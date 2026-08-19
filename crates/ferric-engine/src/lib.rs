@@ -2,6 +2,9 @@
 
 //! Safe state machines used by the generated Ferric runtime.
 
+#[allow(unused_imports)]
+use vstd::prelude::*;
+
 mod cache;
 pub mod epoch;
 pub mod scheduler;
