@@ -6,6 +6,11 @@ rust-version.workspace = true
 version.workspace = true
 publish = false
 
+[dependencies]
+vstd.workspace = true
+
+[package.metadata.verus]
+verify = true
+
 [lints]
 workspace = true
-

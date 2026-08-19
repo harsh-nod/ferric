@@ -80,7 +80,7 @@ impl ModelConfig {
                 return Err(SpecError::ZeroLimit(name));
             }
         }
-        if self.query_heads % self.kv_heads != 0 {
+        if !self.query_heads.is_multiple_of(self.kv_heads) {
             return Err(SpecError::IncompatibleAttentionHeads);
         }
         if self.query_heads.checked_mul(self.head_dim) != Some(self.hidden_size) {

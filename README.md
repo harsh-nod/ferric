@@ -53,7 +53,10 @@ See [the roadmap](docs/ROADMAP.md), [assurance policy](docs/ASSURANCE.md),
 
 ## Development
 
-Ferric currently supports Rust 1.75 or newer.
+Ferric pins Rust 1.97.1 to match the admitted Verus release. Correctness-
+critical executable bodies are compiled by ordinary Cargo and directly
+verified from the same source by `cargo-verus`; proof constructs are erased
+from release artifacts.
 
 ```sh
 cargo fmt --all --check

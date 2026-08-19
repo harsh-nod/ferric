@@ -36,7 +36,7 @@ Goal: freeze the system theorem, core identities, and reversible KV semantics.
 - [ ] Add generational request slots and deterministic scheduler transitions.
 - [ ] Add completion epochs and retirement-before-reuse semantics.
 - [ ] Add sealed immutable prefix pages and copy-on-write.
-- [ ] Add Verus proofs for the executable M0 state machines.
+- [ ] Directly verify the executable M0 state-machine bodies with pinned Verus.
 - [ ] Bind M0 properties into fe2o3 proof contracts.
 
 Exit gate: every implemented transition has an executable oracle, invariant

@@ -23,9 +23,16 @@ execution is not permitted.
 ## Dependency Boundary
 
 The runtime may depend on the reviewed fe2o3 artifact, descriptor, host,
-completion, and HSA APIs. It must not depend on compiler crates, Verus, LLVM,
-COMGR, HIP launch APIs, vendor GEMM libraries, PyTorch, Python, runtime JIT
-facilities, or the fe2o3 legacy compiler.
+completion, and HSA APIs. Correctness-critical runtime crates use pinned vstd
+macros at build time so Verus verifies their actual executable bodies. The
+shipping artifact must not link Verus, vstd, Z3, or proof/ghost state. It also
+must not depend on compiler crates, LLVM, COMGR, HIP launch APIs, vendor GEMM
+libraries, PyTorch, Python, runtime JIT facilities, or the fe2o3 legacy
+compiler.
+
+The qualified release is produced by the strict `cargo-verus build --release`
+invocation. Rebuilding the binary afterward with a different Cargo invocation
+would create a new, unqualified artifact even when source files are unchanged.
 
 The offline build owns:
 
@@ -122,4 +129,3 @@ Reusable capabilities belong upstream in fe2o3:
 - translation validators and machine-resource gates.
 
 Ferric consumes these APIs. It does not duplicate them.
-

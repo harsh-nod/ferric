@@ -50,9 +50,18 @@ proofs/integration/      Ferric transition to fe2o3 contract correspondence
 proofs/negative/         mutations that the proof or admission gate rejects
 ```
 
-Proofs should reuse the production transition definitions wherever Verus
-supports the admitted Rust subset. A separate model is permitted only with an
-explicit, proved correspondence to the executable implementation.
+Correctness-critical transitions are executable functions inside the admitted
+same-source Verus subset. Verus verifies those function bodies directly and
+ordinary Cargo compiles the erased bodies. A separate model is permitted only
+with an explicit, proved correspondence to the executable implementation;
+source hashes, differential tests, or a second "production-shaped" model do
+not establish that correspondence.
+
+Strict proof jobs use a fresh, dedicated target directory because verifier
+arguments are not part of Cargo's freshness fingerprint. They pass
+`--no-cheating`, retain an identity-bound result, and build the exact release
+artifact that will be qualified. A target directory previously used without
+the strict arguments is not admissible evidence.
 
 ## Required M0 Theorems
 
@@ -106,7 +115,7 @@ A proof-required change is complete only when:
   traces;
 - state invariants pass after every public transition;
 - required negative mutations fail for the intended reason;
-- pinned Verus and solver executions close without `assume`, `admit`, an
+- pinned Verus and solver executions close with `--no-cheating`, without `assume`, `admit`, an
   unrecorded `external_body`, timeout, or omitted dependency;
 - the proof transcript and complete source closure are identity-bound;
 - formatting, Clippy, Rust tests, and proof checks pass on the supported Rust
