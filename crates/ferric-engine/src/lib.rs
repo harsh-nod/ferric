@@ -2,6 +2,6 @@
 
 //! Safe state machines used by the generated Ferric runtime.
 
-mod kv;
+mod cache;
 
-pub use kv::{KvError, KvPool, PageId};
+pub use cache::{KvError, KvPool, PageId};
