@@ -47,6 +47,7 @@ kernels:            fe2o3 only
 ```
 
 See [the roadmap](docs/ROADMAP.md), [assurance policy](docs/ASSURANCE.md),
+[proof-development protocol](docs/PROOF_DEVELOPMENT.md),
 [architecture](docs/ARCHITECTURE.md), [feature ledger](docs/FEATURES.md), and
 [performance protocol](docs/PERFORMANCE.md).
 

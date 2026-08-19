@@ -2,6 +2,8 @@
 
 Status: living program contract.
 
+Proof-required work follows [the proof-development protocol](PROOF_DEVELOPMENT.md).
+
 Ferric's north star is proof-carrying DeepSeek-V4 speculative inference on an
 eight-device `gfx942` system. That is a graduation test, not the first
 milestone. The roadmap closes one refinement boundary at a time while keeping
@@ -161,4 +163,3 @@ batching, advanced speculation, quantization, offload, expert parallelism,
 disaggregation, structured generation, and operational serving features. Each
 feature needs a semantic contract, implementation, proof/validation matrix,
 negative tests, and performance qualification.
-
