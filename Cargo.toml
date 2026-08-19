@@ -1,0 +1,19 @@
+[workspace]
+members = [
+    "crates/ferric-engine",
+    "crates/ferric-spec",
+]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+rust-version = "1.75"
+version = "0.1.0"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = "deny"
+pedantic = "deny"
+

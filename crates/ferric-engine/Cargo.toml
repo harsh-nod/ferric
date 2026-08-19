@@ -1,0 +1,14 @@
+[package]
+name = "ferric-engine"
+description = "Safe runtime state machines for Ferric inference"
+edition.workspace = true
+rust-version.workspace = true
+version.workspace = true
+publish = false
+
+[dependencies]
+ferric-spec = { path = "../ferric-spec" }
+
+[lints]
+workspace = true
+

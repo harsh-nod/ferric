@@ -1,0 +1,11 @@
+[package]
+name = "ferric-spec"
+description = "Executable sequential semantics for Ferric inference"
+edition.workspace = true
+rust-version.workspace = true
+version.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
