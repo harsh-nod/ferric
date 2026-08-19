@@ -5,10 +5,10 @@
 //! This crate is not a serving fallback. Production runners must refine these
 //! semantics and do not call them in the inference hot path.
 
+mod configuration;
 mod identity;
-mod model;
 mod speculation;
 
+pub use configuration::{EngineLimits, ModelConfig, SpecError, Target};
 pub use identity::{Identity, RequestId};
-pub use model::{EngineLimits, ModelConfig, SpecError, Target};
 pub use speculation::{verify_greedy_round, GreedyCommit, TokenId};
