@@ -5,8 +5,10 @@
 //! This crate is not a serving fallback. Production runners must refine these
 //! semantics and do not call them in the inference hot path.
 
+pub mod completion;
 mod configuration;
 mod identity;
+pub mod scheduling;
 mod speculation;
 
 pub use configuration::{EngineLimits, ModelConfig, SpecError, Target};
