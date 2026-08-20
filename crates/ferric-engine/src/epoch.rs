@@ -15,22 +15,6 @@ pub struct ExactCompletion {
 }
 
 impl ExactCompletion {
-    /// Constructs evidence at the current external HSA trust boundary.
-    ///
-    /// # Contracted boundary
-    ///
-    /// The caller must have observed successful completion of the exact HSA
-    /// signal associated with `epoch`, on the one ordered completion authority,
-    /// and the fe2o3 runtime contract must establish that the observation makes
-    /// every resource retained by that submission quiescent. Verus proves all
-    /// subsequent lifecycle transitions but does not prove this HSA premise.
-    #[must_use]
-    pub(super) fn from_contracted_hsa_quiescence(epoch: CompletionEpoch) -> (completion: Self)
-        ensures completion.epoch_spec() == epoch,
-    {
-        Self { epoch }
-    }
-
     #[must_use]
     pub const fn epoch(&self) -> (epoch: CompletionEpoch)
         ensures epoch == self.epoch_spec(),
@@ -49,6 +33,14 @@ impl ExactCompletion {
 mod tests {
     use super::ExactCompletion;
     use ferric_spec::completion::CompletionEpoch;
+
+    impl ExactCompletion {
+        /// Test-only stand-in for the future HSA quiescence boundary.
+        #[must_use]
+        pub(crate) fn from_contracted_hsa_quiescence(epoch: CompletionEpoch) -> Self {
+            Self { epoch }
+        }
+    }
 
     #[test]
     fn capability_preserves_the_contracted_epoch() {

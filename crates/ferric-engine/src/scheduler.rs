@@ -4717,7 +4717,6 @@ impl<const C: usize> Scheduler<C> {
         assert(slot.state == RequestState::Vacant);
         assert(slot.in_free_ring);
 
-        let _old_free_head = self.free_head;
         self.free_head = advance::<C>(self.free_head);
         self.free_len -= 1;
         self.slots[slot_index].state = RequestState::Ready;
@@ -5704,19 +5703,19 @@ impl<const C: usize> Scheduler<C> {
 
     fn reclaim_slot(
         &mut self,
-        detached: &KvDetachedRequest,
+        _detached: &KvDetachedRequest,
         request: RequestId,
         next_generation: u32,
     ) -> (reclaimed: RequestId)
         requires
             old(self).basic_invariant(),
-            detached_expected_error::<C>(old(self), detached).is_none(),
-            request == detached.request_spec(),
+            detached_expected_error::<C>(old(self), _detached).is_none(),
+            request == _detached.request_spec(),
             next_generation as int
                 == old(self).slot_generation_spec(request.slot_spec() as int) as int + 1,
         ensures
             final(self).basic_invariant(),
-            final(self).detached_refines(old(self), detached, &Ok(reclaimed)),
+            final(self).detached_refines(old(self), _detached, &Ok(reclaimed)),
             reclaimed == request,
             final(self).state_spec(reclaimed).is_none(),
             final(self).detachment_ready_frame_except(
@@ -5745,7 +5744,7 @@ impl<const C: usize> Scheduler<C> {
         proof {
             self.reclaim_slot_updates_establish_postconditions(
                 old(self),
-                detached,
+                _detached,
                 request,
                 next_generation,
             );
