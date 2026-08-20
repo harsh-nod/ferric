@@ -17,4 +17,5 @@ when-verus=crates/ferric-engine/src/cache.rs|kv-stale-page|ferric-engine|kv-stal
 when-verus=crates/ferric-engine/src/cache.rs|kv-stale-request|ferric-engine|kv-stale-request.py|proof|cache|KvPool::live_request_index
 when-verus=crates/ferric-engine/src/cache.rs|kv-storage-length|ferric-engine|kv-storage-length.py|proof|cache|KvPool::append_fresh_page
 when-verus=crates/ferric-engine/src/epoch.rs|lifecycle|ferric-engine|lifecycle.py|proof|scheduler|Scheduler::finalize_slot
+when-verus=crates/ferric-engine/src/scheduler.rs|scheduler-generation-reuse|ferric-engine|scheduler-generation-reuse.py|proof|scheduler|Scheduler::reclaim_detached
 when-verus=crates/ferric-engine/src/system.rs|system|ferric-engine|system.py|proof|system|Engine::admit

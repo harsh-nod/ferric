@@ -202,16 +202,6 @@ write_metadata "$solver" "$scratch/solver.metadata"
 "$source_gate" "$solver" "$repo/proofs/VERIFIED_MODULES" "$scratch/solver.metadata"
 
 constructor=$(new_copy admitted-allocation-constructor)
-cat >>"$constructor/crates/ferric-engine/src/cache.rs" <<'RS'
-
-verus! {
-impl KvPool {
-    fn new_bounded() {
-        let _storage = vec![0_u8; 1];
-    }
-}
-}
-RS
 write_metadata "$constructor" "$scratch/constructor.metadata"
 "$source_gate" --generate "$constructor" "$scratch/constructor.metadata" \
     "$scratch/constructor.manifest"
@@ -222,21 +212,6 @@ grep -F 'ferric_engine::cache::KvPool::new_bounded' \
 }
 
 engine_constructor=$(new_copy admitted-engine-allocation-constructor)
-printf '\npub mod system;\n' >>"$engine_constructor/crates/ferric-engine/src/lib.rs"
-cat >"$engine_constructor/crates/ferric-engine/src/system.rs" <<'RS'
-use vstd::prelude::*;
-
-verus! {
-pub struct Engine;
-
-impl Engine {
-    pub fn new() {
-        let mut permits: Vec<Option<u8>> = Vec::with_capacity(1);
-        permits.push(None);
-    }
-}
-}
-RS
 write_metadata "$engine_constructor" "$scratch/engine-constructor.metadata"
 "$source_gate" --generate "$engine_constructor" \
     "$scratch/engine-constructor.metadata" "$scratch/engine-constructor.manifest"
@@ -247,13 +222,8 @@ grep -F 'ferric_engine::system::Engine::new' \
 }
 
 engine_transition=$(new_copy rejected-engine-allocation-transition)
-printf '\npub mod system;\n' >>"$engine_transition/crates/ferric-engine/src/lib.rs"
-cat >"$engine_transition/crates/ferric-engine/src/system.rs" <<'RS'
-use vstd::prelude::*;
-
+cat >>"$engine_transition/crates/ferric-engine/src/system.rs" <<'RS'
 verus! {
-pub struct Engine;
-
 impl Engine {
     pub fn transition() {
         let mut permits: Vec<Option<u8>> = Vec::with_capacity(1);

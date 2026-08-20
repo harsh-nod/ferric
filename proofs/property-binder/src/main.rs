@@ -866,10 +866,10 @@ fn collect_negative(
             .insert(name, measure(&entry.path(), false)?);
     }
     for filename in inventory.negative.keys() {
-        if let Some(name) = filename.strip_suffix(".mutation") {
-            if !registry.contains_key(name) {
-                return Err(format!("unregistered mutation marker: {filename}"));
-            }
+        if let Some(name) = filename.strip_suffix(".mutation")
+            && !registry.contains_key(name)
+        {
+            return Err(format!("unregistered mutation marker: {filename}"));
         }
     }
     for (name, registered) in registry {

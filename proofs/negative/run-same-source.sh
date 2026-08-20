@@ -77,7 +77,7 @@ run_rejected() {
             timeout "$timeout_seconds" "$verus_root/cargo-verus" build \
                 -p "$package" --locked --release --target-dir "$target" \
                 --fwd-verus-args-to roots -j 1 -- --no-cheating \
-                --verify-module "$module" --verify-function "$function"
+                --verify-only-module "$module" --verify-function "$function"
     ) >>"$transcript" 2>&1
     status=$?
     set -e

@@ -26,7 +26,8 @@
       "required_mutations": [
         "request-id-generation",
         "kv-request-generation",
-        "kv-stale-request"
+        "kv-stale-request",
+        "scheduler-generation-reuse"
       ],
       "checked_evidence": [],
       "unsupported_reason": null
