@@ -45,7 +45,24 @@ esac
 }
 
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/ferric-negative.XXXXXX")
-trap 'rm -rf "$scratch"' EXIT HUP INT TERM
+cleanup_main() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    if [ -f "$scratch/pids" ]; then
+        while IFS='|' read -r _name pid _extra; do
+            [ -n "$pid" ] && kill -TERM "$pid" 2>/dev/null || true
+        done <"$scratch/pids"
+        while IFS='|' read -r _name pid _extra; do
+            [ -n "$pid" ] && wait "$pid" 2>/dev/null || true
+        done <"$scratch/pids"
+    fi
+    rm -rf "$scratch" || true
+    return "$status"
+}
+trap cleanup_main EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 copy_source() {
     destination=$1
@@ -78,8 +95,11 @@ run_rejected() {
                 -p "$package" --locked --release --target-dir "$target" \
                 --fwd-verus-args-to roots -j 1 -- --no-cheating \
                 --verify-only-module "$module" --verify-function "$function"
-    ) >>"$transcript" 2>&1
+    ) >>"$transcript" 2>&1 &
+    component_child_pid=$!
+    wait "$component_child_pid"
     status=$?
+    component_child_pid=
     set -e
     if [ "$status" -eq 0 ]; then
         printf 'FAIL: %s mutation was accepted\n' "$name" >&2
@@ -108,6 +128,23 @@ run_component() {
     function=$6
     mutation="$repo/proofs/negative/components/$mutator"
     copy="$scratch/copies/$name"
+    target="$scratch/targets/$name"
+    component_child_pid=
+    cleanup_component() {
+        status=$?
+        trap - EXIT HUP INT TERM
+        if [ -n "$component_child_pid" ]; then
+            kill -TERM -"$component_child_pid" 2>/dev/null || true
+            wait "$component_child_pid" 2>/dev/null || true
+        fi
+        chmod -R u+w "$copy" "$target" 2>/dev/null || true
+        rm -rf "$copy" "$target" || true
+        return "$status"
+    }
+    trap cleanup_component EXIT
+    trap 'exit 129' HUP
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
     copy_source "$copy"
     mutation_marker="$output/$name.mutation"
     python3 -I "$mutation" "$copy" >"$mutation_marker"
@@ -139,8 +176,6 @@ run_component() {
     esac
     printf 'PASS: %s actual-body mutation rejected (%s)\n' "$name" "$marker" \
         >"$scratch/results/$name"
-    chmod -R u+w "$copy" "$target" 2>/dev/null || true
-    rm -rf "$copy" "$target"
 }
 
 wait_batch() {
