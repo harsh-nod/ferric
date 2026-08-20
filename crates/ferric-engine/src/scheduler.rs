@@ -335,6 +335,7 @@ impl<const C: usize> Scheduler<C> {
         &&& self.member_len <= self.live_count
         &&& self.batch_len <= self.member_len
         &&& self.completed <= self.submitted
+        &&& self.submitted as int == self.completed as int + self.batch_len as int
     }
 
     pub closed spec fn slot_invariant(&self) -> bool {
@@ -566,6 +567,29 @@ impl<const C: usize> Scheduler<C> {
         ensures self.same_scalars(self),
     {
         reveal(Scheduler::same_scalars);
+    }
+
+    proof fn same_scalars_preserves_basic(&self, before: &Self)
+        requires before.basic_invariant(), self.same_scalars(before),
+        ensures self.basic_invariant(),
+    {
+        reveal(Scheduler::same_scalars);
+        reveal(Scheduler::basic_invariant);
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::slot_invariant);
+        reveal(Scheduler::free_ring_invariant);
+        reveal(Scheduler::reclaim_ring_invariant);
+        reveal(Scheduler::member_ring_invariant);
+        reveal(Scheduler::batch_ring_invariant);
+    }
+
+    proof fn same_scalars_preserves_identity(&self, before: &Self)
+        requires self.same_scalars(before),
+        ensures self.identity_frame(before),
+    {
+        reveal(Scheduler::same_scalars);
+        reveal(Scheduler::slot_generation_spec);
+        reveal(Scheduler::slot_is_live_spec);
     }
 
     pub closed spec fn slot_model(&self, slot_index: int) -> SequentialRequest
@@ -4834,6 +4858,76 @@ impl<const C: usize> Scheduler<C> {
         }
     }
 
+    pub closed spec fn dispatch_execution_refines(
+        &self,
+        before: &Self,
+        before_output: Seq<RequestId>,
+        output: Seq<RequestId>,
+        result: &Result<Option<DispatchBatch>, SchedulerError>,
+    ) -> bool {
+        let available = C - before.member_len;
+        let limit = if before_output.len() < available {
+            before_output.len()
+        } else {
+            available as nat
+        };
+        let expected = ready_selection::<C>(
+            before.slots@,
+            before.cursor,
+            C as nat,
+            limit,
+        );
+        match result {
+            Err(error) => {
+                &&& *error == if before_output.len() == 0 {
+                    SchedulerError::EmptyBatchStorage
+                } else {
+                    SchedulerError::SubmissionEpochExhausted
+                }
+                &&& (before_output.len() == 0
+                    || (before_output.len() > 0 && before.submitted == u64::MAX))
+                &&& self.same_scalars(before)
+                &&& output == before_output
+            }
+            Ok(None) => {
+                &&& before_output.len() > 0
+                &&& before.submitted < u64::MAX
+                &&& (before.batch_len == C || before.member_len == C
+                    || expected.len() == 0)
+                &&& self.same_scalars(before)
+                &&& output == before_output
+            }
+            Ok(Some(batch)) => {
+                let chosen = output.subrange(0, batch.member_count_spec() as int);
+                &&& before_output.len() > 0
+                &&& before.submitted < u64::MAX
+                &&& before.batch_len < C
+                &&& before.member_len < C
+                &&& batch.member_count_spec() > 0
+                &&& batch.member_count_spec() == chosen.len()
+                &&& batch.member_count_spec() == expected.len()
+                &&& batch.epoch_spec().value as int == before.submitted as int + 1
+                &&& selected_request_slots(chosen) == expected
+                &&& before.dispatch_chosen_ready(chosen)
+                &&& before.member_len + chosen.len() <= C
+                &&& self.dispatch_commit_refines(
+                    before,
+                    chosen,
+                    self.cursor,
+                    batch.epoch_spec().value,
+                )
+                &&& self.cursor == ready_scan_cursor::<C>(
+                    before.slots@,
+                    before.cursor,
+                    C as nat,
+                    limit,
+                )
+                &&& self.cursor < C
+                &&& output == dispatch_selected_output(before_output, chosen)
+            }
+        }
+    }
+
     closed spec fn dispatch_scan_oracle(
         &self,
         before: &Self,
@@ -4916,6 +5010,2549 @@ impl<const C: usize> Scheduler<C> {
         &&& self.submitted == before.submitted
         &&& self.completed == before.completed
         &&& self.live_count == before.live_count
+    }
+
+    closed spec fn dispatch_commit_refines(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    ) -> bool {
+        let batch_tail = ring_position::<C>(before.batch_head, before.batch_len as nat);
+        let batch = BatchRecord {
+            epoch: CompletionEpoch { value: next_epoch },
+            member_count: chosen.len() as usize,
+        };
+        &&& chosen.len() > 0
+        &&& self.slots@ == dispatch_selected_slots(before.slots@, chosen, next_epoch)
+        &&& self.free_ring@ == before.free_ring@
+        &&& self.free_head == before.free_head
+        &&& self.free_len == before.free_len
+        &&& self.reclaim_ring@ == before.reclaim_ring@
+        &&& self.reclaim_head == before.reclaim_head
+        &&& self.reclaim_len == before.reclaim_len
+        &&& self.member_ring@ == dispatch_selected_members::<C>(
+            before.member_ring@,
+            before.member_head,
+            before.member_len,
+            chosen,
+        )
+        &&& self.member_head == before.member_head
+        &&& self.member_len == before.member_len + chosen.len()
+        &&& self.batch_ring@ == before.batch_ring@.update(batch_tail, batch)
+        &&& self.batch_head == before.batch_head
+        &&& self.batch_len == before.batch_len + 1
+        &&& self.cursor == next_cursor
+        &&& self.submitted == next_epoch
+        &&& self.completed == before.completed
+        &&& self.live_count == before.live_count
+    }
+
+    closed spec fn dispatch_chosen_ready(&self, chosen: Seq<RequestId>) -> bool {
+        &&& selected_request_slots(chosen).no_duplicates()
+        &&& (forall|offset: int| 0 <= offset < chosen.len() ==> {
+            let request = #[trigger] chosen[offset];
+            let slot_index = request.slot_spec() as int;
+            &&& 0 <= slot_index < C
+            &&& request.generation_spec() == self.slots@[slot_index].generation
+            &&& self.slots@[slot_index].state == RequestState::Ready
+        })
+    }
+
+    proof fn dispatch_scan_chosen_ready(
+        &self,
+        before: &Self,
+        before_output: Seq<RequestId>,
+        output: Seq<RequestId>,
+        chosen: Seq<RequestId>,
+        scanned: usize,
+        limit: usize,
+        next_epoch: u64,
+        slot_index: usize,
+        member_tail: usize,
+    )
+        requires
+            before.basic_invariant(),
+            self.dispatch_scan_refines(
+                before,
+                before_output,
+                output,
+                chosen,
+                scanned,
+                limit,
+                next_epoch,
+                slot_index,
+                member_tail,
+            ),
+            selected_request_slots(chosen) == ready_selection::<C>(
+                before.slots@,
+                before.cursor,
+                C as nat,
+                limit as nat,
+            ),
+        ensures before.dispatch_chosen_ready(chosen),
+    {
+        before.basic_implies_scalar();
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::dispatch_scan_refines);
+        reveal(Scheduler::dispatch_scan_oracle);
+        reveal(Scheduler::dispatch_chosen_ready);
+        assert forall|offset: int| 0 <= offset < chosen.len() implies {
+            let request = #[trigger] chosen[offset];
+            let selected_slot = selected_request_slots(chosen)[offset];
+            let slot_index = request.slot_spec() as int;
+            &&& 0 <= slot_index < C
+            &&& request.generation_spec() == before.slots@[slot_index].generation
+            &&& before.slots@[slot_index].state == RequestState::Ready
+        } by {
+            reveal(selected_request_slots);
+            ready_selection_entry_ready::<C>(
+                before.slots@,
+                before.cursor,
+                C as nat,
+                limit as nat,
+                offset,
+            );
+        }
+    }
+
+    proof fn dispatch_commit_scalar_counts(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+        ensures
+            self.live_count == live_slot_count(self.slots@, C as nat),
+            self.reclaim_len + nonreclaim_live_count(self.slots@, C as nat)
+                == self.live_count,
+            self.free_len + self.live_count == C,
+    {
+        before.basic_implies_scalar();
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::dispatch_chosen_ready);
+        reveal(Scheduler::dispatch_commit_refines);
+        dispatch_selected_counts_preserved(
+            before.slots@,
+            chosen,
+            next_epoch,
+            C as nat,
+        );
+    }
+
+    proof fn dispatch_commit_scalar_static_bounds(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            chosen.len() <= C - before.member_len,
+            next_cursor < C,
+        ensures
+            C > 0,
+            C <= MAX_REQUEST_SLOTS,
+            self.free_head < C,
+            self.free_len <= C,
+            self.reclaim_head < C,
+            self.reclaim_len <= C,
+            self.member_head < C,
+            self.batch_head < C,
+            self.cursor < C,
+            self.live_count <= C,
+            self.reclaim_len <= self.live_count,
+    {
+        before.basic_implies_scalar();
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::dispatch_commit_refines);
+    }
+
+    proof fn dispatch_chosen_member_capacity(
+        &self,
+        chosen: Seq<RequestId>,
+    )
+        requires
+            self.basic_invariant(),
+            self.dispatch_chosen_ready(chosen),
+        ensures self.member_len + chosen.len() <= self.live_count,
+    {
+        self.basic_implies_scalar();
+        self.basic_implies_member_ring();
+        self.member_slot_indices_are_distinct();
+        self.member_slot_indices_are_live();
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::member_ring_invariant);
+        reveal(Scheduler::dispatch_chosen_ready);
+        let members = member_slot_indices::<C>(
+            self.member_ring@,
+            self.member_head,
+            self.member_len,
+        );
+        let selected = selected_request_slots(chosen);
+        let combined = members.add(selected);
+        let live = live_slot_indices(self.slots@, C as nat);
+        live_slot_indices_facts(self.slots@, C as nat);
+        assert(selected.len() == chosen.len()) by {
+            reveal(selected_request_slots);
+        }
+        assert forall|offset: int| 0 <= offset < selected.len() implies
+            #[trigger] live.contains(selected[offset]) by {
+            reveal(selected_request_slots);
+        }
+        assert forall|offset: int| 0 <= offset < selected.len() implies
+            !members.contains(#[trigger] selected[offset]) by {
+            let slot_index = selected[offset];
+            reveal(selected_request_slots);
+            member_slot_indices_contains_iff::<C>(
+                self.member_ring@,
+                self.member_head,
+                self.member_len,
+                slot_index,
+            );
+        }
+        assert(combined.no_duplicates()) by {
+            reveal(Seq::no_duplicates);
+            assert forall|left: int, right: int|
+                0 <= left < combined.len()
+                    && 0 <= right < combined.len()
+                    && left != right implies combined[left] != combined[right] by {
+                if left < members.len() && right < members.len() {
+                    assert(members[left] != members[right]);
+                } else if members.len() <= left && members.len() <= right {
+                    assert(selected[left - members.len()] != selected[right - members.len()]);
+                } else if left < members.len() {
+                    assert(!members.contains(selected[right - members.len()]));
+                } else {
+                    assert(!members.contains(selected[left - members.len()]));
+                }
+            }
+        }
+        assert forall|slot_index: int| combined.contains(slot_index) implies
+            #[trigger] live.contains(slot_index) by {
+            if !members.contains(slot_index) {
+                assert(selected.contains(slot_index));
+                let offset = choose|offset: int| 0 <= offset < selected.len()
+                    && selected[offset] == slot_index;
+            }
+        }
+        combined.to_set_ensures();
+        live.to_set_ensures();
+        combined.unique_seq_to_set();
+        live.unique_seq_to_set();
+        assert(combined.to_set().subset_of(live.to_set()));
+        vstd::set_lib::lemma_len_subset(combined.to_set(), live.to_set());
+    }
+
+    proof fn dispatch_commit_scalar_member_bounds(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            chosen.len() <= C - before.member_len,
+        ensures
+            self.member_len <= C,
+            self.member_len <= self.live_count,
+    {
+        before.basic_implies_scalar();
+        before.dispatch_chosen_member_capacity(chosen);
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::dispatch_commit_refines);
+    }
+
+    proof fn dispatch_commit_scalar_batch_bounds(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            chosen.len() <= C - before.member_len,
+        ensures
+            self.batch_len <= C,
+            self.batch_len <= self.member_len,
+    {
+        before.basic_implies_scalar();
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::dispatch_commit_refines);
+    }
+
+    proof fn dispatch_commit_scalar_epochs(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            next_epoch as int == before.submitted as int + 1,
+        ensures
+            self.completed <= self.submitted,
+            self.submitted as int == self.completed as int + self.batch_len as int,
+    {
+        before.basic_implies_scalar();
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::dispatch_commit_refines);
+    }
+
+    proof fn dispatch_commit_preserves_scalar(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            chosen.len() <= C - before.member_len,
+            next_cursor < C,
+            next_epoch as int == before.submitted as int + 1,
+        ensures self.scalar_invariant(),
+    {
+        self.dispatch_commit_scalar_counts(before, chosen, next_cursor, next_epoch);
+        self.dispatch_commit_scalar_static_bounds(before, chosen, next_cursor, next_epoch);
+        self.dispatch_commit_scalar_member_bounds(before, chosen, next_cursor, next_epoch);
+        self.dispatch_commit_scalar_batch_bounds(before, chosen, next_cursor, next_epoch);
+        self.dispatch_commit_scalar_epochs(before, chosen, next_cursor, next_epoch);
+        reveal(Scheduler::scalar_invariant);
+    }
+
+    proof fn dispatch_commit_slot_at(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+        slot_index: int,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            next_epoch as int == before.submitted as int + 1,
+            0 <= slot_index < C,
+        ensures self.slot_invariant_at(slot_index),
+    {
+        before.basic_implies_scalar();
+        before.basic_implies_slots();
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::slot_invariant);
+        reveal(Scheduler::slot_invariant_at);
+        reveal(Scheduler::dispatch_chosen_ready);
+        reveal(Scheduler::dispatch_commit_refines);
+        assert forall|offset: int| 0 <= offset < chosen.len() implies
+            chosen[offset].slot_spec() < before.slots@.len() by {
+            assert(chosen[offset].slot_spec() < C);
+        }
+        if selected_request_slots(chosen).contains(slot_index) {
+            let offset = choose|offset: int|
+                0 <= offset < selected_request_slots(chosen).len()
+                    && selected_request_slots(chosen)[offset] == slot_index;
+            reveal(selected_request_slots);
+            dispatch_selected_slots_selected_fact(before.slots@, chosen, next_epoch, offset);
+        } else {
+            dispatch_selected_slots_frame_fact(
+                before.slots@,
+                chosen,
+                next_epoch,
+                slot_index,
+            );
+        }
+    }
+
+    proof fn dispatch_commit_slot_points(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            next_epoch as int == before.submitted as int + 1,
+        ensures
+            forall|slot_index: int| 0 <= slot_index < C ==>
+                #[trigger] self.slot_invariant_at(slot_index),
+    {
+        assert forall|slot_index: int| 0 <= slot_index < C implies
+            #[trigger] self.slot_invariant_at(slot_index) by {
+            self.dispatch_commit_slot_at(
+                before,
+                chosen,
+                next_cursor,
+                next_epoch,
+                slot_index,
+            );
+        }
+    }
+
+    proof fn slot_points_imply_invariant(&self)
+        requires
+            forall|slot_index: int| 0 <= slot_index < C ==>
+                #[trigger] self.slot_invariant_at(slot_index),
+        ensures self.slot_invariant(),
+    {
+        assert forall|slot_index: int| 0 <= slot_index < C implies {
+            let slot = #[trigger] self.slots@[slot_index];
+            match slot.state {
+                RequestState::Vacant => {
+                    &&& slot.active_epoch == NO_EPOCH
+                    &&& slot.last_quiescent_epoch == NO_EPOCH
+                    &&& slot.in_free_ring
+                    &&& !slot.in_reclaim_ring
+                }
+                RequestState::Ready => {
+                    &&& slot.active_epoch == NO_EPOCH
+                    &&& slot.last_quiescent_epoch <= self.completed
+                    &&& !slot.in_free_ring
+                    &&& !slot.in_reclaim_ring
+                }
+                RequestState::InFlight => {
+                    &&& NO_EPOCH < slot.active_epoch <= self.submitted
+                    &&& slot.last_quiescent_epoch <= self.completed
+                    &&& !slot.in_free_ring
+                    &&& !slot.in_reclaim_ring
+                }
+                RequestState::Retiring => {
+                    &&& !slot.in_free_ring
+                    &&& slot.active_epoch <= self.submitted
+                    &&& slot.last_quiescent_epoch <= self.completed
+                }
+            }
+        } by {
+            assert(self.slot_invariant_at(slot_index));
+            reveal(Scheduler::slot_invariant_at);
+        }
+        reveal(Scheduler::slot_invariant);
+    }
+
+    proof fn dispatch_commit_preserves_slots(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            next_epoch as int == before.submitted as int + 1,
+        ensures self.slot_invariant(),
+    {
+        self.dispatch_commit_slot_points(before, chosen, next_cursor, next_epoch);
+        self.slot_points_imply_invariant();
+    }
+
+    proof fn dispatch_commit_nonready_frame_at(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+        slot_index: int,
+    )
+        requires
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            0 <= slot_index < C,
+            before.slots@[slot_index].state != RequestState::Ready,
+        ensures self.slots@[slot_index] == before.slots@[slot_index],
+    {
+        reveal(Scheduler::dispatch_chosen_ready);
+        reveal(Scheduler::dispatch_commit_refines);
+        assert forall|offset: int| 0 <= offset < chosen.len() implies
+            chosen[offset].slot_spec() < before.slots@.len() by {
+            assert(chosen[offset].slot_spec() < C);
+        }
+        assert(!selected_request_slots(chosen).contains(slot_index)) by {
+            if selected_request_slots(chosen).contains(slot_index) {
+                let offset = choose|offset: int|
+                    0 <= offset < selected_request_slots(chosen).len()
+                        && selected_request_slots(chosen)[offset] == slot_index;
+                reveal(selected_request_slots);
+            }
+        }
+        dispatch_selected_slots_frame_fact(
+            before.slots@,
+            chosen,
+            next_epoch,
+            slot_index,
+        );
+    }
+
+    proof fn dispatch_commit_slot_flags_frame_at(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+        slot_index: int,
+    )
+        requires
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            0 <= slot_index < C,
+        ensures
+            self.slots@[slot_index].in_free_ring
+                == before.slots@[slot_index].in_free_ring,
+            self.slots@[slot_index].in_reclaim_ring
+                == before.slots@[slot_index].in_reclaim_ring,
+    {
+        reveal(Scheduler::dispatch_chosen_ready);
+        reveal(Scheduler::dispatch_commit_refines);
+        assert forall|offset: int| 0 <= offset < chosen.len() implies
+            chosen[offset].slot_spec() < before.slots@.len() by {
+            assert(chosen[offset].slot_spec() < C);
+        }
+        if selected_request_slots(chosen).contains(slot_index) {
+            let offset = choose|offset: int|
+                0 <= offset < selected_request_slots(chosen).len()
+                    && selected_request_slots(chosen)[offset] == slot_index;
+            reveal(selected_request_slots);
+            dispatch_selected_slots_selected_fact(
+                before.slots@,
+                chosen,
+                next_epoch,
+                offset,
+            );
+        } else {
+            dispatch_selected_slots_frame_fact(
+                before.slots@,
+                chosen,
+                next_epoch,
+                slot_index,
+            );
+        }
+    }
+
+    proof fn dispatch_commit_slot_flags_frame(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+        ensures
+            forall|slot_index: int| 0 <= slot_index < C ==> {
+                &&& (#[trigger] self.slots@[slot_index].in_free_ring)
+                    == before.slots@[slot_index].in_free_ring
+                &&& self.slots@[slot_index].in_reclaim_ring
+                    == before.slots@[slot_index].in_reclaim_ring
+            },
+    {
+        assert forall|slot_index: int| 0 <= slot_index < C implies {
+            &&& (#[trigger] self.slots@[slot_index].in_free_ring)
+                == before.slots@[slot_index].in_free_ring
+            &&& self.slots@[slot_index].in_reclaim_ring
+                == before.slots@[slot_index].in_reclaim_ring
+        } by {
+            self.dispatch_commit_slot_flags_frame_at(
+                before,
+                chosen,
+                next_cursor,
+                next_epoch,
+                slot_index,
+            );
+        }
+    }
+
+    proof fn dispatch_commit_free_entries(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+        ensures
+            forall|offset: int| 0 <= offset < self.free_len ==> {
+                let slot_index = #[trigger] self.free_ring@[
+                    ring_position::<C>(self.free_head, offset as nat)
+                ];
+                &&& slot_index < C
+                &&& self.slots@[slot_index as int].state == RequestState::Vacant
+                &&& self.slots@[slot_index as int].in_free_ring
+            },
+    {
+        before.basic_implies_free_ring();
+        reveal(Scheduler::free_ring_invariant);
+        reveal(Scheduler::dispatch_commit_refines);
+        assert forall|offset: int| 0 <= offset < self.free_len implies {
+            let slot_index = #[trigger] self.free_ring@[
+                ring_position::<C>(self.free_head, offset as nat)
+            ];
+            &&& slot_index < C
+            &&& self.slots@[slot_index as int].state == RequestState::Vacant
+            &&& self.slots@[slot_index as int].in_free_ring
+        } by {
+            let slot_index = self.free_ring@[
+                ring_position::<C>(self.free_head, offset as nat)
+            ];
+            self.dispatch_commit_nonready_frame_at(
+                before,
+                chosen,
+                next_cursor,
+                next_epoch,
+                slot_index as int,
+            );
+        }
+    }
+
+    proof fn dispatch_commit_reclaim_entries(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+        ensures
+            forall|offset: int| 0 <= offset < self.reclaim_len ==> {
+                let slot_index = #[trigger] self.reclaim_ring@[
+                    ring_position::<C>(self.reclaim_head, offset as nat)
+                ];
+                &&& slot_index < C
+                &&& self.slots@[slot_index as int].state == RequestState::Retiring
+                &&& self.slots@[slot_index as int].active_epoch == NO_EPOCH
+                &&& self.slots@[slot_index as int].in_reclaim_ring
+            },
+    {
+        before.basic_implies_reclaim_ring();
+        reveal(Scheduler::reclaim_ring_invariant);
+        reveal(Scheduler::dispatch_commit_refines);
+        assert forall|offset: int| 0 <= offset < self.reclaim_len implies {
+            let slot_index = #[trigger] self.reclaim_ring@[
+                ring_position::<C>(self.reclaim_head, offset as nat)
+            ];
+            &&& slot_index < C
+            &&& self.slots@[slot_index as int].state == RequestState::Retiring
+            &&& self.slots@[slot_index as int].active_epoch == NO_EPOCH
+            &&& self.slots@[slot_index as int].in_reclaim_ring
+        } by {
+            let slot_index = self.reclaim_ring@[
+                ring_position::<C>(self.reclaim_head, offset as nat)
+            ];
+            self.dispatch_commit_nonready_frame_at(
+                before,
+                chosen,
+                next_cursor,
+                next_epoch,
+                slot_index as int,
+            );
+        }
+    }
+
+    proof fn dispatch_commit_preserves_free_ring(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+        ensures self.free_ring_invariant(),
+    {
+        before.basic_implies_free_ring();
+        self.dispatch_commit_free_entries(before, chosen, next_cursor, next_epoch);
+        self.dispatch_commit_slot_flags_frame(before, chosen, next_cursor, next_epoch);
+        reveal(Scheduler::dispatch_commit_refines);
+        reveal(Scheduler::free_ring_invariant);
+    }
+
+    proof fn dispatch_commit_preserves_reclaim_ring(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+        ensures self.reclaim_ring_invariant(),
+    {
+        self.dispatch_commit_reclaim_entries(before, chosen, next_cursor, next_epoch);
+        self.dispatch_commit_reclaim_structure(before, chosen, next_cursor, next_epoch);
+        reveal(Scheduler::reclaim_ring_invariant);
+    }
+
+    proof fn dispatch_commit_reclaim_structure(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+        ensures
+            forall|left: int, right: int|
+                0 <= left < self.reclaim_len
+                    && 0 <= right < self.reclaim_len
+                    && left != right ==>
+                        #[trigger] usize_ring_entries_differ::<C>(
+                            self.reclaim_ring@,
+                            self.reclaim_head,
+                            left,
+                            right,
+                        ),
+            forall|slot_index: int| 0 <= slot_index < C ==>
+                #[trigger] self.slots@[slot_index].in_reclaim_ring
+                    == usize_ring_contains::<C>(
+                        self.reclaim_ring@,
+                        self.reclaim_head,
+                        self.reclaim_len,
+                        slot_index,
+                    ),
+            forall|slot_index: int| 0 <= slot_index < C
+                && !(#[trigger] self.slots@[slot_index].in_reclaim_ring) ==>
+                    self.reclaim_len < C,
+    {
+        self.dispatch_commit_reclaim_distinct(before, chosen, next_cursor, next_epoch);
+        self.dispatch_commit_reclaim_exact_membership(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+        );
+        self.dispatch_commit_reclaim_capacity(before, chosen, next_cursor, next_epoch);
+    }
+
+    proof fn dispatch_commit_reclaim_distinct(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+        ensures
+            forall|left: int, right: int|
+                0 <= left < self.reclaim_len
+                    && 0 <= right < self.reclaim_len
+                    && left != right ==>
+                        #[trigger] usize_ring_entries_differ::<C>(
+                            self.reclaim_ring@,
+                            self.reclaim_head,
+                            left,
+                            right,
+                        ),
+    {
+        before.basic_implies_reclaim_ring();
+        reveal(Scheduler::dispatch_commit_refines);
+        reveal(Scheduler::reclaim_ring_invariant);
+    }
+
+    proof fn dispatch_commit_reclaim_exact_membership(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+        ensures
+            forall|slot_index: int| 0 <= slot_index < C ==>
+                #[trigger] self.slots@[slot_index].in_reclaim_ring
+                    == usize_ring_contains::<C>(
+                        self.reclaim_ring@,
+                        self.reclaim_head,
+                        self.reclaim_len,
+                        slot_index,
+                    ),
+    {
+        assert forall|slot_index: int| 0 <= slot_index < C implies
+            #[trigger] self.slots@[slot_index].in_reclaim_ring
+                == usize_ring_contains::<C>(
+                    self.reclaim_ring@,
+                    self.reclaim_head,
+                    self.reclaim_len,
+                    slot_index,
+                ) by {
+            self.dispatch_commit_reclaim_membership_at(
+                before,
+                chosen,
+                next_cursor,
+                next_epoch,
+                slot_index,
+            );
+        }
+    }
+
+    proof fn dispatch_commit_reclaim_membership_at(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+        slot_index: int,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            0 <= slot_index < C,
+        ensures
+            self.slots@[slot_index].in_reclaim_ring
+                == usize_ring_contains::<C>(
+                    self.reclaim_ring@,
+                    self.reclaim_head,
+                    self.reclaim_len,
+                    slot_index,
+                ),
+    {
+        before.basic_implies_reclaim_ring();
+        self.dispatch_commit_slot_flags_frame_at(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+            slot_index,
+        );
+        reveal(Scheduler::dispatch_commit_refines);
+        reveal(Scheduler::reclaim_ring_invariant);
+    }
+
+    proof fn dispatch_commit_reclaim_capacity(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+        ensures self.reclaim_len < C,
+    {
+        before.basic_implies_reclaim_ring();
+        reveal(Scheduler::dispatch_chosen_ready);
+        reveal(Scheduler::dispatch_commit_refines);
+        reveal(Scheduler::reclaim_ring_invariant);
+        let selected = chosen[0].slot_spec() as int;
+        assert(0 <= selected < C);
+        assert(!before.slots@[selected].in_reclaim_ring);
+    }
+
+    proof fn dispatch_commit_member_handle_at(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+        offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            0 <= offset < self.member_len,
+        ensures {
+            let handle = self.member_ring@[
+                ring_position::<C>(self.member_head, offset as nat)
+            ];
+            if offset < before.member_len {
+                handle == before.member_ring@[
+                    ring_position::<C>(before.member_head, offset as nat)
+                ]
+            } else {
+                handle == chosen[offset - before.member_len]
+            }
+        },
+    {
+        reveal(Scheduler::dispatch_commit_refines);
+        if offset < before.member_len {
+            self.dispatch_commit_old_member_handle_at(
+                before,
+                chosen,
+                next_cursor,
+                next_epoch,
+                offset,
+            );
+        } else {
+            self.dispatch_commit_selected_member_handle_at(
+                before,
+                chosen,
+                next_cursor,
+                next_epoch,
+                offset - before.member_len,
+            );
+        }
+    }
+
+    proof fn dispatch_commit_old_member_handle_at(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+        offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            0 <= offset < before.member_len,
+        ensures
+            self.member_ring@[ring_position::<C>(self.member_head, offset as nat)]
+                == before.member_ring@[
+                    ring_position::<C>(before.member_head, offset as nat)
+                ],
+    {
+        before.basic_implies_scalar();
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::dispatch_chosen_ready);
+        reveal(Scheduler::dispatch_commit_refines);
+        assert forall|chosen_offset: int| 0 <= chosen_offset < chosen.len() implies
+            chosen[chosen_offset].slot_spec() < C by {
+        }
+        let ring_index = ring_position::<C>(before.member_head, offset as nat);
+        assert(!(exists|chosen_offset: int| 0 <= chosen_offset < chosen.len()
+            && #[trigger] ring_position::<C>(
+                before.member_head,
+                (before.member_len + chosen_offset) as nat,
+            ) == ring_index)) by {
+            if exists|chosen_offset: int| 0 <= chosen_offset < chosen.len()
+                && #[trigger] ring_position::<C>(
+                    before.member_head,
+                    (before.member_len + chosen_offset) as nat,
+                ) == ring_index {
+                let chosen_offset = choose|chosen_offset: int|
+                    0 <= chosen_offset < chosen.len()
+                        && #[trigger] ring_position::<C>(
+                            before.member_head,
+                            (before.member_len + chosen_offset) as nat,
+                        ) == ring_index;
+                ring_position_injective::<C>(
+                    before.member_head,
+                    offset as nat,
+                    (before.member_len + chosen_offset) as nat,
+                );
+            }
+        }
+        dispatch_selected_members_frame_fact::<C>(
+            before.member_ring@,
+            before.member_head,
+            before.member_len,
+            chosen,
+            ring_index,
+        );
+    }
+
+    proof fn dispatch_commit_selected_member_handle_at(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+        chosen_offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            0 <= chosen_offset < chosen.len(),
+        ensures
+            self.member_ring@[
+                ring_position::<C>(
+                    self.member_head,
+                    (before.member_len + chosen_offset) as nat,
+                )
+            ] == chosen[chosen_offset],
+    {
+        before.basic_implies_scalar();
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::dispatch_chosen_ready);
+        reveal(Scheduler::dispatch_commit_refines);
+        assert forall|offset: int| 0 <= offset < chosen.len() implies
+            chosen[offset].slot_spec() < C by {
+        }
+        dispatch_selected_members_selected_fact::<C>(
+            before.member_ring@,
+            before.member_head,
+            before.member_len,
+            chosen,
+            chosen_offset,
+        );
+    }
+
+    proof fn dispatch_commit_member_entry_at(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+        offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            next_epoch as int == before.submitted as int + 1,
+            0 <= offset < self.member_len,
+        ensures {
+            let handle = self.member_ring@[
+                ring_position::<C>(self.member_head, offset as nat)
+            ];
+            &&& handle.slot_spec() < C
+            &&& self.slots@[handle.slot_spec() as int].generation
+                == handle.generation_spec()
+            &&& self.completed < self.slots@[handle.slot_spec() as int].active_epoch
+            &&& self.slots@[handle.slot_spec() as int].active_epoch <= self.submitted
+            &&& !self.slots@[handle.slot_spec() as int].in_reclaim_ring
+            &&& (self.slots@[handle.slot_spec() as int].state == RequestState::InFlight
+                || self.slots@[handle.slot_spec() as int].state == RequestState::Retiring)
+        },
+    {
+        before.basic_implies_scalar();
+        before.basic_implies_member_ring();
+        self.dispatch_commit_member_handle_at(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+            offset,
+        );
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::member_ring_invariant);
+        reveal(Scheduler::dispatch_chosen_ready);
+        reveal(Scheduler::dispatch_commit_refines);
+        assert forall|chosen_offset: int| 0 <= chosen_offset < chosen.len() implies
+            chosen[chosen_offset].slot_spec() < before.slots@.len() by {
+            assert(chosen[chosen_offset].slot_spec() < C);
+        }
+        let handle = self.member_ring@[
+            ring_position::<C>(self.member_head, offset as nat)
+        ];
+        if offset < before.member_len {
+            let slot_index = handle.slot_spec() as int;
+            self.dispatch_commit_nonready_frame_at(
+                before,
+                chosen,
+                next_cursor,
+                next_epoch,
+                slot_index,
+            );
+        } else {
+            let chosen_offset = offset - before.member_len;
+            reveal(selected_request_slots);
+            dispatch_selected_slots_selected_fact(
+                before.slots@,
+                chosen,
+                next_epoch,
+                chosen_offset,
+            );
+        }
+    }
+
+    proof fn dispatch_commit_member_entries(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            next_epoch as int == before.submitted as int + 1,
+        ensures
+            forall|offset: int| 0 <= offset < self.member_len ==> {
+                let handle = #[trigger] self.member_ring@[
+                    ring_position::<C>(self.member_head, offset as nat)
+                ];
+                &&& handle.slot_spec() < C
+                &&& self.slots@[handle.slot_spec() as int].generation
+                    == handle.generation_spec()
+                &&& self.completed < self.slots@[handle.slot_spec() as int].active_epoch
+                &&& self.slots@[handle.slot_spec() as int].active_epoch <= self.submitted
+                &&& !self.slots@[handle.slot_spec() as int].in_reclaim_ring
+                &&& (self.slots@[handle.slot_spec() as int].state == RequestState::InFlight
+                    || self.slots@[handle.slot_spec() as int].state == RequestState::Retiring)
+            },
+    {
+        assert forall|offset: int| 0 <= offset < self.member_len implies {
+            let handle = #[trigger] self.member_ring@[
+                ring_position::<C>(self.member_head, offset as nat)
+            ];
+            &&& handle.slot_spec() < C
+            &&& self.slots@[handle.slot_spec() as int].generation
+                == handle.generation_spec()
+            &&& self.completed < self.slots@[handle.slot_spec() as int].active_epoch
+            &&& self.slots@[handle.slot_spec() as int].active_epoch <= self.submitted
+            &&& !self.slots@[handle.slot_spec() as int].in_reclaim_ring
+            &&& (self.slots@[handle.slot_spec() as int].state == RequestState::InFlight
+                || self.slots@[handle.slot_spec() as int].state == RequestState::Retiring)
+        } by {
+            self.dispatch_commit_member_entry_at(
+                before,
+                chosen,
+                next_cursor,
+                next_epoch,
+                offset,
+            );
+        }
+    }
+
+    proof fn dispatch_commit_old_members_differ(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+        left: int,
+        right: int,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            0 <= left < before.member_len,
+            0 <= right < before.member_len,
+            left != right,
+        ensures
+            self.member_ring@[ring_position::<C>(self.member_head, left as nat)].slot_spec()
+                != self.member_ring@[
+                    ring_position::<C>(self.member_head, right as nat)
+                ].slot_spec(),
+    {
+        before.basic_implies_member_ring();
+        self.dispatch_commit_old_member_handle_at(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+            left,
+        );
+        self.dispatch_commit_old_member_handle_at(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+            right,
+        );
+        reveal(Scheduler::member_ring_invariant);
+        assert(request_ring_slots_differ::<C>(
+            before.member_ring@,
+            before.member_head,
+            left,
+            right,
+        ));
+        reveal(request_ring_slots_differ);
+        reveal(Scheduler::dispatch_commit_refines);
+    }
+
+    proof fn dispatch_commit_selected_members_differ(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+        left: int,
+        right: int,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            0 <= left < chosen.len(),
+            0 <= right < chosen.len(),
+            left != right,
+        ensures
+            self.member_ring@[
+                ring_position::<C>(self.member_head, (before.member_len + left) as nat)
+            ].slot_spec()
+                != self.member_ring@[
+                    ring_position::<C>(self.member_head, (before.member_len + right) as nat)
+                ].slot_spec(),
+    {
+        before.basic_implies_scalar();
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::dispatch_chosen_ready);
+        reveal(Scheduler::dispatch_commit_refines);
+        assert forall|offset: int| 0 <= offset < chosen.len() implies
+            chosen[offset].slot_spec() < C by {
+        }
+        dispatch_selected_members_selected_slots_differ::<C>(
+            before.member_ring@,
+            before.member_head,
+            before.member_len,
+            chosen,
+            left,
+            right,
+        );
+    }
+
+    proof fn dispatch_commit_old_selected_members_differ(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+        old_offset: int,
+        chosen_offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            0 <= old_offset < before.member_len,
+            0 <= chosen_offset < chosen.len(),
+        ensures
+            self.member_ring@[
+                ring_position::<C>(self.member_head, old_offset as nat)
+            ].slot_spec()
+                != self.member_ring@[
+                    ring_position::<C>(
+                        self.member_head,
+                        (before.member_len + chosen_offset) as nat,
+                    )
+                ].slot_spec(),
+    {
+        before.basic_implies_member_ring();
+        self.dispatch_commit_old_member_handle_at(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+            old_offset,
+        );
+        self.dispatch_commit_selected_member_handle_at(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+            chosen_offset,
+        );
+        reveal(Scheduler::member_ring_invariant);
+        reveal(Scheduler::dispatch_chosen_ready);
+        let old_handle = before.member_ring@[
+            ring_position::<C>(before.member_head, old_offset as nat)
+        ];
+        let selected = chosen[chosen_offset];
+        assert(old_handle.slot_spec() != selected.slot_spec());
+    }
+
+    proof fn dispatch_commit_old_member_distinct_summary(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+        ensures
+            forall|left: int, right: int|
+                0 <= left < before.member_len
+                    && 0 <= right < before.member_len
+                    && left != right ==>
+                        #[trigger] request_ring_slots_differ::<C>(
+                            self.member_ring@,
+                            self.member_head,
+                            left,
+                            right,
+                        ),
+    {
+        assert forall|left: int, right: int|
+            0 <= left < before.member_len
+                && 0 <= right < before.member_len
+                && left != right implies
+                    #[trigger] request_ring_slots_differ::<C>(
+                        self.member_ring@,
+                        self.member_head,
+                        left,
+                        right,
+                    ) by {
+            self.dispatch_commit_old_members_differ(
+                before,
+                chosen,
+                next_cursor,
+                next_epoch,
+                left,
+                right,
+            );
+            reveal(request_ring_slots_differ);
+        }
+    }
+
+    proof fn dispatch_commit_selected_member_distinct_summary(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+        ensures
+            forall|left: int, right: int|
+                0 <= left < chosen.len()
+                    && 0 <= right < chosen.len()
+                    && left != right ==>
+                        #[trigger] request_ring_slots_differ::<C>(
+                            self.member_ring@,
+                            self.member_head,
+                            before.member_len + left,
+                            before.member_len + right,
+                        ),
+    {
+        assert forall|left: int, right: int|
+            0 <= left < chosen.len()
+                && 0 <= right < chosen.len()
+                && left != right implies
+                    #[trigger] request_ring_slots_differ::<C>(
+                        self.member_ring@,
+                        self.member_head,
+                        before.member_len + left,
+                        before.member_len + right,
+                    ) by {
+            self.dispatch_commit_selected_members_differ(
+                before,
+                chosen,
+                next_cursor,
+                next_epoch,
+                left,
+                right,
+            );
+            reveal(request_ring_slots_differ);
+        }
+    }
+
+    proof fn dispatch_commit_cross_member_distinct_summary(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+        ensures
+            forall|old_offset: int, chosen_offset: int|
+                0 <= old_offset < before.member_len
+                    && 0 <= chosen_offset < chosen.len() ==>
+                        #[trigger] request_ring_slots_differ::<C>(
+                            self.member_ring@,
+                            self.member_head,
+                            old_offset,
+                            before.member_len + chosen_offset,
+                        ),
+    {
+        assert forall|old_offset: int, chosen_offset: int|
+            0 <= old_offset < before.member_len
+                && 0 <= chosen_offset < chosen.len() implies
+                    #[trigger] request_ring_slots_differ::<C>(
+                        self.member_ring@,
+                        self.member_head,
+                        old_offset,
+                        before.member_len + chosen_offset,
+                    ) by {
+            self.dispatch_commit_old_selected_members_differ(
+                before,
+                chosen,
+                next_cursor,
+                next_epoch,
+                old_offset,
+                chosen_offset,
+            );
+            reveal(request_ring_slots_differ);
+        }
+    }
+
+    proof fn dispatch_commit_member_distinct(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+        ensures
+            forall|left: int, right: int|
+                0 <= left < self.member_len
+                    && 0 <= right < self.member_len
+                    && left != right ==>
+                        #[trigger] request_ring_slots_differ::<C>(
+                            self.member_ring@,
+                            self.member_head,
+                            left,
+                            right,
+                        ),
+    {
+        self.dispatch_commit_old_member_distinct_summary(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+        );
+        self.dispatch_commit_selected_member_distinct_summary(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+        );
+        self.dispatch_commit_cross_member_distinct_summary(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+        );
+        reveal(Scheduler::dispatch_commit_refines);
+        assert forall|left: int, right: int|
+            0 <= left < self.member_len
+                && 0 <= right < self.member_len
+                && left != right implies
+                    #[trigger] request_ring_slots_differ::<C>(
+                        self.member_ring@,
+                        self.member_head,
+                        left,
+                        right,
+                    ) by {
+            if left < before.member_len && right < before.member_len {
+            } else if before.member_len <= left && before.member_len <= right {
+                assert(request_ring_slots_differ::<C>(
+                    self.member_ring@,
+                    self.member_head,
+                    before.member_len + (left - before.member_len),
+                    before.member_len + (right - before.member_len),
+                ));
+            } else if left < before.member_len {
+                assert(request_ring_slots_differ::<C>(
+                    self.member_ring@,
+                    self.member_head,
+                    left,
+                    before.member_len + (right - before.member_len),
+                ));
+            } else {
+                assert(request_ring_slots_differ::<C>(
+                    self.member_ring@,
+                    self.member_head,
+                    right,
+                    before.member_len + (left - before.member_len),
+                ));
+                reveal(request_ring_slots_differ);
+            }
+        }
+    }
+
+    proof fn dispatch_commit_member_contains_at(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+        slot_index: int,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+        ensures
+            request_ring_contains_slot::<C>(
+                self.member_ring@,
+                self.member_head,
+                self.member_len,
+                slot_index,
+            ) == (request_ring_contains_slot::<C>(
+                before.member_ring@,
+                before.member_head,
+                before.member_len,
+                slot_index,
+            ) || selected_request_slots(chosen).contains(slot_index)),
+    {
+        reveal(Scheduler::dispatch_commit_refines);
+        reveal(request_ring_contains_slot);
+        reveal(selected_request_slots);
+        if request_ring_contains_slot::<C>(
+            self.member_ring@,
+            self.member_head,
+            self.member_len,
+            slot_index,
+        ) {
+            let offset = choose|offset: int| 0 <= offset < self.member_len
+                && (#[trigger] self.member_ring@[
+                    ring_position::<C>(self.member_head, offset as nat)
+                ].slot_spec()) == slot_index;
+            self.dispatch_commit_member_handle_at(
+                before,
+                chosen,
+                next_cursor,
+                next_epoch,
+                offset,
+            );
+            if offset < before.member_len {
+                assert(request_ring_contains_slot::<C>(
+                    before.member_ring@,
+                    before.member_head,
+                    before.member_len,
+                    slot_index,
+                )) by {
+                    let old_offset = offset;
+                }
+            } else {
+                assert(selected_request_slots(chosen).contains(slot_index)) by {
+                    let selected_offset = offset - before.member_len;
+                    assert(0 <= selected_offset < chosen.len());
+                    assert(selected_request_slots(chosen)[selected_offset]
+                        == chosen[selected_offset].slot_spec() as int);
+                    assert(selected_request_slots(chosen)[selected_offset] == slot_index);
+                }
+            }
+        }
+        if request_ring_contains_slot::<C>(
+            before.member_ring@,
+            before.member_head,
+            before.member_len,
+            slot_index,
+        ) {
+            let offset = choose|offset: int| 0 <= offset < before.member_len
+                && (#[trigger] before.member_ring@[
+                    ring_position::<C>(before.member_head, offset as nat)
+                ].slot_spec()) == slot_index;
+            self.dispatch_commit_member_handle_at(
+                before,
+                chosen,
+                next_cursor,
+                next_epoch,
+                offset,
+            );
+            assert(request_ring_contains_slot::<C>(
+                self.member_ring@,
+                self.member_head,
+                self.member_len,
+                slot_index,
+            )) by {
+                let new_offset = offset;
+            }
+        }
+        if selected_request_slots(chosen).contains(slot_index) {
+            let chosen_offset = choose|chosen_offset: int|
+                0 <= chosen_offset < selected_request_slots(chosen).len()
+                    && selected_request_slots(chosen)[chosen_offset] == slot_index;
+            self.dispatch_commit_member_handle_at(
+                before,
+                chosen,
+                next_cursor,
+                next_epoch,
+                before.member_len + chosen_offset,
+            );
+            assert(request_ring_contains_slot::<C>(
+                self.member_ring@,
+                self.member_head,
+                self.member_len,
+                slot_index,
+            )) by {
+                let new_offset = before.member_len + chosen_offset;
+            }
+        }
+    }
+
+    proof fn dispatch_commit_member_membership_at(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+        slot_index: int,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            next_epoch as int == before.submitted as int + 1,
+            0 <= slot_index < C,
+        ensures
+            ((self.slots@[slot_index].state == RequestState::InFlight
+                || self.slots@[slot_index].state == RequestState::Retiring)
+                && self.completed < self.slots@[slot_index].active_epoch)
+                == request_ring_contains_slot::<C>(
+                    self.member_ring@,
+                    self.member_head,
+                    self.member_len,
+                    slot_index,
+                ),
+    {
+        before.basic_implies_scalar();
+        before.basic_implies_member_ring();
+        self.dispatch_commit_member_contains_at(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+            slot_index,
+        );
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::member_ring_invariant);
+        reveal(Scheduler::dispatch_chosen_ready);
+        reveal(Scheduler::dispatch_commit_refines);
+        assert forall|offset: int| 0 <= offset < chosen.len() implies
+            chosen[offset].slot_spec() < before.slots@.len() by {
+            assert(chosen[offset].slot_spec() < C);
+        }
+        if selected_request_slots(chosen).contains(slot_index) {
+            let chosen_offset = choose|chosen_offset: int|
+                0 <= chosen_offset < selected_request_slots(chosen).len()
+                    && selected_request_slots(chosen)[chosen_offset] == slot_index;
+            reveal(selected_request_slots);
+            dispatch_selected_slots_selected_fact(
+                before.slots@,
+                chosen,
+                next_epoch,
+                chosen_offset,
+            );
+        } else {
+            dispatch_selected_slots_frame_fact(
+                before.slots@,
+                chosen,
+                next_epoch,
+                slot_index,
+            );
+        }
+    }
+
+    proof fn dispatch_commit_member_exact_membership(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            next_epoch as int == before.submitted as int + 1,
+        ensures
+            forall|slot_index: int| 0 <= slot_index < C ==>
+                (((#[trigger] self.slots@[slot_index].state == RequestState::InFlight
+                    || self.slots@[slot_index].state == RequestState::Retiring)
+                    && self.completed < self.slots@[slot_index].active_epoch)
+                    == request_ring_contains_slot::<C>(
+                        self.member_ring@,
+                        self.member_head,
+                        self.member_len,
+                        slot_index,
+                    )),
+    {
+        assert forall|slot_index: int| 0 <= slot_index < C implies
+            (((#[trigger] self.slots@[slot_index].state == RequestState::InFlight
+                || self.slots@[slot_index].state == RequestState::Retiring)
+                && self.completed < self.slots@[slot_index].active_epoch)
+                == request_ring_contains_slot::<C>(
+                    self.member_ring@,
+                    self.member_head,
+                    self.member_len,
+                    slot_index,
+                )) by {
+            self.dispatch_commit_member_membership_at(
+                before,
+                chosen,
+                next_cursor,
+                next_epoch,
+                slot_index,
+            );
+        }
+    }
+
+    proof fn dispatch_commit_preserves_member_ring(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            next_epoch as int == before.submitted as int + 1,
+        ensures self.member_ring_invariant(),
+    {
+        self.dispatch_commit_member_entries(before, chosen, next_cursor, next_epoch);
+        self.dispatch_commit_member_distinct(before, chosen, next_cursor, next_epoch);
+        self.dispatch_commit_member_exact_membership(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+        );
+        reveal(Scheduler::member_ring_invariant);
+    }
+
+    proof fn dispatch_commit_batch_sum(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+        ensures
+            batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                self.batch_len as nat,
+            ) == self.member_len,
+    {
+        before.basic_implies_scalar();
+        before.basic_implies_batch_ring();
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::batch_ring_invariant);
+        reveal(Scheduler::dispatch_commit_refines);
+        let batch = BatchRecord {
+            epoch: CompletionEpoch { value: next_epoch },
+            member_count: chosen.len() as usize,
+        };
+        batch_member_sum_append::<C>(
+            before.batch_ring@,
+            before.batch_head,
+            before.batch_len,
+            batch,
+        );
+    }
+
+    proof fn dispatch_commit_old_batch_record_at(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+        batch_offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            0 <= batch_offset < before.batch_len,
+        ensures
+            self.batch_ring@[
+                ring_position::<C>(self.batch_head, batch_offset as nat)
+            ] == before.batch_ring@[
+                ring_position::<C>(before.batch_head, batch_offset as nat)
+            ],
+    {
+        before.basic_implies_scalar();
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::dispatch_commit_refines);
+        let tail = ring_position::<C>(before.batch_head, before.batch_len as nat);
+        ring_position_injective::<C>(
+            before.batch_head,
+            batch_offset as nat,
+            before.batch_len as nat,
+        );
+        assert(ring_position::<C>(before.batch_head, batch_offset as nat) != tail);
+    }
+
+    proof fn dispatch_commit_old_batch_sum_prefix(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+        count: nat,
+    )
+        requires
+            before.basic_invariant(),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            count <= before.batch_len,
+        ensures
+            batch_member_sum::<C>(self.batch_ring@, self.batch_head, count)
+                == batch_member_sum::<C>(before.batch_ring@, before.batch_head, count),
+    {
+        before.basic_implies_scalar();
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::dispatch_commit_refines);
+        let tail = ring_position::<C>(before.batch_head, before.batch_len as nat);
+        ring_position_bounds::<C>(before.batch_head, before.batch_len as nat);
+        assert forall|offset: int| 0 <= offset < count implies
+            #[trigger] ring_position::<C>(before.batch_head, offset as nat) != tail by {
+            ring_position_injective::<C>(
+                before.batch_head,
+                offset as nat,
+                before.batch_len as nat,
+            );
+        }
+        batch_member_sum_update_frame::<C>(
+            before.batch_ring@,
+            before.batch_head,
+            count,
+            tail,
+            BatchRecord {
+                epoch: CompletionEpoch { value: next_epoch },
+                member_count: chosen.len() as usize,
+            },
+        );
+    }
+
+    proof fn dispatch_commit_old_batch_header_at(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+        batch_offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            next_epoch as int == before.submitted as int + 1,
+            0 <= batch_offset < before.batch_len,
+        ensures {
+            let batch = self.batch_ring@[
+                ring_position::<C>(self.batch_head, batch_offset as nat)
+            ];
+            &&& batch.member_count > 0
+            &&& batch.epoch.value as int == self.completed as int + batch_offset + 1
+            &&& batch.epoch.value <= self.submitted
+        },
+    {
+        before.basic_implies_scalar();
+        before.basic_batch_entry_header_facts(batch_offset);
+        self.dispatch_commit_old_batch_record_at(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+            batch_offset,
+        );
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::dispatch_commit_refines);
+    }
+
+    proof fn dispatch_commit_old_batch_member_epoch_at(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+        batch_offset: int,
+        member_offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            0 <= batch_offset < before.batch_len,
+            batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                batch_offset as nat,
+            ) <= member_offset < batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                batch_offset as nat + 1,
+            ),
+        ensures {
+            let batch = self.batch_ring@[
+                ring_position::<C>(self.batch_head, batch_offset as nat)
+            ];
+            let handle = self.member_ring@[
+                ring_position::<C>(self.member_head, member_offset as nat)
+            ];
+            self.slots@[handle.slot_spec() as int].active_epoch == batch.epoch.value
+        },
+    {
+        before.basic_implies_scalar();
+        before.basic_implies_member_ring();
+        before.basic_implies_batch_ring();
+        self.dispatch_commit_old_batch_record_at(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+            batch_offset,
+        );
+        self.dispatch_commit_old_batch_sum_prefix(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+            batch_offset as nat,
+        );
+        self.dispatch_commit_old_batch_sum_prefix(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+            batch_offset as nat + 1,
+        );
+        batch_member_sum_monotonic::<C>(
+            before.batch_ring@,
+            before.batch_head,
+            batch_offset as nat + 1,
+            before.batch_len as nat,
+        );
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::member_ring_invariant);
+        reveal(Scheduler::batch_ring_invariant);
+        reveal(Scheduler::dispatch_commit_refines);
+        before.basic_batch_member_epoch_fact(batch_offset, member_offset);
+        self.dispatch_commit_old_member_handle_at(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+            member_offset,
+        );
+        let handle = before.member_ring@[
+            ring_position::<C>(before.member_head, member_offset as nat)
+        ];
+        self.dispatch_commit_nonready_frame_at(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+            handle.slot_spec() as int,
+        );
+    }
+
+    proof fn dispatch_commit_old_batch_epoch_members_at(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+        batch_offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            0 <= batch_offset < before.batch_len,
+        ensures {
+            let batch = self.batch_ring@[
+                ring_position::<C>(self.batch_head, batch_offset as nat)
+            ];
+            forall|member_offset: int|
+                batch_member_sum::<C>(
+                    self.batch_ring@,
+                    self.batch_head,
+                    batch_offset as nat,
+                ) <= member_offset < batch_member_sum::<C>(
+                    self.batch_ring@,
+                    self.batch_head,
+                    batch_offset as nat + 1,
+                ) ==> {
+                    let handle = #[trigger] self.member_ring@[
+                        ring_position::<C>(self.member_head, member_offset as nat)
+                    ];
+                    self.slots@[handle.slot_spec() as int].active_epoch == batch.epoch.value
+                }
+        },
+    {
+        assert forall|member_offset: int|
+            batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                batch_offset as nat,
+            ) <= member_offset < batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                batch_offset as nat + 1,
+            ) implies {
+                let handle = #[trigger] self.member_ring@[
+                    ring_position::<C>(self.member_head, member_offset as nat)
+                ];
+                self.slots@[handle.slot_spec() as int].active_epoch
+                    == self.batch_ring@[
+                        ring_position::<C>(self.batch_head, batch_offset as nat)
+                    ].epoch.value
+        } by {
+            self.dispatch_commit_old_batch_member_epoch_at(
+                before,
+                chosen,
+                next_cursor,
+                next_epoch,
+                batch_offset,
+                member_offset,
+            );
+        }
+    }
+
+    proof fn dispatch_commit_old_batch_entry_at(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+        batch_offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            next_epoch as int == before.submitted as int + 1,
+            0 <= batch_offset < before.batch_len,
+        ensures {
+            let batch = self.batch_ring@[
+                ring_position::<C>(self.batch_head, batch_offset as nat)
+            ];
+            &&& batch.member_count > 0
+            &&& batch.epoch.value as int == self.completed as int + batch_offset + 1
+            &&& batch.epoch.value <= self.submitted
+            &&& (forall|member_offset: int|
+                batch_member_sum::<C>(
+                    self.batch_ring@,
+                    self.batch_head,
+                    batch_offset as nat,
+                ) <= member_offset < batch_member_sum::<C>(
+                    self.batch_ring@,
+                    self.batch_head,
+                    batch_offset as nat + 1,
+                ) ==> {
+                    let handle = #[trigger] self.member_ring@[
+                        ring_position::<C>(self.member_head, member_offset as nat)
+                    ];
+                    self.slots@[handle.slot_spec() as int].active_epoch == batch.epoch.value
+                })
+        },
+    {
+        self.dispatch_commit_old_batch_header_at(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+            batch_offset,
+        );
+        self.dispatch_commit_old_batch_epoch_members_at(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+            batch_offset,
+        );
+    }
+
+    proof fn dispatch_commit_old_batch_entries(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            next_epoch as int == before.submitted as int + 1,
+        ensures
+            forall|batch_offset: int| 0 <= batch_offset < before.batch_len ==> {
+                let batch = #[trigger] self.batch_ring@[
+                    ring_position::<C>(self.batch_head, batch_offset as nat)
+                ];
+                &&& batch.member_count > 0
+                &&& batch.epoch.value as int == self.completed as int + batch_offset + 1
+                &&& batch.epoch.value <= self.submitted
+                &&& (forall|member_offset: int|
+                    batch_member_sum::<C>(
+                        self.batch_ring@,
+                        self.batch_head,
+                        batch_offset as nat,
+                    ) <= member_offset < batch_member_sum::<C>(
+                        self.batch_ring@,
+                        self.batch_head,
+                        batch_offset as nat + 1,
+                    ) ==> {
+                        let handle = #[trigger] self.member_ring@[
+                            ring_position::<C>(self.member_head, member_offset as nat)
+                        ];
+                        self.slots@[handle.slot_spec() as int].active_epoch == batch.epoch.value
+                    })
+            },
+    {
+        assert forall|batch_offset: int| 0 <= batch_offset < before.batch_len implies {
+            let batch = #[trigger] self.batch_ring@[
+                ring_position::<C>(self.batch_head, batch_offset as nat)
+            ];
+            &&& batch.member_count > 0
+            &&& batch.epoch.value as int == self.completed as int + batch_offset + 1
+            &&& batch.epoch.value <= self.submitted
+            &&& (forall|member_offset: int|
+                batch_member_sum::<C>(
+                    self.batch_ring@,
+                    self.batch_head,
+                    batch_offset as nat,
+                ) <= member_offset < batch_member_sum::<C>(
+                    self.batch_ring@,
+                    self.batch_head,
+                    batch_offset as nat + 1,
+                ) ==> {
+                    let handle = #[trigger] self.member_ring@[
+                        ring_position::<C>(self.member_head, member_offset as nat)
+                    ];
+                    self.slots@[handle.slot_spec() as int].active_epoch == batch.epoch.value
+                })
+        } by {
+            self.dispatch_commit_old_batch_entry_at(
+                before,
+                chosen,
+                next_cursor,
+                next_epoch,
+                batch_offset,
+            );
+        }
+    }
+
+    proof fn dispatch_commit_new_batch_header(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            next_epoch as int == before.submitted as int + 1,
+        ensures {
+            let batch = self.batch_ring@[
+                ring_position::<C>(self.batch_head, before.batch_len as nat)
+            ];
+            &&& batch.member_count > 0
+            &&& batch.epoch.value as int
+                == self.completed as int + before.batch_len as int + 1
+            &&& batch.epoch.value <= self.submitted
+        },
+    {
+        before.basic_implies_scalar();
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::dispatch_commit_refines);
+    }
+
+    proof fn dispatch_commit_new_batch_member_offset(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+        member_offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                before.batch_len as nat,
+            ) <= member_offset < batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                before.batch_len as nat + 1,
+            ),
+        ensures
+            before.member_len <= member_offset < before.member_len + chosen.len(),
+            0 <= member_offset - before.member_len < chosen.len(),
+    {
+        before.basic_implies_batch_ring();
+        self.dispatch_commit_old_batch_sum_prefix(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+            before.batch_len as nat,
+        );
+        self.dispatch_commit_batch_sum(before, chosen, next_cursor, next_epoch);
+        reveal(Scheduler::batch_ring_invariant);
+        reveal(Scheduler::dispatch_commit_refines);
+    }
+
+    proof fn dispatch_commit_new_batch_member_epoch_at(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+        member_offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            next_epoch as int == before.submitted as int + 1,
+            batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                before.batch_len as nat,
+            ) <= member_offset < batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                before.batch_len as nat + 1,
+            ),
+        ensures {
+            let batch = self.batch_ring@[
+                ring_position::<C>(self.batch_head, before.batch_len as nat)
+            ];
+            let handle = self.member_ring@[
+                ring_position::<C>(self.member_head, member_offset as nat)
+            ];
+            self.slots@[handle.slot_spec() as int].active_epoch == batch.epoch.value
+        },
+    {
+        before.basic_implies_scalar();
+        self.dispatch_commit_new_batch_member_offset(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+            member_offset,
+        );
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::dispatch_chosen_ready);
+        reveal(Scheduler::dispatch_commit_refines);
+        let chosen_offset = member_offset - before.member_len;
+        self.dispatch_commit_selected_member_handle_at(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+            chosen_offset,
+        );
+        assert forall|offset: int| 0 <= offset < chosen.len() implies
+            chosen[offset].slot_spec() < before.slots@.len() by {
+            assert(chosen[offset].slot_spec() < C);
+        }
+        reveal(selected_request_slots);
+        dispatch_selected_slots_selected_fact(
+            before.slots@,
+            chosen,
+            next_epoch,
+            chosen_offset,
+        );
+    }
+
+    proof fn dispatch_commit_new_batch_epoch_members(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            next_epoch as int == before.submitted as int + 1,
+        ensures {
+            let batch = self.batch_ring@[
+                ring_position::<C>(self.batch_head, before.batch_len as nat)
+            ];
+            forall|member_offset: int|
+                batch_member_sum::<C>(
+                    self.batch_ring@,
+                    self.batch_head,
+                    before.batch_len as nat,
+                ) <= member_offset < batch_member_sum::<C>(
+                    self.batch_ring@,
+                    self.batch_head,
+                    before.batch_len as nat + 1,
+                ) ==> {
+                    let handle = #[trigger] self.member_ring@[
+                        ring_position::<C>(self.member_head, member_offset as nat)
+                    ];
+                    self.slots@[handle.slot_spec() as int].active_epoch == batch.epoch.value
+                }
+        },
+    {
+        assert forall|member_offset: int|
+            batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                before.batch_len as nat,
+            ) <= member_offset < batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                before.batch_len as nat + 1,
+            ) implies {
+                let handle = #[trigger] self.member_ring@[
+                    ring_position::<C>(self.member_head, member_offset as nat)
+                ];
+                self.slots@[handle.slot_spec() as int].active_epoch
+                    == self.batch_ring@[
+                        ring_position::<C>(self.batch_head, before.batch_len as nat)
+                    ].epoch.value
+        } by {
+            self.dispatch_commit_new_batch_member_epoch_at(
+                before,
+                chosen,
+                next_cursor,
+                next_epoch,
+                member_offset,
+            );
+        }
+    }
+
+    proof fn dispatch_commit_new_batch_entry(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            next_epoch as int == before.submitted as int + 1,
+        ensures {
+            let batch = self.batch_ring@[
+                ring_position::<C>(self.batch_head, before.batch_len as nat)
+            ];
+            &&& batch.member_count > 0
+            &&& batch.epoch.value as int
+                == self.completed as int + before.batch_len as int + 1
+            &&& batch.epoch.value <= self.submitted
+            &&& (forall|member_offset: int|
+                batch_member_sum::<C>(
+                    self.batch_ring@,
+                    self.batch_head,
+                    before.batch_len as nat,
+                ) <= member_offset < batch_member_sum::<C>(
+                    self.batch_ring@,
+                    self.batch_head,
+                    before.batch_len as nat + 1,
+                ) ==> {
+                    let handle = #[trigger] self.member_ring@[
+                        ring_position::<C>(self.member_head, member_offset as nat)
+                    ];
+                    self.slots@[handle.slot_spec() as int].active_epoch == batch.epoch.value
+                })
+        },
+    {
+        self.dispatch_commit_new_batch_header(before, chosen, next_cursor, next_epoch);
+        self.dispatch_commit_new_batch_epoch_members(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+        );
+    }
+
+    proof fn dispatch_commit_batch_entries(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            next_epoch as int == before.submitted as int + 1,
+        ensures
+            forall|batch_offset: int| 0 <= batch_offset < self.batch_len ==> {
+                let batch = #[trigger] self.batch_ring@[
+                    ring_position::<C>(self.batch_head, batch_offset as nat)
+                ];
+                &&& batch.member_count > 0
+                &&& batch.epoch.value as int == self.completed as int + batch_offset + 1
+                &&& batch.epoch.value <= self.submitted
+                &&& (forall|member_offset: int|
+                    batch_member_sum::<C>(
+                        self.batch_ring@,
+                        self.batch_head,
+                        batch_offset as nat,
+                    ) <= member_offset < batch_member_sum::<C>(
+                        self.batch_ring@,
+                        self.batch_head,
+                        batch_offset as nat + 1,
+                    ) ==> {
+                        let handle = #[trigger] self.member_ring@[
+                            ring_position::<C>(self.member_head, member_offset as nat)
+                        ];
+                        self.slots@[handle.slot_spec() as int].active_epoch == batch.epoch.value
+                    })
+            },
+    {
+        self.dispatch_commit_old_batch_entries(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+        );
+        self.dispatch_commit_new_batch_entry(before, chosen, next_cursor, next_epoch);
+        reveal(Scheduler::dispatch_commit_refines);
+        assert forall|batch_offset: int| 0 <= batch_offset < self.batch_len implies {
+            let batch = #[trigger] self.batch_ring@[
+                ring_position::<C>(self.batch_head, batch_offset as nat)
+            ];
+            &&& batch.member_count > 0
+            &&& batch.epoch.value as int == self.completed as int + batch_offset + 1
+            &&& batch.epoch.value <= self.submitted
+            &&& (forall|member_offset: int|
+                batch_member_sum::<C>(
+                    self.batch_ring@,
+                    self.batch_head,
+                    batch_offset as nat,
+                ) <= member_offset < batch_member_sum::<C>(
+                    self.batch_ring@,
+                    self.batch_head,
+                    batch_offset as nat + 1,
+                ) ==> {
+                    let handle = #[trigger] self.member_ring@[
+                        ring_position::<C>(self.member_head, member_offset as nat)
+                    ];
+                    self.slots@[handle.slot_spec() as int].active_epoch == batch.epoch.value
+                })
+        } by {
+            if before.batch_len <= batch_offset {
+                assert(batch_offset == before.batch_len);
+            }
+        }
+    }
+
+    proof fn dispatch_commit_preserves_batch_ring(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            next_epoch as int == before.submitted as int + 1,
+        ensures self.batch_ring_invariant(),
+    {
+        self.dispatch_commit_batch_sum(before, chosen, next_cursor, next_epoch);
+        self.dispatch_commit_batch_entries(before, chosen, next_cursor, next_epoch);
+        reveal(Scheduler::batch_ring_invariant);
+    }
+
+    proof fn dispatch_commit_preserves_basic(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            next_cursor < C,
+            next_epoch as int == before.submitted as int + 1,
+        ensures self.basic_invariant(),
+    {
+        self.dispatch_commit_preserves_scalar(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+        );
+        self.dispatch_commit_preserves_slots(before, chosen, next_cursor, next_epoch);
+        self.dispatch_commit_preserves_free_ring(before, chosen, next_cursor, next_epoch);
+        self.dispatch_commit_preserves_reclaim_ring(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+        );
+        self.dispatch_commit_preserves_member_ring(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+        );
+        self.dispatch_commit_preserves_batch_ring(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+        );
+        reveal(Scheduler::basic_invariant);
     }
 
     closed spec fn dispatch_scan_refines(
@@ -5068,7 +7705,8 @@ impl<const C: usize> Scheduler<C> {
         member_tail: usize,
     )
         requires
-            before.basic_invariant(),
+            C > 0,
+            before.cursor < C,
             self.dispatch_scan_refines(
                 before,
                 before_output,
@@ -5097,8 +7735,6 @@ impl<const C: usize> Scheduler<C> {
                 0 <= scan_offset < scanned
                     && chosen[chosen_offset].slot_spec() as int
                         == #[trigger] ring_position::<C>(before.cursor, scan_offset as nat);
-            before.basic_implies_scalar();
-            reveal(Scheduler::scalar_invariant);
             ring_position_injective::<C>(
                 before.cursor,
                 scan_offset as nat,
@@ -5106,6 +7742,435 @@ impl<const C: usize> Scheduler<C> {
             );
             assert(false);
         }
+    }
+
+    proof fn dispatch_ready_selection_step(
+        before: &Self,
+        chosen: Seq<RequestId>,
+        scanned: usize,
+        limit: usize,
+        slot_index: usize,
+        handle: RequestId,
+    )
+        requires
+            scanned < C,
+            chosen.len() < limit,
+            before.slots@[slot_index as int].state == RequestState::Ready,
+            handle.slot_spec() == slot_index,
+            ready_selection::<C>(before.slots@, before.cursor, C as nat, limit as nat)
+                == selected_request_slots(chosen).add(ready_selection::<C>(
+                    before.slots@,
+                    slot_index,
+                    (C - scanned) as nat,
+                    (limit - chosen.len()) as nat,
+                )),
+        ensures
+            ready_selection::<C>(before.slots@, before.cursor, C as nat, limit as nat)
+                == selected_request_slots(chosen.push(handle)).add(ready_selection::<C>(
+                    before.slots@,
+                    next_position::<C>(slot_index),
+                    (C - (scanned + 1)) as nat,
+                    (limit - chosen.push(handle).len()) as nat,
+                )),
+    {
+        reveal(ready_selection);
+        selected_request_slots_push(chosen, handle);
+        assert(selected_request_slots(chosen.push(handle))
+            == selected_request_slots(chosen).add(seq![slot_index as int])) by {
+            assert(selected_request_slots(chosen).push(slot_index as int)
+                == selected_request_slots(chosen).add(seq![slot_index as int]));
+        }
+    }
+
+    proof fn dispatch_ready_cursor_step(
+        before: &Self,
+        chosen: Seq<RequestId>,
+        scanned: usize,
+        limit: usize,
+        slot_index: usize,
+        handle: RequestId,
+    )
+        requires
+            scanned < C,
+            chosen.len() < limit,
+            before.slots@[slot_index as int].state == RequestState::Ready,
+            ready_scan_cursor::<C>(before.slots@, before.cursor, C as nat, limit as nat)
+                == ready_scan_cursor::<C>(
+                    before.slots@,
+                    slot_index,
+                    (C - scanned) as nat,
+                    (limit - chosen.len()) as nat,
+                ),
+        ensures
+            ready_scan_cursor::<C>(before.slots@, before.cursor, C as nat, limit as nat)
+                == ready_scan_cursor::<C>(
+                    before.slots@,
+                    next_position::<C>(slot_index),
+                    (C - (scanned + 1)) as nat,
+                    (limit - chosen.push(handle).len()) as nat,
+                ),
+    {
+        reveal(ready_scan_cursor);
+    }
+
+    proof fn selected_slots_push_preserves_unique(
+        chosen: Seq<RequestId>,
+        handle: RequestId,
+    )
+        requires
+            selected_request_slots(chosen).no_duplicates(),
+            !selected_request_slots(chosen).contains(handle.slot_spec() as int),
+        ensures selected_request_slots(chosen.push(handle)).no_duplicates(),
+    {
+        selected_request_slots_push(chosen, handle);
+        let chosen_slots = selected_request_slots(chosen);
+        reveal(Seq::no_duplicates);
+        assert forall|left: int, right: int|
+            0 <= left < selected_request_slots(chosen.push(handle)).len()
+                && 0 <= right < selected_request_slots(chosen.push(handle)).len()
+                && left != right implies
+                    selected_request_slots(chosen.push(handle))[left]
+                        != selected_request_slots(chosen.push(handle))[right] by {
+            if left < chosen_slots.len() && right < chosen_slots.len() {
+                assert(chosen_slots[left] != chosen_slots[right]);
+            } else if left == chosen_slots.len() {
+                assert(selected_request_slots(chosen.push(handle))[left]
+                    == handle.slot_spec() as int);
+                assert(selected_request_slots(chosen.push(handle))[right] == chosen_slots[right]);
+            } else {
+                assert(right == chosen_slots.len());
+                assert(selected_request_slots(chosen.push(handle))[left] == chosen_slots[left]);
+                assert(selected_request_slots(chosen.push(handle))[right]
+                    == handle.slot_spec() as int);
+            }
+        }
+    }
+
+    proof fn dispatch_chosen_facts_push(
+        before: &Self,
+        chosen: Seq<RequestId>,
+        scanned: usize,
+        slot_index: usize,
+        handle: RequestId,
+    )
+        requires
+            C > 0,
+            before.cursor < C,
+            scanned < C,
+            slot_index < C,
+            slot_index as int == ring_position::<C>(before.cursor, scanned as nat),
+            handle.slot_spec() == slot_index,
+            handle.generation_spec() == before.slots@[slot_index as int].generation,
+            forall|chosen_offset: int| 0 <= chosen_offset < chosen.len() ==> {
+                let chosen_request = #[trigger] chosen[chosen_offset];
+                let chosen_slot = chosen_request.slot_spec() as int;
+                &&& 0 <= chosen_slot < C
+                &&& chosen_request.generation_spec()
+                    == before.slots@[chosen_slot].generation
+                &&& (exists|scan_offset: int| 0 <= scan_offset < scanned
+                    && chosen_slot
+                        == #[trigger] ring_position::<C>(
+                            before.cursor,
+                            scan_offset as nat,
+                        ))
+            },
+        ensures
+            forall|chosen_offset: int| 0 <= chosen_offset < chosen.push(handle).len() ==> {
+                let chosen_request = #[trigger] chosen.push(handle)[chosen_offset];
+                let chosen_slot = chosen_request.slot_spec() as int;
+                &&& 0 <= chosen_slot < C
+                &&& chosen_request.generation_spec()
+                    == before.slots@[chosen_slot].generation
+                &&& (exists|scan_offset: int| 0 <= scan_offset < scanned + 1
+                    && chosen_slot
+                        == #[trigger] ring_position::<C>(
+                            before.cursor,
+                            scan_offset as nat,
+                        ))
+            },
+    {
+        assert forall|chosen_offset: int|
+            0 <= chosen_offset < chosen.push(handle).len() implies {
+                let chosen_request = #[trigger] chosen.push(handle)[chosen_offset];
+                let chosen_slot = chosen_request.slot_spec() as int;
+                &&& 0 <= chosen_slot < C
+                &&& chosen_request.generation_spec()
+                    == before.slots@[chosen_slot].generation
+                &&& (exists|scan_offset: int| 0 <= scan_offset < scanned + 1
+                    && chosen_slot
+                        == #[trigger] ring_position::<C>(
+                            before.cursor,
+                            scan_offset as nat,
+                        ))
+        } by {
+            if chosen_offset < chosen.len() {
+                assert(chosen.push(handle)[chosen_offset] == chosen[chosen_offset]);
+                assert({
+                    let chosen_request = chosen[chosen_offset];
+                    let chosen_slot = chosen_request.slot_spec() as int;
+                    &&& 0 <= chosen_slot < C
+                    &&& chosen_request.generation_spec()
+                        == before.slots@[chosen_slot].generation
+                    &&& (exists|scan_offset: int| 0 <= scan_offset < scanned
+                        && chosen_slot
+                            == #[trigger] ring_position::<C>(
+                                before.cursor,
+                                scan_offset as nat,
+                            ))
+                });
+            } else {
+                assert(chosen_offset == chosen.len());
+                assert(chosen.push(handle)[chosen_offset] == handle);
+                assert(exists|scan_offset: int| 0 <= scan_offset < scanned + 1
+                    && handle.slot_spec() as int
+                        == #[trigger] ring_position::<C>(
+                            before.cursor,
+                            scan_offset as nat,
+                        )) by {
+                    let scan_offset = scanned as int;
+                    assert(0 <= scan_offset < scanned + 1);
+                    assert(scan_offset as nat == scanned as nat);
+                    assert(handle.slot_spec() as int == slot_index as int);
+                    assert(slot_index as int
+                        == ring_position::<C>(before.cursor, scanned as nat));
+                    assert(handle.slot_spec() as int
+                        == ring_position::<C>(before.cursor, scanned as nat));
+                }
+            }
+        }
+    }
+
+    proof fn dispatch_scan_oracle_ready_step(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        scanned: usize,
+        limit: usize,
+        slot_index: usize,
+        member_tail: usize,
+        handle: RequestId,
+    )
+        requires
+            C > 0,
+            before.cursor < C,
+            before.member_head < C,
+            self.dispatch_scan_oracle(
+                before,
+                chosen,
+                scanned,
+                limit,
+                slot_index,
+                member_tail,
+            ),
+            scanned < C,
+            chosen.len() < limit,
+            limit <= C - before.member_len,
+            before.slots@[slot_index as int].state == RequestState::Ready,
+            !selected_request_slots(chosen).contains(slot_index as int),
+            handle.slot_spec() == slot_index,
+            handle.generation_spec() == before.slots@[slot_index as int].generation,
+        ensures
+            self.dispatch_scan_oracle(
+                before,
+                chosen.push(handle),
+                (scanned + 1) as usize,
+                limit,
+                next_position::<C>(slot_index),
+                next_position::<C>(member_tail),
+            ),
+    {
+        reveal(Scheduler::dispatch_scan_oracle);
+        Self::dispatch_ready_selection_step(
+            before,
+            chosen,
+            scanned,
+            limit,
+            slot_index,
+            handle,
+        );
+        Self::dispatch_ready_cursor_step(before, chosen, scanned, limit, slot_index, handle);
+        Self::selected_slots_push_preserves_unique(chosen, handle);
+        ring_position_or_head_next::<C>(
+            before.member_head,
+            (before.member_len + chosen.len()) as nat,
+        );
+        if scanned + 1 < C {
+            ring_position_next::<C>(before.cursor, scanned as nat);
+        }
+        Self::dispatch_chosen_facts_push(before, chosen, scanned, slot_index, handle);
+    }
+
+    proof fn dispatch_scan_oracle_skip_step(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        scanned: usize,
+        limit: usize,
+        slot_index: usize,
+        member_tail: usize,
+    )
+        requires
+            C > 0,
+            before.cursor < C,
+            self.dispatch_scan_oracle(
+                before,
+                chosen,
+                scanned,
+                limit,
+                slot_index,
+                member_tail,
+            ),
+            scanned < C,
+            chosen.len() < limit,
+            before.slots@[slot_index as int].state != RequestState::Ready,
+        ensures
+            self.dispatch_scan_oracle(
+                before,
+                chosen,
+                (scanned + 1) as usize,
+                limit,
+                next_position::<C>(slot_index),
+                member_tail,
+            ),
+    {
+        reveal(Scheduler::dispatch_scan_oracle);
+        reveal(ready_selection);
+        reveal(ready_scan_cursor);
+        if scanned + 1 < C {
+            ring_position_next::<C>(before.cursor, scanned as nat);
+        }
+    }
+
+    proof fn dispatch_scan_projection_ready_step(
+        &self,
+        before: &Self,
+        before_output: Seq<RequestId>,
+        prior_output: Seq<RequestId>,
+        prior_slots: Seq<Slot>,
+        prior_members: Seq<RequestId>,
+        chosen: Seq<RequestId>,
+        next_epoch: u64,
+        slot_index: usize,
+        member_tail: usize,
+        handle: RequestId,
+    )
+        requires
+            C > 0,
+            before.member_head < C,
+            prior_slots == dispatch_selected_slots(before.slots@, chosen, next_epoch),
+            prior_output == dispatch_selected_output(before_output, chosen),
+            prior_members == dispatch_selected_members::<C>(
+                before.member_ring@,
+                before.member_head,
+                before.member_len,
+                chosen,
+            ),
+            prior_slots[slot_index as int] == before.slots@[slot_index as int],
+            self.slots@ == prior_slots.update(
+                slot_index as int,
+                Slot {
+                    state: RequestState::InFlight,
+                    active_epoch: next_epoch,
+                    ..prior_slots[slot_index as int]
+                },
+            ),
+            self.member_ring@ == prior_members.update(member_tail as int, handle),
+            prior_output.update(chosen.len() as int, handle)
+                == dispatch_selected_output(before_output, chosen.push(handle)),
+            member_tail as int == ring_position::<C>(
+                before.member_head,
+                (before.member_len + chosen.len()) as nat,
+            ),
+            before.member_len + chosen.len() < C,
+            handle.slot_spec() == slot_index,
+            handle.slot_spec() < C,
+            forall|offset: int| 0 <= offset < chosen.len() ==>
+                chosen[offset].slot_spec() < C,
+        ensures
+            self.slots@
+                == dispatch_selected_slots(before.slots@, chosen.push(handle), next_epoch),
+            self.member_ring@ == dispatch_selected_members::<C>(
+                before.member_ring@,
+                before.member_head,
+                before.member_len,
+                chosen.push(handle),
+            ),
+    {
+        dispatch_selected_slots_push(before.slots@, chosen, next_epoch, handle);
+        dispatch_selected_members_push::<C>(
+            before.member_ring@,
+            before.member_head,
+            before.member_len,
+            chosen,
+            handle,
+        );
+    }
+
+    proof fn dispatch_scan_finished(
+        &self,
+        before: &Self,
+        before_output: Seq<RequestId>,
+        output: Seq<RequestId>,
+        chosen: Seq<RequestId>,
+        scanned: usize,
+        limit: usize,
+        next_epoch: u64,
+        slot_index: usize,
+        member_tail: usize,
+    )
+        requires
+            self.dispatch_scan_refines(
+                before,
+                before_output,
+                output,
+                chosen,
+                scanned,
+                limit,
+                next_epoch,
+                slot_index,
+                member_tail,
+            ),
+            scanned == C || chosen.len() == limit,
+        ensures
+            selected_request_slots(chosen)
+                == ready_selection::<C>(
+                    before.slots@,
+                    before.cursor,
+                    C as nat,
+                    limit as nat,
+                ),
+            chosen.len() == ready_selection::<C>(
+                before.slots@,
+                before.cursor,
+                C as nat,
+                limit as nat,
+            ).len(),
+            slot_index == ready_scan_cursor::<C>(
+                before.slots@,
+                before.cursor,
+                C as nat,
+                limit as nat,
+            ),
+    {
+        reveal(Scheduler::dispatch_scan_refines);
+        reveal(Scheduler::dispatch_scan_oracle);
+        reveal(ready_selection);
+        reveal(ready_scan_cursor);
+        assert(ready_selection::<C>(
+            before.slots@,
+            slot_index,
+            (C - scanned) as nat,
+            (limit - chosen.len()) as nat,
+        ) == Seq::<int>::empty());
+        assert(ready_scan_cursor::<C>(
+            before.slots@,
+            slot_index,
+            (C - scanned) as nat,
+            (limit - chosen.len()) as nat,
+        ) == slot_index);
+        assert(selected_request_slots(chosen).add(Seq::<int>::empty())
+            == selected_request_slots(chosen));
+        reveal(selected_request_slots);
     }
 
     pub(crate) closed spec fn completion_refines(
@@ -6025,34 +9090,41 @@ impl<const C: usize> Scheduler<C> {
         handle
     }
 
-    /// Performs one deterministic rotating scan and submits one compact batch.
-    /// Selected handles are written to the prefix of `output`.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`SchedulerError::EmptyBatchStorage`] for empty output storage
-    /// and [`SchedulerError::SubmissionEpochExhausted`] after the final epoch.
-    pub fn dispatch_ready(
-        &mut self,
-        output: &mut [RequestId],
-    ) -> (result: Result<Option<DispatchBatch>, SchedulerError>)
-        requires old(self).basic_invariant(),
+    fn dispatch_preflight(
+        &self,
+        output: &[RequestId],
+    ) -> (result: Result<Option<(u64, usize)>, SchedulerError>)
+        requires self.basic_invariant(),
         ensures
-            final(self).basic_invariant(),
-            final(self).dispatch_refines(old(self), old(output)@, final(output)@, &result),
-            final(self).identity_frame(old(self)),
+            match result {
+                Err(error) => {
+                    &&& error == if output@.len() == 0 {
+                        SchedulerError::EmptyBatchStorage
+                    } else {
+                        SchedulerError::SubmissionEpochExhausted
+                    }
+                    &&& (output@.len() == 0
+                        || (output@.len() > 0 && self.submitted == u64::MAX))
+                }
+                Ok(None) => {
+                    &&& output@.len() > 0
+                    &&& self.submitted < u64::MAX
+                    &&& (self.batch_len == C || self.member_len == C)
+                }
+                Ok(Some((next_epoch, limit))) => {
+                    &&& output@.len() > 0
+                    &&& self.submitted < u64::MAX
+                    &&& self.batch_len < C
+                    &&& self.member_len < C
+                    &&& next_epoch as int == self.submitted as int + 1
+                    &&& limit as nat == if output@.len() < C - self.member_len {
+                        output@.len()
+                    } else {
+                        (C - self.member_len) as nat
+                    }
+                }
+            },
     {
-        reveal(Scheduler::basic_invariant);
-        reveal(Scheduler::scalar_invariant);
-        reveal(Scheduler::slot_invariant);
-        reveal(Scheduler::free_ring_invariant);
-        reveal(Scheduler::reclaim_ring_invariant);
-        reveal(Scheduler::member_ring_invariant);
-        reveal(Scheduler::batch_ring_invariant);
-        reveal(Scheduler::same_scalars);
-        reveal(Scheduler::dispatch_refines);
-        reveal(Scheduler::slot_model);
-        reveal(ready_selection);
         if output.is_empty() {
             return Err(SchedulerError::EmptyBatchStorage);
         }
@@ -6070,6 +9142,65 @@ impl<const C: usize> Scheduler<C> {
         } else {
             available_members
         };
+        Ok(Some((next_epoch, limit)))
+    }
+
+    #[inline(always)]
+    fn dispatch_scan_commit(
+        &mut self,
+        output: &mut [RequestId],
+        limit: usize,
+        next_epoch: u64,
+    ) -> (result: (usize, usize, usize))
+        requires
+            old(self).basic_invariant(),
+            old(self).member_len < C,
+            limit <= C - old(self).member_len,
+            limit <= old(output)@.len(),
+        ensures {
+            let selected = result.0;
+            let slot_index = result.1;
+            let member_tail = result.2;
+            let chosen = final(output)@.subrange(0, selected as int);
+            let expected = ready_selection::<C>(
+                old(self).slots@,
+                old(self).cursor,
+                C as nat,
+                limit as nat,
+            );
+            &&& selected == chosen.len()
+            &&& selected == expected.len()
+            &&& selected <= limit
+            &&& slot_index == ready_scan_cursor::<C>(
+                old(self).slots@,
+                old(self).cursor,
+                C as nat,
+                limit as nat,
+            )
+            &&& slot_index < C
+            &&& member_tail < C
+            &&& member_tail as int == ring_position_or_head::<C>(
+                old(self).member_head,
+                (old(self).member_len + selected) as nat,
+            )
+            &&& selected_request_slots(chosen) == expected
+            &&& old(self).member_len + chosen.len() <= C
+            &&& old(self).dispatch_chosen_ready(chosen)
+            &&& final(self).dispatch_scan_projection(
+                old(self),
+                old(output)@,
+                final(output)@,
+                chosen,
+                next_epoch,
+            )
+            &&& final(self).dispatch_scan_frames(old(self))
+            &&& final(output)@.len() == old(output)@.len()
+        },
+    {
+        proof {
+            self.basic_implies_scalar();
+        }
+        reveal(Scheduler::scalar_invariant);
         let member_start = ring_tail::<C>(self.member_head, self.member_len);
         let mut member_tail = member_start;
         let mut slot_index = self.cursor;
@@ -6078,12 +9209,7 @@ impl<const C: usize> Scheduler<C> {
         let ghost mut chosen = Seq::<RequestId>::empty();
 
         proof {
-            self.dispatch_scan_init(
-                output@,
-                limit,
-                next_epoch,
-                member_tail,
-            );
+            self.dispatch_scan_init(output@, limit, next_epoch, member_tail);
             assert(self.dispatch_scan_refines(
                 old(self),
                 old(output)@,
@@ -6099,7 +9225,11 @@ impl<const C: usize> Scheduler<C> {
 
         while scanned < C && selected < limit
             invariant
-                old(self).basic_invariant(),
+                C > 0,
+                C <= MAX_REQUEST_SLOTS,
+                old(self).cursor < C,
+                old(self).member_head < C,
+                limit <= C - old(self).member_len,
                 self.dispatch_scan_refines(
                     old(self),
                     old(output)@,
@@ -6113,15 +9243,14 @@ impl<const C: usize> Scheduler<C> {
                 ),
                 selected == chosen.len(),
                 scanned <= C,
-                selected <= scanned,
                 selected <= limit,
-                selected <= output.len(),
-                slot_index < C,
-                member_tail < C,
-                self.member_len + selected <= C,
+                limit <= output.len(),
+                output.len() == old(output)@.len(),
             decreases C - scanned,
         {
             proof {
+                reveal(Scheduler::dispatch_scan_refines);
+                reveal(Scheduler::dispatch_scan_oracle);
                 self.dispatch_scan_current_not_chosen(
                     old(self),
                     old(output)@,
@@ -6135,10 +9264,21 @@ impl<const C: usize> Scheduler<C> {
                 );
             }
             let slot = self.slots[slot_index];
-            if slot.state == RequestState::Ready {
+            assert(slot == self.slots@[slot_index as int]);
+            match slot.state {
+            RequestState::Ready => {
                 let ghost previous_chosen = chosen;
+                let ghost prior_output = output@;
+                let ghost prior_slots = self.slots@;
+                let ghost prior_members = self.member_ring@;
+                let ghost prior_member_tail = member_tail;
+                proof {
+                    reveal(Scheduler::dispatch_scan_refines);
+                    reveal(Scheduler::dispatch_scan_projection);
+                }
                 assert(C <= MAX_REQUEST_SLOTS);
                 assert(self.slots@[slot_index as int].state == RequestState::Ready);
+                assert(selected < output.len());
                 let _handle = self.dispatch_one_selected(
                     output,
                     selected,
@@ -6149,34 +9289,219 @@ impl<const C: usize> Scheduler<C> {
                 member_tail = advance::<C>(member_tail);
                 selected += 1;
                 proof {
-                    chosen = previous_chosen.push(_handle);
-                    selected_request_slots_push(previous_chosen, _handle);
-                    dispatch_selected_slots_push(
-                        old(self).slots@,
+                    dispatch_selected_output_push(old(output)@, previous_chosen, _handle);
+                    self.dispatch_scan_projection_ready_step(
+                        old(self),
+                        old(output)@,
+                        prior_output,
+                        prior_slots,
+                        prior_members,
                         previous_chosen,
                         next_epoch,
+                        slot_index,
+                        prior_member_tail,
                         _handle,
                     );
-                    dispatch_selected_output_push(
+                    assert(output@
+                        == dispatch_selected_output(
+                            old(output)@,
+                            previous_chosen.push(_handle),
+                        ));
+                    self.dispatch_scan_oracle_ready_step(
+                        old(self),
+                        previous_chosen,
+                        scanned,
+                        limit,
+                        slot_index,
+                        prior_member_tail,
+                        _handle,
+                    );
+                    chosen = previous_chosen.push(_handle);
+                    assert(self.dispatch_scan_projection(
+                        old(self),
                         old(output)@,
-                        previous_chosen,
-                        _handle,
-                    );
-                    dispatch_selected_members_push::<C>(
-                        old(self).member_ring@,
-                        old(self).member_head,
-                        old(self).member_len,
-                        previous_chosen,
-                        _handle,
-                    );
+                        output@,
+                        chosen,
+                        next_epoch,
+                    )) by {
+                        reveal(Scheduler::dispatch_scan_projection);
+                    }
+                    assert(self.dispatch_scan_frames(old(self))) by {
+                        reveal(Scheduler::dispatch_scan_frames);
+                    }
+                    assert(self.dispatch_scan_refines(
+                        old(self),
+                        old(output)@,
+                        output@,
+                        chosen,
+                        (scanned + 1) as usize,
+                        limit,
+                        next_epoch,
+                        next_position::<C>(slot_index),
+                        member_tail,
+                    )) by {
+                        reveal(Scheduler::dispatch_scan_refines);
+                    }
                 }
+            }
+            _ => {
+                proof {
+                    assert(self.slots@[slot_index as int].state
+                        != RequestState::Ready);
+                    assert(old(self).slots@[slot_index as int].state
+                        != RequestState::Ready);
+                    self.dispatch_scan_oracle_skip_step(
+                        old(self),
+                        chosen,
+                        scanned,
+                        limit,
+                        slot_index,
+                        member_tail,
+                    );
+                    assert(self.dispatch_scan_refines(
+                        old(self),
+                        old(output)@,
+                        output@,
+                        chosen,
+                        (scanned + 1) as usize,
+                        limit,
+                        next_epoch,
+                        next_position::<C>(slot_index),
+                        member_tail,
+                    )) by {
+                        reveal(Scheduler::dispatch_scan_refines);
+                    }
+                }
+            }
             }
             slot_index = advance::<C>(slot_index);
             scanned += 1;
         }
 
+        proof {
+            self.dispatch_scan_finished(
+                old(self),
+                old(output)@,
+                output@,
+                chosen,
+                scanned,
+                limit,
+                next_epoch,
+                slot_index,
+                member_tail,
+            );
+            self.dispatch_scan_chosen_ready(
+                old(self),
+                old(output)@,
+                output@,
+                chosen,
+                scanned,
+                limit,
+                next_epoch,
+                slot_index,
+                member_tail,
+            );
+            dispatch_selected_output_facts(old(output)@, chosen);
+            assert(output@.subrange(0, selected as int) == chosen) by {
+                assert forall|offset: int| 0 <= offset < selected implies
+                    output@.subrange(0, selected as int)[offset] == chosen[offset] by {
+                    assert(output@[offset] == chosen[offset]);
+                }
+            }
+            assert(self.dispatch_scan_projection(
+                old(self),
+                old(output)@,
+                output@,
+                output@.subrange(0, selected as int),
+                next_epoch,
+            ));
+        }
+
+        (selected, slot_index, member_tail)
+    }
+
+    fn dispatch_enabled(
+        &mut self,
+        output: &mut [RequestId],
+        next_epoch: u64,
+        limit: usize,
+    ) -> (result: Option<DispatchBatch>)
+        requires
+            old(self).basic_invariant(),
+            old(output)@.len() > 0,
+            old(self).submitted < u64::MAX,
+            old(self).batch_len < C,
+            old(self).member_len < C,
+            next_epoch as int == old(self).submitted as int + 1,
+            limit as nat == if old(output)@.len() < C - old(self).member_len {
+                old(output)@.len()
+            } else {
+                (C - old(self).member_len) as nat
+            },
+        ensures
+            match result {
+                None => {
+                    let expected = ready_selection::<C>(
+                        old(self).slots@,
+                        old(self).cursor,
+                        C as nat,
+                        limit as nat,
+                    );
+                    &&& expected.len() == 0
+                    &&& final(self).same_scalars(old(self))
+                    &&& final(output)@ == old(output)@
+                }
+                Some(batch) => {
+                    let chosen = final(output)@.subrange(
+                        0,
+                        batch.member_count_spec() as int,
+                    );
+                    let expected = ready_selection::<C>(
+                        old(self).slots@,
+                        old(self).cursor,
+                        C as nat,
+                        limit as nat,
+                    );
+                    &&& batch.member_count_spec() > 0
+                    &&& batch.member_count_spec() == chosen.len()
+                    &&& batch.member_count_spec() == expected.len()
+                    &&& batch.epoch_spec().value == next_epoch
+                    &&& selected_request_slots(chosen) == expected
+                    &&& old(self).dispatch_chosen_ready(chosen)
+                    &&& old(self).member_len + chosen.len() <= C
+                    &&& final(self).dispatch_commit_refines(
+                        old(self),
+                        chosen,
+                        final(self).cursor,
+                        next_epoch,
+                    )
+                    &&& final(self).cursor == ready_scan_cursor::<C>(
+                        old(self).slots@,
+                        old(self).cursor,
+                        C as nat,
+                        limit as nat,
+                    )
+                    &&& final(self).cursor < C
+                    &&& final(output)@
+                        == dispatch_selected_output(old(output)@, chosen)
+                }
+            },
+    {
+        let (selected, slot_index, _member_tail) =
+            self.dispatch_scan_commit(output, limit, next_epoch);
+        let ghost chosen = output@.subrange(0, selected as int);
+
         if selected == 0 {
-            return Ok(None);
+            proof {
+                reveal(Scheduler::same_scalars);
+                reveal(Scheduler::dispatch_scan_projection);
+                reveal(Scheduler::dispatch_scan_frames);
+                reveal(dispatch_selected_slots);
+                reveal(dispatch_selected_output);
+                reveal(dispatch_selected_members);
+                assert(self.same_scalars(old(self)));
+            }
+            return None;
         }
 
         let batch_tail = ring_tail::<C>(self.batch_head, self.batch_len);
@@ -6189,10 +9514,628 @@ impl<const C: usize> Scheduler<C> {
         self.cursor = slot_index;
         self.submitted = next_epoch;
 
-        Ok(Some(DispatchBatch {
+        assert(self.dispatch_commit_refines(
+            old(self),
+            chosen,
+            slot_index,
+            next_epoch,
+        )) by {
+            reveal(Scheduler::dispatch_commit_refines);
+            reveal(Scheduler::dispatch_scan_projection);
+            reveal(Scheduler::dispatch_scan_frames);
+            assert(self.batch_ring@ == old(self).batch_ring@.update(
+                batch_tail as int,
+                BatchRecord {
+                    epoch: CompletionEpoch { value: next_epoch },
+                    member_count: selected,
+                },
+            ));
+        }
+        Some(DispatchBatch {
             epoch: CompletionEpoch { value: next_epoch },
             member_count: selected,
-        }))
+        })
+    }
+
+    proof fn dispatch_enabled_compose_refines_some(
+        &self,
+        before: &Self,
+        before_output: Seq<RequestId>,
+        output: Seq<RequestId>,
+        next_epoch: u64,
+        limit: usize,
+        batch: DispatchBatch,
+        chosen: Seq<RequestId>,
+    )
+        requires
+            C > 0,
+            before.cursor < C,
+            before.member_head < C,
+            before.batch_head < C,
+            before.completed <= before.submitted,
+            before_output.len() > 0,
+            before.submitted < u64::MAX,
+            before.batch_len < C,
+            before.member_len < C,
+            next_epoch as int == before.submitted as int + 1,
+            limit as nat == if before_output.len() < C - before.member_len {
+                before_output.len()
+            } else {
+                (C - before.member_len) as nat
+            },
+            batch.member_count_spec() <= output.len(),
+            chosen == output.subrange(0, batch.member_count_spec() as int),
+            chosen.len() <= before_output.len(),
+            batch.member_count_spec() > 0,
+            batch.member_count_spec() == chosen.len(),
+            batch.member_count_spec() == ready_selection::<C>(
+                before.slots@,
+                before.cursor,
+                C as nat,
+                limit as nat,
+            ).len(),
+            batch.epoch_spec().value == next_epoch,
+            selected_request_slots(chosen) == ready_selection::<C>(
+                before.slots@,
+                before.cursor,
+                C as nat,
+                limit as nat,
+            ),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(
+                before,
+                chosen,
+                self.cursor,
+                next_epoch,
+            ),
+            self.cursor == ready_scan_cursor::<C>(
+                before.slots@,
+                before.cursor,
+                C as nat,
+                limit as nat,
+            ),
+            output == dispatch_selected_output(before_output, chosen),
+        ensures self.dispatch_refines(before, before_output, output, &Ok(Some(batch))),
+    {
+        let selected = ready_selection::<C>(
+            before.slots@,
+            before.cursor,
+            C as nat,
+            limit as nat,
+        );
+        let batch_tail = ring_position::<C>(
+            before.batch_head,
+            before.batch_len as nat,
+        );
+
+        ready_scan_facts::<C>(
+            before.slots@,
+            before.cursor,
+            C as nat,
+            limit as nat,
+        );
+        dispatch_selected_output_facts(before_output, chosen);
+
+        assert(chosen.len() == selected.len()) by {
+            assert(selected_request_slots(chosen) == selected);
+            reveal(selected_request_slots);
+        }
+        assert(limit <= C - before.member_len);
+        assert(chosen.len() <= limit);
+        assert(before.member_len + chosen.len() <= C);
+        assert forall|chosen_offset: int| 0 <= chosen_offset < chosen.len() implies
+            chosen[chosen_offset].slot_spec() < C by {
+            reveal(Scheduler::dispatch_chosen_ready);
+        }
+
+        assert(output.len() == before_output.len());
+        assert forall|output_index: int|
+            selected.len() <= output_index < output.len() implies
+                #[trigger] output[output_index] == before_output[output_index] by {
+            assert(output == dispatch_selected_output(before_output, chosen));
+        }
+
+        assert forall|selected_offset: int| 0 <= selected_offset < selected.len() implies {
+            let slot_index = #[trigger] selected[selected_offset];
+            &&& output[selected_offset].slot_spec() == slot_index
+            &&& output[selected_offset].generation_spec()
+                == before.slots@[slot_index].generation
+            &&& ferric_spec::scheduling::request_transition(
+                before.slot_model(slot_index),
+                RequestTransition::Dispatch,
+            ) == Ok(self.slot_model(slot_index))
+            &&& self.slots@[slot_index].active_epoch == batch.epoch.value
+            &&& self.slots@[slot_index].generation
+                == before.slots@[slot_index].generation
+            &&& self.slots@[slot_index].last_quiescent_epoch
+                == before.slots@[slot_index].last_quiescent_epoch
+            &&& self.slots@[slot_index].in_free_ring
+                == before.slots@[slot_index].in_free_ring
+            &&& self.slots@[slot_index].in_reclaim_ring
+                == before.slots@[slot_index].in_reclaim_ring
+            &&& self.member_ring@[ring_position::<C>(
+                before.member_head,
+                (before.member_len + selected_offset) as nat,
+            )] == output[selected_offset]
+        } by {
+            assert(selected_request_slots(chosen).len() == chosen.len()) by {
+                reveal(selected_request_slots);
+            }
+            assert(selected_offset < chosen.len());
+            assert(selected[selected_offset]
+                == chosen[selected_offset].slot_spec() as int) by {
+                assert(selected_request_slots(chosen) == selected);
+                reveal(selected_request_slots);
+            }
+            let request = chosen[selected_offset];
+            let slot_index = request.slot_spec() as int;
+            assert(output[selected_offset] == request);
+            assert(request.generation_spec() == before.slots@[slot_index].generation) by {
+                reveal(Scheduler::dispatch_chosen_ready);
+            }
+            assert(before.slots@[slot_index].state == RequestState::Ready) by {
+                reveal(Scheduler::dispatch_chosen_ready);
+            }
+            assert(selected_request_slots(chosen).no_duplicates()) by {
+                reveal(Scheduler::dispatch_chosen_ready);
+            }
+            dispatch_selected_slots_selected_fact(
+                before.slots@,
+                chosen,
+                next_epoch,
+                selected_offset,
+            );
+            dispatch_selected_members_selected_fact::<C>(
+                before.member_ring@,
+                before.member_head,
+                before.member_len,
+                chosen,
+                selected_offset,
+            );
+            assert(self.slots@ == dispatch_selected_slots(
+                before.slots@,
+                chosen,
+                next_epoch,
+            )) by {
+                reveal(Scheduler::dispatch_commit_refines);
+            }
+            assert(self.member_ring@ == dispatch_selected_members::<C>(
+                before.member_ring@,
+                before.member_head,
+                before.member_len,
+                chosen,
+            )) by {
+                reveal(Scheduler::dispatch_commit_refines);
+            }
+            assert(self.completed == before.completed) by {
+                reveal(Scheduler::dispatch_commit_refines);
+            }
+            assert(next_epoch > self.completed);
+            assert(batch.epoch.value == next_epoch);
+            assert(ferric_spec::scheduling::request_transition(
+                before.slot_model(slot_index),
+                RequestTransition::Dispatch,
+            ) == Ok(self.slot_model(slot_index))) by {
+                reveal(Scheduler::slot_model);
+                reveal(ferric_spec::scheduling::request_transition);
+            }
+        }
+
+        assert forall|ring_index: int| 0 <= ring_index < C
+            && !(exists|selected_offset: int| 0 <= selected_offset < selected.len()
+                && (#[trigger] ring_position::<C>(
+                    before.member_head,
+                    (before.member_len + selected_offset) as nat,
+                )) == ring_index) implies
+                    #[trigger] self.member_ring@[ring_index]
+                        == before.member_ring@[ring_index] by {
+            assert forall|chosen_offset: int| 0 <= chosen_offset < chosen.len() implies
+                chosen[chosen_offset].slot_spec() < C by {
+                reveal(Scheduler::dispatch_chosen_ready);
+            }
+            assert(!(exists|chosen_offset: int| 0 <= chosen_offset < chosen.len()
+                && #[trigger] ring_position::<C>(
+                    before.member_head,
+                    (before.member_len + chosen_offset) as nat,
+                ) == ring_index));
+            dispatch_selected_members_frame_fact::<C>(
+                before.member_ring@,
+                before.member_head,
+                before.member_len,
+                chosen,
+                ring_index,
+            );
+            assert(self.member_ring@ == dispatch_selected_members::<C>(
+                before.member_ring@,
+                before.member_head,
+                before.member_len,
+                chosen,
+            )) by {
+                reveal(Scheduler::dispatch_commit_refines);
+            }
+        }
+
+        ring_position_bounds::<C>(before.batch_head, before.batch_len as nat);
+        assert(self.batch_ring@ == before.batch_ring@.update(
+            batch_tail,
+            BatchRecord {
+                epoch: CompletionEpoch { value: next_epoch },
+                member_count: chosen.len() as usize,
+            },
+        )) by {
+            reveal(Scheduler::dispatch_commit_refines);
+        }
+        assert(self.batch_ring@[batch_tail].epoch.value == batch.epoch.value);
+        assert(self.batch_ring@[batch_tail].member_count == selected.len());
+        assert forall|ring_index: int| 0 <= ring_index < C
+            && ring_index != batch_tail implies
+                #[trigger] self.batch_ring@[ring_index]
+                    == before.batch_ring@[ring_index] by {
+        }
+
+        assert forall|slot_index: int| 0 <= slot_index < C
+            && !selected.contains(slot_index) implies
+                #[trigger] self.slots@[slot_index] == before.slots@[slot_index] by {
+            assert(!selected_request_slots(chosen).contains(slot_index));
+            assert forall|chosen_offset: int| 0 <= chosen_offset < chosen.len() implies
+                chosen[chosen_offset].slot_spec() < before.slots@.len() by {
+                reveal(Scheduler::dispatch_chosen_ready);
+            }
+            dispatch_selected_slots_frame_fact(
+                before.slots@,
+                chosen,
+                next_epoch,
+                slot_index,
+            );
+            assert(self.slots@ == dispatch_selected_slots(
+                before.slots@,
+                chosen,
+                next_epoch,
+            )) by {
+                reveal(Scheduler::dispatch_commit_refines);
+            }
+        }
+
+        reveal(Scheduler::dispatch_refines);
+        reveal(Scheduler::dispatch_commit_refines);
+    }
+
+    proof fn dispatch_enabled_compose_identity_none(
+        &self,
+        before: &Self,
+    )
+        requires self.same_scalars(before),
+        ensures self.identity_frame(before),
+    {
+        self.same_scalars_preserves_identity(before);
+    }
+
+    proof fn dispatch_enabled_compose_identity_some(
+        &self,
+        before: &Self,
+        batch: DispatchBatch,
+        chosen: Seq<RequestId>,
+        next_epoch: u64,
+    )
+        requires
+            batch.member_count_spec() == chosen.len(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(
+                before,
+                chosen,
+                self.cursor,
+                next_epoch,
+            ),
+        ensures self.identity_frame(before),
+    {
+        reveal(Scheduler::dispatch_chosen_ready);
+        reveal(Scheduler::dispatch_commit_refines);
+        assert forall|chosen_offset: int| 0 <= chosen_offset < chosen.len() implies
+            chosen[chosen_offset].slot_spec() < before.slots@.len() by {
+            assert(chosen[chosen_offset].slot_spec() < C);
+        }
+        assert forall|slot_index: int| 0 <= slot_index < C implies {
+            &&& self.slot_generation_spec(slot_index)
+                == before.slot_generation_spec(slot_index)
+            &&& self.slot_is_live_spec(slot_index)
+                == before.slot_is_live_spec(slot_index)
+        } by {
+            if selected_request_slots(chosen).contains(slot_index) {
+                let chosen_offset = choose|chosen_offset: int|
+                    0 <= chosen_offset < selected_request_slots(chosen).len()
+                        && selected_request_slots(chosen)[chosen_offset] == slot_index;
+                reveal(selected_request_slots);
+                dispatch_selected_slots_selected_fact(
+                    before.slots@,
+                    chosen,
+                    next_epoch,
+                    chosen_offset,
+                );
+                assert(before.slots@[slot_index].state == RequestState::Ready);
+            } else {
+                dispatch_selected_slots_frame_fact(
+                    before.slots@,
+                    chosen,
+                    next_epoch,
+                    slot_index,
+                );
+            }
+            reveal(Scheduler::slot_generation_spec);
+            reveal(Scheduler::slot_is_live_spec);
+        }
+    }
+
+    proof fn dispatch_enabled_compose_none(
+        &self,
+        before: &Self,
+        before_output: Seq<RequestId>,
+        output: Seq<RequestId>,
+        next_epoch: u64,
+        limit: usize,
+    )
+        requires
+            before.basic_invariant(),
+            before_output.len() > 0,
+            before.submitted < u64::MAX,
+            before.batch_len < C,
+            before.member_len < C,
+            next_epoch as int == before.submitted as int + 1,
+            limit as nat == if before_output.len() < C - before.member_len {
+                before_output.len()
+            } else {
+                (C - before.member_len) as nat
+            },
+            ready_selection::<C>(
+                before.slots@,
+                before.cursor,
+                C as nat,
+                limit as nat,
+            ).len() == 0,
+            self.same_scalars(before),
+            output == before_output,
+        ensures
+            self.dispatch_execution_refines(before, before_output, output, &Ok(None)),
+    {
+        reveal(Scheduler::dispatch_execution_refines);
+    }
+
+    proof fn dispatch_enabled_compose_some(
+        &self,
+        before: &Self,
+        before_output: Seq<RequestId>,
+        output: Seq<RequestId>,
+        next_epoch: u64,
+        limit: usize,
+        batch: DispatchBatch,
+    )
+        requires
+            before.basic_invariant(),
+            before_output.len() > 0,
+            before.submitted < u64::MAX,
+            before.batch_len < C,
+            before.member_len < C,
+            next_epoch as int == before.submitted as int + 1,
+            limit as nat == if before_output.len() < C - before.member_len {
+                before_output.len()
+            } else {
+                (C - before.member_len) as nat
+            },
+            {
+                let chosen = output.subrange(
+                    0,
+                    batch.member_count_spec() as int,
+                );
+                let expected = ready_selection::<C>(
+                    before.slots@,
+                    before.cursor,
+                    C as nat,
+                    limit as nat,
+                );
+                &&& batch.member_count_spec() > 0
+                &&& batch.member_count_spec() == chosen.len()
+                &&& batch.member_count_spec() == expected.len()
+                &&& batch.epoch_spec().value == next_epoch
+                &&& selected_request_slots(chosen) == expected
+                &&& before.dispatch_chosen_ready(chosen)
+                &&& before.member_len + chosen.len() <= C
+                &&& self.dispatch_commit_refines(
+                    before,
+                    chosen,
+                    self.cursor,
+                    next_epoch,
+                )
+                &&& self.cursor == ready_scan_cursor::<C>(
+                    before.slots@,
+                    before.cursor,
+                    C as nat,
+                    limit as nat,
+                )
+                &&& self.cursor < C
+                &&& output == dispatch_selected_output(before_output, chosen)
+            },
+        ensures
+            self.dispatch_execution_refines(
+                before,
+                before_output,
+                output,
+                &Ok(Some(batch)),
+            ),
+    {
+        reveal(Scheduler::dispatch_execution_refines);
+    }
+
+    /// Performs one deterministic rotating scan and submits one compact batch.
+    /// Selected handles are written to the prefix of `output`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`SchedulerError::EmptyBatchStorage`] for empty output storage
+    /// and [`SchedulerError::SubmissionEpochExhausted`] after the final epoch.
+    pub fn dispatch_ready(
+        &mut self,
+        output: &mut [RequestId],
+    ) -> (result: Result<Option<DispatchBatch>, SchedulerError>)
+        requires old(self).basic_invariant(),
+        ensures
+            final(self).dispatch_execution_refines(
+                old(self),
+                old(output)@,
+                final(output)@,
+                &result,
+            ),
+    {
+        match self.dispatch_preflight(output) {
+            Err(error) => {
+                proof {
+                    self.same_scalars_reflexive();
+                    reveal(Scheduler::dispatch_execution_refines);
+                }
+                Err(error)
+            }
+            Ok(None) => {
+                proof {
+                    self.same_scalars_reflexive();
+                    reveal(Scheduler::dispatch_execution_refines);
+                }
+                Ok(None)
+            }
+            Ok(Some((next_epoch, limit))) => {
+                let result = self.dispatch_enabled(output, next_epoch, limit);
+                proof {
+                    match result {
+                        None => {
+                            self.dispatch_enabled_compose_none(
+                                old(self),
+                                old(output)@,
+                                output@,
+                                next_epoch,
+                                limit,
+                            );
+                        }
+                        Some(batch) => {
+                            self.dispatch_enabled_compose_some(
+                                old(self),
+                                old(output)@,
+                                output@,
+                                next_epoch,
+                                limit,
+                                batch,
+                            );
+                        }
+                    }
+                }
+                Ok(result)
+            }
+        }
+    }
+
+    pub(crate) proof fn apply_dispatch_refines(
+        &self,
+        before: &Self,
+        before_output: Seq<RequestId>,
+        output: Seq<RequestId>,
+        result: &Result<Option<DispatchBatch>, SchedulerError>,
+    )
+        requires
+            before.basic_invariant(),
+            self.dispatch_execution_refines(before, before_output, output, result),
+        ensures self.dispatch_refines(before, before_output, output, result),
+    {
+        match result {
+            Err(_) | Ok(None) => {
+                reveal(Scheduler::dispatch_execution_refines);
+                reveal(Scheduler::dispatch_refines);
+            }
+            Ok(Some(batch)) => {
+                before.basic_implies_scalar();
+                reveal(Scheduler::scalar_invariant);
+                reveal(Scheduler::dispatch_execution_refines);
+                let available = (C - before.member_len) as usize;
+                let limit = if before_output.len() < available {
+                    before_output.len() as usize
+                } else {
+                    available
+                };
+                let chosen = output.subrange(0, batch.member_count_spec() as int);
+                ready_scan_facts::<C>(
+                    before.slots@,
+                    before.cursor,
+                    C as nat,
+                    limit as nat,
+                );
+                assert(chosen.len() <= before_output.len());
+                dispatch_selected_output_facts(before_output, chosen);
+                self.dispatch_enabled_compose_refines_some(
+                    before,
+                    before_output,
+                    output,
+                    batch.epoch_spec().value,
+                    limit,
+                    *batch,
+                    chosen,
+                );
+            }
+        }
+    }
+
+    pub(crate) proof fn apply_dispatch_basic(
+        &self,
+        before: &Self,
+        before_output: Seq<RequestId>,
+        output: Seq<RequestId>,
+        result: &Result<Option<DispatchBatch>, SchedulerError>,
+    )
+        requires
+            before.basic_invariant(),
+            self.dispatch_execution_refines(before, before_output, output, result),
+        ensures self.basic_invariant(),
+    {
+        match result {
+            Err(_) | Ok(None) => {
+                reveal(Scheduler::dispatch_execution_refines);
+                self.same_scalars_preserves_basic(before);
+            }
+            Ok(Some(batch)) => {
+                reveal(Scheduler::dispatch_execution_refines);
+                let chosen = output.subrange(0, batch.member_count_spec() as int);
+                self.dispatch_commit_preserves_basic(
+                    before,
+                    chosen,
+                    self.cursor,
+                    batch.epoch_spec().value,
+                );
+            }
+        }
+    }
+
+    pub(crate) proof fn apply_dispatch_identity(
+        &self,
+        before: &Self,
+        before_output: Seq<RequestId>,
+        output: Seq<RequestId>,
+        result: &Result<Option<DispatchBatch>, SchedulerError>,
+    )
+        requires
+            before.basic_invariant(),
+            self.dispatch_execution_refines(before, before_output, output, result),
+        ensures self.identity_frame(before),
+    {
+        match result {
+            Err(_) | Ok(None) => {
+                reveal(Scheduler::dispatch_execution_refines);
+                self.dispatch_enabled_compose_identity_none(before);
+            }
+            Ok(Some(batch)) => {
+                reveal(Scheduler::dispatch_execution_refines);
+                let chosen = output.subrange(0, batch.member_count_spec() as int);
+                self.dispatch_enabled_compose_identity_some(
+                    before,
+                    *batch,
+                    chosen,
+                    batch.epoch_spec().value,
+                );
+            }
+        }
     }
 
     fn completion_preflight(
@@ -9486,6 +13429,49 @@ proof fn ready_scan_facts<const C: usize>(
     }
 }
 
+proof fn ready_selection_entry_ready<const C: usize>(
+    slots: Seq<Slot>,
+    cursor: usize,
+    scans_left: nat,
+    take_left: nat,
+    offset: int,
+)
+    requires
+        C > 0,
+        slots.len() == C,
+        cursor < C,
+        scans_left <= C,
+        0 <= offset < ready_selection::<C>(slots, cursor, scans_left, take_left).len(),
+    ensures
+        slots[ready_selection::<C>(slots, cursor, scans_left, take_left)[offset]].state
+            == RequestState::Ready,
+    decreases scans_left,
+{
+    reveal(ready_selection);
+    if scans_left > 0 && take_left > 0 {
+        let next = next_position::<C>(cursor);
+        if slots[cursor as int].state == RequestState::Ready {
+            if offset > 0 {
+                ready_selection_entry_ready::<C>(
+                    slots,
+                    next,
+                    (scans_left - 1) as nat,
+                    (take_left - 1) as nat,
+                    offset - 1,
+                );
+            }
+        } else {
+            ready_selection_entry_ready::<C>(
+                slots,
+                next,
+                (scans_left - 1) as nat,
+                take_left,
+                offset,
+            );
+        }
+    }
+}
+
 spec fn selected_request_slots(chosen: Seq<RequestId>) -> Seq<int> {
     Seq::new(chosen.len(), |offset: int| chosen[offset].slot_spec() as int)
 }
@@ -9512,6 +13498,20 @@ proof fn selected_request_slots_push(chosen: Seq<RequestId>, added: RequestId)
             assert(offset == chosen.len());
             assert(chosen.push(added)[offset] == added);
         }
+    }
+}
+
+proof fn selected_request_slots_subrange(chosen: Seq<RequestId>, end: int)
+    requires 0 <= end <= chosen.len(),
+    ensures
+        selected_request_slots(chosen.subrange(0, end))
+            == selected_request_slots(chosen).subrange(0, end),
+{
+    reveal(selected_request_slots);
+    assert forall|offset: int| 0 <= offset < end implies
+        #[trigger] selected_request_slots(chosen.subrange(0, end))[offset]
+            == selected_request_slots(chosen).subrange(0, end)[offset] by {
+        assert(chosen.subrange(0, end)[offset] == chosen[offset]);
     }
 }
 
@@ -9570,6 +13570,28 @@ proof fn dispatch_selected_slots_push(
     assert(chosen.push(added).subrange(0, chosen.len() as int) == chosen);
 }
 
+proof fn dispatch_selected_slots_len(
+    slots: Seq<Slot>,
+    chosen: Seq<RequestId>,
+    epoch: u64,
+)
+    requires
+        forall|offset: int| 0 <= offset < chosen.len() ==>
+            chosen[offset].slot_spec() < slots.len(),
+    ensures dispatch_selected_slots(slots, chosen, epoch).len() == slots.len(),
+    decreases chosen.len(),
+{
+    reveal(dispatch_selected_slots);
+    if chosen.len() > 0 {
+        let prefix = chosen.subrange(0, chosen.len() - 1);
+        assert forall|offset: int| 0 <= offset < prefix.len() implies
+            prefix[offset].slot_spec() < slots.len() by {
+            assert(prefix[offset] == chosen[offset]);
+        }
+        dispatch_selected_slots_len(slots, prefix, epoch);
+    }
+}
+
 spec fn dispatch_selected_output(
     output: Seq<RequestId>,
     chosen: Seq<RequestId>,
@@ -9607,6 +13629,38 @@ proof fn dispatch_selected_output_push(
 {
     reveal(dispatch_selected_output);
     assert(chosen.push(added).subrange(0, chosen.len() as int) == chosen);
+}
+
+proof fn dispatch_selected_output_facts(
+    output: Seq<RequestId>,
+    chosen: Seq<RequestId>,
+)
+    requires chosen.len() <= output.len(),
+    ensures
+        dispatch_selected_output(output, chosen).len() == output.len(),
+        forall|offset: int| 0 <= offset < chosen.len() ==>
+            #[trigger] dispatch_selected_output(output, chosen)[offset] == chosen[offset],
+        forall|offset: int| chosen.len() <= offset < output.len() ==>
+            #[trigger] dispatch_selected_output(output, chosen)[offset] == output[offset],
+    decreases chosen.len(),
+{
+    reveal(dispatch_selected_output);
+    if chosen.len() > 0 {
+        let prefix = chosen.subrange(0, chosen.len() - 1);
+        dispatch_selected_output_facts(output, prefix);
+        assert forall|offset: int| 0 <= offset < chosen.len() implies
+            #[trigger] dispatch_selected_output(output, chosen)[offset] == chosen[offset] by {
+            if offset < prefix.len() {
+                assert(prefix[offset] == chosen[offset]);
+            } else {
+                assert(offset == chosen.len() - 1);
+            }
+        }
+        assert forall|offset: int| chosen.len() <= offset < output.len() implies
+            #[trigger] dispatch_selected_output(output, chosen)[offset] == output[offset] by {
+            assert(offset != chosen.len() - 1);
+        }
+    }
 }
 
 spec fn dispatch_selected_members<const C: usize>(
@@ -9844,6 +13898,398 @@ proof fn completed_permits_facts<const C: usize>(
     }
 }
 
+proof fn dispatch_selected_members_len<const C: usize>(
+    members: Seq<RequestId>,
+    head: usize,
+    base_len: usize,
+    chosen: Seq<RequestId>,
+)
+    requires
+        C > 0,
+        members.len() == C,
+        head < C,
+        base_len + chosen.len() <= C,
+        forall|offset: int| 0 <= offset < chosen.len() ==>
+            chosen[offset].slot_spec() < C,
+    ensures
+        dispatch_selected_members::<C>(members, head, base_len, chosen).len()
+            == members.len(),
+    decreases chosen.len(),
+{
+    reveal(dispatch_selected_members);
+    if chosen.len() > 0 {
+        let prefix = chosen.subrange(0, chosen.len() - 1);
+        assert forall|offset: int| 0 <= offset < prefix.len() implies
+            prefix[offset].slot_spec() < C by {
+            assert(prefix[offset] == chosen[offset]);
+        }
+        dispatch_selected_members_len::<C>(members, head, base_len, prefix);
+    }
+}
+
+proof fn dispatch_selected_slots_selected_fact(
+    slots: Seq<Slot>,
+    chosen: Seq<RequestId>,
+    epoch: u64,
+    offset: int,
+)
+    requires
+        forall|chosen_offset: int| 0 <= chosen_offset < chosen.len() ==>
+            chosen[chosen_offset].slot_spec() < slots.len(),
+        selected_request_slots(chosen).no_duplicates(),
+        0 <= offset < chosen.len(),
+        chosen[offset].slot_spec() < slots.len(),
+    ensures {
+        let slot_index = chosen[offset].slot_spec() as int;
+        dispatch_selected_slots(slots, chosen, epoch)[slot_index] == Slot {
+            state: RequestState::InFlight,
+            active_epoch: epoch,
+            ..slots[slot_index]
+        }
+    },
+    decreases chosen.len(),
+{
+    assert(chosen.len() > 0);
+    let prefix = chosen.subrange(0, chosen.len() - 1);
+    let last = chosen[chosen.len() - 1];
+    let last_slot = last.slot_spec() as int;
+    assert(chosen.subrange(0, chosen.len() - 1) == prefix);
+    assert(dispatch_selected_slots(slots, chosen, epoch)
+        == dispatch_selected_slots(slots, prefix, epoch).update(
+            last_slot,
+            Slot {
+                state: RequestState::InFlight,
+                active_epoch: epoch,
+                ..slots[last_slot]
+            },
+        ));
+    let chosen_slots = selected_request_slots(chosen);
+    selected_request_slots_subrange(chosen, chosen.len() - 1);
+    dispatch_selected_slots_len(slots, chosen, epoch);
+    assert forall|prefix_offset: int| 0 <= prefix_offset < prefix.len() implies
+        prefix[prefix_offset].slot_spec() < slots.len() by {
+        assert(prefix[prefix_offset] == chosen[prefix_offset]);
+    }
+    dispatch_selected_slots_len(slots, prefix, epoch);
+    reveal(dispatch_selected_slots);
+    if offset < chosen.len() - 1 {
+        assert(prefix[offset] == chosen[offset]);
+        assert forall|prefix_offset: int| 0 <= prefix_offset < prefix.len() implies
+            prefix[prefix_offset].slot_spec() < slots.len() by {
+            assert(prefix[prefix_offset] == chosen[prefix_offset]);
+        }
+        assert(selected_request_slots(prefix).no_duplicates()) by {
+            reveal(Seq::no_duplicates);
+            assert forall|left: int, right: int|
+                0 <= left < selected_request_slots(prefix).len()
+                    && 0 <= right < selected_request_slots(prefix).len()
+                    && left != right implies
+                        selected_request_slots(prefix)[left]
+                            != selected_request_slots(prefix)[right] by {
+                assert(chosen_slots[left] != chosen_slots[right]);
+            }
+        }
+        dispatch_selected_slots_selected_fact(slots, prefix, epoch, offset);
+        assert(chosen[offset].slot_spec() != last.slot_spec()) by {
+            reveal(Seq::no_duplicates);
+            reveal(selected_request_slots);
+            assert(chosen_slots[offset]
+                != chosen_slots[chosen.len() - 1]);
+        }
+        let slot_index = chosen[offset].slot_spec() as int;
+        assert(0 <= slot_index < slots.len());
+        assert(dispatch_selected_slots(slots, chosen, epoch)[slot_index]
+            == dispatch_selected_slots(slots, prefix, epoch)[slot_index]);
+        assert(dispatch_selected_slots(slots, chosen, epoch)[slot_index] == Slot {
+            state: RequestState::InFlight,
+            active_epoch: epoch,
+            ..slots[slot_index]
+        });
+    } else {
+        assert(offset == chosen.len() - 1);
+        let slot_index = chosen[offset].slot_spec() as int;
+        assert(slot_index == last_slot);
+        assert(0 <= slot_index < slots.len());
+        assert(dispatch_selected_slots(slots, chosen, epoch)[slot_index] == Slot {
+            state: RequestState::InFlight,
+            active_epoch: epoch,
+            ..slots[slot_index]
+        });
+    }
+}
+
+proof fn dispatch_selected_slots_frame_fact(
+    slots: Seq<Slot>,
+    chosen: Seq<RequestId>,
+    epoch: u64,
+    slot_index: int,
+)
+    requires
+        forall|chosen_offset: int| 0 <= chosen_offset < chosen.len() ==>
+            chosen[chosen_offset].slot_spec() < slots.len(),
+        0 <= slot_index < slots.len(),
+        !selected_request_slots(chosen).contains(slot_index),
+    ensures dispatch_selected_slots(slots, chosen, epoch)[slot_index] == slots[slot_index],
+    decreases chosen.len(),
+{
+    dispatch_selected_slots_len(slots, chosen, epoch);
+    reveal(dispatch_selected_slots);
+    if chosen.len() > 0 {
+        let prefix = chosen.subrange(0, chosen.len() - 1);
+        let last = chosen[chosen.len() - 1];
+        selected_request_slots_subrange(chosen, chosen.len() - 1);
+        assert(last.slot_spec() as int != slot_index) by {
+            if last.slot_spec() as int == slot_index {
+                reveal(selected_request_slots);
+                assert(selected_request_slots(chosen)[chosen.len() - 1] == slot_index);
+                assert(selected_request_slots(chosen).contains(slot_index));
+            }
+        }
+        assert forall|prefix_offset: int| 0 <= prefix_offset < prefix.len() implies
+            prefix[prefix_offset].slot_spec() < slots.len() by {
+            assert(prefix[prefix_offset] == chosen[prefix_offset]);
+        }
+        dispatch_selected_slots_len(slots, prefix, epoch);
+        assert(!selected_request_slots(prefix).contains(slot_index)) by {
+            if selected_request_slots(prefix).contains(slot_index) {
+                let prefix_offset = choose|prefix_offset: int|
+                    0 <= prefix_offset < selected_request_slots(prefix).len()
+                        && selected_request_slots(prefix)[prefix_offset] == slot_index;
+                assert(selected_request_slots(chosen)[prefix_offset] == slot_index);
+                assert(selected_request_slots(chosen).contains(slot_index));
+            }
+        }
+        dispatch_selected_slots_frame_fact(slots, prefix, epoch, slot_index);
+    }
+}
+
+proof fn dispatch_selected_counts_preserved(
+    slots: Seq<Slot>,
+    chosen: Seq<RequestId>,
+    epoch: u64,
+    prefix_len: nat,
+)
+    requires
+        prefix_len <= slots.len(),
+        forall|offset: int| 0 <= offset < chosen.len() ==> {
+            let request = #[trigger] chosen[offset];
+            let slot_index = request.slot_spec() as int;
+            &&& 0 <= slot_index < prefix_len
+            &&& slots[slot_index].state == RequestState::Ready
+        },
+        selected_request_slots(chosen).no_duplicates(),
+    ensures
+        live_slot_count(dispatch_selected_slots(slots, chosen, epoch), prefix_len)
+            == live_slot_count(slots, prefix_len),
+        nonreclaim_live_count(dispatch_selected_slots(slots, chosen, epoch), prefix_len)
+            == nonreclaim_live_count(slots, prefix_len),
+    decreases chosen.len(),
+{
+    assert forall|offset: int| 0 <= offset < chosen.len() implies
+        chosen[offset].slot_spec() < slots.len() by {
+        assert((chosen[offset].slot_spec() as int) < prefix_len);
+    }
+    dispatch_selected_slots_len(slots, chosen, epoch);
+    reveal(dispatch_selected_slots);
+    if chosen.len() > 0 {
+        let prefix = chosen.subrange(0, chosen.len() - 1);
+        let last = chosen[chosen.len() - 1];
+        let last_slot = last.slot_spec() as int;
+        selected_request_slots_subrange(chosen, chosen.len() - 1);
+        assert forall|offset: int| 0 <= offset < prefix.len() implies {
+            let request = #[trigger] prefix[offset];
+            let slot_index = request.slot_spec() as int;
+            &&& 0 <= slot_index < prefix_len
+            &&& slots[slot_index].state == RequestState::Ready
+        } by {
+            assert(prefix[offset] == chosen[offset]);
+        }
+        assert(selected_request_slots(prefix).no_duplicates()) by {
+            reveal(Seq::no_duplicates);
+            assert forall|left: int, right: int|
+                0 <= left < selected_request_slots(prefix).len()
+                    && 0 <= right < selected_request_slots(prefix).len()
+                    && left != right implies
+                        selected_request_slots(prefix)[left]
+                            != selected_request_slots(prefix)[right] by {
+                assert(selected_request_slots(chosen)[left]
+                    != selected_request_slots(chosen)[right]);
+            }
+        }
+        dispatch_selected_counts_preserved(slots, prefix, epoch, prefix_len);
+        assert forall|offset: int| 0 <= offset < prefix.len() implies
+            prefix[offset].slot_spec() < slots.len() by {
+            assert((prefix[offset].slot_spec() as int) < prefix_len);
+        }
+        dispatch_selected_slots_len(slots, prefix, epoch);
+        assert(!selected_request_slots(prefix).contains(last_slot)) by {
+            if selected_request_slots(prefix).contains(last_slot) {
+                let prior = choose|prior: int| 0 <= prior < prefix.len()
+                    && selected_request_slots(prefix)[prior] == last_slot;
+                reveal(Seq::no_duplicates);
+                assert(selected_request_slots(chosen)[prior]
+                    == selected_request_slots(chosen)[chosen.len() - 1]);
+            }
+        }
+        dispatch_selected_slots_frame_fact(slots, prefix, epoch, last_slot);
+        let prior_slots = dispatch_selected_slots(slots, prefix, epoch);
+        let replacement = Slot {
+            state: RequestState::InFlight,
+            active_epoch: epoch,
+            ..slots[last_slot]
+        };
+        assert(prior_slots[last_slot] == slots[last_slot]);
+        live_count_update_nonvacant(prior_slots, last_slot, replacement, prefix_len);
+        nonreclaim_count_update_preserved(prior_slots, last_slot, replacement, prefix_len);
+    }
+}
+
+proof fn dispatch_selected_members_selected_fact<const C: usize>(
+    members: Seq<RequestId>,
+    head: usize,
+    base_len: usize,
+    chosen: Seq<RequestId>,
+    offset: int,
+)
+    requires
+        C > 0,
+        members.len() == C,
+        head < C,
+        base_len + chosen.len() <= C,
+        forall|chosen_offset: int| 0 <= chosen_offset < chosen.len() ==>
+            chosen[chosen_offset].slot_spec() < C,
+        0 <= offset < chosen.len(),
+    ensures
+        dispatch_selected_members::<C>(members, head, base_len, chosen)[
+            ring_position::<C>(head, (base_len + offset) as nat)
+        ] == chosen[offset],
+    decreases chosen.len(),
+{
+    assert(chosen.len() > 0);
+    let prefix = chosen.subrange(0, chosen.len() - 1);
+    let last_position = ring_position::<C>(
+        head,
+        (base_len + chosen.len() - 1) as nat,
+    );
+    dispatch_selected_members_len::<C>(members, head, base_len, chosen);
+    assert forall|prefix_offset: int| 0 <= prefix_offset < prefix.len() implies
+        prefix[prefix_offset].slot_spec() < C by {
+        assert(prefix[prefix_offset] == chosen[prefix_offset]);
+    }
+    dispatch_selected_members_len::<C>(members, head, base_len, prefix);
+    reveal(dispatch_selected_members);
+    assert(dispatch_selected_members::<C>(members, head, base_len, chosen)
+        == dispatch_selected_members::<C>(members, head, base_len, prefix).update(
+            last_position,
+            chosen[chosen.len() - 1],
+        ));
+    if offset < chosen.len() - 1 {
+        assert(prefix[offset] == chosen[offset]);
+        assert forall|prefix_offset: int| 0 <= prefix_offset < prefix.len() implies
+            prefix[prefix_offset].slot_spec() < C by {
+            assert(prefix[prefix_offset] == chosen[prefix_offset]);
+        }
+        dispatch_selected_members_selected_fact::<C>(
+            members,
+            head,
+            base_len,
+            prefix,
+            offset,
+        );
+        ring_position_injective::<C>(
+            head,
+            (base_len + offset) as nat,
+            (base_len + chosen.len() - 1) as nat,
+        );
+    } else {
+        assert(offset == chosen.len() - 1);
+        assert(ring_position::<C>(head, (base_len + offset) as nat) == last_position);
+    }
+}
+
+proof fn dispatch_selected_members_selected_slots_differ<const C: usize>(
+    members: Seq<RequestId>,
+    head: usize,
+    base_len: usize,
+    chosen: Seq<RequestId>,
+    left: int,
+    right: int,
+)
+    requires
+        C > 0,
+        members.len() == C,
+        head < C,
+        base_len + chosen.len() <= C,
+        forall|chosen_offset: int| 0 <= chosen_offset < chosen.len() ==>
+            chosen[chosen_offset].slot_spec() < C,
+        selected_request_slots(chosen).no_duplicates(),
+        0 <= left < chosen.len(),
+        0 <= right < chosen.len(),
+        left != right,
+    ensures
+        dispatch_selected_members::<C>(members, head, base_len, chosen)[
+            ring_position::<C>(head, (base_len + left) as nat)
+        ].slot_spec()
+            != dispatch_selected_members::<C>(members, head, base_len, chosen)[
+                ring_position::<C>(head, (base_len + right) as nat)
+            ].slot_spec(),
+{
+    dispatch_selected_members_len::<C>(members, head, base_len, chosen);
+    dispatch_selected_members_selected_fact::<C>(members, head, base_len, chosen, left);
+    dispatch_selected_members_selected_fact::<C>(members, head, base_len, chosen, right);
+    reveal(Seq::no_duplicates);
+    reveal(selected_request_slots);
+    assert(selected_request_slots(chosen).len() == chosen.len());
+    assert(selected_request_slots(chosen)[left] != selected_request_slots(chosen)[right]);
+    assert(chosen[left].slot_spec() != chosen[right].slot_spec());
+}
+
+proof fn dispatch_selected_members_frame_fact<const C: usize>(
+    members: Seq<RequestId>,
+    head: usize,
+    base_len: usize,
+    chosen: Seq<RequestId>,
+    ring_index: int,
+)
+    requires
+        C > 0,
+        members.len() == C,
+        head < C,
+        base_len + chosen.len() <= C,
+        forall|chosen_offset: int| 0 <= chosen_offset < chosen.len() ==>
+            chosen[chosen_offset].slot_spec() < C,
+        0 <= ring_index < C,
+        !(exists|offset: int| 0 <= offset < chosen.len()
+            && #[trigger] ring_position::<C>(head, (base_len + offset) as nat) == ring_index),
+    ensures
+        dispatch_selected_members::<C>(members, head, base_len, chosen)[ring_index]
+            == members[ring_index],
+    decreases chosen.len(),
+{
+    reveal(dispatch_selected_members);
+    if chosen.len() > 0 {
+        let prefix = chosen.subrange(0, chosen.len() - 1);
+        let last_position = ring_position::<C>(
+            head,
+            (base_len + chosen.len() - 1) as nat,
+        );
+        assert(last_position != ring_index);
+        assert forall|prefix_offset: int| 0 <= prefix_offset < prefix.len() implies
+            prefix[prefix_offset].slot_spec() < C by {
+            assert(prefix[prefix_offset] == chosen[prefix_offset]);
+        }
+        assert(!(exists|offset: int| 0 <= offset < prefix.len()
+            && #[trigger] ring_position::<C>(head, (base_len + offset) as nat) == ring_index));
+        dispatch_selected_members_frame_fact::<C>(
+            members,
+            head,
+            base_len,
+            prefix,
+            ring_index,
+        );
+    }
+}
+
 spec fn ring_advance<const C: usize>(head: usize, steps: nat) -> usize
     recommends C > 0, head < C,
     decreases steps,
@@ -9940,6 +14386,74 @@ spec fn batch_member_sum<const C: usize>(
         batch_member_sum::<C>(batches, head, (count - 1) as nat)
             + batches[ring_position::<C>(head, (count - 1) as nat)].member_count as nat
     }
+}
+
+proof fn batch_member_sum_update_frame<const C: usize>(
+    batches: Seq<BatchRecord>,
+    head: usize,
+    count: nat,
+    ring_index: int,
+    replacement: BatchRecord,
+)
+    requires
+        C > 0,
+        batches.len() == C,
+        head < C,
+        count <= C,
+        0 <= ring_index < C,
+        forall|offset: int| 0 <= offset < count ==>
+            #[trigger] ring_position::<C>(head, offset as nat) != ring_index,
+    ensures
+        batch_member_sum::<C>(
+            batches.update(ring_index, replacement),
+            head,
+            count,
+        ) == batch_member_sum::<C>(batches, head, count),
+    decreases count,
+{
+    reveal(batch_member_sum);
+    if count > 0 {
+        assert forall|offset: int| 0 <= offset < count - 1 implies
+            #[trigger] ring_position::<C>(head, offset as nat) != ring_index by {
+        }
+        batch_member_sum_update_frame::<C>(
+            batches,
+            head,
+            (count - 1) as nat,
+            ring_index,
+            replacement,
+        );
+        ring_position_bounds::<C>(head, (count - 1) as nat);
+    }
+}
+
+proof fn batch_member_sum_append<const C: usize>(
+    batches: Seq<BatchRecord>,
+    head: usize,
+    len: usize,
+    replacement: BatchRecord,
+)
+    requires
+        C > 0,
+        batches.len() == C,
+        head < C,
+        len < C,
+    ensures
+        batch_member_sum::<C>(
+            batches.update(ring_position::<C>(head, len as nat), replacement),
+            head,
+            (len + 1) as nat,
+        ) == batch_member_sum::<C>(batches, head, len as nat)
+            + replacement.member_count,
+{
+    let tail = ring_position::<C>(head, len as nat);
+    ring_position_bounds::<C>(head, len as nat);
+    assert forall|offset: int| 0 <= offset < len implies
+        #[trigger] ring_position::<C>(head, offset as nat) != tail by {
+        ring_position_injective::<C>(head, offset as nat, len as nat);
+    }
+    batch_member_sum_update_frame::<C>(batches, head, len as nat, tail, replacement);
+    reveal(batch_member_sum);
 }
 
 proof fn batch_member_sum_monotonic<const C: usize>(

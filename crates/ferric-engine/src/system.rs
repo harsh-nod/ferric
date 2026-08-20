@@ -812,7 +812,34 @@ impl<const C: usize> Engine<C> {
     {
         reveal(Engine::well_formed);
         self.require_healthy()?;
-        match self.scheduler.dispatch_ready(output) {
+        let ghost before_scheduler = self.scheduler;
+        let ghost before_output = output@;
+        let scheduler_result = self.scheduler.dispatch_ready(output);
+        proof {
+            self.scheduler.apply_dispatch_refines(
+                &before_scheduler,
+                before_output,
+                output@,
+                &scheduler_result,
+            );
+        }
+        proof {
+            self.scheduler.apply_dispatch_basic(
+                &before_scheduler,
+                before_output,
+                output@,
+                &scheduler_result,
+            );
+        }
+        proof {
+            self.scheduler.apply_dispatch_identity(
+                &before_scheduler,
+                before_output,
+                output@,
+                &scheduler_result,
+            );
+        }
+        match scheduler_result {
             Ok(batch) => Ok(batch),
             Err(error) => Err(EngineError::Scheduler(error)),
         }
