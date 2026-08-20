@@ -8545,6 +8545,158 @@ impl<const C: usize> Scheduler<C> {
         }
     }
 
+    proof fn finalized_error_establishes_postconditions(
+        &self,
+        before: &Self,
+        finalized: &KvFinalizedRequest,
+        error: SchedulerError,
+    )
+        requires
+            before.basic_invariant(),
+            self.basic_invariant(),
+            self.same_scalars(before),
+            finalized_preflight_spec::<C>(before, finalized) == Err(error),
+        ensures
+            self.basic_invariant(),
+            self.finalized_refines(before, finalized, &Err(error)),
+            self.identity_frame(before),
+            self.completed_epoch_spec() == before.completed_epoch_spec(),
+            self.detachment_ready_frame_except(
+                before,
+                finalized.request_spec().slot_spec() as int,
+            ),
+    {
+        let changed = finalized.request_spec().slot_spec() as int;
+        assert(self.slots_frame_except(before, changed)) by {
+            reveal(Scheduler::same_scalars);
+            reveal(Scheduler::slots_frame_except);
+        }
+        self.detachment_frame_from_slots_frame(before, changed);
+        if 0 <= changed && changed < C {
+            assert(self.slot_generation_spec(changed)
+                == before.slot_generation_spec(changed)) by {
+                reveal(Scheduler::same_scalars);
+                reveal(Scheduler::slot_generation_spec);
+            }
+            assert(self.slot_is_live_spec(changed)
+                == before.slot_is_live_spec(changed)) by {
+                reveal(Scheduler::same_scalars);
+                reveal(Scheduler::slot_is_live_spec);
+            }
+            self.identity_frame_from_slots_frame(before, changed);
+        } else {
+            assert(self.identity_frame(before)) by {
+                reveal(Scheduler::same_scalars);
+                reveal(Scheduler::slot_generation_spec);
+                reveal(Scheduler::slot_is_live_spec);
+            }
+        }
+        assert(self.finalized_refines(before, finalized, &Err(error))) by {
+            reveal(Scheduler::finalized_refines);
+        }
+        reveal(Scheduler::completed_epoch_spec);
+    }
+
+    proof fn finalized_success_establishes_frames(
+        &self,
+        before: &Self,
+        finalized: &KvFinalizedRequest,
+        request: RequestId,
+        epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            finalized_preflight_spec::<C>(before, finalized) == Ok((request, epoch)),
+            self.finalized_slot_refines(before, request, epoch),
+        ensures
+            self.identity_frame(before),
+            self.completed_epoch_spec() == before.completed_epoch_spec(),
+            self.detachment_ready_frame_except(
+                before,
+                finalized.request_spec().slot_spec() as int,
+            ),
+    {
+        let changed = request.slot_spec() as int;
+        assert(self.slots_frame_except(before, changed)) by {
+            reveal(Scheduler::finalized_slot_refines);
+        }
+        self.detachment_frame_from_slots_frame(before, changed);
+        assert(self.slot_generation_spec(changed)
+            == before.slot_generation_spec(changed)) by {
+            reveal(Scheduler::finalized_slot_refines);
+            reveal(Scheduler::slot_generation_spec);
+        }
+        assert(self.slot_is_live_spec(changed) == before.slot_is_live_spec(changed)) by {
+            reveal(finalized_preflight_spec);
+            reveal(finalized_request_preflight_spec);
+            reveal(Scheduler::finalized_slot_refines);
+            reveal(Scheduler::slot_model);
+            reveal(Scheduler::slot_is_live_spec);
+            reveal(ferric_spec::scheduling::request_transition);
+        }
+        self.identity_frame_from_slots_frame(before, changed);
+        reveal(finalized_preflight_spec);
+        reveal(Scheduler::finalized_slot_refines);
+        reveal(Scheduler::completed_epoch_spec);
+    }
+
+    proof fn finalized_success_establishes_result(
+        &self,
+        before: &Self,
+        finalized: &KvFinalizedRequest,
+        request: RequestId,
+        epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            finalized_preflight_spec::<C>(before, finalized) == Ok((request, epoch)),
+            self.finalized_slot_refines(before, request, epoch),
+        ensures
+            self.finalized_refines(before, finalized, &Ok(())),
+            self.state_spec(finalized.request_spec()) == Some(RequestState::Ready),
+            self.slot_is_live_spec(finalized.request_spec().slot_spec() as int),
+    {
+        assert(self.finalized_refines(before, finalized, &Ok(()))) by {
+            reveal(Scheduler::finalized_refines);
+            reveal(Scheduler::slot_model);
+            reveal(Scheduler::slots_frame_except);
+        }
+        reveal(finalized_preflight_spec);
+        reveal(Scheduler::finalized_slot_refines);
+        reveal(Scheduler::state_spec);
+        reveal(Scheduler::slot_model);
+        reveal(Scheduler::slot_is_live_spec);
+        reveal(ferric_spec::scheduling::request_transition);
+    }
+
+    proof fn finalized_success_establishes_postconditions(
+        &self,
+        before: &Self,
+        finalized: &KvFinalizedRequest,
+        request: RequestId,
+        epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            self.basic_invariant(),
+            finalized_preflight_spec::<C>(before, finalized) == Ok((request, epoch)),
+            self.finalized_slot_refines(before, request, epoch),
+        ensures
+            self.basic_invariant(),
+            self.finalized_refines(before, finalized, &Ok(())),
+            self.identity_frame(before),
+            self.completed_epoch_spec() == before.completed_epoch_spec(),
+            self.detachment_ready_frame_except(
+                before,
+                finalized.request_spec().slot_spec() as int,
+            ),
+            self.state_spec(finalized.request_spec()) == Some(RequestState::Ready),
+            self.slot_is_live_spec(finalized.request_spec().slot_spec() as int),
+    {
+        self.finalized_success_establishes_frames(before, finalized, request, epoch);
+        self.finalized_success_establishes_result(before, finalized, request, epoch);
+    }
+
     /// Consumes cache-owned evidence for the exact completed speculative step
     /// before making the request dispatchable again.
     pub(crate) fn accept_finalized(
@@ -8575,34 +8727,11 @@ impl<const C: usize> Scheduler<C> {
                     reveal(Scheduler::same_scalars);
                 }
                 proof {
-                    let changed = finalized.request_spec().slot_spec() as int;
-                    assert(self.slots_frame_except(old(self), changed)) by {
-                        reveal(Scheduler::same_scalars);
-                        reveal(Scheduler::slots_frame_except);
-                    }
-                    self.detachment_frame_from_slots_frame(old(self), changed);
-                    if 0 <= changed && changed < C {
-                        assert(self.slot_generation_spec(changed)
-                            == old(self).slot_generation_spec(changed)) by {
-                            reveal(Scheduler::same_scalars);
-                            reveal(Scheduler::slot_generation_spec);
-                        }
-                        assert(self.slot_is_live_spec(changed)
-                            == old(self).slot_is_live_spec(changed)) by {
-                            reveal(Scheduler::same_scalars);
-                            reveal(Scheduler::slot_is_live_spec);
-                        }
-                        self.identity_frame_from_slots_frame(old(self), changed);
-                    } else {
-                        assert(self.identity_frame(old(self))) by {
-                            reveal(Scheduler::same_scalars);
-                            reveal(Scheduler::slot_generation_spec);
-                            reveal(Scheduler::slot_is_live_spec);
-                        }
-                    }
-                }
-                assert(self.finalized_refines(old(self), &finalized, &result)) by {
-                    reveal(Scheduler::finalized_refines);
+                    self.finalized_error_establishes_postconditions(
+                        old(self),
+                        &finalized,
+                        error,
+                    );
                 }
                 return result;
             }
@@ -8610,30 +8739,12 @@ impl<const C: usize> Scheduler<C> {
         self.finalize_slot(request, epoch);
         let result = Ok(());
         proof {
-            let changed = request.slot_spec() as int;
-            assert(self.slots_frame_except(old(self), changed)) by {
-                reveal(Scheduler::finalized_slot_refines);
-            }
-            self.detachment_frame_from_slots_frame(old(self), changed);
-            assert(self.slot_generation_spec(changed)
-                == old(self).slot_generation_spec(changed)) by {
-                reveal(Scheduler::finalized_slot_refines);
-                reveal(Scheduler::slot_generation_spec);
-            }
-            assert(self.slot_is_live_spec(changed) == old(self).slot_is_live_spec(changed)) by {
-                reveal(finalized_preflight_spec);
-                reveal(finalized_request_preflight_spec);
-                reveal(Scheduler::finalized_slot_refines);
-                reveal(Scheduler::slot_model);
-                reveal(Scheduler::slot_is_live_spec);
-                reveal(ferric_spec::scheduling::request_transition);
-            }
-            self.identity_frame_from_slots_frame(old(self), changed);
-        }
-        assert(self.finalized_refines(old(self), &finalized, &result)) by {
-            reveal(Scheduler::finalized_refines);
-            reveal(Scheduler::slot_model);
-            reveal(Scheduler::slots_frame_except);
+            self.finalized_success_establishes_postconditions(
+                old(self),
+                &finalized,
+                request,
+                epoch,
+            );
         }
         result
     }
