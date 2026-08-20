@@ -40,6 +40,7 @@ manifest_copy() {
     mkdir -p "$fixture/docs" "$fixture/proofs"
     cp "$repo/docs/M0_PROPERTY_CONTRACT.md" "$fixture/docs/"
     cp "$repo/proofs/M0_PROPERTIES.json" "$fixture/proofs/"
+    chmod -R u+w "$fixture"
     printf '%s\n' "$fixture"
 }
 
@@ -122,6 +123,7 @@ cp "$repo/proofs/property-binder/Cargo.lock" "$repo/proofs/property-binder/DEPEN
     "$fixture/proofs/property-binder/"
 cp "$repo/proofs/verus/VERUS_CLOSURE_MANIFEST" "$repo/proofs/verus/VERUS_VERSION" \
     "$fixture/proofs/verus/"
+chmod -R u+w "$fixture"
 
 printf 'fixture source\n' >"$fixture/crates/fixture/source.rs"
 python3 -I - "$fixture/proofs/M0_PROPERTIES.json" \
