@@ -790,14 +790,19 @@ fn collect_evidence(paths: &EvidencePaths<'_>) -> BinderResult<EvidenceInventory
         executable(&current_exe)?,
     );
     let sysroot = command_stdout("rustc", &["--print", "sysroot"])?;
-    inventory.tools.insert(
-        "rustc".to_owned(),
-        executable(&Path::new(&sysroot).join("bin/rustc"))?,
-    );
-    inventory.tools.insert(
-        "cargo".to_owned(),
-        executable(&Path::new(&sysroot).join("bin/cargo"))?,
-    );
+    for name in [
+        "rustc",
+        "cargo",
+        "rustfmt",
+        "cargo-fmt",
+        "cargo-clippy",
+        "clippy-driver",
+    ] {
+        inventory.tools.insert(
+            name.to_owned(),
+            executable(&Path::new(&sysroot).join("bin").join(name))?,
+        );
+    }
     for name in [
         "sh",
         "awk",
@@ -1068,6 +1073,14 @@ fn validate_checked_evidence(
         .map_err(|error| format!("{}: {error}", paths.runtime_tests.display()))?;
     if !runtime.contains("test result: ok.") || runtime.contains("FAILED") {
         return Err("runtime test transcript is not an all-pass result".to_owned());
+    }
+    for gate in ["fmt", "clippy", "test-debug", "test-release"] {
+        let marker = format!("FERRIC_QUALITY_GATE={gate}:PASS");
+        if runtime.lines().filter(|line| *line == marker).count() != 1 {
+            return Err(format!(
+                "quality gate transcript marker is not exact: {gate}"
+            ));
+        }
     }
     let mut digests = Vec::new();
     for evidence in &property.checked_evidence {

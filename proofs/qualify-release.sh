@@ -13,6 +13,14 @@ for tool in awk cargo cat chmod cmp cp dirname grep mkdir mktemp python3 rm rust
     command -v "$tool" >/dev/null 2>&1 || fail "$tool is required by the qualification gate"
 done
 
+rust_sysroot=$(rustc --print sysroot)
+for member in rustc cargo rustfmt cargo-fmt cargo-clippy clippy-driver; do
+    [ -x "$rust_sysroot/bin/$member" ] || \
+        fail "Rust toolchain component is unavailable: $member"
+done
+PATH="$rust_sysroot/bin:$PATH"
+export PATH
+
 verus_root=${VERUS_ROOT:-}
 [ -n "$verus_root" ] || fail 'VERUS_ROOT must name the extracted pinned Verus release'
 verus_root=$(CDPATH='' cd -- "$verus_root" 2>/dev/null && pwd) || fail 'VERUS_ROOT is unavailable'
@@ -236,14 +244,26 @@ FERRIC_NEGATIVE_TIMEOUT_SECONDS="$timeout_seconds" \
 runtime_tests="$scratch/runtime-tests.transcript"
 set +e
 (
+    set -e
     cd "$qualified_repo"
+    printf 'FERRIC_QUALITY_GATE=fmt:BEGIN\n'
+    cargo fmt --all -- --check
+    printf 'FERRIC_QUALITY_GATE=fmt:PASS\n'
+    printf 'FERRIC_QUALITY_GATE=clippy:BEGIN\n'
+    cargo clippy --workspace --all-targets --locked --target-dir "$runtime_test_target" -- -D warnings
+    printf 'FERRIC_QUALITY_GATE=clippy:PASS\n'
+    printf 'FERRIC_QUALITY_GATE=test-debug:BEGIN\n'
+    cargo test --workspace --locked --target-dir "$runtime_test_target"
+    printf 'FERRIC_QUALITY_GATE=test-debug:PASS\n'
+    printf 'FERRIC_QUALITY_GATE=test-release:BEGIN\n'
     cargo test --workspace --locked --release --target-dir "$runtime_test_target"
+    printf 'FERRIC_QUALITY_GATE=test-release:PASS\n'
 ) >"$runtime_tests" 2>&1
 runtime_test_status=$?
 set -e
 cat "$runtime_tests"
 [ "$runtime_test_status" -eq 0 ] || \
-    fail "qualified same-source runtime tests failed with status $runtime_test_status"
+    fail "qualified same-source quality gates failed with status $runtime_test_status"
 
 property_evidence="$scratch/m0-property-evidence.records"
 "$property_binder" --evidence-index \

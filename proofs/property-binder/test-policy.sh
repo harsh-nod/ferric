@@ -189,7 +189,7 @@ printf 'source closure fixture\n' >"$fixture/source.records"
 printf 'PACKAGE=ferric-spec\nfixture proof output\nPACKAGE=ferric-engine\n' \
     >"$fixture/proof.transcript"
 printf 'ferric-spec|6|0|6\nferric-engine|5|0|5\n' >"$fixture/proof.counts"
-printf 'test transition_paths_preserve_fixed_storage_capacities ... ok\ntest result: ok. 1 passed; 0 failed\n' \
+printf 'FERRIC_QUALITY_GATE=fmt:PASS\nFERRIC_QUALITY_GATE=clippy:PASS\nFERRIC_QUALITY_GATE=test-debug:PASS\nFERRIC_QUALITY_GATE=test-release:PASS\ntest transition_paths_preserve_fixed_storage_capacities ... ok\ntest result: ok. 1 passed; 0 failed\n' \
     >"$fixture/runtime-tests.transcript"
 for tool in cargo-verus verus rust_verify z3; do
     cp /bin/true "$fixture/verus/$tool"
@@ -198,6 +198,23 @@ printf 'ferric spec artifact\n' >"$fixture/artifacts/libferric_spec.rlib"
 printf 'ferric engine artifact\n' >"$fixture/artifacts/libferric_engine.rlib"
 
 evidence_arguments="$fixture $fixture/source.records $fixture/proof.transcript $fixture/proof.counts $fixture/evidence $fixture/verus $source_gate $fixture/artifacts $fixture/runtime-tests.transcript"
+for gate in fmt clippy test-debug test-release; do
+    missing="$fixture/runtime-tests-missing-$gate.transcript"
+    missing_index="$fixture/evidence-index-missing-$gate"
+    grep -F -v "FERRIC_QUALITY_GATE=$gate:PASS" \
+        "$fixture/runtime-tests.transcript" >"$missing"
+    "$binder" --evidence-index \
+        "$fixture" "$fixture/source.records" "$fixture/proof.transcript" \
+        "$fixture/proof.counts" "$fixture/evidence" "$fixture/verus" \
+        "$source_gate" "$fixture/artifacts" "$missing" "$missing_index"
+    expect_rejected "quality-gate-missing-$gate" \
+        "quality gate transcript marker is not exact: $gate" \
+        "$binder" --bind \
+        "$fixture" "$fixture/source.records" "$fixture/proof.transcript" \
+        "$fixture/proof.counts" "$fixture/evidence" "$fixture/verus" \
+        "$source_gate" "$fixture/artifacts" "$missing" \
+        "$missing_index" "$fixture/contract-missing-$gate"
+done
 # shellcheck disable=SC2086
 "$binder" --evidence-index $evidence_arguments "$fixture/evidence-index-a"
 # shellcheck disable=SC2086
