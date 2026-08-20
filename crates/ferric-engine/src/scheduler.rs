@@ -4572,6 +4572,7 @@ impl<const C: usize> Scheduler<C> {
                 &&& *count <= permits.len()
                 &&& self.completed == completion_epoch
                 &&& self.submitted == before.submitted
+                &&& self.slots@ == before.slots@
                 &&& self.member_len + *count == before.member_len
                 &&& self.member_head
                     == ring_advance::<C>(before.member_head, *count as nat)
@@ -5652,6 +5653,193 @@ impl<const C: usize> Scheduler<C> {
         Ok(())
     }
 
+    proof fn completion_success_refinement(
+        &self,
+        before: &Self,
+        completion_epoch: u64,
+        before_permits: Seq<Option<KvQuiescencePermit>>,
+        permits: Seq<Option<KvQuiescencePermit>>,
+        count: usize,
+    )
+        requires
+            before.basic_invariant(),
+            before.batch_len > 0,
+            completion_expected_error::<C>(before, completion_epoch, before_permits).is_none(),
+            completion_epoch == before.completed + 1,
+            count == before.batch_ring@[before.batch_head as int].member_count,
+            count <= C,
+            count <= before_permits.len(),
+            self.slots@ == before.slots@,
+            self.free_ring@ == before.free_ring@,
+            self.free_head == before.free_head,
+            self.free_len == before.free_len,
+            self.reclaim_ring@ == before.reclaim_ring@,
+            self.reclaim_head == before.reclaim_head,
+            self.reclaim_len == before.reclaim_len,
+            self.member_ring@ == before.member_ring@,
+            self.member_head == ring_advance::<C>(before.member_head, count as nat),
+            self.member_len + count == before.member_len,
+            self.batch_ring@ == before.batch_ring@,
+            self.batch_head == next_position::<C>(before.batch_head),
+            self.batch_len + 1 == before.batch_len,
+            self.cursor == before.cursor,
+            self.submitted == before.submitted,
+            self.completed == completion_epoch,
+            self.live_count == before.live_count,
+            permits == completed_permits::<C>(
+                before_permits,
+                before.member_ring@,
+                before.member_head,
+                count as nat,
+                completion_epoch,
+            ),
+        ensures self.completion_refines(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                &Ok(count),
+            ),
+    {
+        before.pending_batch_facts();
+        completed_permits_facts::<C>(
+            before_permits,
+            before.member_ring@,
+            before.member_head,
+            count as nat,
+            completion_epoch,
+        );
+        reveal(Scheduler::completion_refines);
+        reveal(Scheduler::slot_model);
+    }
+
+    proof fn completion_completed_batch_from_refinement(
+        &self,
+        before: &Self,
+        completion_epoch: u64,
+        before_permits: Seq<Option<KvQuiescencePermit>>,
+        permits: Seq<Option<KvQuiescencePermit>>,
+        count: usize,
+    )
+        requires
+            before.basic_invariant(),
+            self.completion_refines(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                &Ok(count),
+            ),
+        ensures self.completed_batch_refines(before, permits, count),
+    {
+        before.pending_batch_facts();
+        reveal(Scheduler::completion_refines);
+        assert forall|offset: int| 0 <= offset < count implies match
+            #[trigger] permits[offset]
+        {
+            Some(permit) => {
+                let request = permit.request_spec();
+                &&& request.slot_spec() < C
+                &&& before.pending_member_spec(offset as usize) == Some(request)
+                &&& self.state_spec(request) == before.state_spec(request)
+                &&& (self.state_spec(request) == Some(RequestState::InFlight)
+                    || self.state_spec(request) == Some(RequestState::Retiring))
+                &&& (self.state_spec(request) == Some(RequestState::Retiring) ==>
+                    self.detachment_ready(request, permit.origin_spec()))
+            }
+            None => false,
+        } by {
+            let request = before.member_ring@[
+                ring_position::<C>(before.member_head, offset as nat)
+            ];
+            assert(permits[offset].is_some());
+            assert(permits[offset].unwrap().request_spec() == request);
+            before.pending_member_facts(offset as usize);
+            assert(request.slot_spec() < C);
+            assert(self.slots@[request.slot_spec() as int]
+                == before.slots@[request.slot_spec() as int]);
+            assert(before.slots@[request.slot_spec() as int].generation
+                == request.generation_spec());
+            assert(before.slots@[request.slot_spec() as int].state
+                == RequestState::InFlight
+                || before.slots@[request.slot_spec() as int].state
+                    == RequestState::Retiring);
+            reveal(Scheduler::pending_member_spec);
+            reveal(Scheduler::state_spec);
+            reveal(Scheduler::slot_model);
+            reveal(Scheduler::detachment_ready_inner);
+            reveal(Scheduler::slot_generation_spec);
+        }
+        assert forall|left: int, right: int| 0 <= left < right < count implies
+            permits[left].unwrap().request_spec().slot_spec()
+                != permits[right].unwrap().request_spec().slot_spec()
+        by {
+            assert(request_ring_slots_differ::<C>(
+                before.member_ring@,
+                before.member_head,
+                left,
+                right,
+            ));
+            reveal(request_ring_slots_differ);
+        }
+        reveal(Scheduler::completed_batch_refines);
+        reveal(Scheduler::pending_batch_member_count_spec);
+    }
+
+    proof fn completion_public_from_refinement(
+        &self,
+        before: &Self,
+        completion_epoch: u64,
+        before_permits: Seq<Option<KvQuiescencePermit>>,
+        permits: Seq<Option<KvQuiescencePermit>>,
+        count: usize,
+    )
+        requires
+            before.basic_invariant(),
+            self.completion_refines(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                &Ok(count),
+            ),
+            self.completed_batch_refines(before, permits, count),
+        ensures
+            self.identity_frame(before),
+            count == before.pending_batch_member_count_spec(),
+            self.completed_epoch_spec().value == completion_epoch,
+            count <= permits.len(),
+            forall|offset: int| count <= offset < permits.len() ==>
+                #[trigger] permits[offset] == before_permits[offset],
+            forall|offset: int| 0 <= offset < count ==> match
+                #[trigger] permits[offset]
+            {
+                Some(permit) => {
+                    let request = permit.request_spec();
+                    &&& request.slot_spec() < C
+                    &&& before.pending_member_spec(offset as usize) == Some(request)
+                    &&& self.state_spec(request) == before.state_spec(request)
+                    &&& (self.state_spec(request) == Some(RequestState::InFlight)
+                        || self.state_spec(request) == Some(RequestState::Retiring))
+                    &&& (self.slot_model(request.slot_spec() as int).state
+                        == RequestState::Retiring ==>
+                            self.detachment_ready(request, permit.origin_spec()))
+                }
+                None => false,
+            },
+    {
+        reveal(Scheduler::completion_refines);
+        reveal(Scheduler::identity_frame);
+        reveal(Scheduler::slot_generation_spec);
+        reveal(Scheduler::slot_is_live_spec);
+        reveal(Scheduler::pending_batch_member_count_spec);
+        reveal(Scheduler::pending_member_spec);
+        reveal(Scheduler::completed_epoch_spec);
+        reveal(Scheduler::state_spec);
+        reveal(Scheduler::slot_model);
+        reveal(Scheduler::detachment_ready_inner);
+    }
+
     proof fn completion_success_postconditions(
         &self,
         before: &Self,
@@ -5724,25 +5912,177 @@ impl<const C: usize> Scheduler<C> {
                 None => false,
             },
     {
-        before.pending_batch_facts();
-        completed_permits_facts::<C>(
-            before_permits,
-            before.member_ring@,
-            before.member_head,
-            count as nat,
+        self.completion_success_refinement(
+            before,
             completion_epoch,
+            before_permits,
+            permits,
+            count,
         );
+        self.completion_completed_batch_from_refinement(
+            before,
+            completion_epoch,
+            before_permits,
+            permits,
+            count,
+        );
+        self.completion_public_from_refinement(
+            before,
+            completion_epoch,
+            before_permits,
+            permits,
+            count,
+        );
+    }
+
+    proof fn completion_preserves_scalar(
+        &self,
+        before: &Self,
+        completion_epoch: u64,
+        before_permits: Seq<Option<KvQuiescencePermit>>,
+        permits: Seq<Option<KvQuiescencePermit>>,
+        count: usize,
+    )
+        requires
+            before.basic_invariant(),
+            self.completion_refines(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                &Ok(count),
+            ),
+        ensures self.scalar_invariant(),
+    {
+        before.basic_implies_scalar();
+        before.basic_implies_batch_ring();
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::batch_ring_invariant);
         reveal(Scheduler::completion_refines);
-        reveal(Scheduler::completed_batch_refines);
-        reveal(Scheduler::identity_frame);
-        reveal(Scheduler::slot_generation_spec);
-        reveal(Scheduler::slot_is_live_spec);
-        reveal(Scheduler::pending_batch_member_count_spec);
-        reveal(Scheduler::pending_member_spec);
-        reveal(Scheduler::completed_epoch_spec);
-        reveal(Scheduler::state_spec);
-        reveal(Scheduler::slot_model);
-        reveal(Scheduler::detachment_ready_inner);
+    }
+
+    proof fn completion_preserves_slots(
+        &self,
+        before: &Self,
+        completion_epoch: u64,
+        before_permits: Seq<Option<KvQuiescencePermit>>,
+        permits: Seq<Option<KvQuiescencePermit>>,
+        count: usize,
+    )
+        requires
+            before.basic_invariant(),
+            self.completion_refines(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                &Ok(count),
+            ),
+        ensures self.slot_invariant(),
+    {
+        before.basic_implies_slots();
+        reveal(Scheduler::slot_invariant);
+        reveal(Scheduler::completion_refines);
+    }
+
+    proof fn completion_preserves_free_ring(
+        &self,
+        before: &Self,
+        completion_epoch: u64,
+        before_permits: Seq<Option<KvQuiescencePermit>>,
+        permits: Seq<Option<KvQuiescencePermit>>,
+        count: usize,
+    )
+        requires
+            before.basic_invariant(),
+            self.completion_refines(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                &Ok(count),
+            ),
+        ensures self.free_ring_invariant(),
+    {
+        before.basic_implies_free_ring();
+        reveal(Scheduler::free_ring_invariant);
+        reveal(Scheduler::completion_refines);
+    }
+
+    proof fn completion_preserves_reclaim_ring(
+        &self,
+        before: &Self,
+        completion_epoch: u64,
+        before_permits: Seq<Option<KvQuiescencePermit>>,
+        permits: Seq<Option<KvQuiescencePermit>>,
+        count: usize,
+    )
+        requires
+            before.basic_invariant(),
+            self.completion_refines(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                &Ok(count),
+            ),
+        ensures self.reclaim_ring_invariant(),
+    {
+        before.basic_implies_reclaim_ring();
+        reveal(Scheduler::reclaim_ring_invariant);
+        reveal(Scheduler::completion_refines);
+    }
+
+    proof fn completion_preserves_member_ring(
+        &self,
+        before: &Self,
+        completion_epoch: u64,
+        before_permits: Seq<Option<KvQuiescencePermit>>,
+        permits: Seq<Option<KvQuiescencePermit>>,
+        count: usize,
+    )
+        requires
+            before.basic_invariant(),
+            self.completion_refines(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                &Ok(count),
+            ),
+        ensures self.member_ring_invariant(),
+    {
+        before.basic_implies_member_ring();
+        reveal(Scheduler::member_ring_invariant);
+        reveal(Scheduler::member_entries_invariant);
+        reveal(Scheduler::member_entry_valid);
+        reveal(Scheduler::member_distinct_invariant);
+        reveal(Scheduler::member_membership_invariant);
+        reveal(Scheduler::completion_refines);
+    }
+
+    proof fn completion_preserves_batch_ring(
+        &self,
+        before: &Self,
+        completion_epoch: u64,
+        before_permits: Seq<Option<KvQuiescencePermit>>,
+        permits: Seq<Option<KvQuiescencePermit>>,
+        count: usize,
+    )
+        requires
+            before.basic_invariant(),
+            self.completion_refines(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                &Ok(count),
+            ),
+        ensures self.batch_ring_invariant(),
+    {
+        before.basic_implies_batch_ring();
+        reveal(Scheduler::batch_ring_invariant);
+        reveal(Scheduler::completion_refines);
     }
 
     proof fn completion_success_preserves_basic(
@@ -5764,18 +6104,25 @@ impl<const C: usize> Scheduler<C> {
             ),
         ensures self.basic_invariant(),
     {
+        self.completion_preserves_scalar(
+            before, completion_epoch, before_permits, permits, count,
+        );
+        self.completion_preserves_slots(
+            before, completion_epoch, before_permits, permits, count,
+        );
+        self.completion_preserves_free_ring(
+            before, completion_epoch, before_permits, permits, count,
+        );
+        self.completion_preserves_reclaim_ring(
+            before, completion_epoch, before_permits, permits, count,
+        );
+        self.completion_preserves_member_ring(
+            before, completion_epoch, before_permits, permits, count,
+        );
+        self.completion_preserves_batch_ring(
+            before, completion_epoch, before_permits, permits, count,
+        );
         reveal(Scheduler::basic_invariant);
-        reveal(Scheduler::scalar_invariant);
-        reveal(Scheduler::slot_invariant);
-        reveal(Scheduler::free_ring_invariant);
-        reveal(Scheduler::reclaim_ring_invariant);
-        reveal(Scheduler::member_ring_invariant);
-        reveal(Scheduler::member_entries_invariant);
-        reveal(Scheduler::member_entry_valid);
-        reveal(Scheduler::member_distinct_invariant);
-        reveal(Scheduler::member_membership_invariant);
-        reveal(Scheduler::batch_ring_invariant);
-        reveal(Scheduler::completion_refines);
     }
 
     /// Consumes exact quiescence evidence and emits one linear KV permit per
