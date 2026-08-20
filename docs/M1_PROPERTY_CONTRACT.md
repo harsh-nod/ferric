@@ -14,8 +14,8 @@ qualification must close; it is never a report of current evidence.
 
 The roster distinguishes the inherited M0 `fe2o3-proof-contracts` authority at
 commit `a6fa86b5ccf8f0438925cfec8f48a5d713874da3` from the reviewed M1 upstream
-base at commit `5d095d5663f7d158385603f867f001d1eb22d539`, tree
-`f6a187be6365fb8e2cb12671d163cee41af3b24f`. The older M0 pin does not own or
+integration base at commit `967d996781617e9817002304feb24fc5ac46dc05`, tree
+`cebc7399958e244152b7f4bac23aee2c0de1a282`. The older M0 pin does not own or
 describe future M1 compiler, AQL, KFD, or service-host implementation.
 
 ## Target Assurance Roster
