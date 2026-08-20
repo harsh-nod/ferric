@@ -166,6 +166,16 @@ impl CompletionFailure {
     }
 }
 
+fn slot_index_to_u32(slot_index: usize) -> (result: u32)
+    requires slot_index < MAX_REQUEST_SLOTS,
+    ensures result as int == slot_index as int,
+{
+    let Ok(result) = u32::try_from(slot_index) else {
+        return u32::MAX;
+    };
+    result
+}
+
 /// Fixed-capacity, allocation-free-after-construction request lifecycle.
 ///
 /// `C` is part of the generated runner. Every ring is embedded in the value;
@@ -4722,7 +4732,7 @@ impl<const C: usize> Scheduler<C> {
         self.slots[slot_index].state = RequestState::Ready;
         self.slots[slot_index].in_free_ring = false;
         self.live_count += 1;
-        let request = RequestId::new(slot_index as u32, slot.generation);
+        let request = RequestId::new(slot_index_to_u32(slot_index), slot.generation);
         assert(self.admitted_slot_refines(old(self), request)) by {
             reveal(Scheduler::admitted_slot_refines);
             reveal(Scheduler::slots_frame_except);
@@ -4953,7 +4963,7 @@ impl<const C: usize> Scheduler<C> {
             let slot = self.slots[slot_index];
             if slot.state == RequestState::Ready {
                 let ghost previous_chosen = chosen;
-                let handle = RequestId::new(slot_index as u32, slot.generation);
+                let handle = RequestId::new(slot_index_to_u32(slot_index), slot.generation);
                 output[selected] = handle;
                 self.member_ring[member_tail] = handle;
                 member_tail = advance::<C>(member_tail);
@@ -5232,7 +5242,7 @@ impl<const C: usize> Scheduler<C> {
             reveal(Scheduler::retiring_permit_updates);
             reveal(Scheduler::retiring_reclaim_updates);
         }
-        let request = RequestId::new(slot_index as u32, slot.generation);
+        let request = RequestId::new(slot_index_to_u32(slot_index), slot.generation);
         let origin = if slot.last_quiescent_epoch == NO_EPOCH {
             KvQuiescenceOrigin::NeverSubmitted
         } else {
