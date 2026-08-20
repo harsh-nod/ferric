@@ -23,15 +23,25 @@ def digest(path: Path) -> str:
 
 
 def source_paths(repo: Path) -> list[Path]:
-    paths = [repo / "Cargo.toml", repo / "Cargo.lock", repo / "rust-toolchain.toml"]
-    for root in (repo / "crates", repo / "proofs"):
-        paths.extend(
-            path
-            for path in root.rglob("*")
-            if path.is_file()
-            and "__pycache__" not in path.parts
-            and path.suffix not in {".pyc", ".receipt"}
-        )
+    paths = [
+        repo / "Cargo.toml",
+        repo / "Cargo.lock",
+        repo / "rust-toolchain.toml",
+        repo / ".github/workflows/verus.yml",
+    ]
+    for root in (repo / "crates", repo / "proofs", repo / "docs"):
+        for path in root.rglob("*"):
+            if path.is_symlink():
+                fail(f"source closure contains a symlink: {path}")
+            if path.is_dir():
+                if path.name in {"__pycache__", "target"}:
+                    fail(f"source closure contains a generated directory: {path}")
+                continue
+            if not path.is_file():
+                fail(f"source closure contains a special entry: {path}")
+            if path.suffix in {".pyc", ".receipt"}:
+                fail(f"source closure contains a forbidden generated input: {path}")
+            paths.append(path)
     paths = sorted(set(paths), key=lambda path: path.relative_to(repo).as_posix())
     if any(not path.is_file() for path in paths):
         fail("source closure contains a missing file")

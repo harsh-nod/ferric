@@ -208,13 +208,20 @@ def scan(path: Path, blocks_only: bool) -> None:
         raise ScanError(f"forbidden proof identifier '{forbidden[0]}'")
     trust_code = re.sub(r"\bfn\s+(?:admit|assume)\s*(?=\()", "fn", code)
     trust_calls = sorted(
-        set(re.findall(r"(?<![A-Za-z0-9_.:])\b(admit|assume)\s*\(", trust_code))
+        set(re.findall(r"\b(admit|assume)\s*\(", trust_code))
     )
     if trust_calls:
         raise ScanError(f"forbidden trust call '{trust_calls[0]}'")
     verifier_attributes = set(
         re.findall(
             r"#\s*!?\s*\[\s*verifier\s*::\s*([A-Za-z_][A-Za-z0-9_]*)\b",
+            code,
+        )
+    )
+    verifier_attributes.update(
+        re.findall(
+            r"#\s*!?\s*\[\s*(?:verifier|verus_verify)\s*\(\s*"
+            r"([A-Za-z_][A-Za-z0-9_]*)\b",
             code,
         )
     )

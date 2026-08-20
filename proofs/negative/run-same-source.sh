@@ -125,7 +125,7 @@ while IFS='|' read -r name package mutator marker extra; do
     copy="$scratch/$name"
     copy_source "$copy"
     mutation_marker="$output/$name.mutation"
-    python3 "$mutation" "$copy" >"$mutation_marker"
+    python3 -I "$mutation" "$copy" >"$mutation_marker"
     grep -F 'MUTATED_SOURCE=' "$mutation_marker" >/dev/null || {
         printf 'FAIL: %s mutator did not attest source mutation\n' "$name" >&2
         exit 1

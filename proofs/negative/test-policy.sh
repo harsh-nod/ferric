@@ -2,166 +2,285 @@
 set -eu
 
 usage() {
-    printf 'usage: %s REPO METADATA_JSON OUTPUT_DIR\n' "$0" >&2
+    printf 'usage: %s REPO METADATA_JSON OUTPUT_DIR SOURCE_GATE\n' "$0" >&2
     exit 2
 }
 
-[ "$#" -eq 3 ] || usage
+[ "$#" -eq 4 ] || usage
 repo=$(CDPATH='' cd -- "$1" && pwd)
 metadata=$2
 output=$3
+source_gate=$4
 [ -f "$metadata" ] || {
     printf 'FAIL: Cargo metadata is unavailable: %s\n' "$metadata" >&2
     exit 1
 }
+[ -x "$source_gate" ] || {
+    printf 'FAIL: source gate is unavailable: %s\n' "$source_gate" >&2
+    exit 1
+}
 mkdir -p "$output"
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/ferric-policy-negative.XXXXXX")
-trap 'rm -rf "$scratch"' EXIT HUP INT TERM
+trap 'chmod -R u+w "$scratch" 2>/dev/null || true; rm -rf "$scratch"' EXIT HUP INT TERM
 
-python3 - "$repo/proofs/VERIFIED_MODULES" "$scratch/missing-module.manifest" <<'PY'
+expect_rejected() {
+    name=$1
+    expected=$2
+    shift 2
+    transcript="$output/$name.transcript"
+    printf 'FIXTURE=%s\n' "$name" >"$transcript"
+    set +e
+    "$@" >>"$transcript" 2>&1
+    status=$?
+    set -e
+    if [ "$status" -eq 0 ] || ! grep -F "$expected" "$transcript" >/dev/null; then
+        printf 'FAIL: %s was not rejected with %s\n' "$name" "$expected" >&2
+        cat "$transcript" >&2
+        exit 1
+    fi
+}
+
+new_copy() {
+    name=$1
+    destination="$scratch/$name"
+    mkdir -p "$destination"
+    cp -a "$repo/Cargo.toml" "$repo/Cargo.lock" "$repo/rust-toolchain.toml" "$destination/"
+    cp -a "$repo/crates" "$destination/"
+    mkdir -p "$destination/proofs"
+    cp -a "$repo/proofs/UNVERIFIED_BODIES" "$destination/proofs/"
+    chmod -R u+w "$destination"
+    printf '%s\n' "$destination"
+}
+
+write_metadata() {
+    source_repo=$1
+    destination=$2
+    (
+        cd "$source_repo"
+        cargo metadata --locked --no-deps --format-version 1
+    ) >"$destination"
+}
+
+python3 -I - "$repo/proofs/VERIFIED_MODULES" "$scratch/missing-record.manifest" <<'PY'
 from pathlib import Path
 import sys
 
-source = Path(sys.argv[1]).read_text(encoding="utf-8").splitlines()
-output = [source[0]]
+lines = Path(sys.argv[1]).read_text(encoding="utf-8").splitlines()
 removed = False
-skip = False
-for line in source[1:]:
-    if line.startswith("module="):
-        if not removed:
-            removed = True
-            skip = True
-            continue
-        skip = False
-    if not skip:
-        output.append(line)
+output = []
+for line in lines:
+    if not removed and line.startswith(("module=", "verified=", "unverified=")):
+        removed = True
+        continue
+    output.append(line)
 if not removed:
-    raise SystemExit("coverage manifest contains no removable module")
+    raise SystemExit("coverage manifest contains no removable record")
 Path(sys.argv[2]).write_text("\n".join(output) + "\n", encoding="utf-8")
 PY
-set +e
-printf 'FIXTURE=removed-manifest-module\n' >"$output/coverage-missing-module.transcript"
-python3 "$repo/proofs/check-coverage.py" \
-    "$repo" "$scratch/missing-module.manifest" "$metadata" \
-    >>"$output/coverage-missing-module.transcript" 2>&1
-status=$?
-set -e
-if [ "$status" -eq 0 ] || ! grep -F 'source closure drifted' \
-    "$output/coverage-missing-module.transcript" >/dev/null; then
-    printf 'FAIL: missing coverage module was not rejected\n' >&2
-    exit 1
-fi
+expect_rejected coverage-missing-record 'compiler-rooted proof coverage manifest drifted' \
+    "$source_gate" "$repo" "$scratch/missing-record.manifest" "$metadata"
 
-copy="$scratch/source-copy"
-mkdir -p "$copy"
-cp -a "$repo/crates" "$copy/"
-chmod -R u+w "$copy"
-python3 - "$metadata" "$repo" "$copy" "$scratch/copied-metadata.json" <<'PY'
-import json
-from pathlib import Path
-import sys
+sed '/^verified=ferric-engine|/d' "$repo/proofs/VERIFIED_MODULES" \
+    >"$scratch/zero-direct.manifest"
+: >"$scratch/empty-verus.transcript"
+expect_rejected transcript-zero-direct-coverage 'has no admitted directly verified executable bodies' \
+    python3 -I "$repo/proofs/check-transcript.py" ferric-engine ferric_engine \
+    "$scratch/zero-direct.manifest" "$scratch/empty-verus.transcript" \
+    "$scratch/zero-direct.counts" "$(sed -n '1p' "$repo/proofs/verus/VERUS_VERSION")"
 
-metadata = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-old = str(Path(sys.argv[2]).resolve())
-new = str(Path(sys.argv[3]).resolve())
-for package in metadata["packages"]:
-    for target in package["targets"]:
-        source = target["src_path"]
-        if source.startswith(old + "/crates/"):
-            target["src_path"] = new + source[len(old):]
-Path(sys.argv[4]).write_text(json.dumps(metadata), encoding="utf-8")
-PY
-printf 'pub fn escaped_production_body() {}\n' >"$copy/crates/ferric-spec/src/unlisted_production.rs"
-set +e
-printf 'FIXTURE=created-unlisted-production-source\n' >"$output/coverage-unlisted-source.transcript"
-python3 "$repo/proofs/check-coverage.py" \
-    "$copy" "$repo/proofs/VERIFIED_MODULES" "$scratch/copied-metadata.json" \
-    >>"$output/coverage-unlisted-source.transcript" 2>&1
-status=$?
-set -e
-if [ "$status" -eq 0 ] || ! grep -F 'source closure drifted' \
-    "$output/coverage-unlisted-source.transcript" >/dev/null; then
-    printf 'FAIL: unlisted production source was not rejected\n' >&2
-    exit 1
-fi
+# Complex Rust syntax must be classified structurally. A function pointer is a type,
+# not an executable body, while generic free and trait-default functions are bodies.
+complex=$(new_copy complex-syntax)
+cat >>"$complex/crates/ferric-spec/src/configuration.rs" <<'RS'
 
-scanner_source="$scratch/identity.rs"
-cp "$repo/crates/ferric-spec/src/identity.rs" "$scanner_source"
-chmod u+w "$scanner_source"
-python3 - "$scanner_source" 'external' <<'PY'
-from pathlib import Path
-import sys
+pub type CallbackProbe = fn(u32) -> u32;
 
-path = Path(sys.argv[1])
-source = path.read_text(encoding="utf-8")
-anchor = "    pub fn is_present(&self)"
-replacement = "    #[verifier :: external]\n" + anchor
-if source.count(anchor) != 1:
-    raise SystemExit("external scanner mutation anchor drifted")
-path.write_text(source.replace(anchor, replacement), encoding="utf-8")
-PY
-set +e
-printf 'FIXTURE=inserted-verifier-external-attribute\n' >"$output/scanner-external.transcript"
-python3 "$repo/proofs/check-source.py" --verus-blocks "$scanner_source" \
-    >>"$output/scanner-external.transcript" 2>&1
-status=$?
-set -e
-if [ "$status" -eq 0 ] || ! grep -F "forbidden verifier attribute 'external'" \
-    "$output/scanner-external.transcript" >/dev/null; then
-    printf 'FAIL: verifier::external scanner mutation was not rejected\n' >&2
-    exit 1
-fi
-
-cp "$repo/crates/ferric-spec/src/identity.rs" "$scanner_source"
-chmod u+w "$scanner_source"
-python3 - "$scanner_source" <<'PY'
-from pathlib import Path
-import sys
-
-path = Path(sys.argv[1])
-source = path.read_text(encoding="utf-8")
-anchor = "    pub fn is_present(&self)"
-replacement = "    #[verifier::trusted]\n" + anchor
-if source.count(anchor) != 1:
-    raise SystemExit("trusted scanner mutation anchor drifted")
-path.write_text(source.replace(anchor, replacement), encoding="utf-8")
-PY
-set +e
-printf 'FIXTURE=inserted-verifier-trusted-attribute\n' >"$output/scanner-trusted.transcript"
-python3 "$repo/proofs/check-source.py" --verus-blocks "$scanner_source" \
-    >>"$output/scanner-trusted.transcript" 2>&1
-status=$?
-set -e
-if [ "$status" -eq 0 ] || ! grep -F "forbidden verifier attribute 'trusted'" \
-    "$output/scanner-trusted.transcript" >/dev/null; then
-    printf 'FAIL: verifier::trusted scanner mutation was not rejected\n' >&2
-    exit 1
-fi
-
-boundary_log="$output/scanner-unverified-boundary.transcript"
+pub fn generic_probe<T, U, const N: usize>(value: T) -> Option<U>
+where
+    T: Into<U>,
+    U: Copy,
 {
-    grep -F 'module=ferric-spec|crates/ferric-spec/src/configuration.rs' \
-        "$repo/proofs/VERIFIED_MODULES"
-    if grep -E '^verified=crates/ferric-spec/src/configuration[.]rs[|]' \
-        "$repo/proofs/VERIFIED_MODULES"; then
-        printf 'FAIL: configuration.rs unexpectedly enters the admitted Verus surface\n' >&2
-        exit 1
-    fi
-    verified_sources="$scratch/verified-sources"
-    sed -n 's/^verified=\([^|]*\)|.*/\1/p' "$repo/proofs/VERIFIED_MODULES" \
-        | LC_ALL=C sort -u >"$verified_sources"
-    if grep -F 'crates/ferric-spec/src/configuration.rs' "$verified_sources"; then
-        printf 'FAIL: unverified-only source entered the Verus-block scanner set\n' >&2
-        exit 1
-    fi
-    set --
-    while IFS= read -r source; do
-        set -- "$@" "$repo/$source"
-    done <"$verified_sources"
-    python3 "$repo/proofs/check-source.py" --verus-blocks "$@"
-    printf 'PASS: unverified-only modules remain closure-accounted outside the proof scanner\n'
-} >"$boundary_log" 2>&1
+    let _ = N;
+    Some(value.into())
+}
 
-printf 'PASS: omitted module and unlisted production source fail coverage\n'
-printf 'PASS: external and trusted verifier attributes fail lexical admission\n'
-printf 'PASS: unverified-only module boundary is explicit and scanner-safe\n'
+pub trait DefaultProbe {
+    fn default_probe<T>(&self, callback: fn(T) -> T, value: T) -> T
+    where
+        T: Copy,
+    {
+        callback(value)
+    }
+}
+RS
+cat >>"$complex/proofs/UNVERIFIED_BODIES" <<'ADMISSIONS'
+unverified=ferric-spec|crates/ferric-spec/src/configuration.rs|ferric_spec::configuration::DefaultProbe::default_probe|pending-verus|hostile-parser-generic-fixture
+unverified=ferric-spec|crates/ferric-spec/src/configuration.rs|ferric_spec::configuration::generic_probe|pending-verus|hostile-parser-generic-fixture
+ADMISSIONS
+write_metadata "$complex" "$scratch/complex.metadata"
+"$source_gate" --generate "$complex" "$scratch/complex.metadata" "$scratch/complex.manifest"
+grep -F 'ferric_spec::configuration::generic_probe' "$scratch/complex.manifest" >/dev/null || {
+    printf 'FAIL: generic executable body was not classified\n' >&2
+    exit 1
+}
+grep -F 'ferric_spec::configuration::DefaultProbe::default_probe' \
+    "$scratch/complex.manifest" >/dev/null || {
+    printf 'FAIL: trait-default executable body was not classified\n' >&2
+    exit 1
+}
+if grep -F 'CallbackProbe' "$scratch/complex.manifest" >/dev/null; then
+    printf 'FAIL: function pointer type was misclassified as an executable body\n' >&2
+    exit 1
+fi
+expect_rejected coverage-generic-drift 'compiler-rooted proof coverage manifest drifted' \
+    "$source_gate" "$complex" "$repo/proofs/VERIFIED_MODULES" "$scratch/complex.metadata"
+
+outside=$(new_copy unadmitted-outside-verus)
+printf '\npub fn unadmitted_production_body() {}\n' \
+    >>"$outside/crates/ferric-spec/src/configuration.rs"
+write_metadata "$outside" "$scratch/outside.metadata"
+expect_rejected parser-unadmitted-outside-verus 'unverified executable body admission drifted' \
+    "$source_gate" --generate "$outside" "$scratch/outside.metadata" "$scratch/outside.manifest"
+
+solver=$(new_copy solver-attributes)
+cat >>"$solver/crates/ferric-spec/src/identity.rs" <<'RS'
+
+verus! {
+closed spec fn trigger_attribute_probe(values: Seq<u8>, position: int) -> bool {
+    #[trigger] values[position] == values[position]
+}
+
+#[verifier::bit_vector]
+proof fn bit_vector_attribute_probe(value: u8)
+    ensures value & 0_u8 == 0_u8,
+{}
+}
+RS
+write_metadata "$solver" "$scratch/solver.metadata"
+"$source_gate" "$solver" "$repo/proofs/VERIFIED_MODULES" "$scratch/solver.metadata"
+
+constructor=$(new_copy admitted-allocation-constructor)
+cat >>"$constructor/crates/ferric-engine/src/cache.rs" <<'RS'
+
+verus! {
+impl KvPool {
+    fn new_bounded() {
+        let _storage = vec![0_u8; 1];
+    }
+}
+}
+RS
+write_metadata "$constructor" "$scratch/constructor.metadata"
+"$source_gate" --generate "$constructor" "$scratch/constructor.metadata" \
+    "$scratch/constructor.manifest"
+grep -F 'ferric_engine::cache::KvPool::new_bounded' \
+    "$scratch/constructor.manifest" >/dev/null || {
+    printf 'FAIL: exact allocation constructor was not classified\n' >&2
+    exit 1
+}
+
+allocation=$(new_copy transition-allocation)
+cat >>"$allocation/crates/ferric-engine/src/cache.rs" <<'RS'
+
+verus! {
+pub fn transition_allocation_probe() {
+    let mut values: Vec<u8> = Vec::new();
+    values.push(1);
+    values.reserve(1);
+    values.resize(2, 0);
+    values.extend([3_u8]);
+    let _cloned = values.clone();
+    let _copied = values.to_vec();
+    let _collected: Vec<u8> = values.collect();
+    let _boxed: Box<u8> = Box::new(1);
+    let _macro_values = vec![1_u8];
+}
+}
+RS
+write_metadata "$allocation" "$scratch/allocation.metadata"
+expect_rejected parser-transition-allocation 'violates no-transition-allocation policy' \
+    "$source_gate" --generate "$allocation" "$scratch/allocation.metadata" \
+    "$scratch/allocation.manifest"
+for marker in 'Vec::new' 'Box::new' 'method is forbidden: push' \
+    'method is forbidden: reserve' 'method is forbidden: resize' \
+    'method is forbidden: extend' 'method is forbidden: clone' \
+    'method is forbidden: to_vec' 'method is forbidden: collect' \
+    'vec! allocation is forbidden' 'Box type is forbidden'; do
+    grep -F "$marker" "$output/parser-transition-allocation.transcript" >/dev/null || {
+        printf 'FAIL: transition allocation fixture did not exercise %s\n' "$marker" >&2
+        exit 1
+    }
+done
+
+raw=$(new_copy raw-identifier)
+printf '\npub fn r#match() {}\n' >>"$raw/crates/ferric-spec/src/configuration.rs"
+write_metadata "$raw" "$scratch/raw.metadata"
+expect_rejected parser-raw-identifier 'raw identifier is forbidden' \
+    "$source_gate" --generate "$raw" "$scratch/raw.metadata" "$scratch/raw.manifest"
+
+macro=$(new_copy item-macro)
+cat >>"$macro/crates/ferric-spec/src/configuration.rs" <<'RS'
+
+macro_rules! generated_body {
+    () => { pub fn macro_generated_probe() {} };
+}
+generated_body!();
+RS
+write_metadata "$macro" "$scratch/macro.metadata"
+expect_rejected parser-item-macro 'item macro invocation is forbidden' \
+    "$source_gate" --generate "$macro" "$scratch/macro.metadata" "$scratch/macro.manifest"
+
+orphan=$(new_copy orphan-source)
+printf 'pub fn orphan_probe() {}\n' >"$orphan/crates/ferric-spec/src/orphan_probe.rs"
+write_metadata "$orphan" "$scratch/orphan.metadata"
+expect_rejected parser-orphan-source 'contains unreachable Rust source' \
+    "$source_gate" --generate "$orphan" "$scratch/orphan.metadata" "$scratch/orphan.manifest"
+
+conditional=$(new_copy conditional-source)
+printf '\n#[cfg(any())]\npub fn conditionally_absent_probe() {}\n' \
+    >>"$conditional/crates/ferric-spec/src/configuration.rs"
+write_metadata "$conditional" "$scratch/conditional.metadata"
+expect_rejected parser-cfg 'conditional source is forbidden' \
+    "$source_gate" --generate "$conditional" "$scratch/conditional.metadata" \
+    "$scratch/conditional.manifest"
+
+trust=$(new_copy trust-attribute)
+cat >>"$trust/crates/ferric-spec/src/configuration.rs" <<'RS'
+
+#[verus_verify(external_body)]
+pub fn alternate_trust_attribute_probe() {}
+RS
+write_metadata "$trust" "$scratch/trust.metadata"
+expect_rejected parser-alternate-trust-attribute 'trust-expanding or unsupported verifier attribute: verus_verify' \
+    "$source_gate" --generate "$trust" "$scratch/trust.metadata" "$scratch/trust.manifest"
+
+assume=$(new_copy qualified-assume)
+cat >>"$assume/crates/ferric-spec/src/identity.rs" <<'RS'
+
+verus! {
+pub fn qualified_assume_probe() {
+    vstd::pervasive::assume(false);
+}
+}
+RS
+write_metadata "$assume" "$scratch/assume.metadata"
+expect_rejected parser-qualified-assume 'forbidden trust call' \
+    "$source_gate" --generate "$assume" "$scratch/assume.metadata" "$scratch/assume.manifest"
+
+optout=$(new_copy dependency-opt-out)
+python3 -I - "$optout/crates/ferric-spec/Cargo.toml" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+source = path.read_text(encoding="utf-8")
+needle = "[package.metadata.verus]\nverify = true"
+if source.count(needle) != 1:
+    raise SystemExit("dependency opt-out anchor drifted")
+path.write_text(source.replace(needle, "[package.metadata.verus]\nverify = false"), encoding="utf-8")
+PY
+write_metadata "$optout" "$scratch/optout.metadata"
+expect_rejected dependency-opt-out 'first-party workspace package is not opted into strict Verus' \
+    "$source_gate" --generate "$optout" "$scratch/optout.metadata" "$scratch/optout.manifest"
+
+printf 'PASS: compiler-rooted admission rejects stale, unparsed, conditional, trust-expanded, and opted-out source\n'

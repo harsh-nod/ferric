@@ -1,0 +1,21 @@
+[package]
+name = "ferric-source-gate"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.97.1"
+publish = false
+
+[workspace]
+
+[dependencies]
+proc-macro2 = "1.0.107"
+serde_json = "1.0.149"
+verus_syn = { git = "https://github.com/verus-lang/verus.git", rev = "b677dd5", features = ["visit"] }
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+too-many-lines = { level = "allow", priority = 1 }
