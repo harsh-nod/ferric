@@ -54,6 +54,11 @@ pub enum TransitionError {
 ///
 /// Production code does not call this function in its hot path. Its Verus
 /// postcondition is the abstract relation refined by the scheduler methods.
+///
+/// # Errors
+///
+/// Returns the exact [`TransitionError`] for a transition that is not enabled
+/// by the request's current state and phase.
 pub fn apply_request_transition(
     request: SequentialRequest,
     transition: RequestTransition,

@@ -30,6 +30,11 @@ pub enum CompletionOrderError {
 }
 
 /// Checks the single-authority, exact-next completion rule.
+///
+/// # Errors
+///
+/// Returns [`CompletionOrderError::Exhausted`] when no successor epoch exists,
+/// or [`CompletionOrderError::NotExactNext`] when `observed` is not that successor.
 pub fn check_exact_next(
     completed: CompletionEpoch,
     observed: CompletionEpoch,

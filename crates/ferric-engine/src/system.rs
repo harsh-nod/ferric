@@ -1,5 +1,6 @@
 //! Composed request lifecycle and KV ownership.
 
+#[allow(unused_imports)]
 use crate::cache::{KvError, KvPool, MAX_REQUEST_SLOTS};
 use crate::epoch::ExactCompletion;
 use crate::scheduler::{DispatchBatch, KvQuiescencePermit, Scheduler, SchedulerError};
@@ -14,6 +15,7 @@ verus! {
 pub enum EngineError {
     Faulted,
     CompletionResultCount { expected: usize, actual: usize },
+    RequestNotReady,
     Scheduler(SchedulerError),
     Kv(KvError),
     InvariantViolation,
@@ -104,6 +106,11 @@ impl<const C: usize> Engine<C> {
     }
 
     /// Constructs all request, ring, page, and completion-scratch storage.
+    ///
+    /// # Errors
+    ///
+    /// Returns the scheduler or KV constructor error when the requested bounds
+    /// cannot be represented by the fixed-capacity engine.
     pub fn new(
         page_count: u32,
         page_tokens: u32,
@@ -195,6 +202,12 @@ impl<const C: usize> Engine<C> {
         self.scheduler.completed_epoch()
     }
 
+    /// Admits one request generation into the scheduler and KV pool.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EngineError::Faulted`] after fail-stop, or the exact scheduler
+    /// or KV admission error.
     pub fn admit(&mut self) -> (result: Result<RequestId, EngineError>)
         requires old(self).well_formed(),
         ensures final(self).well_formed(),
@@ -212,6 +225,12 @@ impl<const C: usize> Engine<C> {
         Ok(request)
     }
 
+    /// Extends a live request with tentative logical KV tokens.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EngineError::Faulted`] after fail-stop, or the exact KV
+    /// capacity, identity, or context-bound error.
     pub fn append_tentative(
         &mut self,
         request: RequestId,
@@ -222,12 +241,21 @@ impl<const C: usize> Engine<C> {
     {
         reveal(Engine::well_formed);
         self.require_healthy()?;
+        if self.scheduler.state(request) != Some(RequestState::Ready) {
+            return Err(EngineError::RequestNotReady);
+        }
         match self.kv.append_tentative(request, token_count) {
             Ok(()) => Ok(()),
             Err(error) => Err(EngineError::Kv(error)),
         }
     }
 
+    /// Shares a page-aligned committed prefix between live requests.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EngineError::Faulted`] after fail-stop, or the exact KV
+    /// identity, alignment, target-state, or capacity error.
     pub fn share_committed_prefix(
         &mut self,
         source: RequestId,
@@ -239,6 +267,11 @@ impl<const C: usize> Engine<C> {
     {
         reveal(Engine::well_formed);
         self.require_healthy()?;
+        if self.scheduler.state(source) != Some(RequestState::Ready)
+            || self.scheduler.state(target) != Some(RequestState::Ready)
+        {
+            return Err(EngineError::RequestNotReady);
+        }
         match self
             .kv
             .share_committed_prefix(source, target, token_count)
@@ -248,6 +281,12 @@ impl<const C: usize> Engine<C> {
         }
     }
 
+    /// Validates that a logical KV range is initialized for a live request.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EngineError::Faulted`] after fail-stop, or the exact KV
+    /// identity or initialized-range error.
     pub fn validate_read(
         &self,
         request: RequestId,
@@ -265,6 +304,12 @@ impl<const C: usize> Engine<C> {
         }
     }
 
+    /// Moves a live request into terminal retirement.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EngineError::Faulted`] after fail-stop, or the exact scheduler
+    /// identity or lifecycle error.
     pub fn retire(&mut self, request: RequestId) -> (result: Result<(), EngineError>)
         requires old(self).well_formed(),
         ensures final(self).well_formed(),
@@ -277,6 +322,12 @@ impl<const C: usize> Engine<C> {
         }
     }
 
+    /// Reclaims one already-quiescent retired request, when available.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EngineError::Faulted`] after fail-stop. An internal authority,
+    /// KV, or scheduler mismatch also faults the engine and returns its error.
     pub fn reclaim_one(&mut self) -> (result: Result<Option<RequestId>, EngineError>)
         requires old(self).well_formed(),
         ensures final(self).well_formed(),
@@ -348,6 +399,12 @@ impl<const C: usize> Engine<C> {
         }
     }
 
+    /// Dispatches a deterministic ready batch into caller-owned storage.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EngineError::Faulted`] after fail-stop, or the exact scheduler
+    /// storage or epoch error.
     pub fn dispatch_ready(
         &mut self,
         output: &mut [RequestId],
@@ -369,6 +426,12 @@ impl<const C: usize> Engine<C> {
     /// completion authority is consumed. An internal generation-exhaustion or
     /// invariant failure after quiescence permanently faults the engine; no
     /// affected request becomes dispatchable or reusable.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`CompletionFailure`] for a rejected external result or an
+    /// internal fail-stop error. The exact completion authority is returned
+    /// only when it was not consumed.
     pub fn complete_exact(
         &mut self,
         completion: ExactCompletion,
@@ -656,7 +719,7 @@ impl<const C: usize> Engine<C> {
                     let ghost detached_request = detached.request_spec();
                     let reclaim_result = self.scheduler.reclaim_detached(detached);
                     match reclaim_result {
-                        Ok(reclaimed) => {
+                        Ok(_reclaimed) => {
                             assert(self.scheduler.detachment_ready_frame_except(
                                 &step_scheduler,
                                 detached_request.slot_spec(),
@@ -668,7 +731,7 @@ impl<const C: usize> Engine<C> {
                                 &&& self.scheduler.slot_generation_spec(slot)
                                     == self.kv.request_generation_by_slot_spec(slot)
                             } by {
-                                if slot == reclaimed.slot_spec() {
+                                if slot == _reclaimed.slot_spec() {
                                     assert(before_reclaim_scheduler.slot_is_live_spec(slot)
                                         == before_release_kv.request_live_by_slot_spec(slot));
                                     assert(before_reclaim_scheduler.slot_generation_spec(slot)
@@ -729,7 +792,7 @@ impl<const C: usize> Engine<C> {
                         }
                     }
                 }
-                Some(RequestState::Ready) | Some(RequestState::Vacant) | None => {
+                Some(RequestState::Ready | RequestState::Vacant) | None => {
                     self.faulted = true;
                     self.clear_permits();
                     return Err(CompletionFailure {
@@ -868,6 +931,61 @@ mod tests {
         assert!(failure.into_completion().is_some());
         assert_eq!(engine.completed_epoch(), CompletionEpoch::new(0));
         assert_eq!(engine.state(request), Some(RequestState::InFlight));
+    }
+
+    #[test]
+    fn in_flight_kv_mutation_is_rejected_transactionally() {
+        let mut engine = Engine::<2>::new(8, 4, 32).unwrap();
+        let request = engine.admit().unwrap();
+        engine.append_tentative(request, 1).unwrap();
+        let mut members = output::<2>();
+        engine.dispatch_ready(&mut members).unwrap().unwrap();
+
+        assert_eq!(
+            engine.append_tentative(request, 1),
+            Err(EngineError::RequestNotReady)
+        );
+        assert_eq!(engine.resident_tokens(request), Some(1));
+        assert_eq!(engine.committed_tokens(request), Some(0));
+        assert_eq!(engine.state(request), Some(RequestState::InFlight));
+    }
+
+    #[test]
+    fn prefix_share_rejects_in_flight_source_and_target() {
+        let mut engine = Engine::<2>::new(8, 4, 32).unwrap();
+        let source = engine.admit().unwrap();
+        let target = engine.admit().unwrap();
+        let mut member = output::<1>();
+
+        let source_batch = engine.dispatch_ready(&mut member).unwrap().unwrap();
+        assert_eq!(member[0], source);
+        assert_eq!(
+            engine.share_committed_prefix(source, target, 4),
+            Err(EngineError::RequestNotReady)
+        );
+        engine
+            .complete_exact(
+                ExactCompletion::from_contracted_hsa_quiescence(source_batch.epoch()),
+                &[0],
+            )
+            .unwrap();
+
+        let target_batch = engine.dispatch_ready(&mut member).unwrap().unwrap();
+        assert_eq!(member[0], target);
+        assert_eq!(
+            engine.share_committed_prefix(source, target, 4),
+            Err(EngineError::RequestNotReady)
+        );
+        assert_eq!(engine.state(source), Some(RequestState::Ready));
+        assert_eq!(engine.state(target), Some(RequestState::InFlight));
+        assert_eq!(engine.free_pages(), 8);
+
+        engine
+            .complete_exact(
+                ExactCompletion::from_contracted_hsa_quiescence(target_batch.epoch()),
+                &[0],
+            )
+            .unwrap();
     }
 
     #[test]
