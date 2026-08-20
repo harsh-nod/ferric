@@ -1075,7 +1075,9 @@ impl<const C: usize> Scheduler<C> {
 
     pub(crate) fn pending_batch_member_count(&self) -> (count: usize)
         requires self.basic_invariant(),
-        ensures count == self.pending_batch_member_count_spec(),
+        ensures
+            count == self.pending_batch_member_count_spec(),
+            count <= C,
     {
         reveal(Scheduler::basic_invariant);
         reveal(Scheduler::scalar_invariant);
@@ -1457,6 +1459,13 @@ impl<const C: usize> Scheduler<C> {
                 final(permits)@,
                 &result,
             ),
+            match result {
+                Ok(count) => {
+                    &&& count <= final(permits).len()
+                    &&& count == old(self).pending_batch_member_count_spec()
+                }
+                Err(_) => true,
+            },
     {
         reveal(Scheduler::basic_invariant);
         reveal(Scheduler::scalar_invariant);
@@ -1608,7 +1617,6 @@ impl<const C: usize> Scheduler<C> {
 
     /// Consumes cache-owned evidence for the exact completed speculative step
     /// before making the request dispatchable again.
-    #[verifier::spinoff_prover]
     pub(crate) fn accept_finalized(
         &mut self,
         finalized: KvFinalizedRequest,
