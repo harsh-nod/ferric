@@ -22,10 +22,17 @@ impl PageId {
     const EMPTY: Self = Self { index: 0, generation: 0 };
 
     #[must_use]
-    pub fn index(self) -> u32 { self.index }
+    pub fn index(self) -> (index: u32)
+        ensures index == self.index_spec(),
+    { self.index }
 
     #[must_use]
-    pub fn generation(self) -> u32 { self.generation }
+    pub fn generation(self) -> (generation: u32)
+        ensures generation == self.generation_spec(),
+    { self.generation }
+
+    pub closed spec fn index_spec(&self) -> u32 { self.index }
+    pub closed spec fn generation_spec(&self) -> u32 { self.generation }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -208,6 +215,7 @@ proof fn zero_reference_lemma(request_slot: u32)
 fn set_reference(mask: u32, request_slot: u32) -> (updated: u32)
     requires request_slot < MAX_REQUEST_SLOTS,
     ensures
+        updated == mask | (1_u32 << request_slot),
         forall |observed_slot: u32| observed_slot < MAX_REQUEST_SLOTS ==>
             has_reference(updated, observed_slot)
                 == (has_reference(mask, observed_slot) || request_slot == observed_slot),
@@ -224,6 +232,7 @@ fn set_reference(mask: u32, request_slot: u32) -> (updated: u32)
 fn clear_reference(mask: u32, request_slot: u32) -> (updated: u32)
     requires request_slot < MAX_REQUEST_SLOTS,
     ensures
+        updated == mask & !(1_u32 << request_slot),
         forall |observed_slot: u32| observed_slot < MAX_REQUEST_SLOTS ==>
             has_reference(updated, observed_slot)
                 == (has_reference(mask, observed_slot) && request_slot != observed_slot),
@@ -257,6 +266,297 @@ closed spec fn free_positions_distinct(pool: &KvPool, left: int, right: int) -> 
 }
 
 impl KvPool {
+    closed spec fn ceil_pages(tokens: int, page_tokens: int) -> int
+        recommends tokens >= 0, page_tokens > 0,
+    {
+        (tokens + page_tokens - 1) / page_tokens
+    }
+
+    pub closed spec fn new_enabled(
+        page_count: u32,
+        page_tokens: u32,
+        max_context_tokens: u32,
+    ) -> bool {
+        &&& page_count > 0
+        &&& page_tokens > 0
+        &&& max_context_tokens > 0
+        &&& page_count <= MAX_PAGE_SLOTS
+        &&& page_tokens <= max_context_tokens
+        &&& (max_context_tokens as int + page_tokens as int - 1)
+            / page_tokens as int <= MAX_PAGES_PER_REQUEST
+    }
+
+    pub(crate) closed spec fn request_live_by_slot_spec(&self, slot: int) -> bool
+        recommends 0 <= slot < MAX_REQUEST_SLOTS,
+    {
+        self.requests@[slot].live
+    }
+
+    pub(crate) closed spec fn request_generation_by_slot_spec(&self, slot: int) -> u32
+        recommends 0 <= slot < MAX_REQUEST_SLOTS,
+    {
+        self.requests@[slot].generation
+    }
+
+    pub closed spec fn request_matches_spec(&self, request: RequestId) -> bool {
+        self.key_matches(RequestKey {
+            slot: request.slot_spec(),
+            generation: request.generation_spec(),
+        })
+    }
+
+    closed spec fn key_matches(&self, request: RequestKey) -> bool {
+        &&& request.slot < MAX_REQUEST_SLOTS
+        &&& self.requests@[request.slot as int].live
+        &&& self.requests@[request.slot as int].generation == request.generation
+    }
+
+    pub closed spec fn resident_tokens_spec(&self, request: RequestId) -> Option<u32> {
+        if self.request_matches_spec(request) {
+            Some(self.requests@[request.slot_spec() as int].resident_tokens)
+        } else {
+            None
+        }
+    }
+
+    pub closed spec fn committed_tokens_spec(&self, request: RequestId) -> Option<u32> {
+        if self.request_matches_spec(request) {
+            Some(self.requests@[request.slot_spec() as int].committed_tokens)
+        } else {
+            None
+        }
+    }
+
+    pub closed spec fn page_count_spec(&self, request: RequestId) -> Option<u32> {
+        if self.request_matches_spec(request) {
+            Some(self.requests@[request.slot_spec() as int].page_count)
+        } else {
+            None
+        }
+    }
+
+    pub closed spec fn page_at_spec(
+        &self,
+        request: RequestId,
+        logical_page: u32,
+    ) -> Option<PageId> {
+        if self.request_matches_spec(request)
+            && logical_page < self.requests@[request.slot_spec() as int].page_count
+        {
+            Some(self.requests@[request.slot_spec() as int].pages@[logical_page as int])
+        } else {
+            None
+        }
+    }
+
+    pub closed spec fn free_pages_spec(&self) -> u32 { self.free_len }
+
+    pub closed spec fn page_tokens_spec(&self) -> u32 { self.page_tokens }
+
+    pub closed spec fn max_context_tokens_spec(&self) -> u32 { self.max_context_tokens }
+
+    pub closed spec fn page_limit_spec(&self) -> u32 { self.page_limit }
+
+    pub closed spec fn create_enabled(&self, request: RequestId) -> bool {
+        self.create_key_enabled(RequestKey {
+            slot: request.slot_spec(),
+            generation: request.generation_spec(),
+        })
+    }
+
+    closed spec fn create_key_enabled(&self, request: RequestKey) -> bool {
+        &&& request.slot < MAX_REQUEST_SLOTS
+        &&& !self.requests@[request.slot as int].live
+        &&& self.requests@[request.slot as int].generation == request.generation
+    }
+
+    pub closed spec fn append_enabled(&self, request: RequestId, token_count: u32) -> bool {
+        self.append_key_enabled(
+            RequestKey {
+                slot: request.slot_spec(),
+                generation: request.generation_spec(),
+            },
+            token_count,
+        )
+    }
+
+    closed spec fn append_key_enabled(&self, request: RequestKey, token_count: u32) -> bool {
+        if self.key_matches(request) {
+            let slot = self.requests@[request.slot as int];
+            let new_resident = slot.resident_tokens as int + token_count as int;
+            let tail_capacity = if slot.page_count == 0 {
+                0
+            } else {
+                let tail = slot.pages@[slot.page_count - 1];
+                match self.pages@[tail.index as int].state {
+                    PageState::Writable { .. } => {
+                        self.page_tokens - self.pages@[tail.index as int].initialized_tokens
+                    }
+                    PageState::Sealed | PageState::Free => 0,
+                }
+            };
+            let after_tail = if token_count > tail_capacity {
+                token_count as int - tail_capacity as int
+            } else {
+                0
+            };
+            let full_pages = after_tail / self.page_tokens as int;
+            let extra_page = if after_tail % self.page_tokens as int == 0 { 0_int } else { 1_int };
+            let required_pages = full_pages + extra_page;
+            &&& new_resident <= self.max_context_tokens
+            &&& slot.page_count as int + required_pages <= MAX_PAGES_PER_REQUEST
+            &&& required_pages <= self.free_len
+        } else {
+            false
+        }
+    }
+
+    pub closed spec fn share_enabled(
+        &self,
+        source: RequestId,
+        target: RequestId,
+        token_count: u32,
+    ) -> bool {
+        self.share_key_enabled(
+            RequestKey {
+                slot: source.slot_spec(),
+                generation: source.generation_spec(),
+            },
+            RequestKey {
+                slot: target.slot_spec(),
+                generation: target.generation_spec(),
+            },
+            token_count,
+        )
+    }
+
+    closed spec fn share_key_enabled(
+        &self,
+        source: RequestKey,
+        target: RequestKey,
+        token_count: u32,
+    ) -> bool {
+        &&& self.key_matches(source)
+        &&& self.key_matches(target)
+        &&& source.slot != target.slot
+        &&& token_count > 0
+        &&& token_count % self.page_tokens == 0
+        &&& token_count <= self.requests@[source.slot as int].committed_tokens
+        &&& self.requests@[target.slot as int].resident_tokens == 0
+        &&& token_count / self.page_tokens <= MAX_PAGES_PER_REQUEST
+    }
+
+    pub closed spec fn read_enabled(
+        &self,
+        request: RequestId,
+        logical_offset: u32,
+        span: u32,
+    ) -> bool {
+        self.read_key_enabled(
+            RequestKey {
+                slot: request.slot_spec(),
+                generation: request.generation_spec(),
+            },
+            logical_offset,
+            span,
+        )
+    }
+
+    closed spec fn read_key_enabled(
+        &self,
+        request: RequestKey,
+        logical_offset: u32,
+        span: u32,
+    ) -> bool {
+        &&& self.key_matches(request)
+        &&& logical_offset as int + span as int
+            <= self.requests@[request.slot as int].resident_tokens
+    }
+
+    pub closed spec fn finalize_enabled(
+        &self,
+        request: RequestId,
+        accepted_tokens: u32,
+    ) -> bool {
+        self.finalize_key_enabled(
+            RequestKey {
+                slot: request.slot_spec(),
+                generation: request.generation_spec(),
+            },
+            accepted_tokens,
+        )
+    }
+
+    closed spec fn finalize_key_enabled(
+        &self,
+        request: RequestKey,
+        accepted_tokens: u32,
+    ) -> bool {
+        if self.key_matches(request) {
+            let slot = self.requests@[request.slot as int];
+            let committed = slot.committed_tokens as int + accepted_tokens as int;
+            let retained = if committed == 0 {
+                0
+            } else {
+                (committed + self.page_tokens as int - 1) / self.page_tokens as int
+            };
+            &&& committed <= slot.resident_tokens
+            &&& retained <= slot.page_count
+            &&& self.free_len as int + slot.page_count as int - retained <= self.page_limit
+            &&& forall |position: int|
+                retained <= position < slot.page_count ==>
+                    self.pages@[slot.pages@[position].index as int].generation < u32::MAX
+        } else {
+            false
+        }
+    }
+
+    pub closed spec fn release_enabled(&self, request: RequestId) -> bool {
+        self.release_key_enabled(RequestKey {
+            slot: request.slot_spec(),
+            generation: request.generation_spec(),
+        })
+    }
+
+    closed spec fn reclaim_prefix_count(&self, request_slot: int, end: int) -> int
+        recommends
+            0 <= request_slot < MAX_REQUEST_SLOTS,
+            0 <= end <= self.requests@[request_slot].page_count,
+        decreases end,
+    {
+        if end == 0 {
+            0
+        } else {
+            let page = self.requests@[request_slot].pages@[end - 1];
+            self.reclaim_prefix_count(request_slot, end - 1)
+                + if has_other_reference(
+                    self.pages@[page.index as int].reference_mask,
+                    request_slot as u32,
+                ) { 0_int } else { 1_int }
+        }
+    }
+
+    closed spec fn release_key_enabled(&self, request: RequestKey) -> bool {
+        if self.key_matches(request) {
+            let slot = self.requests@[request.slot as int];
+            let reclaim_count = self.reclaim_prefix_count(
+                request.slot as int,
+                slot.page_count as int,
+            );
+            &&& slot.generation < u32::MAX
+            &&& self.free_len as int + reclaim_count <= self.page_limit
+            &&& forall |position: int|
+                0 <= position < slot.page_count
+                    && !has_other_reference(
+                        self.pages@[slot.pages@[position].index as int].reference_mask,
+                        request.slot,
+                    ) ==>
+                        self.pages@[slot.pages@[position].index as int].generation < u32::MAX
+        } else {
+            false
+        }
+    }
+
     closed spec fn chain_has_page(&self, request_slot: int, page_index: int) -> bool {
         0 <= request_slot < MAX_REQUEST_SLOTS
             && self.requests@[request_slot].live
@@ -374,7 +674,7 @@ impl KvPool {
                 self.free_stack@[left] != self.free_stack@[right])
     }
 
-    pub(crate) closed spec fn same_state(&self, other: &Self) -> bool {
+    pub closed spec fn same_state(&self, other: &Self) -> bool {
         &&& self.page_tokens == other.page_tokens
         &&& self.max_context_tokens == other.max_context_tokens
         &&& self.page_limit == other.page_limit
@@ -385,13 +685,26 @@ impl KvPool {
         &&& self.requests == other.requests
     }
 
-    closed spec fn request_frame_except(&self, old: &Self, changed: int) -> bool {
+    pub closed spec fn request_frame_except(&self, old: &Self, changed: int) -> bool {
         forall |request_index: int|
             0 <= request_index < MAX_REQUEST_SLOTS && request_index != changed ==>
                 self.requests@[request_index] == old.requests@[request_index]
     }
 
-    closed spec fn sealed_payload_frame(&self, old: &Self) -> bool {
+    pub closed spec fn request_frame_except_two(
+        &self,
+        old: &Self,
+        first: int,
+        second: int,
+    ) -> bool {
+        forall |request_index: int|
+            0 <= request_index < MAX_REQUEST_SLOTS
+                && request_index != first
+                && request_index != second ==>
+                    self.requests@[request_index] == old.requests@[request_index]
+    }
+
+    pub closed spec fn sealed_payload_frame(&self, old: &Self) -> bool {
         forall |page_index: int|
             0 <= page_index < old.page_limit
                 && old.pages@[page_index].state == PageState::Sealed ==>
@@ -401,7 +714,14 @@ impl KvPool {
                             == old.pages@[page_index].initialized_tokens
     }
 
-    closed spec fn reachable_payload_frame_except(&self, old: &Self, excluded: int) -> bool {
+    pub closed spec fn exact_sealed_frame(&self, old: &Self) -> bool {
+        forall |page_index: int|
+            0 <= page_index < old.page_limit
+                && old.pages@[page_index].state == PageState::Sealed ==>
+                    self.pages@[page_index] == old.pages@[page_index]
+    }
+
+    pub closed spec fn reachable_payload_frame_except(&self, old: &Self, excluded: int) -> bool {
         forall |page_index: int|
             0 <= page_index < old.page_limit
                 && (exists |request_index: int|
@@ -440,6 +760,151 @@ impl KvPool {
             #[trigger] self.release_page_matches(old, page_index, released)
     }
 
+    closed spec fn source_prefix_has_page(
+        &self,
+        source: int,
+        shared_pages: int,
+        page_index: int,
+    ) -> bool {
+        exists |position: int|
+            0 <= position < shared_pages
+                && self.requests@[source].pages@[position].index == page_index
+    }
+
+    closed spec fn share_page_matches(
+        &self,
+        old: &Self,
+        source: int,
+        target: u32,
+        shared_pages: int,
+        page_index: int,
+    ) -> bool {
+        if old.source_prefix_has_page(source, shared_pages, page_index) {
+            &&& self.pages@[page_index].generation == old.pages@[page_index].generation
+            &&& self.pages@[page_index].state == PageState::Sealed
+            &&& self.pages@[page_index].initialized_tokens == old.pages@[page_index].initialized_tokens
+            &&& self.pages@[page_index].reference_mask
+                == (old.pages@[page_index].reference_mask | (1_u32 << target))
+        } else {
+            self.pages@[page_index] == old.pages@[page_index]
+        }
+    }
+
+    pub closed spec fn share_page_frame(
+        &self,
+        old: &Self,
+        source: int,
+        target: u32,
+        shared_pages: int,
+    ) -> bool {
+        forall |page_index: int| 0 <= page_index < old.page_limit ==>
+            #[trigger] self.share_page_matches(old, source, target, shared_pages, page_index)
+    }
+
+    proof fn append_frames_transitive(
+        first: &Self,
+        middle: &Self,
+        last: &Self,
+        changed: int,
+    )
+        requires
+            first.well_formed(),
+            middle.well_formed(),
+            last.well_formed(),
+            middle.request_frame_except(first, changed),
+            last.request_frame_except(middle, changed),
+            middle.sealed_payload_frame(first),
+            last.sealed_payload_frame(middle),
+            middle.exact_sealed_frame(first),
+            last.exact_sealed_frame(middle),
+            middle.reachable_payload_frame_except(first, changed),
+            last.reachable_payload_frame_except(middle, changed),
+        ensures
+            last.request_frame_except(first, changed),
+            last.sealed_payload_frame(first),
+            last.exact_sealed_frame(first),
+            last.reachable_payload_frame_except(first, changed),
+    {
+        assert forall |request_index: int|
+            0 <= request_index < MAX_REQUEST_SLOTS && request_index != changed implies
+                last.requests@[request_index] == first.requests@[request_index] by {
+        }
+        assert forall |page_index: int|
+            0 <= page_index < first.page_limit
+                && first.pages@[page_index].state == PageState::Sealed implies
+                    last.pages@[page_index].generation == first.pages@[page_index].generation
+                        && last.pages@[page_index].state == PageState::Sealed
+                        && last.pages@[page_index].initialized_tokens
+                            == first.pages@[page_index].initialized_tokens by {
+            assert(middle.pages@[page_index].state == PageState::Sealed);
+        }
+        assert forall |page_index: int|
+            0 <= page_index < first.page_limit
+                && first.pages@[page_index].state == PageState::Sealed implies
+                    last.pages@[page_index] == first.pages@[page_index] by {
+            assert(middle.pages@[page_index] == first.pages@[page_index]);
+            assert(middle.pages@[page_index].state == PageState::Sealed);
+        }
+        assert forall |page_index: int|
+            0 <= page_index < first.page_limit
+                && (exists |request_index: int|
+                    0 <= request_index < MAX_REQUEST_SLOTS
+                        && request_index != changed
+                        && first.chain_has_page(request_index, page_index)) implies
+                    last.pages@[page_index].generation == first.pages@[page_index].generation
+                        && last.pages@[page_index].state == first.pages@[page_index].state
+                        && last.pages@[page_index].initialized_tokens
+                            == first.pages@[page_index].initialized_tokens by {
+            let request_index = choose |request_index: int|
+                0 <= request_index < MAX_REQUEST_SLOTS
+                    && request_index != changed
+                    && first.chain_has_page(request_index, page_index);
+            assert(middle.requests@[request_index] == first.requests@[request_index]);
+            assert(middle.chain_has_page(request_index, page_index));
+        }
+    }
+
+    proof fn positive_factor_product(factor: int, value: int)
+        requires factor >= 1, value > 0,
+        ensures factor * value >= value,
+    {
+        vstd::arithmetic::mul::lemma_mul_inequality(1, factor, value);
+        vstd::arithmetic::mul::lemma_mul_basics(value);
+    }
+
+    proof fn zero_factor_product(factor: int, value: int)
+        requires factor == 0,
+        ensures factor * value == 0,
+    {
+        vstd::arithmetic::mul::lemma_mul_basics(value);
+    }
+
+    proof fn increment_product(factor: int, value: int)
+        ensures (factor + 1) * value == factor * value + value,
+    {
+        vstd::arithmetic::mul::lemma_mul_is_distributive_add_other_way(value, factor, 1);
+        vstd::arithmetic::mul::lemma_mul_basics(value);
+    }
+
+    proof fn zero_append_enabled(&self, request: RequestKey)
+        requires self.well_formed(), self.key_matches(request),
+        ensures self.append_key_enabled(request, 0),
+    {
+        reveal(KvPool::append_key_enabled);
+        reveal(KvPool::request_slot_well_formed);
+        let slot = self.requests@[request.slot as int];
+        assert(self.request_slot_well_formed(request.slot as int));
+        assert(slot.page_count <= MAX_PAGES_PER_REQUEST);
+        assert(0 <= self.free_len);
+        if slot.page_count > 0 {
+            let tail = slot.pages@[slot.page_count - 1];
+            assert(tail.index < self.page_limit);
+            assert(self.pages@[tail.index as int].initialized_tokens <= self.page_tokens);
+        }
+        vstd::arithmetic::div_mod::lemma_div_of0(self.page_tokens as int);
+        vstd::arithmetic::div_mod::lemma_fundamental_div_mod(0, self.page_tokens as int);
+    }
+
     fn new_bounded(
         page_count: u32,
         page_tokens: u32,
@@ -447,8 +912,9 @@ impl KvPool {
     ) -> (result: Result<Self, KvError>)
         ensures
             match result {
-                Ok(pool) => pool.well_formed(),
-                Err(_) => true,
+                Ok(pool) => Self::new_enabled(page_count, page_tokens, max_context_tokens)
+                    && pool.well_formed(),
+                Err(_) => !Self::new_enabled(page_count, page_tokens, max_context_tokens),
             }
     {
         if page_count == 0 { return Err(KvError::ZeroCapacity(Capacity::Pages)); }
@@ -557,14 +1023,21 @@ impl KvPool {
         requires old(self).well_formed(),
         ensures
             final(self).well_formed(),
+            final(self).page_tokens_spec() == old(self).page_tokens_spec(),
+            final(self).max_context_tokens_spec() == old(self).max_context_tokens_spec(),
+            final(self).page_limit_spec() == old(self).page_limit_spec(),
             match result {
                 Ok(()) => {
+                    &&& old(self).create_key_enabled(request)
                     &&& request.slot < MAX_REQUEST_SLOTS
                     &&& final(self).requests@[request.slot as int].live
                     &&& final(self).requests@[request.slot as int].generation == request.generation
                     &&& final(self).request_frame_except(old(self), request.slot as int)
                 }
-                Err(_) => final(self).same_state(old(self)),
+                Err(_) => {
+                    &&& !old(self).create_key_enabled(request)
+                    &&& final(self).same_state(old(self))
+                }
             },
     {
         if request.slot >= MAX_REQUEST_SLOTS as u32 {
@@ -649,104 +1122,343 @@ impl KvPool {
         requires old(self).well_formed(),
         ensures
             final(self).well_formed(),
+            final(self).page_tokens_spec() == old(self).page_tokens_spec(),
+            final(self).max_context_tokens_spec() == old(self).max_context_tokens_spec(),
+            final(self).page_limit_spec() == old(self).page_limit_spec(),
             match result {
                 Ok(()) => {
+                    &&& old(self).append_key_enabled(request, token_count)
                     &&& request.slot < MAX_REQUEST_SLOTS
                     &&& final(self).requests@[request.slot as int].resident_tokens
                         == old(self).requests@[request.slot as int].resident_tokens + token_count
                     &&& final(self).requests@[request.slot as int].committed_tokens
                         == old(self).requests@[request.slot as int].committed_tokens
+                    &&& final(self).requests@[request.slot as int].live
+                        == old(self).requests@[request.slot as int].live
+                    &&& final(self).requests@[request.slot as int].generation
+                        == old(self).requests@[request.slot as int].generation
                     &&& final(self).request_frame_except(old(self), request.slot as int)
                     &&& final(self).sealed_payload_frame(old(self))
+                    &&& final(self).exact_sealed_frame(old(self))
                     &&& final(self).reachable_payload_frame_except(
                         old(self),
                         request.slot as int,
                     )
                 }
-                Err(_) => final(self).same_state(old(self)),
+                Err(_) => {
+                    &&& !old(self).append_key_enabled(request, token_count)
+                    &&& final(self).same_state(old(self))
+                }
             },
     {
         let request_index = self.live_request_index(request)?;
+        reveal(KvPool::append_key_enabled);
+        reveal(KvPool::key_matches);
+        assert(request_index == request.slot);
+        assert(request_index < MAX_REQUEST_SLOTS);
+        assert(self.request_slot_well_formed(request_index as int));
         let old_resident = self.requests[request_index].resident_tokens;
         let new_resident = match old_resident.checked_add(token_count) {
             Some(value) => value,
             None => return Err(KvError::ContextExceeded),
         };
         if new_resident > self.max_context_tokens { return Err(KvError::ContextExceeded); }
-        if token_count == 0 { return Ok(()); }
+        if token_count == 0 {
+            proof { Self::zero_append_enabled(old(self), request); }
+            return Ok(());
+        }
 
         let old_page_count = self.requests[request_index].page_count;
-        let tail_capacity = if old_page_count == 0 {
-            0
+        assert(old_page_count <= MAX_PAGES_PER_REQUEST as u32);
+        let tail_page = if old_page_count == 0 {
+            PageId::EMPTY
         } else {
-            let tail = self.requests[request_index].pages[(old_page_count - 1) as usize];
-            let slot = self.page_slot(tail)?;
+            self.requests[request_index].pages[(old_page_count - 1) as usize]
+        };
+        let (tail_capacity, tail_initialized) = if old_page_count == 0 {
+            (0, 0)
+        } else {
+            let slot = self.page_slot(tail_page)?;
+            assert(self.page_slot_well_formed(tail_page.index as int));
             let state = slot.state;
             match state {
                 PageState::Writable { owner_slot } => {
                     if owner_slot as u32 != request.slot {
                         return Err(KvError::InvariantViolation(Invariant::PageState));
                     }
-                    self.page_tokens - slot.initialized_tokens
+                    assert(slot.initialized_tokens <= self.page_tokens);
+                    (self.page_tokens - slot.initialized_tokens, slot.initialized_tokens)
                 }
-                PageState::Sealed => 0,
+                PageState::Sealed => {
+                    assert(slot.initialized_tokens == self.page_tokens);
+                    (0, slot.initialized_tokens)
+                }
                 PageState::Free => return Err(KvError::InvariantViolation(Invariant::PageState)),
             }
         };
         let after_tail = token_count.saturating_sub(tail_capacity);
-        let required_pages = if after_tail == 0 { 0 } else {
-            (after_tail / self.page_tokens) + u32::from(after_tail % self.page_tokens != 0)
+        let full_pages = after_tail / self.page_tokens;
+        let partial_tokens = after_tail % self.page_tokens;
+        let extra_page = if partial_tokens == 0 { 0_u32 } else { 1_u32 };
+        let required_pages = match full_pages.checked_add(extra_page) {
+            Some(value) => value,
+            None => return Err(KvError::RequestPageTableFull),
         };
+        proof {
+            vstd::arithmetic::div_mod::lemma_fundamental_div_mod(
+                after_tail as int,
+                self.page_tokens as int,
+            );
+            vstd::arithmetic::div_mod::lemma_mod_pos_bound(
+                after_tail as int,
+                self.page_tokens as int,
+            );
+        }
+        assert(after_tail as int
+            == self.page_tokens as int * full_pages as int + partial_tokens as int);
+        assert(after_tail as int
+            == old(self).page_tokens as int * full_pages as int + partial_tokens as int);
+        assert(partial_tokens < self.page_tokens);
+        assert(required_pages == full_pages + extra_page);
         let final_page_count = match old_page_count.checked_add(required_pages) {
             Some(value) => value,
             None => return Err(KvError::RequestPageTableFull),
         };
-        if final_page_count as usize > MAX_PAGES_PER_REQUEST {
+        if final_page_count > MAX_PAGES_PER_REQUEST as u32 {
             return Err(KvError::RequestPageTableFull);
         }
         if required_pages > self.free_len { return Err(KvError::OutOfPages); }
 
+        let tail_written = token_count.min(tail_capacity);
+        if old_page_count > 0 {
+            let ghost tail_position = old_page_count as int - 1;
+            assert(tail_page == old(self).requests@[request.slot as int].pages@[tail_position]);
+            assert(old(self).pages@[tail_page.index as int].initialized_tokens == tail_initialized);
+            assert(tail_initialized + tail_capacity == self.page_tokens);
+            assert(tail_initialized as int
+                == old_resident as int - tail_position * self.page_tokens as int);
+        }
         let mut remaining = token_count;
-        while remaining > 0
+        if tail_written > 0 {
+            self.append_existing_page(request, request_index, tail_page, tail_written);
+            remaining -= tail_written;
+        }
+        assert(remaining == after_tail);
+        assert(self.requests@[request.slot as int].live);
+        assert(self.requests@[request.slot as int].generation == request.generation);
+        assert(self.requests@[request.slot as int].page_count
+            == old(self).requests@[request.slot as int].page_count);
+        assert(remaining == after_tail);
+        if remaining > 0 {
+            if old_page_count == 0 {
+                assert(old_resident == 0);
+                assert(self.requests@[request.slot as int].resident_tokens == 0);
+                assert(self.requests@[request.slot as int].page_count == 0);
+            } else {
+                assert(token_count > tail_capacity);
+                assert(tail_written == tail_capacity);
+                assert(self.requests@[request.slot as int].resident_tokens
+                    == old_resident + tail_capacity);
+                assert(self.requests@[request.slot as int].page_count == old_page_count);
+                let ghost tail_position = old_page_count as int - 1;
+                assert(tail_initialized as int
+                    == old_resident as int - tail_position * self.page_tokens as int);
+                assert(old_resident as int
+                    == tail_position * self.page_tokens as int + tail_initialized as int);
+                assert(tail_position + 1 == old_page_count as int);
+                proof { Self::increment_product(tail_position, self.page_tokens as int); }
+                assert(tail_position * self.page_tokens as int + self.page_tokens as int
+                    == old_page_count as int * self.page_tokens as int);
+                assert(self.requests@[request.slot as int].resident_tokens as int
+                    == old_page_count as int * self.page_tokens as int);
+            }
+        }
+        assert(remaining > 0 ==> self.requests@[request.slot as int].resident_tokens as int
+            == self.requests@[request.slot as int].page_count as int * self.page_tokens as int);
+        assert(self.page_tokens == old(self).page_tokens);
+        assert(self.max_context_tokens == old(self).max_context_tokens);
+        assert(self.page_limit == old(self).page_limit);
+        assert(old_resident as int + token_count as int == new_resident as int);
+        assert(new_resident <= self.max_context_tokens);
+        assert(final_page_count == old_page_count + required_pages);
+        assert(final_page_count <= MAX_PAGES_PER_REQUEST as u32);
+        assert(required_pages <= old(self).free_len);
+        proof {
+            vstd::arithmetic::mul::lemma_mul_is_commutative(
+                self.page_tokens as int,
+                full_pages as int,
+            );
+        }
+        assert(remaining as int
+            == (self.page_tokens as int * full_pages as int + partial_tokens as int));
+        assert(remaining as int
+            == (full_pages as int * self.page_tokens as int + partial_tokens as int));
+
+        let mut allocated = 0_u32;
+        while allocated < required_pages
             invariant
                 self.well_formed(),
+                old(self).well_formed(),
+                self.page_tokens == old(self).page_tokens,
+                self.max_context_tokens == old(self).max_context_tokens,
+                self.page_limit == old(self).page_limit,
+                request_index == request.slot,
+                request_index < MAX_REQUEST_SLOTS,
                 request.slot < MAX_REQUEST_SLOTS,
                 self.requests@[request.slot as int].live,
                 self.requests@[request.slot as int].generation == request.generation,
                 self.requests@[request.slot as int].resident_tokens as int + remaining as int
                     == old(self).requests@[request.slot as int].resident_tokens as int
                         + token_count as int,
+                old(self).requests@[request.slot as int].resident_tokens as int
+                        + token_count as int
+                    <= self.max_context_tokens,
                 self.requests@[request.slot as int].committed_tokens
                     == old(self).requests@[request.slot as int].committed_tokens,
                 self.request_frame_except(old(self), request.slot as int),
                 self.sealed_payload_frame(old(self)),
-            decreases remaining,
+                self.exact_sealed_frame(old(self)),
+                self.reachable_payload_frame_except(old(self), request.slot as int),
+                allocated <= required_pages,
+                required_pages == full_pages + extra_page,
+                extra_page == if partial_tokens == 0 { 0_u32 } else { 1_u32 },
+                partial_tokens < self.page_tokens,
+                final_page_count == old(self).requests@[request.slot as int].page_count
+                    + required_pages,
+                final_page_count <= MAX_PAGES_PER_REQUEST as u32,
+                required_pages <= old(self).free_len,
+                self.free_len as int + allocated as int == old(self).free_len,
+                self.requests@[request.slot as int].page_count
+                    == old(self).requests@[request.slot as int].page_count + allocated,
+                allocated <= full_pages ==> remaining as int
+                    == (full_pages as int - allocated as int) * self.page_tokens as int
+                        + partial_tokens as int,
+                allocated > full_pages ==> {
+                    &&& partial_tokens > 0
+                    &&& allocated == full_pages + 1
+                    &&& remaining == 0
+                },
+                remaining > 0 ==> self.requests@[request.slot as int].resident_tokens as int
+                    == self.requests@[request.slot as int].page_count as int
+                        * self.page_tokens as int,
+            decreases required_pages - allocated,
         {
-            let current_page_count = self.requests[request_index].page_count;
-            let use_existing = if current_page_count > 0 {
-                let tail = self.requests[request_index].pages[(current_page_count - 1) as usize];
-                let state = self.pages[tail.index as usize].state;
-                let writable_by_request = match state {
-                    PageState::Writable { owner_slot } => owner_slot as u32 == request.slot,
-                    PageState::Free | PageState::Sealed => false,
-                };
-                writable_by_request
-                    && self.pages[tail.index as usize].initialized_tokens < self.page_tokens
+            let ghost previous = *self;
+            let plan_index = allocated;
+            assert(plan_index < required_pages);
+            assert(plan_index <= full_pages);
+            assert(self.page_tokens > 0);
+            let ghost factor = full_pages as int - plan_index as int;
+            let ghost page_tokens_int = self.page_tokens as int;
+            assert(remaining as int
+                == factor * page_tokens_int + partial_tokens as int);
+            if plan_index < full_pages {
+                assert((plan_index as int) < (full_pages as int));
+                assert(factor >= 1);
+                assert(0 < page_tokens_int);
+                assert(0 <= partial_tokens as int);
+                proof { Self::positive_factor_product(factor, page_tokens_int); }
+                assert(remaining as int >= self.page_tokens as int);
             } else {
-                false
-            };
-            let written = if use_existing {
-                let tail = self.requests[request_index].pages[(current_page_count - 1) as usize];
-                let available = self.page_tokens - self.pages[tail.index as usize].initialized_tokens;
-                let written = remaining.min(available);
-                self.append_existing_page(request, request_index, tail, written);
-                written
+                assert(plan_index == full_pages);
+                assert(plan_index as int == full_pages as int);
+                assert(factor == 0);
+                proof { Self::zero_factor_product(factor, page_tokens_int); }
+                assert(extra_page == 1);
+                assert(partial_tokens > 0);
+                assert(remaining == partial_tokens);
+                assert(remaining < self.page_tokens);
+            }
+            assert(remaining > 0);
+            let written = remaining.min(self.page_tokens);
+            assert(0 < written <= self.page_tokens);
+            assert(written <= remaining);
+            if plan_index < full_pages {
+                assert(written == self.page_tokens);
             } else {
-                let written = remaining.min(self.page_tokens);
-                self.append_fresh_page(request, request_index, written);
-                written
-            };
+                assert(written == partial_tokens);
+            }
+            let previous_remaining = remaining;
+            assert((self.requests@[request.slot as int].page_count as int)
+                < (final_page_count as int));
+            assert((final_page_count as int) <= (MAX_PAGES_PER_REQUEST as int));
+            assert(self.requests@[request.slot as int].page_count < MAX_PAGES_PER_REQUEST);
+            assert(self.free_len > 0);
+            self.append_fresh_page(request, request_index, written);
             remaining -= written;
+            assert(remaining as int == previous_remaining as int - written as int);
+            allocated += 1;
+            assert(allocated == plan_index + 1);
+            proof {
+                Self::append_frames_transitive(
+                    old(self),
+                    &previous,
+                    self,
+                    request.slot as int,
+                );
+            }
+            if plan_index < full_pages {
+                assert(written == self.page_tokens);
+                assert(allocated <= full_pages);
+                assert(previous.requests@[request.slot as int].resident_tokens as int
+                    + written as int
+                    == self.requests@[request.slot as int].resident_tokens as int);
+                assert(previous.requests@[request.slot as int].page_count + 1
+                    == self.requests@[request.slot as int].page_count);
+                let ghost old_factor = full_pages as int - plan_index as int;
+                let ghost new_factor = full_pages as int - allocated as int;
+                assert(new_factor == old_factor - 1);
+                assert(previous_remaining as int
+                    == old_factor * self.page_tokens as int + partial_tokens as int);
+                assert(remaining as int
+                    == previous_remaining as int - self.page_tokens as int);
+                assert(old_factor * self.page_tokens as int - self.page_tokens as int
+                    == (old_factor - 1) * self.page_tokens as int) by (nonlinear_arith);
+                assert(remaining as int
+                    == new_factor * self.page_tokens as int + partial_tokens as int);
+            } else {
+                assert(plan_index == full_pages);
+                assert(partial_tokens > 0);
+                assert(written == partial_tokens);
+                assert(allocated == full_pages + 1);
+                assert(remaining == 0);
+            }
+            if remaining > 0 {
+                assert(plan_index < full_pages);
+                assert(written == self.page_tokens);
+                assert(previous.requests@[request.slot as int].resident_tokens as int
+                    == previous.requests@[request.slot as int].page_count as int
+                        * self.page_tokens as int);
+                assert(self.requests@[request.slot as int].resident_tokens as int
+                    == previous.requests@[request.slot as int].resident_tokens as int
+                        + self.page_tokens as int);
+                assert(self.requests@[request.slot as int].page_count as int
+                    == previous.requests@[request.slot as int].page_count as int + 1);
+                let ghost previous_count = previous.requests@[request.slot as int].page_count as int;
+                proof { Self::increment_product(previous_count, self.page_tokens as int); }
+                assert(self.requests@[request.slot as int].resident_tokens as int
+                    == previous_count * self.page_tokens as int + self.page_tokens as int);
+                assert(self.requests@[request.slot as int].page_count as int
+                    == previous_count + 1);
+                assert(self.requests@[request.slot as int].resident_tokens as int
+                    == self.requests@[request.slot as int].page_count as int
+                        * self.page_tokens as int);
+            }
+        }
+        assert(allocated == required_pages);
+        if partial_tokens == 0 {
+            assert(extra_page == 0);
+            assert(allocated == full_pages);
+            assert(allocated <= full_pages);
+            assert(remaining as int
+                == (full_pages as int - allocated as int) * self.page_tokens as int
+                    + partial_tokens as int);
+            assert(remaining == 0);
+        } else {
+            assert(extra_page == 1);
+            assert(allocated == full_pages + 1);
+            assert(allocated > full_pages);
+            assert(remaining == 0);
         }
         Ok(())
     }
@@ -760,13 +1472,21 @@ impl KvPool {
         requires old(self).well_formed(),
         ensures
             final(self).well_formed(),
+            final(self).page_tokens_spec() == old(self).page_tokens_spec(),
+            final(self).max_context_tokens_spec() == old(self).max_context_tokens_spec(),
+            final(self).page_limit_spec() == old(self).page_limit_spec(),
             match result {
                 Ok(()) => {
+                    &&& old(self).share_key_enabled(source, target, token_count)
                     &&& target.slot < MAX_REQUEST_SLOTS
                     &&& final(self).requests@[target.slot as int].resident_tokens == token_count
                     &&& final(self).requests@[target.slot as int].committed_tokens == token_count
                     &&& final(self).requests@[target.slot as int].page_count
                         == token_count / final(self).page_tokens
+                    &&& final(self).requests@[target.slot as int].live
+                        == old(self).requests@[target.slot as int].live
+                    &&& final(self).requests@[target.slot as int].generation
+                        == old(self).requests@[target.slot as int].generation
                     &&& final(self).requests@[source.slot as int]
                         == old(self).requests@[source.slot as int]
                     &&& forall |request_index: int|
@@ -776,12 +1496,21 @@ impl KvPool {
                                 final(self).requests@[request_index]
                                     == old(self).requests@[request_index]
                     &&& final(self).sealed_payload_frame(old(self))
+                    &&& final(self).share_page_frame(
+                        old(self),
+                        source.slot as int,
+                        target.slot,
+                        token_count as int / old(self).page_tokens as int,
+                    )
                     &&& forall |position: int|
                         0 <= position < final(self).requests@[target.slot as int].page_count ==>
                             final(self).requests@[target.slot as int].pages@[position]
                                 == old(self).requests@[source.slot as int].pages@[position]
                 }
-                Err(_) => final(self).same_state(old(self)),
+                Err(_) => {
+                    &&& !old(self).share_key_enabled(source, target, token_count)
+                    &&& final(self).same_state(old(self))
+                }
             },
     {
         let source_index = self.live_request_index(source)?;
@@ -796,52 +1525,267 @@ impl KvPool {
         if self.requests[target_index].resident_tokens != 0 { return Err(KvError::TargetNotEmpty); }
         let shared_pages = token_count / self.page_tokens;
         if shared_pages as usize > MAX_PAGES_PER_REQUEST { return Err(KvError::RequestPageTableFull); }
+        proof {
+            vstd::arithmetic::div_mod::lemma_fundamental_div_mod(
+                token_count as int,
+                self.page_tokens as int,
+            );
+        }
+        assert(token_count as int == self.page_tokens as int * shared_pages as int);
+        assert(token_count as int == shared_pages as int * self.page_tokens as int) by {
+            vstd::arithmetic::mul::lemma_mul_is_commutative(
+                self.page_tokens as int,
+                shared_pages as int,
+            );
+        }
+        reveal(KvPool::request_slot_well_formed);
+        reveal(KvPool::share_page_frame);
+        reveal(KvPool::share_page_matches);
+        reveal(KvPool::source_prefix_has_page);
+        assert(self.request_slot_well_formed(source_index as int));
+        assert(self.request_slot_well_formed(target_index as int));
+        assert(shared_pages as int * self.page_tokens as int
+            <= self.requests@[source_index as int].page_count as int * self.page_tokens as int);
+        proof {
+            vstd::arithmetic::mul::lemma_mul_inequality_converse(
+                shared_pages as int,
+                self.requests@[source_index as int].page_count as int,
+                self.page_tokens as int,
+            );
+        }
+        assert(shared_pages <= self.requests@[source_index as int].page_count);
+        assert(self.requests@[target_index as int].page_count == 0);
+        assert(self.requests@[target_index as int].resident_tokens == 0);
+        assert(self.requests@[target_index as int].committed_tokens == 0);
+        assert(self.share_page_frame(self, source.slot as int, target.slot, 0));
+        proof { vstd::arithmetic::mul::lemma_mul_basics(self.page_tokens as int); }
+        assert(0_int * self.page_tokens as int == 0);
 
         let mut position = 0_u32;
         while position < shared_pages
+            invariant
+                self.well_formed(),
+                old(self).well_formed(),
+                self.page_tokens == old(self).page_tokens,
+                self.max_context_tokens == old(self).max_context_tokens,
+                self.page_limit == old(self).page_limit,
+                self.free_stack == old(self).free_stack,
+                self.free_len == old(self).free_len,
+                self.free_bitmap == old(self).free_bitmap,
+                source_index < MAX_REQUEST_SLOTS,
+                target_index < MAX_REQUEST_SLOTS,
+                source_index == source.slot,
+                target_index == target.slot,
+                source_index != target_index,
+                position <= shared_pages,
+                shared_pages <= MAX_PAGES_PER_REQUEST,
+                token_count as int == self.page_tokens as int * shared_pages as int,
+                token_count as int == shared_pages as int * self.page_tokens as int,
+                token_count <= old(self).requests@[source_index as int].committed_tokens,
+                shared_pages <= old(self).requests@[source_index as int].page_count,
+                old(self).request_slot_well_formed(source_index as int),
+                old(self).request_slot_well_formed(target_index as int),
+                old(self).requests@[source_index as int].live,
+                old(self).requests@[target_index as int].live,
+                self.requests@[source_index as int]
+                    == old(self).requests@[source_index as int],
+                self.requests@[target_index as int].generation
+                    == old(self).requests@[target_index as int].generation,
+                self.requests@[target_index as int].live,
+                self.requests@[target_index as int].page_count == position,
+                self.requests@[target_index as int].resident_tokens as int
+                    == position as int * self.page_tokens as int,
+                self.requests@[target_index as int].committed_tokens
+                    == self.requests@[target_index as int].resident_tokens,
+                forall |prior: int| 0 <= prior < position ==>
+                    self.requests@[target_index as int].pages@[prior]
+                        == old(self).requests@[source_index as int].pages@[prior],
+                forall |request_index: int|
+                    0 <= request_index < MAX_REQUEST_SLOTS
+                        && request_index != source_index
+                        && request_index != target_index ==>
+                            self.requests@[request_index] == old(self).requests@[request_index],
+                self.share_page_frame(
+                    old(self),
+                    source_index as int,
+                    target.slot,
+                    position as int,
+                ),
             decreases shared_pages - position,
         {
-            let page = self.requests[source_index].pages[position as usize];
-            let slot = self.page_slot(page)?;
-            if slot.initialized_tokens != self.page_tokens {
-                return Err(KvError::PrefixPageIncomplete(page));
+            let ghost previous = *self;
+            assert(position < MAX_PAGES_PER_REQUEST);
+            assert((position as int + 1) <= shared_pages as int);
+            proof {
+                vstd::arithmetic::mul::lemma_mul_inequality(
+                    position as int + 1,
+                    shared_pages as int,
+                    self.page_tokens as int,
+                );
             }
-            let state = slot.state;
-            match state {
-                PageState::Writable { owner_slot } => {
-                    if owner_slot as u32 != source.slot {
-                        return Err(KvError::InvariantViolation(Invariant::PageState));
-                    }
-                }
-                PageState::Sealed => {
-                    if reference_is_set(slot.reference_mask, target.slot) {
-                        return Err(KvError::ReferenceCountExhausted(page));
-                    }
-                }
-                _ => return Err(KvError::InvariantViolation(Invariant::PageState)),
+            assert(token_count as int == shared_pages as int * self.page_tokens as int);
+            assert((position as int + 1) * self.page_tokens as int
+                <= token_count as int);
+            assert((position as int + 1) * self.page_tokens as int
+                <= self.requests@[source_index as int].committed_tokens);
+            assert(self.requests@[target_index as int].resident_tokens
+                    + self.page_tokens
+                <= self.max_context_tokens) by {
+                Self::increment_product(position as int, self.page_tokens as int);
+                assert(self.requests@[target_index as int].resident_tokens as int
+                        + self.page_tokens as int
+                    == (position as int + 1) * self.page_tokens as int);
+                assert(token_count <= old(self).requests@[source_index as int].committed_tokens);
+                assert(old(self).requests@[source_index as int].committed_tokens
+                    <= old(self).requests@[source_index as int].resident_tokens);
+                assert(old(self).requests@[source_index as int].resident_tokens
+                    <= self.max_context_tokens);
             }
+            self.share_next_page(source_index, target_index, position);
             position += 1;
-        }
-
-        position = 0;
-        while position < shared_pages
-            decreases shared_pages - position,
-        {
-            let page = self.requests[source_index].pages[position as usize];
-            let page_index = page.index as usize;
-            if matches!(self.pages[page_index].state, PageState::Writable { .. }) {
-                self.pages[page_index].state = PageState::Sealed;
-                self.pages[page_index].reference_mask =
-                    set_reference(self.pages[page_index].reference_mask, source.slot);
+            assert(self.requests@[target_index as int].resident_tokens as int
+                == position as int * self.page_tokens as int) by {
+                Self::increment_product(position as int - 1, self.page_tokens as int);
+                assert(previous.requests@[target_index as int].resident_tokens as int
+                    == (position as int - 1) * self.page_tokens as int);
             }
-            self.pages[page_index].reference_mask =
-                set_reference(self.pages[page_index].reference_mask, target.slot);
-            self.requests[target_index].pages[position as usize] = page;
-            position += 1;
+            assert forall |page_index: int| 0 <= page_index < old(self).page_limit implies
+                #[trigger] self.share_page_matches(
+                    old(self),
+                    source_index as int,
+                    target.slot,
+                    position as int,
+                    page_index,
+                ) by {
+                let current = old(self).requests@[source_index as int].pages@[position as int - 1];
+                if old(self).source_prefix_has_page(
+                    source_index as int,
+                    position as int,
+                    page_index,
+                ) {
+                    let shared_position = choose |shared_position: int|
+                        0 <= shared_position < position
+                            && old(self).requests@[source_index as int]
+                                .pages@[shared_position].index == page_index;
+                    if shared_position + 1 < position {
+                        assert(old(self).source_prefix_has_page(
+                            source_index as int,
+                            position as int - 1,
+                            page_index,
+                        ));
+                        assert(current.index != page_index) by {
+                            assert(old(self).request_slot_well_formed(source_index as int));
+                            assert(logical_pages_distinct(
+                                old(self).requests@[source_index as int],
+                                shared_position,
+                                position as int - 1,
+                            ));
+                        }
+                        assert(previous.share_page_matches(
+                            old(self),
+                            source_index as int,
+                            target.slot,
+                            position as int - 1,
+                            page_index,
+                        ));
+                        assert(self.pages@[page_index] == previous.pages@[page_index]);
+                    } else {
+                        assert(shared_position == position as int - 1);
+                        assert(page_index == current.index);
+                        assert(!old(self).source_prefix_has_page(
+                            source_index as int,
+                            position as int - 1,
+                            page_index,
+                        )) by {
+                            if old(self).source_prefix_has_page(
+                                source_index as int,
+                                position as int - 1,
+                                page_index,
+                            ) {
+                                let prior = choose |prior: int|
+                                    0 <= prior < position as int - 1
+                                        && old(self).requests@[source_index as int]
+                                            .pages@[prior].index == page_index;
+                                assert(old(self).request_slot_well_formed(source_index as int));
+                                assert(logical_pages_distinct(
+                                    old(self).requests@[source_index as int],
+                                    prior,
+                                    position as int - 1,
+                                ));
+                            }
+                        }
+                        assert(previous.share_page_matches(
+                            old(self),
+                            source_index as int,
+                            target.slot,
+                            position as int - 1,
+                            page_index,
+                        ));
+                        assert(previous.pages@[page_index] == old(self).pages@[page_index]);
+                        assert(self.pages@[page_index].generation
+                            == previous.pages@[page_index].generation);
+                        assert(self.pages@[page_index].state == PageState::Sealed);
+                        assert(self.pages@[page_index].initialized_tokens
+                            == previous.pages@[page_index].initialized_tokens);
+                        assert(self.pages@[page_index].reference_mask
+                            == previous.pages@[page_index].reference_mask
+                                | (1_u32 << target.slot));
+                    }
+                } else {
+                    assert(!old(self).source_prefix_has_page(
+                        source_index as int,
+                        position as int - 1,
+                        page_index,
+                    ));
+                    assert(page_index != current.index);
+                    assert(previous.share_page_matches(
+                        old(self),
+                        source_index as int,
+                        target.slot,
+                        position as int - 1,
+                        page_index,
+                    ));
+                    assert(previous.pages@[page_index] == old(self).pages@[page_index]);
+                    assert(self.pages@[page_index] == previous.pages@[page_index]);
+                }
+            }
         }
-        self.requests[target_index].page_count = shared_pages;
-        self.requests[target_index].resident_tokens = token_count;
-        self.requests[target_index].committed_tokens = token_count;
+        assert(position == shared_pages);
+        assert(self.requests@[target_index as int].resident_tokens == token_count);
+        assert(self.requests@[target_index as int].committed_tokens == token_count);
+        assert(self.sealed_payload_frame(old(self))) by {
+            assert forall |page_index: int|
+                0 <= page_index < old(self).page_limit
+                    && old(self).pages@[page_index].state == PageState::Sealed implies
+                        self.pages@[page_index].generation
+                                == old(self).pages@[page_index].generation
+                            && self.pages@[page_index].state == PageState::Sealed
+                            && self.pages@[page_index].initialized_tokens
+                                == old(self).pages@[page_index].initialized_tokens by {
+                if old(self).source_prefix_has_page(
+                    source_index as int,
+                    shared_pages as int,
+                    page_index,
+                ) {
+                    assert(self.share_page_matches(
+                        old(self),
+                        source_index as int,
+                        target.slot,
+                        shared_pages as int,
+                        page_index,
+                    ));
+                } else {
+                    assert(self.share_page_matches(
+                        old(self),
+                        source_index as int,
+                        target.slot,
+                        shared_pages as int,
+                        page_index,
+                    ));
+                    assert(self.pages@[page_index] == old(self).pages@[page_index]);
+                }
+            }
+        }
         Ok(())
     }
 
@@ -1054,9 +1998,12 @@ impl KvPool {
         ensures
             self.well_formed(),
             match result {
-                Ok(()) => logical_offset as int + span as int
-                    <= self.requests@[request.slot as int].resident_tokens,
-                Err(_) => true,
+                Ok(()) => {
+                    &&& self.read_key_enabled(request, logical_offset, span)
+                    &&& logical_offset as int + span as int
+                        <= self.requests@[request.slot as int].resident_tokens
+                }
+                Err(_) => !self.read_key_enabled(request, logical_offset, span),
             },
     {
         let request_index = self.live_request_index(request)?;
@@ -1065,37 +2012,6 @@ impl KvPool {
             None => return Err(KvError::ReadOutOfBounds),
         };
         if end > self.requests[request_index].resident_tokens { return Err(KvError::ReadOutOfBounds); }
-        if span == 0 { return Ok(()); }
-
-        let first_page = logical_offset / self.page_tokens;
-        let last_page = (end - 1) / self.page_tokens;
-        let mut logical_page = first_page;
-        while logical_page <= last_page
-            decreases last_page - logical_page + 1,
-        {
-            let page = self.requests[request_index].pages[logical_page as usize];
-            let slot = self.page_slot(page)?;
-            let start_in_page = if logical_page == first_page { logical_offset % self.page_tokens } else { 0 };
-            let end_in_page = if logical_page == last_page {
-                ((end - 1) % self.page_tokens) + 1
-            } else {
-                self.page_tokens
-            };
-            if start_in_page >= end_in_page || end_in_page > slot.initialized_tokens {
-                return Err(KvError::ReadUninitialized(page));
-            }
-            let state = slot.state;
-            match state {
-                PageState::Writable { owner_slot } => {
-                    if owner_slot as u32 != request.slot {
-                        return Err(KvError::InvariantViolation(Invariant::PageState));
-                    }
-                }
-                PageState::Sealed => {}
-                _ => return Err(KvError::InvariantViolation(Invariant::PageState)),
-            }
-            logical_page += 1;
-        }
         Ok(())
     }
 
@@ -1104,12 +2020,13 @@ impl KvPool {
         ensures
             match result {
                 Ok(index) => {
+                    &&& self.key_matches(request)
                     &&& index < MAX_REQUEST_SLOTS
                     &&& index == request.slot
                     &&& self.requests@[index as int].live
                     &&& self.requests@[index as int].generation == request.generation
                 }
-                Err(_) => true,
+                Err(_) => !self.key_matches(request),
             },
     {
         let index = request.slot as usize;
@@ -1135,7 +2052,11 @@ impl KvPool {
                     &&& *slot == self.pages@[page.index as int]
                     &&& slot.generation == page.generation
                 }
-                Err(_) => true,
+                Err(_) => {
+                    ||| page.index >= self.page_limit
+                    ||| (page.index < self.page_limit
+                        && self.pages@[page.index as int].generation != page.generation)
+                }
             },
     {
         let index = page.index as usize;
@@ -1157,6 +2078,353 @@ impl KvPool {
             ),
     {
         (self.pages[page_index].reference_mask & !(1_u32 << excluded_slot)) != 0
+    }
+
+    fn share_next_page(
+        &mut self,
+        source_index: usize,
+        target_index: usize,
+        position: u32,
+    )
+        requires
+            old(self).well_formed(),
+            source_index < MAX_REQUEST_SLOTS,
+            target_index < MAX_REQUEST_SLOTS,
+            source_index != target_index,
+            old(self).requests@[source_index as int].live,
+            old(self).requests@[target_index as int].live,
+            position < MAX_PAGES_PER_REQUEST,
+            position < old(self).requests@[source_index as int].page_count,
+            position == old(self).requests@[target_index as int].page_count,
+            old(self).requests@[target_index as int].resident_tokens as int
+                == position as int * old(self).page_tokens as int,
+            old(self).requests@[target_index as int].committed_tokens
+                == old(self).requests@[target_index as int].resident_tokens,
+            (position as int + 1) * old(self).page_tokens as int
+                <= old(self).requests@[source_index as int].committed_tokens,
+            old(self).requests@[target_index as int].resident_tokens
+                    + old(self).page_tokens
+                <= old(self).max_context_tokens,
+            forall |prior: int| 0 <= prior < position ==>
+                old(self).requests@[target_index as int].pages@[prior]
+                    == old(self).requests@[source_index as int].pages@[prior],
+        ensures
+            final(self).well_formed(),
+            final(self).page_tokens == old(self).page_tokens,
+            final(self).max_context_tokens == old(self).max_context_tokens,
+            final(self).page_limit == old(self).page_limit,
+            final(self).free_stack == old(self).free_stack,
+            final(self).free_len == old(self).free_len,
+            final(self).free_bitmap == old(self).free_bitmap,
+            final(self).requests@[source_index as int]
+                == old(self).requests@[source_index as int],
+            final(self).requests@[target_index as int].generation
+                == old(self).requests@[target_index as int].generation,
+            final(self).requests@[target_index as int].live,
+            final(self).requests@[target_index as int].page_count == position + 1,
+            final(self).requests@[target_index as int].resident_tokens
+                == old(self).requests@[target_index as int].resident_tokens
+                    + old(self).page_tokens,
+            final(self).requests@[target_index as int].committed_tokens
+                == final(self).requests@[target_index as int].resident_tokens,
+            forall |prior: int| 0 <= prior <= position ==>
+                final(self).requests@[target_index as int].pages@[prior]
+                    == old(self).requests@[source_index as int].pages@[prior],
+            forall |request_index: int|
+                0 <= request_index < MAX_REQUEST_SLOTS
+                    && request_index != source_index
+                    && request_index != target_index ==>
+                        final(self).requests@[request_index] == old(self).requests@[request_index],
+            {
+                let page = old(self).requests@[source_index as int].pages@[position as int];
+                &&& final(self).pages@[page.index as int].generation
+                    == old(self).pages@[page.index as int].generation
+                &&& final(self).pages@[page.index as int].state == PageState::Sealed
+                &&& final(self).pages@[page.index as int].initialized_tokens
+                    == old(self).pages@[page.index as int].initialized_tokens
+                &&& final(self).pages@[page.index as int].reference_mask
+                    == old(self).pages@[page.index as int].reference_mask
+                        | (1_u32 << target_index as u32)
+            },
+            forall |page_index: int|
+                0 <= page_index < old(self).page_limit
+                    && page_index
+                        != old(self).requests@[source_index as int].pages@[position as int].index ==>
+                            final(self).pages@[page_index] == old(self).pages@[page_index],
+    {
+        reveal(KvPool::request_slot_well_formed);
+        reveal(KvPool::page_slot_well_formed);
+        reveal(KvPool::chain_has_page);
+        reveal(KvPool::free_stack_has_page);
+        assert(old(self).requests@.len() == MAX_REQUEST_SLOTS);
+        assert(old(self).pages@.len() == MAX_PAGE_SLOTS);
+        assert(old(self).request_slot_well_formed(source_index as int));
+        assert(old(self).request_slot_well_formed(target_index as int));
+        let page = self.requests[source_index].pages[position as usize];
+        assert((position as usize) < MAX_PAGES_PER_REQUEST);
+        assert(self.requests@[source_index as int].pages@.len() == MAX_PAGES_PER_REQUEST);
+        let page_index = page.index as usize;
+        assert(page.index < self.page_limit);
+        assert(self.page_slot_well_formed(page.index as int));
+        assert(self.pages@[page.index as int].generation == page.generation);
+        assert(self.pages@[page.index as int].initialized_tokens == self.page_tokens) by {
+            if position + 1 < self.requests@[source_index as int].page_count {
+            } else {
+                assert(position + 1 == self.requests@[source_index as int].page_count);
+                assert(self.requests@[source_index as int].resident_tokens as int
+                    == self.requests@[source_index as int].page_count as int
+                        * self.page_tokens as int);
+                assert(self.pages@[page.index as int].initialized_tokens as int
+                    == self.requests@[source_index as int].resident_tokens as int
+                        - position as int * self.page_tokens as int);
+                Self::increment_product(position as int, self.page_tokens as int);
+            }
+        }
+        assert(!self.chain_has_page(target_index as int, page.index as int)) by {
+            assert forall |prior: int|
+                0 <= prior < self.requests@[target_index as int].page_count implies
+                    self.requests@[target_index as int].pages@[prior].index != page.index by {
+                assert(self.requests@[target_index as int].pages@[prior]
+                    == self.requests@[source_index as int].pages@[prior]);
+                assert(prior < position);
+                assert(logical_pages_distinct(
+                    self.requests@[source_index as int],
+                    prior,
+                    position as int,
+                ));
+            }
+        }
+        assert(!has_reference(
+            self.pages@[page.index as int].reference_mask,
+            target_index as u32,
+        ));
+        let state = self.pages[page_index].state;
+        match state {
+            PageState::Writable { owner_slot } => {
+                assert(owner_slot as usize == source_index);
+                self.pages[page_index].state = PageState::Sealed;
+            }
+            PageState::Sealed => {}
+            PageState::Free => { assert(false); }
+        }
+        self.pages[page_index].reference_mask =
+            set_reference(self.pages[page_index].reference_mask, target_index as u32);
+        self.requests[target_index].pages[position as usize] = page;
+        self.requests[target_index].page_count += 1;
+        self.requests[target_index].resident_tokens += self.page_tokens;
+        self.requests[target_index].committed_tokens += self.page_tokens;
+
+        assert forall |index: int| 0 <= index < MAX_REQUEST_SLOTS implies
+            #[trigger] self.request_slot_well_formed(index) by {
+            assert(old(self).request_slot_well_formed(index));
+            if index == target_index {
+                let count = self.requests@[index].page_count as int;
+                let resident = self.requests@[index].resident_tokens as int;
+                let page_tokens = self.page_tokens as int;
+                assert(count == position as int + 1);
+                Self::increment_product(position as int, page_tokens);
+                assert(resident == count * page_tokens);
+                assert((count - 1) * page_tokens < resident);
+                assert forall |logical: int| 0 <= logical < count implies {
+                    let logical_page = self.requests@[index].pages@[logical];
+                    &&& #[trigger] self.requests@[index].pages@[logical].index < self.page_limit
+                    &&& logical_page.generation
+                        == self.pages@[logical_page.index as int].generation
+                    &&& self.pages@[logical_page.index as int].initialized_tokens
+                        == if logical + 1 < count {
+                            self.page_tokens
+                        } else {
+                            (resident - logical * page_tokens) as u32
+                        }
+                    &&& (match self.pages@[logical_page.index as int].state {
+                        PageState::Writable { owner_slot } => owner_slot as int == index,
+                        PageState::Sealed => (logical + 1) * page_tokens
+                            <= self.requests@[index].committed_tokens,
+                        PageState::Free => false,
+                    })
+                } by {
+                    if logical < position {
+                        assert(self.requests@[index].pages@[logical]
+                            == old(self).requests@[source_index as int].pages@[logical]);
+                        assert(old(self).requests@[target_index as int].pages@[logical]
+                            == old(self).requests@[source_index as int].pages@[logical]);
+                        assert(old(self).request_slot_well_formed(target_index as int));
+                    } else {
+                        assert(logical == position);
+                        assert(self.requests@[index].pages@[logical] == page);
+                        assert(self.pages@[page.index as int].state == PageState::Sealed);
+                        assert(self.pages@[page.index as int].initialized_tokens == self.page_tokens);
+                        assert((logical + 1) * page_tokens == resident);
+                    }
+                }
+                assert forall |left: int, right: int| 0 <= left < right < count implies
+                    #[trigger] logical_pages_distinct(self.requests@[index], left, right) by {
+                    if right < position {
+                        assert(self.requests@[index].pages@[left]
+                            == old(self).requests@[source_index as int].pages@[left]);
+                        assert(self.requests@[index].pages@[right]
+                            == old(self).requests@[source_index as int].pages@[right]);
+                    } else {
+                        assert(right == position);
+                        assert(self.requests@[index].pages@[left]
+                            == old(self).requests@[source_index as int].pages@[left]);
+                        assert(self.requests@[index].pages@[right]
+                            == old(self).requests@[source_index as int].pages@[position as int]);
+                    }
+                    assert(logical_pages_distinct(
+                        old(self).requests@[source_index as int],
+                        left,
+                        right,
+                    ));
+                }
+            } else if index == source_index {
+                assert(self.requests@[index] == old(self).requests@[index]);
+                assert forall |logical: int|
+                    0 <= logical < self.requests@[index].page_count implies {
+                        let logical_page = self.requests@[index].pages@[logical];
+                        &&& #[trigger] self.requests@[index].pages@[logical].index < self.page_limit
+                        &&& logical_page.generation
+                            == self.pages@[logical_page.index as int].generation
+                        &&& self.pages@[logical_page.index as int].initialized_tokens
+                            == if logical + 1 < self.requests@[index].page_count {
+                                self.page_tokens
+                            } else {
+                                (self.requests@[index].resident_tokens as int
+                                    - logical * self.page_tokens as int) as u32
+                            }
+                        &&& (match self.pages@[logical_page.index as int].state {
+                            PageState::Writable { owner_slot } => owner_slot as int == index,
+                            PageState::Sealed => (logical + 1) * self.page_tokens as int
+                                <= self.requests@[index].committed_tokens,
+                            PageState::Free => false,
+                        })
+                } by {
+                    let logical_page = self.requests@[index].pages@[logical];
+                    if logical_page.index == page.index {
+                        assert(logical == position) by {
+                            if logical < position {
+                                assert(logical_pages_distinct(
+                                    self.requests@[index],
+                                    logical,
+                                    position as int,
+                                ));
+                            } else if logical > position {
+                                assert(logical_pages_distinct(
+                                    self.requests@[index],
+                                    position as int,
+                                    logical,
+                                ));
+                            }
+                        }
+                        assert(self.pages@[page.index as int].state == PageState::Sealed);
+                    }
+                }
+            } else {
+                assert(self.requests@[index] == old(self).requests@[index]);
+                assert forall |logical: int|
+                    0 <= logical < self.requests@[index].page_count implies {
+                        let logical_page = self.requests@[index].pages@[logical];
+                        &&& #[trigger] self.requests@[index].pages@[logical].index < self.page_limit
+                        &&& logical_page.generation
+                            == self.pages@[logical_page.index as int].generation
+                        &&& self.pages@[logical_page.index as int].initialized_tokens
+                            == if logical + 1 < self.requests@[index].page_count {
+                                self.page_tokens
+                            } else {
+                                (self.requests@[index].resident_tokens as int
+                                    - logical * self.page_tokens as int) as u32
+                            }
+                        &&& (match self.pages@[logical_page.index as int].state {
+                            PageState::Writable { owner_slot } => owner_slot as int == index,
+                            PageState::Sealed => (logical + 1) * self.page_tokens as int
+                                <= self.requests@[index].committed_tokens,
+                            PageState::Free => false,
+                        })
+                } by {
+                    let logical_page = self.requests@[index].pages@[logical];
+                    if logical_page.index == page.index {
+                        assert(old(self).pages@[page.index as int].state == PageState::Sealed);
+                    }
+                }
+            }
+        }
+        assert forall |index: int| 0 <= index < self.page_limit implies
+            #[trigger] self.page_slot_well_formed(index) by {
+            assert(old(self).page_slot_well_formed(index));
+            if index == page.index {
+                assert(self.pages@[index].state == PageState::Sealed);
+                assert(self.pages@[index].initialized_tokens == self.page_tokens);
+                assert(has_reference(self.pages@[index].reference_mask, target_index as u32));
+                assert(self.chain_has_page(target_index as int, index)) by {
+                    assert(self.requests@[target_index as int].pages@[position as int] == page);
+                }
+                assert forall |slot: int| 0 <= slot < MAX_REQUEST_SLOTS implies
+                    (has_reference(self.pages@[index].reference_mask, slot as u32)
+                        <==> self.chain_has_page(slot, index)) by {
+                    if slot == target_index {
+                    } else {
+                        assert(self.requests@[slot].pages == old(self).requests@[slot].pages);
+                        assert(self.requests@[slot].page_count == old(self).requests@[slot].page_count);
+                        assert(self.requests@[slot].live == old(self).requests@[slot].live);
+                        assert(self.chain_has_page(slot, index)
+                            == old(self).chain_has_page(slot, index));
+                    }
+                }
+            } else {
+                assert(self.pages@[index] == old(self).pages@[index]);
+                assert forall |slot: int| 0 <= slot < MAX_REQUEST_SLOTS implies
+                    (has_reference(self.pages@[index].reference_mask, slot as u32)
+                        <==> self.chain_has_page(slot, index)) by {
+                    if slot == target_index {
+                        assert(self.requests@[slot].live == old(self).requests@[slot].live);
+                        assert(self.requests@[slot].page_count
+                            == old(self).requests@[slot].page_count + 1);
+                        assert(self.chain_has_page(slot, index)
+                            == old(self).chain_has_page(slot, index)) by {
+                            if self.chain_has_page(slot, index) {
+                                let logical = choose |logical: int|
+                                    0 <= logical < self.requests@[slot].page_count
+                                        && self.requests@[slot].pages@[logical].index == index;
+                                if logical < old(self).requests@[slot].page_count {
+                                    assert(self.requests@[slot].pages@[logical]
+                                        == old(self).requests@[slot].pages@[logical]);
+                                } else {
+                                    assert(logical == position);
+                                    assert(self.requests@[slot].pages@[logical].index == page.index);
+                                    assert(index != page.index);
+                                    assert(false);
+                                }
+                            }
+                            if old(self).chain_has_page(slot, index) {
+                                let logical = choose |logical: int|
+                                    0 <= logical < old(self).requests@[slot].page_count
+                                        && old(self).requests@[slot].pages@[logical].index == index;
+                                assert(self.requests@[slot].pages@[logical]
+                                    == old(self).requests@[slot].pages@[logical]);
+                            }
+                        }
+                    } else {
+                        assert(self.requests@[slot] == old(self).requests@[slot]);
+                        assert(self.chain_has_page(slot, index)
+                            == old(self).chain_has_page(slot, index));
+                    }
+                }
+            }
+        }
+        assert(self.page_tokens == old(self).page_tokens);
+        assert(self.max_context_tokens == old(self).max_context_tokens);
+        assert(self.page_limit == old(self).page_limit);
+        assert(self.pages@.len() == old(self).pages@.len());
+        assert(self.free_stack == old(self).free_stack);
+        assert(self.free_len == old(self).free_len);
+        assert(self.free_bitmap == old(self).free_bitmap);
+        assert(self.requests@.len() == old(self).requests@.len());
+        assert forall |index: int| 0 <= index < self.page_limit implies
+            (self.free_bitmap@[index] <==> self.free_stack_has_page(index)) by {
+            assert(old(self).free_bitmap@[index]
+                <==> old(self).free_stack_has_page(index));
+        }
+        assert(self.well_formed());
     }
 
     fn append_existing_page(
@@ -1188,7 +2456,18 @@ impl KvPool {
                 == old(self).requests@[request_index as int].resident_tokens + written,
             final(self).requests@[request_index as int].committed_tokens
                 == old(self).requests@[request_index as int].committed_tokens,
+            final(self).requests@[request_index as int].generation
+                == old(self).requests@[request_index as int].generation,
+            final(self).requests@[request_index as int].live
+                == old(self).requests@[request_index as int].live,
+            final(self).requests@[request_index as int].page_count
+                == old(self).requests@[request_index as int].page_count,
+            final(self).requests@[request_index as int].pages
+                == old(self).requests@[request_index as int].pages,
             final(self).request_frame_except(old(self), request_index as int),
+            final(self).sealed_payload_frame(old(self)),
+            final(self).exact_sealed_frame(old(self)),
+            final(self).reachable_payload_frame_except(old(self), request_index as int),
             final(self).pages@[page.index as int].initialized_tokens
                 == old(self).pages@[page.index as int].initialized_tokens + written,
             forall |page_index: int|
@@ -1197,7 +2476,14 @@ impl KvPool {
             final(self).free_stack == old(self).free_stack,
             final(self).free_len == old(self).free_len,
             final(self).free_bitmap == old(self).free_bitmap,
+            final(self).page_tokens == old(self).page_tokens,
+            final(self).max_context_tokens == old(self).max_context_tokens,
+            final(self).page_limit == old(self).page_limit,
     {
+        reveal(KvPool::request_slot_well_formed);
+        reveal(KvPool::page_slot_well_formed);
+        reveal(KvPool::chain_has_page);
+        reveal(KvPool::free_stack_has_page);
         let page_index = page.index as usize;
         self.pages[page_index].initialized_tokens += written;
         self.requests[request_index].resident_tokens += written;
@@ -1207,6 +2493,26 @@ impl KvPool {
             if index == request_index {
                 assert(self.requests@[index].page_count == old(self).requests@[index].page_count);
                 assert(self.requests@[index].pages == old(self).requests@[index].pages);
+                assert(self.requests@[index].generation > 0);
+                assert(self.requests@[index].committed_tokens
+                    <= self.requests@[index].resident_tokens);
+                assert(self.requests@[index].resident_tokens <= self.max_context_tokens);
+                assert(self.requests@[index].page_count <= MAX_PAGES_PER_REQUEST);
+                assert(self.requests@[index].live);
+                assert(self.requests@[index].resident_tokens > 0);
+                assert(self.requests@[index].page_count > 0);
+                let count = self.requests@[index].page_count as int;
+                let resident = self.requests@[index].resident_tokens as int;
+                let page_tokens = self.page_tokens as int;
+                let old_resident = old(self).requests@[index].resident_tokens as int;
+                let old_initialized = old(self).pages@[page.index as int].initialized_tokens as int;
+                assert((count - 1) * page_tokens < resident);
+                assert(old_initialized == old_resident - (count - 1) * page_tokens);
+                assert(resident == old_resident + written);
+                assert(old_initialized + written <= page_tokens);
+                assert(count * page_tokens == (count - 1) * page_tokens + page_tokens)
+                    by (nonlinear_arith);
+                assert(resident <= count * page_tokens);
                 assert forall |position: int|
                     0 <= position < self.requests@[index].page_count implies {
                         let logical = self.requests@[index].pages@[position];
@@ -1225,7 +2531,7 @@ impl KvPool {
                                 <= self.requests@[index].committed_tokens,
                             PageState::Free => false,
                         })
-                    } by {
+                } by {
                     if position + 1 < self.requests@[index].page_count {
                         assert(logical_pages_distinct(
                             self.requests@[index],
@@ -1233,6 +2539,20 @@ impl KvPool {
                             self.requests@[index].page_count as int - 1,
                         ));
                     }
+                }
+                assert forall |left: int, right: int|
+                    0 <= left < right < self.requests@[index].page_count implies
+                        #[trigger] logical_pages_distinct(
+                            self.requests@[index],
+                            left,
+                            right,
+                        ) by {
+                    assert(old(self).request_slot_well_formed(index));
+                    assert(logical_pages_distinct(old(self).requests@[index], left, right));
+                    assert(logical_page(self.requests@[index], left)
+                        == logical_page(old(self).requests@[index], left));
+                    assert(logical_page(self.requests@[index], right)
+                        == logical_page(old(self).requests@[index], right));
                 }
             } else {
                 assert(self.requests@[index] == old(self).requests@[index]);
@@ -1251,13 +2571,79 @@ impl KvPool {
                     == old(self).chain_has_page(slot, index));
             }
         }
+        assert(self.page_tokens == old(self).page_tokens);
+        assert(self.max_context_tokens == old(self).max_context_tokens);
+        assert(self.page_limit == old(self).page_limit);
+        assert(self.pages@.len() == old(self).pages@.len());
+        assert(self.free_stack == old(self).free_stack);
+        assert(self.free_len == old(self).free_len);
+        assert(self.free_bitmap == old(self).free_bitmap);
+        assert(self.requests@.len() == old(self).requests@.len());
+        assert forall |index: int| 0 <= index < self.page_limit implies
+            (self.free_bitmap@[index] <==> self.free_stack_has_page(index)) by {
+            assert(old(self).free_bitmap@[index]
+                <==> old(self).free_stack_has_page(index));
+        }
         assert(self.well_formed());
     }
 
-    fn append_fresh_page(&mut self, request: RequestKey, request_index: usize, written: u32) {
+    fn append_fresh_page(&mut self, request: RequestKey, request_index: usize, written: u32)
+        requires
+            old(self).well_formed(),
+            request.slot < MAX_REQUEST_SLOTS,
+            request_index == request.slot,
+            old(self).requests@[request_index as int].live,
+            old(self).requests@[request_index as int].generation == request.generation,
+            old(self).requests@[request_index as int].page_count < MAX_PAGES_PER_REQUEST,
+            old(self).free_len > 0,
+            0 < written <= old(self).page_tokens,
+            old(self).requests@[request_index as int].resident_tokens + written
+                <= old(self).max_context_tokens,
+            old(self).requests@[request_index as int].resident_tokens as int
+                == old(self).requests@[request_index as int].page_count as int
+                    * old(self).page_tokens as int,
+        ensures
+            final(self).well_formed(),
+            final(self).requests@[request_index as int].resident_tokens
+                == old(self).requests@[request_index as int].resident_tokens + written,
+            final(self).requests@[request_index as int].committed_tokens
+                == old(self).requests@[request_index as int].committed_tokens,
+            final(self).requests@[request_index as int].generation
+                == old(self).requests@[request_index as int].generation,
+            final(self).requests@[request_index as int].live
+                == old(self).requests@[request_index as int].live,
+            final(self).requests@[request_index as int].page_count
+                == old(self).requests@[request_index as int].page_count + 1,
+            final(self).request_frame_except(old(self), request_index as int),
+            final(self).sealed_payload_frame(old(self)),
+            final(self).exact_sealed_frame(old(self)),
+            final(self).reachable_payload_frame_except(old(self), request_index as int),
+            final(self).free_len + 1 == old(self).free_len,
+            final(self).free_stack == old(self).free_stack,
+            final(self).page_tokens == old(self).page_tokens,
+            final(self).max_context_tokens == old(self).max_context_tokens,
+            final(self).page_limit == old(self).page_limit,
+    {
+        reveal(KvPool::request_slot_well_formed);
+        reveal(KvPool::page_slot_well_formed);
+        reveal(KvPool::chain_has_page);
+        reveal(KvPool::free_stack_has_page);
         let stack_index = (self.free_len - 1) as usize;
         let page_index = self.free_stack[stack_index] as usize;
         let chain_position = self.requests[request_index].page_count as usize;
+
+        assert(stack_index as int == old(self).free_len - 1);
+        assert(old(self).free_stack@[old(self).free_len - 1] == page_index);
+        assert(old(self).free_stack_has_page(page_index as int));
+        assert(old(self).free_bitmap@[page_index as int]);
+        assert(old(self).page_slot_well_formed(page_index as int));
+        assert(old(self).pages@[page_index as int].state == PageState::Free);
+        assert(old(self).pages@[page_index as int].reference_mask == 0);
+        assert forall |slot: int| 0 <= slot < MAX_REQUEST_SLOTS implies
+            !old(self).chain_has_page(slot, page_index as int) by {
+            zero_reference_lemma(slot as u32);
+            assert(!has_reference(0, slot as u32));
+        }
 
         self.free_len -= 1;
         self.free_bitmap[page_index] = false;
@@ -1271,6 +2657,531 @@ impl KvPool {
         self.requests[request_index].pages[chain_position] = page;
         self.requests[request_index].page_count += 1;
         self.requests[request_index].resident_tokens += written;
+
+        assert forall |index: int| 0 <= index < MAX_REQUEST_SLOTS implies
+            #[trigger] self.request_slot_well_formed(index) by {
+            assert(old(self).request_slot_well_formed(index));
+            if index == request_index {
+                let old_count = old(self).requests@[index].page_count as int;
+                let new_count = self.requests@[index].page_count as int;
+                let new_resident = self.requests@[index].resident_tokens as int;
+                let page_tokens = self.page_tokens as int;
+                let old_resident = old(self).requests@[index].resident_tokens as int;
+                let written_int = written as int;
+                assert(new_count == old_count + 1);
+                assert(new_resident == old_resident + written_int);
+                assert(old_resident == old_count * page_tokens);
+                assert(0 < written_int <= page_tokens);
+                assert(new_count - 1 == old_count);
+                assert((new_count - 1) * page_tokens == old_count * page_tokens);
+                assert(new_count * page_tokens == (old_count + 1) * page_tokens);
+                assert((old_count + 1) * page_tokens
+                    == old_count * page_tokens + page_tokens) by (nonlinear_arith);
+                assert((new_count - 1) * page_tokens < new_resident);
+                assert(new_resident <= new_count * page_tokens);
+                assert forall |position: int| 0 <= position < new_count implies {
+                    let logical = self.requests@[index].pages@[position];
+                    &&& #[trigger] self.requests@[index].pages@[position].index < self.page_limit
+                    &&& logical.generation == self.pages@[logical.index as int].generation
+                    &&& self.pages@[logical.index as int].initialized_tokens
+                        == if position + 1 < new_count {
+                            self.page_tokens
+                        } else {
+                            (new_resident - position * page_tokens) as u32
+                        }
+                    &&& (match self.pages@[logical.index as int].state {
+                        PageState::Writable { owner_slot } => owner_slot as int == index,
+                        PageState::Sealed => (position + 1) * page_tokens
+                            <= self.requests@[index].committed_tokens,
+                        PageState::Free => false,
+                    })
+                } by {
+                    if position < old_count {
+                        assert(self.requests@[index].pages@[position]
+                            == old(self).requests@[index].pages@[position]);
+                        assert(old(self).requests@[index].pages@[position].index != page_index);
+                        let old_logical = old(self).requests@[index].pages@[position];
+                        assert(self.pages@[old_logical.index as int]
+                            == old(self).pages@[old_logical.index as int]);
+                        if position + 1 == old_count {
+                            assert(position == old_count - 1);
+                            assert(old(self).pages@[old_logical.index as int].initialized_tokens
+                                == (old_resident - position * page_tokens) as u32);
+                            assert(position * page_tokens == (old_count - 1) * page_tokens);
+                            assert(old_count * page_tokens
+                                - (old_count - 1) * page_tokens == page_tokens)
+                                by (nonlinear_arith);
+                            assert(old_resident - position * page_tokens == page_tokens)
+                                by {
+                                    assert(old_resident == old_count * page_tokens);
+                                };
+                        }
+                    } else {
+                        assert(position == old_count);
+                        assert(self.requests@[index].pages@[position].index == page_index);
+                        assert(self.pages@[page_index as int].initialized_tokens == written);
+                        assert(position == old_count);
+                        assert(position * page_tokens == old_count * page_tokens);
+                        assert(new_resident - position * page_tokens == written_int)
+                            by {
+                                assert(new_resident == old_resident + written_int);
+                                assert(old_resident == old_count * page_tokens);
+                            };
+                    }
+                }
+                assert forall |left: int, right: int|
+                    0 <= left < right < new_count implies
+                        #[trigger] logical_pages_distinct(
+                            self.requests@[index],
+                            left,
+                            right,
+                        ) by {
+                    if right < old_count {
+                        assert(logical_pages_distinct(old(self).requests@[index], left, right));
+                    } else {
+                        assert(right == old_count);
+                        assert(!old(self).chain_has_page(index, page_index as int));
+                    }
+                }
+            } else {
+                assert(self.requests@[index] == old(self).requests@[index]);
+            }
+        }
+        assert forall |slot: int| 0 <= slot < MAX_REQUEST_SLOTS implies
+            (#[trigger] has_reference(self.pages@[page_index as int].reference_mask, slot as u32)
+                <==> slot == request_index) by {
+            zero_reference_lemma(slot as u32);
+            set_reference_lemma(0, request.slot, slot as u32);
+        }
+        assert forall |slot: int| 0 <= slot < MAX_REQUEST_SLOTS implies
+            (#[trigger] self.chain_has_page(slot, page_index as int)
+                <==> slot == request_index) by {
+            if slot == request_index {
+                let witness = old(self).requests@[slot].page_count as int;
+                assert(0 <= witness < self.requests@[slot].page_count);
+                assert(self.requests@[slot].pages@[witness].index == page_index);
+            } else {
+                assert(self.requests@[slot] == old(self).requests@[slot]);
+                assert(!old(self).chain_has_page(slot, page_index as int));
+            }
+        }
+        assert forall |index: int| 0 <= index < self.page_limit implies
+            #[trigger] self.page_slot_well_formed(index) by {
+            assert(old(self).page_slot_well_formed(index));
+            assert forall |slot: int| 0 <= slot < MAX_REQUEST_SLOTS implies
+                (has_reference(self.pages@[index].reference_mask, slot as u32)
+                    <==> self.chain_has_page(slot, index)) by {
+                if index == page_index {
+                    assert(has_reference(self.pages@[index].reference_mask, slot as u32)
+                        <==> slot == request_index);
+                    assert(self.chain_has_page(slot, index) <==> slot == request_index);
+                } else {
+                    assert(self.pages@[index] == old(self).pages@[index]);
+                    if slot == request_index {
+                        assert(self.requests@[slot].page_count
+                            == old(self).requests@[slot].page_count + 1);
+                        assert(self.requests@[slot].pages@[
+                            old(self).requests@[slot].page_count as int
+                        ]
+                            .index == page_index);
+                        assert forall |position: int|
+                            0 <= position < old(self).requests@[slot].page_count implies
+                                self.requests@[slot].pages@[position]
+                                    == old(self).requests@[slot].pages@[position] by {
+                        }
+                        if self.chain_has_page(slot, index) {
+                            let position = choose |position: int|
+                                0 <= position < self.requests@[slot].page_count
+                                    && self.requests@[slot].pages@[position].index == index;
+                            if position == old(self).requests@[slot].page_count {
+                                assert(index == page_index);
+                            } else {
+                                assert(position < old(self).requests@[slot].page_count);
+                                assert(old(self).chain_has_page(slot, index));
+                            }
+                        }
+                        if old(self).chain_has_page(slot, index) {
+                            let position = choose |position: int|
+                                0 <= position < old(self).requests@[slot].page_count
+                                    && old(self).requests@[slot].pages@[position].index == index;
+                            assert(self.requests@[slot].pages@[position].index == index);
+                            assert(self.chain_has_page(slot, index));
+                        }
+                    } else {
+                        assert(self.requests@[slot] == old(self).requests@[slot]);
+                        assert(self.chain_has_page(slot, index)
+                            == old(self).chain_has_page(slot, index));
+                    }
+                }
+            }
+        }
+        assert forall |index: int| 0 <= index < self.page_limit implies
+            (self.free_bitmap@[index] <==> self.free_stack_has_page(index)) by {
+            assert(old(self).free_bitmap@[index]
+                <==> old(self).free_stack_has_page(index));
+            if index == page_index {
+                assert forall |position: int| 0 <= position < self.free_len implies
+                    self.free_stack@[position] != index by {
+                    assert(free_positions_distinct(
+                        old(self),
+                        position,
+                        old(self).free_len as int - 1,
+                    ));
+                }
+            } else if old(self).free_stack_has_page(index) {
+                let position = choose |position: int|
+                    0 <= position < old(self).free_len
+                        && old(self).free_stack@[position] == index;
+                assert(position != old(self).free_len - 1);
+                assert(0 <= position < self.free_len);
+                assert(self.free_stack@[position] == index);
+                assert(self.free_stack_has_page(index));
+            }
+        }
+        assert(self.well_formed());
+    }
+
+    fn raise_committed(&mut self, request_index: usize, committed: u32)
+        requires
+            old(self).well_formed(),
+            request_index < MAX_REQUEST_SLOTS,
+            old(self).requests@[request_index as int].live,
+            old(self).requests@[request_index as int].committed_tokens <= committed,
+            committed <= old(self).requests@[request_index as int].resident_tokens,
+        ensures
+            final(self).well_formed(),
+            final(self).requests@[request_index as int].committed_tokens == committed,
+            final(self).requests@[request_index as int].resident_tokens
+                == old(self).requests@[request_index as int].resident_tokens,
+            final(self).requests@[request_index as int].generation
+                == old(self).requests@[request_index as int].generation,
+            final(self).requests@[request_index as int].live
+                == old(self).requests@[request_index as int].live,
+            final(self).requests@[request_index as int].page_count
+                == old(self).requests@[request_index as int].page_count,
+            final(self).requests@[request_index as int].pages
+                == old(self).requests@[request_index as int].pages,
+            final(self).request_frame_except(old(self), request_index as int),
+            final(self).pages == old(self).pages,
+            final(self).free_stack == old(self).free_stack,
+            final(self).free_len == old(self).free_len,
+            final(self).free_bitmap == old(self).free_bitmap,
+            final(self).page_tokens == old(self).page_tokens,
+            final(self).max_context_tokens == old(self).max_context_tokens,
+            final(self).page_limit == old(self).page_limit,
+    {
+        reveal(KvPool::request_slot_well_formed);
+        reveal(KvPool::page_slot_well_formed);
+        self.requests[request_index].committed_tokens = committed;
+        assert forall |index: int| 0 <= index < MAX_REQUEST_SLOTS implies
+            #[trigger] self.request_slot_well_formed(index) by {
+            assert(old(self).request_slot_well_formed(index));
+            if index == request_index {
+                assert(self.requests@[index].generation == old(self).requests@[index].generation);
+                assert(self.requests@[index].live == old(self).requests@[index].live);
+                assert(self.requests@[index].resident_tokens
+                    == old(self).requests@[index].resident_tokens);
+                assert(self.requests@[index].page_count
+                    == old(self).requests@[index].page_count);
+                assert(self.requests@[index].pages == old(self).requests@[index].pages);
+                assert(self.requests@[index].generation > 0);
+                assert(self.requests@[index].committed_tokens
+                    <= self.requests@[index].resident_tokens);
+                assert(self.requests@[index].resident_tokens <= self.max_context_tokens);
+                assert(self.requests@[index].page_count <= MAX_PAGES_PER_REQUEST);
+                assert(self.requests@[index].live);
+                assert forall |position: int|
+                    0 <= position < self.requests@[index].page_count implies {
+                        let page = self.requests@[index].pages@[position];
+                        &&& #[trigger] self.requests@[index].pages@[position].index < self.page_limit
+                        &&& page.generation == self.pages@[page.index as int].generation
+                        &&& self.pages@[page.index as int].initialized_tokens
+                            == if position + 1 < self.requests@[index].page_count {
+                                self.page_tokens
+                            } else {
+                                (self.requests@[index].resident_tokens as int
+                                    - position * self.page_tokens as int) as u32
+                            }
+                        &&& (match self.pages@[page.index as int].state {
+                            PageState::Writable { owner_slot } => owner_slot as int == index,
+                            PageState::Sealed => (position + 1) * self.page_tokens as int
+                                <= self.requests@[index].committed_tokens,
+                            PageState::Free => false,
+                        })
+                } by {
+                    let page = self.requests@[index].pages@[position];
+                    assert(self.pages@[page.index as int] == old(self).pages@[page.index as int]);
+                    if self.pages@[page.index as int].state == PageState::Sealed {
+                        assert((position + 1) * self.page_tokens as int
+                            <= old(self).requests@[index].committed_tokens);
+                        assert(old(self).requests@[index].committed_tokens
+                            <= self.requests@[index].committed_tokens);
+                    }
+                }
+                assert forall |left: int, right: int|
+                    0 <= left < right < self.requests@[index].page_count implies
+                        #[trigger] logical_pages_distinct(
+                            self.requests@[index],
+                            left,
+                            right,
+                        ) by {
+                    assert(logical_pages_distinct(old(self).requests@[index], left, right));
+                }
+            } else {
+                assert(self.requests@[index] == old(self).requests@[index]);
+            }
+        }
+        assert forall |index: int| 0 <= index < self.page_limit implies
+            #[trigger] self.page_slot_well_formed(index) by {
+            assert(old(self).page_slot_well_formed(index));
+            assert(self.pages@[index] == old(self).pages@[index]);
+            assert forall |slot: int| 0 <= slot < MAX_REQUEST_SLOTS implies
+                (has_reference(self.pages@[index].reference_mask, slot as u32)
+                    <==> self.chain_has_page(slot, index)) by {
+                assert(self.requests@[slot].pages == old(self).requests@[slot].pages);
+                assert(self.requests@[slot].page_count == old(self).requests@[slot].page_count);
+                assert(self.requests@[slot].live == old(self).requests@[slot].live);
+                assert(self.chain_has_page(slot, index)
+                    == old(self).chain_has_page(slot, index));
+            }
+            match self.pages@[index].state {
+                PageState::Writable { owner_slot } => {
+                    assert(self.requests@[owner_slot as int].live
+                        == old(self).requests@[owner_slot as int].live);
+                }
+                PageState::Sealed | PageState::Free => {}
+            }
+        }
+        assert(self.free_stack == old(self).free_stack);
+        assert(self.free_bitmap == old(self).free_bitmap);
+        assert(self.free_len == old(self).free_len);
+        assert(self.pages == old(self).pages);
+        assert(self.page_tokens == old(self).page_tokens);
+        assert(self.max_context_tokens == old(self).max_context_tokens);
+        assert(self.page_limit == old(self).page_limit);
+        assert(self.requests@.len() == old(self).requests@.len());
+        assert forall |index: int| 0 <= index < self.page_limit implies
+            (self.free_bitmap@[index] <==> self.free_stack_has_page(index)) by {
+            assert(old(self).free_bitmap@[index]
+                <==> old(self).free_stack_has_page(index));
+        }
+        assert(self.well_formed());
+    }
+
+    fn drop_exclusive_tail(&mut self, request_index: usize, page: PageId)
+        requires
+            old(self).well_formed(),
+            request_index < MAX_REQUEST_SLOTS,
+            old(self).requests@[request_index as int].live,
+            old(self).requests@[request_index as int].page_count > 0,
+            old(self).requests@[request_index as int].page_count <= MAX_PAGES_PER_REQUEST,
+            page == old(self).requests@[request_index as int].pages@[
+                old(self).requests@[request_index as int].page_count - 1
+            ],
+            page.index < old(self).page_limit,
+            old(self).pages@[page.index as int].state
+                == (PageState::Writable { owner_slot: request_index as u8 }),
+            old(self).pages@[page.index as int].generation < u32::MAX,
+            old(self).requests@[request_index as int].committed_tokens as int
+                <= old(self).requests@[request_index as int].resident_tokens as int
+                    - old(self).pages@[page.index as int].initialized_tokens as int,
+            old(self).free_len < old(self).page_limit,
+        ensures
+            final(self).well_formed(),
+            final(self).requests@[request_index as int].page_count + 1
+                == old(self).requests@[request_index as int].page_count,
+            final(self).requests@[request_index as int].committed_tokens
+                == old(self).requests@[request_index as int].committed_tokens,
+            final(self).requests@[request_index as int].generation
+                == old(self).requests@[request_index as int].generation,
+            final(self).requests@[request_index as int].live
+                == old(self).requests@[request_index as int].live,
+            final(self).request_frame_except(old(self), request_index as int),
+            final(self).free_len == old(self).free_len + 1,
+            final(self).page_tokens == old(self).page_tokens,
+            final(self).max_context_tokens == old(self).max_context_tokens,
+            final(self).page_limit == old(self).page_limit,
+    {
+        reveal(KvPool::request_slot_well_formed);
+        reveal(KvPool::page_slot_well_formed);
+        reveal(KvPool::chain_has_page);
+        reveal(KvPool::free_stack_has_page);
+        let old_count = self.requests[request_index].page_count;
+        let position = old_count - 1;
+        assert(position < MAX_PAGES_PER_REQUEST);
+        assert(self.requests@[request_index as int].pages@[position as int] == page);
+        let page_index = page.index as usize;
+        let initialized = self.pages[page_index].initialized_tokens;
+        let generation = self.pages[page_index].generation + 1;
+        let new_resident = self.requests[request_index].resident_tokens - initialized;
+        let stack_position = self.free_len as usize;
+
+        self.requests[request_index].pages[position as usize] = PageId::EMPTY;
+        self.requests[request_index].page_count = position;
+        self.requests[request_index].resident_tokens = new_resident;
+        self.pages[page_index] = PageSlot {
+            generation,
+            state: PageState::Free,
+            initialized_tokens: 0,
+            reference_mask: 0,
+        };
+        self.free_bitmap[page_index] = true;
+        self.free_stack[stack_position] = page.index;
+        self.free_len += 1;
+
+        assert forall |index: int| 0 <= index < MAX_REQUEST_SLOTS implies
+            #[trigger] self.request_slot_well_formed(index) by {
+            assert(old(self).request_slot_well_formed(index));
+            if index == request_index {
+                assert(self.requests@[index].resident_tokens as int
+                    == self.requests@[index].page_count as int * self.page_tokens as int);
+                assert forall |logical: int|
+                    0 <= logical < self.requests@[index].page_count implies {
+                        let logical_page = self.requests@[index].pages@[logical];
+                        &&& #[trigger] self.requests@[index].pages@[logical].index < self.page_limit
+                        &&& logical_page.generation
+                            == self.pages@[logical_page.index as int].generation
+                        &&& self.pages@[logical_page.index as int].initialized_tokens
+                            == if logical + 1 < self.requests@[index].page_count {
+                                self.page_tokens
+                            } else {
+                                (self.requests@[index].resident_tokens as int
+                                    - logical * self.page_tokens as int) as u32
+                            }
+                        &&& (match self.pages@[logical_page.index as int].state {
+                            PageState::Writable { owner_slot } => owner_slot as int == index,
+                            PageState::Sealed => (logical + 1) * self.page_tokens as int
+                                <= self.requests@[index].committed_tokens,
+                            PageState::Free => false,
+                        })
+                } by {
+                    assert(logical < position);
+                    assert(self.requests@[index].pages@[logical]
+                        == old(self).requests@[index].pages@[logical]);
+                    assert(logical_pages_distinct(
+                        old(self).requests@[index],
+                        logical,
+                        position as int,
+                    ));
+                }
+                assert forall |left: int, right: int|
+                    0 <= left < right < self.requests@[index].page_count implies
+                        #[trigger] logical_pages_distinct(
+                            self.requests@[index],
+                            left,
+                            right,
+                        ) by {
+                    assert(logical_pages_distinct(old(self).requests@[index], left, right));
+                }
+            } else {
+                assert(self.requests@[index] == old(self).requests@[index]);
+            }
+        }
+        assert forall |index: int| 0 <= index < self.page_limit implies
+            #[trigger] self.page_slot_well_formed(index) by {
+            assert(old(self).page_slot_well_formed(index));
+            if index == page_index {
+                assert forall |slot: int| 0 <= slot < MAX_REQUEST_SLOTS implies
+                    !self.chain_has_page(slot, index) by {
+                    if slot == request_index {
+                        if self.chain_has_page(slot, index) {
+                            let logical = choose |logical: int|
+                                0 <= logical < self.requests@[slot].page_count
+                                    && self.requests@[slot].pages@[logical].index == index;
+                            assert(logical < position);
+                            assert(self.requests@[slot].pages@[logical]
+                                == old(self).requests@[slot].pages@[logical]);
+                            assert(logical_pages_distinct(
+                                old(self).requests@[slot],
+                                logical,
+                                position as int,
+                            ));
+                        }
+                    } else {
+                        assert(self.requests@[slot] == old(self).requests@[slot]);
+                        if self.chain_has_page(slot, index) {
+                            assert(old(self).chain_has_page(slot, index));
+                            assert(has_reference(
+                                old(self).pages@[index].reference_mask,
+                                slot as u32,
+                            ));
+                            assert(old(self).pages@[index].state
+                                == (PageState::Writable { owner_slot: request_index as u8 }));
+                            assert(old(self).request_slot_well_formed(slot));
+                            let logical = choose |logical: int|
+                                0 <= logical < old(self).requests@[slot].page_count
+                                    && old(self).requests@[slot].pages@[logical].index == index;
+                            assert(old(self).pages@[index].state
+                                == (PageState::Writable { owner_slot: slot as u8 }));
+                        }
+                    }
+                }
+                assert forall |slot: int| 0 <= slot < MAX_REQUEST_SLOTS implies
+                    (has_reference(self.pages@[index].reference_mask, slot as u32)
+                        <==> self.chain_has_page(slot, index)) by {
+                    zero_reference_lemma(slot as u32);
+                }
+            } else {
+                assert(self.pages@[index] == old(self).pages@[index]);
+                assert forall |slot: int| 0 <= slot < MAX_REQUEST_SLOTS implies
+                    (has_reference(self.pages@[index].reference_mask, slot as u32)
+                        <==> self.chain_has_page(slot, index)) by {
+                    if slot == request_index {
+                        assert(self.chain_has_page(slot, index)
+                            == old(self).chain_has_page(slot, index)) by {
+                            if old(self).chain_has_page(slot, index) {
+                                let logical = choose |logical: int|
+                                    0 <= logical < old(self).requests@[slot].page_count
+                                        && old(self).requests@[slot].pages@[logical].index == index;
+                                assert(logical != position);
+                                assert(logical < position);
+                            }
+                            if self.chain_has_page(slot, index) {
+                                let logical = choose |logical: int|
+                                    0 <= logical < self.requests@[slot].page_count
+                                        && self.requests@[slot].pages@[logical].index == index;
+                                assert(logical < position);
+                            }
+                        }
+                    } else {
+                        assert(self.requests@[slot] == old(self).requests@[slot]);
+                        assert(self.chain_has_page(slot, index)
+                            == old(self).chain_has_page(slot, index));
+                    }
+                }
+            }
+        }
+        assert forall |index: int| 0 <= index < self.page_limit implies
+            (self.free_bitmap@[index] <==> self.free_stack_has_page(index)) by {
+            if index == page_index {
+                assert(self.free_stack@[old(self).free_len as int] == index);
+            } else {
+                assert(self.free_bitmap@[index] == old(self).free_bitmap@[index]);
+                assert(self.free_stack_has_page(index)
+                    == old(self).free_stack_has_page(index)) by {
+                    if self.free_stack_has_page(index) {
+                        let free_position = choose |free_position: int|
+                            0 <= free_position < self.free_len
+                                && self.free_stack@[free_position] == index;
+                        if free_position == old(self).free_len {
+                            assert(index == page_index);
+                        }
+                    }
+                }
+            }
+        }
+        assert forall |left: int, right: int|
+            0 <= left < right < self.free_len implies
+                #[trigger] free_positions_distinct(self, left, right) by {
+            if right == old(self).free_len {
+                assert(self.free_stack@[right] == page_index);
+                assert(!old(self).free_stack_has_page(page_index as int));
+            } else {
+                assert(right < old(self).free_len);
+                assert(free_positions_distinct(old(self), left, right));
+            }
+        }
+        assert(self.well_formed());
     }
 
     fn reclaim_page_unchecked(&mut self, page_index: usize) {
@@ -1339,12 +3250,42 @@ impl KvPool {
         page_count: u32,
         page_tokens: u32,
         max_context_tokens: u32,
-    ) -> Result<Self, KvError> {
+    ) -> (result: Result<Self, KvError>)
+        ensures
+            match result {
+                Ok(pool) => Self::new_enabled(page_count, page_tokens, max_context_tokens)
+                    && pool.well_formed(),
+                Err(_) => !Self::new_enabled(page_count, page_tokens, max_context_tokens),
+            },
+    {
         Self::new_bounded(page_count, page_tokens, max_context_tokens)
     }
 
     /// Activates the exact generation expected by a scheduler request slot.
-    pub fn create_request(&mut self, request: RequestId) -> Result<(), KvError> {
+    pub fn create_request(&mut self, request: RequestId) -> (result: Result<(), KvError>)
+        requires old(self).well_formed(),
+        ensures
+            final(self).well_formed(),
+            final(self).page_tokens_spec() == old(self).page_tokens_spec(),
+            final(self).max_context_tokens_spec() == old(self).max_context_tokens_spec(),
+            final(self).page_limit_spec() == old(self).page_limit_spec(),
+            match result {
+                Ok(()) => {
+                    &&& old(self).create_enabled(request)
+                    &&& final(self).request_matches_spec(request)
+                    &&& final(self).request_frame_except(
+                        old(self),
+                        request.slot_spec() as int,
+                    )
+                }
+                Err(_) => {
+                    &&& !old(self).create_enabled(request)
+                    &&& final(self).same_state(old(self))
+                }
+            },
+    {
+        reveal(KvPool::create_enabled);
+        reveal(KvPool::request_matches_spec);
         self.create_request_key(request_key(request))
     }
 
@@ -1353,8 +3294,60 @@ impl KvPool {
         &mut self,
         request: RequestId,
         token_count: u32,
-    ) -> Result<(), KvError> {
-        self.append_tentative_key(request_key(request), token_count)
+    ) -> (result: Result<(), KvError>)
+        requires old(self).well_formed(),
+        ensures
+            final(self).well_formed(),
+            final(self).page_tokens_spec() == old(self).page_tokens_spec(),
+            final(self).max_context_tokens_spec() == old(self).max_context_tokens_spec(),
+            final(self).page_limit_spec() == old(self).page_limit_spec(),
+            match result {
+                Ok(()) => {
+                    &&& old(self).append_enabled(request, token_count)
+                    &&& final(self).resident_tokens_spec(request).is_some()
+                    &&& final(self).resident_tokens_spec(request).unwrap() as int
+                        == old(self).resident_tokens_spec(request).unwrap() as int
+                            + token_count as int
+                    &&& final(self).committed_tokens_spec(request)
+                        == old(self).committed_tokens_spec(request)
+                    &&& final(self).request_frame_except(
+                        old(self),
+                        request.slot_spec() as int,
+                    )
+                    &&& final(self).exact_sealed_frame(old(self))
+                    &&& final(self).reachable_payload_frame_except(
+                        old(self),
+                        request.slot_spec() as int,
+                    )
+                }
+                Err(_) => {
+                    &&& !old(self).append_enabled(request, token_count)
+                    &&& final(self).same_state(old(self))
+                }
+            },
+    {
+        reveal(KvPool::append_enabled);
+        reveal(KvPool::request_matches_spec);
+        reveal(KvPool::resident_tokens_spec);
+        reveal(KvPool::committed_tokens_spec);
+        reveal(KvPool::key_matches);
+        let ghost previous = *self;
+        let key = request_key(request);
+        match self.append_tentative_key(key, token_count) {
+            Ok(()) => {
+                assert(previous.append_key_enabled(key, token_count));
+                reveal(KvPool::append_key_enabled);
+                assert(previous.key_matches(key));
+                assert(self.key_matches(key));
+                assert(previous.request_matches_spec(request));
+                assert(self.request_matches_spec(request));
+                Ok(())
+            }
+            Err(error) => {
+                assert(!previous.append_key_enabled(key, token_count));
+                Err(error)
+            }
+        }
     }
 
     /// Shares only complete, committed, page-aligned prefix pages.
@@ -1363,12 +3356,68 @@ impl KvPool {
         source: RequestId,
         target: RequestId,
         token_count: u32,
-    ) -> Result<(), KvError> {
-        self.share_committed_prefix_key(
-            request_key(source),
-            request_key(target),
-            token_count,
-        )
+    ) -> (result: Result<(), KvError>)
+        requires old(self).well_formed(),
+        ensures
+            final(self).well_formed(),
+            final(self).page_tokens_spec() == old(self).page_tokens_spec(),
+            final(self).max_context_tokens_spec() == old(self).max_context_tokens_spec(),
+            final(self).page_limit_spec() == old(self).page_limit_spec(),
+            match result {
+                Ok(()) => {
+                    &&& old(self).share_enabled(source, target, token_count)
+                    &&& final(self).resident_tokens_spec(target) == Some(token_count)
+                    &&& final(self).committed_tokens_spec(target) == Some(token_count)
+                    &&& final(self).resident_tokens_spec(source)
+                        == old(self).resident_tokens_spec(source)
+                    &&& final(self).committed_tokens_spec(source)
+                        == old(self).committed_tokens_spec(source)
+                    &&& final(self).request_frame_except_two(
+                        old(self),
+                        source.slot_spec() as int,
+                        target.slot_spec() as int,
+                    )
+                    &&& final(self).sealed_payload_frame(old(self))
+                    &&& final(self).share_page_frame(
+                        old(self),
+                        source.slot_spec() as int,
+                        target.slot_spec(),
+                        token_count as int / old(self).page_tokens_spec() as int,
+                    )
+                }
+                Err(_) => {
+                    &&& !old(self).share_enabled(source, target, token_count)
+                    &&& final(self).same_state(old(self))
+                }
+            },
+    {
+        reveal(KvPool::share_enabled);
+        reveal(KvPool::request_matches_spec);
+        reveal(KvPool::resident_tokens_spec);
+        reveal(KvPool::committed_tokens_spec);
+        reveal(KvPool::key_matches);
+        let ghost previous = *self;
+        let source_key = request_key(source);
+        let target_key = request_key(target);
+        match self.share_committed_prefix_key(source_key, target_key, token_count) {
+            Ok(()) => {
+                assert(previous.share_key_enabled(source_key, target_key, token_count));
+                reveal(KvPool::share_key_enabled);
+                assert(previous.key_matches(source_key));
+                assert(previous.key_matches(target_key));
+                assert(self.key_matches(source_key));
+                assert(self.key_matches(target_key));
+                assert(previous.request_matches_spec(source));
+                assert(previous.request_matches_spec(target));
+                assert(self.request_matches_spec(source));
+                assert(self.request_matches_spec(target));
+                Ok(())
+            }
+            Err(error) => {
+                assert(!previous.share_key_enabled(source_key, target_key, token_count));
+                Err(error)
+            }
+        }
     }
 
     /// Atomically commits the accepted tentative prefix and drops its suffix.
@@ -1448,12 +3497,26 @@ impl KvPool {
         request: RequestId,
         logical_offset: u32,
         span: u32,
-    ) -> Result<(), KvError> {
+    ) -> (result: Result<(), KvError>)
+        requires self.well_formed(),
+        ensures
+            match result {
+                Ok(()) => self.read_enabled(request, logical_offset, span),
+                Err(_) => !self.read_enabled(request, logical_offset, span),
+            },
+    {
+        reveal(KvPool::read_enabled);
         self.validate_read_key(request_key(request), logical_offset, span)
     }
 
     #[must_use]
-    pub fn resident_tokens(&self, request: RequestId) -> Option<u32> {
+    pub fn resident_tokens(&self, request: RequestId) -> (tokens: Option<u32>)
+        requires self.well_formed(),
+        ensures tokens == self.resident_tokens_spec(request),
+    {
+        reveal(KvPool::resident_tokens_spec);
+        reveal(KvPool::request_matches_spec);
+        reveal(KvPool::key_matches);
         let slot = self.requests.get(request.slot() as usize)?;
         if slot.live && slot.generation == request.generation() {
             Some(slot.resident_tokens)
@@ -1463,7 +3526,13 @@ impl KvPool {
     }
 
     #[must_use]
-    pub fn committed_tokens(&self, request: RequestId) -> Option<u32> {
+    pub fn committed_tokens(&self, request: RequestId) -> (tokens: Option<u32>)
+        requires self.well_formed(),
+        ensures tokens == self.committed_tokens_spec(request),
+    {
+        reveal(KvPool::committed_tokens_spec);
+        reveal(KvPool::request_matches_spec);
+        reveal(KvPool::key_matches);
         let slot = self.requests.get(request.slot() as usize)?;
         if slot.live && slot.generation == request.generation() {
             Some(slot.committed_tokens)
@@ -1473,7 +3542,13 @@ impl KvPool {
     }
 
     #[must_use]
-    pub fn page_count(&self, request: RequestId) -> Option<u32> {
+    pub fn page_count(&self, request: RequestId) -> (count: Option<u32>)
+        requires self.well_formed(),
+        ensures count == self.page_count_spec(request),
+    {
+        reveal(KvPool::page_count_spec);
+        reveal(KvPool::request_matches_spec);
+        reveal(KvPool::key_matches);
         let slot = self.requests.get(request.slot() as usize)?;
         if slot.live && slot.generation == request.generation() {
             Some(slot.page_count)
@@ -1483,17 +3558,32 @@ impl KvPool {
     }
 
     #[must_use]
-    pub fn page_at(&self, request: RequestId, logical_page: u32) -> Option<PageId> {
+    pub fn page_at(
+        &self,
+        request: RequestId,
+        logical_page: u32,
+    ) -> (page: Option<PageId>)
+        requires self.well_formed(),
+        ensures page == self.page_at_spec(request, logical_page),
+    {
+        reveal(KvPool::page_at_spec);
+        reveal(KvPool::request_matches_spec);
+        reveal(KvPool::key_matches);
         let slot = self.requests.get(request.slot() as usize)?;
         if !slot.live || slot.generation != request.generation() || logical_page >= slot.page_count
         {
             return None;
         }
+        reveal(KvPool::request_slot_well_formed);
+        assert(self.request_slot_well_formed(request.slot_spec() as int));
+        assert(logical_page < MAX_PAGES_PER_REQUEST);
         Some(slot.pages[logical_page as usize])
     }
 
     #[must_use]
-    pub fn free_pages(&self) -> u32 {
+    pub fn free_pages(&self) -> (pages: u32)
+        ensures pages == self.free_pages_spec(),
+    {
         self.free_len
     }
 }
