@@ -215,6 +215,9 @@ while IFS='|' read -r component package marker function; do
     if [ "$marker" = no-cheating ]; then
         printf 'error: assume/admit not allowed with --no-cheating\n' \
             >>"$fixture/evidence/$component.transcript"
+    elif [ "$component" = scheduler-completion-boundary ]; then
+        printf 'verification results:: 1 verified, 1 errors (partial verification with `--verify-*`)\n' \
+            >>"$fixture/evidence/$component.transcript"
     else
         printf 'verification results:: 1 verified, 1 errors\n' \
             >>"$fixture/evidence/$component.transcript"
