@@ -456,29 +456,38 @@ impl<const C: usize> Scheduler<C> {
             && !(#[trigger] self.slots@[slot_index].in_reclaim_ring) ==> self.reclaim_len < C)
     }
 
-    pub closed spec fn member_ring_invariant(&self) -> bool {
-        &&& (forall|offset: int| 0 <= offset < self.member_len ==> {
-            let handle = #[trigger] self.member_ring@[
+    closed spec fn member_entry_valid(&self, offset: int) -> bool {
+        let handle = self.member_ring@[
                 ring_position::<C>(self.member_head, offset as nat)
             ];
-            &&& handle.slot_spec() < C
-            &&& self.slots@[handle.slot_spec() as int].generation
-                == handle.generation_spec()
-            &&& self.completed < self.slots@[handle.slot_spec() as int].active_epoch
-            &&& self.slots@[handle.slot_spec() as int].active_epoch <= self.submitted
-            &&& !self.slots@[handle.slot_spec() as int].in_reclaim_ring
-            &&& (self.slots@[handle.slot_spec() as int].state == RequestState::InFlight
-                || self.slots@[handle.slot_spec() as int].state == RequestState::Retiring)
-        })
-        &&& (forall|left: int, right: int|
+        &&& handle.slot_spec() < C
+        &&& self.slots@[handle.slot_spec() as int].generation
+            == handle.generation_spec()
+        &&& self.completed < self.slots@[handle.slot_spec() as int].active_epoch
+        &&& self.slots@[handle.slot_spec() as int].active_epoch <= self.submitted
+        &&& !self.slots@[handle.slot_spec() as int].in_reclaim_ring
+        &&& (self.slots@[handle.slot_spec() as int].state == RequestState::InFlight
+            || self.slots@[handle.slot_spec() as int].state == RequestState::Retiring)
+    }
+
+    closed spec fn member_entries_invariant(&self) -> bool {
+        forall|offset: int| 0 <= offset < self.member_len ==>
+            #[trigger] self.member_entry_valid(offset)
+    }
+
+    closed spec fn member_distinct_invariant(&self) -> bool {
+        forall|left: int, right: int|
             0 <= left < self.member_len && 0 <= right < self.member_len && left != right ==>
                 #[trigger] request_ring_slots_differ::<C>(
                     self.member_ring@,
                     self.member_head,
                     left,
                     right,
-                ))
-        &&& (forall|slot_index: int| 0 <= slot_index < C ==>
+                )
+    }
+
+    closed spec fn member_membership_invariant(&self) -> bool {
+        forall|slot_index: int| 0 <= slot_index < C ==>
             (((#[trigger] self.slots@[slot_index].state == RequestState::InFlight
                 || self.slots@[slot_index].state == RequestState::Retiring)
                 && self.completed < self.slots@[slot_index].active_epoch)
@@ -487,7 +496,13 @@ impl<const C: usize> Scheduler<C> {
                     self.member_head,
                     self.member_len,
                     slot_index,
-                )))
+                ))
+    }
+
+    pub closed spec fn member_ring_invariant(&self) -> bool {
+        &&& self.member_entries_invariant()
+        &&& self.member_distinct_invariant()
+        &&& self.member_membership_invariant()
     }
 
     pub closed spec fn batch_ring_invariant(&self) -> bool {
@@ -1264,6 +1279,14 @@ impl<const C: usize> Scheduler<C> {
         ensures self.member_ring_invariant(),
     {
         reveal(Scheduler::basic_invariant);
+    }
+
+    proof fn basic_implies_member_entries(&self)
+        requires self.basic_invariant(),
+        ensures self.member_entries_invariant(),
+    {
+        self.basic_implies_member_ring();
+        reveal(Scheduler::member_ring_invariant);
     }
 
     proof fn member_slot_indices_are_distinct(&self)
@@ -2369,6 +2392,230 @@ impl<const C: usize> Scheduler<C> {
             assert(left < self.member_len);
             assert(right < self.member_len);
             reveal(Scheduler::member_ring_invariant);
+        }
+    }
+
+    proof fn pending_batch_head_facts(&self)
+        requires
+            self.basic_invariant(),
+            self.batch_len > 0,
+        ensures
+            self.batch_ring@[self.batch_head as int].member_count > 0,
+            self.batch_ring@[self.batch_head as int].member_count <= self.member_len,
+            self.batch_ring@[self.batch_head as int].epoch.value == self.completed + 1,
+    {
+        self.basic_implies_scalar();
+        self.basic_implies_batch_ring();
+        let batch = self.batch_ring@[self.batch_head as int];
+        assert(ring_position::<C>(self.batch_head, 0) == self.batch_head);
+        assert(batch.member_count > 0) by {
+            reveal(Scheduler::batch_ring_invariant);
+        }
+        batch_member_sum_monotonic::<C>(
+            self.batch_ring@,
+            self.batch_head,
+            1,
+            self.batch_len as nat,
+        );
+        assert(batch_member_sum::<C>(self.batch_ring@, self.batch_head, 1)
+            == batch.member_count) by {
+            reveal(batch_member_sum);
+        }
+        assert(batch.member_count <= self.member_len) by {
+            reveal(Scheduler::batch_ring_invariant);
+        }
+        assert(batch.epoch.value as int == self.completed as int + 1) by {
+            reveal(Scheduler::batch_ring_invariant);
+        }
+    }
+
+    proof fn member_entry_bounds(&self, offset: usize)
+        requires
+            self.basic_invariant(),
+            offset < self.member_len,
+        ensures
+            offset < C,
+            0 <= ring_position::<C>(self.member_head, offset as nat) < C,
+    {
+        self.basic_implies_scalar();
+        reveal(Scheduler::scalar_invariant);
+        ring_position_bounds::<C>(self.member_head, offset as nat);
+    }
+
+    proof fn member_entry_slot_bound(&self, offset: usize)
+        requires
+            self.basic_invariant(),
+            offset < self.member_len,
+        ensures self.member_ring@[
+            ring_position::<C>(self.member_head, offset as nat)
+        ].slot_spec() < C,
+    {
+        self.basic_implies_member_entries();
+        assert(self.member_entry_valid(offset as int)) by {
+            reveal(Scheduler::member_entries_invariant);
+        }
+        reveal(Scheduler::member_entry_valid);
+    }
+
+    proof fn member_entry_generation(&self, offset: usize)
+        requires
+            self.basic_invariant(),
+            offset < self.member_len,
+        ensures {
+            let handle = self.member_ring@[
+                ring_position::<C>(self.member_head, offset as nat)
+            ];
+            self.slots@[handle.slot_spec() as int].generation == handle.generation_spec()
+        },
+    {
+        self.basic_implies_member_entries();
+        assert(self.member_entry_valid(offset as int)) by {
+            reveal(Scheduler::member_entries_invariant);
+        }
+        assert({
+            let handle = self.member_ring@[
+                ring_position::<C>(self.member_head, offset as nat)
+            ];
+            self.slots@[handle.slot_spec() as int].generation == handle.generation_spec()
+        }) by {
+            reveal(Scheduler::member_entry_valid);
+        }
+    }
+
+    proof fn member_entry_state(&self, offset: usize)
+        requires
+            self.basic_invariant(),
+            offset < self.member_len,
+        ensures {
+            let handle = self.member_ring@[
+                ring_position::<C>(self.member_head, offset as nat)
+            ];
+            self.slots@[handle.slot_spec() as int].state == RequestState::InFlight
+                || self.slots@[handle.slot_spec() as int].state == RequestState::Retiring
+        },
+    {
+        self.basic_implies_member_entries();
+        assert(self.member_entry_valid(offset as int)) by {
+            reveal(Scheduler::member_entries_invariant);
+        }
+        assert({
+            let handle = self.member_ring@[
+                ring_position::<C>(self.member_head, offset as nat)
+            ];
+            self.slots@[handle.slot_spec() as int].state == RequestState::InFlight
+                || self.slots@[handle.slot_spec() as int].state == RequestState::Retiring
+        }) by {
+            reveal(Scheduler::member_entry_valid);
+        }
+    }
+
+    proof fn member_entry_facts(&self, offset: usize)
+        requires
+            self.basic_invariant(),
+            offset < self.member_len,
+        ensures
+            offset < C,
+            0 <= ring_position::<C>(self.member_head, offset as nat) < C,
+            {
+                let handle = self.member_ring@[
+                    ring_position::<C>(self.member_head, offset as nat)
+                ];
+                &&& handle.slot_spec() < C
+                &&& self.slots@[handle.slot_spec() as int].generation
+                    == handle.generation_spec()
+                &&& (self.slots@[handle.slot_spec() as int].state
+                    == RequestState::InFlight
+                    || self.slots@[handle.slot_spec() as int].state
+                        == RequestState::Retiring)
+            },
+    {
+        self.member_entry_bounds(offset);
+        self.member_entry_slot_bound(offset);
+        self.member_entry_generation(offset);
+        self.member_entry_state(offset);
+    }
+
+    proof fn pending_member_epoch_fact(&self, offset: usize)
+        requires
+            self.basic_invariant(),
+            self.batch_len > 0,
+            offset < self.batch_ring@[self.batch_head as int].member_count,
+        ensures {
+            let handle = self.member_ring@[
+                ring_position::<C>(self.member_head, offset as nat)
+            ];
+            self.slots@[handle.slot_spec() as int].active_epoch
+                == self.batch_ring@[self.batch_head as int].epoch.value
+        },
+    {
+        assert(batch_member_sum::<C>(self.batch_ring@, self.batch_head, 0) == 0) by {
+            reveal(batch_member_sum);
+        }
+        assert(batch_member_sum::<C>(self.batch_ring@, self.batch_head, 1)
+            == self.batch_ring@[self.batch_head as int].member_count) by {
+            reveal(batch_member_sum);
+        }
+        self.basic_batch_member_epoch_fact(0, offset as int);
+    }
+
+    proof fn pending_member_facts(&self, offset: usize)
+        requires
+            self.basic_invariant(),
+            self.batch_len > 0,
+            offset < self.batch_ring@[self.batch_head as int].member_count,
+        ensures
+            offset < C,
+            0 <= ring_position::<C>(self.member_head, offset as nat) < C,
+            {
+                let handle = self.member_ring@[
+                    ring_position::<C>(self.member_head, offset as nat)
+                ];
+                &&& handle.slot_spec() < C
+                &&& self.slots@[handle.slot_spec() as int].generation
+                    == handle.generation_spec()
+                &&& self.slots@[handle.slot_spec() as int].active_epoch
+                    == self.batch_ring@[self.batch_head as int].epoch.value
+                &&& (self.slots@[handle.slot_spec() as int].state
+                    == RequestState::InFlight
+                    || self.slots@[handle.slot_spec() as int].state
+                        == RequestState::Retiring)
+            },
+    {
+        self.pending_batch_head_facts();
+        assert(offset < self.member_len);
+        self.member_entry_facts(offset);
+        self.pending_member_epoch_fact(offset);
+    }
+
+    closed spec fn completion_member_valid(&self, offset: int, observed: u64) -> bool {
+        let handle = self.member_ring@[
+            ring_position::<C>(self.member_head, offset as nat)
+        ];
+        &&& handle.slot_spec() < C
+        &&& self.slots@[handle.slot_spec() as int].generation == handle.generation_spec()
+        &&& self.slots@[handle.slot_spec() as int].active_epoch == observed
+        &&& (self.slots@[handle.slot_spec() as int].state == RequestState::InFlight
+            || self.slots@[handle.slot_spec() as int].state == RequestState::Retiring)
+    }
+
+    proof fn pending_completion_members_valid(&self, observed: u64)
+        requires
+            self.basic_invariant(),
+            self.batch_len > 0,
+            self.batch_ring@[self.batch_head as int].epoch.value == observed,
+        ensures
+            forall|offset: int|
+                0 <= offset < self.batch_ring@[self.batch_head as int].member_count ==>
+                    #[trigger] self.completion_member_valid(offset, observed),
+    {
+        assert forall|offset: int|
+            0 <= offset < self.batch_ring@[self.batch_head as int].member_count implies
+                #[trigger] self.completion_member_valid(offset, observed)
+        by {
+            self.pending_batch_head_facts();
+            self.member_entry_facts(offset as usize);
+            self.pending_member_epoch_fact(offset as usize);
+            reveal(Scheduler::completion_member_valid);
         }
     }
 
@@ -5309,6 +5556,102 @@ impl<const C: usize> Scheduler<C> {
         }))
     }
 
+    fn completion_preflight(
+        &self,
+        batch: BatchRecord,
+        observed: u64,
+        permits: &[Option<KvQuiescencePermit>],
+    ) -> (result: Result<(), SchedulerError>)
+        requires
+            self.basic_invariant(),
+            self.batch_len > 0,
+            batch == self.batch_ring@[self.batch_head as int],
+            batch.member_count > 0,
+            batch.member_count <= self.member_len,
+            batch.member_count <= permits.len(),
+            batch.epoch.value == observed,
+        ensures
+            result == if option_prefix_empty(permits@, batch.member_count as nat) {
+                Ok(())
+            } else {
+                Err(SchedulerError::CompletionStorageNotEmpty)
+            },
+    {
+        proof {
+            self.basic_implies_scalar();
+            self.pending_completion_members_valid(observed);
+        }
+        assert(C > 0) by {
+            reveal(Scheduler::scalar_invariant);
+        }
+        assert(self.member_head < C) by {
+            reveal(Scheduler::scalar_invariant);
+        }
+        assert(self.member_len <= C) by {
+            reveal(Scheduler::scalar_invariant);
+        }
+        let mut checked = 0;
+        let mut check_head = self.member_head;
+        while checked < batch.member_count
+            invariant
+                C > 0,
+                self.member_head < C,
+                checked <= batch.member_count,
+                batch.member_count <= self.member_len,
+                self.member_len <= C,
+                batch.member_count <= permits.len(),
+                check_head < C,
+                forall|offset: int|
+                    0 <= offset < batch.member_count ==>
+                        #[trigger] self.completion_member_valid(offset, observed),
+                check_head as int == ring_position_or_head::<C>(
+                    self.member_head,
+                    checked as nat,
+                ),
+                option_prefix_empty(permits@, checked as nat),
+            decreases batch.member_count - checked,
+        {
+            if permits[checked].is_some() {
+                assert(!option_prefix_empty(permits@, batch.member_count as nat)) by {
+                    reveal(option_prefix_empty);
+                }
+                return Err(SchedulerError::CompletionStorageNotEmpty);
+            }
+            assert(checked < C);
+            assert(check_head as int
+                == ring_position::<C>(self.member_head, checked as nat)) by {
+                reveal(ring_position_or_head);
+            }
+            assert(self.completion_member_valid(checked as int, observed));
+            proof {
+                reveal(Scheduler::completion_member_valid);
+            }
+            let handle = self.member_ring[check_head];
+            if handle.slot() as usize >= C {
+                assert(false);
+                return Err(SchedulerError::InvariantViolation);
+            }
+            let slot = self.slots[handle.slot() as usize];
+            if slot.generation != handle.generation() || slot.active_epoch != observed {
+                assert(false);
+                return Err(SchedulerError::InvariantViolation);
+            }
+            match slot.state {
+                RequestState::InFlight | RequestState::Retiring => {}
+                _ => {
+                    assert(false);
+                    return Err(SchedulerError::InvariantViolation);
+                }
+            }
+            proof {
+                ring_position_or_head_next::<C>(self.member_head, checked as nat);
+            }
+            check_head = advance::<C>(check_head);
+            checked += 1;
+        }
+        Ok(())
+    }
+
     /// Consumes exact quiescence evidence and emits one linear KV permit per
     /// member into caller-owned fixed storage.
     ///
@@ -5377,16 +5720,6 @@ impl<const C: usize> Scheduler<C> {
                 }
             },
     {
-        reveal(Scheduler::basic_invariant);
-        reveal(Scheduler::scalar_invariant);
-        reveal(Scheduler::slot_invariant);
-        reveal(Scheduler::free_ring_invariant);
-        reveal(Scheduler::reclaim_ring_invariant);
-        reveal(Scheduler::member_ring_invariant);
-        reveal(Scheduler::batch_ring_invariant);
-        reveal(Scheduler::same_scalars);
-        reveal(Scheduler::completion_refines);
-        reveal(Scheduler::slot_model);
         if self.batch_len == 0 {
             return Err(CompletionFailure {
                 error: SchedulerError::NoPendingBatch,
@@ -5422,66 +5755,107 @@ impl<const C: usize> Scheduler<C> {
                 completion,
             });
         }
+        proof {
+            self.pending_batch_facts();
+        }
+        assert(batch.member_count <= self.member_len);
+        assert(self.same_scalars(old(self))) by {
+            reveal(Scheduler::same_scalars);
+        }
+        assert(permits@ == old(permits)@);
 
-        // Preflight the complete compact member range before any mutation so
-        // every error return frames the scheduler exactly.
-        let mut checked = 0;
-        let mut check_head = self.member_head;
-        while checked < batch.member_count
-            invariant
-                checked <= batch.member_count,
-                checked <= self.member_len,
-                check_head < C,
-                batch.member_count <= permits.len(),
-            decreases batch.member_count - checked,
-        {
-            if permits[checked].is_some() {
-                return Err(CompletionFailure {
-                    error: SchedulerError::CompletionStorageNotEmpty,
-                    completion,
-                });
-            }
-            let handle = self.member_ring[check_head];
-            if handle.slot() as usize >= C {
-                return Err(CompletionFailure {
-                    error: SchedulerError::InvariantViolation,
-                    completion,
-                });
-            }
-            let slot = self.slots[handle.slot() as usize];
-            if slot.generation != handle.generation() || slot.active_epoch != observed {
-                return Err(CompletionFailure {
-                    error: SchedulerError::InvariantViolation,
-                    completion,
-                });
-            }
-            if slot.state != RequestState::InFlight && slot.state != RequestState::Retiring {
-                return Err(CompletionFailure {
-                    error: SchedulerError::InvariantViolation,
-                    completion,
-                });
-            }
-            check_head = advance::<C>(check_head);
-            checked += 1;
+        if let Err(error) = self.completion_preflight(batch, observed, permits) {
+            return Err(CompletionFailure { error, completion });
         }
 
+        proof {
+            self.basic_implies_scalar();
+        }
+        assert(C > 0) by {
+            reveal(Scheduler::scalar_invariant);
+        }
+        assert(self.member_head < C) by {
+            reveal(Scheduler::scalar_invariant);
+        }
+        assert(batch.member_count <= C) by {
+            reveal(Scheduler::scalar_invariant);
+        }
         let mut processed = 0;
         let mut member_head = self.member_head;
+        proof {
+            completed_permits_empty::<C>(
+                old(permits)@,
+                old(self).member_ring@,
+                old(self).member_head,
+                observed,
+            );
+        }
         while processed < batch.member_count
             invariant
+                C > 0,
+                old(self).member_head < C,
                 processed <= batch.member_count,
-                processed <= self.member_len,
+                batch.member_count <= C,
+                processed <= C,
                 batch.member_count <= permits.len(),
+                permits.len() == old(permits)@.len(),
+                batch.member_count <= old(permits)@.len(),
                 member_head < C,
+                member_head as int == ring_position_or_head::<C>(
+                    old(self).member_head,
+                    processed as nat,
+                ),
+                permits@ == completed_permits::<C>(
+                    old(permits)@,
+                    old(self).member_ring@,
+                    old(self).member_head,
+                    processed as nat,
+                    observed,
+                ),
             decreases batch.member_count - processed,
         {
+            assert(processed < C);
+            assert(processed < permits.len());
+            assert(member_head as int
+                == ring_position::<C>(old(self).member_head, processed as nat)) by {
+                reveal(ring_position_or_head);
+            }
             let handle = self.member_ring[member_head];
+            assert(handle == old(self).member_ring@[ring_position::<C>(
+                old(self).member_head,
+                processed as nat,
+            )]);
+            proof {
+                completed_permits_push::<C>(
+                    old(permits)@,
+                    old(self).member_ring@,
+                    old(self).member_head,
+                    processed as nat,
+                    observed,
+                );
+            }
             permits[processed] = Some(KvQuiescencePermit {
                 request: handle,
                 origin: KvQuiescenceOrigin::CompletedExact { epoch: observed },
             });
+            proof {
+                ring_position_or_head_next::<C>(
+                    old(self).member_head,
+                    processed as nat,
+                );
+            }
             member_head = advance::<C>(member_head);
             processed += 1;
+        }
+
+        proof {
+            completed_permits_facts::<C>(
+                old(permits)@,
+                old(self).member_ring@,
+                old(self).member_head,
+                processed as nat,
+                observed,
+            );
         }
 
         self.member_head = member_head;
@@ -6773,6 +7147,172 @@ proof fn dispatch_selected_members_push<const C: usize>(
 {
     reveal(dispatch_selected_members);
     assert(chosen.push(added).subrange(0, chosen.len() as int) == chosen);
+}
+
+spec fn completed_permits<const C: usize>(
+    before: Seq<Option<KvQuiescencePermit>>,
+    members: Seq<RequestId>,
+    head: usize,
+    processed: nat,
+    epoch: u64,
+) -> Seq<Option<KvQuiescencePermit>>
+    recommends
+        C > 0,
+        members.len() == C,
+        head < C,
+        processed <= C,
+        processed <= before.len(),
+    decreases processed,
+{
+    if processed == 0 {
+        before
+    } else {
+        let prior = completed_permits::<C>(
+            before,
+            members,
+            head,
+            (processed - 1) as nat,
+            epoch,
+        );
+        let request = members[ring_position::<C>(head, (processed - 1) as nat)];
+        prior.update(
+            processed - 1,
+            Some(KvQuiescencePermit {
+                request,
+                origin: KvQuiescenceOrigin::CompletedExact { epoch },
+            }),
+        )
+    }
+}
+
+proof fn completed_permits_empty<const C: usize>(
+    before: Seq<Option<KvQuiescencePermit>>,
+    members: Seq<RequestId>,
+    head: usize,
+    epoch: u64,
+)
+    requires
+        C > 0,
+        members.len() == C,
+        head < C,
+    ensures completed_permits::<C>(before, members, head, 0, epoch) == before,
+{
+    reveal(completed_permits);
+}
+
+proof fn completed_permits_push<const C: usize>(
+    before: Seq<Option<KvQuiescencePermit>>,
+    members: Seq<RequestId>,
+    head: usize,
+    processed: nat,
+    epoch: u64,
+)
+    requires
+        C > 0,
+        members.len() == C,
+        head < C,
+        processed < C,
+        processed < before.len(),
+    ensures
+        completed_permits::<C>(before, members, head, processed + 1, epoch)
+            == completed_permits::<C>(before, members, head, processed, epoch).update(
+                processed as int,
+                Some(KvQuiescencePermit {
+                    request: members[ring_position::<C>(head, processed)],
+                    origin: KvQuiescenceOrigin::CompletedExact { epoch },
+                }),
+            ),
+{
+    reveal(completed_permits);
+}
+
+proof fn completed_permits_facts<const C: usize>(
+    before: Seq<Option<KvQuiescencePermit>>,
+    members: Seq<RequestId>,
+    head: usize,
+    processed: nat,
+    epoch: u64,
+)
+    requires
+        C > 0,
+        members.len() == C,
+        head < C,
+        processed <= C,
+        processed <= before.len(),
+    ensures
+        completed_permits::<C>(before, members, head, processed, epoch).len()
+            == before.len(),
+        forall|offset: int| 0 <= offset < processed ==> {
+            let request = members[ring_position::<C>(head, offset as nat)];
+            match #[trigger] completed_permits::<C>(
+                before,
+                members,
+                head,
+                processed,
+                epoch,
+            )[offset] {
+                Some(permit) => {
+                    &&& permit.request_spec() == request
+                    &&& permit.origin_spec()
+                        == KvQuiescenceOrigin::CompletedExact { epoch }
+                }
+                None => false,
+            }
+        },
+        forall|offset: int| processed <= offset < before.len() ==>
+            #[trigger] completed_permits::<C>(
+                before,
+                members,
+                head,
+                processed,
+                epoch,
+            )[offset] == before[offset],
+    decreases processed,
+{
+    if processed == 0 {
+        completed_permits_empty::<C>(before, members, head, epoch);
+    } else {
+        let previous = (processed - 1) as nat;
+        completed_permits_facts::<C>(before, members, head, previous, epoch);
+        completed_permits_push::<C>(before, members, head, previous, epoch);
+        assert forall|offset: int| 0 <= offset < processed implies {
+            let request = members[ring_position::<C>(head, offset as nat)];
+            match #[trigger] completed_permits::<C>(
+                before,
+                members,
+                head,
+                processed,
+                epoch,
+            )[offset] {
+                Some(permit) => {
+                    &&& permit.request_spec() == request
+                    &&& permit.origin_spec()
+                        == KvQuiescenceOrigin::CompletedExact { epoch }
+                }
+                None => false,
+            }
+        } by {
+            if offset < previous {
+                assert(completed_permits::<C>(before, members, head, processed, epoch)[offset]
+                    == completed_permits::<C>(before, members, head, previous, epoch)[offset]);
+            } else {
+                assert(offset == previous);
+            }
+        }
+        assert forall|offset: int| processed <= offset < before.len() implies
+            #[trigger] completed_permits::<C>(
+                before,
+                members,
+                head,
+                processed,
+                epoch,
+            )[offset] == before[offset]
+        by {
+            assert(offset != previous);
+            assert(completed_permits::<C>(before, members, head, processed, epoch)[offset]
+                == completed_permits::<C>(before, members, head, previous, epoch)[offset]);
+        }
+    }
 }
 
 spec fn ring_advance<const C: usize>(head: usize, steps: nat) -> usize
