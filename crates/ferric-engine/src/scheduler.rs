@@ -703,7 +703,9 @@ impl<const C: usize> Scheduler<C> {
     }
 
     proof fn detachment_frame_from_slots_frame(&self, before: &Self, changed: int)
-        requires self.slots_frame_except(before, changed),
+        requires
+            self.slots_frame_except(before, changed),
+            self.completed == before.completed,
         ensures self.detachment_ready_frame_except(before, changed),
     {
         assert forall|request: RequestId, origin: KvQuiescenceOrigin|
@@ -5075,12 +5077,17 @@ impl<const C: usize> Scheduler<C> {
             count == self.pending_batch_member_count_spec(),
             count <= C,
     {
-        reveal(Scheduler::basic_invariant);
+        proof {
+            self.basic_implies_scalar();
+        }
         reveal(Scheduler::scalar_invariant);
         reveal(Scheduler::pending_batch_member_count_spec);
         if self.batch_len == 0 {
             0
         } else {
+            proof {
+                self.pending_batch_head_facts();
+            }
             self.batch_ring[self.batch_head].member_count
         }
     }
@@ -5089,13 +5096,17 @@ impl<const C: usize> Scheduler<C> {
         requires self.basic_invariant(),
         ensures member == self.pending_member_spec(offset),
     {
-        reveal(Scheduler::basic_invariant);
+        proof {
+            self.basic_implies_scalar();
+        }
         reveal(Scheduler::scalar_invariant);
-        reveal(Scheduler::batch_ring_invariant);
         reveal(Scheduler::pending_member_spec);
         if self.batch_len == 0 || offset >= self.batch_ring[self.batch_head].member_count {
             None
         } else {
+            proof {
+                self.pending_member_facts(offset);
+            }
             let position = ring_tail::<C>(self.member_head, offset);
             Some(self.member_ring[position])
         }
@@ -7837,12 +7848,20 @@ impl<const C: usize> Scheduler<C> {
         ensures state == self.state_spec(request),
     {
         reveal(Scheduler::state_spec);
-        if request.slot() as usize >= C {
+        let slot_number = request.slot();
+        let slot_index = slot_number as usize;
+        if slot_index >= C {
             return None;
         }
-        let slot = self.slots[request.slot() as usize];
-        if slot.generation == request.generation() && slot.state != RequestState::Vacant {
-            Some(slot.state)
+        let slot = self.slots[slot_index];
+        let generation = request.generation();
+        if slot.generation == generation {
+            match slot.state {
+                RequestState::Vacant => None,
+                RequestState::Ready | RequestState::InFlight | RequestState::Retiring => {
+                    Some(slot.state)
+                }
+            }
         } else {
             None
         }
