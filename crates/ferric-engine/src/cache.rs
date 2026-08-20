@@ -5414,12 +5414,16 @@ impl KvPool {
             final(self).page_tokens_spec() == old(self).page_tokens_spec(),
             final(self).max_context_tokens_spec() == old(self).max_context_tokens_spec(),
             final(self).page_limit_spec() == old(self).page_limit_spec(),
-            final(self).create_identity_refines(old(self), request, &result),
             match result {
                 Ok(()) => {
                     &&& old(self).create_enabled(request)
                     &&& old(self).create_decision(request) == Ok(())
                     &&& final(self).request_matches_spec(request)
+                    &&& request.slot_spec() < MAX_REQUEST_SLOTS
+                    &&& final(self).request_live_by_slot_spec(request.slot_spec() as int)
+                    &&& final(self).request_generation_by_slot_spec(
+                        request.slot_spec() as int,
+                    ) == request.generation_spec()
                     &&& final(self).request_frame_except(
                         old(self),
                         request.slot_spec() as int,
@@ -5439,6 +5443,7 @@ impl KvPool {
     {
         reveal(KvPool::create_enabled);
         reveal(KvPool::request_matches_spec);
+        reveal(KvPool::key_matches);
         self.create_request_key(request_key(request))
     }
 
@@ -5702,7 +5707,6 @@ impl KvPool {
         requires old(self).well_formed(),
         ensures
             final(self).well_formed(),
-            final(self).release_identity_refines(old(self), request, &result),
             match result {
                 Ok(evidence) => {
                     &&& old(self).release_authority_enabled(request, &permit)
@@ -5710,6 +5714,7 @@ impl KvPool {
                     &&& evidence.request_spec() == request
                     &&& evidence.origin_spec() == permit.origin_spec()
                     &&& Self::same_request_id(permit.request_spec(), request)
+                    &&& request.generation_spec() < u32::MAX
                     &&& !final(self).request_live_by_slot_spec(request.slot_spec() as int)
                     &&& final(self).request_generation_by_slot_spec(
                         request.slot_spec() as int,
@@ -5749,7 +5754,11 @@ impl KvPool {
             });
         }
         match self.release_request_key(request_key(request)) {
-            Ok(()) => Ok(KvDetachedRequest { request, origin }),
+            Ok(()) => {
+                reveal(KvPool::release_key_enabled);
+                assert(request.generation_spec() < u32::MAX);
+                Ok(KvDetachedRequest { request, origin })
+            }
             Err(error) => Err(KvAuthorityError { error, permit }),
         }
     }

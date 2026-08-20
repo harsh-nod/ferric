@@ -214,15 +214,59 @@ impl<const C: usize> Engine<C> {
     {
         reveal(Engine::well_formed);
         self.require_healthy()?;
-        let request = match self.scheduler.admit() {
+        let ghost entry_scheduler = self.scheduler;
+        let ghost entry_kv = self.kv;
+        let admit_result = self.scheduler.admit();
+        let request = match admit_result {
             Ok(request) => request,
             Err(error) => return Err(EngineError::Scheduler(error)),
         };
-        if let Err(error) = self.kv.create_request(request) {
-            self.faulted = true;
-            return Err(EngineError::Kv(error));
+        assert(self.kv.create_enabled(request)) by {
+            reveal(KvPool::create_enabled);
         }
-        Ok(request)
+        match self.kv.create_request(request) {
+            Ok(()) => {
+                assert forall |slot: int| 0 <= slot < C implies {
+                    &&& self.scheduler.slot_is_live_spec(slot)
+                        == self.kv.request_live_by_slot_spec(slot)
+                    &&& self.scheduler.slot_generation_spec(slot)
+                        == self.kv.request_generation_by_slot_spec(slot)
+                } by {
+                    if slot == request.slot_spec() {
+                        assert(self.scheduler.slot_is_live_spec(slot));
+                        assert(self.scheduler.slot_generation_spec(slot)
+                            == request.generation_spec());
+                        assert(self.kv.request_live_by_slot_spec(slot));
+                        assert(self.kv.request_generation_by_slot_spec(slot)
+                            == request.generation_spec());
+                        assert(entry_scheduler.slot_is_live_spec(slot)
+                            == entry_kv.request_live_by_slot_spec(slot));
+                        assert(entry_scheduler.slot_generation_spec(slot)
+                            == entry_kv.request_generation_by_slot_spec(slot));
+                    } else {
+                        assert(self.scheduler.slot_is_live_spec(slot)
+                            == entry_scheduler.slot_is_live_spec(slot));
+                        assert(self.scheduler.slot_generation_spec(slot)
+                            == entry_scheduler.slot_generation_spec(slot));
+                        assert(self.kv.request_live_by_slot_spec(slot)
+                            == entry_kv.request_live_by_slot_spec(slot));
+                        assert(self.kv.request_generation_by_slot_spec(slot)
+                            == entry_kv.request_generation_by_slot_spec(slot));
+                    }
+                }
+                assert forall |slot: int| C <= slot < MAX_REQUEST_SLOTS implies {
+                    &&& !self.kv.request_live_by_slot_spec(slot)
+                    &&& self.kv.request_generation_by_slot_spec(slot) == 1
+                } by {
+                }
+                Ok(request)
+            }
+            Err(error) => {
+                assert(false);
+                self.faulted = true;
+                Err(EngineError::Kv(error))
+            }
+        }
     }
 
     /// Extends a live request with tentative logical KV tokens.
@@ -348,6 +392,9 @@ impl<const C: usize> Engine<C> {
             }
         };
         let request = permit.request();
+        let ghost permit_request = permit.request_spec();
+        let ghost permit_origin = permit.origin_spec();
+        let ghost before_release_scheduler = self.scheduler;
         let ghost before_release_kv = self.kv;
         let detached = match self.kv.release_request(request, permit) {
             Ok(detached) => detached,
@@ -358,7 +405,12 @@ impl<const C: usize> Engine<C> {
                 return Err(EngineError::Kv(error));
             }
         };
+        assert(detached.request_spec() == permit_request);
+        assert(detached.origin_spec() == permit_origin);
+        assert(before_release_scheduler.detachment_ready(permit_request, permit_origin));
         let ghost before_reclaim_scheduler = self.scheduler;
+        assert(before_reclaim_scheduler == before_release_scheduler);
+        assert(before_reclaim_scheduler.detached_enabled(&detached));
         match self.scheduler.reclaim_detached(detached) {
             Ok(request) => {
                 assert forall |slot: int| 0 <= slot < C implies {
@@ -392,6 +444,7 @@ impl<const C: usize> Engine<C> {
                 Ok(Some(request))
             }
             Err(error) => {
+                assert(false);
                 self.faulted = true;
                 assert(self.well_formed());
                 Err(EngineError::Scheduler(error))
