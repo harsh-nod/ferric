@@ -22,6 +22,11 @@ source_gate=$4
 mkdir -p "$output"
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/ferric-policy-negative.XXXXXX")
 trap 'chmod -R u+w "$scratch" 2>/dev/null || true; rm -rf "$scratch"' EXIT HUP INT TERM
+registry_checker="$repo/proofs/negative/check-registry.py"
+[ -f "$registry_checker" ] || {
+    printf 'FAIL: negative registry checker is unavailable\n' >&2
+    exit 1
+}
 
 expect_rejected() {
     name=$1
@@ -60,6 +65,43 @@ write_metadata() {
         cargo metadata --locked --no-deps --format-version 1
     ) >"$destination"
 }
+
+cp "$repo/proofs/negative/REQUIRED_COMPONENTS" "$scratch/unsafe-target.registry"
+python3 -I - "$scratch/unsafe-target.registry" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+old = "|identity|RequestId::new"
+if text.count(old) != 1:
+    raise SystemExit("registry target fixture anchor drifted")
+path.write_text(text.replace(old, "|identity*|RequestId::new"), encoding="utf-8")
+PY
+expect_rejected negative-registry-unsafe-target 'unsafe Verus module target' \
+    python3 -I "$registry_checker" "$repo" "$scratch/unsafe-target.registry" \
+    "$scratch/unsafe-target.active"
+
+cp "$repo/proofs/negative/REQUIRED_COMPONENTS" "$scratch/duplicate.registry"
+sed -n '2p' "$repo/proofs/negative/REQUIRED_COMPONENTS" \
+    >>"$scratch/duplicate.registry"
+expect_rejected negative-registry-duplicate 'duplicate negative component' \
+    python3 -I "$registry_checker" "$repo" "$scratch/duplicate.registry" \
+    "$scratch/duplicate.active"
+
+python3 -I - "$repo/proofs/negative/REQUIRED_COMPONENTS" \
+    "$scratch/missing-target.registry" <<'PY'
+from pathlib import Path
+import sys
+
+lines = Path(sys.argv[1]).read_text(encoding="utf-8").splitlines()
+fields = lines[1].split("|")
+lines[1] = "|".join(fields[:-1])
+Path(sys.argv[2]).write_text("\n".join(lines) + "\n", encoding="utf-8")
+PY
+expect_rejected negative-registry-missing-target 'malformed negative component record' \
+    python3 -I "$registry_checker" "$repo" "$scratch/missing-target.registry" \
+    "$scratch/missing-target.active"
 
 python3 -I - "$repo/proofs/VERIFIED_MODULES" "$scratch/missing-record.manifest" <<'PY'
 from pathlib import Path

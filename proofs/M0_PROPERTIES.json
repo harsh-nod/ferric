@@ -12,10 +12,21 @@
       "statement_sha256": "93a2678a3c89dea728f2787b5fea506256fed4912b950902d292c236f2c86d9e",
       "compiler_paths_resolved": true,
       "compiler_path_prefixes": [
-        "ferric_spec::identity::RequestId::"
+        "ferric_spec::identity::RequestId::new",
+        "ferric_engine::scheduler::Scheduler::admit",
+        "ferric_engine::scheduler::Scheduler::reclaim_detached",
+        "ferric_engine::cache::KvPool::create_request",
+        "ferric_engine::cache::KvPool::release_request",
+        "ferric_engine::cache::KvPool::retire_empty_request",
+        "ferric_engine::cache::KvPool::live_request_index",
+        "ferric_engine::system::Engine::admit",
+        "ferric_engine::system::Engine::reclaim_one",
+        "ferric_engine::system::Engine::complete_exact"
       ],
       "required_mutations": [
-        "identity-trust"
+        "request-id-generation",
+        "kv-request-generation",
+        "kv-stale-request"
       ],
       "checked_evidence": [],
       "unsupported_reason": null
@@ -32,7 +43,9 @@
         "ferric_spec::speculation::GreedyCommit::"
       ],
       "required_mutations": [
-        "speculation"
+        "speculation-prefix",
+        "speculation",
+        "speculation-validation"
       ],
       "checked_evidence": [],
       "unsupported_reason": null
@@ -98,7 +111,9 @@
         "ferric_engine::cache::KvPool::"
       ],
       "required_mutations": [
-        "kv"
+        "kv",
+        "kv-error-frame",
+        "kv-read-initialized"
       ],
       "checked_evidence": [],
       "unsupported_reason": null
@@ -114,7 +129,9 @@
         "ferric_engine::cache::KvPool::"
       ],
       "required_mutations": [
-        "kv"
+        "kv-share-committed",
+        "kv-cow-sealed",
+        "kv-rollback-tail"
       ],
       "checked_evidence": [],
       "unsupported_reason": null
@@ -131,7 +148,10 @@
         "ferric_engine::cache::PageId::"
       ],
       "required_mutations": [
-        "kv"
+        "kv-page-generation",
+        "kv-request-generation",
+        "kv-stale-request",
+        "kv-stale-page"
       ],
       "checked_evidence": [],
       "unsupported_reason": null
@@ -147,7 +167,8 @@
         "ferric_engine::cache::KvPool::"
       ],
       "required_mutations": [
-        "kv"
+        "kv-storage-length",
+        "kv-free-metadata-bound"
       ],
       "checked_evidence": [],
       "unsupported_reason": null
@@ -160,7 +181,9 @@
       "statement_sha256": "a1f556aed76cb0323ea4044449c442cdd9d0040355587a5f8ee089d951f68f1f",
       "compiler_paths_resolved": true,
       "compiler_path_prefixes": [
-        "ferric_engine::system::Engine::"
+        "ferric_engine::system::Engine::",
+        "ferric_engine::scheduler::Scheduler::finalize_slot",
+        "ferric_engine::cache::KvPool::append_existing_page"
       ],
       "required_mutations": [
         "lifecycle",
