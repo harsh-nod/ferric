@@ -5956,9 +5956,36 @@ impl<const C: usize> Scheduler<C> {
     {
         before.basic_implies_scalar();
         before.basic_implies_batch_ring();
+        reveal(Scheduler::completion_refines);
+        before.pending_batch_facts();
         reveal(Scheduler::scalar_invariant);
         reveal(Scheduler::batch_ring_invariant);
-        reveal(Scheduler::completion_refines);
+        ring_advance_bounds::<C>(before.member_head, count as nat);
+        assert(next_position::<C>(before.batch_head) < C) by {
+            reveal(next_position);
+        }
+        batch_member_sum_pop::<C>(
+            before.batch_ring@,
+            before.batch_head,
+            before.batch_len as nat,
+        );
+        assert forall|offset: int| 0 <= offset < self.batch_len implies
+            (#[trigger] self.batch_ring@[
+                ring_position::<C>(self.batch_head, offset as nat)
+            ].member_count) > 0 by {
+            ring_position_after_pop::<C>(before.batch_head, offset as nat);
+            assert(offset + 1 < before.batch_len);
+        }
+        positive_batch_count_le_sum::<C>(
+            self.batch_ring@,
+            self.batch_head,
+            self.batch_len as nat,
+        );
+        assert(batch_member_sum::<C>(
+            self.batch_ring@,
+            self.batch_head,
+            self.batch_len as nat,
+        ) == self.member_len);
     }
 
     proof fn completion_preserves_slots(
@@ -6033,6 +6060,522 @@ impl<const C: usize> Scheduler<C> {
         reveal(Scheduler::completion_refines);
     }
 
+    proof fn completion_member_entry_preserved(
+        &self,
+        before: &Self,
+        completion_epoch: u64,
+        before_permits: Seq<Option<KvQuiescencePermit>>,
+        permits: Seq<Option<KvQuiescencePermit>>,
+        count: usize,
+        offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.completion_refines(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                &Ok(count),
+            ),
+            self.batch_ring_invariant(),
+            0 <= offset < self.member_len,
+        ensures self.member_entry_valid(offset),
+    {
+        reveal(Scheduler::completion_refines);
+        before.basic_implies_scalar();
+        before.basic_implies_member_entries();
+        self.completion_batch_sum_preserved(
+            before,
+            completion_epoch,
+            before_permits,
+            permits,
+            count,
+        );
+        batch_member_owner::<C>(
+            self.batch_ring@,
+            self.batch_head,
+            self.batch_len as nat,
+            offset as nat,
+        );
+        let batch_offset = choose|batch_offset: int|
+            0 <= batch_offset < self.batch_len
+                && (#[trigger] batch_member_sum::<C>(
+                    self.batch_ring@,
+                    self.batch_head,
+                    batch_offset as nat,
+                )) <= offset < batch_member_sum::<C>(
+                    self.batch_ring@,
+                    self.batch_head,
+                    batch_offset as nat + 1,
+                );
+        let old_offset = count + offset;
+        assert(0 <= old_offset < before.member_len);
+        assert(before.member_entry_valid(old_offset)) by {
+            reveal(Scheduler::member_entries_invariant);
+        }
+        ring_position_after_advance::<C>(
+            before.member_head,
+            count as nat,
+            offset as nat,
+        );
+        let batch = self.batch_ring@[
+            ring_position::<C>(self.batch_head, batch_offset as nat)
+        ];
+        assert(batch.member_count > 0
+            && batch.epoch.value as int
+                == self.completed as int + batch_offset + 1
+            && batch.epoch.value <= self.submitted) by {
+            reveal(Scheduler::batch_ring_invariant);
+        }
+        assert({
+            let handle = self.member_ring@[
+                ring_position::<C>(self.member_head, offset as nat)
+            ];
+            self.slots@[handle.slot_spec() as int].active_epoch == batch.epoch.value
+        }) by {
+            reveal(Scheduler::batch_ring_invariant);
+        }
+        reveal(Scheduler::member_entry_valid);
+    }
+
+    proof fn completion_member_entries_preserved(
+        &self,
+        before: &Self,
+        completion_epoch: u64,
+        before_permits: Seq<Option<KvQuiescencePermit>>,
+        permits: Seq<Option<KvQuiescencePermit>>,
+        count: usize,
+    )
+        requires
+            before.basic_invariant(),
+            self.completion_refines(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                &Ok(count),
+            ),
+            self.batch_ring_invariant(),
+        ensures self.member_entries_invariant(),
+    {
+        assert forall|offset: int| 0 <= offset < self.member_len implies
+            #[trigger] self.member_entry_valid(offset) by {
+            self.completion_member_entry_preserved(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                count,
+                offset,
+            );
+        }
+        reveal(Scheduler::member_entries_invariant);
+    }
+
+    proof fn completion_member_distinct_at(
+        &self,
+        before: &Self,
+        completion_epoch: u64,
+        before_permits: Seq<Option<KvQuiescencePermit>>,
+        permits: Seq<Option<KvQuiescencePermit>>,
+        count: usize,
+        left: int,
+        right: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.completion_refines(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                &Ok(count),
+            ),
+            0 <= left < self.member_len,
+            0 <= right < self.member_len,
+            left != right,
+        ensures
+            request_ring_slots_differ::<C>(
+                self.member_ring@,
+                self.member_head,
+                left,
+                right,
+            ),
+    {
+        reveal(Scheduler::completion_refines);
+        before.basic_implies_scalar();
+        before.basic_implies_member_ring();
+        assert(request_ring_slots_differ::<C>(
+            before.member_ring@,
+            before.member_head,
+            count + left,
+            count + right,
+        )) by {
+            reveal(Scheduler::member_ring_invariant);
+            reveal(Scheduler::member_distinct_invariant);
+        }
+        ring_position_after_advance::<C>(
+            before.member_head,
+            count as nat,
+            left as nat,
+        );
+        ring_position_after_advance::<C>(
+            before.member_head,
+            count as nat,
+            right as nat,
+        );
+        reveal(request_ring_slots_differ);
+    }
+
+    proof fn completion_member_distinct_preserved(
+        &self,
+        before: &Self,
+        completion_epoch: u64,
+        before_permits: Seq<Option<KvQuiescencePermit>>,
+        permits: Seq<Option<KvQuiescencePermit>>,
+        count: usize,
+    )
+        requires
+            before.basic_invariant(),
+            self.completion_refines(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                &Ok(count),
+            ),
+        ensures self.member_distinct_invariant(),
+    {
+        assert forall|left: int, right: int|
+            0 <= left < self.member_len
+                && 0 <= right < self.member_len
+                && left != right implies
+                    #[trigger] request_ring_slots_differ::<C>(
+                        self.member_ring@,
+                        self.member_head,
+                        left,
+                        right,
+                    ) by {
+            self.completion_member_distinct_at(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                count,
+                left,
+                right,
+            );
+        }
+        reveal(Scheduler::member_distinct_invariant);
+    }
+
+    proof fn completion_member_contains_implies_live(
+        &self,
+        before: &Self,
+        completion_epoch: u64,
+        before_permits: Seq<Option<KvQuiescencePermit>>,
+        permits: Seq<Option<KvQuiescencePermit>>,
+        count: usize,
+        slot_index: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.completion_refines(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                &Ok(count),
+            ),
+            self.member_entries_invariant(),
+            0 <= slot_index < C,
+            request_ring_contains_slot::<C>(
+                self.member_ring@,
+                self.member_head,
+                self.member_len,
+                slot_index,
+            ),
+        ensures
+            (self.slots@[slot_index].state == RequestState::InFlight
+                || self.slots@[slot_index].state == RequestState::Retiring)
+                && self.completed < self.slots@[slot_index].active_epoch,
+    {
+        let offset = choose|offset: int| 0 <= offset < self.member_len
+            && (#[trigger] self.member_ring@[
+                ring_position::<C>(self.member_head, offset as nat)
+            ].slot_spec()) == slot_index;
+        assert(self.member_entry_valid(offset)) by {
+            reveal(Scheduler::member_entries_invariant);
+        }
+        reveal(Scheduler::member_entry_valid);
+    }
+
+    proof fn completion_member_live_implies_contains(
+        &self,
+        before: &Self,
+        completion_epoch: u64,
+        before_permits: Seq<Option<KvQuiescencePermit>>,
+        permits: Seq<Option<KvQuiescencePermit>>,
+        count: usize,
+        slot_index: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.completion_refines(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                &Ok(count),
+            ),
+            0 <= slot_index < C,
+            (self.slots@[slot_index].state == RequestState::InFlight
+                || self.slots@[slot_index].state == RequestState::Retiring)
+                && self.completed < self.slots@[slot_index].active_epoch,
+        ensures
+            request_ring_contains_slot::<C>(
+                self.member_ring@,
+                self.member_head,
+                self.member_len,
+                slot_index,
+            ),
+    {
+        reveal(Scheduler::completion_refines);
+        before.basic_implies_member_ring();
+        assert((before.slots@[slot_index].state == RequestState::InFlight
+            || before.slots@[slot_index].state == RequestState::Retiring)
+            && before.completed < before.slots@[slot_index].active_epoch);
+        assert(request_ring_contains_slot::<C>(
+            before.member_ring@,
+            before.member_head,
+            before.member_len,
+            slot_index,
+        )) by {
+            reveal(Scheduler::member_ring_invariant);
+            reveal(Scheduler::member_membership_invariant);
+        }
+        let old_offset = choose|old_offset: int| 0 <= old_offset < before.member_len
+            && (#[trigger] before.member_ring@[
+                ring_position::<C>(before.member_head, old_offset as nat)
+            ].slot_spec()) == slot_index;
+        self.completion_member_old_offset_is_suffix(
+            before,
+            completion_epoch,
+            before_permits,
+            permits,
+            count,
+            slot_index,
+            old_offset,
+        );
+        self.completion_member_suffix_is_contained(
+            before,
+            completion_epoch,
+            before_permits,
+            permits,
+            count,
+            slot_index,
+            old_offset,
+        );
+    }
+
+    proof fn completion_member_old_offset_is_suffix(
+        &self,
+        before: &Self,
+        completion_epoch: u64,
+        before_permits: Seq<Option<KvQuiescencePermit>>,
+        permits: Seq<Option<KvQuiescencePermit>>,
+        count: usize,
+        slot_index: int,
+        old_offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.completion_refines(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                &Ok(count),
+            ),
+            0 <= slot_index < C,
+            (self.slots@[slot_index].state == RequestState::InFlight
+                || self.slots@[slot_index].state == RequestState::Retiring)
+                && self.completed < self.slots@[slot_index].active_epoch,
+            0 <= old_offset < before.member_len,
+            before.member_ring@[
+                ring_position::<C>(before.member_head, old_offset as nat)
+            ].slot_spec() == slot_index,
+        ensures count <= old_offset,
+    {
+        reveal(Scheduler::completion_refines);
+        if old_offset < count {
+            before.pending_batch_facts();
+            assert(before.slots@[slot_index].active_epoch == completion_epoch);
+            assert(false);
+        }
+    }
+
+    proof fn completion_member_suffix_is_contained(
+        &self,
+        before: &Self,
+        completion_epoch: u64,
+        before_permits: Seq<Option<KvQuiescencePermit>>,
+        permits: Seq<Option<KvQuiescencePermit>>,
+        count: usize,
+        slot_index: int,
+        old_offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.completion_refines(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                &Ok(count),
+            ),
+            0 <= slot_index < C,
+            count <= old_offset < before.member_len,
+            before.member_ring@[
+                ring_position::<C>(before.member_head, old_offset as nat)
+            ].slot_spec() == slot_index,
+        ensures
+            request_ring_contains_slot::<C>(
+                self.member_ring@,
+                self.member_head,
+                self.member_len,
+                slot_index,
+            ),
+    {
+        reveal(Scheduler::completion_refines);
+        before.basic_implies_scalar();
+        let offset = old_offset - count;
+        assert(0 <= offset < self.member_len);
+        ring_position_after_advance::<C>(
+            before.member_head,
+            count as nat,
+            offset as nat,
+        );
+        assert(request_ring_contains_slot::<C>(
+            self.member_ring@,
+            self.member_head,
+            self.member_len,
+            slot_index,
+        )) by {
+            reveal(request_ring_contains_slot);
+            assert(exists|witness: int| 0 <= witness < self.member_len
+                && (#[trigger] self.member_ring@[
+                    ring_position::<C>(self.member_head, witness as nat)
+                ].slot_spec()) == slot_index) by {
+                let witness = offset;
+                assert(0 <= witness < self.member_len);
+            }
+        }
+    }
+
+    proof fn completion_member_membership_at(
+        &self,
+        before: &Self,
+        completion_epoch: u64,
+        before_permits: Seq<Option<KvQuiescencePermit>>,
+        permits: Seq<Option<KvQuiescencePermit>>,
+        count: usize,
+        slot_index: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.completion_refines(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                &Ok(count),
+            ),
+            self.member_entries_invariant(),
+            0 <= slot_index < C,
+        ensures
+            ((self.slots@[slot_index].state == RequestState::InFlight
+                || self.slots@[slot_index].state == RequestState::Retiring)
+                && self.completed < self.slots@[slot_index].active_epoch)
+                == request_ring_contains_slot::<C>(
+                    self.member_ring@,
+                    self.member_head,
+                    self.member_len,
+                    slot_index,
+                ),
+    {
+        if request_ring_contains_slot::<C>(
+            self.member_ring@,
+            self.member_head,
+            self.member_len,
+            slot_index,
+        ) {
+            self.completion_member_contains_implies_live(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                count,
+                slot_index,
+            );
+        }
+        if (self.slots@[slot_index].state == RequestState::InFlight
+            || self.slots@[slot_index].state == RequestState::Retiring)
+            && self.completed < self.slots@[slot_index].active_epoch {
+            self.completion_member_live_implies_contains(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                count,
+                slot_index,
+            );
+        }
+    }
+
+    proof fn completion_member_membership_preserved(
+        &self,
+        before: &Self,
+        completion_epoch: u64,
+        before_permits: Seq<Option<KvQuiescencePermit>>,
+        permits: Seq<Option<KvQuiescencePermit>>,
+        count: usize,
+    )
+        requires
+            before.basic_invariant(),
+            self.completion_refines(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                &Ok(count),
+            ),
+            self.member_entries_invariant(),
+        ensures self.member_membership_invariant(),
+    {
+        assert forall|slot_index: int| 0 <= slot_index < C implies
+            (((#[trigger] self.slots@[slot_index].state == RequestState::InFlight
+                || self.slots@[slot_index].state == RequestState::Retiring)
+                && self.completed < self.slots@[slot_index].active_epoch)
+                == request_ring_contains_slot::<C>(
+                    self.member_ring@,
+                    self.member_head,
+                    self.member_len,
+                    slot_index,
+                )) by {
+            self.completion_member_membership_at(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                count,
+                slot_index,
+            );
+        }
+        reveal(Scheduler::member_membership_invariant);
+    }
+
     proof fn completion_preserves_member_ring(
         &self,
         before: &Self,
@@ -6052,13 +6595,207 @@ impl<const C: usize> Scheduler<C> {
             ),
         ensures self.member_ring_invariant(),
     {
-        before.basic_implies_member_ring();
+        self.completion_preserves_batch_ring(
+            before,
+            completion_epoch,
+            before_permits,
+            permits,
+            count,
+        );
+        self.completion_member_entries_preserved(
+            before,
+            completion_epoch,
+            before_permits,
+            permits,
+            count,
+        );
+        self.completion_member_distinct_preserved(
+            before,
+            completion_epoch,
+            before_permits,
+            permits,
+            count,
+        );
+        self.completion_member_membership_preserved(
+            before,
+            completion_epoch,
+            before_permits,
+            permits,
+            count,
+        );
         reveal(Scheduler::member_ring_invariant);
-        reveal(Scheduler::member_entries_invariant);
-        reveal(Scheduler::member_entry_valid);
-        reveal(Scheduler::member_distinct_invariant);
-        reveal(Scheduler::member_membership_invariant);
+    }
+
+    proof fn completion_batch_sum_preserved(
+        &self,
+        before: &Self,
+        completion_epoch: u64,
+        before_permits: Seq<Option<KvQuiescencePermit>>,
+        permits: Seq<Option<KvQuiescencePermit>>,
+        count: usize,
+    )
+        requires
+            before.basic_invariant(),
+            self.completion_refines(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                &Ok(count),
+            ),
+        ensures
+            batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                self.batch_len as nat,
+            ) == self.member_len,
+    {
+        before.basic_implies_batch_ring();
         reveal(Scheduler::completion_refines);
+        reveal(Scheduler::batch_ring_invariant);
+        batch_member_sum_pop::<C>(
+            before.batch_ring@,
+            before.batch_head,
+            before.batch_len as nat,
+        );
+    }
+
+    proof fn completion_batch_header_preserved(
+        &self,
+        before: &Self,
+        completion_epoch: u64,
+        before_permits: Seq<Option<KvQuiescencePermit>>,
+        permits: Seq<Option<KvQuiescencePermit>>,
+        count: usize,
+        batch_offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.completion_refines(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                &Ok(count),
+            ),
+            0 <= batch_offset < self.batch_len,
+        ensures {
+            let batch = self.batch_ring@[
+                ring_position::<C>(self.batch_head, batch_offset as nat)
+            ];
+            &&& batch.member_count > 0
+            &&& batch.epoch.value as int == self.completed as int + batch_offset + 1
+            &&& batch.epoch.value <= self.submitted
+        },
+    {
+        reveal(Scheduler::completion_refines);
+        before.basic_implies_batch_entry(batch_offset + 1);
+        ring_position_after_pop::<C>(before.batch_head, batch_offset as nat);
+    }
+
+    proof fn completion_batch_members_preserved(
+        &self,
+        before: &Self,
+        completion_epoch: u64,
+        before_permits: Seq<Option<KvQuiescencePermit>>,
+        permits: Seq<Option<KvQuiescencePermit>>,
+        count: usize,
+        batch_offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.completion_refines(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                &Ok(count),
+            ),
+            0 <= batch_offset < self.batch_len,
+        ensures {
+            let batch = self.batch_ring@[
+                ring_position::<C>(self.batch_head, batch_offset as nat)
+            ];
+            forall|member_offset: int|
+                batch_member_sum::<C>(
+                    self.batch_ring@,
+                    self.batch_head,
+                    batch_offset as nat,
+                ) <= member_offset < batch_member_sum::<C>(
+                    self.batch_ring@,
+                    self.batch_head,
+                    batch_offset as nat + 1,
+                ) ==> {
+                    let handle = #[trigger] self.member_ring@[
+                        ring_position::<C>(self.member_head, member_offset as nat)
+                    ];
+                    self.slots@[handle.slot_spec() as int].active_epoch == batch.epoch.value
+                }
+        },
+    {
+        reveal(Scheduler::completion_refines);
+        before.basic_implies_scalar();
+        before.basic_implies_batch_entry(batch_offset + 1);
+        self.completion_batch_sum_preserved(
+            before,
+            completion_epoch,
+            before_permits,
+            permits,
+            count,
+        );
+        batch_member_sum_pop::<C>(
+            before.batch_ring@,
+            before.batch_head,
+            (batch_offset + 1) as nat,
+        );
+        batch_member_sum_pop::<C>(
+            before.batch_ring@,
+            before.batch_head,
+            (batch_offset + 2) as nat,
+        );
+        batch_member_sum_monotonic::<C>(
+            self.batch_ring@,
+            self.batch_head,
+            (batch_offset + 1) as nat,
+            self.batch_len as nat,
+        );
+        ring_position_after_pop::<C>(before.batch_head, batch_offset as nat);
+        assert forall|member_offset: int|
+            batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                batch_offset as nat,
+            ) <= member_offset < batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                batch_offset as nat + 1,
+            ) implies {
+                let handle = #[trigger] self.member_ring@[
+                    ring_position::<C>(self.member_head, member_offset as nat)
+                ];
+                self.slots@[handle.slot_spec() as int].active_epoch
+                    == self.batch_ring@[
+                        ring_position::<C>(self.batch_head, batch_offset as nat)
+                    ].epoch.value
+            } by {
+            assert(member_offset < self.member_len);
+            assert(count + member_offset < before.member_len);
+            ring_position_after_advance::<C>(
+                before.member_head,
+                count as nat,
+                member_offset as nat,
+            );
+            assert(batch_member_sum::<C>(
+                before.batch_ring@,
+                before.batch_head,
+                (batch_offset + 1) as nat,
+            ) <= count + member_offset);
+            assert(count + member_offset < batch_member_sum::<C>(
+                before.batch_ring@,
+                before.batch_head,
+                (batch_offset + 2) as nat,
+            ));
+        }
     }
 
     proof fn completion_preserves_batch_ring(
@@ -6080,9 +6817,54 @@ impl<const C: usize> Scheduler<C> {
             ),
         ensures self.batch_ring_invariant(),
     {
-        before.basic_implies_batch_ring();
+        self.completion_batch_sum_preserved(
+            before,
+            completion_epoch,
+            before_permits,
+            permits,
+            count,
+        );
+        assert forall|batch_offset: int| 0 <= batch_offset < self.batch_len implies {
+            let batch = #[trigger] self.batch_ring@[
+                ring_position::<C>(self.batch_head, batch_offset as nat)
+            ];
+            &&& batch.member_count > 0
+            &&& batch.epoch.value as int == self.completed as int + batch_offset + 1
+            &&& batch.epoch.value <= self.submitted
+            &&& (forall|member_offset: int|
+                batch_member_sum::<C>(
+                    self.batch_ring@,
+                    self.batch_head,
+                    batch_offset as nat,
+                ) <= member_offset < batch_member_sum::<C>(
+                    self.batch_ring@,
+                    self.batch_head,
+                    batch_offset as nat + 1,
+                ) ==> {
+                    let handle = #[trigger] self.member_ring@[
+                        ring_position::<C>(self.member_head, member_offset as nat)
+                    ];
+                    self.slots@[handle.slot_spec() as int].active_epoch == batch.epoch.value
+                })
+        } by {
+            self.completion_batch_header_preserved(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                count,
+                batch_offset,
+            );
+            self.completion_batch_members_preserved(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                count,
+                batch_offset,
+            );
+        }
         reveal(Scheduler::batch_ring_invariant);
-        reveal(Scheduler::completion_refines);
     }
 
     proof fn completion_success_preserves_basic(
@@ -7843,6 +8625,46 @@ proof fn ring_advance_matches_position<const C: usize>(head: usize, steps: nat)
     }
 }
 
+proof fn ring_advance_bounds<const C: usize>(head: usize, steps: nat)
+    requires
+        C > 0,
+        head < C,
+        steps <= C,
+    ensures
+        ring_advance::<C>(head, steps) < C,
+{
+    ring_advance_matches_position::<C>(head, steps);
+    reveal(ring_position_or_head);
+    if steps < C {
+        ring_position_bounds::<C>(head, steps);
+    }
+}
+
+proof fn ring_position_after_advance<const C: usize>(
+    head: usize,
+    consumed: nat,
+    offset: nat,
+)
+    requires
+        C > 0,
+        head < C,
+        consumed + offset < C,
+    ensures
+        ring_position::<C>(ring_advance::<C>(head, consumed), offset)
+            == ring_position::<C>(head, consumed + offset),
+    decreases consumed,
+{
+    if consumed == 0 {
+        reveal(ring_advance);
+    } else {
+        let prior = (consumed - 1) as nat;
+        ring_advance_bounds::<C>(head, prior);
+        ring_position_after_advance::<C>(head, prior, offset + 1);
+        ring_position_after_pop::<C>(ring_advance::<C>(head, prior), offset);
+        reveal(ring_advance);
+    }
+}
+
 proof fn ring_position_after_pop<const C: usize>(head: usize, offset: nat)
     requires
         C > 0,
@@ -7894,6 +8716,133 @@ proof fn batch_member_sum_monotonic<const C: usize>(
             (larger - 1) as nat,
         );
         reveal(batch_member_sum);
+    }
+}
+
+proof fn batch_member_sum_pop<const C: usize>(
+    batches: Seq<BatchRecord>,
+    head: usize,
+    count: nat,
+)
+    requires
+        C > 0,
+        head < C,
+        batches.len() == C,
+        0 < count <= C,
+    ensures
+        batch_member_sum::<C>(batches, head, count)
+            == batches[head as int].member_count
+                + batch_member_sum::<C>(
+                    batches,
+                    next_position::<C>(head),
+                    (count - 1) as nat,
+                ),
+    decreases count,
+{
+    assert(next_position::<C>(head) < C) by {
+        reveal(next_position);
+    }
+    if count == 1 {
+        assert(ring_position::<C>(head, 0) == head) by {
+            reveal(ring_position);
+        }
+        assert(batch_member_sum::<C>(batches, head, 0) == 0) by {
+            reveal(batch_member_sum);
+        }
+        assert(batch_member_sum::<C>(batches, head, 1)
+            == batches[head as int].member_count) by {
+            reveal(batch_member_sum);
+        }
+        assert(batch_member_sum::<C>(batches, next_position::<C>(head), 0) == 0) by {
+            reveal(batch_member_sum);
+        }
+    } else {
+        let prior = (count - 1) as nat;
+        batch_member_sum_pop::<C>(batches, head, prior);
+        ring_position_after_pop::<C>(head, (prior - 1) as nat);
+        assert(ring_position::<C>(next_position::<C>(head), (prior - 1) as nat)
+            == ring_position::<C>(head, prior));
+        assert(batch_member_sum::<C>(batches, head, count)
+            == batch_member_sum::<C>(batches, head, prior)
+                + batches[ring_position::<C>(head, prior)].member_count) by {
+            reveal(batch_member_sum);
+        }
+        assert(batch_member_sum::<C>(batches, next_position::<C>(head), prior)
+            == batch_member_sum::<C>(
+                batches,
+                next_position::<C>(head),
+                (prior - 1) as nat,
+            ) + batches[ring_position::<C>(head, prior)].member_count) by {
+            reveal(batch_member_sum);
+        }
+    }
+}
+
+proof fn positive_batch_count_le_sum<const C: usize>(
+    batches: Seq<BatchRecord>,
+    head: usize,
+    count: nat,
+)
+    requires
+        C > 0,
+        head < C,
+        batches.len() == C,
+        count <= C,
+        forall|offset: int| 0 <= offset < count ==>
+            (#[trigger] batches[ring_position::<C>(head, offset as nat)].member_count) > 0,
+    ensures
+        count <= batch_member_sum::<C>(batches, head, count),
+    decreases count,
+{
+    if count > 0 {
+        let prior = (count - 1) as nat;
+        positive_batch_count_le_sum::<C>(batches, head, prior);
+        reveal(batch_member_sum);
+    }
+}
+
+proof fn batch_member_owner<const C: usize>(
+    batches: Seq<BatchRecord>,
+    head: usize,
+    count: nat,
+    member_offset: nat,
+)
+    requires
+        C > 0,
+        head < C,
+        batches.len() == C,
+        count <= C,
+        member_offset < batch_member_sum::<C>(batches, head, count),
+    ensures
+        exists|batch_offset: int| 0 <= batch_offset < count
+            && (#[trigger] batch_member_sum::<C>(batches, head, batch_offset as nat))
+                <= member_offset < batch_member_sum::<C>(
+                    batches,
+                    head,
+                    batch_offset as nat + 1,
+                ),
+    decreases count,
+{
+    let prior = (count - 1) as nat;
+    assert(count > 0) by {
+        if count == 0 {
+            reveal(batch_member_sum);
+        }
+    }
+    if member_offset < batch_member_sum::<C>(batches, head, prior) {
+        batch_member_owner::<C>(batches, head, prior, member_offset);
+    } else {
+        assert(member_offset < batch_member_sum::<C>(batches, head, prior + 1));
+        assert(exists|batch_offset: int| 0 <= batch_offset < count
+            && (#[trigger] batch_member_sum::<C>(batches, head, batch_offset as nat))
+                <= member_offset < batch_member_sum::<C>(
+                    batches,
+                    head,
+                    batch_offset as nat + 1,
+                )) by {
+            let batch_offset = prior as int;
+            assert(0 <= batch_offset < count);
+        }
     }
 }
 
