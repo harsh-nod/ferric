@@ -105,8 +105,16 @@ pub(crate) struct KvFinalizedRequest {
 }
 
 impl KvFinalizedRequest {
-    pub(crate) const fn request(&self) -> RequestId { self.request }
-    pub(crate) const fn origin(&self) -> KvQuiescenceOrigin { self.origin }
+    pub(crate) const fn request(&self) -> (request: RequestId)
+        ensures request == self.request_spec(),
+    { self.request }
+
+    pub(crate) const fn origin(&self) -> (origin: KvQuiescenceOrigin)
+        ensures origin == self.origin_spec(),
+    { self.origin }
+
+    pub(crate) closed spec fn request_spec(&self) -> RequestId { self.request }
+    pub(crate) closed spec fn origin_spec(&self) -> KvQuiescenceOrigin { self.origin }
 }
 
 /// Cache evidence consumed by the lifecycle before a request slot is reused.
@@ -117,8 +125,16 @@ pub(crate) struct KvDetachedRequest {
 }
 
 impl KvDetachedRequest {
-    pub(crate) const fn request(&self) -> RequestId { self.request }
-    pub(crate) const fn origin(&self) -> KvQuiescenceOrigin { self.origin }
+    pub(crate) const fn request(&self) -> (request: RequestId)
+        ensures request == self.request_spec(),
+    { self.request }
+
+    pub(crate) const fn origin(&self) -> (origin: KvQuiescenceOrigin)
+        ensures origin == self.origin_spec(),
+    { self.origin }
+
+    pub(crate) closed spec fn request_spec(&self) -> RequestId { self.request }
+    pub(crate) closed spec fn origin_spec(&self) -> KvQuiescenceOrigin { self.origin }
 }
 
 /// Retry-safe authority error. The unique permit is always returned unchanged.
@@ -129,8 +145,20 @@ pub(crate) struct KvAuthorityError {
 }
 
 impl KvAuthorityError {
-    pub(crate) fn into_parts(self) -> (KvError, KvQuiescencePermit) {
+    pub(crate) fn into_parts(self) -> (parts: (KvError, KvQuiescencePermit))
+        ensures
+            parts.1.request_spec() == self.permit_request_spec(),
+            parts.1.origin_spec() == self.permit_origin_spec(),
+    {
         (self.error, self.permit)
+    }
+
+    pub(crate) closed spec fn permit_request_spec(&self) -> RequestId {
+        self.permit.request_spec()
+    }
+
+    pub(crate) closed spec fn permit_origin_spec(&self) -> KvQuiescenceOrigin {
+        self.permit.origin_spec()
     }
 }
 
@@ -149,6 +177,10 @@ pub struct KvPool {
 
 closed spec fn has_reference(mask: u32, request_slot: u32) -> bool {
     (mask & (1_u32 << request_slot)) != 0
+}
+
+closed spec fn has_other_reference(mask: u32, excluded_slot: u32) -> bool {
+    (mask & !(1_u32 << excluded_slot)) != 0
 }
 
 #[verifier::bit_vector]
@@ -250,13 +282,12 @@ impl KvPool {
             && request.page_count == 0)
         &&& (request.live ==> (
             (request.resident_tokens == 0 <==> request.page_count == 0)
-            && request.page_count as int
-                == if request.resident_tokens == 0 {
-                    0
-                } else {
-                    (request.resident_tokens as int + self.page_tokens as int - 1)
-                        / self.page_tokens as int
-                }
+            && (request.page_count > 0 ==> {
+                &&& ((request.page_count as int - 1) * self.page_tokens as int)
+                    < (request.resident_tokens as int)
+                &&& (request.resident_tokens as int)
+                    <= (request.page_count as int * self.page_tokens as int)
+            })
             && forall |position: int|
                 0 <= position < request.page_count ==> {
                     let page = request.pages@[position];
@@ -343,7 +374,7 @@ impl KvPool {
                 self.free_stack@[left] != self.free_stack@[right])
     }
 
-    closed spec fn same_state(&self, other: &Self) -> bool {
+    pub(crate) closed spec fn same_state(&self, other: &Self) -> bool {
         &&& self.page_tokens == other.page_tokens
         &&& self.max_context_tokens == other.max_context_tokens
         &&& self.page_limit == other.page_limit
@@ -368,6 +399,45 @@ impl KvPool {
                         && self.pages@[page_index].state == PageState::Sealed
                         && self.pages@[page_index].initialized_tokens
                             == old.pages@[page_index].initialized_tokens
+    }
+
+    closed spec fn reachable_payload_frame_except(&self, old: &Self, excluded: int) -> bool {
+        forall |page_index: int|
+            0 <= page_index < old.page_limit
+                && (exists |request_index: int|
+                    0 <= request_index < MAX_REQUEST_SLOTS
+                        && request_index != excluded
+                        && old.chain_has_page(request_index, page_index)) ==>
+                    self.pages@[page_index].generation == old.pages@[page_index].generation
+                        && self.pages@[page_index].state == old.pages@[page_index].state
+                        && self.pages@[page_index].initialized_tokens
+                            == old.pages@[page_index].initialized_tokens
+    }
+
+    closed spec fn release_page_matches(&self, old: &Self, page_index: int, released: u32) -> bool {
+        let old_page = old.pages@[page_index];
+        let new_page = self.pages@[page_index];
+        if has_reference(old_page.reference_mask, released) {
+            if has_other_reference(old_page.reference_mask, released) {
+                &&& new_page.generation == old_page.generation
+                &&& new_page.state == old_page.state
+                &&& new_page.initialized_tokens == old_page.initialized_tokens
+                &&& new_page.reference_mask
+                    == (old_page.reference_mask & !(1_u32 << released))
+            } else {
+                &&& new_page.generation == old_page.generation + 1
+                &&& new_page.state == PageState::Free
+                &&& new_page.initialized_tokens == 0
+                &&& new_page.reference_mask == 0
+            }
+        } else {
+            new_page == old_page
+        }
+    }
+
+    closed spec fn release_page_frame(&self, old: &Self, released: u32) -> bool {
+        forall |page_index: int| 0 <= page_index < old.page_limit ==>
+            #[trigger] self.release_page_matches(old, page_index, released)
     }
 
     fn new_bounded(
@@ -588,6 +658,10 @@ impl KvPool {
                         == old(self).requests@[request.slot as int].committed_tokens
                     &&& final(self).request_frame_except(old(self), request.slot as int)
                     &&& final(self).sealed_payload_frame(old(self))
+                    &&& final(self).reachable_payload_frame_except(
+                        old(self),
+                        request.slot as int,
+                    )
                 }
                 Err(_) => final(self).same_state(old(self)),
             },
@@ -693,6 +767,14 @@ impl KvPool {
                     &&& final(self).requests@[target.slot as int].committed_tokens == token_count
                     &&& final(self).requests@[target.slot as int].page_count
                         == token_count / final(self).page_tokens
+                    &&& final(self).requests@[source.slot as int]
+                        == old(self).requests@[source.slot as int]
+                    &&& forall |request_index: int|
+                        0 <= request_index < MAX_REQUEST_SLOTS
+                            && request_index != source.slot
+                            && request_index != target.slot ==>
+                                final(self).requests@[request_index]
+                                    == old(self).requests@[request_index]
                     &&& final(self).sealed_payload_frame(old(self))
                     &&& forall |position: int|
                         0 <= position < final(self).requests@[target.slot as int].page_count ==>
@@ -780,7 +862,10 @@ impl KvPool {
                         == old(self).requests@[request.slot as int].committed_tokens
                             + accepted_tokens
                     &&& final(self).request_frame_except(old(self), request.slot as int)
-                    &&& final(self).sealed_payload_frame(old(self))
+                    &&& final(self).reachable_payload_frame_except(
+                        old(self),
+                        request.slot as int,
+                    )
                 }
                 Err(_) => final(self).same_state(old(self)),
             },
@@ -878,7 +963,7 @@ impl KvPool {
                     &&& final(self).requests@[request.slot as int].generation
                         == old(self).requests@[request.slot as int].generation + 1
                     &&& final(self).request_frame_except(old(self), request.slot as int)
-                    &&& final(self).sealed_payload_frame(old(self))
+                    &&& final(self).release_page_frame(old(self), request.slot)
                 }
                 Err(_) => final(self).same_state(old(self)),
             },
@@ -913,12 +998,11 @@ impl KvPool {
                     if !reference_is_set(slot.reference_mask, request.slot) {
                         return Err(KvError::InvariantViolation(Invariant::ReferenceCount));
                     }
-                    if !self.page_has_other_reference(page.index as usize, request.slot)
-                        && slot.generation == u32::MAX
-                    {
+                    let shared = self.page_has_other_reference(page.index as usize, request.slot);
+                    if !shared && slot.generation == u32::MAX {
                         return Err(KvError::GenerationExhausted(page));
                     }
-                    if !self.page_has_other_reference(page.index as usize, request.slot) {
+                    if !shared {
                         reclaim[position as usize] = true;
                         reclaim_count += 1;
                     }
@@ -1067,37 +1151,12 @@ impl KvPool {
             self.page_limit <= MAX_PAGE_SLOTS,
             excluded_slot < MAX_REQUEST_SLOTS,
         ensures
-            found <==> exists |request_index: int|
-                0 <= request_index < MAX_REQUEST_SLOTS
-                    && request_index != excluded_slot
-                    && #[trigger] has_reference(
-                        self.pages@[page_index as int].reference_mask,
-                        request_index as u32,
-                    ),
+            found == has_other_reference(
+                self.pages@[page_index as int].reference_mask,
+                excluded_slot,
+            ),
     {
-        let mut request_index = 0_usize;
-        while request_index < MAX_REQUEST_SLOTS
-            invariant
-                request_index <= MAX_REQUEST_SLOTS,
-                forall |checked: int|
-                    0 <= checked < request_index && checked != excluded_slot ==>
-                        !#[trigger] has_reference(
-                            self.pages@[page_index as int].reference_mask,
-                            checked as u32,
-                        ),
-            decreases MAX_REQUEST_SLOTS - request_index,
-        {
-            if request_index != excluded_slot as usize
-                && reference_is_set(
-                    self.pages[page_index].reference_mask,
-                    request_index as u32,
-                )
-            {
-                return true;
-            }
-            request_index += 1;
-        }
-        false
+        (self.pages[page_index].reference_mask & !(1_u32 << excluded_slot)) != 0
     }
 
     fn append_existing_page(
@@ -1106,10 +1165,93 @@ impl KvPool {
         request_index: usize,
         page: PageId,
         written: u32,
-    ) {
+    )
+        requires
+            old(self).well_formed(),
+            request_index < MAX_REQUEST_SLOTS,
+            old(self).requests@[request_index as int].live,
+            old(self).requests@[request_index as int].page_count > 0,
+            page == old(self).requests@[request_index as int].pages@[
+                old(self).requests@[request_index as int].page_count - 1
+            ],
+            page.index < old(self).page_limit,
+            old(self).pages@[page.index as int].state
+                == (PageState::Writable { owner_slot: request_index as u8 }),
+            0 < written,
+            old(self).pages@[page.index as int].initialized_tokens + written
+                <= old(self).page_tokens,
+            old(self).requests@[request_index as int].resident_tokens + written
+                <= old(self).max_context_tokens,
+        ensures
+            final(self).well_formed(),
+            final(self).requests@[request_index as int].resident_tokens
+                == old(self).requests@[request_index as int].resident_tokens + written,
+            final(self).requests@[request_index as int].committed_tokens
+                == old(self).requests@[request_index as int].committed_tokens,
+            final(self).request_frame_except(old(self), request_index as int),
+            final(self).pages@[page.index as int].initialized_tokens
+                == old(self).pages@[page.index as int].initialized_tokens + written,
+            forall |page_index: int|
+                0 <= page_index < old(self).page_limit && page_index != page.index ==>
+                    final(self).pages@[page_index] == old(self).pages@[page_index],
+            final(self).free_stack == old(self).free_stack,
+            final(self).free_len == old(self).free_len,
+            final(self).free_bitmap == old(self).free_bitmap,
+    {
         let page_index = page.index as usize;
         self.pages[page_index].initialized_tokens += written;
         self.requests[request_index].resident_tokens += written;
+        assert forall |index: int| 0 <= index < MAX_REQUEST_SLOTS implies
+            #[trigger] self.request_slot_well_formed(index) by {
+            assert(old(self).request_slot_well_formed(index));
+            if index == request_index {
+                assert(self.requests@[index].page_count == old(self).requests@[index].page_count);
+                assert(self.requests@[index].pages == old(self).requests@[index].pages);
+                assert forall |position: int|
+                    0 <= position < self.requests@[index].page_count implies {
+                        let logical = self.requests@[index].pages@[position];
+                        &&& #[trigger] self.requests@[index].pages@[position].index < self.page_limit
+                        &&& logical.generation == self.pages@[logical.index as int].generation
+                        &&& self.pages@[logical.index as int].initialized_tokens
+                            == if position + 1 < self.requests@[index].page_count {
+                                self.page_tokens
+                            } else {
+                                (self.requests@[index].resident_tokens as int
+                                    - position * self.page_tokens as int) as u32
+                            }
+                        &&& (match self.pages@[logical.index as int].state {
+                            PageState::Writable { owner_slot } => owner_slot as int == index,
+                            PageState::Sealed => (position + 1) * self.page_tokens as int
+                                <= self.requests@[index].committed_tokens,
+                            PageState::Free => false,
+                        })
+                    } by {
+                    if position + 1 < self.requests@[index].page_count {
+                        assert(logical_pages_distinct(
+                            self.requests@[index],
+                            position,
+                            self.requests@[index].page_count as int - 1,
+                        ));
+                    }
+                }
+            } else {
+                assert(self.requests@[index] == old(self).requests@[index]);
+            }
+        }
+        assert forall |index: int| 0 <= index < self.page_limit implies
+            #[trigger] self.page_slot_well_formed(index) by {
+            assert(old(self).page_slot_well_formed(index));
+            assert forall |slot: int| 0 <= slot < MAX_REQUEST_SLOTS implies
+                (has_reference(self.pages@[index].reference_mask, slot as u32)
+                    <==> self.chain_has_page(slot, index)) by {
+                assert(self.requests@[slot].pages == old(self).requests@[slot].pages);
+                assert(self.requests@[slot].page_count == old(self).requests@[slot].page_count);
+                assert(self.requests@[slot].live == old(self).requests@[slot].live);
+                assert(self.chain_has_page(slot, index)
+                    == old(self).chain_has_page(slot, index));
+            }
+        }
+        assert(self.well_formed());
     }
 
     fn append_fresh_page(&mut self, request: RequestKey, request_index: usize, written: u32) {
@@ -1235,7 +1377,23 @@ impl KvPool {
         request: RequestId,
         accepted_tokens: u32,
         permit: KvQuiescencePermit,
-    ) -> Result<KvFinalizedRequest, KvAuthorityError> {
+    ) -> (result: Result<KvFinalizedRequest, KvAuthorityError>)
+        requires old(self).well_formed(),
+        ensures
+            final(self).well_formed(),
+            match result {
+                Ok(evidence) => {
+                    &&& evidence.request_spec() == request
+                    &&& evidence.origin_spec() == permit.origin_spec()
+                    &&& permit.request_spec() == request
+                }
+                Err(failure) => {
+                    &&& final(self).same_state(old(self))
+                    &&& failure.permit_request_spec() == permit.request_spec()
+                    &&& failure.permit_origin_spec() == permit.origin_spec()
+                }
+            },
+    {
         let origin = permit.origin();
         if permit.request() != request || origin == KvQuiescenceOrigin::NeverSubmitted {
             return Err(KvAuthorityError {
@@ -1254,7 +1412,23 @@ impl KvPool {
         &mut self,
         request: RequestId,
         permit: KvQuiescencePermit,
-    ) -> Result<KvDetachedRequest, KvAuthorityError> {
+    ) -> (result: Result<KvDetachedRequest, KvAuthorityError>)
+        requires old(self).well_formed(),
+        ensures
+            final(self).well_formed(),
+            match result {
+                Ok(evidence) => {
+                    &&& evidence.request_spec() == request
+                    &&& evidence.origin_spec() == permit.origin_spec()
+                    &&& permit.request_spec() == request
+                }
+                Err(failure) => {
+                    &&& final(self).same_state(old(self))
+                    &&& failure.permit_request_spec() == permit.request_spec()
+                    &&& failure.permit_origin_spec() == permit.origin_spec()
+                }
+            },
+    {
         let origin = permit.origin();
         if permit.request() != request {
             return Err(KvAuthorityError {
