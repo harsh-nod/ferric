@@ -644,6 +644,24 @@ impl<const C: usize> Scheduler<C> {
         }
     }
 
+    pub(crate) proof fn apply_detachment_ready_frame_except(
+        &self,
+        before: &Self,
+        changed_slot: int,
+        request: RequestId,
+        origin: KvQuiescenceOrigin,
+    )
+        requires
+            self.detachment_ready_frame_except(before, changed_slot),
+            request.slot_spec() < C,
+            request.slot_spec() as int != changed_slot,
+        ensures
+            self.state_spec(request) == before.state_spec(request),
+            self.detachment_ready(request, origin)
+                == before.detachment_ready(request, origin),
+    {
+    }
+
     pub(crate) proof fn apply_detachment_ready_identity(
         &self,
         request: RequestId,
