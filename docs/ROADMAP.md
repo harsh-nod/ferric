@@ -3,6 +3,8 @@
 Status: living program contract.
 
 Proof-required work follows [the proof-development protocol](PROOF_DEVELOPMENT.md).
+M0 qualification is governed by the
+[property contract](M0_PROPERTY_CONTRACT.md).
 
 Ferric's north star is proof-carrying DeepSeek-V4 speculative inference on an
 eight-device `gfx942` system. That is a graduation test, not the first
