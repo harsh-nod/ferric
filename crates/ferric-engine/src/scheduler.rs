@@ -5383,10 +5383,24 @@ impl<const C: usize> Scheduler<C> {
             }
             return result;
         }
-        if slot.state != RequestState::InFlight
-            || slot.active_epoch == NO_EPOCH
-            || slot.active_epoch > self.completed
-        {
+        match slot.state {
+            RequestState::InFlight => {}
+            RequestState::Vacant | RequestState::Ready | RequestState::Retiring => {
+                let result = Err(SchedulerError::FinalizationMismatch);
+                assert(result == finalized_request_preflight_spec::<C>(self, request, epoch)) by {
+                    reveal(finalized_request_preflight_spec);
+                }
+                return result;
+            }
+        }
+        if slot.active_epoch == NO_EPOCH {
+            let result = Err(SchedulerError::FinalizationMismatch);
+            assert(result == finalized_request_preflight_spec::<C>(self, request, epoch)) by {
+                reveal(finalized_request_preflight_spec);
+            }
+            return result;
+        }
+        if slot.active_epoch > self.completed {
             let result = Err(SchedulerError::FinalizationMismatch);
             assert(result == finalized_request_preflight_spec::<C>(self, request, epoch)) by {
                 reveal(finalized_request_preflight_spec);
@@ -5678,6 +5692,19 @@ impl<const C: usize> Scheduler<C> {
                     || (slot.active_epoch == NO_EPOCH && slot.last_quiescent_epoch == epoch)
             }
         };
+        assert(origin_matches == match detached.origin_spec() {
+            KvQuiescenceOrigin::NeverSubmitted => {
+                self.slots@[slot_index as int].active_epoch == NO_EPOCH
+                    && self.slots@[slot_index as int].last_quiescent_epoch == NO_EPOCH
+            }
+            KvQuiescenceOrigin::CompletedExact { epoch } => {
+                (self.slots@[slot_index as int].active_epoch != NO_EPOCH
+                    && self.slots@[slot_index as int].active_epoch == epoch
+                    && epoch <= self.completed)
+                    || (self.slots@[slot_index as int].active_epoch == NO_EPOCH
+                        && self.slots@[slot_index as int].last_quiescent_epoch == epoch)
+            }
+        });
         let request_generation = request.generation();
         if slot.generation != request_generation {
             let result = Err(SchedulerError::DetachmentMismatch);
@@ -5687,13 +5714,16 @@ impl<const C: usize> Scheduler<C> {
             }
             return result;
         }
-        if slot.state != RequestState::Retiring {
-            let result = Err(SchedulerError::DetachmentMismatch);
-            assert(detached_preflight_refines::<C>(self, detached, &result)) by {
-                reveal(detached_preflight_refines);
-                reveal(detached_expected_error);
+        match slot.state {
+            RequestState::Retiring => {}
+            RequestState::Vacant | RequestState::Ready | RequestState::InFlight => {
+                let result = Err(SchedulerError::DetachmentMismatch);
+                assert(detached_preflight_refines::<C>(self, detached, &result)) by {
+                    reveal(detached_preflight_refines);
+                    reveal(detached_expected_error);
+                }
+                return result;
             }
-            return result;
         }
         if slot.in_reclaim_ring || !origin_matches {
             let result = Err(SchedulerError::DetachmentMismatch);
