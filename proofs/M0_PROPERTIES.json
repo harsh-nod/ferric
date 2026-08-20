@@ -14,6 +14,8 @@
       "compiler_path_prefixes": [
         "ferric_spec::identity::RequestId::new",
         "ferric_engine::scheduler::Scheduler::admit",
+        "ferric_engine::scheduler::Scheduler::retire",
+        "ferric_engine::scheduler::Scheduler::reclaim_next_generation",
         "ferric_engine::scheduler::Scheduler::reclaim_detached",
         "ferric_engine::cache::KvPool::create_request",
         "ferric_engine::cache::KvPool::release_request",
@@ -27,6 +29,7 @@
         "request-id-generation",
         "kv-request-generation",
         "kv-stale-request",
+        "scheduler-exact-rejection",
         "scheduler-generation-reuse"
       ],
       "checked_evidence": [],
@@ -59,10 +62,19 @@
       "statement_sha256": "75a99ba88c393e70168f59febe8fb7ea31f341ac83ce4a4d01a6dddeb7e273b8",
       "compiler_paths_resolved": true,
       "compiler_path_prefixes": [
-        "ferric_engine::scheduler::Scheduler::"
+        "ferric_engine::scheduler::Scheduler::admit",
+        "ferric_engine::scheduler::Scheduler::retire",
+        "ferric_engine::scheduler::Scheduler::dispatch_ready",
+        "ferric_engine::scheduler::Scheduler::complete_exact",
+        "ferric_engine::scheduler::Scheduler::accept_finalized",
+        "ferric_engine::scheduler::Scheduler::take_retiring_permit",
+        "ferric_engine::scheduler::Scheduler::reclaim_detached",
+        "ferric_engine::scheduler::Scheduler::finalize_slot"
       ],
       "required_mutations": [
-        "lifecycle"
+        "scheduler-finalization-transition",
+        "scheduler-exact-rejection",
+        "scheduler-completion-boundary"
       ],
       "checked_evidence": [],
       "unsupported_reason": null
@@ -75,10 +87,21 @@
       "statement_sha256": "9fd3a24a86acc4e9cd0430e82b2e3489e569423711da642c5d6d625af55ea54d",
       "compiler_paths_resolved": true,
       "compiler_path_prefixes": [
-        "ferric_engine::scheduler::Scheduler::"
+        "ferric_engine::scheduler::Scheduler::dispatch_ready",
+        "ferric_engine::scheduler::Scheduler::complete_exact",
+        "ferric_engine::scheduler::Scheduler::retire",
+        "ferric_engine::scheduler::Scheduler::retire_inflight",
+        "ferric_engine::scheduler::Scheduler::accept_finalized",
+        "ferric_engine::scheduler::Scheduler::finalize_slot",
+        "ferric_engine::scheduler::Scheduler::take_retiring_permit",
+        "ferric_engine::scheduler::Scheduler::reclaim_detached",
+        "ferric_engine::scheduler::Scheduler::reclaim_slot"
       ],
       "required_mutations": [
-        "lifecycle"
+        "scheduler-completion-early-ready",
+        "scheduler-cancellation-early-ready",
+        "scheduler-finalization-transition",
+        "scheduler-generation-reuse"
       ],
       "checked_evidence": [],
       "unsupported_reason": null
@@ -91,12 +114,19 @@
       "statement_sha256": "0d4b97c0f2b02a34cf14ff02c3987db2f4adff9a5be4683816c50d61a5b8d3b7",
       "compiler_paths_resolved": true,
       "compiler_path_prefixes": [
-        "ferric_engine::scheduler::Scheduler::",
+        "ferric_engine::scheduler::Scheduler::admit",
+        "ferric_engine::scheduler::Scheduler::retire",
+        "ferric_engine::scheduler::Scheduler::dispatch_ready",
+        "ferric_engine::scheduler::Scheduler::complete_exact",
+        "ferric_engine::scheduler::Scheduler::accept_finalized",
+        "ferric_engine::scheduler::Scheduler::take_retiring_permit",
+        "ferric_engine::scheduler::Scheduler::reclaim_detached",
         "ferric_engine::scheduler::advance",
         "ferric_engine::scheduler::ring_tail"
       ],
       "required_mutations": [
-        "lifecycle"
+        "scheduler-scan-bound",
+        "scheduler-ring-bound"
       ],
       "checked_evidence": [],
       "unsupported_reason": null
@@ -182,15 +212,22 @@
       "statement_sha256": "a1f556aed76cb0323ea4044449c442cdd9d0040355587a5f8ee089d951f68f1f",
       "compiler_paths_resolved": true,
       "compiler_path_prefixes": [
-        "ferric_engine::system::Engine::",
-        "ferric_engine::scheduler::Scheduler::finalize_slot",
-        "ferric_engine::cache::KvPool::append_existing_page"
+        "ferric_engine::system::Engine::admit",
+        "ferric_engine::system::Engine::complete_exact",
+        "ferric_engine::system::Engine::reclaim_one",
+        "ferric_engine::scheduler::Scheduler::admit",
+        "ferric_engine::scheduler::Scheduler::complete_exact",
+        "ferric_engine::scheduler::Scheduler::accept_finalized",
+        "ferric_engine::scheduler::Scheduler::reclaim_detached",
+        "ferric_engine::cache::KvPool::create_request",
+        "ferric_engine::cache::KvPool::finalize_tentative",
+        "ferric_engine::cache::KvPool::release_request"
       ],
       "required_mutations": [
-        "lifecycle",
-        "kv",
         "system",
-        "system-completion"
+        "system-completion",
+        "scheduler-completion-early-ready",
+        "system-detachment"
       ],
       "checked_evidence": [],
       "unsupported_reason": null

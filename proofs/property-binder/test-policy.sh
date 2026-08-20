@@ -387,14 +387,17 @@ expect_rejected property-extra-mutation-evidence \
     "$binder" --evidence-index $evidence_arguments "$fixture/extra-evidence-index"
 rm "$fixture/evidence/unregistered.mutation"
 
-package=$(awk -F '|' '$1 == "lifecycle" { print $2 }' "$fixture/components")
-function=$(awk -F '|' '$1 == "lifecycle" { print $4 }' "$fixture/components")
+weak_component=scheduler-finalization-transition
+package=$(awk -F '|' -v component="$weak_component" \
+    '$1 == component { print $2 }' "$fixture/components")
+function=$(awk -F '|' -v component="$weak_component" \
+    '$1 == component { print $4 }' "$fixture/components")
 {
     printf 'VERUS_PACKAGE=%s\n' "$package"
     printf 'VERUS_MODULE=fixture\n'
     printf 'VERUS_FUNCTION=%s\n' "$function"
     printf 'RESULT=rejected-without-authenticated-marker\n'
-} >"$fixture/evidence/lifecycle.transcript"
+} >"$fixture/evidence/$weak_component.transcript"
 # shellcheck disable=SC2086
 expect_rejected property-weak-mutation-evidence \
     'mutation transcript does not contain its required failure marker' \
@@ -404,7 +407,7 @@ expect_rejected property-weak-mutation-evidence \
     printf 'VERUS_MODULE=fixture\n'
     printf 'VERUS_FUNCTION=%s\n' "$function"
     printf 'verification results:: 1 verified, 1 errors\n'
-} >"$fixture/evidence/lifecycle.transcript"
+} >"$fixture/evidence/$weak_component.transcript"
 
 printf 'changed source closure fixture\n' >"$fixture/source.records"
 # shellcheck disable=SC2086

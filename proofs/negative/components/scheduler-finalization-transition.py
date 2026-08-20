@@ -8,13 +8,15 @@ repo = Path(sys.argv[1])
 path = repo / "crates/ferric-engine/src/scheduler.rs"
 source = path.read_text(encoding="utf-8")
 old = """        self.slots[slot_index].state = RequestState::Ready;
-        self.slots[slot_index].phase = LifecyclePhase::Idle;
+        self.slots[slot_index].active_epoch = NO_EPOCH;
+        self.slots[slot_index].last_quiescent_epoch = epoch;
 """
 new = """        self.slots[slot_index].state = RequestState::Retiring;
-        self.slots[slot_index].phase = LifecyclePhase::Idle;
+        self.slots[slot_index].active_epoch = NO_EPOCH;
+        self.slots[slot_index].last_quiescent_epoch = epoch;
 """
 if source.count(old) != 1:
-    raise SystemExit("lifecycle finalization mutation anchor drifted")
+    raise SystemExit("scheduler finalization mutation anchor drifted")
 path.write_text(source.replace(old, new), encoding="utf-8")
 print("MUTATED_SOURCE=crates/ferric-engine/src/scheduler.rs")
-print("MUTATION=finalized-inflight-request-remains-terminal")
+print("MUTATION=finalized-request-remains-terminal")

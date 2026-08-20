@@ -238,6 +238,29 @@ expect_rejected parser-engine-transition-allocation \
     "$source_gate" --generate "$engine_transition" \
     "$scratch/engine-transition.metadata" "$scratch/engine-transition.manifest"
 
+ghost_allocation=$(new_copy admitted-engine-ghost-allocation)
+cat >>"$ghost_allocation/crates/ferric-engine/src/system.rs" <<'RS'
+verus! {
+impl Engine {
+    pub fn ghost_allocation_probe() {
+        let ghost _erased_values: Vec<u8> = Vec::new();
+        let ghost values = Seq::<u8>::empty();
+        proof {
+            let _extended = values.push(1);
+        }
+    }
+}
+}
+RS
+write_metadata "$ghost_allocation" "$scratch/ghost-allocation.metadata"
+"$source_gate" --generate "$ghost_allocation" \
+    "$scratch/ghost-allocation.metadata" "$scratch/ghost-allocation.manifest"
+grep -F 'ferric_engine::system::Engine::ghost_allocation_probe' \
+    "$scratch/ghost-allocation.manifest" >/dev/null || {
+    printf 'FAIL: erased ghost-allocation probe was not classified\n' >&2
+    exit 1
+}
+
 allocation=$(new_copy transition-allocation)
 cat >>"$allocation/crates/ferric-engine/src/cache.rs" <<'RS'
 
