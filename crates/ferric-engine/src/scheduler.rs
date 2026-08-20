@@ -768,6 +768,22 @@ impl<const C: usize> Scheduler<C> {
         reveal(Scheduler::basic_invariant);
     }
 
+    proof fn free_ring_entry_facts(&self, offset: int)
+        requires
+            self.free_ring_invariant(),
+            0 <= offset < self.free_len,
+        ensures {
+            let slot_index = self.free_ring@[
+                ring_position::<C>(self.free_head, offset as nat)
+            ];
+            &&& slot_index < C
+            &&& self.slots@[slot_index as int].state == RequestState::Vacant
+            &&& self.slots@[slot_index as int].in_free_ring
+        },
+    {
+        reveal(Scheduler::free_ring_invariant);
+    }
+
     proof fn basic_implies_reclaim_ring(&self)
         requires self.basic_invariant(),
         ensures self.reclaim_ring_invariant(),
@@ -2179,6 +2195,87 @@ impl<const C: usize> Scheduler<C> {
         self.admit_refines_preserves_free_ring(before, request);
         self.admit_refines_preserves_other_rings(before, request);
         reveal(Scheduler::basic_invariant);
+    }
+
+    proof fn admitted_step_establishes_postconditions(
+        &self,
+        before: &Self,
+        request: RequestId,
+    )
+        requires
+            before.basic_invariant(),
+            self.admitted_slot_refines(before, request),
+            self.admitted_fields_refine(before),
+        ensures
+            self.basic_invariant(),
+            self.admit_refines(before, &Ok(request)),
+            self.slot_is_live_spec(request.slot_spec() as int),
+            self.slot_generation_spec(request.slot_spec() as int)
+                == before.slot_generation_spec(request.slot_spec() as int),
+            forall|other: int|
+                0 <= other < C && other != request.slot_spec() as int ==> {
+                    &&& self.slot_is_live_spec(other) == before.slot_is_live_spec(other)
+                    &&& self.slot_generation_spec(other)
+                        == before.slot_generation_spec(other)
+                },
+    {
+        self.admitted_step_implies_refines(before, request);
+        self.admit_refines_preserves_basic(before, request);
+        reveal(Scheduler::admit_refines);
+        reveal(Scheduler::slot_is_live_spec);
+        reveal(Scheduler::slot_generation_spec);
+        reveal(Scheduler::slots_frame_except);
+        let slot_index = request.slot_spec() as int;
+        assert forall|other: int| 0 <= other < C && other != slot_index implies {
+            &&& self.slot_is_live_spec(other) == before.slot_is_live_spec(other)
+            &&& self.slot_generation_spec(other) == before.slot_generation_spec(other)
+        } by {
+            assert(self.slots@[other] == before.slots@[other]);
+        }
+    }
+
+    proof fn admit_error_establishes_postconditions(&self)
+        requires
+            self.basic_invariant(),
+            self.free_len == 0,
+        ensures
+            self.basic_invariant(),
+            self.admit_refines(self, &Err(SchedulerError::OutOfSlots)),
+            self.identity_frame(self),
+    {
+        self.same_scalars_reflexive();
+        reveal(Scheduler::admit_refines);
+        reveal(Scheduler::identity_frame);
+    }
+
+    proof fn admit_scalar_preflight(&self)
+        requires
+            self.basic_invariant(),
+            self.free_len > 0,
+        ensures
+            C > 0,
+            C <= MAX_REQUEST_SLOTS,
+            self.free_head < C,
+            self.free_len <= C,
+            self.live_count < C,
+    {
+        self.basic_implies_scalar();
+        reveal(Scheduler::scalar_invariant);
+    }
+
+    proof fn admit_head_preflight(&self)
+        requires
+            self.basic_invariant(),
+            self.free_len > 0,
+        ensures
+            self.free_ring@[self.free_head as int] < C,
+            self.slots@[self.free_ring@[self.free_head as int] as int].state
+                == RequestState::Vacant,
+            self.slots@[self.free_ring@[self.free_head as int] as int].in_free_ring,
+    {
+        self.basic_implies_free_ring();
+        self.free_ring_entry_facts(0);
+        assert(ring_position::<C>(self.free_head, 0) == self.free_head);
     }
 
     proof fn pending_batch_facts(&self)
@@ -3702,6 +3799,41 @@ impl<const C: usize> Scheduler<C> {
         );
     }
 
+    proof fn retired_step_establishes_postconditions(
+        &self,
+        before: &Self,
+        request: RequestId,
+    )
+        requires
+            before.basic_invariant(),
+            self.retired_slot_refines(before, request),
+            self.retired_fields_refine(before, request),
+        ensures
+            self.basic_invariant(),
+            self.retire_refines(before, request, &Ok(())),
+            self.identity_frame(before),
+    {
+        self.retired_step_implies_refines(before, request);
+        self.retired_step_preserves_basic(before, request);
+        self.retired_step_preserves_identity(before, request);
+    }
+
+    proof fn retire_error_establishes_postconditions(
+        &self,
+        request: RequestId,
+        error: SchedulerError,
+    )
+        requires
+            self.basic_invariant(),
+            Some(error) == retire_expected_error::<C>(self, request),
+        ensures
+            self.basic_invariant(),
+            self.retire_refines(self, request, &Err(error)),
+            self.identity_frame(self),
+    {
+        self.retire_error_reflexive(request, error);
+    }
+
     pub closed spec fn retire_refines(
         &self,
         before: &Self,
@@ -4701,6 +4833,155 @@ impl<const C: usize> Scheduler<C> {
         }
     }
 
+    #[inline]
+    fn admit_available(
+        &mut self,
+        slot_index: usize,
+    ) -> (request: RequestId)
+        requires
+            C > 0,
+            C <= MAX_REQUEST_SLOTS,
+            old(self).free_head < C,
+            old(self).free_len > 0,
+            old(self).free_len <= C,
+            old(self).live_count < C,
+            slot_index < C,
+            old(self).free_ring@[old(self).free_head as int] == slot_index,
+            old(self).slots@[slot_index as int].state == RequestState::Vacant,
+            old(self).slots@[slot_index as int].in_free_ring,
+        ensures
+            final(self).admitted_slot_refines(old(self), request),
+            final(self).admitted_fields_refine(old(self)),
+    {
+        let slot = self.slots[slot_index];
+
+        self.free_head = advance::<C>(self.free_head);
+        self.free_len -= 1;
+        self.slots[slot_index].state = RequestState::Ready;
+        self.slots[slot_index].in_free_ring = false;
+        self.live_count += 1;
+        let request = RequestId::new(slot_index_to_u32(slot_index), slot.generation);
+        assert(self.admitted_slot_refines(old(self), request)) by {
+            reveal(Scheduler::admitted_slot_refines);
+            reveal(Scheduler::slots_frame_except);
+        }
+        assert(self.admitted_fields_refine(old(self))) by {
+            reveal(Scheduler::admitted_fields_refine);
+        }
+        request
+    }
+
+    #[inline]
+    fn admit_established(&mut self) -> (request: RequestId)
+        requires
+            old(self).basic_invariant(),
+            old(self).free_len > 0,
+        ensures
+            final(self).admitted_slot_refines(old(self), request),
+            final(self).admitted_fields_refine(old(self)),
+    {
+        proof {
+            self.admit_scalar_preflight();
+            self.admit_head_preflight();
+        }
+        let slot_index = self.free_ring[self.free_head];
+        assert(slot_index < C);
+        assert(self.slots@[slot_index as int].state == RequestState::Vacant);
+        assert(self.slots@[slot_index as int].in_free_ring);
+        self.admit_available(slot_index)
+    }
+
+    #[inline]
+    fn admit_refined(&mut self) -> (request: RequestId)
+        requires
+            old(self).basic_invariant(),
+            old(self).free_len > 0,
+        ensures
+            final(self).basic_invariant(),
+            final(self).admit_refines(old(self), &Ok(request)),
+            final(self).slot_is_live_spec(request.slot_spec() as int),
+            final(self).slot_generation_spec(request.slot_spec() as int)
+                == old(self).slot_generation_spec(request.slot_spec() as int),
+            forall|other: int|
+                0 <= other < C && other != request.slot_spec() as int ==> {
+                    &&& final(self).slot_is_live_spec(other)
+                        == old(self).slot_is_live_spec(other)
+                    &&& final(self).slot_generation_spec(other)
+                        == old(self).slot_generation_spec(other)
+                },
+    {
+        let request = self.admit_established();
+        proof {
+            self.admitted_step_establishes_postconditions(old(self), request);
+        }
+        request
+    }
+
+    #[inline]
+    fn retire_inflight(
+        &mut self,
+        _request: RequestId,
+        slot_index: usize,
+    )
+        requires
+            old(self).basic_invariant(),
+            slot_index < C,
+            _request.slot_spec() as int == slot_index as int,
+            old(self).slots@[slot_index as int].generation == _request.generation_spec(),
+            old(self).slots@[slot_index as int].state == RequestState::InFlight,
+        ensures
+            final(self).retired_slot_refines(old(self), _request),
+            final(self).retired_fields_refine(old(self), _request),
+    {
+        self.slots[slot_index].state = RequestState::Retiring;
+        assert(self.retired_slot_refines(old(self), _request)) by {
+            reveal(Scheduler::retired_slot_refines);
+            reveal(Scheduler::slots_frame_except);
+        }
+        assert(self.retired_fields_refine(old(self), _request)) by {
+            reveal(Scheduler::retired_fields_refine);
+        }
+    }
+
+    #[inline]
+    fn retire_ready(
+        &mut self,
+        _request: RequestId,
+        slot_index: usize,
+    )
+        requires
+            old(self).basic_invariant(),
+            slot_index < C,
+            _request.slot_spec() as int == slot_index as int,
+            old(self).slots@[slot_index as int].generation == _request.generation_spec(),
+            old(self).slots@[slot_index as int].state == RequestState::Ready,
+        ensures
+            final(self).retired_slot_refines(old(self), _request),
+            final(self).retired_fields_refine(old(self), _request),
+    {
+        proof {
+            self.basic_implies_slots();
+            self.basic_implies_reclaim_ring();
+        }
+        assert(self.reclaim_len < C);
+        assert(!self.slots@[slot_index as int].in_reclaim_ring);
+        let tail = ring_tail::<C>(self.reclaim_head, self.reclaim_len);
+        self.reclaim_ring[tail] = slot_index;
+        self.reclaim_len += 1;
+        self.slots[slot_index].state = RequestState::Retiring;
+        self.slots[slot_index].active_epoch = NO_EPOCH;
+        self.slots[slot_index].in_reclaim_ring = true;
+        assert(self.retired_slot_refines(old(self), _request)) by {
+            reveal(Scheduler::retired_slot_refines);
+            reveal(Scheduler::slots_frame_except);
+        }
+        assert(self.retired_fields_refine(old(self), _request)) by {
+            reveal(Scheduler::retired_fields_refine);
+            assert(self.reclaim_ring@
+                == old(self).reclaim_ring@.update(tail as int, slot_index));
+        }
+    }
+
     /// Admits one request from the O(1) free ring.
     ///
     /// # Errors
@@ -4727,53 +5008,13 @@ impl<const C: usize> Scheduler<C> {
                 }
             },
     {
-        proof {
-            self.basic_implies_scalar();
-            self.basic_implies_slots();
-            self.basic_implies_free_ring();
-        }
         if self.free_len == 0 {
             proof {
-                self.same_scalars_reflexive();
+                self.admit_error_establishes_postconditions();
             }
             return Err(SchedulerError::OutOfSlots);
         }
-        let ring_index = self.free_head;
-        let slot_index = self.free_ring[ring_index];
-        assert(slot_index < C);
-        let slot = self.slots[slot_index];
-        assert(slot.state == RequestState::Vacant);
-        assert(slot.in_free_ring);
-
-        self.free_head = advance::<C>(self.free_head);
-        self.free_len -= 1;
-        self.slots[slot_index].state = RequestState::Ready;
-        self.slots[slot_index].in_free_ring = false;
-        self.live_count += 1;
-        let request = RequestId::new(slot_index_to_u32(slot_index), slot.generation);
-        assert(self.admitted_slot_refines(old(self), request)) by {
-            reveal(Scheduler::admitted_slot_refines);
-            reveal(Scheduler::slots_frame_except);
-        }
-        assert(self.admitted_fields_refine(old(self))) by {
-            reveal(Scheduler::admitted_fields_refine);
-        }
-        proof {
-            self.admitted_step_implies_refines(old(self), request);
-            self.admit_refines_preserves_basic(old(self), request);
-            reveal(Scheduler::admit_refines);
-            reveal(Scheduler::slot_is_live_spec);
-            reveal(Scheduler::slot_generation_spec);
-            reveal(Scheduler::slots_frame_except);
-            assert forall|other: int| 0 <= other < C && other != slot_index implies {
-                &&& self.slot_is_live_spec(other) == old(self).slot_is_live_spec(other)
-                &&& self.slot_generation_spec(other)
-                    == old(self).slot_generation_spec(other)
-            } by {
-                assert(self.slots@[other] == old(self).slots@[other]);
-            }
-        }
-        Ok(request)
+        Ok(self.admit_refined())
     }
 
     /// Retires a request. An in-flight request stays attached to its batch;
@@ -4798,7 +5039,10 @@ impl<const C: usize> Scheduler<C> {
         if slot_index >= C {
             proof {
                 reveal(retire_expected_error);
-                self.retire_error_reflexive(request, SchedulerError::InvalidSlot);
+                self.retire_error_establishes_postconditions(
+                    request,
+                    SchedulerError::InvalidSlot,
+                );
             }
             return Err(SchedulerError::InvalidSlot);
         }
@@ -4806,7 +5050,10 @@ impl<const C: usize> Scheduler<C> {
         if slot.generation != request.generation() {
             proof {
                 reveal(retire_expected_error);
-                self.retire_error_reflexive(request, SchedulerError::StaleRequest);
+                self.retire_error_establishes_postconditions(
+                    request,
+                    SchedulerError::StaleRequest,
+                );
             }
             return Err(SchedulerError::StaleRequest);
         }
@@ -4814,55 +5061,34 @@ impl<const C: usize> Scheduler<C> {
             RequestState::Vacant => {
                 proof {
                     reveal(retire_expected_error);
-                    self.retire_error_reflexive(request, SchedulerError::RequestNotLive);
+                    self.retire_error_establishes_postconditions(
+                        request,
+                        SchedulerError::RequestNotLive,
+                    );
                 }
                 Err(SchedulerError::RequestNotLive)
             }
             RequestState::Retiring => {
                 proof {
                     reveal(retire_expected_error);
-                    self.retire_error_reflexive(request, SchedulerError::AlreadyRetiring);
+                    self.retire_error_establishes_postconditions(
+                        request,
+                        SchedulerError::AlreadyRetiring,
+                    );
                 }
                 Err(SchedulerError::AlreadyRetiring)
             }
             RequestState::InFlight => {
-                self.slots[slot_index].state = RequestState::Retiring;
-                assert(self.retired_slot_refines(old(self), request)) by {
-                    reveal(Scheduler::retired_slot_refines);
-                    reveal(Scheduler::slots_frame_except);
-                }
-                assert(self.retired_fields_refine(old(self), request)) by {
-                    reveal(Scheduler::retired_fields_refine);
-                }
+                self.retire_inflight(request, slot_index);
                 proof {
-                    self.retired_step_implies_refines(old(self), request);
-                    self.retired_step_preserves_basic(old(self), request);
-                    self.retired_step_preserves_identity(old(self), request);
+                    self.retired_step_establishes_postconditions(old(self), request);
                 }
                 Ok(())
             }
             RequestState::Ready => {
-                assert(self.reclaim_len < C);
-                assert(!slot.in_reclaim_ring);
-                let tail = ring_tail::<C>(self.reclaim_head, self.reclaim_len);
-                self.reclaim_ring[tail] = slot_index;
-                self.reclaim_len += 1;
-                self.slots[slot_index].state = RequestState::Retiring;
-                self.slots[slot_index].active_epoch = NO_EPOCH;
-                self.slots[slot_index].in_reclaim_ring = true;
-                assert(self.retired_slot_refines(old(self), request)) by {
-                    reveal(Scheduler::retired_slot_refines);
-                    reveal(Scheduler::slots_frame_except);
-                }
-                assert(self.retired_fields_refine(old(self), request)) by {
-                    reveal(Scheduler::retired_fields_refine);
-                    assert(self.reclaim_ring@
-                        == old(self).reclaim_ring@.update(tail as int, slot_index));
-                }
+                self.retire_ready(request, slot_index);
                 proof {
-                    self.retired_step_implies_refines(old(self), request);
-                    self.retired_step_preserves_basic(old(self), request);
-                    self.retired_step_preserves_identity(old(self), request);
+                    self.retired_step_establishes_postconditions(old(self), request);
                 }
                 Ok(())
             }
