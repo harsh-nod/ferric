@@ -139,6 +139,8 @@ run_component() {
     esac
     printf 'PASS: %s actual-body mutation rejected (%s)\n' "$name" "$marker" \
         >"$scratch/results/$name"
+    chmod -R u+w "$copy" "$target" 2>/dev/null || true
+    rm -rf "$copy" "$target"
 }
 
 wait_batch() {
