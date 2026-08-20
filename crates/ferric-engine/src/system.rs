@@ -1016,4 +1016,44 @@ mod tests {
         let reused = engine.admit().unwrap();
         assert_eq!(reused.generation(), request.generation() + 1);
     }
+
+    #[test]
+    fn mixed_completion_publishes_active_and_detaches_retired_members() {
+        let mut engine = Engine::<2>::new(16, 4, 32).unwrap();
+        let retired = engine.admit().unwrap();
+        let active = engine.admit().unwrap();
+        engine.append_tentative(retired, 2).unwrap();
+        engine.append_tentative(active, 3).unwrap();
+        let mut members = output::<2>();
+        let batch = engine.dispatch_ready(&mut members).unwrap().unwrap();
+        assert_eq!(members, [retired, active]);
+        engine.retire(retired).unwrap();
+
+        let completion = ExactCompletion::from_contracted_hsa_quiescence(batch.epoch());
+        assert_eq!(engine.complete_exact(completion, &[0, 2]).unwrap(), 2);
+        assert_eq!(engine.state(retired), None);
+        assert_eq!(engine.resident_tokens(retired), None);
+        assert_eq!(engine.state(active), Some(RequestState::Ready));
+        assert_eq!(engine.committed_tokens(active), Some(2));
+        assert_eq!(engine.resident_tokens(active), Some(2));
+        assert_eq!(engine.live_count(), 1);
+    }
+
+    #[test]
+    fn engine_transitions_preserve_completion_scratch_capacity() {
+        let mut engine = Engine::<2>::new(16, 4, 32).unwrap();
+        let scratch_len = engine.permits.len();
+        let scratch_capacity = engine.permits.capacity();
+        let request = engine.admit().unwrap();
+        engine.append_tentative(request, 2).unwrap();
+        let mut members = output::<2>();
+        let batch = engine.dispatch_ready(&mut members).unwrap().unwrap();
+        let completion = ExactCompletion::from_contracted_hsa_quiescence(batch.epoch());
+        engine.complete_exact(completion, &[1]).unwrap();
+        engine.retire(request).unwrap();
+        engine.reclaim_one().unwrap();
+
+        assert_eq!(engine.permits.len(), scratch_len);
+        assert_eq!(engine.permits.capacity(), scratch_capacity);
+    }
 }
