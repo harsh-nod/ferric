@@ -950,8 +950,10 @@ impl<const C: usize> Engine<C> {
         }
 
         let ghost before_completion_scheduler = self.scheduler;
+        let ghost before_completion_permits = self.permits@;
         assert(before_completion_scheduler == entry.scheduler);
         assert(self.kv == entry.kv);
+        assert(before_completion_permits.len() == C);
         assert(completion.epoch_spec() == input_completion_epoch);
         let completed = match self.scheduler.complete_exact(completion, &mut self.permits) {
             Ok(count) => count,
@@ -976,6 +978,15 @@ impl<const C: usize> Engine<C> {
             }
         };
         assert(completed == member_count);
+        proof {
+            self.scheduler.apply_completed_storage_length(
+                &before_completion_scheduler,
+                input_completion_epoch.value,
+                before_completion_permits,
+                self.permits@,
+                completed,
+            );
+        }
         assert(completed <= self.permits@.len());
         assert(self.permits@.len() == C);
         assert forall |position: int| completed <= position < C implies
@@ -1104,6 +1115,17 @@ impl<const C: usize> Engine<C> {
                 assert(entry.pending_member_spec(offset as usize)
                     == Some(self.permits@[offset].unwrap().request_spec()));
             }
+        }
+        assert forall |left: int, right: int| 0 <= left < right < completed implies
+            self.permits@[left].unwrap().request_spec().slot_spec()
+                != self.permits@[right].unwrap().request_spec().slot_spec() by {
+            self.scheduler.apply_completed_batch_distinct(
+                &before_completion_scheduler,
+                self.permits@,
+                completed,
+                left,
+                right,
+            );
         }
 
         index = 0;

@@ -4706,6 +4706,26 @@ impl<const C: usize> Scheduler<C> {
         reveal(Scheduler::completed_batch_refines);
     }
 
+    pub(crate) proof fn apply_completed_storage_length(
+        &self,
+        before: &Self,
+        completion_epoch: u64,
+        before_permits: Seq<Option<KvQuiescencePermit>>,
+        permits: Seq<Option<KvQuiescencePermit>>,
+        count: usize,
+    )
+        requires self.completion_refines(
+            before,
+            completion_epoch,
+            before_permits,
+            permits,
+            &Ok(count),
+        ),
+        ensures permits.len() == before_permits.len(),
+    {
+        reveal(Scheduler::completion_refines);
+    }
+
     pub(crate) closed spec fn finalized_slot_refines(
         &self,
         before: &Self,
