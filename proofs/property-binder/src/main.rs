@@ -667,7 +667,10 @@ fn mutation_registry(
             }
             let source_text = fs::read_to_string(&source_path)
                 .map_err(|error| format!("{}: {error}", source_path.display()))?;
-            let compact: String = source_text.chars().filter(|char| !char.is_whitespace()).collect();
+            let compact: String = source_text
+                .chars()
+                .filter(|char| !char.is_whitespace())
+                .collect();
             (payload, compact.contains("verus!{"))
         } else {
             return Err(format!("malformed negative component: {line}"));
@@ -714,8 +717,8 @@ fn mutation_registry(
                     }
                     let tail = path.strip_prefix(&module_prefix)?;
                     let exact = tail == function;
-                    let unique_suffix = !function.contains("::")
-                        && tail.rsplit("::").next() == Some(function);
+                    let unique_suffix =
+                        !function.contains("::") && tail.rsplit("::").next() == Some(function);
                     (exact || unique_suffix).then_some(path)
                 })
                 .collect();
@@ -801,18 +804,16 @@ fn proof_transcript_has_error(text: &str) -> bool {
             let Some((_, errors)) = tail.split_once(" verified,") else {
                 return false;
             };
-            errors
-                .trim()
-                .strip_suffix(" errors")
+            let mut fields = errors.split_whitespace();
+            fields
+                .next()
                 .and_then(|count| count.parse::<u64>().ok())
                 .is_some_and(|count| count > 0)
+                && fields.next() == Some("errors")
         })
 }
 
-fn mutation_transcript(
-    transcript: &Path,
-    registered: &RegisteredMutation,
-) -> BinderResult<()> {
+fn mutation_transcript(transcript: &Path, registered: &RegisteredMutation) -> BinderResult<()> {
     let text = fs::read_to_string(transcript).map_err(|error| {
         format!(
             "cannot read mutation transcript {}: {error}",
@@ -875,7 +876,10 @@ fn collect_negative(
     for (name, registered) in registry {
         let marker = paths.negative_dir.join(format!("{name}.mutation"));
         if !marker.is_file() {
-            return Err(format!("required mutation evidence missing: {}", marker.display()));
+            return Err(format!(
+                "required mutation evidence missing: {}",
+                marker.display()
+            ));
         }
         let transcript = paths.negative_dir.join(format!("{name}.transcript"));
         if !transcript.is_file() {
@@ -885,12 +889,7 @@ fn collect_negative(
             ));
         }
         let mutator_measurement = measure(&registered.mutator, false)?;
-        marker_hash(
-            paths.repo,
-            &marker,
-            mutator_measurement.digest,
-            &registered,
-        )?;
+        marker_hash(paths.repo, &marker, mutator_measurement.digest, &registered)?;
         mutation_transcript(&transcript, &registered)?;
         let marker_measurement = measure(&marker, false)?;
         let transcript_measurement = measure(&transcript, false)?;
