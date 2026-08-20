@@ -1171,6 +1171,72 @@ impl<const C: usize> Scheduler<C> {
         reveal(Scheduler::reclaim_ring_invariant);
     }
 
+    proof fn retiring_permit_member_entry_preserved(
+        &self,
+        before: &Self,
+        slot_index: usize,
+        offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            before.reclaim_len > 0,
+            slot_index == before.reclaim_ring@[before.reclaim_head as int],
+            self.retiring_permit_updates(before, slot_index),
+            0 <= offset < self.member_len,
+        ensures self.member_entry_valid(offset),
+    {
+        before.basic_implies_member_entries();
+        before.retiring_head_facts();
+        reveal(Scheduler::retiring_permit_updates);
+        reveal(Scheduler::retiring_reclaim_updates);
+        assert(before.member_entry_valid(offset)) by {
+            reveal(Scheduler::member_entries_invariant);
+        }
+        let handle = before.member_ring@[
+            ring_position::<C>(before.member_head, offset as nat)
+        ];
+        assert(handle.slot_spec() as int != slot_index as int) by {
+            reveal(Scheduler::member_entry_valid);
+        }
+        assert(self.slots@[handle.slot_spec() as int]
+            == before.slots@[handle.slot_spec() as int]);
+        reveal(Scheduler::member_entry_valid);
+    }
+
+    proof fn retiring_permit_member_membership_at(
+        &self,
+        before: &Self,
+        slot_index: usize,
+        observed: int,
+    )
+        requires
+            before.basic_invariant(),
+            before.reclaim_len > 0,
+            slot_index == before.reclaim_ring@[before.reclaim_head as int],
+            self.retiring_permit_updates(before, slot_index),
+            0 <= observed < C,
+        ensures
+            (((self.slots@[observed].state == RequestState::InFlight
+                || self.slots@[observed].state == RequestState::Retiring)
+                && self.completed < self.slots@[observed].active_epoch)
+                == request_ring_contains_slot::<C>(
+                    self.member_ring@,
+                    self.member_head,
+                    self.member_len,
+                    observed,
+                )),
+    {
+        before.basic_implies_member_ring();
+        before.retiring_head_facts();
+        reveal(Scheduler::member_ring_invariant);
+        reveal(Scheduler::member_membership_invariant);
+        reveal(Scheduler::retiring_permit_updates);
+        reveal(Scheduler::retiring_reclaim_updates);
+        if observed != slot_index as int {
+            assert(self.slots@[observed] == before.slots@[observed]);
+        }
+    }
+
     proof fn retiring_permit_updates_preserve_member_ring(
         &self,
         before: &Self,
@@ -1184,8 +1250,41 @@ impl<const C: usize> Scheduler<C> {
         ensures self.member_ring_invariant(),
     {
         before.basic_implies_member_ring();
-        before.retiring_head_facts();
         reveal(Scheduler::retiring_permit_updates);
+        assert forall|offset: int| 0 <= offset < self.member_len implies
+            #[trigger] self.member_entry_valid(offset) by {
+            self.retiring_permit_member_entry_preserved(
+                before,
+                slot_index,
+                offset,
+            );
+        }
+        assert(self.member_entries_invariant()) by {
+            reveal(Scheduler::member_entries_invariant);
+        }
+        assert(self.member_distinct_invariant()) by {
+            reveal(Scheduler::member_ring_invariant);
+            reveal(Scheduler::member_distinct_invariant);
+        }
+        assert forall|observed: int| 0 <= observed < C implies
+            (((#[trigger] self.slots@[observed].state == RequestState::InFlight
+                || self.slots@[observed].state == RequestState::Retiring)
+                && self.completed < self.slots@[observed].active_epoch)
+                == request_ring_contains_slot::<C>(
+                    self.member_ring@,
+                    self.member_head,
+                    self.member_len,
+                    observed,
+                )) by {
+            self.retiring_permit_member_membership_at(
+                before,
+                slot_index,
+                observed,
+            );
+        }
+        assert(self.member_membership_invariant()) by {
+            reveal(Scheduler::member_membership_invariant);
+        }
         reveal(Scheduler::member_ring_invariant);
     }
 
@@ -1334,6 +1433,55 @@ impl<const C: usize> Scheduler<C> {
         }
     }
 
+    proof fn member_slot_index_is_nonvacant(&self, slot_index: int)
+        requires
+            self.basic_invariant(),
+            member_slot_indices::<C>(
+                self.member_ring@,
+                self.member_head,
+                self.member_len,
+            ).contains(slot_index),
+        ensures
+            0 <= slot_index < C,
+            self.slots@[slot_index].state != RequestState::Vacant,
+    {
+        self.basic_implies_scalar();
+        self.basic_implies_member_ring();
+        let members = member_slot_indices::<C>(
+            self.member_ring@,
+            self.member_head,
+            self.member_len,
+        );
+        let offset = choose|offset: int| 0 <= offset < members.len()
+            && members[offset] == slot_index;
+        let handle = self.member_ring@[
+            ring_position::<C>(self.member_head, offset as nat)
+        ];
+        assert(handle.slot_spec() as int == slot_index) by {
+            reveal(member_slot_indices);
+        }
+        assert(self.member_entry_valid(offset)) by {
+            reveal(Scheduler::member_ring_invariant);
+            reveal(Scheduler::member_entries_invariant);
+        }
+        reveal(Scheduler::member_entry_valid);
+    }
+
+    proof fn member_slot_index_is_live(&self, slot_index: int)
+        requires
+            self.basic_invariant(),
+            member_slot_indices::<C>(
+                self.member_ring@,
+                self.member_head,
+                self.member_len,
+            ).contains(slot_index),
+        ensures
+            live_slot_indices(self.slots@, C as nat).contains(slot_index),
+    {
+        self.member_slot_index_is_nonvacant(slot_index);
+        live_slot_indices_facts(self.slots@, C as nat);
+    }
+
     proof fn member_slot_indices_are_live(&self)
         requires self.basic_invariant(),
         ensures {
@@ -1347,9 +1495,6 @@ impl<const C: usize> Scheduler<C> {
                 #[trigger] live.contains(slot_index)
         },
     {
-        self.basic_implies_scalar();
-        self.basic_implies_member_ring();
-        live_slot_indices_facts(self.slots@, C as nat);
         let members = member_slot_indices::<C>(
             self.member_ring@,
             self.member_head,
@@ -1358,18 +1503,7 @@ impl<const C: usize> Scheduler<C> {
         let live = live_slot_indices(self.slots@, C as nat);
         assert forall|slot_index: int| members.contains(slot_index) implies
             #[trigger] live.contains(slot_index) by {
-            let offset = choose|offset: int| 0 <= offset < members.len()
-                && members[offset] == slot_index;
-            let handle = self.member_ring@[
-                ring_position::<C>(self.member_head, offset as nat)
-            ];
-            assert(handle.slot_spec() as int == slot_index) by {
-                reveal(member_slot_indices);
-            }
-            assert(0 <= slot_index < C);
-            assert(self.slots@[slot_index].state != RequestState::Vacant) by {
-                reveal(Scheduler::member_ring_invariant);
-            }
+            self.member_slot_index_is_live(slot_index);
         }
     }
 
@@ -1838,6 +1972,61 @@ impl<const C: usize> Scheduler<C> {
         }
     }
 
+    proof fn admitted_member_entry_preserved(
+        &self,
+        before: &Self,
+        request: RequestId,
+        offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.admitted_slot_refines(before, request),
+            self.admitted_fields_refine(before),
+            0 <= offset < self.member_len,
+        ensures self.member_entry_valid(offset),
+    {
+        reveal(Scheduler::admitted_fields_refine);
+        before.basic_implies_member_entries();
+        assert(before.member_entry_valid(offset)) by {
+            reveal(Scheduler::member_entries_invariant);
+        }
+        self.admitted_member_slot_unchanged(before, request, offset);
+        reveal(Scheduler::member_entry_valid);
+    }
+
+    proof fn admitted_member_membership_at(
+        &self,
+        before: &Self,
+        request: RequestId,
+        index: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.admitted_slot_refines(before, request),
+            self.admitted_fields_refine(before),
+            0 <= index < C,
+        ensures
+            (((self.slots@[index].state == RequestState::InFlight
+                || self.slots@[index].state == RequestState::Retiring)
+                && self.completed < self.slots@[index].active_epoch)
+                == request_ring_contains_slot::<C>(
+                    self.member_ring@,
+                    self.member_head,
+                    self.member_len,
+                    index,
+                )),
+    {
+        before.basic_implies_member_ring();
+        reveal(Scheduler::member_ring_invariant);
+        reveal(Scheduler::member_membership_invariant);
+        reveal(Scheduler::admitted_slot_refines);
+        reveal(Scheduler::admitted_fields_refine);
+        let changed = request.slot_spec() as int;
+        if index != changed {
+            assert(self.slots@[index] == before.slots@[index]);
+        }
+    }
+
     proof fn admit_refines_preserves_member_ring(
         &self,
         before: &Self,
@@ -1850,29 +2039,17 @@ impl<const C: usize> Scheduler<C> {
         ensures self.member_ring_invariant(),
     {
         before.basic_implies_member_ring();
-        reveal(Scheduler::member_ring_invariant);
-        reveal(Scheduler::admitted_slot_refines);
         reveal(Scheduler::admitted_fields_refine);
-        let slot_index = request.slot_spec() as int;
-        assert forall|offset: int| 0 <= offset < self.member_len implies {
-            let handle = #[trigger] self.member_ring@[
-                ring_position::<C>(self.member_head, offset as nat)
-            ];
-            &&& handle.slot_spec() < C
-            &&& self.slots@[handle.slot_spec() as int].generation
-                == handle.generation_spec()
-            &&& self.completed < self.slots@[handle.slot_spec() as int].active_epoch
-            &&& self.slots@[handle.slot_spec() as int].active_epoch <= self.submitted
-            &&& !self.slots@[handle.slot_spec() as int].in_reclaim_ring
-            &&& (self.slots@[handle.slot_spec() as int].state == RequestState::InFlight
-                || self.slots@[handle.slot_spec() as int].state == RequestState::Retiring)
-        } by {
-            let handle = self.member_ring@[
-                ring_position::<C>(self.member_head, offset as nat)
-            ];
-            assert(handle.slot_spec() as int != slot_index);
-            assert(self.slots@[handle.slot_spec() as int]
-                == before.slots@[handle.slot_spec() as int]);
+        assert forall|offset: int| 0 <= offset < self.member_len implies
+            #[trigger] self.member_entry_valid(offset) by {
+            self.admitted_member_entry_preserved(before, request, offset);
+        }
+        assert(self.member_entries_invariant()) by {
+            reveal(Scheduler::member_entries_invariant);
+        }
+        assert(self.member_distinct_invariant()) by {
+            reveal(Scheduler::member_ring_invariant);
+            reveal(Scheduler::member_distinct_invariant);
         }
         assert forall|index: int| 0 <= index < C implies
             (((#[trigger] self.slots@[index].state == RequestState::InFlight
@@ -1885,10 +2062,12 @@ impl<const C: usize> Scheduler<C> {
                     index,
                 ))
         by {
-            if index != slot_index {
-                assert(self.slots@[index] == before.slots@[index]);
-            }
+            self.admitted_member_membership_at(before, request, index);
         }
+        assert(self.member_membership_invariant()) by {
+            reveal(Scheduler::member_membership_invariant);
+        }
+        reveal(Scheduler::member_ring_invariant);
     }
 
     proof fn admitted_member_slot_unchanged(
@@ -1911,14 +2090,13 @@ impl<const C: usize> Scheduler<C> {
                 == before.slots@[handle.slot_spec() as int]
         },
     {
-        before.basic_implies_member_ring();
-        reveal(Scheduler::member_ring_invariant);
+        before.member_entry_facts(offset as usize);
         reveal(Scheduler::admitted_slot_refines);
-        reveal(Scheduler::admitted_fields_refine);
         let handle = before.member_ring@[
             ring_position::<C>(before.member_head, offset as nat)
         ];
         assert(handle.slot_spec() as int != request.slot_spec() as int);
+        reveal(Scheduler::slots_frame_except);
     }
 
     proof fn admitted_batch_sum_preserved(
@@ -2009,6 +2187,50 @@ impl<const C: usize> Scheduler<C> {
         reveal(Scheduler::admitted_fields_refine);
     }
 
+    proof fn admitted_batch_member_preserved(
+        &self,
+        before: &Self,
+        request: RequestId,
+        batch_offset: int,
+        member_offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.admitted_slot_refines(before, request),
+            self.admitted_fields_refine(before),
+            0 <= batch_offset < self.batch_len,
+            batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                batch_offset as nat,
+            ) <= member_offset < batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                batch_offset as nat + 1,
+            ),
+        ensures {
+            let batch = self.batch_ring@[
+                ring_position::<C>(self.batch_head, batch_offset as nat)
+            ];
+            let handle = self.member_ring@[
+                ring_position::<C>(self.member_head, member_offset as nat)
+            ];
+            self.slots@[handle.slot_spec() as int].active_epoch == batch.epoch.value
+        },
+    {
+        reveal(Scheduler::admitted_fields_refine);
+        before.basic_implies_batch_ring();
+        reveal(Scheduler::batch_ring_invariant);
+        batch_member_sum_monotonic::<C>(
+            before.batch_ring@,
+            before.batch_head,
+            batch_offset as nat + 1,
+            before.batch_len as nat,
+        );
+        self.admitted_member_slot_unchanged(before, request, member_offset);
+        self.admitted_batch_member_epoch_preserved(before, batch_offset, member_offset);
+    }
+
     proof fn admitted_batch_epoch_members_preserved(
         &self,
         before: &Self,
@@ -2060,9 +2282,9 @@ impl<const C: usize> Scheduler<C> {
                         ring_position::<C>(self.batch_head, batch_offset as nat)
                     ].epoch.value
         } by {
-            self.admitted_member_slot_unchanged(before, request, member_offset);
-            self.admitted_batch_member_epoch_preserved(
+            self.admitted_batch_member_preserved(
                 before,
+                request,
                 batch_offset,
                 member_offset,
             );
@@ -2338,30 +2560,8 @@ impl<const C: usize> Scheduler<C> {
                             right,
                         ),
     {
-        self.basic_implies_scalar();
-        self.basic_implies_member_ring();
-        self.basic_implies_batch_ring();
+        self.pending_batch_head_facts();
         let batch = self.batch_ring@[self.batch_head as int];
-        assert(ring_position::<C>(self.batch_head, 0) == self.batch_head);
-        assert(batch.member_count > 0) by {
-            reveal(Scheduler::batch_ring_invariant);
-        }
-        batch_member_sum_monotonic::<C>(
-            self.batch_ring@,
-            self.batch_head,
-            1,
-            self.batch_len as nat,
-        );
-        assert(batch_member_sum::<C>(self.batch_ring@, self.batch_head, 1)
-            == batch.member_count) by {
-            reveal(batch_member_sum);
-        }
-        assert(batch.member_count <= self.member_len) by {
-            reveal(Scheduler::batch_ring_invariant);
-        }
-        assert(batch.epoch.value as int == self.completed as int + 1) by {
-            reveal(Scheduler::batch_ring_invariant);
-        }
         assert(batch.epoch.value == self.completed + 1);
         assert forall|offset: int| 0 <= offset < batch.member_count implies {
             let handle = #[trigger] self.member_ring@[
@@ -2375,10 +2575,7 @@ impl<const C: usize> Scheduler<C> {
             &&& (self.slots@[handle.slot_spec() as int].state == RequestState::InFlight
                 || self.slots@[handle.slot_spec() as int].state == RequestState::Retiring)
         } by {
-            assert(offset < self.member_len);
-            reveal(Scheduler::member_ring_invariant);
-            reveal(Scheduler::batch_ring_invariant);
-            reveal(batch_member_sum);
+            self.pending_member_facts(offset as usize);
         }
         assert forall|left: int, right: int|
             0 <= left < batch.member_count
@@ -2391,9 +2588,12 @@ impl<const C: usize> Scheduler<C> {
                         right,
                     )
         by {
+            self.pending_batch_head_facts();
             assert(left < self.member_len);
             assert(right < self.member_len);
+            self.basic_implies_member_ring();
             reveal(Scheduler::member_ring_invariant);
+            reveal(Scheduler::member_distinct_invariant);
         }
     }
 
@@ -2525,6 +2725,9 @@ impl<const C: usize> Scheduler<C> {
                 &&& handle.slot_spec() < C
                 &&& self.slots@[handle.slot_spec() as int].generation
                     == handle.generation_spec()
+                &&& self.completed < self.slots@[handle.slot_spec() as int].active_epoch
+                &&& self.slots@[handle.slot_spec() as int].active_epoch <= self.submitted
+                &&& !self.slots@[handle.slot_spec() as int].in_reclaim_ring
                 &&& (self.slots@[handle.slot_spec() as int].state
                     == RequestState::InFlight
                     || self.slots@[handle.slot_spec() as int].state
@@ -2535,6 +2738,11 @@ impl<const C: usize> Scheduler<C> {
         self.member_entry_slot_bound(offset);
         self.member_entry_generation(offset);
         self.member_entry_state(offset);
+        self.basic_implies_member_entries();
+        assert(self.member_entry_valid(offset as int)) by {
+            reveal(Scheduler::member_entries_invariant);
+        }
+        reveal(Scheduler::member_entry_valid);
     }
 
     proof fn pending_member_epoch_fact(&self, offset: usize)
@@ -2577,6 +2785,7 @@ impl<const C: usize> Scheduler<C> {
                     == handle.generation_spec()
                 &&& self.slots@[handle.slot_spec() as int].active_epoch
                     == self.batch_ring@[self.batch_head as int].epoch.value
+                &&& !self.slots@[handle.slot_spec() as int].in_reclaim_ring
                 &&& (self.slots@[handle.slot_spec() as int].state
                     == RequestState::InFlight
                     || self.slots@[handle.slot_spec() as int].state
@@ -2912,6 +3121,83 @@ impl<const C: usize> Scheduler<C> {
         reveal(Scheduler::detached_other_rings_refine);
     }
 
+    proof fn detached_member_entry_preserved(
+        &self,
+        before: &Self,
+        detached: &KvDetachedRequest,
+        request: RequestId,
+        offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.detached_refines(before, detached, &Ok(request)),
+            0 <= offset < self.member_len,
+        ensures self.member_entry_valid(offset),
+    {
+        reveal(Scheduler::detached_refines);
+        reveal(Scheduler::detached_slot_refines);
+        reveal(Scheduler::detached_other_rings_refine);
+        before.member_entry_facts(offset as usize);
+        before.basic_implies_member_entries();
+        let changed = detached.request_spec().slot_spec() as int;
+        assert(before.slot_model(changed).phase == LifecyclePhase::RetiringQuiescent) by {
+            reveal(Scheduler::slot_model);
+            reveal(ferric_spec::scheduling::request_transition);
+        }
+        let handle = before.member_ring@[
+            ring_position::<C>(before.member_head, offset as nat)
+        ];
+        assert(handle.slot_spec() as int != changed) by {
+            reveal(Scheduler::slot_model);
+        }
+        assert(self.slots@[handle.slot_spec() as int]
+            == before.slots@[handle.slot_spec() as int]);
+        assert(before.member_entry_valid(offset)) by {
+            reveal(Scheduler::member_entries_invariant);
+        }
+        reveal(Scheduler::member_entry_valid);
+    }
+
+    proof fn detached_member_membership_at(
+        &self,
+        before: &Self,
+        detached: &KvDetachedRequest,
+        request: RequestId,
+        observed: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.detached_refines(before, detached, &Ok(request)),
+            0 <= observed < C,
+        ensures
+            (((self.slots@[observed].state == RequestState::InFlight
+                || self.slots@[observed].state == RequestState::Retiring)
+                && self.completed < self.slots@[observed].active_epoch)
+                == request_ring_contains_slot::<C>(
+                    self.member_ring@,
+                    self.member_head,
+                    self.member_len,
+                    observed,
+                )),
+    {
+        before.basic_implies_member_ring();
+        reveal(Scheduler::member_ring_invariant);
+        reveal(Scheduler::member_membership_invariant);
+        reveal(Scheduler::detached_refines);
+        reveal(Scheduler::detached_slot_refines);
+        reveal(Scheduler::detached_other_rings_refine);
+        let changed = detached.request_spec().slot_spec() as int;
+        if observed == changed {
+            assert(before.slot_model(changed).phase == LifecyclePhase::RetiringQuiescent) by {
+                reveal(Scheduler::slot_model);
+                reveal(ferric_spec::scheduling::request_transition);
+            }
+            reveal(Scheduler::slot_model);
+        } else {
+            assert(self.slots@[observed] == before.slots@[observed]);
+        }
+    }
+
     proof fn detached_refines_preserves_member_ring(
         &self,
         before: &Self,
@@ -2924,10 +3210,45 @@ impl<const C: usize> Scheduler<C> {
         ensures self.member_ring_invariant(),
     {
         before.basic_implies_member_ring();
-        reveal(Scheduler::member_ring_invariant);
         reveal(Scheduler::detached_refines);
-        reveal(Scheduler::detached_slot_refines);
         reveal(Scheduler::detached_other_rings_refine);
+        assert forall|offset: int| 0 <= offset < self.member_len implies
+            #[trigger] self.member_entry_valid(offset) by {
+            self.detached_member_entry_preserved(
+                before,
+                detached,
+                request,
+                offset,
+            );
+        }
+        assert(self.member_entries_invariant()) by {
+            reveal(Scheduler::member_entries_invariant);
+        }
+        assert(self.member_distinct_invariant()) by {
+            reveal(Scheduler::member_ring_invariant);
+            reveal(Scheduler::member_distinct_invariant);
+        }
+        assert forall|observed: int| 0 <= observed < C implies
+            (((#[trigger] self.slots@[observed].state == RequestState::InFlight
+                || self.slots@[observed].state == RequestState::Retiring)
+                && self.completed < self.slots@[observed].active_epoch)
+                == request_ring_contains_slot::<C>(
+                    self.member_ring@,
+                    self.member_head,
+                    self.member_len,
+                    observed,
+                )) by {
+            self.detached_member_membership_at(
+                before,
+                detached,
+                request,
+                observed,
+            );
+        }
+        assert(self.member_membership_invariant()) by {
+            reveal(Scheduler::member_membership_invariant);
+        }
+        reveal(Scheduler::member_ring_invariant);
     }
 
     proof fn detached_batch_sum_preserved(
@@ -2947,6 +3268,156 @@ impl<const C: usize> Scheduler<C> {
         reveal(Scheduler::batch_ring_invariant);
         reveal(Scheduler::detached_refines);
         reveal(Scheduler::detached_other_rings_refine);
+    }
+
+    proof fn detached_batch_header_preserved(
+        &self,
+        before: &Self,
+        detached: &KvDetachedRequest,
+        request: RequestId,
+        batch_offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.detached_refines(before, detached, &Ok(request)),
+            0 <= batch_offset < self.batch_len,
+        ensures {
+            let batch = self.batch_ring@[
+                ring_position::<C>(self.batch_head, batch_offset as nat)
+            ];
+            &&& batch.member_count > 0
+            &&& batch.epoch.value as int == self.completed as int + batch_offset + 1
+            &&& batch.epoch.value <= self.submitted
+        },
+    {
+        reveal(Scheduler::detached_refines);
+        reveal(Scheduler::detached_other_rings_refine);
+        before.basic_batch_entry_header_facts(batch_offset);
+    }
+
+    proof fn detached_batch_member_epoch_preserved(
+        &self,
+        before: &Self,
+        detached: &KvDetachedRequest,
+        request: RequestId,
+        batch_offset: int,
+        member_offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.detached_refines(before, detached, &Ok(request)),
+            0 <= batch_offset < self.batch_len,
+            batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                batch_offset as nat,
+            ) <= member_offset < batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                batch_offset as nat + 1,
+            ),
+        ensures {
+            let batch = self.batch_ring@[
+                ring_position::<C>(self.batch_head, batch_offset as nat)
+            ];
+            let handle = self.member_ring@[
+                ring_position::<C>(self.member_head, member_offset as nat)
+            ];
+            self.slots@[handle.slot_spec() as int].active_epoch == batch.epoch.value
+        },
+    {
+        reveal(Scheduler::detached_refines);
+        reveal(Scheduler::detached_slot_refines);
+        reveal(Scheduler::detached_other_rings_refine);
+        before.basic_implies_batch_ring();
+        batch_member_sum_monotonic::<C>(
+            before.batch_ring@,
+            before.batch_head,
+            batch_offset as nat + 1,
+            before.batch_len as nat,
+        );
+        assert(0 <= member_offset < before.member_len) by {
+            reveal(Scheduler::batch_ring_invariant);
+        }
+        before.basic_batch_member_epoch_fact(batch_offset, member_offset);
+        before.member_entry_facts(member_offset as usize);
+        let changed = detached.request_spec().slot_spec() as int;
+        assert(before.slot_model(changed).phase == LifecyclePhase::RetiringQuiescent) by {
+            reveal(Scheduler::slot_model);
+            reveal(ferric_spec::scheduling::request_transition);
+        }
+        let handle = before.member_ring@[
+            ring_position::<C>(before.member_head, member_offset as nat)
+        ];
+        assert(handle.slot_spec() as int != changed) by {
+            reveal(Scheduler::slot_model);
+        }
+        assert(self.slots@[handle.slot_spec() as int]
+            == before.slots@[handle.slot_spec() as int]);
+    }
+
+    proof fn detached_batch_entry_preserved(
+        &self,
+        before: &Self,
+        detached: &KvDetachedRequest,
+        request: RequestId,
+        batch_offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.detached_refines(before, detached, &Ok(request)),
+            0 <= batch_offset < self.batch_len,
+        ensures {
+            let batch = self.batch_ring@[
+                ring_position::<C>(self.batch_head, batch_offset as nat)
+            ];
+            &&& batch.member_count > 0
+            &&& batch.epoch.value as int == self.completed as int + batch_offset + 1
+            &&& batch.epoch.value <= self.submitted
+            &&& (forall|member_offset: int|
+                batch_member_sum::<C>(
+                    self.batch_ring@,
+                    self.batch_head,
+                    batch_offset as nat,
+                ) <= member_offset < batch_member_sum::<C>(
+                    self.batch_ring@,
+                    self.batch_head,
+                    batch_offset as nat + 1,
+                ) ==> {
+                    let handle = #[trigger] self.member_ring@[
+                        ring_position::<C>(self.member_head, member_offset as nat)
+                    ];
+                    self.slots@[handle.slot_spec() as int].active_epoch == batch.epoch.value
+                })
+        },
+    {
+        self.detached_batch_header_preserved(before, detached, request, batch_offset);
+        assert forall|member_offset: int|
+            batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                batch_offset as nat,
+            ) <= member_offset < batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                batch_offset as nat + 1,
+            ) implies {
+                let handle = #[trigger] self.member_ring@[
+                    ring_position::<C>(self.member_head, member_offset as nat)
+                ];
+                self.slots@[handle.slot_spec() as int].active_epoch
+                    == self.batch_ring@[
+                        ring_position::<C>(self.batch_head, batch_offset as nat)
+                    ].epoch.value
+        } by {
+            self.detached_batch_member_epoch_preserved(
+                before,
+                detached,
+                request,
+                batch_offset,
+                member_offset,
+            );
+        }
     }
 
     proof fn detached_batch_entries_preserved(
@@ -2984,16 +3455,6 @@ impl<const C: usize> Scheduler<C> {
                     })
             },
     {
-        before.basic_implies_batch_ring();
-        before.basic_implies_member_ring();
-        reveal(Scheduler::detached_refines);
-        reveal(Scheduler::detached_slot_refines);
-        reveal(Scheduler::detached_other_rings_refine);
-        let changed = detached.request_spec().slot_spec() as int;
-        assert(before.slot_model(changed).phase == LifecyclePhase::RetiringQuiescent) by {
-            reveal(Scheduler::slot_model);
-            reveal(ferric_spec::scheduling::request_transition);
-        }
         assert forall|batch_offset: int| 0 <= batch_offset < self.batch_len implies {
             let batch = #[trigger] self.batch_ring@[
                 ring_position::<C>(self.batch_head, batch_offset as nat)
@@ -3017,43 +3478,12 @@ impl<const C: usize> Scheduler<C> {
                     self.slots@[handle.slot_spec() as int].active_epoch == batch.epoch.value
                 })
         } by {
-            assert(batch_offset < before.batch_len);
-            let batch = self.batch_ring@[
-                ring_position::<C>(self.batch_head, batch_offset as nat)
-            ];
-            reveal(Scheduler::batch_ring_invariant);
-            assert forall|member_offset: int|
-                batch_member_sum::<C>(
-                    self.batch_ring@,
-                    self.batch_head,
-                    batch_offset as nat,
-                ) <= member_offset < batch_member_sum::<C>(
-                    self.batch_ring@,
-                    self.batch_head,
-                    batch_offset as nat + 1,
-                ) implies {
-                    let handle = #[trigger] self.member_ring@[
-                        ring_position::<C>(self.member_head, member_offset as nat)
-                    ];
-                    self.slots@[handle.slot_spec() as int].active_epoch == batch.epoch.value
-                }
-            by {
-                batch_member_sum_monotonic::<C>(
-                    before.batch_ring@,
-                    before.batch_head,
-                    batch_offset as nat + 1,
-                    before.batch_len as nat,
-                );
-                assert(0 <= member_offset < before.member_len);
-                let handle = before.member_ring@[
-                    ring_position::<C>(before.member_head, member_offset as nat)
-                ];
-                assert(handle.slot_spec() as int != changed) by {
-                    reveal(Scheduler::member_ring_invariant);
-                }
-                assert(self.slots@[handle.slot_spec() as int]
-                    == before.slots@[handle.slot_spec() as int]);
-            }
+            self.detached_batch_entry_preserved(
+                before,
+                detached,
+                request,
+                batch_offset,
+            );
         }
     }
 
@@ -3197,8 +3627,9 @@ impl<const C: usize> Scheduler<C> {
             before.slot_generation_spec(request.slot_spec() as int)
                 == request.generation_spec(),
     {
-        reveal(Scheduler::basic_invariant);
-        reveal(Scheduler::free_ring_invariant);
+        before.basic_implies_scalar();
+        before.basic_implies_free_ring();
+        before.free_ring_entry_facts(0);
         reveal(Scheduler::admit_refines);
         reveal(Scheduler::slot_is_live_spec);
         reveal(Scheduler::slot_generation_spec);
@@ -3782,6 +4213,68 @@ impl<const C: usize> Scheduler<C> {
         }
     }
 
+    proof fn retired_member_entry_preserved(
+        &self,
+        before: &Self,
+        request: RequestId,
+        offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.retired_slot_refines(before, request),
+            self.retired_fields_refine(before, request),
+            0 <= offset < self.member_len,
+        ensures self.member_entry_valid(offset),
+    {
+        reveal(Scheduler::retired_fields_refine);
+        before.basic_implies_member_entries();
+        assert(before.member_entry_valid(offset)) by {
+            reveal(Scheduler::member_entries_invariant);
+        }
+        let handle = before.member_ring@[
+            ring_position::<C>(before.member_head, offset as nat)
+        ];
+        reveal(Scheduler::retired_slot_refines);
+        if handle.slot_spec() as int != request.slot_spec() as int {
+            assert(self.slots@[handle.slot_spec() as int]
+                == before.slots@[handle.slot_spec() as int]);
+        }
+        reveal(Scheduler::member_entry_valid);
+    }
+
+    proof fn retired_member_membership_at(
+        &self,
+        before: &Self,
+        request: RequestId,
+        index: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.retired_slot_refines(before, request),
+            self.retired_fields_refine(before, request),
+            0 <= index < C,
+        ensures
+            (((self.slots@[index].state == RequestState::InFlight
+                || self.slots@[index].state == RequestState::Retiring)
+                && self.completed < self.slots@[index].active_epoch)
+                == request_ring_contains_slot::<C>(
+                    self.member_ring@,
+                    self.member_head,
+                    self.member_len,
+                    index,
+                )),
+    {
+        before.basic_implies_member_ring();
+        reveal(Scheduler::member_ring_invariant);
+        reveal(Scheduler::member_membership_invariant);
+        reveal(Scheduler::retired_slot_refines);
+        reveal(Scheduler::retired_fields_refine);
+        let changed = request.slot_spec() as int;
+        if index != changed {
+            assert(self.slots@[index] == before.slots@[index]);
+        }
+    }
+
     proof fn retired_step_preserves_member_ring(
         &self,
         before: &Self,
@@ -3794,30 +4287,17 @@ impl<const C: usize> Scheduler<C> {
         ensures self.member_ring_invariant(),
     {
         before.basic_implies_member_ring();
-        reveal(Scheduler::member_ring_invariant);
-        reveal(Scheduler::retired_slot_refines);
         reveal(Scheduler::retired_fields_refine);
-        let slot_index = request.slot_spec() as int;
-        assert forall|offset: int| 0 <= offset < self.member_len implies {
-            let handle = #[trigger] self.member_ring@[
-                ring_position::<C>(self.member_head, offset as nat)
-            ];
-            &&& handle.slot_spec() < C
-            &&& self.slots@[handle.slot_spec() as int].generation
-                == handle.generation_spec()
-            &&& self.completed < self.slots@[handle.slot_spec() as int].active_epoch
-            &&& self.slots@[handle.slot_spec() as int].active_epoch <= self.submitted
-            &&& !self.slots@[handle.slot_spec() as int].in_reclaim_ring
-            &&& (self.slots@[handle.slot_spec() as int].state == RequestState::InFlight
-                || self.slots@[handle.slot_spec() as int].state == RequestState::Retiring)
-        } by {
-            let handle = self.member_ring@[
-                ring_position::<C>(self.member_head, offset as nat)
-            ];
-            if handle.slot_spec() as int != slot_index {
-                assert(self.slots@[handle.slot_spec() as int]
-                    == before.slots@[handle.slot_spec() as int]);
-            }
+        assert forall|offset: int| 0 <= offset < self.member_len implies
+            #[trigger] self.member_entry_valid(offset) by {
+            self.retired_member_entry_preserved(before, request, offset);
+        }
+        assert(self.member_entries_invariant()) by {
+            reveal(Scheduler::member_entries_invariant);
+        }
+        assert(self.member_distinct_invariant()) by {
+            reveal(Scheduler::member_ring_invariant);
+            reveal(Scheduler::member_distinct_invariant);
         }
         assert forall|index: int| 0 <= index < C implies
             (((#[trigger] self.slots@[index].state == RequestState::InFlight
@@ -3830,10 +4310,12 @@ impl<const C: usize> Scheduler<C> {
                     index,
                 ))
         by {
-            if index != slot_index {
-                assert(self.slots@[index] == before.slots@[index]);
-            }
+            self.retired_member_membership_at(before, request, index);
         }
+        assert(self.member_membership_invariant()) by {
+            reveal(Scheduler::member_membership_invariant);
+        }
+        reveal(Scheduler::member_ring_invariant);
     }
 
     proof fn retired_batch_sum_preserved(
@@ -3852,6 +4334,105 @@ impl<const C: usize> Scheduler<C> {
         before.basic_implies_batch_ring();
         reveal(Scheduler::batch_ring_invariant);
         reveal(Scheduler::retired_fields_refine);
+    }
+
+    proof fn retired_batch_header_preserved(
+        &self,
+        before: &Self,
+        request: RequestId,
+        batch_offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.retired_slot_refines(before, request),
+            self.retired_fields_refine(before, request),
+            0 <= batch_offset < self.batch_len,
+        ensures {
+            let batch = self.batch_ring@[
+                ring_position::<C>(self.batch_head, batch_offset as nat)
+            ];
+            &&& batch.member_count > 0
+            &&& batch.epoch.value as int == self.completed as int + batch_offset + 1
+            &&& batch.epoch.value <= self.submitted
+        },
+    {
+        reveal(Scheduler::retired_fields_refine);
+        before.basic_batch_entry_header_facts(batch_offset);
+    }
+
+    proof fn retired_member_active_epoch_preserved(
+        &self,
+        before: &Self,
+        request: RequestId,
+        member_offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.retired_slot_refines(before, request),
+            self.retired_fields_refine(before, request),
+            0 <= member_offset < self.member_len,
+        ensures {
+            let handle = self.member_ring@[
+                ring_position::<C>(self.member_head, member_offset as nat)
+            ];
+            self.slots@[handle.slot_spec() as int].active_epoch
+                == before.slots@[handle.slot_spec() as int].active_epoch
+        },
+    {
+        reveal(Scheduler::retired_fields_refine);
+        before.member_entry_facts(member_offset as usize);
+        let handle = before.member_ring@[
+            ring_position::<C>(before.member_head, member_offset as nat)
+        ];
+        reveal(Scheduler::retired_slot_refines);
+        if handle.slot_spec() as int != request.slot_spec() as int {
+            assert(self.slots@[handle.slot_spec() as int]
+                == before.slots@[handle.slot_spec() as int]);
+        }
+    }
+
+    proof fn retired_batch_member_epoch_preserved(
+        &self,
+        before: &Self,
+        request: RequestId,
+        batch_offset: int,
+        member_offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.retired_slot_refines(before, request),
+            self.retired_fields_refine(before, request),
+            0 <= batch_offset < self.batch_len,
+            batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                batch_offset as nat,
+            ) <= member_offset < batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                batch_offset as nat + 1,
+            ),
+        ensures {
+            let batch = self.batch_ring@[
+                ring_position::<C>(self.batch_head, batch_offset as nat)
+            ];
+            let handle = self.member_ring@[
+                ring_position::<C>(self.member_head, member_offset as nat)
+            ];
+            self.slots@[handle.slot_spec() as int].active_epoch == batch.epoch.value
+        },
+    {
+        reveal(Scheduler::retired_fields_refine);
+        before.basic_implies_batch_ring();
+        reveal(Scheduler::batch_ring_invariant);
+        batch_member_sum_monotonic::<C>(
+            before.batch_ring@,
+            before.batch_head,
+            batch_offset as nat + 1,
+            before.batch_len as nat,
+        );
+        self.retired_member_active_epoch_preserved(before, request, member_offset);
+        before.basic_batch_member_epoch_fact(batch_offset, member_offset);
     }
 
     proof fn retired_batch_entry_preserved(
@@ -3889,20 +4470,7 @@ impl<const C: usize> Scheduler<C> {
                 })
         },
     {
-        before.basic_implies_batch_entry(batch_offset);
-        before.basic_implies_batch_ring();
-        before.basic_implies_member_ring();
-        reveal(Scheduler::batch_ring_invariant);
-        reveal(Scheduler::member_ring_invariant);
-        reveal(Scheduler::retired_slot_refines);
-        reveal(Scheduler::retired_fields_refine);
-        let slot_index = request.slot_spec() as int;
-        batch_member_sum_monotonic::<C>(
-            before.batch_ring@,
-            before.batch_head,
-            (batch_offset + 1) as nat,
-            before.batch_len as nat,
-        );
+        self.retired_batch_header_preserved(before, request, batch_offset);
         assert forall|member_offset: int|
             batch_member_sum::<C>(
                 self.batch_ring@,
@@ -3921,13 +4489,12 @@ impl<const C: usize> Scheduler<C> {
                         ring_position::<C>(self.batch_head, batch_offset as nat)
                     ].epoch.value
         } by {
-            let handle = self.member_ring@[
-                ring_position::<C>(self.member_head, member_offset as nat)
-            ];
-            if handle.slot_spec() as int != slot_index {
-                assert(self.slots@[handle.slot_spec() as int]
-                    == before.slots@[handle.slot_spec() as int]);
-            }
+            self.retired_batch_member_epoch_preserved(
+                before,
+                request,
+                batch_offset,
+                member_offset,
+            );
         }
     }
 
@@ -6447,6 +7014,30 @@ impl<const C: usize> Scheduler<C> {
         }
     }
 
+    proof fn completion_member_suffix_fields(
+        &self,
+        before: &Self,
+        completion_epoch: u64,
+        before_permits: Seq<Option<KvQuiescencePermit>>,
+        permits: Seq<Option<KvQuiescencePermit>>,
+        count: usize,
+    )
+        requires
+            self.completion_refines(
+                before,
+                completion_epoch,
+                before_permits,
+                permits,
+                &Ok(count),
+            ),
+        ensures
+            self.member_len + count == before.member_len,
+            self.member_head == ring_advance::<C>(before.member_head, count as nat),
+            self.member_ring@ == before.member_ring@,
+    {
+        reveal(Scheduler::completion_refines);
+    }
+
     proof fn completion_member_suffix_is_contained(
         &self,
         before: &Self,
@@ -6479,30 +7070,25 @@ impl<const C: usize> Scheduler<C> {
                 slot_index,
             ),
     {
-        reveal(Scheduler::completion_refines);
-        before.basic_implies_scalar();
-        let offset = old_offset - count;
-        assert(0 <= offset < self.member_len);
-        ring_position_after_advance::<C>(
-            before.member_head,
-            count as nat,
-            offset as nat,
+        self.completion_member_suffix_fields(
+            before,
+            completion_epoch,
+            before_permits,
+            permits,
+            count,
         );
-        assert(request_ring_contains_slot::<C>(
+        before.basic_implies_scalar();
+        ring_advance_bounds::<C>(before.member_head, count as nat);
+        request_ring_suffix_contains::<C>(
             self.member_ring@,
+            before.member_head,
             self.member_head,
+            before.member_len,
             self.member_len,
+            count,
+            old_offset,
             slot_index,
-        )) by {
-            reveal(request_ring_contains_slot);
-            assert(exists|witness: int| 0 <= witness < self.member_len
-                && (#[trigger] self.member_ring@[
-                    ring_position::<C>(self.member_head, witness as nat)
-                ].slot_spec()) == slot_index) by {
-                let witness = offset;
-                assert(0 <= witness < self.member_len);
-            }
-        }
+        );
     }
 
     proof fn completion_member_membership_at(
@@ -9721,6 +10307,59 @@ spec fn request_ring_contains_slot<const C: usize>(
 {
     exists|offset: int| 0 <= offset < len
         && (#[trigger] ring[ring_position::<C>(head, offset as nat)].slot_spec()) == slot_index
+}
+
+proof fn request_ring_contains_slot_at<const C: usize>(
+    ring: Seq<RequestId>,
+    head: usize,
+    len: usize,
+    offset: int,
+    slot_index: int,
+)
+    requires
+        C > 0,
+        head < C,
+        len <= C,
+        ring.len() == C,
+        0 <= offset < len,
+        ring[ring_position::<C>(head, offset as nat)].slot_spec() == slot_index,
+    ensures request_ring_contains_slot::<C>(ring, head, len, slot_index),
+{
+    reveal(request_ring_contains_slot);
+    assert(exists|witness: int| 0 <= witness < len
+        && (#[trigger] ring[ring_position::<C>(head, witness as nat)].slot_spec()) == slot_index) by {
+        let witness = offset;
+        assert(0 <= witness < len);
+    }
+}
+
+proof fn request_ring_suffix_contains<const C: usize>(
+    ring: Seq<RequestId>,
+    old_head: usize,
+    new_head: usize,
+    old_len: usize,
+    new_len: usize,
+    count: usize,
+    old_offset: int,
+    slot_index: int,
+)
+    requires
+        C > 0,
+        old_head < C,
+        old_len <= C,
+        ring.len() == C,
+        new_head == ring_advance::<C>(old_head, count as nat),
+        new_head < C,
+        new_len + count == old_len,
+        count <= old_offset < old_len,
+        ring[ring_position::<C>(old_head, old_offset as nat)].slot_spec() == slot_index,
+    ensures request_ring_contains_slot::<C>(ring, new_head, new_len, slot_index),
+{
+    let offset = old_offset - count;
+    assert(0 <= offset < new_len);
+    ring_position_after_advance::<C>(old_head, count as nat, offset as nat);
+    assert(ring[ring_position::<C>(new_head, offset as nat)].slot_spec() == slot_index);
+    request_ring_contains_slot_at::<C>(ring, new_head, new_len, offset, slot_index);
 }
 
 spec fn usize_ring_entries_differ<const C: usize>(
