@@ -167,7 +167,8 @@ generated_coverage="$scratch/VERIFIED_MODULES.generated"
 "$source_gate" --generate "$qualified_repo" "$metadata" "$generated_coverage"
 cmp -s "$qualified_scripts/VERIFIED_MODULES" "$generated_coverage" || {
     printf 'FAIL: proof coverage manifest is stale; regenerate with:\n' >&2
-    printf '  proofs/source-gate/target/release/ferric-source-gate --generate . METADATA proofs/VERIFIED_MODULES\n' >&2
+    printf '  CARGO_TARGET_DIR=/tmp/ferric-source-gate-target cargo build --manifest-path proofs/source-gate/Cargo.toml --release --locked\n' >&2
+    printf '  /tmp/ferric-source-gate-target/release/ferric-source-gate --generate . METADATA proofs/VERIFIED_MODULES\n' >&2
     exit 1
 }
 "$source_gate" "$qualified_repo" "$qualified_scripts/VERIFIED_MODULES" "$metadata"
