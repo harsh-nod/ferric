@@ -120,7 +120,8 @@ A proof-required change is complete only when:
 - the proof transcript and complete source closure are identity-bound;
 - formatting, Clippy, Rust tests, and proof checks pass on the supported Rust
   version;
-- target-specific checks pass on `mi300x` for `gfx942` behavior; and
+- exact-source host checks pass on `mi300x`; a `gfx942` behavior gate becomes
+  mandatory when the qualified code contains a GPU execution path; and
 - an independent review confirms the exact property status and non-claims.
 
 Proof checks should fail closed when the pinned toolchain or authenticated

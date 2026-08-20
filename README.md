@@ -61,7 +61,7 @@ verified from the same source by `cargo-verus`; proof constructs are erased
 from release artifacts.
 
 ```sh
-cargo fmt --all --check
-cargo clippy --workspace --all-targets -- -D warnings
-cargo test --workspace
+cargo fmt --all -- --check
+cargo clippy --workspace --locked --all-targets -- -D warnings
+cargo test --workspace --locked
 ```
