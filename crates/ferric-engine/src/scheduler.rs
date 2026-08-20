@@ -12,6 +12,16 @@ verus! {
 
 const NO_EPOCH: u64 = 0;
 
+fn slot_index_to_u32(slot_index: usize) -> (result: u32)
+    requires slot_index < MAX_REQUEST_SLOTS,
+    ensures result as int == slot_index as int,
+{
+    let Ok(result) = u32::try_from(slot_index) else {
+        return u32::MAX;
+    };
+    result
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct Slot {
     generation: u32,
@@ -164,16 +174,6 @@ impl CompletionFailure {
     pub(crate) closed spec fn completion_epoch_spec(&self) -> CompletionEpoch {
         self.completion.epoch_spec()
     }
-}
-
-fn slot_index_to_u32(slot_index: usize) -> (result: u32)
-    requires slot_index < MAX_REQUEST_SLOTS,
-    ensures result as int == slot_index as int,
-{
-    let Ok(result) = u32::try_from(slot_index) else {
-        return u32::MAX;
-    };
-    result
 }
 
 /// Fixed-capacity, allocation-free-after-construction request lifecycle.
@@ -4869,6 +4869,50 @@ impl<const C: usize> Scheduler<C> {
         }
     }
 
+    #[inline(always)]
+    fn dispatch_one_selected(
+        &mut self,
+        output: &mut [RequestId],
+        selected: usize,
+        slot_index: usize,
+        member_tail: usize,
+        next_epoch: u64,
+    ) -> (handle: RequestId)
+        requires
+            selected < old(output)@.len(),
+            C <= MAX_REQUEST_SLOTS,
+            slot_index < C,
+            member_tail < C,
+            old(self).slots@[slot_index as int].state == RequestState::Ready,
+        ensures
+            handle.slot_spec() == slot_index,
+            handle.generation_spec()
+                == old(self).slots@[slot_index as int].generation,
+            final(output)@
+                == old(output)@.update(selected as int, handle),
+            final(self).slots@
+                == old(self).slots@.update(
+                    slot_index as int,
+                    Slot {
+                        state: RequestState::InFlight,
+                        active_epoch: next_epoch,
+                        ..old(self).slots@[slot_index as int]
+                    },
+                ),
+            final(self).member_ring@
+                == old(self).member_ring@.update(member_tail as int, handle),
+            final(self).dispatch_scan_frames(old(self)),
+    {
+        reveal(Scheduler::dispatch_scan_frames);
+        let slot = self.slots[slot_index];
+        let handle = RequestId::new(slot_index_to_u32(slot_index), slot.generation);
+        output[selected] = handle;
+        self.member_ring[member_tail] = handle;
+        self.slots[slot_index].state = RequestState::InFlight;
+        self.slots[slot_index].active_epoch = next_epoch;
+        handle
+    }
+
     /// Performs one deterministic rotating scan and submits one compact batch.
     /// Selected handles are written to the prefix of `output`.
     ///
@@ -4981,15 +5025,38 @@ impl<const C: usize> Scheduler<C> {
             let slot = self.slots[slot_index];
             if slot.state == RequestState::Ready {
                 let ghost previous_chosen = chosen;
-                let handle = RequestId::new(slot_index_to_u32(slot_index), slot.generation);
-                output[selected] = handle;
-                self.member_ring[member_tail] = handle;
+                assert(C <= MAX_REQUEST_SLOTS);
+                assert(self.slots@[slot_index as int].state == RequestState::Ready);
+                let _handle = self.dispatch_one_selected(
+                    output,
+                    selected,
+                    slot_index,
+                    member_tail,
+                    next_epoch,
+                );
                 member_tail = advance::<C>(member_tail);
-                self.slots[slot_index].state = RequestState::InFlight;
-                self.slots[slot_index].active_epoch = next_epoch;
                 selected += 1;
                 proof {
-                    chosen = previous_chosen.push(handle);
+                    chosen = previous_chosen.push(_handle);
+                    selected_request_slots_push(previous_chosen, _handle);
+                    dispatch_selected_slots_push(
+                        old(self).slots@,
+                        previous_chosen,
+                        next_epoch,
+                        _handle,
+                    );
+                    dispatch_selected_output_push(
+                        old(output)@,
+                        previous_chosen,
+                        _handle,
+                    );
+                    dispatch_selected_members_push::<C>(
+                        old(self).member_ring@,
+                        old(self).member_head,
+                        old(self).member_len,
+                        previous_chosen,
+                        _handle,
+                    );
                 }
             }
             slot_index = advance::<C>(slot_index);
