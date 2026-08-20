@@ -7,8 +7,8 @@ import sys
 repo = Path(sys.argv[1])
 path = repo / "crates/ferric-engine/src/system.rs"
 source = path.read_text(encoding="utf-8")
-old = "match self.kv.create_request(request) {"
-new = "match Ok::<(), KvError>(()) {"
+old = "let create_result = self.kv.create_request(request);"
+new = "let create_result = Ok::<(), KvError>(());"
 if source.count(old) != 1:
     raise SystemExit("system admission mutation anchor drifted")
 path.write_text(source.replace(old, new), encoding="utf-8")
