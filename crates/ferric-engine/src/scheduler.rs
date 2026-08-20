@@ -5550,6 +5550,15 @@ impl<const C: usize> Scheduler<C> {
         }
     }
 
+    closed spec fn dispatch_commit_slot_flags_frame_relation(&self, before: &Self) -> bool {
+        &&& (forall|slot_index: int| 0 <= slot_index < C ==>
+            (#[trigger] self.slots@[slot_index].in_free_ring)
+                == before.slots@[slot_index].in_free_ring)
+        &&& (forall|slot_index: int| 0 <= slot_index < C ==>
+            (#[trigger] self.slots@[slot_index].in_reclaim_ring)
+                == before.slots@[slot_index].in_reclaim_ring)
+    }
+
     proof fn dispatch_commit_slot_flags_frame(
         &self,
         before: &Self,
@@ -5560,20 +5569,23 @@ impl<const C: usize> Scheduler<C> {
         requires
             before.dispatch_chosen_ready(chosen),
             self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
-        ensures
-            forall|slot_index: int| 0 <= slot_index < C ==> {
-                &&& (#[trigger] self.slots@[slot_index].in_free_ring)
-                    == before.slots@[slot_index].in_free_ring
-                &&& self.slots@[slot_index].in_reclaim_ring
-                    == before.slots@[slot_index].in_reclaim_ring
-            },
+        ensures self.dispatch_commit_slot_flags_frame_relation(before),
     {
-        assert forall|slot_index: int| 0 <= slot_index < C implies {
-            &&& (#[trigger] self.slots@[slot_index].in_free_ring)
-                == before.slots@[slot_index].in_free_ring
-            &&& self.slots@[slot_index].in_reclaim_ring
-                == before.slots@[slot_index].in_reclaim_ring
-        } by {
+        reveal(Scheduler::dispatch_commit_slot_flags_frame_relation);
+        assert forall|slot_index: int| 0 <= slot_index < C implies
+            (#[trigger] self.slots@[slot_index].in_free_ring)
+                == before.slots@[slot_index].in_free_ring by {
+            self.dispatch_commit_slot_flags_frame_at(
+                before,
+                chosen,
+                next_cursor,
+                next_epoch,
+                slot_index,
+            );
+        }
+        assert forall|slot_index: int| 0 <= slot_index < C implies
+            (#[trigger] self.slots@[slot_index].in_reclaim_ring)
+                == before.slots@[slot_index].in_reclaim_ring by {
             self.dispatch_commit_slot_flags_frame_at(
                 before,
                 chosen,
@@ -5692,6 +5704,7 @@ impl<const C: usize> Scheduler<C> {
         before.basic_implies_free_ring();
         self.dispatch_commit_free_entries(before, chosen, next_cursor, next_epoch);
         self.dispatch_commit_slot_flags_frame(before, chosen, next_cursor, next_epoch);
+        reveal(Scheduler::dispatch_commit_slot_flags_frame_relation);
         reveal(Scheduler::dispatch_commit_refines);
         reveal(Scheduler::free_ring_invariant);
     }
@@ -5880,6 +5893,23 @@ impl<const C: usize> Scheduler<C> {
         assert(!before.slots@[selected].in_reclaim_ring);
     }
 
+    proof fn dispatch_commit_member_shape(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+    )
+        requires self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+        ensures
+            self.member_head == before.member_head,
+            self.member_len == before.member_len + chosen.len(),
+            self.submitted == next_epoch,
+            self.completed == before.completed,
+    {
+        reveal(Scheduler::dispatch_commit_refines);
+    }
+
     proof fn dispatch_commit_member_handle_at(
         &self,
         before: &Self,
@@ -5907,7 +5937,7 @@ impl<const C: usize> Scheduler<C> {
             }
         },
     {
-        reveal(Scheduler::dispatch_commit_refines);
+        self.dispatch_commit_member_shape(before, chosen, next_cursor, next_epoch);
         if offset < before.member_len {
             self.dispatch_commit_old_member_handle_at(
                 before,
@@ -6025,6 +6055,110 @@ impl<const C: usize> Scheduler<C> {
         );
     }
 
+    proof fn dispatch_commit_old_member_entry_at(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+        offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            next_epoch as int == before.submitted as int + 1,
+            0 <= offset < before.member_len,
+        ensures {
+            let handle = self.member_ring@[
+                ring_position::<C>(self.member_head, offset as nat)
+            ];
+            &&& handle.slot_spec() < C
+            &&& self.slots@[handle.slot_spec() as int].generation
+                == handle.generation_spec()
+            &&& self.completed < self.slots@[handle.slot_spec() as int].active_epoch
+            &&& self.slots@[handle.slot_spec() as int].active_epoch <= self.submitted
+            &&& !self.slots@[handle.slot_spec() as int].in_reclaim_ring
+            &&& (self.slots@[handle.slot_spec() as int].state == RequestState::InFlight
+                || self.slots@[handle.slot_spec() as int].state == RequestState::Retiring)
+        },
+    {
+        before.member_entry_facts(offset as usize);
+        self.dispatch_commit_old_member_handle_at(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+            offset,
+        );
+        let old_handle = before.member_ring@[
+            ring_position::<C>(before.member_head, offset as nat)
+        ];
+        self.dispatch_commit_nonready_frame_at(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+            old_handle.slot_spec() as int,
+        );
+        self.dispatch_commit_member_shape(before, chosen, next_cursor, next_epoch);
+    }
+
+    proof fn dispatch_commit_selected_member_entry_at(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+        chosen_offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(chosen),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            next_epoch as int == before.submitted as int + 1,
+            0 <= chosen_offset < chosen.len(),
+        ensures {
+            let offset = before.member_len + chosen_offset;
+            let handle = self.member_ring@[
+                ring_position::<C>(self.member_head, offset as nat)
+            ];
+            &&& handle.slot_spec() < C
+            &&& self.slots@[handle.slot_spec() as int].generation
+                == handle.generation_spec()
+            &&& self.completed < self.slots@[handle.slot_spec() as int].active_epoch
+            &&& self.slots@[handle.slot_spec() as int].active_epoch <= self.submitted
+            &&& !self.slots@[handle.slot_spec() as int].in_reclaim_ring
+            &&& (self.slots@[handle.slot_spec() as int].state == RequestState::InFlight
+                || self.slots@[handle.slot_spec() as int].state == RequestState::Retiring)
+        },
+    {
+        before.basic_implies_scalar();
+        self.dispatch_commit_selected_member_handle_at(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+            chosen_offset,
+        );
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::dispatch_chosen_ready);
+        reveal(Scheduler::dispatch_commit_refines);
+        assert forall|offset: int| 0 <= offset < chosen.len() implies
+            chosen[offset].slot_spec() < before.slots@.len() by {
+            assert(chosen[offset].slot_spec() < C);
+        }
+        reveal(selected_request_slots);
+        dispatch_selected_slots_selected_fact(
+            before.slots@,
+            chosen,
+            next_epoch,
+            chosen_offset,
+        );
+    }
+
     proof fn dispatch_commit_member_entry_at(
         &self,
         before: &Self,
@@ -6054,41 +6188,21 @@ impl<const C: usize> Scheduler<C> {
                 || self.slots@[handle.slot_spec() as int].state == RequestState::Retiring)
         },
     {
-        before.basic_implies_scalar();
-        before.basic_implies_member_ring();
-        self.dispatch_commit_member_handle_at(
-            before,
-            chosen,
-            next_cursor,
-            next_epoch,
-            offset,
-        );
-        reveal(Scheduler::scalar_invariant);
-        reveal(Scheduler::member_ring_invariant);
-        reveal(Scheduler::dispatch_chosen_ready);
-        reveal(Scheduler::dispatch_commit_refines);
-        assert forall|chosen_offset: int| 0 <= chosen_offset < chosen.len() implies
-            chosen[chosen_offset].slot_spec() < before.slots@.len() by {
-            assert(chosen[chosen_offset].slot_spec() < C);
-        }
-        let handle = self.member_ring@[
-            ring_position::<C>(self.member_head, offset as nat)
-        ];
+        self.dispatch_commit_member_shape(before, chosen, next_cursor, next_epoch);
         if offset < before.member_len {
-            let slot_index = handle.slot_spec() as int;
-            self.dispatch_commit_nonready_frame_at(
+            self.dispatch_commit_old_member_entry_at(
                 before,
                 chosen,
                 next_cursor,
                 next_epoch,
-                slot_index,
+                offset,
             );
         } else {
             let chosen_offset = offset - before.member_len;
-            reveal(selected_request_slots);
-            dispatch_selected_slots_selected_fact(
-                before.slots@,
+            self.dispatch_commit_selected_member_entry_at(
+                before,
                 chosen,
+                next_cursor,
                 next_epoch,
                 chosen_offset,
             );
@@ -6931,9 +7045,16 @@ impl<const C: usize> Scheduler<C> {
             self.slots@[handle.slot_spec() as int].active_epoch == batch.epoch.value
         },
     {
-        before.basic_implies_scalar();
-        before.basic_implies_member_ring();
-        before.basic_implies_batch_ring();
+        self.dispatch_commit_old_batch_member_range_at(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+            batch_offset,
+            member_offset,
+        );
+        before.basic_batch_member_epoch_fact(batch_offset, member_offset);
+        before.member_entry_facts(member_offset as usize);
         self.dispatch_commit_old_batch_record_at(
             before,
             chosen,
@@ -6941,6 +7062,62 @@ impl<const C: usize> Scheduler<C> {
             next_epoch,
             batch_offset,
         );
+        self.dispatch_commit_old_member_handle_at(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+            member_offset,
+        );
+        let old_handle = before.member_ring@[
+            ring_position::<C>(before.member_head, member_offset as nat)
+        ];
+        self.dispatch_commit_nonready_frame_at(
+            before,
+            chosen,
+            next_cursor,
+            next_epoch,
+            old_handle.slot_spec() as int,
+        );
+    }
+
+    proof fn dispatch_commit_old_batch_member_range_at(
+        &self,
+        before: &Self,
+        chosen: Seq<RequestId>,
+        next_cursor: usize,
+        next_epoch: u64,
+        batch_offset: int,
+        member_offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.dispatch_commit_refines(before, chosen, next_cursor, next_epoch),
+            before.member_len + chosen.len() <= C,
+            0 <= batch_offset < before.batch_len,
+            batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                batch_offset as nat,
+            ) <= member_offset < batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                batch_offset as nat + 1,
+            ),
+        ensures
+            batch_member_sum::<C>(
+                before.batch_ring@,
+                before.batch_head,
+                batch_offset as nat,
+            ) <= member_offset < batch_member_sum::<C>(
+                before.batch_ring@,
+                before.batch_head,
+                batch_offset as nat + 1,
+            ),
+            0 <= member_offset < before.member_len,
+    {
+        before.basic_implies_scalar();
+        before.basic_implies_batch_ring();
         self.dispatch_commit_old_batch_sum_prefix(
             before,
             chosen,
@@ -6962,27 +7139,7 @@ impl<const C: usize> Scheduler<C> {
             before.batch_len as nat,
         );
         reveal(Scheduler::scalar_invariant);
-        reveal(Scheduler::member_ring_invariant);
         reveal(Scheduler::batch_ring_invariant);
-        reveal(Scheduler::dispatch_commit_refines);
-        before.basic_batch_member_epoch_fact(batch_offset, member_offset);
-        self.dispatch_commit_old_member_handle_at(
-            before,
-            chosen,
-            next_cursor,
-            next_epoch,
-            member_offset,
-        );
-        let handle = before.member_ring@[
-            ring_position::<C>(before.member_head, member_offset as nat)
-        ];
-        self.dispatch_commit_nonready_frame_at(
-            before,
-            chosen,
-            next_cursor,
-            next_epoch,
-            handle.slot_spec() as int,
-        );
     }
 
     proof fn dispatch_commit_old_batch_epoch_members_at(
