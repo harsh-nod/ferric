@@ -221,8 +221,8 @@
       "name": "m0.engine_composition",
       "kind": "FunctionalCorrectness",
       "required_status": "Proved",
-      "statement": "The public engine exactly refines constructor inputs and wrapper result/output routing for admission, tentative append, committed-prefix sharing, read validation, retirement, reclaim, dispatch, and completion; it preserves scheduler/KV request-generation agreement, publishes completed KV before redispatch, and detaches quiescent KV before slot reuse.",
-      "statement_sha256": "6a7dd0945660e2421896e487e01e3efa01bf6ef1c2301c395104af4e0b136532",
+      "statement": "The public engine exactly refines constructor inputs and wrapper result/output routing for admission, tentative append, committed-prefix sharing, read validation, retirement, reclaim, and dispatch; it preserves scheduler/KV request-generation agreement, publishes completed KV before redispatch, and detaches quiescent KV before slot reuse.",
+      "statement_sha256": "98d7ea71a14f61f6b57cc671c08c547a9c4e0b8f862fee537927111cd1023aee",
       "compiler_paths_resolved": true,
       "compiler_path_prefixes": [
         "ferric_engine::system::Engine::new",

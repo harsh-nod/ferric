@@ -7,8 +7,8 @@ import sys
 repo = Path(sys.argv[1])
 path = repo / "crates/ferric-engine/src/system.rs"
 source = path.read_text(encoding="utf-8")
-old = "match self.kv.append_tentative(request, token_count) {"
-new = "match self.kv.append_tentative(request, 0) {"
+old = "let append_result = self.kv.append_tentative(request, token_count);"
+new = "let append_result = self.kv.append_tentative(request, 0);"
 if source.count(old) != 1:
     raise SystemExit("system append routing mutation anchor drifted")
 path.write_text(source.replace(old, new), encoding="utf-8")
