@@ -573,14 +573,59 @@ impl<const C: usize> Scheduler<C> {
         requires before.basic_invariant(), self.same_scalars(before),
         ensures self.basic_invariant(),
     {
-        reveal(Scheduler::same_scalars);
+        before.basic_implies_scalar();
+        before.basic_implies_slots();
+        before.basic_implies_free_ring();
+        before.basic_implies_reclaim_ring();
+        before.basic_implies_member_ring();
+        before.basic_implies_batch_ring();
+        assert(self.scalar_invariant()) by {
+            reveal(Scheduler::same_scalars);
+            reveal(Scheduler::scalar_invariant);
+        }
+        assert(self.slot_invariant()) by {
+            reveal(Scheduler::same_scalars);
+            reveal(Scheduler::slot_invariant);
+        }
+        assert(self.free_ring_invariant()) by {
+            reveal(Scheduler::same_scalars);
+            reveal(Scheduler::free_ring_invariant);
+        }
+        assert(self.reclaim_ring_invariant()) by {
+            reveal(Scheduler::same_scalars);
+            reveal(Scheduler::reclaim_ring_invariant);
+        }
+        assert(self.member_entries_invariant()) by {
+            reveal(Scheduler::same_scalars);
+            reveal(Scheduler::member_ring_invariant);
+            reveal(Scheduler::member_entries_invariant);
+            assert forall|offset: int| 0 <= offset < self.member_len implies
+                #[trigger] self.member_entry_valid(offset) by {
+                assert(before.member_entry_valid(offset));
+                assert(self.member_entry_valid(offset)
+                    == before.member_entry_valid(offset)) by {
+                    reveal(Scheduler::member_entry_valid);
+                }
+            }
+        }
+        assert(self.member_distinct_invariant()) by {
+            reveal(Scheduler::same_scalars);
+            reveal(Scheduler::member_ring_invariant);
+            reveal(Scheduler::member_distinct_invariant);
+        }
+        assert(self.member_membership_invariant()) by {
+            reveal(Scheduler::same_scalars);
+            reveal(Scheduler::member_ring_invariant);
+            reveal(Scheduler::member_membership_invariant);
+        }
+        assert(self.member_ring_invariant()) by {
+            reveal(Scheduler::member_ring_invariant);
+        }
+        assert(self.batch_ring_invariant()) by {
+            reveal(Scheduler::same_scalars);
+            reveal(Scheduler::batch_ring_invariant);
+        }
         reveal(Scheduler::basic_invariant);
-        reveal(Scheduler::scalar_invariant);
-        reveal(Scheduler::slot_invariant);
-        reveal(Scheduler::free_ring_invariant);
-        reveal(Scheduler::reclaim_ring_invariant);
-        reveal(Scheduler::member_ring_invariant);
-        reveal(Scheduler::batch_ring_invariant);
     }
 
     proof fn same_scalars_preserves_identity(&self, before: &Self)
@@ -6562,24 +6607,6 @@ impl<const C: usize> Scheduler<C> {
                             right,
                         ),
     {
-        self.dispatch_commit_old_member_distinct_summary(
-            before,
-            chosen,
-            next_cursor,
-            next_epoch,
-        );
-        self.dispatch_commit_selected_member_distinct_summary(
-            before,
-            chosen,
-            next_cursor,
-            next_epoch,
-        );
-        self.dispatch_commit_cross_member_distinct_summary(
-            before,
-            chosen,
-            next_cursor,
-            next_epoch,
-        );
         reveal(Scheduler::dispatch_commit_refines);
         assert forall|left: int, right: int|
             0 <= left < self.member_len
@@ -6592,27 +6619,44 @@ impl<const C: usize> Scheduler<C> {
                         right,
                     ) by {
             if left < before.member_len && right < before.member_len {
-            } else if before.member_len <= left && before.member_len <= right {
-                assert(request_ring_slots_differ::<C>(
-                    self.member_ring@,
-                    self.member_head,
-                    before.member_len + (left - before.member_len),
-                    before.member_len + (right - before.member_len),
-                ));
-            } else if left < before.member_len {
-                assert(request_ring_slots_differ::<C>(
-                    self.member_ring@,
-                    self.member_head,
+                self.dispatch_commit_old_members_differ(
+                    before,
+                    chosen,
+                    next_cursor,
+                    next_epoch,
                     left,
-                    before.member_len + (right - before.member_len),
-                ));
-            } else {
-                assert(request_ring_slots_differ::<C>(
-                    self.member_ring@,
-                    self.member_head,
                     right,
-                    before.member_len + (left - before.member_len),
-                ));
+                );
+                reveal(request_ring_slots_differ);
+            } else if before.member_len <= left && before.member_len <= right {
+                self.dispatch_commit_selected_members_differ(
+                    before,
+                    chosen,
+                    next_cursor,
+                    next_epoch,
+                    left - before.member_len,
+                    right - before.member_len,
+                );
+                reveal(request_ring_slots_differ);
+            } else if left < before.member_len {
+                self.dispatch_commit_old_selected_members_differ(
+                    before,
+                    chosen,
+                    next_cursor,
+                    next_epoch,
+                    left,
+                    right - before.member_len,
+                );
+                reveal(request_ring_slots_differ);
+            } else {
+                self.dispatch_commit_old_selected_members_differ(
+                    before,
+                    chosen,
+                    next_cursor,
+                    next_epoch,
+                    right,
+                    left - before.member_len,
+                );
                 reveal(request_ring_slots_differ);
             }
         }
@@ -7764,22 +7808,32 @@ impl<const C: usize> Scheduler<C> {
             ),
     {
         self.basic_implies_scalar();
-        reveal(Scheduler::scalar_invariant);
-        reveal(ring_position_or_head);
-        reveal(Seq::no_duplicates);
+        assert(self.cursor < C) by {
+            reveal(Scheduler::scalar_invariant);
+        }
+        assert(member_tail < C) by {
+            reveal(Scheduler::scalar_invariant);
+            ring_position_bounds::<C>(self.member_head, self.member_len as nat);
+        }
+        assert(self.cursor as int == ring_position::<C>(self.cursor, 0)) by {
+            reveal(Scheduler::scalar_invariant);
+            ring_position_bounds::<C>(self.cursor, 0);
+        }
+        assert(member_tail as int == ring_position_or_head::<C>(
+            self.member_head,
+            (self.member_len + Seq::<RequestId>::empty().len()) as nat,
+        )) by {
+            reveal(Scheduler::scalar_invariant);
+            reveal(ring_position_or_head);
+        }
         selected_request_slots_empty();
-        assert(self.cursor as int == ring_position::<C>(self.cursor, 0));
-        assert(Seq::<int>::empty().add(ready_selection::<C>(
-            self.slots@,
-            self.cursor,
-            C as nat,
-            limit as nat,
-        )) == ready_selection::<C>(
-            self.slots@,
-            self.cursor,
-            C as nat,
-            limit as nat,
-        ));
+        assert(ready_selection::<C>(self.slots@, self.cursor, C as nat, limit as nat)
+            == selected_request_slots(Seq::<RequestId>::empty()).add(
+                ready_selection::<C>(self.slots@, self.cursor, C as nat, limit as nat),
+            ));
+        assert(selected_request_slots(Seq::<RequestId>::empty()).no_duplicates()) by {
+            reveal(Seq::no_duplicates);
+        }
         reveal(Scheduler::dispatch_scan_oracle);
     }
 
@@ -7899,6 +7953,17 @@ impl<const C: usize> Scheduler<C> {
             );
             assert(false);
         }
+        assert forall|chosen_offset: int| 0 <= chosen_offset < chosen.len() implies
+            chosen[chosen_offset].slot_spec() < before.slots@.len() by {
+            let chosen_slot = chosen[chosen_offset].slot_spec() as int;
+            assert(0 <= chosen_slot < C);
+        }
+        dispatch_selected_slots_frame_fact(
+            before.slots@,
+            chosen,
+            next_epoch,
+            slot_index as int,
+        );
     }
 
     proof fn dispatch_ready_selection_step(
@@ -10439,16 +10504,24 @@ impl<const C: usize> Scheduler<C> {
                 &Ok(count),
             ),
     {
-        before.pending_batch_facts();
-        completed_permits_facts::<C>(
-            before_permits,
-            before.member_ring@,
-            before.member_head,
-            count as nat,
+        assert(self.completion_refines(
+            before,
             completion_epoch,
-        );
-        reveal(Scheduler::completion_refines);
-        reveal(Scheduler::slot_model);
+            before_permits,
+            permits,
+            &Ok(count),
+        )) by {
+            before.pending_batch_facts();
+            completed_permits_facts::<C>(
+                before_permits,
+                before.member_ring@,
+                before.member_head,
+                count as nat,
+                completion_epoch,
+            );
+            reveal(Scheduler::completion_refines);
+            reveal(Scheduler::slot_model);
+        }
     }
 
     proof fn completion_completed_batch_from_refinement(
@@ -12570,10 +12643,23 @@ impl<const C: usize> Scheduler<C> {
             ) == Ok(self.slot_model(slot_index))
         },
     {
+        let slot_index = request.slot_spec() as int;
         before.basic_implies_slots();
-        reveal(Scheduler::slot_invariant);
-        reveal(Scheduler::finalized_slot_updates);
-        reveal(Scheduler::slot_model);
+        assert(before.slot_model(slot_index) == SequentialRequest {
+            state: RequestState::InFlight,
+            phase: LifecyclePhase::AwaitingKv,
+        }) by {
+            reveal(Scheduler::slot_invariant);
+            reveal(Scheduler::finalized_slot_updates);
+            reveal(Scheduler::slot_model);
+        }
+        assert(self.slot_model(slot_index) == SequentialRequest {
+            state: RequestState::Ready,
+            phase: LifecyclePhase::Idle,
+        }) by {
+            reveal(Scheduler::finalized_slot_updates);
+            reveal(Scheduler::slot_model);
+        }
         reveal(ferric_spec::scheduling::request_transition);
     }
 
@@ -13044,7 +13130,12 @@ impl<const C: usize> Scheduler<C> {
         }
         self.detached_refines_preserves_basic(before, detached, request);
         self.detachment_frame_from_slots_frame(before, slot_index);
-        reveal(Scheduler::state_spec);
+        assert(self.basic_invariant());
+        assert(self.detached_refines(before, detached, &Ok(request)));
+        assert(self.state_spec(request).is_none()) by {
+            reveal(Scheduler::state_spec);
+        }
+        assert(self.detachment_ready_frame_except(before, slot_index));
     }
 
     fn reclaim_slot(
