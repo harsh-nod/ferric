@@ -5334,6 +5334,46 @@ impl<const C: usize> Scheduler<C> {
         &&& self.live_count == before.live_count
     }
 
+    closed spec fn finalized_slot_updates(
+        &self,
+        before: &Self,
+        request: RequestId,
+        epoch: u64,
+    ) -> bool {
+        let slot_index = request.slot_spec() as int;
+        &&& slot_index < C
+        &&& before.slots@[slot_index].generation == request.generation_spec()
+        &&& before.slots@[slot_index].state == RequestState::InFlight
+        &&& before.slots@[slot_index].active_epoch == epoch
+        &&& NO_EPOCH < epoch <= before.completed
+        &&& self.slots@
+            == before.slots@.update(slot_index, self.slots@[slot_index])
+        &&& self.slots@[slot_index].generation == before.slots@[slot_index].generation
+        &&& self.slots@[slot_index].state == RequestState::Ready
+        &&& self.slots@[slot_index].active_epoch == NO_EPOCH
+        &&& self.slots@[slot_index].last_quiescent_epoch == epoch
+        &&& self.slots@[slot_index].in_free_ring
+            == before.slots@[slot_index].in_free_ring
+        &&& self.slots@[slot_index].in_reclaim_ring
+            == before.slots@[slot_index].in_reclaim_ring
+        &&& self.free_ring@ == before.free_ring@
+        &&& self.free_head == before.free_head
+        &&& self.free_len == before.free_len
+        &&& self.reclaim_ring@ == before.reclaim_ring@
+        &&& self.reclaim_head == before.reclaim_head
+        &&& self.reclaim_len == before.reclaim_len
+        &&& self.member_ring@ == before.member_ring@
+        &&& self.member_head == before.member_head
+        &&& self.member_len == before.member_len
+        &&& self.batch_ring@ == before.batch_ring@
+        &&& self.batch_head == before.batch_head
+        &&& self.batch_len == before.batch_len
+        &&& self.cursor == before.cursor
+        &&& self.submitted == before.submitted
+        &&& self.completed == before.completed
+        &&& self.live_count == before.live_count
+    }
+
     pub(crate) closed spec fn finalized_refines(
         &self,
         before: &Self,
@@ -7934,6 +7974,550 @@ impl<const C: usize> Scheduler<C> {
         Ok((request, epoch))
     }
 
+    proof fn finalized_slot_updates_preserve_scalar(
+        &self,
+        before: &Self,
+        request: RequestId,
+        epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            self.finalized_slot_updates(before, request, epoch),
+        ensures self.scalar_invariant(),
+    {
+        before.basic_implies_scalar();
+        reveal(Scheduler::finalized_slot_updates);
+        reveal(Scheduler::scalar_invariant);
+        let slot_index = request.slot_spec() as int;
+        let old_slots = before.slots@;
+        live_count_update_nonvacant(
+            old_slots,
+            slot_index,
+            self.slots@[slot_index],
+            C as nat,
+        );
+        nonreclaim_count_update_preserved(
+            old_slots,
+            slot_index,
+            self.slots@[slot_index],
+            C as nat,
+        );
+        assert(live_slot_count(self.slots@, C as nat)
+            == live_slot_count(old_slots, C as nat));
+    }
+
+    proof fn finalized_slot_updates_preserve_slots(
+        &self,
+        before: &Self,
+        request: RequestId,
+        epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            self.finalized_slot_updates(before, request, epoch),
+        ensures self.slot_invariant(),
+    {
+        before.basic_implies_slots();
+        reveal(Scheduler::finalized_slot_updates);
+        reveal(Scheduler::slot_invariant);
+        reveal(Scheduler::slot_invariant_at);
+        let slot_index = request.slot_spec() as int;
+        assert(self.slot_invariant_at(slot_index));
+        assert forall|observed: int| 0 <= observed < C implies
+            #[trigger] self.slot_invariant_at(observed) by {
+            if observed != slot_index {
+                assert(self.slots@[observed] == before.slots@[observed]);
+            }
+        }
+    }
+
+    proof fn finalized_slot_updates_preserve_free_ring(
+        &self,
+        before: &Self,
+        request: RequestId,
+        epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            self.finalized_slot_updates(before, request, epoch),
+        ensures self.free_ring_invariant(),
+    {
+        before.basic_implies_free_ring();
+        reveal(Scheduler::finalized_slot_updates);
+        reveal(Scheduler::free_ring_invariant);
+        let slot_index = request.slot_spec() as int;
+        assert forall|offset: int| 0 <= offset < self.free_len implies {
+            let observed = #[trigger] self.free_ring@[
+                ring_position::<C>(self.free_head, offset as nat)
+            ];
+            &&& observed < C
+            &&& self.slots@[observed as int].state == RequestState::Vacant
+            &&& self.slots@[observed as int].in_free_ring
+        } by {
+            let observed = self.free_ring@[
+                ring_position::<C>(self.free_head, offset as nat)
+            ];
+            assert(observed as int != slot_index);
+            assert(self.slots@[observed as int] == before.slots@[observed as int]);
+        }
+        assert forall|observed: int| 0 <= observed < C implies
+            #[trigger] self.slots@[observed].in_free_ring
+                == usize_ring_contains::<C>(
+                    self.free_ring@,
+                    self.free_head,
+                    self.free_len,
+                    observed,
+                ) by {
+            if observed != slot_index {
+                assert(self.slots@[observed] == before.slots@[observed]);
+            }
+        }
+    }
+
+    proof fn finalized_slot_updates_preserve_reclaim_ring(
+        &self,
+        before: &Self,
+        request: RequestId,
+        epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            self.finalized_slot_updates(before, request, epoch),
+        ensures self.reclaim_ring_invariant(),
+    {
+        before.basic_implies_reclaim_ring();
+        reveal(Scheduler::finalized_slot_updates);
+        reveal(Scheduler::reclaim_ring_invariant);
+        let slot_index = request.slot_spec() as int;
+        assert forall|offset: int| 0 <= offset < self.reclaim_len implies {
+            let observed = #[trigger] self.reclaim_ring@[
+                ring_position::<C>(self.reclaim_head, offset as nat)
+            ];
+            &&& observed < C
+            &&& self.slots@[observed as int].state == RequestState::Retiring
+            &&& self.slots@[observed as int].active_epoch == NO_EPOCH
+            &&& self.slots@[observed as int].in_reclaim_ring
+        } by {
+            let observed = self.reclaim_ring@[
+                ring_position::<C>(self.reclaim_head, offset as nat)
+            ];
+            assert(observed as int != slot_index);
+            assert(self.slots@[observed as int] == before.slots@[observed as int]);
+        }
+        assert forall|observed: int| 0 <= observed < C implies
+            #[trigger] self.slots@[observed].in_reclaim_ring
+                == usize_ring_contains::<C>(
+                    self.reclaim_ring@,
+                    self.reclaim_head,
+                    self.reclaim_len,
+                    observed,
+                ) by {
+            if observed != slot_index {
+                assert(self.slots@[observed] == before.slots@[observed]);
+            }
+        }
+    }
+
+    proof fn finalized_slot_updates_preserve_member_ring(
+        &self,
+        before: &Self,
+        request: RequestId,
+        epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            self.finalized_slot_updates(before, request, epoch),
+        ensures self.member_ring_invariant(),
+    {
+        before.basic_implies_member_ring();
+        reveal(Scheduler::finalized_slot_updates);
+        reveal(Scheduler::member_ring_invariant);
+        reveal(Scheduler::member_entries_invariant);
+        reveal(Scheduler::member_membership_invariant);
+        let slot_index = request.slot_spec() as int;
+        assert forall|offset: int| 0 <= offset < self.member_len implies
+            #[trigger] self.member_entry_valid(offset) by {
+            let handle = self.member_ring@[
+                ring_position::<C>(self.member_head, offset as nat)
+            ];
+            assert(before.member_entry_valid(offset));
+            assert(handle.slot_spec() as int != slot_index) by {
+                reveal(Scheduler::member_entry_valid);
+            }
+            assert(self.slots@[handle.slot_spec() as int]
+                == before.slots@[handle.slot_spec() as int]);
+            reveal(Scheduler::member_entry_valid);
+        }
+        assert forall|observed: int| 0 <= observed < C implies
+            (((#[trigger] self.slots@[observed].state == RequestState::InFlight
+                || self.slots@[observed].state == RequestState::Retiring)
+                && self.completed < self.slots@[observed].active_epoch)
+                == request_ring_contains_slot::<C>(
+                    self.member_ring@,
+                    self.member_head,
+                    self.member_len,
+                    observed,
+                )) by {
+            if observed != slot_index {
+                assert(self.slots@[observed] == before.slots@[observed]);
+            }
+        }
+    }
+
+    proof fn finalized_slot_updates_preserve_batch_sum(
+        &self,
+        before: &Self,
+        request: RequestId,
+        epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            self.finalized_slot_updates(before, request, epoch),
+        ensures
+            batch_member_sum::<C>(self.batch_ring@, self.batch_head, self.batch_len as nat)
+                == self.member_len,
+    {
+        before.basic_implies_batch_ring();
+        reveal(Scheduler::finalized_slot_updates);
+        reveal(Scheduler::batch_ring_invariant);
+    }
+
+    proof fn finalized_slot_updates_preserve_batch_header(
+        &self,
+        before: &Self,
+        request: RequestId,
+        epoch: u64,
+        batch_offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.finalized_slot_updates(before, request, epoch),
+            0 <= batch_offset < self.batch_len,
+        ensures {
+            let batch = self.batch_ring@[
+                ring_position::<C>(self.batch_head, batch_offset as nat)
+            ];
+            &&& batch.member_count > 0
+            &&& batch.epoch.value as int == self.completed as int + batch_offset + 1
+            &&& batch.epoch.value <= self.submitted
+        },
+    {
+        reveal(Scheduler::finalized_slot_updates);
+        before.basic_batch_entry_header_facts(batch_offset);
+    }
+
+    proof fn finalized_slot_updates_preserve_member_epoch(
+        &self,
+        before: &Self,
+        request: RequestId,
+        epoch: u64,
+        member_offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.finalized_slot_updates(before, request, epoch),
+            0 <= member_offset < self.member_len,
+        ensures {
+            let handle = self.member_ring@[
+                ring_position::<C>(self.member_head, member_offset as nat)
+            ];
+            self.slots@[handle.slot_spec() as int].active_epoch
+                == before.slots@[handle.slot_spec() as int].active_epoch
+        },
+    {
+        reveal(Scheduler::finalized_slot_updates);
+        let slot_index = request.slot_spec() as int;
+        before.member_entry_facts(member_offset as usize);
+        let handle = before.member_ring@[
+            ring_position::<C>(before.member_head, member_offset as nat)
+        ];
+        assert(handle.slot_spec() as int != slot_index);
+        assert(self.slots@[handle.slot_spec() as int]
+            == before.slots@[handle.slot_spec() as int]);
+    }
+
+    proof fn finalized_slot_updates_preserve_batch_member(
+        &self,
+        before: &Self,
+        request: RequestId,
+        epoch: u64,
+        batch_offset: int,
+        member_offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.finalized_slot_updates(before, request, epoch),
+            0 <= batch_offset < self.batch_len,
+            batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                batch_offset as nat,
+            ) <= member_offset < batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                batch_offset as nat + 1,
+            ),
+        ensures {
+            let batch = self.batch_ring@[
+                ring_position::<C>(self.batch_head, batch_offset as nat)
+            ];
+            let handle = self.member_ring@[
+                ring_position::<C>(self.member_head, member_offset as nat)
+            ];
+            self.slots@[handle.slot_spec() as int].active_epoch == batch.epoch.value
+        },
+    {
+        reveal(Scheduler::finalized_slot_updates);
+        before.basic_implies_batch_ring();
+        reveal(Scheduler::batch_ring_invariant);
+        batch_member_sum_monotonic::<C>(
+            before.batch_ring@,
+            before.batch_head,
+            batch_offset as nat + 1,
+            before.batch_len as nat,
+        );
+        self.finalized_slot_updates_preserve_member_epoch(
+            before,
+            request,
+            epoch,
+            member_offset,
+        );
+        before.basic_batch_member_epoch_fact(batch_offset, member_offset);
+    }
+
+    proof fn finalized_slot_updates_preserve_batch_entry(
+        &self,
+        before: &Self,
+        request: RequestId,
+        epoch: u64,
+        batch_offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.finalized_slot_updates(before, request, epoch),
+            0 <= batch_offset < self.batch_len,
+        ensures {
+            let batch = self.batch_ring@[
+                ring_position::<C>(self.batch_head, batch_offset as nat)
+            ];
+            &&& batch.member_count > 0
+            &&& batch.epoch.value as int == self.completed as int + batch_offset + 1
+            &&& batch.epoch.value <= self.submitted
+            &&& (forall|member_offset: int|
+                batch_member_sum::<C>(
+                    self.batch_ring@,
+                    self.batch_head,
+                    batch_offset as nat,
+                ) <= member_offset < batch_member_sum::<C>(
+                    self.batch_ring@,
+                    self.batch_head,
+                    batch_offset as nat + 1,
+                ) ==> {
+                    let handle = #[trigger] self.member_ring@[
+                        ring_position::<C>(self.member_head, member_offset as nat)
+                    ];
+                    self.slots@[handle.slot_spec() as int].active_epoch == batch.epoch.value
+                })
+        },
+    {
+        self.finalized_slot_updates_preserve_batch_header(
+            before,
+            request,
+            epoch,
+            batch_offset,
+        );
+        assert forall|member_offset: int|
+            batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                batch_offset as nat,
+            ) <= member_offset < batch_member_sum::<C>(
+                self.batch_ring@,
+                self.batch_head,
+                batch_offset as nat + 1,
+            ) implies {
+                let handle = #[trigger] self.member_ring@[
+                    ring_position::<C>(self.member_head, member_offset as nat)
+                ];
+                self.slots@[handle.slot_spec() as int].active_epoch
+                    == self.batch_ring@[
+                        ring_position::<C>(self.batch_head, batch_offset as nat)
+                    ].epoch.value
+        } by {
+            self.finalized_slot_updates_preserve_batch_member(
+                before,
+                request,
+                epoch,
+                batch_offset,
+                member_offset,
+            );
+        }
+    }
+
+    proof fn finalized_slot_updates_preserve_batch_entries(
+        &self,
+        before: &Self,
+        request: RequestId,
+        epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            self.finalized_slot_updates(before, request, epoch),
+        ensures
+            forall|batch_offset: int| 0 <= batch_offset < self.batch_len ==> {
+                let batch = #[trigger] self.batch_ring@[
+                    ring_position::<C>(self.batch_head, batch_offset as nat)
+                ];
+                &&& batch.member_count > 0
+                &&& batch.epoch.value as int == self.completed as int + batch_offset + 1
+                &&& batch.epoch.value <= self.submitted
+                &&& (forall|member_offset: int|
+                    batch_member_sum::<C>(
+                        self.batch_ring@,
+                        self.batch_head,
+                        batch_offset as nat,
+                    ) <= member_offset < batch_member_sum::<C>(
+                        self.batch_ring@,
+                        self.batch_head,
+                        batch_offset as nat + 1,
+                    ) ==> {
+                        let handle = #[trigger] self.member_ring@[
+                            ring_position::<C>(self.member_head, member_offset as nat)
+                        ];
+                        self.slots@[handle.slot_spec() as int].active_epoch == batch.epoch.value
+                    })
+            },
+    {
+        assert forall|batch_offset: int| 0 <= batch_offset < self.batch_len implies {
+            let batch = #[trigger] self.batch_ring@[
+                ring_position::<C>(self.batch_head, batch_offset as nat)
+            ];
+            &&& batch.member_count > 0
+            &&& batch.epoch.value as int == self.completed as int + batch_offset + 1
+            &&& batch.epoch.value <= self.submitted
+            &&& (forall|member_offset: int|
+                batch_member_sum::<C>(
+                    self.batch_ring@,
+                    self.batch_head,
+                    batch_offset as nat,
+                ) <= member_offset < batch_member_sum::<C>(
+                    self.batch_ring@,
+                    self.batch_head,
+                    batch_offset as nat + 1,
+                ) ==> {
+                    let handle = #[trigger] self.member_ring@[
+                        ring_position::<C>(self.member_head, member_offset as nat)
+                    ];
+                    self.slots@[handle.slot_spec() as int].active_epoch == batch.epoch.value
+                })
+        } by {
+            self.finalized_slot_updates_preserve_batch_entry(
+                before,
+                request,
+                epoch,
+                batch_offset,
+            );
+        }
+    }
+
+    proof fn finalized_slot_updates_preserve_batch_ring(
+        &self,
+        before: &Self,
+        request: RequestId,
+        epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            self.finalized_slot_updates(before, request, epoch),
+        ensures self.batch_ring_invariant(),
+    {
+        self.finalized_slot_updates_preserve_batch_sum(before, request, epoch);
+        self.finalized_slot_updates_preserve_batch_entries(before, request, epoch);
+        reveal(Scheduler::batch_ring_invariant);
+    }
+
+    proof fn finalized_slot_updates_imply_refines(
+        &self,
+        before: &Self,
+        request: RequestId,
+        epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            self.finalized_slot_updates(before, request, epoch),
+        ensures self.finalized_slot_refines(before, request, epoch),
+    {
+        self.finalized_slot_updates_preserve_transition(before, request, epoch);
+        self.finalized_slot_updates_preserve_frame(before, request, epoch);
+        reveal(Scheduler::finalized_slot_updates);
+        reveal(Scheduler::finalized_slot_refines);
+    }
+
+    proof fn finalized_slot_updates_preserve_transition(
+        &self,
+        before: &Self,
+        request: RequestId,
+        epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            self.finalized_slot_updates(before, request, epoch),
+        ensures {
+            let slot_index = request.slot_spec() as int;
+            ferric_spec::scheduling::request_transition(
+                before.slot_model(slot_index),
+                RequestTransition::FinalizeKv,
+            ) == Ok(self.slot_model(slot_index))
+        },
+    {
+        before.basic_implies_slots();
+        reveal(Scheduler::slot_invariant);
+        reveal(Scheduler::finalized_slot_updates);
+        reveal(Scheduler::slot_model);
+        reveal(ferric_spec::scheduling::request_transition);
+    }
+
+    proof fn finalized_slot_updates_preserve_frame(
+        &self,
+        before: &Self,
+        request: RequestId,
+        epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            self.finalized_slot_updates(before, request, epoch),
+        ensures self.slots_frame_except(before, request.slot_spec() as int),
+    {
+        reveal(Scheduler::finalized_slot_updates);
+        reveal(Scheduler::slots_frame_except);
+        let slot_index = request.slot_spec() as int;
+        assert forall|observed: int| 0 <= observed < C && observed != slot_index implies
+            #[trigger] self.slots@[observed] == before.slots@[observed] by {}
+    }
+
+    proof fn finalized_slot_updates_establish_postconditions(
+        &self,
+        before: &Self,
+        request: RequestId,
+        epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            self.finalized_slot_updates(before, request, epoch),
+        ensures
+            self.basic_invariant(),
+            self.finalized_slot_refines(before, request, epoch),
+    {
+        self.finalized_slot_updates_preserve_scalar(before, request, epoch);
+        self.finalized_slot_updates_preserve_slots(before, request, epoch);
+        self.finalized_slot_updates_preserve_free_ring(before, request, epoch);
+        self.finalized_slot_updates_preserve_reclaim_ring(before, request, epoch);
+        self.finalized_slot_updates_preserve_member_ring(before, request, epoch);
+        self.finalized_slot_updates_preserve_batch_ring(before, request, epoch);
+        self.finalized_slot_updates_imply_refines(before, request, epoch);
+        reveal(Scheduler::basic_invariant);
+    }
+
     fn finalize_slot(&mut self, request: RequestId, epoch: u64)
         requires
             old(self).basic_invariant(),
@@ -7947,7 +8531,6 @@ impl<const C: usize> Scheduler<C> {
             final(self).basic_invariant(),
             final(self).finalized_slot_refines(old(self), request, epoch),
     {
-        reveal(Scheduler::basic_invariant);
         let slot_index = request.slot() as usize;
         let ghost old_slots = self.slots@;
         self.slots[slot_index].state = RequestState::Ready;
@@ -7955,80 +8538,11 @@ impl<const C: usize> Scheduler<C> {
         self.slots[slot_index].last_quiescent_epoch = epoch;
         assert(self.slots@ == old_slots.update(slot_index as int, self.slots@[slot_index as int]));
         proof {
-            live_count_update_nonvacant(
-                old_slots,
-                slot_index as int,
-                self.slots@[slot_index as int],
-                C as nat,
-            );
-            nonreclaim_count_update_preserved(
-                old_slots,
-                slot_index as int,
-                self.slots@[slot_index as int],
-                C as nat,
-            );
-        }
-        assert(live_slot_count(self.slots@, C as nat) == live_slot_count(old_slots, C as nat));
-        assert forall|observed: int| 0 <= observed < C implies {
-            let observed_slot = #[trigger] self.slots@[observed];
-            match observed_slot.state {
-                RequestState::Vacant => {
-                    &&& observed_slot.active_epoch == NO_EPOCH
-                    &&& observed_slot.last_quiescent_epoch == NO_EPOCH
-                    &&& observed_slot.in_free_ring
-                    &&& !observed_slot.in_reclaim_ring
-                }
-                RequestState::Ready => {
-                    &&& observed_slot.active_epoch == NO_EPOCH
-                    &&& observed_slot.last_quiescent_epoch <= self.completed
-                    &&& !observed_slot.in_free_ring
-                    &&& !observed_slot.in_reclaim_ring
-                }
-                RequestState::InFlight => {
-                    &&& NO_EPOCH < observed_slot.active_epoch <= self.submitted
-                    &&& observed_slot.last_quiescent_epoch <= self.completed
-                    &&& !observed_slot.in_free_ring
-                    &&& !observed_slot.in_reclaim_ring
-                }
-                RequestState::Retiring => {
-                    &&& !observed_slot.in_free_ring
-                    &&& observed_slot.active_epoch <= self.submitted
-                    &&& observed_slot.last_quiescent_epoch <= self.completed
-                }
+            assert(self.finalized_slot_updates(old(self), request, epoch)) by {
+                reveal(Scheduler::finalized_slot_updates);
             }
-        } by {
-            reveal(Scheduler::slot_invariant);
-            if observed != slot_index {
-                assert(self.slots@[observed] == old(self).slots@[observed]);
-            }
+            self.finalized_slot_updates_establish_postconditions(old(self), request, epoch);
         }
-        assert(self.scalar_invariant()) by {
-            reveal(Scheduler::scalar_invariant);
-        }
-        assert(self.slot_invariant()) by {
-            reveal(Scheduler::slot_invariant);
-        }
-        assert(self.free_ring_invariant()) by {
-            reveal(Scheduler::free_ring_invariant);
-        }
-        assert(self.reclaim_ring_invariant()) by {
-            reveal(Scheduler::reclaim_ring_invariant);
-        }
-        assert(self.member_ring_invariant()) by {
-            reveal(Scheduler::member_ring_invariant);
-        }
-        assert(self.batch_ring_invariant()) by {
-            reveal(Scheduler::batch_ring_invariant);
-            reveal(Scheduler::member_ring_invariant);
-        }
-        assert(self.basic_invariant()) by {
-            reveal(Scheduler::basic_invariant);
-        }
-        assert(self.finalized_slot_refines(old(self), request, epoch)) by {
-            reveal(Scheduler::finalized_slot_refines);
-            reveal(Scheduler::slot_model);
-            reveal(Scheduler::slots_frame_except);
-        };
     }
 
     /// Consumes cache-owned evidence for the exact completed speculative step
