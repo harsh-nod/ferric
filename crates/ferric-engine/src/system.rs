@@ -581,7 +581,8 @@ impl<const C: usize> Engine<C> {
         let ghost before_completion_scheduler = self.scheduler;
         let completed = match self.scheduler.complete_exact(completion, &mut self.permits) {
             Ok(count) => count,
-            Err(error) => {
+            Err(failure) => {
+                let (error, completion) = failure.into_parts();
                 assert forall |slot: int| 0 <= slot < C implies {
                     &&& self.scheduler.slot_is_live_spec(slot)
                         == self.kv.request_live_by_slot_spec(slot)
@@ -596,7 +597,7 @@ impl<const C: usize> Engine<C> {
                 assert(self.well_formed());
                 return Err(CompletionFailure {
                     error: EngineError::Scheduler(error),
-                    completion: None,
+                    completion: Some(completion),
                 });
             }
         };
@@ -703,7 +704,7 @@ impl<const C: usize> Engine<C> {
                     assert(before_accept_scheduler == step_scheduler);
                     assert(self.scheduler.detachment_ready_frame_except(
                         &step_scheduler,
-                        finalized_request.slot_spec(),
+                        finalized_request.slot_spec() as int,
                     ));
                     assert(finalized_request.slot_spec() == request.slot_spec());
                     assert forall |position: int| index < position < completed
@@ -719,7 +720,7 @@ impl<const C: usize> Engine<C> {
                             != request.slot_spec());
                         self.scheduler.apply_detachment_ready_frame_except(
                             &step_scheduler,
-                            request.slot_spec(),
+                            request.slot_spec() as int,
                             self.permits@[position].unwrap().request_spec(),
                             self.permits@[position].unwrap().origin_spec(),
                         );
@@ -775,7 +776,7 @@ impl<const C: usize> Engine<C> {
                         Ok(_reclaimed) => {
                             assert(self.scheduler.detachment_ready_frame_except(
                                 &step_scheduler,
-                                detached_request.slot_spec(),
+                                detached_request.slot_spec() as int,
                             ));
                             assert(detached_request.slot_spec() == request.slot_spec());
                             assert forall |slot: int| 0 <= slot < C implies {
@@ -813,7 +814,7 @@ impl<const C: usize> Engine<C> {
                                     .request_spec().slot_spec() != request.slot_spec());
                                 self.scheduler.apply_detachment_ready_frame_except(
                                     &step_scheduler,
-                                    request.slot_spec(),
+                                    request.slot_spec() as int,
                                     self.permits@[position].unwrap().request_spec(),
                                     self.permits@[position].unwrap().origin_spec(),
                                 );
@@ -984,6 +985,32 @@ mod tests {
         assert!(failure.into_completion().is_some());
         assert_eq!(engine.completed_epoch(), CompletionEpoch::new(0));
         assert_eq!(engine.state(request), Some(RequestState::InFlight));
+    }
+
+    #[test]
+    fn scheduler_rejection_returns_authority_and_preserves_engine_for_retry() {
+        let mut engine = Engine::<2>::new(8, 4, 32).unwrap();
+        let request = engine.admit().unwrap();
+        engine.append_tentative(request, 1).unwrap();
+        let mut members = output::<2>();
+        let batch = engine.dispatch_ready(&mut members).unwrap().unwrap();
+        let later_epoch = CompletionEpoch::new(batch.epoch().value() + 1);
+        let later = ExactCompletion::from_contracted_hsa_quiescence(later_epoch);
+
+        let failure = engine.complete_exact(later, &[1]).unwrap_err();
+        assert_eq!(
+            failure.error(),
+            EngineError::Scheduler(crate::SchedulerError::CompletionNotExactNext)
+        );
+        assert_eq!(failure.into_completion().unwrap().epoch(), later_epoch);
+        assert_eq!(engine.completed_epoch(), CompletionEpoch::new(0));
+        assert_eq!(engine.state(request), Some(RequestState::InFlight));
+        assert_eq!(engine.committed_tokens(request), Some(0));
+
+        let exact = ExactCompletion::from_contracted_hsa_quiescence(batch.epoch());
+        assert_eq!(engine.complete_exact(exact, &[1]).unwrap(), 1);
+        assert_eq!(engine.state(request), Some(RequestState::Ready));
+        assert_eq!(engine.committed_tokens(request), Some(1));
     }
 
     #[test]
