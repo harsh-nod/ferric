@@ -8,8 +8,8 @@
       "name": "m0.request_generation",
       "kind": "GenerationSafety",
       "required_status": "Proved",
-      "statement": "A live `RequestId` names exactly one current slot generation; stale or exhausted generations are never admitted as live.",
-      "statement_sha256": "92982e9fd5f660b3c7f3778c8a8902bc55a47d4623d9e2807c1a7497daca2e28",
+      "statement": "A live `RequestId` names exactly one current slot generation; stale generations are rejected, generation never wraps, and a live `u32::MAX` generation fails closed before reuse.",
+      "statement_sha256": "93a2678a3c89dea728f2787b5fea506256fed4912b950902d292c236f2c86d9e",
       "compiler_paths_resolved": true,
       "compiler_path_prefixes": [
         "ferric_spec::identity::RequestId::"

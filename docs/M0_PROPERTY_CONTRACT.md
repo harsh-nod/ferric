@@ -15,7 +15,7 @@ refinement claim.
 
 | Property | fe2o3 kind | Required status | Exact M0 statement |
 | --- | --- | --- | --- |
-| `m0.request_generation` | `GenerationSafety` | `Proved` | A live `RequestId` names exactly one current slot generation; stale or exhausted generations are never admitted as live. |
+| `m0.request_generation` | `GenerationSafety` | `Proved` | A live `RequestId` names exactly one current slot generation; stale generations are rejected, generation never wraps, and a live `u32::MAX` generation fails closed before reuse. |
 | `m0.greedy_speculation` | `FunctionalCorrectness` | `Proved` | For valid target choices, the executable greedy round emits the maximal accepted draft prefix followed by the target correction or bonus; invalid lengths return the specified error. |
 | `m0.scheduler_transition` | `FunctionalCorrectness` | `Proved` | Every successful scheduler body implements its stated deterministic transition and frame; every rejection is the exact enabledness failure and preserves state. |
 | `m0.scheduler_lifetime` | `LeaseSafety` | `Proved` | Dispatch members remain unavailable for reuse through exact completion, KV finalization or detachment, and generation advance. Cancellation never makes executing storage reusable. |
