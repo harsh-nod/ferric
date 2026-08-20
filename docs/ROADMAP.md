@@ -35,9 +35,9 @@ Goal: freeze the system theorem, core identities, and reversible KV semantics.
 - [x] Implement exclusive generational paged-KV ownership.
 - [x] Implement tentative append, commit, rollback, and release.
 - [x] Reject stale page handles and non-transactional exhaustion.
-- [ ] Add generational request slots and deterministic scheduler transitions.
-- [ ] Add completion epochs and retirement-before-reuse semantics.
-- [ ] Add sealed immutable prefix pages and copy-on-write.
+- [x] Add generational request slots and deterministic scheduler transitions.
+- [x] Add completion epochs and retirement-before-reuse semantics.
+- [x] Add sealed immutable prefix pages and copy-on-write.
 - [ ] Directly verify the executable M0 state-machine bodies with pinned Verus.
 - [ ] Bind M0 properties into fe2o3 proof contracts.
 
