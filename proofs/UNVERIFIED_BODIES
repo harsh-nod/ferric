@@ -1,7 +1,5 @@
 format=FERRIC-UNVERIFIED-BODIES-V1
 unverified=ferric-engine|crates/ferric-engine/src/cache.rs|ferric_engine::cache::KvError::Display::fmt|excluded-presentation|error-formatting-outside-inference-state
-unverified=ferric-spec|crates/ferric-spec/src/configuration.rs|ferric_spec::configuration::EngineLimits::validate|pending-verus|configuration-validation-not-yet-lifted
-unverified=ferric-spec|crates/ferric-spec/src/configuration.rs|ferric_spec::configuration::ModelConfig::validate|pending-verus|configuration-validation-not-yet-lifted
 unverified=ferric-spec|crates/ferric-spec/src/configuration.rs|ferric_spec::configuration::SpecError::Display::fmt|excluded-presentation|error-formatting-outside-inference-state
 unverified=ferric-spec|crates/ferric-spec/src/identity.rs|ferric_spec::identity::Identity::Debug::fmt|excluded-presentation|redacted-formatting-outside-inference-state
 unverified=ferric-spec|crates/ferric-spec/src/speculation.rs|ferric_spec::speculation::GreedyVerificationError::Display::fmt|excluded-presentation|error-formatting-outside-inference-state

@@ -48,6 +48,35 @@ impl Identity {
         }
         false
     }
+
+    /// Compares two identities without exposing their bytes.
+    #[must_use]
+    pub fn equals(&self, other: &Self) -> (equal: bool)
+        ensures equal == (self.bytes_spec() == other.bytes_spec()),
+    {
+        let mut index = 0;
+        while index < self.0.len()
+            invariant
+                self.bytes_spec().len() == other.bytes_spec().len(),
+                0 <= index <= self.bytes_spec().len(),
+                forall|prior: int|
+                    0 <= prior < index
+                        ==> self.bytes_spec()[prior] == other.bytes_spec()[prior],
+            decreases self.bytes_spec().len() - index,
+        {
+            if self.0[index] != other.0[index] {
+                return false;
+            }
+            index += 1;
+        }
+        assert(self.bytes_spec() =~= other.bytes_spec()) by {
+            assert forall|position: int|
+                0 <= position < self.bytes_spec().len()
+                    implies self.bytes_spec()[position] == other.bytes_spec()[position]
+            by {}
+        }
+        true
+    }
 }
 
 } // verus!
@@ -116,5 +145,14 @@ mod tests {
         let mut bytes = [0; 32];
         bytes[31] = 1;
         assert!(Identity::new(bytes).is_present());
+    }
+
+    #[test]
+    fn identity_equality_checks_every_byte() {
+        assert!(Identity::new([7; 32]).equals(&Identity::new([7; 32])));
+
+        let mut different = [7; 32];
+        different[31] = 8;
+        assert!(!Identity::new([7; 32]).equals(&Identity::new(different)));
     }
 }
