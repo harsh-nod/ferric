@@ -1,0 +1,1244 @@
+{
+  "assurance_properties": [
+    {
+      "boundary": "Canonical parsing, bounded validation, and authenticated identity compose for the exact target and draft bundle bytes.",
+      "evidence_profiles": [
+        "admission",
+        "authentication"
+      ],
+      "fe2o3_kind": "Extension:model_bundle_well_formed",
+      "name": "model_bundle_well_formed",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "bundle-auth",
+        "bundle-parser",
+        "model-admission",
+        "model-bundle-proof",
+        "tokenizer-admission",
+        "weight-stream"
+      ],
+      "required_status_at_closure": "Proved"
+    },
+    {
+      "boundary": "Each admitted kernel and schedule refines its declared operator through gpu.*; compiler, object, driver, firmware, and hardware boundaries remain separate.",
+      "evidence_profiles": [
+        "composition",
+        "kernel"
+      ],
+      "fe2o3_kind": "Extension:operator_refined",
+      "name": "operator_refined",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "fe2o3-gemm",
+        "fe2o3-logits",
+        "fe2o3-paged-decode",
+        "fe2o3-prefill",
+        "fe2o3-rmsnorm",
+        "fe2o3-rope-kv",
+        "fe2o3-swiglu",
+        "kernel-contract-proof",
+        "kernel-schedule-catalog"
+      ],
+      "required_status_at_closure": "Proved"
+    },
+    {
+      "boundary": "The exact generated plan and executable runner compose admitted operators into the sequential target-model step under the declared numerical policy.",
+      "evidence_profiles": [
+        "composition"
+      ],
+      "fe2o3_kind": "Extension:graph_refined",
+      "name": "graph_refined",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "generated-runner",
+        "graph-proof",
+        "model-admission",
+        "physical-runner",
+        "runner-generator",
+        "speculative-graph"
+      ],
+      "required_status_at_closure": "Proved"
+    },
+    {
+      "boundary": "Initialized generation-owned physical target and draft KV pages refine separate contiguous logical caches across commit, rollback, and retirement.",
+      "evidence_profiles": [
+        "composition",
+        "runtime"
+      ],
+      "fe2o3_kind": "Extension:kv_refined",
+      "name": "kv_refined",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "device-cache",
+        "fe2o3-paged-decode",
+        "fe2o3-rope-kv",
+        "kv-proof"
+      ],
+      "required_status_at_closure": "Proved"
+    },
+    {
+      "boundary": "Interleaved continuous-batching transitions and exact device completions project to independent legal request transitions.",
+      "evidence_profiles": [
+        "composition",
+        "runtime"
+      ],
+      "fe2o3_kind": "Extension:scheduler_refined",
+      "name": "scheduler_refined",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "batching-proof",
+        "physical-runner",
+        "scheduler-proof"
+      ],
+      "required_status_at_closure": "Proved"
+    },
+    {
+      "boundary": "Request data, KV, workspace, completion, and state effects are noninterfering; timing and resource-contention side channels are excluded.",
+      "evidence_profiles": [
+        "composition",
+        "runtime"
+      ],
+      "fe2o3_kind": "Extension:request_isolated",
+      "name": "request_isolated",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "batching-proof",
+        "device-cache",
+        "isolation-proof"
+      ],
+      "required_status_at_closure": "Proved"
+    },
+    {
+      "boundary": "Only a validated accepted prefix becomes reachable and every rejected speculative suffix remains private and is retired safely.",
+      "evidence_profiles": [
+        "composition",
+        "runtime"
+      ],
+      "fe2o3_kind": "Extension:rollback_refined",
+      "name": "rollback_refined",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "device-cache",
+        "speculation-proof",
+        "speculative-graph"
+      ],
+      "required_status_at_closure": "Proved"
+    },
+    {
+      "boundary": "M1 deterministic argmax, tie handling, compact completion, and greedy acceptance refine target-only decoding.",
+      "evidence_profiles": [
+        "composition",
+        "kernel"
+      ],
+      "fe2o3_kind": "Extension:sampler_refined",
+      "name": "sampler_refined",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "fe2o3-logits",
+        "speculation-proof",
+        "speculative-graph"
+      ],
+      "required_status_at_closure": "Proved"
+    },
+    {
+      "boundary": "Stochastic sampling and stochastic speculative distribution preservation are outside the deterministic greedy M1 envelope.",
+      "evidence_profiles": [
+        "nonclaim"
+      ],
+      "fe2o3_kind": "Extension:distribution_preserved",
+      "name": "distribution_preserved",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "m1-tcb",
+        "speculation-proof"
+      ],
+      "required_status_at_closure": "Unsupported"
+    },
+    {
+      "boundary": "Logical allocation, KV, workspace, queue, loop, and finite-schedule bounds hold for the admitted envelope; machine resources are checked separately.",
+      "evidence_profiles": [
+        "admission",
+        "composition",
+        "kernel",
+        "runtime"
+      ],
+      "fe2o3_kind": "ResourceBounds",
+      "name": "resource_bounded",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "device-cache",
+        "fe2o3-aql-foundation",
+        "fe2o3-batch",
+        "fe2o3-kfd-memory-foundation",
+        "fe2o3-kfd-queue-foundation",
+        "fe2o3-typed-allocation",
+        "kernel-schedule-catalog",
+        "weight-stream"
+      ],
+      "required_status_at_closure": "Proved"
+    },
+    {
+      "boundary": "M1 admits exactly one physical gfx942 device and makes no collective or multi-device refinement claim.",
+      "evidence_profiles": [
+        "nonclaim"
+      ],
+      "fe2o3_kind": "Extension:multi_device_refined",
+      "name": "multi_device_refined",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "m1-tcb"
+      ],
+      "required_status_at_closure": "Unsupported"
+    },
+    {
+      "boundary": "The five independent translation validators required by the assurance policy do not exist; source proofs do not establish machine semantics.",
+      "evidence_profiles": [
+        "nonclaim"
+      ],
+      "fe2o3_kind": "Extension:machine_refined",
+      "name": "machine_refined",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "identity-closure",
+        "m1-tcb"
+      ],
+      "required_status_at_closure": "Unsupported"
+    },
+    {
+      "boundary": "Source, kernel-effect, allocation, and runtime models prove admitted bounds and initialization under named compiler, runtime, and hardware contracts.",
+      "evidence_profiles": [
+        "composition",
+        "kernel",
+        "runtime"
+      ],
+      "fe2o3_kind": "MemorySafety",
+      "name": "memory_safe",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "device-cache",
+        "fe2o3-kfd-memory-foundation",
+        "fe2o3-typed-allocation",
+        "kernel-contract-proof",
+        "weight-stream"
+      ],
+      "required_status_at_closure": "Proved"
+    },
+    {
+      "boundary": "Kernel effects, packet publication, and request ownership exclude conflicting admitted accesses at the modeled boundary.",
+      "evidence_profiles": [
+        "composition",
+        "kernel",
+        "runtime"
+      ],
+      "fe2o3_kind": "DataRaceFreedom",
+      "name": "race_free",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "fe2o3-aql-foundation",
+        "fe2o3-batch",
+        "fe2o3-kfd-queue-foundation",
+        "isolation-proof",
+        "kernel-contract-proof"
+      ],
+      "required_status_at_closure": "Proved"
+    },
+    {
+      "boundary": "Generation-bound queue, allocation, KV, and completion leases prevent release or reuse before exact quiescence under named external contracts.",
+      "evidence_profiles": [
+        "composition",
+        "runtime"
+      ],
+      "fe2o3_kind": "LeaseSafety",
+      "name": "lifetime_safe",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "device-cache",
+        "fe2o3-aql-foundation",
+        "fe2o3-kfd-memory-foundation",
+        "fe2o3-kfd-queue-foundation",
+        "fe2o3-queue",
+        "fe2o3-typed-allocation"
+      ],
+      "required_status_at_closure": "Proved"
+    },
+    {
+      "boundary": "An independent canonical validator binds signatures and hashes across bundle, weights, proof inputs, plan, runner, and executable artifacts.",
+      "evidence_profiles": [
+        "authentication"
+      ],
+      "fe2o3_kind": "Extension:artifact_authenticated",
+      "name": "artifact_authenticated",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "bundle-auth",
+        "identity-closure",
+        "weight-stream"
+      ],
+      "required_status_at_closure": "Validated"
+    },
+    {
+      "boundary": "Independent ELF, AMDHSA ABI, resource, ISA, target-feature, and runtime-device validation binds the exact gfx942 xnack- artifact.",
+      "evidence_profiles": [
+        "authentication",
+        "qualification"
+      ],
+      "fe2o3_kind": "Extension:target_conforming",
+      "name": "target_conforming",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "d10-bench",
+        "identity-closure",
+        "m1-tcb"
+      ],
+      "required_status_at_closure": "Validated"
+    }
+  ],
+  "evidence_kinds": [
+    "artifact-identity",
+    "canonical-structure-check",
+    "external-contract",
+    "fe2o3-contract",
+    "hardware-test",
+    "independent-validator",
+    "negative-mutation",
+    "performance-gate",
+    "tcb-report",
+    "unsupported-rationale",
+    "verus-theorem"
+  ],
+  "evidence_profiles": [
+    {
+      "id": "admission",
+      "kinds": [
+        "artifact-identity",
+        "canonical-structure-check",
+        "negative-mutation",
+        "tcb-report",
+        "verus-theorem"
+      ]
+    },
+    {
+      "id": "authentication",
+      "kinds": [
+        "artifact-identity",
+        "canonical-structure-check",
+        "independent-validator",
+        "negative-mutation",
+        "tcb-report"
+      ]
+    },
+    {
+      "id": "composition",
+      "kinds": [
+        "artifact-identity",
+        "fe2o3-contract",
+        "hardware-test",
+        "negative-mutation",
+        "tcb-report",
+        "verus-theorem"
+      ]
+    },
+    {
+      "id": "kernel",
+      "kinds": [
+        "artifact-identity",
+        "fe2o3-contract",
+        "hardware-test",
+        "independent-validator",
+        "negative-mutation",
+        "performance-gate",
+        "tcb-report",
+        "verus-theorem"
+      ]
+    },
+    {
+      "id": "nonclaim",
+      "kinds": [
+        "tcb-report",
+        "unsupported-rationale"
+      ]
+    },
+    {
+      "id": "qualification",
+      "kinds": [
+        "artifact-identity",
+        "hardware-test",
+        "independent-validator",
+        "negative-mutation",
+        "performance-gate",
+        "tcb-report"
+      ]
+    },
+    {
+      "id": "runtime",
+      "kinds": [
+        "artifact-identity",
+        "external-contract",
+        "fe2o3-contract",
+        "hardware-test",
+        "independent-validator",
+        "negative-mutation",
+        "performance-gate",
+        "tcb-report",
+        "verus-theorem"
+      ]
+    }
+  ],
+  "format": "ferric.m1-requirements.v1",
+  "m0_contracts_commit": "a6fa86b5ccf8f0438925cfec8f48a5d713874da3",
+  "m1_upstream_base_commit": "5d095d5663f7d158385603f867f001d1eb22d539",
+  "m1_upstream_base_tree": "f6a187be6365fb8e2cb12671d163cee41af3b24f",
+  "milestone": "M1",
+  "path_obligations": [
+    {
+      "availability": "RequiredFuture",
+      "id": "adversarial-bench",
+      "obligation_state": "Open",
+      "path": "benches/m1/adversarial.rs",
+      "repository": "ferric"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "batching-proof",
+      "obligation_state": "Open",
+      "path": "proofs/m1/batching.rs",
+      "repository": "ferric"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "bundle-auth",
+      "obligation_state": "Open",
+      "path": "crates/ferric-build/src/auth.rs",
+      "repository": "ferric"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "bundle-parser",
+      "obligation_state": "Open",
+      "path": "crates/ferric-build/src/bundle.rs",
+      "repository": "ferric"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "d10-bench",
+      "obligation_state": "Open",
+      "path": "benches/m1/d10.rs",
+      "repository": "ferric"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "device-cache",
+      "obligation_state": "Open",
+      "path": "crates/ferric-engine/src/device_cache.rs",
+      "repository": "ferric"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "differential-bench",
+      "obligation_state": "Open",
+      "path": "benches/m1/differential.rs",
+      "repository": "ferric"
+    },
+    {
+      "availability": "ExistingFoundation",
+      "id": "fe2o3-aql-foundation",
+      "obligation_state": "Open",
+      "path": "crates/fe2o3-aql/src/lib.rs",
+      "repository": "fe2o3"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "fe2o3-batch",
+      "obligation_state": "Open",
+      "path": "crates/fe2o3-service-host/src/batch.rs",
+      "repository": "fe2o3"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "fe2o3-gemm",
+      "obligation_state": "Open",
+      "path": "crates/fe2o3-llm-kernels/src/gemm.rs",
+      "repository": "fe2o3"
+    },
+    {
+      "availability": "ExistingFoundation",
+      "id": "fe2o3-kfd-memory-foundation",
+      "obligation_state": "Open",
+      "path": "crates/fe2o3-kfd/src/memory.rs",
+      "repository": "fe2o3"
+    },
+    {
+      "availability": "ExistingFoundation",
+      "id": "fe2o3-kfd-queue-foundation",
+      "obligation_state": "Open",
+      "path": "crates/fe2o3-kfd/src/queue_submit.rs",
+      "repository": "fe2o3"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "fe2o3-logits",
+      "obligation_state": "Open",
+      "path": "crates/fe2o3-llm-kernels/src/logits.rs",
+      "repository": "fe2o3"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "fe2o3-paged-decode",
+      "obligation_state": "Open",
+      "path": "crates/fe2o3-llm-kernels/src/paged_gqa_decode.rs",
+      "repository": "fe2o3"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "fe2o3-prefill",
+      "obligation_state": "Open",
+      "path": "crates/fe2o3-llm-kernels/src/prefill.rs",
+      "repository": "fe2o3"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "fe2o3-queue",
+      "obligation_state": "Open",
+      "path": "crates/fe2o3-service-host/src/queue.rs",
+      "repository": "fe2o3"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "fe2o3-rmsnorm",
+      "obligation_state": "Open",
+      "path": "crates/fe2o3-llm-kernels/src/rmsnorm.rs",
+      "repository": "fe2o3"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "fe2o3-rope-kv",
+      "obligation_state": "Open",
+      "path": "crates/fe2o3-llm-kernels/src/rope_kv.rs",
+      "repository": "fe2o3"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "fe2o3-swiglu",
+      "obligation_state": "Open",
+      "path": "crates/fe2o3-llm-kernels/src/swiglu.rs",
+      "repository": "fe2o3"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "fe2o3-typed-allocation",
+      "obligation_state": "Open",
+      "path": "crates/fe2o3-service-host/src/allocation.rs",
+      "repository": "fe2o3"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "generated-runner",
+      "obligation_state": "Open",
+      "path": "generated/qwen3_m1.rs",
+      "repository": "ferric"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "graph-proof",
+      "obligation_state": "Open",
+      "path": "proofs/m1/graph.rs",
+      "repository": "ferric"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "identity-closure",
+      "obligation_state": "Open",
+      "path": "crates/ferric-build/src/identity_closure.rs",
+      "repository": "ferric"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "isolation-proof",
+      "obligation_state": "Open",
+      "path": "proofs/m1/isolation.rs",
+      "repository": "ferric"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "kernel-contract-proof",
+      "obligation_state": "Open",
+      "path": "proofs/m1/kernel_contracts.rs",
+      "repository": "ferric"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "kernel-schedule-catalog",
+      "obligation_state": "Open",
+      "path": "crates/ferric-kernels/src/catalog.rs",
+      "repository": "ferric"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "kv-proof",
+      "obligation_state": "Open",
+      "path": "proofs/m1/kv_physical.rs",
+      "repository": "ferric"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "m1-tcb",
+      "obligation_state": "Open",
+      "path": "docs/M1_TCB.md",
+      "repository": "ferric"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "model-admission",
+      "obligation_state": "Open",
+      "path": "crates/ferric-build/src/model.rs",
+      "repository": "ferric"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "model-bundle-proof",
+      "obligation_state": "Open",
+      "path": "proofs/m1/model_bundle.rs",
+      "repository": "ferric"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "physical-runner",
+      "obligation_state": "Open",
+      "path": "crates/ferric-engine/src/runner.rs",
+      "repository": "ferric"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "runner-generator",
+      "obligation_state": "Open",
+      "path": "crates/ferric-build/src/generate.rs",
+      "repository": "ferric"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "scheduler-proof",
+      "obligation_state": "Open",
+      "path": "proofs/m1/scheduler.rs",
+      "repository": "ferric"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "serving-bench",
+      "obligation_state": "Open",
+      "path": "benches/m1/serving.rs",
+      "repository": "ferric"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "speculation-bench",
+      "obligation_state": "Open",
+      "path": "benches/m1/speculation.rs",
+      "repository": "ferric"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "speculation-proof",
+      "obligation_state": "Open",
+      "path": "proofs/m1/speculative_graph.rs",
+      "repository": "ferric"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "speculative-graph",
+      "obligation_state": "Open",
+      "path": "crates/ferric-engine/src/speculative_graph.rs",
+      "repository": "ferric"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "tokenizer-admission",
+      "obligation_state": "Open",
+      "path": "crates/ferric-build/src/tokenizer.rs",
+      "repository": "ferric"
+    },
+    {
+      "availability": "RequiredFuture",
+      "id": "weight-stream",
+      "obligation_state": "Open",
+      "path": "crates/ferric-build/src/weight_stream.rs",
+      "repository": "ferric"
+    }
+  ],
+  "roadmap_requirements": [
+    {
+      "assurance_properties": [
+        "model_bundle_well_formed",
+        "artifact_authenticated",
+        "resource_bounded"
+      ],
+      "evidence_profiles": [
+        "admission",
+        "authentication"
+      ],
+      "id": "m1.r01",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "bundle-auth",
+        "bundle-parser"
+      ],
+      "title": "Define bounded canonical Ferric deployment bundles."
+    },
+    {
+      "assurance_properties": [
+        "model_bundle_well_formed",
+        "graph_refined"
+      ],
+      "evidence_profiles": [
+        "admission"
+      ],
+      "id": "m1.r02",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "model-admission",
+        "tokenizer-admission"
+      ],
+      "title": "Strictly admit Qwen3 config, tokenizer, vocabulary, and safetensors."
+    },
+    {
+      "assurance_properties": [
+        "model_bundle_well_formed"
+      ],
+      "evidence_profiles": [
+        "admission"
+      ],
+      "id": "m1.r03",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "tokenizer-admission"
+      ],
+      "title": "Check target/draft tokenizer compatibility rather than assuming it."
+    },
+    {
+      "assurance_properties": [
+        "model_bundle_well_formed",
+        "memory_safe",
+        "lifetime_safe",
+        "resource_bounded",
+        "artifact_authenticated"
+      ],
+      "evidence_profiles": [
+        "admission",
+        "authentication"
+      ],
+      "id": "m1.r04",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "weight-stream"
+      ],
+      "title": "Stream and authenticate prepacked weight sections."
+    },
+    {
+      "assurance_properties": [
+        "graph_refined",
+        "resource_bounded",
+        "artifact_authenticated",
+        "target_conforming"
+      ],
+      "evidence_profiles": [
+        "authentication",
+        "composition"
+      ],
+      "id": "m1.r05",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "generated-runner",
+        "identity-closure",
+        "runner-generator"
+      ],
+      "title": "Generate a model/target-specific Rust runner and complete plan identity."
+    },
+    {
+      "assurance_properties": [
+        "operator_refined",
+        "memory_safe",
+        "race_free",
+        "resource_bounded",
+        "target_conforming"
+      ],
+      "evidence_profiles": [
+        "kernel"
+      ],
+      "id": "m1.r06",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "fe2o3-gemm",
+        "kernel-schedule-catalog"
+      ],
+      "title": "Parameterized BF16/FP32 GEMM and GEMV."
+    },
+    {
+      "assurance_properties": [
+        "operator_refined",
+        "memory_safe",
+        "race_free",
+        "resource_bounded"
+      ],
+      "evidence_profiles": [
+        "kernel"
+      ],
+      "id": "m1.r07",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "fe2o3-rmsnorm",
+        "kernel-schedule-catalog"
+      ],
+      "title": "RMSNorm and residual fusion."
+    },
+    {
+      "assurance_properties": [
+        "operator_refined",
+        "kv_refined",
+        "memory_safe",
+        "race_free"
+      ],
+      "evidence_profiles": [
+        "kernel"
+      ],
+      "id": "m1.r08",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "fe2o3-rope-kv",
+        "kernel-schedule-catalog"
+      ],
+      "title": "RoPE plus paged-KV write."
+    },
+    {
+      "assurance_properties": [
+        "operator_refined",
+        "memory_safe",
+        "race_free",
+        "resource_bounded"
+      ],
+      "evidence_profiles": [
+        "kernel"
+      ],
+      "id": "m1.r09",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "fe2o3-prefill",
+        "kernel-schedule-catalog"
+      ],
+      "title": "FlashAttention prefill."
+    },
+    {
+      "assurance_properties": [
+        "operator_refined",
+        "kv_refined",
+        "memory_safe",
+        "race_free",
+        "resource_bounded"
+      ],
+      "evidence_profiles": [
+        "kernel"
+      ],
+      "id": "m1.r10",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "fe2o3-paged-decode",
+        "kernel-schedule-catalog"
+      ],
+      "title": "GQA-aware paged decode attention."
+    },
+    {
+      "assurance_properties": [
+        "operator_refined",
+        "memory_safe",
+        "race_free",
+        "resource_bounded"
+      ],
+      "evidence_profiles": [
+        "kernel"
+      ],
+      "id": "m1.r11",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "fe2o3-swiglu",
+        "kernel-schedule-catalog"
+      ],
+      "title": "SwiGLU and projection epilogues."
+    },
+    {
+      "assurance_properties": [
+        "operator_refined",
+        "sampler_refined",
+        "artifact_authenticated"
+      ],
+      "evidence_profiles": [
+        "kernel"
+      ],
+      "id": "m1.r12",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "fe2o3-logits",
+        "kernel-schedule-catalog"
+      ],
+      "title": "Logit projection, argmax, and compact completion records."
+    },
+    {
+      "assurance_properties": [
+        "operator_refined",
+        "resource_bounded",
+        "target_conforming"
+      ],
+      "evidence_profiles": [
+        "authentication",
+        "kernel"
+      ],
+      "id": "m1.r13",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "kernel-schedule-catalog"
+      ],
+      "title": "Finite proof-bound schedule catalogs for every family."
+    },
+    {
+      "assurance_properties": [
+        "lifetime_safe",
+        "resource_bounded",
+        "target_conforming"
+      ],
+      "evidence_profiles": [
+        "runtime"
+      ],
+      "id": "m1.r14",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "fe2o3-aql-foundation",
+        "fe2o3-kfd-queue-foundation",
+        "fe2o3-queue"
+      ],
+      "title": "Reviewed long-lived HSA queue authority in fe2o3."
+    },
+    {
+      "assurance_properties": [
+        "lifetime_safe",
+        "race_free",
+        "resource_bounded"
+      ],
+      "evidence_profiles": [
+        "runtime"
+      ],
+      "id": "m1.r15",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "fe2o3-aql-foundation",
+        "fe2o3-batch",
+        "fe2o3-kfd-queue-foundation"
+      ],
+      "title": "Fixed-capacity multi-packet AQL command batches."
+    },
+    {
+      "assurance_properties": [
+        "memory_safe",
+        "lifetime_safe",
+        "resource_bounded"
+      ],
+      "evidence_profiles": [
+        "runtime"
+      ],
+      "id": "m1.r16",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "fe2o3-kfd-memory-foundation",
+        "fe2o3-typed-allocation"
+      ],
+      "title": "Typed device and host-pinned allocation leases."
+    },
+    {
+      "assurance_properties": [
+        "graph_refined",
+        "scheduler_refined",
+        "lifetime_safe"
+      ],
+      "evidence_profiles": [
+        "composition",
+        "runtime"
+      ],
+      "id": "m1.r17",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "fe2o3-aql-foundation",
+        "fe2o3-batch",
+        "fe2o3-kfd-queue-foundation",
+        "physical-runner"
+      ],
+      "title": "One queue publication per generated inference step."
+    },
+    {
+      "assurance_properties": [
+        "kv_refined",
+        "scheduler_refined",
+        "request_isolated",
+        "lifetime_safe",
+        "resource_bounded"
+      ],
+      "evidence_profiles": [
+        "composition",
+        "runtime"
+      ],
+      "id": "m1.r18",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "device-cache",
+        "physical-runner"
+      ],
+      "title": "Paged KV, continuous batching, cancellation, and quiescent retirement."
+    },
+    {
+      "assurance_properties": [
+        "graph_refined",
+        "kv_refined",
+        "rollback_refined",
+        "sampler_refined"
+      ],
+      "evidence_profiles": [
+        "composition",
+        "runtime"
+      ],
+      "id": "m1.r19",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "speculative-graph"
+      ],
+      "title": "On-device draft, target verification, accept, commit, and rollback round."
+    },
+    {
+      "assurance_properties": [
+        "model_bundle_well_formed",
+        "artifact_authenticated"
+      ],
+      "evidence_profiles": [
+        "composition"
+      ],
+      "id": "m1.r20",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "model-bundle-proof"
+      ],
+      "title": "Model bundle well-formedness."
+    },
+    {
+      "assurance_properties": [
+        "operator_refined",
+        "graph_refined"
+      ],
+      "evidence_profiles": [
+        "composition"
+      ],
+      "id": "m1.r21",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "graph-proof",
+        "kernel-contract-proof"
+      ],
+      "title": "Operator and generated graph refinement."
+    },
+    {
+      "assurance_properties": [
+        "kv_refined"
+      ],
+      "evidence_profiles": [
+        "composition"
+      ],
+      "id": "m1.r22",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "device-cache",
+        "kv-proof"
+      ],
+      "title": "Paged KV refinement to the contiguous logical cache."
+    },
+    {
+      "assurance_properties": [
+        "scheduler_refined",
+        "request_isolated"
+      ],
+      "evidence_profiles": [
+        "composition"
+      ],
+      "id": "m1.r23",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "batching-proof",
+        "scheduler-proof"
+      ],
+      "title": "Continuous batching refinement to independent requests."
+    },
+    {
+      "assurance_properties": [
+        "rollback_refined",
+        "sampler_refined",
+        "distribution_preserved"
+      ],
+      "evidence_profiles": [
+        "composition",
+        "nonclaim"
+      ],
+      "id": "m1.r24",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "speculation-proof"
+      ],
+      "title": "Greedy speculation refinement to target-only decoding."
+    },
+    {
+      "assurance_properties": [
+        "request_isolated",
+        "memory_safe",
+        "race_free"
+      ],
+      "evidence_profiles": [
+        "composition"
+      ],
+      "id": "m1.r25",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "isolation-proof"
+      ],
+      "title": "Request isolation excluding published timing and side-channel non-claims."
+    },
+    {
+      "assurance_properties": [
+        "operator_refined",
+        "memory_safe",
+        "race_free",
+        "resource_bounded"
+      ],
+      "evidence_profiles": [
+        "composition",
+        "kernel"
+      ],
+      "id": "m1.r26",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "kernel-contract-proof"
+      ],
+      "title": "Kernel bounds, initialization, race, and convergence properties."
+    },
+    {
+      "assurance_properties": [
+        "artifact_authenticated",
+        "target_conforming",
+        "machine_refined"
+      ],
+      "evidence_profiles": [
+        "authentication",
+        "nonclaim"
+      ],
+      "id": "m1.r27",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "identity-closure"
+      ],
+      "title": "ABI, target, artifact, proof, and generated-plan identity closure."
+    },
+    {
+      "assurance_properties": [
+        "distribution_preserved",
+        "multi_device_refined",
+        "machine_refined",
+        "memory_safe",
+        "race_free",
+        "lifetime_safe"
+      ],
+      "evidence_profiles": [
+        "nonclaim",
+        "runtime"
+      ],
+      "id": "m1.r28",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "m1-tcb"
+      ],
+      "title": "Explicit compiler/runtime/hardware TCB report."
+    },
+    {
+      "assurance_properties": [
+        "operator_refined",
+        "graph_refined",
+        "sampler_refined",
+        "target_conforming"
+      ],
+      "evidence_profiles": [
+        "qualification"
+      ],
+      "id": "m1.r29",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "differential-bench"
+      ],
+      "title": "Differential target-only logits and tokens over declared buckets."
+    },
+    {
+      "assurance_properties": [
+        "memory_safe",
+        "race_free",
+        "lifetime_safe",
+        "rollback_refined",
+        "resource_bounded"
+      ],
+      "evidence_profiles": [
+        "qualification"
+      ],
+      "id": "m1.r30",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "adversarial-bench"
+      ],
+      "title": "Canary, cancellation, exhaustion, rollback, and fault-injection suites."
+    },
+    {
+      "assurance_properties": [
+        "operator_refined",
+        "target_conforming",
+        "resource_bounded"
+      ],
+      "evidence_profiles": [
+        "kernel",
+        "qualification"
+      ],
+      "id": "m1.r31",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "d10-bench"
+      ],
+      "title": "Core kernels meet the fe2o3 D10 baseline gates."
+    },
+    {
+      "assurance_properties": [
+        "rollback_refined",
+        "sampler_refined"
+      ],
+      "evidence_profiles": [
+        "qualification"
+      ],
+      "id": "m1.r32",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "speculation-bench"
+      ],
+      "title": "Speculation beats Ferric target-only execution on an eligible holdout."
+    },
+    {
+      "assurance_properties": [
+        "graph_refined",
+        "resource_bounded",
+        "target_conforming"
+      ],
+      "evidence_profiles": [
+        "qualification"
+      ],
+      "id": "m1.r33",
+      "obligation_state": "Open",
+      "path_obligations": [
+        "serving-bench"
+      ],
+      "title": "Ferric is compared against pinned, tuned vLLM and SGLang baselines."
+    }
+  ]
+}
