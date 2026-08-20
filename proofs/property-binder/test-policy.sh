@@ -165,8 +165,9 @@ always=speculation|ferric-spec|speculation.py|proof
 always=lifecycle|ferric-engine|lifecycle.py|proof
 always=kv|ferric-engine|kv.py|proof
 always=system|ferric-engine|system.py|proof
+always=system-completion|ferric-engine|system-completion.py|proof
 EOF
-for component in identity-trust speculation lifecycle kv system; do
+for component in identity-trust speculation lifecycle kv system system-completion; do
     printf 'fixture source %s\n' "$component" >"$fixture/crates/fixture/$component.rs"
     printf 'fixture mutator %s\n' "$component" \
         >"$fixture/proofs/negative/components/$component.py"

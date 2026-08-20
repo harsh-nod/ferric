@@ -367,6 +367,23 @@ impl KvPool {
                     == before.request_generation_by_slot_spec(slot)
     }
 
+    pub(crate) proof fn apply_identity_frame_except(
+        &self,
+        before: &Self,
+        changed: int,
+        slot: int,
+    )
+        requires
+            self.identity_frame_except(before, changed),
+            0 <= slot < MAX_REQUEST_SLOTS,
+            slot != changed,
+        ensures
+            self.request_live_by_slot_spec(slot) == before.request_live_by_slot_spec(slot),
+            self.request_generation_by_slot_spec(slot)
+                == before.request_generation_by_slot_spec(slot),
+    {
+    }
+
     proof fn same_state_has_identity(&self, before: &Self)
         requires self.same_state(before),
         ensures self.identity_frame(before),
@@ -1174,6 +1191,12 @@ impl KvPool {
         &&& self.free_len == other.free_len
         &&& self.free_bitmap == other.free_bitmap
         &&& self.requests == other.requests
+    }
+
+    pub(crate) proof fn same_state_reflexive(&self)
+        ensures self.same_state(self),
+    {
+        reveal(KvPool::same_state);
     }
 
     pub closed spec fn request_frame_except(&self, old: &Self, changed: int) -> bool {
@@ -5641,6 +5664,9 @@ impl KvPool {
                     &&& evidence.request_spec() == request
                     &&& evidence.origin_spec() == permit.origin_spec()
                     &&& Self::same_request_id(permit.request_spec(), request)
+                    &&& old(self).committed_tokens_spec(request).is_some()
+                    &&& final(self).committed_tokens_spec(request).is_some()
+                    &&& final(self).resident_tokens_spec(request).is_some()
                     &&& final(self).resident_tokens_spec(request)
                         == final(self).committed_tokens_spec(request)
                     &&& final(self).committed_tokens_spec(request).unwrap() as int
@@ -5733,6 +5759,8 @@ impl KvPool {
                     &&& Self::same_request_id(permit.request_spec(), request)
                     &&& request.generation_spec() < u32::MAX
                     &&& !final(self).request_live_by_slot_spec(request.slot_spec() as int)
+                    &&& final(self).resident_tokens_spec(request).is_none()
+                    &&& final(self).committed_tokens_spec(request).is_none()
                     &&& final(self).request_generation_by_slot_spec(
                         request.slot_spec() as int,
                     ) == old(self).request_generation_by_slot_spec(

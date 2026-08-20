@@ -165,7 +165,8 @@
       "required_mutations": [
         "lifecycle",
         "kv",
-        "system"
+        "system",
+        "system-completion"
       ],
       "checked_evidence": [],
       "unsupported_reason": null

@@ -520,6 +520,12 @@ impl<const C: usize> Scheduler<C> {
         &&& self.live_count == other.live_count
     }
 
+    pub(crate) proof fn same_scalars_reflexive(&self)
+        ensures self.same_scalars(self),
+    {
+        reveal(Scheduler::same_scalars);
+    }
+
     pub closed spec fn slot_model(&self, slot_index: int) -> SequentialRequest
         recommends 0 <= slot_index < C,
     {
@@ -594,7 +600,21 @@ impl<const C: usize> Scheduler<C> {
                 &&& self.state_spec(request) == before.state_spec(request)
                 &&& #[trigger] self.detachment_ready(request, origin)
                     == before.detachment_ready(request, origin)
-            }
+        }
+    }
+
+    pub(crate) proof fn apply_detachment_ready_identity(
+        &self,
+        request: RequestId,
+        origin: KvQuiescenceOrigin,
+    )
+        requires self.detachment_ready(request, origin),
+        ensures
+            request.slot_spec() < C,
+            self.slot_generation_spec(request.slot_spec() as int)
+                == request.generation_spec(),
+    {
+        reveal(Scheduler::detachment_ready_inner);
     }
 
     pub(crate) open spec fn detached_enabled(&self, detached: &KvDetachedRequest) -> bool {
@@ -715,6 +735,34 @@ impl<const C: usize> Scheduler<C> {
                 &&& self.completed == before.completed
             }
         }
+    }
+
+    pub(crate) proof fn apply_admitted_request_identity(
+        &self,
+        before: &Self,
+        request: RequestId,
+    )
+        requires
+            before.basic_invariant(),
+            self.admit_refines(before, &Ok(request)),
+        ensures
+            request.slot_spec() < C,
+            !before.slot_is_live_spec(request.slot_spec() as int),
+            before.slot_generation_spec(request.slot_spec() as int)
+                == request.generation_spec(),
+    {
+        reveal(Scheduler::basic_invariant);
+        reveal(Scheduler::free_ring_invariant);
+        reveal(Scheduler::admit_refines);
+        reveal(Scheduler::slot_is_live_spec);
+        reveal(Scheduler::slot_generation_spec);
+        let slot_index = before.free_ring@[before.free_head as int];
+        assert(0 < before.free_len);
+        assert(ring_position::<C>(before.free_head, 0) == before.free_head);
+        assert(slot_index < C);
+        assert(before.slots@[slot_index as int].state == RequestState::Vacant);
+        assert(request.slot_spec() == slot_index);
+        assert(request.generation_spec() == before.slots@[slot_index as int].generation);
     }
 
     pub closed spec fn retire_refines(
@@ -989,6 +1037,82 @@ impl<const C: usize> Scheduler<C> {
                             #[trigger] self.slots@[slot_index] == before.slots@[slot_index])
             }
         }
+    }
+
+    pub(crate) closed spec fn completed_batch_refines(
+        &self,
+        before: &Self,
+        permits: Seq<Option<KvQuiescencePermit>>,
+        count: usize,
+    ) -> bool {
+        &&& count == before.pending_batch_member_count_spec()
+        &&& count <= permits.len()
+        &&& (forall |offset: int| 0 <= offset < count ==> match
+            #[trigger] permits[offset]
+        {
+            Some(permit) => {
+                let request = permit.request_spec();
+                &&& request.slot_spec() < C
+                &&& before.pending_member_spec(offset as usize) == Some(request)
+                &&& self.state_spec(request) == before.state_spec(request)
+                &&& (self.state_spec(request) == Some(RequestState::InFlight)
+                    || self.state_spec(request) == Some(RequestState::Retiring))
+                &&& (self.state_spec(request) == Some(RequestState::Retiring) ==>
+                    self.detachment_ready(request, permit.origin_spec()))
+            }
+            None => false,
+        })
+        &&& (forall |left: int, right: int| 0 <= left < right < count ==>
+            permits[left].unwrap().request_spec().slot_spec()
+                != permits[right].unwrap().request_spec().slot_spec())
+    }
+
+    pub(crate) proof fn apply_completed_batch_member(
+        &self,
+        before: &Self,
+        permits: Seq<Option<KvQuiescencePermit>>,
+        count: usize,
+        offset: int,
+    )
+        requires
+            self.completed_batch_refines(before, permits, count),
+            0 <= offset < count,
+        ensures
+            permits[offset].is_some(),
+            permits[offset].unwrap().request_spec().slot_spec() < C,
+            before.pending_member_spec(offset as usize)
+                == Some(permits[offset].unwrap().request_spec()),
+            self.state_spec(permits[offset].unwrap().request_spec())
+                == before.state_spec(permits[offset].unwrap().request_spec()),
+            self.state_spec(permits[offset].unwrap().request_spec())
+                == Some(RequestState::InFlight)
+                || self.state_spec(permits[offset].unwrap().request_spec())
+                    == Some(RequestState::Retiring),
+            self.state_spec(permits[offset].unwrap().request_spec())
+                == Some(RequestState::Retiring) ==> self.detachment_ready(
+                    permits[offset].unwrap().request_spec(),
+                    permits[offset].unwrap().origin_spec(),
+                ),
+    {
+        reveal(Scheduler::completed_batch_refines);
+    }
+
+    pub(crate) proof fn apply_completed_batch_distinct(
+        &self,
+        before: &Self,
+        permits: Seq<Option<KvQuiescencePermit>>,
+        count: usize,
+        left: int,
+        right: int,
+    )
+        requires
+            self.completed_batch_refines(before, permits, count),
+            0 <= left < right < count,
+        ensures
+            permits[left].unwrap().request_spec().slot_spec()
+                != permits[right].unwrap().request_spec().slot_spec(),
+    {
+        reveal(Scheduler::completed_batch_refines);
     }
 
     pub(crate) closed spec fn finalized_slot_refines(
@@ -1650,6 +1774,12 @@ impl<const C: usize> Scheduler<C> {
             match result {
                 Ok(count) => {
                     &&& count == old(self).pending_batch_member_count_spec()
+                    &&& final(self).completed_epoch_spec() == completion.epoch_spec()
+                    &&& final(self).completed_batch_refines(
+                        old(self),
+                        final(permits)@,
+                        count,
+                    )
                     &&& count <= final(permits).len()
                     &&& (forall|offset: int| 0 <= offset < count ==> {
                         match #[trigger] final(permits)@[offset] {
@@ -1685,6 +1815,7 @@ impl<const C: usize> Scheduler<C> {
                 Err(failure) => {
                     &&& failure.completion_epoch_spec() == completion.epoch_spec()
                     &&& final(permits)@ == old(permits)@
+                    &&& final(self).same_scalars(old(self))
                 }
             },
     {
@@ -2071,12 +2202,16 @@ impl<const C: usize> Scheduler<C> {
             final(self).basic_invariant(),
             final(self).finalized_refines(old(self), &finalized, &result),
             final(self).identity_frame(old(self)),
+            final(self).completed_epoch_spec() == old(self).completed_epoch_spec(),
             final(self).detachment_ready_frame_except(
                 old(self),
                 finalized.request_spec().slot_spec() as int,
             ),
             result.is_ok() ==> final(self).state_spec(finalized.request_spec())
                 == Some(RequestState::Ready),
+            result.is_ok() ==> final(self).slot_is_live_spec(
+                finalized.request_spec().slot_spec() as int,
+            ),
     {
         let (request, epoch) = match self.finalized_preflight(&finalized) {
             Ok(validated) => validated,
@@ -2299,6 +2434,7 @@ impl<const C: usize> Scheduler<C> {
             final(self).basic_invariant(),
             final(self).detached_refines(old(self), &detached, &result),
             old(self).detached_enabled(&detached) ==> result.is_ok(),
+            final(self).completed_epoch_spec() == old(self).completed_epoch_spec(),
             final(self).detachment_ready_frame_except(
                 old(self),
                 detached.request_spec().slot_spec() as int,
@@ -2307,6 +2443,7 @@ impl<const C: usize> Scheduler<C> {
                 Err(_) => final(self).identity_frame(old(self)),
                 Ok(request) => {
                     let slot_index = request.slot_spec() as int;
+                    &&& request == detached.request_spec()
                     &&& final(self).state_spec(request).is_none()
                     &&& !final(self).slot_is_live_spec(slot_index)
                     &&& final(self).slot_generation_spec(slot_index)
