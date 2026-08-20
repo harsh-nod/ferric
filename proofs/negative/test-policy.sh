@@ -67,6 +67,7 @@ write_metadata() {
 }
 
 cp "$repo/proofs/negative/REQUIRED_COMPONENTS" "$scratch/unsafe-target.registry"
+chmod u+w "$scratch/unsafe-target.registry"
 python3 -I - "$scratch/unsafe-target.registry" <<'PY'
 from pathlib import Path
 import sys
@@ -83,6 +84,7 @@ expect_rejected negative-registry-unsafe-target 'unsafe Verus module target' \
     "$scratch/unsafe-target.active"
 
 cp "$repo/proofs/negative/REQUIRED_COMPONENTS" "$scratch/duplicate.registry"
+chmod u+w "$scratch/duplicate.registry"
 sed -n '2p' "$repo/proofs/negative/REQUIRED_COMPONENTS" \
     >>"$scratch/duplicate.registry"
 expect_rejected negative-registry-duplicate 'duplicate negative component' \
