@@ -1626,13 +1626,6 @@ impl<const C: usize> Scheduler<C> {
             final(self).basic_invariant(),
             final(self).finalized_refines(old(self), &finalized, &result),
     {
-        reveal(Scheduler::basic_invariant);
-        reveal(Scheduler::scalar_invariant);
-        reveal(Scheduler::slot_invariant);
-        reveal(Scheduler::free_ring_invariant);
-        reveal(Scheduler::reclaim_ring_invariant);
-        reveal(Scheduler::member_ring_invariant);
-        reveal(Scheduler::batch_ring_invariant);
         reveal(Scheduler::same_scalars);
         reveal(Scheduler::finalized_refines);
         reveal(Scheduler::slot_model);
@@ -1643,6 +1636,10 @@ impl<const C: usize> Scheduler<C> {
             KvQuiescenceOrigin::CompletedExact { epoch } => epoch,
             KvQuiescenceOrigin::NeverSubmitted => {
                 let result = Err(SchedulerError::FinalizationMismatch);
+                assert(finalized.origin_spec() == KvQuiescenceOrigin::NeverSubmitted);
+                assert(finalized_expected_error::<C>(old(self), &finalized)
+                    == Some(SchedulerError::FinalizationMismatch));
+                assert(self.same_scalars(old(self)));
                 assert(self.finalized_refines(old(self), &finalized, &result));
                 return result;
             }
@@ -1650,6 +1647,10 @@ impl<const C: usize> Scheduler<C> {
         let slot_index = request.slot() as usize;
         if slot_index >= C {
             let result = Err(SchedulerError::InvalidSlot);
+            assert(request == finalized.request_spec());
+            assert(finalized_expected_error::<C>(old(self), &finalized)
+                == Some(SchedulerError::InvalidSlot));
+            assert(self.same_scalars(old(self)));
             assert(self.finalized_refines(old(self), &finalized, &result));
             return result;
         }
@@ -1660,10 +1661,21 @@ impl<const C: usize> Scheduler<C> {
             || slot.active_epoch != epoch
         {
             let result = Err(SchedulerError::FinalizationMismatch);
+            assert(request == finalized.request_spec());
+            assert(finalized_expected_error::<C>(old(self), &finalized)
+                == Some(SchedulerError::FinalizationMismatch));
+            assert(self.same_scalars(old(self)));
             assert(self.finalized_refines(old(self), &finalized, &result));
             return result;
         }
 
+        reveal(Scheduler::basic_invariant);
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::slot_invariant);
+        reveal(Scheduler::free_ring_invariant);
+        reveal(Scheduler::reclaim_ring_invariant);
+        reveal(Scheduler::member_ring_invariant);
+        reveal(Scheduler::batch_ring_invariant);
         let ghost old_slots = self.slots@;
         self.slots[slot_index].state = RequestState::Ready;
         self.slots[slot_index].phase = LifecyclePhase::Idle;
