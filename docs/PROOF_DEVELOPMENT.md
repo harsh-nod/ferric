@@ -43,11 +43,10 @@ that property to be `Proved`.
 Proofs are organized by ownership boundary:
 
 ```text
-crates/ferric-spec/      executable sequential model and specifications
-crates/ferric-engine/    production state transitions
-proofs/engine/           refinement and invariant-preservation proofs
-proofs/integration/      Ferric transition to fe2o3 contract correspondence
-proofs/negative/         mutations that the proof or admission gate rejects
+crates/ferric-spec/src/    executable sequential models and direct proofs
+crates/ferric-engine/src/  production transitions, specifications, and proofs
+proofs/                    authenticated source, tool, and property admission
+proofs/negative/           actual-body mutations the admission gate rejects
 ```
 
 Correctness-critical transitions are executable functions inside the admitted
@@ -76,10 +75,15 @@ The foundation milestone closes these obligations:
 - rollback makes rejected KV unreachable without affecting other requests;
 - submitted resources remain unavailable for reuse until their completion
   epoch is quiescent; and
-- every accepted engine dispatch satisfies the bound fe2o3 kernel contract.
+- the public engine preserves scheduler/KV identity agreement and orders KV
+  publication or detachment before scheduler reuse.
 
 The system refinement theorem composes these component results. A component
 proof may not silently assume another component's conclusion.
+
+M0 has no device dispatch path. Refinement from an accepted engine dispatch to
+an exact fe2o3 kernel contract is an M1 obligation and remains unsupported
+until that path exists.
 
 ## fe2o3 Boundary
 
@@ -120,7 +124,8 @@ A proof-required change is complete only when:
 - the proof transcript and complete source closure are identity-bound;
 - formatting, Clippy, Rust tests, and proof checks pass on the supported Rust
   version;
-- target-specific checks pass on `mi300x` for `gfx942` behavior; and
+- exact-source host checks pass on `mi300x`; a `gfx942` behavior gate becomes
+  mandatory when the qualified code contains a GPU execution path; and
 - an independent review confirms the exact property status and non-claims.
 
 Proof checks should fail closed when the pinned toolchain or authenticated

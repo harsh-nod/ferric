@@ -96,8 +96,10 @@ Required invariants include generational identity, initialized read ranges,
 exclusive writes, immutable sharing, copy-on-write before extension,
 commit-only publication, rollback unreachability, and quiescence before reuse.
 
-The current implementation intentionally supports exclusive pages only.
-Prefix sharing remains unsupported until its states and refinement proof land.
+The M0 metadata state machine supports exclusive writable pages, sealed sharing
+of full committed prefix pages, and copy-on-write extension. It does not yet
+allocate, initialize, or share physical GPU KV buffers; that refinement begins
+with the device runtime milestone.
 
 ## Speculative Round
 

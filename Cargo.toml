@@ -17,5 +17,16 @@ vstd = { git = "https://github.com/verus-lang/verus.git", rev = "b677dd5" }
 unsafe_code = "forbid"
 
 [workspace.lints.clippy]
-all = "deny"
-pedantic = "deny"
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+# Direct Verus bodies retain linear values and proof-only control flow after
+# macro erasure in forms that these style lints cannot interpret.
+if_same_then_else = "allow"
+manual_let_else = "allow"
+needless_pass_by_value = "allow"
+semicolon_if_nothing_returned = "allow"
+single_match = "allow"
+single_match_else = "allow"
+too_many_lines = "allow"
+unused_self = "allow"
+used_underscore_binding = "allow"

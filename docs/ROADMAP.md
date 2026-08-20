@@ -35,14 +35,16 @@ Goal: freeze the system theorem, core identities, and reversible KV semantics.
 - [x] Implement exclusive generational paged-KV ownership.
 - [x] Implement tentative append, commit, rollback, and release.
 - [x] Reject stale page handles and non-transactional exhaustion.
-- [ ] Add generational request slots and deterministic scheduler transitions.
-- [ ] Add completion epochs and retirement-before-reuse semantics.
-- [ ] Add sealed immutable prefix pages and copy-on-write.
-- [ ] Directly verify the executable M0 state-machine bodies with pinned Verus.
-- [ ] Bind M0 properties into fe2o3 proof contracts.
+- [x] Add generational request slots and deterministic scheduler transitions.
+- [x] Add completion epochs and retirement-before-reuse semantics.
+- [x] Add sealed immutable prefix pages and copy-on-write.
+- [x] Directly verify the executable M0 state-machine bodies with pinned Verus.
+- [x] Bind M0 properties into fe2o3 proof contracts.
 
 Exit gate: every implemented transition has an executable oracle, invariant
-tests, negative mutations, and a closed Verus result under the published TCB.
+tests, and a closed direct Verus result under the published TCB. Every `Proved`
+M0 property binds compiler-rooted paths and its assigned sensitive actual-body
+mutations.
 
 ## M1: Qwen3 Speculative Inference On One gfx942
 

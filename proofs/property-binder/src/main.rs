@@ -147,6 +147,10 @@ struct Measurement {
 #[derive(Clone)]
 struct MutationMeasurement {
     mutator: [u8; 32],
+    package: String,
+    module: String,
+    function: String,
+    compiler_path: String,
     marker: Measurement,
     transcript: Measurement,
 }
@@ -154,6 +158,10 @@ struct MutationMeasurement {
 struct RegisteredMutation {
     mutator: PathBuf,
     failure_marker: String,
+    package: String,
+    module: String,
+    function: String,
+    compiler_path: String,
 }
 
 #[derive(Default)]
@@ -215,6 +223,22 @@ fn safe_compiler_prefix(value: &str) -> BinderResult<()> {
         || !value.contains("::")
     {
         return Err(format!("unsafe compiler path prefix: {value:?}"));
+    }
+    Ok(())
+}
+
+fn safe_verus_target(value: &str, description: &str) -> BinderResult<()> {
+    let mut components = value.split("::");
+    let valid = !value.is_empty()
+        && components.all(|component| {
+            let mut bytes = component.bytes();
+            bytes
+                .next()
+                .is_some_and(|byte| byte.is_ascii_alphabetic() || byte == b'_')
+                && bytes.all(|byte| byte.is_ascii_alphanumeric() || byte == b'_')
+        });
+    if !valid {
+        return Err(format!("unsafe {description}: {value:?}"));
     }
     Ok(())
 }
@@ -613,19 +637,47 @@ fn fixed_files(paths: &EvidencePaths<'_>) -> Vec<(String, PathBuf)> {
     ]
 }
 
-fn mutation_registry(repo: &Path) -> BinderResult<BTreeMap<String, RegisteredMutation>> {
+fn mutation_registry(
+    repo: &Path,
+    verified: &VerifiedInventory,
+) -> BinderResult<BTreeMap<String, RegisteredMutation>> {
     let path = repo.join("proofs/negative/REQUIRED_COMPONENTS");
     let text = fs::read_to_string(&path).map_err(|error| format!("{}: {error}", path.display()))?;
+    let mut lines = text.lines();
+    if lines.next() != Some("format=FERRIC-NEGATIVE-COMPONENTS-V2") {
+        return Err("unsupported negative component registry".to_owned());
+    }
     let mut registry = BTreeMap::new();
-    for line in text.lines().skip(1) {
-        let payload = line
-            .split_once('=')
-            .map(|(_, payload)| payload)
-            .ok_or_else(|| format!("malformed negative component: {line}"))?;
+    let mut names = BTreeSet::new();
+    for line in lines {
+        let (payload, enabled) = if let Some(payload) = line.strip_prefix("always=") {
+            (payload, true)
+        } else if let Some(payload) = line.strip_prefix("when-verus=") {
+            let fields: Vec<&str> = payload.split('|').collect();
+            let [source, ..] = fields.as_slice() else {
+                return Err(format!("malformed conditional negative component: {line}"));
+            };
+            let source_path = repo.join(source);
+            if source.is_empty()
+                || source.starts_with('/')
+                || source.split('/').any(|component| component == "..")
+                || !source_path.is_file()
+            {
+                return Err(format!("unsafe conditional mutation source: {source}"));
+            }
+            let source_text = fs::read_to_string(&source_path)
+                .map_err(|error| format!("{}: {error}", source_path.display()))?;
+            let compact: String = source_text.chars().filter(|char| !char.is_whitespace()).collect();
+            (payload, compact.contains("verus!{"))
+        } else {
+            return Err(format!("malformed negative component: {line}"));
+        };
         let fields: Vec<&str> = payload.split('|').collect();
-        let (name, package, mutator, marker) = match fields.as_slice() {
-            [name, package, mutator, marker] => (*name, *package, *mutator, *marker),
-            [source, name, package, mutator, marker] => {
+        let (name, package, mutator, marker, module, function) = match fields.as_slice() {
+            [name, package, mutator, marker, module, function] => {
+                (*name, *package, *mutator, *marker, *module, *function)
+            }
+            [source, name, package, mutator, marker, module, function] => {
                 if source.is_empty()
                     || source.starts_with('/')
                     || source.split('/').any(|component| component == "..")
@@ -633,7 +685,7 @@ fn mutation_registry(repo: &Path) -> BinderResult<BTreeMap<String, RegisteredMut
                 {
                     return Err(format!("unsafe conditional mutation source: {source}"));
                 }
-                (*name, *package, *mutator, *marker)
+                (*name, *package, *mutator, *marker, *module, *function)
             }
             _ => return Err(format!("malformed negative component: {line}")),
         };
@@ -643,43 +695,96 @@ fn mutation_registry(repo: &Path) -> BinderResult<BTreeMap<String, RegisteredMut
         if !matches!(marker, "proof" | "no-cheating") {
             return Err(format!("unknown negative failure marker: {marker}"));
         }
-        if registry
-            .insert(
+        safe_verus_target(module, "Verus module target")?;
+        safe_verus_target(function, "Verus function target")?;
+        if !names.insert(name.to_owned()) {
+            return Err(format!("duplicate negative component: {name}"));
+        }
+        if enabled {
+            let crate_name = verified.packages.get(package).ok_or_else(|| {
+                format!("mutation target package is not verified: {name}|{package}")
+            })?;
+            let module_prefix = format!("{crate_name}::{module}::");
+            let candidates: Vec<&String> = verified
+                .paths
+                .iter()
+                .filter_map(|(owner, path)| {
+                    if owner != package {
+                        return None;
+                    }
+                    let tail = path.strip_prefix(&module_prefix)?;
+                    let exact = tail == function;
+                    let unique_suffix = !function.contains("::")
+                        && tail.rsplit("::").next() == Some(function);
+                    (exact || unique_suffix).then_some(path)
+                })
+                .collect();
+            let compiler_path = match candidates.as_slice() {
+                [path] => (*path).clone(),
+                [] => {
+                    return Err(format!(
+                        "mutation target matched no verified compiler path: {name}|{package}|{module}|{function}"
+                    ));
+                }
+                _ => {
+                    return Err(format!(
+                        "mutation target is ambiguous: {name}|{package}|{module}|{function}"
+                    ));
+                }
+            };
+            registry.insert(
                 name.to_owned(),
                 RegisteredMutation {
                     mutator: repo.join("proofs/negative/components").join(mutator),
                     failure_marker: marker.to_owned(),
+                    package: package.to_owned(),
+                    module: module.to_owned(),
+                    function: function.to_owned(),
+                    compiler_path,
                 },
-            )
-            .is_some()
-        {
-            return Err(format!("duplicate negative component: {name}"));
+            );
         }
+    }
+    if registry.is_empty() {
+        return Err("negative component registry selected no mutations".to_owned());
     }
     Ok(registry)
 }
 
-fn marker_hash(repo: &Path, marker: &Path, expected: [u8; 32]) -> BinderResult<()> {
+fn exact_marker_field<'a>(text: &'a str, prefix: &str) -> BinderResult<&'a str> {
+    let values: Vec<&str> = text
+        .lines()
+        .filter_map(|line| line.strip_prefix(prefix))
+        .collect();
+    match values.as_slice() {
+        [value] if !value.is_empty() => Ok(value),
+        _ => Err(format!("mutation evidence field is not exact: {prefix}")),
+    }
+}
+
+fn marker_hash(
+    repo: &Path,
+    marker: &Path,
+    expected: [u8; 32],
+    registered: &RegisteredMutation,
+) -> BinderResult<()> {
     let text = fs::read_to_string(marker)
         .map_err(|error| format!("cannot read mutation marker {}: {error}", marker.display()))?;
-    let sources: Vec<&str> = text
-        .lines()
-        .filter_map(|line| line.strip_prefix("MUTATED_SOURCE="))
-        .collect();
-    let hashes: Vec<&str> = text
-        .lines()
-        .filter_map(|line| line.strip_prefix("MUTATOR_SHA256="))
-        .collect();
-    if sources.len() != 1
-        || sources[0].is_empty()
-        || sources[0].starts_with('/')
-        || sources[0].split('/').any(|component| component == "..")
-        || !repo.join(sources[0]).is_file()
-        || hashes.len() != 1
-        || hashes[0] != hex(&expected)
+    let source = exact_marker_field(&text, "MUTATED_SOURCE=")?;
+    let hash = exact_marker_field(&text, "MUTATOR_SHA256=")?;
+    let package = exact_marker_field(&text, "VERUS_PACKAGE=")?;
+    let module = exact_marker_field(&text, "VERUS_MODULE=")?;
+    let function = exact_marker_field(&text, "VERUS_FUNCTION=")?;
+    if source.starts_with('/')
+        || source.split('/').any(|component| component == "..")
+        || !repo.join(source).is_file()
+        || hash != hex(&expected)
+        || package != registered.package
+        || module != registered.module
+        || function != registered.function
     {
         return Err(format!(
-            "mutation marker does not bind its source and mutator: {}",
+            "mutation marker does not bind its source, mutator, and exact Verus target: {}",
             marker.display()
         ));
     }
@@ -704,14 +809,26 @@ fn proof_transcript_has_error(text: &str) -> bool {
         })
 }
 
-fn mutation_transcript(transcript: &Path, failure_marker: &str) -> BinderResult<()> {
+fn mutation_transcript(
+    transcript: &Path,
+    registered: &RegisteredMutation,
+) -> BinderResult<()> {
     let text = fs::read_to_string(transcript).map_err(|error| {
         format!(
             "cannot read mutation transcript {}: {error}",
             transcript.display()
         )
     })?;
-    let matched = match failure_marker {
+    if exact_marker_field(&text, "VERUS_MODULE=")? != registered.module
+        || exact_marker_field(&text, "VERUS_PACKAGE=")? != registered.package
+        || exact_marker_field(&text, "VERUS_FUNCTION=")? != registered.function
+    {
+        return Err(format!(
+            "mutation transcript does not bind its exact Verus target: {}",
+            transcript.display()
+        ));
+    }
+    let matched = match registered.failure_marker.as_str() {
         "proof" => proof_transcript_has_error(&text),
         "no-cheating" => text.contains("assume/admit not allowed with --no-cheating"),
         _ => false,
@@ -728,8 +845,9 @@ fn mutation_transcript(transcript: &Path, failure_marker: &str) -> BinderResult<
 fn collect_negative(
     paths: &EvidencePaths<'_>,
     inventory: &mut EvidenceInventory,
+    verified: &VerifiedInventory,
 ) -> BinderResult<()> {
-    let registry = mutation_registry(paths.repo)?;
+    let registry = mutation_registry(paths.repo, verified)?;
     for entry in fs::read_dir(paths.negative_dir)
         .map_err(|error| format!("{}: {error}", paths.negative_dir.display()))?
     {
@@ -747,21 +865,43 @@ fn collect_negative(
             .negative
             .insert(name, measure(&entry.path(), false)?);
     }
+    for filename in inventory.negative.keys() {
+        if let Some(name) = filename.strip_suffix(".mutation")
+            && !registry.contains_key(name)
+        {
+            return Err(format!("unregistered mutation marker: {filename}"));
+        }
+    }
     for (name, registered) in registry {
         let marker = paths.negative_dir.join(format!("{name}.mutation"));
         if !marker.is_file() {
-            continue;
+            return Err(format!("required mutation evidence missing: {}", marker.display()));
         }
         let transcript = paths.negative_dir.join(format!("{name}.transcript"));
+        if !transcript.is_file() {
+            return Err(format!(
+                "required mutation evidence missing: {}",
+                transcript.display()
+            ));
+        }
         let mutator_measurement = measure(&registered.mutator, false)?;
-        marker_hash(paths.repo, &marker, mutator_measurement.digest)?;
-        mutation_transcript(&transcript, &registered.failure_marker)?;
+        marker_hash(
+            paths.repo,
+            &marker,
+            mutator_measurement.digest,
+            &registered,
+        )?;
+        mutation_transcript(&transcript, &registered)?;
         let marker_measurement = measure(&marker, false)?;
         let transcript_measurement = measure(&transcript, false)?;
         inventory.mutations.insert(
             name,
             MutationMeasurement {
                 mutator: mutator_measurement.digest,
+                package: registered.package,
+                module: registered.module,
+                function: registered.function,
+                compiler_path: registered.compiler_path,
                 marker: marker_measurement,
                 transcript: transcript_measurement,
             },
@@ -790,14 +930,19 @@ fn collect_evidence(paths: &EvidencePaths<'_>) -> BinderResult<EvidenceInventory
         executable(&current_exe)?,
     );
     let sysroot = command_stdout("rustc", &["--print", "sysroot"])?;
-    inventory.tools.insert(
-        "rustc".to_owned(),
-        executable(&Path::new(&sysroot).join("bin/rustc"))?,
-    );
-    inventory.tools.insert(
-        "cargo".to_owned(),
-        executable(&Path::new(&sysroot).join("bin/cargo"))?,
-    );
+    for name in [
+        "rustc",
+        "cargo",
+        "rustfmt",
+        "cargo-fmt",
+        "cargo-clippy",
+        "clippy-driver",
+    ] {
+        inventory.tools.insert(
+            name.to_owned(),
+            executable(&Path::new(&sysroot).join("bin").join(name))?,
+        );
+    }
     for name in [
         "sh",
         "awk",
@@ -852,7 +997,8 @@ fn collect_evidence(paths: &EvidencePaths<'_>) -> BinderResult<EvidenceInventory
     if inventory.artifacts.keys().cloned().collect::<BTreeSet<_>>() != expected_artifacts {
         return Err("qualified release artifact set is incomplete".to_owned());
     }
-    collect_negative(paths, &mut inventory)?;
+    let verified = parse_verified(&paths.repo.join("proofs/VERIFIED_MODULES"))?;
+    collect_negative(paths, &mut inventory, &verified)?;
     Ok(inventory)
 }
 
@@ -894,8 +1040,12 @@ fn render_evidence_index(inventory: &EvidenceInventory) -> String {
     );
     lines.extend(inventory.mutations.iter().map(|(name, value)| {
         format!(
-            "mutation={name}|{}|{}|{}|{}|{}",
+            "mutation={name}|{}|{}|{}|{}|{}|{}|{}|{}|{}",
             hex(&value.mutator),
+            value.package,
+            value.module,
+            value.function,
+            value.compiler_path,
             value.marker.size,
             hex(&value.marker.digest),
             value.transcript.size,
@@ -1068,6 +1218,14 @@ fn validate_checked_evidence(
         .map_err(|error| format!("{}: {error}", paths.runtime_tests.display()))?;
     if !runtime.contains("test result: ok.") || runtime.contains("FAILED") {
         return Err("runtime test transcript is not an all-pass result".to_owned());
+    }
+    for gate in ["fmt", "clippy", "test-debug", "test-release"] {
+        let marker = format!("FERRIC_QUALITY_GATE={gate}:PASS");
+        if runtime.lines().filter(|line| *line == marker).count() != 1 {
+            return Err(format!(
+                "quality gate transcript marker is not exact: {gate}"
+            ));
+        }
     }
     let mut digests = Vec::new();
     for evidence in &property.checked_evidence {
@@ -1413,8 +1571,20 @@ fn build_contract(
                             property.name
                         )
                     })?;
+                    if !matched.iter().any(|(package, path)| {
+                        package == &evidence.package && path == &evidence.compiler_path
+                    }) {
+                        return Err(format!(
+                            "property mutation target is outside resolved compiler paths: {}|{}|{}",
+                            property.name, mutation, evidence.compiler_path
+                        ));
+                    }
                     input_digests.extend([
                         evidence.mutator,
+                        sha256_bytes(evidence.package.as_bytes()),
+                        sha256_bytes(evidence.module.as_bytes()),
+                        sha256_bytes(evidence.function.as_bytes()),
+                        sha256_bytes(evidence.compiler_path.as_bytes()),
                         evidence.marker.digest,
                         evidence.transcript.digest,
                     ]);

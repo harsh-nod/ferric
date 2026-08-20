@@ -8,14 +8,29 @@
       "name": "m0.request_generation",
       "kind": "GenerationSafety",
       "required_status": "Proved",
-      "statement": "A live `RequestId` names exactly one current slot generation; stale or exhausted generations are never admitted as live.",
-      "statement_sha256": "92982e9fd5f660b3c7f3778c8a8902bc55a47d4623d9e2807c1a7497daca2e28",
+      "statement": "A live `RequestId` names exactly one current slot generation; stale generations are rejected, generation never wraps, and a live `u32::MAX` generation fails closed before reuse.",
+      "statement_sha256": "93a2678a3c89dea728f2787b5fea506256fed4912b950902d292c236f2c86d9e",
       "compiler_paths_resolved": true,
       "compiler_path_prefixes": [
-        "ferric_spec::identity::RequestId::"
+        "ferric_spec::identity::RequestId::new",
+        "ferric_engine::scheduler::Scheduler::admit",
+        "ferric_engine::scheduler::Scheduler::retire",
+        "ferric_engine::scheduler::Scheduler::reclaim_next_generation",
+        "ferric_engine::scheduler::Scheduler::reclaim_detached",
+        "ferric_engine::cache::KvPool::create_request",
+        "ferric_engine::cache::KvPool::release_request",
+        "ferric_engine::cache::KvPool::retire_empty_request",
+        "ferric_engine::cache::KvPool::live_request_index",
+        "ferric_engine::system::Engine::admit",
+        "ferric_engine::system::Engine::reclaim_one",
+        "ferric_engine::system::Engine::complete_exact"
       ],
       "required_mutations": [
-        "identity-trust"
+        "request-id-generation",
+        "kv-request-generation",
+        "kv-stale-request",
+        "scheduler-exact-rejection",
+        "scheduler-generation-reuse"
       ],
       "checked_evidence": [],
       "unsupported_reason": null
@@ -32,7 +47,9 @@
         "ferric_spec::speculation::GreedyCommit::"
       ],
       "required_mutations": [
-        "speculation"
+        "speculation-prefix",
+        "speculation",
+        "speculation-validation"
       ],
       "checked_evidence": [],
       "unsupported_reason": null
@@ -43,10 +60,26 @@
       "required_status": "Proved",
       "statement": "Every successful scheduler body implements its stated deterministic transition and frame; every rejection is the exact enabledness failure and preserves state.",
       "statement_sha256": "75a99ba88c393e70168f59febe8fb7ea31f341ac83ce4a4d01a6dddeb7e273b8",
-      "compiler_paths_resolved": false,
-      "compiler_path_prefixes": [],
+      "compiler_paths_resolved": true,
+      "compiler_path_prefixes": [
+        "ferric_engine::scheduler::Scheduler::admit",
+        "ferric_engine::scheduler::Scheduler::retire",
+        "ferric_engine::scheduler::Scheduler::dispatch_ready",
+        "ferric_engine::scheduler::Scheduler::dispatch_enabled",
+        "ferric_engine::scheduler::Scheduler::dispatch_preflight",
+        "ferric_engine::scheduler::Scheduler::dispatch_scan_commit",
+        "ferric_engine::scheduler::Scheduler::dispatch_one_selected",
+        "ferric_engine::scheduler::Scheduler::complete_exact",
+        "ferric_engine::scheduler::Scheduler::accept_finalized",
+        "ferric_engine::scheduler::Scheduler::take_retiring_permit",
+        "ferric_engine::scheduler::Scheduler::reclaim_detached",
+        "ferric_engine::scheduler::Scheduler::finalize_slot"
+      ],
       "required_mutations": [
-        "lifecycle"
+        "scheduler-finalization-transition",
+        "scheduler-exact-rejection",
+        "scheduler-completion-boundary",
+        "scheduler-epoch-accounting"
       ],
       "checked_evidence": [],
       "unsupported_reason": null
@@ -57,10 +90,27 @@
       "required_status": "Proved",
       "statement": "Dispatch members remain unavailable for reuse through exact completion, KV finalization or detachment, and generation advance. Cancellation never makes executing storage reusable.",
       "statement_sha256": "9fd3a24a86acc4e9cd0430e82b2e3489e569423711da642c5d6d625af55ea54d",
-      "compiler_paths_resolved": false,
-      "compiler_path_prefixes": [],
+      "compiler_paths_resolved": true,
+      "compiler_path_prefixes": [
+        "ferric_engine::scheduler::Scheduler::dispatch_ready",
+        "ferric_engine::scheduler::Scheduler::dispatch_enabled",
+        "ferric_engine::scheduler::Scheduler::dispatch_preflight",
+        "ferric_engine::scheduler::Scheduler::dispatch_scan_commit",
+        "ferric_engine::scheduler::Scheduler::dispatch_one_selected",
+        "ferric_engine::scheduler::Scheduler::complete_exact",
+        "ferric_engine::scheduler::Scheduler::retire",
+        "ferric_engine::scheduler::Scheduler::retire_inflight",
+        "ferric_engine::scheduler::Scheduler::accept_finalized",
+        "ferric_engine::scheduler::Scheduler::finalize_slot",
+        "ferric_engine::scheduler::Scheduler::take_retiring_permit",
+        "ferric_engine::scheduler::Scheduler::reclaim_detached",
+        "ferric_engine::scheduler::Scheduler::reclaim_slot"
+      ],
       "required_mutations": [
-        "lifecycle"
+        "scheduler-completion-early-ready",
+        "scheduler-cancellation-early-ready",
+        "scheduler-finalization-transition",
+        "scheduler-generation-reuse"
       ],
       "checked_evidence": [],
       "unsupported_reason": null
@@ -71,10 +121,25 @@
       "required_status": "Proved",
       "statement": "For `0 < C <= 32`, all scheduler metadata and rings remain within `C`; dispatch scans at most `C` slots and other transition work is bounded by the affected batch or ring operation.",
       "statement_sha256": "0d4b97c0f2b02a34cf14ff02c3987db2f4adff9a5be4683816c50d61a5b8d3b7",
-      "compiler_paths_resolved": false,
-      "compiler_path_prefixes": [],
+      "compiler_paths_resolved": true,
+      "compiler_path_prefixes": [
+        "ferric_engine::scheduler::Scheduler::admit",
+        "ferric_engine::scheduler::Scheduler::retire",
+        "ferric_engine::scheduler::Scheduler::dispatch_ready",
+        "ferric_engine::scheduler::Scheduler::dispatch_enabled",
+        "ferric_engine::scheduler::Scheduler::dispatch_preflight",
+        "ferric_engine::scheduler::Scheduler::dispatch_scan_commit",
+        "ferric_engine::scheduler::Scheduler::dispatch_one_selected",
+        "ferric_engine::scheduler::Scheduler::complete_exact",
+        "ferric_engine::scheduler::Scheduler::accept_finalized",
+        "ferric_engine::scheduler::Scheduler::take_retiring_permit",
+        "ferric_engine::scheduler::Scheduler::reclaim_detached",
+        "ferric_engine::scheduler::advance",
+        "ferric_engine::scheduler::ring_tail"
+      ],
       "required_mutations": [
-        "lifecycle"
+        "scheduler-scan-bound",
+        "scheduler-ring-bound"
       ],
       "checked_evidence": [],
       "unsupported_reason": null
@@ -85,10 +150,14 @@
       "required_status": "Proved",
       "statement": "Successful KV bodies implement their exact enabled transition and frames; failed transitions preserve the pool. Reads are admitted only inside the logically initialized range.",
       "statement_sha256": "ee1bba3d9699f8a09d6b2ec1621264ec02b2406dcb648acb7c295178659d3d19",
-      "compiler_paths_resolved": false,
-      "compiler_path_prefixes": [],
+      "compiler_paths_resolved": true,
+      "compiler_path_prefixes": [
+        "ferric_engine::cache::KvPool::"
+      ],
       "required_mutations": [
-        "kv"
+        "kv",
+        "kv-error-frame",
+        "kv-read-initialized"
       ],
       "checked_evidence": [],
       "unsupported_reason": null
@@ -99,10 +168,14 @@
       "required_status": "Proved",
       "statement": "Only full committed pages are shared, shared pages are sealed and payload-immutable, extension allocates a fresh writable page, and rejected tentative suffix pages become unreachable without changing other requests.",
       "statement_sha256": "4b827a7aebc268fe7f1837a052412611ea765c032b281064c06cd5a3877d9eca",
-      "compiler_paths_resolved": false,
-      "compiler_path_prefixes": [],
+      "compiler_paths_resolved": true,
+      "compiler_path_prefixes": [
+        "ferric_engine::cache::KvPool::"
+      ],
       "required_mutations": [
-        "kv"
+        "kv-share-committed",
+        "kv-cow-sealed",
+        "kv-rollback-tail"
       ],
       "checked_evidence": [],
       "unsupported_reason": null
@@ -113,10 +186,16 @@
       "required_status": "Proved",
       "statement": "A sole-reference reclaim advances the page generation before reuse, request detach advances the request generation, and stale page or request identities are rejected.",
       "statement_sha256": "f22b28daae5691844a5c3247b2c3a2f77e192680febc508c51793e2346005353",
-      "compiler_paths_resolved": false,
-      "compiler_path_prefixes": [],
+      "compiler_paths_resolved": true,
+      "compiler_path_prefixes": [
+        "ferric_engine::cache::KvPool::",
+        "ferric_engine::cache::PageId::"
+      ],
       "required_mutations": [
-        "kv"
+        "kv-page-generation",
+        "kv-request-generation",
+        "kv-stale-request",
+        "kv-stale-page"
       ],
       "checked_evidence": [],
       "unsupported_reason": null
@@ -127,10 +206,13 @@
       "required_status": "Proved",
       "statement": "Page, request, and page-table lengths remain at their generated construction bounds; live chains, free metadata, token ranges, and reference masks remain within those bounds.",
       "statement_sha256": "c7bb6b970a609e14f525cc7734d0e795e1bc5d04df6e8e17b43f984c3fea6ad8",
-      "compiler_paths_resolved": false,
-      "compiler_path_prefixes": [],
+      "compiler_paths_resolved": true,
+      "compiler_path_prefixes": [
+        "ferric_engine::cache::KvPool::"
+      ],
       "required_mutations": [
-        "kv"
+        "kv-storage-length",
+        "kv-free-metadata-bound"
       ],
       "checked_evidence": [],
       "unsupported_reason": null
@@ -139,13 +221,40 @@
       "name": "m0.engine_composition",
       "kind": "FunctionalCorrectness",
       "required_status": "Proved",
-      "statement": "The public engine preserves exact scheduler/KV request-generation agreement, publishes completed KV before redispatch, and detaches quiescent KV before returning a slot to the free ring.",
-      "statement_sha256": "a1f556aed76cb0323ea4044449c442cdd9d0040355587a5f8ee089d951f68f1f",
-      "compiler_paths_resolved": false,
-      "compiler_path_prefixes": [],
+      "statement": "The public engine exactly refines constructor inputs and wrapper result/output routing for admission, tentative append, committed-prefix sharing, read validation, retirement, reclaim, and dispatch; it preserves scheduler/KV request-generation agreement, publishes completed KV before redispatch, and detaches quiescent KV before slot reuse.",
+      "statement_sha256": "98d7ea71a14f61f6b57cc671c08c547a9c4e0b8f862fee537927111cd1023aee",
+      "compiler_paths_resolved": true,
+      "compiler_path_prefixes": [
+        "ferric_engine::system::Engine::new",
+        "ferric_engine::system::Engine::admit",
+        "ferric_engine::system::Engine::append_tentative",
+        "ferric_engine::system::Engine::share_committed_prefix",
+        "ferric_engine::system::Engine::validate_read",
+        "ferric_engine::system::Engine::retire",
+        "ferric_engine::system::Engine::reclaim_one",
+        "ferric_engine::system::Engine::dispatch_ready",
+        "ferric_engine::system::Engine::complete_exact",
+        "ferric_engine::scheduler::Scheduler::admit",
+        "ferric_engine::scheduler::Scheduler::complete_exact",
+        "ferric_engine::scheduler::Scheduler::accept_finalized",
+        "ferric_engine::scheduler::Scheduler::reclaim_detached",
+        "ferric_engine::cache::KvPool::create_request",
+        "ferric_engine::cache::KvPool::finalize_tentative",
+        "ferric_engine::cache::KvPool::release_request"
+      ],
       "required_mutations": [
-        "lifecycle",
-        "kv"
+        "system-constructor-routing",
+        "system",
+        "system-admit-return",
+        "system-append-routing",
+        "system-share-routing",
+        "system-read-routing",
+        "system-retire-routing",
+        "system-reclaim-return",
+        "system-dispatch-routing",
+        "system-completion",
+        "scheduler-completion-early-ready",
+        "system-detachment"
       ],
       "checked_evidence": [],
       "unsupported_reason": null

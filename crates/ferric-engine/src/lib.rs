@@ -6,7 +6,11 @@
 use vstd::prelude::*;
 
 mod cache;
-pub mod epoch;
-pub mod scheduler;
+mod epoch;
+mod scheduler;
+mod system;
 
-pub use cache::{KvError, KvPool, PageId};
+pub use cache::{KvError, PageId};
+pub use epoch::ExactCompletion;
+pub use scheduler::{DispatchBatch, SchedulerError};
+pub use system::{CompletionFailure, Engine, EngineError};

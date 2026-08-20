@@ -15,7 +15,7 @@ refinement claim.
 
 | Property | fe2o3 kind | Required status | Exact M0 statement |
 | --- | --- | --- | --- |
-| `m0.request_generation` | `GenerationSafety` | `Proved` | A live `RequestId` names exactly one current slot generation; stale or exhausted generations are never admitted as live. |
+| `m0.request_generation` | `GenerationSafety` | `Proved` | A live `RequestId` names exactly one current slot generation; stale generations are rejected, generation never wraps, and a live `u32::MAX` generation fails closed before reuse. |
 | `m0.greedy_speculation` | `FunctionalCorrectness` | `Proved` | For valid target choices, the executable greedy round emits the maximal accepted draft prefix followed by the target correction or bonus; invalid lengths return the specified error. |
 | `m0.scheduler_transition` | `FunctionalCorrectness` | `Proved` | Every successful scheduler body implements its stated deterministic transition and frame; every rejection is the exact enabledness failure and preserves state. |
 | `m0.scheduler_lifetime` | `LeaseSafety` | `Proved` | Dispatch members remain unavailable for reuse through exact completion, KV finalization or detachment, and generation advance. Cancellation never makes executing storage reusable. |
@@ -24,7 +24,7 @@ refinement claim.
 | `m0.kv_sharing_rollback` | `FunctionalCorrectness` | `Proved` | Only full committed pages are shared, shared pages are sealed and payload-immutable, extension allocates a fresh writable page, and rejected tentative suffix pages become unreachable without changing other requests. |
 | `m0.kv_generation` | `GenerationSafety` | `Proved` | A sole-reference reclaim advances the page generation before reuse, request detach advances the request generation, and stale page or request identities are rejected. |
 | `m0.kv_bounds` | `ResourceBounds` | `Proved` | Page, request, and page-table lengths remain at their generated construction bounds; live chains, free metadata, token ranges, and reference masks remain within those bounds. |
-| `m0.engine_composition` | `FunctionalCorrectness` | `Proved` | The public engine preserves exact scheduler/KV request-generation agreement, publishes completed KV before redispatch, and detaches quiescent KV before returning a slot to the free ring. |
+| `m0.engine_composition` | `FunctionalCorrectness` | `Proved` | The public engine exactly refines constructor inputs and wrapper result/output routing for admission, tentative append, committed-prefix sharing, read validation, retirement, reclaim, and dispatch; it preserves scheduler/KV request-generation agreement, publishes completed KV before redispatch, and detaches quiescent KV before slot reuse. |
 | `m0.hsa_exact_completion` | `SynchronizationSafety` | `Contracted` | An `ExactCompletion` is constructed only after the external ordered HSA authority establishes quiescence for that exact epoch and every retained resource. |
 | `m0.proof_erasure` | `ProofErasureCorrespondence` | `Checked` | The qualified release is the artifact emitted by the strict same-source `cargo-verus build --release`; the default erasure checks completed for the authenticated source and tool closure. |
 | `m0.no_transition_allocation` | `ResourceBounds` | `Checked` | The admitted structural check rejects its enumerated allocation and growth constructs outside exact constructors, and capacity tests observe unchanged metadata storage; this is not a general allocation-effect proof. |

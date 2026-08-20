@@ -18,11 +18,12 @@ Statuses:
 | Models | Arbitrary remote Python model code | Unsupported | N/A |
 | KV | Exclusive generational pages | Model | `kv_refined` |
 | KV | Tentative commit and rollback | Model | `rollback_refined` |
-| KV | Prefix caching and copy-on-write | Planned | `kv_refined` |
+| KV | Committed-prefix sharing and copy-on-write | Model | `kv_refined` |
 | KV | Quantized KV | Planned | `kv_refined` |
-| Scheduling | Continuous batching | Planned | `scheduler_refined` |
+| Scheduling | Continuous batching | Model | `scheduler_refined` |
 | Scheduling | Chunked prefill | Planned | `scheduler_refined` |
-| Scheduling | Preemption and cancellation | Planned | `lifetime_safe` |
+| Scheduling | Cancellation | Model | `lifetime_safe` |
+| Scheduling | Preemption | Planned | `lifetime_safe` |
 | Scheduling | Priority and fairness policies | Planned | `resource_bounded` |
 | Decoding | Greedy speculative transition | Model | `rollback_refined` |
 | Decoding | Exact stochastic speculation | Planned | `distribution_preserved` |
@@ -49,4 +50,3 @@ Statuses:
 Feature support is configuration-specific. A feature implemented for one
 model, target, numerical policy, or schedule does not silently generalize to
 another configuration.
-

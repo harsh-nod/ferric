@@ -211,8 +211,21 @@ def main() -> None:
         for row in counts
     ):
         fail("proof count evidence does not match admitted compiler paths")
-    rustc_path = Path(tool_output(["rustc", "--print", "sysroot"])) / "bin/rustc"
-    cargo_path = Path(tool_output(["rustc", "--print", "sysroot"])) / "bin/cargo"
+    rust_bin = Path(tool_output(["rustc", "--print", "sysroot"])) / "bin"
+    rust_tools = {
+        name: rust_bin / name
+        for name in (
+            "rustc",
+            "cargo",
+            "rustfmt",
+            "cargo-fmt",
+            "cargo-clippy",
+            "clippy-driver",
+        )
+    }
+    for name, path in rust_tools.items():
+        if not path.is_file():
+            fail(f"Rust toolchain component is unavailable: {name}")
     host_tools = {}
     for name in (
         "sh",
@@ -275,10 +288,11 @@ def main() -> None:
         f"verification-queries={verification_queries}",
         f"direct-verified-bodies={direct_total}",
         f"opted-packages={','.join(package['name'] for package in opted_packages)}",
-        f"rustc={tool_output(['rustc', '-vV'])}",
-        f"rustc-binary={identity(rustc_path)}",
-        f"cargo={tool_output(['cargo', '-V'])}",
-        f"cargo-binary={identity(cargo_path)}",
+        f"rustc={tool_output([str(rust_tools['rustc']), '-vV'])}",
+        f"cargo={tool_output([str(rust_tools['cargo']), '-V'])}",
+        f"rustfmt={tool_output([str(rust_tools['rustfmt']), '--version'])}",
+        f"clippy={tool_output([str(rust_tools['clippy-driver']), '--version'])}",
+        "quality-gates=fmt,clippy,test-debug,test-release",
         "claim-boundary=verified Rust source bodies plus default Verus erasure checks",
         "nonclaim=rustc linker runtime GPU execution and machine-code refinement remain outside this proof",
         "qualification-host-tcb=ambient Rust/Cargo, Python, POSIX shell/coreutils, OS, filesystem, and process supervision are contracted",
@@ -288,6 +302,7 @@ def main() -> None:
         "property-binder-tcb=property-binder binary and complete locked dependency closure including fe2o3-proof-contracts, proc macros, and build scripts",
         "nonclaim=fe2o3 ContractSetV1 validation does not authenticate digests or establish semantic proofs",
     ]
+    fields.extend(f"rust-tool={name}|{identity(path)}" for name, path in rust_tools.items())
     fields.extend(f"tool={name}|{identity(path)}" for name, path in tools.items())
     fields.extend(f"host-tool={name}|{identity(path)}" for name, path in host_tools.items())
     fields.extend(f"proof-count={'|'.join(row)}" for row in counts)

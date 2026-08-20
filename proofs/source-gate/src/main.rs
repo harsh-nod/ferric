@@ -480,6 +480,20 @@ impl<'ast> Visit<'ast> for SyntaxAudit {
 }
 
 impl<'ast> Visit<'ast> for AllocationAudit {
+    fn visit_expr_unary(&mut self, expression: &'ast verus_syn::ExprUnary) {
+        if matches!(expression.op, verus_syn::UnOp::Proof(_)) {
+            return;
+        }
+        visit::visit_expr_unary(self, expression);
+    }
+
+    fn visit_local(&mut self, local: &'ast verus_syn::Local) {
+        if local.ghost.is_some() || local.tracked.is_some() {
+            return;
+        }
+        visit::visit_local(self, local);
+    }
+
     fn visit_expr_macro(&mut self, expression: &'ast verus_syn::ExprMacro) {
         if expression
             .mac

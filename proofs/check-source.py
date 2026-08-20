@@ -207,9 +207,15 @@ def scan(path: Path, blocks_only: bool) -> None:
     if forbidden:
         raise ScanError(f"forbidden proof identifier '{forbidden[0]}'")
     trust_code = re.sub(r"\bfn\s+(?:admit|assume)\s*(?=\()", "fn", code)
-    trust_calls = sorted(
-        set(re.findall(r"\b(admit|assume)\s*\(", trust_code))
-    )
+    trust_calls = set()
+    for match in re.finditer(r"\b(admit|assume)\s*\(", trust_code):
+        # `admit` is also a production scheduler method. A preceding dot is
+        # unambiguously method dispatch; bare and path-qualified calls remain
+        # forbidden because they can name Verus trust primitives.
+        if trust_code[: match.start()].rstrip().endswith("."):
+            continue
+        trust_calls.add(match.group(1))
+    trust_calls = sorted(trust_calls)
     if trust_calls:
         raise ScanError(f"forbidden trust call '{trust_calls[0]}'")
     verifier_attributes = set(

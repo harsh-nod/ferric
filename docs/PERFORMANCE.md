@@ -11,6 +11,34 @@ Ferric adopts fe2o3 D8-D10 as release policy:
 3. Qualify only exact artifacts that already passed proof, numerical, canary,
    ISA, resource, and target gates.
 
+## M0 Scheduler Design Evidence
+
+The epoch-derived lifecycle representation was selected using a narrow host
+metadata benchmark. This is design evidence, not a release qualification or
+an inference-throughput claim.
+
+The benchmark compared the completion body at `804402c` with the runtime
+prototype at `1e86aab`. Each sample timed only `Scheduler::complete_exact`
+after dispatching a full batch; KV finalization and redispatch ran outside the
+timed interval. Five alternating release runs used 20,000 warmups and 500,000
+samples per capacity with a pinned CPU core.
+
+On the `mi300x` host's EPYC 9454 CPU, median run-level raw means were:
+
+| Capacity | Stored phase | Epoch-derived phase | Change |
+| --- | ---: | ---: | ---: |
+| `1` | 26.292 ns | 26.234 ns | no measurable change |
+| `8` | 43.809 ns | 36.861 ns | -15.9% |
+| `32` | 102.864 ns | 87.067 ns | -15.4% |
+
+Release disassembly explains the result: the successful emission loop drops
+from five stores per member to three, eliminating the scattered slot phase
+store and its load/branch. The `C=8` and `C=32` specialized bodies shrink from
+563 to 492 bytes. Completion still validates each member before mutation, and
+the benchmark includes substantial per-call timer overhead. It contains no
+HSA, GPU, model, tokenizer, network, or serving work and cannot support a
+comparison with vLLM or SGLang.
+
 ## Reproducibility Identity
 
 Every result binds:
@@ -97,4 +125,3 @@ Before timing, reject unexpected scratch, spills, dynamic stack, calls,
 symbols, control flow, occupancy loss, resource-manifest drift, allocations in
 the token loop, host waits, queue drains, graph breaks, or dependency/lifetime
 violations.
-

@@ -16,7 +16,7 @@ output=$3
 }
 mkdir -p "$output"
 
-for tool in awk chmod cp grep mktemp python3 rm sed sha256sum timeout; do
+for tool in awk cat chmod cp grep mktemp python3 rm sha256sum timeout; do
     command -v "$tool" >/dev/null 2>&1 || {
         printf 'FAIL: negative tests require %s\n' "$tool" >&2
         exit 1
@@ -35,6 +35,14 @@ esac
     printf 'FAIL: negative-test timeout must be 1 through 1200\n' >&2
     exit 2
 }
+parallel_jobs=${FERRIC_NEGATIVE_JOBS:-2}
+case "$parallel_jobs" in
+    ''|*[!0-9]*) printf 'FAIL: invalid negative-test parallelism\n' >&2; exit 2 ;;
+esac
+[ "$parallel_jobs" -ge 1 ] && [ "$parallel_jobs" -le 8 ] || {
+    printf 'FAIL: negative-test parallelism must be 1 through 8\n' >&2
+    exit 2
+}
 
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/ferric-negative.XXXXXX")
 trap 'rm -rf "$scratch"' EXIT HUP INT TERM
@@ -51,8 +59,16 @@ run_rejected() {
     name=$1
     copy=$2
     package=$3
-    target=$(mktemp -d "$scratch/${name}-target.XXXXXX")
+    module=$4
+    function=$5
+    target="$scratch/targets/$name"
+    mkdir -p "$target"
     transcript="$output/${name}.transcript"
+    {
+        printf 'VERUS_PACKAGE=%s\n' "$package"
+        printf 'VERUS_MODULE=%s\n' "$module"
+        printf 'VERUS_FUNCTION=%s\n' "$function"
+    } >"$transcript"
     set +e
     (
         cd "$copy"
@@ -60,8 +76,9 @@ run_rejected() {
             CARGO_TERM_COLOR=never \
             timeout "$timeout_seconds" "$verus_root/cargo-verus" build \
                 -p "$package" --locked --release --target-dir "$target" \
-                --fwd-verus-args-to roots -j 1 -- --no-cheating
-    ) >"$transcript" 2>&1
+                --fwd-verus-args-to roots -j 1 -- --no-cheating \
+                --verify-only-module "$module" --verify-function "$function"
+    ) >>"$transcript" 2>&1
     status=$?
     set -e
     if [ "$status" -eq 0 ]; then
@@ -79,50 +96,18 @@ registry="$repo/proofs/negative/REQUIRED_COMPONENTS"
     printf 'FAIL: negative component registry is unavailable\n' >&2
     exit 1
 }
-[ "$(sed -n '1p' "$registry")" = 'format=FERRIC-NEGATIVE-COMPONENTS-V1' ] || {
-    printf 'FAIL: unsupported negative component registry\n' >&2
-    exit 1
-}
 active="$scratch/active-components"
-: >"$active"
-while IFS= read -r record; do
-    case "$record" in
-        format=*) continue ;;
-        always=*) printf '%s\n' "${record#always=}" >>"$active" ;;
-        when-verus=*)
-            fields=${record#when-verus=}
-            source=${fields%%|*}
-            rest=${fields#*|}
-            [ "$rest" != "$fields" ] || {
-                printf 'FAIL: malformed conditional negative component\n' >&2
-                exit 1
-            }
-            if grep -Eq 'verus[[:space:]]*![[:space:]]*\{' "$repo/$source"; then
-                printf '%s\n' "$rest" >>"$active"
-            fi
-            ;;
-        *) printf 'FAIL: malformed negative component record: %s\n' "$record" >&2; exit 1 ;;
-    esac
-done <"$registry"
-[ -s "$active" ] || {
-    printf 'FAIL: negative component registry selected no mutations\n' >&2
-    exit 1
-}
+python3 -I "$repo/proofs/negative/check-registry.py" "$repo" "$registry" "$active"
 
-while IFS='|' read -r name package mutator marker extra; do
-    [ -n "$name" ] && [ -n "$package" ] && [ -n "$mutator" ] && [ -n "$marker" ] && [ -z "$extra" ] || {
-        printf 'FAIL: malformed active negative component\n' >&2
-        exit 1
-    }
-    case "$name$package$mutator" in
-        *[!A-Za-z0-9_.-]*) printf 'FAIL: unsafe negative component identity\n' >&2; exit 1 ;;
-    esac
+run_component() {
+    name=$1
+    package=$2
+    mutator=$3
+    marker=$4
+    module=$5
+    function=$6
     mutation="$repo/proofs/negative/components/$mutator"
-    [ -f "$mutation" ] || {
-        printf 'FAIL: required %s actual-body mutation is missing: %s\n' "$name" "$mutator" >&2
-        exit 1
-    }
-    copy="$scratch/$name"
+    copy="$scratch/copies/$name"
     copy_source "$copy"
     mutation_marker="$output/$name.mutation"
     python3 -I "$mutation" "$copy" >"$mutation_marker"
@@ -132,7 +117,10 @@ while IFS='|' read -r name package mutator marker extra; do
     }
     printf 'MUTATOR_SHA256=%s\n' "$(sha256sum "$mutation" | awk '{ print $1 }')" \
         >>"$mutation_marker"
-    run_rejected "$name" "$copy" "$package"
+    printf 'VERUS_PACKAGE=%s\n' "$package" >>"$mutation_marker"
+    printf 'VERUS_MODULE=%s\n' "$module" >>"$mutation_marker"
+    printf 'VERUS_FUNCTION=%s\n' "$function" >>"$mutation_marker"
+    run_rejected "$name" "$copy" "$package" "$module" "$function"
     case "$marker" in
         proof)
             grep -Eq 'verification results:: [0-9]+ verified, [1-9][0-9]* errors|postcondition not satisfied|assertion failed' \
@@ -149,5 +137,59 @@ while IFS='|' read -r name package mutator marker extra; do
             ;;
         *) printf 'FAIL: unknown negative failure marker: %s\n' "$marker" >&2; exit 1 ;;
     esac
-    printf 'PASS: %s actual-body mutation rejected (%s)\n' "$name" "$marker"
+    printf 'PASS: %s actual-body mutation rejected (%s)\n' "$name" "$marker" \
+        >"$scratch/results/$name"
+}
+
+wait_batch() {
+    while IFS='|' read -r name pid extra; do
+        [ -n "$name" ] && [ -n "$pid" ] && [ -z "$extra" ] || {
+            printf 'FAIL: malformed negative-test job record\n' >&2
+            exit 1
+        }
+        set +e
+        wait "$pid"
+        status=$?
+        set -e
+        if [ "$status" -ne 0 ]; then
+            printf '%s|%s\n' "$name" "$status" >>"$scratch/failures"
+        fi
+    done <"$scratch/pids"
+    : >"$scratch/pids"
+    running=0
+}
+
+mkdir -p "$scratch/copies" "$scratch/targets" "$scratch/results"
+: >"$scratch/pids"
+: >"$scratch/failures"
+running=0
+while IFS='|' read -r name package mutator marker module function extra; do
+    [ -n "$name" ] && [ -n "$package" ] && [ -n "$mutator" ] && [ -n "$marker" ] \
+        && [ -n "$module" ] && [ -n "$function" ] && [ -z "$extra" ] || {
+        printf 'FAIL: malformed active negative component\n' >&2
+        exit 1
+    }
+    [ -f "$repo/proofs/negative/components/$mutator" ] || {
+        printf 'FAIL: required %s actual-body mutation is missing: %s\n' "$name" "$mutator" >&2
+        exit 1
+    }
+    run_component "$name" "$package" "$mutator" "$marker" "$module" "$function" &
+    pid=$!
+    printf '%s|%s\n' "$name" "$pid" >>"$scratch/pids"
+    running=$((running + 1))
+    if [ "$running" -eq "$parallel_jobs" ]; then
+        wait_batch
+    fi
+done <"$active"
+[ "$running" -eq 0 ] || wait_batch
+
+if [ -s "$scratch/failures" ]; then
+    printf 'FAIL: negative mutation jobs failed:\n' >&2
+    while IFS='|' read -r name status; do
+        printf '  %s (status %s)\n' "$name" "$status" >&2
+    done <"$scratch/failures"
+    exit 1
+fi
+while IFS='|' read -r name _rest; do
+    cat "$scratch/results/$name"
 done <"$active"
