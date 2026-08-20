@@ -12,6 +12,11 @@ pub const MAX_REQUEST_SLOTS: usize = 32;
 /// Build-generated per-request page-table bound (8K tokens at 16 tokens/page).
 pub const MAX_PAGES_PER_REQUEST: usize = 512;
 
+const MAX_PAGE_SLOTS_U32: u32 = 16_384;
+const MAX_REQUEST_SLOTS_U32: u32 = 32;
+const MAX_PAGES_PER_REQUEST_U32: u32 = 512;
+const MAX_PAGES_PER_REQUEST_U64: u64 = 512;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct PageId {
     index: u32,
@@ -41,7 +46,7 @@ struct RequestKey { slot: u32, generation: u32 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum PageState {
     Free,
-    Writable { owner_slot: u8 },
+    Writable { owner_slot: u32 },
     Sealed,
 }
 
@@ -1122,7 +1127,7 @@ impl KvPool {
                 owner_slot < MAX_REQUEST_SLOTS
                     && self.requests@[owner_slot as int].live
                     && page.reference_mask == (1_u32 << owner_slot)
-                    && has_reference(page.reference_mask, owner_slot as u32)
+                    && has_reference(page.reference_mask, owner_slot)
                     && 0 < page.initialized_tokens <= self.page_tokens
                     && !self.free_bitmap@[page_index]
             }
@@ -1466,13 +1471,13 @@ impl KvPool {
         if page_count == 0 { return Err(KvError::ZeroCapacity(Capacity::Pages)); }
         if page_tokens == 0 { return Err(KvError::ZeroCapacity(Capacity::PageTokens)); }
         if max_context_tokens == 0 { return Err(KvError::ZeroCapacity(Capacity::ContextTokens)); }
-        if page_count > MAX_PAGE_SLOTS as u32 {
+        if page_count > MAX_PAGE_SLOTS_U32 {
             return Err(KvError::CapacityExceedsBuildBound(Capacity::Pages));
         }
         if page_tokens > max_context_tokens { return Err(KvError::PageExceedsContext); }
-        let rounded_context = max_context_tokens as u64 + page_tokens as u64 - 1;
-        let required_chain_pages = rounded_context / page_tokens as u64;
-        if required_chain_pages > MAX_PAGES_PER_REQUEST as u64 {
+        let rounded_context = u64::from(max_context_tokens) + u64::from(page_tokens) - 1;
+        let required_chain_pages = rounded_context / u64::from(page_tokens);
+        if required_chain_pages > MAX_PAGES_PER_REQUEST_U64 {
             return Err(KvError::CapacityExceedsBuildBound(Capacity::RequestPages));
         }
 
@@ -1590,7 +1595,7 @@ impl KvPool {
                 }
             },
     {
-        if request.slot >= MAX_REQUEST_SLOTS as u32 {
+        if request.slot >= MAX_REQUEST_SLOTS_U32 {
             return Err(KvError::InvalidRequestSlot(request.slot));
         }
         let index = request.slot as usize;
@@ -1729,7 +1734,7 @@ impl KvPool {
         } else {
             self.requests[request_index].pages[(old_page_count - 1) as usize]
         };
-        let (tail_capacity, tail_initialized) = if old_page_count == 0 {
+        let (tail_capacity, _tail_initialized) = if old_page_count == 0 {
             (0, 0)
         } else {
             let slot = self.page_slot(tail_page)?;
@@ -1737,7 +1742,7 @@ impl KvPool {
             let state = slot.state;
             match state {
                 PageState::Writable { owner_slot } => {
-                    if owner_slot as u32 != request.slot {
+                    if owner_slot != request.slot {
                         return Err(KvError::InvariantViolation(Invariant::PageState));
                     }
                     assert(slot.initialized_tokens <= self.page_tokens);
@@ -1753,7 +1758,7 @@ impl KvPool {
         let after_tail = token_count.saturating_sub(tail_capacity);
         let full_pages = after_tail / self.page_tokens;
         let partial_tokens = after_tail % self.page_tokens;
-        let extra_page = if partial_tokens == 0 { 0_u32 } else { 1_u32 };
+        let extra_page = partial_tokens.min(1);
         let required_pages = match full_pages.checked_add(extra_page) {
             Some(value) => value,
             None => return Err(KvError::RequestPageTableFull),
@@ -1778,7 +1783,7 @@ impl KvPool {
             Some(value) => value,
             None => return Err(KvError::RequestPageTableFull),
         };
-        if final_page_count > MAX_PAGES_PER_REQUEST as u32 {
+        if final_page_count > MAX_PAGES_PER_REQUEST_U32 {
             return Err(KvError::RequestPageTableFull);
         }
         if required_pages > self.free_len { return Err(KvError::OutOfPages); }
@@ -1787,9 +1792,9 @@ impl KvPool {
         if old_page_count > 0 {
             let ghost tail_position = old_page_count as int - 1;
             assert(tail_page == old(self).requests@[request.slot as int].pages@[tail_position]);
-            assert(old(self).pages@[tail_page.index as int].initialized_tokens == tail_initialized);
-            assert(tail_initialized + tail_capacity == self.page_tokens);
-            assert(tail_initialized as int
+            assert(old(self).pages@[tail_page.index as int].initialized_tokens == _tail_initialized);
+            assert(_tail_initialized + tail_capacity == self.page_tokens);
+            assert(_tail_initialized as int
                 == old_resident as int - tail_position * self.page_tokens as int);
         }
         let mut remaining = token_count;
@@ -1815,10 +1820,10 @@ impl KvPool {
                     == old_resident + tail_capacity);
                 assert(self.requests@[request.slot as int].page_count == old_page_count);
                 let ghost tail_position = old_page_count as int - 1;
-                assert(tail_initialized as int
+                assert(_tail_initialized as int
                     == old_resident as int - tail_position * self.page_tokens as int);
                 assert(old_resident as int
-                    == tail_position * self.page_tokens as int + tail_initialized as int);
+                    == tail_position * self.page_tokens as int + _tail_initialized as int);
                 assert(tail_position + 1 == old_page_count as int);
                 proof { Self::increment_product(tail_position, self.page_tokens as int); }
                 assert(tail_position * self.page_tokens as int + self.page_tokens as int
@@ -1933,7 +1938,7 @@ impl KvPool {
             } else {
                 assert(written == partial_tokens);
             }
-            let previous_remaining = remaining;
+            let ghost previous_remaining = remaining;
             assert((self.requests@[request.slot as int].page_count as int)
                 < (final_page_count as int));
             assert((final_page_count as int) <= (MAX_PAGES_PER_REQUEST as int));
@@ -2075,20 +2080,40 @@ impl KvPool {
         let source_index = self.live_request_index(source)?;
         let target_index = self.live_request_index(target)?;
         if source_index == target_index { return Err(KvError::SameRequestShare); }
-        if token_count == 0 || token_count % self.page_tokens != 0 {
-            return Err(KvError::PrefixNotPageAligned);
-        }
-        if token_count > self.requests[source_index].committed_tokens {
-            return Err(KvError::PrefixExceedsCommitted);
-        }
-        if self.requests[target_index].resident_tokens != 0 { return Err(KvError::TargetNotEmpty); }
         let shared_pages = token_count / self.page_tokens;
-        if shared_pages as usize > MAX_PAGES_PER_REQUEST { return Err(KvError::RequestPageTableFull); }
         proof {
             vstd::arithmetic::div_mod::lemma_fundamental_div_mod(
                 token_count as int,
                 self.page_tokens as int,
             );
+            vstd::arithmetic::div_mod::lemma_mod_bound(
+                token_count as int,
+                self.page_tokens as int,
+            );
+            vstd::arithmetic::div_mod::lemma_remainder_lower(
+                token_count as int,
+                self.page_tokens as int,
+            );
+            vstd::arithmetic::mul::lemma_mul_is_commutative(
+                self.page_tokens as int,
+                shared_pages as int,
+            );
+        }
+        assert(shared_pages as int * self.page_tokens as int <= token_count as int);
+        let aligned_tokens = shared_pages * self.page_tokens;
+        if token_count == 0 || aligned_tokens != token_count {
+            if token_count != 0 {
+                assert(token_count % self.page_tokens != 0);
+            }
+            return Err(KvError::PrefixNotPageAligned);
+        }
+        assert(token_count % self.page_tokens == 0);
+        if token_count > self.requests[source_index].committed_tokens {
+            return Err(KvError::PrefixExceedsCommitted);
+        }
+        if self.requests[target_index].resident_tokens != 0 { return Err(KvError::TargetNotEmpty); }
+        if shared_pages > MAX_PAGES_PER_REQUEST_U32 {
+            return Err(KvError::RequestPageTableFull);
         }
         assert(token_count as int == self.page_tokens as int * shared_pages as int);
         assert(token_count as int == shared_pages as int * self.page_tokens as int) by {
@@ -2200,7 +2225,7 @@ impl KvPool {
                 assert(old(self).requests@[source_index as int].resident_tokens
                     <= self.max_context_tokens);
             }
-            self.share_next_page(source_index, target_index, position);
+            self.share_next_page(source_index, target_index, target.slot, position);
             position += 1;
             assert(self.requests@[target_index as int].resident_tokens as int
                 == position as int * self.page_tokens as int) by {
@@ -2407,7 +2432,7 @@ impl KvPool {
         assert(old_page_count <= MAX_PAGES_PER_REQUEST);
         let full_pages = committed / self.page_tokens;
         let tail_tokens = committed % self.page_tokens;
-        let extra_page = if tail_tokens == 0 { 0_u32 } else { 1_u32 };
+        let extra_page = tail_tokens.min(1);
         proof {
             vstd::arithmetic::div_mod::lemma_fundamental_div_mod(
                 committed as int,
@@ -2650,8 +2675,8 @@ impl KvPool {
             assert(committed as int
                 <= tail_position as int * self.page_tokens as int);
             match self.pages[page.index as usize].state {
-                PageState::Writable { owner_slot } => {
-                    assert(owner_slot as u32 == request.slot);
+                PageState::Writable { owner_slot: _owner_slot } => {
+                    assert(_owner_slot == request.slot);
                 }
                 PageState::Sealed => {
                     assert(remaining_pages as int * self.page_tokens as int
@@ -2679,7 +2704,7 @@ impl KvPool {
             ));
             assert(self.free_len < self.page_limit);
             let ghost previous = *self;
-            let previous_remaining = remaining_pages;
+            let ghost previous_remaining = remaining_pages;
             self.drop_sole_tail(request_index, page, committed);
             remaining_pages -= 1;
             assert(remaining_pages + 1 == previous_remaining);
@@ -2729,7 +2754,9 @@ impl KvPool {
                 == (retained_pages as int - 1) * self.page_tokens as int
                     + tail_tokens as int);
             match self.pages[tail.index as usize].state {
-                PageState::Writable { owner_slot } => assert(owner_slot as u32 == request.slot),
+                PageState::Writable { owner_slot: _owner_slot } => {
+                    assert(_owner_slot == request.slot);
+                },
                 PageState::Sealed => {
                     assert(retained_pages as int * self.page_tokens as int <= committed as int);
                     assert((committed as int)
@@ -3023,7 +3050,7 @@ impl KvPool {
                     match self.pages@[page.index as int].state {
                         PageState::Writable { owner_slot } => {
                             assert(owner_slot as int == request.slot as int);
-                            assert(owner_slot as u32 == request.slot);
+                            assert(owner_slot == request.slot);
                             assert(self.pages@[page.index as int].reference_mask
                                 == (1_u32 << owner_slot));
                             assert(self.pages@[page.index as int].reference_mask
@@ -3034,7 +3061,7 @@ impl KvPool {
                         PageState::Free => assert(false),
                     }
                 }
-                self.detach_shared_tail(request_index, page, new_committed);
+                self.detach_shared_tail(request_index, request.slot, page, new_committed);
             } else {
                 assert(self.pages@[page.index as int].generation < u32::MAX);
                 assert(initial.reclaim_prefix_count(request.slot as int, remaining as int)
@@ -3329,12 +3356,15 @@ impl KvPool {
         &mut self,
         source_index: usize,
         target_index: usize,
+        target_slot: u32,
         position: u32,
     )
         requires
             old(self).well_formed(),
             source_index < MAX_REQUEST_SLOTS,
             target_index < MAX_REQUEST_SLOTS,
+            target_slot < MAX_REQUEST_SLOTS,
+            target_index == target_slot,
             source_index != target_index,
             old(self).requests@[source_index as int].live,
             old(self).requests@[target_index as int].live,
@@ -3389,7 +3419,7 @@ impl KvPool {
                     == old(self).pages@[page.index as int].initialized_tokens
                 &&& final(self).pages@[page.index as int].reference_mask
                     == old(self).pages@[page.index as int].reference_mask
-                        | (1_u32 << target_index as u32)
+                        | (1_u32 << target_slot)
             },
             forall |page_index: int|
                 0 <= page_index < old(self).page_limit
@@ -3441,19 +3471,19 @@ impl KvPool {
         }
         assert(!has_reference(
             self.pages@[page.index as int].reference_mask,
-            target_index as u32,
+            target_slot,
         ));
         let state = self.pages[page_index].state;
         match state {
-            PageState::Writable { owner_slot } => {
-                assert(owner_slot as usize == source_index);
+            PageState::Writable { owner_slot: _owner_slot } => {
+                assert(_owner_slot as usize == source_index);
                 self.pages[page_index].state = PageState::Sealed;
             }
             PageState::Sealed => {}
             PageState::Free => { assert(false); }
         }
         let previous_reference_mask = self.pages[page_index].reference_mask;
-        let shared_reference_mask = set_reference(previous_reference_mask, target_index as u32);
+        let shared_reference_mask = set_reference(previous_reference_mask, target_slot);
         self.pages[page_index].reference_mask = shared_reference_mask;
         self.requests[target_index].pages[position as usize] = page;
         self.requests[target_index].page_count += 1;
@@ -3603,10 +3633,10 @@ impl KvPool {
                 assert(self.pages@[index].state == PageState::Sealed);
                 assert(self.pages@[index].initialized_tokens == self.page_tokens);
                 assert(!self.free_bitmap@[index]);
-                assert(has_reference(self.pages@[index].reference_mask, target_index as u32));
+                assert(has_reference(self.pages@[index].reference_mask, target_slot));
                 reference_mask_is_nonzero(
                     self.pages@[index].reference_mask,
-                    target_index as u32,
+                    target_slot,
                 );
                 assert(self.pages@[index].reference_mask != 0);
                 assert(self.chain_has_page(target_index as int, index)) by {
@@ -3617,7 +3647,7 @@ impl KvPool {
                         <==> self.chain_has_page(slot, index)) by {
                     set_reference_lemma(
                         old(self).pages@[index].reference_mask,
-                        target_index as u32,
+                        target_slot,
                         slot as u32,
                     );
                     if slot == target_index {
@@ -3704,7 +3734,7 @@ impl KvPool {
             ],
             page.index < old(self).page_limit,
             old(self).pages@[page.index as int].state
-                == (PageState::Writable { owner_slot: request_index as u8 }),
+                == (PageState::Writable { owner_slot: request_index as u32 }),
             0 < written,
             old(self).pages@[page.index as int].initialized_tokens + written
                 <= old(self).page_tokens,
@@ -3924,7 +3954,8 @@ impl KvPool {
         reveal(KvPool::chain_has_page);
         reveal(KvPool::free_stack_has_page);
         let stack_index = (self.free_len - 1) as usize;
-        let page_index = self.free_stack[stack_index] as usize;
+        let page_slot = self.free_stack[stack_index];
+        let page_index = page_slot as usize;
         let chain_position = self.requests[request_index].page_count as usize;
 
         assert(stack_index as int == old(self).free_len - 1);
@@ -3943,7 +3974,7 @@ impl KvPool {
         self.free_len -= 1;
         self.free_bitmap[page_index] = false;
         self.pages[page_index].state = PageState::Writable {
-            owner_slot: request.slot as u8,
+            owner_slot: request.slot,
         };
         self.pages[page_index].initialized_tokens = written;
         let previous_reference_mask = self.pages[page_index].reference_mask;
@@ -3954,7 +3985,7 @@ impl KvPool {
         }
         assert(exclusive_reference_mask == (1_u32 << request.slot));
         self.pages[page_index].reference_mask = exclusive_reference_mask;
-        let page = PageId { index: page_index as u32, generation: self.pages[page_index].generation };
+        let page = PageId { index: page_slot, generation: self.pages[page_index].generation };
         self.requests[request_index].pages[chain_position] = page;
         self.requests[request_index].page_count += 1;
         self.requests[request_index].resident_tokens += written;
@@ -4070,8 +4101,7 @@ impl KvPool {
             == old(self).pages@[page_index as int].generation);
         assert(self.pages@[page_index as int].generation > 0);
         assert(self.pages@[page_index as int].state
-            == (PageState::Writable { owner_slot: request.slot as u8 }));
-        assert((request.slot as u8) as int == request_index as int);
+            == (PageState::Writable { owner_slot: request.slot }));
         assert(self.requests@[request_index as int].live);
         assert(self.pages@[page_index as int].reference_mask == (1_u32 << request.slot));
         assert(0 < self.pages@[page_index as int].initialized_tokens <= self.page_tokens);
@@ -4170,7 +4200,7 @@ impl KvPool {
             ],
             page.index < old(self).page_limit,
             old(self).pages@[page.index as int].state
-                == (PageState::Writable { owner_slot: request_index as u8 }),
+                == (PageState::Writable { owner_slot: request_index as u32 }),
             0 < tail_tokens < old(self).page_tokens,
             new_resident as int
                 == (old(self).requests@[request_index as int].page_count as int - 1)
@@ -4336,9 +4366,9 @@ impl KvPool {
                         0 <= logical < old(self).requests@[slot].page_count
                             && old(self).requests@[slot].pages@[logical].index == index;
                     assert(old(self).pages@[index].state
-                        == (PageState::Writable { owner_slot: slot as u8 }));
+                        == (PageState::Writable { owner_slot: slot as u32 }));
                     assert(old(self).pages@[index].state
-                        == (PageState::Writable { owner_slot: request_index as u8 }));
+                        == (PageState::Writable { owner_slot: request_index as u32 }));
                 } else {
                     assert(self.pages@[index] == old(self).pages@[index]);
                 }
@@ -4937,12 +4967,15 @@ impl KvPool {
     fn detach_shared_tail(
         &mut self,
         request_index: usize,
+        request_slot: u32,
         page: PageId,
         new_committed: u32,
     )
         requires
             old(self).well_formed(),
             request_index < MAX_REQUEST_SLOTS,
+            request_slot < MAX_REQUEST_SLOTS,
+            request_index == request_slot,
             old(self).requests@[request_index as int].live,
             old(self).requests@[request_index as int].page_count > 0,
             old(self).requests@[request_index as int].page_count <= MAX_PAGES_PER_REQUEST,
@@ -4953,7 +4986,7 @@ impl KvPool {
             old(self).pages@[page.index as int].state == PageState::Sealed,
             has_other_reference(
                 old(self).pages@[page.index as int].reference_mask,
-                request_index as u32,
+                request_slot,
             ),
             new_committed as int == if old(self).requests@[request_index as int].committed_tokens
                 as int <= old(self).requests@[request_index as int].resident_tokens as int
@@ -4987,7 +5020,7 @@ impl KvPool {
                 == old(self).pages@[page.index as int].initialized_tokens,
             final(self).pages@[page.index as int].reference_mask
                 == old(self).pages@[page.index as int].reference_mask
-                    & !(1_u32 << request_index as u32),
+                    & !(1_u32 << request_slot),
             forall |page_index: int|
                 0 <= page_index < old(self).page_limit && page_index != page.index ==>
                     final(self).pages@[page_index] == old(self).pages@[page_index],
@@ -5018,7 +5051,7 @@ impl KvPool {
         assert(new_committed <= new_resident);
         let updated_mask = clear_reference(
             self.pages[page_index].reference_mask,
-            request_index as u32,
+            request_slot,
         );
         assert(updated_mask != 0);
 
@@ -5283,7 +5316,7 @@ impl KvPool {
                     if owner_slot as int == request_index {
                         assert(has_reference(
                             old(self).pages@[index].reference_mask,
-                            owner_slot as u32,
+                            owner_slot,
                         ));
                         assert(old(self).chain_has_page(request_index as int, index));
                         assert(false);
@@ -5804,45 +5837,6 @@ impl KvPool {
     }
 
     #[must_use]
-    pub fn page_count(&self, request: RequestId) -> (count: Option<u32>)
-        requires self.well_formed(),
-        ensures count == self.page_count_spec(request),
-    {
-        reveal(KvPool::page_count_spec);
-        reveal(KvPool::request_matches_spec);
-        reveal(KvPool::key_matches);
-        let slot = self.requests.get(request.slot() as usize)?;
-        if slot.live && slot.generation == request.generation() {
-            Some(slot.page_count)
-        } else {
-            None
-        }
-    }
-
-    #[must_use]
-    pub fn page_at(
-        &self,
-        request: RequestId,
-        logical_page: u32,
-    ) -> (page: Option<PageId>)
-        requires self.well_formed(),
-        ensures page == self.page_at_spec(request, logical_page),
-    {
-        reveal(KvPool::page_at_spec);
-        reveal(KvPool::request_matches_spec);
-        reveal(KvPool::key_matches);
-        let slot = self.requests.get(request.slot() as usize)?;
-        if !slot.live || slot.generation != request.generation() || logical_page >= slot.page_count
-        {
-            return None;
-        }
-        reveal(KvPool::request_slot_well_formed);
-        assert(self.request_slot_well_formed(request.slot_spec() as int));
-        assert(logical_page < MAX_PAGES_PER_REQUEST);
-        Some(slot.pages[logical_page as usize])
-    }
-
-    #[must_use]
     pub fn free_pages(&self) -> (pages: u32)
         ensures pages == self.free_pages_spec(),
     {
@@ -5870,6 +5864,21 @@ mod tests {
     fn request(slot: u32, generation: u32) -> RequestId {
         RequestId::new(slot, generation)
     }
+
+    fn page_count(pool: &KvPool, request: RequestId) -> Option<u32> {
+        let slot = pool.requests.get(request.slot() as usize)?;
+        (slot.live && slot.generation == request.generation()).then_some(slot.page_count)
+    }
+
+    fn page_at(pool: &KvPool, request: RequestId, logical_page: u32) -> Option<super::PageId> {
+        let slot = pool.requests.get(request.slot() as usize)?;
+        if !slot.live || slot.generation != request.generation() || logical_page >= slot.page_count
+        {
+            return None;
+        }
+        Some(slot.pages[logical_page as usize])
+    }
+
     fn completed(expected: RequestId) -> KvQuiescencePermit {
         assert_eq!(expected.generation(), 1);
         let mut scheduler = Scheduler::<32>::new().unwrap();
@@ -5900,12 +5909,12 @@ mod tests {
         let mut pool = KvPool::new(8, 4, 16).unwrap();
         pool.create_request(id).unwrap();
         pool.append_tentative(id, 8).unwrap();
-        let retained_tail = pool.page_at(id, 1).unwrap();
+        let retained_tail = page_at(&pool, id, 1).unwrap();
         pool.finalize_tentative(id, 5, completed(id)).unwrap();
         assert_eq!(pool.committed_tokens(id), Some(5));
         assert_eq!(pool.resident_tokens(id), Some(5));
-        assert_eq!(pool.page_count(id), Some(2));
-        assert_eq!(pool.page_at(id, 1), Some(retained_tail));
+        assert_eq!(page_count(&pool, id), Some(2));
+        assert_eq!(page_at(&pool, id, 1), Some(retained_tail));
         assert_eq!(pool.validate_read(id, 0, 5), Ok(()));
         assert_eq!(pool.validate_read(id, 4, 2), Err(KvError::ReadOutOfBounds));
     }
@@ -5918,11 +5927,11 @@ mod tests {
         pool.create_request(first).unwrap();
         pool.append_tentative(first, 4).unwrap();
         pool.append_tentative(first, 4).unwrap();
-        let stale = pool.page_at(first, 1).unwrap();
+        let stale = page_at(&pool, first, 1).unwrap();
         pool.finalize_tentative(first, 4, completed(first)).unwrap();
         pool.create_request(second).unwrap();
         pool.append_tentative(second, 1).unwrap();
-        assert_ne!(pool.page_at(second, 0), Some(stale));
+        assert_ne!(page_at(&pool, second, 0), Some(stale));
         assert_eq!(pool.free_pages(), 6);
     }
 
@@ -5937,11 +5946,11 @@ mod tests {
         pool.finalize_tentative(source, 8, completed(source))
             .unwrap();
         pool.share_committed_prefix(source, target, 8).unwrap();
-        assert_eq!(pool.page_at(source, 0), pool.page_at(target, 0));
-        assert_eq!(pool.page_at(source, 1), pool.page_at(target, 1));
+        assert_eq!(page_at(&pool, source, 0), page_at(&pool, target, 0));
+        assert_eq!(page_at(&pool, source, 1), page_at(&pool, target, 1));
         pool.append_tentative(target, 1).unwrap();
-        assert_eq!(pool.page_at(source, 2), None);
-        assert!(pool.page_at(target, 2).is_some());
+        assert_eq!(page_at(&pool, source, 2), None);
+        assert!(page_at(&pool, target, 2).is_some());
         assert_eq!(pool.resident_tokens(source), Some(8));
         assert_eq!(pool.resident_tokens(target), Some(9));
         assert_eq!(pool.validate_read(target, 3, 6), Ok(()));
@@ -5961,7 +5970,7 @@ mod tests {
             pool.share_committed_prefix(source, target, 6),
             Err(KvError::PrefixNotPageAligned)
         );
-        assert_eq!(pool.page_count(target), Some(0));
+        assert_eq!(page_count(&pool, target), Some(0));
         pool.append_tentative(target, 1).unwrap();
         assert_eq!(
             pool.share_committed_prefix(source, target, 4),
@@ -5981,9 +5990,9 @@ mod tests {
         pool.finalize_tentative(source, 4, completed(source))
             .unwrap();
         pool.share_committed_prefix(source, target, 4).unwrap();
-        let shared = pool.page_at(target, 0).unwrap();
+        let shared = page_at(&pool, target, 0).unwrap();
         pool.release_request(source, completed(source)).unwrap();
-        assert_eq!(pool.page_at(target, 0), Some(shared));
+        assert_eq!(page_at(&pool, target, 0), Some(shared));
         assert_eq!(pool.validate_read(target, 0, 4), Ok(()));
         assert_eq!(pool.free_pages(), 3);
     }
@@ -6010,7 +6019,7 @@ mod tests {
         pool.append_tentative(id, 3).unwrap();
         assert_eq!(pool.append_tentative(id, 2), Err(KvError::OutOfPages));
         assert_eq!(pool.resident_tokens(id), Some(3));
-        assert_eq!(pool.page_count(id), Some(1));
+        assert_eq!(page_count(&pool, id), Some(1));
         assert_eq!(pool.free_pages(), 0);
     }
 
@@ -6076,7 +6085,7 @@ mod tests {
         pool.pages[0].generation = u32::MAX;
         pool.create_request(id).unwrap();
         pool.append_tentative(id, 1).unwrap();
-        let page = pool.page_at(id, 0).unwrap();
+        let page = page_at(&pool, id, 0).unwrap();
         assert_eq!(page.generation(), u32::MAX);
 
         let (error, _permit) = pool
@@ -6085,7 +6094,7 @@ mod tests {
             .into_parts();
         assert_eq!(error, KvError::GenerationExhausted(page));
         assert_eq!(pool.resident_tokens(id), Some(1));
-        assert_eq!(pool.page_at(id, 0), Some(page));
+        assert_eq!(page_at(&pool, id, 0), Some(page));
         assert_eq!(pool.free_pages(), 0);
     }
 }
