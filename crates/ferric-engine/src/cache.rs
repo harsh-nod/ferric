@@ -1,19 +1,3 @@
-// Verus requires explicit branch structure and large same-source proof bodies. Every truncating
-// cast below is guarded by the verified 32-request/16,384-page bounds, and the crate-private
-// authority hooks are consumed by the sibling lifecycle composition.
-#![allow(
-    dead_code,
-    unused_variables,
-    clippy::bool_to_int_with_if,
-    clippy::cast_lossless,
-    clippy::cast_possible_truncation,
-    clippy::if_same_then_else,
-    clippy::manual_is_multiple_of,
-    clippy::manual_let_else,
-    clippy::semicolon_if_nothing_returned,
-    clippy::too_many_lines
-)]
-
 use crate::scheduler::{KvQuiescenceOrigin, KvQuiescencePermit};
 use ferric_spec::RequestId;
 use std::fmt;
