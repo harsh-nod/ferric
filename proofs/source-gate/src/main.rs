@@ -12,7 +12,10 @@ use verus_syn::{
 
 const FORMAT: &str = "FERRIC-VERIFIED-MODULES-V2";
 const VERUS_SOURCE: &str = "git+https://github.com/verus-lang/verus.git?rev=b677dd5";
-const ENGINE_ALLOCATION_CONSTRUCTORS: &[&str] = &["ferric_engine::cache::KvPool::new_bounded"];
+const ENGINE_ALLOCATION_CONSTRUCTORS: &[&str] = &[
+    "ferric_engine::cache::KvPool::new_bounded",
+    "ferric_engine::system::Engine::new",
+];
 
 type GateResult<T> = Result<T, String>;
 type ModuleMap = BTreeMap<String, (String, String)>;

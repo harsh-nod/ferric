@@ -179,6 +179,53 @@ grep -F 'ferric_engine::cache::KvPool::new_bounded' \
     exit 1
 }
 
+engine_constructor=$(new_copy admitted-engine-allocation-constructor)
+printf '\npub mod system;\n' >>"$engine_constructor/crates/ferric-engine/src/lib.rs"
+cat >"$engine_constructor/crates/ferric-engine/src/system.rs" <<'RS'
+use vstd::prelude::*;
+
+verus! {
+pub struct Engine;
+
+impl Engine {
+    pub fn new() {
+        let mut permits: Vec<Option<u8>> = Vec::with_capacity(1);
+        permits.push(None);
+    }
+}
+}
+RS
+write_metadata "$engine_constructor" "$scratch/engine-constructor.metadata"
+"$source_gate" --generate "$engine_constructor" \
+    "$scratch/engine-constructor.metadata" "$scratch/engine-constructor.manifest"
+grep -F 'ferric_engine::system::Engine::new' \
+    "$scratch/engine-constructor.manifest" >/dev/null || {
+    printf 'FAIL: exact engine allocation constructor was not classified\n' >&2
+    exit 1
+}
+
+engine_transition=$(new_copy rejected-engine-allocation-transition)
+printf '\npub mod system;\n' >>"$engine_transition/crates/ferric-engine/src/lib.rs"
+cat >"$engine_transition/crates/ferric-engine/src/system.rs" <<'RS'
+use vstd::prelude::*;
+
+verus! {
+pub struct Engine;
+
+impl Engine {
+    pub fn transition() {
+        let mut permits: Vec<Option<u8>> = Vec::with_capacity(1);
+        permits.push(None);
+    }
+}
+}
+RS
+write_metadata "$engine_transition" "$scratch/engine-transition.metadata"
+expect_rejected parser-engine-transition-allocation \
+    'verified engine body ferric_engine::system::Engine::transition violates no-transition-allocation policy' \
+    "$source_gate" --generate "$engine_transition" \
+    "$scratch/engine-transition.metadata" "$scratch/engine-transition.manifest"
+
 allocation=$(new_copy transition-allocation)
 cat >>"$allocation/crates/ferric-engine/src/cache.rs" <<'RS'
 

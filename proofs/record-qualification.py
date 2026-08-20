@@ -17,6 +17,23 @@ COMMAND = (
     "--locked --release --target-dir FRESH --fwd-verus-args-to roots -j 1 -- "
     "--no-cheating --output-json"
 )
+EXPECTED_PROPERTY_STATUSES = {
+    "m0.request_generation": "Proved",
+    "m0.greedy_speculation": "Proved",
+    "m0.scheduler_transition": "Proved",
+    "m0.scheduler_lifetime": "Proved",
+    "m0.scheduler_bounds": "Proved",
+    "m0.kv_transition": "Proved",
+    "m0.kv_sharing_rollback": "Proved",
+    "m0.kv_generation": "Proved",
+    "m0.kv_bounds": "Proved",
+    "m0.engine_composition": "Proved",
+    "m0.hsa_exact_completion": "Contracted",
+    "m0.proof_erasure": "Checked",
+    "m0.no_transition_allocation": "Checked",
+    "m0.device_kv_initialization": "Unsupported",
+    "m0.machine_refinement": "Unsupported",
+}
 
 
 def fail(message: str) -> None:
@@ -47,14 +64,15 @@ def tool_output(arguments: list[str]) -> str:
 
 
 def main() -> None:
-    if len(sys.argv) != 12:
+    if len(sys.argv) != 16:
         print(
             f"usage: {sys.argv[0]} REPO VERUS_ROOT TARGET METADATA TRANSCRIPT COUNTS "
-            "CLOSURE_TRANSCRIPT NEGATIVE_DIR SOURCE_RECORDS SOURCE_GATE RECEIPT_DIR",
+            "CLOSURE_TRANSCRIPT NEGATIVE_DIR SOURCE_RECORDS SOURCE_GATE RUNTIME_TESTS "
+            "PROPERTY_BINDER PROPERTY_EVIDENCE PROPERTY_CONTRACT RECEIPT_DIR",
             file=sys.stderr,
         )
         raise SystemExit(2)
-    repo, verus_root, target, metadata_path, transcript, counts_path, closure_log, negative_dir, source_records_input, source_gate, receipt_dir = map(
+    repo, verus_root, target, metadata_path, transcript, counts_path, closure_log, negative_dir, source_records_input, source_gate, runtime_tests, property_binder, property_evidence, property_contract, receipt_dir = map(
         Path, sys.argv[1:]
     )
     if receipt_dir.exists() and any(receipt_dir.iterdir()):
@@ -76,12 +94,33 @@ def main() -> None:
             line.split("=", 1)
             for line in (repo / "proofs/verus/VERUS_CLOSURE_MANIFEST").read_text(encoding="utf-8").splitlines()
         )
+        property_contract_bytes = property_contract.read_bytes()
+        property_lines = property_contract_bytes.decode("utf-8").splitlines()
     except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as error:
         fail(str(error))
     if any(len(row) != 4 for row in counts):
         fail("proof count evidence is malformed")
     if len({row[0] for row in counts}) != len(counts):
         fail("proof count evidence contains duplicate packages")
+    if not property_lines or property_lines[0] != "format=FERRIC-M0-PROPERTY-CONTRACT-V1":
+        fail("M0 property artifact has an unsupported format")
+    if property_lines.count("contract-set-validation=validate_closed:PASS") != 1:
+        fail("M0 property artifact does not attest structural closure")
+    property_records = [line.removeprefix("property=") for line in property_lines if line.startswith("property=")]
+    parsed_statuses = {}
+    for record in property_records:
+        fields = record.split("|")
+        if len(fields) != 10 or fields[0] in parsed_statuses:
+            fail("M0 property artifact contains malformed or duplicate records")
+        if any(
+            len(fields[index]) != 64
+            or any(character not in "0123456789abcdef" for character in fields[index])
+            for index in (3, 4, 5)
+        ):
+            fail("M0 property artifact contains a malformed identity")
+        parsed_statuses[fields[0]] = fields[2]
+    if parsed_statuses != EXPECTED_PROPERTY_STATUSES:
+        fail("M0 property artifact status roster drifted")
 
     source_records = receipt_dir / "source-closure.records"
     shutil.copyfile(source_records_input, source_records)
@@ -129,9 +168,21 @@ def main() -> None:
         "proof-build.transcript": transcript,
         "proof-counts.txt": counts_path,
         "verus-closure.transcript": closure_log,
+        "runtime-tests.transcript": runtime_tests,
+        "m0-property-evidence.records": property_evidence,
+        "m0-property-contract.records": property_contract,
     }
     for name, source in evidence.items():
-        shutil.copyfile(source, receipt_dir / name)
+        try:
+            expected = source.read_bytes()
+        except OSError as error:
+            fail(str(error))
+        destination = receipt_dir / name
+        shutil.copyfile(source, destination)
+        if destination.read_bytes() != expected:
+            fail(f"evidence copy drifted: {name}")
+        if source == property_contract and expected != property_contract_bytes:
+            fail("M0 property artifact changed while recording the receipt")
     if negative_dir.is_dir():
         destination = receipt_dir / "negative"
         shutil.copytree(negative_dir, destination)
@@ -141,6 +192,7 @@ def main() -> None:
         for name in ("cargo-verus", "verus", "rust_verify", "z3")
     }
     tools["ferric-source-gate"] = source_gate
+    tools["ferric-property-binder"] = property_binder
     for name, path in tools.items():
         if not path.is_file():
             fail(f"missing authenticated tool {name}")
@@ -209,11 +261,17 @@ def main() -> None:
         f"cargo-lock-sha256={digest(repo / 'Cargo.lock')}",
         f"source-gate-lock-sha256={digest(repo / 'proofs/source-gate/Cargo.lock')}",
         f"source-gate-tcb-sha256={digest(repo / 'proofs/source-gate/DEPENDENCY_TCB')}",
+        f"property-binder-lock-sha256={digest(repo / 'proofs/property-binder/Cargo.lock')}",
+        f"property-binder-tcb-sha256={digest(repo / 'proofs/property-binder/DEPENDENCY_TCB')}",
+        f"m0-property-manifest-sha256={digest(repo / 'proofs/M0_PROPERTIES.json')}",
         f"unverified-bodies-sha256={digest(repo / 'proofs/UNVERIFIED_BODIES')}",
         f"verified-modules-sha256={digest(verified_manifest)}",
         f"cargo-metadata-sha256={digest(metadata_path)}",
         f"source-closure-sha256={digest(source_records)}",
         f"proof-transcript-sha256={digest(transcript)}",
+        f"runtime-tests-sha256={digest(receipt_dir / 'runtime-tests.transcript')}",
+        f"m0-property-evidence-sha256={digest(receipt_dir / 'm0-property-evidence.records')}",
+        f"m0-property-contract-sha256={digest(receipt_dir / 'm0-property-contract.records')}",
         f"verification-queries={verification_queries}",
         f"direct-verified-bodies={direct_total}",
         f"opted-packages={','.join(package['name'] for package in opted_packages)}",
@@ -226,11 +284,15 @@ def main() -> None:
         "qualification-host-tcb=ambient Rust/Cargo, Python, POSIX shell/coreutils, OS, filesystem, and process supervision are contracted",
         "nonclaim=qualification evidence production is identity-bound but not hermetic or independently reproduced",
         "source-gate-tcb=source-gate binary and complete locked dependency closure including proc macros and build scripts",
+        "property-validator-authority=fe2o3 ContractSetV1 validates structure; qualification supplies identity and reconciliation",
+        "property-binder-tcb=property-binder binary and complete locked dependency closure including fe2o3-proof-contracts, proc macros, and build scripts",
+        "nonclaim=fe2o3 ContractSetV1 validation does not authenticate digests or establish semantic proofs",
     ]
     fields.extend(f"tool={name}|{identity(path)}" for name, path in tools.items())
     fields.extend(f"host-tool={name}|{identity(path)}" for name, path in host_tools.items())
     fields.extend(f"proof-count={'|'.join(row)}" for row in counts)
     fields.extend(f"verified-compiler-path={path}" for path in verified_compiler_paths)
+    fields.extend(f"property-contract={record}" for record in property_records)
     fields.extend(f"artifact={artifact}" for artifact in artifacts)
     negative_files = sorted((receipt_dir / "negative").glob("*")) if (receipt_dir / "negative").is_dir() else []
     fields.extend(

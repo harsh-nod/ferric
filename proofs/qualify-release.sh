@@ -54,6 +54,8 @@ mkdir -p "$repo/target"
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/ferric-qualification.XXXXXX")
 proof_target=$(mktemp -d "${TMPDIR:-/tmp}/ferric-proof-target.XXXXXX")
 source_gate_target=$(mktemp -d "${TMPDIR:-/tmp}/ferric-source-gate-target.XXXXXX")
+property_binder_target=$(mktemp -d "${TMPDIR:-/tmp}/ferric-property-binder-target.XXXXXX")
+runtime_test_target=$(mktemp -d "${TMPDIR:-/tmp}/ferric-runtime-test-target.XXXXXX")
 if [ -n "${FERRIC_RECEIPT_DIR:-}" ]; then
     receipt_dir=$FERRIC_RECEIPT_DIR
     [ ! -e "$receipt_dir" ] || fail "receipt destination already exists: $receipt_dir"
@@ -61,7 +63,7 @@ if [ -n "${FERRIC_RECEIPT_DIR:-}" ]; then
 else
     receipt_dir=$(mktemp -d "$repo/target/ferric-receipt.XXXXXX")
 fi
-trap 'chmod -R u+w "$scratch" "$proof_target" "$source_gate_target" 2>/dev/null || true; rm -rf "$scratch" "$proof_target" "$source_gate_target"' EXIT HUP INT TERM
+trap 'chmod -R u+w "$scratch" "$proof_target" "$source_gate_target" "$property_binder_target" "$runtime_test_target" 2>/dev/null || true; rm -rf "$scratch" "$proof_target" "$source_gate_target" "$property_binder_target" "$runtime_test_target"' EXIT HUP INT TERM
 
 # Exclude ambient Cargo wrappers, flags, and configuration from the artifact.
 unset RUSTC RUSTFLAGS CARGO_ENCODED_RUSTFLAGS RUSTC_WRAPPER RUSTC_WORKSPACE_WRAPPER CARGO_BUILD_TARGET CARGO_TARGET_DIR
@@ -104,7 +106,8 @@ qualified_repo=$source_snapshot
 qualified_scripts="$qualified_repo/proofs"
 
 python3 -I "$qualified_scripts/check-lock.py" \
-    "$qualified_repo/Cargo.lock" "$qualified_scripts/source-gate/Cargo.lock"
+    "$qualified_repo/Cargo.lock" "$qualified_scripts/source-gate/Cargo.lock" \
+    "$qualified_scripts/property-binder/Cargo.lock"
 (
     cd "$qualified_repo"
     cargo build --manifest-path proofs/source-gate/Cargo.toml --locked --release \
@@ -124,6 +127,29 @@ generated_source_gate_tcb="$scratch/SOURCE_GATE_DEPENDENCY_TCB.generated"
 "$source_gate" --dependency-tcb "$source_gate_metadata" "$generated_source_gate_tcb"
 cmp -s "$qualified_scripts/source-gate/DEPENDENCY_TCB" "$generated_source_gate_tcb" || \
     fail 'source-gate dependency or build-script TCB drifted'
+(
+    cd "$qualified_repo"
+    cargo build --manifest-path proofs/property-binder/Cargo.toml --locked --release \
+        --target-dir "$property_binder_target"
+)
+property_binder="$property_binder_target/release/ferric-property-binder"
+[ -x "$property_binder" ] || fail 'M0 property binder was not built'
+property_binder_digest=$(sha256sum "$property_binder" | awk '{ print $1 }')
+property_binder_metadata="$scratch/property-binder-cargo-metadata.json"
+(
+    cd "$qualified_repo"
+    CARGO_TARGET_DIR="$property_binder_target" \
+        cargo metadata --manifest-path proofs/property-binder/Cargo.toml \
+        --locked --format-version 1
+) >"$property_binder_metadata"
+generated_property_binder_tcb="$scratch/PROPERTY_BINDER_DEPENDENCY_TCB.generated"
+"$property_binder" --dependency-tcb \
+    "$property_binder_metadata" "$generated_property_binder_tcb"
+cmp -s "$qualified_scripts/property-binder/DEPENDENCY_TCB" \
+    "$generated_property_binder_tcb" || \
+    fail 'property-binder dependency or build-script TCB drifted'
+"$property_binder" --manifest-check "$qualified_repo"
+chmod -R a-w "$property_binder_target"
 metadata="$scratch/cargo-metadata.json"
 (
     cd "$qualified_repo"
@@ -204,10 +230,38 @@ FERRIC_NEGATIVE_TIMEOUT_SECONDS="$timeout_seconds" \
     "$qualified_repo" "$verus_root" "$negative"
 "$qualified_scripts/negative/test-policy.sh" \
     "$qualified_repo" "$metadata" "$negative" "$source_gate"
+"$qualified_scripts/property-binder/test-policy.sh" \
+    "$qualified_repo" "$property_binder" "$source_gate" "$negative"
+
+runtime_tests="$scratch/runtime-tests.transcript"
+set +e
+(
+    cd "$qualified_repo"
+    cargo test --workspace --locked --release --target-dir "$runtime_test_target"
+) >"$runtime_tests" 2>&1
+runtime_test_status=$?
+set -e
+cat "$runtime_tests"
+[ "$runtime_test_status" -eq 0 ] || \
+    fail "qualified same-source runtime tests failed with status $runtime_test_status"
+
+property_evidence="$scratch/m0-property-evidence.records"
+"$property_binder" --evidence-index \
+    "$qualified_repo" "$snapshot_source" "$transcript" "$counts" "$negative" \
+    "$verus_root" "$source_gate" "$artifact_stage/release" "$runtime_tests" \
+    "$property_evidence"
+property_contract="$scratch/m0-property-contract.records"
+"$property_binder" --bind \
+    "$qualified_repo" "$snapshot_source" "$transcript" "$counts" "$negative" \
+    "$verus_root" "$source_gate" "$artifact_stage/release" "$runtime_tests" \
+    "$property_evidence" "$property_contract"
 
 [ "$(sha256sum "$source_gate" | awk '{ print $1 }')" = "$source_gate_digest" ] || \
     fail 'compiler-rooted source gate changed during qualification'
+[ "$(sha256sum "$property_binder" | awk '{ print $1 }')" = "$property_binder_digest" ] || \
+    fail 'M0 property binder changed during qualification'
 "$source_gate" "$qualified_repo" "$qualified_scripts/VERIFIED_MODULES" "$metadata"
+"$property_binder" --manifest-check "$qualified_repo"
 
 post_closure_log="$scratch/verus-closure-post.transcript"
 chmod -R u+w "$verus_root"
@@ -224,5 +278,6 @@ cmp -s "$live_source_before" "$live_source_after" || fail 'live source changed d
 
 python3 -I "$qualified_scripts/record-qualification.py" \
     "$qualified_repo" "$verus_root" "$artifact_stage" "$metadata" "$transcript" "$counts" \
-    "$closure_log" "$negative" "$snapshot_source" "$source_gate" "$receipt_dir"
+    "$closure_log" "$negative" "$snapshot_source" "$source_gate" "$runtime_tests" \
+    "$property_binder" "$property_evidence" "$property_contract" "$receipt_dir"
 printf 'PASS: Ferric strict proof and release qualification completed\n'
