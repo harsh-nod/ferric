@@ -131,7 +131,10 @@ import sys
 path = Path(sys.argv[1])
 value = json.loads(path.read_text(encoding="utf-8"))
 for record in value["properties"]:
-    if record["required_status"] == "Proved" and not record["compiler_paths_resolved"]:
+    if record["required_status"] == "Proved" and record["name"] not in {
+        "m0.request_generation",
+        "m0.greedy_speculation",
+    }:
         token = record["name"].removeprefix("m0.")
         crate = "ferric_engine" if token.startswith("kv_") or token == "engine_composition" else "ferric_spec"
         record["compiler_paths_resolved"] = True
@@ -161,8 +164,9 @@ always=identity-trust|ferric-spec|identity-trust.py|no-cheating
 always=speculation|ferric-spec|speculation.py|proof
 always=lifecycle|ferric-engine|lifecycle.py|proof
 always=kv|ferric-engine|kv.py|proof
+always=system|ferric-engine|system.py|proof
 EOF
-for component in identity-trust speculation lifecycle kv; do
+for component in identity-trust speculation lifecycle kv system; do
     printf 'fixture source %s\n' "$component" >"$fixture/crates/fixture/$component.rs"
     printf 'fixture mutator %s\n' "$component" \
         >"$fixture/proofs/negative/components/$component.py"

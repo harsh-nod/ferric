@@ -43,8 +43,10 @@
       "required_status": "Proved",
       "statement": "Every successful scheduler body implements its stated deterministic transition and frame; every rejection is the exact enabledness failure and preserves state.",
       "statement_sha256": "75a99ba88c393e70168f59febe8fb7ea31f341ac83ce4a4d01a6dddeb7e273b8",
-      "compiler_paths_resolved": false,
-      "compiler_path_prefixes": [],
+      "compiler_paths_resolved": true,
+      "compiler_path_prefixes": [
+        "ferric_engine::scheduler::Scheduler::"
+      ],
       "required_mutations": [
         "lifecycle"
       ],
@@ -57,8 +59,10 @@
       "required_status": "Proved",
       "statement": "Dispatch members remain unavailable for reuse through exact completion, KV finalization or detachment, and generation advance. Cancellation never makes executing storage reusable.",
       "statement_sha256": "9fd3a24a86acc4e9cd0430e82b2e3489e569423711da642c5d6d625af55ea54d",
-      "compiler_paths_resolved": false,
-      "compiler_path_prefixes": [],
+      "compiler_paths_resolved": true,
+      "compiler_path_prefixes": [
+        "ferric_engine::scheduler::Scheduler::"
+      ],
       "required_mutations": [
         "lifecycle"
       ],
@@ -71,8 +75,12 @@
       "required_status": "Proved",
       "statement": "For `0 < C <= 32`, all scheduler metadata and rings remain within `C`; dispatch scans at most `C` slots and other transition work is bounded by the affected batch or ring operation.",
       "statement_sha256": "0d4b97c0f2b02a34cf14ff02c3987db2f4adff9a5be4683816c50d61a5b8d3b7",
-      "compiler_paths_resolved": false,
-      "compiler_path_prefixes": [],
+      "compiler_paths_resolved": true,
+      "compiler_path_prefixes": [
+        "ferric_engine::scheduler::Scheduler::",
+        "ferric_engine::scheduler::advance",
+        "ferric_engine::scheduler::ring_tail"
+      ],
       "required_mutations": [
         "lifecycle"
       ],
@@ -85,8 +93,10 @@
       "required_status": "Proved",
       "statement": "Successful KV bodies implement their exact enabled transition and frames; failed transitions preserve the pool. Reads are admitted only inside the logically initialized range.",
       "statement_sha256": "ee1bba3d9699f8a09d6b2ec1621264ec02b2406dcb648acb7c295178659d3d19",
-      "compiler_paths_resolved": false,
-      "compiler_path_prefixes": [],
+      "compiler_paths_resolved": true,
+      "compiler_path_prefixes": [
+        "ferric_engine::cache::KvPool::"
+      ],
       "required_mutations": [
         "kv"
       ],
@@ -99,8 +109,10 @@
       "required_status": "Proved",
       "statement": "Only full committed pages are shared, shared pages are sealed and payload-immutable, extension allocates a fresh writable page, and rejected tentative suffix pages become unreachable without changing other requests.",
       "statement_sha256": "4b827a7aebc268fe7f1837a052412611ea765c032b281064c06cd5a3877d9eca",
-      "compiler_paths_resolved": false,
-      "compiler_path_prefixes": [],
+      "compiler_paths_resolved": true,
+      "compiler_path_prefixes": [
+        "ferric_engine::cache::KvPool::"
+      ],
       "required_mutations": [
         "kv"
       ],
@@ -113,8 +125,11 @@
       "required_status": "Proved",
       "statement": "A sole-reference reclaim advances the page generation before reuse, request detach advances the request generation, and stale page or request identities are rejected.",
       "statement_sha256": "f22b28daae5691844a5c3247b2c3a2f77e192680febc508c51793e2346005353",
-      "compiler_paths_resolved": false,
-      "compiler_path_prefixes": [],
+      "compiler_paths_resolved": true,
+      "compiler_path_prefixes": [
+        "ferric_engine::cache::KvPool::",
+        "ferric_engine::cache::PageId::"
+      ],
       "required_mutations": [
         "kv"
       ],
@@ -127,8 +142,10 @@
       "required_status": "Proved",
       "statement": "Page, request, and page-table lengths remain at their generated construction bounds; live chains, free metadata, token ranges, and reference masks remain within those bounds.",
       "statement_sha256": "c7bb6b970a609e14f525cc7734d0e795e1bc5d04df6e8e17b43f984c3fea6ad8",
-      "compiler_paths_resolved": false,
-      "compiler_path_prefixes": [],
+      "compiler_paths_resolved": true,
+      "compiler_path_prefixes": [
+        "ferric_engine::cache::KvPool::"
+      ],
       "required_mutations": [
         "kv"
       ],
@@ -141,11 +158,14 @@
       "required_status": "Proved",
       "statement": "The public engine preserves exact scheduler/KV request-generation agreement, publishes completed KV before redispatch, and detaches quiescent KV before returning a slot to the free ring.",
       "statement_sha256": "a1f556aed76cb0323ea4044449c442cdd9d0040355587a5f8ee089d951f68f1f",
-      "compiler_paths_resolved": false,
-      "compiler_path_prefixes": [],
+      "compiler_paths_resolved": true,
+      "compiler_path_prefixes": [
+        "ferric_engine::system::Engine::"
+      ],
       "required_mutations": [
         "lifecycle",
-        "kv"
+        "kv",
+        "system"
       ],
       "checked_evidence": [],
       "unsupported_reason": null

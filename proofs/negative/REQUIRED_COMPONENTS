@@ -3,3 +3,4 @@ always=speculation|ferric-spec|speculation.py|proof
 always=identity-trust|ferric-spec|identity-trust.py|no-cheating
 when-verus=crates/ferric-engine/src/epoch.rs|lifecycle|ferric-engine|lifecycle.py|proof
 when-verus=crates/ferric-engine/src/cache.rs|kv|ferric-engine|kv.py|proof
+when-verus=crates/ferric-engine/src/system.rs|system|ferric-engine|system.py|proof
