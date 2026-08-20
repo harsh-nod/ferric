@@ -286,16 +286,79 @@ impl KvPool {
             / page_tokens as int <= MAX_PAGES_PER_REQUEST
     }
 
-    pub(crate) closed spec fn request_live_by_slot_spec(&self, slot: int) -> bool
+    pub closed spec fn request_live_by_slot_spec(&self, slot: int) -> bool
         recommends 0 <= slot < MAX_REQUEST_SLOTS,
     {
         self.requests@[slot].live
     }
 
-    pub(crate) closed spec fn request_generation_by_slot_spec(&self, slot: int) -> u32
+    pub closed spec fn request_generation_by_slot_spec(&self, slot: int) -> u32
         recommends 0 <= slot < MAX_REQUEST_SLOTS,
     {
         self.requests@[slot].generation
+    }
+
+    pub open spec fn identity_frame(&self, before: &Self) -> bool {
+        forall |slot: int| 0 <= slot < MAX_REQUEST_SLOTS ==> {
+            &&& self.request_live_by_slot_spec(slot)
+                == before.request_live_by_slot_spec(slot)
+            &&& self.request_generation_by_slot_spec(slot)
+                == before.request_generation_by_slot_spec(slot)
+        }
+    }
+
+    pub open spec fn create_identity_refines(
+        &self,
+        before: &Self,
+        request: RequestId,
+        result: &Result<(), KvError>,
+    ) -> bool {
+        match result {
+            Err(_) => self.identity_frame(before),
+            Ok(()) => {
+                let changed = request.slot_spec() as int;
+                &&& 0 <= changed < MAX_REQUEST_SLOTS
+                &&& !before.request_live_by_slot_spec(changed)
+                &&& self.request_live_by_slot_spec(changed)
+                &&& self.request_generation_by_slot_spec(changed)
+                    == before.request_generation_by_slot_spec(changed)
+                &&& request.generation_spec()
+                    == self.request_generation_by_slot_spec(changed)
+                &&& forall |slot: int| 0 <= slot < MAX_REQUEST_SLOTS && slot != changed ==> {
+                    &&& self.request_live_by_slot_spec(slot)
+                        == before.request_live_by_slot_spec(slot)
+                    &&& self.request_generation_by_slot_spec(slot)
+                        == before.request_generation_by_slot_spec(slot)
+                }
+            }
+        }
+    }
+
+    pub(crate) open spec fn release_identity_refines(
+        &self,
+        before: &Self,
+        request: RequestId,
+        result: &Result<KvDetachedRequest, KvAuthorityError>,
+    ) -> bool {
+        match result {
+            Err(_) => self.identity_frame(before),
+            Ok(_) => {
+                let changed = request.slot_spec() as int;
+                &&& 0 <= changed < MAX_REQUEST_SLOTS
+                &&& before.request_live_by_slot_spec(changed)
+                &&& !self.request_live_by_slot_spec(changed)
+                &&& self.request_generation_by_slot_spec(changed)
+                    == before.request_generation_by_slot_spec(changed) + 1
+                &&& request.generation_spec()
+                    == before.request_generation_by_slot_spec(changed)
+                &&& forall |slot: int| 0 <= slot < MAX_REQUEST_SLOTS && slot != changed ==> {
+                    &&& self.request_live_by_slot_spec(slot)
+                        == before.request_live_by_slot_spec(slot)
+                    &&& self.request_generation_by_slot_spec(slot)
+                        == before.request_generation_by_slot_spec(slot)
+                }
+            }
+        }
     }
 
     pub closed spec fn request_matches_spec(&self, request: RequestId) -> bool {
@@ -357,11 +420,11 @@ impl KvPool {
 
     pub closed spec fn page_limit_spec(&self) -> u32 { self.page_limit }
 
-    pub closed spec fn create_enabled(&self, request: RequestId) -> bool {
-        self.create_key_enabled(RequestKey {
-            slot: request.slot_spec(),
-            generation: request.generation_spec(),
-        })
+    pub open spec fn create_enabled(&self, request: RequestId) -> bool {
+        &&& request.slot_spec() < MAX_REQUEST_SLOTS
+        &&& !self.request_live_by_slot_spec(request.slot_spec() as int)
+        &&& self.request_generation_by_slot_spec(request.slot_spec() as int)
+            == request.generation_spec()
     }
 
     closed spec fn create_key_enabled(&self, request: RequestKey) -> bool {
@@ -913,7 +976,11 @@ impl KvPool {
         ensures
             match result {
                 Ok(pool) => Self::new_enabled(page_count, page_tokens, max_context_tokens)
-                    && pool.well_formed(),
+                    && pool.well_formed()
+                    && forall |slot: int| 0 <= slot < MAX_REQUEST_SLOTS ==> {
+                        &&& !pool.request_live_by_slot_spec(slot)
+                        &&& pool.request_generation_by_slot_spec(slot) == 1
+                    },
                 Err(_) => !Self::new_enabled(page_count, page_tokens, max_context_tokens),
             }
     {
@@ -3254,7 +3321,11 @@ impl KvPool {
         ensures
             match result {
                 Ok(pool) => Self::new_enabled(page_count, page_tokens, max_context_tokens)
-                    && pool.well_formed(),
+                    && pool.well_formed()
+                    && forall |slot: int| 0 <= slot < MAX_REQUEST_SLOTS ==> {
+                        &&& !pool.request_live_by_slot_spec(slot)
+                        &&& pool.request_generation_by_slot_spec(slot) == 1
+                    },
                 Err(_) => !Self::new_enabled(page_count, page_tokens, max_context_tokens),
             },
     {
@@ -3269,6 +3340,7 @@ impl KvPool {
             final(self).page_tokens_spec() == old(self).page_tokens_spec(),
             final(self).max_context_tokens_spec() == old(self).max_context_tokens_spec(),
             final(self).page_limit_spec() == old(self).page_limit_spec(),
+            final(self).create_identity_refines(old(self), request, &result),
             match result {
                 Ok(()) => {
                     &&& old(self).create_enabled(request)
@@ -3301,6 +3373,7 @@ impl KvPool {
             final(self).page_tokens_spec() == old(self).page_tokens_spec(),
             final(self).max_context_tokens_spec() == old(self).max_context_tokens_spec(),
             final(self).page_limit_spec() == old(self).page_limit_spec(),
+            final(self).identity_frame(old(self)),
             match result {
                 Ok(()) => {
                     &&& old(self).append_enabled(request, token_count)
@@ -3363,6 +3436,7 @@ impl KvPool {
             final(self).page_tokens_spec() == old(self).page_tokens_spec(),
             final(self).max_context_tokens_spec() == old(self).max_context_tokens_spec(),
             final(self).page_limit_spec() == old(self).page_limit_spec(),
+            final(self).identity_frame(old(self)),
             match result {
                 Ok(()) => {
                     &&& old(self).share_enabled(source, target, token_count)
@@ -3430,6 +3504,7 @@ impl KvPool {
         requires old(self).well_formed(),
         ensures
             final(self).well_formed(),
+            final(self).identity_frame(old(self)),
             match result {
                 Ok(evidence) => {
                     &&& evidence.request_spec() == request
@@ -3465,11 +3540,13 @@ impl KvPool {
         requires old(self).well_formed(),
         ensures
             final(self).well_formed(),
+            final(self).release_identity_refines(old(self), request, &result),
             match result {
                 Ok(evidence) => {
                     &&& evidence.request_spec() == request
                     &&& evidence.origin_spec() == permit.origin_spec()
                     &&& permit.request_spec() == request
+                    &&& request.generation_spec() < u32::MAX
                 }
                 Err(failure) => {
                     &&& final(self).same_state(old(self))

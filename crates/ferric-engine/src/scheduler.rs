@@ -175,6 +175,10 @@ impl<const C: usize> Scheduler<C> {
                     &&& C > 0
                     &&& C <= MAX_REQUEST_SLOTS
                     &&& scheduler.basic_invariant()
+                    &&& forall |slot_index: int| 0 <= slot_index < C ==> {
+                        &&& !scheduler.slot_is_live_spec(slot_index)
+                        &&& scheduler.slot_generation_spec(slot_index) == 1
+                    }
                 }
                 Err(error) => {
                     &&& error == if C == 0 {
@@ -492,16 +496,137 @@ impl<const C: usize> Scheduler<C> {
         }
     }
 
-    pub(crate) closed spec fn slot_generation_spec(&self, slot_index: int) -> u32
+    pub closed spec fn slot_generation_spec(&self, slot_index: int) -> u32
         recommends 0 <= slot_index < C,
     {
         self.slots@[slot_index].generation
     }
 
-    pub(crate) closed spec fn slot_is_live_spec(&self, slot_index: int) -> bool
+    pub closed spec fn slot_is_live_spec(&self, slot_index: int) -> bool
         recommends 0 <= slot_index < C,
     {
         self.slots@[slot_index].state != RequestState::Vacant
+    }
+
+    pub open spec fn identity_frame(&self, before: &Self) -> bool {
+        forall |slot_index: int| 0 <= slot_index < C ==> {
+            &&& self.slot_is_live_spec(slot_index) == before.slot_is_live_spec(slot_index)
+            &&& self.slot_generation_spec(slot_index)
+                == before.slot_generation_spec(slot_index)
+        }
+    }
+
+    pub open spec fn admit_identity_refines(
+        &self,
+        before: &Self,
+        result: &Result<RequestId, SchedulerError>,
+    ) -> bool {
+        match result {
+            Err(_) => self.identity_frame(before),
+            Ok(request) => {
+                let changed = request.slot_spec() as int;
+                &&& 0 <= changed < C
+                &&& !before.slot_is_live_spec(changed)
+                &&& self.slot_is_live_spec(changed)
+                &&& self.slot_generation_spec(changed)
+                    == before.slot_generation_spec(changed)
+                &&& request.generation_spec() == self.slot_generation_spec(changed)
+                &&& forall |slot_index: int| 0 <= slot_index < C && slot_index != changed ==> {
+                    &&& self.slot_is_live_spec(slot_index)
+                        == before.slot_is_live_spec(slot_index)
+                    &&& self.slot_generation_spec(slot_index)
+                        == before.slot_generation_spec(slot_index)
+                }
+            }
+        }
+    }
+
+    pub open spec fn reclaim_identity_refines(
+        &self,
+        before: &Self,
+        result: &Result<RequestId, SchedulerError>,
+    ) -> bool {
+        match result {
+            Err(_) => self.identity_frame(before),
+            Ok(request) => {
+                let changed = request.slot_spec() as int;
+                &&& 0 <= changed < C
+                &&& before.slot_is_live_spec(changed)
+                &&& !self.slot_is_live_spec(changed)
+                &&& self.slot_generation_spec(changed)
+                    == before.slot_generation_spec(changed) + 1
+                &&& request.generation_spec() == before.slot_generation_spec(changed)
+                &&& forall |slot_index: int| 0 <= slot_index < C && slot_index != changed ==> {
+                    &&& self.slot_is_live_spec(slot_index)
+                        == before.slot_is_live_spec(slot_index)
+                    &&& self.slot_generation_spec(slot_index)
+                        == before.slot_generation_spec(slot_index)
+                }
+            }
+        }
+    }
+
+    pub(crate) closed spec fn detachment_ready(
+        &self,
+        request: RequestId,
+        origin: KvQuiescenceOrigin,
+    ) -> bool {
+        if request.slot_spec() >= C {
+            false
+        } else {
+            let slot = self.slots@[request.slot_spec() as int];
+            &&& slot.generation == request.generation_spec()
+            &&& slot.state == RequestState::Retiring
+            &&& slot.phase == LifecyclePhase::RetiringQuiescent
+            &&& !slot.in_reclaim_ring
+            &&& match origin {
+                KvQuiescenceOrigin::NeverSubmitted => {
+                    slot.active_epoch == NO_EPOCH && slot.last_quiescent_epoch == NO_EPOCH
+                }
+                KvQuiescenceOrigin::CompletedExact { epoch } => {
+                    (slot.active_epoch != NO_EPOCH && slot.active_epoch == epoch)
+                        || (slot.active_epoch == NO_EPOCH
+                            && slot.last_quiescent_epoch == epoch)
+                }
+            }
+        }
+    }
+
+    pub(crate) open spec fn detached_enabled(&self, detached: &KvDetachedRequest) -> bool {
+        self.detachment_ready(detached.request_spec(), detached.origin_spec())
+            && detached.request_spec().generation_spec() < u32::MAX
+    }
+
+    pub(crate) open spec fn detachment_ready_frame_except(
+        &self,
+        before: &Self,
+        changed_slot: u32,
+    ) -> bool {
+        forall |request: RequestId, origin: KvQuiescenceOrigin|
+            request.slot_spec() < C && request.slot_spec() != changed_slot ==>
+                {
+                    &&& self.state_spec(request) == before.state_spec(request)
+                    &&& self.detachment_ready(request, origin)
+                        == before.detachment_ready(request, origin)
+                }
+    }
+
+    pub(crate) proof fn apply_detachment_ready_frame_except(
+        &self,
+        before: &Self,
+        changed_slot: u32,
+        request: RequestId,
+        origin: KvQuiescenceOrigin,
+    )
+        requires
+            self.detachment_ready_frame_except(before, changed_slot),
+            request.slot_spec() < C,
+            request.slot_spec() != changed_slot,
+        ensures
+            self.state_spec(request) == before.state_spec(request),
+            self.detachment_ready(request, origin)
+                == before.detachment_ready(request, origin),
+    {
     }
 
     pub closed spec fn slots_frame_except(&self, before: &Self, changed: int) -> bool {
@@ -1111,6 +1236,7 @@ impl<const C: usize> Scheduler<C> {
         ensures
             final(self).basic_invariant(),
             final(self).admit_refines(old(self), &result),
+            final(self).admit_identity_refines(old(self), &result),
     {
         reveal(Scheduler::basic_invariant);
         reveal(Scheduler::scalar_invariant);
@@ -1226,6 +1352,7 @@ impl<const C: usize> Scheduler<C> {
         ensures
             final(self).basic_invariant(),
             final(self).retire_refines(old(self), request, &result),
+            final(self).identity_frame(old(self)),
     {
         reveal(Scheduler::basic_invariant);
         reveal(Scheduler::scalar_invariant);
@@ -1356,6 +1483,7 @@ impl<const C: usize> Scheduler<C> {
         ensures
             final(self).basic_invariant(),
             final(self).dispatch_refines(old(self), old(output)@, final(output)@, &result),
+            final(self).identity_frame(old(self)),
     {
         reveal(Scheduler::basic_invariant);
         reveal(Scheduler::scalar_invariant);
@@ -1459,12 +1587,32 @@ impl<const C: usize> Scheduler<C> {
                 final(permits)@,
                 &result,
             ),
+            final(self).identity_frame(old(self)),
+            final(permits).len() == old(permits).len(),
             match result {
                 Ok(count) => {
                     &&& count <= final(permits).len()
                     &&& count == old(self).pending_batch_member_count_spec()
+                    &&& forall |index: int| 0 <= index < count ==> {
+                        &&& final(permits)@[index].is_some()
+                        &&& final(permits)@[index].unwrap().request_spec().slot_spec() < C
+                        &&& final(self).state_spec(
+                            final(permits)@[index].unwrap().request_spec(),
+                        ) == Some(RequestState::Retiring) ==> (
+                            final(self).detachment_ready(
+                                final(permits)@[index].unwrap().request_spec(),
+                                final(permits)@[index].unwrap().origin_spec(),
+                            )
+                        )
+                    }
+                    &&& forall |left: int, right: int|
+                        0 <= left < right < count ==>
+                            final(permits)@[left].unwrap().request_spec().slot_spec()
+                                != final(permits)@[right].unwrap().request_spec().slot_spec()
+                    &&& forall |index: int| count <= index < final(permits).len() ==>
+                        final(permits)@[index] == old(permits)@[index]
                 }
-                Err(_) => true,
+                Err(_) => final(permits)@ == old(permits)@,
             },
     {
         reveal(Scheduler::basic_invariant);
@@ -1573,6 +1721,14 @@ impl<const C: usize> Scheduler<C> {
         ensures
             final(self).basic_invariant(),
             final(self).retiring_permit_refines(old(self), &result),
+            final(self).identity_frame(old(self)),
+            match &result {
+                Ok(Some(permit)) => final(self).detachment_ready(
+                    permit.request_spec(),
+                    permit.origin_spec(),
+                ),
+                _ => true,
+            },
     {
         reveal(Scheduler::basic_invariant);
         reveal(Scheduler::scalar_invariant);
@@ -1625,6 +1781,11 @@ impl<const C: usize> Scheduler<C> {
         ensures
             final(self).basic_invariant(),
             final(self).finalized_refines(old(self), &finalized, &result),
+            final(self).identity_frame(old(self)),
+            final(self).detachment_ready_frame_except(
+                old(self),
+                finalized.request_spec().slot_spec(),
+            ),
     {
         reveal(Scheduler::same_scalars);
         reveal(Scheduler::finalized_refines);
@@ -1754,6 +1915,21 @@ impl<const C: usize> Scheduler<C> {
         ensures
             final(self).basic_invariant(),
             final(self).detached_refines(old(self), &detached, &result),
+            final(self).reclaim_identity_refines(old(self), &result),
+            result.is_ok() == old(self).detached_enabled(&detached),
+            old(self).detachment_ready(
+                detached.request_spec(),
+                detached.origin_spec(),
+            ) && detached.request_spec().generation_spec() < u32::MAX ==>
+                result.is_ok(),
+            match result {
+                Ok(request) => request == detached.request_spec(),
+                Err(_) => true,
+            },
+            final(self).detachment_ready_frame_except(
+                old(self),
+                detached.request_spec().slot_spec(),
+            ),
     {
         reveal(Scheduler::basic_invariant);
         reveal(Scheduler::scalar_invariant);

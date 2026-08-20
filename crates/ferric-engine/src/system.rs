@@ -52,6 +52,19 @@ pub struct Engine<const C: usize> {
 }
 
 impl<const C: usize> Engine<C> {
+    closed spec fn identity_agreement(&self) -> bool {
+        &&& forall |slot: int| 0 <= slot < C ==> {
+            &&& self.scheduler.slot_is_live_spec(slot)
+                == self.kv.request_live_by_slot_spec(slot)
+            &&& self.scheduler.slot_generation_spec(slot)
+                == self.kv.request_generation_by_slot_spec(slot)
+        }
+        &&& forall |slot: int| C <= slot < MAX_REQUEST_SLOTS ==> {
+            &&& !self.kv.request_live_by_slot_spec(slot)
+            &&& self.kv.request_generation_by_slot_spec(slot) == 1
+        }
+    }
+
     pub closed spec fn well_formed(&self) -> bool {
         &&& self.scheduler.basic_invariant()
         &&& self.kv.well_formed()
@@ -59,18 +72,35 @@ impl<const C: usize> Engine<C> {
         &&& self.permits@.len() == C
         &&& (forall |index: int| 0 <= index < C ==>
             self.permits@[index].is_none())
-        &&& (!self.faulted ==> {
-            &&& forall |slot: int| 0 <= slot < C ==> {
-                &&& self.scheduler.slot_is_live_spec(slot)
-                    == self.kv.request_live_by_slot_spec(slot)
-                &&& self.scheduler.slot_generation_spec(slot)
-                    == self.kv.request_generation_by_slot_spec(slot)
-            }
-            &&& forall |slot: int| C <= slot < MAX_REQUEST_SLOTS ==> {
-                &&& !self.kv.request_live_by_slot_spec(slot)
-                &&& self.kv.request_generation_by_slot_spec(slot) == 1
-            }
-        })
+        &&& self.identity_agreement()
+    }
+
+    pub closed spec fn faulted_spec(&self) -> bool {
+        self.faulted
+    }
+
+    pub closed spec fn live_count_spec(&self) -> usize {
+        self.scheduler.live_count_spec()
+    }
+
+    pub closed spec fn completed_epoch_spec(&self) -> CompletionEpoch {
+        self.scheduler.completed_epoch_spec()
+    }
+
+    pub closed spec fn state_spec(&self, request: RequestId) -> Option<RequestState> {
+        self.scheduler.state_spec(request)
+    }
+
+    pub closed spec fn resident_tokens_spec(&self, request: RequestId) -> Option<u32> {
+        self.kv.resident_tokens_spec(request)
+    }
+
+    pub closed spec fn committed_tokens_spec(&self, request: RequestId) -> Option<u32> {
+        self.kv.committed_tokens_spec(request)
+    }
+
+    pub closed spec fn free_pages_spec(&self) -> u32 {
+        self.kv.free_pages_spec()
     }
 
     /// Constructs all request, ring, page, and completion-scratch storage.
@@ -78,7 +108,13 @@ impl<const C: usize> Engine<C> {
         page_count: u32,
         page_tokens: u32,
         max_context_tokens: u32,
-    ) -> Result<Self, EngineError> {
+    ) -> (result: Result<Self, EngineError>)
+        ensures
+            match result {
+                Ok(engine) => engine.well_formed() && !engine.faulted_spec(),
+                Err(_) => true,
+            },
+    {
         let scheduler = match Scheduler::<C>::new() {
             Ok(scheduler) => scheduler,
             Err(error) => return Err(EngineError::Scheduler(error)),
@@ -87,44 +123,81 @@ impl<const C: usize> Engine<C> {
             Ok(kv) => kv,
             Err(error) => return Err(EngineError::Kv(error)),
         };
-        let mut permits = Vec::with_capacity(C);
+        let mut permits: Vec<Option<KvQuiescencePermit>> = Vec::with_capacity(C);
         let mut index = 0;
         while index < C
+            invariant
+                index <= C,
+                permits@.len() == index,
+                forall |position: int| 0 <= position < index ==>
+                    permits@[position].is_none(),
             decreases C - index,
         {
             permits.push(None);
             index += 1;
         }
-        Ok(Self {
+        let engine = Self {
             scheduler,
             kv,
             permits,
             faulted: false,
-        })
+        };
+        assert forall |slot: int| 0 <= slot < C implies {
+            &&& engine.scheduler.slot_is_live_spec(slot)
+                == engine.kv.request_live_by_slot_spec(slot)
+            &&& engine.scheduler.slot_generation_spec(slot)
+                == engine.kv.request_generation_by_slot_spec(slot)
+        } by {
+        }
+        assert forall |slot: int| C <= slot < MAX_REQUEST_SLOTS implies {
+            &&& !engine.kv.request_live_by_slot_spec(slot)
+            &&& engine.kv.request_generation_by_slot_spec(slot) == 1
+        } by {
+        }
+        assert(engine.scheduler.basic_invariant());
+        assert(engine.kv.well_formed());
+        assert(0 < C <= MAX_REQUEST_SLOTS);
+        assert(engine.permits@.len() == C);
+        assert forall |position: int| 0 <= position < C implies
+            engine.permits@[position].is_none() by {
+        }
+        reveal(Engine::well_formed);
+        reveal(Engine::faulted_spec);
+        assert(engine.well_formed());
+        Ok(engine)
     }
 
     #[must_use]
-    pub const fn is_faulted(&self) -> bool {
+    pub const fn is_faulted(&self) -> (faulted: bool)
+        ensures faulted == self.faulted_spec(),
+    {
         self.faulted
     }
 
     #[must_use]
-    pub const fn capacity(&self) -> usize {
+    pub const fn capacity(&self) -> (capacity: usize)
+        ensures capacity == C,
+    {
         self.scheduler.capacity()
     }
 
     #[must_use]
-    pub const fn live_count(&self) -> usize {
+    pub const fn live_count(&self) -> (count: usize)
+        ensures count == self.live_count_spec(),
+    {
         self.scheduler.live_count()
     }
 
     #[must_use]
-    pub const fn completed_epoch(&self) -> CompletionEpoch {
+    pub const fn completed_epoch(&self) -> (epoch: CompletionEpoch)
+        ensures epoch == self.completed_epoch_spec(),
+    {
         self.scheduler.completed_epoch()
     }
 
-    pub fn admit(&mut self) -> Result<RequestId, EngineError>
+    pub fn admit(&mut self) -> (result: Result<RequestId, EngineError>)
         requires old(self).well_formed(),
+        ensures final(self).well_formed(),
     {
         reveal(Engine::well_formed);
         self.require_healthy()?;
@@ -143,8 +216,9 @@ impl<const C: usize> Engine<C> {
         &mut self,
         request: RequestId,
         token_count: u32,
-    ) -> Result<(), EngineError>
+    ) -> (result: Result<(), EngineError>)
         requires old(self).well_formed(),
+        ensures final(self).well_formed(),
     {
         reveal(Engine::well_formed);
         self.require_healthy()?;
@@ -159,8 +233,9 @@ impl<const C: usize> Engine<C> {
         source: RequestId,
         target: RequestId,
         token_count: u32,
-    ) -> Result<(), EngineError>
+    ) -> (result: Result<(), EngineError>)
         requires old(self).well_formed(),
+        ensures final(self).well_formed(),
     {
         reveal(Engine::well_formed);
         self.require_healthy()?;
@@ -178,8 +253,9 @@ impl<const C: usize> Engine<C> {
         request: RequestId,
         logical_offset: u32,
         span: u32,
-    ) -> Result<(), EngineError>
+    ) -> (result: Result<(), EngineError>)
         requires self.well_formed(),
+        ensures self.well_formed(),
     {
         reveal(Engine::well_formed);
         self.require_healthy()?;
@@ -189,8 +265,9 @@ impl<const C: usize> Engine<C> {
         }
     }
 
-    pub fn retire(&mut self, request: RequestId) -> Result<(), EngineError>
+    pub fn retire(&mut self, request: RequestId) -> (result: Result<(), EngineError>)
         requires old(self).well_formed(),
+        ensures final(self).well_formed(),
     {
         reveal(Engine::well_formed);
         self.require_healthy()?;
@@ -200,32 +277,72 @@ impl<const C: usize> Engine<C> {
         }
     }
 
-    pub fn reclaim_one(&mut self) -> Result<Option<RequestId>, EngineError>
+    pub fn reclaim_one(&mut self) -> (result: Result<Option<RequestId>, EngineError>)
         requires old(self).well_formed(),
+        ensures final(self).well_formed(),
     {
         reveal(Engine::well_formed);
         self.require_healthy()?;
+        let ghost entry_scheduler = self.scheduler;
+        let ghost entry_kv = self.kv;
         let permit_result = match self.scheduler.take_retiring_permit() {
             Ok(result) => result,
             Err(error) => return Err(EngineError::Scheduler(error)),
         };
         let permit = match permit_result {
             Some(permit) => permit,
-            None => return Ok(None),
+            None => {
+                assert(self.well_formed());
+                return Ok(None);
+            }
         };
         let request = permit.request();
+        let ghost before_release_kv = self.kv;
         let detached = match self.kv.release_request(request, permit) {
             Ok(detached) => detached,
             Err(failure) => {
                 let (error, _permit) = failure.into_parts();
                 self.faulted = true;
+                assert(self.well_formed());
                 return Err(EngineError::Kv(error));
             }
         };
+        let ghost before_reclaim_scheduler = self.scheduler;
         match self.scheduler.reclaim_detached(detached) {
-            Ok(request) => Ok(Some(request)),
+            Ok(request) => {
+                assert forall |slot: int| 0 <= slot < C implies {
+                    &&& self.scheduler.slot_is_live_spec(slot)
+                        == self.kv.request_live_by_slot_spec(slot)
+                    &&& self.scheduler.slot_generation_spec(slot)
+                        == self.kv.request_generation_by_slot_spec(slot)
+                } by {
+                    if slot == request.slot_spec() {
+                        assert(entry_scheduler.slot_is_live_spec(slot)
+                            == entry_kv.request_live_by_slot_spec(slot));
+                        assert(entry_scheduler.slot_generation_spec(slot)
+                            == entry_kv.request_generation_by_slot_spec(slot));
+                    } else {
+                        assert(before_reclaim_scheduler.slot_is_live_spec(slot)
+                            == entry_scheduler.slot_is_live_spec(slot));
+                        assert(before_reclaim_scheduler.slot_generation_spec(slot)
+                            == entry_scheduler.slot_generation_spec(slot));
+                        assert(before_release_kv.request_live_by_slot_spec(slot)
+                            == entry_kv.request_live_by_slot_spec(slot));
+                        assert(before_release_kv.request_generation_by_slot_spec(slot)
+                            == entry_kv.request_generation_by_slot_spec(slot));
+                    }
+                }
+                assert forall |slot: int| C <= slot < MAX_REQUEST_SLOTS implies {
+                    &&& !self.kv.request_live_by_slot_spec(slot)
+                    &&& self.kv.request_generation_by_slot_spec(slot) == 1
+                } by {
+                }
+                assert(self.well_formed());
+                Ok(Some(request))
+            }
             Err(error) => {
                 self.faulted = true;
+                assert(self.well_formed());
                 Err(EngineError::Scheduler(error))
             }
         }
@@ -234,8 +351,9 @@ impl<const C: usize> Engine<C> {
     pub fn dispatch_ready(
         &mut self,
         output: &mut [RequestId],
-    ) -> Result<Option<DispatchBatch>, EngineError>
+    ) -> (result: Result<Option<DispatchBatch>, EngineError>)
         requires old(self).well_formed(),
+        ensures final(self).well_formed(),
     {
         reveal(Engine::well_formed);
         self.require_healthy()?;
@@ -255,8 +373,9 @@ impl<const C: usize> Engine<C> {
         &mut self,
         completion: ExactCompletion,
         accepted_tokens: &[u32],
-    ) -> Result<usize, CompletionFailure>
+    ) -> (result: Result<usize, CompletionFailure>)
         requires old(self).well_formed(),
+        ensures final(self).well_formed(),
     {
         reveal(Engine::well_formed);
         if self.faulted {
@@ -282,6 +401,11 @@ impl<const C: usize> Engine<C> {
             invariant
                 self.scheduler.basic_invariant(),
                 self.kv.well_formed(),
+                self.identity_agreement(),
+                0 < C <= MAX_REQUEST_SLOTS,
+                self.permits@.len() == C,
+                forall |position: int| 0 <= position < C ==>
+                    self.permits@[position].is_none(),
                 index <= member_count,
                 member_count <= C,
                 accepted_tokens@.len() == member_count,
@@ -338,9 +462,22 @@ impl<const C: usize> Engine<C> {
             index += 1;
         }
 
+        let ghost before_completion_scheduler = self.scheduler;
         let completed = match self.scheduler.complete_exact(completion, &mut self.permits) {
             Ok(count) => count,
             Err(error) => {
+                assert forall |slot: int| 0 <= slot < C implies {
+                    &&& self.scheduler.slot_is_live_spec(slot)
+                        == self.kv.request_live_by_slot_spec(slot)
+                    &&& self.scheduler.slot_generation_spec(slot)
+                        == self.kv.request_generation_by_slot_spec(slot)
+                } by {
+                    assert(self.scheduler.slot_is_live_spec(slot)
+                        == before_completion_scheduler.slot_is_live_spec(slot));
+                    assert(self.scheduler.slot_generation_spec(slot)
+                        == before_completion_scheduler.slot_generation_spec(slot));
+                }
+                assert(self.well_formed());
                 return Err(CompletionFailure {
                     error: EngineError::Scheduler(error),
                     completion: None,
@@ -349,21 +486,62 @@ impl<const C: usize> Engine<C> {
         };
         assert(completed == member_count);
         assert(completed <= self.permits@.len());
+        assert(self.permits@.len() == C);
+        assert forall |position: int| completed <= position < C implies
+            self.permits@[position].is_none() by {
+        }
+        assert forall |slot: int| 0 <= slot < C implies {
+            &&& self.scheduler.slot_is_live_spec(slot)
+                == self.kv.request_live_by_slot_spec(slot)
+            &&& self.scheduler.slot_generation_spec(slot)
+                == self.kv.request_generation_by_slot_spec(slot)
+        } by {
+            assert(self.scheduler.slot_is_live_spec(slot)
+                == before_completion_scheduler.slot_is_live_spec(slot));
+            assert(self.scheduler.slot_generation_spec(slot)
+                == before_completion_scheduler.slot_generation_spec(slot));
+        }
+        assert(self.identity_agreement());
 
         index = 0;
         while index < completed
             invariant
                 self.scheduler.basic_invariant(),
                 self.kv.well_formed(),
+                self.identity_agreement(),
+                0 < C <= MAX_REQUEST_SLOTS,
+                self.permits@.len() == C,
                 index <= completed,
                 completed <= self.permits@.len(),
                 completed <= accepted_tokens@.len(),
+                forall |position: int| 0 <= position < index ==>
+                    self.permits@[position].is_none(),
+                forall |position: int| index <= position < completed ==>
+                    self.permits@[position].is_some(),
+                forall |position: int| index <= position < completed ==>
+                    self.permits@[position].unwrap().request_spec().slot_spec() < C,
+                forall |left: int, right: int| index <= left < right < completed ==>
+                    self.permits@[left].unwrap().request_spec().slot_spec()
+                        != self.permits@[right].unwrap().request_spec().slot_spec(),
+                forall |position: int| index <= position < completed
+                    && self.scheduler.state_spec(
+                        self.permits@[position].unwrap().request_spec(),
+                    ) == Some(RequestState::Retiring) ==> self.scheduler.detachment_ready(
+                        self.permits@[position].unwrap().request_spec(),
+                        self.permits@[position].unwrap().origin_spec(),
+                    ),
+                forall |position: int| completed <= position < C ==>
+                    self.permits@[position].is_none(),
             decreases completed - index,
         {
+            let ghost step_scheduler = self.scheduler;
+            let ghost step_permits = self.permits@;
+            assert(self.permits@[index as int].is_some());
             let permit = match self.permits[index].take() {
                 Some(permit) => permit,
                 None => {
                     self.faulted = true;
+                    self.clear_permits();
                     return Err(CompletionFailure {
                         error: EngineError::InvariantViolation,
                         completion: None,
@@ -371,8 +549,11 @@ impl<const C: usize> Engine<C> {
                 }
             };
             let request = permit.request();
+            let ghost permit_request = permit.request_spec();
+            let ghost permit_origin = permit.origin_spec();
             match self.scheduler.state(request) {
                 Some(RequestState::InFlight) => {
+                    let ghost before_accept_scheduler = self.scheduler;
                     let finalized = match self.kv.finalize_tentative(
                         request,
                         accepted_tokens[index],
@@ -382,42 +563,175 @@ impl<const C: usize> Engine<C> {
                         Err(failure) => {
                             let (error, _permit) = failure.into_parts();
                             self.faulted = true;
+                            self.clear_permits();
                             return Err(CompletionFailure {
                                 error: EngineError::Kv(error),
                                 completion: None,
                             });
                         }
                     };
-                    if let Err(error) = self.scheduler.accept_finalized(finalized) {
-                        self.faulted = true;
-                        return Err(CompletionFailure {
-                            error: EngineError::Scheduler(error),
-                            completion: None,
-                        });
+                    let ghost finalized_request = finalized.request_spec();
+                    assert(finalized_request == request);
+                    let accept_result = self.scheduler.accept_finalized(finalized);
+                    match accept_result {
+                        Err(error) => {
+                            self.faulted = true;
+                            self.clear_permits();
+                            return Err(CompletionFailure {
+                                error: EngineError::Scheduler(error),
+                                completion: None,
+                            });
+                        }
+                        Ok(()) => {}
+                    }
+                    assert(before_accept_scheduler == step_scheduler);
+                    assert(self.scheduler.detachment_ready_frame_except(
+                        &step_scheduler,
+                        finalized_request.slot_spec(),
+                    ));
+                    assert(finalized_request.slot_spec() == request.slot_spec());
+                    assert forall |position: int| index < position < completed
+                        && self.scheduler.state_spec(
+                            self.permits@[position].unwrap().request_spec(),
+                        ) == Some(RequestState::Retiring) implies
+                            self.scheduler.detachment_ready(
+                                self.permits@[position].unwrap().request_spec(),
+                                self.permits@[position].unwrap().origin_spec(),
+                            ) by {
+                        assert(self.permits@[position] == step_permits[position]);
+                        assert(self.permits@[position].unwrap().request_spec().slot_spec()
+                            != request.slot_spec());
+                        self.scheduler.apply_detachment_ready_frame_except(
+                            &step_scheduler,
+                            request.slot_spec(),
+                            self.permits@[position].unwrap().request_spec(),
+                            self.permits@[position].unwrap().origin_spec(),
+                        );
+                        assert(self.scheduler.state_spec(
+                            self.permits@[position].unwrap().request_spec(),
+                        ) == before_accept_scheduler.state_spec(
+                            self.permits@[position].unwrap().request_spec(),
+                        ));
+                        assert(step_scheduler.state_spec(
+                            step_permits[position].unwrap().request_spec(),
+                        ) == Some(RequestState::Retiring));
+                        assert(step_scheduler.detachment_ready(
+                            step_permits[position].unwrap().request_spec(),
+                            step_permits[position].unwrap().origin_spec(),
+                        ));
+                        assert(before_accept_scheduler.detachment_ready(
+                            self.permits@[position].unwrap().request_spec(),
+                            self.permits@[position].unwrap().origin_spec(),
+                        ));
                     }
                 }
                 Some(RequestState::Retiring) => {
+                    assert(request == permit_request);
+                    assert(self.scheduler.state_spec(request)
+                        == Some(RequestState::Retiring));
+                    assert(self.scheduler.detachment_ready(request, permit_origin));
+                    let ghost before_release_kv = self.kv;
+                    let ghost before_reclaim_scheduler = self.scheduler;
+                    assert(before_reclaim_scheduler == step_scheduler);
                     let detached = match self.kv.release_request(request, permit) {
                         Ok(detached) => detached,
                         Err(failure) => {
                             let (error, _permit) = failure.into_parts();
                             self.faulted = true;
+                            self.clear_permits();
                             return Err(CompletionFailure {
                                 error: EngineError::Kv(error),
                                 completion: None,
                             });
                         }
                     };
-                    if let Err(error) = self.scheduler.reclaim_detached(detached) {
-                        self.faulted = true;
-                        return Err(CompletionFailure {
-                            error: EngineError::Scheduler(error),
-                            completion: None,
-                        });
+                    assert(detached.request_spec() == request);
+                    assert(detached.origin_spec() == permit_origin);
+                    assert(request.generation_spec() < u32::MAX);
+                    assert(before_reclaim_scheduler.detachment_ready(
+                        detached.request_spec(),
+                        detached.origin_spec(),
+                    ));
+                    assert(before_reclaim_scheduler.detached_enabled(&detached));
+                    let ghost detached_request = detached.request_spec();
+                    let reclaim_result = self.scheduler.reclaim_detached(detached);
+                    match reclaim_result {
+                        Ok(reclaimed) => {
+                            assert(self.scheduler.detachment_ready_frame_except(
+                                &step_scheduler,
+                                detached_request.slot_spec(),
+                            ));
+                            assert(detached_request.slot_spec() == request.slot_spec());
+                            assert forall |slot: int| 0 <= slot < C implies {
+                                &&& self.scheduler.slot_is_live_spec(slot)
+                                    == self.kv.request_live_by_slot_spec(slot)
+                                &&& self.scheduler.slot_generation_spec(slot)
+                                    == self.kv.request_generation_by_slot_spec(slot)
+                            } by {
+                                if slot == reclaimed.slot_spec() {
+                                    assert(before_reclaim_scheduler.slot_is_live_spec(slot)
+                                        == before_release_kv.request_live_by_slot_spec(slot));
+                                    assert(before_reclaim_scheduler.slot_generation_spec(slot)
+                                        == before_release_kv.request_generation_by_slot_spec(slot));
+                                } else {
+                                    assert(self.scheduler.slot_is_live_spec(slot)
+                                        == before_reclaim_scheduler.slot_is_live_spec(slot));
+                                    assert(self.scheduler.slot_generation_spec(slot)
+                                        == before_reclaim_scheduler.slot_generation_spec(slot));
+                                    assert(self.kv.request_live_by_slot_spec(slot)
+                                        == before_release_kv.request_live_by_slot_spec(slot));
+                                    assert(self.kv.request_generation_by_slot_spec(slot)
+                                        == before_release_kv.request_generation_by_slot_spec(slot));
+                                }
+                            }
+                            assert forall |position: int| index < position < completed
+                                && self.scheduler.state_spec(
+                                    self.permits@[position].unwrap().request_spec(),
+                                ) == Some(RequestState::Retiring) implies
+                                    self.scheduler.detachment_ready(
+                                        self.permits@[position].unwrap().request_spec(),
+                                        self.permits@[position].unwrap().origin_spec(),
+                                    ) by {
+                                assert(self.permits@[position] == step_permits[position]);
+                                assert(self.permits@[position].unwrap()
+                                    .request_spec().slot_spec() != request.slot_spec());
+                                self.scheduler.apply_detachment_ready_frame_except(
+                                    &step_scheduler,
+                                    request.slot_spec(),
+                                    self.permits@[position].unwrap().request_spec(),
+                                    self.permits@[position].unwrap().origin_spec(),
+                                );
+                                assert(self.scheduler.state_spec(
+                                    self.permits@[position].unwrap().request_spec(),
+                                ) == before_reclaim_scheduler.state_spec(
+                                    self.permits@[position].unwrap().request_spec(),
+                                ));
+                                assert(step_scheduler.state_spec(
+                                    step_permits[position].unwrap().request_spec(),
+                                ) == Some(RequestState::Retiring));
+                                assert(step_scheduler.detachment_ready(
+                                    step_permits[position].unwrap().request_spec(),
+                                    step_permits[position].unwrap().origin_spec(),
+                                ));
+                                assert(before_reclaim_scheduler.detachment_ready(
+                                    self.permits@[position].unwrap().request_spec(),
+                                    self.permits@[position].unwrap().origin_spec(),
+                                ));
+                            }
+                        }
+                        Err(error) => {
+                            assert(false);
+                            self.faulted = true;
+                            return Err(CompletionFailure {
+                                error: EngineError::Scheduler(error),
+                                completion: None,
+                            });
+                        }
                     }
                 }
                 Some(RequestState::Ready) | Some(RequestState::Vacant) | None => {
                     self.faulted = true;
+                    self.clear_permits();
                     return Err(CompletionFailure {
                         error: EngineError::InvariantViolation,
                         completion: None,
@@ -426,36 +740,79 @@ impl<const C: usize> Engine<C> {
             }
             index += 1;
         }
+        assert(self.well_formed());
         Ok(completed)
     }
 
+    fn clear_permits(&mut self)
+        requires
+            old(self).scheduler.basic_invariant(),
+            old(self).kv.well_formed(),
+            old(self).identity_agreement(),
+            old(self).permits@.len() == C,
+            0 < C <= MAX_REQUEST_SLOTS,
+        ensures
+            final(self).scheduler.basic_invariant(),
+            final(self).kv.well_formed(),
+            final(self).identity_agreement(),
+            final(self).permits@.len() == C,
+            forall |index: int| 0 <= index < C ==>
+                final(self).permits@[index].is_none(),
+            final(self).faulted == old(self).faulted,
+    {
+        let mut index = 0;
+        while index < C
+            invariant
+                self.scheduler.basic_invariant(),
+                self.kv.well_formed(),
+                self.identity_agreement(),
+                self.permits@.len() == C,
+                index <= C,
+                forall |position: int| 0 <= position < index ==>
+                    self.permits@[position].is_none(),
+                self.faulted == old(self).faulted,
+            decreases C - index,
+        {
+            self.permits.set(index, None);
+            index += 1;
+        }
+    }
+
     #[must_use]
-    pub fn state(&self, request: RequestId) -> Option<RequestState> {
+    pub fn state(&self, request: RequestId) -> (state: Option<RequestState>)
+        ensures state == self.state_spec(request),
+    {
         self.scheduler.state(request)
     }
 
     #[must_use]
-    pub fn resident_tokens(&self, request: RequestId) -> Option<u32>
+    pub fn resident_tokens(&self, request: RequestId) -> (tokens: Option<u32>)
         requires self.well_formed(),
+        ensures tokens == self.resident_tokens_spec(request),
     {
         reveal(Engine::well_formed);
         self.kv.resident_tokens(request)
     }
 
     #[must_use]
-    pub fn committed_tokens(&self, request: RequestId) -> Option<u32>
+    pub fn committed_tokens(&self, request: RequestId) -> (tokens: Option<u32>)
         requires self.well_formed(),
+        ensures tokens == self.committed_tokens_spec(request),
     {
         reveal(Engine::well_formed);
         self.kv.committed_tokens(request)
     }
 
     #[must_use]
-    pub fn free_pages(&self) -> u32 {
+    pub fn free_pages(&self) -> (pages: u32)
+        ensures pages == self.free_pages_spec(),
+    {
         self.kv.free_pages()
     }
 
-    fn require_healthy(&self) -> Result<(), EngineError> {
+    fn require_healthy(&self) -> (result: Result<(), EngineError>)
+        ensures result == if self.faulted { Err(EngineError::Faulted) } else { Ok(()) },
+    {
         if self.faulted {
             Err(EngineError::Faulted)
         } else {
