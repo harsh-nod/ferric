@@ -141,6 +141,39 @@ pub enum SchedulerError {
     InvariantViolation,
 }
 
+/// A framed completion failure returns the unchanged linear quiescence
+/// authority so the caller can correct transient storage/preflight errors and
+/// retry. Success consumes the authority exactly once.
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) struct CompletionFailure {
+    error: SchedulerError,
+    completion: ExactCompletion,
+}
+
+impl CompletionFailure {
+    pub(crate) const fn error(&self) -> (error: SchedulerError)
+        ensures error == self.error_spec(),
+    {
+        self.error
+    }
+
+    pub(crate) fn into_parts(self) -> (parts: (SchedulerError, ExactCompletion))
+        ensures
+            parts.0 == self.error_spec(),
+            parts.1.epoch_spec() == self.completion_epoch_spec(),
+    {
+        (self.error, self.completion)
+    }
+
+    pub(crate) closed spec fn error_spec(&self) -> SchedulerError {
+        self.error
+    }
+
+    pub(crate) closed spec fn completion_epoch_spec(&self) -> CompletionEpoch {
+        self.completion.epoch_spec()
+    }
+}
+
 /// Fixed-capacity, allocation-free-after-construction request lifecycle.
 ///
 /// `C` is part of the generated runner. Every ring is embedded in the value;
@@ -175,10 +208,10 @@ impl<const C: usize> Scheduler<C> {
                     &&& C > 0
                     &&& C <= MAX_REQUEST_SLOTS
                     &&& scheduler.basic_invariant()
-                    &&& forall |slot_index: int| 0 <= slot_index < C ==> {
+                    &&& (forall|slot_index: int| 0 <= slot_index < C ==> {
                         &&& !scheduler.slot_is_live_spec(slot_index)
                         &&& scheduler.slot_generation_spec(slot_index) == 1
-                    }
+                    })
                 }
                 Err(error) => {
                     &&& error == if C == 0 {
@@ -487,7 +520,7 @@ impl<const C: usize> Scheduler<C> {
         &&& self.live_count == other.live_count
     }
 
-    pub(crate) closed spec fn slot_model(&self, slot_index: int) -> SequentialRequest
+    pub closed spec fn slot_model(&self, slot_index: int) -> SequentialRequest
         recommends 0 <= slot_index < C,
     {
         SequentialRequest {
@@ -509,119 +542,78 @@ impl<const C: usize> Scheduler<C> {
     }
 
     pub open spec fn identity_frame(&self, before: &Self) -> bool {
-        forall |slot_index: int| 0 <= slot_index < C ==> {
-            &&& self.slot_is_live_spec(slot_index) == before.slot_is_live_spec(slot_index)
+        forall|slot_index: int| 0 <= slot_index < C ==> {
             &&& self.slot_generation_spec(slot_index)
                 == before.slot_generation_spec(slot_index)
+            &&& self.slot_is_live_spec(slot_index) == before.slot_is_live_spec(slot_index)
         }
     }
 
-    pub open spec fn admit_identity_refines(
-        &self,
-        before: &Self,
-        result: &Result<RequestId, SchedulerError>,
-    ) -> bool {
-        match result {
-            Err(_) => self.identity_frame(before),
-            Ok(request) => {
-                let changed = request.slot_spec() as int;
-                &&& 0 <= changed < C
-                &&& !before.slot_is_live_spec(changed)
-                &&& self.slot_is_live_spec(changed)
-                &&& self.slot_generation_spec(changed)
-                    == before.slot_generation_spec(changed)
-                &&& request.generation_spec() == self.slot_generation_spec(changed)
-                &&& forall |slot_index: int| 0 <= slot_index < C && slot_index != changed ==> {
-                    &&& self.slot_is_live_spec(slot_index)
-                        == before.slot_is_live_spec(slot_index)
-                    &&& self.slot_generation_spec(slot_index)
-                        == before.slot_generation_spec(slot_index)
-                }
-            }
-        }
-    }
-
-    pub open spec fn reclaim_identity_refines(
-        &self,
-        before: &Self,
-        result: &Result<RequestId, SchedulerError>,
-    ) -> bool {
-        match result {
-            Err(_) => self.identity_frame(before),
-            Ok(request) => {
-                let changed = request.slot_spec() as int;
-                &&& 0 <= changed < C
-                &&& before.slot_is_live_spec(changed)
-                &&& !self.slot_is_live_spec(changed)
-                &&& self.slot_generation_spec(changed)
-                    == before.slot_generation_spec(changed) + 1
-                &&& request.generation_spec() == before.slot_generation_spec(changed)
-                &&& forall |slot_index: int| 0 <= slot_index < C && slot_index != changed ==> {
-                    &&& self.slot_is_live_spec(slot_index)
-                        == before.slot_is_live_spec(slot_index)
-                    &&& self.slot_generation_spec(slot_index)
-                        == before.slot_generation_spec(slot_index)
-                }
-            }
-        }
-    }
-
-    pub(crate) closed spec fn detachment_ready(
+    pub(crate) open spec fn detachment_ready(
         &self,
         request: RequestId,
         origin: KvQuiescenceOrigin,
     ) -> bool {
-        if request.slot_spec() >= C {
-            false
-        } else {
-            let slot = self.slots@[request.slot_spec() as int];
-            &&& slot.generation == request.generation_spec()
-            &&& slot.state == RequestState::Retiring
-            &&& slot.phase == LifecyclePhase::RetiringQuiescent
-            &&& !slot.in_reclaim_ring
-            &&& match origin {
-                KvQuiescenceOrigin::NeverSubmitted => {
-                    slot.active_epoch == NO_EPOCH && slot.last_quiescent_epoch == NO_EPOCH
-                }
-                KvQuiescenceOrigin::CompletedExact { epoch } => {
-                    (slot.active_epoch != NO_EPOCH && slot.active_epoch == epoch)
-                        || (slot.active_epoch == NO_EPOCH
-                            && slot.last_quiescent_epoch == epoch)
-                }
-            }
-        }
+        self.detachment_ready_inner(request, origin)
     }
 
-    pub(crate) open spec fn detached_enabled(&self, detached: &KvDetachedRequest) -> bool {
-        self.detachment_ready(detached.request_spec(), detached.origin_spec())
-            && detached.request_spec().generation_spec() < u32::MAX
+    pub(crate) closed spec fn detachment_ready_inner(
+        &self,
+        request: RequestId,
+        origin: KvQuiescenceOrigin,
+    ) -> bool {
+        let slot_index = request.slot_spec() as int;
+        &&& slot_index < C
+        &&& self.slot_generation_spec(slot_index) == request.generation_spec()
+        &&& self.slot_model(slot_index) == SequentialRequest {
+            state: RequestState::Retiring,
+            phase: LifecyclePhase::RetiringQuiescent,
+        }
+        &&& !self.slots@[slot_index].in_reclaim_ring
+        &&& match origin {
+            KvQuiescenceOrigin::NeverSubmitted => {
+                self.slots@[slot_index].active_epoch == NO_EPOCH
+                    && self.slots@[slot_index].last_quiescent_epoch == NO_EPOCH
+            }
+            KvQuiescenceOrigin::CompletedExact { epoch } => {
+                (self.slots@[slot_index].active_epoch != NO_EPOCH
+                    && self.slots@[slot_index].active_epoch == epoch)
+                    || (self.slots@[slot_index].active_epoch == NO_EPOCH
+                        && self.slots@[slot_index].last_quiescent_epoch == epoch)
+            }
+        }
     }
 
     pub(crate) open spec fn detachment_ready_frame_except(
         &self,
         before: &Self,
-        changed_slot: u32,
+        changed_slot: int,
     ) -> bool {
-        forall |request: RequestId, origin: KvQuiescenceOrigin|
-            request.slot_spec() < C && request.slot_spec() != changed_slot ==>
-                {
-                    &&& self.state_spec(request) == before.state_spec(request)
-                    &&& self.detachment_ready(request, origin)
-                        == before.detachment_ready(request, origin)
-                }
+        forall|request: RequestId, origin: KvQuiescenceOrigin|
+            request.slot_spec() < C && request.slot_spec() as int != changed_slot ==> {
+                &&& self.state_spec(request) == before.state_spec(request)
+                &&& #[trigger] self.detachment_ready(request, origin)
+                    == before.detachment_ready(request, origin)
+            }
+    }
+
+    pub(crate) open spec fn detached_enabled(&self, detached: &KvDetachedRequest) -> bool {
+        let request = detached.request_spec();
+        &&& self.detachment_ready(request, detached.origin_spec())
+        &&& self.slot_generation_spec(request.slot_spec() as int) < u32::MAX
     }
 
     pub(crate) proof fn apply_detachment_ready_frame_except(
         &self,
         before: &Self,
-        changed_slot: u32,
+        changed_slot: int,
         request: RequestId,
         origin: KvQuiescenceOrigin,
     )
         requires
             self.detachment_ready_frame_except(before, changed_slot),
             request.slot_spec() < C,
-            request.slot_spec() != changed_slot,
+            request.slot_spec() as int != changed_slot,
         ensures
             self.state_spec(request) == before.state_spec(request),
             self.detachment_ready(request, origin)
@@ -632,6 +624,46 @@ impl<const C: usize> Scheduler<C> {
     pub closed spec fn slots_frame_except(&self, before: &Self, changed: int) -> bool {
         forall|slot_index: int| 0 <= slot_index < C && slot_index != changed ==>
             #[trigger] self.slots@[slot_index] == before.slots@[slot_index]
+    }
+
+    proof fn detachment_frame_from_slots_frame(&self, before: &Self, changed: int)
+        requires self.slots_frame_except(before, changed),
+        ensures self.detachment_ready_frame_except(before, changed),
+    {
+        assert forall|request: RequestId, origin: KvQuiescenceOrigin|
+            request.slot_spec() < C && request.slot_spec() as int != changed implies {
+                &&& self.state_spec(request) == before.state_spec(request)
+                &&& self.detachment_ready(request, origin)
+                    == before.detachment_ready(request, origin)
+            } by {
+                let slot_index = request.slot_spec() as int;
+                assert(self.slots@[slot_index] == before.slots@[slot_index]);
+                reveal(Scheduler::state_spec);
+                reveal(Scheduler::slot_model);
+                reveal(Scheduler::slot_generation_spec);
+                reveal(Scheduler::detachment_ready_inner);
+            }
+    }
+
+    proof fn identity_frame_from_slots_frame(&self, before: &Self, changed: int)
+        requires
+            0 <= changed < C,
+            self.slots_frame_except(before, changed),
+            self.slot_generation_spec(changed) == before.slot_generation_spec(changed),
+            self.slot_is_live_spec(changed) == before.slot_is_live_spec(changed),
+        ensures self.identity_frame(before),
+    {
+        assert forall|slot_index: int| 0 <= slot_index < C implies {
+            &&& self.slot_generation_spec(slot_index)
+                == before.slot_generation_spec(slot_index)
+            &&& self.slot_is_live_spec(slot_index) == before.slot_is_live_spec(slot_index)
+        } by {
+            if slot_index != changed {
+                assert(self.slots@[slot_index] == before.slots@[slot_index]);
+                reveal(Scheduler::slot_generation_spec);
+                reveal(Scheduler::slot_is_live_spec);
+            }
+        }
     }
 
     pub closed spec fn admit_refines(
@@ -875,15 +907,16 @@ impl<const C: usize> Scheduler<C> {
         completion_epoch: u64,
         before_permits: Seq<Option<KvQuiescencePermit>>,
         permits: Seq<Option<KvQuiescencePermit>>,
-        result: &Result<usize, SchedulerError>,
+        result: &Result<usize, CompletionFailure>,
     ) -> bool {
         match result {
-            Err(error) => {
-                &&& Some(*error) == completion_expected_error::<C>(
+            Err(failure) => {
+                &&& Some(failure.error_spec()) == completion_expected_error::<C>(
                     before,
                     completion_epoch,
                     before_permits,
                 )
+                &&& failure.completion_epoch_spec().value == completion_epoch
                 &&& self.same_scalars(before)
                 &&& permits == before_permits
             }
@@ -958,6 +991,45 @@ impl<const C: usize> Scheduler<C> {
         }
     }
 
+    pub(crate) closed spec fn finalized_slot_refines(
+        &self,
+        before: &Self,
+        request: RequestId,
+        epoch: u64,
+    ) -> bool {
+        let slot_index = request.slot_spec() as int;
+        &&& slot_index < C
+        &&& request.generation_spec() == before.slots@[slot_index].generation
+        &&& before.slots@[slot_index].active_epoch == epoch
+        &&& self.slots@[slot_index].last_quiescent_epoch == epoch
+        &&& ferric_spec::scheduling::request_transition(
+            before.slot_model(slot_index),
+            RequestTransition::FinalizeKv,
+        ) == Ok(self.slot_model(slot_index))
+        &&& self.slots_frame_except(before, slot_index)
+        &&& self.slots@[slot_index].generation == before.slots@[slot_index].generation
+        &&& self.slots@[slot_index].active_epoch == NO_EPOCH
+        &&& self.slots@[slot_index].in_free_ring == before.slots@[slot_index].in_free_ring
+        &&& self.slots@[slot_index].in_reclaim_ring
+            == before.slots@[slot_index].in_reclaim_ring
+        &&& self.free_ring@ == before.free_ring@
+        &&& self.free_head == before.free_head
+        &&& self.free_len == before.free_len
+        &&& self.reclaim_ring@ == before.reclaim_ring@
+        &&& self.reclaim_head == before.reclaim_head
+        &&& self.reclaim_len == before.reclaim_len
+        &&& self.member_ring@ == before.member_ring@
+        &&& self.member_head == before.member_head
+        &&& self.member_len == before.member_len
+        &&& self.batch_ring@ == before.batch_ring@
+        &&& self.batch_head == before.batch_head
+        &&& self.batch_len == before.batch_len
+        &&& self.cursor == before.cursor
+        &&& self.submitted == before.submitted
+        &&& self.completed == before.completed
+        &&& self.live_count == before.live_count
+    }
+
     pub(crate) closed spec fn finalized_refines(
         &self,
         before: &Self,
@@ -971,41 +1043,13 @@ impl<const C: usize> Scheduler<C> {
             }
             Ok(()) => {
                 let request = finalized.request_spec();
-                let slot_index = request.slot_spec() as int;
                 &&& finalized_expected_error::<C>(before, finalized).is_none()
-                &&& slot_index < C
-                &&& request.generation_spec() == before.slots@[slot_index].generation
-                &&& (exists|epoch: u64|
-                    finalized.origin_spec() == KvQuiescenceOrigin::CompletedExact { epoch }
-                    && before.slots@[slot_index].active_epoch == epoch
-                    && self.slots@[slot_index].last_quiescent_epoch == epoch)
-                &&& ferric_spec::scheduling::request_transition(
-                    before.slot_model(slot_index),
-                    RequestTransition::FinalizeKv,
-                ) == Ok(self.slot_model(slot_index))
-                &&& self.slots_frame_except(before, slot_index)
-                &&& self.slots@[slot_index].generation == before.slots@[slot_index].generation
-                &&& self.slots@[slot_index].active_epoch == NO_EPOCH
-                &&& self.slots@[slot_index].in_free_ring
-                    == before.slots@[slot_index].in_free_ring
-                &&& self.slots@[slot_index].in_reclaim_ring
-                    == before.slots@[slot_index].in_reclaim_ring
-                &&& self.free_ring@ == before.free_ring@
-                &&& self.free_head == before.free_head
-                &&& self.free_len == before.free_len
-                &&& self.reclaim_ring@ == before.reclaim_ring@
-                &&& self.reclaim_head == before.reclaim_head
-                &&& self.reclaim_len == before.reclaim_len
-                &&& self.member_ring@ == before.member_ring@
-                &&& self.member_head == before.member_head
-                &&& self.member_len == before.member_len
-                &&& self.batch_ring@ == before.batch_ring@
-                &&& self.batch_head == before.batch_head
-                &&& self.batch_len == before.batch_len
-                &&& self.cursor == before.cursor
-                &&& self.submitted == before.submitted
-                &&& self.completed == before.completed
-                &&& self.live_count == before.live_count
+                &&& match finalized.origin_spec() {
+                    KvQuiescenceOrigin::CompletedExact { epoch } => {
+                        self.finalized_slot_refines(before, request, epoch)
+                    }
+                    KvQuiescenceOrigin::NeverSubmitted => false,
+                }
             }
         }
     }
@@ -1236,7 +1280,21 @@ impl<const C: usize> Scheduler<C> {
         ensures
             final(self).basic_invariant(),
             final(self).admit_refines(old(self), &result),
-            final(self).admit_identity_refines(old(self), &result),
+            match result {
+                Err(_) => final(self).identity_frame(old(self)),
+                Ok(request) => {
+                    let slot_index = request.slot_spec() as int;
+                    &&& final(self).slot_is_live_spec(slot_index)
+                    &&& final(self).slot_generation_spec(slot_index)
+                        == old(self).slot_generation_spec(slot_index)
+                    &&& (forall|other: int| 0 <= other < C && other != slot_index ==> {
+                        &&& final(self).slot_is_live_spec(other)
+                            == old(self).slot_is_live_spec(other)
+                        &&& final(self).slot_generation_spec(other)
+                            == old(self).slot_generation_spec(other)
+                    })
+                }
+            },
     {
         reveal(Scheduler::basic_invariant);
         reveal(Scheduler::scalar_invariant);
@@ -1576,7 +1634,7 @@ impl<const C: usize> Scheduler<C> {
         &mut self,
         completion: ExactCompletion,
         permits: &mut [Option<KvQuiescencePermit>],
-    ) -> (result: Result<usize, SchedulerError>)
+    ) -> (result: Result<usize, CompletionFailure>)
         requires old(self).basic_invariant(),
         ensures
             final(self).basic_invariant(),
@@ -1591,28 +1649,43 @@ impl<const C: usize> Scheduler<C> {
             final(permits).len() == old(permits).len(),
             match result {
                 Ok(count) => {
-                    &&& count <= final(permits).len()
                     &&& count == old(self).pending_batch_member_count_spec()
-                    &&& forall |index: int| 0 <= index < count ==> {
-                        &&& final(permits)@[index].is_some()
-                        &&& final(permits)@[index].unwrap().request_spec().slot_spec() < C
-                        &&& final(self).state_spec(
-                            final(permits)@[index].unwrap().request_spec(),
-                        ) == Some(RequestState::Retiring) ==> (
-                            final(self).detachment_ready(
-                                final(permits)@[index].unwrap().request_spec(),
-                                final(permits)@[index].unwrap().origin_spec(),
-                            )
-                        )
-                    }
-                    &&& forall |left: int, right: int|
-                        0 <= left < right < count ==>
-                            final(permits)@[left].unwrap().request_spec().slot_spec()
-                                != final(permits)@[right].unwrap().request_spec().slot_spec()
-                    &&& forall |index: int| count <= index < final(permits).len() ==>
-                        final(permits)@[index] == old(permits)@[index]
+                    &&& count <= final(permits).len()
+                    &&& (forall|offset: int| 0 <= offset < count ==> {
+                        match #[trigger] final(permits)@[offset] {
+                            Some(permit) => {
+                                let request = permit.request_spec();
+                                &&& request.slot_spec() < C
+                                &&& match old(self).pending_member_spec(offset as usize) {
+                                    Some(member) => member == request,
+                                    None => false,
+                                }
+                                &&& final(self).state_spec(request)
+                                    == old(self).state_spec(request)
+                                &&& (final(self).state_spec(request)
+                                    == Some(RequestState::InFlight)
+                                    || final(self).state_spec(request)
+                                        == Some(RequestState::Retiring))
+                                &&& (final(self).slot_model(request.slot_spec() as int).state
+                                    == RequestState::Retiring ==>
+                                        final(self).detachment_ready(
+                                            request,
+                                            permit.origin_spec(),
+                                        ))
+                            }
+                            None => false,
+                        }
+                    })
+                    &&& (forall|left: int, right: int| 0 <= left < right < count ==>
+                        final(permits)@[left].unwrap().request_spec().slot_spec()
+                            != final(permits)@[right].unwrap().request_spec().slot_spec())
+                    &&& (forall|offset: int| count <= offset < final(permits).len() ==>
+                        #[trigger] final(permits)@[offset] == old(permits)@[offset])
                 }
-                Err(_) => final(permits)@ == old(permits)@,
+                Err(failure) => {
+                    &&& failure.completion_epoch_spec() == completion.epoch_spec()
+                    &&& final(permits)@ == old(permits)@
+                }
             },
     {
         reveal(Scheduler::basic_invariant);
@@ -1626,22 +1699,39 @@ impl<const C: usize> Scheduler<C> {
         reveal(Scheduler::completion_refines);
         reveal(Scheduler::slot_model);
         if self.batch_len == 0 {
-            return Err(SchedulerError::NoPendingBatch);
+            return Err(CompletionFailure {
+                error: SchedulerError::NoPendingBatch,
+                completion,
+            });
         }
         let expected = match self.completed.checked_add(1) {
             Some(epoch) => epoch,
-            None => return Err(SchedulerError::CompletionNotExactNext),
+            None => {
+                return Err(CompletionFailure {
+                    error: SchedulerError::CompletionNotExactNext,
+                    completion,
+                });
+            }
         };
         let observed = completion.epoch().value;
         if observed != expected {
-            return Err(SchedulerError::CompletionNotExactNext);
+            return Err(CompletionFailure {
+                error: SchedulerError::CompletionNotExactNext,
+                completion,
+            });
         }
         let batch = self.batch_ring[self.batch_head];
         if batch.epoch.value != observed || batch.member_count == 0 {
-            return Err(SchedulerError::CompletionEpochMismatch);
+            return Err(CompletionFailure {
+                error: SchedulerError::CompletionEpochMismatch,
+                completion,
+            });
         }
         if permits.len() < batch.member_count {
-            return Err(SchedulerError::CompletionStorageTooSmall);
+            return Err(CompletionFailure {
+                error: SchedulerError::CompletionStorageTooSmall,
+                completion,
+            });
         }
 
         // Preflight the complete compact member range before any mutation so
@@ -1657,22 +1747,34 @@ impl<const C: usize> Scheduler<C> {
             decreases batch.member_count - checked,
         {
             if permits[checked].is_some() {
-                return Err(SchedulerError::CompletionStorageNotEmpty);
+                return Err(CompletionFailure {
+                    error: SchedulerError::CompletionStorageNotEmpty,
+                    completion,
+                });
             }
             let handle = self.member_ring[check_head];
             if handle.slot() as usize >= C {
-                return Err(SchedulerError::InvariantViolation);
+                return Err(CompletionFailure {
+                    error: SchedulerError::InvariantViolation,
+                    completion,
+                });
             }
             let slot = self.slots[handle.slot() as usize];
             if slot.generation != handle.generation() || slot.active_epoch != observed {
-                return Err(SchedulerError::InvariantViolation);
+                return Err(CompletionFailure {
+                    error: SchedulerError::InvariantViolation,
+                    completion,
+                });
             }
             let valid_phase = (slot.state == RequestState::InFlight
                 && slot.phase == LifecyclePhase::Executing)
                 || (slot.state == RequestState::Retiring
                     && slot.phase == LifecyclePhase::RetiringExecuting);
             if !valid_phase {
-                return Err(SchedulerError::InvariantViolation);
+                return Err(CompletionFailure {
+                    error: SchedulerError::InvariantViolation,
+                    completion,
+                });
             }
             check_head = advance::<C>(check_head);
             checked += 1;
@@ -1771,77 +1873,111 @@ impl<const C: usize> Scheduler<C> {
         }))
     }
 
-    /// Consumes cache-owned evidence for the exact completed speculative step
-    /// before making the request dispatchable again.
-    pub(crate) fn accept_finalized(
-        &mut self,
-        finalized: KvFinalizedRequest,
-    ) -> (result: Result<(), SchedulerError>)
-        requires old(self).basic_invariant(),
-        ensures
-            final(self).basic_invariant(),
-            final(self).finalized_refines(old(self), &finalized, &result),
-            final(self).identity_frame(old(self)),
-            final(self).detachment_ready_frame_except(
-                old(self),
-                finalized.request_spec().slot_spec(),
-            ),
+    fn finalized_origin(
+        finalized: &KvFinalizedRequest,
+    ) -> (result: Result<u64, SchedulerError>)
+        ensures result == finalized_origin_spec(finalized),
     {
-        reveal(Scheduler::same_scalars);
-        reveal(Scheduler::finalized_refines);
-        reveal(Scheduler::slot_model);
-        reveal(Scheduler::slots_frame_except);
-        reveal(finalized_expected_error);
-        let request = finalized.request();
-        let epoch = match finalized.origin() {
-            KvQuiescenceOrigin::CompletedExact { epoch } => epoch,
-            KvQuiescenceOrigin::NeverSubmitted => {
-                let result = Err(SchedulerError::FinalizationMismatch);
-                assert(finalized.origin_spec() == KvQuiescenceOrigin::NeverSubmitted);
-                assert(finalized_expected_error::<C>(old(self), &finalized)
-                    == Some(SchedulerError::FinalizationMismatch));
-                assert(self.same_scalars(old(self)));
-                assert(self.finalized_refines(old(self), &finalized, &result));
-                return result;
-            }
-        };
+        reveal(finalized_origin_spec);
+        match finalized.origin() {
+            KvQuiescenceOrigin::CompletedExact { epoch } => Ok(epoch),
+            KvQuiescenceOrigin::NeverSubmitted => Err(SchedulerError::FinalizationMismatch),
+        }
+    }
+
+    fn finalized_request_preflight(
+        &self,
+        request: RequestId,
+        epoch: u64,
+    ) -> (result: Result<(), SchedulerError>)
+        ensures result == finalized_request_preflight_spec::<C>(self, request, epoch),
+    {
         let slot_index = request.slot() as usize;
         if slot_index >= C {
             let result = Err(SchedulerError::InvalidSlot);
-            assert(request == finalized.request_spec());
-            assert(finalized_expected_error::<C>(old(self), &finalized)
-                == Some(SchedulerError::InvalidSlot));
-            assert(self.same_scalars(old(self)));
-            assert(self.finalized_refines(old(self), &finalized, &result));
+            assert(result == finalized_request_preflight_spec::<C>(self, request, epoch)) by {
+                reveal(finalized_request_preflight_spec);
+            }
             return result;
         }
         let slot = self.slots[slot_index];
-        if slot.generation != request.generation()
-            || slot.state != RequestState::InFlight
-            || slot.phase != LifecyclePhase::AwaitingKv
-            || slot.active_epoch != epoch
-        {
+        assert(slot_index as int == request.slot_spec() as int);
+        assert(self.slots@[slot_index as int] == slot);
+        if slot.generation != request.generation() {
             let result = Err(SchedulerError::FinalizationMismatch);
-            assert(request == finalized.request_spec());
-            assert(finalized_expected_error::<C>(old(self), &finalized)
-                == Some(SchedulerError::FinalizationMismatch));
-            assert(self.same_scalars(old(self)));
-            assert(self.finalized_refines(old(self), &finalized, &result));
+            assert(result == finalized_request_preflight_spec::<C>(self, request, epoch)) by {
+                reveal(finalized_request_preflight_spec);
+            }
             return result;
         }
+        match (slot.state, slot.phase) {
+            (RequestState::InFlight, LifecyclePhase::AwaitingKv) => {}
+            _ => {
+                let result = Err(SchedulerError::FinalizationMismatch);
+                assert(result == finalized_request_preflight_spec::<C>(self, request, epoch)) by {
+                    reveal(finalized_request_preflight_spec);
+                }
+                return result;
+            }
+        }
+        if slot.active_epoch != epoch {
+            let result = Err(SchedulerError::FinalizationMismatch);
+            assert(result == finalized_request_preflight_spec::<C>(self, request, epoch)) by {
+                reveal(finalized_request_preflight_spec);
+            }
+            return result;
+        }
+        let result = Ok(());
+        assert(slot.generation == request.generation_spec());
+        assert(slot.state == RequestState::InFlight);
+        assert(slot.phase == LifecyclePhase::AwaitingKv);
+        assert(slot.active_epoch == epoch);
+        assert(result == finalized_request_preflight_spec::<C>(self, request, epoch)) by {
+            reveal(finalized_request_preflight_spec);
+        }
+        result
+    }
 
+    fn finalized_preflight(
+        &self,
+        finalized: &KvFinalizedRequest,
+    ) -> (result: Result<(RequestId, u64), SchedulerError>)
+        requires self.basic_invariant(),
+        ensures result == finalized_preflight_spec::<C>(self, finalized),
+    {
+        reveal(finalized_preflight_spec);
+        let request = finalized.request();
+        let epoch = match Self::finalized_origin(finalized) {
+            Ok(epoch) => epoch,
+            Err(error) => return Err(error),
+        };
+        if let Err(error) = self.finalized_request_preflight(request, epoch) {
+            return Err(error);
+        }
+        Ok((request, epoch))
+    }
+
+    fn finalize_slot(&mut self, request: RequestId, epoch: u64)
+        requires
+            old(self).basic_invariant(),
+            request.slot_spec() < C,
+            old(self).slots@[request.slot_spec() as int].generation
+                == request.generation_spec(),
+            old(self).slots@[request.slot_spec() as int].state == RequestState::InFlight,
+            old(self).slots@[request.slot_spec() as int].phase == LifecyclePhase::AwaitingKv,
+            old(self).slots@[request.slot_spec() as int].active_epoch == epoch,
+        ensures
+            final(self).basic_invariant(),
+            final(self).finalized_slot_refines(old(self), request, epoch),
+    {
         reveal(Scheduler::basic_invariant);
-        reveal(Scheduler::scalar_invariant);
-        reveal(Scheduler::slot_invariant);
-        reveal(Scheduler::free_ring_invariant);
-        reveal(Scheduler::reclaim_ring_invariant);
-        reveal(Scheduler::member_ring_invariant);
-        reveal(Scheduler::batch_ring_invariant);
+        let slot_index = request.slot() as usize;
         let ghost old_slots = self.slots@;
         self.slots[slot_index].state = RequestState::Ready;
         self.slots[slot_index].phase = LifecyclePhase::Idle;
         self.slots[slot_index].active_epoch = NO_EPOCH;
         self.slots[slot_index].last_quiescent_epoch = epoch;
+        assert(self.slots@ == old_slots.update(slot_index as int, self.slots@[slot_index as int]));
         proof {
             live_count_update_nonvacant(
                 old_slots,
@@ -1850,6 +1986,7 @@ impl<const C: usize> Scheduler<C> {
                 C as nat,
             );
         }
+        assert(live_slot_count(self.slots@, C as nat) == live_slot_count(old_slots, C as nat));
         assert forall|observed: int| 0 <= observed < C implies {
             let observed_slot = #[trigger] self.slots@[observed];
             match observed_slot.state {
@@ -1889,67 +2026,153 @@ impl<const C: usize> Scheduler<C> {
                 }
             }
         } by {
+            reveal(Scheduler::slot_invariant);
             if observed != slot_index {
                 assert(self.slots@[observed] == old(self).slots@[observed]);
             }
         }
-        assert(self.scalar_invariant());
-        assert(self.slot_invariant());
-        assert(self.free_ring_invariant());
-        assert(self.reclaim_ring_invariant());
-        assert(self.member_ring_invariant());
-        assert(self.batch_ring_invariant());
-        assert(self.basic_invariant());
-        let result = Ok(());
-        assert(self.finalized_refines(old(self), &finalized, &result));
-        result
+        assert(self.scalar_invariant()) by {
+            reveal(Scheduler::scalar_invariant);
+        }
+        assert(self.slot_invariant()) by {
+            reveal(Scheduler::slot_invariant);
+        }
+        assert(self.free_ring_invariant()) by {
+            reveal(Scheduler::free_ring_invariant);
+        }
+        assert(self.reclaim_ring_invariant()) by {
+            reveal(Scheduler::reclaim_ring_invariant);
+        }
+        assert(self.member_ring_invariant()) by {
+            reveal(Scheduler::member_ring_invariant);
+        }
+        assert(self.batch_ring_invariant()) by {
+            reveal(Scheduler::batch_ring_invariant);
+            reveal(Scheduler::member_ring_invariant);
+        }
+        assert(self.basic_invariant()) by {
+            reveal(Scheduler::basic_invariant);
+        }
+        assert(self.finalized_slot_refines(old(self), request, epoch)) by {
+            reveal(Scheduler::finalized_slot_refines);
+            reveal(Scheduler::slot_model);
+            reveal(Scheduler::slots_frame_except);
+        }
     }
 
-    /// Returns a terminal slot to the free ring only after exact cache-owned
-    /// detachment evidence is consumed.
-    pub(crate) fn reclaim_detached(
+    /// Consumes cache-owned evidence for the exact completed speculative step
+    /// before making the request dispatchable again.
+    pub(crate) fn accept_finalized(
         &mut self,
-        detached: KvDetachedRequest,
-    ) -> (result: Result<RequestId, SchedulerError>)
+        finalized: KvFinalizedRequest,
+    ) -> (result: Result<(), SchedulerError>)
         requires old(self).basic_invariant(),
         ensures
             final(self).basic_invariant(),
-            final(self).detached_refines(old(self), &detached, &result),
-            final(self).reclaim_identity_refines(old(self), &result),
-            result.is_ok() == old(self).detached_enabled(&detached),
-            old(self).detachment_ready(
-                detached.request_spec(),
-                detached.origin_spec(),
-            ) && detached.request_spec().generation_spec() < u32::MAX ==>
-                result.is_ok(),
-            match result {
-                Ok(request) => request == detached.request_spec(),
-                Err(_) => true,
-            },
+            final(self).finalized_refines(old(self), &finalized, &result),
+            final(self).identity_frame(old(self)),
             final(self).detachment_ready_frame_except(
                 old(self),
-                detached.request_spec().slot_spec(),
+                finalized.request_spec().slot_spec() as int,
             ),
+            result.is_ok() ==> final(self).state_spec(finalized.request_spec())
+                == Some(RequestState::Ready),
     {
-        reveal(Scheduler::basic_invariant);
-        reveal(Scheduler::scalar_invariant);
-        reveal(Scheduler::slot_invariant);
-        reveal(Scheduler::free_ring_invariant);
-        reveal(Scheduler::reclaim_ring_invariant);
-        reveal(Scheduler::member_ring_invariant);
-        reveal(Scheduler::batch_ring_invariant);
-        reveal(Scheduler::same_scalars);
-        reveal(Scheduler::detached_refines);
-        reveal(Scheduler::slot_model);
-        reveal(Scheduler::slots_frame_except);
-        reveal(detached_expected_error);
+        let (request, epoch) = match self.finalized_preflight(&finalized) {
+            Ok(validated) => validated,
+            Err(error) => {
+                let result = Err(error);
+                assert(self.same_scalars(old(self))) by {
+                    reveal(Scheduler::same_scalars);
+                }
+                proof {
+                    let changed = finalized.request_spec().slot_spec() as int;
+                    assert(self.slots_frame_except(old(self), changed)) by {
+                        reveal(Scheduler::same_scalars);
+                        reveal(Scheduler::slots_frame_except);
+                    }
+                    self.detachment_frame_from_slots_frame(old(self), changed);
+                    if 0 <= changed && changed < C {
+                        assert(self.slot_generation_spec(changed)
+                            == old(self).slot_generation_spec(changed)) by {
+                            reveal(Scheduler::same_scalars);
+                            reveal(Scheduler::slot_generation_spec);
+                        }
+                        assert(self.slot_is_live_spec(changed)
+                            == old(self).slot_is_live_spec(changed)) by {
+                            reveal(Scheduler::same_scalars);
+                            reveal(Scheduler::slot_is_live_spec);
+                        }
+                        self.identity_frame_from_slots_frame(old(self), changed);
+                    } else {
+                        assert(self.identity_frame(old(self))) by {
+                            reveal(Scheduler::same_scalars);
+                            reveal(Scheduler::slot_generation_spec);
+                            reveal(Scheduler::slot_is_live_spec);
+                        }
+                    }
+                }
+                assert(self.finalized_refines(old(self), &finalized, &result)) by {
+                    reveal(Scheduler::finalized_refines);
+                }
+                return result;
+            }
+        };
+        self.finalize_slot(request, epoch);
+        let result = Ok(());
+        proof {
+            let changed = request.slot_spec() as int;
+            assert(self.slots_frame_except(old(self), changed)) by {
+                reveal(Scheduler::finalized_slot_refines);
+            }
+            self.detachment_frame_from_slots_frame(old(self), changed);
+            assert(self.slot_generation_spec(changed)
+                == old(self).slot_generation_spec(changed)) by {
+                reveal(Scheduler::finalized_slot_refines);
+                reveal(Scheduler::slot_generation_spec);
+            }
+            assert(self.slot_is_live_spec(changed) == old(self).slot_is_live_spec(changed)) by {
+                reveal(finalized_preflight_spec);
+                reveal(finalized_request_preflight_spec);
+                reveal(Scheduler::finalized_slot_refines);
+                reveal(Scheduler::slot_model);
+                reveal(Scheduler::slot_is_live_spec);
+                reveal(ferric_spec::scheduling::request_transition);
+            }
+            self.identity_frame_from_slots_frame(old(self), changed);
+        }
+        assert(self.finalized_refines(old(self), &finalized, &result)) by {
+            reveal(Scheduler::finalized_refines);
+            reveal(Scheduler::slot_model);
+            reveal(Scheduler::slots_frame_except);
+        }
+        result
+    }
+
+    fn detached_preflight(
+        &self,
+        detached: &KvDetachedRequest,
+    ) -> (result: Result<(RequestId, u32), SchedulerError>)
+        requires self.basic_invariant(),
+        ensures detached_preflight_refines::<C>(self, detached, &result),
+    {
         let request = detached.request();
         let slot_index = request.slot() as usize;
         if slot_index >= C {
-            return Err(SchedulerError::InvalidSlot);
+            let result = Err(SchedulerError::InvalidSlot);
+            assert(detached_preflight_refines::<C>(self, detached, &result)) by {
+                reveal(detached_preflight_refines);
+                reveal(detached_expected_error);
+            }
+            return result;
         }
         let slot = self.slots[slot_index];
-        let origin_matches = match detached.origin() {
+        let origin = detached.origin();
+        assert(request == detached.request_spec());
+        assert(origin == detached.origin_spec());
+        assert(slot_index as int == request.slot_spec() as int);
+        assert(self.slots@[slot_index as int] == slot);
+        let origin_matches = match origin {
             KvQuiescenceOrigin::NeverSubmitted => {
                 slot.active_epoch == NO_EPOCH && slot.last_quiescent_epoch == NO_EPOCH
             }
@@ -1958,21 +2181,85 @@ impl<const C: usize> Scheduler<C> {
                     || (slot.active_epoch == NO_EPOCH && slot.last_quiescent_epoch == epoch)
             }
         };
-        if slot.generation != request.generation()
-            || slot.state != RequestState::Retiring
-            || slot.phase != LifecyclePhase::RetiringQuiescent
-            || slot.in_reclaim_ring
-            || !origin_matches
-        {
-            return Err(SchedulerError::DetachmentMismatch);
+        let slot_matches = slot.generation == request.generation()
+            && slot.state == RequestState::Retiring
+            && slot.phase == LifecyclePhase::RetiringQuiescent
+            && !slot.in_reclaim_ring
+            && origin_matches;
+        if !slot_matches {
+            let result = Err(SchedulerError::DetachmentMismatch);
+            assert(detached_preflight_refines::<C>(self, detached, &result)) by {
+                reveal(detached_preflight_refines);
+                reveal(detached_expected_error);
+            }
+            return result;
         }
-        let next_generation = match slot.generation.checked_add(1) {
-            Some(generation) => generation,
-            None => return Err(SchedulerError::GenerationExhausted),
-        };
+        if slot.generation == u32::MAX {
+            let result = Err(SchedulerError::GenerationExhausted);
+            assert(detached_preflight_refines::<C>(self, detached, &result)) by {
+                reveal(detached_preflight_refines);
+                reveal(detached_expected_error);
+                reveal(Scheduler::slot_generation_spec);
+            }
+            return result;
+        }
+        let next_generation = slot.generation + 1;
+        proof {
+            u32_increment_is_exact(slot.generation);
+        }
         if self.free_len == C {
-            return Err(SchedulerError::InvariantViolation);
+            let result = Err(SchedulerError::InvariantViolation);
+            assert(detached_preflight_refines::<C>(self, detached, &result)) by {
+                reveal(detached_preflight_refines);
+                reveal(detached_expected_error);
+            }
+            return result;
         }
+        let result = Ok((request, next_generation));
+        assert(detached_preflight_refines::<C>(self, detached, &result)) by {
+            reveal(detached_preflight_refines);
+            reveal(detached_expected_error);
+            reveal(Scheduler::slot_generation_spec);
+        }
+        result
+    }
+
+    fn reclaim_slot(
+        &mut self,
+        detached: &KvDetachedRequest,
+        request: RequestId,
+        next_generation: u32,
+    ) -> (reclaimed: RequestId)
+        requires
+            old(self).basic_invariant(),
+            detached_expected_error::<C>(old(self), detached).is_none(),
+            request == detached.request_spec(),
+            next_generation as int
+                == old(self).slot_generation_spec(request.slot_spec() as int) as int + 1,
+        ensures
+            final(self).basic_invariant(),
+            final(self).detached_refines(old(self), detached, &Ok(reclaimed)),
+            reclaimed == request,
+            final(self).state_spec(reclaimed).is_none(),
+            final(self).detachment_ready_frame_except(
+                old(self),
+                request.slot_spec() as int,
+            ),
+    {
+        let _ = detached;
+        reveal(Scheduler::basic_invariant);
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::slot_invariant);
+        reveal(Scheduler::free_ring_invariant);
+        reveal(Scheduler::reclaim_ring_invariant);
+        reveal(Scheduler::member_ring_invariant);
+        reveal(Scheduler::batch_ring_invariant);
+        reveal(Scheduler::detached_refines);
+        reveal(Scheduler::slot_model);
+        reveal(Scheduler::slots_frame_except);
+        reveal(detached_expected_error);
+        let slot_index = request.slot() as usize;
+        let ghost old_slots = self.slots@;
         let free_tail = ring_tail::<C>(self.free_head, self.free_len);
         self.free_ring[free_tail] = slot_index;
         self.free_len += 1;
@@ -1986,7 +2273,73 @@ impl<const C: usize> Scheduler<C> {
             in_reclaim_ring: false,
         };
         self.live_count -= 1;
-        Ok(request)
+        assert(self.slots@ == old_slots.update(slot_index as int, self.slots@[slot_index as int]));
+        proof {
+            live_count_update_reclaim(
+                old_slots,
+                slot_index as int,
+                self.slots@[slot_index as int],
+                C as nat,
+            );
+        }
+        proof {
+            self.detachment_frame_from_slots_frame(old(self), slot_index as int);
+        }
+        request
+    }
+
+    /// Returns a terminal slot to the free ring only after exact cache-owned
+    /// detachment evidence is consumed.
+    pub(crate) fn reclaim_detached(
+        &mut self,
+        detached: KvDetachedRequest,
+    ) -> (result: Result<RequestId, SchedulerError>)
+        requires old(self).basic_invariant(),
+        ensures
+            final(self).basic_invariant(),
+            final(self).detached_refines(old(self), &detached, &result),
+            old(self).detached_enabled(&detached) ==> result.is_ok(),
+            final(self).detachment_ready_frame_except(
+                old(self),
+                detached.request_spec().slot_spec() as int,
+            ),
+            match result {
+                Err(_) => final(self).identity_frame(old(self)),
+                Ok(request) => {
+                    let slot_index = request.slot_spec() as int;
+                    &&& final(self).state_spec(request).is_none()
+                    &&& !final(self).slot_is_live_spec(slot_index)
+                    &&& final(self).slot_generation_spec(slot_index)
+                        == old(self).slot_generation_spec(slot_index) + 1
+                    &&& (forall|other: int| 0 <= other < C && other != slot_index ==> {
+                        &&& final(self).slot_is_live_spec(other)
+                            == old(self).slot_is_live_spec(other)
+                        &&& final(self).slot_generation_spec(other)
+                            == old(self).slot_generation_spec(other)
+                    })
+                }
+            },
+    {
+        reveal(Scheduler::same_scalars);
+        let (request, next_generation) = match self.detached_preflight(&detached) {
+            Ok(validated) => validated,
+            Err(error) => {
+                let result = Err(error);
+                assert(self.same_scalars(old(self))) by {
+                    reveal(Scheduler::same_scalars);
+                }
+                proof {
+                    let changed = detached.request_spec().slot_spec() as int;
+                    assert(self.slots_frame_except(old(self), changed)) by {
+                        reveal(Scheduler::same_scalars);
+                        reveal(Scheduler::slots_frame_except);
+                    }
+                    self.detachment_frame_from_slots_frame(old(self), changed);
+                }
+                return result;
+            }
+        };
+        Ok(self.reclaim_slot(&detached, request, next_generation))
     }
 
     #[must_use]
@@ -2089,25 +2442,53 @@ spec fn finalized_expected_error<const C: usize>(
     scheduler: &Scheduler<C>,
     finalized: &KvFinalizedRequest,
 ) -> Option<SchedulerError> {
+    match finalized_preflight_spec::<C>(scheduler, finalized) {
+        Ok(_) => None,
+        Err(error) => Some(error),
+    }
+}
+
+spec fn finalized_preflight_spec<const C: usize>(
+    scheduler: &Scheduler<C>,
+    finalized: &KvFinalizedRequest,
+) -> Result<(RequestId, u64), SchedulerError> {
     let request = finalized.request_spec();
+    match finalized_origin_spec(finalized) {
+        Err(error) => Err(error),
+        Ok(epoch) => match finalized_request_preflight_spec::<C>(scheduler, request, epoch) {
+            Err(error) => Err(error),
+            Ok(()) => Ok((request, epoch)),
+        }
+    }
+}
+
+spec fn finalized_origin_spec(
+    finalized: &KvFinalizedRequest,
+) -> Result<u64, SchedulerError> {
+    match finalized.origin_spec() {
+        KvQuiescenceOrigin::CompletedExact { epoch } => Ok(epoch),
+        KvQuiescenceOrigin::NeverSubmitted => Err(SchedulerError::FinalizationMismatch),
+    }
+}
+
+spec fn finalized_request_preflight_spec<const C: usize>(
+    scheduler: &Scheduler<C>,
+    request: RequestId,
+    epoch: u64,
+) -> Result<(), SchedulerError> {
     let slot_index = request.slot_spec() as int;
     if slot_index >= C {
-        Some(SchedulerError::InvalidSlot)
+        Err(SchedulerError::InvalidSlot)
     } else {
         let slot = scheduler.slots@[slot_index];
-        match finalized.origin_spec() {
-            KvQuiescenceOrigin::CompletedExact { epoch } => {
-                if slot.generation == request.generation_spec()
-                    && slot.state == RequestState::InFlight
-                    && slot.phase == LifecyclePhase::AwaitingKv
-                    && slot.active_epoch == epoch
-                {
-                    None
-                } else {
-                    Some(SchedulerError::FinalizationMismatch)
-                }
-            }
-            KvQuiescenceOrigin::NeverSubmitted => Some(SchedulerError::FinalizationMismatch),
+        if slot.generation == request.generation_spec()
+            && slot.state == RequestState::InFlight
+            && slot.phase == LifecyclePhase::AwaitingKv
+            && slot.active_epoch == epoch
+        {
+            Ok(())
+        } else {
+            Err(SchedulerError::FinalizationMismatch)
         }
     }
 }
@@ -2148,6 +2529,24 @@ spec fn detached_expected_error<const C: usize>(
     }
 }
 
+closed spec fn detached_preflight_refines<const C: usize>(
+    scheduler: &Scheduler<C>,
+    detached: &KvDetachedRequest,
+    result: &Result<(RequestId, u32), SchedulerError>,
+) -> bool {
+    match result {
+        Err(error) => Some(*error) == detached_expected_error::<C>(scheduler, detached),
+        Ok((request, next_generation)) => {
+            let detached_request = detached.request_spec();
+            let slot_index = detached_request.slot_spec() as int;
+            &&& detached_expected_error::<C>(scheduler, detached).is_none()
+            &&& *request == detached_request
+            &&& *next_generation as int
+                == scheduler.slot_generation_spec(slot_index) as int + 1
+        }
+    }
+}
+
 spec fn option_prefix_empty(values: Seq<Option<KvQuiescencePermit>>, prefix: nat) -> bool {
     forall|index: int| 0 <= index < prefix ==> (#[trigger] values[index]).is_none()
 }
@@ -2170,6 +2569,13 @@ spec fn ring_position<const C: usize>(head: usize, offset: nat) -> int
     } else {
         (offset - (C - head)) as int
     }
+}
+
+#[verifier::bit_vector]
+proof fn u32_increment_is_exact(value: u32)
+    requires value != u32::MAX,
+    ensures (value + 1) as int == value as int + 1,
+{
 }
 
 proof fn ring_position_bounds<const C: usize>(head: usize, offset: nat)
@@ -2439,7 +2845,7 @@ spec fn request_ring_slots_differ<const C: usize>(
 
 #[cfg(test)]
 mod tests {
-    use super::{KvQuiescencePermit, Scheduler, SchedulerError};
+    use super::{KvQuiescenceOrigin, KvQuiescencePermit, Scheduler, SchedulerError};
     use crate::cache::KvPool;
     use crate::epoch::ExactCompletion;
     use ferric_spec::scheduling::RequestState;
@@ -2515,13 +2921,15 @@ mod tests {
         let mut authorities = permits::<1>();
 
         let skipped = ferric_spec::completion::CompletionEpoch::new(batch.epoch().value() + 1);
-        assert_eq!(
-            scheduler.complete_exact(
+        let failure = scheduler
+            .complete_exact(
                 ExactCompletion::from_contracted_hsa_quiescence(skipped),
                 &mut authorities,
-            ),
-            Err(SchedulerError::CompletionNotExactNext)
-        );
+            )
+            .unwrap_err();
+        assert_eq!(failure.error(), SchedulerError::CompletionNotExactNext);
+        let (_, returned_completion) = failure.into_parts();
+        assert_eq!(returned_completion.epoch(), skipped);
         assert_eq!(scheduler.state(request), Some(RequestState::InFlight));
         scheduler
             .complete_exact(
@@ -2531,13 +2939,42 @@ mod tests {
             .unwrap();
         assert_eq!(scheduler.state(request), Some(RequestState::InFlight));
         let mut replay_storage = permits::<1>();
-        assert_eq!(
-            scheduler.complete_exact(
+        let failure = scheduler
+            .complete_exact(
                 ExactCompletion::from_contracted_hsa_quiescence(batch.epoch()),
                 &mut replay_storage,
-            ),
-            Err(SchedulerError::NoPendingBatch)
+            )
+            .unwrap_err();
+        assert_eq!(failure.error(), SchedulerError::NoPendingBatch);
+        assert_eq!(failure.into_parts().1.epoch(), batch.epoch());
+    }
+
+    #[test]
+    fn completion_storage_failure_returns_exact_authority_for_retry() {
+        let mut scheduler = Scheduler::<1>::new().unwrap();
+        let request = scheduler.admit().unwrap();
+        let mut members = output::<1>();
+        let batch = scheduler.dispatch_ready(&mut members).unwrap().unwrap();
+        let completion = ExactCompletion::from_contracted_hsa_quiescence(batch.epoch());
+        let mut occupied = [Some(KvQuiescencePermit {
+            request,
+            origin: KvQuiescenceOrigin::NeverSubmitted,
+        })];
+
+        let failure = scheduler
+            .complete_exact(completion, &mut occupied)
+            .unwrap_err();
+        assert_eq!(failure.error(), SchedulerError::CompletionStorageNotEmpty);
+        let (_, completion) = failure.into_parts();
+        assert_eq!(completion.epoch(), batch.epoch());
+        assert_eq!(scheduler.state(request), Some(RequestState::InFlight));
+
+        occupied[0] = None;
+        assert_eq!(
+            scheduler.complete_exact(completion, &mut occupied).unwrap(),
+            1
         );
+        assert_eq!(occupied[0].as_ref().unwrap().request(), request);
     }
 
     #[test]
