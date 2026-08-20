@@ -42,8 +42,9 @@ Goal: freeze the system theorem, core identities, and reversible KV semantics.
 - [x] Bind M0 properties into fe2o3 proof contracts.
 
 Exit gate: every implemented transition has an executable oracle, invariant
-tests, and a closed direct Verus result under the published TCB. Every clause
-of every `Proved` M0 property has an assigned sensitive negative mutation.
+tests, and a closed direct Verus result under the published TCB. Every `Proved`
+M0 property binds compiler-rooted paths and its assigned sensitive actual-body
+mutations.
 
 ## M1: Qwen3 Speculative Inference On One gfx942
 
