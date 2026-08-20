@@ -21,8 +21,10 @@ runtime JIT, raw launch mode, or unverified kernel plugin path.
 Ferric is at its foundation milestone. The repository currently implements:
 
 - executable sequential semantics for greedy speculative verification;
-- a fixed-capacity, generational paged-KV ownership model;
-- atomic KV commit and rollback transitions;
+- a fixed-capacity generational request scheduler with deterministic batching;
+- exact completion authority and retirement-before-reuse transitions;
+- a fixed-capacity generational paged-KV ownership model;
+- atomic KV commit, rollback, sealed-prefix sharing, and copy-on-write transitions;
 - structural invariant validation and hostile stale-handle tests; and
 - the roadmap, assurance policy, feature ledger, and performance protocol.
 
