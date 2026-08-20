@@ -16,9 +16,10 @@ proofs/                  system-level refinement proofs
 benches/                 identity-bound qualification harnesses
 ```
 
-Only `ferric-spec` and the first `ferric-engine` state model exist today.
-Crates are added when they contain real final-path behavior; placeholder GPU
-execution is not permitted.
+`ferric-spec`, the first `ferric-engine` state model, and the pinned Qwen3
+configuration/tokenizer admission slice of `ferric-build` exist today. Crates
+are added when they contain real final-path behavior; placeholder GPU execution
+is not permitted.
 
 ## Dependency Boundary
 

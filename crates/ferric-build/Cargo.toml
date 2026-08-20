@@ -1,0 +1,16 @@
+[package]
+name = "ferric-build"
+description = "Offline authenticated model admission for Ferric"
+edition.workspace = true
+rust-version.workspace = true
+version.workspace = true
+publish = false
+
+[dependencies]
+ferric-spec = { path = "../ferric-spec" }
+
+[package.metadata.verus]
+verify = true
+
+[lints]
+workspace = true
