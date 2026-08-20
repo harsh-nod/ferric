@@ -314,6 +314,40 @@ write_metadata "$assume" "$scratch/assume.metadata"
 expect_rejected parser-qualified-assume 'forbidden trust call' \
     "$source_gate" --generate "$assume" "$scratch/assume.metadata" "$scratch/assume.manifest"
 
+cat >"$scratch/trust-call-method.rs" <<'RS'
+verus! {
+fn admit(&self) {}
+
+fn production_method_call(&self) {
+    self.scheduler.admit();
+}
+}
+RS
+python3 -I "$repo/proofs/check-source.py" --verus-blocks \
+    "$scratch/trust-call-method.rs"
+
+cat >"$scratch/trust-call-bare.rs" <<'RS'
+verus! {
+proof fn bare_trust_call() {
+    assume(false);
+}
+}
+RS
+expect_rejected scanner-bare-trust-call 'forbidden trust call' \
+    python3 -I "$repo/proofs/check-source.py" --verus-blocks \
+    "$scratch/trust-call-bare.rs"
+
+cat >"$scratch/trust-call-qualified.rs" <<'RS'
+verus! {
+proof fn qualified_trust_call() {
+    vstd::pervasive::assume(false);
+}
+}
+RS
+expect_rejected scanner-qualified-trust-call 'forbidden trust call' \
+    python3 -I "$repo/proofs/check-source.py" --verus-blocks \
+    "$scratch/trust-call-qualified.rs"
+
 optout=$(new_copy dependency-opt-out)
 python3 -I - "$optout/crates/ferric-spec/Cargo.toml" <<'PY'
 from pathlib import Path
