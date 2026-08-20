@@ -64,7 +64,7 @@ pub const QWEN3_TARGET_WEIGHT_SET_SHA256: [u8; 32] =
     decode_hex_32(b"2e69c089ff9afcee264646cb8ea6344aa3c8cedbe8022d729889708204e32732");
 /// SHA-256 of the complete pinned Qwen3-0.6B safetensors file.
 pub const QWEN3_DRAFT_WEIGHT_SHA256: [u8; 32] =
-    decode_hex_32(b"f47f7117e88a3b02082d479139c5ed0781f85c71ccf393ca1f2a7c5781d3ee15");
+    decode_hex_32(b"f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b");
 
 const TARGET_WEIGHT_SET_COMPONENTS: [(&str, [u8; 32], u64); 6] = [
     (
@@ -1035,13 +1035,13 @@ mod tests {
         assert_eq!(
             first.draft_model.config.model_id.as_bytes(),
             &super::decode_hex_32(
-                b"81a86d66fc63b11bf9f4dab3b3ef7bad73d664591f8e1697ca51fe444386cad9"
+                b"351fc121a569f0a53e9bb5c98caaeff80d6f8d94737eecf5e179cfa54d9cf998"
             )
         );
         assert_eq!(
             first.bundle_id.as_bytes(),
             &super::decode_hex_32(
-                b"70df70becc6318701c217ebe723248ed4c334b2970dac7fce62e071cf8591050"
+                b"6dfba0acd1c00ce13cec7b5eebb180691bdb8855a7eee89876df2a0a12a2802b"
             )
         );
         assert_eq!(
