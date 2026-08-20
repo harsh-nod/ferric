@@ -1,7 +1,7 @@
 //! Composed request lifecycle and KV ownership.
 
 #[allow(unused_imports)]
-use crate::cache::{KvError, KvPool, MAX_REQUEST_SLOTS};
+use crate::cache::{KvDetachedRequest, KvError, KvPool, MAX_REQUEST_SLOTS};
 use crate::epoch::ExactCompletion;
 use crate::scheduler::{DispatchBatch, KvQuiescencePermit, Scheduler, SchedulerError};
 use ferric_spec::completion::CompletionEpoch;
@@ -163,6 +163,466 @@ impl<const C: usize> Engine<C> {
         &&& self.kv.same_state(&before.kv)
         &&& self.permits@ == before.permits@
         &&& self.faulted == before.faulted
+    }
+
+    pub closed spec fn new_refines(
+        page_count: u32,
+        page_tokens: u32,
+        max_context_tokens: u32,
+        result: &Result<Self, EngineError>,
+    ) -> bool {
+        match result {
+            Ok(engine) => {
+                &&& 0 < C <= MAX_REQUEST_SLOTS
+                &&& engine.scheduler.basic_invariant()
+                &&& (forall|slot: int| 0 <= slot < C ==> {
+                    &&& !engine.slot_is_live_spec(slot)
+                    &&& engine.slot_generation_spec(slot) == 1
+                })
+                &&& KvPool::new_refines(
+                    page_count,
+                    page_tokens,
+                    max_context_tokens,
+                    &Ok(engine.kv),
+                )
+                &&& engine.well_formed()
+                &&& !engine.faulted_spec()
+            }
+            Err(EngineError::Scheduler(error)) => {
+                &&& *error == if C == 0 {
+                    SchedulerError::ZeroCapacity
+                } else {
+                    SchedulerError::CapacityExceedsKvSlots
+                }
+                &&& (C == 0 || C > MAX_REQUEST_SLOTS)
+            }
+            Err(EngineError::Kv(error)) => {
+                &&& 0 < C <= MAX_REQUEST_SLOTS
+                &&& KvPool::new_refines(
+                    page_count,
+                    page_tokens,
+                    max_context_tokens,
+                    &Err(*error),
+                )
+            }
+            Err(_) => false,
+        }
+    }
+
+    pub closed spec fn admit_refines(
+        &self,
+        before: &Self,
+        result: &Result<RequestId, EngineError>,
+    ) -> bool {
+        &&& self.permits@ == before.permits@
+        &&& self.faulted == before.faulted
+        &&& match result {
+            Err(EngineError::Faulted) => {
+                &&& before.faulted_spec()
+                &&& self.scheduler.same_scalars(&before.scheduler)
+                &&& self.kv.same_state(&before.kv)
+            }
+            Err(EngineError::Scheduler(error)) => {
+                &&& !before.faulted_spec()
+                &&& self.kv.same_state(&before.kv)
+                &&& exists |scheduler_result: Result<RequestId, SchedulerError>|
+                    #[trigger] self.scheduler.admit_refines(
+                        &before.scheduler,
+                        &scheduler_result,
+                    ) && match (&scheduler_result, result) {
+                        (Err(scheduler_error), Err(EngineError::Scheduler(engine_error))) => {
+                            scheduler_error == engine_error
+                        }
+                        _ => false,
+                    }
+            }
+            Ok(request) => {
+                &&& !before.faulted_spec()
+                &&& exists |scheduler_result: Result<RequestId, SchedulerError>|
+                    #[trigger] self.scheduler.admit_refines(
+                        &before.scheduler,
+                        &scheduler_result,
+                    ) && match (&scheduler_result, result) {
+                        (Ok(scheduler_request), Ok(engine_request)) => {
+                            scheduler_request == engine_request
+                        }
+                        _ => false,
+                    }
+                &&& exists |kv_result: Result<(), KvError>|
+                    #[trigger] self.kv.create_refines(
+                        &before.kv,
+                        *request,
+                        &kv_result,
+                    ) && match (&kv_result, result) {
+                        (Ok(()), Ok(_)) => true,
+                        _ => false,
+                    }
+            }
+            Err(_) => false,
+        }
+    }
+
+    pub closed spec fn append_tentative_refines(
+        &self,
+        before: &Self,
+        request: RequestId,
+        token_count: u32,
+        result: &Result<(), EngineError>,
+    ) -> bool {
+        &&& self.scheduler.same_scalars(&before.scheduler)
+        &&& self.permits@ == before.permits@
+        &&& self.faulted == before.faulted
+        &&& match result {
+            Err(EngineError::Faulted) => {
+                before.faulted_spec() && self.kv.same_state(&before.kv)
+            }
+            Err(EngineError::RequestNotReady) => {
+                &&& !before.faulted_spec()
+                &&& before.state_spec(request) != Some(RequestState::Ready)
+                &&& self.kv.same_state(&before.kv)
+            }
+            Ok(()) => {
+                &&& !before.faulted_spec()
+                &&& before.state_spec(request) == Some(RequestState::Ready)
+                &&& exists |kv_result: Result<(), KvError>|
+                    #[trigger] self.kv.append_refines(
+                        &before.kv,
+                        request,
+                        token_count,
+                        &kv_result,
+                    ) && match (&kv_result, result) {
+                        (Ok(()), Ok(())) => true,
+                        _ => false,
+                    }
+            }
+            Err(EngineError::Kv(error)) => {
+                &&& !before.faulted_spec()
+                &&& before.state_spec(request) == Some(RequestState::Ready)
+                &&& exists |kv_result: Result<(), KvError>|
+                    #[trigger] self.kv.append_refines(
+                        &before.kv,
+                        request,
+                        token_count,
+                        &kv_result,
+                    ) && match (&kv_result, result) {
+                        (Err(kv_error), Err(EngineError::Kv(engine_error))) => {
+                            kv_error == engine_error
+                        }
+                        _ => false,
+                    }
+            }
+            Err(_) => false,
+        }
+    }
+
+    pub closed spec fn share_committed_prefix_refines(
+        &self,
+        before: &Self,
+        source: RequestId,
+        target: RequestId,
+        token_count: u32,
+        result: &Result<(), EngineError>,
+    ) -> bool {
+        &&& self.scheduler.same_scalars(&before.scheduler)
+        &&& self.permits@ == before.permits@
+        &&& self.faulted == before.faulted
+        &&& match result {
+            Err(EngineError::Faulted) => {
+                before.faulted_spec() && self.kv.same_state(&before.kv)
+            }
+            Err(EngineError::RequestNotReady) => {
+                &&& !before.faulted_spec()
+                &&& (before.state_spec(source) != Some(RequestState::Ready)
+                    || before.state_spec(target) != Some(RequestState::Ready))
+                &&& self.kv.same_state(&before.kv)
+            }
+            Ok(()) => {
+                &&& !before.faulted_spec()
+                &&& before.state_spec(source) == Some(RequestState::Ready)
+                &&& before.state_spec(target) == Some(RequestState::Ready)
+                &&& exists |kv_result: Result<(), KvError>|
+                    #[trigger] self.kv.share_refines(
+                        &before.kv,
+                        source,
+                        target,
+                        token_count,
+                        &kv_result,
+                    ) && match (&kv_result, result) {
+                        (Ok(()), Ok(())) => true,
+                        _ => false,
+                    }
+            }
+            Err(EngineError::Kv(error)) => {
+                &&& !before.faulted_spec()
+                &&& before.state_spec(source) == Some(RequestState::Ready)
+                &&& before.state_spec(target) == Some(RequestState::Ready)
+                &&& exists |kv_result: Result<(), KvError>|
+                    #[trigger] self.kv.share_refines(
+                        &before.kv,
+                        source,
+                        target,
+                        token_count,
+                        &kv_result,
+                    ) && match (&kv_result, result) {
+                        (Err(kv_error), Err(EngineError::Kv(engine_error))) => {
+                            kv_error == engine_error
+                        }
+                        _ => false,
+                    }
+            }
+            Err(_) => false,
+        }
+    }
+
+    pub closed spec fn validate_read_refines(
+        &self,
+        request: RequestId,
+        logical_offset: u32,
+        span: u32,
+        result: &Result<(), EngineError>,
+    ) -> bool {
+        match result {
+            Err(EngineError::Faulted) => self.faulted_spec(),
+            Ok(()) => {
+                &&& !self.faulted_spec()
+                &&& exists |kv_result: Result<(), KvError>|
+                    #[trigger] self.kv.read_refines(
+                        request,
+                        logical_offset,
+                        span,
+                        &kv_result,
+                    ) && match (&kv_result, result) {
+                        (Ok(()), Ok(())) => true,
+                        _ => false,
+                    }
+            }
+            Err(EngineError::Kv(error)) => {
+                &&& !self.faulted_spec()
+                &&& exists |kv_result: Result<(), KvError>|
+                    #[trigger] self.kv.read_refines(
+                        request,
+                        logical_offset,
+                        span,
+                        &kv_result,
+                    ) && match (&kv_result, result) {
+                        (Err(kv_error), Err(EngineError::Kv(engine_error))) => {
+                            kv_error == engine_error
+                        }
+                        _ => false,
+                    }
+            }
+            Err(_) => false,
+        }
+    }
+
+    pub closed spec fn retire_refines(
+        &self,
+        before: &Self,
+        request: RequestId,
+        result: &Result<(), EngineError>,
+    ) -> bool {
+        &&& self.kv.same_state(&before.kv)
+        &&& self.permits@ == before.permits@
+        &&& self.faulted == before.faulted
+        &&& match result {
+            Err(EngineError::Faulted) => {
+                &&& before.faulted_spec()
+                &&& self.scheduler.same_scalars(&before.scheduler)
+            }
+            _ => {
+                &&& !before.faulted_spec()
+                &&& exists |scheduler_result: Result<(), SchedulerError>|
+                    self.scheduler.retire_refines(
+                        &before.scheduler,
+                        request,
+                        &scheduler_result,
+                    )
+                    && match (&scheduler_result, result) {
+                        (Ok(()), Ok(())) => true,
+                        (Err(scheduler_error), Err(EngineError::Scheduler(engine_error))) => {
+                            scheduler_error == engine_error
+                        }
+                        _ => false,
+                    }
+            }
+        }
+    }
+
+    closed spec fn reclaim_success_step(
+        &self,
+        before: &Self,
+        permit: KvQuiescencePermit,
+        detached: KvDetachedRequest,
+        after_take: Scheduler<C>,
+        after_release: KvPool,
+        result_request: RequestId,
+    ) -> bool {
+        let release_request = permit.request_spec();
+        &&& after_take.retiring_permit_refines(
+            &before.scheduler,
+            &Ok(Some(permit)),
+        )
+        &&& before.kv.release_authority_enabled(release_request, &permit)
+        &&& before.kv.release_authority_decision(release_request, &permit) == Ok(())
+        &&& detached.request_spec() == release_request
+        &&& detached.origin_spec() == permit.origin_spec()
+        &&& KvPool::same_request_id(permit.request_spec(), release_request)
+        &&& release_request.generation_spec() < u32::MAX
+        &&& !after_release.request_live_by_slot_spec(release_request.slot_spec() as int)
+        &&& after_release.resident_tokens_spec(release_request).is_none()
+        &&& after_release.committed_tokens_spec(release_request).is_none()
+        &&& after_release.request_generation_by_slot_spec(
+            release_request.slot_spec() as int,
+        ) == before.kv.request_generation_by_slot_spec(
+            release_request.slot_spec() as int,
+        ) + 1
+        &&& after_release.identity_frame_except(
+            &before.kv,
+            release_request.slot_spec() as int,
+        )
+        &&& after_release.request_frame_except(
+            &before.kv,
+            release_request.slot_spec() as int,
+        )
+        &&& after_release.release_page_frame(&before.kv, release_request.slot_spec())
+        &&& self.scheduler.detached_refines(
+            &after_take,
+            &detached,
+            &Ok(result_request),
+        )
+        &&& self.kv.same_state(&after_release)
+    }
+
+    closed spec fn reclaim_release_error_step(
+        &self,
+        before: &Self,
+        permit: KvQuiescencePermit,
+        after_take: Scheduler<C>,
+        error: KvError,
+    ) -> bool {
+        &&& after_take.retiring_permit_refines(
+            &before.scheduler,
+            &Ok(Some(permit)),
+        )
+        &&& self.scheduler.same_scalars(&after_take)
+        &&& !before.kv.release_authority_enabled(permit.request_spec(), &permit)
+        &&& before.kv.release_authority_decision(permit.request_spec(), &permit)
+            == Err(error)
+    }
+
+    closed spec fn reclaim_success_refines(
+        &self,
+        before: &Self,
+        result_request: RequestId,
+    ) -> bool {
+        &&& !before.faulted_spec()
+        &&& self.permits@ == before.permits@
+        &&& !self.faulted_spec()
+        &&& exists |permit: KvQuiescencePermit,
+            detached: KvDetachedRequest,
+            after_take: Scheduler<C>,
+            after_release: KvPool|
+            #[trigger] self.reclaim_success_step(
+                before,
+                permit,
+                detached,
+                after_take,
+                after_release,
+                result_request,
+            )
+    }
+
+    pub closed spec fn reclaim_one_refines(
+        &self,
+        before: &Self,
+        result: &Result<Option<RequestId>, EngineError>,
+    ) -> bool {
+        match result {
+            Err(EngineError::Faulted) => {
+                before.faulted_spec() && self.same_state(before)
+            }
+            Ok(None) => {
+                &&& !before.faulted_spec()
+                &&& self.scheduler.retiring_permit_refines(
+                    &before.scheduler,
+                    &Ok(None),
+                )
+                &&& self.kv.same_state(&before.kv)
+                &&& self.permits@ == before.permits@
+                &&& self.faulted == before.faulted
+            }
+            Ok(Some(request)) => self.reclaim_success_refines(before, *request),
+            Err(EngineError::Scheduler(error)) => {
+                &&& !before.faulted_spec()
+                &&& self.kv.same_state(&before.kv)
+                &&& self.permits@ == before.permits@
+                &&& self.faulted == before.faulted
+                &&& exists |scheduler_result: Result<
+                    Option<KvQuiescencePermit>,
+                    SchedulerError,
+                >| #[trigger] self.scheduler.retiring_permit_refines(
+                    &before.scheduler,
+                    &scheduler_result,
+                ) && match (&scheduler_result, result) {
+                    (Err(scheduler_error), Err(EngineError::Scheduler(engine_error))) => {
+                        scheduler_error == engine_error
+                    }
+                    _ => false,
+                }
+            }
+            Err(EngineError::Kv(error)) => {
+                &&& !before.faulted_spec()
+                &&& self.faulted_spec()
+                &&& self.permits@ == before.permits@
+                &&& self.kv.same_state(&before.kv)
+                &&& exists |permit: KvQuiescencePermit, after_take: Scheduler<C>|
+                    #[trigger] self.reclaim_release_error_step(
+                        before,
+                        permit,
+                        after_take,
+                        *error,
+                    )
+            }
+            Err(_) => false,
+        }
+    }
+
+    pub closed spec fn dispatch_ready_refines(
+        &self,
+        before: &Self,
+        before_output: Seq<RequestId>,
+        output: Seq<RequestId>,
+        result: &Result<Option<DispatchBatch>, EngineError>,
+    ) -> bool {
+        &&& self.kv.same_state(&before.kv)
+        &&& self.permits@ == before.permits@
+        &&& self.faulted == before.faulted
+        &&& match result {
+            Err(EngineError::Faulted) => {
+                &&& before.faulted_spec()
+                &&& self.scheduler.same_scalars(&before.scheduler)
+                &&& output == before_output
+            }
+            Ok(batch) => {
+                &&& !before.faulted_spec()
+                &&& self.scheduler.dispatch_refines(
+                    &before.scheduler,
+                    before_output,
+                    output,
+                    &Ok(*batch),
+                )
+            }
+            Err(EngineError::Scheduler(error)) => {
+                &&& !before.faulted_spec()
+                &&& self.scheduler.dispatch_refines(
+                    &before.scheduler,
+                    before_output,
+                    output,
+                    &Err(*error),
+                )
+            }
+            Err(_) => false,
+        }
     }
 
     closed spec fn pending_prefix_contains_slot(
@@ -419,6 +879,7 @@ impl<const C: usize> Engine<C> {
                 Ok(engine) => engine.well_formed() && !engine.faulted_spec(),
                 Err(_) => true,
             },
+            Self::new_refines(page_count, page_tokens, max_context_tokens, &result),
     {
         let scheduler = match Scheduler::<C>::new() {
             Ok(scheduler) => scheduler,
@@ -508,16 +969,63 @@ impl<const C: usize> Engine<C> {
     /// or KV admission error.
     pub fn admit(&mut self) -> (result: Result<RequestId, EngineError>)
         requires old(self).well_formed(),
-        ensures final(self).well_formed(),
+        ensures
+            final(self).well_formed(),
+            final(self).admit_refines(old(self), &result),
     {
+        let ghost entry = *self;
         reveal(Engine::well_formed);
+        reveal(Engine::admit_refines);
+        reveal(Engine::faulted_spec);
+        proof {
+            self.scheduler.same_scalars_reflexive();
+            self.kv.same_state_reflexive();
+        }
         self.require_healthy()?;
         let ghost entry_scheduler = self.scheduler;
         let ghost entry_kv = self.kv;
         let admit_result = self.scheduler.admit();
-        let request = match admit_result {
-            Ok(request) => request,
-            Err(error) => return Err(EngineError::Scheduler(error)),
+        assert(self.scheduler.admit_refines(&entry_scheduler, &admit_result));
+        let request = match &admit_result {
+            Ok(request) => {
+                assert(exists |scheduler_result: Result<RequestId, SchedulerError>|
+                    #[trigger] self.scheduler.admit_refines(
+                        &entry.scheduler,
+                        &scheduler_result,
+                    ) && match (
+                        &scheduler_result,
+                        &Ok::<RequestId, EngineError>(*request),
+                    ) {
+                        (Ok(scheduler_request), Ok(engine_request)) => {
+                            scheduler_request == engine_request
+                        }
+                        _ => false,
+                    }) by {
+                }
+                *request
+            }
+            Err(error) => {
+                assert(self.kv.same_state(&entry.kv));
+                assert(exists |scheduler_result: Result<RequestId, SchedulerError>|
+                    #[trigger] self.scheduler.admit_refines(
+                        &entry.scheduler,
+                        &scheduler_result,
+                    ) && match (
+                        &scheduler_result,
+                        &Err::<RequestId, EngineError>(EngineError::Scheduler(*error)),
+                    ) {
+                        (Err(scheduler_error), Err(EngineError::Scheduler(engine_error))) => {
+                            scheduler_error == engine_error
+                        }
+                        _ => false,
+                    }) by {
+                }
+                assert(self.admit_refines(
+                    &entry,
+                    &Err(EngineError::Scheduler(*error)),
+                ));
+                return Err(EngineError::Scheduler(*error));
+            }
         };
         assert(self.kv.create_enabled(request)) by {
             reveal(KvPool::create_enabled);
@@ -534,7 +1042,9 @@ impl<const C: usize> Engine<C> {
             assert(entry_scheduler.slot_generation_spec(request.slot_spec() as int)
                 == entry_kv.request_generation_by_slot_spec(request.slot_spec() as int));
         }
-        match self.kv.create_request(request) {
+        let create_result = self.kv.create_request(request);
+        assert(self.kv.create_refines(&entry_kv, request, &create_result));
+        match &create_result {
             Ok(()) => {
                 assert forall |slot: int| 0 <= slot < C implies {
                     &&& self.scheduler.slot_is_live_spec(slot)
@@ -580,12 +1090,23 @@ impl<const C: usize> Engine<C> {
                         slot,
                     );
                 }
+                assert(exists |kv_result: Result<(), KvError>|
+                    #[trigger] self.kv.create_refines(
+                        &entry.kv,
+                        request,
+                        &kv_result,
+                    ) && match (&kv_result, &Ok::<RequestId, EngineError>(request)) {
+                        (Ok(()), Ok(_)) => true,
+                        _ => false,
+                    }) by {
+                }
+                assert(self.admit_refines(&entry, &Ok(request)));
                 Ok(request)
             }
             Err(error) => {
                 assert(false);
                 self.faulted = true;
-                Err(EngineError::Kv(error))
+                Err(EngineError::Kv(*error))
             }
         }
     }
@@ -602,16 +1123,124 @@ impl<const C: usize> Engine<C> {
         token_count: u32,
     ) -> (result: Result<(), EngineError>)
         requires old(self).well_formed(),
-        ensures final(self).well_formed(),
+        ensures
+            final(self).well_formed(),
+            final(self).append_tentative_refines(
+                old(self),
+                request,
+                token_count,
+                &result,
+            ),
     {
+        let ghost entry = *self;
         reveal(Engine::well_formed);
-        self.require_healthy()?;
-        if self.scheduler.state(request) != Some(RequestState::Ready) {
-            return Err(EngineError::RequestNotReady);
+        reveal(Engine::append_tentative_refines);
+        reveal(Engine::faulted_spec);
+        reveal(Engine::state_spec);
+        proof {
+            self.scheduler.same_scalars_reflexive();
+            self.kv.same_state_reflexive();
         }
-        match self.kv.append_tentative(request, token_count) {
-            Ok(()) => Ok(()),
-            Err(error) => Err(EngineError::Kv(error)),
+        self.require_healthy()?;
+        let request_state = self.scheduler.state(request);
+        assert(request_state == self.scheduler.state_spec(request));
+        assert(self.scheduler == entry.scheduler);
+        assert(entry.state_spec(request) == request_state) by {
+            reveal(Engine::state_spec);
+        }
+        match request_state {
+            Some(RequestState::Ready) => {}
+            Some(RequestState::Vacant | RequestState::InFlight | RequestState::Retiring)
+            | None => {
+                assert(self.scheduler.same_scalars(&entry.scheduler)) by {
+                    assert(self.scheduler == entry.scheduler);
+                    entry.scheduler.same_scalars_reflexive();
+                }
+                assert(self.kv.same_state(&entry.kv)) by {
+                    assert(self.kv == entry.kv);
+                    entry.kv.same_state_reflexive();
+                }
+                assert(entry.state_spec(request) != Some(RequestState::Ready));
+                assert(self.permits@ == entry.permits@);
+                assert(self.faulted == entry.faulted);
+                assert(self.append_tentative_refines(
+                    &entry,
+                    request,
+                    token_count,
+                    &Err(EngineError::RequestNotReady),
+                ));
+                return Err(EngineError::RequestNotReady);
+            }
+        }
+        let append_result = self.kv.append_tentative(request, token_count);
+        assert(self.kv.append_refines(
+            &entry.kv,
+            request,
+            token_count,
+            &append_result,
+        ));
+        match &append_result {
+            Ok(()) => {
+                assert(self.scheduler.same_scalars(&entry.scheduler)) by {
+                    assert(self.scheduler == entry.scheduler);
+                    entry.scheduler.same_scalars_reflexive();
+                }
+                assert(!entry.faulted_spec());
+                assert(entry.state_spec(request) == Some(RequestState::Ready));
+                assert(exists |kv_result: Result<(), KvError>|
+                    #[trigger] self.kv.append_refines(
+                        &entry.kv,
+                        request,
+                        token_count,
+                        &kv_result,
+                    ) && match (&kv_result, &Ok::<(), EngineError>(())) {
+                        (Ok(()), Ok(())) => true,
+                        _ => false,
+                    }) by {
+                }
+                assert(self.permits@ == entry.permits@);
+                assert(self.faulted == entry.faulted);
+                assert(self.append_tentative_refines(
+                    &entry,
+                    request,
+                    token_count,
+                    &Ok(()),
+                ));
+                Ok(())
+            }
+            Err(error) => {
+                assert(self.scheduler.same_scalars(&entry.scheduler)) by {
+                    assert(self.scheduler == entry.scheduler);
+                    entry.scheduler.same_scalars_reflexive();
+                }
+                assert(!entry.faulted_spec());
+                assert(entry.state_spec(request) == Some(RequestState::Ready));
+                assert(exists |kv_result: Result<(), KvError>|
+                    #[trigger] self.kv.append_refines(
+                        &entry.kv,
+                        request,
+                        token_count,
+                        &kv_result,
+                    ) && match (
+                        &kv_result,
+                        &Err::<(), EngineError>(EngineError::Kv(*error)),
+                    ) {
+                        (Err(kv_error), Err(EngineError::Kv(engine_error))) => {
+                            kv_error == engine_error
+                        }
+                        _ => false,
+                    }) by {
+                }
+                assert(self.permits@ == entry.permits@);
+                assert(self.faulted == entry.faulted);
+                assert(self.append_tentative_refines(
+                    &entry,
+                    request,
+                    token_count,
+                    &Err(EngineError::Kv(*error)),
+                ));
+                Err(EngineError::Kv(*error))
+            }
         }
     }
 
@@ -628,21 +1257,164 @@ impl<const C: usize> Engine<C> {
         token_count: u32,
     ) -> (result: Result<(), EngineError>)
         requires old(self).well_formed(),
-        ensures final(self).well_formed(),
+        ensures
+            final(self).well_formed(),
+            final(self).share_committed_prefix_refines(
+                old(self),
+                source,
+                target,
+                token_count,
+                &result,
+            ),
     {
+        let ghost entry = *self;
         reveal(Engine::well_formed);
-        self.require_healthy()?;
-        if self.scheduler.state(source) != Some(RequestState::Ready)
-            || self.scheduler.state(target) != Some(RequestState::Ready)
-        {
-            return Err(EngineError::RequestNotReady);
+        reveal(Engine::share_committed_prefix_refines);
+        reveal(Engine::faulted_spec);
+        reveal(Engine::state_spec);
+        proof {
+            self.scheduler.same_scalars_reflexive();
+            self.kv.same_state_reflexive();
         }
-        match self
+        self.require_healthy()?;
+        let source_state = self.scheduler.state(source);
+        assert(source_state == self.scheduler.state_spec(source));
+        assert(self.scheduler == entry.scheduler);
+        assert(entry.state_spec(source) == source_state) by {
+            reveal(Engine::state_spec);
+        }
+        match source_state {
+            Some(RequestState::Ready) => {}
+            _ => {
+                assert(self.scheduler.same_scalars(&entry.scheduler)) by {
+                    assert(self.scheduler == entry.scheduler);
+                    entry.scheduler.same_scalars_reflexive();
+                }
+                assert(self.kv.same_state(&entry.kv)) by {
+                    assert(self.kv == entry.kv);
+                    entry.kv.same_state_reflexive();
+                }
+                assert(entry.state_spec(source) != Some(RequestState::Ready));
+                assert(self.permits@ == entry.permits@);
+                assert(self.faulted == entry.faulted);
+                assert(self.share_committed_prefix_refines(
+                    &entry,
+                    source,
+                    target,
+                    token_count,
+                    &Err(EngineError::RequestNotReady),
+                ));
+                return Err(EngineError::RequestNotReady);
+            }
+        }
+        let target_state = self.scheduler.state(target);
+        assert(target_state == self.scheduler.state_spec(target));
+        assert(entry.state_spec(target) == target_state) by {
+            reveal(Engine::state_spec);
+        }
+        match target_state {
+            Some(RequestState::Ready) => {}
+            _ => {
+                assert(self.scheduler.same_scalars(&entry.scheduler)) by {
+                    assert(self.scheduler == entry.scheduler);
+                    entry.scheduler.same_scalars_reflexive();
+                }
+                assert(self.kv.same_state(&entry.kv)) by {
+                    assert(self.kv == entry.kv);
+                    entry.kv.same_state_reflexive();
+                }
+                assert(entry.state_spec(source) == Some(RequestState::Ready));
+                assert(entry.state_spec(target) != Some(RequestState::Ready));
+                assert(self.permits@ == entry.permits@);
+                assert(self.faulted == entry.faulted);
+                assert(self.share_committed_prefix_refines(
+                    &entry,
+                    source,
+                    target,
+                    token_count,
+                    &Err(EngineError::RequestNotReady),
+                ));
+                return Err(EngineError::RequestNotReady);
+            }
+        }
+        let share_result = self
             .kv
-            .share_committed_prefix(source, target, token_count)
-        {
-            Ok(()) => Ok(()),
-            Err(error) => Err(EngineError::Kv(error)),
+            .share_committed_prefix(source, target, token_count);
+        assert(self.kv.share_refines(
+            &entry.kv,
+            source,
+            target,
+            token_count,
+            &share_result,
+        ));
+        match &share_result {
+            Ok(()) => {
+                assert(self.scheduler.same_scalars(&entry.scheduler)) by {
+                    assert(self.scheduler == entry.scheduler);
+                    entry.scheduler.same_scalars_reflexive();
+                }
+                assert(!entry.faulted_spec());
+                assert(entry.state_spec(source) == Some(RequestState::Ready));
+                assert(entry.state_spec(target) == Some(RequestState::Ready));
+                assert(exists |kv_result: Result<(), KvError>|
+                    #[trigger] self.kv.share_refines(
+                        &entry.kv,
+                        source,
+                        target,
+                        token_count,
+                        &kv_result,
+                    ) && match (&kv_result, &Ok::<(), EngineError>(())) {
+                        (Ok(()), Ok(())) => true,
+                        _ => false,
+                    }) by {
+                }
+                assert(self.permits@ == entry.permits@);
+                assert(self.faulted == entry.faulted);
+                assert(self.share_committed_prefix_refines(
+                    &entry,
+                    source,
+                    target,
+                    token_count,
+                    &Ok(()),
+                ));
+                Ok(())
+            }
+            Err(error) => {
+                assert(self.scheduler.same_scalars(&entry.scheduler)) by {
+                    assert(self.scheduler == entry.scheduler);
+                    entry.scheduler.same_scalars_reflexive();
+                }
+                assert(!entry.faulted_spec());
+                assert(entry.state_spec(source) == Some(RequestState::Ready));
+                assert(entry.state_spec(target) == Some(RequestState::Ready));
+                assert(exists |kv_result: Result<(), KvError>|
+                    #[trigger] self.kv.share_refines(
+                        &entry.kv,
+                        source,
+                        target,
+                        token_count,
+                        &kv_result,
+                    ) && match (
+                        &kv_result,
+                        &Err::<(), EngineError>(EngineError::Kv(*error)),
+                    ) {
+                        (Err(kv_error), Err(EngineError::Kv(engine_error))) => {
+                            kv_error == engine_error
+                        }
+                        _ => false,
+                    }) by {
+                }
+                assert(self.permits@ == entry.permits@);
+                assert(self.faulted == entry.faulted);
+                assert(self.share_committed_prefix_refines(
+                    &entry,
+                    source,
+                    target,
+                    token_count,
+                    &Err(EngineError::Kv(*error)),
+                ));
+                Err(EngineError::Kv(*error))
+            }
         }
     }
 
@@ -659,13 +1431,57 @@ impl<const C: usize> Engine<C> {
         span: u32,
     ) -> (result: Result<(), EngineError>)
         requires self.well_formed(),
-        ensures self.well_formed(),
+        ensures
+            self.well_formed(),
+            self.validate_read_refines(request, logical_offset, span, &result),
     {
         reveal(Engine::well_formed);
+        reveal(Engine::validate_read_refines);
+        reveal(Engine::faulted_spec);
         self.require_healthy()?;
-        match self.kv.validate_read(request, logical_offset, span) {
-            Ok(()) => Ok(()),
-            Err(error) => Err(EngineError::Kv(error)),
+        let read_result = self.kv.validate_read(request, logical_offset, span);
+        assert(self.kv.read_refines(request, logical_offset, span, &read_result));
+        match &read_result {
+            Ok(()) => {
+                assert(exists |kv_result: Result<(), KvError>|
+                    #[trigger] self.kv.read_refines(
+                        request,
+                        logical_offset,
+                        span,
+                        &kv_result,
+                    ) && match (&kv_result, &Ok::<(), EngineError>(())) {
+                        (Ok(()), Ok(())) => true,
+                        _ => false,
+                    }) by {
+                }
+                assert(self.validate_read_refines(request, logical_offset, span, &Ok(())));
+                Ok(())
+            }
+            Err(error) => {
+                assert(exists |kv_result: Result<(), KvError>|
+                    #[trigger] self.kv.read_refines(
+                        request,
+                        logical_offset,
+                        span,
+                        &kv_result,
+                    ) && match (
+                        &kv_result,
+                        &Err::<(), EngineError>(EngineError::Kv(*error)),
+                    ) {
+                        (Err(kv_error), Err(EngineError::Kv(engine_error))) => {
+                            kv_error == engine_error
+                        }
+                        _ => false,
+                    }) by {
+                }
+                assert(self.validate_read_refines(
+                    request,
+                    logical_offset,
+                    span,
+                    &Err(EngineError::Kv(*error)),
+                ));
+                Err(EngineError::Kv(*error))
+            }
         }
     }
 
@@ -677,13 +1493,97 @@ impl<const C: usize> Engine<C> {
     /// identity or lifecycle error.
     pub fn retire(&mut self, request: RequestId) -> (result: Result<(), EngineError>)
         requires old(self).well_formed(),
-        ensures final(self).well_formed(),
+        ensures
+            final(self).well_formed(),
+            final(self).retire_refines(old(self), request, &result),
     {
+        let ghost entry = *self;
+        let ghost entry_scheduler = self.scheduler;
         reveal(Engine::well_formed);
+        reveal(Engine::retire_refines);
+        reveal(Engine::faulted_spec);
+        proof {
+            self.scheduler.same_scalars_reflexive();
+            self.kv.same_state_reflexive();
+        }
         self.require_healthy()?;
-        match self.scheduler.retire(request) {
-            Ok(()) => Ok(()),
-            Err(error) => Err(EngineError::Scheduler(error)),
+        assert(self.scheduler == entry_scheduler);
+        let ghost before_retire_scheduler = self.scheduler;
+        assert(before_retire_scheduler == entry.scheduler);
+        let scheduler_result = self.scheduler.retire(request);
+        assert(self.scheduler.retire_refines(
+            &before_retire_scheduler,
+            request,
+            &scheduler_result,
+        ));
+        match &scheduler_result {
+            Ok(()) => {
+                assert(self.kv.same_state(&entry.kv)) by {
+                    assert(self.kv == entry.kv);
+                    entry.kv.same_state_reflexive();
+                }
+                assert(!entry.faulted_spec());
+                assert(self.permits@ == entry.permits@);
+                assert(self.faulted == entry.faulted);
+                assert(exists |witness: Result<(), SchedulerError>|
+                    self.scheduler.retire_refines(
+                        &entry.scheduler,
+                        request,
+                        &witness,
+                    )
+                    && match (&witness, &Ok(())) {
+                        (Ok(()), Ok(())) => true,
+                        (Err(scheduler_error), Err(EngineError::Scheduler(engine_error))) => {
+                            scheduler_error == engine_error
+                        }
+                        _ => false,
+                    }) by {
+                    assert(self.scheduler.retire_refines(
+                        &entry.scheduler,
+                        request,
+                        &scheduler_result,
+                    ));
+                }
+                assert(self.retire_refines(&entry, request, &Ok(())));
+                Ok(())
+            }
+            Err(error) => {
+                assert(self.kv.same_state(&entry.kv)) by {
+                    assert(self.kv == entry.kv);
+                    entry.kv.same_state_reflexive();
+                }
+                assert(!entry.faulted_spec());
+                assert(self.permits@ == entry.permits@);
+                assert(self.faulted == entry.faulted);
+                assert(exists |witness: Result<(), SchedulerError>|
+                    self.scheduler.retire_refines(
+                        &entry.scheduler,
+                        request,
+                        &witness,
+                    )
+                    && match (
+                        &witness,
+                        &Err(EngineError::Scheduler(*error)),
+                    ) {
+                        (Ok(()), Ok(())) => true,
+                        (Err(scheduler_error), Err(EngineError::Scheduler(engine_error))) => {
+                            scheduler_error == engine_error
+                        }
+                        _ => false,
+                    }) by {
+                    assert(self.scheduler.retire_refines(
+                        &entry.scheduler,
+                        request,
+                        &scheduler_result,
+                    ));
+                }
+                assert(self.retire_refines(
+                    &entry,
+                    request,
+                    &Err(EngineError::Scheduler(*error)),
+                ));
+                Err(EngineError::Scheduler(*error))
+            }
         }
     }
 
@@ -695,37 +1595,123 @@ impl<const C: usize> Engine<C> {
     /// KV, or scheduler mismatch also faults the engine and returns its error.
     pub fn reclaim_one(&mut self) -> (result: Result<Option<RequestId>, EngineError>)
         requires old(self).well_formed(),
-        ensures final(self).well_formed(),
+        ensures
+            final(self).well_formed(),
+            final(self).reclaim_one_refines(old(self), &result),
     {
+        let ghost entry = *self;
         reveal(Engine::well_formed);
+        reveal(Engine::reclaim_one_refines);
+        reveal(Engine::same_state);
+        reveal(Engine::faulted_spec);
+        proof {
+            self.scheduler.same_scalars_reflexive();
+            self.kv.same_state_reflexive();
+        }
         self.require_healthy()?;
-        let ghost entry_scheduler = self.scheduler;
-        let ghost entry_kv = self.kv;
-        let permit_result = match self.scheduler.take_retiring_permit() {
-            Ok(result) => result,
-            Err(error) => return Err(EngineError::Scheduler(error)),
-        };
-        let permit = match permit_result {
-            Some(permit) => permit,
-            None => {
+        assert(self.scheduler == entry.scheduler);
+        assert(self.kv == entry.kv);
+        let ghost entry_scheduler = entry.scheduler;
+        let ghost entry_kv = entry.kv;
+        let take_result = self.scheduler.take_retiring_permit();
+        let permit = match take_result {
+            Err(error) => {
+                assert(self.kv.same_state(&entry.kv)) by {
+                    assert(self.kv == entry.kv);
+                    entry.kv.same_state_reflexive();
+                }
+                assert(self.permits@ == entry.permits@);
+                assert(self.faulted == entry.faulted);
+                assert(exists |scheduler_result: Result<
+                    Option<KvQuiescencePermit>,
+                    SchedulerError,
+                >| #[trigger] self.scheduler.retiring_permit_refines(
+                    &entry.scheduler,
+                    &scheduler_result,
+                ) && match (
+                    &scheduler_result,
+                    &Err::<Option<RequestId>, EngineError>(EngineError::Scheduler(error)),
+                ) {
+                    (Err(scheduler_error), Err(EngineError::Scheduler(engine_error))) => {
+                        scheduler_error == engine_error
+                    }
+                    _ => false,
+                }) by {
+                }
                 assert(self.well_formed());
+                assert(self.reclaim_one_refines(
+                    &entry,
+                    &Err(EngineError::Scheduler(error)),
+                ));
+                return Err(EngineError::Scheduler(error));
+            }
+            Ok(None) => {
+                assert(self.scheduler.retiring_permit_refines(
+                    &entry.scheduler,
+                    &Ok(None),
+                ));
+                assert(self.kv.same_state(&entry.kv)) by {
+                    assert(self.kv == entry.kv);
+                    entry.kv.same_state_reflexive();
+                }
+                assert(self.permits@ == entry.permits@);
+                assert(self.faulted == entry.faulted);
+                assert(!entry.faulted_spec());
+                assert(self.well_formed());
+                assert(self.reclaim_one_refines(&entry, &Ok(None)));
                 return Ok(None);
             }
+            Ok(Some(permit)) => permit,
         };
+        let ghost taken_permit = permit;
         let request = permit.request();
         let ghost permit_request = permit.request_spec();
         let ghost permit_origin = permit.origin_spec();
         let ghost before_release_scheduler = self.scheduler;
         let ghost before_release_kv = self.kv;
+        assert(before_release_scheduler.identity_frame(&entry_scheduler));
+        assert(before_release_scheduler.retiring_permit_refines(
+            &entry_scheduler,
+            &Ok(Some(taken_permit)),
+        ));
         let detached = match self.kv.release_request(request, permit) {
             Ok(detached) => detached,
             Err(failure) => {
+                let ghost release_failure = failure;
                 let (error, _permit) = failure.into_parts();
                 self.faulted = true;
+                assert(self.kv.same_state(&entry.kv));
+                assert(self.permits@ == entry.permits@);
+                assert(self.scheduler.same_scalars(&before_release_scheduler)) by {
+                    assert(self.scheduler == before_release_scheduler);
+                    before_release_scheduler.same_scalars_reflexive();
+                }
+                assert(self.reclaim_release_error_step(
+                    &entry,
+                    taken_permit,
+                    before_release_scheduler,
+                    error,
+                )) by {
+                    reveal(Engine::reclaim_release_error_step);
+                    assert(before_release_kv == entry.kv);
+                    assert(release_failure.error_spec() == error);
+                }
+                assert(exists |witness_permit: KvQuiescencePermit,
+                    witness_after_take: Scheduler<C>|
+                    #[trigger] self.reclaim_release_error_step(
+                        &entry,
+                        witness_permit,
+                        witness_after_take,
+                        error,
+                    )) by {
+                }
                 assert(self.well_formed());
+                assert(self.reclaim_one_refines(&entry, &Err(EngineError::Kv(error))));
                 return Err(EngineError::Kv(error));
             }
         };
+        let ghost released_detached = detached;
+        let ghost after_release_kv = self.kv;
         assert(detached.request_spec() == permit_request);
         assert(detached.origin_spec() == permit_origin);
         assert(before_release_scheduler.detachment_ready(permit_request, permit_origin));
@@ -785,7 +1771,52 @@ impl<const C: usize> Engine<C> {
                         slot,
                     );
                 }
+                assert(request == permit_request);
+                proof {
+                    before_reclaim_scheduler.apply_detachment_ready_identity(
+                        request,
+                        permit_origin,
+                    );
+                }
+                assert(self.permits@ == entry.permits@);
+                assert(!entry.faulted_spec());
+                assert(!self.faulted_spec());
+                assert(self.kv.same_state(&after_release_kv)) by {
+                    assert(self.kv == after_release_kv);
+                    after_release_kv.same_state_reflexive();
+                }
+                assert(self.reclaim_success_step(
+                    &entry,
+                    taken_permit,
+                    released_detached,
+                    before_release_scheduler,
+                    after_release_kv,
+                    request,
+                )) by {
+                    reveal(Engine::reclaim_success_step);
+                    assert(before_release_kv == entry.kv);
+                    assert(before_reclaim_scheduler == before_release_scheduler);
+                }
+                assert(exists |witness_permit: KvQuiescencePermit,
+                    witness_detached: KvDetachedRequest,
+                    witness_after_take: Scheduler<C>,
+                    witness_after_release: KvPool|
+                    #[trigger] self.reclaim_success_step(
+                        &entry,
+                        witness_permit,
+                        witness_detached,
+                        witness_after_take,
+                        witness_after_release,
+                        request,
+                    )) by {
+                }
                 assert(self.well_formed());
+                assert(self.reclaim_success_refines(&entry, request)) by {
+                    reveal(Engine::reclaim_success_refines);
+                }
+                assert(self.reclaim_one_refines(&entry, &Ok(Some(request)))) by {
+                    reveal(Engine::reclaim_one_refines);
+                }
                 Ok(Some(request))
             }
             Err(error) => {
@@ -808,9 +1839,22 @@ impl<const C: usize> Engine<C> {
         output: &mut [RequestId],
     ) -> (result: Result<Option<DispatchBatch>, EngineError>)
         requires old(self).well_formed(),
-        ensures final(self).well_formed(),
+        ensures
+            final(self).well_formed(),
+            final(self).dispatch_ready_refines(
+                old(self),
+                old(output)@,
+                final(output)@,
+                &result,
+            ),
     {
         reveal(Engine::well_formed);
+        reveal(Engine::dispatch_ready_refines);
+        reveal(Engine::faulted_spec);
+        proof {
+            self.scheduler.same_scalars_reflexive();
+            self.kv.same_state_reflexive();
+        }
         self.require_healthy()?;
         let ghost before_scheduler = self.scheduler;
         let ghost before_output = output@;

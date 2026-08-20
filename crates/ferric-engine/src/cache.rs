@@ -159,6 +159,7 @@ pub(crate) struct KvAuthorityError {
 impl KvAuthorityError {
     pub(crate) fn into_parts(self) -> (parts: (KvError, KvQuiescencePermit))
         ensures
+            parts.0 == self.error_spec(),
             parts.1.request_spec() == self.permit_request_spec(),
             parts.1.origin_spec() == self.permit_origin_spec(),
     {
@@ -341,6 +342,34 @@ impl KvPool {
             Ok(())
         }
     }
+
+    pub closed spec fn new_refines(
+        page_count: u32,
+        page_tokens: u32,
+        max_context_tokens: u32,
+        result: &Result<Self, KvError>,
+    ) -> bool {
+        match result {
+            Ok(pool) => {
+                &&& Self::new_enabled(page_count, page_tokens, max_context_tokens)
+                &&& Self::new_decision(page_count, page_tokens, max_context_tokens) == Ok(())
+                &&& pool.well_formed()
+                &&& pool.page_tokens_spec() == page_tokens
+                &&& pool.max_context_tokens_spec() == max_context_tokens
+                &&& pool.page_limit_spec() == page_count
+                &&& pool.free_pages_spec() == page_count
+                &&& forall |slot: int| 0 <= slot < MAX_REQUEST_SLOTS ==> {
+                    &&& !pool.request_live_by_slot_spec(slot)
+                    &&& pool.request_generation_by_slot_spec(slot) == 1
+                }
+            }
+            Err(error) => {
+                &&& !Self::new_enabled(page_count, page_tokens, max_context_tokens)
+                &&& Self::new_decision(page_count, page_tokens, max_context_tokens)
+                    == Err(*error)
+            }
+        }
+    }
     pub closed spec fn request_live_by_slot_spec(&self, slot: int) -> bool
         recommends 0 <= slot < MAX_REQUEST_SLOTS,
     {
@@ -466,6 +495,37 @@ impl KvPool {
         })
     }
 
+    pub closed spec fn create_refines(
+        &self,
+        before: &Self,
+        request: RequestId,
+        result: &Result<(), KvError>,
+    ) -> bool {
+        &&& self.well_formed()
+        &&& self.page_tokens_spec() == before.page_tokens_spec()
+        &&& self.max_context_tokens_spec() == before.max_context_tokens_spec()
+        &&& self.page_limit_spec() == before.page_limit_spec()
+        &&& match result {
+            Ok(()) => {
+                &&& before.create_enabled(request)
+                &&& before.create_decision(request) == Ok(())
+                &&& self.request_matches_spec(request)
+                &&& request.slot_spec() < MAX_REQUEST_SLOTS
+                &&& self.request_live_by_slot_spec(request.slot_spec() as int)
+                &&& self.request_generation_by_slot_spec(request.slot_spec() as int)
+                    == request.generation_spec()
+                &&& self.request_frame_except(before, request.slot_spec() as int)
+                &&& self.identity_frame_except(before, request.slot_spec() as int)
+            }
+            Err(error) => {
+                &&& !before.create_enabled(request)
+                &&& before.create_decision(request) == Err(*error)
+                &&& self.same_state(before)
+                &&& self.identity_frame(before)
+            }
+        }
+    }
+
     closed spec fn create_key_enabled(&self, request: RequestKey) -> bool {
         &&& request.slot < MAX_REQUEST_SLOTS
         &&& !self.requests@[request.slot as int].live
@@ -526,6 +586,43 @@ impl KvPool {
             },
             token_count,
         )
+    }
+
+    pub closed spec fn append_refines(
+        &self,
+        before: &Self,
+        request: RequestId,
+        token_count: u32,
+        result: &Result<(), KvError>,
+    ) -> bool {
+        &&& self.well_formed()
+        &&& self.page_tokens_spec() == before.page_tokens_spec()
+        &&& self.max_context_tokens_spec() == before.max_context_tokens_spec()
+        &&& self.page_limit_spec() == before.page_limit_spec()
+        &&& self.identity_frame(before)
+        &&& match result {
+            Ok(()) => {
+                &&& before.append_enabled(request, token_count)
+                &&& before.append_decision(request, token_count) == Ok(())
+                &&& self.resident_tokens_spec(request).is_some()
+                &&& self.resident_tokens_spec(request).unwrap() as int
+                    == before.resident_tokens_spec(request).unwrap() as int
+                        + token_count as int
+                &&& self.committed_tokens_spec(request)
+                    == before.committed_tokens_spec(request)
+                &&& self.request_frame_except(before, request.slot_spec() as int)
+                &&& self.exact_sealed_frame(before)
+                &&& self.reachable_payload_frame_except(
+                    before,
+                    request.slot_spec() as int,
+                )
+            }
+            Err(error) => {
+                &&& !before.append_enabled(request, token_count)
+                &&& before.append_decision(request, token_count) == Err(*error)
+                &&& self.same_state(before)
+            }
+        }
     }
 
     closed spec fn append_key_enabled(&self, request: RequestKey, token_count: u32) -> bool {
@@ -638,6 +735,50 @@ impl KvPool {
         )
     }
 
+    pub closed spec fn share_refines(
+        &self,
+        before: &Self,
+        source: RequestId,
+        target: RequestId,
+        token_count: u32,
+        result: &Result<(), KvError>,
+    ) -> bool {
+        &&& self.well_formed()
+        &&& self.page_tokens_spec() == before.page_tokens_spec()
+        &&& self.max_context_tokens_spec() == before.max_context_tokens_spec()
+        &&& self.page_limit_spec() == before.page_limit_spec()
+        &&& self.identity_frame(before)
+        &&& match result {
+            Ok(()) => {
+                &&& before.share_enabled(source, target, token_count)
+                &&& before.share_decision(source, target, token_count) == Ok(())
+                &&& self.resident_tokens_spec(target) == Some(token_count)
+                &&& self.committed_tokens_spec(target) == Some(token_count)
+                &&& self.resident_tokens_spec(source)
+                    == before.resident_tokens_spec(source)
+                &&& self.committed_tokens_spec(source)
+                    == before.committed_tokens_spec(source)
+                &&& self.request_frame_except_two(
+                    before,
+                    source.slot_spec() as int,
+                    target.slot_spec() as int,
+                )
+                &&& self.sealed_payload_frame(before)
+                &&& self.share_page_frame(
+                    before,
+                    source.slot_spec() as int,
+                    target.slot_spec(),
+                    token_count as int / before.page_tokens_spec() as int,
+                )
+            }
+            Err(error) => {
+                &&& !before.share_enabled(source, target, token_count)
+                &&& before.share_decision(source, target, token_count) == Err(*error)
+                &&& self.same_state(before)
+            }
+        }
+    }
+
     closed spec fn share_key_enabled(
         &self,
         source: RequestKey,
@@ -713,6 +854,25 @@ impl KvPool {
             logical_offset,
             span,
         )
+    }
+
+    pub closed spec fn read_refines(
+        &self,
+        request: RequestId,
+        logical_offset: u32,
+        span: u32,
+        result: &Result<(), KvError>,
+    ) -> bool {
+        match result {
+            Ok(()) => {
+                &&& self.read_enabled(request, logical_offset, span)
+                &&& self.read_decision(request, logical_offset, span) == Ok(())
+            }
+            Err(error) => {
+                &&& !self.read_enabled(request, logical_offset, span)
+                &&& self.read_decision(request, logical_offset, span) == Err(*error)
+            }
+        }
     }
 
     closed spec fn read_key_enabled(
@@ -1489,8 +1649,10 @@ impl KvPool {
                 Err(error) => !Self::new_enabled(page_count, page_tokens, max_context_tokens)
                     && Self::new_decision(page_count, page_tokens, max_context_tokens)
                         == Err(error),
-            }
+            },
+            Self::new_refines(page_count, page_tokens, max_context_tokens, &result),
     {
+        reveal(KvPool::new_refines);
         if page_count == 0 { return Err(KvError::ZeroCapacity(Capacity::Pages)); }
         if page_tokens == 0 { return Err(KvError::ZeroCapacity(Capacity::PageTokens)); }
         if max_context_tokens == 0 { return Err(KvError::ZeroCapacity(Capacity::ContextTokens)); }
@@ -5438,6 +5600,7 @@ impl KvPool {
                     && Self::new_decision(page_count, page_tokens, max_context_tokens)
                         == Err(error),
             },
+            Self::new_refines(page_count, page_tokens, max_context_tokens, &result),
     {
         Self::new_bounded(page_count, page_tokens, max_context_tokens)
     }
@@ -5480,7 +5643,9 @@ impl KvPool {
                     &&& final(self).identity_frame(old(self))
                 }
             },
+            final(self).create_refines(old(self), request, &result),
     {
+        reveal(KvPool::create_refines);
         reveal(KvPool::create_enabled);
         reveal(KvPool::request_matches_spec);
         reveal(KvPool::key_matches);
@@ -5533,7 +5698,9 @@ impl KvPool {
                     &&& final(self).identity_frame(old(self))
                 }
             },
+            final(self).append_refines(old(self), request, token_count, &result),
     {
+        reveal(KvPool::append_refines);
         reveal(KvPool::append_enabled);
         reveal(KvPool::request_matches_spec);
         reveal(KvPool::resident_tokens_spec);
@@ -5608,7 +5775,9 @@ impl KvPool {
                     &&& final(self).identity_frame(old(self))
                 }
             },
+            final(self).share_refines(old(self), source, target, token_count, &result),
     {
+        reveal(KvPool::share_refines);
         reveal(KvPool::share_enabled);
         reveal(KvPool::request_matches_spec);
         reveal(KvPool::resident_tokens_spec);
@@ -5827,7 +5996,9 @@ impl KvPool {
                 Err(error) => !self.read_enabled(request, logical_offset, span)
                     && self.read_decision(request, logical_offset, span) == Err(error),
             },
+            self.read_refines(request, logical_offset, span, &result),
     {
+        reveal(KvPool::read_refines);
         reveal(KvPool::read_enabled);
         self.validate_read_key(request_key(request), logical_offset, span)
     }
