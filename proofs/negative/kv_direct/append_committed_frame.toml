@@ -1,0 +1,19 @@
+name = "append-must-not-publish-tentative-tokens"
+package = "ferric-engine"
+module = "cache"
+verify_function = "append_existing_page"
+source = "crates/ferric-engine/src/cache.rs"
+expected_failure = "postcondition not satisfied"
+property = "append preserves the request's committed-token count"
+
+anchor = """
+        self.pages[page_index].initialized_tokens += written;
+        self.requests[request_index].resident_tokens += written;
+"""
+
+replacement = """
+        self.pages[page_index].initialized_tokens += written;
+        self.requests[request_index].resident_tokens += written;
+        self.requests[request_index].committed_tokens =
+            self.requests[request_index].resident_tokens;
+"""
