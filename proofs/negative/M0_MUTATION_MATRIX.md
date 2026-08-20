@@ -13,8 +13,9 @@ transcript for the exact source closure being qualified.
 | Completion cannot redispatch a member before KV finalization | `Scheduler::complete_exact` | `scheduler-completion-early-ready` |
 | Cancellation cannot redispatch an executing request | `Scheduler::retire_inflight` | `scheduler-cancellation-early-ready` |
 | Reclaim advances the scheduler generation before reuse | `Scheduler::reclaim_detached` | `scheduler-generation-reuse` |
-| Dispatch scans at most `C` slots | `Scheduler::dispatch_ready` | `scheduler-scan-bound` |
-| Dispatch preserves fixed-capacity submission ring bounds | `Scheduler::dispatch_ready` | `scheduler-ring-bound` |
+| Dispatch advances exactly one submitted epoch and appends exactly one pending batch | `Scheduler::dispatch_enabled` | `scheduler-epoch-accounting` |
+| Dispatch scans at most `C` slots | `Scheduler::dispatch_scan_commit` | `scheduler-scan-bound` |
+| Dispatch preserves fixed-capacity submission ring bounds | `Scheduler::dispatch_preflight` | `scheduler-ring-bound` |
 | Engine admission preserves scheduler/KV identity agreement | `Engine::admit` | `system` |
 | Engine completion publishes the caller's accepted token count | `Engine::complete_exact` | `system-completion` |
 | Engine reclaim consumes detached KV evidence before reporting reuse | `Engine::reclaim_one` | `system-detachment` |

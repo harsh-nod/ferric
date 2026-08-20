@@ -64,7 +64,7 @@
       "compiler_path_prefixes": [
         "ferric_engine::scheduler::Scheduler::admit",
         "ferric_engine::scheduler::Scheduler::retire",
-        "ferric_engine::scheduler::Scheduler::dispatch_ready",
+        "ferric_engine::scheduler::Scheduler::dispatch",
         "ferric_engine::scheduler::Scheduler::complete_exact",
         "ferric_engine::scheduler::Scheduler::accept_finalized",
         "ferric_engine::scheduler::Scheduler::take_retiring_permit",
@@ -74,7 +74,8 @@
       "required_mutations": [
         "scheduler-finalization-transition",
         "scheduler-exact-rejection",
-        "scheduler-completion-boundary"
+        "scheduler-completion-boundary",
+        "scheduler-epoch-accounting"
       ],
       "checked_evidence": [],
       "unsupported_reason": null
@@ -87,7 +88,7 @@
       "statement_sha256": "9fd3a24a86acc4e9cd0430e82b2e3489e569423711da642c5d6d625af55ea54d",
       "compiler_paths_resolved": true,
       "compiler_path_prefixes": [
-        "ferric_engine::scheduler::Scheduler::dispatch_ready",
+        "ferric_engine::scheduler::Scheduler::dispatch",
         "ferric_engine::scheduler::Scheduler::complete_exact",
         "ferric_engine::scheduler::Scheduler::retire",
         "ferric_engine::scheduler::Scheduler::retire_inflight",
@@ -116,7 +117,7 @@
       "compiler_path_prefixes": [
         "ferric_engine::scheduler::Scheduler::admit",
         "ferric_engine::scheduler::Scheduler::retire",
-        "ferric_engine::scheduler::Scheduler::dispatch_ready",
+        "ferric_engine::scheduler::Scheduler::dispatch",
         "ferric_engine::scheduler::Scheduler::complete_exact",
         "ferric_engine::scheduler::Scheduler::accept_finalized",
         "ferric_engine::scheduler::Scheduler::take_retiring_permit",
