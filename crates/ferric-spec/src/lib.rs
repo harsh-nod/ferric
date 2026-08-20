@@ -11,6 +11,7 @@ use vstd::prelude::*;
 pub mod completion;
 mod configuration;
 mod identity;
+mod qwen3;
 pub mod scheduling;
 mod speculation;
 
@@ -22,4 +23,9 @@ pub use configuration::{
     QWEN3_VOCABULARY_SIZE,
 };
 pub use identity::{Identity, RequestId};
+pub use qwen3::{
+    Qwen3TensorError, Qwen3TensorKind, Qwen3TensorMetadata, TensorDType, QWEN3_DRAFT_TENSOR_COUNT,
+    QWEN3_DRAFT_TENSOR_DATA_BYTES, QWEN3_NO_LAYER, QWEN3_TARGET_TENSOR_COUNT,
+    QWEN3_TARGET_TENSOR_DATA_BYTES, QWEN3_TENSORS_PER_LAYER,
+};
 pub use speculation::{verify_greedy_round, GreedyCommit, TokenId};
