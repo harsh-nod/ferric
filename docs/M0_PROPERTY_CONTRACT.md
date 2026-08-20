@@ -53,6 +53,18 @@ validation does not authenticate a digest or establish a theorem, so the
 qualification entrypoint must calculate and authenticate every identity before
 constructing the set.
 
+The qualification builds `proofs/property-binder` against
+`fe2o3-proof-contracts` at exact fe2o3 commit
+`a6fa86b5ccf8f0438925cfec8f48a5d713874da3`. The binder checks this table
+against `proofs/M0_PROPERTIES.json`, reconciles every `Proved` path and required
+actual-body mutation, invokes `ContractSetV1::validate_closed`, and emits a
+canonical property artifact. Its binary, source closure, lockfile, complete
+dependency and build-script TCB, manifest, evidence index, and artifact are
+measured in the durable qualification receipt. The fe2o3 validator supplies
+structural validation only; Ferric's qualification supplies the measured
+identity and evidence reconciliation, under the contracted ambient Rust and
+qualification-host TCB.
+
 ## M0 Non-Claims
 
 M0 does not contain an LLM model runner, GPU kernels, physical KV buffers, an
