@@ -8,10 +8,16 @@
 //! the streaming safetensors typestate. `tokenizer.json` is still represented
 //! only by its exact pinned caller-asserted descriptor.
 
+mod bundle;
 mod json;
 mod safetensors;
 mod sha256;
 
+pub use bundle::{
+    decode_canonical_deployment_bundle, encode_canonical_deployment_bundle, CanonicalBundleError,
+    CanonicalDeploymentBundle, CANONICAL_DEPLOYMENT_BUNDLE_BYTES,
+    CANONICAL_DEPLOYMENT_BUNDLE_VERSION,
+};
 pub use safetensors::{
     authenticate_qwen3_draft_weights, authenticate_qwen3_target_weights, AuthenticatedWeightSet,
     SafetensorsError, SafetensorsSource,
@@ -70,6 +76,12 @@ pub const QWEN3_TARGET_WEIGHT_SET_SHA256: [u8; 32] =
 /// SHA-256 of the complete pinned Qwen3-0.6B safetensors file.
 pub const QWEN3_DRAFT_WEIGHT_SHA256: [u8; 32] =
     decode_hex_32(b"f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b");
+/// Domain-separated identity of the exact admitted Qwen3-8B model inputs.
+pub const QWEN3_TARGET_MODEL_ID: [u8; 32] =
+    decode_hex_32(b"f18fc461576d1a3053a19aba5946ef7b3b45aaf7cbb45d77f5c276f18567224a");
+/// Domain-separated identity of the exact admitted Qwen3-0.6B model inputs.
+pub const QWEN3_DRAFT_MODEL_ID: [u8; 32] =
+    decode_hex_32(b"351fc121a569f0a53e9bb5c98caaeff80d6f8d94737eecf5e179cfa54d9cf998");
 
 const TARGET_WEIGHT_SET_COMPONENTS: [(&str, [u8; 32], u64); 6] = [
     (
@@ -455,7 +467,8 @@ fn assemble_deployment_bundle(
 
     target_config.model_id = model_identity(
         Qwen3ModelRole::Target8B,
-        &assets.target,
+        assets.target.repository,
+        assets.target.revision,
         target_config.config_id,
         target_tokenizer,
         target_weights,
@@ -463,7 +476,8 @@ fn assemble_deployment_bundle(
     );
     draft_config.model_id = model_identity(
         Qwen3ModelRole::Draft06B,
-        &assets.draft,
+        assets.draft.repository,
+        assets.draft.revision,
         draft_config.config_id,
         draft_tokenizer,
         draft_weights,
@@ -690,7 +704,8 @@ fn weight_manifest(
 
 fn model_identity(
     role: Qwen3ModelRole,
-    assets: &ModelAssets<'_>,
+    repository: &str,
+    revision: &str,
     config_id: Identity,
     tokenizer: TokenizerConfig,
     weights: WeightManifest,
@@ -707,8 +722,8 @@ fn model_identity(
         b"ferric.model.v1",
         &[
             &role_byte,
-            assets.repository.as_bytes(),
-            assets.revision.as_bytes(),
+            repository.as_bytes(),
+            revision.as_bytes(),
             config_id.as_bytes(),
             tokenizer.tokenizer_id.as_bytes(),
             tokenizer.vocabulary_id.as_bytes(),

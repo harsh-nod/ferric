@@ -20,10 +20,12 @@ benches/                 identity-bound qualification harnesses
 configuration, tokenizer-metadata, and streaming safetensors admission slices
 of `ferric-build` exist today. Safetensors admission authenticates exact full
 files and validates the closed Qwen3 BF16 tensor schema without buffering
-tensor payloads. It does not yet semantically admit `tokenizer.json`, transform
-or pack tensors, inspect tensor values, or load device memory. Crates are added
-when they contain real final-path behavior; placeholder GPU execution is not
-permitted.
+tensor payloads. A fixed-width canonical record revalidates all pinned and
+derived identities, but does not sign the record or confer authentication
+authority for external files. Ferric does not yet semantically admit
+`tokenizer.json`, transform or pack tensors, inspect tensor values, or load
+device memory. Crates are added when they contain real final-path behavior;
+placeholder GPU execution is not permitted.
 
 ## Dependency Boundary
 
