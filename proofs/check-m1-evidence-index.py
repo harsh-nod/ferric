@@ -82,7 +82,7 @@ TRUSTED_VALIDATORS = {
     "hardware-test": (
         "proofs/m1/evidence/validate-hardware-transcript.py",
         "ferric.m1-validator.hardware-transcript.v1",
-        None,
+        "8a1e06fab53e38f1d48a8c26f132204a169c54ce56cf4bd283695cdc38b6e21f",
     ),
     "independent-validator": (
         "proofs/m1/evidence/validate-independent-validator.py",

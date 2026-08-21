@@ -99,9 +99,9 @@ paths. The version 1 registry is:
 | Verus theorem | `proofs/m1/evidence/validate-verus-theorem.py` | `ferric.m1-validator.verus-theorem.v1` |
 
 The artifact-identity, canonical-structure, external-contract, fe2o3-contract,
-negative-mutation, TCB-report,
-unsupported-rationale, and Verus-theorem validators are `ExistingFoundation`
-inputs with exact source SHA-256 values pinned in the checker-owned registry.
+hardware-transcript, negative-mutation, TCB-report, unsupported-rationale, and
+Verus-theorem validators are `ExistingFoundation` inputs with exact source
+SHA-256 values pinned in the checker-owned registry.
 The artifact-identity validator accepts only a canonical identity-only report
 and independently hashes its deterministic companion payload. The report binds
 the exact Open obligation or property, associated assurance properties, path,
@@ -132,9 +132,16 @@ independently parses a companion canonical-record payload under a
 checker-owned typed schema, and binds the exact Open obligation, profile,
 path, sources, fixed target, and TCB without granting semantic or qualification
 authority. Its protocol is documented in
-`proofs/m1/evidence/CANONICAL_STRUCTURE.md`. The negative-mutation and theorem
-validators validate the complete versioned run directory behind a bound
-`.result` artifact. The
+`proofs/m1/evidence/CANONICAL_STRUCTURE.md`. The hardware-transcript
+validator is documented in `proofs/m1/evidence/HARDWARE_TRANSCRIPT.md`. It
+authenticates a fixed MI300X/gfx942 report plus immutable run-transcript and
+case-roster companions, requires positive completed GPU work for every case,
+and binds the exact source, device, ROCm, driver, firmware, harness, obligation,
+path, profile, and TCB identities. Its reviewed source SHA-256 is
+`8a1e06fab53e38f1d48a8c26f132204a169c54ce56cf4bd283695cdc38b6e21f`.
+Hardware observations grant no theorem, machine-refinement, performance, or
+qualification authority. The negative-mutation and theorem validators validate
+the complete versioned run directory behind a bound `.result` artifact. The
 theorem validator requires the exact pinned output-json schema, selected
 compiler module/function, current source body, ordinary compilation, an exact
 one-query zero-error proof predicate, and the complete theorem roster for the
@@ -143,7 +150,7 @@ checker-owned summary derives `RESULT=success` from its exact structured fields
 and exit status and binds the transcript SHA-256. Any injected `success` field
 is rejected as schema drift. The unsupported-rationale validator accepts only
 the three fixed M1 nonclaims, binds their exact source, requirements, evidence
-binding, and TCB identities, and grants no positive authority. The other
+binding, and TCB identities, and grants no positive authority. The remaining
 validators remain `RequiredFuture` M1 implementation obligations with
 intentionally unset source pins. Until every validator required by an index
 exists in the exact qualified source closure, has a reviewed source SHA-256
