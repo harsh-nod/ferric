@@ -138,13 +138,36 @@ pub enum PhysicalKvError {
     InvalidQuiescenceAuthority,
 }
 
-/// Private, non-clone authority. A future trusted completion bridge must
-/// produce this value; no public source-level constructor exists.
+/// Private, non-clone authority. The crate-local logical composition produces
+/// this value only after observing an exact scheduler completion; no public
+/// source-level constructor exists.
 #[derive(Debug, PartialEq, Eq)]
 pub struct KvQuiescenceAuthority {
     request: RequestId,
     role: Qwen3ModelRole,
     exact_epoch: CompletionEpoch,
+}
+
+impl KvQuiescenceAuthority {
+    pub(crate) closed spec fn request_spec(&self) -> RequestId { self.request }
+
+    pub(crate) closed spec fn role_spec(&self) -> Qwen3ModelRole { self.role }
+
+    pub(crate) closed spec fn exact_epoch_spec(&self) -> CompletionEpoch { self.exact_epoch }
+
+    pub(crate) fn from_exact_completion(
+        request: RequestId,
+        role: Qwen3ModelRole,
+        exact_epoch: CompletionEpoch,
+    ) -> (authority: Self)
+        requires exact_epoch.value > 0,
+        ensures
+            authority.request_spec() == request,
+            authority.role_spec() == role,
+            authority.exact_epoch_spec() == exact_epoch,
+    {
+        Self { request, role, exact_epoch }
+    }
 }
 
 /// Fixed-capacity physical metadata for exactly one admitted request and role.
@@ -211,6 +234,8 @@ impl PhysicalKvState {
         }
     }
 
+    pub closed spec fn selection_spec(&self) -> Qwen3PlanSelection { self.selection }
+
     pub closed spec fn table_contains_index_spec(&self, index: u32) -> bool {
         exists|position: int| 0 <= position < M1_KV_PAGE_TABLE_ENTRIES
             && self.page_table@[position].is_some()
@@ -255,6 +280,14 @@ impl PhysicalKvState {
             Ok(state) => {
                 &&& request.generation_spec() > 0
                 &&& kv_selection_valid(selection)
+                &&& state.selection_spec() == selection
+                &&& state.abstraction_spec().request.slot_spec() == request.slot_spec()
+                &&& state.abstraction_spec().request.generation_spec()
+                    == request.generation_spec()
+                &&& state.abstraction_spec().role == selection.role
+                &&& state.abstraction_spec().lifecycle == PhysicalKvLifecycle::Active
+                &&& state.abstraction_spec().resident_tokens == 0
+                &&& state.abstraction_spec().committed_tokens == 0
                 &&& state.initial_refinement(
                     request,
                     selection,
@@ -309,7 +342,9 @@ impl PhysicalKvState {
     }
 
     #[must_use]
-    pub const fn selection(&self) -> Qwen3PlanSelection { self.selection }
+    pub const fn selection(&self) -> (selection: Qwen3PlanSelection)
+        ensures selection == self.selection_spec(),
+    { self.selection }
 
     #[must_use]
     pub const fn max_context_tokens(&self) -> u32 { self.max_context_tokens }
@@ -1040,6 +1075,24 @@ pub closed spec fn cancel_enabled(
         && after_epoch.value > 0
 }
 
+pub(crate) proof fn active_projection_enables_cancel(
+    state: &PhysicalKvState,
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+    after_epoch: CompletionEpoch,
+)
+    requires
+        state.abstraction_spec().lifecycle == PhysicalKvLifecycle::Active,
+        state.abstraction_spec().request.slot_spec() == request.slot_spec(),
+        state.abstraction_spec().request.generation_spec() == request.generation_spec(),
+        state.selection_spec() == selection,
+        after_epoch.value > 0,
+    ensures cancel_enabled(state, request, selection, after_epoch),
+{
+    reveal(cancel_enabled);
+    reveal(PhysicalKvState::abstraction_spec);
+}
+
 pub closed spec fn cancel_transition(
     before: &PhysicalKvState,
     after: &PhysicalKvState,
@@ -1298,8 +1351,8 @@ pub closed spec fn released_generation_matches(
 
 /// Releases a retired physical generation only under exact quiescence authority.
 ///
-/// The authority has no public constructor in this foundation. A later trusted
-/// completion bridge must create it after exact epoch observation.
+/// The authority has no public constructor. The crate-local logical composition
+/// creates it only after exact scheduler epoch observation.
 ///
 /// # Errors
 ///

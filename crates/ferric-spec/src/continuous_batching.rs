@@ -257,6 +257,30 @@ impl ContinuousBatch {
     }
 }
 
+/// Crate-local bridge exposing the validity carried by a fixed batch slot.
+pub(crate) proof fn valid_continuous_batch_slot(
+    batch: &ContinuousBatch,
+    slot: int,
+)
+    requires
+        batch.valid(),
+        0 <= slot < M1_CONTINUOUS_BATCH_CAPACITY,
+    ensures batch.slots_spec()[slot].valid(),
+{
+}
+
+/// Crate-local bridge from a valid active scheduler request to its positive epoch.
+pub(crate) proof fn valid_continuous_active_epoch(
+    current: ContinuousRequest,
+    epoch: CompletionEpoch,
+)
+    requires
+        current.valid(),
+        current.active_epoch_spec() == Some(epoch),
+    ensures epoch.value > 0,
+{
+}
+
 fn lifecycle_result(
     current: ContinuousRequest,
     transition: RequestTransition,

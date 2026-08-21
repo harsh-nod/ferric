@@ -16,6 +16,7 @@ mod identity;
 mod m1_completion;
 pub mod paged_kv_refinement;
 mod qwen3;
+pub mod request_isolation;
 pub mod scheduling;
 mod speculation;
 pub mod speculative_completion;
@@ -53,6 +54,11 @@ pub use qwen3::{
     Qwen3TensorError, Qwen3TensorKind, Qwen3TensorMetadata, TensorDType, QWEN3_DRAFT_TENSOR_COUNT,
     QWEN3_DRAFT_TENSOR_DATA_BYTES, QWEN3_NO_LAYER, QWEN3_TARGET_TENSOR_COUNT,
     QWEN3_TARGET_TENSOR_DATA_BYTES, QWEN3_TENSORS_PER_LAYER,
+};
+pub use request_isolation::{
+    apply_isolated_kv_action, apply_isolated_scheduler_step, cancel_isolated_request,
+    detach_isolated_request, map_isolated_token, release_isolated_page, IsolatedKvAction,
+    IsolatedRequestKv, IsolatedRequestProjection, IsolatedSchedulerAction, RequestIsolationError,
 };
 pub use speculation::{verify_greedy_round, GreedyCommit, GreedyVerificationError, TokenId};
 pub use speculative_completion::{verify_speculative_completion, SpeculativeCompletionError};
