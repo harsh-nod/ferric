@@ -233,6 +233,27 @@ expect_rejected negative-registry-missing-target 'malformed negative component r
     python3 -I "$registry_checker" "$repo" "$scratch/missing-target.registry" \
     "$scratch/missing-target.active"
 
+identity_anchor=$(new_copy identity-trust-mutator-anchor)
+python3 -I "$repo/proofs/negative/components/identity-trust.py" "$identity_anchor" \
+    >"$scratch/identity-trust-mutator.marker"
+grep -F 'MUTATED_SOURCE=crates/ferric-spec/src/identity.rs' \
+    "$scratch/identity-trust-mutator.marker" >/dev/null || {
+    printf 'FAIL: identity-trust mutator did not attest its exact source\n' >&2
+    exit 1
+}
+python3 -I - "$identity_anchor/crates/ferric-spec/src/identity.rs" <<'PY'
+from pathlib import Path
+import sys
+
+source = Path(sys.argv[1]).read_text(encoding="utf-8")
+is_present = source.index("    pub fn is_present(&self)")
+equals = source.index("    pub fn equals(&self, other: &Self)")
+if source[is_present:equals].count("        assume(false);\n") != 1:
+    raise SystemExit("identity-trust mutation did not land exactly in is_present")
+if "assume(false)" in source[equals:]:
+    raise SystemExit("identity-trust mutation escaped into equals or later source")
+PY
+
 python3 -I - "$repo/proofs/VERIFIED_MODULES" "$scratch/missing-record.manifest" <<'PY'
 from pathlib import Path
 import sys

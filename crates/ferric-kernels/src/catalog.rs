@@ -5,6 +5,9 @@ use ferric_spec::{
     Qwen3ModelRole, Qwen3Operator, Qwen3PlanBucket, Qwen3PlanBuffer, Qwen3PlanGeometry,
     Qwen3PlanSelection, Qwen3PlanShape, Qwen3PlanStep,
 };
+use vstd::prelude::*;
+
+verus! {
 
 /// Canonical structural kernel-catalog record version.
 pub const M1_KERNEL_CATALOG_VERSION: u32 = 1;
@@ -12,11 +15,6 @@ pub const M1_KERNEL_CATALOG_VERSION: u32 = 1;
 pub const M1_KERNEL_PLAN_COUNT: usize = 22;
 /// Exact number of graph operations across all 22 plans.
 pub const M1_KERNEL_OPERATION_BINDINGS: usize = 10_648;
-/// Exact target processor required by every future executable candidate.
-pub const GFX942_PROCESSOR: &str = "gfx942";
-/// Exact target-feature policy required by every future executable candidate.
-pub const GFX942_TARGET_FEATURES: &str = "+wavefrontsize64,-xnack";
-
 /// All and only finite B3 mode/bucket pairs, in catalog order.
 pub const M1_B3_PLAN_BUCKETS: [(Qwen3ExecutionMode, Qwen3PlanBucket); 11] = [
     (Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128),
@@ -71,6 +69,260 @@ pub enum KernelProfileDisposition {
     /// A future upstream implementation must extend the reviewed foundation.
     RequiredExtension,
 }
+
+/// Compiler/runtime identity required by the structural catalog.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum KernelAuthorityComponent {
+    /// Future exact aggregate fe2o3 source closure.
+    Fe2o3Source,
+    /// Future exact compiler implementation.
+    Compiler,
+    /// Future exact compiler invocation and target configuration.
+    CompilerConfiguration,
+    /// Future independent target contract.
+    TargetContract,
+    /// Future exact kernel proof set.
+    KernelProofSet,
+    /// Future exact kernel ABI catalog.
+    KernelAbiCatalog,
+    /// Future reviewed runtime contract.
+    RuntimeContract,
+    /// Future exact runtime ABI and queue protocol.
+    RuntimeAbi,
+    /// Future explicit compiler/runtime/hardware TCB report.
+    TcbReport,
+}
+
+/// Caller-supplied future authorities bound into every catalog identity.
+///
+/// Presence is structural only. No field is authenticated by this crate.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct KernelAuthorityRequirements {
+    /// Exact aggregate fe2o3 source closure.
+    pub fe2o3_source: Identity,
+    /// Exact compiler implementation.
+    pub compiler: Identity,
+    /// Exact compiler invocation and target configuration.
+    pub compiler_configuration: Identity,
+    /// Independent gfx942 target contract.
+    pub target_contract: Identity,
+    /// Exact kernel proof set.
+    pub kernel_proof_set: Identity,
+    /// Exact kernel ABI catalog.
+    pub kernel_abi_catalog: Identity,
+    /// Reviewed runtime contract.
+    pub runtime_contract: Identity,
+    /// Exact runtime ABI and queue protocol.
+    pub runtime_abi: Identity,
+    /// Explicit compiler/runtime/hardware TCB report.
+    pub tcb_report: Identity,
+}
+
+impl KernelAuthorityRequirements {
+    pub(crate) closed spec fn components_spec(&self) -> Seq<(KernelAuthorityComponent, Identity)> {
+        Seq::empty()
+            .push((KernelAuthorityComponent::Fe2o3Source, self.fe2o3_source))
+            .push((KernelAuthorityComponent::Compiler, self.compiler))
+            .push((
+                KernelAuthorityComponent::CompilerConfiguration,
+                self.compiler_configuration,
+            ))
+            .push((
+                KernelAuthorityComponent::TargetContract,
+                self.target_contract,
+            ))
+            .push((
+                KernelAuthorityComponent::KernelProofSet,
+                self.kernel_proof_set,
+            ))
+            .push((
+                KernelAuthorityComponent::KernelAbiCatalog,
+                self.kernel_abi_catalog,
+            ))
+            .push((
+                KernelAuthorityComponent::RuntimeContract,
+                self.runtime_contract,
+            ))
+            .push((KernelAuthorityComponent::RuntimeAbi, self.runtime_abi))
+            .push((KernelAuthorityComponent::TcbReport, self.tcb_report))
+    }
+
+    pub(crate) fn components(&self) -> (components: [(KernelAuthorityComponent, Identity); 9])
+        ensures components@ == self.components_spec(),
+    {
+        [
+            (KernelAuthorityComponent::Fe2o3Source, self.fe2o3_source),
+            (KernelAuthorityComponent::Compiler, self.compiler),
+            (
+                KernelAuthorityComponent::CompilerConfiguration,
+                self.compiler_configuration,
+            ),
+            (
+                KernelAuthorityComponent::TargetContract,
+                self.target_contract,
+            ),
+            (
+                KernelAuthorityComponent::KernelProofSet,
+                self.kernel_proof_set,
+            ),
+            (
+                KernelAuthorityComponent::KernelAbiCatalog,
+                self.kernel_abi_catalog,
+            ),
+            (
+                KernelAuthorityComponent::RuntimeContract,
+                self.runtime_contract,
+            ),
+            (KernelAuthorityComponent::RuntimeAbi, self.runtime_abi),
+            (KernelAuthorityComponent::TcbReport, self.tcb_report),
+        ]
+    }
+}
+
+/// One exact graph operation and its finite reviewed-source profile.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct KernelProfileDescriptor {
+    /// Exact plan identity containing this operation.
+    pub plan_id: Identity,
+    /// Exact role, execution mode, and B3 bucket.
+    pub selection: Qwen3PlanSelection,
+    /// Exact graph step, including all shapes and buffer edges.
+    pub step: Qwen3PlanStep,
+    /// Exact bucket sequence count.
+    pub sequences: u32,
+    /// Exact role-dependent active-token count per sequence.
+    pub active_tokens: u32,
+    /// Exact bucket context-token bound.
+    pub context_tokens: u32,
+    /// K1-K7 family selected for this operation.
+    pub family: KernelFamily,
+    /// Whether this exact boundary exists in the reviewed fixture/model.
+    pub disposition: KernelProfileDisposition,
+}
+
+/// Stable plan/operation position plus its exact profile.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct KernelOperationBinding {
+    /// Zero-based position in the exact target-then-draft plan catalog.
+    pub plan_index: u16,
+    /// Exact operation profile.
+    pub profile: KernelProfileDescriptor,
+}
+
+pub(crate) closed spec fn family_for_spec(
+    operator: Qwen3Operator,
+    mode: Qwen3ExecutionMode,
+) -> (KernelFamily, KernelProfileDisposition) {
+    match operator {
+        Qwen3Operator::TokenEmbedding => (
+            KernelFamily::K1GemmGemv,
+            KernelProfileDisposition::RequiredExtension,
+        ),
+        Qwen3Operator::QueryProjection
+        | Qwen3Operator::KeyProjection
+        | Qwen3Operator::ValueProjection
+        | Qwen3Operator::AttentionOutputResidual
+        | Qwen3Operator::GateProjection
+        | Qwen3Operator::UpProjection
+        | Qwen3Operator::DownResidual
+        | Qwen3Operator::LogitsProjection => (
+            KernelFamily::K1GemmGemv,
+            KernelProfileDisposition::ReviewedFoundation,
+        ),
+        Qwen3Operator::InputRmsNorm
+        | Qwen3Operator::QueryRmsNorm
+        | Qwen3Operator::KeyRmsNorm
+        | Qwen3Operator::PostAttentionRmsNorm
+        | Qwen3Operator::FinalRmsNorm => (
+            KernelFamily::K2RmsNormResidual,
+            KernelProfileDisposition::RequiredExtension,
+        ),
+        Qwen3Operator::Rope | Qwen3Operator::KvWrite => (
+            KernelFamily::K3RopePagedKv,
+            KernelProfileDisposition::ReviewedFoundation,
+        ),
+        Qwen3Operator::Attention => match mode {
+            Qwen3ExecutionMode::Prefill => (
+                KernelFamily::K4GqaPrefill,
+                KernelProfileDisposition::ReviewedFoundation,
+            ),
+            Qwen3ExecutionMode::Decode | Qwen3ExecutionMode::Speculative => (
+                KernelFamily::K5PagedGqaDecode,
+                KernelProfileDisposition::ReviewedFoundation,
+            ),
+        },
+        Qwen3Operator::SwiGlu => (
+            KernelFamily::K6SwiGlu,
+            KernelProfileDisposition::ReviewedFoundation,
+        ),
+        Qwen3Operator::ArgmaxCompactCompletion => (
+            KernelFamily::K7LogitsCompact,
+            KernelProfileDisposition::RequiredExtension,
+        ),
+    }
+}
+
+pub(crate) fn family_for(
+    operator: Qwen3Operator,
+    mode: Qwen3ExecutionMode,
+) -> (result: (KernelFamily, KernelProfileDisposition))
+    ensures result == family_for_spec(operator, mode),
+{
+    match operator {
+        Qwen3Operator::TokenEmbedding => (
+            KernelFamily::K1GemmGemv,
+            KernelProfileDisposition::RequiredExtension,
+        ),
+        Qwen3Operator::QueryProjection
+        | Qwen3Operator::KeyProjection
+        | Qwen3Operator::ValueProjection
+        | Qwen3Operator::AttentionOutputResidual
+        | Qwen3Operator::GateProjection
+        | Qwen3Operator::UpProjection
+        | Qwen3Operator::DownResidual
+        | Qwen3Operator::LogitsProjection => (
+            KernelFamily::K1GemmGemv,
+            KernelProfileDisposition::ReviewedFoundation,
+        ),
+        Qwen3Operator::InputRmsNorm
+        | Qwen3Operator::QueryRmsNorm
+        | Qwen3Operator::KeyRmsNorm
+        | Qwen3Operator::PostAttentionRmsNorm
+        | Qwen3Operator::FinalRmsNorm => (
+            KernelFamily::K2RmsNormResidual,
+            KernelProfileDisposition::RequiredExtension,
+        ),
+        Qwen3Operator::Rope | Qwen3Operator::KvWrite => (
+            KernelFamily::K3RopePagedKv,
+            KernelProfileDisposition::ReviewedFoundation,
+        ),
+        Qwen3Operator::Attention => match mode {
+            Qwen3ExecutionMode::Prefill => (
+                KernelFamily::K4GqaPrefill,
+                KernelProfileDisposition::ReviewedFoundation,
+            ),
+            Qwen3ExecutionMode::Decode | Qwen3ExecutionMode::Speculative => (
+                KernelFamily::K5PagedGqaDecode,
+                KernelProfileDisposition::ReviewedFoundation,
+            ),
+        },
+        Qwen3Operator::SwiGlu => (
+            KernelFamily::K6SwiGlu,
+            KernelProfileDisposition::ReviewedFoundation,
+        ),
+        Qwen3Operator::ArgmaxCompactCompletion => (
+            KernelFamily::K7LogitsCompact,
+            KernelProfileDisposition::RequiredExtension,
+        ),
+    }
+}
+
+} // verus!
+
+/// Exact target processor required by every future executable candidate.
+pub const GFX942_PROCESSOR: &str = "gfx942";
+/// Exact target-feature policy required by every future executable candidate.
+pub const GFX942_TARGET_FEATURES: &str = "+wavefrontsize64,-xnack";
 
 /// Exact reviewed, currently unmerged upstream source identity.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -148,115 +400,6 @@ pub const REVIEWED_KERNEL_SOURCES: [ReviewedKernelSource; 7] = [
         source_path: "examples/qwen3_logits_compact_v1/src/contract.rs",
     },
 ];
-
-/// Compiler/runtime identity required by the structural catalog.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum KernelAuthorityComponent {
-    /// Future exact aggregate fe2o3 source closure.
-    Fe2o3Source,
-    /// Future exact compiler implementation.
-    Compiler,
-    /// Future exact compiler invocation and target configuration.
-    CompilerConfiguration,
-    /// Future independent target contract.
-    TargetContract,
-    /// Future exact kernel proof set.
-    KernelProofSet,
-    /// Future exact kernel ABI catalog.
-    KernelAbiCatalog,
-    /// Future reviewed runtime contract.
-    RuntimeContract,
-    /// Future exact runtime ABI and queue protocol.
-    RuntimeAbi,
-    /// Future explicit compiler/runtime/hardware TCB report.
-    TcbReport,
-}
-
-/// Caller-supplied future authorities bound into every catalog identity.
-///
-/// Presence is structural only. No field is authenticated by this crate.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct KernelAuthorityRequirements {
-    /// Exact aggregate fe2o3 source closure.
-    pub fe2o3_source: Identity,
-    /// Exact compiler implementation.
-    pub compiler: Identity,
-    /// Exact compiler invocation and target configuration.
-    pub compiler_configuration: Identity,
-    /// Independent gfx942 target contract.
-    pub target_contract: Identity,
-    /// Exact kernel proof set.
-    pub kernel_proof_set: Identity,
-    /// Exact kernel ABI catalog.
-    pub kernel_abi_catalog: Identity,
-    /// Reviewed runtime contract.
-    pub runtime_contract: Identity,
-    /// Exact runtime ABI and queue protocol.
-    pub runtime_abi: Identity,
-    /// Explicit compiler/runtime/hardware TCB report.
-    pub tcb_report: Identity,
-}
-
-impl KernelAuthorityRequirements {
-    fn components(&self) -> [(KernelAuthorityComponent, Identity); 9] {
-        [
-            (KernelAuthorityComponent::Fe2o3Source, self.fe2o3_source),
-            (KernelAuthorityComponent::Compiler, self.compiler),
-            (
-                KernelAuthorityComponent::CompilerConfiguration,
-                self.compiler_configuration,
-            ),
-            (
-                KernelAuthorityComponent::TargetContract,
-                self.target_contract,
-            ),
-            (
-                KernelAuthorityComponent::KernelProofSet,
-                self.kernel_proof_set,
-            ),
-            (
-                KernelAuthorityComponent::KernelAbiCatalog,
-                self.kernel_abi_catalog,
-            ),
-            (
-                KernelAuthorityComponent::RuntimeContract,
-                self.runtime_contract,
-            ),
-            (KernelAuthorityComponent::RuntimeAbi, self.runtime_abi),
-            (KernelAuthorityComponent::TcbReport, self.tcb_report),
-        ]
-    }
-}
-
-/// One exact graph operation and its finite reviewed-source profile.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct KernelProfileDescriptor {
-    /// Exact plan identity containing this operation.
-    pub plan_id: Identity,
-    /// Exact role, execution mode, and B3 bucket.
-    pub selection: Qwen3PlanSelection,
-    /// Exact graph step, including all shapes and buffer edges.
-    pub step: Qwen3PlanStep,
-    /// Exact bucket sequence count.
-    pub sequences: u32,
-    /// Exact role-dependent active-token count per sequence.
-    pub active_tokens: u32,
-    /// Exact bucket context-token bound.
-    pub context_tokens: u32,
-    /// K1-K7 family selected for this operation.
-    pub family: KernelFamily,
-    /// Whether this exact boundary exists in the reviewed fixture/model.
-    pub disposition: KernelProfileDisposition,
-}
-
-/// Stable plan/operation position plus its exact profile.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct KernelOperationBinding {
-    /// Zero-based position in the exact target-then-draft plan catalog.
-    pub plan_index: u16,
-    /// Exact operation profile.
-    pub profile: KernelProfileDescriptor,
-}
 
 /// Fail-closed structural kernel-catalog error.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -523,59 +666,6 @@ fn canonical_profile(
     };
     validate_kernel_profile(profile, plan, step.ordinal)?;
     Ok(profile)
-}
-
-fn family_for(
-    operator: Qwen3Operator,
-    mode: Qwen3ExecutionMode,
-) -> (KernelFamily, KernelProfileDisposition) {
-    match operator {
-        Qwen3Operator::TokenEmbedding => (
-            KernelFamily::K1GemmGemv,
-            KernelProfileDisposition::RequiredExtension,
-        ),
-        Qwen3Operator::QueryProjection
-        | Qwen3Operator::KeyProjection
-        | Qwen3Operator::ValueProjection
-        | Qwen3Operator::AttentionOutputResidual
-        | Qwen3Operator::GateProjection
-        | Qwen3Operator::UpProjection
-        | Qwen3Operator::DownResidual
-        | Qwen3Operator::LogitsProjection => (
-            KernelFamily::K1GemmGemv,
-            KernelProfileDisposition::ReviewedFoundation,
-        ),
-        Qwen3Operator::InputRmsNorm
-        | Qwen3Operator::QueryRmsNorm
-        | Qwen3Operator::KeyRmsNorm
-        | Qwen3Operator::PostAttentionRmsNorm
-        | Qwen3Operator::FinalRmsNorm => (
-            KernelFamily::K2RmsNormResidual,
-            KernelProfileDisposition::RequiredExtension,
-        ),
-        Qwen3Operator::Rope | Qwen3Operator::KvWrite => (
-            KernelFamily::K3RopePagedKv,
-            KernelProfileDisposition::ReviewedFoundation,
-        ),
-        Qwen3Operator::Attention => match mode {
-            Qwen3ExecutionMode::Prefill => (
-                KernelFamily::K4GqaPrefill,
-                KernelProfileDisposition::ReviewedFoundation,
-            ),
-            Qwen3ExecutionMode::Decode | Qwen3ExecutionMode::Speculative => (
-                KernelFamily::K5PagedGqaDecode,
-                KernelProfileDisposition::ReviewedFoundation,
-            ),
-        },
-        Qwen3Operator::SwiGlu => (
-            KernelFamily::K6SwiGlu,
-            KernelProfileDisposition::ReviewedFoundation,
-        ),
-        Qwen3Operator::ArgmaxCompactCompletion => (
-            KernelFamily::K7LogitsCompact,
-            KernelProfileDisposition::RequiredExtension,
-        ),
-    }
 }
 
 fn validate_authorities(

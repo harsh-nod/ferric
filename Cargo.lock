@@ -63,7 +63,9 @@ dependencies = [
 name = "ferric-kernels"
 version = "0.1.0"
 dependencies = [
+ "ferric-generated-runner",
  "ferric-spec",
+ "vstd",
 ]
 
 [[package]]

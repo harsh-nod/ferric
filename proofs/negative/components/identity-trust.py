@@ -7,10 +7,20 @@ import sys
 repo = Path(sys.argv[1])
 path = repo / "crates/ferric-spec/src/identity.rs"
 source = path.read_text(encoding="utf-8")
-old = """    {
+old = """    pub fn is_present(&self) -> (present: bool)
+        ensures
+            present == exists|index: int|
+                0 <= index < self.bytes_spec().len()
+                    && self.bytes_spec()[index] != 0,
+    {
         let mut index = 0;
 """
-new = """    {
+new = """    pub fn is_present(&self) -> (present: bool)
+        ensures
+            present == exists|index: int|
+                0 <= index < self.bytes_spec().len()
+                    && self.bytes_spec()[index] != 0,
+    {
         assume(false);
         let mut index = 0;
 """

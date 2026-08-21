@@ -9,6 +9,7 @@
 //! completion, hardware, performance, or qualification authority.
 
 mod catalog;
+mod validation;
 
 pub use catalog::{
     build_structural_kernel_catalog, validate_kernel_profile, validate_structural_kernel_catalog,
@@ -17,4 +18,9 @@ pub use catalog::{
     ReviewedKernelSource, StructuralKernelCatalog, GFX942_PROCESSOR, GFX942_TARGET_FEATURES,
     M1_B3_PLAN_BUCKETS, M1_KERNEL_CATALOG_VERSION, M1_KERNEL_OPERATION_BINDINGS,
     M1_KERNEL_PLAN_COUNT, REVIEWED_KERNEL_SOURCES,
+};
+pub use validation::{
+    validate_kernel_catalog_input, KernelCatalogAuthorityInputs, KernelCatalogInput,
+    KernelCatalogValidationError, ValidatedKernelCatalogInput, VERIFIED_GFX942_PROCESSOR_BYTES,
+    VERIFIED_GFX942_TARGET_FEATURE_BYTES,
 };

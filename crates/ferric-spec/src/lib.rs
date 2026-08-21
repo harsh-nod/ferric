@@ -91,3 +91,17 @@ pub use step_plan_publication::{
     validate_speculative_publication, PublicationPhase, ReservedStateDelta, SpeculativeTokenInputs,
     StepPlan, StepPublication, StepPublicationError,
 };
+
+verus! {
+
+/// Cross-crate verifier view of the exact finite Qwen3 graph-step lookup.
+pub open spec fn canonical_expected_step_spec(
+    role: Qwen3ModelRole,
+    mode: Qwen3ExecutionMode,
+    bucket: Qwen3PlanBucket,
+    ordinal: u32,
+) -> Option<Qwen3PlanStep> {
+    graph::expected_step_spec(role, mode, bucket, ordinal)
+}
+
+} // verus!
