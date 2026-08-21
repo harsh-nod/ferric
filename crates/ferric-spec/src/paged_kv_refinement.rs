@@ -1203,6 +1203,8 @@ impl PhysicalKvSettlementPermit {
 
     pub(crate) closed spec fn after_epoch_spec(&self) -> CompletionEpoch { self.after_epoch }
 
+    pub(crate) closed spec fn pre_committed_spec(&self) -> u32 { self.pre_committed }
+
     pub(crate) closed spec fn tentative_end_spec(&self) -> u32 { self.tentative_end }
 
     pub(crate) closed spec fn commit_end_spec(&self) -> u32 { self.commit_end }
@@ -1311,6 +1313,7 @@ pub(crate) fn preflight_physical_speculative_settlement(
         Ok(permit) => {
             &&& permit.valid_for(state)
             &&& permit.after_epoch_spec() == after_epoch
+            &&& permit.pre_committed_spec() == pre_committed
             &&& permit.tentative_end_spec() == tentative_end
             &&& permit.commit_end_spec() == commit_end
         },

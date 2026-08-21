@@ -73,6 +73,13 @@ pub struct ReservedStateDelta {
     emitted_tokens: [TokenId; M1_MAX_COMPLETION_TOKENS],
 }
 
+/// Borrowed exact sequences used by speculative target verification.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct SpeculativeTokenInputs<'a> {
+    pub draft_tokens: &'a [TokenId],
+    pub target_choices: &'a [TokenId],
+}
+
 impl ReservedStateDelta {
     pub closed spec fn compact_completion_spec(&self) -> CompactCompletionRecord {
         CompactCompletionRecord {
@@ -226,6 +233,13 @@ impl StepPublication {
     {
         self.phase = phase;
     }
+}
+
+/// Private, non-clone proof of complete speculative publication validation.
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) struct SpeculativePublicationPermit {
+    commit: GreedyCommit,
+    accepted_draft_tokens: u8,
 }
 
 /// Fail-closed logical publication rejection.
@@ -415,6 +429,67 @@ pub closed spec fn speculative_publication_matches(
         )
 }
 
+/// Exact unpublished-to-published transition after speculative validation.
+pub closed spec fn speculative_validation_and_publication_transition(
+    before: &StepPublication,
+    after: &StepPublication,
+    expected_request: RequestId,
+    expected_epoch: CompletionEpoch,
+    expected_plan_id: Identity,
+    expected_selection: Qwen3PlanSelection,
+    draft_tokens: Seq<TokenId>,
+    target_choices: Seq<TokenId>,
+) -> bool {
+    &&& publication_phase_matches(before.phase, PublicationPhase::Unpublished)
+    &&& publication_phase_matches(after.phase, PublicationPhase::Published)
+    &&& publication_payload_preserved(before, after)
+    &&& exists|commit: GreedyCommit| speculative_publication_matches(
+        before,
+        expected_request,
+        expected_epoch,
+        expected_plan_id,
+        expected_selection,
+        draft_tokens,
+        target_choices,
+        &commit,
+    )
+}
+
+impl SpeculativePublicationPermit {
+    pub(crate) closed spec fn accepted_draft_tokens_spec(&self) -> u8 {
+        self.accepted_draft_tokens
+    }
+
+    pub(crate) closed spec fn valid_for(
+        &self,
+        publication: &StepPublication,
+        expected_request: RequestId,
+        expected_epoch: CompletionEpoch,
+        expected_plan_id: Identity,
+        expected_selection: Qwen3PlanSelection,
+        draft_tokens: Seq<TokenId>,
+        target_choices: Seq<TokenId>,
+    ) -> bool {
+        &&& speculative_publication_matches(
+            publication,
+            expected_request,
+            expected_epoch,
+            expected_plan_id,
+            expected_selection,
+            draft_tokens,
+            target_choices,
+            &self.commit,
+        )
+        &&& self.accepted_draft_tokens_spec() as nat == self.commit.accepted_spec()
+    }
+
+    pub(crate) fn accepted_draft_tokens(&self) -> (accepted: u8)
+        ensures accepted == self.accepted_draft_tokens_spec(),
+    {
+        self.accepted_draft_tokens
+    }
+}
+
 fn is_target_publication_role(role: Qwen3ModelRole) -> (target: bool)
     ensures target == target_publication_role(role),
 {
@@ -593,6 +668,186 @@ pub fn validate_direct_publication(
     Ok(())
 }
 
+/// Checks every speculative publication obligation without changing phase.
+pub(crate) fn preflight_speculative_publication(
+    publication: &StepPublication,
+    expected_request: RequestId,
+    expected_epoch: CompletionEpoch,
+    expected_plan_id: &Identity,
+    expected_selection: Qwen3PlanSelection,
+    token_inputs: SpeculativeTokenInputs<'_>,
+) -> (result: Result<SpeculativePublicationPermit, StepPublicationError>)
+    ensures match result {
+        Ok(permit) => permit.valid_for(
+            publication,
+            expected_request,
+            expected_epoch,
+            *expected_plan_id,
+            expected_selection,
+            token_inputs.draft_tokens@,
+            token_inputs.target_choices@,
+        ),
+        Err(_) => true,
+    },
+{
+    proof {
+        reveal(SpeculativePublicationPermit::valid_for);
+        reveal(speculative_publication_matches);
+        reveal(speculative_publication_mode);
+        reveal(publication_phase_matches);
+    }
+    if !phase_matches(publication.phase(), PublicationPhase::Unpublished) {
+        return Err(StepPublicationError::WrongPhase);
+    }
+    validate_step_plan(
+        publication.plan,
+        expected_request,
+        expected_epoch,
+        expected_plan_id,
+        expected_selection,
+    )?;
+    if !is_speculative_publication_mode(publication.plan.selection.mode) {
+        return Err(StepPublicationError::WrongValidationMode);
+    }
+    validate_delta_authority(publication.delta, publication.plan)?;
+    let record = publication.delta.compact_completion();
+    let commit = match verify_speculative_completion(
+        &record,
+        publication.plan.request,
+        publication.plan.completion_epoch,
+        &publication.plan.plan_id,
+        token_inputs.draft_tokens,
+        token_inputs.target_choices,
+    ) {
+        Ok(commit) => commit,
+        Err(error) => return Err(StepPublicationError::Speculative(error)),
+    };
+    let accepted_draft_tokens = record.accepted_draft_tokens;
+    let permit = SpeculativePublicationPermit {
+        commit,
+        accepted_draft_tokens,
+    };
+    assert(permit.valid_for(
+        publication,
+        expected_request,
+        expected_epoch,
+        *expected_plan_id,
+        expected_selection,
+        token_inputs.draft_tokens@,
+        token_inputs.target_choices@,
+    ));
+    Ok(permit)
+}
+
+/// Applies a preflighted unpublished-to-validated transition infallibly.
+pub(crate) fn apply_preflighted_speculative_validation(
+    publication: &mut StepPublication,
+    permit: SpeculativePublicationPermit,
+    _expected_request: RequestId,
+    _expected_epoch: CompletionEpoch,
+    _expected_plan_id: &Identity,
+    _expected_selection: Qwen3PlanSelection,
+    _token_inputs: SpeculativeTokenInputs<'_>,
+) -> (commit: GreedyCommit)
+    requires permit.valid_for(
+        old(publication),
+        _expected_request,
+        _expected_epoch,
+        *_expected_plan_id,
+        _expected_selection,
+        _token_inputs.draft_tokens@,
+        _token_inputs.target_choices@,
+    ),
+    ensures
+        speculative_publication_matches(
+            old(publication),
+            _expected_request,
+            _expected_epoch,
+            *_expected_plan_id,
+            _expected_selection,
+            _token_inputs.draft_tokens@,
+            _token_inputs.target_choices@,
+            &commit,
+        ),
+        validation_transition(old(publication), final(publication)),
+{
+    proof {
+        reveal(SpeculativePublicationPermit::valid_for);
+        reveal(validation_transition);
+        reveal(publication_payload_preserved);
+        reveal(publication_phase_matches);
+    }
+    publication.set_phase(PublicationPhase::Validated);
+    permit.commit
+}
+
+/// Applies validated publication and one-shot publication with no error path.
+pub(crate) fn apply_preflighted_speculative_publication(
+    publication: &mut StepPublication,
+    _permit: SpeculativePublicationPermit,
+    _expected_request: RequestId,
+    _expected_epoch: CompletionEpoch,
+    _expected_plan_id: &Identity,
+    _expected_selection: Qwen3PlanSelection,
+    _token_inputs: SpeculativeTokenInputs<'_>,
+) -> (delta: ReservedStateDelta)
+    requires _permit.valid_for(
+        old(publication),
+        _expected_request,
+        _expected_epoch,
+        *_expected_plan_id,
+        _expected_selection,
+        _token_inputs.draft_tokens@,
+        _token_inputs.target_choices@,
+    ),
+    ensures
+        speculative_validation_and_publication_transition(
+            old(publication),
+            final(publication),
+            _expected_request,
+            _expected_epoch,
+            *_expected_plan_id,
+            _expected_selection,
+            _token_inputs.draft_tokens@,
+            _token_inputs.target_choices@,
+        ),
+        delta == final(publication).delta_spec(),
+        delta.compact_completion_spec().accepted_draft_tokens
+            == _permit.accepted_draft_tokens_spec(),
+{
+    proof {
+        reveal(SpeculativePublicationPermit::valid_for);
+        reveal(speculative_validation_and_publication_transition);
+        reveal(publication_payload_preserved);
+        reveal(publication_phase_matches);
+        assert(exists|commit: GreedyCommit| speculative_publication_matches(
+            old(publication),
+            _expected_request,
+            _expected_epoch,
+            *_expected_plan_id,
+            _expected_selection,
+            _token_inputs.draft_tokens@,
+            _token_inputs.target_choices@,
+            &commit,
+        )) by {
+            let witness = _permit.commit;
+            assert(speculative_publication_matches(
+                old(publication),
+                _expected_request,
+                _expected_epoch,
+                *_expected_plan_id,
+                _expected_selection,
+                _token_inputs.draft_tokens@,
+                _token_inputs.target_choices@,
+                &witness,
+            ));
+        }
+    }
+    publication.set_phase(PublicationPhase::Validated);
+    publication.set_phase(PublicationPhase::Published);
+    publication.delta
+}
+
 /// Validates one target speculative delta against exact greedy completion.
 ///
 /// # Errors
@@ -626,55 +881,31 @@ pub fn validate_speculative_publication(
             Err(_) => *final(publication) == *old(publication),
         },
 {
-    let ghost entry = *publication;
-    assert(entry == *old(publication));
     proof {
         reveal(speculative_publication_matches);
-        reveal(speculative_publication_mode);
-        reveal(publication_phase_matches);
         reveal(validation_transition);
-        reveal(publication_payload_preserved);
     }
-    if !phase_matches(publication.phase(), PublicationPhase::Unpublished) {
-        return Err(StepPublicationError::WrongPhase);
-    }
-    validate_step_plan(
-        publication.plan,
+    let token_inputs = SpeculativeTokenInputs {
+        draft_tokens,
+        target_choices,
+    };
+    let permit = preflight_speculative_publication(
+        publication,
         expected_request,
         expected_epoch,
         expected_plan_id,
         expected_selection,
+        token_inputs,
     )?;
-    if !is_speculative_publication_mode(publication.plan.selection.mode) {
-        return Err(StepPublicationError::WrongValidationMode);
-    }
-    validate_delta_authority(publication.delta, publication.plan)?;
-    let record = publication.delta.compact_completion();
-    let speculative_result = verify_speculative_completion(
-        &record,
-        publication.plan.request,
-        publication.plan.completion_epoch,
-        &publication.plan.plan_id,
-        draft_tokens,
-        target_choices,
-    );
-    let commit = match speculative_result {
-        Ok(commit) => commit,
-        Err(error) => return Err(StepPublicationError::Speculative(error)),
-    };
-    assert(record == entry.delta.compact_completion_spec());
-    assert(speculative_publication_matches(
-        &entry,
+    let commit = apply_preflighted_speculative_validation(
+        publication,
+        permit,
         expected_request,
         expected_epoch,
-        *expected_plan_id,
+        expected_plan_id,
         expected_selection,
-        draft_tokens@,
-        target_choices@,
-        &commit,
-    ));
-    publication.set_phase(PublicationPhase::Validated);
-    assert(validation_transition(&entry, publication));
+        token_inputs,
+    );
     Ok(commit)
 }
 

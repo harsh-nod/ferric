@@ -471,6 +471,13 @@ impl SpeculativeKvRoundIndex {
         reveal(SpeculativeKvRoundIndex::valid_for);
     }
 
+    pub proof fn valid_implies_correction_is_deferred(&self)
+        requires self.valid(),
+        ensures correction_is_deferred(self.correction_bonus),
+    {
+        reveal(SpeculativeKvRoundIndex::valid);
+    }
+
     #[must_use]
     pub fn target_input(
         &self,

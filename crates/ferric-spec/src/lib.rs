@@ -21,6 +21,7 @@ pub mod scheduling;
 mod speculation;
 pub mod speculative_completion;
 pub mod speculative_kv_indexing;
+pub mod speculative_step_composition;
 pub mod step_plan_publication;
 
 pub use configuration::{
@@ -70,8 +71,11 @@ pub use speculative_kv_indexing::{
     SpeculativeKvInputSource, SpeculativeKvInterval, SpeculativeKvRoundIndex, TargetChoiceBinding,
     TargetChoiceUse, M1_MAX_SPECULATIVE_KV_DRAFT_TOKENS, M1_MAX_SPECULATIVE_KV_TARGET_INPUTS,
 };
+pub use speculative_step_composition::{
+    settle_and_publish_speculative_step, AtomicSpeculativeStepError, AtomicSpeculativeStepOutcome,
+};
 pub use step_plan_publication::{
     discard_reserved_delta, publish_reserved_delta, validate_direct_publication,
-    validate_speculative_publication, PublicationPhase, ReservedStateDelta, StepPlan,
-    StepPublication, StepPublicationError,
+    validate_speculative_publication, PublicationPhase, ReservedStateDelta, SpeculativeTokenInputs,
+    StepPlan, StepPublication, StepPublicationError,
 };
