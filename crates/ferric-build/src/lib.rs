@@ -4,14 +4,15 @@
 //!
 //! This crate owns byte parsing and identity construction. The resulting
 //! value is still admitted by the executable contract in `ferric-spec`.
-//! Configuration and tokenizer metadata authentication remains separate from
-//! the streaming safetensors typestate. `tokenizer.json` is still represented
-//! only by its exact pinned caller-asserted descriptor.
+//! Configuration, tokenizer metadata, tokenizer vocabulary, and safetensors
+//! authentication remain separate sealed stages until the final bundle path
+//! consumes their authorities.
 
 mod bundle;
 mod json;
 mod safetensors;
 mod sha256;
+mod tokenizer;
 
 pub use bundle::{
     decode_canonical_deployment_bundle, encode_canonical_deployment_bundle, CanonicalBundleError,
@@ -22,6 +23,7 @@ pub use safetensors::{
     authenticate_qwen3_draft_weights, authenticate_qwen3_target_weights, AuthenticatedWeightSet,
     SafetensorsError, SafetensorsSource,
 };
+pub use tokenizer::{authenticate_qwen3_tokenizer, AuthenticatedTokenizer, TokenizerError};
 
 use ferric_spec::{
     DeploymentBundle, EngineLimits, Identity, ModelArtifact, ModelConfig, NumericalPolicy,
@@ -251,6 +253,32 @@ pub struct WeightAuthenticatedDeploymentAssets<'a> {
     pub limits: EngineLimits,
 }
 
+/// Byte-backed model inputs whose tokenizer and weight payload authorities are
+/// supplied separately to the fully authenticated builder.
+#[derive(Clone, Copy, Debug)]
+pub struct AuthenticatedModelAssets<'a> {
+    /// Exact Hugging Face repository name.
+    pub repository: &'a str,
+    /// Exact immutable Hugging Face revision.
+    pub revision: &'a str,
+    /// Complete upstream `config.json` bytes.
+    pub config_json: &'a [u8],
+    /// Complete upstream `tokenizer_config.json` bytes.
+    pub tokenizer_metadata_json: &'a [u8],
+}
+
+/// Inputs for a deployment whose opaque payloads arrive only as sealed
+/// streaming-authenticated authorities.
+#[derive(Clone, Copy, Debug)]
+pub struct AuthenticatedDeploymentAssets<'a> {
+    /// M1 target model configuration and tokenizer metadata.
+    pub target: AuthenticatedModelAssets<'a>,
+    /// M1 speculative draft configuration and tokenizer metadata.
+    pub draft: AuthenticatedModelAssets<'a>,
+    /// Requested bounded engine limits.
+    pub limits: EngineLimits,
+}
+
 /// Fail-closed bundle parsing or admission error.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum BuildError {
@@ -310,6 +338,15 @@ pub enum BuildError {
         /// Role carried by the authenticated authority.
         actual: Qwen3ModelRole,
     },
+    /// A streamed tokenizer authority was supplied for the wrong model role.
+    AuthenticatedTokenizerRole {
+        /// Role required by the builder position.
+        expected: Qwen3ModelRole,
+        /// Role carried by the authenticated authority.
+        actual: Qwen3ModelRole,
+    },
+    /// Target and draft tokenizer semantics or metadata were not identical.
+    TokenizerMismatch,
     /// The executable `ferric-spec` contract rejected the assembled bundle.
     Spec(SpecError),
 }
@@ -361,6 +398,13 @@ impl fmt::Display for BuildError {
                 formatter,
                 "authenticated weight role {actual:?} does not match {expected:?}"
             ),
+            Self::AuthenticatedTokenizerRole { expected, actual } => write!(
+                formatter,
+                "authenticated tokenizer role {actual:?} does not match {expected:?}"
+            ),
+            Self::TokenizerMismatch => {
+                formatter.write_str("target and draft tokenizers are not compatible")
+            }
             Self::Spec(error) => write!(formatter, "bundle admission failed: {error}"),
         }
     }
@@ -386,10 +430,9 @@ pub fn digest_bytes(bytes: &[u8]) -> ArtifactDigest {
 
 /// Preliminary descriptor-only configuration/tokenizer bundle admission.
 ///
-/// This function checks pinned caller-asserted weight descriptors but does not
-/// authenticate weight bytes and cannot construct [`AuthenticatedWeightSet`].
-/// Call the streaming safetensors authentication functions separately when
-/// authenticated weight typestate is required.
+/// This function checks pinned caller-asserted tokenizer and weight descriptors
+/// but cannot construct [`AuthenticatedTokenizer`] or
+/// [`AuthenticatedWeightSet`].
 ///
 /// # Errors
 ///
@@ -455,6 +498,81 @@ pub fn build_weight_authenticated_deployment_bundle(
     assemble_deployment_bundle(&admission_assets)
 }
 
+/// Builds an M1 bundle by consuming exact target/draft tokenizer and weight
+/// authorities produced only by their streaming authenticators.
+///
+/// The builder also authenticates the supplied configuration and tokenizer
+/// metadata bytes, checks target/draft special-token and full chat-template
+/// compatibility through their exact metadata identities, assembles the
+/// deployment, and calls the executable `ferric-spec` validator.
+///
+/// # Errors
+///
+/// Returns [`BuildError`] for swapped authorities, target/draft tokenizer
+/// mismatch, malformed or noncanonical metadata, source or identity mismatch,
+/// or any `ferric-spec` admission failure.
+pub fn build_authenticated_deployment_bundle(
+    assets: AuthenticatedDeploymentAssets<'_>,
+    target_tokenizer: AuthenticatedTokenizer,
+    draft_tokenizer: AuthenticatedTokenizer,
+    target_weights: AuthenticatedWeightSet,
+    draft_weights: AuthenticatedWeightSet,
+) -> Result<DeploymentBundle, BuildError> {
+    let target_tokenizer_role = target_tokenizer.role();
+    if target_tokenizer_role != Qwen3ModelRole::Target8B {
+        return Err(BuildError::AuthenticatedTokenizerRole {
+            expected: Qwen3ModelRole::Target8B,
+            actual: target_tokenizer_role,
+        });
+    }
+    let draft_tokenizer_role = draft_tokenizer.role();
+    if draft_tokenizer_role != Qwen3ModelRole::Draft06B {
+        return Err(BuildError::AuthenticatedTokenizerRole {
+            expected: Qwen3ModelRole::Draft06B,
+            actual: draft_tokenizer_role,
+        });
+    }
+    if !target_tokenizer.compatible_with(&draft_tokenizer) {
+        return Err(BuildError::TokenizerMismatch);
+    }
+
+    let target_weight_role = target_weights.role();
+    if target_weight_role != Qwen3ModelRole::Target8B {
+        return Err(BuildError::AuthenticatedWeightRole {
+            expected: Qwen3ModelRole::Target8B,
+            actual: target_weight_role,
+        });
+    }
+    let draft_weight_role = draft_weights.role();
+    if draft_weight_role != Qwen3ModelRole::Draft06B {
+        return Err(BuildError::AuthenticatedWeightRole {
+            expected: Qwen3ModelRole::Draft06B,
+            actual: draft_weight_role,
+        });
+    }
+
+    let admission_assets = DeploymentAssets {
+        target: ModelAssets {
+            repository: assets.target.repository,
+            revision: assets.target.revision,
+            config_json: assets.target.config_json,
+            tokenizer_metadata_json: assets.target.tokenizer_metadata_json,
+            vocabulary: target_tokenizer.into_descriptor(),
+            weights: target_weights.into_descriptor(),
+        },
+        draft: ModelAssets {
+            repository: assets.draft.repository,
+            revision: assets.draft.revision,
+            config_json: assets.draft.config_json,
+            tokenizer_metadata_json: assets.draft.tokenizer_metadata_json,
+            vocabulary: draft_tokenizer.into_descriptor(),
+            weights: draft_weights.into_descriptor(),
+        },
+        limits: assets.limits,
+    };
+    assemble_deployment_bundle(&admission_assets)
+}
+
 fn assemble_deployment_bundle(
     assets: &DeploymentAssets<'_>,
 ) -> Result<DeploymentBundle, BuildError> {
@@ -462,6 +580,9 @@ fn assemble_deployment_bundle(
     let mut draft_config = parse_config(Qwen3ModelRole::Draft06B, &assets.draft)?;
     let target_tokenizer = parse_tokenizer(&assets.target)?;
     let draft_tokenizer = parse_tokenizer(&assets.draft)?;
+    if target_tokenizer != draft_tokenizer {
+        return Err(BuildError::TokenizerMismatch);
+    }
     let target_weights = weight_manifest(Qwen3ModelRole::Target8B, assets.target.weights)?;
     let draft_weights = weight_manifest(Qwen3ModelRole::Draft06B, assets.draft.weights)?;
 

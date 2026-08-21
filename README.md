@@ -27,6 +27,7 @@ implements:
 - a fixed-capacity generational paged-KV ownership model;
 - atomic KV commit, rollback, sealed-prefix sharing, and copy-on-write transitions;
 - strict pinned Qwen3 configuration and tokenizer-metadata admission;
+- bounded streaming authentication and semantic admission of the exact shared tokenizer;
 - bounded streaming authentication of the exact pinned Qwen3 safetensors files;
 - a fixed-width canonical record for the exact admitted deployment identities;
 - direct pinned-Verus proofs of the executable M0 state machines;
@@ -34,13 +35,14 @@ implements:
 - structural invariant validation and hostile stale-handle tests; and
 - the roadmap, assurance policy, feature ledger, and performance protocol.
 
-Ferric does **not** currently semantically admit `tokenizer.json`, transform or
-pack weights, sign deployment records, load a model onto a device, compile a
-GPU kernel, dispatch HSA, or make a verified-inference or performance claim.
-The canonical record binds pinned values but does not authenticate the files
-named by those values. The new parser, codec, and streaming-authentication
-bodies remain explicitly pending Verus. Unsupported stages fail closed rather
-than selecting another implementation.
+Ferric does **not** currently execute tokenization, prove behavioral equivalence
+to an external regex or Unicode implementation, transform or pack weights,
+sign deployment records, load a model onto a device, compile a GPU kernel,
+dispatch HSA, or make a verified-inference or performance claim. The canonical
+record binds pinned values but does not authenticate the files named by those
+values. The model-admission parser, codec, and streaming-authentication bodies
+remain explicitly pending Verus. Unsupported stages fail closed rather than
+selecting another implementation.
 
 ## First Product Milestone
 

@@ -988,7 +988,7 @@ fn unexpected(artifact: &str, field: &str) -> SafetensorsError {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::{
         authenticate_file, parse_header, parse_target_index, require_shard_name, validate_roster,
         validate_shard_mapping, AuthenticatedSeal, AuthenticatedWeightSet, FilePin, ParsedShard,
@@ -1076,7 +1076,7 @@ mod tests {
         changed.into_bytes()
     }
 
-    fn test_weight_authority(role: Qwen3ModelRole) -> AuthenticatedWeightSet {
+    pub(crate) fn test_authenticated_weight_set(role: Qwen3ModelRole) -> AuthenticatedWeightSet {
         let descriptor = match role {
             Qwen3ModelRole::Target8B => WeightDescriptor {
                 weights_id: QWEN3_TARGET_WEIGHT_SET_SHA256,
@@ -1165,8 +1165,8 @@ mod tests {
     fn weight_authenticated_builder_consumes_and_role_checks_authorities() {
         let bundle = build_weight_authenticated_deployment_bundle(
             weight_authenticated_assets(),
-            test_weight_authority(Qwen3ModelRole::Target8B),
-            test_weight_authority(Qwen3ModelRole::Draft06B),
+            test_authenticated_weight_set(Qwen3ModelRole::Target8B),
+            test_authenticated_weight_set(Qwen3ModelRole::Draft06B),
         )
         .expect("weight-authenticated bundle");
         assert_eq!(
@@ -1177,8 +1177,8 @@ mod tests {
         assert_eq!(
             build_weight_authenticated_deployment_bundle(
                 weight_authenticated_assets(),
-                test_weight_authority(Qwen3ModelRole::Draft06B),
-                test_weight_authority(Qwen3ModelRole::Target8B),
+                test_authenticated_weight_set(Qwen3ModelRole::Draft06B),
+                test_authenticated_weight_set(Qwen3ModelRole::Target8B),
             ),
             Err(BuildError::AuthenticatedWeightRole {
                 expected: Qwen3ModelRole::Target8B,
