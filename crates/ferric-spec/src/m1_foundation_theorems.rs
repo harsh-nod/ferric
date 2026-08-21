@@ -5,13 +5,12 @@
 //! they do not close an M1 property or future path and add no runtime, device,
 //! hardware, numerical, or performance authority.
 
-use crate::continuous_batching::{
-    apply_continuous_batch_step, apply_continuous_publish_step,
-    continuous_batch_expected_error, continuous_batch_step_refines, continuous_publish_step,
-    publication_ready, ContinuousBatch, ContinuousBatchAction, ContinuousBatchError,
-    ContinuousRequest, M1_CONTINUOUS_BATCH_CAPACITY,
-};
 use crate::completion::CompletionEpoch;
+use crate::continuous_batching::{
+    apply_continuous_batch_step, apply_continuous_publish_step, continuous_batch_expected_error,
+    continuous_batch_step_refines, continuous_publish_step, publication_ready, ContinuousBatch,
+    ContinuousBatchAction, ContinuousBatchError, ContinuousRequest, M1_CONTINUOUS_BATCH_CAPACITY,
+};
 use crate::graph::{
     expected_step, expected_step_spec, plan_step_count, plan_step_count_spec, Qwen3ExecutionMode,
     Qwen3PlanBucket, Qwen3PlanStep, QWEN3_DRAFT_PLAN_STEPS, QWEN3_TARGET_PLAN_STEPS,
