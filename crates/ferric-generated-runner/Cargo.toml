@@ -8,6 +8,7 @@ publish = false
 
 [dependencies]
 ferric-spec = { path = "../ferric-spec" }
+vstd.workspace = true
 
 [package.metadata.verus]
 verify = true

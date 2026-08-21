@@ -5,9 +5,9 @@
 //! executable artifact or runtime operation.
 
 use super::{
-    decode_bundle_admission_record, expected_preliminary_kernel_catalog_identity, hash_field,
-    sha256::Sha256, BundleAdmissionError, IdentityClosureError, PreliminaryIdentityClosure,
-    SEQUENTIAL_PLAN_CATALOG_ENTRIES, SEQUENTIAL_PLAN_CATALOG_VERSION,
+    decode_bundle_admission_record, digest_bytes, expected_preliminary_kernel_catalog_identity,
+    hash_field, sha256::Sha256, BundleAdmissionError, IdentityClosureError,
+    PreliminaryIdentityClosure, SEQUENTIAL_PLAN_CATALOG_ENTRIES, SEQUENTIAL_PLAN_CATALOG_VERSION,
 };
 use ferric_generated_runner::{
     GeneratedPlanTemplate, RunnerPatchExtent, RunnerPatchKind, RunnerPatchScalarType,
@@ -29,9 +29,16 @@ use std::fmt::Write;
 
 /// Canonical complete runner-declaration record version.
 pub const GENERATED_RUNNER_DECLARATION_VERSION: u32 = 1;
-const GENERATED_SOURCE_DOMAIN: &[u8] = b"ferric.qwen3.gfx942.generated-runner-source.v1";
+const GENERATED_SOURCE_DOMAIN: &[u8] = b"ferric.qwen3.gfx942.generated-runner-source-closure.v2";
 const DECLARATION_DOMAIN: &[u8] = b"ferric.qwen3.gfx942.runner-declaration.v1";
 const PRELIMINARY_CLOSURE_DOMAIN: &[u8] = b"ferric.qwen3.preliminary-identity-closure.v1";
+const GENERATED_LIBRARY_SOURCE_PATH: &[u8] = b"src/lib.rs";
+const GENERATED_VALIDATION_SOURCE_PATH: &[u8] = b"src/validation.rs";
+const GENERATED_VALIDATION_SOURCE_BYTES: u64 = 31_470;
+const GENERATED_VALIDATION_SOURCE_SHA256: [u8; 32] = [
+    0xc7, 0xe8, 0x2b, 0x2e, 0x2f, 0x71, 0x22, 0x6a, 0x98, 0x47, 0xd6, 0x1f, 0x3d, 0x2d, 0xc7, 0x69,
+    0x6c, 0x0b, 0x9f, 0x50, 0xf7, 0x59, 0xe8, 0xea, 0x99, 0xb2, 0xd9, 0x56, 0x65, 0x5e, 0xda, 0x50,
+];
 
 const EXPECTED_PATCH_SLOTS: [RunnerPatchSlotTemplate; 4] = [
     RunnerPatchSlotTemplate {
@@ -113,7 +120,7 @@ impl GeneratedRunnerDeclaration {
         &self.closure
     }
 
-    /// Returns the byte identity of the checked-in generated source.
+    /// Returns the byte identity of the complete checked-in runner source closure.
     #[must_use]
     pub const fn source_id(&self) -> Identity {
         self.source_id
@@ -195,7 +202,7 @@ pub struct PublishedRunnerDeclaration {
 }
 
 impl PublishedRunnerDeclaration {
-    /// Returns the exact generated source identity retained by publication.
+    /// Returns the exact generated source-closure identity retained by publication.
     #[must_use]
     pub const fn source_id(&self) -> Identity {
         self.declaration.source_id
@@ -333,7 +340,7 @@ pub enum GeneratedRunnerError {
     KernelCatalogIdentityDrift,
     /// The preliminary closure's canonical bytes no longer match its identity.
     ClosureIdentityDrift,
-    /// The closure's generated-source identity is not this exact source.
+    /// The closure's generated-source identity is not this exact two-file closure.
     SourceIdentityDrift,
     /// A flattened operation position or typed profile drifted.
     OperationDrift {
@@ -366,13 +373,16 @@ pub fn render_qwen3_gfx942_runner_source() -> Vec<u8> {
 //! declarations are request-independent data. They authorize no artifact,\n\
 //! allocation, address, queue, load, launch, completion, hardware, proof,\n\
 //! performance, or qualification action.\n\n\
-use ferric_spec::{Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection};\n\n\
-/// Canonical generated runner declaration format.\n\
-pub const GENERATED_RUNNER_TEMPLATE_VERSION: u32 = 1;\n\
+use ferric_spec::{Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection};\n\
+#[allow(unused_imports)]\n\
+use vstd::prelude::*;\n\n\
 /// Exact target processor named by the declaration template.\n\
 pub const GENERATED_RUNNER_PROCESSOR: &str = \"gfx942\";\n\
 /// Exact target features named by the declaration template.\n\
-pub const GENERATED_RUNNER_TARGET_FEATURES: &str = \"+wavefrontsize64,-xnack\";\n\
+pub const GENERATED_RUNNER_TARGET_FEATURES: &str = \"+wavefrontsize64,-xnack\";\n\n\
+verus! {\n\n\
+/// Canonical generated runner declaration format.\n\
+pub const GENERATED_RUNNER_TEMPLATE_VERSION: u32 = 1;\n\
 /// Exact number of finite target/draft B3 plan declarations.\n\
 pub const GENERATED_RUNNER_PLAN_COUNT: usize = 22;\n\
 /// Exact number of ordered operation declarations across all plans.\n\
@@ -442,17 +452,76 @@ pub const GENERATED_PATCH_SLOTS: [RunnerPatchSlotTemplate; 4] = [\n",
     for slot in GENERATED_PATCH_SLOTS {
         write_patch_slot(&mut source, slot);
     }
-    source.push_str("];\n");
+    source.push_str(
+        "];\n\n\
+} // verus!\n\n\
+mod validation;\n\n\
+pub use validation::{\n\
+\x20\x20\x20\x20generated_plan_template, validate_generated_runner_input, GeneratedRunnerIdentityInputs,\n\
+\x20\x20\x20\x20GeneratedRunnerIdentityRole, GeneratedRunnerInput, GeneratedRunnerValidationError,\n\
+\x20\x20\x20\x20ValidatedGeneratedRunnerInput,\n\
+};\n",
+    );
     source.into_bytes()
 }
 
-/// Computes the domain-separated identity of the exact generated source.
+/// Renders the canonical two-file generated-runner source-closure record.
+///
+/// The supplied library bytes and validation length/digest are framed with
+/// their exact workspace-relative paths. This function constructs data only
+/// and does not validate or authenticate any input.
+#[must_use]
+pub fn render_qwen3_gfx942_runner_source_closure(
+    library_source: &[u8],
+    validation_source_bytes: u64,
+    validation_source_sha256: [u8; 32],
+) -> Vec<u8> {
+    let mut closure = Vec::with_capacity(96 + library_source.len());
+    closure.extend_from_slice(&2_u32.to_le_bytes());
+    push_bytes(&mut closure, GENERATED_LIBRARY_SOURCE_PATH);
+    push_bytes(&mut closure, library_source);
+    push_bytes(&mut closure, GENERATED_VALIDATION_SOURCE_PATH);
+    closure.extend_from_slice(&validation_source_bytes.to_le_bytes());
+    closure.extend_from_slice(&validation_source_sha256);
+    closure
+}
+
+/// Computes the domain-separated identity of the exact runner source closure.
 #[must_use]
 pub fn expected_qwen3_gfx942_runner_source_identity() -> Identity {
-    identity_record(
-        GENERATED_SOURCE_DOMAIN,
-        &render_qwen3_gfx942_runner_source(),
-    )
+    let library_source = render_qwen3_gfx942_runner_source();
+    let closure = render_qwen3_gfx942_runner_source_closure(
+        &library_source,
+        GENERATED_VALIDATION_SOURCE_BYTES,
+        GENERATED_VALIDATION_SOURCE_SHA256,
+    );
+    identity_record(GENERATED_SOURCE_DOMAIN, &closure)
+}
+
+/// Validates the exact generated library and pinned validation-module digest.
+///
+/// # Errors
+///
+/// Returns [`GeneratedRunnerError::SourceIdentityDrift`] for any library or
+/// validation-module digest or length drift. This equality check does not prove
+/// SHA-256 collision resistance.
+pub fn validate_qwen3_gfx942_runner_source_closure(
+    library_source: &[u8],
+    validation_source: &[u8],
+) -> Result<Identity, GeneratedRunnerError> {
+    let validation_digest = digest_bytes(validation_source);
+    if library_source != render_qwen3_gfx942_runner_source()
+        || validation_digest.byte_len != GENERATED_VALIDATION_SOURCE_BYTES
+        || validation_digest.sha256 != GENERATED_VALIDATION_SOURCE_SHA256
+    {
+        return Err(GeneratedRunnerError::SourceIdentityDrift);
+    }
+    let closure = render_qwen3_gfx942_runner_source_closure(
+        library_source,
+        validation_digest.byte_len,
+        validation_digest.sha256,
+    );
+    Ok(identity_record(GENERATED_SOURCE_DOMAIN, &closure))
 }
 
 /// Consumes the preliminary closure and builds the complete inert declaration.
@@ -874,7 +943,7 @@ fn indent_generated_declaration_fields(header: &str) -> String {
             source.push_str("    ");
         }
         source.push_str(line);
-        if trimmed.ends_with('{') {
+        if trimmed.ends_with('{') && trimmed != "verus! {" {
             declaration_depth = declaration_depth.saturating_add(1);
         }
     }
@@ -1023,13 +1092,15 @@ mod tests {
     use super::{
         expected_qwen3_gfx942_runner_source_identity, generate_qwen3_gfx942_runner_declaration,
         identity_record, publish_qwen3_gfx942_runner_declaration,
-        render_qwen3_gfx942_runner_source, validate_patch_slots, validate_plan_templates,
-        validate_qwen3_gfx942_runner_declaration, GeneratedRunnerError, DECLARATION_DOMAIN,
-        GENERATED_SOURCE_DOMAIN,
+        render_qwen3_gfx942_runner_source, render_qwen3_gfx942_runner_source_closure,
+        validate_patch_slots, validate_plan_templates, validate_qwen3_gfx942_runner_declaration,
+        validate_qwen3_gfx942_runner_source_closure, GeneratedRunnerError, DECLARATION_DOMAIN,
+        GENERATED_SOURCE_DOMAIN, GENERATED_VALIDATION_SOURCE_BYTES,
+        GENERATED_VALIDATION_SOURCE_SHA256,
     };
     use crate::{
         build_authenticated_sequential_plan_catalog, build_preliminary_identity_closure,
-        build_prepacked_deployment_bundle, build_sequential_plan_catalog,
+        build_prepacked_deployment_bundle, build_sequential_plan_catalog, digest_bytes,
         expected_preliminary_kernel_catalog_identity, seal_authenticated_bundle,
         tokenizer::tests::{authenticated_assets, test_tokenizer},
         weight_stream::tests::test_prepacked,
@@ -1097,11 +1168,11 @@ mod tests {
     }
 
     #[test]
-    fn regeneration_is_byte_exact_and_identity_sensitive() {
+    fn regeneration_and_complete_source_closure_are_byte_exact() {
         let generated = render_qwen3_gfx942_runner_source();
-        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        let crate_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../ferric-generated-runner/src/lib.rs");
-        let checked_in = std::fs::read(path).expect("checked-in generated source");
+        let checked_in = std::fs::read(crate_path).expect("checked-in generated source");
         if generated != checked_in {
             let first = generated
                 .iter()
@@ -1116,23 +1187,85 @@ mod tests {
                 String::from_utf8_lossy(&checked_in[first.saturating_sub(40)..(first + 80).min(checked_in.len())])
             );
         }
+        let validation_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../ferric-generated-runner/src/validation.rs");
+        let validation =
+            std::fs::read(validation_path).expect("checked-in runner validation source");
+        let validation_digest = digest_bytes(&validation);
+        assert_eq!(
+            validation_digest.byte_len,
+            GENERATED_VALIDATION_SOURCE_BYTES
+        );
+        assert_eq!(validation_digest.sha256, GENERATED_VALIDATION_SOURCE_SHA256);
+        assert_eq!(
+            validate_qwen3_gfx942_runner_source_closure(&generated, &validation),
+            Ok(expected_qwen3_gfx942_runner_source_identity())
+        );
         assert_eq!(
             expected_qwen3_gfx942_runner_source_identity(),
             Identity::new([
-                0xae, 0x9d, 0x39, 0x2a, 0x3a, 0xcc, 0x61, 0x53, 0x0a, 0x86, 0xc8, 0x6e, 0xe4, 0xe9,
-                0x94, 0xba, 0xa8, 0xf4, 0xa5, 0xf0, 0xb0, 0x69, 0x8b, 0xaf, 0xbe, 0x5f, 0x24, 0xb2,
-                0x87, 0xae, 0x35, 0xc3,
+                0x71, 0xcc, 0xfd, 0x00, 0xfa, 0x4c, 0xca, 0xf1, 0x7b, 0x66, 0x38, 0xe3, 0x63, 0x4d,
+                0x69, 0xce, 0xb8, 0xdf, 0x44, 0x39, 0x9c, 0xe0, 0xa2, 0x7b, 0x5c, 0x31, 0x4d, 0x51,
+                0x29, 0x4f, 0xba, 0x53,
             ])
         );
         for index in 0..generated.len() {
             let mut changed = generated.clone();
             changed[index] ^= 1;
-            assert_ne!(
-                identity_record(GENERATED_SOURCE_DOMAIN, &changed),
-                expected_qwen3_gfx942_runner_source_identity(),
-                "source byte {index} was not identity-sensitive"
+            assert_eq!(
+                validate_qwen3_gfx942_runner_source_closure(&changed, &validation),
+                Err(GeneratedRunnerError::SourceIdentityDrift),
+                "library source byte {index} was accepted"
             );
         }
+        for index in 0..validation.len() {
+            let mut changed = validation.clone();
+            changed[index] ^= 1;
+            assert_eq!(
+                validate_qwen3_gfx942_runner_source_closure(&generated, &changed),
+                Err(GeneratedRunnerError::SourceIdentityDrift),
+                "validation source byte {index} was accepted"
+            );
+        }
+        let mut trailing_library = generated.clone();
+        trailing_library.push(0);
+        assert_eq!(
+            validate_qwen3_gfx942_runner_source_closure(&trailing_library, &validation),
+            Err(GeneratedRunnerError::SourceIdentityDrift)
+        );
+        assert_eq!(
+            validate_qwen3_gfx942_runner_source_closure(
+                &generated[..generated.len() - 1],
+                &validation,
+            ),
+            Err(GeneratedRunnerError::SourceIdentityDrift)
+        );
+        let mut trailing_validation = validation.clone();
+        trailing_validation.push(0);
+        assert_eq!(
+            validate_qwen3_gfx942_runner_source_closure(&generated, &trailing_validation),
+            Err(GeneratedRunnerError::SourceIdentityDrift)
+        );
+        assert_eq!(
+            validate_qwen3_gfx942_runner_source_closure(
+                &generated,
+                &validation[..validation.len() - 1],
+            ),
+            Err(GeneratedRunnerError::SourceIdentityDrift)
+        );
+
+        let mut representative_validation_drift = validation.clone();
+        representative_validation_drift[validation.len() / 2] ^= 1;
+        let changed_validation_digest = digest_bytes(&representative_validation_drift);
+        let changed_closure = render_qwen3_gfx942_runner_source_closure(
+            &generated,
+            changed_validation_digest.byte_len,
+            changed_validation_digest.sha256,
+        );
+        assert_ne!(
+            identity_record(GENERATED_SOURCE_DOMAIN, &changed_closure),
+            expected_qwen3_gfx942_runner_source_identity()
+        );
     }
 
     #[test]
@@ -1158,9 +1291,9 @@ mod tests {
         assert_eq!(
             declaration.declaration_id(),
             Identity::new([
-                0x02, 0xd7, 0xb3, 0x73, 0x83, 0xe0, 0x0d, 0xca, 0xcb, 0x06, 0x0e, 0x18, 0x6c, 0x80,
-                0x97, 0x21, 0x07, 0x24, 0x0f, 0x5b, 0xd9, 0x21, 0xc8, 0x1d, 0xf8, 0xaf, 0xee, 0x8c,
-                0x61, 0x1a, 0x46, 0x37,
+                0x3e, 0x6c, 0xd6, 0x54, 0xeb, 0xa1, 0xa9, 0xa8, 0xe8, 0x01, 0x99, 0xb8, 0xab, 0xd2,
+                0x3a, 0xed, 0xf5, 0x5b, 0x2a, 0x04, 0x6f, 0x60, 0xc3, 0x4d, 0x06, 0x47, 0x6b, 0xd3,
+                0x72, 0x0d, 0x61, 0xa0,
             ])
         );
 

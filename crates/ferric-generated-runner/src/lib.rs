@@ -8,13 +8,18 @@
 //! performance, or qualification action.
 
 use ferric_spec::{Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection};
+#[allow(unused_imports)]
+use vstd::prelude::*;
 
-/// Canonical generated runner declaration format.
-pub const GENERATED_RUNNER_TEMPLATE_VERSION: u32 = 1;
 /// Exact target processor named by the declaration template.
 pub const GENERATED_RUNNER_PROCESSOR: &str = "gfx942";
 /// Exact target features named by the declaration template.
 pub const GENERATED_RUNNER_TARGET_FEATURES: &str = "+wavefrontsize64,-xnack";
+
+verus! {
+
+/// Canonical generated runner declaration format.
+pub const GENERATED_RUNNER_TEMPLATE_VERSION: u32 = 1;
 /// Exact number of finite target/draft B3 plan declarations.
 pub const GENERATED_RUNNER_PLAN_COUNT: usize = 22;
 /// Exact number of ordered operation declarations across all plans.
@@ -326,3 +331,13 @@ pub const GENERATED_PATCH_SLOTS: [RunnerPatchSlotTemplate; 4] = [
         extent: RunnerPatchExtent::Sequences,
     },
 ];
+
+} // verus!
+
+mod validation;
+
+pub use validation::{
+    generated_plan_template, validate_generated_runner_input, GeneratedRunnerIdentityInputs,
+    GeneratedRunnerIdentityRole, GeneratedRunnerInput, GeneratedRunnerValidationError,
+    ValidatedGeneratedRunnerInput,
+};
