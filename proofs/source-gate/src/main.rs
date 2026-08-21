@@ -686,11 +686,8 @@ impl SourceWalker<'_> {
 
     fn resolve_inherent_methods(&mut self) -> GateResult<()> {
         for method in std::mem::take(&mut self.inherent_methods) {
-            let owner_module = inherent_owner_module(
-                &self.type_owners,
-                &method.source_module,
-                &method.owner,
-            )?;
+            let owner_module =
+                inherent_owner_module(&self.type_owners, &method.source_module, &method.owner)?;
             self.add_function(
                 &method.source,
                 &format!("{owner_module}::{}::{}", method.owner, method.method),
