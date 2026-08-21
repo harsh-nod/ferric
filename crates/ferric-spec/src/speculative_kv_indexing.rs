@@ -323,6 +323,36 @@ impl SpeculativeKvRoundIndex {
         }
     }
 
+    /// Every rejected target/draft suffix fits within one 16-token KV page.
+    pub proof fn rejected_tail_bounds(&self, accepted: u8)
+        requires
+            self.valid(),
+            accepted <= self.draft_token_count,
+        ensures
+            self.target_commit_end_spec(accepted).is_some(),
+            self.draft_commit_end_spec(accepted).is_some(),
+            self.target_tentative.end as int
+                - self.target_commit_end_spec(accepted).unwrap() as int
+                == self.draft_token_count as int - accepted as int,
+            self.draft_tentative.end as int
+                - self.draft_commit_end_spec(accepted).unwrap() as int
+                == if accepted < self.draft_token_count {
+                    self.draft_token_count as int - accepted as int - 1
+                } else {
+                    0
+                },
+            0 <= self.target_tentative.end as int
+                - self.target_commit_end_spec(accepted).unwrap() as int
+                <= M1_MAX_SPECULATIVE_KV_DRAFT_TOKENS,
+            0 <= self.draft_tentative.end as int
+                - self.draft_commit_end_spec(accepted).unwrap() as int
+                <= M1_MAX_SPECULATIVE_KV_DRAFT_TOKENS,
+    {
+        reveal(SpeculativeKvRoundIndex::valid);
+        reveal(SpeculativeKvRoundIndex::target_commit_end_spec);
+        reveal(SpeculativeKvRoundIndex::draft_commit_end_spec);
+    }
+
     pub closed spec fn token_fields_valid(&self) -> bool {
         &&& self.round_anchor < QWEN3_VOCABULARY_SIZE
         &&& forall|index: int| 0 <= index < self.draft_token_count as int ==>
@@ -419,6 +449,26 @@ impl SpeculativeKvRoundIndex {
             && self.plan_id.bytes_spec() == expected_plan_id.bytes_spec()
             && self.target_selection == expected_target
             && self.draft_selection == expected_draft
+    }
+
+    pub proof fn valid_for_implies_valid(
+        &self,
+        expected_request: RequestId,
+        expected_epoch: CompletionEpoch,
+        expected_plan_id: Identity,
+        expected_target: Qwen3PlanSelection,
+        expected_draft: Qwen3PlanSelection,
+    )
+        requires self.valid_for(
+            expected_request,
+            expected_epoch,
+            expected_plan_id,
+            expected_target,
+            expected_draft,
+        ),
+        ensures self.valid(),
+    {
+        reveal(SpeculativeKvRoundIndex::valid_for);
     }
 
     #[must_use]

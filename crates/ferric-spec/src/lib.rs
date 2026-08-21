@@ -58,8 +58,10 @@ pub use qwen3::{
 };
 pub use request_isolation::{
     apply_isolated_kv_action, apply_isolated_scheduler_step, cancel_isolated_request,
-    detach_isolated_request, map_isolated_token, release_isolated_page, IsolatedKvAction,
-    IsolatedRequestKv, IsolatedRequestProjection, IsolatedSchedulerAction, RequestIsolationError,
+    detach_isolated_request, map_isolated_token, release_isolated_page,
+    settle_isolated_speculative_kv, IsolatedKvAction, IsolatedRequestKv, IsolatedRequestProjection,
+    IsolatedSchedulerAction, IsolatedSpeculativeKvExpectation, IsolatedSpeculativeKvSettlement,
+    RequestIsolationError,
 };
 pub use speculation::{verify_greedy_round, GreedyCommit, GreedyVerificationError, TokenId};
 pub use speculative_completion::{verify_speculative_completion, SpeculativeCompletionError};

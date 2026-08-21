@@ -14,13 +14,17 @@ use crate::continuous_batching::{
     ContinuousRequest, M1_CONTINUOUS_BATCH_CAPACITY,
 };
 use crate::paged_kv_refinement::{
-    append_physical_page, cancel_physical_kv, commit_physical_kv, map_initialized_token,
+    append_physical_page, apply_preflighted_physical_speculative_settlement, cancel_physical_kv,
+    commit_physical_kv, map_initialized_token, preflight_physical_speculative_settlement,
     release_retired_page, retire_cancelled_tail, rollback_physical_token, write_physical_token,
     KvQuiescenceAuthority, LogicalKvState, PhysicalKvError, PhysicalKvLifecycle,
     PhysicalKvLocation, PhysicalKvState, PhysicalPageId,
 };
 use crate::scheduling::{LifecyclePhase, RequestState};
-use crate::{Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection, RequestId};
+use crate::{
+    Identity, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection, RequestId,
+    SpeculativeKvRoundIndex,
+};
 use vstd::prelude::*;
 
 verus! {
@@ -62,6 +66,8 @@ pub enum RequestIsolationError {
     RetiredPageCountExhausted,
     RetiredPageCountUnderflow,
     GenerationExhausted,
+    AcceptedCountOutOfRange,
+    InvalidSpeculativeIndex,
     Scheduler(ContinuousBatchError),
     Physical(PhysicalKvError),
 }
@@ -88,6 +94,59 @@ pub struct IsolatedRequestKv {
     draft_retired_pages: u32,
     quiescent_epoch: CompletionEpoch,
     has_quiescent_epoch: bool,
+}
+
+/// Caller-supplied expectations that the round index must match exactly.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct IsolatedSpeculativeKvExpectation {
+    request: RequestId,
+    completion_epoch: CompletionEpoch,
+    plan_id: Identity,
+    target_selection: Qwen3PlanSelection,
+    draft_selection: Qwen3PlanSelection,
+}
+
+impl IsolatedSpeculativeKvExpectation {
+    pub closed spec fn request_spec(&self) -> RequestId { self.request }
+
+    pub closed spec fn completion_epoch_spec(&self) -> CompletionEpoch { self.completion_epoch }
+
+    pub closed spec fn plan_id_spec(&self) -> Identity { self.plan_id }
+
+    pub closed spec fn target_selection_spec(&self) -> Qwen3PlanSelection {
+        self.target_selection
+    }
+
+    pub closed spec fn draft_selection_spec(&self) -> Qwen3PlanSelection {
+        self.draft_selection
+    }
+
+    #[must_use]
+    pub const fn new(
+        request: RequestId,
+        completion_epoch: CompletionEpoch,
+        plan_id: Identity,
+        target_selection: Qwen3PlanSelection,
+        draft_selection: Qwen3PlanSelection,
+    ) -> Self {
+        Self {
+            request,
+            completion_epoch,
+            plan_id,
+            target_selection,
+            draft_selection,
+        }
+    }
+}
+
+/// Exact logical effects of one atomic two-role speculative KV settlement.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct IsolatedSpeculativeKvSettlement {
+    pub accepted_draft_tokens: u8,
+    pub target_commit_end: u32,
+    pub draft_commit_end: u32,
+    pub target_retired_pages: u32,
+    pub draft_retired_pages: u32,
 }
 
 pub closed spec fn target_role(role: Qwen3ModelRole) -> bool {
@@ -871,6 +930,224 @@ pub fn apply_isolated_kv_action(
     Ok(page)
 }
 
+pub closed spec fn isolated_speculative_settlement_transition(
+    before: &IsolatedRequestKv,
+    after: &IsolatedRequestKv,
+    index: &SpeculativeKvRoundIndex,
+    outcome: IsolatedSpeculativeKvSettlement,
+) -> bool {
+    &&& outcome.accepted_draft_tokens <= index.draft_token_count
+    &&& index.target_commit_end_spec(outcome.accepted_draft_tokens)
+        == Some(outcome.target_commit_end)
+    &&& index.draft_commit_end_spec(outcome.accepted_draft_tokens)
+        == Some(outcome.draft_commit_end)
+    &&& after.request == before.request
+    &&& after.quiescent_epoch == before.quiescent_epoch
+    &&& after.has_quiescent_epoch == before.has_quiescent_epoch
+    &&& after.target_retired_pages as int
+        == before.target_retired_pages as int + outcome.target_retired_pages as int
+    &&& after.draft_retired_pages as int
+        == before.draft_retired_pages as int + outcome.draft_retired_pages as int
+    &&& crate::paged_kv_refinement::physical_speculative_settlement_matches(
+        &before.target,
+        &after.target,
+        index.completion_epoch,
+        index.target_tentative.end,
+        outcome.target_commit_end,
+        outcome.target_retired_pages,
+    )
+    &&& crate::paged_kv_refinement::physical_speculative_settlement_matches(
+        &before.draft,
+        &after.draft,
+        index.completion_epoch,
+        index.draft_tentative.end,
+        outcome.draft_commit_end,
+        outcome.draft_retired_pages,
+    )
+}
+
+/// Atomically settles both speculative KV roles after complete immutable preflight.
+///
+/// This narrow primitive performs no publication. The caller must bind a
+/// separately verified compact completion before using the returned endpoints.
+///
+/// # Errors
+///
+/// Rejects any stale expectation, scheduler/index mismatch, malformed physical
+/// tail, or retired-page counter overflow before mutating either KV role.
+pub fn settle_isolated_speculative_kv(
+    batch: &ContinuousBatch,
+    selected: &mut IsolatedRequestKv,
+    other: &mut IsolatedRequestKv,
+    index: &SpeculativeKvRoundIndex,
+    accepted_draft_tokens: u8,
+    expected: &IsolatedSpeculativeKvExpectation,
+) -> (result: Result<IsolatedSpeculativeKvSettlement, RequestIsolationError>)
+    requires batch.valid(),
+    ensures
+        *final(other) == *old(other),
+        result.is_err() ==> *final(selected) == *old(selected),
+        match result {
+            Ok(outcome) => {
+                &&& index.valid_for(
+                    expected.request_spec(),
+                    expected.completion_epoch_spec(),
+                    expected.plan_id_spec(),
+                    expected.target_selection_spec(),
+                    expected.draft_selection_spec(),
+                )
+                &&& isolated_speculative_settlement_transition(
+                    old(selected),
+                    final(selected),
+                    index,
+                    outcome,
+                )
+            },
+            Err(_) => true,
+        },
+{
+    let ghost entry = *selected;
+    proof {
+        reveal(isolated_speculative_settlement_transition);
+    }
+    let current = validate_routing(batch, selected, other, expected.request)?;
+    if !matches!(
+        (current.lifecycle().state, current.lifecycle().phase),
+        (RequestState::InFlight, LifecyclePhase::AwaitingKv)
+    ) {
+        return Err(RequestIsolationError::WrongLifecycle);
+    }
+    if current.active_epoch() != Some(expected.completion_epoch)
+        || index.completion_epoch.value != expected.completion_epoch.value
+    {
+        return Err(RequestIsolationError::EpochMismatch);
+    }
+    if !selected.target.selection().matches(expected.target_selection)
+        || !selected.draft.selection().matches(expected.draft_selection)
+    {
+        return Err(RequestIsolationError::PlanPairMismatch);
+    }
+    match index.validate_for(
+        expected.request,
+        expected.completion_epoch,
+        &expected.plan_id,
+        expected.target_selection,
+        expected.draft_selection,
+        ) {
+        Ok(()) => {},
+        Err(_) => return Err(RequestIsolationError::InvalidSpeculativeIndex),
+    }
+    assert(index.valid_for(
+        expected.request,
+        expected.completion_epoch,
+        expected.plan_id,
+        expected.target_selection,
+        expected.draft_selection,
+    ));
+    if accepted_draft_tokens > index.draft_token_count {
+        return Err(RequestIsolationError::AcceptedCountOutOfRange);
+    }
+    let Some(target_commit_end) = index.target_commit_end(accepted_draft_tokens) else {
+        return Err(RequestIsolationError::AcceptedCountOutOfRange);
+    };
+    let Some(draft_commit_end) = index.draft_commit_end(accepted_draft_tokens) else {
+        return Err(RequestIsolationError::AcceptedCountOutOfRange);
+    };
+    proof {
+            index.valid_for_implies_valid(
+            expected.request,
+            expected.completion_epoch,
+            expected.plan_id,
+            expected.target_selection,
+            expected.draft_selection,
+        );
+        index.rejected_tail_bounds(accepted_draft_tokens);
+        assert(index.target_tentative.end as int - target_commit_end as int
+            <= crate::M1_MAX_SPECULATIVE_KV_DRAFT_TOKENS);
+        assert(index.draft_tentative.end as int - draft_commit_end as int
+            <= crate::M1_MAX_SPECULATIVE_KV_DRAFT_TOKENS);
+    }
+    let target_permit = match preflight_physical_speculative_settlement(
+        &selected.target,
+        expected.request,
+        expected.target_selection,
+        expected.completion_epoch,
+        index.target_pre_committed,
+        index.target_tentative.end,
+        target_commit_end,
+    ) {
+        Ok(permit) => permit,
+        Err(error) => return Err(RequestIsolationError::Physical(error)),
+    };
+    let draft_permit = match preflight_physical_speculative_settlement(
+        &selected.draft,
+        expected.request,
+        expected.draft_selection,
+        expected.completion_epoch,
+        index.draft_pre_committed,
+        index.draft_tentative.end,
+        draft_commit_end,
+    ) {
+        Ok(permit) => permit,
+        Err(error) => return Err(RequestIsolationError::Physical(error)),
+    };
+    let target_retired_pages = target_permit.retired_pages();
+    let draft_retired_pages = draft_permit.retired_pages();
+    let Some(next_target_retired) = selected
+        .target_retired_pages
+        .checked_add(target_retired_pages)
+    else {
+        return Err(RequestIsolationError::RetiredPageCountExhausted);
+    };
+    let Some(next_draft_retired) = selected
+        .draft_retired_pages
+        .checked_add(draft_retired_pages)
+    else {
+        return Err(RequestIsolationError::RetiredPageCountExhausted);
+    };
+
+    apply_preflighted_physical_speculative_settlement(&mut selected.target, target_permit);
+    apply_preflighted_physical_speculative_settlement(&mut selected.draft, draft_permit);
+    selected.target_retired_pages = next_target_retired;
+    selected.draft_retired_pages = next_draft_retired;
+    let outcome = IsolatedSpeculativeKvSettlement {
+        accepted_draft_tokens,
+        target_commit_end,
+        draft_commit_end,
+        target_retired_pages,
+        draft_retired_pages,
+    };
+    assert(index.target_commit_end_spec(accepted_draft_tokens) == Some(target_commit_end));
+    assert(index.draft_commit_end_spec(accepted_draft_tokens) == Some(draft_commit_end));
+    assert(crate::paged_kv_refinement::physical_speculative_settlement_matches(
+        &entry.target,
+        &selected.target,
+        index.completion_epoch,
+        index.target_tentative.end,
+        target_commit_end,
+        target_retired_pages,
+    ));
+    assert(crate::paged_kv_refinement::physical_speculative_settlement_matches(
+        &entry.draft,
+        &selected.draft,
+        index.completion_epoch,
+        index.draft_tentative.end,
+        draft_commit_end,
+        draft_retired_pages,
+    ));
+    assert(selected.target_retired_pages as int
+        == entry.target_retired_pages as int + target_retired_pages as int);
+    assert(selected.draft_retired_pages as int
+        == entry.draft_retired_pages as int + draft_retired_pages as int);
+    assert(isolated_speculative_settlement_transition(
+        &entry,
+        selected,
+        index,
+        outcome,
+    ));
+    Ok(outcome)
+}
+
 /// Resolves one request-owned initialized token only while its scheduler
 /// generation and lifecycle make the physical projection reachable.
 ///
@@ -1105,6 +1382,10 @@ pub proof fn isolated_action_preserves_other_request(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{
+        CorrectionBonusKvDisposition, SpeculativeKvInterval, M1_MAX_SPECULATIVE_KV_DRAFT_TOKENS,
+        M1_MAX_SPECULATIVE_KV_TARGET_INPUTS,
+    };
 
     fn target_decode() -> Qwen3PlanSelection {
         Qwen3PlanSelection {
@@ -1124,6 +1405,226 @@ mod tests {
 
     fn pair(slot: u32) -> IsolatedRequestKv {
         IsolatedRequestKv::new(RequestId::new(slot, 1), target_decode(), draft_decode()).unwrap()
+    }
+
+    fn speculative_selection(role: Qwen3ModelRole, bucket: Qwen3PlanBucket) -> Qwen3PlanSelection {
+        Qwen3PlanSelection {
+            role,
+            mode: Qwen3ExecutionMode::Speculative,
+            bucket,
+        }
+    }
+
+    fn speculative_pair(slot: u32, bucket: Qwen3PlanBucket) -> IsolatedRequestKv {
+        IsolatedRequestKv::new(
+            RequestId::new(slot, 1),
+            speculative_selection(Qwen3ModelRole::Target8B, bucket),
+            speculative_selection(Qwen3ModelRole::Draft06B, bucket),
+        )
+        .unwrap()
+    }
+
+    fn exact_round_index(
+        request: RequestId,
+        epoch: CompletionEpoch,
+        bucket: Qwen3PlanBucket,
+        k: u8,
+        base: u32,
+    ) -> SpeculativeKvRoundIndex {
+        let mut draft_tokens = [0; M1_MAX_SPECULATIVE_KV_DRAFT_TOKENS];
+        for (position, token) in draft_tokens.iter_mut().enumerate().take(usize::from(k)) {
+            *token = 100 + u32::try_from(position).unwrap();
+        }
+        let mut target_commit_ends = [0; M1_MAX_SPECULATIVE_KV_TARGET_INPUTS];
+        let mut draft_commit_ends = [0; M1_MAX_SPECULATIVE_KV_TARGET_INPUTS];
+        for accepted in 0..=usize::from(k) {
+            let accepted = u32::try_from(accepted).unwrap();
+            target_commit_ends[accepted as usize] = base + accepted + 1;
+            draft_commit_ends[accepted as usize] = base
+                + if accepted < u32::from(k) {
+                    accepted + 1
+                } else {
+                    u32::from(k)
+                };
+        }
+        SpeculativeKvRoundIndex {
+            request,
+            completion_epoch: epoch,
+            plan_id: Identity::new([23; 32]),
+            target_selection: speculative_selection(Qwen3ModelRole::Target8B, bucket),
+            draft_selection: speculative_selection(Qwen3ModelRole::Draft06B, bucket),
+            draft_token_count: k,
+            round_anchor: 77,
+            draft_tokens,
+            target_pre_committed: base,
+            draft_pre_committed: base,
+            target_tentative: SpeculativeKvInterval {
+                start: base,
+                end: base + u32::from(k) + 1,
+            },
+            draft_tentative: SpeculativeKvInterval {
+                start: base,
+                end: base + u32::from(k),
+            },
+            target_commit_ends,
+            draft_commit_ends,
+            correction_bonus: CorrectionBonusKvDisposition::DeferredUntilNextStep,
+        }
+    }
+
+    fn write_role_interval(
+        batch: &ContinuousBatch,
+        selected: &mut IsolatedRequestKv,
+        other: &mut IsolatedRequestKv,
+        request: RequestId,
+        role: Qwen3ModelRole,
+        start: u32,
+        end: u32,
+    ) {
+        for logical_position in start..end {
+            if logical_position.is_multiple_of(crate::M1_KV_PAGE_TOKENS) {
+                let page =
+                    PhysicalPageId::new(role, logical_position / crate::M1_KV_PAGE_TOKENS, 1);
+                apply_isolated_kv_action(
+                    batch,
+                    selected,
+                    other,
+                    request,
+                    role,
+                    IsolatedKvAction::AppendPage { page },
+                )
+                .unwrap();
+            }
+            apply_isolated_kv_action(
+                batch,
+                selected,
+                other,
+                request,
+                role,
+                IsolatedKvAction::WriteToken { logical_position },
+            )
+            .unwrap();
+        }
+    }
+
+    fn prepared_speculative_round(
+        bucket: Qwen3PlanBucket,
+        k: u8,
+        base: u32,
+    ) -> (
+        ContinuousBatch,
+        IsolatedRequestKv,
+        IsolatedRequestKv,
+        SpeculativeKvRoundIndex,
+    ) {
+        let mut batch = ContinuousBatch::initial();
+        let mut selected = speculative_pair(1, bucket);
+        let mut other = speculative_pair(2, bucket);
+        let request = selected.request();
+        let first_epoch = CompletionEpoch::new(31);
+        admit_and_dispatch(&mut batch, &mut selected, &mut other, first_epoch);
+        if base > 0 {
+            write_role_interval(
+                &batch,
+                &mut selected,
+                &mut other,
+                request,
+                Qwen3ModelRole::Target8B,
+                0,
+                base,
+            );
+            write_role_interval(
+                &batch,
+                &mut selected,
+                &mut other,
+                request,
+                Qwen3ModelRole::Draft06B,
+                0,
+                base,
+            );
+            apply_isolated_scheduler_step(
+                &mut batch,
+                &mut selected,
+                &mut other,
+                request,
+                IsolatedSchedulerAction::CompleteExact { epoch: first_epoch },
+            )
+            .unwrap();
+            for role in [Qwen3ModelRole::Target8B, Qwen3ModelRole::Draft06B] {
+                apply_isolated_kv_action(
+                    &batch,
+                    &mut selected,
+                    &mut other,
+                    request,
+                    role,
+                    IsolatedKvAction::Commit {
+                        accepted_tokens: base,
+                    },
+                )
+                .unwrap();
+            }
+            apply_isolated_scheduler_step(
+                &mut batch,
+                &mut selected,
+                &mut other,
+                request,
+                IsolatedSchedulerAction::Publish {
+                    epoch: first_epoch,
+                    emitted_tokens: 1,
+                },
+            )
+            .unwrap();
+            apply_isolated_scheduler_step(
+                &mut batch,
+                &mut selected,
+                &mut other,
+                request,
+                IsolatedSchedulerAction::FinalizeKv,
+            )
+            .unwrap();
+        }
+        let round_epoch = if base == 0 {
+            first_epoch
+        } else {
+            let epoch = CompletionEpoch::new(32);
+            apply_isolated_scheduler_step(
+                &mut batch,
+                &mut selected,
+                &mut other,
+                request,
+                IsolatedSchedulerAction::Dispatch { epoch },
+            )
+            .unwrap();
+            epoch
+        };
+        write_role_interval(
+            &batch,
+            &mut selected,
+            &mut other,
+            request,
+            Qwen3ModelRole::Target8B,
+            base,
+            base + u32::from(k) + 1,
+        );
+        write_role_interval(
+            &batch,
+            &mut selected,
+            &mut other,
+            request,
+            Qwen3ModelRole::Draft06B,
+            base,
+            base + u32::from(k),
+        );
+        apply_isolated_scheduler_step(
+            &mut batch,
+            &mut selected,
+            &mut other,
+            request,
+            IsolatedSchedulerAction::CompleteExact { epoch: round_epoch },
+        )
+        .unwrap();
+        let index = exact_round_index(request, round_epoch, bucket, k, base);
+        (batch, selected, other, index)
     }
 
     fn admit_and_dispatch(
@@ -1149,6 +1650,192 @@ mod tests {
             IsolatedSchedulerAction::Dispatch { epoch },
         )
         .unwrap();
+    }
+
+    fn settle_prepared(
+        batch: &ContinuousBatch,
+        selected: &mut IsolatedRequestKv,
+        other: &mut IsolatedRequestKv,
+        index: &SpeculativeKvRoundIndex,
+        accepted: u8,
+    ) -> Result<IsolatedSpeculativeKvSettlement, RequestIsolationError> {
+        let expectation = IsolatedSpeculativeKvExpectation::new(
+            index.request,
+            index.completion_epoch,
+            index.plan_id,
+            index.target_selection,
+            index.draft_selection,
+        );
+        settle_isolated_speculative_kv(batch, selected, other, index, accepted, &expectation)
+    }
+
+    #[test]
+    fn zero_acceptance_commits_anchor_and_rolls_back_both_suffixes() {
+        let (batch, mut selected, mut other, index) =
+            prepared_speculative_round(Qwen3PlanBucket::SpeculativeS1K4C8192, 4, 0);
+        let batch_before = batch;
+        let other_before = other.projection();
+        let outcome = settle_prepared(&batch, &mut selected, &mut other, &index, 0).unwrap();
+        assert_eq!(outcome.target_commit_end, 1);
+        assert_eq!(outcome.draft_commit_end, 1);
+        assert_eq!(outcome.target_retired_pages, 0);
+        assert_eq!(outcome.draft_retired_pages, 0);
+        let projection = selected.projection();
+        assert_eq!(projection.target.resident_tokens, 1);
+        assert_eq!(projection.target.committed_tokens, 1);
+        assert_eq!(projection.draft.resident_tokens, 1);
+        assert_eq!(projection.draft.committed_tokens, 1);
+        assert_eq!(batch, batch_before);
+        assert_eq!(other.projection(), other_before);
+
+        let before_replay = selected.projection();
+        assert_eq!(
+            settle_prepared(&batch, &mut selected, &mut other, &index, 0),
+            Err(RequestIsolationError::Physical(
+                PhysicalKvError::SettlementCursorMismatch
+            ))
+        );
+        assert_eq!(selected.projection(), before_replay);
+    }
+
+    #[test]
+    fn full_acceptance_keeps_every_resident_role_input() {
+        let (batch, mut selected, mut other, index) =
+            prepared_speculative_round(Qwen3PlanBucket::SpeculativeS1K4C8192, 4, 0);
+        let outcome = settle_prepared(&batch, &mut selected, &mut other, &index, 4).unwrap();
+        assert_eq!(outcome.target_commit_end, 5);
+        assert_eq!(outcome.draft_commit_end, 4);
+        assert_eq!(outcome.target_retired_pages, 0);
+        assert_eq!(outcome.draft_retired_pages, 0);
+        let projection = selected.projection();
+        assert_eq!(projection.target.resident_tokens, 5);
+        assert_eq!(projection.target.committed_tokens, 5);
+        assert_eq!(projection.draft.resident_tokens, 4);
+        assert_eq!(projection.draft.committed_tokens, 4);
+    }
+
+    #[test]
+    fn nonaligned_commit_shrinks_retained_prefix_after_retiring_last_page() {
+        let (batch, mut selected, mut other, index) =
+            prepared_speculative_round(Qwen3PlanBucket::SpeculativeS1K16C8192, 16, 0);
+        assert_eq!(selected.target.page_count(), 2);
+        assert_eq!(selected.draft.page_count(), 1);
+        let outcome = settle_prepared(&batch, &mut selected, &mut other, &index, 0).unwrap();
+        assert_eq!(outcome.target_commit_end, 1);
+        assert_eq!(outcome.target_retired_pages, 1);
+        assert_eq!(outcome.draft_retired_pages, 0);
+        assert_eq!(selected.target.page_count(), 1);
+        assert_eq!(selected.draft.page_count(), 1);
+        assert!(map_isolated_token(
+            &batch,
+            &selected,
+            &other,
+            index.request,
+            Qwen3ModelRole::Target8B,
+            0,
+        )
+        .is_ok());
+        assert_eq!(
+            map_isolated_token(
+                &batch,
+                &selected,
+                &other,
+                index.request,
+                Qwen3ModelRole::Target8B,
+                1,
+            ),
+            Err(RequestIsolationError::Physical(
+                PhysicalKvError::LogicalPositionOutOfRange
+            ))
+        );
+    }
+
+    #[test]
+    fn retirement_capacity_is_checked_before_either_role_mutates() {
+        let (batch, mut selected, mut other, index) =
+            prepared_speculative_round(Qwen3PlanBucket::SpeculativeS1K16C8192, 16, 0);
+        selected.target_retired_pages = u32::MAX;
+        let selected_before = selected.projection();
+        let other_before = other.projection();
+        assert_eq!(
+            settle_prepared(&batch, &mut selected, &mut other, &index, 0),
+            Err(RequestIsolationError::RetiredPageCountExhausted)
+        );
+        assert_eq!(selected.projection(), selected_before);
+        assert_eq!(other.projection(), other_before);
+        assert_eq!(selected.target.page_count(), 2);
+        assert_eq!(selected.draft.page_count(), 1);
+    }
+
+    #[test]
+    fn invalid_second_role_leaves_preflighted_target_unchanged() {
+        let (batch, mut selected, mut other, index) =
+            prepared_speculative_round(Qwen3PlanBucket::SpeculativeS1K4C8192, 4, 0);
+        apply_isolated_kv_action(
+            &batch,
+            &mut selected,
+            &mut other,
+            index.request,
+            Qwen3ModelRole::Draft06B,
+            IsolatedKvAction::RollbackToken {
+                after_epoch: index.completion_epoch,
+            },
+        )
+        .unwrap();
+        let selected_before = selected.projection();
+        let target_pages_before = selected.target.page_count();
+        assert_eq!(
+            settle_prepared(&batch, &mut selected, &mut other, &index, 0),
+            Err(RequestIsolationError::Physical(
+                PhysicalKvError::SettlementIntervalMismatch
+            ))
+        );
+        assert_eq!(selected.projection(), selected_before);
+        assert_eq!(selected.target.page_count(), target_pages_before);
+    }
+
+    #[test]
+    fn settlement_expectation_and_accepted_count_drift_fail_before_mutation() {
+        let (batch, mut selected, mut other, index) =
+            prepared_speculative_round(Qwen3PlanBucket::SpeculativeS1K4C8192, 4, 0);
+        let exact = IsolatedSpeculativeKvExpectation::new(
+            index.request,
+            index.completion_epoch,
+            index.plan_id,
+            index.target_selection,
+            index.draft_selection,
+        );
+        let before = selected.projection();
+
+        let mut changed = exact;
+        changed.request = RequestId::new(index.request.slot(), index.request.generation() + 1);
+        assert_eq!(
+            settle_isolated_speculative_kv(&batch, &mut selected, &mut other, &index, 0, &changed,),
+            Err(RequestIsolationError::StaleRequest)
+        );
+        changed = exact;
+        changed.completion_epoch = CompletionEpoch::new(index.completion_epoch.value + 1);
+        assert_eq!(
+            settle_isolated_speculative_kv(&batch, &mut selected, &mut other, &index, 0, &changed,),
+            Err(RequestIsolationError::EpochMismatch)
+        );
+        changed = exact;
+        changed.plan_id = Identity::new([24; 32]);
+        assert_eq!(
+            settle_isolated_speculative_kv(&batch, &mut selected, &mut other, &index, 0, &changed,),
+            Err(RequestIsolationError::InvalidSpeculativeIndex)
+        );
+        changed = exact;
+        changed.target_selection.bucket = Qwen3PlanBucket::SpeculativeS1K8C8192;
+        assert_eq!(
+            settle_isolated_speculative_kv(&batch, &mut selected, &mut other, &index, 0, &changed,),
+            Err(RequestIsolationError::PlanPairMismatch)
+        );
+        assert_eq!(
+            settle_isolated_speculative_kv(&batch, &mut selected, &mut other, &index, 5, &exact,),
+            Err(RequestIsolationError::AcceptedCountOutOfRange)
+        );
+        assert_eq!(selected.projection(), before);
     }
 
     #[test]

@@ -131,6 +131,11 @@ pub enum PhysicalKvError {
     UninitializedRead,
     CommitExceedsResident,
     NoTentativeToken,
+    SettlementCursorMismatch,
+    SettlementIntervalMismatch,
+    SettlementTailTooWide,
+    SettlementPageCountMismatch,
+    SettlementPhysicalAlias,
     ZeroRetirementEpoch,
     RetirementEpochMismatch,
     NoPageToRetire,
@@ -146,6 +151,23 @@ pub struct KvQuiescenceAuthority {
     request: RequestId,
     role: Qwen3ModelRole,
     exact_epoch: CompletionEpoch,
+}
+
+/// Private checked authority for one infallible speculative tail settlement.
+/// The token is non-clone and its fields have no public constructor.
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) struct PhysicalKvSettlementPermit {
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+    after_epoch: CompletionEpoch,
+    pre_committed: u32,
+    tentative_end: u32,
+    commit_end: u32,
+    old_page_count: u32,
+    next_page_count: u32,
+    retired_pages: u32,
+    retired_page: Option<PhysicalPageId>,
+    retained_page: Option<PhysicalPageId>,
 }
 
 impl KvQuiescenceAuthority {
@@ -1063,6 +1085,519 @@ pub fn rollback_physical_token(
     Ok(())
 }
 
+pub(crate) closed spec fn settlement_page_count(tokens: u32) -> u32 {
+    if tokens == 0 {
+        0
+    } else {
+        ((tokens as int - 1) / M1_KV_PAGE_TOKENS as int + 1) as u32
+    }
+}
+
+fn physical_page_count(tokens: u32) -> (count: u32)
+    ensures count == settlement_page_count(tokens),
+{
+    if tokens == 0 {
+        0
+    } else {
+        (tokens - 1) / M1_KV_PAGE_TOKENS + 1
+    }
+}
+
+closed spec fn affected_settlement_page_valid(
+    state: &PhysicalKvState,
+    position: int,
+) -> bool {
+    &&& 0 <= position < state.page_count
+    &&& state.page_table@[position].is_some()
+    &&& {
+        let page = state.page_table@[position].unwrap();
+        let slot = state.page_slots@[page.index as int];
+        &&& role_matches(page.role, state.selection.role)
+        &&& page.index < M1_KV_PHYSICAL_PAGE_SLOTS
+        &&& page.generation > 0
+        &&& slot.generation == page.generation
+        &&& exclusive_owner_matches(slot.ownership, state.request, state.selection.role)
+        &&& slot.initialized_prefix as int == if position + 1 < state.page_count as int {
+            M1_KV_PAGE_TOKENS as int
+        } else {
+            state.resident_tokens as int - position * M1_KV_PAGE_TOKENS as int
+        }
+        &&& forall|other: int|
+            0 <= other < M1_KV_PAGE_TABLE_ENTRIES && other != position
+                && state.page_table@[other].is_some()
+                ==> state.page_table@[other].unwrap().index != page.index
+    }
+}
+
+pub(crate) closed spec fn physical_settlement_enabled(
+    state: &PhysicalKvState,
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+    after_epoch: CompletionEpoch,
+    pre_committed: u32,
+    tentative_end: u32,
+    commit_end: u32,
+) -> bool {
+    &&& lifecycle_matches(state.lifecycle, PhysicalKvLifecycle::Active)
+    &&& same_request(state.request, request)
+    &&& state.selection == selection
+    &&& after_epoch.value > 0
+    &&& state.committed_tokens == pre_committed
+    &&& state.resident_tokens == tentative_end
+    &&& pre_committed <= commit_end <= tentative_end
+    &&& tentative_end as int - commit_end as int <= M1_KV_PAGE_TOKENS
+    &&& state.page_count == settlement_page_count(tentative_end)
+    &&& state.page_count <= M1_KV_PAGE_TABLE_ENTRIES
+    &&& settlement_page_count(commit_end) <= state.page_count
+    &&& state.page_count as int - settlement_page_count(commit_end) as int <= 1
+    &&& if pre_committed < tentative_end {
+        forall|position: int|
+            pre_committed as int / M1_KV_PAGE_TOKENS as int <= position
+                && position < state.page_count as int
+                ==> #[trigger] affected_settlement_page_valid(state, position)
+    } else {
+        true
+    }
+}
+
+impl PhysicalKvSettlementPermit {
+    pub(crate) closed spec fn valid_for(&self, state: &PhysicalKvState) -> bool {
+        let shrink_retained_tail = self.commit_end < self.tentative_end
+            && self.commit_end % M1_KV_PAGE_TOKENS != 0;
+        &&& physical_settlement_enabled(
+            state,
+            self.request,
+            self.selection,
+            self.after_epoch,
+            self.pre_committed,
+            self.tentative_end,
+            self.commit_end,
+        )
+        &&& self.old_page_count == state.page_count
+        &&& self.next_page_count == settlement_page_count(self.commit_end)
+        &&& self.retired_pages as int
+            == state.page_count as int - self.next_page_count as int
+        &&& if self.retired_pages == 1 {
+            &&& self.old_page_count > 0
+            &&& self.retired_page.is_some()
+            &&& state.page_table@[self.old_page_count as int - 1]
+                == self.retired_page
+            &&& self.retired_page.unwrap().index < M1_KV_PHYSICAL_PAGE_SLOTS
+        } else {
+            self.retired_page.is_none()
+        }
+        &&& if shrink_retained_tail {
+            &&& self.next_page_count > 0
+            &&& self.retained_page.is_some()
+            &&& state.page_table@[self.next_page_count as int - 1]
+                == self.retained_page
+            &&& self.retained_page.unwrap().index < M1_KV_PHYSICAL_PAGE_SLOTS
+        } else {
+            self.retained_page.is_none()
+        }
+        &&& (self.retired_page.is_some() && self.retained_page.is_some()
+            ==> self.retired_page.unwrap().index != self.retained_page.unwrap().index)
+    }
+
+    pub(crate) closed spec fn retired_pages_spec(&self) -> u32 { self.retired_pages }
+
+    pub(crate) closed spec fn after_epoch_spec(&self) -> CompletionEpoch { self.after_epoch }
+
+    pub(crate) closed spec fn tentative_end_spec(&self) -> u32 { self.tentative_end }
+
+    pub(crate) closed spec fn commit_end_spec(&self) -> u32 { self.commit_end }
+
+    pub(crate) fn retired_pages(&self) -> (count: u32)
+        ensures count == self.retired_pages_spec(),
+    {
+        self.retired_pages
+    }
+}
+
+pub closed spec fn physical_speculative_settlement_matches(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    after_epoch: CompletionEpoch,
+    tentative_end: u32,
+    commit_end: u32,
+    retired_pages: u32,
+) -> bool {
+    let next_page_count = settlement_page_count(commit_end);
+    let old_page = if retired_pages == 1 {
+        before.page_table@[before.page_count as int - 1].unwrap()
+    } else {
+        PhysicalPageId {
+            role: before.selection.role,
+            index: 0,
+            generation: 0,
+        }
+    };
+    let table_after_retirement = if retired_pages == 1 {
+        before.page_table@.update(before.page_count as int - 1, None)
+    } else {
+        before.page_table@
+    };
+    let slots_after_retirement = if retired_pages == 1 {
+        before.page_slots@.update(
+            old_page.index as int,
+            PhysicalPageSlot {
+                generation: old_page.generation,
+                ownership: PhysicalPageOwnership::Retired {
+                    request: before.request,
+                    role: before.selection.role,
+                    after_epoch,
+                },
+                initialized_prefix: before.page_slots@[old_page.index as int].initialized_prefix,
+            },
+        )
+    } else {
+        before.page_slots@
+    };
+    let shrink_retained_tail = commit_end < tentative_end
+        && commit_end % M1_KV_PAGE_TOKENS != 0;
+    let retained_page = if shrink_retained_tail {
+        before.page_table@[next_page_count as int - 1].unwrap()
+    } else {
+        old_page
+    };
+    let expected_slots = if shrink_retained_tail {
+        let retained_slot = slots_after_retirement[retained_page.index as int];
+        slots_after_retirement.update(
+            retained_page.index as int,
+            PhysicalPageSlot {
+                generation: retained_slot.generation,
+                ownership: retained_slot.ownership,
+                initialized_prefix: commit_end % M1_KV_PAGE_TOKENS,
+            },
+        )
+    } else {
+        slots_after_retirement
+    };
+    &&& after.immutable_frame(before)
+    &&& after.lifecycle == before.lifecycle
+    &&& after.resident_tokens == commit_end
+    &&& after.committed_tokens == commit_end
+    &&& after.page_count == next_page_count
+    &&& after.page_table@ == table_after_retirement
+    &&& after.page_slots@ == expected_slots
+}
+
+pub(crate) closed spec fn physical_settlement_transition(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    permit: &PhysicalKvSettlementPermit,
+) -> bool {
+    physical_speculative_settlement_matches(
+        before,
+        after,
+        permit.after_epoch,
+        permit.tentative_end,
+        permit.commit_end,
+        permit.retired_pages,
+    )
+}
+
+/// Checks the complete affected tail without mutating physical authority.
+pub(crate) fn preflight_physical_speculative_settlement(
+    state: &PhysicalKvState,
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+    after_epoch: CompletionEpoch,
+    pre_committed: u32,
+    tentative_end: u32,
+    commit_end: u32,
+) -> (result: Result<PhysicalKvSettlementPermit, PhysicalKvError>)
+    ensures match result {
+        Ok(permit) => {
+            &&& permit.valid_for(state)
+            &&& permit.after_epoch_spec() == after_epoch
+            &&& permit.tentative_end_spec() == tentative_end
+            &&& permit.commit_end_spec() == commit_end
+        },
+        Err(_) => true,
+    },
+{
+    proof {
+        reveal(physical_settlement_enabled);
+        reveal(affected_settlement_page_valid);
+        reveal(PhysicalKvSettlementPermit::valid_for);
+    }
+    validate_active_authority(state, request, selection)?;
+    if after_epoch.value == 0 {
+        return Err(PhysicalKvError::ZeroRetirementEpoch);
+    }
+    if state.committed_tokens != pre_committed {
+        return Err(PhysicalKvError::SettlementCursorMismatch);
+    }
+    if state.resident_tokens != tentative_end {
+        return Err(PhysicalKvError::SettlementIntervalMismatch);
+    }
+    if pre_committed > commit_end || commit_end > tentative_end {
+        return Err(PhysicalKvError::SettlementIntervalMismatch);
+    }
+    if tentative_end - commit_end > M1_KV_PAGE_TOKENS {
+        return Err(PhysicalKvError::SettlementTailTooWide);
+    }
+    let expected_page_count = physical_page_count(tentative_end);
+    let next_page_count = physical_page_count(commit_end);
+    if state.page_count != expected_page_count
+        || state.page_count > M1_KV_PAGE_TABLE_ENTRIES_U32
+        || next_page_count > state.page_count
+        || state.page_count - next_page_count > 1
+    {
+        return Err(PhysicalKvError::SettlementPageCountMismatch);
+    }
+    if pre_committed < tentative_end {
+        let mut position = pre_committed / M1_KV_PAGE_TOKENS;
+        while position < state.page_count
+            invariant
+                pre_committed < tentative_end,
+                state.resident_tokens == tentative_end,
+                position <= state.page_count,
+                state.page_count <= M1_KV_PAGE_TABLE_ENTRIES,
+                state.page_table@.len() == M1_KV_PAGE_TABLE_ENTRIES,
+                state.page_slots@.len() == M1_KV_PHYSICAL_PAGE_SLOTS,
+                forall|prior: int|
+                    pre_committed as int / M1_KV_PAGE_TOKENS as int <= prior
+                        && prior < position as int
+                        ==> #[trigger] affected_settlement_page_valid(state, prior),
+            decreases state.page_count - position,
+        {
+            let Some(page) = state.page_table[position as usize] else {
+                return Err(PhysicalKvError::MissingPage);
+            };
+            if !same_role(page.role, state.selection.role) {
+                return Err(PhysicalKvError::RoleMismatch);
+            }
+            if page.index >= M1_KV_PHYSICAL_PAGE_SLOTS_U32 {
+                return Err(PhysicalKvError::PageOutOfRange);
+            }
+            let slot = state.page_slots[page.index as usize];
+            if page.generation == 0 || slot.generation != page.generation {
+                return Err(PhysicalKvError::PageGenerationMismatch);
+            }
+            if !is_exclusive_owner(slot.ownership, state.request, state.selection.role) {
+                return Err(PhysicalKvError::PageOwnershipMismatch);
+            }
+            let Some(page_start) = position.checked_mul(M1_KV_PAGE_TOKENS) else {
+                return Err(PhysicalKvError::SettlementPageCountMismatch);
+            };
+            if page_start >= tentative_end {
+                return Err(PhysicalKvError::SettlementPageCountMismatch);
+            }
+            let expected_prefix = if position + 1 < state.page_count {
+                M1_KV_PAGE_TOKENS
+            } else {
+                tentative_end - page_start
+            };
+            if slot.initialized_prefix != expected_prefix {
+                return Err(PhysicalKvError::UninitializedRead);
+            }
+            let mut other = 0u32;
+            while other < M1_KV_PAGE_TABLE_ENTRIES_U32
+                invariant
+                    other <= M1_KV_PAGE_TABLE_ENTRIES,
+                    position < state.page_count,
+                    state.resident_tokens == tentative_end,
+                    state.page_count <= M1_KV_PAGE_TABLE_ENTRIES,
+                    state.page_table@.len() == M1_KV_PAGE_TABLE_ENTRIES,
+                    state.page_table@[position as int].is_some(),
+                    state.page_table@[position as int].unwrap() == page,
+                    forall|prior: int| 0 <= prior < other as int && prior != position as int
+                        && state.page_table@[prior].is_some()
+                        ==> state.page_table@[prior].unwrap().index != page.index,
+                decreases M1_KV_PAGE_TABLE_ENTRIES - other,
+            {
+                if other != position {
+                    if let Some(alias) = state.page_table[other as usize] {
+                        if alias.index == page.index {
+                            return Err(PhysicalKvError::SettlementPhysicalAlias);
+                        }
+                    }
+                }
+                other += 1;
+            }
+            assert forall|other: int|
+                0 <= other < M1_KV_PAGE_TABLE_ENTRIES && other != position as int
+                    && state.page_table@[other].is_some()
+                    implies state.page_table@[other].unwrap().index != page.index by {
+                assert(state.page_table@[other].unwrap().index != page.index);
+            }
+            assert(affected_settlement_page_valid(state, position as int)) by {
+                reveal(affected_settlement_page_valid);
+                assert(0 <= (position as int)
+                    && (position as int) < (state.page_count as int));
+                assert(state.page_table@[position as int].is_some());
+                assert(state.page_table@[position as int].unwrap() == page);
+                assert(role_matches(page.role, state.selection.role));
+                assert(page.index < M1_KV_PHYSICAL_PAGE_SLOTS);
+                assert(slot.generation == page.generation);
+                assert(exclusive_owner_matches(
+                    slot.ownership,
+                    state.request,
+                    state.selection.role,
+                ));
+                assert(page_start as int
+                    == position as int * M1_KV_PAGE_TOKENS as int);
+                assert((position + 1 < state.page_count)
+                    == (position as int + 1 < state.page_count as int));
+                assert(slot.initialized_prefix == expected_prefix);
+                if position + 1 < state.page_count {
+                    assert(expected_prefix == M1_KV_PAGE_TOKENS);
+                } else {
+                    assert(expected_prefix == tentative_end - page_start);
+                    assert(state.resident_tokens == tentative_end);
+                }
+                assert(slot.initialized_prefix as int == if position as int + 1
+                    < state.page_count as int
+                {
+                    M1_KV_PAGE_TOKENS as int
+                } else {
+                    state.resident_tokens as int
+                        - position as int * M1_KV_PAGE_TOKENS as int
+                });
+            }
+            position += 1;
+        }
+        assert forall|position: int|
+            pre_committed as int / M1_KV_PAGE_TOKENS as int <= position
+                && position < state.page_count as int
+                implies #[trigger] affected_settlement_page_valid(state, position) by {
+            assert(affected_settlement_page_valid(state, position));
+        }
+    }
+    let retired_pages = state.page_count - next_page_count;
+    let retired_page = if retired_pages == 1 {
+        state.page_table[(state.page_count - 1) as usize]
+    } else {
+        None
+    };
+    if retired_pages == 1 && retired_page.is_none() {
+        return Err(PhysicalKvError::MissingPage);
+    }
+    let shrink_retained_tail = commit_end < tentative_end
+        && !commit_end.is_multiple_of(M1_KV_PAGE_TOKENS);
+    let retained_page = if shrink_retained_tail {
+        state.page_table[(next_page_count - 1) as usize]
+    } else {
+        None
+    };
+    if shrink_retained_tail && retained_page.is_none() {
+        return Err(PhysicalKvError::MissingPage);
+    }
+    if let Some(page) = retired_page {
+        if page.index >= M1_KV_PHYSICAL_PAGE_SLOTS_U32 {
+            return Err(PhysicalKvError::PageOutOfRange);
+        }
+    }
+    if let Some(page) = retained_page {
+        if page.index >= M1_KV_PHYSICAL_PAGE_SLOTS_U32 {
+            return Err(PhysicalKvError::PageOutOfRange);
+        }
+    }
+    if let (Some(retired), Some(retained)) = (retired_page, retained_page) {
+        if retired.index == retained.index {
+            return Err(PhysicalKvError::SettlementPhysicalAlias);
+        }
+    }
+    proof {
+        assert(physical_settlement_enabled(
+            state,
+            request,
+            selection,
+            after_epoch,
+            pre_committed,
+            tentative_end,
+            commit_end,
+        ));
+        assert(retired_pages as int
+            == state.page_count as int - next_page_count as int);
+        if retired_pages == 1 {
+            assert(state.page_count > 0);
+            assert(retired_page.is_some());
+            assert(state.page_table@[state.page_count as int - 1] == retired_page);
+            assert(retired_page.unwrap().index < M1_KV_PHYSICAL_PAGE_SLOTS);
+        } else {
+            assert(retired_pages == 0);
+            assert(retired_page.is_none());
+        }
+        if shrink_retained_tail {
+            assert(next_page_count > 0);
+            assert(retained_page.is_some());
+            assert(state.page_table@[next_page_count as int - 1] == retained_page);
+            assert(retained_page.unwrap().index < M1_KV_PHYSICAL_PAGE_SLOTS);
+        } else {
+            assert(retained_page.is_none());
+        }
+        assert(retired_page.is_some() && retained_page.is_some()
+            ==> retired_page.unwrap().index != retained_page.unwrap().index);
+    }
+    let permit = PhysicalKvSettlementPermit {
+        request,
+        selection,
+        after_epoch,
+        pre_committed,
+        tentative_end,
+        commit_end,
+        old_page_count: state.page_count,
+        next_page_count,
+        retired_pages,
+        retired_page,
+        retained_page,
+    };
+    assert(permit.valid_for(state));
+    Ok(permit)
+}
+
+/// Applies a previously checked settlement with no fallible second stage.
+pub(crate) fn apply_preflighted_physical_speculative_settlement(
+    state: &mut PhysicalKvState,
+    permit: PhysicalKvSettlementPermit,
+)
+    requires permit.valid_for(old(state)),
+    ensures
+        physical_settlement_transition(old(state), final(state), &permit),
+        physical_speculative_settlement_matches(
+            old(state),
+            final(state),
+            permit.after_epoch_spec(),
+            permit.tentative_end_spec(),
+            permit.commit_end_spec(),
+            permit.retired_pages_spec(),
+        ),
+{
+    proof {
+        reveal(PhysicalKvSettlementPermit::valid_for);
+        reveal(physical_settlement_enabled);
+        reveal(physical_settlement_transition);
+        reveal(physical_speculative_settlement_matches);
+        reveal(affected_settlement_page_valid);
+        reveal(PhysicalKvState::immutable_frame);
+    }
+    let next_page_count = permit.next_page_count;
+    if let Some(page) = permit.retired_page {
+        let table_position = permit.old_page_count - 1;
+        let initialized_prefix = state.page_slots[page.index as usize].initialized_prefix;
+        state.page_table[table_position as usize] = None;
+        state.page_slots[page.index as usize] = PhysicalPageSlot {
+            generation: page.generation,
+            ownership: PhysicalPageOwnership::Retired {
+                request: state.request,
+                role: state.selection.role,
+                after_epoch: permit.after_epoch,
+            },
+            initialized_prefix,
+        };
+    }
+    if let Some(retained_page) = permit.retained_page {
+        state.page_slots[retained_page.index as usize].initialized_prefix =
+            permit.commit_end % M1_KV_PAGE_TOKENS;
+    }
+    state.page_count = next_page_count;
+    state.resident_tokens = permit.commit_end;
+    state.committed_tokens = permit.commit_end;
+}
+
 pub closed spec fn cancel_enabled(
     state: &PhysicalKvState,
     request: RequestId,
@@ -1481,6 +2016,97 @@ mod tests {
                 page: second,
                 offset: 0
             })
+        );
+    }
+
+    fn target_with_seventeen_tokens() -> (PhysicalKvState, PhysicalPageId, PhysicalPageId) {
+        let selection = target_decode();
+        let mut state = PhysicalKvState::new(request(), selection).unwrap();
+        let first = append_and_write(&mut state, selection, 9, M1_KV_PAGE_TOKENS);
+        let second = append_and_write(&mut state, selection, 2, 1);
+        (state, first, second)
+    }
+
+    #[test]
+    fn whole_tail_preflight_rejects_stale_alias_owner_and_prefix_metadata() {
+        let selection = target_decode();
+        let epoch = CompletionEpoch::new(41);
+
+        let (mut stale, _, stale_page) = target_with_seventeen_tokens();
+        stale.page_slots[stale_page.index as usize].generation += 1;
+        let before = stale.logical_state();
+        assert_eq!(
+            preflight_physical_speculative_settlement(
+                &stale,
+                request(),
+                selection,
+                epoch,
+                0,
+                17,
+                1,
+            ),
+            Err(PhysicalKvError::PageGenerationMismatch)
+        );
+        assert_eq!(stale.logical_state(), before);
+
+        let (mut wrong_owner, _, owner_page) = target_with_seventeen_tokens();
+        wrong_owner.page_slots[owner_page.index as usize].ownership = PhysicalPageOwnership::Free;
+        assert_eq!(
+            preflight_physical_speculative_settlement(
+                &wrong_owner,
+                request(),
+                selection,
+                epoch,
+                0,
+                17,
+                1,
+            ),
+            Err(PhysicalKvError::PageOwnershipMismatch)
+        );
+
+        let (mut wrong_prefix, _, prefix_page) = target_with_seventeen_tokens();
+        wrong_prefix.page_slots[prefix_page.index as usize].initialized_prefix = 2;
+        assert_eq!(
+            preflight_physical_speculative_settlement(
+                &wrong_prefix,
+                request(),
+                selection,
+                epoch,
+                0,
+                17,
+                1,
+            ),
+            Err(PhysicalKvError::UninitializedRead)
+        );
+
+        let (mut alias, first_page, _) = target_with_seventeen_tokens();
+        alias.page_table[1] = Some(first_page);
+        assert_eq!(
+            preflight_physical_speculative_settlement(
+                &alias,
+                request(),
+                selection,
+                epoch,
+                0,
+                17,
+                1,
+            ),
+            Err(PhysicalKvError::SettlementPhysicalAlias)
+        );
+
+        let (mut full_acceptance_stale, first_page, _) = target_with_seventeen_tokens();
+        full_acceptance_stale.page_slots[first_page.index as usize].generation += 1;
+        assert_eq!(
+            preflight_physical_speculative_settlement(
+                &full_acceptance_stale,
+                request(),
+                selection,
+                epoch,
+                0,
+                17,
+                17,
+            ),
+            Err(PhysicalKvError::PageGenerationMismatch)
         );
     }
 
