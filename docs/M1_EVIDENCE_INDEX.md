@@ -98,7 +98,7 @@ paths. The version 1 registry is:
 | Unsupported rationale | `proofs/m1/evidence/validate-unsupported-rationale.py` | `ferric.m1-validator.unsupported-rationale.v1` |
 | Verus theorem | `proofs/m1/evidence/validate-verus-theorem.py` | `ferric.m1-validator.verus-theorem.v1` |
 
-The artifact-identity, canonical-structure, external-contract,
+The artifact-identity, canonical-structure, external-contract, fe2o3-contract,
 negative-mutation, TCB-report,
 unsupported-rationale, and Verus-theorem validators are `ExistingFoundation`
 inputs with exact source SHA-256 values pinned in the checker-owned registry.
@@ -114,7 +114,15 @@ validator accepts only a canonical runtime-profile declaration of the four
 fixed compiler, runtime, driver/firmware, and hardware assumptions for the
 exact identity-bound Open obligation. It does not establish that an assumption
 is implemented or satisfied. Its exact report layout and authority boundary
-are documented in `proofs/m1/evidence/EXTERNAL_CONTRACT.md`. The TCB-report
+are documented in `proofs/m1/evidence/EXTERNAL_CONTRACT.md`. The fe2o3-contract
+validator accepts only a canonical contract body and deterministic one-property,
+one-obligation `ContractSetV1` declaration for the exact Open binding. It binds
+the manifest-declared assurance roster, obligation, path, profile, target,
+Ferric and fe2o3 source closures, and complete outer TCB. Structural acceptance
+does not establish implementation, proof, machine refinement, load, launch,
+hardware, performance, or qualification authority. Its exact file layout and
+authority boundary are documented in
+`proofs/m1/evidence/FE2O3_CONTRACT.md`. The TCB-report
 validator binds each compiler, hardware, or runtime TCB report to the complete
 Open M1 obligation, path, profile, source, target, component, and checker-owned
 validator rosters. It authenticates a trusted-boundary declaration only; its

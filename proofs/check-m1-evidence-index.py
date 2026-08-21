@@ -77,7 +77,7 @@ TRUSTED_VALIDATORS = {
     "fe2o3-contract": (
         "proofs/m1/evidence/validate-fe2o3-contract.py",
         "ferric.m1-validator.fe2o3-contract.v1",
-        None,
+        "8e493c1146c4a8e6b2b9992b42e33aabf63b0a6dcd5af87897324cfa9433e024",
     ),
     "hardware-test": (
         "proofs/m1/evidence/validate-hardware-transcript.py",
