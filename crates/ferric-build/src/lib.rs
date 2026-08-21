@@ -10,6 +10,7 @@
 
 mod bundle;
 mod json;
+mod plan;
 mod safetensors;
 mod sha256;
 mod tokenizer;
@@ -19,6 +20,10 @@ pub use bundle::{
     decode_canonical_deployment_bundle, encode_canonical_deployment_bundle, CanonicalBundleError,
     CanonicalDeploymentBundle, CANONICAL_DEPLOYMENT_BUNDLE_BYTES,
     CANONICAL_DEPLOYMENT_BUNDLE_VERSION,
+};
+pub use plan::{
+    build_sequential_plan_catalog, SequentialPlanCatalog, SequentialPlanError,
+    SEQUENTIAL_PLAN_CATALOG_ENTRIES, SEQUENTIAL_PLAN_CATALOG_VERSION,
 };
 pub use safetensors::{
     authenticate_qwen3_draft_weights, authenticate_qwen3_target_weights, AuthenticatedWeightSet,
