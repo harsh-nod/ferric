@@ -107,7 +107,7 @@ TRUSTED_VALIDATORS = {
     "tcb-report": (
         "proofs/m1/evidence/validate-tcb-report.py",
         "ferric.m1-validator.tcb-report.v1",
-        None,
+        "2fe6de0da707b36d46d4e68c1cc3657c14fdf1225b0491acd8baee696f68460f",
     ),
     "unsupported-rationale": (
         "proofs/m1/evidence/validate-unsupported-rationale.py",
