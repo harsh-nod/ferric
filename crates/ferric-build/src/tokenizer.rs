@@ -21,6 +21,7 @@ const MAX_TOKENIZER_PARSE_BYTES: usize = TOKENIZER_JSON_BYTES + 4_096;
 const STREAM_BUFFER_BYTES: usize = 64 * 1_024;
 const BASE_VOCABULARY_SIZE: u32 = 151_643;
 const MERGE_COUNT: usize = 151_387;
+type OrderedMerges = Vec<(String, String)>;
 const TOKENIZER_JSON_SHA256: [u8; 32] = QWEN3_TOKENIZER_SHA256;
 const VOCABULARY_SEMANTIC_SHA256: [u8; 32] =
     decode_hex_32(b"d42824870d58ccbf38bc6d29b312cc4550c8543f448c45fe644dd041f3eff638");
@@ -477,7 +478,7 @@ fn validate_vocabulary(value: Value) -> Result<([u8; 32], Vec<String>), Tokenize
     Ok((digest, tokens))
 }
 
-fn validate_merges(value: Value) -> Result<([u8; 32], Vec<(String, String)>), TokenizerError> {
+fn validate_merges(value: Value) -> Result<([u8; 32], OrderedMerges), TokenizerError> {
     let Value::Array(merges) = value else {
         return Err(wrong_type("$.model.merges"));
     };

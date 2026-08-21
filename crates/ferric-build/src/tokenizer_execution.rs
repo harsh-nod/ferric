@@ -577,8 +577,7 @@ fn byte_to_unicode(byte: u8) -> Option<char> {
 
 fn unicode_to_byte(symbol: char) -> Option<u8> {
     let codepoint = u32::from(symbol);
-    if codepoint <= u32::from(u8::MAX) {
-        let byte = u8::try_from(codepoint).ok()?;
+    if let Ok(byte) = u8::try_from(codepoint) {
         if matches!(byte, b'!'..=b'~' | 0xA1..=0xAC | 0xAE..=0xFF) {
             return Some(byte);
         }
