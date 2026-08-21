@@ -7,28 +7,22 @@
 
 use crate::completion::CompletionEpoch;
 use crate::continuous_batching::{
-    apply_continuous_batch_step, apply_continuous_publish_step, continuous_batch_expected_error,
-    continuous_batch_step_refines, continuous_publish_step, publication_ready, ContinuousBatch,
-    ContinuousBatchAction, ContinuousBatchError, ContinuousRequest, M1_CONTINUOUS_BATCH_CAPACITY,
+    apply_continuous_batch_step, apply_continuous_publish_step, ContinuousBatch,
+    ContinuousBatchAction, ContinuousBatchError, ContinuousRequest,
 };
 use crate::graph::{
-    expected_step, expected_step_spec, plan_step_count, plan_step_count_spec, Qwen3ExecutionMode,
-    Qwen3PlanBucket, Qwen3PlanStep, QWEN3_DRAFT_PLAN_STEPS, QWEN3_TARGET_PLAN_STEPS,
+    expected_step, plan_step_count, Qwen3ExecutionMode, Qwen3PlanBucket, Qwen3PlanStep,
 };
 use crate::paged_kv_refinement::{
-    release_retired_enabled, release_retired_page, release_retired_transition,
-    released_generation_matches, rollback_enabled, rollback_physical_token,
-    rollback_tail_transition, write_at_transition, write_physical_token, write_token_enabled,
-    KvQuiescenceAuthority, PhysicalKvError, PhysicalKvState, PhysicalPageId,
+    release_retired_page, rollback_physical_token, write_physical_token, KvQuiescenceAuthority,
+    PhysicalKvError, PhysicalKvState, PhysicalPageId,
 };
 use crate::speculative_step_composition::{
-    atomic_speculative_step_transition, settle_and_publish_speculative_step,
-    AtomicSpeculativeStepError, AtomicSpeculativeStepOutcome,
+    settle_and_publish_speculative_step, AtomicSpeculativeStepError, AtomicSpeculativeStepOutcome,
 };
 use crate::step_plan_publication::{
-    publication_phase_matches, publication_transition, publish_reserved_delta, step_plan_matches,
-    target_publication_role, validate_step_plan, PublicationPhase, ReservedStateDelta,
-    SpeculativeTokenInputs, StepPlan, StepPublication, StepPublicationError,
+    publish_reserved_delta, validate_step_plan, ReservedStateDelta, SpeculativeTokenInputs,
+    StepPlan, StepPublication, StepPublicationError,
 };
 use crate::{
     Identity, IsolatedRequestKv, IsolatedSpeculativeKvExpectation, Qwen3ModelRole,
@@ -46,14 +40,14 @@ pub fn batching_publish_once_theorem(
 ) -> (result: Result<ContinuousRequest, ContinuousBatchError>)
     requires
         current.active_epoch_spec() == Some(epoch),
-        publication_ready(current),
+        crate::continuous_batching::publication_ready(current),
         current.published_for_active_epoch_spec(),
     ensures result == Err(ContinuousBatchError::AlreadyPublished),
 {
     let result = apply_continuous_publish_step(current, epoch, emitted_tokens);
-    assert(result == continuous_publish_step(current, epoch, emitted_tokens));
+    assert(result == crate::continuous_batching::continuous_publish_step(current, epoch, emitted_tokens));
     proof {
-        reveal(continuous_publish_step);
+        reveal(crate::continuous_batching::continuous_publish_step);
         reveal(ContinuousRequest::active_epoch_spec);
         reveal(ContinuousRequest::published_for_active_epoch_spec);
     }
@@ -69,7 +63,7 @@ pub fn batching_request_routing_theorem(
 ) -> (result: Result<(), ContinuousBatchError>)
     requires
         old(batch).valid(),
-        request.slot_spec() < M1_CONTINUOUS_BATCH_CAPACITY,
+        request.slot_spec() < crate::continuous_batching::M1_CONTINUOUS_BATCH_CAPACITY,
         old(batch).slots_spec()[request.slot_spec() as int].generation_spec()
             != request.generation_spec(),
     ensures
@@ -80,7 +74,7 @@ pub fn batching_request_routing_theorem(
     assert(entry == *old(batch));
     let result = apply_continuous_batch_step(batch, request, action);
     proof {
-        reveal(continuous_batch_expected_error);
+        reveal(crate::continuous_batching::continuous_batch_expected_error);
     }
     assert(result == Err(ContinuousBatchError::StaleGeneration));
     assert(*batch == entry);
@@ -95,11 +89,12 @@ pub fn graph_operator_order_theorem(
     ordinal: u32,
     admitted: Qwen3PlanStep,
 ) -> (step: Option<Qwen3PlanStep>)
-    requires expected_step_spec(role, mode, bucket, ordinal) == Some(admitted),
+    requires crate::graph::expected_step_spec(role, mode, bucket, ordinal) == Some(admitted),
     ensures step == Some(admitted),
 {
+    let _ = admitted;
     let step = expected_step(role, mode, bucket, ordinal);
-    assert(step == expected_step_spec(role, mode, bucket, ordinal));
+    assert(step == crate::graph::expected_step_spec(role, mode, bucket, ordinal));
     assert(step == Some(admitted));
     step
 }
@@ -107,18 +102,18 @@ pub fn graph_operator_order_theorem(
 /// Target and draft graphs retain their distinct exact finite step counts.
 pub fn graph_role_step_count_theorem(role: Qwen3ModelRole) -> (count: u32)
     ensures count == match role {
-        Qwen3ModelRole::Target8B => QWEN3_TARGET_PLAN_STEPS,
-        Qwen3ModelRole::Draft06B => QWEN3_DRAFT_PLAN_STEPS,
+        Qwen3ModelRole::Target8B => crate::graph::QWEN3_TARGET_PLAN_STEPS,
+        Qwen3ModelRole::Draft06B => crate::graph::QWEN3_DRAFT_PLAN_STEPS,
     },
 {
     let count = plan_step_count(role);
-    assert(count == plan_step_count_spec(role));
+    assert(count == crate::graph::plan_step_count_spec(role));
     proof {
-        reveal(plan_step_count_spec);
+        reveal(crate::graph::plan_step_count_spec);
     }
     assert(count == match role {
-        Qwen3ModelRole::Target8B => QWEN3_TARGET_PLAN_STEPS,
-        Qwen3ModelRole::Draft06B => QWEN3_DRAFT_PLAN_STEPS,
+        Qwen3ModelRole::Target8B => crate::graph::QWEN3_TARGET_PLAN_STEPS,
+        Qwen3ModelRole::Draft06B => crate::graph::QWEN3_DRAFT_PLAN_STEPS,
     });
     count
 }
@@ -132,17 +127,18 @@ pub fn isolation_other_request_frame_theorem(
 ) -> (result: Result<(), ContinuousBatchError>)
     requires
         old(batch).valid(),
-        other_slot < M1_CONTINUOUS_BATCH_CAPACITY,
+        other_slot < crate::continuous_batching::M1_CONTINUOUS_BATCH_CAPACITY,
         other_slot as int != request.slot_spec(),
     ensures
         final(batch).slots_spec()[other_slot as int]
             == old(batch).slots_spec()[other_slot as int],
 {
+    let _ = other_slot;
     let ghost entry = *batch;
     assert(entry == *old(batch));
     let result = apply_continuous_batch_step(batch, request, action);
     proof {
-        reveal(continuous_batch_step_refines);
+        reveal(crate::continuous_batching::continuous_batch_step_refines);
     }
     assert(batch.slots_spec()[other_slot as int]
         == entry.slots_spec()[other_slot as int]);
@@ -156,9 +152,9 @@ pub fn kv_release_generation_theorem(
     authority: &KvQuiescenceAuthority,
 ) -> (result: Result<PhysicalPageId, PhysicalKvError>)
     ensures
-        result.is_ok() == release_retired_enabled(old(state), page, authority),
+        result.is_ok() == crate::paged_kv_refinement::release_retired_enabled(old(state), page, authority),
         result.is_ok() ==> {
-            &&& release_retired_transition(old(state), final(state), page)
+            &&& crate::paged_kv_refinement::release_retired_transition(old(state), final(state), page)
             &&& result.unwrap().index_spec() == page.index_spec()
             &&& result.unwrap().generation_spec() as int
                 == page.generation_spec() as int + 1
@@ -168,9 +164,10 @@ pub fn kv_release_generation_theorem(
     let result = release_retired_page(state, page, authority);
     if result.is_ok() {
         let released = result.unwrap();
-        assert(released_generation_matches(released, page));
+        let _ = released;
+        assert(crate::paged_kv_refinement::released_generation_matches(released, page));
         proof {
-            reveal(released_generation_matches);
+            reveal(crate::paged_kv_refinement::released_generation_matches);
         }
         assert(released.index_spec() == page.index_spec());
         assert(released.generation_spec() as int == page.generation_spec() as int + 1);
@@ -186,15 +183,15 @@ pub fn kv_rollback_retirement_theorem(
     after_epoch: CompletionEpoch,
 ) -> (result: Result<(), PhysicalKvError>)
     ensures
-        result.is_ok() == rollback_enabled(old(state), request, selection, after_epoch),
-        result.is_ok() ==> rollback_tail_transition(old(state), final(state), after_epoch),
+        result.is_ok() == crate::paged_kv_refinement::rollback_enabled(old(state), request, selection, after_epoch),
+        result.is_ok() ==> crate::paged_kv_refinement::rollback_tail_transition(old(state), final(state), after_epoch),
         result.is_err() ==> *final(state) == *old(state),
 {
     let ghost entry = *state;
     assert(entry == *old(state));
     let result = rollback_physical_token(state, request, selection, after_epoch);
-    assert(result.is_ok() == rollback_enabled(&entry, request, selection, after_epoch));
-    assert(result.is_ok() ==> rollback_tail_transition(&entry, state, after_epoch));
+    assert(result.is_ok() == crate::paged_kv_refinement::rollback_enabled(&entry, request, selection, after_epoch));
+    assert(result.is_ok() ==> crate::paged_kv_refinement::rollback_tail_transition(&entry, state, after_epoch));
     result
 }
 
@@ -206,15 +203,15 @@ pub fn kv_write_prefix_theorem(
     logical_position: u32,
 ) -> (result: Result<(), PhysicalKvError>)
     ensures
-        result.is_ok() == write_token_enabled(old(state), request, selection, logical_position),
-        result.is_ok() ==> write_at_transition(old(state), final(state), logical_position),
+        result.is_ok() == crate::paged_kv_refinement::write_token_enabled(old(state), request, selection, logical_position),
+        result.is_ok() ==> crate::paged_kv_refinement::write_at_transition(old(state), final(state), logical_position),
         result.is_err() ==> *final(state) == *old(state),
 {
     let ghost entry = *state;
     assert(entry == *old(state));
     let result = write_physical_token(state, request, selection, logical_position);
-    assert(result.is_ok() == write_token_enabled(&entry, request, selection, logical_position));
-    assert(result.is_ok() ==> write_at_transition(&entry, state, logical_position));
+    assert(result.is_ok() == crate::paged_kv_refinement::write_token_enabled(&entry, request, selection, logical_position));
+    assert(result.is_ok() ==> crate::paged_kv_refinement::write_at_transition(&entry, state, logical_position));
     result
 }
 
@@ -223,15 +220,15 @@ pub fn publication_phase_transition_theorem(
     publication: &mut StepPublication,
 ) -> (result: Result<ReservedStateDelta, StepPublicationError>)
     ensures
-        result.is_ok() == publication_phase_matches(
+        result.is_ok() == crate::step_plan_publication::publication_phase_matches(
             old(publication).phase_spec(),
-            PublicationPhase::Validated,
+            crate::step_plan_publication::PublicationPhase::Validated,
         ),
         result.is_ok() ==> {
-            &&& publication_transition(old(publication), final(publication))
-            &&& publication_phase_matches(
+            &&& crate::step_plan_publication::publication_transition(old(publication), final(publication))
+            &&& crate::step_plan_publication::publication_phase_matches(
                 final(publication).phase_spec(),
-                PublicationPhase::Published,
+                crate::step_plan_publication::PublicationPhase::Published,
             )
         },
         result.is_err() ==> *final(publication) == *old(publication),
@@ -240,14 +237,14 @@ pub fn publication_phase_transition_theorem(
     assert(entry == *old(publication));
     let result = publish_reserved_delta(publication);
     if result.is_ok() {
-        assert(publication_transition(&entry, publication));
+        assert(crate::step_plan_publication::publication_transition(&entry, publication));
         proof {
-            reveal(publication_transition);
-            reveal(publication_phase_matches);
+            reveal(crate::step_plan_publication::publication_transition);
+            reveal(crate::step_plan_publication::publication_phase_matches);
         }
-        assert(publication_phase_matches(
+        assert(crate::step_plan_publication::publication_phase_matches(
             publication.phase_spec(),
-            PublicationPhase::Published,
+            crate::step_plan_publication::PublicationPhase::Published,
         ));
     }
     result
@@ -262,7 +259,7 @@ pub fn publication_plan_identity_theorem(
     expected_selection: Qwen3PlanSelection,
 ) -> (result: Result<(), StepPublicationError>)
     ensures
-        result.is_ok() == step_plan_matches(
+        result.is_ok() == crate::step_plan_publication::step_plan_matches(
             plan,
             expected_request,
             expected_epoch,
@@ -271,7 +268,7 @@ pub fn publication_plan_identity_theorem(
         ),
         result.is_ok() ==> {
             &&& crate::m1_completion::identity_present(*expected_plan_id)
-            &&& target_publication_role(expected_selection.role)
+            &&& crate::step_plan_publication::target_publication_role(expected_selection.role)
         },
 {
     let result = validate_step_plan(
@@ -282,7 +279,7 @@ pub fn publication_plan_identity_theorem(
         expected_selection,
     );
     if result.is_ok() {
-        assert(step_plan_matches(
+        assert(crate::step_plan_publication::step_plan_matches(
             plan,
             expected_request,
             expected_epoch,
@@ -290,10 +287,10 @@ pub fn publication_plan_identity_theorem(
             expected_selection,
         ));
         proof {
-            reveal(step_plan_matches);
+            reveal(crate::step_plan_publication::step_plan_matches);
         }
         assert(crate::m1_completion::identity_present(*expected_plan_id));
-        assert(target_publication_role(expected_selection.role));
+        assert(crate::step_plan_publication::target_publication_role(expected_selection.role));
     }
     result
 }
@@ -314,7 +311,7 @@ pub fn speculative_accepted_count_binding_theorem(
         *final(other) == *old(other),
         match result {
             Ok(outcome) => {
-                &&& atomic_speculative_step_transition(
+                &&& crate::speculative_step_composition::atomic_speculative_step_transition(
                     old(publication),
                     final(publication),
                     old(selected),
@@ -342,7 +339,7 @@ pub fn speculative_accepted_count_binding_theorem(
         token_inputs,
     );
     proof {
-        reveal(atomic_speculative_step_transition);
+        reveal(crate::speculative_step_composition::atomic_speculative_step_transition);
         assert(match result {
             Ok(outcome) => outcome.settlement.accepted_draft_tokens
                 == outcome.published_delta.compact_completion_spec().accepted_draft_tokens,
