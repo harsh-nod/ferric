@@ -17,6 +17,7 @@ mod runner;
 mod safetensors;
 mod sha256;
 mod tokenizer;
+mod tokenizer_execution;
 mod weight_stream;
 
 pub use auth::{
@@ -50,6 +51,11 @@ pub use safetensors::{
     SafetensorsError, SafetensorsSource,
 };
 pub use tokenizer::{authenticate_qwen3_tokenizer, AuthenticatedTokenizer, TokenizerError};
+pub use tokenizer_execution::{
+    SpecialTokenDecodePolicy, SpecialTokenEncodePolicy, TokenizerExecutionError,
+    TokenizerExecutionLimits, MAX_TOKENIZER_INPUT_BYTES, MAX_TOKENIZER_OUTPUT_BYTES,
+    MAX_TOKENIZER_OUTPUT_TOKENS, MAX_TOKENIZER_WORK,
+};
 pub use weight_stream::{
     prepack_qwen3_draft_weights, prepack_qwen3_target_weights, PrepackedWeightSet, WeightSection,
     WeightSectionManifest, WeightStreamError, WeightTransform, PREPACKED_WEIGHT_MANIFEST_VERSION,

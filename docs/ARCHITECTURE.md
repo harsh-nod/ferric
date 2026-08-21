@@ -21,14 +21,17 @@ K1-K7 profile catalog in `ferric-kernels`, and the pinned Qwen3 configuration,
 tokenizer, and streaming safetensors admission slices of `ferric-build` exist
 today. Tokenizer admission authenticates the exact shared
 payload and exhaustively binds its vocabulary IDs, merge order, processing
-pipeline, added tokens, special tokens, and chat-template metadata.
+pipeline, added tokens, special tokens, and chat-template metadata. The sealed
+authority now retains the admitted vocabulary and merge program for bounded,
+deterministic ASCII-domain encode and exact byte decode. It rejects non-ASCII
+input instead of approximating NFC or the Unicode-property split expression.
 Safetensors admission authenticates exact full files and validates the closed
 Qwen3 BF16 tensor schema without buffering tensor payloads. A fixed-width
 canonical record revalidates all pinned and derived identities, but does not
 sign the record or confer authentication authority for external files. These
-slices do not implement tokenization, establish behavioral equivalence to an
-external regex or Unicode engine, transform or pack tensors, inspect tensor
-values, or load device memory. The structural kernel catalog covers every
+slices do not establish full Hugging Face tokenizer equivalence, transform or
+pack tensors, inspect tensor values, or load device memory. The structural
+kernel catalog covers every
 operation in the 22 exact B3 plans, but its reviewed upstream sources are
 unmerged fixture/model foundations and profiles that exceed those exact
 fixtures remain explicitly marked as required extensions. It grants no proof,

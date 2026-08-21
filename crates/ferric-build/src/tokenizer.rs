@@ -8,6 +8,12 @@ use ferric_spec::Qwen3ModelRole;
 use std::collections::BTreeMap;
 use std::fmt;
 use std::io::{self, Read};
+use std::sync::Arc;
+
+use crate::tokenizer_execution::{
+    SpecialTokenDecodePolicy, SpecialTokenEncodePolicy, TokenizerExecutionError,
+    TokenizerExecutionLimits, TokenizerProgram,
+};
 
 const TOKENIZER_JSON_BYTES: usize = 11_422_654;
 const TOKENIZER_JSON_BYTES_U64: u64 = QWEN3_TOKENIZER_BYTES;
@@ -27,23 +33,80 @@ const SPLIT_REGEX: &str = "(?i:'s|'t|'re|'ve|'m|'ll|'d)|[^\\r\\n\\p{L}\\p{N}]?\\
 ///
 /// Private fields and the private seal prevent descriptor-only construction.
 /// The value is intentionally neither [`Clone`] nor [`Copy`].
-#[derive(Debug, PartialEq, Eq)]
+#[derive(PartialEq, Eq)]
 pub struct AuthenticatedTokenizer {
     role: Qwen3ModelRole,
     descriptor: ArtifactDigest,
     vocabulary_semantic_sha256: [u8; 32],
     merges_semantic_sha256: [u8; 32],
+    program: Arc<TokenizerProgram>,
     seal: AuthenticatedTokenizerSeal,
 }
 
 #[derive(Debug, PartialEq, Eq)]
 struct AuthenticatedTokenizerSeal;
 
+impl fmt::Debug for AuthenticatedTokenizer {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("AuthenticatedTokenizer")
+            .field("role", &self.role)
+            .field("descriptor", &self.descriptor)
+            .field(
+                "vocabulary_semantic_sha256",
+                &self.vocabulary_semantic_sha256,
+            )
+            .field("merges_semantic_sha256", &self.merges_semantic_sha256)
+            .finish_non_exhaustive()
+    }
+}
+
 impl AuthenticatedTokenizer {
     /// Returns the model role whose tokenizer stream was authenticated.
     #[must_use]
     pub const fn role(&self) -> Qwen3ModelRole {
         self.role
+    }
+
+    /// Encodes one bounded ASCII-domain input with the authenticated tokenizer.
+    ///
+    /// The pinned tokenizer uses NFC and a Unicode-property regular expression.
+    /// Ferric currently accepts ASCII input only, where both behaviors are
+    /// closed and implemented without an external Unicode or regex engine.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`TokenizerExecutionError`] when a bound is invalid or exceeded,
+    /// the input is outside the admitted ASCII domain, a forbidden special
+    /// token is present, or the finite BPE work budget is exhausted.
+    pub fn encode(
+        &self,
+        input: &str,
+        limits: TokenizerExecutionLimits,
+        special_tokens: SpecialTokenEncodePolicy,
+    ) -> Result<Vec<u32>, TokenizerExecutionError> {
+        self.program.encode(input, limits, special_tokens)
+    }
+
+    /// Decodes bounded token IDs to exact bytes with the authenticated tokenizer.
+    ///
+    /// Bytes are returned directly because an arbitrary token slice need not be
+    /// valid UTF-8. Added-token bytes are either preserved exactly or, for the
+    /// fixed special-token subset, skipped according to `special_tokens`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`TokenizerExecutionError`] when a bound is invalid or exceeded,
+    /// a token ID is outside the pinned vocabulary, or an admitted vocabulary
+    /// token cannot be reversed through the pinned byte-level alphabet.
+    pub fn decode_to_bytes(
+        &self,
+        token_ids: &[u32],
+        limits: TokenizerExecutionLimits,
+        special_tokens: SpecialTokenDecodePolicy,
+    ) -> Result<Vec<u8>, TokenizerExecutionError> {
+        self.program
+            .decode_to_bytes(token_ids, limits, special_tokens)
     }
 
     pub(super) fn into_descriptor(self) -> ArtifactDigest {
@@ -204,6 +267,7 @@ pub fn authenticate_qwen3_tokenizer<R: Read>(
         },
         vocabulary_semantic_sha256: semantics.vocabulary_semantic_sha256,
         merges_semantic_sha256: semantics.merges_semantic_sha256,
+        program: semantics.program,
         seal: AuthenticatedTokenizerSeal,
     })
 }
@@ -241,6 +305,7 @@ fn read_exact_hashed<R: Read>(
 struct TokenizerSemantics {
     vocabulary_semantic_sha256: [u8; 32],
     merges_semantic_sha256: [u8; 32],
+    program: Arc<TokenizerProgram>,
 }
 
 fn parse_tokenizer_json(bytes: &[u8]) -> Result<TokenizerSemantics, TokenizerError> {
@@ -353,16 +418,17 @@ fn validate_model(value: Value) -> Result<TokenizerSemantics, TokenizerError> {
     fields.expect_bool("fuse_unk", false)?;
     fields.expect_bool("byte_fallback", false)?;
     fields.expect_bool("ignore_merges", false)?;
-    let vocabulary_semantic_sha256 = validate_vocabulary(fields.take("vocab")?)?;
-    let merges_semantic_sha256 = validate_merges(fields.take("merges")?)?;
+    let (vocabulary_semantic_sha256, vocabulary) = validate_vocabulary(fields.take("vocab")?)?;
+    let (merges_semantic_sha256, merges) = validate_merges(fields.take("merges")?)?;
     fields.finish()?;
     Ok(TokenizerSemantics {
         vocabulary_semantic_sha256,
         merges_semantic_sha256,
+        program: Arc::new(TokenizerProgram::new(vocabulary, merges)),
     })
 }
 
-fn validate_vocabulary(value: Value) -> Result<[u8; 32], TokenizerError> {
+fn validate_vocabulary(value: Value) -> Result<([u8; 32], Vec<String>), TokenizerError> {
     let vocabulary = object("$.model.vocab", value)?;
     let actual = u32::try_from(vocabulary.len()).unwrap_or(u32::MAX);
     if actual != BASE_VOCABULARY_SIZE {
@@ -387,9 +453,9 @@ fn validate_vocabulary(value: Value) -> Result<[u8; 32], TokenizerError> {
 
     let mut hasher = Sha256::new();
     hash_field(&mut hasher, b"ferric.qwen3-tokenizer-vocab.v1");
-    for (id, token) in tokens.into_iter().enumerate() {
+    for (id, token) in tokens.iter().enumerate() {
         let id = u32::try_from(id).expect("base vocabulary index fits u32");
-        let token = token.ok_or(TokenizerError::MissingTokenId(id))?;
+        let token = token.as_ref().ok_or(TokenizerError::MissingTokenId(id))?;
         hash_field(&mut hasher, &id.to_be_bytes());
         hash_field(&mut hasher, token.as_bytes());
     }
@@ -397,10 +463,21 @@ fn validate_vocabulary(value: Value) -> Result<[u8; 32], TokenizerError> {
     if digest != VOCABULARY_SEMANTIC_SHA256 {
         return Err(TokenizerError::VocabularyDigestMismatch);
     }
-    Ok(digest)
+    let tokens = tokens
+        .into_iter()
+        .enumerate()
+        .map(|(id, token)| {
+            token.ok_or_else(|| {
+                TokenizerError::MissingTokenId(
+                    u32::try_from(id).expect("base vocabulary index fits u32"),
+                )
+            })
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok((digest, tokens))
 }
 
-fn validate_merges(value: Value) -> Result<[u8; 32], TokenizerError> {
+fn validate_merges(value: Value) -> Result<([u8; 32], Vec<(String, String)>), TokenizerError> {
     let Value::Array(merges) = value else {
         return Err(wrong_type("$.model.merges"));
     };
@@ -411,6 +488,10 @@ fn validate_merges(value: Value) -> Result<[u8; 32], TokenizerError> {
         });
     }
     let mut hasher = Sha256::new();
+    let mut ordered_merges = Vec::new();
+    ordered_merges
+        .try_reserve_exact(merges.len())
+        .map_err(|_| TokenizerError::ArtifactSize(TOKENIZER_JSON_BYTES))?;
     hash_field(&mut hasher, b"ferric.qwen3-tokenizer-merges.v1");
     for (ordinal, merge) in merges.into_iter().enumerate() {
         let Value::Array(pair) = merge else {
@@ -436,12 +517,13 @@ fn validate_merges(value: Value) -> Result<[u8; 32], TokenizerError> {
         );
         hash_field(&mut hasher, left.as_bytes());
         hash_field(&mut hasher, right.as_bytes());
+        ordered_merges.push((left, right));
     }
     let digest = hasher.finish();
     if digest != MERGES_SEMANTIC_SHA256 {
         return Err(TokenizerError::MergeDigestMismatch);
     }
-    Ok(digest)
+    Ok((digest, ordered_merges))
 }
 
 fn object(path: &str, value: Value) -> Result<BTreeMap<String, Value>, TokenizerError> {
@@ -552,11 +634,13 @@ pub(crate) mod tests {
     use crate::safetensors::tests::test_authenticated_weight_set;
     use crate::{
         build_authenticated_deployment_bundle, ArtifactDigest, AuthenticatedDeploymentAssets,
-        AuthenticatedModelAssets, BuildError, DRAFT_REPOSITORY, DRAFT_REVISION,
-        QWEN3_TARGET_WEIGHT_SET_SHA256, TARGET_REPOSITORY, TARGET_REVISION,
+        AuthenticatedModelAssets, BuildError, SpecialTokenDecodePolicy, SpecialTokenEncodePolicy,
+        TokenizerExecutionLimits, DRAFT_REPOSITORY, DRAFT_REVISION, QWEN3_TARGET_WEIGHT_SET_SHA256,
+        TARGET_REPOSITORY, TARGET_REVISION,
     };
     use ferric_spec::{EngineLimits, Qwen3ModelRole};
     use std::io::{Cursor, Read};
+    use std::sync::{Arc, OnceLock};
 
     const TOKENIZER: &[u8] = include_bytes!("fixtures/tokenizer/qwen3-tokenizer.json");
     const TARGET_CONFIG: &[u8] = include_bytes!("fixtures/qwen3-8b-config.json");
@@ -571,6 +655,7 @@ pub(crate) mod tests {
     }
 
     pub(crate) fn test_tokenizer(role: Qwen3ModelRole) -> AuthenticatedTokenizer {
+        static PROGRAM: OnceLock<Arc<super::TokenizerProgram>> = OnceLock::new();
         AuthenticatedTokenizer {
             role,
             descriptor: ArtifactDigest {
@@ -580,6 +665,11 @@ pub(crate) mod tests {
             },
             vocabulary_semantic_sha256: VOCABULARY_SEMANTIC_SHA256,
             merges_semantic_sha256: MERGES_SEMANTIC_SHA256,
+            program: Arc::clone(PROGRAM.get_or_init(|| {
+                parse_tokenizer_json(TOKENIZER)
+                    .expect("canonical tokenizer semantics")
+                    .program
+            })),
             seal: AuthenticatedTokenizerSeal,
         }
     }
@@ -639,6 +729,24 @@ pub(crate) mod tests {
         )
         .expect("complete chunked tokenizer stream");
         assert_eq!(authenticated.role(), Qwen3ModelRole::Target8B);
+        let ids = authenticated
+            .encode(
+                "Hello world",
+                TokenizerExecutionLimits::m1(),
+                SpecialTokenEncodePolicy::Reject,
+            )
+            .expect("execute only through complete authenticated authority");
+        assert_eq!(ids, vec![9_707, 1_879]);
+        assert_eq!(
+            authenticated
+                .decode_to_bytes(
+                    &ids,
+                    TokenizerExecutionLimits::m1(),
+                    SpecialTokenDecodePolicy::Preserve,
+                )
+                .expect("decode only through complete authenticated authority"),
+            b"Hello world"
+        );
     }
 
     #[test]

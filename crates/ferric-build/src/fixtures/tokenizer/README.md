@@ -35,3 +35,9 @@ Sources:
 - <https://huggingface.co/Qwen/Qwen3-0.6B/blob/c1899de289a04d12100db370d81485cdf75e47ca/tokenizer.json>
 
 This is tokenizer metadata and vocabulary only. It contains no model weights.
+
+The authenticated parser now retains these exact vocabulary and merge records
+for bounded execution. The checked small encode/decode fixtures in
+`tokenizer_execution.rs` cover ASCII contractions, spacing, tabs, CRLF,
+punctuation, digits, and added/special tokens. Non-ASCII execution remains an
+explicit fail-closed nonclaim; see `docs/M1_TOKENIZER_EXECUTION.md`.
