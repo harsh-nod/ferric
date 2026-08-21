@@ -20,6 +20,7 @@ pub mod request_isolation;
 pub mod scheduling;
 mod speculation;
 pub mod speculative_completion;
+pub mod speculative_kv_indexing;
 pub mod step_plan_publication;
 
 pub use configuration::{
@@ -62,6 +63,11 @@ pub use request_isolation::{
 };
 pub use speculation::{verify_greedy_round, GreedyCommit, GreedyVerificationError, TokenId};
 pub use speculative_completion::{verify_speculative_completion, SpeculativeCompletionError};
+pub use speculative_kv_indexing::{
+    CorrectionBonusKvDisposition, SpeculativeKvIndexError, SpeculativeKvInputBinding,
+    SpeculativeKvInputSource, SpeculativeKvInterval, SpeculativeKvRoundIndex, TargetChoiceBinding,
+    TargetChoiceUse, M1_MAX_SPECULATIVE_KV_DRAFT_TOKENS, M1_MAX_SPECULATIVE_KV_TARGET_INPUTS,
+};
 pub use step_plan_publication::{
     discard_reserved_delta, publish_reserved_delta, validate_direct_publication,
     validate_speculative_publication, PublicationPhase, ReservedStateDelta, StepPlan,
