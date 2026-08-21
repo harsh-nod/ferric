@@ -72,6 +72,10 @@ use sha256::Sha256;
 use std::collections::BTreeMap;
 use std::fmt;
 use vstd::prelude::*;
+#[allow(unused_imports)]
+use vstd::seq_lib::*;
+#[allow(unused_imports)]
+use vstd::string::StringSliceAdditionalSpecFns;
 
 const MAX_CONFIG_BYTES: usize = 16 * 1_024;
 const MAX_TOKENIZER_METADATA_BYTES: usize = 64 * 1_024;
@@ -979,6 +983,174 @@ fn weight_manifest(
     })
 }
 
+verus! {
+
+const MODEL_IDENTITY_DOMAIN: [u8; 15] = [
+    102, 101, 114, 114, 105, 99, 46, 109, 111, 100, 101, 108, 46, 118, 49,
+];
+const BUNDLE_IDENTITY_DOMAIN: [u8; 27] = [
+    102, 101, 114, 114, 105, 99, 46, 100, 101, 112, 108, 111, 121, 109, 101, 110, 116, 45, 98,
+    117, 110, 100, 108, 101, 46, 118, 49,
+];
+const GFX942_XNACK_MINUS_IDENTITY_FIELD: [u8; 13] = [
+    103, 102, 120, 57, 52, 50, 58, 120, 110, 97, 99, 107, 45,
+];
+const BF16_FP32_IDENTITY_FIELD: [u8; 33] = [
+    98, 102, 49, 54, 45, 112, 97, 114, 97, 109, 101, 116, 101, 114, 115, 58, 102, 112, 51, 50,
+    45, 97, 99, 99, 117, 109, 117, 108, 97, 116, 105, 111, 110,
+];
+
+closed spec fn u32_big_endian(value: u32) -> Seq<u8> {
+    seq![
+        ((value >> 24) % 256) as u8,
+        ((value >> 16) % 256) as u8,
+        ((value >> 8) % 256) as u8,
+        (value % 256) as u8,
+    ]
+}
+
+closed spec fn u64_big_endian(value: u64) -> Seq<u8> {
+    seq![
+        ((value >> 56) % 256) as u8,
+        ((value >> 48) % 256) as u8,
+        ((value >> 40) % 256) as u8,
+        ((value >> 32) % 256) as u8,
+        ((value >> 24) % 256) as u8,
+        ((value >> 16) % 256) as u8,
+        ((value >> 8) % 256) as u8,
+        (value % 256) as u8,
+    ]
+}
+
+fn encode_u32_big_endian(value: u32) -> (encoded: [u8; 4])
+    ensures encoded@ == u32_big_endian(value),
+{
+    [
+        u8::try_from((value >> 24) % 256).expect("big-endian byte fits u8"),
+        u8::try_from((value >> 16) % 256).expect("big-endian byte fits u8"),
+        u8::try_from((value >> 8) % 256).expect("big-endian byte fits u8"),
+        u8::try_from(value % 256).expect("big-endian byte fits u8"),
+    ]
+}
+
+fn encode_u64_big_endian(value: u64) -> (encoded: [u8; 8])
+    ensures encoded@ == u64_big_endian(value),
+{
+    [
+        u8::try_from((value >> 56) % 256).expect("big-endian byte fits u8"),
+        u8::try_from((value >> 48) % 256).expect("big-endian byte fits u8"),
+        u8::try_from((value >> 40) % 256).expect("big-endian byte fits u8"),
+        u8::try_from((value >> 32) % 256).expect("big-endian byte fits u8"),
+        u8::try_from((value >> 24) % 256).expect("big-endian byte fits u8"),
+        u8::try_from((value >> 16) % 256).expect("big-endian byte fits u8"),
+        u8::try_from((value >> 8) % 256).expect("big-endian byte fits u8"),
+        u8::try_from(value % 256).expect("big-endian byte fits u8"),
+    ]
+}
+
+closed spec fn identity_field_preimage(bytes: Seq<u8>) -> Seq<u8> {
+    u64_big_endian(bytes.len() as u64) + bytes
+}
+
+closed spec fn field_views(fields: &[&[u8]]) -> Seq<Seq<u8>> {
+    Seq::new(fields@.len(), |index: int| fields@[index]@)
+}
+
+closed spec fn identity_fields_preimage(fields: Seq<Seq<u8>>, count: nat) -> Seq<u8>
+    recommends count <= fields.len(),
+    decreases count,
+{
+    if count == 0 {
+        Seq::empty()
+    } else {
+        identity_fields_preimage(fields, (count - 1) as nat)
+            + identity_field_preimage(fields[(count - 1) as int])
+    }
+}
+
+closed spec fn identity_record_preimage(domain: Seq<u8>, fields: Seq<Seq<u8>>) -> Seq<u8> {
+    identity_field_preimage(domain) + identity_fields_preimage(fields, fields.len())
+}
+
+proof fn identity_field_preimage_len(bytes: Seq<u8>)
+    ensures identity_field_preimage(bytes).len() == 8 + bytes.len(),
+{
+}
+
+proof fn identity_fields_prefix_is_bounded(fields: Seq<Seq<u8>>, count: nat)
+    requires count <= fields.len(),
+    ensures
+        identity_fields_preimage(fields, count).len()
+            <= identity_fields_preimage(fields, fields.len()).len(),
+    decreases fields.len() - count,
+{
+    if count < fields.len() {
+        identity_fields_prefix_is_bounded(fields, count + 1);
+    }
+}
+
+proof fn identity_record_prefix_is_bounded(
+    domain: Seq<u8>,
+    fields: Seq<Seq<u8>>,
+    count: nat,
+)
+    requires count <= fields.len(),
+    ensures
+        (identity_field_preimage(domain) + identity_fields_preimage(fields, count)).len()
+            <= identity_record_preimage(domain, fields).len(),
+{
+    identity_fields_prefix_is_bounded(fields, count);
+}
+
+closed spec fn model_identity_fields(
+    role: Qwen3ModelRole,
+    repository: &str,
+    revision: &str,
+    config_id: Identity,
+    tokenizer: TokenizerConfig,
+    weights: WeightManifest,
+    tensor_data_bytes: u64,
+) -> Seq<Seq<u8>> {
+    seq![
+        seq![match role {
+            Qwen3ModelRole::Target8B => 0,
+            Qwen3ModelRole::Draft06B => 1,
+        }],
+        repository.spec_bytes(),
+        revision.spec_bytes(),
+        config_id.bytes_spec(),
+        tokenizer.tokenizer_id.bytes_spec(),
+        tokenizer.vocabulary_id.bytes_spec(),
+        weights.weights_id.bytes_spec(),
+        u64_big_endian(weights.total_bytes),
+        u64_big_endian(tensor_data_bytes),
+        u32_big_endian(weights.sections),
+    ]
+}
+
+closed spec fn model_identity_preimage(
+    role: Qwen3ModelRole,
+    repository: &str,
+    revision: &str,
+    config_id: Identity,
+    tokenizer: TokenizerConfig,
+    weights: WeightManifest,
+    tensor_data_bytes: u64,
+) -> Seq<u8> {
+    identity_record_preimage(
+        MODEL_IDENTITY_DOMAIN@,
+        model_identity_fields(
+            role,
+            repository,
+            revision,
+            config_id,
+            tokenizer,
+            weights,
+            tensor_data_bytes,
+        ),
+    )
+}
+
 fn model_identity(
     role: Qwen3ModelRole,
     repository: &str,
@@ -987,59 +1159,245 @@ fn model_identity(
     tokenizer: TokenizerConfig,
     weights: WeightManifest,
     tensor_data_bytes: u64,
-) -> Identity {
+) -> (identity: Identity)
+    requires
+        model_identity_preimage(
+            role,
+            repository,
+            revision,
+            config_id,
+            tokenizer,
+            weights,
+            tensor_data_bytes,
+        ).len() <= u64::MAX / 8,
+    ensures
+        identity.bytes_spec() == sha256::digest_spec(model_identity_preimage(
+            role,
+            repository,
+            revision,
+            config_id,
+            tokenizer,
+            weights,
+            tensor_data_bytes,
+        )),
+{
     let role_byte = [match role {
         Qwen3ModelRole::Target8B => 0,
         Qwen3ModelRole::Draft06B => 1,
     }];
-    let weight_bytes = weights.total_bytes.to_be_bytes();
-    let tensor_bytes = tensor_data_bytes.to_be_bytes();
-    let weight_sections = weights.sections.to_be_bytes();
-    record_identity(
-        b"ferric.model.v1",
-        &[
-            &role_byte,
-            repository.as_bytes(),
-            revision.as_bytes(),
-            config_id.as_bytes(),
-            tokenizer.tokenizer_id.as_bytes(),
-            tokenizer.vocabulary_id.as_bytes(),
-            weights.weights_id.as_bytes(),
-            &weight_bytes,
-            &tensor_bytes,
-            &weight_sections,
-        ],
-    )
-}
-
-fn bundle_identity(limits: EngineLimits, target: ModelArtifact, draft: ModelArtifact) -> Identity {
-    let context = limits.max_context_tokens.to_be_bytes();
-    let sequences = limits.max_active_sequences.to_be_bytes();
-    let page = limits.kv_page_tokens.to_be_bytes();
-    let draft_tokens = limits.max_draft_tokens.to_be_bytes();
-    record_identity(
-        b"ferric.deployment-bundle.v1",
-        &[
-            b"gfx942:xnack-",
-            b"bf16-parameters:fp32-accumulation",
-            &context,
-            &sequences,
-            &page,
-            &draft_tokens,
-            target.config.model_id.as_bytes(),
-            draft.config.model_id.as_bytes(),
-        ],
-    )
-}
-
-fn record_identity(domain: &[u8], fields: &[&[u8]]) -> Identity {
-    let mut hasher = Sha256::new();
-    hash_field(&mut hasher, domain);
-    for field in fields {
-        hash_field(&mut hasher, field);
+    let weight_bytes = encode_u64_big_endian(weights.total_bytes);
+    let tensor_bytes = encode_u64_big_endian(tensor_data_bytes);
+    let weight_sections = encode_u32_big_endian(weights.sections);
+    let fields: [&[u8]; 10] = [
+        &role_byte,
+        repository.as_bytes(),
+        revision.as_bytes(),
+        config_id.as_bytes(),
+        tokenizer.tokenizer_id.as_bytes(),
+        tokenizer.vocabulary_id.as_bytes(),
+        weights.weights_id.as_bytes(),
+        &weight_bytes,
+        &tensor_bytes,
+        &weight_sections,
+    ];
+    assert(field_views(&fields) =~= model_identity_fields(
+        role,
+        repository,
+        revision,
+        config_id,
+        tokenizer,
+        weights,
+        tensor_data_bytes,
+    )) by {
+        assert forall|index: int| 0 <= index < 10 implies
+            field_views(&fields)[index] == model_identity_fields(
+                role,
+                repository,
+                revision,
+                config_id,
+                tokenizer,
+                weights,
+                tensor_data_bytes,
+            )[index] by {
+            if index == 0 {} else if index == 1 {} else if index == 2 {}
+            else if index == 3 {} else if index == 4 {} else if index == 5 {}
+            else if index == 6 {} else if index == 7 {} else if index == 8 {}
+            else {}
+        }
     }
-    Identity::new(hasher.finish())
+    record_identity(&MODEL_IDENTITY_DOMAIN, &fields)
 }
+
+closed spec fn bundle_identity_fields(
+    limits: EngineLimits,
+    target: ModelArtifact,
+    draft: ModelArtifact,
+) -> Seq<Seq<u8>> {
+    seq![
+        GFX942_XNACK_MINUS_IDENTITY_FIELD@,
+        BF16_FP32_IDENTITY_FIELD@,
+        u32_big_endian(limits.max_context_tokens),
+        u32_big_endian(limits.max_active_sequences),
+        u32_big_endian(limits.kv_page_tokens),
+        u32_big_endian(limits.max_draft_tokens),
+        target.config.model_id.bytes_spec(),
+        draft.config.model_id.bytes_spec(),
+    ]
+}
+
+closed spec fn bundle_identity_preimage(
+    limits: EngineLimits,
+    target: ModelArtifact,
+    draft: ModelArtifact,
+) -> Seq<u8> {
+    identity_record_preimage(
+        BUNDLE_IDENTITY_DOMAIN@,
+        bundle_identity_fields(limits, target, draft),
+    )
+}
+
+fn bundle_identity(
+    limits: EngineLimits,
+    target: ModelArtifact,
+    draft: ModelArtifact,
+) -> (identity: Identity)
+    requires bundle_identity_preimage(limits, target, draft).len() <= u64::MAX / 8,
+    ensures
+        identity.bytes_spec()
+            == sha256::digest_spec(bundle_identity_preimage(limits, target, draft)),
+{
+    let context = encode_u32_big_endian(limits.max_context_tokens);
+    let sequences = encode_u32_big_endian(limits.max_active_sequences);
+    let page = encode_u32_big_endian(limits.kv_page_tokens);
+    let draft_tokens = encode_u32_big_endian(limits.max_draft_tokens);
+    let fields: [&[u8]; 8] = [
+        &GFX942_XNACK_MINUS_IDENTITY_FIELD,
+        &BF16_FP32_IDENTITY_FIELD,
+        &context,
+        &sequences,
+        &page,
+        &draft_tokens,
+        target.config.model_id.as_bytes(),
+        draft.config.model_id.as_bytes(),
+    ];
+    assert(field_views(&fields) =~= bundle_identity_fields(limits, target, draft)) by {
+        assert forall|index: int| 0 <= index < 8 implies
+            field_views(&fields)[index] == bundle_identity_fields(limits, target, draft)[index] by {
+            if index == 0 {} else if index == 1 {} else if index == 2 {}
+            else if index == 3 {} else if index == 4 {} else if index == 5 {}
+            else if index == 6 {} else {}
+        }
+    }
+    record_identity(&BUNDLE_IDENTITY_DOMAIN, &fields)
+}
+
+fn record_identity(domain: &[u8], fields: &[&[u8]]) -> (identity: Identity)
+    requires
+        identity_record_preimage(domain@, field_views(fields)).len() <= u64::MAX / 8,
+    ensures
+        identity.bytes_spec()
+            == sha256::digest_spec(identity_record_preimage(domain@, field_views(fields))),
+{
+    let mut hasher = Sha256::new();
+    proof {
+        sha256::initial_view_is_valid();
+        identity_record_prefix_is_bounded(domain@, field_views(fields), 0);
+    }
+    assert(hasher.view().1 == 0);
+    assert(identity_field_preimage(domain@).len()
+        <= identity_record_preimage(domain@, field_views(fields)).len());
+    assert(sha256::can_update_view(
+        hasher.view(), identity_field_preimage(domain@).len(),
+    ));
+    proof {
+        hasher.derive_can_update(identity_field_preimage(domain@).len());
+    }
+    hash_field(&mut hasher, domain);
+    let mut index = 0;
+    while index < fields.len()
+        invariant
+            index <= fields.len(),
+            hasher.valid(),
+            sha256::valid_view(hasher.view()),
+            sha256::valid_view(sha256::initial_view()),
+            sha256::initial_view().1 == 0,
+            hasher.view() == sha256::update_view(
+                sha256::initial_view(),
+                identity_field_preimage(domain@)
+                    + identity_fields_preimage(field_views(fields), index as nat),
+            ),
+            identity_record_preimage(domain@, field_views(fields)).len() <= u64::MAX / 8,
+        decreases fields.len() - index,
+    {
+        let field = fields[index];
+        assert(field_views(fields)[index as int] == field@);
+        proof {
+            identity_fields_prefix_is_bounded(field_views(fields), (index + 1) as nat);
+            identity_record_prefix_is_bounded(
+                domain@,
+                field_views(fields),
+                (index + 1) as nat,
+            );
+        }
+        assert(identity_fields_preimage(field_views(fields), (index + 1) as nat)
+            == identity_fields_preimage(field_views(fields), index as nat)
+                + identity_field_preimage(field@));
+        proof {
+            sha256::update_view_byte_len(
+                sha256::initial_view(),
+                identity_field_preimage(domain@)
+                    + identity_fields_preimage(field_views(fields), index as nat),
+            );
+        }
+        assert(hasher.view().1
+            == (identity_field_preimage(domain@)
+                + identity_fields_preimage(field_views(fields), index as nat)).len());
+        assert((identity_field_preimage(domain@)
+            + identity_fields_preimage(field_views(fields), (index + 1) as nat)).len()
+                == hasher.view().1 + identity_field_preimage(field@).len());
+        assert(sha256::can_update_view(
+            hasher.view(), identity_field_preimage(field@).len(),
+        ));
+        proof {
+            hasher.derive_can_update(identity_field_preimage(field@).len());
+        }
+        hash_field(&mut hasher, field);
+        proof {
+            sha256::update_view_concat(
+                sha256::initial_view(),
+                identity_field_preimage(domain@)
+                    + identity_fields_preimage(field_views(fields), index as nat),
+                identity_field_preimage(field@),
+            );
+            lemma_concat_associative(
+                identity_field_preimage(domain@),
+                identity_fields_preimage(field_views(fields), index as nat),
+                identity_field_preimage(field@),
+            );
+        }
+        index += 1;
+    }
+    assert(index == fields.len());
+    assert(identity_record_preimage(domain@, field_views(fields))
+        == identity_field_preimage(domain@)
+            + identity_fields_preimage(field_views(fields), fields@.len()));
+    assert(hasher.view() == sha256::update_view(
+        sha256::initial_view(),
+        identity_record_preimage(domain@, field_views(fields)),
+    ));
+    let digest = hasher.finish();
+    proof {
+        sha256::digest_spec_definition(
+            identity_record_preimage(domain@, field_views(fields)),
+        );
+    }
+    assert(digest@ == sha256::digest_spec(
+        identity_record_preimage(domain@, field_views(fields)),
+    ));
+    Identity::new(digest)
+}
+
+} // verus!
 
 fn target_weight_set_identity() -> [u8; 32] {
     let mut hasher = Sha256::new();
@@ -1052,13 +1410,54 @@ fn target_weight_set_identity() -> [u8; 32] {
     hasher.finish()
 }
 
-fn hash_field(hasher: &mut Sha256, bytes: &[u8]) {
-    let length = u64::try_from(bytes.len())
-        .expect("identity field length fits u64")
-        .to_be_bytes();
+verus! {
+
+fn hash_field(hasher: &mut Sha256, bytes: &[u8])
+    requires
+        old(hasher).valid(),
+        sha256::valid_view(old(hasher).view()),
+        old(hasher).can_update(identity_field_preimage(bytes@).len()),
+    ensures
+        final(hasher).valid(),
+        sha256::valid_view(final(hasher).view()),
+        final(hasher).view() == sha256::update_view(
+            old(hasher).view(),
+            identity_field_preimage(bytes@),
+        ),
+{
+    let length_value = u64::try_from(bytes.len()).expect("identity field length fits u64");
+    let length = encode_u64_big_endian(length_value);
+    let ghost initial_view = hasher.view();
+    proof {
+        identity_field_preimage_len(bytes@);
+    }
+    assert(length_value as nat == bytes@.len());
+    assert(length@.len() == 8);
+    assert(identity_field_preimage(bytes@).len() == length@.len() + bytes@.len());
+    proof {
+        hasher.expose_can_update(identity_field_preimage(bytes@).len());
+    }
+    assert(sha256::can_update_view(initial_view, length@.len()));
+    proof {
+        hasher.derive_can_update(length@.len());
+    }
     hasher.update(&length);
+    proof {
+        sha256::update_view_byte_len(initial_view, length@);
+    }
+    assert(hasher.view().1 == initial_view.1 + length@.len());
+    assert(sha256::can_update_view(hasher.view(), bytes@.len()));
+    proof {
+        hasher.derive_can_update(bytes@.len());
+    }
     hasher.update(bytes);
+    proof {
+        sha256::update_view_concat(initial_view, length@, bytes@);
+    }
+    assert(length@ + bytes@ == identity_field_preimage(bytes@));
 }
+
+} // verus!
 
 fn parse_json(artifact: &'static str, bytes: &[u8], max_bytes: usize) -> Result<Value, BuildError> {
     if bytes.is_empty() {

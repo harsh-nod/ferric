@@ -32,6 +32,9 @@ correspondence to its closed functional SHA-256 computation for admitted
 messages shorter than 2^64 bits. The proof covers initialization, the
 big-endian word schedule, 64 wrapping `u32` rounds, block chaining, streaming
 updates, standard padding, encoded bit length, and digest byte order.
+The verified build identity bodies additionally refine their exact ordered,
+big-endian length-prefixed model and deployment-bundle records to that
+functional digest computation.
 
 That computation theorem does not prove collision resistance, preimage or
 second-preimage resistance, provenance, signer identity, or authenticity.

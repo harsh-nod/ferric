@@ -169,6 +169,79 @@ closed spec fn absorb(
     }
 }
 
+proof fn absorb_preserves_valid(
+    core: (Seq<u32>, Seq<u8>),
+    input: Seq<u8>,
+)
+    requires core.0.len() == 8, core.1.len() < 64,
+    ensures
+        absorb(core, input).0.len() == 8,
+        absorb(core, input).1.len() < 64,
+    decreases input.len(),
+{
+    if input.len() != 0 {
+        let filled = core.1.push(input[0]);
+        let next = if filled.len() == 64 {
+            (compress_block(core.0, filled), Seq::empty())
+        } else {
+            (core.0, filled)
+        };
+        absorb_preserves_valid(next, input.subrange(1, input.len() as int));
+    }
+}
+
+proof fn absorb_concat(
+    core: (Seq<u32>, Seq<u8>),
+    left: Seq<u8>,
+    right: Seq<u8>,
+)
+    requires core.0.len() == 8, core.1.len() < 64,
+    ensures absorb(absorb(core, left), right) == absorb(core, left + right),
+    decreases left.len(),
+{
+    if left.len() == 0 {
+        assert(left + right == right);
+    } else {
+        let filled = core.1.push(left[0]);
+        let next = if filled.len() == 64 {
+            (compress_block(core.0, filled), Seq::empty())
+        } else {
+            (core.0, filled)
+        };
+        absorb_concat(
+            next,
+            left.subrange(1, left.len() as int),
+            right,
+        );
+        assert((left + right)[0] == left[0]);
+        assert((left + right).subrange(1, (left + right).len() as int)
+            =~= left.subrange(1, left.len() as int) + right) by {
+            assert forall|index: int|
+                0 <= index < (left + right).len() - 1 implies
+                    (left + right).subrange(1, (left + right).len() as int)[index]
+                        == (left.subrange(1, left.len() as int) + right)[index] by {
+                if index < left.len() - 1 {
+                } else {
+                }
+            }
+        }
+    }
+}
+
+pub(super) open spec fn valid_view(view: ((Seq<u32>, Seq<u8>), nat)) -> bool {
+    &&& view.0.0.len() == 8
+    &&& view.0.1.len() < 64
+    &&& view.1 <= u64::MAX / 8
+}
+
+pub(super) open spec fn can_update_view(
+    view: ((Seq<u32>, Seq<u8>), nat),
+    additional: nat,
+) -> bool {
+    &&& additional <= u64::MAX
+    &&& view.1 + additional <= u64::MAX / 8
+}
+
 pub(super) closed spec fn update_view(
     view: ((Seq<u32>, Seq<u8>), nat),
     input: Seq<u8>,
@@ -178,8 +251,36 @@ pub(super) closed spec fn update_view(
     (absorb(view.0, input), view.1 + input.len())
 }
 
+pub(super) proof fn update_view_concat(
+    view: ((Seq<u32>, Seq<u8>), nat),
+    left: Seq<u8>,
+    right: Seq<u8>,
+)
+    requires view.0.0.len() == 8, view.0.1.len() < 64,
+    ensures update_view(update_view(view, left), right) == update_view(view, left + right),
+{
+    absorb_preserves_valid(view.0, left);
+    absorb_concat(view.0, left, right);
+}
+
+pub(super) proof fn update_view_byte_len(
+    view: ((Seq<u32>, Seq<u8>), nat),
+    input: Seq<u8>,
+)
+    requires valid_view(view),
+    ensures update_view(view, input).1 == view.1 + input.len(),
+{
+}
+
 pub(super) closed spec fn initial_view() -> ((Seq<u32>, Seq<u8>), nat) {
     ((INITIAL_STATE@, Seq::empty()), 0)
+}
+
+pub(super) proof fn initial_view_is_valid()
+    ensures
+        valid_view(initial_view()),
+        initial_view().1 == 0,
+{
 }
 
 closed spec fn bit_length_byte(bit_len: u64, index: int) -> u8
@@ -269,6 +370,14 @@ pub(super) closed spec fn finish_view(view: ((Seq<u32>, Seq<u8>), nat)) -> Seq<u
 
 pub(super) closed spec fn digest_spec(bytes: Seq<u8>) -> Seq<u8> {
     finish_view(update_view(initial_view(), bytes))
+}
+
+pub(super) proof fn digest_spec_definition(bytes: Seq<u8>)
+    requires bytes.len() <= u64::MAX / 8,
+    ensures digest_spec(bytes) == finish_view(update_view(initial_view(), bytes)),
+{
+    initial_view_is_valid();
+    absorb_preserves_valid(initial_view().0, bytes);
 }
 
 const INITIAL_STATE: [u32; 8] = [
@@ -365,8 +474,12 @@ impl Sha256 {
     }
 
     pub(super) closed spec fn valid(&self) -> bool {
+        &&& self.state@.len() == 8
         &&& self.buffered < 64
         &&& self.byte_len <= u64::MAX / 8
+        &&& self.view().0.0.len() == 8
+        &&& self.view().0.1.len() < 64
+        &&& self.view().1 <= u64::MAX / 8
     }
 
     pub(super) closed spec fn can_update(&self, additional: nat) -> bool {
@@ -374,9 +487,24 @@ impl Sha256 {
         &&& self.byte_len as nat + additional <= u64::MAX / 8
     }
 
+    pub(super) proof fn expose_can_update(&self, additional: nat)
+        requires self.can_update(additional),
+        ensures can_update_view(self.view(), additional),
+    {
+    }
+
+    pub(super) proof fn derive_can_update(&self, additional: nat)
+        requires
+            self.valid(),
+            can_update_view(self.view(), additional),
+        ensures self.can_update(additional),
+    {
+    }
+
     pub(super) const fn new() -> (hasher: Self)
         ensures
             hasher.valid(),
+            valid_view(hasher.view()),
             hasher.can_update((u64::MAX / 8) as nat),
             hasher.view() == initial_view(),
     {
@@ -393,9 +521,11 @@ impl Sha256 {
     pub(super) fn update(&mut self, bytes: &[u8])
         requires
             old(self).valid(),
+            valid_view(old(self).view()),
             old(self).can_update(bytes@.len()),
         ensures
             final(self).valid(),
+            valid_view(final(self).view()),
             final(self).view() == update_view(old(self).view(), bytes@),
     {
         let additional = bytes.len();
