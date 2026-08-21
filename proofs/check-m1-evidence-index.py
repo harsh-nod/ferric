@@ -72,7 +72,7 @@ TRUSTED_VALIDATORS = {
     "external-contract": (
         "proofs/m1/evidence/validate-external-contract.py",
         "ferric.m1-validator.external-contract.v1",
-        None,
+        "21ddc8a9f00e90ef2255c27fb562279fcd899814fa5ea06824bc4cd9b250c57e",
     ),
     "fe2o3-contract": (
         "proofs/m1/evidence/validate-fe2o3-contract.py",

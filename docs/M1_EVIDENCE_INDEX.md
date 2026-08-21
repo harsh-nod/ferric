@@ -98,17 +98,23 @@ paths. The version 1 registry is:
 | Unsupported rationale | `proofs/m1/evidence/validate-unsupported-rationale.py` | `ferric.m1-validator.unsupported-rationale.v1` |
 | Verus theorem | `proofs/m1/evidence/validate-verus-theorem.py` | `ferric.m1-validator.verus-theorem.v1` |
 
-The artifact-identity, negative-mutation, unsupported-rationale, and
-Verus-theorem validators are `ExistingFoundation` inputs with exact source
-SHA-256 values pinned in the checker-owned registry. The artifact-identity
-validator accepts only a canonical identity-only report and independently
-hashes its deterministic companion payload. The report binds the exact Open
-obligation or property, associated assurance properties, path, profile,
-requirements, Ferric and fe2o3 source identities, fixed `gfx942:xnack-` target,
-and complete TCB. Its opaque artifact-kind declaration grants no semantic,
-theorem, machine, load, launch, hardware, performance, or qualification
-authority. Its exact report layout and authority boundary are documented in
-`proofs/m1/evidence/ARTIFACT_IDENTITY.md`. The negative-mutation and theorem
+The artifact-identity, external-contract, negative-mutation,
+unsupported-rationale, and Verus-theorem validators are `ExistingFoundation`
+inputs with exact source SHA-256 values pinned in the checker-owned registry.
+The artifact-identity validator accepts only a canonical identity-only report
+and independently hashes its deterministic companion payload. The report binds
+the exact Open obligation or property, associated assurance properties, path,
+profile, requirements, Ferric and fe2o3 source identities, fixed
+`gfx942:xnack-` target, and complete TCB. Its opaque artifact-kind declaration
+grants no semantic, theorem, machine, load, launch, hardware, performance, or
+qualification authority. Its exact report layout and authority boundary are
+documented in `proofs/m1/evidence/ARTIFACT_IDENTITY.md`. The external-contract
+validator accepts only a canonical runtime-profile declaration of the four
+fixed compiler, runtime, driver/firmware, and hardware assumptions for the
+exact identity-bound Open obligation. It does not establish that an assumption
+is implemented or satisfied. Its exact report layout and authority boundary
+are documented in `proofs/m1/evidence/EXTERNAL_CONTRACT.md`. The
+negative-mutation and theorem
 validators validate the complete versioned run directory behind a bound
 `.result` artifact. The
 theorem validator requires the exact pinned output-json schema, selected
