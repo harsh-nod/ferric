@@ -113,6 +113,7 @@ def load_checker() -> Any:
     spec = importlib.util.spec_from_file_location("m1_evidence_checker", CHECKER)
     if spec is None or spec.loader is None:
         raise RuntimeError("could not load M1 evidence checker")
+    sys.dont_write_bytecode = True
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -481,15 +482,18 @@ def main() -> None:
             text=True,
             env={"PATH": os.environ.get("PATH", "")},
         )
-        if (
-            production.returncode == 0
-            or "trusted M1 validator is absent" not in production.stdout
+        if production.returncode == 0 or not any(
+            marker in production.stdout
+            for marker in (
+                "trusted M1 validator is absent",
+                "trusted M1 validator rejected artifact-identity",
+            )
         ):
             raise AssertionError(
                 "production CLI accepted synthetic self-reports without trusted validators:\n"
                 f"{production.stdout}"
             )
-        print("PASS: production CLI rejects absent trusted validators")
+        print("PASS: production CLI rejects synthetic validator self-reports")
 
         cases: list[tuple[str, str, Mutation, str]] = []
 

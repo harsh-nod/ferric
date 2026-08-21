@@ -98,10 +98,19 @@ paths. The version 1 registry is:
 | Unsupported rationale | `proofs/m1/evidence/validate-unsupported-rationale.py` | `ferric.m1-validator.unsupported-rationale.v1` |
 | Verus theorem | `proofs/m1/evidence/validate-verus-theorem.py` | `ferric.m1-validator.verus-theorem.v1` |
 
-The negative-mutation, unsupported-rationale, and Verus-theorem validators are
-`ExistingFoundation` inputs with exact source SHA-256 values pinned in the
-checker-owned registry. The negative-mutation and theorem validators validate
-the complete versioned run directory behind a bound `.result` artifact. The
+The artifact-identity, negative-mutation, unsupported-rationale, and
+Verus-theorem validators are `ExistingFoundation` inputs with exact source
+SHA-256 values pinned in the checker-owned registry. The artifact-identity
+validator accepts only a canonical identity-only report and independently
+hashes its deterministic companion payload. The report binds the exact Open
+obligation or property, associated assurance properties, path, profile,
+requirements, Ferric and fe2o3 source identities, fixed `gfx942:xnack-` target,
+and complete TCB. Its opaque artifact-kind declaration grants no semantic,
+theorem, machine, load, launch, hardware, performance, or qualification
+authority. Its exact report layout and authority boundary are documented in
+`proofs/m1/evidence/ARTIFACT_IDENTITY.md`. The negative-mutation and theorem
+validators validate the complete versioned run directory behind a bound
+`.result` artifact. The
 theorem validator requires the exact pinned output-json schema, selected
 compiler module/function, current source body, ordinary compilation, an exact
 one-query zero-error proof predicate, and the complete theorem roster for the
@@ -111,14 +120,14 @@ and exit status and binds the transcript SHA-256. Any injected `success` field
 is rejected as schema drift. The unsupported-rationale validator accepts only
 the three fixed M1 nonclaims, binds their exact source, requirements, evidence
 binding, and TCB identities, and grants no positive authority. The other
-validators
-remain `RequiredFuture` M1 implementation obligations with intentionally unset
-source pins. Until every validator required by an index exists in the exact
-qualified source closure, has a reviewed source SHA-256 pinned in the
-checker-owned registry, and accepts its canonical context, the production
-checker cannot print an M1 closure `PASS`. Adding a file at another registered
-path is insufficient. The private in-process callback used by synthetic policy
-tests is deliberately absent from the CLI and is not a qualification mode.
+validators remain `RequiredFuture` M1 implementation obligations with
+intentionally unset source pins. Until every validator required by an index
+exists in the exact qualified source closure, has a reviewed source SHA-256
+pinned in the checker-owned registry, and accepts its canonical context, the
+production checker cannot print an M1 closure `PASS`. Adding a file at another
+registered path is insufficient. The private in-process callback used by
+synthetic policy tests is deliberately absent from the CLI and is not a
+qualification mode.
 
 The versioned hostile foundation registry under `proofs/m1/negative/` is not an
 evidence index or closure product. Its runner can authenticate the pinned Verus

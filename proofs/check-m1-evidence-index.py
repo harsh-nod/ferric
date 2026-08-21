@@ -62,7 +62,7 @@ TRUSTED_VALIDATORS = {
     "artifact-identity": (
         "proofs/m1/evidence/validate-artifact-identity.py",
         "ferric.m1-validator.artifact-identity.v1",
-        None,
+        "a72f2e33e92ac9064302194a341f146480950ee090b0ff8de037c7fc71919092",
     ),
     "canonical-structure-check": (
         "proofs/m1/evidence/validate-canonical-structure.py",
