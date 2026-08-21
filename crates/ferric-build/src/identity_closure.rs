@@ -6,6 +6,10 @@
 //! no artifact, proof, load, launch, or qualification authority.
 
 use super::{hash_field, sha256::Sha256, SequentialPlanCatalog, SEQUENTIAL_PLAN_CATALOG_ENTRIES};
+use ferric_kernels::{
+    build_structural_kernel_catalog, KernelAuthorityRequirements, KernelCatalogError,
+    StructuralKernelCatalog, REVIEWED_KERNEL_SOURCES,
+};
 use ferric_spec::Identity;
 
 /// Canonical format version for the preliminary identity-closure record.
@@ -146,6 +150,10 @@ pub enum IdentityClosureError {
         /// Later component reusing it.
         second: IdentityClosureComponent,
     },
+    /// The exact plan/operator catalog or its compiler/runtime requirements drifted.
+    KernelCatalog(KernelCatalogError),
+    /// The caller-supplied kernel-catalog identity is not the canonical record identity.
+    KernelCatalogIdentityDrift,
 }
 
 /// Exact offline catalog plus its structurally complete identity roster.
@@ -157,6 +165,7 @@ pub enum IdentityClosureError {
 #[derive(Debug, Eq, PartialEq)]
 pub struct PreliminaryIdentityClosure {
     catalog: SequentialPlanCatalog,
+    kernel_catalog: StructuralKernelCatalog,
     external: ExternalIdentityClosureInputs,
     closure_id: Identity,
     canonical_bytes: Box<[u8]>,
@@ -167,6 +176,12 @@ impl PreliminaryIdentityClosure {
     #[must_use]
     pub const fn catalog(&self) -> &SequentialPlanCatalog {
         &self.catalog
+    }
+
+    /// Returns the retained exact structural K1-K7 operation catalog.
+    #[must_use]
+    pub const fn kernel_catalog(&self) -> &StructuralKernelCatalog {
+        &self.kernel_catalog
     }
 
     /// Returns the complete caller-supplied external identity roster.
@@ -219,23 +234,81 @@ struct CatalogIdentityInputs {
 /// # Errors
 ///
 /// Returns [`IdentityClosureError`] unless the catalog remains exact and every
-/// external identity is present and distinct. Success does not authenticate
-/// the external inputs or grant artifact, proof, load, launch, or qualification
-/// authority.
+/// external identity is present and distinct. The supplied `kernel_catalog`
+/// identity must equal [`expected_preliminary_kernel_catalog_identity`] for the
+/// retained plans and compiler/runtime requirements. Success does not
+/// authenticate the external inputs or grant artifact, proof, load, launch, or
+/// qualification authority.
 pub fn build_preliminary_identity_closure(
     catalog: SequentialPlanCatalog,
     external: ExternalIdentityClosureInputs,
 ) -> Result<PreliminaryIdentityClosure, IdentityClosureError> {
     let catalog_inputs = catalog_inputs(&catalog)?;
     validate_external(&external)?;
+    let kernel_catalog = structural_kernel_catalog(&catalog, &external)?;
+    let expected_kernel_catalog_id = kernel_catalog_identity(&kernel_catalog);
+    if external.kernel_catalog != expected_kernel_catalog_id {
+        return Err(IdentityClosureError::KernelCatalogIdentityDrift);
+    }
     let canonical_bytes = canonical_record(&catalog_inputs, &external);
     let closure_id = identity_record(&canonical_bytes);
     Ok(PreliminaryIdentityClosure {
         catalog,
+        kernel_catalog,
         external,
         closure_id,
         canonical_bytes: canonical_bytes.into_boxed_slice(),
     })
+}
+
+/// Computes the canonical preliminary kernel-catalog identity for an exact
+/// sequential catalog and future compiler/runtime authority requirements.
+///
+/// The `kernel_catalog` field in `external` is ignored so the caller can derive
+/// it before constructing the complete preliminary closure. No external field
+/// is authenticated and no execution or evidence authority is granted.
+///
+/// # Errors
+///
+/// Returns [`IdentityClosureError`] if the plan catalog or any bound
+/// compiler/runtime authority requirement is structurally invalid.
+pub fn expected_preliminary_kernel_catalog_identity(
+    catalog: &SequentialPlanCatalog,
+    external: &ExternalIdentityClosureInputs,
+) -> Result<Identity, IdentityClosureError> {
+    catalog_inputs(catalog)?;
+    let kernel_catalog = structural_kernel_catalog(catalog, external)?;
+    Ok(kernel_catalog_identity(&kernel_catalog))
+}
+
+fn structural_kernel_catalog(
+    catalog: &SequentialPlanCatalog,
+    external: &ExternalIdentityClosureInputs,
+) -> Result<StructuralKernelCatalog, IdentityClosureError> {
+    build_structural_kernel_catalog(
+        catalog.plans(),
+        catalog.catalog_id(),
+        &REVIEWED_KERNEL_SOURCES,
+        KernelAuthorityRequirements {
+            fe2o3_source: external.fe2o3_source,
+            compiler: external.compiler,
+            compiler_configuration: external.compiler_configuration,
+            target_contract: external.target_contract,
+            kernel_proof_set: external.kernel_proof_set,
+            kernel_abi_catalog: external.kernel_abi_catalog,
+            runtime_contract: external.runtime_contract,
+            runtime_abi: external.runtime_abi,
+            tcb_report: external.tcb_report,
+        },
+    )
+    .map_err(IdentityClosureError::KernelCatalog)
+}
+
+fn kernel_catalog_identity(catalog: &StructuralKernelCatalog) -> Identity {
+    let mut hasher = Sha256::new();
+    hash_field(&mut hasher, b"ferric.qwen3.structural-kernel-catalog.v1");
+    hash_field(&mut hasher, catalog.canonical_bytes());
+    Identity::new(hasher.finish())
 }
 
 fn catalog_inputs(

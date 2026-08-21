@@ -29,8 +29,9 @@ pub use bundle::{
     CANONICAL_DEPLOYMENT_BUNDLE_VERSION,
 };
 pub use identity_closure::{
-    build_preliminary_identity_closure, ExternalIdentityClosureInputs, IdentityClosureComponent,
-    IdentityClosureError, PreliminaryIdentityClosure, PRELIMINARY_IDENTITY_CLOSURE_VERSION,
+    build_preliminary_identity_closure, expected_preliminary_kernel_catalog_identity,
+    ExternalIdentityClosureInputs, IdentityClosureComponent, IdentityClosureError,
+    PreliminaryIdentityClosure, PRELIMINARY_IDENTITY_CLOSURE_VERSION,
 };
 pub use plan::{
     build_sequential_plan_catalog, SequentialPlanCatalog, SequentialPlanError,

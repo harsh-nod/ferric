@@ -16,9 +16,10 @@ proofs/                  system-level refinement proofs
 benches/                 identity-bound qualification harnesses
 ```
 
-`ferric-spec`, the first `ferric-engine` state model, and the pinned Qwen3
-configuration, tokenizer, and streaming safetensors admission slices of
-`ferric-build` exist today. Tokenizer admission authenticates the exact shared
+`ferric-spec`, the first `ferric-engine` state model, the finite structural
+K1-K7 profile catalog in `ferric-kernels`, and the pinned Qwen3 configuration,
+tokenizer, and streaming safetensors admission slices of `ferric-build` exist
+today. Tokenizer admission authenticates the exact shared
 payload and exhaustively binds its vocabulary IDs, merge order, processing
 pipeline, added tokens, special tokens, and chat-template metadata.
 Safetensors admission authenticates exact full files and validates the closed
@@ -27,8 +28,13 @@ canonical record revalidates all pinned and derived identities, but does not
 sign the record or confer authentication authority for external files. These
 slices do not implement tokenization, establish behavioral equivalence to an
 external regex or Unicode engine, transform or pack tensors, inspect tensor
-values, or load device memory. Crates are added when they contain real
-final-path behavior; placeholder GPU execution is not permitted.
+values, or load device memory. The structural kernel catalog covers every
+operation in the 22 exact B3 plans, but its reviewed upstream sources are
+unmerged fixture/model foundations and profiles that exceed those exact
+fixtures remain explicitly marked as required extensions. It grants no proof,
+artifact, compilation, load, launch, dispatch, hardware, performance, or
+qualification authority. Crates are added when they contain real final-path
+behavior; placeholder GPU execution is not permitted.
 
 ## Dependency Boundary
 

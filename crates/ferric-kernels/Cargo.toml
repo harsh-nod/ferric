@@ -1,13 +1,12 @@
 [package]
-name = "ferric-build"
-description = "Offline authenticated model admission for Ferric"
+name = "ferric-kernels"
+description = "Finite proof-bound kernel catalog foundations for Ferric"
 edition.workspace = true
 rust-version.workspace = true
 version.workspace = true
 publish = false
 
 [dependencies]
-ferric-kernels = { path = "../ferric-kernels" }
 ferric-spec = { path = "../ferric-spec" }
 
 [package.metadata.verus]

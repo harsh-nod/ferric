@@ -2,6 +2,7 @@
 members = [
     "crates/ferric-build",
     "crates/ferric-engine",
+    "crates/ferric-kernels",
     "crates/ferric-spec",
 ]
 resolver = "2"
