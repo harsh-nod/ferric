@@ -160,6 +160,23 @@ initialize, copy, or share GPU memory, produce quiescence from a device
 completion, or connect the generated declarations to a queue. The production
 multi-request device allocator and runtime composition remain open M1 work.
 
+`ferric-engine::device_cache` now adds a single-request engine custody bridge
+over that refinement: separate non-clone target/draft page-lease tables, an
+exact pending-write/completion typestate, initialized-only mapping and commit,
+rollback and cancellation retirement, and exact-epoch terminal quiescence.
+Page-allocation and initialized-write authorities have no production
+constructors because fe2o3 allocation authority and exact packet, buffer, and
+KV-write-effect authority are still missing; scoped unit-test stand-ins do not
+fill that gap. Rollback-retired pages from an earlier epoch require their own
+exact completion settlement before later cancellation can become terminal.
+The quiescent state exposes no release or reuse operation until fe2o3 provides
+the corresponding physical leases. This bridge does not implement the
+still-open multi-request device allocator, physical runner, hardware
+initialization, or M1 path obligation. It also consumes exact-completion
+authority directly; the future physical runner must compose and fan out one
+ordered queue completion into scheduler, KV, and resource permits without
+duplicating that linear authority.
+
 ## Speculative Round
 
 The intended generated device batch is:

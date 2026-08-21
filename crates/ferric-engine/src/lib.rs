@@ -6,6 +6,7 @@
 use vstd::prelude::*;
 
 mod cache;
+mod device_cache;
 mod epoch;
 mod physical_step;
 mod runner;
@@ -13,6 +14,15 @@ mod scheduler;
 mod system;
 
 pub use cache::{KvError, PageId};
+pub use device_cache::{
+    bind_gfx942_device, ActiveDeviceKvCache, CancelledDeviceKvCache, DeviceKvAppendFailure,
+    DeviceKvCacheError, DeviceKvCacheProjection, DeviceKvCancellationFailure,
+    DeviceKvCancellationOutcome, DeviceKvPageLease, DeviceKvReadBinding, DeviceKvRetirementOutcome,
+    Gfx942DeviceBinding, InitializedDeviceKvWrite, PendingDeviceKvWrite,
+    PendingWriteCompletionFailure, PoisonedDeviceKvCache, QuiescenceFailure,
+    QuiescentDeviceKvCache, RetirementCompletionFailure, WriteApplicationFailure, GFX942_PROCESSOR,
+    GFX942_TARGET_FEATURES,
+};
 pub use epoch::ExactCompletion;
 pub use physical_step::{
     bind_structural_physical_step, StructuralPhysicalStepBindingError,

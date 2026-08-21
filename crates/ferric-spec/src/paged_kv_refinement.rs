@@ -374,6 +374,26 @@ impl PhysicalKvState {
     #[must_use]
     pub const fn page_count(&self) -> u32 { self.page_count }
 
+    pub closed spec fn page_at_spec(&self, position: u32) -> Option<PhysicalPageId> {
+        if position < M1_KV_PAGE_TABLE_ENTRIES {
+            self.page_table@[position as int]
+        } else {
+            None
+        }
+    }
+
+    /// Returns the exact physical generation retained at one logical page-table position.
+    #[must_use]
+    pub fn page_at(&self, position: u32) -> (page: Option<PhysicalPageId>)
+        ensures page == self.page_at_spec(position),
+    {
+        if position >= M1_KV_PAGE_TABLE_ENTRIES_U32 {
+            None
+        } else {
+            self.page_table[position as usize]
+        }
+    }
+
     #[must_use]
     pub fn page_generation(&self, index: u32) -> Option<u32> {
         if index >= M1_KV_PHYSICAL_PAGE_SLOTS_U32 {
