@@ -16,6 +16,7 @@ mod identity;
 mod m1_completion;
 pub mod m1_foundation_theorems;
 pub mod paged_kv_refinement;
+pub mod physical_plan;
 mod qwen3;
 pub mod request_isolation;
 pub mod scheduling;
@@ -52,6 +53,16 @@ pub use paged_kv_refinement::{
     release_retired_page, retire_cancelled_tail, rollback_physical_token, write_physical_token,
     LogicalKvState, PhysicalKvError, PhysicalKvLifecycle, PhysicalKvLocation, PhysicalKvState,
     PhysicalPageId, M1_KV_PAGE_TABLE_ENTRIES, M1_KV_PAGE_TOKENS, M1_KV_PHYSICAL_PAGE_SLOTS,
+};
+pub use physical_plan::{
+    validate_physical_plan_declaration, DeclaredFusionRefinementPremise,
+    PhysicalCapacityExpectation, PhysicalCapacitySource, PhysicalCompletionDeclaration,
+    PhysicalIdentityRole, PhysicalPacketIdentityBinding, PhysicalPacketSpanDeclaration,
+    PhysicalPlanDeclaration, PhysicalPlanError, PhysicalPlanExpectation,
+    PhysicalPublicationDeclaration, StructurallyValidatedPhysicalPlan,
+    M1_MAX_DECLARED_RING_PACKETS_V1, M1_MAX_UNTRUSTED_PACKET_CAPACITY_V1,
+    M1_MIN_DECLARED_RING_PACKETS_V1, M1_PHYSICAL_PLAN_DECLARATION_VERSION,
+    M1_REVIEWED_BATCH_PACKET_CAPACITY_V1,
 };
 pub use qwen3::{
     Qwen3TensorError, Qwen3TensorKind, Qwen3TensorMetadata, TensorDType, QWEN3_DRAFT_TENSOR_COUNT,
