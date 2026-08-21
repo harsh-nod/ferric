@@ -55,11 +55,11 @@ pub use paged_kv_refinement::{
     PhysicalPageId, M1_KV_PAGE_TABLE_ENTRIES, M1_KV_PAGE_TOKENS, M1_KV_PHYSICAL_PAGE_SLOTS,
 };
 pub use physical_plan::{
-    validate_physical_plan_declaration, DeclaredFusionRefinementPremise,
-    PhysicalCapacityExpectation, PhysicalCapacitySource, PhysicalCompletionDeclaration,
-    PhysicalIdentityRole, PhysicalPacketIdentityBinding, PhysicalPacketSpanDeclaration,
-    PhysicalPlanDeclaration, PhysicalPlanError, PhysicalPlanExpectation,
-    PhysicalPublicationDeclaration, StructurallyValidatedPhysicalPlan,
+    physical_plan_structural_validation_theorem, validate_physical_plan_declaration,
+    DeclaredFusionRefinementPremise, PhysicalCapacityExpectation, PhysicalCapacitySource,
+    PhysicalCompletionDeclaration, PhysicalIdentityRole, PhysicalPacketIdentityBinding,
+    PhysicalPacketSpanDeclaration, PhysicalPlanDeclaration, PhysicalPlanError,
+    PhysicalPlanExpectation, PhysicalPublicationDeclaration, StructurallyValidatedPhysicalPlan,
     M1_MAX_DECLARED_RING_PACKETS_V1, M1_MAX_UNTRUSTED_PACKET_CAPACITY_V1,
     M1_MIN_DECLARED_RING_PACKETS_V1, M1_PHYSICAL_PLAN_DECLARATION_VERSION,
     M1_REVIEWED_BATCH_PACKET_CAPACITY_V1,
