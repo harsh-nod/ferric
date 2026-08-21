@@ -11,6 +11,7 @@ use vstd::prelude::*;
 pub mod completion;
 mod configuration;
 mod identity;
+mod m1_completion;
 mod qwen3;
 pub mod scheduling;
 mod speculation;
@@ -23,6 +24,10 @@ pub use configuration::{
     QWEN3_VOCABULARY_SIZE,
 };
 pub use identity::{Identity, RequestId};
+pub use m1_completion::{
+    select_lowest_argmax, validate_compact_completion, CompactCompletionError,
+    CompactCompletionRecord, M1_MAX_COMPLETION_TOKENS,
+};
 pub use qwen3::{
     Qwen3TensorError, Qwen3TensorKind, Qwen3TensorMetadata, TensorDType, QWEN3_DRAFT_TENSOR_COUNT,
     QWEN3_DRAFT_TENSOR_DATA_BYTES, QWEN3_NO_LAYER, QWEN3_TARGET_TENSOR_COUNT,
