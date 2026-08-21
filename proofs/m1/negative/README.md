@@ -40,21 +40,29 @@ proofs/m1/negative/run-same-source.sh \
 ```
 
 The runner refuses a dirty worktree, authenticates
-`VERUS_CLOSURE_MANIFEST`, records the exact commit/tree/compiler/registry
-identity, applies the strict mutator, requires `cargo check --all-targets` to
-pass, and requires the exact compiler function to fail a proof obligation
-under `--no-cheating`. Output paths must be new. Each scratch source is removed
-after its sequential row; dependency build targets are shared between rows and
-removed when the complete run exits to bound rebuild time and disk use.
+`VERUS_CLOSURE_MANIFEST`, measures the exact M1 checker source closure, and
+records the exact commit, tree, compiler closure, registry, and runner
+identities. It applies the strict mutator, requires `cargo check --all-targets`
+to pass, and requires the exact compiler module and function to fail a proof
+obligation under `--no-cheating`. Output paths must be new. Each selected row
+has an ordered mutation record, compile transcript, Verus transcript, and
+`.result` manifest that binds the companion names, sizes, hashes, and exit
+statuses. Each scratch source is removed after its sequential row; dependency
+build targets are shared between rows and removed when the complete run exits
+to bound rebuild time and disk use.
 
 ## Non-Claims
 
 Registry membership is only a declared hostile-test requirement. A successful
-runner row is a fresh pinned-compiler rejection for that body and clause, but
-it is not an M1 negative-mutation evidence product: the checker-owned M1
-negative-mutation validator remains a `RequiredFuture` path with no admitted
-source pin. Neither state closes a roadmap item, assurance property, or future
-path obligation.
+runner row is a fresh pinned-compiler rejection for that body and clause. The
+checker-owned, source-pinned negative-mutation validator can authenticate a
+canonical `.result` and its complete dedicated run directory. For an evidence
+binding, the selected roster must be exactly every registry row assigned to
+that assurance property and path; partial or cross-property replay is rejected.
+The validator does not create an evidence index or qualification receipt. It is
+an `ExistingFoundation`; all registry-associated proof paths and assurance
+properties remain `Open`. Neither a runner result nor validator acceptance
+closes a roadmap item, assurance property, or future path obligation.
 
 This scaffold adds no artifact, allocation, address, queue, GPU, kernel,
 runner, launch, graph-composition, hardware, numerical, side-channel, or

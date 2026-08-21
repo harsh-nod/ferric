@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Discard a validated delta at the executable publication transition."""
 
+import hashlib
 from pathlib import Path
 import sys
 
@@ -16,3 +17,4 @@ path.write_text(source.replace(old, new), encoding="utf-8")
 print("MUTATED_SOURCE=crates/ferric-spec/src/step_plan_publication.rs")
 print("MUTATION=publication-phase-transition")
 print("CLAUSE=validated-to-published-transition")
+print(f"ANCHOR_SHA256={hashlib.sha256(old.encode('utf-8')).hexdigest()}")

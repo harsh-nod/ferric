@@ -55,8 +55,9 @@ ARTIFACT_KINDS = set(EVIDENCE_ARTIFACT_KINDS.values()) | {
 SOURCE_EXCLUDED_DIRECTORIES = {".git", ".ruff_cache", "__pycache__", "target"}
 SOURCE_EXCLUDED_SUFFIXES = {".pyc", ".receipt"}
 
-# These validators are future M1 qualification inputs. Their paths and
-# protocols are checker-owned so an evidence index cannot select an executable.
+# Validator paths, protocols, and reviewed source identities are checker-owned,
+# so an evidence index cannot select or substitute an executable. A None source
+# identity denotes a validator that remains a RequiredFuture obligation.
 TRUSTED_VALIDATORS = {
     "artifact-identity": (
         "proofs/m1/evidence/validate-artifact-identity.py",
@@ -91,7 +92,7 @@ TRUSTED_VALIDATORS = {
     "negative-mutation": (
         "proofs/m1/evidence/validate-negative-mutation.py",
         "ferric.m1-validator.negative-mutation.v1",
-        None,
+        "b4ee8e7c362f28506a87a4c7620249950c61a3eb34fbddd963961f45a78092c2",
     ),
     "performance-gate": (
         "proofs/m1/evidence/validate-performance-report.py",

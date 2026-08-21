@@ -98,23 +98,32 @@ paths. The version 1 registry is:
 | Unsupported rationale | `proofs/m1/evidence/validate-unsupported-rationale.py` | `ferric.m1-validator.unsupported-rationale.v1` |
 | Verus theorem | `proofs/m1/evidence/validate-verus-theorem.py` | `ferric.m1-validator.verus-theorem.v1` |
 
-These validators are `RequiredFuture` M1 implementation obligations. Until
-every validator required by an index exists in the exact qualified source
-closure, has a reviewed source SHA-256 pinned in the checker-owned registry,
-and accepts its canonical context, the production checker cannot print an M1
-closure `PASS`. All version 1 registry source pins are intentionally unset at
-this scaffold stage. Adding a file at a registered path is therefore
-insufficient. The private in-process callback used by synthetic policy tests
-is deliberately absent from the CLI and is not a qualification mode.
+The negative-mutation validator is an `ExistingFoundation`: its exact source
+SHA-256 is pinned in the checker-owned registry, and it validates the complete
+versioned run directory behind a bound `.result` artifact. The other validators
+remain `RequiredFuture` M1 implementation obligations with intentionally unset
+source pins. Until every validator required by an index exists in the exact
+qualified source closure, has a reviewed source SHA-256 pinned in the
+checker-owned registry, and accepts its canonical context, the production
+checker cannot print an M1 closure `PASS`. Adding a file at another registered
+path is insufficient. The private in-process callback used by synthetic policy
+tests is deliberately absent from the CLI and is not a qualification mode.
 
-The versioned hostile foundation registry under `proofs/m1/negative/` is also
-not an evidence index or evidence product. Its runner can authenticate the
-pinned Verus closure and demonstrate a fresh same-source proof rejection, but
-that output remains inadmissible here until the checker-owned
-`validate-negative-mutation.py` implementation and source pin exist. The
+The versioned hostile foundation registry under `proofs/m1/negative/` is not an
+evidence index or closure product. Its runner can authenticate the pinned Verus
+closure and demonstrate a fresh same-source proof rejection. The trusted
+validator independently binds a canonical result to the exact registry row,
+source commit/tree/closure, compiler closure, current mutation transform,
+selected module/function, ordinary compile success, and proof-failure marker.
+The selected Verus function must end with exactly `0 verified, 1 errors`.
+Cargo's terminal diagnostic count is bound separately to the exact number of
+permitted assertion or postcondition diagnostics, each with the selected source
+path, because one rejected function can emit more than one diagnostic for
+distinct exits.
+This repository does not contain an M1 evidence index using those results. The
 registry's associations to `graph-proof`, `kv-proof`, `batching-proof`,
-`scheduler-proof`, and `isolation-proof` keep those future paths `Open`; they
-do not assert that any path exists or is discharged.
+`scheduler-proof`, and `isolation-proof` keep those future paths `Open`; they do
+not assert that any path exists or is discharged.
 
 This checker establishes structural completeness and cryptographic identity
 closure. It does not establish the semantic truth of a theorem, the

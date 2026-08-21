@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Write a successful request-local transition into a different batch slot."""
 
+import hashlib
 from pathlib import Path
 import sys
 
@@ -16,3 +17,4 @@ path.write_text(source.replace(old, new), encoding="utf-8")
 print("MUTATED_SOURCE=crates/ferric-spec/src/continuous_batching.rs")
 print("MUTATION=isolation-other-request-frame")
 print("CLAUSE=other-request-frame")
+print(f"ANCHOR_SHA256={hashlib.sha256(old.encode('utf-8')).hexdigest()}")

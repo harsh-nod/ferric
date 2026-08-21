@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Erase the retired tail token's initialized-prefix state."""
 
+import hashlib
 from pathlib import Path
 import sys
 
@@ -22,3 +23,4 @@ path.write_text(source.replace(old, new), encoding="utf-8")
 print("MUTATED_SOURCE=crates/ferric-spec/src/paged_kv_refinement.rs")
 print("MUTATION=kv-rollback-retirement")
 print("CLAUSE=retired-tail-prefix")
+print(f"ANCHOR_SHA256={hashlib.sha256(old.encode('utf-8')).hexdigest()}")

@@ -136,8 +136,16 @@ def verify_current_mutators(repo: Path, root: Path, active: Path) -> int:
             stderr=subprocess.STDOUT,
             text=True,
         )
-        expected = f"MUTATED_SOURCE={source}\nMUTATION={name}\nCLAUSE={clause}\n"
-        if result.returncode != 0 or result.stdout != expected:
+        prefix = f"MUTATED_SOURCE={source}\nMUTATION={name}\nCLAUSE={clause}\n"
+        anchor_line = result.stdout.removeprefix(prefix).removesuffix("\n")
+        anchor = anchor_line.removeprefix("ANCHOR_SHA256=")
+        if (
+            result.returncode != 0
+            or not result.stdout.startswith(prefix)
+            or not anchor_line.startswith("ANCHOR_SHA256=")
+            or len(anchor) != 64
+            or any(character not in "0123456789abcdef" for character in anchor)
+        ):
             fail(f"{name} did not apply its exact current anchor\n{result.stdout}")
         after = hashlib.sha256(source_path.read_bytes()).hexdigest()
         if before == after:
