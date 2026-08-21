@@ -13,11 +13,23 @@ use crate::{
 use ferric_spec::{Qwen3ModelRole, TensorDType};
 use std::fmt;
 use std::io::{self, Read, Write};
+use vstd::bytes::{u32_to_le_bytes, u64_to_le_bytes};
+use vstd::prelude::*;
 
 const STREAM_BUFFER_BYTES: usize = 64 * 1_024;
+
+verus! {
+
 const MAX_MANIFEST_BYTES: usize = 256 * 1_024;
 const SECTION_ALIGNMENT: u64 = 2;
-const MANIFEST_DOMAIN: &[u8] = b"ferric.prepacked-weight-sections.v1\0";
+const MANIFEST_DOMAIN: [u8; 36] = [
+    102, 101, 114, 114, 105, 99, 46, 112, 114, 101, 112, 97, 99, 107, 101, 100, 45, 119, 101,
+    105, 103, 104, 116, 45, 115, 101, 99, 116, 105, 111, 110, 115, 46, 118, 49, 0,
+];
+const TRANSFORM_ID_BYTES: [u8; 26] = [
+    98, 102, 49, 54, 45, 114, 111, 119, 45, 109, 97, 106, 111, 114, 45, 105, 100, 101, 110,
+    116, 105, 116, 121, 45, 118, 49,
+];
 
 /// Canonical manifest format version for prepacked weight sections.
 pub const PREPACKED_WEIGHT_MANIFEST_VERSION: u32 = 1;
@@ -59,63 +71,100 @@ pub struct WeightSection {
 }
 
 impl WeightSection {
+    pub closed spec fn tensor_name_spec(&self) -> Seq<char> { self.tensor_name@ }
+    pub closed spec fn role_spec(&self) -> Qwen3ModelRole { self.role }
+    pub closed spec fn dtype_spec(&self) -> TensorDType { self.dtype }
+    pub closed spec fn shape_spec(&self) -> (u32, u32, u32) {
+        (self.rank, self.dimension_0, self.dimension_1)
+    }
+    pub closed spec fn source_artifact_spec(&self) -> Seq<char> { self.source_artifact@ }
+    pub closed spec fn source_range_spec(&self) -> (u64, u64) {
+        (self.source_offset, self.source_length)
+    }
+    pub closed spec fn destination_range_spec(&self) -> (u64, u64) {
+        (self.destination_offset, self.destination_length)
+    }
+    pub closed spec fn alignment_spec(&self) -> u64 { self.alignment }
+    pub closed spec fn transform_spec(&self) -> WeightTransform { self.transform }
+    pub closed spec fn sha256_spec(&self) -> Seq<u8> { self.sha256@ }
+
     /// Returns the exact canonical safetensors tensor name.
     #[must_use]
-    pub fn tensor_name(&self) -> &str {
+    pub fn tensor_name(&self) -> (name: &str)
+        ensures name@ == self.tensor_name_spec(),
+    {
         &self.tensor_name
     }
 
     /// Returns the exact model role.
     #[must_use]
-    pub const fn role(&self) -> Qwen3ModelRole {
+    pub const fn role(&self) -> (role: Qwen3ModelRole)
+        ensures role == self.role_spec(),
+    {
         self.role
     }
 
     /// Returns the admitted tensor data type.
     #[must_use]
-    pub const fn dtype(&self) -> TensorDType {
+    pub const fn dtype(&self) -> (dtype: TensorDType)
+        ensures dtype == self.dtype_spec(),
+    {
         self.dtype
     }
 
     /// Returns `(rank, dimension_0, dimension_1)` from the executable schema.
     #[must_use]
-    pub const fn shape(&self) -> (u32, u32, u32) {
+    pub const fn shape(&self) -> (shape: (u32, u32, u32))
+        ensures shape == self.shape_spec(),
+    {
         (self.rank, self.dimension_0, self.dimension_1)
     }
 
     /// Returns the exact source artifact filename.
     #[must_use]
-    pub fn source_artifact(&self) -> &str {
+    pub fn source_artifact(&self) -> (artifact: &str)
+        ensures artifact@ == self.source_artifact_spec(),
+    {
         &self.source_artifact
     }
 
     /// Returns the absolute full-file source byte offset and length.
     #[must_use]
-    pub const fn source_range(&self) -> (u64, u64) {
+    pub const fn source_range(&self) -> (range: (u64, u64))
+        ensures range == self.source_range_spec(),
+    {
         (self.source_offset, self.source_length)
     }
 
     /// Returns the output byte offset and length.
     #[must_use]
-    pub const fn destination_range(&self) -> (u64, u64) {
+    pub const fn destination_range(&self) -> (range: (u64, u64))
+        ensures range == self.destination_range_spec(),
+    {
         (self.destination_offset, self.destination_length)
     }
 
     /// Returns the required destination alignment in bytes.
     #[must_use]
-    pub const fn alignment(&self) -> u64 {
+    pub const fn alignment(&self) -> (alignment: u64)
+        ensures alignment == self.alignment_spec(),
+    {
         self.alignment
     }
 
     /// Returns the lossless transform applied to the section.
     #[must_use]
-    pub const fn transform(&self) -> WeightTransform {
+    pub const fn transform(&self) -> (transform: WeightTransform)
+        ensures transform == self.transform_spec(),
+    {
         self.transform
     }
 
     /// Returns SHA-256 of the exact emitted section bytes.
     #[must_use]
-    pub const fn sha256(&self) -> [u8; 32] {
+    pub const fn sha256(&self) -> (digest: [u8; 32])
+        ensures digest@ == self.sha256_spec(),
+    {
         self.sha256
     }
 }
@@ -134,62 +183,105 @@ pub struct WeightSectionManifest {
     tensor_data_bytes: u64,
     output_bytes: u64,
     sections: Vec<WeightSection>,
-    canonical_bytes: Box<[u8]>,
+    canonical_bytes: Vec<u8>,
     aggregate_id: [u8; 32],
 }
 
 impl WeightSectionManifest {
+    pub closed spec fn version_spec(&self) -> u32 { self.version }
+    pub closed spec fn role_spec(&self) -> Qwen3ModelRole { self.role }
+    pub closed spec fn source_weights_id_spec(&self) -> Seq<u8> { self.source_weights_id@ }
+    pub closed spec fn source_artifact_bytes_spec(&self) -> u64 { self.source_artifact_bytes }
+    pub closed spec fn tensor_data_bytes_spec(&self) -> u64 { self.tensor_data_bytes }
+    pub closed spec fn output_bytes_spec(&self) -> u64 { self.output_bytes }
+    pub closed spec fn sections_spec(&self) -> Seq<WeightSection> { self.sections@ }
+    pub closed spec fn canonical_bytes_spec(&self) -> Seq<u8> { self.canonical_bytes@ }
+    pub closed spec fn aggregate_id_spec(&self) -> Seq<u8> { self.aggregate_id@ }
+
+    /// Exact relation proved by the pure manifest finalizer.
+    pub closed spec fn valid_commitment(&self) -> bool {
+        &&& self.version == PREPACKED_WEIGHT_MANIFEST_VERSION
+        &&& destination_layout_spec(self.role, self.output_bytes, self.sections@)
+        &&& self.canonical_bytes@ == manifest_record_spec(
+            self.role,
+            self.source_weights_id@,
+            self.source_artifact_bytes,
+            self.tensor_data_bytes,
+            self.output_bytes,
+            self.sections@,
+        )
+        &&& self.aggregate_id@ == crate::sha256::digest_spec(self.canonical_bytes@)
+    }
+
     /// Returns the canonical manifest format version.
     #[must_use]
-    pub const fn version(&self) -> u32 {
+    pub const fn version(&self) -> (version: u32)
+        ensures version == self.version_spec(),
+    {
         self.version
     }
 
     /// Returns the exact model role.
     #[must_use]
-    pub const fn role(&self) -> Qwen3ModelRole {
+    pub const fn role(&self) -> (role: Qwen3ModelRole)
+        ensures role == self.role_spec(),
+    {
         self.role
     }
 
     /// Returns the pinned source weight-set identity.
     #[must_use]
-    pub const fn source_weights_id(&self) -> [u8; 32] {
+    pub const fn source_weights_id(&self) -> (identity: [u8; 32])
+        ensures identity@ == self.source_weights_id_spec(),
+    {
         self.source_weights_id
     }
 
     /// Returns complete source safetensors bytes, including headers.
     #[must_use]
-    pub const fn source_artifact_bytes(&self) -> u64 {
+    pub const fn source_artifact_bytes(&self) -> (bytes: u64)
+        ensures bytes == self.source_artifact_bytes_spec(),
+    {
         self.source_artifact_bytes
     }
 
     /// Returns source tensor-data bytes excluding safetensors headers.
     #[must_use]
-    pub const fn tensor_data_bytes(&self) -> u64 {
+    pub const fn tensor_data_bytes(&self) -> (bytes: u64)
+        ensures bytes == self.tensor_data_bytes_spec(),
+    {
         self.tensor_data_bytes
     }
 
     /// Returns the exact bounded output length.
     #[must_use]
-    pub const fn output_bytes(&self) -> u64 {
+    pub const fn output_bytes(&self) -> (bytes: u64)
+        ensures bytes == self.output_bytes_spec(),
+    {
         self.output_bytes
     }
 
     /// Returns all tensor sections in source-file and source-offset order.
     #[must_use]
-    pub fn sections(&self) -> &[WeightSection] {
+    pub fn sections(&self) -> (sections: &[WeightSection])
+        ensures sections@ == self.sections_spec(),
+    {
         &self.sections
     }
 
     /// Returns the canonical domain-separated manifest record.
     #[must_use]
-    pub fn canonical_bytes(&self) -> &[u8] {
+    pub fn canonical_bytes(&self) -> (bytes: &[u8])
+        ensures bytes@ == self.canonical_bytes_spec(),
+    {
         &self.canonical_bytes
     }
 
     /// Returns SHA-256 of `canonical_bytes`.
     #[must_use]
-    pub const fn aggregate_id(&self) -> [u8; 32] {
+    pub const fn aggregate_id(&self) -> (identity: [u8; 32])
+        ensures identity@ == self.aggregate_id_spec(),
+    {
         self.aggregate_id
     }
 }
@@ -212,28 +304,161 @@ pub struct PrepackedWeightSet {
 #[derive(Debug, PartialEq, Eq)]
 struct PrepackedSeal;
 
-struct SourceStreamState {
-    hasher: Sha256,
-    total: u64,
-    buffer: Box<[u8]>,
-}
-
 impl PrepackedWeightSet {
+    pub closed spec fn role_spec(&self) -> Qwen3ModelRole { self.role }
+    pub closed spec fn descriptor_spec(&self) -> WeightDescriptor { self.descriptor }
+    pub closed spec fn manifest_spec(&self) -> WeightSectionManifest { self.manifest }
+
     /// Returns the exact model role.
     #[must_use]
-    pub const fn role(&self) -> Qwen3ModelRole {
+    pub const fn role(&self) -> (role: Qwen3ModelRole)
+        ensures role == self.role_spec(),
+    {
         self.role
     }
 
     /// Returns the immutable canonical section manifest.
     #[must_use]
-    pub const fn manifest(&self) -> &WeightSectionManifest {
+    pub const fn manifest(&self) -> (manifest: &WeightSectionManifest)
+        ensures *manifest == self.manifest_spec(),
+    {
         &self.manifest
     }
 
-    pub(super) fn into_parts(self) -> (WeightDescriptor, WeightSectionManifest) {
+    pub(super) fn into_parts(self) -> (parts: (WeightDescriptor, WeightSectionManifest))
+        ensures parts == (self.descriptor_spec(), self.manifest_spec()),
+    {
         (self.descriptor, self.manifest)
     }
+}
+
+closed spec fn role_code_spec(role: Qwen3ModelRole) -> u8 {
+    match role {
+        Qwen3ModelRole::Target8B => 1,
+        Qwen3ModelRole::Draft06B => 2,
+    }
+}
+
+closed spec fn dtype_code_spec(dtype: TensorDType) -> u8 {
+    match dtype {
+        TensorDType::Bf16 => 1,
+    }
+}
+
+closed spec fn string_record_spec(bytes: Seq<u8>) -> Seq<u8> {
+    vstd::bytes::spec_u32_to_le_bytes(bytes.len() as u32) + bytes
+}
+
+closed spec fn section_record_spec(section: WeightSection) -> Seq<u8> {
+    string_record_spec(vstd::utf8::encode_utf8(section.tensor_name@))
+        + seq![role_code_spec(section.role)]
+        + seq![dtype_code_spec(section.dtype)]
+        + vstd::bytes::spec_u32_to_le_bytes(section.rank)
+        + vstd::bytes::spec_u32_to_le_bytes(section.dimension_0)
+        + vstd::bytes::spec_u32_to_le_bytes(section.dimension_1)
+        + string_record_spec(vstd::utf8::encode_utf8(section.source_artifact@))
+        + vstd::bytes::spec_u64_to_le_bytes(section.source_offset)
+        + vstd::bytes::spec_u64_to_le_bytes(section.source_length)
+        + vstd::bytes::spec_u64_to_le_bytes(section.destination_offset)
+        + vstd::bytes::spec_u64_to_le_bytes(section.destination_length)
+        + vstd::bytes::spec_u64_to_le_bytes(section.alignment)
+        + string_record_spec(TRANSFORM_ID_BYTES@)
+        + section.sha256@
+}
+
+closed spec fn section_records_from_spec(
+    sections: Seq<WeightSection>,
+    index: nat,
+) -> Seq<u8>
+    recommends index <= sections.len(),
+    decreases sections.len() - index,
+{
+    if index < sections.len() {
+        section_record_spec(sections[index as int])
+            + section_records_from_spec(sections, index + 1)
+    } else {
+        Seq::empty()
+    }
+}
+
+closed spec fn section_records_spec(sections: Seq<WeightSection>) -> Seq<u8> {
+    section_records_from_spec(sections, 0)
+}
+
+closed spec fn manifest_record_spec(
+    role: Qwen3ModelRole,
+    source_weights_id: Seq<u8>,
+    source_artifact_bytes: u64,
+    tensor_data_bytes: u64,
+    output_bytes: u64,
+    sections: Seq<WeightSection>,
+) -> Seq<u8> {
+    MANIFEST_DOMAIN@
+        + vstd::bytes::spec_u32_to_le_bytes(PREPACKED_WEIGHT_MANIFEST_VERSION)
+        + seq![role_code_spec(role)]
+        + source_weights_id
+        + vstd::bytes::spec_u64_to_le_bytes(source_artifact_bytes)
+        + vstd::bytes::spec_u64_to_le_bytes(tensor_data_bytes)
+        + vstd::bytes::spec_u64_to_le_bytes(output_bytes)
+        + vstd::bytes::spec_u32_to_le_bytes(sections.len() as u32)
+        + section_records_spec(sections)
+}
+
+closed spec fn destination_layout_from_spec(
+    role: Qwen3ModelRole,
+    output_bytes: u64,
+    sections: Seq<WeightSection>,
+    index: nat,
+    expected: u64,
+) -> bool
+    recommends index <= sections.len(),
+    decreases sections.len() - index,
+{
+    if index < sections.len() {
+        let section = sections[index as int];
+        &&& destination_section_spec(section, role, expected)
+        &&& expected <= u64::MAX - section.destination_length
+        &&& destination_layout_from_spec(
+            role,
+            output_bytes,
+            sections,
+            index + 1,
+            (expected + section.destination_length) as u64,
+        )
+    } else {
+        expected == output_bytes
+    }
+}
+
+pub open spec fn destination_section_spec(
+    section: WeightSection,
+    role: Qwen3ModelRole,
+    expected: u64,
+) -> bool {
+    &&& section.role_spec() == role
+    &&& section.dtype_spec() == TensorDType::Bf16
+    &&& section.transform_spec() == WeightTransform::Bf16RowMajorIdentityV1
+    &&& section.alignment_spec() == 2
+    &&& section.destination_range_spec().0 == expected
+    &&& section.destination_range_spec().1 == section.source_range_spec().1
+    &&& section.destination_range_spec().0 % 2 == 0
+    &&& section.destination_range_spec().1 % 2 == 0
+}
+
+pub closed spec fn destination_layout_spec(
+    role: Qwen3ModelRole,
+    output_bytes: u64,
+    sections: Seq<WeightSection>,
+) -> bool {
+    destination_layout_from_spec(role, output_bytes, sections, 0, 0)
+}
+
+}
+
+struct SourceStreamState {
+    hasher: Sha256,
+    total: u64,
+    buffer: Box<[u8]>,
 }
 
 /// Fail-closed prepacked weight streaming or manifest error.
@@ -686,151 +911,485 @@ fn flush_output<W: Write>(output: &mut W) -> Result<(), WeightStreamError> {
     })
 }
 
-fn finish_prepacked(
-    role: Qwen3ModelRole,
-    descriptor: WeightDescriptor,
-    output_bytes: u64,
-    sections: Vec<WeightSection>,
-) -> Result<PrepackedWeightSet, WeightStreamError> {
-    if output_bytes != descriptor.tensor_data_bytes
-        || output_bytes != role.tensor_data_bytes()
-        || sections.len() != role.tensor_count() as usize
-    {
-        return Err(WeightStreamError::InvalidLayout(
-            "complete output count or length drifted",
-        ));
-    }
-    validate_destination_coverage(role, output_bytes, &sections)?;
-    let canonical_bytes = encode_manifest_record(role, descriptor, output_bytes, &sections)?;
-    let aggregate_id = crate::sha256::digest(&canonical_bytes);
-    Ok(PrepackedWeightSet {
-        role,
-        descriptor,
-        manifest: WeightSectionManifest {
-            version: PREPACKED_WEIGHT_MANIFEST_VERSION,
-            role,
-            source_weights_id: descriptor.weights_id,
-            source_artifact_bytes: descriptor.artifact_bytes,
-            tensor_data_bytes: descriptor.tensor_data_bytes,
-            output_bytes,
-            sections,
-            canonical_bytes: canonical_bytes.into_boxed_slice(),
-            aggregate_id,
-        },
-        seal: PrepackedSeal,
-    })
+verus! {
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum ManifestBuildError {
+    CompleteOutput,
+    DestinationLayout,
+    DestinationCoverage,
+    DestinationOverflow,
+    ManifestCapacity,
+    ManifestSectionCount,
+    ManifestStringLength,
+    ManifestTooLarge,
 }
 
-fn validate_destination_coverage(
-    role: Qwen3ModelRole,
-    output_bytes: u64,
-    sections: &[WeightSection],
-) -> Result<(), WeightStreamError> {
-    let mut expected = 0_u64;
-    for section in sections {
-        if section.role != role
-            || section.dtype != TensorDType::Bf16
-            || section.transform != WeightTransform::Bf16RowMajorIdentityV1
-            || section.alignment != SECTION_ALIGNMENT
-            || section.destination_offset != expected
-            || section.destination_length != section.source_length
-            || !section.destination_offset.is_multiple_of(section.alignment)
-            || !section.destination_length.is_multiple_of(section.alignment)
-        {
-            return Err(WeightStreamError::InvalidLayout(
-                "destination sections are not canonical and complete",
-            ));
-        }
-        expected = expected.checked_add(section.destination_length).ok_or(
-            WeightStreamError::ArithmeticOverflow("destination coverage"),
-        )?;
-    }
-    if expected != output_bytes {
-        return Err(WeightStreamError::InvalidLayout(
-            "destination sections do not cover output",
-        ));
-    }
-    Ok(())
-}
-
-fn encode_manifest_record(
-    role: Qwen3ModelRole,
-    descriptor: WeightDescriptor,
-    output_bytes: u64,
-    sections: &[WeightSection],
-) -> Result<Vec<u8>, WeightStreamError> {
-    let capacity = sections
-        .len()
-        .checked_mul(160)
-        .and_then(|bytes| bytes.checked_add(64))
-        .ok_or(WeightStreamError::ArithmeticOverflow("manifest capacity"))?;
-    if capacity > MAX_MANIFEST_BYTES {
-        return Err(WeightStreamError::ManifestTooLarge);
-    }
-    let mut record = Vec::with_capacity(capacity);
-    record.extend_from_slice(MANIFEST_DOMAIN);
-    record.extend_from_slice(&PREPACKED_WEIGHT_MANIFEST_VERSION.to_le_bytes());
-    record.push(role_code(role));
-    record.extend_from_slice(&descriptor.weights_id);
-    record.extend_from_slice(&descriptor.artifact_bytes.to_le_bytes());
-    record.extend_from_slice(&descriptor.tensor_data_bytes.to_le_bytes());
-    record.extend_from_slice(&output_bytes.to_le_bytes());
-    let section_count = u32::try_from(sections.len())
-        .map_err(|_| WeightStreamError::ArithmeticOverflow("manifest section count"))?;
-    record.extend_from_slice(&section_count.to_le_bytes());
-    for section in sections {
-        push_string(&mut record, &section.tensor_name)?;
-        record.push(role_code(section.role));
-        record.push(dtype_code(section.dtype));
-        record.extend_from_slice(&section.rank.to_le_bytes());
-        record.extend_from_slice(&section.dimension_0.to_le_bytes());
-        record.extend_from_slice(&section.dimension_1.to_le_bytes());
-        push_string(&mut record, &section.source_artifact)?;
-        record.extend_from_slice(&section.source_offset.to_le_bytes());
-        record.extend_from_slice(&section.source_length.to_le_bytes());
-        record.extend_from_slice(&section.destination_offset.to_le_bytes());
-        record.extend_from_slice(&section.destination_length.to_le_bytes());
-        record.extend_from_slice(&section.alignment.to_le_bytes());
-        push_string(&mut record, section.transform.id())?;
-        record.extend_from_slice(&section.sha256);
-        if record.len() > MAX_MANIFEST_BYTES {
-            return Err(WeightStreamError::ManifestTooLarge);
-        }
-    }
-    Ok(record)
-}
-
-fn push_string(record: &mut Vec<u8>, value: &str) -> Result<(), WeightStreamError> {
-    let length = u32::try_from(value.len())
-        .map_err(|_| WeightStreamError::ArithmeticOverflow("manifest string length"))?;
-    record.extend_from_slice(&length.to_le_bytes());
-    record.extend_from_slice(value.as_bytes());
-    if record.len() > MAX_MANIFEST_BYTES {
-        return Err(WeightStreamError::ManifestTooLarge);
-    }
-    Ok(())
-}
-
-const fn role_code(role: Qwen3ModelRole) -> u8 {
+const fn role_code(role: Qwen3ModelRole) -> (code: u8)
+    ensures code == role_code_spec(role),
+{
     match role {
         Qwen3ModelRole::Target8B => 1,
         Qwen3ModelRole::Draft06B => 2,
     }
 }
 
-const fn dtype_code(dtype: TensorDType) -> u8 {
+const fn dtype_code(dtype: TensorDType) -> (code: u8)
+    ensures code == dtype_code_spec(dtype),
+{
     match dtype {
         TensorDType::Bf16 => 1,
+    }
+}
+
+fn roles_equal(left: Qwen3ModelRole, right: Qwen3ModelRole) -> (equal: bool)
+    ensures equal == (left == right),
+{
+    match left {
+        Qwen3ModelRole::Target8B => match right {
+            Qwen3ModelRole::Target8B => true,
+            Qwen3ModelRole::Draft06B => false,
+        },
+        Qwen3ModelRole::Draft06B => match right {
+            Qwen3ModelRole::Target8B => false,
+            Qwen3ModelRole::Draft06B => true,
+        },
+    }
+}
+
+fn dtypes_equal(left: TensorDType, right: TensorDType) -> (equal: bool)
+    ensures equal == (left == right),
+{
+    match (left, right) {
+        (TensorDType::Bf16, TensorDType::Bf16) => true,
+    }
+}
+
+fn transforms_equal(left: WeightTransform, right: WeightTransform) -> (equal: bool)
+    ensures equal == (left == right),
+{
+    match (left, right) {
+        (WeightTransform::Bf16RowMajorIdentityV1, WeightTransform::Bf16RowMajorIdentityV1) => true,
+    }
+}
+
+fn append_bytes(record: &mut Vec<u8>, bytes: &[u8])
+    ensures final(record)@ == old(record)@ + bytes@,
+{
+    let ghost original = record@;
+    let mut index = 0;
+    while index < bytes.len()
+        invariant
+            index <= bytes.len(),
+            record@ == original + bytes@.subrange(0, index as int),
+        decreases bytes.len() - index,
+    {
+        record.push(bytes[index]);
+        index += 1;
+    }
+    assert(bytes@.subrange(0, bytes@.len() as int) == bytes@);
+}
+
+fn append_u32(record: &mut Vec<u8>, value: u32)
+    ensures
+        final(record)@ == old(record)@ + vstd::bytes::spec_u32_to_le_bytes(value),
+        final(record)@.len() == old(record)@.len() + 4,
+{
+    let encoded = u32_to_le_bytes(value);
+    append_bytes(record, &encoded);
+}
+
+fn append_u64(record: &mut Vec<u8>, value: u64)
+    ensures
+        final(record)@ == old(record)@ + vstd::bytes::spec_u64_to_le_bytes(value),
+        final(record)@.len() == old(record)@.len() + 8,
+{
+    let encoded = u64_to_le_bytes(value);
+    append_bytes(record, &encoded);
+}
+
+fn append_length_prefixed_bytes(
+    record: &mut Vec<u8>,
+    bytes: &[u8],
+) -> (result: Result<(), ManifestBuildError>)
+    ensures
+        result.is_ok() ==> final(record)@ == old(record)@ + string_record_spec(bytes@),
+        result.is_ok() ==> final(record)@.len() <= MAX_MANIFEST_BYTES,
+{
+    if bytes.len() > u32::MAX as usize {
+        return Err(ManifestBuildError::ManifestStringLength);
+    }
+    if record.len() > MAX_MANIFEST_BYTES - 4 {
+        return Err(ManifestBuildError::ManifestTooLarge);
+    }
+    let with_length = record.len() + 4;
+    if bytes.len() > MAX_MANIFEST_BYTES - with_length {
+        return Err(ManifestBuildError::ManifestTooLarge);
+    }
+    let ghost original = record@;
+    let length = match u32::try_from(bytes.len()) {
+        Ok(length) => length,
+        Err(_) => return Err(ManifestBuildError::ManifestStringLength),
+    };
+    append_u32(record, length);
+    append_bytes(record, bytes);
+    assert(record@ == original + string_record_spec(bytes@));
+    assert(record@.len() == original.len() + 4 + bytes@.len());
+    assert(record@.len() <= MAX_MANIFEST_BYTES);
+    Ok(())
+}
+
+fn append_manifest_section(
+    record: &mut Vec<u8>,
+    section: &WeightSection,
+) -> (result: Result<(), ManifestBuildError>)
+    requires old(record)@.len() <= MAX_MANIFEST_BYTES,
+    ensures
+        result.is_ok() ==> final(record)@ == old(record)@ + section_record_spec(*section),
+        result.is_ok() ==> final(record)@.len() <= MAX_MANIFEST_BYTES,
+{
+    let ghost original = record@;
+    let tensor_name: &str = &section.tensor_name;
+    match append_length_prefixed_bytes(record, tensor_name.as_bytes()) {
+        Ok(()) => {},
+        Err(error) => return Err(error),
+    }
+    record.push(role_code(section.role));
+    record.push(dtype_code(section.dtype));
+    append_u32(record, section.rank);
+    append_u32(record, section.dimension_0);
+    append_u32(record, section.dimension_1);
+    let source_artifact: &str = &section.source_artifact;
+    match append_length_prefixed_bytes(record, source_artifact.as_bytes()) {
+        Ok(()) => {},
+        Err(error) => return Err(error),
+    }
+    append_u64(record, section.source_offset);
+    append_u64(record, section.source_length);
+    append_u64(record, section.destination_offset);
+    append_u64(record, section.destination_length);
+    append_u64(record, section.alignment);
+    match append_length_prefixed_bytes(record, &TRANSFORM_ID_BYTES) {
+        Ok(()) => {},
+        Err(error) => return Err(error),
+    }
+    append_bytes(record, &section.sha256);
+    if record.len() > MAX_MANIFEST_BYTES {
+        return Err(ManifestBuildError::ManifestTooLarge);
+    }
+    assert(record@ == original + section_record_spec(*section));
+    Ok(())
+}
+
+fn append_manifest_sections(
+    record: &mut Vec<u8>,
+    sections: &[WeightSection],
+    index: usize,
+) -> (result: Result<(), ManifestBuildError>)
+    requires
+        index <= sections.len(),
+        old(record)@.len() <= MAX_MANIFEST_BYTES,
+    ensures
+        result.is_ok() ==> final(record)@
+            == old(record)@ + section_records_from_spec(sections@, index as nat),
+        result.is_ok() ==> final(record)@.len() <= MAX_MANIFEST_BYTES,
+    decreases sections.len() - index,
+{
+    reveal(section_records_from_spec);
+    if index == sections.len() {
+        return Ok(());
+    }
+    match append_manifest_section(record, &sections[index]) {
+        Ok(()) => {},
+        Err(error) => return Err(error),
+    }
+    match append_manifest_sections(record, sections, index + 1) {
+        Ok(()) => Ok(()),
+        Err(error) => Err(error),
+    }
+}
+
+fn destination_section_valid(
+    section: &WeightSection,
+    role: Qwen3ModelRole,
+    expected: u64,
+) -> (valid: bool)
+    ensures valid ==> destination_section_spec(*section, role, expected),
+{
+    reveal(destination_section_spec);
+    reveal(WeightSection::role_spec);
+    reveal(WeightSection::dtype_spec);
+    reveal(WeightSection::transform_spec);
+    reveal(WeightSection::alignment_spec);
+    reveal(WeightSection::destination_range_spec);
+    reveal(WeightSection::source_range_spec);
+    if !roles_equal(section.role, role) {
+        return false;
+    }
+    if !dtypes_equal(section.dtype, TensorDType::Bf16) {
+        return false;
+    }
+    if !transforms_equal(section.transform, WeightTransform::Bf16RowMajorIdentityV1) {
+        return false;
+    }
+    if section.alignment != SECTION_ALIGNMENT {
+        return false;
+    }
+    if section.destination_offset != expected {
+        return false;
+    }
+    if section.destination_length != section.source_length {
+        return false;
+    }
+    if !section.destination_offset.is_multiple_of(SECTION_ALIGNMENT) {
+        return false;
+    }
+    if !section.destination_length.is_multiple_of(SECTION_ALIGNMENT) {
+        return false;
+    }
+    proof {
+        assert(SECTION_ALIGNMENT == 2);
+        assert(section.destination_offset % 2 == 0);
+        assert(section.destination_length % 2 == 0);
+        assert(section.role_spec() == section.role);
+        assert(section.dtype_spec() == section.dtype);
+        assert(section.transform_spec() == section.transform);
+        assert(section.alignment_spec() == section.alignment);
+        assert(section.destination_range_spec() == (
+            section.destination_offset,
+            section.destination_length,
+        ));
+        assert(section.source_range_spec() == (section.source_offset, section.source_length));
+        assert(section.role_spec() == role);
+        assert(section.dtype_spec() == TensorDType::Bf16);
+        assert(section.transform_spec() == WeightTransform::Bf16RowMajorIdentityV1);
+        assert(section.alignment_spec() == 2);
+        assert(section.destination_range_spec().0 == expected);
+        assert(section.destination_range_spec().1 == section.source_range_spec().1);
+        assert(section.destination_range_spec().0 % 2 == 0);
+        assert(section.destination_range_spec().1 % 2 == 0);
+        assert(destination_section_spec(*section, role, expected));
+    }
+    true
+}
+
+fn validate_destination_from(
+    role: Qwen3ModelRole,
+    output_bytes: u64,
+    sections: &[WeightSection],
+    index: usize,
+    expected: u64,
+) -> (result: Result<(), ManifestBuildError>)
+    requires index <= sections.len(),
+    ensures
+        result.is_ok() ==> destination_layout_from_spec(
+            role,
+            output_bytes,
+            sections@,
+            index as nat,
+            expected,
+        ),
+    decreases sections.len() - index,
+{
+    reveal(destination_layout_from_spec);
+    if index == sections.len() {
+        return if expected == output_bytes {
+            Ok(())
+        } else {
+            Err(ManifestBuildError::DestinationCoverage)
+        };
+    }
+    let section = &sections[index];
+    assert(*section == sections@[index as int]);
+    if !destination_section_valid(section, role, expected) {
+        return Err(ManifestBuildError::DestinationLayout);
+    }
+    let next = match expected.checked_add(section.destination_length) {
+        Some(next) => next,
+        None => return Err(ManifestBuildError::DestinationOverflow),
+    };
+    assert(expected <= u64::MAX - section.destination_length);
+    assert(next == (expected + section.destination_length) as u64);
+    validate_destination_from(role, output_bytes, sections, index + 1, next)
+}
+
+fn validate_destination_coverage_verified(
+    role: Qwen3ModelRole,
+    output_bytes: u64,
+    sections: &[WeightSection],
+) -> (result: Result<(), ManifestBuildError>)
+    ensures result.is_ok() ==> destination_layout_spec(role, output_bytes, sections@),
+{
+    reveal(destination_layout_spec);
+    validate_destination_from(role, output_bytes, sections, 0, 0)
+}
+
+fn encode_manifest_record_verified(
+    role: Qwen3ModelRole,
+    descriptor: WeightDescriptor,
+    output_bytes: u64,
+    sections: &[WeightSection],
+) -> (result: Result<Vec<u8>, ManifestBuildError>)
+    ensures match result {
+        Ok(record) => {
+            &&& record@ == manifest_record_spec(
+                role,
+                descriptor.weights_id@,
+                descriptor.artifact_bytes,
+                descriptor.tensor_data_bytes,
+                output_bytes,
+                sections@,
+            )
+            &&& record@.len() <= MAX_MANIFEST_BYTES
+        },
+        Err(_) => true,
+    },
+{
+    let scaled = match sections.len().checked_mul(160) {
+        Some(scaled) => scaled,
+        None => return Err(ManifestBuildError::ManifestCapacity),
+    };
+    let capacity = match scaled.checked_add(64) {
+        Some(capacity) => capacity,
+        None => return Err(ManifestBuildError::ManifestCapacity),
+    };
+    if capacity > MAX_MANIFEST_BYTES {
+        return Err(ManifestBuildError::ManifestTooLarge);
+    }
+    if sections.len() > u32::MAX as usize {
+        return Err(ManifestBuildError::ManifestSectionCount);
+    }
+
+    let mut record = Vec::with_capacity(capacity);
+    append_bytes(&mut record, &MANIFEST_DOMAIN);
+    append_u32(&mut record, PREPACKED_WEIGHT_MANIFEST_VERSION);
+    record.push(role_code(role));
+    append_bytes(&mut record, &descriptor.weights_id);
+    append_u64(&mut record, descriptor.artifact_bytes);
+    append_u64(&mut record, descriptor.tensor_data_bytes);
+    append_u64(&mut record, output_bytes);
+    let section_count = match u32::try_from(sections.len()) {
+        Ok(section_count) => section_count,
+        Err(_) => return Err(ManifestBuildError::ManifestSectionCount),
+    };
+    append_u32(&mut record, section_count);
+    assert(record@.len() == 101);
+    assert(record@.len() <= MAX_MANIFEST_BYTES);
+    match append_manifest_sections(&mut record, sections, 0) {
+        Ok(()) => {},
+        Err(error) => return Err(error),
+    }
+    assert(record@ == manifest_record_spec(
+        role,
+        descriptor.weights_id@,
+        descriptor.artifact_bytes,
+        descriptor.tensor_data_bytes,
+        output_bytes,
+        sections@,
+    ));
+    Ok(record)
+}
+
+fn build_weight_manifest_verified(
+    role: Qwen3ModelRole,
+    descriptor: WeightDescriptor,
+    output_bytes: u64,
+    sections: Vec<WeightSection>,
+) -> (result: Result<WeightSectionManifest, ManifestBuildError>)
+    ensures match result {
+        Ok(manifest) => {
+            &&& manifest.valid_commitment()
+            &&& manifest.role_spec() == role
+            &&& manifest.source_weights_id_spec() == descriptor.weights_id@
+            &&& manifest.source_artifact_bytes_spec() == descriptor.artifact_bytes
+            &&& manifest.tensor_data_bytes_spec() == descriptor.tensor_data_bytes
+            &&& manifest.output_bytes_spec() == output_bytes
+            &&& manifest.sections_spec() == sections@
+        },
+        Err(_) => true,
+    },
+{
+    if output_bytes != descriptor.tensor_data_bytes
+        || output_bytes != role.tensor_data_bytes()
+        || sections.len() != role.tensor_count() as usize
+    {
+        return Err(ManifestBuildError::CompleteOutput);
+    }
+    match validate_destination_coverage_verified(role, output_bytes, &sections) {
+        Ok(()) => {},
+        Err(error) => return Err(error),
+    }
+    let canonical_bytes =
+        encode_manifest_record_verified(role, descriptor, output_bytes, &sections)?;
+    assert(canonical_bytes@.len() <= MAX_MANIFEST_BYTES);
+    assert(canonical_bytes@.len() <= u64::MAX / 8);
+    let aggregate_id = crate::sha256::digest(&canonical_bytes);
+    let manifest = WeightSectionManifest {
+        version: PREPACKED_WEIGHT_MANIFEST_VERSION,
+        role,
+        source_weights_id: descriptor.weights_id,
+        source_artifact_bytes: descriptor.artifact_bytes,
+        tensor_data_bytes: descriptor.tensor_data_bytes,
+        output_bytes,
+        sections,
+        canonical_bytes,
+        aggregate_id,
+    };
+    assert(manifest.valid_commitment());
+    Ok(manifest)
+}
+
+}
+
+fn finish_prepacked(
+    role: Qwen3ModelRole,
+    descriptor: WeightDescriptor,
+    output_bytes: u64,
+    sections: Vec<WeightSection>,
+) -> Result<PrepackedWeightSet, WeightStreamError> {
+    let manifest = build_weight_manifest_verified(role, descriptor, output_bytes, sections)
+        .map_err(map_manifest_build_error)?;
+    Ok(PrepackedWeightSet {
+        role,
+        descriptor,
+        manifest,
+        seal: PrepackedSeal,
+    })
+}
+
+const fn map_manifest_build_error(error: ManifestBuildError) -> WeightStreamError {
+    match error {
+        ManifestBuildError::CompleteOutput => {
+            WeightStreamError::InvalidLayout("complete output count or length drifted")
+        }
+        ManifestBuildError::DestinationLayout => {
+            WeightStreamError::InvalidLayout("destination sections are not canonical and complete")
+        }
+        ManifestBuildError::DestinationCoverage => {
+            WeightStreamError::InvalidLayout("destination sections do not cover output")
+        }
+        ManifestBuildError::DestinationOverflow => {
+            WeightStreamError::ArithmeticOverflow("destination coverage")
+        }
+        ManifestBuildError::ManifestCapacity => {
+            WeightStreamError::ArithmeticOverflow("manifest capacity")
+        }
+        ManifestBuildError::ManifestSectionCount => {
+            WeightStreamError::ArithmeticOverflow("manifest section count")
+        }
+        ManifestBuildError::ManifestStringLength => {
+            WeightStreamError::ArithmeticOverflow("manifest string length")
+        }
+        ManifestBuildError::ManifestTooLarge => WeightStreamError::ManifestTooLarge,
     }
 }
 
 #[cfg(test)]
 pub(crate) mod tests {
     use super::{
-        encode_manifest_record, flush_output, parse_header, require_shard_name, stream_file,
-        validate_destination_coverage, validate_stream_plan, FilePin, ParsedShard, ParsedTensor,
-        PrepackedSeal, PrepackedWeightSet, WeightSection, WeightSectionManifest, WeightStreamError,
-        WeightTransform, DRAFT_FILE_PIN, PREPACKED_WEIGHT_MANIFEST_VERSION, SECTION_ALIGNMENT,
+        finish_prepacked, flush_output, parse_header, require_shard_name, stream_file,
+        validate_stream_plan, FilePin, ParsedShard, ParsedTensor, PrepackedWeightSet,
+        WeightSection, WeightStreamError, WeightTransform, DRAFT_FILE_PIN, SECTION_ALIGNMENT,
         TARGET_SHARD_PINS,
     };
     use crate::tokenizer::tests::{authenticated_assets, test_tokenizer};
@@ -854,6 +1413,25 @@ pub(crate) mod tests {
     const DRAFT_HEADER: &[u8] = include_bytes!("fixtures/safetensors/qwen3-06b.header.json");
     const TENSOR_BYTES: u64 = 2_048;
     const TOTAL_BYTES: u64 = TENSOR_BYTES * 2;
+
+    fn validate_destination_coverage(
+        role: Qwen3ModelRole,
+        output_bytes: u64,
+        sections: &[WeightSection],
+    ) -> Result<(), WeightStreamError> {
+        super::validate_destination_coverage_verified(role, output_bytes, sections)
+            .map_err(super::map_manifest_build_error)
+    }
+
+    fn encode_manifest_record(
+        role: Qwen3ModelRole,
+        descriptor: WeightDescriptor,
+        output_bytes: u64,
+        sections: &[WeightSection],
+    ) -> Result<Vec<u8>, WeightStreamError> {
+        super::encode_manifest_record_verified(role, descriptor, output_bytes, sections)
+            .map_err(super::map_manifest_build_error)
+    }
 
     struct ChunkedReader {
         cursor: Cursor<Vec<u8>>,
@@ -972,6 +1550,24 @@ pub(crate) mod tests {
             .collect()
     }
 
+    fn tiny_sections() -> Vec<WeightSection> {
+        let data = tiny_data();
+        let (bytes, pin) = synthetic_file(&data);
+        stream_tiny(&mut Cursor::new(bytes), &mut Vec::new(), pin, tiny_plan())
+            .expect("complete tiny stream")
+            .1
+    }
+
+    fn tiny_manifest_record(sections: &[WeightSection]) -> Vec<u8> {
+        encode_manifest_record(
+            Qwen3ModelRole::Draft06B,
+            descriptor(Qwen3ModelRole::Draft06B),
+            TOTAL_BYTES,
+            sections,
+        )
+        .expect("bounded tiny manifest")
+    }
+
     fn descriptor(role: Qwen3ModelRole) -> WeightDescriptor {
         match role {
             Qwen3ModelRole::Target8B => WeightDescriptor {
@@ -1050,25 +1646,8 @@ pub(crate) mod tests {
         }
         assert_eq!(destination, descriptor.tensor_data_bytes);
         assert_eq!(sections.len(), role.tensor_count() as usize);
-        let canonical_bytes = encode_manifest_record(role, descriptor, destination, &sections)
-            .expect("test canonical manifest");
-        let aggregate_id = sha256::digest(&canonical_bytes);
-        PrepackedWeightSet {
-            role,
-            descriptor,
-            manifest: WeightSectionManifest {
-                version: PREPACKED_WEIGHT_MANIFEST_VERSION,
-                role,
-                source_weights_id: descriptor.weights_id,
-                source_artifact_bytes: descriptor.artifact_bytes,
-                tensor_data_bytes: descriptor.tensor_data_bytes,
-                output_bytes: destination,
-                sections,
-                aggregate_id,
-                canonical_bytes: canonical_bytes.into_boxed_slice(),
-            },
-            seal: PrepackedSeal,
-        }
+        finish_prepacked(role, descriptor, destination, sections)
+            .expect("test sections satisfy the verified production finalizer")
     }
 
     #[test]
@@ -1288,6 +1867,193 @@ pub(crate) mod tests {
         .expect("changed canonical record");
         assert_ne!(before, after);
         assert_ne!(sha256::digest(&before), sha256::digest(&after));
+    }
+
+    #[test]
+    fn destination_manifest_layout_mutations_fail_closed() {
+        let mut gap = tiny_sections();
+        gap[1].destination_offset += SECTION_ALIGNMENT;
+        assert!(
+            validate_destination_coverage(Qwen3ModelRole::Draft06B, TOTAL_BYTES, &gap).is_err()
+        );
+
+        let mut overlap = tiny_sections();
+        overlap[1].destination_offset -= SECTION_ALIGNMENT;
+        assert!(
+            validate_destination_coverage(Qwen3ModelRole::Draft06B, TOTAL_BYTES, &overlap,)
+                .is_err()
+        );
+
+        let mut reordered = tiny_sections();
+        reordered.swap(0, 1);
+        assert!(
+            validate_destination_coverage(Qwen3ModelRole::Draft06B, TOTAL_BYTES, &reordered,)
+                .is_err()
+        );
+
+        let mut short = tiny_sections();
+        short.pop();
+        assert!(
+            validate_destination_coverage(Qwen3ModelRole::Draft06B, TOTAL_BYTES, &short).is_err()
+        );
+
+        let mut wrong_role = tiny_sections();
+        wrong_role[0].role = Qwen3ModelRole::Target8B;
+        assert!(
+            validate_destination_coverage(Qwen3ModelRole::Draft06B, TOTAL_BYTES, &wrong_role,)
+                .is_err()
+        );
+
+        let mut wrong_alignment = tiny_sections();
+        wrong_alignment[0].alignment = 4;
+        assert!(validate_destination_coverage(
+            Qwen3ModelRole::Draft06B,
+            TOTAL_BYTES,
+            &wrong_alignment,
+        )
+        .is_err());
+
+        let mut length_mismatch = tiny_sections();
+        length_mismatch[0].destination_length -= SECTION_ALIGNMENT;
+        assert!(validate_destination_coverage(
+            Qwen3ModelRole::Draft06B,
+            TOTAL_BYTES,
+            &length_mismatch,
+        )
+        .is_err());
+
+        let mut overflow = tiny_sections();
+        overflow[0].source_length = u64::MAX - 1;
+        overflow[0].destination_length = u64::MAX - 1;
+        overflow[1].source_length = SECTION_ALIGNMENT;
+        overflow[1].destination_offset = u64::MAX - 1;
+        overflow[1].destination_length = SECTION_ALIGNMENT;
+        assert_eq!(
+            validate_destination_coverage(Qwen3ModelRole::Draft06B, 0, &overflow),
+            Err(WeightStreamError::ArithmeticOverflow(
+                "destination coverage"
+            ))
+        );
+    }
+
+    #[test]
+    fn canonical_manifest_framing_binds_header_and_section_fields() {
+        let baseline_sections = tiny_sections();
+        let baseline = tiny_manifest_record(&baseline_sections);
+        let baseline_digest = sha256::digest(&baseline);
+        assert!(baseline.starts_with(b"ferric.prepacked-weight-sections.v1\0"));
+        assert_eq!(
+            &baseline[36..40],
+            &super::PREPACKED_WEIGHT_MANIFEST_VERSION.to_le_bytes()
+        );
+
+        let assert_changed = |sections: &[WeightSection]| {
+            let changed = tiny_manifest_record(sections);
+            assert_ne!(changed, baseline);
+            assert_ne!(sha256::digest(&changed), baseline_digest);
+        };
+
+        let mut changed = tiny_sections();
+        changed[0].tensor_name.push_str(".mutated");
+        assert_changed(&changed);
+        let mut changed = tiny_sections();
+        changed[0].role = Qwen3ModelRole::Target8B;
+        assert_changed(&changed);
+        let mut changed = tiny_sections();
+        changed[0].rank += 1;
+        assert_changed(&changed);
+        let mut changed = tiny_sections();
+        changed[0].dimension_0 += 1;
+        assert_changed(&changed);
+        let mut changed = tiny_sections();
+        changed[0].dimension_1 += 1;
+        assert_changed(&changed);
+        let mut changed = tiny_sections();
+        changed[0].source_artifact.push_str(".mutated");
+        assert_changed(&changed);
+        let mut changed = tiny_sections();
+        changed[0].source_offset += SECTION_ALIGNMENT;
+        assert_changed(&changed);
+        let mut changed = tiny_sections();
+        changed[0].source_length += SECTION_ALIGNMENT;
+        assert_changed(&changed);
+        let mut changed = tiny_sections();
+        changed[0].destination_offset += SECTION_ALIGNMENT;
+        assert_changed(&changed);
+        let mut changed = tiny_sections();
+        changed[0].destination_length += SECTION_ALIGNMENT;
+        assert_changed(&changed);
+        let mut changed = tiny_sections();
+        changed[0].alignment += SECTION_ALIGNMENT;
+        assert_changed(&changed);
+        let mut changed = tiny_sections();
+        changed[0].sha256[0] ^= 1;
+        assert_changed(&changed);
+
+        let descriptor = descriptor(Qwen3ModelRole::Draft06B);
+        let header_variants = [
+            WeightDescriptor {
+                weights_id: [0; 32],
+                ..descriptor
+            },
+            WeightDescriptor {
+                artifact_bytes: descriptor.artifact_bytes + 1,
+                ..descriptor
+            },
+            WeightDescriptor {
+                tensor_data_bytes: descriptor.tensor_data_bytes + 1,
+                ..descriptor
+            },
+        ];
+        for changed_descriptor in header_variants {
+            let changed = encode_manifest_record(
+                Qwen3ModelRole::Draft06B,
+                changed_descriptor,
+                TOTAL_BYTES,
+                &baseline_sections,
+            )
+            .expect("bounded changed header");
+            assert_ne!(changed, baseline);
+            assert_ne!(sha256::digest(&changed), baseline_digest);
+        }
+        let changed_output = encode_manifest_record(
+            Qwen3ModelRole::Draft06B,
+            descriptor,
+            TOTAL_BYTES + SECTION_ALIGNMENT,
+            &baseline_sections,
+        )
+        .expect("bounded changed output length");
+        assert_ne!(changed_output, baseline);
+        assert_ne!(sha256::digest(&changed_output), baseline_digest);
+
+        let changed_role = encode_manifest_record(
+            Qwen3ModelRole::Target8B,
+            descriptor,
+            TOTAL_BYTES,
+            &baseline_sections,
+        )
+        .expect("bounded changed role");
+        assert_ne!(changed_role, baseline);
+        assert_ne!(sha256::digest(&changed_role), baseline_digest);
+
+        let changed_count = tiny_manifest_record(&baseline_sections[..1]);
+        assert_ne!(changed_count, baseline);
+        assert_ne!(sha256::digest(&changed_count), baseline_digest);
+    }
+
+    #[test]
+    fn verified_finalizer_commits_complete_official_layouts() {
+        for role in [Qwen3ModelRole::Target8B, Qwen3ModelRole::Draft06B] {
+            let prepacked = test_prepacked(role);
+            let manifest = prepacked.manifest();
+            assert_eq!(manifest.role(), role);
+            assert_eq!(manifest.sections().len(), role.tensor_count() as usize);
+            assert_eq!(manifest.output_bytes(), role.tensor_data_bytes());
+            assert_eq!(
+                manifest.aggregate_id(),
+                sha256::digest(manifest.canonical_bytes())
+            );
+        }
     }
 
     #[test]

@@ -71,6 +71,7 @@ use json::Value;
 use sha256::Sha256;
 use std::collections::BTreeMap;
 use std::fmt;
+use vstd::prelude::*;
 
 const MAX_CONFIG_BYTES: usize = 16 * 1_024;
 const MAX_TOKENIZER_METADATA_BYTES: usize = 64 * 1_024;
@@ -213,6 +214,8 @@ pub struct ArtifactDigest {
     pub byte_len: u64,
 }
 
+verus! {
+
 /// Opaque weight metadata supplied by a later safetensors authentication stage.
 ///
 /// This slice compares every field to the pinned official descriptor. It does
@@ -231,6 +234,8 @@ pub struct WeightDescriptor {
     pub tensor_data_bytes: u64,
     /// Number of bounded weight sections in the aggregate record.
     pub sections: u32,
+}
+
 }
 
 /// Byte-backed inputs for one pinned Qwen3 model role.

@@ -41,6 +41,21 @@ algorithm choice, release keys, key identifiers, rotation, revocation, and
 compromise response remain separate pending admission inputs; this declaration
 does not provide or authorize any of them.
 
+The directly verified pure weight-manifest finalizer binds the exact retained
+production fields into the versioned, domain-separated canonical record. Its
+acceptance theorem establishes ordered gap-free destination coverage, exact
+section framing, and equality between the returned aggregate identity and the
+directly verified SHA-256 computation over those canonical bytes. The theorem
+is fail-closed: a successful finalization implies the relation; it does not
+assert that every arbitrary input must be accepted.
+
+External `Read` and `Write` behavior, source EOF observations, partial-write
+effects, final flush behavior, filesystem staging, synchronization, rename or
+publication durability, and recovery after I/O failure remain `Contracted` and
+pending. Unit tests exercise hostile short reads, writes, flushes, gaps,
+overlaps, reordering, overflow, and field mutation, but those tests do not
+promote the external I/O boundary to `Proved`.
+
 ## Runtime Boundary
 
 M1 trusts the exact identity-bound instances of:
