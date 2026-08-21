@@ -24,7 +24,7 @@ mod weight_stream;
 pub use auth::{
     decode_bundle_admission_record, seal_authenticated_bundle, AuthenticatedBundleAdmission,
     BundleAdmissionDescriptor, BundleAdmissionError, BundleAdmissionRecord, ManifestCommitment,
-    BUNDLE_ADMISSION_RECORD_BYTES, BUNDLE_ADMISSION_RECORD_VERSION,
+    BUNDLE_ADMISSION_RECORD_BYTES, BUNDLE_ADMISSION_RECORD_VERSION, MANIFEST_COMMITMENT_BYTES,
 };
 pub use bundle::{
     decode_canonical_deployment_bundle, encode_canonical_deployment_bundle, CanonicalBundleError,

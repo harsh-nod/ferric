@@ -14,19 +14,29 @@ use super::{
 use ferric_spec::{DeploymentBundle, Identity, Qwen3ModelRole, Qwen3TensorMetadata, TensorDType};
 use std::collections::BTreeSet;
 use std::fmt;
+use vstd::bytes::{u32_to_le_bytes, u64_to_le_bytes};
+use vstd::prelude::*;
 
-const MAGIC: [u8; 16] = *b"FERRIC-M1-ADMIT\0";
-const RECORD_DOMAIN: &[u8] = b"ferric.authenticated-bundle-admission.v1\0";
+verus! {
+
+const MAGIC: [u8; 16] = [70, 69, 82, 82, 73, 67, 45, 77, 49, 45, 65, 68, 77, 73, 84, 0];
+const RECORD_DOMAIN: [u8; 41] = [
+    102, 101, 114, 114, 105, 99, 46, 97, 117, 116, 104, 101, 110, 116, 105, 99,
+    97, 116, 101, 100, 45, 98, 117, 110, 100, 108, 101, 45, 97, 100, 109, 105,
+    115, 115, 105, 111, 110, 46, 118, 49, 0,
+];
 const ROLE_TARGET: u8 = 1;
 const ROLE_DRAFT: u8 = 2;
-const MANIFEST_COMMITMENT_BYTES: usize = 101;
+/// Exact byte length of one manifest commitment within an admission record.
+pub const MANIFEST_COMMITMENT_BYTES: usize = 101;
 const MAX_MANIFEST_RECORD_BYTES: usize = 256 * 1_024;
+const MAX_MANIFEST_RECORD_BYTES_U32: u32 = 256 * 1_024;
 
 /// Version of the authenticated deployment commitment.
 pub const BUNDLE_ADMISSION_RECORD_VERSION: u32 = 1;
 /// Exact byte length of the authenticated deployment commitment.
 pub const BUNDLE_ADMISSION_RECORD_BYTES: usize =
-    MAGIC.len() + 4 + CANONICAL_DEPLOYMENT_BUNDLE_BYTES + 2 * MANIFEST_COMMITMENT_BYTES;
+    16 + 4 + CANONICAL_DEPLOYMENT_BUNDLE_BYTES + 202;
 
 /// Exact commitment to one retained prepacked-weight manifest.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -55,6 +65,7 @@ pub struct ManifestCommitment {
 ///
 /// This is data, not authentication authority. Only
 /// [`AuthenticatedBundleAdmission`] retains the sealed byte-backed inputs.
+#[verifier::allow(autoderive_clone_without_spec)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BundleAdmissionDescriptor {
     /// Exact decoded deployment contract.
@@ -68,6 +79,7 @@ pub struct BundleAdmissionDescriptor {
 }
 
 /// Fixed canonical commitment to an authenticated deployment.
+#[verifier::allow(autoderive_clone_without_spec)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BundleAdmissionRecord {
     bytes: [u8; BUNDLE_ADMISSION_RECORD_BYTES],
@@ -75,18 +87,34 @@ pub struct BundleAdmissionRecord {
 }
 
 impl BundleAdmissionRecord {
+    /// Verifier view of the complete fixed-width record.
+    pub closed spec fn bytes_spec(&self) -> Seq<u8> {
+        self.bytes@
+    }
+
+    /// Verifier view of the domain-separated record identity.
+    pub closed spec fn record_id_spec(&self) -> Identity {
+        self.record_id
+    }
+
     /// Returns the complete canonical bytes.
     #[must_use]
-    pub const fn as_bytes(&self) -> &[u8; BUNDLE_ADMISSION_RECORD_BYTES] {
+    pub const fn as_bytes(&self) -> (bytes: &[u8; BUNDLE_ADMISSION_RECORD_BYTES])
+        ensures bytes@ == self.bytes_spec(),
+    {
         &self.bytes
     }
 
     /// Returns the domain-separated record identity.
     #[must_use]
-    pub const fn record_id(&self) -> Identity {
+    pub const fn record_id(&self) -> (identity: Identity)
+        ensures identity == self.record_id_spec(),
+    {
         self.record_id
     }
 }
+
+} // verus!
 
 /// Non-clone authority retaining the exact authenticated deployment inputs.
 #[derive(Debug, PartialEq, Eq)]
@@ -113,7 +141,10 @@ impl AuthenticatedBundleAdmission {
     }
 }
 
+verus! {
+
 /// Failure while sealing or decoding an authenticated bundle commitment.
+#[verifier::allow(autoderive_clone_without_spec)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum BundleAdmissionError {
     /// The fixed record length is wrong.
@@ -139,6 +170,342 @@ pub enum BundleAdmissionError {
         reason: &'static str,
     },
 }
+
+closed spec fn u32_little_endian(value: u32) -> Seq<u8> {
+    vstd::bytes::spec_u32_to_le_bytes(value)
+}
+
+closed spec fn u64_little_endian(value: u64) -> Seq<u8> {
+    vstd::bytes::spec_u64_to_le_bytes(value)
+}
+
+closed spec fn u32_at(bytes: Seq<u8>, offset: int) -> u32
+    recommends 0 <= offset, offset + 4 <= bytes.len(),
+{
+    (bytes[offset] as u32)
+        | ((bytes[offset + 1] as u32) << 8)
+        | ((bytes[offset + 2] as u32) << 16)
+        | ((bytes[offset + 3] as u32) << 24)
+}
+
+closed spec fn u64_at(bytes: Seq<u8>, offset: int) -> u64
+    recommends 0 <= offset, offset + 8 <= bytes.len(),
+{
+    (bytes[offset] as u64)
+        | ((bytes[offset + 1] as u64) << 8)
+        | ((bytes[offset + 2] as u64) << 16)
+        | ((bytes[offset + 3] as u64) << 24)
+        | ((bytes[offset + 4] as u64) << 32)
+        | ((bytes[offset + 5] as u64) << 40)
+        | ((bytes[offset + 6] as u64) << 48)
+        | ((bytes[offset + 7] as u64) << 56)
+}
+
+closed spec fn role_wire(role: Qwen3ModelRole) -> Seq<u8> {
+    seq![match role {
+        Qwen3ModelRole::Target8B => ROLE_TARGET,
+        Qwen3ModelRole::Draft06B => ROLE_DRAFT,
+    }]
+}
+
+closed spec fn role_tensor_data_bytes(role: Qwen3ModelRole) -> u64 {
+    match role {
+        Qwen3ModelRole::Target8B => super::QWEN3_TARGET_TENSOR_DATA_BYTES,
+        Qwen3ModelRole::Draft06B => super::QWEN3_DRAFT_TENSOR_DATA_BYTES,
+    }
+}
+
+closed spec fn role_tensor_count(role: Qwen3ModelRole) -> u32 {
+    match role {
+        Qwen3ModelRole::Target8B => 399,
+        Qwen3ModelRole::Draft06B => 311,
+    }
+}
+
+/// Complete verifier-visible wire image for one manifest descriptor.
+pub closed spec fn manifest_commitment_wire(value: ManifestCommitment) -> Seq<u8> {
+    role_wire(value.role)
+        + u32_little_endian(value.version)
+        + value.source_weights_id@
+        + value.aggregate_id@
+        + u64_little_endian(value.source_artifact_bytes)
+        + u64_little_endian(value.tensor_data_bytes)
+        + u64_little_endian(value.output_bytes)
+        + u32_little_endian(value.section_count)
+        + u32_little_endian(value.canonical_manifest_bytes)
+}
+
+/// Exact structural commitment relation enforced by the descriptor decoder.
+pub closed spec fn manifest_commitment_spec(
+    deployment: DeploymentBundle,
+    value: ManifestCommitment,
+    expected_role: Qwen3ModelRole,
+) -> bool {
+    let model = match expected_role {
+        Qwen3ModelRole::Target8B => deployment.target_model,
+        Qwen3ModelRole::Draft06B => deployment.draft_model,
+    };
+    &&& value.role == expected_role
+    &&& value.version == PREPACKED_WEIGHT_MANIFEST_VERSION
+    &&& value.source_weights_id@ == model.weights.weights_id.bytes_spec()
+    &&& value.aggregate_id@ != Seq::new(32, |index: int| 0u8)
+    &&& value.source_artifact_bytes == model.weights.total_bytes
+    &&& value.tensor_data_bytes == role_tensor_data_bytes(expected_role)
+    &&& value.output_bytes == value.tensor_data_bytes
+    &&& value.section_count == role_tensor_count(expected_role)
+    &&& 0 < value.canonical_manifest_bytes
+    &&& value.canonical_manifest_bytes <= MAX_MANIFEST_RECORD_BYTES_U32
+}
+
+/// Complete mixed-endian admission record for one exact descriptor value.
+pub closed spec fn bundle_admission_record_wire(
+    deployment: DeploymentBundle,
+    target: ManifestCommitment,
+    draft: ManifestCommitment,
+) -> Seq<u8> {
+    MAGIC@
+        + u32_little_endian(BUNDLE_ADMISSION_RECORD_VERSION)
+        + super::bundle::canonical_deployment_bundle_wire(deployment)
+        + manifest_commitment_wire(target)
+        + manifest_commitment_wire(draft)
+}
+
+/// Executable value relation for one canonical admission descriptor.
+pub closed spec fn bundle_admission_descriptor_spec(
+    deployment: DeploymentBundle,
+    target: ManifestCommitment,
+    draft: ManifestCommitment,
+) -> bool {
+    &&& super::bundle::canonical_deployment_bundle_spec(deployment)
+    &&& manifest_commitment_spec(deployment, target, Qwen3ModelRole::Target8B)
+    &&& manifest_commitment_spec(deployment, draft, Qwen3ModelRole::Draft06B)
+}
+
+/// A canonical record paired with the exact production values that encode it.
+pub closed spec fn canonical_bundle_admission_values(
+    bytes: Seq<u8>,
+    deployment: DeploymentBundle,
+    target: ManifestCommitment,
+    draft: ManifestCommitment,
+) -> bool {
+    bundle_admission_descriptor_spec(deployment, target, draft)
+        && bytes == bundle_admission_record_wire(deployment, target, draft)
+}
+
+closed spec fn commitment_matches_bytes(
+    value: ManifestCommitment,
+    bytes: Seq<u8>,
+    offset: int,
+) -> bool
+    recommends 0 <= offset, offset + MANIFEST_COMMITMENT_BYTES <= bytes.len(),
+{
+    &&& bytes[offset] == match value.role {
+        Qwen3ModelRole::Target8B => ROLE_TARGET,
+        Qwen3ModelRole::Draft06B => ROLE_DRAFT,
+    }
+    &&& value.version == u32_at(bytes, offset + 1)
+    &&& value.source_weights_id@ == bytes.subrange(offset + 5, offset + 37)
+    &&& value.aggregate_id@ == bytes.subrange(offset + 37, offset + 69)
+    &&& value.source_artifact_bytes == u64_at(bytes, offset + 69)
+    &&& value.tensor_data_bytes == u64_at(bytes, offset + 77)
+    &&& value.output_bytes == u64_at(bytes, offset + 85)
+    &&& value.section_count == u32_at(bytes, offset + 93)
+    &&& value.canonical_manifest_bytes == u32_at(bytes, offset + 97)
+}
+
+closed spec fn commitment_bytes_spec(
+    bytes: Seq<u8>,
+    offset: int,
+    deployment: DeploymentBundle,
+    role: Qwen3ModelRole,
+) -> bool
+    recommends 0 <= offset, offset + MANIFEST_COMMITMENT_BYTES <= bytes.len(),
+{
+    let expected_role = match role {
+        Qwen3ModelRole::Target8B => ROLE_TARGET,
+        Qwen3ModelRole::Draft06B => ROLE_DRAFT,
+    };
+    let model = match role {
+        Qwen3ModelRole::Target8B => deployment.target_model,
+        Qwen3ModelRole::Draft06B => deployment.draft_model,
+    };
+    &&& bytes[offset] == expected_role
+    &&& u32_at(bytes, offset + 1) == PREPACKED_WEIGHT_MANIFEST_VERSION
+    &&& bytes.subrange(offset + 5, offset + 37) == model.weights.weights_id.bytes_spec()
+    &&& bytes.subrange(offset + 37, offset + 69) != Seq::new(32, |index: int| 0u8)
+    &&& u64_at(bytes, offset + 69) == model.weights.total_bytes
+    &&& u64_at(bytes, offset + 77) == role_tensor_data_bytes(role)
+    &&& u64_at(bytes, offset + 85) == u64_at(bytes, offset + 77)
+    &&& u32_at(bytes, offset + 93) == role_tensor_count(role)
+    &&& 0 < u32_at(bytes, offset + 97)
+    &&& u32_at(bytes, offset + 97) <= MAX_MANIFEST_RECORD_BYTES_U32
+}
+
+closed spec fn raw_commitment_wire(bytes: Seq<u8>, offset: int) -> Seq<u8>
+    recommends 0 <= offset, offset + MANIFEST_COMMITMENT_BYTES <= bytes.len(),
+{
+    seq![bytes[offset]]
+        + u32_little_endian(u32_at(bytes, offset + 1))
+        + bytes.subrange(offset + 5, offset + 37)
+        + bytes.subrange(offset + 37, offset + 69)
+        + u64_little_endian(u64_at(bytes, offset + 69))
+        + u64_little_endian(u64_at(bytes, offset + 77))
+        + u64_little_endian(u64_at(bytes, offset + 85))
+        + u32_little_endian(u32_at(bytes, offset + 93))
+        + u32_little_endian(u32_at(bytes, offset + 97))
+}
+
+closed spec fn raw_admission_wire(bytes: Seq<u8>) -> Seq<u8>
+    recommends bytes.len() == BUNDLE_ADMISSION_RECORD_BYTES,
+{
+    bytes.subrange(0, 16)
+        + u32_little_endian(u32_at(bytes, 16))
+        + bytes.subrange(20, 542)
+        + raw_commitment_wire(bytes, 542)
+        + raw_commitment_wire(bytes, 643)
+}
+
+/// Exact verifier-visible byte acceptance relation for the production decoder.
+pub closed spec fn canonical_bundle_admission_bytes(bytes: Seq<u8>) -> bool {
+    if bytes.len() != BUNDLE_ADMISSION_RECORD_BYTES {
+        false
+    } else {
+        let bundle_bytes = bytes.subrange(20, 20 + CANONICAL_DEPLOYMENT_BUNDLE_BYTES);
+        let deployment = super::bundle::parsed_bundle_spec(bundle_bytes);
+        &&& bytes.subrange(0, 16) == MAGIC@
+        &&& u32_at(bytes, 16) == BUNDLE_ADMISSION_RECORD_VERSION
+        &&& super::bundle::canonical_deployment_bundle_bytes(bundle_bytes)
+        &&& commitment_bytes_spec(bytes, 542, deployment, Qwen3ModelRole::Target8B)
+        &&& commitment_bytes_spec(bytes, 643, deployment, Qwen3ModelRole::Draft06B)
+        &&& bytes == raw_admission_wire(bytes)
+    }
+}
+
+proof fn commitment_matches_reencodes(
+    value: ManifestCommitment,
+    bytes: Seq<u8>,
+    offset: int,
+)
+    requires
+        0 <= offset,
+        offset + MANIFEST_COMMITMENT_BYTES <= bytes.len(),
+        commitment_matches_bytes(value, bytes, offset),
+    ensures manifest_commitment_wire(value) == raw_commitment_wire(bytes, offset),
+{
+}
+
+proof fn parsed_admission_reencodes(
+    bytes: Seq<u8>,
+    deployment: DeploymentBundle,
+    target: ManifestCommitment,
+    draft: ManifestCommitment,
+)
+    requires
+        bytes.len() == BUNDLE_ADMISSION_RECORD_BYTES,
+        bytes.subrange(0, 16) == MAGIC@,
+        u32_at(bytes, 16) == BUNDLE_ADMISSION_RECORD_VERSION,
+        bytes.subrange(20, 542)
+            == super::bundle::canonical_deployment_bundle_wire(deployment),
+        commitment_matches_bytes(target, bytes, 542),
+        commitment_matches_bytes(draft, bytes, 643),
+    ensures
+        bundle_admission_record_wire(deployment, target, draft)
+            == raw_admission_wire(bytes),
+{
+    commitment_matches_reencodes(target, bytes, 542);
+    commitment_matches_reencodes(draft, bytes, 643);
+}
+
+/// Exact relation between accepted bytes and every decoded descriptor field.
+pub closed spec fn descriptor_matches_bytes(
+    descriptor: BundleAdmissionDescriptor,
+    bytes: Seq<u8>,
+) -> bool {
+    &&& bytes.len() == BUNDLE_ADMISSION_RECORD_BYTES
+    &&& descriptor.deployment == super::bundle::parsed_bundle_spec(
+        bytes.subrange(20, 20 + CANONICAL_DEPLOYMENT_BUNDLE_BYTES),
+    )
+    &&& commitment_matches_bytes(descriptor.target_manifest, bytes, 542)
+    &&& commitment_matches_bytes(descriptor.draft_manifest, bytes, 643)
+    &&& descriptor.record_id.bytes_spec()
+        == sha256::digest_spec(RECORD_DOMAIN@ + bytes)
+}
+
+/// Establishes the exact 744-byte production record width from its fields.
+pub proof fn bundle_admission_record_wire_len(
+    deployment: DeploymentBundle,
+    target: ManifestCommitment,
+    draft: ManifestCommitment,
+)
+    ensures bundle_admission_record_wire(deployment, target, draft).len()
+        == BUNDLE_ADMISSION_RECORD_BYTES,
+{
+    reveal(bundle_admission_record_wire);
+    reveal(manifest_commitment_wire);
+    reveal(role_wire);
+    reveal(u32_little_endian);
+    reveal(u64_little_endian);
+    vstd::bytes::lemma_auto_spec_u32_to_from_le_bytes();
+    vstd::bytes::lemma_auto_spec_u64_to_from_le_bytes();
+    super::bundle::canonical_deployment_bundle_wire_len(deployment);
+    assert(target.source_weights_id@.len() == 32);
+    assert(target.aggregate_id@.len() == 32);
+    assert(draft.source_weights_id@.len() == 32);
+    assert(draft.aggregate_id@.len() == 32);
+    assert(u32_little_endian(target.version).len() == 4);
+    assert(u64_little_endian(target.source_artifact_bytes).len() == 8);
+    assert(u32_little_endian(draft.version).len() == 4);
+    assert(u64_little_endian(draft.source_artifact_bytes).len() == 8);
+}
+
+/// Accepted bytes are exactly the canonical re-encoding of retained values.
+pub proof fn accepted_admission_record_reencodes(
+    bytes: Seq<u8>,
+    descriptor: BundleAdmissionDescriptor,
+)
+    requires
+        canonical_bundle_admission_values(
+            bytes,
+            descriptor.deployment,
+            descriptor.target_manifest,
+            descriptor.draft_manifest,
+        ),
+    ensures bytes == bundle_admission_record_wire(
+        descriptor.deployment,
+        descriptor.target_manifest,
+        descriptor.draft_manifest,
+    ),
+{
+}
+
+/// Equal decoded descriptors uniquely identify equal accepted records.
+pub proof fn accepted_admission_record_injective(
+    left: Seq<u8>,
+    right: Seq<u8>,
+    left_descriptor: BundleAdmissionDescriptor,
+    right_descriptor: BundleAdmissionDescriptor,
+)
+    requires
+        canonical_bundle_admission_values(
+            left,
+            left_descriptor.deployment,
+            left_descriptor.target_manifest,
+            left_descriptor.draft_manifest,
+        ),
+        canonical_bundle_admission_values(
+            right,
+            right_descriptor.deployment,
+            right_descriptor.target_manifest,
+            right_descriptor.draft_manifest,
+        ),
+        left_descriptor == right_descriptor,
+    ensures left == right,
+{
+    accepted_admission_record_reencodes(left, left_descriptor);
+    accepted_admission_record_reencodes(right, right_descriptor);
+}
+
+} // verus!
 
 impl fmt::Display for BundleAdmissionError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -209,6 +576,8 @@ pub fn seal_authenticated_bundle(
     Ok(AuthenticatedBundleAdmission { prepacked, record })
 }
 
+verus! {
+
 /// Decodes and revalidates a canonical admission commitment.
 ///
 /// # Errors
@@ -219,34 +588,75 @@ pub fn seal_authenticated_bundle(
 /// authority.
 pub fn decode_bundle_admission_record(
     bytes: &[u8],
-) -> Result<BundleAdmissionDescriptor, BundleAdmissionError> {
+) -> (result: Result<BundleAdmissionDescriptor, BundleAdmissionError>)
+    ensures
+        result.is_ok() == canonical_bundle_admission_bytes(bytes@),
+        result.is_ok() ==> {
+            &&& descriptor_matches_bytes(result.get_Ok_0(), bytes@)
+            &&& bundle_admission_descriptor_spec(
+                result.get_Ok_0().deployment,
+                result.get_Ok_0().target_manifest,
+                result.get_Ok_0().draft_manifest,
+            )
+            &&& canonical_bundle_admission_values(
+                bytes@,
+                result.get_Ok_0().deployment,
+                result.get_Ok_0().target_manifest,
+                result.get_Ok_0().draft_manifest,
+            )
+            &&& bytes@ == bundle_admission_record_wire(
+                result.get_Ok_0().deployment,
+                result.get_Ok_0().target_manifest,
+                result.get_Ok_0().draft_manifest,
+            )
+        },
+{
     if bytes.len() != BUNDLE_ADMISSION_RECORD_BYTES {
+        assert(!canonical_bundle_admission_bytes(bytes@));
         return Err(BundleAdmissionError::InvalidLength);
     }
     let mut reader = Reader::new(bytes);
-    if reader.array::<16>() != MAGIC {
+    let magic = reader.array::<16>()?;
+    if !bytes_equal(&magic, &MAGIC) {
         return Err(BundleAdmissionError::InvalidMagic);
     }
-    if reader.u32() != BUNDLE_ADMISSION_RECORD_VERSION {
+    if reader.u32()? != BUNDLE_ADMISSION_RECORD_VERSION {
         return Err(BundleAdmissionError::InvalidVersion);
     }
-    let bundle_bytes = reader.array::<CANONICAL_DEPLOYMENT_BUNDLE_BYTES>();
-    let deployment = decode_canonical_deployment_bundle(&bundle_bytes)?;
+    let bundle_bytes = reader.array::<CANONICAL_DEPLOYMENT_BUNDLE_BYTES>()?;
+    let deployment = match decode_canonical_deployment_bundle(&bundle_bytes) {
+        Ok(deployment) => deployment,
+        Err(error) => return Err(BundleAdmissionError::CanonicalBundle(error)),
+    };
     let target_manifest = reader.commitment(Qwen3ModelRole::Target8B)?;
     let draft_manifest = reader.commitment(Qwen3ModelRole::Draft06B)?;
     validate_commitment(&deployment, target_manifest)?;
     validate_commitment(&deployment, draft_manifest)?;
     let record = encode_record(&bundle_bytes, target_manifest, draft_manifest);
-    if record.bytes.as_slice() != bytes {
+    proof {
+        parsed_admission_reencodes(
+            bytes@, deployment, target_manifest, draft_manifest,
+        );
+    }
+    assert(record.bytes_spec() == raw_admission_wire(bytes@));
+    let exact_reencoding = bytes_equal(record.as_bytes(), bytes);
+    if !exact_reencoding {
+        assert(!canonical_bundle_admission_bytes(bytes@));
         return Err(BundleAdmissionError::InvalidLength);
     }
-    Ok(BundleAdmissionDescriptor {
+    let descriptor = BundleAdmissionDescriptor {
         deployment,
         target_manifest,
         draft_manifest,
         record_id: record.record_id,
-    })
+    };
+    proof {
+        accepted_admission_record_reencodes(bytes@, descriptor);
+    }
+    Ok(descriptor)
 }
+
+} // verus!
 
 fn validate_manifest(
     manifest: &WeightSectionManifest,
@@ -354,36 +764,54 @@ fn validate_manifest(
     })
 }
 
+verus! {
+
 fn validate_commitment(
     deployment: &DeploymentBundle,
     commitment: ManifestCommitment,
-) -> Result<(), BundleAdmissionError> {
+) -> (result: Result<(), BundleAdmissionError>)
+    ensures result.is_ok() == manifest_commitment_spec(*deployment, commitment, commitment.role),
+{
     let role = commitment.role;
     let model = match role {
         Qwen3ModelRole::Target8B => deployment.target_model,
         Qwen3ModelRole::Draft06B => deployment.draft_model,
     };
+    let (tensor_data_bytes, tensor_count) = match role {
+        Qwen3ModelRole::Target8B => (super::QWEN3_TARGET_TENSOR_DATA_BYTES, 399),
+        Qwen3ModelRole::Draft06B => (super::QWEN3_DRAFT_TENSOR_DATA_BYTES, 311),
+    };
     let invalid = |reason| BundleAdmissionError::InvalidCommitment { role, reason };
     if commitment.version != PREPACKED_WEIGHT_MANIFEST_VERSION {
         return Err(invalid("version"));
     }
-    if commitment.source_weights_id != *model.weights.weights_id.as_bytes()
-        || commitment.aggregate_id == [0; 32]
-    {
+    let source_matches = bytes_equal(
+        &commitment.source_weights_id, model.weights.weights_id.as_bytes(),
+    );
+    let zero = [0u8; 32];
+    assert(zero@ == Seq::new(32, |index: int| 0u8)) by {
+        assert(zero@ =~= Seq::new(32, |index: int| 0u8)) by {
+            assert forall|index: int| 0 <= index < 32 implies
+                zero@[index] == Seq::new(32, |position: int| 0u8)[index] by {}
+        }
+    }
+    let aggregate_is_zero = bytes_equal(&commitment.aggregate_id, &zero);
+    if !source_matches || aggregate_is_zero {
         return Err(invalid("identity"));
     }
     if commitment.source_artifact_bytes != model.weights.total_bytes
-        || commitment.tensor_data_bytes != role.tensor_data_bytes()
+        || commitment.tensor_data_bytes != tensor_data_bytes
         || commitment.output_bytes != commitment.tensor_data_bytes
     {
         return Err(invalid("byte count"));
     }
-    if commitment.section_count != role.tensor_count()
+    if commitment.section_count != tensor_count
         || commitment.canonical_manifest_bytes == 0
-        || commitment.canonical_manifest_bytes as usize > MAX_MANIFEST_RECORD_BYTES
+        || commitment.canonical_manifest_bytes > MAX_MANIFEST_RECORD_BYTES_U32
     {
         return Err(invalid("manifest bound"));
     }
+    assert(manifest_commitment_spec(*deployment, commitment, commitment.role));
     Ok(())
 }
 
@@ -391,19 +819,67 @@ fn encode_record(
     bundle: &[u8; CANONICAL_DEPLOYMENT_BUNDLE_BYTES],
     target: ManifestCommitment,
     draft: ManifestCommitment,
-) -> BundleAdmissionRecord {
+) -> (record: BundleAdmissionRecord)
+    requires
+        bundle@ == super::bundle::canonical_deployment_bundle_wire(
+            super::bundle::parsed_bundle_spec(bundle@),
+        ),
+    ensures
+        record.bytes_spec() == MAGIC@
+            + u32_little_endian(BUNDLE_ADMISSION_RECORD_VERSION)
+            + bundle@
+            + manifest_commitment_wire(target)
+            + manifest_commitment_wire(draft),
+        record.record_id.bytes_spec()
+            == sha256::digest_spec(RECORD_DOMAIN@ + record.bytes_spec()),
+{
     let mut writer = Writer::new();
     writer.bytes(&MAGIC);
     writer.u32(BUNDLE_ADMISSION_RECORD_VERSION);
     writer.bytes(bundle);
     writer.commitment(target);
     writer.commitment(draft);
-    let mut identity_bytes = Vec::with_capacity(RECORD_DOMAIN.len() + writer.bytes.len());
-    identity_bytes.extend_from_slice(RECORD_DOMAIN);
-    identity_bytes.extend_from_slice(&writer.bytes);
+    proof {
+        bundle_admission_record_wire_len(
+            super::bundle::parsed_bundle_spec(bundle@), target, draft,
+        );
+    }
+    assert(writer.offset == BUNDLE_ADMISSION_RECORD_BYTES);
+    assert(writer.view() == writer.bytes@);
+    let mut hasher = sha256::Sha256::new();
+    assert(RECORD_DOMAIN@.len() == 41);
+    proof { sha256::initial_view_is_valid(); }
+    assert(hasher.view() == sha256::initial_view());
+    assert(hasher.view().1 == 0);
+    assert(sha256::can_update_view(hasher.view(), RECORD_DOMAIN@.len()));
+    proof {
+        hasher.derive_can_update(RECORD_DOMAIN@.len());
+    }
+    hasher.update(&RECORD_DOMAIN);
+    proof {
+        sha256::initial_view_is_valid();
+        sha256::update_view_byte_len(sha256::initial_view(), RECORD_DOMAIN@);
+    }
+    assert(hasher.view().1 == RECORD_DOMAIN@.len());
+    assert(RECORD_DOMAIN@.len() + writer.bytes@.len() <= u64::MAX / 8);
+    assert(sha256::can_update_view(hasher.view(), writer.bytes@.len()));
+    proof {
+        hasher.derive_can_update(writer.bytes@.len());
+    }
+    hasher.update(&writer.bytes);
+    proof {
+        sha256::update_view_concat(sha256::initial_view(), RECORD_DOMAIN@, writer.bytes@);
+    }
+    assert(hasher.view() == sha256::update_view(
+        sha256::initial_view(), RECORD_DOMAIN@ + writer.bytes@,
+    ));
+    let digest = hasher.finish();
+    proof {
+        sha256::digest_spec_definition(RECORD_DOMAIN@ + writer.bytes@);
+    }
     BundleAdmissionRecord {
         bytes: writer.bytes,
-        record_id: Identity::new(sha256::digest(&identity_bytes)),
+        record_id: Identity::new(digest),
     }
 }
 
@@ -413,32 +889,105 @@ struct Writer {
 }
 
 impl Writer {
-    const fn new() -> Self {
+    closed spec fn valid(&self) -> bool {
+        self.offset <= BUNDLE_ADMISSION_RECORD_BYTES
+    }
+
+    closed spec fn view(&self) -> Seq<u8>
+        recommends self.valid(),
+    {
+        self.bytes@.subrange(0, self.offset as int)
+    }
+
+    const fn new() -> (writer: Self)
+        ensures writer.valid(), writer.offset == 0, writer.view() == Seq::<u8>::empty(),
+    {
         Self {
             bytes: [0; BUNDLE_ADMISSION_RECORD_BYTES],
             offset: 0,
         }
     }
 
-    fn bytes(&mut self, value: &[u8]) {
-        let end = self.offset + value.len();
-        self.bytes[self.offset..end].copy_from_slice(value);
-        self.offset = end;
+    fn bytes(&mut self, value: &[u8])
+        requires
+            old(self).valid(),
+            old(self).offset + value@.len() <= BUNDLE_ADMISSION_RECORD_BYTES,
+        ensures
+            final(self).valid(),
+            final(self).offset == old(self).offset + value@.len(),
+            final(self).view() == old(self).view() + value@,
+    {
+        let ghost initial_view = self.view();
+        let ghost initial_offset = self.offset;
+        let mut index = 0;
+        while index < value.len()
+            invariant
+                self.valid(),
+                initial_offset + value@.len() <= BUNDLE_ADMISSION_RECORD_BYTES,
+                0 <= index <= value@.len(),
+                self.offset == initial_offset + index,
+                self.view() == initial_view + value@.subrange(0, index as int),
+            decreases value@.len() - index,
+        {
+            let byte = value[index];
+            self.byte_with_capacity(byte);
+            index += 1;
+            assert(value@.subrange(0, index as int)
+                == value@.subrange(0, index as int - 1).push(byte)) by {
+                assert(value@.subrange(0, index as int) =~=
+                    value@.subrange(0, index as int - 1).push(byte)) by {
+                    assert forall|position: int| 0 <= position < index implies
+                        value@.subrange(0, index as int)[position]
+                            == value@.subrange(0, index as int - 1).push(byte)[position] by {
+                        if position < index - 1 {} else {}
+                    }
+                }
+            }
+        }
+        assert(value@.subrange(0, value@.len() as int) == value@);
     }
 
-    fn u8(&mut self, value: u8) {
+    fn u8(&mut self, value: u8)
+        requires old(self).valid(), old(self).offset + 1 <= BUNDLE_ADMISSION_RECORD_BYTES,
+        ensures
+            final(self).valid(),
+            final(self).offset == old(self).offset + 1,
+            final(self).view() == old(self).view() + seq![value],
+    {
         self.bytes(&[value]);
     }
 
-    fn u32(&mut self, value: u32) {
-        self.bytes(&value.to_le_bytes());
+    fn u32(&mut self, value: u32)
+        requires old(self).valid(), old(self).offset + 4 <= BUNDLE_ADMISSION_RECORD_BYTES,
+        ensures
+            final(self).valid(),
+            final(self).offset == old(self).offset + 4,
+            final(self).view() == old(self).view() + u32_little_endian(value),
+    {
+        let encoded = u32_to_le_bytes(value);
+        self.bytes(&encoded);
     }
 
-    fn u64(&mut self, value: u64) {
-        self.bytes(&value.to_le_bytes());
+    fn u64(&mut self, value: u64)
+        requires old(self).valid(), old(self).offset + 8 <= BUNDLE_ADMISSION_RECORD_BYTES,
+        ensures
+            final(self).valid(),
+            final(self).offset == old(self).offset + 8,
+            final(self).view() == old(self).view() + u64_little_endian(value),
+    {
+        let encoded = u64_to_le_bytes(value);
+        self.bytes(&encoded);
     }
 
-    fn commitment(&mut self, value: ManifestCommitment) {
+    fn commitment(&mut self, value: ManifestCommitment)
+        requires
+            old(self).valid(),
+            old(self).offset + MANIFEST_COMMITMENT_BYTES <= BUNDLE_ADMISSION_RECORD_BYTES,
+        ensures
+            final(self).valid(),
+            final(self).offset == old(self).offset + MANIFEST_COMMITMENT_BYTES,
+            final(self).view() == old(self).view() + manifest_commitment_wire(value),
+    {
         self.u8(match value.role {
             Qwen3ModelRole::Target8B => ROLE_TARGET,
             Qwen3ModelRole::Draft06B => ROLE_DRAFT,
@@ -452,6 +1001,26 @@ impl Writer {
         self.u32(value.section_count);
         self.u32(value.canonical_manifest_bytes);
     }
+
+    fn byte_with_capacity(&mut self, value: u8)
+        requires
+            old(self).valid(),
+            old(self).offset < BUNDLE_ADMISSION_RECORD_BYTES,
+        ensures
+            final(self).valid(),
+            final(self).offset == old(self).offset + 1,
+            final(self).view() == old(self).view().push(value),
+    {
+        let offset = self.offset;
+        self.bytes[offset] = value;
+        self.offset += 1;
+        assert(self.view() =~= old(self).view().push(value)) by {
+            assert forall|position: int| 0 <= position < self.view().len() implies
+                self.view()[position] == old(self).view().push(value)[position] by {
+                if position < offset {} else { assert(position == offset); }
+            }
+        }
+    }
 }
 
 struct Reader<'a> {
@@ -460,69 +1029,231 @@ struct Reader<'a> {
 }
 
 impl<'a> Reader<'a> {
-    const fn new(bytes: &'a [u8]) -> Self {
+    closed spec fn valid(&self) -> bool {
+        self.offset <= self.bytes@.len()
+    }
+
+    const fn new(bytes: &'a [u8]) -> (reader: Self)
+        ensures reader.valid(), reader.offset == 0, reader.bytes@ == bytes@,
+    {
         Self { bytes, offset: 0 }
     }
 
-    fn array<const N: usize>(&mut self) -> [u8; N] {
-        let end = self.offset + N;
+    fn array<const N: usize>(&mut self) -> (result: Result<[u8; N], BundleAdmissionError>)
+        requires old(self).valid(),
+        ensures
+            final(self).bytes@ == old(self).bytes@,
+            result.is_ok() == (N <= old(self).bytes@.len() - old(self).offset),
+            result.is_ok() ==> {
+                &&& final(self).offset == old(self).offset + N
+                &&& result.get_Ok_0()@ == old(self).bytes@.subrange(
+                    old(self).offset as int, (old(self).offset + N) as int,
+                )
+            },
+            result.is_err() ==> final(self).offset == old(self).offset,
+    {
+        if N > self.bytes.len() - self.offset {
+            return Err(BundleAdmissionError::InvalidLength);
+        }
+        let start = self.offset;
         let mut value = [0; N];
-        value.copy_from_slice(&self.bytes[self.offset..end]);
-        self.offset = end;
-        value
+        let mut index = 0;
+        while index < N
+            invariant
+                self.offset == start,
+                start + N <= self.bytes@.len(),
+                self.bytes@.len() <= usize::MAX as nat,
+                0 <= index <= N,
+                value@.len() == N,
+                forall|prior: int| 0 <= prior < index ==>
+                    value@[prior] == self.bytes@[start as int + prior],
+            decreases N - index,
+        {
+            proof {
+                assert(start as nat + index as nat <= self.bytes@.len());
+                assert(start as nat + index as nat <= usize::MAX as nat);
+            }
+            let position = match start.checked_add(index) {
+                Some(position) => position,
+                None => return Err(BundleAdmissionError::InvalidLength),
+            };
+            value[index] = self.bytes[position];
+            index += 1;
+        }
+        assert(value@ =~= self.bytes@.subrange(start as int, (start + N) as int)) by {
+            assert forall|position: int| 0 <= position < N implies
+                value@[position] == self.bytes@.subrange(start as int, (start + N) as int)[position]
+                by {}
+        }
+        self.offset += N;
+        Ok(value)
     }
 
-    fn u8(&mut self) -> u8 {
-        self.array::<1>()[0]
+    fn u8(&mut self) -> (result: Result<u8, BundleAdmissionError>)
+        requires old(self).valid(),
+        ensures
+            final(self).bytes@ == old(self).bytes@,
+            result.is_ok() == (1 <= old(self).bytes@.len() - old(self).offset),
+            result.is_ok() ==> {
+                &&& final(self).offset == old(self).offset + 1
+                &&& result.get_Ok_0() == old(self).bytes@[old(self).offset as int]
+            },
+    {
+        match self.array::<1>() {
+            Ok(value) => Ok(value[0]),
+            Err(error) => Err(error),
+        }
     }
 
-    fn u32(&mut self) -> u32 {
-        u32::from_le_bytes(self.array())
+    fn u32(&mut self) -> (result: Result<u32, BundleAdmissionError>)
+        requires old(self).valid(),
+        ensures
+            final(self).bytes@ == old(self).bytes@,
+            result.is_ok() == (4 <= old(self).bytes@.len() - old(self).offset),
+            result.is_ok() ==> {
+                &&& final(self).offset == old(self).offset + 4
+                &&& result.get_Ok_0() == u32_at(old(self).bytes@, old(self).offset as int)
+            },
+    {
+        match self.array::<4>() {
+            Ok(value) => Ok(
+                u32::from(value[0])
+                    | (u32::from(value[1]) << 8)
+                    | (u32::from(value[2]) << 16)
+                    | (u32::from(value[3]) << 24),
+            ),
+            Err(error) => Err(error),
+        }
     }
 
-    fn u64(&mut self) -> u64 {
-        u64::from_le_bytes(self.array())
+    fn u64(&mut self) -> (result: Result<u64, BundleAdmissionError>)
+        requires old(self).valid(),
+        ensures
+            final(self).bytes@ == old(self).bytes@,
+            result.is_ok() == (8 <= old(self).bytes@.len() - old(self).offset),
+            result.is_ok() ==> {
+                &&& final(self).offset == old(self).offset + 8
+                &&& result.get_Ok_0() == u64_at(old(self).bytes@, old(self).offset as int)
+            },
+    {
+        match self.array::<8>() {
+            Ok(value) => Ok(
+                u64::from(value[0])
+                    | (u64::from(value[1]) << 8)
+                    | (u64::from(value[2]) << 16)
+                    | (u64::from(value[3]) << 24)
+                    | (u64::from(value[4]) << 32)
+                    | (u64::from(value[5]) << 40)
+                    | (u64::from(value[6]) << 48)
+                    | (u64::from(value[7]) << 56),
+            ),
+            Err(error) => Err(error),
+        }
     }
 
     fn commitment(
         &mut self,
         expected_role: Qwen3ModelRole,
-    ) -> Result<ManifestCommitment, BundleAdmissionError> {
-        let role = match self.u8() {
-            ROLE_TARGET => Qwen3ModelRole::Target8B,
-            ROLE_DRAFT => Qwen3ModelRole::Draft06B,
-            _ => {
-                return Err(BundleAdmissionError::InvalidCommitment {
-                    role: expected_role,
-                    reason: "role tag",
-                });
+    ) -> (result: Result<ManifestCommitment, BundleAdmissionError>)
+        requires old(self).valid(),
+        ensures
+            final(self).bytes@ == old(self).bytes@,
+            result.is_ok() == {
+                &&& MANIFEST_COMMITMENT_BYTES <= old(self).bytes@.len() - old(self).offset
+                &&& old(self).bytes@[old(self).offset as int] == match expected_role {
+                    Qwen3ModelRole::Target8B => ROLE_TARGET,
+                    Qwen3ModelRole::Draft06B => ROLE_DRAFT,
+                }
+            },
+            result.is_ok() ==> {
+                &&& final(self).offset == old(self).offset + MANIFEST_COMMITMENT_BYTES
+                &&& commitment_matches_bytes(
+                    result.get_Ok_0(), old(self).bytes@, old(self).offset as int,
+                )
+                &&& result.get_Ok_0().role == expected_role
+            },
+    {
+        let tag = self.u8()?;
+        let role = match expected_role {
+            Qwen3ModelRole::Target8B => {
+                if tag == ROLE_TARGET {
+                    Qwen3ModelRole::Target8B
+                } else if tag == ROLE_DRAFT {
+                    return Err(BundleAdmissionError::InvalidCommitment {
+                        role: expected_role,
+                        reason: "role order",
+                    });
+                } else {
+                    return Err(BundleAdmissionError::InvalidCommitment {
+                        role: expected_role,
+                        reason: "role tag",
+                    });
+                }
+            }
+            Qwen3ModelRole::Draft06B => {
+                if tag == ROLE_DRAFT {
+                    Qwen3ModelRole::Draft06B
+                } else if tag == ROLE_TARGET {
+                    return Err(BundleAdmissionError::InvalidCommitment {
+                        role: expected_role,
+                        reason: "role order",
+                    });
+                } else {
+                    return Err(BundleAdmissionError::InvalidCommitment {
+                        role: expected_role,
+                        reason: "role tag",
+                    });
+                }
             }
         };
-        if role != expected_role {
-            return Err(BundleAdmissionError::InvalidCommitment {
-                role: expected_role,
-                reason: "role order",
-            });
-        }
         Ok(ManifestCommitment {
             role,
-            version: self.u32(),
-            source_weights_id: self.array(),
-            aggregate_id: self.array(),
-            source_artifact_bytes: self.u64(),
-            tensor_data_bytes: self.u64(),
-            output_bytes: self.u64(),
-            section_count: self.u32(),
-            canonical_manifest_bytes: self.u32(),
+            version: self.u32()?,
+            source_weights_id: self.array()?,
+            aggregate_id: self.array()?,
+            source_artifact_bytes: self.u64()?,
+            tensor_data_bytes: self.u64()?,
+            output_bytes: self.u64()?,
+            section_count: self.u32()?,
+            canonical_manifest_bytes: self.u32()?,
         })
     }
 }
+
+fn bytes_equal(left: &[u8], right: &[u8]) -> (equal: bool)
+    ensures equal == (left@ == right@),
+{
+    if left.len() != right.len() {
+        return false;
+    }
+    let mut index = 0;
+    while index < left.len()
+        invariant
+            left@.len() == right@.len(),
+            0 <= index <= left@.len(),
+            forall|prior: int| 0 <= prior < index ==> left@[prior] == right@[prior],
+        decreases left@.len() - index,
+    {
+        if left[index] != right[index] {
+            return false;
+        }
+        index += 1;
+    }
+    assert(left@ =~= right@) by {
+        assert forall|position: int| 0 <= position < left@.len() implies
+            left@[position] == right@[position] by {}
+    }
+    true
+}
+
+} // verus!
 
 #[cfg(test)]
 mod tests {
     use super::{
         decode_bundle_admission_record, encode_record, BundleAdmissionError, ManifestCommitment,
-        BUNDLE_ADMISSION_RECORD_BYTES, BUNDLE_ADMISSION_RECORD_VERSION,
+        BUNDLE_ADMISSION_RECORD_BYTES, BUNDLE_ADMISSION_RECORD_VERSION, MANIFEST_COMMITMENT_BYTES,
+        MAX_MANIFEST_RECORD_BYTES_U32, RECORD_DOMAIN,
     };
     use crate::{
         bundle::tests::exact_bundle,
@@ -532,6 +1263,17 @@ mod tests {
         PREPACKED_WEIGHT_MANIFEST_VERSION,
     };
     use ferric_spec::Qwen3ModelRole;
+
+    const BUNDLE_OFFSET: usize = 20;
+    const TARGET_OFFSET: usize = BUNDLE_OFFSET + crate::CANONICAL_DEPLOYMENT_BUNDLE_BYTES;
+    const DRAFT_OFFSET: usize = TARGET_OFFSET + MANIFEST_COMMITMENT_BYTES;
+    const SOURCE_ID_OFFSET: usize = 5;
+    const AGGREGATE_ID_OFFSET: usize = 37;
+    const SOURCE_BYTES_OFFSET: usize = 69;
+    const TENSOR_BYTES_OFFSET: usize = 77;
+    const OUTPUT_BYTES_OFFSET: usize = 85;
+    const SECTION_COUNT_OFFSET: usize = 93;
+    const MANIFEST_BYTES_OFFSET: usize = 97;
 
     fn commitment(role: Qwen3ModelRole, byte: u8) -> ManifestCommitment {
         let deployment = exact_bundle();
@@ -561,6 +1303,14 @@ mod tests {
         )
     }
 
+    fn replace_u32(bytes: &mut [u8], offset: usize, value: u32) {
+        bytes[offset..offset + 4].copy_from_slice(&value.to_le_bytes());
+    }
+
+    fn replace_u64(bytes: &mut [u8], offset: usize, value: u64) {
+        bytes[offset..offset + 8].copy_from_slice(&value.to_le_bytes());
+    }
+
     #[test]
     fn canonical_descriptor_round_trips_and_is_identity_sensitive() {
         let record = record();
@@ -569,6 +1319,16 @@ mod tests {
         assert_eq!(decoded.record_id, record.record_id());
         assert_eq!(decoded.target_manifest.aggregate_id, [0x31; 32]);
         assert_eq!(decoded.draft_manifest.aggregate_id, [0x32; 32]);
+
+        let reencoded = encode_record(
+            &record.as_bytes()[BUNDLE_OFFSET..TARGET_OFFSET]
+                .try_into()
+                .expect("fixed embedded bundle"),
+            decoded.target_manifest,
+            decoded.draft_manifest,
+        );
+        assert_eq!(reencoded.as_bytes(), record.as_bytes());
+        assert_eq!(reencoded.record_id(), decoded.record_id);
 
         for index in 0..BUNDLE_ADMISSION_RECORD_BYTES {
             let mut changed = record.as_bytes().to_owned();
@@ -581,6 +1341,54 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn independent_wire_oracle_matches_every_field_offset_and_record_digest() {
+        let record = record();
+        let bytes = record.as_bytes();
+        let bundle = encode_canonical_deployment_bundle(&exact_bundle()).expect("exact bundle");
+        let target = commitment(Qwen3ModelRole::Target8B, 0x31);
+        let draft = commitment(Qwen3ModelRole::Draft06B, 0x32);
+
+        let mut oracle = Vec::with_capacity(BUNDLE_ADMISSION_RECORD_BYTES);
+        oracle.extend_from_slice(b"FERRIC-M1-ADMIT\0");
+        oracle.extend_from_slice(&BUNDLE_ADMISSION_RECORD_VERSION.to_le_bytes());
+        oracle.extend_from_slice(bundle.as_bytes());
+        for value in [target, draft] {
+            oracle.push(match value.role {
+                Qwen3ModelRole::Target8B => 1,
+                Qwen3ModelRole::Draft06B => 2,
+            });
+            oracle.extend_from_slice(&value.version.to_le_bytes());
+            oracle.extend_from_slice(&value.source_weights_id);
+            oracle.extend_from_slice(&value.aggregate_id);
+            oracle.extend_from_slice(&value.source_artifact_bytes.to_le_bytes());
+            oracle.extend_from_slice(&value.tensor_data_bytes.to_le_bytes());
+            oracle.extend_from_slice(&value.output_bytes.to_le_bytes());
+            oracle.extend_from_slice(&value.section_count.to_le_bytes());
+            oracle.extend_from_slice(&value.canonical_manifest_bytes.to_le_bytes());
+        }
+        assert_eq!(oracle.len(), BUNDLE_ADMISSION_RECORD_BYTES);
+        assert_eq!(oracle, bytes);
+        assert_eq!(&bytes[BUNDLE_OFFSET..TARGET_OFFSET], bundle.as_bytes());
+        assert_eq!(bytes[TARGET_OFFSET], 1);
+        assert_eq!(bytes[DRAFT_OFFSET], 2);
+        assert_eq!(
+            &bytes[TARGET_OFFSET + SOURCE_BYTES_OFFSET..TARGET_OFFSET + TENSOR_BYTES_OFFSET],
+            &target.source_artifact_bytes.to_le_bytes()
+        );
+        assert_eq!(
+            &bytes[DRAFT_OFFSET + SECTION_COUNT_OFFSET..DRAFT_OFFSET + MANIFEST_BYTES_OFFSET],
+            &draft.section_count.to_le_bytes()
+        );
+
+        let mut identity_preimage = RECORD_DOMAIN.to_vec();
+        identity_preimage.extend_from_slice(bytes);
+        assert_eq!(
+            record.record_id().as_bytes(),
+            &crate::sha256::digest(&identity_preimage)
+        );
     }
 
     #[test]
@@ -612,16 +1420,22 @@ mod tests {
     #[test]
     fn truncation_trailing_version_role_and_zero_identity_fail_closed() {
         let record = record();
-        assert_eq!(
-            decode_bundle_admission_record(&record.as_bytes()[..BUNDLE_ADMISSION_RECORD_BYTES - 1]),
-            Err(BundleAdmissionError::InvalidLength)
-        );
-        let mut trailing = record.as_bytes().to_vec();
-        trailing.push(0);
-        assert_eq!(
-            decode_bundle_admission_record(&trailing),
-            Err(BundleAdmissionError::InvalidLength)
-        );
+        for length in 0..BUNDLE_ADMISSION_RECORD_BYTES {
+            assert_eq!(
+                decode_bundle_admission_record(&record.as_bytes()[..length]),
+                Err(BundleAdmissionError::InvalidLength),
+                "truncation length {length} was accepted"
+            );
+        }
+        for extra in [1, 2, 17, MANIFEST_COMMITMENT_BYTES] {
+            let mut trailing = record.as_bytes().to_vec();
+            trailing.resize(BUNDLE_ADMISSION_RECORD_BYTES + extra, 0xa5);
+            assert_eq!(
+                decode_bundle_admission_record(&trailing),
+                Err(BundleAdmissionError::InvalidLength),
+                "{extra} trailing bytes were accepted"
+            );
+        }
         let mut version = record.as_bytes().to_owned();
         version[16..20].copy_from_slice(&(BUNDLE_ADMISSION_RECORD_VERSION + 1).to_le_bytes());
         assert_eq!(
@@ -629,7 +1443,7 @@ mod tests {
             Err(BundleAdmissionError::InvalidVersion)
         );
         let mut role = record.as_bytes().to_owned();
-        role[20 + crate::CANONICAL_DEPLOYMENT_BUNDLE_BYTES] = 9;
+        role[TARGET_OFFSET] = 9;
         assert!(matches!(
             decode_bundle_admission_record(&role),
             Err(BundleAdmissionError::InvalidCommitment {
@@ -638,7 +1452,7 @@ mod tests {
             })
         ));
         let mut zero = record.as_bytes().to_owned();
-        let aggregate_start = 20 + crate::CANONICAL_DEPLOYMENT_BUNDLE_BYTES + 1 + 4 + 32;
+        let aggregate_start = TARGET_OFFSET + AGGREGATE_ID_OFFSET;
         zero[aggregate_start..aggregate_start + 32].fill(0);
         assert!(matches!(
             decode_bundle_admission_record(&zero),
@@ -647,5 +1461,116 @@ mod tests {
                 ..
             })
         ));
+    }
+
+    #[test]
+    fn role_order_and_little_endian_scalars_are_fail_closed() {
+        let record = record();
+
+        let mut swapped = record.as_bytes().to_owned();
+        let target = swapped[TARGET_OFFSET..DRAFT_OFFSET].to_vec();
+        let draft = swapped[DRAFT_OFFSET..].to_vec();
+        swapped[TARGET_OFFSET..DRAFT_OFFSET].copy_from_slice(&draft);
+        swapped[DRAFT_OFFSET..].copy_from_slice(&target);
+        assert!(matches!(
+            decode_bundle_admission_record(&swapped),
+            Err(BundleAdmissionError::InvalidCommitment {
+                reason: "role order",
+                ..
+            })
+        ));
+
+        for offset in [16, TARGET_OFFSET + 1, DRAFT_OFFSET + 1] {
+            let mut big_endian = record.as_bytes().to_owned();
+            big_endian[offset..offset + 4]
+                .copy_from_slice(&BUNDLE_ADMISSION_RECORD_VERSION.to_be_bytes());
+            assert!(decode_bundle_admission_record(&big_endian).is_err());
+        }
+        for offset in [
+            TARGET_OFFSET + SOURCE_BYTES_OFFSET,
+            TARGET_OFFSET + TENSOR_BYTES_OFFSET,
+            DRAFT_OFFSET + SOURCE_BYTES_OFFSET,
+            DRAFT_OFFSET + OUTPUT_BYTES_OFFSET,
+        ] {
+            let mut reversed = record.as_bytes().to_owned();
+            reversed[offset..offset + 8].reverse();
+            assert!(decode_bundle_admission_record(&reversed).is_err());
+        }
+    }
+
+    #[test]
+    fn structural_commitment_boundaries_and_arbitrary_nonzero_aggregates_are_exact() {
+        let record = record();
+        for offset in [TARGET_OFFSET, DRAFT_OFFSET] {
+            for manifest_bytes in [1, 2, MAX_MANIFEST_RECORD_BYTES_U32] {
+                let mut boundary = record.as_bytes().to_owned();
+                replace_u32(
+                    &mut boundary,
+                    offset + MANIFEST_BYTES_OFFSET,
+                    manifest_bytes,
+                );
+                let decoded = decode_bundle_admission_record(&boundary)
+                    .expect("in-range canonical manifest length");
+                let commitment = if offset == TARGET_OFFSET {
+                    decoded.target_manifest
+                } else {
+                    decoded.draft_manifest
+                };
+                assert_eq!(commitment.canonical_manifest_bytes, manifest_bytes);
+            }
+            for manifest_bytes in [0, MAX_MANIFEST_RECORD_BYTES_U32 + 1, u32::MAX] {
+                let mut boundary = record.as_bytes().to_owned();
+                replace_u32(
+                    &mut boundary,
+                    offset + MANIFEST_BYTES_OFFSET,
+                    manifest_bytes,
+                );
+                assert!(decode_bundle_admission_record(&boundary).is_err());
+            }
+
+            for (position, value) in [(0, 1), (15, 0x80), (31, 0xff)] {
+                let mut arbitrary = record.as_bytes().to_owned();
+                arbitrary[offset + AGGREGATE_ID_OFFSET..offset + AGGREGATE_ID_OFFSET + 32].fill(0);
+                arbitrary[offset + AGGREGATE_ID_OFFSET + position] = value;
+                let decoded = decode_bundle_admission_record(&arbitrary)
+                    .expect("arbitrary nonzero aggregate commitment");
+                assert_ne!(decoded.record_id, record.record_id());
+            }
+        }
+    }
+
+    #[test]
+    fn every_structural_identity_count_and_length_drift_is_rejected() {
+        let record = record();
+        for offset in [TARGET_OFFSET, DRAFT_OFFSET] {
+            let mut source_id = record.as_bytes().to_owned();
+            source_id[offset + SOURCE_ID_OFFSET + 17] ^= 0x80;
+            assert!(decode_bundle_admission_record(&source_id).is_err());
+
+            let mut source_bytes = record.as_bytes().to_owned();
+            let source_value = u64::from_le_bytes(
+                source_bytes[offset + SOURCE_BYTES_OFFSET..offset + TENSOR_BYTES_OFFSET]
+                    .try_into()
+                    .expect("source byte scalar"),
+            );
+            replace_u64(
+                &mut source_bytes,
+                offset + SOURCE_BYTES_OFFSET,
+                source_value + 1,
+            );
+            assert!(decode_bundle_admission_record(&source_bytes).is_err());
+
+            let mut tensor_bytes = record.as_bytes().to_owned();
+            replace_u64(&mut tensor_bytes, offset + TENSOR_BYTES_OFFSET, 2);
+            assert!(decode_bundle_admission_record(&tensor_bytes).is_err());
+
+            let mut output_bytes = record.as_bytes().to_owned();
+            replace_u64(&mut output_bytes, offset + OUTPUT_BYTES_OFFSET, 4);
+            assert!(decode_bundle_admission_record(&output_bytes).is_err());
+
+            let mut sections = record.as_bytes().to_owned();
+            replace_u32(&mut sections, offset + SECTION_COUNT_OFFSET, 0);
+            assert!(decode_bundle_admission_record(&sections).is_err());
+        }
     }
 }
