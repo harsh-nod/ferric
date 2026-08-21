@@ -33,6 +33,7 @@ implements:
 - a fixed-width canonical record for the exact admitted deployment identities;
 - all 22 exact sequential target/draft B3 plans and their finite K1-K7 structural profiles;
 - byte-reproducible compiled Qwen3/gfx942 runner declarations for all 10,648 typed operations;
+- linear logical publication of those retained declarations into engine custody;
 - direct pinned-Verus proofs of the executable M0 state machines;
 - identity-bound fe2o3 M0 property records with actual-body mutation evidence;
 - structural invariant validation and hostile stale-handle tests; and
@@ -46,7 +47,9 @@ compile a GPU kernel, instantiate a command template, dispatch HSA, prove graph
 refinement, or make a verified-inference or performance claim. The canonical
 records bind pinned values but do not authenticate external compiler, runtime,
 proof, executable, or machine identities. The model-admission, planning,
-catalog, identity, and declaration bodies remain explicitly pending Verus.
+catalog, identity, declaration, and logical publication bodies remain
+explicitly pending Verus. Logical publication grants no physical runner,
+artifact, address, load, launch, queue, completion, or qualification authority.
 Unsupported stages fail closed rather than selecting another implementation.
 
 ## First Product Milestone

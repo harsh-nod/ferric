@@ -46,10 +46,15 @@ four logical scalar-input schemas. `ferric-build` expands those declarations
 against authenticated admission, the sequential plan catalog, the structural
 kernel catalog, and the preliminary identity closure. The resulting retained
 record covers all 10,648 exact typed operations, including buffer kinds and
-shapes, and regeneration is tested for byte equality. It is not a runtime: it
-contains no address, allocation, artifact, loader, queue, packet, launch,
-completion, hardware observation, graph-refinement proof, performance result,
-or qualification authority.
+shapes, and regeneration is tested for byte equality. A non-clone publication
+step revalidates and consumes that complete build-owned declaration before the
+engine accepts logical custody. The current bounded bridge uses the acyclic
+`ferric-engine -> ferric-build` dependency so no public caller-authored record
+can mint equivalent custody. Engine lookup binds a request-local `StepPlan` to
+an exact retained plan identity and independently bounds its operation span.
+This is not a physical runtime: it contains no address, allocation, artifact,
+loader, queue, packet, launch, completion, hardware observation,
+graph-refinement proof, performance result, or qualification authority.
 
 ## Dependency Boundary
 

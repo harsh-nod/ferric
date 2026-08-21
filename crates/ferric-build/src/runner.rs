@@ -180,6 +180,126 @@ impl GeneratedRunnerDeclaration {
     }
 }
 
+/// One linearly published, fully retained generated-runner declaration.
+///
+/// This value can only be created by consuming a [`GeneratedRunnerDeclaration`]
+/// through [`publish_qwen3_gfx942_runner_declaration`]. It deliberately keeps
+/// the authenticated admission, exact prepacked manifests, plan catalog,
+/// structural kernel catalog, preliminary closure, generated template, and
+/// canonical declaration in build custody. It is not `Clone` and grants no
+/// artifact, allocation, address, load, queue, launch, completion, hardware,
+/// performance, graph-refinement, proof, or qualification authority.
+#[derive(Debug, Eq, PartialEq)]
+pub struct PublishedRunnerDeclaration {
+    declaration: GeneratedRunnerDeclaration,
+}
+
+impl PublishedRunnerDeclaration {
+    /// Returns the exact generated source identity retained by publication.
+    #[must_use]
+    pub const fn source_id(&self) -> Identity {
+        self.declaration.source_id
+    }
+
+    /// Returns the retained authenticated admission-record identity.
+    #[must_use]
+    pub const fn admission_record_id(&self) -> Identity {
+        self.declaration.admission_record_id
+    }
+
+    /// Returns the exact admitted deployment identity.
+    #[must_use]
+    pub const fn bundle_id(&self) -> Identity {
+        self.declaration.closure.catalog().deployment().bundle_id
+    }
+
+    /// Returns the authenticated target prepacked-manifest identity.
+    #[must_use]
+    pub const fn target_prepacked_id(&self) -> Identity {
+        Identity::new(
+            self.declaration
+                .closure
+                .catalog()
+                .prepacked()
+                .target_manifest()
+                .aggregate_id(),
+        )
+    }
+
+    /// Returns the authenticated draft prepacked-manifest identity.
+    #[must_use]
+    pub const fn draft_prepacked_id(&self) -> Identity {
+        Identity::new(
+            self.declaration
+                .closure
+                .catalog()
+                .prepacked()
+                .draft_manifest()
+                .aggregate_id(),
+        )
+    }
+
+    /// Returns the exact sequential plan-catalog identity.
+    #[must_use]
+    pub const fn plan_catalog_id(&self) -> Identity {
+        self.declaration.plan_catalog_id
+    }
+
+    /// Returns the exact structural K1-K7 catalog identity.
+    #[must_use]
+    pub const fn kernel_catalog_id(&self) -> Identity {
+        self.declaration.kernel_catalog_id
+    }
+
+    /// Returns the retained preliminary identity-closure identity.
+    #[must_use]
+    pub const fn closure_id(&self) -> Identity {
+        self.declaration.closure_id
+    }
+
+    /// Returns the complete canonical generated-declaration identity.
+    #[must_use]
+    pub const fn declaration_id(&self) -> Identity {
+        self.declaration.declaration_id
+    }
+
+    /// Returns the exact generated declaration format version.
+    #[must_use]
+    pub const fn declaration_version(&self) -> u32 {
+        GENERATED_RUNNER_DECLARATION_VERSION
+    }
+
+    /// Returns the exact checked-in generated-template format version.
+    #[must_use]
+    pub const fn template_version(&self) -> u32 {
+        GENERATED_RUNNER_TEMPLATE_VERSION
+    }
+
+    /// Returns every retained target-then-draft plan binding.
+    #[must_use]
+    pub fn plans(&self) -> &[GeneratedPlanDeclaration] {
+        &self.declaration.plans
+    }
+
+    /// Returns all exact typed operations in plan/ordinal order.
+    #[must_use]
+    pub fn operations(&self) -> &[GeneratedOperationDeclaration] {
+        &self.declaration.operations
+    }
+
+    /// Returns the exact logical request-input schema.
+    #[must_use]
+    pub fn patch_slots(&self) -> &[RunnerPatchSlotTemplate] {
+        &self.declaration.patch_slots
+    }
+
+    /// Returns the canonical record retained by the declaration identity.
+    #[must_use]
+    pub fn canonical_bytes(&self) -> &[u8] {
+        &self.declaration.canonical_bytes
+    }
+}
+
 /// Fail-closed generated runner declaration error.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum GeneratedRunnerError {
@@ -387,6 +507,24 @@ pub fn generate_qwen3_gfx942_runner_declaration(
     };
     validate_qwen3_gfx942_runner_declaration(&declaration)?;
     Ok(declaration)
+}
+
+/// Consumes and linearly publishes an exact generated-runner declaration.
+///
+/// Publication revalidates the complete retained declaration immediately
+/// before crossing into runtime custody. Failure consumes the candidate and
+/// yields no published value.
+///
+/// # Errors
+///
+/// Returns [`GeneratedRunnerError`] for any authenticated admission, source,
+/// prepacked manifest, plan, operation, kernel catalog, closure, template,
+/// patch schema, canonical record, or identity drift.
+pub fn publish_qwen3_gfx942_runner_declaration(
+    declaration: GeneratedRunnerDeclaration,
+) -> Result<PublishedRunnerDeclaration, GeneratedRunnerError> {
+    validate_qwen3_gfx942_runner_declaration(&declaration)?;
+    Ok(PublishedRunnerDeclaration { declaration })
 }
 
 /// Revalidates every retained generated declaration field independently.
@@ -884,9 +1022,10 @@ fn identity_record(domain: &[u8], bytes: &[u8]) -> Identity {
 mod tests {
     use super::{
         expected_qwen3_gfx942_runner_source_identity, generate_qwen3_gfx942_runner_declaration,
-        identity_record, render_qwen3_gfx942_runner_source, validate_patch_slots,
-        validate_plan_templates, validate_qwen3_gfx942_runner_declaration, GeneratedRunnerError,
-        DECLARATION_DOMAIN, GENERATED_SOURCE_DOMAIN,
+        identity_record, publish_qwen3_gfx942_runner_declaration,
+        render_qwen3_gfx942_runner_source, validate_patch_slots, validate_plan_templates,
+        validate_qwen3_gfx942_runner_declaration, GeneratedRunnerError, DECLARATION_DOMAIN,
+        GENERATED_SOURCE_DOMAIN,
     };
     use crate::{
         build_authenticated_sequential_plan_catalog, build_preliminary_identity_closure,
@@ -1069,6 +1208,70 @@ mod tests {
         assert_eq!(declaration.canonical_bytes(), second.canonical_bytes());
         assert_eq!(declaration.plans(), second.plans());
         assert_eq!(declaration.operations(), second.operations());
+    }
+
+    #[test]
+    fn publication_consumes_and_retains_the_complete_exact_declaration() {
+        let declaration =
+            generate_qwen3_gfx942_runner_declaration(exact_closure()).expect("exact declaration");
+        let source_id = declaration.source_id();
+        let admission_record_id = declaration.admission_record_id();
+        let bundle_id = declaration.closure().catalog().deployment().bundle_id;
+        let target_prepacked_id = Identity::new(
+            declaration
+                .closure()
+                .catalog()
+                .prepacked()
+                .target_manifest()
+                .aggregate_id(),
+        );
+        let draft_prepacked_id = Identity::new(
+            declaration
+                .closure()
+                .catalog()
+                .prepacked()
+                .draft_manifest()
+                .aggregate_id(),
+        );
+        let plan_catalog_id = declaration.plan_catalog_id();
+        let kernel_catalog_id = declaration.kernel_catalog_id();
+        let closure_id = declaration.closure_id();
+        let declaration_id = declaration.declaration_id();
+
+        let published = publish_qwen3_gfx942_runner_declaration(declaration)
+            .expect("exact declaration publishes");
+        assert_eq!(published.source_id(), source_id);
+        assert_eq!(published.admission_record_id(), admission_record_id);
+        assert_eq!(published.bundle_id(), bundle_id);
+        assert_eq!(published.target_prepacked_id(), target_prepacked_id);
+        assert_eq!(published.draft_prepacked_id(), draft_prepacked_id);
+        assert_eq!(published.plan_catalog_id(), plan_catalog_id);
+        assert_eq!(published.kernel_catalog_id(), kernel_catalog_id);
+        assert_eq!(published.closure_id(), closure_id);
+        assert_eq!(published.declaration_id(), declaration_id);
+        assert_eq!(published.plans().len(), GENERATED_RUNNER_PLAN_COUNT);
+        assert_eq!(
+            published.operations().len(),
+            GENERATED_RUNNER_OPERATION_COUNT
+        );
+        assert_eq!(published.patch_slots(), GENERATED_PATCH_SLOTS);
+        assert!(!published.canonical_bytes().is_empty());
+    }
+
+    #[test]
+    fn publication_rejects_a_last_moment_declaration_mutation() {
+        let mut declaration =
+            generate_qwen3_gfx942_runner_declaration(exact_closure()).expect("exact declaration");
+        declaration.operations[GENERATED_RUNNER_OPERATION_COUNT - 1]
+            .profile
+            .step
+            .output_0
+            .shape
+            .dimension_1 += 1;
+        assert_eq!(
+            publish_qwen3_gfx942_runner_declaration(declaration),
+            Err(GeneratedRunnerError::DeclarationDrift)
+        );
     }
 
     #[test]

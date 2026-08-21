@@ -7,6 +7,7 @@ version.workspace = true
 publish = false
 
 [dependencies]
+ferric-build = { path = "../ferric-build" }
 ferric-spec = { path = "../ferric-spec" }
 vstd.workspace = true
 

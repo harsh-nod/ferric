@@ -27,6 +27,7 @@ dependencies = [
 name = "ferric-engine"
 version = "0.1.0"
 dependencies = [
+ "ferric-build",
  "ferric-spec",
  "vstd",
 ]

@@ -42,9 +42,10 @@ pub use plan::{
 };
 pub use runner::{
     expected_qwen3_gfx942_runner_source_identity, generate_qwen3_gfx942_runner_declaration,
-    render_qwen3_gfx942_runner_source, validate_qwen3_gfx942_runner_declaration,
-    GeneratedOperationDeclaration, GeneratedPlanDeclaration, GeneratedRunnerDeclaration,
-    GeneratedRunnerError, GENERATED_RUNNER_DECLARATION_VERSION,
+    publish_qwen3_gfx942_runner_declaration, render_qwen3_gfx942_runner_source,
+    validate_qwen3_gfx942_runner_declaration, GeneratedOperationDeclaration,
+    GeneratedPlanDeclaration, GeneratedRunnerDeclaration, GeneratedRunnerError,
+    PublishedRunnerDeclaration, GENERATED_RUNNER_DECLARATION_VERSION,
 };
 pub use safetensors::{
     authenticate_qwen3_draft_weights, authenticate_qwen3_target_weights, AuthenticatedWeightSet,
