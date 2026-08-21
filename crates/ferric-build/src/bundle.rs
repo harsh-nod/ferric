@@ -417,7 +417,7 @@ impl<'a> Reader<'a> {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::{
         decode_canonical_deployment_bundle, encode_canonical_deployment_bundle,
         CanonicalBundleError, CANONICAL_DEPLOYMENT_BUNDLE_BYTES,
@@ -460,7 +460,7 @@ mod tests {
         }
     }
 
-    fn exact_bundle() -> ferric_spec::DeploymentBundle {
+    pub(crate) fn exact_bundle() -> ferric_spec::DeploymentBundle {
         build_preliminary_deployment_bundle(DeploymentAssets {
             target: model_assets(
                 TARGET_REPOSITORY,

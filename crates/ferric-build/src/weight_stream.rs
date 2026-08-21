@@ -825,12 +825,13 @@ const fn dtype_code(dtype: TensorDType) -> u8 {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::{
-        encode_manifest_record, flush_output, require_shard_name, stream_file,
+        encode_manifest_record, flush_output, parse_header, require_shard_name, stream_file,
         validate_destination_coverage, validate_stream_plan, FilePin, ParsedShard, ParsedTensor,
-        PrepackedSeal, PrepackedWeightSet, WeightSection, WeightStreamError, WeightTransform,
-        SECTION_ALIGNMENT, TARGET_SHARD_PINS,
+        PrepackedSeal, PrepackedWeightSet, WeightSection, WeightSectionManifest, WeightStreamError,
+        WeightTransform, DRAFT_FILE_PIN, PREPACKED_WEIGHT_MANIFEST_VERSION, SECTION_ALIGNMENT,
+        TARGET_SHARD_PINS,
     };
     use crate::tokenizer::tests::{authenticated_assets, test_tokenizer};
     use crate::{
@@ -843,6 +844,14 @@ mod tests {
     use std::io::{self, Cursor, Read, Write};
 
     const HEADER: &[u8] = b"{}";
+    const TARGET_HEADERS: [&[u8]; 5] = [
+        include_bytes!("fixtures/safetensors/qwen3-8b-00001.header.json"),
+        include_bytes!("fixtures/safetensors/qwen3-8b-00002.header.json"),
+        include_bytes!("fixtures/safetensors/qwen3-8b-00003.header.json"),
+        include_bytes!("fixtures/safetensors/qwen3-8b-00004.header.json"),
+        include_bytes!("fixtures/safetensors/qwen3-8b-00005.header.json"),
+    ];
+    const DRAFT_HEADER: &[u8] = include_bytes!("fixtures/safetensors/qwen3-06b.header.json");
     const TENSOR_BYTES: u64 = 2_048;
     const TOTAL_BYTES: u64 = TENSOR_BYTES * 2;
 
@@ -980,21 +989,82 @@ mod tests {
         }
     }
 
-    fn test_prepacked(role: Qwen3ModelRole) -> PrepackedWeightSet {
+    pub(crate) fn test_prepacked(role: Qwen3ModelRole) -> PrepackedWeightSet {
         let descriptor = descriptor(role);
-        let canonical_bytes = b"test-only-prepacked-authority".to_vec();
+        let parsed = match role {
+            Qwen3ModelRole::Target8B => TARGET_HEADERS
+                .iter()
+                .zip(TARGET_SHARD_PINS)
+                .map(|(fixture, pin)| {
+                    assert_eq!(fixture.last(), Some(&b'\n'));
+                    let mut header = fixture[..fixture.len() - 1].to_vec();
+                    header.resize(
+                        usize::try_from(pin.header_bytes).expect("test header bound"),
+                        b' ',
+                    );
+                    let shard = parse_header(role, pin.name, &header, pin.tensor_data_bytes)
+                        .expect("official target header");
+                    (pin, shard)
+                })
+                .collect::<Vec<_>>(),
+            Qwen3ModelRole::Draft06B => {
+                let pin = DRAFT_FILE_PIN;
+                assert_eq!(DRAFT_HEADER.last(), Some(&b'\n'));
+                let mut header = DRAFT_HEADER[..DRAFT_HEADER.len() - 1].to_vec();
+                header.resize(
+                    usize::try_from(pin.header_bytes).expect("test header bound"),
+                    b' ',
+                );
+                vec![(
+                    pin,
+                    parse_header(role, pin.name, &header, pin.tensor_data_bytes)
+                        .expect("official draft header"),
+                )]
+            }
+        };
+        let mut destination = 0_u64;
+        let mut sections = Vec::with_capacity(role.tensor_count() as usize);
+        for (pin, shard) in parsed {
+            for tensor in shard.tensors {
+                let length = tensor.end - tensor.start;
+                let mut digest_input = tensor.name.as_bytes().to_vec();
+                digest_input.extend_from_slice(&tensor.start.to_le_bytes());
+                sections.push(WeightSection {
+                    tensor_name: tensor.name,
+                    role,
+                    dtype: tensor.metadata.dtype,
+                    rank: tensor.metadata.rank,
+                    dimension_0: tensor.metadata.dimension_0,
+                    dimension_1: tensor.metadata.dimension_1,
+                    source_artifact: pin.name.to_owned(),
+                    source_offset: 8 + pin.header_bytes + tensor.start,
+                    source_length: length,
+                    destination_offset: destination,
+                    destination_length: length,
+                    alignment: SECTION_ALIGNMENT,
+                    transform: WeightTransform::Bf16RowMajorIdentityV1,
+                    sha256: sha256::digest(&digest_input),
+                });
+                destination += length;
+            }
+        }
+        assert_eq!(destination, descriptor.tensor_data_bytes);
+        assert_eq!(sections.len(), role.tensor_count() as usize);
+        let canonical_bytes = encode_manifest_record(role, descriptor, destination, &sections)
+            .expect("test canonical manifest");
+        let aggregate_id = sha256::digest(&canonical_bytes);
         PrepackedWeightSet {
             role,
             descriptor,
-            manifest: super::WeightSectionManifest {
-                version: super::PREPACKED_WEIGHT_MANIFEST_VERSION,
+            manifest: WeightSectionManifest {
+                version: PREPACKED_WEIGHT_MANIFEST_VERSION,
                 role,
                 source_weights_id: descriptor.weights_id,
                 source_artifact_bytes: descriptor.artifact_bytes,
                 tensor_data_bytes: descriptor.tensor_data_bytes,
-                output_bytes: descriptor.tensor_data_bytes,
-                sections: Vec::new(),
-                aggregate_id: sha256::digest(&canonical_bytes),
+                output_bytes: destination,
+                sections,
+                aggregate_id,
                 canonical_bytes: canonical_bytes.into_boxed_slice(),
             },
             seal: PrepackedSeal,

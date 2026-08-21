@@ -8,6 +8,7 @@
 //! authentication remain separate sealed stages until the final bundle path
 //! consumes their authorities.
 
+mod auth;
 mod bundle;
 mod identity_closure;
 mod json;
@@ -17,6 +18,11 @@ mod sha256;
 mod tokenizer;
 mod weight_stream;
 
+pub use auth::{
+    decode_bundle_admission_record, seal_authenticated_bundle, AuthenticatedBundleAdmission,
+    BundleAdmissionDescriptor, BundleAdmissionError, BundleAdmissionRecord, ManifestCommitment,
+    BUNDLE_ADMISSION_RECORD_BYTES, BUNDLE_ADMISSION_RECORD_VERSION,
+};
 pub use bundle::{
     decode_canonical_deployment_bundle, encode_canonical_deployment_bundle, CanonicalBundleError,
     CanonicalDeploymentBundle, CANONICAL_DEPLOYMENT_BUNDLE_BYTES,
