@@ -109,6 +109,24 @@ EXPECTED = {
         "step_plan_publication",
         "validate_step_plan",
     ),
+    "speculative-accepted-count-binding": (
+        "speculative-step-composition",
+        "rollback_refined",
+        "speculation-proof",
+        "ferric-spec",
+        "crates/ferric-spec/src/speculative_step_composition.rs",
+        "speculative_step_composition",
+        "settle_and_publish_speculative_step",
+    ),
+    "speculative-atomic-failure-frame": (
+        "speculative-step-composition",
+        "request_isolated",
+        "isolation-proof",
+        "ferric-spec",
+        "crates/ferric-spec/src/speculative_step_composition.rs",
+        "speculative_step_composition",
+        "settle_and_publish_speculative_step",
+    ),
 }
 
 

@@ -9,8 +9,15 @@ import sys
 repo = Path(sys.argv[1])
 path = repo / "crates/ferric-spec/src/step_plan_publication.rs"
 source = path.read_text(encoding="utf-8")
-old = "    publication.set_phase(PublicationPhase::Published);"
-new = "    publication.set_phase(PublicationPhase::Discarded);"
+old = """    if !phase_matches(publication.phase(), PublicationPhase::Validated) {
+        assert(*publication == entry);
+        return Err(StepPublicationError::WrongPhase);
+    }
+    publication.set_phase(PublicationPhase::Published);"""
+new = old.replace(
+    "    publication.set_phase(PublicationPhase::Published);",
+    "    publication.set_phase(PublicationPhase::Discarded);",
+)
 if source.count(old) != 1:
     raise SystemExit("publication phase-transition mutation anchor drifted")
 path.write_text(source.replace(old, new), encoding="utf-8")

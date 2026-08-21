@@ -3,7 +3,8 @@
 `REQUIRED_FOUNDATIONS` is the finite
 `FERRIC-M1-NEGATIVE-FOUNDATIONS-V1` registry for the direct-Verus foundation
 bodies that currently exist for exact graph planning, step-plan publication,
-logical paged KV, continuous batching, and request-slot noninterference.
+atomic speculative publication/KV composition, logical paged KV, continuous
+batching, and request-slot noninterference.
 
 Each row binds one unique body mutation and contract clause to:
 
@@ -15,13 +16,15 @@ Each row binds one unique body mutation and contract clause to:
 - the exact `postcondition` or `assertion` failure class required from pinned
   Verus after the mutated source first passes ordinary Cargo compilation.
 
-`check-registry.py` hard-codes the exact ten-row roster. It first runs the M1
+`check-registry.py` hard-codes the exact twelve-row roster. It first runs the M1
 requirements checker, then rejects row omission, addition, reordering,
 rebinding, duplicate mutators or clauses, unsafe paths, missing files, targets
 outside compiler-rooted coverage, and any property or path that is no longer
 `Open`. Every mutator replaces one uniquely occurring executable-body anchor.
-It does not edit a function contract, specification relation, or proof-tool
-configuration.
+The speculative accepted-count row sends a value other than the
+publication-derived count to KV preflight; the failure-frame row changes
+publication on the KV rejection path. Both are ordinary executable-body edits,
+not contract, specification-relation, assertion-only, or proof-tool mutations.
 
 Run the structural policy directly:
 

@@ -17,6 +17,8 @@ closure status.
 | `kv-write-prefix` | `paged_kv_refinement::write_physical_token` | physical initialization advances with logical residency | `kv_refined` / `kv-proof` |
 | `publication-phase-transition` | `step_plan_publication::publish_reserved_delta` | publication moves only from validated to published | `graph_refined` / `graph-proof` |
 | `publication-plan-identity` | `step_plan_publication::validate_step_plan` | publication authority binds the exact plan identity | `graph_refined` / `graph-proof` |
+| `speculative-accepted-count-binding` | `speculative_step_composition::settle_and_publish_speculative_step` | KV preflight uses the exact publication-derived accepted count | `rollback_refined` / `speculation-proof` |
+| `speculative-atomic-failure-frame` | `speculative_step_composition::settle_and_publish_speculative_step` | all publication and KV validation precedes mutation, and any rejection preserves publication and selected state | `request_isolated` / `isolation-proof` |
 
 The path column is an obligation association, not a claim that the named
 future `proofs/m1/*.rs` path exists or has been discharged.

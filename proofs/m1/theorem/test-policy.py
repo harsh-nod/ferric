@@ -33,6 +33,7 @@ def copy_fixture(repo: Path, destination: Path) -> None:
         "crates/ferric-spec/src/continuous_batching.rs",
         "crates/ferric-spec/src/graph.rs",
         "crates/ferric-spec/src/paged_kv_refinement.rs",
+        "crates/ferric-spec/src/speculative_step_composition.rs",
         "crates/ferric-spec/src/step_plan_publication.rs",
     ):
         target = destination / relative
@@ -71,6 +72,17 @@ def replace_field(lines: list[str], row: int, field: int, value: str) -> None:
     lines[row] = prefix + "=" + "|".join(fields)
 
 
+def registry_row(lines: list[str], name: str) -> int:
+    matches = [
+        position
+        for position, line in enumerate(lines)
+        if line.startswith(f"theorem={name}|")
+    ]
+    if len(matches) != 1:
+        fail(f"fixture theorem row is not unique: {name}")
+    return matches[0]
+
+
 def expect_rejected(
     repo: Path,
     root: Path,
@@ -102,8 +114,8 @@ def main() -> None:
         result = run_checker(baseline, active)
         if result.returncode != 0:
             fail(f"baseline theorem registry failed\n{result.stdout}")
-        if len(active.read_text(encoding="ascii").splitlines()) != 10:
-            fail("baseline theorem registry did not select exactly ten rows")
+        if len(active.read_text(encoding="ascii").splitlines()) != 12:
+            fail("baseline theorem registry did not select exactly twelve rows")
 
         cases: list[tuple[str, str, FixtureMutation]] = [
             (
@@ -163,6 +175,19 @@ def main() -> None:
                 ),
             ),
             (
+                "speculative-binding-drift",
+                "positive theorem binding drifted",
+                lambda fixture: mutate_registry(
+                    fixture,
+                    lambda lines: replace_field(
+                        lines,
+                        registry_row(lines, "speculative-accepted-count-binding"),
+                        7,
+                        "exact_draft_tokens",
+                    ),
+                ),
+            ),
+            (
                 "unsafe-source",
                 "unsafe theorem source path",
                 lambda fixture: mutate_registry(
@@ -178,6 +203,14 @@ def main() -> None:
                 ).unlink(),
             ),
             (
+                "missing-speculative-source",
+                "M1 theorem source is unavailable",
+                lambda fixture: (
+                    fixture
+                    / "crates/ferric-spec/src/speculative_step_composition.rs"
+                ).unlink(),
+            ),
+            (
                 "missing-function-coverage",
                 "function path is not directly verified",
                 lambda fixture: (fixture / "proofs/VERIFIED_MODULES").write_text(
@@ -188,6 +221,22 @@ def main() -> None:
                         .splitlines()
                         if line
                         != "verified=ferric-spec|crates/ferric-spec/src/continuous_batching.rs|ferric_spec::continuous_batching::apply_continuous_publish_step"
+                    )
+                    + "\n",
+                    encoding="utf-8",
+                ),
+            ),
+            (
+                "missing-speculative-function-coverage",
+                "function path is not directly verified",
+                lambda fixture: (fixture / "proofs/VERIFIED_MODULES").write_text(
+                    "\n".join(
+                        line
+                        for line in (fixture / "proofs/VERIFIED_MODULES")
+                        .read_text(encoding="utf-8")
+                        .splitlines()
+                        if line
+                        != "verified=ferric-spec|crates/ferric-spec/src/speculative_step_composition.rs|ferric_spec::speculative_step_composition::settle_and_publish_speculative_step"
                     )
                     + "\n",
                     encoding="utf-8",
@@ -209,6 +258,27 @@ def main() -> None:
             )
 
         cases.append(("premature-property-closure", "must remain Open", close_property))
+
+        def close_speculative_property(fixture: Path) -> None:
+            path = fixture / "proofs/M1_REQUIREMENTS.json"
+            value = json.loads(path.read_text(encoding="utf-8"))
+            next(
+                row
+                for row in value["assurance_properties"]
+                if row["name"] == "rollback_refined"
+            )["obligation_state"] = "Proved"
+            path.write_text(
+                json.dumps(value, ensure_ascii=True, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+
+        cases.append(
+            (
+                "premature-speculative-property-closure",
+                "must remain Open",
+                close_speculative_property,
+            )
+        )
         for name, expected, mutation in cases:
             expect_rejected(repo, root, name, expected, mutation)
 

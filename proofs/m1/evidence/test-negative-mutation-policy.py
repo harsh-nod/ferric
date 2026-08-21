@@ -558,7 +558,7 @@ def main() -> None:
         fail(f"usage: {sys.argv[0]} REPO [REAL_RESULT]")
     repo = Path(sys.argv[1]).resolve(strict=True)
     active, rows = registry(repo)
-    if len(rows) != 10 or not active:
+    if len(rows) != 12 or not active:
         fail("M1 negative registry baseline drifted")
     row = rows[0]
 

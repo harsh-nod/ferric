@@ -119,7 +119,9 @@ Verus, fe2o3, HSA, MI300X hardware, vLLM, or SGLang. It creates no
 `ContractSetV1`, qualification artifact, receipt, or evidence status. A passing
 requirements check proves only that the open M1 obligation roster is canonical,
 complete, internally resolved, and consistent with the unchecked roadmap and
-this document. The separate M1 foundation-mutation registry binds current
-direct-Verus bodies to hostile-test requirements. Registry validation or a
-fresh pinned-compiler rejection does not implement its associated future proof
-path and is not closure evidence.
+this document. The paired M1 positive-theorem and actual-body negative-mutation
+registries bind current direct-Verus bodies to selected-proof and hostile-test
+requirements. Their speculative composition rows cover atomic failure framing
+and publication-to-KV accepted-count agreement. Registry validation, a selected
+theorem run, or a fresh pinned-compiler rejection does not implement its
+associated future proof path and is not closure evidence.

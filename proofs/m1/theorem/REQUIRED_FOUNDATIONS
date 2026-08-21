@@ -9,3 +9,5 @@ theorem=kv-rollback-retirement|logical-paged-kv|kv_refined|kv-proof|ferric-spec|
 theorem=kv-write-prefix|logical-paged-kv|kv_refined|kv-proof|ferric-spec|crates/ferric-spec/src/paged_kv_refinement.rs|paged_kv_refinement|write_physical_token
 theorem=publication-phase-transition|step-plan-publication|graph_refined|graph-proof|ferric-spec|crates/ferric-spec/src/step_plan_publication.rs|step_plan_publication|publish_reserved_delta
 theorem=publication-plan-identity|step-plan-publication|graph_refined|graph-proof|ferric-spec|crates/ferric-spec/src/step_plan_publication.rs|step_plan_publication|validate_step_plan
+theorem=speculative-accepted-count-binding|speculative-step-composition|rollback_refined|speculation-proof|ferric-spec|crates/ferric-spec/src/speculative_step_composition.rs|speculative_step_composition|settle_and_publish_speculative_step
+theorem=speculative-atomic-failure-frame|speculative-step-composition|request_isolated|isolation-proof|ferric-spec|crates/ferric-spec/src/speculative_step_composition.rs|speculative_step_composition|settle_and_publish_speculative_step

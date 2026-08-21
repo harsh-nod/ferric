@@ -89,6 +89,20 @@ EXPECTED = {
         "step_plan_publication", "validate_step_plan",
         "exact-plan-identity",
     ),
+    "speculative-accepted-count-binding": (
+        "speculative-step-composition", "rollback_refined", "speculation-proof",
+        "ferric-spec", "crates/ferric-spec/src/speculative_step_composition.rs",
+        "speculative-accepted-count-binding.py", "assertion",
+        "speculative_step_composition", "settle_and_publish_speculative_step",
+        "publication-kv-accepted-count",
+    ),
+    "speculative-atomic-failure-frame": (
+        "speculative-step-composition", "request_isolated", "isolation-proof",
+        "ferric-spec", "crates/ferric-spec/src/speculative_step_composition.rs",
+        "speculative-atomic-failure-frame.py", "postcondition",
+        "speculative_step_composition", "settle_and_publish_speculative_step",
+        "atomic-preflight-failure-frame",
+    ),
 }
 
 
