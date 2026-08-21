@@ -9,7 +9,8 @@
 //! consumes their authorities.
 
 mod auth;
-mod bundle;
+/// Canonical M1 deployment-bundle wire format and verifier-visible relations.
+pub mod bundle;
 mod identity_closure;
 mod json;
 mod plan;
@@ -81,14 +82,18 @@ const MAX_CONFIG_BYTES: usize = 16 * 1_024;
 const MAX_TOKENIZER_METADATA_BYTES: usize = 64 * 1_024;
 const MAX_CHAT_TEMPLATE_BYTES: usize = 32 * 1_024;
 
+verus! {
+
+type PinnedStr = &'static str;
+
 /// Pinned upstream repository for the M1 target model.
-pub const TARGET_REPOSITORY: &str = "Qwen/Qwen3-8B";
+pub const TARGET_REPOSITORY: PinnedStr = "Qwen/Qwen3-8B";
 /// Pinned upstream revision for the M1 target model.
-pub const TARGET_REVISION: &str = "b968826d9c46dd6066d109eabc6255188de91218";
+pub const TARGET_REVISION: PinnedStr = "b968826d9c46dd6066d109eabc6255188de91218";
 /// Pinned upstream repository for the M1 draft model.
-pub const DRAFT_REPOSITORY: &str = "Qwen/Qwen3-0.6B";
+pub const DRAFT_REPOSITORY: PinnedStr = "Qwen/Qwen3-0.6B";
 /// Pinned upstream revision for the M1 draft model.
-pub const DRAFT_REVISION: &str = "c1899de289a04d12100db370d81485cdf75e47ca";
+pub const DRAFT_REVISION: PinnedStr = "c1899de289a04d12100db370d81485cdf75e47ca";
 
 /// Size of the shared upstream `tokenizer.json` payload.
 pub const QWEN3_TOKENIZER_BYTES: u64 = 11_422_654;
@@ -101,31 +106,49 @@ pub const QWEN3_DRAFT_WEIGHT_ARTIFACT_BYTES: u64 = 1_503_300_328;
 /// Tensor-data bytes following the Qwen3-0.6B safetensors header.
 pub const QWEN3_DRAFT_TENSOR_DATA_BYTES: u64 = 1_503_264_768;
 
-const TARGET_CONFIG_SHA256: [u8; 32] =
-    decode_hex_32(b"f7c4eadfbbf522470667b797a3c89be2524832d2d599797248dc304fff447c30");
-const DRAFT_CONFIG_SHA256: [u8; 32] =
-    decode_hex_32(b"660db3b73d788119c04535e48cf9be5f55bc3100841a718637ae695b442f27dd");
-const TOKENIZER_METADATA_SHA256: [u8; 32] =
-    decode_hex_32(b"d5d09f07b48c3086c508b30d1c9114bd1189145b74e982a265350c923acd8101");
+const TARGET_CONFIG_SHA256: [u8; 32] = [
+    247, 196, 234, 223, 187, 245, 34, 71, 6, 103, 183, 151, 163, 200, 155, 226, 82, 72, 50,
+    210, 213, 153, 121, 114, 72, 220, 48, 79, 255, 68, 124, 48,
+];
+const DRAFT_CONFIG_SHA256: [u8; 32] = [
+    102, 13, 179, 183, 61, 120, 129, 25, 192, 69, 53, 228, 140, 249, 190, 95, 85, 188, 49, 0,
+    132, 26, 113, 134, 55, 174, 105, 91, 68, 47, 39, 221,
+];
+const TOKENIZER_METADATA_SHA256: [u8; 32] = [
+    213, 208, 159, 7, 180, 140, 48, 134, 197, 8, 179, 13, 28, 145, 20, 189, 17, 137, 20, 91,
+    116, 233, 130, 162, 101, 53, 12, 146, 58, 205, 129, 1,
+];
 /// SHA-256 identity of the shared upstream `tokenizer.json` LFS object.
-pub const QWEN3_TOKENIZER_SHA256: [u8; 32] =
-    decode_hex_32(b"aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4");
+pub const QWEN3_TOKENIZER_SHA256: [u8; 32] = [
+    174, 177, 51, 7, 167, 26, 205, 143, 232, 24, 97, 217, 74, 213, 74, 182, 137, 223, 119,
+    51, 24, 128, 158, 237, 60, 190, 121, 75, 68, 146, 218, 228,
+];
 /// Canonical target weight-set descriptor identity.
 ///
 /// This is the domain-separated, length-prefixed SHA-256 record over the
 /// pinned index name/SHA-256/size followed by all five ordered shard
 /// name/SHA-256/size tuples. It is not a hash of concatenated weight bytes.
-pub const QWEN3_TARGET_WEIGHT_SET_SHA256: [u8; 32] =
-    decode_hex_32(b"2e69c089ff9afcee264646cb8ea6344aa3c8cedbe8022d729889708204e32732");
+pub const QWEN3_TARGET_WEIGHT_SET_SHA256: [u8; 32] = [
+    46, 105, 192, 137, 255, 154, 252, 238, 38, 70, 70, 203, 142, 166, 52, 74, 163, 200, 206,
+    219, 232, 2, 45, 114, 152, 137, 112, 130, 4, 227, 39, 50,
+];
 /// SHA-256 of the complete pinned Qwen3-0.6B safetensors file.
-pub const QWEN3_DRAFT_WEIGHT_SHA256: [u8; 32] =
-    decode_hex_32(b"f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b");
+pub const QWEN3_DRAFT_WEIGHT_SHA256: [u8; 32] = [
+    244, 127, 113, 23, 127, 50, 188, 209, 1, 183, 87, 62, 201, 23, 30, 106, 87, 244, 244,
+    211, 17, 72, 211, 142, 56, 35, 6, 244, 41, 150, 135, 75,
+];
 /// Domain-separated identity of the exact admitted Qwen3-8B model inputs.
-pub const QWEN3_TARGET_MODEL_ID: [u8; 32] =
-    decode_hex_32(b"f18fc461576d1a3053a19aba5946ef7b3b45aaf7cbb45d77f5c276f18567224a");
+pub const QWEN3_TARGET_MODEL_ID: [u8; 32] = [
+    241, 143, 196, 97, 87, 109, 26, 48, 83, 161, 154, 186, 89, 70, 239, 123, 59, 69, 170,
+    247, 203, 180, 93, 119, 245, 194, 118, 241, 133, 103, 34, 74,
+];
 /// Domain-separated identity of the exact admitted Qwen3-0.6B model inputs.
-pub const QWEN3_DRAFT_MODEL_ID: [u8; 32] =
-    decode_hex_32(b"351fc121a569f0a53e9bb5c98caaeff80d6f8d94737eecf5e179cfa54d9cf998");
+pub const QWEN3_DRAFT_MODEL_ID: [u8; 32] = [
+    53, 31, 193, 33, 165, 105, 240, 165, 62, 155, 181, 201, 140, 170, 239, 248, 13, 111, 141,
+    148, 115, 126, 236, 245, 225, 121, 207, 165, 77, 156, 249, 152,
+];
+
+} // verus!
 
 const TARGET_WEIGHT_SET_COMPONENTS: [(&str, [u8; 32], u64); 6] = [
     (
@@ -1166,6 +1189,63 @@ closed spec fn model_identity_preimage(
             tensor_data_bytes,
         ),
     )
+}
+
+proof fn model_identity_preimage_len(
+    role: Qwen3ModelRole,
+    repository: &str,
+    revision: &str,
+    config_id: Identity,
+    tokenizer: TokenizerConfig,
+    weights: WeightManifest,
+    tensor_data_bytes: u64,
+)
+    ensures
+        model_identity_preimage(
+            role,
+            repository,
+            revision,
+            config_id,
+            tokenizer,
+            weights,
+            tensor_data_bytes,
+        ).len() == 252 + repository.spec_bytes().len() + revision.spec_bytes().len(),
+{
+    config_id.bytes_spec_len();
+    tokenizer.tokenizer_id.bytes_spec_len();
+    tokenizer.vocabulary_id.bytes_spec_len();
+    weights.weights_id.bytes_spec_len();
+    let fields = model_identity_fields(
+        role,
+        repository,
+        revision,
+        config_id,
+        tokenizer,
+        weights,
+        tensor_data_bytes,
+    );
+    assert(fields.len() == 10);
+    assert(fields[0].len() == 1);
+    assert(fields[1].len() == repository.spec_bytes().len());
+    assert(fields[2].len() == revision.spec_bytes().len());
+    assert(fields[3].len() == 32);
+    assert(fields[4].len() == 32);
+    assert(fields[5].len() == 32);
+    assert(fields[6].len() == 32);
+    assert(fields[7].len() == 8);
+    assert(fields[8].len() == 8);
+    assert(fields[9].len() == 4);
+    identity_field_preimage_len(MODEL_IDENTITY_DOMAIN@);
+    identity_fields_preimage_len(fields, 1);
+    identity_fields_preimage_len(fields, 2);
+    identity_fields_preimage_len(fields, 3);
+    identity_fields_preimage_len(fields, 4);
+    identity_fields_preimage_len(fields, 5);
+    identity_fields_preimage_len(fields, 6);
+    identity_fields_preimage_len(fields, 7);
+    identity_fields_preimage_len(fields, 8);
+    identity_fields_preimage_len(fields, 9);
+    identity_fields_preimage_len(fields, 10);
 }
 
 fn model_identity(

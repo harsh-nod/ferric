@@ -12,10 +12,55 @@ impl Identity {
         self.0@
     }
 
+    /// Ghost constructor for a complete 32-byte identity view.
+    pub closed spec fn from_bytes_spec(bytes: Seq<u8>) -> Self
+        recommends bytes.len() == 32,
+    {
+        Self([
+            bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
+            bytes[8], bytes[9], bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15],
+            bytes[16], bytes[17], bytes[18], bytes[19], bytes[20], bytes[21], bytes[22], bytes[23],
+            bytes[24], bytes[25], bytes[26], bytes[27], bytes[28], bytes[29], bytes[30], bytes[31],
+        ])
+    }
+
+    /// Exposes the byte view of the ghost constructor.
+    pub proof fn from_bytes_spec_view(bytes: Seq<u8>)
+        requires bytes.len() == 32,
+        ensures Self::from_bytes_spec(bytes).bytes_spec() == bytes,
+    {
+        assert(Self::from_bytes_spec(bytes).bytes_spec() =~= bytes) by {
+            assert forall|index: int| 0 <= index < 32 implies
+                Self::from_bytes_spec(bytes).bytes_spec()[index] == bytes[index] by {
+                if index == 0 {} else if index == 1 {} else if index == 2 {}
+                else if index == 3 {} else if index == 4 {} else if index == 5 {}
+                else if index == 6 {} else if index == 7 {} else if index == 8 {}
+                else if index == 9 {} else if index == 10 {} else if index == 11 {}
+                else if index == 12 {} else if index == 13 {} else if index == 14 {}
+                else if index == 15 {} else if index == 16 {} else if index == 17 {}
+                else if index == 18 {} else if index == 19 {} else if index == 20 {}
+                else if index == 21 {} else if index == 22 {} else if index == 23 {}
+                else if index == 24 {} else if index == 25 {} else if index == 26 {}
+                else if index == 27 {} else if index == 28 {} else if index == 29 {}
+                else if index == 30 {} else {}
+            }
+        }
+    }
+
     /// Establishes the exact width of the canonical identity view.
     pub proof fn bytes_spec_len(&self)
         ensures self.bytes_spec().len() == 32,
     {
+    }
+
+    /// Establishes identity equality from equality of the complete byte view.
+    pub proof fn extensional(left: &Self, right: &Self)
+        requires left.bytes_spec() == right.bytes_spec(),
+        ensures *left == *right,
+    {
+        assert(left.0 =~= right.0) by {
+            assert forall|index: int| 0 <= index < 32 implies left.0[index] == right.0[index] by {}
+        }
     }
 
     #[must_use]
