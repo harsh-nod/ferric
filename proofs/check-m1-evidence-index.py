@@ -67,7 +67,7 @@ TRUSTED_VALIDATORS = {
     "canonical-structure-check": (
         "proofs/m1/evidence/validate-canonical-structure.py",
         "ferric.m1-validator.canonical-structure.v1",
-        None,
+        "f8760f0edd21d996c0f59fa2b5aa16a1ab07ecd67b4352e226214c47ef9fe288",
     ),
     "external-contract": (
         "proofs/m1/evidence/validate-external-contract.py",
