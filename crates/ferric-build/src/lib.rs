@@ -9,6 +9,7 @@
 //! consumes their authorities.
 
 mod bundle;
+mod identity_closure;
 mod json;
 mod plan;
 mod safetensors;
@@ -20,6 +21,10 @@ pub use bundle::{
     decode_canonical_deployment_bundle, encode_canonical_deployment_bundle, CanonicalBundleError,
     CanonicalDeploymentBundle, CANONICAL_DEPLOYMENT_BUNDLE_BYTES,
     CANONICAL_DEPLOYMENT_BUNDLE_VERSION,
+};
+pub use identity_closure::{
+    build_preliminary_identity_closure, ExternalIdentityClosureInputs, IdentityClosureComponent,
+    IdentityClosureError, PreliminaryIdentityClosure, PRELIMINARY_IDENTITY_CLOSURE_VERSION,
 };
 pub use plan::{
     build_sequential_plan_catalog, SequentialPlanCatalog, SequentialPlanError,
