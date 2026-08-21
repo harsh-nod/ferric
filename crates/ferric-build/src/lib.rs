@@ -4,13 +4,18 @@
 //!
 //! This crate owns byte parsing and identity construction. The resulting
 //! value is still admitted by the executable contract in `ferric-spec`.
-//! This checkpoint parses and authenticates only `config.json` and
-//! `tokenizer_config.json`. It does not read or semantically admit
-//! `tokenizer.json` or safetensors bytes; their exact pinned descriptors are
-//! caller assertions until the streaming authentication slices are complete.
+//! Configuration and tokenizer metadata authentication remains separate from
+//! the streaming safetensors typestate. `tokenizer.json` is still represented
+//! only by its exact pinned caller-asserted descriptor.
 
 mod json;
+mod safetensors;
 mod sha256;
+
+pub use safetensors::{
+    authenticate_qwen3_draft_weights, authenticate_qwen3_target_weights, AuthenticatedWeightSet,
+    SafetensorsError, SafetensorsSource,
+};
 
 use ferric_spec::{
     DeploymentBundle, EngineLimits, Identity, ModelArtifact, ModelConfig, NumericalPolicy,
@@ -163,8 +168,14 @@ pub struct ArtifactDigest {
 /// not read, hash, or semantically parse the corresponding safetensors bytes.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct WeightDescriptor {
-    /// SHA-256 identity of the pinned file or canonical file-set record.
-    pub digest: ArtifactDigest,
+    /// Canonical identity of the pinned weight set.
+    ///
+    /// For the target this is a domain-separated record over the exact index
+    /// and ordered shard descriptors, not a digest of concatenated bytes. For
+    /// the single-file draft it equals the complete-file SHA-256.
+    pub weights_id: [u8; 32],
+    /// Complete safetensors file bytes, including all headers.
+    pub artifact_bytes: u64,
     /// Bytes occupied by tensor payloads, excluding safetensors headers.
     pub tensor_data_bytes: u64,
     /// Number of bounded weight sections in the aggregate record.
@@ -195,6 +206,35 @@ pub struct DeploymentAssets<'a> {
     pub target: ModelAssets<'a>,
     /// M1 speculative draft model artifacts.
     pub draft: ModelAssets<'a>,
+    /// Requested bounded engine limits.
+    pub limits: EngineLimits,
+}
+
+/// Inputs whose weight descriptors come from streaming authenticated sets.
+///
+/// Configuration and tokenizer metadata bytes are authenticated here, while
+/// `tokenizer.json` remains a pinned caller-asserted descriptor.
+#[derive(Clone, Copy, Debug)]
+pub struct WeightAuthenticatedModelAssets<'a> {
+    /// Exact Hugging Face repository name.
+    pub repository: &'a str,
+    /// Exact immutable Hugging Face revision.
+    pub revision: &'a str,
+    /// Complete upstream `config.json` bytes.
+    pub config_json: &'a [u8],
+    /// Complete upstream `tokenizer_config.json` bytes.
+    pub tokenizer_metadata_json: &'a [u8],
+    /// Caller-asserted shared `tokenizer.json` descriptor.
+    pub vocabulary: ArtifactDigest,
+}
+
+/// Deployment inputs paired with separately authenticated target/draft weights.
+#[derive(Clone, Copy, Debug)]
+pub struct WeightAuthenticatedDeploymentAssets<'a> {
+    /// M1 target model metadata and tokenizer inputs.
+    pub target: WeightAuthenticatedModelAssets<'a>,
+    /// M1 speculative draft model metadata and tokenizer inputs.
+    pub draft: WeightAuthenticatedModelAssets<'a>,
     /// Requested bounded engine limits.
     pub limits: EngineLimits,
 }
@@ -251,6 +291,13 @@ pub enum BuildError {
     DigestMismatch(&'static str),
     /// An opaque artifact descriptor did not match the pinned Qwen3 asset.
     DescriptorMismatch(&'static str),
+    /// A streamed weight authority was supplied for the wrong model role.
+    AuthenticatedWeightRole {
+        /// Role required by the builder position.
+        expected: Qwen3ModelRole,
+        /// Role carried by the authenticated authority.
+        actual: Qwen3ModelRole,
+    },
     /// The executable `ferric-spec` contract rejected the assembled bundle.
     Spec(SpecError),
 }
@@ -298,6 +345,10 @@ impl fmt::Display for BuildError {
                     "{artifact} descriptor does not match the pinned asset"
                 )
             }
+            Self::AuthenticatedWeightRole { expected, actual } => write!(
+                formatter,
+                "authenticated weight role {actual:?} does not match {expected:?}"
+            ),
             Self::Spec(error) => write!(formatter, "bundle admission failed: {error}"),
         }
     }
@@ -321,16 +372,79 @@ pub fn digest_bytes(bytes: &[u8]) -> ArtifactDigest {
     }
 }
 
-/// Parses and authenticates pinned configuration/tokenizer metadata, checks
-/// caller-asserted opaque descriptors, then assembles and validates an M1
-/// bundle.
+/// Preliminary descriptor-only configuration/tokenizer bundle admission.
+///
+/// This function checks pinned caller-asserted weight descriptors but does not
+/// authenticate weight bytes and cannot construct [`AuthenticatedWeightSet`].
+/// Call the streaming safetensors authentication functions separately when
+/// authenticated weight typestate is required.
 ///
 /// # Errors
 ///
 /// Returns [`BuildError`] for malformed JSON, schema drift, remote-code
 /// declarations, identity mismatches, or any `ferric-spec` admission failure.
-pub fn build_deployment_bundle(
+pub fn build_preliminary_deployment_bundle(
     assets: DeploymentAssets<'_>,
+) -> Result<DeploymentBundle, BuildError> {
+    assemble_deployment_bundle(&assets)
+}
+
+/// Builds a bundle from configuration/tokenizer metadata plus two consumed
+/// streaming-authenticated weight authorities.
+///
+/// This is weight-authenticated, not fully artifact-authenticated:
+/// `tokenizer.json` remains the pinned caller-asserted vocabulary descriptor
+/// in [`WeightAuthenticatedModelAssets`]. The private seals on both weight
+/// inputs ensure descriptor-only code cannot enter this path.
+///
+/// # Errors
+///
+/// Returns [`BuildError`] for swapped weight roles, malformed JSON, schema
+/// drift, remote-code declarations, identity mismatches, or any `ferric-spec`
+/// admission failure.
+pub fn build_weight_authenticated_deployment_bundle(
+    assets: WeightAuthenticatedDeploymentAssets<'_>,
+    target_weights: AuthenticatedWeightSet,
+    draft_weights: AuthenticatedWeightSet,
+) -> Result<DeploymentBundle, BuildError> {
+    let target_role = target_weights.role();
+    if target_role != Qwen3ModelRole::Target8B {
+        return Err(BuildError::AuthenticatedWeightRole {
+            expected: Qwen3ModelRole::Target8B,
+            actual: target_role,
+        });
+    }
+    let draft_role = draft_weights.role();
+    if draft_role != Qwen3ModelRole::Draft06B {
+        return Err(BuildError::AuthenticatedWeightRole {
+            expected: Qwen3ModelRole::Draft06B,
+            actual: draft_role,
+        });
+    }
+    let admission_assets = DeploymentAssets {
+        target: ModelAssets {
+            repository: assets.target.repository,
+            revision: assets.target.revision,
+            config_json: assets.target.config_json,
+            tokenizer_metadata_json: assets.target.tokenizer_metadata_json,
+            vocabulary: assets.target.vocabulary,
+            weights: target_weights.into_descriptor(),
+        },
+        draft: ModelAssets {
+            repository: assets.draft.repository,
+            revision: assets.draft.revision,
+            config_json: assets.draft.config_json,
+            tokenizer_metadata_json: assets.draft.tokenizer_metadata_json,
+            vocabulary: assets.draft.vocabulary,
+            weights: draft_weights.into_descriptor(),
+        },
+        limits: assets.limits,
+    };
+    assemble_deployment_bundle(&admission_assets)
+}
+
+fn assemble_deployment_bundle(
+    assets: &DeploymentAssets<'_>,
 ) -> Result<DeploymentBundle, BuildError> {
     let mut target_config = parse_config(Qwen3ModelRole::Target8B, &assets.target)?;
     let mut draft_config = parse_config(Qwen3ModelRole::Draft06B, &assets.draft)?;
@@ -560,16 +674,16 @@ fn weight_manifest(
             "draft weight file",
         ),
     };
-    if descriptor.digest.sha256 != expected_sha256
-        || descriptor.digest.byte_len != artifact_bytes
+    if descriptor.weights_id != expected_sha256
+        || descriptor.artifact_bytes != artifact_bytes
         || descriptor.tensor_data_bytes != tensor_data_bytes
         || descriptor.sections != sections
     {
         return Err(BuildError::DescriptorMismatch(artifact));
     }
     Ok(WeightManifest {
-        weights_id: Identity::new(descriptor.digest.sha256),
-        total_bytes: descriptor.digest.byte_len,
+        weights_id: Identity::new(descriptor.weights_id),
+        total_bytes: descriptor.artifact_bytes,
         sections: descriptor.sections,
     })
 }
@@ -866,8 +980,8 @@ const fn hex_nibble(byte: u8) -> u8 {
 #[cfg(test)]
 mod tests {
     use super::{
-        build_deployment_bundle, digest_bytes, ArtifactDigest, BuildError, DeploymentAssets,
-        ModelAssets, WeightDescriptor, DRAFT_REPOSITORY, DRAFT_REVISION,
+        build_preliminary_deployment_bundle, digest_bytes, ArtifactDigest, BuildError,
+        DeploymentAssets, ModelAssets, WeightDescriptor, DRAFT_REPOSITORY, DRAFT_REVISION,
         QWEN3_DRAFT_TENSOR_DATA_BYTES, QWEN3_DRAFT_WEIGHT_ARTIFACT_BYTES,
         QWEN3_DRAFT_WEIGHT_SHA256, QWEN3_TARGET_TENSOR_DATA_BYTES,
         QWEN3_TARGET_WEIGHT_ARTIFACT_BYTES, QWEN3_TARGET_WEIGHT_SET_SHA256, QWEN3_TOKENIZER_BYTES,
@@ -898,7 +1012,8 @@ mod tests {
         sections: u32,
     ) -> WeightDescriptor {
         WeightDescriptor {
-            digest: ArtifactDigest { sha256, byte_len },
+            weights_id: sha256,
+            artifact_bytes: byte_len,
             tensor_data_bytes,
             sections,
         }
@@ -1006,8 +1121,10 @@ mod tests {
 
     #[test]
     fn canonical_bundle_has_one_deterministic_identity() {
-        let first = build_deployment_bundle(canonical_assets()).expect("canonical bundle");
-        let second = build_deployment_bundle(canonical_assets()).expect("canonical bundle");
+        let first = build_preliminary_deployment_bundle(canonical_assets())
+            .expect("canonical preliminary bundle");
+        let second = build_preliminary_deployment_bundle(canonical_assets())
+            .expect("canonical preliminary bundle");
 
         assert_eq!(first, second);
         assert_eq!(
@@ -1060,7 +1177,7 @@ mod tests {
         let mut assets = canonical_assets();
         assets.target.config_json = &unknown;
         assert!(matches!(
-            build_deployment_bundle(assets),
+            build_preliminary_deployment_bundle(assets),
             Err(BuildError::UnknownField { ref field, .. }) if field == "future_field"
         ));
 
@@ -1074,7 +1191,7 @@ mod tests {
         let mut assets = canonical_assets();
         assets.target.tokenizer_metadata_json = duplicate.as_bytes();
         assert!(matches!(
-            build_deployment_bundle(assets),
+            build_preliminary_deployment_bundle(assets),
             Err(BuildError::InvalidJson { ref reason, .. }) if reason.contains("duplicate field")
         ));
     }
@@ -1088,7 +1205,7 @@ mod tests {
         let mut assets = canonical_assets();
         assets.target.config_json = &remote_config;
         assert_eq!(
-            build_deployment_bundle(assets),
+            build_preliminary_deployment_bundle(assets),
             Err(BuildError::RemoteCode("auto_map".to_owned()))
         );
 
@@ -1101,7 +1218,7 @@ mod tests {
         let mut assets = canonical_assets();
         assets.target.tokenizer_metadata_json = nested.as_bytes();
         assert_eq!(
-            build_deployment_bundle(assets),
+            build_preliminary_deployment_bundle(assets),
             Err(BuildError::RemoteCode("trust_remote_code".to_owned()))
         );
     }
@@ -1113,7 +1230,7 @@ mod tests {
         let mut assets = canonical_assets();
         assets.target.tokenizer_metadata_json = custom_class.as_bytes();
         assert!(matches!(
-            build_deployment_bundle(assets),
+            build_preliminary_deployment_bundle(assets),
             Err(BuildError::UnexpectedValue { ref field, .. }) if field == "tokenizer_class"
         ));
 
@@ -1122,7 +1239,7 @@ mod tests {
         let mut assets = canonical_assets();
         assets.target.config_json = &reencoded;
         assert_eq!(
-            build_deployment_bundle(assets),
+            build_preliminary_deployment_bundle(assets),
             Err(BuildError::DigestMismatch("target config.json"))
         );
     }
@@ -1132,7 +1249,7 @@ mod tests {
         let mut assets = canonical_assets();
         assets.target.revision = DRAFT_REVISION;
         assert_eq!(
-            build_deployment_bundle(assets),
+            build_preliminary_deployment_bundle(assets),
             Err(BuildError::SourceMismatch(
                 ferric_spec::Qwen3ModelRole::Target8B
             ))
@@ -1141,21 +1258,21 @@ mod tests {
         let mut assets = canonical_assets();
         assets.draft.vocabulary.sha256[0] ^= 1;
         assert_eq!(
-            build_deployment_bundle(assets),
+            build_preliminary_deployment_bundle(assets),
             Err(BuildError::DescriptorMismatch("tokenizer.json"))
         );
 
         let mut assets = canonical_assets();
-        assets.target.weights.digest.byte_len = QWEN3_TARGET_TENSOR_DATA_BYTES;
+        assets.target.weights.artifact_bytes = QWEN3_TARGET_TENSOR_DATA_BYTES;
         assert_eq!(
-            build_deployment_bundle(assets),
+            build_preliminary_deployment_bundle(assets),
             Err(BuildError::DescriptorMismatch("target weight set"))
         );
 
         let mut assets = canonical_assets();
         assets.draft.weights.tensor_data_bytes += 1;
         assert_eq!(
-            build_deployment_bundle(assets),
+            build_preliminary_deployment_bundle(assets),
             Err(BuildError::DescriptorMismatch("draft weight file"))
         );
     }
@@ -1165,7 +1282,7 @@ mod tests {
         let mut assets = canonical_assets();
         assets.limits.max_active_sequences = 33;
         assert_eq!(
-            build_deployment_bundle(assets),
+            build_preliminary_deployment_bundle(assets),
             Err(BuildError::Spec(SpecError::ExceedsM1Envelope(
                 "max_active_sequences"
             )))
@@ -1178,7 +1295,7 @@ mod tests {
         let mut assets = canonical_assets();
         assets.target.config_json = &oversized;
         assert_eq!(
-            build_deployment_bundle(assets),
+            build_preliminary_deployment_bundle(assets),
             Err(BuildError::ArtifactTooLarge("target config.json"))
         );
 
@@ -1187,7 +1304,7 @@ mod tests {
         let mut assets = canonical_assets();
         assets.draft.config_json = &trailing;
         assert!(matches!(
-            build_deployment_bundle(assets),
+            build_preliminary_deployment_bundle(assets),
             Err(BuildError::InvalidJson { ref reason, .. }) if reason.contains("trailing data")
         ));
     }

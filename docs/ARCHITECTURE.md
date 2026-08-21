@@ -17,9 +17,13 @@ benches/                 identity-bound qualification harnesses
 ```
 
 `ferric-spec`, the first `ferric-engine` state model, and the pinned Qwen3
-configuration/tokenizer admission slice of `ferric-build` exist today. Crates
-are added when they contain real final-path behavior; placeholder GPU execution
-is not permitted.
+configuration, tokenizer-metadata, and streaming safetensors admission slices
+of `ferric-build` exist today. Safetensors admission authenticates exact full
+files and validates the closed Qwen3 BF16 tensor schema without buffering
+tensor payloads. It does not yet semantically admit `tokenizer.json`, transform
+or pack tensors, inspect tensor values, or load device memory. Crates are added
+when they contain real final-path behavior; placeholder GPU execution is not
+permitted.
 
 ## Dependency Boundary
 
