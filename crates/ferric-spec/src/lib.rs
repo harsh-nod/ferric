@@ -16,6 +16,7 @@ mod m1_completion;
 mod qwen3;
 pub mod scheduling;
 mod speculation;
+pub mod speculative_completion;
 
 pub use configuration::{
     DeploymentBundle, EngineLimits, ModelArtifact, ModelConfig, NumericalPolicy, Qwen3ModelRole,
@@ -40,4 +41,5 @@ pub use qwen3::{
     QWEN3_DRAFT_TENSOR_DATA_BYTES, QWEN3_NO_LAYER, QWEN3_TARGET_TENSOR_COUNT,
     QWEN3_TARGET_TENSOR_DATA_BYTES, QWEN3_TENSORS_PER_LAYER,
 };
-pub use speculation::{verify_greedy_round, GreedyCommit, TokenId};
+pub use speculation::{verify_greedy_round, GreedyCommit, GreedyVerificationError, TokenId};
+pub use speculative_completion::{verify_speculative_completion, SpeculativeCompletionError};

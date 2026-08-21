@@ -400,3 +400,5 @@ verified=ferric-spec|crates/ferric-spec/src/speculation.rs|ferric_spec::speculat
 verified=ferric-spec|crates/ferric-spec/src/speculation.rs|ferric_spec::speculation::GreedyCommit::target_correction_or_bonus
 unverified=ferric-spec|crates/ferric-spec/src/speculation.rs|ferric_spec::speculation::GreedyVerificationError::Display::fmt
 verified=ferric-spec|crates/ferric-spec/src/speculation.rs|ferric_spec::speculation::verify_greedy_round
+module=ferric-spec|crates/ferric-spec/src/speculative_completion.rs|ferric_spec::speculative_completion
+verified=ferric-spec|crates/ferric-spec/src/speculative_completion.rs|ferric_spec::speculative_completion::verify_speculative_completion

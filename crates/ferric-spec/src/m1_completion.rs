@@ -30,6 +30,11 @@ impl CompactCompletionRecord {
     }
 }
 
+pub proof fn compact_completion_emitted_view(record: &CompactCompletionRecord)
+    ensures record.emitted_spec() == record.emitted_tokens@,
+{
+}
+
 /// Fail-closed rejection for deterministic M1 result publication.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CompactCompletionError {
