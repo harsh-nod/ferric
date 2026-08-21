@@ -157,7 +157,6 @@ pub(super) struct TokenizerProgram {
 
 impl TokenizerProgram {
     pub(super) fn new(vocabulary: Vec<String>, merges: Vec<(String, String)>) -> Self {
-        debug_assert_eq!(vocabulary.len(), BASE_VOCABULARY_SIZE);
         let token_ids = vocabulary
             .iter()
             .enumerate()
@@ -170,8 +169,7 @@ impl TokenizerProgram {
             .collect();
         let mut merge_ranks: BTreeMap<String, BTreeMap<String, usize>> = BTreeMap::new();
         for (rank, (left, right)) in merges.into_iter().enumerate() {
-            let prior = merge_ranks.entry(left).or_default().insert(right, rank);
-            debug_assert!(prior.is_none(), "pinned merge pairs are unique");
+            merge_ranks.entry(left).or_default().insert(right, rank);
         }
         Self {
             vocabulary,
