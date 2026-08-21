@@ -13,6 +13,7 @@ mod configuration;
 mod graph;
 mod identity;
 mod m1_completion;
+pub mod paged_kv_refinement;
 mod qwen3;
 pub mod scheduling;
 mod speculation;
@@ -36,6 +37,12 @@ pub use identity::{Identity, RequestId};
 pub use m1_completion::{
     select_lowest_argmax, validate_compact_completion, CompactCompletionError,
     CompactCompletionRecord, M1_MAX_COMPLETION_TOKENS,
+};
+pub use paged_kv_refinement::{
+    append_physical_page, cancel_physical_kv, commit_physical_kv, map_initialized_token,
+    release_retired_page, retire_cancelled_tail, rollback_physical_token, write_physical_token,
+    LogicalKvState, PhysicalKvError, PhysicalKvLifecycle, PhysicalKvLocation, PhysicalKvState,
+    PhysicalPageId, M1_KV_PAGE_TABLE_ENTRIES, M1_KV_PAGE_TOKENS, M1_KV_PHYSICAL_PAGE_SLOTS,
 };
 pub use qwen3::{
     Qwen3TensorError, Qwen3TensorKind, Qwen3TensorMetadata, TensorDType, QWEN3_DRAFT_TENSOR_COUNT,
