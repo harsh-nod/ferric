@@ -1,9 +1,9 @@
 format=FERRIC-VERIFIED-MODULES-V2
 package=ferric-spec|ferric_spec
-package=ferric-engine|ferric_engine
 package=ferric-generated-runner|ferric_generated_runner
 package=ferric-kernels|ferric_kernels
 package=ferric-build|ferric_build
+package=ferric-engine|ferric_engine
 module=ferric-build|crates/ferric-build/src/auth.rs|ferric_build::auth
 unverified=ferric-build|crates/ferric-build/src/auth.rs|ferric_build::auth::AuthenticatedBundleAdmission::into_parts
 unverified=ferric-build|crates/ferric-build/src/auth.rs|ferric_build::auth::AuthenticatedBundleAdmission::prepacked
