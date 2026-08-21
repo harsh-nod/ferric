@@ -832,7 +832,14 @@ def main() -> None:
             raise AssertionError(f"missing evidence did not fail closed:\n{output}")
         print("PASS: hostile missing evidence file")
 
-        relative, _protocol, _source_pin = checker.TRUSTED_VALIDATORS["verus-theorem"]
+        unpinned = [
+            (kind, record)
+            for kind, record in checker.TRUSTED_VALIDATORS.items()
+            if record[2] is None
+        ]
+        if not unpinned:
+            raise AssertionError("hostile policy requires one RequiredFuture validator")
+        evidence_kind, (relative, _protocol, _source_pin) = unpinned[0]
         validator = fixture.ferric / relative
         validator.parent.mkdir(parents=True, exist_ok=True)
         validator.write_text("raise SystemExit(0)\n", encoding="utf-8")
@@ -844,7 +851,7 @@ def main() -> None:
                 checker.invoke_trusted_validator(
                     fixture.ferric,
                     {relative},
-                    "verus-theorem",
+                    evidence_kind,
                     {},
                     None,
                 )

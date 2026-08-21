@@ -98,12 +98,20 @@ paths. The version 1 registry is:
 | Unsupported rationale | `proofs/m1/evidence/validate-unsupported-rationale.py` | `ferric.m1-validator.unsupported-rationale.v1` |
 | Verus theorem | `proofs/m1/evidence/validate-verus-theorem.py` | `ferric.m1-validator.verus-theorem.v1` |
 
-The negative-mutation validator is an `ExistingFoundation`: its exact source
-SHA-256 is pinned in the checker-owned registry, and it validates the complete
-versioned run directory behind a bound `.result` artifact. The unsupported-
-rationale validator is also an `ExistingFoundation`; it accepts only the three
-fixed M1 nonclaims, binds their exact source, requirements, evidence binding,
-and TCB identities, and grants no positive authority. The other validators
+The negative-mutation, unsupported-rationale, and Verus-theorem validators are
+`ExistingFoundation` inputs with exact source SHA-256 values pinned in the
+checker-owned registry. The negative-mutation and theorem validators validate
+the complete versioned run directory behind a bound `.result` artifact. The
+theorem validator requires the exact pinned output-json schema, selected
+compiler module/function, current source body, ordinary compilation, an exact
+one-query zero-error proof predicate, and the complete theorem roster for the
+bound property/path. Because pinned Verus does not emit a `success` field, a
+checker-owned summary derives `RESULT=success` from its exact structured fields
+and exit status and binds the transcript SHA-256. Any injected `success` field
+is rejected as schema drift. The unsupported-rationale validator accepts only
+the three fixed M1 nonclaims, binds their exact source, requirements, evidence
+binding, and TCB identities, and grants no positive authority. The other
+validators
 remain `RequiredFuture` M1 implementation obligations with intentionally unset
 source pins. Until every validator required by an index exists in the exact
 qualified source closure, has a reviewed source SHA-256 pinned in the
@@ -127,6 +135,14 @@ This repository does not contain an M1 evidence index using those results. The
 registry's associations to `graph-proof`, `kv-proof`, `batching-proof`,
 `scheduler-proof`, and `isolation-proof` keep those future paths `Open`; they do
 not assert that any path exists or is discharged.
+
+The paired versioned positive-foundation registry under `proofs/m1/theorem/`
+is likewise not an evidence index or closure product. Its same-source runner
+authenticates ordinary compilation and exact selected-function Verus
+output-json. The theorem validator additionally rejects incomplete
+property/path rosters, source or compiler identity drift, selector and
+infrastructure failures, admission, transcript substitution, and self-reported
+success labels.
 
 This checker establishes structural completeness and cryptographic identity
 closure. It does not establish the semantic truth of a theorem, the

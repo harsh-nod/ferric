@@ -117,7 +117,7 @@ TRUSTED_VALIDATORS = {
     "verus-theorem": (
         "proofs/m1/evidence/validate-verus-theorem.py",
         "ferric.m1-validator.verus-theorem.v1",
-        None,
+        "1b62ce07f709415a0385669b6260b6078fe2eb2d7a408eb9012fccdd19c64985",
     ),
 }
 

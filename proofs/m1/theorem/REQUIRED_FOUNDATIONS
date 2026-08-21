@@ -1,0 +1,11 @@
+format=FERRIC-M1-POSITIVE-THEOREMS-V1
+theorem=batching-publish-once|continuous-batching|scheduler_refined|batching-proof|ferric-spec|crates/ferric-spec/src/continuous_batching.rs|continuous_batching|apply_continuous_publish_step
+theorem=batching-request-routing|continuous-batching|scheduler_refined|scheduler-proof|ferric-spec|crates/ferric-spec/src/continuous_batching.rs|continuous_batching|apply_continuous_batch_step
+theorem=graph-operator-order|exact-graph-plan|graph_refined|graph-proof|ferric-spec|crates/ferric-spec/src/graph.rs|graph|expected_step
+theorem=graph-role-step-count|exact-graph-plan|graph_refined|graph-proof|ferric-spec|crates/ferric-spec/src/graph.rs|graph|plan_step_count
+theorem=isolation-other-request-frame|continuous-batching|request_isolated|isolation-proof|ferric-spec|crates/ferric-spec/src/continuous_batching.rs|continuous_batching|apply_continuous_batch_step
+theorem=kv-release-generation|logical-paged-kv|kv_refined|kv-proof|ferric-spec|crates/ferric-spec/src/paged_kv_refinement.rs|paged_kv_refinement|release_retired_page
+theorem=kv-rollback-retirement|logical-paged-kv|kv_refined|kv-proof|ferric-spec|crates/ferric-spec/src/paged_kv_refinement.rs|paged_kv_refinement|rollback_physical_token
+theorem=kv-write-prefix|logical-paged-kv|kv_refined|kv-proof|ferric-spec|crates/ferric-spec/src/paged_kv_refinement.rs|paged_kv_refinement|write_physical_token
+theorem=publication-phase-transition|step-plan-publication|graph_refined|graph-proof|ferric-spec|crates/ferric-spec/src/step_plan_publication.rs|step_plan_publication|publish_reserved_delta
+theorem=publication-plan-identity|step-plan-publication|graph_refined|graph-proof|ferric-spec|crates/ferric-spec/src/step_plan_publication.rs|step_plan_publication|validate_step_plan
