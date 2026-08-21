@@ -17,6 +17,7 @@ mod qwen3;
 pub mod scheduling;
 mod speculation;
 pub mod speculative_completion;
+pub mod step_plan_publication;
 
 pub use configuration::{
     DeploymentBundle, EngineLimits, ModelArtifact, ModelConfig, NumericalPolicy, Qwen3ModelRole,
@@ -43,3 +44,8 @@ pub use qwen3::{
 };
 pub use speculation::{verify_greedy_round, GreedyCommit, GreedyVerificationError, TokenId};
 pub use speculative_completion::{verify_speculative_completion, SpeculativeCompletionError};
+pub use step_plan_publication::{
+    discard_reserved_delta, publish_reserved_delta, validate_direct_publication,
+    validate_speculative_publication, PublicationPhase, ReservedStateDelta, StepPlan,
+    StepPublication, StepPublicationError,
+};
