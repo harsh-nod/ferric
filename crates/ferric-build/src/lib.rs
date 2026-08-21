@@ -1077,6 +1077,23 @@ proof fn identity_field_preimage_len(bytes: Seq<u8>)
 {
 }
 
+proof fn identity_fields_preimage_len(fields: Seq<Seq<u8>>, count: nat)
+    requires count <= fields.len(),
+    ensures
+        identity_fields_preimage(fields, count).len()
+            == if count == 0 {
+                0
+            } else {
+                identity_fields_preimage(fields, (count - 1) as nat).len()
+                    + 8
+                    + fields[(count - 1) as int].len()
+            },
+{
+    if count > 0 {
+        identity_field_preimage_len(fields[(count - 1) as int]);
+    }
+}
+
 proof fn identity_fields_prefix_is_bounded(fields: Seq<Seq<u8>>, count: nat)
     requires count <= fields.len(),
     ensures
@@ -1256,16 +1273,48 @@ closed spec fn bundle_identity_preimage(
     )
 }
 
+proof fn bundle_identity_preimage_len(
+    limits: EngineLimits,
+    target: ModelArtifact,
+    draft: ModelArtifact,
+)
+    ensures bundle_identity_preimage(limits, target, draft).len() == 225,
+{
+    target.config.model_id.bytes_spec_len();
+    draft.config.model_id.bytes_spec_len();
+    let fields = bundle_identity_fields(limits, target, draft);
+    assert(fields.len() == 8);
+    assert(fields[0].len() == 13);
+    assert(fields[1].len() == 33);
+    assert(fields[2].len() == 4);
+    assert(fields[3].len() == 4);
+    assert(fields[4].len() == 4);
+    assert(fields[5].len() == 4);
+    assert(fields[6].len() == 32);
+    assert(fields[7].len() == 32);
+    identity_field_preimage_len(BUNDLE_IDENTITY_DOMAIN@);
+    identity_fields_preimage_len(fields, 1);
+    identity_fields_preimage_len(fields, 2);
+    identity_fields_preimage_len(fields, 3);
+    identity_fields_preimage_len(fields, 4);
+    identity_fields_preimage_len(fields, 5);
+    identity_fields_preimage_len(fields, 6);
+    identity_fields_preimage_len(fields, 7);
+    identity_fields_preimage_len(fields, 8);
+}
+
 fn bundle_identity(
     limits: EngineLimits,
     target: ModelArtifact,
     draft: ModelArtifact,
 ) -> (identity: Identity)
-    requires bundle_identity_preimage(limits, target, draft).len() <= u64::MAX / 8,
     ensures
         identity.bytes_spec()
             == sha256::digest_spec(bundle_identity_preimage(limits, target, draft)),
 {
+    proof {
+        bundle_identity_preimage_len(limits, target, draft);
+    }
     let context = encode_u32_big_endian(limits.max_context_tokens);
     let sequences = encode_u32_big_endian(limits.max_active_sequences);
     let page = encode_u32_big_endian(limits.kv_page_tokens);

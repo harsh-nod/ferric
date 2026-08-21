@@ -12,6 +12,12 @@ impl Identity {
         self.0@
     }
 
+    /// Establishes the exact width of the canonical identity view.
+    pub proof fn bytes_spec_len(&self)
+        ensures self.bytes_spec().len() == 32,
+    {
+    }
+
     #[must_use]
     pub const fn new(bytes: [u8; 32]) -> (identity: Self)
         ensures identity.bytes_spec() == bytes@,
