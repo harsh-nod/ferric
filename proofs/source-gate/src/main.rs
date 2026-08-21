@@ -37,6 +37,14 @@ struct Function {
     verified: bool,
 }
 
+struct PendingInherentMethod {
+    source: String,
+    source_module: String,
+    owner: String,
+    method: String,
+    verified: bool,
+}
+
 #[derive(Default)]
 struct Inventory {
     packages: Vec<Package>,
@@ -51,6 +59,8 @@ struct SourceWalker<'a> {
     visited: BTreeSet<PathBuf>,
     modules: ModuleMap,
     functions: BTreeSet<Function>,
+    type_owners: BTreeMap<String, BTreeSet<String>>,
+    inherent_methods: Vec<PendingInherentMethod>,
 }
 
 struct SyntaxAudit {
@@ -618,12 +628,36 @@ fn impl_owner(item: &ItemImpl) -> GateResult<String> {
         .ok_or_else(|| "impl self type has no identity".to_owned())
 }
 
+fn inherent_owner_module(
+    type_owners: &BTreeMap<String, BTreeSet<String>>,
+    source_module: &str,
+    owner: &str,
+) -> GateResult<String> {
+    let owners = type_owners.get(owner).ok_or_else(|| {
+        format!("inherent impl owner has no admitted nominal type: {source_module}::{owner}")
+    })?;
+    if owners.contains(source_module) {
+        return Ok(source_module.to_owned());
+    }
+    if owners.len() == 1 {
+        return owners
+            .iter()
+            .next()
+            .cloned()
+            .ok_or_else(|| format!("inherent impl owner set is empty: {owner}"));
+    }
+    Err(format!(
+        "cross-module inherent impl owner is ambiguous: {source_module}::{owner} candidates={owners:?}"
+    ))
+}
+
 impl SourceWalker<'_> {
     fn walk(mut self) -> GateResult<WalkOutput> {
         let root = self.package.root.clone();
         let source_root = self.source_root.clone();
         let module_path = self.package.crate_name.clone();
         self.walk_file(&root, &source_root, &module_path)?;
+        self.resolve_inherent_methods()?;
         let mut all_rs = BTreeSet::new();
         collect_rs_files(&self.source_root, &mut all_rs)?;
         let orphaned: Vec<String> = all_rs
@@ -637,6 +671,33 @@ impl SourceWalker<'_> {
             ));
         }
         Ok((self.modules, self.functions))
+    }
+
+    fn add_type_owner(&mut self, owner: &Ident, module_path: &str) -> GateResult<()> {
+        let owner = owner.to_string();
+        let owners = self.type_owners.entry(owner.clone()).or_default();
+        if !owners.insert(module_path.to_owned()) {
+            return Err(format!(
+                "duplicate nominal type definition: {module_path}::{owner}"
+            ));
+        }
+        Ok(())
+    }
+
+    fn resolve_inherent_methods(&mut self) -> GateResult<()> {
+        for method in std::mem::take(&mut self.inherent_methods) {
+            let owner_module = inherent_owner_module(
+                &self.type_owners,
+                &method.source_module,
+                &method.owner,
+            )?;
+            self.add_function(
+                &method.source,
+                &format!("{owner_module}::{}::{}", method.owner, method.method),
+                method.verified,
+            )?;
+        }
+        Ok(())
     }
 
     fn walk_file(&mut self, path: &Path, module_dir: &Path, module_path: &str) -> GateResult<()> {
@@ -744,6 +805,10 @@ impl SourceWalker<'_> {
                         self.add_function(source, &compiler_path, in_verus)?;
                     }
                 }
+                Item::Enum(item_enum) => {
+                    audit_item(item, in_verus)?;
+                    self.add_type_owner(&item_enum.ident, module_path)?;
+                }
                 Item::Impl(item_impl) => {
                     audit_item(item, in_verus)?;
                     let owner = impl_owner(item_impl)?;
@@ -763,18 +828,27 @@ impl SourceWalker<'_> {
                                             function.sig.ident
                                         ));
                                     }
+                                    let method = function.sig.ident.to_string();
                                     let qualifier = trait_name.as_ref().map_or_else(
                                         || owner.clone(),
                                         |name| format!("{owner}::{name}"),
                                     );
-                                    let compiler_path = format!(
-                                        "{module_path}::{qualifier}::{}",
-                                        function.sig.ident
-                                    );
+                                    let compiler_path =
+                                        format!("{module_path}::{qualifier}::{method}");
                                     if in_verus && self.package.name == "ferric-engine" {
                                         audit_engine_allocation(&function.block, &compiler_path)?;
                                     }
-                                    self.add_function(source, &compiler_path, in_verus)?;
+                                    if trait_name.is_none() {
+                                        self.inherent_methods.push(PendingInherentMethod {
+                                            source: source.to_owned(),
+                                            source_module: module_path.to_owned(),
+                                            owner: owner.clone(),
+                                            method,
+                                            verified: in_verus,
+                                        });
+                                    } else {
+                                        self.add_function(source, &compiler_path, in_verus)?;
+                                    }
                                 }
                             }
                             ImplItem::Macro(macro_item) => {
@@ -789,6 +863,10 @@ impl SourceWalker<'_> {
                             _ => {}
                         }
                     }
+                }
+                Item::Struct(item_struct) => {
+                    audit_item(item, in_verus)?;
+                    self.add_type_owner(&item_struct.ident, module_path)?;
                 }
                 Item::Trait(item_trait) => {
                     audit_item(item, in_verus)?;
@@ -825,6 +903,10 @@ impl SourceWalker<'_> {
                             _ => {}
                         }
                     }
+                }
+                Item::Union(item_union) => {
+                    audit_item(item, in_verus)?;
+                    self.add_type_owner(&item_union.ident, module_path)?;
                 }
                 Item::ForeignMod(_) => return Err("foreign modules are forbidden".to_owned()),
                 Item::AssumeSpecification(_) => {
@@ -910,6 +992,8 @@ fn inventory(repo: &Path, metadata: &Value) -> GateResult<Inventory> {
             visited: BTreeSet::new(),
             modules: BTreeMap::new(),
             functions: BTreeSet::new(),
+            type_owners: BTreeMap::new(),
+            inherent_methods: Vec::new(),
         };
         let (modules, functions) = walker.walk()?;
         for (source, owner) in modules {
@@ -1117,5 +1201,43 @@ fn run() -> GateResult<()> {
 fn main() {
     if let Err(error) = run() {
         fail(error);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::inherent_owner_module;
+    use std::collections::{BTreeMap, BTreeSet};
+
+    fn owners(records: &[(&str, &[&str])]) -> BTreeMap<String, BTreeSet<String>> {
+        records
+            .iter()
+            .map(|(owner, modules)| {
+                (
+                    (*owner).to_owned(),
+                    modules.iter().map(|module| (*module).to_owned()).collect(),
+                )
+            })
+            .collect()
+    }
+
+    #[test]
+    fn inherent_owner_uses_the_defining_module() {
+        let type_owners = owners(&[("Role", &["crate_name::configuration"])]);
+        assert_eq!(
+            inherent_owner_module(&type_owners, "crate_name::qwen3", "Role"),
+            Ok("crate_name::configuration".to_owned())
+        );
+        assert_eq!(
+            inherent_owner_module(&type_owners, "crate_name::configuration", "Role"),
+            Ok("crate_name::configuration".to_owned())
+        );
+    }
+
+    #[test]
+    fn inherent_owner_rejects_missing_or_ambiguous_types() {
+        let type_owners = owners(&[("Role", &["crate_name::a", "crate_name::b"])]);
+        assert!(inherent_owner_module(&type_owners, "crate_name::c", "Role").is_err());
+        assert!(inherent_owner_module(&type_owners, "crate_name::c", "Missing").is_err());
     }
 }
