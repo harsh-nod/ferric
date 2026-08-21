@@ -10,6 +10,7 @@ use vstd::prelude::*;
 
 pub mod completion;
 mod configuration;
+mod graph;
 mod identity;
 mod m1_completion;
 mod qwen3;
@@ -22,6 +23,12 @@ pub use configuration::{
     M1_MAX_CONTEXT_TOKENS, M1_MAX_DRAFT_TOKENS, M1_MAX_KV_PAGE_TOKENS, M1_MAX_WEIGHT_BYTES,
     M1_MAX_WEIGHT_SECTIONS, QWEN3_END_OF_TEXT_TOKEN, QWEN3_IM_END_TOKEN, QWEN3_IM_START_TOKEN,
     QWEN3_VOCABULARY_SIZE,
+};
+pub use graph::{
+    expected_step, geometry, plan_step_count, Qwen3BufferKind, Qwen3ExecutionMode,
+    Qwen3GeneratedPlan, Qwen3Operator, Qwen3PlanAuthority, Qwen3PlanBucket, Qwen3PlanBuffer,
+    Qwen3PlanDimensions, Qwen3PlanError, Qwen3PlanGeometry, Qwen3PlanSelection, Qwen3PlanShape,
+    Qwen3PlanStep, QWEN3_DRAFT_PLAN_STEPS, QWEN3_LAYER_PLAN_STEPS, QWEN3_TARGET_PLAN_STEPS,
 };
 pub use identity::{Identity, RequestId};
 pub use m1_completion::{
