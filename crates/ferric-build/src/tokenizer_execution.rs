@@ -567,7 +567,6 @@ fn byte_to_unicode(byte: u8) -> Option<char> {
     } else if (0x7F..=0xA0).contains(&byte) {
         u32::from(byte).checked_add(162)?
     } else {
-        debug_assert_eq!(byte, 0xAD);
         323
     };
     char::from_u32(codepoint)

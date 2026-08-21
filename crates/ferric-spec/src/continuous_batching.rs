@@ -199,6 +199,24 @@ pub closed spec fn continuous_publish_step(
     }
 }
 
+pub(crate) proof fn already_published_epoch_rejects(
+    current: ContinuousRequest,
+    epoch: CompletionEpoch,
+    emitted_tokens: u8,
+)
+    requires
+        current.active_epoch_spec() == Some(epoch),
+        publication_ready(current),
+        current.published_for_active_epoch_spec(),
+    ensures
+        continuous_publish_step(current, epoch, emitted_tokens)
+            == Err(ContinuousBatchError::AlreadyPublished),
+{
+    reveal(ContinuousRequest::active_epoch_spec);
+    reveal(ContinuousRequest::published_for_active_epoch_spec);
+    reveal(continuous_publish_step);
+}
+
 /// Fixed-capacity interleaved state. Slot position is the request slot identity.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ContinuousBatch {
@@ -636,6 +654,22 @@ pub closed spec fn continuous_batch_expected_error(
             Err(error) => Some(error),
         }
     }
+}
+
+pub(crate) proof fn stale_generation_is_expected_error(
+    before: &ContinuousBatch,
+    request: RequestId,
+    action: ContinuousBatchAction,
+)
+    requires
+        request.slot_spec() < M1_CONTINUOUS_BATCH_CAPACITY,
+        before.slots_spec()[request.slot_spec() as int].generation_spec()
+            != request.generation_spec(),
+    ensures
+        continuous_batch_expected_error(before, request, action)
+            == Some(ContinuousBatchError::StaleGeneration),
+{
+    reveal(continuous_batch_expected_error);
 }
 
 /// Applies one request-local action to the fixed interleaved state.

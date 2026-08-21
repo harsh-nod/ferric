@@ -94,6 +94,35 @@ pub closed spec fn atomic_speculative_step_transition(
     &&& outcome.published_delta == after_publication.delta_spec()
 }
 
+pub(crate) proof fn atomic_transition_binds_accepted_count(
+    before_publication: &StepPublication,
+    after_publication: &StepPublication,
+    before_selected: &IsolatedRequestKv,
+    after_selected: &IsolatedRequestKv,
+    index: &SpeculativeKvRoundIndex,
+    expected: &IsolatedSpeculativeKvExpectation,
+    draft_tokens: Seq<TokenId>,
+    target_choices: Seq<TokenId>,
+    outcome: AtomicSpeculativeStepOutcome,
+)
+    requires atomic_speculative_step_transition(
+        before_publication,
+        after_publication,
+        before_selected,
+        after_selected,
+        index,
+        expected,
+        draft_tokens,
+        target_choices,
+        outcome,
+    ),
+    ensures
+        outcome.settlement.accepted_draft_tokens
+            == outcome.published_delta.compact_completion_spec().accepted_draft_tokens,
+{
+    reveal(atomic_speculative_step_transition);
+}
+
 fn exact_draft_tokens(
     index: &SpeculativeKvRoundIndex,
     draft_tokens: &[TokenId],

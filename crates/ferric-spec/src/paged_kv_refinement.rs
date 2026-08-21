@@ -1887,6 +1887,18 @@ pub closed spec fn released_generation_matches(
         && released.generation as int == retired.generation as int + 1
 }
 
+pub(crate) proof fn released_generation_has_exact_successor(
+    released: PhysicalPageId,
+    prior: PhysicalPageId,
+)
+    requires released_generation_matches(released, prior),
+    ensures
+        released.index_spec() == prior.index_spec(),
+        released.generation_spec() as int == prior.generation_spec() as int + 1,
+{
+    reveal(released_generation_matches);
+}
+
 /// Releases a retired physical generation only under exact quiescence authority.
 ///
 /// The authority has no public constructor. The crate-local logical composition

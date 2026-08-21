@@ -359,6 +359,38 @@ pub closed spec fn publication_transition(
         && publication_payload_preserved(before, after)
 }
 
+pub(crate) proof fn publication_transition_reaches_published(
+    before: &StepPublication,
+    after: &StepPublication,
+)
+    requires publication_transition(before, after),
+    ensures publication_phase_matches(after.phase_spec(), PublicationPhase::Published),
+{
+    reveal(publication_transition);
+    reveal(StepPublication::phase_spec);
+}
+
+pub(crate) proof fn matching_step_plan_has_expected_authority(
+    plan: StepPlan,
+    expected_request: RequestId,
+    expected_epoch: CompletionEpoch,
+    expected_plan_id: Identity,
+    expected_selection: Qwen3PlanSelection,
+)
+    requires step_plan_matches(
+        plan,
+        expected_request,
+        expected_epoch,
+        expected_plan_id,
+        expected_selection,
+    ),
+    ensures
+        crate::m1_completion::identity_present(expected_plan_id),
+        target_publication_role(expected_selection.role),
+{
+    reveal(step_plan_matches);
+}
+
 /// Exact terminal discard transition from either nonterminal phase.
 pub closed spec fn discard_transition(
     before: &StepPublication,

@@ -834,6 +834,16 @@ pub closed spec fn plan_step_count_spec(role: Qwen3ModelRole) -> u32 {
     }
 }
 
+pub(crate) proof fn plan_step_count_is_role_exact(role: Qwen3ModelRole)
+    ensures
+        plan_step_count_spec(role) == match role {
+            Qwen3ModelRole::Target8B => QWEN3_TARGET_PLAN_STEPS,
+            Qwen3ModelRole::Draft06B => QWEN3_DRAFT_PLAN_STEPS,
+        },
+{
+    reveal(plan_step_count_spec);
+}
+
 pub open spec fn expected_step_spec(
     role: Qwen3ModelRole,
     mode: Qwen3ExecutionMode,

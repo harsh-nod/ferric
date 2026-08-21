@@ -47,9 +47,11 @@ pub fn batching_publish_once_theorem(
     let result = apply_continuous_publish_step(current, epoch, emitted_tokens);
     assert(result == crate::continuous_batching::continuous_publish_step(current, epoch, emitted_tokens));
     proof {
-        reveal(crate::continuous_batching::continuous_publish_step);
-        reveal(ContinuousRequest::active_epoch_spec);
-        reveal(ContinuousRequest::published_for_active_epoch_spec);
+        crate::continuous_batching::already_published_epoch_rejects(
+            current,
+            epoch,
+            emitted_tokens,
+        );
     }
     assert(result == Err(ContinuousBatchError::AlreadyPublished));
     result
@@ -74,7 +76,11 @@ pub fn batching_request_routing_theorem(
     assert(entry == *old(batch));
     let result = apply_continuous_batch_step(batch, request, action);
     proof {
-        reveal(crate::continuous_batching::continuous_batch_expected_error);
+        crate::continuous_batching::stale_generation_is_expected_error(
+            &entry,
+            request,
+            action,
+        );
     }
     assert(result == Err(ContinuousBatchError::StaleGeneration));
     assert(*batch == entry);
@@ -109,7 +115,7 @@ pub fn graph_role_step_count_theorem(role: Qwen3ModelRole) -> (count: u32)
     let count = plan_step_count(role);
     assert(count == crate::graph::plan_step_count_spec(role));
     proof {
-        reveal(crate::graph::plan_step_count_spec);
+        crate::graph::plan_step_count_is_role_exact(role);
     }
     assert(count == match role {
         Qwen3ModelRole::Target8B => crate::graph::QWEN3_TARGET_PLAN_STEPS,
@@ -137,8 +143,16 @@ pub fn isolation_other_request_frame_theorem(
     let ghost entry = *batch;
     assert(entry == *old(batch));
     let result = apply_continuous_batch_step(batch, request, action);
-    proof {
-        reveal(crate::continuous_batching::continuous_batch_step_refines);
+    if result.is_ok() {
+        proof {
+            crate::continuous_batching::successful_batch_step_preserves_other_request(
+                &entry,
+                batch,
+                request,
+                action,
+                other_slot as int,
+            );
+        }
     }
     assert(batch.slots_spec()[other_slot as int]
         == entry.slots_spec()[other_slot as int]);
@@ -167,7 +181,10 @@ pub fn kv_release_generation_theorem(
         let _ = released;
         assert(crate::paged_kv_refinement::released_generation_matches(released, page));
         proof {
-            reveal(crate::paged_kv_refinement::released_generation_matches);
+            crate::paged_kv_refinement::released_generation_has_exact_successor(
+                released,
+                page,
+            );
         }
         assert(released.index_spec() == page.index_spec());
         assert(released.generation_spec() as int == page.generation_spec() as int + 1);
@@ -239,8 +256,10 @@ pub fn publication_phase_transition_theorem(
     if result.is_ok() {
         assert(crate::step_plan_publication::publication_transition(&entry, publication));
         proof {
-            reveal(crate::step_plan_publication::publication_transition);
-            reveal(crate::step_plan_publication::publication_phase_matches);
+            crate::step_plan_publication::publication_transition_reaches_published(
+                &entry,
+                publication,
+            );
         }
         assert(crate::step_plan_publication::publication_phase_matches(
             publication.phase_spec(),
@@ -287,7 +306,13 @@ pub fn publication_plan_identity_theorem(
             expected_selection,
         ));
         proof {
-            reveal(crate::step_plan_publication::step_plan_matches);
+            crate::step_plan_publication::matching_step_plan_has_expected_authority(
+                plan,
+                expected_request,
+                expected_epoch,
+                *expected_plan_id,
+                expected_selection,
+            );
         }
         assert(crate::m1_completion::identity_present(*expected_plan_id));
         assert(crate::step_plan_publication::target_publication_role(expected_selection.role));
@@ -329,6 +354,10 @@ pub fn speculative_accepted_count_binding_theorem(
             Err(_) => true,
         },
 {
+    let ghost entry_publication = *publication;
+    let ghost entry_selected = *selected;
+    assert(entry_publication == *old(publication));
+    assert(entry_selected == *old(selected));
     let result = settle_and_publish_speculative_step(
         batch,
         publication,
@@ -338,13 +367,22 @@ pub fn speculative_accepted_count_binding_theorem(
         expected,
         token_inputs,
     );
-    proof {
-        reveal(crate::speculative_step_composition::atomic_speculative_step_transition);
-        assert(match result {
-            Ok(outcome) => outcome.settlement.accepted_draft_tokens
-                == outcome.published_delta.compact_completion_spec().accepted_draft_tokens,
-            Err(_) => true,
-        });
+    if result.is_ok() {
+        let outcome = result.as_ref().unwrap();
+        let _ = outcome;
+        proof {
+            crate::speculative_step_composition::atomic_transition_binds_accepted_count(
+                &entry_publication,
+                publication,
+                &entry_selected,
+                selected,
+                index,
+                expected,
+                token_inputs.draft_tokens@,
+                token_inputs.target_choices@,
+                *outcome,
+            );
+        }
     }
     result
 }
