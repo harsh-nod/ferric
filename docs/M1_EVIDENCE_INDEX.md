@@ -100,9 +100,9 @@ paths. The version 1 registry is:
 
 The artifact-identity, canonical-structure, external-contract, fe2o3-contract,
 hardware-transcript, independent-validator, negative-mutation,
-performance-gate, TCB-report,
-unsupported-rationale, and Verus-theorem validators are `ExistingFoundation`
-inputs with exact source SHA-256 values pinned in the checker-owned registry.
+performance-gate, qualification-receipt, TCB-report, unsupported-rationale,
+and Verus-theorem validators are `ExistingFoundation` inputs with exact source
+SHA-256 values pinned in the checker-owned registry.
 The artifact-identity validator accepts only a canonical identity-only report
 and independently hashes its deterministic companion payload. The report binds
 the exact Open obligation or property, associated assurance properties, path,
@@ -141,8 +141,8 @@ and binds the exact source, device, ROCm, driver, firmware, harness, obligation,
 path, profile, and TCB identities. Its reviewed source SHA-256 is
 `8a1e06fab53e38f1d48a8c26f132204a169c54ce56cf4bd283695cdc38b6e21f`.
 Hardware observations grant no theorem, machine-refinement, performance, or
-qualification authority. The independent-validator
-validator authenticates a fixed-location canonical report, exact case roster,
+qualification authority. The independent-validator authenticates a
+fixed-location canonical report, exact case roster,
 and immutable transcript for the bound Open obligation. It binds the external
 checker organization, repository, source closure, executable, version,
 protocol, input/output schemas, exact positive and expected-failure cases,
@@ -157,10 +157,16 @@ closures, target environment, artifact/plan/schedule/workload/baseline
 identities, protocol, ordered samples, and complete TCB. Acceptance grants
 checked-performance authority only; the exact protocol and nonclaims are
 documented in `proofs/m1/evidence/PERFORMANCE_REPORT.md`. The negative-mutation
-and theorem
-validators validate the complete versioned run directory behind a bound
-`.result` artifact. The
-theorem validator requires the exact pinned output-json schema, selected
+and theorem validators validate the complete versioned run directory behind a
+bound `.result` artifact. The qualification-receipt validator requires one
+canonical receipt shared by all 33 roadmap closure rows, independently
+revalidates the complete exact source, requirements, evidence-index, artifact,
+TCB, and checker-owned validator rosters, and authenticates an immutable
+qualification transcript whose quality, proof, hardware, performance,
+source-closure, evidence-index, and validator gates all pass. Its exact layout
+and authority boundary are documented in
+`proofs/m1/evidence/QUALIFICATION_RECEIPT.md`. The theorem validator requires
+the exact pinned output-json schema, selected
 compiler module/function, current source body, ordinary compilation, an exact
 one-query zero-error proof predicate, and the complete theorem roster for the
 bound property/path. Because pinned Verus does not emit a `success` field, a
@@ -168,15 +174,12 @@ checker-owned summary derives `RESULT=success` from its exact structured fields
 and exit status and binds the transcript SHA-256. Any injected `success` field
 is rejected as schema drift. The unsupported-rationale validator accepts only
 the three fixed M1 nonclaims, binds their exact source, requirements, evidence
-binding, and TCB identities, and grants no positive authority. The remaining
-validators remain `RequiredFuture` M1 implementation obligations with
-intentionally unset source pins. Until every validator required by an index
-exists in the exact qualified source closure, has a reviewed source SHA-256
-pinned in the checker-owned registry, and accepts its canonical context, the
-production checker cannot print an M1 closure `PASS`. Adding a file at another
-registered path is insufficient. The private in-process callback used by
-synthetic policy tests is deliberately absent from the CLI and is not a
-qualification mode.
+binding, and TCB identities, and grants no positive authority. Every version-1
+validator now has a reviewed source SHA-256 in the checker-owned registry, but
+the production checker cannot print an M1 closure `PASS` unless every validator
+accepts its exact canonical evidence context. The private in-process callback
+used by synthetic policy tests is deliberately absent from the CLI and is not
+a qualification mode.
 
 The versioned hostile foundation registry under `proofs/m1/negative/` is not an
 evidence index or closure product. Its runner can authenticate the pinned Verus

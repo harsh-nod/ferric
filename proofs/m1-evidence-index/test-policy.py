@@ -303,6 +303,11 @@ class Fixture:
                 grouped[key].append(binding)
 
         obligations: list[dict[str, Any]] = []
+        receipt_artifact_id = self.add_artifact(
+            "QualificationReceipt",
+            "canonical M1 qualification receipt",
+            b"synthetic test-only canonical M1 receipt\n",
+        )
         for spec in specs:
             key = (spec["class"], spec["id"])
             own = grouped[key]
@@ -317,11 +322,7 @@ class Fixture:
             }
             if spec["class"] == "Roadmap":
                 record["assurance_dependencies"] = spec["dependencies"]
-                record["receipt_artifact_id"] = self.add_artifact(
-                    "QualificationReceipt",
-                    f"receipt for {spec['id']}",
-                    f"synthetic test-only receipt {spec['id']}\n".encode("ascii"),
-                )
+                record["receipt_artifact_id"] = receipt_artifact_id
             elif spec["status"] == "Proved":
                 record["proof_artifact_ids"] = sorted(
                     item["artifact_id"]

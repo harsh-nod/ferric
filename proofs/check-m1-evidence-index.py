@@ -102,7 +102,7 @@ TRUSTED_VALIDATORS = {
     "qualification-receipt": (
         "proofs/m1/evidence/validate-qualification-receipt.py",
         "ferric.m1-validator.qualification-receipt.v1",
-        None,
+        "266d14ed4cff8dffd7dc0e383f49df835cd0bebef4a1f1682b557a059f518702",
     ),
     "tcb-report": (
         "proofs/m1/evidence/validate-tcb-report.py",
@@ -692,11 +692,12 @@ def validate_obligations(
     grouped: dict[tuple[str, str], list[str]],
     artifacts: dict[str, dict[str, Any]],
     used_artifacts: set[str],
-) -> None:
+) -> str:
     if not isinstance(value, list) or len(value) != len(specs):
         fail(f"M1 closure roster must contain exactly {len(specs)} obligation records")
     seen: set[tuple[str, str]] = set()
     referenced_bindings: set[str] = set()
+    receipt_ids: set[str] = set()
     for record, spec in zip(value, specs, strict=True):
         if not isinstance(record, dict):
             fail("M1 closure obligation must be an object")
@@ -765,6 +766,7 @@ def validate_obligations(
             receipt = artifacts.get(receipt_id)
             if receipt is None or receipt["kind"] != "QualificationReceipt":
                 fail(f"M1 roadmap receipt is unavailable or fake: {spec['id']}")
+            receipt_ids.add(receipt_id)
             used_artifacts.add(receipt_id)
         elif status == "Proved":
             proof_ids = binding_artifacts_for_kind(
@@ -815,6 +817,9 @@ def validate_obligations(
         seen.add(key)
     if referenced_bindings != set(bindings):
         fail("not every M1 evidence binding resolves to exactly one closure obligation")
+    if len(receipt_ids) != 1:
+        fail("M1 roadmap closure must use one canonical qualification receipt")
+    return next(iter(receipt_ids))
 
 
 def invoke_trusted_validator(
@@ -875,6 +880,7 @@ def invoke_trusted_validator(
 
 def validate_with_trusted_producers(
     ferric: Path,
+    fe2o3: Path,
     requirements_digest: str,
     index: dict[str, Any],
     sources: dict[str, dict[str, Any]],
@@ -884,6 +890,7 @@ def validate_with_trusted_producers(
     artifact_files: dict[str, Path],
     tcb: dict[str, dict[str, Any]],
     bindings: dict[str, dict[str, Any]],
+    receipt_artifact_id: str,
     test_only_validator: TestValidator | None,
 ) -> None:
     common = {
@@ -927,24 +934,24 @@ def validate_with_trusted_producers(
             context,
             test_only_validator,
         )
-    for obligation in index["obligations"]:
-        if obligation["obligation_class"] != "Roadmap":
-            continue
-        artifact_id = obligation["receipt_artifact_id"]
-        context = {
-            **common,
-            "artifact": artifacts[artifact_id],
-            "artifact_absolute_path": str(artifact_files[artifact_id]),
-            "obligation": obligation,
-            "subject": f"roadmap:{obligation['id']}",
-        }
-        invoke_trusted_validator(
-            ferric,
-            closure_paths["source.ferric"],
-            "qualification-receipt",
-            context,
-            test_only_validator,
-        )
+    context = {
+        **common,
+        "artifact": artifacts[receipt_artifact_id],
+        "artifact_absolute_path": str(artifact_files[receipt_artifact_id]),
+        "index": index,
+        "repository_absolute_paths": {
+            "fe2o3": str(fe2o3),
+            "ferric": str(ferric),
+        },
+        "subject": "qualification:M1",
+    }
+    invoke_trusted_validator(
+        ferric,
+        closure_paths["source.ferric"],
+        "qualification-receipt",
+        context,
+        test_only_validator,
+    )
 
 
 def validate_evidence_index(
@@ -1013,7 +1020,7 @@ def validate_evidence_index(
         artifacts,
         used_artifacts,
     )
-    validate_obligations(
+    receipt_artifact_id = validate_obligations(
         index["obligations"],
         specs,
         bindings,
@@ -1026,6 +1033,7 @@ def validate_evidence_index(
         fail(f"M1 evidence index contains unreferenced artifacts: {unused}")
     validate_with_trusted_producers(
         ferric,
+        fe2o3,
         requirements_digest,
         index,
         sources,
@@ -1035,6 +1043,7 @@ def validate_evidence_index(
         artifact_files,
         tcb,
         bindings,
+        receipt_artifact_id,
         _test_only_validator,
     )
     counts = (

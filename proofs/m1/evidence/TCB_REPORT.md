@@ -38,6 +38,9 @@ checker source pin must match the stable bytes at the registered path. A null
 pin remains `RequiredFuture`, and its executable path must be absent. Thus a
 new file cannot silently widen the validator TCB, while independently reviewed
 validator additions compose by updating their checker-owned pin.
+The qualification-receipt validator is source-pinned and therefore appears as
+an `ExistingFoundation` entry in this roster; the receipt validator separately
+requires every roster entry to be source-pinned before qualification can pass.
 
 The three outer TCB `identity_sha256` values are the hashes of the three report
 artifacts. They cannot be embedded in the reports without a recursive hash
