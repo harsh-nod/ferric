@@ -213,15 +213,15 @@ mod tests {
         }
     }
 
-    const fn plan(
-        plan_index: u16,
+    fn plan(
+        plan_index: u8,
         bucket: Qwen3PlanBucket,
         operation_start: u32,
         operation_count: u32,
     ) -> GeneratedPlanDeclaration {
         GeneratedPlanDeclaration {
-            plan_index,
-            plan_id: Identity::new([plan_index as u8 + 1; 32]),
+            plan_index: u16::from(plan_index),
+            plan_id: Identity::new([plan_index + 1; 32]),
             selection: selection(bucket),
             operation_start,
             operation_count,
