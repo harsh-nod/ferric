@@ -67,9 +67,7 @@ fallbacks:          none
 ### Model And Build
 
 - [ ] Define bounded canonical Ferric deployment bundles.
-- [x] Strictly admit pinned Qwen3 config and tokenizer metadata.
-- [x] Stream-authenticate pinned safetensors and validate the Qwen3 tensor schema.
-- [ ] Semantically admit `tokenizer.json` vocabulary and token mappings.
+- [ ] Strictly admit Qwen3 config, tokenizer, vocabulary, and safetensors.
 - [ ] Check target/draft tokenizer compatibility rather than assuming it.
 - [ ] Stream and authenticate prepacked weight sections.
 - [ ] Generate a model/target-specific Rust runner and complete plan identity.
