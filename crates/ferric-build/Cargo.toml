@@ -10,6 +10,8 @@ publish = false
 ferric-generated-runner = { path = "../ferric-generated-runner" }
 ferric-kernels = { path = "../ferric-kernels" }
 ferric-spec = { path = "../ferric-spec" }
+onig = { version = "=6.5.3", default-features = false }
+unicode-normalization-alignments = "=0.1.12"
 
 [package.metadata.verus]
 verify = true

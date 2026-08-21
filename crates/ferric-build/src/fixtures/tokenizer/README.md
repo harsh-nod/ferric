@@ -37,7 +37,10 @@ Sources:
 This is tokenizer metadata and vocabulary only. It contains no model weights.
 
 The authenticated parser now retains these exact vocabulary and merge records
-for bounded execution. The checked small encode/decode fixtures in
-`tokenizer_execution.rs` cover ASCII contractions, spacing, tabs, CRLF,
-punctuation, digits, and added/special tokens. Non-ASCII execution remains an
-explicit fail-closed nonclaim; see `docs/M1_TOKENIZER_EXECUTION.md`.
+for bounded execution. The 640-case deterministic differential fixture was
+generated from these exact bytes by an independently invoked `tokenizers`
+0.22.2 wheel. It covers ASCII and multilingual text, NFC pairs, Unicode
+categories, whitespace and line endings, contractions, negative lookahead,
+and added/special-token inputs. Its header binds the oracle wheel and runtime
+Unicode table versions. The corpus is regression evidence, not a general
+tokenizer equivalence proof; see `docs/M1_TOKENIZER_EXECUTION.md`.

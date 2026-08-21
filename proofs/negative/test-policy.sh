@@ -52,7 +52,8 @@ new_copy() {
     cp -a "$repo/Cargo.toml" "$repo/Cargo.lock" "$repo/rust-toolchain.toml" "$destination/"
     cp -a "$repo/crates" "$destination/"
     mkdir -p "$destination/proofs"
-    cp -a "$repo/proofs/UNVERIFIED_BODIES" "$destination/proofs/"
+    cp -a "$repo/proofs/UNVERIFIED_BODIES" \
+        "$repo/proofs/RUNTIME_DEPENDENCY_TCB" "$destination/proofs/"
     chmod -R u+w "$destination"
     printf '%s\n' "$destination"
 }
@@ -62,9 +63,136 @@ write_metadata() {
     destination=$2
     (
         cd "$source_repo"
-        cargo metadata --locked --no-deps --format-version 1
+        cargo metadata --locked --format-version 1
     ) >"$destination"
 }
+
+runtime_tcb_hostile() {
+    name=$1
+    mutation=$2
+    fixture=$(new_copy "runtime-tcb-$name")
+    fixture_metadata="$scratch/runtime-tcb-$name.metadata"
+    write_metadata "$fixture" "$fixture_metadata"
+    python3 -I - "$fixture/proofs/RUNTIME_DEPENDENCY_TCB" \
+        "$fixture/Cargo.lock" "$mutation" <<'PY'
+from pathlib import Path
+import sys
+
+manifest = Path(sys.argv[1])
+lock = Path(sys.argv[2])
+mutation = sys.argv[3]
+lines = manifest.read_text(encoding="utf-8").splitlines()
+onig_package = next(
+    index
+    for index, line in enumerate(lines)
+    if line.startswith("package=") and "#onig@6.5.3|onig|6.5.3|" in line
+)
+roots = [index for index, line in enumerate(lines) if line.startswith("root=")]
+if mutation == "missing":
+    del lines[onig_package]
+elif mutation == "extra":
+    lines.insert(onig_package, lines[onig_package].replace("|onig|", "|onig-extra|", 1))
+elif mutation == "reordered":
+    lines[roots[0]], lines[roots[1]] = lines[roots[1]], lines[roots[0]]
+elif mutation == "duplicate":
+    lines.insert(roots[0], lines[roots[0]])
+elif mutation == "version":
+    lines[onig_package] = lines[onig_package].replace("|onig|6.5.3|", "|onig|6.5.4|", 1)
+elif mutation == "source":
+    fields = lines[onig_package].split("|")
+    fields[3] = "registry+https://example.invalid/index"
+    lines[onig_package] = "|".join(fields)
+elif mutation == "checksum":
+    fields = lines[onig_package].split("|")
+    fields[4] = ("1" if fields[4][0] != "1" else "2") + fields[4][1:]
+    lines[onig_package] = "|".join(fields)
+elif mutation == "root":
+    lines[roots[0]] = lines[roots[0]].replace("root=ferric-build|", "root=ferric-engine|", 1)
+elif mutation == "lock-checksum":
+    text = lock.read_text(encoding="utf-8")
+    old = "0cc3cbf698f9438986c11a880c90a6d04b9de27575afd28bbf45b154b6c709e2"
+    if text.count(old) != 1:
+        raise SystemExit("onig Cargo.lock checksum anchor drifted")
+    lock.write_text(text.replace(old, "1" + old[1:]), encoding="utf-8")
+else:
+    raise SystemExit(f"unknown runtime TCB mutation: {mutation}")
+if mutation != "lock-checksum":
+    manifest.write_text("\n".join(lines) + "\n", encoding="utf-8")
+PY
+    expect_rejected "runtime-tcb-$name" 'workspace runtime dependency TCB drifted' \
+        "$source_gate" "$fixture" "$repo/proofs/VERIFIED_MODULES" \
+        "$fixture_metadata"
+}
+
+for mutation in missing extra reordered duplicate version source checksum root lock-checksum; do
+    runtime_tcb_hostile "$mutation" "$mutation"
+done
+
+python3 -I - "$metadata" "$scratch" <<'PY'
+import copy
+import json
+from pathlib import Path
+import sys
+
+metadata = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+scratch = Path(sys.argv[2])
+
+
+def package(name):
+    return next(value for value in metadata["packages"] if value["name"] == name)
+
+
+def node(name):
+    identity = package(name)["id"]
+    return next(value for value in metadata["resolve"]["nodes"] if value["id"] == identity)
+
+
+feature = copy.deepcopy(metadata)
+feature_node = next(
+    value
+    for value in feature["resolve"]["nodes"]
+    if value["id"] == next(p for p in feature["packages"] if p["name"] == "onig")["id"]
+)
+feature_node["features"].append("hostile-feature")
+(scratch / "runtime-feature.metadata").write_text(json.dumps(feature), encoding="utf-8")
+
+build = copy.deepcopy(metadata)
+build_package = next(p for p in build["packages"] if p["name"] == "onig_sys")
+build_package["targets"] = [
+    target for target in build_package["targets"] if "custom-build" not in target["kind"]
+]
+(scratch / "runtime-build-script.metadata").write_text(json.dumps(build), encoding="utf-8")
+
+proc_macro = copy.deepcopy(metadata)
+proc_package = next(p for p in proc_macro["packages"] if p["name"] == "onig")
+proc_target = next(target for target in proc_package["targets"] if "lib" in target["kind"])
+proc_target["kind"] = ["proc-macro"]
+proc_target["crate_types"] = ["proc-macro"]
+(scratch / "runtime-proc-macro.metadata").write_text(
+    json.dumps(proc_macro), encoding="utf-8"
+)
+
+root = copy.deepcopy(metadata)
+root_package = next(p for p in root["packages"] if p["name"] == "ferric-build")
+hostile = copy.deepcopy(next(d for d in root_package["dependencies"] if d["name"] == "onig"))
+hostile["name"] = "bitflags"
+hostile["req"] = "=2.13.1"
+root_package["dependencies"].append(hostile)
+(scratch / "runtime-extra-root.metadata").write_text(json.dumps(root), encoding="utf-8")
+PY
+
+expect_rejected runtime-tcb-feature 'workspace runtime dependency TCB drifted' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    "$scratch/runtime-feature.metadata"
+expect_rejected runtime-tcb-build-script 'workspace runtime dependency TCB drifted' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    "$scratch/runtime-build-script.metadata"
+expect_rejected runtime-tcb-proc-macro 'workspace runtime dependency TCB drifted' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    "$scratch/runtime-proc-macro.metadata"
+expect_rejected runtime-tcb-extra-root 'unadmitted registry runtime root' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    "$scratch/runtime-extra-root.metadata"
 
 cp "$repo/proofs/negative/REQUIRED_COMPONENTS" "$scratch/unsafe-target.registry"
 chmod u+w "$scratch/unsafe-target.registry"

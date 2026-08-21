@@ -12,7 +12,7 @@ use std::sync::Arc;
 
 use crate::tokenizer_execution::{
     SpecialTokenDecodePolicy, SpecialTokenEncodePolicy, TokenizerExecutionError,
-    TokenizerExecutionLimits, TokenizerProgram,
+    TokenizerExecutionLimits, TokenizerProgram, QWEN3_SPLIT_REGEX,
 };
 
 const TOKENIZER_JSON_BYTES: usize = 11_422_654;
@@ -27,21 +27,19 @@ const VOCABULARY_SEMANTIC_SHA256: [u8; 32] =
     decode_hex_32(b"d42824870d58ccbf38bc6d29b312cc4550c8543f448c45fe644dd041f3eff638");
 const MERGES_SEMANTIC_SHA256: [u8; 32] =
     decode_hex_32(b"1f8c784c660c1659a981d03c46deea0abcbf3fb4f6e85938e27281869890734f");
-const SPLIT_REGEX: &str = "(?i:'s|'t|'re|'ve|'m|'ll|'d)|[^\\r\\n\\p{L}\\p{N}]?\\p{L}+|\\p{N}| ?[^\\s\\p{L}\\p{N}]+[\\r\\n]*|\\s*[\\r\\n]+|\\s+(?!\\S)|\\s+";
 
 /// Evidence that one model role's exact pinned `tokenizer.json` stream was
 /// hashed through EOF and admitted against the closed Qwen3 tokenizer schema.
 ///
 /// Private fields and the private seal prevent descriptor-only construction.
 /// The value is intentionally neither [`Clone`] nor [`Copy`].
-#[derive(PartialEq, Eq)]
 pub struct AuthenticatedTokenizer {
     role: Qwen3ModelRole,
     descriptor: ArtifactDigest,
     vocabulary_semantic_sha256: [u8; 32],
     merges_semantic_sha256: [u8; 32],
     program: Arc<TokenizerProgram>,
-    seal: AuthenticatedTokenizerSeal,
+    _seal: AuthenticatedTokenizerSeal,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -69,17 +67,16 @@ impl AuthenticatedTokenizer {
         self.role
     }
 
-    /// Encodes one bounded ASCII-domain input with the authenticated tokenizer.
+    /// Encodes one bounded UTF-8 input with the authenticated tokenizer.
     ///
-    /// The pinned tokenizer uses NFC and a Unicode-property regular expression.
-    /// Ferric currently accepts ASCII input only, where both behaviors are
-    /// closed and implemented without an external Unicode or regex engine.
+    /// The exact pinned NFC implementation and fixed Qwen3 Split expression
+    /// are retained privately by the authenticated authority.
     ///
     /// # Errors
     ///
     /// Returns [`TokenizerExecutionError`] when a bound is invalid or exceeded,
-    /// the input is outside the admitted ASCII domain, a forbidden special
-    /// token is present, or the finite BPE work budget is exhausted.
+    /// a forbidden special token is present, or the finite normalization,
+    /// split, or BPE work budget is exhausted.
     pub fn encode(
         &self,
         input: &str,
@@ -161,6 +158,8 @@ pub enum TokenizerError {
     TrailingData,
     /// The complete streamed bytes differed from the pinned SHA-256.
     DigestMismatch,
+    /// The fixed authenticated Split expression could not be compiled.
+    RegexConstruction,
 }
 
 impl fmt::Display for TokenizerError {
@@ -219,6 +218,9 @@ impl fmt::Display for TokenizerError {
             Self::DigestMismatch => {
                 formatter.write_str("tokenizer.json full-file SHA-256 mismatched")
             }
+            Self::RegexConstruction => {
+                formatter.write_str("authenticated tokenizer Split regex construction failed")
+            }
         }
     }
 }
@@ -269,7 +271,7 @@ pub fn authenticate_qwen3_tokenizer<R: Read>(
         vocabulary_semantic_sha256: semantics.vocabulary_semantic_sha256,
         merges_semantic_sha256: semantics.merges_semantic_sha256,
         program: semantics.program,
-        seal: AuthenticatedTokenizerSeal,
+        _seal: AuthenticatedTokenizerSeal,
     })
 }
 
@@ -391,7 +393,7 @@ fn validate_pre_tokenizer(value: Value) -> Result<(), TokenizerError> {
             split_fields.take("pattern")?,
         )?,
     );
-    pattern.expect_string("Regex", SPLIT_REGEX)?;
+    pattern.expect_string("Regex", QWEN3_SPLIT_REGEX)?;
     pattern.finish()?;
     split_fields.expect_string("behavior", "Isolated")?;
     split_fields.expect_bool("invert", false)?;
@@ -425,7 +427,10 @@ fn validate_model(value: Value) -> Result<TokenizerSemantics, TokenizerError> {
     Ok(TokenizerSemantics {
         vocabulary_semantic_sha256,
         merges_semantic_sha256,
-        program: Arc::new(TokenizerProgram::new(vocabulary, merges)),
+        program: Arc::new(
+            TokenizerProgram::new(vocabulary, merges)
+                .map_err(|_| TokenizerError::RegexConstruction)?,
+        ),
     })
 }
 
@@ -671,7 +676,7 @@ pub(crate) mod tests {
                     .expect("canonical tokenizer semantics")
                     .program
             })),
-            seal: AuthenticatedTokenizerSeal,
+            _seal: AuthenticatedTokenizerSeal,
         }
     }
 

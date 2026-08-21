@@ -23,8 +23,10 @@ today. Tokenizer admission authenticates the exact shared
 payload and exhaustively binds its vocabulary IDs, merge order, processing
 pipeline, added tokens, special tokens, and chat-template metadata. The sealed
 authority now retains the admitted vocabulary and merge program for bounded,
-deterministic ASCII-domain encode and exact byte decode. It rejects non-ASCII
-input instead of approximating NFC or the Unicode-property split expression.
+deterministic UTF-8 encode and exact byte decode. The one authenticated Qwen3
+program uses pinned Unicode 9 NFC tables and a private fixed Split regex over
+bundled Oniguruma Unicode 16 tables; it does not expose a general tokenizer or
+caller-selected regex path.
 Safetensors admission authenticates exact full files and validates the closed
 Qwen3 BF16 tensor schema without buffering tensor payloads. A fixed-width
 canonical record revalidates all pinned and derived identities, but does not
@@ -65,6 +67,16 @@ shipping artifact must not link Verus, vstd, Z3, or proof/ghost state. It also
 must not depend on compiler crates, LLVM, COMGR, HIP launch APIs, vendor GEMM
 libraries, PyTorch, Python, runtime JIT facilities, or the fe2o3 legacy
 compiler.
+
+The authenticated tokenizer path has exactly two admitted crates.io roots: `onig`
+6.5.3 with default features disabled and `unicode-normalization-alignments`
+0.1.12. `proofs/RUNTIME_DEPENDENCY_TCB` binds their complete resolved package,
+source, checksum, feature, target-kind, build-script, proc-macro, and edge
+closure. The source gate regenerates that closure from full Cargo metadata and
+the checksum-bearing format-4 lockfile, rejects every other registry root, and
+binds the canonical records into its source inventory and dependency TCB.
+Oniguruma C compilation and unsafe FFI and both libraries' Unicode tables are
+contracted dependencies rather than verified Ferric code.
 
 The qualified release is produced by the strict `cargo-verus build --release`
 invocation. Rebuilding the binary afterward with a different Cargo invocation

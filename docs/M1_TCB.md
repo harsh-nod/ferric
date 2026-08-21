@@ -29,6 +29,10 @@ not promote that boundary to `Proved`.
 
 M1 trusts the exact identity-bound instances of:
 
+- `onig` 6.5.3, `onig_sys` 69.9.3, the bundled Oniguruma C build and Unicode
+  16.0.0 property/regex tables, including the unsafe Rust/C boundary;
+- `unicode-normalization-alignments` 0.1.12 and its generated Unicode 9.0.0
+  normalization and alignment tables;
 - the reviewed fe2o3 allocation, code-object, kernarg, AQL queue, completion,
   and teardown adapters used by the generated runner;
 - the HSA runtime and KFD user/kernel ABI used by those adapters;
@@ -43,6 +47,20 @@ their contracts. Native atomics, CPU/GPU coherence, MMIO ordering, ioctl side
 effects, signal delivery, reset behavior, and driver/runtime implementation
 are contracted. Any ambiguous native side effect poisons the owning authority
 and requires the teardown policy declared by the runtime evidence.
+
+The two tokenizer libraries and their complete registry closure are pinned in
+`Cargo.lock` and `proofs/RUNTIME_DEPENDENCY_TCB`. Their build scripts, native C
+compiler behavior, unsafe code, regex engine, and Unicode tables are
+`Contracted`. The 640-case exact-tokenizers differential is regression
+evidence only; it is not exhaustive equivalence evidence and is not a Verus
+proof of those external implementations.
+
+The resolved transitive packages are `onig_sys` 69.9.3, `bitflags` 2.13.1,
+`libc` 0.2.189, `once_cell` 1.21.4, `cc` 1.4.4, `find-msvc-tools` 0.1.11,
+`shlex` 2.0.1, `pkg-config` 0.3.34, and `smallvec` 1.15.2. The canonical
+manifest, rather than this prose list, is authoritative for checksums,
+features, target predicates, target kinds, build scripts, proc macros, and
+dependency edges.
 
 ## Hardware Boundary
 

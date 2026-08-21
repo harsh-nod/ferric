@@ -132,7 +132,8 @@ source_gate_metadata="$scratch/source-gate-cargo-metadata.json"
 ) >"$source_gate_metadata"
 chmod -R a-w "$source_gate_target"
 generated_source_gate_tcb="$scratch/SOURCE_GATE_DEPENDENCY_TCB.generated"
-"$source_gate" --dependency-tcb "$source_gate_metadata" "$generated_source_gate_tcb"
+"$source_gate" --dependency-tcb "$qualified_repo" "$source_gate_metadata" \
+    "$generated_source_gate_tcb"
 cmp -s "$qualified_scripts/source-gate/DEPENDENCY_TCB" "$generated_source_gate_tcb" || \
     fail 'source-gate dependency or build-script TCB drifted'
 (
@@ -161,7 +162,7 @@ chmod -R a-w "$property_binder_target"
 metadata="$scratch/cargo-metadata.json"
 (
     cd "$qualified_repo"
-    CARGO_TARGET_DIR="$proof_target" cargo metadata --locked --no-deps --format-version 1
+    CARGO_TARGET_DIR="$proof_target" cargo metadata --locked --format-version 1
 ) >"$metadata"
 generated_coverage="$scratch/VERIFIED_MODULES.generated"
 "$source_gate" --generate "$qualified_repo" "$metadata" "$generated_coverage"

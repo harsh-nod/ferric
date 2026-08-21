@@ -28,7 +28,7 @@ implements:
 - atomic KV commit, rollback, sealed-prefix sharing, and copy-on-write transitions;
 - strict pinned Qwen3 configuration and tokenizer-metadata admission;
 - bounded streaming authentication and semantic admission of the exact shared tokenizer;
-- bounded deterministic ASCII-domain encode and exact byte decode through that tokenizer authority;
+- bounded deterministic UTF-8 encode and exact byte decode through that tokenizer authority;
 - bounded streaming authentication of the exact pinned Qwen3 safetensors files;
 - a fixed-width canonical record for the exact admitted deployment identities;
 - all 22 exact sequential target/draft B3 plans and their finite K1-K7 structural profiles;
@@ -39,8 +39,8 @@ implements:
 - structural invariant validation and hostile stale-handle tests; and
 - the roadmap, assurance policy, feature ledger, and performance protocol.
 
-Ferric does **not** currently support non-ASCII tokenization or prove full
-behavioral equivalence to an external regex or Unicode implementation,
+Ferric does **not** prove general Hugging Face tokenizer equivalence or its
+contracted regex, Unicode, native-build, and unsafe-FFI dependencies,
 transform or pack weights,
 sign deployment records, allocate device memory, load a model onto a device,
 compile a GPU kernel, instantiate a command template, dispatch HSA, prove graph

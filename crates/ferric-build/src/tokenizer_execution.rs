@@ -1,15 +1,17 @@
 //! Bounded execution of the exact parsed Qwen3 tokenizer program.
-//!
-//! Encode is intentionally restricted to ASCII until Unicode normalization and
-//! property-regex behavior have their own admitted implementation.
 
 use crate::ADDED_TOKENS;
+use onig::Regex;
 use std::collections::BTreeMap;
 use std::fmt;
+use unicode_normalization_alignments::UnicodeNormalization;
 
 const BASE_VOCABULARY_SIZE: usize = 151_643;
 const TOTAL_VOCABULARY_SIZE: usize = BASE_VOCABULARY_SIZE + ADDED_TOKENS.len();
 const ORDERED_LOOKUP_COMPARISONS: usize = 128;
+const MAX_TOKENIZER_NORMALIZED_BYTES: usize = 128 * 1_024;
+
+pub(super) const QWEN3_SPLIT_REGEX: &str = "(?i:'s|'t|'re|'ve|'m|'ll|'d)|[^\\r\\n\\p{L}\\p{N}]?\\p{L}+|\\p{N}| ?[^\\s\\p{L}\\p{N}]+[\\r\\n]*|\\s*[\\r\\n]+|\\s+(?!\\S)|\\s+";
 
 /// Hard upper bound for one tokenizer input.
 pub const MAX_TOKENIZER_INPUT_BYTES: usize = 32 * 1_024;
@@ -86,8 +88,8 @@ pub enum TokenizerExecutionError {
     InvalidLimits,
     /// Input bytes exceeded the caller-selected encode bound.
     InputTooLarge { limit: usize, actual: usize },
-    /// Input requires Unicode normalization or property classification not yet admitted.
-    UnsupportedUnicode { byte_offset: usize },
+    /// NFC expansion exceeded the closed normalized-input ceiling.
+    NormalizedInputTooLarge { limit: usize, actual: usize },
     /// A fixed special token occurred while special-token encoding was disabled.
     SpecialTokenForbidden { token_id: u32 },
     /// Token output or decode input exceeded the caller-selected token bound.
@@ -116,9 +118,9 @@ impl fmt::Display for TokenizerExecutionError {
                     "tokenizer input is {actual} bytes, limit is {limit}"
                 )
             }
-            Self::UnsupportedUnicode { byte_offset } => write!(
+            Self::NormalizedInputTooLarge { limit, actual } => write!(
                 formatter,
-                "tokenizer input requires unsupported Unicode behavior at byte {byte_offset}"
+                "normalized tokenizer input is {actual} bytes, limit is {limit}"
             ),
             Self::SpecialTokenForbidden { token_id } => {
                 write!(
@@ -148,15 +150,19 @@ impl fmt::Display for TokenizerExecutionError {
 
 impl std::error::Error for TokenizerExecutionError {}
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug)]
 pub(super) struct TokenizerProgram {
     vocabulary: Vec<String>,
     token_ids: BTreeMap<String, u32>,
     merge_ranks: BTreeMap<String, BTreeMap<String, usize>>,
+    split_regex: Regex,
 }
 
 impl TokenizerProgram {
-    pub(super) fn new(vocabulary: Vec<String>, merges: Vec<(String, String)>) -> Self {
+    pub(super) fn new(
+        vocabulary: Vec<String>,
+        merges: Vec<(String, String)>,
+    ) -> Result<Self, onig::Error> {
         let token_ids = vocabulary
             .iter()
             .enumerate()
@@ -171,11 +177,12 @@ impl TokenizerProgram {
         for (rank, (left, right)) in merges.into_iter().enumerate() {
             merge_ranks.entry(left).or_default().insert(right, rank);
         }
-        Self {
+        Ok(Self {
             vocabulary,
             token_ids,
             merge_ranks,
-        }
+            split_regex: Regex::new(QWEN3_SPLIT_REGEX)?,
+        })
     }
 
     pub(super) fn encode(
@@ -191,21 +198,19 @@ impl TokenizerProgram {
                 actual: input.len(),
             });
         }
-        if let Some((byte_offset, _)) = input.char_indices().find(|(_, symbol)| !symbol.is_ascii())
-        {
-            return Err(TokenizerExecutionError::UnsupportedUnicode { byte_offset });
+        let mut work = WorkBudget::new(limits.work);
+        if special_tokens == SpecialTokenEncodePolicy::Reject {
+            reject_forbidden_special(input, &mut work)?;
         }
-
         let mut output = Vec::new();
         output
             .try_reserve(input.len().min(limits.tokens))
             .map_err(|_| TokenizerExecutionError::AllocationFailed)?;
-        let mut work = WorkBudget::new(limits.work);
         let mut cursor = 0;
         while cursor < input.len() {
             let next = find_added_token(input, cursor, &mut work)?;
             let normal_end = next.map_or(input.len(), |match_| match_.start);
-            self.encode_normal_ascii(&input[cursor..normal_end], limits, &mut work, &mut output)?;
+            self.encode_normal_text(&input[cursor..normal_end], limits, &mut work, &mut output)?;
             let Some(match_) = next else {
                 break;
             };
@@ -224,18 +229,57 @@ impl TokenizerProgram {
         Ok(output)
     }
 
-    fn encode_normal_ascii(
+    fn encode_normal_text(
         &self,
         input: &str,
         limits: TokenizerExecutionLimits,
         work: &mut WorkBudget,
         output: &mut Vec<u32>,
     ) -> Result<(), TokenizerExecutionError> {
-        let mut cursor = 0;
-        while cursor < input.len() {
-            let end = next_ascii_split(input.as_bytes(), cursor, work)?;
-            self.encode_piece(&input.as_bytes()[cursor..end], limits, work, output)?;
-            cursor = end;
+        let mut normalized = String::new();
+        normalized
+            .try_reserve(input.len())
+            .map_err(|_| TokenizerExecutionError::AllocationFailed)?;
+        for (symbol, _) in input.nfc() {
+            work.charge(1)?;
+            let actual = normalized
+                .len()
+                .checked_add(symbol.len_utf8())
+                .ok_or(TokenizerExecutionError::ArithmeticOverflow)?;
+            if actual > MAX_TOKENIZER_NORMALIZED_BYTES {
+                return Err(TokenizerExecutionError::NormalizedInputTooLarge {
+                    limit: MAX_TOKENIZER_NORMALIZED_BYTES,
+                    actual,
+                });
+            }
+            normalized.push(symbol);
+        }
+
+        let mut previous = 0;
+        for (start, end) in self.split_regex.find_iter(&normalized) {
+            work.charge(
+                end.checked_sub(previous)
+                    .ok_or(TokenizerExecutionError::ArithmeticOverflow)?,
+            )?;
+            if previous != start {
+                self.encode_piece(
+                    &normalized.as_bytes()[previous..start],
+                    limits,
+                    work,
+                    output,
+                )?;
+            }
+            self.encode_piece(&normalized.as_bytes()[start..end], limits, work, output)?;
+            previous = end;
+        }
+        if previous != normalized.len() {
+            work.charge(
+                normalized
+                    .len()
+                    .checked_sub(previous)
+                    .ok_or(TokenizerExecutionError::ArithmeticOverflow)?,
+            )?;
+            self.encode_piece(&normalized.as_bytes()[previous..], limits, work, output)?;
         }
         Ok(())
     }
@@ -383,6 +427,32 @@ struct AddedTokenMatch {
     token_id: u32,
 }
 
+fn reject_forbidden_special(
+    input: &str,
+    work: &mut WorkBudget,
+) -> Result<(), TokenizerExecutionError> {
+    for start in 0..input.len() {
+        work.charge(1)?;
+        if input.as_bytes()[start] != b'<' {
+            continue;
+        }
+        for (offset, (content, special)) in ADDED_TOKENS.iter().enumerate() {
+            if !*special {
+                continue;
+            }
+            work.charge(content.len())?;
+            if input[start..].starts_with(content) {
+                let token_id = u32::try_from(BASE_VOCABULARY_SIZE)
+                    .ok()
+                    .and_then(|base| base.checked_add(u32::try_from(offset).ok()?))
+                    .ok_or(TokenizerExecutionError::ArithmeticOverflow)?;
+                return Err(TokenizerExecutionError::SpecialTokenForbidden { token_id });
+            }
+        }
+    }
+    Ok(())
+}
+
 fn find_added_token(
     input: &str,
     cursor: usize,
@@ -424,139 +494,6 @@ fn find_added_token(
             .ok_or(TokenizerExecutionError::ArithmeticOverflow)?;
     }
     Ok(None)
-}
-
-fn next_ascii_split(
-    bytes: &[u8],
-    start: usize,
-    work: &mut WorkBudget,
-) -> Result<usize, TokenizerExecutionError> {
-    work.charge(1)?;
-    if bytes[start] == b'\'' {
-        for contraction in [b"re".as_slice(), b"ve", b"ll", b"s", b"t", b"m", b"d"] {
-            work.charge(contraction.len())?;
-            let contraction_bytes = 1_usize
-                .checked_add(contraction.len())
-                .ok_or(TokenizerExecutionError::ArithmeticOverflow)?;
-            let end = start
-                .checked_add(contraction_bytes)
-                .ok_or(TokenizerExecutionError::ArithmeticOverflow)?;
-            let content_start = start
-                .checked_add(1)
-                .ok_or(TokenizerExecutionError::ArithmeticOverflow)?;
-            if end <= bytes.len()
-                && bytes[content_start..end]
-                    .iter()
-                    .zip(contraction)
-                    .all(|(actual, expected)| actual.eq_ignore_ascii_case(expected))
-            {
-                return Ok(end);
-            }
-        }
-    }
-
-    let mut letters = start;
-    if !is_ascii_letter(bytes[letters]) {
-        let next = letters
-            .checked_add(1)
-            .ok_or(TokenizerExecutionError::ArithmeticOverflow)?;
-        if bytes[letters] != b'\r'
-            && bytes[letters] != b'\n'
-            && !is_ascii_digit(bytes[letters])
-            && next < bytes.len()
-            && is_ascii_letter(bytes[next])
-        {
-            letters = next;
-        }
-    }
-    if is_ascii_letter(bytes[letters]) {
-        let mut end = letters;
-        while end < bytes.len() && is_ascii_letter(bytes[end]) {
-            work.charge(1)?;
-            end = end
-                .checked_add(1)
-                .ok_or(TokenizerExecutionError::ArithmeticOverflow)?;
-        }
-        return Ok(end);
-    }
-
-    if is_ascii_digit(bytes[start]) {
-        return start
-            .checked_add(1)
-            .ok_or(TokenizerExecutionError::ArithmeticOverflow);
-    }
-
-    let punctuation = if bytes[start] == b' ' {
-        start.checked_add(1).and_then(|next| {
-            (next < bytes.len() && is_ascii_punctuation_class(bytes[next])).then_some(next)
-        })
-    } else if is_ascii_punctuation_class(bytes[start]) {
-        Some(start)
-    } else {
-        None
-    };
-    if let Some(mut end) = punctuation {
-        while end < bytes.len() && is_ascii_punctuation_class(bytes[end]) {
-            work.charge(1)?;
-            end = end
-                .checked_add(1)
-                .ok_or(TokenizerExecutionError::ArithmeticOverflow)?;
-        }
-        while end < bytes.len() && matches!(bytes[end], b'\r' | b'\n') {
-            work.charge(1)?;
-            end = end
-                .checked_add(1)
-                .ok_or(TokenizerExecutionError::ArithmeticOverflow)?;
-        }
-        return Ok(end);
-    }
-
-    if is_ascii_whitespace(bytes[start]) {
-        let mut run_end = start;
-        let mut last_newline_end = None;
-        while run_end < bytes.len() && is_ascii_whitespace(bytes[run_end]) {
-            work.charge(1)?;
-            let inspected = run_end;
-            run_end = run_end
-                .checked_add(1)
-                .ok_or(TokenizerExecutionError::ArithmeticOverflow)?;
-            if matches!(bytes[inspected], b'\r' | b'\n') {
-                last_newline_end = Some(run_end);
-            }
-        }
-        if let Some(newline_end) = last_newline_end {
-            return Ok(newline_end);
-        }
-        let run_length = run_end
-            .checked_sub(start)
-            .ok_or(TokenizerExecutionError::ArithmeticOverflow)?;
-        if run_end < bytes.len() && run_length > 1 {
-            return run_end
-                .checked_sub(1)
-                .ok_or(TokenizerExecutionError::ArithmeticOverflow);
-        }
-        return Ok(run_end);
-    }
-
-    start
-        .checked_add(1)
-        .ok_or(TokenizerExecutionError::ArithmeticOverflow)
-}
-
-const fn is_ascii_letter(byte: u8) -> bool {
-    byte.is_ascii_alphabetic()
-}
-
-const fn is_ascii_digit(byte: u8) -> bool {
-    byte.is_ascii_digit()
-}
-
-const fn is_ascii_whitespace(byte: u8) -> bool {
-    byte.is_ascii_whitespace()
-}
-
-const fn is_ascii_punctuation_class(byte: u8) -> bool {
-    !is_ascii_whitespace(byte) && !is_ascii_letter(byte) && !is_ascii_digit(byte)
 }
 
 fn byte_to_unicode(byte: u8) -> Option<char> {
@@ -654,13 +591,16 @@ impl WorkBudget {
 #[cfg(test)]
 mod tests {
     use super::{
-        byte_to_unicode, next_ascii_split, unicode_to_byte, SpecialTokenDecodePolicy,
-        SpecialTokenEncodePolicy, TokenizerExecutionError, TokenizerExecutionLimits, WorkBudget,
-        MAX_TOKENIZER_INPUT_BYTES, MAX_TOKENIZER_WORK,
+        byte_to_unicode, unicode_to_byte, SpecialTokenDecodePolicy, SpecialTokenEncodePolicy,
+        TokenizerExecutionError, TokenizerExecutionLimits, MAX_TOKENIZER_INPUT_BYTES,
+        MAX_TOKENIZER_WORK,
     };
     use crate::tokenizer::tests::test_tokenizer;
     use crate::ADDED_TOKENS;
     use ferric_spec::Qwen3ModelRole;
+
+    const DIFFERENTIAL_CORPUS: &str =
+        include_str!("fixtures/tokenizer/qwen3-tokenizer-differential.txt");
 
     fn tokenizer() -> crate::AuthenticatedTokenizer {
         test_tokenizer(Qwen3ModelRole::Target8B)
@@ -681,7 +621,7 @@ mod tests {
     }
 
     #[test]
-    fn pinned_ascii_encode_fixtures_are_exact_and_deterministic() {
+    fn pinned_ascii_and_unicode_encode_fixtures_are_exact_and_deterministic() {
         let tokenizer = tokenizer();
         let fixtures: &[(&str, &[u32])] = &[
             ("", &[]),
@@ -697,6 +637,10 @@ mod tests {
             ("trailing   ", &[376, 14_277, 262]),
             ("I'RE", &[40, 94_153]),
             ("\0\u{7f}", &[188, 221]),
+            ("e\u{301}", &[963]),
+            ("\u{e9}", &[963]),
+            ("\u{4e2d}\u{6587}", &[104_811]),
+            ("\u{661}\u{662}", &[149, 94, 149, 95]),
         ];
         for (input, expected) in fixtures {
             let first = tokenizer
@@ -705,14 +649,14 @@ mod tests {
                     TokenizerExecutionLimits::m1(),
                     SpecialTokenEncodePolicy::Reject,
                 )
-                .expect("pinned ASCII fixture");
+                .expect("pinned tokenizer fixture");
             let second = tokenizer
                 .encode(
                     input,
                     TokenizerExecutionLimits::m1(),
                     SpecialTokenEncodePolicy::Reject,
                 )
-                .expect("repeat pinned ASCII fixture");
+                .expect("repeat pinned tokenizer fixture");
             assert_eq!(&first, expected, "fixture {input:?}");
             assert_eq!(second, first, "determinism {input:?}");
         }
@@ -766,6 +710,16 @@ mod tests {
                 )
                 .expect_err("special token must be explicit"),
             TokenizerExecutionError::SpecialTokenForbidden { token_id: 151_644 }
+        );
+        assert_eq!(
+            tokenizer
+                .encode(
+                    "\u{e9} prefix <|im_end|>",
+                    TokenizerExecutionLimits::m1(),
+                    SpecialTokenEncodePolicy::Reject,
+                )
+                .expect_err("special token is rejected before Unicode execution"),
+            TokenizerExecutionError::SpecialTokenForbidden { token_id: 151_645 }
         );
         let ids = tokenizer
             .encode(
@@ -849,28 +803,41 @@ mod tests {
     }
 
     #[test]
-    fn ascii_split_boundaries_match_the_pinned_regex_domain() {
-        for (input, expected) in [
-            ("Hello world", vec!["Hello", " world"]),
-            ("hello   world", vec!["hello", "  ", " world"]),
-            ("I'RE ready", vec!["I", "'RE", " ready"]),
-            ("1 23\nnext", vec!["1", " ", "2", "3", "\n", "next"]),
-            ("tabs\twork", vec!["tabs", "\twork"]),
-            ("line\r\nend", vec!["line", "\r\n", "end"]),
-            (" punctuation!?", vec![" punctuation", "!?"]),
-            ("trailing   ", vec!["trailing", "   "]),
-        ] {
-            let mut budget = WorkBudget::new(MAX_TOKENIZER_WORK);
-            let mut cursor = 0;
-            let mut actual = Vec::new();
-            while cursor < input.len() {
-                let end = next_ascii_split(input.as_bytes(), cursor, &mut budget)
-                    .expect("bounded ASCII split");
-                actual.push(&input[cursor..end]);
-                cursor = end;
+    fn independent_oracle_corpus_matches_the_production_path() {
+        let tokenizer = tokenizer();
+        let mut cases = 0_usize;
+        for (line_number, line) in DIFFERENTIAL_CORPUS.lines().enumerate() {
+            if line.is_empty() || line.starts_with('#') {
+                continue;
             }
-            assert_eq!(actual, expected, "split fixture {input:?}");
+            let (input_hex, ids_text) = line
+                .split_once('\t')
+                .unwrap_or_else(|| panic!("malformed corpus line {}", line_number + 1));
+            let input_bytes = if input_hex == "-" {
+                Vec::new()
+            } else {
+                decode_hex(input_hex)
+            };
+            let input = std::str::from_utf8(&input_bytes).expect("corpus input is UTF-8");
+            let expected: Vec<u32> = if ids_text == "-" {
+                Vec::new()
+            } else {
+                ids_text
+                    .split(',')
+                    .map(|id| id.parse().expect("corpus token ID is u32"))
+                    .collect()
+            };
+            let actual = tokenizer
+                .encode(
+                    input,
+                    TokenizerExecutionLimits::m1(),
+                    SpecialTokenEncodePolicy::Allow,
+                )
+                .unwrap_or_else(|error| panic!("corpus line {} failed: {error}", line_number + 1));
+            assert_eq!(actual, expected, "corpus input {input:?}");
+            cases = cases.checked_add(1).expect("corpus case count fits usize");
         }
+        assert!(cases >= 640, "differential corpus must remain substantial");
     }
 
     #[test]
@@ -883,18 +850,8 @@ mod tests {
     }
 
     #[test]
-    fn unsupported_unicode_and_every_execution_bound_fail_closed() {
+    fn every_execution_bound_fails_closed() {
         let tokenizer = tokenizer();
-        assert_eq!(
-            tokenizer
-                .encode(
-                    "aé",
-                    TokenizerExecutionLimits::m1(),
-                    SpecialTokenEncodePolicy::Reject,
-                )
-                .expect_err("Unicode is outside the proved execution domain"),
-            TokenizerExecutionError::UnsupportedUnicode { byte_offset: 1 }
-        );
         assert_eq!(
             tokenizer
                 .encode(
@@ -961,5 +918,16 @@ mod tests {
                 .expect_err("hard envelope cannot be raised"),
             TokenizerExecutionError::InvalidLimits
         );
+    }
+
+    fn decode_hex(input: &str) -> Vec<u8> {
+        assert_eq!(input.len() % 2, 0, "hex input has complete bytes");
+        (0..input.len())
+            .step_by(2)
+            .map(|offset| {
+                u8::from_str_radix(&input[offset..offset + 2], 16)
+                    .expect("corpus input contains lowercase hex")
+            })
+            .collect()
     }
 }
