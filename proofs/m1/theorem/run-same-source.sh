@@ -221,7 +221,8 @@ while IFS='|' read -r name foundation property path_id package source module fun
     # Cargo does not fingerprint forwarded Verus selector arguments. Remove only
     # this package's prior artifacts so every row emits its own root query while
     # retaining the already-built dependency closure.
-    cargo clean -p "$package" --release --target-dir "$scratch/verus-target" \
+    cargo clean --manifest-path "$repo/Cargo.toml" -p "$package" --release \
+        --target-dir "$scratch/verus-target" \
         >"$scratch/$name.clean-transcript" 2>&1 || {
         cat "$scratch/$name.clean-transcript" >&2
         printf 'FAIL: %s could not invalidate the prior selected proof\n' "$name" >&2
