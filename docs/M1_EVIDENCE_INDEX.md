@@ -107,6 +107,15 @@ this scaffold stage. Adding a file at a registered path is therefore
 insufficient. The private in-process callback used by synthetic policy tests
 is deliberately absent from the CLI and is not a qualification mode.
 
+The versioned hostile foundation registry under `proofs/m1/negative/` is also
+not an evidence index or evidence product. Its runner can authenticate the
+pinned Verus closure and demonstrate a fresh same-source proof rejection, but
+that output remains inadmissible here until the checker-owned
+`validate-negative-mutation.py` implementation and source pin exist. The
+registry's associations to `graph-proof`, `kv-proof`, `batching-proof`,
+`scheduler-proof`, and `isolation-proof` keep those future paths `Open`; they
+do not assert that any path exists or is discharged.
+
 This checker establishes structural completeness and cryptographic identity
 closure. It does not establish the semantic truth of a theorem, the
 independence of a validator, hardware correctness, or performance. Those

@@ -106,6 +106,9 @@ Run the requirements and hostile policy checks directly:
 ```sh
 python3 -I proofs/check-m1-requirements.py .
 python3 -I proofs/m1-requirements/test-policy.py .
+python3 -I proofs/m1/negative/check-registry.py \
+  . proofs/m1/negative/REQUIRED_FOUNDATIONS /tmp/m1-active
+python3 -I proofs/m1/negative/test-policy.py .
 ```
 
 ## Non-Claims
@@ -116,4 +119,7 @@ Verus, fe2o3, HSA, MI300X hardware, vLLM, or SGLang. It creates no
 `ContractSetV1`, qualification artifact, receipt, or evidence status. A passing
 requirements check proves only that the open M1 obligation roster is canonical,
 complete, internally resolved, and consistent with the unchecked roadmap and
-this document.
+this document. The separate M1 foundation-mutation registry binds current
+direct-Verus bodies to hostile-test requirements. Registry validation or a
+fresh pinned-compiler rejection does not implement its associated future proof
+path and is not closure evidence.
