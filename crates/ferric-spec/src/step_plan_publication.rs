@@ -25,6 +25,22 @@ pub struct StepPlan {
 }
 
 impl StepPlan {
+    pub closed spec fn request_spec(&self) -> RequestId {
+        self.request
+    }
+
+    pub closed spec fn completion_epoch_spec(&self) -> CompletionEpoch {
+        self.completion_epoch
+    }
+
+    pub closed spec fn plan_id_spec(&self) -> Identity {
+        self.plan_id
+    }
+
+    pub closed spec fn selection_spec(&self) -> Qwen3PlanSelection {
+        self.selection
+    }
+
     /// Constructs a logical plan authority. Validation remains fail-closed.
     #[must_use]
     pub const fn new(
@@ -32,31 +48,45 @@ impl StepPlan {
         completion_epoch: CompletionEpoch,
         plan_id: Identity,
         selection: Qwen3PlanSelection,
-    ) -> Self {
+    ) -> (plan: Self)
+        ensures
+            plan.request_spec() == request,
+            plan.completion_epoch_spec() == completion_epoch,
+            plan.plan_id_spec() == plan_id,
+            plan.selection_spec() == selection,
+    {
         Self { request, completion_epoch, plan_id, selection }
     }
 
     /// Exact generational request identity.
     #[must_use]
-    pub const fn request(&self) -> RequestId {
+    pub const fn request(&self) -> (request: RequestId)
+        ensures request == self.request_spec(),
+    {
         self.request
     }
 
     /// Exact completion epoch.
     #[must_use]
-    pub const fn completion_epoch(&self) -> CompletionEpoch {
+    pub const fn completion_epoch(&self) -> (epoch: CompletionEpoch)
+        ensures epoch == self.completion_epoch_spec(),
+    {
         self.completion_epoch
     }
 
     /// Exact generated-plan identity.
     #[must_use]
-    pub const fn plan_id(&self) -> &Identity {
+    pub const fn plan_id(&self) -> (plan_id: &Identity)
+        ensures *plan_id == self.plan_id_spec(),
+    {
         &self.plan_id
     }
 
     /// Exact target role, mode, and finite graph bucket.
     #[must_use]
-    pub const fn selection(&self) -> Qwen3PlanSelection {
+    pub const fn selection(&self) -> (selection: Qwen3PlanSelection)
+        ensures selection == self.selection_spec(),
+    {
         self.selection
     }
 }

@@ -239,16 +239,28 @@ pub struct StructurallyValidatedPhysicalPlan {
 }
 
 impl StructurallyValidatedPhysicalPlan {
+    pub closed spec fn declaration_spec(&self) -> PhysicalPlanDeclaration {
+        self.declaration
+    }
+
+    pub closed spec fn capacity_source_spec(&self) -> PhysicalCapacitySource {
+        self.capacity_source
+    }
+
     /// Returns the inert declaration for identity binding and later review.
     #[must_use]
-    pub const fn declaration(&self) -> &PhysicalPlanDeclaration {
+    pub const fn declaration(&self) -> (declaration: &PhysicalPlanDeclaration)
+        ensures *declaration == self.declaration_spec(),
+    {
         &self.declaration
     }
 
     /// Returns the retained expectation class. `FutureUntrusted` never means
     /// fe2o3 support, and the reviewed tag is not authentication evidence.
     #[must_use]
-    pub const fn capacity_source(&self) -> PhysicalCapacitySource {
+    pub const fn capacity_source(&self) -> (source: PhysicalCapacitySource)
+        ensures source == self.capacity_source_spec(),
+    {
         self.capacity_source
     }
 }
@@ -635,7 +647,15 @@ fn validate_structure(
 pub fn validate_physical_plan_declaration(
     declaration: PhysicalPlanDeclaration,
     expectation: &PhysicalPlanExpectation,
-) -> Result<StructurallyValidatedPhysicalPlan, PhysicalPlanError> {
+) -> (result: Result<StructurallyValidatedPhysicalPlan, PhysicalPlanError>)
+    ensures match result {
+        Ok(validated) => {
+            &&& validated.declaration_spec() == declaration
+            &&& validated.capacity_source_spec() == expectation.capacity.source
+        },
+        Err(_) => true,
+    },
+{
     validate_capacity_expectation(expectation.capacity)?;
     if validate_structure(&expectation.expected, expectation.capacity).is_err() {
         return Err(PhysicalPlanError::InvalidExpectation);
