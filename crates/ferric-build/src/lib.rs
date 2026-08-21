@@ -1378,6 +1378,19 @@ mod tests {
                 b"ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
             )
         );
+        assert_eq!(
+            digest_bytes(b"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq").sha256,
+            super::decode_hex_32(
+                b"248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1"
+            )
+        );
+        let million_a = vec![b'a'; 1_000_000];
+        assert_eq!(
+            digest_bytes(&million_a).sha256,
+            super::decode_hex_32(
+                b"cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0"
+            )
+        );
         let mut incremental = super::Sha256::new();
         incremental.update(b"a");
         incremental.update(b"b");
@@ -1404,6 +1417,27 @@ mod tests {
             super::target_weight_set_identity(),
             QWEN3_TARGET_WEIGHT_SET_SHA256
         );
+    }
+
+    #[test]
+    fn sha256_chunk_boundaries_match_one_shot_digest() {
+        for byte_len in [0, 1, 55, 56, 63, 64, 65, 119, 120, 127, 128, 129, 257] {
+            let bytes = (0..byte_len)
+                .map(|index| u8::try_from((index * 131 + 17) % 256).expect("fixture byte fits u8"))
+                .collect::<Vec<_>>();
+            let expected = super::sha256::digest(&bytes);
+            for chunk_len in [1, 2, 7, 31, 63, 64, 65, 127] {
+                let mut incremental = super::Sha256::new();
+                for chunk in bytes.chunks(chunk_len) {
+                    incremental.update(chunk);
+                }
+                assert_eq!(
+                    incremental.finish(),
+                    expected,
+                    "byte_len={byte_len}, chunk_len={chunk_len}"
+                );
+            }
+        }
     }
 
     #[test]

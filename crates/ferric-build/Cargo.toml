@@ -12,6 +12,7 @@ ferric-kernels = { path = "../ferric-kernels" }
 ferric-spec = { path = "../ferric-spec" }
 onig = { version = "=6.5.3", default-features = false }
 unicode-normalization-alignments = "=0.1.12"
+vstd.workspace = true
 
 [package.metadata.verus]
 verify = true

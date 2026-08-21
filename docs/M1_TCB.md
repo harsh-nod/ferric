@@ -25,6 +25,22 @@ validator required by `ASSURANCE.md` exists and passes. A source digest,
 successful compilation, disassembly check, or hardware differential test does
 not promote that boundary to `Proved`.
 
+## Cryptographic Boundary
+
+The directly verified `ferric-build` SHA-256 implementation establishes
+correspondence to its closed functional SHA-256 computation for admitted
+messages shorter than 2^64 bits. The proof covers initialization, the
+big-endian word schedule, 64 wrapping `u32` rounds, block chaining, streaming
+updates, standard padding, encoded bit length, and digest byte order.
+
+That computation theorem does not prove collision resistance, preimage or
+second-preimage resistance, provenance, signer identity, or authenticity.
+M1 therefore trusts the standard cryptographic security assumptions for
+SHA-256 wherever a digest is used as an identity commitment. Signature
+algorithm choice, release keys, key identifiers, rotation, revocation, and
+compromise response remain separate pending admission inputs; this declaration
+does not provide or authorize any of them.
+
 ## Runtime Boundary
 
 M1 trusts the exact identity-bound instances of:

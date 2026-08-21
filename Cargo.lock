@@ -39,6 +39,7 @@ dependencies = [
  "ferric-spec",
  "onig",
  "unicode-normalization-alignments",
+ "vstd",
 ]
 
 [[package]]
