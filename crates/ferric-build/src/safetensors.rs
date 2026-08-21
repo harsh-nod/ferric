@@ -13,14 +13,14 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use std::io::{self, Read};
 
-const MAX_SAFETENSORS_HEADER_BYTES: u64 = 64 * 1_024;
+pub(super) const MAX_SAFETENSORS_HEADER_BYTES: u64 = 64 * 1_024;
 const MAX_INDEX_BYTES: usize = 64 * 1_024;
 const STREAM_BUFFER_BYTES: usize = 64 * 1_024;
 const TARGET_INDEX_BYTES: usize = 32_878;
 const TARGET_INDEX_SHA256: [u8; 32] =
     decode_hex_32(b"f9fdbcb91c23971c13ec5d5f2573d2349e8f61f2f049371ec699281748fdb1bc");
 
-const TARGET_SHARD_PINS: [FilePin; 5] = [
+pub(super) const TARGET_SHARD_PINS: [FilePin; 5] = [
     FilePin {
         name: "model-00001-of-00005.safetensors",
         sha256: decode_hex_32(b"31d6a825ae35f11fb85b195b4c42c146c051e446433125a215336abdf95cbf5f"),
@@ -58,7 +58,7 @@ const TARGET_SHARD_PINS: [FilePin; 5] = [
     },
 ];
 
-const DRAFT_FILE_PIN: FilePin = FilePin {
+pub(super) const DRAFT_FILE_PIN: FilePin = FilePin {
     name: "model.safetensors",
     sha256: QWEN3_DRAFT_WEIGHT_SHA256,
     file_bytes: QWEN3_DRAFT_WEIGHT_ARTIFACT_BYTES,
@@ -390,28 +390,29 @@ pub fn authenticate_qwen3_draft_weights<R: Read>(
 }
 
 #[derive(Clone, Copy)]
-struct FilePin {
-    name: &'static str,
-    sha256: [u8; 32],
-    file_bytes: u64,
-    header_bytes: u64,
-    tensor_data_bytes: u64,
+pub(super) struct FilePin {
+    pub(super) name: &'static str,
+    pub(super) sha256: [u8; 32],
+    pub(super) file_bytes: u64,
+    pub(super) header_bytes: u64,
+    pub(super) tensor_data_bytes: u64,
 }
 
-struct ParsedTensor {
-    name: String,
-    start: u64,
-    end: u64,
-    ordinal: u32,
+pub(super) struct ParsedTensor {
+    pub(super) name: String,
+    pub(super) start: u64,
+    pub(super) end: u64,
+    pub(super) ordinal: u32,
+    pub(super) metadata: Qwen3TensorMetadata,
 }
 
-struct ParsedShard {
-    tensors: Vec<ParsedTensor>,
-    tensor_data_bytes: u64,
+pub(super) struct ParsedShard {
+    pub(super) tensors: Vec<ParsedTensor>,
+    pub(super) tensor_data_bytes: u64,
 }
 
 #[derive(Debug)]
-struct TargetIndex {
+pub(super) struct TargetIndex {
     shard_by_tensor: BTreeMap<String, usize>,
 }
 
@@ -545,7 +546,7 @@ fn io_error(artifact: &str, error: io::Error) -> SafetensorsError {
     }
 }
 
-fn parse_target_index(
+pub(super) fn parse_target_index(
     bytes: &[u8],
     authenticate_bytes: bool,
 ) -> Result<TargetIndex, SafetensorsError> {
@@ -595,7 +596,7 @@ fn parse_target_index(
     Ok(TargetIndex { shard_by_tensor })
 }
 
-fn parse_header(
+pub(super) fn parse_header(
     role: Qwen3ModelRole,
     artifact: &str,
     bytes: &[u8],
@@ -690,10 +691,11 @@ fn parse_tensor(
         start,
         end,
         ordinal,
+        metadata: tensor,
     })
 }
 
-fn classify_tensor_name(
+pub(super) fn classify_tensor_name(
     role: Qwen3ModelRole,
     name: &str,
 ) -> Result<(Qwen3TensorKind, u32, u32), SafetensorsError> {
@@ -757,7 +759,7 @@ fn global_ordinal(role: Qwen3ModelRole, kind: Qwen3TensorKind) -> u32 {
     }
 }
 
-fn validate_offset_coverage(
+pub(super) fn validate_offset_coverage(
     tensors: &[ParsedTensor],
     expected_tensor_data_bytes: u64,
 ) -> Result<(), SafetensorsError> {
@@ -786,7 +788,10 @@ fn validate_offset_coverage(
     Ok(())
 }
 
-fn validate_roster(role: Qwen3ModelRole, shards: &[ParsedShard]) -> Result<(), SafetensorsError> {
+pub(super) fn validate_roster(
+    role: Qwen3ModelRole,
+    shards: &[ParsedShard],
+) -> Result<(), SafetensorsError> {
     let mut names = BTreeSet::new();
     let mut ordinals = BTreeSet::new();
     let mut tensor_data_bytes = 0_u64;
@@ -826,7 +831,7 @@ fn validate_roster(role: Qwen3ModelRole, shards: &[ParsedShard]) -> Result<(), S
     Ok(())
 }
 
-fn validate_shard_mapping(
+pub(super) fn validate_shard_mapping(
     index: &TargetIndex,
     shard_index: usize,
     shard: &ParsedShard,
@@ -854,7 +859,7 @@ fn validate_ordinals(
     Ok(())
 }
 
-fn require_shard_name(actual: &str, expected: &str) -> Result<(), SafetensorsError> {
+pub(super) fn require_shard_name(actual: &str, expected: &str) -> Result<(), SafetensorsError> {
     if actual != expected {
         return Err(SafetensorsError::ShardName {
             expected: expected.to_owned(),

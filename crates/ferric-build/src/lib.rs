@@ -13,6 +13,7 @@ mod json;
 mod safetensors;
 mod sha256;
 mod tokenizer;
+mod weight_stream;
 
 pub use bundle::{
     decode_canonical_deployment_bundle, encode_canonical_deployment_bundle, CanonicalBundleError,
@@ -24,6 +25,10 @@ pub use safetensors::{
     SafetensorsError, SafetensorsSource,
 };
 pub use tokenizer::{authenticate_qwen3_tokenizer, AuthenticatedTokenizer, TokenizerError};
+pub use weight_stream::{
+    prepack_qwen3_draft_weights, prepack_qwen3_target_weights, PrepackedWeightSet, WeightSection,
+    WeightSectionManifest, WeightStreamError, WeightTransform, PREPACKED_WEIGHT_MANIFEST_VERSION,
+};
 
 use ferric_spec::{
     DeploymentBundle, EngineLimits, Identity, ModelArtifact, ModelConfig, NumericalPolicy,
@@ -277,6 +282,39 @@ pub struct AuthenticatedDeploymentAssets<'a> {
     pub draft: AuthenticatedModelAssets<'a>,
     /// Requested bounded engine limits.
     pub limits: EngineLimits,
+}
+
+/// Validated deployment plus the two consumed prepacked-output authorities.
+///
+/// The `ferric-spec` deployment bundle binds the exact source weight-set
+/// identities. The two manifests separately bind the emitted foundation
+/// layouts because the current executable bundle schema has no prepacked
+/// aggregate-identity field. This result is intentionally not `Clone`.
+#[derive(Debug, PartialEq, Eq)]
+pub struct PrepackedDeploymentBundle {
+    deployment: DeploymentBundle,
+    target_manifest: WeightSectionManifest,
+    draft_manifest: WeightSectionManifest,
+}
+
+impl PrepackedDeploymentBundle {
+    /// Returns the admitted executable deployment bundle.
+    #[must_use]
+    pub const fn deployment(&self) -> &DeploymentBundle {
+        &self.deployment
+    }
+
+    /// Returns the exact target prepacked-output manifest.
+    #[must_use]
+    pub const fn target_manifest(&self) -> &WeightSectionManifest {
+        &self.target_manifest
+    }
+
+    /// Returns the exact draft prepacked-output manifest.
+    #[must_use]
+    pub const fn draft_manifest(&self) -> &WeightSectionManifest {
+        &self.draft_manifest
+    }
 }
 
 /// Fail-closed bundle parsing or admission error.
@@ -571,6 +609,87 @@ pub fn build_authenticated_deployment_bundle(
         limits: assets.limits,
     };
     assemble_deployment_bundle(&admission_assets)
+}
+
+/// Builds an M1 deployment while consuming tokenizer and prepacked authorities.
+///
+/// The prepacked authorities can be produced only by fresh source streaming;
+/// neither caller-asserted descriptors nor a prior authentication pass can
+/// enter this path. The result retains both canonical prepacked manifests next
+/// to the executable bundle so their aggregate identities are not discarded.
+///
+/// # Errors
+///
+/// Returns [`BuildError`] for swapped authorities, target/draft tokenizer
+/// mismatch, malformed or noncanonical metadata, source or identity mismatch,
+/// or any `ferric-spec` admission failure.
+pub fn build_prepacked_deployment_bundle(
+    assets: AuthenticatedDeploymentAssets<'_>,
+    target_tokenizer: AuthenticatedTokenizer,
+    draft_tokenizer: AuthenticatedTokenizer,
+    target_weights: PrepackedWeightSet,
+    draft_weights: PrepackedWeightSet,
+) -> Result<PrepackedDeploymentBundle, BuildError> {
+    let target_tokenizer_role = target_tokenizer.role();
+    if target_tokenizer_role != Qwen3ModelRole::Target8B {
+        return Err(BuildError::AuthenticatedTokenizerRole {
+            expected: Qwen3ModelRole::Target8B,
+            actual: target_tokenizer_role,
+        });
+    }
+    let draft_tokenizer_role = draft_tokenizer.role();
+    if draft_tokenizer_role != Qwen3ModelRole::Draft06B {
+        return Err(BuildError::AuthenticatedTokenizerRole {
+            expected: Qwen3ModelRole::Draft06B,
+            actual: draft_tokenizer_role,
+        });
+    }
+    if !target_tokenizer.compatible_with(&draft_tokenizer) {
+        return Err(BuildError::TokenizerMismatch);
+    }
+
+    let target_weight_role = target_weights.role();
+    if target_weight_role != Qwen3ModelRole::Target8B {
+        return Err(BuildError::AuthenticatedWeightRole {
+            expected: Qwen3ModelRole::Target8B,
+            actual: target_weight_role,
+        });
+    }
+    let draft_weight_role = draft_weights.role();
+    if draft_weight_role != Qwen3ModelRole::Draft06B {
+        return Err(BuildError::AuthenticatedWeightRole {
+            expected: Qwen3ModelRole::Draft06B,
+            actual: draft_weight_role,
+        });
+    }
+
+    let (target_descriptor, target_manifest) = target_weights.into_parts();
+    let (draft_descriptor, draft_manifest) = draft_weights.into_parts();
+    let admission_assets = DeploymentAssets {
+        target: ModelAssets {
+            repository: assets.target.repository,
+            revision: assets.target.revision,
+            config_json: assets.target.config_json,
+            tokenizer_metadata_json: assets.target.tokenizer_metadata_json,
+            vocabulary: target_tokenizer.into_descriptor(),
+            weights: target_descriptor,
+        },
+        draft: ModelAssets {
+            repository: assets.draft.repository,
+            revision: assets.draft.revision,
+            config_json: assets.draft.config_json,
+            tokenizer_metadata_json: assets.draft.tokenizer_metadata_json,
+            vocabulary: draft_tokenizer.into_descriptor(),
+            weights: draft_descriptor,
+        },
+        limits: assets.limits,
+    };
+    let deployment = assemble_deployment_bundle(&admission_assets)?;
+    Ok(PrepackedDeploymentBundle {
+        deployment,
+        target_manifest,
+        draft_manifest,
+    })
 }
 
 fn assemble_deployment_bundle(

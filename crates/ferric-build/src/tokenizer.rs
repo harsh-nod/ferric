@@ -543,7 +543,7 @@ fn unexpected(path: &str) -> TokenizerError {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::{
         authenticate_qwen3_tokenizer, parse_tokenizer_json, AuthenticatedTokenizer,
         AuthenticatedTokenizerSeal, TokenizerError, MERGES_SEMANTIC_SHA256, TOKENIZER_JSON_BYTES,
@@ -570,7 +570,7 @@ mod tests {
         changed.into_bytes()
     }
 
-    fn test_tokenizer(role: Qwen3ModelRole) -> AuthenticatedTokenizer {
+    pub(crate) fn test_tokenizer(role: Qwen3ModelRole) -> AuthenticatedTokenizer {
         AuthenticatedTokenizer {
             role,
             descriptor: ArtifactDigest {
@@ -584,7 +584,7 @@ mod tests {
         }
     }
 
-    fn authenticated_assets() -> AuthenticatedDeploymentAssets<'static> {
+    pub(crate) fn authenticated_assets() -> AuthenticatedDeploymentAssets<'static> {
         AuthenticatedDeploymentAssets {
             target: AuthenticatedModelAssets {
                 repository: TARGET_REPOSITORY,
