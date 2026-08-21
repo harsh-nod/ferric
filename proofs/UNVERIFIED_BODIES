@@ -1,12 +1,9 @@
 format=FERRIC-UNVERIFIED-BODIES-V1
-unverified=ferric-build|crates/ferric-build/src/auth.rs|ferric_build::auth::AuthenticatedBundleAdmission::into_parts|pending-verus|m1-bundle-authentication-proof-pending
-unverified=ferric-build|crates/ferric-build/src/auth.rs|ferric_build::auth::AuthenticatedBundleAdmission::prepacked|pending-verus|m1-bundle-authentication-proof-pending
-unverified=ferric-build|crates/ferric-build/src/auth.rs|ferric_build::auth::AuthenticatedBundleAdmission::record|pending-verus|m1-bundle-authentication-proof-pending
 unverified=ferric-build|crates/ferric-build/src/auth.rs|ferric_build::auth::BundleAdmissionError::Display::fmt|excluded-presentation|error-formatting-outside-admission
 unverified=ferric-build|crates/ferric-build/src/auth.rs|ferric_build::auth::BundleAdmissionError::Error::source|excluded-presentation|error-chaining-outside-admission
 unverified=ferric-build|crates/ferric-build/src/auth.rs|ferric_build::auth::BundleAdmissionError::From::from|pending-verus|m1-bundle-authentication-proof-pending
 unverified=ferric-build|crates/ferric-build/src/auth.rs|ferric_build::auth::seal_authenticated_bundle|pending-verus|m1-bundle-authentication-proof-pending
-unverified=ferric-build|crates/ferric-build/src/auth.rs|ferric_build::auth::validate_manifest|pending-verus|m1-bundle-authentication-proof-pending
+unverified=ferric-build|crates/ferric-build/src/auth.rs|ferric_build::auth::validate_manifest_sections|pending-verus|m1-manifest-roster-classifier-proof-pending
 unverified=ferric-build|crates/ferric-build/src/bundle.rs|ferric_build::bundle::CanonicalBundleError::Display::fmt|excluded-presentation|error-formatting-outside-admission
 unverified=ferric-build|crates/ferric-build/src/bundle.rs|ferric_build::bundle::CanonicalBundleError::Error::source|excluded-presentation|error-chaining-outside-admission
 unverified=ferric-build|crates/ferric-build/src/identity_closure.rs|ferric_build::identity_closure::ExternalIdentityClosureInputs::components|pending-verus|m1-identity-closure-proof-pending

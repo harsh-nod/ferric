@@ -114,8 +114,6 @@ impl BundleAdmissionRecord {
     }
 }
 
-} // verus!
-
 /// Non-clone authority retaining the exact authenticated deployment inputs.
 #[derive(Debug, PartialEq, Eq)]
 pub struct AuthenticatedBundleAdmission {
@@ -124,24 +122,58 @@ pub struct AuthenticatedBundleAdmission {
 }
 
 impl AuthenticatedBundleAdmission {
+    pub(crate) closed spec fn prepacked_spec(&self) -> PrepackedDeploymentBundle {
+        self.prepacked
+    }
+
+    /// Verifier view of the exact retained deployment.
+    pub closed spec fn deployment_spec(&self) -> DeploymentBundle {
+        self.prepacked.deployment_spec()
+    }
+
+    /// Verifier view of the exact retained target manifest.
+    pub closed spec fn target_manifest_spec(&self) -> WeightSectionManifest {
+        self.prepacked.target_manifest_spec()
+    }
+
+    /// Verifier view of the exact retained draft manifest.
+    pub closed spec fn draft_manifest_spec(&self) -> WeightSectionManifest {
+        self.prepacked.draft_manifest_spec()
+    }
+
+    /// Verifier view of the exact canonical commitment record.
+    pub closed spec fn record_spec(&self) -> BundleAdmissionRecord {
+        self.record
+    }
+
     /// Returns the retained exact deployment and prepacked manifests.
     #[must_use]
     pub const fn prepacked(&self) -> &PrepackedDeploymentBundle {
+        self.prepacked_exact()
+    }
+
+    pub(crate) const fn prepacked_exact(&self) -> (prepacked: &PrepackedDeploymentBundle)
+        ensures *prepacked == self.prepacked_spec(),
+    {
         &self.prepacked
     }
 
     /// Returns the canonical commitment record.
     #[must_use]
-    pub const fn record(&self) -> &BundleAdmissionRecord {
+    pub const fn record(&self) -> (record: &BundleAdmissionRecord)
+        ensures *record == self.record_spec(),
+    {
         &self.record
     }
 
-    pub(crate) fn into_parts(self) -> (PrepackedDeploymentBundle, BundleAdmissionRecord) {
+    pub(crate) fn into_parts(
+        self,
+    ) -> (parts: (PrepackedDeploymentBundle, BundleAdmissionRecord))
+        ensures parts.0 == self.prepacked_spec(), parts.1 == self.record_spec(),
+    {
         (self.prepacked, self.record)
     }
 }
-
-verus! {
 
 /// Failure while sealing or decoding an authenticated bundle commitment.
 #[verifier::allow(autoderive_clone_without_spec)]
@@ -549,6 +581,69 @@ impl From<CanonicalBundleError> for BundleAdmissionError {
     }
 }
 
+verus! {
+
+/// Exact directly checked relation between one retained manifest and its
+/// admission commitment. The digest equality is functional SHA-256 only; it
+/// does not claim collision resistance, file provenance, or a signature.
+pub closed spec fn retained_manifest_commitment_spec(
+    manifest: WeightSectionManifest,
+    deployment: DeploymentBundle,
+    role: Qwen3ModelRole,
+    commitment: ManifestCommitment,
+) -> bool {
+    &&& commitment.role == role
+    &&& commitment.version == manifest.version_spec()
+    &&& commitment.source_weights_id@ == manifest.source_weights_id_spec()
+    &&& commitment.aggregate_id@ == manifest.aggregate_id_spec()
+    &&& commitment.source_artifact_bytes == manifest.source_artifact_bytes_spec()
+    &&& commitment.tensor_data_bytes == manifest.tensor_data_bytes_spec()
+    &&& commitment.output_bytes == manifest.output_bytes_spec()
+    &&& commitment.section_count == manifest.sections_spec().len()
+    &&& commitment.canonical_manifest_bytes == manifest.canonical_bytes_spec().len()
+    &&& manifest_commitment_spec(deployment, commitment, role)
+    &&& manifest.aggregate_id_spec()
+        == sha256::digest_spec(manifest.canonical_bytes_spec())
+}
+
+/// Exact success relation for the directly verified record-sealing core.
+pub closed spec fn sealed_admission_record_spec(
+    record: BundleAdmissionRecord,
+    deployment: DeploymentBundle,
+    target_manifest: WeightSectionManifest,
+    draft_manifest: WeightSectionManifest,
+    target: ManifestCommitment,
+    draft: ManifestCommitment,
+) -> bool {
+    &&& canonical_bundle_admission_bytes(record.bytes_spec())
+    &&& record.record_id_spec().bytes_spec()
+        == sha256::digest_spec(RECORD_DOMAIN@ + record.bytes_spec())
+    &&& retained_manifest_commitment_spec(
+        target_manifest, deployment, Qwen3ModelRole::Target8B, target,
+    )
+    &&& retained_manifest_commitment_spec(
+        draft_manifest, deployment, Qwen3ModelRole::Draft06B, draft,
+    )
+    &&& canonical_bundle_admission_values(record.bytes_spec(), deployment, target, draft)
+}
+
+/// Exact record composition retained by a sealed admission authority.
+pub closed spec fn authenticated_bundle_admission_spec(
+    authority: AuthenticatedBundleAdmission,
+) -> bool {
+    exists |target: ManifestCommitment, draft: ManifestCommitment|
+        sealed_admission_record_spec(
+            authority.record_spec(),
+            authority.prepacked_spec().deployment_spec(),
+            authority.prepacked_spec().target_manifest_spec(),
+            authority.prepacked_spec().draft_manifest_spec(),
+            target,
+            draft,
+        )
+}
+
+} // verus!
+
 /// Consumes exact authenticated prepacked inputs and seals their canonical
 /// deployment commitment.
 ///
@@ -558,25 +653,130 @@ impl From<CanonicalBundleError> for BundleAdmissionError {
 /// role-correct, digest-bound, gap-free, and semantically exact for the
 /// canonical deployment. Success is not signature, artifact-load, launch, or
 /// independent-validation authority.
+///
+/// The semantic section-roster checks are an explicit runtime gate. The
+/// directly verified inner composition derives no roster fact from that gate;
+/// it binds the actual retained scalar, digest, and record values after the
+/// gate succeeds.
 pub fn seal_authenticated_bundle(
     prepacked: PrepackedDeploymentBundle,
 ) -> Result<AuthenticatedBundleAdmission, BundleAdmissionError> {
-    let deployment_record = encode_canonical_deployment_bundle(prepacked.deployment())?;
-    let target = validate_manifest(
-        prepacked.target_manifest(),
-        prepacked.deployment(),
-        Qwen3ModelRole::Target8B,
-    )?;
-    let draft = validate_manifest(
-        prepacked.draft_manifest(),
-        prepacked.deployment(),
-        Qwen3ModelRole::Draft06B,
-    )?;
-    let record = encode_record(deployment_record.as_bytes(), target, draft);
-    Ok(AuthenticatedBundleAdmission { prepacked, record })
+    validate_manifest_sections(prepacked.target_manifest(), Qwen3ModelRole::Target8B)?;
+    validate_manifest_sections(prepacked.draft_manifest(), Qwen3ModelRole::Draft06B)?;
+    let sealed = seal_prepacked_record_verified(&prepacked)?;
+    Ok(authenticated_bundle_admission(prepacked, sealed))
 }
 
 verus! {
+
+type SealedAdmissionRecord = (
+    BundleAdmissionRecord,
+    ManifestCommitment,
+    ManifestCommitment,
+);
+
+fn sealed_admission_record(
+    sealed: SealedAdmissionRecord,
+) -> (record: BundleAdmissionRecord)
+    ensures record == sealed.0,
+{
+    let (record, _, _) = sealed;
+    record
+}
+
+fn seal_prepacked_record_verified(
+    prepacked: &PrepackedDeploymentBundle,
+) -> (result: Result<SealedAdmissionRecord, BundleAdmissionError>)
+    ensures result.is_ok() ==> {
+        let sealed = result.get_Ok_0();
+        sealed_admission_record_spec(
+            sealed.0,
+            prepacked.deployment_spec(),
+            prepacked.target_manifest_spec(),
+            prepacked.draft_manifest_spec(),
+            sealed.1,
+            sealed.2,
+        )
+    },
+{
+    let deployment = prepacked.deployment_exact();
+    let target_manifest = prepacked.target_manifest_exact();
+    let draft_manifest = prepacked.draft_manifest_exact();
+    seal_admission_record_verified(deployment, target_manifest, draft_manifest)
+}
+
+fn authenticated_bundle_admission(
+    prepacked: PrepackedDeploymentBundle,
+    sealed: SealedAdmissionRecord,
+) -> (authority: AuthenticatedBundleAdmission)
+    requires sealed_admission_record_spec(
+        sealed.0,
+        prepacked.deployment_spec(),
+        prepacked.target_manifest_spec(),
+        prepacked.draft_manifest_spec(),
+        sealed.1,
+        sealed.2,
+    ),
+    ensures
+        authority.prepacked_spec() == prepacked,
+        authority.record_spec() == sealed.0,
+    authenticated_bundle_admission_spec(authority),
+{
+    let ghost target = sealed.1;
+    let ghost draft = sealed.2;
+    let record = sealed_admission_record(sealed);
+    let authority = AuthenticatedBundleAdmission { prepacked, record };
+    assert(authenticated_bundle_admission_spec(authority)) by {
+        assert(sealed_admission_record_spec(
+            authority.record_spec(),
+            authority.prepacked_spec().deployment_spec(),
+            authority.prepacked_spec().target_manifest_spec(),
+            authority.prepacked_spec().draft_manifest_spec(),
+            target,
+            draft,
+        ));
+    }
+    authority
+}
+
+fn seal_admission_record_verified(
+    deployment: &DeploymentBundle,
+    target_manifest: &WeightSectionManifest,
+    draft_manifest: &WeightSectionManifest,
+) -> (result: Result<SealedAdmissionRecord, BundleAdmissionError>)
+    ensures result.is_ok() ==> {
+        let sealed = result.get_Ok_0();
+        sealed_admission_record_spec(
+            sealed.0,
+            *deployment,
+            *target_manifest,
+            *draft_manifest,
+            sealed.1,
+            sealed.2,
+        )
+    },
+{
+    let deployment_record = match encode_canonical_deployment_bundle(deployment) {
+        Ok(record) => record,
+        Err(error) => return Err(BundleAdmissionError::CanonicalBundle(error)),
+    };
+    let target = validate_manifest_commitment_verified(
+        target_manifest,
+        deployment,
+        Qwen3ModelRole::Target8B,
+    )?;
+    let draft = validate_manifest_commitment_verified(
+        draft_manifest,
+        deployment,
+        Qwen3ModelRole::Draft06B,
+    )?;
+    let record = encode_record(deployment_record.as_bytes(), target, draft);
+    match decode_bundle_admission_record(record.as_bytes()) {
+        Ok(_) => {},
+        Err(error) => return Err(error),
+    }
+    Ok((record, target, draft))
+}
 
 /// Decodes and revalidates a canonical admission commitment.
 ///
@@ -658,43 +858,17 @@ pub fn decode_bundle_admission_record(
 
 } // verus!
 
-fn validate_manifest(
+/// Runtime-only semantic section validation.
+///
+/// This body deliberately remains outside direct verification: tensor-name
+/// parsing, `BTreeSet` roster construction, string handling, and the metadata
+/// classifier are explicit trusted runtime dependencies. The directly verified
+/// caller derives no ghost fact from this helper beyond observing `Ok(())`.
+fn validate_manifest_sections(
     manifest: &WeightSectionManifest,
-    deployment: &DeploymentBundle,
     role: Qwen3ModelRole,
-) -> Result<ManifestCommitment, BundleAdmissionError> {
-    let model = match role {
-        Qwen3ModelRole::Target8B => deployment.target_model,
-        Qwen3ModelRole::Draft06B => deployment.draft_model,
-    };
+) -> Result<(), BundleAdmissionError> {
     let invalid = |reason| BundleAdmissionError::InvalidManifest { role, reason };
-    if manifest.version() != PREPACKED_WEIGHT_MANIFEST_VERSION {
-        return Err(invalid("version"));
-    }
-    if manifest.role() != role {
-        return Err(invalid("role"));
-    }
-    if manifest.source_weights_id() != *model.weights.weights_id.as_bytes() {
-        return Err(invalid("source identity"));
-    }
-    if manifest.source_artifact_bytes() != model.weights.total_bytes {
-        return Err(invalid("source byte count"));
-    }
-    if manifest.tensor_data_bytes() != role.tensor_data_bytes()
-        || manifest.output_bytes() != manifest.tensor_data_bytes()
-    {
-        return Err(invalid("tensor byte count"));
-    }
-    if manifest.sections().len() != role.tensor_count() as usize {
-        return Err(invalid("section count"));
-    }
-    if manifest.canonical_bytes().is_empty()
-        || manifest.canonical_bytes().len() > MAX_MANIFEST_RECORD_BYTES
-        || sha256::digest(manifest.canonical_bytes()) != manifest.aggregate_id()
-    {
-        return Err(invalid("canonical manifest digest"));
-    }
-
     let mut ordinals = BTreeSet::new();
     let mut expected_destination = 0_u64;
     for section in manifest.sections() {
@@ -750,7 +924,81 @@ fn validate_manifest(
         return Err(invalid("complete tensor roster"));
     }
 
-    Ok(ManifestCommitment {
+    Ok(())
+}
+
+verus! {
+
+fn validate_manifest_commitment_verified(
+    manifest: &WeightSectionManifest,
+    deployment: &DeploymentBundle,
+    role: Qwen3ModelRole,
+) -> (result: Result<ManifestCommitment, BundleAdmissionError>)
+    ensures result.is_ok() ==> retained_manifest_commitment_spec(
+        *manifest, *deployment, role, result.get_Ok_0(),
+    ),
+{
+    let model = match role {
+        Qwen3ModelRole::Target8B => deployment.target_model,
+        Qwen3ModelRole::Draft06B => deployment.draft_model,
+    };
+    let (tensor_data_bytes, tensor_count) = match role {
+        Qwen3ModelRole::Target8B => (super::QWEN3_TARGET_TENSOR_DATA_BYTES, 399u32),
+        Qwen3ModelRole::Draft06B => (super::QWEN3_DRAFT_TENSOR_DATA_BYTES, 311u32),
+    };
+    let invalid = |reason| BundleAdmissionError::InvalidManifest { role, reason };
+    if manifest.version() != PREPACKED_WEIGHT_MANIFEST_VERSION {
+        return Err(invalid("version"));
+    }
+    if manifest.role() != role {
+        return Err(invalid("role"));
+    }
+    if !bytes_equal(&manifest.source_weights_id(), model.weights.weights_id.as_bytes()) {
+        return Err(invalid("source identity"));
+    }
+    if manifest.source_artifact_bytes() != model.weights.total_bytes {
+        return Err(invalid("source byte count"));
+    }
+    if manifest.tensor_data_bytes() != tensor_data_bytes
+        || manifest.output_bytes() != manifest.tensor_data_bytes()
+    {
+        return Err(invalid("tensor byte count"));
+    }
+    let section_count = manifest.sections().len();
+    if section_count != tensor_count as usize {
+        return Err(invalid("section count"));
+    }
+    let canonical_manifest_bytes = manifest.canonical_bytes().len();
+    if canonical_manifest_bytes == 0
+        || canonical_manifest_bytes > MAX_MANIFEST_RECORD_BYTES
+    {
+        return Err(invalid("canonical manifest digest"));
+    }
+    let digest = sha256::digest(manifest.canonical_bytes());
+    if !bytes_equal(&digest, &manifest.aggregate_id()) {
+        return Err(invalid("canonical manifest digest"));
+    }
+    let zero = [0u8; 32];
+    assert(zero@ == Seq::new(32, |index: int| 0u8)) by {
+        assert(zero@ =~= Seq::new(32, |index: int| 0u8)) by {
+            assert forall|index: int| 0 <= index < 32 implies
+                zero@[index] == Seq::new(32, |position: int| 0u8)[index] by {}
+        }
+    }
+    if bytes_equal(&manifest.aggregate_id(), &zero) {
+        return Err(invalid("canonical manifest digest"));
+    }
+    assert(section_count <= MAX_MANIFEST_RECORD_BYTES);
+    assert(canonical_manifest_bytes <= MAX_MANIFEST_RECORD_BYTES);
+    let section_count_u32 = match u32::try_from(section_count) {
+        Ok(value) => value,
+        Err(_) => return Err(invalid("section count")),
+    };
+    let canonical_manifest_bytes_u32 = match u32::try_from(canonical_manifest_bytes) {
+        Ok(value) => value,
+        Err(_) => return Err(invalid("canonical manifest digest")),
+    };
+    let commitment = ManifestCommitment {
         role,
         version: manifest.version(),
         source_weights_id: manifest.source_weights_id(),
@@ -758,13 +1006,14 @@ fn validate_manifest(
         source_artifact_bytes: manifest.source_artifact_bytes(),
         tensor_data_bytes: manifest.tensor_data_bytes(),
         output_bytes: manifest.output_bytes(),
-        section_count: u32::try_from(manifest.sections().len()).unwrap_or(u32::MAX),
-        canonical_manifest_bytes: u32::try_from(manifest.canonical_bytes().len())
-            .unwrap_or(u32::MAX),
-    })
+        section_count: section_count_u32,
+        canonical_manifest_bytes: canonical_manifest_bytes_u32,
+    };
+    assert(manifest_commitment_spec(*deployment, commitment, role));
+    assert(manifest.aggregate_id_spec()
+        == sha256::digest_spec(manifest.canonical_bytes_spec()));
+    Ok(commitment)
 }
-
-verus! {
 
 fn validate_commitment(
     deployment: &DeploymentBundle,
@@ -820,10 +1069,6 @@ fn encode_record(
     target: ManifestCommitment,
     draft: ManifestCommitment,
 ) -> (record: BundleAdmissionRecord)
-    requires
-        bundle@ == super::bundle::canonical_deployment_bundle_wire(
-            super::bundle::parsed_bundle_spec(bundle@),
-        ),
     ensures
         record.bytes_spec() == MAGIC@
             + u32_little_endian(BUNDLE_ADMISSION_RECORD_VERSION)
@@ -1260,7 +1505,7 @@ mod tests {
         encode_canonical_deployment_bundle, seal_authenticated_bundle,
         tokenizer::tests::{authenticated_assets, test_tokenizer},
         weight_stream::tests::test_prepacked,
-        PREPACKED_WEIGHT_MANIFEST_VERSION,
+        WeightSectionManifest, PREPACKED_WEIGHT_MANIFEST_VERSION,
     };
     use ferric_spec::Qwen3ModelRole;
 
@@ -1301,6 +1546,31 @@ mod tests {
             commitment(Qwen3ModelRole::Target8B, 0x31),
             commitment(Qwen3ModelRole::Draft06B, 0x32),
         )
+    }
+
+    fn retained_commitment(
+        manifest: &WeightSectionManifest,
+        role: Qwen3ModelRole,
+    ) -> ManifestCommitment {
+        ManifestCommitment {
+            role,
+            version: manifest.version(),
+            source_weights_id: manifest.source_weights_id(),
+            aggregate_id: manifest.aggregate_id(),
+            source_artifact_bytes: manifest.source_artifact_bytes(),
+            tensor_data_bytes: manifest.tensor_data_bytes(),
+            output_bytes: manifest.output_bytes(),
+            section_count: manifest
+                .sections()
+                .len()
+                .try_into()
+                .expect("bounded section count"),
+            canonical_manifest_bytes: manifest
+                .canonical_bytes()
+                .len()
+                .try_into()
+                .expect("bounded manifest record"),
+        }
     }
 
     fn replace_u32(bytes: &mut [u8], offset: usize, value: u32) {
@@ -1392,7 +1662,7 @@ mod tests {
     }
 
     #[test]
-    fn sealed_authority_consumes_complete_official_tensor_rosters() {
+    fn sealed_authority_decode_gate_preserves_valid_record_and_complete_rosters() {
         let prepacked = crate::build_prepacked_deployment_bundle(
             authenticated_assets(),
             test_tokenizer(Qwen3ModelRole::Target8B),
@@ -1401,7 +1671,16 @@ mod tests {
             test_prepacked(Qwen3ModelRole::Draft06B),
         )
         .expect("complete test prepacked deployment");
+        let deployment_record = encode_canonical_deployment_bundle(prepacked.deployment())
+            .expect("exact retained deployment");
+        let expected_record = encode_record(
+            deployment_record.as_bytes(),
+            retained_commitment(prepacked.target_manifest(), Qwen3ModelRole::Target8B),
+            retained_commitment(prepacked.draft_manifest(), Qwen3ModelRole::Draft06B),
+        );
         let authority = seal_authenticated_bundle(prepacked).expect("sealed admission authority");
+        assert_eq!(authority.record().as_bytes(), expected_record.as_bytes());
+        assert_eq!(authority.record().record_id(), expected_record.record_id());
         let decoded = decode_bundle_admission_record(authority.record().as_bytes())
             .expect("sealed record decodes");
         assert_eq!(decoded.record_id, authority.record().record_id());
