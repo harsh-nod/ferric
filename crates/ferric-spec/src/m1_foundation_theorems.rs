@@ -33,6 +33,10 @@ use vstd::prelude::*;
 verus! {
 
 /// An already-published active epoch rejects a second token publication.
+///
+/// # Errors
+///
+/// Returns [`ContinuousBatchError::AlreadyPublished`] under its proof preconditions.
 pub fn batching_publish_once_theorem(
     current: ContinuousRequest,
     epoch: CompletionEpoch,
@@ -58,6 +62,10 @@ pub fn batching_publish_once_theorem(
 }
 
 /// An in-range stale generation is rejected and frames the entire batch.
+///
+/// # Errors
+///
+/// Returns [`ContinuousBatchError::StaleGeneration`] under its proof preconditions.
 pub fn batching_request_routing_theorem(
     batch: &mut ContinuousBatch,
     request: RequestId,
@@ -88,6 +96,7 @@ pub fn batching_request_routing_theorem(
 }
 
 /// The executable graph lookup returns the exact admitted operator step.
+#[must_use]
 pub fn graph_operator_order_theorem(
     role: Qwen3ModelRole,
     mode: Qwen3ExecutionMode,
@@ -106,6 +115,7 @@ pub fn graph_operator_order_theorem(
 }
 
 /// Target and draft graphs retain their distinct exact finite step counts.
+#[must_use]
 pub fn graph_role_step_count_theorem(role: Qwen3ModelRole) -> (count: u32)
     ensures count == match role {
         Qwen3ModelRole::Target8B => crate::graph::QWEN3_TARGET_PLAN_STEPS,
@@ -125,6 +135,10 @@ pub fn graph_role_step_count_theorem(role: Qwen3ModelRole) -> (count: u32)
 }
 
 /// A selected request action preserves every distinct request slot.
+///
+/// # Errors
+///
+/// Returns the exact fail-closed error from the selected request action.
 pub fn isolation_other_request_frame_theorem(
     batch: &mut ContinuousBatch,
     request: RequestId,
@@ -160,6 +174,10 @@ pub fn isolation_other_request_frame_theorem(
 }
 
 /// Successful retired-page release advances exactly one physical generation.
+///
+/// # Errors
+///
+/// Returns the exact fail-closed retired-page release error.
 pub fn kv_release_generation_theorem(
     state: &mut PhysicalKvState,
     page: PhysicalPageId,
@@ -176,8 +194,8 @@ pub fn kv_release_generation_theorem(
         result.is_err() ==> *final(state) == *old(state),
 {
     let result = release_retired_page(state, page, authority);
-    if result.is_ok() {
-        let released = result.unwrap();
+    if let Ok(released) = &result {
+        let released = *released;
         let _ = released;
         assert(crate::paged_kv_refinement::released_generation_matches(released, page));
         proof {
@@ -193,6 +211,10 @@ pub fn kv_release_generation_theorem(
 }
 
 /// Successful rollback removes exactly the tentative tail and nothing else.
+///
+/// # Errors
+///
+/// Returns the exact fail-closed physical-KV rollback error.
 pub fn kv_rollback_retirement_theorem(
     state: &mut PhysicalKvState,
     request: RequestId,
@@ -213,6 +235,10 @@ pub fn kv_rollback_retirement_theorem(
 }
 
 /// Successful write extends exactly the initialized logical prefix.
+///
+/// # Errors
+///
+/// Returns the exact fail-closed physical-KV write error.
 pub fn kv_write_prefix_theorem(
     state: &mut PhysicalKvState,
     request: RequestId,
@@ -233,6 +259,10 @@ pub fn kv_write_prefix_theorem(
 }
 
 /// Successful one-shot publication moves exactly Validated to Published.
+///
+/// # Errors
+///
+/// Returns the exact fail-closed reserved-delta publication error.
 pub fn publication_phase_transition_theorem(
     publication: &mut StepPublication,
 ) -> (result: Result<ReservedStateDelta, StepPublicationError>)
@@ -270,6 +300,10 @@ pub fn publication_phase_transition_theorem(
 }
 
 /// Plan validation accepts exactly the complete immutable plan authority.
+///
+/// # Errors
+///
+/// Returns the exact fail-closed immutable-plan validation error.
 pub fn publication_plan_identity_theorem(
     plan: StepPlan,
     expected_request: RequestId,
@@ -321,6 +355,10 @@ pub fn publication_plan_identity_theorem(
 }
 
 /// Success binds KV settlement to the exact publication-derived accepted count.
+///
+/// # Errors
+///
+/// Returns the exact fail-closed atomic speculative-step error.
 pub fn speculative_accepted_count_binding_theorem(
     batch: &mut ContinuousBatch,
     publication: &mut StepPublication,
@@ -367,8 +405,8 @@ pub fn speculative_accepted_count_binding_theorem(
         expected,
         token_inputs,
     );
-    if result.is_ok() {
-        let outcome = result.as_ref().unwrap();
+    if let Ok(outcome) = &result {
+        let outcome = *outcome;
         let _ = outcome;
         proof {
             crate::speculative_step_composition::atomic_transition_binds_accepted_count(
@@ -380,7 +418,7 @@ pub fn speculative_accepted_count_binding_theorem(
                 expected,
                 token_inputs.draft_tokens@,
                 token_inputs.target_choices@,
-                *outcome,
+                outcome,
             );
         }
     }
@@ -388,6 +426,10 @@ pub fn speculative_accepted_count_binding_theorem(
 }
 
 /// Every rejection frames scheduler, publication, selected KV, and other KV.
+///
+/// # Errors
+///
+/// Returns the exact fail-closed atomic speculative-step error while framing state.
 pub fn speculative_atomic_failure_frame_theorem(
     batch: &mut ContinuousBatch,
     publication: &mut StepPublication,
