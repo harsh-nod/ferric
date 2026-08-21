@@ -14,6 +14,7 @@ pub mod continuous_batching;
 mod graph;
 mod identity;
 mod m1_completion;
+pub mod m1_foundation_theorems;
 pub mod paged_kv_refinement;
 mod qwen3;
 pub mod request_isolation;

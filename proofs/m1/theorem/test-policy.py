@@ -32,6 +32,7 @@ def copy_fixture(repo: Path, destination: Path) -> None:
         str(REGISTRY),
         "crates/ferric-spec/src/continuous_batching.rs",
         "crates/ferric-spec/src/graph.rs",
+        "crates/ferric-spec/src/m1_foundation_theorems.rs",
         "crates/ferric-spec/src/paged_kv_refinement.rs",
         "crates/ferric-spec/src/speculative_step_composition.rs",
         "crates/ferric-spec/src/step_plan_publication.rs",
@@ -199,16 +200,24 @@ def main() -> None:
                 "missing-source",
                 "M1 theorem source is unavailable",
                 lambda fixture: (
-                    fixture / "crates/ferric-spec/src/continuous_batching.rs"
+                    fixture / "crates/ferric-spec/src/m1_foundation_theorems.rs"
                 ).unlink(),
             ),
             (
-                "missing-speculative-source",
-                "M1 theorem source is unavailable",
-                lambda fixture: (
-                    fixture
-                    / "crates/ferric-spec/src/speculative_step_composition.rs"
-                ).unlink(),
+                "missing-module-coverage",
+                "theorem module path is not inventoried",
+                lambda fixture: (fixture / "proofs/VERIFIED_MODULES").write_text(
+                    "\n".join(
+                        line
+                        for line in (fixture / "proofs/VERIFIED_MODULES")
+                        .read_text(encoding="utf-8")
+                        .splitlines()
+                        if line
+                        != "module=ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|ferric_spec::m1_foundation_theorems"
+                    )
+                    + "\n",
+                    encoding="utf-8",
+                ),
             ),
             (
                 "missing-function-coverage",
@@ -220,7 +229,7 @@ def main() -> None:
                         .read_text(encoding="utf-8")
                         .splitlines()
                         if line
-                        != "verified=ferric-spec|crates/ferric-spec/src/continuous_batching.rs|ferric_spec::continuous_batching::apply_continuous_publish_step"
+                        != "verified=ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|ferric_spec::m1_foundation_theorems::batching_publish_once_theorem"
                     )
                     + "\n",
                     encoding="utf-8",
@@ -236,7 +245,7 @@ def main() -> None:
                         .read_text(encoding="utf-8")
                         .splitlines()
                         if line
-                        != "verified=ferric-spec|crates/ferric-spec/src/speculative_step_composition.rs|ferric_spec::speculative_step_composition::settle_and_publish_speculative_step"
+                        != "verified=ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|ferric_spec::m1_foundation_theorems::speculative_accepted_count_binding_theorem"
                     )
                     + "\n",
                     encoding="utf-8",

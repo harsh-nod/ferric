@@ -531,7 +531,7 @@ fn phase_matches(
     )
 }
 
-fn validate_step_plan(
+pub(crate) fn validate_step_plan(
     plan: StepPlan,
     expected_request: RequestId,
     expected_epoch: CompletionEpoch,

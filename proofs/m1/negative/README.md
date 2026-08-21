@@ -25,6 +25,8 @@ The speculative accepted-count row sends a value other than the
 publication-derived count to KV preflight; the failure-frame row changes
 publication on the KV rejection path. Both are ordinary executable-body edits,
 not contract, specification-relation, assertion-only, or proof-tool mutations.
+Their paired positive rows select dedicated query-bearing wrappers; negative
+rows continue to mutate these actual bodies rather than the wrappers.
 
 Run the structural policy directly:
 

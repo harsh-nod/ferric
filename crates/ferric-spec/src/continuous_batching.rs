@@ -443,7 +443,7 @@ fn is_retiring_quiescent(lifecycle: SequentialRequest) -> (quiescent: bool)
     matches!(lifecycle.phase, LifecyclePhase::RetiringQuiescent)
 }
 
-fn apply_continuous_publish_step(
+pub(crate) fn apply_continuous_publish_step(
     current: ContinuousRequest,
     epoch: CompletionEpoch,
     emitted_tokens: u8,

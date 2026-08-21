@@ -11,7 +11,7 @@ path = repo / "crates/ferric-spec/src/speculative_step_composition.rs"
 source = path.read_text(encoding="utf-8")
 old = "        Err(error) => return Err(AtomicSpeculativeStepError::Kv(error)),"
 new = """        Err(error) => {
-            publication.set_phase(crate::PublicationPhase::Discarded);
+            let _ = crate::discard_reserved_delta(publication);
             return Err(AtomicSpeculativeStepError::Kv(error));
         },"""
 if source.count(old) != 1:

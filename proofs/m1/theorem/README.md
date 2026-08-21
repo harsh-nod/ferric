@@ -4,10 +4,12 @@
 `FERRIC-M1-POSITIVE-THEOREMS-V1` roster paired with the existing M1 hostile
 foundation mutations. Each row binds a still-Open assurance property and path
 to an exact package, source, crate-root Verus module, function, and directly
-verified compiler path in `VERIFIED_MODULES`. The two speculative composition
-rows deliberately select the same atomic body under distinct Open obligations:
-publication-to-KV accepted-count agreement and immutable-preflight failure
-framing.
+verified compiler path in `VERIFIED_MODULES`. Every positive row selects its own
+loop-free wrapper in `m1_foundation_theorems`; each wrapper calls an existing
+executable contract and proves one row-specific consequence. The paired
+negative registry remains bound to the actual implementation bodies. The two
+speculative wrappers cover publication-to-KV accepted-count agreement and
+immutable-preflight failure framing under distinct Open obligations.
 
 `run-same-source.sh` accepts a clean committed Ferric worktree and the exact
 pinned Verus release. It records the source commit, tree, complete M1 source
