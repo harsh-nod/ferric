@@ -99,7 +99,8 @@ paths. The version 1 registry is:
 | Verus theorem | `proofs/m1/evidence/validate-verus-theorem.py` | `ferric.m1-validator.verus-theorem.v1` |
 
 The artifact-identity, canonical-structure, external-contract, fe2o3-contract,
-hardware-transcript, independent-validator, negative-mutation, TCB-report,
+hardware-transcript, independent-validator, negative-mutation,
+performance-gate, TCB-report,
 unsupported-rationale, and Verus-theorem validators are `ExistingFoundation`
 inputs with exact source SHA-256 values pinned in the checker-owned registry.
 The artifact-identity validator accepts only a canonical identity-only report
@@ -149,7 +150,14 @@ requirements, properties, path, profile, source closures, target, and TCB. It
 rejects declared self-validation but treats the resulting observations as
 neither theorem nor machine, launch, hardware, performance, or qualification
 authority. Its protocol is documented in
-`proofs/m1/evidence/INDEPENDENT_VALIDATOR.md`. The negative-mutation and theorem
+`proofs/m1/evidence/INDEPENDENT_VALIDATOR.md`. The performance-gate validator
+recomputes the declared M1 release thresholds from a canonical immutable raw
+measurement roster. It binds the exact Open obligation, profile, path, source
+closures, target environment, artifact/plan/schedule/workload/baseline
+identities, protocol, ordered samples, and complete TCB. Acceptance grants
+checked-performance authority only; the exact protocol and nonclaims are
+documented in `proofs/m1/evidence/PERFORMANCE_REPORT.md`. The negative-mutation
+and theorem
 validators validate the complete versioned run directory behind a bound
 `.result` artifact. The
 theorem validator requires the exact pinned output-json schema, selected

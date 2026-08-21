@@ -97,7 +97,7 @@ TRUSTED_VALIDATORS = {
     "performance-gate": (
         "proofs/m1/evidence/validate-performance-report.py",
         "ferric.m1-validator.performance-report.v1",
-        None,
+        "dac25a582fcb6786d4aeabbfa31ab0fbd00cf962ee9313074ed732894d9feb65",
     ),
     "qualification-receipt": (
         "proofs/m1/evidence/validate-qualification-receipt.py",
