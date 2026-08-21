@@ -87,7 +87,7 @@ TRUSTED_VALIDATORS = {
     "independent-validator": (
         "proofs/m1/evidence/validate-independent-validator.py",
         "ferric.m1-validator.independent-validator.v1",
-        None,
+        "d6188b3a1ff8f637b745fe4100fdd234ebb2c59f86badfddb8c59d10d71b1782",
     ),
     "negative-mutation": (
         "proofs/m1/evidence/validate-negative-mutation.py",

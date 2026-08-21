@@ -99,9 +99,9 @@ paths. The version 1 registry is:
 | Verus theorem | `proofs/m1/evidence/validate-verus-theorem.py` | `ferric.m1-validator.verus-theorem.v1` |
 
 The artifact-identity, canonical-structure, external-contract, fe2o3-contract,
-hardware-transcript, negative-mutation, TCB-report, unsupported-rationale, and
-Verus-theorem validators are `ExistingFoundation` inputs with exact source
-SHA-256 values pinned in the checker-owned registry.
+hardware-transcript, independent-validator, negative-mutation, TCB-report,
+unsupported-rationale, and Verus-theorem validators are `ExistingFoundation`
+inputs with exact source SHA-256 values pinned in the checker-owned registry.
 The artifact-identity validator accepts only a canonical identity-only report
 and independently hashes its deterministic companion payload. The report binds
 the exact Open obligation or property, associated assurance properties, path,
@@ -140,8 +140,18 @@ and binds the exact source, device, ROCm, driver, firmware, harness, obligation,
 path, profile, and TCB identities. Its reviewed source SHA-256 is
 `8a1e06fab53e38f1d48a8c26f132204a169c54ce56cf4bd283695cdc38b6e21f`.
 Hardware observations grant no theorem, machine-refinement, performance, or
-qualification authority. The negative-mutation and theorem validators validate
-the complete versioned run directory behind a bound `.result` artifact. The
+qualification authority. The independent-validator
+validator authenticates a fixed-location canonical report, exact case roster,
+and immutable transcript for the bound Open obligation. It binds the external
+checker organization, repository, source closure, executable, version,
+protocol, input/output schemas, exact positive and expected-failure cases,
+requirements, properties, path, profile, source closures, target, and TCB. It
+rejects declared self-validation but treats the resulting observations as
+neither theorem nor machine, launch, hardware, performance, or qualification
+authority. Its protocol is documented in
+`proofs/m1/evidence/INDEPENDENT_VALIDATOR.md`. The negative-mutation and theorem
+validators validate the complete versioned run directory behind a bound
+`.result` artifact. The
 theorem validator requires the exact pinned output-json schema, selected
 compiler module/function, current source body, ordinary compilation, an exact
 one-query zero-error proof predicate, and the complete theorem roster for the
