@@ -30,6 +30,8 @@ implements:
 - bounded streaming authentication and semantic admission of the exact shared tokenizer;
 - bounded streaming authentication of the exact pinned Qwen3 safetensors files;
 - a fixed-width canonical record for the exact admitted deployment identities;
+- all 22 exact sequential target/draft B3 plans and their finite K1-K7 structural profiles;
+- byte-reproducible compiled Qwen3/gfx942 runner declarations for all 10,648 typed operations;
 - direct pinned-Verus proofs of the executable M0 state machines;
 - identity-bound fe2o3 M0 property records with actual-body mutation evidence;
 - structural invariant validation and hostile stale-handle tests; and
@@ -37,12 +39,13 @@ implements:
 
 Ferric does **not** currently execute tokenization, prove behavioral equivalence
 to an external regex or Unicode implementation, transform or pack weights,
-sign deployment records, load a model onto a device, compile a GPU kernel,
-dispatch HSA, or make a verified-inference or performance claim. The canonical
-record binds pinned values but does not authenticate the files named by those
-values. The model-admission parser, codec, and streaming-authentication bodies
-remain explicitly pending Verus. Unsupported stages fail closed rather than
-selecting another implementation.
+sign deployment records, allocate device memory, load a model onto a device,
+compile a GPU kernel, instantiate a command template, dispatch HSA, prove graph
+refinement, or make a verified-inference or performance claim. The canonical
+records bind pinned values but do not authenticate external compiler, runtime,
+proof, executable, or machine identities. The model-admission, planning,
+catalog, identity, and declaration bodies remain explicitly pending Verus.
+Unsupported stages fail closed rather than selecting another implementation.
 
 ## First Product Milestone
 

@@ -8,10 +8,10 @@ optimization, autotuning, and runner generation offline.
 ```text
 crates/ferric-spec       executable sequential semantics and Verus targets
 crates/ferric-kernels    fe2o3 kernels, contracts, and finite schedules
+crates/ferric-generated-runner checked-in inert runner declarations
 crates/ferric-engine     scheduler, KV, speculation, and generated runner
 crates/ferric-build      model admission, packing, planning, tuning, bundles
 src/bin/ferricd.rs       thin unverified serving boundary
-generated/               model/target-specific generated runner
 proofs/                  system-level refinement proofs
 benches/                 identity-bound qualification harnesses
 ```
@@ -35,6 +35,18 @@ fixtures remain explicitly marked as required extensions. It grants no proof,
 artifact, compilation, load, launch, dispatch, hardware, performance, or
 qualification authority. Crates are added when they contain real final-path
 behavior; placeholder GPU execution is not permitted.
+
+The data-only `ferric-generated-runner` crate is the checked-in output of the
+current deterministic Qwen3/gfx942 declaration generator. It names all 22
+target-then-draft B3 selections, their exact operation offsets and counts, and
+four logical scalar-input schemas. `ferric-build` expands those declarations
+against authenticated admission, the sequential plan catalog, the structural
+kernel catalog, and the preliminary identity closure. The resulting retained
+record covers all 10,648 exact typed operations, including buffer kinds and
+shapes, and regeneration is tested for byte equality. It is not a runtime: it
+contains no address, allocation, artifact, loader, queue, packet, launch,
+completion, hardware observation, graph-refinement proof, performance result,
+or qualification authority.
 
 ## Dependency Boundary
 
@@ -64,7 +76,7 @@ strict model admission
 
 ## Generated Runtime
 
-The generated runner embeds exact:
+The final generated runtime is required to embed exact:
 
 - target and draft model identities;
 - tokenizer, vocabulary, and numerical policy identities;
@@ -74,9 +86,9 @@ The generated runner embeds exact:
 - prefill, target decode, speculative, and sampling command graphs; and
 - target, compiler, schedule, and complete plan identities.
 
-At admission, Ferric authenticates the bundle and instantiates bounded command
-templates. The generation loop patches only admitted addresses, lengths,
-positions, page-table locations, and RNG counters.
+The current generated declaration slice does not instantiate bounded command
+templates or patch runtime values. Those operations remain future runtime and
+independent-validation work.
 
 ## State Transition
 

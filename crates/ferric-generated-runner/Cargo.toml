@@ -1,14 +1,12 @@
 [package]
-name = "ferric-build"
-description = "Offline authenticated model admission for Ferric"
+name = "ferric-generated-runner"
+description = "Checked-in inert Qwen3 gfx942 runner declarations for Ferric"
 edition.workspace = true
 rust-version.workspace = true
 version.workspace = true
 publish = false
 
 [dependencies]
-ferric-generated-runner = { path = "../ferric-generated-runner" }
-ferric-kernels = { path = "../ferric-kernels" }
 ferric-spec = { path = "../ferric-spec" }
 
 [package.metadata.verus]

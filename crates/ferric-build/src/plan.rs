@@ -1,4 +1,7 @@
-use super::{hash_field, sha256::Sha256, PrepackedDeploymentBundle};
+use super::{
+    hash_field, sha256::Sha256, AuthenticatedBundleAdmission, BundleAdmissionRecord,
+    PrepackedDeploymentBundle,
+};
 use ferric_spec::{
     expected_step, plan_step_count, DeploymentBundle, Identity, Qwen3BufferKind,
     Qwen3ExecutionMode, Qwen3GeneratedPlan, Qwen3ModelRole, Qwen3Operator, Qwen3PlanAuthority,
@@ -46,6 +49,7 @@ const BUCKETS: [(Qwen3ExecutionMode, Qwen3PlanBucket); 11] = [
 #[derive(Debug, PartialEq, Eq)]
 pub struct SequentialPlanCatalog {
     prepacked: PrepackedDeploymentBundle,
+    admission_record: Option<BundleAdmissionRecord>,
     plans: Vec<Qwen3GeneratedPlan>,
     catalog_id: Identity,
 }
@@ -61,6 +65,13 @@ impl SequentialPlanCatalog {
     #[must_use]
     pub const fn prepacked(&self) -> &PrepackedDeploymentBundle {
         &self.prepacked
+    }
+
+    /// Returns the retained authenticated admission commitment, when the
+    /// catalog was constructed through the authenticated path.
+    #[must_use]
+    pub const fn admission_record(&self) -> Option<&BundleAdmissionRecord> {
+        self.admission_record.as_ref()
     }
 
     /// Returns all plans in target-then-draft, finite-bucket order.
@@ -141,6 +152,30 @@ pub enum SequentialPlanError {
 pub fn build_sequential_plan_catalog(
     prepacked: PrepackedDeploymentBundle,
 ) -> Result<SequentialPlanCatalog, SequentialPlanError> {
+    build_catalog(prepacked, None)
+}
+
+/// Consumes authenticated prepacked admission and builds every exact M1 plan.
+///
+/// The returned catalog retains both the prepacked authorities and their
+/// canonical authenticated-admission record. It grants no kernel, artifact,
+/// load, launch, runtime, or qualification authority.
+///
+/// # Errors
+///
+/// Returns [`SequentialPlanError`] for stale deployment/manifest authority,
+/// an incomplete graph specification, or plan identity drift.
+pub fn build_authenticated_sequential_plan_catalog(
+    admission: AuthenticatedBundleAdmission,
+) -> Result<SequentialPlanCatalog, SequentialPlanError> {
+    let (prepacked, record) = admission.into_parts();
+    build_catalog(prepacked, Some(record))
+}
+
+fn build_catalog(
+    prepacked: PrepackedDeploymentBundle,
+    admission_record: Option<BundleAdmissionRecord>,
+) -> Result<SequentialPlanCatalog, SequentialPlanError> {
     validate_prepacked(&prepacked)?;
     let target_manifest_id = prepacked.target_manifest().aggregate_id();
     let draft_manifest_id = prepacked.draft_manifest().aggregate_id();
@@ -151,6 +186,7 @@ pub fn build_sequential_plan_catalog(
     )?;
     Ok(SequentialPlanCatalog {
         prepacked,
+        admission_record,
         plans,
         catalog_id,
     })

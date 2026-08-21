@@ -13,6 +13,7 @@ mod bundle;
 mod identity_closure;
 mod json;
 mod plan;
+mod runner;
 mod safetensors;
 mod sha256;
 mod tokenizer;
@@ -34,8 +35,15 @@ pub use identity_closure::{
     PreliminaryIdentityClosure, PRELIMINARY_IDENTITY_CLOSURE_VERSION,
 };
 pub use plan::{
-    build_sequential_plan_catalog, SequentialPlanCatalog, SequentialPlanError,
-    SEQUENTIAL_PLAN_CATALOG_ENTRIES, SEQUENTIAL_PLAN_CATALOG_VERSION,
+    build_authenticated_sequential_plan_catalog, build_sequential_plan_catalog,
+    SequentialPlanCatalog, SequentialPlanError, SEQUENTIAL_PLAN_CATALOG_ENTRIES,
+    SEQUENTIAL_PLAN_CATALOG_VERSION,
+};
+pub use runner::{
+    expected_qwen3_gfx942_runner_source_identity, generate_qwen3_gfx942_runner_declaration,
+    render_qwen3_gfx942_runner_source, validate_qwen3_gfx942_runner_declaration,
+    GeneratedOperationDeclaration, GeneratedPlanDeclaration, GeneratedRunnerDeclaration,
+    GeneratedRunnerError, GENERATED_RUNNER_DECLARATION_VERSION,
 };
 pub use safetensors::{
     authenticate_qwen3_draft_weights, authenticate_qwen3_target_weights, AuthenticatedWeightSet,

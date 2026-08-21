@@ -107,6 +107,10 @@ impl AuthenticatedBundleAdmission {
     pub const fn record(&self) -> &BundleAdmissionRecord {
         &self.record
     }
+
+    pub(crate) fn into_parts(self) -> (PrepackedDeploymentBundle, BundleAdmissionRecord) {
+        (self.prepacked, self.record)
+    }
 }
 
 /// Failure while sealing or decoding an authenticated bundle commitment.
