@@ -915,7 +915,7 @@ mod tests {
             tokenizer
                 .encode(
                     "hello world",
-                    tight_limits(32, 1, 32, 1_024),
+                    tight_limits(32, 1, 32, MAX_TOKENIZER_WORK),
                     SpecialTokenEncodePolicy::Reject,
                 )
                 .expect_err("token output bound"),
