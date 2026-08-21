@@ -100,7 +100,10 @@ paths. The version 1 registry is:
 
 The negative-mutation validator is an `ExistingFoundation`: its exact source
 SHA-256 is pinned in the checker-owned registry, and it validates the complete
-versioned run directory behind a bound `.result` artifact. The other validators
+versioned run directory behind a bound `.result` artifact. The unsupported-
+rationale validator is also an `ExistingFoundation`; it accepts only the three
+fixed M1 nonclaims, binds their exact source, requirements, evidence binding,
+and TCB identities, and grants no positive authority. The other validators
 remain `RequiredFuture` M1 implementation obligations with intentionally unset
 source pins. Until every validator required by an index exists in the exact
 qualified source closure, has a reviewed source SHA-256 pinned in the

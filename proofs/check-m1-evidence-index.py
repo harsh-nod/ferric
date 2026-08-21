@@ -112,7 +112,7 @@ TRUSTED_VALIDATORS = {
     "unsupported-rationale": (
         "proofs/m1/evidence/validate-unsupported-rationale.py",
         "ferric.m1-validator.unsupported-rationale.v1",
-        None,
+        "32d008741e317446e1fda1f5fd021efa13f0ea91b6da3c4b3d5635aca61d560e",
     ),
     "verus-theorem": (
         "proofs/m1/evidence/validate-verus-theorem.py",
