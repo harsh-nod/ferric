@@ -86,9 +86,10 @@ The final generated runtime is required to embed exact:
 - prefill, target decode, speculative, and sampling command graphs; and
 - target, compiler, schedule, and complete plan identities.
 
-The current generated declaration slice does not instantiate bounded command
-templates or patch runtime values. Those operations remain future runtime and
-independent-validation work.
+The current generated declaration slice fixes 22 operation templates and four
+logical scalar patch schemas, but it does not instantiate device command
+packets, addresses, or runtime patch values. Those operations remain future
+runtime and independent-validation work.
 
 ## State Transition
 
@@ -125,9 +126,19 @@ exclusive writes, immutable sharing, copy-on-write before extension,
 commit-only publication, rollback unreachability, and quiescence before reuse.
 
 The M0 metadata state machine supports exclusive writable pages, sealed sharing
-of full committed prefix pages, and copy-on-write extension. It does not yet
-allocate, initialize, or share physical GPU KV buffers; that refinement begins
-with the device runtime milestone.
+of full committed prefix pages, and copy-on-write extension. The M1 logical
+foundation now adds an exact one-request, 16-token-page physical metadata
+projection over the 8192-token envelope, including generational ownership,
+initialized-prefix reads, accepted-prefix commit, rejected-tail rollback,
+cancellation, retirement, and quiescence-gated reuse. A separate verified
+32-slot interleaving model proves that one generational request transition
+frames every other request and that cancellation cannot publish or resurrect
+retiring work.
+
+These are source-level sequential refinements. They do not allocate, address,
+initialize, copy, or share GPU memory, produce quiescence from a device
+completion, or connect the generated declarations to a queue. The production
+multi-request device allocator and runtime composition remain open M1 work.
 
 ## Speculative Round
 
