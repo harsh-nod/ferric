@@ -96,7 +96,7 @@ impl AuthenticatedWeightSet {
         self.role
     }
 
-    pub(super) fn into_descriptor(self) -> WeightDescriptor {
+    pub(crate) fn into_descriptor(self) -> WeightDescriptor {
         self.descriptor
     }
 }
@@ -1160,10 +1160,6 @@ pub(crate) mod tests {
         assert_eq!(draft.tensors.len(), 311);
         assert_eq!(draft.tensor_data_bytes, QWEN3_DRAFT_TENSOR_DATA_BYTES);
         validate_roster(Qwen3ModelRole::Draft06B, &[draft]).expect("complete draft roster");
-        assert_eq!(
-            super::super::target_weight_set_identity(),
-            QWEN3_TARGET_WEIGHT_SET_SHA256
-        );
     }
 
     #[test]

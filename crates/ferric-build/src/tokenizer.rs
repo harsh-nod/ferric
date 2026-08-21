@@ -109,11 +109,11 @@ impl AuthenticatedTokenizer {
             .decode_to_bytes(token_ids, limits, special_tokens)
     }
 
-    pub(super) fn into_descriptor(self) -> ArtifactDigest {
+    pub(crate) fn into_descriptor(self) -> ArtifactDigest {
         self.descriptor
     }
 
-    pub(super) fn compatible_with(&self, other: &Self) -> bool {
+    pub(crate) fn compatible_with(&self, other: &Self) -> bool {
         self.descriptor == other.descriptor
             && self.vocabulary_semantic_sha256 == other.vocabulary_semantic_sha256
             && self.merges_semantic_sha256 == other.merges_semantic_sha256

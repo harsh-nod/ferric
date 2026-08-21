@@ -106,28 +106,28 @@ closed spec fn model_config_wire(model: ModelArtifact) -> Seq<u8> {
     })
         + model.config.model_id.bytes_spec()
         + model.config.config_id.bytes_spec()
-        + super::u32_big_endian(model.config.vocabulary_size)
-        + super::u32_big_endian(model.config.layers)
-        + super::u32_big_endian(model.config.hidden_size)
-        + super::u32_big_endian(model.config.intermediate_size)
-        + super::u32_big_endian(model.config.query_heads)
-        + super::u32_big_endian(model.config.kv_heads)
-        + super::u32_big_endian(model.config.head_dim)
-        + super::u32_big_endian(model.config.max_position_embeddings)
-        + super::u32_big_endian(model.config.rope_theta)
+        + crate::model::u32_big_endian(model.config.vocabulary_size)
+        + crate::model::u32_big_endian(model.config.layers)
+        + crate::model::u32_big_endian(model.config.hidden_size)
+        + crate::model::u32_big_endian(model.config.intermediate_size)
+        + crate::model::u32_big_endian(model.config.query_heads)
+        + crate::model::u32_big_endian(model.config.kv_heads)
+        + crate::model::u32_big_endian(model.config.head_dim)
+        + crate::model::u32_big_endian(model.config.max_position_embeddings)
+        + crate::model::u32_big_endian(model.config.rope_theta)
         + boolean_wire(model.config.tie_word_embeddings)
 }
 
 closed spec fn model_tokenizer_weights_wire(model: ModelArtifact) -> Seq<u8> {
     model.tokenizer.tokenizer_id.bytes_spec()
         + model.tokenizer.vocabulary_id.bytes_spec()
-        + super::u32_big_endian(model.tokenizer.vocabulary_size)
-        + super::u32_big_endian(model.tokenizer.end_of_text_token)
-        + super::u32_big_endian(model.tokenizer.im_start_token)
-        + super::u32_big_endian(model.tokenizer.im_end_token)
+        + crate::model::u32_big_endian(model.tokenizer.vocabulary_size)
+        + crate::model::u32_big_endian(model.tokenizer.end_of_text_token)
+        + crate::model::u32_big_endian(model.tokenizer.im_start_token)
+        + crate::model::u32_big_endian(model.tokenizer.im_end_token)
         + model.weights.weights_id.bytes_spec()
-        + super::u64_big_endian(model.weights.total_bytes)
-        + super::u32_big_endian(model.weights.sections)
+        + crate::model::u64_big_endian(model.weights.total_bytes)
+        + crate::model::u32_big_endian(model.weights.sections)
 }
 
 closed spec fn model_wire(model: ModelArtifact) -> Seq<u8> {
@@ -137,14 +137,14 @@ closed spec fn model_wire(model: ModelArtifact) -> Seq<u8> {
 /// Complete verifier-visible wire image for one production bundle value.
 pub closed spec fn canonical_deployment_bundle_wire(bundle: DeploymentBundle) -> Seq<u8> {
     MAGIC@
-        + super::u32_big_endian(CANONICAL_DEPLOYMENT_BUNDLE_VERSION)
+        + crate::model::u32_big_endian(CANONICAL_DEPLOYMENT_BUNDLE_VERSION)
         + bundle.bundle_id.bytes_spec()
         + byte_wire(TARGET_GFX942_XNACK_MINUS)
         + byte_wire(NUMERICAL_BF16_FP32)
-        + super::u32_big_endian(bundle.limits.max_context_tokens)
-        + super::u32_big_endian(bundle.limits.max_active_sequences)
-        + super::u32_big_endian(bundle.limits.kv_page_tokens)
-        + super::u32_big_endian(bundle.limits.max_draft_tokens)
+        + crate::model::u32_big_endian(bundle.limits.max_context_tokens)
+        + crate::model::u32_big_endian(bundle.limits.max_active_sequences)
+        + crate::model::u32_big_endian(bundle.limits.kv_page_tokens)
+        + crate::model::u32_big_endian(bundle.limits.max_draft_tokens)
         + model_wire(bundle.target_model)
         + model_wire(bundle.draft_model)
 }
@@ -162,7 +162,7 @@ closed spec fn model_matches_pins(model: ModelArtifact, role: Qwen3ModelRole) ->
             &&& model.weights.total_bytes == QWEN3_TARGET_WEIGHT_ARTIFACT_BYTES
             &&& model.weights.sections == 5
             &&& model.config.model_id.bytes_spec() == super::sha256::digest_spec(
-                super::model_identity_preimage(
+                crate::model::model_identity_preimage(
                     role,
                     TARGET_REPOSITORY,
                     TARGET_REVISION,
@@ -184,7 +184,7 @@ closed spec fn model_matches_pins(model: ModelArtifact, role: Qwen3ModelRole) ->
             &&& model.weights.total_bytes == QWEN3_DRAFT_WEIGHT_ARTIFACT_BYTES
             &&& model.weights.sections == 1
             &&& model.config.model_id.bytes_spec() == super::sha256::digest_spec(
-                super::model_identity_preimage(
+                crate::model::model_identity_preimage(
                     role,
                     DRAFT_REPOSITORY,
                     DRAFT_REVISION,
@@ -209,7 +209,7 @@ pub closed spec fn canonical_deployment_bundle_spec(bundle: DeploymentBundle) ->
     &&& model_matches_pins(bundle.target_model, Qwen3ModelRole::Target8B)
     &&& model_matches_pins(bundle.draft_model, Qwen3ModelRole::Draft06B)
     &&& bundle.bundle_id.bytes_spec() == super::sha256::digest_spec(
-        super::bundle_identity_preimage(bundle.limits, bundle.target_model, bundle.draft_model),
+        crate::model::bundle_identity_preimage(bundle.limits, bundle.target_model, bundle.draft_model),
     )
 }
 
@@ -314,7 +314,7 @@ proof fn u32_big_endian_parts_round_trip(value: u32)
 }
 
 proof fn u32_big_endian_round_trip(value: u32)
-    ensures u32_at(super::u32_big_endian(value), 0) == value,
+    ensures u32_at(crate::model::u32_big_endian(value), 0) == value,
 {
     u32_big_endian_parts_round_trip(value);
 }
@@ -428,7 +428,7 @@ fn validate_model(
         return Err(CanonicalBundleError::PinnedFieldMismatch("identity_source"));
     }
     proof {
-        super::model_identity_preimage_len(
+        crate::model::model_identity_preimage_len(
             role,
             repository,
             revision,
@@ -578,7 +578,7 @@ impl Writer {
             result.is_ok() ==> {
                 &&& final(self).valid()
                 &&& final(self).offset == old(self).offset + 4
-                &&& final(self).view() == old(self).view() + super::u32_big_endian(value)
+                &&& final(self).view() == old(self).view() + crate::model::u32_big_endian(value)
             },
     {
         let encoded = encode_u32_big_endian(value);
@@ -592,7 +592,7 @@ impl Writer {
             result.is_ok() ==> {
                 &&& final(self).valid()
                 &&& final(self).offset == old(self).offset + 8
-                &&& final(self).view() == old(self).view() + super::u64_big_endian(value)
+                &&& final(self).view() == old(self).view() + crate::model::u64_big_endian(value)
             },
     {
         let encoded = encode_u64_big_endian(value);
@@ -643,10 +643,10 @@ impl Writer {
             final(self).valid(),
             final(self).offset == old(self).offset + 16,
             final(self).view() == old(self).view()
-                + super::u32_big_endian(value.max_context_tokens)
-                + super::u32_big_endian(value.max_active_sequences)
-                + super::u32_big_endian(value.kv_page_tokens)
-                + super::u32_big_endian(value.max_draft_tokens),
+                + crate::model::u32_big_endian(value.max_context_tokens)
+                + crate::model::u32_big_endian(value.max_active_sequences)
+                + crate::model::u32_big_endian(value.kv_page_tokens)
+                + crate::model::u32_big_endian(value.max_draft_tokens),
     {
         self.u32(value.max_context_tokens)?;
         self.u32(value.max_active_sequences)?;

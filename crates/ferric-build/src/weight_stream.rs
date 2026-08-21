@@ -325,7 +325,7 @@ impl PrepackedWeightSet {
         &self.manifest
     }
 
-    pub(super) fn into_parts(self) -> (parts: (WeightDescriptor, WeightSectionManifest))
+    pub(crate) fn into_parts(self) -> (parts: (WeightDescriptor, WeightSectionManifest))
         ensures parts == (self.descriptor_spec(), self.manifest_spec()),
     {
         (self.descriptor, self.manifest)
