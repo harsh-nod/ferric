@@ -10,6 +10,7 @@ use vstd::prelude::*;
 
 pub mod completion;
 mod configuration;
+pub mod continuous_batching;
 mod graph;
 mod identity;
 mod m1_completion;
@@ -26,6 +27,10 @@ pub use configuration::{
     M1_MAX_CONTEXT_TOKENS, M1_MAX_DRAFT_TOKENS, M1_MAX_KV_PAGE_TOKENS, M1_MAX_WEIGHT_BYTES,
     M1_MAX_WEIGHT_SECTIONS, QWEN3_END_OF_TEXT_TOKEN, QWEN3_IM_END_TOKEN, QWEN3_IM_START_TOKEN,
     QWEN3_VOCABULARY_SIZE,
+};
+pub use continuous_batching::{
+    apply_continuous_batch_step, ContinuousBatch, ContinuousBatchAction, ContinuousBatchError,
+    ContinuousRequest, M1_CONTINUOUS_BATCH_CAPACITY,
 };
 pub use graph::{
     expected_step, geometry, plan_step_count, Qwen3BufferKind, Qwen3ExecutionMode,
