@@ -837,19 +837,16 @@ def main() -> None:
             raise AssertionError(f"missing evidence did not fail closed:\n{output}")
         print("PASS: hostile missing evidence file")
 
-        unpinned = [
+        pinned = [
             (kind, record)
             for kind, record in checker.TRUSTED_VALIDATORS.items()
-            if record[2] is None
+            if record[2] is not None
         ]
-        if not unpinned:
-            raise AssertionError("hostile policy requires one RequiredFuture validator")
-        evidence_kind, (relative, _protocol, _source_pin) = unpinned[0]
+        if not pinned:
+            raise AssertionError("hostile policy requires one source-pinned validator")
+        evidence_kind, (relative, _protocol, _source_pin) = pinned[0]
         validator = fixture.ferric / relative
-        validator.parent.mkdir(parents=True, exist_ok=True)
         validator.write_text("raise SystemExit(0)\n", encoding="utf-8")
-        git(fixture.ferric, "add", relative)
-        git(fixture.ferric, "commit", "-q", "-m", "synthetic unpinned validator")
         output_buffer = io.StringIO()
         try:
             with contextlib.redirect_stderr(output_buffer):
@@ -863,13 +860,13 @@ def main() -> None:
         except SystemExit:
             pass
         else:
-            raise AssertionError("production accepted an unpinned validator source")
-        if "has no pinned source identity" not in output_buffer.getvalue():
+            raise AssertionError("production accepted a substituted validator source")
+        if "source identity mismatch" not in output_buffer.getvalue():
             raise AssertionError(
-                "unpinned validator did not fail at its source identity boundary:\n"
+                "substituted validator did not fail at its source identity boundary:\n"
                 f"{output_buffer.getvalue()}"
             )
-        print("PASS: hostile unpinned trusted-validator source")
+        print("PASS: hostile substituted trusted-validator source")
         print(f"PASS: {len(cases) + 2} hostile M1 evidence-index fixtures")
 
 
