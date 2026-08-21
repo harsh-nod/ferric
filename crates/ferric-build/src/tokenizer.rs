@@ -12,7 +12,8 @@ use std::sync::Arc;
 
 use crate::tokenizer_execution::{
     SpecialTokenDecodePolicy, SpecialTokenEncodePolicy, TokenizerExecutionError,
-    TokenizerExecutionLimits, TokenizerProgram, QWEN3_SPLIT_REGEX,
+    TokenizerExecutionLimits, TokenizerProgram, TokenizerProgramConstructionError,
+    QWEN3_SPLIT_REGEX,
 };
 
 const TOKENIZER_JSON_BYTES: usize = 11_422_654;
@@ -104,6 +105,7 @@ impl AuthenticatedTokenizer {
         special_tokens: SpecialTokenDecodePolicy,
     ) -> Result<Vec<u8>, TokenizerExecutionError> {
         self.program
+            .execution
             .decode_to_bytes(token_ids, limits, special_tokens)
     }
 
@@ -160,6 +162,8 @@ pub enum TokenizerError {
     DigestMismatch,
     /// The fixed authenticated Split expression could not be compiled.
     RegexConstruction,
+    /// The authenticated numeric tokenizer execution program could not be constructed.
+    ExecutionProgramConstruction,
 }
 
 impl fmt::Display for TokenizerError {
@@ -220,6 +224,9 @@ impl fmt::Display for TokenizerError {
             }
             Self::RegexConstruction => {
                 formatter.write_str("authenticated tokenizer Split regex construction failed")
+            }
+            Self::ExecutionProgramConstruction => {
+                formatter.write_str("authenticated numeric tokenizer program construction failed")
             }
         }
     }
@@ -427,10 +434,16 @@ fn validate_model(value: Value) -> Result<TokenizerSemantics, TokenizerError> {
     Ok(TokenizerSemantics {
         vocabulary_semantic_sha256,
         merges_semantic_sha256,
-        program: Arc::new(
-            TokenizerProgram::new(vocabulary, merges)
-                .map_err(|_| TokenizerError::RegexConstruction)?,
-        ),
+        program: Arc::new(TokenizerProgram::new(vocabulary, merges).map_err(
+            |error| match error {
+                TokenizerProgramConstructionError::Regex => TokenizerError::RegexConstruction,
+                TokenizerProgramConstructionError::ArithmeticOverflow
+                | TokenizerProgramConstructionError::AllocationFailed
+                | TokenizerProgramConstructionError::InvalidVocabulary => {
+                    TokenizerError::ExecutionProgramConstruction
+                }
+            },
+        )?),
     })
 }
 

@@ -89,6 +89,16 @@ compiler behavior, unsafe code, regex engine, and Unicode tables are
 evidence only; it is not exhaustive equivalence evidence and is not a Verus
 proof of those external implementations.
 
+Within that boundary, Verus directly verifies the production numeric tokenizer
+execution bodies: the ByteLevel byte/codepoint bijection, earliest/longest
+added-token matching and special-token policy, bounded lowest-rank BPE
+selection with simultaneous nonoverlapping application and strict progress,
+and exact bounded byte decode. Construction of the numeric execution program
+from the authenticated string vocabulary and merge list, Rust `char`
+conversion, fallible allocation, Oniguruma Split behavior, and Unicode
+normalization tables and runtime behavior remain `Contracted`. These theorems
+therefore do not claim full Hugging Face tokenizer equivalence.
+
 The resolved transitive packages are `onig_sys` 69.9.3, `bitflags` 2.13.1,
 `libc` 0.2.189, `once_cell` 1.21.4, `cc` 1.4.4, `find-msvc-tools` 0.1.11,
 `shlex` 2.0.1, `pkg-config` 0.3.34, and `smallvec` 1.15.2. The canonical
