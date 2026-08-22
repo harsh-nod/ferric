@@ -481,6 +481,23 @@ fn preflight_m1_step_workspace_subleases<const N: usize>(
     }
 }
 
+pub(crate) fn validate_addressless_m1_step_workspace_subleases<const N: usize>(
+    expected_selection: Qwen3PlanSelection,
+    plan: &AddresslessM1StepWorkspacePlan,
+) -> Result<(), M1StepWorkspaceSubleaseBindingError> {
+    let allocation = plan.allocation();
+    validate_m1_step_workspace_sublease_roster::<N>(
+        expected_selection,
+        allocation.allocation_id(),
+        allocation.byte_len(),
+        allocation.alignment(),
+        plan.selection(),
+        allocation,
+        plan.ranges(),
+    )
+    .map(|_| ())
+}
+
 fn validate_m1_step_workspace_sublease_roster<const N: usize>(
     expected_selection: Qwen3PlanSelection,
     selected_allocation_id: Identity,

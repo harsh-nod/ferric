@@ -12,6 +12,7 @@ mod completion_wire;
 mod device_cache;
 mod epoch;
 mod initialized_model_memory;
+mod initialized_step_workspaces;
 mod model_memory_allocations;
 mod operation_dispatch_expansion;
 mod operation_kernel_plan;
@@ -62,6 +63,14 @@ pub use initialized_model_memory::{
     m1_model_memory_content_role_v1, InitializedModelMemoryAllocationErrorV1,
     InitializedModelMemoryAllocationFailureV1, InitializedModelMemoryPreflightErrorV1,
     M1_INITIALIZED_MODEL_MEMORY_CONTENT_ROLE_IDENTITY_V1,
+};
+pub use initialized_step_workspaces::{
+    allocate_initialized_m1_full_step_workspaces_v1, m1_step_workspace_content_descriptor_v1,
+    m1_step_workspace_content_role_v1, InitializedM1FullStepWorkspaceAllocationErrorV1,
+    InitializedM1FullStepWorkspaceAllocationFailureV1,
+    InitializedM1FullStepWorkspacePreflightErrorV1, InitializedM1FullStepWorkspaceRuntimeErrorV1,
+    M1FullStepWorkspaceImagesV1, M1InitializedWorkspaceSlotV1,
+    M1_INITIALIZED_STEP_WORKSPACE_CONTENT_ROLE_IDENTITY_V1,
 };
 pub use model_memory_allocations::{
     bind_addressless_model_memory_allocations_v1, BoundModelMemoryAllocationsV1,
