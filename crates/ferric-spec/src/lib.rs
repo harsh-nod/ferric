@@ -50,8 +50,8 @@ pub use m1_completion::{
     CompactCompletionRecord, M1_MAX_COMPLETION_TOKENS,
 };
 pub use m1_step_inputs::{
-    validate_m1_step_inputs, M1StepInputCandidate, M1StepInputError, M1StepInputRejection,
-    M1StepInputValidationOutcome, ValidatedM1StepInputs,
+    validate_m1_step_inputs, M1StepInputCandidate, M1StepInputError, M1StepInputParts,
+    M1StepInputRejection, M1StepInputValidationOutcome, ValidatedM1StepInputs,
 };
 pub use paged_kv_refinement::{
     append_physical_page, cancel_physical_kv, commit_physical_kv, map_initialized_token,
@@ -116,6 +116,14 @@ pub open spec fn m1_step_input_candidate_valid_spec(
     candidate: &M1StepInputCandidate,
 ) -> bool {
     m1_step_inputs::m1_step_input_candidate_valid(candidate)
+}
+
+/// Cross-crate verifier view of the exact structural rejection relation.
+pub open spec fn m1_step_input_error_matches_spec(
+    error: M1StepInputError,
+    candidate: &M1StepInputCandidate,
+) -> bool {
+    m1_step_inputs::m1_step_input_error_matches(error, candidate)
 }
 
 } // verus!
