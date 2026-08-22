@@ -153,6 +153,13 @@ pub struct M1PhysicalFixedBatchCaseV1<'a, const N: usize> {
 }
 
 impl<'a, const N: usize> M1PhysicalFixedBatchCaseV1<'a, N> {
+    pub(crate) fn from_parts(
+        batch: ServiceFixedBatchV1<'a, N>,
+        custody: M1PhysicalFixedBatchCustodyV1,
+    ) -> Self {
+        Self { batch, custody }
+    }
+
     /// Exact generic fixed batch, by borrow.
     #[must_use = "the exact generic batch remains retained by the Ferric case"]
     pub const fn batch(&self) -> &ServiceFixedBatchV1<'a, N> {

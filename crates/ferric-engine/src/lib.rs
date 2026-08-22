@@ -22,6 +22,7 @@ mod physical_dispatch_recipe;
 mod physical_fixed_batch;
 mod physical_kernarg_recipe;
 mod physical_program_catalog;
+mod physical_queue_lifecycle;
 mod physical_step;
 mod runner;
 mod scheduler;
@@ -124,6 +125,13 @@ pub use physical_program_catalog::{
     bind_content_bound_m1_program_catalog_v1, ContentBoundM1ProgramCatalogV1,
     InspectedM1KernelArtifacts, M1PhysicalProgramCatalogErrorV1, M1PhysicalProgramFamilyV1,
     M1PhysicalProgramV1, M1_PHYSICAL_PROGRAM_COUNT_V1,
+};
+pub use physical_queue_lifecycle::{
+    M1PhysicalCompletedQueueSessionV1, M1PhysicalDetachedQueueCaseV1,
+    M1PhysicalDetachedQueueSessionV1, M1PhysicalPublishedQueueSessionV1,
+    M1PhysicalQueueCreateFailureClassV1, M1PhysicalQueueCreateFailureV1,
+    M1PhysicalQueueOperationFailureV1, M1PhysicalQueuePhaseCaseV1, M1PhysicalQueuePhaseV1,
+    M1PhysicalQueueReleaseFailureV1, M1PhysicalQueueSessionV1, M1PhysicalRecycledQueueSessionV1,
 };
 pub use physical_step::{
     bind_structural_physical_step, StructuralPhysicalStepBindingError,
