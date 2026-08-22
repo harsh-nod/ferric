@@ -6,6 +6,7 @@ members = [
     "crates/ferric-kernels",
     "crates/ferric-qwen-kernels",
     "crates/ferric-spec",
+    "proofs/m1",
 ]
 resolver = "2"
 

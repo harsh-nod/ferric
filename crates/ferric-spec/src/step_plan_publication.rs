@@ -517,6 +517,63 @@ pub closed spec fn speculative_validation_and_publication_transition(
     )
 }
 
+/// Exposes the exact greedy witness and compact-count consequence retained by
+/// one successful speculative publication transition.
+///
+/// This lemma preserves the closed transition boundary for sibling modules.
+pub proof fn speculative_transition_binds_greedy_publication(
+    before: &StepPublication,
+    after: &StepPublication,
+    expected_request: RequestId,
+    expected_epoch: CompletionEpoch,
+    expected_plan_id: Identity,
+    expected_selection: Qwen3PlanSelection,
+    draft_tokens: Seq<TokenId>,
+    target_choices: Seq<TokenId>,
+)
+    requires speculative_validation_and_publication_transition(
+        before,
+        after,
+        expected_request,
+        expected_epoch,
+        expected_plan_id,
+        expected_selection,
+        draft_tokens,
+        target_choices,
+    ),
+    ensures
+        publication_payload_preserved(before, after),
+        after.delta_spec().compact_completion_spec().emitted_token_count as int
+            == after.delta_spec().compact_completion_spec().accepted_draft_tokens as int + 1,
+        exists|commit: GreedyCommit| speculative_publication_matches(
+            before,
+            expected_request,
+            expected_epoch,
+            expected_plan_id,
+            expected_selection,
+            draft_tokens,
+            target_choices,
+            &commit,
+        ),
+{
+    reveal(speculative_validation_and_publication_transition);
+    let commit = choose|commit: GreedyCommit| speculative_publication_matches(
+        before,
+        expected_request,
+        expected_epoch,
+        expected_plan_id,
+        expected_selection,
+        draft_tokens,
+        target_choices,
+        &commit,
+    );
+    reveal(speculative_publication_matches);
+    reveal(crate::speculative_completion::speculative_completion_matches);
+    reveal(crate::speculative_completion::compact_record_is_valid_for_round);
+    reveal(publication_payload_preserved);
+    reveal(StepPublication::delta_spec);
+}
+
 impl SpeculativePublicationPermit {
     pub(crate) closed spec fn accepted_draft_tokens_spec(&self) -> u8 {
         self.accepted_draft_tokens

@@ -1,0 +1,21 @@
+[package]
+name = "ferric-m1-speculative-proof"
+description = "M1-specific speculative graph composition theorem"
+edition.workspace = true
+rust-version.workspace = true
+version.workspace = true
+publish = false
+
+[lib]
+path = "speculative_graph.rs"
+
+[dependencies]
+ferric-engine = { path = "../../crates/ferric-engine" }
+ferric-spec = { path = "../../crates/ferric-spec" }
+vstd.workspace = true
+
+[package.metadata.verus]
+verify = true
+
+[lints]
+workspace = true

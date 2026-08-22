@@ -376,6 +376,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ferric-m1-speculative-proof"
+version = "0.1.0"
+dependencies = [
+ "ferric-engine",
+ "ferric-spec",
+ "vstd",
+]
+
+[[package]]
 name = "ferric-qwen-kernels"
 version = "0.1.0"
 dependencies = [
