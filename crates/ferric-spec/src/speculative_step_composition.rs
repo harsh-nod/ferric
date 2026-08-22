@@ -62,6 +62,14 @@ pub struct SpeculativeStepPreflight {
 }
 
 impl SpeculativeStepPreflight {
+    pub closed spec fn accepted_draft_tokens_spec(&self) -> u8 {
+        self.accepted_draft_tokens
+    }
+
+    pub closed spec fn required_single_member_accepted_tokens_spec(&self) -> u32 {
+        self.required_single_member_accepted_tokens
+    }
+
     pub closed spec fn valid_for(
         &self,
         publication: &StepPublication,
@@ -97,7 +105,7 @@ impl SpeculativeStepPreflight {
     /// Exact number of draft candidates accepted by target verification.
     #[must_use]
     pub const fn accepted_draft_tokens(&self) -> (accepted: u8)
-        ensures accepted == self.accepted_draft_tokens,
+        ensures accepted == self.accepted_draft_tokens_spec(),
     {
         self.accepted_draft_tokens
     }
@@ -109,8 +117,8 @@ impl SpeculativeStepPreflight {
     #[must_use]
     pub const fn required_single_member_accepted_tokens(&self) -> (accepted: u32)
         ensures
-            accepted == self.required_single_member_accepted_tokens,
-            accepted as int == self.accepted_draft_tokens as int + 1,
+            accepted == self.required_single_member_accepted_tokens_spec(),
+            accepted as int == self.accepted_draft_tokens_spec() as int + 1,
     {
         self.required_single_member_accepted_tokens
     }
@@ -365,7 +373,7 @@ pub fn apply_preflighted_speculative_step(
             outcome,
         ),
         outcome.settlement.accepted_draft_tokens as int + 1
-            == permit.required_single_member_accepted_tokens as int,
+            == permit.required_single_member_accepted_tokens_spec() as int,
 {
     let ghost entry_publication = *publication;
     let ghost entry_selected = *selected;
