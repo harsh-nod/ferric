@@ -9,7 +9,10 @@
 
 use crate::{AuthenticatedModelWeightLayout, ModelWeightBinding, ModelWeightLayoutError};
 use ferric_qwen_kernels::{paged_decode, prefill, rope_kv};
-use ferric_spec::{Identity, Qwen3ModelRole};
+use ferric_spec::{
+    Identity, PhysicalPageId, Qwen3ModelRole, RequestId, M1_KV_PAGE_TABLE_ENTRIES,
+    M1_MAX_ACTIVE_SEQUENCES,
+};
 use std::fmt;
 
 const BF16_BYTES: u64 = 2;
@@ -37,6 +40,10 @@ const _: () = {
     assert!(
         rope_kv::QWEN3_KV_CACHE_BYTES_V1
             == rope_kv::QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1 as u64 * QWEN3_KV_PAGE_BYTES_V1
+    );
+    assert!(
+        rope_kv::QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1 as usize
+            == M1_MAX_ACTIVE_SEQUENCES as usize * M1_KV_PAGE_TABLE_ENTRIES
     );
 };
 
@@ -208,6 +215,55 @@ pub struct ModelWeightMemoryBinding<'a> {
     range: DeclaredMemoryRange,
 }
 
+/// One request-local physical page bound to its global role-arena subrange.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ModelKvPageMemoryBinding {
+    request: RequestId,
+    page: PhysicalPageId,
+    component: KvCacheComponent,
+    layer: u32,
+    global_page: u32,
+    range: DeclaredMemoryRange,
+}
+
+impl ModelKvPageMemoryBinding {
+    /// Returns the exact generational request owning the local page table.
+    #[must_use]
+    pub const fn request(self) -> RequestId {
+        self.request
+    }
+
+    /// Returns the retained role, local page index, and page generation.
+    #[must_use]
+    pub const fn page(self) -> PhysicalPageId {
+        self.page
+    }
+
+    /// Returns the selected key or value cache plane.
+    #[must_use]
+    pub const fn component(self) -> KvCacheComponent {
+        self.component
+    }
+
+    /// Returns the selected transformer layer.
+    #[must_use]
+    pub const fn layer(self) -> u32 {
+        self.layer
+    }
+
+    /// Returns the exact global pool slot derived from request slot and local page.
+    #[must_use]
+    pub const fn global_page(self) -> u32 {
+        self.global_page
+    }
+
+    /// Returns the exact addressless role-arena page range.
+    #[must_use]
+    pub const fn range(self) -> DeclaredMemoryRange {
+        self.range
+    }
+}
+
 impl<'a> ModelWeightMemoryBinding<'a> {
     /// Returns the typed retained manifest binding.
     #[must_use]
@@ -255,6 +311,16 @@ pub enum ModelMemoryPlanError {
     /// A requested global physical page slot is outside the kernel pool.
     PageOutOfRange {
         /// Rejected physical page slot.
+        page: u32,
+    },
+    /// A generational request names a slot outside the fixed global pool partition.
+    RequestSlotOutOfRange {
+        /// Rejected request slot.
+        slot: u32,
+    },
+    /// A request-local physical page exceeds its 512-entry page table.
+    RequestPageOutOfRange {
+        /// Rejected request-local page index.
         page: u32,
     },
     /// Checked range arithmetic exceeded the declared allocation.
@@ -406,6 +472,51 @@ impl AddresslessModelMemoryPlan {
             QWEN3_KV_PAGE_BYTES_V1,
         )
     }
+
+    /// Resolves one request-local physical page into its disjoint global pool slot.
+    ///
+    /// The mapping is `request.slot * 512 + page.index`. Request generation and
+    /// physical-page generation remain retained in the returned binding but do
+    /// not change the byte address. The engine must still enforce retirement
+    /// before either generation can be reused.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ModelMemoryPlanError`] for an out-of-range request slot,
+    /// request-local page, layer, or checked range computation.
+    pub fn kv_request_page(
+        &self,
+        request: RequestId,
+        page: PhysicalPageId,
+        component: KvCacheComponent,
+        layer: u32,
+    ) -> Result<ModelKvPageMemoryBinding, ModelMemoryPlanError> {
+        if request.slot() >= M1_MAX_ACTIVE_SEQUENCES {
+            return Err(ModelMemoryPlanError::RequestSlotOutOfRange {
+                slot: request.slot(),
+            });
+        }
+        let local_page = page.index();
+        let page_table_entries = u32::try_from(M1_KV_PAGE_TABLE_ENTRIES)
+            .map_err(|_| ModelMemoryPlanError::RangeOverflow)?;
+        if local_page >= page_table_entries {
+            return Err(ModelMemoryPlanError::RequestPageOutOfRange { page: local_page });
+        }
+        let global_page = request
+            .slot()
+            .checked_mul(page_table_entries)
+            .and_then(|base| base.checked_add(local_page))
+            .ok_or(ModelMemoryPlanError::RangeOverflow)?;
+        let range = self.kv_page(page.role(), component, layer, global_page)?;
+        Ok(ModelKvPageMemoryBinding {
+            request,
+            page,
+            component,
+            layer,
+            global_page,
+            range,
+        })
+    }
 }
 
 /// Linear result of one model-memory planning attempt.
@@ -513,7 +624,10 @@ mod tests {
         weight_stream::tests::test_prepacked,
     };
     use ferric_qwen_kernels::rope_kv::{QWEN3_KV_CACHE_BYTES_V1, QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1};
-    use ferric_spec::{Identity, Qwen3ModelRole};
+    use ferric_spec::{
+        Identity, PhysicalPageId, Qwen3ModelRole, RequestId, M1_KV_PAGE_TABLE_ENTRIES,
+        M1_MAX_ACTIVE_SEQUENCES,
+    };
 
     const fn identity(byte: u8) -> Identity {
         Identity::new([byte; 32])
@@ -720,5 +834,85 @@ mod tests {
                 })
             );
         }
+    }
+
+    #[test]
+    fn request_local_pages_partition_the_complete_global_pool_without_aliasing() {
+        let plan = exact_plan();
+        let local_last = u32::try_from(M1_KV_PAGE_TABLE_ENTRIES - 1).unwrap();
+        for role in [Qwen3ModelRole::Target8B, Qwen3ModelRole::Draft06B] {
+            for slot in 0..M1_MAX_ACTIVE_SEQUENCES {
+                let request = RequestId::new(slot, slot + 1);
+                for local_page in [0, local_last] {
+                    let page = PhysicalPageId::new(role, local_page, slot + 2);
+                    let binding = plan
+                        .kv_request_page(request, page, KvCacheComponent::Key, role.layers() - 1)
+                        .expect("request-local page maps into the global role pool");
+                    let expected_global =
+                        slot * u32::try_from(M1_KV_PAGE_TABLE_ENTRIES).unwrap() + local_page;
+                    assert_eq!(binding.request(), request);
+                    assert_eq!(binding.page(), page);
+                    assert_eq!(binding.component(), KvCacheComponent::Key);
+                    assert_eq!(binding.layer(), role.layers() - 1);
+                    assert_eq!(binding.global_page(), expected_global);
+                    assert_eq!(
+                        binding.range(),
+                        plan.kv_page(
+                            role,
+                            KvCacheComponent::Key,
+                            role.layers() - 1,
+                            expected_global,
+                        )
+                        .unwrap()
+                    );
+                }
+            }
+        }
+
+        let final_binding = plan
+            .kv_request_page(
+                RequestId::new(M1_MAX_ACTIVE_SEQUENCES - 1, 9),
+                PhysicalPageId::new(Qwen3ModelRole::Target8B, local_last, 11),
+                KvCacheComponent::Value,
+                Qwen3ModelRole::Target8B.layers() - 1,
+            )
+            .unwrap();
+        assert_eq!(
+            final_binding.global_page(),
+            QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1 - 1
+        );
+        assert_eq!(
+            final_binding.range().end(),
+            qwen3_kv_arena_bytes(Qwen3ModelRole::Target8B)
+        );
+    }
+
+    #[test]
+    fn request_slot_and_local_page_bounds_fail_closed() {
+        let plan = exact_plan();
+        let role = Qwen3ModelRole::Draft06B;
+        assert_eq!(
+            plan.kv_request_page(
+                RequestId::new(M1_MAX_ACTIVE_SEQUENCES, 1),
+                PhysicalPageId::new(role, 0, 1),
+                KvCacheComponent::Key,
+                0,
+            ),
+            Err(ModelMemoryPlanError::RequestSlotOutOfRange {
+                slot: M1_MAX_ACTIVE_SEQUENCES,
+            })
+        );
+        let local_out_of_range = u32::try_from(M1_KV_PAGE_TABLE_ENTRIES).unwrap();
+        assert_eq!(
+            plan.kv_request_page(
+                RequestId::new(0, 1),
+                PhysicalPageId::new(role, local_out_of_range, 1),
+                KvCacheComponent::Value,
+                0,
+            ),
+            Err(ModelMemoryPlanError::RequestPageOutOfRange {
+                page: local_out_of_range,
+            })
+        );
     }
 }

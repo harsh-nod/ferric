@@ -41,10 +41,10 @@ pub use identity_closure::{
 };
 pub use memory_layout::{
     plan_authenticated_model_memory, qwen3_kv_arena_bytes, AddresslessModelMemoryPlan,
-    DeclaredDeviceAllocation, DeclaredMemoryRange, KvCacheComponent, ModelMemoryAllocationKind,
-    ModelMemoryAllocationSet, ModelMemoryPlanError, ModelMemoryPlanFailure, ModelMemoryPlanOutcome,
-    ModelWeightMemoryBinding, QWEN3_KV_ARENA_ALIGNMENT_V1, QWEN3_KV_LAYER_BYTES_V1,
-    QWEN3_KV_PAGE_BYTES_V1,
+    DeclaredDeviceAllocation, DeclaredMemoryRange, KvCacheComponent, ModelKvPageMemoryBinding,
+    ModelMemoryAllocationKind, ModelMemoryAllocationSet, ModelMemoryPlanError,
+    ModelMemoryPlanFailure, ModelMemoryPlanOutcome, ModelWeightMemoryBinding,
+    QWEN3_KV_ARENA_ALIGNMENT_V1, QWEN3_KV_LAYER_BYTES_V1, QWEN3_KV_PAGE_BYTES_V1,
 };
 pub use model::{
     build_authenticated_deployment_bundle, build_preliminary_deployment_bundle,
