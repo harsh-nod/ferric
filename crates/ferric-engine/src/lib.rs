@@ -6,6 +6,7 @@
 use vstd::prelude::*;
 
 mod cache;
+mod completion_wire;
 mod device_cache;
 mod epoch;
 mod physical_step;
@@ -15,6 +16,11 @@ mod speculative_graph;
 mod system;
 
 pub use cache::{KvError, PageId};
+pub use completion_wire::{
+    bind_inert_completion_epoch, check_inert_completion_record, CheckedCompletionSemantics,
+    CompletionEpochJoinFailure, CompletionWireError, CompletionWireExpectation,
+    CompletionWireSemanticExpectation, EpochJoinedCompletionRecord, InertCheckedCompletionRecord,
+};
 pub use device_cache::{
     bind_gfx942_device, ActiveDeviceKvCache, CancelledDeviceKvCache, DeviceKvAppendFailure,
     DeviceKvCacheError, DeviceKvCacheProjection, DeviceKvCancellationFailure,
