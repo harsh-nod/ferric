@@ -1,0 +1,2490 @@
+//! Exact finite Qwen3 paged-GQA causal-prefill compiler profiles.
+//!
+//! Q and O are BF16 `[S,T,QH,128]`. K and V are BF16 P16 caches
+//! `[S,512,16,8,128]` addressed through `u32` page indices `[S,512]`.
+//! Every selected query head maps to `query_head / gqa_group_size`, with
+//! target QH32/GQA4 and draft QH16/GQA2 sharing KVH8.
+//!
+//! The machine declaration uses an ascending D128 FP32 dot and an online FP32
+//! max/sum/numerator recurrence with the existing unresolved
+//! `__ocml_exp_f32` provider boundary, FP32 division, and BF16 RNE output.
+//! A separate two-pass host reference is intended for future reconciliation.
+//! This module does not claim numerical or operator refinement between those
+//! policies. It also makes no memory/race
+//! refinement, compiler-origin, provider-content, artifact, load, launch,
+//! completion, hardware, performance, plan-join, or schedule-catalog claim.
+
+use core::fmt;
+use std::fmt::Write as _;
+
+use fe2o3_amdhsa_loader::{AdmittedProfile, LoadPlan, PlanError};
+use fe2o3_artifact_transaction::{
+    CompilerModuleHandoffIdentityV1, ConsumedCompilerModuleHandoffV1,
+};
+use fe2o3_compiler_ffi::{
+    CodeObjectVersion, CompilerFfiContractV1, CompilerFfiEnvelopeBuilderV1,
+    CompilerFfiEnvelopeError, CompilerFfiLinkRoleV1, CompilerFfiSourceOwnerV1,
+    CompilerModuleHandoffErrorV2, CompilerModuleHandoffIdentityV2, CompilerModuleHandoffV2,
+    CompilerModuleKindV1, CompilerModuleSymbolManifestErrorV1,
+    CompilerModuleSymbolManifestIdentityV1, CompilerModuleSymbolManifestV1,
+    CompilerModuleSymbolRoleV1, DeviceTargetV1, EXTERNAL_DEVICE_LIBRARY_GFX942_DATA_LAYOUT_V1,
+};
+use fe2o3_hsaco::{
+    inspect_and_bind_kernel_descriptors, ArgumentAccess, ArgumentAddressSpace,
+    CodeObjectVersion as InspectedCodeObjectVersion, ExplicitArgument, ExplicitValueKind,
+    ExplicitValueType, HiddenArgument, HiddenValueKind, KernelBindingError, MAX_HSACO_BYTES,
+};
+use fe2o3_hsaco_finalize::{
+    execute_reproducible_first_build_worker_v2, FirstBuildWorkerV2Error,
+    InertDecodedWorkerExchangeV2, InertFirstBuildWorkerV2EvidenceV1, LinkOptionV1, PinnedWorkerV1,
+    WorkerExecutionLimitsV1, WorkerOutputConstraintsV1, WorkerProtocolError,
+};
+use reserved_fe2o3_symbols::{
+    derive_device_ffi_contract_id_v1, DeviceFfiContractFieldsV1, DeviceFfiDirectionV1,
+    DEVICE_FFI_DIRECTION_IMPORT_V1,
+};
+use sha2::{Digest as _, Sha256};
+
+/// Exact kernel entry shared by all eight runtime profiles.
+pub const QWEN3_PREFILL_KERNEL_SYMBOL_V1: &str = "qwen3_gqa_prefill_causal_bf16_f32_v1";
+/// Exact AMDHSA descriptor symbol.
+pub const QWEN3_PREFILL_KERNEL_DESCRIPTOR_SYMBOL_V1: &str =
+    "qwen3_gqa_prefill_causal_bf16_f32_v1.kd";
+/// Exact gfx942 feature profile.
+pub const QWEN3_PREFILL_TARGET_V1: &str = "gfx942:xnack-";
+/// Exact code-object version.
+pub const QWEN3_PREFILL_CODE_OBJECT_VERSION_V1: u8 = 6;
+/// Exact Wave64 workgroup, measured in workitems.
+pub const QWEN3_PREFILL_WORKGROUP_V1: [u32; 3] = [64, 1, 1];
+/// Exact Qwen3 attention feature count per head.
+pub const QWEN3_PREFILL_HEAD_DIMENSION_V1: u32 = 128;
+/// Exact key/value head count for both model roles.
+pub const QWEN3_PREFILL_KV_HEADS_V1: u32 = 8;
+/// Exact tokens per physical cache page.
+pub const QWEN3_PREFILL_PAGE_TOKENS_V1: u32 = 16;
+/// Exact logical-page entries and physical-page slots per sequence.
+pub const QWEN3_PREFILL_PAGE_TABLE_ENTRIES_V1: u32 = 512;
+/// Exact FP32 bits for `1 / sqrt(128)`.
+pub const QWEN3_PREFILL_ATTENTION_SCALE_BITS_V1: u32 = 0x3db5_04f3;
+/// Five pointer-plus-`u64`-length slice records.
+pub const QWEN3_PREFILL_EXPLICIT_KERNARG_BYTES_V1: u64 = 80;
+/// Exact explicit plus COV6 hidden kernarg bytes.
+pub const QWEN3_PREFILL_TOTAL_KERNARG_BYTES_V1: u64 = 336;
+/// Exact kernarg alignment.
+pub const QWEN3_PREFILL_KERNARG_ALIGNMENT_V1: u64 = 8;
+/// Number of finite target/draft prefill profiles.
+pub const QWEN3_PREFILL_PROFILE_COUNT_V1: usize = 8;
+/// Exact byte length of the final canonical direct-LLVM source.
+pub const QWEN3_PREFILL_LLVM_BYTES_V1: usize = 21_408;
+/// SHA-256 of the final canonical direct-LLVM source bytes.
+pub const QWEN3_PREFILL_LLVM_SHA256_V1: [u8; 32] = [
+    0x33, 0x11, 0x34, 0xe8, 0x1b, 0xa6, 0xcd, 0x83, 0x6f, 0xd5, 0xb0, 0x48, 0xb4, 0xf2, 0x28, 0x3b,
+    0xb7, 0x1c, 0xc2, 0xb7, 0x27, 0xd4, 0x64, 0xad, 0xf2, 0x88, 0x30, 0x2d, 0xd4, 0x72, 0xd0, 0x6d,
+];
+
+const OCML_EXP_F32: &str = "__ocml_exp_f32";
+const OCML_EXP_ABI: &str = "C(f32[size=4,align=4])->f32[size=4,align=4]";
+const OCML_EXP_EFFECTS: &str = "none";
+const OCML_PROVIDER_IDENTITY: &str = "gfx942-ocml-v1";
+const OCML_PROVIDER_BASENAMES: [&str; 4] = [
+    "ocml.bc",
+    "oclc_isa_version_942.bc",
+    "oclc_unsafe_math_off.bc",
+    "oclc_finite_only_off.bc",
+];
+const OCML_EXP_BOUNDARY: [u8; 32] = [
+    0xdb, 0x91, 0x96, 0x57, 0x5c, 0xcc, 0xcc, 0xd8, 0x03, 0x53, 0xf5, 0xed, 0x04, 0xbc, 0x42, 0x5b,
+    0x64, 0x34, 0x4a, 0x42, 0x07, 0x09, 0x79, 0x3e, 0xe8, 0x37, 0x79, 0xad, 0xd2, 0x1e, 0x47, 0x60,
+];
+const PROFILE_DOMAIN: &[u8] = b"FERRIC/QWEN3/PAGED-GQA-PREFILL/PROFILE/V1\0";
+const CATALOG_DOMAIN: &[u8] = b"FERRIC/QWEN3/PAGED-GQA-PREFILL/CATALOG/V1\0";
+const KERNEL_IR_DOMAIN: &[u8] = b"FERRIC/QWEN3/PAGED-GQA-PREFILL/KERNEL-IR/V1\0";
+const SOURCE_BINDING_DOMAIN: &[u8] = b"FERRIC/QWEN3/PAGED-GQA-PREFILL/SOURCE-BINDING/V1\0";
+
+/// Target or speculative-draft Qwen3 model role.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[repr(u8)]
+pub enum Qwen3PrefillModelRoleV1 {
+    /// Qwen3-8B target with QH32, KVH8, D128, and GQA4.
+    Target8B = 1,
+    /// Qwen3-0.6B draft with QH16, KVH8, D128, and GQA2.
+    Draft06B = 2,
+}
+
+impl Qwen3PrefillModelRoleV1 {
+    /// Exact query-head count.
+    pub const fn query_heads(self) -> u32 {
+        match self {
+            Self::Target8B => 32,
+            Self::Draft06B => 16,
+        }
+    }
+
+    /// Exact consecutive query heads sharing one KV head.
+    pub const fn gqa_group_size(self) -> u32 {
+        match self {
+            Self::Target8B => 4,
+            Self::Draft06B => 2,
+        }
+    }
+
+    /// Exact pre-output-projection attention width.
+    pub const fn query_width(self) -> u32 {
+        self.query_heads() * QWEN3_PREFILL_HEAD_DIMENSION_V1
+    }
+}
+
+/// Closed Ferric prefill bucket set.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[repr(u8)]
+pub enum Qwen3PrefillBucketV1 {
+    /// One sequence with 128 active/context tokens.
+    S1T128 = 1,
+    /// Eight sequences with 128 active/context tokens each.
+    S8T128 = 2,
+    /// One sequence with 512 active/context tokens.
+    S1T512 = 3,
+    /// One sequence with 2,048 active/context tokens.
+    S1T2048 = 4,
+}
+
+impl Qwen3PrefillBucketV1 {
+    /// Exact independent sequence count.
+    pub const fn sequences(self) -> u32 {
+        match self {
+            Self::S8T128 => 8,
+            Self::S1T128 | Self::S1T512 | Self::S1T2048 => 1,
+        }
+    }
+
+    /// Exact active and context token count per sequence.
+    pub const fn tokens(self) -> u32 {
+        match self {
+            Self::S1T128 | Self::S8T128 => 128,
+            Self::S1T512 => 512,
+            Self::S1T2048 => 2_048,
+        }
+    }
+}
+
+/// Exact machine arithmetic declaration.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(u8)]
+pub enum Qwen3PrefillNumericalPolicyV1 {
+    /// BF16 widening, ascending D128 dot, online FP32 recurrence, existing OCML
+    /// exp boundary, FP32 division, and BF16 RNE output.
+    OnlineFp32OcmlExpBf16RneOutput = 1,
+}
+
+/// SHA-256 identity of one exact profile record.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[repr(transparent)]
+pub struct Qwen3PrefillProfileIdentityV1([u8; 32]);
+
+impl Qwen3PrefillProfileIdentityV1 {
+    /// Returns the domain-separated identity bytes.
+    pub const fn as_bytes(&self) -> &[u8; 32] {
+        &self.0
+    }
+}
+
+/// One exact checked target/draft paged-GQA prefill profile.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct Qwen3PrefillProfileV1 {
+    role: Qwen3PrefillModelRoleV1,
+    bucket: Qwen3PrefillBucketV1,
+    sequences: u32,
+    tokens: u32,
+    query_heads: u32,
+    gqa_group_size: u32,
+    query_width: u32,
+    query_elements: u64,
+    cache_elements_each: u64,
+    page_table_elements: u64,
+    launch_workitems: [u32; 3],
+    grid_workgroups: [u32; 3],
+    numerical_policy: Qwen3PrefillNumericalPolicyV1,
+    identity: Qwen3PrefillProfileIdentityV1,
+}
+
+impl Qwen3PrefillProfileV1 {
+    fn checked(
+        role: Qwen3PrefillModelRoleV1,
+        bucket: Qwen3PrefillBucketV1,
+    ) -> Result<Self, Qwen3PrefillCatalogErrorV1> {
+        let sequences = bucket.sequences();
+        let tokens = bucket.tokens();
+        let query_heads = role.query_heads();
+        let gqa_group_size = role.gqa_group_size();
+        if query_heads.checked_div(gqa_group_size) != Some(QWEN3_PREFILL_KV_HEADS_V1) {
+            return Err(Qwen3PrefillCatalogErrorV1::GqaGeometry);
+        }
+        let query_width = query_heads
+            .checked_mul(QWEN3_PREFILL_HEAD_DIMENSION_V1)
+            .ok_or(Qwen3PrefillCatalogErrorV1::ExtentOverflow)?;
+        let positions = u64::from(sequences)
+            .checked_mul(u64::from(tokens))
+            .ok_or(Qwen3PrefillCatalogErrorV1::ExtentOverflow)?;
+        let query_elements = positions
+            .checked_mul(u64::from(query_width))
+            .ok_or(Qwen3PrefillCatalogErrorV1::ExtentOverflow)?;
+        let cache_elements_each = u64::from(sequences)
+            .checked_mul(u64::from(QWEN3_PREFILL_PAGE_TABLE_ENTRIES_V1))
+            .and_then(|value| value.checked_mul(u64::from(QWEN3_PREFILL_PAGE_TOKENS_V1)))
+            .and_then(|value| value.checked_mul(u64::from(QWEN3_PREFILL_KV_HEADS_V1)))
+            .and_then(|value| value.checked_mul(u64::from(QWEN3_PREFILL_HEAD_DIMENSION_V1)))
+            .ok_or(Qwen3PrefillCatalogErrorV1::ExtentOverflow)?;
+        let page_table_elements = u64::from(sequences)
+            .checked_mul(u64::from(QWEN3_PREFILL_PAGE_TABLE_ENTRIES_V1))
+            .ok_or(Qwen3PrefillCatalogErrorV1::ExtentOverflow)?;
+        let vectors = u32::try_from(
+            positions
+                .checked_mul(u64::from(query_heads))
+                .ok_or(Qwen3PrefillCatalogErrorV1::GridOverflow)?,
+        )
+        .map_err(|_| Qwen3PrefillCatalogErrorV1::GridOverflow)?;
+        let workitems = vectors
+            .checked_mul(QWEN3_PREFILL_WORKGROUP_V1[0])
+            .ok_or(Qwen3PrefillCatalogErrorV1::GridOverflow)?;
+        let mut profile = Self {
+            role,
+            bucket,
+            sequences,
+            tokens,
+            query_heads,
+            gqa_group_size,
+            query_width,
+            query_elements,
+            cache_elements_each,
+            page_table_elements,
+            launch_workitems: [workitems, 1, 1],
+            grid_workgroups: [vectors, 1, 1],
+            numerical_policy: Qwen3PrefillNumericalPolicyV1::OnlineFp32OcmlExpBf16RneOutput,
+            identity: Qwen3PrefillProfileIdentityV1([0; 32]),
+        };
+        profile.identity = Qwen3PrefillProfileIdentityV1(hash(PROFILE_DOMAIN, &profile.encode()));
+        Ok(profile)
+    }
+
+    fn encode(self) -> Vec<u8> {
+        let mut bytes = Vec::with_capacity(128);
+        bytes.push(self.role as u8);
+        bytes.push(self.bucket as u8);
+        for value in [
+            self.sequences,
+            self.tokens,
+            self.query_heads,
+            QWEN3_PREFILL_KV_HEADS_V1,
+            QWEN3_PREFILL_HEAD_DIMENSION_V1,
+            self.gqa_group_size,
+            self.query_width,
+            QWEN3_PREFILL_PAGE_TOKENS_V1,
+            QWEN3_PREFILL_PAGE_TABLE_ENTRIES_V1,
+            QWEN3_PREFILL_ATTENTION_SCALE_BITS_V1,
+        ] {
+            bytes.extend_from_slice(&value.to_le_bytes());
+        }
+        for value in [
+            self.query_elements,
+            self.cache_elements_each,
+            self.page_table_elements,
+        ] {
+            bytes.extend_from_slice(&value.to_le_bytes());
+        }
+        for value in self
+            .launch_workitems
+            .into_iter()
+            .chain(self.grid_workgroups)
+        {
+            bytes.extend_from_slice(&value.to_le_bytes());
+        }
+        bytes.push(self.numerical_policy as u8);
+        bytes
+    }
+
+    /// Exact model role.
+    pub const fn role(self) -> Qwen3PrefillModelRoleV1 {
+        self.role
+    }
+
+    /// Exact prefill bucket.
+    pub const fn bucket(self) -> Qwen3PrefillBucketV1 {
+        self.bucket
+    }
+
+    /// Exact sequence count.
+    pub const fn sequences(self) -> u32 {
+        self.sequences
+    }
+
+    /// Exact active and context tokens per sequence.
+    pub const fn tokens(self) -> u32 {
+        self.tokens
+    }
+
+    /// Exact query-head count.
+    pub const fn query_heads(self) -> u32 {
+        self.query_heads
+    }
+
+    /// Exact GQA group size.
+    pub const fn gqa_group_size(self) -> u32 {
+        self.gqa_group_size
+    }
+
+    /// Exact attention width before O projection.
+    pub const fn query_width(self) -> u32 {
+        self.query_width
+    }
+
+    /// Exact BF16 query and, separately, output element count.
+    pub const fn query_elements(self) -> u64 {
+        self.query_elements
+    }
+
+    /// Exact BF16 key-cache and, separately, value-cache element count.
+    pub const fn cache_elements_each(self) -> u64 {
+        self.cache_elements_each
+    }
+
+    /// Exact `u32` page-index element count.
+    pub const fn page_table_elements(self) -> u64 {
+        self.page_table_elements
+    }
+
+    /// Exact global extent measured in workitems: `[S*T*QH*64,1,1]`.
+    pub const fn launch_workitems(self) -> [u32; 3] {
+        self.launch_workitems
+    }
+
+    /// Exact grid measured in Wave64 workgroups: `[S*T*QH,1,1]`.
+    pub const fn grid_workgroups(self) -> [u32; 3] {
+        self.grid_workgroups
+    }
+
+    /// Exact declared online-recurrence policy.
+    pub const fn numerical_policy(self) -> Qwen3PrefillNumericalPolicyV1 {
+        self.numerical_policy
+    }
+
+    /// Exact domain-separated profile identity.
+    pub const fn identity(self) -> Qwen3PrefillProfileIdentityV1 {
+        self.identity
+    }
+
+    /// A profile declaration is not numerical or operator-refinement evidence.
+    pub const fn proves_operator_refinement(self) -> bool {
+        false
+    }
+}
+
+/// Finite catalog construction failure.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Qwen3PrefillCatalogErrorV1 {
+    /// Query-head quotient did not equal exact KVH8.
+    GqaGeometry,
+    /// Tensor extent arithmetic overflowed.
+    ExtentOverflow,
+    /// Workitem or workgroup arithmetic overflowed.
+    GridOverflow,
+    /// The catalog did not contain exactly eight distinct records.
+    CatalogClosure,
+}
+
+impl fmt::Display for Qwen3PrefillCatalogErrorV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            formatter,
+            "Qwen3 paged-GQA prefill catalog failed: {self:?}"
+        )
+    }
+}
+
+impl std::error::Error for Qwen3PrefillCatalogErrorV1 {}
+
+/// Identity of the exact eight-profile catalog.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[repr(transparent)]
+pub struct Qwen3PrefillProfileCatalogIdentityV1([u8; 32]);
+
+impl Qwen3PrefillProfileCatalogIdentityV1 {
+    /// Returns the exact catalog identity bytes.
+    pub const fn as_bytes(&self) -> &[u8; 32] {
+        &self.0
+    }
+}
+
+/// Complete finite target/draft B3 prefill catalog.
+#[derive(Debug, Eq, PartialEq)]
+pub struct Qwen3PrefillProfileCatalogV1 {
+    profiles: Box<[Qwen3PrefillProfileV1]>,
+    canonical_bytes: Box<[u8]>,
+    identity: Qwen3PrefillProfileCatalogIdentityV1,
+}
+
+impl Qwen3PrefillProfileCatalogV1 {
+    /// Constructs the exact role-major, bucket-major catalog.
+    pub fn canonical() -> Result<Self, Qwen3PrefillCatalogErrorV1> {
+        let mut profiles = Vec::with_capacity(QWEN3_PREFILL_PROFILE_COUNT_V1);
+        for role in [
+            Qwen3PrefillModelRoleV1::Target8B,
+            Qwen3PrefillModelRoleV1::Draft06B,
+        ] {
+            for bucket in [
+                Qwen3PrefillBucketV1::S1T128,
+                Qwen3PrefillBucketV1::S8T128,
+                Qwen3PrefillBucketV1::S1T512,
+                Qwen3PrefillBucketV1::S1T2048,
+            ] {
+                profiles.push(Qwen3PrefillProfileV1::checked(role, bucket)?);
+            }
+        }
+        if profiles.len() != QWEN3_PREFILL_PROFILE_COUNT_V1
+            || profiles.iter().enumerate().any(|(index, profile)| {
+                profiles[index + 1..]
+                    .iter()
+                    .any(|other| profile.identity == other.identity)
+            })
+        {
+            return Err(Qwen3PrefillCatalogErrorV1::CatalogClosure);
+        }
+        let mut canonical_bytes = Vec::with_capacity(512);
+        canonical_bytes.extend_from_slice(&(profiles.len() as u32).to_le_bytes());
+        canonical_bytes.extend_from_slice(QWEN3_PREFILL_TARGET_V1.as_bytes());
+        canonical_bytes.push(QWEN3_PREFILL_CODE_OBJECT_VERSION_V1);
+        for dimension in QWEN3_PREFILL_WORKGROUP_V1 {
+            canonical_bytes.extend_from_slice(&dimension.to_le_bytes());
+        }
+        for profile in &profiles {
+            let encoded = profile.encode();
+            canonical_bytes.extend_from_slice(&(encoded.len() as u32).to_le_bytes());
+            canonical_bytes.extend_from_slice(&encoded);
+            canonical_bytes.extend_from_slice(profile.identity.as_bytes());
+        }
+        let identity = Qwen3PrefillProfileCatalogIdentityV1(hash(CATALOG_DOMAIN, &canonical_bytes));
+        Ok(Self {
+            profiles: profiles.into_boxed_slice(),
+            canonical_bytes: canonical_bytes.into_boxed_slice(),
+            identity,
+        })
+    }
+
+    /// Exact stable-order profile slice.
+    pub fn profiles(&self) -> &[Qwen3PrefillProfileV1] {
+        &self.profiles
+    }
+
+    /// Looks up one exact role/bucket pair.
+    pub fn profile(
+        &self,
+        role: Qwen3PrefillModelRoleV1,
+        bucket: Qwen3PrefillBucketV1,
+    ) -> Option<Qwen3PrefillProfileV1> {
+        self.profiles
+            .iter()
+            .copied()
+            .find(|profile| profile.role == role && profile.bucket == bucket)
+    }
+
+    /// Canonical bytes retaining every checked shape and launch unit.
+    pub fn canonical_bytes(&self) -> &[u8] {
+        &self.canonical_bytes
+    }
+
+    /// Exact catalog identity.
+    pub const fn identity(&self) -> Qwen3PrefillProfileCatalogIdentityV1 {
+        self.identity
+    }
+
+    /// This structural roster grants no source, artifact, or launch authority.
+    pub const fn grants_authority(&self) -> bool {
+        false
+    }
+}
+
+/// Semantic role of one five-slice ABI argument.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(u8)]
+pub enum Qwen3PrefillArgumentRoleV1 {
+    /// Contiguous rotated query input.
+    Query = 1,
+    /// Paged rotated-key cache input.
+    KeyCache = 2,
+    /// Paged value-cache input.
+    ValueCache = 3,
+    /// Logical-to-physical page indices.
+    PageIndices = 4,
+    /// Contiguous attention output.
+    Output = 5,
+}
+
+/// Tensor storage and logical shape for one ABI argument.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(u8)]
+pub enum Qwen3PrefillArgumentShapeV1 {
+    /// BF16 `[S,T,QH,128]`.
+    QueryBf16Bits = 1,
+    /// BF16 `[S,512,16,8,128]`.
+    PagedKvCacheBf16Bits = 2,
+    /// `u32 [S,512]`.
+    PageIndicesU32 = 3,
+    /// BF16 `[S,T,QH,128]`.
+    OutputBf16Bits = 4,
+}
+
+/// Scalar storage interpretation for one ABI argument.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(u8)]
+pub enum Qwen3PrefillScalarV1 {
+    /// BF16 represented as `u16` storage bits.
+    Bf16 = 1,
+    /// Unsigned 32-bit physical page index.
+    U32 = 2,
+}
+
+/// One exact pointer-plus-length ABI record.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct Qwen3PrefillArgumentV1 {
+    /// Semantic tensor role.
+    pub role: Qwen3PrefillArgumentRoleV1,
+    /// Exact logical storage shape.
+    pub shape: Qwen3PrefillArgumentShapeV1,
+    /// Semantic scalar type.
+    pub scalar: Qwen3PrefillScalarV1,
+    /// Explicit kernarg byte offset.
+    pub offset: u32,
+    /// Pointer-plus-length record size.
+    pub size: u32,
+    /// Record alignment.
+    pub alignment: u32,
+}
+
+/// Exact online-recurrence step retained by the semantic KIR.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Qwen3PrefillRecurrenceStepV1 {
+    /// Ascending-feature D128 BF16-to-FP32 dot product.
+    SequentialDotD128,
+    /// Multiply by an exact FP32 bit pattern.
+    ScaleByExactF32Bits(u32),
+    /// Query head maps to KV head by exact quotient.
+    QuotientGqaHeadMapping,
+    /// Keys range from zero through the query token within one sequence.
+    SameSequenceCausalPrefixInclusive,
+    /// Map `key/16` through `[S,512]` and address the selected P16 cache page.
+    P16LogicalToPhysicalPageMapping,
+    /// The first key initializes max, denominator, and numerator pair.
+    FirstKeyInitializesState,
+    /// Later keys update max and evaluate both OCML exponential weights.
+    OnlineMaxAndTwoOcmlExpWeights,
+    /// Denominator and adjacent numerator pair are rescaled sequentially.
+    RescaleDenominatorAndNumeratorPair,
+    /// Divide the numerator pair by the denominator.
+    DivideNumeratorPairByDenominator,
+    /// Narrow the adjacent FP32 pair to BF16 with RNE.
+    NarrowOutputPairBf16Rne,
+}
+
+/// Per-workitem failure behavior.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Qwen3PrefillExceptionalPolicyV1 {
+    /// A workitem traps before its two owned stores. Other workgroups may
+    /// already have stored output, so no whole-dispatch atomicity is claimed.
+    PerLaneTrapBeforeOwnedPairNoGlobalAtomicity,
+}
+
+/// Exact Ferric semantic KIR for one role/bucket profile.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Qwen3PrefillKernelIrV1 {
+    module_id: String,
+    kernel_id: String,
+    arguments: [Qwen3PrefillArgumentV1; 5],
+    profile_identity: Qwen3PrefillProfileIdentityV1,
+    recurrence: [Qwen3PrefillRecurrenceStepV1; 10],
+    exceptional_policy: Qwen3PrefillExceptionalPolicyV1,
+    identity: [u8; 32],
+}
+
+impl Qwen3PrefillKernelIrV1 {
+    /// Ferric-owned semantic module identity.
+    pub fn module_id(&self) -> &str {
+        &self.module_id
+    }
+
+    /// Exact exported kernel identity.
+    pub fn kernel_id(&self) -> &str {
+        &self.kernel_id
+    }
+
+    /// Exact five-slice Q/paged-K/paged-V/page-index/O ABI.
+    pub const fn arguments(&self) -> &[Qwen3PrefillArgumentV1; 5] {
+        &self.arguments
+    }
+
+    /// Profile identity whose geometry this KIR retains.
+    pub const fn profile_identity(&self) -> Qwen3PrefillProfileIdentityV1 {
+        self.profile_identity
+    }
+
+    /// Exact ordered online recurrence.
+    pub const fn recurrence(&self) -> &[Qwen3PrefillRecurrenceStepV1; 10] {
+        &self.recurrence
+    }
+
+    /// Per-workitem exceptional behavior.
+    pub const fn exceptional_policy(&self) -> Qwen3PrefillExceptionalPolicyV1 {
+        self.exceptional_policy
+    }
+
+    /// Domain-separated identity of every retained KIR field.
+    pub const fn identity(&self) -> &[u8; 32] {
+        &self.identity
+    }
+
+    /// The semantic sidecar is not a source-to-machine refinement proof.
+    pub const fn proves_machine_refinement(&self) -> bool {
+        false
+    }
+}
+
+/// Constructs the canonical semantic KIR for one exact profile.
+pub fn qwen3_prefill_kernel_ir_v1(profile: Qwen3PrefillProfileV1) -> Qwen3PrefillKernelIrV1 {
+    let arguments = [
+        argument(
+            Qwen3PrefillArgumentRoleV1::Query,
+            Qwen3PrefillArgumentShapeV1::QueryBf16Bits,
+            Qwen3PrefillScalarV1::Bf16,
+            0,
+        ),
+        argument(
+            Qwen3PrefillArgumentRoleV1::KeyCache,
+            Qwen3PrefillArgumentShapeV1::PagedKvCacheBf16Bits,
+            Qwen3PrefillScalarV1::Bf16,
+            16,
+        ),
+        argument(
+            Qwen3PrefillArgumentRoleV1::ValueCache,
+            Qwen3PrefillArgumentShapeV1::PagedKvCacheBf16Bits,
+            Qwen3PrefillScalarV1::Bf16,
+            32,
+        ),
+        argument(
+            Qwen3PrefillArgumentRoleV1::PageIndices,
+            Qwen3PrefillArgumentShapeV1::PageIndicesU32,
+            Qwen3PrefillScalarV1::U32,
+            48,
+        ),
+        argument(
+            Qwen3PrefillArgumentRoleV1::Output,
+            Qwen3PrefillArgumentShapeV1::OutputBf16Bits,
+            Qwen3PrefillScalarV1::Bf16,
+            64,
+        ),
+    ];
+    let recurrence = [
+        Qwen3PrefillRecurrenceStepV1::SequentialDotD128,
+        Qwen3PrefillRecurrenceStepV1::ScaleByExactF32Bits(QWEN3_PREFILL_ATTENTION_SCALE_BITS_V1),
+        Qwen3PrefillRecurrenceStepV1::QuotientGqaHeadMapping,
+        Qwen3PrefillRecurrenceStepV1::SameSequenceCausalPrefixInclusive,
+        Qwen3PrefillRecurrenceStepV1::P16LogicalToPhysicalPageMapping,
+        Qwen3PrefillRecurrenceStepV1::FirstKeyInitializesState,
+        Qwen3PrefillRecurrenceStepV1::OnlineMaxAndTwoOcmlExpWeights,
+        Qwen3PrefillRecurrenceStepV1::RescaleDenominatorAndNumeratorPair,
+        Qwen3PrefillRecurrenceStepV1::DivideNumeratorPairByDenominator,
+        Qwen3PrefillRecurrenceStepV1::NarrowOutputPairBf16Rne,
+    ];
+    let exceptional_policy =
+        Qwen3PrefillExceptionalPolicyV1::PerLaneTrapBeforeOwnedPairNoGlobalAtomicity;
+    let mut encoded = Vec::with_capacity(256);
+    encoded.extend_from_slice(b"ferric::qwen3::paged_gqa_prefill_v1");
+    encoded.extend_from_slice(QWEN3_PREFILL_KERNEL_SYMBOL_V1.as_bytes());
+    encoded.extend_from_slice(profile.identity.as_bytes());
+    for value in arguments {
+        encoded.extend_from_slice(&[value.role as u8, value.shape as u8, value.scalar as u8]);
+        encoded.extend_from_slice(&value.offset.to_le_bytes());
+        encoded.extend_from_slice(&value.size.to_le_bytes());
+        encoded.extend_from_slice(&value.alignment.to_le_bytes());
+    }
+    for step in recurrence {
+        encode_recurrence_step(step, &mut encoded);
+    }
+    encoded.push(1);
+    Qwen3PrefillKernelIrV1 {
+        module_id: "ferric::qwen3::paged_gqa_prefill_v1".to_owned(),
+        kernel_id: QWEN3_PREFILL_KERNEL_SYMBOL_V1.to_owned(),
+        arguments,
+        profile_identity: profile.identity,
+        recurrence,
+        exceptional_policy,
+        identity: hash(KERNEL_IR_DOMAIN, &encoded),
+    }
+}
+
+const fn argument(
+    role: Qwen3PrefillArgumentRoleV1,
+    shape: Qwen3PrefillArgumentShapeV1,
+    scalar: Qwen3PrefillScalarV1,
+    offset: u32,
+) -> Qwen3PrefillArgumentV1 {
+    Qwen3PrefillArgumentV1 {
+        role,
+        shape,
+        scalar,
+        offset,
+        size: 16,
+        alignment: 8,
+    }
+}
+
+fn encode_recurrence_step(step: Qwen3PrefillRecurrenceStepV1, bytes: &mut Vec<u8>) {
+    match step {
+        Qwen3PrefillRecurrenceStepV1::SequentialDotD128 => bytes.push(1),
+        Qwen3PrefillRecurrenceStepV1::ScaleByExactF32Bits(bits) => {
+            bytes.push(2);
+            bytes.extend_from_slice(&bits.to_le_bytes());
+        }
+        Qwen3PrefillRecurrenceStepV1::QuotientGqaHeadMapping => bytes.push(3),
+        Qwen3PrefillRecurrenceStepV1::SameSequenceCausalPrefixInclusive => bytes.push(4),
+        Qwen3PrefillRecurrenceStepV1::P16LogicalToPhysicalPageMapping => bytes.push(5),
+        Qwen3PrefillRecurrenceStepV1::FirstKeyInitializesState => bytes.push(6),
+        Qwen3PrefillRecurrenceStepV1::OnlineMaxAndTwoOcmlExpWeights => bytes.push(7),
+        Qwen3PrefillRecurrenceStepV1::RescaleDenominatorAndNumeratorPair => bytes.push(8),
+        Qwen3PrefillRecurrenceStepV1::DivideNumeratorPairByDenominator => bytes.push(9),
+        Qwen3PrefillRecurrenceStepV1::NarrowOutputPairBf16Rne => bytes.push(10),
+    }
+}
+
+/// One of the five exact ABI memory regions.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(u8)]
+pub enum Qwen3PrefillBufferV1 {
+    /// Contiguous BF16 rotated query `[S,T,QH,128]`.
+    Query = 1,
+    /// BF16 key cache `[S,512,16,8,128]`.
+    KeyCache = 2,
+    /// BF16 value cache `[S,512,16,8,128]`.
+    ValueCache = 3,
+    /// `u32` physical-page indices `[S,512]`.
+    PageIndices = 4,
+    /// Contiguous BF16 attention output `[S,T,QH,128]`.
+    Output = 5,
+}
+
+/// Exact numerical-span admission failure.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Qwen3PrefillBufferContractErrorV1 {
+    /// A required address was zero.
+    ZeroAddress(Qwen3PrefillBufferV1),
+    /// Byte length differed from the finite profile.
+    ByteLength(Qwen3PrefillBufferV1),
+    /// Start address violated scalar alignment.
+    Alignment(Qwen3PrefillBufferV1),
+    /// Exclusive end overflowed `u64`.
+    RangeOverflow(Qwen3PrefillBufferV1),
+    /// Two exact graph regions overlapped.
+    Aliasing,
+}
+
+impl fmt::Display for Qwen3PrefillBufferContractErrorV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(formatter, "Qwen3 prefill buffer contract failed: {self:?}")
+    }
+}
+
+impl std::error::Error for Qwen3PrefillBufferContractErrorV1 {}
+
+/// Exact checked spans in Q/K-cache/V-cache/page-index/O ABI order.
+#[derive(Debug, Eq, PartialEq)]
+pub struct Qwen3PrefillBufferContractV1 {
+    addresses: [u64; 5],
+    ends: [u64; 5],
+    byte_lengths: [u64; 5],
+}
+
+impl Qwen3PrefillBufferContractV1 {
+    /// Checks exact byte lengths, alignment, range overflow, and pairwise
+    /// disjointness. It does not inspect page-index or cache content.
+    pub fn checked(
+        profile: Qwen3PrefillProfileV1,
+        addresses: [u64; 5],
+        byte_lengths: [u64; 5],
+    ) -> Result<Self, Qwen3PrefillBufferContractErrorV1> {
+        let query_bytes = profile.query_elements.checked_mul(2).ok_or(
+            Qwen3PrefillBufferContractErrorV1::ByteLength(Qwen3PrefillBufferV1::Query),
+        )?;
+        let cache_bytes = profile.cache_elements_each.checked_mul(2).ok_or(
+            Qwen3PrefillBufferContractErrorV1::ByteLength(Qwen3PrefillBufferV1::KeyCache),
+        )?;
+        let page_bytes = profile.page_table_elements.checked_mul(4).ok_or(
+            Qwen3PrefillBufferContractErrorV1::ByteLength(Qwen3PrefillBufferV1::PageIndices),
+        )?;
+        let expected = [
+            query_bytes,
+            cache_bytes,
+            cache_bytes,
+            page_bytes,
+            query_bytes,
+        ];
+        let roles = [
+            Qwen3PrefillBufferV1::Query,
+            Qwen3PrefillBufferV1::KeyCache,
+            Qwen3PrefillBufferV1::ValueCache,
+            Qwen3PrefillBufferV1::PageIndices,
+            Qwen3PrefillBufferV1::Output,
+        ];
+        let alignments = [2_u64, 2, 2, 4, 2];
+        let mut ends = [0_u64; 5];
+        for index in 0..5 {
+            if addresses[index] == 0 {
+                return Err(Qwen3PrefillBufferContractErrorV1::ZeroAddress(roles[index]));
+            }
+            if byte_lengths[index] != expected[index] {
+                return Err(Qwen3PrefillBufferContractErrorV1::ByteLength(roles[index]));
+            }
+            if !addresses[index].is_multiple_of(alignments[index]) {
+                return Err(Qwen3PrefillBufferContractErrorV1::Alignment(roles[index]));
+            }
+            ends[index] = addresses[index].checked_add(byte_lengths[index]).ok_or(
+                Qwen3PrefillBufferContractErrorV1::RangeOverflow(roles[index]),
+            )?;
+        }
+        for left in 0..5 {
+            for right in left + 1..5 {
+                if addresses[left] < ends[right] && addresses[right] < ends[left] {
+                    return Err(Qwen3PrefillBufferContractErrorV1::Aliasing);
+                }
+            }
+        }
+        Ok(Self {
+            addresses,
+            ends,
+            byte_lengths,
+        })
+    }
+
+    /// Exact starts in ABI role order.
+    pub const fn addresses(&self) -> [u64; 5] {
+        self.addresses
+    }
+
+    /// Exact exclusive ends in ABI role order.
+    pub const fn ends(&self) -> [u64; 5] {
+        self.ends
+    }
+
+    /// Exact byte lengths in ABI role order.
+    pub const fn byte_lengths(&self) -> [u64; 5] {
+        self.byte_lengths
+    }
+
+    /// Integer spans do not authenticate mappings, leases, or content.
+    pub const fn authenticates_device_memory(&self) -> bool {
+        false
+    }
+}
+
+/// Four inert identities labeling source, KIR, schedule, and target-plan stages.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct Qwen3PrefillSourceBindingsV1 {
+    source: [u8; 32],
+    kernel_ir: [u8; 32],
+    schedule: [u8; 32],
+    target_plan: [u8; 32],
+}
+
+impl Qwen3PrefillSourceBindingsV1 {
+    /// Constructs inert labels. Preparation requires all four to be nonzero
+    /// and distinct.
+    pub const fn new(
+        source: [u8; 32],
+        kernel_ir: [u8; 32],
+        schedule: [u8; 32],
+        target_plan: [u8; 32],
+    ) -> Self {
+        Self {
+            source,
+            kernel_ir,
+            schedule,
+            target_plan,
+        }
+    }
+
+    /// Caller labels authenticate no source, producer, compiler, or plan.
+    pub const fn authenticates_provenance(self) -> bool {
+        false
+    }
+}
+
+/// Failure while preparing the Ferric-owned direct-LLVM handoff.
+#[derive(Debug)]
+pub enum PrepareQwen3PrefillKernelErrorV1 {
+    /// A source label was zero or reused for another role.
+    SourceBindings,
+    /// The finite profile catalog failed closed.
+    Catalog(Qwen3PrefillCatalogErrorV1),
+    /// A canonical semantic KIR record drifted.
+    KernelIr,
+    /// The exact direct-LLVM body failed its closed structural classifier.
+    CompilerModule,
+    /// The exact unresolved OCML contract envelope failed closed.
+    CompilerEnvelope(CompilerFfiEnvelopeError),
+    /// The exact entry/descriptor/import manifest failed closed.
+    SymbolManifest(CompilerModuleSymbolManifestErrorV1),
+    /// The generic Handoff V2 compiler-module container failed closed.
+    CompilerHandoff(CompilerModuleHandoffErrorV2),
+}
+
+impl fmt::Display for PrepareQwen3PrefillKernelErrorV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(formatter, "Qwen3 prefill preparation failed: {self:?}")
+    }
+}
+
+impl std::error::Error for PrepareQwen3PrefillKernelErrorV1 {}
+
+/// Linear Ferric-owned source/KIR catalog and generic compiler handoff.
+pub struct PreparedQwen3PrefillKernelV1 {
+    catalog: Qwen3PrefillProfileCatalogV1,
+    source_binding_identity: [u8; 32],
+    llvm_sha256: [u8; 32],
+    compiler_handoff_identity: CompilerModuleHandoffIdentityV2,
+    manifest_identity: CompilerModuleSymbolManifestIdentityV1,
+    compiler_handoff: CompilerModuleHandoffV2,
+}
+
+impl fmt::Debug for PreparedQwen3PrefillKernelV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("PreparedQwen3PrefillKernelV1")
+            .field("catalog", &self.catalog.identity)
+            .field("source_binding", &self.source_binding_identity)
+            .field("llvm_sha256", &self.llvm_sha256)
+            .field("compiler_handoff", &self.compiler_handoff_identity)
+            .finish_non_exhaustive()
+    }
+}
+
+impl PreparedQwen3PrefillKernelV1 {
+    /// Complete finite profile catalog retained by this owner.
+    pub const fn catalog(&self) -> &Qwen3PrefillProfileCatalogV1 {
+        &self.catalog
+    }
+
+    /// Identity binding inert stage labels, the exact catalog, every KIR, and
+    /// the canonical LLVM body. It authenticates no external producer.
+    pub const fn source_binding_identity(&self) -> &[u8; 32] {
+        &self.source_binding_identity
+    }
+
+    /// SHA-256 of the exact canonical direct-LLVM body.
+    pub const fn llvm_sha256(&self) -> &[u8; 32] {
+        &self.llvm_sha256
+    }
+
+    /// Complete canonical compiler-handoff identity.
+    pub const fn compiler_handoff_identity(&self) -> CompilerModuleHandoffIdentityV2 {
+        self.compiler_handoff_identity
+    }
+
+    /// Closed entry/descriptor/import manifest identity.
+    pub const fn manifest_identity(&self) -> CompilerModuleSymbolManifestIdentityV1 {
+        self.manifest_identity
+    }
+
+    /// Borrows the exact Handoff V2 compiler module for attempt publication.
+    pub const fn compiler_handoff(&self) -> &CompilerModuleHandoffV2 {
+        &self.compiler_handoff
+    }
+
+    /// Handoff V2 cannot represent the OCML exp intrinsic, so this lane uses
+    /// the public bounded direct-LLVM/OCML Worker route. This does not inherit
+    /// any prior source or compiler authority.
+    pub const fn uses_typed_handoff_v2_source(&self) -> bool {
+        false
+    }
+
+    /// The source binding does not authenticate compiler origin.
+    pub const fn authenticates_compiler_origin(&self) -> bool {
+        false
+    }
+
+    /// Online recurrence remains unreconciled with the separate two-pass host reference.
+    pub const fn proves_operator_or_numerical_refinement(&self) -> bool {
+        false
+    }
+
+    /// Exact profile selection is not yet joined to Ferric plan identity.
+    pub const fn has_ferric_plan_identity_join(&self) -> bool {
+        false
+    }
+
+    /// This compiler slice does not close the kernel schedule catalog.
+    pub const fn has_kernel_schedule_catalog_join(&self) -> bool {
+        false
+    }
+
+    /// Exact source/profile structure grants no artifact or launch authority.
+    pub const fn grants_launch_authority(&self) -> bool {
+        false
+    }
+}
+
+/// Constructs the exact catalog, KIR family, LLVM source, OCML import envelope,
+/// and generic compiler handoff.
+pub fn prepare_qwen3_prefill_kernel_v1(
+    bindings: Qwen3PrefillSourceBindingsV1,
+) -> Result<PreparedQwen3PrefillKernelV1, PrepareQwen3PrefillKernelErrorV1> {
+    validate_source_bindings(bindings)?;
+    let catalog = Qwen3PrefillProfileCatalogV1::canonical()
+        .map_err(PrepareQwen3PrefillKernelErrorV1::Catalog)?;
+    let mut kir_identities = Vec::with_capacity(QWEN3_PREFILL_PROFILE_COUNT_V1 * 32);
+    for profile in catalog.profiles() {
+        let kir = qwen3_prefill_kernel_ir_v1(*profile);
+        if kir.profile_identity() != profile.identity()
+            || kir.arguments()[3].shape != Qwen3PrefillArgumentShapeV1::PageIndicesU32
+            || kir.recurrence()[4] != Qwen3PrefillRecurrenceStepV1::P16LogicalToPhysicalPageMapping
+        {
+            return Err(PrepareQwen3PrefillKernelErrorV1::KernelIr);
+        }
+        kir_identities.extend_from_slice(kir.identity());
+    }
+    let llvm = canonical_qwen3_prefill_llvm();
+    validate_canonical_llvm(&llvm)?;
+    let llvm_sha256: [u8; 32] = Sha256::digest(llvm.as_bytes()).into();
+    let mut source_preimage = Vec::with_capacity(32 * 7);
+    source_preimage.extend_from_slice(&bindings.source);
+    source_preimage.extend_from_slice(&bindings.kernel_ir);
+    source_preimage.extend_from_slice(&bindings.schedule);
+    source_preimage.extend_from_slice(&bindings.target_plan);
+    source_preimage.extend_from_slice(catalog.identity.as_bytes());
+    source_preimage.extend_from_slice(&kir_identities);
+    source_preimage.extend_from_slice(&llvm_sha256);
+    let source_binding_identity = hash(SOURCE_BINDING_DOMAIN, &source_preimage);
+    let target = exact_target();
+    let envelope = exact_ocml_envelope(target)?;
+    let manifest = CompilerModuleSymbolManifestV1::new([
+        (
+            CompilerModuleSymbolRoleV1::KernelEntry,
+            QWEN3_PREFILL_KERNEL_SYMBOL_V1,
+        ),
+        (
+            CompilerModuleSymbolRoleV1::KernelDescriptor,
+            QWEN3_PREFILL_KERNEL_DESCRIPTOR_SYMBOL_V1,
+        ),
+        (
+            CompilerModuleSymbolRoleV1::UnresolvedExternalImport,
+            OCML_EXP_F32,
+        ),
+    ])
+    .map_err(PrepareQwen3PrefillKernelErrorV1::SymbolManifest)?;
+    let manifest_identity = manifest.identity();
+    let compiler_handoff = CompilerModuleHandoffV2::new(
+        CompilerModuleKindV1::LlvmTextIr,
+        target,
+        CodeObjectVersion::V6,
+        envelope,
+        manifest,
+        llvm.as_bytes(),
+    )
+    .map_err(PrepareQwen3PrefillKernelErrorV1::CompilerHandoff)?;
+    let compiler_handoff_identity = compiler_handoff.identity();
+    Ok(PreparedQwen3PrefillKernelV1 {
+        catalog,
+        source_binding_identity,
+        llvm_sha256,
+        compiler_handoff_identity,
+        manifest_identity,
+        compiler_handoff,
+    })
+}
+
+fn validate_source_bindings(
+    bindings: Qwen3PrefillSourceBindingsV1,
+) -> Result<(), PrepareQwen3PrefillKernelErrorV1> {
+    let identities = [
+        bindings.source,
+        bindings.kernel_ir,
+        bindings.schedule,
+        bindings.target_plan,
+    ];
+    for (index, identity) in identities.iter().enumerate() {
+        if identity == &[0; 32] || identities[index + 1..].contains(identity) {
+            return Err(PrepareQwen3PrefillKernelErrorV1::SourceBindings);
+        }
+    }
+    Ok(())
+}
+
+fn exact_ocml_envelope(
+    target: DeviceTargetV1,
+) -> Result<fe2o3_compiler_ffi::CompilerFfiEnvelopeV1, PrepareQwen3PrefillKernelErrorV1> {
+    let semantic_text = lower_hex(&OCML_EXP_BOUNDARY);
+    let fields = DeviceFfiContractFieldsV1 {
+        direction: DEVICE_FFI_DIRECTION_IMPORT_V1,
+        symbol: OCML_EXP_F32,
+        calling_convention: "C",
+        code_object_version: u16::from(QWEN3_PREFILL_CODE_OBJECT_VERSION_V1),
+        target: QWEN3_PREFILL_TARGET_V1,
+        physical_abi: OCML_EXP_ABI,
+        effects: OCML_EXP_EFFECTS,
+        semantic_identity: &semantic_text,
+    };
+    let contract = CompilerFfiContractV1::new(
+        derive_device_ffi_contract_id_v1(fields),
+        DeviceFfiDirectionV1::Import,
+        CompilerFfiLinkRoleV1::RequiresExternalDefinition,
+        target,
+        CodeObjectVersion::V6,
+        CompilerFfiSourceOwnerV1::new(
+            "ferric_qwen_kernels",
+            "ferric_qwen_kernels::prefill::__ocml_exp_f32",
+            [0x50; 16],
+            "__ferric_qwen3_prefill_ocml_exp_f32_v1",
+        )
+        .map_err(PrepareQwen3PrefillKernelErrorV1::CompilerEnvelope)?,
+        OCML_EXP_F32,
+        OCML_EXP_ABI,
+        OCML_EXP_EFFECTS,
+        OCML_EXP_BOUNDARY,
+    )
+    .map_err(PrepareQwen3PrefillKernelErrorV1::CompilerEnvelope)?;
+    let mut builder = CompilerFfiEnvelopeBuilderV1::new(target, CodeObjectVersion::V6, 1)
+        .map_err(PrepareQwen3PrefillKernelErrorV1::CompilerEnvelope)?;
+    builder
+        .push(contract)
+        .map_err(PrepareQwen3PrefillKernelErrorV1::CompilerEnvelope)?;
+    builder
+        .finish()
+        .map_err(PrepareQwen3PrefillKernelErrorV1::CompilerEnvelope)
+}
+
+fn lower_hex(bytes: &[u8]) -> String {
+    const HEX: &[u8; 16] = b"0123456789abcdef";
+    let mut output = String::with_capacity(bytes.len() * 2);
+    for byte in bytes {
+        output.push(char::from(HEX[usize::from(byte >> 4)]));
+        output.push(char::from(HEX[usize::from(byte & 0x0f)]));
+    }
+    output
+}
+
+fn canonical_qwen3_prefill_llvm() -> String {
+    let mut output = String::with_capacity(96 * 1024);
+    writeln!(output, "target triple = \"amdgcn-amd-amdhsa\"")
+        .expect("writing to a String cannot fail");
+    writeln!(
+        output,
+        "target datalayout = \"{EXTERNAL_DEVICE_LIBRARY_GFX942_DATA_LAYOUT_V1}\"\n"
+    )
+    .expect("writing to a String cannot fail");
+    output.push_str(
+        r#"declare i32 @llvm.amdgcn.workitem.id.x() #1
+declare i32 @llvm.amdgcn.workgroup.id.x() #1
+declare void @llvm.trap()
+declare float @__ocml_exp_f32(float)
+
+define amdgpu_kernel void @qwen3_gqa_prefill_causal_bf16_f32_v1(ptr addrspace(1) nocapture readonly align 2 %q.data, i64 %q.len, ptr addrspace(1) nocapture readonly align 2 %k.data, i64 %k.len, ptr addrspace(1) nocapture readonly align 2 %v.data, i64 %v.len, ptr addrspace(1) nocapture readonly align 4 %pages.data, i64 %pages.len, ptr addrspace(1) noalias nocapture writeonly align 2 %output.data, i64 %output.len) #0 !reqd_work_group_size !0 !kernel_arg_access_qual !1 !kernel_arg_type !2 !kernel_arg_base_type !2 !kernel_arg_type_qual !3 {
+entry:
+  %local.i32 = call i32 @llvm.amdgcn.workitem.id.x()
+  %group.i32 = call i32 @llvm.amdgcn.workgroup.id.x()
+  %local = zext i32 %local.i32 to i64
+  %group = zext i32 %group.i32 to i64
+  %group.base = mul nuw i64 %group, 64
+  %global = add nuw i64 %group.base, %local
+  %local.ok = icmp ult i64 %local, 64
+
+  %q.t.s1t128 = icmp eq i64 %q.len, 524288
+  %q.t.s8t128 = icmp eq i64 %q.len, 4194304
+  %q.t.s1t512 = icmp eq i64 %q.len, 2097152
+  %q.t.s1t2048 = icmp eq i64 %q.len, 8388608
+  %q.d.s1t128 = icmp eq i64 %q.len, 262144
+  %q.d.s8t128 = icmp eq i64 %q.len, 2097152
+  %q.d.s1t512 = icmp eq i64 %q.len, 1048576
+  %q.d.s1t2048 = icmp eq i64 %q.len, 4194304
+  %cache.s1 = icmp eq i64 %k.len, 8388608
+  %cache.s8 = icmp eq i64 %k.len, 67108864
+  %value.cache.eq = icmp eq i64 %v.len, %k.len
+  %pages.s1 = icmp eq i64 %pages.len, 512
+  %pages.s8 = icmp eq i64 %pages.len, 4096
+  %output.eq = icmp eq i64 %output.len, %q.len
+
+  %case.t.s1t128.0 = and i1 %q.t.s1t128, %cache.s1
+  %case.t.s1t128.1 = and i1 %case.t.s1t128.0, %pages.s1
+  %case.t.s1t128 = and i1 %case.t.s1t128.1, %value.cache.eq
+  %case.t.s8t128.0 = and i1 %q.t.s8t128, %cache.s8
+  %case.t.s8t128.1 = and i1 %case.t.s8t128.0, %pages.s8
+  %case.t.s8t128 = and i1 %case.t.s8t128.1, %value.cache.eq
+  %case.t.s1t512.0 = and i1 %q.t.s1t512, %cache.s1
+  %case.t.s1t512.1 = and i1 %case.t.s1t512.0, %pages.s1
+  %case.t.s1t512 = and i1 %case.t.s1t512.1, %value.cache.eq
+  %case.t.s1t2048.0 = and i1 %q.t.s1t2048, %cache.s1
+  %case.t.s1t2048.1 = and i1 %case.t.s1t2048.0, %pages.s1
+  %case.t.s1t2048 = and i1 %case.t.s1t2048.1, %value.cache.eq
+  %case.d.s1t128.0 = and i1 %q.d.s1t128, %cache.s1
+  %case.d.s1t128.1 = and i1 %case.d.s1t128.0, %pages.s1
+  %case.d.s1t128 = and i1 %case.d.s1t128.1, %value.cache.eq
+  %case.d.s8t128.0 = and i1 %q.d.s8t128, %cache.s8
+  %case.d.s8t128.1 = and i1 %case.d.s8t128.0, %pages.s8
+  %case.d.s8t128 = and i1 %case.d.s8t128.1, %value.cache.eq
+  %case.d.s1t512.0 = and i1 %q.d.s1t512, %cache.s1
+  %case.d.s1t512.1 = and i1 %case.d.s1t512.0, %pages.s1
+  %case.d.s1t512 = and i1 %case.d.s1t512.1, %value.cache.eq
+  %case.d.s1t2048.0 = and i1 %q.d.s1t2048, %cache.s1
+  %case.d.s1t2048.1 = and i1 %case.d.s1t2048.0, %pages.s1
+  %case.d.s1t2048 = and i1 %case.d.s1t2048.1, %value.cache.eq
+
+  %target.0 = or i1 %case.t.s1t128, %case.t.s8t128
+  %target.1 = or i1 %case.t.s1t512, %case.t.s1t2048
+  %target = or i1 %target.0, %target.1
+  %draft.0 = or i1 %case.d.s1t128, %case.d.s8t128
+  %draft.1 = or i1 %case.d.s1t512, %case.d.s1t2048
+  %draft = or i1 %draft.0, %draft.1
+  %known.profile = or i1 %target, %draft
+  %known.output = and i1 %known.profile, %output.eq
+  %shape.ok = and i1 %known.output, %local.ok
+  br i1 %shape.ok, label %shape.selected, label %trap
+
+shape.selected:
+  %sequences = select i1 %cache.s8, i64 8, i64 1
+  %heads = select i1 %target, i64 32, i64 16
+  %gqa = select i1 %target, i64 4, i64 2
+  %tokens.128.0 = or i1 %case.t.s1t128, %case.t.s8t128
+  %tokens.128.1 = or i1 %case.d.s1t128, %case.d.s8t128
+  %tokens.128 = or i1 %tokens.128.0, %tokens.128.1
+  %tokens.512 = or i1 %case.t.s1t512, %case.d.s1t512
+  %tokens.long = select i1 %tokens.512, i64 512, i64 2048
+  %tokens = select i1 %tokens.128, i64 128, i64 %tokens.long
+  %workitems = lshr exact i64 %q.len, 1
+  %global.ok = icmp ult i64 %global, %workitems
+  br i1 %global.ok, label %indices, label %trap
+
+indices:
+  %vector = lshr exact i64 %global, 6
+  %query.head = urem i64 %vector, %heads
+  %position = udiv i64 %vector, %heads
+  %query.token = urem i64 %position, %tokens
+  %sequence = udiv i64 %position, %tokens
+  %sequence.ok = icmp ult i64 %sequence, %sequences
+  %kv.head = udiv i64 %query.head, %gqa
+  %kv.head.ok = icmp ult i64 %kv.head, 8
+  %indices.ok = and i1 %sequence.ok, %kv.head.ok
+  %q.base = mul nuw i64 %vector, 128
+  %column = shl nuw nsw i64 %local, 1
+  br i1 %indices.ok, label %initial.page, label %trap
+
+initial.page:
+"#,
+    );
+    emit_page_mapping(&mut output, "initial", "0");
+    output.push_str("  br i1 %initial.page.ok, label %initial.score.entry, label %trap\n\n");
+    emit_score(&mut output, "initial");
+    output.push_str(
+        r#"  br i1 %initial.score.finite, label %initial.value, label %trap
+
+initial.value:
+  %initial.value0.index = add nuw i64 %initial.cache.base, %column
+  %initial.value1.index = add nuw i64 %initial.value0.index, 1
+  %initial.value0.ptr = getelementptr inbounds i16, ptr addrspace(1) %v.data, i64 %initial.value0.index
+  %initial.value1.ptr = getelementptr inbounds i16, ptr addrspace(1) %v.data, i64 %initial.value1.index
+  %initial.value0.bf16 = load i16, ptr addrspace(1) %initial.value0.ptr, align 2
+  %initial.value1.bf16 = load i16, ptr addrspace(1) %initial.value1.ptr, align 2
+  %initial.value0.wide = zext i16 %initial.value0.bf16 to i32
+  %initial.value1.wide = zext i16 %initial.value1.bf16 to i32
+  %initial.value0.bits = shl nuw i32 %initial.value0.wide, 16
+  %initial.value1.bits = shl nuw i32 %initial.value1.wide, 16
+  %initial.value0 = bitcast i32 %initial.value0.bits to float
+  %initial.value1 = bitcast i32 %initial.value1.bits to float
+  %initial.value0.exp = and i32 %initial.value0.bits, 2139095040
+  %initial.value1.exp = and i32 %initial.value1.bits, 2139095040
+  %initial.value0.finite = icmp ne i32 %initial.value0.exp, 2139095040
+  %initial.value1.finite = icmp ne i32 %initial.value1.exp, 2139095040
+  %initial.values.finite = and i1 %initial.value0.finite, %initial.value1.finite
+  br i1 %initial.values.finite, label %recur.cond, label %trap
+
+recur.cond:
+  %key = phi i64 [ 1, %initial.value ], [ %next.key, %recur.ok ]
+  %running.max = phi float [ %initial.score, %initial.value ], [ %next.max, %recur.ok ]
+  %running.sum = phi float [ 1.000000e+00, %initial.value ], [ %next.sum, %recur.ok ]
+  %numerator0 = phi float [ %initial.value0, %initial.value ], [ %next.numerator0, %recur.ok ]
+  %numerator1 = phi float [ %initial.value1, %initial.value ], [ %next.numerator1, %recur.ok ]
+  %recur.more = icmp ule i64 %key, %query.token
+  br i1 %recur.more, label %next.page.entry, label %finish
+
+next.page.entry:
+"#,
+    );
+    emit_page_mapping(&mut output, "next", "%key");
+    output.push_str("  br i1 %next.page.ok, label %next.score.entry, label %trap\n\n");
+    emit_score(&mut output, "next");
+    output.push_str(
+        r#"  br i1 %next.score.finite, label %recur.score.ok, label %trap
+
+recur.score.ok:
+  %score.greater = fcmp ogt float %next.score, %running.max
+  %next.max = select i1 %score.greater, float %next.score, float %running.max
+  %previous.delta = fsub float %running.max, %next.max
+  %current.delta = fsub float %next.score, %next.max
+  %previous.weight = call float @__ocml_exp_f32(float %previous.delta)
+  %current.weight = call float @__ocml_exp_f32(float %current.delta)
+  %previous.weight.bits = bitcast float %previous.weight to i32
+  %current.weight.bits = bitcast float %current.weight to i32
+  %previous.weight.exp = and i32 %previous.weight.bits, 2139095040
+  %current.weight.exp = and i32 %current.weight.bits, 2139095040
+  %previous.weight.finite = icmp ne i32 %previous.weight.exp, 2139095040
+  %current.weight.finite = icmp ne i32 %current.weight.exp, 2139095040
+  %weights.finite = and i1 %previous.weight.finite, %current.weight.finite
+  %next.value0.index = add nuw i64 %next.cache.base, %column
+  %next.value1.index = add nuw i64 %next.value0.index, 1
+  %next.value0.ptr = getelementptr inbounds i16, ptr addrspace(1) %v.data, i64 %next.value0.index
+  %next.value1.ptr = getelementptr inbounds i16, ptr addrspace(1) %v.data, i64 %next.value1.index
+  %next.value0.bf16 = load i16, ptr addrspace(1) %next.value0.ptr, align 2
+  %next.value1.bf16 = load i16, ptr addrspace(1) %next.value1.ptr, align 2
+  %next.value0.wide = zext i16 %next.value0.bf16 to i32
+  %next.value1.wide = zext i16 %next.value1.bf16 to i32
+  %next.value0.bits = shl nuw i32 %next.value0.wide, 16
+  %next.value1.bits = shl nuw i32 %next.value1.wide, 16
+  %next.value0 = bitcast i32 %next.value0.bits to float
+  %next.value1 = bitcast i32 %next.value1.bits to float
+  %next.value0.exp = and i32 %next.value0.bits, 2139095040
+  %next.value1.exp = and i32 %next.value1.bits, 2139095040
+  %next.value0.finite = icmp ne i32 %next.value0.exp, 2139095040
+  %next.value1.finite = icmp ne i32 %next.value1.exp, 2139095040
+  %next.values.finite = and i1 %next.value0.finite, %next.value1.finite
+  %weighted.sum = fmul float %running.sum, %previous.weight
+  %next.sum = fadd float %weighted.sum, %current.weight
+  %weighted.numerator0 = fmul float %numerator0, %previous.weight
+  %weighted.current0 = fmul float %next.value0, %current.weight
+  %next.numerator0 = fadd float %weighted.numerator0, %weighted.current0
+  %weighted.numerator1 = fmul float %numerator1, %previous.weight
+  %weighted.current1 = fmul float %next.value1, %current.weight
+  %next.numerator1 = fadd float %weighted.numerator1, %weighted.current1
+  %next.sum.bits = bitcast float %next.sum to i32
+  %next.numerator0.bits = bitcast float %next.numerator0 to i32
+  %next.numerator1.bits = bitcast float %next.numerator1 to i32
+  %next.sum.exp = and i32 %next.sum.bits, 2139095040
+  %next.numerator0.exp = and i32 %next.numerator0.bits, 2139095040
+  %next.numerator1.exp = and i32 %next.numerator1.bits, 2139095040
+  %next.sum.finite = icmp ne i32 %next.sum.exp, 2139095040
+  %next.numerator0.finite = icmp ne i32 %next.numerator0.exp, 2139095040
+  %next.numerator1.finite = icmp ne i32 %next.numerator1.exp, 2139095040
+  %next.sum.positive = fcmp ogt float %next.sum, 0.000000e+00
+  %recur.valid.0 = and i1 %weights.finite, %next.values.finite
+  %recur.valid.1 = and i1 %recur.valid.0, %next.sum.finite
+  %recur.valid.2 = and i1 %recur.valid.1, %next.sum.positive
+  %recur.valid.3 = and i1 %recur.valid.2, %next.numerator0.finite
+  %recur.valid = and i1 %recur.valid.3, %next.numerator1.finite
+  br i1 %recur.valid, label %recur.ok, label %trap
+
+recur.ok:
+  %next.key = add nuw i64 %key, 1
+  br label %recur.cond
+
+finish:
+  %output0 = fdiv float %numerator0, %running.sum
+  %output1 = fdiv float %numerator1, %running.sum
+  %output0.bits = bitcast float %output0 to i32
+  %output1.bits = bitcast float %output1 to i32
+  %output0.exp = and i32 %output0.bits, 2139095040
+  %output1.exp = and i32 %output1.bits, 2139095040
+  %output0.finite = icmp ne i32 %output0.exp, 2139095040
+  %output1.finite = icmp ne i32 %output1.exp, 2139095040
+  %outputs.finite = and i1 %output0.finite, %output1.finite
+  br i1 %outputs.finite, label %narrow, label %trap
+
+narrow:
+  %output0.lsb.shift = lshr i32 %output0.bits, 16
+  %output1.lsb.shift = lshr i32 %output1.bits, 16
+  %output0.lsb = and i32 %output0.lsb.shift, 1
+  %output1.lsb = and i32 %output1.lsb.shift, 1
+  %output0.bias = add nuw nsw i32 32767, %output0.lsb
+  %output1.bias = add nuw nsw i32 32767, %output1.lsb
+  %output0.rounded = add i32 %output0.bits, %output0.bias
+  %output1.rounded = add i32 %output1.bits, %output1.bias
+  %output0.bf16.wide = lshr i32 %output0.rounded, 16
+  %output1.bf16.wide = lshr i32 %output1.rounded, 16
+  %output0.bf16 = trunc i32 %output0.bf16.wide to i16
+  %output1.bf16 = trunc i32 %output1.bf16.wide to i16
+  %first.output = shl nuw i64 %global, 1
+  %second.output = add nuw i64 %first.output, 1
+  %first.output.ok = icmp ult i64 %first.output, %output.len
+  %second.output.ok = icmp ult i64 %second.output, %output.len
+  %pair.output.ok = and i1 %first.output.ok, %second.output.ok
+  br i1 %pair.output.ok, label %store, label %trap
+
+store:
+  %output0.ptr = getelementptr inbounds i16, ptr addrspace(1) %output.data, i64 %first.output
+  %output1.ptr = getelementptr inbounds i16, ptr addrspace(1) %output.data, i64 %second.output
+  store i16 %output0.bf16, ptr addrspace(1) %output0.ptr, align 2
+  store i16 %output1.bf16, ptr addrspace(1) %output1.ptr, align 2
+  ret void
+
+trap:
+  call void @llvm.trap()
+  ret void
+}
+
+attributes #0 = { nounwind "amdgpu-flat-work-group-size"="64,64" "target-cpu"="gfx942" "target-features"="-wavefrontsize32,+wavefrontsize64,-xnack" "denormal-fp-math-f32"="ieee,ieee" "unsafe-fp-math"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "approx-func-fp-math"="false" "fp-contract"="off" }
+attributes #1 = { nounwind readnone speculatable willreturn }
+
+!0 = !{i32 64, i32 1, i32 1}
+!1 = !{!"read_only", !"none", !"read_only", !"none", !"read_only", !"none", !"read_only", !"none", !"write_only", !"none"}
+!2 = !{!"ushort*", !"ulong", !"ushort*", !"ulong", !"ushort*", !"ulong", !"uint*", !"ulong", !"ushort*", !"ulong"}
+!3 = !{!"const", !"", !"const", !"", !"const", !"", !"const", !"", !"restrict", !""}
+"#,
+    );
+    output
+}
+
+fn emit_page_mapping(output: &mut String, prefix: &str, key: &str) {
+    writeln!(
+        output,
+        "  %{prefix}.logical.page = lshr i64 {key}, 4\n\
+         \x20 %{prefix}.token.in.page = and i64 {key}, 15\n\
+         \x20 %{prefix}.logical.page.ok = icmp ult i64 %{prefix}.logical.page, 512\n\
+         \x20 %{prefix}.table.sequence = mul nuw i64 %sequence, 512\n\
+         \x20 %{prefix}.table.index = add nuw i64 %{prefix}.table.sequence, %{prefix}.logical.page\n\
+         \x20 %{prefix}.table.index.ok = icmp ult i64 %{prefix}.table.index, %pages.len\n\
+         \x20 %{prefix}.page.lookup.ok = and i1 %{prefix}.logical.page.ok, %{prefix}.table.index.ok\n\
+         \x20 br i1 %{prefix}.page.lookup.ok, label %{prefix}.page.load, label %trap\n\n\
+         {prefix}.page.load:\n\
+         \x20 %{prefix}.page.ptr = getelementptr inbounds i32, ptr addrspace(1) %pages.data, i64 %{prefix}.table.index\n\
+         \x20 %{prefix}.physical.page.i32 = load i32, ptr addrspace(1) %{prefix}.page.ptr, align 4\n\
+         \x20 %{prefix}.physical.page.ok = icmp ult i32 %{prefix}.physical.page.i32, 512\n\
+         \x20 %{prefix}.physical.page = zext i32 %{prefix}.physical.page.i32 to i64\n\
+         \x20 %{prefix}.cache.sequence = mul nuw i64 %sequence, 512\n\
+         \x20 %{prefix}.cache.page = add nuw i64 %{prefix}.cache.sequence, %{prefix}.physical.page\n\
+         \x20 %{prefix}.cache.page.tokens = mul nuw i64 %{prefix}.cache.page, 16\n\
+         \x20 %{prefix}.cache.token = add nuw i64 %{prefix}.cache.page.tokens, %{prefix}.token.in.page\n\
+         \x20 %{prefix}.cache.token.heads = mul nuw i64 %{prefix}.cache.token, 8\n\
+         \x20 %{prefix}.cache.head = add nuw i64 %{prefix}.cache.token.heads, %kv.head\n\
+         \x20 %{prefix}.cache.base = mul nuw i64 %{prefix}.cache.head, 128\n\
+         \x20 %{prefix}.cache.end = add nuw i64 %{prefix}.cache.base, 128\n\
+         \x20 %{prefix}.cache.extent.ok = icmp ule i64 %{prefix}.cache.end, %k.len\n\
+         \x20 %{prefix}.page.ok = and i1 %{prefix}.physical.page.ok, %{prefix}.cache.extent.ok"
+    )
+    .expect("writing to a String cannot fail");
+}
+
+fn emit_score(output: &mut String, prefix: &str) {
+    writeln!(
+        output,
+        "{prefix}.score.entry:\n\
+         \x20 br label %{prefix}.dot.cond\n\n\
+         {prefix}.dot.cond:\n\
+         \x20 %{prefix}.feature = phi i64 [ 0, %{prefix}.score.entry ], [ %{prefix}.feature.next, %{prefix}.dot.step ]\n\
+         \x20 %{prefix}.dot = phi float [ 0.000000e+00, %{prefix}.score.entry ], [ %{prefix}.dot.next, %{prefix}.dot.step ]\n\
+         \x20 %{prefix}.dot.more = icmp ult i64 %{prefix}.feature, 128\n\
+         \x20 br i1 %{prefix}.dot.more, label %{prefix}.dot.body, label %{prefix}.dot.done\n\n\
+         {prefix}.dot.body:\n\
+         \x20 %{prefix}.q.index = add nuw i64 %q.base, %{prefix}.feature\n\
+         \x20 %{prefix}.k.index = add nuw i64 %{prefix}.cache.base, %{prefix}.feature\n\
+         \x20 %{prefix}.q.ptr = getelementptr inbounds i16, ptr addrspace(1) %q.data, i64 %{prefix}.q.index\n\
+         \x20 %{prefix}.k.ptr = getelementptr inbounds i16, ptr addrspace(1) %k.data, i64 %{prefix}.k.index\n\
+         \x20 %{prefix}.q.bf16 = load i16, ptr addrspace(1) %{prefix}.q.ptr, align 2\n\
+         \x20 %{prefix}.k.bf16 = load i16, ptr addrspace(1) %{prefix}.k.ptr, align 2\n\
+         \x20 %{prefix}.q.wide = zext i16 %{prefix}.q.bf16 to i32\n\
+         \x20 %{prefix}.k.wide = zext i16 %{prefix}.k.bf16 to i32\n\
+         \x20 %{prefix}.q.bits = shl nuw i32 %{prefix}.q.wide, 16\n\
+         \x20 %{prefix}.k.bits = shl nuw i32 %{prefix}.k.wide, 16\n\
+         \x20 %{prefix}.q = bitcast i32 %{prefix}.q.bits to float\n\
+         \x20 %{prefix}.k = bitcast i32 %{prefix}.k.bits to float\n\
+         \x20 %{prefix}.q.exp = and i32 %{prefix}.q.bits, 2139095040\n\
+         \x20 %{prefix}.k.exp = and i32 %{prefix}.k.bits, 2139095040\n\
+         \x20 %{prefix}.q.finite = icmp ne i32 %{prefix}.q.exp, 2139095040\n\
+         \x20 %{prefix}.k.finite = icmp ne i32 %{prefix}.k.exp, 2139095040\n\
+         \x20 %{prefix}.inputs.finite = and i1 %{prefix}.q.finite, %{prefix}.k.finite\n\
+         \x20 %{prefix}.product = fmul float %{prefix}.q, %{prefix}.k\n\
+         \x20 %{prefix}.dot.next = fadd float %{prefix}.dot, %{prefix}.product\n\
+         \x20 %{prefix}.product.bits = bitcast float %{prefix}.product to i32\n\
+         \x20 %{prefix}.dot.next.bits = bitcast float %{prefix}.dot.next to i32\n\
+         \x20 %{prefix}.product.exp = and i32 %{prefix}.product.bits, 2139095040\n\
+         \x20 %{prefix}.dot.next.exp = and i32 %{prefix}.dot.next.bits, 2139095040\n\
+         \x20 %{prefix}.product.finite = icmp ne i32 %{prefix}.product.exp, 2139095040\n\
+         \x20 %{prefix}.dot.next.finite = icmp ne i32 %{prefix}.dot.next.exp, 2139095040\n\
+         \x20 %{prefix}.arithmetic.finite = and i1 %{prefix}.product.finite, %{prefix}.dot.next.finite\n\
+         \x20 %{prefix}.dot.valid = and i1 %{prefix}.inputs.finite, %{prefix}.arithmetic.finite\n\
+         \x20 br i1 %{prefix}.dot.valid, label %{prefix}.dot.step, label %trap\n\n\
+         {prefix}.dot.step:\n\
+         \x20 %{prefix}.feature.next = add nuw i64 %{prefix}.feature, 1\n\
+         \x20 br label %{prefix}.dot.cond\n\n\
+         {prefix}.dot.done:\n\
+         \x20 %{prefix}.scale = bitcast i32 1035273459 to float\n\
+         \x20 %{prefix}.score = fmul float %{prefix}.dot, %{prefix}.scale\n\
+         \x20 %{prefix}.score.bits = bitcast float %{prefix}.score to i32\n\
+         \x20 %{prefix}.score.exp = and i32 %{prefix}.score.bits, 2139095040\n\
+         \x20 %{prefix}.score.finite = icmp ne i32 %{prefix}.score.exp, 2139095040"
+    )
+    .expect("writing to a String cannot fail");
+}
+
+fn validate_canonical_llvm(module: &str) -> Result<(), PrepareQwen3PrefillKernelErrorV1> {
+    let module_sha256: [u8; 32] = Sha256::digest(module.as_bytes()).into();
+    let exact = module.len() == QWEN3_PREFILL_LLVM_BYTES_V1
+        && module_sha256 == QWEN3_PREFILL_LLVM_SHA256_V1
+        && module.matches("define amdgpu_kernel").count() == 1
+        && module
+            .matches("declare float @__ocml_exp_f32(float)")
+            .count()
+            == 1
+        && module.matches("call float @__ocml_exp_f32(float ").count() == 2
+        && module.matches("call void @llvm.trap()").count() == 1
+        && module.matches("store i16").count() == 2
+        && module.contains("@llvm.amdgcn.workitem.id.x")
+        && module.contains("@llvm.amdgcn.workgroup.id.x")
+        && module.contains("%workitems = lshr exact i64 %q.len, 1")
+        && module.contains("%initial.logical.page = lshr i64 0, 4")
+        && module.contains("%next.logical.page = lshr i64 %key, 4")
+        && module.contains("%initial.physical.page.ok = icmp ult i32")
+        && module.contains("%next.physical.page.ok = icmp ult i32")
+        && module.contains("%heads = select i1 %target, i64 32, i64 16")
+        && module.contains("%gqa = select i1 %target, i64 4, i64 2")
+        && module.contains("bitcast i32 1035273459 to float")
+        && module.contains("%pair.output.ok = and i1")
+        && module.contains("\"fp-contract\"=\"off\"")
+        && !module.contains(" fast ")
+        && !module.contains("contract ")
+        && !module.contains("reassoc ")
+        && !module.contains("comgr")
+        && !module.contains("COMGR");
+    if !exact {
+        return Err(PrepareQwen3PrefillKernelErrorV1::CompilerModule);
+    }
+    Ok(())
+}
+
+/// Linear exact compiler handoff awaiting attempt-scoped Worker V2 execution.
+pub struct InertQwen3PrefillWorkerRequestV1 {
+    prepared: PreparedQwen3PrefillKernelV1,
+}
+
+impl fmt::Debug for InertQwen3PrefillWorkerRequestV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("InertQwen3PrefillWorkerRequestV1")
+            .field("catalog", &self.prepared.catalog.identity)
+            .field("source_binding", &self.prepared.source_binding_identity)
+            .field("handoff", &self.prepared.compiler_handoff_identity)
+            .finish_non_exhaustive()
+    }
+}
+
+impl InertQwen3PrefillWorkerRequestV1 {
+    /// Complete profile catalog retained by this request.
+    pub const fn catalog(&self) -> &Qwen3PrefillProfileCatalogV1 {
+        &self.prepared.catalog
+    }
+
+    /// Exact compiler handoff for attempt-scoped transaction publication.
+    pub const fn compiler_handoff(&self) -> &CompilerModuleHandoffV2 {
+        &self.prepared.compiler_handoff
+    }
+
+    /// Ferric-domain source binding retained by the compiler handoff.
+    pub const fn source_binding_identity(&self) -> &[u8; 32] {
+        &self.prepared.source_binding_identity
+    }
+
+    /// A request value does not establish Worker execution or artifact existence.
+    pub const fn authenticates_worker_execution(&self) -> bool {
+        false
+    }
+
+    /// A compiler request grants no artifact, load, or launch authority.
+    pub const fn grants_launch_authority(&self) -> bool {
+        false
+    }
+}
+
+/// Consumes a prepared owner into the exact Worker V2 request stage.
+pub const fn lower_qwen3_prefill_kernel_v1(
+    prepared: PreparedQwen3PrefillKernelV1,
+) -> InertQwen3PrefillWorkerRequestV1 {
+    InertQwen3PrefillWorkerRequestV1 { prepared }
+}
+
+/// Failure while executing the exact module through Worker V2.
+#[derive(Debug)]
+pub enum ExecuteQwen3PrefillWorkerErrorV1 {
+    /// Consumed attempt bytes differ from the exact prepared handoff.
+    HandoffSubstitution,
+    /// A fixed link option could not be represented.
+    FixedLinkOption,
+    /// The fixed HSACO output ceiling could not be represented.
+    OutputConstraint(WorkerProtocolError),
+    /// Reproducible bootstrap and exact replay failed.
+    FirstBuild(FirstBuildWorkerV2Error),
+}
+
+impl fmt::Display for ExecuteQwen3PrefillWorkerErrorV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            formatter,
+            "Qwen3 prefill Worker V2 execution failed: {self:?}"
+        )
+    }
+}
+
+impl std::error::Error for ExecuteQwen3PrefillWorkerErrorV1 {}
+
+/// Linear Worker V2 bootstrap/replay evidence awaiting structural inspection.
+pub struct InertQwen3PrefillWorkerEvidenceV1 {
+    prepared: PreparedQwen3PrefillKernelV1,
+    transaction_handoff: CompilerModuleHandoffIdentityV1,
+    worker: InertFirstBuildWorkerV2EvidenceV1,
+}
+
+impl fmt::Debug for InertQwen3PrefillWorkerEvidenceV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("InertQwen3PrefillWorkerEvidenceV1")
+            .field("source_binding", &self.prepared.source_binding_identity)
+            .field("transaction_handoff", &self.transaction_handoff)
+            .field("worker", &self.worker.identity())
+            .finish_non_exhaustive()
+    }
+}
+
+impl InertQwen3PrefillWorkerEvidenceV1 {
+    /// Reproducible execution remains inert until exact structural inspection.
+    pub const fn grants_artifact_authority(&self) -> bool {
+        false
+    }
+
+    /// Worker output does not prove the online numerical contract.
+    pub const fn proves_numerical_contract(&self) -> bool {
+        false
+    }
+
+    /// Worker output does not reconcile online and two-pass attention.
+    pub const fn proves_operator_refinement(&self) -> bool {
+        false
+    }
+
+    /// Worker output establishes no paged-memory or race refinement.
+    pub const fn proves_memory_or_race_refinement(&self) -> bool {
+        false
+    }
+}
+
+/// Executes exact attempt bytes through Worker V2 bootstrap and replay.
+pub fn execute_qwen3_prefill_worker_v2_v1(
+    request: InertQwen3PrefillWorkerRequestV1,
+    consumed: ConsumedCompilerModuleHandoffV1,
+    worker: &PinnedWorkerV1,
+    limits: WorkerExecutionLimitsV1,
+) -> Result<InertQwen3PrefillWorkerEvidenceV1, ExecuteQwen3PrefillWorkerErrorV1> {
+    let InertQwen3PrefillWorkerRequestV1 { prepared } = request;
+    if consumed.bytes() != prepared.compiler_handoff.canonical_bytes() {
+        return Err(ExecuteQwen3PrefillWorkerErrorV1::HandoffSubstitution);
+    }
+    let transaction_handoff = consumed.identity();
+    let worker_evidence = execute_reproducible_first_build_worker_v2(
+        consumed,
+        worker,
+        Vec::new(),
+        fixed_link_options()?,
+        WorkerOutputConstraintsV1::new(MAX_HSACO_BYTES as u64)
+            .map_err(ExecuteQwen3PrefillWorkerErrorV1::OutputConstraint)?,
+        limits,
+    )
+    .map_err(ExecuteQwen3PrefillWorkerErrorV1::FirstBuild)?;
+    Ok(InertQwen3PrefillWorkerEvidenceV1 {
+        prepared,
+        transaction_handoff,
+        worker: worker_evidence,
+    })
+}
+
+/// Exact post-worker structural rejection.
+#[derive(Debug)]
+pub enum InspectQwen3PrefillKernelErrorV1 {
+    /// Worker request or response canonical bytes failed decoding.
+    Protocol(WorkerProtocolError),
+    /// Compiler, transaction, manifest, Worker, provider, or output lineage drifted.
+    SourceLineage,
+    /// AMDHSA metadata or descriptor binding failed.
+    Hsaco(KernelBindingError),
+    /// Kernel inventory, ABI, or resources differ from the exact profile.
+    KernelProfile,
+    /// Strict allocation-free COV6 loader validation failed.
+    Loader(PlanError),
+}
+
+impl fmt::Display for InspectQwen3PrefillKernelErrorV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            formatter,
+            "Qwen3 prefill structural inspection failed: {self:?}"
+        )
+    }
+}
+
+impl std::error::Error for InspectQwen3PrefillKernelErrorV1 {}
+
+/// Linear Worker output after strict transcript, provider, ABI, resource, and
+/// loader inspection.
+pub struct InspectedQwen3PrefillKernelV1 {
+    catalog: Qwen3PrefillProfileCatalogV1,
+    source_binding_identity: [u8; 32],
+    compiler_handoff_identity: CompilerModuleHandoffIdentityV2,
+    transaction_handoff: CompilerModuleHandoffIdentityV1,
+    loader_plan: LoadPlan,
+    worker: InertFirstBuildWorkerV2EvidenceV1,
+}
+
+impl fmt::Debug for InspectedQwen3PrefillKernelV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("InspectedQwen3PrefillKernelV1")
+            .field("catalog", &self.catalog.identity)
+            .field("source_binding", &self.source_binding_identity)
+            .field("compiler_handoff", &self.compiler_handoff_identity)
+            .field("transaction_handoff", &self.transaction_handoff)
+            .field("worker", &self.worker.identity())
+            .finish_non_exhaustive()
+    }
+}
+
+impl InspectedQwen3PrefillKernelV1 {
+    /// Exact profile catalog retained with the inspected output owner.
+    pub const fn catalog(&self) -> &Qwen3PrefillProfileCatalogV1 {
+        &self.catalog
+    }
+
+    /// Exact strict pure-Rust loader plan over the same Worker output bytes.
+    pub const fn loader_plan(&self) -> &LoadPlan {
+        &self.loader_plan
+    }
+
+    /// Exact bytes retained by sealed Worker V2 evidence.
+    pub fn exact_worker_output_bytes(&self) -> &[u8] {
+        self.worker.output_bytes()
+    }
+
+    /// Observed output bytes are not an independently approved deployment pin.
+    pub const fn has_independent_deployment_pin(&self) -> bool {
+        false
+    }
+
+    /// Structural inspection does not prove source-to-machine refinement.
+    pub const fn proves_machine_refinement(&self) -> bool {
+        false
+    }
+
+    /// Structural inspection does not prove numerical or operator refinement.
+    pub const fn proves_operator_or_numerical_refinement(&self) -> bool {
+        false
+    }
+
+    /// Structural inspection does not prove paged-memory or race refinement.
+    pub const fn proves_memory_or_race_refinement(&self) -> bool {
+        false
+    }
+
+    /// Provider evidence is measured structure, not independent content authentication.
+    pub const fn authenticates_ocml_provider_content(&self) -> bool {
+        false
+    }
+
+    /// Structural inspection does not prove hardware execution.
+    pub const fn proves_hardware_execution(&self) -> bool {
+        false
+    }
+
+    /// No completion observation is represented by this owner.
+    pub const fn proves_completion(&self) -> bool {
+        false
+    }
+
+    /// No performance measurement is represented by this owner.
+    pub const fn proves_performance(&self) -> bool {
+        false
+    }
+
+    /// Structural inspection grants no load or launch authority.
+    pub const fn grants_launch_authority(&self) -> bool {
+        false
+    }
+
+    /// Binds one exact profile to checked numerical spans and inert host labels.
+    pub fn bind_checked_profile(
+        &self,
+        role: Qwen3PrefillModelRoleV1,
+        bucket: Qwen3PrefillBucketV1,
+        addresses: [u64; 5],
+        byte_lengths: [u64; 5],
+        metadata: Qwen3PrefillHostMetadataV1,
+    ) -> Result<CheckedQwen3PrefillLaunchV1, BindQwen3PrefillLaunchErrorV1> {
+        let profile = self
+            .catalog
+            .profile(role, bucket)
+            .ok_or(BindQwen3PrefillLaunchErrorV1::Profile)?;
+        let buffers = Qwen3PrefillBufferContractV1::checked(profile, addresses, byte_lengths)
+            .map_err(BindQwen3PrefillLaunchErrorV1::Buffers)?;
+        metadata
+            .validate()
+            .map_err(BindQwen3PrefillLaunchErrorV1::Metadata)?;
+        Ok(CheckedQwen3PrefillLaunchV1 {
+            profile,
+            buffers,
+            metadata,
+        })
+    }
+}
+
+/// Consumes Worker evidence through exact transcript, provider, HSACO, ABI,
+/// resource, and loader checks.
+pub fn inspect_qwen3_prefill_kernel_v1(
+    evidence: InertQwen3PrefillWorkerEvidenceV1,
+) -> Result<InspectedQwen3PrefillKernelV1, InspectQwen3PrefillKernelErrorV1> {
+    let InertQwen3PrefillWorkerEvidenceV1 {
+        prepared,
+        transaction_handoff,
+        worker,
+    } = evidence;
+    validate_worker_lineage(&prepared, transaction_handoff, &worker)?;
+    let bytes = worker.output_bytes();
+    if !worker.output_identity().matches(bytes) {
+        return Err(InspectQwen3PrefillKernelErrorV1::SourceLineage);
+    }
+    let bound = inspect_and_bind_kernel_descriptors(bytes)
+        .map_err(InspectQwen3PrefillKernelErrorV1::Hsaco)?;
+    let [kernel] = bound.inspection().kernels() else {
+        return Err(InspectQwen3PrefillKernelErrorV1::KernelProfile);
+    };
+    let [binding] = bound.bindings() else {
+        return Err(InspectQwen3PrefillKernelErrorV1::KernelProfile);
+    };
+    let exact = bound.inspection().code_object_version() == InspectedCodeObjectVersion::V6
+        && bound.inspection().target().to_string() == QWEN3_PREFILL_TARGET_V1
+        && !bound.inspection().has_printf_metadata()
+        && kernel.name() == QWEN3_PREFILL_KERNEL_SYMBOL_V1
+        && kernel.symbol() == QWEN3_PREFILL_KERNEL_DESCRIPTOR_SYMBOL_V1
+        && kernel.kernarg_segment_size() == QWEN3_PREFILL_TOTAL_KERNARG_BYTES_V1
+        && kernel.kernarg_segment_alignment() == QWEN3_PREFILL_KERNARG_ALIGNMENT_V1
+        && kernel.implicit_argument_offset() == Some(QWEN3_PREFILL_EXPLICIT_KERNARG_BYTES_V1)
+        && kernel.implicit_argument_size() == 256
+        && kernel.required_workgroup_size() == Some(QWEN3_PREFILL_WORKGROUP_V1)
+        && kernel.max_flat_workgroup_size() == 64
+        && kernel.wavefront_size() == 64
+        && kernel.group_segment_fixed_size() == 0
+        && kernel.private_segment_fixed_size() == 0
+        && kernel.sgpr_spill_count().unwrap_or(0) == 0
+        && kernel.vgpr_spill_count().unwrap_or(0) == 0
+        && !kernel.uses_dynamic_stack()
+        && binding.kernel_index() == 0
+        && binding.descriptor().group_segment_fixed_size() == 0
+        && binding.descriptor().private_segment_fixed_size() == 0
+        && binding.descriptor().wavefront_size() == 64
+        && !binding.descriptor().uses_dynamic_stack()
+        && exact_prefill_explicit_arguments(kernel.explicit_arguments())
+        && exact_hidden_arguments(
+            kernel.hidden_arguments(),
+            QWEN3_PREFILL_EXPLICIT_KERNARG_BYTES_V1,
+        );
+    if !exact {
+        return Err(InspectQwen3PrefillKernelErrorV1::KernelProfile);
+    }
+    let loader = fe2o3_amdhsa_loader::validate(bytes, AdmittedProfile::Gfx942XnackOffCov6)
+        .map_err(InspectQwen3PrefillKernelErrorV1::Loader)?;
+    let loader_plan = *loader.plan();
+    Ok(InspectedQwen3PrefillKernelV1 {
+        catalog: prepared.catalog,
+        source_binding_identity: prepared.source_binding_identity,
+        compiler_handoff_identity: prepared.compiler_handoff_identity,
+        transaction_handoff,
+        loader_plan,
+        worker,
+    })
+}
+
+fn validate_worker_lineage(
+    prepared: &PreparedQwen3PrefillKernelV1,
+    transaction_handoff: CompilerModuleHandoffIdentityV1,
+    worker: &InertFirstBuildWorkerV2EvidenceV1,
+) -> Result<(), InspectQwen3PrefillKernelErrorV1> {
+    let expected_transaction = CompilerModuleHandoffIdentityV1::from_bytes(
+        Sha256::digest(prepared.compiler_handoff.canonical_bytes()).into(),
+    );
+    if transaction_handoff != expected_transaction
+        || worker.handoff_identity() != expected_transaction
+        || worker.compiler_envelope() != prepared.compiler_handoff.envelope()
+        || worker.symbol_manifest() != prepared.compiler_handoff.symbol_manifest()
+        || worker.worker_measurement().llvm_build_identity()
+            != fe2o3_llvm_worker_handoff::EXACT_LLVM_BUILD_IDENTITY_V1
+    {
+        return Err(InspectQwen3PrefillKernelErrorV1::SourceLineage);
+    }
+    let bootstrap = InertDecodedWorkerExchangeV2::decode(
+        worker.bootstrap_request_bytes(),
+        worker.bootstrap().response().canonical_bytes(),
+    )
+    .map_err(InspectQwen3PrefillKernelErrorV1::Protocol)?;
+    let replay = InertDecodedWorkerExchangeV2::decode(
+        worker.authorized_request_bytes(),
+        worker.authorized().response().canonical_bytes(),
+    )
+    .map_err(InspectQwen3PrefillKernelErrorV1::Protocol)?;
+    for exchange in [&bootstrap, &replay] {
+        let request = exchange.request();
+        if request.target() != exact_target()
+            || request.code_object_version() != CodeObjectVersion::V6
+            || request.compiler_module().bytes() != prepared.compiler_handoff.module_bytes()
+            || !request.external_providers().is_empty()
+            || request.import_symbols() != [OCML_EXP_F32]
+            || !request.export_symbols().is_empty()
+            || request.final_symbols()
+                != [
+                    OCML_EXP_F32,
+                    QWEN3_PREFILL_KERNEL_SYMBOL_V1,
+                    QWEN3_PREFILL_KERNEL_DESCRIPTOR_SYMBOL_V1,
+                ]
+            || exchange.response().request_identity() != request.identity()
+            || !exact_ocml_provider(exchange.response())
+        {
+            return Err(InspectQwen3PrefillKernelErrorV1::SourceLineage);
+        }
+    }
+    Ok(())
+}
+
+fn exact_ocml_provider(response: &fe2o3_hsaco_finalize::WorkerResponseV2) -> bool {
+    let Some(provider) = response.device_library_provider() else {
+        return false;
+    };
+    provider.provider_identity() == OCML_PROVIDER_IDENTITY
+        && provider.target().to_string() == QWEN3_PREFILL_TARGET_V1
+        && provider.code_object_version() == CodeObjectVersion::V6
+        && provider.import_symbols() == [OCML_EXP_F32]
+        && provider.manifest_identity() != &[0; 32]
+        && provider.files().len() == OCML_PROVIDER_BASENAMES.len()
+        && provider
+            .files()
+            .iter()
+            .zip(OCML_PROVIDER_BASENAMES)
+            .all(|(file, basename)| file.basename() == basename && file.sha256() != &[0; 32])
+}
+
+fn exact_prefill_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
+    if arguments.len() != 10 {
+        return false;
+    }
+    for (index, name, access, alignment, accepted_type) in [
+        (
+            0,
+            "q.data",
+            ArgumentAccess::ReadOnly,
+            2,
+            is_bf16_metadata_carrier as fn(ExplicitValueType) -> bool,
+        ),
+        (
+            2,
+            "k.data",
+            ArgumentAccess::ReadOnly,
+            2,
+            is_bf16_metadata_carrier,
+        ),
+        (
+            4,
+            "v.data",
+            ArgumentAccess::ReadOnly,
+            2,
+            is_bf16_metadata_carrier,
+        ),
+        (
+            6,
+            "pages.data",
+            ArgumentAccess::ReadOnly,
+            4,
+            is_i32_metadata_carrier,
+        ),
+        (
+            8,
+            "output.data",
+            ArgumentAccess::WriteOnly,
+            2,
+            is_bf16_metadata_carrier,
+        ),
+    ] {
+        if !exact_pointer_argument(
+            &arguments[index],
+            name,
+            (index as u64 / 2) * 16,
+            access,
+            alignment,
+            accepted_type,
+        ) {
+            return false;
+        }
+    }
+    for (index, name) in [
+        (1, "q.len"),
+        (3, "k.len"),
+        (5, "v.len"),
+        (7, "pages.len"),
+        (9, "output.len"),
+    ] {
+        if !exact_length_argument(&arguments[index], name, ((index - 1) as u64 / 2) * 16 + 8) {
+            return false;
+        }
+    }
+    true
+}
+
+fn exact_pointer_argument(
+    argument: &ExplicitArgument,
+    name: &str,
+    offset: u64,
+    access: ArgumentAccess,
+    alignment: u64,
+    accepted_type: fn(ExplicitValueType) -> bool,
+) -> bool {
+    argument.name() == Some(name)
+        && argument.offset() == offset
+        && argument.size() == 8
+        && !argument.alignment().is_some_and(|actual| actual != 8)
+        && argument
+            .pointee_alignment()
+            .is_none_or(|actual| actual == alignment)
+        && argument.value_kind() == ExplicitValueKind::GlobalBuffer
+        && argument.value_type().is_none_or(accepted_type)
+        && argument.address_space() == Some(ArgumentAddressSpace::Global)
+        && argument.access() == Some(access)
+}
+
+fn exact_length_argument(argument: &ExplicitArgument, name: &str, offset: u64) -> bool {
+    argument.name() == Some(name)
+        && argument.offset() == offset
+        && argument.size() == 8
+        && argument.value_kind() == ExplicitValueKind::ByValue
+        && argument
+            .value_type()
+            .is_none_or(|value_type| value_type == ExplicitValueType::U64)
+        && argument.address_space().is_none()
+        && argument.access().is_none()
+}
+
+const fn is_bf16_metadata_carrier(value_type: ExplicitValueType) -> bool {
+    matches!(
+        value_type,
+        ExplicitValueType::I16 | ExplicitValueType::U16 | ExplicitValueType::F16
+    )
+}
+
+const fn is_i32_metadata_carrier(value_type: ExplicitValueType) -> bool {
+    matches!(value_type, ExplicitValueType::I32 | ExplicitValueType::U32)
+}
+
+fn exact_hidden_arguments(arguments: &[HiddenArgument], offset: u64) -> bool {
+    const RELATIVE: [(u64, u64, HiddenValueKind); 19] = [
+        (0, 4, HiddenValueKind::BlockCountX),
+        (4, 4, HiddenValueKind::BlockCountY),
+        (8, 4, HiddenValueKind::BlockCountZ),
+        (12, 2, HiddenValueKind::GroupSizeX),
+        (14, 2, HiddenValueKind::GroupSizeY),
+        (16, 2, HiddenValueKind::GroupSizeZ),
+        (18, 2, HiddenValueKind::RemainderX),
+        (20, 2, HiddenValueKind::RemainderY),
+        (22, 2, HiddenValueKind::RemainderZ),
+        (40, 8, HiddenValueKind::GlobalOffsetX),
+        (48, 8, HiddenValueKind::GlobalOffsetY),
+        (56, 8, HiddenValueKind::GlobalOffsetZ),
+        (64, 2, HiddenValueKind::GridDimensions),
+        (80, 8, HiddenValueKind::HostcallBuffer),
+        (88, 8, HiddenValueKind::MultigridSyncArgument),
+        (96, 8, HiddenValueKind::HeapV1),
+        (104, 8, HiddenValueKind::DefaultQueue),
+        (112, 8, HiddenValueKind::CompletionAction),
+        (200, 8, HiddenValueKind::QueuePointer),
+    ];
+    arguments.len() == RELATIVE.len()
+        && arguments.iter().zip(RELATIVE).all(|(actual, expected)| {
+            actual.offset() == offset + expected.0
+                && actual.size() == expected.1
+                && actual.value_kind() == expected.2
+        })
+}
+
+fn fixed_link_options() -> Result<Vec<LinkOptionV1>, ExecuteQwen3PrefillWorkerErrorV1> {
+    [
+        ("code-object-version", "6"),
+        ("opt-level", "2"),
+        ("strip-debug", "true"),
+        ("verify-each", "true"),
+    ]
+    .into_iter()
+    .map(|(name, value)| {
+        LinkOptionV1::new(name, value)
+            .map_err(|_| ExecuteQwen3PrefillWorkerErrorV1::FixedLinkOption)
+    })
+    .collect()
+}
+
+/// Failure while binding an inspected output to a finite runtime profile.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BindQwen3PrefillLaunchErrorV1 {
+    /// The requested role/bucket tuple is absent from the finite catalog.
+    Profile,
+    /// Numerical buffer validation failed.
+    Buffers(Qwen3PrefillBufferContractErrorV1),
+    /// Required host-only identity/generation labels failed closed.
+    Metadata(Qwen3PrefillHostMetadataErrorV1),
+}
+
+impl fmt::Display for BindQwen3PrefillLaunchErrorV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(formatter, "Qwen3 prefill launch binding failed: {self:?}")
+    }
+}
+
+impl std::error::Error for BindQwen3PrefillLaunchErrorV1 {}
+
+/// Untrusted host-side cache/page labels absent from the machine ABI.
+#[derive(Debug, Eq, PartialEq)]
+pub struct Qwen3PrefillHostMetadataV1 {
+    page_table_identity: [u8; 32],
+    key_cache_identity: [u8; 32],
+    value_cache_identity: [u8; 32],
+    cache_owner_identity: [u8; 32],
+    page_generation: u64,
+}
+
+impl Qwen3PrefillHostMetadataV1 {
+    /// Constructs inert labels for the exact page-table/cache snapshot.
+    pub const fn new(
+        page_table_identity: [u8; 32],
+        key_cache_identity: [u8; 32],
+        value_cache_identity: [u8; 32],
+        cache_owner_identity: [u8; 32],
+        page_generation: u64,
+    ) -> Self {
+        Self {
+            page_table_identity,
+            key_cache_identity,
+            value_cache_identity,
+            cache_owner_identity,
+            page_generation,
+        }
+    }
+
+    fn validate(&self) -> Result<(), Qwen3PrefillHostMetadataErrorV1> {
+        let identities = [
+            self.page_table_identity,
+            self.key_cache_identity,
+            self.value_cache_identity,
+            self.cache_owner_identity,
+        ];
+        for (index, identity) in identities.iter().enumerate() {
+            if identity == &[0; 32] || identities[index + 1..].contains(identity) {
+                return Err(Qwen3PrefillHostMetadataErrorV1::IdentityOrGeneration);
+            }
+        }
+        if self.page_generation == 0 {
+            return Err(Qwen3PrefillHostMetadataErrorV1::IdentityOrGeneration);
+        }
+        Ok(())
+    }
+
+    /// Exact page generation label.
+    pub const fn page_generation(&self) -> u64 {
+        self.page_generation
+    }
+
+    /// These labels do not authenticate content, ownership, or generation.
+    pub const fn authenticates_content_or_ownership(&self) -> bool {
+        false
+    }
+}
+
+/// Host metadata admission failure.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Qwen3PrefillHostMetadataErrorV1 {
+    /// A required identity/generation was absent or identities were aliased.
+    IdentityOrGeneration,
+}
+
+/// Inert exact profile and numerical-buffer binding for a future protected launcher.
+#[derive(Debug)]
+pub struct CheckedQwen3PrefillLaunchV1 {
+    profile: Qwen3PrefillProfileV1,
+    buffers: Qwen3PrefillBufferContractV1,
+    metadata: Qwen3PrefillHostMetadataV1,
+}
+
+impl CheckedQwen3PrefillLaunchV1 {
+    /// Exact finite profile.
+    pub const fn profile(&self) -> Qwen3PrefillProfileV1 {
+        self.profile
+    }
+
+    /// Exact checked numerical buffer ranges.
+    pub const fn buffers(&self) -> &Qwen3PrefillBufferContractV1 {
+        &self.buffers
+    }
+
+    /// Host-only labels retained outside the machine ABI.
+    pub const fn metadata(&self) -> &Qwen3PrefillHostMetadataV1 {
+        &self.metadata
+    }
+
+    /// This binding grants no allocation, load, or launch authority.
+    pub const fn grants_launch_authority(&self) -> bool {
+        false
+    }
+}
+
+fn exact_target() -> DeviceTargetV1 {
+    DeviceTargetV1::parse(QWEN3_PREFILL_TARGET_V1)
+        .expect("the fixed Qwen3 prefill target is canonical")
+}
+
+fn hash(domain: &[u8], bytes: &[u8]) -> [u8; 32] {
+    let mut hasher = Sha256::new();
+    hasher.update(domain);
+    hasher.update((bytes.len() as u64).to_le_bytes());
+    hasher.update(bytes);
+    hasher.finalize().into()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::BTreeSet;
+
+    fn bindings(seed: u8) -> Qwen3PrefillSourceBindingsV1 {
+        Qwen3PrefillSourceBindingsV1::new(
+            [seed; 32],
+            [seed.wrapping_add(1); 32],
+            [seed.wrapping_add(2); 32],
+            [seed.wrapping_add(3); 32],
+        )
+    }
+
+    fn profile(
+        role: Qwen3PrefillModelRoleV1,
+        bucket: Qwen3PrefillBucketV1,
+    ) -> Qwen3PrefillProfileV1 {
+        Qwen3PrefillProfileCatalogV1::canonical()
+            .unwrap()
+            .profile(role, bucket)
+            .unwrap()
+    }
+
+    fn layout(profile: Qwen3PrefillProfileV1) -> ([u64; 5], [u64; 5]) {
+        let query = profile.query_elements() * 2;
+        let cache = profile.cache_elements_each() * 2;
+        let pages = profile.page_table_elements() * 4;
+        (
+            [
+                0x1_0000_0000,
+                0x2_0000_0000,
+                0x3_0000_0000,
+                0x4_0000_0000,
+                0x5_0000_0000,
+            ],
+            [query, cache, cache, pages, query],
+        )
+    }
+
+    #[test]
+    fn exact_eight_profile_catalog_is_complete_unique_and_checked() {
+        let catalog = Qwen3PrefillProfileCatalogV1::canonical().unwrap();
+        assert_eq!(catalog.profiles().len(), QWEN3_PREFILL_PROFILE_COUNT_V1);
+        assert_eq!(
+            catalog
+                .profiles()
+                .iter()
+                .map(Qwen3PrefillProfileV1::identity)
+                .collect::<BTreeSet<_>>()
+                .len(),
+            QWEN3_PREFILL_PROFILE_COUNT_V1
+        );
+        for profile in catalog.profiles() {
+            let vectors = profile
+                .sequences()
+                .checked_mul(profile.tokens())
+                .and_then(|value| value.checked_mul(profile.query_heads()))
+                .unwrap();
+            assert_eq!(profile.grid_workgroups(), [vectors, 1, 1]);
+            assert_eq!(
+                profile.launch_workitems(),
+                [vectors.checked_mul(64).unwrap(), 1, 1]
+            );
+            assert_eq!(
+                profile.query_heads() / profile.gqa_group_size(),
+                QWEN3_PREFILL_KV_HEADS_V1
+            );
+        }
+        assert!(!catalog.grants_authority());
+    }
+
+    #[test]
+    fn attention_width_is_qh_times_d_and_rejects_draft_hidden_substitution() {
+        let catalog = Qwen3PrefillProfileCatalogV1::canonical().unwrap();
+        let target = catalog
+            .profile(
+                Qwen3PrefillModelRoleV1::Target8B,
+                Qwen3PrefillBucketV1::S1T128,
+            )
+            .unwrap();
+        let draft = catalog
+            .profile(
+                Qwen3PrefillModelRoleV1::Draft06B,
+                Qwen3PrefillBucketV1::S1T128,
+            )
+            .unwrap();
+        assert_eq!(target.query_width(), 4_096);
+        assert_eq!(draft.query_width(), 2_048);
+        let mut hostile_draft_hidden_width = draft;
+        hostile_draft_hidden_width.query_width = 1_024;
+        hostile_draft_hidden_width.query_elements /= 2;
+        assert!(!catalog.profiles().contains(&hostile_draft_hidden_width));
+        assert_ne!(
+            qwen3_prefill_kernel_ir_v1(hostile_draft_hidden_width).identity(),
+            qwen3_prefill_kernel_ir_v1(draft).identity()
+        );
+    }
+
+    #[test]
+    fn paged_cache_geometry_matches_rope_kv_layout() {
+        let catalog = Qwen3PrefillProfileCatalogV1::canonical().unwrap();
+        for profile in catalog.profiles() {
+            assert_eq!(
+                profile.page_table_elements(),
+                u64::from(profile.sequences()) * 512
+            );
+            assert_eq!(
+                profile.cache_elements_each(),
+                u64::from(profile.sequences()) * 512 * 16 * 8 * 128
+            );
+            let ir = qwen3_prefill_kernel_ir_v1(*profile);
+            assert_eq!(
+                ir.recurrence()[4],
+                Qwen3PrefillRecurrenceStepV1::P16LogicalToPhysicalPageMapping
+            );
+            assert_eq!(
+                ir.exceptional_policy(),
+                Qwen3PrefillExceptionalPolicyV1::PerLaneTrapBeforeOwnedPairNoGlobalAtomicity
+            );
+        }
+    }
+
+    #[test]
+    fn exact_llvm_classifier_rejects_contract_and_mapping_substitution() {
+        let exact = canonical_qwen3_prefill_llvm();
+        assert_eq!(exact.len(), QWEN3_PREFILL_LLVM_BYTES_V1);
+        assert_eq!(
+            <[u8; 32]>::from(Sha256::digest(exact.as_bytes())),
+            QWEN3_PREFILL_LLVM_SHA256_V1
+        );
+        validate_canonical_llvm(&exact).unwrap();
+        let contract_substitution = exact.replacen(
+            "declare float @__ocml_exp_f32(float)",
+            "declare float @hostile_exp_f32(float)",
+            1,
+        );
+        assert!(validate_canonical_llvm(&contract_substitution).is_err());
+        let helper_substitution = exact.replacen(
+            "%next.logical.page = lshr i64 %key, 4",
+            "%next.logical.page = lshr i64 %key, 5",
+            1,
+        );
+        assert!(validate_canonical_llvm(&helper_substitution).is_err());
+        let store_substitution =
+            exact.replacen("store i16 %output1.bf16", "store i16 %output0.bf16", 1);
+        assert_ne!(exact, store_substitution);
+        assert!(validate_canonical_llvm(&store_substitution).is_err());
+    }
+
+    #[test]
+    fn source_bindings_fail_closed_and_preparation_retains_nonclaims() {
+        assert!(prepare_qwen3_prefill_kernel_v1(bindings(1)).is_ok());
+        assert!(
+            prepare_qwen3_prefill_kernel_v1(Qwen3PrefillSourceBindingsV1::new(
+                [0; 32], [2; 32], [3; 32], [4; 32]
+            ))
+            .is_err()
+        );
+        assert!(
+            prepare_qwen3_prefill_kernel_v1(Qwen3PrefillSourceBindingsV1::new(
+                [1; 32], [1; 32], [3; 32], [4; 32]
+            ))
+            .is_err()
+        );
+        let prepared = prepare_qwen3_prefill_kernel_v1(bindings(7)).unwrap();
+        assert!(!prepared.uses_typed_handoff_v2_source());
+        assert!(!prepared.authenticates_compiler_origin());
+        assert!(!prepared.proves_operator_or_numerical_refinement());
+        assert!(!prepared.has_ferric_plan_identity_join());
+        assert!(!prepared.has_kernel_schedule_catalog_join());
+        assert!(!prepared.grants_launch_authority());
+        assert_eq!(
+            prepared
+                .compiler_handoff()
+                .envelope()
+                .directional_symbols()
+                .imports()
+                .collect::<Vec<_>>(),
+            [OCML_EXP_F32]
+        );
+    }
+
+    #[test]
+    fn buffer_contract_rejects_lengths_alignment_overflow_and_aliases() {
+        let profile = profile(
+            Qwen3PrefillModelRoleV1::Target8B,
+            Qwen3PrefillBucketV1::S1T128,
+        );
+        let (addresses, lengths) = layout(profile);
+        let checked = Qwen3PrefillBufferContractV1::checked(profile, addresses, lengths).unwrap();
+        assert!(!checked.authenticates_device_memory());
+        let mut short = lengths;
+        short[2] -= 2;
+        assert_eq!(
+            Qwen3PrefillBufferContractV1::checked(profile, addresses, short),
+            Err(Qwen3PrefillBufferContractErrorV1::ByteLength(
+                Qwen3PrefillBufferV1::ValueCache
+            ))
+        );
+        let mut misaligned = addresses;
+        misaligned[3] += 2;
+        assert_eq!(
+            Qwen3PrefillBufferContractV1::checked(profile, misaligned, lengths),
+            Err(Qwen3PrefillBufferContractErrorV1::Alignment(
+                Qwen3PrefillBufferV1::PageIndices
+            ))
+        );
+        let mut aliased = addresses;
+        aliased[4] = aliased[0];
+        assert_eq!(
+            Qwen3PrefillBufferContractV1::checked(profile, aliased, lengths),
+            Err(Qwen3PrefillBufferContractErrorV1::Aliasing)
+        );
+        let mut overflowing = addresses;
+        overflowing[0] = u64::MAX - lengths[0] + 1;
+        assert_eq!(
+            Qwen3PrefillBufferContractV1::checked(profile, overflowing, lengths),
+            Err(Qwen3PrefillBufferContractErrorV1::RangeOverflow(
+                Qwen3PrefillBufferV1::Query
+            ))
+        );
+    }
+
+    #[test]
+    fn host_metadata_is_inert_and_rejects_alias_or_zero_generation() {
+        let valid = Qwen3PrefillHostMetadataV1::new([1; 32], [2; 32], [3; 32], [4; 32], 9);
+        assert_eq!(valid.validate(), Ok(()));
+        assert!(!valid.authenticates_content_or_ownership());
+        assert_eq!(valid.page_generation(), 9);
+        let aliased = Qwen3PrefillHostMetadataV1::new([1; 32], [2; 32], [2; 32], [4; 32], 9);
+        assert_eq!(
+            aliased.validate(),
+            Err(Qwen3PrefillHostMetadataErrorV1::IdentityOrGeneration)
+        );
+        let zero_generation =
+            Qwen3PrefillHostMetadataV1::new([1; 32], [2; 32], [3; 32], [4; 32], 0);
+        assert_eq!(
+            zero_generation.validate(),
+            Err(Qwen3PrefillHostMetadataErrorV1::IdentityOrGeneration)
+        );
+    }
+}
