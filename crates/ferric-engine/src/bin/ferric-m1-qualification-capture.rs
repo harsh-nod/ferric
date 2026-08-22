@@ -22,10 +22,13 @@ use ferric_build::{
     QWEN3_TARGET_TENSOR_DATA_BYTES, TARGET_REPOSITORY, TARGET_REVISION,
 };
 use ferric_engine::{
-    bind_m1_kv_workspace_table_v1, bind_m1_physical_runner_v1,
-    initialize_m1_physical_runner_memory_v1, reopen_persisted_m1_kernel_artifacts_v1,
-    ActiveDeviceKvCache, Engine, M1FullStepKvWorkspaceTablesV1, M1FullStepWorkspacePlans,
-    M1PhysicalRunnerRecipeOutcomeV1, M1StepDispatchIntent,
+    bind_m1_kv_workspace_table_v1, bind_m1_physical_runner_v1, complete_m1_physical_step_v1,
+    initialize_m1_physical_runner_memory_v1, release_m1_completed_step_kv_pages_v1,
+    reopen_persisted_m1_kernel_artifacts_v1, ActiveDeviceKvCache,
+    CompletionWireSemanticExpectation, Engine, M1CompletedStepOutcomeV1,
+    M1DeviceKvCompletionMemberV1, M1DeviceKvCompletionRosterV1, M1FullStepKvWorkspaceTablesV1,
+    M1FullStepWorkspacePlans, M1ObservedQualificationOutputV1, M1PhysicalRunnerRecipeOutcomeV1,
+    M1QualificationObservationFailureCustodyV1, M1StepDispatchIntent,
 };
 use ferric_spec::{
     validate_m1_step_inputs, EngineLimits, Identity, M1StepInputCandidate,
@@ -755,21 +758,124 @@ fn execute_capture(
     let published = runner
         .publish_first_step(&mut engine, 1 << 20, allocated, recipe, completion)
         .map_err(|error| format!("cannot publish qualification step: {error:?}"))?;
-    let completed = published
-        .wait(workload.max_polls)
-        .map_err(|error| format!("qualification queue wait failed: {error:?}"))?;
-    let recycled = completed
-        .recycle()
-        .map_err(|error| format!("qualification queue recycle failed: {error:?}"))?;
+    let completed = match published.wait(workload.max_polls) {
+        Ok(completed) => completed,
+        Err(error) => {
+            return Err(format!(
+                "qualification queue wait entered terminal quarantine: {error:?}"
+            ));
+        }
+    };
+    let recycled = match completed.recycle() {
+        Ok(recycled) => recycled,
+        Err(error) => {
+            return Err(format!(
+                "qualification queue recycle entered terminal quarantine: {error:?}"
+            ));
+        }
+    };
     let device_id = recycled.custody().device().device_id();
-    let observed = recycled
-        .observe_qualification_completion()
-        .map_err(|error| format!("qualification observation failed: {error:?}"))?;
+    let observed = match recycled.observe_qualification_completion() {
+        Ok(observed) => observed,
+        Err(failure) => return Err(release_qualification_failure(*failure)),
+    };
+    let (output, choices) = match copy_capture_candidate(&observed, device_id, workload.lanes.len())
+    {
+        Ok(candidate) => candidate,
+        Err(error) => return Err(release_observed_after_error(observed, error)),
+    };
+    for request in &requests {
+        if let Err(error) = engine.retire(*request) {
+            return Err(release_observed_after_error(
+                observed,
+                format!("cannot retire captured request before completion: {error:?}"),
+            ));
+        }
+    }
+    let expectations = choices
+        .iter()
+        .copied()
+        .map(|choice| CompletionWireSemanticExpectation::DirectFinalRow { choice })
+        .collect::<Vec<_>>();
+    let qualified = match observed.check_completion(&expectations) {
+        Ok(qualified) => qualified,
+        Err(failure) => {
+            let (error, observed) = failure.into_parts();
+            return Err(release_observed_after_error(
+                observed,
+                format!("qualification semantic completion join failed: {error}"),
+            ));
+        }
+    };
+    let (completed, evidence) = qualified.into_parts();
+    drop(evidence);
+    let roster = M1DeviceKvCompletionRosterV1::new(
+        caches
+            .into_iter()
+            .map(M1DeviceKvCompletionMemberV1::retiring)
+            .collect(),
+    );
+    let completed = match complete_m1_physical_step_v1(&mut engine, completed, roster) {
+        M1CompletedStepOutcomeV1::Completed(completed) => completed,
+        M1CompletedStepOutcomeV1::Rejected(rejected) => {
+            let (error, readback, roster) = rejected.into_parts();
+            let (queue, checked, completion, reservations) = readback.into_parts();
+            let release = queue.destroy_and_release();
+            drop((checked, completion, reservations, roster));
+            return Err(format!(
+                "qualification completion was rejected: {error:?}; {}",
+                release_result("rejected completion queue", release)
+            ));
+        }
+        M1CompletedStepOutcomeV1::Poisoned(poisoned) => {
+            return Err(format!(
+                "qualification completion entered terminal quarantine: {:?}",
+                poisoned.error()
+            ));
+        }
+    };
+    let released = match release_m1_completed_step_kv_pages_v1(completed) {
+        Ok(released) => released,
+        Err(failure) => {
+            let (error, completed) = (*failure).into_parts();
+            let (queue, checked, members, emitted_counts) = completed.into_parts();
+            let release = queue.destroy_and_release();
+            drop((checked, members, emitted_counts));
+            return Err(format!(
+                "qualification KV page release failed: {error:?}; {}",
+                release_result("page-release queue", release)
+            ));
+        }
+    };
+    let teardown = released
+        .destroy_queue_and_retain_step()
+        .map_err(|failure| format!("qualification final queue teardown failed: {failure:?}"))?;
+    if teardown.members().len() != workload.lanes.len()
+        || teardown
+            .members()
+            .iter()
+            .any(|member| matches!(member, ferric_engine::M1ReleasedDeviceKvMemberV1::Active(_)))
+    {
+        return Err("qualification teardown retained a nonterminal KV member".to_owned());
+    }
+    Ok(output)
+}
+
+fn copy_capture_candidate(
+    observed: &M1ObservedQualificationOutputV1,
+    device_id: Identity,
+    expected_lanes: usize,
+) -> CaptureResult<(CapturedOutput, Vec<u32>)> {
     let compact = observed.compact();
     let records = compact.records();
-    if records.len() != workload.lanes.len() {
+    if records.len() != expected_lanes {
         return Err("compact live record count differs from workload lanes".to_owned());
     }
+    let evidence = observed.evidence();
+    if evidence.logits().rows().len() != records.len() {
+        return Err("captured logits row count differs from compact records".to_owned());
+    }
+    let mut choices = Vec::with_capacity(records.len());
     let mut tokens = Vec::with_capacity(records.len() * 4);
     for (lane, record) in records.iter().enumerate() {
         if record.record().emitted_token_count != 1 || record.accepted_draft_tokens() != 0 {
@@ -777,14 +883,7 @@ fn execute_capture(
                 "lane {lane} compact target-only record is not exactly one emitted token"
             ));
         }
-        let token = record
-            .emitted_tokens()
-            .first()
-            .copied()
-            .ok_or_else(|| format!("lane {lane} compact record has no emitted token"))?;
-        tokens.extend_from_slice(&token.to_le_bytes());
     }
-    let evidence = observed.evidence();
     let mut logits = Vec::new();
     let row_bytes = usize::try_from(
         u64::from(QWEN3_VOCABULARY_SIZE)
@@ -800,6 +899,9 @@ fn execute_capture(
         if row.lane() != lane || row.raw_bytes().len() != row_bytes {
             return Err(format!("captured logits row {lane} geometry drifted"));
         }
+        let choice = lowest_id_finite_bf16_argmax(row.raw_bytes(), lane)?;
+        choices.push(choice);
+        tokens.extend_from_slice(&choice.to_le_bytes());
         logits.extend_from_slice(row.raw_bytes());
         logits_row_sha256.push(*row.raw_sha256());
     }
@@ -811,11 +913,73 @@ fn execute_capture(
         logits_row_sha256,
         tokens,
     };
-    observed
-        .destroy_and_release()
-        .map_err(|error| format!("cannot destroy qualification queue: {error:?}"))?;
-    drop(caches);
-    Ok(output)
+    Ok((output, choices))
+}
+
+fn lowest_id_finite_bf16_argmax(bytes: &[u8], lane: usize) -> CaptureResult<u32> {
+    let expected = usize::try_from(u64::from(QWEN3_VOCABULARY_SIZE) * BF16_BYTES)
+        .map_err(|_| "BF16 logits row extent does not fit usize".to_owned())?;
+    if bytes.len() != expected {
+        return Err(format!("captured logits row {lane} has an invalid extent"));
+    }
+    let mut best_token = 0_u32;
+    let mut best_value = f32::NEG_INFINITY;
+    for (token, encoded) in bytes.chunks_exact(2).enumerate() {
+        let bits = u16::from_le_bytes([encoded[0], encoded[1]]);
+        let value = f32::from_bits(u32::from(bits) << 16);
+        if !value.is_finite() {
+            return Err(format!(
+                "captured logits row {lane} contains a non-finite BF16 value at token {token}"
+            ));
+        }
+        if value > best_value {
+            best_value = value;
+            best_token = u32::try_from(token)
+                .map_err(|_| "BF16 argmax token index does not fit u32".to_owned())?;
+        }
+    }
+    Ok(best_token)
+}
+
+fn release_qualification_failure(
+    failure: ferric_engine::M1QualificationObservationFailureV1,
+) -> String {
+    let (error, custody) = failure.into_parts();
+    let release = match custody {
+        M1QualificationObservationFailureCustodyV1::Recycled(queue) => queue.destroy_and_release(),
+        M1QualificationObservationFailureCustodyV1::CompactRejected(output) => {
+            output.destroy_and_release()
+        }
+        M1QualificationObservationFailureCustodyV1::Observed {
+            completion,
+            partial_logits,
+        } => {
+            drop(partial_logits);
+            completion.destroy_and_release()
+        }
+    };
+    format!(
+        "qualification observation failed: {error}; {}",
+        release_result("failed observation queue", release)
+    )
+}
+
+fn release_observed_after_error(
+    observed: M1ObservedQualificationOutputV1,
+    error: String,
+) -> String {
+    let release = observed.destroy_and_release();
+    format!(
+        "{error}; {}",
+        release_result("observed qualification queue", release)
+    )
+}
+
+fn release_result<T, E: core::fmt::Debug>(description: &str, result: Result<T, E>) -> String {
+    match result {
+        Ok(_) => format!("{description} released"),
+        Err(error) => format!("{description} entered terminal release quarantine: {error:?}"),
+    }
 }
 
 fn require_supported_capture(workload: &Workload) -> CaptureResult<()> {
@@ -1698,10 +1862,27 @@ fn selection_bytes(selection: Qwen3PlanSelection) -> Vec<u8> {
 }
 
 fn current_executable_sha256() -> CaptureResult<String> {
-    let executable = std::env::current_exe()
-        .map_err(|error| format!("cannot resolve current executable: {error}"))?;
-    let (root, relative) = secure_parent(&executable, "benchmark executable")?;
-    let bytes = root.read_bounded(&relative, u64::MAX, "benchmark executable")?;
+    // `/proc/self/exe` is the deliberate magic-link exception: opening it binds
+    // the descriptor to the inode executing this process, even if its pathname
+    // is concurrently replaced. All reads and both metadata checks use that fd.
+    let file = File::open("/proc/self/exe")
+        .map_err(|error| format!("cannot open running benchmark executable: {error}"))?;
+    let initial = fstat(&file)
+        .map_err(|error| format!("cannot inspect running benchmark executable: {error}"))?;
+    if FileType::from_raw_mode(initial.st_mode) != FileType::RegularFile {
+        return Err("running benchmark executable must be a regular file".to_owned());
+    }
+    if initial.st_nlink != 1 {
+        return Err(
+            "running benchmark executable must have exactly one filesystem link".to_owned(),
+        );
+    }
+    let mut executable = SecureFile { file, initial };
+    let length = executable.length("running benchmark executable")?;
+    if length == 0 {
+        return Err("running benchmark executable must not be empty".to_owned());
+    }
+    let bytes = executable.read_exact_snapshot(length, "running benchmark executable")?;
     Ok(sha256_hex(&bytes))
 }
 
@@ -2008,6 +2189,31 @@ mod tests {
             "max_polls": 20_000_000,
             "selection": selection_json(kind_selection(kind).unwrap()),
         })
+    }
+
+    #[test]
+    fn bf16_argmax_is_finite_and_uses_lowest_token_id() {
+        let mut row = vec![0_u8; usize::try_from(u64::from(QWEN3_VOCABULARY_SIZE) * 2).unwrap()];
+        for encoded in row.chunks_exact_mut(2) {
+            encoded.copy_from_slice(&(((-2.0_f32).to_bits() >> 16) as u16).to_le_bytes());
+        }
+        let maximum = (((-1.0_f32).to_bits() >> 16) as u16).to_le_bytes();
+        row[4 * 2..4 * 2 + 2].copy_from_slice(&maximum);
+        row[7 * 2..7 * 2 + 2].copy_from_slice(&maximum);
+        assert_eq!(lowest_id_finite_bf16_argmax(&row, 0).unwrap(), 4);
+
+        row[4 * 2..4 * 2 + 2].copy_from_slice(&0x8000_u16.to_le_bytes());
+        row[7 * 2..7 * 2 + 2].copy_from_slice(&0_u16.to_le_bytes());
+        assert_eq!(lowest_id_finite_bf16_argmax(&row, 0).unwrap(), 4);
+
+        row[9 * 2..9 * 2 + 2].copy_from_slice(&0x7fc0_u16.to_le_bytes());
+        assert!(lowest_id_finite_bf16_argmax(&row, 0).is_err());
+    }
+
+    #[test]
+    fn running_executable_hash_reads_the_live_proc_inode() {
+        let expected = sha256_hex(&fs::read("/proc/self/exe").unwrap());
+        assert_eq!(current_executable_sha256().unwrap(), expected);
     }
 
     #[test]
