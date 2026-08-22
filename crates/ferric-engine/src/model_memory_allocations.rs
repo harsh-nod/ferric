@@ -261,6 +261,19 @@ impl BoundModelMemoryAllocationsV1 {
         self.selected.get(role, kind)
     }
 
+    pub(crate) const fn kv_allocation_key(&self, role: Qwen3ModelRole) -> KvAllocationKeyV1 {
+        match role {
+            Qwen3ModelRole::Target8B => self.target_kv,
+            Qwen3ModelRole::Draft06B => self.draft_kv,
+        }
+    }
+
+    pub(crate) fn revalidate_for_kv_partition(
+        &self,
+    ) -> Result<(), ModelMemoryAllocationBindingErrorV1> {
+        self.revalidate()
+    }
+
     /// Resolves one exact authenticated weight coordinate into an owner-checked,
     /// addressless device dispatch range.
     ///

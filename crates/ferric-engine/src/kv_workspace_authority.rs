@@ -8,7 +8,9 @@
 
 use core::fmt;
 
-use ferric_spec::{Identity, Qwen3PlanSelection, ValidatedM1StepInputs, M1_KV_PAGE_TOKENS};
+use ferric_spec::{
+    Identity, Qwen3PlanSelection, RequestId, ValidatedM1StepInputs, M1_KV_PAGE_TOKENS,
+};
 
 use crate::{
     device_cache::m1_speculative_draft_round_shape_v1, PendingDeviceKvStepWrite,
@@ -17,6 +19,17 @@ use crate::{
 };
 
 const UNSEEN_PHYSICAL_PAGE: u32 = u32::MAX;
+
+fn global_kernel_page_index(request: RequestId, request_local_page: u32) -> Option<u32> {
+    if request_local_page >= M1_KV_PAGE_TABLE_ENTRIES_PER_SEQUENCE_V1 {
+        return None;
+    }
+    request
+        .slot()
+        .checked_mul(M1_KV_PAGE_TABLE_ENTRIES_PER_SEQUENCE_V1)
+        .and_then(|base| base.checked_add(request_local_page))
+        .filter(|global_page| *global_page < M1_KV_PHYSICAL_PAGE_SLOTS_V1)
+}
 
 /// Linear custody of every live lane's pending device-KV reservation.
 ///
@@ -365,13 +378,13 @@ pub enum M1KvWorkspaceTableBindingErrorV1 {
         /// Logical page containing the mismatch.
         logical_page: u32,
     },
-    /// A page index is outside the fixed global M1 physical pool.
+    /// A request-local page index cannot map into the fixed global M1 pool.
     PhysicalPageOutOfRange {
         /// Live lane containing the mismatch.
         lane: usize,
         /// Logical page containing the mismatch.
         logical_page: u32,
-        /// Rejected physical page index.
+        /// Rejected request-local page index.
         page: u32,
     },
     /// A page identity omits its role-scoped arena allocation identity.
@@ -398,7 +411,7 @@ pub enum M1KvWorkspaceTableBindingErrorV1 {
         lane: usize,
         /// Later logical page repeating the page.
         logical_page: u32,
-        /// Repeated physical page index.
+        /// Repeated global kernel page index.
         page: u32,
     },
     /// The exact `[S,512]` table length overflowed host arithmetic.
@@ -657,7 +670,8 @@ fn reject(
 /// epoch, committed context, and active width. Its page identities must form
 /// the exact logical prefix `[0, ceil((context + active) / 16))`, use one
 /// present arena allocation identity for the selected role, name nonaliasing
-/// physical pages below 16,384, and retain nonzero generations.
+/// request-local physical pages below 512, encode them into the request slot's
+/// disjoint 16,384-page kernel pool partition, and retain nonzero generations.
 ///
 /// All validation completes before the output table is allocated. Every
 /// rejection returns the exact inputs and every reservation unchanged. Success
@@ -854,17 +868,20 @@ pub fn bind_m1_kv_workspace_table_v1(
                     reservations,
                 );
             }
-            if page.index() >= M1_KV_PHYSICAL_PAGE_SLOTS_V1 {
-                return reject(
-                    M1KvWorkspaceTableBindingErrorV1::PhysicalPageOutOfRange {
-                        lane,
-                        logical_page: expected_logical_page,
-                        page: page.index(),
-                    },
-                    inputs,
-                    reservations,
-                );
-            }
+            let global_page = match global_kernel_page_index(reservation.request(), page.index()) {
+                Some(global_page) => global_page,
+                None => {
+                    return reject(
+                        M1KvWorkspaceTableBindingErrorV1::PhysicalPageOutOfRange {
+                            lane,
+                            logical_page: expected_logical_page,
+                            page: page.index(),
+                        },
+                        inputs,
+                        reservations,
+                    );
+                }
+            };
             let candidate_allocation = page_identity.allocation_id();
             if !candidate_allocation.is_present() {
                 return reject(
@@ -890,13 +907,13 @@ pub fn bind_m1_kv_workspace_table_v1(
             }
             allocation_id.get_or_insert(candidate_allocation);
 
-            let physical_index = usize::try_from(page.index()).unwrap_or(usize::MAX);
+            let physical_index = usize::try_from(global_page).unwrap_or(usize::MAX);
             let Some(seen_page) = seen_pages.get_mut(physical_index) else {
                 return reject(
                     M1KvWorkspaceTableBindingErrorV1::PhysicalPageOutOfRange {
                         lane,
                         logical_page: expected_logical_page,
-                        page: page.index(),
+                        page: global_page,
                     },
                     inputs,
                     reservations,
@@ -910,7 +927,7 @@ pub fn bind_m1_kv_workspace_table_v1(
                         first_logical_page: prior & 0xffff,
                         lane,
                         logical_page: expected_logical_page,
-                        page: page.index(),
+                        page: global_page,
                     },
                     inputs,
                     reservations,
@@ -959,7 +976,23 @@ pub fn bind_m1_kv_workspace_table_v1(
                     reservations,
                 );
             };
-            *destination = page_identity.page().index();
+            let global_page =
+                match global_kernel_page_index(reservation.request(), page_identity.page().index())
+                {
+                    Some(global_page) => global_page,
+                    None => {
+                        return reject(
+                            M1KvWorkspaceTableBindingErrorV1::PhysicalPageOutOfRange {
+                                lane,
+                                logical_page: page_identity.logical_page(),
+                                page: page_identity.page().index(),
+                            },
+                            inputs,
+                            reservations,
+                        );
+                    }
+                };
+            *destination = global_page;
         }
     }
 
@@ -1042,13 +1075,13 @@ fn build_speculative_draft_round_page_table(
                     },
                 );
             }
-            if page.index() >= M1_KV_PHYSICAL_PAGE_SLOTS_V1 {
-                return Err(M1KvWorkspaceTableBindingErrorV1::PhysicalPageOutOfRange {
+            let global_page = global_kernel_page_index(reservation.request(), page.index()).ok_or(
+                M1KvWorkspaceTableBindingErrorV1::PhysicalPageOutOfRange {
                     lane,
                     logical_page: expected_logical_page,
                     page: page.index(),
-                });
-            }
+                },
+            )?;
             let candidate_allocation = page_identity.allocation_id();
             if !candidate_allocation.is_present() {
                 return Err(
@@ -1068,12 +1101,12 @@ fn build_speculative_draft_round_page_table(
             }
             allocation_id.get_or_insert(candidate_allocation);
 
-            let physical_index = usize::try_from(page.index()).unwrap_or(usize::MAX);
+            let physical_index = usize::try_from(global_page).unwrap_or(usize::MAX);
             let Some(seen_page) = seen_pages.get_mut(physical_index) else {
                 return Err(M1KvWorkspaceTableBindingErrorV1::PhysicalPageOutOfRange {
                     lane,
                     logical_page: expected_logical_page,
-                    page: page.index(),
+                    page: global_page,
                 });
             };
             let prior = *seen_page;
@@ -1083,7 +1116,7 @@ fn build_speculative_draft_round_page_table(
                     first_logical_page: prior & 0xffff,
                     lane,
                     logical_page: expected_logical_page,
-                    page: page.index(),
+                    page: global_page,
                 });
             }
             let packed_lane =
@@ -1110,7 +1143,15 @@ fn build_speculative_draft_round_page_table(
                 .checked_add(logical_page)
                 .and_then(|index| page_table.get_mut(index))
                 .ok_or(M1KvWorkspaceTableBindingErrorV1::TableExtent)?;
-            *destination = page_identity.page().index();
+            *destination = global_kernel_page_index(
+                aggregate.pending_step_write().request(),
+                page_identity.page().index(),
+            )
+            .ok_or(M1KvWorkspaceTableBindingErrorV1::PhysicalPageOutOfRange {
+                lane,
+                logical_page: page_identity.logical_page(),
+                page: page_identity.page().index(),
+            })?;
         }
     }
     Ok((allocation_id, page_table.into_boxed_slice()))
@@ -1507,6 +1548,7 @@ mod tests {
                 DeviceKvPageLease::from_contracted_workspace_bridge_test_allocation(
                     device(),
                     identity(allocation_tag),
+                    request,
                     PhysicalPageId::new(selected.role, index, 1),
                 )
             })
@@ -1537,10 +1579,15 @@ mod tests {
         )
     }
 
-    fn draft_lease(physical_index: u32, allocation_tag: u8) -> DeviceKvPageLease {
+    fn draft_lease(
+        request: RequestId,
+        physical_index: u32,
+        allocation_tag: u8,
+    ) -> DeviceKvPageLease {
         DeviceKvPageLease::from_contracted_workspace_bridge_test_allocation(
             device(),
             identity(allocation_tag),
+            request,
             PhysicalPageId::new(Qwen3ModelRole::Draft06B, physical_index, 1),
         )
     }
@@ -1560,7 +1607,10 @@ mod tests {
 
         if committed != 0 {
             cache
-                .append_page(request, draft_lease(physical_start, allocation_tag))
+                .append_page(
+                    request,
+                    draft_lease(request, physical_start, allocation_tag),
+                )
                 .unwrap();
             for logical_position in 0..committed {
                 let pending = cache
@@ -1586,7 +1636,7 @@ mod tests {
         let existing_pages = committed.div_ceil(M1_KV_PAGE_TOKENS);
         let required_pages = (committed + draft_tokens).div_ceil(M1_KV_PAGE_TOKENS);
         let leases = (existing_pages..required_pages)
-            .map(|page| draft_lease(physical_start + page, allocation_tag))
+            .map(|page| draft_lease(request, physical_start + page, allocation_tag))
             .collect();
         let aggregate = cache
             .reserve_speculative_draft_round_write(
@@ -1635,7 +1685,10 @@ mod tests {
             assert_eq!(bound.inputs().active_lengths()[0], 1);
             assert_eq!(
                 bound.kv_page_indices()[..2],
-                [physical_start, physical_start + 1]
+                [
+                    request.slot() * M1_KV_PAGE_TABLE_ENTRIES_PER_SEQUENCE_V1 + physical_start,
+                    request.slot() * M1_KV_PAGE_TABLE_ENTRIES_PER_SEQUENCE_V1 + physical_start + 1,
+                ]
             );
             assert!(bound.kv_page_indices()[2..].iter().all(|entry| *entry == 0));
             assert_eq!(
@@ -1656,10 +1709,8 @@ mod tests {
         let inputs = validated_inputs(draft_decode, &requests, epoch, &[1; 8], &[0; 8]);
         let mut caches = Vec::new();
         let mut reservations = Vec::new();
-        for (lane, request) in requests.iter().copied().enumerate() {
-            let physical_start = 200 + u32::try_from(lane).unwrap();
-            let (cache, aggregate) =
-                draft_round_reservation(target, request, 0, epoch, physical_start, 111);
+        for request in requests.iter().copied() {
+            let (cache, aggregate) = draft_round_reservation(target, request, 0, epoch, 200, 111);
             caches.push(cache);
             reservations.push(aggregate);
         }
@@ -1670,7 +1721,10 @@ mod tests {
         let row_entries = usize::try_from(M1_KV_PAGE_TABLE_ENTRIES_PER_SEQUENCE_V1).unwrap();
         for lane in 0..8 {
             let row = &bound.kv_page_indices()[lane * row_entries..(lane + 1) * row_entries];
-            assert_eq!(row[0], 200 + u32::try_from(lane).unwrap());
+            assert_eq!(
+                row[0],
+                u32::try_from(lane).unwrap() * M1_KV_PAGE_TABLE_ENTRIES_PER_SEQUENCE_V1 + 200
+            );
             assert!(row[1..].iter().all(|entry| *entry == 0));
         }
         assert_eq!(bound.reservations().reservations().len(), 8);
@@ -1902,16 +1956,8 @@ mod tests {
         let inputs = validated_inputs(selected, &requests, epoch, &[1; 3], &[0; 3]);
         let mut caches = Vec::new();
         let mut reservations = Vec::new();
-        for (lane, request) in requests.into_iter().enumerate() {
-            let (cache, pending) = pending_reservation(
-                selected,
-                request,
-                0,
-                1,
-                epoch,
-                30 + u32::try_from(lane).unwrap(),
-                72,
-            );
+        for request in requests {
+            let (cache, pending) = pending_reservation(selected, request, 0, 1, epoch, 30, 72);
             caches.push(cache);
             reservations.push(pending);
         }
@@ -1920,7 +1966,7 @@ mod tests {
         for lane in 0..3 {
             assert_eq!(
                 bound.kv_page_indices()[lane * width],
-                30 + u32::try_from(lane).unwrap()
+                u32::try_from(lane).unwrap() * M1_KV_PAGE_TABLE_ENTRIES_PER_SEQUENCE_V1 + 30
             );
             assert!(
                 bound.kv_page_indices()[lane * width + 1..(lane + 1) * width]
@@ -2068,7 +2114,7 @@ mod tests {
             1,
             1,
             identity(74),
-            PhysicalPageId::new(selected.role, M1_KV_PHYSICAL_PAGE_SLOTS_V1, 1),
+            PhysicalPageId::new(selected.role, M1_KV_PAGE_TABLE_ENTRIES_PER_SEQUENCE_V1, 1),
         );
         let failure = bind_m1_kv_workspace_table_v1(inputs, vec![pending]).unwrap_err();
         assert_eq!(
@@ -2076,7 +2122,7 @@ mod tests {
             M1KvWorkspaceTableBindingErrorV1::PhysicalPageOutOfRange {
                 lane: 0,
                 logical_page: 1,
-                page: M1_KV_PHYSICAL_PAGE_SLOTS_V1
+                page: M1_KV_PAGE_TABLE_ENTRIES_PER_SEQUENCE_V1
             }
         );
 
@@ -2116,7 +2162,7 @@ mod tests {
     }
 
     #[test]
-    fn allocation_drift_and_cross_lane_aliases_fail_closed() {
+    fn allocation_drift_fails_and_request_slots_partition_equal_local_pages() {
         let selected = selection(
             Qwen3ModelRole::Target8B,
             Qwen3ExecutionMode::Decode,
@@ -2143,18 +2189,62 @@ mod tests {
         let (_first_cache, first) = pending_reservation(selected, requests[0], 0, 1, epoch, 20, 75);
         let (_second_cache, second) =
             pending_reservation(selected, requests[1], 0, 1, epoch, 20, 75);
-        let failure = bind_m1_kv_workspace_table_v1(inputs, vec![first, second]).unwrap_err();
+        let bound = bind_m1_kv_workspace_table_v1(inputs, vec![first, second]).unwrap();
+        let width = usize::try_from(M1_KV_PAGE_TABLE_ENTRIES_PER_SEQUENCE_V1).unwrap();
+        assert_eq!(
+            [bound.kv_page_indices()[0], bound.kv_page_indices()[width]],
+            [20, M1_KV_PAGE_TABLE_ENTRIES_PER_SEQUENCE_V1 + 20]
+        );
+        assert_eq!(bound.reservations().reservations().len(), 2);
+    }
+
+    #[test]
+    fn duplicate_local_pages_within_one_request_fail_as_global_aliases() {
+        let selected = selection(
+            Qwen3ModelRole::Target8B,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        );
+        let request = RequestId::new(2, 3);
+        let epoch = CompletionEpoch::new(20);
+        let inputs = validated_inputs(selected, &[request], epoch, &[32], &[0]);
+        let (_cache, mut pending) = pending_reservation(selected, request, 0, 32, epoch, 10, 75);
+        pending.corrupt_workspace_bridge_page_for_test(
+            1,
+            1,
+            identity(75),
+            PhysicalPageId::new(selected.role, 10, 1),
+        );
+
+        let failure = bind_m1_kv_workspace_table_v1(inputs, vec![pending]).unwrap_err();
         assert_eq!(
             failure.error(),
             M1KvWorkspaceTableBindingErrorV1::PhysicalPageAlias {
                 first_lane: 0,
                 first_logical_page: 0,
-                lane: 1,
-                logical_page: 0,
-                page: 20
+                lane: 0,
+                logical_page: 1,
+                page: request.slot() * M1_KV_PAGE_TABLE_ENTRIES_PER_SEQUENCE_V1 + 10,
             }
         );
-        assert_eq!(failure.reservations().len(), 2);
+        assert_eq!(failure.reservations().len(), 1);
+    }
+
+    #[test]
+    fn global_kernel_page_index_checks_local_and_global_bounds() {
+        assert_eq!(global_kernel_page_index(RequestId::new(0, 1), 0), Some(0));
+        assert_eq!(
+            global_kernel_page_index(RequestId::new(31, 1), 511),
+            Some(M1_KV_PHYSICAL_PAGE_SLOTS_V1 - 1)
+        );
+        assert_eq!(
+            global_kernel_page_index(
+                RequestId::new(0, 1),
+                M1_KV_PAGE_TABLE_ENTRIES_PER_SEQUENCE_V1,
+            ),
+            None
+        );
+        assert_eq!(global_kernel_page_index(RequestId::new(32, 1), 0), None);
     }
 
     #[test]

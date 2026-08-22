@@ -12,23 +12,34 @@
 //! interval before returning the same single completion capability.
 //!
 //! The types below own no KFD allocation, GPU address, page contents, queue,
-//! packet, signal, or hardware observation. There are deliberately no
-//! production constructors for [`DeviceKvPageLease`] or
-//! [`InitializedDeviceKvWrite`]: the generated runner must source those from
-//! exact fe2o3 allocation and queue custody. Unit tests use scoped stand-ins.
-//! Quiescent caches retain page custody and expose no release or reuse
-//! operation. Step completion establishes initialized physical state only; it
-//! deliberately does not decide acceptance, rollback, scheduler completion, or
-//! resource release policy.
+//! packet, signal, or hardware observation. Production page leases are minted
+//! only by [`M1PartitionedModelMemoryKvPoolV1`], which consumes the exact model
+//! memory owner and retains the generic owner's sole target/draft KV plane
+//! partitions. There is deliberately no production constructor for
+//! [`InitializedDeviceKvWrite`]: the generated runner must source it from exact
+//! queue custody. Quiescent caches retain page custody and expose no release or
+//! reuse operation. Step completion establishes initialized physical state
+//! only; it deliberately does not decide acceptance, rollback, scheduler
+//! completion, or resource release policy.
 
-use crate::ExactCompletion;
+use crate::{BoundModelMemoryAllocationsV1, ExactCompletion, ModelMemoryAllocationBindingErrorV1};
+use core::fmt;
+use fe2o3_service_host::{
+    DeviceLocalAllocationV1, DeviceStateRoleV1, ServiceAllocationErrorV1,
+    ServiceAllocationSessionV1, ServiceAllocationSubleaseSetV1, ServiceDeviceDispatchRangeV1,
+};
+use ferric_build::{
+    KvCacheComponent, ModelMemoryAllocationKind, ModelMemoryPlanError, QWEN3_KV_ARENA_ALIGNMENT_V1,
+    QWEN3_KV_PAGE_BYTES_V1,
+};
 use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::{
     append_physical_page, cancel_physical_kv, commit_physical_kv, map_initialized_token,
     retire_cancelled_tail, rollback_physical_token, write_physical_token, Identity, LogicalKvState,
     PhysicalKvError, PhysicalKvLifecycle, PhysicalKvLocation, PhysicalKvState, PhysicalPageId,
     Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection, RequestId, Target,
-    M1_KV_PAGE_TABLE_ENTRIES, M1_KV_PAGE_TOKENS,
+    M1_KV_PAGE_TABLE_ENTRIES, M1_KV_PAGE_TOKENS, M1_KV_PHYSICAL_PAGE_SLOTS,
+    M1_MAX_ACTIVE_SEQUENCES,
 };
 use vstd::prelude::*;
 
@@ -171,15 +182,29 @@ impl From<PhysicalKvError> for DeviceKvCacheError {
 
 /// Linear custody of one page subrange in a contracted role-scoped arena.
 ///
-/// Fields and construction are crate-private. The future physical runner must
-/// split one fe2o3 arena authority into disjoint page subleases before using
-/// the integration constructor. Multiple page leases for one role retain the
-/// same arena allocation identity; this source-only token is not allocation or
-/// subrange evidence.
+/// Fields and construction are crate-private. The production pool retains the
+/// sole generic plane partitions and checks this page's disjoint fragments
+/// across every layer before construction. Multiple page leases for one role
+/// retain the same arena allocation identity, while request, local index, and
+/// generation select one unique global ledger slot.
+///
+/// ```compile_fail
+/// use ferric_engine::DeviceKvPageLease;
+/// use ferric_spec::{Identity, PhysicalPageId, Qwen3ModelRole, RequestId};
+/// fn forge() -> DeviceKvPageLease {
+///     DeviceKvPageLease {
+///         device: todo!(),
+///         allocation_id: Identity::new([1; 32]),
+///         request: RequestId::new(0, 1),
+///         page: PhysicalPageId::new(Qwen3ModelRole::Target8B, 0, 1),
+///     }
+/// }
+/// ```
 #[derive(Debug, PartialEq, Eq)]
 pub struct DeviceKvPageLease {
     device: Gfx942DeviceBinding,
     allocation_id: Identity,
+    request: RequestId,
     page: PhysicalPageId,
 }
 
@@ -190,6 +215,12 @@ impl DeviceKvPageLease {
         self.allocation_id
     }
 
+    /// Returns the exact generational request whose global arena slot is held.
+    #[must_use]
+    pub const fn request(&self) -> RequestId {
+        self.request
+    }
+
     /// Returns the exact role-scoped physical page generation.
     #[must_use]
     pub const fn page(&self) -> PhysicalPageId {
@@ -197,16 +228,699 @@ impl DeviceKvPageLease {
     }
 }
 
+const M1_TARGET_KV_PLANE_SUBLEASES_V1: usize = 72;
+const M1_DRAFT_KV_PLANE_SUBLEASES_V1: usize = 56;
+const M1_GLOBAL_KV_PAGE_SLOTS_V1: usize =
+    M1_MAX_ACTIVE_SEQUENCES as usize * M1_KV_PHYSICAL_PAGE_SLOTS;
+
+type TargetKvPlaneSubleasesV1 = ServiceAllocationSubleaseSetV1<
+    DeviceStateRoleV1,
+    DeviceLocalAllocationV1,
+    M1_TARGET_KV_PLANE_SUBLEASES_V1,
+>;
+type DraftKvPlaneSubleasesV1 = ServiceAllocationSubleaseSetV1<
+    DeviceStateRoleV1,
+    DeviceLocalAllocationV1,
+    M1_DRAFT_KV_PLANE_SUBLEASES_V1,
+>;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum M1KvPoolPageStateV1 {
+    Free { generation: u32 },
+    Leased { request: RequestId, generation: u32 },
+}
+
+impl M1KvPoolPageStateV1 {
+    const INITIAL: Self = Self::Free { generation: 1 };
+}
+
+/// Fail-closed model-memory KV partition or page-lease error.
+#[derive(Debug)]
+pub enum M1DeviceKvArenaLeaseErrorV1 {
+    /// The consumed model-memory owner no longer matches its exact plan.
+    ModelMemory(ModelMemoryAllocationBindingErrorV1),
+    /// One canonical KV plane or request page could not be resolved.
+    ModelPlan(ModelMemoryPlanError),
+    /// A role's complete plane partition drifted from canonical geometry.
+    PlaneGeometry { role: Qwen3ModelRole },
+    /// Host reservation for the bounded generation ledger failed.
+    HostLedgerAllocation { role: Qwen3ModelRole },
+    /// The generic allocation owner rejected a key, partition, or subrange.
+    Allocation {
+        role: Qwen3ModelRole,
+        source: ServiceAllocationErrorV1,
+    },
+    /// A zero or out-of-range generational request was supplied.
+    RequestOutOfRange,
+    /// The request-local physical page index exceeds the exact table bound.
+    PageOutOfRange,
+    /// The exact role/request/page slot is already leased.
+    PageAlreadyLeased,
+    /// The retained generation ledger disagreed with the resolved page.
+    GenerationLedgerDrift,
+}
+
+impl fmt::Display for M1DeviceKvArenaLeaseErrorV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(formatter, "M1 device KV arena lease rejected: {self:?}")
+    }
+}
+
+impl std::error::Error for M1DeviceKvArenaLeaseErrorV1 {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::ModelMemory(source) => Some(source),
+            Self::ModelPlan(source) => Some(source),
+            Self::Allocation { source, .. } => Some(source),
+            Self::PlaneGeometry { .. }
+            | Self::HostLedgerAllocation { .. }
+            | Self::RequestOutOfRange
+            | Self::PageOutOfRange
+            | Self::PageAlreadyLeased
+            | Self::GenerationLedgerDrift => None,
+        }
+    }
+}
+
+/// Opaque recovery after a model-memory KV partition attempt.
+///
+/// `TargetPartitioned` deliberately exposes no model-memory or sublease
+/// extraction API. A failure after the first generic partition cannot honestly
+/// roll that allocation back; retaining this value keeps the sole public
+/// partition witness paired with the consumed model owner for quarantine.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum M1DeviceKvArenaLeaseRecoveryPhaseV1 {
+    /// Neither role arena was partitioned.
+    Unpartitioned,
+    /// Target was partitioned before draft reservation failed.
+    TargetPartitioned,
+}
+
+/// Opaque quarantine custody after only the target arena was partitioned.
+///
+/// ```compile_fail
+/// use ferric_engine::M1TargetPartitionedKvQuarantineV1;
+/// fn bypass(quarantine: M1TargetPartitionedKvQuarantineV1) {
+///     let _model = quarantine.model_memory;
+///     let _allocations = quarantine.allocations;
+/// }
+/// ```
+#[must_use = "partial generic partition custody must remain quarantined"]
+#[derive(Debug)]
+pub struct M1TargetPartitionedKvQuarantineV1 {
+    model_memory: BoundModelMemoryAllocationsV1,
+    allocations: ServiceAllocationSessionV1,
+    target_planes: TargetKvPlaneSubleasesV1,
+}
+
+impl M1TargetPartitionedKvQuarantineV1 {
+    /// Returns the exact inert target-arena identity retained in quarantine.
+    #[must_use]
+    pub const fn target_allocation_id(&self) -> Identity {
+        self.model_memory.selected_allocation_identity(
+            Qwen3ModelRole::Target8B,
+            ModelMemoryAllocationKind::KvArena,
+        )
+    }
+
+    /// Returns the fixed target-plane witness cardinality.
+    #[must_use]
+    pub const fn target_plane_count(&self) -> usize {
+        self.target_planes.len()
+    }
+
+    /// Returns the redacted number of allocations retained by the session.
+    #[must_use]
+    pub fn retained_allocation_count(&self) -> usize {
+        self.allocations.allocation_count()
+    }
+}
+
+#[must_use = "failed model-memory and any completed partition remain retained"]
+#[derive(Debug)]
+pub enum M1DeviceKvArenaLeaseRecoveryV1 {
+    /// Neither role arena was partitioned; both exact inputs are recoverable.
+    Unpartitioned {
+        /// Exact unchanged model-memory owner.
+        model_memory: Box<BoundModelMemoryAllocationsV1>,
+        /// Exact unchanged generic allocation session.
+        allocations: Box<ServiceAllocationSessionV1>,
+    },
+    /// Target was partitioned; all custody is opaque and fail-closed.
+    TargetPartitioned(Box<M1TargetPartitionedKvQuarantineV1>),
+}
+
+impl M1DeviceKvArenaLeaseRecoveryV1 {
+    /// Returns the redacted retained partition phase without exposing owners.
+    #[must_use]
+    pub const fn phase(&self) -> M1DeviceKvArenaLeaseRecoveryPhaseV1 {
+        match self {
+            Self::Unpartitioned { .. } => M1DeviceKvArenaLeaseRecoveryPhaseV1::Unpartitioned,
+            Self::TargetPartitioned(_) => M1DeviceKvArenaLeaseRecoveryPhaseV1::TargetPartitioned,
+        }
+    }
+}
+
+/// Transactional partition rejection retaining every still-live owner.
+#[must_use = "the exact recovery custody must be consumed or quarantined"]
+#[derive(Debug)]
+pub struct M1DeviceKvArenaLeaseBindingFailureV1 {
+    error: M1DeviceKvArenaLeaseErrorV1,
+    recovery: Box<M1DeviceKvArenaLeaseRecoveryV1>,
+}
+
+impl M1DeviceKvArenaLeaseBindingFailureV1 {
+    /// Returns the fail-closed partition diagnostic.
+    #[must_use]
+    pub const fn error(&self) -> &M1DeviceKvArenaLeaseErrorV1 {
+        &self.error
+    }
+
+    /// Recovers the exact diagnostic and retained ownership state.
+    #[must_use = "the exact recovery custody remains retained"]
+    pub fn into_parts(self) -> (M1DeviceKvArenaLeaseErrorV1, M1DeviceKvArenaLeaseRecoveryV1) {
+        (self.error, *self.recovery)
+    }
+}
+
+/// Closed production owner for partitioned model memory and KV page leases.
+///
+/// This value consumes the non-clone model-memory owner and retains the sole
+/// generic target/draft KV plane partitions. It intentionally provides no
+/// model-memory borrow or extraction method: legacy unpartitioned KV ranges
+/// are invalid after this transition. The physical fixed-batch builder must
+/// learn to consume this owner before partitioned execution can be published.
+///
+/// Page leases are minted only after every layer's exact key/value page
+/// subrange is revalidated against the live generic allocation session. The
+/// internal ledger makes each global role/request/page slot one-shot until a
+/// future exact quiescent-release bridge advances its generation.
+///
+/// Ferric cannot instantiate a host-only fake [`ServiceAllocationSessionV1`]:
+/// its public constructors require a real checked KFD session and the pinned
+/// dependency exposes no test-support backend. Duplicate-partition rejection
+/// and denial of legacy ranges after partition are therefore exercised by the
+/// pinned `fe2o3-service-host` tests
+/// `sublease_registration_is_atomic_and_duplicate_consumption_is_rejected`
+/// and
+/// `partitioned_queue_admission_accepts_member_subranges_and_rejects_escape`.
+/// Ferric's compile-fail tests below additionally prove that safe callers
+/// cannot retain the consumed session/model owner or construct a second pool.
+///
+/// ```compile_fail
+/// use ferric_engine::M1PartitionedModelMemoryKvPoolV1;
+/// fn require_clone<T: Clone>() {}
+/// require_clone::<M1PartitionedModelMemoryKvPoolV1>();
+/// ```
+///
+/// ```compile_fail
+/// use ferric_engine::M1PartitionedModelMemoryKvPoolV1;
+/// fn bypass_legacy_ranges(pool: &M1PartitionedModelMemoryKvPoolV1) {
+///     let _ = &pool.model_memory;
+///     let _ = &pool.allocations;
+/// }
+/// ```
+#[must_use = "partition and page-generation custody must remain retained"]
+#[derive(Debug)]
+pub struct M1PartitionedModelMemoryKvPoolV1 {
+    device: Gfx942DeviceBinding,
+    model_memory: BoundModelMemoryAllocationsV1,
+    allocations: ServiceAllocationSessionV1,
+    target_planes: TargetKvPlaneSubleasesV1,
+    draft_planes: DraftKvPlaneSubleasesV1,
+    target_pages: Box<[M1KvPoolPageStateV1]>,
+    draft_pages: Box<[M1KvPoolPageStateV1]>,
+}
+
+impl M1PartitionedModelMemoryKvPoolV1 {
+    /// Returns the exact device declaration retained by the pool.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.device
+    }
+
+    /// Returns the exact inert arena identity retained for one model role.
+    #[must_use]
+    pub const fn allocation_id(&self, role: Qwen3ModelRole) -> Identity {
+        self.model_memory
+            .selected_allocation_identity(role, ModelMemoryAllocationKind::KvArena)
+    }
+
+    /// Resolves one complete KV plane through its unique generic sublease.
+    ///
+    /// This is the only partition-compatible replacement for the legacy
+    /// model-memory KV range resolver. It exposes no model-memory owner or
+    /// native address.
+    ///
+    /// # Errors
+    ///
+    /// Rejects an out-of-range layer, retained model drift, or generic owner,
+    /// allocation-generation, partition-member, mapping, or range drift.
+    pub fn kv_dispatch_range(
+        &self,
+        role: Qwen3ModelRole,
+        component: KvCacheComponent,
+        layer: u32,
+    ) -> Result<ServiceDeviceDispatchRangeV1, M1DeviceKvArenaLeaseErrorV1> {
+        self.model_memory
+            .revalidate_for_kv_partition()
+            .map_err(M1DeviceKvArenaLeaseErrorV1::ModelMemory)?;
+        let declared = self
+            .model_memory
+            .plan()
+            .kv_layer(role, component, layer)
+            .map_err(M1DeviceKvArenaLeaseErrorV1::ModelPlan)?;
+        if declared.allocation_id() != self.allocation_id(role) {
+            return Err(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role });
+        }
+        let member_index = plane_member_index(role, component, layer)?;
+        let range = match role {
+            Qwen3ModelRole::Target8B => self.allocations.sublease_range(
+                &self.target_planes,
+                member_index,
+                0,
+                declared.byte_len(),
+                QWEN3_KV_ARENA_ALIGNMENT_V1,
+            ),
+            Qwen3ModelRole::Draft06B => self.allocations.sublease_range(
+                &self.draft_planes,
+                member_index,
+                0,
+                declared.byte_len(),
+                QWEN3_KV_ARENA_ALIGNMENT_V1,
+            ),
+        }
+        .map_err(|source| M1DeviceKvArenaLeaseErrorV1::Allocation { role, source })?;
+        let dispatch = self
+            .allocations
+            .device_dispatch_range(range)
+            .map_err(|source| M1DeviceKvArenaLeaseErrorV1::Allocation { role, source })?;
+        if dispatch.offset_bytes() != declared.offset()
+            || dispatch.extent_bytes() != declared.byte_len()
+        {
+            return Err(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role });
+        }
+        Ok(dispatch)
+    }
+
+    /// Mints one unique request-local page lease from exact partition custody.
+    ///
+    /// The generation is sourced only from the pool's private ledger. All
+    /// key/value fragments across every role layer are checked before the slot
+    /// changes from free to leased, so every rejection is transactional.
+    ///
+    /// # Errors
+    ///
+    /// Rejects stale requests, out-of-range or duplicate pages, model/geometry
+    /// drift, and every generic owner or sublease mismatch without changing the
+    /// page-generation ledger.
+    pub fn lease_page(
+        &mut self,
+        request: RequestId,
+        role: Qwen3ModelRole,
+        physical_index: u32,
+    ) -> Result<DeviceKvPageLease, M1DeviceKvArenaLeaseErrorV1> {
+        let global_index = global_page_index(request, physical_index)?;
+        let state = *self
+            .page_ledger(role)
+            .get(global_index)
+            .ok_or(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange)?;
+        let generation = free_page_generation(state)?;
+
+        self.model_memory
+            .revalidate_for_kv_partition()
+            .map_err(M1DeviceKvArenaLeaseErrorV1::ModelMemory)?;
+        let page = PhysicalPageId::new(role, physical_index, generation);
+        self.validate_page_fragments(request, page, global_index)?;
+
+        self.page_ledger_mut(role)[global_index] = M1KvPoolPageStateV1::Leased {
+            request,
+            generation,
+        };
+        Ok(DeviceKvPageLease {
+            device: self.device,
+            allocation_id: self.allocation_id(role),
+            request,
+            page,
+        })
+    }
+
+    fn page_ledger(&self, role: Qwen3ModelRole) -> &[M1KvPoolPageStateV1] {
+        match role {
+            Qwen3ModelRole::Target8B => &self.target_pages,
+            Qwen3ModelRole::Draft06B => &self.draft_pages,
+        }
+    }
+
+    fn page_ledger_mut(&mut self, role: Qwen3ModelRole) -> &mut [M1KvPoolPageStateV1] {
+        match role {
+            Qwen3ModelRole::Target8B => &mut self.target_pages,
+            Qwen3ModelRole::Draft06B => &mut self.draft_pages,
+        }
+    }
+
+    fn validate_page_fragments(
+        &self,
+        request: RequestId,
+        page: PhysicalPageId,
+        expected_global_index: usize,
+    ) -> Result<(), M1DeviceKvArenaLeaseErrorV1> {
+        let role = page.role();
+        for layer in 0..role.layers() {
+            for component in [KvCacheComponent::Key, KvCacheComponent::Value] {
+                let binding = self
+                    .model_memory
+                    .plan()
+                    .kv_request_page(request, page, component, layer)
+                    .map_err(M1DeviceKvArenaLeaseErrorV1::ModelPlan)?;
+                if usize::try_from(binding.global_page()) != Ok(expected_global_index)
+                    || binding.range().allocation_id() != self.allocation_id(role)
+                    || binding.range().byte_len() != QWEN3_KV_PAGE_BYTES_V1
+                {
+                    return Err(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role });
+                }
+                let member_index = plane_member_index(role, component, layer)?;
+                let relative_offset = u64::from(binding.global_page())
+                    .checked_mul(QWEN3_KV_PAGE_BYTES_V1)
+                    .ok_or(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role })?;
+                let range = match role {
+                    Qwen3ModelRole::Target8B => self.allocations.sublease_range(
+                        &self.target_planes,
+                        member_index,
+                        relative_offset,
+                        QWEN3_KV_PAGE_BYTES_V1,
+                        QWEN3_KV_ARENA_ALIGNMENT_V1,
+                    ),
+                    Qwen3ModelRole::Draft06B => self.allocations.sublease_range(
+                        &self.draft_planes,
+                        member_index,
+                        relative_offset,
+                        QWEN3_KV_PAGE_BYTES_V1,
+                        QWEN3_KV_ARENA_ALIGNMENT_V1,
+                    ),
+                }
+                .map_err(|source| M1DeviceKvArenaLeaseErrorV1::Allocation { role, source })?;
+                let dispatch = self
+                    .allocations
+                    .device_dispatch_range(range)
+                    .map_err(|source| M1DeviceKvArenaLeaseErrorV1::Allocation { role, source })?;
+                if dispatch.offset_bytes() != binding.range().offset()
+                    || dispatch.extent_bytes() != QWEN3_KV_PAGE_BYTES_V1
+                {
+                    return Err(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role });
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
+/// Consumes exact model memory into sole generic KV plane partitions.
+///
+/// Both bounded page-generation ledgers and all host-only geometry are
+/// prepared before the first generic owner mutation. The target partition is
+/// then reserved before draft. If the second atomic reservation fails, the
+/// failure retains the completed target witness and consumed model-memory
+/// owner in an opaque quarantine state; no rollback is claimed.
+///
+/// # Errors
+///
+/// Returns [`M1DeviceKvArenaLeaseBindingFailureV1`] for model, geometry, host
+/// allocation, generic owner, mapped-state, existing-partition, or sublease
+/// reservation failure.
+///
+/// The service session and model-memory owner are both linear inputs. A safe
+/// caller cannot create a second pool or retain a legacy range path:
+///
+/// ```compile_fail
+/// use fe2o3_service_host::ServiceAllocationSessionV1;
+/// use ferric_engine::{
+///     bind_m1_partitioned_model_memory_kv_pool_v1, BoundModelMemoryAllocationsV1,
+///     Gfx942DeviceBinding,
+/// };
+/// fn partition_twice(
+///     allocations: ServiceAllocationSessionV1,
+///     model: BoundModelMemoryAllocationsV1,
+///     device: Gfx942DeviceBinding,
+/// ) {
+///     let _first = bind_m1_partitioned_model_memory_kv_pool_v1(allocations, model, device);
+///     let _second = bind_m1_partitioned_model_memory_kv_pool_v1(allocations, model, device);
+/// }
+/// ```
+pub fn bind_m1_partitioned_model_memory_kv_pool_v1(
+    mut allocations: ServiceAllocationSessionV1,
+    model_memory: BoundModelMemoryAllocationsV1,
+    device: Gfx942DeviceBinding,
+) -> Result<M1PartitionedModelMemoryKvPoolV1, M1DeviceKvArenaLeaseBindingFailureV1> {
+    if let Err(source) = model_memory.revalidate_for_kv_partition() {
+        return Err(unpartitioned_kv_pool_failure(
+            M1DeviceKvArenaLeaseErrorV1::ModelMemory(source),
+            model_memory,
+            allocations,
+        ));
+    }
+    let target_layout = match kv_plane_partition_layout::<M1_TARGET_KV_PLANE_SUBLEASES_V1>(
+        &model_memory,
+        Qwen3ModelRole::Target8B,
+    ) {
+        Ok(layout) => layout,
+        Err(error) => {
+            return Err(unpartitioned_kv_pool_failure(
+                error,
+                model_memory,
+                allocations,
+            ));
+        }
+    };
+    let draft_layout = match kv_plane_partition_layout::<M1_DRAFT_KV_PLANE_SUBLEASES_V1>(
+        &model_memory,
+        Qwen3ModelRole::Draft06B,
+    ) {
+        Ok(layout) => layout,
+        Err(error) => {
+            return Err(unpartitioned_kv_pool_failure(
+                error,
+                model_memory,
+                allocations,
+            ));
+        }
+    };
+    let target_pages = match new_page_ledger(Qwen3ModelRole::Target8B) {
+        Ok(ledger) => ledger,
+        Err(error) => {
+            return Err(unpartitioned_kv_pool_failure(
+                error,
+                model_memory,
+                allocations,
+            ));
+        }
+    };
+    let draft_pages = match new_page_ledger(Qwen3ModelRole::Draft06B) {
+        Ok(ledger) => ledger,
+        Err(error) => {
+            return Err(unpartitioned_kv_pool_failure(
+                error,
+                model_memory,
+                allocations,
+            ));
+        }
+    };
+
+    for role in [Qwen3ModelRole::Target8B, Qwen3ModelRole::Draft06B] {
+        let key = model_memory.kv_allocation_key(role);
+        if let Err(source) =
+            allocations.range(key, 0, key.extent_bytes(), QWEN3_KV_ARENA_ALIGNMENT_V1)
+        {
+            return Err(unpartitioned_kv_pool_failure(
+                M1DeviceKvArenaLeaseErrorV1::Allocation { role, source },
+                model_memory,
+                allocations,
+            ));
+        }
+    }
+
+    let target_planes = match allocations.reserve_disjoint_subleases(
+        model_memory.kv_allocation_key(Qwen3ModelRole::Target8B),
+        target_layout,
+    ) {
+        Ok(subleases) => subleases,
+        Err(source) => {
+            return Err(unpartitioned_kv_pool_failure(
+                M1DeviceKvArenaLeaseErrorV1::Allocation {
+                    role: Qwen3ModelRole::Target8B,
+                    source,
+                },
+                model_memory,
+                allocations,
+            ));
+        }
+    };
+    let draft_planes = match allocations.reserve_disjoint_subleases(
+        model_memory.kv_allocation_key(Qwen3ModelRole::Draft06B),
+        draft_layout,
+    ) {
+        Ok(subleases) => subleases,
+        Err(source) => {
+            return Err(M1DeviceKvArenaLeaseBindingFailureV1 {
+                error: M1DeviceKvArenaLeaseErrorV1::Allocation {
+                    role: Qwen3ModelRole::Draft06B,
+                    source,
+                },
+                recovery: Box::new(M1DeviceKvArenaLeaseRecoveryV1::TargetPartitioned(Box::new(
+                    M1TargetPartitionedKvQuarantineV1 {
+                        model_memory,
+                        allocations,
+                        target_planes,
+                    },
+                ))),
+            });
+        }
+    };
+
+    Ok(M1PartitionedModelMemoryKvPoolV1 {
+        device,
+        model_memory,
+        allocations,
+        target_planes,
+        draft_planes,
+        target_pages,
+        draft_pages,
+    })
+}
+
+fn unpartitioned_kv_pool_failure(
+    error: M1DeviceKvArenaLeaseErrorV1,
+    model_memory: BoundModelMemoryAllocationsV1,
+    allocations: ServiceAllocationSessionV1,
+) -> M1DeviceKvArenaLeaseBindingFailureV1 {
+    M1DeviceKvArenaLeaseBindingFailureV1 {
+        error,
+        recovery: Box::new(M1DeviceKvArenaLeaseRecoveryV1::Unpartitioned {
+            model_memory: Box::new(model_memory),
+            allocations: Box::new(allocations),
+        }),
+    }
+}
+
+fn new_page_ledger(
+    role: Qwen3ModelRole,
+) -> Result<Box<[M1KvPoolPageStateV1]>, M1DeviceKvArenaLeaseErrorV1> {
+    let mut slots = Vec::new();
+    slots
+        .try_reserve_exact(M1_GLOBAL_KV_PAGE_SLOTS_V1)
+        .map_err(|_| M1DeviceKvArenaLeaseErrorV1::HostLedgerAllocation { role })?;
+    slots.resize(M1_GLOBAL_KV_PAGE_SLOTS_V1, M1KvPoolPageStateV1::INITIAL);
+    Ok(slots.into_boxed_slice())
+}
+
+fn free_page_generation(state: M1KvPoolPageStateV1) -> Result<u32, M1DeviceKvArenaLeaseErrorV1> {
+    let M1KvPoolPageStateV1::Free { generation } = state else {
+        return Err(M1DeviceKvArenaLeaseErrorV1::PageAlreadyLeased);
+    };
+    if generation == 0 {
+        return Err(M1DeviceKvArenaLeaseErrorV1::GenerationLedgerDrift);
+    }
+    Ok(generation)
+}
+
+fn kv_plane_partition_layout<const N: usize>(
+    model_memory: &BoundModelMemoryAllocationsV1,
+    role: Qwen3ModelRole,
+) -> Result<[(u64, u64, u64); N], M1DeviceKvArenaLeaseErrorV1> {
+    if N != role.layers() as usize * 2 {
+        return Err(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role });
+    }
+    let expected_plane_bytes = u64::try_from(M1_GLOBAL_KV_PAGE_SLOTS_V1)
+        .ok()
+        .and_then(|slots| slots.checked_mul(QWEN3_KV_PAGE_BYTES_V1))
+        .ok_or(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role })?;
+    let allocation_id =
+        model_memory.selected_allocation_identity(role, ModelMemoryAllocationKind::KvArena);
+    let mut members = [(0, 0, 0); N];
+    let mut member_index = 0usize;
+    for layer in 0..role.layers() {
+        for component in [KvCacheComponent::Key, KvCacheComponent::Value] {
+            let range = model_memory
+                .plan()
+                .kv_layer(role, component, layer)
+                .map_err(M1DeviceKvArenaLeaseErrorV1::ModelPlan)?;
+            let expected_offset = u64::try_from(member_index)
+                .ok()
+                .and_then(|index| index.checked_mul(expected_plane_bytes))
+                .ok_or(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role })?;
+            if range.allocation_id() != allocation_id
+                || range.offset() != expected_offset
+                || range.byte_len() != expected_plane_bytes
+            {
+                return Err(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role });
+            }
+            members[member_index] = (
+                range.offset(),
+                range.byte_len(),
+                QWEN3_KV_ARENA_ALIGNMENT_V1,
+            );
+            member_index += 1;
+        }
+    }
+    if member_index != N {
+        return Err(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role });
+    }
+    Ok(members)
+}
+
+fn plane_member_index(
+    role: Qwen3ModelRole,
+    component: KvCacheComponent,
+    layer: u32,
+) -> Result<usize, M1DeviceKvArenaLeaseErrorV1> {
+    if layer >= role.layers() {
+        return Err(M1DeviceKvArenaLeaseErrorV1::ModelPlan(
+            ModelMemoryPlanError::LayerOutOfRange { role, layer },
+        ));
+    }
+    let component_index = match component {
+        KvCacheComponent::Key => 0usize,
+        KvCacheComponent::Value => 1usize,
+    };
+    usize::try_from(layer)
+        .ok()
+        .and_then(|layer| layer.checked_mul(2))
+        .and_then(|base| base.checked_add(component_index))
+        .ok_or(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role })
+}
+
+fn global_page_index(
+    request: RequestId,
+    physical_index: u32,
+) -> Result<usize, M1DeviceKvArenaLeaseErrorV1> {
+    if request.generation() == 0 || request.slot() >= M1_MAX_ACTIVE_SEQUENCES {
+        return Err(M1DeviceKvArenaLeaseErrorV1::RequestOutOfRange);
+    }
+    let local_index =
+        usize::try_from(physical_index).map_err(|_| M1DeviceKvArenaLeaseErrorV1::PageOutOfRange)?;
+    if local_index >= M1_KV_PHYSICAL_PAGE_SLOTS {
+        return Err(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange);
+    }
+    usize::try_from(request.slot())
+        .ok()
+        .and_then(|slot| slot.checked_mul(M1_KV_PHYSICAL_PAGE_SLOTS))
+        .and_then(|base| base.checked_add(local_index))
+        .filter(|index| *index < M1_GLOBAL_KV_PAGE_SLOTS_V1)
+        .ok_or(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange)
+}
+
 #[cfg(test)]
 impl DeviceKvPageLease {
     pub(crate) fn from_contracted_workspace_bridge_test_allocation(
         device: Gfx942DeviceBinding,
         allocation_id: Identity,
+        request: RequestId,
         page: PhysicalPageId,
     ) -> Self {
         Self {
             device,
             allocation_id,
+            request,
             page,
         }
     }
@@ -1083,7 +1797,7 @@ impl ActiveDeviceKvCache {
         request: RequestId,
         lease: DeviceKvPageLease,
     ) -> Result<(), DeviceKvAppendFailure> {
-        let error = if self.common.request != request {
+        let error = if self.common.request != request || lease.request != request {
             Some(DeviceKvCacheError::WrongRequest)
         } else if self.common.device != lease.device {
             Some(DeviceKvCacheError::WrongDevice)
@@ -1306,6 +2020,9 @@ impl ActiveDeviceKvCache {
                 .map(DeviceKvPageLease::allocation_id)
         });
         for (position, lease) in new_page_leases.iter().enumerate() {
+            if lease.request != request {
+                return reject(DeviceKvCacheError::WrongRequest, new_page_leases);
+            }
             if lease.device != device {
                 return reject(DeviceKvCacheError::WrongDevice, new_page_leases);
             }
@@ -1634,6 +2351,9 @@ impl ActiveDeviceKvCache {
                 || !identity.allocation_id.equals(&expected_lease.allocation_id)
             {
                 return Err(DeviceKvCacheError::StepPageTableDrift);
+            }
+            if expected_lease.request != binding.request {
+                return Err(DeviceKvCacheError::WrongRequest);
             }
             if expected_lease.device != binding.device {
                 return Err(DeviceKvCacheError::WrongDevice);
@@ -2392,12 +3112,14 @@ impl QuiescentDeviceKvCache {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ferric_build::qwen3_kv_arena_bytes;
     use ferric_spec::{Qwen3ExecutionMode, Qwen3PlanBucket, M1_KV_PHYSICAL_PAGE_SLOTS};
 
     impl DeviceKvPageLease {
         fn from_contracted_gfx942_allocation(
             device: Gfx942DeviceBinding,
             allocation_id: Identity,
+            request: RequestId,
             page: PhysicalPageId,
         ) -> Result<Self, DeviceKvCacheError> {
             if !allocation_id.is_present() {
@@ -2416,6 +3138,7 @@ mod tests {
             Ok(Self {
                 device,
                 allocation_id,
+                request,
                 page,
             })
         }
@@ -2450,6 +3173,67 @@ mod tests {
 
     const fn request() -> RequestId {
         RequestId::new(3, 7)
+    }
+
+    #[test]
+    fn partition_geometry_covers_both_exact_role_arenas_without_gaps() {
+        assert_eq!(
+            M1_TARGET_KV_PLANE_SUBLEASES_V1,
+            Qwen3ModelRole::Target8B.layers() as usize * 2
+        );
+        assert_eq!(
+            M1_DRAFT_KV_PLANE_SUBLEASES_V1,
+            Qwen3ModelRole::Draft06B.layers() as usize * 2
+        );
+        let plane_bytes =
+            u64::try_from(M1_GLOBAL_KV_PAGE_SLOTS_V1).unwrap() * QWEN3_KV_PAGE_BYTES_V1;
+        for role in [Qwen3ModelRole::Target8B, Qwen3ModelRole::Draft06B] {
+            assert_eq!(
+                plane_bytes * u64::from(role.layers()) * 2,
+                qwen3_kv_arena_bytes(role)
+            );
+            assert!(plane_bytes.is_multiple_of(QWEN3_KV_ARENA_ALIGNMENT_V1));
+        }
+    }
+
+    #[test]
+    fn global_page_slots_are_request_partitioned_and_fail_closed() {
+        assert_eq!(global_page_index(RequestId::new(0, 1), 0).unwrap(), 0);
+        assert_eq!(
+            global_page_index(RequestId::new(M1_MAX_ACTIVE_SEQUENCES - 1, 9), 511).unwrap(),
+            M1_GLOBAL_KV_PAGE_SLOTS_V1 - 1
+        );
+        assert!(matches!(
+            global_page_index(RequestId::new(0, 0), 0),
+            Err(M1DeviceKvArenaLeaseErrorV1::RequestOutOfRange)
+        ));
+        assert!(matches!(
+            global_page_index(RequestId::new(M1_MAX_ACTIVE_SEQUENCES, 1), 0),
+            Err(M1DeviceKvArenaLeaseErrorV1::RequestOutOfRange)
+        ));
+        assert!(matches!(
+            global_page_index(RequestId::new(0, 1), 512),
+            Err(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange)
+        ));
+    }
+
+    #[test]
+    fn page_generation_ledger_rejects_zero_and_duplicate_custody() {
+        assert_eq!(
+            free_page_generation(M1KvPoolPageStateV1::INITIAL).unwrap(),
+            1
+        );
+        assert!(matches!(
+            free_page_generation(M1KvPoolPageStateV1::Free { generation: 0 }),
+            Err(M1DeviceKvArenaLeaseErrorV1::GenerationLedgerDrift)
+        ));
+        assert!(matches!(
+            free_page_generation(M1KvPoolPageStateV1::Leased {
+                request: RequestId::new(0, 1),
+                generation: 1,
+            }),
+            Err(M1DeviceKvArenaLeaseErrorV1::PageAlreadyLeased)
+        ));
     }
 
     const fn selection(role: Qwen3ModelRole) -> Qwen3PlanSelection {
@@ -2496,6 +3280,7 @@ mod tests {
         DeviceKvPageLease::from_contracted_gfx942_allocation(
             device(),
             identity(allocation_tag),
+            request(),
             PhysicalPageId::new(role, index, 1),
         )
         .unwrap()
@@ -3443,6 +4228,7 @@ mod tests {
         let wrong_device = DeviceKvPageLease::from_contracted_gfx942_allocation(
             other_device,
             identity(30),
+            request(),
             PhysicalPageId::new(Qwen3ModelRole::Target8B, 0, 1),
         )
         .unwrap();
@@ -3454,6 +4240,7 @@ mod tests {
         let stale = DeviceKvPageLease::from_contracted_gfx942_allocation(
             device(),
             identity(31),
+            request(),
             PhysicalPageId::new(Qwen3ModelRole::Target8B, 0, 2),
         )
         .unwrap();
@@ -3464,6 +4251,24 @@ mod tests {
         );
         assert_eq!(cache.projection().target_active_pages, 0);
         assert_eq!(cache.projection().target.resident_tokens, 0);
+    }
+
+    #[test]
+    fn request_bound_page_lease_cannot_cross_request_generations() {
+        let mut cache = cache();
+        let other_request = RequestId::new(request().slot(), request().generation() + 1);
+        let lease = DeviceKvPageLease::from_contracted_gfx942_allocation(
+            device(),
+            identity(32),
+            other_request,
+            PhysicalPageId::new(Qwen3ModelRole::Target8B, 0, 1),
+        )
+        .unwrap();
+        let failure = cache.append_page(request(), lease).unwrap_err();
+        assert_eq!(failure.error(), DeviceKvCacheError::WrongRequest);
+        let (_, recovered) = failure.into_parts();
+        assert_eq!(recovered.request(), other_request);
+        assert_eq!(cache.projection().target_active_pages, 0);
     }
 
     #[test]
