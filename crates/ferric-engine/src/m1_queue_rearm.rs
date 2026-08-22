@@ -9,9 +9,9 @@
 //! complete serving registry, and makes no hardware, numerical, or performance
 //! claim. A qualification capture attached to target decode remains physically
 //! bound and is overwritten by every admitted generation; Ferric observes it
-//! only after the caller selects the terminal generation. This module does not
-//! yet provide the distinct prompt-commit semantic needed to teacher-force
-//! intermediate context tokens without treating model argmax as emitted output.
+//! only after the caller selects the terminal generation. Completion custody
+//! retains Engine logical acceptance independently from external publication,
+//! including qualification prompt commits with logical one and external zero.
 
 use core::fmt;
 
@@ -93,7 +93,8 @@ pub enum M1LongLivedQueueRearmSchedulePhaseV1 {
 struct ReleasedStepResidueV1 {
     checked: crate::M1CheckedCompletionOutputV1,
     members: Vec<M1ReleasedDeviceKvMemberV1>,
-    emitted_counts: Box<[u32]>,
+    logical_accepted_counts: Box<[u32]>,
+    externally_published_counts: Box<[u32]>,
     release_counts: Box<[M1CompletedKvPageReleaseCountsV1]>,
     completed_members: usize,
     total_released: usize,
@@ -316,6 +317,22 @@ impl M1LongLivedQueueRearmTeardownSuccessV1 {
             None => None,
         }
     }
+
+    /// Prior-round Engine logical acceptance when teardown followed a rearm.
+    #[must_use]
+    pub fn prior_logical_accepted_counts(&self) -> Option<&[u32]> {
+        self.history
+            .as_ref()
+            .map(|history| history.counts.logical_accepted_counts.as_ref())
+    }
+
+    /// Prior-round externally published counts when teardown followed a rearm.
+    #[must_use]
+    pub fn prior_externally_published_counts(&self) -> Option<&[u32]> {
+        self.history
+            .as_ref()
+            .map(|history| history.counts.externally_published_counts.as_ref())
+    }
 }
 
 /// Terminal queue-release failure retaining current and historical custody.
@@ -351,6 +368,22 @@ impl M1LongLivedQueueRearmTeardownFailureV1 {
             None => None,
         }
     }
+
+    /// Prior-round Engine logical acceptance retained on teardown failure.
+    #[must_use]
+    pub fn prior_logical_accepted_counts(&self) -> Option<&[u32]> {
+        self.history
+            .as_ref()
+            .map(|history| history.counts.logical_accepted_counts.as_ref())
+    }
+
+    /// Prior-round external publication retained on teardown failure.
+    #[must_use]
+    pub fn prior_externally_published_counts(&self) -> Option<&[u32]> {
+        self.history
+            .as_ref()
+            .map(|history| history.counts.externally_published_counts.as_ref())
+    }
 }
 
 /// One detached same-queue owner paired with exactly one next scheduler batch.
@@ -376,7 +409,8 @@ pub struct M1ScheduledLongLivedQueueRearmV1 {
     parked: Vec<ActiveDeviceKvCache>,
     terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
     prior_checked: crate::M1CheckedCompletionOutputV1,
-    emitted_counts: Box<[u32]>,
+    logical_accepted_counts: Box<[u32]>,
+    externally_published_counts: Box<[u32]>,
     release_counts: Box<[M1CompletedKvPageReleaseCountsV1]>,
     completed_members: usize,
     total_released: usize,
@@ -400,6 +434,16 @@ impl M1ScheduledLongLivedQueueRearmV1 {
     #[must_use]
     pub const fn terminal_count(&self) -> usize {
         self.terminal.len()
+    }
+
+    #[must_use]
+    pub fn prior_logical_accepted_counts(&self) -> &[u32] {
+        &self.logical_accepted_counts
+    }
+
+    #[must_use]
+    pub fn prior_externally_published_counts(&self) -> &[u32] {
+        &self.externally_published_counts
     }
 
     /// Returns immutable selected-cache projections in scheduler order.
@@ -600,7 +644,8 @@ fn schedule_m1_long_lived_queue_rearm_inner_v1<const C: usize>(
         queue,
         checked,
         mut members,
-        emitted_counts,
+        logical_accepted_counts,
+        externally_published_counts,
         release_counts,
         completed_members,
         total_released,
@@ -618,7 +663,8 @@ fn schedule_m1_long_lived_queue_rearm_inner_v1<const C: usize>(
     let residue = ReleasedStepResidueV1 {
         checked,
         members,
-        emitted_counts,
+        logical_accepted_counts,
+        externally_published_counts,
         release_counts,
         completed_members,
         total_released,
@@ -807,7 +853,8 @@ fn schedule_m1_long_lived_queue_rearm_inner_v1<const C: usize>(
         parked,
         terminal,
         prior_checked: residue.checked,
-        emitted_counts: residue.emitted_counts,
+        logical_accepted_counts: residue.logical_accepted_counts,
+        externally_published_counts: residue.externally_published_counts,
         release_counts: residue.release_counts,
         completed_members: residue.completed_members,
         total_released: residue.total_released,
@@ -821,7 +868,8 @@ struct ScheduledRemainderV1 {
     parked: Vec<ActiveDeviceKvCache>,
     terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
     prior_checked: crate::M1CheckedCompletionOutputV1,
-    emitted_counts: Box<[u32]>,
+    logical_accepted_counts: Box<[u32]>,
+    externally_published_counts: Box<[u32]>,
     release_counts: Box<[M1CompletedKvPageReleaseCountsV1]>,
     completed_members: usize,
     total_released: usize,
@@ -1300,7 +1348,8 @@ fn prepare_m1_long_lived_queue_rearm_inner_v1(
         parked,
         terminal,
         prior_checked,
-        emitted_counts,
+        logical_accepted_counts,
+        externally_published_counts,
         release_counts,
         completed_members,
         total_released,
@@ -1311,7 +1360,8 @@ fn prepare_m1_long_lived_queue_rearm_inner_v1(
         parked,
         terminal,
         prior_checked,
-        emitted_counts,
+        logical_accepted_counts,
+        externally_published_counts,
         release_counts,
         completed_members,
         total_released,
@@ -1667,7 +1717,8 @@ struct M1RearmContinuationCustodyV1 {
     terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
     previous_epoch: CompletionEpoch,
     prior_checked: crate::M1CheckedCompletionOutputV1,
-    emitted_counts: Box<[u32]>,
+    logical_accepted_counts: Box<[u32]>,
+    externally_published_counts: Box<[u32]>,
     release_counts: Box<[M1CompletedKvPageReleaseCountsV1]>,
     completed_members: usize,
     total_released: usize,
@@ -1740,8 +1791,13 @@ impl M1RearmedPublishedQueueV1 {
     }
 
     #[must_use]
-    pub fn prior_emitted_counts(&self) -> &[u32] {
-        &self.carry.emitted_counts
+    pub fn prior_logical_accepted_counts(&self) -> &[u32] {
+        &self.carry.logical_accepted_counts
+    }
+
+    #[must_use]
+    pub fn prior_externally_published_counts(&self) -> &[u32] {
+        &self.carry.externally_published_counts
     }
 
     #[must_use]
@@ -1904,10 +1960,12 @@ impl M1RearmedRecycledQueueV1 {
     /// terminal qualification generation. The same attached qualification
     /// buffer is physically overwritten by every admitted target-decode
     /// generation; this method merely defers its host observation until the
-    /// terminal one. Intermediate prompt priming cannot generally use
-    /// [`Self::read_and_check_completion`]: that path validates an emitted
-    /// `DirectFinalRow` argmax, while teacher forcing requires a separate typed
-    /// prompt-commit semantic that is not implemented by this slice.
+    /// terminal one. Intermediate prompt priming uses
+    /// [`Self::read_and_check_completion`] with the typed qualification
+    /// prompt-commit expectation: K7's compact choice is structurally checked,
+    /// logically accepted, and suppressed from external publication. This path
+    /// is reserved for the terminal qualification expectation and full-logits
+    /// observation.
     /// Observation failure retains both the lower phase-local queue custody and
     /// every selected or parked cache.
     ///
@@ -3246,6 +3304,13 @@ impl M1RearmedCompletionPreflightFailureV1 {
 }
 
 /// Existing physical completion outcome plus custody parked across the round.
+#[derive(Debug)]
+struct M1PriorRearmRoundCountHistoryV1 {
+    logical_accepted_counts: Box<[u32]>,
+    externally_published_counts: Box<[u32]>,
+}
+
+/// Existing physical completion outcome plus custody parked across the round.
 #[must_use = "completion outcome and parked rearm custody must remain retained"]
 #[derive(Debug)]
 pub struct M1RearmedCompletionOutcomeV1 {
@@ -3253,7 +3318,7 @@ pub struct M1RearmedCompletionOutcomeV1 {
     parked: Vec<ActiveDeviceKvCache>,
     terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
     prior_checked: crate::M1CheckedCompletionOutputV1,
-    prior_emitted_counts: Box<[u32]>,
+    prior_counts: M1PriorRearmRoundCountHistoryV1,
     prior_release_counts: Box<[M1CompletedKvPageReleaseCountsV1]>,
     prior_completed_members: usize,
     prior_total_released: usize,
@@ -3301,8 +3366,13 @@ impl M1RearmedCompletionOutcomeV1 {
     }
 
     #[must_use]
-    pub fn prior_emitted_counts(&self) -> &[u32] {
-        &self.prior_emitted_counts
+    pub fn prior_logical_accepted_counts(&self) -> &[u32] {
+        &self.prior_counts.logical_accepted_counts
+    }
+
+    #[must_use]
+    pub fn prior_externally_published_counts(&self) -> &[u32] {
+        &self.prior_counts.externally_published_counts
     }
 
     #[must_use]
@@ -3323,7 +3393,7 @@ impl M1RearmedCompletionOutcomeV1 {
             parked,
             terminal,
             prior_checked,
-            prior_emitted_counts,
+            prior_counts,
             prior_release_counts,
             prior_completed_members,
             prior_total_released,
@@ -3336,7 +3406,7 @@ impl M1RearmedCompletionOutcomeV1 {
                 parked,
                 terminal,
                 prior_checked,
-                prior_emitted_counts,
+                prior_counts,
                 prior_release_counts,
                 prior_completed_members,
                 prior_total_released,
@@ -3350,7 +3420,7 @@ impl M1RearmedCompletionOutcomeV1 {
             parked,
             terminal,
             prior_checked,
-            prior_emitted_counts,
+            prior_counts,
             prior_release_counts,
             prior_completed_members,
             prior_total_released,
@@ -3368,7 +3438,7 @@ impl M1RearmedCompletionOutcomeV1 {
             parked,
             terminal,
             prior_checked,
-            prior_emitted_counts,
+            prior_counts,
             prior_release_counts,
             prior_completed_members,
             prior_total_released,
@@ -3381,7 +3451,7 @@ impl M1RearmedCompletionOutcomeV1 {
                 parked,
                 terminal,
                 prior_checked,
-                prior_emitted_counts,
+                prior_counts,
                 prior_release_counts,
                 prior_completed_members,
                 prior_total_released,
@@ -3393,7 +3463,7 @@ impl M1RearmedCompletionOutcomeV1 {
             completed,
             M1PriorRearmRoundHistoryV1 {
                 prior_checked,
-                prior_emitted_counts,
+                counts: prior_counts,
                 prior_release_counts,
                 prior_completed_members,
                 prior_total_released,
@@ -3409,7 +3479,7 @@ impl M1RearmedCompletionOutcomeV1 {
 #[derive(Debug)]
 struct M1PriorRearmRoundHistoryV1 {
     prior_checked: crate::M1CheckedCompletionOutputV1,
-    prior_emitted_counts: Box<[u32]>,
+    counts: M1PriorRearmRoundCountHistoryV1,
     prior_release_counts: Box<[M1CompletedKvPageReleaseCountsV1]>,
     prior_completed_members: usize,
     prior_total_released: usize,
@@ -3420,7 +3490,8 @@ struct M1PriorRearmRoundHistoryV1 {
 /// Released current round plus active caches parked outside that round.
 ///
 /// The parked caches are deliberately separate from `released`: the current
-/// checked/emitted/release arrays name only current selected lanes.
+/// checked/logical-accept/external-publication/release arrays name only current
+/// selected lanes.
 ///
 /// ```compile_fail
 /// use ferric_engine::M1LongLivedQueueReleasedRoundV1;
@@ -3456,8 +3527,13 @@ impl M1LongLivedQueueReleasedRoundV1 {
     }
 
     #[must_use]
-    pub fn prior_emitted_counts(&self) -> &[u32] {
-        &self.history.prior_emitted_counts
+    pub fn prior_logical_accepted_counts(&self) -> &[u32] {
+        &self.history.counts.logical_accepted_counts
+    }
+
+    #[must_use]
+    pub fn prior_externally_published_counts(&self) -> &[u32] {
+        &self.history.counts.externally_published_counts
     }
 
     #[must_use]
@@ -3665,7 +3741,10 @@ impl M1RearmedCompletedReadbackV1 {
             parked: carry.parked,
             terminal: carry.terminal,
             prior_checked: carry.prior_checked,
-            prior_emitted_counts: carry.emitted_counts,
+            prior_counts: M1PriorRearmRoundCountHistoryV1 {
+                logical_accepted_counts: carry.logical_accepted_counts,
+                externally_published_counts: carry.externally_published_counts,
+            },
             prior_release_counts: carry.release_counts,
             prior_completed_members: carry.completed_members,
             prior_total_released: carry.total_released,
@@ -3901,7 +3980,8 @@ struct PostQueueRemainderV1 {
     parked: Vec<ActiveDeviceKvCache>,
     terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
     prior_checked: crate::M1CheckedCompletionOutputV1,
-    emitted_counts: Box<[u32]>,
+    logical_accepted_counts: Box<[u32]>,
+    externally_published_counts: Box<[u32]>,
     release_counts: Box<[M1CompletedKvPageReleaseCountsV1]>,
     completed_members: usize,
     total_released: usize,
@@ -3941,7 +4021,8 @@ fn submit_m1_long_lived_queue_rearm_inner_v1(
         parked,
         terminal,
         prior_checked,
-        emitted_counts,
+        logical_accepted_counts,
+        externally_published_counts,
         release_counts,
         completed_members,
         total_released,
@@ -3951,7 +4032,8 @@ fn submit_m1_long_lived_queue_rearm_inner_v1(
         parked,
         terminal,
         prior_checked,
-        emitted_counts,
+        logical_accepted_counts,
+        externally_published_counts,
         release_counts,
         completed_members,
         total_released,
@@ -4209,7 +4291,8 @@ fn submit_m1_long_lived_queue_rearm_inner_v1(
             terminal: post.terminal,
             previous_epoch,
             prior_checked: post.prior_checked,
-            emitted_counts: post.emitted_counts,
+            logical_accepted_counts: post.logical_accepted_counts,
+            externally_published_counts: post.externally_published_counts,
             release_counts: post.release_counts,
             completed_members: post.completed_members,
             total_released: post.total_released,
@@ -4291,7 +4374,8 @@ mod tests {
                 selection(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192),
                 previous_epoch,
             ),
-            emitted_counts: Box::new([]),
+            logical_accepted_counts: Box::new([1]),
+            externally_published_counts: Box::new([0]),
             release_counts: Box::new([]),
             completed_members: 0,
             total_released: 0,
@@ -4403,6 +4487,8 @@ mod tests {
         assert_eq!(success.carry.selected[0].projection().request, selected);
         assert_eq!(success.carry.parked[0].projection().request, parked);
         assert_eq!(success.carry.previous_epoch, CompletionEpoch::new(7));
+        assert_eq!(&*success.carry.logical_accepted_counts, &[1]);
+        assert_eq!(&*success.carry.externally_published_counts, &[0]);
         assert_eq!(success.device, test_device());
 
         let failure = rejoin_qualification_observation_retry(
@@ -4417,7 +4503,20 @@ mod tests {
         assert_eq!(failure.carry.selected[0].projection().request, selected);
         assert_eq!(failure.carry.parked[0].projection().request, parked);
         assert_eq!(failure.carry.previous_epoch, CompletionEpoch::new(7));
+        assert_eq!(&*failure.carry.logical_accepted_counts, &[1]);
+        assert_eq!(&*failure.carry.externally_published_counts, &[0]);
         assert_eq!(failure.device, test_device());
+    }
+
+    #[test]
+    fn qualification_prompt_count_history_keeps_logical_and_external_distinct() {
+        let carry = test_rearm_carry(RequestId::new(0, 3), RequestId::new(1, 5));
+        let history = M1PriorRearmRoundCountHistoryV1 {
+            logical_accepted_counts: carry.logical_accepted_counts,
+            externally_published_counts: carry.externally_published_counts,
+        };
+        assert_eq!(&*history.logical_accepted_counts, &[1]);
+        assert_eq!(&*history.externally_published_counts, &[0]);
     }
 
     #[test]

@@ -76,6 +76,11 @@ pub enum M1CompletedOutputCheckErrorV1 {
         /// Exact wire or semantic failure.
         source: CompletionWireError,
     },
+    /// A qualification grouping did not cover the exact scheduler roster.
+    QualificationMemberCount { expected: usize, actual: usize },
+    /// Qualification and ordinary semantics or distinct context declarations
+    /// were mixed within one fixed batch.
+    QualificationContextDrift { lane: usize },
     /// One byte in an inactive capacity record was not canonical zero.
     InactiveRecordNonzero {
         /// Zero-based inactive lane.
@@ -197,12 +202,55 @@ pub(crate) fn check_m1_completed_output_v1(
         });
     }
 
+    let qualification_context = expectations
+        .first()
+        .and_then(|expectation| expectation.semantics().qualification_context());
+    if let Some(first) = qualification_context {
+        let expected = first.grouping().sequences() as usize;
+        if scheduled.member_count() != expected {
+            return Err(M1CompletedOutputCheckErrorV1::QualificationMemberCount {
+                expected,
+                actual: scheduled.member_count(),
+            });
+        }
+        for (lane, expectation) in expectations.iter().copied().enumerate() {
+            let Some(context) = expectation.semantics().qualification_context() else {
+                return Err(M1CompletedOutputCheckErrorV1::QualificationContextDrift { lane });
+            };
+            if context.policy_identity() != first.policy_identity()
+                || context.grouping() != first.grouping()
+                || context.ordinal() != first.ordinal()
+                || context.declared_workload_digest() != first.declared_workload_digest()
+                || context.step() != first.step()
+            {
+                return Err(M1CompletedOutputCheckErrorV1::QualificationContextDrift { lane });
+            }
+        }
+    } else if let Some(lane) = expectations
+        .iter()
+        .position(|expectation| expectation.semantics().qualification_context().is_some())
+    {
+        return Err(M1CompletedOutputCheckErrorV1::QualificationContextDrift { lane });
+    }
+
     let mut records = Vec::new();
     records.try_reserve_exact(expectations.len()).map_err(|_| {
         M1CompletedOutputCheckErrorV1::Output(M1CompletionOutputErrorV1::ExtentOverflow)
     })?;
     for (lane, expectation) in expectations.iter().copied().enumerate() {
         let plan = expectation.plan();
+        if let Some(context) = expectation.semantics().qualification_context() {
+            let actual = context.lane().lane_ordinal;
+            if usize::try_from(actual) != Ok(lane) {
+                return Err(M1CompletedOutputCheckErrorV1::LiveRecord {
+                    lane,
+                    source: CompletionWireError::QualificationLaneMismatch {
+                        expected: u32::try_from(lane).unwrap_or(u32::MAX),
+                        actual,
+                    },
+                });
+            }
+        }
         if plan.selection() != queue_selection {
             return Err(M1CompletedOutputCheckErrorV1::PlanSelectionDrift {
                 lane,

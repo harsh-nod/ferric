@@ -55,9 +55,12 @@ pub use completion_output::{
     M1CompletionOutputErrorV1, M1CompletionOutputShapeV1, M1_COMPLETION_OUTPUT_ALIGNMENT_V1,
 };
 pub use completion_wire::{
-    bind_inert_completion_epoch, check_inert_completion_record, CheckedCompletionSemantics,
+    bind_inert_completion_epoch, check_inert_completion_record,
+    validate_m1_qualification_context_plan_v1, CheckedCompletionSemantics,
     CompletionEpochJoinFailure, CompletionWireError, CompletionWireExpectation,
     CompletionWireSemanticExpectation, EpochJoinedCompletionRecord, InertCheckedCompletionRecord,
+    M1QualificationContextStepWitnessErrorV1, M1ValidatedQualificationContextPlanV1,
+    M1ValidatedQualificationContextStepV1,
 };
 pub use device_cache::{
     bind_m1_partitioned_model_memory_kv_pool_v1, AbortedDeviceKvStepWrite, ActiveDeviceKvCache,

@@ -836,9 +836,15 @@ fn execute_capture(
         Ok(released) => released,
         Err(failure) => {
             let (error, completed) = (*failure).into_parts();
-            let (queue, checked, members, emitted_counts) = completed.into_parts();
+            let (queue, checked, members, logical_accepted_counts, externally_published_counts) =
+                completed.into_parts();
             let release = queue.destroy_and_release();
-            drop((checked, members, emitted_counts));
+            drop((
+                checked,
+                members,
+                logical_accepted_counts,
+                externally_published_counts,
+            ));
             return Err(format!(
                 "qualification KV page release failed: {error:?}; {}",
                 release_result("page-release queue", release)

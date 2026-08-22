@@ -49,8 +49,12 @@ pub enum M1CompletedStepKvReleaseErrorV1 {
     Shape,
     /// One terminal member did not retain the checked completion epoch.
     TerminalEpoch { lane: usize },
-    /// One checked emitted count drifted from the completed-step copy.
-    EmittedCount { lane: usize },
+    /// One raw K7 compact count drifted from its checked semantic case.
+    RawCompactCount { lane: usize },
+    /// One Engine logical-accept count drifted from checked semantics.
+    LogicalAcceptedCount { lane: usize },
+    /// One external-publication count drifted from checked semantics.
+    ExternallyPublishedCount { lane: usize },
     /// One cache is pending, structurally inconsistent, or in the wrong lifecycle.
     CacheState { lane: usize, role: Qwen3ModelRole },
     /// One cache belongs to a different physical device.
@@ -242,7 +246,8 @@ pub struct M1ReleasedCompletedStepV1 {
     queue: M1PhysicalReadbackQueueSessionV1,
     checked: M1CheckedCompletionOutputV1,
     members: Vec<M1ReleasedDeviceKvMemberV1>,
-    emitted_counts: Box<[u32]>,
+    logical_accepted_counts: Box<[u32]>,
+    externally_published_counts: Box<[u32]>,
     release_counts: Box<[M1CompletedKvPageReleaseCountsV1]>,
     completed_members: usize,
     total_released: usize,
@@ -255,7 +260,8 @@ pub struct M1ReleasedQueueTeardownSuccessV1 {
     queue_release: ServiceQueueReleaseObservationV1,
     checked: M1CheckedCompletionOutputV1,
     members: Vec<M1ReleasedDeviceKvMemberV1>,
-    emitted_counts: Box<[u32]>,
+    logical_accepted_counts: Box<[u32]>,
+    externally_published_counts: Box<[u32]>,
     release_counts: Box<[M1CompletedKvPageReleaseCountsV1]>,
     completed_members: usize,
     total_released: usize,
@@ -276,8 +282,13 @@ impl M1ReleasedQueueTeardownSuccessV1 {
     }
 
     #[must_use]
-    pub fn emitted_counts(&self) -> &[u32] {
-        &self.emitted_counts
+    pub fn logical_accepted_counts(&self) -> &[u32] {
+        &self.logical_accepted_counts
+    }
+
+    #[must_use]
+    pub fn externally_published_counts(&self) -> &[u32] {
+        &self.externally_published_counts
     }
 
     #[must_use]
@@ -303,7 +314,8 @@ pub struct M1ReleasedQueueTeardownFailureV1 {
     source: M1PhysicalReadbackQueueReleaseFailureV1,
     checked: M1CheckedCompletionOutputV1,
     members: Vec<M1ReleasedDeviceKvMemberV1>,
-    emitted_counts: Box<[u32]>,
+    logical_accepted_counts: Box<[u32]>,
+    externally_published_counts: Box<[u32]>,
     release_counts: Box<[M1CompletedKvPageReleaseCountsV1]>,
     completed_members: usize,
     total_released: usize,
@@ -323,8 +335,13 @@ impl M1ReleasedQueueTeardownFailureV1 {
     }
 
     #[must_use]
-    pub fn emitted_counts(&self) -> &[u32] {
-        &self.emitted_counts
+    pub fn logical_accepted_counts(&self) -> &[u32] {
+        &self.logical_accepted_counts
+    }
+
+    #[must_use]
+    pub fn externally_published_counts(&self) -> &[u32] {
+        &self.externally_published_counts
     }
 
     #[must_use]
@@ -357,8 +374,13 @@ impl M1ReleasedCompletedStepV1 {
     }
 
     #[must_use]
-    pub fn emitted_counts(&self) -> &[u32] {
-        &self.emitted_counts
+    pub fn logical_accepted_counts(&self) -> &[u32] {
+        &self.logical_accepted_counts
+    }
+
+    #[must_use]
+    pub fn externally_published_counts(&self) -> &[u32] {
+        &self.externally_published_counts
     }
 
     #[must_use]
@@ -394,7 +416,8 @@ impl M1ReleasedCompletedStepV1 {
             queue,
             checked,
             members,
-            emitted_counts,
+            logical_accepted_counts,
+            externally_published_counts,
             release_counts,
             completed_members,
             total_released,
@@ -404,7 +427,8 @@ impl M1ReleasedCompletedStepV1 {
                 queue_release,
                 checked,
                 members,
-                emitted_counts,
+                logical_accepted_counts,
+                externally_published_counts,
                 release_counts,
                 completed_members,
                 total_released,
@@ -413,7 +437,8 @@ impl M1ReleasedCompletedStepV1 {
                 source,
                 checked,
                 members,
-                emitted_counts,
+                logical_accepted_counts,
+                externally_published_counts,
                 release_counts,
                 completed_members,
                 total_released,
@@ -436,6 +461,7 @@ impl M1ReleasedCompletedStepV1 {
         M1CheckedCompletionOutputV1,
         Vec<M1ReleasedDeviceKvMemberV1>,
         Box<[u32]>,
+        Box<[u32]>,
         Box<[M1CompletedKvPageReleaseCountsV1]>,
         usize,
         usize,
@@ -444,7 +470,8 @@ impl M1ReleasedCompletedStepV1 {
             self.queue,
             self.checked,
             self.members,
-            self.emitted_counts,
+            self.logical_accepted_counts,
+            self.externally_published_counts,
             self.release_counts,
             self.completed_members,
             self.total_released,
@@ -588,7 +615,8 @@ fn validate_roster(
     let member_count = completed.members().len();
     for actual in [
         completed.checked().records().len(),
-        completed.emitted_counts().len(),
+        completed.logical_accepted_counts().len(),
+        completed.externally_published_counts().len(),
     ] {
         if actual != member_count {
             return Err(M1CompletedStepKvReleaseErrorV1::MemberCount {
@@ -616,8 +644,15 @@ fn validate_roster(
         let record = completed.checked().records()[lane].record();
         validate_request_lane(lane, projection.request, record.request)?;
         validate_request_lane(lane, member.request(), record.request)?;
-        if usize::from(record.emitted_token_count) != completed.emitted_counts()[lane] as usize {
-            return Err(M1CompletedStepKvReleaseErrorV1::EmittedCount { lane });
+        let semantics = completed.checked().records()[lane].semantics();
+        if u32::from(record.emitted_token_count) != semantics.raw_compact_count() {
+            return Err(M1CompletedStepKvReleaseErrorV1::RawCompactCount { lane });
+        }
+        if completed.logical_accepted_counts()[lane] != semantics.logical_accepted_count() {
+            return Err(M1CompletedStepKvReleaseErrorV1::LogicalAcceptedCount { lane });
+        }
+        if completed.externally_published_counts()[lane] != semantics.externally_published_count() {
+            return Err(M1CompletedStepKvReleaseErrorV1::ExternallyPublishedCount { lane });
         }
         for first_lane in 0..lane {
             if completed.members()[first_lane].request() == member.request() {
@@ -811,8 +846,14 @@ pub fn release_m1_completed_step_kv_pages_v1(
     release_counts.extend(plans.iter().map(|plan| plan.counts));
     let total_released = release_counts.iter().map(|counts| counts.total()).sum();
 
-    let (mut queue, checked, mut members, emitted_counts, completed_members) =
-        completed.into_release_parts();
+    let (
+        mut queue,
+        checked,
+        mut members,
+        logical_accepted_counts,
+        externally_published_counts,
+        completed_members,
+    ) = completed.into_release_parts();
     for role in M1_KV_PAGE_RETURN_ROLE_ORDER_V1 {
         commit_role(&mut queue, &mut members, &mut plans, role);
     }
@@ -841,7 +882,8 @@ pub fn release_m1_completed_step_kv_pages_v1(
         queue,
         checked,
         members: released_members,
-        emitted_counts,
+        logical_accepted_counts,
+        externally_published_counts,
         release_counts: release_counts.into_boxed_slice(),
         completed_members,
         total_released,

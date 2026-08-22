@@ -198,7 +198,8 @@ pub struct M1CompletedStepSuccessV1 {
     queue: M1PhysicalReadbackQueueSessionV1,
     checked: M1CheckedCompletionOutputV1,
     members: Vec<M1CompletedDeviceKvMemberV1>,
-    emitted_counts: Box<[u32]>,
+    logical_accepted_counts: Box<[u32]>,
+    externally_published_counts: Box<[u32]>,
     completed_members: usize,
 }
 
@@ -216,8 +217,14 @@ impl M1CompletedStepSuccessV1 {
     }
 
     #[must_use]
-    pub fn emitted_counts(&self) -> &[u32] {
-        &self.emitted_counts
+    pub fn logical_accepted_counts(&self) -> &[u32] {
+        &self.logical_accepted_counts
+    }
+
+    /// Per-member tokens made externally visible by this completion.
+    #[must_use]
+    pub fn externally_published_counts(&self) -> &[u32] {
+        &self.externally_published_counts
     }
 
     #[must_use]
@@ -226,6 +233,7 @@ impl M1CompletedStepSuccessV1 {
     }
 
     #[must_use = "all successful custody remains linear"]
+    #[allow(clippy::type_complexity)]
     pub fn into_parts(
         self,
     ) -> (
@@ -233,10 +241,18 @@ impl M1CompletedStepSuccessV1 {
         M1CheckedCompletionOutputV1,
         Vec<M1CompletedDeviceKvMemberV1>,
         Box<[u32]>,
+        Box<[u32]>,
     ) {
-        (self.queue, self.checked, self.members, self.emitted_counts)
+        (
+            self.queue,
+            self.checked,
+            self.members,
+            self.logical_accepted_counts,
+            self.externally_published_counts,
+        )
     }
 
+    #[allow(clippy::type_complexity)]
     pub(crate) fn into_release_parts(
         self,
     ) -> (
@@ -244,13 +260,15 @@ impl M1CompletedStepSuccessV1 {
         M1CheckedCompletionOutputV1,
         Vec<M1CompletedDeviceKvMemberV1>,
         Box<[u32]>,
+        Box<[u32]>,
         usize,
     ) {
         (
             self.queue,
             self.checked,
             self.members,
-            self.emitted_counts,
+            self.logical_accepted_counts,
+            self.externally_published_counts,
             self.completed_members,
         )
     }
@@ -274,8 +292,16 @@ enum MemberReservationsV1 {
 #[derive(Clone, Copy, Debug)]
 struct MemberArithmeticV1 {
     target_accepted: u32,
-    draft_accepted: Option<u32>,
-    emitted: u32,
+    draft_accepted: u32,
+    logical_accepted: u32,
+    externally_published: u32,
+}
+
+#[derive(Debug)]
+struct M1CompletedStepPreflightV1 {
+    arithmetic: Vec<MemberArithmeticV1>,
+    logical_accepted: Vec<u32>,
+    externally_published: Vec<u32>,
 }
 
 #[derive(Debug)]
@@ -451,9 +477,7 @@ fn preflight_member(
         let accepted = if pending.selection().role == Qwen3ModelRole::Target8B {
             arithmetic.target_accepted
         } else {
-            arithmetic
-                .draft_accepted
-                .ok_or(M1CompletedStepErrorV1::Reservation { lane })?
+            arithmetic.draft_accepted
         };
         member
             .cache
@@ -474,7 +498,7 @@ fn preflight_all<const C: usize>(
     engine: &Engine<C>,
     readback: &M1PhysicalCompletedReadbackV1,
     roster: &M1DeviceKvCompletionRosterV1,
-) -> Result<(Vec<MemberArithmeticV1>, Vec<u32>), M1CompletedStepErrorV1> {
+) -> Result<M1CompletedStepPreflightV1, M1CompletedStepErrorV1> {
     let checked = readback.checked();
     let reservations = readback.kv_reservations();
     let member_count = checked.records().len();
@@ -525,8 +549,12 @@ fn preflight_all<const C: usize>(
     arithmetic
         .try_reserve_exact(member_count)
         .map_err(|_| M1CompletedStepErrorV1::HostAllocation)?;
-    let mut emitted = Vec::new();
-    emitted
+    let mut logical_accepted = Vec::new();
+    logical_accepted
+        .try_reserve_exact(member_count)
+        .map_err(|_| M1CompletedStepErrorV1::HostAllocation)?;
+    let mut externally_published = Vec::new();
+    externally_published
         .try_reserve_exact(member_count)
         .map_err(|_| M1CompletedStepErrorV1::HostAllocation)?;
     for lane in 0..member_count {
@@ -537,12 +565,21 @@ fn preflight_all<const C: usize>(
         let (rows, member_arithmetic) = match reservations {
             M1FullStepKvReservationCustodyV1::TargetOnly { target } => {
                 let target = &target.reservations()[lane];
+                let semantics = record.semantics();
                 if target.selection() != checked.selection()
                     || !matches!(
-                        record.semantics(),
+                        semantics,
                         CheckedCompletionSemantics::DirectFinalRow { .. }
+                            | CheckedCompletionSemantics::QualificationPromptCommit { .. }
+                            | CheckedCompletionSemantics::QualificationFinalRow { .. }
                     )
-                    || record.record().emitted_token_count != 1
+                    || u32::from(record.record().emitted_token_count)
+                        != semantics.raw_compact_count()
+                    || (matches!(
+                        semantics,
+                        CheckedCompletionSemantics::QualificationPromptCommit { .. }
+                            | CheckedCompletionSemantics::QualificationFinalRow { .. }
+                    ) && target.active_tokens() != 1)
                 {
                     return Err(M1CompletedStepErrorV1::CompletionSemantics { lane });
                 }
@@ -550,8 +587,9 @@ fn preflight_all<const C: usize>(
                     [Some(target), None],
                     MemberArithmeticV1 {
                         target_accepted: target.active_tokens(),
-                        draft_accepted: None,
-                        emitted: 1,
+                        draft_accepted: 0,
+                        logical_accepted: semantics.logical_accepted_count(),
+                        externally_published: semantics.externally_published_count(),
                     },
                 )
             }
@@ -574,8 +612,9 @@ fn preflight_all<const C: usize>(
                     [Some(target), Some(draft)],
                     MemberArithmeticV1 {
                         target_accepted: target.active_tokens(),
-                        draft_accepted: Some(draft.active_tokens()),
-                        emitted: 1,
+                        draft_accepted: draft.active_tokens(),
+                        logical_accepted: 1,
+                        externally_published: 1,
                     },
                 )
             }
@@ -590,7 +629,9 @@ fn preflight_all<const C: usize>(
                         accepted_draft_tokens,
                         ..
                     } => u32::from(accepted_draft_tokens),
-                    CheckedCompletionSemantics::DirectFinalRow { .. } => {
+                    CheckedCompletionSemantics::DirectFinalRow { .. }
+                    | CheckedCompletionSemantics::QualificationPromptCommit { .. }
+                    | CheckedCompletionSemantics::QualificationFinalRow { .. } => {
                         return Err(M1CompletedStepErrorV1::CompletionSemantics { lane });
                     }
                 };
@@ -610,8 +651,9 @@ fn preflight_all<const C: usize>(
                     [Some(target), Some(draft.pending_step_write())],
                     MemberArithmeticV1 {
                         target_accepted: emitted,
-                        draft_accepted: Some(draft_accepted),
-                        emitted,
+                        draft_accepted,
+                        logical_accepted: emitted,
+                        externally_published: emitted,
                     },
                 )
             }
@@ -625,10 +667,20 @@ fn preflight_all<const C: usize>(
             member_arithmetic,
         )?;
         arithmetic.push(member_arithmetic);
-        emitted.push(member_arithmetic.emitted);
+        logical_accepted.push(member_arithmetic.logical_accepted);
+        externally_published.push(member_arithmetic.externally_published);
     }
-    preflight_engine(engine, readback.completion_authority(), roster, &emitted)?;
-    Ok((arithmetic, emitted))
+    preflight_engine(
+        engine,
+        readback.completion_authority(),
+        roster,
+        &logical_accepted,
+    )?;
+    Ok(M1CompletedStepPreflightV1 {
+        arithmetic,
+        logical_accepted,
+        externally_published,
+    })
 }
 
 fn bind_work(
@@ -747,7 +799,7 @@ fn finish_active(
         let accepted = if write.selection().role == Qwen3ModelRole::Target8B {
             arithmetic.target_accepted
         } else {
-            arithmetic.draft_accepted.unwrap_or(0)
+            arithmetic.draft_accepted
         };
         match cache.settle_completed_step(write, accepted, epoch) {
             Ok(count) => {
@@ -794,7 +846,7 @@ fn finish_retiring(
         let accepted = if write.selection().role == Qwen3ModelRole::Target8B {
             arithmetic.target_accepted
         } else {
-            arithmetic.draft_accepted.unwrap_or(0)
+            arithmetic.draft_accepted
         };
         if let Err(error) = cache.settle_completed_step(write, accepted, epoch) {
             return Err(Box::new(ApplyFailureV1 {
@@ -942,7 +994,11 @@ pub fn complete_m1_physical_step_v1<const C: usize>(
     readback: M1PhysicalCompletedReadbackV1,
     roster: M1DeviceKvCompletionRosterV1,
 ) -> M1CompletedStepOutcomeV1 {
-    let (arithmetic, emitted) = match preflight_all(engine, &readback, &roster) {
+    let M1CompletedStepPreflightV1 {
+        arithmetic,
+        logical_accepted,
+        externally_published,
+    } = match preflight_all(engine, &readback, &roster) {
         Ok(preflight) => preflight,
         Err(error) => return reject(error, readback, roster),
     };
@@ -1035,12 +1091,13 @@ pub fn complete_m1_physical_step_v1<const C: usize>(
             },
         );
     };
-    match engine.complete_exact(authority, &emitted) {
+    match engine.complete_exact(authority, &logical_accepted) {
         Ok(completed_members) => M1CompletedStepOutcomeV1::Completed(M1CompletedStepSuccessV1 {
             queue,
             checked,
             members: completed,
-            emitted_counts: emitted.into_boxed_slice(),
+            logical_accepted_counts: logical_accepted.into_boxed_slice(),
+            externally_published_counts: externally_published.into_boxed_slice(),
             completed_members,
         }),
         Err(failure) => {
@@ -1161,8 +1218,9 @@ mod tests {
             reservations: MemberReservationsV1::Paired { draft, target },
             arithmetic: MemberArithmeticV1 {
                 target_accepted: 4,
-                draft_accepted: Some(4),
-                emitted: 1,
+                draft_accepted: 4,
+                logical_accepted: 1,
+                externally_published: 1,
             },
         }
     }
@@ -1210,8 +1268,9 @@ mod tests {
             reservations: MemberReservationsV1::Speculative { draft, target },
             arithmetic: MemberArithmeticV1 {
                 target_accepted: emitted,
-                draft_accepted: Some(emitted.min(4)),
-                emitted,
+                draft_accepted: emitted.min(4),
+                logical_accepted: emitted,
+                externally_published: emitted,
             },
         }
     }
@@ -1240,8 +1299,9 @@ mod tests {
             reservations: MemberReservationsV1::TargetOnly { target },
             arithmetic: MemberArithmeticV1 {
                 target_accepted: 1,
-                draft_accepted: None,
-                emitted: 1,
+                draft_accepted: 0,
+                logical_accepted: 1,
+                externally_published: 1,
             },
         }
     }
@@ -1401,6 +1461,63 @@ mod tests {
         }
         assert_eq!(engine.complete_exact(completion, &[1, 1]).unwrap(), 2);
         assert_eq!(engine.completed_epoch(), EPOCH);
+    }
+
+    #[test]
+    fn qualification_prompt_commit_advances_physical_and_engine_kv_without_publication() {
+        with_large_stack(
+            qualification_prompt_commit_advances_physical_and_engine_kv_without_publication_inner,
+        );
+    }
+
+    fn qualification_prompt_commit_advances_physical_and_engine_kv_without_publication_inner() {
+        let mut engine = Engine::<1>::new(16, 4, 32).unwrap();
+        let request = engine.admit().unwrap();
+        assert_eq!(engine.committed_tokens(request), Some(0));
+        engine.append_tentative(request, 1).unwrap();
+        let mut scheduled = [RequestId::new(0, 0); 1];
+        let batch = engine.dispatch_ready(&mut scheduled).unwrap().unwrap();
+        assert_eq!(scheduled, [request]);
+
+        let mut work = target_only_work(request, M1DeviceKvCompletionDispositionV1::Continue);
+        work.arithmetic = MemberArithmeticV1 {
+            target_accepted: 1,
+            draft_accepted: 0,
+            logical_accepted: 1,
+            externally_published: 0,
+        };
+        assert_eq!(work.arithmetic.target_accepted, 1);
+        assert_eq!(work.arithmetic.logical_accepted, 1);
+        assert_eq!(work.arithmetic.externally_published, 0);
+        let (completed, completion) = apply_member(
+            work,
+            ExactCompletion::from_contracted_hsa_quiescence(batch.epoch()),
+            batch.epoch(),
+        )
+        .unwrap();
+        let M1CompletedDeviceKvMemberV1::Active(mut physical) = completed else {
+            panic!("qualification priming member must continue");
+        };
+        assert_eq!(physical.projection().target.committed_tokens, 1);
+
+        assert_eq!(engine.complete_exact(completion, &[1]).unwrap(), 1);
+        assert_eq!(engine.committed_tokens(request), Some(1));
+        engine.append_tentative(request, 1).unwrap();
+        let next = engine.dispatch_ready(&mut scheduled).unwrap().unwrap();
+        assert_eq!(scheduled, [request]);
+        assert_eq!(next.epoch(), CompletionEpoch::new(2));
+        let next_physical = physical
+            .reserve_step_write(
+                request,
+                Qwen3ModelRole::Target8B,
+                1,
+                1,
+                next.epoch(),
+                Vec::new(),
+            )
+            .expect("the next same-page context reservation must succeed");
+        assert_eq!(next_physical.committed_tokens(), 1);
+        assert_eq!(next_physical.active_tokens(), 1);
     }
 
     #[test]

@@ -23,9 +23,12 @@ use ferric_qwen_kernels::logits::Qwen3LogitsCompactRecordLayoutV1 as Layout;
 use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::{
     validate_compact_completion, verify_speculative_completion, CompactCompletionError,
-    CompactCompletionRecord, GreedyCommit, Identity, Qwen3ExecutionMode, Qwen3ModelRole,
-    Qwen3PlanBucket, Qwen3PlanError, Qwen3PlanSelection, RequestId, SpeculativeCompletionError,
-    StepPlan, TokenId, M1_MAX_ACTIVE_SEQUENCES, M1_MAX_COMPLETION_TOKENS,
+    CompactCompletionRecord, GreedyCommit, Identity, M1QualificationContextPlan,
+    M1QualificationContextPlanError, M1QualificationContextStep, M1QualificationContextStepKind,
+    M1QualificationExecutionBindingDeclaration, M1QualificationLaneExecutionBinding,
+    M1QualificationLaneGrouping, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket,
+    Qwen3PlanError, Qwen3PlanSelection, RequestId, SpeculativeCompletionError, StepPlan, TokenId,
+    M1_MAX_ACTIVE_SEQUENCES, M1_MAX_COMPLETION_TOKENS,
 };
 
 const _: () = {
@@ -42,6 +45,19 @@ pub enum CompletionWireSemanticExpectation<'a> {
         /// Expected final active-row argmax choice.
         choice: TokenId,
     },
+    /// Qualification priming commits one supplied prompt token while suppressing
+    /// the structurally observed compact choice from external publication.
+    QualificationPromptCommit {
+        /// Validated, inert context-policy and lane-declaration witness.
+        context: &'a M1ValidatedQualificationContextStepV1,
+    },
+    /// Qualification terminal completion publishes the exact final-row choice.
+    QualificationFinalRow {
+        /// Validated, inert context-policy and lane-declaration witness.
+        context: &'a M1ValidatedQualificationContextStepV1,
+        /// Expected lowest-token-ID argmax choice for the terminal logits row.
+        choice: TokenId,
+    },
     /// Speculation must publish the maximal accepted prefix and correction or bonus.
     Speculative {
         /// Exact draft proposal tokens for the selected bucket.
@@ -49,6 +65,166 @@ pub enum CompletionWireSemanticExpectation<'a> {
         /// Exact target choices, including the final correction-or-bonus row.
         target_choices: &'a [TokenId],
     },
+}
+
+impl<'a> CompletionWireSemanticExpectation<'a> {
+    /// Returns the qualification context witness when this is a qualification case.
+    #[must_use]
+    pub const fn qualification_context(self) -> Option<&'a M1ValidatedQualificationContextStepV1> {
+        match self {
+            Self::QualificationPromptCommit { context }
+            | Self::QualificationFinalRow { context, .. } => Some(context),
+            Self::DirectFinalRow { .. } | Self::Speculative { .. } => None,
+        }
+    }
+}
+
+/// Failure to derive one inert qualification context-step witness.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum M1QualificationContextStepWitnessErrorV1 {
+    /// The complete context plan failed its exact declaration and policy checks.
+    Plan(M1QualificationContextPlanError),
+    /// The requested step ordinal is outside the validated 8,192-step plan.
+    StepOrdinal { ordinal: u32 },
+    /// The requested lane is outside the validated grouping.
+    LaneOrdinal { lane: u32 },
+}
+
+impl fmt::Display for M1QualificationContextStepWitnessErrorV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            formatter,
+            "M1 qualification context-step witness rejected: {self:?}"
+        )
+    }
+}
+
+impl std::error::Error for M1QualificationContextStepWitnessErrorV1 {}
+
+/// Copy-only witness of one fully validated context-plan step and lane declaration.
+///
+/// This witness proves exact equality with the caller-supplied declaration and
+/// the reviewed context policy. It does not authenticate prompt bytes, lane
+/// identity, workload content, execution, or device allocation custody. The
+/// qualification runner must establish those relations independently before
+/// using the witness.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct M1ValidatedQualificationContextStepV1 {
+    policy_identity: Identity,
+    grouping: M1QualificationLaneGrouping,
+    ordinal: u32,
+    step: M1QualificationContextStep,
+    declared_workload_digest: Identity,
+    lane: M1QualificationLaneExecutionBinding,
+}
+
+/// Borrowed once-validated qualification context plan.
+///
+/// Construction performs the complete 8,192-step policy and exact declaration
+/// validation once. [`Self::step`] then selects any ordinal/lane witness in O(1)
+/// without revalidating the whole plan. Like the selected step witness, this
+/// value carries no authentication authority for concrete workload bytes.
+#[derive(Clone, Copy, Debug)]
+pub struct M1ValidatedQualificationContextPlanV1<'a> {
+    plan: &'a M1QualificationContextPlan,
+    grouping: M1QualificationLaneGrouping,
+}
+
+impl M1ValidatedQualificationContextPlanV1<'_> {
+    /// Selects one exact already-validated ordinal and ordered lane declaration.
+    ///
+    /// # Errors
+    ///
+    /// Rejects a step ordinal or lane ordinal outside this validated plan.
+    pub fn step(
+        self,
+        ordinal: u32,
+        lane: u32,
+    ) -> Result<M1ValidatedQualificationContextStepV1, M1QualificationContextStepWitnessErrorV1>
+    {
+        let step = self
+            .plan
+            .steps
+            .get(usize::try_from(ordinal).unwrap_or(usize::MAX))
+            .copied()
+            .ok_or(M1QualificationContextStepWitnessErrorV1::StepOrdinal { ordinal })?;
+        let lane_declaration = self
+            .plan
+            .execution_binding
+            .ordered_lanes
+            .get(usize::try_from(lane).unwrap_or(usize::MAX))
+            .copied()
+            .ok_or(M1QualificationContextStepWitnessErrorV1::LaneOrdinal { lane })?;
+        Ok(M1ValidatedQualificationContextStepV1 {
+            policy_identity: self.plan.plan_id,
+            grouping: self.grouping,
+            ordinal,
+            step,
+            declared_workload_digest: self.plan.execution_binding.declared_workload_digest,
+            lane: lane_declaration,
+        })
+    }
+}
+
+impl M1ValidatedQualificationContextStepV1 {
+    /// Reviewed qualification context-policy identity.
+    #[must_use]
+    pub const fn policy_identity(self) -> Identity {
+        self.policy_identity
+    }
+
+    /// Exact fixed lane grouping validated for the plan.
+    #[must_use]
+    pub const fn grouping(self) -> M1QualificationLaneGrouping {
+        self.grouping
+    }
+
+    /// Exact context-step ordinal.
+    #[must_use]
+    pub const fn ordinal(self) -> u32 {
+        self.ordinal
+    }
+
+    /// Exact validated unit-step policy.
+    #[must_use]
+    pub const fn step(self) -> M1QualificationContextStep {
+        self.step
+    }
+
+    /// Inert workload-digest declaration validated for exact equality.
+    #[must_use]
+    pub const fn declared_workload_digest(self) -> Identity {
+        self.declared_workload_digest
+    }
+
+    /// Inert ordered lane and token-sequence declaration.
+    #[must_use]
+    pub const fn lane(self) -> M1QualificationLaneExecutionBinding {
+        self.lane
+    }
+}
+
+/// Validates the complete qualification context plan exactly once.
+///
+/// `expected_execution_binding` is still an inert declaration. Callers must
+/// authenticate concrete workload, lane, and token-sequence content before
+/// treating this plan or any O(1) selected step witness as part of an execution
+/// decision.
+///
+/// # Errors
+///
+/// Returns the exact context-plan validation error without producing a witness.
+pub fn validate_m1_qualification_context_plan_v1<'a>(
+    plan: &'a M1QualificationContextPlan,
+    expected_grouping: M1QualificationLaneGrouping,
+    expected_execution_binding: &M1QualificationExecutionBindingDeclaration,
+) -> Result<M1ValidatedQualificationContextPlanV1<'a>, M1QualificationContextStepWitnessErrorV1> {
+    plan.validate(expected_grouping, expected_execution_binding)
+        .map_err(M1QualificationContextStepWitnessErrorV1::Plan)?;
+    Ok(M1ValidatedQualificationContextPlanV1 {
+        plan,
+        grouping: expected_grouping,
+    })
 }
 
 /// Borrowed expected authority and semantics for one K7 record.
@@ -89,6 +265,21 @@ pub enum CheckedCompletionSemantics {
         /// Exact emitted token.
         token: TokenId,
     },
+    /// Qualification prompt token committed while its compact choice is suppressed.
+    QualificationPromptCommit {
+        /// Structurally valid compact choice, deliberately not compared with the
+        /// independently supplied next prompt token.
+        choice: TokenId,
+        /// Exact validated context-policy and inert declaration witness.
+        context: M1ValidatedQualificationContextStepV1,
+    },
+    /// Qualification terminal choice matched the declared lowest-ID argmax.
+    QualificationFinalRow {
+        /// Exact externally published terminal token.
+        token: TokenId,
+        /// Exact validated context-policy and inert declaration witness.
+        context: M1ValidatedQualificationContextStepV1,
+    },
     /// Speculation matched the maximal prefix and correction-or-bonus relation.
     Speculative {
         /// Maximal accepted draft prefix length.
@@ -96,6 +287,39 @@ pub enum CheckedCompletionSemantics {
         /// Target correction at the first mismatch, or bonus after a full match.
         correction_or_bonus: TokenId,
     },
+}
+
+impl CheckedCompletionSemantics {
+    /// Raw K7 compact-token count required by the checked semantic case.
+    #[must_use]
+    pub const fn raw_compact_count(self) -> u32 {
+        match self {
+            Self::DirectFinalRow { .. }
+            | Self::QualificationPromptCommit { .. }
+            | Self::QualificationFinalRow { .. } => 1,
+            Self::Speculative {
+                accepted_draft_tokens,
+                ..
+            } => accepted_draft_tokens as u32 + 1,
+        }
+    }
+
+    /// Tokens logically accepted by the Engine for this completed step.
+    #[must_use]
+    pub const fn logical_accepted_count(self) -> u32 {
+        self.raw_compact_count()
+    }
+
+    /// Tokens externally published by the checked semantic case.
+    #[must_use]
+    pub const fn externally_published_count(self) -> u32 {
+        match self {
+            Self::QualificationPromptCommit { .. } => 0,
+            Self::DirectFinalRow { .. }
+            | Self::QualificationFinalRow { .. }
+            | Self::Speculative { .. } => self.raw_compact_count(),
+        }
+    }
 }
 
 /// Fail-closed K7 wire or semantic validation error.
@@ -117,6 +341,12 @@ pub enum CompletionWireError {
     NonTargetRole,
     /// Direct/speculative expectations did not match the selected mode.
     ModeSemanticsMismatch,
+    /// A qualification witness did not name the checked scheduler lane.
+    QualificationLaneMismatch { expected: u32, actual: u32 },
+    /// The qualification grouping did not match the target decode bucket.
+    QualificationGroupingMismatch,
+    /// The expectation selected the wrong qualification step kind.
+    QualificationStepKindMismatch,
     /// The semantic draft length differed from the selected speculative K.
     SpeculativeLengthMismatch { expected: usize, actual: usize },
     /// The record failed the shared logical compact-completion validator.
@@ -278,6 +508,55 @@ pub fn check_inert_completion_record(
             CheckedCompletionSemantics::DirectFinalRow { token: actual }
         }
         (
+            Qwen3ExecutionMode::Decode,
+            CompletionWireSemanticExpectation::QualificationPromptCommit { context },
+        ) => {
+            validate_qualification_selection(selection, context)?;
+            if context.step().kind != M1QualificationContextStepKind::TeacherForcedPromptContext {
+                return Err(CompletionWireError::QualificationStepKindMismatch);
+            }
+            validate_compact_completion(
+                &record,
+                expected_request,
+                expected_epoch,
+                expected_plan_id,
+                0,
+            )
+            .map_err(CompletionWireError::Logical)?;
+            CheckedCompletionSemantics::QualificationPromptCommit {
+                choice: record.emitted_tokens[0],
+                context: *context,
+            }
+        }
+        (
+            Qwen3ExecutionMode::Decode,
+            CompletionWireSemanticExpectation::QualificationFinalRow { context, choice },
+        ) => {
+            validate_qualification_selection(selection, context)?;
+            if context.step().kind != M1QualificationContextStepKind::FinalObserved {
+                return Err(CompletionWireError::QualificationStepKindMismatch);
+            }
+            validate_compact_completion(
+                &record,
+                expected_request,
+                expected_epoch,
+                expected_plan_id,
+                0,
+            )
+            .map_err(CompletionWireError::Logical)?;
+            let actual = record.emitted_tokens[0];
+            if actual != choice {
+                return Err(CompletionWireError::DirectFinalRowMismatch {
+                    expected: choice,
+                    actual,
+                });
+            }
+            CheckedCompletionSemantics::QualificationFinalRow {
+                token: actual,
+                context: *context,
+            }
+        }
+        (
             Qwen3ExecutionMode::Speculative,
             CompletionWireSemanticExpectation::Speculative {
                 draft_tokens,
@@ -311,6 +590,22 @@ pub fn check_inert_completion_record(
         selection,
         semantics,
     })
+}
+
+fn validate_qualification_selection(
+    selection: Qwen3PlanSelection,
+    context: &M1ValidatedQualificationContextStepV1,
+) -> Result<(), CompletionWireError> {
+    let grouping = match selection.bucket {
+        Qwen3PlanBucket::DecodeS1C8192 => M1QualificationLaneGrouping::S1,
+        Qwen3PlanBucket::DecodeS8C8192 => M1QualificationLaneGrouping::S8,
+        Qwen3PlanBucket::DecodeS32C8192 => M1QualificationLaneGrouping::S32,
+        _ => return Err(CompletionWireError::QualificationGroupingMismatch),
+    };
+    if context.grouping() != grouping {
+        return Err(CompletionWireError::QualificationGroupingMismatch);
+    }
+    Ok(())
 }
 
 /// Correlates an inert checked record with separately obtained completion custody.
@@ -428,6 +723,7 @@ fn read_u64(bytes: &[u8], offset: usize) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ferric_spec::m1_qualification_context_plan;
 
     const REQUEST: RequestId = RequestId::new(3, 9);
     const EPOCH: CompletionEpoch = CompletionEpoch::new(12);
@@ -487,6 +783,17 @@ mod tests {
         )
     }
 
+    fn qualification_binding() -> M1QualificationExecutionBindingDeclaration {
+        M1QualificationExecutionBindingDeclaration {
+            declared_workload_digest: Identity::new([81; 32]),
+            ordered_lanes: vec![M1QualificationLaneExecutionBinding {
+                lane_ordinal: 0,
+                lane_identity: Identity::new([82; 32]),
+                token_sequence_identity: Identity::new([83; 32]),
+            }],
+        }
+    }
+
     #[test]
     fn exact_direct_final_row_decodes_and_checks() {
         let checked = direct_checked(&direct_bytes()).unwrap();
@@ -496,6 +803,83 @@ mod tests {
         assert_eq!(
             checked.semantics(),
             CheckedCompletionSemantics::DirectFinalRow { token: 17 }
+        );
+    }
+
+    #[test]
+    fn qualification_prompt_commit_suppresses_structurally_observed_choice() {
+        let binding = qualification_binding();
+        let context_plan =
+            m1_qualification_context_plan(M1QualificationLaneGrouping::S1, binding.clone());
+        let validated = validate_m1_qualification_context_plan_v1(
+            &context_plan,
+            M1QualificationLaneGrouping::S1,
+            &binding,
+        )
+        .unwrap();
+        let context = validated.step(0, 0).unwrap();
+        let step_plan = plan(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192);
+        let checked = check_inert_completion_record(
+            &encode(REQUEST, EPOCH, &PLAN_ID, 0, &[777]),
+            CompletionWireExpectation::new(
+                &step_plan,
+                CompletionWireSemanticExpectation::QualificationPromptCommit { context: &context },
+            ),
+        )
+        .unwrap();
+        assert_eq!(context.declared_workload_digest(), Identity::new([81; 32]));
+        assert_eq!(context.lane(), binding.ordered_lanes[0]);
+        assert_eq!(checked.semantics().raw_compact_count(), 1);
+        assert_eq!(checked.semantics().logical_accepted_count(), 1);
+        assert_eq!(checked.semantics().externally_published_count(), 0);
+        assert!(matches!(
+            checked.semantics(),
+            CheckedCompletionSemantics::QualificationPromptCommit { choice: 777, .. }
+        ));
+    }
+
+    #[test]
+    fn qualification_final_row_publishes_only_exact_declared_choice() {
+        let binding = qualification_binding();
+        let context_plan =
+            m1_qualification_context_plan(M1QualificationLaneGrouping::S1, binding.clone());
+        let validated = validate_m1_qualification_context_plan_v1(
+            &context_plan,
+            M1QualificationLaneGrouping::S1,
+            &binding,
+        )
+        .unwrap();
+        let priming = validated.step(0, 0).unwrap();
+        let context = validated.step(8_191, 0).unwrap();
+        assert_eq!(priming.policy_identity(), context.policy_identity());
+        let step_plan = plan(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192);
+        let exact = encode(REQUEST, EPOCH, &PLAN_ID, 0, &[41]);
+        let expectation = CompletionWireExpectation::new(
+            &step_plan,
+            CompletionWireSemanticExpectation::QualificationFinalRow {
+                context: &context,
+                choice: 41,
+            },
+        );
+        let checked = check_inert_completion_record(&exact, expectation).unwrap();
+        assert_eq!(checked.semantics().logical_accepted_count(), 1);
+        assert_eq!(checked.semantics().externally_published_count(), 1);
+
+        assert_eq!(
+            check_inert_completion_record(
+                &exact,
+                CompletionWireExpectation::new(
+                    &step_plan,
+                    CompletionWireSemanticExpectation::QualificationFinalRow {
+                        context: &context,
+                        choice: 42,
+                    },
+                ),
+            ),
+            Err(CompletionWireError::DirectFinalRowMismatch {
+                expected: 42,
+                actual: 41,
+            })
         );
     }
 
