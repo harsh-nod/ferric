@@ -17,7 +17,7 @@ use crate::{
     compose_m1_step_workspace_image_v1, AddresslessM1PhysicalBufferRecipeV1,
     BoundM1CompletionOutputV1, BoundM1KvWorkspaceTableV1,
     BoundM1SpeculativeDraftKvRoundWorkspaceTableV1, ComposedM1FullStepWorkspaceSetV1,
-    ComposedM1StepWorkspaceImageV1, ContentBoundM1ProgramCatalogV1,
+    ComposedM1StepWorkspaceImageV1, ContentBoundM1ProgramCatalogV1, Gfx942DeviceBinding,
     InitializedM1FullStepWorkspaceAllocationFailureV1,
     InitializedM1FullStepWorkspacePreflightErrorV1, LogicalRunnerDeclaration,
     M1FullStepWorkspaceImagesV1, M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans,
@@ -341,6 +341,12 @@ pub struct M1AllocatedScheduledStepV1 {
 }
 
 impl M1AllocatedScheduledStepV1 {
+    /// Checked physical-device receipt retained with allocated step custody.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.partitioned_memory.device()
+    }
+
     /// Exact workspace allocation owners.
     pub const fn workspace_owners(&self) -> &M1FullStepWorkspaceSubleaseOwners {
         &self.workspace_owners
@@ -378,6 +384,12 @@ pub struct M1PrepublicationAllocationFailureV1 {
 }
 
 impl M1PrepublicationAllocationFailureV1 {
+    /// Checked physical-device receipt retained after allocation rejection.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.partitioned_memory.device()
+    }
+
     /// Existing exact initialized-workspace failure.
     pub const fn source(&self) -> &InitializedM1FullStepWorkspaceAllocationFailureV1 {
         &self.failure
@@ -689,6 +701,12 @@ pub struct M1PrepublicationBatchV1<'a> {
 }
 
 impl M1PrepublicationBatchV1<'_> {
+    /// Checked physical-device receipt retained before queue creation.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.batch.device()
+    }
+
     /// Exact closed physical batch shape.
     #[must_use]
     pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {

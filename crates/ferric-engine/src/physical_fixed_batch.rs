@@ -14,11 +14,11 @@ use ferric_spec::{Identity, Qwen3PlanBucket, Qwen3PlanSelection};
 use crate::{
     m1_completion_output_shape_v1, AddresslessM1FullStepWorkspaceComposition,
     AddresslessM1PhysicalDispatchRecipeV1, BoundM1CompletionOutputV1,
-    BoundM1PhysicalBufferBindingsV1, ContentBoundM1ProgramCatalogV1, M1BoundPhysicalBufferRowV1,
-    M1CompletionOutputShapeV1, M1FullStepWorkspaceSubleaseOwners, M1PartitionedModelMemoryKvPoolV1,
-    M1PartitionedModelMemoryKvQueueCustodyV1, M1PhysicalBufferRecipeRowV1,
-    M1PhysicalKernargImageV1, M1PhysicalProgramV1, M1StepDispatchIntent,
-    M1_PHYSICAL_PROGRAM_COUNT_V1,
+    BoundM1PhysicalBufferBindingsV1, ContentBoundM1ProgramCatalogV1, Gfx942DeviceBinding,
+    M1BoundPhysicalBufferRowV1, M1CompletionOutputShapeV1, M1FullStepWorkspaceSubleaseOwners,
+    M1PartitionedModelMemoryKvPoolV1, M1PartitionedModelMemoryKvQueueCustodyV1,
+    M1PhysicalBufferRecipeRowV1, M1PhysicalKernargImageV1, M1PhysicalProgramV1,
+    M1StepDispatchIntent, M1_PHYSICAL_PROGRAM_COUNT_V1,
 };
 
 /// Exact packet count of every target-only M1 step.
@@ -87,6 +87,12 @@ pub struct M1PhysicalFixedBatchCustodyV1 {
 }
 
 impl M1PhysicalFixedBatchCustodyV1 {
+    /// Checked physical-device receipt retained by the allocation owner.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.partitioned_memory.device()
+    }
+
     /// Domain-separated identity of the exact selected program catalog.
     #[must_use]
     pub const fn catalog_id(&self) -> Identity {
@@ -206,6 +212,12 @@ pub struct M1PhysicalQueueBatchCustodyV1 {
 }
 
 impl M1PhysicalQueueBatchCustodyV1 {
+    /// Checked physical-device receipt retained through every queue phase.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.partitioned_memory.device()
+    }
+
     /// Exact target selection retained by the former fixed batch.
     #[must_use]
     pub const fn selection(&self) -> Qwen3PlanSelection {
@@ -355,6 +367,12 @@ pub enum M1PhysicalFixedBatchV1<'a> {
 }
 
 impl M1PhysicalFixedBatchV1<'_> {
+    /// Checked physical-device receipt retained by this complete fixed batch.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.custody().device()
+    }
+
     /// Exact closed shape of this batch.
     #[must_use]
     pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {

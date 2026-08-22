@@ -20,12 +20,13 @@ use ferric_spec::completion::CompletionEpoch;
 use crate::completed_readback_join::{check_m1_completed_output_v1, CompletedReadbackMetadataV1};
 use crate::{
     CompletionWireExpectation, CompletionWireSemanticExpectation, ExactCompletion,
-    M1CheckedCompletionOutputV1, M1CompletedOutputCheckErrorV1, M1FullStepKvReservationCustodyV1,
-    M1PhysicalFixedBatchCaseV1, M1PhysicalFixedBatchCustodyV1, M1PhysicalFixedBatchShapeV1,
-    M1PhysicalFixedBatchV1, M1PhysicalQueueBatchCustodyV1, M1PrepublicationBatchV1,
-    M1PrepublicationStepCustodyV1, M1ScheduledDispatchV1, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
-    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
-    M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
+    Gfx942DeviceBinding, M1CheckedCompletionOutputV1, M1CompletedOutputCheckErrorV1,
+    M1FullStepKvReservationCustodyV1, M1PhysicalFixedBatchCaseV1, M1PhysicalFixedBatchCustodyV1,
+    M1PhysicalFixedBatchShapeV1, M1PhysicalFixedBatchV1, M1PhysicalQueueBatchCustodyV1,
+    M1PrepublicationBatchV1, M1PrepublicationStepCustodyV1, M1ScheduledDispatchV1,
+    M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
+    M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
 };
 
 /// Observable Ferric phase for one M1 queue generation.
@@ -131,6 +132,12 @@ impl<Q> M1PhysicalQueuePhaseCaseV1<Q> {
     #[must_use = "the exact Ferric custody remains paired with the generic queue"]
     pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
         &self.custody
+    }
+
+    /// Checked physical-device receipt retained beside the generic queue phase.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.custody.device()
     }
 
     /// Returns the immutable logical epoch bound before queue creation.

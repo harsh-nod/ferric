@@ -29,8 +29,8 @@ use crate::{
     allocate_m1_completion_output_v1, AddresslessM1FullStepWorkspaceComposition,
     BoundM1CompletionOutputV1, BoundM1FullStepWorkspaceSubleases, BoundModelMemoryAllocationsV1,
     ExactCompletion, InitializedM1FullStepWorkspaceAllocationFailureV1, M1CompletionOutputErrorV1,
-    M1FullStepWorkspaceDispatchRangeError, M1FullStepWorkspaceImagesV1, M1FullStepWorkspacePlans,
-    M1FullStepWorkspaceRole, M1FullStepWorkspaceSubleaseBindingFailure,
+    M1DeviceBoundModelMemoryV1, M1FullStepWorkspaceDispatchRangeError, M1FullStepWorkspaceImagesV1,
+    M1FullStepWorkspacePlans, M1FullStepWorkspaceRole, M1FullStepWorkspaceSubleaseBindingFailure,
     M1FullStepWorkspaceSubleaseOwners, ModelMemoryAllocationBindingErrorV1,
     ModelMemoryDispatchRangeErrorV1,
 };
@@ -61,14 +61,31 @@ pub const GFX942_TARGET_FEATURES: &str = "+wavefrontsize64,-xnack";
 
 verus! {
 
-/// Identity-only binding for one declared M1 device.
+/// Detached receipt for one checked physical M1 device admission.
 ///
-/// This value is copyable because it owns no device resource or observation.
-/// Successful construction validates declaration bytes, not real hardware.
+/// This value is copyable because it owns no device resource. Production
+/// construction is crate-private and derives every field from the same
+/// [`fe2o3_kfd::CheckedGfx942XnackMinusDevice`] later consumed into the service
+/// allocation session. Copying the receipt does not copy KFD, allocation, load,
+/// queue, publication, or execution authority.
+///
+/// ```compile_fail
+/// use ferric_engine::{bind_gfx942_device, GFX942_PROCESSOR, GFX942_TARGET_FEATURES};
+/// use ferric_spec::Identity;
+/// let _ = bind_gfx942_device(
+///     Identity::new([1; 32]),
+///     7,
+///     GFX942_PROCESSOR,
+///     GFX942_TARGET_FEATURES,
+/// );
+/// ```
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Gfx942DeviceBinding {
     device_id: Identity,
     node_id: u32,
+    kfd_gpu_id: u32,
+    gpu_unique_id: u64,
+    admission_generation: u64,
     target: Target,
 }
 
@@ -101,52 +118,74 @@ impl Gfx942DeviceBinding {
     }
 }
 
-closed spec fn exact_device_binding(
-    binding: Gfx942DeviceBinding,
-    device_id: Identity,
-    node_id: u32,
-) -> bool {
-    binding.device_id == device_id
-        && binding.node_id == node_id
-        && binding.target == Target::Gfx942XnackMinus
-}
-
-fn exact_binding(device_id: Identity, node_id: u32) -> (binding: Gfx942DeviceBinding)
-    ensures exact_device_binding(binding, device_id, node_id),
-{
-    proof { reveal(exact_device_binding); }
-    Gfx942DeviceBinding {
-        device_id,
-        node_id,
-        target: Target::Gfx942XnackMinus,
-    }
-}
-
 } // verus!
 
-/// Validates and retains the exact single-device gfx942 declaration.
-///
-/// This function does not inspect a machine or authenticate `device_id`.
-///
-/// # Errors
-///
-/// Rejects an absent identity or any processor/feature byte drift.
-pub fn bind_gfx942_device(
-    device_id: Identity,
-    node_id: u32,
-    processor: &str,
-    target_features: &str,
-) -> Result<Gfx942DeviceBinding, DeviceKvCacheError> {
-    if !device_id.is_present() {
-        return Err(DeviceKvCacheError::MissingDeviceIdentity);
+impl Gfx942DeviceBinding {
+    /// KFD GPU identifier observed by the checked fe2 device admission.
+    #[must_use]
+    pub const fn kfd_gpu_id(self) -> u32 {
+        self.kfd_gpu_id
     }
-    if processor != GFX942_PROCESSOR {
-        return Err(DeviceKvCacheError::ProcessorMismatch);
+
+    /// Stable GPU unique identifier observed in the checked topology snapshot.
+    #[must_use]
+    pub const fn gpu_unique_id(self) -> u64 {
+        self.gpu_unique_id
     }
-    if target_features != GFX942_TARGET_FEATURES {
-        return Err(DeviceKvCacheError::TargetFeaturesMismatch);
+
+    /// Process-local fe2 device-admission generation committed before VM acquisition.
+    #[must_use]
+    pub const fn admission_generation(self) -> u64 {
+        self.admission_generation
     }
-    Ok(exact_binding(device_id, node_id))
+
+    pub(crate) const fn from_physical_receipt(
+        device_id: Identity,
+        node_id: u32,
+        kfd_gpu_id: u32,
+        gpu_unique_id: u64,
+        admission_generation: u64,
+    ) -> Self {
+        Self {
+            device_id,
+            node_id,
+            kfd_gpu_id,
+            gpu_unique_id,
+            admission_generation,
+            target: Target::Gfx942XnackMinus,
+        }
+    }
+}
+
+#[cfg(test)]
+pub(crate) mod test_support {
+    use super::*;
+
+    /// Builds an inert device receipt for host-only state-machine tests.
+    pub(crate) fn bind_gfx942_device(
+        device_id: Identity,
+        node_id: u32,
+        processor: &str,
+        target_features: &str,
+    ) -> Result<Gfx942DeviceBinding, DeviceKvCacheError> {
+        if !device_id.is_present() {
+            return Err(DeviceKvCacheError::MissingDeviceIdentity);
+        }
+        if processor != GFX942_PROCESSOR {
+            return Err(DeviceKvCacheError::ProcessorMismatch);
+        }
+        if target_features != GFX942_TARGET_FEATURES {
+            return Err(DeviceKvCacheError::TargetFeaturesMismatch);
+        }
+        Ok(Gfx942DeviceBinding {
+            device_id,
+            node_id,
+            kfd_gpu_id: node_id,
+            gpu_unique_id: u64::from(node_id),
+            admission_generation: 1,
+            target: Target::Gfx942XnackMinus,
+        })
+    }
 }
 
 /// Fail-closed device-cache rejection.
@@ -350,12 +389,19 @@ pub enum M1DeviceKvArenaLeaseRecoveryPhaseV1 {
 #[must_use = "partial generic partition custody must remain quarantined"]
 #[derive(Debug)]
 pub struct M1TargetPartitionedKvQuarantineV1 {
+    device: Gfx942DeviceBinding,
     model_memory: BoundModelMemoryAllocationsV1,
     allocations: ServiceAllocationSessionV1,
     target_planes: TargetKvPlaneSubleasesV1,
 }
 
 impl M1TargetPartitionedKvQuarantineV1 {
+    /// Returns the checked physical-device receipt retained in quarantine.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.device
+    }
+
     /// Returns the exact inert target-arena identity retained in quarantine.
     #[must_use]
     pub const fn target_allocation_id(&self) -> Identity {
@@ -388,6 +434,15 @@ pub enum M1DeviceKvArenaLeaseRecoveryV1 {
 }
 
 impl M1DeviceKvArenaLeaseRecoveryV1 {
+    /// Returns the checked physical-device receipt retained in either recovery phase.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        match self {
+            Self::Unpartitioned(recovery) => recovery.device(),
+            Self::TargetPartitioned(quarantine) => quarantine.device(),
+        }
+    }
+
     /// Returns the redacted retained partition phase without exposing owners.
     #[must_use]
     pub const fn phase(&self) -> M1DeviceKvArenaLeaseRecoveryPhaseV1 {
@@ -409,15 +464,11 @@ impl M1DeviceKvArenaLeaseRecoveryV1 {
     /// after any generic partition has already succeeded.
     pub fn retry(
         self,
-        device: Gfx942DeviceBinding,
     ) -> Result<M1PartitionedModelMemoryKvPoolV1, M1DeviceKvArenaLeaseBindingFailureV1> {
         match self {
             Self::Unpartitioned(recovery) => {
-                let M1UnpartitionedModelMemoryKvRecoveryV1 {
-                    model_memory,
-                    allocations,
-                } = *recovery;
-                bind_m1_partitioned_model_memory_kv_pool_v1(allocations, model_memory, device)
+                let M1UnpartitionedModelMemoryKvRecoveryV1 { initialized } = *recovery;
+                bind_m1_partitioned_model_memory_kv_pool_v1(initialized)
             }
             recovery @ Self::TargetPartitioned(_) => Err(M1DeviceKvArenaLeaseBindingFailureV1 {
                 error: M1DeviceKvArenaLeaseErrorV1::RetryDenied,
@@ -435,15 +486,21 @@ impl M1DeviceKvArenaLeaseRecoveryV1 {
 /// ```compile_fail
 /// use ferric_engine::M1UnpartitionedModelMemoryKvRecoveryV1;
 /// fn escape(recovery: M1UnpartitionedModelMemoryKvRecoveryV1) {
-///     let _ = recovery.model_memory;
-///     let _ = recovery.allocations;
+///     let _ = recovery.initialized;
 /// }
 /// ```
 #[must_use = "unchanged partition inputs must be retried or retained"]
 #[derive(Debug)]
 pub struct M1UnpartitionedModelMemoryKvRecoveryV1 {
-    model_memory: BoundModelMemoryAllocationsV1,
-    allocations: ServiceAllocationSessionV1,
+    initialized: M1DeviceBoundModelMemoryV1,
+}
+
+impl M1UnpartitionedModelMemoryKvRecoveryV1 {
+    /// Returns the checked physical-device receipt retained before partitioning.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.initialized.device()
+    }
 }
 
 /// Transactional partition rejection retaining every still-live owner.
@@ -455,6 +512,12 @@ pub struct M1DeviceKvArenaLeaseBindingFailureV1 {
 }
 
 impl M1DeviceKvArenaLeaseBindingFailureV1 {
+    /// Returns the checked physical-device receipt retained by the failure.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.recovery.device()
+    }
+
     /// Returns the fail-closed partition diagnostic.
     #[must_use]
     pub const fn error(&self) -> &M1DeviceKvArenaLeaseErrorV1 {
@@ -473,8 +536,8 @@ impl M1DeviceKvArenaLeaseBindingFailureV1 {
 /// This value consumes the non-clone model-memory owner and retains the sole
 /// generic target/draft KV plane partitions. It intentionally provides no
 /// model-memory borrow or extraction method: legacy unpartitioned KV ranges
-/// are invalid after this transition. The physical fixed-batch builder must
-/// learn to consume this owner before partitioned execution can be published.
+/// are invalid after this transition. The physical fixed-batch builder consumes
+/// this exact owner and carries its receipt through queue custody.
 ///
 /// Page leases are minted only after every layer's exact key/value page
 /// subrange is revalidated against the live generic allocation session. The
@@ -1069,28 +1132,22 @@ impl M1PartitionedModelMemoryKvPoolV1 {
 /// caller cannot create a second pool or retain a legacy range path:
 ///
 /// ```compile_fail
-/// use fe2o3_service_host::ServiceAllocationSessionV1;
 /// use ferric_engine::{
-///     bind_m1_partitioned_model_memory_kv_pool_v1, BoundModelMemoryAllocationsV1,
-///     Gfx942DeviceBinding,
+///     bind_m1_partitioned_model_memory_kv_pool_v1, M1DeviceBoundModelMemoryV1,
 /// };
-/// fn partition_twice(
-///     allocations: ServiceAllocationSessionV1,
-///     model: BoundModelMemoryAllocationsV1,
-///     device: Gfx942DeviceBinding,
-/// ) {
-///     let _first = bind_m1_partitioned_model_memory_kv_pool_v1(allocations, model, device);
-///     let _second = bind_m1_partitioned_model_memory_kv_pool_v1(allocations, model, device);
+/// fn partition_twice(initialized: M1DeviceBoundModelMemoryV1) {
+///     let _first = bind_m1_partitioned_model_memory_kv_pool_v1(initialized);
+///     let _second = bind_m1_partitioned_model_memory_kv_pool_v1(initialized);
 /// }
 /// ```
 pub fn bind_m1_partitioned_model_memory_kv_pool_v1(
-    mut allocations: ServiceAllocationSessionV1,
-    model_memory: BoundModelMemoryAllocationsV1,
-    device: Gfx942DeviceBinding,
+    initialized: M1DeviceBoundModelMemoryV1,
 ) -> Result<M1PartitionedModelMemoryKvPoolV1, M1DeviceKvArenaLeaseBindingFailureV1> {
+    let (device, mut allocations, model_memory) = initialized.into_parts();
     if let Err(source) = model_memory.revalidate_for_kv_partition() {
         return Err(unpartitioned_kv_pool_failure(
             M1DeviceKvArenaLeaseErrorV1::ModelMemory(source),
+            device,
             model_memory,
             allocations,
         ));
@@ -1103,6 +1160,7 @@ pub fn bind_m1_partitioned_model_memory_kv_pool_v1(
         Err(error) => {
             return Err(unpartitioned_kv_pool_failure(
                 error,
+                device,
                 model_memory,
                 allocations,
             ));
@@ -1116,6 +1174,7 @@ pub fn bind_m1_partitioned_model_memory_kv_pool_v1(
         Err(error) => {
             return Err(unpartitioned_kv_pool_failure(
                 error,
+                device,
                 model_memory,
                 allocations,
             ));
@@ -1126,6 +1185,7 @@ pub fn bind_m1_partitioned_model_memory_kv_pool_v1(
         Err(error) => {
             return Err(unpartitioned_kv_pool_failure(
                 error,
+                device,
                 model_memory,
                 allocations,
             ));
@@ -1136,6 +1196,7 @@ pub fn bind_m1_partitioned_model_memory_kv_pool_v1(
         Err(error) => {
             return Err(unpartitioned_kv_pool_failure(
                 error,
+                device,
                 model_memory,
                 allocations,
             ));
@@ -1149,6 +1210,7 @@ pub fn bind_m1_partitioned_model_memory_kv_pool_v1(
         {
             return Err(unpartitioned_kv_pool_failure(
                 M1DeviceKvArenaLeaseErrorV1::Allocation { role, source },
+                device,
                 model_memory,
                 allocations,
             ));
@@ -1166,6 +1228,7 @@ pub fn bind_m1_partitioned_model_memory_kv_pool_v1(
                     role: Qwen3ModelRole::Target8B,
                     source,
                 },
+                device,
                 model_memory,
                 allocations,
             ));
@@ -1184,6 +1247,7 @@ pub fn bind_m1_partitioned_model_memory_kv_pool_v1(
                 },
                 recovery: Box::new(M1DeviceKvArenaLeaseRecoveryV1::TargetPartitioned(Box::new(
                     M1TargetPartitionedKvQuarantineV1 {
+                        device,
                         model_memory,
                         allocations,
                         target_planes,
@@ -1206,6 +1270,7 @@ pub fn bind_m1_partitioned_model_memory_kv_pool_v1(
 
 fn unpartitioned_kv_pool_failure(
     error: M1DeviceKvArenaLeaseErrorV1,
+    device: Gfx942DeviceBinding,
     model_memory: BoundModelMemoryAllocationsV1,
     allocations: ServiceAllocationSessionV1,
 ) -> M1DeviceKvArenaLeaseBindingFailureV1 {
@@ -1213,8 +1278,11 @@ fn unpartitioned_kv_pool_failure(
         error,
         recovery: Box::new(M1DeviceKvArenaLeaseRecoveryV1::Unpartitioned(Box::new(
             M1UnpartitionedModelMemoryKvRecoveryV1 {
-                model_memory,
-                allocations,
+                initialized: M1DeviceBoundModelMemoryV1::from_parts(
+                    device,
+                    allocations,
+                    model_memory,
+                ),
             },
         ))),
     }
@@ -3727,6 +3795,7 @@ impl SettledQuiescentDeviceKvCache {
 
 #[cfg(test)]
 mod tests {
+    use super::test_support::bind_gfx942_device;
     use super::*;
     use ferric_build::qwen3_kv_arena_bytes;
     use ferric_spec::{Qwen3ExecutionMode, Qwen3PlanBucket, M1_KV_PHYSICAL_PAGE_SLOTS};

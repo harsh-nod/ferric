@@ -1450,9 +1450,10 @@ pub fn bind_m1_speculative_draft_kv_round_workspace_table_v1(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::device_cache::test_support::bind_gfx942_device;
     use crate::{
-        bind_gfx942_device, ActiveDeviceKvCache, DeviceKvPageLease, ExactCompletion,
-        Gfx942DeviceBinding, GFX942_PROCESSOR, GFX942_TARGET_FEATURES,
+        ActiveDeviceKvCache, DeviceKvPageLease, ExactCompletion, Gfx942DeviceBinding,
+        GFX942_PROCESSOR, GFX942_TARGET_FEATURES,
     };
     use ferric_spec::completion::CompletionEpoch;
     use ferric_spec::{

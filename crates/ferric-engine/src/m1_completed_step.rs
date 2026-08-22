@@ -1070,10 +1070,8 @@ mod tests {
     };
 
     use super::*;
-    use crate::{
-        bind_gfx942_device, DeviceKvPageLease, Gfx942DeviceBinding, GFX942_PROCESSOR,
-        GFX942_TARGET_FEATURES,
-    };
+    use crate::device_cache::test_support::bind_gfx942_device;
+    use crate::{DeviceKvPageLease, Gfx942DeviceBinding, GFX942_PROCESSOR, GFX942_TARGET_FEATURES};
 
     const EPOCH: CompletionEpoch = CompletionEpoch::new(1);
 

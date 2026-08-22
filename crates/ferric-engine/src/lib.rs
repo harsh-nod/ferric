@@ -24,6 +24,7 @@ mod operation_kernel_plan;
 mod persisted_kernel_artifacts;
 mod physical_buffer_bindings;
 mod physical_buffer_recipe;
+mod physical_device;
 mod physical_dispatch_recipe;
 mod physical_fixed_batch;
 mod physical_kernarg_recipe;
@@ -56,10 +57,10 @@ pub use completion_wire::{
     CompletionWireSemanticExpectation, EpochJoinedCompletionRecord, InertCheckedCompletionRecord,
 };
 pub use device_cache::{
-    bind_gfx942_device, bind_m1_partitioned_model_memory_kv_pool_v1, AbortedDeviceKvStepWrite,
-    ActiveDeviceKvCache, CancelledDeviceKvCache, DeviceKvAppendFailure, DeviceKvCacheError,
-    DeviceKvCacheProjection, DeviceKvCancellationFailure, DeviceKvCancellationOutcome,
-    DeviceKvPageLease, DeviceKvReadBinding, DeviceKvRetirementOutcome, DeviceKvStepAbortFailure,
+    bind_m1_partitioned_model_memory_kv_pool_v1, AbortedDeviceKvStepWrite, ActiveDeviceKvCache,
+    CancelledDeviceKvCache, DeviceKvAppendFailure, DeviceKvCacheError, DeviceKvCacheProjection,
+    DeviceKvCancellationFailure, DeviceKvCancellationOutcome, DeviceKvPageLease,
+    DeviceKvReadBinding, DeviceKvRetirementOutcome, DeviceKvStepAbortFailure,
     DeviceKvStepPageBinding, DeviceKvStepPageIdentity, DeviceKvStepReservationFailure,
     Gfx942DeviceBinding, InitializedDeviceKvWrite, M1DeviceKvArenaLeaseBindingFailureV1,
     M1DeviceKvArenaLeaseErrorV1, M1DeviceKvArenaLeaseRecoveryPhaseV1,
@@ -147,6 +148,14 @@ pub use physical_buffer_recipe::{
     M1PhysicalBufferAccessV1, M1PhysicalBufferRecipeErrorV1, M1PhysicalBufferRecipeFailureV1,
     M1PhysicalBufferRecipeRowV1, M1PhysicalBufferSentinelV1, M1PhysicalBufferSourceV1,
     M1PhysicalExplicitBufferV1, M1_PHYSICAL_BUFFER_RECIPE_VERSION_V1,
+};
+pub use physical_device::{
+    acquire_m1_checked_gfx942_service_device_v1, allocate_initialized_m1_model_memory_on_device_v1,
+    M1CheckedGfx942ServiceDeviceAcquireFailureV1, M1CheckedGfx942ServiceDeviceV1,
+    M1DeviceBoundModelMemoryV1, M1DeviceModelMemoryAllocationFailureClassV1,
+    M1DeviceModelMemoryAllocationFailureV1, M1DeviceModelMemoryFailureReleaseFailureV1,
+    M1DeviceModelMemoryFailureReleaseObservationV1, M1UnpublishedAllocationReleaseFailureV1,
+    M1UnpublishedAllocationReleaseObservationV1,
 };
 pub use physical_dispatch_recipe::{
     derive_m1_physical_dispatch_recipe_v1, AddresslessM1PhysicalDispatchRecipeV1,
