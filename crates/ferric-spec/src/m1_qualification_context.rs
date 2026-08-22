@@ -334,6 +334,18 @@ impl M1QualificationContextStepKind {
                 | (Self::FinalObserved, Self::FinalObserved)
         )
     }
+
+    fn externally_emitted_outputs_per_lane(self) -> (outputs: u32)
+        ensures
+            self == Self::TeacherForcedPromptContext ==> outputs == 0,
+            self == Self::FinalObserved ==> outputs == 1,
+    {
+        match self {
+            Self::TeacherForcedPromptContext => 0,
+            Self::FinalObserved => 1,
+        }
+    }
+
 }
 
 /// Disposition of the model compact choice computed by one step.
@@ -440,7 +452,6 @@ impl M1QualificationContextStep {
         }
     }
 
-    #[allow(clippy::bool_to_int_with_if)]
     fn validate_at(
         self,
         ordinal: u32,
@@ -470,7 +481,7 @@ impl M1QualificationContextStep {
         } else {
             M1QualificationNextInputPolicy::Terminal
         };
-        let expected_outputs_per_lane = if priming { 0 } else { 1 };
+        let expected_outputs_per_lane = expected_kind.externally_emitted_outputs_per_lane();
         let expected_aggregate_outputs = if priming { 0 } else { sequences };
         let expected_host_publication = !priming;
         let expected_end = ordinal + 1;
@@ -729,7 +740,6 @@ impl M1QualificationContextPlan {
 /// [`M1QualificationContextPlan::validate`] joins it exactly to independently
 /// authenticated runtime expectations.
 #[must_use]
-#[allow(clippy::bool_to_int_with_if)]
 pub fn m1_qualification_context_plan(
     grouping: M1QualificationLaneGrouping,
     execution_binding: M1QualificationExecutionBindingDeclaration,
@@ -758,12 +768,15 @@ pub fn m1_qualification_context_plan(
         decreases M1_QUALIFICATION_TOKENS_PER_LANE - ordinal,
     {
         let priming = ordinal < M1_QUALIFICATION_PROMPT_CONTEXT_TOKENS;
+        let kind = if priming {
+            M1QualificationContextStepKind::TeacherForcedPromptContext
+        } else {
+            M1QualificationContextStepKind::FinalObserved
+        };
+        let externally_emitted_outputs_per_lane =
+            kind.externally_emitted_outputs_per_lane();
         let step = M1QualificationContextStep {
-            kind: if priming {
-                M1QualificationContextStepKind::TeacherForcedPromptContext
-            } else {
-                M1QualificationContextStepKind::FinalObserved
-            },
+            kind,
             input_tokens: M1QualificationTokenRange {
                 start: ordinal,
                 end: ordinal + 1,
@@ -782,7 +795,7 @@ pub fn m1_qualification_context_plan(
             } else {
                 M1QualificationNextInputPolicy::Terminal
             },
-            externally_emitted_outputs_per_lane: if priming { 0 } else { 1 },
+            externally_emitted_outputs_per_lane,
             aggregate_externally_emitted_output_count: if priming { 0 } else { sequences },
             qualification_capture_destination_required: true,
             publish_qualification_output_to_host: !priming,
