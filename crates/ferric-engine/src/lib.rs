@@ -13,6 +13,7 @@ mod model_memory_allocations;
 mod operation_dispatch_expansion;
 mod operation_kernel_plan;
 mod physical_dispatch_recipe;
+mod physical_kernarg_recipe;
 mod physical_program_catalog;
 mod physical_step;
 mod runner;
@@ -63,6 +64,11 @@ pub use physical_dispatch_recipe::{
     derive_m1_physical_dispatch_recipe_v1, AddresslessM1PhysicalDispatchRecipeV1,
     M1PhysicalDispatchRecipeErrorV1, M1PhysicalDispatchRecipeRowV1, M1PhysicalProfileFamilyV1,
     M1_PHYSICAL_DISPATCH_RECIPE_VERSION_V1,
+};
+pub use physical_kernarg_recipe::{
+    derive_m1_physical_kernarg_recipe_v1, AddresslessM1PhysicalKernargRecipeV1,
+    M1PhysicalKernargImageV1, M1PhysicalKernargRecipeErrorV1, M1PhysicalKernargRecipeFailureV1,
+    M1_COV6_HIDDEN_KERNARG_BYTES_V1, M1_PHYSICAL_KERNARG_RECIPE_VERSION_V1,
 };
 pub use physical_program_catalog::{
     bind_content_bound_m1_program_catalog_v1, ContentBoundM1ProgramCatalogV1,
