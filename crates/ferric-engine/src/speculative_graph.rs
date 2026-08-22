@@ -68,7 +68,10 @@ impl SingleMemberSpeculativeGraphFailure {
         self.completion
     }
 
-    pub closed spec fn returns_completion_at_spec(&self, epoch: ferric_spec::CompletionEpoch) -> bool {
+    pub closed spec fn returns_completion_at_spec(
+        &self,
+        epoch: ferric_spec::completion::CompletionEpoch,
+    ) -> bool {
         match self.completion {
             Some(completion) => completion.epoch_spec() == epoch,
             None => false,
