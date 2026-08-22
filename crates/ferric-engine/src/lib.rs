@@ -19,6 +19,7 @@ mod runner;
 mod scheduler;
 mod speculative_graph;
 mod step_dispatch_composition;
+mod step_workspace_composition;
 mod step_workspace_subleases;
 mod system;
 
@@ -84,6 +85,12 @@ pub use step_dispatch_composition::{
     derive_m1_step_dispatch_plan, AddresslessM1StepDispatchPlan, M1StepDispatchCompositionError,
     M1StepDispatchDependency, M1StepDispatchIntent, M1StepDispatchSegment, M1StepDispatchStage,
     M1_MAX_STEP_DISPATCHES_V1, M1_STEP_DISPATCH_COMPOSITION_VERSION,
+};
+pub use step_workspace_composition::{
+    compose_addressless_m1_full_step_workspaces, AddresslessM1FullStepWorkspaceComposition,
+    M1FullStepWorkspaceCompositionError, M1FullStepWorkspaceCompositionFailure,
+    M1FullStepWorkspaceCompositionOutcome, M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans,
+    M1FullStepWorkspaceRole, M1FullStepWorkspaceSegmentBinding, M1SpeculativeDraftChoiceSubrange,
 };
 pub use step_workspace_subleases::{
     bind_addressless_m1_step_workspace_subleases, BoundM1StepWorkspaceSubleases,
