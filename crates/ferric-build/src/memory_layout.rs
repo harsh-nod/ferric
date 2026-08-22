@@ -323,6 +323,10 @@ pub enum ModelMemoryPlanError {
         /// Rejected request-local page index.
         page: u32,
     },
+    /// A request generation of zero cannot identify live scheduler custody.
+    ZeroRequestGeneration,
+    /// A physical-page generation of zero cannot identify live KV custody.
+    ZeroPageGeneration,
     /// Checked range arithmetic exceeded the declared allocation.
     RangeOverflow,
 }
@@ -482,8 +486,8 @@ impl AddresslessModelMemoryPlan {
     ///
     /// # Errors
     ///
-    /// Returns [`ModelMemoryPlanError`] for an out-of-range request slot,
-    /// request-local page, layer, or checked range computation.
+    /// Returns [`ModelMemoryPlanError`] for a zero generation, out-of-range
+    /// request slot, request-local page, layer, or checked range computation.
     pub fn kv_request_page(
         &self,
         request: RequestId,
@@ -491,6 +495,12 @@ impl AddresslessModelMemoryPlan {
         component: KvCacheComponent,
         layer: u32,
     ) -> Result<ModelKvPageMemoryBinding, ModelMemoryPlanError> {
+        if request.generation() == 0 {
+            return Err(ModelMemoryPlanError::ZeroRequestGeneration);
+        }
+        if page.generation() == 0 {
+            return Err(ModelMemoryPlanError::ZeroPageGeneration);
+        }
         if request.slot() >= M1_MAX_ACTIVE_SEQUENCES {
             return Err(ModelMemoryPlanError::RequestSlotOutOfRange {
                 slot: request.slot(),
@@ -888,7 +898,7 @@ mod tests {
     }
 
     #[test]
-    fn request_slot_and_local_page_bounds_fail_closed() {
+    fn request_and_page_generation_and_bounds_fail_closed() {
         let plan = exact_plan();
         let role = Qwen3ModelRole::Draft06B;
         assert_eq!(
@@ -913,6 +923,24 @@ mod tests {
             Err(ModelMemoryPlanError::RequestPageOutOfRange {
                 page: local_out_of_range,
             })
+        );
+        assert_eq!(
+            plan.kv_request_page(
+                RequestId::new(0, 0),
+                PhysicalPageId::new(role, 0, 1),
+                KvCacheComponent::Key,
+                0,
+            ),
+            Err(ModelMemoryPlanError::ZeroRequestGeneration)
+        );
+        assert_eq!(
+            plan.kv_request_page(
+                RequestId::new(0, 1),
+                PhysicalPageId::new(role, 0, 0),
+                KvCacheComponent::Key,
+                0,
+            ),
+            Err(ModelMemoryPlanError::ZeroPageGeneration)
         );
     }
 }
