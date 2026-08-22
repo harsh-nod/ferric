@@ -1498,6 +1498,15 @@ impl M1ObservedQualificationOutputV1 {
     ) -> Result<ServiceQueueReleaseObservationV1, M1PhysicalQueueReleaseFailureV1> {
         self.completion.destroy_and_release()
     }
+
+    pub(crate) fn into_teardown_parts(
+        self,
+    ) -> (
+        M1ObservedCompletionOutputV1,
+        M1QualificationCompletionEvidenceV1,
+    ) {
+        (self.completion, self.evidence)
+    }
 }
 
 /// Successful semantic join retaining qualification evidence beside completion.

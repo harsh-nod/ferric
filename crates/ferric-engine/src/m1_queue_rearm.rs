@@ -2099,7 +2099,7 @@ impl M1RearmedQualificationObservationFailureV1 {
         M1RearmedQualificationObservationTeardownSuccessV1,
         Box<M1RearmedQualificationObservationTeardownFailureV1>,
     > {
-        quarantine_qualification_observation_teardown(engine);
+        quarantine_qualification_teardown(engine);
         let Self {
             source,
             carry,
@@ -2125,7 +2125,7 @@ impl M1RearmedQualificationObservationFailureV1 {
     }
 }
 
-fn quarantine_qualification_observation_teardown<const C: usize>(engine: &mut Engine<C>) {
+fn quarantine_qualification_teardown<const C: usize>(engine: &mut Engine<C>) {
     engine.quarantine_m1_queue_rearm_failure();
 }
 
@@ -2526,6 +2526,212 @@ impl M1RearmedQualificationCompletedReadbackJoinFailureV1 {
         M1RearmedObservedQualificationOutputV1,
     ) {
         (self.error, *self.observed)
+    }
+
+    /// Permanently quarantines `engine`, then destroys the semantically
+    /// rejected physical queue while retaining the diagnostic, copied
+    /// qualification evidence, and exact selected/parked cache lineage.
+    ///
+    /// A semantic mismatch cannot authorize the pending KV write even though
+    /// its bytes were physically observed. The returned custody is therefore
+    /// terminal and deliberately cannot re-enter scheduling.
+    ///
+    /// ```compile_fail
+    /// use ferric_engine::{Engine, M1RearmedQualificationCompletedReadbackJoinFailureV1};
+    /// fn teardown_twice(
+    ///     engine: &mut Engine<32>,
+    ///     failure: M1RearmedQualificationCompletedReadbackJoinFailureV1,
+    /// ) {
+    ///     let _first = failure.destroy_queue_and_retain_custody(engine);
+    ///     let _second = failure.destroy_queue_and_retain_custody(engine);
+    /// }
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal lower queue-release quarantine joined to the same
+    /// semantic diagnostic, evidence, and cache lineage.
+    pub fn destroy_queue_and_retain_custody<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1RearmedQualificationSemanticTeardownSuccessV1,
+        Box<M1RearmedQualificationSemanticTeardownFailureV1>,
+    > {
+        quarantine_qualification_teardown(engine);
+        let Self { error, observed } = self;
+        let M1RearmedObservedQualificationOutputV1 {
+            observed,
+            carry,
+            queue_observation,
+            device,
+        } = *observed;
+        let (completion, evidence) = observed.into_teardown_parts();
+        match completion.destroy_and_release() {
+            Ok(queue_release) => Ok(M1RearmedQualificationSemanticTeardownSuccessV1 {
+                error,
+                evidence,
+                queue_release,
+                carry,
+                queue_observation,
+                device,
+            }),
+            Err(source) => Err(Box::new(M1RearmedQualificationSemanticTeardownFailureV1 {
+                error,
+                evidence,
+                source,
+                carry,
+                queue_observation,
+                device,
+            })),
+        }
+    }
+}
+
+/// Clean queue teardown after terminal qualification semantic rejection.
+///
+/// The copied evidence and exact diagnostic remain inspectable, while selected
+/// and parked caches are intentionally inert beside the fail-stopped Engine.
+#[must_use = "semantic rejection evidence and cache quarantine remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedQualificationSemanticTeardownSuccessV1 {
+    error: crate::M1CompletedReadbackJoinErrorV1,
+    evidence: crate::M1QualificationCompletionEvidenceV1,
+    queue_release: ServiceQueueReleaseObservationV1,
+    carry: M1RearmContinuationCustodyV1,
+    queue_observation: ComputeAqlQueueObservationV1,
+    device: Gfx942DeviceBinding,
+}
+
+impl M1RearmedQualificationSemanticTeardownSuccessV1 {
+    /// Exact semantic rejection retained through teardown.
+    #[must_use]
+    pub const fn error(&self) -> &crate::M1CompletedReadbackJoinErrorV1 {
+        &self.error
+    }
+
+    /// Copied compact and final-logits qualification evidence.
+    #[must_use = "qualification evidence remains retained"]
+    pub const fn evidence(&self) -> &crate::M1QualificationCompletionEvidenceV1 {
+        &self.evidence
+    }
+
+    /// Exact generic queue release observation.
+    #[must_use]
+    pub const fn queue_release(&self) -> ServiceQueueReleaseObservationV1 {
+        self.queue_release
+    }
+
+    /// Number of selected and parked caches retained in terminal quarantine.
+    #[must_use]
+    pub const fn retained_cache_count(&self) -> usize {
+        self.carry.selected.len() + self.carry.parked.len()
+    }
+
+    /// Selected requests retained in exact scheduler order.
+    #[must_use]
+    pub fn selected_requests(&self) -> impl ExactSizeIterator<Item = RequestId> + '_ {
+        self.carry
+            .selected
+            .iter()
+            .map(|cache| cache.projection().request)
+    }
+
+    /// Active caches parked outside the rejected selected roster.
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        self.carry.parked.len()
+    }
+
+    /// Exact predecessor completion epoch.
+    #[must_use]
+    pub const fn previous_epoch(&self) -> CompletionEpoch {
+        self.carry.previous_epoch
+    }
+
+    /// Exact completed queue generation observed before teardown.
+    #[must_use]
+    pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
+        self.queue_observation
+    }
+
+    /// Checked physical-device receipt retained through teardown.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.device
+    }
+}
+
+/// Terminal queue-release failure after qualification semantic rejection.
+///
+/// The failed lower release remains joined to the semantic diagnostic, copied
+/// evidence, and exact selected/parked cache quarantine.
+#[must_use = "semantic and queue-release quarantine remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedQualificationSemanticTeardownFailureV1 {
+    error: crate::M1CompletedReadbackJoinErrorV1,
+    evidence: crate::M1QualificationCompletionEvidenceV1,
+    source: crate::M1PhysicalQueueReleaseFailureV1,
+    carry: M1RearmContinuationCustodyV1,
+    queue_observation: ComputeAqlQueueObservationV1,
+    device: Gfx942DeviceBinding,
+}
+
+impl M1RearmedQualificationSemanticTeardownFailureV1 {
+    /// Exact semantic rejection retained beside release quarantine.
+    #[must_use]
+    pub const fn error(&self) -> &crate::M1CompletedReadbackJoinErrorV1 {
+        &self.error
+    }
+
+    /// Copied compact and final-logits qualification evidence.
+    #[must_use = "qualification evidence remains retained"]
+    pub const fn evidence(&self) -> &crate::M1QualificationCompletionEvidenceV1 {
+        &self.evidence
+    }
+
+    /// Terminal lower queue-release failure.
+    pub const fn source(&self) -> &crate::M1PhysicalQueueReleaseFailureV1 {
+        &self.source
+    }
+
+    /// Number of selected and parked caches retained in terminal quarantine.
+    #[must_use]
+    pub const fn retained_cache_count(&self) -> usize {
+        self.carry.selected.len() + self.carry.parked.len()
+    }
+
+    /// Selected requests retained in exact scheduler order.
+    #[must_use]
+    pub fn selected_requests(&self) -> impl ExactSizeIterator<Item = RequestId> + '_ {
+        self.carry
+            .selected
+            .iter()
+            .map(|cache| cache.projection().request)
+    }
+
+    /// Active caches parked outside the rejected selected roster.
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        self.carry.parked.len()
+    }
+
+    /// Exact predecessor completion epoch.
+    #[must_use]
+    pub const fn previous_epoch(&self) -> CompletionEpoch {
+        self.carry.previous_epoch
+    }
+
+    /// Exact completed queue generation retained beside release quarantine.
+    #[must_use]
+    pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
+        self.queue_observation
+    }
+
+    /// Checked physical-device receipt retained beside release quarantine.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.device
     }
 }
 
@@ -4236,7 +4442,7 @@ mod tests {
     }
 
     #[test]
-    fn terminal_observation_teardown_quarantines_in_flight_engine() {
+    fn terminal_qualification_teardown_quarantines_in_flight_engine() {
         let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
         let request = engine.admit().unwrap();
         engine.append_tentative(request, 1).unwrap();
@@ -4244,7 +4450,7 @@ mod tests {
         assert_eq!(scheduled.member(0), Some(request));
         assert!(!engine.is_faulted());
 
-        quarantine_qualification_observation_teardown(&mut engine);
+        quarantine_qualification_teardown(&mut engine);
         assert!(engine.is_faulted());
         assert_eq!(engine.state(request), Some(RequestState::InFlight));
     }
@@ -4270,6 +4476,13 @@ mod tests {
             crate::M1CompletedReadbackJoinErrorV1,
             M1RearmedObservedQualificationOutputV1,
         );
+        type SemanticTeardown = fn(
+            M1RearmedQualificationCompletedReadbackJoinFailureV1,
+            &mut Engine<32>,
+        ) -> Result<
+            M1RearmedQualificationSemanticTeardownSuccessV1,
+            Box<M1RearmedQualificationSemanticTeardownFailureV1>,
+        >;
         type SemanticRetry = for<'a, 'b> fn(
             M1RearmedObservedQualificationOutputV1,
             &'a [crate::CompletionWireSemanticExpectation<'b>],
@@ -4313,6 +4526,10 @@ mod tests {
         let _: ObservationTeardown =
             M1RearmedQualificationObservationFailureV1::destroy_queue_and_retain_custody::<32>;
         let _: SemanticRecovery = M1RearmedQualificationCompletedReadbackJoinFailureV1::into_parts;
+        let _: SemanticTeardown =
+            M1RearmedQualificationCompletedReadbackJoinFailureV1::destroy_queue_and_retain_custody::<
+                32,
+            >;
         let _: SemanticRetry = retry_semantic;
         let _: TerminalCompletion = M1RearmedQualifiedCompletedReadbackV1::complete_retiring::<32>;
         let _: QualifiedRecovery = M1RearmedQualifiedCompletionOutcomeV1::into_parts;
