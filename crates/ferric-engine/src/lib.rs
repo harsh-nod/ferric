@@ -16,6 +16,7 @@ mod operation_kernel_plan;
 mod physical_buffer_bindings;
 mod physical_buffer_recipe;
 mod physical_dispatch_recipe;
+mod physical_fixed_batch;
 mod physical_kernarg_recipe;
 mod physical_program_catalog;
 mod physical_step;
@@ -84,6 +85,14 @@ pub use physical_dispatch_recipe::{
     M1PhysicalDispatchKindV1, M1PhysicalDispatchProfileV1, M1PhysicalDispatchRecipeErrorV1,
     M1PhysicalDispatchRecipeRowV1, M1PhysicalProfileFamilyV1,
     M1_PHYSICAL_DISPATCH_RECIPE_VERSION_V1,
+};
+pub use physical_fixed_batch::{
+    build_m1_physical_fixed_batch_v1, M1PhysicalFixedBatchBuildErrorV1,
+    M1PhysicalFixedBatchBuildFailureV1, M1PhysicalFixedBatchCaseV1, M1PhysicalFixedBatchCustodyV1,
+    M1PhysicalFixedBatchRowSetV1, M1PhysicalFixedBatchShapeV1, M1PhysicalFixedBatchV1,
+    M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
+    M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
 };
 pub use physical_kernarg_recipe::{
     derive_m1_physical_kernarg_recipe_v1, AddresslessM1PhysicalKernargRecipeV1,
