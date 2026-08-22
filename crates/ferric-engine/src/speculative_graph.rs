@@ -63,8 +63,12 @@ impl SingleMemberSpeculativeGraphFailure {
     /// Recovers the exact completion only when the engine did not consume it.
     #[must_use]
     pub fn into_completion(self) -> (completion: Option<ExactCompletion>)
-        ensures completion == self.completion,
+        ensures completion == self.completion_spec(),
     {
+        self.completion
+    }
+
+    pub closed spec fn completion_spec(&self) -> Option<ExactCompletion> {
         self.completion
     }
 
@@ -100,17 +104,32 @@ impl SingleMemberSpeculativeGraphFailure {
 pub struct SingleMemberSpeculativeGraphOutcome {
     logical: AtomicSpeculativeStepOutcome,
     accepted_draft_tokens: u8,
-    required_engine_accepted_tokens: u32,
 }
 
 impl SingleMemberSpeculativeGraphOutcome {
+    pub closed spec fn logical_spec(&self) -> AtomicSpeculativeStepOutcome {
+        self.logical
+    }
+
+    pub closed spec fn accepted_draft_tokens_spec(&self) -> u8 {
+        self.accepted_draft_tokens
+    }
+
+    pub closed spec fn required_engine_accepted_tokens_spec(&self) -> u32 {
+        (self.accepted_draft_tokens as int + 1) as u32
+    }
+
     #[must_use]
-    pub const fn logical(&self) -> AtomicSpeculativeStepOutcome {
+    pub const fn logical(&self) -> (logical: AtomicSpeculativeStepOutcome)
+        ensures logical == self.logical_spec(),
+    {
         self.logical
     }
 
     #[must_use]
-    pub const fn accepted_draft_tokens(&self) -> u8 {
+    pub const fn accepted_draft_tokens(&self) -> (accepted: u8)
+        ensures accepted == self.accepted_draft_tokens_spec(),
+    {
         self.accepted_draft_tokens
     }
 
@@ -119,9 +138,11 @@ impl SingleMemberSpeculativeGraphOutcome {
     /// This observation is not a cross-model KV refinement claim.
     #[must_use]
     pub const fn required_engine_accepted_tokens(&self) -> (accepted: u32)
-        ensures accepted as int == self.accepted_draft_tokens as int + 1,
+        ensures
+            accepted == self.required_engine_accepted_tokens_spec(),
+            accepted as int == self.accepted_draft_tokens_spec() as int + 1,
     {
-        self.required_engine_accepted_tokens
+        self.accepted_draft_tokens as u32 + 1
     }
 }
 
@@ -138,6 +159,26 @@ pub struct SingleMemberSpeculativeGraphInputs<'a> {
 }
 
 impl<'a> SingleMemberSpeculativeGraphInputs<'a> {
+    pub closed spec fn batch_valid_spec(&self) -> bool {
+        self.batch.valid()
+    }
+
+    pub closed spec fn index_spec(&self) -> &SpeculativeKvRoundIndex {
+        self.index
+    }
+
+    pub closed spec fn expected_spec(&self) -> &IsolatedSpeculativeKvExpectation {
+        self.expected
+    }
+
+    pub closed spec fn draft_tokens_spec(&self) -> Seq<ferric_spec::TokenId> {
+        self.token_inputs.draft_tokens@
+    }
+
+    pub closed spec fn target_choices_spec(&self) -> Seq<ferric_spec::TokenId> {
+        self.token_inputs.target_choices@
+    }
+
     /// Bundles the exact logical witnesses checked before engine completion.
     #[must_use]
     pub const fn new(
@@ -178,7 +219,7 @@ pub fn complete_single_member_speculative_graph<const C: usize>(
 ) -> (result: Result<SingleMemberSpeculativeGraphOutcome, SingleMemberSpeculativeGraphFailure>)
     requires
         old(engine).well_formed(),
-        inputs.batch.valid(),
+        inputs.batch_valid_spec(),
     ensures
         final(engine).well_formed(),
         match result {
@@ -188,16 +229,16 @@ pub fn complete_single_member_speculative_graph<const C: usize>(
                     final(publication),
                     old(selected),
                     final(selected),
-                    inputs.index,
-                    inputs.expected,
-                    inputs.token_inputs.draft_tokens@,
-                    inputs.token_inputs.target_choices@,
-                    outcome.logical,
+                    inputs.index_spec(),
+                    inputs.expected_spec(),
+                    inputs.draft_tokens_spec(),
+                    inputs.target_choices_spec(),
+                    outcome.logical_spec(),
                 )
-                &&& outcome.accepted_draft_tokens
-                    == outcome.logical.settlement.accepted_draft_tokens
-                &&& outcome.required_engine_accepted_tokens as int
-                    == outcome.accepted_draft_tokens as int + 1
+                &&& outcome.accepted_draft_tokens_spec()
+                    == outcome.logical_spec().settlement.accepted_draft_tokens
+                &&& outcome.required_engine_accepted_tokens_spec() as int
+                    == outcome.accepted_draft_tokens_spec() as int + 1
                 &&& final(engine).completed_epoch_spec() == completion.epoch_spec()
             },
             Err(failure) => {
@@ -251,7 +292,16 @@ pub fn complete_single_member_speculative_graph<const C: usize>(
     let accepted_draft_tokens = permit.accepted_draft_tokens();
     let required_engine_accepted_tokens = permit.required_single_member_accepted_tokens();
     let accepted = [required_engine_accepted_tokens];
+    let ghost before_completion = *engine;
     let completion_result = engine.complete_exact(completion, &accepted);
+    proof {
+        engine.apply_completion_observations(
+            &before_completion,
+            completion_epoch,
+            accepted@,
+            &completion_result,
+        );
+    }
     let _completed = match completion_result {
         Ok(completed) => completed,
         Err(failure) => {
@@ -263,9 +313,6 @@ pub fn complete_single_member_speculative_graph<const C: usize>(
             });
         },
     };
-    proof {
-        reveal(Engine::completion_refines);
-    }
     assert(_completed == 1);
     assert(engine.completed_epoch_spec() == completion_epoch);
     let logical = apply_preflighted_speculative_step(
@@ -280,10 +327,9 @@ pub fn complete_single_member_speculative_graph<const C: usize>(
     let outcome = SingleMemberSpeculativeGraphOutcome {
         logical,
         accepted_draft_tokens,
-        required_engine_accepted_tokens,
     };
-    assert(outcome.required_engine_accepted_tokens as int
-        == outcome.accepted_draft_tokens as int + 1);
+    assert(outcome.required_engine_accepted_tokens_spec() as int
+        == outcome.accepted_draft_tokens_spec() as int + 1);
     Ok(outcome)
 }
 

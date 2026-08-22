@@ -9764,6 +9764,7 @@ impl<const C: usize> Scheduler<C> {
                         limit as nat,
                     );
                     &&& batch.member_count_spec() > 0
+                    &&& batch.member_count_spec() <= old(output)@.len()
                     &&& batch.member_count_spec() == chosen.len()
                     &&& batch.member_count_spec() == expected.len()
                     &&& batch.epoch_spec().value == next_epoch
@@ -10284,6 +10285,10 @@ impl<const C: usize> Scheduler<C> {
                 final(output)@,
                 &result,
             ),
+            match result {
+                Ok(Some(batch)) => batch.member_count_spec() <= old(output)@.len(),
+                _ => true,
+            },
     {
         match self.dispatch_preflight(output) {
             Err(error) => {
@@ -10303,7 +10308,7 @@ impl<const C: usize> Scheduler<C> {
             Ok(Some((next_epoch, limit))) => {
                 let result = self.dispatch_enabled(output, next_epoch, limit);
                 proof {
-                    match result {
+                    match &result {
                         None => {
                             self.dispatch_enabled_compose_none(
                                 old(self),
@@ -10314,13 +10319,17 @@ impl<const C: usize> Scheduler<C> {
                             );
                         }
                         Some(batch) => {
+                            let ghost batch_snapshot = DispatchBatch {
+                                epoch: batch.epoch,
+                                member_count: batch.member_count,
+                            };
                             self.dispatch_enabled_compose_some(
                                 old(self),
                                 old(output)@,
                                 output@,
                                 next_epoch,
                                 limit,
-                                batch,
+                                batch_snapshot,
                             );
                         }
                     }

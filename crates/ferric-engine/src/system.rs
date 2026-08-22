@@ -40,8 +40,12 @@ impl CompletionFailure {
 
     #[must_use]
     pub fn into_completion(self) -> (completion: Option<ExactCompletion>)
-        ensures completion == self.completion,
+        ensures completion == self.completion_spec(),
     {
+        self.completion
+    }
+
+    pub closed spec fn completion_spec(&self) -> Option<ExactCompletion> {
         self.completion
     }
 
@@ -865,6 +869,35 @@ impl<const C: usize> Engine<C> {
                 }
             }
         }
+    }
+
+    pub(crate) proof fn apply_completion_observations(
+        &self,
+        before: &Self,
+        completion_epoch: CompletionEpoch,
+        accepted_tokens: Seq<u32>,
+        result: &Result<usize, CompletionFailure>,
+    )
+        requires self.completion_refines(
+            before,
+            completion_epoch,
+            accepted_tokens,
+            result,
+        ),
+        ensures
+            match result {
+                Ok(completed) => {
+                    &&& *completed == before.pending_batch_member_count_spec()
+                    &&& self.completed_epoch_spec() == completion_epoch
+                }
+                Err(failure) => match failure.completion_spec() {
+                    Some(returned) => returned.epoch_spec() == completion_epoch,
+                    None => self.faulted_spec(),
+                },
+            },
+    {
+        reveal(Engine::completion_refines);
+        reveal(CompletionFailure::completion_spec);
     }
 
     /// Constructs all request, ring, page, and completion-scratch storage.
@@ -1865,6 +1898,10 @@ impl<const C: usize> Engine<C> {
                 final(output)@,
                 &result,
             ),
+            match result {
+                Ok(Some(batch)) => batch.member_count_spec() <= old(output)@.len(),
+                _ => true,
+            },
     {
         reveal(Engine::well_formed);
         reveal(Engine::dispatch_ready_refines);
