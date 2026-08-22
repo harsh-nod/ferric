@@ -17,6 +17,7 @@ version = "0.1.0"
 [workspace.dependencies]
 fe2o3-amdhsa-loader = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "bea73e0b988c02911c10419f94319cb8f9af3f62" }
 fe2o3-aql = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "bea73e0b988c02911c10419f94319cb8f9af3f62" }
+fe2o3-kfd = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "bea73e0b988c02911c10419f94319cb8f9af3f62" }
 fe2o3-artifact-transaction = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "bea73e0b988c02911c10419f94319cb8f9af3f62" }
 fe2o3-compiler-ffi = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "bea73e0b988c02911c10419f94319cb8f9af3f62" }
 fe2o3-hsaco = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "bea73e0b988c02911c10419f94319cb8f9af3f62" }

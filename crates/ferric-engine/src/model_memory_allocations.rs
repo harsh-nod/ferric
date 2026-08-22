@@ -451,6 +451,23 @@ fn plan_allocations(plan: &AddresslessModelMemoryPlan) -> [DeclaredDeviceAllocat
     MODEL_MEMORY_SLOTS_V1.map(|(role, kind)| plan.allocation(role, kind))
 }
 
+pub(crate) fn preflight_addressless_model_memory_plan_v1(
+    plan: &AddresslessModelMemoryPlan,
+) -> Result<SelectedModelMemoryAllocationIdentitiesV1, ModelMemoryAllocationBindingErrorV1> {
+    let allocations = plan_allocations(plan);
+    let selected = SelectedModelMemoryAllocationIdentitiesV1::new(
+        allocations[0].allocation_id(),
+        allocations[1].allocation_id(),
+        allocations[2].allocation_id(),
+        allocations[3].allocation_id(),
+    );
+    let geometries = allocations.map(|allocation| {
+        ServiceAllocationGeometryV1::new(allocation.byte_len(), allocation.alignment())
+    });
+    validate_model_memory_allocation_binding(allocations, selected.as_array(), geometries)?;
+    Ok(selected)
+}
+
 fn validate_model_memory_allocation_binding(
     plan: [DeclaredDeviceAllocation; 4],
     selected: [Identity; 4],

@@ -11,6 +11,7 @@ mod completion_output;
 mod completion_wire;
 mod device_cache;
 mod epoch;
+mod initialized_model_memory;
 mod model_memory_allocations;
 mod operation_dispatch_expansion;
 mod operation_kernel_plan;
@@ -56,6 +57,12 @@ pub use device_cache::{
     GFX942_TARGET_FEATURES,
 };
 pub use epoch::ExactCompletion;
+pub use initialized_model_memory::{
+    allocate_initialized_model_memory_v1, m1_model_memory_content_descriptor_v1,
+    m1_model_memory_content_role_v1, InitializedModelMemoryAllocationErrorV1,
+    InitializedModelMemoryAllocationFailureV1, InitializedModelMemoryPreflightErrorV1,
+    M1_INITIALIZED_MODEL_MEMORY_CONTENT_ROLE_IDENTITY_V1,
+};
 pub use model_memory_allocations::{
     bind_addressless_model_memory_allocations_v1, BoundModelMemoryAllocationsV1,
     ModelMemoryAllocationBindingErrorV1, ModelMemoryAllocationBindingFailureV1,
