@@ -1,7 +1,8 @@
 //! Exact finite Qwen3 paged-GQA causal-prefill compiler profiles.
 //!
-//! Q and O are BF16 `[S,T,QH,128]`. K and V are BF16 P16 caches
-//! `[S,512,16,8,128]` addressed through `u32` page indices `[S,512]`.
+//! Q and O are BF16 `[S,T,QH,128]`. K and V are BF16 P16 caches in the
+//! fixed global pool `[16384,16,8,128]`, addressed through `u32` page indices
+//! `[S,512]`.
 //! Every selected query head maps to `query_head / gqa_group_size`, with
 //! target QH32/GQA4 and draft QH16/GQA2 sharing KVH8.
 //!
@@ -62,8 +63,10 @@ pub const QWEN3_PREFILL_HEAD_DIMENSION_V1: u32 = 128;
 pub const QWEN3_PREFILL_KV_HEADS_V1: u32 = 8;
 /// Exact tokens per physical cache page.
 pub const QWEN3_PREFILL_PAGE_TOKENS_V1: u32 = 16;
-/// Exact logical-page entries and physical-page slots per sequence.
+/// Exact logical-page entries per sequence.
 pub const QWEN3_PREFILL_PAGE_TABLE_ENTRIES_V1: u32 = 512;
+/// Exact physical-page slots in the fixed global cache pool.
+pub const QWEN3_PREFILL_CACHE_POOL_PAGES_V1: u32 = 16_384;
 /// Exact FP32 bits for `1 / sqrt(128)`.
 pub const QWEN3_PREFILL_ATTENTION_SCALE_BITS_V1: u32 = 0x3db5_04f3;
 /// Five pointer-plus-`u64`-length slice records.
@@ -75,11 +78,11 @@ pub const QWEN3_PREFILL_KERNARG_ALIGNMENT_V1: u64 = 8;
 /// Number of finite target/draft prefill profiles.
 pub const QWEN3_PREFILL_PROFILE_COUNT_V1: usize = 8;
 /// Exact byte length of the final canonical direct-LLVM source.
-pub const QWEN3_PREFILL_LLVM_BYTES_V1: usize = 21_408;
+pub const QWEN3_PREFILL_LLVM_BYTES_V1: usize = 21_147;
 /// SHA-256 of the final canonical direct-LLVM source bytes.
 pub const QWEN3_PREFILL_LLVM_SHA256_V1: [u8; 32] = [
-    0x33, 0x11, 0x34, 0xe8, 0x1b, 0xa6, 0xcd, 0x83, 0x6f, 0xd5, 0xb0, 0x48, 0xb4, 0xf2, 0x28, 0x3b,
-    0xb7, 0x1c, 0xc2, 0xb7, 0x27, 0xd4, 0x64, 0xad, 0xf2, 0x88, 0x30, 0x2d, 0xd4, 0x72, 0xd0, 0x6d,
+    0x76, 0x74, 0xca, 0xa6, 0x3d, 0x6e, 0xbd, 0x27, 0x81, 0x39, 0xdb, 0xc0, 0xc2, 0x87, 0xc7, 0xe2,
+    0xc7, 0x58, 0x11, 0x91, 0x79, 0xa0, 0x21, 0x37, 0x89, 0x68, 0x6c, 0xed, 0xd0, 0x21, 0xe5, 0x22,
 ];
 
 const OCML_EXP_F32: &str = "__ocml_exp_f32";
@@ -228,8 +231,7 @@ impl Qwen3PrefillProfileV1 {
         let query_elements = positions
             .checked_mul(u64::from(query_width))
             .ok_or(Qwen3PrefillCatalogErrorV1::ExtentOverflow)?;
-        let cache_elements_each = u64::from(sequences)
-            .checked_mul(u64::from(QWEN3_PREFILL_PAGE_TABLE_ENTRIES_V1))
+        let cache_elements_each = u64::from(QWEN3_PREFILL_CACHE_POOL_PAGES_V1)
             .and_then(|value| value.checked_mul(u64::from(QWEN3_PREFILL_PAGE_TOKENS_V1)))
             .and_then(|value| value.checked_mul(u64::from(QWEN3_PREFILL_KV_HEADS_V1)))
             .and_then(|value| value.checked_mul(u64::from(QWEN3_PREFILL_HEAD_DIMENSION_V1)))
@@ -280,6 +282,7 @@ impl Qwen3PrefillProfileV1 {
             self.query_width,
             QWEN3_PREFILL_PAGE_TOKENS_V1,
             QWEN3_PREFILL_PAGE_TABLE_ENTRIES_V1,
+            QWEN3_PREFILL_CACHE_POOL_PAGES_V1,
             QWEN3_PREFILL_ATTENTION_SCALE_BITS_V1,
         ] {
             bytes.extend_from_slice(&value.to_le_bytes());
@@ -524,7 +527,7 @@ pub enum Qwen3PrefillArgumentRoleV1 {
 pub enum Qwen3PrefillArgumentShapeV1 {
     /// BF16 `[S,T,QH,128]`.
     QueryBf16Bits = 1,
-    /// BF16 `[S,512,16,8,128]`.
+    /// BF16 `[16384,16,8,128]` fixed global physical-page pool.
     PagedKvCacheBf16Bits = 2,
     /// `u32 [S,512]`.
     PageIndicesU32 = 3,
@@ -570,7 +573,7 @@ pub enum Qwen3PrefillRecurrenceStepV1 {
     QuotientGqaHeadMapping,
     /// Keys range from zero through the query token within one sequence.
     SameSequenceCausalPrefixInclusive,
-    /// Map `key/16` through `[S,512]` and address the selected P16 cache page.
+    /// Map `key/16` through `[S,512]` into the global 16,384-page P16 pool.
     P16LogicalToPhysicalPageMapping,
     /// The first key initializes max, denominator, and numerator pair.
     FirstKeyInitializesState,
@@ -759,9 +762,9 @@ fn encode_recurrence_step(step: Qwen3PrefillRecurrenceStepV1, bytes: &mut Vec<u8
 pub enum Qwen3PrefillBufferV1 {
     /// Contiguous BF16 rotated query `[S,T,QH,128]`.
     Query = 1,
-    /// BF16 key cache `[S,512,16,8,128]`.
+    /// BF16 key cache in the fixed global pool `[16384,16,8,128]`.
     KeyCache = 2,
-    /// BF16 value cache `[S,512,16,8,128]`.
+    /// BF16 value cache in the fixed global pool `[16384,16,8,128]`.
     ValueCache = 3,
     /// `u32` physical-page indices `[S,512]`.
     PageIndices = 4,
@@ -1200,35 +1203,34 @@ entry:
   %q.d.s8t128 = icmp eq i64 %q.len, 2097152
   %q.d.s1t512 = icmp eq i64 %q.len, 1048576
   %q.d.s1t2048 = icmp eq i64 %q.len, 4194304
-  %cache.s1 = icmp eq i64 %k.len, 8388608
-  %cache.s8 = icmp eq i64 %k.len, 67108864
+  %cache.global = icmp eq i64 %k.len, 268435456
   %value.cache.eq = icmp eq i64 %v.len, %k.len
   %pages.s1 = icmp eq i64 %pages.len, 512
   %pages.s8 = icmp eq i64 %pages.len, 4096
   %output.eq = icmp eq i64 %output.len, %q.len
 
-  %case.t.s1t128.0 = and i1 %q.t.s1t128, %cache.s1
+  %case.t.s1t128.0 = and i1 %q.t.s1t128, %cache.global
   %case.t.s1t128.1 = and i1 %case.t.s1t128.0, %pages.s1
   %case.t.s1t128 = and i1 %case.t.s1t128.1, %value.cache.eq
-  %case.t.s8t128.0 = and i1 %q.t.s8t128, %cache.s8
+  %case.t.s8t128.0 = and i1 %q.t.s8t128, %cache.global
   %case.t.s8t128.1 = and i1 %case.t.s8t128.0, %pages.s8
   %case.t.s8t128 = and i1 %case.t.s8t128.1, %value.cache.eq
-  %case.t.s1t512.0 = and i1 %q.t.s1t512, %cache.s1
+  %case.t.s1t512.0 = and i1 %q.t.s1t512, %cache.global
   %case.t.s1t512.1 = and i1 %case.t.s1t512.0, %pages.s1
   %case.t.s1t512 = and i1 %case.t.s1t512.1, %value.cache.eq
-  %case.t.s1t2048.0 = and i1 %q.t.s1t2048, %cache.s1
+  %case.t.s1t2048.0 = and i1 %q.t.s1t2048, %cache.global
   %case.t.s1t2048.1 = and i1 %case.t.s1t2048.0, %pages.s1
   %case.t.s1t2048 = and i1 %case.t.s1t2048.1, %value.cache.eq
-  %case.d.s1t128.0 = and i1 %q.d.s1t128, %cache.s1
+  %case.d.s1t128.0 = and i1 %q.d.s1t128, %cache.global
   %case.d.s1t128.1 = and i1 %case.d.s1t128.0, %pages.s1
   %case.d.s1t128 = and i1 %case.d.s1t128.1, %value.cache.eq
-  %case.d.s8t128.0 = and i1 %q.d.s8t128, %cache.s8
+  %case.d.s8t128.0 = and i1 %q.d.s8t128, %cache.global
   %case.d.s8t128.1 = and i1 %case.d.s8t128.0, %pages.s8
   %case.d.s8t128 = and i1 %case.d.s8t128.1, %value.cache.eq
-  %case.d.s1t512.0 = and i1 %q.d.s1t512, %cache.s1
+  %case.d.s1t512.0 = and i1 %q.d.s1t512, %cache.global
   %case.d.s1t512.1 = and i1 %case.d.s1t512.0, %pages.s1
   %case.d.s1t512 = and i1 %case.d.s1t512.1, %value.cache.eq
-  %case.d.s1t2048.0 = and i1 %q.d.s1t2048, %cache.s1
+  %case.d.s1t2048.0 = and i1 %q.d.s1t2048, %cache.global
   %case.d.s1t2048.1 = and i1 %case.d.s1t2048.0, %pages.s1
   %case.d.s1t2048 = and i1 %case.d.s1t2048.1, %value.cache.eq
 
@@ -1244,7 +1246,7 @@ entry:
   br i1 %shape.ok, label %shape.selected, label %trap
 
 shape.selected:
-  %sequences = select i1 %cache.s8, i64 8, i64 1
+  %sequences = select i1 %pages.s8, i64 8, i64 1
   %heads = select i1 %target, i64 32, i64 16
   %gqa = select i1 %target, i64 4, i64 2
   %tokens.128.0 = or i1 %case.t.s1t128, %case.t.s8t128
@@ -1448,11 +1450,9 @@ fn emit_page_mapping(output: &mut String, prefix: &str, key: &str) {
          {prefix}.page.load:\n\
          \x20 %{prefix}.page.ptr = getelementptr inbounds i32, ptr addrspace(1) %pages.data, i64 %{prefix}.table.index\n\
          \x20 %{prefix}.physical.page.i32 = load i32, ptr addrspace(1) %{prefix}.page.ptr, align 4\n\
-         \x20 %{prefix}.physical.page.ok = icmp ult i32 %{prefix}.physical.page.i32, 512\n\
+         \x20 %{prefix}.physical.page.ok = icmp ult i32 %{prefix}.physical.page.i32, 16384\n\
          \x20 %{prefix}.physical.page = zext i32 %{prefix}.physical.page.i32 to i64\n\
-         \x20 %{prefix}.cache.sequence = mul nuw i64 %sequence, 512\n\
-         \x20 %{prefix}.cache.page = add nuw i64 %{prefix}.cache.sequence, %{prefix}.physical.page\n\
-         \x20 %{prefix}.cache.page.tokens = mul nuw i64 %{prefix}.cache.page, 16\n\
+         \x20 %{prefix}.cache.page.tokens = mul nuw i64 %{prefix}.physical.page, 16\n\
          \x20 %{prefix}.cache.token = add nuw i64 %{prefix}.cache.page.tokens, %{prefix}.token.in.page\n\
          \x20 %{prefix}.cache.token.heads = mul nuw i64 %{prefix}.cache.token, 8\n\
          \x20 %{prefix}.cache.head = add nuw i64 %{prefix}.cache.token.heads, %kv.head\n\
@@ -1535,6 +1535,12 @@ fn validate_canonical_llvm(module: &str) -> Result<(), PrepareQwen3PrefillKernel
         && module.contains("%next.logical.page = lshr i64 %key, 4")
         && module.contains("%initial.physical.page.ok = icmp ult i32")
         && module.contains("%next.physical.page.ok = icmp ult i32")
+        && module
+            .contains("%initial.physical.page.ok = icmp ult i32 %initial.physical.page.i32, 16384")
+        && module.contains("%next.physical.page.ok = icmp ult i32 %next.physical.page.i32, 16384")
+        && module.contains("%initial.cache.page.tokens = mul nuw i64 %initial.physical.page, 16")
+        && module.contains("%next.cache.page.tokens = mul nuw i64 %next.physical.page, 16")
+        && !module.contains(".cache.sequence")
         && module.contains("%heads = select i1 %target, i64 32, i64 16")
         && module.contains("%gqa = select i1 %target, i64 4, i64 2")
         && module.contains("bitcast i32 1035273459 to float")
@@ -2345,8 +2351,9 @@ mod tests {
     }
 
     #[test]
-    fn paged_cache_geometry_matches_rope_kv_layout() {
+    fn paged_cache_geometry_matches_fixed_global_pool() {
         let catalog = Qwen3PrefillProfileCatalogV1::canonical().unwrap();
+        assert_eq!(QWEN3_PREFILL_CACHE_POOL_PAGES_V1, 16_384);
         for profile in catalog.profiles() {
             assert_eq!(
                 profile.page_table_elements(),
@@ -2354,7 +2361,7 @@ mod tests {
             );
             assert_eq!(
                 profile.cache_elements_each(),
-                u64::from(profile.sequences()) * 512 * 16 * 8 * 128
+                u64::from(QWEN3_PREFILL_CACHE_POOL_PAGES_V1) * 16 * 8 * 128
             );
             let ir = qwen3_prefill_kernel_ir_v1(*profile);
             assert_eq!(
@@ -2389,6 +2396,27 @@ mod tests {
             1,
         );
         assert!(validate_canonical_llvm(&helper_substitution).is_err());
+        let initial_local_page_limit_substitution = exact.replacen(
+            "%initial.physical.page.ok = icmp ult i32 %initial.physical.page.i32, 16384",
+            "%initial.physical.page.ok = icmp ult i32 %initial.physical.page.i32, 512",
+            1,
+        );
+        assert_ne!(exact, initial_local_page_limit_substitution);
+        assert!(validate_canonical_llvm(&initial_local_page_limit_substitution).is_err());
+        let next_local_page_limit_substitution = exact.replacen(
+            "%next.physical.page.ok = icmp ult i32 %next.physical.page.i32, 16384",
+            "%next.physical.page.ok = icmp ult i32 %next.physical.page.i32, 512",
+            1,
+        );
+        assert_ne!(exact, next_local_page_limit_substitution);
+        assert!(validate_canonical_llvm(&next_local_page_limit_substitution).is_err());
+        let sequence_offset_substitution = exact.replacen(
+            "%next.cache.page.tokens = mul nuw i64 %next.physical.page, 16",
+            "%next.cache.sequence = mul nuw i64 %sequence, 512\n  %next.cache.page = add nuw i64 %next.cache.sequence, %next.physical.page\n  %next.cache.page.tokens = mul nuw i64 %next.cache.page, 16",
+            1,
+        );
+        assert_ne!(exact, sequence_offset_substitution);
+        assert!(validate_canonical_llvm(&sequence_offset_substitution).is_err());
         let store_substitution =
             exact.replacen("store i16 %output1.bf16", "store i16 %output0.bf16", 1);
         assert_ne!(exact, store_substitution);
@@ -2437,6 +2465,15 @@ mod tests {
         let (addresses, lengths) = layout(profile);
         let checked = Qwen3PrefillBufferContractV1::checked(profile, addresses, lengths).unwrap();
         assert!(!checked.authenticates_device_memory());
+        let s8_profile = profile(
+            Qwen3PrefillModelRoleV1::Target8B,
+            Qwen3PrefillBucketV1::S8T128,
+        );
+        let (s8_addresses, s8_lengths) = layout(s8_profile);
+        assert_eq!(lengths[1], s8_lengths[1]);
+        assert_eq!(lengths[2], s8_lengths[2]);
+        assert_ne!(lengths[3], s8_lengths[3]);
+        Qwen3PrefillBufferContractV1::checked(s8_profile, s8_addresses, s8_lengths).unwrap();
         let mut short = lengths;
         short[2] -= 2;
         assert_eq!(
