@@ -199,13 +199,14 @@ once per draft token.
 Reusable capabilities belong upstream in fe2o3:
 
 - a connected production D1-D7 path for Ferric's closed Rust subset;
-- parameterized LLM kernel families and proof-bound finite schedules;
 - long-lived HSA queues, typed allocations, asynchronous copies, and bounded
   multi-packet command batches;
-- generated multi-kernel dispatch and graph identity binding;
+- generic multi-kernel dispatch and executable identity binding;
 - runner-visible quiescence capabilities;
 - numerical contracts for BF16, FP32, FP8, FP4, MFMA, exponentials, and
   reductions; and
 - translation validators and machine-resource gates.
 
-Ferric consumes these APIs. It does not duplicate them.
+Ferric consumes these APIs. Qwen kernels, inference graphs, finite model
+schedule catalogs, and generated inference runners remain Ferric-owned; they
+are not upstream fe2o3 components.
