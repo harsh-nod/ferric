@@ -20,6 +20,7 @@ mod plan;
 mod runner;
 mod safetensors;
 mod sha256;
+mod step_workspace;
 mod tokenizer;
 mod tokenizer_execution;
 mod weight_stream;
@@ -80,6 +81,14 @@ pub use runner::{
 pub use safetensors::{
     authenticate_qwen3_draft_weights, authenticate_qwen3_target_weights, AuthenticatedWeightSet,
     SafetensorsError, SafetensorsSource,
+};
+pub use step_workspace::{
+    m1_step_workspace_requirements, plan_addressless_m1_step_workspace,
+    AddresslessM1StepWorkspacePlan, AvailableM1StepWorkspace, DeclaredM1StepWorkspaceAllocation,
+    M1StepWorkspaceDeclaration, M1StepWorkspaceMemoryBinding, M1StepWorkspacePlanError,
+    M1StepWorkspacePlanFailure, M1StepWorkspacePlanOutcome, M1StepWorkspaceRange,
+    M1StepWorkspaceRangeRole, M1StepWorkspaceRequirements,
+    M1_STEP_WORKSPACE_ALLOCATION_ALIGNMENT_V1, M1_STEP_WORKSPACE_LAYOUT_VERSION,
 };
 pub use tokenizer::{authenticate_qwen3_tokenizer, AuthenticatedTokenizer, TokenizerError};
 pub use tokenizer_execution::{
