@@ -656,7 +656,9 @@ pub closed spec fn continuous_batch_expected_error(
     }
 }
 
-pub(crate) proof fn stale_generation_is_expected_error(
+/// An in-range request with a noncurrent generation is rejected before any
+/// request-local transition is considered.
+pub proof fn stale_generation_is_expected_error(
     before: &ContinuousBatch,
     request: RequestId,
     action: ContinuousBatchAction,
@@ -669,6 +671,35 @@ pub(crate) proof fn stale_generation_is_expected_error(
         continuous_batch_expected_error(before, request, action)
             == Some(ContinuousBatchError::StaleGeneration),
 {
+    reveal(continuous_batch_expected_error);
+}
+
+/// A second publication for the exact active epoch is the batch-level
+/// `AlreadyPublished` rejection.
+pub proof fn already_published_batch_is_expected_error(
+    before: &ContinuousBatch,
+    request: RequestId,
+    epoch: CompletionEpoch,
+    emitted_tokens: u8,
+)
+    requires
+        request.slot_spec() < M1_CONTINUOUS_BATCH_CAPACITY,
+        before.slots_spec()[request.slot_spec() as int].generation_spec()
+            == request.generation_spec(),
+        before.slots_spec()[request.slot_spec() as int].active_epoch_spec() == Some(epoch),
+        publication_ready(before.slots_spec()[request.slot_spec() as int]),
+        before.slots_spec()[request.slot_spec() as int]
+            .published_for_active_epoch_spec(),
+    ensures
+        continuous_batch_expected_error(
+            before,
+            request,
+            ContinuousBatchAction::Publish { epoch, emitted_tokens },
+        ) == Some(ContinuousBatchError::AlreadyPublished),
+{
+    let current = before.slots_spec()[request.slot_spec() as int];
+    already_published_epoch_rejects(current, epoch, emitted_tokens);
+    reveal(continuous_request_step);
     reveal(continuous_batch_expected_error);
 }
 

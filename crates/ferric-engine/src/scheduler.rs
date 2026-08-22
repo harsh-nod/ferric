@@ -155,8 +155,17 @@ impl M1ScheduledDispatchV1 {
     pub(crate) fn from_dispatch_batch(
         batch: DispatchBatch,
         selected: &[RequestId; M1_MAX_ACTIVE_SEQUENCES as usize],
-    ) -> Self
+    ) -> (result: Self)
         requires batch.member_count_spec() <= M1_MAX_ACTIVE_SEQUENCES as usize,
+        ensures
+            result.epoch_spec() == batch.epoch_spec(),
+            result.member_count_spec() == batch.member_count_spec(),
+            forall|index: int| 0 <= index < batch.member_count_spec() ==>
+                result.member_spec(index) == Some(selected@[index]),
+            forall|index: int|
+                batch.member_count_spec() <= index
+                    < M1_MAX_ACTIVE_SEQUENCES as usize
+                ==> result.member_spec(index).is_none(),
     {
         let count = batch.member_count();
         let mut members = [None; M1_MAX_ACTIVE_SEQUENCES as usize];
@@ -167,6 +176,11 @@ impl M1ScheduledDispatchV1 {
                 count <= M1_MAX_ACTIVE_SEQUENCES as usize,
                 members@.len() == M1_MAX_ACTIVE_SEQUENCES as usize,
                 selected@.len() == M1_MAX_ACTIVE_SEQUENCES as usize,
+                forall|position: int| 0 <= position < index ==>
+                    members@[position] == Some(selected@[position]),
+                forall|position: int|
+                    index <= position < M1_MAX_ACTIVE_SEQUENCES as usize ==>
+                        members@[position].is_none(),
             decreases count - index,
         {
             members[index] = Some(selected[index]);
@@ -177,19 +191,25 @@ impl M1ScheduledDispatchV1 {
 
     /// Returns the exact scheduler-issued completion epoch.
     #[must_use]
-    pub const fn epoch(&self) -> CompletionEpoch {
+    pub const fn epoch(&self) -> (epoch: CompletionEpoch)
+        ensures epoch == self.epoch_spec(),
+    {
         self.batch.epoch()
     }
 
     /// Returns the nonzero scheduler-selected prefix length.
     #[must_use]
-    pub const fn member_count(&self) -> usize {
+    pub const fn member_count(&self) -> (count: usize)
+        ensures count == self.member_count_spec(),
+    {
         self.batch.member_count()
     }
 
     /// Returns one exact scheduler-selected request or `None` outside the live prefix.
     #[must_use]
-    pub fn member(&self, index: usize) -> Option<RequestId> {
+    pub fn member(&self, index: usize) -> (member: Option<RequestId>)
+        ensures member == self.member_spec(index as int),
+    {
         if index < M1_MAX_ACTIVE_SEQUENCES as usize {
             self.members[index]
         } else {
@@ -201,8 +221,51 @@ impl M1ScheduledDispatchV1 {
     #[must_use]
     pub const fn members(
         &self,
-    ) -> &[Option<RequestId>; M1_MAX_ACTIVE_SEQUENCES as usize] {
+    ) -> (members: &[Option<RequestId>; M1_MAX_ACTIVE_SEQUENCES as usize])
+        ensures members@ == self.members_spec(),
+    {
         &self.members
+    }
+
+    /// Verifier view of the exact scheduler-issued completion epoch.
+    pub closed spec fn epoch_spec(&self) -> CompletionEpoch {
+        self.batch.epoch_spec()
+    }
+
+    /// Verifier view of the live scheduler-issued roster prefix length.
+    pub closed spec fn member_count_spec(&self) -> usize {
+        self.batch.member_count_spec()
+    }
+
+    /// Verifier view of one fixed-roster entry.
+    pub closed spec fn member_spec(&self, index: int) -> Option<RequestId> {
+        if 0 <= index < M1_MAX_ACTIVE_SEQUENCES as usize {
+            self.members@[index]
+        } else {
+            None
+        }
+    }
+
+    /// Verifier view of the complete fixed roster, including padding.
+    pub closed spec fn members_spec(&self) -> Seq<Option<RequestId>> {
+        self.members@
+    }
+
+    /// Exact closed shape of one nonempty M1 scheduler roster.
+    pub open spec fn canonical_roster_spec(&self) -> bool {
+        &&& 0 < self.member_count_spec()
+        &&& self.member_count_spec() <= M1_MAX_ACTIVE_SEQUENCES as usize
+        &&& self.members_spec().len() == M1_MAX_ACTIVE_SEQUENCES as usize
+        &&& forall|index: int| 0 <= index < self.member_count_spec() ==>
+            self.member_spec(index).is_some()
+        &&& forall|index: int|
+            self.member_count_spec() <= index < M1_MAX_ACTIVE_SEQUENCES as usize
+            ==> self.member_spec(index).is_none()
+        &&& forall|left: int, right: int|
+            0 <= left < right < self.member_count_spec() ==> {
+                self.member_spec(left).unwrap().slot_spec()
+                    != self.member_spec(right).unwrap().slot_spec()
+            }
     }
 }
 
@@ -8999,6 +9062,10 @@ impl<const C: usize> Scheduler<C> {
         CompletionEpoch { value: self.completed }
     }
 
+    pub closed spec fn submitted_epoch_spec(&self) -> CompletionEpoch {
+        CompletionEpoch { value: self.submitted }
+    }
+
     pub(crate) closed spec fn pending_batch_member_count_spec(&self) -> usize {
         if self.batch_len == 0 {
             0
@@ -10408,6 +10475,255 @@ impl<const C: usize> Scheduler<C> {
                     chosen,
                 );
             }
+        }
+    }
+
+    proof fn successful_dispatch_selected_observation(
+        &self,
+        before: &Self,
+        before_output: Seq<RequestId>,
+        output: Seq<RequestId>,
+        batch: &DispatchBatch,
+        offset: int,
+    )
+        requires
+            before.basic_invariant(),
+            self.dispatch_execution_refines(
+                before,
+                before_output,
+                output,
+                &Ok(Some(*batch)),
+            ),
+            0 <= offset < batch.member_count_spec(),
+        ensures {
+            let request = output[offset];
+            &&& before.state_spec(request) == Some(RequestState::Ready)
+            &&& self.state_spec(request) == Some(RequestState::InFlight)
+        },
+    {
+        hide(Scheduler::basic_invariant);
+        hide(Scheduler::slot_invariant);
+        hide(Scheduler::free_ring_invariant);
+        hide(Scheduler::reclaim_ring_invariant);
+        hide(Scheduler::member_ring_invariant);
+        hide(Scheduler::batch_ring_invariant);
+        before.basic_implies_scalar();
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::dispatch_execution_refines);
+        let available = C - before.member_len;
+        let limit = if before_output.len() < available {
+            before_output.len()
+        } else {
+            available as nat
+        };
+        let expected = ready_selection::<C>(
+            before.slots@,
+            before.cursor,
+            C as nat,
+            limit,
+        );
+        let chosen = output.subrange(0, batch.member_count_spec() as int);
+        assert(batch.member_count_spec() == chosen.len());
+        assert(batch.member_count_spec() == expected.len());
+        ready_scan_facts::<C>(
+            before.slots@,
+            before.cursor,
+            C as nat,
+            limit,
+        );
+        assert(limit <= before_output.len());
+        assert(chosen.len() <= before_output.len());
+        dispatch_selected_output_facts(before_output, chosen);
+        assert(0 <= offset < chosen.len());
+        let request = chosen[offset];
+        let slot_index = request.slot_spec() as int;
+        assert(chosen[offset] == output[offset]);
+        reveal(Scheduler::dispatch_chosen_ready);
+        reveal(Scheduler::dispatch_commit_refines);
+        dispatch_selected_slots_selected_fact(
+            before.slots@,
+            chosen,
+            batch.epoch_spec().value,
+            offset,
+        );
+        reveal(Scheduler::state_spec);
+    }
+
+    proof fn successful_dispatch_nonselected_observation(
+        &self,
+        before: &Self,
+        before_output: Seq<RequestId>,
+        output: Seq<RequestId>,
+        batch: &DispatchBatch,
+        request: RequestId,
+    )
+        requires
+            before.basic_invariant(),
+            self.dispatch_execution_refines(
+                before,
+                before_output,
+                output,
+                &Ok(Some(*batch)),
+            ),
+            request.slot_spec() < C,
+            forall|offset: int| 0 <= offset < batch.member_count_spec() ==>
+                #[trigger] output[offset].slot_spec() != request.slot_spec(),
+        ensures self.state_spec(request) == before.state_spec(request),
+    {
+        hide(Scheduler::basic_invariant);
+        hide(Scheduler::slot_invariant);
+        hide(Scheduler::free_ring_invariant);
+        hide(Scheduler::reclaim_ring_invariant);
+        hide(Scheduler::member_ring_invariant);
+        hide(Scheduler::batch_ring_invariant);
+        before.basic_implies_scalar();
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::dispatch_execution_refines);
+        let available = C - before.member_len;
+        let limit = if before_output.len() < available {
+            before_output.len()
+        } else {
+            available as nat
+        };
+        let expected = ready_selection::<C>(
+            before.slots@,
+            before.cursor,
+            C as nat,
+            limit,
+        );
+        let chosen = output.subrange(0, batch.member_count_spec() as int);
+        assert(batch.member_count_spec() == chosen.len());
+        assert(batch.member_count_spec() == expected.len());
+        ready_scan_facts::<C>(
+            before.slots@,
+            before.cursor,
+            C as nat,
+            limit,
+        );
+        assert(limit <= before_output.len());
+        assert(chosen.len() <= before_output.len());
+        dispatch_selected_output_facts(before_output, chosen);
+        let slot_index = request.slot_spec() as int;
+        assert(!selected_request_slots(chosen).contains(slot_index)) by {
+            if selected_request_slots(chosen).contains(slot_index) {
+                let offset = choose|offset: int|
+                    0 <= offset < selected_request_slots(chosen).len()
+                    && selected_request_slots(chosen)[offset] == slot_index;
+                reveal(selected_request_slots);
+                assert(0 <= offset < chosen.len());
+                assert(chosen[offset] == output[offset]);
+                assert(false);
+            }
+        }
+        reveal(Scheduler::dispatch_commit_refines);
+        dispatch_selected_slots_frame_fact(
+            before.slots@,
+            chosen,
+            batch.epoch_spec().value,
+            slot_index,
+        );
+        reveal(Scheduler::state_spec);
+    }
+
+    /// Exposes the exact public roster, epoch, and selected lifecycle
+    /// observations carried by a successful dispatch refinement.
+    pub(crate) proof fn expose_successful_dispatch_observations(
+        &self,
+        before: &Self,
+        before_output: Seq<RequestId>,
+        output: Seq<RequestId>,
+        batch: &DispatchBatch,
+    )
+        requires
+            before.basic_invariant(),
+            self.dispatch_execution_refines(
+                before,
+                before_output,
+                output,
+                &Ok(Some(*batch)),
+            ),
+        ensures
+            batch.member_count_spec() > 0,
+            batch.member_count_spec() <= before_output.len(),
+            output.len() == before_output.len(),
+            batch.epoch_spec().value as int
+                == before.submitted_epoch_spec().value as int + 1,
+            self.submitted_epoch_spec() == batch.epoch_spec(),
+            batch.epoch_spec().value > before.completed_epoch_spec().value,
+            forall|offset: int| 0 <= offset < batch.member_count_spec() ==> {
+                let request = #[trigger] output[offset];
+                &&& before.state_spec(request) == Some(RequestState::Ready)
+                &&& self.state_spec(request) == Some(RequestState::InFlight)
+            },
+            forall|request: RequestId|
+                request.slot_spec() < C
+                && (forall|offset: int|
+                    0 <= offset < batch.member_count_spec() ==>
+                        #[trigger] output[offset].slot_spec() != request.slot_spec())
+                ==> self.state_spec(request) == before.state_spec(request),
+    {
+        hide(Scheduler::basic_invariant);
+        hide(Scheduler::slot_invariant);
+        hide(Scheduler::free_ring_invariant);
+        hide(Scheduler::reclaim_ring_invariant);
+        hide(Scheduler::member_ring_invariant);
+        hide(Scheduler::batch_ring_invariant);
+        before.basic_implies_scalar();
+        reveal(Scheduler::scalar_invariant);
+        reveal(Scheduler::dispatch_execution_refines);
+        reveal(Scheduler::completed_epoch_spec);
+        reveal(Scheduler::submitted_epoch_spec);
+        let available = C - before.member_len;
+        let limit = if before_output.len() < available {
+            before_output.len()
+        } else {
+            available as nat
+        };
+        let expected = ready_selection::<C>(
+            before.slots@,
+            before.cursor,
+            C as nat,
+            limit,
+        );
+        let chosen = output.subrange(0, batch.member_count_spec() as int);
+        assert(batch.member_count_spec() == chosen.len());
+        assert(batch.member_count_spec() == expected.len());
+        ready_scan_facts::<C>(
+            before.slots@,
+            before.cursor,
+            C as nat,
+            limit,
+        );
+        assert(limit <= before_output.len());
+        assert(chosen.len() <= before_output.len());
+        dispatch_selected_output_facts(before_output, chosen);
+        reveal(Scheduler::dispatch_commit_refines);
+        assert forall|offset: int| 0 <= offset < batch.member_count_spec() implies {
+            let request = #[trigger] output[offset];
+            &&& before.state_spec(request) == Some(RequestState::Ready)
+            &&& self.state_spec(request) == Some(RequestState::InFlight)
+        } by {
+            self.successful_dispatch_selected_observation(
+                before,
+                before_output,
+                output,
+                batch,
+                offset,
+            );
+        }
+        assert forall|request: RequestId|
+            request.slot_spec() < C
+            && (forall|offset: int|
+                0 <= offset < batch.member_count_spec() ==>
+                    #[trigger] output[offset].slot_spec() != request.slot_spec())
+            implies self.state_spec(request) == before.state_spec(request) by {
+            self.successful_dispatch_nonselected_observation(
+                before,
+                before_output,
+                output,
+                batch,
+                request,
+            );
         }
     }
 

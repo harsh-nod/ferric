@@ -34,7 +34,9 @@ pub struct CompletionFailure {
 
 impl CompletionFailure {
     #[must_use]
-    pub const fn error(&self) -> EngineError {
+    pub const fn error(&self) -> (error: EngineError)
+        ensures error == self.error_spec(),
+    {
         self.error
     }
 
@@ -140,6 +142,10 @@ impl<const C: usize> Engine<C> {
         self.scheduler.completed_epoch_spec()
     }
 
+    pub closed spec fn submitted_epoch_spec(&self) -> CompletionEpoch {
+        self.scheduler.submitted_epoch_spec()
+    }
+
     pub closed spec fn state_spec(&self, request: RequestId) -> Option<RequestState> {
         self.scheduler.state_spec(request)
     }
@@ -170,6 +176,23 @@ impl<const C: usize> Engine<C> {
 
     pub closed spec fn slot_generation_spec(&self, slot: int) -> u32 {
         self.scheduler.slot_generation_spec(slot)
+    }
+
+    /// A completion epoch is externally reordered relative to the exact next
+    /// pending scheduler batch. The count guards exclude earlier preflight
+    /// errors that have a different diagnostic.
+    pub open spec fn completion_epoch_reordered(
+        &self,
+        completion_epoch: CompletionEpoch,
+        accepted_count: nat,
+    ) -> bool {
+        &&& !self.faulted_spec()
+        &&& self.pending_batch_member_count_spec() > 0
+        &&& accepted_count == self.pending_batch_member_count_spec()
+        &&& ferric_spec::completion::exact_next(
+            self.completed_epoch_spec(),
+            completion_epoch,
+        ).is_err()
     }
 
     closed spec fn same_state(&self, before: &Self) -> bool {
@@ -1041,7 +1064,17 @@ impl<const C: usize> Engine<C> {
         accepted_tokens: &[u32],
     ) -> (result: Result<(), EngineError>)
         requires self.well_formed(),
+        ensures
+            self.completion_epoch_reordered(
+                completion.epoch_spec(),
+                accepted_tokens@.len(),
+            ) ==> result == Err(EngineError::Scheduler(
+                SchedulerError::CompletionNotExactNext,
+            )),
     {
+        proof {
+            reveal(Engine::completion_epoch_reordered);
+        }
         if self.faulted {
             return Err(EngineError::Faulted);
         }
@@ -1055,24 +1088,33 @@ impl<const C: usize> Engine<C> {
         if member_count == 0 {
             return Err(EngineError::Scheduler(SchedulerError::NoPendingBatch));
         }
-        let expected_epoch = match self.scheduler.completed_epoch().value().checked_add(1) {
-            Some(epoch) => epoch,
-            None => {
+        let completed_epoch = self.scheduler.completed_epoch();
+        assert(completed_epoch == self.completed_epoch_spec()) by {
+            reveal(Engine::completed_epoch_spec);
+        }
+        let observed_epoch = completion.epoch();
+        match ferric_spec::completion::check_exact_next(completed_epoch, observed_epoch) {
+            Err(_) => {
                 return Err(EngineError::Scheduler(
                     SchedulerError::CompletionNotExactNext,
                 ));
             }
-        };
-        if completion.epoch().value() != expected_epoch {
-            return Err(EngineError::Scheduler(
-                SchedulerError::CompletionNotExactNext,
-            ));
+            Ok(_) => {}
         }
+        assert(observed_epoch == completion.epoch_spec());
+        assert(!self.completion_epoch_reordered(
+            completion.epoch_spec(),
+            accepted_tokens@.len(),
+        ));
 
         let mut index = 0;
         while index < member_count
             invariant
                 self.well_formed(),
+                !self.completion_epoch_reordered(
+                    completion.epoch_spec(),
+                    accepted_tokens@.len(),
+                ),
                 index <= member_count,
                 member_count <= C,
                 accepted_tokens@.len() == member_count,
@@ -1119,6 +1161,47 @@ impl<const C: usize> Engine<C> {
             index += 1;
         }
         Ok(())
+    }
+
+    /// Rejects a non-next exact completion during the immutable preflight and
+    /// returns its linear completion authority unchanged.
+    ///
+    /// This is a proof-bearing view of the same order check used by
+    /// [`Self::complete_exact`]. The accepted-count and pending-batch guards in
+    /// [`Self::completion_epoch_reordered`] exclude earlier diagnostics.
+    pub fn reject_reordered_completion(
+        &self,
+        completion: ExactCompletion,
+        accepted_tokens: &[u32],
+    ) -> (failure: CompletionFailure)
+        requires
+            self.well_formed(),
+            self.completion_epoch_reordered(
+                completion.epoch_spec(),
+                accepted_tokens@.len(),
+            ),
+        ensures
+            failure.error_spec() == EngineError::Scheduler(
+                SchedulerError::CompletionNotExactNext,
+            ),
+            failure.returns_completion_at_spec(completion.epoch_spec()),
+    {
+        let result = self.preflight_complete_exact(&completion, accepted_tokens);
+        match result {
+            Err(error) => {
+                assert(error == EngineError::Scheduler(
+                    SchedulerError::CompletionNotExactNext,
+                ));
+                CompletionFailure::returned(error, completion)
+            }
+            Ok(()) => {
+                assert(false);
+                CompletionFailure::returned(
+                    EngineError::Scheduler(SchedulerError::CompletionNotExactNext),
+                    completion,
+                )
+            }
+        }
     }
 
     /// Admits one request generation into the scheduler and KV pool.
@@ -2008,13 +2091,41 @@ impl<const C: usize> Engine<C> {
                 &result,
             ),
             match result {
-                Ok(Some(batch)) => batch.member_count_spec() <= old(output)@.len(),
+                Ok(Some(batch)) => {
+                    &&& batch.member_count_spec() > 0
+                    &&& batch.member_count_spec() <= old(output)@.len()
+                    &&& final(output)@.len() == old(output)@.len()
+                    &&& batch.epoch_spec().value as int
+                        == old(self).submitted_epoch_spec().value as int + 1
+                    &&& final(self).submitted_epoch_spec() == batch.epoch_spec()
+                    &&& batch.epoch_spec().value
+                        > old(self).completed_epoch_spec().value
+                    &&& forall|offset: int|
+                        0 <= offset < batch.member_count_spec() ==> {
+                            let request = #[trigger] final(output)@[offset];
+                            &&& old(self).state_spec(request)
+                                == Some(RequestState::Ready)
+                            &&& final(self).state_spec(request)
+                                == Some(RequestState::InFlight)
+                        }
+                    &&& forall|request: RequestId|
+                        request.slot_spec() < C
+                        && (forall|offset: int|
+                            0 <= offset < batch.member_count_spec() ==>
+                                #[trigger] final(output)@[offset].slot_spec()
+                                    != request.slot_spec())
+                        ==> final(self).state_spec(request)
+                            == old(self).state_spec(request)
+                },
                 _ => true,
             },
     {
         reveal(Engine::well_formed);
         reveal(Engine::dispatch_ready_refines);
         reveal(Engine::faulted_spec);
+        reveal(Engine::completed_epoch_spec);
+        reveal(Engine::submitted_epoch_spec);
+        reveal(Engine::state_spec);
         proof {
             self.scheduler.same_scalars_reflexive();
             self.kv.same_state_reflexive();
@@ -2023,6 +2134,19 @@ impl<const C: usize> Engine<C> {
         let ghost before_scheduler = self.scheduler;
         let ghost before_output = output@;
         let scheduler_result = self.scheduler.dispatch_ready(output);
+        proof {
+            match &scheduler_result {
+                Ok(Some(batch)) => {
+                    self.scheduler.expose_successful_dispatch_observations(
+                        &before_scheduler,
+                        before_output,
+                        output@,
+                        batch,
+                    );
+                }
+                _ => {},
+            }
+        }
         proof {
             self.scheduler.apply_dispatch_refines(
                 &before_scheduler,
