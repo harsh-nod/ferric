@@ -14,6 +14,7 @@ pub mod bundle;
 mod identity_closure;
 mod json;
 mod model;
+mod model_layout;
 mod plan;
 mod runner;
 mod safetensors;
@@ -47,6 +48,10 @@ pub use model::{
     QWEN3_DRAFT_WEIGHT_SHA256, QWEN3_TARGET_MODEL_ID, QWEN3_TARGET_TENSOR_DATA_BYTES,
     QWEN3_TARGET_WEIGHT_ARTIFACT_BYTES, QWEN3_TARGET_WEIGHT_SET_SHA256, QWEN3_TOKENIZER_BYTES,
     QWEN3_TOKENIZER_SHA256, TARGET_REPOSITORY, TARGET_REVISION,
+};
+pub use model_layout::{
+    build_authenticated_model_weight_layout, AuthenticatedModelWeightLayout, ModelWeightBinding,
+    ModelWeightLayoutError,
 };
 pub use plan::{
     build_authenticated_sequential_plan_catalog, build_sequential_plan_catalog,
