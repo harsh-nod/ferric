@@ -10,7 +10,7 @@ use vstd::prelude::*;
 verus! {
 
 /// Canonical structural kernel-catalog record version.
-pub const M1_KERNEL_CATALOG_VERSION: u32 = 2;
+pub const M1_KERNEL_CATALOG_VERSION: u32 = 3;
 /// Exact number of target/draft B3 plans.
 pub const M1_KERNEL_PLAN_COUNT: usize = 22;
 /// Exact number of graph operations across all 22 plans.
@@ -217,11 +217,8 @@ pub(crate) closed spec fn family_for_spec(
     mode: Qwen3ExecutionMode,
 ) -> (KernelFamily, KernelProfileDisposition) {
     match operator {
-        Qwen3Operator::TokenEmbedding => (
-            KernelFamily::K1GemmGemv,
-            KernelProfileDisposition::RequiredExtension,
-        ),
-        Qwen3Operator::QueryProjection
+        Qwen3Operator::TokenEmbedding
+        | Qwen3Operator::QueryProjection
         | Qwen3Operator::KeyProjection
         | Qwen3Operator::ValueProjection
         | Qwen3Operator::AttentionOutputResidual
@@ -272,11 +269,8 @@ pub(crate) fn family_for(
     ensures result == family_for_spec(operator, mode),
 {
     match operator {
-        Qwen3Operator::TokenEmbedding => (
-            KernelFamily::K1GemmGemv,
-            KernelProfileDisposition::RequiredExtension,
-        ),
-        Qwen3Operator::QueryProjection
+        Qwen3Operator::TokenEmbedding
+        | Qwen3Operator::QueryProjection
         | Qwen3Operator::KeyProjection
         | Qwen3Operator::ValueProjection
         | Qwen3Operator::AttentionOutputResidual
@@ -962,6 +956,11 @@ mod tests {
         )
         .unwrap();
         assert_eq!(catalog.version(), M1_KERNEL_CATALOG_VERSION);
+        assert_eq!(M1_KERNEL_CATALOG_VERSION, 3);
+        assert_eq!(
+            &catalog.canonical_bytes()[..4],
+            &M1_KERNEL_CATALOG_VERSION.to_le_bytes()
+        );
         assert_eq!(catalog.bindings().len(), M1_KERNEL_OPERATION_BINDINGS);
         assert_eq!(
             catalog.source_declarations(),
@@ -970,12 +969,21 @@ mod tests {
         assert!(!catalog.canonical_bytes().is_empty());
 
         let mut family_seen = [false; 7];
+        let mut token_embedding_profiles = 0;
         for binding in catalog.bindings() {
             let plan = &plans[usize::from(binding.plan_index)];
             validate_kernel_profile(binding.profile, plan, binding.profile.step.ordinal).unwrap();
             family_seen[usize::from(family_tag(binding.profile.family) - 1)] = true;
+            if binding.profile.step.operator == Qwen3Operator::TokenEmbedding {
+                token_embedding_profiles += 1;
+                assert_eq!(
+                    binding.profile.disposition,
+                    KernelProfileDisposition::DeclaredFoundation
+                );
+            }
         }
         assert_eq!(family_seen, [true; 7]);
+        assert_eq!(token_embedding_profiles, M1_B3_PLAN_BUCKETS.len() * 2);
     }
 
     #[test]

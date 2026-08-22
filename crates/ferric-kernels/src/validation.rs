@@ -774,7 +774,7 @@ mod tests {
             Err(KernelCatalogValidationError::ExpectationProfileFamilyDrift)
         );
         let mut changed = exact;
-        changed.profile.disposition = KernelProfileDisposition::DeclaredFoundation;
+        changed.profile.disposition = KernelProfileDisposition::RequiredExtension;
         assert_eq!(
             validate_kernel_catalog_input(changed, changed),
             Err(KernelCatalogValidationError::ExpectationProfileFamilyDrift)
