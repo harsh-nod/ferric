@@ -116,6 +116,18 @@ pub struct M1PhysicalQueuePhaseCaseV1<Q> {
 }
 
 impl<Q> M1PhysicalQueuePhaseCaseV1<Q> {
+    pub(crate) const fn from_queue_rearm(
+        lower: Q,
+        custody: M1PhysicalQueueBatchCustodyV1,
+        step: M1PrepublicationStepCustodyV1,
+    ) -> Self {
+        Self {
+            lower,
+            custody,
+            step,
+        }
+    }
+
     const fn new(
         lower: Q,
         custody: M1PhysicalQueueBatchCustodyV1,
@@ -789,6 +801,42 @@ impl M1PhysicalReadbackDetachedQueueSessionV1 {
             | Self::SpeculativeK4(case)
             | Self::SpeculativeK8(case)
             | Self::SpeculativeK16(case) => case.detached_dispatch_generation(),
+        }
+    }
+
+    pub(crate) fn into_rearm_parts(
+        self,
+    ) -> (
+        M1PhysicalFixedBatchShapeV1,
+        ServiceQueueUnboundSessionV1,
+        M1PhysicalQueueBatchCustodyV1,
+    ) {
+        match self {
+            Self::TargetOnly(case) => (
+                M1PhysicalFixedBatchShapeV1::TargetOnly,
+                case.lower,
+                case.custody,
+            ),
+            Self::PairedPrefill(case) => (
+                M1PhysicalFixedBatchShapeV1::PairedPrefill,
+                case.lower,
+                case.custody,
+            ),
+            Self::SpeculativeK4(case) => (
+                M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+                case.lower,
+                case.custody,
+            ),
+            Self::SpeculativeK8(case) => (
+                M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+                case.lower,
+                case.custody,
+            ),
+            Self::SpeculativeK16(case) => (
+                M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+                case.lower,
+                case.custody,
+            ),
         }
     }
 }

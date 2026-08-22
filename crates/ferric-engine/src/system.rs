@@ -977,6 +977,22 @@ impl<const C: usize> Engine<C> {
         self.faulted
     }
 
+    /// Permanently quarantines an in-flight M1 queue rearm after Ferric retains
+    /// every available queue, cache, allocation, and scheduler owner.
+    pub(crate) fn quarantine_m1_queue_rearm_failure(&mut self)
+        requires old(self).well_formed(),
+        ensures
+            self.well_formed(),
+            self.faulted_spec(),
+            self.scheduler == old(self).scheduler,
+            self.kv == old(self).kv,
+            self.permits == old(self).permits,
+    {
+        reveal(Engine::well_formed);
+        reveal(Engine::faulted_spec);
+        self.faulted = true;
+    }
+
     #[must_use]
     pub const fn capacity(&self) -> (capacity: usize)
         ensures capacity == C,

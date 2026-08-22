@@ -38,6 +38,18 @@ pub struct M1BoundPhysicalBufferRowV1 {
 }
 
 impl M1BoundPhysicalBufferRowV1 {
+    pub(crate) fn from_queue_rearm(
+        source: &M1PhysicalBufferRecipeRowV1,
+        buffers: Box<[ServiceFixedDispatchBufferV1]>,
+    ) -> Self {
+        Self {
+            dispatch_index: source.dispatch_index(),
+            profile_id: source.profile_id(),
+            program: source.program(),
+            buffers,
+        }
+    }
+
     /// Zero-based position in the complete physical step.
     #[must_use]
     pub const fn dispatch_index(&self) -> u32 {

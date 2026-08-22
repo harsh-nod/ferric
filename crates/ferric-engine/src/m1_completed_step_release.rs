@@ -14,6 +14,7 @@
 
 use core::fmt;
 
+use fe2o3_service_host::ServiceQueueReleaseObservationV1;
 use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::{PhysicalKvLifecycle, PhysicalPageId, Qwen3ModelRole, RequestId};
 
@@ -24,7 +25,7 @@ use crate::device_cache::{
 use crate::{
     ActiveDeviceKvCache, DeviceKvCacheProjection, M1CheckedCompletionOutputV1,
     M1CompletedDeviceKvMemberV1, M1CompletedStepSuccessV1, M1DeviceKvArenaLeaseErrorV1,
-    M1PhysicalReadbackQueueSessionV1,
+    M1PhysicalReadbackQueueReleaseFailureV1, M1PhysicalReadbackQueueSessionV1,
 };
 
 /// Stable whole-roster page-return rejection.
@@ -247,6 +248,101 @@ pub struct M1ReleasedCompletedStepV1 {
     total_released: usize,
 }
 
+/// Successful final queue release retaining the completed-step observations.
+#[must_use = "released member and completion observations remain owned"]
+#[derive(Debug)]
+pub struct M1ReleasedQueueTeardownSuccessV1 {
+    queue_release: ServiceQueueReleaseObservationV1,
+    checked: M1CheckedCompletionOutputV1,
+    members: Vec<M1ReleasedDeviceKvMemberV1>,
+    emitted_counts: Box<[u32]>,
+    release_counts: Box<[M1CompletedKvPageReleaseCountsV1]>,
+    completed_members: usize,
+    total_released: usize,
+}
+
+impl M1ReleasedQueueTeardownSuccessV1 {
+    #[must_use]
+    pub const fn queue_release(&self) -> ServiceQueueReleaseObservationV1 {
+        self.queue_release
+    }
+
+    pub const fn checked(&self) -> &M1CheckedCompletionOutputV1 {
+        &self.checked
+    }
+
+    pub fn members(&self) -> &[M1ReleasedDeviceKvMemberV1] {
+        &self.members
+    }
+
+    #[must_use]
+    pub fn emitted_counts(&self) -> &[u32] {
+        &self.emitted_counts
+    }
+
+    #[must_use]
+    pub fn release_counts(&self) -> &[M1CompletedKvPageReleaseCountsV1] {
+        &self.release_counts
+    }
+
+    #[must_use]
+    pub const fn completed_members(&self) -> usize {
+        self.completed_members
+    }
+
+    #[must_use]
+    pub const fn total_released(&self) -> usize {
+        self.total_released
+    }
+}
+
+/// Terminal queue-release failure retaining all available completed-step custody.
+#[must_use = "terminal queue release failure retains physical and member custody"]
+#[derive(Debug)]
+pub struct M1ReleasedQueueTeardownFailureV1 {
+    source: M1PhysicalReadbackQueueReleaseFailureV1,
+    checked: M1CheckedCompletionOutputV1,
+    members: Vec<M1ReleasedDeviceKvMemberV1>,
+    emitted_counts: Box<[u32]>,
+    release_counts: Box<[M1CompletedKvPageReleaseCountsV1]>,
+    completed_members: usize,
+    total_released: usize,
+}
+
+impl M1ReleasedQueueTeardownFailureV1 {
+    pub const fn source(&self) -> &M1PhysicalReadbackQueueReleaseFailureV1 {
+        &self.source
+    }
+
+    pub const fn checked(&self) -> &M1CheckedCompletionOutputV1 {
+        &self.checked
+    }
+
+    pub fn members(&self) -> &[M1ReleasedDeviceKvMemberV1] {
+        &self.members
+    }
+
+    #[must_use]
+    pub fn emitted_counts(&self) -> &[u32] {
+        &self.emitted_counts
+    }
+
+    #[must_use]
+    pub fn release_counts(&self) -> &[M1CompletedKvPageReleaseCountsV1] {
+        &self.release_counts
+    }
+
+    #[must_use]
+    pub const fn completed_members(&self) -> usize {
+        self.completed_members
+    }
+
+    #[must_use]
+    pub const fn total_released(&self) -> usize {
+        self.total_released
+    }
+}
+
 impl M1ReleasedCompletedStepV1 {
     pub const fn queue(&self) -> &M1PhysicalReadbackQueueSessionV1 {
         &self.queue
@@ -278,6 +374,81 @@ impl M1ReleasedCompletedStepV1 {
     #[must_use]
     pub const fn total_released(&self) -> usize {
         self.total_released
+    }
+
+    /// Destroys the completed queue and releases its allocation session while
+    /// retaining the completed-step member and observation custody.
+    ///
+    /// This is the clean terminal route when no request continues. It does not
+    /// claim that an active member may be discarded; any such owner remains in
+    /// the returned closed success or failure value.
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal lower-layer release quarantine paired with every
+    /// remaining completed-step owner and observation.
+    pub fn destroy_queue_and_retain_step(
+        self,
+    ) -> Result<M1ReleasedQueueTeardownSuccessV1, Box<M1ReleasedQueueTeardownFailureV1>> {
+        let Self {
+            queue,
+            checked,
+            members,
+            emitted_counts,
+            release_counts,
+            completed_members,
+            total_released,
+        } = self;
+        match queue.destroy_and_release() {
+            Ok(queue_release) => Ok(M1ReleasedQueueTeardownSuccessV1 {
+                queue_release,
+                checked,
+                members,
+                emitted_counts,
+                release_counts,
+                completed_members,
+                total_released,
+            }),
+            Err(source) => Err(Box::new(M1ReleasedQueueTeardownFailureV1 {
+                source,
+                checked,
+                members,
+                emitted_counts,
+                release_counts,
+                completed_members,
+                total_released,
+            })),
+        }
+    }
+
+    pub(crate) fn try_reserve_rearm_members(
+        &mut self,
+        additional: usize,
+    ) -> Result<(), std::collections::TryReserveError> {
+        self.members.try_reserve_exact(additional)
+    }
+
+    #[allow(clippy::type_complexity)]
+    pub(crate) fn into_rearm_parts(
+        self,
+    ) -> (
+        M1PhysicalReadbackQueueSessionV1,
+        M1CheckedCompletionOutputV1,
+        Vec<M1ReleasedDeviceKvMemberV1>,
+        Box<[u32]>,
+        Box<[M1CompletedKvPageReleaseCountsV1]>,
+        usize,
+        usize,
+    ) {
+        (
+            self.queue,
+            self.checked,
+            self.members,
+            self.emitted_counts,
+            self.release_counts,
+            self.completed_members,
+            self.total_released,
+        )
     }
 }
 

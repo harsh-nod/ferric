@@ -18,6 +18,7 @@ mod kv_workspace_authority;
 mod m1_completed_step;
 mod m1_completed_step_release;
 mod m1_prepublication;
+mod m1_queue_rearm;
 mod model_memory_allocations;
 mod operation_dispatch_expansion;
 mod operation_kernel_plan;
@@ -104,6 +105,7 @@ pub use m1_completed_step_release::{
     release_m1_completed_step_kv_pages_v1, M1CompletedKvPageIdentityErrorV1,
     M1CompletedKvPageReleaseCountsV1, M1CompletedStepKvReleaseErrorV1,
     M1CompletedStepKvReleaseFailureV1, M1ReleasedCompletedStepV1, M1ReleasedDeviceKvMemberV1,
+    M1ReleasedQueueTeardownFailureV1, M1ReleasedQueueTeardownSuccessV1,
     M1ReleasedTerminalDeviceKvMemberV1,
 };
 pub use m1_prepublication::{
@@ -115,6 +117,23 @@ pub use m1_prepublication::{
     M1PrepublicationBatchBuildFailureV1, M1PrepublicationBatchV1,
     M1PrepublicationCompositionFailureV1, M1PrepublicationJoinErrorV1,
     M1PrepublicationJoinFailureV1, M1PrepublicationStepCustodyV1, M1WorkspaceImageResidueV1,
+};
+pub use m1_queue_rearm::{
+    prepare_m1_long_lived_queue_rearm_v1, reserve_m1_long_lived_queue_rearm_kv_v1,
+    schedule_m1_long_lived_queue_rearm_v1, submit_m1_long_lived_queue_rearm_v1,
+    M1LongLivedQueueRearmKvInputsV1, M1LongLivedQueueRearmKvReservationFailureV1,
+    M1LongLivedQueueRearmKvReservationPhaseV1, M1LongLivedQueueRearmPrepareFailureV1,
+    M1LongLivedQueueRearmProgressPhaseV1, M1LongLivedQueueRearmScheduleErrorV1,
+    M1LongLivedQueueRearmScheduleFailureV1, M1LongLivedQueueRearmSchedulePhaseV1,
+    M1LongLivedQueueRearmSubmissionFailureV1, M1LongLivedQueueRearmSubmissionPhaseV1,
+    M1LongLivedQueueRearmTeardownFailureV1, M1LongLivedQueueRearmTeardownSuccessV1,
+    M1LongLivedQueueReleasedRoundV1, M1LongLivedQueueUnscheduledRoundV1,
+    M1PreparedLongLivedQueueRearmV1, M1RearmedCompletedQueueV1, M1RearmedCompletedReadbackV1,
+    M1RearmedCompletionOutcomeV1, M1RearmedCompletionPreflightErrorV1,
+    M1RearmedCompletionPreflightFailureV1, M1RearmedPublishedQueueV1,
+    M1RearmedQueueProgressFailureV1, M1RearmedReadbackFailureV1, M1RearmedRecycledQueueV1,
+    M1RearmedRoundPageReleaseFailureV1, M1RearmedRoundReleaseOutcomeV1,
+    M1ReservedLongLivedQueueRearmV1, M1ScheduledLongLivedQueueRearmV1,
 };
 pub use model_memory_allocations::{
     bind_addressless_model_memory_allocations_v1, BoundModelMemoryAllocationsV1,

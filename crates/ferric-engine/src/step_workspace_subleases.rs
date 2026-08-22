@@ -11,7 +11,8 @@ use core::fmt;
 use fe2o3_service_host::{
     DeviceLocalAllocationV1, DeviceWorkspaceRoleV1, ServiceAllocationErrorV1,
     ServiceAllocationKeyV1, ServiceAllocationSessionV1, ServiceAllocationSubleaseSetV1,
-    ServiceDeviceDispatchRangeV1,
+    ServiceDeviceDispatchRangeV1, ServiceQueuePartitionedDataUpdateV1,
+    ServiceQueueUnboundSessionV1,
 };
 use ferric_build::{
     m1_step_workspace_requirements, AddresslessM1StepWorkspacePlan,
@@ -368,6 +369,112 @@ impl<const N: usize> BoundM1StepWorkspaceSubleases<N> {
         }
         Ok(())
     }
+
+    pub(crate) const fn replacement_subleases(
+        &self,
+    ) -> &ServiceAllocationSubleaseSetV1<DeviceWorkspaceRoleV1, DeviceLocalAllocationV1, N> {
+        &self.subleases
+    }
+}
+
+#[derive(Debug)]
+pub(crate) enum M1QueueReplacedWorkspaceBindingFailureV1<const N: usize> {
+    Plan {
+        failure: M1StepWorkspaceSubleaseBindingFailure,
+        update: Box<ServiceQueuePartitionedDataUpdateV1<DeviceWorkspaceRoleV1, N>>,
+    },
+    ReturnedRange {
+        plan: AddresslessM1StepWorkspacePlan,
+        queue: Box<ServiceQueueUnboundSessionV1>,
+        subleases:
+            Box<ServiceAllocationSubleaseSetV1<DeviceWorkspaceRoleV1, DeviceLocalAllocationV1, N>>,
+        ranges: Box<[ServiceDeviceDispatchRangeV1; N]>,
+    },
+}
+
+impl<const N: usize> M1QueueReplacedWorkspaceBindingFailureV1<N> {
+    pub(crate) fn retained_owner_count(&self) -> usize {
+        match self {
+            Self::Plan { failure, update } => {
+                let _ = failure.error();
+                let _ = update;
+                2
+            }
+            Self::ReturnedRange {
+                plan,
+                queue,
+                subleases,
+                ranges,
+            } => {
+                let _ = plan.selection();
+                let _ = queue.observation();
+                let _ = subleases;
+                let _ = ranges.len();
+                2
+            }
+        }
+    }
+}
+
+pub(crate) fn bind_queue_replaced_m1_step_workspace<const N: usize>(
+    plan: AddresslessM1StepWorkspacePlan,
+    update: ServiceQueuePartitionedDataUpdateV1<DeviceWorkspaceRoleV1, N>,
+) -> Result<
+    (
+        ServiceQueueUnboundSessionV1,
+        BoundM1StepWorkspaceSubleases<N>,
+        [ServiceDeviceDispatchRangeV1; N],
+    ),
+    Box<M1QueueReplacedWorkspaceBindingFailureV1<N>>,
+> {
+    let allocation = plan.allocation();
+    let (plan, roster) = match preflight_m1_step_workspace_subleases::<N>(
+        plan.selection(),
+        allocation.allocation_id(),
+        allocation.byte_len(),
+        allocation.alignment(),
+        plan,
+    ) {
+        Ok(preflighted) => preflighted,
+        Err(failure) => {
+            return Err(Box::new(M1QueueReplacedWorkspaceBindingFailureV1::Plan {
+                failure,
+                update: Box::new(update),
+            }));
+        }
+    };
+    let (queue, subleases, ranges) = update.into_parts();
+    // The generic update is unforgeable and produces both values from one
+    // committed owner/allocation generation. Recheck its entire public member
+    // layout, including the sublease witness, before constructing Ferric custody.
+    let returned_layout_matches = ranges.iter().zip(roster.members).enumerate().all(
+        |(index, (range, (offset, extent, alignment)))| {
+            subleases.offset_bytes(index) == Some(offset)
+                && subleases.extent_bytes(index) == Some(extent)
+                && subleases.alignment(index) == Some(alignment)
+                && range.offset_bytes() == offset
+                && range.extent_bytes() == extent
+        },
+    );
+    if !returned_layout_matches {
+        return Err(Box::new(
+            M1QueueReplacedWorkspaceBindingFailureV1::ReturnedRange {
+                plan,
+                queue: Box::new(queue),
+                subleases: Box::new(subleases),
+                ranges: Box::new(ranges),
+            },
+        ));
+    }
+    Ok((
+        queue,
+        BoundM1StepWorkspaceSubleases {
+            plan,
+            roles: roster.roles,
+            subleases,
+        },
+        ranges,
+    ))
 }
 
 fn validate_role_contained_subrange(

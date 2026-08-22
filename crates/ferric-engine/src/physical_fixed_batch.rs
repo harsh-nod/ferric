@@ -228,6 +228,19 @@ pub struct M1PhysicalQueueBatchCustodyV1 {
     bound_rows: Box<[M1BoundPhysicalBufferRowV1]>,
 }
 
+#[derive(Debug)]
+pub(crate) struct M1PhysicalQueueBatchRearmPartsV1 {
+    pub(crate) catalog_id: Identity,
+    pub(crate) selection: Qwen3PlanSelection,
+    pub(crate) physical_recipe: AddresslessM1PhysicalDispatchRecipeV1,
+    pub(crate) workspace_composition: AddresslessM1FullStepWorkspaceComposition,
+    pub(crate) workspace_owners: M1FullStepWorkspaceSubleaseOwners,
+    pub(crate) partitioned_memory: M1PartitionedModelMemoryKvQueueCustodyV1,
+    pub(crate) completion_output: BoundM1CompletionOutputV1,
+    pub(crate) source_rows: Box<[M1PhysicalBufferRecipeRowV1]>,
+    pub(crate) bound_rows: Box<[M1BoundPhysicalBufferRowV1]>,
+}
+
 impl M1PhysicalQueueBatchCustodyV1 {
     /// Checked physical-device receipt retained through every queue phase.
     #[must_use]
@@ -299,6 +312,34 @@ impl M1PhysicalQueueBatchCustodyV1 {
         m1_physical_fixed_batch_shape_for_intent_v1(
             self.workspace_composition.dispatch_plan().intent(),
         )
+    }
+
+    pub(crate) fn into_rearm_parts(self) -> M1PhysicalQueueBatchRearmPartsV1 {
+        M1PhysicalQueueBatchRearmPartsV1 {
+            catalog_id: self.catalog_id,
+            selection: self.selection,
+            physical_recipe: self.physical_recipe,
+            workspace_composition: self.workspace_composition,
+            workspace_owners: self.workspace_owners,
+            partitioned_memory: self.partitioned_memory,
+            completion_output: self.completion_output,
+            source_rows: self.source_rows,
+            bound_rows: self.bound_rows,
+        }
+    }
+
+    pub(crate) fn from_rearm_parts(parts: M1PhysicalQueueBatchRearmPartsV1) -> Self {
+        Self {
+            catalog_id: parts.catalog_id,
+            selection: parts.selection,
+            physical_recipe: parts.physical_recipe,
+            workspace_composition: parts.workspace_composition,
+            workspace_owners: parts.workspace_owners,
+            partitioned_memory: parts.partitioned_memory,
+            completion_output: parts.completion_output,
+            source_rows: parts.source_rows,
+            bound_rows: parts.bound_rows,
+        }
     }
 }
 

@@ -329,6 +329,20 @@ impl M1PreparedScheduledWorkspaceImagesV1 {
     pub const fn step(&self) -> &M1PrepublicationStepCustodyV1 {
         &self.step
     }
+
+    pub(crate) const fn plans(&self) -> &M1FullStepWorkspacePlans {
+        &self.plans
+    }
+
+    pub(crate) fn into_rearm_parts(
+        self,
+    ) -> (
+        M1FullStepWorkspacePlans,
+        M1FullStepWorkspaceImagesV1,
+        M1PrepublicationStepCustodyV1,
+    ) {
+        (self.plans, self.images, self.step)
+    }
 }
 
 /// Allocated workspace owners joined to scheduler and KV authority.
