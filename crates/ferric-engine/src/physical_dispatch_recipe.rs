@@ -8,6 +8,7 @@
 //! evidence, performance evidence, or refinement proof.
 
 use fe2o3_aql::{AqlDispatchGeometryV1, AqlGeometryError};
+use ferric_kernels::KernelProfileDescriptor;
 use ferric_qwen_kernels::{gemm, logits, paged_decode, prefill, rmsnorm, rope_kv, swiglu};
 use ferric_spec::{Identity, Qwen3ExecutionMode, Qwen3Operator, Qwen3PlanSelection};
 
@@ -48,7 +49,7 @@ pub struct M1PhysicalDispatchRecipeRowV1 {
     stage: M1StepDispatchStage,
     selection: Qwen3PlanSelection,
     logical_ordinal: u32,
-    operator: Qwen3Operator,
+    profile: KernelProfileDescriptor,
     kind: M1OperationDispatchKind,
     profile_id: Identity,
     program: M1PhysicalProgramV1,
@@ -91,7 +92,13 @@ impl M1PhysicalDispatchRecipeRowV1 {
     /// Generated Qwen operation represented by this row.
     #[must_use]
     pub const fn operator(self) -> Qwen3Operator {
-        self.operator
+        self.profile.step.operator
+    }
+
+    /// Complete generated profile, including exact layer and buffer edges.
+    #[must_use]
+    pub const fn profile(self) -> KernelProfileDescriptor {
+        self.profile
     }
 
     /// Whole-operation or exact K7 subdispatch role.
@@ -371,7 +378,7 @@ pub fn derive_m1_physical_dispatch_recipe_v1(
                 stage: segment.stage(),
                 selection: segment.selection(),
                 logical_ordinal: row.logical_ordinal(),
-                operator: row.operator(),
+                profile: *row.profile(),
                 kind: row.kind(),
                 profile_id: row.operation().profile_id(),
                 program: resolved.program,

@@ -10,7 +10,7 @@
 //! authentication, allocation, queue, launch, completion, readback, hardware,
 //! performance, inference-result, or refinement authority.
 
-use ferric_kernels::KernelFamily;
+use ferric_kernels::{KernelFamily, KernelProfileDescriptor};
 use ferric_qwen_kernels::logits::{
     Qwen3LogitsBucketKindV1, Qwen3LogitsCompletionKindV1, Qwen3LogitsModeV1,
     Qwen3LogitsModelRoleV1, Qwen3LogitsProfileCatalogV1,
@@ -60,7 +60,7 @@ impl M1OperationDispatchKind {
 pub struct M1OperationDispatchRow {
     dispatch_index: u32,
     logical_ordinal: u32,
-    operator: Qwen3Operator,
+    profile: KernelProfileDescriptor,
     operation: DeclaredOperationKernelBinding,
     kind: M1OperationDispatchKind,
 }
@@ -71,14 +71,14 @@ impl M1OperationDispatchRow {
     pub const fn new(
         dispatch_index: u32,
         logical_ordinal: u32,
-        operator: Qwen3Operator,
+        profile: KernelProfileDescriptor,
         operation: DeclaredOperationKernelBinding,
         kind: M1OperationDispatchKind,
     ) -> Self {
         Self {
             dispatch_index,
             logical_ordinal,
-            operator,
+            profile,
             operation,
             kind,
         }
@@ -99,7 +99,13 @@ impl M1OperationDispatchRow {
     /// Returns the exact generated graph operator.
     #[must_use]
     pub const fn operator(&self) -> Qwen3Operator {
-        self.operator
+        self.profile.step.operator
+    }
+
+    /// Returns the complete generated profile, including layer and buffer edges.
+    #[must_use]
+    pub const fn profile(&self) -> &KernelProfileDescriptor {
+        &self.profile
     }
 
     /// Returns the retained exact operation/kernel identity binding.
@@ -401,6 +407,11 @@ pub enum M1OperationDispatchExpansionError {
         /// Rejected operator.
         actual: Qwen3Operator,
     },
+    /// A declared row changed exact generated geometry, layer, or buffer edges.
+    Profile {
+        /// Physical row position being checked.
+        position: usize,
+    },
     /// A declared row has the wrong K1-K7 family.
     Family {
         /// Physical row position being checked.
@@ -664,7 +675,7 @@ fn derive_rows(
             push_row(
                 &mut rows,
                 logical_ordinal,
-                generated.profile.step.operator,
+                generated.profile,
                 binding,
                 M1OperationDispatchKind::K7Argmax,
             )?;
@@ -680,7 +691,7 @@ fn derive_rows(
                     push_row(
                         &mut rows,
                         logical_ordinal,
-                        generated.profile.step.operator,
+                        generated.profile,
                         binding,
                         M1OperationDispatchKind::K7Compact,
                     )?;
@@ -698,7 +709,7 @@ fn derive_rows(
             push_row(
                 &mut rows,
                 logical_ordinal,
-                generated.profile.step.operator,
+                generated.profile,
                 binding,
                 M1OperationDispatchKind::WholeOperation,
             )?;
@@ -718,7 +729,7 @@ fn derive_rows(
 fn push_row(
     rows: &mut Vec<M1OperationDispatchRow>,
     logical_ordinal: u32,
-    operator: Qwen3Operator,
+    profile: KernelProfileDescriptor,
     operation: &DeclaredOperationKernelBinding,
     kind: M1OperationDispatchKind,
 ) -> Result<(), M1OperationDispatchExpansionError> {
@@ -727,7 +738,7 @@ fn push_row(
     rows.push(M1OperationDispatchRow {
         dispatch_index,
         logical_ordinal,
-        operator,
+        profile,
         operation: *operation,
         kind,
     });
@@ -919,12 +930,15 @@ fn validate_row(
             actual: actual.operation.plan_index(),
         });
     }
-    if actual.operator != expected.operator {
+    if actual.operator() != expected.operator() {
         return Err(M1OperationDispatchExpansionError::Operator {
             position,
-            expected: expected.operator,
-            actual: actual.operator,
+            expected: expected.operator(),
+            actual: actual.operator(),
         });
+    }
+    if actual.profile != expected.profile {
+        return Err(M1OperationDispatchExpansionError::Profile { position });
     }
     if actual.operation.family() != expected.operation.family() {
         return Err(M1OperationDispatchExpansionError::Family {
@@ -1009,7 +1023,7 @@ fn expansion_identity(declaration: &DeclaredM1OperationDispatchExpansion) -> Ide
     for row in &declaration.rows {
         record.extend_from_slice(&row.dispatch_index.to_le_bytes());
         record.extend_from_slice(&row.logical_ordinal.to_le_bytes());
-        record.push(operator_tag(row.operator));
+        record.push(operator_tag(row.operator()));
         record.push(row.kind.tag());
         let operation = row.operation;
         record.extend_from_slice(&operation.operation_index().to_le_bytes());
@@ -1282,7 +1296,7 @@ mod tests {
         M1OperationDispatchRow::new(
             row.dispatch_index(),
             row.logical_ordinal(),
-            row.operator(),
+            *row.profile(),
             *operation,
             row.kind(),
         )
@@ -1372,6 +1386,7 @@ mod tests {
                             u32::try_from(logical_position).expect("logical position fits u32")
                         );
                         assert_eq!(row.operator(), generated.profile.step.operator);
+                        assert_eq!(row.profile(), &generated.profile);
                         assert_eq!(row.operation(), binding);
                         assert_eq!(
                             row.kind(),
@@ -1449,6 +1464,25 @@ mod tests {
                 expected: M1_OPERATION_DISPATCH_EXPANSION_VERSION,
                 actual: M1_OPERATION_DISPATCH_EXPANSION_VERSION + 1,
             },
+        );
+
+        let mut declaration =
+            derive_m1_operation_dispatch_expansion(&operation_plan, TARGET_SELECTION).unwrap();
+        let row = declaration.rows[0];
+        let mut wrong_profile = *row.profile();
+        wrong_profile.sequences += 1;
+        declaration.rows[0] = M1OperationDispatchRow::new(
+            row.dispatch_index(),
+            row.logical_ordinal(),
+            wrong_profile,
+            *row.operation(),
+            row.kind(),
+        );
+        operation_plan = reject_and_recover(
+            operation_plan,
+            TARGET_SELECTION,
+            declaration,
+            M1OperationDispatchExpansionError::Profile { position: 0 },
         );
 
         let mut declaration =
@@ -1561,7 +1595,7 @@ mod tests {
         declaration.rows[0] = M1OperationDispatchRow::new(
             1,
             row.logical_ordinal(),
-            row.operator(),
+            *row.profile(),
             *row.operation(),
             row.kind(),
         );
@@ -1596,7 +1630,7 @@ mod tests {
         declaration.rows[0] = M1OperationDispatchRow::new(
             row.dispatch_index(),
             1,
-            row.operator(),
+            *row.profile(),
             *row.operation(),
             row.kind(),
         );
@@ -1658,10 +1692,12 @@ mod tests {
         let mut declaration =
             derive_m1_operation_dispatch_expansion(&operation_plan, TARGET_SELECTION).unwrap();
         let row = declaration.rows[0];
+        let mut wrong_profile = *row.profile();
+        wrong_profile.step.operator = Qwen3Operator::InputRmsNorm;
         declaration.rows[0] = M1OperationDispatchRow::new(
             row.dispatch_index(),
             row.logical_ordinal(),
-            Qwen3Operator::InputRmsNorm,
+            wrong_profile,
             *row.operation(),
             row.kind(),
         );
@@ -1732,7 +1768,7 @@ mod tests {
         declaration.rows[compact_position] = M1OperationDispatchRow::new(
             row.dispatch_index(),
             row.logical_ordinal(),
-            row.operator(),
+            *row.profile(),
             *row.operation(),
             M1OperationDispatchKind::K7Argmax,
         );
