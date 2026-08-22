@@ -4,6 +4,14 @@
 //! choice disposition, and qualification observation policy for the closed
 //! S1, S8, and S32 shapes. It does not authorize execution, weaken the current
 //! decode guard, or refine M2 chunked prefill.
+//!
+//! Ordinal coverage alone does not authenticate prompt contents. Before using
+//! a validated plan, the runner must independently authenticate each concrete
+//! 8,192-token lane against its declared token-sequence identity, preserve the
+//! declared lane ordering without permutation, and authenticate the workload
+//! digest over the grouping and ordered roster. It must also join each logical
+//! capture requirement to exact allocation custody; this module neither names
+//! nor proves persistence of a physical allocation.
 
 use crate::Identity;
 use vstd::prelude::*;
@@ -40,22 +48,22 @@ impl M1QualificationLaneGrouping {
     pub closed spec fn plan_identity_bytes_spec(self) -> Seq<u8> {
         match self {
             Self::S1 => seq![
-                0x4a, 0x67, 0x77, 0x95, 0x11, 0x42, 0xeb, 0x54,
-                0xde, 0x8b, 0x95, 0xd5, 0xbb, 0xb8, 0x7e, 0x34,
-                0xb3, 0xf1, 0xc5, 0xfd, 0xf7, 0x57, 0xee, 0xab,
-                0x7a, 0x53, 0x0d, 0x21, 0x1a, 0x6e, 0x81, 0x0f,
+                0x63, 0x8e, 0x01, 0xd1, 0x41, 0x9e, 0xb8, 0xc4,
+                0xa4, 0xa3, 0x22, 0x98, 0xf2, 0x38, 0xdc, 0x26,
+                0xb9, 0x4c, 0x8e, 0x08, 0xda, 0xc8, 0x4e, 0x91,
+                0xf2, 0x5c, 0xc5, 0x8d, 0xa8, 0x03, 0x82, 0x5c,
             ],
             Self::S8 => seq![
-                0xdc, 0xa4, 0x04, 0x02, 0xfe, 0x0b, 0x86, 0x80,
-                0x7f, 0x5f, 0x84, 0xb8, 0x57, 0x00, 0x83, 0x6b,
-                0x52, 0x4a, 0x6a, 0x8b, 0x7b, 0x1a, 0xc2, 0xf8,
-                0x62, 0x26, 0xf2, 0x16, 0x02, 0x74, 0xd0, 0x5f,
+                0x45, 0x03, 0x2d, 0xb1, 0xe3, 0x2f, 0x59, 0x7d,
+                0x56, 0xd4, 0xa3, 0x37, 0xae, 0xe9, 0x4f, 0x04,
+                0xd9, 0xf4, 0x49, 0xd9, 0x37, 0x3f, 0x2e, 0xd3,
+                0x76, 0xe0, 0xf4, 0x49, 0x3e, 0x9c, 0x6b, 0x0d,
             ],
             Self::S32 => seq![
-                0x01, 0x9c, 0x6a, 0x17, 0xb3, 0x85, 0x45, 0x79,
-                0x2e, 0xf2, 0x15, 0x2a, 0xf3, 0x1f, 0x7b, 0x43,
-                0xfb, 0xe8, 0xe6, 0xd0, 0x42, 0x2c, 0xf3, 0xb8,
-                0x04, 0x09, 0x26, 0x9a, 0x59, 0xa6, 0x4b, 0xd1,
+                0x7c, 0xb3, 0x75, 0x11, 0xa5, 0xa4, 0x66, 0x87,
+                0x9f, 0x36, 0xfc, 0x0b, 0x2a, 0x4b, 0x22, 0x17,
+                0x91, 0xfa, 0x7a, 0xdf, 0xf8, 0x11, 0x8e, 0x47,
+                0x58, 0x89, 0xc0, 0x21, 0x75, 0x30, 0x74, 0x86,
             ],
         }
     }
@@ -81,6 +89,185 @@ impl M1QualificationLaneGrouping {
     }
 }
 
+/// Inert declaration of one lane's identity and exact ordered token sequence.
+///
+/// These identities carry no execution or authentication authority. The
+/// runtime integration must authenticate the concrete lane and all 8,192
+/// ordered token IDs before joining them to this declaration.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct M1QualificationLaneExecutionBinding {
+    pub lane_ordinal: u32,
+    pub lane_identity: Identity,
+    pub token_sequence_identity: Identity,
+}
+
+impl M1QualificationLaneExecutionBinding {
+    pub open spec fn exactly_matches_at(
+        &self,
+        ordinal: int,
+        expected: &Self,
+    ) -> bool {
+        &&& 0 <= ordinal
+        &&& self.lane_ordinal as int == ordinal
+        &&& expected.lane_ordinal as int == ordinal
+        &&& exists|index: int| 0 <= index < self.lane_identity.bytes_spec().len()
+            && self.lane_identity.bytes_spec()[index] != 0
+        &&& exists|index: int| 0 <= index < expected.lane_identity.bytes_spec().len()
+            && expected.lane_identity.bytes_spec()[index] != 0
+        &&& self.lane_identity.bytes_spec() == expected.lane_identity.bytes_spec()
+        &&& exists|index: int| 0 <= index < self.token_sequence_identity.bytes_spec().len()
+            && self.token_sequence_identity.bytes_spec()[index] != 0
+        &&& exists|index: int| 0 <= index < expected.token_sequence_identity.bytes_spec().len()
+            && expected.token_sequence_identity.bytes_spec()[index] != 0
+        &&& self.token_sequence_identity.bytes_spec()
+            == expected.token_sequence_identity.bytes_spec()
+    }
+
+    fn validate_exact_match_at(
+        &self,
+        ordinal: u32,
+        expected: &Self,
+    ) -> (result: Result<(), M1QualificationContextPlanError>)
+        ensures result.is_ok() == self.exactly_matches_at(ordinal as int, expected),
+    {
+        if self.lane_ordinal != ordinal {
+            return Err(M1QualificationContextPlanError::LaneOrdinal {
+                position: ordinal,
+                actual: self.lane_ordinal,
+            });
+        }
+        if expected.lane_ordinal != ordinal {
+            return Err(M1QualificationContextPlanError::ExpectedLaneOrdinal {
+                position: ordinal,
+                actual: expected.lane_ordinal,
+            });
+        }
+        if !self.lane_identity.is_present() {
+            return Err(M1QualificationContextPlanError::LaneIdentityAbsent { lane: ordinal });
+        }
+        if !expected.lane_identity.is_present() {
+            return Err(M1QualificationContextPlanError::ExpectedLaneIdentityAbsent {
+                lane: ordinal,
+            });
+        }
+        if !self.lane_identity.equals(&expected.lane_identity) {
+            return Err(M1QualificationContextPlanError::LaneIdentityMismatch { lane: ordinal });
+        }
+        if !self.token_sequence_identity.is_present() {
+            return Err(M1QualificationContextPlanError::TokenSequenceIdentityAbsent {
+                lane: ordinal,
+            });
+        }
+        if !expected.token_sequence_identity.is_present() {
+            return Err(
+                M1QualificationContextPlanError::ExpectedTokenSequenceIdentityAbsent {
+                    lane: ordinal,
+                },
+            );
+        }
+        if !self
+            .token_sequence_identity
+            .equals(&expected.token_sequence_identity)
+        {
+            return Err(M1QualificationContextPlanError::TokenSequenceIdentityMismatch {
+                lane: ordinal,
+            });
+        }
+        Ok(())
+    }
+}
+
+/// Inert declaration that the runtime must join to authenticated workload data.
+///
+/// `declared_workload_digest` is expected to cover the grouping and complete
+/// ordered lane roster. `ordered_lanes` fixes both lane association and every
+/// lane's ordered 8,192-token sequence identity. This crate checks exact
+/// declaration equality, presence, order, and cardinality; it does not hash
+/// token bytes or grant execution authority.
+#[verifier::allow(autoderive_clone_without_spec)]
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct M1QualificationExecutionBindingDeclaration {
+    pub declared_workload_digest: Identity,
+    pub ordered_lanes: Vec<M1QualificationLaneExecutionBinding>,
+}
+
+impl M1QualificationExecutionBindingDeclaration {
+    pub open spec fn exactly_matches_for(
+        &self,
+        grouping: M1QualificationLaneGrouping,
+        expected: &Self,
+    ) -> bool {
+        &&& exists|index: int| 0 <= index < self.declared_workload_digest.bytes_spec().len()
+            && self.declared_workload_digest.bytes_spec()[index] != 0
+        &&& exists|index: int| 0 <= index < expected.declared_workload_digest.bytes_spec().len()
+            && expected.declared_workload_digest.bytes_spec()[index] != 0
+        &&& self.declared_workload_digest.bytes_spec()
+            == expected.declared_workload_digest.bytes_spec()
+        &&& self.ordered_lanes@.len() == grouping.sequences_spec() as nat
+        &&& expected.ordered_lanes@.len() == grouping.sequences_spec() as nat
+        &&& forall|lane: int| 0 <= lane < self.ordered_lanes@.len()
+            ==> self.ordered_lanes@[lane].exactly_matches_at(
+                lane,
+                &expected.ordered_lanes@[lane],
+            )
+    }
+
+    fn validate_exact_match_for(
+        &self,
+        grouping: M1QualificationLaneGrouping,
+        expected: &Self,
+    ) -> (result: Result<(), M1QualificationContextPlanError>)
+        ensures result.is_ok() == self.exactly_matches_for(grouping, expected),
+    {
+        if !self.declared_workload_digest.is_present() {
+            return Err(M1QualificationContextPlanError::WorkloadDigestAbsent);
+        }
+        if !expected.declared_workload_digest.is_present() {
+            return Err(M1QualificationContextPlanError::ExpectedWorkloadDigestAbsent);
+        }
+        if !self
+            .declared_workload_digest
+            .equals(&expected.declared_workload_digest)
+        {
+            return Err(M1QualificationContextPlanError::WorkloadDigestMismatch);
+        }
+
+        let expected_lane_count = grouping.sequences();
+        if self.ordered_lanes.len() != expected_lane_count as usize {
+            return Err(M1QualificationContextPlanError::LaneBindingCount {
+                expected_lanes: expected_lane_count,
+                actual_lanes: self.ordered_lanes.len(),
+            });
+        }
+        if expected.ordered_lanes.len() != expected_lane_count as usize {
+            return Err(M1QualificationContextPlanError::ExpectedLaneBindingCount {
+                expected_lanes: expected_lane_count,
+                actual_lanes: expected.ordered_lanes.len(),
+            });
+        }
+
+        let mut lane = 0u32;
+        while lane < expected_lane_count
+            invariant
+                expected_lane_count == grouping.sequences_spec(),
+                self.ordered_lanes@.len() == expected_lane_count as nat,
+                expected.ordered_lanes@.len() == expected_lane_count as nat,
+                0 <= lane <= expected_lane_count,
+                forall|prior: int| 0 <= prior < lane ==> self.ordered_lanes@[prior]
+                    .exactly_matches_at(prior, &expected.ordered_lanes@[prior]),
+            decreases expected_lane_count - lane,
+        {
+            self.ordered_lanes[lane as usize]
+                .validate_exact_match_at(lane, &expected.ordered_lanes[lane as usize])?;
+            lane += 1;
+        }
+        assert(self.exactly_matches_for(grouping, expected)) by {
+            reveal(M1QualificationExecutionBindingDeclaration::exactly_matches_for);
+        }
+        Ok(())
+    }
+}
+
 /// Returns the fixed reviewed identity for one grouping's exact v1 plan.
 ///
 /// Each identity is a SHA-256 digest of the versioned domain, grouping, and
@@ -93,22 +280,22 @@ pub const fn m1_qualification_context_plan_identity(
 {
     match grouping {
         M1QualificationLaneGrouping::S1 => Identity::new([
-            0x4a, 0x67, 0x77, 0x95, 0x11, 0x42, 0xeb, 0x54,
-            0xde, 0x8b, 0x95, 0xd5, 0xbb, 0xb8, 0x7e, 0x34,
-            0xb3, 0xf1, 0xc5, 0xfd, 0xf7, 0x57, 0xee, 0xab,
-            0x7a, 0x53, 0x0d, 0x21, 0x1a, 0x6e, 0x81, 0x0f,
+            0x63, 0x8e, 0x01, 0xd1, 0x41, 0x9e, 0xb8, 0xc4,
+            0xa4, 0xa3, 0x22, 0x98, 0xf2, 0x38, 0xdc, 0x26,
+            0xb9, 0x4c, 0x8e, 0x08, 0xda, 0xc8, 0x4e, 0x91,
+            0xf2, 0x5c, 0xc5, 0x8d, 0xa8, 0x03, 0x82, 0x5c,
         ]),
         M1QualificationLaneGrouping::S8 => Identity::new([
-            0xdc, 0xa4, 0x04, 0x02, 0xfe, 0x0b, 0x86, 0x80,
-            0x7f, 0x5f, 0x84, 0xb8, 0x57, 0x00, 0x83, 0x6b,
-            0x52, 0x4a, 0x6a, 0x8b, 0x7b, 0x1a, 0xc2, 0xf8,
-            0x62, 0x26, 0xf2, 0x16, 0x02, 0x74, 0xd0, 0x5f,
+            0x45, 0x03, 0x2d, 0xb1, 0xe3, 0x2f, 0x59, 0x7d,
+            0x56, 0xd4, 0xa3, 0x37, 0xae, 0xe9, 0x4f, 0x04,
+            0xd9, 0xf4, 0x49, 0xd9, 0x37, 0x3f, 0x2e, 0xd3,
+            0x76, 0xe0, 0xf4, 0x49, 0x3e, 0x9c, 0x6b, 0x0d,
         ]),
         M1QualificationLaneGrouping::S32 => Identity::new([
-            0x01, 0x9c, 0x6a, 0x17, 0xb3, 0x85, 0x45, 0x79,
-            0x2e, 0xf2, 0x15, 0x2a, 0xf3, 0x1f, 0x7b, 0x43,
-            0xfb, 0xe8, 0xe6, 0xd0, 0x42, 0x2c, 0xf3, 0xb8,
-            0x04, 0x09, 0x26, 0x9a, 0x59, 0xa6, 0x4b, 0xd1,
+            0x7c, 0xb3, 0x75, 0x11, 0xa5, 0xa4, 0x66, 0x87,
+            0x9f, 0x36, 0xfc, 0x0b, 0x2a, 0x4b, 0x22, 0x17,
+            0x91, 0xfa, 0x7a, 0xdf, 0xf8, 0x11, 0x8e, 0x47,
+            0x58, 0x89, 0xc0, 0x21, 0x75, 0x30, 0x74, 0x86,
         ]),
     }
 }
@@ -198,13 +385,16 @@ impl M1QualificationNextInputPolicy {
 
 /// One exact unit-token step in qualification-only context construction.
 ///
-/// `prompt_context_commits` and `externally_emitted_output_count` are distinct
-/// fields. Every step commits one supplied prompt token. Priming steps also
+/// `prompt_context_commits` and `externally_emitted_outputs_per_lane` are
+/// distinct fields. Every step commits one supplied prompt token per lane.
+/// Priming steps also
 /// observe a model compact choice, but suppress it and independently select the
 /// next teacher-forced prompt token; no choice-to-prompt equality is required.
-/// `qualification_buffer_attached` models the one buffer retained in queue
-/// custody and overwritten by every generation. Host publication remains a
-/// separate terminal-only decision.
+/// `qualification_capture_destination_required` is only a per-step logical
+/// requirement. It does not identify an allocation, prove that one allocation
+/// persists, or prove an overwrite. The engine must separately join every step
+/// to its exact runtime allocation custody. Host publication remains a separate
+/// terminal-only decision.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct M1QualificationContextStep {
     pub kind: M1QualificationContextStepKind,
@@ -212,13 +402,14 @@ pub struct M1QualificationContextStep {
     pub prompt_context_commits: M1QualificationTokenRange,
     pub compact_choice: M1QualificationCompactChoiceDisposition,
     pub next_input: M1QualificationNextInputPolicy,
-    pub externally_emitted_output_count: u32,
-    pub qualification_buffer_attached: bool,
+    pub externally_emitted_outputs_per_lane: u32,
+    pub aggregate_externally_emitted_output_count: u32,
+    pub qualification_capture_destination_required: bool,
     pub publish_qualification_output_to_host: bool,
 }
 
 impl M1QualificationContextStep {
-    pub open spec fn valid_at(self, ordinal: u32) -> bool {
+    pub open spec fn valid_at(self, ordinal: u32, sequences: u32) -> bool {
         if ordinal < M1_QUALIFICATION_PROMPT_CONTEXT_TOKENS {
             self.kind == M1QualificationContextStepKind::TeacherForcedPromptContext
                 && self.input_tokens.start == ordinal
@@ -228,8 +419,9 @@ impl M1QualificationContextStep {
                     == M1QualificationCompactChoiceDisposition::ObservedButSuppressed
                 && self.next_input
                     == M1QualificationNextInputPolicy::IndependentTeacherForcedPrompt
-                && self.externally_emitted_output_count == 0
-                && self.qualification_buffer_attached
+                && self.externally_emitted_outputs_per_lane == 0
+                && self.aggregate_externally_emitted_output_count == 0
+                && self.qualification_capture_destination_required
                 && !self.publish_qualification_output_to_host
         } else if ordinal == M1_QUALIFICATION_FINAL_INPUT_TOKEN {
             self.kind == M1QualificationContextStepKind::FinalObserved
@@ -239,8 +431,9 @@ impl M1QualificationContextStep {
                 && self.compact_choice
                     == M1QualificationCompactChoiceDisposition::ObservedAndPublished
                 && self.next_input == M1QualificationNextInputPolicy::Terminal
-                && self.externally_emitted_output_count == 1
-                && self.qualification_buffer_attached
+                && self.externally_emitted_outputs_per_lane == 1
+                && self.aggregate_externally_emitted_output_count == sequences
+                && self.qualification_capture_destination_required
                 && self.publish_qualification_output_to_host
         } else {
             false
@@ -248,8 +441,12 @@ impl M1QualificationContextStep {
     }
 
     #[allow(clippy::bool_to_int_with_if)]
-    fn validate_at(self, ordinal: u32) -> (result: Result<(), M1QualificationContextPlanError>)
-        ensures result.is_ok() == self.valid_at(ordinal),
+    fn validate_at(
+        self,
+        ordinal: u32,
+        sequences: u32,
+    ) -> (result: Result<(), M1QualificationContextPlanError>)
+        ensures result.is_ok() == self.valid_at(ordinal, sequences),
     {
         if ordinal >= M1_QUALIFICATION_TOKENS_PER_LANE {
             return Err(M1QualificationContextPlanError::StepCount {
@@ -273,7 +470,8 @@ impl M1QualificationContextStep {
         } else {
             M1QualificationNextInputPolicy::Terminal
         };
-        let expected_outputs = if priming { 0 } else { 1 };
+        let expected_outputs_per_lane = if priming { 0 } else { 1 };
+        let expected_aggregate_outputs = if priming { 0 } else { sequences };
         let expected_host_publication = !priming;
         let expected_end = ordinal + 1;
 
@@ -303,13 +501,22 @@ impl M1QualificationContextStep {
         if !self.next_input.matches(expected_next_input) {
             return Err(M1QualificationContextPlanError::NextInputPolicy { ordinal });
         }
-        if self.externally_emitted_output_count != expected_outputs {
-            return Err(M1QualificationContextPlanError::ExternallyEmittedOutputCount { ordinal });
+        if self.externally_emitted_outputs_per_lane != expected_outputs_per_lane {
+            return Err(
+                M1QualificationContextPlanError::ExternallyEmittedOutputsPerLane { ordinal },
+            );
         }
-        if !self.qualification_buffer_attached {
-            return Err(M1QualificationContextPlanError::QualificationBufferAttachment {
+        if self.aggregate_externally_emitted_output_count != expected_aggregate_outputs {
+            return Err(M1QualificationContextPlanError::AggregateExternallyEmittedOutputCount {
                 ordinal,
             });
+        }
+        if !self.qualification_capture_destination_required {
+            return Err(
+                M1QualificationContextPlanError::QualificationCaptureDestinationRequired {
+                    ordinal,
+                },
+            );
         }
         if self.publish_qualification_output_to_host != expected_host_publication {
             return Err(M1QualificationContextPlanError::HostPublicationPolicy { ordinal });
@@ -325,6 +532,7 @@ pub struct M1QualificationContextPlan {
     pub version: u32,
     pub plan_id: Identity,
     pub grouping: M1QualificationLaneGrouping,
+    pub execution_binding: M1QualificationExecutionBindingDeclaration,
     pub tokens_per_lane: u32,
     pub steps: Vec<M1QualificationContextStep>,
 }
@@ -332,6 +540,7 @@ pub struct M1QualificationContextPlan {
 impl M1QualificationContextPlan {
     /// Every supplied input and prompt commit is the exact unit interval at its
     /// ordinal. This excludes gaps, overlap, leading input, and trailing input.
+    /// It is ordinal coverage only and does not authenticate token contents.
     pub open spec fn has_exact_token_coverage(&self) -> bool {
         self.steps@.len() == M1_QUALIFICATION_CONTEXT_PLAN_STEPS as nat
             && forall|ordinal: int| 0 <= ordinal < self.steps@.len() ==> {
@@ -344,14 +553,24 @@ impl M1QualificationContextPlan {
 
     pub open spec fn every_step_is_valid(&self) -> bool {
         forall|ordinal: int| 0 <= ordinal < self.steps@.len()
-            ==> self.steps@[ordinal].valid_at(ordinal as u32)
+            ==> self.steps@[ordinal].valid_at(
+                ordinal as u32,
+                self.grouping.sequences_spec(),
+            )
     }
 
-    /// Mathematical acceptance relation for the exact expected grouping.
-    pub open spec fn valid_for(&self, expected_grouping: M1QualificationLaneGrouping) -> bool {
+    /// Mathematical acceptance relation for the exact expected grouping and
+    /// independently supplied execution-binding declaration.
+    pub open spec fn valid_for(
+        &self,
+        expected_grouping: M1QualificationLaneGrouping,
+        expected_execution_binding: &M1QualificationExecutionBindingDeclaration,
+    ) -> bool {
         self.version == M1_QUALIFICATION_CONTEXT_PLAN_VERSION
             && self.grouping == expected_grouping
             && self.plan_id.bytes_spec() == expected_grouping.plan_identity_bytes_spec()
+            && self.execution_binding
+                .exactly_matches_for(expected_grouping, expected_execution_binding)
             && self.tokens_per_lane == M1_QUALIFICATION_TOKENS_PER_LANE
             && self.steps@.len() == M1_QUALIFICATION_CONTEXT_PLAN_STEPS as nat
             && self.every_step_is_valid()
@@ -372,25 +591,30 @@ impl M1QualificationContextPlan {
             &&& self.steps@[ordinal].prompt_context_commits
                 == self.steps@[ordinal].input_tokens
         } by {
-            assert(self.steps@[ordinal].valid_at(ordinal as u32));
+            assert(self.steps@[ordinal].valid_at(
+                ordinal as u32,
+                self.grouping.sequences_spec(),
+            ));
             reveal(M1QualificationContextStep::valid_at);
         }
     }
 
     /// Validates exact unit-token coverage, prompt commits, compact-choice
-    /// disposition, buffer custody, host publication, stable identity, and lane
-    /// grouping.
+    /// disposition, capture requirement, host publication, stable policy
+    /// identity, grouping, and exact execution-binding declaration join.
     ///
     /// # Errors
     ///
     /// Fails closed on any header, grouping, identity, coverage, commit,
-    /// choice, next-input, external-emission, attachment, or host-publication
-    /// substitution.
+    /// choice, next-input, per-lane or aggregate external-emission,
+    /// capture-requirement, host-publication, workload, or lane-binding
+    /// substitution. Identity authentication remains a runner obligation.
     pub fn validate(
         &self,
         expected_grouping: M1QualificationLaneGrouping,
+        expected_execution_binding: &M1QualificationExecutionBindingDeclaration,
     ) -> (result: Result<(), M1QualificationContextPlanError>)
-        ensures result.is_ok() == self.valid_for(expected_grouping),
+        ensures result.is_ok() == self.valid_for(expected_grouping, expected_execution_binding),
     {
         if self.version != M1_QUALIFICATION_CONTEXT_PLAN_VERSION {
             return Err(M1QualificationContextPlanError::UnsupportedVersion);
@@ -402,6 +626,8 @@ impl M1QualificationContextPlan {
         if !self.plan_id.equals(&expected_identity) {
             return Err(M1QualificationContextPlanError::PlanIdentityMismatch);
         }
+        self.execution_binding
+            .validate_exact_match_for(expected_grouping, expected_execution_binding)?;
         if self.tokens_per_lane != M1_QUALIFICATION_TOKENS_PER_LANE {
             return Err(M1QualificationContextPlanError::TokensPerLane {
                 expected_tokens: M1_QUALIFICATION_TOKENS_PER_LANE,
@@ -421,14 +647,20 @@ impl M1QualificationContextPlan {
                 self.version == M1_QUALIFICATION_CONTEXT_PLAN_VERSION,
                 self.grouping == expected_grouping,
                 self.plan_id.bytes_spec() == expected_grouping.plan_identity_bytes_spec(),
+                self.execution_binding
+                    .exactly_matches_for(expected_grouping, expected_execution_binding),
                 self.tokens_per_lane == M1_QUALIFICATION_TOKENS_PER_LANE,
                 self.steps@.len() == M1_QUALIFICATION_CONTEXT_PLAN_STEPS as nat,
                 0 <= ordinal <= M1_QUALIFICATION_TOKENS_PER_LANE,
                 forall|prior: int| 0 <= prior < ordinal
-                    ==> self.steps@[prior].valid_at(prior as u32),
+                    ==> self.steps@[prior].valid_at(
+                        prior as u32,
+                        self.grouping.sequences_spec(),
+                    ),
             decreases M1_QUALIFICATION_TOKENS_PER_LANE - ordinal,
         {
-            self.steps[ordinal as usize].validate_at(ordinal)?;
+            self.steps[ordinal as usize]
+                .validate_at(ordinal, expected_grouping.sequences())?;
             ordinal += 1;
         }
         assert(self.every_step_is_valid()) by {
@@ -444,13 +676,16 @@ impl M1QualificationContextPlan {
     pub proof fn expose_exact_context(
         &self,
         expected_grouping: M1QualificationLaneGrouping,
+        expected_execution_binding: &M1QualificationExecutionBindingDeclaration,
     )
-        requires self.valid_for(expected_grouping),
+        requires self.valid_for(expected_grouping, expected_execution_binding),
         ensures
             expected_grouping.sequences_spec() == 1
                 || expected_grouping.sequences_spec() == 8
                 || expected_grouping.sequences_spec() == 32,
             self.tokens_per_lane == 8_192,
+            self.execution_binding
+                .exactly_matches_for(expected_grouping, expected_execution_binding),
             self.has_exact_token_coverage(),
             forall|ordinal: int| 0 <= ordinal < 8_191 ==> {
                 &&& self.steps@[ordinal].kind
@@ -463,8 +698,9 @@ impl M1QualificationContextPlan {
                     == M1QualificationCompactChoiceDisposition::ObservedButSuppressed
                 &&& self.steps@[ordinal].next_input
                     == M1QualificationNextInputPolicy::IndependentTeacherForcedPrompt
-                &&& self.steps@[ordinal].externally_emitted_output_count == 0
-                &&& self.steps@[ordinal].qualification_buffer_attached
+                &&& self.steps@[ordinal].externally_emitted_outputs_per_lane == 0
+                &&& self.steps@[ordinal].aggregate_externally_emitted_output_count == 0
+                &&& self.steps@[ordinal].qualification_capture_destination_required
                 &&& !self.steps@[ordinal].publish_qualification_output_to_host
             },
             self.steps@[8_191].kind == M1QualificationContextStepKind::FinalObserved,
@@ -474,8 +710,10 @@ impl M1QualificationContextPlan {
             self.steps@[8_191].compact_choice
                 == M1QualificationCompactChoiceDisposition::ObservedAndPublished,
             self.steps@[8_191].next_input == M1QualificationNextInputPolicy::Terminal,
-            self.steps@[8_191].externally_emitted_output_count == 1,
-            self.steps@[8_191].qualification_buffer_attached,
+            self.steps@[8_191].externally_emitted_outputs_per_lane == 1,
+            self.steps@[8_191].aggregate_externally_emitted_output_count
+                == expected_grouping.sequences_spec(),
+            self.steps@[8_191].qualification_capture_destination_required,
             self.steps@[8_191].publish_qualification_output_to_host,
     {
         reveal(M1QualificationContextPlan::valid_for);
@@ -485,22 +723,38 @@ impl M1QualificationContextPlan {
     }
 }
 
-/// Constructs the unique v1 qualification context plan for one grouping.
+/// Constructs a v1 qualification context-plan candidate for one grouping.
+///
+/// `execution_binding` remains an inert declaration until
+/// [`M1QualificationContextPlan::validate`] joins it exactly to independently
+/// authenticated runtime expectations.
 #[must_use]
 #[allow(clippy::bool_to_int_with_if)]
 pub fn m1_qualification_context_plan(
     grouping: M1QualificationLaneGrouping,
+    execution_binding: M1QualificationExecutionBindingDeclaration,
 ) -> (plan: M1QualificationContextPlan)
-    ensures plan.valid_for(grouping),
+    ensures
+        plan.version == M1_QUALIFICATION_CONTEXT_PLAN_VERSION,
+        plan.plan_id.bytes_spec() == grouping.plan_identity_bytes_spec(),
+        plan.grouping == grouping,
+        plan.execution_binding == execution_binding,
+        plan.tokens_per_lane == M1_QUALIFICATION_TOKENS_PER_LANE,
+        plan.steps@.len() == M1_QUALIFICATION_CONTEXT_PLAN_STEPS as nat,
+        plan.every_step_is_valid(),
+        plan.has_exact_token_coverage(),
 {
     let mut steps: Vec<M1QualificationContextStep> = Vec::new();
+    let sequences = grouping.sequences();
+    assert(sequences == grouping.sequences_spec());
     let mut ordinal = 0u32;
     while ordinal < M1_QUALIFICATION_TOKENS_PER_LANE
         invariant
+            sequences == grouping.sequences_spec(),
             0 <= ordinal <= M1_QUALIFICATION_TOKENS_PER_LANE,
             steps@.len() == ordinal as nat,
             forall|prior: int| 0 <= prior < ordinal
-                ==> steps@[prior].valid_at(prior as u32),
+                ==> steps@[prior].valid_at(prior as u32, grouping.sequences_spec()),
         decreases M1_QUALIFICATION_TOKENS_PER_LANE - ordinal,
     {
         let priming = ordinal < M1_QUALIFICATION_PROMPT_CONTEXT_TOKENS;
@@ -528,11 +782,18 @@ pub fn m1_qualification_context_plan(
             } else {
                 M1QualificationNextInputPolicy::Terminal
             },
-            externally_emitted_output_count: if priming { 0 } else { 1 },
-            qualification_buffer_attached: true,
+            externally_emitted_outputs_per_lane: if priming { 0 } else { 1 },
+            aggregate_externally_emitted_output_count: if priming { 0 } else { sequences },
+            qualification_capture_destination_required: true,
             publish_qualification_output_to_host: !priming,
         };
-        assert(step.valid_at(ordinal));
+        if priming {
+            assert(step.aggregate_externally_emitted_output_count == 0);
+        } else {
+            assert(ordinal == M1_QUALIFICATION_FINAL_INPUT_TOKEN);
+            assert(step.aggregate_externally_emitted_output_count == grouping.sequences_spec());
+        }
+        assert(step.valid_at(ordinal, grouping.sequences_spec()));
         steps.push(step);
         ordinal += 1;
     }
@@ -541,6 +802,7 @@ pub fn m1_qualification_context_plan(
         version: M1_QUALIFICATION_CONTEXT_PLAN_VERSION,
         plan_id: m1_qualification_context_plan_identity(grouping),
         grouping,
+        execution_binding,
         tokens_per_lane: M1_QUALIFICATION_TOKENS_PER_LANE,
         steps,
     };
@@ -559,6 +821,19 @@ pub enum M1QualificationContextPlanError {
     UnsupportedVersion,
     GroupingMismatch,
     PlanIdentityMismatch,
+    WorkloadDigestAbsent,
+    ExpectedWorkloadDigestAbsent,
+    WorkloadDigestMismatch,
+    LaneBindingCount { expected_lanes: u32, actual_lanes: usize },
+    ExpectedLaneBindingCount { expected_lanes: u32, actual_lanes: usize },
+    LaneOrdinal { position: u32, actual: u32 },
+    ExpectedLaneOrdinal { position: u32, actual: u32 },
+    LaneIdentityAbsent { lane: u32 },
+    ExpectedLaneIdentityAbsent { lane: u32 },
+    LaneIdentityMismatch { lane: u32 },
+    TokenSequenceIdentityAbsent { lane: u32 },
+    ExpectedTokenSequenceIdentityAbsent { lane: u32 },
+    TokenSequenceIdentityMismatch { lane: u32 },
     TokensPerLane {
         expected_tokens: u32,
         actual_tokens: u32,
@@ -573,8 +848,9 @@ pub enum M1QualificationContextPlanError {
     PromptCommitMismatch { ordinal: u32 },
     CompactChoiceDisposition { ordinal: u32 },
     NextInputPolicy { ordinal: u32 },
-    ExternallyEmittedOutputCount { ordinal: u32 },
-    QualificationBufferAttachment { ordinal: u32 },
+    ExternallyEmittedOutputsPerLane { ordinal: u32 },
+    AggregateExternallyEmittedOutputCount { ordinal: u32 },
+    QualificationCaptureDestinationRequired { ordinal: u32 },
     HostPublicationPolicy { ordinal: u32 },
 }
 
@@ -594,9 +870,9 @@ pub const fn m1_qualification_context_plan_identity_preimage(
     grouping: M1QualificationLaneGrouping,
 ) -> &'static [u8] {
     match grouping {
-        M1QualificationLaneGrouping::S1 => b"ferric.m1.qualification-context-plan.v1|s1|8192|priming:8191x(input-one,commit-prompt-one,compact-choice-observed-suppressed,qualification-buffer-attached-overwrite,host-observation-suppressed,no-external-output,next-prompt-independent)|final:input8191,commit-prompt-one,compact-choice-observed-published,qualification-buffer-attached-overwrite,host-observation-published,one-external-output",
-        M1QualificationLaneGrouping::S8 => b"ferric.m1.qualification-context-plan.v1|s8|8192|priming:8191x(input-one,commit-prompt-one,compact-choice-observed-suppressed,qualification-buffer-attached-overwrite,host-observation-suppressed,no-external-output,next-prompt-independent)|final:input8191,commit-prompt-one,compact-choice-observed-published,qualification-buffer-attached-overwrite,host-observation-published,one-external-output",
-        M1QualificationLaneGrouping::S32 => b"ferric.m1.qualification-context-plan.v1|s32|8192|priming:8191x(input-one,commit-prompt-one,compact-choice-observed-suppressed,qualification-buffer-attached-overwrite,host-observation-suppressed,no-external-output,next-prompt-independent)|final:input8191,commit-prompt-one,compact-choice-observed-published,qualification-buffer-attached-overwrite,host-observation-published,one-external-output",
+        M1QualificationLaneGrouping::S1 => b"ferric.m1.qualification-context-plan.v1|s1|8192|binding:inert-workload-digest+ordered-lane-token-sequence-identities,exact-runtime-join-required|priming:8191x(input-one,commit-prompt-one,compact-choice-observed-suppressed,qualification-capture-destination-required,host-observation-suppressed,per-lane-output-zero,aggregate-output-zero,next-prompt-independent)|final:input8191,commit-prompt-one,compact-choice-observed-published,qualification-capture-destination-required,host-observation-published,per-lane-output-one,aggregate-output-grouping",
+        M1QualificationLaneGrouping::S8 => b"ferric.m1.qualification-context-plan.v1|s8|8192|binding:inert-workload-digest+ordered-lane-token-sequence-identities,exact-runtime-join-required|priming:8191x(input-one,commit-prompt-one,compact-choice-observed-suppressed,qualification-capture-destination-required,host-observation-suppressed,per-lane-output-zero,aggregate-output-zero,next-prompt-independent)|final:input8191,commit-prompt-one,compact-choice-observed-published,qualification-capture-destination-required,host-observation-published,per-lane-output-one,aggregate-output-grouping",
+        M1QualificationLaneGrouping::S32 => b"ferric.m1.qualification-context-plan.v1|s32|8192|binding:inert-workload-digest+ordered-lane-token-sequence-identities,exact-runtime-join-required|priming:8191x(input-one,commit-prompt-one,compact-choice-observed-suppressed,qualification-capture-destination-required,host-observation-suppressed,per-lane-output-zero,aggregate-output-zero,next-prompt-independent)|final:input8191,commit-prompt-one,compact-choice-observed-published,qualification-capture-destination-required,host-observation-published,per-lane-output-one,aggregate-output-grouping",
     }
 }
 
@@ -605,11 +881,12 @@ mod tests {
     use super::{
         m1_qualification_context_plan, m1_qualification_context_plan_identity,
         m1_qualification_context_plan_identity_preimage, M1QualificationCompactChoiceDisposition,
-        M1QualificationContextPlanError, M1QualificationContextStepKind,
-        M1QualificationLaneGrouping, M1QualificationNextInputPolicy,
-        M1_QUALIFICATION_CONTEXT_PLAN_IDENTITY_DOMAIN, M1_QUALIFICATION_CONTEXT_PLAN_STEPS,
-        M1_QUALIFICATION_CONTEXT_PLAN_VERSION, M1_QUALIFICATION_PROMPT_CONTEXT_TOKENS,
-        M1_QUALIFICATION_TOKENS_PER_LANE,
+        M1QualificationContextPlan, M1QualificationContextPlanError,
+        M1QualificationContextStepKind, M1QualificationExecutionBindingDeclaration,
+        M1QualificationLaneExecutionBinding, M1QualificationLaneGrouping,
+        M1QualificationNextInputPolicy, M1_QUALIFICATION_CONTEXT_PLAN_IDENTITY_DOMAIN,
+        M1_QUALIFICATION_CONTEXT_PLAN_STEPS, M1_QUALIFICATION_CONTEXT_PLAN_VERSION,
+        M1_QUALIFICATION_PROMPT_CONTEXT_TOKENS, M1_QUALIFICATION_TOKENS_PER_LANE,
     };
     use crate::Identity;
     use sha2::{Digest as _, Sha256};
@@ -620,14 +897,54 @@ mod tests {
         M1QualificationLaneGrouping::S32,
     ];
 
+    fn test_identity(namespace: u8, ordinal: u32) -> Identity {
+        let mut bytes = [0u8; 32];
+        bytes[0] = namespace;
+        bytes[1..5].copy_from_slice(&ordinal.to_le_bytes());
+        bytes[31] = 0xa5;
+        Identity::new(bytes)
+    }
+
+    fn execution_binding(
+        grouping: M1QualificationLaneGrouping,
+    ) -> M1QualificationExecutionBindingDeclaration {
+        let ordered_lanes = (0..grouping.sequences())
+            .map(|lane_ordinal| M1QualificationLaneExecutionBinding {
+                lane_ordinal,
+                lane_identity: test_identity(0x20, lane_ordinal),
+                token_sequence_identity: test_identity(0x40, lane_ordinal),
+            })
+            .collect();
+        M1QualificationExecutionBindingDeclaration {
+            declared_workload_digest: test_identity(0x10, grouping.sequences()),
+            ordered_lanes,
+        }
+    }
+
+    fn plan_and_expected(
+        grouping: M1QualificationLaneGrouping,
+    ) -> (
+        M1QualificationContextPlan,
+        M1QualificationExecutionBindingDeclaration,
+    ) {
+        let expected = execution_binding(grouping);
+        let plan = m1_qualification_context_plan(grouping, expected.clone());
+        (plan, expected)
+    }
+
     #[test]
     fn canonical_plans_commit_every_prompt_and_publish_only_terminal_output() {
         for grouping in GROUPINGS {
-            let plan = m1_qualification_context_plan(grouping);
-            assert_eq!(plan.validate(grouping), Ok(()));
+            let (plan, expected) = plan_and_expected(grouping);
+            assert_eq!(plan.validate(grouping, &expected), Ok(()));
             assert_eq!(plan.version, M1_QUALIFICATION_CONTEXT_PLAN_VERSION);
             assert_eq!(plan.tokens_per_lane, M1_QUALIFICATION_TOKENS_PER_LANE);
             assert_eq!(plan.steps.len(), M1_QUALIFICATION_CONTEXT_PLAN_STEPS);
+            assert_eq!(plan.execution_binding, expected);
+            assert_eq!(
+                plan.execution_binding.ordered_lanes.len(),
+                grouping.sequences() as usize
+            );
 
             for ordinal in 0..M1_QUALIFICATION_PROMPT_CONTEXT_TOKENS as usize {
                 let priming = plan.steps[ordinal];
@@ -648,8 +965,9 @@ mod tests {
                     priming.next_input,
                     M1QualificationNextInputPolicy::IndependentTeacherForcedPrompt
                 );
-                assert_eq!(priming.externally_emitted_output_count, 0);
-                assert!(priming.qualification_buffer_attached);
+                assert_eq!(priming.externally_emitted_outputs_per_lane, 0);
+                assert_eq!(priming.aggregate_externally_emitted_output_count, 0);
+                assert!(priming.qualification_capture_destination_required);
                 assert!(!priming.publish_qualification_output_to_host);
             }
 
@@ -666,8 +984,12 @@ mod tests {
                 terminal.next_input,
                 M1QualificationNextInputPolicy::Terminal
             );
-            assert_eq!(terminal.externally_emitted_output_count, 1);
-            assert!(terminal.qualification_buffer_attached);
+            assert_eq!(terminal.externally_emitted_outputs_per_lane, 1);
+            assert_eq!(
+                terminal.aggregate_externally_emitted_output_count,
+                grouping.sequences()
+            );
+            assert!(terminal.qualification_capture_destination_required);
             assert!(terminal.publish_qualification_output_to_host);
         }
     }
@@ -676,25 +998,25 @@ mod tests {
     fn stable_plan_identities_are_group_specific_and_repeatable() {
         let expected = [
             [
-                0x4a, 0x67, 0x77, 0x95, 0x11, 0x42, 0xeb, 0x54, 0xde, 0x8b, 0x95, 0xd5, 0xbb, 0xb8,
-                0x7e, 0x34, 0xb3, 0xf1, 0xc5, 0xfd, 0xf7, 0x57, 0xee, 0xab, 0x7a, 0x53, 0x0d, 0x21,
-                0x1a, 0x6e, 0x81, 0x0f,
+                0x63, 0x8e, 0x01, 0xd1, 0x41, 0x9e, 0xb8, 0xc4, 0xa4, 0xa3, 0x22, 0x98, 0xf2, 0x38,
+                0xdc, 0x26, 0xb9, 0x4c, 0x8e, 0x08, 0xda, 0xc8, 0x4e, 0x91, 0xf2, 0x5c, 0xc5, 0x8d,
+                0xa8, 0x03, 0x82, 0x5c,
             ],
             [
-                0xdc, 0xa4, 0x04, 0x02, 0xfe, 0x0b, 0x86, 0x80, 0x7f, 0x5f, 0x84, 0xb8, 0x57, 0x00,
-                0x83, 0x6b, 0x52, 0x4a, 0x6a, 0x8b, 0x7b, 0x1a, 0xc2, 0xf8, 0x62, 0x26, 0xf2, 0x16,
-                0x02, 0x74, 0xd0, 0x5f,
+                0x45, 0x03, 0x2d, 0xb1, 0xe3, 0x2f, 0x59, 0x7d, 0x56, 0xd4, 0xa3, 0x37, 0xae, 0xe9,
+                0x4f, 0x04, 0xd9, 0xf4, 0x49, 0xd9, 0x37, 0x3f, 0x2e, 0xd3, 0x76, 0xe0, 0xf4, 0x49,
+                0x3e, 0x9c, 0x6b, 0x0d,
             ],
             [
-                0x01, 0x9c, 0x6a, 0x17, 0xb3, 0x85, 0x45, 0x79, 0x2e, 0xf2, 0x15, 0x2a, 0xf3, 0x1f,
-                0x7b, 0x43, 0xfb, 0xe8, 0xe6, 0xd0, 0x42, 0x2c, 0xf3, 0xb8, 0x04, 0x09, 0x26, 0x9a,
-                0x59, 0xa6, 0x4b, 0xd1,
+                0x7c, 0xb3, 0x75, 0x11, 0xa5, 0xa4, 0x66, 0x87, 0x9f, 0x36, 0xfc, 0x0b, 0x2a, 0x4b,
+                0x22, 0x17, 0x91, 0xfa, 0x7a, 0xdf, 0xf8, 0x11, 0x8e, 0x47, 0x58, 0x89, 0xc0, 0x21,
+                0x75, 0x30, 0x74, 0x86,
             ],
         ];
 
         for (index, grouping) in GROUPINGS.into_iter().enumerate() {
-            let first = m1_qualification_context_plan(grouping);
-            let second = m1_qualification_context_plan(grouping);
+            let first = m1_qualification_context_plan(grouping, execution_binding(grouping));
+            let second = m1_qualification_context_plan(grouping, execution_binding(grouping));
             assert_eq!(first.plan_id.as_bytes(), &expected[index]);
             assert!(first.plan_id.equals(&second.plan_id));
             assert!(first
@@ -711,63 +1033,123 @@ mod tests {
     fn header_grouping_and_cardinality_mutations_fail_closed() {
         let grouping = M1QualificationLaneGrouping::S1;
 
-        let mut changed = m1_qualification_context_plan(grouping);
+        let (mut changed, expected) = plan_and_expected(grouping);
         changed.version += 1;
         assert_eq!(
-            changed.validate(grouping),
+            changed.validate(grouping, &expected),
             Err(M1QualificationContextPlanError::UnsupportedVersion)
         );
 
-        let mut changed = m1_qualification_context_plan(grouping);
+        let (mut changed, expected) = plan_and_expected(grouping);
         changed.plan_id = Identity::new([0; 32]);
         assert_eq!(
-            changed.validate(grouping),
+            changed.validate(grouping, &expected),
             Err(M1QualificationContextPlanError::PlanIdentityMismatch)
         );
 
-        let changed = m1_qualification_context_plan(M1QualificationLaneGrouping::S8);
+        let (changed, _) = plan_and_expected(M1QualificationLaneGrouping::S8);
+        let expected = execution_binding(grouping);
         assert_eq!(
-            changed.validate(grouping),
+            changed.validate(grouping, &expected),
             Err(M1QualificationContextPlanError::GroupingMismatch)
         );
 
-        let mut changed = m1_qualification_context_plan(grouping);
+        let (mut changed, expected) = plan_and_expected(grouping);
         changed.tokens_per_lane -= 1;
         assert!(matches!(
-            changed.validate(grouping),
+            changed.validate(grouping, &expected),
             Err(M1QualificationContextPlanError::TokensPerLane { .. })
         ));
 
-        let mut changed = m1_qualification_context_plan(grouping);
+        let (mut changed, expected) = plan_and_expected(grouping);
         changed.steps.pop();
         assert!(matches!(
-            changed.validate(grouping),
+            changed.validate(grouping, &expected),
             Err(M1QualificationContextPlanError::StepCount { .. })
         ));
+    }
+
+    #[test]
+    fn workload_digest_lane_order_and_token_sequence_mutations_fail_closed() {
+        let grouping = M1QualificationLaneGrouping::S8;
+
+        let (mut changed, expected) = plan_and_expected(grouping);
+        changed.execution_binding.declared_workload_digest = test_identity(0x11, 8);
+        assert_eq!(
+            changed.validate(grouping, &expected),
+            Err(M1QualificationContextPlanError::WorkloadDigestMismatch)
+        );
+
+        let (mut changed, expected) = plan_and_expected(grouping);
+        changed.execution_binding.ordered_lanes.pop();
+        assert!(matches!(
+            changed.validate(grouping, &expected),
+            Err(M1QualificationContextPlanError::LaneBindingCount { .. })
+        ));
+
+        let (changed, mut expected) = plan_and_expected(grouping);
+        expected.ordered_lanes.pop();
+        assert!(matches!(
+            changed.validate(grouping, &expected),
+            Err(M1QualificationContextPlanError::ExpectedLaneBindingCount { .. })
+        ));
+
+        let (mut changed, expected) = plan_and_expected(grouping);
+        changed.execution_binding.ordered_lanes[3].lane_ordinal = 4;
+        assert_eq!(
+            changed.validate(grouping, &expected),
+            Err(M1QualificationContextPlanError::LaneOrdinal {
+                position: 3,
+                actual: 4,
+            })
+        );
+
+        let (mut changed, expected) = plan_and_expected(grouping);
+        changed.execution_binding.ordered_lanes[2].lane_identity =
+            changed.execution_binding.ordered_lanes[3].lane_identity;
+        assert_eq!(
+            changed.validate(grouping, &expected),
+            Err(M1QualificationContextPlanError::LaneIdentityMismatch { lane: 2 })
+        );
+
+        let (mut changed, expected) = plan_and_expected(grouping);
+        changed.execution_binding.ordered_lanes[5].token_sequence_identity =
+            changed.execution_binding.ordered_lanes[6].token_sequence_identity;
+        assert_eq!(
+            changed.validate(grouping, &expected),
+            Err(M1QualificationContextPlanError::TokenSequenceIdentityMismatch { lane: 5 })
+        );
+
+        let (mut changed, expected) = plan_and_expected(grouping);
+        changed.execution_binding.ordered_lanes[1].token_sequence_identity = Identity::new([0; 32]);
+        assert_eq!(
+            changed.validate(grouping, &expected),
+            Err(M1QualificationContextPlanError::TokenSequenceIdentityAbsent { lane: 1 })
+        );
     }
 
     #[test]
     fn gap_overlap_and_trailing_mutations_fail_closed() {
         let grouping = M1QualificationLaneGrouping::S1;
 
-        let mut gap = m1_qualification_context_plan(grouping);
+        let (mut gap, expected) = plan_and_expected(grouping);
         gap.steps[4_096].input_tokens.start += 1;
         assert!(matches!(
-            gap.validate(grouping),
+            gap.validate(grouping, &expected),
             Err(M1QualificationContextPlanError::TokenCoverageStart { ordinal: 4_096, .. })
         ));
 
-        let mut overlap = m1_qualification_context_plan(grouping);
+        let (mut overlap, expected) = plan_and_expected(grouping);
         overlap.steps[8_190].input_tokens.start -= 1;
         assert!(matches!(
-            overlap.validate(grouping),
+            overlap.validate(grouping, &expected),
             Err(M1QualificationContextPlanError::TokenCoverageStart { ordinal: 8_190, .. })
         ));
 
-        let mut trailing = m1_qualification_context_plan(grouping);
+        let (mut trailing, expected) = plan_and_expected(grouping);
         trailing.steps[8_191].input_tokens.end += 1;
         assert!(matches!(
-            trailing.validate(grouping),
+            trailing.validate(grouping, &expected),
             Err(M1QualificationContextPlanError::TokenCoverageEnd { ordinal: 8_191, .. })
         ));
     }
@@ -776,47 +1158,64 @@ mod tests {
     fn priming_choice_commit_emission_and_observation_mutations_fail_closed() {
         let grouping = M1QualificationLaneGrouping::S8;
 
-        let mut commit_drift = m1_qualification_context_plan(grouping);
+        let (mut commit_drift, expected) = plan_and_expected(grouping);
         commit_drift.steps[0].prompt_context_commits.end = 0;
         assert_eq!(
-            commit_drift.validate(grouping),
+            commit_drift.validate(grouping, &expected),
             Err(M1QualificationContextPlanError::PromptCommitMismatch { ordinal: 0 })
         );
 
-        let mut choice_published = m1_qualification_context_plan(grouping);
+        let (mut choice_published, expected) = plan_and_expected(grouping);
         choice_published.steps[17].compact_choice =
             M1QualificationCompactChoiceDisposition::ObservedAndPublished;
         assert_eq!(
-            choice_published.validate(grouping),
+            choice_published.validate(grouping, &expected),
             Err(M1QualificationContextPlanError::CompactChoiceDisposition { ordinal: 17 })
         );
 
-        let mut choice_drives_prompt = m1_qualification_context_plan(grouping);
+        let (mut choice_drives_prompt, expected) = plan_and_expected(grouping);
         choice_drives_prompt.steps[18].next_input =
             M1QualificationNextInputPolicy::CompactChoiceFeedback;
         assert_eq!(
-            choice_drives_prompt.validate(grouping),
+            choice_drives_prompt.validate(grouping, &expected),
             Err(M1QualificationContextPlanError::NextInputPolicy { ordinal: 18 })
         );
 
-        let mut priming_emits = m1_qualification_context_plan(grouping);
-        priming_emits.steps[8_190].externally_emitted_output_count = 1;
+        let (mut priming_emits, expected) = plan_and_expected(grouping);
+        priming_emits.steps[8_190].externally_emitted_outputs_per_lane = 1;
         assert_eq!(
-            priming_emits.validate(grouping),
-            Err(M1QualificationContextPlanError::ExternallyEmittedOutputCount { ordinal: 8_190 })
+            priming_emits.validate(grouping, &expected),
+            Err(
+                M1QualificationContextPlanError::ExternallyEmittedOutputsPerLane { ordinal: 8_190 }
+            )
         );
 
-        let mut priming_detaches_buffer = m1_qualification_context_plan(grouping);
-        priming_detaches_buffer.steps[1].qualification_buffer_attached = false;
+        let (mut priming_aggregate, expected) = plan_and_expected(grouping);
+        priming_aggregate.steps[8_190].aggregate_externally_emitted_output_count = 1;
         assert_eq!(
-            priming_detaches_buffer.validate(grouping),
-            Err(M1QualificationContextPlanError::QualificationBufferAttachment { ordinal: 1 })
+            priming_aggregate.validate(grouping, &expected),
+            Err(
+                M1QualificationContextPlanError::AggregateExternallyEmittedOutputCount {
+                    ordinal: 8_190,
+                }
+            )
         );
 
-        let mut priming_publishes = m1_qualification_context_plan(grouping);
+        let (mut missing_capture_requirement, expected) = plan_and_expected(grouping);
+        missing_capture_requirement.steps[1].qualification_capture_destination_required = false;
+        assert_eq!(
+            missing_capture_requirement.validate(grouping, &expected),
+            Err(
+                M1QualificationContextPlanError::QualificationCaptureDestinationRequired {
+                    ordinal: 1,
+                }
+            )
+        );
+
+        let (mut priming_publishes, expected) = plan_and_expected(grouping);
         priming_publishes.steps[1].publish_qualification_output_to_host = true;
         assert_eq!(
-            priming_publishes.validate(grouping),
+            priming_publishes.validate(grouping, &expected),
             Err(M1QualificationContextPlanError::HostPublicationPolicy { ordinal: 1 })
         );
     }
@@ -825,40 +1224,46 @@ mod tests {
     fn terminal_choice_and_publication_mutations_fail_closed() {
         let grouping = M1QualificationLaneGrouping::S32;
 
-        let mut terminal_choice = m1_qualification_context_plan(grouping);
+        let (mut terminal_choice, expected) = plan_and_expected(grouping);
         terminal_choice.steps[8_191].compact_choice =
             M1QualificationCompactChoiceDisposition::ObservedButSuppressed;
         assert_eq!(
-            terminal_choice.validate(grouping),
+            terminal_choice.validate(grouping, &expected),
             Err(M1QualificationContextPlanError::CompactChoiceDisposition { ordinal: 8_191 })
         );
 
-        let mut terminal_suppressed = m1_qualification_context_plan(grouping);
-        terminal_suppressed.steps[8_191].externally_emitted_output_count = 0;
+        let (mut terminal_suppressed, expected) = plan_and_expected(grouping);
+        terminal_suppressed.steps[8_191].externally_emitted_outputs_per_lane = 0;
         assert_eq!(
-            terminal_suppressed.validate(grouping),
-            Err(M1QualificationContextPlanError::ExternallyEmittedOutputCount { ordinal: 8_191 })
+            terminal_suppressed.validate(grouping, &expected),
+            Err(
+                M1QualificationContextPlanError::ExternallyEmittedOutputsPerLane { ordinal: 8_191 }
+            )
         );
 
-        let mut terminal_detaches_buffer = m1_qualification_context_plan(grouping);
-        terminal_detaches_buffer.steps[8_191].qualification_buffer_attached = false;
+        let (mut terminal_aggregate, expected) = plan_and_expected(grouping);
+        terminal_aggregate.steps[8_191].aggregate_externally_emitted_output_count = 31;
         assert_eq!(
-            terminal_detaches_buffer.validate(grouping),
-            Err(M1QualificationContextPlanError::QualificationBufferAttachment { ordinal: 8_191 })
+            terminal_aggregate.validate(grouping, &expected),
+            Err(
+                M1QualificationContextPlanError::AggregateExternallyEmittedOutputCount {
+                    ordinal: 8_191,
+                }
+            )
         );
 
-        let mut terminal_not_published = m1_qualification_context_plan(grouping);
+        let (mut terminal_not_published, expected) = plan_and_expected(grouping);
         terminal_not_published.steps[8_191].publish_qualification_output_to_host = false;
         assert_eq!(
-            terminal_not_published.validate(grouping),
+            terminal_not_published.validate(grouping, &expected),
             Err(M1QualificationContextPlanError::HostPublicationPolicy { ordinal: 8_191 })
         );
 
-        let mut phase_substitution = m1_qualification_context_plan(grouping);
+        let (mut phase_substitution, expected) = plan_and_expected(grouping);
         phase_substitution.steps[8_191].kind =
             M1QualificationContextStepKind::TeacherForcedPromptContext;
         assert_eq!(
-            phase_substitution.validate(grouping),
+            phase_substitution.validate(grouping, &expected),
             Err(M1QualificationContextPlanError::StepKind { ordinal: 8_191 })
         );
     }
