@@ -12,6 +12,7 @@ use fe2o3_amdhsa_loader::{
 };
 use fe2o3_hsaco_finalize::ContentIdentityV1;
 use ferric_qwen_kernels::{gemm, logits, paged_decode, prefill, rmsnorm, rope_kv, swiglu};
+use sha2::{Digest, Sha256};
 
 use super::kernel_artifact_policy::{
     M1_KERNEL_WORKER_BUILD_IDENTITY_V1, M1_KERNEL_WORKER_EXECUTABLE_BYTES_V1,
@@ -31,6 +32,8 @@ const LINK_OPTIONS: [(&str, &str); 4] = [
 
 const OCML_PROVIDER: &str = "gfx942-ocml-v1";
 const OCML_IMPORT: &str = "__ocml_exp_f32";
+const ASSEMBLY_CATALOG_DOMAIN: &[u8] =
+    b"ferric.m1.kernel-artifact-builder.speculative-assembly-catalog.v1";
 const OCML_FILES: [(&str, [u8; 32]); 4] = [
     (
         "ocml.bc",
@@ -412,6 +415,8 @@ pub enum M1KernelArtifactManifestErrorV1 {
     InvalidText,
     /// A fixed roster or structural relation is invalid.
     Invalid(&'static str),
+    /// Ferric could not reconstruct one of its own canonical finite catalogs.
+    CanonicalCatalog(M1KernelCanonicalCatalogErrorV1),
     /// Bytes decode but are not the unique canonical encoding.
     NonCanonical,
 }
@@ -422,7 +427,62 @@ impl fmt::Display for M1KernelArtifactManifestErrorV1 {
     }
 }
 
-impl std::error::Error for M1KernelArtifactManifestErrorV1 {}
+impl std::error::Error for M1KernelArtifactManifestErrorV1 {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::CanonicalCatalog(source) => Some(source),
+            _ => None,
+        }
+    }
+}
+
+/// Exact canonical finite-catalog constructor that unexpectedly failed.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1KernelCanonicalCatalogErrorV1 {
+    /// K1 GEMM/GEMV catalog derivation failed.
+    Gemm(gemm::Qwen3GemmCatalogErrorV1),
+    /// K1 token-embedding catalog derivation failed.
+    TokenEmbedding(gemm::Qwen3TokenEmbeddingCatalogErrorV1),
+    /// K2 `RMSNorm` catalog derivation failed.
+    RmsNorm(rmsnorm::Qwen3RmsNormCatalogErrorV1),
+    /// K3 rotary/KV catalog derivation failed.
+    RopeKv(rope_kv::Qwen3RopeKvCatalogErrorV1),
+    /// K4 prefill catalog derivation failed.
+    Prefill(prefill::Qwen3PrefillCatalogErrorV1),
+    /// K5 paged-decode catalog derivation failed.
+    PagedDecode(paged_decode::Qwen3PagedDecodeCatalogErrorV1),
+    /// K6 `SwiGLU` catalog derivation failed.
+    SwiGlu(swiglu::Qwen3SwiGluCatalogErrorV1),
+    /// K7 logits catalog derivation failed.
+    Logits(logits::Qwen3LogitsCatalogErrorV1),
+}
+
+impl fmt::Display for M1KernelCanonicalCatalogErrorV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(formatter, "canonical M1 kernel catalog failed: {self:?}")
+    }
+}
+
+impl std::error::Error for M1KernelCanonicalCatalogErrorV1 {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(match self {
+            Self::Gemm(source) => source,
+            Self::TokenEmbedding(source) => source,
+            Self::RmsNorm(source) => source,
+            Self::RopeKv(source) => source,
+            Self::Prefill(source) => source,
+            Self::PagedDecode(source) => source,
+            Self::SwiGlu(source) => source,
+            Self::Logits(source) => source,
+        })
+    }
+}
+
+impl From<M1KernelCanonicalCatalogErrorV1> for M1KernelArtifactManifestErrorV1 {
+    fn from(source: M1KernelCanonicalCatalogErrorV1) -> Self {
+        Self::CanonicalCatalog(source)
+    }
+}
 
 /// Decodes and re-encodes one strict canonical inert manifest.
 ///
@@ -631,48 +691,114 @@ fn validate_load_plan(
 fn validate_profiles(
     entry: &M1KernelArtifactEntryV1,
 ) -> Result<(), M1KernelArtifactManifestErrorV1> {
-    let expected: &[(&str, usize)] = match entry.family {
-        M1KernelArtifactFamilyV1::Gemm => &[
-            ("gemm", gemm::QWEN3_GEMM_PROFILE_COUNT_V1),
-            (
-                "token-embedding",
-                gemm::QWEN3_TOKEN_EMBEDDING_PROFILE_COUNT_V1,
-            ),
-        ],
-        M1KernelArtifactFamilyV1::RmsNorm => {
-            &[("rmsnorm", rmsnorm::QWEN3_RMSNORM_PROFILE_COUNT_V1)]
-        }
-        M1KernelArtifactFamilyV1::RopeKv => &[("rope-kv", rope_kv::QWEN3_ROPE_KV_PROFILE_COUNT_V1)],
-        M1KernelArtifactFamilyV1::Prefill => {
-            &[("prefill", prefill::QWEN3_PREFILL_PROFILE_COUNT_V1)]
-        }
-        M1KernelArtifactFamilyV1::PagedDecode => &[(
-            "paged-decode",
-            paged_decode::QWEN3_PAGED_DECODE_PROFILE_COUNT_V1,
-        )],
-        M1KernelArtifactFamilyV1::SwiGlu => &[("swiglu", swiglu::QWEN3_SWIGLU_PROFILE_COUNT_V1)],
-        M1KernelArtifactFamilyV1::Logits => &[
-            ("logits", logits::QWEN3_LOGITS_PROFILE_COUNT_V1),
-            (
-                "speculative-token-assembly",
-                logits::QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_PROFILE_COUNT_V1,
-            ),
-        ],
-    };
+    let expected = canonical_profile_catalogs(entry.family)?;
     if entry.profile_catalogs.len() != expected.len() {
         return Err(M1KernelArtifactManifestErrorV1::Invalid(
             "profile catalog count",
         ));
     }
-    for (actual, (name, count)) in entry.profile_catalogs.iter().zip(expected) {
-        if actual.name != *name
-            || actual.profile_count != u32::try_from(*count).expect("profile count fits u32")
-            || actual.identity == [0; 32]
-        {
-            return Err(M1KernelArtifactManifestErrorV1::Invalid("profile catalog"));
-        }
+    if entry.profile_catalogs != expected {
+        return Err(M1KernelArtifactManifestErrorV1::Invalid("profile catalog"));
     }
     Ok(())
+}
+
+fn canonical_profile_catalogs(
+    family: M1KernelArtifactFamilyV1,
+) -> Result<Vec<M1KernelProfileCatalogV1>, M1KernelArtifactManifestErrorV1> {
+    Ok(match family {
+        M1KernelArtifactFamilyV1::Gemm => {
+            let catalog = gemm::Qwen3GemmProfileCatalogV1::canonical()
+                .map_err(M1KernelCanonicalCatalogErrorV1::Gemm)?;
+            let embedding = gemm::Qwen3TokenEmbeddingProfileCatalogV1::canonical()
+                .map_err(M1KernelCanonicalCatalogErrorV1::TokenEmbedding)?;
+            vec![
+                M1KernelProfileCatalogV1::new(
+                    "gemm",
+                    gemm::QWEN3_GEMM_PROFILE_COUNT_V1,
+                    *catalog.identity().as_bytes(),
+                ),
+                M1KernelProfileCatalogV1::new(
+                    "token-embedding",
+                    gemm::QWEN3_TOKEN_EMBEDDING_PROFILE_COUNT_V1,
+                    *embedding.identity().as_bytes(),
+                ),
+            ]
+        }
+        M1KernelArtifactFamilyV1::RmsNorm => {
+            let catalog = rmsnorm::Qwen3RmsNormProfileCatalogV1::canonical()
+                .map_err(M1KernelCanonicalCatalogErrorV1::RmsNorm)?;
+            vec![M1KernelProfileCatalogV1::new(
+                "rmsnorm",
+                rmsnorm::QWEN3_RMSNORM_PROFILE_COUNT_V1,
+                *catalog.identity().as_bytes(),
+            )]
+        }
+        M1KernelArtifactFamilyV1::RopeKv => {
+            let catalog = rope_kv::Qwen3RopeKvProfileCatalogV1::canonical()
+                .map_err(M1KernelCanonicalCatalogErrorV1::RopeKv)?;
+            vec![M1KernelProfileCatalogV1::new(
+                "rope-kv",
+                rope_kv::QWEN3_ROPE_KV_PROFILE_COUNT_V1,
+                *catalog.identity().as_bytes(),
+            )]
+        }
+        M1KernelArtifactFamilyV1::Prefill => {
+            let catalog = prefill::Qwen3PrefillProfileCatalogV1::canonical()
+                .map_err(M1KernelCanonicalCatalogErrorV1::Prefill)?;
+            vec![M1KernelProfileCatalogV1::new(
+                "prefill",
+                prefill::QWEN3_PREFILL_PROFILE_COUNT_V1,
+                *catalog.identity().as_bytes(),
+            )]
+        }
+        M1KernelArtifactFamilyV1::PagedDecode => {
+            let catalog = paged_decode::Qwen3PagedDecodeProfileCatalogV1::canonical()
+                .map_err(M1KernelCanonicalCatalogErrorV1::PagedDecode)?;
+            vec![M1KernelProfileCatalogV1::new(
+                "paged-decode",
+                paged_decode::QWEN3_PAGED_DECODE_PROFILE_COUNT_V1,
+                *catalog.identity().as_bytes(),
+            )]
+        }
+        M1KernelArtifactFamilyV1::SwiGlu => {
+            let catalog = swiglu::Qwen3SwiGluProfileCatalogV1::canonical()
+                .map_err(M1KernelCanonicalCatalogErrorV1::SwiGlu)?;
+            vec![M1KernelProfileCatalogV1::new(
+                "swiglu",
+                swiglu::QWEN3_SWIGLU_PROFILE_COUNT_V1,
+                *catalog.identity().as_bytes(),
+            )]
+        }
+        M1KernelArtifactFamilyV1::Logits => {
+            let catalog = logits::Qwen3LogitsProfileCatalogV1::canonical()
+                .map_err(M1KernelCanonicalCatalogErrorV1::Logits)?;
+            vec![
+                M1KernelProfileCatalogV1::new(
+                    "logits",
+                    logits::QWEN3_LOGITS_PROFILE_COUNT_V1,
+                    *catalog.identity().as_bytes(),
+                ),
+                M1KernelProfileCatalogV1::new(
+                    "speculative-token-assembly",
+                    logits::QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_PROFILE_COUNT_V1,
+                    speculative_assembly_catalog_identity(),
+                ),
+            ]
+        }
+    })
+}
+
+pub(crate) fn speculative_assembly_catalog_identity() -> [u8; 32] {
+    let profiles = logits::qwen3_speculative_token_assembly_profiles_v1();
+    let mut digest = Sha256::new();
+    digest.update((ASSEMBLY_CATALOG_DOMAIN.len() as u64).to_le_bytes());
+    digest.update(ASSEMBLY_CATALOG_DOMAIN);
+    digest.update((profiles.len() as u64).to_le_bytes());
+    for profile in profiles {
+        digest.update(profile.identity().as_bytes());
+    }
+    digest.finalize().into()
 }
 
 fn expected_programs(family: M1KernelArtifactFamilyV1) -> Vec<M1KernelArtifactProgramV1> {
@@ -1085,53 +1211,8 @@ mod tests {
         ContentIdentityV1::from_parts([seed; 32], byte_len)
     }
 
-    fn fixture_profiles(
-        family: M1KernelArtifactFamilyV1,
-        seed: u8,
-    ) -> Vec<M1KernelProfileCatalogV1> {
-        let expected: &[(&str, usize)] = match family {
-            M1KernelArtifactFamilyV1::Gemm => &[
-                ("gemm", gemm::QWEN3_GEMM_PROFILE_COUNT_V1),
-                (
-                    "token-embedding",
-                    gemm::QWEN3_TOKEN_EMBEDDING_PROFILE_COUNT_V1,
-                ),
-            ],
-            M1KernelArtifactFamilyV1::RmsNorm => {
-                &[("rmsnorm", rmsnorm::QWEN3_RMSNORM_PROFILE_COUNT_V1)]
-            }
-            M1KernelArtifactFamilyV1::RopeKv => {
-                &[("rope-kv", rope_kv::QWEN3_ROPE_KV_PROFILE_COUNT_V1)]
-            }
-            M1KernelArtifactFamilyV1::Prefill => {
-                &[("prefill", prefill::QWEN3_PREFILL_PROFILE_COUNT_V1)]
-            }
-            M1KernelArtifactFamilyV1::PagedDecode => &[(
-                "paged-decode",
-                paged_decode::QWEN3_PAGED_DECODE_PROFILE_COUNT_V1,
-            )],
-            M1KernelArtifactFamilyV1::SwiGlu => {
-                &[("swiglu", swiglu::QWEN3_SWIGLU_PROFILE_COUNT_V1)]
-            }
-            M1KernelArtifactFamilyV1::Logits => &[
-                ("logits", logits::QWEN3_LOGITS_PROFILE_COUNT_V1),
-                (
-                    "speculative-token-assembly",
-                    logits::QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_PROFILE_COUNT_V1,
-                ),
-            ],
-        };
-        expected
-            .iter()
-            .enumerate()
-            .map(|(index, (name, count))| {
-                M1KernelProfileCatalogV1::new(
-                    name,
-                    *count,
-                    [seed + u8::try_from(index).unwrap(); 32],
-                )
-            })
-            .collect()
+    fn fixture_profiles(family: M1KernelArtifactFamilyV1) -> Vec<M1KernelProfileCatalogV1> {
+        canonical_profile_catalogs(family).unwrap()
     }
 
     fn fixture_entry(family: M1KernelArtifactFamilyV1, index: usize) -> M1KernelArtifactEntryV1 {
@@ -1143,7 +1224,7 @@ mod tests {
             compiler_module: fixture_identity(seed + 16, 256),
             compiler_handoff: fixture_identity(seed + 32, 512),
             symbol_manifest: fixture_identity(seed + 48, 128),
-            profile_catalogs: fixture_profiles(family, seed + 64),
+            profile_catalogs: fixture_profiles(family),
             programs: expected_programs(family),
             provider: family.uses_ocml().then(DeviceLibraryProviderRecordV1::ocml),
             load_plan: LoadPlanRecordV1 {
@@ -1315,6 +1396,30 @@ mod tests {
             M1KernelArtifactManifestV1::new(entries).unwrap_err(),
             M1KernelArtifactManifestErrorV1::Invalid("program roster")
         );
+    }
+
+    #[test]
+    fn every_nonzero_catalog_identity_substitution_fails_decode() {
+        let mut substitutions = 0;
+        for family_index in 0..M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1 {
+            let catalog_count = fixture_entries()[family_index].profile_catalogs.len();
+            for catalog_index in 0..catalog_count {
+                let mut entries = fixture_entries();
+                let identity = &mut entries[family_index].profile_catalogs[catalog_index].identity;
+                identity[0] ^= 0x80;
+                assert_ne!(*identity, [0; 32]);
+                let substituted = encode_manifest(&entries).unwrap();
+                assert_eq!(
+                    decode_m1_kernel_artifact_manifest_v1(&substituted),
+                    Err(M1KernelArtifactManifestErrorV1::Invalid(
+                        "profile catalog"
+                    )),
+                    "accepted catalog identity substitution for family {family_index}, catalog {catalog_index}"
+                );
+                substitutions += 1;
+            }
+        }
+        assert_eq!(substitutions, 9);
     }
 
     #[test]

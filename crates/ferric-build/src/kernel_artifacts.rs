@@ -23,8 +23,9 @@ use rustix::fs::{renameat_with, RenameFlags, CWD};
 use sha2::{Digest, Sha256};
 
 use super::kernel_artifact_manifest::{
-    M1KernelArtifactEntryV1, M1KernelArtifactFamilyV1, M1KernelArtifactManifestErrorV1,
-    M1KernelArtifactManifestV1, M1KernelProfileCatalogV1, M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1,
+    speculative_assembly_catalog_identity, M1KernelArtifactEntryV1, M1KernelArtifactFamilyV1,
+    M1KernelArtifactManifestErrorV1, M1KernelArtifactManifestV1, M1KernelProfileCatalogV1,
+    M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1,
 };
 use super::kernel_artifact_policy::open_m1_kernel_worker_v1;
 
@@ -33,8 +34,6 @@ pub const M1_KERNEL_ARTIFACT_MANIFEST_FILENAME_V1: &str = "m1-kernel-artifacts.m
 
 const LABEL_DOMAIN: &[u8] = b"ferric.m1.kernel-artifact-builder.inert-label.v1";
 const INVOCATION_DOMAIN: &[u8] = b"ferric.m1.kernel-artifact-builder.invocation.v1";
-const ASSEMBLY_CATALOG_DOMAIN: &[u8] =
-    b"ferric.m1.kernel-artifact-builder.speculative-assembly-catalog.v1";
 const TRANSACTION_SESSION: BuildSession = BuildSession::from_bytes([
     0x66, 0x65, 0x72, 0x72, 0x69, 0x63, 0x2d, 0x6d, 0x31, 0x2d, 0x6b, 0x31, 0x6b, 0x37, 0x01, 0x01,
 ]);
@@ -785,18 +784,6 @@ fn inert_labels(family: M1KernelArtifactFamilyV1) -> [[u8; 32]; 4] {
         digest.update([family as u8, role]);
         digest.finalize().into()
     })
-}
-
-fn speculative_assembly_catalog_identity() -> [u8; 32] {
-    let profiles = logits::qwen3_speculative_token_assembly_profiles_v1();
-    let mut digest = Sha256::new();
-    digest.update((ASSEMBLY_CATALOG_DOMAIN.len() as u64).to_le_bytes());
-    digest.update(ASSEMBLY_CATALOG_DOMAIN);
-    digest.update((profiles.len() as u64).to_le_bytes());
-    for profile in profiles {
-        digest.update(profile.identity().as_bytes());
-    }
-    digest.finalize().into()
 }
 
 fn family_error(

@@ -46,7 +46,7 @@ pub use identity_closure::{
 pub use kernel_artifact_manifest::{
     decode_m1_kernel_artifact_manifest_v1, M1KernelArtifactEntryV1, M1KernelArtifactFamilyV1,
     M1KernelArtifactManifestErrorV1, M1KernelArtifactManifestV1, M1KernelArtifactProgramV1,
-    M1KernelProfileCatalogV1, M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1,
+    M1KernelCanonicalCatalogErrorV1, M1KernelProfileCatalogV1, M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1,
     M1_KERNEL_ARTIFACT_MANIFEST_VERSION_V1, M1_PHYSICAL_PROGRAM_COUNT_V1,
 };
 pub use kernel_artifact_policy::{
