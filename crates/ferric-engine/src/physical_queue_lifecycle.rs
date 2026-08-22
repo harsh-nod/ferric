@@ -1423,9 +1423,13 @@ impl M1QualificationCompletionEvidenceV1 {
 /// Move-only target-only observation retaining compact and final-logits evidence.
 ///
 /// ```compile_fail
-/// use ferric_engine::M1ObservedQualificationOutputV1;
-/// fn observe_twice(observed: M1ObservedQualificationOutputV1) {
-///     let _ = observed.observe_qualification_completion();
+/// use ferric_engine::{CompletionWireSemanticExpectation, M1ObservedQualificationOutputV1};
+/// fn consume_twice(
+///     observed: M1ObservedQualificationOutputV1,
+///     expectations: &[CompletionWireSemanticExpectation<'_>],
+/// ) {
+///     let _first = observed.check_completion(expectations);
+///     let _second = observed.destroy_and_release();
 /// }
 /// ```
 #[must_use = "qualification observation must be checked, destroyed, or retained"]
@@ -1594,10 +1598,22 @@ impl std::error::Error for M1QualificationObservationErrorV1 {}
 ///
 /// ```compile_fail
 /// use ferric_engine::M1QualificationObservationFailureCustodyV1;
-/// fn reopen_post_copy(custody: M1QualificationObservationFailureCustodyV1) {
-///     if let M1QualificationObservationFailureCustodyV1::Observed { completion, .. } = custody {
-///         let _ = completion.observe_qualification_completion();
+/// fn destroy(custody: M1QualificationObservationFailureCustodyV1) {
+///     match custody {
+///         M1QualificationObservationFailureCustodyV1::Recycled(queue) => {
+///             let _ = queue.destroy_and_release();
+///         }
+///         M1QualificationObservationFailureCustodyV1::CompactRejected(output) => {
+///             let _ = output.destroy_and_release();
+///         }
+///         M1QualificationObservationFailureCustodyV1::Observed { completion, .. } => {
+///             let _ = completion.destroy_and_release();
+///         }
 ///     }
+/// }
+/// fn destroy_twice(custody: M1QualificationObservationFailureCustodyV1) {
+///     destroy(custody);
+///     destroy(custody);
 /// }
 /// ```
 #[must_use = "qualification failure custody must be torn down or retained"]

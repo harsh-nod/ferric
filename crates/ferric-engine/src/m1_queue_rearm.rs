@@ -380,11 +380,12 @@ impl M1ScheduledLongLivedQueueRearmV1 {
     }
 }
 
-fn repeated_shape_is_supported(
+fn validate_rearm_eligibility(
     shape: M1PhysicalFixedBatchShapeV1,
     selection: Qwen3PlanSelection,
-) -> bool {
-    match shape {
+    qualification_logits_enabled: bool,
+) -> Result<(), M1LongLivedQueueRearmScheduleErrorV1> {
+    let shape_is_supported = match shape {
         M1PhysicalFixedBatchShapeV1::TargetOnly => selection.mode == Qwen3ExecutionMode::Decode,
         M1PhysicalFixedBatchShapeV1::SpeculativeK4
         | M1PhysicalFixedBatchShapeV1::SpeculativeK8
@@ -392,6 +393,11 @@ fn repeated_shape_is_supported(
             selection.mode == Qwen3ExecutionMode::Speculative
         }
         M1PhysicalFixedBatchShapeV1::PairedPrefill => false,
+    };
+    if qualification_logits_enabled || !shape_is_supported {
+        Err(M1LongLivedQueueRearmScheduleErrorV1::UnsupportedPriorShape)
+    } else {
+        Ok(())
     }
 }
 
@@ -499,17 +505,19 @@ fn schedule_m1_long_lived_queue_rearm_inner_v1<const C: usize>(
 > {
     let shape = released.queue().shape();
     let selection = released.queue().custody().selection();
-    if !repeated_shape_is_supported(shape, selection)
-        || released
+    if let Err(error) = validate_rearm_eligibility(
+        shape,
+        selection,
+        released
             .queue()
             .custody()
             .completion_output()
             .qualification_logits()
-            .is_some()
-    {
+            .is_some(),
+    ) {
         return Err(schedule_phase_failure(
             M1LongLivedQueueRearmSchedulePhaseV1::Released,
-            M1LongLivedQueueRearmScheduleErrorV1::UnsupportedPriorShape,
+            error,
             ScheduleFailureCustodyV1::ReleasedWithLineage {
                 released: Box::new(released),
                 parked: parked_lineage,
@@ -2967,25 +2975,62 @@ mod tests {
 
     #[test]
     fn repeated_slice_excludes_prefill_and_shape_transitions() {
-        assert!(!repeated_shape_is_supported(
-            M1PhysicalFixedBatchShapeV1::PairedPrefill,
-            selection(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128),
-        ));
-        assert!(!repeated_shape_is_supported(
-            M1PhysicalFixedBatchShapeV1::TargetOnly,
-            selection(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128),
-        ));
-        assert!(repeated_shape_is_supported(
-            M1PhysicalFixedBatchShapeV1::TargetOnly,
-            selection(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192),
-        ));
-        assert!(repeated_shape_is_supported(
-            M1PhysicalFixedBatchShapeV1::SpeculativeK4,
-            selection(
-                Qwen3ExecutionMode::Speculative,
-                Qwen3PlanBucket::SpeculativeS1K4C8192,
+        assert_eq!(
+            validate_rearm_eligibility(
+                M1PhysicalFixedBatchShapeV1::PairedPrefill,
+                selection(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128),
+                false,
             ),
-        ));
+            Err(M1LongLivedQueueRearmScheduleErrorV1::UnsupportedPriorShape)
+        );
+        assert_eq!(
+            validate_rearm_eligibility(
+                M1PhysicalFixedBatchShapeV1::TargetOnly,
+                selection(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128),
+                false,
+            ),
+            Err(M1LongLivedQueueRearmScheduleErrorV1::UnsupportedPriorShape)
+        );
+        assert_eq!(
+            validate_rearm_eligibility(
+                M1PhysicalFixedBatchShapeV1::TargetOnly,
+                selection(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192),
+                false,
+            ),
+            Ok(())
+        );
+        assert_eq!(
+            validate_rearm_eligibility(
+                M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+                selection(
+                    Qwen3ExecutionMode::Speculative,
+                    Qwen3PlanBucket::SpeculativeS1K4C8192,
+                ),
+                false,
+            ),
+            Ok(())
+        );
+    }
+
+    #[test]
+    fn qualification_bearing_target_decode_is_rejected_from_long_lived_rearm() {
+        let target_decode = selection(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS8C8192);
+        assert_eq!(
+            validate_rearm_eligibility(
+                M1PhysicalFixedBatchShapeV1::TargetOnly,
+                target_decode,
+                false,
+            ),
+            Ok(())
+        );
+        assert_eq!(
+            validate_rearm_eligibility(
+                M1PhysicalFixedBatchShapeV1::TargetOnly,
+                target_decode,
+                true,
+            ),
+            Err(M1LongLivedQueueRearmScheduleErrorV1::UnsupportedPriorShape)
+        );
     }
 
     #[test]

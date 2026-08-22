@@ -551,6 +551,16 @@ mod tests {
 
     use super::*;
 
+    const TARGET_ONLY_BUCKETS: [Qwen3PlanBucket; 7] = [
+        Qwen3PlanBucket::PrefillS1T128,
+        Qwen3PlanBucket::PrefillS8T128,
+        Qwen3PlanBucket::PrefillS1T512,
+        Qwen3PlanBucket::PrefillS1T2048,
+        Qwen3PlanBucket::DecodeS1C8192,
+        Qwen3PlanBucket::DecodeS8C8192,
+        Qwen3PlanBucket::DecodeS32C8192,
+    ];
+
     fn selection(bucket: Qwen3PlanBucket) -> Qwen3PlanSelection {
         Qwen3PlanSelection {
             role: Qwen3ModelRole::Target8B,
@@ -588,15 +598,7 @@ mod tests {
 
     #[test]
     fn all_target_only_shapes_match_existing_logits_workspace() {
-        for bucket in [
-            Qwen3PlanBucket::PrefillS1T128,
-            Qwen3PlanBucket::PrefillS8T128,
-            Qwen3PlanBucket::PrefillS1T512,
-            Qwen3PlanBucket::PrefillS1T2048,
-            Qwen3PlanBucket::DecodeS1C8192,
-            Qwen3PlanBucket::DecodeS8C8192,
-            Qwen3PlanBucket::DecodeS32C8192,
-        ] {
+        for bucket in TARGET_ONLY_BUCKETS {
             let shape = m1_qualification_logits_shape_v1(selection(bucket)).unwrap();
             assert_eq!(shape.vocabulary(), QWEN3_VOCABULARY_SIZE);
             assert_eq!(shape.row_bytes(), u64::from(QWEN3_VOCABULARY_SIZE) * 2);
@@ -604,6 +606,37 @@ mod tests {
                 shape.extent_bytes(),
                 u64::from(shape.sequences()) * u64::from(shape.active_tokens()) * shape.row_bytes()
             );
+        }
+    }
+
+    #[test]
+    fn every_target_only_shape_has_exact_first_and_last_final_row_boundaries() {
+        for bucket in TARGET_ONLY_BUCKETS {
+            let shape = m1_qualification_logits_shape_v1(selection(bucket)).unwrap();
+            let last_lane = usize::try_from(shape.sequences() - 1).unwrap();
+            let full_active = shape.active_tokens();
+            let first_full = u64::from(full_active - 1) * shape.row_bytes();
+            let last_first =
+                u64::from(shape.sequences() - 1) * u64::from(full_active) * shape.row_bytes();
+
+            assert_eq!(shape.final_row_relative_offset(0, 1).unwrap(), 0);
+            assert_eq!(
+                shape.final_row_relative_offset(0, full_active).unwrap(),
+                first_full
+            );
+            assert_eq!(
+                shape.final_row_relative_offset(last_lane, 1).unwrap(),
+                last_first
+            );
+            assert_eq!(
+                shape
+                    .final_row_relative_offset(last_lane, full_active)
+                    .unwrap(),
+                shape.extent_bytes() - shape.row_bytes()
+            );
+            assert!(last_first
+                .checked_add(shape.row_bytes())
+                .is_some_and(|end| end <= shape.extent_bytes()));
         }
     }
 
