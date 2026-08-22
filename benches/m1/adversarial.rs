@@ -9,9 +9,10 @@ use ferric_m1_benchmarks::{
 };
 use rustix::fd::OwnedFd;
 use rustix::fs::{
-    fsync, mkdirat, openat2, renameat_with, unlinkat, AtFlags, Mode, OFlags, RenameFlags,
-    ResolveFlags, CWD,
+    fstat, fsync, mkdirat, openat2, renameat_with, unlinkat, AtFlags, FileType, Mode, OFlags,
+    RenameFlags, ResolveFlags, CWD,
 };
+use rustix::process::geteuid;
 use serde_json::{json, Map, Value};
 use std::collections::{BTreeMap, BTreeSet};
 use std::env;
@@ -29,11 +30,17 @@ const CANARY_LAYOUT_FORMAT: &str = "FERRIC-M1-ADVERSARIAL-CANARY-LAYOUT-V1";
 const FAULT_PLAN_FORMAT: &str = "FERRIC-M1-ADVERSARIAL-FAULT-PLAN-V1";
 const EXHAUSTION_WORKLOAD_FORMAT: &str = "FERRIC-M1-ADVERSARIAL-EXHAUSTION-V1";
 const RUNNER_TRANSCRIPT_FORMAT: &str = "FERRIC-M1-ADVERSARIAL-RUNNER-TRANSCRIPT-V1";
+const ENGINE_TRANSCRIPT_FORMAT: &str = "FERRIC-M1-ADVERSARIAL-ENGINE-TRANSCRIPT-V1";
 const RAW_RECORD_FORMAT: &str = "FERRIC-M1-ADVERSARIAL-RAW-RECORD-V1";
 const RECORDS_FORMAT: &str = "FERRIC-M1-BENCHMARK-RECORDS-V1";
+const TARGET: &str = "gfx942:xnack-";
 const EXECUTION_AUTHORITY: &str = "externally-supplied-adversarial-execution-only";
 const OBSERVATION_AUTHORITY: &str = "externally-collected-adversarial-observation-only";
+const RUNNER_TRANSCRIPT_AUTHORITY: &str = "externally-reported-adversarial-runner-transcript-only";
+const POLICY_FIXTURE_AUTHORITY: &str = "synthetic-policy-fixture-only";
 const RAW_AUTHORITY: &str = "computed-adversarial-observation-only";
+const RUNNER_TRANSCRIPT_NONCLAIM: &str = "Authenticated external report bytes and structural joins only; this transcript does not establish device execution, exact completion, fault injection, safety, hardware correctness, or close m1.r30.";
+const POLICY_FIXTURE_NONCLAIM: &str = "Synthetic policy fixture parser exercise only; this document is not a benchmark record or evidence and does not establish device execution, exact completion, fault injection, safety, hardware correctness, or close m1.r30.";
 const MAX_COMPANION_BYTES: u64 = 64 * 1024 * 1024;
 const MAX_EXHAUSTION_CONTEXT_TOKENS: u32 = 1_048_576;
 const MAX_EXHAUSTION_PAGE_COUNT: u32 = 4_096;
@@ -100,7 +107,52 @@ struct ExecutionCase {
 
 #[derive(Debug)]
 struct FaultCase {
+    expected_outcome: String,
+    id: String,
     injection_point: String,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ReportClass {
+    External,
+    PolicyFixture,
+}
+
+impl ReportClass {
+    fn authority(self) -> &'static str {
+        match self {
+            Self::External => RUNNER_TRANSCRIPT_AUTHORITY,
+            Self::PolicyFixture => POLICY_FIXTURE_AUTHORITY,
+        }
+    }
+
+    fn observation_authority(self) -> &'static str {
+        match self {
+            Self::External => OBSERVATION_AUTHORITY,
+            Self::PolicyFixture => POLICY_FIXTURE_AUTHORITY,
+        }
+    }
+
+    fn nonclaim(self) -> &'static str {
+        match self {
+            Self::External => RUNNER_TRANSCRIPT_NONCLAIM,
+            Self::PolicyFixture => POLICY_FIXTURE_NONCLAIM,
+        }
+    }
+
+    fn provenance(self) -> &'static str {
+        match self {
+            Self::External => "external-report",
+            Self::PolicyFixture => "synthetic-policy-fixture-only",
+        }
+    }
+
+    fn status(self) -> &'static str {
+        match self {
+            Self::External => "reported-unvalidated",
+            Self::PolicyFixture => "synthetic-policy-fixture-only",
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -129,6 +181,15 @@ struct CaseResult {
     details: Value,
     measurements: Measurements,
     source_observation_sha256: String,
+    status: &'static str,
+    transcript: Vec<u8>,
+}
+
+#[derive(Debug)]
+struct ExternalObservation {
+    observation_sha256: String,
+    reported_outcome: String,
+    result: Value,
     transcript: Vec<u8>,
 }
 
@@ -186,6 +247,17 @@ impl StagingBundle {
             ResolveFlags::NO_SYMLINKS | ResolveFlags::NO_MAGICLINKS,
         )
         .map_err(|error| format!("cannot securely open output parent: {error}"))?;
+        let parent_stat =
+            fstat(&parent).map_err(|error| format!("cannot inspect output parent: {error}"))?;
+        if FileType::from_raw_mode(parent_stat.st_mode) != FileType::Directory
+            || parent_stat.st_uid != geteuid().as_raw()
+            || parent_stat.st_mode & 0o022 != 0
+        {
+            return Err(
+                "output parent must be an owner-controlled directory without group/other writes"
+                    .to_owned(),
+            );
+        }
         match openat2(
             &parent,
             output_name.as_os_str(),
@@ -307,6 +379,18 @@ impl StagingBundle {
         fsync(&self.transcripts)
             .map_err(|error| format!("cannot sync staged transcript directory: {error}"))?;
         fsync(&self.staging).map_err(|error| format!("cannot sync staging bundle: {error}"))?;
+        let namespace = open_directory_at(
+            &self.parent,
+            Path::new(&self.staging_name),
+            "staging namespace",
+        )?;
+        let held = fstat(&self.staging)
+            .map_err(|error| format!("cannot inspect held staging directory: {error}"))?;
+        let named = fstat(&namespace)
+            .map_err(|error| format!("cannot inspect named staging directory: {error}"))?;
+        if held.st_dev != named.st_dev || held.st_ino != named.st_ino {
+            return Err("staging namespace no longer names the held directory".to_owned());
+        }
         renameat_with(
             &self.parent,
             self.staging_name.as_os_str(),
@@ -355,11 +439,14 @@ impl Drop for StagingBundle {
 
 fn main() -> ExitCode {
     let arguments = env::args_os().skip(1).collect::<Vec<_>>();
-    if arguments
-        .first()
-        .is_some_and(|command| command == "produce")
-    {
-        return match produce_command(&arguments) {
+    let command = arguments.first().and_then(|value| value.to_str());
+    if matches!(command, Some("produce" | "check-policy-fixture")) {
+        let result = match command {
+            Some("produce") => produce_command(&arguments),
+            Some("check-policy-fixture") => check_policy_fixture_command(&arguments),
+            _ => unreachable!(),
+        };
+        return match result {
             Ok(()) => ExitCode::SUCCESS,
             Err(error) => {
                 eprintln!("FAIL: {error}");
@@ -377,12 +464,41 @@ fn produce_command(arguments: &[OsString]) -> BenchResult<()> {
     if command != "produce" {
         return Err("adversarial producer command drifted".to_owned());
     }
-    let (plan, plan_bytes) = load_benchmark_plan(&SUITE, Path::new(plan_path))?;
+    execute_command(
+        Path::new(plan_path),
+        Path::new(execution_path),
+        Some(Path::new(output_bundle)),
+        ReportClass::External,
+    )
+}
+
+fn check_policy_fixture_command(arguments: &[OsString]) -> BenchResult<()> {
+    let [command, plan_path, execution_path] = arguments else {
+        return Err("usage: ferric-m1-adversarial check-policy-fixture PLAN EXECUTION".to_owned());
+    };
+    if command != "check-policy-fixture" {
+        return Err("adversarial fixture-check command drifted".to_owned());
+    }
+    execute_command(
+        Path::new(plan_path),
+        Path::new(execution_path),
+        None,
+        ReportClass::PolicyFixture,
+    )
+}
+
+fn execute_command(
+    plan_path: &Path,
+    execution_path: &Path,
+    output_bundle: Option<&Path>,
+    report_class: ReportClass,
+) -> BenchResult<()> {
+    let (plan, plan_bytes) = load_benchmark_plan(&SUITE, plan_path)?;
     let plan_sha256 = sha256_identity(&plan_bytes);
     let plan_cases = exact_plan_cases(&plan)?;
     let plan_identities = plan_identities(&plan)?;
     let (root, execution, execution_bytes) =
-        load_canonical_document(Path::new(execution_path), "adversarial execution manifest")?;
+        load_canonical_document(execution_path, "adversarial execution manifest")?;
     let execution_sha256 = sha256_identity(&execution_bytes);
     let (cases, canary_layout_path, fault_plan_path) =
         parse_execution(&execution, &plan_cases, &plan_sha256)?;
@@ -410,7 +526,7 @@ fn produce_command(arguments: &[OsString]) -> BenchResult<()> {
     expect_identity(&plan_identities, "fault-plan", &fault_plan_sha256)?;
     let fault_cases = parse_fault_plan(&fault_plan)?;
 
-    let mut staging = StagingBundle::create(Path::new(output_bundle))?;
+    let mut staging = output_bundle.map(StagingBundle::create).transpose()?;
     let mut observations = Vec::with_capacity(cases.len());
     for case in cases {
         let plan_case = plan_cases
@@ -448,7 +564,9 @@ fn produce_command(arguments: &[OsString]) -> BenchResult<()> {
             fault_case,
             fault_plan_sha256: &fault_plan_sha256,
             input_sha256: &input_sha256,
+            plan_identities: &plan_identities,
             plan_sha256: &plan_sha256,
+            report_class,
             root: &root,
             seen_identities: &mut input_identities,
             workload: &workload,
@@ -456,10 +574,12 @@ fn produce_command(arguments: &[OsString]) -> BenchResult<()> {
         };
         let result = run_case(context)?;
         let transcript_sha256 = sha256_identity(&result.transcript);
-        staging.write_transcript(
-            &format!("{}.runner.transcript", case.case_id),
-            &result.transcript,
-        )?;
+        if let Some(bundle) = &mut staging {
+            bundle.write_transcript(
+                &format!("{}.runner.transcript", case.case_id),
+                &result.transcript,
+            )?;
+        }
         let record_context = RecordContext {
             canary_layout: &canary_layout_sha256,
             execution: &execution_sha256,
@@ -471,18 +591,23 @@ fn produce_command(arguments: &[OsString]) -> BenchResult<()> {
         };
         let raw = raw_record(&case, &result, &record_context);
         let raw_bytes = encode_canonical_document(&raw)?;
-        staging.write_raw(
-            &format!("{}.adversarial.raw.json", case.case_id),
-            &raw_bytes,
-        )?;
-        observations.push(observation(
-            &case,
-            result.measurements,
-            &fault_plan_sha256,
-            &raw_bytes,
-            &transcript_sha256,
-        ));
+        if let Some(bundle) = &mut staging {
+            bundle.write_raw(
+                &format!("{}.adversarial.raw.json", case.case_id),
+                &raw_bytes,
+            )?;
+            observations.push(observation(
+                &case,
+                result.measurements,
+                &fault_plan_sha256,
+                &raw_bytes,
+                &transcript_sha256,
+            ));
+        }
     }
+    let Some(mut staging) = staging else {
+        return Ok(());
+    };
     let records = json!({
         "format": RECORDS_FORMAT,
         "observations": observations,
@@ -500,7 +625,9 @@ struct RunContext<'a> {
     fault_case: &'a FaultCase,
     fault_plan_sha256: &'a str,
     input_sha256: &'a str,
+    plan_identities: &'a BTreeMap<String, String>,
     plan_sha256: &'a str,
+    report_class: ReportClass,
     root: &'a SecureInputDirectory,
     seen_identities: &'a mut BTreeSet<SecureFileIdentity>,
     workload: &'a Value,
@@ -519,7 +646,12 @@ fn run_case(mut context: RunContext<'_>) -> BenchResult<CaseResult> {
 }
 
 fn run_canary(context: &mut RunContext<'_>) -> BenchResult<CaseResult> {
-    let (result, transcript, observation_sha256) = load_external_observation(context)?;
+    let ExternalObservation {
+        observation_sha256,
+        reported_outcome: transcript_outcome,
+        result,
+        transcript,
+    } = load_external_observation(context)?;
     let result = object(&result, &["after", "before"], "canary observation result")?;
     let (before, before_identity) = read_companion(
         context.root,
@@ -545,34 +677,46 @@ fn run_canary(context: &mut RunContext<'_>) -> BenchResult<CaseResult> {
         return Err("canary snapshots have different lengths".to_owned());
     }
     let corruptions = compare_canaries(context.canary_regions, &before, &after)?;
-    let observed_outcome = if corruptions == 0 {
+    let reported_outcome = if corruptions == 0 {
         "canary-intact"
     } else {
         "canary-corruption-detected"
     };
-    let matched = outcome_matches(context.fault_case, observed_outcome);
+    expect_value(
+        &transcript_outcome,
+        reported_outcome,
+        "canary runner-reported outcome",
+    )?;
+    let matched = outcome_matches(context.fault_case, reported_outcome);
     Ok(CaseResult {
         details: json!({
             "execution_domain": "external-snapshot-comparison",
             "hardware_claim": "none",
             "injection_point": context.fault_case.injection_point,
-            "observed_outcome": observed_outcome,
+            "intake_status": "reported-unvalidated",
+            "reported_outcome": reported_outcome,
             "snapshot_bytes": before.len(),
         }),
         measurements: Measurements {
             canary_corruptions: corruptions,
-            faults_observed: u64::from(matched),
+            faults_observed: 0,
             leaked_resources: 0,
             rollback_mismatches: 0,
-            unexpected_errors: u64::from(!matched),
+            unexpected_errors: u64::from(!matched).saturating_add(1),
         },
         source_observation_sha256: observation_sha256,
+        status: "reported-unvalidated",
         transcript,
     })
 }
 
 fn run_external_cancellation(context: &mut RunContext<'_>) -> BenchResult<CaseResult> {
-    let (result, transcript, observation_sha256) = load_external_observation(context)?;
+    let ExternalObservation {
+        observation_sha256,
+        reported_outcome: transcript_outcome,
+        result,
+        transcript,
+    } = load_external_observation(context)?;
     let result = object(
         &result,
         &[
@@ -596,27 +740,36 @@ fn run_external_cancellation(context: &mut RunContext<'_>) -> BenchResult<CaseRe
         .saturating_add(u64::from(reclaimed_before))
         .saturating_add(u64::from(!reclaimed_after))
         .saturating_add(u64::from(leaked != 0));
-    let observed_outcome = if violations == 0 {
+    let reported_outcome = if violations == 0 {
         "cancelled-after-exact-completion"
     } else {
         "cancellation-boundary-violation"
     };
-    let matched = outcome_matches(context.fault_case, observed_outcome);
+    expect_value(
+        &transcript_outcome,
+        reported_outcome,
+        "cancellation runner-reported outcome",
+    )?;
+    let matched = outcome_matches(context.fault_case, reported_outcome);
     Ok(CaseResult {
         details: json!({
             "execution_domain": "external-physical-observation",
             "hardware_claim": "none",
             "injection_point": context.fault_case.injection_point,
-            "observed_outcome": observed_outcome,
+            "intake_status": "reported-unvalidated",
+            "reported_outcome": reported_outcome,
         }),
         measurements: Measurements {
             canary_corruptions: 0,
-            faults_observed: u64::from(matched),
+            faults_observed: 0,
             leaked_resources: leaked,
             rollback_mismatches: 0,
-            unexpected_errors: violations.saturating_add(u64::from(!matched)),
+            unexpected_errors: violations
+                .saturating_add(u64::from(!matched))
+                .saturating_add(1),
         },
         source_observation_sha256: observation_sha256,
+        status: "reported-unvalidated",
         transcript,
     })
 }
@@ -723,7 +876,7 @@ fn run_exhaustion(context: &RunContext<'_>) -> BenchResult<CaseResult> {
         "details": details,
         "execution_sha256": context.execution_sha256,
         "fault_plan_sha256": context.fault_plan_sha256,
-        "format": RUNNER_TRANSCRIPT_FORMAT,
+        "format": ENGINE_TRANSCRIPT_FORMAT,
         "input_sha256": context.input_sha256,
         "kind": context.case.kind,
         "plan_sha256": context.plan_sha256,
@@ -740,12 +893,18 @@ fn run_exhaustion(context: &RunContext<'_>) -> BenchResult<CaseResult> {
             unexpected_errors: violations.saturating_add(u64::from(!matched)),
         },
         source_observation_sha256: sha256_identity(&transcript),
+        status: "observed",
         transcript,
     })
 }
 
 fn run_external_fault_injection(context: &mut RunContext<'_>) -> BenchResult<CaseResult> {
-    let (result, transcript, observation_sha256) = load_external_observation(context)?;
+    let ExternalObservation {
+        observation_sha256,
+        reported_outcome: transcript_outcome,
+        result,
+        transcript,
+    } = load_external_observation(context)?;
     let result = object(
         &result,
         &[
@@ -762,38 +921,53 @@ fn run_external_fault_injection(context: &mut RunContext<'_>) -> BenchResult<Cas
     let live_resources = unsigned(result, "live_resources_after", "fault-injection result")?;
     let quarantined = boolean(result, "queue_quarantined", "fault-injection result")?;
     let retry_denied = boolean(result, "retry_denied", "fault-injection result")?;
-    let violations = u64::from(injected == 0)
+    let violations = u64::from(injected != 1)
         .saturating_add(injected.abs_diff(observed))
         .saturating_add(u64::from(!quarantined))
         .saturating_add(u64::from(!retry_denied))
         .saturating_add(u64::from(live_resources != 0));
-    let observed_outcome = if violations == 0 {
+    let reported_outcome = if violations == 0 {
         "terminal-fault-quarantined"
     } else {
         "fault-injection-boundary-violation"
     };
-    let matched = outcome_matches(context.fault_case, observed_outcome);
+    expect_value(
+        &transcript_outcome,
+        reported_outcome,
+        "fault-injection runner-reported outcome",
+    )?;
+    let matched = outcome_matches(context.fault_case, reported_outcome);
     Ok(CaseResult {
         details: json!({
             "execution_domain": "external-physical-observation",
             "hardware_claim": "none",
+            "fault_id": context.fault_case.id,
             "injection_point": context.fault_case.injection_point,
-            "observed_outcome": observed_outcome,
+            "intake_status": "reported-unvalidated",
+            "reported_outcome": reported_outcome,
         }),
         measurements: Measurements {
             canary_corruptions: 0,
-            faults_observed: observed,
+            faults_observed: 0,
             leaked_resources: live_resources,
             rollback_mismatches: 0,
-            unexpected_errors: violations.saturating_add(u64::from(!matched)),
+            unexpected_errors: violations
+                .saturating_add(u64::from(!matched))
+                .saturating_add(1),
         },
         source_observation_sha256: observation_sha256,
+        status: "reported-unvalidated",
         transcript,
     })
 }
 
 fn run_external_rollback(context: &mut RunContext<'_>) -> BenchResult<CaseResult> {
-    let (result, transcript, observation_sha256) = load_external_observation(context)?;
+    let ExternalObservation {
+        observation_sha256,
+        reported_outcome: transcript_outcome,
+        result,
+        transcript,
+    } = load_external_observation(context)?;
     let result = object(
         &result,
         &[
@@ -823,34 +997,39 @@ fn run_external_rollback(context: &mut RunContext<'_>) -> BenchResult<CaseResult
         .saturating_add(u64::from(expected_after != Some(committed_after)))
         .saturating_add(u64::from(resident_after != committed_after));
     let leaked = free_before.abs_diff(free_after).saturating_add(live_after);
-    let observed_outcome = if mismatches == 0 && leaked == 0 {
+    let reported_outcome = if mismatches == 0 && leaked == 0 {
         "strict-prefix-rollback-refined"
     } else {
         "rollback-boundary-violation"
     };
-    let matched = outcome_matches(context.fault_case, observed_outcome);
+    expect_value(
+        &transcript_outcome,
+        reported_outcome,
+        "rollback runner-reported outcome",
+    )?;
+    let matched = outcome_matches(context.fault_case, reported_outcome);
     Ok(CaseResult {
         details: json!({
             "execution_domain": "external-physical-observation",
             "hardware_claim": "none",
             "injection_point": context.fault_case.injection_point,
-            "observed_outcome": observed_outcome,
+            "intake_status": "reported-unvalidated",
+            "reported_outcome": reported_outcome,
         }),
         measurements: Measurements {
             canary_corruptions: 0,
-            faults_observed: u64::from(matched),
+            faults_observed: 0,
             leaked_resources: leaked,
             rollback_mismatches: mismatches,
-            unexpected_errors: u64::from(!matched),
+            unexpected_errors: u64::from(!matched).saturating_add(1),
         },
         source_observation_sha256: observation_sha256,
+        status: "reported-unvalidated",
         transcript,
     })
 }
 
-fn load_external_observation(
-    context: &mut RunContext<'_>,
-) -> BenchResult<(Value, Vec<u8>, String)> {
+fn load_external_observation(context: &mut RunContext<'_>) -> BenchResult<ExternalObservation> {
     let path = context.case.observation.as_ref().ok_or_else(|| {
         format!(
             "completion-dependent case requires an external observation: {}",
@@ -870,12 +1049,17 @@ fn load_external_observation(
         &[
             "authority",
             "case_id",
+            "execution_sha256",
+            "fault",
+            "fault_plan_sha256",
             "format",
             "input_sha256",
             "kind",
             "plan_sha256",
+            "provenance",
             "result",
             "runner_transcript",
+            "status",
             "workload_sha256",
         ],
         "adversarial external observation",
@@ -883,7 +1067,7 @@ fn load_external_observation(
     expect(
         document,
         "authority",
-        OBSERVATION_AUTHORITY,
+        context.report_class.observation_authority(),
         "observation authority",
     )?;
     expect(document, "format", OBSERVATION_FORMAT, "observation format")?;
@@ -894,6 +1078,18 @@ fn load_external_observation(
         "observation case id",
     )?;
     expect(document, "kind", &context.case.kind, "observation kind")?;
+    expect(
+        document,
+        "execution_sha256",
+        context.execution_sha256,
+        "observation execution identity",
+    )?;
+    expect(
+        document,
+        "fault_plan_sha256",
+        context.fault_plan_sha256,
+        "observation fault-plan identity",
+    )?;
     expect(
         document,
         "plan_sha256",
@@ -912,6 +1108,23 @@ fn load_external_observation(
         context.workload_sha256,
         "observation workload identity",
     )?;
+    expect(
+        document,
+        "provenance",
+        context.report_class.provenance(),
+        "observation provenance",
+    )?;
+    expect(
+        document,
+        "status",
+        context.report_class.status(),
+        "observation status",
+    )?;
+    validate_fault_binding(
+        field(document, "fault", "adversarial external observation")?,
+        context,
+        "observation fault binding",
+    )?;
     let result = field(document, "result", "adversarial external observation")?.clone();
     let (transcript, transcript_identity) = read_companion(
         context.root,
@@ -927,7 +1140,274 @@ fn load_external_observation(
         transcript_identity,
         "external runner transcript",
     )?;
-    Ok((result, transcript, sha256_identity(&observation_bytes)))
+    let transcript_value: Value = serde_json::from_slice(&transcript)
+        .map_err(|error| format!("cannot parse external runner transcript: {error}"))?;
+    if encode_canonical_document(&transcript_value)? != transcript {
+        return Err("external runner transcript is not canonical JSON".to_owned());
+    }
+    let reported_outcome =
+        validate_runner_transcript(&transcript_value, &result, context)?.to_owned();
+    Ok(ExternalObservation {
+        observation_sha256: sha256_identity(&observation_bytes),
+        reported_outcome,
+        result,
+        transcript,
+    })
+}
+
+fn validate_fault_binding(
+    value: &Value,
+    context: &RunContext<'_>,
+    description: &str,
+) -> BenchResult<()> {
+    let fault = object(
+        value,
+        &["expected_outcome", "id", "injection_point", "occurrences"],
+        description,
+    )?;
+    expect(
+        fault,
+        "expected_outcome",
+        &context.fault_case.expected_outcome,
+        description,
+    )?;
+    expect(fault, "id", &context.fault_case.id, description)?;
+    expect(
+        fault,
+        "injection_point",
+        &context.fault_case.injection_point,
+        description,
+    )?;
+    if unsigned(fault, "occurrences", description)? != 1 {
+        return Err(format!("{description} must name exactly one occurrence"));
+    }
+    Ok(())
+}
+
+fn validate_runner_transcript<'a>(
+    value: &'a Value,
+    result: &Value,
+    context: &RunContext<'_>,
+) -> BenchResult<&'a str> {
+    let transcript = object(
+        value,
+        &[
+            "authority",
+            "bindings",
+            "case_id",
+            "fault",
+            "format",
+            "hardware_claim",
+            "hardware_evidence",
+            "kind",
+            "nonclaim",
+            "planned_runner",
+            "provenance",
+            "reported_outcome",
+            "result",
+            "result_semantics",
+            "status",
+            "suite",
+            "target",
+        ],
+        "external runner transcript",
+    )?;
+    expect(
+        transcript,
+        "authority",
+        context.report_class.authority(),
+        "runner transcript authority",
+    )?;
+    expect(
+        transcript,
+        "format",
+        RUNNER_TRANSCRIPT_FORMAT,
+        "runner transcript format",
+    )?;
+    expect(
+        transcript,
+        "status",
+        context.report_class.status(),
+        "runner transcript status",
+    )?;
+    expect(
+        transcript,
+        "provenance",
+        context.report_class.provenance(),
+        "runner transcript provenance",
+    )?;
+    expect(transcript, "suite", SUITE.name, "runner transcript suite")?;
+    expect(transcript, "target", TARGET, "runner transcript target")?;
+    expect(
+        transcript,
+        "case_id",
+        &context.case.case_id,
+        "runner transcript case id",
+    )?;
+    expect(
+        transcript,
+        "kind",
+        &context.case.kind,
+        "runner transcript kind",
+    )?;
+    expect(
+        transcript,
+        "hardware_claim",
+        "none",
+        "runner transcript hardware claim",
+    )?;
+    expect(
+        transcript,
+        "nonclaim",
+        context.report_class.nonclaim(),
+        "runner transcript nonclaim",
+    )?;
+
+    let bindings = object(
+        field(transcript, "bindings", "external runner transcript")?,
+        &[
+            "execution_sha256",
+            "fault_plan_sha256",
+            "input_sha256",
+            "plan_sha256",
+            "workload_sha256",
+        ],
+        "runner transcript bindings",
+    )?;
+    for (name, expected) in [
+        ("execution_sha256", context.execution_sha256),
+        ("fault_plan_sha256", context.fault_plan_sha256),
+        ("input_sha256", context.input_sha256),
+        ("plan_sha256", context.plan_sha256),
+        ("workload_sha256", context.workload_sha256),
+    ] {
+        expect(bindings, name, expected, "runner transcript binding")?;
+    }
+    validate_fault_binding(
+        field(transcript, "fault", "external runner transcript")?,
+        context,
+        "runner transcript fault binding",
+    )?;
+
+    let executable = plan_identity(context.plan_identities, "benchmark-executable")?;
+    let protocol = plan_identity(context.plan_identities, "benchmark-protocol")?;
+    let environment = plan_identity(context.plan_identities, "environment")?;
+    let planned = object(
+        field(transcript, "planned_runner", "external runner transcript")?,
+        &["environment_sha256", "executable_sha256", "protocol_sha256"],
+        "runner transcript planned runner",
+    )?;
+    expect(
+        planned,
+        "executable_sha256",
+        executable,
+        "planned runner executable",
+    )?;
+    expect(
+        planned,
+        "protocol_sha256",
+        protocol,
+        "planned runner protocol",
+    )?;
+    expect(
+        planned,
+        "environment_sha256",
+        environment,
+        "planned runner environment",
+    )?;
+    validate_hardware_evidence(
+        field(
+            transcript,
+            "hardware_evidence",
+            "external runner transcript",
+        )?,
+        executable,
+        protocol,
+        environment,
+    )?;
+    if field(transcript, "result", "external runner transcript")? != result {
+        return Err("runner transcript result drifted from its observation".to_owned());
+    }
+    expect(
+        transcript,
+        "result_semantics",
+        result_semantics(&context.case.kind)?,
+        "runner transcript result semantics",
+    )?;
+    string(transcript, "reported_outcome", "external runner transcript")
+}
+
+fn validate_hardware_evidence(
+    value: &Value,
+    executable: &str,
+    protocol: &str,
+    environment: &str,
+) -> BenchResult<()> {
+    if value.is_null() {
+        return Ok(());
+    }
+    let evidence = object(
+        value,
+        &[
+            "device_identity_sha256",
+            "environment_identity_sha256",
+            "hardware_report_sha256",
+            "hardware_transcript_sha256",
+            "harness_binary_sha256",
+            "harness_protocol_sha256",
+        ],
+        "runner transcript hardware evidence",
+    )?;
+    for name in [
+        "device_identity_sha256",
+        "environment_identity_sha256",
+        "hardware_report_sha256",
+        "hardware_transcript_sha256",
+        "harness_binary_sha256",
+        "harness_protocol_sha256",
+    ] {
+        require_sha256(
+            string(evidence, name, "runner transcript hardware evidence")?,
+            "runner transcript hardware evidence identity",
+        )?;
+    }
+    expect(
+        evidence,
+        "environment_identity_sha256",
+        environment,
+        "hardware evidence environment",
+    )?;
+    expect(
+        evidence,
+        "harness_binary_sha256",
+        executable,
+        "hardware evidence harness binary",
+    )?;
+    expect(
+        evidence,
+        "harness_protocol_sha256",
+        protocol,
+        "hardware evidence harness protocol",
+    )
+}
+
+fn plan_identity<'a>(identities: &'a BTreeMap<String, String>, name: &str) -> BenchResult<&'a str> {
+    identities
+        .get(name)
+        .map(String::as_str)
+        .ok_or_else(|| format!("benchmark plan omitted identity: {name}"))
+}
+
+fn result_semantics(kind: &str) -> BenchResult<&'static str> {
+    match kind {
+        "canary" => Ok("guard-byte-snapshot-comparison"),
+        "cancellation" => Ok("completion-before-reclamation"),
+        "fault-injection" => Ok("terminal-queue-fault-quarantine"),
+        "rollback" => Ok("accepted-prefix-kv-rollback"),
+        _ => Err(format!(
+            "external result semantics do not cover kind: {kind}"
+        )),
+    }
 }
 
 fn parse_execution(
@@ -1173,6 +1653,8 @@ fn parse_fault_plan(value: &Value) -> BenchResult<BTreeMap<String, FaultCase>> {
         faults.insert(
             kind.to_owned(),
             FaultCase {
+                expected_outcome: expected.to_owned(),
+                id: id.to_owned(),
                 injection_point: point.to_owned(),
             },
         );
@@ -1208,18 +1690,7 @@ fn expected_outcome(kind: &str) -> &'static str {
 }
 
 fn outcome_matches(fault: &FaultCase, observed: &str) -> bool {
-    observed == expected_outcome_from_point(&fault.injection_point)
-}
-
-fn expected_outcome_from_point(point: &str) -> &'static str {
-    match point {
-        "guard-bytes" => "canary-intact",
-        "in-flight-retirement" => "cancelled-after-exact-completion",
-        "kv-page-allocation" => "out-of-pages-transactional",
-        "queue-transition" => "terminal-fault-quarantined",
-        "accepted-prefix" => "strict-prefix-rollback-refined",
-        _ => "unknown",
-    }
+    observed == fault.expected_outcome
 }
 
 fn compare_canaries(regions: &[CanaryRegion], before: &[u8], after: &[u8]) -> BenchResult<u64> {
@@ -1273,7 +1744,7 @@ fn raw_record(case: &ExecutionCase, result: &CaseResult, context: &RecordContext
         "plan_sha256": context.plan,
         "runner_transcript_sha256": context.transcript,
         "source_observation_sha256": result.source_observation_sha256,
-        "status": "observed",
+        "status": result.status,
         "workload_sha256": context.workload,
     })
 }

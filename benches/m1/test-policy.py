@@ -26,11 +26,24 @@ DIFFERENTIAL_PAIRS_FORMAT = "FERRIC-M1-DIFFERENTIAL-PAIRS-V1"
 DIFFERENTIAL_OUTPUT_FORMAT = "FERRIC-M1-DIFFERENTIAL-OUTPUT-V1"
 ADVERSARIAL_EXECUTION_FORMAT = "FERRIC-M1-ADVERSARIAL-EXECUTION-V1"
 ADVERSARIAL_OBSERVATION_FORMAT = "FERRIC-M1-ADVERSARIAL-OBSERVATION-V1"
+ADVERSARIAL_RUNNER_TRANSCRIPT_FORMAT = (
+    "FERRIC-M1-ADVERSARIAL-RUNNER-TRANSCRIPT-V1"
+)
 ADVERSARIAL_CANARY_LAYOUT_FORMAT = "FERRIC-M1-ADVERSARIAL-CANARY-LAYOUT-V1"
 ADVERSARIAL_FAULT_PLAN_FORMAT = "FERRIC-M1-ADVERSARIAL-FAULT-PLAN-V1"
 ADVERSARIAL_EXHAUSTION_FORMAT = "FERRIC-M1-ADVERSARIAL-EXHAUSTION-V1"
 TARGET = "gfx942:xnack-"
 VOCABULARY_SIZE = 151_936
+ADVERSARIAL_POLICY_NONCLAIM = (
+    "Synthetic policy fixture parser exercise only; this document is not a "
+    "benchmark record or evidence and does not establish device execution, exact "
+    "completion, fault injection, safety, hardware correctness, or close m1.r30."
+)
+ADVERSARIAL_EXTERNAL_NONCLAIM = (
+    "Authenticated external report bytes and structural joins only; this transcript "
+    "does not establish device execution, exact completion, fault injection, safety, "
+    "hardware correctness, or close m1.r30."
+)
 
 
 def fail(message: str) -> NoReturn:
@@ -384,73 +397,18 @@ def exercise_adversarial_producer(
     canary_before_path.write_bytes(canary_before)
     canary_after_path.write_bytes(canary_after)
 
+    observation_paths: dict[str, Path] = {}
+    transcript_paths: dict[str, Path] = {}
     execution_cases = []
-    transcript_paths: dict[str, tuple[Path, bytes]] = {}
     for case in plan["cases"]:
         kind = case["kind"]
         input_path, workload_path = case_files[kind]
-        if kind == "exhaustion":
-            observation_path: Path | None = None
-        else:
-            transcript_path = scratch / f"{case['id']}.runner.txt"
-            transcript_raw = canonical_bytes(
-                {
-                    "case_id": case["id"],
-                    "status": "synthetic-policy-fixture-only",
-                }
-            )
-            transcript_path.write_bytes(transcript_raw)
-            transcript_paths[kind] = (transcript_path, transcript_raw)
-            if kind == "canary":
-                result = {
-                    "after": companion(canary_after_path, canary_after),
-                    "before": companion(canary_before_path, canary_before),
-                }
-            elif kind == "cancellation":
-                result = {
-                    "completion_observed": True,
-                    "free_pages_after": 8,
-                    "free_pages_before": 8,
-                    "live_requests_after": 0,
-                    "reclaimed_after_completion": True,
-                    "reclaimed_before_completion": False,
-                }
-            elif kind == "fault-injection":
-                result = {
-                    "failures_observed": 2,
-                    "faults_injected": 2,
-                    "live_resources_after": 0,
-                    "queue_quarantined": True,
-                    "retry_denied": True,
-                }
-            elif kind == "rollback":
-                result = {
-                    "accepted_tokens": 2,
-                    "committed_tokens_after": 4,
-                    "committed_tokens_before": 2,
-                    "free_pages_after_cleanup": 8,
-                    "free_pages_before": 8,
-                    "live_requests_after_cleanup": 0,
-                    "resident_tokens_after": 4,
-                    "resident_tokens_before": 6,
-                }
-            else:
-                fail(f"unknown adversarial producer kind: {kind}")
-            observation_path = scratch / f"{case['id']}.observation.json"
-            write(
-                observation_path,
-                {
-                    "authority": "externally-collected-adversarial-observation-only",
-                    "case_id": case["id"],
-                    "format": ADVERSARIAL_OBSERVATION_FORMAT,
-                    "input_sha256": case["input_sha256"],
-                    "kind": kind,
-                    "plan_sha256": plan_sha256,
-                    "result": result,
-                    "runner_transcript": companion(transcript_path, transcript_raw),
-                    "workload_sha256": case["workload_sha256"],
-                },
-            )
+        observation_path = (
+            None if kind == "exhaustion" else scratch / f"{case['id']}.observation.json"
+        )
+        if observation_path is not None:
+            observation_paths[kind] = observation_path
+            transcript_paths[kind] = scratch / f"{case['id']}.runner.json"
         execution_cases.append(
             {
                 "case_id": case["id"],
@@ -476,62 +434,333 @@ def exercise_adversarial_producer(
             "suite": "adversarial",
         },
     )
-    output_bundle = scratch / "adversarial.bundle"
+    execution_sha256 = hashlib.sha256(execution_path.read_bytes()).hexdigest()
+    fault_plan_sha256 = hashlib.sha256(fault_plan_path.read_bytes()).hexdigest()
+    result_semantics = {
+        "canary": "guard-byte-snapshot-comparison",
+        "cancellation": "completion-before-reclamation",
+        "fault-injection": "terminal-queue-fault-quarantine",
+        "rollback": "accepted-prefix-kv-rollback",
+    }
+    faults = {fault["case_kind"]: fault for fault in fault_plan["faults"]}
+
+    for case in plan["cases"]:
+        kind = case["kind"]
+        if kind == "exhaustion":
+            continue
+        if kind == "canary":
+            result = {
+                "after": companion(canary_after_path, canary_after),
+                "before": companion(canary_before_path, canary_before),
+            }
+        elif kind == "cancellation":
+            result = {
+                "completion_observed": True,
+                "free_pages_after": 8,
+                "free_pages_before": 8,
+                "live_requests_after": 0,
+                "reclaimed_after_completion": True,
+                "reclaimed_before_completion": False,
+            }
+        elif kind == "fault-injection":
+            result = {
+                "failures_observed": 1,
+                "faults_injected": 1,
+                "live_resources_after": 0,
+                "queue_quarantined": True,
+                "retry_denied": True,
+            }
+        elif kind == "rollback":
+            result = {
+                "accepted_tokens": 2,
+                "committed_tokens_after": 4,
+                "committed_tokens_before": 2,
+                "free_pages_after_cleanup": 8,
+                "free_pages_before": 8,
+                "live_requests_after_cleanup": 0,
+                "resident_tokens_after": 4,
+                "resident_tokens_before": 6,
+            }
+        else:
+            fail(f"unknown adversarial producer kind: {kind}")
+        fault = {
+            "expected_outcome": faults[kind]["expected_outcome"],
+            "id": faults[kind]["id"],
+            "injection_point": faults[kind]["injection_point"],
+            "occurrences": 1,
+        }
+        hardware_evidence = None
+        if kind == "canary":
+            hardware_evidence = {
+                "device_identity_sha256": digest("synthetic device identity"),
+                "environment_identity_sha256": plan["identities"]["environment"],
+                "hardware_report_sha256": digest("synthetic hardware report"),
+                "hardware_transcript_sha256": digest(
+                    "synthetic hardware transcript"
+                ),
+                "harness_binary_sha256": plan["identities"][
+                    "benchmark-executable"
+                ],
+                "harness_protocol_sha256": plan["identities"][
+                    "benchmark-protocol"
+                ],
+            }
+        transcript_path = transcript_paths[kind]
+        transcript = {
+            "authority": "synthetic-policy-fixture-only",
+            "bindings": {
+                "execution_sha256": execution_sha256,
+                "fault_plan_sha256": fault_plan_sha256,
+                "input_sha256": case["input_sha256"],
+                "plan_sha256": plan_sha256,
+                "workload_sha256": case["workload_sha256"],
+            },
+            "case_id": case["id"],
+            "fault": fault,
+            "format": ADVERSARIAL_RUNNER_TRANSCRIPT_FORMAT,
+            "hardware_claim": "none",
+            "hardware_evidence": hardware_evidence,
+            "kind": kind,
+            "nonclaim": ADVERSARIAL_POLICY_NONCLAIM,
+            "planned_runner": {
+                "environment_sha256": plan["identities"]["environment"],
+                "executable_sha256": plan["identities"]["benchmark-executable"],
+                "protocol_sha256": plan["identities"]["benchmark-protocol"],
+            },
+            "provenance": "synthetic-policy-fixture-only",
+            "reported_outcome": faults[kind]["expected_outcome"],
+            "result": result,
+            "result_semantics": result_semantics[kind],
+            "status": "synthetic-policy-fixture-only",
+            "suite": "adversarial",
+            "target": TARGET,
+        }
+        write(transcript_path, transcript)
+        transcript_raw = transcript_path.read_bytes()
+        write(
+            observation_paths[kind],
+            {
+                "authority": "synthetic-policy-fixture-only",
+                "case_id": case["id"],
+                "execution_sha256": execution_sha256,
+                "fault": fault,
+                "fault_plan_sha256": fault_plan_sha256,
+                "format": ADVERSARIAL_OBSERVATION_FORMAT,
+                "input_sha256": case["input_sha256"],
+                "kind": kind,
+                "plan_sha256": plan_sha256,
+                "provenance": "synthetic-policy-fixture-only",
+                "result": result,
+                "runner_transcript": companion(transcript_path, transcript_raw),
+                "status": "synthetic-policy-fixture-only",
+                "workload_sha256": case["workload_sha256"],
+            },
+        )
+
+    invoke(
+        repo,
+        "adversarial",
+        ["check-policy-fixture", str(plan_path), str(execution_path)],
+    )
+    output_bundle = scratch / "adversarial.fixture.bundle"
     invoke(
         repo,
         "adversarial",
         ["produce", str(plan_path), str(execution_path), str(output_bundle)],
+        expected_status=1,
+    )
+    if output_bundle.exists():
+        fail("production adversarial command published a synthetic fixture")
+    require_no_staging(scratch, output_bundle)
+
+    external_inputs = {
+        path: path.read_bytes()
+        for path in [*observation_paths.values(), *transcript_paths.values()]
+    }
+    for kind, transcript_path in transcript_paths.items():
+        transcript = load_canonical(
+            transcript_path.read_bytes(), f"{kind} external-intake transcript"
+        )
+        transcript["authority"] = (
+            "externally-reported-adversarial-runner-transcript-only"
+        )
+        transcript["nonclaim"] = ADVERSARIAL_EXTERNAL_NONCLAIM
+        transcript["provenance"] = "external-report"
+        transcript["status"] = "reported-unvalidated"
+        write(transcript_path, transcript)
+        observation_path = observation_paths[kind]
+        observation = load_canonical(
+            observation_path.read_bytes(), f"{kind} external-intake observation"
+        )
+        observation["authority"] = (
+            "externally-collected-adversarial-observation-only"
+        )
+        observation["provenance"] = "external-report"
+        observation["runner_transcript"] = companion(
+            transcript_path, transcript_path.read_bytes()
+        )
+        observation["status"] = "reported-unvalidated"
+        write(observation_path, observation)
+
+    external_bundle = scratch / "adversarial.reported-unvalidated.bundle"
+    invoke(
+        repo,
+        "adversarial",
+        ["produce", str(plan_path), str(execution_path), str(external_bundle)],
     )
     if (
-        len(list((output_bundle / "raw").iterdir())) != 5
-        or len(list((output_bundle / "transcripts").iterdir())) != 5
+        len(list((external_bundle / "raw").iterdir())) != 5
+        or len(list((external_bundle / "transcripts").iterdir())) != 5
     ):
-        fail("adversarial producer output roster drifted")
-    records_path = output_bundle / "records.json"
-    records = load_canonical(records_path.read_bytes(), "adversarial produced records")
+        fail("adversarial external-intake output roster drifted")
+    records_path = external_bundle / "records.json"
+    records = load_canonical(records_path.read_bytes(), "adversarial external intake")
     if len(records.get("observations", [])) != 5:
-        fail("adversarial producer records omitted a case")
+        fail("adversarial external-intake records omitted a case")
     for observation in records["observations"]:
         metrics = observation["measurements"]
-        if (
-            metrics["canary-corruptions"] != [0]
-            or metrics["leaked-resources"] != [0]
-            or metrics["rollback-mismatches"] != [0]
-            or metrics["unexpected-errors"] != [0]
+        if observation.get("status") != "completed":
+            fail("adversarial collection status drifted")
+        if observation["kind"] == "exhaustion":
+            if metrics["faults-observed"] != [1] or metrics["unexpected-errors"] != [0]:
+                fail("logical exhaustion observation did not pass exactly")
+        elif (
+            metrics["faults-observed"] != [0]
+            or metrics["unexpected-errors"] != [1]
         ):
-            fail("successful adversarial policy fixture produced a safety mismatch")
-    validated_path = scratch / "adversarial.produced-transcript.json"
+            fail("external adversarial intake was promoted to a passing observation")
+    for raw_path in (external_bundle / "raw").iterdir():
+        raw = load_canonical(raw_path.read_bytes(), "adversarial raw intake record")
+        expected_status = (
+            "observed" if raw["kind"] == "exhaustion" else "reported-unvalidated"
+        )
+        if raw.get("status") != expected_status:
+            fail("adversarial raw intake authority drifted")
+    validated_path = scratch / "adversarial.external-intake.validation.json"
     invoke(
         repo,
         "adversarial",
         ["validate", str(plan_path), str(records_path), str(validated_path)],
     )
-    invoke(
-        repo,
-        "adversarial",
-        ["produce", str(plan_path), str(execution_path), str(output_bundle)],
-        expected_status=1,
-    )
-    require_no_staging(scratch, output_bundle)
+    for path, contents in external_inputs.items():
+        path.write_bytes(contents)
 
-    transcript_path, transcript_raw = transcript_paths["cancellation"]
-    transcript_path.write_bytes(transcript_raw + b"\n")
-    substituted_bundle = scratch / "adversarial.substituted.bundle"
+    def reject_mutation(path: Path, description: str, mutate: Any) -> None:
+        original = path.read_bytes()
+        value = load_canonical(original, description)
+        mutate(value)
+        write(path, value)
+        invoke(
+            repo,
+            "adversarial",
+            ["check-policy-fixture", str(plan_path), str(execution_path)],
+            expected_status=1,
+        )
+        path.write_bytes(original)
+
+    def reject_transcript_mutation(kind: str, description: str, mutate: Any) -> None:
+        transcript_path = transcript_paths[kind]
+        observation_path = observation_paths[kind]
+        original_transcript = transcript_path.read_bytes()
+        original_observation = observation_path.read_bytes()
+        value = load_canonical(original_transcript, description)
+        mutate(value)
+        write(transcript_path, value)
+        observation = load_canonical(original_observation, f"{kind} fixture observation")
+        replacement = transcript_path.read_bytes()
+        observation["runner_transcript"] = companion(transcript_path, replacement)
+        write(observation_path, observation)
+        invoke(
+            repo,
+            "adversarial",
+            ["check-policy-fixture", str(plan_path), str(execution_path)],
+            expected_status=1,
+        )
+        transcript_path.write_bytes(original_transcript)
+        observation_path.write_bytes(original_observation)
+
+    cancellation_observation = observation_paths["cancellation"]
+    reject_mutation(
+        cancellation_observation,
+        "cancellation fixture observation",
+        lambda value: value["fault"].__setitem__("id", "wrong.policy-fixture"),
+    )
+    reject_mutation(
+        cancellation_observation,
+        "cancellation fixture observation",
+        lambda value: value["fault"].__setitem__("injection_point", "guard-bytes"),
+    )
+    reject_mutation(
+        cancellation_observation,
+        "cancellation fixture observation",
+        lambda value: value["fault"].__setitem__("occurrences", 2),
+    )
+
+    cancellation_transcript = transcript_paths["cancellation"]
+    reject_transcript_mutation(
+        "cancellation",
+        "cancellation fixture transcript",
+        lambda value: value["bindings"].__setitem__(
+            "execution_sha256", digest("wrong execution")
+        ),
+    )
+    reject_transcript_mutation(
+        "cancellation",
+        "cancellation fixture transcript",
+        lambda value: value["planned_runner"].__setitem__(
+            "environment_sha256", digest("wrong environment")
+        ),
+    )
+    reject_transcript_mutation(
+        "cancellation",
+        "cancellation fixture transcript",
+        lambda value: value.__setitem__(
+            "hardware_evidence", {"device_identity_sha256": digest("device")}
+        ),
+    )
+    reject_transcript_mutation(
+        "cancellation",
+        "cancellation fixture transcript",
+        lambda value: value["result"].__setitem__("completion_observed", False),
+    )
+    reject_transcript_mutation(
+        "cancellation",
+        "cancellation fixture transcript",
+        lambda value: value.__setitem__(
+            "reported_outcome", "cancellation-boundary-violation"
+        ),
+    )
+    transcript_raw = cancellation_transcript.read_bytes()
+    observation_raw = cancellation_observation.read_bytes()
+    cancellation_transcript.write_bytes(transcript_raw + b"\n")
+    observation = load_canonical(observation_raw, "cancellation fixture observation")
+    observation["runner_transcript"] = companion(
+        cancellation_transcript, cancellation_transcript.read_bytes()
+    )
+    write(cancellation_observation, observation)
     invoke(
         repo,
         "adversarial",
-        [
-            "produce",
-            str(plan_path),
-            str(execution_path),
-            str(substituted_bundle),
-        ],
+        ["check-policy-fixture", str(plan_path), str(execution_path)],
         expected_status=1,
     )
-    if substituted_bundle.exists():
-        fail("adversarial producer published after transcript substitution")
-    require_no_staging(scratch, substituted_bundle)
-    transcript_path.write_bytes(transcript_raw)
+    cancellation_transcript.write_bytes(transcript_raw)
+    cancellation_observation.write_bytes(observation_raw)
+
+    insecure_parent = scratch / "adversarial.insecure-output-parent"
+    insecure_parent.mkdir(mode=0o700)
+    insecure_parent.chmod(0o777)
+    insecure_output = insecure_parent / "bundle"
+    invoke(
+        repo,
+        "adversarial",
+        ["produce", str(plan_path), str(execution_path), str(insecure_output)],
+        expected_status=1,
+    )
+    if insecure_output.exists():
+        fail("adversarial producer published beneath an untrusted output parent")
+    require_no_staging(insecure_parent, insecure_output)
+    insecure_parent.chmod(0o700)
 
 
 def exercise_differential_producer(

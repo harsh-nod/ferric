@@ -69,21 +69,31 @@ cargo run --locked -p ferric-m1-benchmarks --bin ferric-m1-adversarial -- \
 input and workload for each required case to the plan. It also binds the exact
 canary layout and fault roster named by the plan. The exhaustion case executes
 the public Ferric engine directly and observes transactional `OutOfPages`
-rejection plus complete ready-state reclamation. Canary records compare exact
-external before/after byte snapshots. Cancellation, rollback, and injected
-physical queue failures require external observation documents and immutable
-runner transcripts because production completion authority is available only
-after real queue completion and readback.
+rejection plus complete ready-state reclamation. Canary, cancellation,
+rollback, and injected physical queue reports remain `reported-unvalidated`
+intake because production completion authority is available only after real
+queue completion and readback. Each such report has a nonzero
+`unexpected-errors` measurement and zero `faults-observed`; it cannot represent
+a passing safety observation.
 
-The adversarial producer copies each authenticated runner transcript, writes a
-computed raw record for each case, and publishes those files with `records.json`
-as one no-replace bundle. Its external physical observations explicitly carry
-no hardware claim: the MI300 harness and independent evidence validators must
-still establish snapshot provenance, exact completion, and injected device
-failure coverage before `m1.r30` can close.
+External observation documents bind the exact execution, plan, case input,
+workload, fault plan, and one selected fault occurrence. Their canonical
+`FERRIC-M1-ADVERSARIAL-RUNNER-TRANSCRIPT-V1` companions repeat those bindings,
+join the exact result and derived outcome, and bind the planned benchmark
+executable, protocol, and environment identities. Optional hardware identities
+are all-or-nothing correlation handles only. The producer copies each checked
+transcript, writes a computed raw record, and publishes those files with
+`records.json` as one no-replace bundle. These external reports explicitly
+carry no hardware claim: the Ferric-owned MI300 harness and independent evidence
+validators must still establish snapshot provenance, exact completion, injected
+device failure coverage, and typed custody before `m1.r30` can close.
 
-The policy test uses temporary synthetic values solely to exercise the CLI
-protocol and mutation rejection. It never writes benchmark evidence:
+The policy test uses the distinct `synthetic-policy-fixture-only` authority and
+the nonpublishing `check-policy-fixture` command solely to exercise the shared
+parsers and mutation rejection. Normal `produce` rejects those fixtures. The
+test also publishes one temporary `reported-unvalidated` intake bundle to
+regression-test publication and demotion; every external case remains
+nonpassing, and the temporary directory is discarded with the test:
 
 ```text
 python3 -I benches/m1/test-policy.py .
