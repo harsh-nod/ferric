@@ -737,7 +737,7 @@ fn transport_handoff(
     family: M1KernelArtifactFamilyV1,
     bytes: &[u8],
 ) -> Result<ConsumedCompilerModuleHandoffV1, M1KernelArtifactBuildErrorV1> {
-    let producer = ProducerIdentity::from_codegen(family.name(), None)
+    let producer = ProducerIdentity::from_codegen(producer_crate_name(family), None)
         .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Handoff, source))?;
     let mut digest = Sha256::new();
     digest.update((INVOCATION_DOMAIN.len() as u64).to_le_bytes());
@@ -759,6 +759,18 @@ fn transport_handoff(
         .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Handoff, source))?;
     active.consumed = true;
     Ok(consumed)
+}
+
+const fn producer_crate_name(family: M1KernelArtifactFamilyV1) -> &'static str {
+    match family {
+        M1KernelArtifactFamilyV1::Gemm => "ferric_m1_k1_gemm",
+        M1KernelArtifactFamilyV1::RmsNorm => "ferric_m1_k2_rmsnorm",
+        M1KernelArtifactFamilyV1::RopeKv => "ferric_m1_k3_rope_kv",
+        M1KernelArtifactFamilyV1::Prefill => "ferric_m1_k4_prefill",
+        M1KernelArtifactFamilyV1::PagedDecode => "ferric_m1_k5_paged_decode",
+        M1KernelArtifactFamilyV1::SwiGlu => "ferric_m1_k6_swiglu",
+        M1KernelArtifactFamilyV1::Logits => "ferric_m1_k7_logits",
+    }
 }
 
 struct ActiveHandoffAttempt<'a> {
@@ -1030,6 +1042,18 @@ mod tests {
             }
         }
         assert_eq!(labels.len(), M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1 * 4);
+    }
+
+    #[test]
+    fn every_kernel_family_has_a_valid_distinct_compiler_producer() {
+        let mut producers = BTreeSet::new();
+        for family in M1KernelArtifactFamilyV1::ALL {
+            let name = producer_crate_name(family);
+            ProducerIdentity::from_codegen(name, None)
+                .expect("canonical compiler producer must be accepted by the transport");
+            assert!(producers.insert(name));
+        }
+        assert_eq!(producers.len(), M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1);
     }
 
     #[test]
