@@ -436,7 +436,7 @@ closed spec fn live_plan_valid(
         }
     &&& forall|active_index: int|
         active as int <= active_index < width ==> {
-            &&& candidate.token_ids_spec()[row + active_index] == 0
+            &&& #[trigger] candidate.token_ids_spec()[row + active_index] == 0
             &&& candidate.position_ids_spec()[row + active_index] == 0
         }
 }
@@ -452,7 +452,7 @@ closed spec fn inactive_lane_valid(
     &&& candidate.context_lengths_spec()[lane] == 0
     &&& forall|active_index: int|
         0 <= active_index < width ==> {
-            &&& candidate.token_ids_spec()[row + active_index] == 0
+            &&& #[trigger] candidate.token_ids_spec()[row + active_index] == 0
             &&& candidate.position_ids_spec()[row + active_index] == 0
         }
 }
@@ -473,6 +473,7 @@ pub closed spec fn m1_step_input_candidate_valid(candidate: &M1StepInputCandidat
             &&& exists|live_lanes: int|
                 0 < live_lanes <= sequences
                 && candidate.lanes_spec()[0].is_some()
+                && #[trigger] live_plan_valid(candidate, dimensions, live_lanes, 0)
                 && forall|lane: int|
                     0 <= lane < live_lanes ==> {
                         &&& candidate.lanes_spec()[lane].is_some()
