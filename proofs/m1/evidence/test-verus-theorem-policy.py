@@ -603,7 +603,7 @@ def main() -> None:
         fail(f"usage: {sys.argv[0]} REPO [REAL_RESULT]")
     repo = Path(sys.argv[1]).resolve(strict=True)
     active, rows = registry(repo)
-    if len(rows) != 12 or not active:
+    if len(rows) != 13 or not active:
         fail("M1 positive-theorem registry baseline drifted")
     row = rows[0]
     with tempfile.TemporaryDirectory(prefix="ferric-m1-theorem-policy.") as scratch:
@@ -613,6 +613,13 @@ def main() -> None:
         baseline_root.mkdir()
         _, baseline_context = build_run(repo, baseline_root, row, source_identity)
         expect_pass(repo, baseline_context, "canonical Verus-theorem fixture")
+        model_row = next(
+            selected for selected in rows if selected[0] == "model-bundle-composition"
+        )
+        model_root = root / "model-bundle-baseline"
+        model_root.mkdir()
+        _, model_context = build_run(repo, model_root, model_row, source_identity)
+        expect_pass(repo, model_context, "canonical model-bundle theorem fixture")
 
         cases: list[tuple[str, str, FixtureMutation]] = [
             (
@@ -1022,6 +1029,33 @@ def main() -> None:
         ]
         for name, expected, mutation in cases:
             expect_rejected(repo, root, source_identity, row, name, expected, mutation)
+        expect_rejected(
+            repo,
+            root,
+            source_identity,
+            model_row,
+            "model-wrong-compile-package",
+            "header, order, or trailing newline drifted",
+            lambda run, context, selected: edit_transcript(
+                run,
+                context,
+                selected,
+                "compile",
+                "CARGO_PACKAGE=ferric-build",
+                "CARGO_PACKAGE=ferric-spec",
+            ),
+        )
+        expect_rejected(
+            repo,
+            root,
+            source_identity,
+            model_row,
+            "model-extra-compile-package",
+            "run file roster is incomplete or contains extras",
+            lambda run, _context, _selected: (
+                run / "ferric-spec.compile.transcript"
+            ).write_text("foreign package transcript\n", encoding="ascii"),
+        )
 
         incomplete_root = root / "incomplete-property-product"
         incomplete_root.mkdir()
@@ -1072,8 +1106,8 @@ def main() -> None:
             expect_pass(repo, real_context, "real canonical Verus-theorem artifact")
 
     print(
-        f"PASS: M1 theorem validator accepted its canonical fixture and rejected "
-        f"{len(cases) + 3} hostile artifacts"
+        f"PASS: M1 theorem validator accepted its canonical fixtures and rejected "
+        f"{len(cases) + 5} hostile artifacts"
     )
 
 

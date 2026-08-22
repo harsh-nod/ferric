@@ -30,6 +30,7 @@ def copy_fixture(repo: Path, destination: Path) -> None:
         "proofs/VERIFIED_MODULES",
         "proofs/m1/theorem/check-registry.py",
         str(REGISTRY),
+        "proofs/m1/model_bundle.rs",
         "crates/ferric-spec/src/continuous_batching.rs",
         "crates/ferric-spec/src/graph.rs",
         "crates/ferric-spec/src/m1_foundation_theorems.rs",
@@ -115,8 +116,8 @@ def main() -> None:
         result = run_checker(baseline, active)
         if result.returncode != 0:
             fail(f"baseline theorem registry failed\n{result.stdout}")
-        if len(active.read_text(encoding="ascii").splitlines()) != 12:
-            fail("baseline theorem registry did not select exactly twelve rows")
+        if len(active.read_text(encoding="ascii").splitlines()) != 13:
+            fail("baseline theorem registry did not select exactly thirteen rows")
 
         cases: list[tuple[str, str, FixtureMutation]] = [
             (
@@ -204,6 +205,13 @@ def main() -> None:
                 ).unlink(),
             ),
             (
+                "missing-model-bundle-source",
+                "M1 theorem source is unavailable",
+                lambda fixture: (
+                    fixture / "proofs/m1/model_bundle.rs"
+                ).unlink(),
+            ),
+            (
                 "missing-module-coverage",
                 "theorem module path is not inventoried",
                 lambda fixture: (fixture / "proofs/VERIFIED_MODULES").write_text(
@@ -230,6 +238,38 @@ def main() -> None:
                         .splitlines()
                         if line
                         != "verified=ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|ferric_spec::m1_foundation_theorems::batching_publish_once_theorem"
+                    )
+                    + "\n",
+                    encoding="utf-8",
+                ),
+            ),
+            (
+                "missing-model-bundle-module-coverage",
+                "theorem module path is not inventoried",
+                lambda fixture: (fixture / "proofs/VERIFIED_MODULES").write_text(
+                    "\n".join(
+                        line
+                        for line in (fixture / "proofs/VERIFIED_MODULES")
+                        .read_text(encoding="utf-8")
+                        .splitlines()
+                        if line
+                        != "module=ferric-m1-proof|proofs/m1/model_bundle.rs|ferric_m1_proof::model_bundle"
+                    )
+                    + "\n",
+                    encoding="utf-8",
+                ),
+            ),
+            (
+                "missing-model-bundle-function-coverage",
+                "function path is not directly verified",
+                lambda fixture: (fixture / "proofs/VERIFIED_MODULES").write_text(
+                    "\n".join(
+                        line
+                        for line in (fixture / "proofs/VERIFIED_MODULES")
+                        .read_text(encoding="utf-8")
+                        .splitlines()
+                        if line
+                        != "verified=ferric-m1-proof|proofs/m1/model_bundle.rs|ferric_m1_proof::model_bundle::model_bundle_well_formed_composition_theorem"
                     )
                     + "\n",
                     encoding="utf-8",

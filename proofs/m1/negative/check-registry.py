@@ -75,6 +75,13 @@ EXPECTED = {
         "postcondition", "paged_kv_refinement",
         "write_physical_token", "initialized-prefix-advance",
     ),
+    "model-bundle-record-binding": (
+        "model-bundle-composition", "model_bundle_well_formed",
+        "model-bundle-proof", "ferric-build",
+        "crates/ferric-build/src/auth.rs", "model-bundle-record-binding.py",
+        "assertion", "auth", "revalidate_authenticated_bundle",
+        "retained-record-equality",
+    ),
     "publication-phase-transition": (
         "step-plan-publication", "graph_refined", "graph-proof",
         "ferric-spec", "crates/ferric-spec/src/step_plan_publication.rs",

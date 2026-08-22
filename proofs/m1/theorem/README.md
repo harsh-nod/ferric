@@ -4,20 +4,23 @@
 `FERRIC-M1-POSITIVE-THEOREMS-V1` roster paired with the existing M1 hostile
 foundation mutations. Each row binds a still-Open assurance property and path
 to an exact package, source, crate-root Verus module, function, and directly
-verified compiler path in `VERIFIED_MODULES`. Every positive row selects its own
-loop-free wrapper in `m1_foundation_theorems`; each wrapper calls an existing
-executable contract and proves one row-specific consequence. The paired
-negative registry remains bound to the actual implementation bodies. The two
+verified compiler path in `VERIFIED_MODULES`. Each positive row selects one
+loop-free query-bearing function; most remain in `m1_foundation_theorems`,
+while the model-bundle row selects the exact compiler-rooted roadmap path in
+`proofs/m1/model_bundle.rs`. That thin theorem lifts the consuming
+`ferric-build` boundary without adding authority. The paired negative registry
+remains bound to the actual implementation bodies. The two
 speculative wrappers cover publication-to-KV accepted-count agreement and
 immutable-preflight failure framing under distinct Open obligations.
 
 `run-same-source.sh` accepts a clean committed Ferric worktree and the exact
 pinned Verus release. It records the source commit, tree, complete M1 source
 closure, Verus binary and closure, coverage manifest, registry, and runner. It
-requires one ordinary Cargo check to pass and invokes each selected function
-with `--no-cheating --output-json`. Every result binds ordered theorem metadata,
-the shared compile transcript, the complete Verus transcript, an independently
-derived structured summary, exact sizes, hashes, and exit statuses. The pinned
+requires one ordinary Cargo check per selected package and invokes each selected
+function with `--no-cheating --output-json`. Every result binds ordered theorem
+metadata, its package compile transcript, the complete Verus transcript, an
+independently derived structured summary, exact sizes, hashes, and exit
+statuses. The pinned
 Verus output schema does not emit a `success` field. The checker rejects such a
 field as schema drift and derives `RESULT=success` only from exit status zero,
 exactly one selected verified query, zero `errors`, both encountered-error flags
@@ -37,4 +40,7 @@ index, qualification receipt, or path implementation. Even an authenticated
 positive result establishes only a selected source-level function under the
 pinned compiler and explicit TCB. It does not close an assurance property, path
 obligation, or ROADMAP item, and adds no artifact, machine, hardware, numerical,
-load, launch, side-channel, or performance authority.
+load, launch, side-channel, or performance authority. The model-bundle row
+proves retained scalar, digest, and wire commitments only; it does not prove
+`WeightSectionManifest::valid_commitment`, manifest destination layout,
+tensor-name semantics, the runtime `BTreeSet` roster, or a later plan join.

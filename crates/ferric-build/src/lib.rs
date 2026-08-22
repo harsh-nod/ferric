@@ -20,6 +20,7 @@ mod kernel_artifacts;
 mod memory_layout;
 mod model;
 mod model_layout;
+pub mod model_bundle;
 mod plan;
 mod runner;
 mod safetensors;
@@ -95,6 +96,7 @@ pub use model_layout::{
     build_authenticated_model_weight_layout, AuthenticatedModelWeightLayout, ModelWeightBinding,
     ModelWeightLayoutError,
 };
+pub use model_bundle::{prove_model_bundle_composition, ModelBundleProof, ModelBundleProofFailure};
 pub use plan::{
     build_authenticated_sequential_plan_catalog, build_sequential_plan_catalog,
     SequentialPlanCatalog, SequentialPlanError, SEQUENTIAL_PLAN_CATALOG_ENTRIES,

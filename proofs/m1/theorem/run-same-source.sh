@@ -175,20 +175,36 @@ coverage_digest=$(sha256sum "$repo/proofs/VERIFIED_MODULES" | awk '{ print $1 }'
     printf 'NONCLAIM=no-m1-property-path-or-roadmap-closure\n'
 } >"$output/RUN_IDENTITY"
 
-compile_transcript="$output/ferric-spec.compile.transcript"
-{
-    printf 'FORMAT=FERRIC-M1-POSITIVE-COMPILE-V1\n'
-    printf 'CARGO_PACKAGE=ferric-spec\n'
-    printf 'COMMAND=cargo-check-locked-all-targets\n'
-} >"$compile_transcript"
-run_child "$compile_transcript" "$repo" env CARGO_TERM_COLOR=never \
-    timeout "$timeout_seconds" cargo check -p ferric-spec --locked --all-targets \
-    --target-dir "$scratch/compile-target"
-compile_status=$child_status
-[ "$compile_status" -eq 0 ] || {
-    printf 'FAIL: M1 theorem source did not compile (status %s)\n' "$compile_status" >&2
+selected_packages="$scratch/selected-packages"
+awk -F '|' '{ print $5 }' "$selected" | LC_ALL=C sort -u >"$selected_packages"
+[ -s "$selected_packages" ] || {
+    printf 'FAIL: selected M1 theorem package roster is empty\n' >&2
     exit 1
 }
+while IFS= read -r package; do
+    case "$package" in
+        ferric-build|ferric-m1-proof|ferric-spec) ;;
+        *)
+            printf 'FAIL: unsupported M1 theorem package: %s\n' "$package" >&2
+            exit 1
+            ;;
+    esac
+    compile_transcript="$output/$package.compile.transcript"
+    {
+        printf 'FORMAT=FERRIC-M1-POSITIVE-COMPILE-V1\n'
+        printf 'CARGO_PACKAGE=%s\n' "$package"
+        printf 'COMMAND=cargo-check-locked-all-targets\n'
+    } >"$compile_transcript"
+    run_child "$compile_transcript" "$repo" env CARGO_TERM_COLOR=never \
+        timeout "$timeout_seconds" cargo check -p "$package" --locked --all-targets \
+        --target-dir "$scratch/compile-target"
+    compile_status=$child_status
+    [ "$compile_status" -eq 0 ] || {
+        printf 'FAIL: M1 theorem package %s did not compile (status %s)\n' \
+            "$package" "$compile_status" >&2
+        exit 1
+    }
+done <"$selected_packages"
 
 while IFS='|' read -r name foundation property path_id package source module function extra; do
     [ -n "$name" ] && [ -n "$foundation" ] && [ -n "$property" ] \
@@ -197,10 +213,13 @@ while IFS='|' read -r name foundation property path_id package source module fun
         printf 'FAIL: malformed selected M1 positive theorem\n' >&2
         exit 1
     }
-    [ "$package" = ferric-spec ] || {
-        printf 'FAIL: unsupported M1 theorem package: %s\n' "$package" >&2
-        exit 1
-    }
+    case "$package" in
+        ferric-build|ferric-m1-proof|ferric-spec) ;;
+        *)
+            printf 'FAIL: unsupported M1 theorem package: %s\n' "$package" >&2
+            exit 1
+            ;;
+    esac
     crate_name=$(printf '%s' "$package" | tr '-' '_')
     compiler_path="${crate_name}::${module}::${function}"
     source_digest=$(sha256sum "$repo/$source" | awk '{ print $1 }')
@@ -268,6 +287,7 @@ while IFS='|' read -r name foundation property path_id package source module fun
         printf 'VERUS_RESULT=proved\n'
     } >"$theorem_record"
 
+    compile_transcript="$output/$package.compile.transcript"
     result="$output/$name.result"
     {
         printf 'FORMAT=FERRIC-M1-POSITIVE-RESULT-V1\n'
@@ -279,10 +299,10 @@ while IFS='|' read -r name foundation property path_id package source module fun
         printf 'THEOREM_RECORD=%s.theorem\n' "$name"
         printf 'THEOREM_RECORD_SHA256=%s\n' "$(sha256sum "$theorem_record" | awk '{ print $1 }')"
         printf 'THEOREM_RECORD_SIZE=%s\n' "$(stat -c '%s' "$theorem_record")"
-        printf 'COMPILE_TRANSCRIPT=ferric-spec.compile.transcript\n'
+        printf 'COMPILE_TRANSCRIPT=%s.compile.transcript\n' "$package"
         printf 'COMPILE_TRANSCRIPT_SHA256=%s\n' "$(sha256sum "$compile_transcript" | awk '{ print $1 }')"
         printf 'COMPILE_TRANSCRIPT_SIZE=%s\n' "$(stat -c '%s' "$compile_transcript")"
-        printf 'COMPILE_EXIT_STATUS=%s\n' "$compile_status"
+        printf 'COMPILE_EXIT_STATUS=0\n'
         printf 'VERUS_SUMMARY=%s.verus.summary\n' "$name"
         printf 'VERUS_SUMMARY_SHA256=%s\n' "$(sha256sum "$summary" | awk '{ print $1 }')"
         printf 'VERUS_SUMMARY_SIZE=%s\n' "$(stat -c '%s' "$summary")"

@@ -7,6 +7,7 @@ theorem=isolation-other-request-frame|continuous-batching|request_isolated|isola
 theorem=kv-release-generation|logical-paged-kv|kv_refined|kv-proof|ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|m1_foundation_theorems|kv_release_generation_theorem
 theorem=kv-rollback-retirement|logical-paged-kv|kv_refined|kv-proof|ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|m1_foundation_theorems|kv_rollback_retirement_theorem
 theorem=kv-write-prefix|logical-paged-kv|kv_refined|kv-proof|ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|m1_foundation_theorems|kv_write_prefix_theorem
+theorem=model-bundle-composition|model-bundle-composition|model_bundle_well_formed|model-bundle-proof|ferric-m1-proof|proofs/m1/model_bundle.rs|model_bundle|model_bundle_well_formed_composition_theorem
 theorem=publication-phase-transition|step-plan-publication|graph_refined|graph-proof|ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|m1_foundation_theorems|publication_phase_transition_theorem
 theorem=publication-plan-identity|step-plan-publication|graph_refined|graph-proof|ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|m1_foundation_theorems|publication_plan_identity_theorem
 theorem=speculative-accepted-count-binding|speculative-step-composition|rollback_refined|speculation-proof|ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|m1_foundation_theorems|speculative_accepted_count_binding_theorem

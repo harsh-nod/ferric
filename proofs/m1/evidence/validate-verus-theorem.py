@@ -224,6 +224,16 @@ EXPECTED_ROWS = (
         "kv_write_prefix_theorem",
     ),
     (
+        "model-bundle-composition",
+        "model-bundle-composition",
+        "model_bundle_well_formed",
+        "model-bundle-proof",
+        "ferric-m1-proof",
+        "proofs/m1/model_bundle.rs",
+        "model_bundle",
+        "model_bundle_well_formed_composition_theorem",
+    ),
+    (
         "publication-phase-transition",
         "step-plan-publication",
         "graph_refined",
@@ -264,6 +274,7 @@ EXPECTED_ROWS = (
         "speculative_atomic_failure_frame_theorem",
     ),
 )
+EXPECTED_PACKAGES = frozenset(row[4] for row in EXPECTED_ROWS)
 
 
 def fail(message: str) -> NoReturn:
@@ -506,10 +517,10 @@ def exact_run_files(
     expected = {
         "RUN_IDENTITY",
         "active-foundations",
-        "ferric-spec.compile.transcript",
         "selected-foundations",
         "verus-closure.transcript",
     }
+    expected.update(f"{row[4]}.compile.transcript" for row in selected)
     for row in selected:
         name = row[0]
         expected.update(
@@ -949,12 +960,18 @@ def validate_run(
     run_identity = common.read_bounded(
         run_dir / "RUN_IDENTITY", MAX_CONTROL_BYTES, "Verus-theorem run identity"
     )
-    compile_raw = common.read_bounded(
-        run_dir / "ferric-spec.compile.transcript",
-        MAX_TRANSCRIPT_BYTES,
-        "Verus-theorem compile transcript",
-    )
-    validate_compile(compile_raw, "ferric-spec", common)
+    packages = {row[4] for row in selected_rows}
+    if not packages <= EXPECTED_PACKAGES:
+        fail("selected theorem package roster drifted")
+    compile_by_package: dict[str, bytes] = {}
+    for package in sorted(packages):
+        compile_raw = common.read_bounded(
+            run_dir / f"{package}.compile.transcript",
+            MAX_TRANSCRIPT_BYTES,
+            f"{package} Verus-theorem compile transcript",
+        )
+        validate_compile(compile_raw, package, common)
+        compile_by_package[package] = compile_raw
     for row in selected_rows:
         validate_result(
             repo,
@@ -964,7 +981,7 @@ def validate_run(
             active,
             selected,
             closure,
-            compile_raw,
+            compile_by_package[row[4]],
             common,
         )
     primary = artifact_path.name.removesuffix(".result")

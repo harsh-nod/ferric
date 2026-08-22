@@ -91,6 +91,15 @@ EXPECTED = {
         "m1_foundation_theorems",
         "kv_write_prefix_theorem",
     ),
+    "model-bundle-composition": (
+        "model-bundle-composition",
+        "model_bundle_well_formed",
+        "model-bundle-proof",
+        "ferric-m1-proof",
+        "proofs/m1/model_bundle.rs",
+        "model_bundle",
+        "model_bundle_well_formed_composition_theorem",
+    ),
     "publication-phase-transition": (
         "step-plan-publication",
         "graph_refined",

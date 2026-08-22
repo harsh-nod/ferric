@@ -558,7 +558,7 @@ def main() -> None:
         fail(f"usage: {sys.argv[0]} REPO [REAL_RESULT]")
     repo = Path(sys.argv[1]).resolve(strict=True)
     active, rows = registry(repo)
-    if len(rows) != 12 or not active:
+    if len(rows) != 13 or not active:
         fail("M1 negative registry baseline drifted")
     row = rows[0]
 
@@ -573,6 +573,19 @@ def main() -> None:
         expect_pass(repo, baseline_context, "canonical negative-mutation fixture")
         if baseline_result.name != f"{row[0]}.result":
             fail("baseline result identity drifted")
+        model_row = next(
+            selected
+            for selected in rows
+            if selected[0] == "model-bundle-record-binding"
+        )
+        model_root = root / "model-bundle-baseline"
+        model_root.mkdir()
+        model_result, model_context = build_run(
+            repo, model_root, model_row, source_identity
+        )
+        expect_pass(repo, model_context, "canonical model-bundle mutation fixture")
+        if model_result.name != f"{model_row[0]}.result":
+            fail("model-bundle result identity drifted")
 
         cases: list[tuple[str, str, FixtureMutation]] = [
             (
@@ -871,7 +884,7 @@ def main() -> None:
             expect_pass(repo, real_context, "real canonical runner artifact")
 
     print(
-        f"PASS: M1 negative validator accepted its canonical fixture and rejected "
+        f"PASS: M1 negative validator accepted its canonical fixtures and rejected "
         f"{len(cases) + 3} hostile artifacts"
     )
 

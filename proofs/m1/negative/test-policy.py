@@ -52,6 +52,7 @@ def copy_fixture(repo: Path, destination: Path) -> None:
         destination / "proofs/m1/negative/components",
     )
     for relative in (
+        "crates/ferric-build/src/auth.rs",
         "crates/ferric-spec/src/continuous_batching.rs",
         "crates/ferric-spec/src/graph.rs",
         "crates/ferric-spec/src/paged_kv_refinement.rs",
@@ -195,8 +196,8 @@ def main() -> None:
         if result.returncode != 0:
             fail(f"baseline M1 negative registry check failed\n{result.stdout}")
         rows = active.read_text(encoding="utf-8").splitlines()
-        if len(rows) != 12:
-            fail(f"baseline selected {len(rows)} M1 mutations instead of 12")
+        if len(rows) != 13:
+            fail(f"baseline selected {len(rows)} M1 mutations instead of 13")
         mutator_count = verify_current_mutators(repo, root, active)
 
         cases: list[tuple[str, str, FixtureMutation]] = []
@@ -291,6 +292,13 @@ def main() -> None:
             ).unlink(),
         ))
         cases.append((
+            "missing-model-bundle-mutator", "M1 foundation mutator is unavailable",
+            lambda fixture: (
+                fixture
+                / "proofs/m1/negative/components/model-bundle-record-binding.py"
+            ).unlink(),
+        ))
+        cases.append((
             "missing-source", "M1 foundation source is unavailable",
             lambda fixture: (fixture / "crates/ferric-spec/src/continuous_batching.rs").unlink(),
         ))
@@ -299,6 +307,10 @@ def main() -> None:
             lambda fixture: (
                 fixture / "crates/ferric-spec/src/speculative_step_composition.rs"
             ).unlink(),
+        ))
+        cases.append((
+            "missing-model-bundle-source", "M1 foundation source is unavailable",
+            lambda fixture: (fixture / "crates/ferric-build/src/auth.rs").unlink(),
         ))
         cases.append((
             "missing-module-record", "compiler module path is not inventoried",
@@ -316,6 +328,28 @@ def main() -> None:
                 "\n".join(
                     line for line in (fixture / "proofs/VERIFIED_MODULES").read_text(encoding="utf-8").splitlines()
                     if line != "verified=ferric-spec|crates/ferric-spec/src/continuous_batching.rs|ferric_spec::continuous_batching::apply_continuous_publish_step"
+                ) + "\n",
+                encoding="utf-8",
+            ),
+        ))
+        cases.append((
+            "missing-model-bundle-module-record",
+            "compiler module path is not inventoried",
+            lambda fixture: (fixture / "proofs/VERIFIED_MODULES").write_text(
+                "\n".join(
+                    line for line in (fixture / "proofs/VERIFIED_MODULES").read_text(encoding="utf-8").splitlines()
+                    if line != "module=ferric-build|crates/ferric-build/src/auth.rs|ferric_build::auth"
+                ) + "\n",
+                encoding="utf-8",
+            ),
+        ))
+        cases.append((
+            "missing-model-bundle-function-record",
+            "compiler function path is not directly verified",
+            lambda fixture: (fixture / "proofs/VERIFIED_MODULES").write_text(
+                "\n".join(
+                    line for line in (fixture / "proofs/VERIFIED_MODULES").read_text(encoding="utf-8").splitlines()
+                    if line != "verified=ferric-build|crates/ferric-build/src/auth.rs|ferric_build::auth::revalidate_authenticated_bundle"
                 ) + "\n",
                 encoding="utf-8",
             ),

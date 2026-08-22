@@ -175,6 +175,15 @@ impl AuthenticatedBundleAdmission {
     }
 }
 
+/// Exposes the retained deployment projection to sibling proof modules.
+pub(crate) proof fn authenticated_bundle_deployment_is_prepacked(
+    authority: AuthenticatedBundleAdmission,
+)
+    ensures authority.deployment_spec() == authority.prepacked_spec().deployment_spec(),
+{
+    reveal(AuthenticatedBundleAdmission::deployment_spec);
+}
+
 /// Failure while sealing or decoding an authenticated bundle commitment.
 #[verifier::allow(autoderive_clone_without_spec)]
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -201,6 +210,8 @@ pub enum BundleAdmissionError {
         /// Stable fail-closed reason.
         reason: &'static str,
     },
+    /// The retained record no longer equals a freshly recomputed verified seal.
+    AuthorityRecordMismatch,
 }
 
 closed spec fn u32_little_endian(value: u32) -> Seq<u8> {
@@ -562,6 +573,9 @@ impl fmt::Display for BundleAdmissionError {
                     "{role:?} manifest commitment is invalid: {reason}"
                 )
             }
+            Self::AuthorityRecordMismatch => {
+                formatter.write_str("authenticated bundle record no longer matches its inputs")
+            }
         }
     }
 }
@@ -642,6 +656,31 @@ pub closed spec fn authenticated_bundle_admission_spec(
         )
 }
 
+/// Exposes only the canonical deployment consequence of a retained admission.
+pub(crate) proof fn authenticated_bundle_admission_retains_canonical_deployment(
+    authority: AuthenticatedBundleAdmission,
+)
+    requires authenticated_bundle_admission_spec(authority),
+    ensures super::bundle::canonical_deployment_bundle_spec(authority.deployment_spec()),
+{
+    reveal(authenticated_bundle_admission_spec);
+    assert forall|target: ManifestCommitment, draft: ManifestCommitment|
+        #[trigger] sealed_admission_record_spec(
+            authority.record_spec(),
+            authority.prepacked_spec().deployment_spec(),
+            authority.prepacked_spec().target_manifest_spec(),
+            authority.prepacked_spec().draft_manifest_spec(),
+            target,
+            draft,
+        ) implies super::bundle::canonical_deployment_bundle_spec(
+            authority.deployment_spec(),
+        ) by {
+        reveal(sealed_admission_record_spec);
+        reveal(canonical_bundle_admission_values);
+        reveal(bundle_admission_descriptor_spec);
+    }
+}
+
 } // verus!
 
 /// Consumes exact authenticated prepacked inputs and seals their canonical
@@ -703,6 +742,64 @@ fn seal_prepacked_record_verified(
     let target_manifest = prepacked.target_manifest_exact();
     let draft_manifest = prepacked.draft_manifest_exact();
     seal_admission_record_verified(deployment, target_manifest, draft_manifest)
+}
+
+fn admission_records_equal(
+    left: &BundleAdmissionRecord,
+    right: &BundleAdmissionRecord,
+) -> (equal: bool)
+    ensures equal == (*left == *right),
+{
+    if !bytes_equal(left.as_bytes(), right.as_bytes()) {
+        return false;
+    }
+    if !left.record_id().equals(&right.record_id()) {
+        return false;
+    }
+    assert(left.bytes@ == right.bytes@);
+    assert(left.bytes =~= right.bytes) by {
+        assert forall|index: int| 0 <= index < left.bytes@.len() implies
+            left.bytes[index] == right.bytes[index] by {}
+    }
+    assert(left.record_id.bytes_spec() == right.record_id.bytes_spec());
+    proof {
+        Identity::extensional(&left.record_id, &right.record_id);
+    }
+    assert(*left == *right);
+    true
+}
+
+/// Recomputes the verified seal and checks that it equals the retained record.
+///
+/// This internal consistency check is not independent authentication. Digest
+/// equality is functional SHA-256 only and grants no signature, provenance,
+/// artifact, load, launch, machine, hardware, performance, or qualification
+/// authority. The result does not prove
+/// `WeightSectionManifest::valid_commitment`, manifest destination layout,
+/// tensor-name semantics, the runtime `BTreeSet` roster, or a later plan join.
+pub(crate) fn revalidate_authenticated_bundle(
+    authority: &AuthenticatedBundleAdmission,
+) -> (result: Result<(), BundleAdmissionError>)
+    ensures result.is_ok() ==> authenticated_bundle_admission_spec(*authority),
+{
+    let sealed = seal_prepacked_record_verified(authority.prepacked_exact())?;
+    if !admission_records_equal(authority.record(), &sealed.0) {
+        return Err(BundleAdmissionError::AuthorityRecordMismatch);
+    }
+    let ghost target = sealed.1;
+    let ghost draft = sealed.2;
+    assert(authority.record_spec() == sealed.0);
+    assert(authenticated_bundle_admission_spec(*authority)) by {
+        assert(sealed_admission_record_spec(
+            authority.record_spec(),
+            authority.prepacked_spec().deployment_spec(),
+            authority.prepacked_spec().target_manifest_spec(),
+            authority.prepacked_spec().draft_manifest_spec(),
+            target,
+            draft,
+        ));
+    }
+    Ok(())
 }
 
 fn authenticated_bundle_admission(
@@ -1507,7 +1604,7 @@ mod tests {
         weight_stream::tests::test_prepacked,
         WeightSectionManifest, PREPACKED_WEIGHT_MANIFEST_VERSION,
     };
-    use ferric_spec::Qwen3ModelRole;
+    use ferric_spec::{Identity, Qwen3ModelRole};
 
     const BUNDLE_OFFSET: usize = 20;
     const TARGET_OFFSET: usize = BUNDLE_OFFSET + crate::CANONICAL_DEPLOYMENT_BUNDLE_BYTES;
@@ -1694,6 +1791,37 @@ mod tests {
             authority.prepacked().draft_manifest().aggregate_id(),
             decoded.draft_manifest.aggregate_id
         );
+    }
+
+    #[test]
+    fn composition_failure_returns_the_exact_original_admission_for_retry() {
+        let prepacked = crate::build_prepacked_deployment_bundle(
+            authenticated_assets(),
+            test_tokenizer(Qwen3ModelRole::Target8B),
+            test_tokenizer(Qwen3ModelRole::Draft06B),
+            test_prepacked(Qwen3ModelRole::Target8B),
+            test_prepacked(Qwen3ModelRole::Draft06B),
+        )
+        .expect("complete test prepacked deployment");
+        let mut authority =
+            seal_authenticated_bundle(prepacked).expect("sealed admission authority");
+        authority.record.record_id = Identity::new([0xa5; 32]);
+
+        let expected_record_id = authority.record().record_id();
+        let expected_record_bytes = *authority.record().as_bytes();
+        let expected_deployment = *authority.prepacked().deployment();
+        let failure = crate::prove_model_bundle_composition(authority)
+            .expect_err("retained record drift must fail closed");
+        assert_eq!(
+            failure.error(),
+            &BundleAdmissionError::AuthorityRecordMismatch
+        );
+
+        let (error, recovered) = (*failure).into_parts();
+        assert_eq!(error, BundleAdmissionError::AuthorityRecordMismatch);
+        assert_eq!(recovered.record().record_id(), expected_record_id);
+        assert_eq!(recovered.record().as_bytes(), &expected_record_bytes);
+        assert_eq!(*recovered.prepacked().deployment(), expected_deployment);
     }
 
     #[test]

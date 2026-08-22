@@ -1,6 +1,6 @@
 [package]
 name = "ferric-m1-proof"
-description = "M1-specific generated and speculative graph composition theorems"
+description = "M1-specific cross-crate and cross-module composition theorems"
 edition.workspace = true
 rust-version.workspace = true
 version.workspace = true
@@ -10,6 +10,7 @@ publish = false
 path = "lib.rs"
 
 [dependencies]
+ferric-build = { path = "../../crates/ferric-build" }
 ferric-engine = { path = "../../crates/ferric-engine" }
 ferric-generated-runner = { path = "../../crates/ferric-generated-runner" }
 ferric-kernels = { path = "../../crates/ferric-kernels" }

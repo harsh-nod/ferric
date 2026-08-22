@@ -414,6 +414,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "ferric-m1-proof"
+version = "0.1.0"
+dependencies = [
+ "ferric-build",
+ "vstd",
+]
+
+[[package]]
 name = "ferric-spec"
 version = "0.1.0"
 dependencies = [
