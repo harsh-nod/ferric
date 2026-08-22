@@ -7,7 +7,11 @@
 //! only an unchanged decode or speculative selection and fixed-batch shape.
 //! It does not admit prefill transitions, shape changes, new requests, or a
 //! complete serving registry, and makes no hardware, numerical, or performance
-//! claim.
+//! claim. A qualification capture attached to target decode remains physically
+//! bound and is overwritten by every admitted generation; Ferric observes it
+//! only after the caller selects the terminal generation. This module does not
+//! yet provide the distinct prompt-commit semantic needed to teacher-force
+//! intermediate context tokens without treating model argmax as emitted output.
 
 use core::fmt;
 
@@ -263,11 +267,13 @@ impl M1LongLivedQueueUnscheduledRoundV1 {
                 released,
                 parked,
                 terminal,
+                history: None,
             }),
             Err(released) => Err(Box::new(M1LongLivedQueueRearmTeardownFailureV1 {
                 released,
                 parked,
                 terminal,
+                history: None,
             })),
         }
     }
@@ -280,6 +286,7 @@ pub struct M1LongLivedQueueRearmTeardownSuccessV1 {
     released: crate::M1ReleasedQueueTeardownSuccessV1,
     parked: Vec<ActiveDeviceKvCache>,
     terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
+    history: Option<M1PriorRearmRoundHistoryV1>,
 }
 
 impl M1LongLivedQueueRearmTeardownSuccessV1 {
@@ -296,6 +303,15 @@ impl M1LongLivedQueueRearmTeardownSuccessV1 {
     pub const fn terminal_count(&self) -> usize {
         self.terminal.len()
     }
+
+    /// Prior-round completed member count when teardown followed a rearm.
+    #[must_use]
+    pub const fn prior_completed_members(&self) -> Option<usize> {
+        match &self.history {
+            Some(history) => Some(history.prior_completed_members),
+            None => None,
+        }
+    }
 }
 
 /// Terminal queue-release failure retaining current and historical custody.
@@ -305,6 +321,7 @@ pub struct M1LongLivedQueueRearmTeardownFailureV1 {
     released: Box<crate::M1ReleasedQueueTeardownFailureV1>,
     parked: Vec<ActiveDeviceKvCache>,
     terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
+    history: Option<M1PriorRearmRoundHistoryV1>,
 }
 
 impl M1LongLivedQueueRearmTeardownFailureV1 {
@@ -320,6 +337,15 @@ impl M1LongLivedQueueRearmTeardownFailureV1 {
     #[must_use]
     pub const fn terminal_count(&self) -> usize {
         self.terminal.len()
+    }
+
+    /// Prior-round completed member count retained after a rearm teardown failure.
+    #[must_use]
+    pub const fn prior_completed_members(&self) -> Option<usize> {
+        match &self.history {
+            Some(history) => Some(history.prior_completed_members),
+            None => None,
+        }
     }
 }
 
@@ -394,7 +420,10 @@ fn validate_rearm_eligibility(
         }
         M1PhysicalFixedBatchShapeV1::PairedPrefill => false,
     };
-    if qualification_logits_enabled || !shape_is_supported {
+    let qualification_shape_is_supported = !qualification_logits_enabled
+        || (shape == M1PhysicalFixedBatchShapeV1::TargetOnly
+            && selection.mode == Qwen3ExecutionMode::Decode);
+    if !qualification_shape_is_supported || !shape_is_supported {
         Err(M1LongLivedQueueRearmScheduleErrorV1::UnsupportedPriorShape)
     } else {
         Ok(())
@@ -463,6 +492,10 @@ fn finish_schedule_transition<const C: usize, T, E>(
 /// Scheduler order is authoritative. Every selected request must be one of the
 /// released continuing caches; other continuing caches remain parked. New
 /// requests, prefill transitions, and shape changes are rejected by this slice.
+/// An admitted target-decode qualification buffer is the same allocation
+/// already attached before first publication: each rearmed generation
+/// physically overwrites it. Rearm does not allocate or attach a final-only
+/// buffer and does not itself identify which generation is terminal.
 ///
 /// # Errors
 ///
@@ -1861,6 +1894,59 @@ pub struct M1RearmedRecycledQueueV1 {
 }
 
 impl M1RearmedRecycledQueueV1 {
+    /// Copies one rearmed target-decode compact output and its final live logits.
+    ///
+    /// This consuming path is intended only after the caller identifies the
+    /// terminal qualification generation. The same attached qualification
+    /// buffer is physically overwritten by every admitted target-decode
+    /// generation; this method merely defers its host observation until the
+    /// terminal one. Intermediate prompt priming cannot generally use
+    /// [`Self::read_and_check_completion`]: that path validates an emitted
+    /// `DirectFinalRow` argmax, while teacher forcing requires a separate typed
+    /// prompt-commit semantic that is not implemented by this slice.
+    /// Observation failure retains both the lower phase-local queue custody and
+    /// every selected or parked cache.
+    ///
+    /// ```compile_fail
+    /// use ferric_engine::M1RearmedRecycledQueueV1;
+    /// fn observe_twice(recycled: M1RearmedRecycledQueueV1) {
+    ///     let _first = recycled.observe_qualification_completion();
+    ///     let _second = recycled.observe_qualification_completion();
+    /// }
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns the existing qualification observation rejection paired with
+    /// the complete rearm continuation custody.
+    pub fn observe_qualification_completion(
+        self,
+    ) -> Result<
+        M1RearmedObservedQualificationOutputV1,
+        Box<M1RearmedQualificationObservationFailureV1>,
+    > {
+        let Self {
+            queue,
+            carry,
+            queue_observation,
+            device,
+        } = self;
+        match queue.observe_qualification_completion() {
+            Ok(observed) => Ok(M1RearmedObservedQualificationOutputV1 {
+                observed,
+                carry,
+                queue_observation,
+                device,
+            }),
+            Err(source) => Err(Box::new(M1RearmedQualificationObservationFailureV1 {
+                source,
+                carry,
+                queue_observation,
+                device,
+            })),
+        }
+    }
+
     /// Observes and checks the exact completion bytes for the fresh generation.
     ///
     /// # Errors
@@ -1903,6 +1989,259 @@ impl M1RearmedRecycledQueueV1 {
                 device,
             })),
         }
+    }
+}
+
+/// Qualification-copy rejection retaining every rearm continuation owner.
+#[must_use = "qualification observation failure retains queue and cache custody"]
+#[derive(Debug)]
+pub struct M1RearmedQualificationObservationFailureV1 {
+    source: Box<crate::M1QualificationObservationFailureV1>,
+    carry: M1RearmContinuationCustodyV1,
+    queue_observation: ComputeAqlQueueObservationV1,
+    device: Gfx942DeviceBinding,
+}
+
+impl M1RearmedQualificationObservationFailureV1 {
+    /// Exact lower qualification-copy rejection.
+    pub const fn source(&self) -> &crate::M1QualificationObservationFailureV1 {
+        &self.source
+    }
+
+    /// Number of active cache owners retained across selected and parked lanes.
+    #[must_use]
+    pub const fn retained_cache_count(&self) -> usize {
+        self.carry.selected.len() + self.carry.parked.len()
+    }
+
+    /// Exact completed queue generation observation.
+    #[must_use]
+    pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
+        self.queue_observation
+    }
+
+    /// Checked physical-device receipt retained through failure.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.device
+    }
+
+    /// Exact predecessor completion epoch.
+    #[must_use]
+    pub const fn previous_epoch(&self) -> CompletionEpoch {
+        self.carry.previous_epoch
+    }
+
+    /// Separates the lower retry-or-teardown owner from opaque rearm custody.
+    ///
+    /// The lower failure's consuming [`crate::M1QualificationObservationFailureV1::into_parts`]
+    /// transition remains available after recovery, including recycled retry
+    /// and closed teardown for partially copied output.
+    #[must_use = "both lower failure and rearm custody remain linear"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        Box<crate::M1QualificationObservationFailureV1>,
+        M1RearmedQualificationFailureCustodyV1,
+    ) {
+        (
+            self.source,
+            M1RearmedQualificationFailureCustodyV1 {
+                carry: self.carry,
+                queue_observation: self.queue_observation,
+                device: self.device,
+            },
+        )
+    }
+}
+
+/// Opaque continuation custody recovered from qualification observation failure.
+///
+/// The physical queue remains in the separately returned lower failure. This
+/// owner keeps selected, parked, and terminal KV lineage paired while the caller
+/// retries or tears down that lower phase-local queue custody.
+#[must_use = "qualification failure KV lineage must remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedQualificationFailureCustodyV1 {
+    carry: M1RearmContinuationCustodyV1,
+    queue_observation: ComputeAqlQueueObservationV1,
+    device: Gfx942DeviceBinding,
+}
+
+impl M1RearmedQualificationFailureCustodyV1 {
+    /// Number of active selected and parked caches retained after failure.
+    #[must_use]
+    pub const fn retained_cache_count(&self) -> usize {
+        self.carry.selected.len() + self.carry.parked.len()
+    }
+
+    /// Selected request owners in exact scheduler order.
+    #[must_use]
+    pub fn selected_requests(&self) -> impl ExactSizeIterator<Item = RequestId> + '_ {
+        self.carry
+            .selected
+            .iter()
+            .map(|cache| cache.projection().request)
+    }
+
+    /// Exact completed queue generation observation.
+    #[must_use]
+    pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
+        self.queue_observation
+    }
+
+    /// Checked physical-device receipt retained through failure.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.device
+    }
+
+    /// Exact predecessor completion epoch.
+    #[must_use]
+    pub const fn previous_epoch(&self) -> CompletionEpoch {
+        self.carry.previous_epoch
+    }
+}
+
+/// Move-only final qualification observation with complete rearm lineage.
+///
+/// Semantic rejection returns this same owner, so corrected expectations never
+/// repeat either the compact-output read or a logits-row read.
+///
+/// ```compile_fail
+/// use ferric_engine::M1RearmedObservedQualificationOutputV1;
+/// fn require_clone<T: Clone>() {}
+/// require_clone::<M1RearmedObservedQualificationOutputV1>();
+/// ```
+#[must_use = "final qualification observation must be checked or retained"]
+#[derive(Debug)]
+pub struct M1RearmedObservedQualificationOutputV1 {
+    observed: crate::M1ObservedQualificationOutputV1,
+    carry: M1RearmContinuationCustodyV1,
+    queue_observation: ComputeAqlQueueObservationV1,
+    device: Gfx942DeviceBinding,
+}
+
+impl M1RearmedObservedQualificationOutputV1 {
+    /// Already-copied compact and final-logits evidence.
+    #[must_use = "qualification evidence remains retained by this observation"]
+    pub const fn evidence(&self) -> &crate::M1QualificationCompletionEvidenceV1 {
+        self.observed.evidence()
+    }
+
+    /// Selected request owners in exact scheduler order.
+    #[must_use]
+    pub fn selected_requests(&self) -> impl ExactSizeIterator<Item = RequestId> + '_ {
+        self.carry
+            .selected
+            .iter()
+            .map(|cache| cache.projection().request)
+    }
+
+    /// Exact completed queue generation observation.
+    #[must_use]
+    pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
+        self.queue_observation
+    }
+
+    /// Checked physical-device receipt retained through observation.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.device
+    }
+
+    /// Exact predecessor completion epoch.
+    #[must_use]
+    pub const fn previous_epoch(&self) -> CompletionEpoch {
+        self.carry.previous_epoch
+    }
+
+    /// Joins the copied compact output to exact semantic expectations once.
+    ///
+    /// # Errors
+    ///
+    /// Returns the same already-copied qualification observation paired with
+    /// the semantic diagnostic; no completed read can be reissued.
+    pub fn check_completion(
+        self,
+        expectations: &[crate::CompletionWireSemanticExpectation<'_>],
+    ) -> Result<
+        M1RearmedQualifiedCompletedReadbackV1,
+        M1RearmedQualificationCompletedReadbackJoinFailureV1,
+    > {
+        let Self {
+            observed,
+            carry,
+            queue_observation,
+            device,
+        } = self;
+        match observed.check_completion(expectations) {
+            Ok(qualified) => {
+                let (readback, evidence) = qualified.into_parts();
+                Ok(M1RearmedQualifiedCompletedReadbackV1 {
+                    readback: M1RearmedCompletedReadbackV1 {
+                        readback,
+                        carry,
+                        queue_observation,
+                        device,
+                    },
+                    evidence,
+                })
+            }
+            Err(source) => {
+                let (error, observed) = source.into_parts();
+                Err(M1RearmedQualificationCompletedReadbackJoinFailureV1 {
+                    error,
+                    observed: Box::new(Self {
+                        observed,
+                        carry,
+                        queue_observation,
+                        device,
+                    }),
+                })
+            }
+        }
+    }
+}
+
+/// Semantic rejection retaining the same final qualification observation.
+///
+/// ```compile_fail
+/// use ferric_engine::M1RearmedQualificationCompletedReadbackJoinFailureV1;
+/// fn recover_twice(failure: M1RearmedQualificationCompletedReadbackJoinFailureV1) {
+///     let _first = failure.into_parts();
+///     let _second = failure.into_parts();
+/// }
+/// ```
+#[must_use = "qualification join failure retains copied evidence and cache custody"]
+#[derive(Debug)]
+pub struct M1RearmedQualificationCompletedReadbackJoinFailureV1 {
+    error: crate::M1CompletedReadbackJoinErrorV1,
+    observed: Box<M1RearmedObservedQualificationOutputV1>,
+}
+
+impl M1RearmedQualificationCompletedReadbackJoinFailureV1 {
+    /// Exact compact semantic rejection.
+    #[must_use]
+    pub const fn error(&self) -> &crate::M1CompletedReadbackJoinErrorV1 {
+        &self.error
+    }
+
+    /// Same already-copied qualification observation.
+    #[must_use = "the rejected observation retains every linear owner"]
+    pub const fn observed(&self) -> &M1RearmedObservedQualificationOutputV1 {
+        &self.observed
+    }
+
+    /// Recovers the diagnostic and unchanged observation for corrected retry.
+    #[must_use = "the observation remains the sole semantic retry owner"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        crate::M1CompletedReadbackJoinErrorV1,
+        M1RearmedObservedQualificationOutputV1,
+    ) {
+        (self.error, *self.observed)
     }
 }
 
@@ -1959,6 +2298,219 @@ pub struct M1RearmedCompletedReadbackV1 {
     carry: M1RearmContinuationCustodyV1,
     queue_observation: ComputeAqlQueueObservationV1,
     device: Gfx942DeviceBinding,
+}
+
+/// Final qualification readback paired with selected and parked KV custody.
+///
+/// This owner exposes only a retiring completion transition. The caller must
+/// first move every [`Self::selected_requests`] member into Engine retirement;
+/// a successful physical completion then settles the final write, retires all
+/// reachable pages, and preserves the copied evidence beside the outcome.
+///
+/// ```compile_fail
+/// use ferric_engine::{Engine, M1RearmedQualifiedCompletedReadbackV1};
+/// fn complete_twice(
+///     engine: &mut Engine<32>,
+///     readback: M1RearmedQualifiedCompletedReadbackV1,
+/// ) {
+///     let _first = readback.complete_retiring(engine);
+///     let _second = readback.complete_retiring(engine);
+/// }
+/// ```
+#[must_use = "qualified readback must retire its KV custody or remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedQualifiedCompletedReadbackV1 {
+    readback: M1RearmedCompletedReadbackV1,
+    evidence: crate::M1QualificationCompletionEvidenceV1,
+}
+
+impl M1RearmedQualifiedCompletedReadbackV1 {
+    /// Already-copied compact and final-logits qualification evidence.
+    #[must_use = "qualification evidence remains retained by this readback"]
+    pub const fn evidence(&self) -> &crate::M1QualificationCompletionEvidenceV1 {
+        &self.evidence
+    }
+
+    /// Selected requests that must enter Engine retirement before completion.
+    #[must_use]
+    pub fn selected_requests(&self) -> impl ExactSizeIterator<Item = RequestId> + '_ {
+        self.readback
+            .carry
+            .selected
+            .iter()
+            .map(|cache| cache.projection().request)
+    }
+
+    /// Exact predecessor completion epoch.
+    #[must_use]
+    pub const fn previous_epoch(&self) -> CompletionEpoch {
+        self.readback.carry.previous_epoch
+    }
+
+    /// Completes every selected member with the terminal retiring disposition.
+    ///
+    /// This local wrapper never permits a qualification-bearing member to
+    /// continue into another queue generation. Engine retirement remains an
+    /// explicit prior transition so partial scheduler failure is visible to the
+    /// caller before this owner is consumed.
+    ///
+    /// # Errors
+    ///
+    /// Returns retryable local custody if the terminal disposition roster or
+    /// the existing completion preflight cannot reserve bounded host storage.
+    pub fn complete_retiring<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1RearmedQualifiedCompletionOutcomeV1,
+        Box<M1RearmedQualifiedCompletionPreflightFailureV1>,
+    > {
+        let selected = self.readback.carry.selected.len();
+        let dispositions = match retiring_dispositions(selected) {
+            Ok(dispositions) => dispositions,
+            Err(()) => {
+                return Err(Box::new(M1RearmedQualifiedCompletionPreflightFailureV1 {
+                    error: M1RearmedCompletionPreflightErrorV1::HostAllocation,
+                    custody: M1RearmedQualifiedCompletionPreflightCustodyV1::Readback(Box::new(
+                        self,
+                    )),
+                }))
+            }
+        };
+        let Self { readback, evidence } = self;
+        match readback.complete(engine, dispositions) {
+            Ok(completion) => Ok(M1RearmedQualifiedCompletionOutcomeV1 {
+                completion,
+                evidence,
+            }),
+            Err(source) => Err(Box::new(M1RearmedQualifiedCompletionPreflightFailureV1 {
+                error: source.error(),
+                custody: M1RearmedQualifiedCompletionPreflightCustodyV1::Lower { source, evidence },
+            })),
+        }
+    }
+}
+
+fn retiring_dispositions(
+    count: usize,
+) -> Result<Vec<crate::M1DeviceKvCompletionDispositionV1>, ()> {
+    let mut dispositions = Vec::new();
+    dispositions.try_reserve_exact(count).map_err(|_| ())?;
+    dispositions.resize(count, crate::M1DeviceKvCompletionDispositionV1::Retire);
+    Ok(dispositions)
+}
+
+#[derive(Debug)]
+enum M1RearmedQualifiedCompletionPreflightCustodyV1 {
+    Readback(Box<M1RearmedQualifiedCompletedReadbackV1>),
+    Lower {
+        source: M1RearmedCompletionPreflightFailureV1,
+        evidence: crate::M1QualificationCompletionEvidenceV1,
+    },
+}
+
+/// Retry-safe local failure before terminal qualification completion fan-out.
+#[must_use = "qualification completion failure retains readback and evidence"]
+#[derive(Debug)]
+pub struct M1RearmedQualifiedCompletionPreflightFailureV1 {
+    error: M1RearmedCompletionPreflightErrorV1,
+    custody: M1RearmedQualifiedCompletionPreflightCustodyV1,
+}
+
+impl M1RearmedQualifiedCompletionPreflightFailureV1 {
+    /// Exact bounded local preflight rejection.
+    #[must_use]
+    pub const fn error(&self) -> M1RearmedCompletionPreflightErrorV1 {
+        self.error
+    }
+
+    /// Number of active selected and parked cache owners retained by failure.
+    #[must_use]
+    pub const fn retained_cache_count(&self) -> usize {
+        match &self.custody {
+            M1RearmedQualifiedCompletionPreflightCustodyV1::Readback(readback) => {
+                readback.readback.carry.selected.len() + readback.readback.carry.parked.len()
+            }
+            M1RearmedQualifiedCompletionPreflightCustodyV1::Lower { source, .. } => {
+                source.retained_cache_count()
+            }
+        }
+    }
+
+    /// Copied final qualification evidence retained through local failure.
+    #[must_use = "qualification evidence remains retained for retry"]
+    pub const fn evidence(&self) -> &crate::M1QualificationCompletionEvidenceV1 {
+        match &self.custody {
+            M1RearmedQualifiedCompletionPreflightCustodyV1::Readback(readback) => {
+                &readback.evidence
+            }
+            M1RearmedQualifiedCompletionPreflightCustodyV1::Lower { evidence, .. } => evidence,
+        }
+    }
+
+    /// Retries the unchanged terminal disposition preflight.
+    ///
+    /// # Errors
+    ///
+    /// Returns renewed retained custody if bounded host allocation still fails.
+    pub fn retry<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<M1RearmedQualifiedCompletionOutcomeV1, Box<Self>> {
+        match self.custody {
+            M1RearmedQualifiedCompletionPreflightCustodyV1::Readback(readback) => {
+                readback.complete_retiring(engine)
+            }
+            M1RearmedQualifiedCompletionPreflightCustodyV1::Lower { source, evidence } => {
+                match source.retry(engine) {
+                    Ok(completion) => Ok(M1RearmedQualifiedCompletionOutcomeV1 {
+                        completion,
+                        evidence,
+                    }),
+                    Err(source) => Err(Box::new(Self {
+                        error: source.error(),
+                        custody: M1RearmedQualifiedCompletionPreflightCustodyV1::Lower {
+                            source,
+                            evidence,
+                        },
+                    })),
+                }
+            }
+        }
+    }
+}
+
+/// Terminal physical completion outcome retaining final qualification evidence.
+#[must_use = "completion outcome and qualification evidence must remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedQualifiedCompletionOutcomeV1 {
+    completion: M1RearmedCompletionOutcomeV1,
+    evidence: crate::M1QualificationCompletionEvidenceV1,
+}
+
+impl M1RearmedQualifiedCompletionOutcomeV1 {
+    /// Existing completion, rejection, or poison outcome with all KV custody.
+    #[must_use = "physical completion outcome remains retained"]
+    pub const fn completion(&self) -> &M1RearmedCompletionOutcomeV1 {
+        &self.completion
+    }
+
+    /// Exact copied compact and final-logits evidence.
+    #[must_use = "qualification evidence remains retained"]
+    pub const fn evidence(&self) -> &crate::M1QualificationCompletionEvidenceV1 {
+        &self.evidence
+    }
+
+    /// Separates the completion outcome and inert qualification evidence once.
+    #[must_use = "both physical outcome and qualification evidence remain retained"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1RearmedCompletionOutcomeV1,
+        crate::M1QualificationCompletionEvidenceV1,
+    ) {
+        (self.completion, self.evidence)
+    }
 }
 
 /// Pure local rejection before selected caches enter the completion fan-out.
@@ -2248,6 +2800,51 @@ impl M1LongLivedQueueReleasedRoundV1 {
     #[must_use]
     pub const fn device(&self) -> Gfx942DeviceBinding {
         self.history.device
+    }
+
+    /// Destroys the completed queue while retaining current and prior lineage.
+    ///
+    /// This is the terminal route after every current member was completed with
+    /// `Retire`. Any parked active cache remains visible in the returned closed
+    /// teardown owner; callers therefore must not claim whole-roster retirement
+    /// unless [`Self::parked_count`] was zero before consuming this value.
+    ///
+    /// ```compile_fail
+    /// use ferric_engine::M1LongLivedQueueReleasedRoundV1;
+    /// fn teardown_twice(released: M1LongLivedQueueReleasedRoundV1) {
+    ///     let _first = released.destroy_queue_and_retain_round();
+    ///     let _second = released.destroy_queue_and_retain_round();
+    /// }
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal lower-layer queue release quarantine together with all
+    /// current, parked, terminal, and prior-round observation custody.
+    pub fn destroy_queue_and_retain_round(
+        self,
+    ) -> Result<M1LongLivedQueueRearmTeardownSuccessV1, Box<M1LongLivedQueueRearmTeardownFailureV1>>
+    {
+        let Self {
+            released,
+            parked,
+            terminal,
+            history,
+        } = self;
+        match released.destroy_queue_and_retain_step() {
+            Ok(released) => Ok(M1LongLivedQueueRearmTeardownSuccessV1 {
+                released,
+                parked,
+                terminal,
+                history: Some(history),
+            }),
+            Err(released) => Err(Box::new(M1LongLivedQueueRearmTeardownFailureV1 {
+                released,
+                parked,
+                terminal,
+                history: Some(history),
+            })),
+        }
     }
 
     /// Consumes current released and separately parked active custody into the
@@ -3013,7 +3610,7 @@ mod tests {
     }
 
     #[test]
-    fn qualification_bearing_target_decode_is_rejected_from_long_lived_rearm() {
+    fn qualification_bearing_target_decode_alone_is_admitted_for_terminal_rearm() {
         let target_decode = selection(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS8C8192);
         assert_eq!(
             validate_rearm_eligibility(
@@ -3029,8 +3626,98 @@ mod tests {
                 target_decode,
                 true,
             ),
+            Ok(())
+        );
+        assert_eq!(
+            validate_rearm_eligibility(
+                M1PhysicalFixedBatchShapeV1::TargetOnly,
+                selection(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128),
+                true,
+            ),
             Err(M1LongLivedQueueRearmScheduleErrorV1::UnsupportedPriorShape)
         );
+        assert_eq!(
+            validate_rearm_eligibility(
+                M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+                selection(
+                    Qwen3ExecutionMode::Speculative,
+                    Qwen3PlanBucket::SpeculativeS1K4C8192,
+                ),
+                true,
+            ),
+            Err(M1LongLivedQueueRearmScheduleErrorV1::UnsupportedPriorShape)
+        );
+    }
+
+    #[test]
+    fn final_qualification_completion_builds_only_retiring_dispositions() {
+        let dispositions = retiring_dispositions(32).unwrap();
+        assert_eq!(dispositions.len(), 32);
+        assert!(dispositions
+            .iter()
+            .all(|disposition| *disposition == crate::M1DeviceKvCompletionDispositionV1::Retire));
+        assert!(retiring_dispositions(0).unwrap().is_empty());
+    }
+
+    #[test]
+    fn qualification_terminal_custody_graph_has_consuming_recovery_and_teardown() {
+        type ObservationRecovery = fn(
+            M1RearmedQualificationObservationFailureV1,
+        ) -> (
+            Box<crate::M1QualificationObservationFailureV1>,
+            M1RearmedQualificationFailureCustodyV1,
+        );
+        type SemanticRecovery = fn(
+            M1RearmedQualificationCompletedReadbackJoinFailureV1,
+        ) -> (
+            crate::M1CompletedReadbackJoinErrorV1,
+            M1RearmedObservedQualificationOutputV1,
+        );
+        type SemanticRetry = for<'a, 'b> fn(
+            M1RearmedObservedQualificationOutputV1,
+            &'a [crate::CompletionWireSemanticExpectation<'b>],
+        ) -> Result<
+            M1RearmedQualifiedCompletedReadbackV1,
+            M1RearmedQualificationCompletedReadbackJoinFailureV1,
+        >;
+        type TerminalCompletion = fn(
+            M1RearmedQualifiedCompletedReadbackV1,
+            &mut Engine<32>,
+        ) -> Result<
+            M1RearmedQualifiedCompletionOutcomeV1,
+            Box<M1RearmedQualifiedCompletionPreflightFailureV1>,
+        >;
+        type QualifiedRecovery = fn(
+            M1RearmedQualifiedCompletionOutcomeV1,
+        ) -> (
+            M1RearmedCompletionOutcomeV1,
+            crate::M1QualificationCompletionEvidenceV1,
+        );
+        type PageRelease = fn(M1RearmedCompletionOutcomeV1) -> M1RearmedRoundReleaseOutcomeV1;
+        type TerminalTeardown = fn(
+            M1LongLivedQueueReleasedRoundV1,
+        ) -> Result<
+            M1LongLivedQueueRearmTeardownSuccessV1,
+            Box<M1LongLivedQueueRearmTeardownFailureV1>,
+        >;
+
+        fn retry_semantic(
+            observed: M1RearmedObservedQualificationOutputV1,
+            expectations: &[crate::CompletionWireSemanticExpectation<'_>],
+        ) -> Result<
+            M1RearmedQualifiedCompletedReadbackV1,
+            M1RearmedQualificationCompletedReadbackJoinFailureV1,
+        > {
+            observed.check_completion(expectations)
+        }
+
+        let _: ObservationRecovery = M1RearmedQualificationObservationFailureV1::into_parts;
+        let _: SemanticRecovery = M1RearmedQualificationCompletedReadbackJoinFailureV1::into_parts;
+        let _: SemanticRetry = retry_semantic;
+        let _: TerminalCompletion = M1RearmedQualifiedCompletedReadbackV1::complete_retiring::<32>;
+        let _: QualifiedRecovery = M1RearmedQualifiedCompletionOutcomeV1::into_parts;
+        let _: PageRelease = M1RearmedCompletionOutcomeV1::release_completed;
+        let _: TerminalTeardown = M1LongLivedQueueReleasedRoundV1::destroy_queue_and_retain_round;
     }
 
     #[test]

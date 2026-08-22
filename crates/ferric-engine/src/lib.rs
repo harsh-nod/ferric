@@ -132,9 +132,13 @@ pub use m1_queue_rearm::{
     M1LongLivedQueueReleasedRoundV1, M1LongLivedQueueUnscheduledRoundV1,
     M1PreparedLongLivedQueueRearmV1, M1RearmedCompletedQueueV1, M1RearmedCompletedReadbackV1,
     M1RearmedCompletionOutcomeV1, M1RearmedCompletionPreflightErrorV1,
-    M1RearmedCompletionPreflightFailureV1, M1RearmedPublishedQueueV1,
-    M1RearmedQueueProgressFailureV1, M1RearmedReadbackFailureSourceV1, M1RearmedReadbackFailureV1,
-    M1RearmedRecycledQueueV1, M1RearmedRoundPageReleaseFailureV1, M1RearmedRoundReleaseOutcomeV1,
+    M1RearmedCompletionPreflightFailureV1, M1RearmedObservedQualificationOutputV1,
+    M1RearmedPublishedQueueV1, M1RearmedQualificationCompletedReadbackJoinFailureV1,
+    M1RearmedQualificationFailureCustodyV1, M1RearmedQualificationObservationFailureV1,
+    M1RearmedQualifiedCompletedReadbackV1, M1RearmedQualifiedCompletionOutcomeV1,
+    M1RearmedQualifiedCompletionPreflightFailureV1, M1RearmedQueueProgressFailureV1,
+    M1RearmedReadbackFailureSourceV1, M1RearmedReadbackFailureV1, M1RearmedRecycledQueueV1,
+    M1RearmedRoundPageReleaseFailureV1, M1RearmedRoundReleaseOutcomeV1,
     M1ReservedLongLivedQueueRearmV1, M1ScheduledLongLivedQueueRearmV1,
 };
 pub use model_memory_allocations::{
