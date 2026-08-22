@@ -18,6 +18,7 @@ mod runner;
 mod scheduler;
 mod speculative_graph;
 mod step_dispatch_composition;
+mod step_workspace_subleases;
 mod system;
 
 pub use cache::{KvError, PageId};
@@ -77,5 +78,12 @@ pub use step_dispatch_composition::{
     derive_m1_step_dispatch_plan, AddresslessM1StepDispatchPlan, M1StepDispatchCompositionError,
     M1StepDispatchDependency, M1StepDispatchIntent, M1StepDispatchSegment, M1StepDispatchStage,
     M1_MAX_STEP_DISPATCHES_V1, M1_STEP_DISPATCH_COMPOSITION_VERSION,
+};
+pub use step_workspace_subleases::{
+    bind_addressless_m1_step_workspace_subleases, BoundM1StepWorkspaceSubleases,
+    M1StepWorkspaceSubleaseBindingError, M1StepWorkspaceSubleaseBindingFailure,
+    M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
+    M1_TARGET_SPECULATIVE_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
+    M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
 };
 pub use system::{CompletionFailure, Engine, EngineError};
