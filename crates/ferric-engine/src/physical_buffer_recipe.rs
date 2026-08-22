@@ -278,6 +278,18 @@ impl AddresslessM1PhysicalBufferRecipeV1 {
         (self.kernargs, self.workspaces)
     }
 
+    /// Recovers both exact linear inputs and every derived semantic row.
+    #[must_use = "all exact structural inputs and derived rows remain retained"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        AddresslessM1PhysicalKernargRecipeV1,
+        AddresslessM1FullStepWorkspaceComposition,
+        Box<[M1PhysicalBufferRecipeRowV1]>,
+    ) {
+        (self.kernargs, self.workspaces, self.rows)
+    }
+
     /// This recipe resolves no allocation range or native address.
     #[must_use]
     pub const fn binds_device_memory(&self) -> bool {
@@ -308,6 +320,27 @@ impl AddresslessM1PhysicalBufferRecipeV1 {
     #[must_use]
     pub const fn proves_execution_or_refinement(&self) -> bool {
         false
+    }
+
+    pub(crate) fn revalidate(&self) -> Result<(), M1PhysicalBufferRecipeErrorV1> {
+        let expected = derive_rows(&self.kernargs, &self.workspaces)?;
+        if expected != self.rows {
+            return Err(M1PhysicalBufferRecipeErrorV1::RetainedRows);
+        }
+        Ok(())
+    }
+
+    pub(crate) fn from_parts(
+        kernargs: AddresslessM1PhysicalKernargRecipeV1,
+        workspaces: AddresslessM1FullStepWorkspaceComposition,
+        rows: Box<[M1PhysicalBufferRecipeRowV1]>,
+    ) -> Self {
+        Self {
+            version: M1_PHYSICAL_BUFFER_RECIPE_VERSION_V1,
+            kernargs,
+            workspaces,
+            rows,
+        }
     }
 }
 
@@ -369,6 +402,8 @@ pub enum M1PhysicalBufferRecipeErrorV1 {
         dispatch_index: u32,
         argument: usize,
     },
+    /// The retained derived row roster differs from exact rederivation.
+    RetainedRows,
 }
 
 impl fmt::Display for M1PhysicalBufferRecipeErrorV1 {
@@ -1198,7 +1233,7 @@ const fn valid_weight_layer(role: Qwen3ModelRole, kind: Qwen3TensorKind, layer: 
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use std::collections::HashSet;
 
     use ferric_build::{
@@ -1239,7 +1274,7 @@ mod tests {
         selection(Qwen3ModelRole::Target8B, mode, bucket)
     }
 
-    fn complete_intents() -> [M1StepDispatchIntent; 15] {
+    pub(crate) fn complete_intents() -> [M1StepDispatchIntent; 15] {
         [
             M1StepDispatchIntent::TargetOnly(target(
                 Qwen3ExecutionMode::Prefill,
@@ -1342,7 +1377,7 @@ mod tests {
         selection(Qwen3ModelRole::Draft06B, mode, bucket)
     }
 
-    fn exact_inputs(
+    pub(crate) fn exact_inputs(
         intent: M1StepDispatchIntent,
         identity_byte: u8,
     ) -> (
