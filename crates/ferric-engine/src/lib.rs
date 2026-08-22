@@ -159,10 +159,10 @@ pub use step_workspace_composition::{
     M1SpeculativeDraftMetadataSubrange,
 };
 pub use step_workspace_images::{
-    compose_m1_step_workspace_image_v1, ComposedM1StepWorkspaceImageV1,
-    M1StepWorkspaceImageCompositionErrorV1, M1StepWorkspaceImageCompositionFailureV1,
-    M1StepWorkspaceImageCompositionOutcomeV1, M1_KV_PAGE_TABLE_ENTRIES_PER_SEQUENCE_V1,
-    M1_KV_PHYSICAL_PAGE_SLOTS_V1,
+    compose_m1_step_workspace_image_v1, ComposedM1FullStepWorkspaceSetV1,
+    ComposedM1StepWorkspaceImageV1, M1StepWorkspaceImageCompositionErrorV1,
+    M1StepWorkspaceImageCompositionFailureV1, M1StepWorkspaceImageCompositionOutcomeV1,
+    M1_KV_PAGE_TABLE_ENTRIES_PER_SEQUENCE_V1, M1_KV_PHYSICAL_PAGE_SLOTS_V1,
 };
 pub use step_workspace_subleases::{
     bind_addressless_m1_step_workspace_subleases, BoundM1StepWorkspaceSubleases,

@@ -18,6 +18,8 @@ use ferric_spec::{
     Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanSelection, TokenId, ValidatedM1StepInputs,
 };
 
+use crate::{M1FullStepWorkspaceImagesV1, M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans};
+
 /// Exact physical page-table entries supplied for every selected sequence.
 pub const M1_KV_PAGE_TABLE_ENTRIES_PER_SEQUENCE_V1: u32 = QWEN3_KV_PAGE_TABLE_ENTRIES_V1;
 /// Exclusive upper bound for every physical KV page index.
@@ -75,6 +77,117 @@ impl ComposedM1StepWorkspaceImageV1 {
     #[must_use]
     pub const fn grants_runtime_authority(&self) -> bool {
         false
+    }
+}
+
+/// Closed full-step set of already composed plan-and-image owners.
+///
+/// This type mirrors [`M1FullStepWorkspaceImagesV1`] while retaining the exact
+/// addressless plan paired with each image. It intentionally does not implement
+/// `Clone`.
+///
+/// ```compile_fail
+/// use ferric_engine::ComposedM1FullStepWorkspaceSetV1;
+/// fn require_clone<T: Clone>() {}
+/// require_clone::<ComposedM1FullStepWorkspaceSetV1>();
+/// ```
+#[must_use = "all composed plan-and-image owners remain retained"]
+#[derive(Debug, Eq, PartialEq)]
+pub enum ComposedM1FullStepWorkspaceSetV1 {
+    /// One composed target-only workspace.
+    TargetOnly {
+        /// Exact retained target plan and initialized image.
+        target: ComposedM1StepWorkspaceImageV1,
+    },
+    /// Composed draft and target prefill workspaces.
+    PairedPrefill {
+        /// Exact retained draft plan and initialized image.
+        draft: ComposedM1StepWorkspaceImageV1,
+        /// Exact retained target plan and initialized image.
+        target: ComposedM1StepWorkspaceImageV1,
+    },
+    /// Composed reusable draft-decode and target-verification workspaces.
+    SpeculativeRound {
+        /// Exact retained draft plan and initialized image.
+        draft_decode: ComposedM1StepWorkspaceImageV1,
+        /// Exact retained target plan and initialized image.
+        target_speculative: ComposedM1StepWorkspaceImageV1,
+    },
+}
+
+impl ComposedM1FullStepWorkspaceSetV1 {
+    /// Wraps one composed target-only workspace owner.
+    #[must_use = "the composed target workspace remains retained"]
+    pub const fn target_only(target: ComposedM1StepWorkspaceImageV1) -> Self {
+        Self::TargetOnly { target }
+    }
+
+    /// Wraps composed draft and target prefill workspace owners.
+    #[must_use = "both composed prefill workspaces remain retained"]
+    pub const fn paired_prefill(
+        draft: ComposedM1StepWorkspaceImageV1,
+        target: ComposedM1StepWorkspaceImageV1,
+    ) -> Self {
+        Self::PairedPrefill { draft, target }
+    }
+
+    /// Wraps composed draft-decode and target-verification workspace owners.
+    #[must_use = "both composed speculative workspaces remain retained"]
+    pub const fn speculative_round(
+        draft_decode: ComposedM1StepWorkspaceImageV1,
+        target_speculative: ComposedM1StepWorkspaceImageV1,
+    ) -> Self {
+        Self::SpeculativeRound {
+            draft_decode,
+            target_speculative,
+        }
+    }
+
+    /// Returns the exact closed full-step owner shape.
+    #[must_use]
+    pub const fn kind(&self) -> M1FullStepWorkspaceInputKind {
+        match self {
+            Self::TargetOnly { .. } => M1FullStepWorkspaceInputKind::TargetOnly,
+            Self::PairedPrefill { .. } => M1FullStepWorkspaceInputKind::PairedPrefill,
+            Self::SpeculativeRound { .. } => M1FullStepWorkspaceInputKind::SpeculativeRound,
+        }
+    }
+
+    /// Splits every composed owner into the existing allocation input types.
+    ///
+    /// This conversion is lossless and shape preserving. The initialized
+    /// workspace allocation preflight remains responsible for checking the
+    /// selections assigned to each closed slot.
+    #[must_use = "the exact plans and complete images remain retained"]
+    pub fn into_allocation_inputs(self) -> (M1FullStepWorkspacePlans, M1FullStepWorkspaceImagesV1) {
+        match self {
+            Self::TargetOnly { target } => {
+                let (target_plan, target_image) = target.into_parts();
+                (
+                    M1FullStepWorkspacePlans::target_only(target_plan),
+                    M1FullStepWorkspaceImagesV1::target_only(target_image),
+                )
+            }
+            Self::PairedPrefill { draft, target } => {
+                let (draft_plan, draft_image) = draft.into_parts();
+                let (target_plan, target_image) = target.into_parts();
+                (
+                    M1FullStepWorkspacePlans::paired_prefill(draft_plan, target_plan),
+                    M1FullStepWorkspaceImagesV1::paired_prefill(draft_image, target_image),
+                )
+            }
+            Self::SpeculativeRound {
+                draft_decode,
+                target_speculative,
+            } => {
+                let (draft_plan, draft_image) = draft_decode.into_parts();
+                let (target_plan, target_image) = target_speculative.into_parts();
+                (
+                    M1FullStepWorkspacePlans::speculative_round(draft_plan, target_plan),
+                    M1FullStepWorkspaceImagesV1::speculative_round(draft_image, target_image),
+                )
+            }
+        }
     }
 }
 
@@ -715,6 +828,7 @@ fn narrow_f64_to_f32(value: f64) -> f32 {
 mod tests {
     use super::{
         compose_m1_step_workspace_image_v1, compose_preflight, narrow_f64_to_f32,
+        ComposedM1FullStepWorkspaceSetV1, ComposedM1StepWorkspaceImageV1,
         M1StepWorkspaceImageCompositionErrorV1, M1StepWorkspaceImageCompositionOutcomeV1,
     };
     use ferric_build::{
@@ -728,6 +842,10 @@ mod tests {
         validate_m1_step_inputs, Identity, M1StepInputCandidate, M1StepInputValidationOutcome,
         Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection, RequestId,
         StepPlan, ValidatedM1StepInputs,
+    };
+
+    use crate::{
+        M1FullStepWorkspaceImagesV1, M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans,
     };
 
     const ALL_SELECTIONS: [Qwen3PlanSelection; 22] = [
@@ -958,6 +1076,23 @@ mod tests {
             }
         }
         pages.into_boxed_slice()
+    }
+
+    fn composed(
+        selection: Qwen3PlanSelection,
+        seed: u8,
+        placeholders: bool,
+    ) -> ComposedM1StepWorkspaceImageV1 {
+        let M1StepWorkspaceImageCompositionOutcomeV1::Composed(composed) =
+            compose_m1_step_workspace_image_v1(
+                exact_plan(selection, seed),
+                validated_inputs(selection, 1, placeholders),
+                page_table(selection, 1),
+            )
+        else {
+            panic!("exact fixture must compose")
+        };
+        composed
     }
 
     fn range_bytes<'a>(
@@ -1194,6 +1329,109 @@ mod tests {
                 .iter()
                 .all(|byte| *byte == 0));
         }
+    }
+
+    #[test]
+    fn closed_full_step_adapter_preserves_every_plan_and_complete_image_owner() {
+        let target_decode = selection(
+            Qwen3ModelRole::Target8B,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        let target_only =
+            ComposedM1FullStepWorkspaceSetV1::target_only(composed(target_decode, 8, false));
+        assert_eq!(target_only.kind(), M1FullStepWorkspaceInputKind::TargetOnly);
+        let (
+            M1FullStepWorkspacePlans::TargetOnly {
+                target: target_plan,
+            },
+            M1FullStepWorkspaceImagesV1::TargetOnly {
+                target: target_image,
+            },
+        ) = target_only.into_allocation_inputs()
+        else {
+            panic!("target-only shape must be preserved")
+        };
+        assert_eq!(target_plan.selection(), target_decode);
+        assert_eq!(
+            target_image.len() as u64,
+            target_plan.allocation().byte_len()
+        );
+
+        let draft_prefill = selection(
+            Qwen3ModelRole::Draft06B,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        );
+        let target_prefill = selection(
+            Qwen3ModelRole::Target8B,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        );
+        let paired = ComposedM1FullStepWorkspaceSetV1::paired_prefill(
+            composed(draft_prefill, 9, false),
+            composed(target_prefill, 10, false),
+        );
+        assert_eq!(paired.kind(), M1FullStepWorkspaceInputKind::PairedPrefill);
+        let (
+            M1FullStepWorkspacePlans::PairedPrefill {
+                draft: draft_plan,
+                target: target_plan,
+            },
+            M1FullStepWorkspaceImagesV1::PairedPrefill {
+                draft: draft_image,
+                target: target_image,
+            },
+        ) = paired.into_allocation_inputs()
+        else {
+            panic!("paired-prefill shape must be preserved")
+        };
+        assert_eq!(draft_plan.selection(), draft_prefill);
+        assert_eq!(target_plan.selection(), target_prefill);
+        assert_eq!(draft_image.len() as u64, draft_plan.allocation().byte_len());
+        assert_eq!(
+            target_image.len() as u64,
+            target_plan.allocation().byte_len()
+        );
+
+        let draft_speculative = selection(
+            Qwen3ModelRole::Draft06B,
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+        );
+        let target_speculative = selection(
+            Qwen3ModelRole::Target8B,
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+        );
+        let speculative = ComposedM1FullStepWorkspaceSetV1::speculative_round(
+            composed(draft_speculative, 11, false),
+            composed(target_speculative, 12, true),
+        );
+        assert_eq!(
+            speculative.kind(),
+            M1FullStepWorkspaceInputKind::SpeculativeRound
+        );
+        let (
+            M1FullStepWorkspacePlans::SpeculativeRound {
+                draft_decode: draft_plan,
+                target_speculative: target_plan,
+            },
+            M1FullStepWorkspaceImagesV1::SpeculativeRound {
+                draft_decode: draft_image,
+                target_speculative: target_image,
+            },
+        ) = speculative.into_allocation_inputs()
+        else {
+            panic!("speculative-round shape must be preserved")
+        };
+        assert_eq!(draft_plan.selection(), draft_speculative);
+        assert_eq!(target_plan.selection(), target_speculative);
+        assert_eq!(draft_image.len() as u64, draft_plan.allocation().byte_len());
+        assert_eq!(
+            target_image.len() as u64,
+            target_plan.allocation().byte_len()
+        );
     }
 
     #[test]
