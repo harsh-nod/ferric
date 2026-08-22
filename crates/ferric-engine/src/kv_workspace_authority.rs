@@ -11,7 +11,8 @@ use core::fmt;
 use ferric_spec::{Identity, Qwen3PlanSelection, ValidatedM1StepInputs, M1_KV_PAGE_TOKENS};
 
 use crate::{
-    PendingDeviceKvStepWrite, M1_KV_PAGE_TABLE_ENTRIES_PER_SEQUENCE_V1,
+    device_cache::m1_speculative_draft_round_shape_v1, PendingDeviceKvStepWrite,
+    PendingSpeculativeDraftKvRoundWrite, M1_KV_PAGE_TABLE_ENTRIES_PER_SEQUENCE_V1,
     M1_KV_PHYSICAL_PAGE_SLOTS_V1,
 };
 
@@ -124,6 +125,145 @@ impl BoundM1KvWorkspaceTableV1 {
         ValidatedM1StepInputs,
         Box<[u32]>,
         M1KvWorkspaceReservationCustodyV1,
+    ) {
+        (self.inputs, self.kv_page_indices, self.reservations)
+    }
+
+    /// This structural join grants no initialization or runtime authority.
+    #[must_use]
+    pub const fn grants_runtime_authority(&self) -> bool {
+        false
+    }
+}
+
+/// Linear custody for every live lane's full-round draft-KV reservation.
+///
+/// The one-token draft-decode workspace selection is retained separately from
+/// the paired draft-speculative cache selection inside each reservation. This
+/// type proves no initialization, launch, completion, acceptance, or rollback.
+///
+/// ```compile_fail
+/// use ferric_engine::M1SpeculativeDraftKvRoundReservationCustodyV1;
+/// fn require_clone<T: Clone>() {}
+/// require_clone::<M1SpeculativeDraftKvRoundReservationCustodyV1>();
+/// ```
+#[must_use = "aggregate draft-round reservations must remain retained until settled or aborted"]
+#[derive(Debug, Eq, PartialEq)]
+pub struct M1SpeculativeDraftKvRoundReservationCustodyV1 {
+    target_speculative_selection: Qwen3PlanSelection,
+    draft_decode_selection: Qwen3PlanSelection,
+    draft_tokens: u32,
+    allocation_id: Identity,
+    reservations: Vec<PendingSpeculativeDraftKvRoundWrite>,
+}
+
+impl M1SpeculativeDraftKvRoundReservationCustodyV1 {
+    /// Returns the exact target speculative selection defining K.
+    #[must_use]
+    pub const fn target_speculative_selection(&self) -> Qwen3PlanSelection {
+        self.target_speculative_selection
+    }
+
+    /// Returns the reusable one-token draft-decode workspace selection.
+    #[must_use]
+    pub const fn draft_decode_selection(&self) -> Qwen3PlanSelection {
+        self.draft_decode_selection
+    }
+
+    /// Returns the aggregate K4, K8, or K16 reservation width.
+    #[must_use]
+    pub const fn draft_tokens(&self) -> u32 {
+        self.draft_tokens
+    }
+
+    /// Returns the one role-scoped draft arena allocation identity.
+    #[must_use]
+    pub const fn allocation_id(&self) -> Identity {
+        self.allocation_id
+    }
+
+    /// Borrows aggregate reservations in exact live-lane order.
+    pub fn reservations(&self) -> &[PendingSpeculativeDraftKvRoundWrite] {
+        &self.reservations
+    }
+
+    /// Recovers all aggregate reservations in exact live-lane order.
+    #[must_use]
+    pub fn into_reservations(self) -> Vec<PendingSpeculativeDraftKvRoundWrite> {
+        self.reservations
+    }
+
+    /// Structural custody grants no initialization or runtime authority.
+    #[must_use]
+    pub const fn grants_runtime_authority(&self) -> bool {
+        false
+    }
+}
+
+/// Exact draft-decode inputs and `context + K` page table for one full round.
+///
+/// `inputs` deliberately retains active length one per live lane because the
+/// same draft workspace is reused by every sequential segment. The aggregate
+/// reservation custody separately covers K physical writes per lane.
+///
+/// ```compile_fail
+/// use ferric_engine::BoundM1SpeculativeDraftKvRoundWorkspaceTableV1;
+/// fn require_clone<T: Clone>() {}
+/// require_clone::<BoundM1SpeculativeDraftKvRoundWorkspaceTableV1>();
+/// ```
+#[must_use = "workspace inputs, page table, and aggregate reservations remain linear"]
+#[derive(Debug, Eq, PartialEq)]
+pub struct BoundM1SpeculativeDraftKvRoundWorkspaceTableV1 {
+    target_speculative_selection: Qwen3PlanSelection,
+    inputs: ValidatedM1StepInputs,
+    kv_page_indices: Box<[u32]>,
+    reservations: M1SpeculativeDraftKvRoundReservationCustodyV1,
+}
+
+impl BoundM1SpeculativeDraftKvRoundWorkspaceTableV1 {
+    /// Returns the exact target speculative selection defining K.
+    #[must_use]
+    pub const fn target_speculative_selection(&self) -> Qwen3PlanSelection {
+        self.target_speculative_selection
+    }
+
+    /// Returns the reusable one-token draft-decode selection.
+    #[must_use]
+    pub const fn draft_decode_selection(&self) -> Qwen3PlanSelection {
+        self.inputs.selection()
+    }
+
+    /// Returns the exact K4, K8, or K16 aggregate write width.
+    #[must_use]
+    pub const fn draft_tokens(&self) -> u32 {
+        self.reservations.draft_tokens
+    }
+
+    /// Borrows the exact draft-decode workspace inputs.
+    #[must_use]
+    pub const fn inputs(&self) -> &ValidatedM1StepInputs {
+        &self.inputs
+    }
+
+    /// Borrows the canonical sequence-major `[S,512]` page table through K.
+    #[must_use]
+    pub fn kv_page_indices(&self) -> &[u32] {
+        &self.kv_page_indices
+    }
+
+    /// Borrows every live lane's aggregate reservation custody.
+    pub const fn reservations(&self) -> &M1SpeculativeDraftKvRoundReservationCustodyV1 {
+        &self.reservations
+    }
+
+    /// Separates workspace-image inputs from aggregate reservation custody.
+    #[must_use = "workspace-image inputs and aggregate reservations must remain retained"]
+    pub fn into_workspace_image_parts(
+        self,
+    ) -> (
+        ValidatedM1StepInputs,
+        Box<[u32]>,
+        M1SpeculativeDraftKvRoundReservationCustodyV1,
     ) {
         (self.inputs, self.kv_page_indices, self.reservations)
     }
@@ -329,6 +469,172 @@ impl M1KvWorkspaceTableBindingFailureV1 {
         Vec<PendingDeviceKvStepWrite>,
     ) {
         (self.error, self.inputs, self.reservations)
+    }
+}
+
+/// Stable fail-closed reason for rejecting a speculative draft-round join.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1SpeculativeDraftKvRoundBindingErrorV1 {
+    /// The supplied target selection is not an exact admitted speculative shape.
+    TargetSpeculativeSelection {
+        /// Rejected target selection.
+        actual: Qwen3PlanSelection,
+    },
+    /// The reusable workspace is not the exact decode shape paired with target.
+    DraftDecodeSelection {
+        /// Required `Draft06B` decode selection.
+        expected: Qwen3PlanSelection,
+        /// Supplied workspace selection.
+        actual: Qwen3PlanSelection,
+    },
+    /// A live draft workspace row does not retain active length one.
+    DraftWorkspaceActiveLength {
+        /// Live lane containing the mismatch.
+        lane: usize,
+        /// Supplied active length.
+        actual: u32,
+    },
+    /// The aggregate reservation vector does not match the live prefix.
+    ReservationCount {
+        /// Required live-lane reservation count.
+        expected: usize,
+        /// Supplied reservation count.
+        actual: usize,
+    },
+    /// One aggregate reservation retains another target speculative selection.
+    ReservationTargetSelection {
+        /// Live lane containing the mismatch.
+        lane: usize,
+    },
+    /// One aggregate reservation retains another draft-decode selection.
+    ReservationDraftDecodeSelection {
+        /// Live lane containing the mismatch.
+        lane: usize,
+    },
+    /// One aggregate reservation's declared or physical width differs from K.
+    ReservationDraftTokens {
+        /// Live lane containing the mismatch.
+        lane: usize,
+        /// K derived from the exact target bucket.
+        expected: u32,
+        /// Width retained by the aggregate wrapper.
+        declared: u32,
+        /// Width retained by the one physical pending marker.
+        reserved: u32,
+    },
+    /// The underlying cache reservation is not the paired draft-speculative shape.
+    ReservationSpeculativeSelection {
+        /// Live lane containing the mismatch.
+        lane: usize,
+        /// Required paired draft-speculative selection.
+        expected: Qwen3PlanSelection,
+        /// Selection retained by the pending cache reservation.
+        actual: Qwen3PlanSelection,
+    },
+    /// One reservation names a different generational request.
+    ReservationRequest {
+        /// Live lane containing the mismatch.
+        lane: usize,
+    },
+    /// One reservation names a different exact completion epoch.
+    ReservationCompletionEpoch {
+        /// Live lane containing the mismatch.
+        lane: usize,
+    },
+    /// One reservation starts from a different committed context.
+    ReservationCommittedTokens {
+        /// Live lane containing the mismatch.
+        lane: usize,
+        /// Context retained by the workspace inputs.
+        expected: u32,
+        /// Context retained by the reservation.
+        actual: u32,
+    },
+    /// One reservation does not end at exact `context + K`.
+    ReservationEndTokens {
+        /// Live lane containing the mismatch.
+        lane: usize,
+        /// Required exclusive interval end.
+        expected: u32,
+        /// Supplied exclusive interval end.
+        actual: u32,
+    },
+    /// The retained per-page write spans do not partition `[context, context + K)`.
+    ReservationWriteSpan {
+        /// Live lane containing the mismatch.
+        lane: usize,
+    },
+    /// Page identities, arena ownership, table geometry, or host allocation failed.
+    WorkspaceTable(M1KvWorkspaceTableBindingErrorV1),
+}
+
+impl fmt::Display for M1SpeculativeDraftKvRoundBindingErrorV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            formatter,
+            "M1 speculative draft KV round rejected: {self:?}"
+        )
+    }
+}
+
+impl std::error::Error for M1SpeculativeDraftKvRoundBindingErrorV1 {}
+
+/// Retry-safe draft-round join rejection retaining every exact input.
+///
+/// ```compile_fail
+/// use ferric_engine::M1SpeculativeDraftKvRoundBindingFailureV1;
+/// fn require_clone<T: Clone>() {}
+/// require_clone::<M1SpeculativeDraftKvRoundBindingFailureV1>();
+/// ```
+#[must_use = "rejection retains target, workspace inputs, and all aggregate reservations"]
+#[derive(Debug, Eq, PartialEq)]
+pub struct M1SpeculativeDraftKvRoundBindingFailureV1 {
+    error: M1SpeculativeDraftKvRoundBindingErrorV1,
+    target_speculative_selection: Qwen3PlanSelection,
+    inputs: ValidatedM1StepInputs,
+    reservations: Vec<PendingSpeculativeDraftKvRoundWrite>,
+}
+
+impl M1SpeculativeDraftKvRoundBindingFailureV1 {
+    /// Returns the stable rejection reason.
+    #[must_use]
+    pub const fn error(&self) -> M1SpeculativeDraftKvRoundBindingErrorV1 {
+        self.error
+    }
+
+    /// Returns the exact unchanged target speculative selection.
+    #[must_use]
+    pub const fn target_speculative_selection(&self) -> Qwen3PlanSelection {
+        self.target_speculative_selection
+    }
+
+    /// Borrows the exact unchanged draft-decode workspace inputs.
+    #[must_use]
+    pub const fn inputs(&self) -> &ValidatedM1StepInputs {
+        &self.inputs
+    }
+
+    /// Borrows all exact unchanged aggregate reservations.
+    pub fn reservations(&self) -> &[PendingSpeculativeDraftKvRoundWrite] {
+        &self.reservations
+    }
+
+    /// Recovers the diagnostic and every exact unchanged input.
+    #[must_use]
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1SpeculativeDraftKvRoundBindingErrorV1,
+        Qwen3PlanSelection,
+        ValidatedM1StepInputs,
+        Vec<PendingSpeculativeDraftKvRoundWrite>,
+    ) {
+        (
+            self.error,
+            self.target_speculative_selection,
+            self.inputs,
+            self.reservations,
+        )
     }
 }
 
@@ -668,12 +974,444 @@ pub fn bind_m1_kv_workspace_table_v1(
     })
 }
 
+fn reject_speculative_draft_round(
+    error: M1SpeculativeDraftKvRoundBindingErrorV1,
+    target_speculative_selection: Qwen3PlanSelection,
+    inputs: ValidatedM1StepInputs,
+    reservations: Vec<PendingSpeculativeDraftKvRoundWrite>,
+) -> Result<
+    BoundM1SpeculativeDraftKvRoundWorkspaceTableV1,
+    Box<M1SpeculativeDraftKvRoundBindingFailureV1>,
+> {
+    Err(Box::new(M1SpeculativeDraftKvRoundBindingFailureV1 {
+        error,
+        target_speculative_selection,
+        inputs,
+        reservations,
+    }))
+}
+
+fn build_speculative_draft_round_page_table(
+    inputs: &ValidatedM1StepInputs,
+    reservations: &[PendingSpeculativeDraftKvRoundWrite],
+    draft_speculative_selection: Qwen3PlanSelection,
+) -> Result<(Identity, Box<[u32]>), M1KvWorkspaceTableBindingErrorV1> {
+    let sequence_count = usize::try_from(inputs.dimensions().sequences)
+        .map_err(|_| M1KvWorkspaceTableBindingErrorV1::TableExtent)?;
+    let entries_per_sequence =
+        usize::try_from(M1_KV_PAGE_TABLE_ENTRIES_PER_SEQUENCE_V1).unwrap_or(usize::MAX);
+    let table_entries = sequence_count
+        .checked_mul(entries_per_sequence)
+        .ok_or(M1KvWorkspaceTableBindingErrorV1::TableExtent)?;
+    let physical_page_slots = usize::try_from(M1_KV_PHYSICAL_PAGE_SLOTS_V1).unwrap_or(usize::MAX);
+    let mut seen_pages = Vec::new();
+    if seen_pages.try_reserve_exact(physical_page_slots).is_err() {
+        return Err(
+            M1KvWorkspaceTableBindingErrorV1::HostValidationReservation {
+                entries: physical_page_slots,
+            },
+        );
+    }
+    seen_pages.resize(physical_page_slots, UNSEEN_PHYSICAL_PAGE);
+
+    let mut allocation_id = None;
+    for (lane, aggregate) in reservations.iter().enumerate() {
+        let reservation = aggregate.pending_step_write();
+        for (entry, page_identity) in reservation.page_table().iter().enumerate() {
+            let expected_logical_page = u32::try_from(entry).unwrap_or(u32::MAX);
+            if page_identity.logical_page() != expected_logical_page {
+                return Err(M1KvWorkspaceTableBindingErrorV1::LogicalPageOrder {
+                    lane,
+                    entry,
+                    expected: expected_logical_page,
+                    actual: page_identity.logical_page(),
+                });
+            }
+            let page = page_identity.page();
+            if page.role() != draft_speculative_selection.role {
+                return Err(M1KvWorkspaceTableBindingErrorV1::PhysicalPageRole {
+                    lane,
+                    logical_page: expected_logical_page,
+                });
+            }
+            if page.generation() == 0 {
+                return Err(
+                    M1KvWorkspaceTableBindingErrorV1::ZeroPhysicalPageGeneration {
+                        lane,
+                        logical_page: expected_logical_page,
+                    },
+                );
+            }
+            if page.index() >= M1_KV_PHYSICAL_PAGE_SLOTS_V1 {
+                return Err(M1KvWorkspaceTableBindingErrorV1::PhysicalPageOutOfRange {
+                    lane,
+                    logical_page: expected_logical_page,
+                    page: page.index(),
+                });
+            }
+            let candidate_allocation = page_identity.allocation_id();
+            if !candidate_allocation.is_present() {
+                return Err(
+                    M1KvWorkspaceTableBindingErrorV1::MissingAllocationIdentity {
+                        lane,
+                        logical_page: expected_logical_page,
+                    },
+                );
+            }
+            if allocation_id
+                .is_some_and(|expected: Identity| !expected.equals(&candidate_allocation))
+            {
+                return Err(M1KvWorkspaceTableBindingErrorV1::ArenaAllocationMismatch {
+                    lane,
+                    logical_page: expected_logical_page,
+                });
+            }
+            allocation_id.get_or_insert(candidate_allocation);
+
+            let physical_index = usize::try_from(page.index()).unwrap_or(usize::MAX);
+            let Some(seen_page) = seen_pages.get_mut(physical_index) else {
+                return Err(M1KvWorkspaceTableBindingErrorV1::PhysicalPageOutOfRange {
+                    lane,
+                    logical_page: expected_logical_page,
+                    page: page.index(),
+                });
+            };
+            let prior = *seen_page;
+            if prior != UNSEEN_PHYSICAL_PAGE {
+                return Err(M1KvWorkspaceTableBindingErrorV1::PhysicalPageAlias {
+                    first_lane: usize::try_from(prior >> 16).unwrap_or(usize::MAX),
+                    first_logical_page: prior & 0xffff,
+                    lane,
+                    logical_page: expected_logical_page,
+                    page: page.index(),
+                });
+            }
+            let packed_lane =
+                u32::try_from(lane).map_err(|_| M1KvWorkspaceTableBindingErrorV1::TableExtent)?;
+            *seen_page = (packed_lane << 16) | expected_logical_page;
+        }
+    }
+
+    let allocation_id = allocation_id.ok_or(M1KvWorkspaceTableBindingErrorV1::TableExtent)?;
+    let mut page_table = Vec::new();
+    if page_table.try_reserve_exact(table_entries).is_err() {
+        return Err(M1KvWorkspaceTableBindingErrorV1::HostTableReservation {
+            entries: table_entries,
+        });
+    }
+    page_table.resize(table_entries, 0);
+    for (lane, aggregate) in reservations.iter().enumerate() {
+        let row_start = lane
+            .checked_mul(entries_per_sequence)
+            .ok_or(M1KvWorkspaceTableBindingErrorV1::TableExtent)?;
+        for page_identity in aggregate.pending_step_write().page_table() {
+            let logical_page = usize::try_from(page_identity.logical_page()).unwrap_or(usize::MAX);
+            let destination = row_start
+                .checked_add(logical_page)
+                .and_then(|index| page_table.get_mut(index))
+                .ok_or(M1KvWorkspaceTableBindingErrorV1::TableExtent)?;
+            *destination = page_identity.page().index();
+        }
+    }
+    Ok((allocation_id, page_table.into_boxed_slice()))
+}
+
+/// Joins one reused draft-decode workspace roster to full-round KV custody.
+///
+/// Every live input row must retain active length one because each of the K
+/// draft segments reuses the same decode workspace. Each aggregate reservation
+/// must instead retain one paired draft-speculative pending marker for exact
+/// `[context, context + K)`, where K is derived only from
+/// `target_speculative_selection`. Page identities must cover the logical
+/// prefix through `context + K`, share one draft arena, remain globally
+/// nonaliasing across live lanes, and fit the canonical padded `[S,512]` table.
+///
+/// This function performs no cache mutation, allocation binding, queue launch,
+/// completion, acceptance, or rollback. Every rejection returns the exact
+/// target selection, workspace inputs, and aggregate reservations unchanged.
+/// The ordinary [`bind_m1_kv_workspace_table_v1`] contract remains unchanged.
+///
+/// # Errors
+///
+/// Returns [`M1SpeculativeDraftKvRoundBindingFailureV1`] for target/decode/K,
+/// live-roster, request, epoch, interval, page-table, arena, alias, extent, or
+/// host-reservation drift.
+pub fn bind_m1_speculative_draft_kv_round_workspace_table_v1(
+    target_speculative_selection: Qwen3PlanSelection,
+    inputs: ValidatedM1StepInputs,
+    reservations: Vec<PendingSpeculativeDraftKvRoundWrite>,
+) -> Result<
+    BoundM1SpeculativeDraftKvRoundWorkspaceTableV1,
+    Box<M1SpeculativeDraftKvRoundBindingFailureV1>,
+> {
+    let Some((draft_speculative_selection, draft_decode_selection, draft_tokens)) =
+        m1_speculative_draft_round_shape_v1(target_speculative_selection)
+    else {
+        return reject_speculative_draft_round(
+            M1SpeculativeDraftKvRoundBindingErrorV1::TargetSpeculativeSelection {
+                actual: target_speculative_selection,
+            },
+            target_speculative_selection,
+            inputs,
+            reservations,
+        );
+    };
+    if inputs.selection() != draft_decode_selection {
+        return reject_speculative_draft_round(
+            M1SpeculativeDraftKvRoundBindingErrorV1::DraftDecodeSelection {
+                expected: draft_decode_selection,
+                actual: inputs.selection(),
+            },
+            target_speculative_selection,
+            inputs,
+            reservations,
+        );
+    }
+
+    let live_lanes = usize::try_from(inputs.live_lane_count()).unwrap_or(usize::MAX);
+    for lane in 0..live_lanes {
+        let Some(&active) = inputs.active_lengths().get(lane) else {
+            return reject_speculative_draft_round(
+                M1SpeculativeDraftKvRoundBindingErrorV1::WorkspaceTable(
+                    M1KvWorkspaceTableBindingErrorV1::TableExtent,
+                ),
+                target_speculative_selection,
+                inputs,
+                reservations,
+            );
+        };
+        if active != 1 {
+            return reject_speculative_draft_round(
+                M1SpeculativeDraftKvRoundBindingErrorV1::DraftWorkspaceActiveLength {
+                    lane,
+                    actual: active,
+                },
+                target_speculative_selection,
+                inputs,
+                reservations,
+            );
+        }
+    }
+    if reservations.len() != live_lanes {
+        return reject_speculative_draft_round(
+            M1SpeculativeDraftKvRoundBindingErrorV1::ReservationCount {
+                expected: live_lanes,
+                actual: reservations.len(),
+            },
+            target_speculative_selection,
+            inputs,
+            reservations,
+        );
+    }
+
+    for (lane, aggregate) in reservations.iter().enumerate() {
+        if aggregate.target_speculative_selection() != target_speculative_selection {
+            return reject_speculative_draft_round(
+                M1SpeculativeDraftKvRoundBindingErrorV1::ReservationTargetSelection { lane },
+                target_speculative_selection,
+                inputs,
+                reservations,
+            );
+        }
+        if aggregate.draft_decode_selection() != draft_decode_selection {
+            return reject_speculative_draft_round(
+                M1SpeculativeDraftKvRoundBindingErrorV1::ReservationDraftDecodeSelection { lane },
+                target_speculative_selection,
+                inputs,
+                reservations,
+            );
+        }
+        let reservation = aggregate.pending_step_write();
+        if aggregate.draft_tokens() != draft_tokens || reservation.active_tokens() != draft_tokens {
+            return reject_speculative_draft_round(
+                M1SpeculativeDraftKvRoundBindingErrorV1::ReservationDraftTokens {
+                    lane,
+                    expected: draft_tokens,
+                    declared: aggregate.draft_tokens(),
+                    reserved: reservation.active_tokens(),
+                },
+                target_speculative_selection,
+                inputs,
+                reservations,
+            );
+        }
+        if reservation.selection() != draft_speculative_selection {
+            return reject_speculative_draft_round(
+                M1SpeculativeDraftKvRoundBindingErrorV1::ReservationSpeculativeSelection {
+                    lane,
+                    expected: draft_speculative_selection,
+                    actual: reservation.selection(),
+                },
+                target_speculative_selection,
+                inputs,
+                reservations,
+            );
+        }
+        let Some(plan) = inputs.lanes().get(lane).and_then(Option::as_ref) else {
+            return reject_speculative_draft_round(
+                M1SpeculativeDraftKvRoundBindingErrorV1::WorkspaceTable(
+                    M1KvWorkspaceTableBindingErrorV1::TableExtent,
+                ),
+                target_speculative_selection,
+                inputs,
+                reservations,
+            );
+        };
+        if reservation.request() != plan.request() {
+            return reject_speculative_draft_round(
+                M1SpeculativeDraftKvRoundBindingErrorV1::ReservationRequest { lane },
+                target_speculative_selection,
+                inputs,
+                reservations,
+            );
+        }
+        if reservation.epoch() != plan.completion_epoch() {
+            return reject_speculative_draft_round(
+                M1SpeculativeDraftKvRoundBindingErrorV1::ReservationCompletionEpoch { lane },
+                target_speculative_selection,
+                inputs,
+                reservations,
+            );
+        }
+        let Some(&committed_tokens) = inputs.context_lengths().get(lane) else {
+            return reject_speculative_draft_round(
+                M1SpeculativeDraftKvRoundBindingErrorV1::WorkspaceTable(
+                    M1KvWorkspaceTableBindingErrorV1::TableExtent,
+                ),
+                target_speculative_selection,
+                inputs,
+                reservations,
+            );
+        };
+        if reservation.committed_tokens() != committed_tokens {
+            return reject_speculative_draft_round(
+                M1SpeculativeDraftKvRoundBindingErrorV1::ReservationCommittedTokens {
+                    lane,
+                    expected: committed_tokens,
+                    actual: reservation.committed_tokens(),
+                },
+                target_speculative_selection,
+                inputs,
+                reservations,
+            );
+        }
+        let Some(end_tokens) = committed_tokens.checked_add(draft_tokens) else {
+            return reject_speculative_draft_round(
+                M1SpeculativeDraftKvRoundBindingErrorV1::WorkspaceTable(
+                    M1KvWorkspaceTableBindingErrorV1::TableExtent,
+                ),
+                target_speculative_selection,
+                inputs,
+                reservations,
+            );
+        };
+        if reservation.end_tokens() != end_tokens {
+            return reject_speculative_draft_round(
+                M1SpeculativeDraftKvRoundBindingErrorV1::ReservationEndTokens {
+                    lane,
+                    expected: end_tokens,
+                    actual: reservation.end_tokens(),
+                },
+                target_speculative_selection,
+                inputs,
+                reservations,
+            );
+        }
+        let expected_pages =
+            usize::try_from(end_tokens.div_ceil(M1_KV_PAGE_TOKENS)).unwrap_or(usize::MAX);
+        if reservation.page_table().len() != expected_pages {
+            return reject_speculative_draft_round(
+                M1SpeculativeDraftKvRoundBindingErrorV1::WorkspaceTable(
+                    M1KvWorkspaceTableBindingErrorV1::LogicalPageCount {
+                        lane,
+                        expected: expected_pages,
+                        actual: reservation.page_table().len(),
+                    },
+                ),
+                target_speculative_selection,
+                inputs,
+                reservations,
+            );
+        }
+
+        let first_logical_page = committed_tokens / M1_KV_PAGE_TOKENS;
+        let last_logical_page = (end_tokens - 1) / M1_KV_PAGE_TOKENS;
+        let expected_write_pages =
+            usize::try_from(last_logical_page - first_logical_page + 1).unwrap_or(usize::MAX);
+        if reservation.write_pages().len() != expected_write_pages {
+            return reject_speculative_draft_round(
+                M1SpeculativeDraftKvRoundBindingErrorV1::ReservationWriteSpan { lane },
+                target_speculative_selection,
+                inputs,
+                reservations,
+            );
+        }
+        for (offset, write) in reservation.write_pages().iter().enumerate() {
+            let logical_page =
+                first_logical_page.saturating_add(u32::try_from(offset).unwrap_or(u32::MAX));
+            let logical_page_start = logical_page.saturating_mul(M1_KV_PAGE_TOKENS);
+            let span_start = committed_tokens.max(logical_page_start);
+            let span_end = end_tokens.min(logical_page_start.saturating_add(M1_KV_PAGE_TOKENS));
+            let Some(identity) = reservation.page_table().get(logical_page as usize) else {
+                return reject_speculative_draft_round(
+                    M1SpeculativeDraftKvRoundBindingErrorV1::ReservationWriteSpan { lane },
+                    target_speculative_selection,
+                    inputs,
+                    reservations,
+                );
+            };
+            if write.logical_page() != logical_page
+                || write.allocation_id() != identity.allocation_id()
+                || write.page() != identity.page()
+                || write.first_offset() != span_start.saturating_sub(logical_page_start)
+                || write.token_count() != span_end.saturating_sub(span_start)
+                || write.token_count() == 0
+            {
+                return reject_speculative_draft_round(
+                    M1SpeculativeDraftKvRoundBindingErrorV1::ReservationWriteSpan { lane },
+                    target_speculative_selection,
+                    inputs,
+                    reservations,
+                );
+            }
+        }
+    }
+
+    let (allocation_id, kv_page_indices) = match build_speculative_draft_round_page_table(
+        &inputs,
+        &reservations,
+        draft_speculative_selection,
+    ) {
+        Ok(table) => table,
+        Err(error) => {
+            return reject_speculative_draft_round(
+                M1SpeculativeDraftKvRoundBindingErrorV1::WorkspaceTable(error),
+                target_speculative_selection,
+                inputs,
+                reservations,
+            );
+        }
+    };
+    Ok(BoundM1SpeculativeDraftKvRoundWorkspaceTableV1 {
+        target_speculative_selection,
+        inputs,
+        kv_page_indices,
+        reservations: M1SpeculativeDraftKvRoundReservationCustodyV1 {
+            target_speculative_selection,
+            draft_decode_selection,
+            draft_tokens,
+            allocation_id,
+            reservations,
+        },
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::{
-        bind_gfx942_device, ActiveDeviceKvCache, DeviceKvPageLease, Gfx942DeviceBinding,
-        GFX942_PROCESSOR, GFX942_TARGET_FEATURES,
+        bind_gfx942_device, ActiveDeviceKvCache, DeviceKvPageLease, ExactCompletion,
+        Gfx942DeviceBinding, GFX942_PROCESSOR, GFX942_TARGET_FEATURES,
     };
     use ferric_spec::completion::CompletionEpoch;
     use ferric_spec::{
@@ -789,6 +1527,300 @@ mod tests {
         let (cache, pending) = pending_reservation(selected, request, 0, active, epoch, 7, 71);
         let bound = bind_m1_kv_workspace_table_v1(inputs, vec![pending]).unwrap();
         (cache, bound)
+    }
+
+    fn speculative_target(bucket: Qwen3PlanBucket) -> Qwen3PlanSelection {
+        selection(
+            Qwen3ModelRole::Target8B,
+            Qwen3ExecutionMode::Speculative,
+            bucket,
+        )
+    }
+
+    fn draft_lease(physical_index: u32, allocation_tag: u8) -> DeviceKvPageLease {
+        DeviceKvPageLease::from_contracted_workspace_bridge_test_allocation(
+            device(),
+            identity(allocation_tag),
+            PhysicalPageId::new(Qwen3ModelRole::Draft06B, physical_index, 1),
+        )
+    }
+
+    fn draft_round_reservation(
+        target: Qwen3PlanSelection,
+        request: RequestId,
+        committed: u32,
+        epoch: CompletionEpoch,
+        physical_start: u32,
+        allocation_tag: u8,
+    ) -> (ActiveDeviceKvCache, PendingSpeculativeDraftKvRoundWrite) {
+        let (draft_speculative, draft_decode, draft_tokens) =
+            m1_speculative_draft_round_shape_v1(target).unwrap();
+        let mut cache = ActiveDeviceKvCache::new(device(), request, target, draft_speculative)
+            .expect("paired speculative cache must validate");
+
+        if committed != 0 {
+            cache
+                .append_page(request, draft_lease(physical_start, allocation_tag))
+                .unwrap();
+            for logical_position in 0..committed {
+                let pending = cache
+                    .prepare_write(
+                        request,
+                        Qwen3ModelRole::Draft06B,
+                        logical_position,
+                        CompletionEpoch::new(epoch.value() - 1),
+                    )
+                    .unwrap();
+                let initialized = pending
+                    .complete_for_test(ExactCompletion::from_contracted_hsa_quiescence(
+                        CompletionEpoch::new(epoch.value() - 1),
+                    ))
+                    .unwrap();
+                cache.apply_initialized_write(initialized).unwrap();
+            }
+            cache
+                .accept_initialized(request, Qwen3ModelRole::Draft06B, committed)
+                .unwrap();
+        }
+
+        let existing_pages = committed.div_ceil(M1_KV_PAGE_TOKENS);
+        let required_pages = (committed + draft_tokens).div_ceil(M1_KV_PAGE_TOKENS);
+        let leases = (existing_pages..required_pages)
+            .map(|page| draft_lease(physical_start + page, allocation_tag))
+            .collect();
+        let aggregate = cache
+            .reserve_speculative_draft_round_write(
+                request,
+                target,
+                draft_decode,
+                committed,
+                epoch,
+                leases,
+            )
+            .unwrap();
+        (cache, aggregate)
+    }
+
+    #[test]
+    fn speculative_draft_round_binds_every_k_through_an_existing_tail() {
+        for (case, bucket) in [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS8K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let target = speculative_target(bucket);
+            let (_, draft_decode, draft_tokens) =
+                m1_speculative_draft_round_shape_v1(target).unwrap();
+            let request = RequestId::new(u32::try_from(case).unwrap(), 3);
+            let epoch = CompletionEpoch::new(100 + u64::try_from(case).unwrap());
+            let inputs = validated_inputs(draft_decode, &[request], epoch, &[1], &[15]);
+            let physical_start = 100 + u32::try_from(case * 2).unwrap();
+            let allocation_tag = 100 + u8::try_from(case).unwrap();
+            let (_cache, aggregate) =
+                draft_round_reservation(target, request, 15, epoch, physical_start, allocation_tag);
+
+            let bound = bind_m1_speculative_draft_kv_round_workspace_table_v1(
+                target,
+                inputs,
+                vec![aggregate],
+            )
+            .unwrap();
+            assert_eq!(bound.target_speculative_selection(), target);
+            assert_eq!(bound.draft_decode_selection(), draft_decode);
+            assert_eq!(bound.draft_tokens(), draft_tokens);
+            assert_eq!(bound.inputs().active_lengths()[0], 1);
+            assert_eq!(
+                bound.kv_page_indices()[..2],
+                [physical_start, physical_start + 1]
+            );
+            assert!(bound.kv_page_indices()[2..].iter().all(|entry| *entry == 0));
+            assert_eq!(
+                bound.reservations().allocation_id(),
+                identity(allocation_tag)
+            );
+            assert_eq!(bound.reservations().reservations().len(), 1);
+            assert!(!bound.grants_runtime_authority());
+        }
+    }
+
+    #[test]
+    fn speculative_draft_round_binds_all_eight_live_lanes_without_aliases() {
+        let target = speculative_target(Qwen3PlanBucket::SpeculativeS8K4C8192);
+        let (_, draft_decode, _) = m1_speculative_draft_round_shape_v1(target).unwrap();
+        let epoch = CompletionEpoch::new(110);
+        let requests: Vec<_> = (0..8).map(|lane| RequestId::new(lane, 4)).collect();
+        let inputs = validated_inputs(draft_decode, &requests, epoch, &[1; 8], &[0; 8]);
+        let mut caches = Vec::new();
+        let mut reservations = Vec::new();
+        for (lane, request) in requests.iter().copied().enumerate() {
+            let physical_start = 200 + u32::try_from(lane).unwrap();
+            let (cache, aggregate) =
+                draft_round_reservation(target, request, 0, epoch, physical_start, 111);
+            caches.push(cache);
+            reservations.push(aggregate);
+        }
+
+        let bound =
+            bind_m1_speculative_draft_kv_round_workspace_table_v1(target, inputs, reservations)
+                .unwrap();
+        let row_entries = usize::try_from(M1_KV_PAGE_TABLE_ENTRIES_PER_SEQUENCE_V1).unwrap();
+        for lane in 0..8 {
+            let row = &bound.kv_page_indices()[lane * row_entries..(lane + 1) * row_entries];
+            assert_eq!(row[0], 200 + u32::try_from(lane).unwrap());
+            assert!(row[1..].iter().all(|entry| *entry == 0));
+        }
+        assert_eq!(bound.reservations().reservations().len(), 8);
+        assert_eq!(caches.len(), 8);
+    }
+
+    #[test]
+    fn speculative_draft_round_rejections_recover_exact_inputs_for_retry() {
+        let target = speculative_target(Qwen3PlanBucket::SpeculativeS1K4C8192);
+        let (_, draft_decode, _) = m1_speculative_draft_round_shape_v1(target).unwrap();
+        let request = RequestId::new(0, 5);
+        let epoch = CompletionEpoch::new(120);
+
+        let inputs = validated_inputs(draft_decode, &[request], epoch, &[1], &[0]);
+        let invalid_target = selection(
+            Qwen3ModelRole::Target8B,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        let failure = bind_m1_speculative_draft_kv_round_workspace_table_v1(
+            invalid_target,
+            inputs,
+            Vec::new(),
+        )
+        .unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1SpeculativeDraftKvRoundBindingErrorV1::TargetSpeculativeSelection {
+                actual: invalid_target
+            }
+        );
+        let (_, recovered_target, recovered_inputs, recovered) = failure.into_parts();
+        assert_eq!(recovered_target, invalid_target);
+        assert_eq!(recovered_inputs.selection(), draft_decode);
+        assert!(recovered.is_empty());
+
+        let inputs = validated_inputs(draft_decode, &[request], epoch, &[1], &[0]);
+        let failure =
+            bind_m1_speculative_draft_kv_round_workspace_table_v1(target, inputs, Vec::new())
+                .unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1SpeculativeDraftKvRoundBindingErrorV1::ReservationCount {
+                expected: 1,
+                actual: 0
+            }
+        );
+        assert!(failure.into_parts().3.is_empty());
+
+        let wrong_decode = selection(
+            Qwen3ModelRole::Draft06B,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS8C8192,
+        );
+        let inputs = validated_inputs(wrong_decode, &[request], epoch, &[1], &[0]);
+        let (_cache, aggregate) = draft_round_reservation(target, request, 0, epoch, 20, 120);
+        let failure =
+            bind_m1_speculative_draft_kv_round_workspace_table_v1(target, inputs, vec![aggregate])
+                .unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1SpeculativeDraftKvRoundBindingErrorV1::DraftDecodeSelection {
+                expected: draft_decode,
+                actual: wrong_decode
+            }
+        );
+        assert_eq!(failure.into_parts().3.len(), 1);
+
+        let inputs = validated_inputs(draft_decode, &[request], epoch, &[1], &[0]);
+        let (_cache, mut aggregate) = draft_round_reservation(target, request, 0, epoch, 21, 120);
+        aggregate.corrupt_target_selection_for_test(speculative_target(
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+        ));
+        let failure =
+            bind_m1_speculative_draft_kv_round_workspace_table_v1(target, inputs, vec![aggregate])
+                .unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1SpeculativeDraftKvRoundBindingErrorV1::ReservationTargetSelection { lane: 0 }
+        );
+        assert_eq!(failure.into_parts().3.len(), 1);
+
+        let inputs = validated_inputs(draft_decode, &[request], epoch, &[1], &[0]);
+        let (_cache, mut aggregate) = draft_round_reservation(target, request, 0, epoch, 22, 120);
+        aggregate.corrupt_draft_decode_selection_for_test(wrong_decode);
+        let failure =
+            bind_m1_speculative_draft_kv_round_workspace_table_v1(target, inputs, vec![aggregate])
+                .unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1SpeculativeDraftKvRoundBindingErrorV1::ReservationDraftDecodeSelection { lane: 0 }
+        );
+        assert_eq!(
+            failure.into_parts().3[0].draft_decode_selection(),
+            wrong_decode
+        );
+
+        let inputs = validated_inputs(draft_decode, &[request], epoch, &[1], &[0]);
+        let (_cache, mut aggregate) = draft_round_reservation(target, request, 0, epoch, 23, 120);
+        aggregate.corrupt_draft_tokens_for_test(8);
+        let failure =
+            bind_m1_speculative_draft_kv_round_workspace_table_v1(target, inputs, vec![aggregate])
+                .unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1SpeculativeDraftKvRoundBindingErrorV1::ReservationDraftTokens {
+                lane: 0,
+                expected: 4,
+                declared: 8,
+                reserved: 4
+            }
+        );
+        assert_eq!(failure.into_parts().3[0].draft_tokens(), 8);
+
+        let inputs = validated_inputs(draft_decode, &[request], epoch, &[1], &[0]);
+        let (_cache, mut aggregate) = draft_round_reservation(target, request, 0, epoch, 24, 120);
+        aggregate.corrupt_page_for_test(
+            0,
+            7,
+            identity(120),
+            PhysicalPageId::new(Qwen3ModelRole::Draft06B, 24, 1),
+        );
+        let failure =
+            bind_m1_speculative_draft_kv_round_workspace_table_v1(target, inputs, vec![aggregate])
+                .unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1SpeculativeDraftKvRoundBindingErrorV1::WorkspaceTable(
+                M1KvWorkspaceTableBindingErrorV1::LogicalPageOrder {
+                    lane: 0,
+                    entry: 0,
+                    expected: 0,
+                    actual: 7
+                }
+            )
+        );
+        let (_, recovered_target, recovered_inputs, mut recovered) = failure.into_parts();
+        recovered[0].corrupt_page_for_test(
+            0,
+            0,
+            identity(120),
+            PhysicalPageId::new(Qwen3ModelRole::Draft06B, 24, 1),
+        );
+        let rebound = bind_m1_speculative_draft_kv_round_workspace_table_v1(
+            recovered_target,
+            recovered_inputs,
+            recovered,
+        )
+        .unwrap();
+        assert_eq!(rebound.kv_page_indices()[0], 24);
     }
 
     #[test]

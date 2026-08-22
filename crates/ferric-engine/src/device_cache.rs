@@ -27,7 +27,7 @@ use ferric_spec::{
     append_physical_page, cancel_physical_kv, commit_physical_kv, map_initialized_token,
     retire_cancelled_tail, rollback_physical_token, write_physical_token, Identity, LogicalKvState,
     PhysicalKvError, PhysicalKvLifecycle, PhysicalKvLocation, PhysicalKvState, PhysicalPageId,
-    Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanSelection, RequestId, Target,
+    Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection, RequestId, Target,
     M1_KV_PAGE_TABLE_ENTRIES, M1_KV_PAGE_TOKENS,
 };
 use vstd::prelude::*;
@@ -318,8 +318,8 @@ impl DeviceKvStepPageBinding {
 /// The reservation covers `[committed_tokens, committed_tokens +
 /// active_tokens)` and retains every not-yet-bound page lease needed by that
 /// interval. Preparing it does not append pages, initialize memory, or prove
-/// that a dispatch completed. It can currently only be inspected or aborted;
-/// the future physical runner must add the allocation and completion bridge.
+/// that a dispatch completed. It can be inspected, aborted, or consumed by the
+/// crate-private exact-completion bridge that initializes the whole interval.
 ///
 /// This type is intentionally not `Clone`.
 ///
@@ -343,6 +343,96 @@ pub struct PendingDeviceKvStepWrite {
     page_table: Box<[DeviceKvStepPageIdentity]>,
     write_pages: Box<[DeviceKvStepPageBinding]>,
     new_page_leases: Vec<DeviceKvPageLease>,
+}
+
+/// One full speculative round's aggregate draft-KV reservation.
+///
+/// The cache reservation remains bound to the paired draft-speculative
+/// selection, while `draft_decode_selection` names the one-token workspace
+/// reused by each of the K sequential draft segments. `draft_tokens` is derived
+/// only from the exact target speculative bucket. This wrapper is intentionally
+/// not `Clone`.
+///
+/// ```compile_fail
+/// use ferric_engine::PendingSpeculativeDraftKvRoundWrite;
+/// fn require_clone<T: Clone>() {}
+/// require_clone::<PendingSpeculativeDraftKvRoundWrite>();
+/// ```
+#[must_use = "the aggregate draft-round reservation must remain retained until settled or aborted"]
+#[derive(Debug, PartialEq, Eq)]
+pub struct PendingSpeculativeDraftKvRoundWrite {
+    target_speculative_selection: Qwen3PlanSelection,
+    draft_decode_selection: Qwen3PlanSelection,
+    draft_tokens: u32,
+    pending: PendingDeviceKvStepWrite,
+}
+
+impl PendingSpeculativeDraftKvRoundWrite {
+    /// Returns the exact target speculative selection that defines K.
+    #[must_use]
+    pub const fn target_speculative_selection(&self) -> Qwen3PlanSelection {
+        self.target_speculative_selection
+    }
+
+    /// Returns the exact reusable one-token draft-decode selection.
+    #[must_use]
+    pub const fn draft_decode_selection(&self) -> Qwen3PlanSelection {
+        self.draft_decode_selection
+    }
+
+    /// Returns the exact K4, K8, or K16 aggregate write width.
+    #[must_use]
+    pub const fn draft_tokens(&self) -> u32 {
+        self.draft_tokens
+    }
+
+    /// Borrows the one underlying pending marker and physical-page snapshot.
+    #[must_use]
+    pub const fn pending_step_write(&self) -> &PendingDeviceKvStepWrite {
+        &self.pending
+    }
+
+    /// Recovers the one pending step write for abort or exact completion.
+    #[must_use = "the single pending write remains linear"]
+    pub fn into_pending_step_write(self) -> PendingDeviceKvStepWrite {
+        self.pending
+    }
+}
+
+pub(crate) fn m1_speculative_draft_round_shape_v1(
+    target_speculative_selection: Qwen3PlanSelection,
+) -> Option<(Qwen3PlanSelection, Qwen3PlanSelection, u32)> {
+    if target_speculative_selection.role != Qwen3ModelRole::Target8B
+        || target_speculative_selection.mode != Qwen3ExecutionMode::Speculative
+    {
+        return None;
+    }
+    let (draft_decode_bucket, draft_tokens) = match target_speculative_selection.bucket {
+        Qwen3PlanBucket::SpeculativeS1K4C8192 => (Qwen3PlanBucket::DecodeS1C8192, 4),
+        Qwen3PlanBucket::SpeculativeS8K4C8192 => (Qwen3PlanBucket::DecodeS8C8192, 4),
+        Qwen3PlanBucket::SpeculativeS1K8C8192 => (Qwen3PlanBucket::DecodeS1C8192, 8),
+        Qwen3PlanBucket::SpeculativeS1K16C8192 => (Qwen3PlanBucket::DecodeS1C8192, 16),
+        Qwen3PlanBucket::PrefillS1T128
+        | Qwen3PlanBucket::PrefillS8T128
+        | Qwen3PlanBucket::PrefillS1T512
+        | Qwen3PlanBucket::PrefillS1T2048
+        | Qwen3PlanBucket::DecodeS1C8192
+        | Qwen3PlanBucket::DecodeS8C8192
+        | Qwen3PlanBucket::DecodeS32C8192 => return None,
+    };
+    Some((
+        Qwen3PlanSelection {
+            role: Qwen3ModelRole::Draft06B,
+            mode: Qwen3ExecutionMode::Speculative,
+            bucket: target_speculative_selection.bucket,
+        },
+        Qwen3PlanSelection {
+            role: Qwen3ModelRole::Draft06B,
+            mode: Qwen3ExecutionMode::Decode,
+            bucket: draft_decode_bucket,
+        },
+        draft_tokens,
+    ))
 }
 
 impl PendingDeviceKvStepWrite {
@@ -391,6 +481,39 @@ impl PendingDeviceKvStepWrite {
     #[must_use]
     pub const fn new_page_count(&self) -> usize {
         self.new_page_leases.len()
+    }
+}
+
+#[cfg(test)]
+impl PendingSpeculativeDraftKvRoundWrite {
+    pub(crate) fn corrupt_target_selection_for_test(&mut self, selection: Qwen3PlanSelection) {
+        self.target_speculative_selection = selection;
+    }
+
+    pub(crate) fn corrupt_draft_decode_selection_for_test(
+        &mut self,
+        selection: Qwen3PlanSelection,
+    ) {
+        self.draft_decode_selection = selection;
+    }
+
+    pub(crate) fn corrupt_draft_tokens_for_test(&mut self, draft_tokens: u32) {
+        self.draft_tokens = draft_tokens;
+    }
+
+    pub(crate) fn corrupt_page_for_test(
+        &mut self,
+        entry: usize,
+        logical_page: u32,
+        allocation_id: Identity,
+        page: PhysicalPageId,
+    ) {
+        self.pending.corrupt_workspace_bridge_page_for_test(
+            entry,
+            logical_page,
+            allocation_id,
+            page,
+        );
     }
 }
 
@@ -1284,6 +1407,64 @@ impl ActiveDeviceKvCache {
             page_table: page_table.into_boxed_slice(),
             write_pages: write_pages.into_boxed_slice(),
             new_page_leases,
+        })
+    }
+
+    /// Reserves one full speculative round's K sequential draft-token writes.
+    ///
+    /// `target_speculative_selection` must be this cache's exact target K4, K8,
+    /// or K16 selection. `draft_decode_selection` must be the paired `Draft06B`
+    /// decode workspace shape: S1 for target S1 and S8 for target S8. The
+    /// aggregate width is derived exclusively from the target bucket; callers
+    /// cannot supply or override K. Success installs one draft pending marker
+    /// for `[committed_tokens, committed_tokens + K)` and retains the one-token
+    /// workspace selection beside that linear reservation.
+    ///
+    /// # Errors
+    ///
+    /// Rejects target/draft selection drift before mutation and returns every
+    /// supplied page lease unchanged. Exact cache, interval, lease, and epoch
+    /// validation then uses [`Self::reserve_step_write`].
+    pub fn reserve_speculative_draft_round_write(
+        &mut self,
+        request: RequestId,
+        target_speculative_selection: Qwen3PlanSelection,
+        draft_decode_selection: Qwen3PlanSelection,
+        committed_tokens: u32,
+        epoch: CompletionEpoch,
+        new_page_leases: Vec<DeviceKvPageLease>,
+    ) -> Result<PendingSpeculativeDraftKvRoundWrite, Box<DeviceKvStepReservationFailure>> {
+        let reject = |page_leases| {
+            Err(Box::new(DeviceKvStepReservationFailure {
+                error: DeviceKvCacheError::StepSelectionMismatch,
+                page_leases,
+            }))
+        };
+        let Some((draft_speculative_selection, expected_draft_decode, draft_tokens)) =
+            m1_speculative_draft_round_shape_v1(target_speculative_selection)
+        else {
+            return reject(new_page_leases);
+        };
+        if self.common.target.selection() != target_speculative_selection
+            || self.common.draft.selection() != draft_speculative_selection
+            || draft_decode_selection != expected_draft_decode
+        {
+            return reject(new_page_leases);
+        }
+
+        let pending = self.reserve_step_write(
+            request,
+            Qwen3ModelRole::Draft06B,
+            committed_tokens,
+            draft_tokens,
+            epoch,
+            new_page_leases,
+        )?;
+        Ok(PendingSpeculativeDraftKvRoundWrite {
+            target_speculative_selection,
+            draft_decode_selection,
+            draft_tokens,
+            pending,
         })
     }
 
@@ -2241,7 +2422,7 @@ mod tests {
     }
 
     impl PendingDeviceKvWrite {
-        fn complete_for_test(
+        pub(crate) fn complete_for_test(
             self,
             completion: ExactCompletion,
         ) -> Result<InitializedDeviceKvWrite, Box<PendingWriteCompletionFailure>> {
@@ -2910,6 +3091,129 @@ mod tests {
                 offset: 15,
             }
         );
+    }
+
+    #[test]
+    fn speculative_draft_round_reserves_and_completes_one_exact_k_interval() {
+        for (case, bucket) in [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS8K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let epoch = 140 + u64::try_from(case).unwrap();
+            let allocation_tag = 140 + u8::try_from(case).unwrap();
+            let target = selected(
+                Qwen3ModelRole::Target8B,
+                Qwen3ExecutionMode::Speculative,
+                bucket,
+            );
+            let (_, draft_decode, draft_tokens) =
+                m1_speculative_draft_round_shape_v1(target).unwrap();
+            let mut cache = cache_for(request(), Qwen3ExecutionMode::Speculative, bucket);
+            append_and_initialize(
+                &mut cache,
+                Qwen3ModelRole::Draft06B,
+                0,
+                allocation_tag,
+                15,
+                epoch - 1,
+            );
+            cache
+                .accept_initialized(request(), Qwen3ModelRole::Draft06B, 15)
+                .unwrap();
+
+            let aggregate = cache
+                .reserve_speculative_draft_round_write(
+                    request(),
+                    target,
+                    draft_decode,
+                    15,
+                    CompletionEpoch::new(epoch),
+                    leases(Qwen3ModelRole::Draft06B, 1, 1, allocation_tag),
+                )
+                .unwrap();
+            assert_eq!(aggregate.target_speculative_selection(), target);
+            assert_eq!(aggregate.draft_decode_selection(), draft_decode);
+            assert_eq!(aggregate.draft_tokens(), draft_tokens);
+            assert_eq!(aggregate.pending_step_write().committed_tokens(), 15);
+            assert_eq!(aggregate.pending_step_write().active_tokens(), draft_tokens);
+            assert_eq!(
+                aggregate.pending_step_write().end_tokens(),
+                15 + draft_tokens
+            );
+            assert_eq!(aggregate.pending_step_write().write_pages().len(), 2);
+            assert!(cache.projection().draft_write_pending);
+
+            let completed = match complete_step(cache, aggregate.into_pending_step_write(), epoch) {
+                DeviceKvStepCompletionOutcome::Completed(completed) => completed,
+                other => panic!("draft round case {case} did not complete: {other:?}"),
+            };
+            let (cache, initialized, completion) = completed.into_parts();
+            assert_eq!(completion.epoch(), CompletionEpoch::new(epoch));
+            assert_eq!(initialized.active_tokens(), draft_tokens);
+            assert_eq!(initialized.end_tokens(), 15 + draft_tokens);
+            let projection = cache.projection();
+            assert_eq!(projection.draft.committed_tokens, 15);
+            assert_eq!(projection.draft.resident_tokens, 15 + draft_tokens);
+            assert_eq!(projection.draft_active_pages, 2);
+            assert!(!projection.draft_write_pending);
+        }
+    }
+
+    #[test]
+    fn speculative_draft_round_selection_rejection_is_transactional() {
+        let bucket = Qwen3PlanBucket::SpeculativeS1K4C8192;
+        let target = selected(
+            Qwen3ModelRole::Target8B,
+            Qwen3ExecutionMode::Speculative,
+            bucket,
+        );
+        let (_, draft_decode, _) = m1_speculative_draft_round_shape_v1(target).unwrap();
+        let wrong_target = selected(
+            Qwen3ModelRole::Target8B,
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+        );
+        let wrong_draft = selected(
+            Qwen3ModelRole::Draft06B,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS8C8192,
+        );
+        for (supplied_target, supplied_draft) in
+            [(wrong_target, draft_decode), (target, wrong_draft)]
+        {
+            let mut cache = cache_for(request(), Qwen3ExecutionMode::Speculative, bucket);
+            let before = cache.projection();
+            let failure = cache
+                .reserve_speculative_draft_round_write(
+                    request(),
+                    supplied_target,
+                    supplied_draft,
+                    0,
+                    CompletionEpoch::new(150),
+                    leases(Qwen3ModelRole::Draft06B, 0, 1, 150),
+                )
+                .unwrap_err();
+            assert_eq!(failure.error(), DeviceKvCacheError::StepSelectionMismatch);
+            let (_, recovered_leases) = failure.into_parts();
+            assert_eq!(recovered_leases.len(), 1);
+            assert_eq!(cache.projection(), before);
+            let recovered = cache
+                .reserve_speculative_draft_round_write(
+                    request(),
+                    target,
+                    draft_decode,
+                    0,
+                    CompletionEpoch::new(150),
+                    recovered_leases,
+                )
+                .unwrap();
+            assert_eq!(recovered.draft_tokens(), 4);
+        }
     }
 
     #[test]

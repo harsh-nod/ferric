@@ -58,9 +58,9 @@ pub use device_cache::{
     DeviceKvReadBinding, DeviceKvRetirementOutcome, DeviceKvStepAbortFailure,
     DeviceKvStepPageBinding, DeviceKvStepPageIdentity, DeviceKvStepReservationFailure,
     Gfx942DeviceBinding, InitializedDeviceKvWrite, PendingDeviceKvStepWrite, PendingDeviceKvWrite,
-    PendingWriteCompletionFailure, PoisonedDeviceKvCache, QuiescenceFailure,
-    QuiescentDeviceKvCache, RetirementCompletionFailure, WriteApplicationFailure, GFX942_PROCESSOR,
-    GFX942_TARGET_FEATURES,
+    PendingSpeculativeDraftKvRoundWrite, PendingWriteCompletionFailure, PoisonedDeviceKvCache,
+    QuiescenceFailure, QuiescentDeviceKvCache, RetirementCompletionFailure,
+    WriteApplicationFailure, GFX942_PROCESSOR, GFX942_TARGET_FEATURES,
 };
 pub use epoch::ExactCompletion;
 pub use initialized_model_memory::{
@@ -78,8 +78,11 @@ pub use initialized_step_workspaces::{
     M1_INITIALIZED_STEP_WORKSPACE_CONTENT_ROLE_IDENTITY_V1,
 };
 pub use kv_workspace_authority::{
-    bind_m1_kv_workspace_table_v1, BoundM1KvWorkspaceTableV1, M1KvWorkspaceReservationCustodyV1,
-    M1KvWorkspaceTableBindingErrorV1, M1KvWorkspaceTableBindingFailureV1,
+    bind_m1_kv_workspace_table_v1, bind_m1_speculative_draft_kv_round_workspace_table_v1,
+    BoundM1KvWorkspaceTableV1, BoundM1SpeculativeDraftKvRoundWorkspaceTableV1,
+    M1KvWorkspaceReservationCustodyV1, M1KvWorkspaceTableBindingErrorV1,
+    M1KvWorkspaceTableBindingFailureV1, M1SpeculativeDraftKvRoundBindingErrorV1,
+    M1SpeculativeDraftKvRoundBindingFailureV1, M1SpeculativeDraftKvRoundReservationCustodyV1,
 };
 pub use model_memory_allocations::{
     bind_addressless_model_memory_allocations_v1, BoundModelMemoryAllocationsV1,
