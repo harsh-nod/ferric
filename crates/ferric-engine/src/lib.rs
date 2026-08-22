@@ -23,10 +23,12 @@ pub use completion_wire::{
     CompletionWireSemanticExpectation, EpochJoinedCompletionRecord, InertCheckedCompletionRecord,
 };
 pub use device_cache::{
-    bind_gfx942_device, ActiveDeviceKvCache, CancelledDeviceKvCache, DeviceKvAppendFailure,
-    DeviceKvCacheError, DeviceKvCacheProjection, DeviceKvCancellationFailure,
-    DeviceKvCancellationOutcome, DeviceKvPageLease, DeviceKvReadBinding, DeviceKvRetirementOutcome,
-    Gfx942DeviceBinding, InitializedDeviceKvWrite, PendingDeviceKvWrite,
+    bind_gfx942_device, AbortedDeviceKvStepWrite, ActiveDeviceKvCache, CancelledDeviceKvCache,
+    DeviceKvAppendFailure, DeviceKvCacheError, DeviceKvCacheProjection,
+    DeviceKvCancellationFailure, DeviceKvCancellationOutcome, DeviceKvPageLease,
+    DeviceKvReadBinding, DeviceKvRetirementOutcome, DeviceKvStepAbortFailure,
+    DeviceKvStepPageBinding, DeviceKvStepPageIdentity, DeviceKvStepReservationFailure,
+    Gfx942DeviceBinding, InitializedDeviceKvWrite, PendingDeviceKvStepWrite, PendingDeviceKvWrite,
     PendingWriteCompletionFailure, PoisonedDeviceKvCache, QuiescenceFailure,
     QuiescentDeviceKvCache, RetirementCompletionFailure, WriteApplicationFailure, GFX942_PROCESSOR,
     GFX942_TARGET_FEATURES,
