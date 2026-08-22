@@ -58,7 +58,6 @@ pub struct SpeculativeStepPreflight {
     publication: crate::step_plan_publication::SpeculativePublicationPermit,
     kv: crate::request_isolation::IsolatedSpeculativeKvSettlementPermit,
     accepted_draft_tokens: u8,
-    required_single_member_accepted_tokens: u32,
 }
 
 impl SpeculativeStepPreflight {
@@ -67,7 +66,7 @@ impl SpeculativeStepPreflight {
     }
 
     pub closed spec fn required_single_member_accepted_tokens_spec(&self) -> u32 {
-        self.required_single_member_accepted_tokens
+        (self.accepted_draft_tokens as int + 1) as u32
     }
 
     pub closed spec fn valid_for(
@@ -86,6 +85,7 @@ impl SpeculativeStepPreflight {
             expected.target_selection_spec(),
             expected.draft_selection_spec(),
         )
+        &&& draft_tokens_match_index(index, draft_tokens)
         &&& self.publication.valid_for(
             publication,
             index.request,
@@ -98,8 +98,6 @@ impl SpeculativeStepPreflight {
         &&& self.kv.valid_for(selected, index)
         &&& self.accepted_draft_tokens == self.publication.accepted_draft_tokens_spec()
         &&& self.accepted_draft_tokens == self.kv.accepted_draft_tokens_spec()
-        &&& self.required_single_member_accepted_tokens as int
-            == self.accepted_draft_tokens as int + 1
     }
 
     /// Exact number of draft candidates accepted by target verification.
@@ -120,7 +118,7 @@ impl SpeculativeStepPreflight {
             accepted == self.required_single_member_accepted_tokens_spec(),
             accepted as int == self.accepted_draft_tokens_spec() as int + 1,
     {
-        self.required_single_member_accepted_tokens
+        self.accepted_draft_tokens as u32 + 1
     }
 }
 
@@ -135,14 +133,6 @@ pub const fn required_single_member_accepted_count(
     ensures accepted as int == accepted_draft_tokens as int + 1,
 {
     accepted_draft_tokens as u32 + 1
-}
-
-/// The required single-member count is exactly accepted draft tokens plus one.
-pub proof fn exact_required_single_member_accepted_count(accepted_draft_tokens: u8)
-    ensures
-        required_single_member_accepted_count(accepted_draft_tokens) as int
-            == accepted_draft_tokens as int + 1,
-{
 }
 
 /// The caller-supplied draft slice is exactly the live index prefix, not a substitute.
@@ -319,16 +309,10 @@ pub fn preflight_speculative_step(
         Ok(permit) => permit,
         Err(error) => return Err(AtomicSpeculativeStepError::Kv(error)),
     };
-    let required_single_member_accepted_tokens =
-        required_single_member_accepted_count(accepted_draft_tokens);
-    proof {
-        exact_required_single_member_accepted_count(accepted_draft_tokens);
-    }
     let permit = SpeculativeStepPreflight {
         publication: publication_permit,
         kv: kv_permit,
         accepted_draft_tokens,
-        required_single_member_accepted_tokens,
     };
     assert(permit.valid_for(
         publication,
@@ -378,16 +362,23 @@ pub fn apply_preflighted_speculative_step(
     let ghost entry_publication = *publication;
     let ghost entry_selected = *selected;
     let ghost required_single_member_accepted_tokens =
-        permit.required_single_member_accepted_tokens;
+        permit.required_single_member_accepted_tokens_spec();
     proof {
         reveal(SpeculativeStepPreflight::valid_for);
         reveal(atomic_speculative_step_transition);
+        index.valid_for_implies_valid(
+            _expected.request_spec(),
+            _expected.completion_epoch_spec(),
+            _expected.plan_id_spec(),
+            _expected.target_selection_spec(),
+            _expected.draft_selection_spec(),
+        );
+        index.valid_implies_correction_is_deferred();
     }
     let SpeculativeStepPreflight {
         publication: publication_permit,
         kv: kv_permit,
         accepted_draft_tokens: _accepted_draft_tokens,
-        required_single_member_accepted_tokens: _,
     } = permit;
     let settlement = apply_preflighted_isolated_speculative_kv(selected, index, kv_permit);
     let published_delta = apply_preflighted_speculative_publication(
