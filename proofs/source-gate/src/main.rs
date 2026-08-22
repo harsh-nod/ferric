@@ -4,6 +4,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
+use verus_syn::parse::Parser;
 use verus_syn::visit::{self, Visit};
 use verus_syn::{
     Attribute, Block, Expr, File, FnMode, ImplItem, Item, ItemImpl, Meta, Path as SynPath, Publish,
@@ -16,7 +17,7 @@ const RUNTIME_TCB_PATH: &str = "proofs/RUNTIME_DEPENDENCY_TCB";
 const CRATES_IO_SOURCE: &str = "registry+https://github.com/rust-lang/crates.io-index";
 const VERUS_SOURCE: &str = "git+https://github.com/verus-lang/verus.git?rev=b677dd5";
 const FE2O3_SOURCE: &str =
-    "git+https://github.com/harsh-nod/fe2o3.git?rev=174bc1b0e3c5552724f3169a7c6527a7838e077d";
+    "git+https://github.com/harsh-nod/fe2o3.git?rev=bea73e0b988c02911c10419f94319cb8f9af3f62";
 const RUNTIME_ROOTS: &[(&str, &str, &str, bool)] = &[
     ("ferric-build", "onig", "=6.5.3", false),
     (
@@ -31,6 +32,7 @@ const RUNTIME_ROOTS: &[(&str, &str, &str, bool)] = &[
 const FE2O3_ROOTS: &[(&str, &str)] = &[
     ("ferric-engine", "fe2o3-amdhsa-loader"),
     ("ferric-engine", "fe2o3-aql"),
+    ("ferric-engine", "fe2o3-kfd"),
     ("ferric-engine", "fe2o3-service-host"),
     ("ferric-qwen-kernels", "fe2o3-amdhsa-loader"),
     ("ferric-qwen-kernels", "fe2o3-artifact-transaction"),
@@ -940,7 +942,11 @@ fn validate_attributes(attributes: &[Attribute], allow_solver_attributes: bool) 
                 };
                 if !matches!(
                     list.tokens.to_string().as_str(),
-                    "unused_imports" | "clippy :: too_many_arguments" | "clippy :: type_complexity"
+                    "unused_imports"
+                        | "clippy :: cast_possible_truncation"
+                        | "clippy :: large_enum_variant"
+                        | "clippy :: too_many_arguments"
+                        | "clippy :: type_complexity"
                 ) {
                     return Err(format!("unsupported allow attribute: {}", list.tokens));
                 }
@@ -1081,12 +1087,26 @@ impl<'ast> Visit<'ast> for SyntaxAudit {
     }
 
     fn visit_stmt_macro(&mut self, statement: &'ast verus_syn::StmtMacro) {
-        if path_name(&statement.mac.path) == "assert" {
+        let name = path_name(&statement.mac.path);
+        if matches!(name.as_str(), "assert" | "debug_assert") {
             match verus_syn::parse2::<Expr>(statement.mac.tokens.clone()) {
                 Ok(expression) => self.visit_expr(&expression),
                 Err(error) => self
                     .errors
-                    .push(format!("unsupported assert! invocation: {error}")),
+                    .push(format!("unsupported assertion invocation: {error}")),
+            }
+        } else if name == "debug_assert_eq" {
+            let parser =
+                verus_syn::punctuated::Punctuated::<Expr, verus_syn::Token![,]>::parse_terminated;
+            match parser.parse2(statement.mac.tokens.clone()) {
+                Ok(expressions) => {
+                    for expression in &expressions {
+                        self.visit_expr(expression);
+                    }
+                }
+                Err(error) => self
+                    .errors
+                    .push(format!("unsupported assertion invocation: {error}")),
             }
         } else {
             self.reject_macro(&statement.mac.path, "statement");
