@@ -2065,7 +2065,7 @@ pub enum InspectQwen3RmsNormKernelErrorV1 {
     /// AMDHSA metadata or descriptor binding failed.
     Hsaco(KernelBindingError),
     /// Kernel inventory, ABI, or resource facts differ from the exact profile.
-    KernelProfile,
+    KernelProfile(&'static str),
     /// Strict allocation-free COV6 loader validation failed.
     Loader(PlanError),
 }
@@ -2199,37 +2199,66 @@ pub fn inspect_qwen3_rmsnorm_kernel_v1(
     let bound = inspect_and_bind_kernel_descriptors(bytes)
         .map_err(InspectQwen3RmsNormKernelErrorV1::Hsaco)?;
     let [kernel] = bound.inspection().kernels() else {
-        return Err(InspectQwen3RmsNormKernelErrorV1::KernelProfile);
+        return Err(InspectQwen3RmsNormKernelErrorV1::KernelProfile(
+            "kernel cardinality",
+        ));
     };
     let [binding] = bound.bindings() else {
-        return Err(InspectQwen3RmsNormKernelErrorV1::KernelProfile);
+        return Err(InspectQwen3RmsNormKernelErrorV1::KernelProfile(
+            "descriptor cardinality",
+        ));
     };
     if bound.inspection().code_object_version() != InspectedCodeObjectVersion::V6
         || bound.inspection().target().to_string() != QWEN3_RMSNORM_TARGET_V1
         || bound.inspection().has_printf_metadata()
-        || kernel.name() != QWEN3_RMSNORM_KERNEL_SYMBOL_V1
+    {
+        return Err(InspectQwen3RmsNormKernelErrorV1::KernelProfile("module"));
+    }
+    if kernel.name() != QWEN3_RMSNORM_KERNEL_SYMBOL_V1
         || kernel.symbol() != QWEN3_RMSNORM_KERNEL_DESCRIPTOR_SYMBOL_V1
-        || kernel.kernarg_segment_size() != QWEN3_RMSNORM_TOTAL_KERNARG_BYTES_V1
+    {
+        return Err(InspectQwen3RmsNormKernelErrorV1::KernelProfile("symbol"));
+    }
+    if kernel.kernarg_segment_size() != QWEN3_RMSNORM_TOTAL_KERNARG_BYTES_V1
         || kernel.kernarg_segment_alignment() != QWEN3_RMSNORM_KERNARG_ALIGNMENT_V1
         || kernel.implicit_argument_offset() != Some(QWEN3_RMSNORM_HIDDEN_KERNARG_OFFSET_V1)
         || kernel.implicit_argument_size() != 256
-        || kernel.required_workgroup_size() != Some(QWEN3_RMSNORM_WORKGROUP_V1)
+    {
+        return Err(InspectQwen3RmsNormKernelErrorV1::KernelProfile("kernarg"));
+    }
+    if kernel.required_workgroup_size() != Some(QWEN3_RMSNORM_WORKGROUP_V1)
         || kernel.max_flat_workgroup_size() != QWEN3_RMSNORM_WORKGROUP_V1[0]
         || kernel.wavefront_size() != 64
-        || kernel.group_segment_fixed_size() != 0
+    {
+        return Err(InspectQwen3RmsNormKernelErrorV1::KernelProfile("launch"));
+    }
+    if kernel.group_segment_fixed_size() != 0
         || kernel.private_segment_fixed_size() != 0
         || kernel.sgpr_spill_count().unwrap_or(0) != 0
         || kernel.vgpr_spill_count().unwrap_or(0) != 0
         || kernel.uses_dynamic_stack()
-        || binding.kernel_index() != 0
+    {
+        return Err(InspectQwen3RmsNormKernelErrorV1::KernelProfile("resources"));
+    }
+    if binding.kernel_index() != 0
         || binding.descriptor().group_segment_fixed_size() != 0
         || binding.descriptor().private_segment_fixed_size() != 0
         || binding.descriptor().wavefront_size() != 64
         || binding.descriptor().uses_dynamic_stack()
-        || !exact_explicit_arguments(kernel.explicit_arguments())
-        || !exact_hidden_arguments(kernel.hidden_arguments())
     {
-        return Err(InspectQwen3RmsNormKernelErrorV1::KernelProfile);
+        return Err(InspectQwen3RmsNormKernelErrorV1::KernelProfile(
+            "descriptor",
+        ));
+    }
+    if !exact_explicit_arguments(kernel.explicit_arguments()) {
+        return Err(InspectQwen3RmsNormKernelErrorV1::KernelProfile(
+            "explicit arguments",
+        ));
+    }
+    if !exact_hidden_arguments(kernel.hidden_arguments()) {
+        return Err(InspectQwen3RmsNormKernelErrorV1::KernelProfile(
+            "hidden arguments",
+        ));
     }
     let loader = fe2o3_amdhsa_loader::validate(bytes, AdmittedProfile::Gfx942XnackOffCov6)
         .map_err(InspectQwen3RmsNormKernelErrorV1::Loader)?;
