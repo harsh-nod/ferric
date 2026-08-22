@@ -438,6 +438,8 @@ struct BindingRowMetadata {
     source_selection: ferric_spec::Qwen3PlanSelection,
     physical_selection: ferric_spec::Qwen3PlanSelection,
     logical_ordinal_matches: bool,
+    profile_matches: bool,
+    kind_matches: bool,
     source_profile_id: Identity,
     physical_profile_id: Identity,
     source_program: M1PhysicalProgramV1,
@@ -464,6 +466,8 @@ fn validate_row_metadata(
             source_selection: source.selection(),
             physical_selection: physical.selection(),
             logical_ordinal_matches: source.logical_ordinal() == physical.logical_ordinal(),
+            profile_matches: source.profile() == physical.profile(),
+            kind_matches: source.kind() == physical.kind(),
             source_profile_id: source.profile_id(),
             physical_profile_id: physical.profile_id(),
             source_program: source.program(),
@@ -482,6 +486,8 @@ fn validate_row_metadata_entry(
         || metadata.source_stage != metadata.physical_stage
         || metadata.source_selection != metadata.physical_selection
         || !metadata.logical_ordinal_matches
+        || !metadata.profile_matches
+        || !metadata.kind_matches
         || metadata.source_profile_id != metadata.physical_profile_id
         || metadata.source_program != metadata.physical_program
     {
@@ -567,6 +573,64 @@ fn resolve_source(
                     error,
                 })
         }
+        M1PhysicalBufferSourceV1::SpeculativeDraftAnchorTokenIds {
+            workspace,
+            range,
+            verification_segment,
+        } => {
+            if workspace != crate::M1FullStepWorkspaceRole::Draft
+                || range != ferric_build::M1StepWorkspaceRangeRole::TokenIds
+                || verification_segment != row.segment_index()
+            {
+                return Err(M1PhysicalBufferBindingErrorV1::RowMetadata { dispatch_index });
+            }
+            workspaces
+                .speculative_token_assembly_anchor_dispatch_range(allocations, verification_segment)
+                .map_err(|error| M1PhysicalBufferBindingErrorV1::WorkspaceRange {
+                    dispatch_index,
+                    argument,
+                    error,
+                })
+        }
+        M1PhysicalBufferSourceV1::SpeculativeDraftIterationMetadata {
+            workspace,
+            range,
+            draft_segment,
+            iteration,
+        } => {
+            let exact = match range {
+                ferric_build::M1StepWorkspaceRangeRole::DraftPositionIds => {
+                    workspaces.speculative_draft_position_subrange(draft_segment)
+                }
+                ferric_build::M1StepWorkspaceRangeRole::DraftContextLengths => {
+                    workspaces.speculative_draft_context_subrange(draft_segment)
+                }
+                _ => None,
+            };
+            if workspace != crate::M1FullStepWorkspaceRole::Target
+                || draft_segment != row.segment_index()
+                || exact.is_none_or(|metadata| {
+                    metadata.draft_segment() != draft_segment
+                        || metadata.iteration() != iteration
+                        || metadata.range().role() != range
+                })
+            {
+                return Err(M1PhysicalBufferBindingErrorV1::RowMetadata { dispatch_index });
+            }
+            let resolved =
+                match range {
+                    ferric_build::M1StepWorkspaceRangeRole::DraftPositionIds => workspaces
+                        .speculative_draft_position_dispatch_range(allocations, draft_segment),
+                    ferric_build::M1StepWorkspaceRangeRole::DraftContextLengths => workspaces
+                        .speculative_draft_context_dispatch_range(allocations, draft_segment),
+                    _ => unreachable!(),
+                };
+            resolved.map_err(|error| M1PhysicalBufferBindingErrorV1::WorkspaceRange {
+                dispatch_index,
+                argument,
+                error,
+            })
+        }
         M1PhysicalBufferSourceV1::ModelWeight { role, kind, layer } => model_memory
             .weight_dispatch_range(allocations, role, kind, layer)
             .map_err(|error| M1PhysicalBufferBindingErrorV1::ModelMemoryRange {
@@ -585,8 +649,7 @@ fn resolve_source(
                 argument,
                 error,
             }),
-        M1PhysicalBufferSourceV1::SpeculativeTargetTokenIds { .. }
-        | M1PhysicalBufferSourceV1::SpeculativeDraftIterationMetadata { .. } => {
+        M1PhysicalBufferSourceV1::SpeculativeTargetTokenIds { .. } => {
             Err(M1PhysicalBufferBindingErrorV1::MaterializationRequired {
                 dispatch_index,
                 argument,
@@ -670,8 +733,8 @@ mod tests {
     }
 
     #[test]
-    fn every_non_speculative_intent_is_complete_and_binding_ready() {
-        for (case, intent) in non_speculative_intents().into_iter().enumerate() {
+    fn every_complete_intent_is_structurally_binding_ready() {
+        for (case, intent) in complete_intents().into_iter().enumerate() {
             let recipe = exact_recipe(intent, 50 + u8::try_from(case).unwrap() * 2);
             assert!(!recipe.requires_future_materialization());
             assert!(first_materialization_requirement(&recipe).is_none());
@@ -826,30 +889,82 @@ mod tests {
     }
 
     #[test]
-    fn every_speculative_intent_fails_closed_on_explicit_materialization() {
+    fn every_speculative_shape_routes_assembly_and_exact_target_metadata() {
         for (case, intent) in complete_intents().into_iter().skip(11).enumerate() {
             let recipe = exact_recipe(intent, 140 + u8::try_from(case).unwrap() * 2);
-            let error = first_materialization_requirement(&recipe).unwrap();
-            let M1PhysicalBufferBindingErrorV1::MaterializationRequired {
-                dispatch_index,
-                argument,
-                source,
-            } = error
-            else {
-                panic!("speculative recipe did not fail for materialization")
-            };
-            assert!(source.requires_future_materialization());
-            let exact = recipe
+            assert!(!recipe.requires_future_materialization());
+            assert!(first_materialization_requirement(&recipe).is_none());
+            let assembly = recipe
                 .rows()
                 .iter()
-                .find(|row| row.dispatch_index() == dispatch_index)
-                .and_then(|row| {
-                    row.buffers()
-                        .iter()
-                        .find(|buffer| buffer.explicit_argument_index() == argument)
-                })
+                .find(|row| row.program() == M1PhysicalProgramV1::SpeculativeTokenAssembly)
                 .unwrap();
-            assert_eq!(exact.source(), source);
+            assert_eq!(assembly.logical_ordinal(), None);
+            assert_eq!(assembly.operator(), None);
+            assert_eq!(assembly.buffers().len(), 3);
+            assert!(matches!(
+                assembly.buffers()[0].source(),
+                M1PhysicalBufferSourceV1::SpeculativeDraftAnchorTokenIds {
+                    workspace: M1FullStepWorkspaceRole::Draft,
+                    range: M1StepWorkspaceRangeRole::TokenIds,
+                    verification_segment,
+                } if verification_segment == assembly.segment_index()
+            ));
+            assert_eq!(
+                assembly.buffers()[1].source(),
+                M1PhysicalBufferSourceV1::Workspace {
+                    workspace: M1FullStepWorkspaceRole::Target,
+                    range: M1StepWorkspaceRangeRole::DraftChoices,
+                }
+            );
+            assert_eq!(
+                assembly.buffers()[2].source(),
+                M1PhysicalBufferSourceV1::Workspace {
+                    workspace: M1FullStepWorkspaceRole::Target,
+                    range: M1StepWorkspaceRangeRole::TokenIds,
+                }
+            );
+
+            let mut position_rows = Vec::new();
+            let mut context_rows = Vec::new();
+            for source in recipe
+                .rows()
+                .iter()
+                .flat_map(crate::M1PhysicalBufferRecipeRowV1::buffers)
+                .map(|buffer| buffer.source())
+            {
+                let M1PhysicalBufferSourceV1::SpeculativeDraftIterationMetadata {
+                    workspace,
+                    range,
+                    draft_segment,
+                    iteration,
+                } = source
+                else {
+                    continue;
+                };
+                assert_eq!(workspace, M1FullStepWorkspaceRole::Target);
+                assert!(iteration > 0);
+                assert_eq!(draft_segment, iteration);
+                match range {
+                    M1StepWorkspaceRangeRole::DraftPositionIds => {
+                        if !position_rows.contains(&(draft_segment, iteration)) {
+                            position_rows.push((draft_segment, iteration));
+                        }
+                    }
+                    M1StepWorkspaceRangeRole::DraftContextLengths => {
+                        if !context_rows.contains(&(draft_segment, iteration)) {
+                            context_rows.push((draft_segment, iteration));
+                        }
+                    }
+                    _ => panic!("non-staged metadata source"),
+                }
+            }
+            let draft_iterations = match assembly.stage() {
+                M1StepDispatchStage::TargetVerification { draft_iterations } => draft_iterations,
+                _ => unreachable!(),
+            };
+            assert_eq!(position_rows.len(), usize::from(draft_iterations - 1));
+            assert_eq!(context_rows.len(), usize::from(draft_iterations - 1));
 
             let (kernargs, workspaces, rows) = recipe.into_parts();
             AddresslessM1PhysicalBufferRecipeV1::from_parts(kernargs, workspaces, rows)
@@ -889,6 +1004,12 @@ mod tests {
         assert_row_metadata(hostile);
         hostile = exact;
         hostile.logical_ordinal_matches = false;
+        assert_row_metadata(hostile);
+        hostile = exact;
+        hostile.profile_matches = false;
+        assert_row_metadata(hostile);
+        hostile = exact;
+        hostile.kind_matches = false;
         assert_row_metadata(hostile);
         hostile = exact;
         hostile.source_profile_id = Identity::new([255; 32]);
@@ -961,6 +1082,8 @@ mod tests {
             source_selection: source.selection(),
             physical_selection: physical.selection(),
             logical_ordinal_matches: source.logical_ordinal() == physical.logical_ordinal(),
+            profile_matches: source.profile() == physical.profile(),
+            kind_matches: source.kind() == physical.kind(),
             source_profile_id: source.profile_id(),
             physical_profile_id: physical.profile_id(),
             source_program: source.program(),

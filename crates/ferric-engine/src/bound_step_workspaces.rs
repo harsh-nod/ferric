@@ -15,9 +15,9 @@ use ferric_build::{AddresslessM1StepWorkspacePlan, M1StepWorkspaceRangeRole};
 
 use crate::{
     AddresslessM1FullStepWorkspaceComposition, BoundM1StepWorkspaceSubleases,
-    M1FullStepWorkspaceInputKind, M1FullStepWorkspaceRole, M1FullStepWorkspaceSegmentBinding,
-    M1SpeculativeDraftChoiceSubrange, M1SpeculativeDraftMetadataSubrange, M1StepDispatchStage,
-    M1StepWorkspaceDispatchRangeError, M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
+    M1FullStepWorkspaceInputKind, M1FullStepWorkspaceRole, M1SpeculativeDraftChoiceSubrange,
+    M1SpeculativeDraftMetadataSubrange, M1StepDispatchStage, M1StepWorkspaceDispatchRangeError,
+    M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
     M1_TARGET_SPECULATIVE_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
     M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
 };
@@ -322,6 +322,8 @@ pub enum M1FullStepWorkspaceDispatchRangeError {
     },
     /// The segment has no speculative target choice row.
     DraftChoiceSubrangeUnavailable { segment_index: u8 },
+    /// The target-verification segment has no exact draft anchor-token source.
+    DraftAnchorUnavailable { segment_index: u8 },
     /// The segment has no speculative target draft-position row.
     DraftPositionSubrangeUnavailable { segment_index: u8 },
     /// The segment has no speculative target draft-context row.
@@ -430,6 +432,75 @@ impl BoundM1FullStepWorkspaceSubleases {
             .draft_choice_subrange()
     }
 
+    /// Returns the exact addressless target `DraftPositionIds` row for one draft segment.
+    #[must_use]
+    pub fn speculative_draft_position_subrange(
+        &self,
+        draft_segment: u8,
+    ) -> Option<M1SpeculativeDraftMetadataSubrange> {
+        self.composition
+            .segment_binding(draft_segment)?
+            .draft_position_ids_subrange()
+    }
+
+    /// Returns the exact addressless target `DraftContextLengths` row for one draft segment.
+    #[must_use]
+    pub fn speculative_draft_context_subrange(
+        &self,
+        draft_segment: u8,
+    ) -> Option<M1SpeculativeDraftMetadataSubrange> {
+        self.composition
+            .segment_binding(draft_segment)?
+            .draft_context_lengths_subrange()
+    }
+
+    /// Resolves the exact draft `TokenIds [S]` anchor for token assembly.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`M1FullStepWorkspaceDispatchRangeError`] unless the named
+    /// segment is the speculative target-verification segment and an exact
+    /// draft workspace owner is retained.
+    pub fn speculative_token_assembly_anchor_dispatch_range(
+        &self,
+        allocations: &ServiceAllocationSessionV1,
+        verification_segment: u8,
+    ) -> Result<ServiceDeviceDispatchRangeV1, M1FullStepWorkspaceDispatchRangeError> {
+        let valid_segment = self
+            .composition
+            .dispatch_plan()
+            .segments()
+            .get(usize::from(verification_segment))
+            .is_some_and(|segment| {
+                segment.segment_index() == verification_segment
+                    && matches!(
+                        segment.stage(),
+                        M1StepDispatchStage::TargetVerification { .. }
+                    )
+            });
+        if !valid_segment
+            || !matches!(
+                &self.owners,
+                M1FullStepWorkspaceSubleaseOwners::SpeculativeRound { .. }
+            )
+        {
+            return Err(
+                M1FullStepWorkspaceDispatchRangeError::DraftAnchorUnavailable {
+                    segment_index: verification_segment,
+                },
+            );
+        }
+        self.whole_workspace_dispatch_range(
+            allocations,
+            M1FullStepWorkspaceRole::Draft,
+            M1StepWorkspaceRangeRole::TokenIds,
+        )
+        .map_err(|error| M1FullStepWorkspaceDispatchRangeError::Range {
+            workspace: M1FullStepWorkspaceRole::Draft,
+            error,
+        })
+    }
+
     /// Resolves the exact target-owned `DraftChoices` row for one draft segment.
     ///
     /// The returned range retains the target allocation generation and the
@@ -479,9 +550,7 @@ impl BoundM1FullStepWorkspaceSubleases {
         draft_segment: u8,
     ) -> Result<ServiceDeviceDispatchRangeV1, M1FullStepWorkspaceDispatchRangeError> {
         let row = self
-            .composition
-            .segment_binding(draft_segment)
-            .and_then(M1FullStepWorkspaceSegmentBinding::draft_position_ids_subrange)
+            .speculative_draft_position_subrange(draft_segment)
             .ok_or(
                 M1FullStepWorkspaceDispatchRangeError::DraftPositionSubrangeUnavailable {
                     segment_index: draft_segment,
@@ -505,9 +574,7 @@ impl BoundM1FullStepWorkspaceSubleases {
         draft_segment: u8,
     ) -> Result<ServiceDeviceDispatchRangeV1, M1FullStepWorkspaceDispatchRangeError> {
         let row = self
-            .composition
-            .segment_binding(draft_segment)
-            .and_then(M1FullStepWorkspaceSegmentBinding::draft_context_lengths_subrange)
+            .speculative_draft_context_subrange(draft_segment)
             .ok_or(
                 M1FullStepWorkspaceDispatchRangeError::DraftContextSubrangeUnavailable {
                     segment_index: draft_segment,

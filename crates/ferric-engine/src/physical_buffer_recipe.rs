@@ -17,8 +17,9 @@ use ferric_spec::{
 
 use crate::{
     AddresslessM1FullStepWorkspaceComposition, AddresslessM1PhysicalKernargRecipeV1,
-    M1FullStepWorkspaceRole, M1OperationDispatchKind, M1PhysicalProgramV1,
-    M1SpeculativeDraftChoiceSubrange, M1StepDispatchStage, M1_PHYSICAL_DISPATCH_RECIPE_VERSION_V1,
+    M1FullStepWorkspaceRole, M1OperationDispatchKind, M1PhysicalDispatchKindV1,
+    M1PhysicalDispatchProfileV1, M1PhysicalProgramV1, M1SpeculativeDraftChoiceSubrange,
+    M1StepDispatchStage, M1_PHYSICAL_DISPATCH_RECIPE_VERSION_V1,
     M1_PHYSICAL_KERNARG_RECIPE_VERSION_V1,
 };
 
@@ -68,6 +69,15 @@ pub enum M1PhysicalBufferSourceV1 {
     },
     /// One exact target `DraftChoices [K,S]` iteration row.
     SpeculativeDraftChoices(M1SpeculativeDraftChoiceSubrange),
+    /// Initial draft `TokenIds [S]` consumed by target-token assembly.
+    SpeculativeDraftAnchorTokenIds {
+        /// Exact draft workspace containing the anchor tokens.
+        workspace: M1FullStepWorkspaceRole,
+        /// Exact anchor-token workspace range.
+        range: M1StepWorkspaceRangeRole,
+        /// Target-verification segment immediately following the assembly row.
+        verification_segment: u8,
+    },
     /// Target-verification token IDs that a future in-batch materialization
     /// step must assemble from the initial token and ordered draft choices.
     SpeculativeTargetTokenIds {
@@ -78,14 +88,15 @@ pub enum M1PhysicalBufferSourceV1 {
         /// Exact number of preceding autoregressive draft iterations.
         draft_iterations: u8,
     },
-    /// Draft-decode position or committed-context metadata that a future
-    /// in-batch step must advance before the named iteration executes.
+    /// One exact target-owned draft-decode position or committed-context row.
     SpeculativeDraftIterationMetadata {
-        /// Exact reusable draft workspace declaring the eventual destination.
+        /// Target workspace owning the staged iteration-major rows.
         workspace: M1FullStepWorkspaceRole,
-        /// `PositionIds` or `ContextLengths` destination role.
+        /// `DraftPositionIds` or `DraftContextLengths` target range.
         range: M1StepWorkspaceRangeRole,
-        /// Exact autoregressive draft iteration requiring the advanced value.
+        /// Draft segment consuming this exact row.
+        draft_segment: u8,
+        /// Zero-based iteration-major row index.
         iteration: u8,
     },
     /// One exact immutable model-weight tensor coordinate.
@@ -141,10 +152,7 @@ impl M1PhysicalBufferSourceV1 {
     /// a value whose production is established by the retained inputs.
     #[must_use]
     pub const fn requires_future_materialization(self) -> bool {
-        matches!(
-            self,
-            Self::SpeculativeTargetTokenIds { .. } | Self::SpeculativeDraftIterationMetadata { .. }
-        )
+        matches!(self, Self::SpeculativeTargetTokenIds { .. })
     }
 }
 
@@ -155,8 +163,7 @@ pub struct M1PhysicalBufferRecipeRowV1 {
     segment_index: u8,
     stage: M1StepDispatchStage,
     selection: Qwen3PlanSelection,
-    logical_ordinal: u32,
-    profile_id: Identity,
+    profile: M1PhysicalDispatchProfileV1,
     program: M1PhysicalProgramV1,
     buffers: Box<[M1PhysicalExplicitBufferV1]>,
 }
@@ -188,14 +195,40 @@ impl M1PhysicalBufferRecipeRowV1 {
 
     /// Operation ordinal within the selected generated plan.
     #[must_use]
-    pub const fn logical_ordinal(&self) -> u32 {
-        self.logical_ordinal
+    pub const fn logical_ordinal(&self) -> Option<u32> {
+        match self.profile {
+            M1PhysicalDispatchProfileV1::Model {
+                logical_ordinal, ..
+            } => Some(logical_ordinal),
+            M1PhysicalDispatchProfileV1::SpeculativeTokenAssembly(_) => None,
+        }
+    }
+
+    /// Generated Qwen operator, absent for infrastructure rows.
+    #[must_use]
+    pub const fn operator(&self) -> Option<Qwen3Operator> {
+        match self.profile {
+            M1PhysicalDispatchProfileV1::Model { descriptor, .. } => Some(descriptor.step.operator),
+            M1PhysicalDispatchProfileV1::SpeculativeTokenAssembly(_) => None,
+        }
+    }
+
+    /// Exact model or infrastructure dispatch profile.
+    #[must_use]
+    pub const fn profile(&self) -> M1PhysicalDispatchProfileV1 {
+        self.profile
+    }
+
+    /// Physical row role without assigning infrastructure a Qwen operator.
+    #[must_use]
+    pub const fn kind(&self) -> M1PhysicalDispatchKindV1 {
+        self.profile.kind()
     }
 
     /// Exact canonical profile identity.
     #[must_use]
     pub const fn profile_id(&self) -> Identity {
-        self.profile_id
+        self.profile.profile_id()
     }
 
     /// Exact physical entry point selected for this row.
@@ -496,71 +529,10 @@ fn derive_rows(
     let physical = kernargs.source_recipe();
     let dispatch = workspaces.dispatch_plan();
     let mut rows = Vec::with_capacity(physical.rows().len());
+    let mut physical_position = 0_usize;
+    let mut logical_dispatch_index = 0_u32;
 
-    for (position, (physical_row, image)) in
-        physical.rows().iter().zip(kernargs.images()).enumerate()
-    {
-        let expected =
-            u32::try_from(position).map_err(|_| M1PhysicalBufferRecipeErrorV1::DispatchCount {
-                expected: physical.rows().len(),
-                physical: physical.rows().len(),
-                images: kernargs.images().len(),
-            })?;
-        if physical_row.dispatch_index() != expected {
-            return Err(M1PhysicalBufferRecipeErrorV1::DispatchOrder {
-                expected,
-                actual: physical_row.dispatch_index(),
-            });
-        }
-        if image.dispatch_index() != expected {
-            return Err(M1PhysicalBufferRecipeErrorV1::DispatchOrder {
-                expected,
-                actual: image.dispatch_index(),
-            });
-        }
-        let segment = dispatch
-            .segments()
-            .get(usize::from(physical_row.segment_index()))
-            .ok_or(M1PhysicalBufferRecipeErrorV1::PhysicalRow {
-                dispatch_index: expected,
-            })?;
-        let local_index = expected.checked_sub(segment.dispatch_start()).ok_or(
-            M1PhysicalBufferRecipeErrorV1::PhysicalRow {
-                dispatch_index: expected,
-            },
-        )?;
-        let logical = segment
-            .rows()
-            .get(usize::try_from(local_index).map_err(|_| {
-                M1PhysicalBufferRecipeErrorV1::PhysicalRow {
-                    dispatch_index: expected,
-                }
-            })?)
-            .ok_or(M1PhysicalBufferRecipeErrorV1::PhysicalRow {
-                dispatch_index: expected,
-            })?;
-        if segment.segment_index() != physical_row.segment_index()
-            || segment.stage() != physical_row.stage()
-            || segment.selection() != physical_row.selection()
-            || logical.dispatch_index() != local_index
-            || logical.logical_ordinal() != physical_row.logical_ordinal()
-            || logical.profile() != &physical_row.profile()
-            || logical.kind() != physical_row.kind()
-            || logical.operation().profile_id() != physical_row.profile_id()
-        {
-            return Err(M1PhysicalBufferRecipeErrorV1::PhysicalRow {
-                dispatch_index: expected,
-            });
-        }
-        if image.selection() != physical_row.selection()
-            || image.profile_id() != physical_row.profile_id()
-            || image.program() != physical_row.program()
-            || image.bytes().len() != usize::try_from(physical_row.kernarg_bytes()).unwrap_or(0)
-        {
-            return Err(M1PhysicalBufferRecipeErrorV1::KernargImage {
-                dispatch_index: expected,
-            });
-        }
+    for segment in dispatch.segments() {
         let binding = workspaces
             .segment_binding(segment.segment_index())
             .filter(|binding| {
@@ -577,51 +549,205 @@ fn derive_rows(
             .ok_or(M1PhysicalBufferRecipeErrorV1::WorkspaceBinding {
                 segment_index: segment.segment_index(),
             })?;
-        let profile = physical_row.profile();
-        let input = MappingInput {
-            dispatch_index: expected,
-            segment_index: segment.segment_index(),
-            stage: segment.stage(),
-            selection: segment.selection(),
-            logical_ordinal: physical_row.logical_ordinal(),
-            operator: profile.step.operator,
-            layer: profile.step.layer,
-            kind: physical_row.kind(),
-            program: physical_row.program(),
-            workspace: binding.workspace_role(),
-            draft_choice_subrange: binding.draft_choice_subrange(),
-            token_input: match segment.stage() {
-                M1StepDispatchStage::DraftDecode { iteration } if iteration > 0 => workspaces
-                    .segment_binding(iteration - 1)
-                    .and_then(crate::M1FullStepWorkspaceSegmentBinding::draft_choice_subrange)
-                    .map(M1PhysicalBufferSourceV1::SpeculativeDraftChoices),
-                M1StepDispatchStage::TargetVerification { draft_iterations } => {
-                    Some(M1PhysicalBufferSourceV1::SpeculativeTargetTokenIds {
-                        workspace: M1FullStepWorkspaceRole::Target,
-                        range: M1StepWorkspaceRangeRole::TokenIds,
-                        draft_iterations,
-                    })
+
+        if let M1StepDispatchStage::TargetVerification { draft_iterations } = segment.stage() {
+            let (physical_row, image, dispatch_index) =
+                physical_entry(physical.rows(), kernargs.images(), physical_position)?;
+            validate_physical_entry(physical_row, image, segment, dispatch_index)?;
+            let profile = match physical_row.profile() {
+                M1PhysicalDispatchProfileV1::SpeculativeTokenAssembly(profile) => profile,
+                M1PhysicalDispatchProfileV1::Model { .. } => {
+                    return Err(M1PhysicalBufferRecipeErrorV1::PhysicalRow { dispatch_index });
                 }
-                _ => None,
-            },
-        };
-        validate_mapping_input(input)?;
-        let buffers = expected_buffers(input)?;
-        let row = M1PhysicalBufferRecipeRowV1 {
-            dispatch_index: expected,
-            segment_index: input.segment_index,
-            stage: input.stage,
-            selection: input.selection,
-            logical_ordinal: input.logical_ordinal,
-            profile_id: physical_row.profile_id(),
-            program: input.program,
-            buffers,
-        };
-        validate_buffer_row(&row, input, workspaces)?;
-        rows.push(row);
+            };
+            if physical_row.program() != M1PhysicalProgramV1::SpeculativeTokenAssembly
+                || profile.speculative_k() != u32::from(draft_iterations)
+                || segment
+                    .selection()
+                    .bucket
+                    .dimensions(segment.selection().role, segment.selection().mode)
+                    .is_none_or(|dimensions| {
+                        dimensions.sequences != profile.sequences()
+                            || dimensions.active_tokens != profile.speculative_k() + 1
+                    })
+            {
+                return Err(M1PhysicalBufferRecipeErrorV1::PhysicalRow { dispatch_index });
+            }
+            let buffers = assembly_buffers(segment.segment_index());
+            let row = M1PhysicalBufferRecipeRowV1 {
+                dispatch_index,
+                segment_index: segment.segment_index(),
+                stage: segment.stage(),
+                selection: segment.selection(),
+                profile: physical_row.profile(),
+                program: physical_row.program(),
+                buffers,
+            };
+            validate_assembly_buffer_row(&row, workspaces)?;
+            rows.push(row);
+            physical_position = physical_position.checked_add(1).ok_or(
+                M1PhysicalBufferRecipeErrorV1::DispatchCount {
+                    expected: physical.rows().len(),
+                    physical: physical.rows().len(),
+                    images: kernargs.images().len(),
+                },
+            )?;
+        }
+
+        for logical in segment.rows() {
+            let (physical_row, image, dispatch_index) =
+                physical_entry(physical.rows(), kernargs.images(), physical_position)?;
+            validate_physical_entry(physical_row, image, segment, dispatch_index)?;
+            let expected_logical_dispatch_index = segment
+                .dispatch_start()
+                .checked_add(logical.dispatch_index())
+                .ok_or(M1PhysicalBufferRecipeErrorV1::PhysicalRow { dispatch_index })?;
+            let (logical_ordinal, descriptor, kind, profile_id) = match physical_row.profile() {
+                M1PhysicalDispatchProfileV1::Model {
+                    logical_ordinal,
+                    descriptor,
+                    kind,
+                    profile_id,
+                } => (logical_ordinal, descriptor, kind, profile_id),
+                M1PhysicalDispatchProfileV1::SpeculativeTokenAssembly(_) => {
+                    return Err(M1PhysicalBufferRecipeErrorV1::PhysicalRow { dispatch_index });
+                }
+            };
+            if expected_logical_dispatch_index != logical_dispatch_index
+                || logical.logical_ordinal() != logical_ordinal
+                || logical.profile() != &descriptor
+                || logical.kind() != kind
+                || logical.operation().profile_id() != profile_id
+            {
+                return Err(M1PhysicalBufferRecipeErrorV1::PhysicalRow { dispatch_index });
+            }
+            let input = MappingInput {
+                dispatch_index,
+                segment_index: segment.segment_index(),
+                stage: segment.stage(),
+                selection: segment.selection(),
+                logical_ordinal,
+                operator: descriptor.step.operator,
+                layer: descriptor.step.layer,
+                kind,
+                program: physical_row.program(),
+                workspace: binding.workspace_role(),
+                draft_choice_subrange: binding.draft_choice_subrange(),
+                token_input: match segment.stage() {
+                    M1StepDispatchStage::DraftDecode { iteration } if iteration > 0 => workspaces
+                        .segment_binding(iteration - 1)
+                        .and_then(crate::M1FullStepWorkspaceSegmentBinding::draft_choice_subrange)
+                        .map(M1PhysicalBufferSourceV1::SpeculativeDraftChoices),
+                    _ => None,
+                },
+            };
+            validate_mapping_input(input)?;
+            validate_speculative_metadata_binding(input, workspaces)?;
+            let buffers = expected_buffers(input, workspaces)?;
+            let row = M1PhysicalBufferRecipeRowV1 {
+                dispatch_index,
+                segment_index: input.segment_index,
+                stage: input.stage,
+                selection: input.selection,
+                profile: physical_row.profile(),
+                program: input.program,
+                buffers,
+            };
+            validate_buffer_row(&row, input, workspaces)?;
+            rows.push(row);
+            physical_position = physical_position.checked_add(1).ok_or(
+                M1PhysicalBufferRecipeErrorV1::DispatchCount {
+                    expected: physical.rows().len(),
+                    physical: physical.rows().len(),
+                    images: kernargs.images().len(),
+                },
+            )?;
+            logical_dispatch_index = logical_dispatch_index
+                .checked_add(1)
+                .ok_or(M1PhysicalBufferRecipeErrorV1::PhysicalRow { dispatch_index })?;
+        }
+    }
+    if physical_position != physical.rows().len()
+        || logical_dispatch_index != dispatch.dispatch_count()
+    {
+        return Err(M1PhysicalBufferRecipeErrorV1::DispatchCount {
+            expected: physical_position,
+            physical: physical.rows().len(),
+            images: kernargs.images().len(),
+        });
     }
     validate_recipe_order(&rows)?;
     Ok(rows.into_boxed_slice())
+}
+
+fn physical_entry<'a>(
+    physical_rows: &'a [crate::M1PhysicalDispatchRecipeRowV1],
+    images: &'a [crate::M1PhysicalKernargImageV1],
+    position: usize,
+) -> Result<
+    (
+        &'a crate::M1PhysicalDispatchRecipeRowV1,
+        &'a crate::M1PhysicalKernargImageV1,
+        u32,
+    ),
+    M1PhysicalBufferRecipeErrorV1,
+> {
+    let dispatch_index =
+        u32::try_from(position).map_err(|_| M1PhysicalBufferRecipeErrorV1::DispatchCount {
+            expected: physical_rows.len(),
+            physical: physical_rows.len(),
+            images: images.len(),
+        })?;
+    let physical =
+        physical_rows
+            .get(position)
+            .ok_or(M1PhysicalBufferRecipeErrorV1::DispatchCount {
+                expected: position + 1,
+                physical: physical_rows.len(),
+                images: images.len(),
+            })?;
+    let image = images
+        .get(position)
+        .ok_or(M1PhysicalBufferRecipeErrorV1::DispatchCount {
+            expected: position + 1,
+            physical: physical_rows.len(),
+            images: images.len(),
+        })?;
+    Ok((physical, image, dispatch_index))
+}
+
+fn validate_physical_entry(
+    physical: &crate::M1PhysicalDispatchRecipeRowV1,
+    image: &crate::M1PhysicalKernargImageV1,
+    segment: &crate::M1StepDispatchSegment,
+    dispatch_index: u32,
+) -> Result<(), M1PhysicalBufferRecipeErrorV1> {
+    if physical.dispatch_index() != dispatch_index {
+        return Err(M1PhysicalBufferRecipeErrorV1::DispatchOrder {
+            expected: dispatch_index,
+            actual: physical.dispatch_index(),
+        });
+    }
+    if physical.segment_index() != segment.segment_index()
+        || physical.stage() != segment.stage()
+        || physical.selection() != segment.selection()
+    {
+        return Err(M1PhysicalBufferRecipeErrorV1::PhysicalRow { dispatch_index });
+    }
+    if image.dispatch_index() != dispatch_index {
+        return Err(M1PhysicalBufferRecipeErrorV1::DispatchOrder {
+            expected: dispatch_index,
+            actual: image.dispatch_index(),
+        });
+    }
+    if image.selection() != physical.selection()
+        || image.profile_id() != physical.profile_id()
+        || image.program() != physical.program()
+        || image.bytes().len() != usize::try_from(physical.kernarg_bytes()).unwrap_or(0)
+    {
+        return Err(M1PhysicalBufferRecipeErrorV1::KernargImage { dispatch_index });
+    }
+    Ok(())
 }
 
 fn validate_recipe_order(
@@ -664,8 +790,20 @@ fn validate_input_headers(
     if physical.composition_id() != workspaces.dispatch_plan().composition_id() {
         return Err(M1PhysicalBufferRecipeErrorV1::CompositionIdentity);
     }
-    let expected =
-        usize::try_from(workspaces.dispatch_plan().dispatch_count()).unwrap_or(usize::MAX);
+    let infrastructure = workspaces
+        .dispatch_plan()
+        .segments()
+        .iter()
+        .filter(|segment| {
+            matches!(
+                segment.stage(),
+                M1StepDispatchStage::TargetVerification { .. }
+            )
+        })
+        .count();
+    let expected = usize::try_from(workspaces.dispatch_plan().dispatch_count())
+        .unwrap_or(usize::MAX)
+        .saturating_add(infrastructure);
     if expected != physical.rows().len()
         || usize::try_from(physical.dispatch_count()).ok() != Some(physical.rows().len())
         || physical.rows().len() != kernargs.images().len()
@@ -705,17 +843,10 @@ fn validate_mapping_input(input: MappingInput) -> Result<(), M1PhysicalBufferRec
             M1StepDispatchStage::DraftDecode { iteration: 0 }
             | M1StepDispatchStage::TargetOnly
             | M1StepDispatchStage::DraftPrefill
-            | M1StepDispatchStage::TargetPrefill,
+            | M1StepDispatchStage::TargetPrefill
+            | M1StepDispatchStage::TargetVerification { .. },
             None,
         ) => {}
-        (
-            M1StepDispatchStage::TargetVerification { draft_iterations },
-            Some(M1PhysicalBufferSourceV1::SpeculativeTargetTokenIds {
-                workspace: M1FullStepWorkspaceRole::Target,
-                range: M1StepWorkspaceRangeRole::TokenIds,
-                draft_iterations: actual,
-            }),
-        ) if actual == draft_iterations => {}
         _ => {
             return Err(M1PhysicalBufferRecipeErrorV1::WorkspaceBinding {
                 segment_index: input.segment_index,
@@ -766,6 +897,57 @@ fn validate_mapping_input(input: MappingInput) -> Result<(), M1PhysicalBufferRec
     Ok(())
 }
 
+fn validate_speculative_metadata_binding(
+    input: MappingInput,
+    workspaces: &AddresslessM1FullStepWorkspaceComposition,
+) -> Result<(), M1PhysicalBufferRecipeErrorV1> {
+    let M1StepDispatchStage::DraftDecode { iteration } = input.stage else {
+        return Ok(());
+    };
+    if iteration == 0 {
+        return Ok(());
+    }
+    let binding = workspaces.segment_binding(input.segment_index).ok_or(
+        M1PhysicalBufferRecipeErrorV1::WorkspaceBinding {
+            segment_index: input.segment_index,
+        },
+    )?;
+    for (role, metadata) in [
+        (
+            M1StepWorkspaceRangeRole::DraftPositionIds,
+            binding.draft_position_ids_subrange(),
+        ),
+        (
+            M1StepWorkspaceRangeRole::DraftContextLengths,
+            binding.draft_context_lengths_subrange(),
+        ),
+    ] {
+        let valid = metadata.is_some_and(|metadata| {
+            metadata.draft_segment() == input.segment_index
+                && metadata.iteration() == iteration
+                && metadata.range().role() == role
+                && metadata.target_workspace_id()
+                    == workspaces.workspace_plans().target().workspace_id()
+                && metadata.target_workspace_selection()
+                    == workspaces.workspace_plans().target().selection()
+                && metadata.target_allocation_id()
+                    == workspaces
+                        .workspace_plans()
+                        .target()
+                        .allocation()
+                        .allocation_id()
+        });
+        if !valid {
+            return Err(M1PhysicalBufferRecipeErrorV1::WorkspaceRange {
+                dispatch_index: input.dispatch_index,
+                workspace: M1FullStepWorkspaceRole::Target,
+                role,
+            });
+        }
+    }
+    Ok(())
+}
+
 fn buffer(
     explicit_argument_index: usize,
     access: M1PhysicalBufferAccessV1,
@@ -778,7 +960,11 @@ fn buffer(
     }
 }
 
-fn workspace(input: MappingInput, range: M1StepWorkspaceRangeRole) -> M1PhysicalBufferSourceV1 {
+fn workspace(
+    input: MappingInput,
+    range: M1StepWorkspaceRangeRole,
+    workspaces: &AddresslessM1FullStepWorkspaceComposition,
+) -> M1PhysicalBufferSourceV1 {
     if let M1StepDispatchStage::DraftDecode { iteration } = input.stage {
         if iteration > 0
             && matches!(
@@ -786,11 +972,25 @@ fn workspace(input: MappingInput, range: M1StepWorkspaceRangeRole) -> M1Physical
                 M1StepWorkspaceRangeRole::PositionIds | M1StepWorkspaceRangeRole::ContextLengths
             )
         {
-            return M1PhysicalBufferSourceV1::SpeculativeDraftIterationMetadata {
-                workspace: input.workspace,
-                range,
-                iteration,
-            };
+            let metadata = workspaces
+                .segment_binding(input.segment_index)
+                .and_then(|binding| match range {
+                    M1StepWorkspaceRangeRole::PositionIds => binding.draft_position_ids_subrange(),
+                    M1StepWorkspaceRangeRole::ContextLengths => {
+                        binding.draft_context_lengths_subrange()
+                    }
+                    _ => None,
+                });
+            if let Some(metadata) = metadata.filter(|metadata| {
+                metadata.iteration() == iteration && metadata.draft_segment() == input.segment_index
+            }) {
+                return M1PhysicalBufferSourceV1::SpeculativeDraftIterationMetadata {
+                    workspace: M1FullStepWorkspaceRole::Target,
+                    range: metadata.range().role(),
+                    draft_segment: metadata.draft_segment(),
+                    iteration: metadata.iteration(),
+                };
+            }
         }
     }
     M1PhysicalBufferSourceV1::Workspace {
@@ -827,8 +1027,43 @@ fn kv(input: MappingInput, component: KvCacheComponent) -> M1PhysicalBufferSourc
     }
 }
 
+fn assembly_buffers(verification_segment: u8) -> Box<[M1PhysicalExplicitBufferV1]> {
+    use M1PhysicalBufferAccessV1::{ReadOnly, WriteOnly};
+    use M1StepWorkspaceRangeRole as W;
+
+    vec![
+        buffer(
+            0,
+            ReadOnly,
+            M1PhysicalBufferSourceV1::SpeculativeDraftAnchorTokenIds {
+                workspace: M1FullStepWorkspaceRole::Draft,
+                range: W::TokenIds,
+                verification_segment,
+            },
+        ),
+        buffer(
+            2,
+            ReadOnly,
+            M1PhysicalBufferSourceV1::Workspace {
+                workspace: M1FullStepWorkspaceRole::Target,
+                range: W::DraftChoices,
+            },
+        ),
+        buffer(
+            4,
+            WriteOnly,
+            M1PhysicalBufferSourceV1::Workspace {
+                workspace: M1FullStepWorkspaceRole::Target,
+                range: W::TokenIds,
+            },
+        ),
+    ]
+    .into_boxed_slice()
+}
+
 fn expected_buffers(
     input: MappingInput,
+    workspaces: &AddresslessM1FullStepWorkspaceComposition,
 ) -> Result<Box<[M1PhysicalExplicitBufferV1]>, M1PhysicalBufferRecipeErrorV1> {
     use M1PhysicalBufferAccessV1::{ReadOnly, WriteOnly};
     use M1StepWorkspaceRangeRole as W;
@@ -842,39 +1077,75 @@ fn expected_buffers(
                 ReadOnly,
                 input
                     .token_input
-                    .unwrap_or_else(|| workspace(input, W::TokenIds)),
+                    .unwrap_or_else(|| workspace(input, W::TokenIds, workspaces)),
             ),
             buffer(
                 2,
                 ReadOnly,
                 weight(input, T::TokenEmbedding, QWEN3_NO_LAYER),
             ),
-            buffer(4, WriteOnly, workspace(input, W::ResidualHidden)),
+            buffer(
+                4,
+                WriteOnly,
+                workspace(input, W::ResidualHidden, workspaces),
+            ),
         ],
-        O::QueryProjection => {
-            gemm_buffers(input, W::NormalizedHidden, T::QueryProjection, W::Query)
-        }
-        O::KeyProjection => gemm_buffers(input, W::NormalizedHidden, T::KeyProjection, W::Key),
-        O::ValueProjection => {
-            gemm_buffers(input, W::NormalizedHidden, T::ValueProjection, W::Value)
-        }
+        O::QueryProjection => gemm_buffers(
+            input,
+            W::NormalizedHidden,
+            T::QueryProjection,
+            W::Query,
+            workspaces,
+        ),
+        O::KeyProjection => gemm_buffers(
+            input,
+            W::NormalizedHidden,
+            T::KeyProjection,
+            W::Key,
+            workspaces,
+        ),
+        O::ValueProjection => gemm_buffers(
+            input,
+            W::NormalizedHidden,
+            T::ValueProjection,
+            W::Value,
+            workspaces,
+        ),
         O::AttentionOutputResidual => gemm_buffers(
             input,
             W::AttentionOutput,
             T::OutputProjection,
             W::ResidualHidden,
+            workspaces,
         ),
         O::GateProjection => gemm_buffers(
             input,
             W::PostAttentionNormalized,
             T::GateProjection,
             W::Gate,
+            workspaces,
         ),
-        O::UpProjection => gemm_buffers(input, W::PostAttentionNormalized, T::UpProjection, W::Up),
-        O::DownResidual => gemm_buffers(input, W::Activated, T::DownProjection, W::ResidualHidden),
-        O::LogitsProjection => {
-            gemm_buffers(input, W::FinalNormalized, T::LanguageModelHead, W::Logits)
-        }
+        O::UpProjection => gemm_buffers(
+            input,
+            W::PostAttentionNormalized,
+            T::UpProjection,
+            W::Up,
+            workspaces,
+        ),
+        O::DownResidual => gemm_buffers(
+            input,
+            W::Activated,
+            T::DownProjection,
+            W::ResidualHidden,
+            workspaces,
+        ),
+        O::LogitsProjection => gemm_buffers(
+            input,
+            W::FinalNormalized,
+            T::LanguageModelHead,
+            W::Logits,
+            workspaces,
+        ),
         O::InputRmsNorm
         | O::QueryRmsNorm
         | O::KeyRmsNorm
@@ -904,7 +1175,7 @@ fn expected_buffers(
                 _ => unreachable!(),
             };
             vec![
-                buffer(0, ReadOnly, workspace(input, input_range)),
+                buffer(0, ReadOnly, workspace(input, input_range, workspaces)),
                 buffer(
                     2,
                     ReadOnly,
@@ -924,47 +1195,59 @@ fn expected_buffers(
                         M1PhysicalBufferSentinelV1::RmsInactiveFusedOutput,
                     ),
                 ),
-                buffer(8, WriteOnly, workspace(input, output_range)),
+                buffer(8, WriteOnly, workspace(input, output_range, workspaces)),
             ]
         }
         O::Rope => vec![
-            buffer(0, ReadOnly, workspace(input, W::NormalizedQuery)),
-            buffer(2, ReadOnly, workspace(input, W::NormalizedKey)),
-            buffer(4, ReadOnly, workspace(input, W::PositionIds)),
-            buffer(6, ReadOnly, workspace(input, W::RopeCosTable)),
-            buffer(8, ReadOnly, workspace(input, W::RopeSinTable)),
-            buffer(10, WriteOnly, workspace(input, W::RotatedQuery)),
-            buffer(12, WriteOnly, workspace(input, W::RotatedKey)),
+            buffer(
+                0,
+                ReadOnly,
+                workspace(input, W::NormalizedQuery, workspaces),
+            ),
+            buffer(2, ReadOnly, workspace(input, W::NormalizedKey, workspaces)),
+            buffer(4, ReadOnly, workspace(input, W::PositionIds, workspaces)),
+            buffer(6, ReadOnly, workspace(input, W::RopeCosTable, workspaces)),
+            buffer(8, ReadOnly, workspace(input, W::RopeSinTable, workspaces)),
+            buffer(10, WriteOnly, workspace(input, W::RotatedQuery, workspaces)),
+            buffer(12, WriteOnly, workspace(input, W::RotatedKey, workspaces)),
         ],
         O::KvWrite => vec![
-            buffer(0, ReadOnly, workspace(input, W::RotatedKey)),
-            buffer(2, ReadOnly, workspace(input, W::Value)),
-            buffer(4, ReadOnly, workspace(input, W::ContextLengths)),
-            buffer(6, ReadOnly, workspace(input, W::KvPageIndices)),
+            buffer(0, ReadOnly, workspace(input, W::RotatedKey, workspaces)),
+            buffer(2, ReadOnly, workspace(input, W::Value, workspaces)),
+            buffer(4, ReadOnly, workspace(input, W::ContextLengths, workspaces)),
+            buffer(6, ReadOnly, workspace(input, W::KvPageIndices, workspaces)),
             buffer(8, WriteOnly, kv(input, KvCacheComponent::Key)),
             buffer(10, WriteOnly, kv(input, KvCacheComponent::Value)),
         ],
         O::Attention => match input.selection.mode {
             Qwen3ExecutionMode::Prefill => vec![
-                buffer(0, ReadOnly, workspace(input, W::RotatedQuery)),
+                buffer(0, ReadOnly, workspace(input, W::RotatedQuery, workspaces)),
                 buffer(2, ReadOnly, kv(input, KvCacheComponent::Key)),
                 buffer(4, ReadOnly, kv(input, KvCacheComponent::Value)),
-                buffer(6, ReadOnly, workspace(input, W::KvPageIndices)),
-                buffer(8, WriteOnly, workspace(input, W::AttentionOutput)),
+                buffer(6, ReadOnly, workspace(input, W::KvPageIndices, workspaces)),
+                buffer(
+                    8,
+                    WriteOnly,
+                    workspace(input, W::AttentionOutput, workspaces),
+                ),
             ],
             Qwen3ExecutionMode::Decode | Qwen3ExecutionMode::Speculative => vec![
-                buffer(0, ReadOnly, workspace(input, W::RotatedQuery)),
+                buffer(0, ReadOnly, workspace(input, W::RotatedQuery, workspaces)),
                 buffer(2, ReadOnly, kv(input, KvCacheComponent::Key)),
                 buffer(4, ReadOnly, kv(input, KvCacheComponent::Value)),
-                buffer(6, ReadOnly, workspace(input, W::KvPageIndices)),
-                buffer(8, ReadOnly, workspace(input, W::ContextLengths)),
-                buffer(10, WriteOnly, workspace(input, W::AttentionOutput)),
+                buffer(6, ReadOnly, workspace(input, W::KvPageIndices, workspaces)),
+                buffer(8, ReadOnly, workspace(input, W::ContextLengths, workspaces)),
+                buffer(
+                    10,
+                    WriteOnly,
+                    workspace(input, W::AttentionOutput, workspaces),
+                ),
             ],
         },
         O::SwiGlu => vec![
-            buffer(0, ReadOnly, workspace(input, W::Gate)),
-            buffer(2, ReadOnly, workspace(input, W::Up)),
-            buffer(4, WriteOnly, workspace(input, W::Activated)),
+            buffer(0, ReadOnly, workspace(input, W::Gate, workspaces)),
+            buffer(2, ReadOnly, workspace(input, W::Up, workspaces)),
+            buffer(4, WriteOnly, workspace(input, W::Activated, workspaces)),
         ],
         O::ArgmaxCompactCompletion => match input.kind {
             M1OperationDispatchKind::K7Argmax => {
@@ -984,16 +1267,16 @@ fn expected_buffers(
                         }
                         M1PhysicalBufferSourceV1::SpeculativeDraftChoices(subrange)
                     }
-                    _ => workspace(input, W::Choices),
+                    _ => workspace(input, W::Choices, workspaces),
                 };
                 vec![
-                    buffer(0, ReadOnly, workspace(input, W::Logits)),
+                    buffer(0, ReadOnly, workspace(input, W::Logits, workspaces)),
                     buffer(2, WriteOnly, output),
                 ]
             }
             M1OperationDispatchKind::K7Compact => {
                 let draft = if input.selection.mode == Qwen3ExecutionMode::Speculative {
-                    workspace(input, W::DraftChoices)
+                    workspace(input, W::DraftChoices, workspaces)
                 } else {
                     sentinel(
                         input,
@@ -1002,14 +1285,30 @@ fn expected_buffers(
                     )
                 };
                 vec![
-                    buffer(0, ReadOnly, workspace(input, W::Choices)),
+                    buffer(0, ReadOnly, workspace(input, W::Choices, workspaces)),
                     buffer(2, ReadOnly, draft),
-                    buffer(4, ReadOnly, workspace(input, W::ActiveLengths)),
-                    buffer(6, ReadOnly, workspace(input, W::RequestSlots)),
-                    buffer(8, ReadOnly, workspace(input, W::RequestGenerations)),
-                    buffer(10, ReadOnly, workspace(input, W::CompletionEpochs)),
-                    buffer(12, ReadOnly, workspace(input, W::PlanIdentities)),
-                    buffer(14, WriteOnly, workspace(input, W::CompactCompletionRecords)),
+                    buffer(4, ReadOnly, workspace(input, W::ActiveLengths, workspaces)),
+                    buffer(6, ReadOnly, workspace(input, W::RequestSlots, workspaces)),
+                    buffer(
+                        8,
+                        ReadOnly,
+                        workspace(input, W::RequestGenerations, workspaces),
+                    ),
+                    buffer(
+                        10,
+                        ReadOnly,
+                        workspace(input, W::CompletionEpochs, workspaces),
+                    ),
+                    buffer(
+                        12,
+                        ReadOnly,
+                        workspace(input, W::PlanIdentities, workspaces),
+                    ),
+                    buffer(
+                        14,
+                        WriteOnly,
+                        workspace(input, W::CompactCompletionRecords, workspaces),
+                    ),
                 ]
             }
             M1OperationDispatchKind::WholeOperation => {
@@ -1028,6 +1327,7 @@ fn gemm_buffers(
     input_range: M1StepWorkspaceRangeRole,
     weight_kind: Qwen3TensorKind,
     output_range: M1StepWorkspaceRangeRole,
+    workspaces: &AddresslessM1FullStepWorkspaceComposition,
 ) -> Vec<M1PhysicalExplicitBufferV1> {
     use M1PhysicalBufferAccessV1::{ReadOnly, ReadWrite};
     let layer = if weight_kind == Qwen3TensorKind::LanguageModelHead {
@@ -1036,9 +1336,9 @@ fn gemm_buffers(
         input.layer
     };
     vec![
-        buffer(0, ReadOnly, workspace(input, input_range)),
+        buffer(0, ReadOnly, workspace(input, input_range, workspaces)),
         buffer(2, ReadOnly, weight(input, weight_kind, layer)),
-        buffer(4, ReadWrite, workspace(input, output_range)),
+        buffer(4, ReadWrite, workspace(input, output_range, workspaces)),
     ]
 }
 
@@ -1047,21 +1347,85 @@ fn validate_buffer_row(
     input: MappingInput,
     workspaces: &AddresslessM1FullStepWorkspaceComposition,
 ) -> Result<(), M1PhysicalBufferRecipeErrorV1> {
+    validate_speculative_metadata_binding(input, workspaces)?;
     if row.dispatch_index != input.dispatch_index
         || row.segment_index != input.segment_index
         || row.stage != input.stage
         || row.selection != input.selection
-        || row.logical_ordinal != input.logical_ordinal
+        || row.logical_ordinal() != Some(input.logical_ordinal)
+        || row.operator() != Some(input.operator)
+        || row.kind() != M1PhysicalDispatchKindV1::Model(input.kind)
         || row.program != input.program
     {
         return Err(M1PhysicalBufferRecipeErrorV1::PhysicalRow {
             dispatch_index: input.dispatch_index,
         });
     }
-    let expected = expected_buffers(input)?;
+    let expected = expected_buffers(input, workspaces)?;
+    validate_exact_buffer_roster(row, &expected, workspaces)
+}
+
+fn validate_assembly_buffer_row(
+    row: &M1PhysicalBufferRecipeRowV1,
+    workspaces: &AddresslessM1FullStepWorkspaceComposition,
+) -> Result<(), M1PhysicalBufferRecipeErrorV1> {
+    let M1StepDispatchStage::TargetVerification { .. } = row.stage else {
+        return Err(M1PhysicalBufferRecipeErrorV1::PhysicalRow {
+            dispatch_index: row.dispatch_index,
+        });
+    };
+    let M1PhysicalDispatchProfileV1::SpeculativeTokenAssembly(profile) = row.profile else {
+        return Err(M1PhysicalBufferRecipeErrorV1::PhysicalRow {
+            dispatch_index: row.dispatch_index,
+        });
+    };
+    let extents = profile.storage_extents();
+    let draft_anchor_bytes = extents[0].checked_mul(4);
+    let draft_choices_bytes = extents[1].checked_mul(4);
+    let target_token_bytes = extents[2].checked_mul(4);
+    let exact_extents = workspaces
+        .workspace_plans()
+        .draft()
+        .and_then(|draft| draft.range(M1StepWorkspaceRangeRole::TokenIds))
+        .zip(
+            workspaces
+                .workspace_plans()
+                .target()
+                .range(M1StepWorkspaceRangeRole::DraftChoices),
+        )
+        .zip(
+            workspaces
+                .workspace_plans()
+                .target()
+                .range(M1StepWorkspaceRangeRole::TokenIds),
+        )
+        .is_some_and(|((anchor, choices), target)| {
+            Some(anchor.byte_len()) == draft_anchor_bytes
+                && Some(choices.byte_len()) == draft_choices_bytes
+                && Some(target.byte_len()) == target_token_bytes
+        });
+    if row.logical_ordinal().is_some()
+        || row.operator().is_some()
+        || row.kind() != M1PhysicalDispatchKindV1::SpeculativeTokenAssembly
+        || row.program != M1PhysicalProgramV1::SpeculativeTokenAssembly
+        || !exact_extents
+    {
+        return Err(M1PhysicalBufferRecipeErrorV1::PhysicalRow {
+            dispatch_index: row.dispatch_index,
+        });
+    }
+    let expected = assembly_buffers(row.segment_index);
+    validate_exact_buffer_roster(row, &expected, workspaces)
+}
+
+fn validate_exact_buffer_roster(
+    row: &M1PhysicalBufferRecipeRowV1,
+    expected: &[M1PhysicalExplicitBufferV1],
+    workspaces: &AddresslessM1FullStepWorkspaceComposition,
+) -> Result<(), M1PhysicalBufferRecipeErrorV1> {
     if row.buffers.len() != expected.len() {
         return Err(M1PhysicalBufferRecipeErrorV1::BufferCount {
-            dispatch_index: input.dispatch_index,
+            dispatch_index: row.dispatch_index,
             expected: expected.len(),
             actual: row.buffers.len(),
         });
@@ -1069,24 +1433,24 @@ fn validate_buffer_row(
     for (actual, expected) in row.buffers.iter().zip(expected.iter()) {
         if actual.explicit_argument_index != expected.explicit_argument_index {
             return Err(M1PhysicalBufferRecipeErrorV1::ArgumentOrdinal {
-                dispatch_index: input.dispatch_index,
+                dispatch_index: row.dispatch_index,
                 expected: expected.explicit_argument_index,
                 actual: actual.explicit_argument_index,
             });
         }
         if actual.access != expected.access {
             return Err(M1PhysicalBufferRecipeErrorV1::Access {
-                dispatch_index: input.dispatch_index,
+                dispatch_index: row.dispatch_index,
                 argument: actual.explicit_argument_index,
             });
         }
         if actual.source != expected.source {
             return Err(M1PhysicalBufferRecipeErrorV1::Source {
-                dispatch_index: input.dispatch_index,
+                dispatch_index: row.dispatch_index,
                 argument: actual.explicit_argument_index,
             });
         }
-        validate_source(input.dispatch_index, actual.source, workspaces)?;
+        validate_source(row.dispatch_index, actual.source, workspaces)?;
     }
     Ok(())
 }
@@ -1147,6 +1511,37 @@ fn validate_source(
                 });
             }
         }
+        M1PhysicalBufferSourceV1::SpeculativeDraftAnchorTokenIds {
+            workspace,
+            range,
+            verification_segment,
+        } => {
+            let valid = workspace == M1FullStepWorkspaceRole::Draft
+                && range == M1StepWorkspaceRangeRole::TokenIds
+                && workspaces
+                    .dispatch_plan()
+                    .segments()
+                    .get(usize::from(verification_segment))
+                    .is_some_and(|segment| {
+                        segment.segment_index() == verification_segment
+                            && matches!(
+                                segment.stage(),
+                                M1StepDispatchStage::TargetVerification { .. }
+                            )
+                    })
+                && workspaces
+                    .workspace_plans()
+                    .draft()
+                    .and_then(|plan| plan.range(range))
+                    .is_some_and(|range| range.byte_len() > 0);
+            if !valid {
+                return Err(M1PhysicalBufferRecipeErrorV1::WorkspaceRange {
+                    dispatch_index,
+                    workspace,
+                    role: range,
+                });
+            }
+        }
         M1PhysicalBufferSourceV1::SpeculativeTargetTokenIds {
             workspace,
             range,
@@ -1171,20 +1566,37 @@ fn validate_source(
         M1PhysicalBufferSourceV1::SpeculativeDraftIterationMetadata {
             workspace,
             range,
+            draft_segment,
             iteration,
         } => {
-            let valid = workspace == M1FullStepWorkspaceRole::Draft
-                && matches!(
-                    range,
-                    M1StepWorkspaceRangeRole::PositionIds
-                        | M1StepWorkspaceRangeRole::ContextLengths
-                )
+            let exact = workspaces
+                .segment_binding(draft_segment)
+                .and_then(|binding| match range {
+                    M1StepWorkspaceRangeRole::DraftPositionIds => {
+                        binding.draft_position_ids_subrange()
+                    }
+                    M1StepWorkspaceRangeRole::DraftContextLengths => {
+                        binding.draft_context_lengths_subrange()
+                    }
+                    _ => None,
+                });
+            let valid = workspace == M1FullStepWorkspaceRole::Target
                 && iteration > 0
-                && workspaces
-                    .workspace_plans()
-                    .draft()
-                    .and_then(|plan| plan.range(range))
-                    .is_some_and(|range| range.byte_len() > 0);
+                && exact.is_some_and(|metadata| {
+                    metadata.iteration() == iteration
+                        && metadata.draft_segment() == draft_segment
+                        && metadata.range().role() == range
+                        && metadata.target_workspace_id()
+                            == workspaces.workspace_plans().target().workspace_id()
+                        && metadata.target_workspace_selection()
+                            == workspaces.workspace_plans().target().selection()
+                        && metadata.target_allocation_id()
+                            == workspaces
+                                .workspace_plans()
+                                .target()
+                                .allocation()
+                                .allocation_id()
+                });
             if !valid {
                 return Err(M1PhysicalBufferRecipeErrorV1::WorkspaceRange {
                     dispatch_index,
@@ -1424,7 +1836,8 @@ pub(crate) mod tests {
             M1PhysicalProgramV1::GemmReference
             | M1PhysicalProgramV1::GemmVectorized
             | M1PhysicalProgramV1::TokenEmbedding
-            | M1PhysicalProgramV1::SwiGlu => 3,
+            | M1PhysicalProgramV1::SwiGlu
+            | M1PhysicalProgramV1::SpeculativeTokenAssembly => 3,
             M1PhysicalProgramV1::RmsNorm | M1PhysicalProgramV1::GqaPrefill => 5,
             M1PhysicalProgramV1::Rope => 7,
             M1PhysicalProgramV1::PagedKvWrite | M1PhysicalProgramV1::PagedGqaDecode => 6,
@@ -1434,7 +1847,7 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn every_complete_intent_maps_all_eleven_programs_in_exact_row_order() {
+    fn every_complete_intent_maps_all_twelve_programs_in_exact_row_order() {
         let mut programs = HashSet::new();
         let mut selections = Vec::new();
         for (case, intent) in complete_intents().into_iter().enumerate() {
@@ -1537,6 +1950,13 @@ pub(crate) mod tests {
 
     #[test]
     fn all_twenty_two_finite_selections_have_exhaustive_operator_mappings() {
+        let (_, workspaces) = exact_inputs(
+            M1StepDispatchIntent::TargetOnly(target(
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS1C8192,
+            )),
+            70,
+        );
         let selections = all_finite_selections();
         assert_eq!(selections.len(), 22);
         for selected in selections {
@@ -1563,7 +1983,7 @@ pub(crate) mod tests {
                     token_input: None,
                 };
                 validate_mapping_input(input).unwrap();
-                let buffers = expected_buffers(input).unwrap();
+                let buffers = expected_buffers(input, &workspaces).unwrap();
                 assert_eq!(buffers.len(), expected_pointer_count(input.program));
                 if !operators.contains(&step.operator) {
                     operators.push(step.operator);
@@ -1581,7 +2001,7 @@ pub(crate) mod tests {
         ));
         let (kernargs, workspaces) = exact_inputs(intent, 80);
         let recipe = derive_m1_physical_buffer_recipe_v1(kernargs, workspaces).unwrap();
-        assert!(recipe.requires_future_materialization());
+        assert!(!recipe.requires_future_materialization());
         let embeddings = recipe
             .rows()
             .iter()
@@ -1612,8 +2032,9 @@ pub(crate) mod tests {
             assert_eq!(
                 rope.buffers()[2].source(),
                 M1PhysicalBufferSourceV1::SpeculativeDraftIterationMetadata {
-                    workspace: M1FullStepWorkspaceRole::Draft,
-                    range: M1StepWorkspaceRangeRole::PositionIds,
+                    workspace: M1FullStepWorkspaceRole::Target,
+                    range: M1StepWorkspaceRangeRole::DraftPositionIds,
+                    draft_segment: iteration,
                     iteration,
                 }
             );
@@ -1629,23 +2050,65 @@ pub(crate) mod tests {
                 assert_eq!(
                     row.buffers()[buffer_index].source(),
                     M1PhysicalBufferSourceV1::SpeculativeDraftIterationMetadata {
-                        workspace: M1FullStepWorkspaceRole::Draft,
-                        range: M1StepWorkspaceRangeRole::ContextLengths,
+                        workspace: M1FullStepWorkspaceRole::Target,
+                        range: M1StepWorkspaceRangeRole::DraftContextLengths,
+                        draft_segment: iteration,
                         iteration,
                     }
                 );
             }
         }
+        let assembly = recipe
+            .rows()
+            .iter()
+            .find(|row| row.program() == M1PhysicalProgramV1::SpeculativeTokenAssembly)
+            .unwrap();
+        assert_eq!(assembly.logical_ordinal(), None);
+        assert_eq!(assembly.operator(), None);
+        assert_eq!(
+            assembly.buffers(),
+            &[
+                super::buffer(
+                    0,
+                    M1PhysicalBufferAccessV1::ReadOnly,
+                    M1PhysicalBufferSourceV1::SpeculativeDraftAnchorTokenIds {
+                        workspace: M1FullStepWorkspaceRole::Draft,
+                        range: M1StepWorkspaceRangeRole::TokenIds,
+                        verification_segment: 4,
+                    },
+                ),
+                super::buffer(
+                    2,
+                    M1PhysicalBufferAccessV1::ReadOnly,
+                    M1PhysicalBufferSourceV1::Workspace {
+                        workspace: M1FullStepWorkspaceRole::Target,
+                        range: M1StepWorkspaceRangeRole::DraftChoices,
+                    },
+                ),
+                super::buffer(
+                    4,
+                    M1PhysicalBufferAccessV1::WriteOnly,
+                    M1PhysicalBufferSourceV1::Workspace {
+                        workspace: M1FullStepWorkspaceRole::Target,
+                        range: M1StepWorkspaceRangeRole::TokenIds,
+                    },
+                ),
+            ]
+        );
         let target_source = embeddings[4].buffers()[0].source();
         assert_eq!(
             target_source,
-            M1PhysicalBufferSourceV1::SpeculativeTargetTokenIds {
+            M1PhysicalBufferSourceV1::Workspace {
                 workspace: M1FullStepWorkspaceRole::Target,
                 range: M1StepWorkspaceRangeRole::TokenIds,
-                draft_iterations: 4,
             }
         );
-        assert!(target_source.requires_future_materialization());
+        assert!(!target_source.requires_future_materialization());
+        assert!(assembly.dispatch_index() < embeddings[4].dispatch_index());
+        assert_eq!(
+            assembly.dispatch_index() + 1,
+            embeddings[4].dispatch_index()
+        );
 
         for row in recipe.rows().iter().filter(|row| {
             row.stage()
@@ -1672,6 +2135,157 @@ pub(crate) mod tests {
                 workspace: M1FullStepWorkspaceRole::Target,
                 range: M1StepWorkspaceRangeRole::DraftChoices,
             }
+        );
+    }
+
+    #[test]
+    fn all_four_speculative_counts_and_s8_k4_iteration_offsets_are_exact() {
+        let buckets = [
+            (Qwen3PlanBucket::SpeculativeS1K4C8192, 2_242_usize),
+            (Qwen3PlanBucket::SpeculativeS8K4C8192, 2_242),
+            (Qwen3PlanBucket::SpeculativeS1K8C8192, 3_938),
+            (Qwen3PlanBucket::SpeculativeS1K16C8192, 7_330),
+        ];
+        for (case, (bucket, expected_count)) in buckets.into_iter().enumerate() {
+            let intent = M1StepDispatchIntent::SpeculativeRound(target(
+                Qwen3ExecutionMode::Speculative,
+                bucket,
+            ));
+            let (kernargs, workspaces) =
+                exact_inputs(intent, 130 + u8::try_from(case).unwrap() * 2);
+            let recipe = derive_m1_physical_buffer_recipe_v1(kernargs, workspaces).unwrap();
+            assert_eq!(recipe.rows().len(), expected_count);
+            let assembly_position = recipe
+                .rows()
+                .iter()
+                .position(|row| row.program() == M1PhysicalProgramV1::SpeculativeTokenAssembly)
+                .unwrap();
+            let target_embedding = recipe.rows()[assembly_position + 1].operator().unwrap();
+            assert_eq!(target_embedding, Qwen3Operator::TokenEmbedding);
+        }
+
+        let intent = M1StepDispatchIntent::SpeculativeRound(target(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS8K4C8192,
+        ));
+        let (kernargs, workspaces) = exact_inputs(intent, 145);
+        let recipe = derive_m1_physical_buffer_recipe_v1(kernargs, workspaces).unwrap();
+        let target = recipe.workspace_composition().workspace_plans().target();
+        let positions = target
+            .range(M1StepWorkspaceRangeRole::DraftPositionIds)
+            .unwrap();
+        let contexts = target
+            .range(M1StepWorkspaceRangeRole::DraftContextLengths)
+            .unwrap();
+        for iteration in 1..4_u8 {
+            let binding = recipe
+                .workspace_composition()
+                .segment_binding(iteration)
+                .unwrap();
+            let position = binding.draft_position_ids_subrange().unwrap();
+            let context = binding.draft_context_lengths_subrange().unwrap();
+            assert_eq!(position.range().byte_len(), 32);
+            assert_eq!(context.range().byte_len(), 32);
+            assert_eq!(
+                position.range().offset(),
+                positions.offset() + u64::from(iteration) * 32
+            );
+            assert_eq!(
+                context.range().offset(),
+                contexts.offset() + u64::from(iteration) * 32
+            );
+            assert!(recipe.rows().iter().any(|row| {
+                row.stage() == M1StepDispatchStage::DraftDecode { iteration }
+                    && row.buffers().iter().any(|buffer| {
+                        buffer.source()
+                            == M1PhysicalBufferSourceV1::SpeculativeDraftIterationMetadata {
+                                workspace: M1FullStepWorkspaceRole::Target,
+                                range: M1StepWorkspaceRangeRole::DraftPositionIds,
+                                draft_segment: iteration,
+                                iteration,
+                            }
+                    })
+            }));
+            assert!(recipe.rows().iter().any(|row| {
+                row.stage() == M1StepDispatchStage::DraftDecode { iteration }
+                    && row.buffers().iter().any(|buffer| {
+                        buffer.source()
+                            == M1PhysicalBufferSourceV1::SpeculativeDraftIterationMetadata {
+                                workspace: M1FullStepWorkspaceRole::Target,
+                                range: M1StepWorkspaceRangeRole::DraftContextLengths,
+                                draft_segment: iteration,
+                                iteration,
+                            }
+                    })
+            }));
+        }
+    }
+
+    #[test]
+    fn hostile_assembly_order_profile_and_source_fail_closed() {
+        let intent = M1StepDispatchIntent::SpeculativeRound(target(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+        ));
+
+        let (kernargs, workspaces) = exact_inputs(intent, 150);
+        let recipe = derive_m1_physical_buffer_recipe_v1(kernargs, workspaces).unwrap();
+        let (kernargs, workspaces, rows) = recipe.into_parts();
+        let mut rows = rows.into_vec();
+        let assembly = rows
+            .iter()
+            .position(|row| row.program == M1PhysicalProgramV1::SpeculativeTokenAssembly)
+            .unwrap();
+        rows.swap(assembly - 1, assembly);
+        assert_eq!(
+            super::AddresslessM1PhysicalBufferRecipeV1::from_parts(
+                kernargs,
+                workspaces,
+                rows.into_boxed_slice(),
+            )
+            .revalidate(),
+            Err(M1PhysicalBufferRecipeErrorV1::RetainedRows)
+        );
+
+        let (kernargs, workspaces) = exact_inputs(intent, 152);
+        let recipe = derive_m1_physical_buffer_recipe_v1(kernargs, workspaces).unwrap();
+        let (kernargs, workspaces, rows) = recipe.into_parts();
+        let mut rows = rows.into_vec();
+        let assembly = rows
+            .iter()
+            .position(|row| row.program == M1PhysicalProgramV1::SpeculativeTokenAssembly)
+            .unwrap();
+        rows[assembly].profile = rows[assembly + 1].profile;
+        assert_eq!(
+            super::AddresslessM1PhysicalBufferRecipeV1::from_parts(
+                kernargs,
+                workspaces,
+                rows.into_boxed_slice(),
+            )
+            .revalidate(),
+            Err(M1PhysicalBufferRecipeErrorV1::RetainedRows)
+        );
+
+        let (kernargs, workspaces) = exact_inputs(intent, 154);
+        let recipe = derive_m1_physical_buffer_recipe_v1(kernargs, workspaces).unwrap();
+        let (kernargs, workspaces, rows) = recipe.into_parts();
+        let mut rows = rows.into_vec();
+        let assembly = rows
+            .iter()
+            .position(|row| row.program == M1PhysicalProgramV1::SpeculativeTokenAssembly)
+            .unwrap();
+        rows[assembly].buffers[0].source = M1PhysicalBufferSourceV1::Workspace {
+            workspace: M1FullStepWorkspaceRole::Draft,
+            range: M1StepWorkspaceRangeRole::TokenIds,
+        };
+        assert_eq!(
+            super::AddresslessM1PhysicalBufferRecipeV1::from_parts(
+                kernargs,
+                workspaces,
+                rows.into_boxed_slice(),
+            )
+            .revalidate(),
+            Err(M1PhysicalBufferRecipeErrorV1::RetainedRows)
         );
     }
 
@@ -1782,15 +2396,18 @@ pub(crate) mod tests {
     #[test]
     fn hostile_program_ordinal_access_role_sentinel_layer_and_row_drift_fail_closed() {
         let input = rms_input();
-        let (_, workspaces) = exact_inputs(M1StepDispatchIntent::TargetOnly(input.selection), 110);
-        let exact_buffers = expected_buffers(input).unwrap();
+        let (kernargs, workspaces) =
+            exact_inputs(M1StepDispatchIntent::TargetOnly(input.selection), 110);
+        let profile = kernargs.source_recipe().rows()
+            [usize::try_from(input.dispatch_index).unwrap()]
+        .profile();
+        let exact_buffers = expected_buffers(input, &workspaces).unwrap();
         let mut row = M1PhysicalBufferRecipeRowV1 {
             dispatch_index: input.dispatch_index,
             segment_index: input.segment_index,
             stage: input.stage,
             selection: input.selection,
-            logical_ordinal: input.logical_ordinal,
-            profile_id: Identity::new([1; 32]),
+            profile,
             program: input.program,
             buffers: exact_buffers,
         };
@@ -1808,13 +2425,13 @@ pub(crate) mod tests {
             validate_buffer_row(&row, input, &workspaces),
             Err(M1PhysicalBufferRecipeErrorV1::ArgumentOrdinal { .. })
         ));
-        row.buffers = expected_buffers(input).unwrap();
+        row.buffers = expected_buffers(input, &workspaces).unwrap();
         row.buffers[0].access = M1PhysicalBufferAccessV1::WriteOnly;
         assert!(matches!(
             validate_buffer_row(&row, input, &workspaces),
             Err(M1PhysicalBufferRecipeErrorV1::Access { .. })
         ));
-        row.buffers = expected_buffers(input).unwrap();
+        row.buffers = expected_buffers(input, &workspaces).unwrap();
         row.buffers[0].source = M1PhysicalBufferSourceV1::Workspace {
             workspace: M1FullStepWorkspaceRole::Draft,
             range: M1StepWorkspaceRangeRole::ResidualHidden,
@@ -1823,7 +2440,7 @@ pub(crate) mod tests {
             validate_buffer_row(&row, input, &workspaces),
             Err(M1PhysicalBufferRecipeErrorV1::Source { .. })
         ));
-        row.buffers = expected_buffers(input).unwrap();
+        row.buffers = expected_buffers(input, &workspaces).unwrap();
         row.buffers[1].source = M1PhysicalBufferSourceV1::WorkspaceSentinel {
             workspace: M1FullStepWorkspaceRole::Target,
             range: M1StepWorkspaceRangeRole::PositionIds,
@@ -1845,7 +2462,7 @@ pub(crate) mod tests {
             ),
             Err(M1PhysicalBufferRecipeErrorV1::Layer { .. })
         ));
-        row.buffers = expected_buffers(input).unwrap();
+        row.buffers = expected_buffers(input, &workspaces).unwrap();
         row.dispatch_index += 1;
         assert!(matches!(
             validate_buffer_row(&row, input, &workspaces),
