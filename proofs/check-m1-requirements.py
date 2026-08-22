@@ -14,8 +14,8 @@ from typing import Any, NoReturn
 
 FORMAT = "ferric.m1-requirements.v1"
 M0_CONTRACTS_COMMIT = "a6fa86b5ccf8f0438925cfec8f48a5d713874da3"
-M1_UPSTREAM_BASE_COMMIT = "967d996781617e9817002304feb24fc5ac46dc05"
-M1_UPSTREAM_BASE_TREE = "cebc7399958e244152b7f4bac23aee2c0de1a282"
+M1_UPSTREAM_BASE_COMMIT = "a6c779f6f8052839c3a07901f9bfafa681f7b09a"
+M1_UPSTREAM_BASE_TREE = "1636cae7363b421f8850d6c455a53216f374667c"
 OPEN = "Open"
 M1_REQUIREMENT_COUNT = 33
 
@@ -48,6 +48,16 @@ EXISTING_FOUNDATIONS = {
 }
 REQUIRED_FUTURE_TARGETS = {
     "fe2o3-batch": ("fe2o3", "crates/fe2o3-service-host/src/batch.rs"),
+    "ferric-gemm": ("ferric", "crates/ferric-qwen-kernels/src/gemm.rs"),
+    "ferric-logits": ("ferric", "crates/ferric-qwen-kernels/src/logits.rs"),
+    "ferric-paged-decode": (
+        "ferric",
+        "crates/ferric-qwen-kernels/src/paged_decode.rs",
+    ),
+    "ferric-prefill": ("ferric", "crates/ferric-qwen-kernels/src/prefill.rs"),
+    "ferric-rmsnorm": ("ferric", "crates/ferric-qwen-kernels/src/rmsnorm.rs"),
+    "ferric-rope-kv": ("ferric", "crates/ferric-qwen-kernels/src/rope_kv.rs"),
+    "ferric-swiglu": ("ferric", "crates/ferric-qwen-kernels/src/swiglu.rs"),
 }
 ALLOWED_CLOSURE_STATUSES = {"Proved", "Unsupported", "Validated"}
 ALLOWED_AVAILABILITY = {"ExistingFoundation", "RequiredFuture"}

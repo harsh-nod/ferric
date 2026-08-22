@@ -8,7 +8,7 @@
 use super::{hash_field, sha256::Sha256, SequentialPlanCatalog, SEQUENTIAL_PLAN_CATALOG_ENTRIES};
 use ferric_kernels::{
     build_structural_kernel_catalog, KernelAuthorityRequirements, KernelCatalogError,
-    StructuralKernelCatalog, REVIEWED_KERNEL_SOURCES,
+    StructuralKernelCatalog, FERRIC_KERNEL_SOURCE_DECLARATIONS,
 };
 use ferric_spec::Identity;
 
@@ -21,7 +21,7 @@ const EXTERNAL_COMPONENT_COUNT: usize = 15;
 pub enum IdentityClosureComponent {
     /// Exact Ferric qualified source closure.
     FerricSource,
-    /// Exact fe2o3 qualified source closure.
+    /// Exact generic fe2o3 compiler/runtime dependency closure.
     Fe2o3Source,
     /// Rust/fe2o3 compiler implementation identity.
     Compiler,
@@ -57,7 +57,7 @@ pub enum IdentityClosureComponent {
 pub struct ExternalIdentityClosureInputs {
     /// Exact Ferric qualified source closure.
     pub ferric_source: Identity,
-    /// Exact fe2o3 qualified source closure.
+    /// Exact generic fe2o3 compiler/runtime dependency closure.
     pub fe2o3_source: Identity,
     /// Rust/fe2o3 compiler implementation identity.
     pub compiler: Identity,
@@ -288,7 +288,7 @@ fn structural_kernel_catalog(
     build_structural_kernel_catalog(
         catalog.plans(),
         catalog.catalog_id(),
-        &REVIEWED_KERNEL_SOURCES,
+        &FERRIC_KERNEL_SOURCE_DECLARATIONS,
         KernelAuthorityRequirements {
             fe2o3_source: external.fe2o3_source,
             compiler: external.compiler,
@@ -306,7 +306,7 @@ fn structural_kernel_catalog(
 
 fn kernel_catalog_identity(catalog: &StructuralKernelCatalog) -> Identity {
     let mut hasher = Sha256::new();
-    hash_field(&mut hasher, b"ferric.qwen3.structural-kernel-catalog.v1");
+    hash_field(&mut hasher, b"ferric.qwen3.structural-kernel-catalog.v2");
     hash_field(&mut hasher, catalog.canonical_bytes());
     Identity::new(hasher.finish())
 }

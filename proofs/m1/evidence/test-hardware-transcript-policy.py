@@ -36,7 +36,7 @@ TCB_KINDS = ("Compiler", "Hardware", "Runtime")
 Case = tuple[str, str, str, str, str]
 CASES: tuple[Case, ...] = (
     ("roadmap-composition", "Roadmap", "m1.r05", "composition", "generated-runner"),
-    ("roadmap-kernel-fe2o3", "Roadmap", "m1.r06", "kernel", "fe2o3-gemm"),
+    ("roadmap-kernel-ferric", "Roadmap", "m1.r06", "kernel", "ferric-gemm"),
     (
         "roadmap-runtime-fe2o3",
         "Roadmap",

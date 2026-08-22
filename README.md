@@ -8,7 +8,8 @@ Ferric has one production path:
 ```text
 authenticated model bundle
   -> verified algorithm and execution plan
-  -> proof-bound fe2o3 kernels
+  -> Ferric-owned proof-bound model kernels
+  -> reusable fe2o3 compiler and runtime
   -> generated Rust runner
   -> reviewed direct HSA command batches
 ```
@@ -65,7 +66,8 @@ KV cache:           paged
 scheduling:         continuous batching
 decoding:           greedy, then exact finite-distribution sampling
 runtime:            direct HSA command batches
-kernels:            fe2o3 only
+kernels:            Ferric-owned
+compiler/runtime:   reusable fe2o3 APIs
 ```
 
 See [the roadmap](docs/ROADMAP.md), [assurance policy](docs/ASSURANCE.md),

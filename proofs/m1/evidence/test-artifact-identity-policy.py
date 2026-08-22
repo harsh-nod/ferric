@@ -31,7 +31,7 @@ Case = tuple[str, str, str, str]
 CASES: tuple[Case, ...] = (
     ("roadmap", "Roadmap", "m1.r01", "bundle-auth"),
     ("assurance", "Assurance", "artifact_authenticated", "identity-closure"),
-    ("fe2o3", "Assurance", "operator_refined", "fe2o3-gemm"),
+    ("ferric", "Assurance", "operator_refined", "ferric-gemm"),
 )
 Mutation = Callable[[Path, Path, dict[str, Any], dict[str, Any]], None]
 

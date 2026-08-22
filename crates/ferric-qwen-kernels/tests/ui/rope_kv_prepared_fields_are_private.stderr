@@ -1,0 +1,10 @@
+error[E0616]: field `compiler_handoff` of struct `PreparedQwen3RopeKvKernelV1` is private
+ --> tests/ui/rope_kv_prepared_fields_are_private.rs:4:22
+  |
+4 |     let _ = prepared.compiler_handoff;
+  |                      ^^^^^^^^^^^^^^^^ private field
+  |
+help: a method `compiler_handoff` also exists, call it with parentheses
+  |
+4 |     let _ = prepared.compiler_handoff();
+  |                                      ++

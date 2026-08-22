@@ -8,14 +8,16 @@ implementation obligation remains `Open`.
 
 `proofs/M1_REQUIREMENTS.json` is the canonical machine-readable roster. The
 deterministic checker binds it to all 33 unchecked M1 roadmap requirements,
-this assurance roster, exact Ferric and fe2o3 path obligations, and the allowed
-evidence-profile vocabulary. A required status is the status that a future
-qualification must close; it is never a report of current evidence.
+this assurance roster, exact Ferric implementation and reusable fe2o3
+compiler/runtime path obligations, and the allowed evidence-profile vocabulary.
+A required status is the status that a future qualification must close; it is
+never a report of current evidence.
 
 The roster distinguishes the inherited M0 `fe2o3-proof-contracts` authority at
 commit `a6fa86b5ccf8f0438925cfec8f48a5d713874da3` from the reviewed M1 upstream
-integration base at commit `967d996781617e9817002304feb24fc5ac46dc05`, tree
-`cebc7399958e244152b7f4bac23aee2c0de1a282`. The older M0 pin does not own or
+integration base at generic compiler/runtime commit
+`a6c779f6f8052839c3a07901f9bfafa681f7b09a`, tree
+`1636cae7363b421f8850d6c455a53216f374667c`. The older M0 pin does not own or
 describe future M1 compiler, AQL, KFD, or service-host implementation.
 
 ## Target Assurance Roster
@@ -60,7 +62,7 @@ validators required by `docs/ASSURANCE.md` exist and pass.
 The manifest contains one open record for each M1 roadmap checkbox:
 
 - model and build: `m1.r01` through `m1.r05`;
-- fe2o3 kernel families: `m1.r06` through `m1.r13`;
+- Ferric kernel families: `m1.r06` through `m1.r13`;
 - runtime: `m1.r14` through `m1.r19`;
 - proof and validation: `m1.r20` through `m1.r28`; and
 - qualification: `m1.r29` through `m1.r33`.
@@ -73,9 +75,10 @@ the obligation is unambiguous, not that the file or evidence already exists.
 
 Each path record is explicitly `ExistingFoundation` or `RequiredFuture`.
 Existing AQL and KFD foundations are named at their reviewed M1 base paths.
-`crates/fe2o3-service-host/src/batch.rs` and the other service-host or LLM
-targets are explicitly `RequiredFuture`; their resolution does not assert that
-they exist at the reviewed base.
+Ferric owns every Qwen kernel-family target under
+`crates/ferric-qwen-kernels/src/`. Reusable fe2o3 service-host targets remain
+separate `RequiredFuture` records. Resolution does not assert that any future
+path exists or implements its obligation.
 
 ## Evidence Profiles
 
@@ -86,10 +89,12 @@ kind as a substitute for another:
   a TCB, and a Verus theorem;
 - `authentication`: canonical structure, exact artifact identity, an independent
   validator, negative mutations, and a TCB;
-- `kernel`: fe2o3 contract, theorem, mutation, hardware, validator, performance,
-  identity, and TCB records;
-- `runtime`: runtime and fe2o3 contracts plus theorem, mutation, hardware,
-  validator, performance, identity, and TCB records;
+- `kernel`: Ferric kernel contract first, then generic fe2o3 compiler/runtime
+  contracts, theorem, mutation, hardware, validator, performance, identity,
+  and TCB records;
+- `runtime`: Ferric runtime and generic fe2o3 compiler/runtime contracts plus
+  theorem, mutation, hardware, validator, performance, identity, and TCB
+  records;
 - `composition`: exact identity, contract, theorem, mutation, hardware, and TCB
   records;
 - `qualification`: exact identity, hardware, validator, mutation, performance,

@@ -359,8 +359,8 @@ fn disposition_matches(
 {
     matches!((left, right),
         (
-            KernelProfileDisposition::ReviewedFoundation,
-            KernelProfileDisposition::ReviewedFoundation,
+            KernelProfileDisposition::DeclaredFoundation,
+            KernelProfileDisposition::DeclaredFoundation,
         ) | (
             KernelProfileDisposition::RequiredExtension,
             KernelProfileDisposition::RequiredExtension,
@@ -774,7 +774,7 @@ mod tests {
             Err(KernelCatalogValidationError::ExpectationProfileFamilyDrift)
         );
         let mut changed = exact;
-        changed.profile.disposition = KernelProfileDisposition::ReviewedFoundation;
+        changed.profile.disposition = KernelProfileDisposition::DeclaredFoundation;
         assert_eq!(
             validate_kernel_catalog_input(changed, changed),
             Err(KernelCatalogValidationError::ExpectationProfileFamilyDrift)

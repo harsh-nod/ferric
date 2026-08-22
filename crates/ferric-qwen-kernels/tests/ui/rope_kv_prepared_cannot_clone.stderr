@@ -1,0 +1,5 @@
+error[E0599]: no method named `clone` found for struct `PreparedQwen3RopeKvKernelV1` in the current scope
+  --> tests/ui/rope_kv_prepared_cannot_clone.rs:10:31
+   |
+10 |     let _duplicate = prepared.clone();
+   |                               ^^^^^ method not found in `PreparedQwen3RopeKvKernelV1`

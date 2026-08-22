@@ -1,4 +1,4 @@
-//! Exact finite mapping from sequential graph operations to reviewed K1-K7 sources.
+//! Exact finite mapping from sequential graph operations to Ferric-owned K1-K7 sources.
 
 use ferric_spec::{
     expected_step, Identity, Qwen3BufferKind, Qwen3ExecutionMode, Qwen3GeneratedPlan,
@@ -10,7 +10,7 @@ use vstd::prelude::*;
 verus! {
 
 /// Canonical structural kernel-catalog record version.
-pub const M1_KERNEL_CATALOG_VERSION: u32 = 1;
+pub const M1_KERNEL_CATALOG_VERSION: u32 = 2;
 /// Exact number of target/draft B3 plans.
 pub const M1_KERNEL_PLAN_COUNT: usize = 22;
 /// Exact number of graph operations across all 22 plans.
@@ -42,7 +42,7 @@ pub const M1_B3_PLAN_BUCKETS: [(Qwen3ExecutionMode, Qwen3PlanBucket); 11] = [
     ),
 ];
 
-/// Reviewed upstream source family owning one structural foundation.
+/// Ferric-owned kernel family named by one structural declaration.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum KernelFamily {
     /// K1 B3 GEMM/GEMV linear specialization.
@@ -61,19 +61,19 @@ pub enum KernelFamily {
     K7LogitsCompact,
 }
 
-/// Whether the reviewed upstream source exactly includes this graph boundary.
+/// Whether the declared Ferric source is intended to cover this graph boundary.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum KernelProfileDisposition {
-    /// The upstream fixture/model declares the same finite operator boundary.
-    ReviewedFoundation,
-    /// A future upstream implementation must extend the reviewed foundation.
+    /// The Ferric source declaration names the same finite operator boundary.
+    DeclaredFoundation,
+    /// The Ferric implementation must extend the currently declared boundary.
     RequiredExtension,
 }
 
 /// Compiler/runtime identity required by the structural catalog.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum KernelAuthorityComponent {
-    /// Future exact aggregate fe2o3 source closure.
+    /// Future exact generic fe2o3 compiler/runtime dependency closure.
     Fe2o3Source,
     /// Future exact compiler implementation.
     Compiler,
@@ -98,7 +98,10 @@ pub enum KernelAuthorityComponent {
 /// Presence is structural only. No field is authenticated by this crate.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct KernelAuthorityRequirements {
-    /// Exact aggregate fe2o3 source closure.
+    /// Exact generic fe2o3 compiler/runtime dependency closure.
+    ///
+    /// This identity does not include or grant ownership of Ferric kernel
+    /// source. Model-specific kernel declarations are bound separately.
     pub fe2o3_source: Identity,
     /// Exact compiler implementation.
     pub compiler: Identity,
@@ -179,7 +182,7 @@ impl KernelAuthorityRequirements {
     }
 }
 
-/// One exact graph operation and its finite reviewed-source profile.
+/// One exact graph operation and its finite source-declaration profile.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct KernelProfileDescriptor {
     /// Exact plan identity containing this operation.
@@ -196,7 +199,7 @@ pub struct KernelProfileDescriptor {
     pub context_tokens: u32,
     /// K1-K7 family selected for this operation.
     pub family: KernelFamily,
-    /// Whether this exact boundary exists in the reviewed fixture/model.
+    /// Whether the Ferric declaration covers this boundary or needs extension.
     pub disposition: KernelProfileDisposition,
 }
 
@@ -227,7 +230,7 @@ pub(crate) closed spec fn family_for_spec(
         | Qwen3Operator::DownResidual
         | Qwen3Operator::LogitsProjection => (
             KernelFamily::K1GemmGemv,
-            KernelProfileDisposition::ReviewedFoundation,
+            KernelProfileDisposition::DeclaredFoundation,
         ),
         Qwen3Operator::InputRmsNorm
         | Qwen3Operator::QueryRmsNorm
@@ -235,29 +238,29 @@ pub(crate) closed spec fn family_for_spec(
         | Qwen3Operator::PostAttentionRmsNorm
         | Qwen3Operator::FinalRmsNorm => (
             KernelFamily::K2RmsNormResidual,
-            KernelProfileDisposition::RequiredExtension,
+            KernelProfileDisposition::DeclaredFoundation,
         ),
         Qwen3Operator::Rope | Qwen3Operator::KvWrite => (
             KernelFamily::K3RopePagedKv,
-            KernelProfileDisposition::ReviewedFoundation,
+            KernelProfileDisposition::DeclaredFoundation,
         ),
         Qwen3Operator::Attention => match mode {
             Qwen3ExecutionMode::Prefill => (
                 KernelFamily::K4GqaPrefill,
-                KernelProfileDisposition::ReviewedFoundation,
+                KernelProfileDisposition::DeclaredFoundation,
             ),
             Qwen3ExecutionMode::Decode | Qwen3ExecutionMode::Speculative => (
                 KernelFamily::K5PagedGqaDecode,
-                KernelProfileDisposition::ReviewedFoundation,
+                KernelProfileDisposition::DeclaredFoundation,
             ),
         },
         Qwen3Operator::SwiGlu => (
             KernelFamily::K6SwiGlu,
-            KernelProfileDisposition::ReviewedFoundation,
+            KernelProfileDisposition::DeclaredFoundation,
         ),
         Qwen3Operator::ArgmaxCompactCompletion => (
             KernelFamily::K7LogitsCompact,
-            KernelProfileDisposition::RequiredExtension,
+            KernelProfileDisposition::DeclaredFoundation,
         ),
     }
 }
@@ -282,7 +285,7 @@ pub(crate) fn family_for(
         | Qwen3Operator::DownResidual
         | Qwen3Operator::LogitsProjection => (
             KernelFamily::K1GemmGemv,
-            KernelProfileDisposition::ReviewedFoundation,
+            KernelProfileDisposition::DeclaredFoundation,
         ),
         Qwen3Operator::InputRmsNorm
         | Qwen3Operator::QueryRmsNorm
@@ -290,29 +293,29 @@ pub(crate) fn family_for(
         | Qwen3Operator::PostAttentionRmsNorm
         | Qwen3Operator::FinalRmsNorm => (
             KernelFamily::K2RmsNormResidual,
-            KernelProfileDisposition::RequiredExtension,
+            KernelProfileDisposition::DeclaredFoundation,
         ),
         Qwen3Operator::Rope | Qwen3Operator::KvWrite => (
             KernelFamily::K3RopePagedKv,
-            KernelProfileDisposition::ReviewedFoundation,
+            KernelProfileDisposition::DeclaredFoundation,
         ),
         Qwen3Operator::Attention => match mode {
             Qwen3ExecutionMode::Prefill => (
                 KernelFamily::K4GqaPrefill,
-                KernelProfileDisposition::ReviewedFoundation,
+                KernelProfileDisposition::DeclaredFoundation,
             ),
             Qwen3ExecutionMode::Decode | Qwen3ExecutionMode::Speculative => (
                 KernelFamily::K5PagedGqaDecode,
-                KernelProfileDisposition::ReviewedFoundation,
+                KernelProfileDisposition::DeclaredFoundation,
             ),
         },
         Qwen3Operator::SwiGlu => (
             KernelFamily::K6SwiGlu,
-            KernelProfileDisposition::ReviewedFoundation,
+            KernelProfileDisposition::DeclaredFoundation,
         ),
         Qwen3Operator::ArgmaxCompactCompletion => (
             KernelFamily::K7LogitsCompact,
-            KernelProfileDisposition::RequiredExtension,
+            KernelProfileDisposition::DeclaredFoundation,
         ),
     }
 }
@@ -324,80 +327,60 @@ pub const GFX942_PROCESSOR: &str = "gfx942";
 /// Exact target-feature policy required by every future executable candidate.
 pub const GFX942_TARGET_FEATURES: &str = "+wavefrontsize64,-xnack";
 
-/// Exact reviewed, currently unmerged upstream source identity.
+/// One Ferric-owned kernel-family source declaration.
+///
+/// This record names an ownership path. It is not evidence that the path
+/// exists, has been reviewed, implements the family, or satisfies an M1
+/// obligation. Exact source identity remains a separate closure input.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct ReviewedKernelSource {
+pub struct KernelSourceDeclaration {
     /// Stable K1-K7 family.
     pub family: KernelFamily,
-    /// GitHub pull request number in `harsh-nod/fe2o3`.
-    pub pull_request: u32,
-    /// Exact head commit SHA-1.
-    pub commit: &'static str,
-    /// Exact Git tree SHA-1 for the head commit.
-    pub tree: &'static str,
-    /// Exact repository identity.
+    /// Repository owning the model-specific implementation.
     pub repository: &'static str,
-    /// Primary source path for the reviewed operator contract.
+    /// Primary Ferric source path for the operator declaration.
     pub source_path: &'static str,
 }
 
-/// K1-K7 reviewed source roster in family order.
-pub const REVIEWED_KERNEL_SOURCES: [ReviewedKernelSource; 7] = [
-    ReviewedKernelSource {
+/// K1-K7 Ferric source declarations in family order.
+///
+/// Missing files remain explicit future obligations in
+/// `proofs/M1_REQUIREMENTS.json`; this roster does not claim availability.
+pub const FERRIC_KERNEL_SOURCE_DECLARATIONS: [KernelSourceDeclaration; 7] = [
+    KernelSourceDeclaration {
         family: KernelFamily::K1GemmGemv,
-        pull_request: 191,
-        commit: "1a6a76cbe5d17f8a9446bfa83ee49aa8cf9596ed",
-        tree: "e6c12126caf499a8eb111b1a03e54e42512413d3",
-        repository: "harsh-nod/fe2o3",
-        source_path: "crates/fe2o3-llm-kernels/src/gemm.rs",
+        repository: "harsh-nod/ferric",
+        source_path: "crates/ferric-qwen-kernels/src/gemm.rs",
     },
-    ReviewedKernelSource {
+    KernelSourceDeclaration {
         family: KernelFamily::K2RmsNormResidual,
-        pull_request: 186,
-        commit: "88df011d87dc2c2e91b4963b010b97dd38fa015b",
-        tree: "d1c4f1c69edc879e32a74ee74662f19cead45b40",
-        repository: "harsh-nod/fe2o3",
-        source_path: "examples/rmsnorm_residual_v1/src/contract.rs",
+        repository: "harsh-nod/ferric",
+        source_path: "crates/ferric-qwen-kernels/src/rmsnorm.rs",
     },
-    ReviewedKernelSource {
+    KernelSourceDeclaration {
         family: KernelFamily::K3RopePagedKv,
-        pull_request: 187,
-        commit: "e805b51de645710d0504be36cc8782508cd36e75",
-        tree: "cc78ee18bff42636e14d67a73d2d8a6cef88c2f9",
-        repository: "harsh-nod/fe2o3",
-        source_path: "crates/fe2o3-llm-kernels/src/rope_kv.rs",
+        repository: "harsh-nod/ferric",
+        source_path: "crates/ferric-qwen-kernels/src/rope_kv.rs",
     },
-    ReviewedKernelSource {
+    KernelSourceDeclaration {
         family: KernelFamily::K4GqaPrefill,
-        pull_request: 188,
-        commit: "2ee53195220c010699895d30ab5ad1b328073d9f",
-        tree: "5b828c0bcd2e2c2e8a3314ac178067a0e9527a0b",
-        repository: "harsh-nod/fe2o3",
-        source_path: "examples/qwen3_gqa_prefill_v1/src/contract.rs",
+        repository: "harsh-nod/ferric",
+        source_path: "crates/ferric-qwen-kernels/src/prefill.rs",
     },
-    ReviewedKernelSource {
+    KernelSourceDeclaration {
         family: KernelFamily::K5PagedGqaDecode,
-        pull_request: 189,
-        commit: "4d1980df037fbd599ed113a93c413e937f40ddd7",
-        tree: "c8a82349ca42b0b11dce08480f75b1eaaaad3995",
-        repository: "harsh-nod/fe2o3",
-        source_path: "examples/qwen3_paged_gqa_decode_v1/src/contract.rs",
+        repository: "harsh-nod/ferric",
+        source_path: "crates/ferric-qwen-kernels/src/paged_decode.rs",
     },
-    ReviewedKernelSource {
+    KernelSourceDeclaration {
         family: KernelFamily::K6SwiGlu,
-        pull_request: 190,
-        commit: "fc2578789dcf6ad2366f78b6cdf73077e354ddeb",
-        tree: "7c0ccb6afe2e3af00529aced543ab00c313ed28f",
-        repository: "harsh-nod/fe2o3",
-        source_path: "examples/qwen3_swiglu_v1/src/contract.rs",
+        repository: "harsh-nod/ferric",
+        source_path: "crates/ferric-qwen-kernels/src/swiglu.rs",
     },
-    ReviewedKernelSource {
+    KernelSourceDeclaration {
         family: KernelFamily::K7LogitsCompact,
-        pull_request: 192,
-        commit: "49193006a6bfb2daa7ffbcd698f00c12c3f20ecd",
-        tree: "269ab71b2071f59959c3bd87fa5bc24be61a35b5",
-        repository: "harsh-nod/fe2o3",
-        source_path: "examples/qwen3_logits_compact_v1/src/contract.rs",
+        repository: "harsh-nod/ferric",
+        source_path: "crates/ferric-qwen-kernels/src/logits.rs",
     },
 ];
 
@@ -415,15 +398,15 @@ pub enum KernelCatalogError {
         /// Later component.
         second: KernelAuthorityComponent,
     },
-    /// The reviewed K1-K7 roster has the wrong length.
-    ReviewedSourceCount {
+    /// The declared K1-K7 source roster has the wrong length.
+    SourceDeclarationCount {
         /// Exact required length.
         expected: usize,
         /// Observed length.
         actual: usize,
     },
-    /// A K1-K7 PR, commit, tree, repository, or path identity drifted.
-    ReviewedSourceDrift(KernelFamily),
+    /// A K1-K7 repository or path declaration drifted.
+    SourceDeclarationDrift(KernelFamily),
     /// The plan input has the wrong finite length.
     PlanCount {
         /// Exact required length.
@@ -463,7 +446,7 @@ pub enum KernelCatalogError {
 pub struct StructuralKernelCatalog {
     plan_catalog_id: Identity,
     authorities: KernelAuthorityRequirements,
-    reviewed_sources: Box<[ReviewedKernelSource]>,
+    source_declarations: Box<[KernelSourceDeclaration]>,
     bindings: Box<[KernelOperationBinding]>,
     canonical_bytes: Box<[u8]>,
 }
@@ -481,10 +464,10 @@ impl StructuralKernelCatalog {
         self.authorities
     }
 
-    /// Returns the exact reviewed K1-K7 source roster.
+    /// Returns the exact Ferric-owned K1-K7 source declarations.
     #[must_use]
-    pub fn reviewed_sources(&self) -> &[ReviewedKernelSource] {
-        &self.reviewed_sources
+    pub fn source_declarations(&self) -> &[KernelSourceDeclaration] {
+        &self.source_declarations
     }
 
     /// Returns every plan operation in exact plan/ordinal order.
@@ -510,20 +493,20 @@ impl StructuralKernelCatalog {
 ///
 /// # Errors
 ///
-/// Returns [`KernelCatalogError`] for any plan, profile, reviewed-source, or
+/// Returns [`KernelCatalogError`] for any plan, profile, source-declaration, or
 /// compiler/runtime authority drift. Success does not grant any execution or
 /// evidence authority.
 pub fn build_structural_kernel_catalog(
     plans: &[Qwen3GeneratedPlan],
     plan_catalog_id: Identity,
-    reviewed_sources: &[ReviewedKernelSource],
+    source_declarations: &[KernelSourceDeclaration],
     authorities: KernelAuthorityRequirements,
 ) -> Result<StructuralKernelCatalog, KernelCatalogError> {
     if !plan_catalog_id.is_present() {
         return Err(KernelCatalogError::MissingPlanCatalogIdentity);
     }
     validate_authorities(&authorities)?;
-    validate_reviewed_sources(reviewed_sources)?;
+    validate_source_declarations(source_declarations)?;
     if plans.len() != M1_KERNEL_PLAN_COUNT {
         return Err(KernelCatalogError::PlanCount {
             expected: M1_KERNEL_PLAN_COUNT,
@@ -570,7 +553,7 @@ pub fn build_structural_kernel_catalog(
     Ok(StructuralKernelCatalog {
         plan_catalog_id,
         authorities,
-        reviewed_sources: reviewed_sources.to_vec().into_boxed_slice(),
+        source_declarations: source_declarations.to_vec().into_boxed_slice(),
         bindings: bindings.into_boxed_slice(),
         canonical_bytes: canonical_bytes.into_boxed_slice(),
     })
@@ -586,11 +569,11 @@ pub fn validate_structural_kernel_catalog(
     catalog: &StructuralKernelCatalog,
     plans: &[Qwen3GeneratedPlan],
     plan_catalog_id: Identity,
-    reviewed_sources: &[ReviewedKernelSource],
+    source_declarations: &[KernelSourceDeclaration],
     authorities: KernelAuthorityRequirements,
 ) -> Result<(), KernelCatalogError> {
     let expected =
-        build_structural_kernel_catalog(plans, plan_catalog_id, reviewed_sources, authorities)?;
+        build_structural_kernel_catalog(plans, plan_catalog_id, source_declarations, authorities)?;
     if catalog != &expected {
         return Err(KernelCatalogError::CatalogDrift);
     }
@@ -688,18 +671,21 @@ fn validate_authorities(
     Ok(())
 }
 
-fn validate_reviewed_sources(
-    reviewed_sources: &[ReviewedKernelSource],
+fn validate_source_declarations(
+    source_declarations: &[KernelSourceDeclaration],
 ) -> Result<(), KernelCatalogError> {
-    if reviewed_sources.len() != REVIEWED_KERNEL_SOURCES.len() {
-        return Err(KernelCatalogError::ReviewedSourceCount {
-            expected: REVIEWED_KERNEL_SOURCES.len(),
-            actual: reviewed_sources.len(),
+    if source_declarations.len() != FERRIC_KERNEL_SOURCE_DECLARATIONS.len() {
+        return Err(KernelCatalogError::SourceDeclarationCount {
+            expected: FERRIC_KERNEL_SOURCE_DECLARATIONS.len(),
+            actual: source_declarations.len(),
         });
     }
-    for (actual, expected) in reviewed_sources.iter().zip(REVIEWED_KERNEL_SOURCES) {
+    for (actual, expected) in source_declarations
+        .iter()
+        .zip(FERRIC_KERNEL_SOURCE_DECLARATIONS)
+    {
         if actual != &expected {
-            return Err(KernelCatalogError::ReviewedSourceDrift(expected.family));
+            return Err(KernelCatalogError::SourceDeclarationDrift(expected.family));
         }
     }
     Ok(())
@@ -729,12 +715,9 @@ fn encode_catalog(
     for (_, identity) in authorities.components() {
         record.extend_from_slice(identity.as_bytes());
     }
-    record.extend_from_slice(&(REVIEWED_KERNEL_SOURCES.len() as u64).to_le_bytes());
-    for source in REVIEWED_KERNEL_SOURCES {
+    record.extend_from_slice(&(FERRIC_KERNEL_SOURCE_DECLARATIONS.len() as u64).to_le_bytes());
+    for source in FERRIC_KERNEL_SOURCE_DECLARATIONS {
         record.push(family_tag(source.family));
-        record.extend_from_slice(&source.pull_request.to_le_bytes());
-        push_bytes(&mut record, source.commit.as_bytes());
-        push_bytes(&mut record, source.tree.as_bytes());
         push_bytes(&mut record, source.repository.as_bytes());
         push_bytes(&mut record, source.source_path.as_bytes());
     }
@@ -765,7 +748,7 @@ fn encode_profile(record: &mut Vec<u8>, profile: KernelProfileDescriptor) {
     record.extend_from_slice(&profile.context_tokens.to_le_bytes());
     record.push(family_tag(profile.family));
     record.push(match profile.disposition {
-        KernelProfileDisposition::ReviewedFoundation => 1,
+        KernelProfileDisposition::DeclaredFoundation => 1,
         KernelProfileDisposition::RequiredExtension => 2,
     });
     encode_step(record, profile.step);
@@ -974,13 +957,16 @@ mod tests {
         let catalog = build_structural_kernel_catalog(
             &plans,
             identity(200),
-            &REVIEWED_KERNEL_SOURCES,
+            &FERRIC_KERNEL_SOURCE_DECLARATIONS,
             authorities(),
         )
         .unwrap();
         assert_eq!(catalog.version(), M1_KERNEL_CATALOG_VERSION);
         assert_eq!(catalog.bindings().len(), M1_KERNEL_OPERATION_BINDINGS);
-        assert_eq!(catalog.reviewed_sources(), REVIEWED_KERNEL_SOURCES);
+        assert_eq!(
+            catalog.source_declarations(),
+            FERRIC_KERNEL_SOURCE_DECLARATIONS
+        );
         assert!(!catalog.canonical_bytes().is_empty());
 
         let mut family_seen = [false; 7];
@@ -1002,7 +988,7 @@ mod tests {
             build_structural_kernel_catalog(
                 &changed,
                 identity(200),
-                &REVIEWED_KERNEL_SOURCES,
+                &FERRIC_KERNEL_SOURCE_DECLARATIONS,
                 authorities(),
             ),
             Err(KernelCatalogError::PlanSelection { plan_index: 0 })
@@ -1014,7 +1000,7 @@ mod tests {
             build_structural_kernel_catalog(
                 &changed,
                 identity(200),
-                &REVIEWED_KERNEL_SOURCES,
+                &FERRIC_KERNEL_SOURCE_DECLARATIONS,
                 authorities(),
             ),
             Err(KernelCatalogError::PlanSelection { plan_index: 0 })
@@ -1026,7 +1012,7 @@ mod tests {
             build_structural_kernel_catalog(
                 &changed,
                 identity(200),
-                &REVIEWED_KERNEL_SOURCES,
+                &FERRIC_KERNEL_SOURCE_DECLARATIONS,
                 authorities(),
             ),
             Err(KernelCatalogError::InvalidPlan { plan_index: 0 })
@@ -1038,7 +1024,7 @@ mod tests {
             build_structural_kernel_catalog(
                 &changed,
                 identity(200),
-                &REVIEWED_KERNEL_SOURCES,
+                &FERRIC_KERNEL_SOURCE_DECLARATIONS,
                 authorities(),
             ),
             Err(KernelCatalogError::InvalidPlan { plan_index: 0 })
@@ -1051,7 +1037,7 @@ mod tests {
         let catalog = build_structural_kernel_catalog(
             &plans,
             identity(200),
-            &REVIEWED_KERNEL_SOURCES,
+            &FERRIC_KERNEL_SOURCE_DECLARATIONS,
             authorities(),
         )
         .unwrap();
@@ -1076,7 +1062,7 @@ mod tests {
         let catalog = build_structural_kernel_catalog(
             &plans,
             identity(200),
-            &REVIEWED_KERNEL_SOURCES,
+            &FERRIC_KERNEL_SOURCE_DECLARATIONS,
             authorities(),
         )
         .unwrap();
@@ -1086,7 +1072,7 @@ mod tests {
                 &catalog,
                 &plans,
                 identity(201),
-                &REVIEWED_KERNEL_SOURCES,
+                &FERRIC_KERNEL_SOURCE_DECLARATIONS,
                 authorities(),
             ),
             Err(KernelCatalogError::CatalogDrift)
@@ -1100,7 +1086,7 @@ mod tests {
                     &catalog,
                     &changed,
                     identity(200),
-                    &REVIEWED_KERNEL_SOURCES,
+                    &FERRIC_KERNEL_SOURCE_DECLARATIONS,
                     authorities(),
                 ),
                 Err(KernelCatalogError::CatalogDrift)
@@ -1126,7 +1112,7 @@ mod tests {
                     &catalog,
                     &plans,
                     identity(200),
-                    &REVIEWED_KERNEL_SOURCES,
+                    &FERRIC_KERNEL_SOURCE_DECLARATIONS,
                     changed,
                 ),
                 Err(KernelCatalogError::CatalogDrift)
@@ -1135,15 +1121,12 @@ mod tests {
     }
 
     #[test]
-    fn every_reviewed_pr_commit_tree_repository_and_path_is_exact() {
-        for source_index in 0..REVIEWED_KERNEL_SOURCES.len() {
-            for field in 0..5 {
-                let mut sources = REVIEWED_KERNEL_SOURCES;
+    fn every_ferric_repository_and_path_declaration_is_exact() {
+        for source_index in 0..FERRIC_KERNEL_SOURCE_DECLARATIONS.len() {
+            for field in 0..2 {
+                let mut sources = FERRIC_KERNEL_SOURCE_DECLARATIONS;
                 match field {
-                    0 => sources[source_index].pull_request += 100,
-                    1 => sources[source_index].commit = "0000000000000000000000000000000000000001",
-                    2 => sources[source_index].tree = "0000000000000000000000000000000000000002",
-                    3 => sources[source_index].repository = "drift/fe2o3",
+                    0 => sources[source_index].repository = "drift/ferric",
                     _ => sources[source_index].source_path = "drift.rs",
                 }
                 assert_eq!(
@@ -1153,8 +1136,8 @@ mod tests {
                         &sources,
                         authorities(),
                     ),
-                    Err(KernelCatalogError::ReviewedSourceDrift(
-                        REVIEWED_KERNEL_SOURCES[source_index].family
+                    Err(KernelCatalogError::SourceDeclarationDrift(
+                        FERRIC_KERNEL_SOURCE_DECLARATIONS[source_index].family
                     ))
                 );
             }
@@ -1170,7 +1153,7 @@ mod tests {
             build_structural_kernel_catalog(
                 &plans,
                 identity(200),
-                &REVIEWED_KERNEL_SOURCES,
+                &FERRIC_KERNEL_SOURCE_DECLARATIONS,
                 missing,
             ),
             Err(KernelCatalogError::MissingAuthority(
@@ -1184,7 +1167,7 @@ mod tests {
             build_structural_kernel_catalog(
                 &plans,
                 identity(200),
-                &REVIEWED_KERNEL_SOURCES,
+                &FERRIC_KERNEL_SOURCE_DECLARATIONS,
                 reused,
             ),
             Err(KernelCatalogError::ReusedAuthority {
@@ -1199,7 +1182,7 @@ mod tests {
             build_structural_kernel_catalog(
                 &duplicate,
                 identity(200),
-                &REVIEWED_KERNEL_SOURCES,
+                &FERRIC_KERNEL_SOURCE_DECLARATIONS,
                 authorities(),
             ),
             Err(KernelCatalogError::InvalidPlanIdentity { plan_index: 1 })
