@@ -604,9 +604,7 @@ pub enum Qwen3RmsNormBufferV1 {
 /// Numerical buffer-contract rejection.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Qwen3RmsNormBufferContractErrorV1 {
-    /// A pure profile did not use exact zero for an inactive pointer.
-    InactiveAddress(Qwen3RmsNormBufferV1),
-    /// A numerical address was zero.
+    /// A numerical or zero-length sentinel address was zero.
     ZeroAddress(Qwen3RmsNormBufferV1),
     /// The available byte span differed from the exact selected profile.
     ByteLength(Qwen3RmsNormBufferV1),
@@ -640,8 +638,13 @@ impl Qwen3RmsNormBufferContractV1 {
     ///
     /// # Errors
     ///
-    /// Returns an error for a wrong mode-specific length, a nonzero inactive
-    /// buffer, a zero active address, misalignment, overflow, or aliasing.
+    /// Pure profiles retain nonempty, aligned sentinel ranges for the two
+    /// inspected pointer arguments whose logical lengths are zero. The kernel
+    /// ignores those pointers under the pure behavior tag, while the generic
+    /// fixed-dispatch runtime can still bind every inspected global argument.
+    ///
+    /// Returns an error for a wrong mode-specific length, a zero pointer,
+    /// misalignment, overflow, or active-range aliasing.
     pub fn checked(
         profile: Qwen3RmsNormProfileV1,
         addresses: [u64; 5],
@@ -668,27 +671,18 @@ impl Qwen3RmsNormBufferContractV1 {
         ];
         let mut ends = [0; 5];
         for index in 0..5 {
-            if expected[index] == 0 && addresses[index] != 0 {
-                return Err(Qwen3RmsNormBufferContractErrorV1::InactiveAddress(
-                    roles[index],
-                ));
-            }
-            if expected[index] != 0 && addresses[index] == 0 {
+            if addresses[index] == 0 {
                 return Err(Qwen3RmsNormBufferContractErrorV1::ZeroAddress(roles[index]));
             }
             if lengths[index] != expected[index] {
                 return Err(Qwen3RmsNormBufferContractErrorV1::ByteLength(roles[index]));
             }
-            if expected[index] != 0 && !addresses[index].is_multiple_of(2) {
+            if !addresses[index].is_multiple_of(2) {
                 return Err(Qwen3RmsNormBufferContractErrorV1::Alignment(roles[index]));
             }
-            ends[index] = if expected[index] == 0 {
-                0
-            } else {
-                addresses[index].checked_add(lengths[index]).ok_or(
-                    Qwen3RmsNormBufferContractErrorV1::RangeOverflow(roles[index]),
-                )?
-            };
+            ends[index] = addresses[index].checked_add(lengths[index]).ok_or(
+                Qwen3RmsNormBufferContractErrorV1::RangeOverflow(roles[index]),
+            )?;
         }
         for left in 0..5 {
             for right in left + 1..5 {
@@ -2658,7 +2652,7 @@ mod tests {
     }
 
     #[test]
-    fn pure_and_fused_buffer_modes_reject_cross_variant_bindings() {
+    fn pure_sentinels_and_fused_buffer_modes_reject_length_drift() {
         let catalog = Qwen3RmsNormProfileCatalogV1::canonical().unwrap();
         let bucket = Qwen3RmsNormBucketV1::new(
             Qwen3RmsNormModelRoleV1::Draft06B,
@@ -2672,7 +2666,7 @@ mod tests {
             .unwrap();
         let pure_row_bytes = pure.row_elements() * 2;
         let pure_weight_bytes = pure.weight_elements() * 2;
-        let pure_addresses = [0x10_0000, 0, 0x20_0000, 0, 0x30_0000];
+        let pure_addresses = [0x10_0000, 0x18_0000, 0x20_0000, 0x28_0000, 0x30_0000];
         let pure_lengths = [pure_row_bytes, 0, pure_weight_bytes, 0, pure_row_bytes];
         let checked =
             Qwen3RmsNormBufferContractV1::checked(pure, pure_addresses, pure_lengths).unwrap();
@@ -2698,23 +2692,18 @@ mod tests {
             Qwen3RmsNormBufferContractV1::checked(fused, fused_addresses, fused_lengths).unwrap();
         assert_eq!(checked.behavior(), Qwen3RmsNormBehaviorV1::ResidualFused);
 
-        assert_eq!(
-            Qwen3RmsNormBufferContractV1::checked(pure, fused_addresses, pure_lengths),
-            Err(Qwen3RmsNormBufferContractErrorV1::InactiveAddress(
-                Qwen3RmsNormBufferV1::Residual
-            ))
-        );
+        assert!(Qwen3RmsNormBufferContractV1::checked(pure, fused_addresses, pure_lengths).is_ok());
         assert_eq!(
             Qwen3RmsNormBufferContractV1::checked(fused, pure_addresses, pure_lengths),
-            Err(Qwen3RmsNormBufferContractErrorV1::ZeroAddress(
+            Err(Qwen3RmsNormBufferContractErrorV1::ByteLength(
                 Qwen3RmsNormBufferV1::Residual
             ))
         );
-        let mut nonzero_inactive = pure_addresses;
-        nonzero_inactive[1] = 0x40_0000;
+        let mut zero_inactive = pure_addresses;
+        zero_inactive[1] = 0;
         assert_eq!(
-            Qwen3RmsNormBufferContractV1::checked(pure, nonzero_inactive, pure_lengths),
-            Err(Qwen3RmsNormBufferContractErrorV1::InactiveAddress(
+            Qwen3RmsNormBufferContractV1::checked(pure, zero_inactive, pure_lengths),
+            Err(Qwen3RmsNormBufferContractErrorV1::ZeroAddress(
                 Qwen3RmsNormBufferV1::Residual
             ))
         );
