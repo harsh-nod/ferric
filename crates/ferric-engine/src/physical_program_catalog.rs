@@ -327,7 +327,26 @@ impl<'a> ContentBoundM1ProgramCatalogV1<'a> {
 pub fn bind_content_bound_m1_program_catalog_v1(
     artifacts: InspectedM1KernelArtifacts<'_>,
 ) -> Result<ContentBoundM1ProgramCatalogV1<'_>, M1PhysicalProgramCatalogErrorV1> {
-    let programs = M1PhysicalProgramV1::ALL.map(|program| bind_program(artifacts, program));
+    bind_content_bound_catalog_from_source(|program| artifacts.bytes_and_plan(program))
+}
+
+pub(crate) fn bind_content_bound_m1_program_catalog_from_persisted_v1<'bytes>(
+    bytes: [&'bytes [u8]; 7],
+    plans: &[LoadPlan; 7],
+) -> Result<ContentBoundM1ProgramCatalogV1<'bytes>, M1PhysicalProgramCatalogErrorV1> {
+    bind_content_bound_catalog_from_source(|program| {
+        let family = program.family();
+        (bytes[family_index(family)], plans[family_index(family)])
+    })
+}
+
+fn bind_content_bound_catalog_from_source<'a>(
+    mut source: impl FnMut(M1PhysicalProgramV1) -> (&'a [u8], LoadPlan),
+) -> Result<ContentBoundM1ProgramCatalogV1<'a>, M1PhysicalProgramCatalogErrorV1> {
+    let programs = M1PhysicalProgramV1::ALL.map(|program| {
+        let (bytes, retained_plan) = source(program);
+        bind_program(bytes, retained_plan, program)
+    });
     let programs = collect_programs(programs)?;
     let catalog_id = program_catalog_identity(&programs);
     Ok(ContentBoundM1ProgramCatalogV1 {
@@ -337,10 +356,10 @@ pub fn bind_content_bound_m1_program_catalog_v1(
 }
 
 fn bind_program(
-    artifacts: InspectedM1KernelArtifacts<'_>,
+    bytes: &[u8],
+    retained_plan: LoadPlan,
     program: M1PhysicalProgramV1,
 ) -> Result<ValidatedKernelEnvelope<'_>, M1PhysicalProgramCatalogErrorV1> {
-    let (bytes, retained_plan) = artifacts.bytes_and_plan(program);
     let envelope = fe2o3_amdhsa_loader::validate(bytes, AdmittedProfile::Gfx942XnackOffCov6)
         .map_err(|error| M1PhysicalProgramCatalogErrorV1::Loader { program, error })?;
     if envelope.plan() != &retained_plan {
@@ -351,6 +370,18 @@ fn bind_program(
     envelope
         .bind_kernel(program.kernel_symbol())
         .map_err(|error| M1PhysicalProgramCatalogErrorV1::KernelClosure { program, error })
+}
+
+const fn family_index(family: M1PhysicalProgramFamilyV1) -> usize {
+    match family {
+        M1PhysicalProgramFamilyV1::Gemm => 0,
+        M1PhysicalProgramFamilyV1::RmsNorm => 1,
+        M1PhysicalProgramFamilyV1::RopeKv => 2,
+        M1PhysicalProgramFamilyV1::Prefill => 3,
+        M1PhysicalProgramFamilyV1::PagedDecode => 4,
+        M1PhysicalProgramFamilyV1::SwiGlu => 5,
+        M1PhysicalProgramFamilyV1::Logits => 6,
+    }
 }
 
 fn collect_programs(

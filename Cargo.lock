@@ -353,6 +353,7 @@ dependencies = [
  "ferric-kernels",
  "ferric-qwen-kernels",
  "ferric-spec",
+ "rustix",
  "sha2",
  "vstd",
 ]

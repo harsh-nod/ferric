@@ -20,6 +20,7 @@ mod m1_prepublication;
 mod model_memory_allocations;
 mod operation_dispatch_expansion;
 mod operation_kernel_plan;
+mod persisted_kernel_artifacts;
 mod physical_buffer_bindings;
 mod physical_buffer_recipe;
 mod physical_dispatch_recipe;
@@ -124,6 +125,10 @@ pub use operation_kernel_plan::{
     bind_declared_operation_kernel_plan, DeclaredKernelFamilyArtifact, DeclaredOperationIdentity,
     DeclaredOperationKernelBinding, DeclaredOperationKernelPlan, OperationKernelIdentityComponent,
     OperationKernelPlanError, OperationKernelPlanFailure, OperationKernelPlanOutcome,
+};
+pub use persisted_kernel_artifacts::{
+    reopen_persisted_m1_kernel_artifacts_v1, AdmittedPersistedM1KernelArtifactsV1,
+    M1PersistedKernelArtifactFileV1, M1PersistedKernelArtifactOpenErrorV1,
 };
 pub use physical_buffer_bindings::{
     bind_m1_physical_buffer_ranges_v1, BoundM1PhysicalBufferBindingsV1, M1BoundPhysicalBufferRowV1,

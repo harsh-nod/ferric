@@ -20,7 +20,8 @@ use super::kernel_artifact_policy::{
 };
 
 const MANIFEST_MAGIC: &[u8] = b"FERRIC-M1-KERNEL-ARTIFACTS-V1\0";
-const MANIFEST_MAX_BYTES: usize = 64 * 1024;
+/// Maximum encoded size admitted for the canonical K1-K7 artifact manifest.
+pub const M1_KERNEL_ARTIFACT_MANIFEST_MAX_BYTES_V1: usize = 64 * 1024;
 const TARGET: &str = "gfx942:xnack-";
 const CODE_OBJECT_VERSION: u8 = 6;
 const LINK_OPTIONS: [(&str, &str); 4] = [
@@ -343,6 +344,14 @@ impl M1KernelArtifactEntryV1 {
     pub fn object_path(&self) -> String {
         format!("objects/sha256/{}.hsaco", hex(self.artifact.sha256()))
     }
+
+    /// Whether fresh generic-loader validation reproduced the exact persisted plan.
+    ///
+    /// This comparison grants no compiler, artifact, load, or execution custody.
+    #[must_use]
+    pub fn matches_validated_load_plan(&self, plan: &LoadPlan) -> bool {
+        self.load_plan == LoadPlanRecordV1::from_plan(plan)
+    }
 }
 
 /// Strict canonical manifest for the complete seven-artifact build.
@@ -478,6 +487,32 @@ impl std::error::Error for M1KernelCanonicalCatalogErrorV1 {
     }
 }
 
+/// Constructs a canonical manifest around caller-supplied structural test objects.
+///
+/// This helper exists only under the `test-fixtures` feature and grants no
+/// compiler-build, Worker, deployment, load, or execution custody.
+#[cfg(feature = "test-fixtures")]
+#[doc(hidden)]
+pub fn m1_kernel_artifact_manifest_test_fixture_v1(
+    objects: [&[u8]; M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1],
+    plans: &[LoadPlan; M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1],
+) -> Result<M1KernelArtifactManifestV1, M1KernelArtifactManifestErrorV1> {
+    let entries = std::array::from_fn(|index| {
+        let seed = u8::try_from(index + 1).expect("seven fixture families fit u8");
+        M1KernelArtifactEntryV1::new(
+            M1KernelArtifactFamilyV1::ALL[index],
+            ContentIdentityV1::calculate(objects[index]),
+            ContentIdentityV1::from_parts([seed; 32], 1),
+            ContentIdentityV1::from_parts([seed + 16; 32], 1),
+            ContentIdentityV1::from_parts([seed + 32; 32], 1),
+            canonical_profile_catalogs(M1KernelArtifactFamilyV1::ALL[index])
+                .expect("checked-in finite test catalogs remain constructible"),
+            &plans[index],
+        )
+    });
+    M1KernelArtifactManifestV1::new(entries)
+}
+
 impl From<M1KernelCanonicalCatalogErrorV1> for M1KernelArtifactManifestErrorV1 {
     fn from(source: M1KernelCanonicalCatalogErrorV1) -> Self {
         Self::CanonicalCatalog(source)
@@ -493,7 +528,7 @@ impl From<M1KernelCanonicalCatalogErrorV1> for M1KernelArtifactManifestErrorV1 {
 pub fn decode_m1_kernel_artifact_manifest_v1(
     bytes: &[u8],
 ) -> Result<M1KernelArtifactManifestV1, M1KernelArtifactManifestErrorV1> {
-    if bytes.len() > MANIFEST_MAX_BYTES {
+    if bytes.len() > M1_KERNEL_ARTIFACT_MANIFEST_MAX_BYTES_V1 {
         return Err(M1KernelArtifactManifestErrorV1::TooLarge);
     }
     let mut decoder = Decoder::new(bytes);
@@ -892,7 +927,7 @@ fn encode_manifest(
     for entry in entries {
         encode_entry(&mut bytes, entry)?;
     }
-    if bytes.len() > MANIFEST_MAX_BYTES {
+    if bytes.len() > M1_KERNEL_ARTIFACT_MANIFEST_MAX_BYTES_V1 {
         return Err(M1KernelArtifactManifestErrorV1::TooLarge);
     }
     Ok(bytes)
@@ -1337,7 +1372,11 @@ mod tests {
             Err(M1KernelArtifactManifestErrorV1::NonCanonical)
         );
         assert_eq!(
-            decode_m1_kernel_artifact_manifest_v1(&vec![0; MANIFEST_MAX_BYTES + 1]),
+            decode_m1_kernel_artifact_manifest_v1(&vec![
+                0;
+                M1_KERNEL_ARTIFACT_MANIFEST_MAX_BYTES_V1
+                    + 1
+            ]),
             Err(M1KernelArtifactManifestErrorV1::TooLarge)
         );
     }

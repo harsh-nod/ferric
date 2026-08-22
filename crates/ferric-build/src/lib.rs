@@ -43,11 +43,15 @@ pub use identity_closure::{
     ExternalIdentityClosureInputs, IdentityClosureComponent, IdentityClosureError,
     PreliminaryIdentityClosure, PRELIMINARY_IDENTITY_CLOSURE_VERSION,
 };
+#[cfg(feature = "test-fixtures")]
+#[doc(hidden)]
+pub use kernel_artifact_manifest::m1_kernel_artifact_manifest_test_fixture_v1;
 pub use kernel_artifact_manifest::{
     decode_m1_kernel_artifact_manifest_v1, M1KernelArtifactEntryV1, M1KernelArtifactFamilyV1,
     M1KernelArtifactManifestErrorV1, M1KernelArtifactManifestV1, M1KernelArtifactProgramV1,
     M1KernelCanonicalCatalogErrorV1, M1KernelProfileCatalogV1, M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1,
-    M1_KERNEL_ARTIFACT_MANIFEST_VERSION_V1, M1_PHYSICAL_PROGRAM_COUNT_V1,
+    M1_KERNEL_ARTIFACT_MANIFEST_MAX_BYTES_V1, M1_KERNEL_ARTIFACT_MANIFEST_VERSION_V1,
+    M1_PHYSICAL_PROGRAM_COUNT_V1,
 };
 pub use kernel_artifact_policy::{
     M1_KERNEL_WORKER_BUILD_IDENTITY_V1, M1_KERNEL_WORKER_EXECUTABLE_BYTES_V1,
