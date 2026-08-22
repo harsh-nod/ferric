@@ -15,7 +15,7 @@ closure status.
 | `kv-release-generation` | `paged_kv_refinement::release_retired_page` | reuse advances the retired physical generation | `kv_refined` / `kv-proof` |
 | `kv-rollback-retirement` | `paged_kv_refinement::rollback_physical_token` | removing a one-token tentative tail retires its exact initialized prefix | `kv_refined` / `kv-proof` |
 | `kv-write-prefix` | `paged_kv_refinement::write_physical_token` | physical initialization advances with logical residency | `kv_refined` / `kv-proof` |
-| `model-bundle-record-binding` | `auth::revalidate_authenticated_bundle` | the retained record equals a freshly recomputed verified seal before proof custody | `model_bundle_well_formed` / `model-bundle-proof` |
+| `model-bundle-record-binding` | `auth::admission_records_equal` | mismatching retained and recomputed record bytes are rejected before proof custody | `model_bundle_well_formed` / `model-bundle-proof` |
 | `publication-phase-transition` | `step_plan_publication::publish_reserved_delta` | publication moves only from validated to published | `graph_refined` / `graph-proof` |
 | `publication-plan-identity` | `step_plan_publication::validate_step_plan` | publication authority binds the exact plan identity | `graph_refined` / `graph-proof` |
 | `speculative-accepted-count-binding` | `speculative_step_composition::settle_and_publish_speculative_step` | KV preflight uses the exact publication-derived accepted count | `rollback_refined` / `speculation-proof` |

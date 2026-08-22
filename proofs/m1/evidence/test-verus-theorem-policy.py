@@ -192,8 +192,22 @@ def make_context(
     properties = {
         record["name"]: record for record in requirements["assurance_properties"]
     }
+    profiles = {
+        record["id"]: set(record["kinds"])
+        for record in requirements["evidence_profiles"]
+    }
     paths = {record["id"]: record for record in requirements["path_obligations"]}
     name, _, property_name, path_id, *_ = row
+    profile_id = next(
+        (
+            candidate
+            for candidate in properties[property_name]["evidence_profiles"]
+            if "verus-theorem" in profiles[candidate]
+        ),
+        None,
+    )
+    if profile_id is None:
+        fail(f"fixture property does not admit Verus-theorem evidence: {property_name}")
     artifact = {
         "id": f"artifact.theorem.{name}",
         "kind": "TheoremTranscript",
@@ -208,7 +222,7 @@ def make_context(
         "obligation_class": "Assurance",
         "obligation_id": property_name,
         "path_id": path_id,
-        "profile_id": "composition",
+        "profile_id": profile_id,
         "source_identity_id": "source.ferric",
         "statement_sha256": digest_bytes(
             properties[property_name]["boundary"].encode("utf-8")
@@ -1041,7 +1055,7 @@ def main() -> None:
                 context,
                 selected,
                 "compile",
-                "CARGO_PACKAGE=ferric-build",
+                "CARGO_PACKAGE=ferric-m1-proof",
                 "CARGO_PACKAGE=ferric-spec",
             ),
         )

@@ -79,7 +79,7 @@ EXPECTED = {
         "model-bundle-composition", "model_bundle_well_formed",
         "model-bundle-proof", "ferric-build",
         "crates/ferric-build/src/auth.rs", "model-bundle-record-binding.py",
-        "assertion", "auth", "revalidate_authenticated_bundle",
+        "postcondition", "auth", "admission_records_equal",
         "retained-record-equality",
     ),
     "publication-phase-transition": (

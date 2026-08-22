@@ -349,7 +349,7 @@ def main() -> None:
             lambda fixture: (fixture / "proofs/VERIFIED_MODULES").write_text(
                 "\n".join(
                     line for line in (fixture / "proofs/VERIFIED_MODULES").read_text(encoding="utf-8").splitlines()
-                    if line != "verified=ferric-build|crates/ferric-build/src/auth.rs|ferric_build::auth::revalidate_authenticated_bundle"
+                    if line != "verified=ferric-build|crates/ferric-build/src/auth.rs|ferric_build::auth::admission_records_equal"
                 ) + "\n",
                 encoding="utf-8",
             ),
