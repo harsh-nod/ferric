@@ -191,6 +191,21 @@ impl DeviceKvPageLease {
     }
 }
 
+#[cfg(test)]
+impl DeviceKvPageLease {
+    pub(crate) fn from_contracted_workspace_bridge_test_allocation(
+        device: Gfx942DeviceBinding,
+        allocation_id: Identity,
+        page: PhysicalPageId,
+    ) -> Self {
+        Self {
+            device,
+            allocation_id,
+            page,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct PendingWriteBinding {
     device: Gfx942DeviceBinding,
@@ -361,6 +376,23 @@ impl PendingDeviceKvStepWrite {
     #[must_use]
     pub const fn new_page_count(&self) -> usize {
         self.new_page_leases.len()
+    }
+}
+
+#[cfg(test)]
+impl PendingDeviceKvStepWrite {
+    pub(crate) fn corrupt_workspace_bridge_page_for_test(
+        &mut self,
+        entry: usize,
+        logical_page: u32,
+        allocation_id: Identity,
+        page: PhysicalPageId,
+    ) {
+        self.page_table[entry] = DeviceKvStepPageIdentity {
+            logical_page,
+            allocation_id,
+            page,
+        };
     }
 }
 

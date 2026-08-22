@@ -13,6 +13,7 @@ mod device_cache;
 mod epoch;
 mod initialized_model_memory;
 mod initialized_step_workspaces;
+mod kv_workspace_authority;
 mod model_memory_allocations;
 mod operation_dispatch_expansion;
 mod operation_kernel_plan;
@@ -73,6 +74,10 @@ pub use initialized_step_workspaces::{
     InitializedM1FullStepWorkspacePreflightErrorV1, InitializedM1FullStepWorkspaceRuntimeErrorV1,
     M1FullStepWorkspaceImagesV1, M1InitializedWorkspaceSlotV1,
     M1_INITIALIZED_STEP_WORKSPACE_CONTENT_ROLE_IDENTITY_V1,
+};
+pub use kv_workspace_authority::{
+    bind_m1_kv_workspace_table_v1, BoundM1KvWorkspaceTableV1, M1KvWorkspaceReservationCustodyV1,
+    M1KvWorkspaceTableBindingErrorV1, M1KvWorkspaceTableBindingFailureV1,
 };
 pub use model_memory_allocations::{
     bind_addressless_model_memory_allocations_v1, BoundModelMemoryAllocationsV1,
