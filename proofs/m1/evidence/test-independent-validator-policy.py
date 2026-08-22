@@ -49,7 +49,7 @@ CASE_COUNTS = {"expected_fail": 8, "pass": 2, "total": 10}
 Case = tuple[str, str, str, str, str]
 CASES: tuple[Case, ...] = (
     ("runner-ferric", "Roadmap", "m1.r05", "generated-runner", "authentication"),
-    ("kernel-fe2o3", "Roadmap", "m1.r06", "fe2o3-gemm", "kernel"),
+    ("kernel-ferric", "Roadmap", "m1.r06", "ferric-gemm", "kernel"),
     (
         "target-ferric",
         "Assurance",

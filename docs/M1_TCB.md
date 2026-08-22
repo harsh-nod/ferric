@@ -12,8 +12,9 @@ M1 trusts the exact identity-bound instances of:
 
 - Rust and Cargo used to compile Ferric and fe2o3;
 - Verus, its bundled solver dependencies, and the proof runner;
-- the reviewed fe2o3 Rust-to-MIR, structured-kernel, LLVM/AMDGPU, object, and
-  HSACO pipeline components admitted by the evidence index;
+- the reviewed fe2o3 Rust-to-MIR, generic structured-IR/compiler,
+  LLVM/AMDGPU, object, and HSACO pipeline components admitted by the evidence
+  index;
 - LLVM's AMDGPU backend and the in-process linker/finalizer; and
 - the independent artifact, ABI, target, and machine-shape validators named by
   the evidence index.

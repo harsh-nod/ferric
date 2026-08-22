@@ -7,7 +7,8 @@ optimization, autotuning, and runner generation offline.
 
 ```text
 crates/ferric-spec       executable sequential semantics and Verus targets
-crates/ferric-kernels    fe2o3 kernels, contracts, and finite schedules
+crates/ferric-kernels    structural kernel catalog and finite schedules
+crates/ferric-qwen-kernels Ferric-owned Qwen kernel compiler profiles
 crates/ferric-generated-runner checked-in inert runner declarations
 crates/ferric-engine     scheduler, KV, speculation, and generated runner
 crates/ferric-build      model admission, packing, planning, tuning, bundles
@@ -34,12 +35,13 @@ sign the record or confer authentication authority for external files. These
 slices do not establish full Hugging Face tokenizer equivalence, transform or
 pack tensors, inspect tensor values, or load device memory. The structural
 kernel catalog covers every
-operation in the 22 exact B3 plans, but its reviewed upstream sources are
-unmerged fixture/model foundations and profiles that exceed those exact
-fixtures remain explicitly marked as required extensions. It grants no proof,
-artifact, compilation, load, launch, dispatch, hardware, performance, or
-qualification authority. Crates are added when they contain real final-path
-behavior; placeholder GPU execution is not permitted.
+operation in the 22 exact B3 plans and names Ferric-owned source declarations
+for all seven kernel families. Those declarations do not establish file
+availability, implementation, review, or authority, and profiles that require
+additional coverage remain explicitly marked as required extensions. The
+catalog grants no proof, artifact, compilation, load, launch, dispatch,
+hardware, performance, or qualification authority. Crates are added when they
+contain real final-path behavior; placeholder GPU execution is not permitted.
 
 The data-only `ferric-generated-runner` crate is the checked-in output of the
 current deterministic Qwen3/gfx942 declaration generator. It names all 22
@@ -88,7 +90,7 @@ The offline build owns:
 strict model admission
   -> canonical Model IR
   -> algorithm and execution planning
-  -> fe2o3 kernel compilation and proof
+  -> Ferric-owned model kernels over reusable fe2o3 compiler APIs
   -> finite schedule qualification
   -> generated runner
   -> signed deployment bundle

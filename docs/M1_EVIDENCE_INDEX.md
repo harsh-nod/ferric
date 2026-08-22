@@ -106,7 +106,8 @@ SHA-256 values pinned in the checker-owned registry.
 The artifact-identity validator accepts only a canonical identity-only report
 and independently hashes its deterministic companion payload. The report binds
 the exact Open obligation or property, associated assurance properties, path,
-profile, requirements, Ferric and fe2o3 source identities, fixed
+profile, requirements, Ferric and generic fe2o3 compiler/runtime source
+identities, fixed
 `gfx942:xnack-` target, and complete TCB. Its opaque artifact-kind declaration
 grants no semantic, theorem, machine, load, launch, hardware, performance, or
 qualification authority. Its exact report layout and authority boundary are
@@ -119,7 +120,8 @@ are documented in `proofs/m1/evidence/EXTERNAL_CONTRACT.md`. The fe2o3-contract
 validator accepts only a canonical contract body and deterministic one-property,
 one-obligation `ContractSetV1` declaration for the exact Open binding. It binds
 the manifest-declared assurance roster, obligation, path, profile, target,
-Ferric and fe2o3 source closures, and complete outer TCB. Structural acceptance
+Ferric and generic fe2o3 compiler/runtime source closures, and complete outer
+TCB. Structural acceptance
 does not establish implementation, proof, machine refinement, load, launch,
 hardware, performance, or qualification authority. Its exact file layout and
 authority boundary are documented in

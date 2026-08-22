@@ -1,0 +1,25 @@
+[package]
+name = "ferric-qwen-kernels"
+description = "Finite Qwen kernel compiler profiles owned by Ferric"
+edition.workspace = true
+rust-version.workspace = true
+version.workspace = true
+publish = false
+
+[dependencies]
+fe2o3-amdhsa-loader.workspace = true
+fe2o3-artifact-transaction.workspace = true
+fe2o3-compiler-ffi.workspace = true
+fe2o3-hsaco.workspace = true
+fe2o3-hsaco-finalize.workspace = true
+fe2o3-llvm-handoff.workspace = true
+fe2o3-llvm-text.workspace = true
+fe2o3-llvm-worker-handoff.workspace = true
+reserved-fe2o3-symbols.workspace = true
+sha2.workspace = true
+
+[dev-dependencies]
+trybuild = "1"
+
+[lints]
+workspace = true

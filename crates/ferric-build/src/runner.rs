@@ -17,9 +17,9 @@ use ferric_generated_runner::{
 };
 use ferric_kernels::{
     validate_kernel_profile, validate_structural_kernel_catalog, KernelAuthorityRequirements,
-    KernelCatalogError, KernelProfileDescriptor, GFX942_PROCESSOR, GFX942_TARGET_FEATURES,
-    M1_B3_PLAN_BUCKETS, M1_KERNEL_CATALOG_VERSION, M1_KERNEL_OPERATION_BINDINGS,
-    M1_KERNEL_PLAN_COUNT, REVIEWED_KERNEL_SOURCES,
+    KernelCatalogError, KernelProfileDescriptor, FERRIC_KERNEL_SOURCE_DECLARATIONS,
+    GFX942_PROCESSOR, GFX942_TARGET_FEATURES, M1_B3_PLAN_BUCKETS, M1_KERNEL_CATALOG_VERSION,
+    M1_KERNEL_OPERATION_BINDINGS, M1_KERNEL_PLAN_COUNT,
 };
 use ferric_spec::{
     plan_step_count, Identity, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket,
@@ -736,7 +736,7 @@ fn validate_closure(closure: &PreliminaryIdentityClosure) -> Result<(), Generate
         closure.kernel_catalog(),
         catalog.plans(),
         catalog.catalog_id(),
-        &REVIEWED_KERNEL_SOURCES,
+        &FERRIC_KERNEL_SOURCE_DECLARATIONS,
         kernel_authorities(closure),
     )
     .map_err(GeneratedRunnerError::KernelCatalog)?;
@@ -1291,9 +1291,9 @@ mod tests {
         assert_eq!(
             declaration.declaration_id(),
             Identity::new([
-                0x3e, 0x6c, 0xd6, 0x54, 0xeb, 0xa1, 0xa9, 0xa8, 0xe8, 0x01, 0x99, 0xb8, 0xab, 0xd2,
-                0x3a, 0xed, 0xf5, 0x5b, 0x2a, 0x04, 0x6f, 0x60, 0xc3, 0x4d, 0x06, 0x47, 0x6b, 0xd3,
-                0x72, 0x0d, 0x61, 0xa0,
+                0x8c, 0x81, 0xfe, 0xa3, 0xa8, 0xf4, 0x56, 0x16, 0xec, 0x39, 0x94, 0xdd, 0xc4, 0x06,
+                0xdf, 0xc4, 0xf6, 0x72, 0x05, 0x6d, 0x3b, 0x61, 0xf7, 0x84, 0x78, 0x9f, 0x46, 0xec,
+                0x1e, 0xfe, 0xde, 0xa3,
             ])
         );
 

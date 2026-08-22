@@ -1,0 +1,5 @@
+error[E0599]: no method named `clone` found for struct `InertQwen3RopeKvWorkerRequestV1` in the current scope
+  --> tests/ui/rope_kv_request_cannot_clone.rs:12:30
+   |
+12 |     let _duplicate = request.clone();
+   |                              ^^^^^ method not found in `InertQwen3RopeKvWorkerRequestV1`

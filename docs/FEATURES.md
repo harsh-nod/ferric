@@ -7,7 +7,7 @@ Statuses:
 
 - `Model`: executable state model exists.
 - `Planned`: final semantics and implementation are not yet present.
-- `fe2o3`: blocked on a reusable fe2o3 compiler, kernel, or runtime capability.
+- `fe2o3`: blocked on a reusable fe2o3 compiler or runtime capability.
 - `Unsupported`: intentionally rejected by product policy.
 
 | Area | Feature | Status | Required primary property |
@@ -33,9 +33,9 @@ Statuses:
 | Sampling | Beam and parallel sampling | Planned | `sampler_refined` |
 | Output | Structured/grammar-constrained generation | Planned | `sampler_refined` |
 | Adapters | LoRA and multi-LoRA batching | Planned | `graph_refined` |
-| Kernels | GEMM/GEMV/RMSNorm/RoPE/SwiGLU | fe2o3 | `operator_refined` |
-| Kernels | Flash prefill and paged decode attention | fe2o3 | `operator_refined` |
-| Kernels | FP8/FP4 and MoE grouped GEMM | fe2o3 | `operator_refined` |
+| Kernels | GEMM/GEMV/RMSNorm/RoPE/SwiGLU | Planned | `operator_refined` |
+| Kernels | Flash prefill and paged decode attention | Planned | `operator_refined` |
+| Kernels | FP8/FP4 and MoE grouped GEMM | Planned | `operator_refined` |
 | Runtime | Direct bounded HSA command batches | fe2o3 | `lifetime_safe` |
 | Runtime | Runtime JIT or raw kernel plugins | Unsupported | N/A |
 | Parallel | Data parallelism | Planned | `multi_device_refined` |
