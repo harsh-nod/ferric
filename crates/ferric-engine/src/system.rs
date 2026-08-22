@@ -126,6 +126,12 @@ impl<const C: usize> Engine<C> {
         self.faulted
     }
 
+    pub closed spec fn queue_rearm_quarantine_refines(&self, before: &Self) -> bool {
+        &&& self.scheduler == before.scheduler
+        &&& self.kv == before.kv
+        &&& self.permits@ == before.permits@
+    }
+
     pub closed spec fn live_count_spec(&self) -> usize {
         self.scheduler.live_count_spec()
     }
@@ -982,14 +988,13 @@ impl<const C: usize> Engine<C> {
     pub(crate) fn quarantine_m1_queue_rearm_failure(&mut self)
         requires old(self).well_formed(),
         ensures
-            self.well_formed(),
-            self.faulted_spec(),
-            self.scheduler == old(self).scheduler,
-            self.kv == old(self).kv,
-            self.permits == old(self).permits,
+            final(self).well_formed(),
+            final(self).faulted_spec(),
+            final(self).queue_rearm_quarantine_refines(old(self)),
     {
         reveal(Engine::well_formed);
         reveal(Engine::faulted_spec);
+        reveal(Engine::queue_rearm_quarantine_refines);
         self.faulted = true;
     }
 
