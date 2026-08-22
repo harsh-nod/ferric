@@ -24,6 +24,9 @@ INPUT_FORMAT = "FERRIC-M1-BENCHMARK-INPUT-V1"
 RECORDS_FORMAT = "FERRIC-M1-BENCHMARK-RECORDS-V1"
 DIFFERENTIAL_PAIRS_FORMAT = "FERRIC-M1-DIFFERENTIAL-PAIRS-V1"
 DIFFERENTIAL_OUTPUT_FORMAT = "FERRIC-M1-DIFFERENTIAL-OUTPUT-V1"
+DIFFERENTIAL_ACCEPTANCE_POLICY_FORMAT = (
+    "FERRIC-M1-DIFFERENTIAL-ACCEPTANCE-POLICY-V1"
+)
 ADVERSARIAL_EXECUTION_FORMAT = "FERRIC-M1-ADVERSARIAL-EXECUTION-V1"
 ADVERSARIAL_OBSERVATION_FORMAT = "FERRIC-M1-ADVERSARIAL-OBSERVATION-V1"
 ADVERSARIAL_RUNNER_TRANSCRIPT_FORMAT = (
@@ -34,6 +37,17 @@ ADVERSARIAL_FAULT_PLAN_FORMAT = "FERRIC-M1-ADVERSARIAL-FAULT-PLAN-V1"
 ADVERSARIAL_EXHAUSTION_FORMAT = "FERRIC-M1-ADVERSARIAL-EXHAUSTION-V1"
 TARGET = "gfx942:xnack-"
 VOCABULARY_SIZE = 151_936
+DIFFERENTIAL_ACCEPTANCE_POLICY_NONCLAIM = (
+    "This artifact supplies plan-admitted differential thresholds only. It does not "
+    "establish independent review, numerical correctness, hardware correctness, "
+    "qualification authority, or close m1.r29."
+)
+DIFFERENTIAL_ACCEPTANCE_RESULT_NONCLAIM = (
+    "This result authenticates exact target-only differential comparisons against "
+    "one plan-admitted threshold policy only. It does not establish an independently "
+    "reviewed threshold, prove operator or graph refinement, establish hardware "
+    "correctness, grant qualification authority, or close m1.r29."
+)
 ADVERSARIAL_POLICY_NONCLAIM = (
     "Synthetic policy fixture parser exercise only; this document is not a "
     "benchmark record or evidence and does not establish device execution, exact "
@@ -231,6 +245,34 @@ def differential_rows(kind: str) -> int:
     if kind == "decode-s32-c8192":
         return 32
     fail(f"unknown differential case kind: {kind}")
+
+
+def differential_acceptance_policy(descriptor: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "authority": "externally-admitted-differential-threshold-policy-only",
+        "cases": [
+            {
+                "kind": kind,
+                "maximum_logit_ulp_error": (
+                    128 if kind == "decode-s32-c8192" else 0
+                ),
+                "maximum_token_mismatches": 0,
+            }
+            for kind in descriptor["case_kinds"]
+        ],
+        "finite_logits_required": True,
+        "format": DIFFERENTIAL_ACCEPTANCE_POLICY_FORMAT,
+        "logit_metric": (
+            "maximum-monotonic-bf16-ulp-distance-signed-zero-equal"
+        ),
+        "nonclaim": DIFFERENTIAL_ACCEPTANCE_POLICY_NONCLAIM,
+        "obligation_id": "m1.r29",
+        "path_id": "differential-bench",
+        "suite": "differential",
+        "target": TARGET,
+        "token_metric": "ferric-reference-greedy-token-mismatch-count",
+        "token_selection": "lowest-token-id-bf16-argmax",
+    }
 
 
 def output_manifest(
@@ -769,6 +811,7 @@ def exercise_differential_producer(
     plan_path: Path,
     plan: dict[str, Any],
     plan_raw: bytes,
+    policy_path: Path,
 ) -> None:
     pairs = []
     output_manifests: dict[str, Path] = {}
@@ -874,6 +917,112 @@ def exercise_differential_producer(
             or metrics["token-mismatches"] != [0]
         ):
             fail("equal synthetic differential outputs did not compare exactly")
+
+    acceptance = load_canonical(
+        invoke(
+            repo,
+            "differential",
+            [
+                "check-acceptance",
+                str(plan_path),
+                str(pairs_path),
+                str(policy_path),
+            ],
+        ).stdout,
+        "differential acceptance result",
+    )
+    if (
+        acceptance.get("authority")
+        != "checked-differential-policy-conformance-only"
+        or acceptance.get("status") != "POLICY_CONFORMING"
+        or acceptance.get("nonclaim") != DIFFERENTIAL_ACCEPTANCE_RESULT_NONCLAIM
+        or len(acceptance.get("cases", [])) != 7
+    ):
+        fail("differential acceptance result promoted its authority")
+    invoke(
+        repo,
+        "differential",
+        ["check-acceptance", str(plan_path), str(pairs_path)],
+        expected_status=1,
+    )
+
+    policy_bytes = policy_path.read_bytes()
+    policy = load_canonical(policy_bytes, "differential acceptance policy")
+    policy["cases"][0]["maximum_logit_ulp_error"] = 1
+    write(policy_path, policy)
+    invoke(
+        repo,
+        "differential",
+        [
+            "check-acceptance",
+            str(plan_path),
+            str(pairs_path),
+            str(policy_path),
+        ],
+        expected_status=1,
+    )
+    policy_path.write_bytes(policy_bytes)
+
+    first_case = plan["cases"][0]
+    first_manifest_path = output_manifests[f"{first_case['id']}:ferric"]
+    first_manifest = load_canonical(
+        first_manifest_path.read_bytes(), "first Ferric output manifest"
+    )
+    first_logits_path = scratch / first_manifest["logits"]["path"]
+    first_logits = first_logits_path.read_bytes()
+    changed_logits = (0x3F81).to_bytes(2, "little") + first_logits[2:]
+    first_logits_path.write_bytes(changed_logits)
+    first_manifest["logits"]["sha256"] = hashlib.sha256(changed_logits).hexdigest()
+    write(first_manifest_path, first_manifest)
+    invoke(
+        repo,
+        "differential",
+        [
+            "check-acceptance",
+            str(plan_path),
+            str(pairs_path),
+            str(policy_path),
+        ],
+        expected_status=1,
+    )
+    first_logits_path.write_bytes(first_logits)
+    first_manifest["logits"]["sha256"] = hashlib.sha256(first_logits).hexdigest()
+    write(first_manifest_path, first_manifest)
+
+    token_case = next(
+        case for case in plan["cases"] if case["kind"] == "decode-s32-c8192"
+    )
+    token_manifest_path = output_manifests[f"{token_case['id']}:ferric"]
+    token_manifest = load_canonical(
+        token_manifest_path.read_bytes(), "token-mutation Ferric output manifest"
+    )
+    token_logits_path = scratch / token_manifest["logits"]["path"]
+    token_payload_path = scratch / token_manifest["tokens"]["path"]
+    token_logits = token_logits_path.read_bytes()
+    token_payload = token_payload_path.read_bytes()
+    changed_logits = token_logits[:2] + (0x4000).to_bytes(2, "little") + token_logits[4:]
+    changed_tokens = (1).to_bytes(4, "little") + token_payload[4:]
+    token_logits_path.write_bytes(changed_logits)
+    token_payload_path.write_bytes(changed_tokens)
+    token_manifest["logits"]["sha256"] = hashlib.sha256(changed_logits).hexdigest()
+    token_manifest["tokens"]["sha256"] = hashlib.sha256(changed_tokens).hexdigest()
+    write(token_manifest_path, token_manifest)
+    invoke(
+        repo,
+        "differential",
+        [
+            "check-acceptance",
+            str(plan_path),
+            str(pairs_path),
+            str(policy_path),
+        ],
+        expected_status=1,
+    )
+    token_logits_path.write_bytes(token_logits)
+    token_payload_path.write_bytes(token_payload)
+    token_manifest["logits"]["sha256"] = hashlib.sha256(token_logits).hexdigest()
+    token_manifest["tokens"]["sha256"] = hashlib.sha256(token_payload).hexdigest()
+    write(token_manifest_path, token_manifest)
     transcript_path = scratch / "differential.produced-transcript.json"
     invoke(
         repo,
@@ -1060,7 +1209,14 @@ def exercise_suite(
     input_path = scratch / f"{suite}.input.json"
     plan_a = scratch / f"{suite}.plan-a.json"
     plan_b = scratch / f"{suite}.plan-b.json"
-    write(input_path, plan_input(descriptor))
+    input_value = plan_input(descriptor)
+    policy_path = scratch / "differential.acceptance-policy.json"
+    if suite == "differential":
+        write(policy_path, differential_acceptance_policy(descriptor))
+        input_value["identities"]["differential-acceptance-policy"] = (
+            hashlib.sha256(policy_path.read_bytes()).hexdigest()
+        )
+    write(input_path, input_value)
     invoke(repo, suite, ["plan", str(input_path), str(plan_a)])
     invoke(repo, suite, ["plan", str(input_path), str(plan_b)])
     if plan_a.read_bytes() != plan_b.read_bytes():
@@ -1070,7 +1226,9 @@ def exercise_suite(
     if suite == "adversarial":
         exercise_adversarial_producer(repo, scratch, descriptor)
     if suite == "differential":
-        exercise_differential_producer(repo, scratch, plan_a, plan, plan_raw)
+        exercise_differential_producer(
+            repo, scratch, plan_a, plan, plan_raw, policy_path
+        )
 
     records_path = scratch / f"{suite}.records.json"
     transcript_path = scratch / f"{suite}.transcript.json"

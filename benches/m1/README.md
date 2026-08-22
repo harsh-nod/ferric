@@ -58,6 +58,28 @@ argmax of its own row. It records comparison counts, maximum ULP distance, and
 Ferric/reference token mismatches. It deliberately applies no numerical
 tolerance and does not turn the resulting records into qualification evidence.
 
+Numerical acceptance is a separate, fail-closed operation:
+
+```text
+cargo run --locked -p ferric-m1-benchmarks --bin ferric-m1-differential -- \
+  check-acceptance PLAN PAIRS POLICY
+```
+
+`POLICY` is a canonical `FERRIC-M1-DIFFERENTIAL-ACCEPTANCE-POLICY-V1`
+artifact whose SHA-256 must already be present as the plan's
+`differential-acceptance-policy` identity. It fixes one maximum monotonic BF16
+ULP error and maximum Ferric/reference greedy-token mismatch count for every
+one of the seven case kinds. Ferric does not supply a default tolerance. The
+checker rereads the full identity-bound payloads, requires exact shapes and
+encodings, finite logits, and lowest-ID BF16 argmax tokens, then applies only
+the plan-admitted per-case thresholds. A missing, substituted, incomplete, or
+type-drifted policy fails before comparison.
+
+The canonical result has `checked-differential-policy-conformance-only`
+authority. It does not establish that the external threshold was independently
+reviewed, create qualification evidence, or close `m1.r29`; those remain duties
+of the independent M1 evidence and qualification validators.
+
 The adversarial suite has a separate five-case producer:
 
 ```text

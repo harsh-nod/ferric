@@ -27,13 +27,21 @@ use vstd::prelude::*;
 const PAIRS_FORMAT: &str = "FERRIC-M1-DIFFERENTIAL-PAIRS-V1";
 const OUTPUT_FORMAT: &str = "FERRIC-M1-DIFFERENTIAL-OUTPUT-V1";
 const RAW_RECORD_FORMAT: &str = "FERRIC-M1-DIFFERENTIAL-RAW-RECORD-V1";
+const ACCEPTANCE_POLICY_FORMAT: &str = "FERRIC-M1-DIFFERENTIAL-ACCEPTANCE-POLICY-V1";
+const ACCEPTANCE_RESULT_FORMAT: &str = "FERRIC-M1-DIFFERENTIAL-ACCEPTANCE-RESULT-V1";
 const RECORDS_FORMAT: &str = "FERRIC-M1-BENCHMARK-RECORDS-V1";
 const PAIRS_AUTHORITY: &str = "externally-collected-differential-pairs-only";
 const OUTPUT_AUTHORITY: &str = "externally-collected-model-output-only";
 const RAW_AUTHORITY: &str = "computed-differential-comparison-only";
+const ACCEPTANCE_POLICY_AUTHORITY: &str = "externally-admitted-differential-threshold-policy-only";
+const ACCEPTANCE_RESULT_AUTHORITY: &str = "checked-differential-policy-conformance-only";
+const ACCEPTANCE_POLICY_IDENTITY: &str = "differential-acceptance-policy";
+const TARGET: &str = "gfx942:xnack-";
 const VOCABULARY_SIZE: u64 = 151_936;
 const BF16_BYTES: u64 = 2;
 const TOKEN_BYTES: u64 = 4;
+const ACCEPTANCE_POLICY_NONCLAIM: &str = "This artifact supplies plan-admitted differential thresholds only. It does not establish independent review, numerical correctness, hardware correctness, qualification authority, or close m1.r29.";
+const ACCEPTANCE_RESULT_NONCLAIM: &str = "This result authenticates exact target-only differential comparisons against one plan-admitted threshold policy only. It does not establish an independently reviewed threshold, prove operator or graph refinement, establish hardware correctness, grant qualification authority, or close m1.r29.";
 
 const METRICS: &[Metric] = &[
     Metric {
@@ -68,7 +76,11 @@ const SUITE: Suite = Suite {
         "prefill-s1-t512",
         "prefill-s8-t128",
     ],
-    extra_identities: &["reference-implementation", "reference-protocol"],
+    extra_identities: &[
+        ACCEPTANCE_POLICY_IDENTITY,
+        "reference-implementation",
+        "reference-protocol",
+    ],
     metrics: METRICS,
     extra_record_attributes: &["ferric-output-sha256", "reference-output-sha256"],
     minimum_warmups: 0,
@@ -128,6 +140,12 @@ struct Comparison {
     compared_tokens: u64,
     maximum_logit_ulp_error: u64,
     token_mismatches: u64,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct AcceptanceThreshold {
+    maximum_logit_ulp_error: u64,
+    maximum_token_mismatches: u64,
 }
 
 struct CheckedReader<R> {
@@ -413,6 +431,18 @@ fn main() -> ExitCode {
             }
         };
     }
+    if arguments
+        .first()
+        .is_some_and(|command| command == "check-acceptance")
+    {
+        return match check_acceptance_command(&arguments) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("FAIL: {error}");
+                ExitCode::FAILURE
+            }
+        };
+    }
     main_for(&SUITE)
 }
 
@@ -460,6 +490,243 @@ fn produce_command(arguments: &[OsString]) -> BenchResult<()> {
     });
     staging.write_records(&encode_canonical_document(&records)?)?;
     staging.publish()
+}
+
+fn check_acceptance_command(arguments: &[OsString]) -> BenchResult<()> {
+    let [command, plan_path, pairs_path, policy_path] = arguments else {
+        return Err("usage: ferric-m1-differential check-acceptance PLAN PAIRS POLICY".to_owned());
+    };
+    if command != "check-acceptance" {
+        return Err("differential acceptance command drifted".to_owned());
+    }
+    let (plan, plan_bytes) = load_benchmark_plan(&SUITE, Path::new(plan_path))?;
+    let plan_sha256 = sha256_identity(&plan_bytes);
+    let plan_cases = exact_plan_cases(&plan)?;
+    let identities = plan_identities(&plan)?;
+    let (_, policy_value, policy_bytes) =
+        load_canonical_document(Path::new(policy_path), "differential acceptance policy")?;
+    let policy_sha256 = sha256_identity(&policy_bytes);
+    if policy_sha256 != identity(&identities, ACCEPTANCE_POLICY_IDENTITY)? {
+        return Err("differential acceptance policy was not admitted by the plan".to_owned());
+    }
+    let thresholds = parse_acceptance_policy(&policy_value)?;
+    let (input_root, pairs_value, pairs_bytes) =
+        load_canonical_document(Path::new(pairs_path), "differential pairs manifest")?;
+    let mut pairs = parse_pairs(
+        &input_root,
+        &pairs_value,
+        &plan_cases,
+        &identities,
+        &plan_sha256,
+    )?;
+    let pairs_sha256 = sha256_identity(&pairs_bytes);
+    let mut cases = Vec::with_capacity(pairs.len());
+    for pair in &mut pairs {
+        let comparison = compare_pair(pair)?;
+        let threshold = thresholds
+            .get(&pair.kind)
+            .ok_or_else(|| format!("acceptance policy omitted case kind: {}", pair.kind))?;
+        require_comparison_within_policy(&pair.case_id, comparison, *threshold)?;
+        cases.push(json!({
+            "case_id": pair.case_id,
+            "comparison": {
+                "compared_logits": comparison.compared_logits,
+                "compared_tokens": comparison.compared_tokens,
+                "maximum_logit_ulp_error": comparison.maximum_logit_ulp_error,
+                "token_mismatches": comparison.token_mismatches,
+            },
+            "kind": pair.kind,
+            "status": "within-policy",
+            "threshold": {
+                "maximum_logit_ulp_error": threshold.maximum_logit_ulp_error,
+                "maximum_token_mismatches": threshold.maximum_token_mismatches,
+            },
+        }));
+    }
+    let result = json!({
+        "authority": ACCEPTANCE_RESULT_AUTHORITY,
+        "cases": cases,
+        "format": ACCEPTANCE_RESULT_FORMAT,
+        "nonclaim": ACCEPTANCE_RESULT_NONCLAIM,
+        "obligation_id": SUITE.obligation_id,
+        "pairs_sha256": pairs_sha256,
+        "path_id": SUITE.path_id,
+        "plan_sha256": plan_sha256,
+        "policy_sha256": policy_sha256,
+        "status": "POLICY_CONFORMING",
+        "suite": SUITE.name,
+        "target": TARGET,
+    });
+    let bytes = encode_canonical_document(&result)?;
+    let mut stdout = std::io::stdout().lock();
+    stdout
+        .write_all(&bytes)
+        .map_err(|error| format!("cannot write differential acceptance result: {error}"))?;
+    stdout
+        .flush()
+        .map_err(|error| format!("cannot flush differential acceptance result: {error}"))
+}
+
+fn parse_acceptance_policy(value: &Value) -> BenchResult<BTreeMap<String, AcceptanceThreshold>> {
+    let policy = object(
+        value,
+        &[
+            "authority",
+            "cases",
+            "finite_logits_required",
+            "format",
+            "logit_metric",
+            "nonclaim",
+            "obligation_id",
+            "path_id",
+            "suite",
+            "target",
+            "token_metric",
+            "token_selection",
+        ],
+        "differential acceptance policy",
+    )?;
+    expect(
+        policy,
+        "authority",
+        ACCEPTANCE_POLICY_AUTHORITY,
+        "acceptance policy authority",
+    )?;
+    expect(
+        policy,
+        "format",
+        ACCEPTANCE_POLICY_FORMAT,
+        "acceptance policy format",
+    )?;
+    expect(
+        policy,
+        "logit_metric",
+        "maximum-monotonic-bf16-ulp-distance-signed-zero-equal",
+        "acceptance policy logit metric",
+    )?;
+    expect(
+        policy,
+        "nonclaim",
+        ACCEPTANCE_POLICY_NONCLAIM,
+        "acceptance policy nonclaim",
+    )?;
+    expect(
+        policy,
+        "obligation_id",
+        SUITE.obligation_id,
+        "acceptance policy obligation",
+    )?;
+    expect(policy, "path_id", SUITE.path_id, "acceptance policy path")?;
+    expect(policy, "suite", SUITE.name, "acceptance policy suite")?;
+    expect(policy, "target", TARGET, "acceptance policy target")?;
+    expect(
+        policy,
+        "token_metric",
+        "ferric-reference-greedy-token-mismatch-count",
+        "acceptance policy token metric",
+    )?;
+    expect(
+        policy,
+        "token_selection",
+        "lowest-token-id-bf16-argmax",
+        "acceptance policy token selection",
+    )?;
+    if field(
+        policy,
+        "finite_logits_required",
+        "differential acceptance policy",
+    )?
+    .as_bool()
+        != Some(true)
+    {
+        return Err("differential acceptance policy must require finite logits".to_owned());
+    }
+    let cases = field(policy, "cases", "differential acceptance policy")?
+        .as_array()
+        .ok_or_else(|| "differential acceptance policy cases must be an array".to_owned())?;
+    if cases.len() != SUITE.case_kinds.len() {
+        return Err(
+            "differential acceptance policy must cover exactly seven case kinds".to_owned(),
+        );
+    }
+    let mut thresholds = BTreeMap::new();
+    let mut prior: Option<&str> = None;
+    for case in cases {
+        let case = object(
+            case,
+            &[
+                "kind",
+                "maximum_logit_ulp_error",
+                "maximum_token_mismatches",
+            ],
+            "differential acceptance policy case",
+        )?;
+        let kind = string(case, "kind", "differential acceptance policy case")?;
+        if prior.is_some_and(|previous| previous >= kind) {
+            return Err(
+                "differential acceptance policy cases must be uniquely sorted by kind".to_owned(),
+            );
+        }
+        prior = Some(kind);
+        if !SUITE.case_kinds.contains(&kind) {
+            return Err(format!(
+                "differential acceptance policy has unknown kind: {kind}"
+            ));
+        }
+        let maximum_logit_ulp_error = field(
+            case,
+            "maximum_logit_ulp_error",
+            "differential acceptance policy case",
+        )?
+        .as_u64()
+        .ok_or_else(|| "maximum logit ULP threshold must be an unsigned integer".to_owned())?;
+        let maximum_token_mismatches = field(
+            case,
+            "maximum_token_mismatches",
+            "differential acceptance policy case",
+        )?
+        .as_u64()
+        .ok_or_else(|| "maximum token mismatch threshold must be an unsigned integer".to_owned())?;
+        if maximum_token_mismatches > rows_for_kind(kind)? {
+            return Err(format!(
+                "token mismatch threshold exceeds the row count for {kind}"
+            ));
+        }
+        thresholds.insert(
+            kind.to_owned(),
+            AcceptanceThreshold {
+                maximum_logit_ulp_error,
+                maximum_token_mismatches,
+            },
+        );
+    }
+    if thresholds
+        .keys()
+        .map(String::as_str)
+        .collect::<BTreeSet<_>>()
+        != SUITE.case_kinds.iter().copied().collect()
+    {
+        return Err("differential acceptance policy case-kind roster drifted".to_owned());
+    }
+    Ok(thresholds)
+}
+
+fn require_comparison_within_policy(
+    case_id: &str,
+    comparison: Comparison,
+    threshold: AcceptanceThreshold,
+) -> BenchResult<()> {
+    if comparison.maximum_logit_ulp_error > threshold.maximum_logit_ulp_error {
+        return Err(format!(
+            "maximum logit ULP error exceeds the admitted policy for {case_id}"
+        ));
+    }
+    if comparison.token_mismatches > threshold.maximum_token_mismatches {
+        return Err(format!(
+            "token mismatches exceed the admitted policy for {case_id}"
+        ));
+    }
+    Ok(())
 }
 
 fn exact_plan_cases(plan: &Value) -> BenchResult<BTreeMap<String, PlanCase>> {
@@ -1295,6 +1562,27 @@ mod tests {
         }
     }
 
+    fn acceptance_policy_fixture() -> Value {
+        json!({
+            "authority": ACCEPTANCE_POLICY_AUTHORITY,
+            "cases": SUITE.case_kinds.iter().map(|kind| json!({
+                "kind": kind,
+                "maximum_logit_ulp_error": 0,
+                "maximum_token_mismatches": 0,
+            })).collect::<Vec<_>>(),
+            "finite_logits_required": true,
+            "format": ACCEPTANCE_POLICY_FORMAT,
+            "logit_metric": "maximum-monotonic-bf16-ulp-distance-signed-zero-equal",
+            "nonclaim": ACCEPTANCE_POLICY_NONCLAIM,
+            "obligation_id": SUITE.obligation_id,
+            "path_id": SUITE.path_id,
+            "suite": SUITE.name,
+            "target": TARGET,
+            "token_metric": "ferric-reference-greedy-token-mismatch-count",
+            "token_selection": "lowest-token-id-bf16-argmax",
+        })
+    }
+
     fn compare(
         ferric: &[u16],
         reference: &[u16],
@@ -1387,6 +1675,66 @@ mod tests {
         assert_eq!(rows_for_kind("decode-s8-c8192").unwrap(), 8);
         assert_eq!(rows_for_kind("prefill-s8-t128").unwrap(), 8);
         assert!(rows_for_kind("decode-s2-c8192").is_err());
+    }
+
+    #[test]
+    fn acceptance_policy_requires_exact_typed_semantics_and_roster() {
+        let policy = acceptance_policy_fixture();
+        let thresholds = parse_acceptance_policy(&policy).unwrap();
+        assert_eq!(thresholds.len(), 7);
+
+        let mut missing = policy.clone();
+        missing["cases"].as_array_mut().unwrap().pop();
+        assert!(parse_acceptance_policy(&missing).is_err());
+
+        let mut nonfinite = policy.clone();
+        nonfinite["finite_logits_required"] = Value::Bool(false);
+        assert!(parse_acceptance_policy(&nonfinite).is_err());
+
+        let mut unknown = policy.clone();
+        unknown["cases"][0]["kind"] = Value::String("decode-s2-c8192".to_owned());
+        assert!(parse_acceptance_policy(&unknown).is_err());
+
+        let mut vacuous_tokens = policy;
+        vacuous_tokens["cases"][0]["maximum_token_mismatches"] = Value::from(2_u64);
+        assert!(parse_acceptance_policy(&vacuous_tokens).is_err());
+    }
+
+    #[test]
+    fn acceptance_applies_only_explicit_logit_and_token_thresholds() {
+        let comparison = Comparison {
+            compared_logits: VOCABULARY_SIZE,
+            compared_tokens: 1,
+            maximum_logit_ulp_error: 1,
+            token_mismatches: 1,
+        };
+        assert!(require_comparison_within_policy(
+            "decode-s1-c8192.001",
+            comparison,
+            AcceptanceThreshold {
+                maximum_logit_ulp_error: 0,
+                maximum_token_mismatches: 1,
+            },
+        )
+        .is_err());
+        assert!(require_comparison_within_policy(
+            "decode-s1-c8192.001",
+            comparison,
+            AcceptanceThreshold {
+                maximum_logit_ulp_error: 1,
+                maximum_token_mismatches: 0,
+            },
+        )
+        .is_err());
+        assert!(require_comparison_within_policy(
+            "decode-s1-c8192.001",
+            comparison,
+            AcceptanceThreshold {
+                maximum_logit_ulp_error: 1,
+                maximum_token_mismatches: 1,
+            },
+        )
+        .is_ok());
     }
 
     #[test]

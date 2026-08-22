@@ -1136,7 +1136,11 @@ fn parse_identities(value: &Value) -> CaptureResult<BTreeMap<String, String>> {
         .as_object()
         .ok_or_else(|| "benchmark identities must be an object".to_owned())?;
     let mut expected = COMMON_IDENTITIES.to_vec();
-    expected.extend(["reference-implementation", "reference-protocol"]);
+    expected.extend([
+        "differential-acceptance-policy",
+        "reference-implementation",
+        "reference-protocol",
+    ]);
     expected.sort_unstable();
     exact_keys(object, &expected, "benchmark identities")?;
     let mut identities = BTreeMap::new();
@@ -2457,7 +2461,11 @@ mod tests {
     fn producer_manifest_has_exact_payload_contract() {
         let identities = COMMON_IDENTITIES
             .iter()
-            .chain([&"reference-implementation", &"reference-protocol"])
+            .chain([
+                &"differential-acceptance-policy",
+                &"reference-implementation",
+                &"reference-protocol",
+            ])
             .map(|name| ((*name).to_owned(), digest(name)))
             .collect();
         let case = PlanCase {
