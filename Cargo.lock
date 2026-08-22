@@ -325,11 +325,18 @@ dependencies = [
 name = "ferric-build"
 version = "0.1.0"
 dependencies = [
+ "fe2o3-amdhsa-loader",
+ "fe2o3-artifact-transaction",
+ "fe2o3-compiler-ffi",
+ "fe2o3-hsaco-finalize",
+ "fe2o3-llvm-worker-handoff",
  "ferric-generated-runner",
  "ferric-kernels",
  "ferric-qwen-kernels",
  "ferric-spec",
  "onig",
+ "rustix",
+ "sha2",
  "unicode-normalization-alignments",
  "vstd",
 ]

@@ -10,11 +10,18 @@ publish = false
 test-fixtures = []
 
 [dependencies]
+fe2o3-amdhsa-loader.workspace = true
+fe2o3-artifact-transaction.workspace = true
+fe2o3-compiler-ffi.workspace = true
+fe2o3-hsaco-finalize.workspace = true
+fe2o3-llvm-worker-handoff.workspace = true
 ferric-generated-runner = { path = "../ferric-generated-runner" }
 ferric-kernels = { path = "../ferric-kernels" }
 ferric-qwen-kernels = { path = "../ferric-qwen-kernels" }
 ferric-spec = { path = "../ferric-spec" }
 onig = { version = "=6.5.3", default-features = false }
+rustix.workspace = true
+sha2.workspace = true
 unicode-normalization-alignments = "=0.1.12"
 vstd.workspace = true
 

@@ -13,6 +13,9 @@ mod auth;
 pub mod bundle;
 mod identity_closure;
 mod json;
+mod kernel_artifact_manifest;
+mod kernel_artifact_policy;
+mod kernel_artifacts;
 mod memory_layout;
 mod model;
 mod model_layout;
@@ -39,6 +42,21 @@ pub use identity_closure::{
     build_preliminary_identity_closure, expected_preliminary_kernel_catalog_identity,
     ExternalIdentityClosureInputs, IdentityClosureComponent, IdentityClosureError,
     PreliminaryIdentityClosure, PRELIMINARY_IDENTITY_CLOSURE_VERSION,
+};
+pub use kernel_artifact_manifest::{
+    decode_m1_kernel_artifact_manifest_v1, M1KernelArtifactEntryV1, M1KernelArtifactFamilyV1,
+    M1KernelArtifactManifestErrorV1, M1KernelArtifactManifestV1, M1KernelArtifactProgramV1,
+    M1KernelProfileCatalogV1, M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1,
+    M1_KERNEL_ARTIFACT_MANIFEST_VERSION_V1, M1_PHYSICAL_PROGRAM_COUNT_V1,
+};
+pub use kernel_artifact_policy::{
+    M1_KERNEL_WORKER_BUILD_IDENTITY_V1, M1_KERNEL_WORKER_EXECUTABLE_BYTES_V1,
+    M1_KERNEL_WORKER_EXECUTABLE_SHA256_V1, M1_KERNEL_WORKER_LLVM_BUILD_IDENTITY_V1,
+};
+pub use kernel_artifacts::{
+    build_and_publish_m1_kernel_artifacts_v1, BuiltAndInspectedM1KernelArtifactsV1,
+    M1KernelArtifactBuildErrorV1, M1KernelArtifactBuildStageV1,
+    M1KernelArtifactPublicationStatusV1, M1_KERNEL_ARTIFACT_MANIFEST_FILENAME_V1,
 };
 #[cfg(feature = "test-fixtures")]
 #[doc(hidden)]
