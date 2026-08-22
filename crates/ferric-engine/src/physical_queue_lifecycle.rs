@@ -613,6 +613,10 @@ impl<const N: usize> M1PhysicalReadbackQueueCaseV1<N> {
         &self.custody
     }
 
+    const fn custody_mut(&mut self) -> &mut M1PhysicalQueueBatchCustodyV1 {
+        &mut self.custody
+    }
+
     fn into_parts(
         self,
     ) -> (
@@ -686,6 +690,16 @@ impl M1PhysicalReadbackQueueSessionV1 {
             Self::SpeculativeK4(case) => case.custody(),
             Self::SpeculativeK8(case) => case.custody(),
             Self::SpeculativeK16(case) => case.custody(),
+        }
+    }
+
+    pub(crate) const fn custody_mut(&mut self) -> &mut M1PhysicalQueueBatchCustodyV1 {
+        match self {
+            Self::TargetOnly(case) => case.custody_mut(),
+            Self::PairedPrefill(case) => case.custody_mut(),
+            Self::SpeculativeK4(case) => case.custody_mut(),
+            Self::SpeculativeK8(case) => case.custody_mut(),
+            Self::SpeculativeK16(case) => case.custody_mut(),
         }
     }
 }

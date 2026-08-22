@@ -16,6 +16,7 @@ mod initialized_model_memory;
 mod initialized_step_workspaces;
 mod kv_workspace_authority;
 mod m1_completed_step;
+mod m1_completed_step_release;
 mod m1_prepublication;
 mod model_memory_allocations;
 mod operation_dispatch_expansion;
@@ -97,6 +98,12 @@ pub use m1_completed_step::{
     M1CompletedStepOutcomeV1, M1CompletedStepPoisonV1, M1CompletedStepRejectionV1,
     M1CompletedStepSuccessV1, M1DeviceKvCompletionDispositionV1, M1DeviceKvCompletionMemberV1,
     M1DeviceKvCompletionRosterV1,
+};
+pub use m1_completed_step_release::{
+    release_m1_completed_step_kv_pages_v1, M1CompletedKvPageIdentityErrorV1,
+    M1CompletedKvPageReleaseCountsV1, M1CompletedStepKvReleaseErrorV1,
+    M1CompletedStepKvReleaseFailureV1, M1ReleasedCompletedStepV1, M1ReleasedDeviceKvMemberV1,
+    M1ReleasedTerminalDeviceKvMemberV1,
 };
 pub use m1_prepublication::{
     allocate_m1_prepublication_workspaces_v1, build_m1_prepublication_batch_v1,

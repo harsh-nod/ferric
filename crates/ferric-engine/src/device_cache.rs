@@ -17,8 +17,9 @@
 //! memory owner and retains the generic owner's sole target/draft KV plane
 //! partitions. There is deliberately no production constructor for
 //! [`InitializedDeviceKvWrite`]: the generated runner must source it from exact
-//! queue custody. Quiescent caches retain page custody and expose no release or
-//! reuse operation. Step completion establishes initialized physical state
+//! queue custody. Quiescent caches release retired leases only through the
+//! closed completed-step join, which returns them to that exact queue-retained
+//! ledger. Step completion establishes initialized physical state
 //! only; it deliberately does not decide acceptance, rollback, scheduler
 //! completion, or resource release policy.
 
@@ -242,6 +243,8 @@ const M1_TARGET_KV_PLANE_SUBLEASES_V1: usize = 72;
 const M1_DRAFT_KV_PLANE_SUBLEASES_V1: usize = 56;
 const M1_GLOBAL_KV_PAGE_SLOTS_V1: usize =
     M1_MAX_ACTIVE_SEQUENCES as usize * M1_KV_PHYSICAL_PAGE_SLOTS;
+pub(crate) const M1_KV_PAGE_RETURN_ROLE_ORDER_V1: [Qwen3ModelRole; 2] =
+    [Qwen3ModelRole::Draft06B, Qwen3ModelRole::Target8B];
 
 type TargetKvPlaneSubleasesV1 = ServiceAllocationSubleaseSetV1<
     DeviceStateRoleV1,
@@ -570,6 +573,136 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
             Qwen3ModelRole::Draft06B => self.draft_pages.len(),
         }
     }
+
+    pub(crate) fn revalidate_page_return_authority(
+        &self,
+    ) -> Result<(), M1DeviceKvArenaLeaseErrorV1> {
+        self.model_memory
+            .revalidate_for_kv_partition()
+            .map_err(M1DeviceKvArenaLeaseErrorV1::ModelMemory)?;
+        if self.target_planes.len() != M1_TARGET_KV_PLANE_SUBLEASES_V1
+            || self.draft_planes.len() != M1_DRAFT_KV_PLANE_SUBLEASES_V1
+            || self.target_pages.len() != M1_GLOBAL_KV_PAGE_SLOTS_V1
+            || self.draft_pages.len() != M1_GLOBAL_KV_PAGE_SLOTS_V1
+        {
+            return Err(M1DeviceKvArenaLeaseErrorV1::GenerationLedgerDrift);
+        }
+        Ok(())
+    }
+
+    pub(crate) fn preflight_page_return(
+        &self,
+        expected_role: Qwen3ModelRole,
+        lease: &DeviceKvPageLease,
+    ) -> Result<M1PreflightedKvPageReturnV1, M1KvPageReturnErrorV1> {
+        let global_index = global_page_index(lease.request, lease.page.index())
+            .map_err(|_| M1KvPageReturnErrorV1::Index)?;
+        preflight_page_return_identity(
+            self.device,
+            self.allocation_id(expected_role),
+            expected_role,
+            self.page_ledger(expected_role).get(global_index).copied(),
+            global_index,
+            lease.request,
+            lease,
+        )
+    }
+
+    pub(crate) fn commit_page_return(
+        &mut self,
+        preflighted: M1PreflightedKvPageReturnV1,
+        lease: DeviceKvPageLease,
+    ) {
+        let state = &mut self.page_ledger_mut(preflighted.role)[preflighted.global_index];
+        commit_page_return_state(state, preflighted, lease);
+    }
+
+    fn page_ledger(&self, role: Qwen3ModelRole) -> &[M1KvPoolPageStateV1] {
+        match role {
+            Qwen3ModelRole::Target8B => &self.target_pages,
+            Qwen3ModelRole::Draft06B => &self.draft_pages,
+        }
+    }
+
+    fn page_ledger_mut(&mut self, role: Qwen3ModelRole) -> &mut [M1KvPoolPageStateV1] {
+        match role {
+            Qwen3ModelRole::Target8B => &mut self.target_pages,
+            Qwen3ModelRole::Draft06B => &mut self.draft_pages,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum M1KvPageReturnErrorV1 {
+    Device,
+    Allocation,
+    Request,
+    Role,
+    Index,
+    Ledger,
+    GenerationExhausted,
+}
+
+#[derive(Debug, Eq, PartialEq)]
+pub(crate) struct M1PreflightedKvPageReturnV1 {
+    pub(crate) role: Qwen3ModelRole,
+    pub(crate) request: RequestId,
+    pub(crate) page: PhysicalPageId,
+    pub(crate) allocation_id: Identity,
+    pub(crate) global_index: usize,
+    next_generation: u32,
+}
+
+fn preflight_page_return_identity(
+    expected_device: Gfx942DeviceBinding,
+    expected_allocation_id: Identity,
+    expected_role: Qwen3ModelRole,
+    state: Option<M1KvPoolPageStateV1>,
+    global_index: usize,
+    expected_request: RequestId,
+    lease: &DeviceKvPageLease,
+) -> Result<M1PreflightedKvPageReturnV1, M1KvPageReturnErrorV1> {
+    if lease.device != expected_device {
+        return Err(M1KvPageReturnErrorV1::Device);
+    }
+    if lease.request != expected_request {
+        return Err(M1KvPageReturnErrorV1::Request);
+    }
+    if lease.page.role() != expected_role {
+        return Err(M1KvPageReturnErrorV1::Role);
+    }
+    if !lease.allocation_id.equals(&expected_allocation_id) {
+        return Err(M1KvPageReturnErrorV1::Allocation);
+    }
+    validate_leased_page_state(state, lease.request, lease.page.generation())
+        .map_err(|_| M1KvPageReturnErrorV1::Ledger)?;
+    let next_generation = lease
+        .page
+        .generation()
+        .checked_add(1)
+        .ok_or(M1KvPageReturnErrorV1::GenerationExhausted)?;
+    Ok(M1PreflightedKvPageReturnV1 {
+        role: expected_role,
+        request: lease.request,
+        page: lease.page,
+        allocation_id: lease.allocation_id,
+        global_index,
+        next_generation,
+    })
+}
+
+const fn returned_page_state(preflighted: &M1PreflightedKvPageReturnV1) -> M1KvPoolPageStateV1 {
+    M1KvPoolPageStateV1::Free {
+        generation: preflighted.next_generation,
+    }
+}
+
+fn commit_page_return_state(
+    state: &mut M1KvPoolPageStateV1,
+    preflighted: M1PreflightedKvPageReturnV1,
+    _lease: DeviceKvPageLease,
+) {
+    *state = returned_page_state(&preflighted);
 }
 
 impl M1PartitionedModelMemoryKvPoolV1 {
@@ -1855,10 +1988,28 @@ pub struct DeviceKvCacheProjection {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-struct RetiredPageLease {
+pub(crate) struct RetiredPageLease {
     lease: DeviceKvPageLease,
     after_epoch: CompletionEpoch,
     quiescent: bool,
+}
+
+impl RetiredPageLease {
+    pub(crate) const fn lease(&self) -> &DeviceKvPageLease {
+        &self.lease
+    }
+
+    pub(crate) const fn after_epoch(&self) -> CompletionEpoch {
+        self.after_epoch
+    }
+
+    pub(crate) const fn is_quiescent(&self) -> bool {
+        self.quiescent
+    }
+
+    pub(crate) fn into_lease(self) -> DeviceKvPageLease {
+        self.lease
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -1976,6 +2127,26 @@ impl DeviceKvCacheCommon {
             })
     }
 
+    fn release_state_is_valid(&self) -> bool {
+        self.target.pending.is_none()
+            && self.draft.pending.is_none()
+            && Self::owned_table_matches(&self.target)
+            && Self::owned_table_matches(&self.draft)
+    }
+
+    fn retired_pages(&self, role: Qwen3ModelRole) -> &[RetiredPageLease] {
+        &self.role(role).retired_pages
+    }
+
+    fn take_retired_pages(&mut self, role: Qwen3ModelRole) -> Vec<RetiredPageLease> {
+        let cache = self.role_mut(role);
+        let retired = core::mem::take(&mut cache.retired_pages);
+        if cache.active_pages.is_empty() {
+            cache.arena_allocation_id = None;
+        }
+        retired
+    }
+
     fn settle_retired_epoch(
         &mut self,
         completion: ExactCompletion,
@@ -2086,6 +2257,18 @@ impl ActiveDeviceKvCache {
     #[must_use]
     pub fn projection(&self) -> DeviceKvCacheProjection {
         self.common.projection()
+    }
+
+    pub(crate) fn release_state_is_valid(&self) -> bool {
+        self.common.release_state_is_valid()
+    }
+
+    pub(crate) fn retired_pages(&self, role: Qwen3ModelRole) -> &[RetiredPageLease] {
+        self.common.retired_pages(role)
+    }
+
+    pub(crate) fn take_retired_pages(&mut self, role: Qwen3ModelRole) -> Vec<RetiredPageLease> {
+        self.common.take_retired_pages(role)
     }
 
     /// Consumes one allocation lease into the exact role page table.
@@ -3526,6 +3709,20 @@ impl SettledQuiescentDeviceKvCache {
     pub const fn completion_epoch(&self) -> CompletionEpoch {
         self.completion_epoch
     }
+
+    pub(crate) fn release_state_is_valid(&self) -> bool {
+        self.common.release_state_is_valid()
+            && self.common.target.active_pages.is_empty()
+            && self.common.draft.active_pages.is_empty()
+    }
+
+    pub(crate) fn retired_pages(&self, role: Qwen3ModelRole) -> &[RetiredPageLease] {
+        self.common.retired_pages(role)
+    }
+
+    pub(crate) fn take_retired_pages(&mut self, role: Qwen3ModelRole) -> Vec<RetiredPageLease> {
+        self.common.take_retired_pages(role)
+    }
 }
 
 #[cfg(test)]
@@ -3683,6 +3880,232 @@ mod tests {
             validate_leased_page_state(None, request, 11),
             Err(M1DeviceKvArenaLeaseErrorV1::PageLeaseMismatch)
         ));
+    }
+
+    #[test]
+    fn returned_page_preflight_rejects_hostile_identity_substitution() {
+        let expected_device = device();
+        let other_device =
+            bind_gfx942_device(identity(9), 8, GFX942_PROCESSOR, GFX942_TARGET_FEATURES).unwrap();
+        let allocation = identity(2);
+        let expected_request = RequestId::new(3, 7);
+        let page = PhysicalPageId::new(Qwen3ModelRole::Draft06B, 5, 11);
+        let state = Some(M1KvPoolPageStateV1::Leased {
+            request: expected_request,
+            generation: 11,
+        });
+        let lease = |device, allocation_id, request, page| DeviceKvPageLease {
+            device,
+            allocation_id,
+            request,
+            page,
+        };
+
+        let exact = lease(expected_device, allocation, expected_request, page);
+        let ticket = preflight_page_return_identity(
+            expected_device,
+            allocation,
+            Qwen3ModelRole::Draft06B,
+            state,
+            1541,
+            expected_request,
+            &exact,
+        )
+        .unwrap();
+        assert_eq!(ticket.global_index, 1541);
+        assert_eq!(
+            returned_page_state(&ticket),
+            M1KvPoolPageStateV1::Free { generation: 12 }
+        );
+
+        assert_eq!(
+            preflight_page_return_identity(
+                expected_device,
+                allocation,
+                Qwen3ModelRole::Draft06B,
+                state,
+                1541,
+                expected_request,
+                &lease(other_device, allocation, expected_request, page),
+            ),
+            Err(M1KvPageReturnErrorV1::Device)
+        );
+        assert_eq!(
+            preflight_page_return_identity(
+                expected_device,
+                allocation,
+                Qwen3ModelRole::Draft06B,
+                state,
+                1541,
+                expected_request,
+                &lease(expected_device, identity(3), expected_request, page),
+            ),
+            Err(M1KvPageReturnErrorV1::Allocation)
+        );
+        assert_eq!(
+            preflight_page_return_identity(
+                expected_device,
+                allocation,
+                Qwen3ModelRole::Draft06B,
+                state,
+                1541,
+                RequestId::new(4, 7),
+                &exact,
+            ),
+            Err(M1KvPageReturnErrorV1::Request)
+        );
+        assert_eq!(
+            preflight_page_return_identity(
+                expected_device,
+                allocation,
+                Qwen3ModelRole::Target8B,
+                state,
+                1541,
+                expected_request,
+                &exact,
+            ),
+            Err(M1KvPageReturnErrorV1::Role)
+        );
+        assert_eq!(
+            preflight_page_return_identity(
+                expected_device,
+                allocation,
+                Qwen3ModelRole::Draft06B,
+                Some(M1KvPoolPageStateV1::Leased {
+                    request: expected_request,
+                    generation: 10,
+                }),
+                1541,
+                expected_request,
+                &exact,
+            ),
+            Err(M1KvPageReturnErrorV1::Ledger)
+        );
+    }
+
+    #[test]
+    fn returned_page_generation_exhaustion_is_preflight_only() {
+        let request = RequestId::new(1, 4);
+        let lease = DeviceKvPageLease {
+            device: device(),
+            allocation_id: identity(2),
+            request,
+            page: PhysicalPageId::new(Qwen3ModelRole::Target8B, 0, u32::MAX),
+        };
+        assert_eq!(
+            preflight_page_return_identity(
+                device(),
+                identity(2),
+                Qwen3ModelRole::Target8B,
+                Some(M1KvPoolPageStateV1::Leased {
+                    request,
+                    generation: u32::MAX,
+                }),
+                512,
+                request,
+                &lease,
+            ),
+            Err(M1KvPageReturnErrorV1::GenerationExhausted)
+        );
+    }
+
+    #[test]
+    fn whole_roster_return_is_transactional_and_draft_then_target() {
+        let requests = [RequestId::new(0, 4), RequestId::new(1, 9)];
+        let generations = [10u32, 20u32];
+        let mut draft = [
+            M1KvPoolPageStateV1::Leased {
+                request: requests[0],
+                generation: generations[0],
+            },
+            M1KvPoolPageStateV1::Leased {
+                request: requests[1],
+                generation: generations[1],
+            },
+        ];
+        let mut target = draft;
+        let before_draft = draft;
+        let before_target = target;
+        let allocation = |role| match role {
+            Qwen3ModelRole::Draft06B => identity(71),
+            Qwen3ModelRole::Target8B => identity(72),
+        };
+        let lease = |role, lane: usize| DeviceKvPageLease {
+            device: device(),
+            allocation_id: allocation(role),
+            request: requests[lane],
+            page: PhysicalPageId::new(role, 4, generations[lane]),
+        };
+
+        let hostile = lease(Qwen3ModelRole::Target8B, 1);
+        assert_eq!(
+            preflight_page_return_identity(
+                device(),
+                allocation(Qwen3ModelRole::Target8B),
+                Qwen3ModelRole::Target8B,
+                Some(M1KvPoolPageStateV1::Leased {
+                    request: requests[1],
+                    generation: generations[1] - 1,
+                }),
+                global_page_index(requests[1], 4).unwrap(),
+                requests[1],
+                &hostile,
+            ),
+            Err(M1KvPageReturnErrorV1::Ledger)
+        );
+        assert_eq!(draft, before_draft);
+        assert_eq!(target, before_target);
+
+        let mut staged = Vec::new();
+        for role in M1_KV_PAGE_RETURN_ROLE_ORDER_V1 {
+            for lane in 0..requests.len() {
+                let lease = lease(role, lane);
+                let state = match role {
+                    Qwen3ModelRole::Draft06B => draft[lane],
+                    Qwen3ModelRole::Target8B => target[lane],
+                };
+                let ticket = preflight_page_return_identity(
+                    device(),
+                    allocation(role),
+                    role,
+                    Some(state),
+                    global_page_index(requests[lane], 4).unwrap(),
+                    requests[lane],
+                    &lease,
+                )
+                .unwrap();
+                staged.push((role, lane, ticket, lease));
+            }
+        }
+        assert_eq!(draft, before_draft);
+        assert_eq!(target, before_target);
+
+        let mut order = Vec::new();
+        for (role, lane, ticket, lease) in staged {
+            order.push((role, lane));
+            let state = match role {
+                Qwen3ModelRole::Draft06B => &mut draft[lane],
+                Qwen3ModelRole::Target8B => &mut target[lane],
+            };
+            commit_page_return_state(state, ticket, lease);
+        }
+        assert_eq!(
+            order,
+            vec![
+                (Qwen3ModelRole::Draft06B, 0),
+                (Qwen3ModelRole::Draft06B, 1),
+                (Qwen3ModelRole::Target8B, 0),
+                (Qwen3ModelRole::Target8B, 1),
+            ]
+        );
+        assert_eq!(
+            draft,
+            [
+                M1KvPoolPageStateV1::Free { generation: 11 },
+                M1KvPoolPageStateV1::Free { generation: 21 },
+            ]
+        );
+        assert_eq!(target, draft);
     }
 
     const fn selection(role: Qwen3ModelRole) -> Qwen3PlanSelection {
@@ -4973,5 +5396,71 @@ mod tests {
         assert_eq!(projection.target_quiescent_retired_pages, 2);
         assert_eq!(projection.draft_retired_pages, 0);
         assert_eq!(projection.draft_quiescent_retired_pages, 0);
+    }
+
+    #[test]
+    fn continuing_release_moves_only_quiescent_rollback_pages() {
+        let mut active = cache();
+        append_and_initialize(&mut active, Qwen3ModelRole::Target8B, 0, 51, 16, 21);
+        active
+            .accept_initialized(request(), Qwen3ModelRole::Target8B, 16)
+            .unwrap();
+        append_and_initialize(&mut active, Qwen3ModelRole::Target8B, 1, 51, 1, 21);
+        assert!(matches!(
+            active
+                .rollback_one(
+                    request(),
+                    Qwen3ModelRole::Target8B,
+                    CompletionEpoch::new(21),
+                )
+                .unwrap(),
+            DeviceKvRetirementOutcome::PageRetired(_)
+        ));
+        let (_settled, _completion) = active
+            .settle_retired_epoch(ExactCompletion::from_contracted_hsa_quiescence(
+                CompletionEpoch::new(21),
+            ))
+            .unwrap();
+        assert!(active.release_state_is_valid());
+
+        let returned = active.take_retired_pages(Qwen3ModelRole::Target8B);
+        assert_eq!(returned.len(), 1);
+        assert_eq!(returned[0].lease().page().index(), 1);
+        assert!(returned[0].is_quiescent());
+        let projection = active.projection();
+        assert_eq!(projection.target_active_pages, 1);
+        assert_eq!(projection.target_retired_pages, 0);
+        assert_eq!(projection.target_arena_allocation_id, Some(identity(51)));
+    }
+
+    #[test]
+    fn terminal_release_moves_every_role_page_and_clears_arena_markers() {
+        let mut cache = cache();
+        append_and_initialize(&mut cache, Qwen3ModelRole::Target8B, 0, 61, 2, 22);
+        append_and_initialize(&mut cache, Qwen3ModelRole::Draft06B, 0, 62, 2, 22);
+        let mut cancelled = match cache.cancel(request(), CompletionEpoch::new(22)) {
+            DeviceKvCancellationOutcome::Cancelled(cancelled) => cancelled,
+            other => panic!("unexpected cancellation outcome: {other:?}"),
+        };
+        assert_eq!(cancelled.retire_all(request()).unwrap(), 2);
+        let quiescent = cancelled
+            .quiesce(ExactCompletion::from_contracted_hsa_quiescence(
+                CompletionEpoch::new(22),
+            ))
+            .unwrap();
+        let (mut settled, _completion) = quiescent.into_threaded_parts();
+        assert!(settled.release_state_is_valid());
+
+        let draft = settled.take_retired_pages(Qwen3ModelRole::Draft06B);
+        let target = settled.take_retired_pages(Qwen3ModelRole::Target8B);
+        assert_eq!(draft.len(), 1);
+        assert_eq!(target.len(), 1);
+        assert_eq!(draft[0].lease().allocation_id(), identity(62));
+        assert_eq!(target[0].lease().allocation_id(), identity(61));
+        let projection = settled.projection();
+        assert_eq!(projection.draft_retired_pages, 0);
+        assert_eq!(projection.target_retired_pages, 0);
+        assert_eq!(projection.draft_arena_allocation_id, None);
+        assert_eq!(projection.target_arena_allocation_id, None);
     }
 }

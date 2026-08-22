@@ -236,6 +236,24 @@ impl M1CompletedStepSuccessV1 {
     ) {
         (self.queue, self.checked, self.members, self.emitted_counts)
     }
+
+    pub(crate) fn into_release_parts(
+        self,
+    ) -> (
+        M1PhysicalReadbackQueueSessionV1,
+        M1CheckedCompletionOutputV1,
+        Vec<M1CompletedDeviceKvMemberV1>,
+        Box<[u32]>,
+        usize,
+    ) {
+        (
+            self.queue,
+            self.checked,
+            self.members,
+            self.emitted_counts,
+            self.completed_members,
+        )
+    }
 }
 
 #[derive(Debug)]

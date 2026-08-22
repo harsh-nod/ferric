@@ -224,6 +224,12 @@ impl M1PhysicalQueueBatchCustodyV1 {
         &self.partitioned_memory
     }
 
+    pub(crate) const fn partitioned_memory_mut(
+        &mut self,
+    ) -> &mut M1PartitionedModelMemoryKvQueueCustodyV1 {
+        &mut self.partitioned_memory
+    }
+
     /// Exact coherent completion-output binding retained for readback.
     #[must_use = "completion-output custody remains paired with the queue"]
     pub const fn completion_output(&self) -> &BoundM1CompletionOutputV1 {
@@ -258,6 +264,12 @@ impl M1PhysicalQueueBatchCustodyV1 {
     #[must_use]
     pub fn bound_rows(&self) -> &[M1BoundPhysicalBufferRowV1] {
         &self.bound_rows
+    }
+
+    pub(crate) fn retained_intent_shape(&self) -> Option<M1PhysicalFixedBatchShapeV1> {
+        m1_physical_fixed_batch_shape_for_intent_v1(
+            self.workspace_composition.dispatch_plan().intent(),
+        )
     }
 }
 
@@ -759,18 +771,8 @@ fn classify_shape(
     intent: M1StepDispatchIntent,
     actual: usize,
 ) -> Result<M1PhysicalFixedBatchShapeV1, M1PhysicalFixedBatchBuildErrorV1> {
-    let shape = match intent {
-        M1StepDispatchIntent::TargetOnly(_) => M1PhysicalFixedBatchShapeV1::TargetOnly,
-        M1StepDispatchIntent::PairedPrefill(_) => M1PhysicalFixedBatchShapeV1::PairedPrefill,
-        M1StepDispatchIntent::SpeculativeRound(selection) => match selection.bucket {
-            Qwen3PlanBucket::SpeculativeS1K4C8192 | Qwen3PlanBucket::SpeculativeS8K4C8192 => {
-                M1PhysicalFixedBatchShapeV1::SpeculativeK4
-            }
-            Qwen3PlanBucket::SpeculativeS1K8C8192 => M1PhysicalFixedBatchShapeV1::SpeculativeK8,
-            Qwen3PlanBucket::SpeculativeS1K16C8192 => M1PhysicalFixedBatchShapeV1::SpeculativeK16,
-            _ => return Err(M1PhysicalFixedBatchBuildErrorV1::UnsupportedIntent(intent)),
-        },
-    };
+    let shape = m1_physical_fixed_batch_shape_for_intent_v1(intent)
+        .ok_or(M1PhysicalFixedBatchBuildErrorV1::UnsupportedIntent(intent))?;
     let expected = shape.packet_count();
     if actual != expected {
         return Err(M1PhysicalFixedBatchBuildErrorV1::ShapePacketCount {
@@ -780,6 +782,24 @@ fn classify_shape(
         });
     }
     Ok(shape)
+}
+
+pub(crate) fn m1_physical_fixed_batch_shape_for_intent_v1(
+    intent: M1StepDispatchIntent,
+) -> Option<M1PhysicalFixedBatchShapeV1> {
+    let shape = match intent {
+        M1StepDispatchIntent::TargetOnly(_) => M1PhysicalFixedBatchShapeV1::TargetOnly,
+        M1StepDispatchIntent::PairedPrefill(_) => M1PhysicalFixedBatchShapeV1::PairedPrefill,
+        M1StepDispatchIntent::SpeculativeRound(selection) => match selection.bucket {
+            Qwen3PlanBucket::SpeculativeS1K4C8192 | Qwen3PlanBucket::SpeculativeS8K4C8192 => {
+                M1PhysicalFixedBatchShapeV1::SpeculativeK4
+            }
+            Qwen3PlanBucket::SpeculativeS1K8C8192 => M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+            Qwen3PlanBucket::SpeculativeS1K16C8192 => M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+            _ => return None,
+        },
+    };
+    Some(shape)
 }
 
 fn validate_row_count(
@@ -899,7 +919,8 @@ mod tests {
     use ferric_spec::{Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection};
 
     use super::{
-        classify_shape, validate_completion_output_shape, validate_packet_row, validate_row_count,
+        classify_shape, m1_physical_fixed_batch_shape_for_intent_v1,
+        validate_completion_output_shape, validate_packet_row, validate_row_count,
         M1PhysicalFixedBatchBuildErrorV1, M1PhysicalFixedBatchRowSetV1,
         M1PhysicalFixedBatchShapeV1, PacketRowMetadataV1, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
         M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
@@ -972,6 +993,23 @@ mod tests {
             assert_eq!(classify_shape(intent, count), Ok(expected));
             assert_eq!(expected.packet_count(), count);
         }
+    }
+
+    #[test]
+    fn retained_intent_distinguishes_target_only_and_paired_prefill() {
+        let selection = target(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS8T128);
+        assert_eq!(
+            m1_physical_fixed_batch_shape_for_intent_v1(M1StepDispatchIntent::TargetOnly(
+                selection
+            )),
+            Some(M1PhysicalFixedBatchShapeV1::TargetOnly)
+        );
+        assert_eq!(
+            m1_physical_fixed_batch_shape_for_intent_v1(M1StepDispatchIntent::PairedPrefill(
+                selection
+            )),
+            Some(M1PhysicalFixedBatchShapeV1::PairedPrefill)
+        );
     }
 
     #[test]
