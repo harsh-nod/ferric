@@ -2389,7 +2389,8 @@ fn exact_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
             || argument.value_kind() != ExplicitValueKind::GlobalBuffer
             || !argument.value_type().is_none_or(is_bf16_metadata_carrier)
             || argument.address_space() != Some(ArgumentAddressSpace::Global)
-            || argument.access() != Some(access)
+            || argument.access().is_some_and(|declared| declared != access)
+            || argument.actual_access() != Some(access)
         {
             return false;
         }
@@ -2412,6 +2413,7 @@ fn exact_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
                 .is_some_and(|value_type| value_type != ExplicitValueType::U64)
             || argument.address_space().is_some()
             || argument.access().is_some()
+            || argument.actual_access().is_some()
         {
             return false;
         }
@@ -2437,6 +2439,7 @@ fn exact_scalar_argument(
             .is_none_or(|actual| actual == value_type)
         && argument.address_space().is_none()
         && argument.access().is_none()
+        && argument.actual_access().is_none()
 }
 
 const fn is_bf16_metadata_carrier(value_type: ExplicitValueType) -> bool {
