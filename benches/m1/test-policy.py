@@ -918,18 +918,18 @@ def exercise_differential_producer(
         ):
             fail("equal synthetic differential outputs did not compare exactly")
 
+    acceptance_result = invoke(
+        repo,
+        "differential",
+        [
+            "check-acceptance",
+            str(plan_path),
+            str(pairs_path),
+            str(policy_path),
+        ],
+    )
     acceptance = load_canonical(
-        invoke(
-            repo,
-            "differential",
-            [
-                "check-acceptance",
-                str(plan_path),
-                str(pairs_path),
-                str(policy_path),
-            ],
-        ).stdout,
-        "differential acceptance result",
+        acceptance_result.stdout, "differential acceptance result"
     )
     if (
         acceptance.get("authority")
@@ -939,6 +939,81 @@ def exercise_differential_producer(
         or len(acceptance.get("cases", [])) != 7
     ):
         fail("differential acceptance result promoted its authority")
+    for case in acceptance["cases"]:
+        if set(case) != {
+            "case_id",
+            "comparison",
+            "ferric_output",
+            "kind",
+            "reference_output",
+            "runner_transcript_sha256",
+            "status",
+            "threshold",
+        }:
+            fail("differential acceptance case omitted an identity binding")
+        for producer in ("ferric_output", "reference_output"):
+            if set(case[producer]) != {
+                "logits_bytes",
+                "logits_sha256",
+                "manifest_sha256",
+                "tokens_bytes",
+                "tokens_sha256",
+            }:
+                fail("differential acceptance output identity schema drifted")
+
+    content_case = plan["cases"][0]
+    original_contents: dict[Path, bytes] = {}
+    for producer in ("ferric", "reference"):
+        manifest_path = output_manifests[f"{content_case['id']}:{producer}"]
+        manifest_bytes = manifest_path.read_bytes()
+        manifest = load_canonical(
+            manifest_bytes, f"{producer} content-substitution output manifest"
+        )
+        logits_path = scratch / manifest["logits"]["path"]
+        logits = logits_path.read_bytes()
+        changed_logits = (0x3F81).to_bytes(2, "little") + logits[2:]
+        original_contents[manifest_path] = manifest_bytes
+        original_contents[logits_path] = logits
+        logits_path.write_bytes(changed_logits)
+        manifest["logits"]["sha256"] = hashlib.sha256(changed_logits).hexdigest()
+        write(manifest_path, manifest)
+    substituted_result = invoke(
+        repo,
+        "differential",
+        [
+            "check-acceptance",
+            str(plan_path),
+            str(pairs_path),
+            str(policy_path),
+        ],
+    )
+    substituted = load_canonical(
+        substituted_result.stdout, "content-substituted differential acceptance result"
+    )
+    if substituted_result.stdout == acceptance_result.stdout:
+        fail("different valid output content left acceptance identity unchanged")
+    if (
+        substituted["pairs_sha256"] != acceptance["pairs_sha256"]
+        or [case["comparison"] for case in substituted["cases"]]
+        != [case["comparison"] for case in acceptance["cases"]]
+    ):
+        fail("content-substitution fixture did not preserve pairs and comparison metrics")
+    original_case = next(
+        case for case in acceptance["cases"] if case["case_id"] == content_case["id"]
+    )
+    substituted_case = next(
+        case for case in substituted["cases"] if case["case_id"] == content_case["id"]
+    )
+    if (
+        substituted_case["ferric_output"] == original_case["ferric_output"]
+        or substituted_case["reference_output"] == original_case["reference_output"]
+        or substituted_case["runner_transcript_sha256"]
+        != original_case["runner_transcript_sha256"]
+    ):
+        fail("acceptance result did not isolate output content from runner identity")
+    for path, contents in original_contents.items():
+        path.write_bytes(contents)
+
     invoke(
         repo,
         "differential",

@@ -527,21 +527,7 @@ fn check_acceptance_command(arguments: &[OsString]) -> BenchResult<()> {
             .get(&pair.kind)
             .ok_or_else(|| format!("acceptance policy omitted case kind: {}", pair.kind))?;
         require_comparison_within_policy(&pair.case_id, comparison, *threshold)?;
-        cases.push(json!({
-            "case_id": pair.case_id,
-            "comparison": {
-                "compared_logits": comparison.compared_logits,
-                "compared_tokens": comparison.compared_tokens,
-                "maximum_logit_ulp_error": comparison.maximum_logit_ulp_error,
-                "token_mismatches": comparison.token_mismatches,
-            },
-            "kind": pair.kind,
-            "status": "within-policy",
-            "threshold": {
-                "maximum_logit_ulp_error": threshold.maximum_logit_ulp_error,
-                "maximum_token_mismatches": threshold.maximum_token_mismatches,
-            },
-        }));
+        cases.push(acceptance_case_record(pair, comparison, *threshold));
     }
     let result = json!({
         "authority": ACCEPTANCE_RESULT_AUTHORITY,
@@ -727,6 +713,31 @@ fn require_comparison_within_policy(
         ));
     }
     Ok(())
+}
+
+fn acceptance_case_record(
+    pair: &Pair,
+    comparison: Comparison,
+    threshold: AcceptanceThreshold,
+) -> Value {
+    json!({
+        "case_id": pair.case_id,
+        "comparison": {
+            "compared_logits": comparison.compared_logits,
+            "compared_tokens": comparison.compared_tokens,
+            "maximum_logit_ulp_error": comparison.maximum_logit_ulp_error,
+            "token_mismatches": comparison.token_mismatches,
+        },
+        "ferric_output": output_record(&pair.ferric),
+        "kind": pair.kind,
+        "reference_output": output_record(&pair.reference),
+        "runner_transcript_sha256": pair.runner_transcript_sha256,
+        "status": "within-policy",
+        "threshold": {
+            "maximum_logit_ulp_error": threshold.maximum_logit_ulp_error,
+            "maximum_token_mismatches": threshold.maximum_token_mismatches,
+        },
+    })
 }
 
 fn exact_plan_cases(plan: &Value) -> BenchResult<BTreeMap<String, PlanCase>> {

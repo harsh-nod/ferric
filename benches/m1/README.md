@@ -73,7 +73,10 @@ one of the seven case kinds. Ferric does not supply a default tolerance. The
 checker rereads the full identity-bound payloads, requires exact shapes and
 encodings, finite logits, and lowest-ID BF16 argmax tokens, then applies only
 the plan-admitted per-case thresholds. A missing, substituted, incomplete, or
-type-drifted policy fails before comparison.
+type-drifted policy fails before comparison. Every result case binds the exact
+Ferric and reference manifest and payload SHA-256 identities plus its runner
+transcript SHA-256, so metric-preserving output substitution changes the
+canonical result identity.
 
 The canonical result has `checked-differential-policy-conformance-only`
 authority. It does not establish that the external threshold was independently
