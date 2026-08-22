@@ -2,10 +2,12 @@
 //!
 //! K1 owns logits projection. This module starts from BF16 logits. Every
 //! target and draft plan profile produces one lowest-ID argmax choice per
-//! active row. Only target profiles may additionally encode publication
-//! records: direct modes emit the final active-row choice, while speculative
+//! fixed bucket row. Only target profiles may additionally encode publication
+//! records: direct modes emit the final live-row choice, while speculative
 //! modes emit the maximal accepted draft prefix plus target correction or
-//! bonus. Draft profiles remain proposal-only.
+//! bonus. Inactive target lanes emit canonical zero records without reading
+//! request authority; inactive draft choices are ignored by the caller. Draft
+//! profiles remain proposal-only.
 //!
 //! The catalog, source pin, Worker transcript, structural inspection, and
 //! buffer binding do not establish numerical, operator, race, source-to-
@@ -164,17 +166,17 @@ pub const QWEN3_LOGITS_ARGMAX_EXPLICIT_KERNARG_BYTES_V1: u64 = 40;
 /// Exact argmax explicit plus COV6 hidden kernarg bytes.
 pub const QWEN3_LOGITS_ARGMAX_TOTAL_KERNARG_BYTES_V1: u64 = 296;
 /// Exact compact explicit kernarg bytes, rounded to eight-byte alignment.
-pub const QWEN3_LOGITS_COMPACT_EXPLICIT_KERNARG_BYTES_V1: u64 = 128;
+pub const QWEN3_LOGITS_COMPACT_EXPLICIT_KERNARG_BYTES_V1: u64 = 144;
 /// Exact compact explicit plus COV6 hidden kernarg bytes.
-pub const QWEN3_LOGITS_COMPACT_TOTAL_KERNARG_BYTES_V1: u64 = 384;
+pub const QWEN3_LOGITS_COMPACT_TOTAL_KERNARG_BYTES_V1: u64 = 400;
 /// Exact kernarg alignment.
 pub const QWEN3_LOGITS_KERNARG_ALIGNMENT_V1: u64 = 8;
 /// Exact final LLVM byte length.
-pub const QWEN3_LOGITS_LLVM_BYTES_V1: usize = 18_437;
+pub const QWEN3_LOGITS_LLVM_BYTES_V1: usize = 20_135;
 /// Exact final LLVM SHA-256.
 pub const QWEN3_LOGITS_LLVM_SHA256_V1: [u8; 32] = [
-    0x6c, 0x51, 0x0f, 0x86, 0x45, 0x55, 0xab, 0xb4, 0x73, 0x94, 0x29, 0x44, 0xcc, 0x8f, 0x86, 0x88,
-    0x8d, 0x5c, 0x21, 0xc9, 0xaf, 0x6e, 0xe8, 0x14, 0x02, 0xf6, 0x13, 0x04, 0x5b, 0xce, 0x62, 0x68,
+    0xb9, 0xf8, 0xcf, 0xcc, 0xea, 0x4a, 0x63, 0xc2, 0x6e, 0xb7, 0x4e, 0xae, 0x5a, 0x04, 0xbc, 0xba,
+    0xc4, 0xb7, 0x3f, 0x88, 0xce, 0xc4, 0x7a, 0x77, 0x35, 0x50, 0x8e, 0x84, 0x24, 0x70, 0x51, 0x56,
 ];
 
 const PROFILE_DOMAIN: &[u8] = b"FERRIC/QWEN3/LOGITS/PROFILE/V1\0";
@@ -625,16 +627,18 @@ pub enum Qwen3LogitsBufferV1 {
     Choices = 2,
     /// U32 speculative draft tokens.
     DraftTokens = 3,
+    /// U32 live active-token count for each fixed sequence lane.
+    ActiveLengths = 4,
     /// U32 request slots.
-    RequestSlots = 4,
+    RequestSlots = 5,
     /// U32 request generations.
-    RequestGenerations = 5,
+    RequestGenerations = 6,
     /// U64 completion epochs.
-    Epochs = 6,
+    Epochs = 7,
     /// Per-request 32-byte plan identities.
-    PlanIdentities = 7,
+    PlanIdentities = 8,
     /// Canonical 120-byte records.
-    Records = 8,
+    Records = 9,
 }
 
 /// Checked binding rejection.
@@ -686,20 +690,21 @@ impl Qwen3ArgmaxBufferContractV1 {
 /// Exact target-only compact slice binding.
 #[derive(Debug, Eq, PartialEq)]
 pub struct Qwen3CompactBufferContractV1 {
-    addresses: [u64; 7],
-    byte_lengths: [u64; 7],
+    addresses: [u64; 8],
+    byte_lengths: [u64; 8],
 }
 
 impl Qwen3CompactBufferContractV1 {
-    /// Addresses in choices, draft, slot, generation, epoch, plan, record order.
+    /// Addresses in choices, draft, active-length, slot, generation, epoch,
+    /// plan, record order.
     #[must_use]
-    pub const fn addresses(&self) -> [u64; 7] {
+    pub const fn addresses(&self) -> [u64; 8] {
         self.addresses
     }
 
     /// Exact byte lengths in the same order.
     #[must_use]
-    pub const fn byte_lengths(&self) -> [u64; 7] {
+    pub const fn byte_lengths(&self) -> [u64; 8] {
         self.byte_lengths
     }
 }
@@ -716,7 +721,7 @@ impl Qwen3LogitsBufferContractV1 {
         profile: Qwen3LogitsProfileV1,
         argmax_addresses: [u64; 2],
         argmax_lengths: [u64; 2],
-        compact: Option<([u64; 7], [u64; 7])>,
+        compact: Option<([u64; 8], [u64; 8])>,
     ) -> Result<Self, Qwen3LogitsBufferContractErrorV1> {
         let [logits_elements, choices_elements, draft_elements, record_bytes] =
             profile.storage_extents();
@@ -779,6 +784,7 @@ impl Qwen3LogitsBufferContractV1 {
                 ))?,
             sequences * 4,
             sequences * 4,
+            sequences * 4,
             sequences * 8,
             sequences * 32,
             record_bytes,
@@ -786,14 +792,15 @@ impl Qwen3LogitsBufferContractV1 {
         let roles = [
             Qwen3LogitsBufferV1::Choices,
             Qwen3LogitsBufferV1::DraftTokens,
+            Qwen3LogitsBufferV1::ActiveLengths,
             Qwen3LogitsBufferV1::RequestSlots,
             Qwen3LogitsBufferV1::RequestGenerations,
             Qwen3LogitsBufferV1::Epochs,
             Qwen3LogitsBufferV1::PlanIdentities,
             Qwen3LogitsBufferV1::Records,
         ];
-        let alignments = [4, 4, 4, 4, 8, 1, 4];
-        for index in 0..7 {
+        let alignments = [4, 4, 4, 4, 4, 8, 1, 4];
+        for index in 0..8 {
             check_slice(
                 roles[index],
                 addresses[index],
@@ -802,8 +809,8 @@ impl Qwen3LogitsBufferContractV1 {
                 alignments[index],
             )?;
         }
-        for first in 0..7 {
-            for second in first + 1..7 {
+        for first in 0..8 {
+            for second in first + 1..8 {
                 check_disjoint(
                     roles[first],
                     addresses[first],
@@ -814,7 +821,7 @@ impl Qwen3LogitsBufferContractV1 {
                 )?;
             }
         }
-        for index in 1..7 {
+        for index in 1..8 {
             check_disjoint(
                 Qwen3LogitsBufferV1::Logits,
                 argmax_addresses[0],
@@ -919,7 +926,7 @@ pub struct Qwen3LogitsKernelIrV1 {
     profile_identity: Qwen3LogitsProfileIdentityV1,
     completion: Qwen3LogitsCompletionKindV1,
     argmax_arguments: [Qwen3LogitsArgumentV1; 2],
-    compact_arguments: Option<[Qwen3LogitsArgumentV1; 7]>,
+    compact_arguments: Option<[Qwen3LogitsArgumentV1; 8]>,
     identity: [u8; 32],
 }
 
@@ -942,9 +949,9 @@ impl Qwen3LogitsKernelIrV1 {
         &self.argmax_arguments
     }
 
-    /// Exact seven-slice target compact boundary.
+    /// Exact eight-slice target compact boundary.
     #[must_use]
-    pub const fn compact_arguments(&self) -> Option<&[Qwen3LogitsArgumentV1; 7]> {
+    pub const fn compact_arguments(&self) -> Option<&[Qwen3LogitsArgumentV1; 8]> {
         self.compact_arguments.as_ref()
     }
 
@@ -988,6 +995,12 @@ pub fn qwen3_logits_kernel_ir_v1(profile: Qwen3LogitsProfileV1) -> Qwen3LogitsKe
                 role: Qwen3LogitsBufferV1::DraftTokens,
                 access: Qwen3LogitsArgumentAccessV1::ReadOnly,
                 extent: draft,
+                element_bytes: 4,
+            },
+            Qwen3LogitsArgumentV1 {
+                role: Qwen3LogitsBufferV1::ActiveLengths,
+                access: Qwen3LogitsArgumentAccessV1::ReadOnly,
+                extent: sequences,
                 element_bytes: 4,
             },
             Qwen3LogitsArgumentV1 {
@@ -1319,9 +1332,9 @@ attributes #1 = { nounwind readnone speculatable willreturn }
 !1 = !{!"read_only", !"none", !"write_only", !"none", !"none", !"none"}
 !2 = !{!"ushort*", !"ulong", !"uint*", !"ulong", !"uint", !"uint"}
 !3 = !{!"const restrict", !"", !"restrict", !"", !"", !""}
-!4 = !{!"read_only", !"none", !"read_only", !"none", !"read_only", !"none", !"read_only", !"none", !"read_only", !"none", !"read_only", !"none", !"write_only", !"none", !"none", !"none", !"none"}
-!5 = !{!"uint*", !"ulong", !"uint*", !"ulong", !"uint*", !"ulong", !"uint*", !"ulong", !"ulong*", !"ulong", !"uchar*", !"ulong", !"uchar*", !"ulong", !"uint", !"uint", !"uint"}
-!6 = !{!"const restrict", !"", !"const restrict", !"", !"const restrict", !"", !"const restrict", !"", !"const restrict", !"", !"const restrict", !"", !"restrict", !"", !"", !"", !""}
+!4 = !{!"read_only", !"none", !"read_only", !"none", !"read_only", !"none", !"read_only", !"none", !"read_only", !"none", !"read_only", !"none", !"read_only", !"none", !"write_only", !"none", !"none", !"none", !"none"}
+!5 = !{!"uint*", !"ulong", !"uint*", !"ulong", !"uint*", !"ulong", !"uint*", !"ulong", !"uint*", !"ulong", !"ulong*", !"ulong", !"uchar*", !"ulong", !"uchar*", !"ulong", !"uint", !"uint", !"uint"}
+!6 = !{!"const restrict", !"", !"const restrict", !"", !"const restrict", !"", !"const restrict", !"", !"const restrict", !"", !"const restrict", !"", !"const restrict", !"", !"restrict", !"", !"", !"", !""}
 "#,
     );
     output
@@ -1441,7 +1454,7 @@ fn emit_compact_kernel(output: &mut String) {
     let symbol = QWEN3_LOGITS_COMPACT_KERNEL_SYMBOL_V1;
     writeln!(
         output,
-        "define amdgpu_kernel void @{symbol}(ptr addrspace(1) noalias nocapture readonly align 4 %choices.data, i64 %choices.len, ptr addrspace(1) noalias nocapture readonly align 4 %draft.data, i64 %draft.len, ptr addrspace(1) noalias nocapture readonly align 4 %slots.data, i64 %slots.len, ptr addrspace(1) noalias nocapture readonly align 4 %generations.data, i64 %generations.len, ptr addrspace(1) noalias nocapture readonly align 8 %epochs.data, i64 %epochs.len, ptr addrspace(1) noalias nocapture readonly align 1 %plans.data, i64 %plans.len, ptr addrspace(1) noalias nocapture writeonly align 4 %records.data, i64 %records.len, i32 %sequences, i32 %active.tokens, i32 %speculative.k) #0 !reqd_work_group_size !0 !kernel_arg_access_qual !4 !kernel_arg_type !5 !kernel_arg_base_type !5 !kernel_arg_type_qual !6 {{"
+        "define amdgpu_kernel void @{symbol}(ptr addrspace(1) noalias nocapture readonly align 4 %choices.data, i64 %choices.len, ptr addrspace(1) noalias nocapture readonly align 4 %draft.data, i64 %draft.len, ptr addrspace(1) noalias nocapture readonly align 4 %active.lengths.data, i64 %active.lengths.len, ptr addrspace(1) noalias nocapture readonly align 4 %slots.data, i64 %slots.len, ptr addrspace(1) noalias nocapture readonly align 4 %generations.data, i64 %generations.len, ptr addrspace(1) noalias nocapture readonly align 8 %epochs.data, i64 %epochs.len, ptr addrspace(1) noalias nocapture readonly align 1 %plans.data, i64 %plans.len, ptr addrspace(1) noalias nocapture writeonly align 4 %records.data, i64 %records.len, i32 %sequences, i32 %active.tokens, i32 %speculative.k) #0 !reqd_work_group_size !0 !kernel_arg_access_qual !4 !kernel_arg_type !5 !kernel_arg_base_type !5 !kernel_arg_type_qual !6 {{"
     )
     .expect("writing to a String cannot fail");
     output.push_str(
@@ -1494,17 +1507,19 @@ fn emit_compact_kernel(output: &mut String) {
   %records.expected = mul nuw i64 %sequences64, 120
   %choices.ok = icmp eq i64 %choices.len, %choices.expected
   %draft.ok = icmp eq i64 %draft.len, %draft.expected
+  %active.lengths.ok = icmp eq i64 %active.lengths.len, %sequences64
   %slots.ok = icmp eq i64 %slots.len, %sequences64
   %generations.ok = icmp eq i64 %generations.len, %sequences64
   %epochs.ok = icmp eq i64 %epochs.len, %sequences64
   %plans.ok = icmp eq i64 %plans.len, %plans.expected
   %records.ok = icmp eq i64 %records.len, %records.expected
   %length.0 = and i1 %choices.ok, %draft.ok
-  %length.1 = and i1 %slots.ok, %generations.ok
-  %length.2 = and i1 %epochs.ok, %plans.ok
-  %length.3 = and i1 %length.0, %length.1
-  %length.4 = and i1 %length.2, %records.ok
-  %lengths.ok = and i1 %length.3, %length.4
+  %length.1 = and i1 %active.lengths.ok, %slots.ok
+  %length.2 = and i1 %generations.ok, %epochs.ok
+  %length.3 = and i1 %plans.ok, %records.ok
+  %length.4 = and i1 %length.0, %length.1
+  %length.5 = and i1 %length.2, %length.3
+  %lengths.ok = and i1 %length.4, %length.5
   %entry.ok = and i1 %known.profile, %lengths.ok
   br i1 %entry.ok, label %coordinates, label %trap
 
@@ -1513,11 +1528,43 @@ coordinates:
   %sequence.i32 = call i32 @llvm.amdgcn.workgroup.id.x()
   %lane.zero = icmp eq i32 %local, 0
   %sequence.ok = icmp ult i32 %sequence.i32, %sequences
-  %active = and i1 %lane.zero, %sequence.ok
-  br i1 %active, label %authority.load, label %return
+  %workitem.active = and i1 %lane.zero, %sequence.ok
+  br i1 %workitem.active, label %active.load, label %return
+
+active.load:
+  %sequence = zext i32 %sequence.i32 to i64
+  %live.ptr = getelementptr inbounds i32, ptr addrspace(1) %active.lengths.data, i64 %sequence
+  %live = load i32, ptr addrspace(1) %live.ptr, align 4
+  %live.within = icmp ule i32 %live, %active.tokens
+  %live.nonzero = icmp ne i32 %live, 0
+  %live.zero = icmp eq i32 %live, 0
+  %live.full = icmp eq i32 %live, %active.tokens
+  %is.direct = icmp eq i32 %speculative.k, 0
+  %spec.width.ok = or i1 %live.zero, %live.full
+  %live.width.ok = or i1 %is.direct, %spec.width.ok
+  %live.ok = and i1 %live.within, %live.width.ok
+  br i1 %live.ok, label %active.classify, label %trap
+
+active.classify:
+  br i1 %live.nonzero, label %authority.load, label %record.zero.entry
+
+record.zero.entry:
+  %inactive.record.base = mul nuw i64 %sequence, 30
+  br label %record.zero.cond
+
+record.zero.cond:
+  %inactive.record.index = phi i64 [ 0, %record.zero.entry ], [ %inactive.record.next, %record.zero.body ]
+  %inactive.record.more = icmp ult i64 %inactive.record.index, 30
+  br i1 %inactive.record.more, label %record.zero.body, label %return
+
+record.zero.body:
+  %inactive.record.offset = add nuw i64 %inactive.record.base, %inactive.record.index
+  %inactive.record.ptr = getelementptr inbounds i32, ptr addrspace(1) %records.data, i64 %inactive.record.offset
+  store i32 0, ptr addrspace(1) %inactive.record.ptr, align 4
+  %inactive.record.next = add nuw i64 %inactive.record.index, 1
+  br label %record.zero.cond
 
 authority.load:
-  %sequence = zext i32 %sequence.i32 to i64
   %slot.ptr = getelementptr inbounds i32, ptr addrspace(1) %slots.data, i64 %sequence
   %slot = load i32, ptr addrspace(1) %slot.ptr, align 4
   %slot.ok = icmp ult i32 %slot, 32
@@ -1551,12 +1598,12 @@ plan.done:
 
 choice.base:
   %choice.base.index = mul nuw i64 %sequence, %active64
-  %is.direct = icmp eq i32 %speculative.k, 0
   br i1 %is.direct, label %direct.choice, label %accept.cond
 
 direct.choice:
-  %active.minus.one = sub nuw i64 %active64, 1
-  %direct.choice.index = add nuw i64 %choice.base.index, %active.minus.one
+  %live64 = zext i32 %live to i64
+  %live.minus.one = sub nuw i64 %live64, 1
+  %direct.choice.index = add nuw i64 %choice.base.index, %live.minus.one
   %direct.choice.ptr = getelementptr inbounds i32, ptr addrspace(1) %choices.data, i64 %direct.choice.index
   %direct.choice.token = load i32, ptr addrspace(1) %direct.choice.ptr, align 4
   %direct.choice.ok = icmp ult i32 %direct.choice.token, 151936
@@ -1720,8 +1767,13 @@ fn validate_canonical_llvm(module: &str) -> Result<(), PrepareQwen3LogitsKernelE
             == 1
         && module.contains("%strictly.greater = fcmp ogt float")
         && !module.contains("fcmp oge")
+        && module.contains("%active.lengths.ok = icmp eq i64 %active.lengths.len, %sequences64")
+        && module.contains("%live.within = icmp ule i32 %live, %active.tokens")
+        && module.contains("%spec.width.ok = or i1 %live.zero, %live.full")
+        && module.contains("%live.width.ok = or i1 %is.direct, %spec.width.ok")
         && module
-            .contains("%direct.choice.index = add nuw i64 %choice.base.index, %active.minus.one")
+            .contains("%direct.choice.index = add nuw i64 %choice.base.index, %live.minus.one")
+        && module.contains("store i32 0, ptr addrspace(1) %inactive.record.ptr, align 4")
         && module.contains("%accepted.less.k = icmp ult i32 %accepted, %speculative.k")
         && module.contains("store i16 0, ptr addrspace(1) %record.reserved.ptr")
         && module.contains("%records.expected = mul nuw i64 %sequences64, 120")
@@ -2039,7 +2091,7 @@ impl InspectedQwen3LogitsKernelV1 {
         bucket: Qwen3LogitsBucketV1,
         argmax_addresses: [u64; 2],
         argmax_lengths: [u64; 2],
-        compact: Option<([u64; 7], [u64; 7])>,
+        compact: Option<([u64; 8], [u64; 8])>,
     ) -> Result<CheckedQwen3LogitsLaunchV1, BindQwen3LogitsLaunchErrorV1> {
         let profile = self
             .catalog
@@ -2239,7 +2291,7 @@ fn exact_argmax_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
 }
 
 fn exact_compact_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
-    if arguments.len() != 17 {
+    if arguments.len() != 19 {
         return false;
     }
     let pointers = [
@@ -2261,7 +2313,7 @@ fn exact_compact_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
         ),
         (
             4,
-            "slots.data",
+            "active.lengths.data",
             32,
             4,
             ArgumentAccess::ReadOnly,
@@ -2269,7 +2321,7 @@ fn exact_compact_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
         ),
         (
             6,
-            "generations.data",
+            "slots.data",
             48,
             4,
             ArgumentAccess::ReadOnly,
@@ -2277,24 +2329,32 @@ fn exact_compact_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
         ),
         (
             8,
-            "epochs.data",
+            "generations.data",
             64,
+            4,
+            ArgumentAccess::ReadOnly,
+            is_u32_metadata_carrier,
+        ),
+        (
+            10,
+            "epochs.data",
+            80,
             8,
             ArgumentAccess::ReadOnly,
             is_u64_metadata_carrier,
         ),
         (
-            10,
+            12,
             "plans.data",
-            80,
+            96,
             1,
             ArgumentAccess::ReadOnly,
             is_u8_metadata_carrier,
         ),
         (
-            12,
+            14,
             "records.data",
-            96,
+            112,
             4,
             ArgumentAccess::WriteOnly,
             is_u8_metadata_carrier,
@@ -2309,11 +2369,12 @@ fn exact_compact_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
             match index {
                 0 => "choices.len",
                 2 => "draft.len",
-                4 => "slots.len",
-                6 => "generations.len",
-                8 => "epochs.len",
-                10 => "plans.len",
-                12 => "records.len",
+                4 => "active.lengths.len",
+                6 => "slots.len",
+                8 => "generations.len",
+                10 => "epochs.len",
+                12 => "plans.len",
+                14 => "records.len",
                 _ => return false,
             },
             offset + 8,
@@ -2323,18 +2384,18 @@ fn exact_compact_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
             return false;
         }
     }
-    exact_integer_argument(&arguments[14], "sequences", 112, 4, is_u32_metadata_carrier)
+    exact_integer_argument(&arguments[16], "sequences", 128, 4, is_u32_metadata_carrier)
         && exact_integer_argument(
-            &arguments[15],
+            &arguments[17],
             "active.tokens",
-            116,
+            132,
             4,
             is_u32_metadata_carrier,
         )
         && exact_integer_argument(
-            &arguments[16],
+            &arguments[18],
             "speculative.k",
-            120,
+            136,
             4,
             is_u32_metadata_carrier,
         )
@@ -2531,7 +2592,7 @@ mod tests {
         Qwen3LogitsProfileV1::canonical(Qwen3LogitsBucketV1::new(role, kind)).unwrap()
     }
 
-    fn exact_lengths(profile: Qwen3LogitsProfileV1) -> ([u64; 2], Option<[u64; 7]>) {
+    fn exact_lengths(profile: Qwen3LogitsProfileV1) -> ([u64; 2], Option<[u64; 8]>) {
         let [logits, choices, draft, records] = profile.storage_extents();
         let argmax = [logits * 2, choices * 4];
         let sequences = u64::from(profile.choice_shape()[0]);
@@ -2543,6 +2604,7 @@ mod tests {
                 draft * 4,
                 sequences * 4,
                 sequences * 4,
+                sequences * 4,
                 sequences * 8,
                 sequences * 32,
                 records,
@@ -2551,7 +2613,7 @@ mod tests {
         (argmax, compact)
     }
 
-    fn compact_addresses(choice: u64) -> [u64; 7] {
+    fn compact_addresses(choice: u64) -> [u64; 8] {
         [
             choice,
             0x2000_0000,
@@ -2560,6 +2622,7 @@ mod tests {
             0x5000_0000,
             0x6000_0000,
             0x7000_0000,
+            0x8000_0000,
         ]
     }
 
@@ -2652,9 +2715,36 @@ mod tests {
             }
         }
         assert_eq!((draft, direct, speculative), (11, 7, 4));
+        let target = profile(
+            Qwen3LogitsModelRoleV1::Target8B,
+            Qwen3LogitsBucketKindV1::PrefillS8T128,
+        );
+        let compact = qwen3_logits_kernel_ir_v1(target)
+            .compact_arguments()
+            .copied()
+            .unwrap();
+        assert_eq!(
+            compact.map(|argument| argument.role),
+            [
+                Qwen3LogitsBufferV1::Choices,
+                Qwen3LogitsBufferV1::DraftTokens,
+                Qwen3LogitsBufferV1::ActiveLengths,
+                Qwen3LogitsBufferV1::RequestSlots,
+                Qwen3LogitsBufferV1::RequestGenerations,
+                Qwen3LogitsBufferV1::Epochs,
+                Qwen3LogitsBufferV1::PlanIdentities,
+                Qwen3LogitsBufferV1::Records,
+            ]
+        );
+        assert_eq!(compact[2].extent, 8);
+        assert_eq!(compact[2].access, Qwen3LogitsArgumentAccessV1::ReadOnly);
         let source = canonical_qwen3_logits_llvm();
         assert!(source
-            .contains("%direct.choice.index = add nuw i64 %choice.base.index, %active.minus.one"));
+            .contains("%direct.choice.index = add nuw i64 %choice.base.index, %live.minus.one"));
+        assert!(source.contains("%live.within = icmp ule i32 %live, %active.tokens"));
+        assert!(source.contains("%spec.width.ok = or i1 %live.zero, %live.full"));
+        assert!(source.contains("%live.width.ok = or i1 %is.direct, %spec.width.ok"));
+        assert!(source.contains("store i32 0, ptr addrspace(1) %inactive.record.ptr, align 4"));
     }
 
     #[test]
@@ -2768,7 +2858,7 @@ mod tests {
         .is_ok());
 
         let mut wrong = compact_lengths.unwrap();
-        wrong[6] -= 1;
+        wrong[7] -= 1;
         assert_eq!(
             Qwen3LogitsBufferContractV1::checked(
                 target,
@@ -2780,8 +2870,21 @@ mod tests {
                 Qwen3LogitsBufferV1::Records
             ))
         );
+        let mut wrong_active = compact_lengths.unwrap();
+        wrong_active[2] -= 1;
+        assert_eq!(
+            Qwen3LogitsBufferContractV1::checked(
+                target,
+                argmax_addresses,
+                argmax_lengths,
+                Some((compact_addresses, wrong_active)),
+            ),
+            Err(Qwen3LogitsBufferContractErrorV1::Length(
+                Qwen3LogitsBufferV1::ActiveLengths
+            ))
+        );
         let mut aliased = compact_addresses;
-        aliased[6] = aliased[2];
+        aliased[7] = aliased[2];
         assert!(matches!(
             Qwen3LogitsBufferContractV1::checked(
                 target,
@@ -2791,6 +2894,20 @@ mod tests {
             ),
             Err(Qwen3LogitsBufferContractErrorV1::Aliasing(_, _))
         ));
+        let mut aliased_active = compact_addresses;
+        aliased_active[3] = aliased_active[2];
+        assert_eq!(
+            Qwen3LogitsBufferContractV1::checked(
+                target,
+                argmax_addresses,
+                argmax_lengths,
+                Some((aliased_active, compact_lengths.unwrap())),
+            ),
+            Err(Qwen3LogitsBufferContractErrorV1::Aliasing(
+                Qwen3LogitsBufferV1::ActiveLengths,
+                Qwen3LogitsBufferV1::RequestSlots,
+            ))
+        );
         assert!(matches!(
             Qwen3LogitsBufferContractV1::checked(
                 target,
@@ -2820,7 +2937,7 @@ mod tests {
                 draft,
                 [0x1000, 0x1000_0000],
                 draft_lengths,
-                Some((compact_addresses, [0; 7])),
+                Some((compact_addresses, [0; 8])),
             ),
             Err(Qwen3LogitsBufferContractErrorV1::CompletionMode)
         );
@@ -2885,8 +3002,28 @@ mod tests {
                 1,
             ),
             source.replacen(
-                "%active.minus.one = sub nuw i64 %active64, 1",
-                "%active.minus.one = sub nuw i64 %active64, %active64",
+                "%live.minus.one = sub nuw i64 %live64, 1",
+                "%live.minus.one = sub nuw i64 %live64, %live64",
+                1,
+            ),
+            source.replacen(
+                "%active.lengths.ok = icmp eq i64 %active.lengths.len, %sequences64",
+                "%active.lengths.ok = icmp ule i64 %active.lengths.len, %sequences64",
+                1,
+            ),
+            source.replacen(
+                "%live.within = icmp ule i32 %live, %active.tokens",
+                "%live.within = icmp ult i32 %live, %active.tokens",
+                1,
+            ),
+            source.replacen(
+                "%spec.width.ok = or i1 %live.zero, %live.full",
+                "%spec.width.ok = and i1 %live.zero, %live.full",
+                1,
+            ),
+            source.replacen(
+                "store i32 0, ptr addrspace(1) %inactive.record.ptr, align 4",
+                "store i32 1, ptr addrspace(1) %inactive.record.ptr, align 4",
                 1,
             ),
             source.replacen(
