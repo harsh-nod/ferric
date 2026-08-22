@@ -1183,7 +1183,10 @@ fn load_input_tokens(
     workload: &Workload,
     case: &PlanCase,
 ) -> CaptureResult<Vec<u32>> {
-    let parent = workload_path.parent().unwrap_or_else(|| Path::new("."));
+    let parent = workload_path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."));
     let root = SecureDirectory::open(parent, "qualification workload parent")?;
     let bytes = root.read_exact(
         &workload.input_path,
@@ -2175,7 +2178,14 @@ mod tests {
     }
 
     #[test]
-    fn bare_output_path_uses_current_directory() {
+    fn bare_input_and_output_paths_use_current_directory() {
+        let bare_workload = Path::new("workload.json");
+        let workload_parent = bare_workload
+            .parent()
+            .filter(|parent| !parent.as_os_str().is_empty())
+            .unwrap_or_else(|| Path::new("."));
+        assert_eq!(workload_parent, Path::new("."));
+
         let output = BareOutput::new();
         let mut staging = StagingOutput::create(&output.0).unwrap();
         staging.write("payload", b"captured\n").unwrap();
