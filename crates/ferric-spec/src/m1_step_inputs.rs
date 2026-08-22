@@ -390,9 +390,8 @@ closed spec fn identity_present(identity: crate::Identity) -> bool {
         0 <= index < identity.bytes_spec().len() && identity.bytes_spec()[index] != 0
 }
 
-closed spec fn live_plan_valid(
+closed spec fn live_plan_metadata_valid(
     candidate: &M1StepInputCandidate,
-    dimensions: Qwen3PlanDimensions,
     live_lanes: int,
     lane: int,
 ) -> bool
@@ -405,10 +404,6 @@ closed spec fn live_plan_valid(
     let selection = candidate.selection_spec();
     let plan = candidate.lanes_spec()[lane].unwrap();
     let first = candidate.lanes_spec()[0].unwrap();
-    let active = candidate.active_lengths_spec()[lane];
-    let committed = candidate.context_lengths_spec()[lane];
-    let width = dimensions.active_tokens as int;
-    let row = lane * width;
     &&& plan.selection_spec() == selection
     &&& identity_present(plan.plan_id_spec())
     &&& plan.plan_id_spec() == first.plan_id_spec()
@@ -421,6 +416,18 @@ closed spec fn live_plan_valid(
             let prior_plan = #[trigger] candidate.lanes_spec()[prior].unwrap();
             prior_plan.request_spec().slot_spec() != plan.request_spec().slot_spec()
         }
+}
+
+closed spec fn live_row_valid(
+    candidate: &M1StepInputCandidate,
+    dimensions: Qwen3PlanDimensions,
+    lane: int,
+) -> bool {
+    let selection = candidate.selection_spec();
+    let active = candidate.active_lengths_spec()[lane];
+    let committed = candidate.context_lengths_spec()[lane];
+    let width = dimensions.active_tokens as int;
+    let row = lane * width;
     &&& match selection.mode {
         Qwen3ExecutionMode::Prefill => 0 < active <= dimensions.active_tokens && committed == 0,
         Qwen3ExecutionMode::Decode | Qwen3ExecutionMode::Speculative => {
@@ -441,6 +448,22 @@ closed spec fn live_plan_valid(
         }
 }
 
+closed spec fn live_plan_valid(
+    candidate: &M1StepInputCandidate,
+    dimensions: Qwen3PlanDimensions,
+    live_lanes: int,
+    lane: int,
+) -> bool
+    recommends
+        0 < live_lanes <= candidate.lanes_spec().len(),
+        0 <= lane < live_lanes,
+        candidate.lanes_spec()[0].is_some(),
+        candidate.lanes_spec()[lane].is_some(),
+{
+    live_plan_metadata_valid(candidate, live_lanes, lane)
+        && live_row_valid(candidate, dimensions, lane)
+}
+
 closed spec fn inactive_lane_valid(
     candidate: &M1StepInputCandidate,
     dimensions: Qwen3PlanDimensions,
@@ -457,34 +480,150 @@ closed spec fn inactive_lane_valid(
         }
 }
 
+closed spec fn candidate_shape_valid(
+    candidate: &M1StepInputCandidate,
+    dimensions: Qwen3PlanDimensions,
+) -> bool {
+    let sequences = dimensions.sequences as int;
+    let width = dimensions.active_tokens as int;
+    &&& candidate.lanes_spec().len() == sequences
+    &&& candidate.token_ids_spec().len() == sequences * width
+    &&& candidate.position_ids_spec().len() == sequences * width
+    &&& candidate.active_lengths_spec().len() == sequences
+    &&& candidate.context_lengths_spec().len() == sequences
+}
+
+closed spec fn live_prefix_valid(candidate: &M1StepInputCandidate, live_lanes: int) -> bool {
+    &&& 0 < live_lanes <= candidate.lanes_spec().len()
+    &&& forall|lane: int|
+        0 <= lane < live_lanes ==> #[trigger] candidate.lanes_spec()[lane].is_some()
+    &&& forall|lane: int|
+        live_lanes <= lane < candidate.lanes_spec().len()
+            ==> #[trigger] candidate.lanes_spec()[lane].is_none()
+}
+
+closed spec fn live_metadata_valid(
+    candidate: &M1StepInputCandidate,
+    live_lanes: int,
+) -> bool {
+    forall|lane: int|
+        0 <= lane < live_lanes
+            ==> #[trigger] live_plan_metadata_valid(candidate, live_lanes, lane)
+}
+
+closed spec fn candidate_rows_valid(
+    candidate: &M1StepInputCandidate,
+    dimensions: Qwen3PlanDimensions,
+    live_lanes: int,
+) -> bool {
+    &&& forall|lane: int|
+        0 <= lane < live_lanes ==> #[trigger] live_row_valid(candidate, dimensions, lane)
+    &&& forall|lane: int|
+        live_lanes <= lane < candidate.lanes_spec().len()
+            ==> #[trigger] inactive_lane_valid(candidate, dimensions, lane)
+}
+
 /// Exact mathematical validity of a structural multi-lane candidate.
 pub closed spec fn m1_step_input_candidate_valid(candidate: &M1StepInputCandidate) -> bool {
     let selection = candidate.selection_spec();
     match selection.bucket.dimensions_spec(selection.role, selection.mode) {
         None => false,
         Some(dimensions) => {
-            let sequences = dimensions.sequences as int;
-            let width = dimensions.active_tokens as int;
-            &&& candidate.lanes_spec().len() == sequences
-            &&& candidate.token_ids_spec().len() == sequences * width
-            &&& candidate.position_ids_spec().len() == sequences * width
-            &&& candidate.active_lengths_spec().len() == sequences
-            &&& candidate.context_lengths_spec().len() == sequences
+            &&& candidate_shape_valid(candidate, dimensions)
             &&& exists|live_lanes: int|
-                0 < live_lanes <= sequences
-                && candidate.lanes_spec()[0].is_some()
-                && #[trigger] live_plan_valid(candidate, dimensions, live_lanes, 0)
-                && forall|lane: int|
-                    0 <= lane < live_lanes ==> {
-                        &&& candidate.lanes_spec()[lane].is_some()
-                        &&& live_plan_valid(candidate, dimensions, live_lanes, lane)
-                    }
-                && forall|lane: int|
-                    live_lanes <= lane < sequences ==> {
-                        &&& candidate.lanes_spec()[lane].is_none()
-                        &&& inactive_lane_valid(candidate, dimensions, lane)
-                    }
+                #[trigger] live_prefix_valid(candidate, live_lanes)
+                    && live_metadata_valid(candidate, live_lanes)
+                    && candidate_rows_valid(candidate, dimensions, live_lanes)
         },
+    }
+}
+
+proof fn live_prefix_is_unique(
+    candidate: &M1StepInputCandidate,
+    left: int,
+    right: int,
+)
+    requires
+        live_prefix_valid(candidate, left),
+        live_prefix_valid(candidate, right),
+    ensures left == right,
+{
+    reveal(live_prefix_valid);
+    if left < right {
+        assert(candidate.lanes_spec()[left].is_none());
+        assert(candidate.lanes_spec()[left].is_some());
+    } else if right < left {
+        assert(candidate.lanes_spec()[right].is_none());
+        assert(candidate.lanes_spec()[right].is_some());
+    }
+}
+
+proof fn valid_candidate_uses_prefix(
+    candidate: &M1StepInputCandidate,
+    dimensions: Qwen3PlanDimensions,
+    live_lanes: int,
+)
+    requires
+        m1_step_input_candidate_valid(candidate),
+        selected_dimensions(candidate, dimensions),
+        live_prefix_valid(candidate, live_lanes),
+    ensures
+        candidate_shape_valid(candidate, dimensions),
+        live_metadata_valid(candidate, live_lanes),
+        candidate_rows_valid(candidate, dimensions, live_lanes),
+{
+    reveal(m1_step_input_candidate_valid);
+    reveal(selected_dimensions);
+    let witness = choose|witness: int|
+        live_prefix_valid(candidate, witness)
+            && live_metadata_valid(candidate, witness)
+            && candidate_rows_valid(candidate, dimensions, witness);
+    live_prefix_is_unique(candidate, live_lanes, witness);
+}
+
+proof fn valid_candidate_has_prefix(candidate: &M1StepInputCandidate)
+    requires m1_step_input_candidate_valid(candidate),
+    ensures exists|live_lanes: int| live_prefix_valid(candidate, live_lanes),
+{
+    reveal(m1_step_input_candidate_valid);
+}
+
+proof fn live_gap_refutes_candidate(
+    candidate: &M1StepInputCandidate,
+    prior: int,
+    lane: int,
+)
+    requires
+        0 <= prior < lane < candidate.lanes_spec().len(),
+        candidate.lanes_spec()[prior].is_none(),
+        candidate.lanes_spec()[lane].is_some(),
+    ensures !m1_step_input_candidate_valid(candidate),
+{
+    if m1_step_input_candidate_valid(candidate) {
+        valid_candidate_has_prefix(candidate);
+        let live_lanes = choose|live_lanes: int| live_prefix_valid(candidate, live_lanes);
+        reveal(live_prefix_valid);
+        if live_lanes <= lane {
+            assert(candidate.lanes_spec()[lane].is_none());
+        } else {
+            assert(candidate.lanes_spec()[prior].is_some());
+        }
+    }
+}
+
+proof fn empty_roster_refutes_candidate(candidate: &M1StepInputCandidate)
+    requires
+        forall|lane: int|
+            0 <= lane < candidate.lanes_spec().len()
+                ==> #[trigger] candidate.lanes_spec()[lane].is_none(),
+    ensures !m1_step_input_candidate_valid(candidate),
+{
+    if m1_step_input_candidate_valid(candidate) {
+        valid_candidate_has_prefix(candidate);
+        let live_lanes = choose|live_lanes: int| live_prefix_valid(candidate, live_lanes);
+        reveal(live_prefix_valid);
+        assert(candidate.lanes_spec()[0].is_some());
+        assert(candidate.lanes_spec()[0].is_none());
     }
 }
 
@@ -563,7 +702,12 @@ pub closed spec fn m1_step_input_error_matches(
                         && expected == dimensions.sequences
                         && expected != actual
             },
-            M1StepInputError::DimensionOverflow => false,
+            M1StepInputError::DimensionOverflow => {
+                exists|dimensions: Qwen3PlanDimensions|
+                    selected_dimensions(candidate, dimensions)
+                        && dimensions.sequences as int * dimensions.active_tokens as int
+                            > usize::MAX as int
+            },
             M1StepInputError::EmptyLivePrefix => {
                 forall|lane: int|
                     0 <= lane < candidate.lanes_spec().len()
@@ -753,31 +897,79 @@ fn rejection(
 fn rejected(
     error: M1StepInputError,
     candidate: M1StepInputCandidate,
-) -> M1StepInputValidationOutcome {
+) -> (result: M1StepInputValidationOutcome)
+    ensures
+        !result.is_validated_spec(),
+        match result {
+            M1StepInputValidationOutcome::Rejected(failure) => {
+                &&& failure.error_spec() == error
+                &&& failure.candidate_selection_spec() == candidate.selection_spec()
+                &&& failure.candidate_lanes_spec() == candidate.lanes_spec()
+                &&& failure.candidate_token_ids_spec() == candidate.token_ids_spec()
+                &&& failure.candidate_position_ids_spec() == candidate.position_ids_spec()
+                &&& failure.candidate_active_lengths_spec() == candidate.active_lengths_spec()
+                &&& failure.candidate_context_lengths_spec() == candidate.context_lengths_spec()
+            },
+            M1StepInputValidationOutcome::Validated(_) => false,
+        },
+{
     M1StepInputValidationOutcome::Rejected(rejection(error, candidate))
 }
 
 fn validate_shape(
     candidate: &M1StepInputCandidate,
     dimensions: Qwen3PlanDimensions,
-) -> Result<(usize, usize, usize), M1StepInputError> {
+) -> (result: Result<(usize, usize, usize), M1StepInputError>)
+    requires selected_dimensions(candidate, dimensions),
+    ensures match result {
+        Ok((sequences, width, flattened)) => {
+            &&& sequences as int == dimensions.sequences as int
+            &&& width as int == dimensions.active_tokens as int
+            &&& flattened as int
+                == dimensions.sequences as int * dimensions.active_tokens as int
+            &&& flattened as int <= usize::MAX as int
+            &&& candidate_shape_valid(candidate, dimensions)
+        },
+        Err(error) => m1_step_input_error_matches(error, candidate),
+    },
+{
+    proof {
+        reveal(candidate_shape_valid);
+        reveal(m1_step_input_candidate_valid);
+        reveal(m1_step_input_error_matches);
+        reveal(selected_dimensions);
+    }
     let sequences = usize::try_from(dimensions.sequences)
         .map_err(|_error| M1StepInputError::DimensionOverflow)?;
     let width = usize::try_from(dimensions.active_tokens)
         .map_err(|_error| M1StepInputError::DimensionOverflow)?;
-    let flattened = sequences
-        .checked_mul(width)
-        .ok_or(M1StepInputError::DimensionOverflow)?;
+    let token_count = candidate.token_ids().len();
+    let flattened = match sequences.checked_mul(width) {
+        Some(flattened) => flattened,
+        None => {
+            assert(!m1_step_input_candidate_valid(candidate)) by {
+                if m1_step_input_candidate_valid(candidate) {
+                    assert(candidate_shape_valid(candidate, dimensions));
+                    assert(candidate.token_ids_spec().len() == token_count as int);
+                }
+            }
+            assert(m1_step_input_error_matches(
+                M1StepInputError::DimensionOverflow,
+                candidate,
+            ));
+            return Err(M1StepInputError::DimensionOverflow);
+        },
+    };
     if candidate.lanes().len() != sequences {
         return Err(M1StepInputError::LaneRosterCount {
             expected: sequences,
             actual: candidate.lanes().len(),
         });
     }
-    if candidate.token_ids().len() != flattened {
+    if token_count != flattened {
         return Err(M1StepInputError::TokenCount {
             expected: flattened,
-            actual: candidate.token_ids().len(),
+            actual: token_count,
         });
     }
     if candidate.position_ids().len() != flattened {
@@ -801,19 +993,67 @@ fn validate_shape(
     Ok((sequences, width, flattened))
 }
 
-fn live_prefix(candidate: &M1StepInputCandidate) -> Result<usize, M1StepInputError> {
+fn live_prefix(
+    candidate: &M1StepInputCandidate,
+) -> (result: Result<usize, M1StepInputError>)
+    ensures match result {
+        Ok(live_lanes) => live_prefix_valid(candidate, live_lanes as int),
+        Err(error) => m1_step_input_error_matches(error, candidate),
+    },
+{
+    proof {
+        reveal(live_prefix_valid);
+        reveal(m1_step_input_candidate_valid);
+        reveal(m1_step_input_error_matches);
+    }
     let mut live_lanes = 0usize;
     let mut inactive_seen = false;
-    for lane in 0..candidate.lanes().len() {
+    let mut lane = 0usize;
+    while lane < candidate.lanes().len()
+        invariant
+            lane <= candidate.lanes_spec().len(),
+            live_lanes <= lane,
+            inactive_seen == (live_lanes < lane),
+            forall|prior: int|
+                0 <= prior < live_lanes
+                    ==> #[trigger] candidate.lanes_spec()[prior].is_some(),
+            forall|prior: int|
+                live_lanes <= prior < lane
+                    ==> #[trigger] candidate.lanes_spec()[prior].is_none(),
+        decreases candidate.lanes_spec().len() - lane,
+    {
         match &candidate.lanes()[lane] {
             Some(_) if inactive_seen => {
+                assert(exists|prior: int|
+                    0 <= prior < lane && candidate.lanes_spec()[prior].is_none()) by {
+                    assert(candidate.lanes_spec()[live_lanes as int].is_none());
+                }
+                proof {
+                    live_gap_refutes_candidate(
+                        candidate,
+                        live_lanes as int,
+                        lane as int,
+                    );
+                }
+                assert(m1_step_input_error_matches(
+                    M1StepInputError::LiveLaneAfterInactive { lane },
+                    candidate,
+                ));
                 return Err(M1StepInputError::LiveLaneAfterInactive { lane });
             }
-            Some(_) => live_lanes += 1,
+            Some(_) => {
+                assert(live_lanes == lane);
+                live_lanes += 1;
+            },
             None => inactive_seen = true,
         }
+        lane += 1;
     }
     if live_lanes == 0 {
+        proof {
+            empty_roster_refutes_candidate(candidate);
+        }
+        assert(m1_step_input_error_matches(M1StepInputError::EmptyLivePrefix, candidate));
         return Err(M1StepInputError::EmptyLivePrefix);
     }
     Ok(live_lanes)
@@ -821,49 +1061,191 @@ fn live_prefix(candidate: &M1StepInputCandidate) -> Result<usize, M1StepInputErr
 
 fn validate_live_plans(
     candidate: &M1StepInputCandidate,
+    _dimensions: Qwen3PlanDimensions,
     live_lanes: usize,
-) -> Result<(), M1StepInputError> {
+) -> (result: Result<(), M1StepInputError>)
+    requires
+        selected_dimensions(candidate, _dimensions),
+        live_prefix_valid(candidate, live_lanes as int),
+    ensures match result {
+        Ok(()) => live_metadata_valid(candidate, live_lanes as int),
+        Err(error) => m1_step_input_error_matches(error, candidate),
+    },
+{
+    proof {
+        reveal(identity_present);
+        reveal(live_metadata_valid);
+        reveal(live_plan_metadata_valid);
+        reveal(m1_step_input_error_matches);
+        if m1_step_input_candidate_valid(candidate) {
+            valid_candidate_uses_prefix(candidate, _dimensions, live_lanes as int);
+        }
+    }
     let selection = candidate.selection();
     let first = candidate.lanes()[0].expect("nonempty live prefix has lane zero");
     let first_identity = *first.plan_id();
     let first_epoch = first.completion_epoch();
-    for lane in 0..live_lanes {
+    assert(first == candidate.lanes_spec()[0].unwrap());
+    let mut lane = 0usize;
+    while lane < live_lanes
+        invariant
+            selected_dimensions(candidate, _dimensions),
+            live_prefix_valid(candidate, live_lanes as int),
+            m1_step_input_candidate_valid(candidate)
+                ==> live_metadata_valid(candidate, live_lanes as int),
+            selection == candidate.selection_spec(),
+            first == candidate.lanes_spec()[0].unwrap(),
+            first_identity == first.plan_id_spec(),
+            first_epoch == first.completion_epoch_spec(),
+            lane <= live_lanes,
+            forall|prior: int|
+                0 <= prior < lane
+                    ==> #[trigger] live_plan_metadata_valid(
+                        candidate,
+                        live_lanes as int,
+                        prior,
+                    ),
+        decreases live_lanes - lane,
+    {
         let plan = candidate.lanes()[lane].expect("live prefix contains plans");
+        assert(plan == candidate.lanes_spec()[lane as int].unwrap());
+        assert(m1_step_input_candidate_valid(candidate) ==> live_plan_metadata_valid(
+            candidate,
+            live_lanes as int,
+            lane as int,
+        ));
         if !plan.selection().matches(selection) {
+            assert(m1_step_input_error_matches(
+                M1StepInputError::PlanSelectionMismatch { lane },
+                candidate,
+            ));
             return Err(M1StepInputError::PlanSelectionMismatch { lane });
         }
         if !plan.plan_id().is_present() {
+            assert(m1_step_input_error_matches(
+                M1StepInputError::AbsentPlanIdentity { lane },
+                candidate,
+            ));
             return Err(M1StepInputError::AbsentPlanIdentity { lane });
         }
-        if !plan.plan_id().equals(&first_identity) {
+        let plan_identity = *plan.plan_id();
+        if !plan_identity.equals(&first_identity) {
+            assert(m1_step_input_error_matches(
+                M1StepInputError::PlanIdentityMismatch { lane },
+                candidate,
+            ));
             return Err(M1StepInputError::PlanIdentityMismatch { lane });
         }
-        if plan.completion_epoch().value() == 0 {
+        proof {
+            crate::Identity::extensional(&plan_identity, &first_identity);
+        }
+        let epoch = plan.completion_epoch();
+        let epoch_value = epoch.value;
+        assert(epoch == plan.completion_epoch_spec());
+        if epoch_value == 0 {
+            assert(m1_step_input_error_matches(
+                M1StepInputError::ZeroCompletionEpoch { lane },
+                candidate,
+            ));
             return Err(M1StepInputError::ZeroCompletionEpoch { lane });
         }
-        if plan.completion_epoch() != first_epoch {
+        if epoch.value != first_epoch.value {
+            assert(epoch != first_epoch);
+            assert(m1_step_input_error_matches(
+                M1StepInputError::CompletionEpochMismatch { lane },
+                candidate,
+            ));
             return Err(M1StepInputError::CompletionEpochMismatch { lane });
         }
+        assert(epoch == first_epoch);
         let request = plan.request();
-        if request.slot() >= M1_MAX_ACTIVE_SEQUENCES {
-            return Err(M1StepInputError::RequestSlotOutOfRange {
-                lane,
-                slot: request.slot(),
-            });
+        let slot = request.slot();
+        if slot >= M1_MAX_ACTIVE_SEQUENCES {
+            assert(m1_step_input_error_matches(
+                M1StepInputError::RequestSlotOutOfRange { lane, slot },
+                candidate,
+            ));
+            return Err(M1StepInputError::RequestSlotOutOfRange { lane, slot });
         }
         if request.generation() == 0 {
+            assert(m1_step_input_error_matches(
+                M1StepInputError::ZeroRequestGeneration { lane },
+                candidate,
+            ));
             return Err(M1StepInputError::ZeroRequestGeneration { lane });
         }
-        for first_lane in 0..lane {
+        let mut first_lane = 0usize;
+        while first_lane < lane
+            invariant
+                selected_dimensions(candidate, _dimensions),
+                live_prefix_valid(candidate, live_lanes as int),
+                m1_step_input_candidate_valid(candidate)
+                    ==> live_metadata_valid(candidate, live_lanes as int),
+                selection == candidate.selection_spec(),
+                first == candidate.lanes_spec()[0].unwrap(),
+                first_identity == first.plan_id_spec(),
+                first_epoch == first.completion_epoch_spec(),
+                plan == candidate.lanes_spec()[lane as int].unwrap(),
+                plan.selection_spec() == selection,
+                identity_present(plan.plan_id_spec()),
+                plan.plan_id_spec() == first_identity,
+                epoch == plan.completion_epoch_spec(),
+                epoch_value == epoch.value,
+                epoch_value > 0,
+                epoch == first_epoch,
+                request == plan.request_spec(),
+                slot == request.slot_spec(),
+                slot < M1_MAX_ACTIVE_SEQUENCES,
+                request.generation_spec() > 0,
+                lane < live_lanes,
+                first_lane <= lane,
+                forall|prior: int|
+                    0 <= prior < lane
+                        ==> #[trigger] live_plan_metadata_valid(
+                            candidate,
+                            live_lanes as int,
+                            prior,
+                        ),
+                forall|prior: int|
+                    0 <= prior < first_lane ==> {
+                        let prior_plan = #[trigger] candidate.lanes_spec()[prior].unwrap();
+                        prior_plan.request_spec().slot_spec() != plan.request_spec().slot_spec()
+                    },
+            decreases lane - first_lane,
+        {
             let prior = candidate.lanes()[first_lane].expect("prior live lane");
-            if prior.request().slot() == request.slot() {
-                return Err(M1StepInputError::DuplicateRequestSlot {
-                    first_lane,
-                    lane,
-                    slot: request.slot(),
-                });
+            let prior_request = prior.request();
+            let prior_slot = prior_request.slot();
+            assert(prior == candidate.lanes_spec()[first_lane as int].unwrap());
+            assert(prior_request == prior.request_spec());
+            assert(prior_slot == prior_request.slot_spec());
+            proof {
+                if m1_step_input_candidate_valid(candidate) {
+                    assert(live_plan_metadata_valid(
+                        candidate,
+                        live_lanes as int,
+                        lane as int,
+                    ));
+                    assert({
+                        let prior_plan = candidate.lanes_spec()[first_lane as int].unwrap();
+                        prior_plan.request_spec().slot_spec()
+                            != plan.request_spec().slot_spec()
+                    });
+                }
             }
+            if prior_slot == slot {
+                assert(m1_step_input_error_matches(
+                    M1StepInputError::DuplicateRequestSlot { first_lane, lane, slot },
+                    candidate,
+                ));
+                return Err(M1StepInputError::DuplicateRequestSlot { first_lane, lane, slot });
+            }
+            assert(prior_request.slot_spec() != request.slot_spec());
+            assert(prior.request_spec().slot_spec() != plan.request_spec().slot_spec());
+            first_lane += 1;
         }
+        assert(live_plan_metadata_valid(candidate, live_lanes as int, lane as int));
+        lane += 1;
     }
     Ok(())
 }
@@ -874,16 +1256,88 @@ fn validate_rows(
     live_lanes: usize,
     sequences: usize,
     width: usize,
-) -> Result<(), M1StepInputError> {
+    _flattened: usize,
+) -> (result: Result<(), M1StepInputError>)
+    requires
+        selected_dimensions(candidate, dimensions),
+        candidate_shape_valid(candidate, dimensions),
+        sequences as int == dimensions.sequences as int,
+        width as int == dimensions.active_tokens as int,
+        _flattened as int == sequences as int * width as int,
+        live_prefix_valid(candidate, live_lanes as int),
+        live_metadata_valid(candidate, live_lanes as int),
+    ensures match result {
+        Ok(()) => candidate_rows_valid(candidate, dimensions, live_lanes as int),
+        Err(error) => m1_step_input_error_matches(error, candidate),
+    },
+{
+    proof {
+        reveal(candidate_rows_valid);
+        reveal(inactive_lane_valid);
+        reveal(live_row_valid);
+        reveal(m1_step_input_error_matches);
+        reveal(exact_flat_location);
+        reveal(selected_dimensions);
+        if m1_step_input_candidate_valid(candidate) {
+            valid_candidate_uses_prefix(candidate, dimensions, live_lanes as int);
+        }
+    }
     let selection = candidate.selection();
-    for lane in 0..sequences {
+    let mut lane = 0usize;
+    while lane < sequences
+        invariant
+            selected_dimensions(candidate, dimensions),
+            candidate_shape_valid(candidate, dimensions),
+            sequences as int == dimensions.sequences as int,
+            width as int == dimensions.active_tokens as int,
+            _flattened as int == sequences as int * width as int,
+            live_prefix_valid(candidate, live_lanes as int),
+            live_metadata_valid(candidate, live_lanes as int),
+            m1_step_input_candidate_valid(candidate)
+                ==> candidate_rows_valid(candidate, dimensions, live_lanes as int),
+            selection == candidate.selection_spec(),
+            lane <= sequences,
+            forall|prior: int|
+                0 <= prior < lane && prior < live_lanes
+                    ==> #[trigger] live_row_valid(candidate, dimensions, prior),
+            forall|prior: int|
+                0 <= prior < lane && live_lanes <= prior
+                    ==> #[trigger] inactive_lane_valid(candidate, dimensions, prior),
+        decreases sequences - lane,
+    {
         let active = candidate.active_lengths()[lane];
         let committed = candidate.context_lengths()[lane];
         let live = lane < live_lanes;
         if live {
+            assert(m1_step_input_candidate_valid(candidate) ==> live_row_valid(
+                candidate,
+                dimensions,
+                lane as int,
+            ));
+        } else {
+            assert(m1_step_input_candidate_valid(candidate) ==> inactive_lane_valid(
+                candidate,
+                dimensions,
+                lane as int,
+            ));
+        }
+        if live {
             match selection.mode {
                 Qwen3ExecutionMode::Prefill => {
                     if active == 0 || active > dimensions.active_tokens {
+                        assert(!m1_step_input_candidate_valid(candidate)) by {
+                            if m1_step_input_candidate_valid(candidate) {
+                                assert(live_row_valid(candidate, dimensions, lane as int));
+                            }
+                        }
+                        assert(m1_step_input_error_matches(
+                            M1StepInputError::PrefillActiveOutOfRange {
+                                lane,
+                                capacity: dimensions.active_tokens,
+                                actual: active,
+                            },
+                            candidate,
+                        ));
                         return Err(M1StepInputError::PrefillActiveOutOfRange {
                             lane,
                             capacity: dimensions.active_tokens,
@@ -891,6 +1345,18 @@ fn validate_rows(
                         });
                     }
                     if committed != 0 {
+                        assert(!m1_step_input_candidate_valid(candidate)) by {
+                            if m1_step_input_candidate_valid(candidate) {
+                                assert(live_row_valid(candidate, dimensions, lane as int));
+                            }
+                        }
+                        assert(m1_step_input_error_matches(
+                            M1StepInputError::PrefillCommittedContextNonZero {
+                                lane,
+                                actual: committed,
+                            },
+                            candidate,
+                        ));
                         return Err(M1StepInputError::PrefillCommittedContextNonZero {
                             lane,
                             actual: committed,
@@ -899,6 +1365,19 @@ fn validate_rows(
                 }
                 Qwen3ExecutionMode::Decode | Qwen3ExecutionMode::Speculative => {
                     if active != dimensions.active_tokens {
+                        assert(!m1_step_input_candidate_valid(candidate)) by {
+                            if m1_step_input_candidate_valid(candidate) {
+                                assert(live_row_valid(candidate, dimensions, lane as int));
+                            }
+                        }
+                        assert(m1_step_input_error_matches(
+                            M1StepInputError::ActiveLengthMismatch {
+                                lane,
+                                expected: dimensions.active_tokens,
+                                actual: active,
+                            },
+                            candidate,
+                        ));
                         return Err(M1StepInputError::ActiveLengthMismatch {
                             lane,
                             expected: dimensions.active_tokens,
@@ -907,10 +1386,26 @@ fn validate_rows(
                     }
                 }
             }
-            let end = committed
-                .checked_add(active)
-                .ok_or(M1StepInputError::ContextLengthOverflow { lane })?;
+            let end = match committed.checked_add(active) {
+                Some(end) => end,
+                None => {
+                    assert(m1_step_input_error_matches(
+                        M1StepInputError::ContextLengthOverflow { lane },
+                        candidate,
+                    ));
+                    return Err(M1StepInputError::ContextLengthOverflow { lane });
+                },
+            };
             if end > dimensions.context_tokens {
+                assert(m1_step_input_error_matches(
+                    M1StepInputError::ContextExceedsCapacity {
+                        lane,
+                        committed,
+                        active,
+                        capacity: dimensions.context_tokens,
+                    },
+                    candidate,
+                ));
                 return Err(M1StepInputError::ContextExceedsCapacity {
                     lane,
                     committed,
@@ -919,6 +1414,14 @@ fn validate_rows(
                 });
             }
         } else if active != 0 || committed != 0 {
+            assert(m1_step_input_error_matches(
+                M1StepInputError::InactiveLengthPadding {
+                    lane,
+                    active,
+                    context: committed,
+                },
+                candidate,
+            ));
             return Err(M1StepInputError::InactiveLengthPadding {
                 lane,
                 active,
@@ -926,31 +1429,132 @@ fn validate_rows(
             });
         }
 
+        assert(lane as int + 1 <= sequences as int);
+        assert(0 <= width as int);
+        proof {
+            vstd::arithmetic::mul::lemma_mul_inequality(
+                lane as int + 1,
+                sequences as int,
+                width as int,
+            );
+            vstd::arithmetic::mul::lemma_mul_inequality(
+                lane as int,
+                lane as int + 1,
+                width as int,
+            );
+            vstd::arithmetic::mul::lemma_mul_is_distributive_add_other_way(
+                width as int,
+                lane as int,
+                1,
+            );
+        }
+        assert((lane as int + 1) * width as int <= sequences as int * width as int);
+        assert((lane as int + 1) * width as int <= _flattened as int);
+        assert(lane as int * width as int <= _flattened as int);
         let row = lane
             .checked_mul(width)
-            .ok_or(M1StepInputError::DimensionOverflow)?;
-        let active_usize = usize::try_from(active)
-            .map_err(|_error| M1StepInputError::DimensionOverflow)?;
-        for active_index in 0..width {
+            .expect("validated row multiplication is bounded");
+        assert(row as int + width as int <= _flattened as int);
+        let active_usize = usize::try_from(active).expect("u32 fits usize");
+        let mut active_index = 0usize;
+        while active_index < width
+            invariant
+                selected_dimensions(candidate, dimensions),
+                candidate_shape_valid(candidate, dimensions),
+                sequences as int == dimensions.sequences as int,
+                width as int == dimensions.active_tokens as int,
+                _flattened as int == sequences as int * width as int,
+                live_prefix_valid(candidate, live_lanes as int),
+                live_metadata_valid(candidate, live_lanes as int),
+                m1_step_input_candidate_valid(candidate)
+                    ==> candidate_rows_valid(candidate, dimensions, live_lanes as int),
+                selection == candidate.selection_spec(),
+                lane < sequences,
+                row as int == lane as int * width as int,
+                row as int + width as int <= candidate.token_ids_spec().len(),
+                row as int + width as int <= candidate.position_ids_spec().len(),
+                active_index <= width,
+                live == (lane < live_lanes),
+                active == candidate.active_lengths_spec()[lane as int],
+                committed == candidate.context_lengths_spec()[lane as int],
+                active_usize as int == active as int,
+                live ==> active_usize <= width,
+                live ==> committed as int + active as int <= dimensions.context_tokens as int,
+                live ==> match selection.mode {
+                    Qwen3ExecutionMode::Prefill => {
+                        0 < active <= dimensions.active_tokens && committed == 0
+                    },
+                    Qwen3ExecutionMode::Decode | Qwen3ExecutionMode::Speculative => {
+                        active == dimensions.active_tokens
+                    },
+                },
+                !live ==> active == 0 && committed == 0,
+                forall|prior: int|
+                    0 <= prior < active_index && live && prior < active as int ==> {
+                        &&& #[trigger] candidate.token_ids_spec()[row as int + prior]
+                            < QWEN3_VOCABULARY_SIZE
+                        &&& candidate.position_ids_spec()[row as int + prior] as int
+                            == committed as int + prior
+                    },
+                forall|prior: int|
+                    0 <= prior < active_index && (!live || active as int <= prior) ==> {
+                        &&& #[trigger] candidate.token_ids_spec()[row as int + prior] == 0
+                        &&& candidate.position_ids_spec()[row as int + prior] == 0
+                    },
+            decreases width - active_index,
+        {
             let flat = row
                 .checked_add(active_index)
-                .ok_or(M1StepInputError::DimensionOverflow)?;
+                .expect("validated flat index is bounded");
+            assert(flat as int == row as int + active_index as int);
             if live && active_index < active_usize {
                 let token = candidate.token_ids()[flat];
                 if token >= QWEN3_VOCABULARY_SIZE {
+                    assert(!m1_step_input_candidate_valid(candidate)) by {
+                        if m1_step_input_candidate_valid(candidate) {
+                            assert(live_row_valid(candidate, dimensions, lane as int));
+                            assert(candidate.token_ids_spec()[
+                                row as int + active_index as int
+                            ] < QWEN3_VOCABULARY_SIZE);
+                        }
+                    }
+                    assert(m1_step_input_error_matches(
+                        M1StepInputError::TokenOutOfRange {
+                            lane,
+                            active_index,
+                            token,
+                        },
+                        candidate,
+                    ));
                     return Err(M1StepInputError::TokenOutOfRange {
                         lane,
                         active_index,
                         token,
                     });
                 }
-                let offset = u32::try_from(active_index)
-                    .map_err(|_error| M1StepInputError::DimensionOverflow)?;
+                let offset = u32::try_from(active_index).expect("active width is u32-bounded");
                 let expected = committed
                     .checked_add(offset)
-                    .ok_or(M1StepInputError::ContextLengthOverflow { lane })?;
+                    .expect("validated active position is bounded");
                 let actual = candidate.position_ids()[flat];
                 if actual != expected {
+                    assert(!m1_step_input_candidate_valid(candidate)) by {
+                        if m1_step_input_candidate_valid(candidate) {
+                            assert(live_row_valid(candidate, dimensions, lane as int));
+                            assert(candidate.position_ids_spec()[
+                                row as int + active_index as int
+                            ] as int == committed as int + active_index as int);
+                        }
+                    }
+                    assert(m1_step_input_error_matches(
+                        M1StepInputError::PositionMismatch {
+                            lane,
+                            active_index,
+                            expected,
+                            actual,
+                        },
+                        candidate,
+                    ));
                     return Err(M1StepInputError::PositionMismatch {
                         lane,
                         active_index,
@@ -958,9 +1562,30 @@ fn validate_rows(
                         actual,
                     });
                 }
+                assert(candidate.token_ids_spec()[row as int + active_index as int]
+                    < QWEN3_VOCABULARY_SIZE);
+                assert(candidate.position_ids_spec()[row as int + active_index as int] as int
+                    == committed as int + active_index as int);
             } else {
                 let token = candidate.token_ids()[flat];
                 if token != 0 {
+                    assert(!m1_step_input_candidate_valid(candidate)) by {
+                        if m1_step_input_candidate_valid(candidate) {
+                            if live {
+                                assert(live_row_valid(candidate, dimensions, lane as int));
+                            } else {
+                                assert(inactive_lane_valid(candidate, dimensions, lane as int));
+                            }
+                        }
+                    }
+                    assert(m1_step_input_error_matches(
+                        M1StepInputError::TokenPaddingNonZero {
+                            lane,
+                            active_index,
+                            actual: token,
+                        },
+                        candidate,
+                    ));
                     return Err(M1StepInputError::TokenPaddingNonZero {
                         lane,
                         active_index,
@@ -969,14 +1594,86 @@ fn validate_rows(
                 }
                 let position = candidate.position_ids()[flat];
                 if position != 0 {
+                    assert(!m1_step_input_candidate_valid(candidate)) by {
+                        if m1_step_input_candidate_valid(candidate) {
+                            if live {
+                                assert(live_row_valid(candidate, dimensions, lane as int));
+                            } else {
+                                assert(inactive_lane_valid(candidate, dimensions, lane as int));
+                            }
+                        }
+                    }
+                    assert(m1_step_input_error_matches(
+                        M1StepInputError::PositionPaddingNonZero {
+                            lane,
+                            active_index,
+                            actual: position,
+                        },
+                        candidate,
+                    ));
                     return Err(M1StepInputError::PositionPaddingNonZero {
                         lane,
                         active_index,
                         actual: position,
                     });
                 }
+                assert(candidate.token_ids_spec()[row as int + active_index as int] == 0);
+                assert(candidate.position_ids_spec()[row as int + active_index as int] == 0);
             }
+            assert forall|prior: int|
+                0 <= prior < active_index + 1 && live && prior < active as int implies {
+                    &&& #[trigger] candidate.token_ids_spec()[row as int + prior]
+                        < QWEN3_VOCABULARY_SIZE
+                    &&& candidate.position_ids_spec()[row as int + prior] as int
+                        == committed as int + prior
+                } by {
+                if prior == active_index {
+                    assert(active_index < active_usize);
+                }
+            }
+            assert forall|prior: int|
+                0 <= prior < active_index + 1 && (!live || active as int <= prior) implies {
+                    &&& #[trigger] candidate.token_ids_spec()[row as int + prior] == 0
+                    &&& candidate.position_ids_spec()[row as int + prior] == 0
+                } by {
+                if prior == active_index {
+                    assert(!live || active_usize <= active_index);
+                }
+            }
+            active_index += 1;
         }
+        if live {
+            assert(row as int
+                == lane as int * dimensions.active_tokens as int);
+            assert forall|index: int|
+                0 <= index < active as int implies {
+                    &&& #[trigger] candidate.token_ids_spec()[row as int + index]
+                        < QWEN3_VOCABULARY_SIZE
+                    &&& candidate.position_ids_spec()[row as int + index] as int
+                        == committed as int + index
+                } by {}
+            assert forall|index: int|
+                active as int <= index < width as int implies {
+                    &&& #[trigger] candidate.token_ids_spec()[row as int + index] == 0
+                    &&& candidate.position_ids_spec()[row as int + index] == 0
+                } by {}
+            assert(live_row_valid(candidate, dimensions, lane as int));
+        } else {
+            assert(active == 0);
+            assert(committed == 0);
+            assert(width as int == dimensions.active_tokens as int);
+            assert(candidate.active_lengths_spec()[lane as int] == 0);
+            assert(candidate.context_lengths_spec()[lane as int] == 0);
+            assert(row as int
+                == lane as int * dimensions.active_tokens as int);
+            assert forall|index: int|
+                0 <= index < width as int implies {
+                    &&& #[trigger] candidate.token_ids_spec()[row as int + index] == 0
+                    &&& candidate.position_ids_spec()[row as int + index] == 0
+                } by {}
+            assert(inactive_lane_valid(candidate, dimensions, lane as int));
+        }
+        lane += 1;
     }
     Ok(())
 }
@@ -1013,9 +1710,6 @@ pub fn validate_m1_step_inputs(
         },
 {
     let selection = candidate.selection();
-    if selection.validate().is_err() {
-        return rejected(M1StepInputError::InvalidSelection, candidate);
-    }
     let dimensions = match selection
         .bucket
         .dimensions(selection.role, selection.mode)
@@ -1023,7 +1717,7 @@ pub fn validate_m1_step_inputs(
         Some(dimensions) => dimensions,
         None => return rejected(M1StepInputError::InvalidSelection, candidate),
     };
-    let (sequences, width, _) = match validate_shape(&candidate, dimensions) {
+    let (sequences, width, flattened) = match validate_shape(&candidate, dimensions) {
         Ok(shape) => shape,
         Err(error) => return rejected(error, candidate),
     };
@@ -1031,10 +1725,17 @@ pub fn validate_m1_step_inputs(
         Ok(live_lanes) => live_lanes,
         Err(error) => return rejected(error, candidate),
     };
-    if let Err(error) = validate_live_plans(&candidate, live_lanes) {
+    if let Err(error) = validate_live_plans(&candidate, dimensions, live_lanes) {
         return rejected(error, candidate);
     }
-    if let Err(error) = validate_rows(&candidate, dimensions, live_lanes, sequences, width) {
+    if let Err(error) = validate_rows(
+        &candidate,
+        dimensions,
+        live_lanes,
+        sequences,
+        width,
+        flattened,
+    ) {
         return rejected(error, candidate);
     }
     let live_lanes = match u32::try_from(live_lanes) {
