@@ -2808,7 +2808,6 @@ impl<const C: usize> Scheduler<C> {
         }
     }
 
-    #[verifier::rlimit(20)]
     proof fn pending_batch_head_facts(&self)
         requires
             self.basic_invariant(),
@@ -2818,13 +2817,33 @@ impl<const C: usize> Scheduler<C> {
             self.batch_ring@[self.batch_head as int].member_count <= self.member_len,
             self.batch_ring@[self.batch_head as int].epoch.value == self.completed + 1,
     {
+        self.pending_batch_head_entry_facts();
+        self.pending_batch_head_member_count_bounded();
+    }
+
+    proof fn pending_batch_head_entry_facts(&self)
+        requires
+            self.basic_invariant(),
+            self.batch_len > 0,
+        ensures
+            self.batch_ring@[self.batch_head as int].member_count > 0,
+            self.batch_ring@[self.batch_head as int].epoch.value == self.completed + 1,
+    {
+        self.basic_implies_scalar();
+        self.basic_implies_batch_entry(0);
+        assert(ring_position::<C>(self.batch_head, 0) == self.batch_head);
+    }
+
+    proof fn pending_batch_head_member_count_bounded(&self)
+        requires
+            self.basic_invariant(),
+            self.batch_len > 0,
+        ensures self.batch_ring@[self.batch_head as int].member_count <= self.member_len,
+    {
         self.basic_implies_scalar();
         self.basic_implies_batch_ring();
         let batch = self.batch_ring@[self.batch_head as int];
         assert(ring_position::<C>(self.batch_head, 0) == self.batch_head);
-        assert(batch.member_count > 0) by {
-            reveal(Scheduler::batch_ring_invariant);
-        }
         batch_member_sum_monotonic::<C>(
             self.batch_ring@,
             self.batch_head,
@@ -2836,9 +2855,6 @@ impl<const C: usize> Scheduler<C> {
             reveal(batch_member_sum);
         }
         assert(batch.member_count <= self.member_len) by {
-            reveal(Scheduler::batch_ring_invariant);
-        }
-        assert(batch.epoch.value as int == self.completed as int + 1) by {
             reveal(Scheduler::batch_ring_invariant);
         }
     }
