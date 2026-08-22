@@ -418,7 +418,7 @@ closed spec fn live_plan_valid(
     &&& plan.request_spec().generation_spec() > 0
     &&& forall|prior: int|
         0 <= prior < lane ==> {
-            let prior_plan = candidate.lanes_spec()[prior].unwrap();
+            let prior_plan = #[trigger] candidate.lanes_spec()[prior].unwrap();
             prior_plan.request_spec().slot_spec() != plan.request_spec().slot_spec()
         }
     &&& match selection.mode {
