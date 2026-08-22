@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "benches/m1",
     "crates/ferric-build",
     "crates/ferric-engine",
     "crates/ferric-generated-runner",

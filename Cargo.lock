@@ -376,6 +376,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ferric-m1-benchmarks"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "sha2",
+ "vstd",
+]
+
+[[package]]
 name = "ferric-m1-proof"
 version = "0.1.0"
 dependencies = [

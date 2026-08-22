@@ -18,18 +18,46 @@ const CRATES_IO_SOURCE: &str = "registry+https://github.com/rust-lang/crates.io-
 const VERUS_SOURCE: &str = "git+https://github.com/verus-lang/verus.git?rev=b677dd5";
 const FE2O3_SOURCE: &str =
     "git+https://github.com/harsh-nod/fe2o3.git?rev=f8fbd92027e66961aa0894e804425a9a43ee4f36";
-const FERRIC_BUILD_BINARIES: &[(&str, &str)] = &[
+const QUALIFIED_BINARIES: &[(&str, &str, &str)] = &[
     (
+        "ferric-build",
         "ferric-m1-generate-runner",
         "crates/ferric-build/src/bin/ferric-m1-generate-runner.rs",
     ),
     (
+        "ferric-build",
         "ferric-m1-kernel-artifacts",
         "crates/ferric-build/src/bin/ferric-m1-kernel-artifacts.rs",
     ),
     (
+        "ferric-build",
         "ferric-m1-prepack",
         "crates/ferric-build/src/bin/ferric-m1-prepack.rs",
+    ),
+    (
+        "ferric-m1-benchmarks",
+        "ferric-m1-adversarial",
+        "benches/m1/adversarial.rs",
+    ),
+    (
+        "ferric-m1-benchmarks",
+        "ferric-m1-d10",
+        "benches/m1/d10.rs",
+    ),
+    (
+        "ferric-m1-benchmarks",
+        "ferric-m1-differential",
+        "benches/m1/differential.rs",
+    ),
+    (
+        "ferric-m1-benchmarks",
+        "ferric-m1-serving",
+        "benches/m1/serving.rs",
+    ),
+    (
+        "ferric-m1-benchmarks",
+        "ferric-m1-speculation",
+        "benches/m1/speculation.rs",
     ),
 ];
 const RUNTIME_ROOTS: &[(&str, &str, &str, bool, &[&str])] = &[
@@ -45,6 +73,14 @@ const RUNTIME_ROOTS: &[(&str, &str, &str, bool, &[&str])] = &[
     ),
     ("ferric-engine", "rustix", "=1.1.4", true, &["fs"]),
     ("ferric-engine", "sha2", "^0.11.0", true, &[]),
+    (
+        "ferric-m1-benchmarks",
+        "serde_json",
+        "=1.0.151",
+        true,
+        &[],
+    ),
+    ("ferric-m1-benchmarks", "sha2", "^0.11.0", true, &[]),
     ("ferric-qwen-kernels", "sha2", "^0.11.0", true, &[]),
 ];
 const FE2O3_ROOTS: &[(&str, &str)] = &[
@@ -819,42 +855,44 @@ fn packages(
             } else if kinds.len() == 1 && kinds[0].as_str() == Some("test") {
             } else if kinds.len() == 1
                 && kinds[0].as_str() == Some("bin")
-                && name == "ferric-build"
                 && target
                     .get("name")
                     .and_then(Value::as_str)
                     .is_some_and(|target_name| {
-                        FERRIC_BUILD_BINARIES
+                        QUALIFIED_BINARIES
                             .iter()
-                            .any(|(expected_name, _)| target_name == *expected_name)
+                            .any(|(owner, expected_name, _)| {
+                                name == *owner && target_name == *expected_name
+                            })
                     })
             {
                 let target_name = target
                     .get("name")
                     .and_then(Value::as_str)
-                    .ok_or_else(|| "ferric-build binary has no name".to_owned())?;
+                    .ok_or_else(|| "qualified binary has no name".to_owned())?;
                 let crate_types = target
                     .get("crate_types")
                     .and_then(Value::as_array)
-                    .ok_or_else(|| "ferric-build binary has no crate types".to_owned())?;
+                    .ok_or_else(|| "qualified binary has no crate types".to_owned())?;
                 if crate_types.len() != 1 || crate_types[0].as_str() != Some("bin") {
-                    return Err("ferric-build binary crate type drifted".to_owned());
+                    return Err("qualified binary crate type drifted".to_owned());
                 }
                 let root = canonical(Path::new(
                     target
                         .get("src_path")
                         .and_then(Value::as_str)
-                        .ok_or_else(|| "ferric-build binary has no source path".to_owned())?,
+                        .ok_or_else(|| "qualified binary has no source path".to_owned())?,
                 ))?;
-                let expected_path = FERRIC_BUILD_BINARIES
+                let expected_path = QUALIFIED_BINARIES
                     .iter()
-                    .find_map(|(expected_name, expected_path)| {
-                        (target_name == *expected_name).then_some(*expected_path)
+                    .find_map(|(owner, expected_name, expected_path)| {
+                        (name == *owner && target_name == *expected_name)
+                            .then_some(*expected_path)
                     })
-                    .ok_or_else(|| "unsupported ferric-build binary".to_owned())?;
+                    .ok_or_else(|| "unsupported qualified binary".to_owned())?;
                 let expected_root = canonical(&repo.join(expected_path))?;
                 if root != expected_root {
-                    return Err("ferric-build binary source path drifted".to_owned());
+                    return Err("qualified binary source path drifted".to_owned());
                 }
                 let crate_name = target_name.replace('-', "_");
                 safe_atom(&crate_name, "binary crate name")?;
