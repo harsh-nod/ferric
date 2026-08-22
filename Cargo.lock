@@ -380,6 +380,7 @@ dependencies = [
 name = "ferric-m1-benchmarks"
 version = "0.1.0"
 dependencies = [
+ "ferric-engine",
  "rustix",
  "serde_json",
  "sha2",

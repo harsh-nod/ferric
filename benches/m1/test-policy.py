@@ -24,6 +24,11 @@ INPUT_FORMAT = "FERRIC-M1-BENCHMARK-INPUT-V1"
 RECORDS_FORMAT = "FERRIC-M1-BENCHMARK-RECORDS-V1"
 DIFFERENTIAL_PAIRS_FORMAT = "FERRIC-M1-DIFFERENTIAL-PAIRS-V1"
 DIFFERENTIAL_OUTPUT_FORMAT = "FERRIC-M1-DIFFERENTIAL-OUTPUT-V1"
+ADVERSARIAL_EXECUTION_FORMAT = "FERRIC-M1-ADVERSARIAL-EXECUTION-V1"
+ADVERSARIAL_OBSERVATION_FORMAT = "FERRIC-M1-ADVERSARIAL-OBSERVATION-V1"
+ADVERSARIAL_CANARY_LAYOUT_FORMAT = "FERRIC-M1-ADVERSARIAL-CANARY-LAYOUT-V1"
+ADVERSARIAL_FAULT_PLAN_FORMAT = "FERRIC-M1-ADVERSARIAL-FAULT-PLAN-V1"
+ADVERSARIAL_EXHAUSTION_FORMAT = "FERRIC-M1-ADVERSARIAL-EXHAUSTION-V1"
 TARGET = "gfx942:xnack-"
 VOCABULARY_SIZE = 151_936
 
@@ -94,6 +99,14 @@ def require_no_staging(parent: Path, output: Path) -> None:
     prefix = f".{output.name}.staging."
     if any(entry.name.startswith(prefix) for entry in parent.iterdir()):
         fail(f"failed producer left an owned staging bundle for {output.name}")
+
+
+def companion(path: Path, contents: bytes) -> dict[str, Any]:
+    return {
+        "bytes": len(contents),
+        "path": path.name,
+        "sha256": hashlib.sha256(contents).hexdigest(),
+    }
 
 
 def plan_input(descriptor: dict[str, Any]) -> dict[str, Any]:
@@ -253,6 +266,272 @@ def output_manifest(
         },
         "workload_sha256": case["workload_sha256"],
     }
+
+
+def exercise_adversarial_producer(
+    repo: Path, scratch: Path, descriptor: dict[str, Any]
+) -> None:
+    layout = {
+        "format": ADVERSARIAL_CANARY_LAYOUT_FORMAT,
+        "regions": [
+            {"expected_byte": 165, "length": 2, "name": "prefix", "offset": 0},
+            {"expected_byte": 90, "length": 2, "name": "suffix", "offset": 4},
+        ],
+    }
+    fault_points = {
+        "canary": ("guard-bytes", "canary-intact"),
+        "cancellation": (
+            "in-flight-retirement",
+            "cancelled-after-exact-completion",
+        ),
+        "exhaustion": ("kv-page-allocation", "out-of-pages-transactional"),
+        "fault-injection": ("queue-transition", "terminal-fault-quarantined"),
+        "rollback": ("accepted-prefix", "strict-prefix-rollback-refined"),
+    }
+    fault_plan = {
+        "faults": [
+            {
+                "case_kind": kind,
+                "expected_outcome": fault_points[kind][1],
+                "id": f"{kind}.policy-fixture",
+                "injection_point": fault_points[kind][0],
+            }
+            for kind in descriptor["case_kinds"]
+        ],
+        "format": ADVERSARIAL_FAULT_PLAN_FORMAT,
+    }
+    layout_path = scratch / "adversarial.canary-layout.json"
+    fault_plan_path = scratch / "adversarial.fault-plan.json"
+    write(layout_path, layout)
+    write(fault_plan_path, fault_plan)
+
+    case_files: dict[str, tuple[Path, Path]] = {}
+    cases = []
+    for kind in descriptor["case_kinds"]:
+        case_id = f"{kind}.producer"
+        input_path = scratch / f"{case_id}.input.json"
+        workload_path = scratch / f"{case_id}.workload.json"
+        write(
+            input_path,
+            {
+                "case_id": case_id,
+                "kind": kind,
+                "status": "synthetic-policy-fixture-only",
+            },
+        )
+        if kind == "exhaustion":
+            workload = {
+                "format": ADVERSARIAL_EXHAUSTION_FORMAT,
+                "kind": kind,
+                "parameters": {
+                    "first_append_tokens": 8,
+                    "max_context_tokens": 12,
+                    "page_count": 2,
+                    "page_tokens": 4,
+                    "rejected_append_tokens": 1,
+                },
+            }
+        else:
+            workload = {
+                "case_id": case_id,
+                "kind": kind,
+                "status": "synthetic-policy-fixture-only",
+            }
+        write(workload_path, workload)
+        case_files[kind] = (input_path, workload_path)
+        cases.append(
+            {
+                "id": case_id,
+                "input_sha256": hashlib.sha256(input_path.read_bytes()).hexdigest(),
+                "kind": kind,
+                "workload_sha256": hashlib.sha256(
+                    workload_path.read_bytes()
+                ).hexdigest(),
+            }
+        )
+
+    identities = {
+        identifier: digest(f"adversarial:producer:{identifier}")
+        for identifier in descriptor["required_identities"]
+    }
+    identities["canary-layout"] = hashlib.sha256(layout_path.read_bytes()).hexdigest()
+    identities["fault-plan"] = hashlib.sha256(fault_plan_path.read_bytes()).hexdigest()
+    plan_input_path = scratch / "adversarial.producer.input.json"
+    plan_path = scratch / "adversarial.producer.plan.json"
+    write(
+        plan_input_path,
+        {
+            "cases": cases,
+            "format": INPUT_FORMAT,
+            "identities": identities,
+            "suite": "adversarial",
+            "target": TARGET,
+        },
+    )
+    invoke(
+        repo,
+        "adversarial",
+        ["plan", str(plan_input_path), str(plan_path)],
+    )
+    plan_raw = plan_path.read_bytes()
+    plan = load_canonical(plan_raw, "adversarial producer plan")
+    plan_sha256 = hashlib.sha256(plan_raw).hexdigest()
+
+    canary_before = bytes([0xA5, 0xA5, 1, 2, 0x5A, 0x5A])
+    canary_after = canary_before
+    canary_before_path = scratch / "canary.before.bin"
+    canary_after_path = scratch / "canary.after.bin"
+    canary_before_path.write_bytes(canary_before)
+    canary_after_path.write_bytes(canary_after)
+
+    execution_cases = []
+    transcript_paths: dict[str, tuple[Path, bytes]] = {}
+    for case in plan["cases"]:
+        kind = case["kind"]
+        input_path, workload_path = case_files[kind]
+        if kind == "exhaustion":
+            observation_path: Path | None = None
+        else:
+            transcript_path = scratch / f"{case['id']}.runner.txt"
+            transcript_raw = canonical_bytes(
+                {
+                    "case_id": case["id"],
+                    "status": "synthetic-policy-fixture-only",
+                }
+            )
+            transcript_path.write_bytes(transcript_raw)
+            transcript_paths[kind] = (transcript_path, transcript_raw)
+            if kind == "canary":
+                result = {
+                    "after": companion(canary_after_path, canary_after),
+                    "before": companion(canary_before_path, canary_before),
+                }
+            elif kind == "cancellation":
+                result = {
+                    "completion_observed": True,
+                    "free_pages_after": 8,
+                    "free_pages_before": 8,
+                    "live_requests_after": 0,
+                    "reclaimed_after_completion": True,
+                    "reclaimed_before_completion": False,
+                }
+            elif kind == "fault-injection":
+                result = {
+                    "failures_observed": 2,
+                    "faults_injected": 2,
+                    "live_resources_after": 0,
+                    "queue_quarantined": True,
+                    "retry_denied": True,
+                }
+            elif kind == "rollback":
+                result = {
+                    "accepted_tokens": 2,
+                    "committed_tokens_after": 4,
+                    "committed_tokens_before": 2,
+                    "free_pages_after_cleanup": 8,
+                    "free_pages_before": 8,
+                    "live_requests_after_cleanup": 0,
+                    "resident_tokens_after": 4,
+                    "resident_tokens_before": 6,
+                }
+            else:
+                fail(f"unknown adversarial producer kind: {kind}")
+            observation_path = scratch / f"{case['id']}.observation.json"
+            write(
+                observation_path,
+                {
+                    "authority": "externally-collected-adversarial-observation-only",
+                    "case_id": case["id"],
+                    "format": ADVERSARIAL_OBSERVATION_FORMAT,
+                    "input_sha256": case["input_sha256"],
+                    "kind": kind,
+                    "plan_sha256": plan_sha256,
+                    "result": result,
+                    "runner_transcript": companion(transcript_path, transcript_raw),
+                    "workload_sha256": case["workload_sha256"],
+                },
+            )
+        execution_cases.append(
+            {
+                "case_id": case["id"],
+                "input": input_path.name,
+                "kind": kind,
+                "observation": (
+                    observation_path.name if observation_path is not None else None
+                ),
+                "workload": workload_path.name,
+            }
+        )
+
+    execution_path = scratch / "adversarial.execution.json"
+    write(
+        execution_path,
+        {
+            "authority": "externally-supplied-adversarial-execution-only",
+            "canary_layout": layout_path.name,
+            "cases": execution_cases,
+            "fault_plan": fault_plan_path.name,
+            "format": ADVERSARIAL_EXECUTION_FORMAT,
+            "plan_sha256": plan_sha256,
+            "suite": "adversarial",
+        },
+    )
+    output_bundle = scratch / "adversarial.bundle"
+    invoke(
+        repo,
+        "adversarial",
+        ["produce", str(plan_path), str(execution_path), str(output_bundle)],
+    )
+    if (
+        len(list((output_bundle / "raw").iterdir())) != 5
+        or len(list((output_bundle / "transcripts").iterdir())) != 5
+    ):
+        fail("adversarial producer output roster drifted")
+    records_path = output_bundle / "records.json"
+    records = load_canonical(records_path.read_bytes(), "adversarial produced records")
+    if len(records.get("observations", [])) != 5:
+        fail("adversarial producer records omitted a case")
+    for observation in records["observations"]:
+        metrics = observation["measurements"]
+        if (
+            metrics["canary-corruptions"] != [0]
+            or metrics["leaked-resources"] != [0]
+            or metrics["rollback-mismatches"] != [0]
+            or metrics["unexpected-errors"] != [0]
+        ):
+            fail("successful adversarial policy fixture produced a safety mismatch")
+    validated_path = scratch / "adversarial.produced-transcript.json"
+    invoke(
+        repo,
+        "adversarial",
+        ["validate", str(plan_path), str(records_path), str(validated_path)],
+    )
+    invoke(
+        repo,
+        "adversarial",
+        ["produce", str(plan_path), str(execution_path), str(output_bundle)],
+        expected_status=1,
+    )
+    require_no_staging(scratch, output_bundle)
+
+    transcript_path, transcript_raw = transcript_paths["cancellation"]
+    transcript_path.write_bytes(transcript_raw + b"\n")
+    substituted_bundle = scratch / "adversarial.substituted.bundle"
+    invoke(
+        repo,
+        "adversarial",
+        [
+            "produce",
+            str(plan_path),
+            str(execution_path),
+            str(substituted_bundle),
+        ],
+        expected_status=1,
+    )
+    if substituted_bundle.exists():
+        fail("adversarial producer published after transcript substitution")
+    require_no_staging(scratch, substituted_bundle)
+    transcript_path.write_bytes(transcript_raw)
 
 
 def exercise_differential_producer(
@@ -559,6 +838,8 @@ def exercise_suite(
         fail(f"{suite} plans are nondeterministic")
     plan_raw = plan_a.read_bytes()
     plan = load_canonical(plan_raw, f"{suite} plan")
+    if suite == "adversarial":
+        exercise_adversarial_producer(repo, scratch, descriptor)
     if suite == "differential":
         exercise_differential_producer(repo, scratch, plan_a, plan, plan_raw)
 

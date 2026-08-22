@@ -58,6 +58,30 @@ argmax of its own row. It records comparison counts, maximum ULP distance, and
 Ferric/reference token mismatches. It deliberately applies no numerical
 tolerance and does not turn the resulting records into qualification evidence.
 
+The adversarial suite has a separate five-case producer:
+
+```text
+cargo run --locked -p ferric-m1-benchmarks --bin ferric-m1-adversarial -- \
+  produce PLAN EXECUTION OUTPUT-BUNDLE
+```
+
+`EXECUTION` uses `FERRIC-M1-ADVERSARIAL-EXECUTION-V1` and binds exactly one
+input and workload for each required case to the plan. It also binds the exact
+canary layout and fault roster named by the plan. The exhaustion case executes
+the public Ferric engine directly and observes transactional `OutOfPages`
+rejection plus complete ready-state reclamation. Canary records compare exact
+external before/after byte snapshots. Cancellation, rollback, and injected
+physical queue failures require external observation documents and immutable
+runner transcripts because production completion authority is available only
+after real queue completion and readback.
+
+The adversarial producer copies each authenticated runner transcript, writes a
+computed raw record for each case, and publishes those files with `records.json`
+as one no-replace bundle. Its external physical observations explicitly carry
+no hardware claim: the MI300 harness and independent evidence validators must
+still establish snapshot provenance, exact completion, and injected device
+failure coverage before `m1.r30` can close.
+
 The policy test uses temporary synthetic values solely to exercise the CLI
 protocol and mutation rejection. It never writes benchmark evidence:
 
