@@ -24,6 +24,10 @@ The integrated structural compiler lanes are:
   Gate, up, and output tensors use BF16 storage with role-exact intermediate
   widths, fixed-order FP32 activation arithmetic, and BF16 round-to-nearest-even
   output.
+- `logits.rs`: 22 lowest-ID argmax profiles over BF16 logits with vocabulary
+  151,936, plus target-only compact completion profiles. Direct modes publish
+  the final active row; speculative modes publish the maximal accepted draft
+  prefix plus a correction or bonus in the canonical 120-byte record.
 
 `RoPE` uses split-half D128 pairing and reads absolute U32 position IDs into fixed
 FP32 cosine and sine tables of extent `[8192,64]`. The typed graph does not
@@ -51,7 +55,7 @@ refinement, physical-KV refinement, source or artifact authentication,
 machine-code refinement, allocation, load, launch, completion, hardware
 behavior, or performance. Checked-in tests do not execute Worker V2 and do not
 establish HSACO existence. The `ferric-gemm`, `ferric-prefill`,
-`ferric-paged-decode`, `ferric-rope-kv`, `ferric-swiglu`, and
+`ferric-paged-decode`, `ferric-rope-kv`, `ferric-swiglu`, `ferric-logits`, and
 `kernel-schedule-catalog`
 obligations, plus the exact Ferric generated-plan/runner identity join, remain
 Open. This crate does not close an assurance property or roadmap row.

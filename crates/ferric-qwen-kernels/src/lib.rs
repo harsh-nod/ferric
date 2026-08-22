@@ -4,6 +4,8 @@
 
 /// Exact finite Qwen3 dense GEMM/GEMV compiler profiles.
 pub mod gemm;
+/// Exact Qwen3 lowest-ID argmax and compact-completion compiler profiles.
+pub mod logits;
 /// Exact Qwen3 paged-GQA decode and speculative-attention compiler profiles.
 pub mod paged_decode;
 /// Exact Qwen3 causal-prefill compiler profiles.
