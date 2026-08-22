@@ -11,6 +11,7 @@ mod device_cache;
 mod epoch;
 mod operation_dispatch_expansion;
 mod operation_kernel_plan;
+mod physical_program_catalog;
 mod physical_step;
 mod runner;
 mod scheduler;
@@ -48,6 +49,11 @@ pub use operation_kernel_plan::{
     bind_declared_operation_kernel_plan, DeclaredKernelFamilyArtifact, DeclaredOperationIdentity,
     DeclaredOperationKernelBinding, DeclaredOperationKernelPlan, OperationKernelIdentityComponent,
     OperationKernelPlanError, OperationKernelPlanFailure, OperationKernelPlanOutcome,
+};
+pub use physical_program_catalog::{
+    bind_content_bound_m1_program_catalog_v1, ContentBoundM1ProgramCatalogV1,
+    InspectedM1KernelArtifacts, M1PhysicalProgramCatalogErrorV1, M1PhysicalProgramFamilyV1,
+    M1PhysicalProgramV1, M1_PHYSICAL_PROGRAM_COUNT_V1,
 };
 pub use physical_step::{
     bind_structural_physical_step, StructuralPhysicalStepBindingError,
