@@ -705,8 +705,11 @@ fn validate_capacity_expectation(
         }
         PhysicalCapacitySource::FutureUntrusted => None,
     };
-    if reviewed_capacity.is_some_and(|expected| capacity.batch_packet_capacity != expected) {
-        return Err(PhysicalPlanError::InvalidCapacity);
+    match reviewed_capacity {
+        Some(expected) if capacity.batch_packet_capacity != expected => {
+            return Err(PhysicalPlanError::InvalidCapacity);
+        }
+        _ => {}
     }
     Ok(())
 }

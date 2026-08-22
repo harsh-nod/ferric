@@ -803,8 +803,8 @@ fn validate_shape(
 fn live_prefix(candidate: &M1StepInputCandidate) -> Result<usize, M1StepInputError> {
     let mut live_lanes = 0usize;
     let mut inactive_seen = false;
-    for (lane, plan) in candidate.lanes().iter().enumerate() {
-        match plan {
+    for lane in 0..candidate.lanes().len() {
+        match &candidate.lanes()[lane] {
             Some(_) if inactive_seen => {
                 return Err(M1StepInputError::LiveLaneAfterInactive { lane });
             }
