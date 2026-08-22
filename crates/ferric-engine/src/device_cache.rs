@@ -133,6 +133,7 @@ pub enum DeviceKvCacheError {
     WrongRequest,
     WrongRole,
     PlanPairMismatch,
+    ArenaAllocationMismatch,
     AllocationAlias,
     PendingWriteExists,
     NoPendingWrite,
@@ -153,11 +154,13 @@ impl From<PhysicalKvError> for DeviceKvCacheError {
     }
 }
 
-/// Linear custody of one contracted role-scoped allocation generation.
+/// Linear custody of one page subrange in a contracted role-scoped arena.
 ///
 /// Fields and construction are crate-private. The future physical runner must
-/// supply a unique fe2o3 allocation authority before using the integration
-/// constructor. This source-only token itself is not allocation evidence.
+/// split one fe2o3 arena authority into disjoint page subleases before using
+/// the integration constructor. Multiple page leases for one role retain the
+/// same arena allocation identity; this source-only token is not allocation or
+/// subrange evidence.
 #[derive(Debug, PartialEq, Eq)]
 pub struct DeviceKvPageLease {
     device: Gfx942DeviceBinding,
@@ -271,6 +274,8 @@ pub struct DeviceKvCacheProjection {
     pub request: RequestId,
     pub target: LogicalKvState,
     pub draft: LogicalKvState,
+    pub target_arena_allocation_id: Option<Identity>,
+    pub draft_arena_allocation_id: Option<Identity>,
     pub target_active_pages: usize,
     pub draft_active_pages: usize,
     pub target_retired_pages: usize,
@@ -291,6 +296,7 @@ struct RetiredPageLease {
 #[derive(Debug, PartialEq, Eq)]
 struct RoleDeviceKvCache {
     physical: PhysicalKvState,
+    arena_allocation_id: Option<Identity>,
     active_pages: Vec<DeviceKvPageLease>,
     retired_pages: Vec<RetiredPageLease>,
     pending: Option<PendingWriteBinding>,
@@ -302,6 +308,7 @@ impl RoleDeviceKvCache {
         let physical = PhysicalKvState::new(request, selection)?;
         Ok(Self {
             physical,
+            arena_allocation_id: None,
             active_pages: Vec::with_capacity(M1_KV_PAGE_TABLE_ENTRIES),
             retired_pages: Vec::with_capacity(M1_KV_PAGE_TABLE_ENTRIES),
             pending: None,
@@ -333,6 +340,8 @@ impl DeviceKvCacheCommon {
             request: self.request,
             target: self.target.logical(),
             draft: self.draft.logical(),
+            target_arena_allocation_id: self.target.arena_allocation_id,
+            draft_arena_allocation_id: self.draft.arena_allocation_id,
             target_active_pages: self.target.active_pages.len(),
             draft_active_pages: self.draft.active_pages.len(),
             target_retired_pages: self.target.retired_pages.len(),
@@ -368,32 +377,35 @@ impl DeviceKvCacheCommon {
         }
     }
 
-    fn allocation_is_owned(&self, allocation_id: &Identity) -> bool {
-        self.target
-            .active_pages
-            .iter()
-            .chain(self.draft.active_pages.iter())
-            .any(|lease| lease.allocation_id.equals(allocation_id))
-            || self
-                .target
-                .retired_pages
-                .iter()
-                .chain(self.draft.retired_pages.iter())
-                .any(|retired| retired.lease.allocation_id.equals(allocation_id))
+    fn other_role_arena(&self, role: Qwen3ModelRole) -> Option<Identity> {
+        match role {
+            Qwen3ModelRole::Target8B => self.draft.arena_allocation_id,
+            Qwen3ModelRole::Draft06B => self.target.arena_allocation_id,
+        }
     }
 
     fn owned_table_matches(cache: &RoleDeviceKvCache) -> bool {
         usize::try_from(cache.physical.page_count()) == Ok(cache.active_pages.len())
+            && cache.arena_allocation_id.is_some()
+                == (!cache.active_pages.is_empty() || !cache.retired_pages.is_empty())
             && cache
                 .active_pages
                 .iter()
                 .enumerate()
                 .all(|(position, lease)| {
-                    u32::try_from(position)
-                        .ok()
-                        .and_then(|position| cache.physical.page_at(position))
-                        == Some(lease.page)
+                    cache
+                        .arena_allocation_id
+                        .is_some_and(|arena| arena.equals(&lease.allocation_id))
+                        && u32::try_from(position)
+                            .ok()
+                            .and_then(|position| cache.physical.page_at(position))
+                            == Some(lease.page)
                 })
+            && cache.retired_pages.iter().all(|retired| {
+                cache
+                    .arena_allocation_id
+                    .is_some_and(|arena| arena.equals(&retired.lease.allocation_id))
+            })
     }
 
     fn settle_retired_epoch(
@@ -525,7 +537,11 @@ impl ActiveDeviceKvCache {
             Some(DeviceKvCacheError::WrongRequest)
         } else if self.common.device != lease.device {
             Some(DeviceKvCacheError::WrongDevice)
-        } else if self.common.allocation_is_owned(&lease.allocation_id) {
+        } else if self
+            .common
+            .other_role_arena(lease.page.role())
+            .is_some_and(|arena| arena.equals(&lease.allocation_id))
+        {
             Some(DeviceKvCacheError::AllocationAlias)
         } else {
             let cache = self.common.role(lease.page.role());
@@ -533,6 +549,11 @@ impl ActiveDeviceKvCache {
                 Some(DeviceKvCacheError::PendingWriteExists)
             } else if !DeviceKvCacheCommon::owned_table_matches(cache) {
                 Some(DeviceKvCacheError::OwnedPageTableDrift)
+            } else if cache
+                .arena_allocation_id
+                .is_some_and(|arena| !arena.equals(&lease.allocation_id))
+            {
+                Some(DeviceKvCacheError::ArenaAllocationMismatch)
             } else if lease.page.role() != cache.selection().role {
                 Some(DeviceKvCacheError::WrongRole)
             } else {
@@ -552,6 +573,9 @@ impl ActiveDeviceKvCache {
                 error: error.into(),
                 lease,
             });
+        }
+        if cache.arena_allocation_id.is_none() {
+            cache.arena_allocation_id = Some(lease.allocation_id);
         }
         cache.active_pages.push(lease);
         Ok(())
@@ -1371,6 +1395,27 @@ mod tests {
     }
 
     #[test]
+    fn same_role_pages_share_one_arena_and_reject_arena_substitution() {
+        let mut cache = cache();
+        append_and_initialize(&mut cache, Qwen3ModelRole::Target8B, 0, 41, 16, 20);
+        cache
+            .append_page(request(), lease(Qwen3ModelRole::Target8B, 1, 41))
+            .unwrap();
+        let projection = cache.projection();
+        assert_eq!(projection.target_arena_allocation_id, Some(identity(41)));
+        assert_eq!(projection.draft_arena_allocation_id, None);
+        assert_eq!(projection.target_active_pages, 2);
+
+        let failure = cache
+            .append_page(request(), lease(Qwen3ModelRole::Target8B, 2, 42))
+            .unwrap_err();
+        assert_eq!(failure.error(), DeviceKvCacheError::ArenaAllocationMismatch);
+        let (_, returned) = failure.into_parts();
+        assert_eq!(returned.allocation_id(), identity(42));
+        assert_eq!(cache.projection().target_active_pages, 2);
+    }
+
+    #[test]
     fn wrong_device_and_stale_page_generation_are_rejected_transactionally() {
         let mut cache = cache();
         let other_device =
@@ -1539,7 +1584,7 @@ mod tests {
         cache
             .accept_initialized(request(), Qwen3ModelRole::Draft06B, 16)
             .unwrap();
-        append_and_initialize(&mut cache, Qwen3ModelRole::Draft06B, 1, 26, 1, 12);
+        append_and_initialize(&mut cache, Qwen3ModelRole::Draft06B, 1, 25, 1, 12);
         assert!(matches!(
             cache
                 .rollback_one(
@@ -1611,7 +1656,7 @@ mod tests {
         active
             .accept_initialized(request(), Qwen3ModelRole::Target8B, 16)
             .unwrap();
-        append_and_initialize(&mut active, Qwen3ModelRole::Target8B, 1, 34, 1, 11);
+        append_and_initialize(&mut active, Qwen3ModelRole::Target8B, 1, 33, 1, 11);
         assert!(matches!(
             active
                 .rollback_one(
