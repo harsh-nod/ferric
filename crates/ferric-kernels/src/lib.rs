@@ -25,3 +25,17 @@ pub use validation::{
     KernelCatalogValidationError, ValidatedKernelCatalogInput, VERIFIED_GFX942_PROCESSOR_BYTES,
     VERIFIED_GFX942_TARGET_FEATURE_BYTES,
 };
+
+#[allow(unused_imports)]
+use vstd::prelude::*;
+
+verus! {
+
+/// Cross-crate verifier view of the finite M1 kernel-profile envelope.
+pub open spec fn m1_kernel_profile_is_finite(
+    profile: KernelProfileDescriptor,
+) -> bool {
+    catalog::m1_kernel_profile_is_finite(profile)
+}
+
+} // verus!

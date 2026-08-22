@@ -371,6 +371,38 @@ impl ValidatedKernelCatalogInput {
         reveal(ValidatedKernelCatalogInput::matches_expected_spec);
         kernel_catalog_match_exposes_plan_operation(self.input, expected);
     }
+
+    /// Exposes the exact M1 logical envelope and finite K1-K7 family bound for
+    /// one independently accepted catalog operation.
+    ///
+    /// This lemma does not expose schedule implementation, memory allocation,
+    /// compiler, object, driver, hardware, numerical, or performance facts.
+    pub proof fn expose_m1_finite_profile(&self, expected: KernelCatalogInput)
+        requires self.matches_expected_spec(expected),
+        ensures
+            crate::m1_kernel_profile_is_finite(self.input_spec().profile),
+            crate::m1_kernel_profile_is_finite(expected.profile),
+    {
+        self.expose_plan_operation(expected);
+        reveal(kernel_catalog_input_matches_exactly);
+        reveal(expectation_matches_catalog);
+        let dimensions = expected.profile.selection.bucket.dimensions_spec(
+            expected.profile.selection.role,
+            expected.profile.selection.mode,
+        ).unwrap();
+        ferric_spec::qwen3_m1_plan_dimensions_are_bounded(
+            expected.profile.selection.bucket,
+            expected.profile.selection.role,
+            expected.profile.selection.mode,
+            dimensions,
+        );
+        crate::catalog::family_for_is_declared_foundation(
+            expected.profile.step.operator,
+            expected.profile.selection.mode,
+        );
+        reveal(crate::m1_kernel_profile_is_finite);
+        reveal(crate::catalog::m1_kernel_profile_is_finite);
+    }
 }
 
 /// Returns one exact plan position, or `None` outside the finite roster.

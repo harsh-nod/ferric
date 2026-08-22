@@ -102,6 +102,25 @@ pub use step_plan_publication::{
 
 verus! {
 
+/// Exposes the exact finite logical dimensions for one admitted Qwen3 B3
+/// bucket to downstream proof crates.
+pub proof fn qwen3_m1_plan_dimensions_are_bounded(
+    bucket: Qwen3PlanBucket,
+    role: Qwen3ModelRole,
+    mode: Qwen3ExecutionMode,
+    dimensions: Qwen3PlanDimensions,
+)
+    requires bucket.dimensions_spec(role, mode) == Some(dimensions),
+    ensures
+        1 <= dimensions.sequences <= 32,
+        1 <= dimensions.active_tokens <= 2_048,
+        128 <= dimensions.context_tokens <= 8_192,
+        dimensions.sequences as int * dimensions.active_tokens as int <= 2_048,
+        dimensions.active_tokens <= dimensions.context_tokens,
+{
+    graph::qwen3_m1_plan_dimensions_are_bounded(bucket, role, mode, dimensions);
+}
+
 /// Cross-crate verifier view of the exact finite Qwen3 graph-step lookup.
 pub open spec fn canonical_expected_step_spec(
     role: Qwen3ModelRole,

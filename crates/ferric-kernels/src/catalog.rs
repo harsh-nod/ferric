@@ -61,6 +61,28 @@ pub enum KernelFamily {
     K7LogitsCompact,
 }
 
+impl KernelFamily {
+    /// Stable mathematical K1-K7 ordinal used only by source-level contracts.
+    pub open spec fn ordinal_spec(self) -> nat {
+        match self {
+            Self::K1GemmGemv => 1,
+            Self::K2RmsNormResidual => 2,
+            Self::K3RopePagedKv => 3,
+            Self::K4GqaPrefill => 4,
+            Self::K5PagedGqaDecode => 5,
+            Self::K6SwiGlu => 6,
+            Self::K7LogitsCompact => 7,
+        }
+    }
+
+    /// Every constructible family is exactly one finite K1-K7 member.
+    pub proof fn expose_finite_ordinal(self)
+        ensures 1 <= self.ordinal_spec() <= 7,
+    {
+        reveal(KernelFamily::ordinal_spec);
+    }
+}
+
 /// Whether the declared Ferric source is intended to cover this graph boundary.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum KernelProfileDisposition {
@@ -260,6 +282,36 @@ pub(crate) closed spec fn family_for_spec(
             KernelProfileDisposition::DeclaredFoundation,
         ),
     }
+}
+
+/// Every operation admitted by the structural family mapping selects a
+/// declared K1-K7 foundation, never an unproved extension placeholder.
+pub(crate) proof fn family_for_is_declared_foundation(
+    operator: Qwen3Operator,
+    mode: Qwen3ExecutionMode,
+)
+    ensures
+        family_for_spec(operator, mode).1
+            == KernelProfileDisposition::DeclaredFoundation,
+        1 <= family_for_spec(operator, mode).0.ordinal_spec() <= 7,
+{
+    reveal(family_for_spec);
+    family_for_spec(operator, mode).0.expose_finite_ordinal();
+}
+
+/// Exact finite source-level envelope carried by one kernel profile.
+///
+/// This predicate deliberately stops before schedule implementation,
+/// allocation, compilation, object, runtime, hardware, numerical, and
+/// performance boundaries.
+pub open spec fn m1_kernel_profile_is_finite(profile: KernelProfileDescriptor) -> bool {
+    &&& 1 <= profile.sequences <= 32
+    &&& 1 <= profile.active_tokens <= 2_048
+    &&& 128 <= profile.context_tokens <= 8_192
+    &&& profile.sequences as int * profile.active_tokens as int <= 2_048
+    &&& profile.active_tokens <= profile.context_tokens
+    &&& 1 <= profile.family.ordinal_spec() <= 7
+    &&& profile.disposition == KernelProfileDisposition::DeclaredFoundation
 }
 
 pub(crate) fn family_for(
