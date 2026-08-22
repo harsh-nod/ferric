@@ -8,6 +8,7 @@ publish = false
 
 [dependencies]
 ferric-build = { path = "../ferric-build" }
+ferric-qwen-kernels = { path = "../ferric-qwen-kernels" }
 ferric-spec = { path = "../ferric-spec" }
 vstd.workspace = true
 

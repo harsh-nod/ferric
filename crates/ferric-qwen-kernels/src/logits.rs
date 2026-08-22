@@ -62,6 +62,101 @@ pub const QWEN3_LOGITS_MAX_SPECULATIVE_K_V1: u32 = 16;
 pub const QWEN3_LOGITS_MAX_EMITTED_TOKENS_V1: u32 = 17;
 /// Exact canonical compact-record byte count.
 pub const QWEN3_LOGITS_COMPACT_RECORD_BYTES_V1: u64 = 120;
+/// Canonical K7 compact-completion wire layout.
+///
+/// The descriptor names byte offsets shared by the K7 source validator and
+/// Ferric's host decoder. It describes bytes only; it grants no completion,
+/// readback, content, or execution authority.
+pub struct Qwen3LogitsCompactRecordLayoutV1;
+
+impl Qwen3LogitsCompactRecordLayoutV1 {
+    /// Total bytes in one record as the machine ABI extent.
+    pub const RECORD_BYTES: u64 = 120;
+    /// Total bytes in one record as a host slice extent.
+    pub const RECORD_BYTES_USIZE: usize = 120;
+    /// Little-endian request-slot offset.
+    pub const REQUEST_SLOT_OFFSET: usize = 0;
+    /// Little-endian request-generation offset.
+    pub const REQUEST_GENERATION_OFFSET: usize = 4;
+    /// Little-endian completion-epoch offset.
+    pub const COMPLETION_EPOCH_OFFSET: usize = 8;
+    /// Plan-identity offset.
+    pub const PLAN_IDENTITY_OFFSET: usize = 16;
+    /// Plan-identity byte count.
+    pub const PLAN_IDENTITY_BYTES: usize = 32;
+    /// Accepted-draft-token count offset.
+    pub const ACCEPTED_DRAFT_TOKENS_OFFSET: usize = 48;
+    /// Emitted-token count offset.
+    pub const EMITTED_TOKEN_COUNT_OFFSET: usize = 49;
+    /// Reserved-zero byte range start.
+    pub const RESERVED_OFFSET: usize = 50;
+    /// Reserved-zero byte count.
+    pub const RESERVED_BYTES: usize = 2;
+    /// Little-endian token-array offset.
+    pub const TOKENS_OFFSET: usize = 52;
+    /// Bytes in one token ID.
+    pub const TOKEN_BYTES: usize = 4;
+    /// Fixed token-slot count.
+    pub const TOKEN_SLOTS: usize = 17;
+
+    /// Returns the byte offset for one bounded token slot.
+    #[must_use]
+    pub const fn token_offset(index: usize) -> Option<usize> {
+        if index < Self::TOKEN_SLOTS {
+            Some(Self::TOKENS_OFFSET + index * Self::TOKEN_BYTES)
+        } else {
+            None
+        }
+    }
+}
+
+const _: () = {
+    assert!(Qwen3LogitsCompactRecordLayoutV1::RECORD_BYTES == QWEN3_LOGITS_COMPACT_RECORD_BYTES_V1);
+    assert!(
+        Qwen3LogitsCompactRecordLayoutV1::RECORD_BYTES_USIZE as u64
+            == Qwen3LogitsCompactRecordLayoutV1::RECORD_BYTES
+    );
+    assert!(
+        Qwen3LogitsCompactRecordLayoutV1::TOKEN_SLOTS
+            == QWEN3_LOGITS_MAX_EMITTED_TOKENS_V1 as usize
+    );
+    assert!(
+        Qwen3LogitsCompactRecordLayoutV1::REQUEST_GENERATION_OFFSET
+            == Qwen3LogitsCompactRecordLayoutV1::REQUEST_SLOT_OFFSET + 4
+    );
+    assert!(
+        Qwen3LogitsCompactRecordLayoutV1::COMPLETION_EPOCH_OFFSET
+            == Qwen3LogitsCompactRecordLayoutV1::REQUEST_GENERATION_OFFSET + 4
+    );
+    assert!(
+        Qwen3LogitsCompactRecordLayoutV1::PLAN_IDENTITY_OFFSET
+            == Qwen3LogitsCompactRecordLayoutV1::COMPLETION_EPOCH_OFFSET + 8
+    );
+    assert!(
+        Qwen3LogitsCompactRecordLayoutV1::ACCEPTED_DRAFT_TOKENS_OFFSET
+            == Qwen3LogitsCompactRecordLayoutV1::PLAN_IDENTITY_OFFSET
+                + Qwen3LogitsCompactRecordLayoutV1::PLAN_IDENTITY_BYTES
+    );
+    assert!(
+        Qwen3LogitsCompactRecordLayoutV1::EMITTED_TOKEN_COUNT_OFFSET
+            == Qwen3LogitsCompactRecordLayoutV1::ACCEPTED_DRAFT_TOKENS_OFFSET + 1
+    );
+    assert!(
+        Qwen3LogitsCompactRecordLayoutV1::RESERVED_OFFSET
+            == Qwen3LogitsCompactRecordLayoutV1::EMITTED_TOKEN_COUNT_OFFSET + 1
+    );
+    assert!(
+        Qwen3LogitsCompactRecordLayoutV1::TOKENS_OFFSET
+            == Qwen3LogitsCompactRecordLayoutV1::RESERVED_OFFSET
+                + Qwen3LogitsCompactRecordLayoutV1::RESERVED_BYTES
+    );
+    assert!(
+        Qwen3LogitsCompactRecordLayoutV1::TOKENS_OFFSET
+            + Qwen3LogitsCompactRecordLayoutV1::TOKEN_SLOTS
+                * Qwen3LogitsCompactRecordLayoutV1::TOKEN_BYTES
+            == Qwen3LogitsCompactRecordLayoutV1::RECORD_BYTES_USIZE
+    );
+};
 /// Exact number of target/draft profiles.
 pub const QWEN3_LOGITS_PROFILE_COUNT_V1: usize = 22;
 /// Exact argmax explicit kernarg bytes.
@@ -2586,20 +2681,51 @@ mod tests {
     #[test]
     fn compact_record_layout_is_exact_120_bytes_and_reserved_bytes_are_zeroed() {
         let source = canonical_qwen3_logits_llvm();
+        assert_eq!(Qwen3LogitsCompactRecordLayoutV1::REQUEST_SLOT_OFFSET, 0);
+        assert!(source.contains(
+            "%record.slot.ptr = getelementptr inbounds i8, ptr addrspace(1) %records.data, i64 %record.base"
+        ));
         for (field, offset) in [
-            ("record.generation.offset", 4),
-            ("record.epoch.offset", 8),
-            ("record.plan.base", 16),
-            ("record.accepted.offset", 48),
-            ("record.emitted.offset", 49),
-            ("record.reserved.offset", 50),
-            ("record.tokens.base", 52),
+            (
+                "record.generation.offset",
+                Qwen3LogitsCompactRecordLayoutV1::REQUEST_GENERATION_OFFSET,
+            ),
+            (
+                "record.epoch.offset",
+                Qwen3LogitsCompactRecordLayoutV1::COMPLETION_EPOCH_OFFSET,
+            ),
+            (
+                "record.plan.base",
+                Qwen3LogitsCompactRecordLayoutV1::PLAN_IDENTITY_OFFSET,
+            ),
+            (
+                "record.accepted.offset",
+                Qwen3LogitsCompactRecordLayoutV1::ACCEPTED_DRAFT_TOKENS_OFFSET,
+            ),
+            (
+                "record.emitted.offset",
+                Qwen3LogitsCompactRecordLayoutV1::EMITTED_TOKEN_COUNT_OFFSET,
+            ),
+            (
+                "record.reserved.offset",
+                Qwen3LogitsCompactRecordLayoutV1::RESERVED_OFFSET,
+            ),
+            (
+                "record.tokens.base",
+                Qwen3LogitsCompactRecordLayoutV1::TOKENS_OFFSET,
+            ),
         ] {
             assert!(source.contains(&format!("%{field} = add nuw i64 %record.base, {offset}")));
         }
         assert!(source.contains("store i16 0, ptr addrspace(1) %record.reserved.ptr"));
-        assert!(source.contains("%zero.more = icmp ult i64 %zero.index, 17"));
-        assert!(source.contains("%records.expected = mul nuw i64 %sequences64, 120"));
+        assert!(source.contains(&format!(
+            "%zero.more = icmp ult i64 %zero.index, {}",
+            Qwen3LogitsCompactRecordLayoutV1::TOKEN_SLOTS
+        )));
+        assert!(source.contains(&format!(
+            "%records.expected = mul nuw i64 %sequences64, {}",
+            Qwen3LogitsCompactRecordLayoutV1::RECORD_BYTES
+        )));
         assert!(!source.contains("%records.expected = mul nuw i64 %sequences64, 96"));
     }
 
