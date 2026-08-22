@@ -94,6 +94,10 @@ pub enum M1StepWorkspaceRangeRole {
     PlanIdentities,
     /// Target K7 canonical 120-byte compact records `[S]`.
     CompactCompletionRecords,
+    /// Target speculative draft-decode `u32` position IDs `[K,S]`, iteration-major.
+    DraftPositionIds,
+    /// Target speculative draft-decode `u32` context lengths `[K,S]`, iteration-major.
+    DraftContextLengths,
 }
 
 impl M1StepWorkspaceRangeRole {
@@ -126,6 +130,8 @@ impl M1StepWorkspaceRangeRole {
             | Self::RopeSinTable
             | Self::Choices
             | Self::DraftChoices
+            | Self::DraftPositionIds
+            | Self::DraftContextLengths
             | Self::RequestSlots
             | Self::RequestGenerations
             | Self::CompactCompletionRecords => U32_BYTES,
@@ -164,6 +170,8 @@ impl M1StepWorkspaceRangeRole {
             Self::CompletionEpochs => 28,
             Self::PlanIdentities => 29,
             Self::CompactCompletionRecords => 30,
+            Self::DraftPositionIds => 31,
+            Self::DraftContextLengths => 32,
         }
     }
 }
@@ -727,19 +735,20 @@ fn build_requirements(
     }
 
     if matches!(selection.role, Qwen3ModelRole::Target8B) {
-        if matches!(selection.mode, Qwen3ExecutionMode::Speculative) {
+        let draft_metadata_bytes = if matches!(selection.mode, Qwen3ExecutionMode::Speculative) {
             let draft_tokens = dimensions
                 .active_tokens
                 .checked_sub(1)
                 .ok_or(M1StepWorkspacePlanError::ArithmeticOverflow)?;
-            builder.push(
-                M1StepWorkspaceRangeRole::DraftChoices,
-                checked_mul(
-                    checked_mul(u64::from(dimensions.sequences), u64::from(draft_tokens))?,
-                    U32_BYTES,
-                )?,
+            let bytes = checked_mul(
+                checked_mul(u64::from(dimensions.sequences), u64::from(draft_tokens))?,
+                U32_BYTES,
             )?;
-        }
+            builder.push(M1StepWorkspaceRangeRole::DraftChoices, bytes)?;
+            Some(bytes)
+        } else {
+            None
+        };
         builder.push(M1StepWorkspaceRangeRole::RequestSlots, sequence_u32)?;
         builder.push(M1StepWorkspaceRangeRole::RequestGenerations, sequence_u32)?;
         builder.push(
@@ -757,6 +766,10 @@ fn build_requirements(
                 logits::QWEN3_LOGITS_COMPACT_RECORD_BYTES_V1,
             )?,
         )?;
+        if let Some(bytes) = draft_metadata_bytes {
+            builder.push(M1StepWorkspaceRangeRole::DraftPositionIds, bytes)?;
+            builder.push(M1StepWorkspaceRangeRole::DraftContextLengths, bytes)?;
+        }
     }
 
     let (ranges, allocation_byte_len) = builder.finish()?;
@@ -1064,11 +1077,32 @@ mod tests {
                 assert_eq!(requirements.allocation_alignment(), 64);
                 assert!(requirements.allocation_byte_len().is_multiple_of(64));
                 let expected_count = match (role, mode) {
-                    (Qwen3ModelRole::Target8B, Qwen3ExecutionMode::Speculative) => 30,
+                    (Qwen3ModelRole::Target8B, Qwen3ExecutionMode::Speculative) => 32,
                     (Qwen3ModelRole::Target8B, _) => 29,
                     (Qwen3ModelRole::Draft06B, _) => 24,
                 };
                 assert_eq!(requirements.ranges().len(), expected_count);
+                let has_draft_metadata =
+                    role == Qwen3ModelRole::Target8B && mode == Qwen3ExecutionMode::Speculative;
+                for metadata_role in [
+                    M1StepWorkspaceRangeRole::DraftPositionIds,
+                    M1StepWorkspaceRangeRole::DraftContextLengths,
+                ] {
+                    assert_eq!(
+                        requirements.range(metadata_role).is_some(),
+                        has_draft_metadata
+                    );
+                }
+                if has_draft_metadata {
+                    assert_eq!(
+                        requirements.ranges()[expected_count - 2].role(),
+                        M1StepWorkspaceRangeRole::DraftPositionIds
+                    );
+                    assert_eq!(
+                        requirements.ranges()[expected_count - 1].role(),
+                        M1StepWorkspaceRangeRole::DraftContextLengths
+                    );
+                }
                 for (index, range) in requirements.ranges().iter().copied().enumerate() {
                     assert!(range.byte_len() > 0);
                     assert!(range.offset().is_multiple_of(64));
@@ -1100,6 +1134,14 @@ mod tests {
                 assert_eq!(plan.abort(), exact_available(selection));
             }
         }
+    }
+
+    #[test]
+    fn appended_speculative_metadata_role_tags_do_not_renumber_existing_roles() {
+        assert_eq!(M1StepWorkspaceRangeRole::DraftChoices.tag(), 25);
+        assert_eq!(M1StepWorkspaceRangeRole::CompactCompletionRecords.tag(), 30);
+        assert_eq!(M1StepWorkspaceRangeRole::DraftPositionIds.tag(), 31);
+        assert_eq!(M1StepWorkspaceRangeRole::DraftContextLengths.tag(), 32);
     }
 
     #[test]
@@ -1137,6 +1179,14 @@ mod tests {
         );
         assert_eq!(length(M1StepWorkspaceRangeRole::Choices), rows * 4);
         assert_eq!(length(M1StepWorkspaceRangeRole::DraftChoices), 8 * 4 * 4);
+        assert_eq!(
+            length(M1StepWorkspaceRangeRole::DraftPositionIds),
+            8 * 4 * 4
+        );
+        assert_eq!(
+            length(M1StepWorkspaceRangeRole::DraftContextLengths),
+            8 * 4 * 4
+        );
         assert_eq!(length(M1StepWorkspaceRangeRole::RequestSlots), 8 * 4);
         assert_eq!(length(M1StepWorkspaceRangeRole::RequestGenerations), 8 * 4);
         assert_eq!(length(M1StepWorkspaceRangeRole::CompletionEpochs), 8 * 8);
@@ -1158,6 +1208,8 @@ mod tests {
         assert!(draft.range(M1StepWorkspaceRangeRole::Choices).is_some());
         for role in [
             M1StepWorkspaceRangeRole::DraftChoices,
+            M1StepWorkspaceRangeRole::DraftPositionIds,
+            M1StepWorkspaceRangeRole::DraftContextLengths,
             M1StepWorkspaceRangeRole::RequestSlots,
             M1StepWorkspaceRangeRole::RequestGenerations,
             M1StepWorkspaceRangeRole::CompletionEpochs,
@@ -1174,6 +1226,12 @@ mod tests {
         .unwrap();
         assert!(direct
             .range(M1StepWorkspaceRangeRole::DraftChoices)
+            .is_none());
+        assert!(direct
+            .range(M1StepWorkspaceRangeRole::DraftPositionIds)
+            .is_none());
+        assert!(direct
+            .range(M1StepWorkspaceRangeRole::DraftContextLengths)
             .is_none());
         assert!(direct
             .range(M1StepWorkspaceRangeRole::CompactCompletionRecords)
@@ -1215,6 +1273,15 @@ mod tests {
                     .map(M1StepWorkspaceRange::byte_len),
                 (draft_elements != 0).then_some(draft_elements * U32_BYTES)
             );
+            for role in [
+                M1StepWorkspaceRangeRole::DraftPositionIds,
+                M1StepWorkspaceRangeRole::DraftContextLengths,
+            ] {
+                assert_eq!(
+                    requirements.range(role).map(M1StepWorkspaceRange::byte_len),
+                    (draft_elements != 0).then_some(draft_elements * U32_BYTES)
+                );
+            }
             assert_eq!(
                 requirements
                     .range(M1StepWorkspaceRangeRole::CompactCompletionRecords)
@@ -1630,8 +1697,8 @@ mod tests {
         assert_eq!(
             reject(short),
             M1StepWorkspacePlanError::RangeCount {
-                expected: 30,
-                actual: 29
+                expected: 32,
+                actual: 31
             }
         );
 

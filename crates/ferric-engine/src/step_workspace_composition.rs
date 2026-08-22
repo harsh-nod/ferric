@@ -2,8 +2,8 @@
 //!
 //! This layer joins an exact checked dispatch composition to the exact checked
 //! workspace plans required by its intent. Speculative draft decodes reuse one
-//! draft decode workspace, while each draft segment names one disjoint row of
-//! the target `DraftChoices [K,S]` range where its argmax is to be preserved.
+//! draft decode workspace, while each draft segment names disjoint rows of the
+//! target `DraftChoices`, `DraftPositionIds`, and `DraftContextLengths` ranges.
 //!
 //! The resulting declarations remain addressless. They grant no allocation,
 //! mapping, packet, queue, launch, completion, readback, content-authentication,
@@ -165,6 +165,86 @@ pub struct M1SpeculativeDraftChoiceSubrange {
     range: M1StepWorkspaceRange,
 }
 
+/// One checked target speculative metadata `[K,S]` iteration row.
+///
+/// This addressless declaration identifies storage reserved for a draft
+/// segment's position IDs or context lengths. It does not establish that the
+/// row contains initialized values or grant authority to write or read it.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct M1SpeculativeDraftMetadataSubrange {
+    draft_segment: u8,
+    iteration: u8,
+    sequence_count: u32,
+    target_workspace_id: Identity,
+    target_workspace_selection: Qwen3PlanSelection,
+    target_allocation_id: Identity,
+    range: M1StepWorkspaceRange,
+}
+
+impl M1SpeculativeDraftMetadataSubrange {
+    /// Draft segment associated with this staging row.
+    #[must_use]
+    pub const fn draft_segment(self) -> u8 {
+        self.draft_segment
+    }
+
+    /// Zero-based iteration-major row index.
+    #[must_use]
+    pub const fn iteration(self) -> u8 {
+        self.iteration
+    }
+
+    /// Exact sequence width `S` of this row.
+    #[must_use]
+    pub const fn sequence_count(self) -> u32 {
+        self.sequence_count
+    }
+
+    /// Identity of the exact target speculative workspace plan.
+    #[must_use]
+    pub const fn target_workspace_id(self) -> Identity {
+        self.target_workspace_id
+    }
+
+    /// Exact target speculative role, mode, and bucket.
+    #[must_use]
+    pub const fn target_workspace_selection(self) -> Qwen3PlanSelection {
+        self.target_workspace_selection
+    }
+
+    /// Inert identity of the target plan's declared future allocation.
+    #[must_use]
+    pub const fn target_allocation_id(self) -> Identity {
+        self.target_allocation_id
+    }
+
+    /// Exact checked addressless metadata row.
+    #[must_use]
+    pub const fn range(self) -> M1StepWorkspaceRange {
+        self.range
+    }
+
+    /// Returns one sequence element's checked byte offset within the target allocation.
+    #[must_use]
+    pub fn sequence_byte_offset(self, sequence_index: u32) -> Option<u64> {
+        if sequence_index >= self.sequence_count {
+            return None;
+        }
+        let within_row = u64::from(sequence_index).checked_mul(U32_BYTES)?;
+        let offset = self.range.offset().checked_add(within_row)?;
+        match (offset.checked_add(U32_BYTES), self.range.checked_end()) {
+            (Some(end), Some(range_end)) if end <= range_end => Some(offset),
+            _ => None,
+        }
+    }
+
+    /// This declaration authenticates no initialized metadata contents.
+    #[must_use]
+    pub const fn authenticates_metadata_contents(self) -> bool {
+        false
+    }
+}
+
 impl M1SpeculativeDraftChoiceSubrange {
     /// Draft segment that produces the choices intended for this row.
     #[must_use]
@@ -231,6 +311,8 @@ pub struct M1FullStepWorkspaceSegmentBinding {
     workspace_id: Identity,
     workspace_selection: Qwen3PlanSelection,
     draft_choice_subrange: Option<M1SpeculativeDraftChoiceSubrange>,
+    draft_position_ids_subrange: Option<M1SpeculativeDraftMetadataSubrange>,
+    draft_context_lengths_subrange: Option<M1SpeculativeDraftMetadataSubrange>,
 }
 
 impl M1FullStepWorkspaceSegmentBinding {
@@ -264,6 +346,24 @@ impl M1FullStepWorkspaceSegmentBinding {
     #[must_use]
     pub const fn draft_choice_subrange(self) -> Option<M1SpeculativeDraftChoiceSubrange> {
         self.draft_choice_subrange
+    }
+
+    /// Target `DraftPositionIds` row for this speculative draft iteration.
+    ///
+    /// Non-draft segments and non-speculative steps return `None`.
+    #[must_use]
+    pub const fn draft_position_ids_subrange(self) -> Option<M1SpeculativeDraftMetadataSubrange> {
+        self.draft_position_ids_subrange
+    }
+
+    /// Target `DraftContextLengths` row for this speculative draft iteration.
+    ///
+    /// Non-draft segments and non-speculative steps return `None`.
+    #[must_use]
+    pub const fn draft_context_lengths_subrange(
+        self,
+    ) -> Option<M1SpeculativeDraftMetadataSubrange> {
+        self.draft_context_lengths_subrange
     }
 
     /// A structural workspace association grants no execution authority.
@@ -506,6 +606,13 @@ pub enum M1FullStepWorkspaceCompositionError {
         /// Required semantic range.
         role: M1StepWorkspaceRangeRole,
     },
+    /// Two required target metadata ranges are not in canonical disjoint order.
+    WorkspaceRangeOrder {
+        /// Range required to precede the other range.
+        earlier: M1StepWorkspaceRangeRole,
+        /// Range required to follow the other range.
+        later: M1StepWorkspaceRangeRole,
+    },
     /// Checked row-size or offset arithmetic overflowed.
     ArithmeticOverflow,
 }
@@ -566,6 +673,13 @@ struct M1FullStepWorkspaceContract {
     target_selection: Qwen3PlanSelection,
     draft_selection: Option<Qwen3PlanSelection>,
     speculative_shape: Option<(u32, u8)>,
+}
+
+#[derive(Clone, Copy)]
+struct M1SpeculativeDraftSegmentSubranges {
+    choice: M1SpeculativeDraftChoiceSubrange,
+    position_ids: M1SpeculativeDraftMetadataSubrange,
+    context_lengths: M1SpeculativeDraftMetadataSubrange,
 }
 
 /// Composes exact checked dispatch and workspace plans for one complete M1 step.
@@ -737,6 +851,8 @@ fn validate_speculative_segments(
         .ok_or(M1FullStepWorkspaceCompositionError::ArithmeticOverflow)?;
     let choice_subranges =
         validate_speculative_choice_ranges(workspace_plans.target(), draft, sequences, iterations)?;
+    let metadata_subranges =
+        validate_speculative_metadata_ranges(workspace_plans.target(), sequences, iterations)?;
     let mut bindings = Vec::with_capacity(dispatch_plan.segments().len());
     for iteration in 0..iterations {
         let position = usize::from(iteration);
@@ -759,11 +875,16 @@ fn validate_speculative_segments(
             dependency,
             draft_selection,
         )?;
+        let speculative_subranges = M1SpeculativeDraftSegmentSubranges {
+            choice: choice_subranges[position],
+            position_ids: metadata_subranges[position].0,
+            context_lengths: metadata_subranges[position].1,
+        };
         bindings.push(segment_binding(
             iteration,
             M1FullStepWorkspaceRole::Draft,
             draft,
-            Some(choice_subranges[position]),
+            Some(&speculative_subranges),
         ));
     }
 
@@ -798,14 +919,17 @@ fn segment_binding(
     segment_index: u8,
     workspace_role: M1FullStepWorkspaceRole,
     workspace: &AddresslessM1StepWorkspacePlan,
-    draft_choice_subrange: Option<M1SpeculativeDraftChoiceSubrange>,
+    speculative_subranges: Option<&M1SpeculativeDraftSegmentSubranges>,
 ) -> M1FullStepWorkspaceSegmentBinding {
     M1FullStepWorkspaceSegmentBinding {
         segment_index,
         workspace_role,
         workspace_id: workspace.workspace_id(),
         workspace_selection: workspace.selection(),
-        draft_choice_subrange,
+        draft_choice_subrange: speculative_subranges.map(|subranges| subranges.choice),
+        draft_position_ids_subrange: speculative_subranges.map(|subranges| subranges.position_ids),
+        draft_context_lengths_subrange: speculative_subranges
+            .map(|subranges| subranges.context_lengths),
     }
 }
 
@@ -994,6 +1118,145 @@ fn validate_segment_fields(
         });
     }
     Ok(())
+}
+
+fn validate_speculative_metadata_ranges(
+    target: &AddresslessM1StepWorkspacePlan,
+    sequences: u32,
+    iterations: u8,
+) -> Result<
+    Box<
+        [(
+            M1SpeculativeDraftMetadataSubrange,
+            M1SpeculativeDraftMetadataSubrange,
+        )],
+    >,
+    M1FullStepWorkspaceCompositionError,
+> {
+    let position_ids = target
+        .range(M1StepWorkspaceRangeRole::DraftPositionIds)
+        .ok_or(M1FullStepWorkspaceCompositionError::MissingWorkspaceRange {
+            workspace: M1FullStepWorkspaceRole::Target,
+            role: M1StepWorkspaceRangeRole::DraftPositionIds,
+        })?;
+    let context_lengths = target
+        .range(M1StepWorkspaceRangeRole::DraftContextLengths)
+        .ok_or(M1FullStepWorkspaceCompositionError::MissingWorkspaceRange {
+            workspace: M1FullStepWorkspaceRole::Target,
+            role: M1StepWorkspaceRangeRole::DraftContextLengths,
+        })?;
+    validate_speculative_metadata_range_geometry(
+        target.workspace_id(),
+        target.selection(),
+        target.allocation().allocation_id(),
+        target.allocation().byte_len(),
+        position_ids,
+        context_lengths,
+        sequences,
+        iterations,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn validate_speculative_metadata_range_geometry(
+    target_workspace_id: Identity,
+    target_workspace_selection: Qwen3PlanSelection,
+    target_allocation_id: Identity,
+    target_allocation_len: u64,
+    position_ids: M1StepWorkspaceRange,
+    context_lengths: M1StepWorkspaceRange,
+    sequences: u32,
+    iterations: u8,
+) -> Result<
+    Box<
+        [(
+            M1SpeculativeDraftMetadataSubrange,
+            M1SpeculativeDraftMetadataSubrange,
+        )],
+    >,
+    M1FullStepWorkspaceCompositionError,
+> {
+    for (expected, range) in [
+        (M1StepWorkspaceRangeRole::DraftPositionIds, position_ids),
+        (
+            M1StepWorkspaceRangeRole::DraftContextLengths,
+            context_lengths,
+        ),
+    ] {
+        validate_range_role(M1FullStepWorkspaceRole::Target, expected, range)?;
+        validate_range_alignment(M1FullStepWorkspaceRole::Target, range)?;
+    }
+
+    let row_bytes = u64::from(sequences)
+        .checked_mul(U32_BYTES)
+        .ok_or(M1FullStepWorkspaceCompositionError::ArithmeticOverflow)?;
+    let total_bytes = row_bytes
+        .checked_mul(u64::from(iterations))
+        .ok_or(M1FullStepWorkspaceCompositionError::ArithmeticOverflow)?;
+    for range in [position_ids, context_lengths] {
+        validate_range_length(M1FullStepWorkspaceRole::Target, total_bytes, range)?;
+        validate_range_bounds(
+            M1FullStepWorkspaceRole::Target,
+            target_allocation_len,
+            range,
+        )?;
+    }
+    if position_ids.checked_end().ok_or(
+        M1FullStepWorkspaceCompositionError::WorkspaceRangeOverflow {
+            workspace: M1FullStepWorkspaceRole::Target,
+            role: M1StepWorkspaceRangeRole::DraftPositionIds,
+        },
+    )? > context_lengths.offset()
+    {
+        return Err(M1FullStepWorkspaceCompositionError::WorkspaceRangeOrder {
+            earlier: M1StepWorkspaceRangeRole::DraftPositionIds,
+            later: M1StepWorkspaceRangeRole::DraftContextLengths,
+        });
+    }
+
+    let mut subranges = Vec::with_capacity(usize::from(iterations));
+    for iteration in 0..iterations {
+        let iteration_offset = u64::from(iteration)
+            .checked_mul(row_bytes)
+            .ok_or(M1FullStepWorkspaceCompositionError::ArithmeticOverflow)?;
+        let make_subrange = |whole: M1StepWorkspaceRange| {
+            let offset = whole
+                .offset()
+                .checked_add(iteration_offset)
+                .ok_or(M1FullStepWorkspaceCompositionError::ArithmeticOverflow)?;
+            let end = offset
+                .checked_add(row_bytes)
+                .ok_or(M1FullStepWorkspaceCompositionError::ArithmeticOverflow)?;
+            let whole_end = whole.checked_end().ok_or(
+                M1FullStepWorkspaceCompositionError::WorkspaceRangeOverflow {
+                    workspace: M1FullStepWorkspaceRole::Target,
+                    role: whole.role(),
+                },
+            )?;
+            if end > whole_end || end > target_allocation_len {
+                return Err(
+                    M1FullStepWorkspaceCompositionError::WorkspaceRangeOutOfBounds {
+                        workspace: M1FullStepWorkspaceRole::Target,
+                        role: whole.role(),
+                    },
+                );
+            }
+            Ok(M1SpeculativeDraftMetadataSubrange {
+                draft_segment: iteration,
+                iteration,
+                sequence_count: sequences,
+                target_workspace_id,
+                target_workspace_selection,
+                target_allocation_id,
+                range: M1StepWorkspaceRange::new(whole.role(), offset, row_bytes, U32_BYTES),
+            })
+        };
+        subranges.push((
+            make_subrange(position_ids)?,
+            make_subrange(context_lengths)?,
+        ));
+    }
+    Ok(subranges.into_boxed_slice())
 }
 
 fn validate_speculative_choice_ranges(
@@ -1201,8 +1464,9 @@ mod tests {
     use super::{
         compose_addressless_m1_full_step_workspaces, intent_contract, validate_segment_count,
         validate_segment_fields, validate_speculative_choice_range_geometry,
-        M1FullStepWorkspaceCompositionError, M1FullStepWorkspaceCompositionOutcome,
-        M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans, M1FullStepWorkspaceRole,
+        validate_speculative_metadata_range_geometry, M1FullStepWorkspaceCompositionError,
+        M1FullStepWorkspaceCompositionOutcome, M1FullStepWorkspaceInputKind,
+        M1FullStepWorkspacePlans, M1FullStepWorkspaceRole,
     };
     use crate::operation_kernel_plan::tests::public_operation_kernel_plan_fixture;
     use crate::{
@@ -1321,6 +1585,8 @@ mod tests {
             assert_eq!(binding.workspace_id(), target_id);
             assert_eq!(binding.workspace_selection(), target_selection);
             assert_eq!(binding.draft_choice_subrange(), None);
+            assert_eq!(binding.draft_position_ids_subrange(), None);
+            assert_eq!(binding.draft_context_lengths_subrange(), None);
         }
     }
 
@@ -1369,7 +1635,7 @@ mod tests {
     }
 
     #[test]
-    fn every_speculative_bucket_reuses_draft_and_slices_target_choices_iteration_major() {
+    fn every_speculative_bucket_reuses_draft_and_slices_target_rows_iteration_major() {
         let operation_plan = public_operation_kernel_plan_fixture();
         for (case, (target_bucket, draft_bucket, sequences, iterations)) in
             SPECULATIVE_CASES.into_iter().enumerate()
@@ -1391,9 +1657,22 @@ mod tests {
             let draft_id = draft_plan.workspace_id();
             let target_id = target_plan.workspace_id();
             let target_allocation_id = target_plan.allocation().allocation_id();
-            let whole = target_plan
+            let choices = target_plan
                 .range(M1StepWorkspaceRangeRole::DraftChoices)
                 .unwrap();
+            let position_ids = target_plan
+                .range(M1StepWorkspaceRangeRole::DraftPositionIds)
+                .unwrap();
+            let context_lengths = target_plan
+                .range(M1StepWorkspaceRangeRole::DraftContextLengths)
+                .unwrap();
+            if target_bucket == Qwen3PlanBucket::SpeculativeS8K4C8192 {
+                assert_eq!(sequences, 8);
+                assert_eq!(iterations, 4);
+                assert_eq!(u64::from(sequences) * 4, 32);
+                assert_eq!(position_ids.byte_len(), 128);
+                assert_eq!(context_lengths.byte_len(), 128);
+            }
             let composition = composed(compose_addressless_m1_full_step_workspaces(
                 dispatch,
                 M1FullStepWorkspacePlans::speculative_round(draft_plan, target_plan),
@@ -1420,7 +1699,7 @@ mod tests {
                 );
                 assert_eq!(
                     subrange.range().offset(),
-                    whole.offset() + u64::from(iteration) * row_bytes
+                    choices.offset() + u64::from(iteration) * row_bytes
                 );
                 assert_eq!(subrange.range().byte_len(), row_bytes);
                 assert_eq!(subrange.range().alignment(), 4);
@@ -1434,6 +1713,39 @@ mod tests {
                 );
                 assert_eq!(subrange.sequence_byte_offset(sequences), None);
                 assert!(!subrange.authenticates_preserved_choice());
+
+                for (metadata, whole, role) in [
+                    (
+                        binding.draft_position_ids_subrange().unwrap(),
+                        position_ids,
+                        M1StepWorkspaceRangeRole::DraftPositionIds,
+                    ),
+                    (
+                        binding.draft_context_lengths_subrange().unwrap(),
+                        context_lengths,
+                        M1StepWorkspaceRangeRole::DraftContextLengths,
+                    ),
+                ] {
+                    assert_eq!(metadata.draft_segment(), iteration);
+                    assert_eq!(metadata.iteration(), iteration);
+                    assert_eq!(metadata.sequence_count(), sequences);
+                    assert_eq!(metadata.target_workspace_id(), target_id);
+                    assert_eq!(metadata.target_workspace_selection(), target_selection);
+                    assert_eq!(metadata.target_allocation_id(), target_allocation_id);
+                    assert_eq!(metadata.range().role(), role);
+                    assert_eq!(
+                        metadata.range().offset(),
+                        whole.offset() + u64::from(iteration) * row_bytes
+                    );
+                    assert_eq!(metadata.range().byte_len(), row_bytes);
+                    assert_eq!(metadata.range().alignment(), 4);
+                    assert_eq!(
+                        metadata.sequence_byte_offset(sequences - 1),
+                        Some(metadata.range().offset() + row_bytes - 4)
+                    );
+                    assert_eq!(metadata.sequence_byte_offset(sequences), None);
+                    assert!(!metadata.authenticates_metadata_contents());
+                }
             }
             let target_binding = composition.segment_binding(iterations).unwrap();
             assert_eq!(
@@ -1442,6 +1754,8 @@ mod tests {
             );
             assert_eq!(target_binding.workspace_id(), target_id);
             assert_eq!(target_binding.draft_choice_subrange(), None);
+            assert_eq!(target_binding.draft_position_ids_subrange(), None);
+            assert_eq!(target_binding.draft_context_lengths_subrange(), None);
             assert!(!composition.grants_address_authority());
             assert!(!composition.grants_execution_authority());
             assert!(!composition.authenticates_workspace_contents());
@@ -1705,6 +2019,90 @@ mod tests {
         ));
         assert!(matches!(
             validate(exact_target, 79, exact_draft, 36),
+            Err(M1FullStepWorkspaceCompositionError::WorkspaceRangeOutOfBounds { .. })
+        ));
+    }
+
+    #[test]
+    fn hostile_speculative_metadata_geometry_rejects_role_alignment_length_overflow_order_and_bounds(
+    ) {
+        let target_id = Identity::new([111; 32]);
+        let allocation_id = Identity::new([112; 32]);
+        let target_selection = target(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+        );
+        let exact_position =
+            M1StepWorkspaceRange::new(M1StepWorkspaceRangeRole::DraftPositionIds, 64, 16, 4);
+        let exact_context =
+            M1StepWorkspaceRange::new(M1StepWorkspaceRangeRole::DraftContextLengths, 128, 16, 4);
+        let validate = |position, context, allocation_len| {
+            validate_speculative_metadata_range_geometry(
+                target_id,
+                target_selection,
+                allocation_id,
+                allocation_len,
+                position,
+                context,
+                1,
+                4,
+            )
+        };
+        assert!(matches!(
+            validate(
+                M1StepWorkspaceRange::new(M1StepWorkspaceRangeRole::DraftContextLengths, 64, 16, 4,),
+                exact_context,
+                144,
+            ),
+            Err(M1FullStepWorkspaceCompositionError::WorkspaceRangeRole { .. })
+        ));
+        assert!(matches!(
+            validate(
+                M1StepWorkspaceRange::new(M1StepWorkspaceRangeRole::DraftPositionIds, 66, 16, 4,),
+                exact_context,
+                144,
+            ),
+            Err(M1FullStepWorkspaceCompositionError::WorkspaceRangeOffsetAlignment { .. })
+        ));
+        assert!(matches!(
+            validate(
+                M1StepWorkspaceRange::new(M1StepWorkspaceRangeRole::DraftPositionIds, 64, 16, 8,),
+                exact_context,
+                144,
+            ),
+            Err(M1FullStepWorkspaceCompositionError::WorkspaceRangeAlignment { .. })
+        ));
+        assert!(matches!(
+            validate(
+                M1StepWorkspaceRange::new(M1StepWorkspaceRangeRole::DraftPositionIds, 64, 12, 4,),
+                exact_context,
+                144,
+            ),
+            Err(M1FullStepWorkspaceCompositionError::WorkspaceRangeLength { .. })
+        ));
+        assert!(matches!(
+            validate(
+                M1StepWorkspaceRange::new(
+                    M1StepWorkspaceRangeRole::DraftPositionIds,
+                    u64::MAX - 15,
+                    16,
+                    4,
+                ),
+                exact_context,
+                u64::MAX,
+            ),
+            Err(M1FullStepWorkspaceCompositionError::WorkspaceRangeOverflow { .. })
+        ));
+        assert!(matches!(
+            validate(
+                M1StepWorkspaceRange::new(M1StepWorkspaceRangeRole::DraftPositionIds, 128, 16, 4,),
+                exact_context,
+                144,
+            ),
+            Err(M1FullStepWorkspaceCompositionError::WorkspaceRangeOrder { .. })
+        ));
+        assert!(matches!(
+            validate(exact_position, exact_context, 143),
             Err(M1FullStepWorkspaceCompositionError::WorkspaceRangeOutOfBounds { .. })
         ));
     }

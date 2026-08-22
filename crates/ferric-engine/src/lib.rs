@@ -110,6 +110,7 @@ pub use step_workspace_composition::{
     M1FullStepWorkspaceCompositionError, M1FullStepWorkspaceCompositionFailure,
     M1FullStepWorkspaceCompositionOutcome, M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans,
     M1FullStepWorkspaceRole, M1FullStepWorkspaceSegmentBinding, M1SpeculativeDraftChoiceSubrange,
+    M1SpeculativeDraftMetadataSubrange,
 };
 pub use step_workspace_subleases::{
     bind_addressless_m1_step_workspace_subleases, BoundM1StepWorkspaceSubleases,

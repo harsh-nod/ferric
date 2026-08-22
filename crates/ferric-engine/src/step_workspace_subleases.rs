@@ -25,7 +25,7 @@ pub const M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1: usize = 24;
 /// Number of workspace members in a non-speculative target selection.
 pub const M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1: usize = 29;
 /// Number of workspace members in a speculative target selection.
-pub const M1_TARGET_SPECULATIVE_STEP_WORKSPACE_SUBLEASE_COUNT_V1: usize = 30;
+pub const M1_TARGET_SPECULATIVE_STEP_WORKSPACE_SUBLEASE_COUNT_V1: usize = 32;
 
 /// Fail-closed workspace-to-sublease binding error.
 #[derive(Debug)]
