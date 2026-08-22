@@ -18,6 +18,8 @@ const CRATES_IO_SOURCE: &str = "registry+https://github.com/rust-lang/crates.io-
 const VERUS_SOURCE: &str = "git+https://github.com/verus-lang/verus.git?rev=b677dd5";
 const FE2O3_SOURCE: &str =
     "git+https://github.com/harsh-nod/fe2o3.git?rev=bea73e0b988c02911c10419f94319cb8f9af3f62";
+const FERRIC_BUILD_PREPACK_BINARY_NAME: &str = "ferric-m1-prepack";
+const FERRIC_BUILD_PREPACK_BINARY_PATH: &str = "crates/ferric-build/src/bin/ferric-m1-prepack.rs";
 const RUNTIME_ROOTS: &[(&str, &str, &str, bool)] = &[
     ("ferric-build", "onig", "=6.5.3", false),
     (
@@ -51,7 +53,13 @@ const ENGINE_ALLOCATION_CONSTRUCTORS: &[&str] = &[
 
 type GateResult<T> = Result<T, String>;
 type ModuleMap = BTreeMap<String, (String, String)>;
-type WalkOutput = (ModuleMap, BTreeSet<Function>);
+type WalkOutput = (ModuleMap, BTreeSet<Function>, BTreeSet<PathBuf>);
+
+#[derive(Clone)]
+struct PackageTarget {
+    crate_name: String,
+    root: PathBuf,
+}
 
 #[derive(Clone)]
 struct Package {
@@ -59,6 +67,7 @@ struct Package {
     crate_name: String,
     root: PathBuf,
     dependencies: BTreeSet<String>,
+    additional_targets: Vec<PackageTarget>,
 }
 
 #[derive(Clone, Eq, Ord, PartialEq, PartialOrd)]
@@ -768,6 +777,7 @@ fn packages(
             .and_then(Value::as_array)
             .ok_or_else(|| format!("package {name} has no targets array"))?;
         let mut library_targets = Vec::new();
+        let mut additional_targets = Vec::new();
         for target in targets {
             let target = target
                 .as_object()
@@ -778,7 +788,36 @@ fn packages(
                 .ok_or_else(|| format!("package {name} target has no kind"))?;
             if kinds.len() == 1 && kinds[0].as_str() == Some("lib") {
                 library_targets.push(target);
-            } else if kinds.len() != 1 || kinds[0].as_str() != Some("test") {
+            } else if kinds.len() == 1 && kinds[0].as_str() == Some("test") {
+            } else if kinds.len() == 1
+                && kinds[0].as_str() == Some("bin")
+                && name == "ferric-build"
+                && target.get("name").and_then(Value::as_str)
+                    == Some(FERRIC_BUILD_PREPACK_BINARY_NAME)
+            {
+                let crate_types = target
+                    .get("crate_types")
+                    .and_then(Value::as_array)
+                    .ok_or_else(|| "ferric-build prepack binary has no crate types".to_owned())?;
+                if crate_types.len() != 1 || crate_types[0].as_str() != Some("bin") {
+                    return Err("ferric-build prepack binary crate type drifted".to_owned());
+                }
+                let root = canonical(Path::new(
+                    target
+                        .get("src_path")
+                        .and_then(Value::as_str)
+                        .ok_or_else(|| {
+                            "ferric-build prepack binary has no source path".to_owned()
+                        })?,
+                ))?;
+                let expected_root = canonical(&repo.join(FERRIC_BUILD_PREPACK_BINARY_PATH))?;
+                if root != expected_root {
+                    return Err("ferric-build prepack binary source path drifted".to_owned());
+                }
+                let crate_name = FERRIC_BUILD_PREPACK_BINARY_NAME.replace('-', "_");
+                safe_atom(&crate_name, "binary crate name")?;
+                additional_targets.push(PackageTarget { crate_name, root });
+            } else {
                 return Err(format!(
                     "qualified package {name} has an unsupported non-library target"
                 ));
@@ -797,6 +836,14 @@ fn packages(
         safe_atom(&crate_name, "crate name")?;
         if !crate_names.insert(crate_name.clone()) {
             return Err(format!("qualified packages share crate name: {crate_name}"));
+        }
+        for target in &additional_targets {
+            if !crate_names.insert(target.crate_name.clone()) {
+                return Err(format!(
+                    "qualified targets share crate name: {}",
+                    target.crate_name
+                ));
+            }
         }
         let root = canonical(Path::new(
             target
@@ -861,6 +908,7 @@ fn packages(
             crate_name,
             root,
             dependencies,
+            additional_targets,
         });
     }
     topological_packages(result)
@@ -942,7 +990,8 @@ fn validate_attributes(attributes: &[Attribute], allow_solver_attributes: bool) 
                 };
                 if !matches!(
                     list.tokens.to_string().as_str(),
-                    "unused_imports"
+                    "dead_code"
+                        | "unused_imports"
                         | "clippy :: cast_possible_truncation"
                         | "clippy :: large_enum_variant"
                         | "clippy :: too_many_arguments"
@@ -1038,6 +1087,21 @@ impl SyntaxAudit {
             path_name(path)
         ));
     }
+
+    fn visit_expression_macro_arguments(&mut self, tokens: proc_macro2::TokenStream, name: &str) {
+        let parser =
+            verus_syn::punctuated::Punctuated::<Expr, verus_syn::Token![,]>::parse_terminated;
+        match parser.parse2(tokens) {
+            Ok(expressions) => {
+                for expression in &expressions {
+                    self.visit_expr(expression);
+                }
+            }
+            Err(error) => self
+                .errors
+                .push(format!("unsupported {name}! invocation: {error}")),
+        }
+    }
 }
 
 impl<'ast> Visit<'ast> for SyntaxAudit {
@@ -1095,19 +1159,8 @@ impl<'ast> Visit<'ast> for SyntaxAudit {
                     .errors
                     .push(format!("unsupported assertion invocation: {error}")),
             }
-        } else if name == "debug_assert_eq" {
-            let parser =
-                verus_syn::punctuated::Punctuated::<Expr, verus_syn::Token![,]>::parse_terminated;
-            match parser.parse2(statement.mac.tokens.clone()) {
-                Ok(expressions) => {
-                    for expression in &expressions {
-                        self.visit_expr(expression);
-                    }
-                }
-                Err(error) => self
-                    .errors
-                    .push(format!("unsupported assertion invocation: {error}")),
-            }
+        } else if matches!(name.as_str(), "debug_assert_eq" | "eprintln" | "println") {
+            self.visit_expression_macro_arguments(statement.mac.tokens.clone(), &name);
         } else {
             self.reject_macro(&statement.mac.path, "statement");
         }
@@ -1360,19 +1413,7 @@ impl SourceWalker<'_> {
         let module_path = self.package.crate_name.clone();
         self.walk_file(&root, &source_root, &module_path)?;
         self.resolve_inherent_methods()?;
-        let mut all_rs = BTreeSet::new();
-        collect_rs_files(&self.source_root, &mut all_rs)?;
-        let orphaned: Vec<String> = all_rs
-            .difference(&self.visited)
-            .map(|path| relative_source(self.repo, path))
-            .collect::<GateResult<_>>()?;
-        if !orphaned.is_empty() {
-            return Err(format!(
-                "package {} contains unreachable Rust source: {orphaned:?}",
-                self.package.name
-            ));
-        }
-        Ok((self.modules, self.functions))
+        Ok((self.modules, self.functions, self.visited))
     }
 
     fn add_type_owner(&mut self, owner: &Ident, module_path: &str) -> GateResult<()> {
@@ -1689,23 +1730,58 @@ fn inventory(repo: &Path, metadata: &Value) -> GateResult<Inventory> {
             .parent()
             .ok_or_else(|| format!("package {} source root has no parent", package.name))?
             .to_owned();
-        let walker = SourceWalker {
-            repo,
-            package,
-            source_root,
-            visited: BTreeSet::new(),
-            modules: BTreeMap::new(),
-            functions: BTreeSet::new(),
-            type_owners: BTreeMap::new(),
-            inherent_methods: Vec::new(),
-        };
-        let (modules, functions) = walker.walk()?;
-        for (source, owner) in modules {
-            if inventory.modules.insert(source.clone(), owner).is_some() {
-                return Err(format!("source belongs to multiple packages: {source}"));
+        let mut targets = vec![PackageTarget {
+            crate_name: package.crate_name.clone(),
+            root: package.root.clone(),
+        }];
+        targets.extend(package.additional_targets.iter().cloned());
+        let mut visited = BTreeSet::new();
+        for target in targets {
+            let target_package = Package {
+                name: package.name.clone(),
+                crate_name: target.crate_name,
+                root: target.root,
+                dependencies: package.dependencies.clone(),
+                additional_targets: Vec::new(),
+            };
+            let walker = SourceWalker {
+                repo,
+                package: &target_package,
+                source_root: source_root.clone(),
+                visited: BTreeSet::new(),
+                modules: BTreeMap::new(),
+                functions: BTreeSet::new(),
+                type_owners: BTreeMap::new(),
+                inherent_methods: Vec::new(),
+            };
+            let (modules, functions, target_visited) = walker.walk()?;
+            for (source, owner) in modules {
+                if inventory.modules.insert(source.clone(), owner).is_some() {
+                    return Err(format!("source belongs to multiple packages: {source}"));
+                }
             }
+            for function in functions {
+                if !inventory.functions.insert(function.clone()) {
+                    return Err(format!(
+                        "executable compiler path belongs to multiple targets: {}",
+                        function.compiler_path
+                    ));
+                }
+            }
+            visited.extend(target_visited);
         }
-        inventory.functions.extend(functions);
+        let mut all_rs = BTreeSet::new();
+        collect_rs_files(&source_root, &mut all_rs)?;
+        let orphaned: Vec<String> = all_rs
+            .difference(&visited)
+            .map(|path| relative_source(repo, path))
+            .collect::<GateResult<_>>()?;
+        if !orphaned.is_empty() {
+            return Err(format!(
+                "package {} contains unreachable Rust source: {orphaned:?}",
+                package.name
+            ));
+        }
     }
     Ok(inventory)
 }

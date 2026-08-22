@@ -209,6 +209,20 @@ test_target["kind"] = ["bin"]
 test_target["crate_types"] = ["bin"]
 (scratch / "non-library-target.metadata").write_text(json.dumps(target), encoding="utf-8")
 
+binary_name = copy.deepcopy(metadata)
+build_package = next(p for p in binary_name["packages"] if p["name"] == "ferric-build")
+prepack_target = next(t for t in build_package["targets"] if t["kind"] == ["bin"])
+prepack_target["name"] = "unadmitted-prepack"
+(scratch / "binary-name.metadata").write_text(json.dumps(binary_name), encoding="utf-8")
+
+binary_path = copy.deepcopy(metadata)
+build_package = next(p for p in binary_path["packages"] if p["name"] == "ferric-build")
+prepack_target = next(t for t in build_package["targets"] if t["kind"] == ["bin"])
+prepack_target["src_path"] = next(
+    t for t in build_package["targets"] if t["kind"] == ["lib"]
+)["src_path"]
+(scratch / "binary-path.metadata").write_text(json.dumps(binary_path), encoding="utf-8")
+
 test_fixture_runtime = copy.deepcopy(metadata)
 engine_package = next(
     p for p in test_fixture_runtime["packages"] if p["name"] == "ferric-engine"
@@ -245,6 +259,12 @@ expect_rejected fe2o3-source-drift 'workspace fe2o3 dependency declaration drift
 expect_rejected non-library-target 'unsupported non-library target' \
     "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/non-library-target.metadata"
+expect_rejected binary-name-drift 'unsupported non-library target' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    "$scratch/binary-name.metadata"
+expect_rejected binary-path-drift 'prepack binary source path drifted' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    "$scratch/binary-path.metadata"
 expect_rejected test-fixture-runtime-activation \
     'activates the test-fixtures feature outside its admitted dev edge' \
     "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
