@@ -4,19 +4,22 @@
 //! transitions to non-clone engine typestates. A page lease is retained in the
 //! cache while its physical identity is reachable or retired. An initialized
 //! prefix advances only after a crate-owned pending write is paired with an
-//! [`ExactCompletion`] for the same epoch. A bulk step reservation separately
-//! snapshots the complete addressless page table and exact write spans without
-//! claiming page binding, initialization, dispatch, or completion.
+//! [`ExactCompletion`] for the same epoch. A bulk step reservation snapshots
+//! the complete addressless page table and exact write spans without claiming
+//! initialization, dispatch, or completion. Once the ordered queue has
+//! completed, the crate-private step-completion bridge revalidates that entire
+//! snapshot, appends its retained leases, and initializes the reserved physical
+//! interval before returning the same single completion capability.
 //!
 //! The types below own no KFD allocation, GPU address, page contents, queue,
 //! packet, signal, or hardware observation. There are deliberately no
 //! production constructors for [`DeviceKvPageLease`] or
-//! [`InitializedDeviceKvWrite`]: fe2o3 allocation authority and exact packet,
-//! buffer, and KV-write-effect authority do not exist yet. Unit tests use
-//! scoped stand-ins. Quiescent caches retain page custody and expose no release
-//! or reuse operation. This foundation also does not implement the future
-//! fan-out/composition that must derive scheduler, KV, and resource permits
-//! from one ordered queue completion without duplicating linear authority.
+//! [`InitializedDeviceKvWrite`]: the generated runner must source those from
+//! exact fe2o3 allocation and queue custody. Unit tests use scoped stand-ins.
+//! Quiescent caches retain page custody and expose no release or reuse
+//! operation. Step completion establishes initialized physical state only; it
+//! deliberately does not decide acceptance, rollback, scheduler completion, or
+//! resource release policy.
 
 use crate::ExactCompletion;
 use ferric_spec::completion::CompletionEpoch;
@@ -147,6 +150,9 @@ pub enum DeviceKvCacheError {
     StepRangeOverflow,
     StepPageLeaseCountMismatch,
     StepPhysicalAlias,
+    StepSelectionMismatch,
+    StepPageTableDrift,
+    StepWriteSpanDrift,
     WriteGenerationExhausted,
     ZeroCompletionEpoch,
     CompletionEpochMismatch,
@@ -322,6 +328,15 @@ impl DeviceKvStepPageBinding {
 /// fn require_clone<T: Clone>() {}
 /// require_clone::<PendingDeviceKvStepWrite>();
 /// ```
+///
+/// ```compile_fail
+/// use ferric_engine::PendingDeviceKvStepWrite;
+/// fn consume_once(_: PendingDeviceKvStepWrite) {}
+/// fn consume_twice(pending: PendingDeviceKvStepWrite) {
+///     consume_once(pending);
+///     consume_once(pending);
+/// }
+/// ```
 #[derive(Debug, PartialEq, Eq)]
 pub struct PendingDeviceKvStepWrite {
     binding: PendingStepWriteBinding,
@@ -379,6 +394,149 @@ impl PendingDeviceKvStepWrite {
     }
 }
 
+/// Inert record of the exact step interval installed in physical KV state.
+///
+/// This value owns no page lease, device allocation, queue, signal, or
+/// [`ExactCompletion`]. It is kept non-clone so the eventual runner can move one
+/// exact interval record through its sequential completion fan-out.
+#[allow(dead_code)]
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) struct InertInitializedDeviceKvStepWrite {
+    binding: PendingStepWriteBinding,
+    page_table: Box<[DeviceKvStepPageIdentity]>,
+    write_pages: Box<[DeviceKvStepPageBinding]>,
+}
+
+#[allow(dead_code)]
+impl InertInitializedDeviceKvStepWrite {
+    pub(crate) const fn request(&self) -> RequestId {
+        self.binding.request
+    }
+
+    pub(crate) const fn selection(&self) -> Qwen3PlanSelection {
+        self.binding.selection
+    }
+
+    pub(crate) const fn committed_tokens(&self) -> u32 {
+        self.binding.committed_tokens
+    }
+
+    pub(crate) const fn active_tokens(&self) -> u32 {
+        self.binding.active_tokens
+    }
+
+    pub(crate) const fn end_tokens(&self) -> u32 {
+        self.binding.end_tokens
+    }
+
+    pub(crate) const fn epoch(&self) -> CompletionEpoch {
+        self.binding.epoch
+    }
+
+    pub(crate) const fn page_table(&self) -> &[DeviceKvStepPageIdentity] {
+        &self.page_table
+    }
+
+    pub(crate) const fn write_pages(&self) -> &[DeviceKvStepPageBinding] {
+        &self.write_pages
+    }
+}
+
+/// Successful initialized-step transition retaining active cache custody.
+#[allow(dead_code)]
+#[must_use = "active cache custody, interval evidence, and exact completion remain linear"]
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) struct CompletedDeviceKvStepWrite {
+    cache: ActiveDeviceKvCache,
+    initialized: InertInitializedDeviceKvStepWrite,
+    completion: ExactCompletion,
+}
+
+#[allow(dead_code)]
+impl CompletedDeviceKvStepWrite {
+    pub(crate) fn into_parts(
+        self,
+    ) -> (
+        ActiveDeviceKvCache,
+        InertInitializedDeviceKvStepWrite,
+        ExactCompletion,
+    ) {
+        (self.cache, self.initialized, self.completion)
+    }
+}
+
+/// Retry-safe step-completion rejection retaining all unchanged inputs.
+#[allow(dead_code)]
+#[must_use = "rejection retains cache, reservation, and exact completion custody"]
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) struct DeviceKvStepCompletionFailure {
+    error: DeviceKvCacheError,
+    cache: ActiveDeviceKvCache,
+    pending: PendingDeviceKvStepWrite,
+    completion: ExactCompletion,
+}
+
+#[allow(dead_code)]
+impl DeviceKvStepCompletionFailure {
+    pub(crate) const fn error(&self) -> DeviceKvCacheError {
+        self.error
+    }
+
+    pub(crate) fn into_parts(
+        self,
+    ) -> (
+        DeviceKvCacheError,
+        ActiveDeviceKvCache,
+        PendingDeviceKvStepWrite,
+        ExactCompletion,
+    ) {
+        (self.error, self.cache, self.pending, self.completion)
+    }
+}
+
+/// Terminal custody after an impossible post-preflight model transition.
+///
+/// Some new leases may already have moved into `common`; any not-yet-appended
+/// leases remain in `unappended_page_leases`. No active-cache recovery,
+/// mutation, read, release, or reuse operation is exposed.
+#[allow(dead_code)]
+#[must_use = "poisoned custody must remain quarantined"]
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) struct PoisonedDeviceKvStepCompletion {
+    error: DeviceKvCacheError,
+    common: DeviceKvCacheCommon,
+    binding: PendingStepWriteBinding,
+    page_table: Box<[DeviceKvStepPageIdentity]>,
+    write_pages: Box<[DeviceKvStepPageBinding]>,
+    unappended_page_leases: Vec<DeviceKvPageLease>,
+    completion: ExactCompletion,
+}
+
+#[allow(dead_code)]
+impl PoisonedDeviceKvStepCompletion {
+    pub(crate) const fn error(&self) -> DeviceKvCacheError {
+        self.error
+    }
+
+    pub(crate) fn projection(&self) -> DeviceKvCacheProjection {
+        self.common.projection()
+    }
+
+    pub(crate) const fn completion_epoch(&self) -> CompletionEpoch {
+        self.completion.epoch()
+    }
+}
+
+/// Exhaustive result of joining one pending step write to exact completion.
+#[allow(dead_code)]
+#[must_use = "every outcome retains linear cache and completion custody"]
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) enum DeviceKvStepCompletionOutcome {
+    Completed(CompletedDeviceKvStepWrite),
+    Rejected(DeviceKvStepCompletionFailure),
+    Poisoned(PoisonedDeviceKvStepCompletion),
+}
+
 #[cfg(test)]
 impl PendingDeviceKvStepWrite {
     pub(crate) fn corrupt_workspace_bridge_page_for_test(
@@ -393,6 +551,25 @@ impl PendingDeviceKvStepWrite {
             allocation_id,
             page,
         };
+    }
+
+    pub(crate) fn corrupt_completion_bridge_request_for_test(&mut self, request: RequestId) {
+        self.binding.request = request;
+    }
+
+    pub(crate) fn corrupt_completion_bridge_selection_for_test(
+        &mut self,
+        selection: Qwen3PlanSelection,
+    ) {
+        self.binding.selection = selection;
+    }
+
+    pub(crate) fn corrupt_completion_bridge_write_span_for_test(
+        &mut self,
+        entry: usize,
+        token_count: u32,
+    ) {
+        self.write_pages[entry].token_count = token_count;
     }
 }
 
@@ -1149,6 +1326,322 @@ impl ActiveDeviceKvCache {
         })
     }
 
+    fn preflight_step_completion(
+        &self,
+        pending: &PendingDeviceKvStepWrite,
+        completion: &ExactCompletion,
+    ) -> Result<(), DeviceKvCacheError> {
+        let binding = pending.binding;
+        if binding.device != self.common.device {
+            return Err(DeviceKvCacheError::WrongDevice);
+        }
+        if binding.request != self.common.request {
+            return Err(DeviceKvCacheError::WrongRequest);
+        }
+        if completion.epoch() != binding.epoch {
+            return Err(DeviceKvCacheError::CompletionEpochMismatch);
+        }
+
+        let role = binding.selection.role;
+        let cache = self.common.role(role);
+        if cache.selection() != binding.selection {
+            return Err(DeviceKvCacheError::StepSelectionMismatch);
+        }
+        match cache.pending {
+            None => return Err(DeviceKvCacheError::NoPendingWrite),
+            Some(PendingWriteState::Step(marker)) if marker == binding => {}
+            Some(_) => return Err(DeviceKvCacheError::PendingWriteMismatch),
+        }
+        if binding
+            .write_generation
+            .checked_add(1)
+            .is_none_or(|next| next != cache.next_write_generation)
+        {
+            return Err(DeviceKvCacheError::PendingWriteMismatch);
+        }
+        if !DeviceKvCacheCommon::owned_table_matches(cache) {
+            return Err(DeviceKvCacheError::OwnedPageTableDrift);
+        }
+
+        let Some(dimensions) = binding
+            .selection
+            .bucket
+            .dimensions(role, binding.selection.mode)
+        else {
+            return Err(DeviceKvCacheError::StepSelectionMismatch);
+        };
+        if binding.active_tokens == 0 {
+            return Err(DeviceKvCacheError::ZeroStepActiveTokens);
+        }
+        let active_matches = match binding.selection.mode {
+            Qwen3ExecutionMode::Prefill => binding.active_tokens <= dimensions.active_tokens,
+            Qwen3ExecutionMode::Decode | Qwen3ExecutionMode::Speculative => {
+                binding.active_tokens == dimensions.active_tokens
+            }
+        };
+        if !active_matches {
+            return Err(DeviceKvCacheError::StepActiveLengthMismatch);
+        }
+        if binding.selection.mode == Qwen3ExecutionMode::Prefill && binding.committed_tokens != 0 {
+            return Err(DeviceKvCacheError::StepCommittedPositionMismatch);
+        }
+
+        let logical = cache.logical();
+        if logical.lifecycle != PhysicalKvLifecycle::Active {
+            return Err(DeviceKvCacheError::Physical(
+                PhysicalKvError::WrongLifecycle,
+            ));
+        }
+        if logical.committed_tokens != binding.committed_tokens {
+            return Err(DeviceKvCacheError::StepCommittedPositionMismatch);
+        }
+        if logical.resident_tokens != binding.committed_tokens {
+            return Err(DeviceKvCacheError::StepTentativeTokensRemain);
+        }
+        let Some(end_tokens) = binding.committed_tokens.checked_add(binding.active_tokens) else {
+            return Err(DeviceKvCacheError::StepRangeOverflow);
+        };
+        if end_tokens != binding.end_tokens {
+            return Err(DeviceKvCacheError::StepWriteSpanDrift);
+        }
+        if end_tokens > dimensions.context_tokens {
+            return Err(DeviceKvCacheError::Physical(
+                PhysicalKvError::ContextExceeded,
+            ));
+        }
+
+        let required_page_count = usize::try_from((end_tokens - 1) / M1_KV_PAGE_TOKENS + 1)
+            .map_err(|_| DeviceKvCacheError::StepRangeOverflow)?;
+        if pending.page_table.len() != required_page_count {
+            return Err(DeviceKvCacheError::StepPageTableDrift);
+        }
+        let existing_page_count = cache.active_pages.len();
+        let Some(missing_page_count) = required_page_count.checked_sub(existing_page_count) else {
+            return Err(DeviceKvCacheError::OwnedPageTableDrift);
+        };
+        if pending.new_page_leases.len() != missing_page_count {
+            return Err(DeviceKvCacheError::StepPageTableDrift);
+        }
+
+        let expected_arena = cache.arena_allocation_id.or_else(|| {
+            pending
+                .new_page_leases
+                .first()
+                .map(DeviceKvPageLease::allocation_id)
+        });
+        let Some(expected_arena) = expected_arena else {
+            return Err(DeviceKvCacheError::StepPageTableDrift);
+        };
+        if self
+            .common
+            .other_role_arena(role)
+            .is_some_and(|arena| arena.equals(&expected_arena))
+        {
+            return Err(DeviceKvCacheError::AllocationAlias);
+        }
+
+        for (position, identity) in pending.page_table.iter().enumerate() {
+            let logical_page =
+                u32::try_from(position).map_err(|_| DeviceKvCacheError::StepRangeOverflow)?;
+            let expected_lease = if position < existing_page_count {
+                &cache.active_pages[position]
+            } else {
+                &pending.new_page_leases[position - existing_page_count]
+            };
+            if identity.logical_page != logical_page
+                || identity.page != expected_lease.page
+                || !identity.allocation_id.equals(&expected_lease.allocation_id)
+            {
+                return Err(DeviceKvCacheError::StepPageTableDrift);
+            }
+            if expected_lease.device != binding.device {
+                return Err(DeviceKvCacheError::WrongDevice);
+            }
+            if identity.page.role() != role {
+                return Err(DeviceKvCacheError::WrongRole);
+            }
+            if !identity.allocation_id.equals(&expected_arena) {
+                return Err(DeviceKvCacheError::ArenaAllocationMismatch);
+            }
+            if identity.page.generation() == 0
+                || cache.physical.page_generation(identity.page.index())
+                    != Some(identity.page.generation())
+            {
+                return Err(DeviceKvCacheError::Physical(
+                    PhysicalKvError::PageGenerationMismatch,
+                ));
+            }
+            if pending.page_table[..position]
+                .iter()
+                .any(|prior| prior.page.index() == identity.page.index())
+            {
+                return Err(DeviceKvCacheError::StepPhysicalAlias);
+            }
+        }
+
+        let first_logical_page = binding.committed_tokens / M1_KV_PAGE_TOKENS;
+        let last_logical_page = (binding.end_tokens - 1) / M1_KV_PAGE_TOKENS;
+        let expected_write_page_count = usize::try_from(last_logical_page - first_logical_page + 1)
+            .map_err(|_| DeviceKvCacheError::StepRangeOverflow)?;
+        if pending.write_pages.len() != expected_write_page_count {
+            return Err(DeviceKvCacheError::StepWriteSpanDrift);
+        }
+        for (position, write) in pending.write_pages.iter().enumerate() {
+            let position =
+                u32::try_from(position).map_err(|_| DeviceKvCacheError::StepRangeOverflow)?;
+            let logical_page = first_logical_page
+                .checked_add(position)
+                .ok_or(DeviceKvCacheError::StepRangeOverflow)?;
+            let logical_page_start = logical_page
+                .checked_mul(M1_KV_PAGE_TOKENS)
+                .ok_or(DeviceKvCacheError::StepRangeOverflow)?;
+            let span_start = binding.committed_tokens.max(logical_page_start);
+            let span_end = binding
+                .end_tokens
+                .min(logical_page_start + M1_KV_PAGE_TOKENS);
+            let table_identity = pending
+                .page_table
+                .get(logical_page as usize)
+                .ok_or(DeviceKvCacheError::StepPageTableDrift)?;
+            if write.identity != *table_identity
+                || write.identity.logical_page != logical_page
+                || write.first_offset != span_start - logical_page_start
+                || write.token_count != span_end - span_start
+                || write.token_count == 0
+            {
+                return Err(DeviceKvCacheError::StepWriteSpanDrift);
+            }
+        }
+        Ok(())
+    }
+
+    /// Joins one exact ordered-queue completion to a pending bulk KV write.
+    ///
+    /// Every cache, marker, epoch, selection, page-table, and write-span check
+    /// completes before mutation. A rejection therefore returns the unchanged
+    /// cache, reservation, and completion. Success appends all retained leases,
+    /// initializes the complete reserved interval, clears its pending marker,
+    /// and returns the same single [`ExactCompletion`] beside inert interval
+    /// evidence. No acceptance or rollback decision is made here.
+    ///
+    /// A failure from an already-preflighted source-model transition is treated
+    /// as an internal invariant violation. Its partially transitioned custody
+    /// is terminally quarantined instead of pretending that rollback occurred.
+    #[allow(dead_code)]
+    pub(crate) fn complete_step_write(
+        self,
+        pending: PendingDeviceKvStepWrite,
+        completion: ExactCompletion,
+    ) -> DeviceKvStepCompletionOutcome {
+        if let Err(error) = self.preflight_step_completion(&pending, &completion) {
+            return DeviceKvStepCompletionOutcome::Rejected(DeviceKvStepCompletionFailure {
+                error,
+                cache: self,
+                pending,
+                completion,
+            });
+        }
+
+        let PendingDeviceKvStepWrite {
+            binding,
+            page_table,
+            write_pages,
+            new_page_leases,
+        } = pending;
+        let role = binding.selection.role;
+        let mut common = self.common;
+        let mut new_page_leases = new_page_leases.into_iter();
+        for logical_position in binding.committed_tokens..binding.end_tokens {
+            let logical_page = logical_position / M1_KV_PAGE_TOKENS;
+            if common.role(role).physical.page_count() <= logical_page {
+                let Some(lease) = new_page_leases.next() else {
+                    return DeviceKvStepCompletionOutcome::Poisoned(
+                        PoisonedDeviceKvStepCompletion {
+                            error: DeviceKvCacheError::StepPageTableDrift,
+                            common,
+                            binding,
+                            page_table,
+                            write_pages,
+                            unappended_page_leases: Vec::new(),
+                            completion,
+                        },
+                    );
+                };
+                let append_result = append_physical_page(
+                    &mut common.role_mut(role).physical,
+                    binding.request,
+                    binding.selection,
+                    lease.page,
+                );
+                if let Err(error) = append_result {
+                    let mut unappended_page_leases = Vec::new();
+                    unappended_page_leases.push(lease);
+                    unappended_page_leases.extend(new_page_leases);
+                    return DeviceKvStepCompletionOutcome::Poisoned(
+                        PoisonedDeviceKvStepCompletion {
+                            error: error.into(),
+                            common,
+                            binding,
+                            page_table,
+                            write_pages,
+                            unappended_page_leases,
+                            completion,
+                        },
+                    );
+                }
+                let cache = common.role_mut(role);
+                if cache.arena_allocation_id.is_none() {
+                    cache.arena_allocation_id = Some(lease.allocation_id);
+                }
+                cache.active_pages.push(lease);
+            }
+
+            let write_result = write_physical_token(
+                &mut common.role_mut(role).physical,
+                binding.request,
+                binding.selection,
+                logical_position,
+            );
+            if let Err(error) = write_result {
+                let unappended_page_leases = new_page_leases.collect();
+                return DeviceKvStepCompletionOutcome::Poisoned(PoisonedDeviceKvStepCompletion {
+                    error: error.into(),
+                    common,
+                    binding,
+                    page_table,
+                    write_pages,
+                    unappended_page_leases,
+                    completion,
+                });
+            }
+        }
+        if let Some(lease) = new_page_leases.next() {
+            let mut unappended_page_leases = Vec::new();
+            unappended_page_leases.push(lease);
+            unappended_page_leases.extend(new_page_leases);
+            return DeviceKvStepCompletionOutcome::Poisoned(PoisonedDeviceKvStepCompletion {
+                error: DeviceKvCacheError::StepPageTableDrift,
+                common,
+                binding,
+                page_table,
+                write_pages,
+                unappended_page_leases,
+                completion,
+            });
+        }
+        common.role_mut(role).pending = None;
+
+        DeviceKvStepCompletionOutcome::Completed(CompletedDeviceKvStepWrite {
+            cache: ActiveDeviceKvCache { common },
+            initialized: InertInitializedDeviceKvStepWrite {
+                binding,
+                page_table,
+                write_pages,
+            },
+            completion,
+        })
+    }
+
     /// Applies one completed physical write to the verified initialized prefix.
     ///
     /// Failure retains the completion authority. No public source constructor
@@ -1853,6 +2346,76 @@ mod tests {
         ))
     }
 
+    fn complete_step(
+        cache: ActiveDeviceKvCache,
+        pending: PendingDeviceKvStepWrite,
+        epoch: u64,
+    ) -> DeviceKvStepCompletionOutcome {
+        cache.complete_step_write(
+            pending,
+            ExactCompletion::from_contracted_hsa_quiescence(CompletionEpoch::new(epoch)),
+        )
+    }
+
+    fn prefill_step_reservation(epoch: u64) -> (ActiveDeviceKvCache, PendingDeviceKvStepWrite) {
+        let mut cache = cache_for(
+            request(),
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        );
+        let pending = cache
+            .reserve_step_write(
+                request(),
+                Qwen3ModelRole::Target8B,
+                0,
+                128,
+                CompletionEpoch::new(epoch),
+                leases(Qwen3ModelRole::Target8B, 0, 8, 90),
+            )
+            .unwrap();
+        (cache, pending)
+    }
+
+    fn cross_page_step_reservation(epoch: u64) -> (ActiveDeviceKvCache, PendingDeviceKvStepWrite) {
+        let role = Qwen3ModelRole::Target8B;
+        let mut cache = cache_for(
+            request(),
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        );
+        append_and_initialize(&mut cache, role, 0, 91, 15, epoch - 1);
+        cache.accept_initialized(request(), role, 15).unwrap();
+        let pending = cache
+            .reserve_step_write(
+                request(),
+                role,
+                15,
+                17,
+                CompletionEpoch::new(epoch),
+                leases(role, 1, 1, 91),
+            )
+            .unwrap();
+        (cache, pending)
+    }
+
+    fn assert_completion_rejection_is_identical(
+        outcome: DeviceKvStepCompletionOutcome,
+        expected_error: DeviceKvCacheError,
+        expected_cache: ActiveDeviceKvCache,
+        expected_pending: PendingDeviceKvStepWrite,
+        expected_completion: ExactCompletion,
+    ) {
+        let DeviceKvStepCompletionOutcome::Rejected(failure) = outcome else {
+            panic!("step completion was not rejected");
+        };
+        assert_eq!(failure.error(), expected_error);
+        let (error, cache, pending, completion) = failure.into_parts();
+        assert_eq!(error, expected_error);
+        assert_eq!(cache, expected_cache);
+        assert_eq!(pending, expected_pending);
+        assert_eq!(completion, expected_completion);
+    }
+
     fn append_and_initialize(
         cache: &mut ActiveDeviceKvCache,
         role: Qwen3ModelRole,
@@ -2157,6 +2720,329 @@ mod tests {
         assert_eq!(failure.error(), DeviceKvCacheError::PendingWriteExists);
         assert_eq!(failure.into_parts().1.page().index(), 0);
         assert_eq!(cache.abort_step_write(pending).unwrap().page_count(), 1);
+    }
+
+    #[test]
+    fn completed_steps_initialize_every_prefill_decode_and_speculative_width() {
+        let cases = [
+            (
+                Qwen3ExecutionMode::Prefill,
+                Qwen3PlanBucket::PrefillS1T128,
+                Qwen3ModelRole::Target8B,
+                128,
+                0,
+            ),
+            (
+                Qwen3ExecutionMode::Prefill,
+                Qwen3PlanBucket::PrefillS1T512,
+                Qwen3ModelRole::Target8B,
+                512,
+                0,
+            ),
+            (
+                Qwen3ExecutionMode::Prefill,
+                Qwen3PlanBucket::PrefillS1T2048,
+                Qwen3ModelRole::Target8B,
+                2_048,
+                0,
+            ),
+            (
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS1C8192,
+                Qwen3ModelRole::Target8B,
+                1,
+                15,
+            ),
+            (
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K4C8192,
+                Qwen3ModelRole::Target8B,
+                5,
+                15,
+            ),
+            (
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K4C8192,
+                Qwen3ModelRole::Draft06B,
+                4,
+                15,
+            ),
+            (
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K8C8192,
+                Qwen3ModelRole::Target8B,
+                9,
+                15,
+            ),
+            (
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K8C8192,
+                Qwen3ModelRole::Draft06B,
+                8,
+                15,
+            ),
+            (
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K16C8192,
+                Qwen3ModelRole::Target8B,
+                17,
+                15,
+            ),
+            (
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K16C8192,
+                Qwen3ModelRole::Draft06B,
+                16,
+                15,
+            ),
+        ];
+
+        for (case, (mode, bucket, role, active_tokens, committed_tokens)) in
+            cases.into_iter().enumerate()
+        {
+            let epoch = 100 + u64::try_from(case).unwrap();
+            let allocation_tag = 100 + u8::try_from(case).unwrap();
+            let mut cache = cache_for(request(), mode, bucket);
+            if committed_tokens != 0 {
+                append_and_initialize(
+                    &mut cache,
+                    role,
+                    0,
+                    allocation_tag,
+                    committed_tokens,
+                    epoch - 1,
+                );
+                cache
+                    .accept_initialized(request(), role, committed_tokens)
+                    .unwrap();
+            }
+            let end_tokens = committed_tokens + active_tokens;
+            let required_pages = usize::try_from(end_tokens.div_ceil(M1_KV_PAGE_TOKENS)).unwrap();
+            let existing_pages = usize::from(committed_tokens != 0);
+            let pending = cache
+                .reserve_step_write(
+                    request(),
+                    role,
+                    committed_tokens,
+                    active_tokens,
+                    CompletionEpoch::new(epoch),
+                    leases(
+                        role,
+                        u32::try_from(existing_pages).unwrap(),
+                        required_pages - existing_pages,
+                        allocation_tag,
+                    ),
+                )
+                .unwrap();
+
+            let completed = match complete_step(cache, pending, epoch) {
+                DeviceKvStepCompletionOutcome::Completed(completed) => completed,
+                other => panic!("exact step completion case {case} did not complete: {other:?}"),
+            };
+            let (cache, initialized, completion) = completed.into_parts();
+            assert_eq!(completion.epoch(), CompletionEpoch::new(epoch));
+            assert_eq!(initialized.request(), request());
+            assert_eq!(initialized.selection(), selected(role, mode, bucket));
+            assert_eq!(initialized.committed_tokens(), committed_tokens);
+            assert_eq!(initialized.active_tokens(), active_tokens);
+            assert_eq!(initialized.end_tokens(), end_tokens);
+            assert_eq!(initialized.epoch(), CompletionEpoch::new(epoch));
+            assert_eq!(initialized.page_table().len(), required_pages);
+            assert_eq!(
+                initialized
+                    .write_pages()
+                    .iter()
+                    .map(DeviceKvStepPageBinding::token_count)
+                    .sum::<u32>(),
+                active_tokens
+            );
+
+            let projection = cache.projection();
+            let logical = if role == Qwen3ModelRole::Target8B {
+                projection.target
+            } else {
+                projection.draft
+            };
+            assert_eq!(logical.committed_tokens, committed_tokens);
+            assert_eq!(logical.resident_tokens, end_tokens);
+            assert!(!projection.target_write_pending);
+            assert!(!projection.draft_write_pending);
+            for logical_position in 0..end_tokens {
+                assert_eq!(
+                    cache
+                        .map_initialized(request(), role, logical_position)
+                        .unwrap()
+                        .logical_position,
+                    logical_position
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn cross_page_completion_retains_existing_tail_and_appends_new_page_custody() {
+        let (cache, pending) = cross_page_step_reservation(120);
+        assert_eq!(pending.write_pages().len(), 2);
+        assert_eq!(pending.write_pages()[0].first_offset(), 15);
+        assert_eq!(pending.write_pages()[0].token_count(), 1);
+        assert_eq!(pending.write_pages()[1].first_offset(), 0);
+        assert_eq!(pending.write_pages()[1].token_count(), 16);
+
+        let DeviceKvStepCompletionOutcome::Completed(completed) =
+            complete_step(cache, pending, 120)
+        else {
+            panic!("cross-page step completion did not complete");
+        };
+        let (cache, initialized, completion) = completed.into_parts();
+        assert_eq!(completion.epoch(), CompletionEpoch::new(120));
+        assert_eq!(initialized.write_pages().len(), 2);
+        let projection = cache.projection();
+        assert_eq!(projection.target_active_pages, 2);
+        assert_eq!(projection.target.committed_tokens, 15);
+        assert_eq!(projection.target.resident_tokens, 32);
+        assert_eq!(
+            cache
+                .map_initialized(request(), Qwen3ModelRole::Target8B, 31)
+                .unwrap()
+                .location,
+            PhysicalKvLocation {
+                page: PhysicalPageId::new(Qwen3ModelRole::Target8B, 1, 1),
+                offset: 15,
+            }
+        );
+    }
+
+    #[test]
+    fn completion_epoch_rejection_returns_identical_linear_inputs() {
+        let (cache, pending) = prefill_step_reservation(121);
+        let (expected_cache, expected_pending) = prefill_step_reservation(121);
+        let supplied = ExactCompletion::from_contracted_hsa_quiescence(CompletionEpoch::new(122));
+        let expected = ExactCompletion::from_contracted_hsa_quiescence(CompletionEpoch::new(122));
+        let outcome = cache.complete_step_write(pending, supplied);
+        assert_completion_rejection_is_identical(
+            outcome,
+            DeviceKvCacheError::CompletionEpochMismatch,
+            expected_cache,
+            expected_pending,
+            expected,
+        );
+    }
+
+    #[test]
+    fn request_selection_and_pending_marker_drift_reject_before_mutation() {
+        let (cache, mut pending) = prefill_step_reservation(123);
+        let (expected_cache, mut expected_pending) = prefill_step_reservation(123);
+        let stale_request = RequestId::new(request().slot(), request().generation() + 1);
+        pending.corrupt_completion_bridge_request_for_test(stale_request);
+        expected_pending.corrupt_completion_bridge_request_for_test(stale_request);
+        assert_completion_rejection_is_identical(
+            complete_step(cache, pending, 123),
+            DeviceKvCacheError::WrongRequest,
+            expected_cache,
+            expected_pending,
+            ExactCompletion::from_contracted_hsa_quiescence(CompletionEpoch::new(123)),
+        );
+
+        let (cache, mut pending) = prefill_step_reservation(124);
+        let (expected_cache, mut expected_pending) = prefill_step_reservation(124);
+        let drifted_selection = selected(
+            Qwen3ModelRole::Target8B,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T512,
+        );
+        pending.corrupt_completion_bridge_selection_for_test(drifted_selection);
+        expected_pending.corrupt_completion_bridge_selection_for_test(drifted_selection);
+        assert_completion_rejection_is_identical(
+            complete_step(cache, pending, 124),
+            DeviceKvCacheError::StepSelectionMismatch,
+            expected_cache,
+            expected_pending,
+            ExactCompletion::from_contracted_hsa_quiescence(CompletionEpoch::new(124)),
+        );
+
+        let (mut cache, pending) = prefill_step_reservation(125);
+        let (mut expected_cache, expected_pending) = prefill_step_reservation(125);
+        cache.common.target.pending = None;
+        expected_cache.common.target.pending = None;
+        assert_completion_rejection_is_identical(
+            complete_step(cache, pending, 125),
+            DeviceKvCacheError::NoPendingWrite,
+            expected_cache,
+            expected_pending,
+            ExactCompletion::from_contracted_hsa_quiescence(CompletionEpoch::new(125)),
+        );
+
+        let (mut cache, pending) = prefill_step_reservation(126);
+        let (mut expected_cache, expected_pending) = prefill_step_reservation(126);
+        for marker in [
+            &mut cache.common.target.pending,
+            &mut expected_cache.common.target.pending,
+        ] {
+            let Some(PendingWriteState::Step(mut binding)) = *marker else {
+                panic!("fixture did not retain its pending step marker");
+            };
+            binding.write_generation += 1;
+            *marker = Some(PendingWriteState::Step(binding));
+        }
+        assert_completion_rejection_is_identical(
+            complete_step(cache, pending, 126),
+            DeviceKvCacheError::PendingWriteMismatch,
+            expected_cache,
+            expected_pending,
+            ExactCompletion::from_contracted_hsa_quiescence(CompletionEpoch::new(126)),
+        );
+    }
+
+    #[test]
+    fn page_table_write_span_and_owned_cache_drift_reject_before_mutation() {
+        let (cache, mut pending) = prefill_step_reservation(127);
+        let (expected_cache, mut expected_pending) = prefill_step_reservation(127);
+        let original = pending.page_table()[0];
+        pending.corrupt_workspace_bridge_page_for_test(
+            0,
+            7,
+            original.allocation_id(),
+            original.page(),
+        );
+        expected_pending.corrupt_workspace_bridge_page_for_test(
+            0,
+            7,
+            original.allocation_id(),
+            original.page(),
+        );
+        assert_completion_rejection_is_identical(
+            complete_step(cache, pending, 127),
+            DeviceKvCacheError::StepPageTableDrift,
+            expected_cache,
+            expected_pending,
+            ExactCompletion::from_contracted_hsa_quiescence(CompletionEpoch::new(127)),
+        );
+
+        let (cache, mut pending) = prefill_step_reservation(128);
+        let (expected_cache, mut expected_pending) = prefill_step_reservation(128);
+        pending.corrupt_completion_bridge_write_span_for_test(0, 15);
+        expected_pending.corrupt_completion_bridge_write_span_for_test(0, 15);
+        assert_completion_rejection_is_identical(
+            complete_step(cache, pending, 128),
+            DeviceKvCacheError::StepWriteSpanDrift,
+            expected_cache,
+            expected_pending,
+            ExactCompletion::from_contracted_hsa_quiescence(CompletionEpoch::new(128)),
+        );
+
+        let (mut cache, pending) = cross_page_step_reservation(129);
+        let (mut expected_cache, expected_pending) = cross_page_step_reservation(129);
+        cache.common.target.active_pages[0].page =
+            PhysicalPageId::new(Qwen3ModelRole::Target8B, 2, 1);
+        expected_cache.common.target.active_pages[0].page =
+            PhysicalPageId::new(Qwen3ModelRole::Target8B, 2, 1);
+        assert_completion_rejection_is_identical(
+            complete_step(cache, pending, 129),
+            DeviceKvCacheError::OwnedPageTableDrift,
+            expected_cache,
+            expected_pending,
+            ExactCompletion::from_contracted_hsa_quiescence(CompletionEpoch::new(129)),
+        );
     }
 
     #[test]
