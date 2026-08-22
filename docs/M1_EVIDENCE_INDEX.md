@@ -13,6 +13,21 @@ artifacts.
 
 ## Invocation
 
+Before external evidence exists, run the static infrastructure preflight:
+
+```text
+python3 -I proofs/m1-evidence-index/check-infrastructure.py FERRIC_REPO
+python3 -I proofs/m1-evidence-index/test-infrastructure-policy.py
+```
+
+The preflight independently checks that the requirements evidence vocabulary,
+index-checker artifact and validator registries, validator source pins and
+protocols, TCB-report mirror, qualification-receipt mirror, and seven receipt
+gates are mutually complete. It does not read or generate an evidence index,
+run a qualification gate, create a receipt, or change any `Open` obligation.
+
+After the external evidence products and receipt exist, validate them with:
+
 ```text
 python3 -I proofs/check-m1-evidence-index.py \
   FERRIC_REPO EVIDENCE_INDEX FE2O3_REPO
