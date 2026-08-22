@@ -9,6 +9,7 @@ mod cache;
 mod completion_wire;
 mod device_cache;
 mod epoch;
+mod operation_kernel_plan;
 mod physical_step;
 mod runner;
 mod scheduler;
@@ -31,6 +32,11 @@ pub use device_cache::{
     GFX942_TARGET_FEATURES,
 };
 pub use epoch::ExactCompletion;
+pub use operation_kernel_plan::{
+    bind_declared_operation_kernel_plan, DeclaredKernelFamilyArtifact, DeclaredOperationIdentity,
+    DeclaredOperationKernelBinding, DeclaredOperationKernelPlan, OperationKernelIdentityComponent,
+    OperationKernelPlanError, OperationKernelPlanFailure, OperationKernelPlanOutcome,
+};
 pub use physical_step::{
     bind_structural_physical_step, StructuralPhysicalStepBindingError,
     StructuralPhysicalStepBindingFailure, StructuralPhysicalStepBindingOutcome,
