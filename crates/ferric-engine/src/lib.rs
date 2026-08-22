@@ -29,6 +29,7 @@ mod scheduler;
 mod speculative_graph;
 mod step_dispatch_composition;
 mod step_workspace_composition;
+mod step_workspace_images;
 mod step_workspace_subleases;
 mod system;
 
@@ -156,6 +157,12 @@ pub use step_workspace_composition::{
     M1FullStepWorkspaceCompositionOutcome, M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans,
     M1FullStepWorkspaceRole, M1FullStepWorkspaceSegmentBinding, M1SpeculativeDraftChoiceSubrange,
     M1SpeculativeDraftMetadataSubrange,
+};
+pub use step_workspace_images::{
+    compose_m1_step_workspace_image_v1, ComposedM1StepWorkspaceImageV1,
+    M1StepWorkspaceImageCompositionErrorV1, M1StepWorkspaceImageCompositionFailureV1,
+    M1StepWorkspaceImageCompositionOutcomeV1, M1_KV_PAGE_TABLE_ENTRIES_PER_SEQUENCE_V1,
+    M1_KV_PHYSICAL_PAGE_SLOTS_V1,
 };
 pub use step_workspace_subleases::{
     bind_addressless_m1_step_workspace_subleases, BoundM1StepWorkspaceSubleases,
