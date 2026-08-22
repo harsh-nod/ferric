@@ -26,7 +26,7 @@ use fe2o3_compiler_ffi::{
     CompilerModuleHandoffErrorV2, CompilerModuleHandoffIdentityV2, CompilerModuleHandoffV2,
     CompilerModuleKindV1, CompilerModuleSymbolManifestErrorV1,
     CompilerModuleSymbolManifestIdentityV1, CompilerModuleSymbolManifestV1,
-    CompilerModuleSymbolRoleV1, DeviceTargetV1, EXTERNAL_DEVICE_LIBRARY_GFX942_DATA_LAYOUT_V1,
+    CompilerModuleSymbolRoleV1, DeviceTargetV1,
 };
 use fe2o3_hsaco::{
     inspect_and_bind_kernel_descriptors, ArgumentAccess, ArgumentAddressSpace,
@@ -39,6 +39,7 @@ use fe2o3_hsaco_finalize::{
     InertDecodedWorkerExchangeV2, InertFirstBuildWorkerV2EvidenceV1, LinkOptionV1, PinnedWorkerV1,
     WorkerExecutionLimitsV1, WorkerOutputConstraintsV1, WorkerProtocolError,
 };
+use fe2o3_llvm_handoff::GFX942_AMDHSA_DATA_LAYOUT_V1;
 use sha2::{Digest as _, Sha256};
 
 /// Exact lowest-ID argmax kernel entry.
@@ -182,11 +183,11 @@ pub const QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_TOTAL_KERNARG_BYTES_V1: u64 = 312;
 /// Exact kernarg alignment.
 pub const QWEN3_LOGITS_KERNARG_ALIGNMENT_V1: u64 = 8;
 /// Exact final LLVM byte length.
-pub const QWEN3_LOGITS_LLVM_BYTES_V1: usize = 23_861;
+pub const QWEN3_LOGITS_LLVM_BYTES_V1: usize = 23_865;
 /// Exact final LLVM SHA-256.
 pub const QWEN3_LOGITS_LLVM_SHA256_V1: [u8; 32] = [
-    0xd5, 0xe3, 0x8c, 0x8d, 0x3c, 0x4b, 0x01, 0xf6, 0x1b, 0x90, 0xed, 0xb8, 0xfc, 0x00, 0xec, 0x94,
-    0xe5, 0xa9, 0xd2, 0xbb, 0xb3, 0x8b, 0x58, 0x97, 0x22, 0xf2, 0x54, 0x40, 0xa6, 0xb9, 0xf0, 0x6c,
+    0x0a, 0xb6, 0x31, 0x6d, 0x84, 0xe6, 0xb8, 0xae, 0x7c, 0x29, 0x58, 0x33, 0xcf, 0x8d, 0x0f, 0x9d,
+    0x3b, 0x25, 0xf3, 0xa2, 0x62, 0x5e, 0xc7, 0x4d, 0xd1, 0xb8, 0x61, 0x2e, 0xfd, 0x8c, 0x75, 0x7d,
 ];
 
 const PROFILE_DOMAIN: &[u8] = b"FERRIC/QWEN3/LOGITS/PROFILE/V1\0";
@@ -1739,7 +1740,7 @@ fn canonical_qwen3_logits_llvm() -> String {
         .expect("writing to a String cannot fail");
     writeln!(
         output,
-        "target datalayout = \"{EXTERNAL_DEVICE_LIBRARY_GFX942_DATA_LAYOUT_V1}\"\n"
+        "target datalayout = \"{GFX942_AMDHSA_DATA_LAYOUT_V1}\"\n"
     )
     .expect("writing to a String cannot fail");
     output.push_str(

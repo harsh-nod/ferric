@@ -2336,6 +2336,7 @@ unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::handoff_identity|pending-verus|m1-kernel-artifact-build-proof-pending
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::hex|pending-verus|m1-kernel-artifact-build-proof-pending
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::inert_labels|pending-verus|m1-kernel-artifact-build-proof-pending
+unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::producer_crate_name|pending-verus|m1-kernel-artifact-build-proof-pending
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::remove_directory|pending-verus|m1-kernel-artifact-build-proof-pending
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::require_distinct_artifacts|pending-verus|m1-kernel-artifact-build-proof-pending
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::symbol_identity|pending-verus|m1-kernel-artifact-build-proof-pending

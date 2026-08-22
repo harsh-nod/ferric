@@ -459,6 +459,7 @@ unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::handoff_identity
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::hex
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::inert_labels
+unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::producer_crate_name
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::remove_directory
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::require_distinct_artifacts
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::symbol_identity

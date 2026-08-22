@@ -28,7 +28,7 @@ use fe2o3_compiler_ffi::{
     CompilerModuleHandoffErrorV2, CompilerModuleHandoffIdentityV2, CompilerModuleHandoffV2,
     CompilerModuleKindV1, CompilerModuleSymbolManifestErrorV1,
     CompilerModuleSymbolManifestIdentityV1, CompilerModuleSymbolManifestV1,
-    CompilerModuleSymbolRoleV1, DeviceTargetV1, EXTERNAL_DEVICE_LIBRARY_GFX942_DATA_LAYOUT_V1,
+    CompilerModuleSymbolRoleV1, DeviceTargetV1,
 };
 use fe2o3_hsaco::{
     inspect_and_bind_kernel_descriptors, ArgumentAccess, ArgumentAddressSpace,
@@ -40,6 +40,7 @@ use fe2o3_hsaco_finalize::{
     InertDecodedWorkerExchangeV2, InertFirstBuildWorkerV2EvidenceV1, LinkOptionV1, PinnedWorkerV1,
     WorkerExecutionLimitsV1, WorkerOutputConstraintsV1, WorkerProtocolError,
 };
+use fe2o3_llvm_handoff::GFX942_AMDHSA_DATA_LAYOUT_V1;
 use reserved_fe2o3_symbols::{
     derive_device_ffi_contract_id_v1, DeviceFfiContractFieldsV1, DeviceFfiDirectionV1,
     DEVICE_FFI_DIRECTION_IMPORT_V1,
@@ -78,11 +79,11 @@ pub const QWEN3_PREFILL_KERNARG_ALIGNMENT_V1: u64 = 8;
 /// Number of finite target/draft prefill profiles.
 pub const QWEN3_PREFILL_PROFILE_COUNT_V1: usize = 8;
 /// Exact byte length of the final canonical direct-LLVM source.
-pub const QWEN3_PREFILL_LLVM_BYTES_V1: usize = 21_302;
+pub const QWEN3_PREFILL_LLVM_BYTES_V1: usize = 21_306;
 /// SHA-256 of the final canonical direct-LLVM source bytes.
 pub const QWEN3_PREFILL_LLVM_SHA256_V1: [u8; 32] = [
-    0xfd, 0x98, 0xb9, 0xa1, 0x3c, 0x46, 0x06, 0x0f, 0xb1, 0x34, 0xa9, 0x6f, 0x36, 0x37, 0x23, 0x0a,
-    0x05, 0x70, 0xa7, 0x3c, 0x4f, 0x27, 0x62, 0x50, 0x71, 0x84, 0xc0, 0x0c, 0x87, 0x9a, 0xa4, 0x51,
+    0x54, 0x1b, 0x62, 0xeb, 0x77, 0xca, 0x33, 0x51, 0x7e, 0x33, 0x49, 0x81, 0xd3, 0x3e, 0x1f, 0x75,
+    0xbb, 0xd9, 0xa7, 0xa5, 0x53, 0x36, 0xc3, 0xf0, 0x07, 0x08, 0x85, 0x56, 0xfb, 0x1d, 0x50, 0xbf,
 ];
 
 const OCML_EXP_F32: &str = "__ocml_exp_f32";
@@ -1248,7 +1249,7 @@ fn canonical_qwen3_prefill_llvm() -> String {
         .expect("writing to a String cannot fail");
     writeln!(
         output,
-        "target datalayout = \"{EXTERNAL_DEVICE_LIBRARY_GFX942_DATA_LAYOUT_V1}\"\n"
+        "target datalayout = \"{GFX942_AMDHSA_DATA_LAYOUT_V1}\"\n"
     )
     .expect("writing to a String cannot fail");
     output.push_str(
