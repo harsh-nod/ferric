@@ -52,6 +52,7 @@ new_copy() {
     cp -a "$repo/Cargo.toml" "$repo/Cargo.lock" "$repo/rust-toolchain.toml" "$destination/"
     cp -a "$repo/crates" "$destination/"
     mkdir -p "$destination/proofs"
+    cp -a "$repo/proofs/m1" "$destination/proofs/"
     cp -a "$repo/proofs/UNVERIFIED_BODIES" \
         "$repo/proofs/RUNTIME_DEPENDENCY_TCB" "$destination/proofs/"
     chmod -R u+w "$destination"
