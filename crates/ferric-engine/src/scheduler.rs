@@ -2808,6 +2808,7 @@ impl<const C: usize> Scheduler<C> {
         }
     }
 
+    #[verifier::rlimit(20)]
     proof fn pending_batch_head_facts(&self)
         requires
             self.basic_invariant(),
