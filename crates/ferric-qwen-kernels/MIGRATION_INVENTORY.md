@@ -10,7 +10,7 @@ Historical reference commit:
 `dba12e9cc3bbf7810f05dd4e82cc2e2d355b63f8`, tree
 `a6b983137deb931c1ef9da11a0826d62aeaae8f7`.
 
-Move into `src/gemm.rs`:
+Integrated in `src/gemm.rs`:
 
 - the two-role, eleven-bucket, eight-operation finite catalog;
 - BF16 A/B/C buffer contracts with FP32 accumulation and BF16
@@ -24,7 +24,7 @@ Move into `src/gemm.rs`:
 - unit tests for the finite catalog, buffer bounds/aliasing, schedule choice,
   source-label rejection, and structural compiler output.
 
-The migrated catalog must use Ferric graph-width correction commit `15bafaf`
+The migrated catalog uses Ferric graph-width correction commit `15bafaf`
 as its semantic reference. Attention output-projection input width is flattened
 `query_heads * head_dim`: target 4096 and draft 2048. In particular, the draft
 O-projection weight/input contract is `[hidden=1024, query_width=2048]`, not a
@@ -32,7 +32,7 @@ square 1024-by-1024 hidden projection. Add a hostile hidden-width substitution
 test when moving the module; the historical fe2o3 catalog predates this Ferric
 graph correction and must not be copied blindly.
 
-Move and re-domain the six existing compile-fail source/baseline pairs for
+The lane re-domains the six existing compile-fail source/baseline pairs for
 prepared, request, and inspected custody. Rename the generic filenames with a
 `gemm_` prefix. Add real trybuild-generated non-Clone/private-field baselines
 for Worker evidence; the historical branch did not contain those two cases.
@@ -76,8 +76,9 @@ qualification.
 
 ## Integration
 
-Both modules belong in `ferric-qwen-kernels` beside `rope_kv.rs`. Their host
-profile identities must later join the Ferric generated plan and protected
-runner. `ferric-gemm`, `ferric-rmsnorm`, and `kernel-schedule-catalog` remain
-Open path obligations until fresh Ferric-owned qualification closes the exact
-declared boundaries.
+GEMM now belongs to `ferric-qwen-kernels` beside `rope_kv.rs`, `prefill.rs`, and
+`paged_decode.rs`; RMSNorm remains pending in its isolated migration lane. All
+host profile identities must later join the Ferric generated plan and
+protected runner. `ferric-gemm`, `ferric-rmsnorm`, and
+`kernel-schedule-catalog` remain Open path obligations until Ferric-owned proof,
+artifact, and qualification evidence closes the exact declared boundaries.

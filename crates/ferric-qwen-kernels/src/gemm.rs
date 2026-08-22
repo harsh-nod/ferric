@@ -101,6 +101,7 @@ pub enum Qwen3GemmModelRoleV1 {
 
 impl Qwen3GemmModelRoleV1 {
     /// Exact hidden width.
+    #[must_use]
     pub const fn hidden_size(self) -> u32 {
         match self {
             Self::Target8B => 4_096,
@@ -109,6 +110,7 @@ impl Qwen3GemmModelRoleV1 {
     }
 
     /// Exact gated-MLP intermediate width.
+    #[must_use]
     pub const fn intermediate_size(self) -> u32 {
         match self {
             Self::Target8B => 12_288,
@@ -117,6 +119,7 @@ impl Qwen3GemmModelRoleV1 {
     }
 
     /// Exact flattened query-head width.
+    #[must_use]
     pub const fn query_width(self) -> u32 {
         match self {
             Self::Target8B => 32 * 128,
@@ -125,6 +128,7 @@ impl Qwen3GemmModelRoleV1 {
     }
 
     /// Exact flattened key/value-head width.
+    #[must_use]
     pub const fn kv_width(self) -> u32 {
         8 * 128
     }
@@ -197,26 +201,31 @@ pub struct Qwen3GemmBucketV1 {
 
 impl Qwen3GemmBucketV1 {
     /// Creates one finite role/bucket selection.
+    #[must_use]
     pub const fn new(role: Qwen3GemmModelRoleV1, kind: Qwen3GemmBucketKindV1) -> Self {
         Self { role, kind }
     }
 
     /// Exact model role.
+    #[must_use]
     pub const fn role(self) -> Qwen3GemmModelRoleV1 {
         self.role
     }
 
     /// Exact bucket kind.
+    #[must_use]
     pub const fn kind(self) -> Qwen3GemmBucketKindV1 {
         self.kind
     }
 
     /// Exact `[sequences, active_tokens]` dimensions.
+    #[must_use]
     pub const fn sequence_and_active_tokens(self) -> [u32; 2] {
         self.kind.sequence_and_active_tokens(self.role)
     }
 
     /// Exact flattened dense-projection row count.
+    #[must_use]
     pub const fn flattened_rows(self) -> u32 {
         let dimensions = self.sequence_and_active_tokens();
         dimensions[0] * dimensions[1]
@@ -278,6 +287,7 @@ pub enum Qwen3GemmScheduleV1 {
 
 impl Qwen3GemmScheduleV1 {
     /// Exact kernel entry selected by this schedule.
+    #[must_use]
     pub const fn kernel_symbol(self) -> &'static str {
         match self {
             Self::ReferenceWave64V1 => QWEN3_GEMM_REFERENCE_KERNEL_SYMBOL_V1,
@@ -311,6 +321,7 @@ pub struct Qwen3GemmProfileIdentityV1([u8; 32]);
 
 impl Qwen3GemmProfileIdentityV1 {
     /// Returns the domain-separated identity bytes.
+    #[must_use]
     pub const fn as_bytes(&self) -> &[u8; 32] {
         &self.0
     }
@@ -416,66 +427,79 @@ impl Qwen3GemmProfileV1 {
     }
 
     /// Exact role and bucket selection.
+    #[must_use]
     pub const fn bucket(self) -> Qwen3GemmBucketV1 {
         self.bucket
     }
 
     /// Exact graph operation.
+    #[must_use]
     pub const fn operation(self) -> Qwen3GemmOperationV1 {
         self.operation
     }
 
     /// Closed source schedule selected by row count.
+    #[must_use]
     pub const fn schedule(self) -> Qwen3GemmScheduleV1 {
         self.schedule
     }
 
     /// Exact `[M,N,K]` dimensions.
+    #[must_use]
     pub const fn dimensions(self) -> [u32; 3] {
         self.dimensions
     }
 
     /// Exact row-major `[lda,ldb,ldc]` strides in elements.
+    #[must_use]
     pub const fn strides(self) -> [u32; 3] {
         self.strides
     }
 
     /// Exact `[A BF16,B BF16,C BF16]` element extents.
+    #[must_use]
     pub const fn storage_elements(self) -> [u64; 3] {
         self.storage_elements
     }
 
     /// Exact HSA-adapter block counts.
+    #[must_use]
     pub const fn hsa_adapter_block_counts(self) -> [u32; 3] {
         self.block_counts
     }
 
     /// Exact AQL total-workitem grid.
+    #[must_use]
     pub const fn aql_grid_workitems(self) -> [u32; 3] {
         self.aql_grid_workitems
     }
 
     /// Exact number of four-element source reduction phases.
+    #[must_use]
     pub const fn reduction_phases(self) -> u32 {
         self.reduction_phases
     }
 
     /// Exact alpha bits, always FP32 one.
+    #[must_use]
     pub const fn alpha_bits(self) -> u32 {
         1.0_f32.to_bits()
     }
 
     /// Exact beta bits, FP32 one only for residual operations.
+    #[must_use]
     pub const fn beta_bits(self) -> u32 {
         self.operation.beta_bits()
     }
 
     /// Exact declared numerical policy.
+    #[must_use]
     pub const fn numerical_policy(self) -> Qwen3GemmNumericalPolicyV1 {
         self.numerical_policy
     }
 
     /// GEMV only for M=1; tiled GEMM otherwise.
+    #[must_use]
     pub const fn execution_class(self) -> Qwen3GemmExecutionClassV1 {
         if self.dimensions[0] == 1 {
             Qwen3GemmExecutionClassV1::GemvM1
@@ -485,11 +509,13 @@ impl Qwen3GemmProfileV1 {
     }
 
     /// Exact domain-separated profile identity.
+    #[must_use]
     pub const fn identity(self) -> Qwen3GemmProfileIdentityV1 {
         self.identity
     }
 
     /// Checked host geometry is not machine or arithmetic-refinement evidence.
+    #[must_use]
     pub const fn proves_machine_arithmetic(self) -> bool {
         false
     }
@@ -521,6 +547,7 @@ pub struct Qwen3GemmProfileCatalogIdentityV1([u8; 32]);
 
 impl Qwen3GemmProfileCatalogIdentityV1 {
     /// Returns the domain-separated identity bytes.
+    #[must_use]
     pub const fn as_bytes(&self) -> &[u8; 32] {
         &self.0
     }
@@ -536,6 +563,10 @@ pub struct Qwen3GemmProfileCatalogV1 {
 
 impl Qwen3GemmProfileCatalogV1 {
     /// Constructs all 176 profiles in stable role/bucket/operation order.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any exact profile geometry or catalog extent is invalid.
     pub fn canonical() -> Result<Self, Qwen3GemmCatalogErrorV1> {
         let mut profiles = Vec::with_capacity(QWEN3_GEMM_PROFILE_COUNT_V1);
         for role in QWEN3_GEMM_ROLES_V1 {
@@ -547,10 +578,14 @@ impl Qwen3GemmProfileCatalogV1 {
             }
         }
         let mut canonical_bytes = Vec::with_capacity(profiles.len() * 160);
-        canonical_bytes.extend_from_slice(&(profiles.len() as u32).to_le_bytes());
+        let profile_count =
+            u32::try_from(profiles.len()).map_err(|_| Qwen3GemmCatalogErrorV1::ExtentOverflow)?;
+        canonical_bytes.extend_from_slice(&profile_count.to_le_bytes());
         for profile in &profiles {
             let encoded = profile.encode();
-            canonical_bytes.extend_from_slice(&(encoded.len() as u32).to_le_bytes());
+            let encoded_len = u32::try_from(encoded.len())
+                .map_err(|_| Qwen3GemmCatalogErrorV1::ExtentOverflow)?;
+            canonical_bytes.extend_from_slice(&encoded_len.to_le_bytes());
             canonical_bytes.extend_from_slice(&encoded);
             canonical_bytes.extend_from_slice(profile.identity.as_bytes());
         }
@@ -563,11 +598,13 @@ impl Qwen3GemmProfileCatalogV1 {
     }
 
     /// Exact stable profile roster.
+    #[must_use]
     pub fn profiles(&self) -> &[Qwen3GemmProfileV1] {
         &self.profiles
     }
 
     /// Finds one exact finite profile.
+    #[must_use]
     pub fn profile(
         &self,
         bucket: Qwen3GemmBucketV1,
@@ -580,16 +617,19 @@ impl Qwen3GemmProfileCatalogV1 {
     }
 
     /// Exact canonical catalog bytes.
+    #[must_use]
     pub fn canonical_bytes(&self) -> &[u8] {
         &self.canonical_bytes
     }
 
     /// Exact catalog identity.
+    #[must_use]
     pub const fn identity(&self) -> Qwen3GemmProfileCatalogIdentityV1 {
         self.identity
     }
 
     /// This host roster grants no source, artifact, or launch authority.
+    #[must_use]
     pub const fn grants_authority(&self) -> bool {
         false
     }
@@ -670,6 +710,11 @@ pub struct Qwen3GemmBufferContractV1 {
 
 impl Qwen3GemmBufferContractV1 {
     /// Checks exact BF16 lengths, alignment, overflow, and pairwise disjointness.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for a zero, misaligned, overflowing, incorrectly sized,
+    /// or overlapping buffer span.
     pub fn checked(
         profile: Qwen3GemmProfileV1,
         addresses: [u64; 3],
@@ -728,21 +773,25 @@ impl Qwen3GemmBufferContractV1 {
     }
 
     /// Exact start addresses.
+    #[must_use]
     pub const fn addresses(&self) -> &[u64; 3] {
         &self.addresses
     }
 
     /// Exact exclusive ends.
+    #[must_use]
     pub const fn ends(&self) -> &[u64; 3] {
         &self.ends
     }
 
     /// Exact byte lengths.
+    #[must_use]
     pub const fn byte_lengths(&self) -> &[u64; 3] {
         &self.byte_lengths
     }
 
     /// Numerical spans do not authenticate allocation or device memory.
+    #[must_use]
     pub const fn authenticates_device_memory(&self) -> bool {
         false
     }
@@ -800,52 +849,62 @@ pub struct Qwen3GemmKernelIrV1 {
 
 impl Qwen3GemmKernelIrV1 {
     /// Ferric-owned semantic module identity.
+    #[must_use]
     pub fn module_id(&self) -> &str {
         &self.module_id
     }
 
     /// Exact selected kernel identity.
+    #[must_use]
     pub fn kernel_id(&self) -> &str {
         &self.kernel_id
     }
 
     /// Profile identity retained by this sidecar.
+    #[must_use]
     pub const fn profile_identity(&self) -> Qwen3GemmProfileIdentityV1 {
         self.profile_identity
     }
 
     /// Exact three-slice BF16 ABI.
+    #[must_use]
     pub const fn arguments(&self) -> &[Qwen3GemmArgumentV1; 3] {
         &self.arguments
     }
 
     /// Exact `[M,N,K]` dimensions.
+    #[must_use]
     pub const fn dimensions(&self) -> [u32; 3] {
         self.dimensions
     }
 
     /// Exact source schedule.
+    #[must_use]
     pub const fn schedule(&self) -> Qwen3GemmScheduleV1 {
         self.schedule
     }
 
     /// Exact declared arithmetic/storage policy.
+    #[must_use]
     pub const fn numerical_policy(&self) -> Qwen3GemmNumericalPolicyV1 {
         self.numerical_policy
     }
 
     /// Domain-separated KIR identity.
+    #[must_use]
     pub const fn identity(&self) -> &[u8; 32] {
         &self.identity
     }
 
     /// The semantic sidecar is not a source-to-machine refinement proof.
+    #[must_use]
     pub const fn proves_machine_refinement(&self) -> bool {
         false
     }
 }
 
 /// Constructs the canonical Ferric semantic KIR sidecar for one profile.
+#[must_use]
 pub fn qwen3_gemm_kernel_ir_v1(profile: Qwen3GemmProfileV1) -> Qwen3GemmKernelIrV1 {
     let arguments = [
         Qwen3GemmArgumentV1 {
@@ -908,6 +967,7 @@ pub struct Qwen3GemmSourceBindingsV1 {
 
 impl Qwen3GemmSourceBindingsV1 {
     /// Constructs inert source, KIR, schedule, and target-plan labels.
+    #[must_use]
     pub const fn new(
         source: [u8; 32],
         kernel_ir: [u8; 32],
@@ -923,6 +983,7 @@ impl Qwen3GemmSourceBindingsV1 {
     }
 
     /// These labels do not authenticate source provenance or content.
+    #[must_use]
     pub const fn authenticates_provenance(self) -> bool {
         false
     }
@@ -979,74 +1040,92 @@ impl fmt::Debug for PreparedQwen3GemmKernelV1 {
 
 impl PreparedQwen3GemmKernelV1 {
     /// Complete finite profile catalog.
+    #[must_use]
     pub const fn catalog(&self) -> &Qwen3GemmProfileCatalogV1 {
         &self.catalog
     }
 
     /// Ferric-domain identity binding labels, catalog, KIRs, and source bytes.
+    #[must_use]
     pub const fn source_binding_identity(&self) -> &[u8; 32] {
         &self.source_binding_identity
     }
 
     /// Exact final source SHA-256.
+    #[must_use]
     pub const fn llvm_sha256(&self) -> &[u8; 32] {
         &self.llvm_sha256
     }
 
     /// Complete generic compiler-handoff identity.
+    #[must_use]
     pub const fn compiler_handoff_identity(&self) -> CompilerModuleHandoffIdentityV2 {
         self.compiler_handoff_identity
     }
 
     /// Closed two-entry/two-descriptor manifest identity.
+    #[must_use]
     pub const fn manifest_identity(&self) -> CompilerModuleSymbolManifestIdentityV1 {
         self.manifest_identity
     }
 
     /// Exact generic compiler handoff.
+    #[must_use]
     pub const fn compiler_handoff(&self) -> &CompilerModuleHandoffV2 {
         &self.compiler_handoff
     }
 
     /// This lane uses the bounded direct-LLVM route because the reusable typed
     /// general-GEMM contract has FP32 C rather than this module's BF16 C.
+    #[must_use]
     pub const fn uses_typed_handoff_v2_source(&self) -> bool {
         false
     }
 
     /// The machine classifier retains geometry and schedule, not duplicate
     /// graph profile identity where multiple operations have the same shape.
+    #[must_use]
     pub const fn classifier_distinguishes_duplicate_profiles(&self) -> bool {
         false
     }
 
     /// Direct LLVM is structurally pinned but does not authenticate compiler origin.
+    #[must_use]
     pub const fn authenticates_compiler_origin(&self) -> bool {
         false
     }
 
     /// Source structure is not numerical or operator-refinement evidence.
+    #[must_use]
     pub const fn proves_operator_or_numerical_refinement(&self) -> bool {
         false
     }
 
     /// This compiler slice does not close Ferric's generated-plan join.
+    #[must_use]
     pub const fn has_ferric_plan_identity_join(&self) -> bool {
         false
     }
 
     /// This compiler slice does not close the kernel schedule catalog.
+    #[must_use]
     pub const fn has_kernel_schedule_catalog_join(&self) -> bool {
         false
     }
 
     /// Preparation grants no artifact, load, or launch authority.
+    #[must_use]
     pub const fn grants_launch_authority(&self) -> bool {
         false
     }
 }
 
 /// Constructs the finite catalog, KIR family, pinned LLVM, and compiler handoff.
+///
+/// # Errors
+///
+/// Returns an error if source labels, profile construction, KIR construction,
+/// the compiler FFI boundary, symbol manifest, or compiler handoff is invalid.
 pub fn prepare_qwen3_gemm_kernel_v1(
     bindings: Qwen3GemmSourceBindingsV1,
 ) -> Result<PreparedQwen3GemmKernelV1, PrepareQwen3GemmKernelErrorV1> {
@@ -1148,12 +1227,12 @@ fn canonical_qwen3_gemm_llvm() -> String {
     )
     .expect("writing to a String cannot fail");
     output.push_str(
-        r#"declare i32 @llvm.amdgcn.workitem.id.x() #1
+        r"declare i32 @llvm.amdgcn.workitem.id.x() #1
 declare i32 @llvm.amdgcn.workgroup.id.x() #1
 declare i32 @llvm.amdgcn.workgroup.id.y() #1
 declare void @llvm.trap()
 
-"#,
+",
     );
     emit_gemm_kernel(
         &mut output,
@@ -1188,7 +1267,7 @@ fn emit_gemm_kernel(output: &mut String, symbol: &str, schedule: Qwen3GemmSchedu
     .expect("writing to a String cannot fail");
     emit_machine_classifier(output, schedule);
     output.push_str(
-        r#"  %local.i32 = call i32 @llvm.amdgcn.workitem.id.x()
+        r"  %local.i32 = call i32 @llvm.amdgcn.workitem.id.x()
   %group.x.i32 = call i32 @llvm.amdgcn.workgroup.id.x()
   %group.y.i32 = call i32 @llvm.amdgcn.workgroup.id.y()
   %local = zext i32 %local.i32 to i64
@@ -1240,14 +1319,14 @@ reduce.entry:
   br label %reduce.cond
 
 reduce.cond:
-"#,
+",
     );
     match schedule {
         Qwen3GemmScheduleV1::ReferenceWave64V1 => emit_reference_reduction(output),
         Qwen3GemmScheduleV1::VectorizedA4Wave64V1 => emit_vectorized_reduction(output),
     }
     output.push_str(
-        r#"
+        r"
 reduce.done:
   br i1 %beta.one, label %residual.load, label %narrow
 
@@ -1289,7 +1368,7 @@ trap:
   call void @llvm.trap()
   ret void
 }
-"#,
+",
     );
 }
 
@@ -1304,7 +1383,7 @@ fn emit_machine_classifier(output: &mut String, schedule: Qwen3GemmScheduleV1) {
     let target_rows = emit_allowed_rows(output, "target", target_rows);
     let draft_rows = emit_allowed_rows(output, "draft", draft_rows);
     output.push_str(
-        r#"  %beta.zero = icmp eq i32 %beta.bits, 0
+        r"  %beta.zero = icmp eq i32 %beta.bits, 0
   %beta.one = icmp eq i32 %beta.bits, 1065353216
   %n.t.hidden = icmp eq i32 %n, 4096
   %n.t.kv = icmp eq i32 %n, 1024
@@ -1351,7 +1430,7 @@ fn emit_machine_classifier(output: &mut String, schedule: Qwen3GemmScheduleV1) {
   %draft.shape.2 = or i1 %draft.down, %draft.logits
   %draft.shape.3 = or i1 %draft.shape.0, %draft.shape.1
   %draft.shape = or i1 %draft.shape.3, %draft.shape.2
-"#,
+",
     );
     writeln!(
         output,
@@ -1377,7 +1456,7 @@ fn emit_allowed_rows(output: &mut String, prefix: &str, rows: &[u32]) -> String 
 
 fn emit_reference_reduction(output: &mut String) {
     output.push_str(
-        r#"  %reduction = phi i64 [ 0, %reduce.entry ], [ %reduction.next, %reduce.body ]
+        r"  %reduction = phi i64 [ 0, %reduce.entry ], [ %reduction.next, %reduce.body ]
   %accumulator = phi float [ 0.000000e+00, %reduce.entry ], [ %accumulator.next, %reduce.body ]
   %reduction.more = icmp ult i64 %reduction, %k64
   br i1 %reduction.more, label %reduce.body, label %reduce.done
@@ -1401,13 +1480,13 @@ reduce.body:
   %accumulator.next = fadd float %accumulator, %product
   %reduction.next = add nuw i64 %reduction, 1
   br label %reduce.cond
-"#,
+",
     );
 }
 
 fn emit_vectorized_reduction(output: &mut String) {
     output.push_str(
-        r#"  %reduction = phi i64 [ 0, %reduce.entry ], [ %reduction.next, %reduce.body ]
+        r"  %reduction = phi i64 [ 0, %reduce.entry ], [ %reduction.next, %reduce.body ]
   %accumulator = phi float [ 0.000000e+00, %reduce.entry ], [ %accumulator.4, %reduce.body ]
   %reduction.more = icmp ult i64 %reduction, %k64
   br i1 %reduction.more, label %reduce.body, label %reduce.done
@@ -1417,7 +1496,7 @@ reduce.body:
   %a.index = add nuw i64 %a.row.base, %reduction
   %a.ptr = getelementptr inbounds i16, ptr addrspace(1) %a.data, i64 %a.index
   %a.vector = load <4 x i16>, ptr addrspace(1) %a.ptr, align 2
-"#,
+",
     );
     for index in 0..4 {
         writeln!(
@@ -1438,9 +1517,9 @@ reduce.body:
         .expect("writing to a String cannot fail");
     }
     output.push_str(
-        r#"  %reduction.next = add nuw i64 %reduction, 4
+        r"  %reduction.next = add nuw i64 %reduction, 4
   br label %reduce.cond
-"#,
+",
     );
 }
 
@@ -1503,32 +1582,38 @@ impl fmt::Debug for InertQwen3GemmWorkerRequestV1 {
 
 impl InertQwen3GemmWorkerRequestV1 {
     /// Complete finite catalog retained by the request owner.
+    #[must_use]
     pub const fn catalog(&self) -> &Qwen3GemmProfileCatalogV1 {
         &self.prepared.catalog
     }
 
     /// Exact compiler handoff for transaction publication.
+    #[must_use]
     pub const fn compiler_handoff(&self) -> &CompilerModuleHandoffV2 {
         &self.prepared.compiler_handoff
     }
 
     /// Ferric-domain source binding retained by the compiler handoff.
+    #[must_use]
     pub const fn source_binding_identity(&self) -> &[u8; 32] {
         &self.prepared.source_binding_identity
     }
 
     /// A request does not establish Worker execution or artifact existence.
+    #[must_use]
     pub const fn authenticates_worker_execution(&self) -> bool {
         false
     }
 
     /// A compiler request grants no artifact, load, or launch authority.
+    #[must_use]
     pub const fn grants_launch_authority(&self) -> bool {
         false
     }
 }
 
 /// Consumes a prepared owner into the exact Worker V2 request stage.
+#[must_use]
 pub const fn lower_qwen3_gemm_kernel_v1(
     prepared: PreparedQwen3GemmKernelV1,
 ) -> InertQwen3GemmWorkerRequestV1 {
@@ -1576,22 +1661,30 @@ impl fmt::Debug for InertQwen3GemmWorkerEvidenceV1 {
 
 impl InertQwen3GemmWorkerEvidenceV1 {
     /// Worker evidence remains inert until strict structural inspection.
+    #[must_use]
     pub const fn grants_artifact_authority(&self) -> bool {
         false
     }
 
     /// Worker output does not prove the declared numerical policy.
+    #[must_use]
     pub const fn proves_numerical_contract(&self) -> bool {
         false
     }
 
     /// Worker output does not establish operator or race refinement.
+    #[must_use]
     pub const fn proves_operator_or_race_refinement(&self) -> bool {
         false
     }
 }
 
 /// Executes the exact transaction handoff through Worker V2 bootstrap/replay.
+///
+/// # Errors
+///
+/// Returns an error for a substituted handoff, invalid fixed link options or
+/// output constraints, or a Worker V2 execution failure.
 pub fn execute_qwen3_gemm_worker_v2_v1(
     request: InertQwen3GemmWorkerRequestV1,
     consumed: ConsumedCompilerModuleHandoffV1,
@@ -1671,76 +1764,95 @@ impl fmt::Debug for InspectedQwen3GemmKernelV1 {
 
 impl InspectedQwen3GemmKernelV1 {
     /// Complete finite catalog retained by the inspected owner.
+    #[must_use]
     pub const fn catalog(&self) -> &Qwen3GemmProfileCatalogV1 {
         &self.catalog
     }
 
     /// Exact strict pure-Rust loader plan over the same output bytes.
+    #[must_use]
     pub const fn loader_plan(&self) -> &LoadPlan {
         &self.loader_plan
     }
 
     /// Exact bytes retained by sealed Worker evidence.
+    #[must_use]
     pub fn exact_worker_output_bytes(&self) -> &[u8] {
         self.worker.output_bytes()
     }
 
     /// Observed bytes are not an independently approved deployment pin.
+    #[must_use]
     pub const fn has_independent_deployment_pin(&self) -> bool {
         false
     }
 
     /// Structural inspection does not prove source-to-machine refinement.
+    #[must_use]
     pub const fn proves_machine_refinement(&self) -> bool {
         false
     }
 
     /// Structural inspection does not prove numerical or operator refinement.
+    #[must_use]
     pub const fn proves_operator_or_numerical_refinement(&self) -> bool {
         false
     }
 
     /// Structural inspection does not prove single-writer or race refinement.
+    #[must_use]
     pub const fn proves_race_refinement(&self) -> bool {
         false
     }
 
     /// Structural inspection does not authenticate weight or buffer content.
+    #[must_use]
     pub const fn authenticates_content(&self) -> bool {
         false
     }
 
     /// Structural inspection does not authenticate allocation ownership.
+    #[must_use]
     pub const fn authenticates_allocation_ownership(&self) -> bool {
         false
     }
 
     /// No mutable generation authority is represented by this owner.
+    #[must_use]
     pub const fn authenticates_generation(&self) -> bool {
         false
     }
 
     /// Structural inspection does not prove hardware execution.
+    #[must_use]
     pub const fn proves_hardware_execution(&self) -> bool {
         false
     }
 
     /// No completion observation is represented by this owner.
+    #[must_use]
     pub const fn proves_completion(&self) -> bool {
         false
     }
 
     /// No performance measurement is represented by this owner.
+    #[must_use]
     pub const fn proves_performance(&self) -> bool {
         false
     }
 
     /// Structural inspection grants no load or launch authority.
+    #[must_use]
     pub const fn grants_launch_authority(&self) -> bool {
         false
     }
 
     /// Binds one exact profile to exact disjoint BF16 buffer spans.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the profile is absent or any buffer span fails the
+    /// exact checked contract.
     pub fn bind_checked_profile(
         &self,
         bucket: Qwen3GemmBucketV1,
@@ -1759,6 +1871,11 @@ impl InspectedQwen3GemmKernelV1 {
 }
 
 /// Consumes Worker evidence through transcript, HSACO, ABI/resource, and loader checks.
+///
+/// # Errors
+///
+/// Returns an error if lineage, output identity, HSACO structure, kernel ABI,
+/// resource limits, or the loader profile fails closed.
 pub fn inspect_qwen3_gemm_kernel_v1(
     evidence: InertQwen3GemmWorkerEvidenceV1,
 ) -> Result<InspectedQwen3GemmKernelV1, InspectQwen3GemmKernelErrorV1> {
@@ -1942,7 +2059,7 @@ fn exact_bf16_pointer_argument(
     argument.name() == Some(name)
         && argument.offset() == offset
         && argument.size() == 8
-        && !argument.alignment().is_some_and(|actual| actual != 8)
+        && argument.alignment().is_none_or(|actual| actual == 8)
         && argument
             .pointee_alignment()
             .is_none_or(|actual| actual == 2)
@@ -2053,21 +2170,25 @@ pub struct CheckedQwen3GemmLaunchV1 {
 
 impl CheckedQwen3GemmLaunchV1 {
     /// Exact finite profile.
+    #[must_use]
     pub const fn profile(&self) -> Qwen3GemmProfileV1 {
         self.profile
     }
 
     /// Exact checked BF16 buffer ranges.
+    #[must_use]
     pub const fn buffers(&self) -> &Qwen3GemmBufferContractV1 {
         &self.buffers
     }
 
     /// Exact kernel entry selected by the profile schedule.
+    #[must_use]
     pub const fn kernel_symbol(&self) -> &'static str {
         self.profile.schedule.kernel_symbol()
     }
 
     /// This binding grants no allocation, load, or launch authority.
+    #[must_use]
     pub const fn grants_launch_authority(&self) -> bool {
         false
     }
@@ -2276,25 +2397,29 @@ mod tests {
     fn exhaustive_admitted_index_grid_and_extent_arithmetic_is_checked() {
         let catalog = Qwen3GemmProfileCatalogV1::canonical().unwrap();
         for profile in catalog.profiles() {
-            let [m, n, k] = profile.dimensions().map(u64::from);
-            let [a, b, c] = profile.storage_elements();
-            let a_last = (m - 1)
-                .checked_mul(k)
-                .and_then(|base| base.checked_add(k - 1))
+            let [rows, columns, reduction] = profile.dimensions().map(u64::from);
+            let [a_elements, b_elements, c_elements] = profile.storage_elements();
+            let a_last = (rows - 1)
+                .checked_mul(reduction)
+                .and_then(|base| base.checked_add(reduction - 1))
                 .unwrap();
-            let b_last = (k - 1)
-                .checked_mul(n)
-                .and_then(|base| base.checked_add(n - 1))
+            let b_last = (reduction - 1)
+                .checked_mul(columns)
+                .and_then(|base| base.checked_add(columns - 1))
                 .unwrap();
-            let c_last = (m - 1)
-                .checked_mul(n)
-                .and_then(|base| base.checked_add(n - 1))
+            let c_last = (rows - 1)
+                .checked_mul(columns)
+                .and_then(|base| base.checked_add(columns - 1))
                 .unwrap();
-            assert!(a_last < a && b_last < b && c_last < c);
-            assert!(a <= i64::MAX as u64 && b <= i64::MAX as u64 && c <= i64::MAX as u64);
-            assert!(a.checked_mul(2).is_some());
-            assert!(b.checked_mul(2).is_some());
-            assert!(c.checked_mul(2).is_some());
+            assert!(a_last < a_elements && b_last < b_elements && c_last < c_elements);
+            assert!(
+                i64::try_from(a_elements).is_ok()
+                    && i64::try_from(b_elements).is_ok()
+                    && i64::try_from(c_elements).is_ok()
+            );
+            assert!(a_elements.checked_mul(2).is_some());
+            assert!(b_elements.checked_mul(2).is_some());
+            assert!(c_elements.checked_mul(2).is_some());
             assert!(profile.dimensions()[2].is_multiple_of(4));
             let blocks = profile.hsa_adapter_block_counts();
             let grid = profile.aql_grid_workitems();

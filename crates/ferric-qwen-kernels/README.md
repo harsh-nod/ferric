@@ -5,10 +5,21 @@ bindings, and linear Worker custody wrappers for Ferric's admitted Qwen
 envelope. It consumes public, reusable fe2o3 compiler/runtime APIs; fe2o3 does
 not own the Qwen geometry or operator declarations in this crate.
 
-The first module, `src/rope_kv.rs`, declares 44 profiles: target and draft roles,
-eleven exact Ferric buckets, and separate `RoPE` and paged-KV-write operations.
-Target query tensors are `[S,T,32,128]`, draft query tensors are
-`[S,T,16,128]`, and both key/value tensors are `[S,T,8,128]`.
+The integrated structural compiler lanes are:
+
+- `gemm.rs`: 176 profiles for eight dense operations over both roles and all
+  eleven buckets. A, B, and C use BF16 storage with declared ascending FP32
+  accumulation and BF16 round-to-nearest-even output. Draft attention output
+  projection consumes the exact flattened query width 2048, not hidden width
+  1024.
+- `rope_kv.rs`: 44 profiles for separate `RoPE` and paged-KV-write operations.
+  Target query tensors are `[S,T,32,128]`, draft query tensors are
+  `[S,T,16,128]`, and both key/value tensors are `[S,T,8,128]`.
+- `prefill.rs`: eight initial causal-prefill attention profiles. Query/output
+  width is 4096 for target and 2048 for draft.
+- `paged_decode.rs`: fourteen decode/speculative attention profiles over an
+  exact per-sequence committed-token vector. Query/output width is 4096 for
+  target and 2048 for draft.
 
 `RoPE` uses split-half D128 pairing and reads absolute U32 position IDs into fixed
 FP32 cosine and sine tables of extent `[8192,64]`. The typed graph does not
@@ -25,19 +36,20 @@ use. A sequence selects a translation table; it does not prefix cache storage.
 Generation, exclusive-owner, role, profile, and page-table identities remain
 host labels and are not authenticated by the machine ABI.
 
-The module constructs separate typed Handoff V2 functions for `RoPE` and KV
-write, serializes canonical LLVM, forms a linear Worker V2 request, and defines
-strict post-worker structural inspection. It uses typed Handoff V2 directly
-because the reusable Pliron AMDGPU route does not support this scalar BF16
-graph. This is an explicit compiler-boundary limitation, not a Pliron result.
+The modules construct pinned direct-LLVM or typed Handoff V2 source, form
+linear Worker V2 requests, and define strict post-worker structural
+inspection. The attention lanes retain an exact unresolved OCML exponential
+provider contract. These are explicit compiler boundaries, not evidence that
+the Worker ran or that an executable artifact exists.
 
-The catalog and structural checks are not evidence of operator or numerical
+The catalogs and structural checks are not evidence of operator or numerical
 refinement, physical-KV refinement, source or artifact authentication,
 machine-code refinement, allocation, load, launch, completion, hardware
 behavior, or performance. Checked-in tests do not execute Worker V2 and do not
-establish HSACO existence. The `kernel-schedule-catalog` obligation and exact
-Ferric generated-plan/runner identity join remain open. This crate does not
-close `m1.r08`, an assurance property, or a roadmap row.
+establish HSACO existence. The `ferric-gemm`, `ferric-prefill`,
+`ferric-paged-decode`, `ferric-rope-kv`, and `kernel-schedule-catalog`
+obligations, plus the exact Ferric generated-plan/runner identity join, remain
+Open. This crate does not close an assurance property or roadmap row.
 
 The workspace dependency revision is pinned to accepted reusable fe2o3 generic
 compiler/runtime commit `a6c779f6f8052839c3a07901f9bfafa681f7b09a`.

@@ -34,18 +34,18 @@ use fe2o3_compiler_ffi::{
     CompilerModuleSymbolRoleV1, DeviceTargetV1, EXTERNAL_DEVICE_LIBRARY_GFX942_DATA_LAYOUT_V1,
 };
 use fe2o3_hsaco::{
-    ArgumentAccess, ArgumentAddressSpace, CodeObjectVersion as InspectedCodeObjectVersion,
-    ExplicitArgument, ExplicitValueKind, ExplicitValueType, HiddenArgument, HiddenValueKind,
-    KernelBindingError, MAX_HSACO_BYTES, inspect_and_bind_kernel_descriptors,
+    inspect_and_bind_kernel_descriptors, ArgumentAccess, ArgumentAddressSpace,
+    CodeObjectVersion as InspectedCodeObjectVersion, ExplicitArgument, ExplicitValueKind,
+    ExplicitValueType, HiddenArgument, HiddenValueKind, KernelBindingError, MAX_HSACO_BYTES,
 };
 use fe2o3_hsaco_finalize::{
-    FirstBuildWorkerV2Error, InertDecodedWorkerExchangeV2, InertFirstBuildWorkerV2EvidenceV1,
-    LinkOptionV1, PinnedWorkerV1, WorkerExecutionLimitsV1, WorkerOutputConstraintsV1,
-    WorkerProtocolError, execute_reproducible_first_build_worker_v2,
+    execute_reproducible_first_build_worker_v2, FirstBuildWorkerV2Error,
+    InertDecodedWorkerExchangeV2, InertFirstBuildWorkerV2EvidenceV1, LinkOptionV1, PinnedWorkerV1,
+    WorkerExecutionLimitsV1, WorkerOutputConstraintsV1, WorkerProtocolError,
 };
 use reserved_fe2o3_symbols::{
-    DEVICE_FFI_DIRECTION_IMPORT_V1, DeviceFfiContractFieldsV1, DeviceFfiDirectionV1,
-    derive_device_ffi_contract_id_v1,
+    derive_device_ffi_contract_id_v1, DeviceFfiContractFieldsV1, DeviceFfiDirectionV1,
+    DEVICE_FFI_DIRECTION_IMPORT_V1,
 };
 use sha2::{Digest as _, Sha256};
 
@@ -119,6 +119,7 @@ pub enum Qwen3PagedDecodeModelRoleV1 {
 
 impl Qwen3PagedDecodeModelRoleV1 {
     /// Exact query-head count.
+    #[must_use]
     pub const fn query_heads(self) -> u32 {
         match self {
             Self::Target8B => 32,
@@ -127,6 +128,7 @@ impl Qwen3PagedDecodeModelRoleV1 {
     }
 
     /// Exact consecutive query heads sharing one KV head.
+    #[must_use]
     pub const fn gqa_group_size(self) -> u32 {
         match self {
             Self::Target8B => 4,
@@ -135,6 +137,7 @@ impl Qwen3PagedDecodeModelRoleV1 {
     }
 
     /// Exact pre-output-projection attention width.
+    #[must_use]
     pub const fn query_width(self) -> u32 {
         self.query_heads() * QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1
     }
@@ -162,6 +165,7 @@ pub enum Qwen3PagedDecodeBucketV1 {
 
 impl Qwen3PagedDecodeBucketV1 {
     /// Exact independent sequence count.
+    #[must_use]
     pub const fn sequences(self) -> u32 {
         match self {
             Self::DecodeS8C8192 | Self::SpecS8K4C8192 => 8,
@@ -174,6 +178,7 @@ impl Qwen3PagedDecodeBucketV1 {
     }
 
     /// Exact active-token count per sequence for one model role.
+    #[must_use]
     pub const fn active_tokens(self, role: Qwen3PagedDecodeModelRoleV1) -> u32 {
         match self {
             Self::DecodeS1C8192 | Self::DecodeS8C8192 | Self::DecodeS32C8192 => 1,
@@ -209,6 +214,7 @@ pub struct Qwen3PagedDecodeProfileIdentityV1([u8; 32]);
 
 impl Qwen3PagedDecodeProfileIdentityV1 {
     /// Returns the domain-separated identity bytes.
+    #[must_use]
     pub const fn as_bytes(&self) -> &[u8; 32] {
         &self.0
     }
@@ -338,86 +344,103 @@ impl Qwen3PagedDecodeProfileV1 {
     }
 
     /// Exact model role.
+    #[must_use]
     pub const fn role(self) -> Qwen3PagedDecodeModelRoleV1 {
         self.role
     }
 
     /// Exact paged decode bucket.
+    #[must_use]
     pub const fn bucket(self) -> Qwen3PagedDecodeBucketV1 {
         self.bucket
     }
 
     /// Exact sequence count.
+    #[must_use]
     pub const fn sequences(self) -> u32 {
         self.sequences
     }
 
     /// Exact active tokens per sequence.
+    #[must_use]
     pub const fn active_tokens(self) -> u32 {
         self.active_tokens
     }
 
     /// Exact maximum logical context per sequence.
+    #[must_use]
     pub const fn context_capacity(self) -> u32 {
         self.context_capacity
     }
 
     /// Exact query-head count.
+    #[must_use]
     pub const fn query_heads(self) -> u32 {
         self.query_heads
     }
 
     /// Exact GQA group size.
+    #[must_use]
     pub const fn gqa_group_size(self) -> u32 {
         self.gqa_group_size
     }
 
     /// Exact attention width before O projection.
+    #[must_use]
     pub const fn query_width(self) -> u32 {
         self.query_width
     }
 
     /// Exact BF16 query and, separately, output element count.
+    #[must_use]
     pub const fn query_elements(self) -> u64 {
         self.query_elements
     }
 
     /// Exact BF16 key-cache and, separately, value-cache element count.
+    #[must_use]
     pub const fn cache_elements_each(self) -> u64 {
         self.cache_elements_each
     }
 
     /// Exact `u32` page-index element count.
+    #[must_use]
     pub const fn page_table_elements(self) -> u64 {
         self.page_table_elements
     }
 
     /// Exact `u32` committed-token count element count.
+    #[must_use]
     pub const fn context_elements(self) -> u64 {
         self.context_elements
     }
 
     /// Exact global extent measured in workitems: `[S*A*QH*64,1,1]`.
+    #[must_use]
     pub const fn launch_workitems(self) -> [u32; 3] {
         self.launch_workitems
     }
 
     /// Exact grid measured in Wave64 workgroups: `[S*A*QH,1,1]`.
+    #[must_use]
     pub const fn grid_workgroups(self) -> [u32; 3] {
         self.grid_workgroups
     }
 
     /// Exact declared online-recurrence policy.
+    #[must_use]
     pub const fn numerical_policy(self) -> Qwen3PagedDecodeNumericalPolicyV1 {
         self.numerical_policy
     }
 
     /// Exact domain-separated profile identity.
+    #[must_use]
     pub const fn identity(self) -> Qwen3PagedDecodeProfileIdentityV1 {
         self.identity
     }
 
     /// A profile declaration is not numerical or operator-refinement evidence.
+    #[must_use]
     pub const fn proves_operator_refinement(self) -> bool {
         false
     }
@@ -454,6 +477,7 @@ pub struct Qwen3PagedDecodeProfileCatalogIdentityV1([u8; 32]);
 
 impl Qwen3PagedDecodeProfileCatalogIdentityV1 {
     /// Returns the exact catalog identity bytes.
+    #[must_use]
     pub const fn as_bytes(&self) -> &[u8; 32] {
         &self.0
     }
@@ -469,6 +493,10 @@ pub struct Qwen3PagedDecodeProfileCatalogV1 {
 
 impl Qwen3PagedDecodeProfileCatalogV1 {
     /// Constructs the exact role-major, bucket-major catalog.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any exact profile geometry or catalog extent is invalid.
     pub fn canonical() -> Result<Self, Qwen3PagedDecodeCatalogErrorV1> {
         let mut profiles = Vec::with_capacity(QWEN3_PAGED_DECODE_PROFILE_COUNT_V1);
         for role in [
@@ -497,7 +525,9 @@ impl Qwen3PagedDecodeProfileCatalogV1 {
             return Err(Qwen3PagedDecodeCatalogErrorV1::CatalogClosure);
         }
         let mut canonical_bytes = Vec::with_capacity(512);
-        canonical_bytes.extend_from_slice(&(profiles.len() as u32).to_le_bytes());
+        let profile_count = u32::try_from(profiles.len())
+            .map_err(|_| Qwen3PagedDecodeCatalogErrorV1::CatalogClosure)?;
+        canonical_bytes.extend_from_slice(&profile_count.to_le_bytes());
         canonical_bytes.extend_from_slice(QWEN3_PAGED_DECODE_TARGET_V1.as_bytes());
         canonical_bytes.push(QWEN3_PAGED_DECODE_CODE_OBJECT_VERSION_V1);
         for dimension in QWEN3_PAGED_DECODE_WORKGROUP_V1 {
@@ -505,7 +535,9 @@ impl Qwen3PagedDecodeProfileCatalogV1 {
         }
         for profile in &profiles {
             let encoded = profile.encode();
-            canonical_bytes.extend_from_slice(&(encoded.len() as u32).to_le_bytes());
+            let encoded_len = u32::try_from(encoded.len())
+                .map_err(|_| Qwen3PagedDecodeCatalogErrorV1::CatalogClosure)?;
+            canonical_bytes.extend_from_slice(&encoded_len.to_le_bytes());
             canonical_bytes.extend_from_slice(&encoded);
             canonical_bytes.extend_from_slice(profile.identity.as_bytes());
         }
@@ -519,11 +551,13 @@ impl Qwen3PagedDecodeProfileCatalogV1 {
     }
 
     /// Exact stable-order profile slice.
+    #[must_use]
     pub fn profiles(&self) -> &[Qwen3PagedDecodeProfileV1] {
         &self.profiles
     }
 
     /// Looks up one exact role/bucket pair.
+    #[must_use]
     pub fn profile(
         &self,
         role: Qwen3PagedDecodeModelRoleV1,
@@ -536,16 +570,19 @@ impl Qwen3PagedDecodeProfileCatalogV1 {
     }
 
     /// Canonical bytes retaining every checked shape and launch unit.
+    #[must_use]
     pub fn canonical_bytes(&self) -> &[u8] {
         &self.canonical_bytes
     }
 
     /// Exact catalog identity.
+    #[must_use]
     pub const fn identity(&self) -> Qwen3PagedDecodeProfileCatalogIdentityV1 {
         self.identity
     }
 
     /// This structural roster grants no source, artifact, or launch authority.
+    #[must_use]
     pub const fn grants_authority(&self) -> bool {
         false
     }
@@ -661,47 +698,56 @@ pub struct Qwen3PagedDecodeKernelIrV1 {
 
 impl Qwen3PagedDecodeKernelIrV1 {
     /// Ferric-owned semantic module identity.
+    #[must_use]
     pub fn module_id(&self) -> &str {
         &self.module_id
     }
 
     /// Exact exported kernel identity.
+    #[must_use]
     pub fn kernel_id(&self) -> &str {
         &self.kernel_id
     }
 
     /// Exact six-slice Q/paged-K/paged-V/page-index/committed/O ABI.
+    #[must_use]
     pub const fn arguments(&self) -> &[Qwen3PagedDecodeArgumentV1; 6] {
         &self.arguments
     }
 
     /// Profile identity whose geometry this KIR retains.
+    #[must_use]
     pub const fn profile_identity(&self) -> Qwen3PagedDecodeProfileIdentityV1 {
         self.profile_identity
     }
 
     /// Exact ordered online recurrence.
+    #[must_use]
     pub const fn recurrence(&self) -> &[Qwen3PagedDecodeRecurrenceStepV1; 11] {
         &self.recurrence
     }
 
     /// Per-workitem exceptional behavior.
+    #[must_use]
     pub const fn exceptional_policy(&self) -> Qwen3PagedDecodeExceptionalPolicyV1 {
         self.exceptional_policy
     }
 
     /// Domain-separated identity of every retained KIR field.
+    #[must_use]
     pub const fn identity(&self) -> &[u8; 32] {
         &self.identity
     }
 
     /// The semantic sidecar is not a source-to-machine refinement proof.
+    #[must_use]
     pub const fn proves_machine_refinement(&self) -> bool {
         false
     }
 }
 
 /// Constructs the canonical semantic KIR for one exact profile.
+#[must_use]
 pub fn qwen3_paged_decode_kernel_ir_v1(
     profile: Qwen3PagedDecodeProfileV1,
 ) -> Qwen3PagedDecodeKernelIrV1 {
@@ -875,6 +921,11 @@ pub struct Qwen3PagedDecodeBufferContractV1 {
 impl Qwen3PagedDecodeBufferContractV1 {
     /// Checks exact byte lengths, alignment, range overflow, and pairwise
     /// disjointness. It does not inspect page-index or cache content.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for a zero, misaligned, overflowing, incorrectly sized,
+    /// or overlapping buffer span.
     pub fn checked(
         profile: Qwen3PagedDecodeProfileV1,
         addresses: [u64; 6],
@@ -949,21 +1000,25 @@ impl Qwen3PagedDecodeBufferContractV1 {
     }
 
     /// Exact starts in ABI role order.
+    #[must_use]
     pub const fn addresses(&self) -> [u64; 6] {
         self.addresses
     }
 
     /// Exact exclusive ends in ABI role order.
+    #[must_use]
     pub const fn ends(&self) -> [u64; 6] {
         self.ends
     }
 
     /// Exact byte lengths in ABI role order.
+    #[must_use]
     pub const fn byte_lengths(&self) -> [u64; 6] {
         self.byte_lengths
     }
 
     /// Integer spans do not authenticate mappings, leases, or content.
+    #[must_use]
     pub const fn authenticates_device_memory(&self) -> bool {
         false
     }
@@ -981,6 +1036,7 @@ pub struct Qwen3PagedDecodeSourceBindingsV1 {
 impl Qwen3PagedDecodeSourceBindingsV1 {
     /// Constructs inert labels. Preparation requires all four to be nonzero
     /// and distinct.
+    #[must_use]
     pub const fn new(
         source: [u8; 32],
         kernel_ir: [u8; 32],
@@ -996,6 +1052,7 @@ impl Qwen3PagedDecodeSourceBindingsV1 {
     }
 
     /// Caller labels authenticate no source, producer, compiler, or plan.
+    #[must_use]
     pub const fn authenticates_provenance(self) -> bool {
         false
     }
@@ -1052,32 +1109,38 @@ impl fmt::Debug for PreparedQwen3PagedDecodeKernelV1 {
 
 impl PreparedQwen3PagedDecodeKernelV1 {
     /// Complete finite profile catalog retained by this owner.
+    #[must_use]
     pub const fn catalog(&self) -> &Qwen3PagedDecodeProfileCatalogV1 {
         &self.catalog
     }
 
     /// Identity binding inert stage labels, the exact catalog, every KIR, and
     /// the canonical LLVM body. It authenticates no external producer.
+    #[must_use]
     pub const fn source_binding_identity(&self) -> &[u8; 32] {
         &self.source_binding_identity
     }
 
     /// SHA-256 of the exact canonical direct-LLVM body.
+    #[must_use]
     pub const fn llvm_sha256(&self) -> &[u8; 32] {
         &self.llvm_sha256
     }
 
     /// Complete canonical compiler-handoff identity.
+    #[must_use]
     pub const fn compiler_handoff_identity(&self) -> CompilerModuleHandoffIdentityV2 {
         self.compiler_handoff_identity
     }
 
     /// Closed entry/descriptor/import manifest identity.
+    #[must_use]
     pub const fn manifest_identity(&self) -> CompilerModuleSymbolManifestIdentityV1 {
         self.manifest_identity
     }
 
     /// Borrows the exact Handoff V2 compiler module for attempt publication.
+    #[must_use]
     pub const fn compiler_handoff(&self) -> &CompilerModuleHandoffV2 {
         &self.compiler_handoff
     }
@@ -1085,31 +1148,37 @@ impl PreparedQwen3PagedDecodeKernelV1 {
     /// Handoff V2 cannot represent the OCML exp intrinsic, so this lane uses
     /// the public bounded direct-LLVM/OCML Worker route. This does not inherit
     /// any prior source or compiler authority.
+    #[must_use]
     pub const fn uses_typed_handoff_v2_source(&self) -> bool {
         false
     }
 
     /// The source binding does not authenticate compiler origin.
+    #[must_use]
     pub const fn authenticates_compiler_origin(&self) -> bool {
         false
     }
 
     /// Online recurrence remains unreconciled with the separate two-pass host reference.
+    #[must_use]
     pub const fn proves_operator_or_numerical_refinement(&self) -> bool {
         false
     }
 
     /// Exact profile selection is not yet joined to Ferric plan identity.
+    #[must_use]
     pub const fn has_ferric_plan_identity_join(&self) -> bool {
         false
     }
 
     /// This compiler slice does not close the kernel schedule catalog.
+    #[must_use]
     pub const fn has_kernel_schedule_catalog_join(&self) -> bool {
         false
     }
 
     /// Exact source/profile structure grants no artifact or launch authority.
+    #[must_use]
     pub const fn grants_launch_authority(&self) -> bool {
         false
     }
@@ -1117,6 +1186,11 @@ impl PreparedQwen3PagedDecodeKernelV1 {
 
 /// Constructs the exact catalog, KIR family, LLVM source, OCML import envelope,
 /// and generic compiler handoff.
+///
+/// # Errors
+///
+/// Returns an error if source labels, profile construction, KIR construction,
+/// the OCML FFI boundary, symbol manifest, or compiler handoff is invalid.
 pub fn prepare_qwen3_paged_decode_kernel_v1(
     bindings: Qwen3PagedDecodeSourceBindingsV1,
 ) -> Result<PreparedQwen3PagedDecodeKernelV1, PrepareQwen3PagedDecodeKernelErrorV1> {
@@ -1266,7 +1340,7 @@ fn canonical_qwen3_paged_decode_llvm() -> String {
     )
     .expect("writing to a String cannot fail");
     output.push_str(
-        r#"declare i32 @llvm.amdgcn.workitem.id.x() #1
+        r"declare i32 @llvm.amdgcn.workitem.id.x() #1
 declare i32 @llvm.amdgcn.workgroup.id.x() #1
 declare void @llvm.trap()
 declare float @__ocml_exp_f32(float)
@@ -1403,13 +1477,13 @@ context:
   br i1 %context.ok, label %initial.page, label %trap
 
 initial.page:
-"#,
+",
     );
     emit_page_mapping(&mut output, "initial", "0");
     output.push_str("  br i1 %initial.page.ok, label %initial.score.entry, label %trap\n\n");
     emit_score(&mut output, "initial");
     output.push_str(
-        r#"  br i1 %initial.score.finite, label %initial.value, label %trap
+        r"  br i1 %initial.score.finite, label %initial.value, label %trap
 
 initial.value:
   %initial.value0.index = add nuw i64 %initial.cache.base, %column
@@ -1441,7 +1515,7 @@ recur.cond:
   br i1 %recur.more, label %next.page.entry, label %finish
 
 next.page.entry:
-"#,
+",
     );
     emit_page_mapping(&mut output, "next", "%key");
     output.push_str("  br i1 %next.page.ok, label %next.score.entry, label %trap\n\n");
@@ -1706,32 +1780,38 @@ impl fmt::Debug for InertQwen3PagedDecodeWorkerRequestV1 {
 
 impl InertQwen3PagedDecodeWorkerRequestV1 {
     /// Complete profile catalog retained by this request.
+    #[must_use]
     pub const fn catalog(&self) -> &Qwen3PagedDecodeProfileCatalogV1 {
         &self.prepared.catalog
     }
 
     /// Exact compiler handoff for attempt-scoped transaction publication.
+    #[must_use]
     pub const fn compiler_handoff(&self) -> &CompilerModuleHandoffV2 {
         &self.prepared.compiler_handoff
     }
 
     /// Ferric-domain source binding retained by the compiler handoff.
+    #[must_use]
     pub const fn source_binding_identity(&self) -> &[u8; 32] {
         &self.prepared.source_binding_identity
     }
 
     /// A request value does not establish Worker execution or artifact existence.
+    #[must_use]
     pub const fn authenticates_worker_execution(&self) -> bool {
         false
     }
 
     /// A compiler request grants no artifact, load, or launch authority.
+    #[must_use]
     pub const fn grants_launch_authority(&self) -> bool {
         false
     }
 }
 
 /// Consumes a prepared owner into the exact Worker V2 request stage.
+#[must_use]
 pub const fn lower_qwen3_paged_decode_kernel_v1(
     prepared: PreparedQwen3PagedDecodeKernelV1,
 ) -> InertQwen3PagedDecodeWorkerRequestV1 {
@@ -1782,27 +1862,36 @@ impl fmt::Debug for InertQwen3PagedDecodeWorkerEvidenceV1 {
 
 impl InertQwen3PagedDecodeWorkerEvidenceV1 {
     /// Reproducible execution remains inert until exact structural inspection.
+    #[must_use]
     pub const fn grants_artifact_authority(&self) -> bool {
         false
     }
 
     /// Worker output does not prove the online numerical contract.
+    #[must_use]
     pub const fn proves_numerical_contract(&self) -> bool {
         false
     }
 
     /// Worker output does not reconcile online and two-pass attention.
+    #[must_use]
     pub const fn proves_operator_refinement(&self) -> bool {
         false
     }
 
     /// Worker output establishes no paged-memory or race refinement.
+    #[must_use]
     pub const fn proves_memory_or_race_refinement(&self) -> bool {
         false
     }
 }
 
 /// Executes exact attempt bytes through Worker V2 bootstrap and replay.
+///
+/// # Errors
+///
+/// Returns an error for a substituted handoff, invalid fixed link options or
+/// output constraints, or a Worker V2 execution failure.
 pub fn execute_qwen3_paged_decode_worker_v2_v1(
     request: InertQwen3PagedDecodeWorkerRequestV1,
     consumed: ConsumedCompilerModuleHandoffV1,
@@ -1883,66 +1972,83 @@ impl fmt::Debug for InspectedQwen3PagedDecodeKernelV1 {
 
 impl InspectedQwen3PagedDecodeKernelV1 {
     /// Exact profile catalog retained with the inspected output owner.
+    #[must_use]
     pub const fn catalog(&self) -> &Qwen3PagedDecodeProfileCatalogV1 {
         &self.catalog
     }
 
     /// Exact strict pure-Rust loader plan over the same Worker output bytes.
+    #[must_use]
     pub const fn loader_plan(&self) -> &LoadPlan {
         &self.loader_plan
     }
 
     /// Exact bytes retained by sealed Worker V2 evidence.
+    #[must_use]
     pub fn exact_worker_output_bytes(&self) -> &[u8] {
         self.worker.output_bytes()
     }
 
     /// Observed output bytes are not an independently approved deployment pin.
+    #[must_use]
     pub const fn has_independent_deployment_pin(&self) -> bool {
         false
     }
 
     /// Structural inspection does not prove source-to-machine refinement.
+    #[must_use]
     pub const fn proves_machine_refinement(&self) -> bool {
         false
     }
 
     /// Structural inspection does not prove numerical or operator refinement.
+    #[must_use]
     pub const fn proves_operator_or_numerical_refinement(&self) -> bool {
         false
     }
 
     /// Structural inspection does not prove paged-memory or race refinement.
+    #[must_use]
     pub const fn proves_memory_or_race_refinement(&self) -> bool {
         false
     }
 
     /// Provider evidence is measured structure, not independent content authentication.
+    #[must_use]
     pub const fn authenticates_ocml_provider_content(&self) -> bool {
         false
     }
 
     /// Structural inspection does not prove hardware execution.
+    #[must_use]
     pub const fn proves_hardware_execution(&self) -> bool {
         false
     }
 
     /// No completion observation is represented by this owner.
+    #[must_use]
     pub const fn proves_completion(&self) -> bool {
         false
     }
 
     /// No performance measurement is represented by this owner.
+    #[must_use]
     pub const fn proves_performance(&self) -> bool {
         false
     }
 
     /// Structural inspection grants no load or launch authority.
+    #[must_use]
     pub const fn grants_launch_authority(&self) -> bool {
         false
     }
 
     /// Binds one exact profile to checked numerical spans and inert host labels.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the profile is absent, any buffer span fails its
+    /// exact contract, or the inert metadata labels are invalid.
     pub fn bind_checked_profile(
         &self,
         role: Qwen3PagedDecodeModelRoleV1,
@@ -1970,6 +2076,11 @@ impl InspectedQwen3PagedDecodeKernelV1 {
 
 /// Consumes Worker evidence through exact transcript, provider, HSACO, ABI,
 /// resource, and loader checks.
+///
+/// # Errors
+///
+/// Returns an error if lineage, provider binding, output identity, HSACO
+/// structure, kernel ABI, resource limits, or the loader profile fails closed.
 pub fn inspect_qwen3_paged_decode_kernel_v1(
     evidence: InertQwen3PagedDecodeWorkerEvidenceV1,
 ) -> Result<InspectedQwen3PagedDecodeKernelV1, InspectQwen3PagedDecodeKernelErrorV1> {
@@ -2186,7 +2297,7 @@ fn exact_pointer_argument(
     argument.name() == Some(name)
         && argument.offset() == offset
         && argument.size() == 8
-        && !argument.alignment().is_some_and(|actual| actual != 8)
+        && argument.alignment().is_none_or(|actual| actual == 8)
         && argument
             .pointee_alignment()
             .is_none_or(|actual| actual == alignment)
@@ -2299,6 +2410,7 @@ pub struct Qwen3PagedDecodeHostMetadataV1 {
 
 impl Qwen3PagedDecodeHostMetadataV1 {
     /// Constructs inert labels for the exact page-table/cache snapshot.
+    #[must_use]
     pub const fn new(
         page_table_identity: [u8; 32],
         key_cache_identity: [u8; 32],
@@ -2337,11 +2449,13 @@ impl Qwen3PagedDecodeHostMetadataV1 {
     }
 
     /// Exact page generation label.
+    #[must_use]
     pub const fn page_generation(&self) -> u64 {
         self.page_generation
     }
 
     /// These labels do not authenticate content, ownership, or generation.
+    #[must_use]
     pub const fn authenticates_content_or_ownership(&self) -> bool {
         false
     }
@@ -2364,21 +2478,25 @@ pub struct CheckedQwen3PagedDecodeLaunchV1 {
 
 impl CheckedQwen3PagedDecodeLaunchV1 {
     /// Exact finite profile.
+    #[must_use]
     pub const fn profile(&self) -> Qwen3PagedDecodeProfileV1 {
         self.profile
     }
 
     /// Exact checked numerical buffer ranges.
+    #[must_use]
     pub const fn buffers(&self) -> &Qwen3PagedDecodeBufferContractV1 {
         &self.buffers
     }
 
     /// Host-only labels retained outside the machine ABI.
+    #[must_use]
     pub const fn metadata(&self) -> &Qwen3PagedDecodeHostMetadataV1 {
         &self.metadata
     }
 
     /// This binding grants no allocation, load, or launch authority.
+    #[must_use]
     pub const fn grants_launch_authority(&self) -> bool {
         false
     }
@@ -2496,10 +2614,8 @@ mod tests {
         hostile_draft_hidden_width.query_width = 1_024;
         hostile_draft_hidden_width.query_elements /= 2;
         assert!(!catalog.profiles().contains(&hostile_draft_hidden_width));
-        assert!(
-            canonical_qwen3_paged_decode_llvm()
-                .contains("%q.d.decode.s1 = icmp eq i64 %q.len, 2048")
-        );
+        assert!(canonical_qwen3_paged_decode_llvm()
+            .contains("%q.d.decode.s1 = icmp eq i64 %q.len, 2048"));
     }
 
     #[test]
