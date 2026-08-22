@@ -1937,15 +1937,15 @@ impl M1RearmedRecycledQueueV1 {
         } = self;
         match queue.observe_qualification_completion() {
             Ok(observed) => Ok(M1RearmedObservedQualificationOutputV1 {
-                observed: Some(observed),
+                observed,
                 carry,
-                queue_observation: Some(queue_observation),
+                queue_observation,
                 device,
             }),
             Err(source) => Err(Box::new(M1RearmedQualificationObservationFailureV1 {
-                source: Some(source),
+                source,
                 carry,
-                queue_observation: Some(queue_observation),
+                queue_observation,
                 device,
             })),
         }
@@ -2008,23 +2008,16 @@ impl M1RearmedRecycledQueueV1 {
 #[must_use = "qualification observation failure retains queue and cache custody"]
 #[derive(Debug)]
 pub struct M1RearmedQualificationObservationFailureV1 {
-    source: Option<Box<crate::M1QualificationObservationFailureV1>>,
+    source: Box<crate::M1QualificationObservationFailureV1>,
     carry: M1RearmContinuationCustodyV1,
-    queue_observation: Option<ComputeAqlQueueObservationV1>,
+    queue_observation: ComputeAqlQueueObservationV1,
     device: Gfx942DeviceBinding,
 }
 
 impl M1RearmedQualificationObservationFailureV1 {
     /// Exact lower qualification-copy rejection.
-    ///
-    /// # Panics
-    ///
-    /// Panics only for the internal test-scripted retry-success owner, which
-    /// intentionally has no physical lower failure.
-    pub fn source(&self) -> &crate::M1QualificationObservationFailureV1 {
-        self.source
-            .as_deref()
-            .expect("scripted retry success has no physical lower failure")
+    pub const fn source(&self) -> &crate::M1QualificationObservationFailureV1 {
+        &self.source
     }
 
     /// Number of active cache owners retained across selected and parked lanes.
@@ -2034,17 +2027,9 @@ impl M1RearmedQualificationObservationFailureV1 {
     }
 
     /// Exact completed queue generation observation.
-    ///
-    /// # Panics
-    ///
-    /// Panics only for the internal test-scripted retry-success owner, which
-    /// intentionally has no physical queue observation.
     #[must_use]
     pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
-        match self.queue_observation {
-            Some(observation) => observation,
-            None => panic!("only test-scripted qualification retry lacks queue observation"),
-        }
+        self.queue_observation
     }
 
     /// Checked physical-device receipt retained through failure.
@@ -2064,6 +2049,9 @@ impl M1RearmedQualificationObservationFailureV1 {
     ///
     /// Terminal and partial-copy failures return unchanged joined custody; no
     /// completed read that may already have succeeded is reopened.
+    /// A true lower observation-success retry requires native recycled queue
+    /// custody and is therefore exercised by hardware integration; unit tests
+    /// cover this transition's exact success/failure rejoin core.
     ///
     /// # Errors
     ///
@@ -2076,19 +2064,23 @@ impl M1RearmedQualificationObservationFailureV1 {
             queue_observation,
             device,
         } = self;
-        match retry_qualification_observation_source(source) {
-            Ok(observed) => Ok(M1RearmedObservedQualificationOutputV1 {
-                observed,
-                carry,
-                queue_observation,
-                device,
+        let retry = retry_physical_qualification_observation_source(source);
+        match rejoin_qualification_observation_retry(retry, carry, queue_observation, device) {
+            Ok(joined) => Ok(M1RearmedObservedQualificationOutputV1 {
+                observed: joined.source,
+                carry: joined.carry,
+                queue_observation: joined.queue_observation,
+                device: joined.device,
             }),
-            Err(source) => Err(Box::new(Self {
-                source,
-                carry,
-                queue_observation,
-                device,
-            })),
+            Err(joined) => {
+                let joined = *joined;
+                Err(Box::new(Self {
+                    source: joined.source,
+                    carry: joined.carry,
+                    queue_observation: joined.queue_observation,
+                    device: joined.device,
+                }))
+            }
         }
     }
 
@@ -2114,7 +2106,7 @@ impl M1RearmedQualificationObservationFailureV1 {
             queue_observation,
             device,
         } = self;
-        match teardown_qualification_observation_source(source) {
+        match teardown_physical_qualification_observation_source(*source) {
             Ok(source) => Ok(M1RearmedQualificationObservationTeardownSuccessV1 {
                 source,
                 carry,
@@ -2137,38 +2129,54 @@ fn quarantine_qualification_observation_teardown<const C: usize>(engine: &mut En
     engine.quarantine_m1_queue_rearm_failure();
 }
 
-fn retry_qualification_observation_source(
-    source: Option<Box<crate::M1QualificationObservationFailureV1>>,
+#[derive(Debug)]
+struct M1RearmedQualificationObservationRetryJoinV1<T, Q> {
+    source: T,
+    carry: M1RearmContinuationCustodyV1,
+    queue_observation: Q,
+    device: Gfx942DeviceBinding,
+}
+
+fn rejoin_qualification_observation_retry<T, E, Q>(
+    source: Result<T, E>,
+    carry: M1RearmContinuationCustodyV1,
+    queue_observation: Q,
+    device: Gfx942DeviceBinding,
 ) -> Result<
-    Option<crate::M1ObservedQualificationOutputV1>,
-    Option<Box<crate::M1QualificationObservationFailureV1>>,
+    M1RearmedQualificationObservationRetryJoinV1<T, Q>,
+    Box<M1RearmedQualificationObservationRetryJoinV1<E, Q>>,
 > {
     match source {
-        Some(source) => retry_physical_qualification_observation_source(source),
-        None => Ok(None),
+        Ok(source) => Ok(M1RearmedQualificationObservationRetryJoinV1 {
+            source,
+            carry,
+            queue_observation,
+            device,
+        }),
+        Err(source) => Err(Box::new(M1RearmedQualificationObservationRetryJoinV1 {
+            source,
+            carry,
+            queue_observation,
+            device,
+        })),
     }
 }
 
 fn retry_physical_qualification_observation_source(
     source: Box<crate::M1QualificationObservationFailureV1>,
-) -> Result<
-    Option<crate::M1ObservedQualificationOutputV1>,
-    Option<Box<crate::M1QualificationObservationFailureV1>>,
-> {
+) -> Result<crate::M1ObservedQualificationOutputV1, Box<crate::M1QualificationObservationFailureV1>>
+{
     if !matches!(
         source.custody(),
         crate::M1QualificationObservationFailureCustodyV1::Recycled(_)
     ) {
-        return Err(Some(source));
+        return Err(source);
     }
     let (_error, custody) = (*source).into_parts();
     let crate::M1QualificationObservationFailureCustodyV1::Recycled(queue) = custody else {
         unreachable!("borrowed qualification failure custody was recycled")
     };
-    queue
-        .observe_qualification_completion()
-        .map(Some)
-        .map_err(Some)
+    queue.observe_qualification_completion()
 }
 
 #[derive(Debug)]
@@ -2183,18 +2191,6 @@ struct QualificationObservationTeardownFailureV1 {
     error: crate::M1QualificationObservationErrorV1,
     source: crate::M1PhysicalQueueReleaseFailureV1,
     partial_logits: Box<[ServiceCompletedReadbackV1]>,
-}
-
-fn teardown_qualification_observation_source(
-    source: Option<Box<crate::M1QualificationObservationFailureV1>>,
-) -> Result<QualificationObservationTeardownSuccessV1, Box<QualificationObservationTeardownFailureV1>>
-{
-    match source {
-        Some(source) => teardown_physical_qualification_observation_source(*source),
-        None => {
-            panic!("test-scripted qualification retry cannot enter physical teardown")
-        }
-    }
 }
 
 fn teardown_physical_qualification_observation_source(
@@ -2261,7 +2257,7 @@ fn teardown_physical_qualification_observation_source(
 pub struct M1RearmedQualificationObservationTeardownSuccessV1 {
     source: QualificationObservationTeardownSuccessV1,
     carry: M1RearmContinuationCustodyV1,
-    queue_observation: Option<ComputeAqlQueueObservationV1>,
+    queue_observation: ComputeAqlQueueObservationV1,
     device: Gfx942DeviceBinding,
 }
 
@@ -2306,17 +2302,9 @@ impl M1RearmedQualificationObservationTeardownSuccessV1 {
     }
 
     /// Exact completed queue generation observed before teardown.
-    ///
-    /// # Panics
-    ///
-    /// Panics only for an internal test-scripted owner, which cannot reach
-    /// physical teardown through the public transition graph.
     #[must_use]
     pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
-        match self.queue_observation {
-            Some(observation) => observation,
-            None => panic!("only test-scripted qualification retry lacks queue observation"),
-        }
+        self.queue_observation
     }
 
     /// Checked physical-device receipt retained through teardown.
@@ -2337,7 +2325,7 @@ impl M1RearmedQualificationObservationTeardownSuccessV1 {
 pub struct M1RearmedQualificationObservationTeardownFailureV1 {
     source: Box<QualificationObservationTeardownFailureV1>,
     carry: M1RearmContinuationCustodyV1,
-    queue_observation: Option<ComputeAqlQueueObservationV1>,
+    queue_observation: ComputeAqlQueueObservationV1,
     device: Gfx942DeviceBinding,
 }
 
@@ -2381,17 +2369,9 @@ impl M1RearmedQualificationObservationTeardownFailureV1 {
     }
 
     /// Exact completed queue generation retained beside release quarantine.
-    ///
-    /// # Panics
-    ///
-    /// Panics only for an internal test-scripted owner, which cannot reach
-    /// physical teardown through the public transition graph.
     #[must_use]
     pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
-        match self.queue_observation {
-            Some(observation) => observation,
-            None => panic!("only test-scripted qualification retry lacks queue observation"),
-        }
+        self.queue_observation
     }
 
     /// Checked physical-device receipt retained beside release quarantine.
@@ -2414,25 +2394,17 @@ impl M1RearmedQualificationObservationTeardownFailureV1 {
 #[must_use = "final qualification observation must be checked or retained"]
 #[derive(Debug)]
 pub struct M1RearmedObservedQualificationOutputV1 {
-    observed: Option<crate::M1ObservedQualificationOutputV1>,
+    observed: crate::M1ObservedQualificationOutputV1,
     carry: M1RearmContinuationCustodyV1,
-    queue_observation: Option<ComputeAqlQueueObservationV1>,
+    queue_observation: ComputeAqlQueueObservationV1,
     device: Gfx942DeviceBinding,
 }
 
 impl M1RearmedObservedQualificationOutputV1 {
     /// Already-copied compact and final-logits evidence.
-    ///
-    /// # Panics
-    ///
-    /// Panics only for the internal test-scripted retry-success owner, which
-    /// exists solely to exercise joined carry reconstruction.
     #[must_use = "qualification evidence remains retained by this observation"]
-    pub fn evidence(&self) -> &crate::M1QualificationCompletionEvidenceV1 {
-        self.observed
-            .as_ref()
-            .expect("scripted retry success has no copied qualification evidence")
-            .evidence()
+    pub const fn evidence(&self) -> &crate::M1QualificationCompletionEvidenceV1 {
+        self.observed.evidence()
     }
 
     /// Selected request owners in exact scheduler order.
@@ -2451,17 +2423,9 @@ impl M1RearmedObservedQualificationOutputV1 {
     }
 
     /// Exact completed queue generation observation.
-    ///
-    /// # Panics
-    ///
-    /// Panics only for the internal test-scripted retry-success owner, which
-    /// intentionally has no physical queue observation.
     #[must_use]
     pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
-        match self.queue_observation {
-            Some(observation) => observation,
-            None => panic!("only test-scripted qualification retry lacks queue observation"),
-        }
+        self.queue_observation
     }
 
     /// Checked physical-device receipt retained through observation.
@@ -2482,11 +2446,6 @@ impl M1RearmedObservedQualificationOutputV1 {
     ///
     /// Returns the same already-copied qualification observation paired with
     /// the semantic diagnostic; no completed read can be reissued.
-    ///
-    /// # Panics
-    ///
-    /// Panics only if called on the internal test-scripted retry-success owner,
-    /// which has no physical qualification evidence to check.
     pub fn check_completion(
         self,
         expectations: &[crate::CompletionWireSemanticExpectation<'_>],
@@ -2500,11 +2459,6 @@ impl M1RearmedObservedQualificationOutputV1 {
             queue_observation,
             device,
         } = self;
-        let observed =
-            observed.expect("test-scripted qualification retry cannot enter semantic completion");
-        let Some(queue_observation) = queue_observation else {
-            panic!("physical qualification observation retains queue observation")
-        };
         match observed.check_completion(expectations) {
             Ok(qualified) => {
                 let (readback, evidence) = qualified.into_parts();
@@ -2523,9 +2477,9 @@ impl M1RearmedObservedQualificationOutputV1 {
                 Err(M1RearmedQualificationCompletedReadbackJoinFailureV1 {
                     error,
                     observed: Box::new(Self {
-                        observed: Some(observed),
+                        observed,
                         carry,
-                        queue_observation: Some(queue_observation),
+                        queue_observation,
                         device,
                     }),
                 })
@@ -4119,30 +4073,22 @@ mod tests {
         .unwrap()
     }
 
-    fn scripted_retry_failure(
-        selected: RequestId,
-        parked: RequestId,
-    ) -> M1RearmedQualificationObservationFailureV1 {
+    fn test_rearm_carry(selected: RequestId, parked: RequestId) -> M1RearmContinuationCustodyV1 {
         let device = test_device();
         let previous_epoch = CompletionEpoch::new(7);
-        M1RearmedQualificationObservationFailureV1 {
-            source: None,
-            carry: M1RearmContinuationCustodyV1 {
-                selected: vec![test_cache(selected, device)],
-                parked: vec![test_cache(parked, device)],
-                terminal: Vec::new(),
+        M1RearmContinuationCustodyV1 {
+            selected: vec![test_cache(selected, device)],
+            parked: vec![test_cache(parked, device)],
+            terminal: Vec::new(),
+            previous_epoch,
+            prior_checked: crate::M1CheckedCompletionOutputV1::empty_for_rearm_test(
+                selection(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192),
                 previous_epoch,
-                prior_checked: crate::M1CheckedCompletionOutputV1::empty_for_rearm_test(
-                    selection(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192),
-                    previous_epoch,
-                ),
-                emitted_counts: Box::new([]),
-                release_counts: Box::new([]),
-                completed_members: 0,
-                total_released: 0,
-            },
-            queue_observation: None,
-            device,
+            ),
+            emitted_counts: Box::new([]),
+            release_counts: Box::new([]),
+            completed_members: 0,
+            total_released: 0,
         }
     }
 
@@ -4236,18 +4182,36 @@ mod tests {
     }
 
     #[test]
-    fn qualification_observation_retry_returns_fully_rejoined_owner() {
+    fn qualification_observation_retry_rejoins_exact_carry_on_both_outcomes() {
         let selected = RequestId::new(0, 3);
         let parked = RequestId::new(1, 5);
-        let failure = scripted_retry_failure(selected, parked);
-        assert_eq!(failure.retained_cache_count(), 2);
-        assert_eq!(failure.previous_epoch(), CompletionEpoch::new(7));
+        let success = rejoin_qualification_observation_retry(
+            Ok::<u8, u16>(41),
+            test_rearm_carry(selected, parked),
+            73_u32,
+            test_device(),
+        )
+        .unwrap();
+        assert_eq!(success.source, 41);
+        assert_eq!(success.queue_observation, 73);
+        assert_eq!(success.carry.selected[0].projection().request, selected);
+        assert_eq!(success.carry.parked[0].projection().request, parked);
+        assert_eq!(success.carry.previous_epoch, CompletionEpoch::new(7));
+        assert_eq!(success.device, test_device());
 
-        let observed = failure.retry().unwrap();
-        assert_eq!(observed.selected_requests().collect::<Vec<_>>(), [selected]);
-        assert_eq!(observed.parked_count(), 1);
-        assert_eq!(observed.previous_epoch(), CompletionEpoch::new(7));
-        assert_eq!(observed.device(), test_device());
+        let failure = rejoin_qualification_observation_retry(
+            Err::<u8, u16>(97),
+            test_rearm_carry(selected, parked),
+            89_u32,
+            test_device(),
+        )
+        .unwrap_err();
+        assert_eq!(failure.source, 97);
+        assert_eq!(failure.queue_observation, 89);
+        assert_eq!(failure.carry.selected[0].projection().request, selected);
+        assert_eq!(failure.carry.parked[0].projection().request, parked);
+        assert_eq!(failure.carry.previous_epoch, CompletionEpoch::new(7));
+        assert_eq!(failure.device, test_device());
     }
 
     #[test]
