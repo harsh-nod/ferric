@@ -1,0 +1,5 @@
+error[E0451]: field `catalog` of struct `PreparedQwen3LogitsKernelV1` is private
+ --> tests/ui/logits_prepared_fields_are_private.rs:4:39
+  |
+4 |     let PreparedQwen3LogitsKernelV1 { catalog, .. } = value;
+  |                                       ^^^^^^^ private field
