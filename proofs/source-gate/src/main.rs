@@ -17,21 +17,37 @@ const RUNTIME_TCB_PATH: &str = "proofs/RUNTIME_DEPENDENCY_TCB";
 const CRATES_IO_SOURCE: &str = "registry+https://github.com/rust-lang/crates.io-index";
 const VERUS_SOURCE: &str = "git+https://github.com/verus-lang/verus.git?rev=b677dd5";
 const FE2O3_SOURCE: &str =
-    "git+https://github.com/harsh-nod/fe2o3.git?rev=bea73e0b988c02911c10419f94319cb8f9af3f62";
-const FERRIC_BUILD_PREPACK_BINARY_NAME: &str = "ferric-m1-prepack";
-const FERRIC_BUILD_PREPACK_BINARY_PATH: &str = "crates/ferric-build/src/bin/ferric-m1-prepack.rs";
-const RUNTIME_ROOTS: &[(&str, &str, &str, bool)] = &[
-    ("ferric-build", "onig", "=6.5.3", false),
+    "git+https://github.com/harsh-nod/fe2o3.git?rev=f8fbd92027e66961aa0894e804425a9a43ee4f36";
+const FERRIC_BUILD_BINARIES: &[(&str, &str)] = &[
+    (
+        "ferric-m1-kernel-artifacts",
+        "crates/ferric-build/src/bin/ferric-m1-kernel-artifacts.rs",
+    ),
+    (
+        "ferric-m1-prepack",
+        "crates/ferric-build/src/bin/ferric-m1-prepack.rs",
+    ),
+];
+const RUNTIME_ROOTS: &[(&str, &str, &str, bool, &[&str])] = &[
+    ("ferric-build", "onig", "=6.5.3", false, &[]),
+    ("ferric-build", "rustix", "=1.1.4", true, &["fs"]),
+    ("ferric-build", "sha2", "^0.11.0", true, &[]),
     (
         "ferric-build",
         "unicode-normalization-alignments",
         "=0.1.12",
         true,
+        &[],
     ),
-    ("ferric-engine", "sha2", "^0.11.0", true),
-    ("ferric-qwen-kernels", "sha2", "^0.11.0", true),
+    ("ferric-engine", "sha2", "^0.11.0", true, &[]),
+    ("ferric-qwen-kernels", "sha2", "^0.11.0", true, &[]),
 ];
 const FE2O3_ROOTS: &[(&str, &str)] = &[
+    ("ferric-build", "fe2o3-amdhsa-loader"),
+    ("ferric-build", "fe2o3-artifact-transaction"),
+    ("ferric-build", "fe2o3-compiler-ffi"),
+    ("ferric-build", "fe2o3-hsaco-finalize"),
+    ("ferric-build", "fe2o3-llvm-worker-handoff"),
     ("ferric-engine", "fe2o3-amdhsa-loader"),
     ("ferric-engine", "fe2o3-aql"),
     ("ferric-engine", "fe2o3-kfd"),
@@ -395,13 +411,14 @@ fn validate_root_declaration(
     }
     let expected = RUNTIME_ROOTS
         .iter()
-        .find(|(expected_owner, expected_name, _, _)| {
+        .find(|(expected_owner, expected_name, _, _, _)| {
             owner == *expected_owner && name == *expected_name
         })
         .ok_or_else(|| {
             format!("package {owner} has an unadmitted registry runtime root: {name}")
         })?;
-    let (_, _, requirement, uses_default_features) = *expected;
+    let (_, _, requirement, uses_default_features, expected_features) = *expected;
+    let features = string_array(dependency, "features", "root feature")?;
     if string_field(dependency, "req")? != requirement
         || bool_field(dependency, "uses_default_features")? != uses_default_features
         || bool_field(dependency, "optional")?
@@ -414,7 +431,7 @@ fn validate_root_declaration(
         || dependency
             .get("registry")
             .is_some_and(|value| !value.is_null())
-        || !string_array(dependency, "features", "root feature")?.is_empty()
+        || features != expected_features
     {
         return Err(format!(
             "workspace registry runtime root declaration drifted: {owner}::{name}"
@@ -504,8 +521,14 @@ fn render_runtime_dependency_tcb(repo: &Path, metadata: &Value) -> GateResult<Ru
             };
             let resolved_id = string_field(resolved, "pkg")?;
             root_ids.push(resolved_id.to_owned());
+            let features = string_array(dependency, "features", "root feature")?;
+            let features = if features.is_empty() {
+                "none".to_owned()
+            } else {
+                features.join(",")
+            };
             root_records.push(format!(
-                "root={owner}|{dependency_name}|{}|{}|{}|{}|features=none|{resolved_id}",
+                "root={owner}|{dependency_name}|{}|{}|{}|{}|features={features}|{resolved_id}",
                 string_field(dependency, "req")?,
                 string_field(dependency, "source")?,
                 bool_field(dependency, "uses_default_features")?,
@@ -515,7 +538,7 @@ fn render_runtime_dependency_tcb(repo: &Path, metadata: &Value) -> GateResult<Ru
     }
     let expected_roots: BTreeSet<(String, String)> = RUNTIME_ROOTS
         .iter()
-        .map(|(owner, name, _, _)| ((*owner).to_owned(), (*name).to_owned()))
+        .map(|(owner, name, _, _, _)| ((*owner).to_owned(), (*name).to_owned()))
         .collect();
     if roots != expected_roots {
         return Err(format!(
@@ -792,29 +815,43 @@ fn packages(
             } else if kinds.len() == 1
                 && kinds[0].as_str() == Some("bin")
                 && name == "ferric-build"
-                && target.get("name").and_then(Value::as_str)
-                    == Some(FERRIC_BUILD_PREPACK_BINARY_NAME)
+                && target
+                    .get("name")
+                    .and_then(Value::as_str)
+                    .is_some_and(|target_name| {
+                        FERRIC_BUILD_BINARIES
+                            .iter()
+                            .any(|(expected_name, _)| target_name == *expected_name)
+                    })
             {
+                let target_name = target
+                    .get("name")
+                    .and_then(Value::as_str)
+                    .ok_or_else(|| "ferric-build binary has no name".to_owned())?;
                 let crate_types = target
                     .get("crate_types")
                     .and_then(Value::as_array)
-                    .ok_or_else(|| "ferric-build prepack binary has no crate types".to_owned())?;
+                    .ok_or_else(|| "ferric-build binary has no crate types".to_owned())?;
                 if crate_types.len() != 1 || crate_types[0].as_str() != Some("bin") {
-                    return Err("ferric-build prepack binary crate type drifted".to_owned());
+                    return Err("ferric-build binary crate type drifted".to_owned());
                 }
                 let root = canonical(Path::new(
                     target
                         .get("src_path")
                         .and_then(Value::as_str)
-                        .ok_or_else(|| {
-                            "ferric-build prepack binary has no source path".to_owned()
-                        })?,
+                        .ok_or_else(|| "ferric-build binary has no source path".to_owned())?,
                 ))?;
-                let expected_root = canonical(&repo.join(FERRIC_BUILD_PREPACK_BINARY_PATH))?;
+                let expected_path = FERRIC_BUILD_BINARIES
+                    .iter()
+                    .find_map(|(expected_name, expected_path)| {
+                        (target_name == *expected_name).then_some(*expected_path)
+                    })
+                    .ok_or_else(|| "unsupported ferric-build binary".to_owned())?;
+                let expected_root = canonical(&repo.join(expected_path))?;
                 if root != expected_root {
-                    return Err("ferric-build prepack binary source path drifted".to_owned());
+                    return Err("ferric-build binary source path drifted".to_owned());
                 }
-                let crate_name = FERRIC_BUILD_PREPACK_BINARY_NAME.replace('-', "_");
+                let crate_name = target_name.replace('-', "_");
                 safe_atom(&crate_name, "binary crate name")?;
                 additional_targets.push(PackageTarget { crate_name, root });
             } else {

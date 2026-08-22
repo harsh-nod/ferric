@@ -17,8 +17,6 @@ use ferric_build::{
     ModelMemoryAllocationKind, ModelMemoryPlanError, ModelWeightLayoutError,
     QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1,
 };
-#[cfg(test)]
-use ferric_build::{DeclaredMemoryRange, KvCacheComponent, QWEN3_KV_ARENA_ALIGNMENT_V1};
 use ferric_spec::{Identity, Qwen3ModelRole, Qwen3TensorKind};
 
 type WeightAllocationKeyV1 = ServiceAllocationKeyV1<DeviceInputRoleV1, DeviceLocalAllocationV1>;
@@ -553,26 +551,11 @@ fn resolve_weight_plan_range(
 }
 
 #[cfg(test)]
-fn resolve_kv_plan_range(
-    plan: &AddresslessModelMemoryPlan,
-    role: Qwen3ModelRole,
-    component: KvCacheComponent,
-    layer: u32,
-) -> Result<ResolvedModelMemoryRangeV1, ModelMemoryPlanError> {
-    let range: DeclaredMemoryRange = plan.kv_layer(role, component, layer)?;
-    Ok(ResolvedModelMemoryRangeV1 {
-        allocation_id: range.allocation_id(),
-        offset: range.offset(),
-        extent: range.byte_len(),
-        alignment: QWEN3_KV_ARENA_ALIGNMENT_V1,
-    })
-}
-
-#[cfg(test)]
 mod tests {
     use super::*;
     use ferric_build::{
-        qwen3_model_memory_plan_test_fixture, QWEN3_KV_LAYER_BYTES_V1,
+        qwen3_model_memory_plan_test_fixture, DeclaredMemoryRange, KvCacheComponent,
+        QWEN3_KV_ARENA_ALIGNMENT_V1, QWEN3_KV_LAYER_BYTES_V1,
         QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1,
     };
     use ferric_spec::QWEN3_NO_LAYER;
@@ -583,6 +566,21 @@ mod tests {
 
     fn exact_plan() -> AddresslessModelMemoryPlan {
         qwen3_model_memory_plan_test_fixture()
+    }
+
+    fn resolve_kv_plan_range(
+        plan: &AddresslessModelMemoryPlan,
+        role: Qwen3ModelRole,
+        component: KvCacheComponent,
+        layer: u32,
+    ) -> Result<ResolvedModelMemoryRangeV1, ModelMemoryPlanError> {
+        let range: DeclaredMemoryRange = plan.kv_layer(role, component, layer)?;
+        Ok(ResolvedModelMemoryRangeV1 {
+            allocation_id: range.allocation_id(),
+            offset: range.offset(),
+            extent: range.byte_len(),
+            alignment: QWEN3_KV_ARENA_ALIGNMENT_V1,
+        })
     }
 
     fn exact_selected(

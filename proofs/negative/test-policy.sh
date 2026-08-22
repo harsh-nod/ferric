@@ -198,7 +198,7 @@ compiler_dependency = next(
     d for d in qwen_package["dependencies"] if d["name"] == "fe2o3-compiler-ffi"
 )
 compiler_dependency["source"] = compiler_dependency["source"].replace(
-    "bea73e0b988c02911c10419f94319cb8f9af3f62", "0" * 40
+    "f8fbd92027e66961aa0894e804425a9a43ee4f36", "0" * 40
 )
 (scratch / "fe2o3-source.metadata").write_text(json.dumps(fe2o3), encoding="utf-8")
 
@@ -262,7 +262,7 @@ expect_rejected non-library-target 'unsupported non-library target' \
 expect_rejected binary-name-drift 'unsupported non-library target' \
     "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/binary-name.metadata"
-expect_rejected binary-path-drift 'prepack binary source path drifted' \
+expect_rejected binary-path-drift 'ferric-build binary source path drifted' \
     "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/binary-path.metadata"
 expect_rejected test-fixture-runtime-activation \
