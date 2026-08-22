@@ -169,6 +169,7 @@ pub closed spec fn structural_binding_error_matches(
 closed spec fn reviewed_capacity_source(source: PhysicalCapacitySource) -> bool {
     source == PhysicalCapacitySource::ReviewedBatchArithmeticV1
         || source == PhysicalCapacitySource::ReviewedBatchArithmeticV2
+        || source == PhysicalCapacitySource::ReviewedBatchArithmeticV3
 }
 
 closed spec fn role_operation_count_matches(
@@ -202,7 +203,8 @@ fn is_reviewed_capacity_source(source: PhysicalCapacitySource) -> (reviewed: boo
 {
     match source {
         PhysicalCapacitySource::ReviewedBatchArithmeticV1
-        | PhysicalCapacitySource::ReviewedBatchArithmeticV2 => true,
+        | PhysicalCapacitySource::ReviewedBatchArithmeticV2
+        | PhysicalCapacitySource::ReviewedBatchArithmeticV3 => true,
         PhysicalCapacitySource::FutureUntrusted => false,
     }
 }
@@ -323,7 +325,7 @@ mod tests {
         Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection, RequestId,
         StepPlan, StructurallyValidatedPhysicalPlan, M1_PHYSICAL_PLAN_DECLARATION_VERSION,
         M1_REVIEWED_BATCH_PACKET_CAPACITY_V1, M1_REVIEWED_BATCH_PACKET_CAPACITY_V2,
-        QWEN3_TARGET_PLAN_STEPS,
+        M1_REVIEWED_BATCH_PACKET_CAPACITY_V3, QWEN3_TARGET_PLAN_STEPS,
     };
 
     fn identity(role: u8, index: u32) -> Identity {
@@ -360,6 +362,9 @@ mod tests {
             | PhysicalCapacitySource::FutureUntrusted => M1_REVIEWED_BATCH_PACKET_CAPACITY_V1,
             PhysicalCapacitySource::ReviewedBatchArithmeticV2 => {
                 M1_REVIEWED_BATCH_PACKET_CAPACITY_V2
+            }
+            PhysicalCapacitySource::ReviewedBatchArithmeticV3 => {
+                M1_REVIEWED_BATCH_PACKET_CAPACITY_V3
             }
         };
         let capacity = PhysicalCapacityExpectation {
@@ -433,6 +438,7 @@ mod tests {
         for source in [
             PhysicalCapacitySource::ReviewedBatchArithmeticV1,
             PhysicalCapacitySource::ReviewedBatchArithmeticV2,
+            PhysicalCapacitySource::ReviewedBatchArithmeticV3,
         ] {
             let plan_id = identity(3, 0);
             let physical = synthetic_unproved_physical_plan(

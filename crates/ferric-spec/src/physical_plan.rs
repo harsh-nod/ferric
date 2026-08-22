@@ -27,12 +27,14 @@ pub const M1_PHYSICAL_PLAN_DECLARATION_VERSION: u32 = 1;
 pub const M1_REVIEWED_BATCH_PACKET_CAPACITY_V1: u32 = 256;
 /// Exact maximum of the reviewed fixed-batch V2 declaration.
 pub const M1_REVIEWED_BATCH_PACKET_CAPACITY_V2: u32 = 1_024;
+/// Exact maximum of the reviewed complete-batch V3 declaration.
+pub const M1_REVIEWED_BATCH_PACKET_CAPACITY_V3: u32 = 8_192;
 /// Smallest ring capacity named by the reviewed arithmetic profile.
 pub const M1_MIN_DECLARED_RING_PACKETS_V1: u32 = 64;
 /// Largest ring capacity named by the reviewed arithmetic profile.
 pub const M1_MAX_DECLARED_RING_PACKETS_V1: u32 = 33_554_432;
 /// Absolute source-level bound for a future untrusted packet-capacity expectation.
-pub const M1_MAX_UNTRUSTED_PACKET_CAPACITY_V1: u32 = 1_024;
+pub const M1_MAX_UNTRUSTED_PACKET_CAPACITY_V1: u32 = 8_192;
 
 /// Provenance class of a separately supplied capacity expectation.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -47,6 +49,12 @@ pub enum PhysicalCapacitySource {
     /// This tag is a Ferric structural expectation only. It is not an
     /// authenticated fe2o3 build, runtime observation, or support receipt.
     ReviewedBatchArithmeticV2,
+    /// Declares the reviewed complete-batch V3 maximum of 8,192 packets.
+    ///
+    /// This tag covers Ferric's complete assembly-inclusive M1 batch shapes.
+    /// It is not an authenticated fe2o3 build, runtime observation, or support
+    /// receipt.
+    ReviewedBatchArithmeticV3,
     /// Explicitly untrusted future capacity, usable only for structural tests
     /// and future integration validation.
     FutureUntrusted,
@@ -346,6 +354,9 @@ pub closed spec fn physical_capacity_expectation_is_structurally_valid(
             },
             PhysicalCapacitySource::ReviewedBatchArithmeticV2 => {
                 capacity.batch_packet_capacity == M1_REVIEWED_BATCH_PACKET_CAPACITY_V2
+            },
+            PhysicalCapacitySource::ReviewedBatchArithmeticV3 => {
+                capacity.batch_packet_capacity == M1_REVIEWED_BATCH_PACKET_CAPACITY_V3
             },
             PhysicalCapacitySource::FutureUntrusted => true,
         }
@@ -702,6 +713,9 @@ fn validate_capacity_expectation(
         }
         PhysicalCapacitySource::ReviewedBatchArithmeticV2 => {
             Some(M1_REVIEWED_BATCH_PACKET_CAPACITY_V2)
+        }
+        PhysicalCapacitySource::ReviewedBatchArithmeticV3 => {
+            Some(M1_REVIEWED_BATCH_PACKET_CAPACITY_V3)
         }
         PhysicalCapacitySource::FutureUntrusted => None,
     };
@@ -1440,13 +1454,14 @@ pub fn physical_plan_structural_validation_theorem(
 #[cfg(test)]
 mod tests {
     use super::{
-        physical_plan_structural_validation_theorem, validate_physical_plan_declaration,
-        DeclaredFusionRefinementPremise, PhysicalCapacityExpectation, PhysicalCapacitySource,
-        PhysicalCompletionDeclaration, PhysicalIdentityRole, PhysicalPacketIdentityBinding,
-        PhysicalPacketSpanDeclaration, PhysicalPlanDeclaration, PhysicalPlanError,
-        PhysicalPlanExpectation, PhysicalPublicationDeclaration,
-        M1_PHYSICAL_PLAN_DECLARATION_VERSION, M1_REVIEWED_BATCH_PACKET_CAPACITY_V1,
-        M1_REVIEWED_BATCH_PACKET_CAPACITY_V2,
+        physical_plan_structural_validation_theorem, validate_capacity_expectation,
+        validate_physical_plan_declaration, DeclaredFusionRefinementPremise,
+        PhysicalCapacityExpectation, PhysicalCapacitySource, PhysicalCompletionDeclaration,
+        PhysicalIdentityRole, PhysicalPacketIdentityBinding, PhysicalPacketSpanDeclaration,
+        PhysicalPlanDeclaration, PhysicalPlanError, PhysicalPlanExpectation,
+        PhysicalPublicationDeclaration, M1_PHYSICAL_PLAN_DECLARATION_VERSION,
+        M1_REVIEWED_BATCH_PACKET_CAPACITY_V1, M1_REVIEWED_BATCH_PACKET_CAPACITY_V2,
+        M1_REVIEWED_BATCH_PACKET_CAPACITY_V3,
     };
     use crate::{
         Identity, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection,
@@ -1638,6 +1653,23 @@ mod tests {
                 validated.capacity_source(),
                 PhysicalCapacitySource::ReviewedBatchArithmeticV2
             );
+        }
+    }
+
+    #[test]
+    fn complete_m1_runtime_cardinalities_fit_reviewed_v3() {
+        let capacity = capacity(
+            PhysicalCapacitySource::ReviewedBatchArithmeticV3,
+            M1_REVIEWED_BATCH_PACKET_CAPACITY_V3,
+            M1_REVIEWED_BATCH_PACKET_CAPACITY_V3,
+        );
+        assert_eq!(validate_capacity_expectation(capacity), Ok(()));
+
+        // Target-only, paired, and the three distinct assembly-inclusive
+        // speculative cardinalities (K4 S1/S8 share the same count).
+        for packet_count in [545, 969, 2_242, 3_938, 7_330] {
+            assert!(packet_count <= capacity.batch_packet_capacity);
+            assert!(packet_count <= capacity.ring_packet_capacity);
         }
     }
 
@@ -1869,7 +1901,7 @@ mod tests {
     fn capacity_expectation_boundaries_fail_closed() {
         for invalid_capacity in [
             capacity(PhysicalCapacitySource::FutureUntrusted, 0, 64),
-            capacity(PhysicalCapacitySource::FutureUntrusted, 1_025, 2_048),
+            capacity(PhysicalCapacitySource::FutureUntrusted, 8_193, 16_384),
             capacity(PhysicalCapacitySource::FutureUntrusted, 128, 192),
             capacity(PhysicalCapacitySource::FutureUntrusted, 512, 256),
             capacity(PhysicalCapacitySource::ReviewedBatchArithmeticV1, 255, 256),
@@ -1877,6 +1909,11 @@ mod tests {
                 PhysicalCapacitySource::ReviewedBatchArithmeticV2,
                 1_023,
                 1_024,
+            ),
+            capacity(
+                PhysicalCapacitySource::ReviewedBatchArithmeticV3,
+                8_191,
+                8_192,
             ),
         ] {
             let declaration = synthetic_unproved_declaration(
