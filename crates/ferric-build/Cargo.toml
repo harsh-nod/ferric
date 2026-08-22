@@ -6,6 +6,9 @@ rust-version.workspace = true
 version.workspace = true
 publish = false
 
+[features]
+test-fixtures = []
+
 [dependencies]
 ferric-generated-runner = { path = "../ferric-generated-runner" }
 ferric-kernels = { path = "../ferric-kernels" }

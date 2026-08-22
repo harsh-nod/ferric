@@ -66,6 +66,9 @@ pub use plan::{
     SequentialPlanCatalog, SequentialPlanError, SEQUENTIAL_PLAN_CATALOG_ENTRIES,
     SEQUENTIAL_PLAN_CATALOG_VERSION,
 };
+#[cfg(feature = "test-fixtures")]
+#[doc(hidden)]
+pub use runner::qwen3_runner_closure_test_fixture;
 pub use runner::{
     expected_qwen3_gfx942_runner_source_identity, generate_qwen3_gfx942_runner_declaration,
     publish_qwen3_gfx942_runner_declaration, render_qwen3_gfx942_runner_source,

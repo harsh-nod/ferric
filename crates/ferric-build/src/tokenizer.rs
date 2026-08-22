@@ -643,6 +643,69 @@ fn unexpected(path: &str) -> TokenizerError {
     TokenizerError::UnexpectedValue(path.to_owned())
 }
 
+#[cfg(feature = "test-fixtures")]
+pub(crate) mod test_fixtures {
+    use super::{
+        parse_tokenizer_json, AuthenticatedTokenizer, AuthenticatedTokenizerSeal,
+        MERGES_SEMANTIC_SHA256, TOKENIZER_JSON_BYTES, TOKENIZER_JSON_SHA256,
+        VOCABULARY_SEMANTIC_SHA256,
+    };
+    use crate::{
+        ArtifactDigest, AuthenticatedDeploymentAssets, AuthenticatedModelAssets, DRAFT_REPOSITORY,
+        DRAFT_REVISION, TARGET_REPOSITORY, TARGET_REVISION,
+    };
+    use ferric_spec::{EngineLimits, Qwen3ModelRole};
+    use std::sync::{Arc, OnceLock};
+
+    const TOKENIZER: &[u8] = include_bytes!("fixtures/tokenizer/qwen3-tokenizer.json");
+    const TARGET_CONFIG: &[u8] = include_bytes!("fixtures/qwen3-8b-config.json");
+    const DRAFT_CONFIG: &[u8] = include_bytes!("fixtures/qwen3-06b-config.json");
+    const TOKENIZER_METADATA: &[u8] = include_bytes!("fixtures/qwen3-tokenizer-config.json");
+
+    pub(crate) fn test_tokenizer(role: Qwen3ModelRole) -> AuthenticatedTokenizer {
+        static PROGRAM: OnceLock<Arc<super::TokenizerProgram>> = OnceLock::new();
+        AuthenticatedTokenizer {
+            role,
+            descriptor: ArtifactDigest {
+                sha256: TOKENIZER_JSON_SHA256,
+                byte_len: u64::try_from(TOKENIZER_JSON_BYTES)
+                    .expect("tokenizer byte length fits u64"),
+            },
+            vocabulary_semantic_sha256: VOCABULARY_SEMANTIC_SHA256,
+            merges_semantic_sha256: MERGES_SEMANTIC_SHA256,
+            program: Arc::clone(PROGRAM.get_or_init(|| {
+                parse_tokenizer_json(TOKENIZER)
+                    .expect("canonical tokenizer semantics")
+                    .program
+            })),
+            _seal: AuthenticatedTokenizerSeal,
+        }
+    }
+
+    pub(crate) fn authenticated_assets() -> AuthenticatedDeploymentAssets<'static> {
+        AuthenticatedDeploymentAssets {
+            target: AuthenticatedModelAssets {
+                repository: TARGET_REPOSITORY,
+                revision: TARGET_REVISION,
+                config_json: &TARGET_CONFIG[..TARGET_CONFIG.len() - 1],
+                tokenizer_metadata_json: TOKENIZER_METADATA,
+            },
+            draft: AuthenticatedModelAssets {
+                repository: DRAFT_REPOSITORY,
+                revision: DRAFT_REVISION,
+                config_json: &DRAFT_CONFIG[..DRAFT_CONFIG.len() - 1],
+                tokenizer_metadata_json: TOKENIZER_METADATA,
+            },
+            limits: EngineLimits {
+                max_context_tokens: 8_192,
+                max_active_sequences: 32,
+                kv_page_tokens: 256,
+                max_draft_tokens: 16,
+            },
+        }
+    }
+}
+
 #[cfg(test)]
 pub(crate) mod tests {
     use super::{

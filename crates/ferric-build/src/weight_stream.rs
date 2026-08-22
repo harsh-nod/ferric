@@ -1446,6 +1446,111 @@ const fn map_manifest_build_error(error: ManifestBuildError) -> WeightStreamErro
     }
 }
 
+#[cfg(feature = "test-fixtures")]
+pub(crate) mod test_fixtures {
+    use super::{
+        finish_prepacked, parse_header, PrepackedWeightSet, WeightSection, WeightTransform,
+        DRAFT_FILE_PIN, SECTION_ALIGNMENT, TARGET_SHARD_PINS,
+    };
+    use crate::{
+        sha256, WeightDescriptor, QWEN3_DRAFT_TENSOR_DATA_BYTES, QWEN3_DRAFT_WEIGHT_ARTIFACT_BYTES,
+        QWEN3_DRAFT_WEIGHT_SHA256, QWEN3_TARGET_TENSOR_DATA_BYTES,
+        QWEN3_TARGET_WEIGHT_ARTIFACT_BYTES, QWEN3_TARGET_WEIGHT_SET_SHA256,
+    };
+    use ferric_spec::Qwen3ModelRole;
+
+    const TARGET_HEADERS: [&[u8]; 5] = [
+        include_bytes!("fixtures/safetensors/qwen3-8b-00001.header.json"),
+        include_bytes!("fixtures/safetensors/qwen3-8b-00002.header.json"),
+        include_bytes!("fixtures/safetensors/qwen3-8b-00003.header.json"),
+        include_bytes!("fixtures/safetensors/qwen3-8b-00004.header.json"),
+        include_bytes!("fixtures/safetensors/qwen3-8b-00005.header.json"),
+    ];
+    const DRAFT_HEADER: &[u8] = include_bytes!("fixtures/safetensors/qwen3-06b.header.json");
+
+    const fn descriptor(role: Qwen3ModelRole) -> WeightDescriptor {
+        match role {
+            Qwen3ModelRole::Target8B => WeightDescriptor {
+                weights_id: QWEN3_TARGET_WEIGHT_SET_SHA256,
+                artifact_bytes: QWEN3_TARGET_WEIGHT_ARTIFACT_BYTES,
+                tensor_data_bytes: QWEN3_TARGET_TENSOR_DATA_BYTES,
+                sections: 5,
+            },
+            Qwen3ModelRole::Draft06B => WeightDescriptor {
+                weights_id: QWEN3_DRAFT_WEIGHT_SHA256,
+                artifact_bytes: QWEN3_DRAFT_WEIGHT_ARTIFACT_BYTES,
+                tensor_data_bytes: QWEN3_DRAFT_TENSOR_DATA_BYTES,
+                sections: 1,
+            },
+        }
+    }
+
+    pub(crate) fn test_prepacked(role: Qwen3ModelRole) -> PrepackedWeightSet {
+        let descriptor = descriptor(role);
+        let parsed = match role {
+            Qwen3ModelRole::Target8B => TARGET_HEADERS
+                .iter()
+                .zip(TARGET_SHARD_PINS)
+                .map(|(fixture, pin)| {
+                    assert_eq!(fixture.last(), Some(&b'\n'));
+                    let mut header = fixture[..fixture.len() - 1].to_vec();
+                    header.resize(
+                        usize::try_from(pin.header_bytes).expect("test header bound"),
+                        b' ',
+                    );
+                    let shard = parse_header(role, pin.name, &header, pin.tensor_data_bytes)
+                        .expect("official target header");
+                    (pin, shard)
+                })
+                .collect::<Vec<_>>(),
+            Qwen3ModelRole::Draft06B => {
+                let pin = DRAFT_FILE_PIN;
+                assert_eq!(DRAFT_HEADER.last(), Some(&b'\n'));
+                let mut header = DRAFT_HEADER[..DRAFT_HEADER.len() - 1].to_vec();
+                header.resize(
+                    usize::try_from(pin.header_bytes).expect("test header bound"),
+                    b' ',
+                );
+                vec![(
+                    pin,
+                    parse_header(role, pin.name, &header, pin.tensor_data_bytes)
+                        .expect("official draft header"),
+                )]
+            }
+        };
+        let mut destination = 0_u64;
+        let mut sections = Vec::with_capacity(role.tensor_count() as usize);
+        for (pin, shard) in parsed {
+            for tensor in shard.tensors {
+                let length = tensor.end - tensor.start;
+                let mut digest_input = tensor.name.as_bytes().to_vec();
+                digest_input.extend_from_slice(&tensor.start.to_le_bytes());
+                sections.push(WeightSection {
+                    tensor_name: tensor.name,
+                    role,
+                    dtype: tensor.metadata.dtype,
+                    rank: tensor.metadata.rank,
+                    dimension_0: tensor.metadata.dimension_0,
+                    dimension_1: tensor.metadata.dimension_1,
+                    source_artifact: pin.name.to_owned(),
+                    source_offset: 8 + pin.header_bytes + tensor.start,
+                    source_length: length,
+                    destination_offset: destination,
+                    destination_length: length,
+                    alignment: SECTION_ALIGNMENT,
+                    transform: WeightTransform::Bf16RowMajorIdentityV1,
+                    sha256: sha256::digest(&digest_input),
+                });
+                destination += length;
+            }
+        }
+        assert_eq!(destination, descriptor.tensor_data_bytes);
+        assert_eq!(sections.len(), role.tensor_count() as usize);
+        finish_prepacked(role, descriptor, destination, sections)
+            .expect("test sections satisfy the verified production finalizer")
+    }
+}
+
 #[cfg(test)]
 pub(crate) mod tests {
     use super::{
