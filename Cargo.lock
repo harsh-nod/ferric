@@ -285,6 +285,7 @@ dependencies = [
  "ferric-kernels",
  "ferric-qwen-kernels",
  "ferric-spec",
+ "sha2",
  "vstd",
 ]
 

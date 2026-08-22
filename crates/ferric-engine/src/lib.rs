@@ -9,6 +9,7 @@ mod cache;
 mod completion_wire;
 mod device_cache;
 mod epoch;
+mod operation_dispatch_expansion;
 mod operation_kernel_plan;
 mod physical_step;
 mod runner;
@@ -34,6 +35,14 @@ pub use device_cache::{
     GFX942_TARGET_FEATURES,
 };
 pub use epoch::ExactCompletion;
+pub use operation_dispatch_expansion::{
+    derive_m1_operation_dispatch_expansion, plan_m1_operation_dispatch_expansion,
+    AddresslessM1OperationDispatchPlan, DeclaredM1OperationDispatchExpansion,
+    M1OperationDispatchExpansionError, M1OperationDispatchExpansionFailure,
+    M1OperationDispatchExpansionOutcome, M1OperationDispatchIdentityComponent,
+    M1OperationDispatchKind, M1OperationDispatchRow, M1_MAX_OPERATION_DISPATCHES_V1,
+    M1_OPERATION_DISPATCH_EXPANSION_VERSION,
+};
 pub use operation_kernel_plan::{
     bind_declared_operation_kernel_plan, DeclaredKernelFamilyArtifact, DeclaredOperationIdentity,
     DeclaredOperationKernelBinding, DeclaredOperationKernelPlan, OperationKernelIdentityComponent,

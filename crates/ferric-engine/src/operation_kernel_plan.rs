@@ -1059,7 +1059,7 @@ where
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use std::collections::HashSet;
 
     use ferric_build::{
@@ -1076,9 +1076,9 @@ mod tests {
     use super::{
         bind_declared_operation_kernel_plan, expected_family, resolve_profile, validate_families,
         validate_operation_sequence_with_catalogs, CanonicalCatalogs, DeclaredKernelFamilyArtifact,
-        DeclaredOperationIdentity, DeclaredOperationKernelBinding, LogicalRunnerDeclaration,
-        OperationKernelIdentityComponent, OperationKernelPlanError, OperationKernelPlanOutcome,
-        FAMILIES, M1_B3_PLAN_BUCKETS, M1_KERNEL_OPERATION_BINDINGS,
+        DeclaredOperationIdentity, DeclaredOperationKernelBinding, DeclaredOperationKernelPlan,
+        LogicalRunnerDeclaration, OperationKernelIdentityComponent, OperationKernelPlanError,
+        OperationKernelPlanOutcome, FAMILIES, M1_B3_PLAN_BUCKETS, M1_KERNEL_OPERATION_BINDINGS,
     };
 
     const TARGET_OPERATIONS: usize = 11 * 544;
@@ -1472,6 +1472,16 @@ mod tests {
             families,
             operations,
         )
+    }
+
+    pub(crate) fn public_operation_kernel_plan_fixture() -> DeclaredOperationKernelPlan {
+        let (runner, families, operations) = public_runner_fixture();
+        let OperationKernelPlanOutcome::Bound(plan) =
+            bind_declared_operation_kernel_plan(runner, families, operations)
+        else {
+            panic!("exact published runner must bind");
+        };
+        plan
     }
 
     #[test]

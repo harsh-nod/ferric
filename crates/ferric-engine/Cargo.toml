@@ -11,6 +11,7 @@ ferric-build = { path = "../ferric-build" }
 ferric-kernels = { path = "../ferric-kernels" }
 ferric-qwen-kernels = { path = "../ferric-qwen-kernels" }
 ferric-spec = { path = "../ferric-spec" }
+sha2.workspace = true
 vstd.workspace = true
 
 [dev-dependencies]
