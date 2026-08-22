@@ -15,6 +15,7 @@ mod graph;
 mod identity;
 mod m1_completion;
 pub mod m1_foundation_theorems;
+mod m1_qualification_context;
 mod m1_step_inputs;
 pub mod paged_kv_refinement;
 pub mod physical_plan;
@@ -48,6 +49,15 @@ pub use identity::{Identity, RequestId};
 pub use m1_completion::{
     select_lowest_argmax, validate_compact_completion, CompactCompletionError,
     CompactCompletionRecord, M1_MAX_COMPLETION_TOKENS,
+};
+pub use m1_qualification_context::{
+    m1_qualification_context_plan, m1_qualification_context_plan_identity,
+    M1QualificationCompactChoiceDisposition, M1QualificationContextPlan,
+    M1QualificationContextPlanError, M1QualificationContextStep, M1QualificationContextStepKind,
+    M1QualificationLaneGrouping, M1QualificationNextInputPolicy, M1QualificationTokenRange,
+    M1_QUALIFICATION_CONTEXT_PLAN_STEPS, M1_QUALIFICATION_CONTEXT_PLAN_VERSION,
+    M1_QUALIFICATION_FINAL_INPUT_TOKEN, M1_QUALIFICATION_PROMPT_CONTEXT_TOKENS,
+    M1_QUALIFICATION_TOKENS_PER_LANE,
 };
 pub use m1_step_inputs::{
     validate_m1_step_inputs, M1StepInputCandidate, M1StepInputError, M1StepInputParts,
