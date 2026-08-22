@@ -7,6 +7,9 @@ version.workspace = true
 publish = false
 
 [dependencies]
+fe2o3-amdhsa-loader.workspace = true
+fe2o3-aql.workspace = true
+fe2o3-service-host.workspace = true
 ferric-build = { path = "../ferric-build" }
 ferric-kernels = { path = "../ferric-kernels" }
 ferric-qwen-kernels = { path = "../ferric-qwen-kernels" }
