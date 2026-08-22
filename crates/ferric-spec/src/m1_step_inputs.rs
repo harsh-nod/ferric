@@ -430,7 +430,7 @@ closed spec fn live_plan_valid(
     &&& committed as int + active as int <= dimensions.context_tokens as int
     &&& forall|active_index: int|
         0 <= active_index < active as int ==> {
-            &&& candidate.token_ids_spec()[row + active_index] < QWEN3_VOCABULARY_SIZE
+            &&& #[trigger] candidate.token_ids_spec()[row + active_index] < QWEN3_VOCABULARY_SIZE
             &&& candidate.position_ids_spec()[row + active_index] as int
                 == committed as int + active_index
         }
