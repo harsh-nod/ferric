@@ -9,6 +9,7 @@ mod cache;
 mod completion_wire;
 mod device_cache;
 mod epoch;
+mod model_memory_allocations;
 mod operation_dispatch_expansion;
 mod operation_kernel_plan;
 mod physical_dispatch_recipe;
@@ -39,6 +40,11 @@ pub use device_cache::{
     GFX942_TARGET_FEATURES,
 };
 pub use epoch::ExactCompletion;
+pub use model_memory_allocations::{
+    bind_addressless_model_memory_allocations_v1, BoundModelMemoryAllocationsV1,
+    ModelMemoryAllocationBindingErrorV1, ModelMemoryAllocationBindingFailureV1,
+    ModelMemoryDispatchRangeErrorV1, SelectedModelMemoryAllocationIdentitiesV1,
+};
 pub use operation_dispatch_expansion::{
     derive_m1_operation_dispatch_expansion, plan_m1_operation_dispatch_expansion,
     AddresslessM1OperationDispatchPlan, DeclaredM1OperationDispatchExpansion,

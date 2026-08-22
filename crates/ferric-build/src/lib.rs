@@ -40,6 +40,9 @@ pub use identity_closure::{
     ExternalIdentityClosureInputs, IdentityClosureComponent, IdentityClosureError,
     PreliminaryIdentityClosure, PRELIMINARY_IDENTITY_CLOSURE_VERSION,
 };
+#[cfg(feature = "test-fixtures")]
+#[doc(hidden)]
+pub use memory_layout::qwen3_model_memory_plan_test_fixture;
 pub use memory_layout::{
     plan_authenticated_model_memory, qwen3_kv_arena_bytes, AddresslessModelMemoryPlan,
     DeclaredDeviceAllocation, DeclaredMemoryRange, KvCacheComponent, ModelKvPageMemoryBinding,

@@ -584,6 +584,65 @@ pub fn plan_authenticated_model_memory(
     }
 }
 
+/// Builds the compact exact model-memory fixture for cross-crate tests.
+///
+/// This helper exists only under the `test-fixtures` feature. It grants no
+/// deployed model-content, allocation, initialization, or dispatch authority.
+#[cfg(feature = "test-fixtures")]
+#[doc(hidden)]
+#[must_use]
+pub fn qwen3_model_memory_plan_test_fixture() -> AddresslessModelMemoryPlan {
+    use crate::{
+        build_authenticated_model_weight_layout, build_prepacked_deployment_bundle,
+        seal_authenticated_bundle, tokenizer::test_fixtures::authenticated_assets,
+        tokenizer::test_fixtures::test_tokenizer, weight_stream::test_fixtures::test_prepacked,
+    };
+
+    const fn fixture_identity(byte: u8) -> Identity {
+        Identity::new([byte; 32])
+    }
+
+    let prepacked = build_prepacked_deployment_bundle(
+        authenticated_assets(),
+        test_tokenizer(Qwen3ModelRole::Target8B),
+        test_tokenizer(Qwen3ModelRole::Draft06B),
+        test_prepacked(Qwen3ModelRole::Target8B),
+        test_prepacked(Qwen3ModelRole::Draft06B),
+    )
+    .expect("exact compact prepacked fixture");
+    let admission = seal_authenticated_bundle(prepacked).expect("sealed compact fixture");
+    let layout =
+        build_authenticated_model_weight_layout(admission).expect("exact model layout fixture");
+    let declarations = ModelMemoryAllocationSet::new(
+        DeclaredDeviceAllocation::new(
+            fixture_identity(1),
+            Qwen3ModelRole::Target8B.tensor_data_bytes(),
+            QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1,
+        ),
+        DeclaredDeviceAllocation::new(
+            fixture_identity(2),
+            Qwen3ModelRole::Draft06B.tensor_data_bytes(),
+            QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1,
+        ),
+        DeclaredDeviceAllocation::new(
+            fixture_identity(3),
+            qwen3_kv_arena_bytes(Qwen3ModelRole::Target8B),
+            QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1,
+        ),
+        DeclaredDeviceAllocation::new(
+            fixture_identity(4),
+            qwen3_kv_arena_bytes(Qwen3ModelRole::Draft06B),
+            QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1,
+        ),
+    );
+    match plan_authenticated_model_memory(layout, declarations) {
+        ModelMemoryPlanOutcome::Planned(plan) => plan,
+        ModelMemoryPlanOutcome::Rejected(failure) => {
+            panic!("exact model-memory fixture rejected: {:?}", failure.error())
+        }
+    }
+}
+
 fn validate_declarations(
     declarations: ModelMemoryAllocationSet,
 ) -> Result<(), ModelMemoryPlanError> {
