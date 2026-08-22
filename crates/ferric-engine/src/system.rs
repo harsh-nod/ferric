@@ -37,7 +37,9 @@ impl CompletionFailure {
     }
 
     #[must_use]
-    pub fn into_completion(self) -> Option<ExactCompletion> {
+    pub fn into_completion(self) -> (completion: Option<ExactCompletion>)
+        ensures completion == self.completion,
+    {
         self.completion
     }
 
@@ -959,6 +961,20 @@ impl<const C: usize> Engine<C> {
         ensures epoch == self.completed_epoch_spec(),
     {
         self.scheduler.completed_epoch()
+    }
+
+    pub(crate) fn pending_batch_member_count(&self) -> (count: usize)
+        requires self.well_formed(),
+        ensures count == self.pending_batch_member_count_spec(),
+    {
+        self.scheduler.pending_batch_member_count()
+    }
+
+    pub(crate) fn pending_member(&self, offset: usize) -> (request: Option<RequestId>)
+        requires self.well_formed(),
+        ensures request == self.pending_member_spec(offset),
+    {
+        self.scheduler.pending_member(offset)
     }
 
     /// Admits one request generation into the scheduler and KV pool.

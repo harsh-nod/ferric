@@ -1478,6 +1478,7 @@ pub proof fn isolated_action_preserves_other_request(
 mod tests {
     use super::*;
     use crate::{
+        apply_preflighted_speculative_step, preflight_speculative_step,
         settle_and_publish_speculative_step, AtomicSpeculativeStepError, CompactCompletionRecord,
         CorrectionBonusKvDisposition, PublicationPhase, ReservedStateDelta,
         SpeculativeCompletionError, SpeculativeKvInterval, SpeculativeTokenInputs, StepPlan,
@@ -2043,6 +2044,48 @@ mod tests {
             assert_eq!(batch, batch_before);
             assert_eq!(other.projection(), other_before);
         }
+    }
+
+    #[test]
+    fn staged_speculative_preflight_is_inert_then_applies_once() {
+        let (batch, mut selected, other, index) =
+            prepared_speculative_round(Qwen3PlanBucket::SpeculativeS1K4C8192, 4, 0);
+        let draft_tokens = live_draft_tokens(&index);
+        let target_choices = [100, 101, 900, 903, 904];
+        let emitted = [100, 101, 900];
+        let mut publication = reserved_speculative_publication(&index, 2, &emitted);
+        let expected = exact_settlement_expectation(&index);
+        let publication_before = reserved_speculative_publication(&index, 2, &emitted);
+        let selected_before = selected.projection();
+
+        let permit = preflight_speculative_step(
+            &batch,
+            &publication,
+            &selected,
+            &other,
+            &index,
+            &expected,
+            token_inputs(&draft_tokens, &target_choices),
+        )
+        .unwrap();
+
+        assert_eq!(permit.accepted_draft_tokens(), 2);
+        assert_eq!(permit.required_single_member_accepted_tokens(), 3);
+        assert_eq!(publication, publication_before);
+        assert_eq!(selected.projection(), selected_before);
+
+        let outcome = apply_preflighted_speculative_step(
+            &mut publication,
+            &mut selected,
+            &index,
+            &expected,
+            token_inputs(&draft_tokens, &target_choices),
+            permit,
+        );
+
+        assert_eq!(publication.phase(), PublicationPhase::Published);
+        assert_eq!(outcome.settlement.accepted_draft_tokens, 2);
+        assert_eq!(outcome.published_delta.emitted_token_count(), 3);
     }
 
     #[test]

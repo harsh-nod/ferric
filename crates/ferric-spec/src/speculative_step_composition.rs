@@ -40,6 +40,103 @@ pub struct AtomicSpeculativeStepOutcome {
     pub published_delta: ReservedStateDelta,
 }
 
+/// Opaque, non-clone authority for one fully preflighted logical transaction.
+///
+/// This permit contains no device-completion authority. It can only apply the
+/// publication and logical target/draft KV effects checked by
+/// [`preflight_speculative_step`].
+///
+/// ```compile_fail
+/// use ferric_spec::SpeculativeStepPreflight;
+///
+/// fn duplicate(permit: SpeculativeStepPreflight) {
+///     let _second = permit.clone();
+/// }
+/// ```
+#[derive(Debug, PartialEq, Eq)]
+pub struct SpeculativeStepPreflight {
+    publication: crate::step_plan_publication::SpeculativePublicationPermit,
+    kv: crate::request_isolation::IsolatedSpeculativeKvSettlementPermit,
+    accepted_draft_tokens: u8,
+    required_single_member_accepted_tokens: u32,
+}
+
+impl SpeculativeStepPreflight {
+    pub closed spec fn valid_for(
+        &self,
+        publication: &StepPublication,
+        selected: &IsolatedRequestKv,
+        index: &SpeculativeKvRoundIndex,
+        expected: &IsolatedSpeculativeKvExpectation,
+        draft_tokens: Seq<TokenId>,
+        target_choices: Seq<TokenId>,
+    ) -> bool {
+        &&& index.valid_for(
+            expected.request_spec(),
+            expected.completion_epoch_spec(),
+            expected.plan_id_spec(),
+            expected.target_selection_spec(),
+            expected.draft_selection_spec(),
+        )
+        &&& self.publication.valid_for(
+            publication,
+            index.request,
+            index.completion_epoch,
+            index.plan_id,
+            index.target_selection,
+            draft_tokens,
+            target_choices,
+        )
+        &&& self.kv.valid_for(selected, index)
+        &&& self.accepted_draft_tokens == self.publication.accepted_draft_tokens_spec()
+        &&& self.accepted_draft_tokens == self.kv.accepted_draft_tokens_spec()
+        &&& self.required_single_member_accepted_tokens as int
+            == self.accepted_draft_tokens as int + 1
+    }
+
+    /// Exact number of draft candidates accepted by target verification.
+    #[must_use]
+    pub const fn accepted_draft_tokens(&self) -> (accepted: u8)
+        ensures accepted == self.accepted_draft_tokens,
+    {
+        self.accepted_draft_tokens
+    }
+
+    /// Required single-member engine count: accepted draft tokens plus one.
+    ///
+    /// This arithmetic does not establish a refinement between the engine's
+    /// single KV pool and either isolated target/draft KV state.
+    #[must_use]
+    pub const fn required_single_member_accepted_tokens(&self) -> (accepted: u32)
+        ensures
+            accepted == self.required_single_member_accepted_tokens,
+            accepted as int == self.accepted_draft_tokens as int + 1,
+    {
+        self.required_single_member_accepted_tokens
+    }
+}
+
+/// Computes the required accepted count for the narrow single-member handoff.
+///
+/// This is only a bounded arithmetic mapping. It does not establish a
+/// cross-model KV refinement.
+#[must_use]
+pub const fn required_single_member_accepted_count(
+    accepted_draft_tokens: u8,
+) -> (accepted: u32)
+    ensures accepted as int == accepted_draft_tokens as int + 1,
+{
+    accepted_draft_tokens as u32 + 1
+}
+
+/// The required single-member count is exactly accepted draft tokens plus one.
+pub proof fn exact_required_single_member_accepted_count(accepted_draft_tokens: u8)
+    ensures
+        required_single_member_accepted_count(accepted_draft_tokens) as int
+            == accepted_draft_tokens as int + 1,
+{
+}
+
 /// The caller-supplied draft slice is exactly the live index prefix, not a substitute.
 pub closed spec fn draft_tokens_match_index(
     index: &SpeculativeKvRoundIndex,
@@ -154,6 +251,172 @@ fn exact_draft_tokens(
     true
 }
 
+/// Checks every publication and logical KV obligation without changing state.
+///
+/// The returned permit is opaque, non-clone, and contains no completion,
+/// queue, device, allocation, or runtime authority.
+///
+/// # Errors
+///
+/// Returns [`AtomicSpeculativeStepError`] when the draft tokens, publication,
+/// or isolated target/draft KV state differs from the exact indexed round.
+pub fn preflight_speculative_step(
+    batch: &ContinuousBatch,
+    publication: &StepPublication,
+    selected: &IsolatedRequestKv,
+    other: &IsolatedRequestKv,
+    index: &SpeculativeKvRoundIndex,
+    expected: &IsolatedSpeculativeKvExpectation,
+    token_inputs: SpeculativeTokenInputs<'_>,
+) -> (result: Result<SpeculativeStepPreflight, AtomicSpeculativeStepError>)
+    requires batch.valid(),
+    ensures match result {
+        Ok(permit) => permit.valid_for(
+            publication,
+            selected,
+            index,
+            expected,
+            token_inputs.draft_tokens@,
+            token_inputs.target_choices@,
+        ),
+        Err(_) => true,
+    },
+{
+    proof {
+        reveal(SpeculativeStepPreflight::valid_for);
+    }
+    if !exact_draft_tokens(index, token_inputs.draft_tokens) {
+        return Err(AtomicSpeculativeStepError::DraftTokensMismatch);
+    }
+    let publication_permit = match preflight_speculative_publication(
+        publication,
+        index.request,
+        index.completion_epoch,
+        &index.plan_id,
+        index.target_selection,
+        token_inputs,
+    ) {
+        Ok(permit) => permit,
+        Err(error) => return Err(AtomicSpeculativeStepError::Publication(error)),
+    };
+    let accepted_draft_tokens = publication_permit.accepted_draft_tokens();
+    let kv_permit = match preflight_isolated_speculative_kv(
+        batch,
+        selected,
+        other,
+        index,
+        accepted_draft_tokens,
+        expected,
+    ) {
+        Ok(permit) => permit,
+        Err(error) => return Err(AtomicSpeculativeStepError::Kv(error)),
+    };
+    let required_single_member_accepted_tokens =
+        required_single_member_accepted_count(accepted_draft_tokens);
+    proof {
+        exact_required_single_member_accepted_count(accepted_draft_tokens);
+    }
+    let permit = SpeculativeStepPreflight {
+        publication: publication_permit,
+        kv: kv_permit,
+        accepted_draft_tokens,
+        required_single_member_accepted_tokens,
+    };
+    assert(permit.valid_for(
+        publication,
+        selected,
+        index,
+        expected,
+        token_inputs.draft_tokens@,
+        token_inputs.target_choices@,
+    ));
+    Ok(permit)
+}
+
+/// Applies one fully checked publication and logical KV transaction.
+///
+/// No fallible operation runs here. The permit is consumed exactly once.
+pub fn apply_preflighted_speculative_step(
+    publication: &mut StepPublication,
+    selected: &mut IsolatedRequestKv,
+    index: &SpeculativeKvRoundIndex,
+    _expected: &IsolatedSpeculativeKvExpectation,
+    token_inputs: SpeculativeTokenInputs<'_>,
+    permit: SpeculativeStepPreflight,
+) -> (outcome: AtomicSpeculativeStepOutcome)
+    requires permit.valid_for(
+        old(publication),
+        old(selected),
+        index,
+        _expected,
+        token_inputs.draft_tokens@,
+        token_inputs.target_choices@,
+    ),
+    ensures
+        atomic_speculative_step_transition(
+            old(publication),
+            final(publication),
+            old(selected),
+            final(selected),
+            index,
+            _expected,
+            token_inputs.draft_tokens@,
+            token_inputs.target_choices@,
+            outcome,
+        ),
+        outcome.settlement.accepted_draft_tokens as int + 1
+            == permit.required_single_member_accepted_tokens as int,
+{
+    let ghost entry_publication = *publication;
+    let ghost entry_selected = *selected;
+    let ghost required_single_member_accepted_tokens =
+        permit.required_single_member_accepted_tokens;
+    proof {
+        reveal(SpeculativeStepPreflight::valid_for);
+        reveal(atomic_speculative_step_transition);
+    }
+    let SpeculativeStepPreflight {
+        publication: publication_permit,
+        kv: kv_permit,
+        accepted_draft_tokens: _accepted_draft_tokens,
+        required_single_member_accepted_tokens: _,
+    } = permit;
+    let settlement = apply_preflighted_isolated_speculative_kv(selected, index, kv_permit);
+    let published_delta = apply_preflighted_speculative_publication(
+        publication,
+        publication_permit,
+        index.request,
+        index.completion_epoch,
+        &index.plan_id,
+        index.target_selection,
+        token_inputs,
+    );
+    let outcome = AtomicSpeculativeStepOutcome {
+        settlement,
+        published_delta,
+    };
+    assert(settlement.accepted_draft_tokens == _accepted_draft_tokens);
+    assert(published_delta.compact_completion_spec().accepted_draft_tokens
+        == _accepted_draft_tokens);
+    assert(settlement.accepted_draft_tokens
+        == published_delta.compact_completion_spec().accepted_draft_tokens);
+    assert(published_delta == publication.delta_spec());
+    assert(atomic_speculative_step_transition(
+        &entry_publication,
+        publication,
+        &entry_selected,
+        selected,
+        index,
+        _expected,
+        token_inputs.draft_tokens@,
+        token_inputs.target_choices@,
+        outcome,
+    ));
+    assert(outcome.settlement.accepted_draft_tokens as int + 1
+        == required_single_member_accepted_tokens as int);
+    outcome
+}
+
 /// Validates and atomically applies one exact target-authoritative speculative step.
 ///
 /// The scheduler batch is observed but never changed. The other request is
@@ -204,51 +467,23 @@ pub fn settle_and_publish_speculative_step(
     proof {
         reveal(atomic_speculative_step_transition);
     }
-    if !exact_draft_tokens(index, token_inputs.draft_tokens) {
-        return Err(AtomicSpeculativeStepError::DraftTokensMismatch);
-    }
-    let publication_permit = match preflight_speculative_publication(
-        publication,
-        index.request,
-        index.completion_epoch,
-        &index.plan_id,
-        index.target_selection,
-        token_inputs,
-    ) {
-        Ok(permit) => permit,
-        Err(error) => return Err(AtomicSpeculativeStepError::Publication(error)),
-    };
-    let accepted_draft_tokens = publication_permit.accepted_draft_tokens();
-    let ghost publication_accepted = publication_permit.accepted_draft_tokens_spec();
-    assert(accepted_draft_tokens == publication_accepted);
-    let kv_permit = match preflight_isolated_speculative_kv(
+    let permit = preflight_speculative_step(
         batch,
+        publication,
         selected,
         other,
         index,
-        accepted_draft_tokens,
         expected,
-    ) {
-        Ok(permit) => permit,
-        Err(error) => return Err(AtomicSpeculativeStepError::Kv(error)),
-    };
-    let ghost kv_accepted = kv_permit.accepted_draft_tokens_spec();
-    assert(kv_accepted == accepted_draft_tokens);
-
-    let settlement = apply_preflighted_isolated_speculative_kv(selected, index, kv_permit);
-    let published_delta = apply_preflighted_speculative_publication(
-        publication,
-        publication_permit,
-        index.request,
-        index.completion_epoch,
-        &index.plan_id,
-        index.target_selection,
         token_inputs,
+    )?;
+    let outcome = apply_preflighted_speculative_step(
+        publication,
+        selected,
+        index,
+        expected,
+        token_inputs,
+        permit,
     );
-    let outcome = AtomicSpeculativeStepOutcome {
-        settlement,
-        published_delta,
-    };
     assert(draft_tokens_match_index(index, token_inputs.draft_tokens@));
     assert(index.valid_for(
         expected.request_spec(),
@@ -270,28 +505,6 @@ pub fn settle_and_publish_speculative_step(
             index.correction_bonus,
         ));
     }
-    assert(crate::step_plan_publication::speculative_validation_and_publication_transition(
-        &entry_publication,
-        publication,
-        index.request,
-        index.completion_epoch,
-        index.plan_id,
-        index.target_selection,
-        token_inputs.draft_tokens@,
-        token_inputs.target_choices@,
-    ));
-    assert(crate::request_isolation::isolated_speculative_settlement_transition(
-        &entry_selected,
-        selected,
-        index,
-        settlement,
-    ));
-    assert(settlement.accepted_draft_tokens == kv_accepted);
-    assert(published_delta.compact_completion_spec().accepted_draft_tokens
-        == publication_accepted);
-    assert(settlement.accepted_draft_tokens
-        == published_delta.compact_completion_spec().accepted_draft_tokens);
-    assert(published_delta == publication.delta_spec());
     assert(atomic_speculative_step_transition(
         &entry_publication,
         publication,

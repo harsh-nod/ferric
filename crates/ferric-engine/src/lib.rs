@@ -11,6 +11,7 @@ mod epoch;
 mod physical_step;
 mod runner;
 mod scheduler;
+mod speculative_graph;
 mod system;
 
 pub use cache::{KvError, PageId};
@@ -31,4 +32,9 @@ pub use physical_step::{
 };
 pub use runner::{LogicalRunnerDeclaration, LogicalRunnerError};
 pub use scheduler::{DispatchBatch, SchedulerError};
+pub use speculative_graph::{
+    complete_single_member_speculative_graph, SingleMemberSpeculativeGraphError,
+    SingleMemberSpeculativeGraphFailure, SingleMemberSpeculativeGraphInputs,
+    SingleMemberSpeculativeGraphOutcome,
+};
 pub use system::{CompletionFailure, Engine, EngineError};
