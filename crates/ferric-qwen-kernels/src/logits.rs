@@ -50,6 +50,12 @@ pub const QWEN3_LOGITS_ARGMAX_DESCRIPTOR_SYMBOL_V1: &str =
 pub const QWEN3_LOGITS_COMPACT_KERNEL_SYMBOL_V1: &str = "ferric_qwen3_compact_completion_v1";
 /// Exact target-only compact encoder descriptor.
 pub const QWEN3_LOGITS_COMPACT_DESCRIPTOR_SYMBOL_V1: &str = "ferric_qwen3_compact_completion_v1.kd";
+/// Exact speculative target-token assembly entry.
+pub const QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_KERNEL_SYMBOL_V1: &str =
+    "ferric_qwen3_speculative_token_assembly_v1";
+/// Exact speculative target-token assembly descriptor.
+pub const QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_DESCRIPTOR_SYMBOL_V1: &str =
+    "ferric_qwen3_speculative_token_assembly_v1.kd";
 /// Exact device target.
 pub const QWEN3_LOGITS_TARGET_V1: &str = "gfx942:xnack-";
 /// Exact code-object version.
@@ -169,19 +175,25 @@ pub const QWEN3_LOGITS_ARGMAX_TOTAL_KERNARG_BYTES_V1: u64 = 296;
 pub const QWEN3_LOGITS_COMPACT_EXPLICIT_KERNARG_BYTES_V1: u64 = 144;
 /// Exact compact explicit plus COV6 hidden kernarg bytes.
 pub const QWEN3_LOGITS_COMPACT_TOTAL_KERNARG_BYTES_V1: u64 = 400;
+/// Exact speculative target-token assembly explicit kernarg bytes.
+pub const QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_EXPLICIT_KERNARG_BYTES_V1: u64 = 56;
+/// Exact speculative target-token assembly explicit plus COV6 hidden kernarg bytes.
+pub const QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_TOTAL_KERNARG_BYTES_V1: u64 = 312;
 /// Exact kernarg alignment.
 pub const QWEN3_LOGITS_KERNARG_ALIGNMENT_V1: u64 = 8;
 /// Exact final LLVM byte length.
-pub const QWEN3_LOGITS_LLVM_BYTES_V1: usize = 20_346;
+pub const QWEN3_LOGITS_LLVM_BYTES_V1: usize = 23_861;
 /// Exact final LLVM SHA-256.
 pub const QWEN3_LOGITS_LLVM_SHA256_V1: [u8; 32] = [
-    0xd5, 0x0f, 0x3f, 0xd1, 0xc3, 0x54, 0xae, 0x3e, 0x3e, 0x6a, 0x82, 0x4d, 0xee, 0x41, 0x5b, 0xf8,
-    0xc6, 0x5a, 0xa5, 0xf2, 0x13, 0x1d, 0xc4, 0x3e, 0x26, 0x4d, 0xd6, 0x80, 0x3f, 0xdb, 0x1e, 0x17,
+    0xd5, 0xe3, 0x8c, 0x8d, 0x3c, 0x4b, 0x01, 0xf6, 0x1b, 0x90, 0xed, 0xb8, 0xfc, 0x00, 0xec, 0x94,
+    0xe5, 0xa9, 0xd2, 0xbb, 0xb3, 0x8b, 0x58, 0x97, 0x22, 0xf2, 0x54, 0x40, 0xa6, 0xb9, 0xf0, 0x6c,
 ];
 
 const PROFILE_DOMAIN: &[u8] = b"FERRIC/QWEN3/LOGITS/PROFILE/V1\0";
 const CATALOG_DOMAIN: &[u8] = b"FERRIC/QWEN3/LOGITS/CATALOG/V1\0";
 const KERNEL_IR_DOMAIN: &[u8] = b"FERRIC/QWEN3/LOGITS/KERNEL-IR/V1\0";
+const ASSEMBLY_PROFILE_DOMAIN: &[u8] = b"FERRIC/QWEN3/SPECULATIVE-TOKEN-ASSEMBLY/PROFILE/V1\0";
+const ASSEMBLY_KERNEL_IR_DOMAIN: &[u8] = b"FERRIC/QWEN3/SPECULATIVE-TOKEN-ASSEMBLY/KERNEL-IR/V1\0";
 const SOURCE_BINDING_DOMAIN: &[u8] = b"FERRIC/QWEN3/LOGITS/SOURCE-BINDING/V1\0";
 
 /// Target or speculative-draft model role.
@@ -657,6 +669,135 @@ const QWEN3_LOGITS_BUCKETS_V1: [Qwen3LogitsBucketKindV1; 11] = [
     Qwen3LogitsBucketKindV1::SpeculativeS1K16C8192,
 ];
 
+/// Exact number of admitted speculative target-token assembly profiles.
+pub const QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_PROFILE_COUNT_V1: usize = 4;
+
+const QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_BUCKETS_V1: [Qwen3LogitsBucketKindV1;
+    QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_PROFILE_COUNT_V1] = [
+    Qwen3LogitsBucketKindV1::SpeculativeS1K4C8192,
+    Qwen3LogitsBucketKindV1::SpeculativeS8K4C8192,
+    Qwen3LogitsBucketKindV1::SpeculativeS1K8C8192,
+    Qwen3LogitsBucketKindV1::SpeculativeS1K16C8192,
+];
+
+/// Stable speculative target-token assembly profile identity.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct Qwen3SpeculativeTokenAssemblyProfileIdentityV1([u8; 32]);
+
+impl Qwen3SpeculativeTokenAssemblyProfileIdentityV1 {
+    /// Identity bytes.
+    #[must_use]
+    pub const fn as_bytes(&self) -> &[u8; 32] {
+        &self.0
+    }
+}
+
+/// One exact target speculative token-assembly profile.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct Qwen3SpeculativeTokenAssemblyProfileV1 {
+    bucket: Qwen3LogitsBucketKindV1,
+    sequences: u32,
+    speculative_k: u32,
+    identity: Qwen3SpeculativeTokenAssemblyProfileIdentityV1,
+}
+
+impl Qwen3SpeculativeTokenAssemblyProfileV1 {
+    /// Constructs one of the four admitted target speculative profiles.
+    #[must_use]
+    pub fn for_bucket(bucket: Qwen3LogitsBucketKindV1) -> Option<Self> {
+        if !QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_BUCKETS_V1.contains(&bucket) {
+            return None;
+        }
+        Some(Self::canonical(bucket))
+    }
+
+    fn canonical(bucket: Qwen3LogitsBucketKindV1) -> Self {
+        let sequences = bucket.sequences();
+        let speculative_k = bucket.speculative_k();
+        let mut encoded = Vec::with_capacity(12);
+        encoded.push(bucket as u8);
+        encoded.extend_from_slice(&sequences.to_le_bytes());
+        encoded.extend_from_slice(&speculative_k.to_le_bytes());
+        Self {
+            bucket,
+            sequences,
+            speculative_k,
+            identity: Qwen3SpeculativeTokenAssemblyProfileIdentityV1(hash(
+                ASSEMBLY_PROFILE_DOMAIN,
+                &encoded,
+            )),
+        }
+    }
+
+    /// Exact target speculative bucket.
+    #[must_use]
+    pub const fn bucket(self) -> Qwen3LogitsBucketKindV1 {
+        self.bucket
+    }
+
+    /// Sequence count `S`.
+    #[must_use]
+    pub const fn sequences(self) -> u32 {
+        self.sequences
+    }
+
+    /// Draft iteration count `K`.
+    #[must_use]
+    pub const fn speculative_k(self) -> u32 {
+        self.speculative_k
+    }
+
+    /// Exact `[anchor TokenIds, DraftChoices, target TokenIds]` element extents.
+    #[must_use]
+    pub const fn storage_extents(self) -> [u64; 3] {
+        let sequences = self.sequences as u64;
+        let speculative_k = self.speculative_k as u64;
+        [
+            sequences,
+            sequences * speculative_k,
+            sequences * (speculative_k + 1),
+        ]
+    }
+
+    /// Linear iteration-major `[K,S]` draft-choice index.
+    #[must_use]
+    pub const fn draft_choice_index(self, iteration: u32, sequence: u32) -> Option<u64> {
+        if iteration >= self.speculative_k || sequence >= self.sequences {
+            return None;
+        }
+        Some(iteration as u64 * self.sequences as u64 + sequence as u64)
+    }
+
+    /// Linear sequence-major `[S,K+1]` target-token index.
+    #[must_use]
+    pub const fn target_token_index(self, sequence: u32, token: u32) -> Option<u64> {
+        if sequence >= self.sequences || token > self.speculative_k {
+            return None;
+        }
+        Some(sequence as u64 * (self.speculative_k as u64 + 1) + token as u64)
+    }
+
+    /// Exact one-workgroup-per-sequence AQL workitems.
+    #[must_use]
+    pub const fn grid_workitems(self) -> [u32; 3] {
+        [self.sequences * QWEN3_LOGITS_WORKGROUP_V1[0], 1, 1]
+    }
+
+    /// Stable infrastructure profile identity.
+    #[must_use]
+    pub const fn identity(self) -> Qwen3SpeculativeTokenAssemblyProfileIdentityV1 {
+        self.identity
+    }
+}
+
+/// Returns all four profiles in canonical target bucket order.
+#[must_use]
+pub fn qwen3_speculative_token_assembly_profiles_v1(
+) -> [Qwen3SpeculativeTokenAssemblyProfileV1; QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_PROFILE_COUNT_V1] {
+    QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_BUCKETS_V1
+        .map(Qwen3SpeculativeTokenAssemblyProfileV1::canonical)
+}
+
 /// One physical buffer role.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[repr(u8)]
@@ -679,11 +820,19 @@ pub enum Qwen3LogitsBufferV1 {
     PlanIdentities = 8,
     /// Canonical 120-byte records.
     Records = 9,
+    /// U32 anchor `TokenIds` in `[S]` order.
+    AnchorTokenIds = 10,
+    /// U32 iteration-major `DraftChoices` in `[K,S]` order.
+    DraftChoices = 11,
+    /// U32 assembled target `TokenIds` in sequence-major `[S,K+1]` order.
+    TargetTokenIds = 12,
 }
 
 /// Checked binding rejection.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Qwen3LogitsBufferContractErrorV1 {
+    /// The supplied finite profile was not canonical.
+    Profile,
     /// A byte length differed.
     Length(Qwen3LogitsBufferV1),
     /// A pointer was zero or insufficiently aligned.
@@ -938,6 +1087,155 @@ fn check_disjoint(
     Ok(())
 }
 
+/// Exact checked speculative target-token assembly slice binding.
+#[derive(Debug, Eq, PartialEq)]
+pub struct Qwen3SpeculativeTokenAssemblyBufferContractV1 {
+    addresses: [u64; 3],
+    byte_lengths: [u64; 3],
+}
+
+impl Qwen3SpeculativeTokenAssemblyBufferContractV1 {
+    /// Checks exact extents, alignment, interval overflow, and pairwise no-alias.
+    ///
+    /// Addresses and lengths are in anchor `TokenIds`, iteration-major
+    /// `DraftChoices`, and sequence-major target `TokenIds` order.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the profile is not canonical or any slice differs
+    /// from its exact four-profile boundary.
+    pub fn checked(
+        profile: Qwen3SpeculativeTokenAssemblyProfileV1,
+        addresses: [u64; 3],
+        byte_lengths: [u64; 3],
+    ) -> Result<Self, Qwen3LogitsBufferContractErrorV1> {
+        if Qwen3SpeculativeTokenAssemblyProfileV1::for_bucket(profile.bucket()) != Some(profile) {
+            return Err(Qwen3LogitsBufferContractErrorV1::Profile);
+        }
+        let roles = [
+            Qwen3LogitsBufferV1::AnchorTokenIds,
+            Qwen3LogitsBufferV1::DraftChoices,
+            Qwen3LogitsBufferV1::TargetTokenIds,
+        ];
+        let extents = profile.storage_extents();
+        let mut expected = [0; 3];
+        for index in 0..3 {
+            expected[index] = extents[index]
+                .checked_mul(4)
+                .ok_or(Qwen3LogitsBufferContractErrorV1::Overflow(roles[index]))?;
+            check_slice(
+                roles[index],
+                addresses[index],
+                byte_lengths[index],
+                expected[index],
+                4,
+            )?;
+        }
+        for first in 0..3 {
+            for second in first + 1..3 {
+                check_disjoint(
+                    roles[first],
+                    addresses[first],
+                    byte_lengths[first],
+                    roles[second],
+                    addresses[second],
+                    byte_lengths[second],
+                )?;
+            }
+        }
+        Ok(Self {
+            addresses,
+            byte_lengths,
+        })
+    }
+
+    /// Addresses in anchor, `DraftChoices`, target order.
+    #[must_use]
+    pub const fn addresses(&self) -> [u64; 3] {
+        self.addresses
+    }
+
+    /// Exact byte lengths in the same order.
+    #[must_use]
+    pub const fn byte_lengths(&self) -> [u64; 3] {
+        self.byte_lengths
+    }
+}
+
+/// Host-side semantic assembly rejection.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Qwen3SpeculativeTokenAssemblyErrorV1 {
+    /// The supplied finite profile was not canonical.
+    Profile,
+    /// Anchor length differed from `S`.
+    AnchorLength,
+    /// `DraftChoices` length differed from `K*S`.
+    DraftLength,
+    /// Checked index or allocation arithmetic failed.
+    Arithmetic,
+}
+
+impl fmt::Display for Qwen3SpeculativeTokenAssemblyErrorV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            formatter,
+            "Qwen3 speculative token assembly failed: {self:?}"
+        )
+    }
+}
+
+impl std::error::Error for Qwen3SpeculativeTokenAssemblyErrorV1 {}
+
+/// Applies the exact K7 target-token assembly semantics on host slices.
+///
+/// This helper specifies layout only and establishes no device execution or
+/// numerical refinement claim.
+///
+/// # Errors
+///
+/// Returns an error for a noncanonical profile, wrong input extent, or checked
+/// index/allocation arithmetic failure.
+pub fn assemble_qwen3_speculative_target_tokens_v1(
+    profile: Qwen3SpeculativeTokenAssemblyProfileV1,
+    anchor_token_ids: &[u32],
+    draft_choices: &[u32],
+) -> Result<Vec<u32>, Qwen3SpeculativeTokenAssemblyErrorV1> {
+    if Qwen3SpeculativeTokenAssemblyProfileV1::for_bucket(profile.bucket()) != Some(profile) {
+        return Err(Qwen3SpeculativeTokenAssemblyErrorV1::Profile);
+    }
+    let [anchor_elements, draft_elements, target_elements] = profile.storage_extents();
+    if u64::try_from(anchor_token_ids.len()).ok() != Some(anchor_elements) {
+        return Err(Qwen3SpeculativeTokenAssemblyErrorV1::AnchorLength);
+    }
+    if u64::try_from(draft_choices.len()).ok() != Some(draft_elements) {
+        return Err(Qwen3SpeculativeTokenAssemblyErrorV1::DraftLength);
+    }
+    let target_len = usize::try_from(target_elements)
+        .map_err(|_| Qwen3SpeculativeTokenAssemblyErrorV1::Arithmetic)?;
+    let mut target_token_ids = vec![0; target_len];
+    for sequence in 0..profile.sequences() {
+        let anchor_index = usize::try_from(sequence)
+            .map_err(|_| Qwen3SpeculativeTokenAssemblyErrorV1::Arithmetic)?;
+        let target_anchor = profile
+            .target_token_index(sequence, 0)
+            .and_then(|index| usize::try_from(index).ok())
+            .ok_or(Qwen3SpeculativeTokenAssemblyErrorV1::Arithmetic)?;
+        target_token_ids[target_anchor] = anchor_token_ids[anchor_index];
+        for iteration in 0..profile.speculative_k() {
+            let draft_index = profile
+                .draft_choice_index(iteration, sequence)
+                .and_then(|index| usize::try_from(index).ok())
+                .ok_or(Qwen3SpeculativeTokenAssemblyErrorV1::Arithmetic)?;
+            let target_index = profile
+                .target_token_index(sequence, iteration + 1)
+                .and_then(|index| usize::try_from(index).ok())
+                .ok_or(Qwen3SpeculativeTokenAssemblyErrorV1::Arithmetic)?;
+            target_token_ids[target_index] = draft_choices[draft_index];
+        }
+    }
+    Ok(target_token_ids)
+}
+
 /// Semantic KIR argument access.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Qwen3LogitsArgumentAccessV1 {
@@ -968,6 +1266,75 @@ pub struct Qwen3LogitsKernelIrV1 {
     argmax_arguments: [Qwen3LogitsArgumentV1; 2],
     compact_arguments: Option<[Qwen3LogitsArgumentV1; 8]>,
     identity: [u8; 32],
+}
+
+/// Ferric-owned semantic sidecar for speculative target-token assembly.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Qwen3SpeculativeTokenAssemblyKernelIrV1 {
+    profile_identity: Qwen3SpeculativeTokenAssemblyProfileIdentityV1,
+    arguments: [Qwen3LogitsArgumentV1; 3],
+    identity: [u8; 32],
+}
+
+impl Qwen3SpeculativeTokenAssemblyKernelIrV1 {
+    /// Exact retained infrastructure profile identity.
+    #[must_use]
+    pub const fn profile_identity(&self) -> Qwen3SpeculativeTokenAssemblyProfileIdentityV1 {
+        self.profile_identity
+    }
+
+    /// Exact read/read/write KIR effects.
+    #[must_use]
+    pub const fn arguments(&self) -> &[Qwen3LogitsArgumentV1; 3] {
+        &self.arguments
+    }
+
+    /// Stable KIR identity.
+    #[must_use]
+    pub const fn identity(&self) -> &[u8; 32] {
+        &self.identity
+    }
+}
+
+/// Lowers one assembly profile to its exact Ferric semantic KIR sidecar.
+#[must_use]
+pub fn qwen3_speculative_token_assembly_kernel_ir_v1(
+    profile: Qwen3SpeculativeTokenAssemblyProfileV1,
+) -> Qwen3SpeculativeTokenAssemblyKernelIrV1 {
+    let extents = profile.storage_extents();
+    let arguments = [
+        Qwen3LogitsArgumentV1 {
+            role: Qwen3LogitsBufferV1::AnchorTokenIds,
+            access: Qwen3LogitsArgumentAccessV1::ReadOnly,
+            extent: extents[0],
+            element_bytes: 4,
+        },
+        Qwen3LogitsArgumentV1 {
+            role: Qwen3LogitsBufferV1::DraftChoices,
+            access: Qwen3LogitsArgumentAccessV1::ReadOnly,
+            extent: extents[1],
+            element_bytes: 4,
+        },
+        Qwen3LogitsArgumentV1 {
+            role: Qwen3LogitsBufferV1::TargetTokenIds,
+            access: Qwen3LogitsArgumentAccessV1::WriteOnly,
+            extent: extents[2],
+            element_bytes: 4,
+        },
+    ];
+    let mut encoded = Vec::with_capacity(64);
+    encoded.extend_from_slice(profile.identity().as_bytes());
+    for argument in arguments {
+        encoded.push(argument.role as u8);
+        encoded.push(argument.access as u8);
+        encoded.push(argument.element_bytes);
+        encoded.extend_from_slice(&argument.extent.to_le_bytes());
+    }
+    Qwen3SpeculativeTokenAssemblyKernelIrV1 {
+        profile_identity: profile.identity(),
+        arguments,
+        identity: hash(ASSEMBLY_KERNEL_IR_DOMAIN, &encoded),
+    }
 }
 
 impl Qwen3LogitsKernelIrV1 {
@@ -1201,7 +1568,7 @@ impl PreparedQwen3LogitsKernelV1 {
         self.compiler_handoff_identity
     }
 
-    /// Closed two-entry/two-descriptor manifest identity.
+    /// Closed three-entry/three-descriptor manifest identity.
     #[must_use]
     pub const fn manifest_identity(&self) -> CompilerModuleSymbolManifestIdentityV1 {
         self.manifest_identity
@@ -1271,6 +1638,20 @@ pub fn prepare_qwen3_logits_kernel_v1(
         }
         kir_identities.extend_from_slice(kir.identity());
     }
+    for profile in qwen3_speculative_token_assembly_profiles_v1() {
+        let kir = qwen3_speculative_token_assembly_kernel_ir_v1(profile);
+        if kir.profile_identity() != profile.identity()
+            || kir.arguments().map(|argument| argument.access)
+                != [
+                    Qwen3LogitsArgumentAccessV1::ReadOnly,
+                    Qwen3LogitsArgumentAccessV1::ReadOnly,
+                    Qwen3LogitsArgumentAccessV1::WriteOnly,
+                ]
+        {
+            return Err(PrepareQwen3LogitsKernelErrorV1::KernelIr);
+        }
+        kir_identities.extend_from_slice(kir.identity());
+    }
     let llvm = canonical_qwen3_logits_llvm();
     validate_canonical_llvm(&llvm)?;
     let llvm_sha256: [u8; 32] = Sha256::digest(llvm.as_bytes()).into();
@@ -1297,12 +1678,20 @@ pub fn prepare_qwen3_logits_kernel_v1(
             QWEN3_LOGITS_ARGMAX_KERNEL_SYMBOL_V1,
         ),
         (
+            CompilerModuleSymbolRoleV1::KernelEntry,
+            QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_KERNEL_SYMBOL_V1,
+        ),
+        (
             CompilerModuleSymbolRoleV1::KernelDescriptor,
             QWEN3_LOGITS_COMPACT_DESCRIPTOR_SYMBOL_V1,
         ),
         (
             CompilerModuleSymbolRoleV1::KernelDescriptor,
             QWEN3_LOGITS_ARGMAX_DESCRIPTOR_SYMBOL_V1,
+        ),
+        (
+            CompilerModuleSymbolRoleV1::KernelDescriptor,
+            QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_DESCRIPTOR_SYMBOL_V1,
         ),
     ])
     .map_err(PrepareQwen3LogitsKernelErrorV1::SymbolManifest)?;
@@ -1363,6 +1752,8 @@ declare void @llvm.trap()
     emit_argmax_kernel(&mut output);
     output.push('\n');
     emit_compact_kernel(&mut output);
+    output.push('\n');
+    emit_speculative_token_assembly_kernel(&mut output);
     output.push_str(
         r#"
 attributes #0 = { nounwind "amdgpu-no-completion-action" "amdgpu-no-default-queue" "amdgpu-no-heap-ptr" "amdgpu-no-hostcall-ptr" "amdgpu-no-multigrid-sync-arg" "amdgpu-no-queue-ptr" "amdgpu-flat-work-group-size"="64,64" "target-cpu"="gfx942" "target-features"="-wavefrontsize32,+wavefrontsize64,-xnack" "denormal-fp-math-f32"="ieee,ieee" "unsafe-fp-math"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "approx-func-fp-math"="false" "fp-contract"="off" }
@@ -1375,9 +1766,92 @@ attributes #1 = { nounwind readnone speculatable willreturn }
 !4 = !{!"read_only", !"none", !"read_only", !"none", !"read_only", !"none", !"read_only", !"none", !"read_only", !"none", !"read_only", !"none", !"read_only", !"none", !"write_only", !"none", !"none", !"none", !"none"}
 !5 = !{!"uint*", !"ulong", !"uint*", !"ulong", !"uint*", !"ulong", !"uint*", !"ulong", !"uint*", !"ulong", !"ulong*", !"ulong", !"uchar*", !"ulong", !"uchar*", !"ulong", !"uint", !"uint", !"uint"}
 !6 = !{!"const restrict", !"", !"const restrict", !"", !"const restrict", !"", !"const restrict", !"", !"const restrict", !"", !"const restrict", !"", !"const restrict", !"", !"restrict", !"", !"", !"", !""}
+!7 = !{!"read_only", !"none", !"read_only", !"none", !"write_only", !"none", !"none", !"none"}
+!8 = !{!"uint*", !"ulong", !"uint*", !"ulong", !"uint*", !"ulong", !"uint", !"uint"}
+!9 = !{!"const restrict", !"", !"const restrict", !"", !"restrict", !"", !"", !""}
 "#,
     );
     output
+}
+
+fn emit_speculative_token_assembly_kernel(output: &mut String) {
+    let symbol = QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_KERNEL_SYMBOL_V1;
+    writeln!(
+        output,
+        "define amdgpu_kernel void @{symbol}(ptr addrspace(1) noalias nocapture readonly align 4 %anchor.data, i64 %anchor.len, ptr addrspace(1) noalias nocapture readonly align 4 %draft.choices.data, i64 %draft.choices.len, ptr addrspace(1) noalias nocapture writeonly align 4 %target.tokens.data, i64 %target.tokens.len, i32 %sequences, i32 %speculative.k) #0 !reqd_work_group_size !0 !kernel_arg_access_qual !7 !kernel_arg_type !8 !kernel_arg_base_type !8 !kernel_arg_type_qual !9 {{"
+    )
+    .expect("writing to a String cannot fail");
+    output.push_str(
+        r"entry:
+  %s1 = icmp eq i32 %sequences, 1
+  %s8 = icmp eq i32 %sequences, 8
+  %k4 = icmp eq i32 %speculative.k, 4
+  %k8 = icmp eq i32 %speculative.k, 8
+  %k16 = icmp eq i32 %speculative.k, 16
+  %s1.k4 = and i1 %s1, %k4
+  %s8.k4 = and i1 %s8, %k4
+  %s1.k8 = and i1 %s1, %k8
+  %s1.k16 = and i1 %s1, %k16
+  %known.0 = or i1 %s1.k4, %s8.k4
+  %known.1 = or i1 %s1.k8, %s1.k16
+  %known.profile = or i1 %known.0, %known.1
+  %sequences64 = zext i32 %sequences to i64
+  %k64 = zext i32 %speculative.k to i64
+  %width = add nuw i64 %k64, 1
+  %draft.expected = mul nuw i64 %k64, %sequences64
+  %target.expected = mul nuw i64 %sequences64, %width
+  %anchor.ok = icmp eq i64 %anchor.len, %sequences64
+  %draft.ok = icmp eq i64 %draft.choices.len, %draft.expected
+  %target.ok = icmp eq i64 %target.tokens.len, %target.expected
+  %lengths.0 = and i1 %anchor.ok, %draft.ok
+  %lengths.ok = and i1 %lengths.0, %target.ok
+  %entry.ok = and i1 %known.profile, %lengths.ok
+  br i1 %entry.ok, label %coordinates, label %trap
+
+coordinates:
+  %local = call i32 @llvm.amdgcn.workitem.id.x()
+  %sequence.i32 = call i32 @llvm.amdgcn.workgroup.id.x()
+  %lane.zero = icmp eq i32 %local, 0
+  %sequence.ok = icmp ult i32 %sequence.i32, %sequences
+  %active = and i1 %lane.zero, %sequence.ok
+  br i1 %active, label %anchor.copy, label %return
+
+anchor.copy:
+  %sequence = zext i32 %sequence.i32 to i64
+  %target.base = mul nuw i64 %sequence, %width
+  %anchor.ptr = getelementptr inbounds i32, ptr addrspace(1) %anchor.data, i64 %sequence
+  %anchor.token = load i32, ptr addrspace(1) %anchor.ptr, align 4
+  %target.anchor.ptr = getelementptr inbounds i32, ptr addrspace(1) %target.tokens.data, i64 %target.base
+  store i32 %anchor.token, ptr addrspace(1) %target.anchor.ptr, align 4
+  br label %draft.copy.cond
+
+draft.copy.cond:
+  %iteration = phi i32 [ 0, %anchor.copy ], [ %iteration.next, %draft.copy.body ]
+  %more = icmp ult i32 %iteration, %speculative.k
+  br i1 %more, label %draft.copy.body, label %return
+
+draft.copy.body:
+  %iteration64 = zext i32 %iteration to i64
+  %draft.iteration.base = mul nuw i64 %iteration64, %sequences64
+  %draft.index = add nuw i64 %draft.iteration.base, %sequence
+  %draft.ptr = getelementptr inbounds i32, ptr addrspace(1) %draft.choices.data, i64 %draft.index
+  %draft.token = load i32, ptr addrspace(1) %draft.ptr, align 4
+  %target.column = add nuw i64 %iteration64, 1
+  %target.index = add nuw i64 %target.base, %target.column
+  %target.ptr = getelementptr inbounds i32, ptr addrspace(1) %target.tokens.data, i64 %target.index
+  store i32 %draft.token, ptr addrspace(1) %target.ptr, align 4
+  %iteration.next = add nuw i32 %iteration, 1
+  br label %draft.copy.cond
+
+return:
+  ret void
+
+trap:
+  call void @llvm.trap()
+  ret void
+}
+",
+    );
 }
 
 fn emit_argmax_kernel(output: &mut String) {
@@ -1795,6 +2269,7 @@ fn validate_canonical_llvm(module: &str) -> Result<(), PrepareQwen3LogitsKernelE
     let hash: [u8; 32] = Sha256::digest(module.as_bytes()).into();
     let argmax_symbol = QWEN3_LOGITS_ARGMAX_KERNEL_SYMBOL_V1;
     let compact_symbol = QWEN3_LOGITS_COMPACT_KERNEL_SYMBOL_V1;
+    let assembly_symbol = QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_KERNEL_SYMBOL_V1;
     let exact = module.len() == QWEN3_LOGITS_LLVM_BYTES_V1
         && hash == QWEN3_LOGITS_LLVM_SHA256_V1
         && crate::COV6_NO_RUNTIME_SERVICE_ATTRIBUTES_V1
@@ -1806,6 +2281,10 @@ fn validate_canonical_llvm(module: &str) -> Result<(), PrepareQwen3LogitsKernelE
             == 1
         && module
             .matches(&format!("define amdgpu_kernel void @{compact_symbol}"))
+            .count()
+            == 1
+        && module
+            .matches(&format!("define amdgpu_kernel void @{assembly_symbol}"))
             .count()
             == 1
         && module.contains("%strictly.greater = fcmp ogt float")
@@ -1825,6 +2304,11 @@ fn validate_canonical_llvm(module: &str) -> Result<(), PrepareQwen3LogitsKernelE
         && module.contains("store i16 0, ptr addrspace(1) %record.reserved.ptr")
         && module.contains("%records.expected = mul nuw i64 %sequences64, 120")
         && module.contains("%vocabulary.ok = icmp eq i32 %vocabulary, 151936")
+        && module.contains("%target.expected = mul nuw i64 %sequences64, %width")
+        && module.contains("%draft.iteration.base = mul nuw i64 %iteration64, %sequences64")
+        && module.contains("%target.base = mul nuw i64 %sequence, %width")
+        && module.contains("store i32 %anchor.token, ptr addrspace(1) %target.anchor.ptr, align 4")
+        && module.contains("store i32 %draft.token, ptr addrspace(1) %target.ptr, align 4")
         && !module.contains("atomic")
         && !module.contains("volatile")
         && !module.contains("llvm.fma")
@@ -2177,10 +2661,10 @@ pub fn inspect_qwen3_logits_kernel_v1(
     }
     let bound = inspect_and_bind_kernel_descriptors(bytes)
         .map_err(InspectQwen3LogitsKernelErrorV1::Hsaco)?;
-    let [argmax, compact] = bound.inspection().kernels() else {
+    let [argmax, compact, assembly] = bound.inspection().kernels() else {
         return Err(InspectQwen3LogitsKernelErrorV1::KernelProfile);
     };
-    let [argmax_binding, compact_binding] = bound.bindings() else {
+    let [argmax_binding, compact_binding, assembly_binding] = bound.bindings() else {
         return Err(InspectQwen3LogitsKernelErrorV1::KernelProfile);
     };
     let exact = bound.inspection().code_object_version() == InspectedCodeObjectVersion::V6
@@ -2208,6 +2692,18 @@ pub fn inspect_qwen3_logits_kernel_v1(
                 explicit_bytes: QWEN3_LOGITS_COMPACT_EXPLICIT_KERNARG_BYTES_V1,
                 total_bytes: QWEN3_LOGITS_COMPACT_TOTAL_KERNARG_BYTES_V1,
                 explicit_arguments: exact_compact_explicit_arguments,
+            },
+        )
+        && exact_kernel_profile(
+            assembly,
+            assembly_binding,
+            ExactKernelProfileV1 {
+                index: 2,
+                symbol: QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_KERNEL_SYMBOL_V1,
+                descriptor: QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_DESCRIPTOR_SYMBOL_V1,
+                explicit_bytes: QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_EXPLICIT_KERNARG_BYTES_V1,
+                total_bytes: QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_TOTAL_KERNARG_BYTES_V1,
+                explicit_arguments: exact_speculative_token_assembly_explicit_arguments,
             },
         );
     if !exact {
@@ -2264,8 +2760,10 @@ fn validate_worker_lineage(
             || !request.final_symbols().iter().map(String::as_str).eq([
                 QWEN3_LOGITS_COMPACT_KERNEL_SYMBOL_V1,
                 QWEN3_LOGITS_ARGMAX_KERNEL_SYMBOL_V1,
+                QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_KERNEL_SYMBOL_V1,
                 QWEN3_LOGITS_COMPACT_DESCRIPTOR_SYMBOL_V1,
                 QWEN3_LOGITS_ARGMAX_DESCRIPTOR_SYMBOL_V1,
+                QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_DESCRIPTOR_SYMBOL_V1,
             ])
             || exchange.response().request_identity() != request.identity()
             || exchange.response().device_library_provider().is_some()
@@ -2443,6 +2941,57 @@ fn exact_compact_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
             &arguments[18],
             "speculative.k",
             136,
+            4,
+            is_u32_metadata_carrier,
+        )
+}
+
+fn exact_speculative_token_assembly_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
+    arguments.len() == 8
+        && exact_pointer_argument(
+            &arguments[0],
+            "anchor.data",
+            0,
+            4,
+            ArgumentAccess::ReadOnly,
+            is_u32_metadata_carrier,
+        )
+        && exact_integer_argument(&arguments[1], "anchor.len", 8, 8, is_u64_metadata_carrier)
+        && exact_pointer_argument(
+            &arguments[2],
+            "draft.choices.data",
+            16,
+            4,
+            ArgumentAccess::ReadOnly,
+            is_u32_metadata_carrier,
+        )
+        && exact_integer_argument(
+            &arguments[3],
+            "draft.choices.len",
+            24,
+            8,
+            is_u64_metadata_carrier,
+        )
+        && exact_pointer_argument(
+            &arguments[4],
+            "target.tokens.data",
+            32,
+            4,
+            ArgumentAccess::WriteOnly,
+            is_u32_metadata_carrier,
+        )
+        && exact_integer_argument(
+            &arguments[5],
+            "target.tokens.len",
+            40,
+            8,
+            is_u64_metadata_carrier,
+        )
+        && exact_integer_argument(&arguments[6], "sequences", 48, 4, is_u32_metadata_carrier)
+        && exact_integer_argument(
+            &arguments[7],
+            "speculative.k",
+            52,
             4,
             is_u32_metadata_carrier,
         )
@@ -2739,6 +3288,188 @@ mod tests {
                 [sequences, k]
             );
         }
+    }
+
+    #[test]
+    fn exact_four_assembly_profiles_kir_effects_and_s8_layout_are_closed() {
+        let profiles = qwen3_speculative_token_assembly_profiles_v1();
+        assert_eq!(
+            profiles.len(),
+            QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_PROFILE_COUNT_V1
+        );
+        assert_eq!(
+            profiles.map(|profile| (
+                profile.bucket(),
+                profile.sequences(),
+                profile.speculative_k()
+            )),
+            [
+                (Qwen3LogitsBucketKindV1::SpeculativeS1K4C8192, 1, 4),
+                (Qwen3LogitsBucketKindV1::SpeculativeS8K4C8192, 8, 4),
+                (Qwen3LogitsBucketKindV1::SpeculativeS1K8C8192, 1, 8),
+                (Qwen3LogitsBucketKindV1::SpeculativeS1K16C8192, 1, 16),
+            ]
+        );
+        assert!(Qwen3SpeculativeTokenAssemblyProfileV1::for_bucket(
+            Qwen3LogitsBucketKindV1::DecodeS1C8192
+        )
+        .is_none());
+        let identities = profiles
+            .iter()
+            .map(|profile| profile.identity())
+            .collect::<BTreeSet<_>>();
+        assert_eq!(identities.len(), profiles.len());
+        for profile in profiles {
+            let [anchor, draft, target] = profile.storage_extents();
+            assert_eq!(anchor, u64::from(profile.sequences()));
+            assert_eq!(
+                draft,
+                u64::from(profile.sequences() * profile.speculative_k())
+            );
+            assert_eq!(
+                target,
+                u64::from(profile.sequences() * (profile.speculative_k() + 1))
+            );
+            let kir = qwen3_speculative_token_assembly_kernel_ir_v1(profile);
+            assert_eq!(kir.profile_identity(), profile.identity());
+            assert_eq!(
+                kir.arguments()
+                    .map(|argument| (argument.role, argument.access, argument.extent)),
+                [
+                    (
+                        Qwen3LogitsBufferV1::AnchorTokenIds,
+                        Qwen3LogitsArgumentAccessV1::ReadOnly,
+                        anchor
+                    ),
+                    (
+                        Qwen3LogitsBufferV1::DraftChoices,
+                        Qwen3LogitsArgumentAccessV1::ReadOnly,
+                        draft
+                    ),
+                    (
+                        Qwen3LogitsBufferV1::TargetTokenIds,
+                        Qwen3LogitsArgumentAccessV1::WriteOnly,
+                        target
+                    ),
+                ]
+            );
+        }
+
+        let s8 = Qwen3SpeculativeTokenAssemblyProfileV1::for_bucket(
+            Qwen3LogitsBucketKindV1::SpeculativeS8K4C8192,
+        )
+        .unwrap();
+        let anchor = (100..108).collect::<Vec<_>>();
+        let draft = (0..32).map(|index| 1_000 + index).collect::<Vec<_>>();
+        let assembled = assemble_qwen3_speculative_target_tokens_v1(s8, &anchor, &draft).unwrap();
+        let mut expected = Vec::new();
+        for sequence in 0..8 {
+            expected.push(anchor[sequence]);
+            for iteration in 0..4 {
+                expected.push(draft[iteration * 8 + sequence]);
+            }
+        }
+        assert_eq!(assembled, expected);
+        assert_eq!(s8.storage_extents(), [8, 32, 40]);
+        assert_eq!(s8.draft_choice_index(3, 7), Some(31));
+        assert_eq!(s8.target_token_index(7, 4), Some(39));
+        assert_eq!(s8.draft_choice_index(4, 0), None);
+        assert_eq!(s8.target_token_index(8, 0), None);
+        assert_eq!(
+            QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_EXPLICIT_KERNARG_BYTES_V1,
+            56
+        );
+        assert_eq!(QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_TOTAL_KERNARG_BYTES_V1, 312);
+        let source = canonical_qwen3_logits_llvm();
+        assert!(source.contains(
+            "ptr addrspace(1) noalias nocapture readonly align 4 %anchor.data, i64 %anchor.len"
+        ));
+        assert!(source.contains(
+            "ptr addrspace(1) noalias nocapture readonly align 4 %draft.choices.data, i64 %draft.choices.len"
+        ));
+        assert!(source.contains(
+            "ptr addrspace(1) noalias nocapture writeonly align 4 %target.tokens.data, i64 %target.tokens.len"
+        ));
+        for changed in [
+            source.replacen("%s8.k4 = and i1 %s8, %k4", "%s8.k4 = and i1 %s8, %k8", 1),
+            source.replacen(
+                "%draft.index = add nuw i64 %draft.iteration.base, %sequence",
+                "%draft.index = add nuw i64 %draft.iteration.base, %iteration64",
+                1,
+            ),
+            source.replacen(
+                "store i32 %anchor.token, ptr addrspace(1) %target.anchor.ptr, align 4",
+                "store i32 %draft.token, ptr addrspace(1) %target.anchor.ptr, align 4",
+                1,
+            ),
+        ] {
+            assert!(matches!(
+                validate_canonical_llvm(&changed),
+                Err(PrepareQwen3LogitsKernelErrorV1::CompilerModule)
+            ));
+        }
+    }
+
+    #[test]
+    fn assembly_bounds_alignment_alias_and_profile_drift_fail_closed() {
+        let profile = Qwen3SpeculativeTokenAssemblyProfileV1::for_bucket(
+            Qwen3LogitsBucketKindV1::SpeculativeS8K4C8192,
+        )
+        .unwrap();
+        let lengths = [32, 128, 160];
+        let addresses = [0x1000, 0x2000, 0x3000];
+        assert!(Qwen3SpeculativeTokenAssemblyBufferContractV1::checked(
+            profile, addresses, lengths
+        )
+        .is_ok());
+        for (addresses, lengths, expected) in [
+            (
+                addresses,
+                [32, 124, 160],
+                Qwen3LogitsBufferContractErrorV1::Length(Qwen3LogitsBufferV1::DraftChoices),
+            ),
+            (
+                [0x1002, 0x2000, 0x3000],
+                lengths,
+                Qwen3LogitsBufferContractErrorV1::Address(Qwen3LogitsBufferV1::AnchorTokenIds),
+            ),
+            (
+                [0x1000, 0x2000, 0x1000],
+                lengths,
+                Qwen3LogitsBufferContractErrorV1::Aliasing(
+                    Qwen3LogitsBufferV1::AnchorTokenIds,
+                    Qwen3LogitsBufferV1::TargetTokenIds,
+                ),
+            ),
+            (
+                [u64::MAX - 15, 0x2000, 0x3000],
+                lengths,
+                Qwen3LogitsBufferContractErrorV1::Overflow(Qwen3LogitsBufferV1::AnchorTokenIds),
+            ),
+        ] {
+            assert_eq!(
+                Qwen3SpeculativeTokenAssemblyBufferContractV1::checked(profile, addresses, lengths),
+                Err(expected)
+            );
+        }
+        assert_eq!(
+            assemble_qwen3_speculative_target_tokens_v1(profile, &[0; 7], &[0; 32]),
+            Err(Qwen3SpeculativeTokenAssemblyErrorV1::AnchorLength)
+        );
+        assert_eq!(
+            assemble_qwen3_speculative_target_tokens_v1(profile, &[0; 8], &[0; 31]),
+            Err(Qwen3SpeculativeTokenAssemblyErrorV1::DraftLength)
+        );
+        let mut changed = profile;
+        changed.sequences = 1;
+        assert_eq!(
+            Qwen3SpeculativeTokenAssemblyBufferContractV1::checked(changed, addresses, lengths),
+            Err(Qwen3LogitsBufferContractErrorV1::Profile)
+        );
+        assert_eq!(
+            assemble_qwen3_speculative_target_tokens_v1(changed, &[0], &[0; 4]),
+            Err(Qwen3SpeculativeTokenAssemblyErrorV1::Profile)
+        );
     }
 
     #[test]

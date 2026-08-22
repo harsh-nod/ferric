@@ -3,7 +3,7 @@
 //! The compiler-facing Qwen owners have already checked their Worker lineage,
 //! complete HSACO inventory, ABI, resources, and allocation-free load plan.
 //! This module revalidates those retained bytes through the generic fe2o3
-//! loader and binds the eleven exact entry points needed by packet lowering.
+//! loader and binds the twelve exact entry points needed by packet lowering.
 //! It does not independently approve deployment bytes, allocate or load an
 //! image, construct kernargs, publish a queue, observe completion, prove
 //! refinement, or report hardware or performance evidence.
@@ -20,7 +20,7 @@ use sha2::{Digest, Sha256};
 const PROGRAM_CATALOG_IDENTITY_DOMAIN: &[u8] = b"ferric.m1.physical-program-catalog.v1";
 
 /// Exact number of selected entry points across the seven M1 kernel artifacts.
-pub const M1_PHYSICAL_PROGRAM_COUNT_V1: usize = 11;
+pub const M1_PHYSICAL_PROGRAM_COUNT_V1: usize = 12;
 
 /// Stable physical-program ordinal used by future fixed packet batches.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -48,6 +48,8 @@ pub enum M1PhysicalProgramV1 {
     LogitsArgmax = 9,
     /// Target compact-completion path.
     LogitsCompact = 10,
+    /// In-batch speculative target-token assembly infrastructure path.
+    SpeculativeTokenAssembly = 11,
 }
 
 impl M1PhysicalProgramV1 {
@@ -64,6 +66,7 @@ impl M1PhysicalProgramV1 {
         Self::SwiGlu,
         Self::LogitsArgmax,
         Self::LogitsCompact,
+        Self::SpeculativeTokenAssembly,
     ];
 
     /// Zero-based index supplied to a fixed service packet.
@@ -87,6 +90,9 @@ impl M1PhysicalProgramV1 {
             Self::SwiGlu => swiglu::QWEN3_SWIGLU_KERNEL_SYMBOL_V1,
             Self::LogitsArgmax => logits::QWEN3_LOGITS_ARGMAX_KERNEL_SYMBOL_V1,
             Self::LogitsCompact => logits::QWEN3_LOGITS_COMPACT_KERNEL_SYMBOL_V1,
+            Self::SpeculativeTokenAssembly => {
+                logits::QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_KERNEL_SYMBOL_V1
+            }
         }
     }
 }
@@ -123,7 +129,9 @@ impl M1PhysicalProgramV1 {
             Self::GqaPrefill => M1PhysicalProgramFamilyV1::Prefill,
             Self::PagedGqaDecode => M1PhysicalProgramFamilyV1::PagedDecode,
             Self::SwiGlu => M1PhysicalProgramFamilyV1::SwiGlu,
-            Self::LogitsArgmax | Self::LogitsCompact => M1PhysicalProgramFamilyV1::Logits,
+            Self::LogitsArgmax | Self::LogitsCompact | Self::SpeculativeTokenAssembly => {
+                M1PhysicalProgramFamilyV1::Logits
+            }
         }
     }
 }
@@ -239,7 +247,7 @@ impl fmt::Display for M1PhysicalProgramCatalogErrorV1 {
 
 impl std::error::Error for M1PhysicalProgramCatalogErrorV1 {}
 
-/// Content-bound custody of the eleven exact selected kernel entry points.
+/// Content-bound custody of the twelve exact selected kernel entry points.
 ///
 /// The selected closures borrow their exact inspected Worker output bytes. This
 /// owner intentionally does not implement `Clone` and must be consumed to move

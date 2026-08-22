@@ -10,16 +10,18 @@
 use ferric_kernels::KernelProfileDescriptor;
 use ferric_qwen_kernels::{gemm, logits, paged_decode, prefill, rmsnorm, rope_kv, swiglu};
 use ferric_spec::{
-    expected_step, Identity, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3Operator, Qwen3PlanSelection,
+    expected_step, Identity, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3Operator, Qwen3PlanBucket,
+    Qwen3PlanSelection,
 };
 
 use crate::{
-    AddresslessM1PhysicalDispatchRecipeV1, M1OperationDispatchKind, M1PhysicalDispatchRecipeRowV1,
-    M1PhysicalProfileFamilyV1, M1PhysicalProgramV1, M1_PHYSICAL_DISPATCH_RECIPE_VERSION_V1,
+    AddresslessM1PhysicalDispatchRecipeV1, M1OperationDispatchKind, M1PhysicalDispatchKindV1,
+    M1PhysicalDispatchProfileV1, M1PhysicalDispatchRecipeRowV1, M1PhysicalProfileFamilyV1,
+    M1PhysicalProgramV1, M1StepDispatchStage, M1_PHYSICAL_DISPATCH_RECIPE_VERSION_V1,
 };
 
 /// Zero-pointer physical-kernarg recipe format.
-pub const M1_PHYSICAL_KERNARG_RECIPE_VERSION_V1: u32 = 1;
+pub const M1_PHYSICAL_KERNARG_RECIPE_VERSION_V1: u32 = 2;
 /// Exact byte count reserved for COV6 hidden arguments in every image.
 pub const M1_COV6_HIDDEN_KERNARG_BYTES_V1: usize = 256;
 
@@ -185,10 +187,12 @@ pub enum M1PhysicalKernargRecipeErrorV1 {
         dispatch_index: u32,
         operator: Qwen3Operator,
     },
+    /// The infrastructure profile identity or target selection drifted.
+    InfrastructureProfileIdentity { dispatch_index: u32 },
     /// The physical subdispatch kind did not match the exact program.
     DispatchKind {
         dispatch_index: u32,
-        kind: M1OperationDispatchKind,
+        kind: M1PhysicalDispatchKindV1,
     },
     /// The row selected a different physical program.
     Program {
@@ -258,10 +262,12 @@ impl M1PhysicalKernargRecipeFailureV1 {
 #[derive(Clone, Copy)]
 struct KernargRowInput {
     dispatch_index: u32,
+    stage: M1StepDispatchStage,
     selection: Qwen3PlanSelection,
-    logical_ordinal: u32,
-    profile: KernelProfileDescriptor,
-    kind: M1OperationDispatchKind,
+    logical_ordinal: Option<u32>,
+    profile: Option<KernelProfileDescriptor>,
+    assembly_profile: Option<logits::Qwen3SpeculativeTokenAssemblyProfileV1>,
+    kind: M1PhysicalDispatchKindV1,
     profile_id: Identity,
     program: M1PhysicalProgramV1,
     grid: [u32; 3],
@@ -274,9 +280,17 @@ impl From<M1PhysicalDispatchRecipeRowV1> for KernargRowInput {
     fn from(row: M1PhysicalDispatchRecipeRowV1) -> Self {
         Self {
             dispatch_index: row.dispatch_index(),
+            stage: row.stage(),
             selection: row.selection(),
             logical_ordinal: row.logical_ordinal(),
-            profile: row.profile(),
+            profile: match row.profile() {
+                M1PhysicalDispatchProfileV1::Model { descriptor, .. } => Some(descriptor),
+                M1PhysicalDispatchProfileV1::SpeculativeTokenAssembly(_) => None,
+            },
+            assembly_profile: match row.profile() {
+                M1PhysicalDispatchProfileV1::Model { .. } => None,
+                M1PhysicalDispatchProfileV1::SpeculativeTokenAssembly(profile) => Some(profile),
+            },
             kind: row.kind(),
             profile_id: row.profile_id(),
             program: row.program(),
@@ -541,11 +555,37 @@ fn derive_input_images(
 }
 
 fn validate_descriptor(row: &KernargRowInput) -> Result<(), M1PhysicalKernargRecipeErrorV1> {
+    if let Some(profile) = row.assembly_profile {
+        let expected_profile = assembly_profile_for_selection(row.selection);
+        if row.kind != M1PhysicalDispatchKindV1::SpeculativeTokenAssembly
+            || row.logical_ordinal.is_some()
+            || row.profile.is_some()
+            || expected_profile != Some(profile)
+            || !matches!(
+                row.stage,
+                M1StepDispatchStage::TargetVerification { draft_iterations }
+                    if u32::from(draft_iterations) == profile.speculative_k()
+            )
+            || row.dynamic_group_segment_bytes != 0
+        {
+            return Err(M1PhysicalKernargRecipeErrorV1::ProfileDescriptor {
+                dispatch_index: row.dispatch_index,
+            });
+        }
+        return Ok(());
+    }
+    let (Some(logical_ordinal), Some(profile), M1PhysicalDispatchKindV1::Model(_)) =
+        (row.logical_ordinal, row.profile, row.kind)
+    else {
+        return Err(M1PhysicalKernargRecipeErrorV1::ProfileDescriptor {
+            dispatch_index: row.dispatch_index,
+        });
+    };
     let Some(expected) = expected_step(
         row.selection.role,
         row.selection.mode,
         row.selection.bucket,
-        row.logical_ordinal,
+        logical_ordinal,
     ) else {
         return Err(M1PhysicalKernargRecipeErrorV1::ProfileDescriptor {
             dispatch_index: row.dispatch_index,
@@ -560,11 +600,11 @@ fn validate_descriptor(row: &KernargRowInput) -> Result<(), M1PhysicalKernargRec
             dispatch_index: row.dispatch_index,
         });
     };
-    if row.profile.selection != row.selection
-        || row.profile.step != expected
-        || row.profile.sequences != dimensions.sequences
-        || row.profile.active_tokens != dimensions.active_tokens
-        || row.profile.context_tokens != dimensions.context_tokens
+    if profile.selection != row.selection
+        || profile.step != expected
+        || profile.sequences != dimensions.sequences
+        || profile.active_tokens != dimensions.active_tokens
+        || profile.context_tokens != dimensions.context_tokens
         || row.dynamic_group_segment_bytes != 0
     {
         return Err(M1PhysicalKernargRecipeErrorV1::ProfileDescriptor {
@@ -578,7 +618,11 @@ fn derive_image(
     catalogs: &CanonicalKernargProfiles,
     row: &KernargRowInput,
 ) -> Result<M1PhysicalKernargImageV1, M1PhysicalKernargRecipeErrorV1> {
-    match row.profile.step.operator {
+    if row.kind == M1PhysicalDispatchKindV1::SpeculativeTokenAssembly {
+        return encode_speculative_token_assembly(row);
+    }
+    let profile = model_descriptor(row)?;
+    match profile.step.operator {
         Qwen3Operator::TokenEmbedding => encode_embedding(catalogs, row),
         Qwen3Operator::QueryProjection
         | Qwen3Operator::KeyProjection
@@ -608,7 +652,34 @@ fn derive_image(
 fn unresolved(row: &KernargRowInput) -> M1PhysicalKernargRecipeErrorV1 {
     M1PhysicalKernargRecipeErrorV1::ProfileIdentity {
         dispatch_index: row.dispatch_index,
-        operator: row.profile.step.operator,
+        operator: row
+            .profile
+            .map_or(Qwen3Operator::ArgmaxCompactCompletion, |profile| {
+                profile.step.operator
+            }),
+    }
+}
+
+fn model_descriptor(
+    row: &KernargRowInput,
+) -> Result<KernelProfileDescriptor, M1PhysicalKernargRecipeErrorV1> {
+    row.profile
+        .ok_or(M1PhysicalKernargRecipeErrorV1::ProfileDescriptor {
+            dispatch_index: row.dispatch_index,
+        })
+}
+
+fn model_kind(
+    row: &KernargRowInput,
+) -> Result<M1OperationDispatchKind, M1PhysicalKernargRecipeErrorV1> {
+    match row.kind {
+        M1PhysicalDispatchKindV1::Model(kind) => Ok(kind),
+        M1PhysicalDispatchKindV1::SpeculativeTokenAssembly => {
+            Err(M1PhysicalKernargRecipeErrorV1::DispatchKind {
+                dispatch_index: row.dispatch_index,
+                kind: row.kind,
+            })
+        }
     }
 }
 
@@ -651,7 +722,8 @@ fn check_row(
         M1PhysicalProgramV1::GemmReference
         | M1PhysicalProgramV1::GemmVectorized
         | M1PhysicalProgramV1::TokenEmbedding
-        | M1PhysicalProgramV1::SwiGlu => &[0, 16, 32][..],
+        | M1PhysicalProgramV1::SwiGlu
+        | M1PhysicalProgramV1::SpeculativeTokenAssembly => &[0, 16, 32][..],
         M1PhysicalProgramV1::RmsNorm | M1PhysicalProgramV1::GqaPrefill => &[0, 16, 32, 48, 64][..],
         M1PhysicalProgramV1::Rope => &[0, 16, 32, 48, 64, 80, 96][..],
         M1PhysicalProgramV1::PagedKvWrite | M1PhysicalProgramV1::PagedGqaDecode => {
@@ -684,6 +756,32 @@ fn dimensions_match(selection: Qwen3PlanSelection, sequences: u32, active_tokens
         })
 }
 
+fn assembly_profile_for_selection(
+    selection: Qwen3PlanSelection,
+) -> Option<logits::Qwen3SpeculativeTokenAssemblyProfileV1> {
+    if selection.role != Qwen3ModelRole::Target8B
+        || selection.mode != Qwen3ExecutionMode::Speculative
+    {
+        return None;
+    }
+    let bucket = match selection.bucket {
+        Qwen3PlanBucket::SpeculativeS1K4C8192 => {
+            logits::Qwen3LogitsBucketKindV1::SpeculativeS1K4C8192
+        }
+        Qwen3PlanBucket::SpeculativeS8K4C8192 => {
+            logits::Qwen3LogitsBucketKindV1::SpeculativeS8K4C8192
+        }
+        Qwen3PlanBucket::SpeculativeS1K8C8192 => {
+            logits::Qwen3LogitsBucketKindV1::SpeculativeS1K8C8192
+        }
+        Qwen3PlanBucket::SpeculativeS1K16C8192 => {
+            logits::Qwen3LogitsBucketKindV1::SpeculativeS1K16C8192
+        }
+        _ => return None,
+    };
+    logits::Qwen3SpeculativeTokenAssemblyProfileV1::for_bucket(bucket)
+}
+
 fn encode_embedding(
     catalogs: &CanonicalKernargProfiles,
     row: &KernargRowInput,
@@ -706,7 +804,7 @@ fn encode_embedding(
                 )
         })
         .ok_or_else(|| unresolved(row))?;
-    if row.kind != M1OperationDispatchKind::WholeOperation {
+    if model_kind(row)? != M1OperationDispatchKind::WholeOperation {
         return Err(M1PhysicalKernargRecipeErrorV1::DispatchKind {
             dispatch_index: row.dispatch_index,
             kind: row.kind,
@@ -765,6 +863,7 @@ fn encode_gemm(
     catalogs: &CanonicalKernargProfiles,
     row: &KernargRowInput,
 ) -> Result<M1PhysicalKernargImageV1, M1PhysicalKernargRecipeErrorV1> {
+    let descriptor = model_descriptor(row)?;
     let profile = catalogs
         .gemm
         .profiles()
@@ -781,10 +880,10 @@ fn encode_gemm(
                         gemm::Qwen3GemmModelRoleV1::Target8B
                     ),
                 )
-                && gemm_operation_matches(row.profile.step.operator, profile.operation())
+                && gemm_operation_matches(descriptor.step.operator, profile.operation())
         })
         .ok_or_else(|| unresolved(row))?;
-    if row.kind != M1OperationDispatchKind::WholeOperation {
+    if model_kind(row)? != M1OperationDispatchKind::WholeOperation {
         return Err(M1PhysicalKernargRecipeErrorV1::DispatchKind {
             dispatch_index: row.dispatch_index,
             kind: row.kind,
@@ -842,6 +941,7 @@ fn encode_rmsnorm(
     catalogs: &CanonicalKernargProfiles,
     row: &KernargRowInput,
 ) -> Result<M1PhysicalKernargImageV1, M1PhysicalKernargRecipeErrorV1> {
+    let descriptor = model_descriptor(row)?;
     let profile = catalogs
         .rmsnorm
         .profiles()
@@ -858,10 +958,10 @@ fn encode_rmsnorm(
                         rmsnorm::Qwen3RmsNormModelRoleV1::Target8B
                     ),
                 )
-                && rmsnorm_operation_matches(row.profile.step.operator, profile.operation())
+                && rmsnorm_operation_matches(descriptor.step.operator, profile.operation())
         })
         .ok_or_else(|| unresolved(row))?;
-    if row.kind != M1OperationDispatchKind::WholeOperation {
+    if model_kind(row)? != M1OperationDispatchKind::WholeOperation {
         return Err(M1PhysicalKernargRecipeErrorV1::DispatchKind {
             dispatch_index: row.dispatch_index,
             kind: row.kind,
@@ -899,6 +999,7 @@ fn encode_rope_kv(
     catalogs: &CanonicalKernargProfiles,
     row: &KernargRowInput,
 ) -> Result<M1PhysicalKernargImageV1, M1PhysicalKernargRecipeErrorV1> {
+    let descriptor = model_descriptor(row)?;
     let profile = catalogs
         .rope_kv
         .profiles()
@@ -916,7 +1017,7 @@ fn encode_rope_kv(
                     ),
                 )
                 && matches!(
-                    (row.profile.step.operator, profile.operation()),
+                    (descriptor.step.operator, profile.operation()),
                     (Qwen3Operator::Rope, rope_kv::Qwen3RopeKvOperationV1::Rope)
                         | (
                             Qwen3Operator::KvWrite,
@@ -925,7 +1026,7 @@ fn encode_rope_kv(
                 )
         })
         .ok_or_else(|| unresolved(row))?;
-    if row.kind != M1OperationDispatchKind::WholeOperation {
+    if model_kind(row)? != M1OperationDispatchKind::WholeOperation {
         return Err(M1PhysicalKernargRecipeErrorV1::DispatchKind {
             dispatch_index: row.dispatch_index,
             kind: row.kind,
@@ -1009,7 +1110,7 @@ fn encode_prefill(
                 )
         })
         .ok_or_else(|| unresolved(row))?;
-    if row.kind != M1OperationDispatchKind::WholeOperation {
+    if model_kind(row)? != M1OperationDispatchKind::WholeOperation {
         return Err(M1PhysicalKernargRecipeErrorV1::DispatchKind {
             dispatch_index: row.dispatch_index,
             kind: row.kind,
@@ -1056,7 +1157,7 @@ fn encode_paged_decode(
                 )
         })
         .ok_or_else(|| unresolved(row))?;
-    if row.kind != M1OperationDispatchKind::WholeOperation {
+    if model_kind(row)? != M1OperationDispatchKind::WholeOperation {
         return Err(M1PhysicalKernargRecipeErrorV1::DispatchKind {
             dispatch_index: row.dispatch_index,
             kind: row.kind,
@@ -1101,7 +1202,7 @@ fn encode_swiglu(
                 )
         })
         .ok_or_else(|| unresolved(row))?;
-    if row.kind != M1OperationDispatchKind::WholeOperation {
+    if model_kind(row)? != M1OperationDispatchKind::WholeOperation {
         return Err(M1PhysicalKernargRecipeErrorV1::DispatchKind {
             dispatch_index: row.dispatch_index,
             kind: row.kind,
@@ -1145,7 +1246,7 @@ fn encode_logits(
         .ok_or_else(|| unresolved(row))?;
     let [logits_elements, choices_elements, draft_elements, record_bytes] =
         profile.storage_extents();
-    match row.kind {
+    match model_kind(row)? {
         M1OperationDispatchKind::K7Argmax => {
             let mut image = check_row(
                 row,
@@ -1203,6 +1304,46 @@ fn encode_logits(
             })
         }
     }
+}
+
+fn encode_speculative_token_assembly(
+    row: &KernargRowInput,
+) -> Result<M1PhysicalKernargImageV1, M1PhysicalKernargRecipeErrorV1> {
+    let profile = row.assembly_profile.ok_or(
+        M1PhysicalKernargRecipeErrorV1::InfrastructureProfileIdentity {
+            dispatch_index: row.dispatch_index,
+        },
+    )?;
+    if row.kind != M1PhysicalDispatchKindV1::SpeculativeTokenAssembly {
+        return Err(M1PhysicalKernargRecipeErrorV1::DispatchKind {
+            dispatch_index: row.dispatch_index,
+            kind: row.kind,
+        });
+    }
+    if assembly_profile_for_selection(row.selection) != Some(profile)
+        || row.profile_id.as_bytes() != profile.identity().as_bytes()
+    {
+        return Err(
+            M1PhysicalKernargRecipeErrorV1::InfrastructureProfileIdentity {
+                dispatch_index: row.dispatch_index,
+            },
+        );
+    }
+    let mut image = check_row(
+        row,
+        M1PhysicalProgramV1::SpeculativeTokenAssembly,
+        profile.grid_workitems(),
+        logits::QWEN3_LOGITS_WORKGROUP_V1,
+        logits::QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_EXPLICIT_KERNARG_BYTES_V1,
+        logits::QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_TOTAL_KERNARG_BYTES_V1,
+    )?;
+    let [anchor, draft, target] = profile.storage_extents();
+    image.write_u64(8, anchor)?;
+    image.write_u64(24, draft)?;
+    image.write_u64(40, target)?;
+    image.write_u32(48, profile.sequences())?;
+    image.write_u32(52, profile.speculative_k())?;
+    image.finish(row)
 }
 
 #[cfg(test)]
@@ -1311,7 +1452,8 @@ mod tests {
             M1PhysicalProgramV1::GemmReference
             | M1PhysicalProgramV1::GemmVectorized
             | M1PhysicalProgramV1::TokenEmbedding
-            | M1PhysicalProgramV1::SwiGlu => &[0, 16, 32],
+            | M1PhysicalProgramV1::SwiGlu
+            | M1PhysicalProgramV1::SpeculativeTokenAssembly => &[0, 16, 32],
             M1PhysicalProgramV1::RmsNorm | M1PhysicalProgramV1::GqaPrefill => &[0, 16, 32, 48, 64],
             M1PhysicalProgramV1::Rope => &[0, 16, 32, 48, 64, 80, 96],
             M1PhysicalProgramV1::PagedKvWrite | M1PhysicalProgramV1::PagedGqaDecode => {
@@ -1422,6 +1564,30 @@ mod tests {
         assert_eq!(read_u32(compact.bytes(), 128), 1);
         assert_eq!(read_u32(compact.bytes(), 132), 5);
         assert_eq!(read_u32(compact.bytes(), 136), 4);
+
+        let s8 = derive_m1_physical_kernarg_recipe_v1(physical_recipe(
+            M1StepDispatchIntent::SpeculativeRound(target(
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS8K4C8192,
+            )),
+        ))
+        .unwrap();
+        let assembly = s8
+            .images()
+            .iter()
+            .find(|image| image.program() == M1PhysicalProgramV1::SpeculativeTokenAssembly)
+            .unwrap();
+        assert_eq!(assembly.explicit_bytes(), 56);
+        assert_eq!(assembly.bytes().len(), 312);
+        assert_eq!(read_u64(assembly.bytes(), 8), 8);
+        assert_eq!(read_u64(assembly.bytes(), 24), 32);
+        assert_eq!(read_u64(assembly.bytes(), 40), 40);
+        assert_eq!(read_u32(assembly.bytes(), 48), 8);
+        assert_eq!(read_u32(assembly.bytes(), 52), 4);
+        assert!(assembly.bytes()[0..8].iter().all(|byte| *byte == 0));
+        assert!(assembly.bytes()[16..24].iter().all(|byte| *byte == 0));
+        assert!(assembly.bytes()[32..40].iter().all(|byte| *byte == 0));
+        assert!(assembly.cov6_hidden_suffix().iter().all(|byte| *byte == 0));
     }
 
     fn all_finite_selections() -> Vec<Qwen3PlanSelection> {
@@ -1581,7 +1747,7 @@ mod tests {
         );
 
         let mut descriptor = rows[0];
-        descriptor.profile.selection =
+        descriptor.profile.as_mut().unwrap().selection =
             target(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS8C8192);
         assert_eq!(
             validate_descriptor(&descriptor),
@@ -1598,7 +1764,7 @@ mod tests {
         ));
 
         let mut kind = rows[0];
-        kind.kind = M1OperationDispatchKind::K7Argmax;
+        kind.kind = crate::M1PhysicalDispatchKindV1::Model(M1OperationDispatchKind::K7Argmax);
         assert!(matches!(
             derive_image(&catalogs, &kind),
             Err(M1PhysicalKernargRecipeErrorV1::DispatchKind { .. })
@@ -1641,6 +1807,75 @@ mod tests {
         assert!(matches!(
             derive_image(&CanonicalKernargProfiles::new().unwrap(), &row),
             Err(M1PhysicalKernargRecipeErrorV1::ProfileIdentity { .. })
+        ));
+    }
+
+    #[test]
+    fn hostile_assembly_profile_kind_program_geometry_and_abi_drift_fail_closed() {
+        let catalogs = CanonicalKernargProfiles::new().unwrap();
+        let source = physical_recipe(M1StepDispatchIntent::SpeculativeRound(target(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS8K4C8192,
+        )));
+        let row = source
+            .rows()
+            .iter()
+            .copied()
+            .find(|row| row.program() == M1PhysicalProgramV1::SpeculativeTokenAssembly)
+            .map(KernargRowInput::from)
+            .unwrap();
+
+        let mut wrong_profile = row;
+        wrong_profile.assembly_profile = logits::Qwen3SpeculativeTokenAssemblyProfileV1::for_bucket(
+            logits::Qwen3LogitsBucketKindV1::SpeculativeS1K4C8192,
+        );
+        assert_eq!(
+            validate_descriptor(&wrong_profile),
+            Err(M1PhysicalKernargRecipeErrorV1::ProfileDescriptor {
+                dispatch_index: row.dispatch_index,
+            })
+        );
+
+        let mut wrong_identity = row;
+        wrong_identity.profile_id = Identity::new([0; 32]);
+        assert_eq!(
+            derive_image(&catalogs, &wrong_identity),
+            Err(
+                M1PhysicalKernargRecipeErrorV1::InfrastructureProfileIdentity {
+                    dispatch_index: row.dispatch_index,
+                }
+            )
+        );
+
+        let mut wrong_kind = row;
+        wrong_kind.kind =
+            crate::M1PhysicalDispatchKindV1::Model(M1OperationDispatchKind::WholeOperation);
+        assert_eq!(
+            derive_image(&catalogs, &wrong_kind),
+            Err(M1PhysicalKernargRecipeErrorV1::ProfileDescriptor {
+                dispatch_index: row.dispatch_index,
+            })
+        );
+
+        let mut wrong_program = row;
+        wrong_program.program = M1PhysicalProgramV1::LogitsArgmax;
+        assert!(matches!(
+            derive_image(&catalogs, &wrong_program),
+            Err(M1PhysicalKernargRecipeErrorV1::Program { .. })
+        ));
+
+        let mut wrong_geometry = row;
+        wrong_geometry.grid[0] += 64;
+        assert!(matches!(
+            derive_image(&catalogs, &wrong_geometry),
+            Err(M1PhysicalKernargRecipeErrorV1::Geometry { .. })
+        ));
+
+        let mut wrong_abi = row;
+        wrong_abi.kernarg_bytes -= 1;
+        assert!(matches!(
+            derive_image(&catalogs, &wrong_abi),
+            Err(M1PhysicalKernargRecipeErrorV1::KernargLength { .. })
         ));
     }
 

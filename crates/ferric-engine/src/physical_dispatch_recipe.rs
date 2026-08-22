@@ -10,7 +10,10 @@
 use fe2o3_aql::{AqlDispatchGeometryV1, AqlGeometryError};
 use ferric_kernels::KernelProfileDescriptor;
 use ferric_qwen_kernels::{gemm, logits, paged_decode, prefill, rmsnorm, rope_kv, swiglu};
-use ferric_spec::{Identity, Qwen3ExecutionMode, Qwen3Operator, Qwen3PlanSelection};
+use ferric_spec::{
+    Identity, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3Operator, Qwen3PlanBucket,
+    Qwen3PlanSelection,
+};
 
 use crate::{
     AddresslessM1StepDispatchPlan, M1OperationDispatchKind, M1PhysicalProgramV1,
@@ -18,7 +21,7 @@ use crate::{
 };
 
 /// Addressless physical-dispatch recipe format.
-pub const M1_PHYSICAL_DISPATCH_RECIPE_VERSION_V1: u32 = 1;
+pub const M1_PHYSICAL_DISPATCH_RECIPE_VERSION_V1: u32 = 2;
 
 /// Finite profile family whose canonical catalog could not be reconstructed.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -41,6 +44,56 @@ pub enum M1PhysicalProfileFamilyV1 {
     Logits,
 }
 
+/// Physical dispatch role without conflating infrastructure with a Qwen operator.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1PhysicalDispatchKindV1 {
+    /// One generated model-operation dispatch or exact K7 model subdispatch.
+    Model(M1OperationDispatchKind),
+    /// In-batch speculative target-token assembly infrastructure dispatch.
+    SpeculativeTokenAssembly,
+}
+
+/// Exact finite profile carried by one physical dispatch.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[allow(clippy::large_enum_variant)]
+pub enum M1PhysicalDispatchProfileV1 {
+    /// Generated model-operation profile and its logical position.
+    Model {
+        /// Operation ordinal within the selected generated plan.
+        logical_ordinal: u32,
+        /// Complete generated profile, including layer and buffer edges.
+        descriptor: KernelProfileDescriptor,
+        /// Whole-operation or exact K7 subdispatch role.
+        kind: M1OperationDispatchKind,
+        /// Canonical finite-profile identity.
+        profile_id: Identity,
+    },
+    /// Four-shape target-token assembly infrastructure profile.
+    SpeculativeTokenAssembly(logits::Qwen3SpeculativeTokenAssemblyProfileV1),
+}
+
+impl M1PhysicalDispatchProfileV1 {
+    /// Physical dispatch role.
+    #[must_use]
+    pub const fn kind(self) -> M1PhysicalDispatchKindV1 {
+        match self {
+            Self::Model { kind, .. } => M1PhysicalDispatchKindV1::Model(kind),
+            Self::SpeculativeTokenAssembly(_) => M1PhysicalDispatchKindV1::SpeculativeTokenAssembly,
+        }
+    }
+
+    /// Exact profile identity across both model and infrastructure profiles.
+    #[must_use]
+    pub const fn profile_id(self) -> Identity {
+        match self {
+            Self::Model { profile_id, .. } => profile_id,
+            Self::SpeculativeTokenAssembly(profile) => {
+                Identity::new(*profile.identity().as_bytes())
+            }
+        }
+    }
+}
+
 /// One exact, checked, addressless physical dispatch row.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct M1PhysicalDispatchRecipeRowV1 {
@@ -48,10 +101,7 @@ pub struct M1PhysicalDispatchRecipeRowV1 {
     segment_index: u8,
     stage: M1StepDispatchStage,
     selection: Qwen3PlanSelection,
-    logical_ordinal: u32,
-    profile: KernelProfileDescriptor,
-    kind: M1OperationDispatchKind,
-    profile_id: Identity,
+    profile: M1PhysicalDispatchProfileV1,
     program: M1PhysicalProgramV1,
     geometry: AqlDispatchGeometryV1,
     kernarg_bytes: u64,
@@ -85,32 +135,40 @@ impl M1PhysicalDispatchRecipeRowV1 {
 
     /// Operation ordinal within the selected generated plan.
     #[must_use]
-    pub const fn logical_ordinal(self) -> u32 {
-        self.logical_ordinal
+    pub const fn logical_ordinal(self) -> Option<u32> {
+        match self.profile {
+            M1PhysicalDispatchProfileV1::Model {
+                logical_ordinal, ..
+            } => Some(logical_ordinal),
+            M1PhysicalDispatchProfileV1::SpeculativeTokenAssembly(_) => None,
+        }
     }
 
     /// Generated Qwen operation represented by this row.
     #[must_use]
-    pub const fn operator(self) -> Qwen3Operator {
-        self.profile.step.operator
+    pub const fn operator(self) -> Option<Qwen3Operator> {
+        match self.profile {
+            M1PhysicalDispatchProfileV1::Model { descriptor, .. } => Some(descriptor.step.operator),
+            M1PhysicalDispatchProfileV1::SpeculativeTokenAssembly(_) => None,
+        }
     }
 
     /// Complete generated profile, including exact layer and buffer edges.
     #[must_use]
-    pub const fn profile(self) -> KernelProfileDescriptor {
+    pub const fn profile(self) -> M1PhysicalDispatchProfileV1 {
         self.profile
     }
 
     /// Whole-operation or exact K7 subdispatch role.
     #[must_use]
-    pub const fn kind(self) -> M1OperationDispatchKind {
-        self.kind
+    pub const fn kind(self) -> M1PhysicalDispatchKindV1 {
+        self.profile.kind()
     }
 
     /// Canonical finite-profile identity resolved for this row.
     #[must_use]
     pub const fn profile_id(self) -> Identity {
-        self.profile_id
+        self.profile.profile_id()
     }
 
     /// Exact entry-point ordinal required from a future content-bound roster.
@@ -333,33 +391,74 @@ struct ResolvedPhysicalProfile {
 pub fn derive_m1_physical_dispatch_recipe_v1(
     step: &AddresslessM1StepDispatchPlan,
 ) -> Result<AddresslessM1PhysicalDispatchRecipeV1, M1PhysicalDispatchRecipeErrorV1> {
-    if step.dispatch_count() > M1_MAX_STEP_DISPATCHES_V1 {
+    let inserts_assembly = matches!(
+        step.intent(),
+        crate::M1StepDispatchIntent::SpeculativeRound(_)
+    );
+    let physical_dispatch_count = step
+        .dispatch_count()
+        .checked_add(u32::from(inserts_assembly))
+        .ok_or(M1PhysicalDispatchRecipeErrorV1::ArithmeticOverflow)?;
+    if physical_dispatch_count > M1_MAX_STEP_DISPATCHES_V1 {
         return Err(M1PhysicalDispatchRecipeErrorV1::Capacity {
-            required: step.dispatch_count(),
+            required: physical_dispatch_count,
             capacity: M1_MAX_STEP_DISPATCHES_V1,
         });
     }
     let profiles = CanonicalPhysicalProfiles::new()?;
-    let capacity = usize::try_from(step.dispatch_count())
+    let capacity = usize::try_from(physical_dispatch_count)
         .map_err(|_| M1PhysicalDispatchRecipeErrorV1::ArithmeticOverflow)?;
     let mut rows = Vec::with_capacity(capacity);
-    let mut expected_dispatch_index = 0_u32;
+    let mut expected_logical_dispatch_index = 0_u32;
+    let mut physical_dispatch_index = 0_u32;
 
     for segment in step.segments() {
+        if matches!(
+            segment.stage(),
+            M1StepDispatchStage::TargetVerification { .. }
+        ) {
+            let profile = assembly_profile_for_selection(segment.selection()).ok_or(
+                M1PhysicalDispatchRecipeErrorV1::CanonicalProfileCatalog(
+                    M1PhysicalProfileFamilyV1::Logits,
+                ),
+            )?;
+            let geometry = AqlDispatchGeometryV1::new(
+                profile.grid_workitems(),
+                logits::QWEN3_LOGITS_WORKGROUP_V1,
+            )
+            .map_err(|error| M1PhysicalDispatchRecipeErrorV1::Geometry {
+                dispatch_index: physical_dispatch_index,
+                error,
+            })?;
+            rows.push(M1PhysicalDispatchRecipeRowV1 {
+                dispatch_index: physical_dispatch_index,
+                segment_index: segment.segment_index(),
+                stage: segment.stage(),
+                selection: segment.selection(),
+                profile: M1PhysicalDispatchProfileV1::SpeculativeTokenAssembly(profile),
+                program: M1PhysicalProgramV1::SpeculativeTokenAssembly,
+                geometry,
+                kernarg_bytes: logits::QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_TOTAL_KERNARG_BYTES_V1,
+                dynamic_group_segment_bytes: 0,
+            });
+            physical_dispatch_index = physical_dispatch_index
+                .checked_add(1)
+                .ok_or(M1PhysicalDispatchRecipeErrorV1::ArithmeticOverflow)?;
+        }
         for row in segment.rows() {
-            let dispatch_index = segment
+            let logical_dispatch_index = segment
                 .dispatch_start()
                 .checked_add(row.dispatch_index())
                 .ok_or(M1PhysicalDispatchRecipeErrorV1::ArithmeticOverflow)?;
-            if dispatch_index != expected_dispatch_index {
+            if logical_dispatch_index != expected_logical_dispatch_index {
                 return Err(M1PhysicalDispatchRecipeErrorV1::DispatchOrder {
-                    expected: expected_dispatch_index,
-                    actual: dispatch_index,
+                    expected: expected_logical_dispatch_index,
+                    actual: logical_dispatch_index,
                 });
             }
             let resolved = resolve_physical_profile(
                 &profiles,
-                dispatch_index,
+                physical_dispatch_index,
                 segment.selection().mode,
                 row.operator(),
                 row.kind(),
@@ -368,42 +467,79 @@ pub fn derive_m1_physical_dispatch_recipe_v1(
             let geometry =
                 AqlDispatchGeometryV1::new(resolved.grid, resolved.workgroup).map_err(|error| {
                     M1PhysicalDispatchRecipeErrorV1::Geometry {
-                        dispatch_index,
+                        dispatch_index: physical_dispatch_index,
                         error,
                     }
                 })?;
             rows.push(M1PhysicalDispatchRecipeRowV1 {
-                dispatch_index,
+                dispatch_index: physical_dispatch_index,
                 segment_index: segment.segment_index(),
                 stage: segment.stage(),
                 selection: segment.selection(),
-                logical_ordinal: row.logical_ordinal(),
-                profile: *row.profile(),
-                kind: row.kind(),
-                profile_id: row.operation().profile_id(),
+                profile: M1PhysicalDispatchProfileV1::Model {
+                    logical_ordinal: row.logical_ordinal(),
+                    descriptor: *row.profile(),
+                    kind: row.kind(),
+                    profile_id: row.operation().profile_id(),
+                },
                 program: resolved.program,
                 geometry,
                 kernarg_bytes: resolved.kernarg_bytes,
                 dynamic_group_segment_bytes: 0,
             });
-            expected_dispatch_index = expected_dispatch_index
+            expected_logical_dispatch_index = expected_logical_dispatch_index
+                .checked_add(1)
+                .ok_or(M1PhysicalDispatchRecipeErrorV1::ArithmeticOverflow)?;
+            physical_dispatch_index = physical_dispatch_index
                 .checked_add(1)
                 .ok_or(M1PhysicalDispatchRecipeErrorV1::ArithmeticOverflow)?;
         }
     }
 
-    if expected_dispatch_index != step.dispatch_count() {
+    if expected_logical_dispatch_index != step.dispatch_count() {
         return Err(M1PhysicalDispatchRecipeErrorV1::DispatchCount {
             expected: step.dispatch_count(),
-            actual: expected_dispatch_index,
+            actual: expected_logical_dispatch_index,
+        });
+    }
+    if physical_dispatch_index != physical_dispatch_count {
+        return Err(M1PhysicalDispatchRecipeErrorV1::DispatchCount {
+            expected: physical_dispatch_count,
+            actual: physical_dispatch_index,
         });
     }
     Ok(AddresslessM1PhysicalDispatchRecipeV1 {
         version: M1_PHYSICAL_DISPATCH_RECIPE_VERSION_V1,
         composition_id: step.composition_id(),
-        dispatch_count: expected_dispatch_index,
+        dispatch_count: physical_dispatch_index,
         rows: rows.into_boxed_slice(),
     })
+}
+
+fn assembly_profile_for_selection(
+    selection: Qwen3PlanSelection,
+) -> Option<logits::Qwen3SpeculativeTokenAssemblyProfileV1> {
+    if selection.role != Qwen3ModelRole::Target8B
+        || selection.mode != Qwen3ExecutionMode::Speculative
+    {
+        return None;
+    }
+    let bucket = match selection.bucket {
+        Qwen3PlanBucket::SpeculativeS1K4C8192 => {
+            logits::Qwen3LogitsBucketKindV1::SpeculativeS1K4C8192
+        }
+        Qwen3PlanBucket::SpeculativeS8K4C8192 => {
+            logits::Qwen3LogitsBucketKindV1::SpeculativeS8K4C8192
+        }
+        Qwen3PlanBucket::SpeculativeS1K8C8192 => {
+            logits::Qwen3LogitsBucketKindV1::SpeculativeS1K8C8192
+        }
+        Qwen3PlanBucket::SpeculativeS1K16C8192 => {
+            logits::Qwen3LogitsBucketKindV1::SpeculativeS1K16C8192
+        }
+        _ => return None,
+    };
+    logits::Qwen3SpeculativeTokenAssemblyProfileV1::for_bucket(bucket)
 }
 
 fn resolve_physical_profile(
@@ -606,11 +742,11 @@ mod tests {
     use ferric_spec::{Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection};
 
     use super::{
-        derive_m1_physical_dispatch_recipe_v1, M1PhysicalProgramV1,
-        M1_PHYSICAL_DISPATCH_RECIPE_VERSION_V1,
+        derive_m1_physical_dispatch_recipe_v1, M1PhysicalDispatchKindV1,
+        M1PhysicalDispatchProfileV1, M1PhysicalProgramV1, M1_PHYSICAL_DISPATCH_RECIPE_VERSION_V1,
     };
     use crate::operation_kernel_plan::tests::public_operation_kernel_plan_fixture;
-    use crate::{derive_m1_step_dispatch_plan, M1StepDispatchIntent};
+    use crate::{derive_m1_step_dispatch_plan, M1StepDispatchIntent, M1StepDispatchStage};
 
     const fn target(mode: Qwen3ExecutionMode, bucket: Qwen3PlanBucket) -> Qwen3PlanSelection {
         Qwen3PlanSelection {
@@ -687,24 +823,48 @@ mod tests {
             )),
         ];
         for intent in intents {
+            let speculative = matches!(intent, M1StepDispatchIntent::SpeculativeRound(_));
             let step = derive_m1_step_dispatch_plan(&operation_plan, intent)
                 .expect("canonical complete step");
             let recipe = derive_m1_physical_dispatch_recipe_v1(&step)
                 .expect("all retained profiles resolve to checked physical recipes");
             assert_eq!(recipe.version(), M1_PHYSICAL_DISPATCH_RECIPE_VERSION_V1);
             assert_eq!(recipe.composition_id(), step.composition_id());
-            assert_eq!(recipe.dispatch_count(), step.dispatch_count());
-            assert_eq!(recipe.rows().len(), step.dispatch_count() as usize);
+            let expected_count = step.dispatch_count() + u32::from(speculative);
+            assert_eq!(recipe.dispatch_count(), expected_count);
+            assert_eq!(recipe.rows().len(), expected_count as usize);
             assert_eq!(recipe.rows()[0].dispatch_index(), 0);
             assert_eq!(
                 recipe.rows().last().unwrap().dispatch_index(),
-                step.dispatch_count() - 1
+                expected_count - 1
             );
             assert!(recipe
                 .rows()
                 .iter()
                 .all(|row| row.dynamic_group_segment_bytes() == 0));
             seen_programs.extend(recipe.rows().iter().map(|row| row.program()));
+            let assembly = recipe
+                .rows()
+                .iter()
+                .filter(|row| row.kind() == M1PhysicalDispatchKindV1::SpeculativeTokenAssembly)
+                .collect::<Vec<_>>();
+            assert_eq!(assembly.len(), usize::from(speculative));
+            if let Some(row) = assembly.first() {
+                assert_eq!(row.program(), M1PhysicalProgramV1::SpeculativeTokenAssembly);
+                assert_eq!(row.operator(), None);
+                assert_eq!(row.logical_ordinal(), None);
+                assert!(matches!(
+                    row.profile(),
+                    M1PhysicalDispatchProfileV1::SpeculativeTokenAssembly(_)
+                ));
+                assert!(matches!(
+                    row.stage(),
+                    M1StepDispatchStage::TargetVerification { .. }
+                ));
+                let next = &recipe.rows()[row.dispatch_index() as usize + 1];
+                assert!(matches!(next.kind(), M1PhysicalDispatchKindV1::Model(_)));
+                assert_eq!(next.stage(), row.stage());
+            }
             assert!(!recipe.authenticates_artifacts());
             assert!(!recipe.grants_execution_authority());
             assert!(!recipe.proves_refinement());
@@ -733,7 +893,9 @@ mod tests {
             .filter(|row| {
                 matches!(
                     row.program(),
-                    M1PhysicalProgramV1::LogitsArgmax | M1PhysicalProgramV1::LogitsCompact
+                    M1PhysicalProgramV1::LogitsArgmax
+                        | M1PhysicalProgramV1::LogitsCompact
+                        | M1PhysicalProgramV1::SpeculativeTokenAssembly
                 )
             })
             .map(|row| row.program())
@@ -745,6 +907,7 @@ mod tests {
                 M1PhysicalProgramV1::LogitsArgmax,
                 M1PhysicalProgramV1::LogitsArgmax,
                 M1PhysicalProgramV1::LogitsArgmax,
+                M1PhysicalProgramV1::SpeculativeTokenAssembly,
                 M1PhysicalProgramV1::LogitsArgmax,
                 M1PhysicalProgramV1::LogitsCompact,
             ]

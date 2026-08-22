@@ -81,7 +81,8 @@ pub use physical_buffer_recipe::{
 };
 pub use physical_dispatch_recipe::{
     derive_m1_physical_dispatch_recipe_v1, AddresslessM1PhysicalDispatchRecipeV1,
-    M1PhysicalDispatchRecipeErrorV1, M1PhysicalDispatchRecipeRowV1, M1PhysicalProfileFamilyV1,
+    M1PhysicalDispatchKindV1, M1PhysicalDispatchProfileV1, M1PhysicalDispatchRecipeErrorV1,
+    M1PhysicalDispatchRecipeRowV1, M1PhysicalProfileFamilyV1,
     M1_PHYSICAL_DISPATCH_RECIPE_VERSION_V1,
 };
 pub use physical_kernarg_recipe::{
