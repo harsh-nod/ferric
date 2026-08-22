@@ -1235,6 +1235,7 @@ unverified=ferric-engine|crates/ferric-engine/src/bin/ferric-m1-qualification-ca
 unverified=ferric-engine|crates/ferric-engine/src/bin/ferric-m1-qualification-capture.rs|ferric_m1_qualification_capture::parse_identities
 unverified=ferric-engine|crates/ferric-engine/src/bin/ferric-m1-qualification-capture.rs|ferric_m1_qualification_capture::parse_lanes
 unverified=ferric-engine|crates/ferric-engine/src/bin/ferric-m1-qualification-capture.rs|ferric_m1_qualification_capture::path_exists_at
+unverified=ferric-engine|crates/ferric-engine/src/bin/ferric-m1-qualification-capture.rs|ferric_m1_qualification_capture::qualification_kv_page_count
 unverified=ferric-engine|crates/ferric-engine/src/bin/ferric-m1-qualification-capture.rs|ferric_m1_qualification_capture::release_observed_after_error
 unverified=ferric-engine|crates/ferric-engine/src/bin/ferric-m1-qualification-capture.rs|ferric_m1_qualification_capture::release_qualification_failure
 unverified=ferric-engine|crates/ferric-engine/src/bin/ferric-m1-qualification-capture.rs|ferric_m1_qualification_capture::release_result

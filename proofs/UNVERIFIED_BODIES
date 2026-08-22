@@ -427,6 +427,7 @@ unverified=ferric-engine|crates/ferric-engine/src/bin/ferric-m1-qualification-ca
 unverified=ferric-engine|crates/ferric-engine/src/bin/ferric-m1-qualification-capture.rs|ferric_m1_qualification_capture::parse_identities|pending-verus|m1-qualification-capture-runner-proof-pending
 unverified=ferric-engine|crates/ferric-engine/src/bin/ferric-m1-qualification-capture.rs|ferric_m1_qualification_capture::parse_lanes|pending-verus|m1-qualification-capture-runner-proof-pending
 unverified=ferric-engine|crates/ferric-engine/src/bin/ferric-m1-qualification-capture.rs|ferric_m1_qualification_capture::path_exists_at|pending-verus|m1-qualification-capture-runner-proof-pending
+unverified=ferric-engine|crates/ferric-engine/src/bin/ferric-m1-qualification-capture.rs|ferric_m1_qualification_capture::qualification_kv_page_count|pending-verus|m1-qualification-capture-runner-proof-pending
 unverified=ferric-engine|crates/ferric-engine/src/bin/ferric-m1-qualification-capture.rs|ferric_m1_qualification_capture::release_observed_after_error|pending-verus|m1-qualification-capture-runner-proof-pending
 unverified=ferric-engine|crates/ferric-engine/src/bin/ferric-m1-qualification-capture.rs|ferric_m1_qualification_capture::release_qualification_failure|pending-verus|m1-qualification-capture-runner-proof-pending
 unverified=ferric-engine|crates/ferric-engine/src/bin/ferric-m1-qualification-capture.rs|ferric_m1_qualification_capture::release_result|pending-verus|m1-qualification-capture-runner-proof-pending

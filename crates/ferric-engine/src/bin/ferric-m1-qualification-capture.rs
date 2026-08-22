@@ -33,7 +33,7 @@ use ferric_engine::{
 use ferric_spec::{
     validate_m1_step_inputs, EngineLimits, Identity, M1StepInputCandidate,
     M1StepInputValidationOutcome, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket,
-    Qwen3PlanSelection, StepPlan, ValidatedM1StepInputs, QWEN3_VOCABULARY_SIZE,
+    Qwen3PlanSelection, StepPlan, ValidatedM1StepInputs, M1_KV_PAGE_TOKENS, QWEN3_VOCABULARY_SIZE,
 };
 use rustix::fd::OwnedFd;
 use rustix::fs::{
@@ -698,10 +698,8 @@ fn execute_capture(
         let mut cache =
             ActiveDeviceKvCache::new(memory.device(), request, selection, draft_selection)
                 .map_err(|error| format!("cannot create lane {lane} device KV cache: {error:?}"))?;
-        let end = context_lengths[lane]
-            .checked_add(active_lengths[lane])
-            .ok_or_else(|| format!("lane {lane} context extent overflowed"))?;
-        let pages = end.div_ceil(256);
+        let pages = qualification_kv_page_count(context_lengths[lane], active_lengths[lane])
+            .map_err(|error| format!("lane {lane} {error}"))?;
         let mut leases = Vec::with_capacity(pages as usize);
         for page in 0..pages {
             leases.push(
@@ -988,6 +986,16 @@ fn require_supported_capture(workload: &Workload) -> CaptureResult<()> {
     } else {
         Ok(())
     }
+}
+
+fn qualification_kv_page_count(context: u32, active: u32) -> CaptureResult<u32> {
+    let end = context
+        .checked_add(active)
+        .ok_or_else(|| "context extent overflowed".to_owned())?;
+    if active == 0 || end == 0 {
+        return Err("active KV extent must be nonzero".to_owned());
+    }
+    Ok(end.div_ceil(M1_KV_PAGE_TOKENS))
 }
 
 fn validated_inputs(
@@ -2293,6 +2301,25 @@ mod tests {
             }]
         );
         assert!(!bytes.is_empty());
+    }
+
+    #[test]
+    fn qualification_kv_leases_follow_the_exact_p16_contract() {
+        for (context, active, expected_pages) in [
+            (0, 128, 8),
+            (0, 512, 32),
+            (0, 2_048, 128),
+            (8_191, 1, 512),
+            (15, 1, 1),
+            (16, 1, 2),
+        ] {
+            assert_eq!(
+                qualification_kv_page_count(context, active).unwrap(),
+                expected_pages
+            );
+        }
+        assert!(qualification_kv_page_count(0, 0).is_err());
+        assert!(qualification_kv_page_count(u32::MAX, 1).is_err());
     }
 
     #[test]
