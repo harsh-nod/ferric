@@ -54,8 +54,10 @@ pub const QWEN3_KV_PAGE_BYTES_V1: u64 = rope_kv::QWEN3_KV_PAGE_TOKENS_V1 as u64
     * BF16_BYTES;
 /// Bytes in one layer's complete key and value cache planes.
 pub const QWEN3_KV_LAYER_BYTES_V1: u64 = rope_kv::QWEN3_KV_CACHE_BYTES_V1 * 2;
+/// Exact KFD-compatible base alignment for every model allocation.
+pub const QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1: u64 = 4_096;
 /// Required base alignment for role-scoped KV arenas and all derived pages.
-pub const QWEN3_KV_ARENA_ALIGNMENT_V1: u64 = QWEN3_KV_PAGE_BYTES_V1;
+pub const QWEN3_KV_ARENA_ALIGNMENT_V1: u64 = QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1;
 
 /// Returns the exact byte length of one role-scoped, all-layer KV arena.
 #[must_use]
@@ -71,15 +73,17 @@ pub const fn qwen3_kv_arena_bytes(role: Qwen3ModelRole) -> u64 {
 pub struct DeclaredDeviceAllocation {
     allocation_id: Identity,
     byte_len: u64,
+    alignment: u64,
 }
 
 impl DeclaredDeviceAllocation {
     /// Creates inert allocation declaration data.
     #[must_use]
-    pub const fn new(allocation_id: Identity, byte_len: u64) -> Self {
+    pub const fn new(allocation_id: Identity, byte_len: u64, alignment: u64) -> Self {
         Self {
             allocation_id,
             byte_len,
+            alignment,
         }
     }
 
@@ -93,6 +97,12 @@ impl DeclaredDeviceAllocation {
     #[must_use]
     pub const fn byte_len(self) -> u64 {
         self.byte_len
+    }
+
+    /// Returns the caller-declared allocation-base alignment.
+    #[must_use]
+    pub const fn alignment(self) -> u64 {
+        self.alignment
     }
 }
 
@@ -299,6 +309,17 @@ pub enum ModelMemoryPlanError {
         /// Exact required bytes.
         expected: u64,
         /// Rejected caller-declared bytes.
+        actual: u64,
+    },
+    /// A declared allocation has the wrong exact KFD-compatible alignment.
+    AllocationAlignment {
+        /// Model role owning the rejected declaration.
+        role: Qwen3ModelRole,
+        /// Allocation purpose.
+        kind: ModelMemoryAllocationKind,
+        /// Exact required alignment.
+        expected: u64,
+        /// Rejected caller-declared alignment.
         actual: u64,
     },
     /// A requested transformer layer is outside the selected role.
@@ -588,6 +609,14 @@ fn validate_declarations(
                 actual: allocation.byte_len,
             });
         }
+        if allocation.alignment != QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1 {
+            return Err(ModelMemoryPlanError::AllocationAlignment {
+                role,
+                kind,
+                expected: QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1,
+                actual: allocation.alignment,
+            });
+        }
     }
 
     let allocations = declarations.as_array();
@@ -625,7 +654,8 @@ mod tests {
         plan_authenticated_model_memory, qwen3_kv_arena_bytes, AddresslessModelMemoryPlan,
         DeclaredDeviceAllocation, KvCacheComponent, ModelMemoryAllocationKind,
         ModelMemoryAllocationSet, ModelMemoryPlanError, ModelMemoryPlanOutcome,
-        QWEN3_KV_LAYER_BYTES_V1, QWEN3_KV_PAGE_BYTES_V1,
+        QWEN3_KV_ARENA_ALIGNMENT_V1, QWEN3_KV_LAYER_BYTES_V1, QWEN3_KV_PAGE_BYTES_V1,
+        QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1,
     };
     use crate::{
         build_authenticated_model_weight_layout, build_prepacked_deployment_bundle,
@@ -661,18 +691,22 @@ mod tests {
             DeclaredDeviceAllocation::new(
                 identity(1),
                 Qwen3ModelRole::Target8B.tensor_data_bytes(),
+                QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1,
             ),
             DeclaredDeviceAllocation::new(
                 identity(2),
                 Qwen3ModelRole::Draft06B.tensor_data_bytes(),
+                QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1,
             ),
             DeclaredDeviceAllocation::new(
                 identity(3),
                 qwen3_kv_arena_bytes(Qwen3ModelRole::Target8B),
+                QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1,
             ),
             DeclaredDeviceAllocation::new(
                 identity(4),
                 qwen3_kv_arena_bytes(Qwen3ModelRole::Draft06B),
+                QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1,
             ),
         )
     }
@@ -698,10 +732,15 @@ mod tests {
             30_064_771_072
         );
         assert_eq!(QWEN3_KV_PAGE_BYTES_V1, 32_768);
+        assert_eq!(QWEN3_KV_ARENA_ALIGNMENT_V1, 4_096);
 
         for role in [Qwen3ModelRole::Target8B, Qwen3ModelRole::Draft06B] {
             let weight_allocation = plan.allocation(role, ModelMemoryAllocationKind::Weights);
             assert_eq!(weight_allocation.byte_len(), role.tensor_data_bytes());
+            assert_eq!(
+                weight_allocation.alignment(),
+                QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1
+            );
             for ordinal in 0..role.tensor_count() {
                 let binding = plan
                     .weight_by_ordinal(role, ordinal)
@@ -720,6 +759,7 @@ mod tests {
 
             let kv_allocation = plan.allocation(role, ModelMemoryAllocationKind::KvArena);
             assert_eq!(kv_allocation.byte_len(), qwen3_kv_arena_bytes(role));
+            assert_eq!(kv_allocation.alignment(), QWEN3_KV_ARENA_ALIGNMENT_V1);
             for layer in 0..role.layers() {
                 let key = plan
                     .kv_layer(role, KvCacheComponent::Key, layer)
@@ -761,7 +801,11 @@ mod tests {
         let mut cases = Vec::new();
         let exact = declarations();
         let mut values = exact.as_array();
-        values[0] = DeclaredDeviceAllocation::new(Identity::new([0; 32]), values[0].byte_len());
+        values[0] = DeclaredDeviceAllocation::new(
+            Identity::new([0; 32]),
+            values[0].byte_len(),
+            values[0].alignment(),
+        );
         cases.push((
             ModelMemoryAllocationSet::new(values[0], values[1], values[2], values[3]),
             ModelMemoryPlanError::MissingAllocationIdentity {
@@ -776,6 +820,7 @@ mod tests {
                 aliased[right] = DeclaredDeviceAllocation::new(
                     aliased[left].allocation_id(),
                     aliased[right].byte_len(),
+                    aliased[right].alignment(),
                 );
                 cases.push((
                     ModelMemoryAllocationSet::new(aliased[0], aliased[1], aliased[2], aliased[3]),
@@ -790,11 +835,14 @@ mod tests {
             (Qwen3ModelRole::Target8B, ModelMemoryAllocationKind::KvArena),
             (Qwen3ModelRole::Draft06B, ModelMemoryAllocationKind::KvArena),
         ];
-        for (index, (role, kind)) in slots.into_iter().enumerate() {
+        for (index, (role, kind)) in slots.iter().copied().enumerate() {
             let mut changed = exact.as_array();
             let expected = changed[index].byte_len();
-            changed[index] =
-                DeclaredDeviceAllocation::new(changed[index].allocation_id(), expected - 1);
+            changed[index] = DeclaredDeviceAllocation::new(
+                changed[index].allocation_id(),
+                expected - 1,
+                changed[index].alignment(),
+            );
             cases.push((
                 ModelMemoryAllocationSet::new(changed[0], changed[1], changed[2], changed[3]),
                 ModelMemoryPlanError::AllocationLength {
@@ -802,6 +850,23 @@ mod tests {
                     kind,
                     expected,
                     actual: expected - 1,
+                },
+            ));
+        }
+        for (index, (role, kind)) in slots.iter().copied().enumerate() {
+            let mut changed = exact.as_array();
+            changed[index] = DeclaredDeviceAllocation::new(
+                changed[index].allocation_id(),
+                changed[index].byte_len(),
+                QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1 / 2,
+            );
+            cases.push((
+                ModelMemoryAllocationSet::new(changed[0], changed[1], changed[2], changed[3]),
+                ModelMemoryPlanError::AllocationAlignment {
+                    role,
+                    kind,
+                    expected: QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1,
+                    actual: QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1 / 2,
                 },
             ));
         }

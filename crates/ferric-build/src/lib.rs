@@ -46,6 +46,7 @@ pub use memory_layout::{
     ModelMemoryAllocationKind, ModelMemoryAllocationSet, ModelMemoryPlanError,
     ModelMemoryPlanFailure, ModelMemoryPlanOutcome, ModelWeightMemoryBinding,
     QWEN3_KV_ARENA_ALIGNMENT_V1, QWEN3_KV_LAYER_BYTES_V1, QWEN3_KV_PAGE_BYTES_V1,
+    QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1,
 };
 pub use model::{
     build_authenticated_deployment_bundle, build_preliminary_deployment_bundle,
