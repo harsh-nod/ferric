@@ -49,7 +49,7 @@ Historical reference commit:
 `62d11e929a2eb9e6cf71007c8a674fb7b9d493c8`, directly based on the GEMM
 reference commit.
 
-Move into `src/rmsnorm.rs`:
+Migrated into `src/rmsnorm.rs` from the historical reference:
 
 - the 132-profile catalog: two roles, eleven buckets, five pure graph
   operations, and a separate hidden-width residual-fused operation;
@@ -63,9 +63,9 @@ Move into `src/rmsnorm.rs`:
 - unit tests for all profiles, modes, maximum rows, source labels, bounds,
   aliases, hostile geometry, and structural compiler output.
 
-Move and re-domain all six existing RMSNorm compile-fail source/baseline pairs.
-Add real trybuild-generated non-Clone/private-field cases for Worker evidence,
-which are absent from the historical accepted branch.
+The six historical RMSNorm compile-fail source/baseline pairs are re-domained
+for Ferric. Non-Clone/private-field Worker-evidence cases are included and
+their baselines must come only from a real trybuild run.
 
 Do not copy historical lockfile or fe2o3 package/README/module ownership edits.
 Replace every historical fe2o3-owned Qwen RMSNorm identity domain with a Ferric

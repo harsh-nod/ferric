@@ -10,6 +10,8 @@ pub mod logits;
 pub mod paged_decode;
 /// Exact Qwen3 causal-prefill compiler profiles.
 pub mod prefill;
+/// Exact Qwen3 RMSNorm and explicitly residual-fused compiler profiles.
+pub mod rmsnorm;
 /// Exact Qwen3 split-half RoPE and global-pool P16 paged-KV compiler profiles.
 pub mod rope_kv;
 /// Exact Qwen3 SwiGLU compiler profiles.
