@@ -172,11 +172,11 @@ pub const QWEN3_LOGITS_COMPACT_TOTAL_KERNARG_BYTES_V1: u64 = 400;
 /// Exact kernarg alignment.
 pub const QWEN3_LOGITS_KERNARG_ALIGNMENT_V1: u64 = 8;
 /// Exact final LLVM byte length.
-pub const QWEN3_LOGITS_LLVM_BYTES_V1: usize = 20_290;
+pub const QWEN3_LOGITS_LLVM_BYTES_V1: usize = 20_346;
 /// Exact final LLVM SHA-256.
 pub const QWEN3_LOGITS_LLVM_SHA256_V1: [u8; 32] = [
-    0x3d, 0x63, 0x1c, 0x1c, 0x00, 0xf1, 0xdf, 0x43, 0x25, 0x72, 0xbe, 0x9e, 0xb9, 0xbd, 0xf5, 0xfc,
-    0xb0, 0x59, 0xb9, 0x90, 0x9c, 0x06, 0x04, 0xc1, 0xc7, 0x6e, 0x45, 0x35, 0xa3, 0x66, 0xd4, 0x39,
+    0xd5, 0x0f, 0x3f, 0xd1, 0xc3, 0x54, 0xae, 0x3e, 0x3e, 0x6a, 0x82, 0x4d, 0xee, 0x41, 0x5b, 0xf8,
+    0xc6, 0x5a, 0xa5, 0xf2, 0x13, 0x1d, 0xc4, 0x3e, 0x26, 0x4d, 0xd6, 0x80, 0x3f, 0xdb, 0x1e, 0x17,
 ];
 
 const PROFILE_DOMAIN: &[u8] = b"FERRIC/QWEN3/LOGITS/PROFILE/V1\0";
@@ -351,6 +351,14 @@ pub enum Qwen3LogitsCompletionKindV1 {
     TargetSpeculative = 3,
 }
 
+/// Physical layout of target-verification draft choices.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[repr(u8)]
+pub enum Qwen3SpeculativeDraftLayoutV1 {
+    /// K contiguous iteration slices, each containing one choice per sequence.
+    IterationMajor = 1,
+}
+
 /// Stable profile identity.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Qwen3LogitsProfileIdentityV1([u8; 32]);
@@ -402,6 +410,13 @@ impl Qwen3LogitsProfileV1 {
         encoded.push(bucket.kind() as u8);
         encoded.push(bucket.mode() as u8);
         encoded.push(completion as u8);
+        encoded.push(
+            if completion == Qwen3LogitsCompletionKindV1::TargetSpeculative {
+                Qwen3SpeculativeDraftLayoutV1::IterationMajor as u8
+            } else {
+                0
+            },
+        );
         encoded.extend_from_slice(&sequences.to_le_bytes());
         encoded.extend_from_slice(&active.to_le_bytes());
         encoded.extend_from_slice(&bucket.rows().to_le_bytes());
@@ -451,6 +466,31 @@ impl Qwen3LogitsProfileV1 {
     #[must_use]
     pub const fn speculative_k(self) -> u32 {
         self.bucket.speculative_k()
+    }
+
+    /// Exact iteration-major `[K, sequences]` draft-choice shape.
+    #[must_use]
+    pub const fn speculative_draft_shape(self) -> Option<[u32; 2]> {
+        if matches!(
+            self.completion,
+            Qwen3LogitsCompletionKindV1::TargetSpeculative
+        ) {
+            Some([self.bucket.speculative_k(), self.bucket.shape()[0]])
+        } else {
+            None
+        }
+    }
+
+    /// Linear element index for one iteration-major draft choice.
+    #[must_use]
+    pub const fn speculative_draft_index(self, iteration: u32, sequence: u32) -> Option<u64> {
+        let Some([iterations, sequences]) = self.speculative_draft_shape() else {
+            return None;
+        };
+        if iteration >= iterations || sequence >= sequences {
+            return None;
+        }
+        Some(iteration as u64 * sequences as u64 + sequence as u64)
     }
 
     /// Exact [logits, choices, draft tokens, record bytes] extents.
@@ -625,7 +665,7 @@ pub enum Qwen3LogitsBufferV1 {
     Logits = 1,
     /// U32 argmax choices.
     Choices = 2,
-    /// U32 speculative draft tokens.
+    /// U32 target-verification draft tokens in iteration-major `[K,S]` order.
     DraftTokens = 3,
     /// U32 live active-token count for each fixed sequence lane.
     ActiveLengths = 4,
@@ -1616,8 +1656,8 @@ accept.cond:
 
 accept.load:
   %accepted64 = zext i32 %accepted to i64
-  %draft.base = mul nuw i64 %sequence, %k64
-  %draft.index = add nuw i64 %draft.base, %accepted64
+  %draft.iteration.base = mul nuw i64 %accepted64, %sequences64
+  %draft.index = add nuw i64 %draft.iteration.base, %sequence
   %draft.ptr = getelementptr inbounds i32, ptr addrspace(1) %draft.data, i64 %draft.index
   %draft.token = load i32, ptr addrspace(1) %draft.ptr, align 4
   %target.index = add nuw i64 %choice.base.index, %accepted64
@@ -1719,8 +1759,8 @@ tokens.emit.cond:
 
 tokens.emit.body:
   %emit.index64 = zext i32 %emit.index to i64
-  %emit.draft.base = mul nuw i64 %sequence, %k64
-  %emit.draft.index = add nuw i64 %emit.draft.base, %emit.index64
+  %emit.draft.iteration.base = mul nuw i64 %emit.index64, %sequences64
+  %emit.draft.index = add nuw i64 %emit.draft.iteration.base, %sequence
   %emit.draft.ptr = getelementptr inbounds i32, ptr addrspace(1) %draft.data, i64 %emit.draft.index
   %emit.draft.token = load i32, ptr addrspace(1) %emit.draft.ptr, align 4
   %emit.byte.offset = mul nuw i64 %emit.index64, 4
@@ -1778,6 +1818,10 @@ fn validate_canonical_llvm(module: &str) -> Result<(), PrepareQwen3LogitsKernelE
             .contains("%direct.choice.index = add nuw i64 %choice.base.index, %live.minus.one")
         && module.contains("store i32 0, ptr addrspace(1) %inactive.record.ptr, align 4")
         && module.contains("%accepted.less.k = icmp ult i32 %accepted, %speculative.k")
+        && module.contains("%draft.iteration.base = mul nuw i64 %accepted64, %sequences64")
+        && module.contains("%emit.draft.iteration.base = mul nuw i64 %emit.index64, %sequences64")
+        && !module.contains("%draft.base = mul nuw i64 %sequence, %k64")
+        && !module.contains("%emit.draft.base = mul nuw i64 %sequence, %k64")
         && module.contains("store i16 0, ptr addrspace(1) %record.reserved.ptr")
         && module.contains("%records.expected = mul nuw i64 %sequences64, 120")
         && module.contains("%vocabulary.ok = icmp eq i32 %vocabulary, 151936")
@@ -2679,6 +2723,17 @@ mod tests {
                 profile(Qwen3LogitsModelRoleV1::Target8B, kind).choice_shape(),
                 [sequences, k + 1]
             );
+            let target = profile(Qwen3LogitsModelRoleV1::Target8B, kind);
+            assert_eq!(target.speculative_draft_shape(), Some([k, sequences]));
+            let mut indices = Vec::new();
+            for iteration in 0..k {
+                for sequence in 0..sequences {
+                    indices.push(target.speculative_draft_index(iteration, sequence).unwrap());
+                }
+            }
+            assert_eq!(indices, (0..u64::from(k * sequences)).collect::<Vec<_>>());
+            assert_eq!(target.speculative_draft_index(k, 0), None);
+            assert_eq!(target.speculative_draft_index(0, sequences), None);
             assert_eq!(
                 profile(Qwen3LogitsModelRoleV1::Draft06B, kind).choice_shape(),
                 [sequences, k]
@@ -2833,6 +2888,10 @@ mod tests {
         let source = canonical_qwen3_logits_llvm();
         assert!(source.contains("%accepted.less.k = icmp ult i32 %accepted, %speculative.k"));
         assert!(source.contains("%tokens.equal = icmp eq i32 %draft.token, %target.token"));
+        assert!(source.contains("%draft.iteration.base = mul nuw i64 %accepted64, %sequences64"));
+        assert!(
+            source.contains("%emit.draft.iteration.base = mul nuw i64 %emit.index64, %sequences64")
+        );
         assert!(source
             .contains("%correction.index = add nuw i64 %choice.base.index, %accepted.final64"));
     }

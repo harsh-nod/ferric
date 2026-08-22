@@ -82,7 +82,7 @@ pub enum M1StepWorkspaceRangeRole {
     Logits,
     /// K7 `u32` lowest-ID argmax choices `[S,A]`.
     Choices,
-    /// Target speculative K7 `u32` draft choices `[S,K]`.
+    /// Target speculative K7 `u32` draft choices `[K,S]`, one contiguous slice per iteration.
     DraftChoices,
     /// Target K7 `u32` request slots `[S]`.
     RequestSlots,
