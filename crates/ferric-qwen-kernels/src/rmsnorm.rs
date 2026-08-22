@@ -1171,9 +1171,18 @@ fn kernel_parameters_v1() -> Result<Vec<KernelParameterV1>, HandoffDiagnosticV1>
 }
 
 fn exact_function_attributes() -> Vec<FunctionAttributeV1> {
-    FunctionAttributeV1::gfx942_kernel_defaults(
+    let mut attributes = FunctionAttributeV1::gfx942_kernel_defaults(
         WorkgroupSizeRangeV1::new(64, 64).expect("the fixed wave64 bound is valid"),
-    )
+    );
+    attributes.extend([
+        FunctionAttributeV1::NoCompletionAction,
+        FunctionAttributeV1::NoDefaultQueue,
+        FunctionAttributeV1::NoHeapPointer,
+        FunctionAttributeV1::NoHostcallPointer,
+        FunctionAttributeV1::NoMultigridSyncArgument,
+        FunctionAttributeV1::NoQueuePointer,
+    ]);
+    attributes
 }
 
 #[derive(Clone, Copy)]
@@ -2415,7 +2424,7 @@ const fn is_bf16_metadata_carrier(value_type: ExplicitValueType) -> bool {
 }
 
 fn exact_hidden_arguments(arguments: &[HiddenArgument]) -> bool {
-    const RELATIVE: [(u64, u64, HiddenValueKind); 19] = [
+    const RELATIVE: [(u64, u64, HiddenValueKind); 13] = [
         (0, 4, HiddenValueKind::BlockCountX),
         (4, 4, HiddenValueKind::BlockCountY),
         (8, 4, HiddenValueKind::BlockCountZ),
@@ -2429,12 +2438,6 @@ fn exact_hidden_arguments(arguments: &[HiddenArgument]) -> bool {
         (48, 8, HiddenValueKind::GlobalOffsetY),
         (56, 8, HiddenValueKind::GlobalOffsetZ),
         (64, 2, HiddenValueKind::GridDimensions),
-        (80, 8, HiddenValueKind::HostcallBuffer),
-        (88, 8, HiddenValueKind::MultigridSyncArgument),
-        (96, 8, HiddenValueKind::HeapV1),
-        (104, 8, HiddenValueKind::DefaultQueue),
-        (112, 8, HiddenValueKind::CompletionAction),
-        (200, 8, HiddenValueKind::QueuePointer),
     ];
     arguments.len() == RELATIVE.len()
         && arguments.iter().zip(RELATIVE).all(|(actual, expected)| {
@@ -2782,6 +2785,9 @@ mod tests {
                 llvm.contains(required),
                 "missing LLVM fragment: {required}\n{llvm}"
             );
+        }
+        for attribute in crate::COV6_NO_RUNTIME_SERVICE_ATTRIBUTES_V1 {
+            assert_eq!(llvm.matches(attribute).count(), 1, "{attribute}");
         }
         let definition = llvm
             .lines()
