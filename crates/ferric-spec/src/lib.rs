@@ -84,7 +84,9 @@ pub use speculative_kv_indexing::{
     TargetChoiceUse, M1_MAX_SPECULATIVE_KV_DRAFT_TOKENS, M1_MAX_SPECULATIVE_KV_TARGET_INPUTS,
 };
 pub use speculative_step_composition::{
-    settle_and_publish_speculative_step, AtomicSpeculativeStepError, AtomicSpeculativeStepOutcome,
+    apply_preflighted_speculative_step, preflight_speculative_step,
+    required_single_member_accepted_count, settle_and_publish_speculative_step,
+    AtomicSpeculativeStepError, AtomicSpeculativeStepOutcome, SpeculativeStepPreflight,
 };
 pub use step_plan_publication::{
     discard_reserved_delta, publish_reserved_delta, validate_direct_publication,
