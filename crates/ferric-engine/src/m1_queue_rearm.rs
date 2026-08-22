@@ -499,7 +499,14 @@ fn schedule_m1_long_lived_queue_rearm_inner_v1<const C: usize>(
 > {
     let shape = released.queue().shape();
     let selection = released.queue().custody().selection();
-    if !repeated_shape_is_supported(shape, selection) {
+    if !repeated_shape_is_supported(shape, selection)
+        || released
+            .queue()
+            .custody()
+            .completion_output()
+            .qualification_logits()
+            .is_some()
+    {
         return Err(schedule_phase_failure(
             M1LongLivedQueueRearmSchedulePhaseV1::Released,
             M1LongLivedQueueRearmScheduleErrorV1::UnsupportedPriorShape,

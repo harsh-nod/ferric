@@ -26,9 +26,10 @@
 use crate::bound_step_workspaces::bind_addressless_m1_full_step_workspace_subleases;
 use crate::initialized_step_workspaces::allocate_initialized_m1_full_step_workspaces_v1;
 use crate::{
-    allocate_m1_completion_output_v1, AddresslessM1FullStepWorkspaceComposition,
-    BoundM1CompletionOutputV1, BoundM1FullStepWorkspaceSubleases, BoundModelMemoryAllocationsV1,
-    ExactCompletion, InitializedM1FullStepWorkspaceAllocationFailureV1, M1CompletionOutputErrorV1,
+    allocate_m1_completion_output_v1, qualification_logits::attach_m1_qualification_logits_v1,
+    AddresslessM1FullStepWorkspaceComposition, BoundM1CompletionOutputV1,
+    BoundM1FullStepWorkspaceSubleases, BoundModelMemoryAllocationsV1, ExactCompletion,
+    InitializedM1FullStepWorkspaceAllocationFailureV1, M1CompletionOutputErrorV1,
     M1DeviceBoundModelMemoryV1, M1FullStepWorkspaceDispatchRangeError, M1FullStepWorkspaceImagesV1,
     M1FullStepWorkspacePlans, M1FullStepWorkspaceRole, M1FullStepWorkspaceSubleaseBindingFailure,
     M1FullStepWorkspaceSubleaseOwners, ModelMemoryAllocationBindingErrorV1,
@@ -841,12 +842,38 @@ impl M1PartitionedModelMemoryKvPoolV1 {
         allocate_m1_completion_output_v1(&mut self.allocations, selection)
     }
 
+    /// Adds qualification-only host-visible logits capture to a compact output.
+    ///
+    /// Production callers retain the ordinary compact-only allocation path.
+    /// Qualification must opt in before physical buffer binding.
+    ///
+    /// # Errors
+    ///
+    /// Rejects shape, allocation, mapping, or range drift while retaining the
+    /// already-bound compact output inside the boxed failure.
+    pub fn enable_qualification_logits_capture(
+        &mut self,
+        completion: BoundM1CompletionOutputV1,
+    ) -> Result<BoundM1CompletionOutputV1, Box<crate::M1QualificationLogitsAllocationFailureV1>>
+    {
+        attach_m1_qualification_logits_v1(&mut self.allocations, completion)
+    }
+
     pub(crate) fn completion_output_dispatch_range(
         &self,
         completion: &BoundM1CompletionOutputV1,
         selection: Qwen3PlanSelection,
     ) -> Result<fe2o3_service_host::ServiceHostDispatchRangeV1, M1CompletionOutputErrorV1> {
         completion.host_dispatch_range(&self.allocations, selection)
+    }
+
+    pub(crate) fn qualification_logits_dispatch_range(
+        &self,
+        logits: &crate::BoundM1QualificationLogitsV1,
+        selection: Qwen3PlanSelection,
+    ) -> Result<fe2o3_service_host::ServiceHostDispatchRangeV1, crate::M1QualificationLogitsErrorV1>
+    {
+        logits.host_dispatch_range(&self.allocations, selection)
     }
 
     pub(crate) fn allocate_full_step_workspaces(

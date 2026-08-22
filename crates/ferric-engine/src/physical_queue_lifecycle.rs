@@ -19,16 +19,17 @@ use ferric_spec::completion::CompletionEpoch;
 
 use crate::completed_readback_join::check_m1_completed_output_v1;
 use crate::observed_completion::observe_m1_completed_output_v1;
+use crate::qualification_logits::observe_m1_qualification_logits_v1;
 use crate::{
     CompletionWireExpectation, CompletionWireSemanticExpectation, ExactCompletion,
     Gfx942DeviceBinding, M1CheckedCompletionOutputV1, M1CompletedOutputCheckErrorV1,
     M1FullStepKvReservationCustodyV1, M1ObservedCompletionImageErrorV1,
-    M1ObservedCompletionImageV1, M1PhysicalFixedBatchCaseV1, M1PhysicalFixedBatchCustodyV1,
-    M1PhysicalFixedBatchShapeV1, M1PhysicalFixedBatchV1, M1PhysicalQueueBatchCustodyV1,
-    M1PrepublicationBatchV1, M1PrepublicationStepCustodyV1, M1ScheduledDispatchV1,
-    M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
-    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
-    M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
+    M1ObservedCompletionImageV1, M1ObservedQualificationLogitsV1, M1PhysicalFixedBatchCaseV1,
+    M1PhysicalFixedBatchCustodyV1, M1PhysicalFixedBatchShapeV1, M1PhysicalFixedBatchV1,
+    M1PhysicalQueueBatchCustodyV1, M1PrepublicationBatchV1, M1PrepublicationStepCustodyV1,
+    M1QualificationLogitsErrorV1, M1ScheduledDispatchV1, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
 };
 
 /// Observable Ferric phase for one M1 queue generation.
@@ -1390,6 +1391,262 @@ pub struct M1PhysicalCompletedReadbackV1 {
     kv: M1FullStepKvReservationCustodyV1,
 }
 
+/// Copied compact K7 bytes and final live BF16 logits rows for qualification.
+#[must_use = "qualification evidence must be reported or retained"]
+#[derive(Debug)]
+pub struct M1QualificationCompletionEvidenceV1 {
+    compact_raw_bytes: Box<[u8]>,
+    compact_raw_sha256: [u8; 32],
+    logits: M1ObservedQualificationLogitsV1,
+}
+
+impl M1QualificationCompletionEvidenceV1 {
+    /// Exact copied compact K7 image, including inactive canonical padding.
+    #[must_use]
+    pub fn compact_raw_bytes(&self) -> &[u8] {
+        &self.compact_raw_bytes
+    }
+
+    /// SHA-256 of the exact compact K7 image.
+    #[must_use]
+    pub const fn compact_raw_sha256(&self) -> &[u8; 32] {
+        &self.compact_raw_sha256
+    }
+
+    /// Exact final live BF16 rows in scheduler order.
+    #[must_use = "the captured logits rows remain retained by this evidence"]
+    pub const fn logits(&self) -> &M1ObservedQualificationLogitsV1 {
+        &self.logits
+    }
+}
+
+/// Move-only target-only observation retaining compact and final-logits evidence.
+///
+/// ```compile_fail
+/// use ferric_engine::M1ObservedQualificationOutputV1;
+/// fn observe_twice(observed: M1ObservedQualificationOutputV1) {
+///     let _ = observed.observe_qualification_completion();
+/// }
+/// ```
+#[must_use = "qualification observation must be checked, destroyed, or retained"]
+#[derive(Debug)]
+pub struct M1ObservedQualificationOutputV1 {
+    completion: M1ObservedCompletionOutputV1,
+    evidence: M1QualificationCompletionEvidenceV1,
+}
+
+impl M1ObservedQualificationOutputV1 {
+    /// Structurally observed compact K7 image.
+    #[must_use = "the compact image remains retained by this observation"]
+    pub const fn compact(&self) -> &M1ObservedCompletionImageV1 {
+        self.completion.image()
+    }
+
+    /// Copied compact and final-logits qualification evidence.
+    #[must_use = "qualification evidence remains retained by this observation"]
+    pub const fn evidence(&self) -> &M1QualificationCompletionEvidenceV1 {
+        &self.evidence
+    }
+
+    /// Consumes the compact observation through the existing semantic join.
+    ///
+    /// Failure retains the same copied evidence and cannot reopen either read.
+    ///
+    /// # Errors
+    ///
+    /// Returns the existing compact semantic rejection while retaining the
+    /// same already-copied qualification evidence in closed custody.
+    pub fn check_completion(
+        self,
+        expectations: &[CompletionWireSemanticExpectation<'_>],
+    ) -> Result<M1QualifiedPhysicalCompletedReadbackV1, M1QualificationCompletedReadbackJoinFailureV1>
+    {
+        let Self {
+            completion,
+            evidence,
+        } = self;
+        match completion.check_completion(expectations) {
+            Ok(completed) => Ok(M1QualifiedPhysicalCompletedReadbackV1 {
+                completed,
+                evidence,
+            }),
+            Err(failure) => {
+                let (error, completion) = failure.into_parts();
+                Err(M1QualificationCompletedReadbackJoinFailureV1 {
+                    error,
+                    observed: Box::new(Self {
+                        completion,
+                        evidence,
+                    }),
+                })
+            }
+        }
+    }
+
+    /// Tears down the queue without granting semantic completion authority.
+    ///
+    /// # Errors
+    ///
+    /// Returns the existing terminal release failure with all available queue
+    /// and Ferric custody retained.
+    pub fn destroy_and_release(
+        self,
+    ) -> Result<ServiceQueueReleaseObservationV1, M1PhysicalQueueReleaseFailureV1> {
+        self.completion.destroy_and_release()
+    }
+}
+
+/// Successful semantic join retaining qualification evidence beside completion.
+#[must_use = "completed readback and qualification evidence must remain retained"]
+#[derive(Debug)]
+pub struct M1QualifiedPhysicalCompletedReadbackV1 {
+    completed: M1PhysicalCompletedReadbackV1,
+    evidence: M1QualificationCompletionEvidenceV1,
+}
+
+impl M1QualifiedPhysicalCompletedReadbackV1 {
+    /// Existing exact completed-readback custody.
+    #[must_use = "completed readback custody remains retained by this join"]
+    pub const fn completed(&self) -> &M1PhysicalCompletedReadbackV1 {
+        &self.completed
+    }
+
+    /// Exact copied qualification evidence.
+    #[must_use = "qualification evidence remains retained by this join"]
+    pub const fn evidence(&self) -> &M1QualificationCompletionEvidenceV1 {
+        &self.evidence
+    }
+
+    /// Separates completed authority and inert qualification evidence once.
+    #[must_use = "both completion custody and qualification evidence remain retained"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1PhysicalCompletedReadbackV1,
+        M1QualificationCompletionEvidenceV1,
+    ) {
+        (self.completed, self.evidence)
+    }
+}
+
+/// Qualification semantic failure retaining the same already-copied evidence.
+#[must_use = "semantic rejection retains one-shot qualification custody"]
+#[derive(Debug)]
+pub struct M1QualificationCompletedReadbackJoinFailureV1 {
+    error: M1CompletedReadbackJoinErrorV1,
+    observed: Box<M1ObservedQualificationOutputV1>,
+}
+
+impl M1QualificationCompletedReadbackJoinFailureV1 {
+    /// Existing exact compact semantic rejection.
+    #[must_use]
+    pub const fn error(&self) -> &M1CompletedReadbackJoinErrorV1 {
+        &self.error
+    }
+
+    /// Same one-shot observation; no generic completed-read transition exists.
+    #[must_use = "the rejected observation retains all copied evidence"]
+    pub const fn observed(&self) -> &M1ObservedQualificationOutputV1 {
+        &self.observed
+    }
+
+    /// Recovers the error and unchanged qualification observation once.
+    #[must_use = "the captured evidence remains retained"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1CompletedReadbackJoinErrorV1,
+        M1ObservedQualificationOutputV1,
+    ) {
+        (self.error, *self.observed)
+    }
+}
+
+/// Qualification observation failure before or after completed copies.
+#[derive(Debug)]
+pub enum M1QualificationObservationErrorV1 {
+    /// Only target-only physical batches admit this evidence path.
+    NotTargetOnly,
+    /// Qualification capture was not explicitly attached before publication.
+    CaptureNotEnabled,
+    /// Existing compact K7 observation rejected.
+    Compact(M1CompletionObservationErrorV1),
+    /// Host allocation for an immutable compact evidence copy failed.
+    HostAllocation,
+    /// One final logits row failed its generation-bound generic copy.
+    Queue {
+        lane: usize,
+        source: ServiceQueueErrorV1,
+    },
+    /// Final-row shape or completed coordinates rejected.
+    Logits(M1QualificationLogitsErrorV1),
+}
+
+impl fmt::Display for M1QualificationObservationErrorV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(formatter, "M1 qualification observation rejected: {self:?}")
+    }
+}
+
+impl std::error::Error for M1QualificationObservationErrorV1 {}
+
+/// Linear custody retained after a qualification observation failure.
+///
+/// ```compile_fail
+/// use ferric_engine::M1QualificationObservationFailureCustodyV1;
+/// fn reopen_post_copy(custody: M1QualificationObservationFailureCustodyV1) {
+///     if let M1QualificationObservationFailureCustodyV1::Observed { completion, .. } = custody {
+///         let _ = completion.observe_qualification_completion();
+///     }
+/// }
+/// ```
+#[must_use = "qualification failure custody must be torn down or retained"]
+#[derive(Debug)]
+pub enum M1QualificationObservationFailureCustodyV1 {
+    /// No completed copy succeeded; the exact recycled queue remains retryable.
+    Recycled(Box<M1PhysicalRecycledQueueSessionV1>),
+    /// Compact K7 copied but failed structural observation; no read is reopened.
+    CompactRejected(Box<M1RejectedCompletionOutputV1>),
+    /// Compact K7 observed; zero or more final logits rows were also copied.
+    Observed {
+        completion: Box<M1ObservedCompletionOutputV1>,
+        partial_logits: Box<[ServiceCompletedReadbackV1]>,
+    },
+}
+
+/// Fail-closed qualification observation with exact phase-local custody.
+#[must_use = "qualification failure retains linear queue and copied-byte custody"]
+#[derive(Debug)]
+pub struct M1QualificationObservationFailureV1 {
+    error: M1QualificationObservationErrorV1,
+    custody: M1QualificationObservationFailureCustodyV1,
+}
+
+impl M1QualificationObservationFailureV1 {
+    /// Exact pre-copy, compact-copy, or logits-copy rejection.
+    #[must_use]
+    pub const fn error(&self) -> &M1QualificationObservationErrorV1 {
+        &self.error
+    }
+
+    /// Exact retained custody; only `Recycled` permits another observation.
+    #[must_use = "linear observation failure custody remains retained"]
+    pub const fn custody(&self) -> &M1QualificationObservationFailureCustodyV1 {
+        &self.custody
+    }
+
+    /// Recovers the diagnostic and phase-local custody once.
+    #[must_use = "failure custody remains retained"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1QualificationObservationErrorV1,
+        M1QualificationObservationFailureCustodyV1,
+    ) {
+        (self.error, self.custody)
+    }
+}
+
 impl M1PhysicalCompletedReadbackV1 {
     /// Returns post-readback queue custody without exposing another join transition.
     #[must_use = "post-readback queue custody remains retained by the join"]
@@ -2480,7 +2737,217 @@ fn check_observed_case<const N: usize>(
     ))
 }
 
+fn qualification_preflight(
+    recycled: &M1PhysicalRecycledQueueSessionV1,
+) -> Result<(), M1QualificationObservationErrorV1> {
+    let M1PhysicalRecycledQueueSessionV1::TargetOnly(case) = recycled else {
+        return Err(M1QualificationObservationErrorV1::NotTargetOnly);
+    };
+    let Some(logits) = case.custody.completion_output().qualification_logits() else {
+        return Err(M1QualificationObservationErrorV1::CaptureNotEnabled);
+    };
+    let active = case.step.target_active_lengths();
+    if active.len() != case.step.scheduled_dispatch().member_count() {
+        return Err(M1QualificationObservationErrorV1::Logits(
+            M1QualificationLogitsErrorV1::LiveLaneCount {
+                capacity: case.step.scheduled_dispatch().member_count(),
+                actual: active.len(),
+            },
+        ));
+    }
+    for (lane, length) in active.enumerate() {
+        logits
+            .shape()
+            .final_row_relative_offset(lane, length)
+            .map_err(M1QualificationObservationErrorV1::Logits)?;
+    }
+    Ok(())
+}
+
+fn qualification_preflight_failure(
+    error: M1QualificationObservationErrorV1,
+    recycled: M1PhysicalRecycledQueueSessionV1,
+) -> M1QualificationObservationFailureV1 {
+    M1QualificationObservationFailureV1 {
+        error,
+        custody: M1QualificationObservationFailureCustodyV1::Recycled(Box::new(recycled)),
+    }
+}
+
+fn qualification_compact_failure(
+    failure: M1CompletionObservationFailureV1,
+) -> M1QualificationObservationFailureV1 {
+    let (error, custody) = failure.into_parts();
+    let custody = match custody {
+        M1CompletionObservationFailureCustodyV1::Recycled(recycled) => {
+            M1QualificationObservationFailureCustodyV1::Recycled(recycled)
+        }
+        M1CompletionObservationFailureCustodyV1::Rejected(rejected) => {
+            M1QualificationObservationFailureCustodyV1::CompactRejected(rejected)
+        }
+    };
+    M1QualificationObservationFailureV1 {
+        error: M1QualificationObservationErrorV1::Compact(error),
+        custody,
+    }
+}
+
+fn qualification_observed_failure(
+    error: M1QualificationObservationErrorV1,
+    completion: M1ObservedCompletionOutputV1,
+    partial_logits: Vec<ServiceCompletedReadbackV1>,
+) -> M1QualificationObservationFailureV1 {
+    M1QualificationObservationFailureV1 {
+        error,
+        custody: M1QualificationObservationFailureCustodyV1::Observed {
+            completion: Box::new(completion),
+            partial_logits: partial_logits.into_boxed_slice(),
+        },
+    }
+}
+
+fn finish_qualification_observation(
+    mut completion: M1ObservedCompletionOutputV1,
+) -> Result<M1ObservedQualificationOutputV1, Box<M1QualificationObservationFailureV1>> {
+    let M1ObservedCompletionOutputV1::TargetOnly(case) = &mut completion else {
+        return Err(Box::new(qualification_observed_failure(
+            M1QualificationObservationErrorV1::NotTargetOnly,
+            completion,
+            Vec::new(),
+        )));
+    };
+    let Some(logits) = case.case.custody.completion_output().qualification_logits() else {
+        return Err(Box::new(qualification_observed_failure(
+            M1QualificationObservationErrorV1::CaptureNotEnabled,
+            completion,
+            Vec::new(),
+        )));
+    };
+    let shape = logits.shape();
+    let full_range = logits.retained_host_dispatch_range();
+    let active_lengths = case.case.step.target_active_lengths().collect::<Vec<_>>();
+    let dispatch_generation = case.image.dispatch_generation();
+
+    let mut compact_raw = Vec::new();
+    if compact_raw
+        .try_reserve_exact(case.image.raw_bytes().len())
+        .is_err()
+    {
+        return Err(Box::new(qualification_observed_failure(
+            M1QualificationObservationErrorV1::HostAllocation,
+            completion,
+            Vec::new(),
+        )));
+    }
+    compact_raw.extend_from_slice(case.image.raw_bytes());
+    let compact_raw_sha256 = *case.image.raw_sha256();
+
+    let mut readbacks = Vec::new();
+    if readbacks.try_reserve_exact(active_lengths.len()).is_err() {
+        return Err(Box::new(qualification_observed_failure(
+            M1QualificationObservationErrorV1::HostAllocation,
+            completion,
+            readbacks,
+        )));
+    }
+    for (lane, active_length) in active_lengths.iter().copied().enumerate() {
+        let relative = match shape.final_row_relative_offset(lane, active_length) {
+            Ok(relative) => relative,
+            Err(error) => {
+                return Err(Box::new(qualification_observed_failure(
+                    M1QualificationObservationErrorV1::Logits(error),
+                    completion,
+                    readbacks,
+                )))
+            }
+        };
+        let row_range = match full_range.checked_subrange(
+            relative,
+            shape.row_bytes(),
+            crate::M1_QUALIFICATION_LOGITS_ALIGNMENT_V1,
+        ) {
+            Ok(range) => range,
+            Err(error) => {
+                return Err(Box::new(qualification_observed_failure(
+                    M1QualificationObservationErrorV1::Logits(
+                        M1QualificationLogitsErrorV1::Allocation(error),
+                    ),
+                    completion,
+                    readbacks,
+                )))
+            }
+        };
+        let request = case.case.lower.completed_read_request(row_range);
+        match case.case.lower.read_completed(request) {
+            Ok(readback) => readbacks.push(readback),
+            Err(source) => {
+                return Err(Box::new(qualification_observed_failure(
+                    M1QualificationObservationErrorV1::Queue { lane, source },
+                    completion,
+                    readbacks,
+                )))
+            }
+        }
+    }
+    let logits = match observe_m1_qualification_logits_v1(
+        shape,
+        full_range,
+        dispatch_generation,
+        &active_lengths,
+        readbacks,
+    ) {
+        Ok(logits) => logits,
+        Err((error, readbacks)) => {
+            return Err(Box::new(qualification_observed_failure(
+                M1QualificationObservationErrorV1::Logits(error),
+                completion,
+                readbacks,
+            )))
+        }
+    };
+    Ok(M1ObservedQualificationOutputV1 {
+        completion,
+        evidence: M1QualificationCompletionEvidenceV1 {
+            compact_raw_bytes: compact_raw.into_boxed_slice(),
+            compact_raw_sha256,
+            logits,
+        },
+    })
+}
+
 impl M1PhysicalRecycledQueueSessionV1 {
+    /// Copies target-only compact K7 output and each final live BF16 logits row.
+    ///
+    /// Qualification capture must have been explicitly enabled before physical
+    /// binding. All shape checks run before the first compact copy. Once any
+    /// copy succeeds, failures retain closed observed custody with no method
+    /// that can issue either completed read again.
+    ///
+    /// ```compile_fail
+    /// use ferric_engine::M1PhysicalRecycledQueueSessionV1;
+    /// fn observe_twice(queue: M1PhysicalRecycledQueueSessionV1) {
+    ///     let _first = queue.observe_qualification_completion();
+    ///     let _second = queue.observe_qualification_completion();
+    /// }
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Rejects non-target or uncaptured queues before copying. Compact or
+    /// logits copy, allocation, and shape failures retain phase-local linear
+    /// custody and never reopen a copy that may already have succeeded.
+    pub fn observe_qualification_completion(
+        self,
+    ) -> Result<M1ObservedQualificationOutputV1, Box<M1QualificationObservationFailureV1>> {
+        if let Err(error) = qualification_preflight(&self) {
+            return Err(Box::new(qualification_preflight_failure(error, self)));
+        }
+        let observed = self
+            .observe_completion()
+            .map_err(|failure| Box::new(qualification_compact_failure(failure)))?;
+        finish_qualification_observation(observed)
+    }
+
     /// Copies and structurally observes the exact K7 output exactly once.
     ///
     /// The generic request is minted from the exact retained host range. A

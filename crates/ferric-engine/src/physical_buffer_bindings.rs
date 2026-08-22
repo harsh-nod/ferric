@@ -22,7 +22,8 @@ use crate::{
     M1FullStepWorkspaceDispatchRangeError, M1FullStepWorkspaceSubleaseBindingError,
     M1FullStepWorkspaceSubleaseOwners, M1PartitionedModelMemoryKvPoolV1,
     M1PhysicalBufferRecipeErrorV1, M1PhysicalBufferRecipeRowV1, M1PhysicalBufferSentinelV1,
-    M1PhysicalBufferSourceV1, M1PhysicalProgramV1, ModelMemoryDispatchRangeErrorV1,
+    M1PhysicalBufferSourceV1, M1PhysicalProgramV1, M1QualificationLogitsErrorV1,
+    M1StepDispatchIntent, ModelMemoryDispatchRangeErrorV1,
 };
 
 /// Owner-checked physical-buffer binding format.
@@ -298,6 +299,12 @@ pub enum M1PhysicalBufferBindingErrorV1 {
         /// Exact host-output owner diagnostic.
         error: M1CompletionOutputErrorV1,
     },
+    /// Qualification capture was attached to a non-target-only physical recipe.
+    QualificationLogitsIntent,
+    /// The physical recipe did not retain exactly the two target logits bindings.
+    QualificationLogitsSources { expected: usize, actual: usize },
+    /// The qualification logits owner rejected shape or allocation revalidation.
+    QualificationLogitsRange { error: M1QualificationLogitsErrorV1 },
 }
 
 impl fmt::Display for M1PhysicalBufferBindingErrorV1 {
@@ -405,6 +412,19 @@ pub fn bind_m1_physical_buffer_ranges_v1(
                 ));
             }
         };
+    let qualification_logits_range =
+        match preflight_qualification_logits(&recipe, &completion_output, &partitioned_memory) {
+            Ok(range) => range,
+            Err(error) => {
+                return Err(failure(
+                    error,
+                    recipe,
+                    workspace_owners,
+                    partitioned_memory,
+                    completion_output,
+                ));
+            }
+        };
 
     let (kernargs, composition, source_rows) = recipe.into_parts();
     let workspaces = match partitioned_memory
@@ -432,6 +452,7 @@ pub fn bind_m1_physical_buffer_ranges_v1(
         &partitioned_memory,
         completion_output.shape(),
         completion_range,
+        qualification_logits_range,
     ) {
         Ok(rows) => Ok(BoundM1PhysicalBufferBindingsV1 {
             version: M1_PHYSICAL_BUFFER_BINDING_VERSION_V1,
@@ -539,6 +560,71 @@ fn preflight_completion_output(
         )
 }
 
+fn preflight_qualification_logits(
+    recipe: &AddresslessM1PhysicalBufferRecipeV1,
+    completion_output: &BoundM1CompletionOutputV1,
+    partitioned_memory: &M1PartitionedModelMemoryKvPoolV1,
+) -> Result<Option<ServiceHostDispatchRangeV1>, M1PhysicalBufferBindingErrorV1> {
+    let Some(logits) = completion_output.qualification_logits() else {
+        return Ok(None);
+    };
+    let M1StepDispatchIntent::TargetOnly(selection) =
+        recipe.workspace_composition().dispatch_plan().intent()
+    else {
+        return Err(M1PhysicalBufferBindingErrorV1::QualificationLogitsIntent);
+    };
+    if selection != logits.shape().selection() {
+        return Err(M1PhysicalBufferBindingErrorV1::QualificationLogitsRange {
+            error: M1QualificationLogitsErrorV1::SelectionDrift {
+                expected: logits.shape().selection(),
+                actual: selection,
+            },
+        });
+    }
+    let (sources, exact_sources) = qualification_logits_source_isolation(recipe, selection);
+    if sources != 2 || !exact_sources {
+        return Err(M1PhysicalBufferBindingErrorV1::QualificationLogitsSources {
+            expected: 2,
+            actual: sources,
+        });
+    }
+    partitioned_memory
+        .qualification_logits_dispatch_range(logits, selection)
+        .map(Some)
+        .map_err(|error| M1PhysicalBufferBindingErrorV1::QualificationLogitsRange { error })
+}
+
+fn qualification_logits_source_isolation(
+    recipe: &AddresslessM1PhysicalBufferRecipeV1,
+    selection: ferric_spec::Qwen3PlanSelection,
+) -> (usize, bool) {
+    let mut sources = 0;
+    let exact = recipe.rows().iter().all(|row| {
+        row.buffers().iter().all(|buffer| {
+            let is_logits = matches!(
+                buffer.source(),
+                M1PhysicalBufferSourceV1::Workspace {
+                    range: ferric_build::M1StepWorkspaceRangeRole::Logits,
+                    ..
+                }
+            );
+            if is_logits {
+                sources += 1;
+            }
+            !is_logits
+                || matches!(
+                    buffer.source(),
+                    M1PhysicalBufferSourceV1::Workspace {
+                        workspace: crate::M1FullStepWorkspaceRole::Target,
+                        range: ferric_build::M1StepWorkspaceRangeRole::Logits,
+                    }
+                ) && row.segment_index() == 0
+                    && row.selection() == selection
+        })
+    });
+    (sources, exact)
+}
+
 fn validate_completion_output_shape(
     dispatch_index: u32,
     argument: usize,
@@ -587,6 +673,7 @@ struct SourceResolutionContextV1<'a> {
     workspaces: &'a BoundM1FullStepWorkspaceSubleases,
     completion_shape: M1CompletionOutputShapeV1,
     completion_range: ServiceHostDispatchRangeV1,
+    qualification_logits_range: Option<ServiceHostDispatchRangeV1>,
 }
 
 impl ResolvedM1PhysicalBufferRangeV1 {
@@ -612,6 +699,7 @@ fn resolve_rows(
     partitioned_memory: &M1PartitionedModelMemoryKvPoolV1,
     completion_shape: M1CompletionOutputShapeV1,
     completion_range: ServiceHostDispatchRangeV1,
+    qualification_logits_range: Option<ServiceHostDispatchRangeV1>,
 ) -> Result<Box<[M1BoundPhysicalBufferRowV1]>, M1PhysicalBufferBindingErrorV1> {
     let physical_rows = kernargs.source_recipe().rows();
     if source_rows.len() != physical_rows.len() {
@@ -623,6 +711,7 @@ fn resolve_rows(
         workspaces,
         completion_shape,
         completion_range,
+        qualification_logits_range,
     };
     let mut rows = Vec::with_capacity(source_rows.len());
     for (position, source_row) in source_rows.iter().enumerate() {
@@ -765,6 +854,17 @@ fn resolve_source(
 ) -> Result<ResolvedM1PhysicalBufferRangeV1, M1PhysicalBufferBindingErrorV1> {
     let dispatch_index = row.dispatch_index();
     match source {
+        M1PhysicalBufferSourceV1::Workspace { workspace, range }
+            if workspace == crate::M1FullStepWorkspaceRole::Target
+                && range == ferric_build::M1StepWorkspaceRangeRole::Logits
+                && context.qualification_logits_range.is_some() =>
+        {
+            Ok(ResolvedM1PhysicalBufferRangeV1::HostVisible(
+                context
+                    .qualification_logits_range
+                    .expect("qualification logits guard retains exact range"),
+            ))
+        }
         M1PhysicalBufferSourceV1::Workspace { workspace, range } => context
             .partitioned_memory
             .workspace_segment_dispatch_range(
@@ -956,16 +1056,16 @@ mod tests {
     };
 
     use super::{
-        first_materialization_requirement, sentinel_geometry, validate_argument_ordinal,
-        validate_completion_output_shape, validate_row_metadata_entry, BindingRowMetadata,
-        M1PhysicalBufferBindingErrorV1,
+        first_materialization_requirement, qualification_logits_source_isolation,
+        sentinel_geometry, validate_argument_ordinal, validate_completion_output_shape,
+        validate_row_metadata_entry, BindingRowMetadata, M1PhysicalBufferBindingErrorV1,
     };
     use crate::physical_buffer_recipe::tests::{complete_intents, exact_inputs};
     use crate::{
         derive_m1_physical_buffer_recipe_v1, m1_completion_output_shape_v1,
         AddresslessM1PhysicalBufferRecipeV1, M1FullStepWorkspaceDispatchRangeError,
-        M1FullStepWorkspaceRole, M1PhysicalBufferSentinelV1, M1PhysicalBufferSourceV1,
-        M1PhysicalProgramV1, M1StepDispatchIntent, M1StepDispatchStage,
+        M1FullStepWorkspaceRole, M1PhysicalBufferRecipeRowV1, M1PhysicalBufferSentinelV1,
+        M1PhysicalBufferSourceV1, M1PhysicalProgramV1, M1StepDispatchIntent, M1StepDispatchStage,
         M1StepWorkspaceDispatchRangeError,
     };
 
@@ -1072,6 +1172,39 @@ mod tests {
             )
             .unwrap();
         }
+    }
+
+    #[test]
+    fn qualification_override_isolated_to_two_target_logits_arguments() {
+        let intent = M1StepDispatchIntent::TargetOnly(target(
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        ));
+        let recipe = exact_recipe(intent, 210);
+        assert_eq!(
+            qualification_logits_source_isolation(&recipe, intent.target_selection()),
+            (2, true)
+        );
+        let total = recipe
+            .rows()
+            .iter()
+            .map(|row| row.buffers().len())
+            .sum::<usize>();
+        let untouched = recipe
+            .rows()
+            .iter()
+            .flat_map(M1PhysicalBufferRecipeRowV1::buffers)
+            .filter(|buffer| {
+                !matches!(
+                    buffer.source(),
+                    M1PhysicalBufferSourceV1::Workspace {
+                        workspace: M1FullStepWorkspaceRole::Target,
+                        range: M1StepWorkspaceRangeRole::Logits,
+                    }
+                )
+            })
+            .count();
+        assert_eq!(untouched + 2, total);
     }
 
     #[test]

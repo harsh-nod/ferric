@@ -27,6 +27,7 @@ use crate::{
     M1PhysicalFixedBatchBuildFailureV1, M1PhysicalFixedBatchShapeV1, M1PhysicalFixedBatchV1,
     M1ScheduledDispatchV1, M1SpeculativeDraftKvRoundReservationCustodyV1,
     M1StepWorkspaceImageCompositionFailureV1, M1StepWorkspaceImageCompositionOutcomeV1,
+    PendingDeviceKvStepWrite,
 };
 
 const MAX_LANES: usize = M1_MAX_ACTIVE_SEQUENCES as usize;
@@ -291,6 +292,20 @@ impl M1PrepublicationStepCustodyV1 {
         &self.target_plans
     }
 
+    pub(crate) fn target_active_lengths(&self) -> impl ExactSizeIterator<Item = u32> + '_ {
+        let target = match &self.kv {
+            M1FullStepKvReservationCustodyV1::TargetOnly { target }
+            | M1FullStepKvReservationCustodyV1::PairedPrefill { target, .. } => target,
+            M1FullStepKvReservationCustodyV1::SpeculativeRound {
+                target_speculative, ..
+            } => target_speculative,
+        };
+        target
+            .reservations()
+            .iter()
+            .map(PendingDeviceKvStepWrite::active_tokens)
+    }
+
     /// Pending KV reservation custody.
     pub const fn kv_reservations(&self) -> &M1FullStepKvReservationCustodyV1 {
         &self.kv
@@ -501,7 +516,6 @@ pub fn prepare_m1_scheduled_workspace_images_v1(
             }))
         }
     };
-
     let (outcomes, kv) = compose_all(plans, tables);
     match collect_composed(outcomes) {
         Ok(images) => {

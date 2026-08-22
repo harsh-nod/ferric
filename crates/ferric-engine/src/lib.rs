@@ -33,6 +33,7 @@ mod physical_kernarg_recipe;
 mod physical_program_catalog;
 mod physical_queue_lifecycle;
 mod physical_step;
+mod qualification_logits;
 mod runner;
 mod scheduler;
 mod speculative_graph;
@@ -208,20 +209,31 @@ pub use physical_queue_lifecycle::{
     M1CompletedReadbackJoinErrorV1, M1CompletedReadbackJoinFailureV1,
     M1CompletionObservationErrorV1, M1CompletionObservationFailureCustodyV1,
     M1CompletionObservationFailureV1, M1ObservedCompletionCaseV1, M1ObservedCompletionOutputV1,
-    M1PhysicalCompletedQueueSessionV1, M1PhysicalCompletedReadbackV1,
-    M1PhysicalDetachedQueueCaseV1, M1PhysicalDetachedQueueSessionV1,
+    M1ObservedQualificationOutputV1, M1PhysicalCompletedQueueSessionV1,
+    M1PhysicalCompletedReadbackV1, M1PhysicalDetachedQueueCaseV1, M1PhysicalDetachedQueueSessionV1,
     M1PhysicalPublishedQueueSessionV1, M1PhysicalQueueCreateFailureClassV1,
     M1PhysicalQueueCreateFailureV1, M1PhysicalQueueOperationFailureV1, M1PhysicalQueuePhaseCaseV1,
     M1PhysicalQueuePhaseV1, M1PhysicalQueueReleaseFailureV1, M1PhysicalQueueSessionV1,
     M1PhysicalReadbackDetachedQueueCaseV1, M1PhysicalReadbackDetachedQueueSessionV1,
     M1PhysicalReadbackQueueCaseV1, M1PhysicalReadbackQueueOperationFailureV1,
     M1PhysicalReadbackQueueReleaseFailureV1, M1PhysicalReadbackQueueSessionV1,
-    M1PhysicalRecycledQueueSessionV1, M1RejectedCompletionCaseV1, M1RejectedCompletionOutputV1,
+    M1PhysicalRecycledQueueSessionV1, M1QualificationCompletedReadbackJoinFailureV1,
+    M1QualificationCompletionEvidenceV1, M1QualificationObservationErrorV1,
+    M1QualificationObservationFailureCustodyV1, M1QualificationObservationFailureV1,
+    M1QualifiedPhysicalCompletedReadbackV1, M1RejectedCompletionCaseV1,
+    M1RejectedCompletionOutputV1,
 };
 pub use physical_step::{
     bind_structural_physical_step, StructuralPhysicalStepBindingError,
     StructuralPhysicalStepBindingFailure, StructuralPhysicalStepBindingOutcome,
     StructurallyBoundPhysicalStep,
+};
+pub use qualification_logits::{
+    m1_qualification_logits_shape_v1, BoundM1QualificationLogitsV1,
+    M1ObservedQualificationLogitsRowV1, M1ObservedQualificationLogitsV1,
+    M1QualificationLogitsAllocationFailureV1, M1QualificationLogitsErrorV1,
+    M1QualificationLogitsShapeV1, M1_QUALIFICATION_LOGITS_ALIGNMENT_V1,
+    M1_QUALIFICATION_LOGITS_ELEMENT_BYTES_V1,
 };
 pub use runner::{
     bind_m1_physical_runner_v1, initialize_m1_physical_runner_memory_v1, LogicalRunnerDeclaration,

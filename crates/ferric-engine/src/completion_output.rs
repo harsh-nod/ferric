@@ -15,6 +15,8 @@ use fe2o3_service_host::{
 use ferric_qwen_kernels::logits::Qwen3LogitsCompactRecordLayoutV1;
 use ferric_spec::{Qwen3ModelRole, Qwen3PlanSelection};
 
+use crate::BoundM1QualificationLogitsV1;
+
 type CompletionOutputAllocationKeyV1 =
     ServiceAllocationKeyV1<HostDownloadRoleV1, HostVisibleAllocationV1>;
 
@@ -193,6 +195,7 @@ pub struct BoundM1CompletionOutputV1 {
     shape: M1CompletionOutputShapeV1,
     key: CompletionOutputAllocationKeyV1,
     dispatch_range: ServiceHostDispatchRangeV1,
+    qualification_logits: Option<BoundM1QualificationLogitsV1>,
 }
 
 impl BoundM1CompletionOutputV1 {
@@ -207,6 +210,20 @@ impl BoundM1CompletionOutputV1 {
     #[must_use]
     pub const fn retained_host_dispatch_range(&self) -> ServiceHostDispatchRangeV1 {
         self.dispatch_range
+    }
+
+    /// Returns qualification-only logits capture when explicitly enabled.
+    #[must_use = "qualification logits custody remains paired with compact output"]
+    pub const fn qualification_logits(&self) -> Option<&BoundM1QualificationLogitsV1> {
+        self.qualification_logits.as_ref()
+    }
+
+    pub(crate) fn attach_qualification_logits(
+        mut self,
+        qualification_logits: BoundM1QualificationLogitsV1,
+    ) -> Self {
+        self.qualification_logits = Some(qualification_logits);
+        self
     }
 
     /// Revalidates the exact selection, key geometry, owner generation, and
@@ -295,6 +312,7 @@ pub fn allocate_m1_completion_output_v1(
         shape,
         key,
         dispatch_range,
+        qualification_logits: None,
     })
 }
 
