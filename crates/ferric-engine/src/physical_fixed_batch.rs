@@ -146,13 +146,13 @@ pub struct M1PhysicalFixedBatchCaseV1<'a, const N: usize> {
 
 impl<'a, const N: usize> M1PhysicalFixedBatchCaseV1<'a, N> {
     /// Exact generic fixed batch, by borrow.
-    #[must_use]
+    #[must_use = "the exact generic batch remains retained by the Ferric case"]
     pub const fn batch(&self) -> &ServiceFixedBatchV1<'a, N> {
         &self.batch
     }
 
     /// Exact retained Ferric recipe and allocation custody, by borrow.
-    #[must_use]
+    #[must_use = "the exact Ferric custody remains retained beside the generic batch"]
     pub const fn custody(&self) -> &M1PhysicalFixedBatchCustodyV1 {
         &self.custody
     }
@@ -190,15 +190,15 @@ impl<'a, const N: usize> M1PhysicalFixedBatchCaseV1<'a, N> {
 #[derive(Debug)]
 pub enum M1PhysicalFixedBatchV1<'a> {
     /// One complete target-only publication.
-    TargetOnly(M1PhysicalFixedBatchCaseV1<'a, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>),
+    TargetOnly(Box<M1PhysicalFixedBatchCaseV1<'a, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>>),
     /// One complete paired-prefill publication.
-    PairedPrefill(M1PhysicalFixedBatchCaseV1<'a, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1>),
+    PairedPrefill(Box<M1PhysicalFixedBatchCaseV1<'a, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1>>),
     /// One complete K4 speculative publication, for either S1 or S8.
-    SpeculativeK4(M1PhysicalFixedBatchCaseV1<'a, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1>),
+    SpeculativeK4(Box<M1PhysicalFixedBatchCaseV1<'a, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1>>),
     /// One complete K8 speculative publication.
-    SpeculativeK8(M1PhysicalFixedBatchCaseV1<'a, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1>),
+    SpeculativeK8(Box<M1PhysicalFixedBatchCaseV1<'a, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1>>),
     /// One complete K16 speculative publication.
-    SpeculativeK16(M1PhysicalFixedBatchCaseV1<'a, M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1>),
+    SpeculativeK16(Box<M1PhysicalFixedBatchCaseV1<'a, M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1>>),
 }
 
 impl M1PhysicalFixedBatchV1<'_> {
@@ -221,7 +221,7 @@ impl M1PhysicalFixedBatchV1<'_> {
     }
 
     /// Exact retained Ferric recipe and allocation custody, by borrow.
-    #[must_use]
+    #[must_use = "the exact Ferric custody remains retained beside the generic batch"]
     pub const fn custody(&self) -> &M1PhysicalFixedBatchCustodyV1 {
         match self {
             Self::TargetOnly(case) => &case.custody,
@@ -350,8 +350,8 @@ impl std::error::Error for M1PhysicalFixedBatchBuildErrorV1 {}
 #[derive(Debug)]
 pub struct M1PhysicalFixedBatchBuildFailureV1<'a> {
     error: M1PhysicalFixedBatchBuildErrorV1,
-    catalog: ContentBoundM1ProgramCatalogV1<'a>,
-    bindings: BoundM1PhysicalBufferBindingsV1,
+    catalog: Box<ContentBoundM1ProgramCatalogV1<'a>>,
+    bindings: Box<BoundM1PhysicalBufferBindingsV1>,
 }
 
 impl<'a> M1PhysicalFixedBatchBuildFailureV1<'a> {
@@ -370,7 +370,7 @@ impl<'a> M1PhysicalFixedBatchBuildFailureV1<'a> {
         ContentBoundM1ProgramCatalogV1<'a>,
         BoundM1PhysicalBufferBindingsV1,
     ) {
-        (self.error, self.catalog, self.bindings)
+        (self.error, *self.catalog, *self.bindings)
     }
 }
 
@@ -420,8 +420,8 @@ pub fn build_m1_physical_fixed_batch_v1(
         Err(error) => {
             return Err(M1PhysicalFixedBatchBuildFailureV1 {
                 error,
-                catalog,
-                bindings,
+                catalog: Box::new(catalog),
+                bindings: Box::new(bindings),
             });
         }
     };
@@ -449,19 +449,19 @@ pub fn build_m1_physical_fixed_batch_v1(
 
     Ok(match shape {
         M1PhysicalFixedBatchShapeV1::TargetOnly => {
-            M1PhysicalFixedBatchV1::TargetOnly(lower_fixed_batch(parts))
+            M1PhysicalFixedBatchV1::TargetOnly(Box::new(lower_fixed_batch(parts)))
         }
         M1PhysicalFixedBatchShapeV1::PairedPrefill => {
-            M1PhysicalFixedBatchV1::PairedPrefill(lower_fixed_batch(parts))
+            M1PhysicalFixedBatchV1::PairedPrefill(Box::new(lower_fixed_batch(parts)))
         }
         M1PhysicalFixedBatchShapeV1::SpeculativeK4 => {
-            M1PhysicalFixedBatchV1::SpeculativeK4(lower_fixed_batch(parts))
+            M1PhysicalFixedBatchV1::SpeculativeK4(Box::new(lower_fixed_batch(parts)))
         }
         M1PhysicalFixedBatchShapeV1::SpeculativeK8 => {
-            M1PhysicalFixedBatchV1::SpeculativeK8(lower_fixed_batch(parts))
+            M1PhysicalFixedBatchV1::SpeculativeK8(Box::new(lower_fixed_batch(parts)))
         }
         M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
-            M1PhysicalFixedBatchV1::SpeculativeK16(lower_fixed_batch(parts))
+            M1PhysicalFixedBatchV1::SpeculativeK16(Box::new(lower_fixed_batch(parts)))
         }
     })
 }
@@ -659,9 +659,9 @@ struct LoweringPartsV1<'a> {
     bound_rows: Box<[M1BoundPhysicalBufferRowV1]>,
 }
 
-fn lower_fixed_batch<'a, const N: usize>(
-    parts: LoweringPartsV1<'a>,
-) -> M1PhysicalFixedBatchCaseV1<'a, N> {
+fn lower_fixed_batch<const N: usize>(
+    parts: LoweringPartsV1<'_>,
+) -> M1PhysicalFixedBatchCaseV1<'_, N> {
     let mut images = parts.images.into_vec().into_iter();
     let mut bound_rows = parts.bound_rows.iter();
     let packets = core::array::from_fn(|position| {
