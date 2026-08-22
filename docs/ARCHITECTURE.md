@@ -43,8 +43,11 @@ catalog grants no proof, artifact, compilation, load, launch, dispatch,
 hardware, performance, or qualification authority. Crates are added when they
 contain real final-path behavior; placeholder GPU execution is not permitted.
 
-The data-only `ferric-generated-runner` crate is the checked-in output of the
-current deterministic Qwen3/gfx942 declaration generator. It names all 22
+The data-only `ferric-generated-runner` crate and roadmap-facing
+`generated/qwen3_m1.rs` are byte-exact checked-in publications of the current
+deterministic Qwen3/gfx942 declaration generator. The crate source is compiled;
+the standalone path is retained as an inert auditable artifact, and neither is
+an independent template. They name all 22
 target-then-draft B3 selections, their exact operation offsets and counts, and
 four logical scalar-input schemas. `ferric-build` expands those declarations
 against authenticated admission, the sequential plan catalog, the structural

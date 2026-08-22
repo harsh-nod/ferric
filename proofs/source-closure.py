@@ -29,7 +29,7 @@ def source_paths(repo: Path) -> list[Path]:
         repo / "rust-toolchain.toml",
         repo / ".github/workflows/verus.yml",
     ]
-    for root in (repo / "crates", repo / "proofs", repo / "docs"):
+    for root in (repo / "crates", repo / "proofs", repo / "docs", repo / "generated"):
         for path in root.rglob("*"):
             if path.is_symlink():
                 fail(f"source closure contains a symlink: {path}")

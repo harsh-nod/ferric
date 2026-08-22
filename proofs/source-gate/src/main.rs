@@ -20,6 +20,10 @@ const FE2O3_SOURCE: &str =
     "git+https://github.com/harsh-nod/fe2o3.git?rev=f8fbd92027e66961aa0894e804425a9a43ee4f36";
 const FERRIC_BUILD_BINARIES: &[(&str, &str)] = &[
     (
+        "ferric-m1-generate-runner",
+        "crates/ferric-build/src/bin/ferric-m1-generate-runner.rs",
+    ),
+    (
         "ferric-m1-kernel-artifacts",
         "crates/ferric-build/src/bin/ferric-m1-kernel-artifacts.rs",
     ),

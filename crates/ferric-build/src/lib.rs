@@ -11,6 +11,7 @@
 mod auth;
 /// Canonical M1 deployment-bundle wire format and verifier-visible relations.
 pub mod bundle;
+mod generate;
 mod identity_closure;
 mod json;
 mod kernel_artifact_manifest;
@@ -37,6 +38,12 @@ pub use bundle::{
     decode_canonical_deployment_bundle, encode_canonical_deployment_bundle, CanonicalBundleError,
     CanonicalDeploymentBundle, CANONICAL_DEPLOYMENT_BUNDLE_BYTES,
     CANONICAL_DEPLOYMENT_BUNDLE_VERSION,
+};
+pub use generate::{
+    publish_qwen3_m1_generated_runner_v1, validate_qwen3_m1_generated_runner_sources_v1,
+    M1GeneratedRunnerPublicationErrorV1, M1GeneratedRunnerPublicationStatusV1,
+    M1GeneratedRunnerSourceErrorV1, M1_GENERATED_RUNNER_CRATE_SOURCE_PATH_V1,
+    M1_GENERATED_RUNNER_PATH_V1, M1_GENERATED_RUNNER_VALIDATION_SOURCE_PATH_V1,
 };
 pub use identity_closure::{
     build_preliminary_identity_closure, expected_preliminary_kernel_catalog_identity,
