@@ -282,6 +282,7 @@ name = "ferric-engine"
 version = "0.1.0"
 dependencies = [
  "ferric-build",
+ "ferric-kernels",
  "ferric-qwen-kernels",
  "ferric-spec",
  "vstd",
