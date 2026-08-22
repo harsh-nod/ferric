@@ -1,4 +1,4 @@
-//! Exact finite Qwen3 dense GEMM/GEMV compiler profiles owned by Ferric.
+//! Exact finite Qwen3 token-embedding and dense GEMM/GEMV profiles owned by Ferric.
 //!
 //! A, B, and C use BF16 storage. The declared machine source widens operands
 //! to FP32, accumulates in ascending K order with separate multiply and add,
@@ -13,6 +13,10 @@
 //! launch refinement. Duplicate graph profiles with identical runtime matrix
 //! geometry are deliberately machine-equivalent; their distinct Ferric
 //! profile identities remain host-side and are not classified by the source.
+//! Token embedding copies one BF16 weight element per output workitem without
+//! arithmetic. Its expected weight identity is an opaque bundle-admission
+//! label retained at the checked binding boundary, not content-authentication
+//! evidence created by this module.
 
 use core::fmt;
 use std::fmt::Write as _;
@@ -53,6 +57,12 @@ pub const QWEN3_GEMM_VECTORIZED_KERNEL_SYMBOL_V1: &str =
 /// Exact vectorized-A-schedule AMDHSA descriptor symbol.
 pub const QWEN3_GEMM_VECTORIZED_DESCRIPTOR_SYMBOL_V1: &str =
     "ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1.kd";
+/// Exact BF16 token-embedding bit-copy kernel entry.
+pub const QWEN3_TOKEN_EMBEDDING_KERNEL_SYMBOL_V1: &str =
+    "ferric_qwen3_token_embedding_bf16_copy_v1";
+/// Exact BF16 token-embedding descriptor symbol.
+pub const QWEN3_TOKEN_EMBEDDING_DESCRIPTOR_SYMBOL_V1: &str =
+    "ferric_qwen3_token_embedding_bf16_copy_v1.kd";
 /// Exact device target required by every profile.
 pub const QWEN3_GEMM_TARGET_V1: &str = "gfx942:xnack-";
 /// Exact code-object version required by every profile.
@@ -70,24 +80,33 @@ pub const QWEN3_GEMM_OPERATION_COUNT_V1: usize = 8;
 /// Total exact finite profiles.
 pub const QWEN3_GEMM_PROFILE_COUNT_V1: usize =
     QWEN3_GEMM_BUCKET_COUNT_V1 * QWEN3_GEMM_OPERATION_COUNT_V1;
+/// Exact target/draft token-embedding profile count.
+pub const QWEN3_TOKEN_EMBEDDING_PROFILE_COUNT_V1: usize = QWEN3_GEMM_BUCKET_COUNT_V1;
 /// Exact explicit three-slice plus four-u32 kernarg bytes.
 pub const QWEN3_GEMM_EXPLICIT_KERNARG_BYTES_V1: u64 = 64;
 /// Exact explicit plus COV6 hidden kernarg bytes.
 pub const QWEN3_GEMM_TOTAL_KERNARG_BYTES_V1: u64 = 320;
+/// Exact token-embedding explicit kernarg bytes after ABI alignment.
+pub const QWEN3_TOKEN_EMBEDDING_EXPLICIT_KERNARG_BYTES_V1: u64 = 64;
+/// Exact token-embedding explicit plus COV6 hidden kernarg bytes.
+pub const QWEN3_TOKEN_EMBEDDING_TOTAL_KERNARG_BYTES_V1: u64 = 320;
 /// Exact kernarg alignment.
 pub const QWEN3_GEMM_KERNARG_ALIGNMENT_V1: u64 = 8;
 /// Exact byte length of the final canonical direct-LLVM module.
-pub const QWEN3_GEMM_LLVM_BYTES_V1: usize = 20_166;
+pub const QWEN3_GEMM_LLVM_BYTES_V1: usize = 26_051;
 /// SHA-256 of the final canonical direct-LLVM module bytes.
 pub const QWEN3_GEMM_LLVM_SHA256_V1: [u8; 32] = [
-    0xef, 0x66, 0x9d, 0x91, 0x10, 0x92, 0xdc, 0x0d, 0x5c, 0xd0, 0xc1, 0xa5, 0x01, 0xe5, 0x6e, 0xbb,
-    0xba, 0xd0, 0x5b, 0x94, 0x67, 0x9e, 0x0c, 0x0f, 0x78, 0xfa, 0xf6, 0x9d, 0x1b, 0x28, 0xd7, 0x15,
+    0x7d, 0xc4, 0x42, 0xbc, 0xb9, 0xdd, 0x56, 0xf8, 0xab, 0xa5, 0x02, 0x67, 0xe3, 0xc2, 0x14, 0xbc,
+    0xd6, 0x51, 0x73, 0x13, 0x05, 0x9e, 0xe3, 0x36, 0x13, 0x9e, 0xc8, 0x71, 0x28, 0x0a, 0xcc, 0xff,
 ];
 
 const PROFILE_DOMAIN: &[u8] = b"FERRIC/QWEN3/GEMM/PROFILE/V1\0";
 const CATALOG_DOMAIN: &[u8] = b"FERRIC/QWEN3/GEMM/CATALOG/V1\0";
 const KERNEL_IR_DOMAIN: &[u8] = b"FERRIC/QWEN3/GEMM/KERNEL-IR/V1\0";
 const SOURCE_BINDING_DOMAIN: &[u8] = b"FERRIC/QWEN3/GEMM/SOURCE-BINDING/V1\0";
+const EMBEDDING_PROFILE_DOMAIN: &[u8] = b"FERRIC/QWEN3/TOKEN-EMBEDDING/PROFILE/V1\0";
+const EMBEDDING_CATALOG_DOMAIN: &[u8] = b"FERRIC/QWEN3/TOKEN-EMBEDDING/CATALOG/V1\0";
+const EMBEDDING_KERNEL_IR_DOMAIN: &[u8] = b"FERRIC/QWEN3/TOKEN-EMBEDDING/KERNEL-IR/V1\0";
 
 /// Target or speculative-draft Qwen3 model role.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -665,6 +684,583 @@ const QWEN3_GEMM_OPERATIONS_V1: [Qwen3GemmOperationV1; 8] = [
     Qwen3GemmOperationV1::LogitsProjection,
 ];
 
+/// SHA-256 identity of one exact token-embedding profile.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[repr(transparent)]
+pub struct Qwen3TokenEmbeddingProfileIdentityV1([u8; 32]);
+
+impl Qwen3TokenEmbeddingProfileIdentityV1 {
+    /// Returns the domain-separated identity bytes.
+    #[must_use]
+    pub const fn as_bytes(&self) -> &[u8; 32] {
+        &self.0
+    }
+}
+
+/// One finite token-ID to BF16 embedding lookup profile.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct Qwen3TokenEmbeddingProfileV1 {
+    bucket: Qwen3GemmBucketV1,
+    shape: [u32; 3],
+    storage_elements: [u64; 3],
+    aql_grid_workitems: [u32; 3],
+    identity: Qwen3TokenEmbeddingProfileIdentityV1,
+}
+
+impl Qwen3TokenEmbeddingProfileV1 {
+    fn checked(bucket: Qwen3GemmBucketV1) -> Result<Self, Qwen3TokenEmbeddingCatalogErrorV1> {
+        let [sequences, active_tokens] = bucket.sequence_and_active_tokens();
+        let rows = sequences
+            .checked_mul(active_tokens)
+            .ok_or(Qwen3TokenEmbeddingCatalogErrorV1::ExtentOverflow)?;
+        let hidden = bucket.role().hidden_size();
+        let weight_elements = u64::from(QWEN3_VOCABULARY_SIZE_V1)
+            .checked_mul(u64::from(hidden))
+            .ok_or(Qwen3TokenEmbeddingCatalogErrorV1::ExtentOverflow)?;
+        let output_elements = u64::from(rows)
+            .checked_mul(u64::from(hidden))
+            .ok_or(Qwen3TokenEmbeddingCatalogErrorV1::ExtentOverflow)?;
+        let grid_x = u32::try_from(output_elements)
+            .map_err(|_| Qwen3TokenEmbeddingCatalogErrorV1::GridOverflow)?;
+        if rows == 0
+            || hidden == 0
+            || !grid_x.is_multiple_of(QWEN3_GEMM_WORKGROUP_V1[0])
+            || [u64::from(rows), weight_elements, output_elements]
+                .iter()
+                .any(|extent| *extent > i64::MAX as u64 || extent.checked_mul(4).is_none())
+        {
+            return Err(Qwen3TokenEmbeddingCatalogErrorV1::ArithmeticInvariant);
+        }
+        let mut profile = Self {
+            bucket,
+            shape: [sequences, active_tokens, hidden],
+            storage_elements: [u64::from(rows), weight_elements, output_elements],
+            aql_grid_workitems: [grid_x, 1, 1],
+            identity: Qwen3TokenEmbeddingProfileIdentityV1([0; 32]),
+        };
+        profile.identity =
+            Qwen3TokenEmbeddingProfileIdentityV1(hash(EMBEDDING_PROFILE_DOMAIN, &profile.encode()));
+        Ok(profile)
+    }
+
+    fn encode(self) -> Vec<u8> {
+        let mut bytes = Vec::with_capacity(96);
+        bytes.extend_from_slice(&[self.bucket.role() as u8, self.bucket.kind() as u8]);
+        bytes.extend_from_slice(&QWEN3_VOCABULARY_SIZE_V1.to_le_bytes());
+        for value in self.shape {
+            bytes.extend_from_slice(&value.to_le_bytes());
+        }
+        for value in self.storage_elements {
+            bytes.extend_from_slice(&value.to_le_bytes());
+        }
+        for value in self.aql_grid_workitems {
+            bytes.extend_from_slice(&value.to_le_bytes());
+        }
+        bytes
+    }
+
+    /// Exact role and bucket selection.
+    #[must_use]
+    pub const fn bucket(self) -> Qwen3GemmBucketV1 {
+        self.bucket
+    }
+
+    /// Exact `[sequences, active tokens, hidden]` shape.
+    #[must_use]
+    pub const fn shape(self) -> [u32; 3] {
+        self.shape
+    }
+
+    /// Exact flattened row count.
+    #[must_use]
+    pub const fn rows(self) -> u32 {
+        self.shape[0] * self.shape[1]
+    }
+
+    /// Exact hidden width.
+    #[must_use]
+    pub const fn hidden_size(self) -> u32 {
+        self.shape[2]
+    }
+
+    /// Exact `[token IDs, weight BF16, output BF16]` element extents.
+    #[must_use]
+    pub const fn storage_elements(self) -> [u64; 3] {
+        self.storage_elements
+    }
+
+    /// Exact AQL total-workitem grid.
+    #[must_use]
+    pub const fn aql_grid_workitems(self) -> [u32; 3] {
+        self.aql_grid_workitems
+    }
+
+    /// Exact domain-separated profile identity.
+    #[must_use]
+    pub const fn identity(self) -> Qwen3TokenEmbeddingProfileIdentityV1 {
+        self.identity
+    }
+
+    /// Profile structure does not prove weight content or machine execution.
+    #[must_use]
+    pub const fn authenticates_weight_content(self) -> bool {
+        false
+    }
+}
+
+/// Failure while deriving the finite token-embedding catalog.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Qwen3TokenEmbeddingCatalogErrorV1 {
+    /// A storage extent overflowed.
+    ExtentOverflow,
+    /// The exact total-workitem grid did not fit the admitted domain.
+    GridOverflow,
+    /// A finite shape violated the exact source preconditions.
+    ArithmeticInvariant,
+    /// The exact 22-profile roster drifted.
+    ProfileSet,
+    /// Two host profiles had the same identity.
+    DuplicateIdentity,
+}
+
+impl fmt::Display for Qwen3TokenEmbeddingCatalogErrorV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(formatter, "Qwen3 token-embedding catalog failed: {self:?}")
+    }
+}
+
+impl std::error::Error for Qwen3TokenEmbeddingCatalogErrorV1 {}
+
+/// SHA-256 identity of the complete token-embedding catalog.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[repr(transparent)]
+pub struct Qwen3TokenEmbeddingProfileCatalogIdentityV1([u8; 32]);
+
+impl Qwen3TokenEmbeddingProfileCatalogIdentityV1 {
+    /// Returns the domain-separated identity bytes.
+    #[must_use]
+    pub const fn as_bytes(&self) -> &[u8; 32] {
+        &self.0
+    }
+}
+
+/// Complete finite target/draft token-embedding profile catalog.
+#[derive(Debug, Eq, PartialEq)]
+pub struct Qwen3TokenEmbeddingProfileCatalogV1 {
+    profiles: Box<[Qwen3TokenEmbeddingProfileV1]>,
+    canonical_bytes: Box<[u8]>,
+    identity: Qwen3TokenEmbeddingProfileCatalogIdentityV1,
+}
+
+impl Qwen3TokenEmbeddingProfileCatalogV1 {
+    /// Constructs all 22 profiles in stable role/bucket order.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if an exact extent, grid, roster, or identity invariant fails.
+    pub fn canonical() -> Result<Self, Qwen3TokenEmbeddingCatalogErrorV1> {
+        let mut profiles = Vec::with_capacity(QWEN3_TOKEN_EMBEDDING_PROFILE_COUNT_V1);
+        for role in QWEN3_GEMM_ROLES_V1 {
+            for kind in QWEN3_GEMM_BUCKET_KINDS_V1 {
+                profiles.push(Qwen3TokenEmbeddingProfileV1::checked(
+                    Qwen3GemmBucketV1::new(role, kind),
+                )?);
+            }
+        }
+        if profiles.len() != QWEN3_TOKEN_EMBEDDING_PROFILE_COUNT_V1 {
+            return Err(Qwen3TokenEmbeddingCatalogErrorV1::ProfileSet);
+        }
+        for index in 0..profiles.len() {
+            if profiles[index + 1..]
+                .iter()
+                .any(|profile| profile.identity == profiles[index].identity)
+            {
+                return Err(Qwen3TokenEmbeddingCatalogErrorV1::DuplicateIdentity);
+            }
+        }
+        let mut canonical_bytes = Vec::with_capacity(profiles.len() * 128);
+        canonical_bytes.extend_from_slice(
+            &u32::try_from(profiles.len())
+                .map_err(|_| Qwen3TokenEmbeddingCatalogErrorV1::ExtentOverflow)?
+                .to_le_bytes(),
+        );
+        for profile in &profiles {
+            let encoded = profile.encode();
+            canonical_bytes.extend_from_slice(
+                &u32::try_from(encoded.len())
+                    .map_err(|_| Qwen3TokenEmbeddingCatalogErrorV1::ExtentOverflow)?
+                    .to_le_bytes(),
+            );
+            canonical_bytes.extend_from_slice(&encoded);
+            canonical_bytes.extend_from_slice(profile.identity.as_bytes());
+        }
+        let identity = Qwen3TokenEmbeddingProfileCatalogIdentityV1(hash(
+            EMBEDDING_CATALOG_DOMAIN,
+            &canonical_bytes,
+        ));
+        Ok(Self {
+            profiles: profiles.into_boxed_slice(),
+            canonical_bytes: canonical_bytes.into_boxed_slice(),
+            identity,
+        })
+    }
+
+    /// Exact stable profile roster.
+    #[must_use]
+    pub fn profiles(&self) -> &[Qwen3TokenEmbeddingProfileV1] {
+        &self.profiles
+    }
+
+    /// Finds one exact finite profile.
+    #[must_use]
+    pub fn profile(&self, bucket: Qwen3GemmBucketV1) -> Option<Qwen3TokenEmbeddingProfileV1> {
+        self.profiles
+            .iter()
+            .copied()
+            .find(|profile| profile.bucket == bucket)
+    }
+
+    /// Exact canonical catalog bytes.
+    #[must_use]
+    pub fn canonical_bytes(&self) -> &[u8] {
+        &self.canonical_bytes
+    }
+
+    /// Exact catalog identity.
+    #[must_use]
+    pub const fn identity(&self) -> Qwen3TokenEmbeddingProfileCatalogIdentityV1 {
+        self.identity
+    }
+
+    /// This host roster grants no source, content, artifact, or launch authority.
+    #[must_use]
+    pub const fn grants_authority(&self) -> bool {
+        false
+    }
+}
+
+/// Ferric-admission-supplied expected embedding-weight identity.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct Qwen3ExpectedEmbeddingWeightIdentityV1 {
+    role: Qwen3GemmModelRoleV1,
+    bytes: [u8; 32],
+}
+
+impl Qwen3ExpectedEmbeddingWeightIdentityV1 {
+    /// Constructs a nonzero opaque bundle-bound identity for one model role.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for the absent all-zero identity.
+    pub fn new(
+        role: Qwen3GemmModelRoleV1,
+        bytes: [u8; 32],
+    ) -> Result<Self, Qwen3ExpectedEmbeddingWeightIdentityErrorV1> {
+        if bytes == [0; 32] {
+            return Err(Qwen3ExpectedEmbeddingWeightIdentityErrorV1::Absent);
+        }
+        Ok(Self { role, bytes })
+    }
+
+    /// Exact role supplied by Ferric admission.
+    #[must_use]
+    pub const fn role(self) -> Qwen3GemmModelRoleV1 {
+        self.role
+    }
+
+    /// Opaque expected identity bytes.
+    #[must_use]
+    pub const fn as_bytes(&self) -> &[u8; 32] {
+        &self.bytes
+    }
+
+    /// Retention is not independent content authentication.
+    #[must_use]
+    pub const fn authenticates_content(self) -> bool {
+        false
+    }
+}
+
+/// Invalid expected embedding-weight identity.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Qwen3ExpectedEmbeddingWeightIdentityErrorV1 {
+    /// The identity was all zero.
+    Absent,
+}
+
+impl fmt::Display for Qwen3ExpectedEmbeddingWeightIdentityErrorV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            formatter,
+            "expected embedding-weight identity failed: {self:?}"
+        )
+    }
+}
+
+impl std::error::Error for Qwen3ExpectedEmbeddingWeightIdentityErrorV1 {}
+
+/// One token-embedding ABI region.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(u8)]
+pub enum Qwen3TokenEmbeddingBufferV1 {
+    /// U32 token IDs `[S,A]`.
+    TokenIds = 1,
+    /// BF16 embedding weight `[151936,H]`.
+    Weight = 2,
+    /// BF16 output `[S,A,H]`.
+    Output = 3,
+}
+
+/// Exact token-embedding buffer admission failure.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Qwen3TokenEmbeddingBufferContractErrorV1 {
+    /// The supplied expected weight identity belongs to the other model role.
+    WeightRole,
+    /// A required address was zero.
+    ZeroAddress(Qwen3TokenEmbeddingBufferV1),
+    /// A byte span differed from the exact profile extent.
+    ByteLength(Qwen3TokenEmbeddingBufferV1),
+    /// An address violated its element alignment.
+    Alignment(Qwen3TokenEmbeddingBufferV1),
+    /// An exclusive end overflowed u64.
+    RangeOverflow(Qwen3TokenEmbeddingBufferV1),
+    /// Two exact regions overlapped.
+    Aliasing,
+}
+
+impl fmt::Display for Qwen3TokenEmbeddingBufferContractErrorV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            formatter,
+            "Qwen3 token-embedding buffer contract failed: {self:?}"
+        )
+    }
+}
+
+impl std::error::Error for Qwen3TokenEmbeddingBufferContractErrorV1 {}
+
+/// Exact checked token-ID, expected-weight, and output spans.
+#[derive(Debug, Eq, PartialEq)]
+pub struct Qwen3TokenEmbeddingBufferContractV1 {
+    expected_weight_identity: Qwen3ExpectedEmbeddingWeightIdentityV1,
+    addresses: [u64; 3],
+    ends: [u64; 3],
+    byte_lengths: [u64; 3],
+}
+
+impl Qwen3TokenEmbeddingBufferContractV1 {
+    fn checked(
+        profile: Qwen3TokenEmbeddingProfileV1,
+        expected_weight_identity: Qwen3ExpectedEmbeddingWeightIdentityV1,
+        addresses: [u64; 3],
+        byte_lengths: [u64; 3],
+    ) -> Result<Self, Qwen3TokenEmbeddingBufferContractErrorV1> {
+        if expected_weight_identity.role() != profile.bucket().role() {
+            return Err(Qwen3TokenEmbeddingBufferContractErrorV1::WeightRole);
+        }
+        let elements = profile.storage_elements();
+        let expected = [
+            elements[0].checked_mul(4).ok_or(
+                Qwen3TokenEmbeddingBufferContractErrorV1::ByteLength(
+                    Qwen3TokenEmbeddingBufferV1::TokenIds,
+                ),
+            )?,
+            elements[1].checked_mul(2).ok_or(
+                Qwen3TokenEmbeddingBufferContractErrorV1::ByteLength(
+                    Qwen3TokenEmbeddingBufferV1::Weight,
+                ),
+            )?,
+            elements[2].checked_mul(2).ok_or(
+                Qwen3TokenEmbeddingBufferContractErrorV1::ByteLength(
+                    Qwen3TokenEmbeddingBufferV1::Output,
+                ),
+            )?,
+        ];
+        let roles = [
+            Qwen3TokenEmbeddingBufferV1::TokenIds,
+            Qwen3TokenEmbeddingBufferV1::Weight,
+            Qwen3TokenEmbeddingBufferV1::Output,
+        ];
+        let alignments = [4, 2, 2];
+        let mut ends = [0; 3];
+        for index in 0..3 {
+            if addresses[index] == 0 {
+                return Err(Qwen3TokenEmbeddingBufferContractErrorV1::ZeroAddress(
+                    roles[index],
+                ));
+            }
+            if byte_lengths[index] != expected[index] {
+                return Err(Qwen3TokenEmbeddingBufferContractErrorV1::ByteLength(
+                    roles[index],
+                ));
+            }
+            if !addresses[index].is_multiple_of(alignments[index]) {
+                return Err(Qwen3TokenEmbeddingBufferContractErrorV1::Alignment(
+                    roles[index],
+                ));
+            }
+            ends[index] = addresses[index].checked_add(byte_lengths[index]).ok_or(
+                Qwen3TokenEmbeddingBufferContractErrorV1::RangeOverflow(roles[index]),
+            )?;
+        }
+        for left in 0..3 {
+            for right in left + 1..3 {
+                if addresses[left] < ends[right] && addresses[right] < ends[left] {
+                    return Err(Qwen3TokenEmbeddingBufferContractErrorV1::Aliasing);
+                }
+            }
+        }
+        Ok(Self {
+            expected_weight_identity,
+            addresses,
+            ends,
+            byte_lengths,
+        })
+    }
+
+    /// Opaque expected weight identity retained from Ferric admission.
+    #[must_use]
+    pub const fn expected_weight_identity(&self) -> Qwen3ExpectedEmbeddingWeightIdentityV1 {
+        self.expected_weight_identity
+    }
+
+    /// Exact start addresses in token-ID, weight, output order.
+    #[must_use]
+    pub const fn addresses(&self) -> &[u64; 3] {
+        &self.addresses
+    }
+
+    /// Exact exclusive ends.
+    #[must_use]
+    pub const fn ends(&self) -> &[u64; 3] {
+        &self.ends
+    }
+
+    /// Exact byte lengths.
+    #[must_use]
+    pub const fn byte_lengths(&self) -> &[u64; 3] {
+        &self.byte_lengths
+    }
+
+    /// This join does not authenticate content, allocation, or device memory.
+    #[must_use]
+    pub const fn authenticates_content_or_memory(&self) -> bool {
+        false
+    }
+}
+
+/// Semantic token-embedding ABI role.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(u8)]
+pub enum Qwen3TokenEmbeddingArgumentRoleV1 {
+    /// U32 token IDs.
+    TokenIds = 1,
+    /// Bundle-bound BF16 embedding weights.
+    ExpectedWeight = 2,
+    /// BF16 output.
+    Output = 3,
+}
+
+/// One exact token-embedding pointer-plus-length ABI declaration.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct Qwen3TokenEmbeddingArgumentV1 {
+    /// Semantic buffer role.
+    pub role: Qwen3TokenEmbeddingArgumentRoleV1,
+    /// Explicit kernarg byte offset.
+    pub offset: u32,
+    /// Pointer-plus-length record size.
+    pub size: u32,
+    /// Pointee alignment.
+    pub pointee_alignment: u32,
+}
+
+/// Ferric-owned semantic sidecar for one token-embedding profile.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Qwen3TokenEmbeddingKernelIrV1 {
+    profile_identity: Qwen3TokenEmbeddingProfileIdentityV1,
+    arguments: [Qwen3TokenEmbeddingArgumentV1; 3],
+    shape: [u32; 3],
+    identity: [u8; 32],
+}
+
+impl Qwen3TokenEmbeddingKernelIrV1 {
+    /// Profile identity retained by this sidecar.
+    #[must_use]
+    pub const fn profile_identity(&self) -> Qwen3TokenEmbeddingProfileIdentityV1 {
+        self.profile_identity
+    }
+
+    /// Exact three-slice ABI.
+    #[must_use]
+    pub const fn arguments(&self) -> &[Qwen3TokenEmbeddingArgumentV1; 3] {
+        &self.arguments
+    }
+
+    /// Exact `[sequences, active tokens, hidden]` shape.
+    #[must_use]
+    pub const fn shape(&self) -> [u32; 3] {
+        self.shape
+    }
+
+    /// Domain-separated sidecar identity.
+    #[must_use]
+    pub const fn identity(&self) -> &[u8; 32] {
+        &self.identity
+    }
+
+    /// This sidecar is not source-to-machine or content refinement.
+    #[must_use]
+    pub const fn proves_refinement(&self) -> bool {
+        false
+    }
+}
+
+/// Constructs the canonical token-embedding semantic sidecar.
+#[must_use]
+pub fn qwen3_token_embedding_kernel_ir_v1(
+    profile: Qwen3TokenEmbeddingProfileV1,
+) -> Qwen3TokenEmbeddingKernelIrV1 {
+    let arguments = [
+        Qwen3TokenEmbeddingArgumentV1 {
+            role: Qwen3TokenEmbeddingArgumentRoleV1::TokenIds,
+            offset: 0,
+            size: 16,
+            pointee_alignment: 4,
+        },
+        Qwen3TokenEmbeddingArgumentV1 {
+            role: Qwen3TokenEmbeddingArgumentRoleV1::ExpectedWeight,
+            offset: 16,
+            size: 16,
+            pointee_alignment: 2,
+        },
+        Qwen3TokenEmbeddingArgumentV1 {
+            role: Qwen3TokenEmbeddingArgumentRoleV1::Output,
+            offset: 32,
+            size: 16,
+            pointee_alignment: 2,
+        },
+    ];
+    let mut encoded = Vec::with_capacity(160);
+    encoded.extend_from_slice(b"ferric::qwen3::token_embedding_v1");
+    encoded.extend_from_slice(QWEN3_TOKEN_EMBEDDING_KERNEL_SYMBOL_V1.as_bytes());
+    encoded.extend_from_slice(profile.identity().as_bytes());
+    for value in profile.shape() {
+        encoded.extend_from_slice(&value.to_le_bytes());
+    }
+    for argument in arguments {
+        encoded.push(argument.role as u8);
+        encoded.extend_from_slice(&argument.offset.to_le_bytes());
+        encoded.extend_from_slice(&argument.size.to_le_bytes());
+        encoded.extend_from_slice(&argument.pointee_alignment.to_le_bytes());
+    }
+    Qwen3TokenEmbeddingKernelIrV1 {
+        profile_identity: profile.identity(),
+        arguments,
+        shape: profile.shape(),
+        identity: hash(EMBEDDING_KERNEL_IR_DOMAIN, &encoded),
+    }
+}
+
 /// One of the three exact ABI regions.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[repr(u8)]
@@ -996,6 +1592,8 @@ pub enum PrepareQwen3GemmKernelErrorV1 {
     SourceBindings,
     /// The finite profile catalog failed.
     Catalog(Qwen3GemmCatalogErrorV1),
+    /// The finite token-embedding catalog failed.
+    TokenEmbeddingCatalog(Qwen3TokenEmbeddingCatalogErrorV1),
     /// A semantic KIR sidecar did not retain its exact profile.
     KernelIr,
     /// The complete direct-LLVM source or classifier differed from its pin.
@@ -1019,6 +1617,7 @@ impl std::error::Error for PrepareQwen3GemmKernelErrorV1 {}
 /// Linear prepared compiler owner awaiting Worker request construction.
 pub struct PreparedQwen3GemmKernelV1 {
     catalog: Qwen3GemmProfileCatalogV1,
+    token_embedding_catalog: Qwen3TokenEmbeddingProfileCatalogV1,
     source_binding_identity: [u8; 32],
     llvm_sha256: [u8; 32],
     compiler_handoff_identity: CompilerModuleHandoffIdentityV2,
@@ -1031,6 +1630,10 @@ impl fmt::Debug for PreparedQwen3GemmKernelV1 {
         formatter
             .debug_struct("PreparedQwen3GemmKernelV1")
             .field("catalog", &self.catalog.identity)
+            .field(
+                "token_embedding_catalog",
+                &self.token_embedding_catalog.identity,
+            )
             .field("source_binding", &self.source_binding_identity)
             .field("llvm_sha256", &self.llvm_sha256)
             .field("compiler_handoff", &self.compiler_handoff_identity)
@@ -1043,6 +1646,12 @@ impl PreparedQwen3GemmKernelV1 {
     #[must_use]
     pub const fn catalog(&self) -> &Qwen3GemmProfileCatalogV1 {
         &self.catalog
+    }
+
+    /// Complete finite token-embedding profile catalog.
+    #[must_use]
+    pub const fn token_embedding_catalog(&self) -> &Qwen3TokenEmbeddingProfileCatalogV1 {
+        &self.token_embedding_catalog
     }
 
     /// Ferric-domain identity binding labels, catalog, KIRs, and source bytes.
@@ -1063,7 +1672,7 @@ impl PreparedQwen3GemmKernelV1 {
         self.compiler_handoff_identity
     }
 
-    /// Closed two-entry/two-descriptor manifest identity.
+    /// Closed three-entry/three-descriptor manifest identity.
     #[must_use]
     pub const fn manifest_identity(&self) -> CompilerModuleSymbolManifestIdentityV1 {
         self.manifest_identity
@@ -1132,6 +1741,8 @@ pub fn prepare_qwen3_gemm_kernel_v1(
     validate_source_bindings(bindings)?;
     let catalog =
         Qwen3GemmProfileCatalogV1::canonical().map_err(PrepareQwen3GemmKernelErrorV1::Catalog)?;
+    let token_embedding_catalog = Qwen3TokenEmbeddingProfileCatalogV1::canonical()
+        .map_err(PrepareQwen3GemmKernelErrorV1::TokenEmbeddingCatalog)?;
     let mut kir_identities = Vec::with_capacity(QWEN3_GEMM_PROFILE_COUNT_V1 * 32);
     for profile in catalog.profiles() {
         let kir = qwen3_gemm_kernel_ir_v1(*profile);
@@ -1144,16 +1755,34 @@ pub fn prepare_qwen3_gemm_kernel_v1(
         }
         kir_identities.extend_from_slice(kir.identity());
     }
+    let mut embedding_kir_identities =
+        Vec::with_capacity(QWEN3_TOKEN_EMBEDDING_PROFILE_COUNT_V1 * 32);
+    for profile in token_embedding_catalog.profiles() {
+        let kir = qwen3_token_embedding_kernel_ir_v1(*profile);
+        if kir.profile_identity() != profile.identity()
+            || kir.shape() != profile.shape()
+            || kir.arguments()[0].role != Qwen3TokenEmbeddingArgumentRoleV1::TokenIds
+            || kir.arguments()[1].role != Qwen3TokenEmbeddingArgumentRoleV1::ExpectedWeight
+            || kir.arguments()[2].role != Qwen3TokenEmbeddingArgumentRoleV1::Output
+        {
+            return Err(PrepareQwen3GemmKernelErrorV1::KernelIr);
+        }
+        embedding_kir_identities.extend_from_slice(kir.identity());
+    }
     let llvm = canonical_qwen3_gemm_llvm();
     validate_canonical_llvm(&llvm)?;
     let llvm_sha256: [u8; 32] = Sha256::digest(llvm.as_bytes()).into();
-    let mut source_preimage = Vec::with_capacity(32 * (6 + QWEN3_GEMM_PROFILE_COUNT_V1));
+    let mut source_preimage = Vec::with_capacity(
+        32 * (7 + QWEN3_GEMM_PROFILE_COUNT_V1 + QWEN3_TOKEN_EMBEDDING_PROFILE_COUNT_V1),
+    );
     source_preimage.extend_from_slice(&bindings.source);
     source_preimage.extend_from_slice(&bindings.kernel_ir);
     source_preimage.extend_from_slice(&bindings.schedule);
     source_preimage.extend_from_slice(&bindings.target_plan);
     source_preimage.extend_from_slice(catalog.identity.as_bytes());
     source_preimage.extend_from_slice(&kir_identities);
+    source_preimage.extend_from_slice(token_embedding_catalog.identity.as_bytes());
+    source_preimage.extend_from_slice(&embedding_kir_identities);
     source_preimage.extend_from_slice(&llvm_sha256);
     let source_binding_identity = hash(SOURCE_BINDING_DOMAIN, &source_preimage);
     let target = exact_target();
@@ -1170,12 +1799,20 @@ pub fn prepare_qwen3_gemm_kernel_v1(
             QWEN3_GEMM_VECTORIZED_KERNEL_SYMBOL_V1,
         ),
         (
+            CompilerModuleSymbolRoleV1::KernelEntry,
+            QWEN3_TOKEN_EMBEDDING_KERNEL_SYMBOL_V1,
+        ),
+        (
             CompilerModuleSymbolRoleV1::KernelDescriptor,
             QWEN3_GEMM_REFERENCE_DESCRIPTOR_SYMBOL_V1,
         ),
         (
             CompilerModuleSymbolRoleV1::KernelDescriptor,
             QWEN3_GEMM_VECTORIZED_DESCRIPTOR_SYMBOL_V1,
+        ),
+        (
+            CompilerModuleSymbolRoleV1::KernelDescriptor,
+            QWEN3_TOKEN_EMBEDDING_DESCRIPTOR_SYMBOL_V1,
         ),
     ])
     .map_err(PrepareQwen3GemmKernelErrorV1::SymbolManifest)?;
@@ -1192,6 +1829,7 @@ pub fn prepare_qwen3_gemm_kernel_v1(
     let compiler_handoff_identity = compiler_handoff.identity();
     Ok(PreparedQwen3GemmKernelV1 {
         catalog,
+        token_embedding_catalog,
         source_binding_identity,
         llvm_sha256,
         compiler_handoff_identity,
@@ -1245,6 +1883,8 @@ declare void @llvm.trap()
         QWEN3_GEMM_VECTORIZED_KERNEL_SYMBOL_V1,
         Qwen3GemmScheduleV1::VectorizedA4Wave64V1,
     );
+    output.push('\n');
+    emit_token_embedding_kernel(&mut output);
     output.push_str(
         r#"
 attributes #0 = { nounwind "amdgpu-flat-work-group-size"="64,64" "target-cpu"="gfx942" "target-features"="-wavefrontsize32,+wavefrontsize64,-xnack" "denormal-fp-math-f32"="ieee,ieee" "unsafe-fp-math"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "approx-func-fp-math"="false" "fp-contract"="off" }
@@ -1254,6 +1894,9 @@ attributes #1 = { nounwind readnone speculatable willreturn }
 !1 = !{!"read_only", !"none", !"read_only", !"none", !"read_write", !"none", !"none", !"none", !"none", !"none"}
 !2 = !{!"ushort*", !"ulong", !"ushort*", !"ulong", !"ushort*", !"ulong", !"uint", !"uint", !"uint", !"uint"}
 !3 = !{!"const restrict", !"", !"const restrict", !"", !"restrict", !"", !"", !"", !"", !""}
+!4 = !{!"read_only", !"none", !"read_only", !"none", !"write_only", !"none", !"none", !"none", !"none"}
+!5 = !{!"uint*", !"ulong", !"ushort*", !"ulong", !"ushort*", !"ulong", !"uint", !"uint", !"uint"}
+!6 = !{!"const restrict", !"", !"const restrict", !"", !"restrict", !"", !"", !"", !""}
 "#,
     );
     output
@@ -1380,8 +2023,8 @@ fn emit_machine_classifier(output: &mut String, schedule: Qwen3GemmScheduleV1) {
             &[16, 32, 128, 512, 1_024, 2_048],
         ),
     };
-    let target_rows = emit_allowed_rows(output, "target", target_rows);
-    let draft_rows = emit_allowed_rows(output, "draft", draft_rows);
+    let target_rows = emit_allowed_rows(output, "target", "%m", target_rows);
+    let draft_rows = emit_allowed_rows(output, "draft", "%m", draft_rows);
     output.push_str(
         r"  %beta.zero = icmp eq i32 %beta.bits, 0
   %beta.one = icmp eq i32 %beta.bits, 1065353216
@@ -1439,10 +2082,13 @@ fn emit_machine_classifier(output: &mut String, schedule: Qwen3GemmScheduleV1) {
     .expect("writing to a String cannot fail");
 }
 
-fn emit_allowed_rows(output: &mut String, prefix: &str, rows: &[u32]) -> String {
+fn emit_allowed_rows(output: &mut String, prefix: &str, dimension: &str, rows: &[u32]) -> String {
     for (index, row) in rows.iter().enumerate() {
-        writeln!(output, "  %{prefix}.row.{index} = icmp eq i32 %m, {row}")
-            .expect("writing to a String cannot fail");
+        writeln!(
+            output,
+            "  %{prefix}.row.{index} = icmp eq i32 {dimension}, {row}"
+        )
+        .expect("writing to a String cannot fail");
     }
     let mut current = format!("%{prefix}.row.0");
     for index in 1..rows.len() {
@@ -1452,6 +2098,85 @@ fn emit_allowed_rows(output: &mut String, prefix: &str, rows: &[u32]) -> String 
         current = next;
     }
     current
+}
+
+fn emit_token_embedding_kernel(output: &mut String) {
+    let symbol = QWEN3_TOKEN_EMBEDDING_KERNEL_SYMBOL_V1;
+    writeln!(
+        output,
+        "define amdgpu_kernel void @{symbol}(ptr addrspace(1) noalias nocapture readonly align 4 %tokens.data, i64 %tokens.len, ptr addrspace(1) noalias nocapture readonly align 2 %weight.data, i64 %weight.len, ptr addrspace(1) noalias nocapture writeonly align 2 %output.data, i64 %output.len, i32 %rows, i32 %hidden, i32 %vocabulary) #0 !reqd_work_group_size !0 !kernel_arg_access_qual !4 !kernel_arg_type !5 !kernel_arg_base_type !5 !kernel_arg_type_qual !6 {{\nentry:"
+    )
+    .expect("writing to a String cannot fail");
+    let target_rows = emit_allowed_rows(
+        output,
+        "embedding.target",
+        "%rows",
+        &[1, 5, 8, 9, 17, 32, 40, 128, 512, 1_024, 2_048],
+    );
+    let draft_rows = emit_allowed_rows(
+        output,
+        "embedding.draft",
+        "%rows",
+        &[1, 4, 8, 16, 32, 128, 512, 1_024, 2_048],
+    );
+    writeln!(
+        output,
+        "  %embedding.target.hidden = icmp eq i32 %hidden, 4096\n  %embedding.draft.hidden = icmp eq i32 %hidden, 1024\n  %embedding.target.profile = and i1 {target_rows}, %embedding.target.hidden\n  %embedding.draft.profile = and i1 {draft_rows}, %embedding.draft.hidden\n  %embedding.shape = or i1 %embedding.target.profile, %embedding.draft.profile"
+    )
+    .expect("writing to a String cannot fail");
+    output.push_str(
+        r"  %embedding.vocabulary.ok = icmp eq i32 %vocabulary, 151936
+  %embedding.known.profile = and i1 %embedding.shape, %embedding.vocabulary.ok
+  %rows64 = zext i32 %rows to i64
+  %hidden64 = zext i32 %hidden to i64
+  %vocabulary64 = zext i32 %vocabulary to i64
+  %weight.expected = mul nuw i64 %vocabulary64, %hidden64
+  %output.expected = mul nuw i64 %rows64, %hidden64
+  %tokens.length.ok = icmp eq i64 %tokens.len, %rows64
+  %weight.length.ok = icmp eq i64 %weight.len, %weight.expected
+  %output.length.ok = icmp eq i64 %output.len, %output.expected
+  %input.lengths.ok = and i1 %tokens.length.ok, %weight.length.ok
+  %lengths.ok = and i1 %input.lengths.ok, %output.length.ok
+  %entry.ok = and i1 %embedding.known.profile, %lengths.ok
+  br i1 %entry.ok, label %coordinates, label %trap
+
+coordinates:
+  %local.i32 = call i32 @llvm.amdgcn.workitem.id.x()
+  %group.i32 = call i32 @llvm.amdgcn.workgroup.id.x()
+  %local = zext i32 %local.i32 to i64
+  %group = zext i32 %group.i32 to i64
+  %group.base = mul nuw i64 %group, 64
+  %output.index = add nuw i64 %group.base, %local
+  %output.active = icmp ult i64 %output.index, %output.expected
+  br i1 %output.active, label %token.load, label %return
+
+token.load:
+  %row = udiv i64 %output.index, %hidden64
+  %column = urem i64 %output.index, %hidden64
+  %token.ptr = getelementptr inbounds i32, ptr addrspace(1) %tokens.data, i64 %row
+  %token = load i32, ptr addrspace(1) %token.ptr, align 4
+  %token.in.vocabulary = icmp ult i32 %token, %vocabulary
+  br i1 %token.in.vocabulary, label %weight.address, label %trap
+
+weight.address:
+  %token64 = zext i32 %token to i64
+  %weight.row.base = mul nuw i64 %token64, %hidden64
+  %weight.index = add nuw i64 %weight.row.base, %column
+  %weight.ptr = getelementptr inbounds i16, ptr addrspace(1) %weight.data, i64 %weight.index
+  %embedding.bits = load i16, ptr addrspace(1) %weight.ptr, align 2
+  %output.ptr = getelementptr inbounds i16, ptr addrspace(1) %output.data, i64 %output.index
+  store i16 %embedding.bits, ptr addrspace(1) %output.ptr, align 2
+  br label %return
+
+return:
+  ret void
+
+trap:
+  call void @llvm.trap()
+  ret void
+}
+",
+    );
 }
 
 fn emit_reference_reduction(output: &mut String) {
@@ -1527,7 +2252,7 @@ fn validate_canonical_llvm(module: &str) -> Result<(), PrepareQwen3GemmKernelErr
     let module_sha256: [u8; 32] = Sha256::digest(module.as_bytes()).into();
     let exact = module.len() == QWEN3_GEMM_LLVM_BYTES_V1
         && module_sha256 == QWEN3_GEMM_LLVM_SHA256_V1
-        && module.matches("define amdgpu_kernel").count() == 2
+        && module.matches("define amdgpu_kernel").count() == 3
         && module
             .matches(QWEN3_GEMM_REFERENCE_KERNEL_SYMBOL_V1)
             .count()
@@ -1536,8 +2261,12 @@ fn validate_canonical_llvm(module: &str) -> Result<(), PrepareQwen3GemmKernelErr
             .matches(QWEN3_GEMM_VECTORIZED_KERNEL_SYMBOL_V1)
             .count()
             == 1
-        && module.matches("call void @llvm.trap()").count() == 2
-        && module.matches("store i16").count() == 2
+        && module
+            .matches(QWEN3_TOKEN_EMBEDDING_KERNEL_SYMBOL_V1)
+            .count()
+            == 1
+        && module.matches("call void @llvm.trap()").count() == 3
+        && module.matches("store i16").count() == 3
         && module.matches("load <4 x i16>").count() == 1
         && module.contains("%draft.o.nk = and i1 %n.d.hidden, %k.d.query")
         && module.contains("%k.d.query = icmp eq i32 %k, 2048")
@@ -1547,6 +2276,12 @@ fn validate_canonical_llvm(module: &str) -> Result<(), PrepareQwen3GemmKernelErr
         && module.contains("%b.expected = mul nuw i64 %k64, %n64")
         && module.contains("%c.expected = mul nuw i64 %m64, %n64")
         && module.contains("%result.bf16 = trunc i32 %result.bf16.wide to i16")
+        && module.contains("%embedding.vocabulary.ok = icmp eq i32 %vocabulary, 151936")
+        && module.contains("%embedding.target.hidden = icmp eq i32 %hidden, 4096")
+        && module.contains("%embedding.draft.hidden = icmp eq i32 %hidden, 1024")
+        && module.contains("%token.in.vocabulary = icmp ult i32 %token, %vocabulary")
+        && module.contains("br i1 %token.in.vocabulary, label %weight.address, label %trap")
+        && module.contains("store i16 %embedding.bits")
         && module.contains("\"fp-contract\"=\"off\"")
         && !module.contains("store float")
         && !module.contains("atomic")
@@ -1574,6 +2309,10 @@ impl fmt::Debug for InertQwen3GemmWorkerRequestV1 {
         formatter
             .debug_struct("InertQwen3GemmWorkerRequestV1")
             .field("catalog", &self.prepared.catalog.identity)
+            .field(
+                "token_embedding_catalog",
+                &self.prepared.token_embedding_catalog.identity,
+            )
             .field("source_binding", &self.prepared.source_binding_identity)
             .field("handoff", &self.prepared.compiler_handoff_identity)
             .finish_non_exhaustive()
@@ -1585,6 +2324,12 @@ impl InertQwen3GemmWorkerRequestV1 {
     #[must_use]
     pub const fn catalog(&self) -> &Qwen3GemmProfileCatalogV1 {
         &self.prepared.catalog
+    }
+
+    /// Complete finite token-embedding catalog retained by the request.
+    #[must_use]
+    pub const fn token_embedding_catalog(&self) -> &Qwen3TokenEmbeddingProfileCatalogV1 {
+        &self.prepared.token_embedding_catalog
     }
 
     /// Exact compiler handoff for transaction publication.
@@ -1742,6 +2487,7 @@ impl std::error::Error for InspectQwen3GemmKernelErrorV1 {}
 /// Linear Worker output after exact ABI/resource and loader inspection.
 pub struct InspectedQwen3GemmKernelV1 {
     catalog: Qwen3GemmProfileCatalogV1,
+    token_embedding_catalog: Qwen3TokenEmbeddingProfileCatalogV1,
     source_binding_identity: [u8; 32],
     compiler_handoff_identity: CompilerModuleHandoffIdentityV2,
     transaction_handoff: CompilerModuleHandoffIdentityV1,
@@ -1754,6 +2500,10 @@ impl fmt::Debug for InspectedQwen3GemmKernelV1 {
         formatter
             .debug_struct("InspectedQwen3GemmKernelV1")
             .field("catalog", &self.catalog.identity)
+            .field(
+                "token_embedding_catalog",
+                &self.token_embedding_catalog.identity,
+            )
             .field("source_binding", &self.source_binding_identity)
             .field("compiler_handoff", &self.compiler_handoff_identity)
             .field("transaction_handoff", &self.transaction_handoff)
@@ -1767,6 +2517,12 @@ impl InspectedQwen3GemmKernelV1 {
     #[must_use]
     pub const fn catalog(&self) -> &Qwen3GemmProfileCatalogV1 {
         &self.catalog
+    }
+
+    /// Complete finite token-embedding catalog retained by the inspected owner.
+    #[must_use]
+    pub const fn token_embedding_catalog(&self) -> &Qwen3TokenEmbeddingProfileCatalogV1 {
+        &self.token_embedding_catalog
     }
 
     /// Exact strict pure-Rust loader plan over the same output bytes.
@@ -1868,6 +2624,34 @@ impl InspectedQwen3GemmKernelV1 {
             .map_err(BindQwen3GemmLaunchErrorV1::Buffers)?;
         Ok(CheckedQwen3GemmLaunchV1 { profile, buffers })
     }
+
+    /// Binds one exact token-embedding profile to disjoint checked spans and
+    /// an expected bundle-bound weight identity.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the profile is absent, the expected identity role
+    /// differs, or any address, length, alignment, overflow, or alias check fails.
+    pub fn bind_checked_token_embedding_profile(
+        &self,
+        bucket: Qwen3GemmBucketV1,
+        expected_weight_identity: Qwen3ExpectedEmbeddingWeightIdentityV1,
+        addresses: [u64; 3],
+        byte_lengths: [u64; 3],
+    ) -> Result<CheckedQwen3TokenEmbeddingLaunchV1, BindQwen3TokenEmbeddingLaunchErrorV1> {
+        let profile = self
+            .token_embedding_catalog
+            .profile(bucket)
+            .ok_or(BindQwen3TokenEmbeddingLaunchErrorV1::Profile)?;
+        let buffers = Qwen3TokenEmbeddingBufferContractV1::checked(
+            profile,
+            expected_weight_identity,
+            addresses,
+            byte_lengths,
+        )
+        .map_err(BindQwen3TokenEmbeddingLaunchErrorV1::Buffers)?;
+        Ok(CheckedQwen3TokenEmbeddingLaunchV1 { profile, buffers })
+    }
 }
 
 /// Consumes Worker evidence through transcript, HSACO, ABI/resource, and loader checks.
@@ -1891,10 +2675,10 @@ pub fn inspect_qwen3_gemm_kernel_v1(
     }
     let bound =
         inspect_and_bind_kernel_descriptors(bytes).map_err(InspectQwen3GemmKernelErrorV1::Hsaco)?;
-    let [reference, vectorized] = bound.inspection().kernels() else {
+    let [reference, vectorized, token_embedding] = bound.inspection().kernels() else {
         return Err(InspectQwen3GemmKernelErrorV1::KernelProfile);
     };
-    let [reference_binding, vectorized_binding] = bound.bindings() else {
+    let [reference_binding, vectorized_binding, token_embedding_binding] = bound.bindings() else {
         return Err(InspectQwen3GemmKernelErrorV1::KernelProfile);
     };
     let exact = bound.inspection().code_object_version() == InspectedCodeObjectVersion::V6
@@ -1903,16 +2687,38 @@ pub fn inspect_qwen3_gemm_kernel_v1(
         && exact_kernel_profile(
             reference,
             reference_binding,
-            0,
-            QWEN3_GEMM_REFERENCE_KERNEL_SYMBOL_V1,
-            QWEN3_GEMM_REFERENCE_DESCRIPTOR_SYMBOL_V1,
+            ExactKernelProfileV1 {
+                index: 0,
+                symbol: QWEN3_GEMM_REFERENCE_KERNEL_SYMBOL_V1,
+                descriptor: QWEN3_GEMM_REFERENCE_DESCRIPTOR_SYMBOL_V1,
+                explicit_bytes: QWEN3_GEMM_EXPLICIT_KERNARG_BYTES_V1,
+                total_bytes: QWEN3_GEMM_TOTAL_KERNARG_BYTES_V1,
+                explicit_arguments: exact_gemm_explicit_arguments,
+            },
         )
         && exact_kernel_profile(
             vectorized,
             vectorized_binding,
-            1,
-            QWEN3_GEMM_VECTORIZED_KERNEL_SYMBOL_V1,
-            QWEN3_GEMM_VECTORIZED_DESCRIPTOR_SYMBOL_V1,
+            ExactKernelProfileV1 {
+                index: 1,
+                symbol: QWEN3_GEMM_VECTORIZED_KERNEL_SYMBOL_V1,
+                descriptor: QWEN3_GEMM_VECTORIZED_DESCRIPTOR_SYMBOL_V1,
+                explicit_bytes: QWEN3_GEMM_EXPLICIT_KERNARG_BYTES_V1,
+                total_bytes: QWEN3_GEMM_TOTAL_KERNARG_BYTES_V1,
+                explicit_arguments: exact_gemm_explicit_arguments,
+            },
+        )
+        && exact_kernel_profile(
+            token_embedding,
+            token_embedding_binding,
+            ExactKernelProfileV1 {
+                index: 2,
+                symbol: QWEN3_TOKEN_EMBEDDING_KERNEL_SYMBOL_V1,
+                descriptor: QWEN3_TOKEN_EMBEDDING_DESCRIPTOR_SYMBOL_V1,
+                explicit_bytes: QWEN3_TOKEN_EMBEDDING_EXPLICIT_KERNARG_BYTES_V1,
+                total_bytes: QWEN3_TOKEN_EMBEDDING_TOTAL_KERNARG_BYTES_V1,
+                explicit_arguments: exact_token_embedding_explicit_arguments,
+            },
         );
     if !exact {
         return Err(InspectQwen3GemmKernelErrorV1::KernelProfile);
@@ -1922,6 +2728,7 @@ pub fn inspect_qwen3_gemm_kernel_v1(
     let loader_plan = *loader.plan();
     Ok(InspectedQwen3GemmKernelV1 {
         catalog: prepared.catalog,
+        token_embedding_catalog: prepared.token_embedding_catalog,
         source_binding_identity: prepared.source_binding_identity,
         compiler_handoff_identity: prepared.compiler_handoff_identity,
         transaction_handoff,
@@ -1968,8 +2775,10 @@ fn validate_worker_lineage(
             || !request.final_symbols().iter().map(String::as_str).eq([
                 QWEN3_GEMM_REFERENCE_KERNEL_SYMBOL_V1,
                 QWEN3_GEMM_VECTORIZED_KERNEL_SYMBOL_V1,
+                QWEN3_TOKEN_EMBEDDING_KERNEL_SYMBOL_V1,
                 QWEN3_GEMM_REFERENCE_DESCRIPTOR_SYMBOL_V1,
                 QWEN3_GEMM_VECTORIZED_DESCRIPTOR_SYMBOL_V1,
+                QWEN3_TOKEN_EMBEDDING_DESCRIPTOR_SYMBOL_V1,
             ])
             || exchange.response().request_identity() != request.identity()
             || exchange.response().device_library_provider().is_some()
@@ -1980,18 +2789,25 @@ fn validate_worker_lineage(
     Ok(())
 }
 
+struct ExactKernelProfileV1 {
+    index: usize,
+    symbol: &'static str,
+    descriptor: &'static str,
+    explicit_bytes: u64,
+    total_bytes: u64,
+    explicit_arguments: fn(&[ExplicitArgument]) -> bool,
+}
+
 fn exact_kernel_profile(
     kernel: &InspectedKernel,
     binding: &KernelDescriptorBinding,
-    index: usize,
-    symbol: &str,
-    descriptor: &str,
+    profile: ExactKernelProfileV1,
 ) -> bool {
-    kernel.name() == symbol
-        && kernel.symbol() == descriptor
-        && kernel.kernarg_segment_size() == QWEN3_GEMM_TOTAL_KERNARG_BYTES_V1
+    kernel.name() == profile.symbol
+        && kernel.symbol() == profile.descriptor
+        && kernel.kernarg_segment_size() == profile.total_bytes
         && kernel.kernarg_segment_alignment() == QWEN3_GEMM_KERNARG_ALIGNMENT_V1
-        && kernel.implicit_argument_offset() == Some(QWEN3_GEMM_EXPLICIT_KERNARG_BYTES_V1)
+        && kernel.implicit_argument_offset() == Some(profile.explicit_bytes)
         && kernel.implicit_argument_size() == 256
         && kernel.required_workgroup_size() == Some(QWEN3_GEMM_WORKGROUP_V1)
         && kernel.max_flat_workgroup_size() == 64
@@ -2001,16 +2817,13 @@ fn exact_kernel_profile(
         && kernel.sgpr_spill_count().unwrap_or(0) == 0
         && kernel.vgpr_spill_count().unwrap_or(0) == 0
         && !kernel.uses_dynamic_stack()
-        && binding.kernel_index() == index
+        && binding.kernel_index() == profile.index
         && binding.descriptor().group_segment_fixed_size() == 0
         && binding.descriptor().private_segment_fixed_size() == 0
         && binding.descriptor().wavefront_size() == 64
         && !binding.descriptor().uses_dynamic_stack()
-        && exact_gemm_explicit_arguments(kernel.explicit_arguments())
-        && exact_hidden_arguments(
-            kernel.hidden_arguments(),
-            QWEN3_GEMM_EXPLICIT_KERNARG_BYTES_V1,
-        )
+        && (profile.explicit_arguments)(kernel.explicit_arguments())
+        && exact_hidden_arguments(kernel.hidden_arguments(), profile.explicit_bytes)
 }
 
 fn exact_gemm_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
@@ -2050,11 +2863,66 @@ fn exact_gemm_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
     true
 }
 
+fn exact_token_embedding_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
+    arguments.len() == 9
+        && exact_global_pointer_argument(
+            &arguments[0],
+            "tokens.data",
+            0,
+            4,
+            ArgumentAccess::ReadOnly,
+            is_u32_metadata_carrier,
+        )
+        && exact_global_pointer_argument(
+            &arguments[2],
+            "weight.data",
+            16,
+            2,
+            ArgumentAccess::ReadOnly,
+            is_bf16_metadata_carrier,
+        )
+        && exact_global_pointer_argument(
+            &arguments[4],
+            "output.data",
+            32,
+            2,
+            ArgumentAccess::WriteOnly,
+            is_bf16_metadata_carrier,
+        )
+        && [(1, "tokens.len"), (3, "weight.len"), (5, "output.len")]
+            .into_iter()
+            .all(|(index, name)| {
+                exact_integer_argument(
+                    &arguments[index],
+                    name,
+                    ((index - 1) as u64 / 2) * 16 + 8,
+                    8,
+                    is_u64_metadata_carrier,
+                )
+            })
+        && [(6, "rows", 48), (7, "hidden", 52), (8, "vocabulary", 56)]
+            .into_iter()
+            .all(|(index, name, offset)| {
+                exact_integer_argument(&arguments[index], name, offset, 4, is_u32_metadata_carrier)
+            })
+}
+
 fn exact_bf16_pointer_argument(
     argument: &ExplicitArgument,
     name: &str,
     offset: u64,
     access: ArgumentAccess,
+) -> bool {
+    exact_global_pointer_argument(argument, name, offset, 2, access, is_bf16_metadata_carrier)
+}
+
+fn exact_global_pointer_argument(
+    argument: &ExplicitArgument,
+    name: &str,
+    offset: u64,
+    pointee_alignment: u64,
+    access: ArgumentAccess,
+    accepted_type: fn(ExplicitValueType) -> bool,
 ) -> bool {
     argument.name() == Some(name)
         && argument.offset() == offset
@@ -2062,9 +2930,9 @@ fn exact_bf16_pointer_argument(
         && argument.alignment().is_none_or(|actual| actual == 8)
         && argument
             .pointee_alignment()
-            .is_none_or(|actual| actual == 2)
+            .is_none_or(|actual| actual == pointee_alignment)
         && argument.value_kind() == ExplicitValueKind::GlobalBuffer
-        && argument.value_type().is_none_or(is_bf16_metadata_carrier)
+        && argument.value_type().is_none_or(accepted_type)
         && argument.address_space() == Some(ArgumentAddressSpace::Global)
         && argument.access() == Some(access)
 }
@@ -2188,6 +3056,59 @@ impl CheckedQwen3GemmLaunchV1 {
     }
 
     /// This binding grants no allocation, load, or launch authority.
+    #[must_use]
+    pub const fn grants_launch_authority(&self) -> bool {
+        false
+    }
+}
+
+/// Failure while binding an inspected token-embedding profile.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BindQwen3TokenEmbeddingLaunchErrorV1 {
+    /// The requested role/bucket tuple was absent.
+    Profile,
+    /// Expected weight identity or numerical buffer validation failed.
+    Buffers(Qwen3TokenEmbeddingBufferContractErrorV1),
+}
+
+impl fmt::Display for BindQwen3TokenEmbeddingLaunchErrorV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            formatter,
+            "Qwen3 token-embedding launch binding failed: {self:?}"
+        )
+    }
+}
+
+impl std::error::Error for BindQwen3TokenEmbeddingLaunchErrorV1 {}
+
+/// Exact inert token-embedding binding retained for a future protected launcher.
+#[derive(Debug)]
+pub struct CheckedQwen3TokenEmbeddingLaunchV1 {
+    profile: Qwen3TokenEmbeddingProfileV1,
+    buffers: Qwen3TokenEmbeddingBufferContractV1,
+}
+
+impl CheckedQwen3TokenEmbeddingLaunchV1 {
+    /// Exact finite profile.
+    #[must_use]
+    pub const fn profile(&self) -> Qwen3TokenEmbeddingProfileV1 {
+        self.profile
+    }
+
+    /// Exact checked buffer ranges and expected weight identity.
+    #[must_use]
+    pub const fn buffers(&self) -> &Qwen3TokenEmbeddingBufferContractV1 {
+        &self.buffers
+    }
+
+    /// Exact token-embedding kernel symbol.
+    #[must_use]
+    pub const fn kernel_symbol(&self) -> &'static str {
+        QWEN3_TOKEN_EMBEDDING_KERNEL_SYMBOL_V1
+    }
+
+    /// This binding grants no content, allocation, load, or launch authority.
     #[must_use]
     pub const fn grants_launch_authority(&self) -> bool {
         false
@@ -2586,5 +3507,213 @@ mod tests {
             qwen3_gemm_kernel_ir_v1(key).identity(),
             qwen3_gemm_kernel_ir_v1(value).identity()
         );
+    }
+
+    #[test]
+    fn exact_22_token_embedding_profiles_bind_role_bucket_rows_and_hidden() {
+        let first = Qwen3TokenEmbeddingProfileCatalogV1::canonical().unwrap();
+        let second = Qwen3TokenEmbeddingProfileCatalogV1::canonical().unwrap();
+        assert_eq!(first, second);
+        assert_eq!(
+            first.profiles().len(),
+            QWEN3_TOKEN_EMBEDDING_PROFILE_COUNT_V1
+        );
+        assert_eq!(QWEN3_TOKEN_EMBEDDING_PROFILE_COUNT_V1, 22);
+        let identities = first
+            .profiles()
+            .iter()
+            .map(|profile| *profile.identity().as_bytes())
+            .collect::<BTreeSet<_>>();
+        assert_eq!(identities.len(), QWEN3_TOKEN_EMBEDDING_PROFILE_COUNT_V1);
+        for profile in first.profiles() {
+            let [sequences, active, hidden] = profile.shape();
+            let rows = sequences.checked_mul(active).unwrap();
+            assert_eq!(profile.rows(), rows);
+            assert_eq!(hidden, profile.bucket().role().hidden_size());
+            assert_eq!(
+                profile.storage_elements(),
+                [
+                    u64::from(rows),
+                    u64::from(QWEN3_VOCABULARY_SIZE_V1) * u64::from(hidden),
+                    u64::from(rows) * u64::from(hidden),
+                ]
+            );
+            assert_eq!(
+                profile.aql_grid_workitems(),
+                [rows.checked_mul(hidden).unwrap(), 1, 1]
+            );
+            assert_eq!(
+                qwen3_token_embedding_kernel_ir_v1(*profile).shape(),
+                profile.shape()
+            );
+            assert!(!profile.authenticates_weight_content());
+        }
+        assert!(!first.grants_authority());
+    }
+
+    #[test]
+    fn token_embedding_profile_rejects_hostile_vocab_hidden_row_and_profile_substitutions() {
+        let catalog = Qwen3TokenEmbeddingProfileCatalogV1::canonical().unwrap();
+        let draft = catalog
+            .profile(Qwen3GemmBucketV1::new(
+                Qwen3GemmModelRoleV1::Draft06B,
+                Qwen3GemmBucketKindV1::SpeculativeS1K16C8192,
+            ))
+            .unwrap();
+        assert_eq!(draft.shape(), [1, 16, 1_024]);
+        let mut hidden = draft;
+        hidden.shape[2] = 4_096;
+        assert_ne!(hidden, draft);
+        assert_ne!(
+            qwen3_token_embedding_kernel_ir_v1(hidden).identity(),
+            qwen3_token_embedding_kernel_ir_v1(draft).identity()
+        );
+        let mut row = draft;
+        row.shape[1] = 17;
+        assert_ne!(row, draft);
+        let target = catalog
+            .profile(Qwen3GemmBucketV1::new(
+                Qwen3GemmModelRoleV1::Target8B,
+                Qwen3GemmBucketKindV1::SpeculativeS1K16C8192,
+            ))
+            .unwrap();
+        assert_eq!(target.shape(), [1, 17, 4_096]);
+        assert_ne!(target.identity(), draft.identity());
+    }
+
+    #[test]
+    fn token_embedding_buffers_join_expected_role_and_reject_lengths_aliases_and_overflow() {
+        let profile = Qwen3TokenEmbeddingProfileCatalogV1::canonical()
+            .unwrap()
+            .profile(Qwen3GemmBucketV1::new(
+                Qwen3GemmModelRoleV1::Target8B,
+                Qwen3GemmBucketKindV1::DecodeS1C8192,
+            ))
+            .unwrap();
+        let target_identity =
+            Qwen3ExpectedEmbeddingWeightIdentityV1::new(Qwen3GemmModelRoleV1::Target8B, [7; 32])
+                .unwrap();
+        assert!(Qwen3ExpectedEmbeddingWeightIdentityV1::new(
+            Qwen3GemmModelRoleV1::Target8B,
+            [0; 32]
+        )
+        .is_err());
+        let elements = profile.storage_elements();
+        let addresses = [0x1_0000_0000, 0x10_0000_0000, 0x20_0000_0000];
+        let lengths = [elements[0] * 4, elements[1] * 2, elements[2] * 2];
+        let checked = Qwen3TokenEmbeddingBufferContractV1::checked(
+            profile,
+            target_identity,
+            addresses,
+            lengths,
+        )
+        .unwrap();
+        assert_eq!(checked.expected_weight_identity(), target_identity);
+        assert!(!checked.authenticates_content_or_memory());
+        let draft_identity =
+            Qwen3ExpectedEmbeddingWeightIdentityV1::new(Qwen3GemmModelRoleV1::Draft06B, [8; 32])
+                .unwrap();
+        assert_eq!(
+            Qwen3TokenEmbeddingBufferContractV1::checked(
+                profile,
+                draft_identity,
+                addresses,
+                lengths,
+            ),
+            Err(Qwen3TokenEmbeddingBufferContractErrorV1::WeightRole)
+        );
+        for pair in [(0, 1), (0, 2), (1, 2)] {
+            let mut aliased = addresses;
+            aliased[pair.1] = aliased[pair.0];
+            assert_eq!(
+                Qwen3TokenEmbeddingBufferContractV1::checked(
+                    profile,
+                    target_identity,
+                    aliased,
+                    lengths,
+                ),
+                Err(Qwen3TokenEmbeddingBufferContractErrorV1::Aliasing)
+            );
+        }
+        let mut short = lengths;
+        short[1] -= 2;
+        assert_eq!(
+            Qwen3TokenEmbeddingBufferContractV1::checked(
+                profile,
+                target_identity,
+                addresses,
+                short,
+            ),
+            Err(Qwen3TokenEmbeddingBufferContractErrorV1::ByteLength(
+                Qwen3TokenEmbeddingBufferV1::Weight
+            ))
+        );
+        let mut overflowing = addresses;
+        overflowing[2] = u64::MAX - lengths[2] + 1;
+        assert_eq!(
+            Qwen3TokenEmbeddingBufferContractV1::checked(
+                profile,
+                target_identity,
+                overflowing,
+                lengths,
+            ),
+            Err(Qwen3TokenEmbeddingBufferContractErrorV1::RangeOverflow(
+                Qwen3TokenEmbeddingBufferV1::Output
+            ))
+        );
+    }
+
+    #[test]
+    fn token_bound_dominates_weight_address_and_source_substitutions_fail_closed() {
+        let exact = canonical_qwen3_gemm_llvm();
+        let embedding = exact
+            .split_once(QWEN3_TOKEN_EMBEDDING_KERNEL_SYMBOL_V1)
+            .unwrap()
+            .1;
+        let bound = embedding
+            .find("%token.in.vocabulary = icmp ult i32 %token, %vocabulary")
+            .unwrap();
+        let branch = embedding
+            .find("br i1 %token.in.vocabulary, label %weight.address, label %trap")
+            .unwrap();
+        let weight_address = embedding.find("weight.address:").unwrap();
+        let weight_gep = embedding
+            .find("%weight.ptr = getelementptr inbounds i16")
+            .unwrap();
+        assert!(bound < branch && branch < weight_address && weight_address < weight_gep);
+        assert_eq!(embedding.matches("store i16 %embedding.bits").count(), 1);
+        assert!(!embedding.contains("fadd"));
+        assert!(!embedding.contains("fmul"));
+        for hostile in [
+            exact.replacen(
+                "%embedding.vocabulary.ok = icmp eq i32 %vocabulary, 151936",
+                "%embedding.vocabulary.ok = icmp eq i32 %vocabulary, 151935",
+                1,
+            ),
+            exact.replacen(
+                "%embedding.draft.hidden = icmp eq i32 %hidden, 1024",
+                "%embedding.draft.hidden = icmp eq i32 %hidden, 4096",
+                1,
+            ),
+            exact.replacen(
+                "%embedding.draft.row.8 = icmp eq i32 %rows, 2048",
+                "%embedding.draft.row.8 = icmp eq i32 %rows, 2049",
+                1,
+            ),
+            exact.replacen(
+                "%token.in.vocabulary = icmp ult i32 %token, %vocabulary",
+                "%token.in.vocabulary = icmp ule i32 %token, %vocabulary",
+                1,
+            ),
+            exact.replacen(
+                "br i1 %token.in.vocabulary, label %weight.address, label %trap",
+                "br i1 true, label %weight.address, label %trap",
+                1,
+            ),
+            exact.replacen("store i16 %embedding.bits", "store i16 0", 1),
+        ] {
+            assert_ne!(hostile, exact);
+            assert!(validate_canonical_llvm(&hostile).is_err());
+        }
     }
 }

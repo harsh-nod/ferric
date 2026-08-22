@@ -1,0 +1,21 @@
+error[E0616]: field `profile` of struct `CheckedQwen3TokenEmbeddingLaunchV1` is private
+ --> tests/ui/gemm_token_embedding_checked_fields_are_private.rs:4:21
+  |
+4 |     let _ = binding.profile;
+  |                     ^^^^^^^ private field
+  |
+help: a method `profile` also exists, call it with parentheses
+  |
+4 |     let _ = binding.profile();
+  |                            ++
+
+error[E0616]: field `buffers` of struct `CheckedQwen3TokenEmbeddingLaunchV1` is private
+ --> tests/ui/gemm_token_embedding_checked_fields_are_private.rs:5:21
+  |
+5 |     let _ = binding.buffers;
+  |                     ^^^^^^^ private field
+  |
+help: a method `buffers` also exists, call it with parentheses
+  |
+5 |     let _ = binding.buffers();
+  |                            ++
