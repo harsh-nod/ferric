@@ -1,0 +1,29 @@
+error[E0451]: field `catalog` of struct `PreparedQwen3SwiGluKernelV1` is private
+ --> tests/ui/swiglu_custody_fields_are_private.rs:7:39
+  |
+7 |     let PreparedQwen3SwiGluKernelV1 { catalog, .. } = value;
+  |                                       ^^^^^^^ private field
+
+error[E0451]: field `prepared` of struct `InertQwen3SwiGluWorkerRequestV1` is private
+  --> tests/ui/swiglu_custody_fields_are_private.rs:12:43
+   |
+12 |     let InertQwen3SwiGluWorkerRequestV1 { prepared } = value;
+   |                                           ^^^^^^^^ private field
+
+error[E0451]: field `worker` of struct `InertQwen3SwiGluWorkerEvidenceV1` is private
+  --> tests/ui/swiglu_custody_fields_are_private.rs:17:44
+   |
+17 |     let InertQwen3SwiGluWorkerEvidenceV1 { worker, .. } = value;
+   |                                            ^^^^^^ private field
+
+error[E0451]: field `loader_plan` of struct `InspectedQwen3SwiGluKernelV1` is private
+  --> tests/ui/swiglu_custody_fields_are_private.rs:22:40
+   |
+22 |     let InspectedQwen3SwiGluKernelV1 { loader_plan, .. } = value;
+   |                                        ^^^^^^^^^^^ private field
+
+error[E0451]: field `profile` of struct `CheckedQwen3SwiGluLaunchV1` is private
+  --> tests/ui/swiglu_custody_fields_are_private.rs:27:38
+   |
+27 |     let CheckedQwen3SwiGluLaunchV1 { profile, .. } = value;
+   |                                      ^^^^^^^ private field

@@ -32,18 +32,18 @@ use fe2o3_compiler_ffi::{
     CompilerModuleSymbolRoleV1, DeviceTargetV1, EXTERNAL_DEVICE_LIBRARY_GFX942_DATA_LAYOUT_V1,
 };
 use fe2o3_hsaco::{
-    ArgumentAccess, ArgumentAddressSpace, CodeObjectVersion as InspectedCodeObjectVersion,
-    ExplicitArgument, ExplicitValueKind, ExplicitValueType, HiddenArgument, HiddenValueKind,
-    KernelBindingError, MAX_HSACO_BYTES, inspect_and_bind_kernel_descriptors,
+    inspect_and_bind_kernel_descriptors, ArgumentAccess, ArgumentAddressSpace,
+    CodeObjectVersion as InspectedCodeObjectVersion, ExplicitArgument, ExplicitValueKind,
+    ExplicitValueType, HiddenArgument, HiddenValueKind, KernelBindingError, MAX_HSACO_BYTES,
 };
 use fe2o3_hsaco_finalize::{
-    FirstBuildWorkerV2Error, InertDecodedWorkerExchangeV2, InertFirstBuildWorkerV2EvidenceV1,
-    LinkOptionV1, PinnedWorkerV1, WorkerExecutionLimitsV1, WorkerOutputConstraintsV1,
-    WorkerProtocolError, execute_reproducible_first_build_worker_v2,
+    execute_reproducible_first_build_worker_v2, FirstBuildWorkerV2Error,
+    InertDecodedWorkerExchangeV2, InertFirstBuildWorkerV2EvidenceV1, LinkOptionV1, PinnedWorkerV1,
+    WorkerExecutionLimitsV1, WorkerOutputConstraintsV1, WorkerProtocolError,
 };
 use reserved_fe2o3_symbols::{
-    DEVICE_FFI_DIRECTION_IMPORT_V1, DeviceFfiContractFieldsV1, DeviceFfiDirectionV1,
-    derive_device_ffi_contract_id_v1,
+    derive_device_ffi_contract_id_v1, DeviceFfiContractFieldsV1, DeviceFfiDirectionV1,
+    DEVICE_FFI_DIRECTION_IMPORT_V1,
 };
 use sha2::{Digest as _, Sha256};
 
@@ -2345,11 +2345,10 @@ mod tests {
                 Qwen3SwiGluArgumentRoleV1::Output,
             ]
         );
-        assert!(
-            kir.arguments()
-                .iter()
-                .all(|argument| argument.scalar == Qwen3SwiGluScalarV1::Bf16)
-        );
+        assert!(kir
+            .arguments()
+            .iter()
+            .all(|argument| argument.scalar == Qwen3SwiGluScalarV1::Bf16));
         assert_eq!(
             kir.recurrence(),
             &[

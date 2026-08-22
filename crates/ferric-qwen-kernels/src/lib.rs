@@ -10,3 +10,5 @@ pub mod paged_decode;
 pub mod prefill;
 /// Exact Qwen3 split-half RoPE and global-pool P16 paged-KV compiler profiles.
 pub mod rope_kv;
+/// Exact Qwen3 SwiGLU compiler profiles.
+pub mod swiglu;

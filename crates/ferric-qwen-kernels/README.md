@@ -20,6 +20,10 @@ The integrated structural compiler lanes are:
 - `paged_decode.rs`: fourteen decode/speculative attention profiles over an
   exact per-sequence committed-token vector. Query/output width is 4096 for
   target and 2048 for draft.
+- `swiglu.rs`: 22 target/draft profiles over the eleven admitted buckets.
+  Gate, up, and output tensors use BF16 storage with role-exact intermediate
+  widths, fixed-order FP32 activation arithmetic, and BF16 round-to-nearest-even
+  output.
 
 `RoPE` uses split-half D128 pairing and reads absolute U32 position IDs into fixed
 FP32 cosine and sine tables of extent `[8192,64]`. The typed graph does not
@@ -47,7 +51,8 @@ refinement, physical-KV refinement, source or artifact authentication,
 machine-code refinement, allocation, load, launch, completion, hardware
 behavior, or performance. Checked-in tests do not execute Worker V2 and do not
 establish HSACO existence. The `ferric-gemm`, `ferric-prefill`,
-`ferric-paged-decode`, `ferric-rope-kv`, and `kernel-schedule-catalog`
+`ferric-paged-decode`, `ferric-rope-kv`, `ferric-swiglu`, and
+`kernel-schedule-catalog`
 obligations, plus the exact Ferric generated-plan/runner identity join, remain
 Open. This crate does not close an assurance property or roadmap row.
 
