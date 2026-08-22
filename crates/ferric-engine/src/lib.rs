@@ -37,9 +37,9 @@ mod step_workspace_subleases;
 mod system;
 
 pub use bound_step_workspaces::{
-    bind_addressless_m1_full_step_workspace_subleases, BoundM1FullStepWorkspaceSubleases,
-    M1FullStepWorkspaceDispatchRangeError, M1FullStepWorkspaceSubleaseBindingError,
-    M1FullStepWorkspaceSubleaseBindingFailure, M1FullStepWorkspaceSubleaseOwners,
+    BoundM1FullStepWorkspaceSubleases, M1FullStepWorkspaceDispatchRangeError,
+    M1FullStepWorkspaceSubleaseBindingError, M1FullStepWorkspaceSubleaseBindingFailure,
+    M1FullStepWorkspaceSubleaseOwners,
 };
 pub use cache::{KvError, PageId};
 pub use completed_readback_join::{M1CheckedCompletionOutputV1, M1CompletedOutputCheckErrorV1};
@@ -61,7 +61,8 @@ pub use device_cache::{
     Gfx942DeviceBinding, InitializedDeviceKvWrite, M1DeviceKvArenaLeaseBindingFailureV1,
     M1DeviceKvArenaLeaseErrorV1, M1DeviceKvArenaLeaseRecoveryPhaseV1,
     M1DeviceKvArenaLeaseRecoveryV1, M1PartitionedModelMemoryKvPoolV1,
-    M1TargetPartitionedKvQuarantineV1, PendingDeviceKvStepWrite, PendingDeviceKvWrite,
+    M1PartitionedModelMemoryKvQueueCustodyV1, M1TargetPartitionedKvQuarantineV1,
+    M1UnpartitionedModelMemoryKvRecoveryV1, PendingDeviceKvStepWrite, PendingDeviceKvWrite,
     PendingSpeculativeDraftKvRoundWrite, PendingWriteCompletionFailure, PoisonedDeviceKvCache,
     QuiescenceFailure, QuiescentDeviceKvCache, RetirementCompletionFailure,
     WriteApplicationFailure, GFX942_PROCESSOR, GFX942_TARGET_FEATURES,
@@ -74,8 +75,8 @@ pub use initialized_model_memory::{
     M1_INITIALIZED_MODEL_MEMORY_CONTENT_ROLE_IDENTITY_V1,
 };
 pub use initialized_step_workspaces::{
-    allocate_initialized_m1_full_step_workspaces_v1, m1_step_workspace_content_descriptor_v1,
-    m1_step_workspace_content_role_v1, InitializedM1FullStepWorkspaceAllocationErrorV1,
+    m1_step_workspace_content_descriptor_v1, m1_step_workspace_content_role_v1,
+    InitializedM1FullStepWorkspaceAllocationErrorV1,
     InitializedM1FullStepWorkspaceAllocationFailureV1,
     InitializedM1FullStepWorkspacePreflightErrorV1, InitializedM1FullStepWorkspaceRuntimeErrorV1,
     M1FullStepWorkspaceImagesV1, M1InitializedWorkspaceSlotV1,
@@ -137,9 +138,9 @@ pub use physical_fixed_batch::{
     build_m1_physical_fixed_batch_v1, M1PhysicalFixedBatchBuildErrorV1,
     M1PhysicalFixedBatchBuildFailureV1, M1PhysicalFixedBatchCaseV1, M1PhysicalFixedBatchCustodyV1,
     M1PhysicalFixedBatchRowSetV1, M1PhysicalFixedBatchShapeV1, M1PhysicalFixedBatchV1,
-    M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
-    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
-    M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
+    M1PhysicalQueueBatchCustodyV1, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
 };
 pub use physical_kernarg_recipe::{
     derive_m1_physical_kernarg_recipe_v1, AddresslessM1PhysicalKernargRecipeV1,

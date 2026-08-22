@@ -14,10 +14,11 @@ use fe2o3_service_host::{
 };
 use ferric_build::{
     qwen3_kv_arena_bytes, AddresslessModelMemoryPlan, DeclaredDeviceAllocation,
-    DeclaredMemoryRange, KvCacheComponent, ModelMemoryAllocationKind, ModelMemoryPlanError,
-    ModelWeightLayoutError, QWEN3_KV_ARENA_ALIGNMENT_V1,
+    ModelMemoryAllocationKind, ModelMemoryPlanError, ModelWeightLayoutError,
     QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1,
 };
+#[cfg(test)]
+use ferric_build::{DeclaredMemoryRange, KvCacheComponent, QWEN3_KV_ARENA_ALIGNMENT_V1};
 use ferric_spec::{Identity, Qwen3ModelRole, Qwen3TensorKind};
 
 type WeightAllocationKeyV1 = ServiceAllocationKeyV1<DeviceInputRoleV1, DeviceLocalAllocationV1>;
@@ -285,7 +286,7 @@ impl BoundModelMemoryAllocationsV1 {
     ///
     /// Returns [`ModelMemoryDispatchRangeErrorV1`] for binding drift, an invalid
     /// canonical coordinate, or generic allocation-owner rejection.
-    pub fn weight_dispatch_range(
+    pub(crate) fn weight_dispatch_range(
         &self,
         allocations: &ServiceAllocationSessionV1,
         role: Qwen3ModelRole,
@@ -301,41 +302,6 @@ impl BoundModelMemoryAllocationsV1 {
         let key = match role {
             Qwen3ModelRole::Target8B => self.target_weights,
             Qwen3ModelRole::Draft06B => self.draft_weights,
-        };
-        let range = allocations
-            .range(key, resolved.offset, resolved.extent, resolved.alignment)
-            .map_err(ModelMemoryDispatchRangeErrorV1::Allocation)?;
-        allocations
-            .device_dispatch_range(range)
-            .map_err(ModelMemoryDispatchRangeErrorV1::Allocation)
-    }
-
-    /// Resolves one exact role/component/layer KV plane into an owner-checked,
-    /// addressless device dispatch range.
-    ///
-    /// The retained service key preserves the `DeviceStateRoleV1` marker
-    /// through both generic owner checks.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`ModelMemoryDispatchRangeErrorV1`] for binding drift, an invalid
-    /// canonical KV coordinate, or generic allocation-owner rejection.
-    pub fn kv_dispatch_range(
-        &self,
-        allocations: &ServiceAllocationSessionV1,
-        role: Qwen3ModelRole,
-        component: KvCacheComponent,
-        layer: u32,
-    ) -> Result<ServiceDeviceDispatchRangeV1, ModelMemoryDispatchRangeErrorV1> {
-        self.revalidate()
-            .map_err(ModelMemoryDispatchRangeErrorV1::Binding)?;
-        let resolved = resolve_kv_plan_range(&self.plan, role, component, layer)
-            .map_err(ModelMemoryDispatchRangeErrorV1::Kv)?;
-        self.revalidate_resolved(role, ModelMemoryAllocationKind::KvArena, resolved)
-            .map_err(ModelMemoryDispatchRangeErrorV1::Binding)?;
-        let key = match role {
-            Qwen3ModelRole::Target8B => self.target_kv,
-            Qwen3ModelRole::Draft06B => self.draft_kv,
         };
         let range = allocations
             .range(key, resolved.offset, resolved.extent, resolved.alignment)
@@ -586,6 +552,7 @@ fn resolve_weight_plan_range(
     })
 }
 
+#[cfg(test)]
 fn resolve_kv_plan_range(
     plan: &AddresslessModelMemoryPlan,
     role: Qwen3ModelRole,

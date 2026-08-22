@@ -7,28 +7,26 @@
 
 use core::fmt;
 
-use fe2o3_service_host::ServiceAllocationSessionV1;
-use ferric_build::ModelMemoryAllocationKind;
 use ferric_spec::{
     Identity, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection, RequestId,
     StepPlan, ValidatedM1StepInputs, M1_MAX_ACTIVE_SEQUENCES,
 };
 
 use crate::{
-    allocate_initialized_m1_full_step_workspaces_v1, bind_m1_physical_buffer_ranges_v1,
-    build_m1_physical_fixed_batch_v1, compose_m1_step_workspace_image_v1,
-    AddresslessM1PhysicalBufferRecipeV1, BoundM1CompletionOutputV1, BoundM1KvWorkspaceTableV1,
-    BoundM1SpeculativeDraftKvRoundWorkspaceTableV1, BoundModelMemoryAllocationsV1,
-    ComposedM1FullStepWorkspaceSetV1, ComposedM1StepWorkspaceImageV1,
-    ContentBoundM1ProgramCatalogV1, InitializedM1FullStepWorkspaceAllocationFailureV1,
+    bind_m1_physical_buffer_ranges_v1, build_m1_physical_fixed_batch_v1,
+    compose_m1_step_workspace_image_v1, AddresslessM1PhysicalBufferRecipeV1,
+    BoundM1CompletionOutputV1, BoundM1KvWorkspaceTableV1,
+    BoundM1SpeculativeDraftKvRoundWorkspaceTableV1, ComposedM1FullStepWorkspaceSetV1,
+    ComposedM1StepWorkspaceImageV1, ContentBoundM1ProgramCatalogV1,
+    InitializedM1FullStepWorkspaceAllocationFailureV1,
     InitializedM1FullStepWorkspacePreflightErrorV1, LogicalRunnerDeclaration,
     M1FullStepWorkspaceImagesV1, M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans,
     M1FullStepWorkspaceSubleaseOwners, M1KvWorkspaceReservationCustodyV1,
-    M1PhysicalBufferBindingErrorV1, M1PhysicalBufferBindingFailureV1,
-    M1PhysicalFixedBatchBuildErrorV1, M1PhysicalFixedBatchBuildFailureV1,
-    M1PhysicalFixedBatchShapeV1, M1PhysicalFixedBatchV1, M1ScheduledDispatchV1,
-    M1SpeculativeDraftKvRoundReservationCustodyV1, M1StepWorkspaceImageCompositionFailureV1,
-    M1StepWorkspaceImageCompositionOutcomeV1,
+    M1PartitionedModelMemoryKvPoolV1, M1PhysicalBufferBindingErrorV1,
+    M1PhysicalBufferBindingFailureV1, M1PhysicalFixedBatchBuildErrorV1,
+    M1PhysicalFixedBatchBuildFailureV1, M1PhysicalFixedBatchShapeV1, M1PhysicalFixedBatchV1,
+    M1ScheduledDispatchV1, M1SpeculativeDraftKvRoundReservationCustodyV1,
+    M1StepWorkspaceImageCompositionFailureV1, M1StepWorkspaceImageCompositionOutcomeV1,
 };
 
 const MAX_LANES: usize = M1_MAX_ACTIVE_SEQUENCES as usize;
@@ -338,6 +336,7 @@ impl M1PreparedScheduledWorkspaceImagesV1 {
 #[derive(Debug)]
 pub struct M1AllocatedScheduledStepV1 {
     workspace_owners: M1FullStepWorkspaceSubleaseOwners,
+    partitioned_memory: M1PartitionedModelMemoryKvPoolV1,
     step: M1PrepublicationStepCustodyV1,
 }
 
@@ -352,13 +351,20 @@ impl M1AllocatedScheduledStepV1 {
         &self.step
     }
 
+    /// Exact closed model-memory, allocation, partition, and page-ledger owner.
+    #[must_use = "partitioned memory custody remains retained through prepublication"]
+    pub const fn partitioned_memory(&self) -> &M1PartitionedModelMemoryKvPoolV1 {
+        &self.partitioned_memory
+    }
+
     fn into_parts(
         self,
     ) -> (
         M1FullStepWorkspaceSubleaseOwners,
+        M1PartitionedModelMemoryKvPoolV1,
         M1PrepublicationStepCustodyV1,
     ) {
-        (self.workspace_owners, self.step)
+        (self.workspace_owners, self.partitioned_memory, self.step)
     }
 }
 
@@ -367,6 +373,7 @@ impl M1AllocatedScheduledStepV1 {
 #[derive(Debug)]
 pub struct M1PrepublicationAllocationFailureV1 {
     failure: InitializedM1FullStepWorkspaceAllocationFailureV1,
+    partitioned_memory: Box<M1PartitionedModelMemoryKvPoolV1>,
     step: Box<M1PrepublicationStepCustodyV1>,
 }
 
@@ -381,15 +388,22 @@ impl M1PrepublicationAllocationFailureV1 {
         &self.step
     }
 
+    /// Closed allocation and partition custody retained after rejection.
+    #[must_use = "partitioned memory custody remains retained by the failure"]
+    pub const fn partitioned_memory(&self) -> &M1PartitionedModelMemoryKvPoolV1 {
+        &self.partitioned_memory
+    }
+
     /// Recovers the existing failure and retained step authority.
     #[must_use = "allocation failure and retained step authority both require handling"]
     pub fn into_parts(
         self,
     ) -> (
         InitializedM1FullStepWorkspaceAllocationFailureV1,
+        M1PartitionedModelMemoryKvPoolV1,
         M1PrepublicationStepCustodyV1,
     ) {
-        (self.failure, *self.step)
+        (self.failure, *self.partitioned_memory, *self.step)
     }
 
     /// Recovers the exact prepared input after pure allocation preflight rejection.
@@ -405,21 +419,31 @@ impl M1PrepublicationAllocationFailureV1 {
     ) -> Result<
         (
             InitializedM1FullStepWorkspacePreflightErrorV1,
+            M1PartitionedModelMemoryKvPoolV1,
             M1PreparedScheduledWorkspaceImagesV1,
         ),
         Self,
     > {
-        let Self { failure, step } = self;
+        let Self {
+            failure,
+            partitioned_memory,
+            step,
+        } = self;
         match failure.into_preflight_parts() {
             Ok((error, plans, images)) => Ok((
                 error,
+                *partitioned_memory,
                 M1PreparedScheduledWorkspaceImagesV1 {
                     plans,
                     images,
                     step: *step,
                 },
             )),
-            Err(failure) => Err(Self { failure, step }),
+            Err(failure) => Err(Self {
+                failure,
+                partitioned_memory,
+                step,
+            }),
         }
     }
 }
@@ -494,7 +518,7 @@ pub enum M1PrepareFailureV1 {
 /// Returns [`M1PrepublicationAllocationFailureV1`] with the exact existing
 /// allocation failure and scheduler/KV custody.
 pub fn allocate_m1_prepublication_workspaces_v1(
-    allocations: &mut ServiceAllocationSessionV1,
+    mut partitioned_memory: M1PartitionedModelMemoryKvPoolV1,
     prepared: M1PreparedScheduledWorkspaceImagesV1,
 ) -> Result<M1AllocatedScheduledStepV1, M1PrepublicationAllocationFailureV1> {
     let M1PreparedScheduledWorkspaceImagesV1 {
@@ -502,13 +526,15 @@ pub fn allocate_m1_prepublication_workspaces_v1(
         images,
         step,
     } = prepared;
-    match allocate_initialized_m1_full_step_workspaces_v1(allocations, plans, images) {
+    match partitioned_memory.allocate_full_step_workspaces(plans, images) {
         Ok(workspace_owners) => Ok(M1AllocatedScheduledStepV1 {
             workspace_owners,
+            partitioned_memory,
             step,
         }),
         Err(failure) => Err(M1PrepublicationAllocationFailureV1 {
             failure,
+            partitioned_memory: Box::new(partitioned_memory),
             step: Box::new(step),
         }),
     }
@@ -525,7 +551,6 @@ pub enum M1PrepublicationBatchBuildFailureV1<'a> {
         error: M1PrepublicationBatchBuildErrorKindV1,
         allocated: Box<M1AllocatedScheduledStepV1>,
         recipe: Box<AddresslessM1PhysicalBufferRecipeV1>,
-        model_memory: Box<BoundModelMemoryAllocationsV1>,
         completion_output: Box<BoundM1CompletionOutputV1>,
         catalog: Box<ContentBoundM1ProgramCatalogV1<'a>>,
     },
@@ -567,7 +592,6 @@ impl<'a> M1PrepublicationBatchBuildFailureV1<'a> {
         M1PrepublicationBatchBuildDiagnosticV1,
         M1AllocatedScheduledStepV1,
         AddresslessM1PhysicalBufferRecipeV1,
-        BoundModelMemoryAllocationsV1,
         BoundM1CompletionOutputV1,
         ContentBoundM1ProgramCatalogV1<'a>,
     ) {
@@ -576,14 +600,12 @@ impl<'a> M1PrepublicationBatchBuildFailureV1<'a> {
                 error,
                 allocated,
                 recipe,
-                model_memory,
                 completion_output,
                 catalog,
             } => (
                 M1PrepublicationBatchBuildDiagnosticV1::Preflight(error),
                 *allocated,
                 *recipe,
-                *model_memory,
                 *completion_output,
                 *catalog,
             ),
@@ -592,32 +614,32 @@ impl<'a> M1PrepublicationBatchBuildFailureV1<'a> {
                 step,
                 catalog,
             } => {
-                let (error, recipe, workspace_owners, model_memory, completion_output) =
+                let (error, recipe, workspace_owners, partitioned_memory, completion_output) =
                     failure.into_parts();
                 (
                     M1PrepublicationBatchBuildDiagnosticV1::Binding(error),
                     M1AllocatedScheduledStepV1 {
                         workspace_owners,
+                        partitioned_memory,
                         step: *step,
                     },
                     recipe,
-                    model_memory,
                     completion_output,
                     *catalog,
                 )
             }
             Self::FixedBatch { failure, step } => {
                 let (error, catalog, bindings) = failure.into_parts();
-                let (recipe, workspace_owners, model_memory, completion_output, _bound_rows) =
+                let (recipe, workspace_owners, partitioned_memory, completion_output, _bound_rows) =
                     bindings.into_parts();
                 (
                     M1PrepublicationBatchBuildDiagnosticV1::FixedBatch(error),
                     M1AllocatedScheduledStepV1 {
                         workspace_owners,
+                        partitioned_memory,
                         step: *step,
                     },
                     recipe,
-                    model_memory,
                     completion_output,
                     catalog,
                 )
@@ -646,6 +668,10 @@ pub enum M1PrepublicationBatchBuildErrorKindV1 {
         expected: Identity,
         actual: Identity,
     },
+    /// One target reservation page is not backed by the retained lease ledger.
+    TargetKvPage { lane: usize, logical_page: u32 },
+    /// One draft reservation page is not backed by the retained lease ledger.
+    DraftKvPage { lane: usize, logical_page: u32 },
 }
 
 /// Opaque queue-creation input proving the prepublication join completed.
@@ -677,41 +703,36 @@ impl M1PrepublicationBatchV1<'_> {
 
 /// Owner-checks all physical ranges and constructs the sole queue input.
 ///
-/// The model-memory input is isolated at this boundary so a later partitioned
-/// KV-arena owner can replace it without exposing raw queue construction.
+/// The allocated input already owns the closed model-memory/KV pool. Every
+/// retained reservation page is revalidated against that pool before physical
+/// binding consumes it into fixed-batch custody.
 ///
 /// # Errors
 ///
 /// Returns [`M1PrepublicationBatchBuildFailureV1`] with unchanged inputs for
 /// pure preflight rejection or the exact existing binding/build failure plus
 /// retained step authority.
-pub fn build_m1_prepublication_batch_v1<'a>(
+pub fn build_m1_prepublication_batch_v1(
     allocated: M1AllocatedScheduledStepV1,
     recipe: AddresslessM1PhysicalBufferRecipeV1,
-    model_memory: BoundModelMemoryAllocationsV1,
     completion_output: BoundM1CompletionOutputV1,
-    catalog: ContentBoundM1ProgramCatalogV1<'a>,
-    allocations: &ServiceAllocationSessionV1,
-) -> Result<M1PrepublicationBatchV1<'a>, M1PrepublicationBatchBuildFailureV1<'a>> {
-    if let Err(error) =
-        validate_batch_inputs(&allocated, &recipe, &model_memory, &completion_output)
-    {
+    catalog: ContentBoundM1ProgramCatalogV1<'_>,
+) -> Result<M1PrepublicationBatchV1<'_>, M1PrepublicationBatchBuildFailureV1<'_>> {
+    if let Err(error) = validate_batch_inputs(&allocated, &recipe, &completion_output) {
         return Err(M1PrepublicationBatchBuildFailureV1::Rejected {
             error,
             allocated: Box::new(allocated),
             recipe: Box::new(recipe),
-            model_memory: Box::new(model_memory),
             completion_output: Box::new(completion_output),
             catalog: Box::new(catalog),
         });
     }
-    let (workspace_owners, step) = allocated.into_parts();
+    let (workspace_owners, partitioned_memory, step) = allocated.into_parts();
     let bindings = match bind_m1_physical_buffer_ranges_v1(
         recipe,
         workspace_owners,
-        model_memory,
+        partitioned_memory,
         completion_output,
-        allocations,
     ) {
         Ok(bindings) => bindings,
         Err(failure) => {
@@ -737,7 +758,6 @@ pub fn build_m1_prepublication_batch_v1<'a>(
 fn validate_batch_inputs(
     allocated: &M1AllocatedScheduledStepV1,
     recipe: &AddresslessM1PhysicalBufferRecipeV1,
-    model_memory: &BoundModelMemoryAllocationsV1,
     completion_output: &BoundM1CompletionOutputV1,
 ) -> Result<(), M1PrepublicationBatchBuildErrorKindV1> {
     let expected = allocated.step.kv.target_selection();
@@ -753,17 +773,18 @@ fn validate_batch_inputs(
         allocated.step.scheduled.member_count(),
         completion_output.shape().sequences() as usize,
     )?;
-    let expected_target = model_memory
-        .selected_allocation_identity(Qwen3ModelRole::Target8B, ModelMemoryAllocationKind::KvArena);
+    let expected_target = allocated
+        .partitioned_memory
+        .allocation_id(Qwen3ModelRole::Target8B);
     let actual_target = allocated.step.kv.target_allocation_id();
     validate_kv_arena_identity(Qwen3ModelRole::Target8B, expected_target, actual_target)?;
     if let Some(actual_draft) = allocated.step.kv.draft_allocation_id() {
-        let expected_draft = model_memory.selected_allocation_identity(
-            Qwen3ModelRole::Draft06B,
-            ModelMemoryAllocationKind::KvArena,
-        );
+        let expected_draft = allocated
+            .partitioned_memory
+            .allocation_id(Qwen3ModelRole::Draft06B);
         validate_kv_arena_identity(Qwen3ModelRole::Draft06B, expected_draft, actual_draft)?;
     }
+    validate_partitioned_page_custody(&allocated.partitioned_memory, &allocated.step.kv)?;
     Ok(())
 }
 
@@ -790,6 +811,83 @@ fn validate_kv_arena_identity(
     } else {
         Err(M1PrepublicationBatchBuildErrorKindV1::DraftKvArena { expected, actual })
     }
+}
+
+fn validate_partitioned_page_custody(
+    partitioned_memory: &M1PartitionedModelMemoryKvPoolV1,
+    custody: &M1FullStepKvReservationCustodyV1,
+) -> Result<(), M1PrepublicationBatchBuildErrorKindV1> {
+    match custody {
+        M1FullStepKvReservationCustodyV1::TargetOnly { target } => {
+            validate_regular_reservations(partitioned_memory, target, true)
+        }
+        M1FullStepKvReservationCustodyV1::PairedPrefill { draft, target } => {
+            validate_regular_reservations(partitioned_memory, draft, false)?;
+            validate_regular_reservations(partitioned_memory, target, true)
+        }
+        M1FullStepKvReservationCustodyV1::SpeculativeRound {
+            draft_decode,
+            target_speculative,
+        } => {
+            for (lane, aggregate) in draft_decode.reservations().iter().enumerate() {
+                validate_pending_pages(
+                    partitioned_memory,
+                    aggregate.pending_step_write(),
+                    lane,
+                    false,
+                )?;
+            }
+            validate_regular_reservations(partitioned_memory, target_speculative, true)
+        }
+    }
+}
+
+fn validate_regular_reservations(
+    partitioned_memory: &M1PartitionedModelMemoryKvPoolV1,
+    custody: &M1KvWorkspaceReservationCustodyV1,
+    target: bool,
+) -> Result<(), M1PrepublicationBatchBuildErrorKindV1> {
+    for (lane, pending) in custody.reservations().iter().enumerate() {
+        validate_pending_pages(partitioned_memory, pending, lane, target)?;
+    }
+    Ok(())
+}
+
+fn validate_pending_pages(
+    partitioned_memory: &M1PartitionedModelMemoryKvPoolV1,
+    pending: &crate::PendingDeviceKvStepWrite,
+    lane: usize,
+    target: bool,
+) -> Result<(), M1PrepublicationBatchBuildErrorKindV1> {
+    for identity in pending.page_table() {
+        let expected_role = if target {
+            Qwen3ModelRole::Target8B
+        } else {
+            Qwen3ModelRole::Draft06B
+        };
+        if identity.page().role() != expected_role
+            || partitioned_memory
+                .validate_page_identity(
+                    pending.request(),
+                    identity.allocation_id(),
+                    identity.page(),
+                )
+                .is_err()
+        {
+            return Err(if target {
+                M1PrepublicationBatchBuildErrorKindV1::TargetKvPage {
+                    lane,
+                    logical_page: identity.logical_page(),
+                }
+            } else {
+                M1PrepublicationBatchBuildErrorKindV1::DraftKvPage {
+                    lane,
+                    logical_page: identity.logical_page(),
+                }
+            });
+        }
+    }
+    Ok(())
 }
 
 type ComposeOutcome = M1StepWorkspaceImageCompositionOutcomeV1;

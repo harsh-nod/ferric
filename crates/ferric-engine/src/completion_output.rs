@@ -216,7 +216,7 @@ impl BoundM1CompletionOutputV1 {
     ///
     /// Returns [`M1CompletionOutputErrorV1`] for target-selection drift, key
     /// geometry drift, or generic owner/range rejection.
-    pub fn host_dispatch_range(
+    pub(crate) fn host_dispatch_range(
         &self,
         allocations: &ServiceAllocationSessionV1,
         selection: Qwen3PlanSelection,

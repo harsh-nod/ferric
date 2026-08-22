@@ -22,15 +22,25 @@
 //! only; it deliberately does not decide acceptance, rollback, scheduler
 //! completion, or resource release policy.
 
-use crate::{BoundModelMemoryAllocationsV1, ExactCompletion, ModelMemoryAllocationBindingErrorV1};
+use crate::bound_step_workspaces::bind_addressless_m1_full_step_workspace_subleases;
+use crate::initialized_step_workspaces::allocate_initialized_m1_full_step_workspaces_v1;
+use crate::{
+    allocate_m1_completion_output_v1, AddresslessM1FullStepWorkspaceComposition,
+    BoundM1CompletionOutputV1, BoundM1FullStepWorkspaceSubleases, BoundModelMemoryAllocationsV1,
+    ExactCompletion, InitializedM1FullStepWorkspaceAllocationFailureV1, M1CompletionOutputErrorV1,
+    M1FullStepWorkspaceDispatchRangeError, M1FullStepWorkspaceImagesV1, M1FullStepWorkspacePlans,
+    M1FullStepWorkspaceRole, M1FullStepWorkspaceSubleaseBindingFailure,
+    M1FullStepWorkspaceSubleaseOwners, ModelMemoryAllocationBindingErrorV1,
+    ModelMemoryDispatchRangeErrorV1,
+};
 use core::fmt;
 use fe2o3_service_host::{
     DeviceLocalAllocationV1, DeviceStateRoleV1, ServiceAllocationErrorV1,
     ServiceAllocationSessionV1, ServiceAllocationSubleaseSetV1, ServiceDeviceDispatchRangeV1,
 };
 use ferric_build::{
-    KvCacheComponent, ModelMemoryAllocationKind, ModelMemoryPlanError, QWEN3_KV_ARENA_ALIGNMENT_V1,
-    QWEN3_KV_PAGE_BYTES_V1,
+    KvCacheComponent, M1StepWorkspaceRangeRole, ModelMemoryAllocationKind, ModelMemoryPlanError,
+    QWEN3_KV_ARENA_ALIGNMENT_V1, QWEN3_KV_PAGE_BYTES_V1,
 };
 use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::{
@@ -278,6 +288,12 @@ pub enum M1DeviceKvArenaLeaseErrorV1 {
     PageAlreadyLeased,
     /// The retained generation ledger disagreed with the resolved page.
     GenerationLedgerDrift,
+    /// A retained reservation names a different role-scoped allocation.
+    AllocationIdentityMismatch,
+    /// A retained reservation names a page not leased to its exact request.
+    PageLeaseMismatch,
+    /// Retry was requested after a generic partition had already succeeded.
+    RetryDenied,
 }
 
 impl fmt::Display for M1DeviceKvArenaLeaseErrorV1 {
@@ -297,7 +313,10 @@ impl std::error::Error for M1DeviceKvArenaLeaseErrorV1 {
             | Self::RequestOutOfRange
             | Self::PageOutOfRange
             | Self::PageAlreadyLeased
-            | Self::GenerationLedgerDrift => None,
+            | Self::GenerationLedgerDrift
+            | Self::AllocationIdentityMismatch
+            | Self::PageLeaseMismatch
+            | Self::RetryDenied => None,
         }
     }
 }
@@ -359,13 +378,8 @@ impl M1TargetPartitionedKvQuarantineV1 {
 #[must_use = "failed model-memory and any completed partition remain retained"]
 #[derive(Debug)]
 pub enum M1DeviceKvArenaLeaseRecoveryV1 {
-    /// Neither role arena was partitioned; both exact inputs are recoverable.
-    Unpartitioned {
-        /// Exact unchanged model-memory owner.
-        model_memory: Box<BoundModelMemoryAllocationsV1>,
-        /// Exact unchanged generic allocation session.
-        allocations: Box<ServiceAllocationSessionV1>,
-    },
+    /// Neither role arena was partitioned; the opaque owner can retry directly.
+    Unpartitioned(Box<M1UnpartitionedModelMemoryKvRecoveryV1>),
     /// Target was partitioned; all custody is opaque and fail-closed.
     TargetPartitioned(Box<M1TargetPartitionedKvQuarantineV1>),
 }
@@ -375,10 +389,58 @@ impl M1DeviceKvArenaLeaseRecoveryV1 {
     #[must_use]
     pub const fn phase(&self) -> M1DeviceKvArenaLeaseRecoveryPhaseV1 {
         match self {
-            Self::Unpartitioned { .. } => M1DeviceKvArenaLeaseRecoveryPhaseV1::Unpartitioned,
+            Self::Unpartitioned(_) => M1DeviceKvArenaLeaseRecoveryPhaseV1::Unpartitioned,
             Self::TargetPartitioned(_) => M1DeviceKvArenaLeaseRecoveryPhaseV1::TargetPartitioned,
         }
     }
+
+    /// Retries only an unchanged pre-partition owner without exposing either raw input.
+    ///
+    /// A target-partitioned recovery remains quarantined inside the returned
+    /// failure and never regains legacy session or model-memory access.
+    ///
+    /// # Errors
+    ///
+    /// Returns the exact ordinary binding failure on an unchanged retry, or
+    /// [`M1DeviceKvArenaLeaseErrorV1::RetryDenied`] with unchanged quarantine
+    /// after any generic partition has already succeeded.
+    pub fn retry(
+        self,
+        device: Gfx942DeviceBinding,
+    ) -> Result<M1PartitionedModelMemoryKvPoolV1, M1DeviceKvArenaLeaseBindingFailureV1> {
+        match self {
+            Self::Unpartitioned(recovery) => {
+                let M1UnpartitionedModelMemoryKvRecoveryV1 {
+                    model_memory,
+                    allocations,
+                } = *recovery;
+                bind_m1_partitioned_model_memory_kv_pool_v1(allocations, model_memory, device)
+            }
+            recovery @ Self::TargetPartitioned(_) => Err(M1DeviceKvArenaLeaseBindingFailureV1 {
+                error: M1DeviceKvArenaLeaseErrorV1::RetryDenied,
+                recovery: Box::new(recovery),
+            }),
+        }
+    }
+}
+
+/// Opaque unchanged inputs retained before the first generic partition.
+///
+/// The only consuming operation is [`M1DeviceKvArenaLeaseRecoveryV1::retry`].
+/// Raw model-memory and service-session owners cannot be extracted.
+///
+/// ```compile_fail
+/// use ferric_engine::M1UnpartitionedModelMemoryKvRecoveryV1;
+/// fn escape(recovery: M1UnpartitionedModelMemoryKvRecoveryV1) {
+///     let _ = recovery.model_memory;
+///     let _ = recovery.allocations;
+/// }
+/// ```
+#[must_use = "unchanged partition inputs must be retried or retained"]
+#[derive(Debug)]
+pub struct M1UnpartitionedModelMemoryKvRecoveryV1 {
+    model_memory: BoundModelMemoryAllocationsV1,
+    allocations: ServiceAllocationSessionV1,
 }
 
 /// Transactional partition rejection retaining every still-live owner.
@@ -452,6 +514,64 @@ pub struct M1PartitionedModelMemoryKvPoolV1 {
     draft_pages: Box<[M1KvPoolPageStateV1]>,
 }
 
+/// Opaque Ferric custody retained after generic queue ownership is created.
+///
+/// The service allocation session moves into the generic queue ledger while
+/// this owner retains the only model-memory, partition, and page-generation
+/// witnesses. It deliberately exposes no allocation, range, lease, or raw
+/// model-memory API.
+///
+/// ```compile_fail
+/// use ferric_engine::M1PartitionedModelMemoryKvQueueCustodyV1;
+/// fn escape(custody: M1PartitionedModelMemoryKvQueueCustodyV1) {
+///     let _ = custody.model_memory;
+///     let _ = custody.target_planes;
+/// }
+/// ```
+#[must_use = "partition and page-generation custody must remain paired with the queue"]
+#[derive(Debug)]
+pub struct M1PartitionedModelMemoryKvQueueCustodyV1 {
+    device: Gfx942DeviceBinding,
+    model_memory: BoundModelMemoryAllocationsV1,
+    target_planes: TargetKvPlaneSubleasesV1,
+    draft_planes: DraftKvPlaneSubleasesV1,
+    target_pages: Box<[M1KvPoolPageStateV1]>,
+    draft_pages: Box<[M1KvPoolPageStateV1]>,
+}
+
+impl M1PartitionedModelMemoryKvQueueCustodyV1 {
+    /// Returns the exact inert device declaration retained through queue phases.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.device
+    }
+
+    /// Returns one exact role-scoped KV allocation identity without exposing its owner.
+    #[must_use]
+    pub const fn allocation_id(&self, role: Qwen3ModelRole) -> Identity {
+        self.model_memory
+            .selected_allocation_identity(role, ModelMemoryAllocationKind::KvArena)
+    }
+
+    /// Returns the fixed number of retained partition members for one role.
+    #[must_use]
+    pub const fn plane_count(&self, role: Qwen3ModelRole) -> usize {
+        match role {
+            Qwen3ModelRole::Target8B => self.target_planes.len(),
+            Qwen3ModelRole::Draft06B => self.draft_planes.len(),
+        }
+    }
+
+    /// Returns the fixed ledger cardinality without exposing ledger contents.
+    #[must_use]
+    pub fn page_slot_count(&self, role: Qwen3ModelRole) -> usize {
+        match role {
+            Qwen3ModelRole::Target8B => self.target_pages.len(),
+            Qwen3ModelRole::Draft06B => self.draft_pages.len(),
+        }
+    }
+}
+
 impl M1PartitionedModelMemoryKvPoolV1 {
     /// Returns the exact device declaration retained by the pool.
     #[must_use]
@@ -464,6 +584,169 @@ impl M1PartitionedModelMemoryKvPoolV1 {
     pub const fn allocation_id(&self, role: Qwen3ModelRole) -> Identity {
         self.model_memory
             .selected_allocation_identity(role, ModelMemoryAllocationKind::KvArena)
+    }
+
+    /// Revalidates one retained reservation page against the private lease ledger.
+    ///
+    /// This checks exact request slot/generation, role-scoped allocation
+    /// identity, request-local index, nonzero physical generation, ledger
+    /// occupancy, and every K/V page fragment before reporting success.
+    ///
+    /// # Errors
+    ///
+    /// Rejects any request, allocation, page, generation, ledger, model-plan,
+    /// partition, mapping, or fragment-geometry drift.
+    pub fn validate_page_identity(
+        &self,
+        request: RequestId,
+        allocation_id: Identity,
+        page: PhysicalPageId,
+    ) -> Result<(), M1DeviceKvArenaLeaseErrorV1> {
+        let global_index = global_page_index(request, page.index())?;
+        if allocation_id != self.allocation_id(page.role()) {
+            return Err(M1DeviceKvArenaLeaseErrorV1::AllocationIdentityMismatch);
+        }
+        validate_leased_page_state(
+            self.page_ledger(page.role()).get(global_index).copied(),
+            request,
+            page.generation(),
+        )?;
+        self.model_memory
+            .revalidate_for_kv_partition()
+            .map_err(M1DeviceKvArenaLeaseErrorV1::ModelMemory)?;
+        self.validate_page_fragments(request, page, global_index)
+    }
+
+    /// Resolves one exact model-weight range through retained allocation custody.
+    ///
+    /// # Errors
+    ///
+    /// Rejects model-plan, key, owner-generation, mapping, or range drift.
+    pub fn weight_dispatch_range(
+        &self,
+        role: Qwen3ModelRole,
+        kind: ferric_spec::Qwen3TensorKind,
+        layer: u32,
+    ) -> Result<ServiceDeviceDispatchRangeV1, ModelMemoryDispatchRangeErrorV1> {
+        self.model_memory
+            .weight_dispatch_range(&self.allocations, role, kind, layer)
+    }
+
+    /// Allocates one exact coherent completion output inside this closed owner.
+    ///
+    /// # Errors
+    ///
+    /// Rejects selection, extent, allocation, mapping, or range drift while
+    /// retaining the allocation session inside the pool.
+    pub fn allocate_completion_output(
+        &mut self,
+        selection: Qwen3PlanSelection,
+    ) -> Result<BoundM1CompletionOutputV1, M1CompletionOutputErrorV1> {
+        allocate_m1_completion_output_v1(&mut self.allocations, selection)
+    }
+
+    pub(crate) fn completion_output_dispatch_range(
+        &self,
+        completion: &BoundM1CompletionOutputV1,
+        selection: Qwen3PlanSelection,
+    ) -> Result<fe2o3_service_host::ServiceHostDispatchRangeV1, M1CompletionOutputErrorV1> {
+        completion.host_dispatch_range(&self.allocations, selection)
+    }
+
+    pub(crate) fn allocate_full_step_workspaces(
+        &mut self,
+        plans: M1FullStepWorkspacePlans,
+        images: M1FullStepWorkspaceImagesV1,
+    ) -> Result<M1FullStepWorkspaceSubleaseOwners, InitializedM1FullStepWorkspaceAllocationFailureV1>
+    {
+        allocate_initialized_m1_full_step_workspaces_v1(&mut self.allocations, plans, images)
+    }
+
+    pub(crate) fn bind_full_step_workspaces(
+        &self,
+        composition: AddresslessM1FullStepWorkspaceComposition,
+        owners: M1FullStepWorkspaceSubleaseOwners,
+    ) -> Result<BoundM1FullStepWorkspaceSubleases, M1FullStepWorkspaceSubleaseBindingFailure> {
+        bind_addressless_m1_full_step_workspace_subleases(composition, owners, &self.allocations)
+    }
+
+    pub(crate) fn workspace_segment_dispatch_range(
+        &self,
+        workspaces: &BoundM1FullStepWorkspaceSubleases,
+        segment_index: u8,
+        workspace: M1FullStepWorkspaceRole,
+        role: M1StepWorkspaceRangeRole,
+    ) -> Result<ServiceDeviceDispatchRangeV1, M1FullStepWorkspaceDispatchRangeError> {
+        workspaces.segment_dispatch_range(&self.allocations, segment_index, workspace, role)
+    }
+
+    pub(crate) fn speculative_token_assembly_anchor_dispatch_range(
+        &self,
+        workspaces: &BoundM1FullStepWorkspaceSubleases,
+        verification_segment: u8,
+    ) -> Result<ServiceDeviceDispatchRangeV1, M1FullStepWorkspaceDispatchRangeError> {
+        workspaces.speculative_token_assembly_anchor_dispatch_range(
+            &self.allocations,
+            verification_segment,
+        )
+    }
+
+    pub(crate) fn speculative_draft_choice_dispatch_range(
+        &self,
+        workspaces: &BoundM1FullStepWorkspaceSubleases,
+        producer_segment: u8,
+    ) -> Result<ServiceDeviceDispatchRangeV1, M1FullStepWorkspaceDispatchRangeError> {
+        workspaces.speculative_draft_choice_dispatch_range(&self.allocations, producer_segment)
+    }
+
+    pub(crate) fn speculative_draft_position_dispatch_range(
+        &self,
+        workspaces: &BoundM1FullStepWorkspaceSubleases,
+        draft_segment: u8,
+    ) -> Result<ServiceDeviceDispatchRangeV1, M1FullStepWorkspaceDispatchRangeError> {
+        workspaces.speculative_draft_position_dispatch_range(&self.allocations, draft_segment)
+    }
+
+    pub(crate) fn speculative_draft_context_dispatch_range(
+        &self,
+        workspaces: &BoundM1FullStepWorkspaceSubleases,
+        draft_segment: u8,
+    ) -> Result<ServiceDeviceDispatchRangeV1, M1FullStepWorkspaceDispatchRangeError> {
+        workspaces.speculative_draft_context_dispatch_range(&self.allocations, draft_segment)
+    }
+
+    pub(crate) fn into_queue_creation_parts(
+        self,
+    ) -> (
+        ServiceAllocationSessionV1,
+        M1PartitionedModelMemoryKvQueueCustodyV1,
+    ) {
+        (
+            self.allocations,
+            M1PartitionedModelMemoryKvQueueCustodyV1 {
+                device: self.device,
+                model_memory: self.model_memory,
+                target_planes: self.target_planes,
+                draft_planes: self.draft_planes,
+                target_pages: self.target_pages,
+                draft_pages: self.draft_pages,
+            },
+        )
+    }
+
+    pub(crate) fn from_rejected_queue_creation(
+        allocations: ServiceAllocationSessionV1,
+        custody: M1PartitionedModelMemoryKvQueueCustodyV1,
+    ) -> Self {
+        Self {
+            device: custody.device,
+            model_memory: custody.model_memory,
+            allocations,
+            target_planes: custody.target_planes,
+            draft_planes: custody.draft_planes,
+            target_pages: custody.target_pages,
+            draft_pages: custody.draft_pages,
+        }
     }
 
     /// Resolves one complete KV plane through its unique generic sublease.
@@ -795,10 +1078,12 @@ fn unpartitioned_kv_pool_failure(
 ) -> M1DeviceKvArenaLeaseBindingFailureV1 {
     M1DeviceKvArenaLeaseBindingFailureV1 {
         error,
-        recovery: Box::new(M1DeviceKvArenaLeaseRecoveryV1::Unpartitioned {
-            model_memory: Box::new(model_memory),
-            allocations: Box::new(allocations),
-        }),
+        recovery: Box::new(M1DeviceKvArenaLeaseRecoveryV1::Unpartitioned(Box::new(
+            M1UnpartitionedModelMemoryKvRecoveryV1 {
+                model_memory,
+                allocations,
+            },
+        ))),
     }
 }
 
@@ -821,6 +1106,25 @@ fn free_page_generation(state: M1KvPoolPageStateV1) -> Result<u32, M1DeviceKvAre
         return Err(M1DeviceKvArenaLeaseErrorV1::GenerationLedgerDrift);
     }
     Ok(generation)
+}
+
+fn validate_leased_page_state(
+    state: Option<M1KvPoolPageStateV1>,
+    request: RequestId,
+    generation: u32,
+) -> Result<(), M1DeviceKvArenaLeaseErrorV1> {
+    if generation == 0 {
+        return Err(M1DeviceKvArenaLeaseErrorV1::GenerationLedgerDrift);
+    }
+    if state
+        != Some(M1KvPoolPageStateV1::Leased {
+            request,
+            generation,
+        })
+    {
+        return Err(M1DeviceKvArenaLeaseErrorV1::PageLeaseMismatch);
+    }
+    Ok(())
 }
 
 fn kv_plane_partition_layout<const N: usize>(
@@ -3233,6 +3537,36 @@ mod tests {
                 generation: 1,
             }),
             Err(M1DeviceKvArenaLeaseErrorV1::PageAlreadyLeased)
+        ));
+    }
+
+    #[test]
+    fn retained_page_validation_rejects_free_stale_and_cross_request_ledger_entries() {
+        let request = RequestId::new(3, 7);
+        let leased = M1KvPoolPageStateV1::Leased {
+            request,
+            generation: 11,
+        };
+        assert!(validate_leased_page_state(Some(leased), request, 11).is_ok());
+        assert!(matches!(
+            validate_leased_page_state(Some(M1KvPoolPageStateV1::INITIAL), request, 1),
+            Err(M1DeviceKvArenaLeaseErrorV1::PageLeaseMismatch)
+        ));
+        assert!(matches!(
+            validate_leased_page_state(Some(leased), request, 10),
+            Err(M1DeviceKvArenaLeaseErrorV1::PageLeaseMismatch)
+        ));
+        assert!(matches!(
+            validate_leased_page_state(Some(leased), RequestId::new(4, 1), 11),
+            Err(M1DeviceKvArenaLeaseErrorV1::PageLeaseMismatch)
+        ));
+        assert!(matches!(
+            validate_leased_page_state(Some(leased), request, 0),
+            Err(M1DeviceKvArenaLeaseErrorV1::GenerationLedgerDrift)
+        ));
+        assert!(matches!(
+            validate_leased_page_state(None, request, 11),
+            Err(M1DeviceKvArenaLeaseErrorV1::PageLeaseMismatch)
         ));
     }
 

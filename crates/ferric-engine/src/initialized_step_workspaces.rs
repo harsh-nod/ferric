@@ -374,7 +374,7 @@ pub fn m1_step_workspace_content_descriptor_v1(
 /// preflight, initialized service-allocation, or exact sublease-binding
 /// rejection. Only pure preflight rejection guarantees exact recovery of both
 /// input plans and complete images.
-pub fn allocate_initialized_m1_full_step_workspaces_v1(
+pub(crate) fn allocate_initialized_m1_full_step_workspaces_v1(
     allocations: &mut ServiceAllocationSessionV1,
     plans: M1FullStepWorkspacePlans,
     images: M1FullStepWorkspaceImagesV1,

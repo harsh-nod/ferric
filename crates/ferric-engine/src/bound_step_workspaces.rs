@@ -387,7 +387,7 @@ impl BoundM1FullStepWorkspaceSubleases {
     /// Returns [`M1FullStepWorkspaceDispatchRangeError`] for an absent segment,
     /// unavailable cross-workspace request, inactive role, invalid subrange, or
     /// generic allocation-owner rejection.
-    pub fn segment_dispatch_range(
+    pub(crate) fn segment_dispatch_range(
         &self,
         allocations: &ServiceAllocationSessionV1,
         segment_index: u8,
@@ -461,7 +461,7 @@ impl BoundM1FullStepWorkspaceSubleases {
     /// Returns [`M1FullStepWorkspaceDispatchRangeError`] unless the named
     /// segment is the speculative target-verification segment and an exact
     /// draft workspace owner is retained.
-    pub fn speculative_token_assembly_anchor_dispatch_range(
+    pub(crate) fn speculative_token_assembly_anchor_dispatch_range(
         &self,
         allocations: &ServiceAllocationSessionV1,
         verification_segment: u8,
@@ -511,7 +511,7 @@ impl BoundM1FullStepWorkspaceSubleases {
     ///
     /// Returns [`M1FullStepWorkspaceDispatchRangeError`] for an absent or
     /// non-draft segment, hostile row metadata, or generic owner rejection.
-    pub fn speculative_draft_choice_dispatch_range(
+    pub(crate) fn speculative_draft_choice_dispatch_range(
         &self,
         allocations: &ServiceAllocationSessionV1,
         producer_segment: u8,
@@ -544,7 +544,7 @@ impl BoundM1FullStepWorkspaceSubleases {
     ///
     /// Returns [`M1FullStepWorkspaceDispatchRangeError`] for an absent or
     /// non-draft segment, hostile row metadata, or generic owner rejection.
-    pub fn speculative_draft_position_dispatch_range(
+    pub(crate) fn speculative_draft_position_dispatch_range(
         &self,
         allocations: &ServiceAllocationSessionV1,
         draft_segment: u8,
@@ -568,7 +568,7 @@ impl BoundM1FullStepWorkspaceSubleases {
     ///
     /// Returns [`M1FullStepWorkspaceDispatchRangeError`] for an absent or
     /// non-draft segment, hostile row metadata, or generic owner rejection.
-    pub fn speculative_draft_context_dispatch_range(
+    pub(crate) fn speculative_draft_context_dispatch_range(
         &self,
         allocations: &ServiceAllocationSessionV1,
         draft_segment: u8,
@@ -703,7 +703,7 @@ impl BoundM1FullStepWorkspaceSubleases {
 /// Returns [`M1FullStepWorkspaceSubleaseBindingFailure`] for any structural,
 /// identity, selection, subrange, retained-partition, or allocation-generation
 /// mismatch. The failure retains every exact unchanged linear input.
-pub fn bind_addressless_m1_full_step_workspace_subleases(
+pub(crate) fn bind_addressless_m1_full_step_workspace_subleases(
     composition: AddresslessM1FullStepWorkspaceComposition,
     owners: M1FullStepWorkspaceSubleaseOwners,
     allocations: &ServiceAllocationSessionV1,

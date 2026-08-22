@@ -14,10 +14,11 @@ use ferric_spec::{Identity, Qwen3PlanBucket, Qwen3PlanSelection};
 use crate::{
     m1_completion_output_shape_v1, AddresslessM1FullStepWorkspaceComposition,
     AddresslessM1PhysicalDispatchRecipeV1, BoundM1CompletionOutputV1,
-    BoundM1PhysicalBufferBindingsV1, BoundModelMemoryAllocationsV1, ContentBoundM1ProgramCatalogV1,
-    M1BoundPhysicalBufferRowV1, M1CompletionOutputShapeV1, M1FullStepWorkspaceSubleaseOwners,
-    M1PhysicalBufferRecipeRowV1, M1PhysicalKernargImageV1, M1PhysicalProgramV1,
-    M1StepDispatchIntent, M1_PHYSICAL_PROGRAM_COUNT_V1,
+    BoundM1PhysicalBufferBindingsV1, ContentBoundM1ProgramCatalogV1, M1BoundPhysicalBufferRowV1,
+    M1CompletionOutputShapeV1, M1FullStepWorkspaceSubleaseOwners, M1PartitionedModelMemoryKvPoolV1,
+    M1PartitionedModelMemoryKvQueueCustodyV1, M1PhysicalBufferRecipeRowV1,
+    M1PhysicalKernargImageV1, M1PhysicalProgramV1, M1StepDispatchIntent,
+    M1_PHYSICAL_PROGRAM_COUNT_V1,
 };
 
 /// Exact packet count of every target-only M1 step.
@@ -79,7 +80,7 @@ pub struct M1PhysicalFixedBatchCustodyV1 {
     physical_recipe: AddresslessM1PhysicalDispatchRecipeV1,
     workspace_composition: AddresslessM1FullStepWorkspaceComposition,
     workspace_owners: M1FullStepWorkspaceSubleaseOwners,
-    model_memory: BoundModelMemoryAllocationsV1,
+    partitioned_memory: M1PartitionedModelMemoryKvPoolV1,
     completion_output: BoundM1CompletionOutputV1,
     source_rows: Box<[M1PhysicalBufferRecipeRowV1]>,
     bound_rows: Box<[M1BoundPhysicalBufferRowV1]>,
@@ -116,10 +117,10 @@ impl M1PhysicalFixedBatchCustodyV1 {
         &self.workspace_owners
     }
 
-    /// Retained exact target/draft model-memory allocation custody.
-    #[must_use = "the exact model-memory allocation custody remains retained"]
-    pub const fn model_memory(&self) -> &BoundModelMemoryAllocationsV1 {
-        &self.model_memory
+    /// Retained closed model-memory, partition, ledger, and allocation custody.
+    #[must_use = "partitioned memory custody remains retained by the fixed batch"]
+    pub const fn partitioned_memory(&self) -> &M1PartitionedModelMemoryKvPoolV1 {
+        &self.partitioned_memory
     }
 
     /// Retained coherent host-download completion-output allocation custody.
@@ -135,6 +136,125 @@ impl M1PhysicalFixedBatchCustodyV1 {
     }
 
     /// Retained owner-checked generic buffer rows in publication order.
+    #[must_use]
+    pub fn bound_rows(&self) -> &[M1BoundPhysicalBufferRowV1] {
+        &self.bound_rows
+    }
+
+    pub(crate) fn into_queue_creation_parts(
+        self,
+    ) -> (
+        fe2o3_service_host::ServiceAllocationSessionV1,
+        M1PhysicalQueueBatchCustodyV1,
+    ) {
+        let (allocations, partitioned_memory) = self.partitioned_memory.into_queue_creation_parts();
+        (
+            allocations,
+            M1PhysicalQueueBatchCustodyV1 {
+                catalog_id: self.catalog_id,
+                selection: self.selection,
+                physical_recipe: self.physical_recipe,
+                workspace_composition: self.workspace_composition,
+                workspace_owners: self.workspace_owners,
+                partitioned_memory,
+                completion_output: self.completion_output,
+                source_rows: self.source_rows,
+                bound_rows: self.bound_rows,
+            },
+        )
+    }
+
+    pub(crate) fn from_rejected_queue_creation(
+        allocations: fe2o3_service_host::ServiceAllocationSessionV1,
+        custody: M1PhysicalQueueBatchCustodyV1,
+    ) -> Self {
+        Self {
+            catalog_id: custody.catalog_id,
+            selection: custody.selection,
+            physical_recipe: custody.physical_recipe,
+            workspace_composition: custody.workspace_composition,
+            workspace_owners: custody.workspace_owners,
+            partitioned_memory: M1PartitionedModelMemoryKvPoolV1::from_rejected_queue_creation(
+                allocations,
+                custody.partitioned_memory,
+            ),
+            completion_output: custody.completion_output,
+            source_rows: custody.source_rows,
+            bound_rows: custody.bound_rows,
+        }
+    }
+}
+
+/// Ferric batch custody retained after the allocation session enters a queue ledger.
+///
+/// This post-split owner cannot allocate, resolve ranges, or mint leases. It
+/// retains the only partition/model/page-ledger witnesses beside every queue
+/// phase and intentionally cannot be converted back without the exact rejected
+/// generic allocation session inside crate-private queue creation code.
+#[must_use = "post-split Ferric custody must remain paired with generic queue custody"]
+#[derive(Debug)]
+pub struct M1PhysicalQueueBatchCustodyV1 {
+    catalog_id: Identity,
+    selection: Qwen3PlanSelection,
+    physical_recipe: AddresslessM1PhysicalDispatchRecipeV1,
+    workspace_composition: AddresslessM1FullStepWorkspaceComposition,
+    workspace_owners: M1FullStepWorkspaceSubleaseOwners,
+    partitioned_memory: M1PartitionedModelMemoryKvQueueCustodyV1,
+    completion_output: BoundM1CompletionOutputV1,
+    source_rows: Box<[M1PhysicalBufferRecipeRowV1]>,
+    bound_rows: Box<[M1BoundPhysicalBufferRowV1]>,
+}
+
+impl M1PhysicalQueueBatchCustodyV1 {
+    /// Exact target selection retained by the former fixed batch.
+    #[must_use]
+    pub const fn selection(&self) -> Qwen3PlanSelection {
+        self.selection
+    }
+
+    /// Exact selected-program catalog identity.
+    #[must_use]
+    pub const fn catalog_id(&self) -> Identity {
+        self.catalog_id
+    }
+
+    /// Opaque partition/model/page-ledger custody retained beside the queue.
+    #[must_use = "partition custody remains paired with the generic queue"]
+    pub const fn partitioned_memory(&self) -> &M1PartitionedModelMemoryKvQueueCustodyV1 {
+        &self.partitioned_memory
+    }
+
+    /// Exact coherent completion-output binding retained for readback.
+    #[must_use = "completion-output custody remains paired with the queue"]
+    pub const fn completion_output(&self) -> &BoundM1CompletionOutputV1 {
+        &self.completion_output
+    }
+
+    /// Retained exact physical dispatch recipe.
+    #[must_use]
+    pub const fn physical_recipe(&self) -> &AddresslessM1PhysicalDispatchRecipeV1 {
+        &self.physical_recipe
+    }
+
+    /// Retained exact workspace composition.
+    #[must_use = "workspace composition remains retained by queue custody"]
+    pub const fn workspace_composition(&self) -> &AddresslessM1FullStepWorkspaceComposition {
+        &self.workspace_composition
+    }
+
+    /// Retained workspace sublease witnesses.
+    #[must_use = "workspace sublease witnesses remain retained by queue custody"]
+    pub const fn workspace_owners(&self) -> &M1FullStepWorkspaceSubleaseOwners {
+        &self.workspace_owners
+    }
+
+    /// Retained semantic buffer rows.
+    #[must_use]
+    pub fn source_rows(&self) -> &[M1PhysicalBufferRecipeRowV1] {
+        &self.source_rows
+    }
+
+    /// Retained owner-checked generic buffer rows.
     #[must_use]
     pub fn bound_rows(&self) -> &[M1BoundPhysicalBufferRowV1] {
         &self.bound_rows
@@ -180,7 +300,7 @@ impl<'a, const N: usize> M1PhysicalFixedBatchCaseV1<'a, N> {
 
     /// Consumes the wrapper into the generic batch and all Ferric custody.
     #[must_use = "the generic batch and all Ferric custody remain live"]
-    pub fn into_parts(self) -> (ServiceFixedBatchV1<'a, N>, M1PhysicalFixedBatchCustodyV1) {
+    pub(crate) fn into_parts(self) -> (ServiceFixedBatchV1<'a, N>, M1PhysicalFixedBatchCustodyV1) {
         (self.batch, self.custody)
     }
 
@@ -469,7 +589,7 @@ pub fn build_m1_physical_fixed_batch_v1(
     };
 
     let catalog_id = catalog.catalog_id();
-    let (recipe, workspace_owners, model_memory, completion_output, bound_rows) =
+    let (recipe, workspace_owners, partitioned_memory, completion_output, bound_rows) =
         bindings.into_parts();
     let (kernargs, workspace_composition, source_rows) = recipe.into_parts();
     let (physical_recipe, images) = kernargs.into_parts();
@@ -485,7 +605,7 @@ pub fn build_m1_physical_fixed_batch_v1(
         images,
         workspace_composition,
         workspace_owners,
-        model_memory,
+        partitioned_memory,
         completion_output,
         source_rows,
         bound_rows,
@@ -730,7 +850,7 @@ struct LoweringPartsV1<'a> {
     images: Box<[M1PhysicalKernargImageV1]>,
     workspace_composition: AddresslessM1FullStepWorkspaceComposition,
     workspace_owners: M1FullStepWorkspaceSubleaseOwners,
-    model_memory: BoundModelMemoryAllocationsV1,
+    partitioned_memory: M1PartitionedModelMemoryKvPoolV1,
     completion_output: BoundM1CompletionOutputV1,
     source_rows: Box<[M1PhysicalBufferRecipeRowV1]>,
     bound_rows: Box<[M1BoundPhysicalBufferRowV1]>,
@@ -766,7 +886,7 @@ fn lower_fixed_batch<const N: usize>(
         physical_recipe: parts.physical_recipe,
         workspace_composition: parts.workspace_composition,
         workspace_owners: parts.workspace_owners,
-        model_memory: parts.model_memory,
+        partitioned_memory: parts.partitioned_memory,
         completion_output: parts.completion_output,
         source_rows: parts.source_rows,
         bound_rows: parts.bound_rows,

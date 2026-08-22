@@ -10,10 +10,10 @@
 use core::fmt;
 
 use fe2o3_service_host::{
-    QuarantinedServiceQueueV1, ServiceAllocationSessionV1, ServiceCompletedQueueSessionV1,
-    ServicePublishedQueueSessionV1, ServiceQueueCreateFailureV1, ServiceQueueErrorV1,
-    ServiceQueueOperationFailureV1, ServiceQueueReleaseFailureV1, ServiceQueueReleaseObservationV1,
-    ServiceQueueSessionV1, ServiceQueueUnboundSessionV1, ServiceRecycledQueueSessionV1,
+    ServiceCompletedQueueSessionV1, ServicePublishedQueueSessionV1, ServiceQueueCreateFailureV1,
+    ServiceQueueErrorV1, ServiceQueueOperationFailureV1, ServiceQueueReleaseFailureV1,
+    ServiceQueueReleaseObservationV1, ServiceQueueSessionV1, ServiceQueueUnboundSessionV1,
+    ServiceRecycledQueueSessionV1,
 };
 use ferric_spec::completion::CompletionEpoch;
 
@@ -22,8 +22,8 @@ use crate::{
     CompletionWireExpectation, CompletionWireSemanticExpectation, ExactCompletion,
     M1CheckedCompletionOutputV1, M1CompletedOutputCheckErrorV1, M1FullStepKvReservationCustodyV1,
     M1PhysicalFixedBatchCaseV1, M1PhysicalFixedBatchCustodyV1, M1PhysicalFixedBatchShapeV1,
-    M1PhysicalFixedBatchV1, M1PrepublicationBatchV1, M1PrepublicationStepCustodyV1,
-    M1ScheduledDispatchV1, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
+    M1PhysicalFixedBatchV1, M1PhysicalQueueBatchCustodyV1, M1PrepublicationBatchV1,
+    M1PrepublicationStepCustodyV1, M1ScheduledDispatchV1, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
     M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
     M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
 };
@@ -110,14 +110,14 @@ impl M1PhysicalQueueCreateFailureClassV1 {
 #[must_use = "generic queue and Ferric custody must remain paired"]
 pub struct M1PhysicalQueuePhaseCaseV1<Q> {
     lower: Q,
-    custody: M1PhysicalFixedBatchCustodyV1,
+    custody: M1PhysicalQueueBatchCustodyV1,
     step: M1PrepublicationStepCustodyV1,
 }
 
 impl<Q> M1PhysicalQueuePhaseCaseV1<Q> {
     const fn new(
         lower: Q,
-        custody: M1PhysicalFixedBatchCustodyV1,
+        custody: M1PhysicalQueueBatchCustodyV1,
         step: M1PrepublicationStepCustodyV1,
     ) -> Self {
         Self {
@@ -129,7 +129,7 @@ impl<Q> M1PhysicalQueuePhaseCaseV1<Q> {
 
     /// Returns retained Ferric recipe and allocation custody without exposing generic authority.
     #[must_use = "the exact Ferric custody remains paired with the generic queue"]
-    pub const fn custody(&self) -> &M1PhysicalFixedBatchCustodyV1 {
+    pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
         &self.custody
     }
 
@@ -149,7 +149,7 @@ impl<Q> M1PhysicalQueuePhaseCaseV1<Q> {
         self,
     ) -> (
         Q,
-        M1PhysicalFixedBatchCustodyV1,
+        M1PhysicalQueueBatchCustodyV1,
         M1PrepublicationStepCustodyV1,
     ) {
         (self.lower, self.custody, self.step)
@@ -240,7 +240,7 @@ impl M1PhysicalQueueSessionV1 {
 
     /// Returns retained Ferric recipe and allocation custody by borrow.
     #[must_use = "the exact Ferric custody remains paired with the generic queue"]
-    pub const fn custody(&self) -> &M1PhysicalFixedBatchCustodyV1 {
+    pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
         match self {
             Self::TargetOnly(case) => case.custody(),
             Self::PairedPrefill(case) => case.custody(),
@@ -348,7 +348,7 @@ impl M1PhysicalPublishedQueueSessionV1 {
 
     /// Returns retained Ferric recipe and allocation custody by borrow.
     #[must_use = "the exact Ferric custody remains paired with the generic queue"]
-    pub const fn custody(&self) -> &M1PhysicalFixedBatchCustodyV1 {
+    pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
         match self {
             Self::TargetOnly(case) => case.custody(),
             Self::PairedPrefill(case) => case.custody(),
@@ -456,7 +456,7 @@ impl M1PhysicalCompletedQueueSessionV1 {
 
     /// Returns retained Ferric recipe and allocation custody by borrow.
     #[must_use = "the exact Ferric custody remains paired with the generic queue"]
-    pub const fn custody(&self) -> &M1PhysicalFixedBatchCustodyV1 {
+    pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
         match self {
             Self::TargetOnly(case) => case.custody(),
             Self::PairedPrefill(case) => case.custody(),
@@ -564,7 +564,7 @@ impl M1PhysicalRecycledQueueSessionV1 {
 
     /// Returns retained Ferric recipe and allocation custody by borrow.
     #[must_use = "the exact Ferric custody remains paired with the generic queue"]
-    pub const fn custody(&self) -> &M1PhysicalFixedBatchCustodyV1 {
+    pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
         match self {
             Self::TargetOnly(case) => case.custody(),
             Self::PairedPrefill(case) => case.custody(),
@@ -603,13 +603,13 @@ impl M1PhysicalRecycledQueueSessionV1 {
 #[must_use = "post-readback queue custody must be detached, released, or retained"]
 pub struct M1PhysicalReadbackQueueCaseV1<const N: usize> {
     lower: ServiceRecycledQueueSessionV1<N>,
-    custody: M1PhysicalFixedBatchCustodyV1,
+    custody: M1PhysicalQueueBatchCustodyV1,
 }
 
 impl<const N: usize> M1PhysicalReadbackQueueCaseV1<N> {
     /// Returns retained Ferric recipe and allocation custody by borrow.
     #[must_use = "Ferric custody remains paired with the post-readback queue"]
-    pub const fn custody(&self) -> &M1PhysicalFixedBatchCustodyV1 {
+    pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
         &self.custody
     }
 
@@ -617,7 +617,7 @@ impl<const N: usize> M1PhysicalReadbackQueueCaseV1<N> {
         self,
     ) -> (
         ServiceRecycledQueueSessionV1<N>,
-        M1PhysicalFixedBatchCustodyV1,
+        M1PhysicalQueueBatchCustodyV1,
     ) {
         (self.lower, self.custody)
     }
@@ -679,7 +679,7 @@ impl M1PhysicalReadbackQueueSessionV1 {
 
     /// Returns retained Ferric recipe and allocation custody by borrow.
     #[must_use = "Ferric custody remains paired with the post-readback queue"]
-    pub const fn custody(&self) -> &M1PhysicalFixedBatchCustodyV1 {
+    pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
         match self {
             Self::TargetOnly(case) => case.custody(),
             Self::PairedPrefill(case) => case.custody(),
@@ -695,20 +695,20 @@ impl M1PhysicalReadbackQueueSessionV1 {
 #[derive(Debug)]
 pub struct M1PhysicalReadbackDetachedQueueCaseV1 {
     lower: ServiceQueueUnboundSessionV1,
-    custody: M1PhysicalFixedBatchCustodyV1,
+    custody: M1PhysicalQueueBatchCustodyV1,
 }
 
 impl M1PhysicalReadbackDetachedQueueCaseV1 {
     /// Returns retained Ferric recipe and allocation custody by borrow.
     #[must_use = "Ferric custody remains paired with the detached queue"]
-    pub const fn custody(&self) -> &M1PhysicalFixedBatchCustodyV1 {
+    pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
         &self.custody
     }
 
-    /// Separates the still-live generic queue from inert Ferric custody.
-    #[must_use = "both detached owners must remain retained"]
-    pub fn into_parts(self) -> (ServiceQueueUnboundSessionV1, M1PhysicalFixedBatchCustodyV1) {
-        (self.lower, self.custody)
+    /// Returns the completed generic dispatch generation retained by detachment.
+    #[must_use]
+    pub const fn detached_dispatch_generation(&self) -> u64 {
+        self.lower.detached_dispatch_generation()
     }
 }
 
@@ -749,7 +749,7 @@ impl M1PhysicalReadbackDetachedQueueSessionV1 {
 
     /// Returns retained Ferric recipe and allocation custody by borrow.
     #[must_use = "Ferric custody remains paired with the detached queue"]
-    pub const fn custody(&self) -> &M1PhysicalFixedBatchCustodyV1 {
+    pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
         match self {
             Self::TargetOnly(case)
             | Self::PairedPrefill(case)
@@ -759,17 +759,16 @@ impl M1PhysicalReadbackDetachedQueueSessionV1 {
         }
     }
 
-    /// Separates the still-live generic queue from inert Ferric custody.
-    #[must_use = "both detached owners must remain retained"]
-    pub fn into_parts(self) -> (ServiceQueueUnboundSessionV1, M1PhysicalFixedBatchCustodyV1) {
-        let case = match self {
+    /// Returns the completed generic dispatch generation retained by detachment.
+    #[must_use]
+    pub const fn detached_dispatch_generation(&self) -> u64 {
+        match self {
             Self::TargetOnly(case)
             | Self::PairedPrefill(case)
             | Self::SpeculativeK4(case)
             | Self::SpeculativeK8(case)
-            | Self::SpeculativeK16(case) => case,
-        };
-        case.into_parts()
+            | Self::SpeculativeK16(case) => case.detached_dispatch_generation(),
+        }
     }
 }
 
@@ -779,7 +778,7 @@ impl M1PhysicalReadbackDetachedQueueSessionV1 {
 pub struct M1PhysicalReadbackQueueOperationFailureV1 {
     shape: M1PhysicalFixedBatchShapeV1,
     lower: ServiceQueueOperationFailureV1,
-    custody: Box<M1PhysicalFixedBatchCustodyV1>,
+    custody: Box<M1PhysicalQueueBatchCustodyV1>,
 }
 
 impl M1PhysicalReadbackQueueOperationFailureV1 {
@@ -795,10 +794,10 @@ impl M1PhysicalReadbackQueueOperationFailureV1 {
         self.lower.error()
     }
 
-    /// Consumes the failure into opaque generic quarantine and Ferric custody.
-    #[must_use = "both terminal owners must remain retained"]
-    pub fn into_parts(self) -> (QuarantinedServiceQueueV1, M1PhysicalFixedBatchCustodyV1) {
-        (self.lower.into_quarantined(), *self.custody)
+    /// Returns the exact Ferric custody retained beside generic quarantine.
+    #[must_use = "Ferric custody remains retained by terminal failure"]
+    pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
+        &self.custody
     }
 }
 
@@ -808,7 +807,7 @@ impl M1PhysicalReadbackQueueOperationFailureV1 {
 pub struct M1PhysicalReadbackQueueReleaseFailureV1 {
     shape: M1PhysicalFixedBatchShapeV1,
     lower: ServiceQueueReleaseFailureV1,
-    custody: Box<M1PhysicalFixedBatchCustodyV1>,
+    custody: Box<M1PhysicalQueueBatchCustodyV1>,
 }
 
 impl M1PhysicalReadbackQueueReleaseFailureV1 {
@@ -824,10 +823,10 @@ impl M1PhysicalReadbackQueueReleaseFailureV1 {
         &self.lower
     }
 
-    /// Consumes the failure into the lower failure and Ferric custody.
-    #[must_use = "both terminal owners must remain retained"]
-    pub fn into_parts(self) -> (ServiceQueueReleaseFailureV1, M1PhysicalFixedBatchCustodyV1) {
-        (self.lower, *self.custody)
+    /// Returns the exact Ferric custody retained beside release failure.
+    #[must_use = "Ferric custody remains retained by terminal failure"]
+    pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
+        &self.custody
     }
 }
 
@@ -956,41 +955,46 @@ impl M1PhysicalCompletedReadbackV1 {
     }
 }
 
-/// Queue creation rejection or terminal failure with exact Ferric custody.
-#[must_use = "pure rejection retains exact inputs; terminal failure retains Ferric custody"]
-pub enum M1PhysicalQueueCreateFailureV1<'a> {
-    /// Pre-transfer rejection with unchanged allocation and fixed-batch inputs.
+enum M1PhysicalQueueCreateFailureStateV1<'a> {
     Rejected {
-        /// Exact generic rejection.
         error: ServiceQueueErrorV1,
-        /// Unchanged generic allocation session.
-        allocations: Box<ServiceAllocationSessionV1>,
-        /// Exact reconstructed opaque prepublication batch.
         batch: Box<M1PrepublicationBatchV1<'a>>,
     },
-    /// KFD may have consumed the generic inputs; only Ferric custody remains recoverable.
     Terminal {
-        /// Exact generic terminal error.
         error: ServiceQueueErrorV1,
-        /// Original fixed-batch shape.
         shape: M1PhysicalFixedBatchShapeV1,
-        /// Scheduler, plan, and KV authority retained without retry authority.
         step: Box<M1PrepublicationStepCustodyV1>,
-        /// Ferric custody retained without retry authority.
-        custody: Box<M1PhysicalFixedBatchCustodyV1>,
+        custody: Box<M1PhysicalQueueBatchCustodyV1>,
     },
+}
+
+/// Opaque queue-creation rejection or terminal failure with exact Ferric custody.
+///
+/// Pure rejection can recover only the exact recombined prepublication input
+/// through [`Self::into_rejected_input`]. Terminal model, partition, ledger,
+/// scheduler, and batch custody cannot be pattern-matched apart.
+///
+/// ```compile_fail
+/// use ferric_engine::M1PhysicalQueueCreateFailureV1;
+/// fn split(failure: M1PhysicalQueueCreateFailureV1<'_>) {
+///     let M1PhysicalQueueCreateFailureV1::Terminal { custody, .. } = failure;
+/// }
+/// ```
+#[must_use = "pure rejection retains exact inputs; terminal failure retains Ferric custody"]
+pub struct M1PhysicalQueueCreateFailureV1<'a> {
+    state: M1PhysicalQueueCreateFailureStateV1<'a>,
 }
 
 impl fmt::Debug for M1PhysicalQueueCreateFailureV1<'_> {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Rejected { error, batch, .. } => formatter
+        match &self.state {
+            M1PhysicalQueueCreateFailureStateV1::Rejected { error, batch, .. } => formatter
                 .debug_struct("Rejected")
                 .field("error", error)
                 .field("shape", &batch.shape())
                 .field("step", &batch.step())
                 .finish_non_exhaustive(),
-            Self::Terminal {
+            M1PhysicalQueueCreateFailureStateV1::Terminal {
                 error, shape, step, ..
             } => formatter
                 .debug_struct("Terminal")
@@ -1003,74 +1007,101 @@ impl fmt::Debug for M1PhysicalQueueCreateFailureV1<'_> {
 }
 
 impl<'a> M1PhysicalQueueCreateFailureV1<'a> {
+    fn rejected(error: ServiceQueueErrorV1, batch: M1PrepublicationBatchV1<'a>) -> Self {
+        Self {
+            state: M1PhysicalQueueCreateFailureStateV1::Rejected {
+                error,
+                batch: Box::new(batch),
+            },
+        }
+    }
+
+    fn terminal(
+        error: ServiceQueueErrorV1,
+        shape: M1PhysicalFixedBatchShapeV1,
+        step: Box<M1PrepublicationStepCustodyV1>,
+        custody: Box<M1PhysicalQueueBatchCustodyV1>,
+    ) -> Self {
+        Self {
+            state: M1PhysicalQueueCreateFailureStateV1::Terminal {
+                error,
+                shape,
+                step,
+                custody,
+            },
+        }
+    }
+
     /// Classifies recoverable pure rejection versus terminal consumption.
     #[must_use]
     pub const fn class(&self) -> M1PhysicalQueueCreateFailureClassV1 {
-        match self {
-            Self::Rejected { .. } => M1PhysicalQueueCreateFailureClassV1::Rejected,
-            Self::Terminal { .. } => M1PhysicalQueueCreateFailureClassV1::Terminal,
+        match self.state {
+            M1PhysicalQueueCreateFailureStateV1::Rejected { .. } => {
+                M1PhysicalQueueCreateFailureClassV1::Rejected
+            }
+            M1PhysicalQueueCreateFailureStateV1::Terminal { .. } => {
+                M1PhysicalQueueCreateFailureClassV1::Terminal
+            }
         }
     }
 
     /// Returns the exact generic error without consuming retained ownership.
     #[must_use]
     pub const fn error(&self) -> &ServiceQueueErrorV1 {
-        match self {
-            Self::Rejected { error, .. } | Self::Terminal { error, .. } => error,
+        match &self.state {
+            M1PhysicalQueueCreateFailureStateV1::Rejected { error, .. }
+            | M1PhysicalQueueCreateFailureStateV1::Terminal { error, .. } => error,
         }
     }
 
     /// Returns the exact rejected or terminal M1 shape.
     #[must_use]
     pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
-        match self {
-            Self::Rejected { batch, .. } => batch.shape(),
-            Self::Terminal { shape, .. } => *shape,
+        match &self.state {
+            M1PhysicalQueueCreateFailureStateV1::Rejected { batch, .. } => batch.shape(),
+            M1PhysicalQueueCreateFailureStateV1::Terminal { shape, .. } => *shape,
         }
     }
 
     /// Returns the exact logical epoch supplied for queue construction.
     #[must_use]
     pub const fn queue_epoch(&self) -> CompletionEpoch {
-        match self {
-            Self::Rejected { batch, .. } => batch.step().scheduled_dispatch().epoch(),
-            Self::Terminal { step, .. } => step.scheduled_dispatch().epoch(),
+        match &self.state {
+            M1PhysicalQueueCreateFailureStateV1::Rejected { batch, .. } => {
+                batch.step().scheduled_dispatch().epoch()
+            }
+            M1PhysicalQueueCreateFailureStateV1::Terminal { step, .. } => {
+                step.scheduled_dispatch().epoch()
+            }
         }
     }
 
     /// Returns the exact scheduler dispatch retained by this failure.
     #[must_use = "scheduler dispatch authority remains retained by the failure"]
     pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
-        match self {
-            Self::Rejected { batch, .. } => batch.step().scheduled_dispatch(),
-            Self::Terminal { step, .. } => step.scheduled_dispatch(),
+        match &self.state {
+            M1PhysicalQueueCreateFailureStateV1::Rejected { batch, .. } => {
+                batch.step().scheduled_dispatch()
+            }
+            M1PhysicalQueueCreateFailureStateV1::Terminal { step, .. } => step.scheduled_dispatch(),
         }
     }
 
-    /// Recovers unchanged inputs only after pure pre-transfer rejection.
-    #[must_use = "pure rejection recovery returns both unchanged construction inputs"]
-    pub fn into_rejected_inputs(
-        self,
-    ) -> Option<(ServiceAllocationSessionV1, M1PrepublicationBatchV1<'a>)> {
-        match self {
-            Self::Rejected {
-                allocations, batch, ..
-            } => Some((*allocations, *batch)),
-            Self::Terminal { .. } => None,
+    /// Returns terminal Ferric custody without exposing either raw owner.
+    #[must_use = "terminal Ferric custody remains inert and retained"]
+    pub const fn terminal_custody(&self) -> Option<&M1PhysicalQueueBatchCustodyV1> {
+        match &self.state {
+            M1PhysicalQueueCreateFailureStateV1::Rejected { .. } => None,
+            M1PhysicalQueueCreateFailureStateV1::Terminal { custody, .. } => Some(custody),
         }
     }
 
-    /// Recovers Ferric custody and scheduler dispatch after terminal creation failure.
-    ///
-    /// The returned owners grant no retry authority; the generic allocation and
-    /// batch owners are unavailable after this failure class.
-    #[must_use = "terminal Ferric and scheduler custody must remain retained"]
-    pub fn into_terminal_parts(
-        self,
-    ) -> Option<(M1PhysicalFixedBatchCustodyV1, M1PrepublicationStepCustodyV1)> {
-        match self {
-            Self::Rejected { .. } => None,
-            Self::Terminal { custody, step, .. } => Some((*custody, *step)),
+    /// Recovers the exact recombined prepublication input after pure rejection.
+    #[must_use = "pure rejection recovery returns the exact opaque queue input"]
+    pub fn into_rejected_input(self) -> Option<M1PrepublicationBatchV1<'a>> {
+        match self.state {
+            M1PhysicalQueueCreateFailureStateV1::Rejected { batch, .. } => Some(*batch),
+            M1PhysicalQueueCreateFailureStateV1::Terminal { .. } => None,
         }
     }
 }
@@ -1082,7 +1113,7 @@ pub struct M1PhysicalQueueOperationFailureV1 {
     shape: M1PhysicalFixedBatchShapeV1,
     step: Box<M1PrepublicationStepCustodyV1>,
     lower: ServiceQueueOperationFailureV1,
-    custody: Box<M1PhysicalFixedBatchCustodyV1>,
+    custody: Box<M1PhysicalQueueBatchCustodyV1>,
 }
 
 impl M1PhysicalQueueOperationFailureV1 {
@@ -1116,34 +1147,33 @@ impl M1PhysicalQueueOperationFailureV1 {
         self.lower.error()
     }
 
-    /// Consumes the failure into opaque generic quarantine and Ferric custody.
-    ///
-    /// Neither returned value grants retry authority.
-    #[must_use = "both terminal owners must remain retained"]
-    pub fn into_quarantined_parts(
-        self,
-    ) -> (
-        QuarantinedServiceQueueV1,
-        M1PhysicalFixedBatchCustodyV1,
-        M1PrepublicationStepCustodyV1,
-    ) {
-        (self.lower.into_quarantined(), *self.custody, *self.step)
+    /// Returns the exact Ferric custody retained beside generic quarantine.
+    #[must_use = "Ferric custody remains retained by terminal failure"]
+    pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
+        &self.custody
     }
 }
 
 /// Detached generic queue custody paired with the exact former M1 batch custody.
+///
+/// ```compile_fail
+/// use ferric_engine::M1PhysicalDetachedQueueSessionV1;
+/// fn split(detached: M1PhysicalDetachedQueueSessionV1) {
+///     let _ = detached.into_parts();
+/// }
+/// ```
 #[must_use = "the live detached queue and Ferric custody must remain retained"]
 #[derive(Debug)]
 pub struct M1PhysicalDetachedQueueCaseV1 {
     lower: ServiceQueueUnboundSessionV1,
-    custody: M1PhysicalFixedBatchCustodyV1,
+    custody: M1PhysicalQueueBatchCustodyV1,
     step: M1PrepublicationStepCustodyV1,
 }
 
 impl M1PhysicalDetachedQueueCaseV1 {
     /// Returns retained Ferric recipe and allocation custody by borrow.
     #[must_use = "the exact Ferric custody remains paired with the detached queue"]
-    pub const fn custody(&self) -> &M1PhysicalFixedBatchCustodyV1 {
+    pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
         &self.custody
     }
 
@@ -1159,16 +1189,10 @@ impl M1PhysicalDetachedQueueCaseV1 {
         self.step.scheduled_dispatch()
     }
 
-    /// Separates the still-live generic queue from inert Ferric custody.
-    #[must_use = "the live generic queue and Ferric custody must both remain retained"]
-    pub fn into_parts(
-        self,
-    ) -> (
-        ServiceQueueUnboundSessionV1,
-        M1PhysicalFixedBatchCustodyV1,
-        M1PrepublicationStepCustodyV1,
-    ) {
-        (self.lower, self.custody, self.step)
+    /// Returns the completed generic dispatch generation retained by detachment.
+    #[must_use]
+    pub const fn detached_dispatch_generation(&self) -> u64 {
+        self.lower.detached_dispatch_generation()
     }
 }
 
@@ -1209,7 +1233,7 @@ impl M1PhysicalDetachedQueueSessionV1 {
 
     /// Returns retained Ferric recipe and allocation custody by borrow.
     #[must_use = "the exact Ferric custody remains paired with the detached queue"]
-    pub const fn custody(&self) -> &M1PhysicalFixedBatchCustodyV1 {
+    pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
         match self {
             Self::TargetOnly(case)
             | Self::PairedPrefill(case)
@@ -1243,23 +1267,16 @@ impl M1PhysicalDetachedQueueSessionV1 {
         }
     }
 
-    /// Separates the still-live generic queue from inert Ferric custody.
-    #[must_use = "the live generic queue and Ferric custody must both remain retained"]
-    pub fn into_parts(
-        self,
-    ) -> (
-        ServiceQueueUnboundSessionV1,
-        M1PhysicalFixedBatchCustodyV1,
-        M1PrepublicationStepCustodyV1,
-    ) {
-        let case = match self {
+    /// Returns the completed generic dispatch generation retained by detachment.
+    #[must_use]
+    pub const fn detached_dispatch_generation(&self) -> u64 {
+        match self {
             Self::TargetOnly(case)
             | Self::PairedPrefill(case)
             | Self::SpeculativeK4(case)
             | Self::SpeculativeK8(case)
-            | Self::SpeculativeK16(case) => case,
-        };
-        case.into_parts()
+            | Self::SpeculativeK16(case) => case.detached_dispatch_generation(),
+        }
     }
 }
 
@@ -1270,7 +1287,7 @@ pub struct M1PhysicalQueueReleaseFailureV1 {
     shape: M1PhysicalFixedBatchShapeV1,
     step: Box<M1PrepublicationStepCustodyV1>,
     lower: ServiceQueueReleaseFailureV1,
-    custody: Box<M1PhysicalFixedBatchCustodyV1>,
+    custody: Box<M1PhysicalQueueBatchCustodyV1>,
 }
 
 impl M1PhysicalQueueReleaseFailureV1 {
@@ -1298,19 +1315,10 @@ impl M1PhysicalQueueReleaseFailureV1 {
         &self.lower
     }
 
-    /// Consumes the terminal failure into the exact lower failure and Ferric custody.
-    ///
-    /// The lower failure retains any generic quarantine made available by the
-    /// generic service host. Neither part grants retry authority.
-    #[must_use = "all terminal release custody must remain retained"]
-    pub fn into_parts(
-        self,
-    ) -> (
-        ServiceQueueReleaseFailureV1,
-        M1PhysicalFixedBatchCustodyV1,
-        M1PrepublicationStepCustodyV1,
-    ) {
-        (self.lower, *self.custody, *self.step)
+    /// Returns the exact Ferric custody retained beside release failure.
+    #[must_use = "Ferric custody remains retained by terminal failure"]
+    pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
+        &self.custody
     }
 }
 
@@ -1318,27 +1326,28 @@ enum CreateCaseResultV1<'a, const N: usize> {
     Ready(Box<M1PhysicalQueuePhaseCaseV1<ServiceQueueSessionV1<N>>>),
     Rejected {
         error: ServiceQueueErrorV1,
-        allocations: Box<ServiceAllocationSessionV1>,
         batch: Box<M1PhysicalFixedBatchCaseV1<'a, N>>,
         step: Box<M1PrepublicationStepCustodyV1>,
     },
     Terminal {
         error: ServiceQueueErrorV1,
-        custody: Box<M1PhysicalFixedBatchCustodyV1>,
+        custody: Box<M1PhysicalQueueBatchCustodyV1>,
         step: Box<M1PrepublicationStepCustodyV1>,
     },
 }
 
 fn create_case<const N: usize>(
-    allocations: ServiceAllocationSessionV1,
     ring_bytes: u32,
     step: M1PrepublicationStepCustodyV1,
     case: M1PhysicalFixedBatchCaseV1<'_, N>,
 ) -> CreateCaseResultV1<'_, N> {
     let (batch, custody) = case.into_parts();
+    let (allocations, queue_custody) = custody.into_queue_creation_parts();
     match ServiceQueueSessionV1::create(allocations, ring_bytes, batch) {
         Ok(lower) => CreateCaseResultV1::Ready(Box::new(M1PhysicalQueuePhaseCaseV1::new(
-            lower, custody, step,
+            lower,
+            queue_custody,
+            step,
         ))),
         Err(ServiceQueueCreateFailureV1::Rejected {
             error,
@@ -1346,13 +1355,18 @@ fn create_case<const N: usize>(
             batch,
         }) => CreateCaseResultV1::Rejected {
             error,
-            allocations,
-            batch: Box::new(M1PhysicalFixedBatchCaseV1::from_parts(*batch, custody)),
+            batch: Box::new(M1PhysicalFixedBatchCaseV1::from_parts(
+                *batch,
+                M1PhysicalFixedBatchCustodyV1::from_rejected_queue_creation(
+                    *allocations,
+                    queue_custody,
+                ),
+            )),
             step: Box::new(step),
         },
         Err(ServiceQueueCreateFailureV1::Terminal { error }) => CreateCaseResultV1::Terminal {
             error,
-            custody: Box::new(custody),
+            custody: Box::new(queue_custody),
             step: Box::new(step),
         },
     }
@@ -1363,29 +1377,25 @@ fn finish_target_only_create(
 ) -> Result<M1PhysicalQueueSessionV1, M1PhysicalQueueCreateFailureV1<'_>> {
     match result {
         CreateCaseResultV1::Ready(case) => Ok(M1PhysicalQueueSessionV1::TargetOnly(case)),
-        CreateCaseResultV1::Rejected {
-            error,
-            allocations,
-            batch,
-            step,
-        } => Err(M1PhysicalQueueCreateFailureV1::Rejected {
-            error,
-            allocations,
-            batch: Box::new(M1PrepublicationBatchV1 {
-                batch: M1PhysicalFixedBatchV1::TargetOnly(batch),
-                step: *step,
-            }),
-        }),
+        CreateCaseResultV1::Rejected { error, batch, step } => {
+            Err(M1PhysicalQueueCreateFailureV1::rejected(
+                error,
+                M1PrepublicationBatchV1 {
+                    batch: M1PhysicalFixedBatchV1::TargetOnly(batch),
+                    step: *step,
+                },
+            ))
+        }
         CreateCaseResultV1::Terminal {
             error,
             custody,
             step,
-        } => Err(M1PhysicalQueueCreateFailureV1::Terminal {
+        } => Err(M1PhysicalQueueCreateFailureV1::terminal(
             error,
-            shape: M1PhysicalFixedBatchShapeV1::TargetOnly,
+            M1PhysicalFixedBatchShapeV1::TargetOnly,
             step,
             custody,
-        }),
+        )),
     }
 }
 
@@ -1394,29 +1404,25 @@ fn finish_paired_prefill_create(
 ) -> Result<M1PhysicalQueueSessionV1, M1PhysicalQueueCreateFailureV1<'_>> {
     match result {
         CreateCaseResultV1::Ready(case) => Ok(M1PhysicalQueueSessionV1::PairedPrefill(case)),
-        CreateCaseResultV1::Rejected {
-            error,
-            allocations,
-            batch,
-            step,
-        } => Err(M1PhysicalQueueCreateFailureV1::Rejected {
-            error,
-            allocations,
-            batch: Box::new(M1PrepublicationBatchV1 {
-                batch: M1PhysicalFixedBatchV1::PairedPrefill(batch),
-                step: *step,
-            }),
-        }),
+        CreateCaseResultV1::Rejected { error, batch, step } => {
+            Err(M1PhysicalQueueCreateFailureV1::rejected(
+                error,
+                M1PrepublicationBatchV1 {
+                    batch: M1PhysicalFixedBatchV1::PairedPrefill(batch),
+                    step: *step,
+                },
+            ))
+        }
         CreateCaseResultV1::Terminal {
             error,
             custody,
             step,
-        } => Err(M1PhysicalQueueCreateFailureV1::Terminal {
+        } => Err(M1PhysicalQueueCreateFailureV1::terminal(
             error,
-            shape: M1PhysicalFixedBatchShapeV1::PairedPrefill,
+            M1PhysicalFixedBatchShapeV1::PairedPrefill,
             step,
             custody,
-        }),
+        )),
     }
 }
 
@@ -1425,29 +1431,25 @@ fn finish_speculative_k4_create(
 ) -> Result<M1PhysicalQueueSessionV1, M1PhysicalQueueCreateFailureV1<'_>> {
     match result {
         CreateCaseResultV1::Ready(case) => Ok(M1PhysicalQueueSessionV1::SpeculativeK4(case)),
-        CreateCaseResultV1::Rejected {
-            error,
-            allocations,
-            batch,
-            step,
-        } => Err(M1PhysicalQueueCreateFailureV1::Rejected {
-            error,
-            allocations,
-            batch: Box::new(M1PrepublicationBatchV1 {
-                batch: M1PhysicalFixedBatchV1::SpeculativeK4(batch),
-                step: *step,
-            }),
-        }),
+        CreateCaseResultV1::Rejected { error, batch, step } => {
+            Err(M1PhysicalQueueCreateFailureV1::rejected(
+                error,
+                M1PrepublicationBatchV1 {
+                    batch: M1PhysicalFixedBatchV1::SpeculativeK4(batch),
+                    step: *step,
+                },
+            ))
+        }
         CreateCaseResultV1::Terminal {
             error,
             custody,
             step,
-        } => Err(M1PhysicalQueueCreateFailureV1::Terminal {
+        } => Err(M1PhysicalQueueCreateFailureV1::terminal(
             error,
-            shape: M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+            M1PhysicalFixedBatchShapeV1::SpeculativeK4,
             step,
             custody,
-        }),
+        )),
     }
 }
 
@@ -1456,29 +1458,25 @@ fn finish_speculative_k8_create(
 ) -> Result<M1PhysicalQueueSessionV1, M1PhysicalQueueCreateFailureV1<'_>> {
     match result {
         CreateCaseResultV1::Ready(case) => Ok(M1PhysicalQueueSessionV1::SpeculativeK8(case)),
-        CreateCaseResultV1::Rejected {
-            error,
-            allocations,
-            batch,
-            step,
-        } => Err(M1PhysicalQueueCreateFailureV1::Rejected {
-            error,
-            allocations,
-            batch: Box::new(M1PrepublicationBatchV1 {
-                batch: M1PhysicalFixedBatchV1::SpeculativeK8(batch),
-                step: *step,
-            }),
-        }),
+        CreateCaseResultV1::Rejected { error, batch, step } => {
+            Err(M1PhysicalQueueCreateFailureV1::rejected(
+                error,
+                M1PrepublicationBatchV1 {
+                    batch: M1PhysicalFixedBatchV1::SpeculativeK8(batch),
+                    step: *step,
+                },
+            ))
+        }
         CreateCaseResultV1::Terminal {
             error,
             custody,
             step,
-        } => Err(M1PhysicalQueueCreateFailureV1::Terminal {
+        } => Err(M1PhysicalQueueCreateFailureV1::terminal(
             error,
-            shape: M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+            M1PhysicalFixedBatchShapeV1::SpeculativeK8,
             step,
             custody,
-        }),
+        )),
     }
 }
 
@@ -1487,29 +1485,25 @@ fn finish_speculative_k16_create(
 ) -> Result<M1PhysicalQueueSessionV1, M1PhysicalQueueCreateFailureV1<'_>> {
     match result {
         CreateCaseResultV1::Ready(case) => Ok(M1PhysicalQueueSessionV1::SpeculativeK16(case)),
-        CreateCaseResultV1::Rejected {
-            error,
-            allocations,
-            batch,
-            step,
-        } => Err(M1PhysicalQueueCreateFailureV1::Rejected {
-            error,
-            allocations,
-            batch: Box::new(M1PrepublicationBatchV1 {
-                batch: M1PhysicalFixedBatchV1::SpeculativeK16(batch),
-                step: *step,
-            }),
-        }),
+        CreateCaseResultV1::Rejected { error, batch, step } => {
+            Err(M1PhysicalQueueCreateFailureV1::rejected(
+                error,
+                M1PrepublicationBatchV1 {
+                    batch: M1PhysicalFixedBatchV1::SpeculativeK16(batch),
+                    step: *step,
+                },
+            ))
+        }
         CreateCaseResultV1::Terminal {
             error,
             custody,
             step,
-        } => Err(M1PhysicalQueueCreateFailureV1::Terminal {
+        } => Err(M1PhysicalQueueCreateFailureV1::terminal(
             error,
-            shape: M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+            M1PhysicalFixedBatchShapeV1::SpeculativeK16,
             step,
             custody,
-        }),
+        )),
     }
 }
 
@@ -1594,19 +1588,18 @@ fn release_case<const N: usize>(
 }
 
 impl M1PhysicalQueueSessionV1 {
-    /// Consumes one allocation session and the opaque prepublication batch into a queue.
+    /// Privately transfers the prepublication owner's allocation session into a queue.
     ///
     /// Raw scheduler and fixed-batch inputs cannot enter this boundary.
     ///
     /// ```compile_fail
     /// use fe2o3_service_host::ServiceAllocationSessionV1;
-    /// use ferric_engine::{M1PhysicalFixedBatchV1, M1PhysicalQueueSessionV1, M1ScheduledDispatchV1};
+    /// use ferric_engine::{M1PhysicalQueueSessionV1, M1PrepublicationBatchV1};
     /// fn raw_create(
     ///     allocations: ServiceAllocationSessionV1,
-    ///     scheduled: M1ScheduledDispatchV1,
-    ///     batch: M1PhysicalFixedBatchV1<'_>,
+    ///     batch: M1PrepublicationBatchV1<'_>,
     /// ) {
-    ///     let _ = M1PhysicalQueueSessionV1::create(allocations, 4096, scheduled, batch);
+    ///     let _ = M1PhysicalQueueSessionV1::create(allocations, 4096, batch);
     /// }
     /// ```
     ///
@@ -1619,26 +1612,25 @@ impl M1PhysicalQueueSessionV1 {
     /// Returns [`M1PhysicalQueueCreateFailureV1`] with the generic error and all
     /// ownership that the generic service-host layer can honestly return.
     pub fn create(
-        allocations: ServiceAllocationSessionV1,
         ring_bytes: u32,
         prepublication: M1PrepublicationBatchV1<'_>,
     ) -> Result<Self, M1PhysicalQueueCreateFailureV1<'_>> {
         let M1PrepublicationBatchV1 { batch, step } = prepublication;
         match batch {
             M1PhysicalFixedBatchV1::TargetOnly(case) => {
-                finish_target_only_create(create_case(allocations, ring_bytes, step, *case))
+                finish_target_only_create(create_case(ring_bytes, step, *case))
             }
             M1PhysicalFixedBatchV1::PairedPrefill(case) => {
-                finish_paired_prefill_create(create_case(allocations, ring_bytes, step, *case))
+                finish_paired_prefill_create(create_case(ring_bytes, step, *case))
             }
             M1PhysicalFixedBatchV1::SpeculativeK4(case) => {
-                finish_speculative_k4_create(create_case(allocations, ring_bytes, step, *case))
+                finish_speculative_k4_create(create_case(ring_bytes, step, *case))
             }
             M1PhysicalFixedBatchV1::SpeculativeK8(case) => {
-                finish_speculative_k8_create(create_case(allocations, ring_bytes, step, *case))
+                finish_speculative_k8_create(create_case(ring_bytes, step, *case))
             }
             M1PhysicalFixedBatchV1::SpeculativeK16(case) => {
-                finish_speculative_k16_create(create_case(allocations, ring_bytes, step, *case))
+                finish_speculative_k16_create(create_case(ring_bytes, step, *case))
             }
         }
     }
@@ -2112,7 +2104,7 @@ fn operation_failure(
     shape: M1PhysicalFixedBatchShapeV1,
     step: M1PrepublicationStepCustodyV1,
     lower: ServiceQueueOperationFailureV1,
-    custody: M1PhysicalFixedBatchCustodyV1,
+    custody: M1PhysicalQueueBatchCustodyV1,
 ) -> M1PhysicalQueueOperationFailureV1 {
     M1PhysicalQueueOperationFailureV1 {
         shape,

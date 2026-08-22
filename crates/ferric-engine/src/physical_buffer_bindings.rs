@@ -10,17 +10,17 @@
 use core::fmt;
 
 use fe2o3_service_host::{
-    ServiceAllocationErrorV1, ServiceAllocationSessionV1, ServiceDeviceDispatchRangeV1,
-    ServiceFixedDispatchBufferV1, ServiceHostDispatchRangeV1,
+    ServiceAllocationErrorV1, ServiceDeviceDispatchRangeV1, ServiceFixedDispatchBufferV1,
+    ServiceHostDispatchRangeV1,
 };
 use ferric_spec::Identity;
 
 use crate::{
-    bind_addressless_m1_full_step_workspace_subleases, m1_completion_output_shape_v1,
-    AddresslessM1PhysicalBufferRecipeV1, AddresslessM1PhysicalKernargRecipeV1,
-    BoundM1CompletionOutputV1, BoundM1FullStepWorkspaceSubleases, BoundModelMemoryAllocationsV1,
-    M1CompletionOutputErrorV1, M1CompletionOutputShapeV1, M1FullStepWorkspaceDispatchRangeError,
-    M1FullStepWorkspaceSubleaseBindingError, M1FullStepWorkspaceSubleaseOwners,
+    m1_completion_output_shape_v1, AddresslessM1PhysicalBufferRecipeV1,
+    AddresslessM1PhysicalKernargRecipeV1, BoundM1CompletionOutputV1,
+    BoundM1FullStepWorkspaceSubleases, M1CompletionOutputErrorV1, M1CompletionOutputShapeV1,
+    M1FullStepWorkspaceDispatchRangeError, M1FullStepWorkspaceSubleaseBindingError,
+    M1FullStepWorkspaceSubleaseOwners, M1PartitionedModelMemoryKvPoolV1,
     M1PhysicalBufferRecipeErrorV1, M1PhysicalBufferRecipeRowV1, M1PhysicalBufferSentinelV1,
     M1PhysicalBufferSourceV1, M1PhysicalProgramV1, ModelMemoryDispatchRangeErrorV1,
 };
@@ -83,7 +83,7 @@ pub struct BoundM1PhysicalBufferBindingsV1 {
     kernargs: AddresslessM1PhysicalKernargRecipeV1,
     source_rows: Box<[M1PhysicalBufferRecipeRowV1]>,
     workspaces: BoundM1FullStepWorkspaceSubleases,
-    model_memory: BoundModelMemoryAllocationsV1,
+    partitioned_memory: M1PartitionedModelMemoryKvPoolV1,
     completion_output: BoundM1CompletionOutputV1,
     rows: Box<[M1BoundPhysicalBufferRowV1]>,
 }
@@ -113,10 +113,10 @@ impl BoundM1PhysicalBufferBindingsV1 {
         &self.workspaces
     }
 
-    /// Exact retained model-memory custody.
-    #[must_use = "the exact model-memory custody remains retained by the physical binding"]
-    pub const fn model_memory_bindings(&self) -> &BoundModelMemoryAllocationsV1 {
-        &self.model_memory
+    /// Exact retained partitioned model-memory and allocation custody.
+    #[must_use = "partitioned model-memory custody remains retained by the binding"]
+    pub const fn partitioned_memory(&self) -> &M1PartitionedModelMemoryKvPoolV1 {
+        &self.partitioned_memory
     }
 
     /// Exact retained coherent host-download completion-output custody.
@@ -139,7 +139,7 @@ impl BoundM1PhysicalBufferBindingsV1 {
     ) -> (
         AddresslessM1PhysicalBufferRecipeV1,
         M1FullStepWorkspaceSubleaseOwners,
-        BoundModelMemoryAllocationsV1,
+        M1PartitionedModelMemoryKvPoolV1,
         BoundM1CompletionOutputV1,
         Box<[M1BoundPhysicalBufferRowV1]>,
     ) {
@@ -152,7 +152,7 @@ impl BoundM1PhysicalBufferBindingsV1 {
         (
             recipe,
             owners,
-            self.model_memory,
+            self.partitioned_memory,
             self.completion_output,
             self.rows,
         )
@@ -231,6 +231,15 @@ pub enum M1PhysicalBufferBindingErrorV1 {
         /// Exact model-memory diagnostic.
         error: ModelMemoryDispatchRangeErrorV1,
     },
+    /// A partitioned KV-plane source could not be resolved exactly.
+    PartitionedKvRange {
+        /// Global physical row.
+        dispatch_index: u32,
+        /// Inspected explicit-argument ordinal.
+        argument: usize,
+        /// Exact partition/model/allocation diagnostic.
+        error: crate::M1DeviceKvArenaLeaseErrorV1,
+    },
     /// A fixed nonempty sentinel subrange could not be narrowed exactly.
     SentinelRange {
         /// Global physical row.
@@ -303,7 +312,7 @@ pub struct M1PhysicalBufferBindingFailureV1 {
     error: Box<M1PhysicalBufferBindingErrorV1>,
     recipe: Box<AddresslessM1PhysicalBufferRecipeV1>,
     workspace_owners: Box<M1FullStepWorkspaceSubleaseOwners>,
-    model_memory: Box<BoundModelMemoryAllocationsV1>,
+    partitioned_memory: Box<M1PartitionedModelMemoryKvPoolV1>,
     completion_output: Box<BoundM1CompletionOutputV1>,
 }
 
@@ -322,14 +331,14 @@ impl M1PhysicalBufferBindingFailureV1 {
         M1PhysicalBufferBindingErrorV1,
         AddresslessM1PhysicalBufferRecipeV1,
         M1FullStepWorkspaceSubleaseOwners,
-        BoundModelMemoryAllocationsV1,
+        M1PartitionedModelMemoryKvPoolV1,
         BoundM1CompletionOutputV1,
     ) {
         (
             *self.error,
             *self.recipe,
             *self.workspace_owners,
-            *self.model_memory,
+            *self.partitioned_memory,
             *self.completion_output,
         )
     }
@@ -349,16 +358,15 @@ impl M1PhysicalBufferBindingFailureV1 {
 pub fn bind_m1_physical_buffer_ranges_v1(
     recipe: AddresslessM1PhysicalBufferRecipeV1,
     workspace_owners: M1FullStepWorkspaceSubleaseOwners,
-    model_memory: BoundModelMemoryAllocationsV1,
+    partitioned_memory: M1PartitionedModelMemoryKvPoolV1,
     completion_output: BoundM1CompletionOutputV1,
-    allocations: &ServiceAllocationSessionV1,
 ) -> Result<BoundM1PhysicalBufferBindingsV1, M1PhysicalBufferBindingFailureV1> {
     if let Err(error) = recipe.revalidate() {
         return Err(failure(
             M1PhysicalBufferBindingErrorV1::Recipe(error),
             recipe,
             workspace_owners,
-            model_memory,
+            partitioned_memory,
             completion_output,
         ));
     }
@@ -367,31 +375,29 @@ pub fn bind_m1_physical_buffer_ranges_v1(
             error,
             recipe,
             workspace_owners,
-            model_memory,
+            partitioned_memory,
             completion_output,
         ));
     }
 
     let completion_range =
-        match preflight_completion_output(&recipe, &completion_output, allocations) {
+        match preflight_completion_output(&recipe, &completion_output, &partitioned_memory) {
             Ok(range) => range,
             Err(error) => {
                 return Err(failure(
                     error,
                     recipe,
                     workspace_owners,
-                    model_memory,
+                    partitioned_memory,
                     completion_output,
                 ));
             }
         };
 
     let (kernargs, composition, source_rows) = recipe.into_parts();
-    let workspaces = match bind_addressless_m1_full_step_workspace_subleases(
-        composition,
-        workspace_owners,
-        allocations,
-    ) {
+    let workspaces = match partitioned_memory
+        .bind_full_step_workspaces(composition, workspace_owners)
+    {
         Ok(workspaces) => workspaces,
         Err(rejection) => {
             let (error, composition, workspace_owners) = rejection.into_parts();
@@ -401,7 +407,7 @@ pub fn bind_m1_physical_buffer_ranges_v1(
                 M1PhysicalBufferBindingErrorV1::WorkspaceOwner(error),
                 recipe,
                 workspace_owners,
-                model_memory,
+                partitioned_memory,
                 completion_output,
             ));
         }
@@ -411,17 +417,16 @@ pub fn bind_m1_physical_buffer_ranges_v1(
         &kernargs,
         &source_rows,
         &workspaces,
-        &model_memory,
+        &partitioned_memory,
         completion_output.shape(),
         completion_range,
-        allocations,
     ) {
         Ok(rows) => Ok(BoundM1PhysicalBufferBindingsV1 {
             version: M1_PHYSICAL_BUFFER_BINDING_VERSION_V1,
             kernargs,
             source_rows,
             workspaces,
-            model_memory,
+            partitioned_memory,
             completion_output,
             rows,
         }),
@@ -433,7 +438,7 @@ pub fn bind_m1_physical_buffer_ranges_v1(
                 error,
                 recipe,
                 workspace_owners,
-                model_memory,
+                partitioned_memory,
                 completion_output,
             ))
         }
@@ -444,14 +449,14 @@ fn failure(
     error: M1PhysicalBufferBindingErrorV1,
     recipe: AddresslessM1PhysicalBufferRecipeV1,
     workspace_owners: M1FullStepWorkspaceSubleaseOwners,
-    model_memory: BoundModelMemoryAllocationsV1,
+    partitioned_memory: M1PartitionedModelMemoryKvPoolV1,
     completion_output: BoundM1CompletionOutputV1,
 ) -> M1PhysicalBufferBindingFailureV1 {
     M1PhysicalBufferBindingFailureV1 {
         error: Box::new(error),
         recipe: Box::new(recipe),
         workspace_owners: Box::new(workspace_owners),
-        model_memory: Box::new(model_memory),
+        partitioned_memory: Box::new(partitioned_memory),
         completion_output: Box::new(completion_output),
     }
 }
@@ -476,7 +481,7 @@ fn first_materialization_requirement(
 fn preflight_completion_output(
     recipe: &AddresslessM1PhysicalBufferRecipeV1,
     completion_output: &BoundM1CompletionOutputV1,
-    allocations: &ServiceAllocationSessionV1,
+    partitioned_memory: &M1PartitionedModelMemoryKvPoolV1,
 ) -> Result<ServiceHostDispatchRangeV1, M1PhysicalBufferBindingErrorV1> {
     let mut matches = recipe.rows().iter().flat_map(|row| {
         row.buffers().iter().filter_map(move |buffer| {
@@ -511,8 +516,8 @@ fn preflight_completion_output(
         source_sequences,
         completion_output.shape(),
     )?;
-    completion_output
-        .host_dispatch_range(allocations, selection)
+    partitioned_memory
+        .completion_output_dispatch_range(completion_output, selection)
         .map_err(
             |error| M1PhysicalBufferBindingErrorV1::CompletionOutputRange {
                 dispatch_index,
@@ -566,9 +571,8 @@ enum ResolvedM1PhysicalBufferRangeV1 {
 
 #[derive(Clone, Copy)]
 struct SourceResolutionContextV1<'a> {
-    allocations: &'a ServiceAllocationSessionV1,
+    partitioned_memory: &'a M1PartitionedModelMemoryKvPoolV1,
     workspaces: &'a BoundM1FullStepWorkspaceSubleases,
-    model_memory: &'a BoundModelMemoryAllocationsV1,
     completion_shape: M1CompletionOutputShapeV1,
     completion_range: ServiceHostDispatchRangeV1,
 }
@@ -593,10 +597,9 @@ fn resolve_rows(
     kernargs: &AddresslessM1PhysicalKernargRecipeV1,
     source_rows: &[M1PhysicalBufferRecipeRowV1],
     workspaces: &BoundM1FullStepWorkspaceSubleases,
-    model_memory: &BoundModelMemoryAllocationsV1,
+    partitioned_memory: &M1PartitionedModelMemoryKvPoolV1,
     completion_shape: M1CompletionOutputShapeV1,
     completion_range: ServiceHostDispatchRangeV1,
-    allocations: &ServiceAllocationSessionV1,
 ) -> Result<Box<[M1BoundPhysicalBufferRowV1]>, M1PhysicalBufferBindingErrorV1> {
     let physical_rows = kernargs.source_recipe().rows();
     if source_rows.len() != physical_rows.len() {
@@ -604,9 +607,8 @@ fn resolve_rows(
     }
     validate_row_metadata(source_rows, physical_rows)?;
     let context = SourceResolutionContextV1 {
-        allocations,
+        partitioned_memory,
         workspaces,
-        model_memory,
         completion_shape,
         completion_range,
     };
@@ -752,8 +754,13 @@ fn resolve_source(
     let dispatch_index = row.dispatch_index();
     match source {
         M1PhysicalBufferSourceV1::Workspace { workspace, range } => context
-            .workspaces
-            .segment_dispatch_range(context.allocations, row.segment_index(), workspace, range)
+            .partitioned_memory
+            .workspace_segment_dispatch_range(
+                context.workspaces,
+                row.segment_index(),
+                workspace,
+                range,
+            )
             .map_err(|error| M1PhysicalBufferBindingErrorV1::WorkspaceRange {
                 dispatch_index,
                 argument,
@@ -766,8 +773,13 @@ fn resolve_source(
             purpose,
         } => {
             let parent = context
-                .workspaces
-                .segment_dispatch_range(context.allocations, row.segment_index(), workspace, range)
+                .partitioned_memory
+                .workspace_segment_dispatch_range(
+                    context.workspaces,
+                    row.segment_index(),
+                    workspace,
+                    range,
+                )
                 .map_err(|error| M1PhysicalBufferBindingErrorV1::WorkspaceRange {
                     dispatch_index,
                     argument,
@@ -792,9 +804,9 @@ fn resolve_source(
                 return Err(M1PhysicalBufferBindingErrorV1::RowMetadata { dispatch_index });
             }
             context
-                .workspaces
+                .partitioned_memory
                 .speculative_draft_choice_dispatch_range(
-                    context.allocations,
+                    context.workspaces,
                     expected.producer_segment(),
                 )
                 .map_err(|error| M1PhysicalBufferBindingErrorV1::WorkspaceRange {
@@ -816,9 +828,9 @@ fn resolve_source(
                 return Err(M1PhysicalBufferBindingErrorV1::RowMetadata { dispatch_index });
             }
             context
-                .workspaces
+                .partitioned_memory
                 .speculative_token_assembly_anchor_dispatch_range(
-                    context.allocations,
+                    context.workspaces,
                     verification_segment,
                 )
                 .map_err(|error| M1PhysicalBufferBindingErrorV1::WorkspaceRange {
@@ -855,11 +867,11 @@ fn resolve_source(
             }
             let resolved = match range {
                 ferric_build::M1StepWorkspaceRangeRole::DraftPositionIds => context
-                    .workspaces
-                    .speculative_draft_position_dispatch_range(context.allocations, draft_segment),
+                    .partitioned_memory
+                    .speculative_draft_position_dispatch_range(context.workspaces, draft_segment),
                 ferric_build::M1StepWorkspaceRangeRole::DraftContextLengths => context
-                    .workspaces
-                    .speculative_draft_context_dispatch_range(context.allocations, draft_segment),
+                    .partitioned_memory
+                    .speculative_draft_context_dispatch_range(context.workspaces, draft_segment),
                 _ => unreachable!(),
             };
             resolved
@@ -871,8 +883,8 @@ fn resolve_source(
                 .map(ResolvedM1PhysicalBufferRangeV1::Device)
         }
         M1PhysicalBufferSourceV1::ModelWeight { role, kind, layer } => context
-            .model_memory
-            .weight_dispatch_range(context.allocations, role, kind, layer)
+            .partitioned_memory
+            .weight_dispatch_range(role, kind, layer)
             .map_err(|error| M1PhysicalBufferBindingErrorV1::ModelMemoryRange {
                 dispatch_index,
                 argument,
@@ -884,9 +896,9 @@ fn resolve_source(
             component,
             layer,
         } => context
-            .model_memory
-            .kv_dispatch_range(context.allocations, role, component, layer)
-            .map_err(|error| M1PhysicalBufferBindingErrorV1::ModelMemoryRange {
+            .partitioned_memory
+            .kv_dispatch_range(role, component, layer)
+            .map_err(|error| M1PhysicalBufferBindingErrorV1::PartitionedKvRange {
                 dispatch_index,
                 argument,
                 error,
