@@ -154,6 +154,24 @@ impl M1CheckedCompletionOutputV1 {
     }
 }
 
+#[cfg(test)]
+impl M1CheckedCompletionOutputV1 {
+    pub(crate) fn empty_for_rearm_test(
+        selection: Qwen3PlanSelection,
+        epoch: CompletionEpoch,
+    ) -> Self {
+        Self {
+            selection,
+            epoch,
+            dispatch_generation: 0,
+            data_index: 0,
+            offset_bytes: 0,
+            extent_bytes: 0,
+            records: Box::new([]),
+        }
+    }
+}
+
 pub(crate) fn check_m1_completed_output_v1(
     observed: &M1ObservedCompletionImageV1,
     queue_selection: Qwen3PlanSelection,
