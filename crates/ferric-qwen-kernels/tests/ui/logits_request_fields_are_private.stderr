@@ -1,0 +1,5 @@
+error[E0451]: field `prepared` of struct `InertQwen3LogitsWorkerRequestV1` is private
+ --> tests/ui/logits_request_fields_are_private.rs:4:43
+  |
+4 |     let InertQwen3LogitsWorkerRequestV1 { prepared } = value;
+  |                                           ^^^^^^^^ private field
