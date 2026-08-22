@@ -159,6 +159,17 @@ impl RequestId {
         self.generation
     }
 
+    /// Establishes exact generational-request equality from its public view.
+    pub proof fn extensional(left: &Self, right: &Self)
+        requires
+            left.slot_spec() == right.slot_spec(),
+            left.generation_spec() == right.generation_spec(),
+        ensures *left == *right,
+    {
+        reveal(RequestId::slot_spec);
+        reveal(RequestId::generation_spec);
+    }
+
     #[must_use]
     pub const fn new(slot: u32, generation: u32) -> (request: Self)
         ensures

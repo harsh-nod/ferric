@@ -536,6 +536,41 @@ fn is_retired_owner(
     }
 }
 
+/// The exact role-scoped generation is a free, zero-initialized source slot.
+pub closed spec fn physical_page_is_free_generation(
+    state: &PhysicalKvState,
+    page: PhysicalPageId,
+) -> bool {
+    &&& role_matches(state.selection.role, page.role)
+    &&& page.index < M1_KV_PHYSICAL_PAGE_SLOTS
+    &&& page.generation > 0
+    &&& state.page_slots@[page.index as int].generation == page.generation
+    &&& state.page_slots@[page.index as int].ownership == PhysicalPageOwnership::Free
+    &&& state.page_slots@[page.index as int].initialized_prefix == 0
+}
+
+/// The exact role-scoped generation is retired for one request and epoch.
+pub closed spec fn physical_page_is_retired_at_epoch(
+    state: &PhysicalKvState,
+    request: RequestId,
+    role: Qwen3ModelRole,
+    exact_epoch: CompletionEpoch,
+    page: PhysicalPageId,
+) -> bool {
+    &&& role_matches(state.selection.role, role)
+    &&& role_matches(page.role, role)
+    &&& page.index < M1_KV_PHYSICAL_PAGE_SLOTS
+    &&& page.generation > 0
+    &&& state.page_slots@[page.index as int].generation == page.generation
+    &&& retired_owner_matches(
+        state.page_slots@[page.index as int].ownership,
+        request,
+        role,
+        exact_epoch,
+    )
+    &&& !state.table_contains_index_spec(page.index)
+}
+
 fn validate_active_authority(
     state: &PhysicalKvState,
     request: RequestId,
@@ -1149,7 +1184,7 @@ closed spec fn affected_settlement_page_valid(
     }
 }
 
-pub(crate) closed spec fn physical_settlement_enabled(
+pub closed spec fn physical_settlement_enabled(
     state: &PhysicalKvState,
     request: RequestId,
     selection: Qwen3PlanSelection,
@@ -1181,6 +1216,10 @@ pub(crate) closed spec fn physical_settlement_enabled(
 }
 
 impl PhysicalKvSettlementPermit {
+    pub(crate) closed spec fn request_spec(&self) -> RequestId { self.request }
+
+    pub(crate) closed spec fn selection_spec(&self) -> Qwen3PlanSelection { self.selection }
+
     pub(crate) closed spec fn valid_for(&self, state: &PhysicalKvState) -> bool {
         let shrink_retained_tail = self.commit_end < self.tentative_end
             && self.commit_end % M1_KV_PAGE_TOKENS != 0;
@@ -1233,6 +1272,21 @@ impl PhysicalKvSettlementPermit {
         ensures count == self.retired_pages_spec(),
     {
         self.retired_pages
+    }
+
+    pub(crate) proof fn valid_for_establishes_enabled(&self, state: &PhysicalKvState)
+        requires self.valid_for(state),
+        ensures physical_settlement_enabled(
+            state,
+            self.request_spec(),
+            self.selection_spec(),
+            self.after_epoch_spec(),
+            self.pre_committed_spec(),
+            self.tentative_end_spec(),
+            self.commit_end_spec(),
+        ),
+    {
+        reveal(PhysicalKvSettlementPermit::valid_for);
     }
 }
 
@@ -1304,6 +1358,53 @@ pub closed spec fn physical_speculative_settlement_matches(
     &&& after.page_slots@ == expected_slots
 }
 
+/// Exposes the logical accepted-prefix facts of the sealed physical relation.
+pub proof fn physical_speculative_settlement_properties(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+    after_epoch: CompletionEpoch,
+    pre_committed: u32,
+    tentative_end: u32,
+    commit_end: u32,
+    retired_pages: u32,
+)
+    requires
+        physical_settlement_enabled(
+            before,
+            request,
+            selection,
+            after_epoch,
+            pre_committed,
+            tentative_end,
+            commit_end,
+        ),
+        physical_speculative_settlement_matches(
+            before,
+            after,
+            after_epoch,
+            tentative_end,
+            commit_end,
+            retired_pages,
+        ),
+    ensures
+        same_request(after.abstraction_spec().request, request),
+        after.selection_spec() == selection,
+        after.abstraction_spec().role == selection.role,
+        after.abstraction_spec().resident_tokens == commit_end,
+        after.abstraction_spec().committed_tokens == commit_end,
+        before.abstraction_spec().resident_tokens == tentative_end,
+        before.abstraction_spec().committed_tokens == pre_committed,
+{
+    reveal(physical_settlement_enabled);
+    reveal(physical_speculative_settlement_matches);
+    reveal(PhysicalKvState::immutable_frame);
+    reveal(PhysicalKvState::abstraction_spec);
+    reveal(PhysicalKvState::selection_spec);
+    reveal(same_request);
+}
+
 pub(crate) closed spec fn physical_settlement_transition(
     before: &PhysicalKvState,
     after: &PhysicalKvState,
@@ -1332,6 +1433,8 @@ pub(crate) fn preflight_physical_speculative_settlement(
     ensures match result {
         Ok(permit) => {
             &&& permit.valid_for(state)
+            &&& permit.request_spec() == request
+            &&& permit.selection_spec() == selection
             &&& permit.after_epoch_spec() == after_epoch
             &&& permit.pre_committed_spec() == pre_committed
             &&& permit.tentative_end_spec() == tentative_end
@@ -1864,6 +1967,7 @@ pub closed spec fn release_retired_enabled(
 ) -> bool {
     &&& same_request(state.request, authority.request)
     &&& role_matches(state.selection.role, authority.role)
+    &&& role_matches(page.role, authority.role)
     &&& page.index < M1_KV_PHYSICAL_PAGE_SLOTS
     &&& page.generation > 0
     &&& state.page_slots@[page.index as int].generation == page.generation
@@ -1907,7 +2011,152 @@ pub closed spec fn released_generation_matches(
         && released.generation as int == retired.generation as int + 1
 }
 
-pub(crate) proof fn released_generation_has_exact_successor(
+/// Exact source-level release under scheduler-provided quiescence.
+///
+/// This relation keeps the otherwise private page-slot ownership state sealed
+/// in its owning module. It states that the retired generation belonged to the
+/// exact request and role at the exact completed epoch, was unreachable from
+/// the page table, and became the free successor generation. It does not state
+/// that device bytes were cleared or that a device allocation was released.
+pub closed spec fn exact_quiescent_release_transition(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    request: RequestId,
+    role: Qwen3ModelRole,
+    exact_epoch: CompletionEpoch,
+    retired: PhysicalPageId,
+    released: PhysicalPageId,
+) -> bool {
+    &&& exact_epoch.value > 0
+    &&& same_request(before.request, request)
+    &&& role_matches(before.selection.role, role)
+    &&& role_matches(retired.role, role)
+    &&& physical_page_is_retired_at_epoch(
+        before,
+        request,
+        role,
+        exact_epoch,
+        retired,
+    )
+    &&& before.page_slots@[retired.index as int].generation < u32::MAX
+    &&& released_generation_matches(released, retired)
+    &&& release_retired_transition(before, after, retired)
+    &&& physical_page_is_free_generation(after, released)
+}
+
+proof fn release_transition_makes_successor_free(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    retired: PhysicalPageId,
+    released: PhysicalPageId,
+)
+    requires
+        role_matches(before.selection.role, retired.role),
+        retired.index < M1_KV_PHYSICAL_PAGE_SLOTS,
+        retired.generation > 0,
+        retired.generation < u32::MAX,
+        released_generation_matches(released, retired),
+        release_retired_transition(before, after, retired),
+    ensures physical_page_is_free_generation(after, released),
+{
+    reveal(released_generation_matches);
+    reveal(release_retired_transition);
+    reveal(physical_page_is_free_generation);
+    reveal(PhysicalKvState::immutable_frame);
+    reveal(role_matches);
+    assert(released.index == retired.index);
+    assert(released.generation as int == retired.generation as int + 1);
+    assert((retired.generation as int + 1) as u32 == released.generation);
+    assert(after.page_slots@[released.index as int] == PhysicalPageSlot {
+        generation: released.generation,
+        ownership: PhysicalPageOwnership::Free,
+        initialized_prefix: 0,
+    });
+}
+
+pub(crate) proof fn exact_authority_release_establishes_transition(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    authority: &KvQuiescenceAuthority,
+    request: RequestId,
+    role: Qwen3ModelRole,
+    exact_epoch: CompletionEpoch,
+    retired: PhysicalPageId,
+    released: PhysicalPageId,
+)
+    requires
+        authority.request_spec() == request,
+        authority.role_spec() == role,
+        authority.exact_epoch_spec() == exact_epoch,
+        exact_epoch.value > 0,
+        release_retired_enabled(before, retired, authority),
+        released_generation_matches(released, retired),
+        release_retired_transition(before, after, retired),
+    ensures exact_quiescent_release_transition(
+        before,
+        after,
+        request,
+        role,
+        exact_epoch,
+        retired,
+        released,
+    ),
+{
+    reveal(release_retired_enabled);
+    reveal(role_matches);
+    assert(role_matches(before.selection.role, retired.role));
+    release_transition_makes_successor_free(before, after, retired, released);
+    reveal(exact_quiescent_release_transition);
+    reveal(release_retired_transition);
+    reveal(released_generation_matches);
+    reveal(physical_page_is_retired_at_epoch);
+    reveal(physical_page_is_free_generation);
+    reveal(KvQuiescenceAuthority::request_spec);
+    reveal(KvQuiescenceAuthority::role_spec);
+    reveal(KvQuiescenceAuthority::exact_epoch_spec);
+}
+
+/// Opens the sealed release relation only to expose its stable public facts.
+pub proof fn exact_quiescent_release_properties(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    request: RequestId,
+    role: Qwen3ModelRole,
+    exact_epoch: CompletionEpoch,
+    retired: PhysicalPageId,
+    released: PhysicalPageId,
+)
+    requires exact_quiescent_release_transition(
+        before,
+        after,
+        request,
+        role,
+        exact_epoch,
+        retired,
+        released,
+    ),
+    ensures
+        after.abstraction_spec() == before.abstraction_spec(),
+        same_request(before.abstraction_spec().request, request),
+        role_matches(before.abstraction_spec().role, role),
+        physical_page_is_retired_at_epoch(before, request, role, exact_epoch, retired),
+        physical_page_is_free_generation(after, released),
+        released.role_spec() == retired.role_spec(),
+        released.index_spec() == retired.index_spec(),
+        released.generation_spec() as int == retired.generation_spec() as int + 1,
+{
+    reveal(exact_quiescent_release_transition);
+    reveal(release_retired_transition);
+    reveal(released_generation_matches);
+    reveal(physical_page_is_retired_at_epoch);
+    reveal(physical_page_is_free_generation);
+    reveal(PhysicalKvState::immutable_frame);
+    reveal(PhysicalKvState::abstraction_spec);
+    reveal(same_request);
+    reveal(role_matches);
+}
+
+pub proof fn released_generation_has_exact_successor(
     released: PhysicalPageId,
     prior: PhysicalPageId,
 )
@@ -1953,6 +2202,9 @@ pub fn release_retired_page(
         || !same_role(state.selection.role, authority.role)
     {
         return Err(PhysicalKvError::InvalidQuiescenceAuthority);
+    }
+    if !same_role(page.role, authority.role) {
+        return Err(PhysicalKvError::RoleMismatch);
     }
     if page.index >= M1_KV_PHYSICAL_PAGE_SLOTS_U32 {
         return Err(PhysicalKvError::PageOutOfRange);
@@ -2281,6 +2533,12 @@ mod tests {
             role: selection.role,
             exact_epoch: epoch,
         };
+        let wrong_role =
+            PhysicalPageId::new(Qwen3ModelRole::Draft06B, page.index(), page.generation());
+        assert_eq!(
+            release_retired_page(&mut state, wrong_role, &exact),
+            Err(PhysicalKvError::RoleMismatch)
+        );
         let next = release_retired_page(&mut state, page, &exact).unwrap();
         assert_eq!(next.generation(), page.generation() + 1);
         assert_eq!(

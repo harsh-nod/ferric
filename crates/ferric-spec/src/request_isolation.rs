@@ -976,7 +976,121 @@ pub closed spec fn isolated_speculative_settlement_transition(
     )
 }
 
+/// Source-level initialized physical prestate consumed by speculative settlement.
+///
+/// Both role states must contain the complete tentative interval with valid
+/// initialized page prefixes before the accepted prefix can be committed and
+/// the rejected suffix made unreachable. This is metadata refinement only; it
+/// does not relate device-memory bytes to logical token values.
+pub closed spec fn isolated_initialized_speculative_prestate(
+    selected: &IsolatedRequestKv,
+    index: &SpeculativeKvRoundIndex,
+    outcome: IsolatedSpeculativeKvSettlement,
+) -> bool {
+    &&& crate::paged_kv_refinement::physical_settlement_enabled(
+        &selected.target,
+        index.request,
+        index.target_selection,
+        index.completion_epoch,
+        index.target_pre_committed,
+        index.target_tentative.end,
+        outcome.target_commit_end,
+    )
+    &&& crate::paged_kv_refinement::physical_settlement_enabled(
+        &selected.draft,
+        index.request,
+        index.draft_selection,
+        index.completion_epoch,
+        index.draft_pre_committed,
+        index.draft_tentative.end,
+        outcome.draft_commit_end,
+    )
+}
+
+/// Derives the public accepted-prefix and rejected-suffix facts from the
+/// sealed two-role physical settlement relations.
+pub proof fn isolated_initialized_speculative_properties(
+    before: &IsolatedRequestKv,
+    after: &IsolatedRequestKv,
+    index: &SpeculativeKvRoundIndex,
+    outcome: IsolatedSpeculativeKvSettlement,
+)
+    requires
+        index.valid(),
+        request_identity_matches(before.request_spec(), index.request),
+        isolated_initialized_speculative_prestate(before, index, outcome),
+        isolated_speculative_settlement_transition(before, after, index, outcome),
+    ensures
+        request_identity_matches(
+            after.projection_spec().request,
+            before.projection_spec().request,
+        ),
+        request_identity_matches(after.projection_spec().request, index.request),
+        after.projection_spec().target.role == Qwen3ModelRole::Target8B,
+        after.projection_spec().draft.role == Qwen3ModelRole::Draft06B,
+        after.projection_spec().target.resident_tokens == outcome.target_commit_end,
+        after.projection_spec().target.committed_tokens == outcome.target_commit_end,
+        after.projection_spec().draft.resident_tokens == outcome.draft_commit_end,
+        after.projection_spec().draft.committed_tokens == outcome.draft_commit_end,
+        outcome.accepted_draft_tokens <= index.draft_token_count,
+        outcome.target_commit_end as int
+            == index.target_pre_committed as int + outcome.accepted_draft_tokens as int + 1,
+        outcome.draft_commit_end as int
+            == index.draft_pre_committed as int
+                + if outcome.accepted_draft_tokens < index.draft_token_count {
+                    outcome.accepted_draft_tokens as int + 1
+                } else {
+                    index.draft_token_count as int
+                },
+        after.projection_spec().target_retired_pages as int
+            == before.projection_spec().target_retired_pages as int
+                + outcome.target_retired_pages as int,
+        after.projection_spec().draft_retired_pages as int
+            == before.projection_spec().draft_retired_pages as int
+                + outcome.draft_retired_pages as int,
+        index.target_tentative.end as int - outcome.target_commit_end as int
+            == index.draft_token_count as int - outcome.accepted_draft_tokens as int,
+        index.draft_tentative.end as int - outcome.draft_commit_end as int
+            == if outcome.accepted_draft_tokens < index.draft_token_count {
+                index.draft_token_count as int - outcome.accepted_draft_tokens as int - 1
+            } else {
+                0
+            },
+{
+    reveal(isolated_initialized_speculative_prestate);
+    reveal(isolated_speculative_settlement_transition);
+    reveal(IsolatedRequestKv::projection_spec);
+    reveal(request_identity_matches);
+    crate::paged_kv_refinement::physical_speculative_settlement_properties(
+        &before.target,
+        &after.target,
+        index.request,
+        index.target_selection,
+        index.completion_epoch,
+        index.target_pre_committed,
+        index.target_tentative.end,
+        outcome.target_commit_end,
+        outcome.target_retired_pages,
+    );
+    crate::paged_kv_refinement::physical_speculative_settlement_properties(
+        &before.draft,
+        &after.draft,
+        index.request,
+        index.draft_selection,
+        index.completion_epoch,
+        index.draft_pre_committed,
+        index.draft_tentative.end,
+        outcome.draft_commit_end,
+        outcome.draft_retired_pages,
+    );
+    index.rejected_tail_bounds(outcome.accepted_draft_tokens);
+}
+
 impl IsolatedSpeculativeKvSettlementPermit {
+    pub(crate) closed spec fn outcome_spec(&self) -> IsolatedSpeculativeKvSettlement {
+        self.outcome
+    }
+
     pub(crate) closed spec fn accepted_draft_tokens_spec(&self) -> u8 {
         self.outcome.accepted_draft_tokens
     }
@@ -992,12 +1106,16 @@ impl IsolatedSpeculativeKvSettlementPermit {
         &&& index.draft_commit_end_spec(self.outcome.accepted_draft_tokens)
             == Some(self.outcome.draft_commit_end)
         &&& self.target.valid_for(&selected.target)
+        &&& self.target.request_spec() == index.request
+        &&& self.target.selection_spec() == index.target_selection
         &&& self.target.after_epoch_spec() == index.completion_epoch
         &&& self.target.pre_committed_spec() == index.target_pre_committed
         &&& self.target.tentative_end_spec() == index.target_tentative.end
         &&& self.target.commit_end_spec() == self.outcome.target_commit_end
         &&& self.target.retired_pages_spec() == self.outcome.target_retired_pages
         &&& self.draft.valid_for(&selected.draft)
+        &&& self.draft.request_spec() == index.request
+        &&& self.draft.selection_spec() == index.draft_selection
         &&& self.draft.after_epoch_spec() == index.completion_epoch
         &&& self.draft.pre_committed_spec() == index.draft_pre_committed
         &&& self.draft.tentative_end_spec() == index.draft_tentative.end
@@ -1032,6 +1150,7 @@ pub(crate) fn preflight_isolated_speculative_kv(
                 expected.target_selection_spec(),
                 expected.draft_selection_spec(),
             )
+            &&& request_identity_matches(selected.request_spec(), index.request)
             &&& permit.valid_for(selected, index)
             &&& permit.accepted_draft_tokens_spec() == accepted_draft_tokens
         },
@@ -1040,6 +1159,7 @@ pub(crate) fn preflight_isolated_speculative_kv(
 {
     proof {
         reveal(IsolatedSpeculativeKvSettlementPermit::valid_for);
+        reveal(request_identity_matches);
     }
     let current = validate_routing(batch, selected, other, expected.request)?;
     if !matches!(
@@ -1167,6 +1287,7 @@ pub(crate) fn apply_preflighted_isolated_speculative_kv(
         _index,
         outcome,
     ),
+    outcome == permit.outcome_spec(),
     outcome.accepted_draft_tokens == permit.accepted_draft_tokens_spec(),
 {
     let ghost entry = *selected;
@@ -1218,6 +1339,12 @@ pub fn settle_isolated_speculative_kv(
                     expected.target_selection_spec(),
                     expected.draft_selection_spec(),
                 )
+                &&& request_identity_matches(old(selected).request_spec(), index.request)
+                &&& isolated_initialized_speculative_prestate(
+                    old(selected),
+                    index,
+                    outcome,
+                )
                 &&& isolated_speculative_settlement_transition(
                     old(selected),
                     final(selected),
@@ -1228,7 +1355,10 @@ pub fn settle_isolated_speculative_kv(
             Err(_) => true,
         },
 {
+    let ghost entry = *selected;
+    assert(entry == *old(selected));
     proof {
+        reveal(isolated_initialized_speculative_prestate);
         reveal(isolated_speculative_settlement_transition);
     }
     let permit = preflight_isolated_speculative_kv(
@@ -1239,7 +1369,19 @@ pub fn settle_isolated_speculative_kv(
         accepted_draft_tokens,
         expected,
     )?;
+    let ghost expected_outcome = permit.outcome_spec();
+    proof {
+        reveal(IsolatedSpeculativeKvSettlementPermit::valid_for);
+        permit.target.valid_for_establishes_enabled(&entry.target);
+        permit.draft.valid_for_establishes_enabled(&entry.draft);
+        assert(isolated_initialized_speculative_prestate(
+            &entry,
+            index,
+            expected_outcome,
+        ));
+    }
     let outcome = apply_preflighted_isolated_speculative_kv(selected, index, permit);
+    assert(outcome == expected_outcome);
     Ok(outcome)
 }
 
@@ -1294,6 +1436,185 @@ pub fn map_isolated_token(
     }
 }
 
+/// Observes exact retired-page ownership through the selected role projection.
+pub closed spec fn isolated_role_page_is_retired_at_epoch(
+    selected: &IsolatedRequestKv,
+    request: RequestId,
+    role: Qwen3ModelRole,
+    exact_epoch: CompletionEpoch,
+    page: PhysicalPageId,
+) -> bool {
+    if target_role(role) {
+        crate::paged_kv_refinement::physical_page_is_retired_at_epoch(
+            &selected.target,
+            request,
+            role,
+            exact_epoch,
+            page,
+        )
+    } else {
+        draft_role(role) && crate::paged_kv_refinement::physical_page_is_retired_at_epoch(
+            &selected.draft,
+            request,
+            role,
+            exact_epoch,
+            page,
+        )
+    }
+}
+
+/// Observes a free successor generation through the selected role projection.
+pub closed spec fn isolated_role_page_is_free_generation(
+    selected: &IsolatedRequestKv,
+    role: Qwen3ModelRole,
+    page: PhysicalPageId,
+) -> bool {
+    if target_role(role) {
+        crate::paged_kv_refinement::physical_page_is_free_generation(&selected.target, page)
+    } else {
+        draft_role(role)
+            && crate::paged_kv_refinement::physical_page_is_free_generation(&selected.draft, page)
+    }
+}
+
+/// Exact terminal release of one role-scoped retired page generation.
+///
+/// The selected request must already carry the exact nonzero quiescent epoch.
+/// The non-selected role and every request-level identity field remain framed.
+/// The selected physical role performs the sealed retired-to-free successor
+/// transition and its retirement count decreases exactly once.
+pub closed spec fn isolated_exact_page_release_transition(
+    before: &IsolatedRequestKv,
+    after: &IsolatedRequestKv,
+    request: RequestId,
+    role: Qwen3ModelRole,
+    retired: PhysicalPageId,
+    released: PhysicalPageId,
+    exact_epoch: CompletionEpoch,
+) -> bool {
+    &&& request_identity_matches(before.request, request)
+    &&& before.has_quiescent_epoch
+    &&& before.quiescent_epoch == exact_epoch
+    &&& exact_epoch.value > 0
+    &&& after.request == before.request
+    &&& after.quiescent_epoch == before.quiescent_epoch
+    &&& after.has_quiescent_epoch == before.has_quiescent_epoch
+    &&& if target_role(role) {
+        &&& crate::paged_kv_refinement::exact_quiescent_release_transition(
+            &before.target,
+            &after.target,
+            request,
+            role,
+            exact_epoch,
+            retired,
+            released,
+        )
+        &&& after.draft == before.draft
+        &&& before.target_retired_pages > 0
+        &&& after.target_retired_pages as int + 1
+            == before.target_retired_pages as int
+        &&& after.draft_retired_pages == before.draft_retired_pages
+    } else {
+        &&& draft_role(role)
+        &&& crate::paged_kv_refinement::exact_quiescent_release_transition(
+            &before.draft,
+            &after.draft,
+            request,
+            role,
+            exact_epoch,
+            retired,
+            released,
+        )
+        &&& after.target == before.target
+        &&& before.draft_retired_pages > 0
+        &&& after.draft_retired_pages as int + 1
+            == before.draft_retired_pages as int
+        &&& after.target_retired_pages == before.target_retired_pages
+    }
+}
+
+/// Exposes the stable public consequences of one exact terminal page return.
+pub proof fn isolated_exact_page_release_properties(
+    before: &IsolatedRequestKv,
+    after: &IsolatedRequestKv,
+    request: RequestId,
+    role: Qwen3ModelRole,
+    retired: PhysicalPageId,
+    released: PhysicalPageId,
+    exact_epoch: CompletionEpoch,
+)
+    requires isolated_exact_page_release_transition(
+        before,
+        after,
+        request,
+        role,
+        retired,
+        released,
+        exact_epoch,
+    ),
+    ensures
+        target_role(role) || draft_role(role),
+        request_identity_matches(
+            after.projection_spec().request,
+            before.projection_spec().request,
+        ),
+        after.projection_spec().quiescent_epoch == Some(exact_epoch),
+        isolated_role_page_is_retired_at_epoch(
+            before,
+            request,
+            role,
+            exact_epoch,
+            retired,
+        ),
+        isolated_role_page_is_free_generation(after, role, released),
+        released.role_spec() == retired.role_spec(),
+        released.index_spec() == retired.index_spec(),
+        released.generation_spec() as int == retired.generation_spec() as int + 1,
+        target_role(role) ==> {
+            &&& after.projection_spec().target == before.projection_spec().target
+            &&& after.projection_spec().draft == before.projection_spec().draft
+            &&& after.projection_spec().target_retired_pages as int + 1
+                == before.projection_spec().target_retired_pages as int
+            &&& after.projection_spec().draft_retired_pages
+                == before.projection_spec().draft_retired_pages
+        },
+        draft_role(role) ==> {
+            &&& after.projection_spec().target == before.projection_spec().target
+            &&& after.projection_spec().draft == before.projection_spec().draft
+            &&& after.projection_spec().draft_retired_pages as int + 1
+                == before.projection_spec().draft_retired_pages as int
+            &&& after.projection_spec().target_retired_pages
+                == before.projection_spec().target_retired_pages
+        },
+{
+    reveal(isolated_exact_page_release_transition);
+    reveal(isolated_role_page_is_retired_at_epoch);
+    reveal(isolated_role_page_is_free_generation);
+    reveal(IsolatedRequestKv::projection_spec);
+    reveal(request_identity_matches);
+    if target_role(role) {
+        crate::paged_kv_refinement::exact_quiescent_release_properties(
+            &before.target,
+            &after.target,
+            request,
+            role,
+            exact_epoch,
+            retired,
+            released,
+        );
+    } else {
+        crate::paged_kv_refinement::exact_quiescent_release_properties(
+            &before.draft,
+            &after.draft,
+            request,
+            role,
+            exact_epoch,
+            retired,
+            released,
+        );
+    }
+}
+
 /// Releases one retired page only from a scheduler-quiescent request and an
 /// epoch recorded by its exact completion transition.
 ///
@@ -1314,7 +1635,18 @@ pub fn release_isolated_page(
     ensures
         *final(other) == *old(other),
         result.is_err() ==> *final(selected) == *old(selected),
+        result.is_ok() ==> isolated_exact_page_release_transition(
+            old(selected),
+            final(selected),
+            request,
+            role,
+            page,
+            result.unwrap(),
+            exact_epoch,
+        ),
 {
+    let ghost entry = *selected;
+    assert(entry == *old(selected));
     let current = validate_routing(batch, selected, other, request)?;
     if !matches!(
         (current.lifecycle().state, current.lifecycle().phase),
@@ -1356,6 +1688,44 @@ pub fn release_isolated_page(
         selected.target_retired_pages -= 1;
     } else {
         selected.draft_retired_pages -= 1;
+    }
+    proof {
+        if target {
+            crate::paged_kv_refinement::exact_authority_release_establishes_transition(
+                &entry.target,
+                &selected.target,
+                &authority,
+                request,
+                role,
+                exact_epoch,
+                page,
+                released,
+            );
+        } else {
+            crate::paged_kv_refinement::exact_authority_release_establishes_transition(
+                &entry.draft,
+                &selected.draft,
+                &authority,
+                request,
+                role,
+                exact_epoch,
+                page,
+                released,
+            );
+        }
+        reveal(isolated_exact_page_release_transition);
+        reveal(request_identity_matches);
+        reveal(target_role);
+        reveal(draft_role);
+        assert(isolated_exact_page_release_transition(
+            &entry,
+            selected,
+            request,
+            role,
+            page,
+            released,
+            exact_epoch,
+        ));
     }
     Ok(released)
 }

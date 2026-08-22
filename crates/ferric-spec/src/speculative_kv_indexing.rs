@@ -329,8 +329,19 @@ impl SpeculativeKvRoundIndex {
             self.valid(),
             accepted <= self.draft_token_count,
         ensures
+            self.target_selection.role == Qwen3ModelRole::Target8B,
+            self.draft_selection.role == Qwen3ModelRole::Draft06B,
             self.target_commit_end_spec(accepted).is_some(),
             self.draft_commit_end_spec(accepted).is_some(),
+            self.target_commit_end_spec(accepted).unwrap() as int
+                == self.target_pre_committed as int + accepted as int + 1,
+            self.draft_commit_end_spec(accepted).unwrap() as int
+                == self.draft_pre_committed as int
+                    + if accepted < self.draft_token_count {
+                        accepted as int + 1
+                    } else {
+                        self.draft_token_count as int
+                    },
             self.target_tentative.end as int
                 - self.target_commit_end_spec(accepted).unwrap() as int
                 == self.draft_token_count as int - accepted as int,
@@ -466,9 +477,14 @@ impl SpeculativeKvRoundIndex {
             expected_target,
             expected_draft,
         ),
-        ensures self.valid(),
+        ensures
+            self.valid(),
+            self.request == expected_request,
+            self.target_selection == expected_target,
+            self.draft_selection == expected_draft,
     {
         reveal(SpeculativeKvRoundIndex::valid_for);
+        RequestId::extensional(&self.request, &expected_request);
     }
 
     pub proof fn valid_implies_correction_is_deferred(&self)
