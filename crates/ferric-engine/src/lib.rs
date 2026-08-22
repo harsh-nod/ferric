@@ -13,6 +13,7 @@ mod epoch;
 mod model_memory_allocations;
 mod operation_dispatch_expansion;
 mod operation_kernel_plan;
+mod physical_buffer_recipe;
 mod physical_dispatch_recipe;
 mod physical_kernarg_recipe;
 mod physical_program_catalog;
@@ -65,6 +66,12 @@ pub use operation_kernel_plan::{
     bind_declared_operation_kernel_plan, DeclaredKernelFamilyArtifact, DeclaredOperationIdentity,
     DeclaredOperationKernelBinding, DeclaredOperationKernelPlan, OperationKernelIdentityComponent,
     OperationKernelPlanError, OperationKernelPlanFailure, OperationKernelPlanOutcome,
+};
+pub use physical_buffer_recipe::{
+    derive_m1_physical_buffer_recipe_v1, AddresslessM1PhysicalBufferRecipeV1,
+    M1PhysicalBufferAccessV1, M1PhysicalBufferRecipeErrorV1, M1PhysicalBufferRecipeFailureV1,
+    M1PhysicalBufferRecipeRowV1, M1PhysicalBufferSentinelV1, M1PhysicalBufferSourceV1,
+    M1PhysicalExplicitBufferV1, M1_PHYSICAL_BUFFER_RECIPE_VERSION_V1,
 };
 pub use physical_dispatch_recipe::{
     derive_m1_physical_dispatch_recipe_v1, AddresslessM1PhysicalDispatchRecipeV1,
