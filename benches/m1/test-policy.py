@@ -22,7 +22,10 @@ SUITES = (
 )
 INPUT_FORMAT = "FERRIC-M1-BENCHMARK-INPUT-V1"
 RECORDS_FORMAT = "FERRIC-M1-BENCHMARK-RECORDS-V1"
+DIFFERENTIAL_PAIRS_FORMAT = "FERRIC-M1-DIFFERENTIAL-PAIRS-V1"
+DIFFERENTIAL_OUTPUT_FORMAT = "FERRIC-M1-DIFFERENTIAL-OUTPUT-V1"
 TARGET = "gfx942:xnack-"
+VOCABULARY_SIZE = 151_936
 
 
 def fail(message: str) -> NoReturn:
@@ -183,6 +186,244 @@ def validate_descriptor(
             fail(f"{suite} descriptor contains a weak or nondeterministic roster")
 
 
+def differential_rows(kind: str) -> int:
+    if kind in {
+        "decode-s1-c8192",
+        "prefill-s1-t128",
+        "prefill-s1-t2048",
+        "prefill-s1-t512",
+    }:
+        return 1
+    if kind in {"decode-s8-c8192", "prefill-s8-t128"}:
+        return 8
+    if kind == "decode-s32-c8192":
+        return 32
+    fail(f"unknown differential case kind: {kind}")
+
+
+def output_manifest(
+    plan: dict[str, Any],
+    case: dict[str, Any],
+    producer: str,
+    logits_path: Path,
+    logits: bytes,
+    tokens_path: Path,
+    tokens: bytes,
+    runner_transcript_sha256: str,
+) -> dict[str, Any]:
+    if producer == "ferric":
+        producer_identity = "benchmark-executable"
+        protocol_identity = "benchmark-protocol"
+    else:
+        producer_identity = "reference-implementation"
+        protocol_identity = "reference-protocol"
+    return {
+        "authority": "externally-collected-model-output-only",
+        "case_id": case["id"],
+        "environment_sha256": plan["identities"]["environment"],
+        "format": DIFFERENTIAL_OUTPUT_FORMAT,
+        "input_sha256": case["input_sha256"],
+        "kind": case["kind"],
+        "logits": {
+            "bytes": len(logits),
+            "encoding": "bf16-le",
+            "path": logits_path.name,
+            "sha256": hashlib.sha256(logits).hexdigest(),
+        },
+        "plan_sha256": hashlib.sha256(canonical_bytes(plan)).hexdigest(),
+        "producer": producer,
+        "producer_sha256": plan["identities"][producer_identity],
+        "protocol_sha256": plan["identities"][protocol_identity],
+        "runner_transcript_sha256": runner_transcript_sha256,
+        "shape": {
+            "rows": differential_rows(case["kind"]),
+            "vocabulary_size": VOCABULARY_SIZE,
+        },
+        "tokens": {
+            "bytes": len(tokens),
+            "encoding": "u32-le",
+            "path": tokens_path.name,
+            "sha256": hashlib.sha256(tokens).hexdigest(),
+        },
+        "workload_sha256": case["workload_sha256"],
+    }
+
+
+def exercise_differential_producer(
+    repo: Path,
+    scratch: Path,
+    plan_path: Path,
+    plan: dict[str, Any],
+    plan_raw: bytes,
+) -> None:
+    pairs = []
+    output_manifests: dict[str, Path] = {}
+    runner_transcripts: dict[str, tuple[Path, bytes]] = {}
+    for case in plan["cases"]:
+        rows = differential_rows(case["kind"])
+        logits = (0x3F80).to_bytes(2, "little") * (rows * VOCABULARY_SIZE)
+        tokens = (0).to_bytes(4, "little") * rows
+        runner_path = scratch / f"{case['id']}.runner.json"
+        runner_bytes = canonical_bytes(
+            {
+                "case_id": case["id"],
+                "status": "synthetic-policy-fixture-only",
+            }
+        )
+        runner_path.write_bytes(runner_bytes)
+        runner_sha256 = hashlib.sha256(runner_bytes).hexdigest()
+        runner_transcripts[case["id"]] = (runner_path, runner_bytes)
+        manifests = {}
+        for producer in ("ferric", "reference"):
+            prefix = f"{case['id']}.{producer}"
+            logits_path = scratch / f"{prefix}.logits.bf16le"
+            tokens_path = scratch / f"{prefix}.tokens.u32le"
+            logits_path.write_bytes(logits)
+            tokens_path.write_bytes(tokens)
+            manifest_path = scratch / f"{prefix}.output.json"
+            write(
+                manifest_path,
+                output_manifest(
+                    plan,
+                    case,
+                    producer,
+                    logits_path,
+                    logits,
+                    tokens_path,
+                    tokens,
+                    runner_sha256,
+                ),
+            )
+            manifests[producer] = manifest_path
+            output_manifests[f"{case['id']}:{producer}"] = manifest_path
+        pairs.append(
+            {
+                "case_id": case["id"],
+                "ferric_output_manifest": manifests["ferric"].name,
+                "kind": case["kind"],
+                "reference_output_manifest": manifests["reference"].name,
+                "runner_transcript": {
+                    "bytes": len(runner_bytes),
+                    "path": runner_path.name,
+                    "sha256": runner_sha256,
+                },
+            }
+        )
+    pairs_value = {
+        "authority": "externally-collected-differential-pairs-only",
+        "format": DIFFERENTIAL_PAIRS_FORMAT,
+        "pairs": pairs,
+        "plan_sha256": hashlib.sha256(plan_raw).hexdigest(),
+        "suite": "differential",
+    }
+    pairs_path = scratch / "differential.pairs.json"
+    write(pairs_path, pairs_value)
+
+    raw_directory = scratch / "differential.raw"
+    records_path = scratch / "differential.produced-records.json"
+    invoke(
+        repo,
+        "differential",
+        ["produce", str(plan_path), str(pairs_path), str(raw_directory), str(records_path)],
+    )
+    if len(list(raw_directory.iterdir())) != 7:
+        fail("differential producer did not emit the exact raw-record roster")
+    records = load_canonical(records_path.read_bytes(), "produced differential records")
+    if len(records.get("observations", [])) != 7:
+        fail("differential producer record roster drifted")
+    for observation in records["observations"]:
+        metrics = observation["measurements"]
+        if (
+            metrics["maximum-logit-ulp-error"] != [0]
+            or metrics["token-mismatches"] != [0]
+        ):
+            fail("equal synthetic differential outputs did not compare exactly")
+    transcript_path = scratch / "differential.produced-transcript.json"
+    invoke(
+        repo,
+        "differential",
+        ["validate", str(plan_path), str(records_path), str(transcript_path)],
+    )
+
+    first = plan["cases"][0]
+    runner_path, runner_bytes = runner_transcripts[first["id"]]
+    runner_path.write_bytes(runner_bytes + b"\n")
+    invoke(
+        repo,
+        "differential",
+        [
+            "produce",
+            str(plan_path),
+            str(pairs_path),
+            str(scratch / "substituted-runner.raw"),
+            str(scratch / "substituted-runner.records.json"),
+        ],
+        expected_status=1,
+    )
+    runner_path.write_bytes(runner_bytes)
+
+    ferric_manifest_path = output_manifests[f"{first['id']}:ferric"]
+    ferric_manifest = load_canonical(
+        ferric_manifest_path.read_bytes(), "Ferric output manifest"
+    )
+    ferric_manifest["producer_sha256"] = digest("substituted producer")
+    write(ferric_manifest_path, ferric_manifest)
+    invoke(
+        repo,
+        "differential",
+        [
+            "produce",
+            str(plan_path),
+            str(pairs_path),
+            str(scratch / "substituted.raw"),
+            str(scratch / "substituted.records.json"),
+        ],
+        expected_status=1,
+    )
+
+    ferric_manifest["producer_sha256"] = plan["identities"]["benchmark-executable"]
+    wrong_tokens = (1).to_bytes(4, "little")
+    wrong_tokens_path = scratch / ferric_manifest["tokens"]["path"]
+    wrong_tokens_path.write_bytes(wrong_tokens)
+    ferric_manifest["tokens"]["sha256"] = hashlib.sha256(wrong_tokens).hexdigest()
+    write(ferric_manifest_path, ferric_manifest)
+    invoke(
+        repo,
+        "differential",
+        [
+            "produce",
+            str(plan_path),
+            str(pairs_path),
+            str(scratch / "wrong-argmax.raw"),
+            str(scratch / "wrong-argmax.records.json"),
+        ],
+        expected_status=1,
+    )
+
+    wrong_tokens_path.write_bytes((0).to_bytes(4, "little"))
+    ferric_manifest["tokens"]["sha256"] = hashlib.sha256(
+        (0).to_bytes(4, "little")
+    ).hexdigest()
+    logits_path = scratch / ferric_manifest["logits"]["path"]
+    logits = logits_path.read_bytes()
+    nonfinite_logits = (0x7F80).to_bytes(2, "little") + logits[2:]
+    logits_path.write_bytes(nonfinite_logits)
+    ferric_manifest["logits"]["sha256"] = hashlib.sha256(nonfinite_logits).hexdigest()
+    write(ferric_manifest_path, ferric_manifest)
+    invoke(
+        repo,
+        "differential",
+        [
+            "produce",
+            str(plan_path),
+            str(pairs_path),
+            str(scratch / "nonfinite.raw"),
+            str(scratch / "nonfinite.records.json"),
+        ],
+        expected_status=1,
+    )
+
+
 def exercise_suite(
     repo: Path, scratch: Path, requirements: dict[str, Any], suite: str
 ) -> None:
@@ -203,6 +444,8 @@ def exercise_suite(
         fail(f"{suite} plans are nondeterministic")
     plan_raw = plan_a.read_bytes()
     plan = load_canonical(plan_raw, f"{suite} plan")
+    if suite == "differential":
+        exercise_differential_producer(repo, scratch, plan_a, plan, plan_raw)
 
     records_path = scratch / f"{suite}.records.json"
     transcript_path = scratch / f"{suite}.transcript.json"

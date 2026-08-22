@@ -25,6 +25,31 @@ or qualification. Real MI300X/model/reference/baseline records and the
 independent M1 evidence validators remain required. Requirements `m1.r29`
 through `m1.r33` remain `Open`.
 
+The differential suite can also turn an exact seven-case output-pair manifest
+into immutable raw comparison records plus the common benchmark-record
+envelope:
+
+```text
+cargo run --locked -p ferric-m1-benchmarks --bin ferric-m1-differential -- \
+  produce PLAN PAIRS OUTPUT-RAW-DIR OUTPUT-RECORDS
+```
+
+`PAIRS` uses `FERRIC-M1-DIFFERENTIAL-PAIRS-V1` and names one canonical
+`FERRIC-M1-DIFFERENTIAL-OUTPUT-V1` manifest for Ferric and one for the
+independent reference in every planned case, plus an immutable canonical runner
+transcript companion. Paths are safe relative paths. Each output manifest binds
+its producer, protocol, environment, plan, case input, workload, and runner
+transcript identities, and describes exact-size little-endian BF16 logits
+`[rows,151936]` and `u32` greedy-token payloads by path and SHA-256. Rows are
+fixed by the seven declared case kinds.
+
+The producer hashes while streaming both full logit payloads, rejects short,
+trailing, substituted, or nonfinite data, computes monotonic BF16 ULP distance
+with signed zeros equal, and requires each declared token to be the lowest-ID
+argmax of its own row. It records comparison counts, maximum ULP distance, and
+Ferric/reference token mismatches. It deliberately applies no numerical
+tolerance and does not turn the resulting records into qualification evidence.
+
 The policy test uses temporary synthetic values solely to exercise the CLI
 protocol and mutation rejection. It never writes benchmark evidence:
 

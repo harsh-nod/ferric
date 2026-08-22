@@ -84,7 +84,56 @@ pub struct Suite {
     pub nonclaim: &'static str,
 }
 
-type BenchResult<T> = Result<T, String>;
+/// Failure returned by a benchmark protocol command.
+pub type BenchResult<T> = Result<T, String>;
+
+/// Loads and validates one canonical benchmark plan without granting evidence authority.
+///
+/// # Errors
+///
+/// Returns an error for an unreadable, noncanonical, malformed, or suite-mismatched plan.
+pub fn load_benchmark_plan(suite: &Suite, path: &Path) -> BenchResult<(Value, Vec<u8>)> {
+    validate_definition(suite)?;
+    let bytes = read_regular(path, "benchmark plan")?;
+    let value = parse_canonical(&bytes, "benchmark plan")?;
+    validate_plan(suite, &value)?;
+    Ok((value, bytes))
+}
+
+/// Loads one bounded canonical JSON document from a regular nonsymlink file.
+///
+/// # Errors
+///
+/// Returns an error when the file or its canonical JSON representation is invalid.
+pub fn load_canonical_document(path: &Path, description: &str) -> BenchResult<(Value, Vec<u8>)> {
+    let bytes = read_regular(path, description)?;
+    let value = parse_canonical(&bytes, description)?;
+    Ok((value, bytes))
+}
+
+/// Serializes a value with the benchmark protocol's canonical JSON encoding.
+///
+/// # Errors
+///
+/// Returns an error when `value` cannot be represented as JSON.
+pub fn encode_canonical_document(value: &Value) -> BenchResult<Vec<u8>> {
+    canonical_bytes(value)
+}
+
+/// Returns the lowercase SHA-256 identity of an immutable byte sequence.
+#[must_use]
+pub fn sha256_identity(bytes: &[u8]) -> String {
+    sha256(bytes)
+}
+
+/// Creates and synchronizes a protocol output without replacing an existing path.
+///
+/// # Errors
+///
+/// Returns an error when the path exists or the new file cannot be written and synchronized.
+pub fn create_new_output(path: &Path, bytes: &[u8]) -> BenchResult<()> {
+    write_new(path, bytes)
+}
 
 /// Runs the common CLI for one source-reviewed suite definition.
 #[must_use]
