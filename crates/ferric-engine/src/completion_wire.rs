@@ -4,10 +4,12 @@
 //! before they can be correlated with [`ExactCompletion`]. The byte checker is
 //! deliberately inert: neither the bytes nor [`InertCheckedCompletionRecord`]
 //! prove readback, queue publication, GPU completion, model content, kernel
-//! execution, numerical refinement, inference, or hardware behavior. A future
-//! generic service runner must supply a stronger completed-readback token bound
-//! to the exact host-download range. The current exact-epoch join does not
-//! substitute for that missing range-custody boundary.
+//! execution, numerical refinement, inference, or hardware behavior. Production
+//! code obtains bytes through
+//! [`crate::M1PhysicalRecycledQueueSessionV1::read_and_check_completion`], which
+//! binds the exact retained K7 range and scheduler roster before it creates one
+//! [`ExactCompletion`]. Calling the inert checker alone grants no completion
+//! authority.
 //!
 //! The wire format does not encode role, mode, or bucket. Those values remain
 //! checked host context retained from `StepPlan`; the plan identity is the only
@@ -163,12 +165,13 @@ impl InertCheckedCompletionRecord {
     }
 }
 
-/// Exact-epoch correlation of inert checked bytes with independent quiescence.
+/// Legacy exact-epoch correlation of inert checked bytes with quiescence.
 ///
 /// This wrapper is linear because it contains [`ExactCompletion`]. It still
 /// does not prove that the bytes came from the completed submission or a
 /// particular host-download range, authenticate model content, or prove
-/// inference correctness.
+/// inference correctness. Production completed readback uses the physical queue
+/// lifecycle's range- and roster-bound join instead.
 ///
 /// ```compile_fail
 /// use ferric_engine::EpochJoinedCompletionRecord;
@@ -309,12 +312,12 @@ pub fn check_inert_completion_record(
     })
 }
 
-/// Correlates checked bytes with separately obtained exact completion custody.
+/// Correlates an inert checked record with separately obtained completion custody.
 ///
-/// The current crate has no production constructor for [`ExactCompletion`],
-/// and that type does not bind a host-download range. This function only checks
-/// that both inputs name the same epoch. A future generic completed-readback
-/// token must be joined before these bytes may influence production state.
+/// This compatibility utility checks only that both inputs name the same epoch.
+/// It does not establish completed-readback provenance. Production code should
+/// retain the checked records and single [`ExactCompletion`] minted together by
+/// [`crate::M1PhysicalRecycledQueueSessionV1::read_and_check_completion`].
 ///
 /// # Errors
 ///

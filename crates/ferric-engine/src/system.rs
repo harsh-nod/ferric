@@ -3,10 +3,12 @@
 #[allow(unused_imports)]
 use crate::cache::{KvDetachedRequest, KvError, KvPool, MAX_REQUEST_SLOTS};
 use crate::epoch::ExactCompletion;
-use crate::scheduler::{DispatchBatch, KvQuiescencePermit, Scheduler, SchedulerError};
+use crate::scheduler::{
+    DispatchBatch, KvQuiescencePermit, M1ScheduledDispatchV1, Scheduler, SchedulerError,
+};
 use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::scheduling::RequestState;
-use ferric_spec::RequestId;
+use ferric_spec::{RequestId, M1_MAX_ACTIVE_SEQUENCES};
 use vstd::prelude::*;
 
 verus! {
@@ -1905,6 +1907,30 @@ impl<const C: usize> Engine<C> {
         }
     }
 
+    /// Dispatches at most the M1 lane capacity and captures the exact selected roster.
+    ///
+    /// The scheduler's linear batch metadata and the caller-inaccessible stack
+    /// scratch prefix move immediately into one [`M1ScheduledDispatchV1`].
+    ///
+    /// # Errors
+    ///
+    /// Returns the same fail-stop or scheduler error as [`Self::dispatch_ready`].
+    pub fn dispatch_m1_ready(
+        &mut self,
+    ) -> (result: Result<Option<M1ScheduledDispatchV1>, EngineError>)
+        requires old(self).well_formed(),
+        ensures final(self).well_formed(),
+    {
+        let mut selected = [RequestId::new(0, 0); M1_MAX_ACTIVE_SEQUENCES as usize];
+        match self.dispatch_ready(&mut selected)? {
+            Some(batch) => Ok(Some(M1ScheduledDispatchV1::from_dispatch_batch(
+                batch,
+                &selected,
+            ))),
+            None => Ok(None),
+        }
+    }
+
     /// Applies one exact completion and its per-member accepted token counts.
     ///
     /// Caller-controlled length and acceptance bounds are checked before the
@@ -2747,6 +2773,22 @@ mod tests {
         assert_eq!(engine.committed_tokens(request), Some(2));
         assert_eq!(engine.resident_tokens(request), Some(2));
         assert_eq!(engine.state(request), Some(RequestState::Ready));
+    }
+
+    #[test]
+    fn m1_dispatch_owns_exact_selected_prefix_and_canonical_padding() {
+        let mut engine = Engine::<4>::new(32, 4, 64).unwrap();
+        let first = engine.admit().unwrap();
+        let second = engine.admit().unwrap();
+        engine.append_tentative(first, 1).unwrap();
+        engine.append_tentative(second, 1).unwrap();
+
+        let scheduled = engine.dispatch_m1_ready().unwrap().unwrap();
+        assert_eq!(scheduled.epoch(), CompletionEpoch::new(1));
+        assert_eq!(scheduled.member_count(), 2);
+        assert_eq!(scheduled.member(0), Some(first));
+        assert_eq!(scheduled.member(1), Some(second));
+        assert!(scheduled.members()[2..].iter().all(Option::is_none));
     }
 
     #[test]

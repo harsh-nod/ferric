@@ -5,7 +5,7 @@ use crate::epoch::ExactCompletion;
 use ferric_spec::completion::CompletionEpoch;
 #[allow(unused_imports)]
 use ferric_spec::scheduling::{LifecyclePhase, RequestState, RequestTransition, SequentialRequest};
-use ferric_spec::RequestId;
+use ferric_spec::{RequestId, M1_MAX_ACTIVE_SEQUENCES};
 use vstd::prelude::*;
 
 verus! {
@@ -97,7 +97,13 @@ impl BatchRecord {
 
 /// Successful dispatch metadata. Members occupy the prefix written to the
 /// caller-provided output slice.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+///
+/// ```compile_fail
+/// use ferric_engine::DispatchBatch;
+/// fn require_clone<T: Clone>() {}
+/// require_clone::<DispatchBatch>();
+/// ```
+#[derive(Debug, PartialEq, Eq)]
 pub struct DispatchBatch {
     epoch: CompletionEpoch,
     member_count: usize,
@@ -105,14 +111,14 @@ pub struct DispatchBatch {
 
 impl DispatchBatch {
     #[must_use]
-    pub const fn epoch(self) -> (epoch: CompletionEpoch)
+    pub const fn epoch(&self) -> (epoch: CompletionEpoch)
         ensures epoch.value == self.epoch_spec().value,
     {
         self.epoch
     }
 
     #[must_use]
-    pub const fn member_count(self) -> (count: usize)
+    pub const fn member_count(&self) -> (count: usize)
         ensures count == self.member_count_spec(),
     {
         self.member_count
@@ -124,6 +130,79 @@ impl DispatchBatch {
 
     pub closed spec fn epoch_spec(&self) -> CompletionEpoch {
         self.epoch
+    }
+}
+
+/// Linear M1 scheduler dispatch authority with an exact fixed-capacity member roster.
+///
+/// Only [`crate::Engine::dispatch_m1_ready`] constructs this owner. The scheduler
+/// batch and immutable request prefix move together into physical queue custody.
+/// Entries beyond [`Self::member_count`] are canonical `None` padding.
+///
+/// ```compile_fail
+/// use ferric_engine::M1ScheduledDispatchV1;
+/// fn require_clone<T: Clone>() {}
+/// require_clone::<M1ScheduledDispatchV1>();
+/// ```
+#[must_use = "scheduled M1 dispatch authority must enter physical queue custody"]
+#[derive(Debug, PartialEq, Eq)]
+pub struct M1ScheduledDispatchV1 {
+    batch: DispatchBatch,
+    members: [Option<RequestId>; M1_MAX_ACTIVE_SEQUENCES as usize],
+}
+
+impl M1ScheduledDispatchV1 {
+    pub(crate) fn from_dispatch_batch(
+        batch: DispatchBatch,
+        selected: &[RequestId; M1_MAX_ACTIVE_SEQUENCES as usize],
+    ) -> Self
+        requires batch.member_count_spec() <= M1_MAX_ACTIVE_SEQUENCES as usize,
+    {
+        let count = batch.member_count();
+        let mut members = [None; M1_MAX_ACTIVE_SEQUENCES as usize];
+        let mut index = 0;
+        while index < count
+            invariant
+                index <= count,
+                count <= M1_MAX_ACTIVE_SEQUENCES as usize,
+                members@.len() == M1_MAX_ACTIVE_SEQUENCES as usize,
+                selected@.len() == M1_MAX_ACTIVE_SEQUENCES as usize,
+            decreases count - index,
+        {
+            members[index] = Some(selected[index]);
+            index += 1;
+        }
+        Self { batch, members }
+    }
+
+    /// Returns the exact scheduler-issued completion epoch.
+    #[must_use]
+    pub const fn epoch(&self) -> CompletionEpoch {
+        self.batch.epoch()
+    }
+
+    /// Returns the nonzero scheduler-selected prefix length.
+    #[must_use]
+    pub const fn member_count(&self) -> usize {
+        self.batch.member_count()
+    }
+
+    /// Returns one exact scheduler-selected request or `None` outside the live prefix.
+    #[must_use]
+    pub fn member(&self, index: usize) -> Option<RequestId> {
+        if index < M1_MAX_ACTIVE_SEQUENCES as usize {
+            self.members[index]
+        } else {
+            None
+        }
+    }
+
+    /// Returns the fixed M1 roster with canonical `None` padding.
+    #[must_use]
+    pub const fn members(
+        &self,
+    ) -> &[Option<RequestId>; M1_MAX_ACTIVE_SEQUENCES as usize] {
+        &self.members
     }
 }
 
@@ -15783,6 +15862,23 @@ spec fn request_ring_slots_differ<const C: usize>(
         != ring[ring_position::<C>(head, right as nat)].slot_spec()
 }
 
+}
+
+#[cfg(test)]
+impl M1ScheduledDispatchV1 {
+    pub(crate) fn for_test(epoch: CompletionEpoch, selected: &[RequestId]) -> Self {
+        assert!(!selected.is_empty());
+        assert!(selected.len() <= M1_MAX_ACTIVE_SEQUENCES as usize);
+        let batch = DispatchBatch {
+            epoch,
+            member_count: selected.len(),
+        };
+        let mut members = [None; M1_MAX_ACTIVE_SEQUENCES as usize];
+        for (destination, source) in members.iter_mut().zip(selected) {
+            *destination = Some(*source);
+        }
+        Self { batch, members }
+    }
 }
 
 #[cfg(test)]

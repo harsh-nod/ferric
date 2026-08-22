@@ -7,6 +7,7 @@ use vstd::prelude::*;
 
 mod bound_step_workspaces;
 mod cache;
+mod completed_readback_join;
 mod completion_output;
 mod completion_wire;
 mod device_cache;
@@ -40,6 +41,7 @@ pub use bound_step_workspaces::{
     M1FullStepWorkspaceSubleaseBindingFailure, M1FullStepWorkspaceSubleaseOwners,
 };
 pub use cache::{KvError, PageId};
+pub use completed_readback_join::{M1CheckedCompletionOutputV1, M1CompletedOutputCheckErrorV1};
 pub use completion_output::{
     allocate_m1_completion_output_v1, m1_completion_output_shape_v1, BoundM1CompletionOutputV1,
     M1CompletionOutputErrorV1, M1CompletionOutputShapeV1, M1_COMPLETION_OUTPUT_ALIGNMENT_V1,
@@ -133,11 +135,16 @@ pub use physical_program_catalog::{
     M1PhysicalProgramV1, M1_PHYSICAL_PROGRAM_COUNT_V1,
 };
 pub use physical_queue_lifecycle::{
-    M1PhysicalCompletedQueueSessionV1, M1PhysicalDetachedQueueCaseV1,
-    M1PhysicalDetachedQueueSessionV1, M1PhysicalPublishedQueueSessionV1,
-    M1PhysicalQueueCreateFailureClassV1, M1PhysicalQueueCreateFailureV1,
-    M1PhysicalQueueOperationFailureV1, M1PhysicalQueuePhaseCaseV1, M1PhysicalQueuePhaseV1,
-    M1PhysicalQueueReleaseFailureV1, M1PhysicalQueueSessionV1, M1PhysicalRecycledQueueSessionV1,
+    M1CompletedReadbackJoinErrorV1, M1CompletedReadbackJoinFailureV1,
+    M1PhysicalCompletedQueueSessionV1, M1PhysicalCompletedReadbackV1,
+    M1PhysicalDetachedQueueCaseV1, M1PhysicalDetachedQueueSessionV1,
+    M1PhysicalPublishedQueueSessionV1, M1PhysicalQueueCreateFailureClassV1,
+    M1PhysicalQueueCreateFailureV1, M1PhysicalQueueOperationFailureV1, M1PhysicalQueuePhaseCaseV1,
+    M1PhysicalQueuePhaseV1, M1PhysicalQueueReleaseFailureV1, M1PhysicalQueueReuseErrorV1,
+    M1PhysicalQueueReuseFailureV1, M1PhysicalQueueSessionV1, M1PhysicalReadbackDetachedQueueCaseV1,
+    M1PhysicalReadbackDetachedQueueSessionV1, M1PhysicalReadbackQueueCaseV1,
+    M1PhysicalReadbackQueueOperationFailureV1, M1PhysicalReadbackQueueReleaseFailureV1,
+    M1PhysicalReadbackQueueSessionV1, M1PhysicalRecycledQueueSessionV1,
 };
 pub use physical_step::{
     bind_structural_physical_step, StructuralPhysicalStepBindingError,
@@ -145,7 +152,7 @@ pub use physical_step::{
     StructurallyBoundPhysicalStep,
 };
 pub use runner::{LogicalRunnerDeclaration, LogicalRunnerError};
-pub use scheduler::{DispatchBatch, SchedulerError};
+pub use scheduler::{DispatchBatch, M1ScheduledDispatchV1, SchedulerError};
 pub use speculative_graph::{
     complete_single_member_speculative_graph, SingleMemberSpeculativeGraphError,
     SingleMemberSpeculativeGraphFailure, SingleMemberSpeculativeGraphInputs,
