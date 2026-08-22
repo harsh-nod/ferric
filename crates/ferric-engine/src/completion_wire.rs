@@ -22,10 +22,8 @@ use ferric_spec::{
     validate_compact_completion, verify_speculative_completion, CompactCompletionError,
     CompactCompletionRecord, GreedyCommit, Identity, Qwen3ExecutionMode, Qwen3ModelRole,
     Qwen3PlanBucket, Qwen3PlanError, Qwen3PlanSelection, RequestId, SpeculativeCompletionError,
-    StepPlan, TokenId, M1_MAX_COMPLETION_TOKENS,
+    StepPlan, TokenId, M1_MAX_ACTIVE_SEQUENCES, M1_MAX_COMPLETION_TOKENS,
 };
-
-const MAX_REQUEST_SLOTS: u32 = 32;
 
 const _: () = {
     assert!(Layout::RECORD_BYTES == 120);
@@ -376,7 +374,7 @@ fn decode_completion_record(bytes: &[u8]) -> Result<CompactCompletionRecord, Com
     }
 
     let slot = read_u32(bytes, Layout::REQUEST_SLOT_OFFSET);
-    if slot >= MAX_REQUEST_SLOTS {
+    if slot >= M1_MAX_ACTIVE_SEQUENCES {
         return Err(CompletionWireError::RequestSlotOutOfRange { actual: slot });
     }
     let generation = read_u32(bytes, Layout::REQUEST_GENERATION_OFFSET);
@@ -622,11 +620,11 @@ mod tests {
     fn slot_generation_counts_and_all_token_slots_fail_closed() {
         let mut changed = direct_bytes();
         changed[Layout::REQUEST_SLOT_OFFSET..Layout::REQUEST_SLOT_OFFSET + 4]
-            .copy_from_slice(&MAX_REQUEST_SLOTS.to_le_bytes());
+            .copy_from_slice(&M1_MAX_ACTIVE_SEQUENCES.to_le_bytes());
         assert_eq!(
             direct_checked(&changed),
             Err(CompletionWireError::RequestSlotOutOfRange {
-                actual: MAX_REQUEST_SLOTS
+                actual: M1_MAX_ACTIVE_SEQUENCES
             })
         );
         changed = direct_bytes();
