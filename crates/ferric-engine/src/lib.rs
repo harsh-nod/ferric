@@ -15,6 +15,7 @@ mod epoch;
 mod initialized_model_memory;
 mod initialized_step_workspaces;
 mod kv_workspace_authority;
+mod m1_prepublication;
 mod model_memory_allocations;
 mod operation_dispatch_expansion;
 mod operation_kernel_plan;
@@ -84,6 +85,16 @@ pub use kv_workspace_authority::{
     M1KvWorkspaceTableBindingFailureV1, M1SpeculativeDraftKvRoundBindingErrorV1,
     M1SpeculativeDraftKvRoundBindingFailureV1, M1SpeculativeDraftKvRoundReservationCustodyV1,
 };
+pub use m1_prepublication::{
+    allocate_m1_prepublication_workspaces_v1, build_m1_prepublication_batch_v1,
+    prepare_m1_scheduled_workspace_images_v1, M1AllocatedScheduledStepV1,
+    M1FullStepKvReservationCustodyV1, M1FullStepKvWorkspaceTablesV1, M1PrepareFailureV1,
+    M1PreparedScheduledWorkspaceImagesV1, M1PrepublicationAllocationFailureV1,
+    M1PrepublicationBatchBuildDiagnosticV1, M1PrepublicationBatchBuildErrorKindV1,
+    M1PrepublicationBatchBuildFailureV1, M1PrepublicationBatchV1,
+    M1PrepublicationCompositionFailureV1, M1PrepublicationJoinErrorV1,
+    M1PrepublicationJoinFailureV1, M1PrepublicationStepCustodyV1, M1WorkspaceImageResidueV1,
+};
 pub use model_memory_allocations::{
     bind_addressless_model_memory_allocations_v1, BoundModelMemoryAllocationsV1,
     ModelMemoryAllocationBindingErrorV1, ModelMemoryAllocationBindingFailureV1,
@@ -143,11 +154,11 @@ pub use physical_queue_lifecycle::{
     M1PhysicalDetachedQueueCaseV1, M1PhysicalDetachedQueueSessionV1,
     M1PhysicalPublishedQueueSessionV1, M1PhysicalQueueCreateFailureClassV1,
     M1PhysicalQueueCreateFailureV1, M1PhysicalQueueOperationFailureV1, M1PhysicalQueuePhaseCaseV1,
-    M1PhysicalQueuePhaseV1, M1PhysicalQueueReleaseFailureV1, M1PhysicalQueueReuseErrorV1,
-    M1PhysicalQueueReuseFailureV1, M1PhysicalQueueSessionV1, M1PhysicalReadbackDetachedQueueCaseV1,
-    M1PhysicalReadbackDetachedQueueSessionV1, M1PhysicalReadbackQueueCaseV1,
-    M1PhysicalReadbackQueueOperationFailureV1, M1PhysicalReadbackQueueReleaseFailureV1,
-    M1PhysicalReadbackQueueSessionV1, M1PhysicalRecycledQueueSessionV1,
+    M1PhysicalQueuePhaseV1, M1PhysicalQueueReleaseFailureV1, M1PhysicalQueueSessionV1,
+    M1PhysicalReadbackDetachedQueueCaseV1, M1PhysicalReadbackDetachedQueueSessionV1,
+    M1PhysicalReadbackQueueCaseV1, M1PhysicalReadbackQueueOperationFailureV1,
+    M1PhysicalReadbackQueueReleaseFailureV1, M1PhysicalReadbackQueueSessionV1,
+    M1PhysicalRecycledQueueSessionV1,
 };
 pub use physical_step::{
     bind_structural_physical_step, StructuralPhysicalStepBindingError,

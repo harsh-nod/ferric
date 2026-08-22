@@ -2,13 +2,10 @@
 //!
 //! The generic service host owns KFD queue state and enforces publication,
 //! completion, recycle, readback, detach, and release. This module keeps the
-//! corresponding M1 recipe, scheduler roster, and allocation custody beside
-//! every generic phase. The completed-readback join checks the exact K7 range
-//! against that roster before minting completion authority.
-//!
-//! Fixed-batch custody does not yet bind the scheduler roster to populated
-//! request or workspace buffers before publication. Closing that routing
-//! boundary belongs to the later physical runner and is not claimed here.
+//! corresponding M1 recipe, scheduler-bound target plans, pending KV
+//! reservations, and allocation custody beside every generic phase. The
+//! completed-readback join checks the exact K7 range against those retained
+//! plans before minting completion authority.
 
 use core::fmt;
 
@@ -22,12 +19,13 @@ use ferric_spec::completion::CompletionEpoch;
 
 use crate::completed_readback_join::{check_m1_completed_output_v1, CompletedReadbackMetadataV1};
 use crate::{
-    CompletionWireExpectation, ExactCompletion, M1CheckedCompletionOutputV1,
-    M1CompletedOutputCheckErrorV1, M1PhysicalFixedBatchCaseV1, M1PhysicalFixedBatchCustodyV1,
-    M1PhysicalFixedBatchShapeV1, M1PhysicalFixedBatchV1, M1ScheduledDispatchV1,
-    M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
-    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
-    M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
+    CompletionWireExpectation, CompletionWireSemanticExpectation, ExactCompletion,
+    M1CheckedCompletionOutputV1, M1CompletedOutputCheckErrorV1, M1FullStepKvReservationCustodyV1,
+    M1PhysicalFixedBatchCaseV1, M1PhysicalFixedBatchCustodyV1, M1PhysicalFixedBatchShapeV1,
+    M1PhysicalFixedBatchV1, M1PrepublicationBatchV1, M1PrepublicationStepCustodyV1,
+    M1ScheduledDispatchV1, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
 };
 
 /// Observable Ferric phase for one M1 queue generation.
@@ -39,7 +37,7 @@ pub enum M1PhysicalQueuePhaseV1 {
     Published,
     /// Every completion signal was observed, before signal recycle.
     Completed,
-    /// Every completion signal was recycled; readback, reuse, detach, or release is allowed.
+    /// Every completion signal was recycled; readback, detach, or release is allowed.
     Recycled,
     /// Exact completed bytes were checked and completion authority was minted once.
     ReadbackJoined,
@@ -70,13 +68,13 @@ impl M1PhysicalQueuePhaseV1 {
 
     /// Whether this phase grants completed-readback join or a terminal transition.
     #[must_use]
-    pub const fn can_read_reuse_detach_or_release(self) -> bool {
+    pub const fn can_read_detach_or_release(self) -> bool {
         matches!(self, Self::Recycled)
     }
 
-    /// Whether this phase grants reuse, detach, or release without another readback join.
+    /// Whether this phase grants detach or release without another readback join.
     #[must_use]
-    pub const fn can_reuse_detach_or_release(self) -> bool {
+    pub const fn can_detach_or_release(self) -> bool {
         matches!(self, Self::Recycled | Self::ReadbackJoined)
     }
 }
@@ -113,19 +111,19 @@ impl M1PhysicalQueueCreateFailureClassV1 {
 pub struct M1PhysicalQueuePhaseCaseV1<Q> {
     lower: Q,
     custody: M1PhysicalFixedBatchCustodyV1,
-    scheduled: M1ScheduledDispatchV1,
+    step: M1PrepublicationStepCustodyV1,
 }
 
 impl<Q> M1PhysicalQueuePhaseCaseV1<Q> {
     const fn new(
         lower: Q,
         custody: M1PhysicalFixedBatchCustodyV1,
-        scheduled: M1ScheduledDispatchV1,
+        step: M1PrepublicationStepCustodyV1,
     ) -> Self {
         Self {
             lower,
             custody,
-            scheduled,
+            step,
         }
     }
 
@@ -138,17 +136,23 @@ impl<Q> M1PhysicalQueuePhaseCaseV1<Q> {
     /// Returns the immutable logical epoch bound before queue creation.
     #[must_use]
     pub const fn queue_epoch(&self) -> CompletionEpoch {
-        self.scheduled.epoch()
+        self.step.scheduled_dispatch().epoch()
     }
 
     /// Returns the exact linear scheduler dispatch retained by this queue phase.
     #[must_use = "scheduler dispatch authority remains paired with the physical queue"]
     pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
-        &self.scheduled
+        self.step.scheduled_dispatch()
     }
 
-    fn into_parts(self) -> (Q, M1PhysicalFixedBatchCustodyV1, M1ScheduledDispatchV1) {
-        (self.lower, self.custody, self.scheduled)
+    fn into_parts(
+        self,
+    ) -> (
+        Q,
+        M1PhysicalFixedBatchCustodyV1,
+        M1PrepublicationStepCustodyV1,
+    ) {
+        (self.lower, self.custody, self.step)
     }
 }
 
@@ -158,7 +162,7 @@ impl<Q: fmt::Debug> fmt::Debug for M1PhysicalQueuePhaseCaseV1<Q> {
             .debug_struct("M1PhysicalQueuePhaseCaseV1")
             .field("lower", &self.lower)
             .field("custody", &self.custody)
-            .field("scheduled", &self.scheduled)
+            .field("step", &self.step)
             .finish()
     }
 }
@@ -596,7 +600,7 @@ impl M1PhysicalRecycledQueueSessionV1 {
 }
 
 /// Post-readback generic queue custody with no remaining scheduler dispatch authority.
-#[must_use = "post-readback queue custody must be reused, detached, released, or retained"]
+#[must_use = "post-readback queue custody must be detached, released, or retained"]
 pub struct M1PhysicalReadbackQueueCaseV1<const N: usize> {
     lower: ServiceRecycledQueueSessionV1<N>,
     custody: M1PhysicalFixedBatchCustodyV1,
@@ -630,7 +634,16 @@ impl<const N: usize> fmt::Debug for M1PhysicalReadbackQueueCaseV1<N> {
 }
 
 /// Closed M1 queue owner after the one-shot completed-readback join.
-#[must_use = "post-readback queue custody must be reused, detached, released, or retained"]
+///
+/// A fresh scheduler roster cannot reuse request-specific batch custody.
+///
+/// ```compile_fail
+/// use ferric_engine::{M1PhysicalReadbackQueueSessionV1, M1ScheduledDispatchV1};
+/// fn raw_reuse(queue: M1PhysicalReadbackQueueSessionV1, scheduled: M1ScheduledDispatchV1) {
+///     let _ = queue.reuse(scheduled);
+/// }
+/// ```
+#[must_use = "post-readback queue custody must be detached, released, or retained"]
 #[derive(Debug)]
 pub enum M1PhysicalReadbackQueueSessionV1 {
     /// Post-readback target-only queue.
@@ -674,82 +687,6 @@ impl M1PhysicalReadbackQueueSessionV1 {
             Self::SpeculativeK8(case) => case.custody(),
             Self::SpeculativeK16(case) => case.custody(),
         }
-    }
-}
-
-/// Pure post-readback reuse contract diagnostic.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum M1PhysicalQueueReuseErrorV1 {
-    /// A scheduler dispatch must contain at least one request.
-    EmptyDispatch,
-    /// The scheduler dispatch exceeds the retained completion-output capacity.
-    CapacityExceeded {
-        /// Retained completion-output sequence capacity.
-        capacity: usize,
-        /// Scheduler-selected member count.
-        actual: usize,
-    },
-}
-
-impl fmt::Display for M1PhysicalQueueReuseErrorV1 {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(formatter, "M1 queue reuse rejected: {self:?}")
-    }
-}
-
-impl std::error::Error for M1PhysicalQueueReuseErrorV1 {}
-
-const fn validate_scheduled_member_count(
-    actual: usize,
-    capacity: usize,
-) -> Result<(), M1PhysicalQueueReuseErrorV1> {
-    if actual == 0 {
-        Err(M1PhysicalQueueReuseErrorV1::EmptyDispatch)
-    } else if actual > capacity {
-        Err(M1PhysicalQueueReuseErrorV1::CapacityExceeded { capacity, actual })
-    } else {
-        Ok(())
-    }
-}
-
-/// Pure reuse rejection retaining both unchanged inputs.
-#[must_use = "reuse rejection retains the post-readback queue and scheduled dispatch"]
-#[derive(Debug)]
-pub struct M1PhysicalQueueReuseFailureV1 {
-    error: M1PhysicalQueueReuseErrorV1,
-    queue: Box<M1PhysicalReadbackQueueSessionV1>,
-    scheduled: Box<M1ScheduledDispatchV1>,
-}
-
-impl M1PhysicalQueueReuseFailureV1 {
-    /// Returns the exact pure contract error.
-    #[must_use]
-    pub const fn error(&self) -> M1PhysicalQueueReuseErrorV1 {
-        self.error
-    }
-
-    /// Returns the unchanged post-readback queue by borrow.
-    #[must_use = "post-readback queue custody remains retained by this failure"]
-    pub const fn queue(&self) -> &M1PhysicalReadbackQueueSessionV1 {
-        &self.queue
-    }
-
-    /// Returns the unchanged scheduled dispatch by borrow.
-    #[must_use = "scheduled dispatch remains retained by this failure"]
-    pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
-        &self.scheduled
-    }
-
-    /// Recovers both unchanged reuse inputs.
-    #[must_use = "both retry-capable inputs must remain retained"]
-    pub fn into_parts(
-        self,
-    ) -> (
-        M1PhysicalQueueReuseErrorV1,
-        M1PhysicalReadbackQueueSessionV1,
-        M1ScheduledDispatchV1,
-    ) {
-        (self.error, *self.queue, *self.scheduled)
     }
 }
 
@@ -978,6 +915,7 @@ pub struct M1PhysicalCompletedReadbackV1 {
     queue: M1PhysicalReadbackQueueSessionV1,
     checked: M1CheckedCompletionOutputV1,
     completion: ExactCompletion,
+    kv: M1FullStepKvReservationCustodyV1,
 }
 
 impl M1PhysicalCompletedReadbackV1 {
@@ -999,6 +937,11 @@ impl M1PhysicalCompletedReadbackV1 {
         self.completion.epoch()
     }
 
+    /// Returns pending KV reservations retained through exact readback.
+    pub const fn kv_reservations(&self) -> &M1FullStepKvReservationCustodyV1 {
+        &self.kv
+    }
+
     /// Separates post-readback queue custody, checked records, and completion authority once.
     #[must_use = "all three linear outputs must remain retained"]
     pub fn into_parts(
@@ -1007,8 +950,9 @@ impl M1PhysicalCompletedReadbackV1 {
         M1PhysicalReadbackQueueSessionV1,
         M1CheckedCompletionOutputV1,
         ExactCompletion,
+        M1FullStepKvReservationCustodyV1,
     ) {
-        (self.queue, self.checked, self.completion)
+        (self.queue, self.checked, self.completion, self.kv)
     }
 }
 
@@ -1021,10 +965,8 @@ pub enum M1PhysicalQueueCreateFailureV1<'a> {
         error: ServiceQueueErrorV1,
         /// Unchanged generic allocation session.
         allocations: Box<ServiceAllocationSessionV1>,
-        /// Exact reconstructed closed M1 fixed batch.
-        batch: Box<M1PhysicalFixedBatchV1<'a>>,
-        /// Unchanged scheduler dispatch supplied for queue construction.
-        scheduled: Box<M1ScheduledDispatchV1>,
+        /// Exact reconstructed opaque prepublication batch.
+        batch: Box<M1PrepublicationBatchV1<'a>>,
     },
     /// KFD may have consumed the generic inputs; only Ferric custody remains recoverable.
     Terminal {
@@ -1032,8 +974,8 @@ pub enum M1PhysicalQueueCreateFailureV1<'a> {
         error: ServiceQueueErrorV1,
         /// Original fixed-batch shape.
         shape: M1PhysicalFixedBatchShapeV1,
-        /// Scheduler dispatch retained without retry authority.
-        scheduled: Box<M1ScheduledDispatchV1>,
+        /// Scheduler, plan, and KV authority retained without retry authority.
+        step: Box<M1PrepublicationStepCustodyV1>,
         /// Ferric custody retained without retry authority.
         custody: Box<M1PhysicalFixedBatchCustodyV1>,
     },
@@ -1042,27 +984,19 @@ pub enum M1PhysicalQueueCreateFailureV1<'a> {
 impl fmt::Debug for M1PhysicalQueueCreateFailureV1<'_> {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Rejected {
-                error,
-                batch,
-                scheduled,
-                ..
-            } => formatter
+            Self::Rejected { error, batch, .. } => formatter
                 .debug_struct("Rejected")
                 .field("error", error)
                 .field("shape", &batch.shape())
-                .field("scheduled", scheduled)
+                .field("step", &batch.step())
                 .finish_non_exhaustive(),
             Self::Terminal {
-                error,
-                shape,
-                scheduled,
-                ..
+                error, shape, step, ..
             } => formatter
                 .debug_struct("Terminal")
                 .field("error", error)
                 .field("shape", shape)
-                .field("scheduled", scheduled)
+                .field("step", step)
                 .finish_non_exhaustive(),
         }
     }
@@ -1099,9 +1033,8 @@ impl<'a> M1PhysicalQueueCreateFailureV1<'a> {
     #[must_use]
     pub const fn queue_epoch(&self) -> CompletionEpoch {
         match self {
-            Self::Rejected { scheduled, .. } | Self::Terminal { scheduled, .. } => {
-                scheduled.epoch()
-            }
+            Self::Rejected { batch, .. } => batch.step().scheduled_dispatch().epoch(),
+            Self::Terminal { step, .. } => step.scheduled_dispatch().epoch(),
         }
     }
 
@@ -1109,7 +1042,8 @@ impl<'a> M1PhysicalQueueCreateFailureV1<'a> {
     #[must_use = "scheduler dispatch authority remains retained by the failure"]
     pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
         match self {
-            Self::Rejected { scheduled, .. } | Self::Terminal { scheduled, .. } => scheduled,
+            Self::Rejected { batch, .. } => batch.step().scheduled_dispatch(),
+            Self::Terminal { step, .. } => step.scheduled_dispatch(),
         }
     }
 
@@ -1117,18 +1051,11 @@ impl<'a> M1PhysicalQueueCreateFailureV1<'a> {
     #[must_use = "pure rejection recovery returns both unchanged construction inputs"]
     pub fn into_rejected_inputs(
         self,
-    ) -> Option<(
-        ServiceAllocationSessionV1,
-        M1ScheduledDispatchV1,
-        M1PhysicalFixedBatchV1<'a>,
-    )> {
+    ) -> Option<(ServiceAllocationSessionV1, M1PrepublicationBatchV1<'a>)> {
         match self {
             Self::Rejected {
-                allocations,
-                batch,
-                scheduled,
-                ..
-            } => Some((*allocations, *scheduled, *batch)),
+                allocations, batch, ..
+            } => Some((*allocations, *batch)),
             Self::Terminal { .. } => None,
         }
     }
@@ -1140,12 +1067,10 @@ impl<'a> M1PhysicalQueueCreateFailureV1<'a> {
     #[must_use = "terminal Ferric and scheduler custody must remain retained"]
     pub fn into_terminal_parts(
         self,
-    ) -> Option<(M1PhysicalFixedBatchCustodyV1, M1ScheduledDispatchV1)> {
+    ) -> Option<(M1PhysicalFixedBatchCustodyV1, M1PrepublicationStepCustodyV1)> {
         match self {
             Self::Rejected { .. } => None,
-            Self::Terminal {
-                custody, scheduled, ..
-            } => Some((*custody, *scheduled)),
+            Self::Terminal { custody, step, .. } => Some((*custody, *step)),
         }
     }
 }
@@ -1155,7 +1080,7 @@ impl<'a> M1PhysicalQueueCreateFailureV1<'a> {
 #[derive(Debug)]
 pub struct M1PhysicalQueueOperationFailureV1 {
     shape: M1PhysicalFixedBatchShapeV1,
-    scheduled: Box<M1ScheduledDispatchV1>,
+    step: Box<M1PrepublicationStepCustodyV1>,
     lower: ServiceQueueOperationFailureV1,
     custody: Box<M1PhysicalFixedBatchCustodyV1>,
 }
@@ -1170,13 +1095,13 @@ impl M1PhysicalQueueOperationFailureV1 {
     /// Returns the logical epoch retained from the failed queue generation.
     #[must_use]
     pub const fn queue_epoch(&self) -> CompletionEpoch {
-        self.scheduled.epoch()
+        self.step.scheduled_dispatch().epoch()
     }
 
     /// Returns the exact scheduler dispatch retained after terminal queue failure.
     #[must_use = "scheduler dispatch authority remains retained by quarantine"]
     pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
-        &self.scheduled
+        self.step.scheduled_dispatch()
     }
 
     /// Returns the terminal phase classification.
@@ -1200,13 +1125,9 @@ impl M1PhysicalQueueOperationFailureV1 {
     ) -> (
         QuarantinedServiceQueueV1,
         M1PhysicalFixedBatchCustodyV1,
-        M1ScheduledDispatchV1,
+        M1PrepublicationStepCustodyV1,
     ) {
-        (
-            self.lower.into_quarantined(),
-            *self.custody,
-            *self.scheduled,
-        )
+        (self.lower.into_quarantined(), *self.custody, *self.step)
     }
 }
 
@@ -1216,7 +1137,7 @@ impl M1PhysicalQueueOperationFailureV1 {
 pub struct M1PhysicalDetachedQueueCaseV1 {
     lower: ServiceQueueUnboundSessionV1,
     custody: M1PhysicalFixedBatchCustodyV1,
-    scheduled: M1ScheduledDispatchV1,
+    step: M1PrepublicationStepCustodyV1,
 }
 
 impl M1PhysicalDetachedQueueCaseV1 {
@@ -1229,13 +1150,13 @@ impl M1PhysicalDetachedQueueCaseV1 {
     /// Returns the logical epoch retained from the detached generation.
     #[must_use]
     pub const fn queue_epoch(&self) -> CompletionEpoch {
-        self.scheduled.epoch()
+        self.step.scheduled_dispatch().epoch()
     }
 
     /// Returns the exact scheduler dispatch retained from the detached generation.
     #[must_use = "scheduler dispatch authority remains retained by the detached queue"]
     pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
-        &self.scheduled
+        self.step.scheduled_dispatch()
     }
 
     /// Separates the still-live generic queue from inert Ferric custody.
@@ -1245,9 +1166,9 @@ impl M1PhysicalDetachedQueueCaseV1 {
     ) -> (
         ServiceQueueUnboundSessionV1,
         M1PhysicalFixedBatchCustodyV1,
-        M1ScheduledDispatchV1,
+        M1PrepublicationStepCustodyV1,
     ) {
-        (self.lower, self.custody, self.scheduled)
+        (self.lower, self.custody, self.step)
     }
 }
 
@@ -1329,7 +1250,7 @@ impl M1PhysicalDetachedQueueSessionV1 {
     ) -> (
         ServiceQueueUnboundSessionV1,
         M1PhysicalFixedBatchCustodyV1,
-        M1ScheduledDispatchV1,
+        M1PrepublicationStepCustodyV1,
     ) {
         let case = match self {
             Self::TargetOnly(case)
@@ -1347,7 +1268,7 @@ impl M1PhysicalDetachedQueueSessionV1 {
 #[derive(Debug)]
 pub struct M1PhysicalQueueReleaseFailureV1 {
     shape: M1PhysicalFixedBatchShapeV1,
-    scheduled: Box<M1ScheduledDispatchV1>,
+    step: Box<M1PrepublicationStepCustodyV1>,
     lower: ServiceQueueReleaseFailureV1,
     custody: Box<M1PhysicalFixedBatchCustodyV1>,
 }
@@ -1362,13 +1283,13 @@ impl M1PhysicalQueueReleaseFailureV1 {
     /// Returns the logical epoch retained from the failed queue generation.
     #[must_use]
     pub const fn queue_epoch(&self) -> CompletionEpoch {
-        self.scheduled.epoch()
+        self.step.scheduled_dispatch().epoch()
     }
 
     /// Returns the exact scheduler dispatch retained after terminal release failure.
     #[must_use = "scheduler dispatch authority remains retained by the release failure"]
     pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
-        &self.scheduled
+        self.step.scheduled_dispatch()
     }
 
     /// Returns the lower release failure without discarding retained ownership.
@@ -1387,9 +1308,9 @@ impl M1PhysicalQueueReleaseFailureV1 {
     ) -> (
         ServiceQueueReleaseFailureV1,
         M1PhysicalFixedBatchCustodyV1,
-        M1ScheduledDispatchV1,
+        M1PrepublicationStepCustodyV1,
     ) {
-        (self.lower, *self.custody, *self.scheduled)
+        (self.lower, *self.custody, *self.step)
     }
 }
 
@@ -1399,25 +1320,25 @@ enum CreateCaseResultV1<'a, const N: usize> {
         error: ServiceQueueErrorV1,
         allocations: Box<ServiceAllocationSessionV1>,
         batch: Box<M1PhysicalFixedBatchCaseV1<'a, N>>,
-        scheduled: Box<M1ScheduledDispatchV1>,
+        step: Box<M1PrepublicationStepCustodyV1>,
     },
     Terminal {
         error: ServiceQueueErrorV1,
         custody: Box<M1PhysicalFixedBatchCustodyV1>,
-        scheduled: Box<M1ScheduledDispatchV1>,
+        step: Box<M1PrepublicationStepCustodyV1>,
     },
 }
 
 fn create_case<const N: usize>(
     allocations: ServiceAllocationSessionV1,
     ring_bytes: u32,
-    scheduled: M1ScheduledDispatchV1,
+    step: M1PrepublicationStepCustodyV1,
     case: M1PhysicalFixedBatchCaseV1<'_, N>,
 ) -> CreateCaseResultV1<'_, N> {
     let (batch, custody) = case.into_parts();
     match ServiceQueueSessionV1::create(allocations, ring_bytes, batch) {
         Ok(lower) => CreateCaseResultV1::Ready(Box::new(M1PhysicalQueuePhaseCaseV1::new(
-            lower, custody, scheduled,
+            lower, custody, step,
         ))),
         Err(ServiceQueueCreateFailureV1::Rejected {
             error,
@@ -1427,12 +1348,12 @@ fn create_case<const N: usize>(
             error,
             allocations,
             batch: Box::new(M1PhysicalFixedBatchCaseV1::from_parts(*batch, custody)),
-            scheduled: Box::new(scheduled),
+            step: Box::new(step),
         },
         Err(ServiceQueueCreateFailureV1::Terminal { error }) => CreateCaseResultV1::Terminal {
             error,
             custody: Box::new(custody),
-            scheduled: Box::new(scheduled),
+            step: Box::new(step),
         },
     }
 }
@@ -1446,21 +1367,23 @@ fn finish_target_only_create(
             error,
             allocations,
             batch,
-            scheduled,
+            step,
         } => Err(M1PhysicalQueueCreateFailureV1::Rejected {
             error,
             allocations,
-            batch: Box::new(M1PhysicalFixedBatchV1::TargetOnly(batch)),
-            scheduled,
+            batch: Box::new(M1PrepublicationBatchV1 {
+                batch: M1PhysicalFixedBatchV1::TargetOnly(batch),
+                step: *step,
+            }),
         }),
         CreateCaseResultV1::Terminal {
             error,
             custody,
-            scheduled,
+            step,
         } => Err(M1PhysicalQueueCreateFailureV1::Terminal {
             error,
             shape: M1PhysicalFixedBatchShapeV1::TargetOnly,
-            scheduled,
+            step,
             custody,
         }),
     }
@@ -1475,21 +1398,23 @@ fn finish_paired_prefill_create(
             error,
             allocations,
             batch,
-            scheduled,
+            step,
         } => Err(M1PhysicalQueueCreateFailureV1::Rejected {
             error,
             allocations,
-            batch: Box::new(M1PhysicalFixedBatchV1::PairedPrefill(batch)),
-            scheduled,
+            batch: Box::new(M1PrepublicationBatchV1 {
+                batch: M1PhysicalFixedBatchV1::PairedPrefill(batch),
+                step: *step,
+            }),
         }),
         CreateCaseResultV1::Terminal {
             error,
             custody,
-            scheduled,
+            step,
         } => Err(M1PhysicalQueueCreateFailureV1::Terminal {
             error,
             shape: M1PhysicalFixedBatchShapeV1::PairedPrefill,
-            scheduled,
+            step,
             custody,
         }),
     }
@@ -1504,21 +1429,23 @@ fn finish_speculative_k4_create(
             error,
             allocations,
             batch,
-            scheduled,
+            step,
         } => Err(M1PhysicalQueueCreateFailureV1::Rejected {
             error,
             allocations,
-            batch: Box::new(M1PhysicalFixedBatchV1::SpeculativeK4(batch)),
-            scheduled,
+            batch: Box::new(M1PrepublicationBatchV1 {
+                batch: M1PhysicalFixedBatchV1::SpeculativeK4(batch),
+                step: *step,
+            }),
         }),
         CreateCaseResultV1::Terminal {
             error,
             custody,
-            scheduled,
+            step,
         } => Err(M1PhysicalQueueCreateFailureV1::Terminal {
             error,
             shape: M1PhysicalFixedBatchShapeV1::SpeculativeK4,
-            scheduled,
+            step,
             custody,
         }),
     }
@@ -1533,21 +1460,23 @@ fn finish_speculative_k8_create(
             error,
             allocations,
             batch,
-            scheduled,
+            step,
         } => Err(M1PhysicalQueueCreateFailureV1::Rejected {
             error,
             allocations,
-            batch: Box::new(M1PhysicalFixedBatchV1::SpeculativeK8(batch)),
-            scheduled,
+            batch: Box::new(M1PrepublicationBatchV1 {
+                batch: M1PhysicalFixedBatchV1::SpeculativeK8(batch),
+                step: *step,
+            }),
         }),
         CreateCaseResultV1::Terminal {
             error,
             custody,
-            scheduled,
+            step,
         } => Err(M1PhysicalQueueCreateFailureV1::Terminal {
             error,
             shape: M1PhysicalFixedBatchShapeV1::SpeculativeK8,
-            scheduled,
+            step,
             custody,
         }),
     }
@@ -1562,21 +1491,23 @@ fn finish_speculative_k16_create(
             error,
             allocations,
             batch,
-            scheduled,
+            step,
         } => Err(M1PhysicalQueueCreateFailureV1::Rejected {
             error,
             allocations,
-            batch: Box::new(M1PhysicalFixedBatchV1::SpeculativeK16(batch)),
-            scheduled,
+            batch: Box::new(M1PrepublicationBatchV1 {
+                batch: M1PhysicalFixedBatchV1::SpeculativeK16(batch),
+                step: *step,
+            }),
         }),
         CreateCaseResultV1::Terminal {
             error,
             custody,
-            scheduled,
+            step,
         } => Err(M1PhysicalQueueCreateFailureV1::Terminal {
             error,
             shape: M1PhysicalFixedBatchShapeV1::SpeculativeK16,
-            scheduled,
+            step,
             custody,
         }),
     }
@@ -1589,12 +1520,12 @@ fn submit_case<const N: usize>(
     Box<M1PhysicalQueuePhaseCaseV1<ServicePublishedQueueSessionV1<N>>>,
     M1PhysicalQueueOperationFailureV1,
 > {
-    let (lower, custody, scheduled) = (*case).into_parts();
+    let (lower, custody, step) = (*case).into_parts();
     match lower.submit() {
         Ok(lower) => Ok(Box::new(M1PhysicalQueuePhaseCaseV1::new(
-            lower, custody, scheduled,
+            lower, custody, step,
         ))),
-        Err(lower) => Err(operation_failure(shape, scheduled, lower, custody)),
+        Err(lower) => Err(operation_failure(shape, step, lower, custody)),
     }
 }
 
@@ -1606,12 +1537,12 @@ fn wait_case<const N: usize>(
     Box<M1PhysicalQueuePhaseCaseV1<ServiceCompletedQueueSessionV1<N>>>,
     M1PhysicalQueueOperationFailureV1,
 > {
-    let (lower, custody, scheduled) = (*case).into_parts();
+    let (lower, custody, step) = (*case).into_parts();
     match lower.wait(polls) {
         Ok(lower) => Ok(Box::new(M1PhysicalQueuePhaseCaseV1::new(
-            lower, custody, scheduled,
+            lower, custody, step,
         ))),
-        Err(lower) => Err(operation_failure(shape, scheduled, lower, custody)),
+        Err(lower) => Err(operation_failure(shape, step, lower, custody)),
     }
 }
 
@@ -1622,12 +1553,12 @@ fn recycle_case<const N: usize>(
     Box<M1PhysicalQueuePhaseCaseV1<ServiceRecycledQueueSessionV1<N>>>,
     M1PhysicalQueueOperationFailureV1,
 > {
-    let (lower, custody, scheduled) = (*case).into_parts();
+    let (lower, custody, step) = (*case).into_parts();
     match lower.recycle() {
         Ok(lower) => Ok(Box::new(M1PhysicalQueuePhaseCaseV1::new(
-            lower, custody, scheduled,
+            lower, custody, step,
         ))),
-        Err(lower) => Err(operation_failure(shape, scheduled, lower, custody)),
+        Err(lower) => Err(operation_failure(shape, step, lower, custody)),
     }
 }
 
@@ -1635,14 +1566,14 @@ fn detach_case<const N: usize>(
     case: Box<M1PhysicalQueuePhaseCaseV1<ServiceRecycledQueueSessionV1<N>>>,
     shape: M1PhysicalFixedBatchShapeV1,
 ) -> Result<Box<M1PhysicalDetachedQueueCaseV1>, M1PhysicalQueueOperationFailureV1> {
-    let (lower, custody, scheduled) = (*case).into_parts();
+    let (lower, custody, step) = (*case).into_parts();
     match lower.detach() {
         Ok(lower) => Ok(Box::new(M1PhysicalDetachedQueueCaseV1 {
             lower,
             custody,
-            scheduled,
+            step,
         })),
-        Err(lower) => Err(operation_failure(shape, scheduled, lower, custody)),
+        Err(lower) => Err(operation_failure(shape, step, lower, custody)),
     }
 }
 
@@ -1650,12 +1581,12 @@ fn release_case<const N: usize>(
     case: Box<M1PhysicalQueuePhaseCaseV1<ServiceRecycledQueueSessionV1<N>>>,
     shape: M1PhysicalFixedBatchShapeV1,
 ) -> Result<ServiceQueueReleaseObservationV1, M1PhysicalQueueReleaseFailureV1> {
-    let (lower, custody, scheduled) = (*case).into_parts();
+    let (lower, custody, step) = (*case).into_parts();
     match lower.destroy_and_release() {
         Ok(observation) => Ok(observation),
         Err(lower) => Err(M1PhysicalQueueReleaseFailureV1 {
             shape,
-            scheduled: Box::new(scheduled),
+            step: Box::new(step),
             lower,
             custody: Box::new(custody),
         }),
@@ -1663,7 +1594,21 @@ fn release_case<const N: usize>(
 }
 
 impl M1PhysicalQueueSessionV1 {
-    /// Consumes one allocation session and exact closed M1 fixed batch into a queue.
+    /// Consumes one allocation session and the opaque prepublication batch into a queue.
+    ///
+    /// Raw scheduler and fixed-batch inputs cannot enter this boundary.
+    ///
+    /// ```compile_fail
+    /// use fe2o3_service_host::ServiceAllocationSessionV1;
+    /// use ferric_engine::{M1PhysicalFixedBatchV1, M1PhysicalQueueSessionV1, M1ScheduledDispatchV1};
+    /// fn raw_create(
+    ///     allocations: ServiceAllocationSessionV1,
+    ///     scheduled: M1ScheduledDispatchV1,
+    ///     batch: M1PhysicalFixedBatchV1<'_>,
+    /// ) {
+    ///     let _ = M1PhysicalQueueSessionV1::create(allocations, 4096, scheduled, batch);
+    /// }
+    /// ```
     ///
     /// Pure validation rejection reconstructs the exact input fixed-batch
     /// variant. Terminal creation failure retains Ferric custody but grants no
@@ -1676,35 +1621,25 @@ impl M1PhysicalQueueSessionV1 {
     pub fn create(
         allocations: ServiceAllocationSessionV1,
         ring_bytes: u32,
-        scheduled: M1ScheduledDispatchV1,
-        batch: M1PhysicalFixedBatchV1<'_>,
+        prepublication: M1PrepublicationBatchV1<'_>,
     ) -> Result<Self, M1PhysicalQueueCreateFailureV1<'_>> {
-        let capacity = batch.completion_output().shape().sequences() as usize;
-        let members = scheduled.member_count();
-        if validate_scheduled_member_count(members, capacity).is_err() {
-            return Err(M1PhysicalQueueCreateFailureV1::Rejected {
-                error: ServiceQueueErrorV1::BatchContract("M1 scheduled member count"),
-                allocations: Box::new(allocations),
-                batch: Box::new(batch),
-                scheduled: Box::new(scheduled),
-            });
-        }
+        let M1PrepublicationBatchV1 { batch, step } = prepublication;
         match batch {
             M1PhysicalFixedBatchV1::TargetOnly(case) => {
-                finish_target_only_create(create_case(allocations, ring_bytes, scheduled, *case))
+                finish_target_only_create(create_case(allocations, ring_bytes, step, *case))
             }
             M1PhysicalFixedBatchV1::PairedPrefill(case) => {
-                finish_paired_prefill_create(create_case(allocations, ring_bytes, scheduled, *case))
+                finish_paired_prefill_create(create_case(allocations, ring_bytes, step, *case))
             }
             M1PhysicalFixedBatchV1::SpeculativeK4(case) => {
-                finish_speculative_k4_create(create_case(allocations, ring_bytes, scheduled, *case))
+                finish_speculative_k4_create(create_case(allocations, ring_bytes, step, *case))
             }
             M1PhysicalFixedBatchV1::SpeculativeK8(case) => {
-                finish_speculative_k8_create(create_case(allocations, ring_bytes, scheduled, *case))
+                finish_speculative_k8_create(create_case(allocations, ring_bytes, step, *case))
             }
-            M1PhysicalFixedBatchV1::SpeculativeK16(case) => finish_speculative_k16_create(
-                create_case(allocations, ring_bytes, scheduled, *case),
-            ),
+            M1PhysicalFixedBatchV1::SpeculativeK16(case) => {
+                finish_speculative_k16_create(create_case(allocations, ring_bytes, step, *case))
+            }
         }
     }
 
@@ -1817,18 +1752,6 @@ impl M1PhysicalCompletedQueueSessionV1 {
     }
 }
 
-fn reuse_readback_case<const N: usize>(
-    case: Box<M1PhysicalReadbackQueueCaseV1<N>>,
-    scheduled: M1ScheduledDispatchV1,
-) -> Box<M1PhysicalQueuePhaseCaseV1<ServiceQueueSessionV1<N>>> {
-    let (lower, custody) = (*case).into_parts();
-    Box::new(M1PhysicalQueuePhaseCaseV1::new(
-        lower.reuse(),
-        custody,
-        scheduled,
-    ))
-}
-
 fn detach_readback_case<const N: usize>(
     case: Box<M1PhysicalReadbackQueueCaseV1<N>>,
     shape: M1PhysicalFixedBatchShapeV1,
@@ -1863,48 +1786,6 @@ fn release_readback_case<const N: usize>(
 }
 
 impl M1PhysicalReadbackQueueSessionV1 {
-    /// Reuses the attached batch for one fresh exact scheduler dispatch.
-    ///
-    /// The old dispatch authority was consumed by the successful readback join;
-    /// this transition requires a new linear dispatch and binds it to the next
-    /// prepared queue generation.
-    ///
-    /// # Errors
-    ///
-    /// Returns both unchanged inputs if the new dispatch is empty or exceeds
-    /// the retained completion-output capacity.
-    pub fn reuse(
-        self,
-        scheduled: M1ScheduledDispatchV1,
-    ) -> Result<M1PhysicalQueueSessionV1, M1PhysicalQueueReuseFailureV1> {
-        let capacity = self.custody().completion_output().shape().sequences() as usize;
-        let actual = scheduled.member_count();
-        if let Err(error) = validate_scheduled_member_count(actual, capacity) {
-            return Err(M1PhysicalQueueReuseFailureV1 {
-                error,
-                queue: Box::new(self),
-                scheduled: Box::new(scheduled),
-            });
-        }
-        match self {
-            Self::TargetOnly(case) => Ok(M1PhysicalQueueSessionV1::TargetOnly(
-                reuse_readback_case(case, scheduled),
-            )),
-            Self::PairedPrefill(case) => Ok(M1PhysicalQueueSessionV1::PairedPrefill(
-                reuse_readback_case(case, scheduled),
-            )),
-            Self::SpeculativeK4(case) => Ok(M1PhysicalQueueSessionV1::SpeculativeK4(
-                reuse_readback_case(case, scheduled),
-            )),
-            Self::SpeculativeK8(case) => Ok(M1PhysicalQueueSessionV1::SpeculativeK8(
-                reuse_readback_case(case, scheduled),
-            )),
-            Self::SpeculativeK16(case) => Ok(M1PhysicalQueueSessionV1::SpeculativeK16(
-                reuse_readback_case(case, scheduled),
-            )),
-        }
-    }
-
     /// Detaches exact data custody after the completed-readback join.
     ///
     /// # Errors
@@ -1972,6 +1853,7 @@ type ReadAndCheckCaseResultV1<const N: usize> = Result<
         Box<M1PhysicalReadbackQueueCaseV1<N>>,
         M1CheckedCompletionOutputV1,
         ExactCompletion,
+        M1FullStepKvReservationCustodyV1,
     ),
     (
         M1CompletedReadbackJoinErrorV1,
@@ -1981,7 +1863,7 @@ type ReadAndCheckCaseResultV1<const N: usize> = Result<
 
 fn read_and_check_case<const N: usize>(
     mut case: Box<M1PhysicalQueuePhaseCaseV1<ServiceRecycledQueueSessionV1<N>>>,
-    expectations: &[CompletionWireExpectation<'_>],
+    semantics: &[CompletionWireSemanticExpectation<'_>],
 ) -> ReadAndCheckCaseResultV1<N> {
     let output = case.custody.completion_output();
     let output_shape = output.shape();
@@ -2015,25 +1897,62 @@ fn read_and_check_case<const N: usize>(
         data_index: readback.data_index(),
         offset_bytes: readback.offset_bytes(),
     };
+    let scheduled = case.step.scheduled_dispatch();
+    if semantics.len() != scheduled.member_count() {
+        return Err((
+            M1CompletedReadbackJoinErrorV1::Output(
+                M1CompletedOutputCheckErrorV1::ExpectationCount {
+                    expected: scheduled.member_count(),
+                    actual: semantics.len(),
+                },
+            ),
+            case,
+        ));
+    }
+    let mut expectations = Vec::new();
+    if expectations.try_reserve_exact(semantics.len()).is_err() {
+        return Err((
+            M1CompletedReadbackJoinErrorV1::Output(M1CompletedOutputCheckErrorV1::Output(
+                crate::M1CompletionOutputErrorV1::ExtentOverflow,
+            )),
+            case,
+        ));
+    }
+    for (lane, semantic) in semantics.iter().copied().enumerate() {
+        let Some(plan) = case.step.target_plans()[lane].as_ref() else {
+            return Err((
+                M1CompletedReadbackJoinErrorV1::Output(
+                    M1CompletedOutputCheckErrorV1::ExpectationCount {
+                        expected: scheduled.member_count(),
+                        actual: lane,
+                    },
+                ),
+                case,
+            ));
+        };
+        expectations.push(CompletionWireExpectation::new(plan, semantic));
+    }
     let checked = match check_m1_completed_output_v1(
         output_shape,
         case.custody.selection(),
-        &case.scheduled,
+        scheduled,
         metadata,
         readback.bytes(),
-        expectations,
+        &expectations,
     ) {
         Ok(checked) => checked,
         Err(error) => {
             return Err((M1CompletedReadbackJoinErrorV1::Output(error), case));
         }
     };
-    let (lower, custody, scheduled) = (*case).into_parts();
+    let (lower, custody, step) = (*case).into_parts();
+    let (scheduled, _target_plans, kv) = step.into_parts();
     let completion = ExactCompletion::from_completed_m1_queue_readback(scheduled);
     Ok((
         Box::new(M1PhysicalReadbackQueueCaseV1 { lower, custody }),
         checked,
         completion,
+        kv,
     ))
 }
 
@@ -2049,10 +1968,10 @@ impl M1PhysicalRecycledQueueSessionV1 {
     /// consumes scheduler authority to mint one [`ExactCompletion`].
     ///
     /// ```compile_fail
-    /// use ferric_engine::{CompletionWireExpectation, M1PhysicalRecycledQueueSessionV1};
+    /// use ferric_engine::{CompletionWireSemanticExpectation, M1PhysicalRecycledQueueSessionV1};
     /// fn join_twice(
     ///     queue: M1PhysicalRecycledQueueSessionV1,
-    ///     expectations: &[CompletionWireExpectation<'_>],
+    ///     expectations: &[CompletionWireSemanticExpectation<'_>],
     /// ) {
     ///     let _first = queue.read_and_check_completion(expectations);
     ///     let _second = queue.read_and_check_completion(expectations);
@@ -2066,14 +1985,15 @@ impl M1PhysicalRecycledQueueSessionV1 {
     /// authority is created on failure.
     pub fn read_and_check_completion(
         self,
-        expectations: &[CompletionWireExpectation<'_>],
+        expectations: &[CompletionWireSemanticExpectation<'_>],
     ) -> Result<M1PhysicalCompletedReadbackV1, M1CompletedReadbackJoinFailureV1> {
         match self {
             Self::TargetOnly(case) => match read_and_check_case(case, expectations) {
-                Ok((case, checked, completion)) => Ok(M1PhysicalCompletedReadbackV1 {
+                Ok((case, checked, completion, kv)) => Ok(M1PhysicalCompletedReadbackV1 {
                     queue: M1PhysicalReadbackQueueSessionV1::TargetOnly(case),
                     checked,
                     completion,
+                    kv,
                 }),
                 Err((error, case)) => Err(M1CompletedReadbackJoinFailureV1 {
                     error,
@@ -2081,10 +2001,11 @@ impl M1PhysicalRecycledQueueSessionV1 {
                 }),
             },
             Self::PairedPrefill(case) => match read_and_check_case(case, expectations) {
-                Ok((case, checked, completion)) => Ok(M1PhysicalCompletedReadbackV1 {
+                Ok((case, checked, completion, kv)) => Ok(M1PhysicalCompletedReadbackV1 {
                     queue: M1PhysicalReadbackQueueSessionV1::PairedPrefill(case),
                     checked,
                     completion,
+                    kv,
                 }),
                 Err((error, case)) => Err(M1CompletedReadbackJoinFailureV1 {
                     error,
@@ -2092,10 +2013,11 @@ impl M1PhysicalRecycledQueueSessionV1 {
                 }),
             },
             Self::SpeculativeK4(case) => match read_and_check_case(case, expectations) {
-                Ok((case, checked, completion)) => Ok(M1PhysicalCompletedReadbackV1 {
+                Ok((case, checked, completion, kv)) => Ok(M1PhysicalCompletedReadbackV1 {
                     queue: M1PhysicalReadbackQueueSessionV1::SpeculativeK4(case),
                     checked,
                     completion,
+                    kv,
                 }),
                 Err((error, case)) => Err(M1CompletedReadbackJoinFailureV1 {
                     error,
@@ -2103,10 +2025,11 @@ impl M1PhysicalRecycledQueueSessionV1 {
                 }),
             },
             Self::SpeculativeK8(case) => match read_and_check_case(case, expectations) {
-                Ok((case, checked, completion)) => Ok(M1PhysicalCompletedReadbackV1 {
+                Ok((case, checked, completion, kv)) => Ok(M1PhysicalCompletedReadbackV1 {
                     queue: M1PhysicalReadbackQueueSessionV1::SpeculativeK8(case),
                     checked,
                     completion,
+                    kv,
                 }),
                 Err((error, case)) => Err(M1CompletedReadbackJoinFailureV1 {
                     error,
@@ -2114,10 +2037,11 @@ impl M1PhysicalRecycledQueueSessionV1 {
                 }),
             },
             Self::SpeculativeK16(case) => match read_and_check_case(case, expectations) {
-                Ok((case, checked, completion)) => Ok(M1PhysicalCompletedReadbackV1 {
+                Ok((case, checked, completion, kv)) => Ok(M1PhysicalCompletedReadbackV1 {
                     queue: M1PhysicalReadbackQueueSessionV1::SpeculativeK16(case),
                     checked,
                     completion,
+                    kv,
                 }),
                 Err((error, case)) => Err(M1CompletedReadbackJoinFailureV1 {
                     error,
@@ -2186,13 +2110,13 @@ impl M1PhysicalRecycledQueueSessionV1 {
 
 fn operation_failure(
     shape: M1PhysicalFixedBatchShapeV1,
-    scheduled: M1ScheduledDispatchV1,
+    step: M1PrepublicationStepCustodyV1,
     lower: ServiceQueueOperationFailureV1,
     custody: M1PhysicalFixedBatchCustodyV1,
 ) -> M1PhysicalQueueOperationFailureV1 {
     M1PhysicalQueueOperationFailureV1 {
         shape,
-        scheduled: Box::new(scheduled),
+        step: Box::new(step),
         lower,
         custody: Box::new(custody),
     }
@@ -2200,10 +2124,7 @@ fn operation_failure(
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        validate_scheduled_member_count, M1PhysicalQueueCreateFailureClassV1,
-        M1PhysicalQueuePhaseV1, M1PhysicalQueueReuseErrorV1,
-    };
+    use super::{M1PhysicalQueueCreateFailureClassV1, M1PhysicalQueuePhaseV1};
 
     #[test]
     fn state_capabilities_are_disjoint_and_fail_closed() {
@@ -2220,15 +2141,15 @@ mod tests {
             let grants = usize::from(phase.can_submit())
                 + usize::from(phase.can_wait())
                 + usize::from(phase.can_recycle())
-                + usize::from(phase.can_read_reuse_detach_or_release());
+                + usize::from(phase.can_read_detach_or_release());
             assert!(grants <= 1);
         }
         assert!(M1PhysicalQueuePhaseV1::Prepared.can_submit());
         assert!(M1PhysicalQueuePhaseV1::Published.can_wait());
         assert!(M1PhysicalQueuePhaseV1::Completed.can_recycle());
-        assert!(M1PhysicalQueuePhaseV1::Recycled.can_read_reuse_detach_or_release());
-        assert!(M1PhysicalQueuePhaseV1::ReadbackJoined.can_reuse_detach_or_release());
-        assert!(!M1PhysicalQueuePhaseV1::ReadbackJoined.can_read_reuse_detach_or_release());
+        assert!(M1PhysicalQueuePhaseV1::Recycled.can_read_detach_or_release());
+        assert!(M1PhysicalQueuePhaseV1::ReadbackJoined.can_detach_or_release());
+        assert!(!M1PhysicalQueuePhaseV1::ReadbackJoined.can_read_detach_or_release());
         assert_eq!(0, grants_for(M1PhysicalQueuePhaseV1::Detached));
         assert_eq!(0, grants_for(M1PhysicalQueuePhaseV1::Quarantined));
     }
@@ -2241,27 +2162,10 @@ mod tests {
         assert!(M1PhysicalQueueCreateFailureClassV1::Terminal.denies_retry());
     }
 
-    #[test]
-    fn scheduled_member_count_contract_is_exact_at_both_boundaries() {
-        assert_eq!(
-            validate_scheduled_member_count(0, 8),
-            Err(M1PhysicalQueueReuseErrorV1::EmptyDispatch)
-        );
-        assert_eq!(validate_scheduled_member_count(1, 8), Ok(()));
-        assert_eq!(validate_scheduled_member_count(8, 8), Ok(()));
-        assert_eq!(
-            validate_scheduled_member_count(9, 8),
-            Err(M1PhysicalQueueReuseErrorV1::CapacityExceeded {
-                capacity: 8,
-                actual: 9,
-            })
-        );
-    }
-
     fn grants_for(phase: M1PhysicalQueuePhaseV1) -> usize {
         usize::from(phase.can_submit())
             + usize::from(phase.can_wait())
             + usize::from(phase.can_recycle())
-            + usize::from(phase.can_read_reuse_detach_or_release())
+            + usize::from(phase.can_read_detach_or_release())
     }
 }
