@@ -39,6 +39,37 @@ establish HSACO existence. The `kernel-schedule-catalog` obligation and exact
 Ferric generated-plan/runner identity join remain open. This crate does not
 close `m1.r08`, an assurance property, or a roadmap row.
 
+The `src/rmsnorm.rs` module declares 132 profiles: target and draft roles,
+eleven exact Ferric buckets, five pure graph operations, and one separate
+hidden-width residual-fused operation. Hidden normalization widths are 4096
+for the target and 1024 for the draft. Query and key normalization are
+per-head width 128, with exact target/draft query-head and shared KV-head row
+counts. The generic machine ABI carries behavior, rows, width, epsilon, and
+element counts. It requires positive rows and one supported mode/width pair,
+but it does not constrain rows to the finite catalog or carry an operation or
+profile tag. Consequently it cannot distinguish Input, `PostAttention`, and
+Final `RMSNorm` when their pure hidden geometry is identical. Exact operation,
+role, bucket, and row selection remain checked host catalog state and are not
+yet joined to a generated Ferric plan or runner.
+
+`RMSNorm` inputs, weights, residuals, fused residual outputs, and normalized
+outputs are BF16. The typed graph declares FP32 square accumulation,
+normalization, weighting, and residual addition before BF16 conversion. Pure
+mode requires both optional residual pointer/length pairs to be exactly zero,
+the pointer parameters carry neither `nonnull` nor dereferenceable attributes,
+and its control flow cannot reach residual loads or fused-output stores.
+Residual-fused mode is hidden-width only, requires exact nonzero disjoint spans,
+and rejects width 128.
+
+The `RMSNorm` module uses direct typed Handoff V2 because the reusable Pliron
+AMDGPU route cannot represent this scalar BF16 graph. It serializes canonical
+LLVM, forms linear Worker V2 custody, and defines strict post-worker ELF,
+AMDHSA ABI, descriptor, resource, and loader inspection. Source tests inspect
+the serialized LLVM structure but do not execute Worker V2, create or
+disassemble an HSACO, or establish numerical, operator, source-to-LLVM,
+LLVM-to-machine, hardware, completion, or performance refinement. The
+`ferric-rmsnorm` and `kernel-schedule-catalog` paths and `m1.r07` remain Open.
+
 The workspace dependency revision is pinned to accepted reusable fe2o3 generic
 compiler/runtime commit `a6c779f6f8052839c3a07901f9bfafa681f7b09a`.
 That source closure supplies generic infrastructure only; it is not Ferric

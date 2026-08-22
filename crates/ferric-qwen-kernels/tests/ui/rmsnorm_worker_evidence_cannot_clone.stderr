@@ -1,0 +1,5 @@
+error[E0599]: no method named `clone` found for struct `InertQwen3RmsNormWorkerEvidenceV1` in the current scope
+ --> tests/ui/rmsnorm_worker_evidence_cannot_clone.rs:4:31
+  |
+4 |     let _duplicate = evidence.clone();
+  |                               ^^^^^ method not found in `InertQwen3RmsNormWorkerEvidenceV1`
