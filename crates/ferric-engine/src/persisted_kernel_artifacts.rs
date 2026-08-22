@@ -159,6 +159,15 @@ impl fmt::Debug for AdmittedPersistedM1KernelArtifactsV1 {
 }
 
 impl AdmittedPersistedM1KernelArtifactsV1 {
+    pub(crate) fn content_bound_program_catalog_v1(
+        &self,
+    ) -> Result<ContentBoundM1ProgramCatalogV1<'_>, M1PhysicalProgramCatalogErrorV1> {
+        bind_content_bound_m1_program_catalog_from_persisted_v1(
+            object_borrows(&self.objects),
+            &self.plans,
+        )
+    }
+
     /// Revalidated canonical inert manifest retained with the exact bytes.
     #[must_use]
     pub const fn manifest(&self) -> &M1KernelArtifactManifestV1 {
@@ -186,10 +195,7 @@ impl AdmittedPersistedM1KernelArtifactsV1 {
         &self,
         use_catalog: impl for<'catalog> FnOnce(ContentBoundM1ProgramCatalogV1<'catalog>) -> R,
     ) -> Result<R, M1PhysicalProgramCatalogErrorV1> {
-        let catalog = bind_content_bound_m1_program_catalog_from_persisted_v1(
-            object_borrows(&self.objects),
-            &self.plans,
-        )?;
+        let catalog = self.content_bound_program_catalog_v1()?;
         Ok(use_catalog(catalog))
     }
 

@@ -217,7 +217,13 @@ pub use physical_step::{
     StructuralPhysicalStepBindingFailure, StructuralPhysicalStepBindingOutcome,
     StructurallyBoundPhysicalStep,
 };
-pub use runner::{LogicalRunnerDeclaration, LogicalRunnerError};
+pub use runner::{
+    bind_m1_physical_runner_v1, initialize_m1_physical_runner_memory_v1, LogicalRunnerDeclaration,
+    LogicalRunnerError, M1PhysicalRunnerBindFailureV1, M1PhysicalRunnerFirstCompletionOutcomeV1,
+    M1PhysicalRunnerFirstPublicationFailureV1, M1PhysicalRunnerMemoryFailureV1,
+    M1PhysicalRunnerQueueFailureStageV1, M1PhysicalRunnerRearmSubmissionFailureV1,
+    M1PhysicalRunnerRecipeFailureV1, M1PhysicalRunnerRecipeOutcomeV1, M1PhysicalRunnerV1,
+};
 pub use scheduler::{DispatchBatch, M1ScheduledDispatchV1, SchedulerError};
 pub use speculative_graph::{
     complete_single_member_speculative_graph, SingleMemberSpeculativeGraphError,

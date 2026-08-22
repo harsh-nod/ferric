@@ -256,6 +256,8 @@ pub enum OperationKernelIdentityComponent {
 /// Fail-closed structural operation/kernel planning error.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum OperationKernelPlanError {
+    /// Host allocation for the complete canonical binding roster failed.
+    HostAllocation,
     /// The family artifact roster has the wrong size.
     FamilyCount {
         /// Required K1-K7 declaration count.
@@ -396,6 +398,15 @@ pub struct DeclaredOperationKernelPlan {
 }
 
 impl DeclaredOperationKernelPlan {
+    /// Borrows the exact published runner retained by this physical plan.
+    ///
+    /// This is declaration custody only. Physical execution still requires the
+    /// separately admitted artifact, allocation, buffer, and queue authorities.
+    #[must_use]
+    pub(crate) const fn runner(&self) -> &LogicalRunnerDeclaration {
+        &self.runner
+    }
+
     /// Exact generated-runner declaration identity retained in custody.
     #[must_use]
     pub const fn runner_declaration_id(&self) -> Identity {
@@ -503,6 +514,49 @@ impl DeclaredOperationKernelPlan {
     pub const fn proves_refinement(&self) -> bool {
         false
     }
+}
+
+pub(crate) fn derive_canonical_operation_bindings(
+    runner: &LogicalRunnerDeclaration,
+    families: &[DeclaredKernelFamilyArtifact],
+) -> Result<Box<[DeclaredOperationKernelBinding]>, OperationKernelPlanError> {
+    validate_families(families)?;
+    let catalogs = CanonicalCatalogs::build()?;
+    let mut operations = Vec::new();
+    operations
+        .try_reserve_exact(runner.operation_count())
+        .map_err(|_| OperationKernelPlanError::HostAllocation)?;
+    for role in [Qwen3ModelRole::Target8B, Qwen3ModelRole::Draft06B] {
+        for (mode, bucket) in M1_B3_PLAN_BUCKETS {
+            let selection = Qwen3PlanSelection { role, mode, bucket };
+            for generated in runner
+                .operations_for(selection)
+                .map_err(OperationKernelPlanError::Runner)?
+            {
+                let expected = resolve_profile(generated, &catalogs).ok_or(
+                    OperationKernelPlanError::CanonicalProfile(generated.operation_index),
+                )?;
+                let family = families
+                    .iter()
+                    .copied()
+                    .find(|family| family.family() == generated.profile.family)
+                    .ok_or(OperationKernelPlanError::Family(generated.operation_index))?;
+                operations.push(DeclaredOperationKernelBinding::new(
+                    generated.operation_index,
+                    generated.plan_index,
+                    DeclaredOperationIdentity::new(
+                        generated.profile.plan_id,
+                        runner.declaration_id(),
+                        runner.kernel_catalog_id(),
+                        expected.catalog_id,
+                        expected.profile_id,
+                    ),
+                    family,
+                ));
+            }
+        }
+    }
+    Ok(operations.into_boxed_slice())
 }
 
 /// Exact linear outcome of one structural planning attempt.
@@ -1096,11 +1150,12 @@ pub(crate) mod tests {
     };
 
     use super::{
-        bind_declared_operation_kernel_plan, expected_family, resolve_profile, validate_families,
-        validate_operation_sequence_with_catalogs, CanonicalCatalogs, DeclaredKernelFamilyArtifact,
-        DeclaredOperationIdentity, DeclaredOperationKernelBinding, DeclaredOperationKernelPlan,
-        LogicalRunnerDeclaration, OperationKernelIdentityComponent, OperationKernelPlanError,
-        OperationKernelPlanOutcome, FAMILIES, M1_B3_PLAN_BUCKETS, M1_KERNEL_OPERATION_BINDINGS,
+        bind_declared_operation_kernel_plan, derive_canonical_operation_bindings, expected_family,
+        resolve_profile, validate_families, validate_operation_sequence_with_catalogs,
+        CanonicalCatalogs, DeclaredKernelFamilyArtifact, DeclaredOperationIdentity,
+        DeclaredOperationKernelBinding, DeclaredOperationKernelPlan, LogicalRunnerDeclaration,
+        OperationKernelIdentityComponent, OperationKernelPlanError, OperationKernelPlanOutcome,
+        FAMILIES, M1_B3_PLAN_BUCKETS, M1_KERNEL_OPERATION_BINDINGS,
     };
 
     const TARGET_OPERATIONS: usize = 11 * 544;
@@ -1504,6 +1559,26 @@ pub(crate) mod tests {
             panic!("exact published runner must bind");
         };
         plan
+    }
+
+    #[test]
+    fn canonical_derivation_binds_the_complete_generated_operation_roster() {
+        let declaration =
+            generate_qwen3_gfx942_runner_declaration(qwen3_runner_closure_test_fixture())
+                .expect("generated runner from compact sealed fixture");
+        let publication = publish_qwen3_gfx942_runner_declaration(declaration)
+            .expect("published runner from compact sealed fixture");
+        let runner = LogicalRunnerDeclaration::from_published(publication);
+        let families = family_artifacts();
+        let operations = derive_canonical_operation_bindings(&runner, &families)
+            .expect("canonical profiles bind every generated operation");
+        assert_eq!(operations.len(), M1_KERNEL_OPERATION_BINDINGS);
+        let OperationKernelPlanOutcome::Bound(plan) =
+            bind_declared_operation_kernel_plan(runner, families, operations)
+        else {
+            panic!("canonical derived roster must pass independent binding");
+        };
+        assert_eq!(plan.operations().len(), M1_KERNEL_OPERATION_BINDINGS);
     }
 
     #[test]
