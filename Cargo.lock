@@ -388,6 +388,7 @@ dependencies = [
 name = "ferric-m1-proof"
 version = "0.1.0"
 dependencies = [
+ "ferric-build",
  "ferric-engine",
  "ferric-generated-runner",
  "ferric-kernels",
@@ -410,14 +411,6 @@ dependencies = [
  "reserved-fe2o3-symbols",
  "sha2",
  "trybuild",
- "vstd",
-]
-
-[[package]]
-name = "ferric-m1-proof"
-version = "0.1.0"
-dependencies = [
- "ferric-build",
  "vstd",
 ]
 
