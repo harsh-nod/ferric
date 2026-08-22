@@ -1,8 +1,9 @@
 //! Owner-checked service-buffer bindings for exact M1 physical recipes.
 //!
 //! This layer resolves Ferric semantic sources through already-bound workspace
-//! and model-memory owners. It retains every linear input and produces only
-//! ordered [`ServiceFixedDispatchBufferV1`] rosters. It does not construct
+//! and model-memory owners plus one coherent completion-output owner. It
+//! retains every linear input and produces only ordered
+//! [`ServiceFixedDispatchBufferV1`] rosters. It does not construct
 //! packets or batches, transfer allocation custody, publish a queue, launch
 //! work, authenticate contents, or prove completion or refinement.
 
@@ -10,14 +11,15 @@ use core::fmt;
 
 use fe2o3_service_host::{
     ServiceAllocationErrorV1, ServiceAllocationSessionV1, ServiceDeviceDispatchRangeV1,
-    ServiceFixedDispatchBufferV1,
+    ServiceFixedDispatchBufferV1, ServiceHostDispatchRangeV1,
 };
 use ferric_spec::Identity;
 
 use crate::{
-    bind_addressless_m1_full_step_workspace_subleases, AddresslessM1PhysicalBufferRecipeV1,
-    AddresslessM1PhysicalKernargRecipeV1, BoundM1FullStepWorkspaceSubleases,
-    BoundModelMemoryAllocationsV1, M1FullStepWorkspaceDispatchRangeError,
+    bind_addressless_m1_full_step_workspace_subleases, m1_completion_output_shape_v1,
+    AddresslessM1PhysicalBufferRecipeV1, AddresslessM1PhysicalKernargRecipeV1,
+    BoundM1CompletionOutputV1, BoundM1FullStepWorkspaceSubleases, BoundModelMemoryAllocationsV1,
+    M1CompletionOutputErrorV1, M1CompletionOutputShapeV1, M1FullStepWorkspaceDispatchRangeError,
     M1FullStepWorkspaceSubleaseBindingError, M1FullStepWorkspaceSubleaseOwners,
     M1PhysicalBufferRecipeErrorV1, M1PhysicalBufferRecipeRowV1, M1PhysicalBufferSentinelV1,
     M1PhysicalBufferSourceV1, M1PhysicalProgramV1, ModelMemoryDispatchRangeErrorV1,
@@ -74,7 +76,7 @@ impl M1BoundPhysicalBufferRowV1 {
 /// fn require_clone<T: Clone>() {}
 /// require_clone::<BoundM1PhysicalBufferBindingsV1>();
 /// ```
-#[must_use = "all physical, workspace, model-memory, and buffer custody must remain retained"]
+#[must_use = "all physical, allocation, and buffer custody must remain retained"]
 #[derive(Debug)]
 pub struct BoundM1PhysicalBufferBindingsV1 {
     version: u32,
@@ -82,6 +84,7 @@ pub struct BoundM1PhysicalBufferBindingsV1 {
     source_rows: Box<[M1PhysicalBufferRecipeRowV1]>,
     workspaces: BoundM1FullStepWorkspaceSubleases,
     model_memory: BoundModelMemoryAllocationsV1,
+    completion_output: BoundM1CompletionOutputV1,
     rows: Box<[M1BoundPhysicalBufferRowV1]>,
 }
 
@@ -116,6 +119,12 @@ impl BoundM1PhysicalBufferBindingsV1 {
         &self.model_memory
     }
 
+    /// Exact retained coherent host-download completion-output custody.
+    #[must_use = "the exact completion-output custody remains retained by the physical binding"]
+    pub const fn completion_output(&self) -> &BoundM1CompletionOutputV1 {
+        &self.completion_output
+    }
+
     /// Complete owner-checked service-buffer rosters in global dispatch order.
     #[must_use]
     pub fn rows(&self) -> &[M1BoundPhysicalBufferRowV1] {
@@ -131,6 +140,7 @@ impl BoundM1PhysicalBufferBindingsV1 {
         AddresslessM1PhysicalBufferRecipeV1,
         M1FullStepWorkspaceSubleaseOwners,
         BoundModelMemoryAllocationsV1,
+        BoundM1CompletionOutputV1,
         Box<[M1BoundPhysicalBufferRowV1]>,
     ) {
         let (composition, owners) = self.workspaces.into_parts();
@@ -139,7 +149,13 @@ impl BoundM1PhysicalBufferBindingsV1 {
             composition,
             self.source_rows,
         );
-        (recipe, owners, self.model_memory, self.rows)
+        (
+            recipe,
+            owners,
+            self.model_memory,
+            self.completion_output,
+            self.rows,
+        )
     }
 
     /// These rosters grant no packet, batch, queue, or launch authority.
@@ -224,6 +240,43 @@ pub enum M1PhysicalBufferBindingErrorV1 {
         /// Exact generic range diagnostic.
         error: ServiceAllocationErrorV1,
     },
+    /// The recipe did not contain exactly one target compact-output source.
+    CompletionOutputCount {
+        /// Exact required source count.
+        expected: usize,
+        /// Rejected source count.
+        actual: usize,
+    },
+    /// A compact source and retained host output name different exact shapes.
+    CompletionOutputShape {
+        /// Global physical row.
+        dispatch_index: u32,
+        /// Inspected explicit-argument ordinal.
+        argument: usize,
+        /// Target selection named by the compact row.
+        expected_selection: ferric_spec::Qwen3PlanSelection,
+        /// Selection retained by the host-output owner.
+        actual_selection: ferric_spec::Qwen3PlanSelection,
+        /// Sequence count required by the compact row selection.
+        expected_sequences: u32,
+        /// Sequence count encoded by the semantic source.
+        source_sequences: u32,
+        /// Sequence count retained by the host-output owner.
+        actual_sequences: u32,
+        /// Exact canonical byte extent required by the compact row.
+        expected_extent: u64,
+        /// Byte extent retained by the host-output owner.
+        actual_extent: u64,
+    },
+    /// The generic allocation owner rejected the coherent completion range.
+    CompletionOutputRange {
+        /// Global physical row.
+        dispatch_index: u32,
+        /// Inspected explicit-argument ordinal.
+        argument: usize,
+        /// Exact host-output owner diagnostic.
+        error: M1CompletionOutputErrorV1,
+    },
 }
 
 impl fmt::Display for M1PhysicalBufferBindingErrorV1 {
@@ -235,13 +288,23 @@ impl fmt::Display for M1PhysicalBufferBindingErrorV1 {
 impl std::error::Error for M1PhysicalBufferBindingErrorV1 {}
 
 /// Retry-safe rejection retaining every exact unchanged linear input.
-#[must_use = "all rejected physical, workspace, and model-memory owners remain recoverable"]
+///
+/// ```compile_fail
+/// use ferric_engine::M1PhysicalBufferBindingFailureV1;
+///
+/// fn recover_twice(failure: M1PhysicalBufferBindingFailureV1) {
+///     let _first = failure.into_parts();
+///     let _second = failure.into_parts();
+/// }
+/// ```
+#[must_use = "all rejected physical and allocation owners remain recoverable"]
 #[derive(Debug)]
 pub struct M1PhysicalBufferBindingFailureV1 {
     error: Box<M1PhysicalBufferBindingErrorV1>,
     recipe: Box<AddresslessM1PhysicalBufferRecipeV1>,
     workspace_owners: Box<M1FullStepWorkspaceSubleaseOwners>,
     model_memory: Box<BoundModelMemoryAllocationsV1>,
+    completion_output: Box<BoundM1CompletionOutputV1>,
 }
 
 impl M1PhysicalBufferBindingFailureV1 {
@@ -260,12 +323,14 @@ impl M1PhysicalBufferBindingFailureV1 {
         AddresslessM1PhysicalBufferRecipeV1,
         M1FullStepWorkspaceSubleaseOwners,
         BoundModelMemoryAllocationsV1,
+        BoundM1CompletionOutputV1,
     ) {
         (
             *self.error,
             *self.recipe,
             *self.workspace_owners,
             *self.model_memory,
+            *self.completion_output,
         )
     }
 }
@@ -274,17 +339,18 @@ impl M1PhysicalBufferBindingFailureV1 {
 ///
 /// Materialization prerequisites fail before any input is decomposed. All
 /// subsequent failures reconstruct and return the exact addressless recipe,
-/// workspace owners, and model-memory owner unchanged.
+/// workspace owners, model-memory owner, and completion-output owner unchanged.
 ///
 /// # Errors
 ///
 /// Returns [`M1PhysicalBufferBindingFailureV1`] for recipe, materialization,
-/// workspace-owner, row/order/ordinal, workspace-range, model-range, or
-/// sentinel-subrange rejection.
+/// workspace-owner, row/order/ordinal, workspace-range, model-range,
+/// completion-output, or sentinel-subrange rejection.
 pub fn bind_m1_physical_buffer_ranges_v1(
     recipe: AddresslessM1PhysicalBufferRecipeV1,
     workspace_owners: M1FullStepWorkspaceSubleaseOwners,
     model_memory: BoundModelMemoryAllocationsV1,
+    completion_output: BoundM1CompletionOutputV1,
     allocations: &ServiceAllocationSessionV1,
 ) -> Result<BoundM1PhysicalBufferBindingsV1, M1PhysicalBufferBindingFailureV1> {
     if let Err(error) = recipe.revalidate() {
@@ -293,11 +359,32 @@ pub fn bind_m1_physical_buffer_ranges_v1(
             recipe,
             workspace_owners,
             model_memory,
+            completion_output,
         ));
     }
     if let Some(error) = first_materialization_requirement(&recipe) {
-        return Err(failure(error, recipe, workspace_owners, model_memory));
+        return Err(failure(
+            error,
+            recipe,
+            workspace_owners,
+            model_memory,
+            completion_output,
+        ));
     }
+
+    let completion_range =
+        match preflight_completion_output(&recipe, &completion_output, allocations) {
+            Ok(range) => range,
+            Err(error) => {
+                return Err(failure(
+                    error,
+                    recipe,
+                    workspace_owners,
+                    model_memory,
+                    completion_output,
+                ));
+            }
+        };
 
     let (kernargs, composition, source_rows) = recipe.into_parts();
     let workspaces = match bind_addressless_m1_full_step_workspace_subleases(
@@ -315,6 +402,7 @@ pub fn bind_m1_physical_buffer_ranges_v1(
                 recipe,
                 workspace_owners,
                 model_memory,
+                completion_output,
             ));
         }
     };
@@ -324,6 +412,8 @@ pub fn bind_m1_physical_buffer_ranges_v1(
         &source_rows,
         &workspaces,
         &model_memory,
+        completion_output.shape(),
+        completion_range,
         allocations,
     ) {
         Ok(rows) => Ok(BoundM1PhysicalBufferBindingsV1 {
@@ -332,13 +422,20 @@ pub fn bind_m1_physical_buffer_ranges_v1(
             source_rows,
             workspaces,
             model_memory,
+            completion_output,
             rows,
         }),
         Err(error) => {
             let (composition, workspace_owners) = workspaces.into_parts();
             let recipe =
                 AddresslessM1PhysicalBufferRecipeV1::from_parts(kernargs, composition, source_rows);
-            Err(failure(error, recipe, workspace_owners, model_memory))
+            Err(failure(
+                error,
+                recipe,
+                workspace_owners,
+                model_memory,
+                completion_output,
+            ))
         }
     }
 }
@@ -348,12 +445,14 @@ fn failure(
     recipe: AddresslessM1PhysicalBufferRecipeV1,
     workspace_owners: M1FullStepWorkspaceSubleaseOwners,
     model_memory: BoundModelMemoryAllocationsV1,
+    completion_output: BoundM1CompletionOutputV1,
 ) -> M1PhysicalBufferBindingFailureV1 {
     M1PhysicalBufferBindingFailureV1 {
         error: Box::new(error),
         recipe: Box::new(recipe),
         workspace_owners: Box::new(workspace_owners),
         model_memory: Box::new(model_memory),
+        completion_output: Box::new(completion_output),
     }
 }
 
@@ -374,11 +473,129 @@ fn first_materialization_requirement(
     })
 }
 
+fn preflight_completion_output(
+    recipe: &AddresslessM1PhysicalBufferRecipeV1,
+    completion_output: &BoundM1CompletionOutputV1,
+    allocations: &ServiceAllocationSessionV1,
+) -> Result<ServiceHostDispatchRangeV1, M1PhysicalBufferBindingErrorV1> {
+    let mut matches = recipe.rows().iter().flat_map(|row| {
+        row.buffers().iter().filter_map(move |buffer| {
+            let M1PhysicalBufferSourceV1::CompletionOutput { sequences } = buffer.source() else {
+                return None;
+            };
+            Some((
+                row.dispatch_index(),
+                buffer.explicit_argument_index(),
+                row.selection(),
+                sequences,
+            ))
+        })
+    });
+    let Some((dispatch_index, argument, selection, source_sequences)) = matches.next() else {
+        return Err(M1PhysicalBufferBindingErrorV1::CompletionOutputCount {
+            expected: 1,
+            actual: 0,
+        });
+    };
+    if matches.next().is_some() {
+        let actual = 2 + matches.count();
+        return Err(M1PhysicalBufferBindingErrorV1::CompletionOutputCount {
+            expected: 1,
+            actual,
+        });
+    }
+    validate_completion_output_shape(
+        dispatch_index,
+        argument,
+        selection,
+        source_sequences,
+        completion_output.shape(),
+    )?;
+    completion_output
+        .host_dispatch_range(allocations, selection)
+        .map_err(
+            |error| M1PhysicalBufferBindingErrorV1::CompletionOutputRange {
+                dispatch_index,
+                argument,
+                error,
+            },
+        )
+}
+
+fn validate_completion_output_shape(
+    dispatch_index: u32,
+    argument: usize,
+    selection: ferric_spec::Qwen3PlanSelection,
+    source_sequences: u32,
+    actual: M1CompletionOutputShapeV1,
+) -> Result<(), M1PhysicalBufferBindingErrorV1> {
+    let expected = m1_completion_output_shape_v1(selection).map_err(|_| {
+        M1PhysicalBufferBindingErrorV1::CompletionOutputShape {
+            dispatch_index,
+            argument,
+            expected_selection: selection,
+            actual_selection: actual.selection(),
+            expected_sequences: 0,
+            source_sequences,
+            actual_sequences: actual.sequences(),
+            expected_extent: 0,
+            actual_extent: actual.extent_bytes(),
+        }
+    })?;
+    if actual != expected || source_sequences != expected.sequences() {
+        return Err(M1PhysicalBufferBindingErrorV1::CompletionOutputShape {
+            dispatch_index,
+            argument,
+            expected_selection: selection,
+            actual_selection: actual.selection(),
+            expected_sequences: expected.sequences(),
+            source_sequences,
+            actual_sequences: actual.sequences(),
+            expected_extent: expected.extent_bytes(),
+            actual_extent: actual.extent_bytes(),
+        });
+    }
+    Ok(())
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ResolvedM1PhysicalBufferRangeV1 {
+    Device(ServiceDeviceDispatchRangeV1),
+    HostVisible(ServiceHostDispatchRangeV1),
+}
+
+#[derive(Clone, Copy)]
+struct SourceResolutionContextV1<'a> {
+    allocations: &'a ServiceAllocationSessionV1,
+    workspaces: &'a BoundM1FullStepWorkspaceSubleases,
+    model_memory: &'a BoundModelMemoryAllocationsV1,
+    completion_shape: M1CompletionOutputShapeV1,
+    completion_range: ServiceHostDispatchRangeV1,
+}
+
+impl ResolvedM1PhysicalBufferRangeV1 {
+    const fn into_fixed_buffer(
+        self,
+        explicit_argument_index: usize,
+    ) -> ServiceFixedDispatchBufferV1 {
+        match self {
+            Self::Device(range) => {
+                ServiceFixedDispatchBufferV1::new(explicit_argument_index, range)
+            }
+            Self::HostVisible(range) => {
+                ServiceFixedDispatchBufferV1::new_host_visible(explicit_argument_index, range)
+            }
+        }
+    }
+}
+
 fn resolve_rows(
     kernargs: &AddresslessM1PhysicalKernargRecipeV1,
     source_rows: &[M1PhysicalBufferRecipeRowV1],
     workspaces: &BoundM1FullStepWorkspaceSubleases,
     model_memory: &BoundModelMemoryAllocationsV1,
+    completion_shape: M1CompletionOutputShapeV1,
+    completion_range: ServiceHostDispatchRangeV1,
     allocations: &ServiceAllocationSessionV1,
 ) -> Result<Box<[M1BoundPhysicalBufferRowV1]>, M1PhysicalBufferBindingErrorV1> {
     let physical_rows = kernargs.source_recipe().rows();
@@ -386,6 +603,13 @@ fn resolve_rows(
         return Err(M1PhysicalBufferBindingErrorV1::RowMetadata { dispatch_index: 0 });
     }
     validate_row_metadata(source_rows, physical_rows)?;
+    let context = SourceResolutionContextV1 {
+        allocations,
+        workspaces,
+        model_memory,
+        completion_shape,
+        completion_range,
+    };
     let mut rows = Vec::with_capacity(source_rows.len());
     for (position, source_row) in source_rows.iter().enumerate() {
         let dispatch_index =
@@ -400,14 +624,12 @@ fn resolve_rows(
                 source_buffer.explicit_argument_index(),
             )?;
             let range = resolve_source(
-                allocations,
-                workspaces,
-                model_memory,
+                context,
                 source_row,
                 source_buffer.explicit_argument_index(),
                 source_buffer.source(),
             )?;
-            buffers.push(ServiceFixedDispatchBufferV1::new(expected_ordinal, range));
+            buffers.push(range.into_fixed_buffer(expected_ordinal));
         }
         if buffers.len() != source_row.buffers().len() {
             return Err(M1PhysicalBufferBindingErrorV1::BufferCount {
@@ -522,29 +744,30 @@ fn validate_argument_ordinal(
 }
 
 fn resolve_source(
-    allocations: &ServiceAllocationSessionV1,
-    workspaces: &BoundM1FullStepWorkspaceSubleases,
-    model_memory: &BoundModelMemoryAllocationsV1,
+    context: SourceResolutionContextV1<'_>,
     row: &M1PhysicalBufferRecipeRowV1,
     argument: usize,
     source: M1PhysicalBufferSourceV1,
-) -> Result<ServiceDeviceDispatchRangeV1, M1PhysicalBufferBindingErrorV1> {
+) -> Result<ResolvedM1PhysicalBufferRangeV1, M1PhysicalBufferBindingErrorV1> {
     let dispatch_index = row.dispatch_index();
     match source {
-        M1PhysicalBufferSourceV1::Workspace { workspace, range } => workspaces
-            .segment_dispatch_range(allocations, row.segment_index(), workspace, range)
+        M1PhysicalBufferSourceV1::Workspace { workspace, range } => context
+            .workspaces
+            .segment_dispatch_range(context.allocations, row.segment_index(), workspace, range)
             .map_err(|error| M1PhysicalBufferBindingErrorV1::WorkspaceRange {
                 dispatch_index,
                 argument,
                 error,
-            }),
+            })
+            .map(ResolvedM1PhysicalBufferRangeV1::Device),
         M1PhysicalBufferSourceV1::WorkspaceSentinel {
             workspace,
             range,
             purpose,
         } => {
-            let parent = workspaces
-                .segment_dispatch_range(allocations, row.segment_index(), workspace, range)
+            let parent = context
+                .workspaces
+                .segment_dispatch_range(context.allocations, row.segment_index(), workspace, range)
                 .map_err(|error| M1PhysicalBufferBindingErrorV1::WorkspaceRange {
                     dispatch_index,
                     argument,
@@ -558,20 +781,28 @@ fn resolve_source(
                     argument,
                     error,
                 })
+                .map(ResolvedM1PhysicalBufferRangeV1::Device)
         }
         M1PhysicalBufferSourceV1::SpeculativeDraftChoices(expected) => {
-            if workspaces.speculative_draft_choice_subrange(expected.producer_segment())
+            if context
+                .workspaces
+                .speculative_draft_choice_subrange(expected.producer_segment())
                 != Some(expected)
             {
                 return Err(M1PhysicalBufferBindingErrorV1::RowMetadata { dispatch_index });
             }
-            workspaces
-                .speculative_draft_choice_dispatch_range(allocations, expected.producer_segment())
+            context
+                .workspaces
+                .speculative_draft_choice_dispatch_range(
+                    context.allocations,
+                    expected.producer_segment(),
+                )
                 .map_err(|error| M1PhysicalBufferBindingErrorV1::WorkspaceRange {
                     dispatch_index,
                     argument,
                     error,
                 })
+                .map(ResolvedM1PhysicalBufferRangeV1::Device)
         }
         M1PhysicalBufferSourceV1::SpeculativeDraftAnchorTokenIds {
             workspace,
@@ -584,13 +815,18 @@ fn resolve_source(
             {
                 return Err(M1PhysicalBufferBindingErrorV1::RowMetadata { dispatch_index });
             }
-            workspaces
-                .speculative_token_assembly_anchor_dispatch_range(allocations, verification_segment)
+            context
+                .workspaces
+                .speculative_token_assembly_anchor_dispatch_range(
+                    context.allocations,
+                    verification_segment,
+                )
                 .map_err(|error| M1PhysicalBufferBindingErrorV1::WorkspaceRange {
                     dispatch_index,
                     argument,
                     error,
                 })
+                .map(ResolvedM1PhysicalBufferRangeV1::Device)
         }
         M1PhysicalBufferSourceV1::SpeculativeDraftIterationMetadata {
             workspace,
@@ -599,12 +835,12 @@ fn resolve_source(
             iteration,
         } => {
             let exact = match range {
-                ferric_build::M1StepWorkspaceRangeRole::DraftPositionIds => {
-                    workspaces.speculative_draft_position_subrange(draft_segment)
-                }
-                ferric_build::M1StepWorkspaceRangeRole::DraftContextLengths => {
-                    workspaces.speculative_draft_context_subrange(draft_segment)
-                }
+                ferric_build::M1StepWorkspaceRangeRole::DraftPositionIds => context
+                    .workspaces
+                    .speculative_draft_position_subrange(draft_segment),
+                ferric_build::M1StepWorkspaceRangeRole::DraftContextLengths => context
+                    .workspaces
+                    .speculative_draft_context_subrange(draft_segment),
                 _ => None,
             };
             if workspace != crate::M1FullStepWorkspaceRole::Target
@@ -617,38 +853,57 @@ fn resolve_source(
             {
                 return Err(M1PhysicalBufferBindingErrorV1::RowMetadata { dispatch_index });
             }
-            let resolved =
-                match range {
-                    ferric_build::M1StepWorkspaceRangeRole::DraftPositionIds => workspaces
-                        .speculative_draft_position_dispatch_range(allocations, draft_segment),
-                    ferric_build::M1StepWorkspaceRangeRole::DraftContextLengths => workspaces
-                        .speculative_draft_context_dispatch_range(allocations, draft_segment),
-                    _ => unreachable!(),
-                };
-            resolved.map_err(|error| M1PhysicalBufferBindingErrorV1::WorkspaceRange {
+            let resolved = match range {
+                ferric_build::M1StepWorkspaceRangeRole::DraftPositionIds => context
+                    .workspaces
+                    .speculative_draft_position_dispatch_range(context.allocations, draft_segment),
+                ferric_build::M1StepWorkspaceRangeRole::DraftContextLengths => context
+                    .workspaces
+                    .speculative_draft_context_dispatch_range(context.allocations, draft_segment),
+                _ => unreachable!(),
+            };
+            resolved
+                .map_err(|error| M1PhysicalBufferBindingErrorV1::WorkspaceRange {
+                    dispatch_index,
+                    argument,
+                    error,
+                })
+                .map(ResolvedM1PhysicalBufferRangeV1::Device)
+        }
+        M1PhysicalBufferSourceV1::ModelWeight { role, kind, layer } => context
+            .model_memory
+            .weight_dispatch_range(context.allocations, role, kind, layer)
+            .map_err(|error| M1PhysicalBufferBindingErrorV1::ModelMemoryRange {
                 dispatch_index,
                 argument,
                 error,
             })
-        }
-        M1PhysicalBufferSourceV1::ModelWeight { role, kind, layer } => model_memory
-            .weight_dispatch_range(allocations, role, kind, layer)
-            .map_err(|error| M1PhysicalBufferBindingErrorV1::ModelMemoryRange {
-                dispatch_index,
-                argument,
-                error,
-            }),
+            .map(ResolvedM1PhysicalBufferRangeV1::Device),
         M1PhysicalBufferSourceV1::KvCachePlane {
             role,
             component,
             layer,
-        } => model_memory
-            .kv_dispatch_range(allocations, role, component, layer)
+        } => context
+            .model_memory
+            .kv_dispatch_range(context.allocations, role, component, layer)
             .map_err(|error| M1PhysicalBufferBindingErrorV1::ModelMemoryRange {
                 dispatch_index,
                 argument,
                 error,
-            }),
+            })
+            .map(ResolvedM1PhysicalBufferRangeV1::Device),
+        M1PhysicalBufferSourceV1::CompletionOutput { sequences } => {
+            validate_completion_output_shape(
+                dispatch_index,
+                argument,
+                row.selection(),
+                sequences,
+                context.completion_shape,
+            )?;
+            Ok(ResolvedM1PhysicalBufferRangeV1::HostVisible(
+                context.completion_range,
+            ))
+        }
         M1PhysicalBufferSourceV1::SpeculativeTargetTokenIds { .. } => {
             Err(M1PhysicalBufferBindingErrorV1::MaterializationRequired {
                 dispatch_index,
@@ -678,13 +933,15 @@ mod tests {
 
     use super::{
         first_materialization_requirement, sentinel_geometry, validate_argument_ordinal,
-        validate_row_metadata_entry, BindingRowMetadata, M1PhysicalBufferBindingErrorV1,
+        validate_completion_output_shape, validate_row_metadata_entry, BindingRowMetadata,
+        M1PhysicalBufferBindingErrorV1,
     };
     use crate::physical_buffer_recipe::tests::{complete_intents, exact_inputs};
     use crate::{
-        derive_m1_physical_buffer_recipe_v1, AddresslessM1PhysicalBufferRecipeV1,
-        M1FullStepWorkspaceDispatchRangeError, M1FullStepWorkspaceRole, M1PhysicalBufferSentinelV1,
-        M1PhysicalBufferSourceV1, M1PhysicalProgramV1, M1StepDispatchIntent, M1StepDispatchStage,
+        derive_m1_physical_buffer_recipe_v1, m1_completion_output_shape_v1,
+        AddresslessM1PhysicalBufferRecipeV1, M1FullStepWorkspaceDispatchRangeError,
+        M1FullStepWorkspaceRole, M1PhysicalBufferSentinelV1, M1PhysicalBufferSourceV1,
+        M1PhysicalProgramV1, M1StepDispatchIntent, M1StepDispatchStage,
         M1StepWorkspaceDispatchRangeError,
     };
 
@@ -757,6 +1014,82 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn every_complete_intent_has_one_exact_host_completion_source() {
+        for (case, intent) in complete_intents().into_iter().enumerate() {
+            let recipe = exact_recipe(intent, 70 + u8::try_from(case).unwrap() * 2);
+            let outputs = recipe
+                .rows()
+                .iter()
+                .flat_map(|row| {
+                    row.buffers().iter().filter_map(move |buffer| {
+                        let M1PhysicalBufferSourceV1::CompletionOutput { sequences } =
+                            buffer.source()
+                        else {
+                            return None;
+                        };
+                        Some((row, buffer.explicit_argument_index(), sequences))
+                    })
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(outputs.len(), 1);
+            let (row, argument, sequences) = outputs[0];
+            assert_eq!(row.program(), M1PhysicalProgramV1::LogitsCompact);
+            assert_eq!(argument, 14);
+            let shape = m1_completion_output_shape_v1(intent.target_selection()).unwrap();
+            validate_completion_output_shape(
+                row.dispatch_index(),
+                argument,
+                row.selection(),
+                sequences,
+                shape,
+            )
+            .unwrap();
+        }
+    }
+
+    #[test]
+    fn hostile_completion_selection_and_source_extent_fail_exactly() {
+        let exact = target(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS8C8192);
+        let stale = target(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS8T128);
+        let stale_shape = m1_completion_output_shape_v1(stale).unwrap();
+        let error = validate_completion_output_shape(544, 14, exact, 8, stale_shape).unwrap_err();
+        let M1PhysicalBufferBindingErrorV1::CompletionOutputShape {
+            dispatch_index,
+            argument,
+            expected_selection,
+            actual_selection,
+            expected_sequences,
+            source_sequences,
+            actual_sequences,
+            expected_extent,
+            actual_extent,
+        } = error
+        else {
+            panic!("completion selection drift lost its exact diagnostic")
+        };
+        assert_eq!((dispatch_index, argument), (544, 14));
+        assert_eq!((expected_selection, actual_selection), (exact, stale));
+        assert_eq!(
+            (expected_sequences, source_sequences, actual_sequences),
+            (8, 8, 8)
+        );
+        assert_eq!((expected_extent, actual_extent), (960, 960));
+
+        let exact_shape = m1_completion_output_shape_v1(exact).unwrap();
+        assert!(matches!(
+            validate_completion_output_shape(544, 14, exact, 1, exact_shape),
+            Err(M1PhysicalBufferBindingErrorV1::CompletionOutputShape {
+                expected_sequences: 8,
+                source_sequences: 1,
+                actual_sequences: 8,
+                expected_extent: 960,
+                actual_extent: 960,
+                ..
+            })
+        ));
     }
 
     #[test]

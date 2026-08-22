@@ -1,10 +1,10 @@
 //! Exact fixed-cardinality packet batches for complete M1 inference steps.
 //!
 //! This is the Ferric-specific lowering boundary from checked M1 program,
-//! kernarg, workspace, model-memory, and explicit-buffer ownership into generic
-//! fe2o3 fixed packet descriptions. It constructs no queue, publishes no AQL
-//! packet, launches no work, observes no completion, and proves no refinement
-//! or hardware behavior.
+//! kernarg, workspace, model-memory, host-completion, and explicit-buffer
+//! ownership into generic fe2o3 fixed packet descriptions. It constructs no
+//! queue, publishes no AQL packet, launches no work, observes no completion,
+//! and proves no refinement or hardware behavior.
 
 use core::fmt;
 
@@ -12,11 +12,12 @@ use fe2o3_service_host::{ServiceFixedBatchV1, ServiceFixedDispatchPacketV1};
 use ferric_spec::{Identity, Qwen3PlanBucket, Qwen3PlanSelection};
 
 use crate::{
-    AddresslessM1FullStepWorkspaceComposition, AddresslessM1PhysicalDispatchRecipeV1,
+    m1_completion_output_shape_v1, AddresslessM1FullStepWorkspaceComposition,
+    AddresslessM1PhysicalDispatchRecipeV1, BoundM1CompletionOutputV1,
     BoundM1PhysicalBufferBindingsV1, BoundModelMemoryAllocationsV1, ContentBoundM1ProgramCatalogV1,
-    M1BoundPhysicalBufferRowV1, M1FullStepWorkspaceSubleaseOwners, M1PhysicalBufferRecipeRowV1,
-    M1PhysicalKernargImageV1, M1PhysicalProgramV1, M1StepDispatchIntent,
-    M1_PHYSICAL_PROGRAM_COUNT_V1,
+    M1BoundPhysicalBufferRowV1, M1CompletionOutputShapeV1, M1FullStepWorkspaceSubleaseOwners,
+    M1PhysicalBufferRecipeRowV1, M1PhysicalKernargImageV1, M1PhysicalProgramV1,
+    M1StepDispatchIntent, M1_PHYSICAL_PROGRAM_COUNT_V1,
 };
 
 /// Exact packet count of every target-only M1 step.
@@ -79,6 +80,7 @@ pub struct M1PhysicalFixedBatchCustodyV1 {
     workspace_composition: AddresslessM1FullStepWorkspaceComposition,
     workspace_owners: M1FullStepWorkspaceSubleaseOwners,
     model_memory: BoundModelMemoryAllocationsV1,
+    completion_output: BoundM1CompletionOutputV1,
     source_rows: Box<[M1PhysicalBufferRecipeRowV1]>,
     bound_rows: Box<[M1BoundPhysicalBufferRowV1]>,
 }
@@ -120,6 +122,12 @@ impl M1PhysicalFixedBatchCustodyV1 {
         &self.model_memory
     }
 
+    /// Retained coherent host-download completion-output allocation custody.
+    #[must_use = "the exact completion-output allocation custody remains retained"]
+    pub const fn completion_output(&self) -> &BoundM1CompletionOutputV1 {
+        &self.completion_output
+    }
+
     /// Retained semantic buffer-source rows in publication order.
     #[must_use]
     pub fn source_rows(&self) -> &[M1PhysicalBufferRecipeRowV1] {
@@ -155,6 +163,12 @@ impl<'a, const N: usize> M1PhysicalFixedBatchCaseV1<'a, N> {
     #[must_use = "the exact Ferric custody remains retained beside the generic batch"]
     pub const fn custody(&self) -> &M1PhysicalFixedBatchCustodyV1 {
         &self.custody
+    }
+
+    /// Exact retained coherent completion-output custody, by borrow.
+    #[must_use = "the completion-output owner remains retained beside the generic batch"]
+    pub const fn completion_output(&self) -> &BoundM1CompletionOutputV1 {
+        self.custody.completion_output()
     }
 
     /// Consumes the wrapper into the generic batch and all Ferric custody.
@@ -230,6 +244,12 @@ impl M1PhysicalFixedBatchV1<'_> {
             Self::SpeculativeK8(case) => &case.custody,
             Self::SpeculativeK16(case) => &case.custody,
         }
+    }
+
+    /// Exact retained coherent completion-output custody, by borrow.
+    #[must_use = "the completion-output owner remains retained beside the generic batch"]
+    pub const fn completion_output(&self) -> &BoundM1CompletionOutputV1 {
+        self.custody().completion_output()
     }
 
     /// Exact selected target plan.
@@ -330,6 +350,21 @@ pub enum M1PhysicalFixedBatchBuildErrorV1 {
         expected: usize,
         actual: usize,
     },
+    /// The retained completion-output owner names another target selection or shape.
+    CompletionOutputShape {
+        /// Exact target selection required by the batch.
+        expected_selection: Qwen3PlanSelection,
+        /// Rejected selection retained by the completion owner.
+        actual_selection: Qwen3PlanSelection,
+        /// Exact canonical sequence count required by the batch.
+        expected_sequences: u32,
+        /// Rejected retained sequence count.
+        actual_sequences: u32,
+        /// Exact canonical byte extent required by the batch.
+        expected_extent: u64,
+        /// Rejected retained byte extent.
+        actual_extent: u64,
+    },
     /// A checked count or index could not be represented on this host.
     ArithmeticOverflow,
 }
@@ -427,7 +462,8 @@ pub fn build_m1_physical_fixed_batch_v1(
     };
 
     let catalog_id = catalog.catalog_id();
-    let (recipe, workspace_owners, model_memory, bound_rows) = bindings.into_parts();
+    let (recipe, workspace_owners, model_memory, completion_output, bound_rows) =
+        bindings.into_parts();
     let (kernargs, workspace_composition, source_rows) = recipe.into_parts();
     let (physical_recipe, images) = kernargs.into_parts();
     let selection = workspace_composition
@@ -443,6 +479,7 @@ pub fn build_m1_physical_fixed_batch_v1(
         workspace_composition,
         workspace_owners,
         model_memory,
+        completion_output,
         source_rows,
         bound_rows,
     };
@@ -485,6 +522,11 @@ fn validate_inputs(
     let count = usize::try_from(physical_recipe.dispatch_count())
         .map_err(|_| M1PhysicalFixedBatchBuildErrorV1::ArithmeticOverflow)?;
     let shape = classify_shape(workspace_composition.dispatch_plan().intent(), count)?;
+    let selection = workspace_composition
+        .dispatch_plan()
+        .intent()
+        .target_selection();
+    validate_completion_output_shape(selection, bindings.completion_output().shape())?;
 
     validate_row_count(
         M1PhysicalFixedBatchRowSetV1::PhysicalRecipe,
@@ -557,6 +599,33 @@ fn validate_inputs(
         }
     }
     Ok(shape)
+}
+
+fn validate_completion_output_shape(
+    selection: Qwen3PlanSelection,
+    actual: M1CompletionOutputShapeV1,
+) -> Result<(), M1PhysicalFixedBatchBuildErrorV1> {
+    let expected = m1_completion_output_shape_v1(selection).map_err(|_| {
+        M1PhysicalFixedBatchBuildErrorV1::CompletionOutputShape {
+            expected_selection: selection,
+            actual_selection: actual.selection(),
+            expected_sequences: 0,
+            actual_sequences: actual.sequences(),
+            expected_extent: 0,
+            actual_extent: actual.extent_bytes(),
+        }
+    })?;
+    if actual != expected {
+        return Err(M1PhysicalFixedBatchBuildErrorV1::CompletionOutputShape {
+            expected_selection: selection,
+            actual_selection: actual.selection(),
+            expected_sequences: expected.sequences(),
+            actual_sequences: actual.sequences(),
+            expected_extent: expected.extent_bytes(),
+            actual_extent: actual.extent_bytes(),
+        });
+    }
+    Ok(())
 }
 
 fn classify_shape(
@@ -655,6 +724,7 @@ struct LoweringPartsV1<'a> {
     workspace_composition: AddresslessM1FullStepWorkspaceComposition,
     workspace_owners: M1FullStepWorkspaceSubleaseOwners,
     model_memory: BoundModelMemoryAllocationsV1,
+    completion_output: BoundM1CompletionOutputV1,
     source_rows: Box<[M1PhysicalBufferRecipeRowV1]>,
     bound_rows: Box<[M1BoundPhysicalBufferRowV1]>,
 }
@@ -690,6 +760,7 @@ fn lower_fixed_batch<const N: usize>(
         workspace_composition: parts.workspace_composition,
         workspace_owners: parts.workspace_owners,
         model_memory: parts.model_memory,
+        completion_output: parts.completion_output,
         source_rows: parts.source_rows,
         bound_rows: parts.bound_rows,
     };
@@ -701,13 +772,13 @@ mod tests {
     use ferric_spec::{Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection};
 
     use super::{
-        classify_shape, validate_packet_row, validate_row_count, M1PhysicalFixedBatchBuildErrorV1,
-        M1PhysicalFixedBatchRowSetV1, M1PhysicalFixedBatchShapeV1, PacketRowMetadataV1,
-        M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
-        M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
-        M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
+        classify_shape, validate_completion_output_shape, validate_packet_row, validate_row_count,
+        M1PhysicalFixedBatchBuildErrorV1, M1PhysicalFixedBatchRowSetV1,
+        M1PhysicalFixedBatchShapeV1, PacketRowMetadataV1, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
+        M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
+        M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
     };
-    use crate::{M1PhysicalProgramV1, M1StepDispatchIntent};
+    use crate::{m1_completion_output_shape_v1, M1PhysicalProgramV1, M1StepDispatchIntent};
     use ferric_spec::Identity;
 
     const fn target(mode: Qwen3ExecutionMode, bucket: Qwen3PlanBucket) -> Qwen3PlanSelection {
@@ -799,6 +870,25 @@ mod tests {
             Err(M1PhysicalFixedBatchBuildErrorV1::UnsupportedIntent(
                 unsupported
             ))
+        );
+    }
+
+    #[test]
+    fn fixed_batch_rejects_completion_owner_selection_drift_at_equal_extent() {
+        let expected = target(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS8C8192);
+        let stale = target(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS8T128);
+        let actual = m1_completion_output_shape_v1(stale).unwrap();
+        assert_eq!(actual.extent_bytes(), 960);
+        assert_eq!(
+            validate_completion_output_shape(expected, actual),
+            Err(M1PhysicalFixedBatchBuildErrorV1::CompletionOutputShape {
+                expected_selection: expected,
+                actual_selection: stale,
+                expected_sequences: 8,
+                actual_sequences: 8,
+                expected_extent: 960,
+                actual_extent: 960,
+            })
         );
     }
 
