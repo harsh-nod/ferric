@@ -10,7 +10,7 @@ use crate::{
     QWEN3_DRAFT_WEIGHT_SHA256, QWEN3_TARGET_TENSOR_DATA_BYTES, QWEN3_TARGET_WEIGHT_ARTIFACT_BYTES,
     QWEN3_TARGET_WEIGHT_SET_SHA256,
 };
-use ferric_spec::{Qwen3ModelRole, TensorDType};
+use ferric_spec::{Qwen3ModelRole, Qwen3TensorMetadata, TensorDType};
 use std::fmt;
 use std::io::{self, Read, Write};
 use vstd::bytes::{u32_to_le_bytes, u64_to_le_bytes};
@@ -453,6 +453,38 @@ pub closed spec fn destination_layout_spec(
     destination_layout_from_spec(role, output_bytes, sections, 0, 0)
 }
 
+}
+
+impl WeightSection {
+    /// Resolves the canonical tensor name and retained shape to a typed Qwen3
+    /// coordinate and its role-local ordinal.
+    ///
+    /// This uses the same closed name classifier as safetensors admission. It
+    /// does not authenticate bytes or grant allocation or execution authority.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`SafetensorsError`] if the retained name, layer, rank, or shape
+    /// is not an exact member of the admitted Qwen3 role schema.
+    pub fn qwen3_metadata(&self) -> Result<(Qwen3TensorMetadata, u32), SafetensorsError> {
+        let (kind, layer, ordinal) = classify_tensor_name(self.role, &self.tensor_name)?;
+        let metadata = Qwen3TensorMetadata {
+            role: self.role,
+            kind,
+            layer,
+            dtype: self.dtype,
+            rank: self.rank,
+            dimension_0: self.dimension_0,
+            dimension_1: self.dimension_1,
+        };
+        metadata
+            .validate()
+            .map_err(|error| SafetensorsError::TensorSchema {
+                tensor: self.tensor_name.clone(),
+                error,
+            })?;
+        Ok((metadata, ordinal))
+    }
 }
 
 struct SourceStreamState {
@@ -1399,7 +1431,9 @@ pub(crate) mod tests {
         QWEN3_DRAFT_WEIGHT_SHA256, QWEN3_TARGET_TENSOR_DATA_BYTES,
         QWEN3_TARGET_WEIGHT_ARTIFACT_BYTES, QWEN3_TARGET_WEIGHT_SET_SHA256,
     };
-    use ferric_spec::{Qwen3ModelRole, Qwen3TensorMetadata, TensorDType};
+    use ferric_spec::{
+        Qwen3ModelRole, Qwen3TensorKind, Qwen3TensorMetadata, TensorDType, QWEN3_NO_LAYER,
+    };
     use std::io::{self, Cursor, Read, Write};
 
     const HEADER: &[u8] = b"{}";
@@ -2053,7 +2087,63 @@ pub(crate) mod tests {
                 manifest.aggregate_id(),
                 sha256::digest(manifest.canonical_bytes())
             );
+
+            let mut seen = vec![false; role.tensor_count() as usize];
+            for section in manifest.sections() {
+                let (metadata, ordinal) = section
+                    .qwen3_metadata()
+                    .expect("sealed section resolves through the admission classifier");
+                assert_eq!(metadata.role, role);
+                assert!((ordinal as usize) < seen.len());
+                assert!(!seen[ordinal as usize]);
+                seen[ordinal as usize] = true;
+            }
+            assert!(seen.into_iter().all(|present| present));
         }
+    }
+
+    #[test]
+    fn typed_section_metadata_preserves_global_and_layer_coordinates() {
+        let target = test_prepacked(Qwen3ModelRole::Target8B);
+        let embedding = target
+            .manifest()
+            .sections()
+            .iter()
+            .find(|section| section.tensor_name() == "model.embed_tokens.weight")
+            .expect("target embedding section");
+        let (metadata, ordinal) = embedding.qwen3_metadata().unwrap();
+        assert_eq!(metadata.kind, Qwen3TensorKind::TokenEmbedding);
+        assert_eq!(metadata.layer, QWEN3_NO_LAYER);
+        assert_eq!(ordinal, 0);
+
+        let draft = test_prepacked(Qwen3ModelRole::Draft06B);
+        let query = draft
+            .manifest()
+            .sections()
+            .iter()
+            .find(|section| section.tensor_name() == "model.layers.27.self_attn.q_proj.weight")
+            .expect("last draft query projection section");
+        let (metadata, ordinal) = query.qwen3_metadata().unwrap();
+        assert_eq!(metadata.kind, Qwen3TensorKind::QueryProjection);
+        assert_eq!(metadata.layer, 27);
+        assert_eq!(ordinal, 2 + 27 * 11 + 9);
+    }
+
+    #[test]
+    fn typed_section_metadata_rejects_name_and_shape_drift() {
+        let mut invalid_name = tiny_sections();
+        invalid_name[0].tensor_name.push_str(".drift");
+        assert!(matches!(
+            invalid_name[0].qwen3_metadata(),
+            Err(SafetensorsError::InvalidTensorName(_))
+        ));
+
+        let mut invalid_shape = tiny_sections();
+        invalid_shape[0].dimension_0 += 1;
+        assert!(matches!(
+            invalid_shape[0].qwen3_metadata(),
+            Err(SafetensorsError::TensorSchema { .. })
+        ));
     }
 
     #[test]
