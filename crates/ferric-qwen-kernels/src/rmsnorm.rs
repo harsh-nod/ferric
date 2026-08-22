@@ -4,6 +4,8 @@
 //! epsilon, and exact element counts. Exact bucket rows and the distinction
 //! among machine-equivalent pure hidden operations remain host catalog state;
 //! joining that state to a Ferric runner plan is outside this compiler slice.
+//! Pure profiles require nonnull residual and fused-output sentinels, but their
+//! exact zero lengths keep both pointers outside every memory-effect block.
 
 use core::fmt;
 
@@ -238,7 +240,7 @@ impl Qwen3RmsNormProfileIdentityV1 {
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[repr(u32)]
 pub enum Qwen3RmsNormBehaviorV1 {
-    /// Pure `RMSNorm`; the residual pointer/output and lengths must be zero.
+    /// Pure `RMSNorm`; auxiliary lengths are zero and pointers are ignored nonnull sentinels.
     Pure = 0,
     /// Add a residual before normalization and write the fused value.
     ResidualFused = 1,
@@ -1092,9 +1094,10 @@ fn kernel_parameters_v1() -> Result<Vec<KernelParameterV1>, HandoffDiagnosticV1>
         ParameterAttributeV1::ReadOnly,
         ParameterAttributeV1::Align(2),
     ];
-    let optional_readonly = vec![
+    let sentinel_readonly = vec![
         ParameterAttributeV1::NoAlias,
         ParameterAttributeV1::NoCapture,
+        ParameterAttributeV1::NonNull,
         ParameterAttributeV1::ReadOnly,
         ParameterAttributeV1::Align(2),
     ];
@@ -1105,9 +1108,10 @@ fn kernel_parameters_v1() -> Result<Vec<KernelParameterV1>, HandoffDiagnosticV1>
         ParameterAttributeV1::WriteOnly,
         ParameterAttributeV1::Align(2),
     ];
-    let optional_writeonly = vec![
+    let sentinel_writeonly = vec![
         ParameterAttributeV1::NoAlias,
         ParameterAttributeV1::NoCapture,
+        ParameterAttributeV1::NonNull,
         ParameterAttributeV1::WriteOnly,
         ParameterAttributeV1::Align(2),
     ];
@@ -1118,7 +1122,7 @@ fn kernel_parameters_v1() -> Result<Vec<KernelParameterV1>, HandoffDiagnosticV1>
             KernelValueTypeV1::Scalar(ScalarTypeV1::I64),
             vec![],
         ),
-        ("residual_bf16", global_bf16, optional_readonly),
+        ("residual_bf16", global_bf16, sentinel_readonly),
         (
             "residual_elements",
             KernelValueTypeV1::Scalar(ScalarTypeV1::I64),
@@ -1130,7 +1134,7 @@ fn kernel_parameters_v1() -> Result<Vec<KernelParameterV1>, HandoffDiagnosticV1>
             KernelValueTypeV1::Scalar(ScalarTypeV1::I64),
             vec![],
         ),
-        ("fused_residual_bf16", global_bf16, optional_writeonly),
+        ("fused_residual_bf16", global_bf16, sentinel_writeonly),
         (
             "fused_residual_elements",
             KernelValueTypeV1::Scalar(ScalarTypeV1::I64),
@@ -1524,13 +1528,6 @@ fn build_kernel_function(
         normalized_address,
         zero_i64,
     );
-    let residual_address_zero =
-        builder.compare(ComparePredicateV2::IntegerEqual, residual_address, zero_i64);
-    let fused_address_zero = builder.compare(
-        ComparePredicateV2::IntegerEqual,
-        fused_output_address,
-        zero_i64,
-    );
     let residual_address_nonzero = builder.compare(
         ComparePredicateV2::IntegerNotEqual,
         residual_address,
@@ -1542,12 +1539,11 @@ fn build_kernel_function(
         zero_i64,
     );
     let pure_lengths = builder.and(residual_zero, fused_output_zero);
-    let pure_addresses = builder.and(residual_address_zero, fused_address_zero);
-    let pure_auxiliary = builder.and(pure_lengths, pure_addresses);
+    let sentinel_addresses = builder.and(residual_address_nonzero, fused_address_nonzero);
+    let pure_auxiliary = builder.and(pure_lengths, sentinel_addresses);
     let pure_buffers = builder.and(pure_mode, pure_auxiliary);
     let fused_lengths = builder.and(residual_exact, fused_output_exact);
-    let fused_addresses = builder.and(residual_address_nonzero, fused_address_nonzero);
-    let fused_auxiliary = builder.and(fused_lengths, fused_addresses);
+    let fused_auxiliary = builder.and(fused_lengths, sentinel_addresses);
     let fused_buffers = builder.and(fused_mode, fused_auxiliary);
     let mode_buffers_valid = builder.or(pure_buffers, fused_buffers);
     let required_lengths = builder.and(input_exact, weight_exact);
@@ -1825,9 +1821,10 @@ fn build_kernel_function(
         ParameterAttributeV1::ReadOnly,
         ParameterAttributeV1::Align(2),
     ];
-    let optional_readonly = vec![
+    let sentinel_readonly = vec![
         ParameterAttributeV1::NoAlias,
         ParameterAttributeV1::NoCapture,
+        ParameterAttributeV1::NonNull,
         ParameterAttributeV1::ReadOnly,
         ParameterAttributeV1::Align(2),
     ];
@@ -1838,9 +1835,10 @@ fn build_kernel_function(
         ParameterAttributeV1::WriteOnly,
         ParameterAttributeV1::Align(2),
     ];
-    let optional_writeonly = vec![
+    let sentinel_writeonly = vec![
         ParameterAttributeV1::NoAlias,
         ParameterAttributeV1::NoCapture,
+        ParameterAttributeV1::NonNull,
         ParameterAttributeV1::WriteOnly,
         ParameterAttributeV1::Align(2),
     ];
@@ -1856,7 +1854,7 @@ fn build_kernel_function(
             ValueIdV2::new(3),
             pointer,
             "residual_bf16",
-            optional_readonly,
+            sentinel_readonly,
         ),
         (ValueIdV2::new(4), i64_type, "residual_elements", vec![]),
         (ValueIdV2::new(5), pointer, "weight_bf16", required_readonly),
@@ -1865,7 +1863,7 @@ fn build_kernel_function(
             ValueIdV2::new(7),
             pointer,
             "fused_residual_bf16",
-            optional_writeonly,
+            sentinel_writeonly,
         ),
         (
             ValueIdV2::new(8),
@@ -2483,7 +2481,7 @@ fn hash(domain: &[u8], bytes: &[u8]) -> [u8; 32] {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::BTreeSet;
+    use std::collections::{BTreeMap, BTreeSet};
 
     fn bindings(seed: u8) -> Qwen3RmsNormSourceBindingsV1 {
         Qwen3RmsNormSourceBindingsV1::new(
@@ -2707,6 +2705,168 @@ mod tests {
                 Qwen3RmsNormBufferV1::Residual
             ))
         );
+        let mut zero_fused_output_sentinel = pure_addresses;
+        zero_fused_output_sentinel[3] = 0;
+        assert_eq!(
+            Qwen3RmsNormBufferContractV1::checked(pure, zero_fused_output_sentinel, pure_lengths,),
+            Err(Qwen3RmsNormBufferContractErrorV1::ZeroAddress(
+                Qwen3RmsNormBufferV1::FusedResidualOutput
+            ))
+        );
+        let mut nonzero_residual_length = pure_lengths;
+        nonzero_residual_length[1] = pure_row_bytes;
+        assert_eq!(
+            Qwen3RmsNormBufferContractV1::checked(pure, pure_addresses, nonzero_residual_length,),
+            Err(Qwen3RmsNormBufferContractErrorV1::ByteLength(
+                Qwen3RmsNormBufferV1::Residual
+            ))
+        );
+        let mut nonzero_fused_output_length = pure_lengths;
+        nonzero_fused_output_length[3] = pure_row_bytes;
+        assert_eq!(
+            Qwen3RmsNormBufferContractV1::checked(
+                pure,
+                pure_addresses,
+                nonzero_fused_output_length,
+            ),
+            Err(Qwen3RmsNormBufferContractErrorV1::ByteLength(
+                Qwen3RmsNormBufferV1::FusedResidualOutput
+            ))
+        );
+        let mut aliased_active_output = pure_addresses;
+        aliased_active_output[4] = pure_addresses[0];
+        assert_eq!(
+            Qwen3RmsNormBufferContractV1::checked(pure, aliased_active_output, pure_lengths,),
+            Err(Qwen3RmsNormBufferContractErrorV1::Aliasing)
+        );
+    }
+
+    #[test]
+    fn typed_graph_requires_nonnull_sentinels_without_pure_auxiliary_effects() {
+        let catalog = Qwen3RmsNormProfileCatalogV1::canonical().unwrap();
+        let handoff = construct_typed_handoff(&catalog, bindings(0x59)).unwrap();
+        let base_kernel = &handoff.base().kernels()[0];
+        for parameter_index in [2, 6] {
+            let attributes = base_kernel.parameters()[parameter_index].attributes();
+            assert!(attributes.contains(&ParameterAttributeV1::NonNull));
+            assert!(!attributes
+                .iter()
+                .any(|attribute| matches!(attribute, ParameterAttributeV1::Dereferenceable(_))));
+        }
+        let function = handoff
+            .module()
+            .functions()
+            .iter()
+            .find(|function| function.symbol() == QWEN3_RMSNORM_KERNEL_SYMBOL_V1)
+            .unwrap();
+
+        for parameter_index in [2, 6] {
+            let attributes = function.parameters()[parameter_index].attributes();
+            assert!(attributes.contains(&ParameterAttributeV1::NonNull));
+            assert!(!attributes
+                .iter()
+                .any(|attribute| matches!(attribute, ParameterAttributeV1::Dereferenceable(_))));
+        }
+
+        let definitions = function
+            .blocks()
+            .iter()
+            .flat_map(BasicBlockV2::instructions)
+            .filter_map(|instruction| {
+                instruction
+                    .result()
+                    .map(|result| (result.id(), instruction.kind()))
+            })
+            .collect::<BTreeMap<_, _>>();
+        let constant_bits = |id: ValueIdV2| match definitions.get(&id) {
+            Some(InstructionKindV2::Constant(value)) => Some(value.bits()),
+            _ => None,
+        };
+        let pointer_address = |parameter: ValueIdV2| {
+            definitions
+                .iter()
+                .find_map(|(result, kind)| match kind {
+                    InstructionKindV2::Cast {
+                        operation: CastOperationV2::PointerToInt,
+                        value,
+                        ..
+                    } if *value == parameter => Some(*result),
+                    _ => None,
+                })
+                .unwrap()
+        };
+        for parameter in [ValueIdV2::new(3), ValueIdV2::new(7)] {
+            let address = pointer_address(parameter);
+            let predicates = definitions
+                .values()
+                .filter_map(|kind| match kind {
+                    InstructionKindV2::Compare {
+                        predicate,
+                        left,
+                        right,
+                    } if *left == address && constant_bits(*right) == Some(0) => Some(*predicate),
+                    _ => None,
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(predicates, [ComparePredicateV2::IntegerNotEqual]);
+        }
+
+        let fused_mode = definitions
+            .iter()
+            .find_map(|(result, kind)| match kind {
+                InstructionKindV2::Compare {
+                    predicate: ComparePredicateV2::IntegerEqual,
+                    left,
+                    right,
+                } if *left == ValueIdV2::new(14) && constant_bits(*right) == Some(1) => {
+                    Some(*result)
+                }
+                _ => None,
+            })
+            .unwrap();
+        let fused_blocks = function
+            .blocks()
+            .iter()
+            .filter_map(|block| match block.terminator() {
+                TerminatorV2::ConditionalBranch {
+                    condition,
+                    then_block,
+                    ..
+                } if *condition == fused_mode => Some(*then_block),
+                _ => None,
+            })
+            .collect::<BTreeSet<_>>();
+        assert_eq!(fused_blocks.len(), 2);
+
+        let pointer_base = |pointer: ValueIdV2| match definitions.get(&pointer) {
+            Some(InstructionKindV2::GetElementPtr { base, .. }) => Some(*base),
+            _ => None,
+        };
+        let mut residual_loads = 0;
+        let mut residual_stores = 0;
+        let mut fused_output_loads = 0;
+        let mut fused_output_stores = 0;
+        for block in function.blocks() {
+            for instruction in block.instructions() {
+                let (pointer, is_load) = match instruction.kind() {
+                    InstructionKindV2::Load { pointer, .. } => (*pointer, true),
+                    InstructionKindV2::Store { pointer, .. } => (*pointer, false),
+                    _ => continue,
+                };
+                match (pointer_base(pointer), is_load) {
+                    (Some(base), true) if base == ValueIdV2::new(3) => residual_loads += 1,
+                    (Some(base), false) if base == ValueIdV2::new(3) => residual_stores += 1,
+                    (Some(base), true) if base == ValueIdV2::new(7) => fused_output_loads += 1,
+                    (Some(base), false) if base == ValueIdV2::new(7) => fused_output_stores += 1,
+                    _ => continue,
+                }
+                assert!(fused_blocks.contains(&block.id()));
+            }
+        }
+        assert_eq!(residual_loads, 2);
+        assert_eq!(residual_stores, 0);
+        assert_eq!(fused_output_loads, 0);
+        assert_eq!(fused_output_stores, 1);
     }
 
     #[test]
@@ -2782,13 +2942,12 @@ mod tests {
             .lines()
             .find(|line| line.starts_with("define amdgpu_kernel"))
             .unwrap();
-        assert!(definition
-            .contains("ptr addrspace(1) noalias captures(none) readonly align 2 %residual_bf16"));
         assert!(definition.contains(
-            "ptr addrspace(1) noalias captures(none) writeonly align 2 %fused_residual_bf16"
+            "ptr addrspace(1) noalias captures(none) nonnull readonly align 2 %residual_bf16"
         ));
-        assert!(!definition.contains("nonnull readonly align 2 %residual_bf16"));
-        assert!(!definition.contains("nonnull writeonly align 2 %fused_residual_bf16"));
+        assert!(definition.contains(
+            "ptr addrspace(1) noalias captures(none) nonnull writeonly align 2 %fused_residual_bf16"
+        ));
         assert!(!definition.contains("dereferenceable"));
         assert!(!first.uses_pliron_lowering());
         assert!(!first.proves_machine_refinement());
