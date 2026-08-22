@@ -1,7 +1,7 @@
 //! Fully initialized service allocation for one exact model-memory plan.
 //!
 //! Ferric owns the semantic content-role namespace, model-specific image
-//! checks, zero-filled KV construction, and the join back to its addressless
+//! checks, zero-filled KV recipes, and the join back to its addressless
 //! model-memory plan. Generic fe2o3 remains responsible for allocating,
 //! verifying, mapping, and retaining device memory without exposing an address.
 //!
@@ -14,11 +14,9 @@
 //! authority.
 
 use core::fmt;
-use std::collections::TryReserveError;
-
 use fe2o3_kfd::{
     Gfx942DeviceContentDescriptorErrorV1, Gfx942DeviceContentDescriptorV1,
-    Gfx942DeviceContentRoleV1,
+    Gfx942DeviceContentRoleV1, Gfx942RepeatedByteContentV1,
 };
 use fe2o3_service_host::{
     DeviceInputRoleV1, DeviceStateRoleV1, ServiceAllocationErrorV1, ServiceAllocationSessionV1,
@@ -44,7 +42,7 @@ pub const M1_INITIALIZED_MODEL_MEMORY_CONTENT_ROLE_IDENTITY_V1: [u8; 32] = [
     231, 253, 219, 136, 61, 101, 199, 250, 83, 130, 234, 175,
 ];
 
-/// Host-only validation or exact zero-image preparation failure.
+/// Host-only validation failure.
 #[derive(Debug)]
 pub enum InitializedModelMemoryPreflightErrorV1 {
     /// The retained addressless plan failed exact identity, extent, alignment,
@@ -68,17 +66,6 @@ pub enum InitializedModelMemoryPreflightErrorV1 {
         /// Required image length.
         byte_len: u64,
     },
-    /// Host allocation for a complete zero-filled KV image failed.
-    HostImageAllocation {
-        /// Selected model role.
-        role: Qwen3ModelRole,
-        /// Allocation purpose.
-        kind: ModelMemoryAllocationKind,
-        /// Required image length.
-        byte_len: u64,
-        /// Standard allocator reservation failure.
-        source: TryReserveError,
-    },
 }
 
 impl fmt::Display for InitializedModelMemoryPreflightErrorV1 {
@@ -93,7 +80,6 @@ impl fmt::Display for InitializedModelMemoryPreflightErrorV1 {
 impl std::error::Error for InitializedModelMemoryPreflightErrorV1 {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            Self::HostImageAllocation { source, .. } => Some(source),
             Self::Plan(source) => Some(source),
             Self::WeightImageLength { .. } | Self::HostImageExtent { .. } => None,
         }
@@ -103,7 +89,7 @@ impl std::error::Error for InitializedModelMemoryPreflightErrorV1 {
 /// Fail-closed initialized model-memory allocation error.
 #[derive(Debug)]
 pub enum InitializedModelMemoryAllocationErrorV1 {
-    /// A host-only plan, weight-image, or KV-image check failed before KFD use.
+    /// A host-only plan or weight-image check failed before KFD use.
     Preflight(InitializedModelMemoryPreflightErrorV1),
     /// A deterministic content descriptor could not be constructed.
     Descriptor {
@@ -219,11 +205,12 @@ pub fn m1_model_memory_content_descriptor_v1(
 ///
 /// All Ferric-owned fallible host preflight runs before the first service
 /// allocation: the plan's four allocation declarations, both supplied weight
-/// lengths, both complete zero-filled KV host images, and all four content
+/// lengths, both bounded-memory zero-byte KV recipes, and all four content
 /// descriptors. The caller supplies the sole generic allocation/KFD owner.
-/// Weights use `DeviceInputRoleV1`; mutable KV arenas use
-/// `DeviceStateRoleV1`. Every allocation uses the exact 4096-byte model-memory
-/// alignment and complete image extent.
+/// Weights remain complete byte-backed `DeviceInputRoleV1` images; mutable KV
+/// arenas use repeated-byte `DeviceStateRoleV1` initialization. Every
+/// allocation uses the exact 4096-byte model-memory alignment and complete
+/// image extent.
 ///
 /// The returned value owns no native address or allocation lease. The caller
 /// must keep `allocations` alive for dispatch-range resolution and must use its
@@ -269,20 +256,24 @@ pub fn allocate_initialized_model_memory_v1(
         ));
     }
 
-    let target_kv = match zeroed_kv_image(Qwen3ModelRole::Target8B) {
-        Ok(image) => image,
-        Err(error) => {
-            return Err(allocation_failure(
-                InitializedModelMemoryAllocationErrorV1::Preflight(error),
+    let target_kv_initialization = match zeroed_kv_initialization(Qwen3ModelRole::Target8B) {
+        Ok(initialization) => initialization,
+        Err(source) => {
+            return Err(descriptor_failure(
+                source,
+                Qwen3ModelRole::Target8B,
+                ModelMemoryAllocationKind::KvArena,
                 plan,
             ));
         }
     };
-    let draft_kv = match zeroed_kv_image(Qwen3ModelRole::Draft06B) {
-        Ok(image) => image,
-        Err(error) => {
-            return Err(allocation_failure(
-                InitializedModelMemoryAllocationErrorV1::Preflight(error),
+    let draft_kv_initialization = match zeroed_kv_initialization(Qwen3ModelRole::Draft06B) {
+        Ok(initialization) => initialization,
+        Err(source) => {
+            return Err(descriptor_failure(
+                source,
+                Qwen3ModelRole::Draft06B,
+                ModelMemoryAllocationKind::KvArena,
                 plan,
             ));
         }
@@ -318,37 +309,6 @@ pub fn allocate_initialized_model_memory_v1(
             ));
         }
     };
-    let target_kv_descriptor = match m1_model_memory_content_descriptor_v1(
-        Qwen3ModelRole::Target8B,
-        ModelMemoryAllocationKind::KvArena,
-        &target_kv,
-    ) {
-        Ok(descriptor) => descriptor,
-        Err(source) => {
-            return Err(descriptor_failure(
-                source,
-                Qwen3ModelRole::Target8B,
-                ModelMemoryAllocationKind::KvArena,
-                plan,
-            ));
-        }
-    };
-    let draft_kv_descriptor = match m1_model_memory_content_descriptor_v1(
-        Qwen3ModelRole::Draft06B,
-        ModelMemoryAllocationKind::KvArena,
-        &draft_kv,
-    ) {
-        Ok(descriptor) => descriptor,
-        Err(source) => {
-            return Err(descriptor_failure(
-                source,
-                Qwen3ModelRole::Draft06B,
-                ModelMemoryAllocationKind::KvArena,
-                plan,
-            ));
-        }
-    };
-
     let target_weights = match allocations.allocate_initialized_device_local::<DeviceInputRoleV1>(
         target_prepacked_weights,
         QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1,
@@ -379,11 +339,11 @@ pub fn allocate_initialized_model_memory_v1(
             ));
         }
     };
-    let target_kv = match allocations.allocate_initialized_device_local::<DeviceStateRoleV1>(
-        target_kv,
-        QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1,
-        target_kv_descriptor,
-    ) {
+    let target_kv = match allocations
+        .allocate_initialized_device_local_repeated_byte::<DeviceStateRoleV1>(
+            target_kv_initialization,
+            QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1,
+        ) {
         Ok(key) => key,
         Err(source) => {
             return Err(service_allocation_failure(
@@ -394,11 +354,11 @@ pub fn allocate_initialized_model_memory_v1(
             ));
         }
     };
-    let draft_kv = match allocations.allocate_initialized_device_local::<DeviceStateRoleV1>(
-        draft_kv,
-        QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1,
-        draft_kv_descriptor,
-    ) {
+    let draft_kv = match allocations
+        .allocate_initialized_device_local_repeated_byte::<DeviceStateRoleV1>(
+            draft_kv_initialization,
+            QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1,
+        ) {
         Ok(key) => key,
         Err(source) => {
             return Err(service_allocation_failure(
@@ -461,32 +421,28 @@ fn validate_weight_image_length(
     Ok(())
 }
 
-fn zeroed_kv_image(
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct KvRepeatedByteInitializationFieldsV1 {
+    content_role: Gfx942DeviceContentRoleV1,
+    byte_len: u64,
+    repeated_byte: u8,
+}
+
+fn zeroed_kv_initialization_fields(
     role: Qwen3ModelRole,
-) -> Result<Box<[u8]>, InitializedModelMemoryPreflightErrorV1> {
-    let byte_len = qwen3_kv_arena_bytes(role);
-    let length = usize::try_from(byte_len).map_err(|_| {
-        InitializedModelMemoryPreflightErrorV1::HostImageExtent {
-            role,
-            kind: ModelMemoryAllocationKind::KvArena,
-            byte_len,
-        }
-    })?;
-    zeroed_image(length).map_err(|source| {
-        InitializedModelMemoryPreflightErrorV1::HostImageAllocation {
-            role,
-            kind: ModelMemoryAllocationKind::KvArena,
-            byte_len,
-            source,
-        }
+) -> Result<KvRepeatedByteInitializationFieldsV1, Gfx942DeviceContentDescriptorErrorV1> {
+    Ok(KvRepeatedByteInitializationFieldsV1 {
+        content_role: m1_model_memory_content_role_v1(role, ModelMemoryAllocationKind::KvArena)?,
+        byte_len: qwen3_kv_arena_bytes(role),
+        repeated_byte: 0,
     })
 }
 
-fn zeroed_image(length: usize) -> Result<Box<[u8]>, TryReserveError> {
-    let mut image = Vec::new();
-    image.try_reserve_exact(length)?;
-    image.resize(length, 0);
-    Ok(image.into_boxed_slice())
+fn zeroed_kv_initialization(
+    role: Qwen3ModelRole,
+) -> Result<Gfx942RepeatedByteContentV1, Gfx942DeviceContentDescriptorErrorV1> {
+    let fields = zeroed_kv_initialization_fields(role)?;
+    Gfx942RepeatedByteContentV1::new(fields.content_role, fields.byte_len, fields.repeated_byte)
 }
 
 fn descriptor_failure(
@@ -526,14 +482,16 @@ fn allocation_failure(
 #[cfg(test)]
 mod tests {
     use fe2o3_kfd::Gfx942DeviceContentDescriptorErrorV1;
-    use ferric_build::{qwen3_model_memory_plan_test_fixture, ModelMemoryAllocationKind};
+    use ferric_build::{
+        qwen3_kv_arena_bytes, qwen3_model_memory_plan_test_fixture, ModelMemoryAllocationKind,
+    };
     use ferric_spec::Qwen3ModelRole;
     use sha2::{Digest, Sha256};
 
     use super::{
         m1_model_memory_content_descriptor_v1, m1_model_memory_content_role_v1,
-        preflight_addressless_model_memory_plan_v1, validate_weight_image_length, zeroed_image,
-        InitializedModelMemoryPreflightErrorV1,
+        preflight_addressless_model_memory_plan_v1, validate_weight_image_length,
+        zeroed_kv_initialization_fields, InitializedModelMemoryPreflightErrorV1,
         M1_INITIALIZED_MODEL_MEMORY_CONTENT_ROLE_IDENTITY_V1,
     };
 
@@ -652,9 +610,21 @@ mod tests {
     }
 
     #[test]
-    fn zero_image_builder_returns_an_exact_zero_extent_without_kfd() {
-        let image = zeroed_image(4_097).unwrap();
-        assert_eq!(image.len(), 4_097);
-        assert!(image.iter().all(|byte| *byte == 0));
+    fn kv_preflight_retains_exact_roles_extents_order_and_zero_recipe_without_images() {
+        let roles = [Qwen3ModelRole::Target8B, Qwen3ModelRole::Draft06B];
+        for (offset, role) in roles.into_iter().enumerate() {
+            let fields = zeroed_kv_initialization_fields(role).unwrap();
+            assert_eq!(
+                fields.content_role.ordinal(),
+                u32::try_from(offset + 2).unwrap()
+            );
+            assert_eq!(
+                fields.content_role,
+                m1_model_memory_content_role_v1(role, ModelMemoryAllocationKind::KvArena).unwrap()
+            );
+            assert_eq!(fields.byte_len, qwen3_kv_arena_bytes(role));
+            assert_eq!(fields.repeated_byte, 0);
+            assert!(fields.byte_len > u64::try_from(core::mem::size_of_val(&fields)).unwrap());
+        }
     }
 }
