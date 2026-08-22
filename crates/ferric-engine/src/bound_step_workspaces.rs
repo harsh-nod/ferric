@@ -15,9 +15,9 @@ use ferric_build::{AddresslessM1StepWorkspacePlan, M1StepWorkspaceRangeRole};
 
 use crate::{
     AddresslessM1FullStepWorkspaceComposition, BoundM1StepWorkspaceSubleases,
-    M1FullStepWorkspaceInputKind, M1FullStepWorkspaceRole, M1SpeculativeDraftChoiceSubrange,
-    M1StepDispatchStage, M1StepWorkspaceDispatchRangeError,
-    M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
+    M1FullStepWorkspaceInputKind, M1FullStepWorkspaceRole, M1FullStepWorkspaceSegmentBinding,
+    M1SpeculativeDraftChoiceSubrange, M1SpeculativeDraftMetadataSubrange, M1StepDispatchStage,
+    M1StepWorkspaceDispatchRangeError, M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
     M1_TARGET_SPECULATIVE_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
     M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
 };
@@ -27,6 +27,8 @@ type TargetWorkspaceOwner =
     BoundM1StepWorkspaceSubleases<M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1>;
 type TargetSpeculativeWorkspaceOwner =
     BoundM1StepWorkspaceSubleases<M1_TARGET_SPECULATIVE_STEP_WORKSPACE_SUBLEASE_COUNT_V1>;
+
+const U32_BYTES: u64 = 4;
 
 /// Exact already-bound workspace-owner input shape for one complete M1 step.
 ///
@@ -236,6 +238,27 @@ pub enum M1FullStepWorkspaceSubleaseBindingError {
         /// Slice position being validated.
         position: usize,
     },
+    /// A non-draft segment unexpectedly retains speculative metadata-row declarations.
+    UnexpectedDraftMetadataSubrange {
+        /// Slice position being validated.
+        position: usize,
+        /// Unexpected target metadata role.
+        role: M1StepWorkspaceRangeRole,
+    },
+    /// A speculative draft segment is missing one exact target metadata row.
+    MissingDraftMetadataSubrange {
+        /// Slice position being validated.
+        position: usize,
+        /// Missing target metadata role.
+        role: M1StepWorkspaceRangeRole,
+    },
+    /// A speculative target metadata row has wrong identity, selection, role, iteration, or geometry.
+    DraftMetadataSubrange {
+        /// Slice position being validated.
+        position: usize,
+        /// Rejected target metadata role.
+        role: M1StepWorkspaceRangeRole,
+    },
     /// The generic allocation owner rejected a retained partition or generation.
     Allocation {
         /// Workspace position being revalidated.
@@ -299,6 +322,10 @@ pub enum M1FullStepWorkspaceDispatchRangeError {
     },
     /// The segment has no speculative target choice row.
     DraftChoiceSubrangeUnavailable { segment_index: u8 },
+    /// The segment has no speculative target draft-position row.
+    DraftPositionSubrangeUnavailable { segment_index: u8 },
+    /// The segment has no speculative target draft-context row.
+    DraftContextSubrangeUnavailable { segment_index: u8 },
     /// The exact role-contained range resolver rejected the request.
     Range {
         /// Workspace position being resolved.
@@ -350,7 +377,8 @@ impl BoundM1FullStepWorkspaceSubleases {
     ///
     /// Every segment may resolve its primary workspace. Speculative draft
     /// segments may additionally resolve the target workspace because their
-    /// argmax output is preserved into target-owned iteration-major state.
+    /// argmax output and position/context inputs use target-owned
+    /// iteration-major state.
     ///
     /// # Errors
     ///
@@ -436,6 +464,58 @@ impl BoundM1FullStepWorkspaceSubleases {
         })
     }
 
+    /// Resolves the exact target-owned `DraftPositionIds` row for one draft segment.
+    ///
+    /// The returned range retains the target member index and allocation
+    /// generation while narrowing to the current iteration's exact row.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`M1FullStepWorkspaceDispatchRangeError`] for an absent or
+    /// non-draft segment, hostile row metadata, or generic owner rejection.
+    pub fn speculative_draft_position_dispatch_range(
+        &self,
+        allocations: &ServiceAllocationSessionV1,
+        draft_segment: u8,
+    ) -> Result<ServiceDeviceDispatchRangeV1, M1FullStepWorkspaceDispatchRangeError> {
+        let row = self
+            .composition
+            .segment_binding(draft_segment)
+            .and_then(M1FullStepWorkspaceSegmentBinding::draft_position_ids_subrange)
+            .ok_or(
+                M1FullStepWorkspaceDispatchRangeError::DraftPositionSubrangeUnavailable {
+                    segment_index: draft_segment,
+                },
+            )?;
+        self.speculative_draft_metadata_dispatch_range(allocations, row)
+    }
+
+    /// Resolves the exact target-owned `DraftContextLengths` row for one draft segment.
+    ///
+    /// The returned range retains the target member index and allocation
+    /// generation while narrowing to the current iteration's exact row.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`M1FullStepWorkspaceDispatchRangeError`] for an absent or
+    /// non-draft segment, hostile row metadata, or generic owner rejection.
+    pub fn speculative_draft_context_dispatch_range(
+        &self,
+        allocations: &ServiceAllocationSessionV1,
+        draft_segment: u8,
+    ) -> Result<ServiceDeviceDispatchRangeV1, M1FullStepWorkspaceDispatchRangeError> {
+        let row = self
+            .composition
+            .segment_binding(draft_segment)
+            .and_then(M1FullStepWorkspaceSegmentBinding::draft_context_lengths_subrange)
+            .ok_or(
+                M1FullStepWorkspaceDispatchRangeError::DraftContextSubrangeUnavailable {
+                    segment_index: draft_segment,
+                },
+            )?;
+        self.speculative_draft_metadata_dispatch_range(allocations, row)
+    }
+
     /// Recovers the exact retained composition and all workspace owners.
     #[must_use = "the exact composition and workspace owners remain retained"]
     pub fn into_parts(
@@ -466,6 +546,23 @@ impl BoundM1FullStepWorkspaceSubleases {
             .range(role)
             .ok_or(M1StepWorkspaceDispatchRangeError::InactiveRole { role })?;
         self.workspace_dispatch_subrange(allocations, workspace, role, range)
+    }
+
+    fn speculative_draft_metadata_dispatch_range(
+        &self,
+        allocations: &ServiceAllocationSessionV1,
+        row: M1SpeculativeDraftMetadataSubrange,
+    ) -> Result<ServiceDeviceDispatchRangeV1, M1FullStepWorkspaceDispatchRangeError> {
+        self.workspace_dispatch_subrange(
+            allocations,
+            M1FullStepWorkspaceRole::Target,
+            row.range().role(),
+            row.range(),
+        )
+        .map_err(|error| M1FullStepWorkspaceDispatchRangeError::Range {
+            workspace: M1FullStepWorkspaceRole::Target,
+            error,
+        })
     }
 
     fn workspace_dispatch_subrange(
@@ -660,6 +757,8 @@ fn validate_bound_full_step_workspace_metadata(
             binding.workspace_id(),
             binding.workspace_selection(),
             binding.draft_choice_subrange(),
+            binding.draft_position_ids_subrange(),
+            binding.draft_context_lengths_subrange(),
             owner,
             Some(owners_target(owners)),
         )?;
@@ -727,6 +826,8 @@ fn validate_segment_workspace_binding(
     binding_workspace_id: ferric_spec::Identity,
     binding_selection: ferric_spec::Qwen3PlanSelection,
     draft_choice: Option<M1SpeculativeDraftChoiceSubrange>,
+    draft_position_ids: Option<M1SpeculativeDraftMetadataSubrange>,
+    draft_context_lengths: Option<M1SpeculativeDraftMetadataSubrange>,
     owner: WorkspaceOwnerMetadata<'_>,
     target: Option<WorkspaceOwnerMetadata<'_>>,
 ) -> Result<(), M1FullStepWorkspaceSubleaseBindingError> {
@@ -752,18 +853,62 @@ fn validate_segment_workspace_binding(
     if segment_selection != owner.plan.selection() || binding_selection != segment_selection {
         return Err(M1FullStepWorkspaceSubleaseBindingError::SegmentSelection { position });
     }
-    match (stage, draft_choice) {
-        (M1StepDispatchStage::DraftDecode { iteration }, Some(row)) => {
-            validate_draft_choice_subrange(position, segment_index, iteration, row, target)
-        }
-        (M1StepDispatchStage::DraftDecode { .. }, None) => {
-            Err(M1FullStepWorkspaceSubleaseBindingError::MissingDraftChoiceSubrange { position })
-        }
-        (_, Some(_)) => {
-            Err(M1FullStepWorkspaceSubleaseBindingError::UnexpectedDraftChoiceSubrange { position })
-        }
-        (_, None) => Ok(()),
+    if let M1StepDispatchStage::DraftDecode { iteration } = stage {
+        let choice = draft_choice.ok_or(
+            M1FullStepWorkspaceSubleaseBindingError::MissingDraftChoiceSubrange { position },
+        )?;
+        let position_ids = draft_position_ids.ok_or(
+            M1FullStepWorkspaceSubleaseBindingError::MissingDraftMetadataSubrange {
+                position,
+                role: M1StepWorkspaceRangeRole::DraftPositionIds,
+            },
+        )?;
+        let context_lengths = draft_context_lengths.ok_or(
+            M1FullStepWorkspaceSubleaseBindingError::MissingDraftMetadataSubrange {
+                position,
+                role: M1StepWorkspaceRangeRole::DraftContextLengths,
+            },
+        )?;
+        validate_draft_choice_subrange(position, segment_index, iteration, choice, target)?;
+        validate_draft_metadata_subrange(
+            position,
+            segment_index,
+            iteration,
+            M1StepWorkspaceRangeRole::DraftPositionIds,
+            position_ids,
+            target,
+        )?;
+        return validate_draft_metadata_subrange(
+            position,
+            segment_index,
+            iteration,
+            M1StepWorkspaceRangeRole::DraftContextLengths,
+            context_lengths,
+            target,
+        );
     }
+    if draft_choice.is_some() {
+        return Err(
+            M1FullStepWorkspaceSubleaseBindingError::UnexpectedDraftChoiceSubrange { position },
+        );
+    }
+    if draft_position_ids.is_some() {
+        return Err(
+            M1FullStepWorkspaceSubleaseBindingError::UnexpectedDraftMetadataSubrange {
+                position,
+                role: M1StepWorkspaceRangeRole::DraftPositionIds,
+            },
+        );
+    }
+    if draft_context_lengths.is_some() {
+        return Err(
+            M1FullStepWorkspaceSubleaseBindingError::UnexpectedDraftMetadataSubrange {
+                position,
+                role: M1StepWorkspaceRangeRole::DraftContextLengths,
+            },
+        );
+    }
+    Ok(())
 }
 
 fn validate_draft_choice_subrange(
@@ -824,6 +969,71 @@ fn validate_draft_choice_subrange_fields(
         || range_end > parent_end
     {
         return Err(M1FullStepWorkspaceSubleaseBindingError::DraftChoiceSubrange { position });
+    }
+    Ok(())
+}
+
+fn validate_draft_metadata_subrange(
+    position: usize,
+    segment_index: u8,
+    iteration: u8,
+    expected_role: M1StepWorkspaceRangeRole,
+    row: M1SpeculativeDraftMetadataSubrange,
+    target: Option<WorkspaceOwnerMetadata<'_>>,
+) -> Result<(), M1FullStepWorkspaceSubleaseBindingError> {
+    let error = || M1FullStepWorkspaceSubleaseBindingError::DraftMetadataSubrange {
+        position,
+        role: expected_role,
+    };
+    let target = target.ok_or_else(error)?;
+    let parent = target.plan.range(expected_role).ok_or_else(error)?;
+    let target_selection = target.plan.selection();
+    let dimensions = target_selection
+        .bucket
+        .dimensions(target_selection.role, target_selection.mode)
+        .ok_or_else(error)?;
+    let draft_iterations = dimensions.active_tokens.checked_sub(1).ok_or_else(error)?;
+    u32::from(iteration)
+        .checked_add(1)
+        .filter(|current| *current <= draft_iterations)
+        .ok_or_else(error)?;
+    let row_bytes = u64::from(dimensions.sequences)
+        .checked_mul(U32_BYTES)
+        .ok_or_else(error)?;
+    let expected_offset = parent
+        .offset()
+        .checked_add(
+            u64::from(iteration)
+                .checked_mul(row_bytes)
+                .ok_or_else(error)?,
+        )
+        .ok_or_else(error)?;
+    let expected_total = row_bytes
+        .checked_mul(u64::from(draft_iterations))
+        .ok_or_else(error)?;
+    let range = row.range();
+    let range_end = range.checked_end().ok_or_else(error)?;
+    let parent_end = parent.checked_end().ok_or_else(error)?;
+    if target_selection.role != ferric_spec::Qwen3ModelRole::Target8B
+        || target_selection.mode != ferric_spec::Qwen3ExecutionMode::Speculative
+        || row.draft_segment() != segment_index
+        || row.iteration() != iteration
+        || row.sequence_count() != dimensions.sequences
+        || row.target_workspace_id() != target.plan.workspace_id()
+        || row.target_workspace_selection() != target_selection
+        || row.target_allocation_id() != target.plan.allocation().allocation_id()
+        || parent.byte_len() != expected_total
+        || parent.alignment() != U32_BYTES
+        || range.role() != expected_role
+        || range.offset() != expected_offset
+        || range.byte_len() != row_bytes
+        || range.alignment() != U32_BYTES
+        || !range.offset().is_multiple_of(U32_BYTES)
+        || range.offset() < parent.offset()
+        || range_end > parent_end
+        || range_end > target.plan.allocation().byte_len()
+    {
+        return Err(error());
     }
     Ok(())
 }
@@ -1029,6 +1239,60 @@ mod tests {
             ));
             let draft_owner = exact_workspace_plan(draft_selection, 50);
             let target_owner = exact_workspace_plan(target_selection, 51);
+            let dimensions = target_bucket
+                .dimensions(Qwen3ModelRole::Target8B, Qwen3ExecutionMode::Speculative)
+                .unwrap();
+            let iterations = u8::try_from(dimensions.active_tokens - 1).unwrap();
+            let row_bytes = u64::from(dimensions.sequences) * U32_BYTES;
+            let position_parent = target_owner
+                .range(M1StepWorkspaceRangeRole::DraftPositionIds)
+                .unwrap();
+            let context_parent = target_owner
+                .range(M1StepWorkspaceRangeRole::DraftContextLengths)
+                .unwrap();
+            let target_metadata = WorkspaceOwnerMetadata::new(
+                &target_owner,
+                M1_TARGET_SPECULATIVE_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
+            );
+            for iteration in 0..iterations {
+                let binding = composition.segment_binding(iteration).unwrap();
+                let position_ids = binding.draft_position_ids_subrange().unwrap();
+                let context_lengths = binding.draft_context_lengths_subrange().unwrap();
+                for (role, row, parent) in [
+                    (
+                        M1StepWorkspaceRangeRole::DraftPositionIds,
+                        position_ids,
+                        position_parent,
+                    ),
+                    (
+                        M1StepWorkspaceRangeRole::DraftContextLengths,
+                        context_lengths,
+                        context_parent,
+                    ),
+                ] {
+                    validate_draft_metadata_subrange(
+                        usize::from(iteration),
+                        iteration,
+                        iteration,
+                        role,
+                        row,
+                        Some(target_metadata),
+                    )
+                    .unwrap();
+                    assert_eq!(row.range().role(), role);
+                    assert_eq!(row.range().byte_len(), row_bytes);
+                    assert_eq!(
+                        row.range().offset(),
+                        parent.offset() + u64::from(iteration) * row_bytes
+                    );
+                }
+            }
+            if target_bucket == Qwen3PlanBucket::SpeculativeS8K4C8192 {
+                assert_eq!(iterations, 4);
+                assert_eq!(row_bytes, 32);
+                assert_eq!(position_parent.byte_len(), 128);
+                assert_eq!(context_parent.byte_len(), 128);
+            }
             validate_bound_full_step_workspace_metadata(
                 &composition,
                 M1FullStepWorkspaceOwnerMetadata::SpeculativeRound {
@@ -1159,6 +1423,8 @@ mod tests {
                 binding.workspace_id(),
                 binding.workspace_selection(),
                 binding.draft_choice_subrange(),
+                binding.draft_position_ids_subrange(),
+                binding.draft_context_lengths_subrange(),
                 owner,
                 Some(owner),
             )
@@ -1174,6 +1440,8 @@ mod tests {
                 binding.workspace_role(),
                 binding.workspace_id(),
                 binding.workspace_selection(),
+                None,
+                None,
                 None,
                 owner,
                 Some(owner),
@@ -1191,6 +1459,8 @@ mod tests {
                 binding.workspace_id(),
                 binding.workspace_selection(),
                 None,
+                None,
+                None,
                 owner,
                 Some(owner),
             ),
@@ -1206,6 +1476,8 @@ mod tests {
                 binding.workspace_role(),
                 Identity::new([99; 32]),
                 binding.workspace_selection(),
+                None,
+                None,
                 None,
                 owner,
                 Some(owner),
@@ -1226,6 +1498,8 @@ mod tests {
                     Qwen3ExecutionMode::Decode,
                     Qwen3PlanBucket::DecodeS1C8192,
                 ),
+                None,
+                None,
                 None,
                 owner,
                 Some(owner),
@@ -1330,6 +1604,80 @@ mod tests {
     }
 
     #[test]
+    fn speculative_metadata_rows_reject_missing_and_swapped_roles() {
+        let operation_plan = public_operation_kernel_plan_fixture();
+        let target_selection = target(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS8K4C8192,
+        );
+        let draft_selection = selection(
+            Qwen3ModelRole::Draft06B,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS8C8192,
+        );
+        let composition = composed(compose_addressless_m1_full_step_workspaces(
+            derive_m1_step_dispatch_plan(
+                &operation_plan,
+                M1StepDispatchIntent::SpeculativeRound(target_selection),
+            )
+            .unwrap(),
+            M1FullStepWorkspacePlans::speculative_round(
+                exact_workspace_plan(draft_selection, 91),
+                exact_workspace_plan(target_selection, 92),
+            ),
+        ));
+        let draft_plan = exact_workspace_plan(draft_selection, 91);
+        let target_plan = exact_workspace_plan(target_selection, 92);
+        let draft_owner =
+            WorkspaceOwnerMetadata::new(&draft_plan, M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1);
+        let target_owner = WorkspaceOwnerMetadata::new(
+            &target_plan,
+            M1_TARGET_SPECULATIVE_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
+        );
+        let segment = &composition.dispatch_plan().segments()[0];
+        let binding = composition.segment_bindings()[0];
+        let choice = binding.draft_choice_subrange();
+        let position_ids = binding.draft_position_ids_subrange();
+        let context_lengths = binding.draft_context_lengths_subrange();
+        let validate = |position_ids, context_lengths| {
+            validate_segment_workspace_binding(
+                0,
+                segment.segment_index(),
+                segment.stage(),
+                segment.selection(),
+                binding.segment_index(),
+                binding.workspace_role(),
+                binding.workspace_id(),
+                binding.workspace_selection(),
+                choice,
+                position_ids,
+                context_lengths,
+                draft_owner,
+                Some(target_owner),
+            )
+        };
+        validate(position_ids, context_lengths).unwrap();
+        assert!(matches!(
+            validate(None, context_lengths),
+            Err(
+                M1FullStepWorkspaceSubleaseBindingError::MissingDraftMetadataSubrange {
+                    position: 0,
+                    role: M1StepWorkspaceRangeRole::DraftPositionIds,
+                }
+            )
+        ));
+        assert!(matches!(
+            validate(context_lengths, position_ids),
+            Err(
+                M1FullStepWorkspaceSubleaseBindingError::DraftMetadataSubrange {
+                    position: 0,
+                    role: M1StepWorkspaceRangeRole::DraftPositionIds,
+                }
+            )
+        ));
+    }
+
+    #[test]
     fn stale_allocation_generation_is_attributed_to_exact_workspace() {
         let error = allocation_error(
             M1FullStepWorkspaceRole::Target,
@@ -1340,6 +1688,21 @@ mod tests {
             M1FullStepWorkspaceSubleaseBindingError::Allocation {
                 workspace: M1FullStepWorkspaceRole::Target,
                 error: ServiceAllocationErrorV1::AllocationGenerationMismatch,
+            }
+        ));
+        let dispatch_error = M1FullStepWorkspaceDispatchRangeError::Range {
+            workspace: M1FullStepWorkspaceRole::Target,
+            error: M1StepWorkspaceDispatchRangeError::Allocation(
+                ServiceAllocationErrorV1::AllocationGenerationMismatch,
+            ),
+        };
+        assert!(matches!(
+            dispatch_error,
+            M1FullStepWorkspaceDispatchRangeError::Range {
+                workspace: M1FullStepWorkspaceRole::Target,
+                error: M1StepWorkspaceDispatchRangeError::Allocation(
+                    ServiceAllocationErrorV1::AllocationGenerationMismatch
+                ),
             }
         ));
     }
