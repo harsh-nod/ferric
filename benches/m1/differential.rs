@@ -222,7 +222,10 @@ impl StagingBundle {
             .file_name()
             .map(OsString::from)
             .ok_or_else(|| "output bundle path has no final component".to_owned())?;
-        let parent_path = output.parent().unwrap_or_else(|| Path::new("."));
+        let parent_path = output
+            .parent()
+            .filter(|parent| !parent.as_os_str().is_empty())
+            .unwrap_or_else(|| Path::new("."));
         let parent = openat2(
             CWD,
             parent_path,

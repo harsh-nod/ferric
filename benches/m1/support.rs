@@ -783,7 +783,10 @@ fn secure_parent(path: &Path, description: &str) -> BenchResult<(SecureInputDire
         .file_name()
         .map(PathBuf::from)
         .ok_or_else(|| format!("{description} path has no file name"))?;
-    let parent = path.parent().unwrap_or_else(|| Path::new("."));
+    let parent = path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."));
     let descriptor = openat2(
         CWD,
         parent,

@@ -335,6 +335,27 @@ def exercise_differential_producer(
     records_path = output_bundle / "records.json"
     if len(list(raw_directory.iterdir())) != 7:
         fail("differential producer did not emit the exact raw-record roster")
+
+    bare_output = scratch / "differential.bare.bundle"
+    bare_result = subprocess.run(
+        [
+            str(repo / "target/debug/ferric-m1-differential"),
+            "produce",
+            plan_path.name,
+            pairs_path.name,
+            bare_output.name,
+        ],
+        cwd=scratch,
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env={"PATH": os.environ.get("PATH", "")},
+    )
+    if bare_result.returncode != 0 or not (bare_output / "records.json").is_file():
+        fail(
+            "differential producer rejected bare current-directory paths:\n"
+            + bare_result.stderr.decode(errors="replace")
+        )
     records = load_canonical(records_path.read_bytes(), "produced differential records")
     if len(records.get("observations", [])) != 7:
         fail("differential producer record roster drifted")
