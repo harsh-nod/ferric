@@ -172,11 +172,11 @@ pub const QWEN3_LOGITS_COMPACT_TOTAL_KERNARG_BYTES_V1: u64 = 400;
 /// Exact kernarg alignment.
 pub const QWEN3_LOGITS_KERNARG_ALIGNMENT_V1: u64 = 8;
 /// Exact final LLVM byte length.
-pub const QWEN3_LOGITS_LLVM_BYTES_V1: usize = 20_135;
+pub const QWEN3_LOGITS_LLVM_BYTES_V1: usize = 20_290;
 /// Exact final LLVM SHA-256.
 pub const QWEN3_LOGITS_LLVM_SHA256_V1: [u8; 32] = [
-    0xb9, 0xf8, 0xcf, 0xcc, 0xea, 0x4a, 0x63, 0xc2, 0x6e, 0xb7, 0x4e, 0xae, 0x5a, 0x04, 0xbc, 0xba,
-    0xc4, 0xb7, 0x3f, 0x88, 0xce, 0xc4, 0x7a, 0x77, 0x35, 0x50, 0x8e, 0x84, 0x24, 0x70, 0x51, 0x56,
+    0x3d, 0x63, 0x1c, 0x1c, 0x00, 0xf1, 0xdf, 0x43, 0x25, 0x72, 0xbe, 0x9e, 0xb9, 0xbd, 0xf5, 0xfc,
+    0xb0, 0x59, 0xb9, 0x90, 0x9c, 0x06, 0x04, 0xc1, 0xc7, 0x6e, 0x45, 0x35, 0xa3, 0x66, 0xd4, 0x39,
 ];
 
 const PROFILE_DOMAIN: &[u8] = b"FERRIC/QWEN3/LOGITS/PROFILE/V1\0";
@@ -1325,7 +1325,7 @@ declare void @llvm.trap()
     emit_compact_kernel(&mut output);
     output.push_str(
         r#"
-attributes #0 = { nounwind "amdgpu-flat-work-group-size"="64,64" "target-cpu"="gfx942" "target-features"="-wavefrontsize32,+wavefrontsize64,-xnack" "denormal-fp-math-f32"="ieee,ieee" "unsafe-fp-math"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "approx-func-fp-math"="false" "fp-contract"="off" }
+attributes #0 = { nounwind "amdgpu-no-completion-action" "amdgpu-no-default-queue" "amdgpu-no-heap-ptr" "amdgpu-no-hostcall-ptr" "amdgpu-no-multigrid-sync-arg" "amdgpu-no-queue-ptr" "amdgpu-flat-work-group-size"="64,64" "target-cpu"="gfx942" "target-features"="-wavefrontsize32,+wavefrontsize64,-xnack" "denormal-fp-math-f32"="ieee,ieee" "unsafe-fp-math"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "approx-func-fp-math"="false" "fp-contract"="off" }
 attributes #1 = { nounwind readnone speculatable willreturn }
 
 !0 = !{i32 64, i32 1, i32 1}
@@ -1757,6 +1757,9 @@ fn validate_canonical_llvm(module: &str) -> Result<(), PrepareQwen3LogitsKernelE
     let compact_symbol = QWEN3_LOGITS_COMPACT_KERNEL_SYMBOL_V1;
     let exact = module.len() == QWEN3_LOGITS_LLVM_BYTES_V1
         && hash == QWEN3_LOGITS_LLVM_SHA256_V1
+        && crate::COV6_NO_RUNTIME_SERVICE_ATTRIBUTES_V1
+            .iter()
+            .all(|attribute| module.matches(attribute).count() == 1)
         && module
             .matches(&format!("define amdgpu_kernel void @{argmax_symbol}"))
             .count()
@@ -2458,7 +2461,7 @@ const fn is_u32_metadata_carrier(value_type: ExplicitValueType) -> bool {
 }
 
 fn exact_hidden_arguments(arguments: &[HiddenArgument], offset: u64) -> bool {
-    const RELATIVE: [(u64, u64, HiddenValueKind); 19] = [
+    const RELATIVE: [(u64, u64, HiddenValueKind); 13] = [
         (0, 4, HiddenValueKind::BlockCountX),
         (4, 4, HiddenValueKind::BlockCountY),
         (8, 4, HiddenValueKind::BlockCountZ),
@@ -2472,12 +2475,6 @@ fn exact_hidden_arguments(arguments: &[HiddenArgument], offset: u64) -> bool {
         (48, 8, HiddenValueKind::GlobalOffsetY),
         (56, 8, HiddenValueKind::GlobalOffsetZ),
         (64, 2, HiddenValueKind::GridDimensions),
-        (80, 8, HiddenValueKind::HostcallBuffer),
-        (88, 8, HiddenValueKind::MultigridSyncArgument),
-        (96, 8, HiddenValueKind::HeapV1),
-        (104, 8, HiddenValueKind::DefaultQueue),
-        (112, 8, HiddenValueKind::CompletionAction),
-        (200, 8, HiddenValueKind::QueuePointer),
     ];
     arguments.len() == RELATIVE.len()
         && arguments.iter().zip(RELATIVE).all(|(actual, expected)| {
@@ -3046,6 +3043,11 @@ mod tests {
         let digest: [u8; 32] = Sha256::digest(source.as_bytes()).into();
         assert_eq!(digest, QWEN3_LOGITS_LLVM_SHA256_V1);
         assert!(validate_canonical_llvm(&source).is_ok());
+        for attribute in crate::COV6_NO_RUNTIME_SERVICE_ATTRIBUTES_V1 {
+            let missing = source.replacen(attribute, "", 1);
+            assert_ne!(source, missing);
+            assert!(validate_canonical_llvm(&missing).is_err());
+        }
         let prepared = prepare_qwen3_logits_kernel_v1(bindings()).unwrap();
         assert!(!prepared.classifier_distinguishes_duplicate_profiles());
         assert!(!prepared.authenticates_compiler_origin());

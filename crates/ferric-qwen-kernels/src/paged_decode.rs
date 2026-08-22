@@ -81,11 +81,11 @@ pub const QWEN3_PAGED_DECODE_KERNARG_ALIGNMENT_V1: u64 = 8;
 /// Number of finite target/draft paged decode profiles.
 pub const QWEN3_PAGED_DECODE_PROFILE_COUNT_V1: usize = 14;
 /// Exact byte length of the final canonical direct-LLVM source.
-pub const QWEN3_PAGED_DECODE_LLVM_BYTES_V1: usize = 23_685;
+pub const QWEN3_PAGED_DECODE_LLVM_BYTES_V1: usize = 23_840;
 /// SHA-256 of the final canonical direct-LLVM source bytes.
 pub const QWEN3_PAGED_DECODE_LLVM_SHA256_V1: [u8; 32] = [
-    0xa9, 0x12, 0x31, 0xb0, 0x22, 0x71, 0x51, 0x97, 0x7b, 0x6c, 0xe0, 0xb3, 0x84, 0x12, 0x60, 0x52,
-    0x35, 0xf9, 0x74, 0x01, 0x27, 0x59, 0x0b, 0x47, 0x9b, 0x70, 0x98, 0x05, 0x12, 0xb3, 0x6e, 0x28,
+    0xad, 0xb2, 0x81, 0xbd, 0x35, 0xd4, 0xae, 0xdf, 0xd8, 0x3e, 0xff, 0x6b, 0xad, 0x54, 0xea, 0x0c,
+    0x8e, 0x9b, 0xa5, 0x66, 0xff, 0x5b, 0x1c, 0xa6, 0xaa, 0xf9, 0xfd, 0x37, 0xee, 0xa8, 0x5e, 0x57,
 ];
 
 const OCML_EXP_F32: &str = "__ocml_exp_f32";
@@ -1627,7 +1627,7 @@ trap:
   ret void
 }
 
-attributes #0 = { nounwind "amdgpu-flat-work-group-size"="64,64" "target-cpu"="gfx942" "target-features"="-wavefrontsize32,+wavefrontsize64,-xnack" "denormal-fp-math-f32"="ieee,ieee" "unsafe-fp-math"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "approx-func-fp-math"="false" "fp-contract"="off" }
+attributes #0 = { nounwind "amdgpu-no-completion-action" "amdgpu-no-default-queue" "amdgpu-no-heap-ptr" "amdgpu-no-hostcall-ptr" "amdgpu-no-multigrid-sync-arg" "amdgpu-no-queue-ptr" "amdgpu-flat-work-group-size"="64,64" "target-cpu"="gfx942" "target-features"="-wavefrontsize32,+wavefrontsize64,-xnack" "denormal-fp-math-f32"="ieee,ieee" "unsafe-fp-math"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "approx-func-fp-math"="false" "fp-contract"="off" }
 attributes #1 = { nounwind readnone speculatable willreturn }
 
 !0 = !{i32 64, i32 1, i32 1}
@@ -1723,6 +1723,9 @@ fn validate_canonical_llvm(module: &str) -> Result<(), PrepareQwen3PagedDecodeKe
     let module_sha256: [u8; 32] = Sha256::digest(module.as_bytes()).into();
     let exact = module.len() == QWEN3_PAGED_DECODE_LLVM_BYTES_V1
         && module_sha256 == QWEN3_PAGED_DECODE_LLVM_SHA256_V1
+        && crate::COV6_NO_RUNTIME_SERVICE_ATTRIBUTES_V1
+            .iter()
+            .all(|attribute| module.matches(attribute).count() == 1)
         && module.matches("define amdgpu_kernel").count() == 1
         && module
             .matches("declare float @__ocml_exp_f32(float)")
@@ -2331,7 +2334,7 @@ const fn is_i32_metadata_carrier(value_type: ExplicitValueType) -> bool {
 }
 
 fn exact_hidden_arguments(arguments: &[HiddenArgument], offset: u64) -> bool {
-    const RELATIVE: [(u64, u64, HiddenValueKind); 19] = [
+    const RELATIVE: [(u64, u64, HiddenValueKind); 13] = [
         (0, 4, HiddenValueKind::BlockCountX),
         (4, 4, HiddenValueKind::BlockCountY),
         (8, 4, HiddenValueKind::BlockCountZ),
@@ -2345,12 +2348,6 @@ fn exact_hidden_arguments(arguments: &[HiddenArgument], offset: u64) -> bool {
         (48, 8, HiddenValueKind::GlobalOffsetY),
         (56, 8, HiddenValueKind::GlobalOffsetZ),
         (64, 2, HiddenValueKind::GridDimensions),
-        (80, 8, HiddenValueKind::HostcallBuffer),
-        (88, 8, HiddenValueKind::MultigridSyncArgument),
-        (96, 8, HiddenValueKind::HeapV1),
-        (104, 8, HiddenValueKind::DefaultQueue),
-        (112, 8, HiddenValueKind::CompletionAction),
-        (200, 8, HiddenValueKind::QueuePointer),
     ];
     arguments.len() == RELATIVE.len()
         && arguments.iter().zip(RELATIVE).all(|(actual, expected)| {
@@ -2720,6 +2717,11 @@ mod tests {
             QWEN3_PAGED_DECODE_LLVM_SHA256_V1
         );
         validate_canonical_llvm(&exact).unwrap();
+        for attribute in crate::COV6_NO_RUNTIME_SERVICE_ATTRIBUTES_V1 {
+            let missing = exact.replacen(attribute, "", 1);
+            assert_ne!(exact, missing);
+            assert!(validate_canonical_llvm(&missing).is_err());
+        }
         let contract_substitution = exact.replacen(
             "declare float @__ocml_exp_f32(float)",
             "declare float @hostile_exp_f32(float)",

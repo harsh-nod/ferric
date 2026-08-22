@@ -93,11 +93,11 @@ pub const QWEN3_TOKEN_EMBEDDING_TOTAL_KERNARG_BYTES_V1: u64 = 320;
 /// Exact kernarg alignment.
 pub const QWEN3_GEMM_KERNARG_ALIGNMENT_V1: u64 = 8;
 /// Exact byte length of the final canonical direct-LLVM module.
-pub const QWEN3_GEMM_LLVM_BYTES_V1: usize = 26_051;
+pub const QWEN3_GEMM_LLVM_BYTES_V1: usize = 26_206;
 /// SHA-256 of the final canonical direct-LLVM module bytes.
 pub const QWEN3_GEMM_LLVM_SHA256_V1: [u8; 32] = [
-    0x7d, 0xc4, 0x42, 0xbc, 0xb9, 0xdd, 0x56, 0xf8, 0xab, 0xa5, 0x02, 0x67, 0xe3, 0xc2, 0x14, 0xbc,
-    0xd6, 0x51, 0x73, 0x13, 0x05, 0x9e, 0xe3, 0x36, 0x13, 0x9e, 0xc8, 0x71, 0x28, 0x0a, 0xcc, 0xff,
+    0x4d, 0xa7, 0xa8, 0xbd, 0x1a, 0xfc, 0xcf, 0xb3, 0x48, 0x50, 0xa5, 0x23, 0x95, 0x7f, 0xb9, 0xf6,
+    0x53, 0x36, 0x1a, 0xe4, 0x67, 0x56, 0x01, 0xad, 0xa5, 0xf4, 0x83, 0x76, 0xb7, 0x9e, 0x13, 0x72,
 ];
 
 const PROFILE_DOMAIN: &[u8] = b"FERRIC/QWEN3/GEMM/PROFILE/V1\0";
@@ -1887,7 +1887,7 @@ declare void @llvm.trap()
     emit_token_embedding_kernel(&mut output);
     output.push_str(
         r#"
-attributes #0 = { nounwind "amdgpu-flat-work-group-size"="64,64" "target-cpu"="gfx942" "target-features"="-wavefrontsize32,+wavefrontsize64,-xnack" "denormal-fp-math-f32"="ieee,ieee" "unsafe-fp-math"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "approx-func-fp-math"="false" "fp-contract"="off" }
+attributes #0 = { nounwind "amdgpu-no-completion-action" "amdgpu-no-default-queue" "amdgpu-no-heap-ptr" "amdgpu-no-hostcall-ptr" "amdgpu-no-multigrid-sync-arg" "amdgpu-no-queue-ptr" "amdgpu-flat-work-group-size"="64,64" "target-cpu"="gfx942" "target-features"="-wavefrontsize32,+wavefrontsize64,-xnack" "denormal-fp-math-f32"="ieee,ieee" "unsafe-fp-math"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "approx-func-fp-math"="false" "fp-contract"="off" }
 attributes #1 = { nounwind readnone speculatable willreturn }
 
 !0 = !{i32 64, i32 1, i32 1}
@@ -2252,6 +2252,9 @@ fn validate_canonical_llvm(module: &str) -> Result<(), PrepareQwen3GemmKernelErr
     let module_sha256: [u8; 32] = Sha256::digest(module.as_bytes()).into();
     let exact = module.len() == QWEN3_GEMM_LLVM_BYTES_V1
         && module_sha256 == QWEN3_GEMM_LLVM_SHA256_V1
+        && crate::COV6_NO_RUNTIME_SERVICE_ATTRIBUTES_V1
+            .iter()
+            .all(|attribute| module.matches(attribute).count() == 1)
         && module.matches("define amdgpu_kernel").count() == 3
         && module
             .matches(QWEN3_GEMM_REFERENCE_KERNEL_SYMBOL_V1)
@@ -2969,7 +2972,7 @@ const fn is_u32_metadata_carrier(value_type: ExplicitValueType) -> bool {
 }
 
 fn exact_hidden_arguments(arguments: &[HiddenArgument], offset: u64) -> bool {
-    const RELATIVE: [(u64, u64, HiddenValueKind); 19] = [
+    const RELATIVE: [(u64, u64, HiddenValueKind); 13] = [
         (0, 4, HiddenValueKind::BlockCountX),
         (4, 4, HiddenValueKind::BlockCountY),
         (8, 4, HiddenValueKind::BlockCountZ),
@@ -2983,12 +2986,6 @@ fn exact_hidden_arguments(arguments: &[HiddenArgument], offset: u64) -> bool {
         (48, 8, HiddenValueKind::GlobalOffsetY),
         (56, 8, HiddenValueKind::GlobalOffsetZ),
         (64, 2, HiddenValueKind::GridDimensions),
-        (80, 8, HiddenValueKind::HostcallBuffer),
-        (88, 8, HiddenValueKind::MultigridSyncArgument),
-        (96, 8, HiddenValueKind::HeapV1),
-        (104, 8, HiddenValueKind::DefaultQueue),
-        (112, 8, HiddenValueKind::CompletionAction),
-        (200, 8, HiddenValueKind::QueuePointer),
     ];
     arguments.len() == RELATIVE.len()
         && arguments.iter().zip(RELATIVE).all(|(actual, expected)| {
@@ -3368,6 +3365,12 @@ mod tests {
             QWEN3_GEMM_LLVM_SHA256_V1
         );
         validate_canonical_llvm(&exact).unwrap();
+
+        for attribute in crate::COV6_NO_RUNTIME_SERVICE_ATTRIBUTES_V1 {
+            let missing = exact.replacen(attribute, "", 1);
+            assert_ne!(exact, missing);
+            assert!(validate_canonical_llvm(&missing).is_err());
+        }
 
         let draft_hidden_substitution = exact.replacen(
             "%k.d.query = icmp eq i32 %k, 2048",

@@ -78,11 +78,11 @@ pub const QWEN3_PREFILL_KERNARG_ALIGNMENT_V1: u64 = 8;
 /// Number of finite target/draft prefill profiles.
 pub const QWEN3_PREFILL_PROFILE_COUNT_V1: usize = 8;
 /// Exact byte length of the final canonical direct-LLVM source.
-pub const QWEN3_PREFILL_LLVM_BYTES_V1: usize = 21_147;
+pub const QWEN3_PREFILL_LLVM_BYTES_V1: usize = 21_302;
 /// SHA-256 of the final canonical direct-LLVM source bytes.
 pub const QWEN3_PREFILL_LLVM_SHA256_V1: [u8; 32] = [
-    0x76, 0x74, 0xca, 0xa6, 0x3d, 0x6e, 0xbd, 0x27, 0x81, 0x39, 0xdb, 0xc0, 0xc2, 0x87, 0xc7, 0xe2,
-    0xc7, 0x58, 0x11, 0x91, 0x79, 0xa0, 0x21, 0x37, 0x89, 0x68, 0x6c, 0xed, 0xd0, 0x21, 0xe5, 0x22,
+    0xfd, 0x98, 0xb9, 0xa1, 0x3c, 0x46, 0x06, 0x0f, 0xb1, 0x34, 0xa9, 0x6f, 0x36, 0x37, 0x23, 0x0a,
+    0x05, 0x70, 0xa7, 0x3c, 0x4f, 0x27, 0x62, 0x50, 0x71, 0x84, 0xc0, 0x0c, 0x87, 0x9a, 0xa4, 0x51,
 ];
 
 const OCML_EXP_F32: &str = "__ocml_exp_f32";
@@ -1496,7 +1496,7 @@ trap:
   ret void
 }
 
-attributes #0 = { nounwind "amdgpu-flat-work-group-size"="64,64" "target-cpu"="gfx942" "target-features"="-wavefrontsize32,+wavefrontsize64,-xnack" "denormal-fp-math-f32"="ieee,ieee" "unsafe-fp-math"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "approx-func-fp-math"="false" "fp-contract"="off" }
+attributes #0 = { nounwind "amdgpu-no-completion-action" "amdgpu-no-default-queue" "amdgpu-no-heap-ptr" "amdgpu-no-hostcall-ptr" "amdgpu-no-multigrid-sync-arg" "amdgpu-no-queue-ptr" "amdgpu-flat-work-group-size"="64,64" "target-cpu"="gfx942" "target-features"="-wavefrontsize32,+wavefrontsize64,-xnack" "denormal-fp-math-f32"="ieee,ieee" "unsafe-fp-math"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "approx-func-fp-math"="false" "fp-contract"="off" }
 attributes #1 = { nounwind readnone speculatable willreturn }
 
 !0 = !{i32 64, i32 1, i32 1}
@@ -1592,6 +1592,9 @@ fn validate_canonical_llvm(module: &str) -> Result<(), PrepareQwen3PrefillKernel
     let module_sha256: [u8; 32] = Sha256::digest(module.as_bytes()).into();
     let exact = module.len() == QWEN3_PREFILL_LLVM_BYTES_V1
         && module_sha256 == QWEN3_PREFILL_LLVM_SHA256_V1
+        && crate::COV6_NO_RUNTIME_SERVICE_ATTRIBUTES_V1
+            .iter()
+            .all(|attribute| module.matches(attribute).count() == 1)
         && module.matches("define amdgpu_kernel").count() == 1
         && module
             .matches("declare float @__ocml_exp_f32(float)")
@@ -2190,7 +2193,7 @@ const fn is_i32_metadata_carrier(value_type: ExplicitValueType) -> bool {
 }
 
 fn exact_hidden_arguments(arguments: &[HiddenArgument], offset: u64) -> bool {
-    const RELATIVE: [(u64, u64, HiddenValueKind); 19] = [
+    const RELATIVE: [(u64, u64, HiddenValueKind); 13] = [
         (0, 4, HiddenValueKind::BlockCountX),
         (4, 4, HiddenValueKind::BlockCountY),
         (8, 4, HiddenValueKind::BlockCountZ),
@@ -2204,12 +2207,6 @@ fn exact_hidden_arguments(arguments: &[HiddenArgument], offset: u64) -> bool {
         (48, 8, HiddenValueKind::GlobalOffsetY),
         (56, 8, HiddenValueKind::GlobalOffsetZ),
         (64, 2, HiddenValueKind::GridDimensions),
-        (80, 8, HiddenValueKind::HostcallBuffer),
-        (88, 8, HiddenValueKind::MultigridSyncArgument),
-        (96, 8, HiddenValueKind::HeapV1),
-        (104, 8, HiddenValueKind::DefaultQueue),
-        (112, 8, HiddenValueKind::CompletionAction),
-        (200, 8, HiddenValueKind::QueuePointer),
     ];
     arguments.len() == RELATIVE.len()
         && arguments.iter().zip(RELATIVE).all(|(actual, expected)| {
@@ -2505,6 +2502,11 @@ mod tests {
             QWEN3_PREFILL_LLVM_SHA256_V1
         );
         validate_canonical_llvm(&exact).unwrap();
+        for attribute in crate::COV6_NO_RUNTIME_SERVICE_ATTRIBUTES_V1 {
+            let missing = exact.replacen(attribute, "", 1);
+            assert_ne!(exact, missing);
+            assert!(validate_canonical_llvm(&missing).is_err());
+        }
         let contract_substitution = exact.replacen(
             "declare float @__ocml_exp_f32(float)",
             "declare float @hostile_exp_f32(float)",

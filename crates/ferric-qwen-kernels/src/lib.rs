@@ -2,6 +2,15 @@
 #![deny(missing_docs)]
 #![doc = include_str!("../README.md")]
 
+const COV6_NO_RUNTIME_SERVICE_ATTRIBUTES_V1: [&str; 6] = [
+    "\"amdgpu-no-completion-action\"",
+    "\"amdgpu-no-default-queue\"",
+    "\"amdgpu-no-heap-ptr\"",
+    "\"amdgpu-no-hostcall-ptr\"",
+    "\"amdgpu-no-multigrid-sync-arg\"",
+    "\"amdgpu-no-queue-ptr\"",
+];
+
 /// Exact finite Qwen3 dense GEMM/GEMV compiler profiles.
 pub mod gemm;
 /// Exact Qwen3 lowest-ID argmax and compact-completion compiler profiles.
