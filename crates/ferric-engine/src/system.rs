@@ -1012,6 +1012,94 @@ impl<const C: usize> Engine<C> {
         self.scheduler.pending_member(offset)
     }
 
+    /// Performs every externally rejectable exact-completion check without
+    /// consuming completion authority or mutating scheduler/KV state.
+    pub(crate) fn preflight_complete_exact(
+        &self,
+        completion: &ExactCompletion,
+        accepted_tokens: &[u32],
+    ) -> (result: Result<(), EngineError>)
+        requires self.well_formed(),
+    {
+        if self.faulted {
+            return Err(EngineError::Faulted);
+        }
+        let member_count = self.scheduler.pending_batch_member_count();
+        if accepted_tokens.len() != member_count {
+            return Err(EngineError::CompletionResultCount {
+                expected: member_count,
+                actual: accepted_tokens.len(),
+            });
+        }
+        if member_count == 0 {
+            return Err(EngineError::Scheduler(SchedulerError::NoPendingBatch));
+        }
+        let expected_epoch = match self.scheduler.completed_epoch().value().checked_add(1) {
+            Some(epoch) => epoch,
+            None => {
+                return Err(EngineError::Scheduler(
+                    SchedulerError::CompletionNotExactNext,
+                ));
+            }
+        };
+        if completion.epoch().value() != expected_epoch {
+            return Err(EngineError::Scheduler(
+                SchedulerError::CompletionNotExactNext,
+            ));
+        }
+
+        let mut index = 0;
+        while index < member_count
+            invariant
+                self.well_formed(),
+                index <= member_count,
+                member_count <= C,
+                accepted_tokens@.len() == member_count,
+            decreases member_count - index,
+        {
+            let request = match self.scheduler.pending_member(index) {
+                Some(request) => request,
+                None => return Err(EngineError::InvariantViolation),
+            };
+            match self.scheduler.state(request) {
+                Some(RequestState::InFlight) => {
+                    let resident = match self.kv.resident_tokens(request) {
+                        Some(tokens) => tokens,
+                        None => return Err(EngineError::InvariantViolation),
+                    };
+                    let committed = match self.kv.committed_tokens(request) {
+                        Some(tokens) => tokens,
+                        None => return Err(EngineError::InvariantViolation),
+                    };
+                    let tentative = match resident.checked_sub(committed) {
+                        Some(tokens) => tokens,
+                        None => return Err(EngineError::InvariantViolation),
+                    };
+                    if accepted_tokens[index] > tentative {
+                        return Err(EngineError::Kv(KvError::CommitExceedsResident));
+                    }
+                }
+                Some(RequestState::Retiring) => {
+                    if !self.scheduler.pending_retirement_ready(
+                        index,
+                        request,
+                        completion.epoch(),
+                    ) {
+                        if request.generation() == u32::MAX {
+                            return Err(EngineError::Scheduler(
+                                SchedulerError::GenerationExhausted,
+                            ));
+                        }
+                        return Err(EngineError::InvariantViolation);
+                    }
+                }
+                _ => return Err(EngineError::InvariantViolation),
+            }
+            index += 1;
+        }
+        Ok(())
+    }
+
     /// Admits one request generation into the scheduler and KV pool.
     ///
     /// # Errors
@@ -2009,6 +2097,17 @@ impl<const C: usize> Engine<C> {
         }
         assert(self.same_state(&entry));
         assert(entry == *old(self));
+        if let Err(error) = self.preflight_complete_exact(&completion, accepted_tokens) {
+            let ghost returned_epoch = completion.epoch_spec();
+            let result = Err(CompletionFailure::returned(error, completion));
+            assert(self.completion_refines(
+                &entry,
+                returned_epoch,
+                accepted_tokens@,
+                &result,
+            ));
+            return result;
+        }
         if self.faulted {
             return Err(CompletionFailure::returned(EngineError::Faulted, completion));
         }
@@ -2977,6 +3076,62 @@ mod tests {
         assert_eq!(engine.committed_tokens(active), Some(2));
         assert_eq!(engine.resident_tokens(active), Some(2));
         assert_eq!(engine.live_count(), 1);
+    }
+
+    #[test]
+    fn exact_completion_preflight_rejects_epoch_count_and_acceptance_without_mutation() {
+        let mut engine = Engine::<2>::new(16, 4, 32).unwrap();
+        let first = engine.admit().unwrap();
+        let second = engine.admit().unwrap();
+        engine.append_tentative(first, 2).unwrap();
+        engine.append_tentative(second, 3).unwrap();
+        let mut members = output::<2>();
+        let batch = engine.dispatch_ready(&mut members).unwrap().unwrap();
+        assert_eq!(members, [first, second]);
+
+        let exact = ExactCompletion::from_contracted_hsa_quiescence(batch.epoch());
+        assert_eq!(engine.preflight_complete_exact(&exact, &[1, 2]), Ok(()));
+        assert!(matches!(
+            engine.preflight_complete_exact(&exact, &[1]),
+            Err(EngineError::CompletionResultCount {
+                expected: 2,
+                actual: 1
+            })
+        ));
+        assert_eq!(
+            engine.preflight_complete_exact(&exact, &[3, 2]),
+            Err(EngineError::Kv(super::KvError::CommitExceedsResident))
+        );
+        let late = ExactCompletion::from_contracted_hsa_quiescence(CompletionEpoch::new(
+            batch.epoch().value() + 1,
+        ));
+        assert!(matches!(
+            engine.preflight_complete_exact(&late, &[1, 2]),
+            Err(EngineError::Scheduler(
+                super::SchedulerError::CompletionNotExactNext
+            ))
+        ));
+        assert_eq!(engine.completed_epoch(), CompletionEpoch::new(0));
+        assert_eq!(engine.state(first), Some(RequestState::InFlight));
+        assert_eq!(engine.state(second), Some(RequestState::InFlight));
+        assert_eq!(engine.resident_tokens(first), Some(2));
+        assert_eq!(engine.resident_tokens(second), Some(3));
+    }
+
+    #[test]
+    fn retiring_preflight_checks_future_exact_detachment_without_settling() {
+        let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+        let request = engine.admit().unwrap();
+        engine.append_tentative(request, 1).unwrap();
+        let mut members = output::<1>();
+        let batch = engine.dispatch_ready(&mut members).unwrap().unwrap();
+        engine.retire(request).unwrap();
+        let exact = ExactCompletion::from_contracted_hsa_quiescence(batch.epoch());
+
+        assert_eq!(engine.preflight_complete_exact(&exact, &[0]), Ok(()));
+        assert_eq!(engine.state(request), Some(RequestState::Retiring));
+        assert_eq!(engine.completed_epoch(), CompletionEpoch::new(0));
+        assert_eq!(engine.resident_tokens(request), Some(1));
     }
 
     #[test]

@@ -1979,7 +1979,7 @@ impl DeviceKvCacheCommon {
     fn settle_retired_epoch(
         &mut self,
         completion: ExactCompletion,
-    ) -> Result<usize, RetirementCompletionFailure> {
+    ) -> Result<(usize, ExactCompletion), RetirementCompletionFailure> {
         let exact_epoch = completion.epoch();
         let matching = self
             .target
@@ -2003,7 +2003,7 @@ impl DeviceKvCacheCommon {
         {
             retired.quiescent = true;
         }
-        Ok(matching)
+        Ok((matching, completion))
     }
 
     fn validate_request(&self, request: RequestId) -> Result<(), DeviceKvCacheError> {
@@ -2528,7 +2528,7 @@ impl ActiveDeviceKvCache {
         })
     }
 
-    fn preflight_step_completion(
+    pub(crate) fn preflight_step_completion(
         &self,
         pending: &PendingDeviceKvStepWrite,
         completion: &ExactCompletion,
@@ -2715,6 +2715,90 @@ impl ActiveDeviceKvCache {
                 || write.token_count == 0
             {
                 return Err(DeviceKvCacheError::StepWriteSpanDrift);
+            }
+        }
+        Ok(())
+    }
+
+    pub(crate) fn preflight_step_settlement(
+        &self,
+        pending: &PendingDeviceKvStepWrite,
+        accepted_tokens: u32,
+        after_epoch: CompletionEpoch,
+    ) -> Result<(), DeviceKvCacheError> {
+        if after_epoch.value() == 0 || pending.epoch() != after_epoch {
+            return Err(DeviceKvCacheError::CompletionEpochMismatch);
+        }
+        if accepted_tokens > pending.active_tokens() {
+            return Err(DeviceKvCacheError::Physical(
+                PhysicalKvError::CommitExceedsResident,
+            ));
+        }
+        let rejected_tokens = pending.active_tokens() - accepted_tokens;
+        if rejected_tokens > M1_KV_PAGE_TOKENS {
+            return Err(DeviceKvCacheError::Physical(
+                PhysicalKvError::SettlementTailTooWide,
+            ));
+        }
+        Ok(())
+    }
+
+    pub(crate) fn settle_completed_step(
+        &mut self,
+        initialized: &InertInitializedDeviceKvStepWrite,
+        accepted_tokens: u32,
+        after_epoch: CompletionEpoch,
+    ) -> Result<u32, DeviceKvCacheError> {
+        if initialized.epoch() != after_epoch {
+            return Err(DeviceKvCacheError::CompletionEpochMismatch);
+        }
+        let request = initialized.request();
+        let role = initialized.selection().role;
+        self.accept_initialized(request, role, accepted_tokens)?;
+        let rejected_tokens = initialized
+            .active_tokens()
+            .checked_sub(accepted_tokens)
+            .ok_or(DeviceKvCacheError::Physical(
+                PhysicalKvError::CommitExceedsResident,
+            ))?;
+        let mut retired_pages = 0u32;
+        for _ in 0..rejected_tokens {
+            if matches!(
+                self.rollback_one(request, role, after_epoch)?,
+                DeviceKvRetirementOutcome::PageRetired(_)
+            ) {
+                retired_pages = retired_pages
+                    .checked_add(1)
+                    .ok_or(DeviceKvCacheError::OwnedPageTableDrift)?;
+            }
+        }
+        Ok(retired_pages)
+    }
+
+    pub(crate) fn preflight_retirement_after_step(
+        &self,
+        request: RequestId,
+        after_epoch: CompletionEpoch,
+    ) -> Result<(), DeviceKvCacheError> {
+        self.common.validate_request(request)?;
+        if after_epoch.value() == 0 {
+            return Err(DeviceKvCacheError::ZeroCompletionEpoch);
+        }
+        for cache in [&self.common.target, &self.common.draft] {
+            if !matches!(cache.logical().lifecycle, PhysicalKvLifecycle::Active) {
+                return Err(DeviceKvCacheError::Physical(
+                    PhysicalKvError::WrongLifecycle,
+                ));
+            }
+            if !DeviceKvCacheCommon::owned_table_matches(cache) {
+                return Err(DeviceKvCacheError::OwnedPageTableDrift);
+            }
+            if cache
+                .retired_pages
+                .iter()
+                .any(|retired| !retired.quiescent && retired.after_epoch != after_epoch)
+            {
+                return Err(DeviceKvCacheError::UnsettledPriorRetirement);
             }
         }
         Ok(())
@@ -3031,7 +3115,7 @@ impl ActiveDeviceKvCache {
     pub fn settle_retired_epoch(
         &mut self,
         completion: ExactCompletion,
-    ) -> Result<usize, RetirementCompletionFailure> {
+    ) -> Result<(usize, ExactCompletion), RetirementCompletionFailure> {
         self.common.settle_retired_epoch(completion)
     }
 
@@ -3302,7 +3386,7 @@ impl CancelledDeviceKvCache {
     pub fn settle_retired_epoch(
         &mut self,
         completion: ExactCompletion,
-    ) -> Result<usize, RetirementCompletionFailure> {
+    ) -> Result<(usize, ExactCompletion), RetirementCompletionFailure> {
         self.common.settle_retired_epoch(completion)
     }
 
@@ -3410,6 +3494,37 @@ impl QuiescentDeviceKvCache {
     #[must_use]
     pub const fn completion_epoch(&self) -> CompletionEpoch {
         self.completion.epoch()
+    }
+
+    pub(crate) fn into_threaded_parts(self) -> (SettledQuiescentDeviceKvCache, ExactCompletion) {
+        let completion_epoch = self.completion.epoch();
+        (
+            SettledQuiescentDeviceKvCache {
+                common: self.common,
+                completion_epoch,
+            },
+            self.completion,
+        )
+    }
+}
+
+/// Terminal quiescent device-KV custody after completion authority moves on.
+#[must_use = "terminal device-KV custody must remain retained"]
+#[derive(Debug, PartialEq, Eq)]
+pub struct SettledQuiescentDeviceKvCache {
+    common: DeviceKvCacheCommon,
+    completion_epoch: CompletionEpoch,
+}
+
+impl SettledQuiescentDeviceKvCache {
+    #[must_use]
+    pub fn projection(&self) -> DeviceKvCacheProjection {
+        self.common.projection()
+    }
+
+    #[must_use]
+    pub const fn completion_epoch(&self) -> CompletionEpoch {
+        self.completion_epoch
     }
 }
 
@@ -4842,14 +4957,12 @@ mod tests {
             DeviceKvCacheError::UnsettledPriorRetirement
         );
         let (mut cancelled, _) = failure.into_parts();
-        assert_eq!(
-            cancelled
-                .settle_retired_epoch(ExactCompletion::from_contracted_hsa_quiescence(
-                    CompletionEpoch::new(11),
-                ))
-                .unwrap(),
-            1
-        );
+        let (settled, _completion) = cancelled
+            .settle_retired_epoch(ExactCompletion::from_contracted_hsa_quiescence(
+                CompletionEpoch::new(11),
+            ))
+            .unwrap();
+        assert_eq!(settled, 1);
         let quiescent = cancelled
             .quiesce(ExactCompletion::from_contracted_hsa_quiescence(
                 CompletionEpoch::new(14),

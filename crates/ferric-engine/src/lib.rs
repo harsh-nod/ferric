@@ -15,6 +15,7 @@ mod epoch;
 mod initialized_model_memory;
 mod initialized_step_workspaces;
 mod kv_workspace_authority;
+mod m1_completed_step;
 mod m1_prepublication;
 mod model_memory_allocations;
 mod operation_dispatch_expansion;
@@ -65,7 +66,8 @@ pub use device_cache::{
     M1UnpartitionedModelMemoryKvRecoveryV1, PendingDeviceKvStepWrite, PendingDeviceKvWrite,
     PendingSpeculativeDraftKvRoundWrite, PendingWriteCompletionFailure, PoisonedDeviceKvCache,
     QuiescenceFailure, QuiescentDeviceKvCache, RetirementCompletionFailure,
-    WriteApplicationFailure, GFX942_PROCESSOR, GFX942_TARGET_FEATURES,
+    SettledQuiescentDeviceKvCache, WriteApplicationFailure, GFX942_PROCESSOR,
+    GFX942_TARGET_FEATURES,
 };
 pub use epoch::ExactCompletion;
 pub use initialized_model_memory::{
@@ -88,6 +90,12 @@ pub use kv_workspace_authority::{
     M1KvWorkspaceReservationCustodyV1, M1KvWorkspaceTableBindingErrorV1,
     M1KvWorkspaceTableBindingFailureV1, M1SpeculativeDraftKvRoundBindingErrorV1,
     M1SpeculativeDraftKvRoundBindingFailureV1, M1SpeculativeDraftKvRoundReservationCustodyV1,
+};
+pub use m1_completed_step::{
+    complete_m1_physical_step_v1, M1CompletedDeviceKvMemberV1, M1CompletedStepErrorV1,
+    M1CompletedStepOutcomeV1, M1CompletedStepPoisonV1, M1CompletedStepRejectionV1,
+    M1CompletedStepSuccessV1, M1DeviceKvCompletionDispositionV1, M1DeviceKvCompletionMemberV1,
+    M1DeviceKvCompletionRosterV1,
 };
 pub use m1_prepublication::{
     allocate_m1_prepublication_workspaces_v1, build_m1_prepublication_batch_v1,

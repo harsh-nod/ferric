@@ -9085,6 +9085,29 @@ impl<const C: usize> Scheduler<C> {
         }
     }
 
+    /// Checks the future exact-completion detachment conditions for one
+    /// pending retiring member without consuming scheduler authority.
+    pub(crate) fn pending_retirement_ready(
+        &self,
+        offset: usize,
+        request: RequestId,
+        epoch: CompletionEpoch,
+    ) -> (ready: bool)
+        requires self.basic_invariant(),
+    {
+        if self.pending_member(offset) != Some(request)
+            || request.slot() as usize >= C
+        {
+            return false;
+        }
+        let slot = self.slots[request.slot() as usize];
+        slot.generation == request.generation()
+            && slot.state == RequestState::Retiring
+            && slot.active_epoch == epoch.value()
+            && !slot.in_reclaim_ring
+            && slot.generation < u32::MAX
+    }
+
     #[inline]
     fn admit_available(
         &mut self,
@@ -16357,5 +16380,22 @@ mod tests {
         assert_eq!(scheduler.completed, before_completed);
         assert_eq!(scheduler.live_count, before_live_count);
         assert_eq!(scheduler.state(request), Some(RequestState::Ready));
+    }
+
+    #[test]
+    fn max_generation_pending_retirement_is_not_future_detachment_ready() {
+        let mut scheduler = Scheduler::<1>::new().unwrap();
+        scheduler.slots[0].generation = u32::MAX;
+        let request = scheduler.admit().unwrap();
+        let mut members = output::<1>();
+        let batch = scheduler.dispatch_ready(&mut members).unwrap().unwrap();
+        scheduler.retire(request).unwrap();
+
+        assert!(!scheduler.pending_retirement_ready(0, request, batch.epoch()));
+        assert_eq!(scheduler.state(request), Some(RequestState::Retiring));
+        assert_eq!(
+            scheduler.completed_epoch(),
+            ferric_spec::completion::CompletionEpoch::new(0)
+        );
     }
 }

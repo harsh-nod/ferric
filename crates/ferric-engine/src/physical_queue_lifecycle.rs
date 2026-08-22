@@ -936,6 +936,10 @@ impl M1PhysicalCompletedReadbackV1 {
         self.completion.epoch()
     }
 
+    pub(crate) const fn completion_authority(&self) -> &ExactCompletion {
+        &self.completion
+    }
+
     /// Returns pending KV reservations retained through exact readback.
     pub const fn kv_reservations(&self) -> &M1FullStepKvReservationCustodyV1 {
         &self.kv
