@@ -2760,10 +2760,10 @@ fn validate_worker_lineage(
             || !request.export_symbols().is_empty()
             || !request.final_symbols().iter().map(String::as_str).eq([
                 QWEN3_LOGITS_COMPACT_KERNEL_SYMBOL_V1,
-                QWEN3_LOGITS_ARGMAX_KERNEL_SYMBOL_V1,
-                QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_KERNEL_SYMBOL_V1,
                 QWEN3_LOGITS_COMPACT_DESCRIPTOR_SYMBOL_V1,
+                QWEN3_LOGITS_ARGMAX_KERNEL_SYMBOL_V1,
                 QWEN3_LOGITS_ARGMAX_DESCRIPTOR_SYMBOL_V1,
+                QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_KERNEL_SYMBOL_V1,
                 QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_DESCRIPTOR_SYMBOL_V1,
             ])
             || exchange.response().request_identity() != request.identity()

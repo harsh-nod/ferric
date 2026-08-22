@@ -3045,8 +3045,8 @@ fn validate_worker_lineage(
             || !request.export_symbols().is_empty()
             || !request.final_symbols().iter().map(String::as_str).eq([
                 QWEN3_PAGED_KV_WRITE_KERNEL_SYMBOL_V1,
-                QWEN3_ROPE_KERNEL_SYMBOL_V1,
                 QWEN3_PAGED_KV_WRITE_KERNEL_DESCRIPTOR_SYMBOL_V1,
+                QWEN3_ROPE_KERNEL_SYMBOL_V1,
                 QWEN3_ROPE_KERNEL_DESCRIPTOR_SYMBOL_V1,
             ])
             || exchange.response().request_identity() != request.identity()

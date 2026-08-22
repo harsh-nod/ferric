@@ -2778,10 +2778,10 @@ fn validate_worker_lineage(
             || !request.export_symbols().is_empty()
             || !request.final_symbols().iter().map(String::as_str).eq([
                 QWEN3_GEMM_REFERENCE_KERNEL_SYMBOL_V1,
-                QWEN3_GEMM_VECTORIZED_KERNEL_SYMBOL_V1,
-                QWEN3_TOKEN_EMBEDDING_KERNEL_SYMBOL_V1,
                 QWEN3_GEMM_REFERENCE_DESCRIPTOR_SYMBOL_V1,
+                QWEN3_GEMM_VECTORIZED_KERNEL_SYMBOL_V1,
                 QWEN3_GEMM_VECTORIZED_DESCRIPTOR_SYMBOL_V1,
+                QWEN3_TOKEN_EMBEDDING_KERNEL_SYMBOL_V1,
                 QWEN3_TOKEN_EMBEDDING_DESCRIPTOR_SYMBOL_V1,
             ])
             || exchange.response().request_identity() != request.identity()
