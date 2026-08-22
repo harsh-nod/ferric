@@ -430,6 +430,31 @@ impl DeclaredOperationKernelPlan {
         &self,
         selection: Qwen3PlanSelection,
     ) -> Result<&[DeclaredOperationKernelBinding], LogicalRunnerError> {
+        self.operation_declarations_for(selection)
+            .map(|(_, bindings)| bindings)
+    }
+
+    /// Returns the exact generated operations and their checked bindings.
+    ///
+    /// Both slices have the same nonzero length and position `i` in the first
+    /// slice is structurally bound to position `i` in the second. The returned
+    /// declarations remain inert: they do not authenticate artifacts or grant
+    /// allocation, address, packet, queue, or launch authority.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`LogicalRunnerError`] if the retained published plan is absent
+    /// or either operation range no longer fits its retained roster.
+    pub fn operation_declarations_for(
+        &self,
+        selection: Qwen3PlanSelection,
+    ) -> Result<
+        (
+            &[GeneratedOperationDeclaration],
+            &[DeclaredOperationKernelBinding],
+        ),
+        LogicalRunnerError,
+    > {
         let generated = self.runner.operations_for(selection)?;
         let Some(first) = generated.first() else {
             return Err(LogicalRunnerError::OperationRangeDrift);
@@ -439,9 +464,14 @@ impl DeclaredOperationKernelPlan {
         let end = start
             .checked_add(generated.len())
             .ok_or(LogicalRunnerError::OperationRangeDrift)?;
-        self.operations
+        let bindings = self
+            .operations
             .get(start..end)
-            .ok_or(LogicalRunnerError::OperationRangeDrift)
+            .ok_or(LogicalRunnerError::OperationRangeDrift)?;
+        if bindings.len() != generated.len() {
+            return Err(LogicalRunnerError::OperationRangeDrift);
+        }
+        Ok((generated, bindings))
     }
 
     /// Recovers the inert runner and declarations without creating authority.
@@ -1456,8 +1486,8 @@ mod tests {
         for role in [Qwen3ModelRole::Target8B, Qwen3ModelRole::Draft06B] {
             for (mode, bucket) in M1_B3_PLAN_BUCKETS {
                 let selection = Qwen3PlanSelection { role, mode, bucket };
-                let operations = plan
-                    .operations_for(selection)
+                let (generated, operations) = plan
+                    .operation_declarations_for(selection)
                     .expect("published plan range");
                 assert_eq!(
                     operations.len(),
@@ -1466,6 +1496,14 @@ mod tests {
                         Qwen3ModelRole::Draft06B => 424,
                     }
                 );
+                assert_eq!(generated.len(), operations.len());
+                for (generated, binding) in generated.iter().zip(operations) {
+                    assert_eq!(generated.operation_index, binding.operation_index());
+                    assert_eq!(generated.plan_index, binding.plan_index());
+                    assert_eq!(generated.profile.selection, selection);
+                    assert_eq!(generated.profile.plan_id, binding.plan_id());
+                    assert_eq!(generated.profile.family, binding.family());
+                }
                 assert_eq!(
                     usize::try_from(operations[0].operation_index()).expect("u32 fits usize"),
                     operation_count
