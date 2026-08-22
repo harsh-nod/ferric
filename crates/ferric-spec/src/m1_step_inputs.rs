@@ -761,9 +761,9 @@ fn validate_shape(
     dimensions: Qwen3PlanDimensions,
 ) -> Result<(usize, usize, usize), M1StepInputError> {
     let sequences = usize::try_from(dimensions.sequences)
-        .map_err(|_| M1StepInputError::DimensionOverflow)?;
+        .map_err(|_error| M1StepInputError::DimensionOverflow)?;
     let width = usize::try_from(dimensions.active_tokens)
-        .map_err(|_| M1StepInputError::DimensionOverflow)?;
+        .map_err(|_error| M1StepInputError::DimensionOverflow)?;
     let flattened = sequences
         .checked_mul(width)
         .ok_or(M1StepInputError::DimensionOverflow)?;
@@ -929,7 +929,7 @@ fn validate_rows(
             .checked_mul(width)
             .ok_or(M1StepInputError::DimensionOverflow)?;
         let active_usize = usize::try_from(active)
-            .map_err(|_| M1StepInputError::DimensionOverflow)?;
+            .map_err(|_error| M1StepInputError::DimensionOverflow)?;
         for active_index in 0..width {
             let flat = row
                 .checked_add(active_index)
@@ -944,7 +944,7 @@ fn validate_rows(
                     });
                 }
                 let offset = u32::try_from(active_index)
-                    .map_err(|_| M1StepInputError::DimensionOverflow)?;
+                    .map_err(|_error| M1StepInputError::DimensionOverflow)?;
                 let expected = committed
                     .checked_add(offset)
                     .ok_or(M1StepInputError::ContextLengthOverflow { lane })?;

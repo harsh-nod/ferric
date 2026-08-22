@@ -524,7 +524,7 @@ pub open spec fn canonical_step_spec(
     let attention = shape_3_spec(
         dimensions.sequences,
         dimensions.active_tokens,
-        geometry.query_heads * geometry.head_dim,
+        (geometry.query_heads * geometry.head_dim) as u32,
     );
     let kv = shape_4_spec(
         dimensions.sequences,
