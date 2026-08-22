@@ -11,6 +11,7 @@ mod device_cache;
 mod epoch;
 mod operation_dispatch_expansion;
 mod operation_kernel_plan;
+mod physical_dispatch_recipe;
 mod physical_program_catalog;
 mod physical_step;
 mod runner;
@@ -49,6 +50,11 @@ pub use operation_kernel_plan::{
     bind_declared_operation_kernel_plan, DeclaredKernelFamilyArtifact, DeclaredOperationIdentity,
     DeclaredOperationKernelBinding, DeclaredOperationKernelPlan, OperationKernelIdentityComponent,
     OperationKernelPlanError, OperationKernelPlanFailure, OperationKernelPlanOutcome,
+};
+pub use physical_dispatch_recipe::{
+    derive_m1_physical_dispatch_recipe_v1, AddresslessM1PhysicalDispatchRecipeV1,
+    M1PhysicalDispatchRecipeErrorV1, M1PhysicalDispatchRecipeRowV1, M1PhysicalProfileFamilyV1,
+    M1_PHYSICAL_DISPATCH_RECIPE_VERSION_V1,
 };
 pub use physical_program_catalog::{
     bind_content_bound_m1_program_catalog_v1, ContentBoundM1ProgramCatalogV1,
