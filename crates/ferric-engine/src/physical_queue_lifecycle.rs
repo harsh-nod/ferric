@@ -10,18 +10,20 @@
 use core::fmt;
 
 use fe2o3_service_host::{
-    ServiceCompletedQueueSessionV1, ServicePublishedQueueSessionV1, ServiceQueueCreateFailureV1,
-    ServiceQueueErrorV1, ServiceQueueOperationFailureV1, ServiceQueueReleaseFailureV1,
-    ServiceQueueReleaseObservationV1, ServiceQueueSessionV1, ServiceQueueUnboundSessionV1,
-    ServiceRecycledQueueSessionV1,
+    ServiceCompletedQueueSessionV1, ServiceCompletedReadbackV1, ServicePublishedQueueSessionV1,
+    ServiceQueueCreateFailureV1, ServiceQueueErrorV1, ServiceQueueOperationFailureV1,
+    ServiceQueueReleaseFailureV1, ServiceQueueReleaseObservationV1, ServiceQueueSessionV1,
+    ServiceQueueUnboundSessionV1, ServiceRecycledQueueSessionV1,
 };
 use ferric_spec::completion::CompletionEpoch;
 
-use crate::completed_readback_join::{check_m1_completed_output_v1, CompletedReadbackMetadataV1};
+use crate::completed_readback_join::check_m1_completed_output_v1;
+use crate::observed_completion::observe_m1_completed_output_v1;
 use crate::{
     CompletionWireExpectation, CompletionWireSemanticExpectation, ExactCompletion,
     Gfx942DeviceBinding, M1CheckedCompletionOutputV1, M1CompletedOutputCheckErrorV1,
-    M1FullStepKvReservationCustodyV1, M1PhysicalFixedBatchCaseV1, M1PhysicalFixedBatchCustodyV1,
+    M1FullStepKvReservationCustodyV1, M1ObservedCompletionImageErrorV1,
+    M1ObservedCompletionImageV1, M1PhysicalFixedBatchCaseV1, M1PhysicalFixedBatchCustodyV1,
     M1PhysicalFixedBatchShapeV1, M1PhysicalFixedBatchV1, M1PhysicalQueueBatchCustodyV1,
     M1PrepublicationBatchV1, M1PrepublicationStepCustodyV1, M1ScheduledDispatchV1,
     M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
@@ -40,6 +42,8 @@ pub enum M1PhysicalQueuePhaseV1 {
     Completed,
     /// Every completion signal was recycled; readback, detach, or release is allowed.
     Recycled,
+    /// Exact K7 bytes were copied once and structurally observed without semantic authority.
+    Observed,
     /// Exact completed bytes were checked and completion authority was minted once.
     ReadbackJoined,
     /// Exact data custody was detached while the native queue remains live.
@@ -76,7 +80,7 @@ impl M1PhysicalQueuePhaseV1 {
     /// Whether this phase grants detach or release without another readback join.
     #[must_use]
     pub const fn can_detach_or_release(self) -> bool {
-        matches!(self, Self::Recycled | Self::ReadbackJoined)
+        matches!(self, Self::Recycled | Self::Observed | Self::ReadbackJoined)
     }
 }
 
@@ -618,6 +622,337 @@ impl M1PhysicalRecycledQueueSessionV1 {
     }
 }
 
+/// One exact recycled queue generation paired with its single copied K7 image.
+///
+/// The carrier intentionally has no completed-read method and is not `Clone`.
+#[must_use = "observed bytes and all queue, scheduler, and KV custody remain linear"]
+pub struct M1ObservedCompletionCaseV1<const N: usize> {
+    case: Box<M1PhysicalQueuePhaseCaseV1<ServiceRecycledQueueSessionV1<N>>>,
+    image: M1ObservedCompletionImageV1,
+}
+
+impl<const N: usize> fmt::Debug for M1ObservedCompletionCaseV1<N> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1ObservedCompletionCaseV1")
+            .field("case", &self.case)
+            .field("image", &self.image)
+            .finish()
+    }
+}
+
+/// Move-only inert observation after one exact completed K7 readback.
+///
+/// This value retains the generic queue, physical allocation custody, exact
+/// scheduler roster, target plans, pending KV reservations, dispatch
+/// generation, selection, and copied bytes. It creates no [`ExactCompletion`]
+/// and grants no numerical, inference, refinement, or performance authority.
+///
+/// ```compile_fail
+/// use ferric_engine::M1ObservedCompletionOutputV1;
+/// fn require_clone<T: Clone>() {}
+/// require_clone::<M1ObservedCompletionOutputV1>();
+/// ```
+///
+/// ```compile_fail
+/// use ferric_engine::M1ObservedCompletionOutputV1;
+/// fn read_twice(observed: M1ObservedCompletionOutputV1) {
+///     let _ = observed.observe_completion();
+/// }
+/// ```
+#[must_use = "observed completion custody must be checked, destroyed, or retained"]
+#[derive(Debug)]
+pub enum M1ObservedCompletionOutputV1 {
+    /// Observed target-only queue.
+    TargetOnly(Box<M1ObservedCompletionCaseV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>>),
+    /// Observed paired-prefill queue.
+    PairedPrefill(Box<M1ObservedCompletionCaseV1<M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1>>),
+    /// Observed K4 speculative queue.
+    SpeculativeK4(Box<M1ObservedCompletionCaseV1<M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1>>),
+    /// Observed K8 speculative queue.
+    SpeculativeK8(Box<M1ObservedCompletionCaseV1<M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1>>),
+    /// Observed K16 speculative queue.
+    SpeculativeK16(Box<M1ObservedCompletionCaseV1<M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1>>),
+}
+
+fn join_observed_output_case<const N: usize>(
+    case: Box<M1ObservedCompletionCaseV1<N>>,
+    observed: fn(Box<M1ObservedCompletionCaseV1<N>>) -> M1ObservedCompletionOutputV1,
+    readback: fn(Box<M1PhysicalReadbackQueueCaseV1<N>>) -> M1PhysicalReadbackQueueSessionV1,
+    expectations: &[CompletionWireSemanticExpectation<'_>],
+) -> Result<M1PhysicalCompletedReadbackV1, M1CompletedReadbackJoinFailureV1> {
+    match check_observed_case(case, expectations) {
+        Ok((case, checked, completion, kv)) => Ok(M1PhysicalCompletedReadbackV1 {
+            queue: readback(case),
+            checked,
+            completion,
+            kv,
+        }),
+        Err((source, case)) => Err(M1CompletedReadbackJoinFailureV1 {
+            error: M1CompletedReadbackJoinErrorV1 { source },
+            observed: Box::new(observed(case)),
+        }),
+    }
+}
+
+fn release_observed_case<const N: usize>(
+    case: M1ObservedCompletionCaseV1<N>,
+    shape: M1PhysicalFixedBatchShapeV1,
+) -> Result<ServiceQueueReleaseObservationV1, M1PhysicalQueueReleaseFailureV1> {
+    let M1ObservedCompletionCaseV1 { case, image: _ } = case;
+    release_case(case, shape)
+}
+
+fn release_rejected_case<const N: usize>(
+    case: M1RejectedCompletionCaseV1<N>,
+    shape: M1PhysicalFixedBatchShapeV1,
+) -> Result<ServiceQueueReleaseObservationV1, M1PhysicalQueueReleaseFailureV1> {
+    let M1RejectedCompletionCaseV1 { case, readback: _ } = case;
+    release_case(case, shape)
+}
+
+impl M1ObservedCompletionOutputV1 {
+    /// Returns the exact former M1 publication shape.
+    #[must_use]
+    pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
+        match self {
+            Self::TargetOnly(_) => M1PhysicalFixedBatchShapeV1::TargetOnly,
+            Self::PairedPrefill(_) => M1PhysicalFixedBatchShapeV1::PairedPrefill,
+            Self::SpeculativeK4(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+            Self::SpeculativeK8(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+            Self::SpeculativeK16(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+        }
+    }
+
+    /// Returns the observed phase represented by this closed owner.
+    #[must_use]
+    pub const fn phase(&self) -> M1PhysicalQueuePhaseV1 {
+        M1PhysicalQueuePhaseV1::Observed
+    }
+
+    /// Borrows the inert copied image and decoded records.
+    #[must_use = "the observed image remains paired with physical custody"]
+    pub const fn image(&self) -> &M1ObservedCompletionImageV1 {
+        match self {
+            Self::TargetOnly(case) => &case.image,
+            Self::PairedPrefill(case) => &case.image,
+            Self::SpeculativeK4(case) => &case.image,
+            Self::SpeculativeK8(case) => &case.image,
+            Self::SpeculativeK16(case) => &case.image,
+        }
+    }
+
+    /// Returns the exact scheduler dispatch retained beside the copied image.
+    #[must_use = "scheduler authority remains paired with the observation"]
+    pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
+        match self {
+            Self::TargetOnly(case) => case.case.step.scheduled_dispatch(),
+            Self::PairedPrefill(case) => case.case.step.scheduled_dispatch(),
+            Self::SpeculativeK4(case) => case.case.step.scheduled_dispatch(),
+            Self::SpeculativeK8(case) => case.case.step.scheduled_dispatch(),
+            Self::SpeculativeK16(case) => case.case.step.scheduled_dispatch(),
+        }
+    }
+
+    /// Returns the checked physical-device receipt retained through observation.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        match self {
+            Self::TargetOnly(case) => case.case.custody.device(),
+            Self::PairedPrefill(case) => case.case.custody.device(),
+            Self::SpeculativeK4(case) => case.case.custody.device(),
+            Self::SpeculativeK8(case) => case.case.custody.device(),
+            Self::SpeculativeK16(case) => case.case.custody.device(),
+        }
+    }
+
+    /// Returns the exact selected-program catalog identity.
+    #[must_use]
+    pub const fn catalog_id(&self) -> ferric_spec::Identity {
+        match self {
+            Self::TargetOnly(case) => case.case.custody.catalog_id(),
+            Self::PairedPrefill(case) => case.case.custody.catalog_id(),
+            Self::SpeculativeK4(case) => case.case.custody.catalog_id(),
+            Self::SpeculativeK8(case) => case.case.custody.catalog_id(),
+            Self::SpeculativeK16(case) => case.case.custody.catalog_id(),
+        }
+    }
+
+    /// Returns pending KV reservation custody retained through observation.
+    #[must_use = "pending KV custody remains paired with the observation"]
+    pub const fn kv_reservations(&self) -> &M1FullStepKvReservationCustodyV1 {
+        match self {
+            Self::TargetOnly(case) => case.case.step.kv_reservations(),
+            Self::PairedPrefill(case) => case.case.step.kv_reservations(),
+            Self::SpeculativeK4(case) => case.case.step.kv_reservations(),
+            Self::SpeculativeK8(case) => case.case.step.kv_reservations(),
+            Self::SpeculativeK16(case) => case.case.step.kv_reservations(),
+        }
+    }
+}
+
+/// One exact recycled queue generation paired with a rejected copied K7 image.
+///
+/// The copied bytes are retained so structural rejection cannot reopen the
+/// lower completed-read operation.
+#[must_use = "rejected copied bytes and all Ferric custody remain linear"]
+pub struct M1RejectedCompletionCaseV1<const N: usize> {
+    case: Box<M1PhysicalQueuePhaseCaseV1<ServiceRecycledQueueSessionV1<N>>>,
+    readback: ServiceCompletedReadbackV1,
+}
+
+impl<const N: usize> fmt::Debug for M1RejectedCompletionCaseV1<N> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1RejectedCompletionCaseV1")
+            .field("case", &self.case)
+            .field("readback", &self.readback)
+            .finish()
+    }
+}
+
+/// Move-only custody after one copied K7 image failed structural observation.
+///
+/// This owner exposes the rejected raw copy for diagnosis and can tear down the
+/// queue, but has no completed-read or semantic-completion transition.
+///
+/// ```compile_fail
+/// use ferric_engine::M1RejectedCompletionOutputV1;
+/// fn reread(rejected: M1RejectedCompletionOutputV1) {
+///     let _ = rejected.observe_completion();
+/// }
+/// ```
+#[must_use = "rejected observation custody must be destroyed or retained"]
+#[derive(Debug)]
+pub enum M1RejectedCompletionOutputV1 {
+    /// Rejected target-only queue observation.
+    TargetOnly(Box<M1RejectedCompletionCaseV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>>),
+    /// Rejected paired-prefill queue observation.
+    PairedPrefill(Box<M1RejectedCompletionCaseV1<M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1>>),
+    /// Rejected K4 speculative queue observation.
+    SpeculativeK4(Box<M1RejectedCompletionCaseV1<M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1>>),
+    /// Rejected K8 speculative queue observation.
+    SpeculativeK8(Box<M1RejectedCompletionCaseV1<M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1>>),
+    /// Rejected K16 speculative queue observation.
+    SpeculativeK16(Box<M1RejectedCompletionCaseV1<M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1>>),
+}
+
+impl M1RejectedCompletionOutputV1 {
+    /// Returns the exact former M1 publication shape.
+    #[must_use]
+    pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
+        match self {
+            Self::TargetOnly(_) => M1PhysicalFixedBatchShapeV1::TargetOnly,
+            Self::PairedPrefill(_) => M1PhysicalFixedBatchShapeV1::PairedPrefill,
+            Self::SpeculativeK4(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+            Self::SpeculativeK8(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+            Self::SpeculativeK16(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+        }
+    }
+
+    /// Returns the exact target selection retained beside the rejected copy.
+    #[must_use]
+    pub const fn selection(&self) -> ferric_spec::Qwen3PlanSelection {
+        match self {
+            Self::TargetOnly(case) => case.case.custody.selection(),
+            Self::PairedPrefill(case) => case.case.custody.selection(),
+            Self::SpeculativeK4(case) => case.case.custody.selection(),
+            Self::SpeculativeK8(case) => case.case.custody.selection(),
+            Self::SpeculativeK16(case) => case.case.custody.selection(),
+        }
+    }
+
+    /// Returns the checked physical-device receipt retained through rejection.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        match self {
+            Self::TargetOnly(case) => case.case.custody.device(),
+            Self::PairedPrefill(case) => case.case.custody.device(),
+            Self::SpeculativeK4(case) => case.case.custody.device(),
+            Self::SpeculativeK8(case) => case.case.custody.device(),
+            Self::SpeculativeK16(case) => case.case.custody.device(),
+        }
+    }
+
+    /// Returns the observed phase represented by this rejected copied image.
+    #[must_use]
+    pub const fn phase(&self) -> M1PhysicalQueuePhaseV1 {
+        M1PhysicalQueuePhaseV1::Observed
+    }
+
+    /// Returns the exact generation that authorized the rejected byte copy.
+    #[must_use]
+    pub const fn dispatch_generation(&self) -> u64 {
+        match self {
+            Self::TargetOnly(case) => case.readback.dispatch_generation(),
+            Self::PairedPrefill(case) => case.readback.dispatch_generation(),
+            Self::SpeculativeK4(case) => case.readback.dispatch_generation(),
+            Self::SpeculativeK8(case) => case.readback.dispatch_generation(),
+            Self::SpeculativeK16(case) => case.readback.dispatch_generation(),
+        }
+    }
+
+    /// Returns the addressless data ordinal bound to the rejected byte copy.
+    #[must_use]
+    pub const fn data_index(&self) -> usize {
+        match self {
+            Self::TargetOnly(case) => case.readback.data_index(),
+            Self::PairedPrefill(case) => case.readback.data_index(),
+            Self::SpeculativeK4(case) => case.readback.data_index(),
+            Self::SpeculativeK8(case) => case.readback.data_index(),
+            Self::SpeculativeK16(case) => case.readback.data_index(),
+        }
+    }
+
+    /// Returns the copied offset reported for the rejected image.
+    #[must_use]
+    pub const fn offset_bytes(&self) -> u64 {
+        match self {
+            Self::TargetOnly(case) => case.readback.offset_bytes(),
+            Self::PairedPrefill(case) => case.readback.offset_bytes(),
+            Self::SpeculativeK4(case) => case.readback.offset_bytes(),
+            Self::SpeculativeK8(case) => case.readback.offset_bytes(),
+            Self::SpeculativeK16(case) => case.readback.offset_bytes(),
+        }
+    }
+
+    /// Returns the exact rejected copied bytes without granting semantic authority.
+    #[must_use]
+    pub fn raw_bytes(&self) -> &[u8] {
+        match self {
+            Self::TargetOnly(case) => case.readback.bytes(),
+            Self::PairedPrefill(case) => case.readback.bytes(),
+            Self::SpeculativeK4(case) => case.readback.bytes(),
+            Self::SpeculativeK8(case) => case.readback.bytes(),
+            Self::SpeculativeK16(case) => case.readback.bytes(),
+        }
+    }
+
+    /// Returns the exact scheduler dispatch retained beside the rejected copy.
+    #[must_use = "scheduler authority remains paired with the rejected observation"]
+    pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
+        match self {
+            Self::TargetOnly(case) => case.case.step.scheduled_dispatch(),
+            Self::PairedPrefill(case) => case.case.step.scheduled_dispatch(),
+            Self::SpeculativeK4(case) => case.case.step.scheduled_dispatch(),
+            Self::SpeculativeK8(case) => case.case.step.scheduled_dispatch(),
+            Self::SpeculativeK16(case) => case.case.step.scheduled_dispatch(),
+        }
+    }
+
+    /// Returns pending KV reservation custody retained through rejection.
+    #[must_use = "pending KV custody remains paired with the rejected observation"]
+    pub const fn kv_reservations(&self) -> &M1FullStepKvReservationCustodyV1 {
+        match self {
+            Self::TargetOnly(case) => case.case.step.kv_reservations(),
+            Self::PairedPrefill(case) => case.case.step.kv_reservations(),
+            Self::SpeculativeK4(case) => case.case.step.kv_reservations(),
+            Self::SpeculativeK8(case) => case.case.step.kv_reservations(),
+            Self::SpeculativeK16(case) => case.case.step.kv_reservations(),
+        }
+    }
+}
+
 /// Post-readback generic queue custody with no remaining scheduler dispatch authority.
 #[must_use = "post-readback queue custody must be detached, released, or retained"]
 pub struct M1PhysicalReadbackQueueCaseV1<const N: usize> {
@@ -899,9 +1234,9 @@ impl M1PhysicalReadbackQueueReleaseFailureV1 {
     }
 }
 
-/// One-shot completed-readback or semantic-join diagnostic.
+/// One-shot completed-copy or structural-observation diagnostic.
 #[derive(Debug)]
-pub enum M1CompletedReadbackJoinErrorV1 {
+pub enum M1CompletionObservationErrorV1 {
     /// The generic generation-bound completed copy failed.
     Queue(ServiceQueueErrorV1),
     /// The returned allocation offset differed from the retained K7 range.
@@ -918,50 +1253,119 @@ pub enum M1CompletedReadbackJoinErrorV1 {
         /// Generic readback byte count.
         actual: u64,
     },
-    /// Copied records failed scheduler, padding, wire, or semantic validation.
-    Output(M1CompletedOutputCheckErrorV1),
+    /// Copied records failed bounded structural decoding or inactive padding checks.
+    Image(M1ObservedCompletionImageErrorV1),
+}
+
+impl fmt::Display for M1CompletionObservationErrorV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(formatter, "M1 completion observation rejected: {self:?}")
+    }
+}
+
+impl std::error::Error for M1CompletionObservationErrorV1 {}
+
+/// Linear custody retained by an observation failure.
+#[must_use = "failure custody must be retried, destroyed, or retained"]
+#[derive(Debug)]
+pub enum M1CompletionObservationFailureCustodyV1 {
+    /// No completed copy succeeded, so the exact recycled queue remains retryable.
+    Recycled(Box<M1PhysicalRecycledQueueSessionV1>),
+    /// A completed copy succeeded and is closed against another read.
+    Rejected(Box<M1RejectedCompletionOutputV1>),
+}
+
+/// Observation failure retaining exact pre-copy or post-copy custody.
+///
+/// Only [`M1CompletionObservationFailureCustodyV1::Recycled`] permits retry.
+/// Coordinate, extent, and image failures retain the first copied bytes in a
+/// [`M1RejectedCompletionOutputV1`] with no completed-read transition.
+#[must_use = "observation failure retains linear queue and byte custody"]
+#[derive(Debug)]
+pub struct M1CompletionObservationFailureV1 {
+    error: M1CompletionObservationErrorV1,
+    custody: M1CompletionObservationFailureCustodyV1,
+}
+
+impl M1CompletionObservationFailureV1 {
+    /// Returns the exact observation failure.
+    #[must_use]
+    pub const fn error(&self) -> &M1CompletionObservationErrorV1 {
+        &self.error
+    }
+
+    /// Returns the exact retained pre-copy or post-copy custody.
+    #[must_use = "linear failure custody remains retained"]
+    pub const fn custody(&self) -> &M1CompletionObservationFailureCustodyV1 {
+        &self.custody
+    }
+
+    /// Recovers the exact failure and its linear custody.
+    #[must_use = "linear failure custody must remain retained"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1CompletionObservationErrorV1,
+        M1CompletionObservationFailureCustodyV1,
+    ) {
+        (self.error, self.custody)
+    }
+}
+
+/// Semantic-join diagnostic after an exact structural observation exists.
+#[derive(Debug)]
+pub struct M1CompletedReadbackJoinErrorV1 {
+    source: M1CompletedOutputCheckErrorV1,
+}
+
+impl M1CompletedReadbackJoinErrorV1 {
+    /// Returns the exact scheduler, plan, wire, or token-semantic rejection.
+    #[must_use]
+    pub const fn source(&self) -> &M1CompletedOutputCheckErrorV1 {
+        &self.source
+    }
 }
 
 impl fmt::Display for M1CompletedReadbackJoinErrorV1 {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(formatter, "M1 completed readback join rejected: {self:?}")
+        write!(
+            formatter,
+            "M1 completed readback join rejected: {:?}",
+            self.source
+        )
     }
 }
 
 impl std::error::Error for M1CompletedReadbackJoinErrorV1 {}
 
-/// Retry-safe one-shot join failure retaining unchanged recycled queue custody.
+/// Semantic rejection retaining the same captured observation for correction.
 ///
-/// No [`ExactCompletion`] exists on this path.
-#[must_use = "join failure retains the recycled queue for retry or teardown"]
+/// No [`ExactCompletion`] exists on this path, and retry never recopies the
+/// completed host range.
+#[must_use = "join failure retains the observed completion for retry or teardown"]
 #[derive(Debug)]
 pub struct M1CompletedReadbackJoinFailureV1 {
     error: M1CompletedReadbackJoinErrorV1,
-    queue: Box<M1PhysicalRecycledQueueSessionV1>,
+    observed: Box<M1ObservedCompletionOutputV1>,
 }
 
 impl M1CompletedReadbackJoinFailureV1 {
-    /// Returns the exact failure without discarding retry-capable queue custody.
+    /// Returns the exact semantic failure.
     #[must_use]
     pub const fn error(&self) -> &M1CompletedReadbackJoinErrorV1 {
         &self.error
     }
 
-    /// Returns the unchanged recycled queue by borrow.
-    #[must_use = "recycled queue custody remains retained by this failure"]
-    pub const fn queue(&self) -> &M1PhysicalRecycledQueueSessionV1 {
-        &self.queue
+    /// Returns the unchanged captured observation by borrow.
+    #[must_use = "observed queue and byte custody remain retained by this failure"]
+    pub const fn observed(&self) -> &M1ObservedCompletionOutputV1 {
+        &self.observed
     }
 
-    /// Recovers the exact failure and unchanged recycled queue.
-    #[must_use = "retry-capable recycled queue custody must remain retained"]
-    pub fn into_parts(
-        self,
-    ) -> (
-        M1CompletedReadbackJoinErrorV1,
-        M1PhysicalRecycledQueueSessionV1,
-    ) {
-        (self.error, *self.queue)
+    /// Recovers the exact failure and unchanged captured observation.
+    #[must_use = "captured observation custody must remain retained"]
+    pub fn into_parts(self) -> (M1CompletedReadbackJoinErrorV1, M1ObservedCompletionOutputV1) {
+        (self.error, *self.observed)
     }
 }
 
@@ -1913,7 +2317,103 @@ impl M1PhysicalReadbackQueueSessionV1 {
     }
 }
 
-type ReadAndCheckCaseResultV1<const N: usize> = Result<
+enum ObserveCaseFailureV1<const N: usize> {
+    BeforeCopy {
+        error: M1CompletionObservationErrorV1,
+        case: Box<M1PhysicalQueuePhaseCaseV1<ServiceRecycledQueueSessionV1<N>>>,
+    },
+    AfterCopy {
+        error: M1CompletionObservationErrorV1,
+        case: Box<M1PhysicalQueuePhaseCaseV1<ServiceRecycledQueueSessionV1<N>>>,
+        readback: ServiceCompletedReadbackV1,
+    },
+}
+
+type ObserveCaseResultV1<const N: usize> =
+    Result<Box<M1ObservedCompletionCaseV1<N>>, Box<ObserveCaseFailureV1<N>>>;
+
+fn observe_case<const N: usize>(
+    mut case: Box<M1PhysicalQueuePhaseCaseV1<ServiceRecycledQueueSessionV1<N>>>,
+) -> ObserveCaseResultV1<N> {
+    let output = case.custody.completion_output();
+    let output_shape = output.shape();
+    let range = output.retained_host_dispatch_range();
+    let request = case.lower.completed_read_request(range);
+    let readback = match case.lower.read_completed(request) {
+        Ok(readback) => readback,
+        Err(error) => {
+            return Err(Box::new(ObserveCaseFailureV1::BeforeCopy {
+                error: M1CompletionObservationErrorV1::Queue(error),
+                case,
+            }))
+        }
+    };
+    if readback.offset_bytes() != range.offset_bytes() {
+        return Err(Box::new(ObserveCaseFailureV1::AfterCopy {
+            error: M1CompletionObservationErrorV1::OffsetDrift {
+                expected: range.offset_bytes(),
+                actual: readback.offset_bytes(),
+            },
+            case,
+            readback,
+        }));
+    }
+    let extent_bytes = u64::try_from(readback.bytes().len()).unwrap_or(u64::MAX);
+    if extent_bytes != range.extent_bytes() {
+        return Err(Box::new(ObserveCaseFailureV1::AfterCopy {
+            error: M1CompletionObservationErrorV1::ExtentDrift {
+                expected: range.extent_bytes(),
+                actual: extent_bytes,
+            },
+            case,
+            readback,
+        }));
+    }
+    let scheduled = case.step.scheduled_dispatch();
+    let image = match observe_m1_completed_output_v1(
+        output_shape,
+        case.custody.selection(),
+        scheduled,
+        readback,
+    ) {
+        Ok(image) => image,
+        Err((error, readback)) => {
+            return Err(Box::new(ObserveCaseFailureV1::AfterCopy {
+                error: M1CompletionObservationErrorV1::Image(error),
+                case,
+                readback,
+            }))
+        }
+    };
+    Ok(Box::new(M1ObservedCompletionCaseV1 { case, image }))
+}
+
+fn retain_observation_failure<const N: usize>(
+    failure: ObserveCaseFailureV1<N>,
+    recycled: fn(
+        Box<M1PhysicalQueuePhaseCaseV1<ServiceRecycledQueueSessionV1<N>>>,
+    ) -> M1PhysicalRecycledQueueSessionV1,
+    rejected: fn(Box<M1RejectedCompletionCaseV1<N>>) -> M1RejectedCompletionOutputV1,
+) -> M1CompletionObservationFailureV1 {
+    match failure {
+        ObserveCaseFailureV1::BeforeCopy { error, case } => M1CompletionObservationFailureV1 {
+            error,
+            custody: M1CompletionObservationFailureCustodyV1::Recycled(Box::new(recycled(case))),
+        },
+        ObserveCaseFailureV1::AfterCopy {
+            error,
+            case,
+            readback,
+        } => M1CompletionObservationFailureV1 {
+            error,
+            custody: M1CompletionObservationFailureCustodyV1::Rejected(Box::new(rejected(
+                Box::new(M1RejectedCompletionCaseV1 { case, readback }),
+            ))),
+        },
+    }
+}
+
+type CheckObservedCaseResultV1<const N: usize> = Result<
     (
         Box<M1PhysicalReadbackQueueCaseV1<N>>,
         M1CheckedCompletionOutputV1,
@@ -1921,95 +2421,54 @@ type ReadAndCheckCaseResultV1<const N: usize> = Result<
         M1FullStepKvReservationCustodyV1,
     ),
     (
-        M1CompletedReadbackJoinErrorV1,
-        Box<M1PhysicalQueuePhaseCaseV1<ServiceRecycledQueueSessionV1<N>>>,
+        M1CompletedOutputCheckErrorV1,
+        Box<M1ObservedCompletionCaseV1<N>>,
     ),
 >;
 
-fn read_and_check_case<const N: usize>(
-    mut case: Box<M1PhysicalQueuePhaseCaseV1<ServiceRecycledQueueSessionV1<N>>>,
+fn check_observed_case<const N: usize>(
+    case: Box<M1ObservedCompletionCaseV1<N>>,
     semantics: &[CompletionWireSemanticExpectation<'_>],
-) -> ReadAndCheckCaseResultV1<N> {
-    let output = case.custody.completion_output();
-    let output_shape = output.shape();
-    let range = output.retained_host_dispatch_range();
-    let request = case.lower.completed_read_request(range);
-    let readback = match case.lower.read_completed(request) {
-        Ok(readback) => readback,
-        Err(error) => return Err((M1CompletedReadbackJoinErrorV1::Queue(error), case)),
-    };
-    if readback.offset_bytes() != range.offset_bytes() {
-        return Err((
-            M1CompletedReadbackJoinErrorV1::OffsetDrift {
-                expected: range.offset_bytes(),
-                actual: readback.offset_bytes(),
-            },
-            case,
-        ));
-    }
-    let extent_bytes = u64::try_from(readback.bytes().len()).unwrap_or(u64::MAX);
-    if extent_bytes != range.extent_bytes() {
-        return Err((
-            M1CompletedReadbackJoinErrorV1::ExtentDrift {
-                expected: range.extent_bytes(),
-                actual: extent_bytes,
-            },
-            case,
-        ));
-    }
-    let metadata = CompletedReadbackMetadataV1 {
-        dispatch_generation: readback.dispatch_generation(),
-        data_index: readback.data_index(),
-        offset_bytes: readback.offset_bytes(),
-    };
-    let scheduled = case.step.scheduled_dispatch();
+) -> CheckObservedCaseResultV1<N> {
+    let scheduled = case.case.step.scheduled_dispatch();
     if semantics.len() != scheduled.member_count() {
         return Err((
-            M1CompletedReadbackJoinErrorV1::Output(
-                M1CompletedOutputCheckErrorV1::ExpectationCount {
-                    expected: scheduled.member_count(),
-                    actual: semantics.len(),
-                },
-            ),
+            M1CompletedOutputCheckErrorV1::ExpectationCount {
+                expected: scheduled.member_count(),
+                actual: semantics.len(),
+            },
             case,
         ));
     }
     let mut expectations = Vec::new();
     if expectations.try_reserve_exact(semantics.len()).is_err() {
         return Err((
-            M1CompletedReadbackJoinErrorV1::Output(M1CompletedOutputCheckErrorV1::Output(
-                crate::M1CompletionOutputErrorV1::ExtentOverflow,
-            )),
+            M1CompletedOutputCheckErrorV1::Output(crate::M1CompletionOutputErrorV1::ExtentOverflow),
             case,
         ));
     }
     for (lane, semantic) in semantics.iter().copied().enumerate() {
-        let Some(plan) = case.step.target_plans()[lane].as_ref() else {
+        let Some(plan) = case.case.step.target_plans()[lane].as_ref() else {
             return Err((
-                M1CompletedReadbackJoinErrorV1::Output(
-                    M1CompletedOutputCheckErrorV1::ExpectationCount {
-                        expected: scheduled.member_count(),
-                        actual: lane,
-                    },
-                ),
+                M1CompletedOutputCheckErrorV1::ExpectationCount {
+                    expected: scheduled.member_count(),
+                    actual: lane,
+                },
                 case,
             ));
         };
         expectations.push(CompletionWireExpectation::new(plan, semantic));
     }
     let checked = match check_m1_completed_output_v1(
-        output_shape,
-        case.custody.selection(),
+        &case.image,
+        case.case.custody.selection(),
         scheduled,
-        metadata,
-        readback.bytes(),
         &expectations,
     ) {
         Ok(checked) => checked,
-        Err(error) => {
-            return Err((M1CompletedReadbackJoinErrorV1::Output(error), case));
-        }
+        Err(error) => return Err((error, case)),
     };
+    let M1ObservedCompletionCaseV1 { case, image: _ } = *case;
     let (lower, custody, step) = (*case).into_parts();
     let (scheduled, _target_plans, kv) = step.into_parts();
     let completion = ExactCompletion::from_completed_m1_queue_readback(scheduled);
@@ -2022,97 +2481,79 @@ fn read_and_check_case<const N: usize>(
 }
 
 impl M1PhysicalRecycledQueueSessionV1 {
-    /// Reads and semantically joins the exact K7 output exactly once.
+    /// Copies and structurally observes the exact K7 output exactly once.
     ///
     /// The generic request is minted from the exact retained host range. A
     /// successful generic read therefore validates the hidden dispatch-data
     /// ordinal through the queue ledger and uses that ordinal for the KFD copy;
-    /// Ferric additionally compares the public offset and byte length. Every
-    /// scheduled live record is then checked in exact request order, and all
-    /// remaining capacity records must be canonical zero before this transition
-    /// consumes scheduler authority to mint one [`ExactCompletion`].
+    /// Ferric additionally compares the public offset and byte length, decodes
+    /// the bounded live records, and requires canonical zero inactive rows.
+    /// Scheduler authority and pending KV custody remain retained, and this
+    /// transition does not mint [`ExactCompletion`].
     ///
     /// ```compile_fail
-    /// use ferric_engine::{CompletionWireSemanticExpectation, M1PhysicalRecycledQueueSessionV1};
-    /// fn join_twice(
-    ///     queue: M1PhysicalRecycledQueueSessionV1,
-    ///     expectations: &[CompletionWireSemanticExpectation<'_>],
-    /// ) {
-    ///     let _first = queue.read_and_check_completion(expectations);
-    ///     let _second = queue.read_and_check_completion(expectations);
+    /// use ferric_engine::M1PhysicalRecycledQueueSessionV1;
+    /// fn observe_twice(queue: M1PhysicalRecycledQueueSessionV1) {
+    ///     let _first = queue.observe_completion();
+    ///     let _second = queue.observe_completion();
     /// }
     /// ```
     ///
     /// # Errors
     ///
-    /// Returns the unchanged recycled queue for generic read, coordinate,
-    /// scheduler-roster, padding, wire, or semantic rejection. No completion
-    /// authority is created on failure.
-    pub fn read_and_check_completion(
+    /// A generic read failure returns retryable recycled custody because no copy
+    /// succeeded. Every rejection after a successful copy returns closed
+    /// rejected-observation custody, so the first copy cannot be repeated. No
+    /// completion authority is created on either path.
+    pub fn observe_completion(
         self,
-        expectations: &[CompletionWireSemanticExpectation<'_>],
-    ) -> Result<M1PhysicalCompletedReadbackV1, M1CompletedReadbackJoinFailureV1> {
+    ) -> Result<M1ObservedCompletionOutputV1, M1CompletionObservationFailureV1> {
         match self {
-            Self::TargetOnly(case) => match read_and_check_case(case, expectations) {
-                Ok((case, checked, completion, kv)) => Ok(M1PhysicalCompletedReadbackV1 {
-                    queue: M1PhysicalReadbackQueueSessionV1::TargetOnly(case),
-                    checked,
-                    completion,
-                    kv,
+            Self::TargetOnly(case) => observe_case(case)
+                .map(M1ObservedCompletionOutputV1::TargetOnly)
+                .map_err(|failure| {
+                    retain_observation_failure(
+                        *failure,
+                        M1PhysicalRecycledQueueSessionV1::TargetOnly,
+                        M1RejectedCompletionOutputV1::TargetOnly,
+                    )
                 }),
-                Err((error, case)) => Err(M1CompletedReadbackJoinFailureV1 {
-                    error,
-                    queue: Box::new(Self::TargetOnly(case)),
+            Self::PairedPrefill(case) => observe_case(case)
+                .map(M1ObservedCompletionOutputV1::PairedPrefill)
+                .map_err(|failure| {
+                    retain_observation_failure(
+                        *failure,
+                        M1PhysicalRecycledQueueSessionV1::PairedPrefill,
+                        M1RejectedCompletionOutputV1::PairedPrefill,
+                    )
                 }),
-            },
-            Self::PairedPrefill(case) => match read_and_check_case(case, expectations) {
-                Ok((case, checked, completion, kv)) => Ok(M1PhysicalCompletedReadbackV1 {
-                    queue: M1PhysicalReadbackQueueSessionV1::PairedPrefill(case),
-                    checked,
-                    completion,
-                    kv,
+            Self::SpeculativeK4(case) => observe_case(case)
+                .map(M1ObservedCompletionOutputV1::SpeculativeK4)
+                .map_err(|failure| {
+                    retain_observation_failure(
+                        *failure,
+                        M1PhysicalRecycledQueueSessionV1::SpeculativeK4,
+                        M1RejectedCompletionOutputV1::SpeculativeK4,
+                    )
                 }),
-                Err((error, case)) => Err(M1CompletedReadbackJoinFailureV1 {
-                    error,
-                    queue: Box::new(Self::PairedPrefill(case)),
+            Self::SpeculativeK8(case) => observe_case(case)
+                .map(M1ObservedCompletionOutputV1::SpeculativeK8)
+                .map_err(|failure| {
+                    retain_observation_failure(
+                        *failure,
+                        M1PhysicalRecycledQueueSessionV1::SpeculativeK8,
+                        M1RejectedCompletionOutputV1::SpeculativeK8,
+                    )
                 }),
-            },
-            Self::SpeculativeK4(case) => match read_and_check_case(case, expectations) {
-                Ok((case, checked, completion, kv)) => Ok(M1PhysicalCompletedReadbackV1 {
-                    queue: M1PhysicalReadbackQueueSessionV1::SpeculativeK4(case),
-                    checked,
-                    completion,
-                    kv,
+            Self::SpeculativeK16(case) => observe_case(case)
+                .map(M1ObservedCompletionOutputV1::SpeculativeK16)
+                .map_err(|failure| {
+                    retain_observation_failure(
+                        *failure,
+                        M1PhysicalRecycledQueueSessionV1::SpeculativeK16,
+                        M1RejectedCompletionOutputV1::SpeculativeK16,
+                    )
                 }),
-                Err((error, case)) => Err(M1CompletedReadbackJoinFailureV1 {
-                    error,
-                    queue: Box::new(Self::SpeculativeK4(case)),
-                }),
-            },
-            Self::SpeculativeK8(case) => match read_and_check_case(case, expectations) {
-                Ok((case, checked, completion, kv)) => Ok(M1PhysicalCompletedReadbackV1 {
-                    queue: M1PhysicalReadbackQueueSessionV1::SpeculativeK8(case),
-                    checked,
-                    completion,
-                    kv,
-                }),
-                Err((error, case)) => Err(M1CompletedReadbackJoinFailureV1 {
-                    error,
-                    queue: Box::new(Self::SpeculativeK8(case)),
-                }),
-            },
-            Self::SpeculativeK16(case) => match read_and_check_case(case, expectations) {
-                Ok((case, checked, completion, kv)) => Ok(M1PhysicalCompletedReadbackV1 {
-                    queue: M1PhysicalReadbackQueueSessionV1::SpeculativeK16(case),
-                    checked,
-                    completion,
-                    kv,
-                }),
-                Err((error, case)) => Err(M1CompletedReadbackJoinFailureV1 {
-                    error,
-                    queue: Box::new(Self::SpeculativeK16(case)),
-                }),
-            },
         }
     }
 
@@ -2173,6 +2614,120 @@ impl M1PhysicalRecycledQueueSessionV1 {
     }
 }
 
+impl M1ObservedCompletionOutputV1 {
+    /// Consumes the captured bytes through the existing roster and semantic join.
+    ///
+    /// Success mints the only [`ExactCompletion`] for this scheduler batch.
+    /// Failure returns the unchanged observed owner, so corrected semantic
+    /// expectations can be retried without another generic completed read.
+    ///
+    /// # Errors
+    ///
+    /// Returns retained observation custody for expectation-count, roster,
+    /// selection, epoch, wire-identity, or token-semantic rejection.
+    pub fn check_completion(
+        self,
+        expectations: &[CompletionWireSemanticExpectation<'_>],
+    ) -> Result<M1PhysicalCompletedReadbackV1, M1CompletedReadbackJoinFailureV1> {
+        match self {
+            Self::TargetOnly(case) => join_observed_output_case(
+                case,
+                M1ObservedCompletionOutputV1::TargetOnly,
+                M1PhysicalReadbackQueueSessionV1::TargetOnly,
+                expectations,
+            ),
+            Self::PairedPrefill(case) => join_observed_output_case(
+                case,
+                M1ObservedCompletionOutputV1::PairedPrefill,
+                M1PhysicalReadbackQueueSessionV1::PairedPrefill,
+                expectations,
+            ),
+            Self::SpeculativeK4(case) => join_observed_output_case(
+                case,
+                M1ObservedCompletionOutputV1::SpeculativeK4,
+                M1PhysicalReadbackQueueSessionV1::SpeculativeK4,
+                expectations,
+            ),
+            Self::SpeculativeK8(case) => join_observed_output_case(
+                case,
+                M1ObservedCompletionOutputV1::SpeculativeK8,
+                M1PhysicalReadbackQueueSessionV1::SpeculativeK8,
+                expectations,
+            ),
+            Self::SpeculativeK16(case) => join_observed_output_case(
+                case,
+                M1ObservedCompletionOutputV1::SpeculativeK16,
+                M1PhysicalReadbackQueueSessionV1::SpeculativeK16,
+                expectations,
+            ),
+        }
+    }
+
+    /// Destroys the observed queue and releases its exact allocation storage.
+    ///
+    /// This teardown consumes the inert observation without checking semantics
+    /// or minting completion authority.
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal release failure retaining all available queue, batch,
+    /// scheduler, and KV custody.
+    pub fn destroy_and_release(
+        self,
+    ) -> Result<ServiceQueueReleaseObservationV1, M1PhysicalQueueReleaseFailureV1> {
+        match self {
+            Self::TargetOnly(case) => {
+                release_observed_case(*case, M1PhysicalFixedBatchShapeV1::TargetOnly)
+            }
+            Self::PairedPrefill(case) => {
+                release_observed_case(*case, M1PhysicalFixedBatchShapeV1::PairedPrefill)
+            }
+            Self::SpeculativeK4(case) => {
+                release_observed_case(*case, M1PhysicalFixedBatchShapeV1::SpeculativeK4)
+            }
+            Self::SpeculativeK8(case) => {
+                release_observed_case(*case, M1PhysicalFixedBatchShapeV1::SpeculativeK8)
+            }
+            Self::SpeculativeK16(case) => {
+                release_observed_case(*case, M1PhysicalFixedBatchShapeV1::SpeculativeK16)
+            }
+        }
+    }
+}
+
+impl M1RejectedCompletionOutputV1 {
+    /// Destroys the queue after a structurally rejected one-shot byte copy.
+    ///
+    /// This teardown consumes the rejected raw copy without reopening readback
+    /// or minting completion authority.
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal release failure retaining all available queue, batch,
+    /// scheduler, and KV custody.
+    pub fn destroy_and_release(
+        self,
+    ) -> Result<ServiceQueueReleaseObservationV1, M1PhysicalQueueReleaseFailureV1> {
+        match self {
+            Self::TargetOnly(case) => {
+                release_rejected_case(*case, M1PhysicalFixedBatchShapeV1::TargetOnly)
+            }
+            Self::PairedPrefill(case) => {
+                release_rejected_case(*case, M1PhysicalFixedBatchShapeV1::PairedPrefill)
+            }
+            Self::SpeculativeK4(case) => {
+                release_rejected_case(*case, M1PhysicalFixedBatchShapeV1::SpeculativeK4)
+            }
+            Self::SpeculativeK8(case) => {
+                release_rejected_case(*case, M1PhysicalFixedBatchShapeV1::SpeculativeK8)
+            }
+            Self::SpeculativeK16(case) => {
+                release_rejected_case(*case, M1PhysicalFixedBatchShapeV1::SpeculativeK16)
+            }
+        }
+    }
+}
+
 fn operation_failure(
     shape: M1PhysicalFixedBatchShapeV1,
     step: M1PrepublicationStepCustodyV1,
@@ -2198,6 +2753,7 @@ mod tests {
             M1PhysicalQueuePhaseV1::Published,
             M1PhysicalQueuePhaseV1::Completed,
             M1PhysicalQueuePhaseV1::Recycled,
+            M1PhysicalQueuePhaseV1::Observed,
             M1PhysicalQueuePhaseV1::ReadbackJoined,
             M1PhysicalQueuePhaseV1::Detached,
             M1PhysicalQueuePhaseV1::Quarantined,
@@ -2213,6 +2769,8 @@ mod tests {
         assert!(M1PhysicalQueuePhaseV1::Published.can_wait());
         assert!(M1PhysicalQueuePhaseV1::Completed.can_recycle());
         assert!(M1PhysicalQueuePhaseV1::Recycled.can_read_detach_or_release());
+        assert!(M1PhysicalQueuePhaseV1::Observed.can_detach_or_release());
+        assert!(!M1PhysicalQueuePhaseV1::Observed.can_read_detach_or_release());
         assert!(M1PhysicalQueuePhaseV1::ReadbackJoined.can_detach_or_release());
         assert!(!M1PhysicalQueuePhaseV1::ReadbackJoined.can_read_detach_or_release());
         assert_eq!(0, grants_for(M1PhysicalQueuePhaseV1::Detached));

@@ -12,7 +12,7 @@ use ferric_spec::{Qwen3PlanSelection, RequestId};
 
 use crate::{
     check_inert_completion_record, CompletionWireError, CompletionWireExpectation,
-    InertCheckedCompletionRecord, M1CompletionOutputErrorV1, M1CompletionOutputShapeV1,
+    InertCheckedCompletionRecord, M1CompletionOutputErrorV1, M1ObservedCompletionImageV1,
     M1ScheduledDispatchV1,
 };
 
@@ -25,6 +25,13 @@ pub enum M1CompletedOutputCheckErrorV1 {
         expected: Qwen3PlanSelection,
         /// Selection retained by completion-output custody.
         actual: Qwen3PlanSelection,
+    },
+    /// The captured observation was substituted across scheduler epochs.
+    ObservationEpochDrift {
+        /// Epoch bound when the completed bytes were copied.
+        expected: CompletionEpoch,
+        /// Epoch retained by the supplied scheduler authority.
+        actual: CompletionEpoch,
     },
     /// Caller expectations did not cover exactly the scheduled live members.
     ExpectationCount {
@@ -147,24 +154,22 @@ impl M1CheckedCompletionOutputV1 {
     }
 }
 
-pub(crate) struct CompletedReadbackMetadataV1 {
-    pub dispatch_generation: u64,
-    pub data_index: usize,
-    pub offset_bytes: u64,
-}
-
 pub(crate) fn check_m1_completed_output_v1(
-    shape: M1CompletionOutputShapeV1,
+    observed: &M1ObservedCompletionImageV1,
     queue_selection: Qwen3PlanSelection,
     scheduled: &M1ScheduledDispatchV1,
-    metadata: CompletedReadbackMetadataV1,
-    bytes: &[u8],
     expectations: &[CompletionWireExpectation<'_>],
 ) -> Result<M1CheckedCompletionOutputV1, M1CompletedOutputCheckErrorV1> {
-    if shape.selection() != queue_selection {
+    if observed.selection() != queue_selection {
         return Err(M1CompletedOutputCheckErrorV1::SelectionDrift {
             expected: queue_selection,
-            actual: shape.selection(),
+            actual: observed.selection(),
+        });
+    }
+    if observed.epoch() != scheduled.epoch() {
+        return Err(M1CompletedOutputCheckErrorV1::ObservationEpochDrift {
+            expected: observed.epoch(),
+            actual: scheduled.epoch(),
         });
     }
     if expectations.len() != scheduled.member_count() {
@@ -204,34 +209,26 @@ pub(crate) fn check_m1_completed_output_v1(
                 actual: plan.request(),
             });
         }
-        let record_bytes = shape
-            .record_bytes(bytes, u32::try_from(lane).unwrap_or(u32::MAX))
-            .map_err(M1CompletedOutputCheckErrorV1::Output)?;
+        let record_bytes = observed
+            .raw_record_bytes(u32::try_from(lane).unwrap_or(u32::MAX))
+            .ok_or(M1CompletedOutputCheckErrorV1::Output(
+                M1CompletionOutputErrorV1::SequenceOutOfRange {
+                    sequences: observed.shape().sequences(),
+                    actual: u32::try_from(lane).unwrap_or(u32::MAX),
+                },
+            ))?;
         let checked = check_inert_completion_record(record_bytes, expectation)
             .map_err(|source| M1CompletedOutputCheckErrorV1::LiveRecord { lane, source })?;
         records.push(checked);
     }
 
-    let capacity = shape.sequences() as usize;
-    for lane in expectations.len()..capacity {
-        let record_bytes = shape
-            .record_bytes(bytes, u32::try_from(lane).unwrap_or(u32::MAX))
-            .map_err(M1CompletedOutputCheckErrorV1::Output)?;
-        if let Some(record_offset) = record_bytes.iter().position(|byte| *byte != 0) {
-            return Err(M1CompletedOutputCheckErrorV1::InactiveRecordNonzero {
-                lane,
-                record_offset,
-            });
-        }
-    }
-
     Ok(M1CheckedCompletionOutputV1 {
         selection: queue_selection,
         epoch: scheduled.epoch(),
-        dispatch_generation: metadata.dispatch_generation,
-        data_index: metadata.data_index,
-        offset_bytes: metadata.offset_bytes,
-        extent_bytes: shape.extent_bytes(),
+        dispatch_generation: observed.dispatch_generation(),
+        data_index: observed.data_index(),
+        offset_bytes: observed.offset_bytes(),
+        extent_bytes: observed.extent_bytes(),
         records: records.into_boxed_slice(),
     })
 }
@@ -301,27 +298,22 @@ mod tests {
         bytes
     }
 
-    fn metadata() -> CompletedReadbackMetadataV1 {
-        CompletedReadbackMetadataV1 {
-            dispatch_generation: 19,
-            data_index: 5,
-            offset_bytes: 384,
-        }
-    }
-
     fn check(
         scheduled: &M1ScheduledDispatchV1,
         bytes: &[u8],
         expectations: &[CompletionWireExpectation<'_>],
     ) -> Result<M1CheckedCompletionOutputV1, M1CompletedOutputCheckErrorV1> {
-        check_m1_completed_output_v1(
+        let observed = M1ObservedCompletionImageV1::from_bytes_for_test(
             m1_completion_output_shape_v1(selection()).expect("S8 is supported"),
             selection(),
             scheduled,
-            metadata(),
-            bytes,
-            expectations,
+            19,
+            5,
+            384,
+            bytes.into(),
         )
+        .expect("test image is structurally observed");
+        check_m1_completed_output_v1(&observed, selection(), scheduled, expectations)
     }
 
     #[test]
@@ -413,21 +405,30 @@ mod tests {
             bucket: Qwen3PlanBucket::DecodeS1C8192,
             ..selection()
         };
+        let observed = M1ObservedCompletionImageV1::from_bytes_for_test(
+            m1_completion_output_shape_v1(selection()).expect("S8 is supported"),
+            selection(),
+            &scheduled,
+            19,
+            5,
+            384,
+            exact_bytes().into_boxed_slice(),
+        )
+        .expect("test image is structurally observed");
         assert!(matches!(
-            check_m1_completed_output_v1(
-                m1_completion_output_shape_v1(selection()).expect("S8 is supported"),
-                wrong_selection,
-                &scheduled,
-                metadata(),
-                &exact_bytes(),
-                &[],
-            ),
+            check_m1_completed_output_v1(&observed, wrong_selection, &scheduled, &[],),
             Err(M1CompletedOutputCheckErrorV1::SelectionDrift { .. })
+        ));
+
+        let other_scheduled = M1ScheduledDispatchV1::for_test(OTHER_EPOCH, &REQUESTS);
+        assert!(matches!(
+            check_m1_completed_output_v1(&observed, selection(), &other_scheduled, &[],),
+            Err(M1CompletedOutputCheckErrorV1::ObservationEpochDrift { .. })
         ));
     }
 
     #[test]
-    fn live_wire_corruption_inactive_bytes_and_extent_drift_fail_closed() {
+    fn observed_token_semantic_mismatch_fails_closed() {
         let plans = [
             plan(REQUESTS[0], EPOCH, PLAN_IDS[0]),
             plan(REQUESTS[1], EPOCH, PLAN_IDS[1]),
@@ -444,32 +445,12 @@ mod tests {
         ];
 
         let mut bytes = exact_bytes();
-        bytes[Layout::RESERVED_OFFSET] = 1;
+        let token_offset = Layout::token_offset(0).expect("first token exists");
+        bytes[token_offset..token_offset + 4].copy_from_slice(&99_u32.to_le_bytes());
         let scheduled = M1ScheduledDispatchV1::for_test(EPOCH, &REQUESTS);
         assert!(matches!(
             check(&scheduled, &bytes, &expectations),
             Err(M1CompletedOutputCheckErrorV1::LiveRecord { lane: 0, .. })
-        ));
-
-        let mut bytes = exact_bytes();
-        bytes[2 * Layout::RECORD_BYTES_USIZE + 37] = 1;
-        let scheduled = M1ScheduledDispatchV1::for_test(EPOCH, &REQUESTS);
-        assert!(matches!(
-            check(&scheduled, &bytes, &expectations),
-            Err(M1CompletedOutputCheckErrorV1::InactiveRecordNonzero {
-                lane: 2,
-                record_offset: 37
-            })
-        ));
-
-        let mut bytes = exact_bytes();
-        bytes.pop();
-        let scheduled = M1ScheduledDispatchV1::for_test(EPOCH, &REQUESTS);
-        assert!(matches!(
-            check(&scheduled, &bytes, &expectations),
-            Err(M1CompletedOutputCheckErrorV1::Output(
-                M1CompletionOutputErrorV1::ReadbackExtentDrift { .. }
-            ))
         ));
     }
 }

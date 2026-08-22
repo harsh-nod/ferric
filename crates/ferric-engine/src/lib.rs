@@ -20,6 +20,7 @@ mod m1_completed_step_release;
 mod m1_prepublication;
 mod m1_queue_rearm;
 mod model_memory_allocations;
+mod observed_completion;
 mod operation_dispatch_expansion;
 mod operation_kernel_plan;
 mod persisted_kernel_artifacts;
@@ -131,14 +132,17 @@ pub use m1_queue_rearm::{
     M1PreparedLongLivedQueueRearmV1, M1RearmedCompletedQueueV1, M1RearmedCompletedReadbackV1,
     M1RearmedCompletionOutcomeV1, M1RearmedCompletionPreflightErrorV1,
     M1RearmedCompletionPreflightFailureV1, M1RearmedPublishedQueueV1,
-    M1RearmedQueueProgressFailureV1, M1RearmedReadbackFailureV1, M1RearmedRecycledQueueV1,
-    M1RearmedRoundPageReleaseFailureV1, M1RearmedRoundReleaseOutcomeV1,
+    M1RearmedQueueProgressFailureV1, M1RearmedReadbackFailureSourceV1, M1RearmedReadbackFailureV1,
+    M1RearmedRecycledQueueV1, M1RearmedRoundPageReleaseFailureV1, M1RearmedRoundReleaseOutcomeV1,
     M1ReservedLongLivedQueueRearmV1, M1ScheduledLongLivedQueueRearmV1,
 };
 pub use model_memory_allocations::{
     bind_addressless_model_memory_allocations_v1, BoundModelMemoryAllocationsV1,
     ModelMemoryAllocationBindingErrorV1, ModelMemoryAllocationBindingFailureV1,
     ModelMemoryDispatchRangeErrorV1, SelectedModelMemoryAllocationIdentitiesV1,
+};
+pub use observed_completion::{
+    M1ObservedCompletionImageErrorV1, M1ObservedCompletionImageV1, M1ObservedCompletionRecordV1,
 };
 pub use operation_dispatch_expansion::{
     derive_m1_operation_dispatch_expansion, plan_m1_operation_dispatch_expansion,
@@ -202,6 +206,8 @@ pub use physical_program_catalog::{
 };
 pub use physical_queue_lifecycle::{
     M1CompletedReadbackJoinErrorV1, M1CompletedReadbackJoinFailureV1,
+    M1CompletionObservationErrorV1, M1CompletionObservationFailureCustodyV1,
+    M1CompletionObservationFailureV1, M1ObservedCompletionCaseV1, M1ObservedCompletionOutputV1,
     M1PhysicalCompletedQueueSessionV1, M1PhysicalCompletedReadbackV1,
     M1PhysicalDetachedQueueCaseV1, M1PhysicalDetachedQueueSessionV1,
     M1PhysicalPublishedQueueSessionV1, M1PhysicalQueueCreateFailureClassV1,
@@ -210,7 +216,7 @@ pub use physical_queue_lifecycle::{
     M1PhysicalReadbackDetachedQueueCaseV1, M1PhysicalReadbackDetachedQueueSessionV1,
     M1PhysicalReadbackQueueCaseV1, M1PhysicalReadbackQueueOperationFailureV1,
     M1PhysicalReadbackQueueReleaseFailureV1, M1PhysicalReadbackQueueSessionV1,
-    M1PhysicalRecycledQueueSessionV1,
+    M1PhysicalRecycledQueueSessionV1, M1RejectedCompletionCaseV1, M1RejectedCompletionOutputV1,
 };
 pub use physical_step::{
     bind_structural_physical_step, StructuralPhysicalStepBindingError,

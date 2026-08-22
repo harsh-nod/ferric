@@ -29,7 +29,8 @@ use crate::{
     AddresslessM1StepDispatchPlan, AdmittedPersistedM1KernelArtifactsV1, BoundM1CompletionOutputV1,
     ContentBoundM1ProgramCatalogV1, DeclaredKernelFamilyArtifact, DeclaredOperationKernelPlan,
     Engine, M1CompletedReadbackJoinFailureV1, M1CompletedStepKvReleaseFailureV1,
-    M1CompletedStepOutcomeV1, M1DeviceKvArenaLeaseBindingFailureV1, M1DeviceKvCompletionRosterV1,
+    M1CompletedStepOutcomeV1, M1CompletionObservationFailureV1,
+    M1DeviceKvArenaLeaseBindingFailureV1, M1DeviceKvCompletionRosterV1,
     M1DeviceModelMemoryAllocationFailureV1, M1FullStepKvWorkspaceTablesV1,
     M1FullStepWorkspaceCompositionFailure, M1FullStepWorkspaceCompositionOutcome,
     M1FullStepWorkspacePlans, M1LongLivedQueueRearmSubmissionFailureV1,
@@ -404,7 +405,15 @@ impl M1PhysicalRunnerV1 {
                 };
             }
         };
-        let readback = match recycled.read_and_check_completion(semantics) {
+        let observed = match recycled.observe_completion() {
+            Ok(observed) => observed,
+            Err(failure) => {
+                return M1PhysicalRunnerFirstCompletionOutcomeV1::ObservationRejected(Box::new(
+                    failure,
+                ))
+            }
+        };
+        let readback = match observed.check_completion(semantics) {
             Ok(readback) => readback,
             Err(failure) => {
                 return M1PhysicalRunnerFirstCompletionOutcomeV1::ReadbackRejected(Box::new(
@@ -700,6 +709,7 @@ pub enum M1PhysicalRunnerFirstCompletionOutcomeV1 {
         stage: M1PhysicalRunnerQueueFailureStageV1,
         failure: Box<M1PhysicalQueueOperationFailureV1>,
     },
+    ObservationRejected(Box<M1CompletionObservationFailureV1>),
     ReadbackRejected(Box<M1CompletedReadbackJoinFailureV1>),
     CompletionNotCommitted(M1CompletedStepOutcomeV1),
     PageReleaseRejected(Box<M1CompletedStepKvReleaseFailureV1>),
@@ -756,9 +766,111 @@ mod tests {
     use ferric_spec::{
         Identity, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection,
     };
+    use serde_json::{json, Value};
 
     use crate::operation_kernel_plan::tests::public_operation_kernel_plan_fixture;
     use crate::{M1FullStepWorkspacePlans, M1StepDispatchIntent};
+
+    struct RawObservationTranscriptFieldsV1<'a> {
+        catalog_identity: &'a [u8],
+        device_identity: &'a [u8],
+        dispatch_generation: u64,
+        emitted_tokens: &'a [u32],
+        gpu_unique_id: u64,
+        kernel_artifact_manifest: &'a [u8],
+        plan_identity: &'a [u8],
+        raw_bytes: &'a [u8],
+        raw_sha256: &'a [u8],
+        accepted_draft_tokens: u8,
+        completion_epoch: u64,
+        emitted_token_count: u8,
+        request_generation: u32,
+        request_slot: u32,
+        runner_declaration: &'a [u8],
+    }
+
+    fn lowercase_hex(bytes: &[u8]) -> String {
+        use std::fmt::Write as _;
+
+        let mut output = String::with_capacity(bytes.len() * 2);
+        for byte in bytes {
+            write!(output, "{byte:02x}").expect("writing into String cannot fail");
+        }
+        output
+    }
+
+    fn canonical_json_bytes(value: &Value) -> Result<Vec<u8>, serde_json::Error> {
+        let mut bytes = serde_json::to_vec_pretty(value)?;
+        bytes.push(b'\n');
+        Ok(bytes)
+    }
+
+    fn raw_observation_transcript(
+        fields: &RawObservationTranscriptFieldsV1<'_>,
+    ) -> Result<Vec<u8>, serde_json::Error> {
+        canonical_json_bytes(&json!({
+            "authority": "observed-k7-structure-only",
+            "catalog_identity_sha256": lowercase_hex(fields.catalog_identity),
+            "device_identity_sha256": lowercase_hex(fields.device_identity),
+            "dispatch_generation": fields.dispatch_generation,
+            "emitted_tokens": fields.emitted_tokens,
+            "format": "FERRIC-M1-RAW-COMPLETION-OBSERVATION-V1",
+            "gpu_unique_id": fields.gpu_unique_id,
+            "kernel_artifact_manifest_sha256": lowercase_hex(fields.kernel_artifact_manifest),
+            "nonclaim": "Structural K7 observation only; no token correctness, logits, numerical correctness, inference refinement, performance, qualification, or r29-r33 closure.",
+            "plan_identity_sha256": lowercase_hex(fields.plan_identity),
+            "raw_bytes_hex": lowercase_hex(fields.raw_bytes),
+            "raw_sha256": lowercase_hex(fields.raw_sha256),
+            "record": {
+                "accepted_draft_tokens": fields.accepted_draft_tokens,
+                "completion_epoch": fields.completion_epoch,
+                "emitted_token_count": fields.emitted_token_count,
+                "request_generation": fields.request_generation,
+                "request_slot": fields.request_slot,
+            },
+            "runner_declaration_sha256": lowercase_hex(fields.runner_declaration),
+            "selection": {
+                "bucket": "decode-s1-c8192",
+                "mode": "decode",
+                "role": "target-8b",
+            },
+            "status": "OBSERVED",
+            "target": "gfx942:xnack-",
+        }))
+    }
+
+    #[test]
+    fn raw_observation_transcript_is_parse_stable_canonical_ascii_json() {
+        let transcript = raw_observation_transcript(&RawObservationTranscriptFieldsV1 {
+            catalog_identity: &[1; 32],
+            device_identity: &[2; 32],
+            dispatch_generation: 17,
+            emitted_tokens: &[23, 29],
+            gpu_unique_id: 41,
+            kernel_artifact_manifest: &[3; 32],
+            plan_identity: &[4; 32],
+            raw_bytes: &[5, 6, 7],
+            raw_sha256: &[8; 32],
+            accepted_draft_tokens: 0,
+            completion_epoch: 31,
+            emitted_token_count: 2,
+            request_generation: 9,
+            request_slot: 4,
+            runner_declaration: &[10; 32],
+        })
+        .expect("fixed transcript value serializes");
+        let reparsed: Value = serde_json::from_slice(&transcript).expect("transcript parses");
+        assert_eq!(
+            canonical_json_bytes(&reparsed).expect("reparsed transcript serializes"),
+            transcript
+        );
+        assert!(transcript.is_ascii());
+        assert_eq!(reparsed["authority"], "observed-k7-structure-only");
+        assert!(reparsed["nonclaim"]
+            .as_str()
+            .expect("nonclaim is text")
+            .contains("r29-r33 closure"));
+    }
 
     const fn selection(bucket: Qwen3PlanBucket) -> Qwen3PlanSelection {
         Qwen3PlanSelection {
@@ -894,8 +1006,9 @@ mod tests {
 
     #[test]
     #[ignore = "requires admitted K1-K7 artifacts, prepacked Qwen bytes, and an exclusive MI300X"]
-    fn configured_mi300x_target_only_dispatch_smoke_is_not_numerical_evidence() {
-        use std::fs;
+    fn configured_mi300x_target_only_observation_emits_no_numerical_claim() {
+        use std::fs::{self, OpenOptions};
+        use std::io::Write as _;
 
         use fe2o3_kfd::{DeviceSelector, OpenedKfd};
         use ferric_build::{
@@ -943,9 +1056,11 @@ mod tests {
         // FERRIC_M1_TARGET_PREPACKED_WEIGHTS
         // FERRIC_M1_DRAFT_PREPACKED_WEIGHTS
         // FERRIC_M1_GPU_UNIQUE_ID
+        // FERRIC_M1_OBSERVED_COMPLETION_TRANSCRIPT
         let artifact_directory = required_path("FERRIC_M1_KERNEL_ARTIFACT_DIRECTORY");
         let target_weights = required_path("FERRIC_M1_TARGET_PREPACKED_WEIGHTS");
         let draft_weights = required_path("FERRIC_M1_DRAFT_PREPACKED_WEIGHTS");
+        let transcript_path = required_path("FERRIC_M1_OBSERVED_COMPLETION_TRANSCRIPT");
         let unique_id = std::env::var("FERRIC_M1_GPU_UNIQUE_ID")
             .expect("set FERRIC_M1_GPU_UNIQUE_ID to the selected MI300X unique ID")
             .parse::<u64>()
@@ -1051,14 +1166,57 @@ mod tests {
         let completed = published.wait(20_000_000).expect("wait for live dispatch");
         let recycled = completed.recycle().expect("recycle live dispatch queue");
         assert_eq!(recycled.shape(), M1PhysicalFixedBatchShapeV1::TargetOnly);
-        let _release = recycled
+        let observed = recycled
+            .observe_completion()
+            .expect("copy and structurally observe exact K7 output");
+        let image = observed.image();
+        let record = image
+            .records()
+            .first()
+            .expect("S1 observation contains one live record");
+        let device = observed.device();
+        let catalog_identity = observed.catalog_id();
+        let device_identity = device.device_id();
+        let kernel_artifact_manifest = runner.kernel_artifact_manifest_id();
+        let runner_declaration = runner.declaration_id();
+        let transcript = raw_observation_transcript(&RawObservationTranscriptFieldsV1 {
+            catalog_identity: catalog_identity.as_bytes(),
+            device_identity: device_identity.as_bytes(),
+            dispatch_generation: image.dispatch_generation(),
+            emitted_tokens: record.emitted_tokens(),
+            gpu_unique_id: device.gpu_unique_id(),
+            kernel_artifact_manifest: kernel_artifact_manifest.as_bytes(),
+            plan_identity: record.record().plan_id.as_bytes(),
+            raw_bytes: image.raw_bytes(),
+            raw_sha256: image.raw_sha256(),
+            accepted_draft_tokens: record.accepted_draft_tokens(),
+            completion_epoch: record.record().epoch.value(),
+            emitted_token_count: record.record().emitted_token_count,
+            request_generation: record.record().request.generation(),
+            request_slot: record.record().request.slot(),
+            runner_declaration: runner_declaration.as_bytes(),
+        })
+        .expect("serialize canonical observation transcript");
+        assert!(transcript.is_ascii());
+        let mut transcript_file = OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&transcript_path)
+            .expect("create a new observation transcript without overwriting evidence");
+        transcript_file
+            .write_all(&transcript)
+            .expect("write complete canonical observation transcript");
+        transcript_file
+            .sync_all()
+            .expect("persist complete observation transcript");
+        let _release = observed
             .destroy_and_release()
             .expect("destroy queue and release model/workspace storage");
 
         // The fixture publication and memory plan are structural test
-        // authorities. This smoke proves only that the admitted queue ran to a
-        // completion signal; it does not authenticate a deployment or assert
-        // token values, numerical correctness, performance, or refinement.
+        // authorities. This transcript reports only a generation-bound byte
+        // observation; it does not authenticate a deployment or assert token
+        // values, logits, numerical correctness, performance, or refinement.
         drop(cache);
     }
 }

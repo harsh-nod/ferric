@@ -354,6 +354,7 @@ dependencies = [
  "ferric-qwen-kernels",
  "ferric-spec",
  "rustix",
+ "serde_json",
  "sha2",
  "vstd",
 ]

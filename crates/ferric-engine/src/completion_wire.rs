@@ -6,8 +6,9 @@
 //! prove readback, queue publication, GPU completion, model content, kernel
 //! execution, numerical refinement, inference, or hardware behavior. Production
 //! code obtains bytes through
-//! [`crate::M1PhysicalRecycledQueueSessionV1::read_and_check_completion`], which
-//! binds the exact retained K7 range and scheduler roster before it creates one
+//! [`crate::M1PhysicalRecycledQueueSessionV1::observe_completion`], followed by
+//! [`crate::M1ObservedCompletionOutputV1::check_completion`]. Together they bind
+//! the exact retained K7 range and scheduler roster before creating one
 //! [`ExactCompletion`]. Calling the inert checker alone grants no completion
 //! authority.
 //!
@@ -317,7 +318,7 @@ pub fn check_inert_completion_record(
 /// This compatibility utility checks only that both inputs name the same epoch.
 /// It does not establish completed-readback provenance. Production code should
 /// retain the checked records and single [`ExactCompletion`] minted together by
-/// [`crate::M1PhysicalRecycledQueueSessionV1::read_and_check_completion`].
+/// [`crate::M1ObservedCompletionOutputV1::check_completion`].
 ///
 /// # Errors
 ///
@@ -356,7 +357,9 @@ fn speculative_k(bucket: Qwen3PlanBucket) -> Option<usize> {
     }
 }
 
-fn decode_completion_record(bytes: &[u8]) -> Result<CompactCompletionRecord, CompletionWireError> {
+pub(crate) fn decode_completion_record(
+    bytes: &[u8],
+) -> Result<CompactCompletionRecord, CompletionWireError> {
     if bytes.len() != Layout::RECORD_BYTES_USIZE {
         return Err(CompletionWireError::RecordLength {
             expected: Layout::RECORD_BYTES_USIZE,

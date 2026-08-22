@@ -21,6 +21,7 @@ vstd.workspace = true
 
 [dev-dependencies]
 ferric-build = { path = "../ferric-build", features = ["test-fixtures"] }
+serde_json = "=1.0.151"
 
 [package.metadata.verus]
 verify = true

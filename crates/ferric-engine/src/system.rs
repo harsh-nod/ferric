@@ -1168,7 +1168,7 @@ impl<const C: usize> Engine<C> {
     ///
     /// This is a proof-bearing view of the same order check used by
     /// [`Self::complete_exact`]. The accepted-count and pending-batch guards in
-    /// [`Self::completion_epoch_reordered`] exclude earlier diagnostics.
+    /// `completion_epoch_reordered` exclude earlier diagnostics.
     #[must_use]
     pub fn reject_reordered_completion(
         &self,

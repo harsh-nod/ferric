@@ -1835,8 +1835,8 @@ impl M1RearmedCompletedQueueV1 {
     }
 }
 
-/// Recycled rearmed queue ready for the existing exact readback join.
-#[must_use = "recycled rearm custody must read exact completion or remain retained"]
+/// Recycled rearmed queue ready for one exact observation and semantic join.
+#[must_use = "recycled rearm custody must observe exact completion or remain retained"]
 #[derive(Debug)]
 pub struct M1RearmedRecycledQueueV1 {
     queue: crate::M1PhysicalRecycledQueueSessionV1,
@@ -1846,12 +1846,13 @@ pub struct M1RearmedRecycledQueueV1 {
 }
 
 impl M1RearmedRecycledQueueV1 {
-    /// Reads and checks the exact completion bytes for the fresh generation.
+    /// Observes and checks the exact completion bytes for the fresh generation.
     ///
     /// # Errors
     ///
-    /// Returns retry-safe unchanged recycled custody for queue, coordinate,
-    /// wire, scheduler-roster, padding, or semantic rejection.
+    /// A lower read rejection retains retryable recycled custody. Rejection
+    /// after a successful copy retains either closed rejected-observation
+    /// custody or the semantic observation, so no second physical read occurs.
     pub fn read_and_check_completion(
         self,
         expectations: &[crate::CompletionWireSemanticExpectation<'_>],
@@ -1862,7 +1863,18 @@ impl M1RearmedRecycledQueueV1 {
             queue_observation,
             device,
         } = self;
-        match queue.read_and_check_completion(expectations) {
+        let observed = match queue.observe_completion() {
+            Ok(observed) => observed,
+            Err(source) => {
+                return Err(Box::new(M1RearmedReadbackFailureV1 {
+                    source: M1RearmedReadbackFailureSourceV1::Observation(source),
+                    carry,
+                    queue_observation,
+                    device,
+                }))
+            }
+        };
+        match observed.check_completion(expectations) {
             Ok(readback) => Ok(M1RearmedCompletedReadbackV1 {
                 readback,
                 carry,
@@ -1870,7 +1882,7 @@ impl M1RearmedRecycledQueueV1 {
                 device,
             }),
             Err(source) => Err(Box::new(M1RearmedReadbackFailureV1 {
-                source,
+                source: M1RearmedReadbackFailureSourceV1::Join(source),
                 carry,
                 queue_observation,
                 device,
@@ -1879,32 +1891,48 @@ impl M1RearmedRecycledQueueV1 {
     }
 }
 
-/// Retry-safe exact-readback rejection retaining the same recycled owner.
-#[must_use = "readback rejection must be retried, torn down, or retained"]
+/// Exact observation or semantic-join failure retaining all linear custody.
+#[derive(Debug)]
+pub enum M1RearmedReadbackFailureSourceV1 {
+    /// Physical copy or structural observation rejection.
+    Observation(crate::M1CompletionObservationFailureV1),
+    /// Scheduler-roster, plan, wire-identity, or token-semantic rejection.
+    Join(crate::M1CompletedReadbackJoinFailureV1),
+}
+
+/// Exact-readback rejection retaining recycled or observed queue custody.
+#[must_use = "readback rejection and all continuation custody must remain retained"]
 #[derive(Debug)]
 pub struct M1RearmedReadbackFailureV1 {
-    source: crate::M1CompletedReadbackJoinFailureV1,
+    source: M1RearmedReadbackFailureSourceV1,
     carry: M1RearmContinuationCustodyV1,
     queue_observation: ComputeAqlQueueObservationV1,
     device: Gfx942DeviceBinding,
 }
 
 impl M1RearmedReadbackFailureV1 {
+    /// Returns the exact observation or semantic rejection by borrow.
     #[must_use]
-    pub const fn source(&self) -> &crate::M1CompletedReadbackJoinErrorV1 {
-        self.source.error()
+    pub const fn source(&self) -> &M1RearmedReadbackFailureSourceV1 {
+        &self.source
     }
 
-    /// Recovers the unchanged recycled queue without exposing a raw session.
-    #[must_use = "retry-capable recycled queue and cache custody must remain retained"]
-    pub fn into_recycled(self) -> M1RearmedRecycledQueueV1 {
-        let (_error, queue) = self.source.into_parts();
-        M1RearmedRecycledQueueV1 {
-            queue,
-            carry: self.carry,
-            queue_observation: self.queue_observation,
-            device: self.device,
-        }
+    /// Returns the queue observation retained from the completed generation.
+    #[must_use]
+    pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
+        self.queue_observation
+    }
+
+    /// Returns the checked physical-device receipt retained through failure.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.device
+    }
+
+    /// Returns the exact predecessor epoch retained by continuation custody.
+    #[must_use]
+    pub const fn previous_epoch(&self) -> CompletionEpoch {
+        self.carry.previous_epoch
     }
 }
 
