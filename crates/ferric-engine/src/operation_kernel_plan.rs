@@ -1032,16 +1032,23 @@ where
 mod tests {
     use std::collections::HashSet;
 
-    use ferric_build::GeneratedOperationDeclaration;
+    use ferric_build::{
+        generate_qwen3_gfx942_runner_declaration, publish_qwen3_gfx942_runner_declaration,
+        qwen3_runner_closure_test_fixture, GeneratedOperationDeclaration,
+        GeneratedRunnerDeclaration,
+    };
     use ferric_kernels::{KernelFamily, KernelProfileDescriptor, KernelProfileDisposition};
-    use ferric_spec::{expected_step, Identity, Qwen3ModelRole, Qwen3PlanSelection};
+    use ferric_qwen_kernels::{gemm, logits, paged_decode, prefill, rmsnorm, rope_kv, swiglu};
+    use ferric_spec::{
+        expected_step, Identity, Qwen3ModelRole, Qwen3Operator, Qwen3PlanBucket, Qwen3PlanSelection,
+    };
 
     use super::{
-        expected_family, resolve_profile, validate_families,
+        bind_declared_operation_kernel_plan, expected_family, resolve_profile, validate_families,
         validate_operation_sequence_with_catalogs, CanonicalCatalogs, DeclaredKernelFamilyArtifact,
-        DeclaredOperationIdentity, DeclaredOperationKernelBinding,
-        OperationKernelIdentityComponent, OperationKernelPlanError, FAMILIES, M1_B3_PLAN_BUCKETS,
-        M1_KERNEL_OPERATION_BINDINGS,
+        DeclaredOperationIdentity, DeclaredOperationKernelBinding, LogicalRunnerDeclaration,
+        OperationKernelIdentityComponent, OperationKernelPlanError, OperationKernelPlanOutcome,
+        FAMILIES, M1_B3_PLAN_BUCKETS, M1_KERNEL_OPERATION_BINDINGS,
     };
 
     const TARGET_OPERATIONS: usize = 11 * 544;
@@ -1158,6 +1165,378 @@ mod tests {
             candidates,
             catalogs,
         )
+    }
+
+    #[derive(Clone, Copy)]
+    struct PublicProfileFixture {
+        role_tag: u8,
+        bucket_tag: u8,
+        operator: Qwen3Operator,
+        catalog_id: Identity,
+        profile_id: Identity,
+    }
+
+    fn insert_public_profile(
+        fixtures: &mut Vec<PublicProfileFixture>,
+        fixture: PublicProfileFixture,
+    ) {
+        assert!(!fixtures.iter().any(|prior| {
+            prior.role_tag == fixture.role_tag
+                && prior.bucket_tag == fixture.bucket_tag
+                && prior.operator == fixture.operator
+        }));
+        fixtures.push(fixture);
+    }
+
+    const fn public_gemm_operator(operation: gemm::Qwen3GemmOperationV1) -> Qwen3Operator {
+        match operation {
+            gemm::Qwen3GemmOperationV1::QueryProjection => Qwen3Operator::QueryProjection,
+            gemm::Qwen3GemmOperationV1::KeyProjection => Qwen3Operator::KeyProjection,
+            gemm::Qwen3GemmOperationV1::ValueProjection => Qwen3Operator::ValueProjection,
+            gemm::Qwen3GemmOperationV1::AttentionOutputResidual => {
+                Qwen3Operator::AttentionOutputResidual
+            }
+            gemm::Qwen3GemmOperationV1::GateProjection => Qwen3Operator::GateProjection,
+            gemm::Qwen3GemmOperationV1::UpProjection => Qwen3Operator::UpProjection,
+            gemm::Qwen3GemmOperationV1::DownResidual => Qwen3Operator::DownResidual,
+            gemm::Qwen3GemmOperationV1::LogitsProjection => Qwen3Operator::LogitsProjection,
+        }
+    }
+
+    const fn public_rmsnorm_operator(
+        operation: rmsnorm::Qwen3RmsNormOperationV1,
+    ) -> Option<Qwen3Operator> {
+        match operation {
+            rmsnorm::Qwen3RmsNormOperationV1::InputRmsNorm => Some(Qwen3Operator::InputRmsNorm),
+            rmsnorm::Qwen3RmsNormOperationV1::QueryRmsNorm => Some(Qwen3Operator::QueryRmsNorm),
+            rmsnorm::Qwen3RmsNormOperationV1::KeyRmsNorm => Some(Qwen3Operator::KeyRmsNorm),
+            rmsnorm::Qwen3RmsNormOperationV1::PostAttentionRmsNorm => {
+                Some(Qwen3Operator::PostAttentionRmsNorm)
+            }
+            rmsnorm::Qwen3RmsNormOperationV1::FinalRmsNorm => Some(Qwen3Operator::FinalRmsNorm),
+            rmsnorm::Qwen3RmsNormOperationV1::ResidualFusedHidden => None,
+        }
+    }
+
+    const fn public_rope_kv_operator(operation: rope_kv::Qwen3RopeKvOperationV1) -> Qwen3Operator {
+        match operation {
+            rope_kv::Qwen3RopeKvOperationV1::Rope => Qwen3Operator::Rope,
+            rope_kv::Qwen3RopeKvOperationV1::PagedKvWrite => Qwen3Operator::KvWrite,
+        }
+    }
+
+    fn public_profile_fixtures() -> Vec<PublicProfileFixture> {
+        let gemm = gemm::Qwen3GemmProfileCatalogV1::canonical().expect("public GEMM catalog");
+        let embedding = gemm::Qwen3TokenEmbeddingProfileCatalogV1::canonical()
+            .expect("public embedding catalog");
+        let rmsnorm =
+            rmsnorm::Qwen3RmsNormProfileCatalogV1::canonical().expect("public RMSNorm catalog");
+        let rope_kv =
+            rope_kv::Qwen3RopeKvProfileCatalogV1::canonical().expect("public RoPE/KV catalog");
+        let prefill =
+            prefill::Qwen3PrefillProfileCatalogV1::canonical().expect("public prefill catalog");
+        let paged_decode = paged_decode::Qwen3PagedDecodeProfileCatalogV1::canonical()
+            .expect("public decode catalog");
+        let swiglu =
+            swiglu::Qwen3SwiGluProfileCatalogV1::canonical().expect("public SwiGLU catalog");
+        let logits =
+            logits::Qwen3LogitsProfileCatalogV1::canonical().expect("public logits catalog");
+        let catalog_counts = [
+            gemm.profiles().len(),
+            embedding.profiles().len(),
+            rmsnorm.profiles().len(),
+            rope_kv.profiles().len(),
+            prefill.profiles().len(),
+            paged_decode.profiles().len(),
+            swiglu.profiles().len(),
+            logits.profiles().len(),
+        ];
+        assert_eq!(catalog_counts, [176, 22, 132, 44, 8, 14, 22, 22]);
+        assert_eq!(
+            catalog_counts.into_iter().sum::<usize>(),
+            CANONICAL_QWEN_PROFILES
+        );
+
+        let mut fixtures = Vec::with_capacity(GRAPH_USED_QWEN_PROFILES);
+        for profile in gemm.profiles() {
+            insert_public_profile(
+                &mut fixtures,
+                PublicProfileFixture {
+                    role_tag: profile.bucket().role() as u8,
+                    bucket_tag: profile.bucket().kind() as u8,
+                    operator: public_gemm_operator(profile.operation()),
+                    catalog_id: Identity::new(*gemm.identity().as_bytes()),
+                    profile_id: Identity::new(*profile.identity().as_bytes()),
+                },
+            );
+        }
+        for profile in embedding.profiles() {
+            insert_public_profile(
+                &mut fixtures,
+                PublicProfileFixture {
+                    role_tag: profile.bucket().role() as u8,
+                    bucket_tag: profile.bucket().kind() as u8,
+                    operator: Qwen3Operator::TokenEmbedding,
+                    catalog_id: Identity::new(*embedding.identity().as_bytes()),
+                    profile_id: Identity::new(*profile.identity().as_bytes()),
+                },
+            );
+        }
+        for profile in rmsnorm.profiles() {
+            let Some(operator) = public_rmsnorm_operator(profile.operation()) else {
+                continue;
+            };
+            insert_public_profile(
+                &mut fixtures,
+                PublicProfileFixture {
+                    role_tag: profile.bucket().role() as u8,
+                    bucket_tag: profile.bucket().kind() as u8,
+                    operator,
+                    catalog_id: Identity::new(*rmsnorm.identity().as_bytes()),
+                    profile_id: Identity::new(*profile.identity().as_bytes()),
+                },
+            );
+        }
+        for profile in rope_kv.profiles() {
+            insert_public_profile(
+                &mut fixtures,
+                PublicProfileFixture {
+                    role_tag: profile.bucket().role() as u8,
+                    bucket_tag: profile.bucket().kind() as u8,
+                    operator: public_rope_kv_operator(profile.operation()),
+                    catalog_id: Identity::new(*rope_kv.identity().as_bytes()),
+                    profile_id: Identity::new(*profile.identity().as_bytes()),
+                },
+            );
+        }
+        for profile in prefill.profiles() {
+            insert_public_profile(
+                &mut fixtures,
+                PublicProfileFixture {
+                    role_tag: profile.role() as u8,
+                    bucket_tag: profile.bucket() as u8,
+                    operator: Qwen3Operator::Attention,
+                    catalog_id: Identity::new(*prefill.identity().as_bytes()),
+                    profile_id: Identity::new(*profile.identity().as_bytes()),
+                },
+            );
+        }
+        for profile in paged_decode.profiles() {
+            insert_public_profile(
+                &mut fixtures,
+                PublicProfileFixture {
+                    role_tag: profile.role() as u8,
+                    bucket_tag: profile.bucket() as u8 + 4,
+                    operator: Qwen3Operator::Attention,
+                    catalog_id: Identity::new(*paged_decode.identity().as_bytes()),
+                    profile_id: Identity::new(*profile.identity().as_bytes()),
+                },
+            );
+        }
+        for profile in swiglu.profiles() {
+            insert_public_profile(
+                &mut fixtures,
+                PublicProfileFixture {
+                    role_tag: profile.role() as u8,
+                    bucket_tag: profile.bucket() as u8,
+                    operator: Qwen3Operator::SwiGlu,
+                    catalog_id: Identity::new(*swiglu.identity().as_bytes()),
+                    profile_id: Identity::new(*profile.identity().as_bytes()),
+                },
+            );
+        }
+        for profile in logits.profiles() {
+            insert_public_profile(
+                &mut fixtures,
+                PublicProfileFixture {
+                    role_tag: profile.bucket().role() as u8,
+                    bucket_tag: profile.bucket().kind() as u8,
+                    operator: Qwen3Operator::ArgmaxCompactCompletion,
+                    catalog_id: Identity::new(*logits.identity().as_bytes()),
+                    profile_id: Identity::new(*profile.identity().as_bytes()),
+                },
+            );
+        }
+        assert_eq!(fixtures.len(), GRAPH_USED_QWEN_PROFILES);
+        fixtures
+    }
+
+    const fn public_model_role_tag(role: Qwen3ModelRole) -> u8 {
+        match role {
+            Qwen3ModelRole::Target8B => 1,
+            Qwen3ModelRole::Draft06B => 2,
+        }
+    }
+
+    const fn public_plan_bucket_tag(bucket: Qwen3PlanBucket) -> u8 {
+        match bucket {
+            Qwen3PlanBucket::PrefillS1T128 => 1,
+            Qwen3PlanBucket::PrefillS8T128 => 2,
+            Qwen3PlanBucket::PrefillS1T512 => 3,
+            Qwen3PlanBucket::PrefillS1T2048 => 4,
+            Qwen3PlanBucket::DecodeS1C8192 => 5,
+            Qwen3PlanBucket::DecodeS8C8192 => 6,
+            Qwen3PlanBucket::DecodeS32C8192 => 7,
+            Qwen3PlanBucket::SpeculativeS1K4C8192 => 8,
+            Qwen3PlanBucket::SpeculativeS8K4C8192 => 9,
+            Qwen3PlanBucket::SpeculativeS1K8C8192 => 10,
+            Qwen3PlanBucket::SpeculativeS1K16C8192 => 11,
+        }
+    }
+
+    fn public_operation_bindings(
+        declaration: &GeneratedRunnerDeclaration,
+        families: &[DeclaredKernelFamilyArtifact],
+        fixtures: &[PublicProfileFixture],
+    ) -> Box<[DeclaredOperationKernelBinding]> {
+        declaration
+            .operations()
+            .iter()
+            .map(|operation| {
+                let profile = fixtures
+                    .iter()
+                    .find(|fixture| {
+                        fixture.role_tag == public_model_role_tag(operation.profile.selection.role)
+                            && fixture.bucket_tag
+                                == public_plan_bucket_tag(operation.profile.selection.bucket)
+                            && fixture.operator == operation.profile.step.operator
+                    })
+                    .expect("generated operation has one public Qwen profile");
+                let family = families
+                    .iter()
+                    .copied()
+                    .find(|family| family.family() == operation.profile.family)
+                    .expect("generated operation has one family declaration");
+                DeclaredOperationKernelBinding::new(
+                    operation.operation_index,
+                    operation.plan_index,
+                    DeclaredOperationIdentity::new(
+                        operation.profile.plan_id,
+                        declaration.declaration_id(),
+                        declaration.kernel_catalog_id(),
+                        profile.catalog_id,
+                        profile.profile_id,
+                    ),
+                    family,
+                )
+            })
+            .collect::<Vec<_>>()
+            .into_boxed_slice()
+    }
+
+    fn public_runner_fixture() -> (
+        LogicalRunnerDeclaration,
+        Box<[DeclaredKernelFamilyArtifact]>,
+        Box<[DeclaredOperationKernelBinding]>,
+    ) {
+        let declaration =
+            generate_qwen3_gfx942_runner_declaration(qwen3_runner_closure_test_fixture())
+                .expect("generated runner from compact sealed fixture");
+        let families = family_artifacts();
+        let profiles = public_profile_fixtures();
+        let operations = public_operation_bindings(&declaration, &families, &profiles);
+        let publication = publish_qwen3_gfx942_runner_declaration(declaration)
+            .expect("published runner from compact sealed fixture");
+        (
+            LogicalRunnerDeclaration::from_published(publication),
+            families,
+            operations,
+        )
+    }
+
+    #[test]
+    fn real_publication_binds_all_plans_and_rejection_recovers_exact_inputs() {
+        let (runner, families, operations) = public_runner_fixture();
+        let outcome = bind_declared_operation_kernel_plan(runner, families, operations);
+        let OperationKernelPlanOutcome::Bound(plan) = outcome else {
+            panic!("exact published runner must bind");
+        };
+        let mut plan_count = 0_usize;
+        let mut operation_count = 0_usize;
+        for role in [Qwen3ModelRole::Target8B, Qwen3ModelRole::Draft06B] {
+            for (mode, bucket) in M1_B3_PLAN_BUCKETS {
+                let selection = Qwen3PlanSelection { role, mode, bucket };
+                let operations = plan
+                    .operations_for(selection)
+                    .expect("published plan range");
+                assert_eq!(
+                    operations.len(),
+                    match role {
+                        Qwen3ModelRole::Target8B => 544,
+                        Qwen3ModelRole::Draft06B => 424,
+                    }
+                );
+                assert_eq!(
+                    usize::try_from(operations[0].operation_index()).expect("u32 fits usize"),
+                    operation_count
+                );
+                operation_count += operations.len();
+                plan_count += 1;
+            }
+        }
+        assert_eq!(plan_count, 22);
+        assert_eq!(operation_count, M1_KERNEL_OPERATION_BINDINGS);
+        assert_eq!(plan.operations().len(), M1_KERNEL_OPERATION_BINDINGS);
+
+        let (runner, families, mut operations) = public_runner_fixture();
+        let retained_runner = (
+            runner.source_id(),
+            runner.admission_record_id(),
+            runner.bundle_id(),
+            runner.target_prepacked_id(),
+            runner.draft_prepacked_id(),
+            runner.plan_catalog_id(),
+            runner.kernel_catalog_id(),
+            runner.closure_id(),
+            runner.declaration_id(),
+            runner.plan_count(),
+            runner.operation_count(),
+        );
+        let retained_families = families.clone();
+        let first = operations[0];
+        let family = families
+            .iter()
+            .copied()
+            .find(|family| family.family() == first.family())
+            .expect("first operation family");
+        operations[0] = DeclaredOperationKernelBinding::new(
+            first.operation_index(),
+            first.plan_index(),
+            DeclaredOperationIdentity::new(
+                identity(99),
+                first.runner_declaration_id(),
+                first.kernel_catalog_id(),
+                first.profile_catalog_id(),
+                first.profile_id(),
+            ),
+            family,
+        );
+        let retained_operations = operations.clone();
+        let outcome = bind_declared_operation_kernel_plan(runner, families, operations);
+        let OperationKernelPlanOutcome::Rejected(failure) = outcome else {
+            panic!("hostile plan identity must fail closed");
+        };
+        assert_eq!(failure.error(), OperationKernelPlanError::PlanIdentity(0));
+        let (error, runner, families, operations) = failure.into_parts();
+        assert_eq!(error, OperationKernelPlanError::PlanIdentity(0));
+        assert_eq!(families, retained_families);
+        assert_eq!(operations, retained_operations);
+        assert_eq!(
+            (
+                runner.source_id(),
+                runner.admission_record_id(),
+                runner.bundle_id(),
+                runner.target_prepacked_id(),
+                runner.draft_prepacked_id(),
+                runner.plan_catalog_id(),
+                runner.kernel_catalog_id(),
+                runner.closure_id(),
+                runner.declaration_id(),
+                runner.plan_count(),
+                runner.operation_count(),
+            ),
+            retained_runner
+        );
     }
 
     #[test]

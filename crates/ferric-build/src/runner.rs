@@ -1087,6 +1087,61 @@ fn identity_record(domain: &[u8], bytes: &[u8]) -> Identity {
     Identity::new(hasher.finish())
 }
 
+/// Builds the compact sealed runner-closure fixture for cross-crate tests.
+///
+/// This helper exists only under the `test-fixtures` feature. Its in-crate
+/// compact prepacked authorities do not authenticate deployed model bytes and
+/// must not be used as production admission or qualification evidence.
+#[cfg(feature = "test-fixtures")]
+#[doc(hidden)]
+#[must_use]
+pub fn qwen3_runner_closure_test_fixture() -> PreliminaryIdentityClosure {
+    use crate::{
+        build_authenticated_sequential_plan_catalog, build_preliminary_identity_closure,
+        build_prepacked_deployment_bundle, expected_preliminary_kernel_catalog_identity,
+        seal_authenticated_bundle, tokenizer::test_fixtures::authenticated_assets,
+        tokenizer::test_fixtures::test_tokenizer, weight_stream::test_fixtures::test_prepacked,
+        ExternalIdentityClosureInputs,
+    };
+    use ferric_spec::Qwen3ModelRole;
+
+    const fn fixture_identity(byte: u8) -> Identity {
+        Identity::new([byte; 32])
+    }
+
+    let prepacked = build_prepacked_deployment_bundle(
+        authenticated_assets(),
+        test_tokenizer(Qwen3ModelRole::Target8B),
+        test_tokenizer(Qwen3ModelRole::Draft06B),
+        test_prepacked(Qwen3ModelRole::Target8B),
+        test_prepacked(Qwen3ModelRole::Draft06B),
+    )
+    .expect("exact compact prepacked fixture");
+    let admission = seal_authenticated_bundle(prepacked).expect("sealed compact fixture");
+    let catalog = build_authenticated_sequential_plan_catalog(admission)
+        .expect("authenticated compact plan fixture");
+    let mut external = ExternalIdentityClosureInputs {
+        ferric_source: fixture_identity(31),
+        fe2o3_source: fixture_identity(32),
+        compiler: fixture_identity(33),
+        compiler_configuration: fixture_identity(34),
+        target_contract: fixture_identity(35),
+        kernel_catalog: fixture_identity(36),
+        kernel_proof_set: fixture_identity(37),
+        kernel_abi_catalog: fixture_identity(38),
+        executable_catalog: fixture_identity(39),
+        runtime_contract: fixture_identity(40),
+        runtime_abi: fixture_identity(41),
+        generated_runner: expected_qwen3_gfx942_runner_source_identity(),
+        validator_registry: fixture_identity(43),
+        qualification_protocol: fixture_identity(44),
+        tcb_report: fixture_identity(45),
+    };
+    external.kernel_catalog = expected_preliminary_kernel_catalog_identity(&catalog, &external)
+        .expect("structural compact kernel fixture");
+    build_preliminary_identity_closure(catalog, external).expect("compact identity closure")
+}
+
 #[cfg(test)]
 mod tests {
     use super::{

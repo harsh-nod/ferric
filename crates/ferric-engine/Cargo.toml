@@ -13,6 +13,9 @@ ferric-qwen-kernels = { path = "../ferric-qwen-kernels" }
 ferric-spec = { path = "../ferric-spec" }
 vstd.workspace = true
 
+[dev-dependencies]
+ferric-build = { path = "../ferric-build", features = ["test-fixtures"] }
+
 [package.metadata.verus]
 verify = true
 
