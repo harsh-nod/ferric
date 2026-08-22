@@ -521,6 +521,11 @@ pub open spec fn canonical_step_spec(
         geometry.query_heads,
         geometry.head_dim,
     );
+    let attention = shape_3_spec(
+        dimensions.sequences,
+        dimensions.active_tokens,
+        geometry.query_heads * geometry.head_dim,
+    );
     let kv = shape_4_spec(
         dimensions.sequences,
         dimensions.active_tokens,
@@ -608,11 +613,11 @@ pub open spec fn canonical_step_spec(
             input_0: buffer_spec(Qwen3BufferKind::RotatedQuery, layer, query),
             input_1: buffer_spec(Qwen3BufferKind::KvKeys, layer, cache),
             input_2: buffer_spec(Qwen3BufferKind::KvValues, layer, cache),
-            output_0: buffer_spec(Qwen3BufferKind::AttentionOutput, layer, hidden), output_1: none,
+            output_0: buffer_spec(Qwen3BufferKind::AttentionOutput, layer, attention), output_1: none,
         },
         Qwen3Operator::AttentionOutputResidual => Qwen3PlanStep {
             ordinal, layer, operator, geometry,
-            input_0: buffer_spec(Qwen3BufferKind::AttentionOutput, layer, hidden),
+            input_0: buffer_spec(Qwen3BufferKind::AttentionOutput, layer, attention),
             input_1: buffer_spec(Qwen3BufferKind::Hidden, layer, hidden), input_2: none,
             output_0: buffer_spec(Qwen3BufferKind::HiddenAfterAttention, layer, hidden), output_1: none,
         },
@@ -685,6 +690,11 @@ fn canonical_step(
         dimensions.active_tokens,
         geometry.query_heads,
         geometry.head_dim,
+    );
+    let attention = shape_3(
+        dimensions.sequences,
+        dimensions.active_tokens,
+        geometry.query_heads * geometry.head_dim,
     );
     let kv = shape_4(
         dimensions.sequences,
@@ -761,11 +771,11 @@ fn canonical_step(
             input_0: buffer(Qwen3BufferKind::RotatedQuery, layer, query),
             input_1: buffer(Qwen3BufferKind::KvKeys, layer, cache),
             input_2: buffer(Qwen3BufferKind::KvValues, layer, cache),
-            output_0: buffer(Qwen3BufferKind::AttentionOutput, layer, hidden), output_1: none,
+            output_0: buffer(Qwen3BufferKind::AttentionOutput, layer, attention), output_1: none,
         },
         Qwen3Operator::AttentionOutputResidual => Qwen3PlanStep {
             ordinal, layer, operator, geometry,
-            input_0: buffer(Qwen3BufferKind::AttentionOutput, layer, hidden),
+            input_0: buffer(Qwen3BufferKind::AttentionOutput, layer, attention),
             input_1: buffer(Qwen3BufferKind::Hidden, layer, hidden), input_2: none,
             output_0: buffer(Qwen3BufferKind::HiddenAfterAttention, layer, hidden), output_1: none,
         },
@@ -1304,9 +1314,52 @@ mod tests {
         assert_eq!(target.steps[2].geometry.query_heads, 32);
         assert_eq!(target.steps[2].geometry.gqa_group_size, 4);
         assert_eq!(target.steps[0].input_0.shape.dimension_1, 9);
+        assert_eq!(target.steps[9].operator, Qwen3Operator::Attention);
+        assert_eq!(target.steps[9].output_0.shape.dimension_2, 4_096);
+        assert_eq!(
+            target.steps[10].operator,
+            Qwen3Operator::AttentionOutputResidual
+        );
+        assert_eq!(target.steps[10].input_0.shape.dimension_2, 4_096);
+        assert_eq!(target.steps[10].output_0.shape.dimension_2, 4_096);
         assert_eq!(draft.steps[2].geometry.query_heads, 16);
         assert_eq!(draft.steps[2].geometry.gqa_group_size, 2);
         assert_eq!(draft.steps[0].input_0.shape.dimension_1, 8);
+        assert_eq!(draft.steps[9].operator, Qwen3Operator::Attention);
+        assert_eq!(draft.steps[9].output_0.shape.dimension_2, 2_048);
+        assert_eq!(
+            draft.steps[10].operator,
+            Qwen3Operator::AttentionOutputResidual
+        );
+        assert_eq!(draft.steps[10].input_0.shape.dimension_2, 2_048);
+        assert_eq!(draft.steps[10].output_0.shape.dimension_2, 1_024);
+    }
+
+    #[test]
+    fn draft_attention_hidden_width_substitution_fails_closed() {
+        let base = canonical_plan(
+            Qwen3ModelRole::Draft06B,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+
+        let mut wrong_attention_output = base.clone();
+        wrong_attention_output.steps[9].output_0.shape.dimension_2 = 1_024;
+        assert_eq!(
+            wrong_attention_output.validate(authority(), wrong_attention_output.selection),
+            Err(Qwen3PlanError::StepMismatch { ordinal: 9 })
+        );
+
+        let mut wrong_output_projection_input = base;
+        wrong_output_projection_input.steps[10]
+            .input_0
+            .shape
+            .dimension_2 = 1_024;
+        assert_eq!(
+            wrong_output_projection_input
+                .validate(authority(), wrong_output_projection_input.selection),
+            Err(Qwen3PlanError::StepMismatch { ordinal: 10 })
+        );
     }
 
     #[test]
