@@ -5,6 +5,7 @@
 #[allow(unused_imports)]
 use vstd::prelude::*;
 
+mod bound_step_workspaces;
 mod cache;
 mod completion_wire;
 mod device_cache;
@@ -24,6 +25,11 @@ mod step_workspace_composition;
 mod step_workspace_subleases;
 mod system;
 
+pub use bound_step_workspaces::{
+    bind_addressless_m1_full_step_workspace_subleases, BoundM1FullStepWorkspaceSubleases,
+    M1FullStepWorkspaceDispatchRangeError, M1FullStepWorkspaceSubleaseBindingError,
+    M1FullStepWorkspaceSubleaseBindingFailure, M1FullStepWorkspaceSubleaseOwners,
+};
 pub use cache::{KvError, PageId};
 pub use completion_wire::{
     bind_inert_completion_epoch, check_inert_completion_record, CheckedCompletionSemantics,
@@ -100,8 +106,8 @@ pub use step_workspace_composition::{
 };
 pub use step_workspace_subleases::{
     bind_addressless_m1_step_workspace_subleases, BoundM1StepWorkspaceSubleases,
-    M1StepWorkspaceSubleaseBindingError, M1StepWorkspaceSubleaseBindingFailure,
-    M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
+    M1StepWorkspaceDispatchRangeError, M1StepWorkspaceSubleaseBindingError,
+    M1StepWorkspaceSubleaseBindingFailure, M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
     M1_TARGET_SPECULATIVE_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
     M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
 };

@@ -161,6 +161,56 @@ impl fmt::Display for M1StepWorkspaceSubleaseBindingError {
 
 impl std::error::Error for M1StepWorkspaceSubleaseBindingError {}
 
+/// Failure while resolving one exact role-contained workspace dispatch range.
+#[derive(Debug)]
+pub enum M1StepWorkspaceDispatchRangeError {
+    /// The requested semantic role is inactive in the retained workspace plan.
+    InactiveRole {
+        /// Requested inactive role.
+        role: M1StepWorkspaceRangeRole,
+    },
+    /// The requested subrange names another semantic role.
+    RangeRoleDrift {
+        /// Required role.
+        expected: M1StepWorkspaceRangeRole,
+        /// Rejected role.
+        actual: M1StepWorkspaceRangeRole,
+    },
+    /// The requested subrange is empty.
+    EmptyRange {
+        /// Requested role.
+        role: M1StepWorkspaceRangeRole,
+    },
+    /// The requested subrange has invalid or unsatisfied alignment.
+    RangeAlignment {
+        /// Requested role.
+        role: M1StepWorkspaceRangeRole,
+    },
+    /// The requested subrange or retained parent range overflowed `u64`.
+    RangeOverflow {
+        /// Requested role.
+        role: M1StepWorkspaceRangeRole,
+    },
+    /// The requested subrange is not wholly contained in the retained role member.
+    RangeOutOfBounds {
+        /// Requested role.
+        role: M1StepWorkspaceRangeRole,
+    },
+    /// The generic allocation owner rejected the retained member or generation.
+    Allocation(ServiceAllocationErrorV1),
+}
+
+impl fmt::Display for M1StepWorkspaceDispatchRangeError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            formatter,
+            "M1 step workspace dispatch range rejected: {self:?}"
+        )
+    }
+}
+
+impl std::error::Error for M1StepWorkspaceDispatchRangeError {}
+
 /// Rejected binding retaining the exact unchanged addressless plan.
 #[must_use = "the rejected addressless workspace plan remains recoverable"]
 #[derive(Debug)]
@@ -267,6 +317,93 @@ impl<const N: usize> BoundM1StepWorkspaceSubleases<N> {
         };
         allocations.device_dispatch_range(range).map(Some)
     }
+
+    /// Revalidates and resolves one exact absolute subrange inside a role member.
+    ///
+    /// The returned generic range retains the exact allocation generation and
+    /// logical member index recorded by this owner. The requested range is
+    /// addressless and its offset is relative to the workspace allocation, not
+    /// to the role member.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`M1StepWorkspaceDispatchRangeError`] if the role is inactive,
+    /// the requested interval is not nonempty, aligned, and wholly contained in
+    /// that exact role member, or the generic allocation owner rejects the
+    /// retained partition or allocation generation.
+    pub fn dispatch_subrange(
+        &self,
+        allocations: &ServiceAllocationSessionV1,
+        role: M1StepWorkspaceRangeRole,
+        requested: M1StepWorkspaceRange,
+    ) -> Result<ServiceDeviceDispatchRangeV1, M1StepWorkspaceDispatchRangeError> {
+        let member_index = self
+            .member_index(role)
+            .ok_or(M1StepWorkspaceDispatchRangeError::InactiveRole { role })?;
+        let parent = self
+            .plan
+            .range(role)
+            .ok_or(M1StepWorkspaceDispatchRangeError::InactiveRole { role })?;
+        let relative_offset = validate_role_contained_subrange(role, parent, requested)?;
+        let range = allocations
+            .sublease_range(
+                &self.subleases,
+                member_index,
+                relative_offset,
+                requested.byte_len(),
+                requested.alignment(),
+            )
+            .map_err(M1StepWorkspaceDispatchRangeError::Allocation)?;
+        allocations
+            .device_dispatch_range(range)
+            .map_err(M1StepWorkspaceDispatchRangeError::Allocation)
+    }
+
+    pub(crate) fn revalidate_dispatch_ranges(
+        &self,
+        allocations: &ServiceAllocationSessionV1,
+    ) -> Result<(), ServiceAllocationErrorV1> {
+        for range in allocations.sublease_ranges(&self.subleases)? {
+            allocations.device_dispatch_range(range)?;
+        }
+        Ok(())
+    }
+}
+
+fn validate_role_contained_subrange(
+    role: M1StepWorkspaceRangeRole,
+    parent: M1StepWorkspaceRange,
+    requested: M1StepWorkspaceRange,
+) -> Result<u64, M1StepWorkspaceDispatchRangeError> {
+    if requested.role() != role {
+        return Err(M1StepWorkspaceDispatchRangeError::RangeRoleDrift {
+            expected: role,
+            actual: requested.role(),
+        });
+    }
+    if requested.byte_len() == 0 {
+        return Err(M1StepWorkspaceDispatchRangeError::EmptyRange { role });
+    }
+    if requested.alignment() == 0
+        || !requested.alignment().is_power_of_two()
+        || requested.alignment() != parent.alignment()
+        || !requested.offset().is_multiple_of(requested.alignment())
+    {
+        return Err(M1StepWorkspaceDispatchRangeError::RangeAlignment { role });
+    }
+    let parent_end = parent
+        .checked_end()
+        .ok_or(M1StepWorkspaceDispatchRangeError::RangeOverflow { role })?;
+    let requested_end = requested
+        .checked_end()
+        .ok_or(M1StepWorkspaceDispatchRangeError::RangeOverflow { role })?;
+    if requested.offset() < parent.offset() || requested_end > parent_end {
+        return Err(M1StepWorkspaceDispatchRangeError::RangeOutOfBounds { role });
+    }
+    requested
+        .offset()
+        .checked_sub(parent.offset())
+        .ok_or(M1StepWorkspaceDispatchRangeError::RangeOutOfBounds { role })
 }
 
 #[derive(Debug)]
@@ -960,5 +1097,66 @@ mod tests {
             reject(&length),
             M1StepWorkspaceSubleaseBindingError::RangeLengthDrift { index: 0, .. }
         ));
+    }
+
+    #[test]
+    fn exact_role_subranges_are_absolute_contained_and_aligned() {
+        let parent = M1StepWorkspaceRange::new(M1StepWorkspaceRangeRole::DraftChoices, 128, 64, 4);
+        let exact = M1StepWorkspaceRange::new(M1StepWorkspaceRangeRole::DraftChoices, 144, 16, 4);
+        assert_eq!(
+            validate_role_contained_subrange(M1StepWorkspaceRangeRole::DraftChoices, parent, exact)
+                .unwrap(),
+            16
+        );
+
+        for (requested, expected) in [
+            (
+                M1StepWorkspaceRange::new(M1StepWorkspaceRangeRole::Choices, 144, 16, 4),
+                1,
+            ),
+            (
+                M1StepWorkspaceRange::new(M1StepWorkspaceRangeRole::DraftChoices, 144, 0, 4),
+                2,
+            ),
+            (
+                M1StepWorkspaceRange::new(M1StepWorkspaceRangeRole::DraftChoices, 146, 16, 4),
+                3,
+            ),
+            (
+                M1StepWorkspaceRange::new(
+                    M1StepWorkspaceRangeRole::DraftChoices,
+                    u64::MAX - 3,
+                    8,
+                    4,
+                ),
+                4,
+            ),
+            (
+                M1StepWorkspaceRange::new(M1StepWorkspaceRangeRole::DraftChoices, 124, 16, 4),
+                5,
+            ),
+            (
+                M1StepWorkspaceRange::new(M1StepWorkspaceRangeRole::DraftChoices, 184, 16, 4),
+                5,
+            ),
+        ] {
+            let error = validate_role_contained_subrange(
+                M1StepWorkspaceRangeRole::DraftChoices,
+                parent,
+                requested,
+            )
+            .unwrap_err();
+            assert!(matches!(
+                (expected, error),
+                (1, M1StepWorkspaceDispatchRangeError::RangeRoleDrift { .. })
+                    | (2, M1StepWorkspaceDispatchRangeError::EmptyRange { .. })
+                    | (3, M1StepWorkspaceDispatchRangeError::RangeAlignment { .. })
+                    | (4, M1StepWorkspaceDispatchRangeError::RangeOverflow { .. })
+                    | (
+                        5,
+                        M1StepWorkspaceDispatchRangeError::RangeOutOfBounds { .. }
+                    )
+            ));
+        }
     }
 }
