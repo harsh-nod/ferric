@@ -3,16 +3,22 @@
 //! Target-only differential run-plan, comparison, and record-ingestion boundary.
 
 use ferric_m1_benchmarks::{
-    create_new_output, encode_canonical_document, load_benchmark_plan, load_canonical_document,
-    main_for, sha256_identity, BenchResult, Metric, Suite,
+    encode_canonical_document, load_benchmark_plan, load_canonical_document, main_for,
+    sha256_identity, BenchResult, Metric, SecureFileIdentity, SecureInputDirectory,
+    SecureInputFile, Suite,
+};
+use rustix::fd::OwnedFd;
+use rustix::fs::{
+    fsync, mkdirat, openat2, renameat_with, unlinkat, AtFlags, Mode, OFlags, RenameFlags,
+    ResolveFlags, CWD,
 };
 use serde_json::{json, Map, Value};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::ffi::OsString;
-use std::fs::{self, File};
-use std::io::{BufReader, Read};
+use std::fs::File;
+use std::io::{Read, Write};
 use std::path::{Component, Path, PathBuf};
 use std::process::ExitCode;
 #[allow(unused_imports)]
@@ -73,15 +79,31 @@ const SUITE: Suite = Suite {
 #[derive(Debug)]
 struct Payload {
     bytes: u64,
+    input: Option<SecureInputFile>,
     path: PathBuf,
     sha256: String,
 }
 
 #[derive(Debug)]
 struct Output {
+    manifest_identity: SecureFileIdentity,
     manifest_sha256: String,
     logits: Payload,
     tokens: Payload,
+}
+
+struct OutputContext<'a> {
+    case_id: &'a str,
+    case: &'a PlanCase,
+    identities: &'a BTreeMap<String, String>,
+    plan_sha256: &'a str,
+    runner_transcript_sha256: &'a str,
+}
+
+#[derive(Clone, Copy)]
+struct PayloadExpectation<'a> {
+    bytes: u64,
+    sha256: &'a str,
 }
 
 #[derive(Debug)]
@@ -114,7 +136,24 @@ struct CheckedReader<R> {
     bytes: u64,
 }
 
-impl<R: Read> CheckedReader<R> {
+trait SnapshotRead: Read {
+    fn validate_snapshot(&self, description: &str) -> BenchResult<()>;
+}
+
+impl SnapshotRead for SecureInputFile {
+    fn validate_snapshot(&self, description: &str) -> BenchResult<()> {
+        SecureInputFile::validate_snapshot(self, description)
+    }
+}
+
+#[cfg(test)]
+impl<T: AsRef<[u8]>> SnapshotRead for std::io::Cursor<T> {
+    fn validate_snapshot(&self, _description: &str) -> BenchResult<()> {
+        Ok(())
+    }
+}
+
+impl<R: SnapshotRead> CheckedReader<R> {
     fn new(inner: R) -> Self {
         Self {
             inner,
@@ -124,9 +163,10 @@ impl<R: Read> CheckedReader<R> {
     }
 
     fn read_exact(&mut self, buffer: &mut [u8], description: &str) -> BenchResult<()> {
-        self.inner
-            .read_exact(buffer)
-            .map_err(|error| format!("cannot read {description}: {error}"))?;
+        if let Err(error) = self.inner.read_exact(buffer) {
+            self.inner.validate_snapshot(description)?;
+            return Err(format!("cannot read {description}: {error}"));
+        }
         self.sha256.update(&*buffer);
         self.bytes = self
             .bytes
@@ -138,21 +178,222 @@ impl<R: Read> CheckedReader<R> {
         Ok(())
     }
 
-    fn finish(mut self, payload: &Payload, description: &str) -> BenchResult<()> {
+    fn finish(
+        mut self,
+        expected_bytes: u64,
+        expected_sha256: &str,
+        description: &str,
+    ) -> BenchResult<()> {
         let mut trailing = [0_u8; 1];
-        let trailing_bytes = self
-            .inner
-            .read(&mut trailing)
-            .map_err(|error| format!("cannot finish {description}: {error}"))?;
-        if trailing_bytes != 0 || self.bytes != payload.bytes {
+        let trailing_bytes = match self.inner.read(&mut trailing) {
+            Ok(bytes) => bytes,
+            Err(error) => {
+                self.inner.validate_snapshot(description)?;
+                return Err(format!("cannot finish {description}: {error}"));
+            }
+        };
+        if trailing_bytes != 0 || self.bytes != expected_bytes {
+            self.inner.validate_snapshot(description)?;
             return Err(format!("{description} length drifted"));
         }
+        self.inner.validate_snapshot(description)?;
         let actual = hex_digest(self.sha256.finalize().as_slice());
-        if actual != payload.sha256 {
+        if actual != expected_sha256 {
             return Err(format!("{description} SHA-256 drifted"));
         }
         Ok(())
     }
+}
+
+struct StagingBundle {
+    parent: OwnedFd,
+    staging: OwnedFd,
+    raw: OwnedFd,
+    staging_name: OsString,
+    output_name: OsString,
+    raw_names: Vec<OsString>,
+    records_written: bool,
+    armed: bool,
+}
+
+impl StagingBundle {
+    fn create(output: &Path) -> BenchResult<Self> {
+        let output_name = output
+            .file_name()
+            .map(OsString::from)
+            .ok_or_else(|| "output bundle path has no final component".to_owned())?;
+        let parent_path = output.parent().unwrap_or_else(|| Path::new("."));
+        let parent = openat2(
+            CWD,
+            parent_path,
+            OFlags::RDONLY
+                | OFlags::DIRECTORY
+                | OFlags::NOFOLLOW
+                | OFlags::NONBLOCK
+                | OFlags::CLOEXEC,
+            Mode::empty(),
+            ResolveFlags::NO_SYMLINKS | ResolveFlags::NO_MAGICLINKS,
+        )
+        .map_err(|error| format!("cannot securely open output parent: {error}"))?;
+        match openat2(
+            &parent,
+            output_name.as_os_str(),
+            OFlags::RDONLY | OFlags::NOFOLLOW | OFlags::NONBLOCK | OFlags::CLOEXEC,
+            Mode::empty(),
+            ResolveFlags::BENEATH | ResolveFlags::NO_SYMLINKS | ResolveFlags::NO_MAGICLINKS,
+        ) {
+            Ok(_) => return Err("output bundle already exists".to_owned()),
+            Err(error) if error == rustix::io::Errno::NOENT => {}
+            Err(error) => return Err(format!("cannot safely inspect output bundle: {error}")),
+        }
+
+        for nonce in 0..1_024_u16 {
+            let mut staging_name = OsString::from(".");
+            staging_name.push(&output_name);
+            staging_name.push(format!(".staging.{}.{nonce}", std::process::id()));
+            match mkdirat(
+                &parent,
+                staging_name.as_os_str(),
+                Mode::RUSR | Mode::WUSR | Mode::XUSR,
+            ) {
+                Ok(()) => {
+                    let staging =
+                        match open_directory_at(&parent, Path::new(&staging_name), "staging") {
+                            Ok(staging) => staging,
+                            Err(error) => {
+                                let _ =
+                                    unlinkat(&parent, staging_name.as_os_str(), AtFlags::REMOVEDIR);
+                                return Err(error);
+                            }
+                        };
+                    if let Err(error) =
+                        mkdirat(&staging, "raw", Mode::RUSR | Mode::WUSR | Mode::XUSR)
+                    {
+                        let _ = unlinkat(&parent, staging_name.as_os_str(), AtFlags::REMOVEDIR);
+                        return Err(format!("cannot create staged raw directory: {error}"));
+                    }
+                    let raw = match open_directory_at(&staging, Path::new("raw"), "staged raw") {
+                        Ok(raw) => raw,
+                        Err(error) => {
+                            let _ = unlinkat(&staging, "raw", AtFlags::REMOVEDIR);
+                            let _ = unlinkat(&parent, staging_name.as_os_str(), AtFlags::REMOVEDIR);
+                            return Err(error);
+                        }
+                    };
+                    return Ok(Self {
+                        parent,
+                        staging,
+                        raw,
+                        staging_name,
+                        output_name,
+                        raw_names: Vec::new(),
+                        records_written: false,
+                        armed: true,
+                    });
+                }
+                Err(error) if error == rustix::io::Errno::EXIST => {}
+                Err(error) => return Err(format!("cannot create staging bundle: {error}")),
+            }
+        }
+        Err("staging bundle namespace was exhausted".to_owned())
+    }
+
+    fn write_raw(&mut self, name: &str, bytes: &[u8]) -> BenchResult<()> {
+        let name = OsString::from(name);
+        self.raw_names.push(name.clone());
+        write_new_at(&self.raw, Path::new(&name), bytes, "raw comparison record")
+    }
+
+    fn write_records(&mut self, bytes: &[u8]) -> BenchResult<()> {
+        self.records_written = true;
+        write_new_at(
+            &self.staging,
+            Path::new("records.json"),
+            bytes,
+            "benchmark records",
+        )
+    }
+
+    fn publish(mut self) -> BenchResult<()> {
+        fsync(&self.raw).map_err(|error| format!("cannot sync staged raw directory: {error}"))?;
+        fsync(&self.staging).map_err(|error| format!("cannot sync staging bundle: {error}"))?;
+        renameat_with(
+            &self.parent,
+            self.staging_name.as_os_str(),
+            &self.parent,
+            self.output_name.as_os_str(),
+            RenameFlags::NOREPLACE,
+        )
+        .map_err(|error| {
+            if error == rustix::io::Errno::EXIST {
+                "output bundle appeared before no-replace publication".to_owned()
+            } else {
+                format!("cannot publish staging bundle without replacement: {error}")
+            }
+        })?;
+        self.armed = false;
+        if let Err(error) = fsync(&self.parent) {
+            eprintln!("WARN: output bundle published but parent sync failed: {error}");
+        }
+        Ok(())
+    }
+}
+
+impl Drop for StagingBundle {
+    fn drop(&mut self) {
+        if !self.armed {
+            return;
+        }
+        for name in &self.raw_names {
+            let _ = unlinkat(&self.raw, name.as_os_str(), AtFlags::empty());
+        }
+        if self.records_written {
+            let _ = unlinkat(&self.staging, "records.json", AtFlags::empty());
+        }
+        let _ = unlinkat(&self.staging, "raw", AtFlags::REMOVEDIR);
+        let _ = unlinkat(
+            &self.parent,
+            self.staging_name.as_os_str(),
+            AtFlags::REMOVEDIR,
+        );
+    }
+}
+
+fn open_directory_at(parent: &OwnedFd, relative: &Path, description: &str) -> BenchResult<OwnedFd> {
+    openat2(
+        parent,
+        relative,
+        OFlags::RDONLY | OFlags::DIRECTORY | OFlags::NOFOLLOW | OFlags::NONBLOCK | OFlags::CLOEXEC,
+        Mode::empty(),
+        ResolveFlags::BENEATH | ResolveFlags::NO_SYMLINKS | ResolveFlags::NO_MAGICLINKS,
+    )
+    .map_err(|error| format!("cannot securely open {description} directory: {error}"))
+}
+
+fn write_new_at(
+    parent: &OwnedFd,
+    relative: &Path,
+    bytes: &[u8],
+    description: &str,
+) -> BenchResult<()> {
+    let descriptor = openat2(
+        parent,
+        relative,
+        OFlags::WRONLY
+            | OFlags::CREATE
+            | OFlags::EXCL
+            | OFlags::NOFOLLOW
+            | OFlags::NONBLOCK
+            | OFlags::CLOEXEC,
+        Mode::RUSR | Mode::WUSR,
+        ResolveFlags::BENEATH | ResolveFlags::NO_SYMLINKS | ResolveFlags::NO_MAGICLINKS,
+    )
+    .map_err(|error| format!("cannot create staged {description}: {error}"))?;
+    let mut file = File::from(descriptor);
+    file.write_all(bytes)
+        .map_err(|error| format!("cannot write staged {description}: {error}"))?;
+    file.sync_all()
+        .map_err(|error| format!("cannot sync staged {description}: {error}"))
 }
 
 fn main() -> ExitCode {
@@ -173,51 +414,39 @@ fn main() -> ExitCode {
 }
 
 fn produce_command(arguments: &[OsString]) -> BenchResult<()> {
-    let [command, plan_path, pairs_path, raw_directory, records_path] = arguments else {
-        return Err(
-            "usage: ferric-m1-differential produce PLAN PAIRS OUTPUT-RAW-DIR OUTPUT-RECORDS"
-                .to_owned(),
-        );
+    let [command, plan_path, pairs_path, output_bundle] = arguments else {
+        return Err("usage: ferric-m1-differential produce PLAN PAIRS OUTPUT-BUNDLE".to_owned());
     };
     if command != "produce" {
         return Err("differential producer command drifted".to_owned());
     }
     let plan_path = Path::new(plan_path);
     let pairs_path = Path::new(pairs_path);
-    let raw_directory = Path::new(raw_directory);
-    let records_path = Path::new(records_path);
-    require_absent(raw_directory, "raw-record output directory")?;
-    require_absent(records_path, "benchmark-record output")?;
+    let output_bundle = Path::new(output_bundle);
 
     let (plan, plan_bytes) = load_benchmark_plan(&SUITE, plan_path)?;
     let plan_sha256 = sha256_identity(&plan_bytes);
     let plan_cases = exact_plan_cases(&plan)?;
     let identities = plan_identities(&plan)?;
-    let (pairs_value, pairs_bytes) =
+    let (input_root, pairs_value, pairs_bytes) =
         load_canonical_document(pairs_path, "differential pairs manifest")?;
     let pairs = parse_pairs(
+        &input_root,
         &pairs_value,
-        pairs_path.parent().unwrap_or_else(|| Path::new(".")),
         &plan_cases,
         &identities,
         &plan_sha256,
     )?;
     let pairs_sha256 = sha256_identity(&pairs_bytes);
+    let mut staging = StagingBundle::create(output_bundle)?;
 
-    let mut completed = Vec::with_capacity(pairs.len());
-    for pair in pairs {
-        let comparison = compare_pair(&pair)?;
+    let mut observations = Vec::with_capacity(pairs.len());
+    for mut pair in pairs {
+        let comparison = compare_pair(&mut pair)?;
         let raw = raw_record(&pair, comparison, &plan_sha256, &pairs_sha256)?;
         let raw_bytes = encode_canonical_document(&raw)?;
-        completed.push((pair, comparison, raw_bytes));
-    }
-
-    fs::create_dir(raw_directory)
-        .map_err(|error| format!("cannot create raw-record output directory: {error}"))?;
-    let mut observations = Vec::with_capacity(completed.len());
-    for (pair, comparison, raw_bytes) in completed {
-        let raw_path = raw_directory.join(format!("{}.differential.raw.json", pair.case_id));
-        create_new_output(&raw_path, &raw_bytes)?;
+        let raw_name = format!("{}.differential.raw.json", pair.case_id);
+        staging.write_raw(&raw_name, &raw_bytes)?;
         observations.push(observation(&pair, comparison, &raw_bytes));
     }
     let records = json!({
@@ -226,7 +455,8 @@ fn produce_command(arguments: &[OsString]) -> BenchResult<()> {
         "plan_sha256": plan_sha256,
         "suite": SUITE.name,
     });
-    create_new_output(records_path, &encode_canonical_document(&records)?)
+    staging.write_records(&encode_canonical_document(&records)?)?;
+    staging.publish()
 }
 
 fn exact_plan_cases(plan: &Value) -> BenchResult<BTreeMap<String, PlanCase>> {
@@ -301,8 +531,8 @@ fn plan_identities(plan: &Value) -> BenchResult<BTreeMap<String, String>> {
 }
 
 fn parse_pairs(
+    root: &SecureInputDirectory,
     value: &Value,
-    base: &Path,
     plan_cases: &BTreeMap<String, PlanCase>,
     identities: &BTreeMap<String, String>,
     plan_sha256: &str,
@@ -325,6 +555,7 @@ fn parse_pairs(
     let mut prior: Option<&str> = None;
     let mut seen = BTreeSet::new();
     let mut manifest_paths = BTreeSet::new();
+    let mut input_identities = BTreeSet::new();
     let mut pairs = Vec::with_capacity(values.len());
     for value in values {
         let pair = object(
@@ -350,18 +581,19 @@ fn parse_pairs(
         if plan_case.kind != kind {
             return Err(format!("differential pair drifted from plan: {case_id}"));
         }
-        let runner_transcript_sha256 = parse_companion(
+        let (runner_transcript_sha256, runner_identity) = parse_companion(
+            root,
             field(pair, "runner_transcript", "differential pair")?,
-            base,
             "runner transcript",
         )?;
+        admit_input_identity(&mut input_identities, runner_identity, "runner transcript")?;
         let ferric_path = relative_path(
-            base,
+            Path::new(""),
             string(pair, "ferric_output_manifest", "differential pair")?,
             "Ferric output manifest",
         )?;
         let reference_path = relative_path(
-            base,
+            Path::new(""),
             string(pair, "reference_output_manifest", "differential pair")?,
             "reference output manifest",
         )?;
@@ -370,24 +602,57 @@ fn parse_pairs(
         {
             return Err("differential output manifest was reused".to_owned());
         }
-        let ferric = parse_output(
-            &ferric_path,
+        let output_context = OutputContext {
             case_id,
-            plan_case,
-            "ferric",
+            case: plan_case,
             identities,
             plan_sha256,
-            &runner_transcript_sha256,
-        )?;
-        let reference = parse_output(
-            &reference_path,
-            case_id,
-            plan_case,
-            "reference",
-            identities,
-            plan_sha256,
-            &runner_transcript_sha256,
-        )?;
+            runner_transcript_sha256: &runner_transcript_sha256,
+        };
+        let ferric = parse_output(root, &ferric_path, "ferric", &output_context)?;
+        let reference = parse_output(root, &reference_path, "reference", &output_context)?;
+        for (identity, description) in [
+            (ferric.manifest_identity, "Ferric output manifest"),
+            (
+                ferric
+                    .logits
+                    .input
+                    .as_ref()
+                    .ok_or_else(|| "Ferric logit payload was not opened".to_owned())?
+                    .identity(),
+                "Ferric logit payload",
+            ),
+            (
+                ferric
+                    .tokens
+                    .input
+                    .as_ref()
+                    .ok_or_else(|| "Ferric token payload was not opened".to_owned())?
+                    .identity(),
+                "Ferric token payload",
+            ),
+            (reference.manifest_identity, "reference output manifest"),
+            (
+                reference
+                    .logits
+                    .input
+                    .as_ref()
+                    .ok_or_else(|| "reference logit payload was not opened".to_owned())?
+                    .identity(),
+                "reference logit payload",
+            ),
+            (
+                reference
+                    .tokens
+                    .input
+                    .as_ref()
+                    .ok_or_else(|| "reference token payload was not opened".to_owned())?
+                    .identity(),
+                "reference token payload",
+            ),
+        ] {
+            admit_input_identity(&mut input_identities, identity, description)?;
+        }
         seen.insert(case_id);
         pairs.push(Pair {
             case_id: case_id.to_owned(),
@@ -403,7 +668,11 @@ fn parse_pairs(
     Ok(pairs)
 }
 
-fn parse_companion(value: &Value, base: &Path, description: &str) -> BenchResult<String> {
+fn parse_companion(
+    root: &SecureInputDirectory,
+    value: &Value,
+    description: &str,
+) -> BenchResult<(String, SecureFileIdentity)> {
     let companion = object(value, &["bytes", "path", "sha256"], description)?;
     let bytes = field(companion, "bytes", description)?
         .as_u64()
@@ -413,28 +682,29 @@ fn parse_companion(value: &Value, base: &Path, description: &str) -> BenchResult
     }
     let expected_sha256 = string(companion, "sha256", description)?;
     require_sha256(expected_sha256, &format!("{description} identity"))?;
-    let path = relative_path(base, string(companion, "path", description)?, description)?;
-    let (_, actual) = load_canonical_document(&path, description)?;
+    let path = relative_path(
+        Path::new(""),
+        string(companion, "path", description)?,
+        description,
+    )?;
+    let (_, actual, identity) = root.read_canonical(&path, description)?;
     if u64::try_from(actual.len()) != Ok(bytes) {
         return Err(format!("{description} length drifted"));
     }
     if sha256_identity(&actual) != expected_sha256 {
         return Err(format!("{description} SHA-256 drifted"));
     }
-    Ok(expected_sha256.to_owned())
+    Ok((expected_sha256.to_owned(), identity))
 }
 
 fn parse_output(
+    root: &SecureInputDirectory,
     path: &Path,
-    case_id: &str,
-    case: &PlanCase,
     producer: &str,
-    identities: &BTreeMap<String, String>,
-    plan_sha256: &str,
-    runner_transcript_sha256: &str,
+    context: &OutputContext<'_>,
 ) -> BenchResult<Output> {
     let description = format!("{producer} output manifest");
-    let (value, bytes) = load_canonical_document(path, &description)?;
+    let (value, bytes, manifest_identity) = root.read_canonical(path, &description)?;
     let output = object(
         &value,
         &[
@@ -457,22 +727,27 @@ fn parse_output(
         &description,
     )?;
     expect(output, "authority", OUTPUT_AUTHORITY, "output authority")?;
-    expect(output, "case_id", case_id, "output case id")?;
+    expect(output, "case_id", context.case_id, "output case id")?;
     expect(
         output,
         "environment_sha256",
-        identity(identities, "environment")?,
+        identity(context.identities, "environment")?,
         "output environment identity",
     )?;
     expect(output, "format", OUTPUT_FORMAT, "output format")?;
     expect(
         output,
         "input_sha256",
-        &case.input_sha256,
+        &context.case.input_sha256,
         "output input identity",
     )?;
-    expect(output, "kind", &case.kind, "output kind")?;
-    expect(output, "plan_sha256", plan_sha256, "output plan identity")?;
+    expect(output, "kind", &context.case.kind, "output kind")?;
+    expect(
+        output,
+        "plan_sha256",
+        context.plan_sha256,
+        "output plan identity",
+    )?;
     expect(output, "producer", producer, "output producer")?;
 
     let (producer_identity, protocol_identity) = if producer == "ferric" {
@@ -483,29 +758,29 @@ fn parse_output(
     expect(
         output,
         "producer_sha256",
-        identity(identities, producer_identity)?,
+        identity(context.identities, producer_identity)?,
         "output producer identity",
     )?;
     expect(
         output,
         "protocol_sha256",
-        identity(identities, protocol_identity)?,
+        identity(context.identities, protocol_identity)?,
         "output protocol identity",
     )?;
     expect(
         output,
         "runner_transcript_sha256",
-        runner_transcript_sha256,
+        context.runner_transcript_sha256,
         "output runner transcript identity",
     )?;
     expect(
         output,
         "workload_sha256",
-        &case.workload_sha256,
+        &context.case.workload_sha256,
         "output workload identity",
     )?;
 
-    let rows = rows_for_kind(&case.kind)?;
+    let rows = rows_for_kind(&context.case.kind)?;
     let shape = object(
         field(output, "shape", &description)?,
         &["rows", "vocabulary_size"],
@@ -527,6 +802,7 @@ fn parse_output(
         .ok_or_else(|| "token payload length overflowed".to_owned())?;
     let base = path.parent().unwrap_or_else(|| Path::new("."));
     let logits = parse_payload(
+        root,
         field(output, "logits", &description)?,
         base,
         "bf16-le",
@@ -534,6 +810,7 @@ fn parse_output(
         "logit payload",
     )?;
     let tokens = parse_payload(
+        root,
         field(output, "tokens", &description)?,
         base,
         "u32-le",
@@ -544,6 +821,7 @@ fn parse_output(
         return Err(format!("{producer} output reuses one payload path"));
     }
     Ok(Output {
+        manifest_identity,
         manifest_sha256: sha256_identity(&bytes),
         logits,
         tokens,
@@ -551,6 +829,7 @@ fn parse_output(
 }
 
 fn parse_payload(
+    root: &SecureInputDirectory,
     value: &Value,
     base: &Path,
     encoding: &str,
@@ -562,34 +841,77 @@ fn parse_payload(
     expect_u64(payload, "bytes", expected_bytes, "payload length")?;
     let sha256 = string(payload, "sha256", description)?;
     require_sha256(sha256, "payload identity")?;
+    let path = relative_path(base, string(payload, "path", description)?, description)?;
+    let input = root.open_exact(&path, expected_bytes, description)?;
     Ok(Payload {
         bytes: expected_bytes,
-        path: relative_path(base, string(payload, "path", description)?, description)?,
+        input: Some(input),
+        path,
         sha256: sha256.to_owned(),
     })
 }
 
-fn compare_pair(pair: &Pair) -> BenchResult<Comparison> {
+fn compare_pair(pair: &mut Pair) -> BenchResult<Comparison> {
     let rows = rows_for_kind(&pair.kind)?;
-    let ferric_logits = open_payload(&pair.ferric.logits, "Ferric logit payload")?;
-    let reference_logits = open_payload(&pair.reference.logits, "reference logit payload")?;
+    let ferric_logits_bytes = pair.ferric.logits.bytes;
+    let ferric_logits_sha256 = pair.ferric.logits.sha256.clone();
+    let reference_logits_bytes = pair.reference.logits.bytes;
+    let reference_logits_sha256 = pair.reference.logits.sha256.clone();
+    let ferric_expected = PayloadExpectation {
+        bytes: ferric_logits_bytes,
+        sha256: &ferric_logits_sha256,
+    };
+    let reference_expected = PayloadExpectation {
+        bytes: reference_logits_bytes,
+        sha256: &reference_logits_sha256,
+    };
     let (maximum_logit_ulp_error, ferric_argmax, reference_argmax) = compare_logits(
-        ferric_logits,
-        reference_logits,
+        CheckedReader::new(
+            pair.ferric
+                .logits
+                .input
+                .take()
+                .ok_or_else(|| "Ferric logit payload was already consumed".to_owned())?,
+        ),
+        CheckedReader::new(
+            pair.reference
+                .logits
+                .input
+                .take()
+                .ok_or_else(|| "reference logit payload was already consumed".to_owned())?,
+        ),
         rows,
         VOCABULARY_SIZE,
-        &pair.ferric.logits,
-        &pair.reference.logits,
+        ferric_expected,
+        reference_expected,
     )?;
+    let ferric_token_bytes = pair.ferric.tokens.bytes;
+    let ferric_token_sha256 = pair.ferric.tokens.sha256.clone();
     let ferric_tokens = read_tokens(
-        open_payload(&pair.ferric.tokens, "Ferric token payload")?,
-        &pair.ferric.tokens,
+        CheckedReader::new(
+            pair.ferric
+                .tokens
+                .input
+                .take()
+                .ok_or_else(|| "Ferric token payload was already consumed".to_owned())?,
+        ),
+        ferric_token_bytes,
+        &ferric_token_sha256,
         rows,
         "Ferric token payload",
     )?;
+    let reference_token_bytes = pair.reference.tokens.bytes;
+    let reference_token_sha256 = pair.reference.tokens.sha256.clone();
     let reference_tokens = read_tokens(
-        open_payload(&pair.reference.tokens, "reference token payload")?,
-        &pair.reference.tokens,
+        CheckedReader::new(
+            pair.reference
+                .tokens
+                .input
+                .take()
+                .ok_or_else(|| "reference token payload was already consumed".to_owned())?,
+        ),
+        reference_token_bytes,
+        &reference_token_sha256,
         rows,
         "reference token payload",
     )?;
@@ -616,13 +938,13 @@ fn compare_pair(pair: &Pair) -> BenchResult<Comparison> {
     })
 }
 
-fn compare_logits<FR: Read, RR: Read>(
+fn compare_logits<FR: SnapshotRead, RR: SnapshotRead>(
     mut ferric: CheckedReader<FR>,
     mut reference: CheckedReader<RR>,
     rows: u64,
     vocabulary: u64,
-    ferric_payload: &Payload,
-    reference_payload: &Payload,
+    ferric_expected: PayloadExpectation<'_>,
+    reference_expected: PayloadExpectation<'_>,
 ) -> BenchResult<(u64, Vec<u32>, Vec<u32>)> {
     let row_capacity = usize::try_from(rows)
         .map_err(|_| "differential row count does not fit this host".to_owned())?;
@@ -652,14 +974,23 @@ fn compare_logits<FR: Read, RR: Read>(
                 .ok_or_else(|| "reference logit row was empty".to_owned())?,
         );
     }
-    ferric.finish(ferric_payload, "Ferric logit payload")?;
-    reference.finish(reference_payload, "reference logit payload")?;
+    ferric.finish(
+        ferric_expected.bytes,
+        ferric_expected.sha256,
+        "Ferric logit payload",
+    )?;
+    reference.finish(
+        reference_expected.bytes,
+        reference_expected.sha256,
+        "reference logit payload",
+    )?;
     Ok((maximum_ulp, ferric_argmax, reference_argmax))
 }
 
-fn read_tokens<R: Read>(
+fn read_tokens<R: SnapshotRead>(
     mut reader: CheckedReader<R>,
-    payload: &Payload,
+    expected_bytes: u64,
+    expected_sha256: &str,
     rows: u64,
     description: &str,
 ) -> BenchResult<Vec<u32>> {
@@ -671,11 +1002,14 @@ fn read_tokens<R: Read>(
         reader.read_exact(&mut bytes, description)?;
         tokens.push(u32::from_le_bytes(bytes));
     }
-    reader.finish(payload, description)?;
+    reader.finish(expected_bytes, expected_sha256, description)?;
     Ok(tokens)
 }
 
-fn read_bf16<R: Read>(reader: &mut CheckedReader<R>, description: &str) -> BenchResult<u16> {
+fn read_bf16<R: SnapshotRead>(
+    reader: &mut CheckedReader<R>,
+    description: &str,
+) -> BenchResult<u16> {
     let mut bytes = [0_u8; 2];
     reader.read_exact(&mut bytes, description)?;
     Ok(u16::from_le_bytes(bytes))
@@ -726,31 +1060,6 @@ fn validate_argmax(
         }
     }
     Ok(())
-}
-
-fn open_payload(
-    payload: &Payload,
-    description: &str,
-) -> BenchResult<CheckedReader<BufReader<File>>> {
-    let metadata = fs::symlink_metadata(&payload.path)
-        .map_err(|error| format!("cannot inspect {description}: {error}"))?;
-    if metadata.file_type().is_symlink() || !metadata.is_file() {
-        return Err(format!("{description} must be a regular nonsymlink file"));
-    }
-    if metadata.len() != payload.bytes {
-        return Err(format!("{description} length drifted"));
-    }
-    let file =
-        File::open(&payload.path).map_err(|error| format!("cannot open {description}: {error}"))?;
-    if file
-        .metadata()
-        .map_err(|error| format!("cannot inspect opened {description}: {error}"))?
-        .len()
-        != payload.bytes
-    {
-        return Err(format!("opened {description} length drifted"));
-    }
-    Ok(CheckedReader::new(BufReader::new(file)))
 }
 
 fn raw_record(
@@ -840,12 +1149,15 @@ fn relative_path(base: &Path, value: &str, description: &str) -> BenchResult<Pat
     Ok(base.join(relative))
 }
 
-fn require_absent(path: &Path, description: &str) -> BenchResult<()> {
-    match fs::symlink_metadata(path) {
-        Ok(_) => Err(format!("{description} already exists")),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
-        Err(error) => Err(format!("cannot inspect {description}: {error}")),
+fn admit_input_identity(
+    identities: &mut BTreeSet<SecureFileIdentity>,
+    identity: SecureFileIdentity,
+    description: &str,
+) -> BenchResult<()> {
+    if !identities.insert(identity) {
+        return Err(format!("{description} aliases another differential input"));
     }
+    Ok(())
 }
 
 fn object<'a>(
@@ -938,7 +1250,31 @@ fn hex_digest(bytes: &[u8]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
     use std::io::Cursor;
+    use std::sync::atomic::{AtomicU64, Ordering};
+
+    static TEST_NONCE: AtomicU64 = AtomicU64::new(0);
+
+    struct TestDirectory(PathBuf);
+
+    impl TestDirectory {
+        fn new() -> Self {
+            let nonce = TEST_NONCE.fetch_add(1, Ordering::Relaxed);
+            let path = env::temp_dir().join(format!(
+                "ferric-m1-differential-test.{}.{nonce}",
+                std::process::id()
+            ));
+            fs::create_dir(&path).unwrap();
+            Self(path)
+        }
+    }
+
+    impl Drop for TestDirectory {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
 
     fn bf16(values: &[u16]) -> Vec<u8> {
         values
@@ -950,6 +1286,7 @@ mod tests {
     fn payload(bytes: &[u8]) -> Payload {
         Payload {
             bytes: u64::try_from(bytes.len()).unwrap(),
+            input: None,
             path: PathBuf::new(),
             sha256: sha256_identity(bytes),
         }
@@ -963,13 +1300,21 @@ mod tests {
     ) -> BenchResult<(u64, Vec<u32>, Vec<u32>)> {
         let ferric = bf16(ferric);
         let reference = bf16(reference);
+        let ferric_payload = payload(&ferric);
+        let reference_payload = payload(&reference);
         compare_logits(
             CheckedReader::new(Cursor::new(&ferric)),
             CheckedReader::new(Cursor::new(&reference)),
             rows,
             vocabulary,
-            &payload(&ferric),
-            &payload(&reference),
+            PayloadExpectation {
+                bytes: ferric_payload.bytes,
+                sha256: &ferric_payload.sha256,
+            },
+            PayloadExpectation {
+                bytes: reference_payload.bytes,
+                sha256: &reference_payload.sha256,
+            },
         )
     }
 
@@ -1007,8 +1352,10 @@ mod tests {
 
         let ferric = bf16(&[0x3f80]);
         let reference = bf16(&[0x3f80]);
+        let reference_sha256 = sha256_identity(&reference);
         let substituted = Payload {
             bytes: 2,
+            input: None,
             path: PathBuf::new(),
             sha256: sha256_identity(b"substituted"),
         };
@@ -1017,8 +1364,14 @@ mod tests {
             CheckedReader::new(Cursor::new(&reference)),
             1,
             1,
-            &substituted,
-            &payload(&reference),
+            PayloadExpectation {
+                bytes: substituted.bytes,
+                sha256: &substituted.sha256,
+            },
+            PayloadExpectation {
+                bytes: 2,
+                sha256: &reference_sha256,
+            },
         )
         .is_err());
     }
@@ -1040,5 +1393,40 @@ mod tests {
         assert!(relative_path(base, "/tmp/output.json", "test").is_err());
         assert!(relative_path(base, "../output.json", "test").is_err());
         assert!(relative_path(base, "case/\u{2603}.json", "test").is_err());
+    }
+
+    #[test]
+    fn staged_bundle_failure_is_retry_safe_and_publication_is_no_replace() {
+        let temporary = TestDirectory::new();
+        let output = temporary.0.join("comparison.bundle");
+
+        {
+            let mut staging = StagingBundle::create(&output).unwrap();
+            staging.write_raw("case.raw.json", b"raw\n").unwrap();
+            assert!(staging.write_raw("case.raw.json", b"duplicate\n").is_err());
+        }
+        assert!(!output.exists());
+        assert!(fs::read_dir(&temporary.0).unwrap().next().is_none());
+
+        let mut staging = StagingBundle::create(&output).unwrap();
+        staging.write_raw("case.raw.json", b"raw\n").unwrap();
+        staging.write_records(b"records\n").unwrap();
+        fs::write(&output, b"caller-owned\n").unwrap();
+        assert!(staging.publish().is_err());
+        assert_eq!(fs::read(&output).unwrap(), b"caller-owned\n");
+        assert_eq!(fs::read_dir(&temporary.0).unwrap().count(), 1);
+
+        fs::remove_file(&output).unwrap();
+        let mut retry = StagingBundle::create(&output).unwrap();
+        retry.write_raw("case.raw.json", b"raw\n").unwrap();
+        retry.write_records(b"records\n").unwrap();
+        retry.publish().unwrap();
+        assert_eq!(
+            fs::read(output.join("raw/case.raw.json")).unwrap(),
+            b"raw\n"
+        );
+        assert_eq!(fs::read(output.join("records.json")).unwrap(), b"records\n");
+        assert!(StagingBundle::create(&output).is_err());
+        assert_eq!(fs::read(output.join("records.json")).unwrap(), b"records\n");
     }
 }

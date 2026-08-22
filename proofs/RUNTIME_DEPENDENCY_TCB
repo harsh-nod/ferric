@@ -5,6 +5,7 @@ root=ferric-build|sha2|^0.11.0|registry+https://github.com/rust-lang/crates.io-i
 root=ferric-build|unicode-normalization-alignments|=0.1.12|registry+https://github.com/rust-lang/crates.io-index|true|false|features=none|registry+https://github.com/rust-lang/crates.io-index#unicode-normalization-alignments@0.1.12
 root=ferric-engine|rustix|=1.1.4|registry+https://github.com/rust-lang/crates.io-index|true|false|features=fs|registry+https://github.com/rust-lang/crates.io-index#rustix@1.1.4
 root=ferric-engine|sha2|^0.11.0|registry+https://github.com/rust-lang/crates.io-index|true|false|features=none|registry+https://github.com/rust-lang/crates.io-index#sha2@0.11.0
+root=ferric-m1-benchmarks|rustix|=1.1.4|registry+https://github.com/rust-lang/crates.io-index|true|false|features=fs|registry+https://github.com/rust-lang/crates.io-index#rustix@1.1.4
 root=ferric-m1-benchmarks|serde_json|=1.0.151|registry+https://github.com/rust-lang/crates.io-index|true|false|features=none|registry+https://github.com/rust-lang/crates.io-index#serde_json@1.0.151
 root=ferric-m1-benchmarks|sha2|^0.11.0|registry+https://github.com/rust-lang/crates.io-index|true|false|features=none|registry+https://github.com/rust-lang/crates.io-index#sha2@0.11.0
 root=ferric-qwen-kernels|sha2|^0.11.0|registry+https://github.com/rust-lang/crates.io-index|true|false|features=none|registry+https://github.com/rust-lang/crates.io-index#sha2@0.11.0

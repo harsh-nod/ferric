@@ -6,14 +6,16 @@
 //! the shape and identity of externally collected records. They deliberately
 //! do not manufacture measurements or decide an M1 evidence gate.
 
+use rustix::fd::OwnedFd;
+use rustix::fs::{fstat, openat2, FileType, Mode, OFlags, ResolveFlags, Stat, CWD};
 use serde_json::{json, Map, Value};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::ffi::OsString;
-use std::fs::{self, OpenOptions};
-use std::io::{self, Write};
-use std::path::Path;
+use std::fs::{File, OpenOptions};
+use std::io::{self, Read, Write};
+use std::path::{Component, Path, PathBuf};
 use std::process::ExitCode;
 #[allow(unused_imports)]
 use vstd::prelude::*;
@@ -87,6 +89,167 @@ pub struct Suite {
 /// Failure returned by a benchmark protocol command.
 pub type BenchResult<T> = Result<T, String>;
 
+/// Stable descriptor identity used to reject hard-link aliases before comparison.
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+pub struct SecureFileIdentity {
+    device: u64,
+    inode: u64,
+}
+
+/// Strict no-follow descriptor root for one externally supplied manifest tree.
+#[derive(Debug)]
+pub struct SecureInputDirectory {
+    descriptor: OwnedFd,
+}
+
+/// One regular input held open from validation through its final snapshot check.
+#[derive(Debug)]
+pub struct SecureInputFile {
+    file: File,
+    initial: Stat,
+}
+
+impl SecureInputDirectory {
+    /// Reads one bounded canonical document beneath this descriptor root.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for unsafe traversal, a nonregular file, an invalid size,
+    /// concurrent metadata drift, an incomplete read, or noncanonical JSON.
+    pub fn read_canonical(
+        &self,
+        relative: &Path,
+        description: &str,
+    ) -> BenchResult<(Value, Vec<u8>, SecureFileIdentity)> {
+        let (bytes, identity) = self.read_bounded_bytes(relative, description)?;
+        let value = parse_canonical(&bytes, description)?;
+        Ok((value, bytes, identity))
+    }
+
+    fn read_bounded_bytes(
+        &self,
+        relative: &Path,
+        description: &str,
+    ) -> BenchResult<(Vec<u8>, SecureFileIdentity)> {
+        let mut input = self.open_bounded(relative, MAX_DOCUMENT_BYTES, description)?;
+        let initial_len = input.length(description)?;
+        let mut bytes = Vec::new();
+        bytes
+            .try_reserve_exact(initial_len.saturating_add(1))
+            .map_err(|_| format!("cannot reserve {description} read buffer"))?;
+        let read_result = Read::by_ref(&mut input)
+            .take(MAX_DOCUMENT_BYTES.saturating_add(1) as u64)
+            .read_to_end(&mut bytes);
+        let snapshot_result = input.validate_snapshot(description);
+        if let Err(error) = read_result {
+            snapshot_result?;
+            return Err(format!("cannot read {description}: {error}"));
+        }
+        snapshot_result?;
+        if bytes.len() != initial_len {
+            return Err(format!("{description} changed during the bounded read"));
+        }
+        Ok((bytes, input.identity()))
+    }
+
+    /// Opens one exact-size regular file beneath this descriptor root.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for unsafe traversal, filesystem type drift, or a size mismatch.
+    pub fn open_exact(
+        &self,
+        relative: &Path,
+        expected_bytes: u64,
+        description: &str,
+    ) -> BenchResult<SecureInputFile> {
+        let input = self.open_file(relative, description)?;
+        let actual = u64::try_from(input.initial.st_size)
+            .map_err(|_| format!("{description} size is invalid"))?;
+        if actual != expected_bytes {
+            return Err(format!("{description} length drifted"));
+        }
+        Ok(input)
+    }
+
+    fn open_bounded(
+        &self,
+        relative: &Path,
+        maximum_bytes: usize,
+        description: &str,
+    ) -> BenchResult<SecureInputFile> {
+        let input = self.open_file(relative, description)?;
+        let length = usize::try_from(input.initial.st_size)
+            .map_err(|_| format!("{description} is too large for this host"))?;
+        if length == 0 || length > maximum_bytes {
+            return Err(format!("{description} size is outside the admitted bound"));
+        }
+        Ok(input)
+    }
+
+    fn open_file(&self, relative: &Path, description: &str) -> BenchResult<SecureInputFile> {
+        require_relative(relative, description)?;
+        let descriptor = openat2(
+            &self.descriptor,
+            relative,
+            OFlags::RDONLY | OFlags::NOFOLLOW | OFlags::NONBLOCK | OFlags::CLOEXEC,
+            Mode::empty(),
+            ResolveFlags::BENEATH | ResolveFlags::NO_SYMLINKS | ResolveFlags::NO_MAGICLINKS,
+        )
+        .map_err(|error| format!("cannot securely open {description}: {error}"))?;
+        let initial = fstat(&descriptor)
+            .map_err(|error| format!("cannot inspect opened {description}: {error}"))?;
+        if FileType::from_raw_mode(initial.st_mode) != FileType::RegularFile {
+            return Err(format!("{description} must be a regular file"));
+        }
+        if initial.st_nlink != 1 {
+            return Err(format!(
+                "{description} must have exactly one filesystem link"
+            ));
+        }
+        Ok(SecureInputFile {
+            file: File::from(descriptor),
+            initial,
+        })
+    }
+}
+
+impl SecureInputFile {
+    /// Returns the stable device/inode identity captured on descriptor open.
+    #[must_use]
+    pub const fn identity(&self) -> SecureFileIdentity {
+        SecureFileIdentity {
+            device: self.initial.st_dev,
+            inode: self.initial.st_ino,
+        }
+    }
+
+    /// Revalidates descriptor metadata after an exact read.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any identity, type, size, link, or timestamp field changed.
+    pub fn validate_snapshot(&self, description: &str) -> BenchResult<()> {
+        let final_stat = fstat(&self.file)
+            .map_err(|error| format!("cannot reinspect {description}: {error}"))?;
+        if !same_file_snapshot(&self.initial, &final_stat) {
+            return Err(format!("{description} changed while being read"));
+        }
+        Ok(())
+    }
+
+    fn length(&self, description: &str) -> BenchResult<usize> {
+        usize::try_from(self.initial.st_size)
+            .map_err(|_| format!("{description} is too large for this host"))
+    }
+}
+
+impl Read for SecureInputFile {
+    fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
+        self.file.read(buffer)
+    }
+}
+
 /// Loads and validates one canonical benchmark plan without granting evidence authority.
 ///
 /// # Errors
@@ -94,21 +257,24 @@ pub type BenchResult<T> = Result<T, String>;
 /// Returns an error for an unreadable, noncanonical, malformed, or suite-mismatched plan.
 pub fn load_benchmark_plan(suite: &Suite, path: &Path) -> BenchResult<(Value, Vec<u8>)> {
     validate_definition(suite)?;
-    let bytes = read_regular(path, "benchmark plan")?;
-    let value = parse_canonical(&bytes, "benchmark plan")?;
+    let (root, relative) = secure_parent(path, "benchmark plan")?;
+    let (value, bytes, _) = root.read_canonical(&relative, "benchmark plan")?;
     validate_plan(suite, &value)?;
     Ok((value, bytes))
 }
 
-/// Loads one bounded canonical JSON document from a regular nonsymlink file.
+/// Opens a strict descriptor root and loads one canonical document from it.
 ///
 /// # Errors
 ///
 /// Returns an error when the file or its canonical JSON representation is invalid.
-pub fn load_canonical_document(path: &Path, description: &str) -> BenchResult<(Value, Vec<u8>)> {
-    let bytes = read_regular(path, description)?;
-    let value = parse_canonical(&bytes, description)?;
-    Ok((value, bytes))
+pub fn load_canonical_document(
+    path: &Path,
+    description: &str,
+) -> BenchResult<(SecureInputDirectory, Value, Vec<u8>)> {
+    let (root, relative) = secure_parent(path, description)?;
+    let (value, bytes, _) = root.read_canonical(&relative, description)?;
+    Ok((root, value, bytes))
 }
 
 /// Serializes a value with the benchmark protocol's canonical JSON encoding.
@@ -124,15 +290,6 @@ pub fn encode_canonical_document(value: &Value) -> BenchResult<Vec<u8>> {
 #[must_use]
 pub fn sha256_identity(bytes: &[u8]) -> String {
     sha256(bytes)
-}
-
-/// Creates and synchronizes a protocol output without replacing an existing path.
-///
-/// # Errors
-///
-/// Returns an error when the path exists or the new file cannot be written and synchronized.
-pub fn create_new_output(path: &Path, bytes: &[u8]) -> BenchResult<()> {
-    write_new(path, bytes)
 }
 
 /// Runs the common CLI for one source-reviewed suite definition.
@@ -621,22 +778,51 @@ fn require_sha256(value: &str) -> BenchResult<()> {
     Ok(())
 }
 
+fn secure_parent(path: &Path, description: &str) -> BenchResult<(SecureInputDirectory, PathBuf)> {
+    let relative = path
+        .file_name()
+        .map(PathBuf::from)
+        .ok_or_else(|| format!("{description} path has no file name"))?;
+    let parent = path.parent().unwrap_or_else(|| Path::new("."));
+    let descriptor = openat2(
+        CWD,
+        parent,
+        OFlags::RDONLY | OFlags::DIRECTORY | OFlags::NOFOLLOW | OFlags::NONBLOCK | OFlags::CLOEXEC,
+        Mode::empty(),
+        ResolveFlags::NO_SYMLINKS | ResolveFlags::NO_MAGICLINKS,
+    )
+    .map_err(|error| format!("cannot securely open {description} parent: {error}"))?;
+    Ok((SecureInputDirectory { descriptor }, relative))
+}
+
 fn read_regular(path: &Path, description: &str) -> BenchResult<Vec<u8>> {
-    let metadata = fs::symlink_metadata(path)
-        .map_err(|error| format!("cannot inspect {description}: {error}"))?;
-    if metadata.file_type().is_symlink() || !metadata.is_file() {
-        return Err(format!("{description} must be a regular nonsymlink file"));
+    let (root, relative) = secure_parent(path, description)?;
+    root.read_bounded_bytes(&relative, description)
+        .map(|(bytes, _)| bytes)
+}
+
+fn require_relative(path: &Path, description: &str) -> BenchResult<()> {
+    if path.as_os_str().is_empty()
+        || path.is_absolute()
+        || !path
+            .components()
+            .all(|component| matches!(component, Component::Normal(_)))
+    {
+        return Err(format!("{description} path must be a safe relative path"));
     }
-    let size = usize::try_from(metadata.len())
-        .map_err(|_| format!("{description} is too large for this host"))?;
-    if size == 0 || size > MAX_DOCUMENT_BYTES {
-        return Err(format!("{description} size is outside the admitted bound"));
-    }
-    let bytes = fs::read(path).map_err(|error| format!("cannot read {description}: {error}"))?;
-    if bytes.len() != size {
-        return Err(format!("{description} changed during the bounded read"));
-    }
-    Ok(bytes)
+    Ok(())
+}
+
+fn same_file_snapshot(initial: &Stat, final_stat: &Stat) -> bool {
+    initial.st_dev == final_stat.st_dev
+        && initial.st_ino == final_stat.st_ino
+        && initial.st_mode == final_stat.st_mode
+        && initial.st_nlink == final_stat.st_nlink
+        && initial.st_size == final_stat.st_size
+        && initial.st_mtime == final_stat.st_mtime
+        && initial.st_mtime_nsec == final_stat.st_mtime_nsec
+        && initial.st_ctime == final_stat.st_ctime
+        && initial.st_ctime_nsec == final_stat.st_ctime_nsec
 }
 
 fn parse_canonical(bytes: &[u8], description: &str) -> BenchResult<Value> {
@@ -690,6 +876,31 @@ fn write_stdout(value: &Value) -> BenchResult<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
+    use std::os::unix::fs::symlink;
+    use std::sync::atomic::{AtomicU64, Ordering};
+
+    static TEST_NONCE: AtomicU64 = AtomicU64::new(0);
+
+    struct TestDirectory(PathBuf);
+
+    impl TestDirectory {
+        fn new() -> Self {
+            let nonce = TEST_NONCE.fetch_add(1, Ordering::Relaxed);
+            let path = env::temp_dir().join(format!(
+                "ferric-m1-support-test.{}.{nonce}",
+                std::process::id()
+            ));
+            fs::create_dir(&path).unwrap();
+            Self(path)
+        }
+    }
+
+    impl Drop for TestDirectory {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
 
     const METRICS: &[Metric] = &[
         Metric {
@@ -838,5 +1049,47 @@ mod tests {
         assert!(parse_canonical(br#"{"b":1,"a":2}"#, "test input").is_err());
         assert!(parse_canonical(br#"{"a":1,"a":2}"#, "test input").is_err());
         assert!(require_sha256(&"0".repeat(64)).is_err());
+    }
+
+    #[test]
+    fn secure_reads_reject_intermediate_and_final_symlinks() {
+        let temporary = TestDirectory::new();
+        let actual_directory = temporary.0.join("real");
+        fs::create_dir(&actual_directory).unwrap();
+        let document = canonical_bytes(&json!({"value": 1})).unwrap();
+        fs::write(actual_directory.join("document.json"), document).unwrap();
+        symlink(&actual_directory, temporary.0.join("directory-link")).unwrap();
+        symlink(
+            actual_directory.join("document.json"),
+            temporary.0.join("document-link.json"),
+        )
+        .unwrap();
+
+        let (root, _) = secure_parent(&temporary.0.join("root.json"), "test root").unwrap();
+        assert!(root
+            .read_canonical(Path::new("directory-link/document.json"), "linked document")
+            .is_err());
+        assert!(root
+            .read_canonical(Path::new("document-link.json"), "linked document")
+            .is_err());
+        assert!(secure_parent(
+            &temporary.0.join("directory-link/document.json"),
+            "linked parent",
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn secure_file_snapshot_rejects_post_open_drift() {
+        let temporary = TestDirectory::new();
+        let path = temporary.0.join("payload.bin");
+        fs::write(&path, b"original").unwrap();
+        let (root, relative) = secure_parent(&path, "test payload").unwrap();
+        let mut input = root.open_exact(&relative, 8, "test payload").unwrap();
+
+        fs::write(&path, b"short").unwrap();
+        let mut bytes = Vec::new();
+        input.read_to_end(&mut bytes).unwrap();
+        assert!(input.validate_snapshot("test payload").is_err());
     }
 }

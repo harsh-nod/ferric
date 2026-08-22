@@ -90,6 +90,12 @@ def write(path: Path, value: Any) -> None:
     path.write_bytes(canonical_bytes(value))
 
 
+def require_no_staging(parent: Path, output: Path) -> None:
+    prefix = f".{output.name}.staging."
+    if any(entry.name.startswith(prefix) for entry in parent.iterdir()):
+        fail(f"failed producer left an owned staging bundle for {output.name}")
+
+
 def plan_input(descriptor: dict[str, Any]) -> dict[str, Any]:
     identities = {
         identifier: digest(f"{descriptor['suite']}:identity:{identifier}")
@@ -319,13 +325,14 @@ def exercise_differential_producer(
     pairs_path = scratch / "differential.pairs.json"
     write(pairs_path, pairs_value)
 
-    raw_directory = scratch / "differential.raw"
-    records_path = scratch / "differential.produced-records.json"
+    output_bundle = scratch / "differential.bundle"
     invoke(
         repo,
         "differential",
-        ["produce", str(plan_path), str(pairs_path), str(raw_directory), str(records_path)],
+        ["produce", str(plan_path), str(pairs_path), str(output_bundle)],
     )
+    raw_directory = output_bundle / "raw"
+    records_path = output_bundle / "records.json"
     if len(list(raw_directory.iterdir())) != 7:
         fail("differential producer did not emit the exact raw-record roster")
     records = load_canonical(records_path.read_bytes(), "produced differential records")
@@ -344,6 +351,62 @@ def exercise_differential_producer(
         "differential",
         ["validate", str(plan_path), str(records_path), str(transcript_path)],
     )
+    records_before = records_path.read_bytes()
+    invoke(
+        repo,
+        "differential",
+        ["produce", str(plan_path), str(pairs_path), str(output_bundle)],
+        expected_status=1,
+    )
+    if records_path.read_bytes() != records_before:
+        fail("no-replace publication modified an existing output bundle")
+    require_no_staging(scratch, output_bundle)
+
+    plan_parent_link = scratch / "plan-parent-link"
+    os.symlink(scratch, plan_parent_link)
+    linked_plan_bundle = scratch / "linked-plan.bundle"
+    invoke(
+        repo,
+        "differential",
+        [
+            "produce",
+            str(plan_parent_link / plan_path.name),
+            str(pairs_path),
+            str(linked_plan_bundle),
+        ],
+        expected_status=1,
+    )
+    if linked_plan_bundle.exists():
+        fail("producer published output after a symlinked plan traversal")
+    plan_parent_link.unlink()
+
+    with tempfile.TemporaryDirectory(
+        prefix="ferric-m1-differential-escape."
+    ) as outside_raw:
+        outside = Path(outside_raw)
+        first_id = plan["cases"][0]["id"]
+        escaped_manifest = output_manifests[f"{first_id}:ferric"]
+        (outside / escaped_manifest.name).write_bytes(escaped_manifest.read_bytes())
+        escape_link = scratch / "manifest-escape"
+        os.symlink(outside, escape_link)
+        pairs_value["pairs"][0]["ferric_output_manifest"] = (
+            f"{escape_link.name}/{escaped_manifest.name}"
+        )
+        write(pairs_path, pairs_value)
+        escaped_bundle = scratch / "escaped-manifest.bundle"
+        invoke(
+            repo,
+            "differential",
+            ["produce", str(plan_path), str(pairs_path), str(escaped_bundle)],
+            expected_status=1,
+        )
+        if escaped_bundle.exists():
+            fail("producer published output after an intermediate symlink escape")
+        escape_link.unlink()
+    pairs_value["pairs"][0]["ferric_output_manifest"] = output_manifests[
+        f"{plan['cases'][0]['id']}:ferric"
+    ].name
+    write(pairs_path, pairs_value)
 
     first = plan["cases"][0]
     runner_path, runner_bytes = runner_transcripts[first["id"]]
@@ -355,8 +418,7 @@ def exercise_differential_producer(
             "produce",
             str(plan_path),
             str(pairs_path),
-            str(scratch / "substituted-runner.raw"),
-            str(scratch / "substituted-runner.records.json"),
+            str(scratch / "substituted-runner.bundle"),
         ],
         expected_status=1,
     )
@@ -375,13 +437,34 @@ def exercise_differential_producer(
             "produce",
             str(plan_path),
             str(pairs_path),
-            str(scratch / "substituted.raw"),
-            str(scratch / "substituted.records.json"),
+            str(scratch / "substituted.bundle"),
         ],
         expected_status=1,
     )
 
     ferric_manifest["producer_sha256"] = plan["identities"]["benchmark-executable"]
+    write(ferric_manifest_path, ferric_manifest)
+    reference_manifest_path = output_manifests[f"{first['id']}:reference"]
+    reference_manifest = load_canonical(
+        reference_manifest_path.read_bytes(), "reference output manifest"
+    )
+    ferric_tokens_path = scratch / ferric_manifest["tokens"]["path"]
+    reference_tokens_path = scratch / reference_manifest["tokens"]["path"]
+    ferric_tokens = ferric_tokens_path.read_bytes()
+    ferric_tokens_path.unlink()
+    os.link(reference_tokens_path, ferric_tokens_path)
+    aliased_bundle = scratch / "hardlink-alias.bundle"
+    invoke(
+        repo,
+        "differential",
+        ["produce", str(plan_path), str(pairs_path), str(aliased_bundle)],
+        expected_status=1,
+    )
+    if aliased_bundle.exists():
+        fail("producer published output for hard-linked differential inputs")
+    ferric_tokens_path.unlink()
+    ferric_tokens_path.write_bytes(ferric_tokens)
+
     wrong_tokens = (1).to_bytes(4, "little")
     wrong_tokens_path = scratch / ferric_manifest["tokens"]["path"]
     wrong_tokens_path.write_bytes(wrong_tokens)
@@ -394,16 +477,28 @@ def exercise_differential_producer(
             "produce",
             str(plan_path),
             str(pairs_path),
-            str(scratch / "wrong-argmax.raw"),
-            str(scratch / "wrong-argmax.records.json"),
+            str(scratch / "retry.bundle"),
         ],
         expected_status=1,
     )
+    retry_bundle = scratch / "retry.bundle"
+    if retry_bundle.exists():
+        fail("failed comparison published a partial output bundle")
+    require_no_staging(scratch, retry_bundle)
 
     wrong_tokens_path.write_bytes((0).to_bytes(4, "little"))
     ferric_manifest["tokens"]["sha256"] = hashlib.sha256(
         (0).to_bytes(4, "little")
     ).hexdigest()
+    write(ferric_manifest_path, ferric_manifest)
+    invoke(
+        repo,
+        "differential",
+        ["produce", str(plan_path), str(pairs_path), str(retry_bundle)],
+    )
+    if len(list((retry_bundle / "raw").iterdir())) != 7:
+        fail("retry did not publish the exact differential bundle")
+
     logits_path = scratch / ferric_manifest["logits"]["path"]
     logits = logits_path.read_bytes()
     nonfinite_logits = (0x7F80).to_bytes(2, "little") + logits[2:]
@@ -417,8 +512,7 @@ def exercise_differential_producer(
             "produce",
             str(plan_path),
             str(pairs_path),
-            str(scratch / "nonfinite.raw"),
-            str(scratch / "nonfinite.records.json"),
+            str(scratch / "nonfinite.bundle"),
         ],
         expected_status=1,
     )
