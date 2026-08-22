@@ -7,6 +7,7 @@ use vstd::prelude::*;
 
 mod bound_step_workspaces;
 mod cache;
+mod completion_output;
 mod completion_wire;
 mod device_cache;
 mod epoch;
@@ -34,6 +35,10 @@ pub use bound_step_workspaces::{
     M1FullStepWorkspaceSubleaseBindingFailure, M1FullStepWorkspaceSubleaseOwners,
 };
 pub use cache::{KvError, PageId};
+pub use completion_output::{
+    allocate_m1_completion_output_v1, m1_completion_output_shape_v1, BoundM1CompletionOutputV1,
+    M1CompletionOutputErrorV1, M1CompletionOutputShapeV1, M1_COMPLETION_OUTPUT_ALIGNMENT_V1,
+};
 pub use completion_wire::{
     bind_inert_completion_epoch, check_inert_completion_record, CheckedCompletionSemantics,
     CompletionEpochJoinFailure, CompletionWireError, CompletionWireExpectation,

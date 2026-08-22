@@ -99,6 +99,11 @@ pub enum M1PhysicalBufferSourceV1 {
         /// Zero-based iteration-major row index.
         iteration: u8,
     },
+    /// Exact coherent host-download output for target K7 compact records.
+    CompletionOutput {
+        /// Number of canonical 120-byte records, one per target sequence.
+        sequences: u32,
+    },
     /// One exact immutable model-weight tensor coordinate.
     ModelWeight {
         /// Target or draft model owning the tensor.
@@ -1275,6 +1280,13 @@ fn expected_buffers(
                 ]
             }
             M1OperationDispatchKind::K7Compact => {
+                let dimensions = input
+                    .selection
+                    .bucket
+                    .dimensions(input.selection.role, input.selection.mode)
+                    .ok_or(M1PhysicalBufferRecipeErrorV1::PhysicalRow {
+                        dispatch_index: input.dispatch_index,
+                    })?;
                 let draft = if input.selection.mode == Qwen3ExecutionMode::Speculative {
                     workspace(input, W::DraftChoices, workspaces)
                 } else {
@@ -1307,7 +1319,9 @@ fn expected_buffers(
                     buffer(
                         14,
                         WriteOnly,
-                        workspace(input, W::CompactCompletionRecords, workspaces),
+                        M1PhysicalBufferSourceV1::CompletionOutput {
+                            sequences: dimensions.sequences,
+                        },
                     ),
                 ]
             }
@@ -1605,6 +1619,20 @@ fn validate_source(
                 });
             }
         }
+        M1PhysicalBufferSourceV1::CompletionOutput { sequences } => {
+            let selection = workspaces.workspace_plans().target().selection();
+            let valid = selection.role == Qwen3ModelRole::Target8B
+                && selection
+                    .bucket
+                    .dimensions(selection.role, selection.mode)
+                    .is_some_and(|dimensions| dimensions.sequences == sequences);
+            if !valid {
+                return Err(M1PhysicalBufferRecipeErrorV1::Source {
+                    dispatch_index,
+                    argument: 14,
+                });
+            }
+        }
         M1PhysicalBufferSourceV1::ModelWeight { role, kind, layer } => {
             if !valid_weight_layer(role, kind, layer) {
                 return Err(M1PhysicalBufferRecipeErrorV1::Layer {
@@ -1851,6 +1879,12 @@ pub(crate) mod tests {
         let mut programs = HashSet::new();
         let mut selections = Vec::new();
         for (case, intent) in complete_intents().into_iter().enumerate() {
+            let target_selection = intent.target_selection();
+            let target_sequences = target_selection
+                .bucket
+                .dimensions(target_selection.role, target_selection.mode)
+                .unwrap()
+                .sequences;
             let (kernargs, workspaces) = exact_inputs(intent, 10 + u8::try_from(case).unwrap() * 2);
             let count = kernargs.images().len();
             let recipe = derive_m1_physical_buffer_recipe_v1(kernargs, workspaces).unwrap();
@@ -1878,6 +1912,19 @@ pub(crate) mod tests {
                     selections.push(row.selection());
                 }
             }
+            let compact = recipe
+                .rows()
+                .iter()
+                .filter(|row| row.program() == M1PhysicalProgramV1::LogitsCompact)
+                .collect::<Vec<_>>();
+            assert_eq!(compact.len(), 1);
+            assert_eq!(compact[0].buffers()[7].explicit_argument_index(), 14);
+            assert_eq!(
+                compact[0].buffers()[7].source(),
+                M1PhysicalBufferSourceV1::CompletionOutput {
+                    sequences: target_sequences,
+                }
+            );
         }
         assert_eq!(programs, M1PhysicalProgramV1::ALL.into_iter().collect());
         assert_eq!(selections.len(), 17);
@@ -2136,6 +2183,10 @@ pub(crate) mod tests {
                 range: M1StepWorkspaceRangeRole::DraftChoices,
             }
         );
+        assert_eq!(
+            compact.buffers()[7].source(),
+            M1PhysicalBufferSourceV1::CompletionOutput { sequences: 1 }
+        );
     }
 
     #[test]
@@ -2332,6 +2383,10 @@ pub(crate) mod tests {
                 range: M1StepWorkspaceRangeRole::PositionIds,
                 purpose: M1PhysicalBufferSentinelV1::CompactNoDraftTokens,
             }
+        );
+        assert_eq!(
+            compact.buffers()[7].source(),
+            M1PhysicalBufferSourceV1::CompletionOutput { sequences: 1 }
         );
     }
 
