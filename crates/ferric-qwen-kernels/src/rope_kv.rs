@@ -2753,7 +2753,14 @@ pub enum InspectQwen3RopeKvKernelErrorV1 {
     /// AMDHSA metadata or descriptor binding failed.
     Hsaco(KernelBindingError),
     /// Kernel inventory, ABI, or resource facts differ from the exact profile.
-    KernelProfile,
+    KernelProfile(&'static str),
+    /// Explicit physical argument metadata differs from the exact profile.
+    ExplicitArguments {
+        /// Kernel whose physical argument metadata drifted.
+        kernel: &'static str,
+        /// Complete inspected explicit argument list.
+        arguments: Vec<ExplicitArgument>,
+    },
     /// Strict allocation-free COV6 loader validation failed.
     Loader(PlanError),
 }
@@ -2920,22 +2927,30 @@ pub fn inspect_qwen3_rope_kv_kernel_v1(
     let kernels = bound.inspection().kernels();
     let bindings = bound.bindings();
     if kernels.len() != 2 || bindings.len() != 2 {
-        return Err(InspectQwen3RopeKvKernelErrorV1::KernelProfile);
+        return Err(InspectQwen3RopeKvKernelErrorV1::KernelProfile(
+            "kernel/descriptor cardinality",
+        ));
     }
     let Some(rope_index) = kernels
         .iter()
         .position(|kernel| kernel.name() == QWEN3_ROPE_KERNEL_SYMBOL_V1)
     else {
-        return Err(InspectQwen3RopeKvKernelErrorV1::KernelProfile);
+        return Err(InspectQwen3RopeKvKernelErrorV1::KernelProfile(
+            "RoPE symbol inventory",
+        ));
     };
     let Some(kv_index) = kernels
         .iter()
         .position(|kernel| kernel.name() == QWEN3_PAGED_KV_WRITE_KERNEL_SYMBOL_V1)
     else {
-        return Err(InspectQwen3RopeKvKernelErrorV1::KernelProfile);
+        return Err(InspectQwen3RopeKvKernelErrorV1::KernelProfile(
+            "KV symbol inventory",
+        ));
     };
     if rope_index == kv_index {
-        return Err(InspectQwen3RopeKvKernelErrorV1::KernelProfile);
+        return Err(InspectQwen3RopeKvKernelErrorV1::KernelProfile(
+            "kernel index alias",
+        ));
     }
     let rope = &kernels[rope_index];
     let kv = &kernels[kv_index];
@@ -2944,7 +2959,10 @@ pub fn inspect_qwen3_rope_kv_kernel_v1(
     if bound.inspection().code_object_version() != InspectedCodeObjectVersion::V6
         || bound.inspection().target().to_string() != QWEN3_ROPE_KV_TARGET_V1
         || bound.inspection().has_printf_metadata()
-        || rope.name() != QWEN3_ROPE_KERNEL_SYMBOL_V1
+    {
+        return Err(InspectQwen3RopeKvKernelErrorV1::KernelProfile("module"));
+    }
+    if rope.name() != QWEN3_ROPE_KERNEL_SYMBOL_V1
         || rope.symbol() != QWEN3_ROPE_KERNEL_DESCRIPTOR_SYMBOL_V1
         || rope.kernarg_segment_size() != QWEN3_ROPE_TOTAL_KERNARG_BYTES_V1
         || rope.kernarg_segment_alignment() != QWEN3_ROPE_KV_KERNARG_ALIGNMENT_V1
@@ -2963,12 +2981,26 @@ pub fn inspect_qwen3_rope_kv_kernel_v1(
         || rope_binding.descriptor().private_segment_fixed_size() != 0
         || rope_binding.descriptor().wavefront_size() != 64
         || rope_binding.descriptor().uses_dynamic_stack()
-        || !exact_rope_explicit_arguments(rope.explicit_arguments())
-        || !exact_hidden_arguments(
-            rope.hidden_arguments(),
-            QWEN3_ROPE_EXPLICIT_KERNARG_BYTES_V1,
-        )
-        || kv.name() != QWEN3_PAGED_KV_WRITE_KERNEL_SYMBOL_V1
+    {
+        return Err(InspectQwen3RopeKvKernelErrorV1::KernelProfile(
+            "RoPE physical profile",
+        ));
+    }
+    if !exact_rope_explicit_arguments(rope.explicit_arguments()) {
+        return Err(InspectQwen3RopeKvKernelErrorV1::ExplicitArguments {
+            kernel: QWEN3_ROPE_KERNEL_SYMBOL_V1,
+            arguments: rope.explicit_arguments().to_vec(),
+        });
+    }
+    if !exact_hidden_arguments(
+        rope.hidden_arguments(),
+        QWEN3_ROPE_EXPLICIT_KERNARG_BYTES_V1,
+    ) {
+        return Err(InspectQwen3RopeKvKernelErrorV1::KernelProfile(
+            "RoPE hidden arguments",
+        ));
+    }
+    if kv.name() != QWEN3_PAGED_KV_WRITE_KERNEL_SYMBOL_V1
         || kv.symbol() != QWEN3_PAGED_KV_WRITE_KERNEL_DESCRIPTOR_SYMBOL_V1
         || kv.kernarg_segment_size() != QWEN3_KV_WRITE_TOTAL_KERNARG_BYTES_V1
         || kv.kernarg_segment_alignment() != QWEN3_ROPE_KV_KERNARG_ALIGNMENT_V1
@@ -2987,13 +3019,24 @@ pub fn inspect_qwen3_rope_kv_kernel_v1(
         || kv_binding.descriptor().private_segment_fixed_size() != 0
         || kv_binding.descriptor().wavefront_size() != 64
         || kv_binding.descriptor().uses_dynamic_stack()
-        || !exact_kv_explicit_arguments(kv.explicit_arguments())
-        || !exact_hidden_arguments(
-            kv.hidden_arguments(),
-            QWEN3_KV_WRITE_EXPLICIT_KERNARG_BYTES_V1,
-        )
     {
-        return Err(InspectQwen3RopeKvKernelErrorV1::KernelProfile);
+        return Err(InspectQwen3RopeKvKernelErrorV1::KernelProfile(
+            "KV physical profile",
+        ));
+    }
+    if !exact_kv_explicit_arguments(kv.explicit_arguments()) {
+        return Err(InspectQwen3RopeKvKernelErrorV1::ExplicitArguments {
+            kernel: QWEN3_PAGED_KV_WRITE_KERNEL_SYMBOL_V1,
+            arguments: kv.explicit_arguments().to_vec(),
+        });
+    }
+    if !exact_hidden_arguments(
+        kv.hidden_arguments(),
+        QWEN3_KV_WRITE_EXPLICIT_KERNARG_BYTES_V1,
+    ) {
+        return Err(InspectQwen3RopeKvKernelErrorV1::KernelProfile(
+            "KV hidden arguments",
+        ));
     }
     let loader = fe2o3_amdhsa_loader::validate(bytes, AdmittedProfile::Gfx942XnackOffCov6)
         .map_err(InspectQwen3RopeKvKernelErrorV1::Loader)?;
