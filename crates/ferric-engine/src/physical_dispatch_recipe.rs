@@ -14,6 +14,8 @@ use ferric_spec::{
     Identity, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3Operator, Qwen3PlanBucket,
     Qwen3PlanSelection,
 };
+#[allow(unused_imports)]
+use vstd::prelude::*;
 
 use crate::{
     AddresslessM1StepDispatchPlan, M1OperationDispatchKind, M1PhysicalProgramV1,
@@ -22,6 +24,26 @@ use crate::{
 
 /// Addressless physical-dispatch recipe format.
 pub const M1_PHYSICAL_DISPATCH_RECIPE_VERSION_V1: u32 = 2;
+
+verus! {
+
+/// Verifier view of target-only addressless physical-recipe cardinality.
+///
+/// Target-only recipes insert no speculative token-assembly row, so their
+/// physical recipe is row-for-row with the operation-dispatch expansion.
+pub open spec fn m1_target_only_physical_recipe_count_spec(
+    operation_dispatch_count: nat,
+) -> nat {
+    operation_dispatch_count
+}
+
+/// Exposes the exact reviewed target-only addressless recipe count.
+pub proof fn m1_target_only_physical_recipe_shape()
+    ensures m1_target_only_physical_recipe_count_spec(545) == 545,
+{
+}
+
+} // verus!
 
 /// Finite profile family whose canonical catalog could not be reconstructed.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

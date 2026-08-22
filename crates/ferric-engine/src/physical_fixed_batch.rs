@@ -10,6 +10,8 @@ use core::fmt;
 
 use fe2o3_service_host::{ServiceFixedBatchV1, ServiceFixedDispatchPacketV1};
 use ferric_spec::{Identity, Qwen3PlanBucket, Qwen3PlanSelection};
+#[allow(unused_imports)]
+use vstd::prelude::*;
 
 use crate::{
     m1_completion_output_shape_v1, AddresslessM1FullStepWorkspaceComposition,
@@ -60,6 +62,21 @@ impl M1PhysicalFixedBatchShapeV1 {
         }
     }
 }
+
+verus! {
+
+/// Verifier view of the target-only fixed-batch packet cardinality.
+pub open spec fn m1_target_only_fixed_batch_packet_count_spec() -> nat {
+    545
+}
+
+/// Exposes the exact reviewed target-only fixed-batch cardinality.
+pub proof fn m1_target_only_fixed_batch_shape()
+    ensures m1_target_only_fixed_batch_packet_count_spec() == 545,
+{
+}
+
+} // verus!
 
 /// Ferric ownership retained beside one generic fixed batch.
 ///

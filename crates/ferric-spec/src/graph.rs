@@ -1223,6 +1223,60 @@ impl Qwen3GeneratedPlan {
         }
         Ok(())
     }
+
+    /// Exposes exact ordered logical steps and the plan identity carried by a
+    /// valid generated Qwen3 plan.
+    ///
+    /// This source-level graph fact grants no kernel, address, dispatch,
+    /// queue, numerical, or machine-execution authority.
+    pub proof fn expose_valid_steps(
+        &self,
+        expected_authority: Qwen3PlanAuthority,
+        expected_selection: Qwen3PlanSelection,
+    )
+        requires self.valid_for(expected_authority, expected_selection),
+        ensures
+            self.selection == expected_selection,
+            self.steps@.len() == match expected_selection.role {
+                Qwen3ModelRole::Target8B => QWEN3_TARGET_PLAN_STEPS as nat,
+                Qwen3ModelRole::Draft06B => QWEN3_DRAFT_PLAN_STEPS as nat,
+            },
+            self.authority.plan_id.bytes_spec() == expected_authority.plan_id.bytes_spec(),
+            forall|index: int| 0 <= index < self.steps@.len()
+                ==> crate::canonical_expected_step_spec(
+                    expected_selection.role,
+                    expected_selection.mode,
+                    expected_selection.bucket,
+                    index as u32,
+                ) == Some(self.steps@[index]),
+    {
+        reveal(Qwen3GeneratedPlan::valid_for);
+        reveal(Qwen3PlanAuthority::matches);
+        reveal(crate::canonical_expected_step_spec);
+        plan_step_count_is_role_exact(expected_selection.role);
+    }
+
+    /// A valid target graph has exactly one compact-completion operation, at
+    /// its final logical ordinal.
+    pub proof fn expose_unique_target_completion(
+        &self,
+        expected_authority: Qwen3PlanAuthority,
+        expected_selection: Qwen3PlanSelection,
+    )
+        requires
+            self.valid_for(expected_authority, expected_selection),
+            expected_selection.role == Qwen3ModelRole::Target8B,
+        ensures
+            self.steps@.len() == QWEN3_TARGET_PLAN_STEPS as nat,
+            self.steps@[543].operator == Qwen3Operator::ArgmaxCompactCompletion,
+            forall|index: int| 0 <= index < 543
+                ==> self.steps@[index].operator != Qwen3Operator::ArgmaxCompactCompletion,
+    {
+        self.expose_valid_steps(expected_authority, expected_selection);
+        reveal(expected_step_spec);
+        reveal(Qwen3PlanBucket::dimensions_spec);
+        reveal(canonical_step_spec);
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]

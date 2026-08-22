@@ -8,7 +8,8 @@
 //! not claim that a physical graph ran, that device KV refines the isolated KV
 //! model, or that a multi-member batch shares this transition. Kernel output,
 //! queue readback, device identity, hardware, numerical, timing, and
-//! performance qualification remain separate M1 obligations.
+//! performance qualification remain separate M1 obligations. Scheduler and
+//! multi-member refinement, machine semantics, and M1 closure are not proved.
 
 #[allow(unused_imports)]
 use ferric_engine::{

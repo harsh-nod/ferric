@@ -236,6 +236,100 @@ pub closed spec fn generated_runner_input_matches_exactly(
         && input_fields_match_exactly(candidate, expected)
 }
 
+/// Exposes only the finite-table and exact-field consequences needed by
+/// cross-crate graph composition proofs.
+///
+/// The underlying acceptance relation remains closed in this owning module.
+/// This lemma grants no artifact, allocation, address, packet, or execution
+/// authority.
+pub proof fn generated_runner_match_exposes_plan_operation(
+    candidate: GeneratedRunnerInput,
+    expected: GeneratedRunnerInput,
+)
+    requires generated_runner_input_matches_exactly(candidate, expected),
+    ensures
+        candidate.template_version == expected.template_version,
+        candidate.plan_index == expected.plan_index,
+        candidate.selection == expected.selection,
+        candidate.operation_start == expected.operation_start,
+        candidate.operation_count == expected.operation_count,
+        candidate.operation_index == expected.operation_index,
+        candidate.patch_slots@ == expected.patch_slots@,
+        (expected.plan_index as int) < GENERATED_RUNNER_PLAN_COUNT,
+        expected.plan_index
+            == GENERATED_PLAN_TEMPLATES@[expected.plan_index as int].plan_index,
+        expected.selection
+            == GENERATED_PLAN_TEMPLATES@[expected.plan_index as int].selection,
+        expected.operation_start
+            == GENERATED_PLAN_TEMPLATES@[expected.plan_index as int].operation_start,
+        expected.operation_count
+            == GENERATED_PLAN_TEMPLATES@[expected.plan_index as int].operation_count,
+        expected.operation_start as int <= expected.operation_index as int,
+        (expected.operation_index as int)
+            < (expected.operation_start as int) + (expected.operation_count as int),
+        candidate.identities.declaration_id.bytes_spec()
+            == expected.identities.declaration_id.bytes_spec(),
+        candidate.identities.plan_id.bytes_spec()
+            == expected.identities.plan_id.bytes_spec(),
+        candidate.identities.kernel_catalog_id.bytes_spec()
+            == expected.identities.kernel_catalog_id.bytes_spec(),
+{
+    reveal(generated_runner_input_matches_exactly);
+    reveal(expectation_matches_generated_table);
+    reveal(input_fields_match_exactly);
+    reveal(identity_inputs_match_exactly);
+    assert(identity_sequence(candidate.identities)[4].bytes_spec()
+        == identity_sequence(expected.identities)[4].bytes_spec());
+    assert(identity_sequence(candidate.identities)[6].bytes_spec()
+        == identity_sequence(expected.identities)[6].bytes_spec());
+    assert(identity_sequence(candidate.identities)[7].bytes_spec()
+        == identity_sequence(expected.identities)[7].bytes_spec());
+    reveal(identity_sequence);
+}
+
+impl ValidatedGeneratedRunnerInput {
+    /// Exact independently supplied expectation accepted for this retained
+    /// generated operation.
+    pub closed spec fn matches_expected_spec(&self, expected: GeneratedRunnerInput) -> bool {
+        generated_runner_input_matches_exactly(self.input, expected)
+    }
+
+    /// Exposes the finite-table and exact-field consequences retained by this
+    /// validated owner without opening the module's acceptance relation.
+    pub proof fn expose_plan_operation(&self, expected: GeneratedRunnerInput)
+        requires self.matches_expected_spec(expected),
+        ensures
+            self.input_spec().template_version == expected.template_version,
+            self.input_spec().plan_index == expected.plan_index,
+            self.input_spec().selection == expected.selection,
+            self.input_spec().operation_start == expected.operation_start,
+            self.input_spec().operation_count == expected.operation_count,
+            self.input_spec().operation_index == expected.operation_index,
+            self.input_spec().patch_slots@ == expected.patch_slots@,
+            (expected.plan_index as int) < GENERATED_RUNNER_PLAN_COUNT,
+            expected.plan_index
+                == GENERATED_PLAN_TEMPLATES@[expected.plan_index as int].plan_index,
+            expected.selection
+                == GENERATED_PLAN_TEMPLATES@[expected.plan_index as int].selection,
+            expected.operation_start
+                == GENERATED_PLAN_TEMPLATES@[expected.plan_index as int].operation_start,
+            expected.operation_count
+                == GENERATED_PLAN_TEMPLATES@[expected.plan_index as int].operation_count,
+            expected.operation_start as int <= expected.operation_index as int,
+            (expected.operation_index as int)
+                < (expected.operation_start as int) + (expected.operation_count as int),
+            self.input_spec().identities.declaration_id.bytes_spec()
+                == expected.identities.declaration_id.bytes_spec(),
+            self.input_spec().identities.plan_id.bytes_spec()
+                == expected.identities.plan_id.bytes_spec(),
+            self.input_spec().identities.kernel_catalog_id.bytes_spec()
+                == expected.identities.kernel_catalog_id.bytes_spec(),
+    {
+        reveal(ValidatedGeneratedRunnerInput::matches_expected_spec);
+        generated_runner_match_exposes_plan_operation(self.input, expected);
+    }
+}
+
 /// Returns one exact generated plan position, or `None` outside the roster.
 #[must_use]
 pub fn generated_plan_template(
@@ -536,7 +630,10 @@ pub fn validate_generated_runner_input(
     ensures
         result.is_ok() == generated_runner_input_matches_exactly(candidate, expected),
         match result {
-            Ok(validated) => validated.input_spec() == candidate,
+            Ok(validated) => {
+                &&& validated.input_spec() == candidate
+                &&& validated.matches_expected_spec(expected)
+            },
             Err(_) => true,
         },
 {

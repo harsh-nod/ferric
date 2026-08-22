@@ -276,6 +276,103 @@ pub closed spec fn kernel_catalog_input_matches_exactly(
     expectation_matches_catalog(expected) && input_matches_exactly(candidate, expected)
 }
 
+/// Exposes the exact generated-position and logical-profile consequences used
+/// by cross-crate graph composition proofs.
+///
+/// The catalog acceptance predicate remains closed in this owning module. No
+/// compiler, artifact, address, dispatch, or execution authority follows from
+/// this lemma.
+pub proof fn kernel_catalog_match_exposes_plan_operation(
+    candidate: KernelCatalogInput,
+    expected: KernelCatalogInput,
+)
+    requires kernel_catalog_input_matches_exactly(candidate, expected),
+    ensures
+        candidate.catalog_version == expected.catalog_version,
+        candidate.plan_index == expected.plan_index,
+        candidate.operation_index == expected.operation_index,
+        candidate.profile.selection == expected.profile.selection,
+        candidate.profile.step == expected.profile.step,
+        candidate.profile.sequences == expected.profile.sequences,
+        candidate.profile.active_tokens == expected.profile.active_tokens,
+        candidate.profile.context_tokens == expected.profile.context_tokens,
+        candidate.profile.family == expected.profile.family,
+        candidate.profile.disposition == expected.profile.disposition,
+        candidate.profile.plan_id.bytes_spec() == expected.profile.plan_id.bytes_spec(),
+        candidate.authorities.plan_id.bytes_spec()
+            == expected.authorities.plan_id.bytes_spec(),
+        candidate.authorities.plan_catalog_id.bytes_spec()
+            == expected.authorities.plan_catalog_id.bytes_spec(),
+        (expected.plan_index as int) < GENERATED_RUNNER_PLAN_COUNT,
+        expected.plan_index
+            == GENERATED_PLAN_TEMPLATES@[expected.plan_index as int].plan_index,
+        expected.profile.selection
+            == GENERATED_PLAN_TEMPLATES@[expected.plan_index as int].selection,
+        ferric_spec::canonical_expected_step_spec(
+            expected.profile.selection.role,
+            expected.profile.selection.mode,
+            expected.profile.selection.bucket,
+            expected.profile.step.ordinal,
+        ) == Some(expected.profile.step),
+{
+    reveal(kernel_catalog_input_matches_exactly);
+    reveal(expectation_matches_catalog);
+    reveal(input_matches_exactly);
+    reveal(profile_matches_exactly);
+    reveal(authorities_match_exactly);
+    assert(authority_sequence(candidate.authorities)[0].bytes_spec()
+        == authority_sequence(expected.authorities)[0].bytes_spec());
+    assert(authority_sequence(candidate.authorities)[1].bytes_spec()
+        == authority_sequence(expected.authorities)[1].bytes_spec());
+    reveal(authority_sequence);
+    reveal(ferric_spec::canonical_expected_step_spec);
+}
+
+impl ValidatedKernelCatalogInput {
+    /// Exact independently supplied expectation accepted for this retained
+    /// structural kernel operation.
+    pub closed spec fn matches_expected_spec(&self, expected: KernelCatalogInput) -> bool {
+        kernel_catalog_input_matches_exactly(self.input, expected)
+    }
+
+    /// Exposes exact generated-position and logical-profile consequences
+    /// without opening the owning module's acceptance relation.
+    pub proof fn expose_plan_operation(&self, expected: KernelCatalogInput)
+        requires self.matches_expected_spec(expected),
+        ensures
+            self.input_spec().catalog_version == expected.catalog_version,
+            self.input_spec().plan_index == expected.plan_index,
+            self.input_spec().operation_index == expected.operation_index,
+            self.input_spec().profile.selection == expected.profile.selection,
+            self.input_spec().profile.step == expected.profile.step,
+            self.input_spec().profile.sequences == expected.profile.sequences,
+            self.input_spec().profile.active_tokens == expected.profile.active_tokens,
+            self.input_spec().profile.context_tokens == expected.profile.context_tokens,
+            self.input_spec().profile.family == expected.profile.family,
+            self.input_spec().profile.disposition == expected.profile.disposition,
+            self.input_spec().profile.plan_id.bytes_spec()
+                == expected.profile.plan_id.bytes_spec(),
+            self.input_spec().authorities.plan_id.bytes_spec()
+                == expected.authorities.plan_id.bytes_spec(),
+            self.input_spec().authorities.plan_catalog_id.bytes_spec()
+                == expected.authorities.plan_catalog_id.bytes_spec(),
+            (expected.plan_index as int) < GENERATED_RUNNER_PLAN_COUNT,
+            expected.plan_index
+                == GENERATED_PLAN_TEMPLATES@[expected.plan_index as int].plan_index,
+            expected.profile.selection
+                == GENERATED_PLAN_TEMPLATES@[expected.plan_index as int].selection,
+            ferric_spec::canonical_expected_step_spec(
+                expected.profile.selection.role,
+                expected.profile.selection.mode,
+                expected.profile.selection.bucket,
+                expected.profile.step.ordinal,
+            ) == Some(expected.profile.step),
+    {
+        reveal(ValidatedKernelCatalogInput::matches_expected_spec);
+        kernel_catalog_match_exposes_plan_operation(self.input, expected);
+    }
+}
+
 /// Returns one exact plan position, or `None` outside the finite roster.
 #[must_use]
 pub fn kernel_catalog_plan(
@@ -621,7 +718,10 @@ pub fn validate_kernel_catalog_input(
     ensures
         result.is_ok() == kernel_catalog_input_matches_exactly(candidate, expected),
         match result {
-            Ok(validated) => validated.input_spec() == candidate,
+            Ok(validated) => {
+                &&& validated.input_spec() == candidate
+                &&& validated.matches_expected_spec(expected)
+            },
             Err(_) => true,
         },
 {

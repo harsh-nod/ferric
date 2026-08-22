@@ -231,3 +231,72 @@ pub use step_workspace_subleases::{
     M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
 };
 pub use system::{CompletionFailure, Engine, EngineError};
+
+verus! {
+
+/// Cross-crate verifier view of one generated operation's exact addressless
+/// dispatch row kinds.
+pub open spec fn m1_operation_dispatch_kinds_spec(
+    role: ferric_spec::Qwen3ModelRole,
+    operator: ferric_spec::Qwen3Operator,
+) -> Seq<nat> {
+    operation_dispatch_expansion::m1_operation_dispatch_kinds_spec(role, operator)
+}
+
+/// Cross-crate verifier view of target operation-expansion cardinality.
+pub open spec fn m1_target_operation_dispatch_count_spec(
+    logical_operation_count: nat,
+    target_completion_operation_count: nat,
+) -> nat {
+    operation_dispatch_expansion::m1_target_operation_dispatch_count_spec(
+        logical_operation_count,
+        target_completion_operation_count,
+    )
+}
+
+/// Exposes the exact reviewed target compact-completion expansion.
+pub proof fn m1_target_completion_dispatch_shape()
+    ensures
+        m1_operation_dispatch_kinds_spec(
+            ferric_spec::Qwen3ModelRole::Target8B,
+            ferric_spec::Qwen3Operator::ArgmaxCompactCompletion,
+        ) == seq![2nat, 3nat],
+        m1_target_operation_dispatch_count_spec(544, 1) == 545,
+{
+    reveal(m1_operation_dispatch_kinds_spec);
+    reveal(m1_target_operation_dispatch_count_spec);
+    operation_dispatch_expansion::m1_target_completion_dispatch_shape();
+}
+
+/// Cross-crate verifier view of target-only addressless physical-recipe
+/// cardinality.
+pub open spec fn m1_target_only_physical_recipe_count_spec(
+    operation_dispatch_count: nat,
+) -> nat {
+    physical_dispatch_recipe::m1_target_only_physical_recipe_count_spec(
+        operation_dispatch_count,
+    )
+}
+
+/// Exposes the exact reviewed target-only physical-recipe shape.
+pub proof fn m1_target_only_physical_recipe_shape()
+    ensures m1_target_only_physical_recipe_count_spec(545) == 545,
+{
+    reveal(m1_target_only_physical_recipe_count_spec);
+    physical_dispatch_recipe::m1_target_only_physical_recipe_shape();
+}
+
+/// Cross-crate verifier view of target-only fixed-batch cardinality.
+pub open spec fn m1_target_only_fixed_batch_packet_count_spec() -> nat {
+    physical_fixed_batch::m1_target_only_fixed_batch_packet_count_spec()
+}
+
+/// Exposes the exact reviewed target-only fixed-batch cardinality.
+pub proof fn m1_target_only_fixed_batch_shape()
+    ensures m1_target_only_fixed_batch_packet_count_spec() == 545,
+{
+    reveal(m1_target_only_fixed_batch_packet_count_spec);
+    physical_fixed_batch::m1_target_only_fixed_batch_shape();
+}
+
+} // verus!

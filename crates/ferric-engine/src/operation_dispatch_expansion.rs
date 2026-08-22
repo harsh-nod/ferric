@@ -21,6 +21,8 @@ use ferric_spec::{
 };
 use sha2::{Digest, Sha256};
 use std::fmt;
+#[allow(unused_imports)]
+use vstd::prelude::*;
 
 use crate::{DeclaredOperationKernelBinding, DeclaredOperationKernelPlan, LogicalRunnerError};
 
@@ -51,6 +53,51 @@ impl M1OperationDispatchKind {
         }
     }
 }
+
+verus! {
+
+/// Verifier view of the exact addressless row kinds derived for one retained
+/// generated operation.
+///
+/// Target K7 completion is the only operation expanded to two rows. Draft K7
+/// retains only argmax; every other operation remains one whole-operation row.
+pub open spec fn m1_operation_dispatch_kinds_spec(
+    role: Qwen3ModelRole,
+    operator: Qwen3Operator,
+) -> Seq<nat> {
+    match (role, operator) {
+        (Qwen3ModelRole::Target8B, Qwen3Operator::ArgmaxCompactCompletion) => {
+            seq![2nat, 3nat]
+        },
+        (Qwen3ModelRole::Draft06B, Qwen3Operator::ArgmaxCompactCompletion) => {
+            seq![2nat]
+        },
+        _ => seq![1nat],
+    }
+}
+
+/// Exact row-count arithmetic for a logical roster containing a known number
+/// of target compact-completion operations.
+pub open spec fn m1_target_operation_dispatch_count_spec(
+    logical_operation_count: nat,
+    target_completion_operation_count: nat,
+) -> nat {
+    logical_operation_count + target_completion_operation_count
+}
+
+/// Exposes the reviewed target K7 two-row expansion and complete target-plan
+/// addressless row count.
+pub proof fn m1_target_completion_dispatch_shape()
+    ensures
+        m1_operation_dispatch_kinds_spec(
+            Qwen3ModelRole::Target8B,
+            Qwen3Operator::ArgmaxCompactCompletion,
+        ) == seq![2nat, 3nat],
+        m1_target_operation_dispatch_count_spec(544, 1) == 545,
+{
+}
+
+} // verus!
 
 /// One exact addressless physical-dispatch row.
 ///
