@@ -15,6 +15,7 @@ mod physical_step;
 mod runner;
 mod scheduler;
 mod speculative_graph;
+mod step_dispatch_composition;
 mod system;
 
 pub use cache::{KvError, PageId};
@@ -59,5 +60,10 @@ pub use speculative_graph::{
     complete_single_member_speculative_graph, SingleMemberSpeculativeGraphError,
     SingleMemberSpeculativeGraphFailure, SingleMemberSpeculativeGraphInputs,
     SingleMemberSpeculativeGraphOutcome,
+};
+pub use step_dispatch_composition::{
+    derive_m1_step_dispatch_plan, AddresslessM1StepDispatchPlan, M1StepDispatchCompositionError,
+    M1StepDispatchDependency, M1StepDispatchIntent, M1StepDispatchSegment, M1StepDispatchStage,
+    M1_MAX_STEP_DISPATCHES_V1, M1_STEP_DISPATCH_COMPOSITION_VERSION,
 };
 pub use system::{CompletionFailure, Engine, EngineError};
