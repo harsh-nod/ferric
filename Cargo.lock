@@ -381,6 +381,7 @@ dependencies = [
  "reserved-fe2o3-symbols",
  "sha2",
  "trybuild",
+ "vstd",
 ]
 
 [[package]]

@@ -179,6 +179,49 @@ hostile["name"] = "bitflags"
 hostile["req"] = "=2.13.1"
 root_package["dependencies"].append(hostile)
 (scratch / "runtime-extra-root.metadata").write_text(json.dumps(root), encoding="utf-8")
+
+dev_promoted = copy.deepcopy(metadata)
+qwen_package = next(
+    p for p in dev_promoted["packages"] if p["name"] == "ferric-qwen-kernels"
+)
+trybuild = next(d for d in qwen_package["dependencies"] if d["name"] == "trybuild")
+if trybuild["kind"] != "dev":
+    raise SystemExit("qwen trybuild dev-dependency anchor drifted")
+trybuild["kind"] = None
+(scratch / "runtime-dev-promoted.metadata").write_text(
+    json.dumps(dev_promoted), encoding="utf-8"
+)
+
+fe2o3 = copy.deepcopy(metadata)
+qwen_package = next(p for p in fe2o3["packages"] if p["name"] == "ferric-qwen-kernels")
+compiler_dependency = next(
+    d for d in qwen_package["dependencies"] if d["name"] == "fe2o3-compiler-ffi"
+)
+compiler_dependency["source"] = compiler_dependency["source"].replace(
+    "c69befaa7d797930e64bb5f48a6090fe7d82ed58", "0" * 40
+)
+(scratch / "fe2o3-source.metadata").write_text(json.dumps(fe2o3), encoding="utf-8")
+
+target = copy.deepcopy(metadata)
+qwen_package = next(p for p in target["packages"] if p["name"] == "ferric-qwen-kernels")
+test_target = next(t for t in qwen_package["targets"] if t["kind"] == ["test"])
+test_target["kind"] = ["bin"]
+test_target["crate_types"] = ["bin"]
+(scratch / "non-library-target.metadata").write_text(json.dumps(target), encoding="utf-8")
+
+test_fixture_runtime = copy.deepcopy(metadata)
+engine_package = next(
+    p for p in test_fixture_runtime["packages"] if p["name"] == "ferric-engine"
+)
+runtime_build = next(
+    d
+    for d in engine_package["dependencies"]
+    if d["name"] == "ferric-build" and d["kind"] is None
+)
+runtime_build["features"].append("test-fixtures")
+(scratch / "test-fixture-runtime.metadata").write_text(
+    json.dumps(test_fixture_runtime), encoding="utf-8"
+)
 PY
 
 expect_rejected runtime-tcb-feature 'workspace runtime dependency TCB drifted' \
@@ -193,6 +236,19 @@ expect_rejected runtime-tcb-proc-macro 'workspace runtime dependency TCB drifted
 expect_rejected runtime-tcb-extra-root 'unadmitted registry runtime root' \
     "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/runtime-extra-root.metadata"
+expect_rejected runtime-dev-promoted 'unadmitted registry runtime root' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    "$scratch/runtime-dev-promoted.metadata"
+expect_rejected fe2o3-source-drift 'workspace fe2o3 dependency declaration drifted' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    "$scratch/fe2o3-source.metadata"
+expect_rejected non-library-target 'unsupported non-library target' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    "$scratch/non-library-target.metadata"
+expect_rejected test-fixture-runtime-activation \
+    'activates the test-fixtures feature outside its admitted dev edge' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    "$scratch/test-fixture-runtime.metadata"
 
 cp "$repo/proofs/negative/REQUIRED_COMPONENTS" "$scratch/unsafe-target.registry"
 chmod u+w "$scratch/unsafe-target.registry"
@@ -476,6 +532,32 @@ write_metadata "$conditional" "$scratch/conditional.metadata"
 expect_rejected parser-cfg 'conditional source is forbidden' \
     "$source_gate" --generate "$conditional" "$scratch/conditional.metadata" \
     "$scratch/conditional.manifest"
+
+deny=$(new_copy unsupported-deny)
+sed -i 's/^#!\[deny(missing_docs)\]$/#![deny(dead_code)]/' \
+    "$deny/crates/ferric-qwen-kernels/src/lib.rs"
+write_metadata "$deny" "$scratch/deny.metadata"
+expect_rejected parser-unsupported-deny 'unsupported deny attribute: dead_code' \
+    "$source_gate" --generate "$deny" "$scratch/deny.metadata" "$scratch/deny.manifest"
+
+repr=$(new_copy unsupported-repr)
+sed -i '0,/^#\[repr(u8)\]$/s//#[repr(C)]/' \
+    "$repr/crates/ferric-qwen-kernels/src/gemm.rs"
+write_metadata "$repr" "$scratch/repr.metadata"
+expect_rejected parser-unsupported-repr 'unsupported repr attribute: C' \
+    "$source_gate" --generate "$repr" "$scratch/repr.metadata" "$scratch/repr.manifest"
+
+assert_include=$(new_copy assert-source-inclusion)
+cat >>"$assert_include/crates/ferric-spec/src/configuration.rs" <<'RS'
+
+const _: () = {
+    assert!(include_str!("configuration.rs").is_empty());
+};
+RS
+write_metadata "$assert_include" "$scratch/assert-include.metadata"
+expect_rejected parser-assert-source-inclusion 'source inclusion macro is forbidden: include_str!' \
+    "$source_gate" --generate "$assert_include" "$scratch/assert-include.metadata" \
+    "$scratch/assert-include.manifest"
 
 trust=$(new_copy trust-attribute)
 cat >>"$trust/crates/ferric-spec/src/configuration.rs" <<'RS'

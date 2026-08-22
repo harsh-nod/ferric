@@ -1622,23 +1622,27 @@ const fn rope_machine_geometry_is_known(
     query_heads: u32,
     context: u32,
 ) -> bool {
-    const fn contains(roster: &[[u32; 3]], value: [u32; 3]) -> bool {
-        let mut index = 0;
-        while index < roster.len() {
-            if roster[index][0] == value[0]
-                && roster[index][1] == value[1]
-                && roster[index][2] == value[2]
-            {
-                return true;
-            }
-            index += 1;
-        }
-        false
-    }
     let geometry = [active, sequences, context];
-    (contains(&ROPE_COMMON_GEOMETRY_V1, geometry) && matches!(query_heads, 16 | 32))
-        || (contains(&ROPE_TARGET_SPECULATIVE_GEOMETRY_V1, geometry) && query_heads == 32)
-        || (contains(&ROPE_DRAFT_SPECULATIVE_GEOMETRY_V1, geometry) && query_heads == 16)
+    (rope_roster_contains_geometry(&ROPE_COMMON_GEOMETRY_V1, geometry)
+        && matches!(query_heads, 16 | 32))
+        || (rope_roster_contains_geometry(&ROPE_TARGET_SPECULATIVE_GEOMETRY_V1, geometry)
+            && query_heads == 32)
+        || (rope_roster_contains_geometry(&ROPE_DRAFT_SPECULATIVE_GEOMETRY_V1, geometry)
+            && query_heads == 16)
+}
+
+const fn rope_roster_contains_geometry(roster: &[[u32; 3]], value: [u32; 3]) -> bool {
+    let mut index = 0;
+    while index < roster.len() {
+        if roster[index][0] == value[0]
+            && roster[index][1] == value[1]
+            && roster[index][2] == value[2]
+        {
+            return true;
+        }
+        index += 1;
+    }
+    false
 }
 
 const ROPE_COMMON_GEOMETRY_V1: [[u32; 3]; 7] = [

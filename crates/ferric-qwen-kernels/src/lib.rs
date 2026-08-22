@@ -2,6 +2,9 @@
 #![deny(missing_docs)]
 #![doc = include_str!("../README.md")]
 
+#[allow(unused_imports)]
+use vstd::prelude::*;
+
 const COV6_NO_RUNTIME_SERVICE_ATTRIBUTES_V1: [&str; 6] = [
     "\"amdgpu-no-completion-action\"",
     "\"amdgpu-no-default-queue\"",

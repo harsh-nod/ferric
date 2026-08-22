@@ -169,36 +169,6 @@ impl WeightSection {
     }
 }
 
-#[cfg(test)]
-impl WeightSection {
-    pub(crate) fn test_set_role(&mut self, role: Qwen3ModelRole) {
-        self.role = role;
-    }
-
-    pub(crate) fn test_set_tensor_name(&mut self, name: &str) {
-        self.tensor_name = name.to_owned();
-    }
-
-    pub(crate) fn test_increment_dimension_0(&mut self) {
-        self.dimension_0 += 1;
-    }
-
-    pub(crate) fn test_increment_destination_offset(&mut self) {
-        self.destination_offset += SECTION_ALIGNMENT;
-    }
-
-    pub(crate) fn test_decrement_destination_length(&mut self) {
-        self.destination_length -= SECTION_ALIGNMENT;
-    }
-}
-
-#[cfg(test)]
-impl WeightSectionManifest {
-    pub(crate) fn test_sections_mut(&mut self) -> &mut Vec<WeightSection> {
-        &mut self.sections
-    }
-}
-
 /// Immutable, versioned manifest for a complete prepacked Qwen3 weight set.
 ///
 /// `canonical_bytes` is the domain-separated binary record hashed to produce
@@ -483,6 +453,36 @@ pub closed spec fn destination_layout_spec(
     destination_layout_from_spec(role, output_bytes, sections, 0, 0)
 }
 
+}
+
+#[cfg(test)]
+impl WeightSection {
+    pub(crate) fn test_set_role(&mut self, role: Qwen3ModelRole) {
+        self.role = role;
+    }
+
+    pub(crate) fn test_set_tensor_name(&mut self, name: &str) {
+        self.tensor_name = name.to_owned();
+    }
+
+    pub(crate) fn test_increment_dimension_0(&mut self) {
+        self.dimension_0 += 1;
+    }
+
+    pub(crate) fn test_increment_destination_offset(&mut self) {
+        self.destination_offset += SECTION_ALIGNMENT;
+    }
+
+    pub(crate) fn test_decrement_destination_length(&mut self) {
+        self.destination_length -= SECTION_ALIGNMENT;
+    }
+}
+
+#[cfg(test)]
+impl WeightSectionManifest {
+    pub(crate) fn test_sections_mut(&mut self) -> &mut Vec<WeightSection> {
+        &mut self.sections
+    }
 }
 
 impl WeightSection {

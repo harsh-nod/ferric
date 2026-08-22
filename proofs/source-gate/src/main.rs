@@ -6,8 +6,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use verus_syn::visit::{self, Visit};
 use verus_syn::{
-    Attribute, Block, Expr, File, FnMode, ImplItem, Item, ItemImpl, ItemMod, Meta, Path as SynPath,
-    Publish, Signature, TraitItem, Type,
+    Attribute, Block, Expr, File, FnMode, ImplItem, Item, ItemImpl, Meta, Path as SynPath, Publish,
+    Signature, TraitItem, Type,
 };
 
 const FORMAT: &str = "FERRIC-VERIFIED-MODULES-V2";
@@ -15,6 +15,8 @@ const RUNTIME_TCB_FORMAT: &str = "FERRIC-RUNTIME-DEPENDENCY-TCB-V1";
 const RUNTIME_TCB_PATH: &str = "proofs/RUNTIME_DEPENDENCY_TCB";
 const CRATES_IO_SOURCE: &str = "registry+https://github.com/rust-lang/crates.io-index";
 const VERUS_SOURCE: &str = "git+https://github.com/verus-lang/verus.git?rev=b677dd5";
+const FE2O3_SOURCE: &str =
+    "git+https://github.com/harsh-nod/fe2o3.git?rev=c69befaa7d797930e64bb5f48a6090fe7d82ed58";
 const RUNTIME_ROOTS: &[(&str, &str, &str, bool)] = &[
     ("ferric-build", "onig", "=6.5.3", false),
     (
@@ -23,6 +25,19 @@ const RUNTIME_ROOTS: &[(&str, &str, &str, bool)] = &[
         "=0.1.12",
         true,
     ),
+    ("ferric-engine", "sha2", "^0.11.0", true),
+    ("ferric-qwen-kernels", "sha2", "^0.11.0", true),
+];
+const FE2O3_ROOTS: &[(&str, &str)] = &[
+    ("ferric-qwen-kernels", "fe2o3-amdhsa-loader"),
+    ("ferric-qwen-kernels", "fe2o3-artifact-transaction"),
+    ("ferric-qwen-kernels", "fe2o3-compiler-ffi"),
+    ("ferric-qwen-kernels", "fe2o3-hsaco"),
+    ("ferric-qwen-kernels", "fe2o3-hsaco-finalize"),
+    ("ferric-qwen-kernels", "fe2o3-llvm-handoff"),
+    ("ferric-qwen-kernels", "fe2o3-llvm-text"),
+    ("ferric-qwen-kernels", "fe2o3-llvm-worker-handoff"),
+    ("ferric-qwen-kernels", "reserved-fe2o3-symbols"),
 ];
 const ENGINE_ALLOCATION_CONSTRUCTORS: &[&str] = &[
     "ferric_engine::cache::KvPool::new_bounded",
@@ -148,6 +163,15 @@ fn bool_field(value: &Value, field: &str) -> GateResult<bool> {
         .get(field)
         .and_then(Value::as_bool)
         .ok_or_else(|| format!("Cargo metadata field {field} is absent or malformed"))
+}
+
+fn is_dev_dependency(dependency: &Value) -> GateResult<bool> {
+    match dependency.get("kind") {
+        None | Some(Value::Null) => Ok(false),
+        Some(Value::String(kind)) if kind == "dev" => Ok(true),
+        Some(Value::String(kind)) => Err(format!("unsupported workspace dependency kind: {kind}")),
+        Some(_) => Err("workspace dependency kind is malformed".to_owned()),
+    }
 }
 
 fn string_array(value: &Value, field: &str, description: &str) -> GateResult<Vec<String>> {
@@ -347,6 +371,9 @@ fn validate_root_declaration(
     owner: &str,
     dependency: &Value,
 ) -> GateResult<Option<(String, String)>> {
+    if is_dev_dependency(dependency)? {
+        return Ok(None);
+    }
     let name = string_field(dependency, "name")?;
     let source = dependency.get("source").and_then(Value::as_str);
     if source != Some(CRATES_IO_SOURCE) {
@@ -373,7 +400,6 @@ fn validate_root_declaration(
         || dependency
             .get("registry")
             .is_some_and(|value| !value.is_null())
-        || dependency.get("kind").is_some_and(|value| !value.is_null())
         || !string_array(dependency, "features", "root feature")?.is_empty()
     {
         return Err(format!(
@@ -381,6 +407,36 @@ fn validate_root_declaration(
         ));
     }
     Ok(Some((owner.to_owned(), name.to_owned())))
+}
+
+fn validate_fe2o3_root_declaration(owner: &str, dependency: &Value) -> GateResult<bool> {
+    let name = string_field(dependency, "name")?;
+    let expected = FE2O3_ROOTS
+        .iter()
+        .any(|(expected_owner, expected_name)| owner == *expected_owner && name == *expected_name);
+    if !expected {
+        return Ok(false);
+    }
+    if dependency.get("source").and_then(Value::as_str) != Some(FE2O3_SOURCE)
+        || string_field(dependency, "req")? != "*"
+        || !bool_field(dependency, "uses_default_features")?
+        || bool_field(dependency, "optional")?
+        || dependency
+            .get("rename")
+            .is_some_and(|value| !value.is_null())
+        || dependency
+            .get("target")
+            .is_some_and(|value| !value.is_null())
+        || dependency
+            .get("registry")
+            .is_some_and(|value| !value.is_null())
+        || !string_array(dependency, "features", "fe2o3 root feature")?.is_empty()
+    {
+        return Err(format!(
+            "workspace fe2o3 dependency declaration drifted: {owner}::{name}"
+        ));
+    }
+    Ok(true)
 }
 
 fn render_runtime_dependency_tcb(repo: &Path, metadata: &Value) -> GateResult<RuntimeTcb> {
@@ -672,6 +728,19 @@ fn packages(
                 "first-party workspace package is not opted into strict Verus: {name}"
             ));
         }
+        if name == "ferric-build" {
+            let features = package
+                .get("features")
+                .and_then(Value::as_object)
+                .ok_or_else(|| "ferric-build feature declarations are malformed".to_owned())?;
+            let Some(test_fixtures) = features.get("test-fixtures").and_then(Value::as_array)
+            else {
+                return Err("ferric-build test-fixtures feature is absent or malformed".to_owned());
+            };
+            if features.len() != 1 || !test_fixtures.is_empty() {
+                return Err("ferric-build test-fixtures feature declaration drifted".to_owned());
+            }
+        }
         let manifest = canonical(
             Path::new(string_field(package, "manifest_path")?)
                 .parent()
@@ -693,21 +762,28 @@ fn packages(
             .get("targets")
             .and_then(Value::as_array)
             .ok_or_else(|| format!("package {name} has no targets array"))?;
-        if targets.len() != 1 {
+        let mut library_targets = Vec::new();
+        for target in targets {
+            let target = target
+                .as_object()
+                .ok_or_else(|| format!("package {name} target is malformed"))?;
+            let kinds = target
+                .get("kind")
+                .and_then(Value::as_array)
+                .ok_or_else(|| format!("package {name} target has no kind"))?;
+            if kinds.len() == 1 && kinds[0].as_str() == Some("lib") {
+                library_targets.push(target);
+            } else if kinds.len() != 1 || kinds[0].as_str() != Some("test") {
+                return Err(format!(
+                    "qualified package {name} has an unsupported non-library target"
+                ));
+            }
+        }
+        let [target] = library_targets.as_slice() else {
             return Err(format!(
                 "qualified package {name} must contain exactly one library target"
             ));
-        }
-        let target = targets[0]
-            .as_object()
-            .ok_or_else(|| format!("package {name} target is malformed"))?;
-        let kinds = target
-            .get("kind")
-            .and_then(Value::as_array)
-            .ok_or_else(|| format!("package {name} target has no kind"))?;
-        if kinds.len() != 1 || kinds[0].as_str() != Some("lib") {
-            return Err(format!("qualified package {name} target is not a library"));
-        }
+        };
         let crate_name = target
             .get("name")
             .and_then(Value::as_str)
@@ -733,12 +809,21 @@ fn packages(
             .and_then(Value::as_array)
             .ok_or_else(|| format!("package {name} dependencies are malformed"))?
         {
-            if dependency.get("kind").is_some_and(|kind| !kind.is_null()) {
+            let dependency_name = string_field(dependency, "name")?;
+            let is_dev = is_dev_dependency(dependency)?;
+            let requested_features = string_array(dependency, "features", "workspace feature")?;
+            if requested_features
+                .iter()
+                .any(|feature| feature == "test-fixtures")
+                && !(name == "ferric-engine" && dependency_name == "ferric-build" && is_dev)
+            {
                 return Err(format!(
-                    "qualified package {name} has a non-runtime dependency"
+                    "package {name} activates the test-fixtures feature outside its admitted dev edge"
                 ));
             }
-            let dependency_name = string_field(dependency, "name")?;
+            if is_dev {
+                continue;
+            }
             if let Some(path) = dependency.get("path").and_then(Value::as_str) {
                 let dependency_path = canonical(Path::new(path))?;
                 let admitted = manifest_to_name.get(&dependency_path).ok_or_else(|| {
@@ -758,7 +843,8 @@ fn packages(
                 let admitted_runtime_root = source == Some(CRATES_IO_SOURCE)
                     && runtime_roots.contains(&(name.clone(), dependency_name.to_owned()));
                 let admitted_vstd = dependency_name == "vstd" && source == Some(VERUS_SOURCE);
-                if !admitted_runtime_root && !admitted_vstd {
+                let admitted_fe2o3 = validate_fe2o3_root_declaration(&name, dependency)?;
+                if !admitted_runtime_root && !admitted_vstd && !admitted_fe2o3 {
                     return Err(format!(
                         "package {name} has an unadmitted external dependency: {dependency_name}"
                     ));
@@ -836,14 +922,23 @@ fn validate_attributes(attributes: &[Attribute], allow_solver_attributes: bool) 
     for attribute in attributes {
         let name = path_name(attribute.path());
         match name.as_str() {
-            "cfg" | "cfg_attr" => return Err(format!("conditional source is forbidden: {name}")),
+            "cfg" | "cfg_attr" => {
+                let detail = match &attribute.meta {
+                    Meta::List(list) => format!("({})", list.tokens),
+                    _ => String::new(),
+                };
+                return Err(format!("conditional source is forbidden: {name}{detail}"));
+            }
             "path" => return Err("#[path] module redirection is forbidden".to_owned()),
             "doc" | "must_use" | "inline" | "cold" | "non_exhaustive" | "deprecated" => {}
             "allow" => {
                 let Meta::List(list) = &attribute.meta else {
                     return Err("malformed allow attribute".to_owned());
                 };
-                if list.tokens.to_string() != "unused_imports" {
+                if !matches!(
+                    list.tokens.to_string().as_str(),
+                    "unused_imports" | "clippy :: too_many_arguments" | "clippy :: type_complexity"
+                ) {
                     return Err(format!("unsupported allow attribute: {}", list.tokens));
                 }
             }
@@ -853,6 +948,25 @@ fn validate_attributes(attributes: &[Attribute], allow_solver_attributes: bool) 
                 };
                 if list.tokens.to_string() != "unsafe_code" {
                     return Err(format!("unsupported forbid attribute: {}", list.tokens));
+                }
+            }
+            "deny" => {
+                let Meta::List(list) = &attribute.meta else {
+                    return Err("malformed deny attribute".to_owned());
+                };
+                if list.tokens.to_string() != "missing_docs" {
+                    return Err(format!("unsupported deny attribute: {}", list.tokens));
+                }
+            }
+            "repr" => {
+                let Meta::List(list) = &attribute.meta else {
+                    return Err("malformed repr attribute".to_owned());
+                };
+                if !matches!(
+                    list.tokens.to_string().as_str(),
+                    "u8" | "u32" | "transparent"
+                ) {
+                    return Err(format!("unsupported repr attribute: {}", list.tokens));
                 }
             }
             "derive" => {
@@ -964,7 +1078,16 @@ impl<'ast> Visit<'ast> for SyntaxAudit {
     }
 
     fn visit_stmt_macro(&mut self, statement: &'ast verus_syn::StmtMacro) {
-        self.reject_macro(&statement.mac.path, "statement");
+        if path_name(&statement.mac.path) == "assert" {
+            match verus_syn::parse2::<Expr>(statement.mac.tokens.clone()) {
+                Ok(expression) => self.visit_expr(&expression),
+                Err(error) => self
+                    .errors
+                    .push(format!("unsupported assert! invocation: {error}")),
+            }
+        } else {
+            self.reject_macro(&statement.mac.path, "statement");
+        }
     }
 
     fn visit_expr_macro(&mut self, expression: &'ast verus_syn::ExprMacro) {
@@ -1098,25 +1221,76 @@ fn audit_engine_allocation(block: &Block, compiler_path: &str) -> GateResult<()>
     }
 }
 
-fn audit_item(item: &Item, in_verus: bool) -> GateResult<()> {
+fn audit_item(item: &Item, in_verus: bool, source: &str) -> GateResult<()> {
     let allow_root_function = matches!(item, Item::Fn(_));
+    let item_name = match item {
+        Item::Const(item) => format!("const {}", item.ident),
+        Item::Enum(item) => format!("enum {}", item.ident),
+        Item::Fn(item) => format!("fn {}", item.sig.ident),
+        Item::Impl(item) => format!(
+            "impl {}",
+            impl_owner(item).unwrap_or_else(|_| "<unsupported-owner>".to_owned())
+        ),
+        Item::Static(item) => format!("static {}", item.ident),
+        Item::Struct(item) => format!("struct {}", item.ident),
+        Item::Trait(item) => format!("trait {}", item.ident),
+        Item::Type(item) => format!("type {}", item.ident),
+        _ => "item".to_owned(),
+    };
     let mut audit = SyntaxAudit::new(allow_root_function, in_verus);
     audit.visit_item(item);
-    audit.finish()
+    audit
+        .finish()
+        .map_err(|error| format!("{source} ({item_name}): {error}"))
 }
 
-fn cfg_test_inline(module: &ItemMod) -> bool {
-    if module.content.is_none() {
-        return false;
-    }
-    let non_doc: Vec<&Attribute> = module
-        .attrs
+fn cfg_test_attributes(attributes: &[Attribute]) -> bool {
+    let non_doc: Vec<&Attribute> = attributes
         .iter()
-        .filter(|attribute| !attribute.path().is_ident("doc"))
+        .filter(|attribute| path_name(attribute.path()) != "doc")
         .collect();
     non_doc.len() == 1
-        && non_doc[0].path().is_ident("cfg")
+        && path_name(non_doc[0].path()) == "cfg"
         && matches!(&non_doc[0].meta, Meta::List(list) if list.tokens.to_string() == "test")
+}
+
+fn cfg_test_item(item: &Item) -> bool {
+    match item {
+        Item::Impl(item) => cfg_test_attributes(&item.attrs),
+        Item::Mod(item) => cfg_test_attributes(&item.attrs),
+        _ => false,
+    }
+}
+
+fn cfg_test_fixture_item(item: &Item) -> GateResult<bool> {
+    let attributes = match item {
+        Item::Fn(item) => &item.attrs,
+        Item::Mod(item) => &item.attrs,
+        Item::Use(item) => &item.attrs,
+        _ => return Ok(false),
+    };
+    let cfg_attributes: Vec<&Attribute> = attributes
+        .iter()
+        .filter(|attribute| path_name(attribute.path()) == "cfg")
+        .collect();
+    if cfg_attributes.is_empty() {
+        return Ok(false);
+    }
+    if cfg_attributes.len() != 1
+        || !matches!(
+            &cfg_attributes[0].meta,
+            Meta::List(list) if list.tokens.to_string() == "feature = \"test-fixtures\""
+        )
+    {
+        return Ok(false);
+    }
+    let remaining: Vec<Attribute> = attributes
+        .iter()
+        .filter(|attribute| path_name(attribute.path()) != "cfg")
+        .cloned()
+        .collect();
+    validate_attributes(&remaining, false)?;
+    Ok(true)
 }
 
 fn impl_owner(item: &ItemImpl) -> GateResult<String> {
@@ -1242,6 +1416,12 @@ impl SourceWalker<'_> {
         in_verus: bool,
     ) -> GateResult<()> {
         for item in items {
+            if cfg_test_item(item) {
+                continue;
+            }
+            if self.package.name == "ferric-build" && cfg_test_fixture_item(item)? {
+                continue;
+            }
             match item {
                 Item::Macro(item_macro)
                     if item_macro.ident.is_none()
@@ -1266,9 +1446,6 @@ impl SourceWalker<'_> {
                 Item::Mod(module) => {
                     if in_verus {
                         return Err("module declarations inside verus! are forbidden".to_owned());
-                    }
-                    if cfg_test_inline(module) {
-                        continue;
                     }
                     validate_attributes(&module.attrs, false)?;
                     let child_name = module.ident.to_string();
@@ -1297,7 +1474,7 @@ impl SourceWalker<'_> {
                     }
                 }
                 Item::Fn(function) => {
-                    audit_item(item, in_verus)?;
+                    audit_item(item, in_verus, source)?;
                     let executable = validate_signature(&function.sig)?;
                     if executable {
                         let compiler_path = format!("{module_path}::{}", function.sig.ident);
@@ -1308,11 +1485,11 @@ impl SourceWalker<'_> {
                     }
                 }
                 Item::Enum(item_enum) => {
-                    audit_item(item, in_verus)?;
+                    audit_item(item, in_verus, source)?;
                     self.add_type_owner(&item_enum.ident, module_path)?;
                 }
                 Item::Impl(item_impl) => {
-                    audit_item(item, in_verus)?;
+                    audit_item(item, in_verus, source)?;
                     let owner = impl_owner(item_impl)?;
                     let trait_name = item_impl
                         .trait_
@@ -1367,11 +1544,11 @@ impl SourceWalker<'_> {
                     }
                 }
                 Item::Struct(item_struct) => {
-                    audit_item(item, in_verus)?;
+                    audit_item(item, in_verus, source)?;
                     self.add_type_owner(&item_struct.ident, module_path)?;
                 }
                 Item::Trait(item_trait) => {
-                    audit_item(item, in_verus)?;
+                    audit_item(item, in_verus, source)?;
                     for trait_item in &item_trait.items {
                         match trait_item {
                             TraitItem::Fn(function) => {
@@ -1407,7 +1584,7 @@ impl SourceWalker<'_> {
                     }
                 }
                 Item::Union(item_union) => {
-                    audit_item(item, in_verus)?;
+                    audit_item(item, in_verus, source)?;
                     self.add_type_owner(&item_union.ident, module_path)?;
                 }
                 Item::ForeignMod(_) => return Err("foreign modules are forbidden".to_owned()),
@@ -1415,7 +1592,7 @@ impl SourceWalker<'_> {
                     return Err("assume_specification is forbidden".to_owned());
                 }
                 Item::Verbatim(_) => return Err("unparsed item syntax is forbidden".to_owned()),
-                _ => audit_item(item, in_verus)?,
+                _ => audit_item(item, in_verus, source)?,
             }
         }
         Ok(())

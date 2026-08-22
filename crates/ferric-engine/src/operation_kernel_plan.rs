@@ -993,47 +993,69 @@ trait ProfileCatalog {
     fn profiles(&self) -> &[Self::Profile];
 }
 
-macro_rules! profile_catalog {
-    ($catalog:ty, $profile:ty) => {
-        impl ProfileCatalog for $catalog {
-            type Profile = $profile;
+impl ProfileCatalog for gemm::Qwen3GemmProfileCatalogV1 {
+    type Profile = gemm::Qwen3GemmProfileV1;
 
-            fn profiles(&self) -> &[Self::Profile] {
-                self.profiles()
-            }
-        }
-    };
+    fn profiles(&self) -> &[Self::Profile] {
+        self.profiles()
+    }
 }
 
-profile_catalog!(gemm::Qwen3GemmProfileCatalogV1, gemm::Qwen3GemmProfileV1);
-profile_catalog!(
-    gemm::Qwen3TokenEmbeddingProfileCatalogV1,
-    gemm::Qwen3TokenEmbeddingProfileV1
-);
-profile_catalog!(
-    rmsnorm::Qwen3RmsNormProfileCatalogV1,
-    rmsnorm::Qwen3RmsNormProfileV1
-);
-profile_catalog!(
-    rope_kv::Qwen3RopeKvProfileCatalogV1,
-    rope_kv::Qwen3RopeKvProfileV1
-);
-profile_catalog!(
-    prefill::Qwen3PrefillProfileCatalogV1,
-    prefill::Qwen3PrefillProfileV1
-);
-profile_catalog!(
-    paged_decode::Qwen3PagedDecodeProfileCatalogV1,
-    paged_decode::Qwen3PagedDecodeProfileV1
-);
-profile_catalog!(
-    swiglu::Qwen3SwiGluProfileCatalogV1,
-    swiglu::Qwen3SwiGluProfileV1
-);
-profile_catalog!(
-    logits::Qwen3LogitsProfileCatalogV1,
-    logits::Qwen3LogitsProfileV1
-);
+impl ProfileCatalog for gemm::Qwen3TokenEmbeddingProfileCatalogV1 {
+    type Profile = gemm::Qwen3TokenEmbeddingProfileV1;
+
+    fn profiles(&self) -> &[Self::Profile] {
+        self.profiles()
+    }
+}
+
+impl ProfileCatalog for rmsnorm::Qwen3RmsNormProfileCatalogV1 {
+    type Profile = rmsnorm::Qwen3RmsNormProfileV1;
+
+    fn profiles(&self) -> &[Self::Profile] {
+        self.profiles()
+    }
+}
+
+impl ProfileCatalog for rope_kv::Qwen3RopeKvProfileCatalogV1 {
+    type Profile = rope_kv::Qwen3RopeKvProfileV1;
+
+    fn profiles(&self) -> &[Self::Profile] {
+        self.profiles()
+    }
+}
+
+impl ProfileCatalog for prefill::Qwen3PrefillProfileCatalogV1 {
+    type Profile = prefill::Qwen3PrefillProfileV1;
+
+    fn profiles(&self) -> &[Self::Profile] {
+        self.profiles()
+    }
+}
+
+impl ProfileCatalog for paged_decode::Qwen3PagedDecodeProfileCatalogV1 {
+    type Profile = paged_decode::Qwen3PagedDecodeProfileV1;
+
+    fn profiles(&self) -> &[Self::Profile] {
+        self.profiles()
+    }
+}
+
+impl ProfileCatalog for swiglu::Qwen3SwiGluProfileCatalogV1 {
+    type Profile = swiglu::Qwen3SwiGluProfileV1;
+
+    fn profiles(&self) -> &[Self::Profile] {
+        self.profiles()
+    }
+}
+
+impl ProfileCatalog for logits::Qwen3LogitsProfileCatalogV1 {
+    type Profile = logits::Qwen3LogitsProfileV1;
+
+    fn profiles(&self) -> &[Self::Profile] {
+        self.profiles()
+    }
+}
 
 fn profile_at<C, M, F, G>(
     catalog: &C,
