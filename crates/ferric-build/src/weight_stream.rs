@@ -6,9 +6,9 @@ use crate::safetensors::{
 };
 use crate::sha256::Sha256;
 use crate::{
-    WeightDescriptor, QWEN3_DRAFT_TENSOR_DATA_BYTES, QWEN3_DRAFT_WEIGHT_ARTIFACT_BYTES,
-    QWEN3_DRAFT_WEIGHT_SHA256, QWEN3_TARGET_TENSOR_DATA_BYTES, QWEN3_TARGET_WEIGHT_ARTIFACT_BYTES,
-    QWEN3_TARGET_WEIGHT_SET_SHA256,
+    ManifestCommitment, WeightDescriptor, QWEN3_DRAFT_TENSOR_DATA_BYTES,
+    QWEN3_DRAFT_WEIGHT_ARTIFACT_BYTES, QWEN3_DRAFT_WEIGHT_SHA256, QWEN3_TARGET_TENSOR_DATA_BYTES,
+    QWEN3_TARGET_WEIGHT_ARTIFACT_BYTES, QWEN3_TARGET_WEIGHT_SET_SHA256,
 };
 use ferric_spec::{Qwen3ModelRole, Qwen3TensorMetadata, TensorDType};
 use std::fmt;
@@ -33,6 +33,22 @@ const TRANSFORM_ID_BYTES: [u8; 26] = [
 
 /// Canonical manifest format version for prepacked weight sections.
 pub const PREPACKED_WEIGHT_MANIFEST_VERSION: u32 = 1;
+/// SHA-256 of the canonical manifest produced from the exact pinned Qwen3-8B sources.
+pub const QWEN3_TARGET_PREPACKED_MANIFEST_SHA256: [u8; 32] = [
+    0xd6, 0xd8, 0xb5, 0x5c, 0x73, 0x59, 0x56, 0x45, 0xde, 0xde, 0xad, 0xe0, 0x05, 0xd4, 0xe8,
+    0x53, 0x09, 0x8c, 0xf3, 0xa2, 0x2f, 0xaf, 0x1c, 0x04, 0x59, 0x22, 0xd0, 0x03, 0x67, 0xec,
+    0xff, 0x7e,
+];
+/// Canonical Qwen3-8B prepacked manifest length.
+pub const QWEN3_TARGET_PREPACKED_MANIFEST_BYTES: u32 = 77_591;
+/// SHA-256 of the canonical manifest produced from the exact pinned Qwen3-0.6B source.
+pub const QWEN3_DRAFT_PREPACKED_MANIFEST_SHA256: [u8; 32] = [
+    0xcd, 0x97, 0xbd, 0xa6, 0x5e, 0x4a, 0x40, 0xd4, 0x9a, 0xe8, 0x85, 0x44, 0x4c, 0xc6, 0xa1,
+    0x5a, 0x47, 0x13, 0x5d, 0x10, 0x73, 0x07, 0x5d, 0xda, 0x10, 0x4b, 0x36, 0x00, 0x68, 0xe4,
+    0x74, 0x1e,
+];
+/// Canonical Qwen3-0.6B prepacked manifest length.
+pub const QWEN3_DRAFT_PREPACKED_MANIFEST_BYTES: u32 = 55_798;
 
 /// The only data transform admitted by this foundation slice.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -288,11 +304,11 @@ impl WeightSectionManifest {
 
 /// Sealed authority for a completely emitted and authenticated prepacked set.
 ///
-/// This value is returned only after exact source EOF and full-file SHA-256,
-/// schema and layout validation, every successful output write, and manifest
-/// construction. It is intentionally not `Clone`. Callers must write into a
-/// staging destination and publish that destination atomically only after this
-/// authority is returned.
+/// This value is returned only after either exact source EOF/full-file SHA-256
+/// authentication or an exact match to the compiled canonical-manifest trust
+/// anchor followed by every section digest and output EOF. It is intentionally
+/// not `Clone`. Callers must publish only the byte snapshot authenticated by
+/// this authority.
 #[derive(Debug, PartialEq, Eq)]
 pub struct PrepackedWeightSet {
     role: Qwen3ModelRole,
@@ -565,6 +581,45 @@ impl std::error::Error for WeightStreamError {
         }
     }
 }
+
+/// Failure while reopening a persisted prepacked weight artifact.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum PersistedPrepackedWeightError {
+    /// The admission-record commitment does not describe the exact pinned role.
+    InvalidCommitment(&'static str),
+    /// The bounded canonical manifest record is malformed or noncanonical.
+    InvalidManifest(&'static str),
+    /// A manifest string field is not valid UTF-8.
+    InvalidManifestUtf8(&'static str),
+    /// Parsed section metadata does not form the exact admitted Qwen3 roster.
+    InvalidSectionLayout(&'static str),
+    /// Reconstructing the canonical typed manifest failed.
+    Manifest(WeightStreamError),
+    /// The persisted weight reader returned an I/O error.
+    WeightIo(io::ErrorKind),
+    /// EOF arrived before the complete committed prepacked image.
+    WeightEarlyEof {
+        /// Exact committed image length.
+        expected: u64,
+        /// Bytes observed before EOF.
+        actual: u64,
+    },
+    /// A byte followed the complete committed prepacked image.
+    WeightTrailingData,
+    /// One persisted tensor section differed from its committed digest.
+    SectionDigestMismatch {
+        /// Zero-based section position in the canonical manifest.
+        section: usize,
+    },
+}
+
+impl fmt::Display for PersistedPrepackedWeightError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(formatter, "persisted prepacked weights rejected: {self:?}")
+    }
+}
+
+impl std::error::Error for PersistedPrepackedWeightError {}
 
 impl From<SafetensorsError> for WeightStreamError {
     fn from(error: SafetensorsError) -> Self {
@@ -1419,6 +1474,504 @@ fn finish_prepacked(
     })
 }
 
+struct PersistedManifestReader<'a> {
+    bytes: &'a [u8],
+    offset: usize,
+}
+
+impl<'a> PersistedManifestReader<'a> {
+    const fn new(bytes: &'a [u8]) -> Self {
+        Self { bytes, offset: 0 }
+    }
+
+    fn take(&mut self, length: usize) -> Result<&'a [u8], PersistedPrepackedWeightError> {
+        let end = self.offset.checked_add(length).ok_or(
+            PersistedPrepackedWeightError::InvalidManifest("field extent overflow"),
+        )?;
+        let value = self.bytes.get(self.offset..end).ok_or(
+            PersistedPrepackedWeightError::InvalidManifest("truncated field"),
+        )?;
+        self.offset = end;
+        Ok(value)
+    }
+
+    fn array<const N: usize>(&mut self) -> Result<[u8; N], PersistedPrepackedWeightError> {
+        self.take(N)?
+            .try_into()
+            .map_err(|_| PersistedPrepackedWeightError::InvalidManifest("fixed field"))
+    }
+
+    fn u8(&mut self) -> Result<u8, PersistedPrepackedWeightError> {
+        Ok(self.array::<1>()?[0])
+    }
+
+    fn u32(&mut self) -> Result<u32, PersistedPrepackedWeightError> {
+        Ok(u32::from_le_bytes(self.array()?))
+    }
+
+    fn u64(&mut self) -> Result<u64, PersistedPrepackedWeightError> {
+        Ok(u64::from_le_bytes(self.array()?))
+    }
+
+    fn string(&mut self, field: &'static str) -> Result<String, PersistedPrepackedWeightError> {
+        let length = usize::try_from(self.u32()?).map_err(|_| {
+            PersistedPrepackedWeightError::InvalidManifest("string length overflow")
+        })?;
+        let bytes = self.take(length)?;
+        std::str::from_utf8(bytes)
+            .map(str::to_owned)
+            .map_err(|_| PersistedPrepackedWeightError::InvalidManifestUtf8(field))
+    }
+
+    fn finish(self) -> Result<(), PersistedPrepackedWeightError> {
+        if self.offset == self.bytes.len() {
+            Ok(())
+        } else {
+            Err(PersistedPrepackedWeightError::InvalidManifest(
+                "trailing manifest bytes",
+            ))
+        }
+    }
+}
+
+struct ParsedPersistedManifest {
+    role: Qwen3ModelRole,
+    source_weights_id: [u8; 32],
+    source_artifact_bytes: u64,
+    tensor_data_bytes: u64,
+    output_bytes: u64,
+    sections: Vec<WeightSection>,
+}
+
+fn exact_weight_descriptor(role: Qwen3ModelRole) -> WeightDescriptor {
+    match role {
+        Qwen3ModelRole::Target8B => WeightDescriptor {
+            weights_id: QWEN3_TARGET_WEIGHT_SET_SHA256,
+            artifact_bytes: QWEN3_TARGET_WEIGHT_ARTIFACT_BYTES,
+            tensor_data_bytes: QWEN3_TARGET_TENSOR_DATA_BYTES,
+            sections: 5,
+        },
+        Qwen3ModelRole::Draft06B => WeightDescriptor {
+            weights_id: QWEN3_DRAFT_WEIGHT_SHA256,
+            artifact_bytes: QWEN3_DRAFT_WEIGHT_ARTIFACT_BYTES,
+            tensor_data_bytes: QWEN3_DRAFT_TENSOR_DATA_BYTES,
+            sections: 1,
+        },
+    }
+}
+
+fn exact_persisted_manifest_identity(role: Qwen3ModelRole) -> ([u8; 32], u32) {
+    match role {
+        Qwen3ModelRole::Target8B => (
+            QWEN3_TARGET_PREPACKED_MANIFEST_SHA256,
+            QWEN3_TARGET_PREPACKED_MANIFEST_BYTES,
+        ),
+        Qwen3ModelRole::Draft06B => (
+            QWEN3_DRAFT_PREPACKED_MANIFEST_SHA256,
+            QWEN3_DRAFT_PREPACKED_MANIFEST_BYTES,
+        ),
+    }
+}
+
+fn validate_persisted_commitment(
+    role: Qwen3ModelRole,
+    commitment: ManifestCommitment,
+    manifest_bytes: &[u8],
+) -> Result<WeightDescriptor, PersistedPrepackedWeightError> {
+    let descriptor = exact_weight_descriptor(role);
+    let (manifest_identity, manifest_bytes_exact) = exact_persisted_manifest_identity(role);
+    if commitment.role != role {
+        return Err(PersistedPrepackedWeightError::InvalidCommitment("role"));
+    }
+    if commitment.version != PREPACKED_WEIGHT_MANIFEST_VERSION {
+        return Err(PersistedPrepackedWeightError::InvalidCommitment("version"));
+    }
+    if commitment.source_weights_id != descriptor.weights_id {
+        return Err(PersistedPrepackedWeightError::InvalidCommitment(
+            "source identity",
+        ));
+    }
+    if commitment.source_artifact_bytes != descriptor.artifact_bytes
+        || commitment.tensor_data_bytes != descriptor.tensor_data_bytes
+        || commitment.output_bytes != descriptor.tensor_data_bytes
+    {
+        return Err(PersistedPrepackedWeightError::InvalidCommitment(
+            "byte count",
+        ));
+    }
+    if commitment.section_count != role.tensor_count() {
+        return Err(PersistedPrepackedWeightError::InvalidCommitment(
+            "section count",
+        ));
+    }
+    let manifest_length = u32::try_from(manifest_bytes.len())
+        .map_err(|_| PersistedPrepackedWeightError::InvalidCommitment("manifest byte count"))?;
+    if manifest_bytes.is_empty()
+        || manifest_bytes.len() > MAX_MANIFEST_BYTES
+        || commitment.canonical_manifest_bytes != manifest_length
+        || commitment.canonical_manifest_bytes != manifest_bytes_exact
+    {
+        return Err(PersistedPrepackedWeightError::InvalidCommitment(
+            "manifest byte count",
+        ));
+    }
+    if commitment.aggregate_id != manifest_identity
+        || crate::sha256::digest(manifest_bytes) != manifest_identity
+    {
+        return Err(PersistedPrepackedWeightError::InvalidCommitment(
+            "manifest identity",
+        ));
+    }
+    Ok(descriptor)
+}
+
+fn parse_persisted_manifest(
+    bytes: &[u8],
+) -> Result<ParsedPersistedManifest, PersistedPrepackedWeightError> {
+    if bytes.is_empty() || bytes.len() > MAX_MANIFEST_BYTES {
+        return Err(PersistedPrepackedWeightError::InvalidManifest(
+            "manifest size",
+        ));
+    }
+    let mut reader = PersistedManifestReader::new(bytes);
+    if reader.array::<36>()? != MANIFEST_DOMAIN {
+        return Err(PersistedPrepackedWeightError::InvalidManifest("magic"));
+    }
+    if reader.u32()? != PREPACKED_WEIGHT_MANIFEST_VERSION {
+        return Err(PersistedPrepackedWeightError::InvalidManifest("version"));
+    }
+    let role = match reader.u8()? {
+        1 => Qwen3ModelRole::Target8B,
+        2 => Qwen3ModelRole::Draft06B,
+        _ => return Err(PersistedPrepackedWeightError::InvalidManifest("role")),
+    };
+    let source_weights_id = reader.array()?;
+    let source_artifact_bytes = reader.u64()?;
+    let tensor_data_bytes = reader.u64()?;
+    let output_bytes = reader.u64()?;
+    let section_count = reader.u32()?;
+    if section_count != role.tensor_count() {
+        return Err(PersistedPrepackedWeightError::InvalidManifest(
+            "section count",
+        ));
+    }
+    let section_count = usize::try_from(section_count)
+        .map_err(|_| PersistedPrepackedWeightError::InvalidManifest("section count overflow"))?;
+    let mut sections = Vec::new();
+    sections
+        .try_reserve_exact(section_count)
+        .map_err(|_| PersistedPrepackedWeightError::InvalidManifest("section allocation"))?;
+    for _ in 0..section_count {
+        let tensor_name = reader.string("tensor name")?;
+        let section_role = match reader.u8()? {
+            1 => Qwen3ModelRole::Target8B,
+            2 => Qwen3ModelRole::Draft06B,
+            _ => {
+                return Err(PersistedPrepackedWeightError::InvalidManifest(
+                    "section role",
+                ));
+            }
+        };
+        if reader.u8()? != 1 {
+            return Err(PersistedPrepackedWeightError::InvalidManifest(
+                "section dtype",
+            ));
+        }
+        let rank = reader.u32()?;
+        let dimension_0 = reader.u32()?;
+        let dimension_1 = reader.u32()?;
+        let source_artifact = reader.string("source artifact")?;
+        let source_offset = reader.u64()?;
+        let source_length = reader.u64()?;
+        let destination_offset = reader.u64()?;
+        let destination_length = reader.u64()?;
+        let alignment = reader.u64()?;
+        let transform = reader.string("transform")?;
+        if transform.as_bytes() != TRANSFORM_ID_BYTES {
+            return Err(PersistedPrepackedWeightError::InvalidManifest(
+                "section transform",
+            ));
+        }
+        let sha256 = reader.array()?;
+        sections.push(WeightSection {
+            tensor_name,
+            role: section_role,
+            dtype: TensorDType::Bf16,
+            rank,
+            dimension_0,
+            dimension_1,
+            source_artifact,
+            source_offset,
+            source_length,
+            destination_offset,
+            destination_length,
+            alignment,
+            transform: WeightTransform::Bf16RowMajorIdentityV1,
+            sha256,
+        });
+    }
+    reader.finish()?;
+    Ok(ParsedPersistedManifest {
+        role,
+        source_weights_id,
+        source_artifact_bytes,
+        tensor_data_bytes,
+        output_bytes,
+        sections,
+    })
+}
+
+fn persisted_source_pin(role: Qwen3ModelRole, name: &str) -> Option<(usize, FilePin)> {
+    match role {
+        Qwen3ModelRole::Target8B => TARGET_SHARD_PINS
+            .iter()
+            .copied()
+            .enumerate()
+            .find(|(_, pin)| pin.name == name),
+        Qwen3ModelRole::Draft06B if name == DRAFT_FILE_PIN.name => Some((0, DRAFT_FILE_PIN)),
+        Qwen3ModelRole::Draft06B => None,
+    }
+}
+
+fn validate_persisted_sections(
+    manifest: &WeightSectionManifest,
+) -> Result<(), PersistedPrepackedWeightError> {
+    let role = manifest.role();
+    let mut seen = [false; Qwen3ModelRole::Target8B.tensor_count() as usize];
+    let mut source_cursors = [0_u64; TARGET_SHARD_PINS.len()];
+    let mut expected_target_source = 0_usize;
+    match role {
+        Qwen3ModelRole::Target8B => {
+            for (cursor, pin) in source_cursors.iter_mut().zip(TARGET_SHARD_PINS) {
+                *cursor = 8_u64.checked_add(pin.header_bytes).ok_or(
+                    PersistedPrepackedWeightError::InvalidSectionLayout("source header"),
+                )?;
+            }
+        }
+        Qwen3ModelRole::Draft06B => {
+            source_cursors[0] = 8_u64.checked_add(DRAFT_FILE_PIN.header_bytes).ok_or(
+                PersistedPrepackedWeightError::InvalidSectionLayout("source header"),
+            )?;
+        }
+    }
+    for section in manifest.sections() {
+        if section.role != role
+            || section.dtype != TensorDType::Bf16
+            || section.transform != WeightTransform::Bf16RowMajorIdentityV1
+            || section.alignment != SECTION_ALIGNMENT
+            || section.sha256 == [0; 32]
+        {
+            return Err(PersistedPrepackedWeightError::InvalidSectionLayout(
+                "section authority",
+            ));
+        }
+        let (_, ordinal) = section
+            .qwen3_metadata()
+            .map_err(|_| PersistedPrepackedWeightError::InvalidSectionLayout("tensor schema"))?;
+        let ordinal = usize::try_from(ordinal)
+            .map_err(|_| PersistedPrepackedWeightError::InvalidSectionLayout("tensor ordinal"))?;
+        let seen_entry =
+            seen.get_mut(ordinal)
+                .ok_or(PersistedPrepackedWeightError::InvalidSectionLayout(
+                    "tensor ordinal",
+                ))?;
+        if *seen_entry {
+            return Err(PersistedPrepackedWeightError::InvalidSectionLayout(
+                "duplicate tensor ordinal",
+            ));
+        }
+        *seen_entry = true;
+        let expected_length = u64::from(section.dimension_0)
+            .checked_mul(u64::from(section.dimension_1))
+            .and_then(|elements| elements.checked_mul(2))
+            .ok_or(PersistedPrepackedWeightError::InvalidSectionLayout(
+                "tensor byte arithmetic",
+            ))?;
+        if section.source_length != expected_length || section.destination_length != expected_length
+        {
+            return Err(PersistedPrepackedWeightError::InvalidSectionLayout(
+                "tensor byte length",
+            ));
+        }
+        let (source_index, source_pin) = persisted_source_pin(role, &section.source_artifact)
+            .ok_or(PersistedPrepackedWeightError::InvalidSectionLayout(
+                "source artifact",
+            ))?;
+        if role == Qwen3ModelRole::Target8B && source_index != expected_target_source {
+            return Err(PersistedPrepackedWeightError::InvalidSectionLayout(
+                "source shard order",
+            ));
+        }
+        let source_cursor = source_cursors.get_mut(source_index).ok_or(
+            PersistedPrepackedWeightError::InvalidSectionLayout("source artifact index"),
+        )?;
+        if section.source_offset != *source_cursor
+            || !section.source_offset.is_multiple_of(SECTION_ALIGNMENT)
+        {
+            return Err(PersistedPrepackedWeightError::InvalidSectionLayout(
+                "source coverage",
+            ));
+        }
+        *source_cursor = section
+            .source_offset
+            .checked_add(section.source_length)
+            .ok_or(PersistedPrepackedWeightError::InvalidSectionLayout(
+                "source range",
+            ))?;
+        if *source_cursor > source_pin.file_bytes {
+            return Err(PersistedPrepackedWeightError::InvalidSectionLayout(
+                "source range",
+            ));
+        }
+        if role == Qwen3ModelRole::Target8B && *source_cursor == source_pin.file_bytes {
+            expected_target_source = expected_target_source.checked_add(1).ok_or(
+                PersistedPrepackedWeightError::InvalidSectionLayout("source shard order"),
+            )?;
+        }
+    }
+    let required = role.tensor_count() as usize;
+    if manifest.sections().len() != required || seen[..required].iter().any(|entry| !entry) {
+        return Err(PersistedPrepackedWeightError::InvalidSectionLayout(
+            "complete tensor roster",
+        ));
+    }
+    let source_coverage_complete = match role {
+        Qwen3ModelRole::Target8B => source_cursors
+            .iter()
+            .zip(TARGET_SHARD_PINS)
+            .all(|(cursor, pin)| *cursor == pin.file_bytes),
+        Qwen3ModelRole::Draft06B => source_cursors[0] == DRAFT_FILE_PIN.file_bytes,
+    };
+    if !source_coverage_complete {
+        return Err(PersistedPrepackedWeightError::InvalidSectionLayout(
+            "complete source coverage",
+        ));
+    }
+    Ok(())
+}
+
+fn verify_persisted_weight_bytes<R: Read>(
+    reader: &mut R,
+    manifest: &WeightSectionManifest,
+) -> Result<(), PersistedPrepackedWeightError> {
+    let mut buffer = vec![0; STREAM_BUFFER_BYTES].into_boxed_slice();
+    let mut total = 0_u64;
+    for (section_index, section) in manifest.sections().iter().enumerate() {
+        let mut hasher = Sha256::new();
+        let mut remaining = section.destination_length;
+        while remaining != 0 {
+            let chunk = usize::try_from(remaining.min(STREAM_BUFFER_BYTES as u64))
+                .map_err(|_| PersistedPrepackedWeightError::InvalidSectionLayout("stream chunk"))?;
+            let mut filled = 0;
+            while filled < chunk {
+                match reader.read(&mut buffer[filled..chunk]) {
+                    Ok(0) => {
+                        return Err(PersistedPrepackedWeightError::WeightEarlyEof {
+                            expected: manifest.output_bytes(),
+                            actual: total,
+                        });
+                    }
+                    Ok(read) => {
+                        hasher.update(&buffer[filled..filled + read]);
+                        filled += read;
+                        total = total
+                            .checked_add(u64::try_from(read).map_err(|_| {
+                                PersistedPrepackedWeightError::InvalidSectionLayout(
+                                    "stream byte count",
+                                )
+                            })?)
+                            .ok_or(PersistedPrepackedWeightError::InvalidSectionLayout(
+                                "stream byte count",
+                            ))?;
+                    }
+                    Err(error) if error.kind() == io::ErrorKind::Interrupted => {}
+                    Err(error) => {
+                        return Err(PersistedPrepackedWeightError::WeightIo(error.kind()));
+                    }
+                }
+            }
+            remaining = remaining
+                .checked_sub(u64::try_from(chunk).map_err(|_| {
+                    PersistedPrepackedWeightError::InvalidSectionLayout("stream chunk")
+                })?)
+                .ok_or(PersistedPrepackedWeightError::InvalidSectionLayout(
+                    "stream byte count",
+                ))?;
+        }
+        if hasher.finish() != section.sha256 {
+            return Err(PersistedPrepackedWeightError::SectionDigestMismatch {
+                section: section_index,
+            });
+        }
+    }
+    if total != manifest.output_bytes() {
+        return Err(PersistedPrepackedWeightError::WeightEarlyEof {
+            expected: manifest.output_bytes(),
+            actual: total,
+        });
+    }
+    let mut trailing = [0; 1];
+    loop {
+        match reader.read(&mut trailing) {
+            Ok(0) => break,
+            Ok(_) => return Err(PersistedPrepackedWeightError::WeightTrailingData),
+            Err(error) if error.kind() == io::ErrorKind::Interrupted => {}
+            Err(error) => return Err(PersistedPrepackedWeightError::WeightIo(error.kind())),
+        }
+    }
+    Ok(())
+}
+
+/// Reopens one persisted prepacked Qwen3 weight image under an admission commitment.
+///
+/// The canonical manifest must exactly match the supplied admission-record
+/// commitment and the pinned role descriptor. Every manifest section is
+/// reparsed, canonically re-encoded, schema checked, and matched to the closed
+/// Qwen3 tensor roster before the output image is streamed through exact
+/// per-section SHA-256 checks and EOF. Success returns the same non-clone
+/// [`PrepackedWeightSet`] typestate used by fresh safetensors prepacking.
+///
+/// `commitment` is decoded identity data, not signature authority. Reopening
+/// succeeds only when its manifest length and SHA-256 equal the trust anchors
+/// compiled from a fresh exact-source prepack. Signatures and independent
+/// validation remain separate M1 admission and qualification boundaries.
+///
+/// # Errors
+///
+/// Returns [`PersistedPrepackedWeightError`] for commitment, canonical-record,
+/// tensor-schema, section-digest, I/O, truncation, or trailing-data drift.
+pub fn reopen_persisted_qwen3_weights<R: Read>(
+    role: Qwen3ModelRole,
+    commitment: ManifestCommitment,
+    manifest_bytes: &[u8],
+    mut weights: R,
+) -> Result<PrepackedWeightSet, PersistedPrepackedWeightError> {
+    let descriptor = validate_persisted_commitment(role, commitment, manifest_bytes)?;
+    let parsed = parse_persisted_manifest(manifest_bytes)?;
+    if parsed.role != role
+        || parsed.source_weights_id != descriptor.weights_id
+        || parsed.source_artifact_bytes != descriptor.artifact_bytes
+        || parsed.tensor_data_bytes != descriptor.tensor_data_bytes
+        || parsed.output_bytes != descriptor.tensor_data_bytes
+    {
+        return Err(PersistedPrepackedWeightError::InvalidManifest(
+            "manifest header commitment",
+        ));
+    }
+    let prepacked = finish_prepacked(role, descriptor, parsed.output_bytes, parsed.sections)
+        .map_err(PersistedPrepackedWeightError::Manifest)?;
+    if prepacked.manifest().canonical_bytes() != manifest_bytes
+        || prepacked.manifest().aggregate_id() != commitment.aggregate_id
+    {
+        return Err(PersistedPrepackedWeightError::InvalidManifest(
+            "noncanonical re-encoding",
+        ));
+    }
+    validate_persisted_sections(prepacked.manifest())?;
+    verify_persisted_weight_bytes(&mut weights, prepacked.manifest())?;
+    Ok(prepacked)
+}
+
 const fn map_manifest_build_error(error: ManifestBuildError) -> WeightStreamError {
     match error {
         ManifestBuildError::CompleteOutput => {
@@ -1554,17 +2107,20 @@ pub(crate) mod test_fixtures {
 #[cfg(test)]
 pub(crate) mod tests {
     use super::{
-        finish_prepacked, flush_output, parse_header, require_shard_name, stream_file,
-        validate_stream_plan, FilePin, ParsedShard, ParsedTensor, PrepackedWeightSet,
-        WeightSection, WeightStreamError, WeightTransform, DRAFT_FILE_PIN, SECTION_ALIGNMENT,
-        TARGET_SHARD_PINS,
+        exact_weight_descriptor, finish_prepacked, flush_output, parse_header,
+        parse_persisted_manifest, require_shard_name, stream_file, validate_persisted_commitment,
+        validate_persisted_sections, validate_stream_plan, verify_persisted_weight_bytes, FilePin,
+        ParsedShard, ParsedTensor, PersistedPrepackedWeightError, PrepackedWeightSet,
+        WeightSection, WeightSectionManifest, WeightStreamError, WeightTransform, DRAFT_FILE_PIN,
+        PREPACKED_WEIGHT_MANIFEST_VERSION, SECTION_ALIGNMENT, TARGET_SHARD_PINS,
     };
     use crate::tokenizer::tests::{authenticated_assets, test_tokenizer};
     use crate::{
-        build_prepacked_deployment_bundle, sha256, BuildError, SafetensorsError, WeightDescriptor,
-        QWEN3_DRAFT_TENSOR_DATA_BYTES, QWEN3_DRAFT_WEIGHT_ARTIFACT_BYTES,
-        QWEN3_DRAFT_WEIGHT_SHA256, QWEN3_TARGET_TENSOR_DATA_BYTES,
-        QWEN3_TARGET_WEIGHT_ARTIFACT_BYTES, QWEN3_TARGET_WEIGHT_SET_SHA256,
+        build_prepacked_deployment_bundle, sha256, BuildError, ManifestCommitment,
+        SafetensorsError, WeightDescriptor, QWEN3_DRAFT_TENSOR_DATA_BYTES,
+        QWEN3_DRAFT_WEIGHT_ARTIFACT_BYTES, QWEN3_DRAFT_WEIGHT_SHA256,
+        QWEN3_TARGET_TENSOR_DATA_BYTES, QWEN3_TARGET_WEIGHT_ARTIFACT_BYTES,
+        QWEN3_TARGET_WEIGHT_SET_SHA256,
     };
     use ferric_spec::{
         Qwen3ModelRole, Qwen3TensorKind, Qwen3TensorMetadata, TensorDType, QWEN3_NO_LAYER,
@@ -1817,6 +2373,139 @@ pub(crate) mod tests {
         assert_eq!(sections.len(), role.tensor_count() as usize);
         finish_prepacked(role, descriptor, destination, sections)
             .expect("test sections satisfy the verified production finalizer")
+    }
+
+    fn commitment(manifest: &WeightSectionManifest) -> ManifestCommitment {
+        ManifestCommitment {
+            role: manifest.role(),
+            version: manifest.version(),
+            source_weights_id: manifest.source_weights_id(),
+            aggregate_id: manifest.aggregate_id(),
+            source_artifact_bytes: manifest.source_artifact_bytes(),
+            tensor_data_bytes: manifest.tensor_data_bytes(),
+            output_bytes: manifest.output_bytes(),
+            section_count: u32::try_from(manifest.sections().len()).unwrap(),
+            canonical_manifest_bytes: u32::try_from(manifest.canonical_bytes().len()).unwrap(),
+        }
+    }
+
+    #[test]
+    fn official_persisted_manifests_parse_reencode_and_validate_exactly() {
+        for role in [Qwen3ModelRole::Target8B, Qwen3ModelRole::Draft06B] {
+            let original = test_prepacked(role);
+            let manifest = original.manifest();
+            let descriptor = exact_weight_descriptor(role);
+            let parsed = parse_persisted_manifest(manifest.canonical_bytes())
+                .expect("canonical manifest parses");
+            assert_eq!(parsed.role, role);
+            let reopened = finish_prepacked(role, descriptor, parsed.output_bytes, parsed.sections)
+                .expect("parsed manifest finalizes");
+            assert_eq!(reopened.manifest(), manifest);
+            validate_persisted_sections(reopened.manifest())
+                .expect("official tensor roster validates");
+
+            assert_eq!(
+                validate_persisted_commitment(
+                    role,
+                    commitment(manifest),
+                    manifest.canonical_bytes(),
+                ),
+                Err(PersistedPrepackedWeightError::InvalidCommitment(
+                    "manifest identity"
+                ))
+            );
+        }
+    }
+
+    #[test]
+    fn persisted_manifest_rejects_source_coverage_gaps() {
+        let mut prepacked = test_prepacked(Qwen3ModelRole::Draft06B);
+        prepacked.manifest.sections[0].source_offset += SECTION_ALIGNMENT;
+        assert_eq!(
+            validate_persisted_sections(prepacked.manifest()),
+            Err(PersistedPrepackedWeightError::InvalidSectionLayout(
+                "source coverage"
+            ))
+        );
+    }
+
+    #[test]
+    fn persisted_manifest_rejects_target_shard_permutation() {
+        let mut prepacked = test_prepacked(Qwen3ModelRole::Target8B);
+        let second_shard = prepacked
+            .manifest
+            .sections
+            .iter()
+            .position(|section| section.source_artifact == TARGET_SHARD_PINS[1].name)
+            .expect("second pinned shard is present");
+        prepacked.manifest.sections.rotate_left(second_shard);
+        assert_eq!(
+            validate_persisted_sections(prepacked.manifest()),
+            Err(PersistedPrepackedWeightError::InvalidSectionLayout(
+                "source shard order"
+            ))
+        );
+    }
+
+    fn tiny_persisted_manifest(payload: &[u8]) -> WeightSectionManifest {
+        let digest = sha256::digest(payload);
+        WeightSectionManifest {
+            version: PREPACKED_WEIGHT_MANIFEST_VERSION,
+            role: Qwen3ModelRole::Draft06B,
+            source_weights_id: QWEN3_DRAFT_WEIGHT_SHA256,
+            source_artifact_bytes: payload.len() as u64,
+            tensor_data_bytes: payload.len() as u64,
+            output_bytes: payload.len() as u64,
+            sections: vec![WeightSection {
+                tensor_name: "tiny".to_owned(),
+                role: Qwen3ModelRole::Draft06B,
+                dtype: TensorDType::Bf16,
+                rank: 1,
+                dimension_0: u32::try_from(payload.len() / 2).unwrap(),
+                dimension_1: 1,
+                source_artifact: "tiny".to_owned(),
+                source_offset: 0,
+                source_length: payload.len() as u64,
+                destination_offset: 0,
+                destination_length: payload.len() as u64,
+                alignment: SECTION_ALIGNMENT,
+                transform: WeightTransform::Bf16RowMajorIdentityV1,
+                sha256: digest,
+            }],
+            canonical_bytes: vec![1],
+            aggregate_id: digest,
+        }
+    }
+
+    #[test]
+    fn persisted_section_stream_rejects_mutation_truncation_and_trailing_bytes() {
+        let payload = b"abcdefgh";
+        let manifest = tiny_persisted_manifest(payload);
+        verify_persisted_weight_bytes(&mut Cursor::new(payload), &manifest)
+            .expect("exact persisted bytes");
+
+        let mut changed = payload.to_vec();
+        changed[3] ^= 1;
+        assert_eq!(
+            verify_persisted_weight_bytes(&mut Cursor::new(changed), &manifest),
+            Err(PersistedPrepackedWeightError::SectionDigestMismatch { section: 0 })
+        );
+        assert_eq!(
+            verify_persisted_weight_bytes(
+                &mut Cursor::new(&payload[..payload.len() - 1]),
+                &manifest,
+            ),
+            Err(PersistedPrepackedWeightError::WeightEarlyEof {
+                expected: payload.len() as u64,
+                actual: (payload.len() - 1) as u64,
+            })
+        );
+        let mut trailing = payload.to_vec();
+        trailing.push(0);
+        assert_eq!(
+            verify_persisted_weight_bytes(&mut Cursor::new(trailing), &manifest),
+            Err(PersistedPrepackedWeightError::WeightTrailingData)
+        );
     }
 
     #[test]

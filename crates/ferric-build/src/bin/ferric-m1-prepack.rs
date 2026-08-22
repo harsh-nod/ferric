@@ -2,12 +2,13 @@
 
 use ferric_build::{
     authenticate_qwen3_tokenizer, build_preliminary_deployment_bundle,
-    build_prepacked_deployment_bundle, encode_canonical_deployment_bundle,
-    prepack_qwen3_draft_weights, prepack_qwen3_target_weights, seal_authenticated_bundle,
-    ArtifactDigest, AuthenticatedDeploymentAssets, AuthenticatedModelAssets, DeploymentAssets,
-    ModelAssets, SafetensorsSource, WeightDescriptor, DRAFT_REPOSITORY, DRAFT_REVISION,
-    QWEN3_DRAFT_TENSOR_DATA_BYTES, QWEN3_DRAFT_WEIGHT_ARTIFACT_BYTES, QWEN3_DRAFT_WEIGHT_SHA256,
-    QWEN3_TARGET_TENSOR_DATA_BYTES, QWEN3_TARGET_WEIGHT_ARTIFACT_BYTES,
+    build_prepacked_deployment_bundle, decode_bundle_admission_record,
+    encode_canonical_deployment_bundle, prepack_qwen3_draft_weights, prepack_qwen3_target_weights,
+    reopen_persisted_qwen3_weights, seal_authenticated_bundle, ArtifactDigest,
+    AuthenticatedDeploymentAssets, AuthenticatedModelAssets, DeploymentAssets, ModelAssets,
+    SafetensorsSource, WeightDescriptor, BUNDLE_ADMISSION_RECORD_BYTES, DRAFT_REPOSITORY,
+    DRAFT_REVISION, QWEN3_DRAFT_TENSOR_DATA_BYTES, QWEN3_DRAFT_WEIGHT_ARTIFACT_BYTES,
+    QWEN3_DRAFT_WEIGHT_SHA256, QWEN3_TARGET_TENSOR_DATA_BYTES, QWEN3_TARGET_WEIGHT_ARTIFACT_BYTES,
     QWEN3_TARGET_WEIGHT_SET_SHA256, QWEN3_TOKENIZER_BYTES, QWEN3_TOKENIZER_SHA256,
     TARGET_REPOSITORY, TARGET_REVISION,
 };
@@ -87,28 +88,35 @@ fn run() -> Result<(), Box<dyn Error>> {
     let executable = arguments
         .next()
         .unwrap_or_else(|| OsString::from("ferric-m1-prepack"));
-    let source = arguments.next().ok_or_else(|| usage_error(&executable))?;
+    let first = arguments.next().ok_or_else(|| usage_error(&executable))?;
+    if first == "--verify" {
+        let source = arguments.next().ok_or_else(|| usage_error(&executable))?;
+        let prepacked = arguments.next().ok_or_else(|| usage_error(&executable))?;
+        if arguments.next().is_some() {
+            return Err(usage_error(&executable).into());
+        }
+        return verify_prepacked(Path::new(&source), Path::new(&prepacked));
+    }
     let output = arguments.next().ok_or_else(|| usage_error(&executable))?;
     if arguments.next().is_some() {
         return Err(usage_error(&executable).into());
     }
 
-    admit_and_prepack(Path::new(&source), Path::new(&output))
+    admit_and_prepack(Path::new(&first), Path::new(&output))
+}
+
+fn read_model_metadata(root: &Path) -> io::Result<(Vec<u8>, Vec<u8>)> {
+    Ok((
+        read_bounded(&root.join("config.json"), METADATA_INPUT_LIMIT)?,
+        read_bounded(&root.join("tokenizer_config.json"), METADATA_INPUT_LIMIT)?,
+    ))
 }
 
 fn admit_and_prepack(source: &Path, output: &Path) -> Result<(), Box<dyn Error>> {
     let target_root = source.join("target");
     let draft_root = source.join("draft");
-    let target_config = read_bounded(&target_root.join("config.json"), METADATA_INPUT_LIMIT)?;
-    let draft_config = read_bounded(&draft_root.join("config.json"), METADATA_INPUT_LIMIT)?;
-    let target_tokenizer_metadata = read_bounded(
-        &target_root.join("tokenizer_config.json"),
-        METADATA_INPUT_LIMIT,
-    )?;
-    let draft_tokenizer_metadata = read_bounded(
-        &draft_root.join("tokenizer_config.json"),
-        METADATA_INPUT_LIMIT,
-    )?;
+    let (target_config, target_tokenizer_metadata) = read_model_metadata(&target_root)?;
+    let (draft_config, draft_tokenizer_metadata) = read_model_metadata(&draft_root)?;
     let target_index = read_bounded(
         &target_root.join("model.safetensors.index.json"),
         METADATA_INPUT_LIMIT,
@@ -237,6 +245,119 @@ fn admit_and_prepack(source: &Path, output: &Path) -> Result<(), Box<dyn Error>>
     Ok(())
 }
 
+fn verify_prepacked(source: &Path, prepacked_root: &Path) -> Result<(), Box<dyn Error>> {
+    let target_root = source.join("target");
+    let draft_root = source.join("draft");
+    let (target_config, target_tokenizer_metadata) = read_model_metadata(&target_root)?;
+    let (draft_config, draft_tokenizer_metadata) = read_model_metadata(&draft_root)?;
+    let record_bytes = read_bounded(
+        &prepacked_root.join("bundle.admission.bin"),
+        BUNDLE_ADMISSION_RECORD_BYTES as u64,
+    )?;
+    let descriptor = decode_bundle_admission_record(&record_bytes)?;
+    let target_manifest = read_bounded(
+        &prepacked_root.join("target.weights.manifest.bin"),
+        METADATA_INPUT_LIMIT * 4,
+    )?;
+    let draft_manifest = read_bounded(
+        &prepacked_root.join("draft.weights.manifest.bin"),
+        METADATA_INPUT_LIMIT * 4,
+    )?;
+    let target_weights = reopen_persisted_qwen3_weights(
+        Qwen3ModelRole::Target8B,
+        descriptor.target_manifest,
+        &target_manifest,
+        File::open(prepacked_root.join("target.weights.bin"))?,
+    )?;
+    let draft_weights = reopen_persisted_qwen3_weights(
+        Qwen3ModelRole::Draft06B,
+        descriptor.draft_manifest,
+        &draft_manifest,
+        File::open(prepacked_root.join("draft.weights.bin"))?,
+    )?;
+    let target_tokenizer = authenticate_qwen3_tokenizer(
+        Qwen3ModelRole::Target8B,
+        File::open(target_root.join("tokenizer.json"))?,
+    )?;
+    let draft_tokenizer = authenticate_qwen3_tokenizer(
+        Qwen3ModelRole::Draft06B,
+        File::open(draft_root.join("tokenizer.json"))?,
+    )?;
+    let limits = EngineLimits {
+        max_context_tokens: 8_192,
+        max_active_sequences: 32,
+        kv_page_tokens: 256,
+        max_draft_tokens: 16,
+    };
+    let prepacked = build_prepacked_deployment_bundle(
+        AuthenticatedDeploymentAssets {
+            target: AuthenticatedModelAssets {
+                repository: TARGET_REPOSITORY,
+                revision: TARGET_REVISION,
+                config_json: &target_config,
+                tokenizer_metadata_json: &target_tokenizer_metadata,
+            },
+            draft: AuthenticatedModelAssets {
+                repository: DRAFT_REPOSITORY,
+                revision: DRAFT_REVISION,
+                config_json: &draft_config,
+                tokenizer_metadata_json: &draft_tokenizer_metadata,
+            },
+            limits,
+        },
+        target_tokenizer,
+        draft_tokenizer,
+        target_weights,
+        draft_weights,
+    )?;
+    if prepacked.deployment() != &descriptor.deployment {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "persisted deployment differs from the admission record",
+        )
+        .into());
+    }
+    let bundle = encode_canonical_deployment_bundle(prepacked.deployment())?;
+    let persisted_bundle = read_bounded(
+        &prepacked_root.join("deployment.bundle.bin"),
+        bundle.as_bytes().len() as u64,
+    )?;
+    if bundle.as_bytes().as_slice() != persisted_bundle {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "persisted canonical deployment bytes differ",
+        )
+        .into());
+    }
+    let admission = seal_authenticated_bundle(prepacked)?;
+    if admission.record().as_bytes().as_slice() != record_bytes {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "persisted admission record does not re-seal exactly",
+        )
+        .into());
+    }
+
+    println!("verified_snapshot={}", prepacked_root.display());
+    println!(
+        "bundle_id={}",
+        hex(admission.prepacked().deployment().bundle_id.as_bytes())
+    );
+    println!(
+        "target_manifest_id={}",
+        hex(&admission.prepacked().target_manifest().aggregate_id())
+    );
+    println!(
+        "draft_manifest_id={}",
+        hex(&admission.prepacked().draft_manifest().aggregate_id())
+    );
+    println!(
+        "admission_record_id={}",
+        hex(admission.record().record_id().as_bytes())
+    );
+    Ok(())
+}
+
 fn open_target_shards(
     root: &Path,
 ) -> io::Result<[SafetensorsSource<'static, File>; TARGET_SHARD_NAMES.len()]> {
@@ -301,7 +422,7 @@ fn usage_error(executable: &std::ffi::OsStr) -> io::Error {
     io::Error::new(
         io::ErrorKind::InvalidInput,
         format!(
-            "usage: {} <download-root> <output-directory>",
+            "usage: {} <download-root> <output-directory> | --verify <download-root> <prepacked-directory>",
             Path::new(executable).display()
         ),
     )

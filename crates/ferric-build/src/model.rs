@@ -640,10 +640,11 @@ pub fn build_authenticated_deployment_bundle(
 
 /// Builds an M1 deployment while consuming tokenizer and prepacked authorities.
 ///
-/// The prepacked authorities can be produced only by fresh source streaming;
-/// neither caller-asserted descriptors nor a prior authentication pass can
-/// enter this path. The result retains both canonical prepacked manifests next
-/// to the executable bundle so their aggregate identities are not discarded.
+/// The prepacked authorities can be produced by fresh source streaming or by
+/// reopening bytes under the exact compiled canonical-manifest trust anchors;
+/// caller-asserted descriptors cannot enter this path. The result retains both
+/// canonical prepacked manifests next to the executable bundle so their
+/// aggregate identities are not discarded.
 ///
 /// # Errors
 ///

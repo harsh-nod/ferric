@@ -101,8 +101,11 @@ pub use tokenizer_execution::{
     MAX_TOKENIZER_OUTPUT_TOKENS, MAX_TOKENIZER_WORK,
 };
 pub use weight_stream::{
-    prepack_qwen3_draft_weights, prepack_qwen3_target_weights, PrepackedWeightSet, WeightSection,
-    WeightSectionManifest, WeightStreamError, WeightTransform, PREPACKED_WEIGHT_MANIFEST_VERSION,
+    prepack_qwen3_draft_weights, prepack_qwen3_target_weights, reopen_persisted_qwen3_weights,
+    PersistedPrepackedWeightError, PrepackedWeightSet, WeightSection, WeightSectionManifest,
+    WeightStreamError, WeightTransform, PREPACKED_WEIGHT_MANIFEST_VERSION,
+    QWEN3_DRAFT_PREPACKED_MANIFEST_BYTES, QWEN3_DRAFT_PREPACKED_MANIFEST_SHA256,
+    QWEN3_TARGET_PREPACKED_MANIFEST_BYTES, QWEN3_TARGET_PREPACKED_MANIFEST_SHA256,
 };
 
 pub(crate) use model::{
