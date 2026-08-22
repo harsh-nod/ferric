@@ -13,6 +13,7 @@ mod auth;
 pub mod bundle;
 mod identity_closure;
 mod json;
+mod memory_layout;
 mod model;
 mod model_layout;
 mod plan;
@@ -37,6 +38,13 @@ pub use identity_closure::{
     build_preliminary_identity_closure, expected_preliminary_kernel_catalog_identity,
     ExternalIdentityClosureInputs, IdentityClosureComponent, IdentityClosureError,
     PreliminaryIdentityClosure, PRELIMINARY_IDENTITY_CLOSURE_VERSION,
+};
+pub use memory_layout::{
+    plan_authenticated_model_memory, qwen3_kv_arena_bytes, AddresslessModelMemoryPlan,
+    DeclaredDeviceAllocation, DeclaredMemoryRange, KvCacheComponent, ModelMemoryAllocationKind,
+    ModelMemoryAllocationSet, ModelMemoryPlanError, ModelMemoryPlanFailure, ModelMemoryPlanOutcome,
+    ModelWeightMemoryBinding, QWEN3_KV_ARENA_ALIGNMENT_V1, QWEN3_KV_LAYER_BYTES_V1,
+    QWEN3_KV_PAGE_BYTES_V1,
 };
 pub use model::{
     build_authenticated_deployment_bundle, build_preliminary_deployment_bundle,
