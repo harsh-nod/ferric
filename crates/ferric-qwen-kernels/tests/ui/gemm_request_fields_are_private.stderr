@@ -1,0 +1,5 @@
+error[E0451]: field `prepared` of struct `InertQwen3GemmWorkerRequestV1` is private
+ --> tests/ui/gemm_request_fields_are_private.rs:4:41
+  |
+4 |     let InertQwen3GemmWorkerRequestV1 { prepared } = value;
+  |                                         ^^^^^^^^ private field
