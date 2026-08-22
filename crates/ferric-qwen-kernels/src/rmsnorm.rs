@@ -2066,6 +2066,8 @@ pub enum InspectQwen3RmsNormKernelErrorV1 {
     Hsaco(KernelBindingError),
     /// Kernel inventory, ABI, or resource facts differ from the exact profile.
     KernelProfile(&'static str),
+    /// Explicit physical argument metadata differs from the exact profile.
+    ExplicitArguments(Vec<ExplicitArgument>),
     /// Strict allocation-free COV6 loader validation failed.
     Loader(PlanError),
 }
@@ -2251,8 +2253,8 @@ pub fn inspect_qwen3_rmsnorm_kernel_v1(
         ));
     }
     if !exact_explicit_arguments(kernel.explicit_arguments()) {
-        return Err(InspectQwen3RmsNormKernelErrorV1::KernelProfile(
-            "explicit arguments",
+        return Err(InspectQwen3RmsNormKernelErrorV1::ExplicitArguments(
+            kernel.explicit_arguments().to_vec(),
         ));
     }
     if !exact_hidden_arguments(kernel.hidden_arguments()) {
