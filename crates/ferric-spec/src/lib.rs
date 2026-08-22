@@ -15,6 +15,7 @@ mod graph;
 mod identity;
 mod m1_completion;
 pub mod m1_foundation_theorems;
+mod m1_step_inputs;
 pub mod paged_kv_refinement;
 pub mod physical_plan;
 mod qwen3;
@@ -47,6 +48,10 @@ pub use identity::{Identity, RequestId};
 pub use m1_completion::{
     select_lowest_argmax, validate_compact_completion, CompactCompletionError,
     CompactCompletionRecord, M1_MAX_COMPLETION_TOKENS,
+};
+pub use m1_step_inputs::{
+    validate_m1_step_inputs, M1StepInputCandidate, M1StepInputError, M1StepInputRejection,
+    M1StepInputValidationOutcome, ValidatedM1StepInputs,
 };
 pub use paged_kv_refinement::{
     append_physical_page, cancel_physical_kv, commit_physical_kv, map_initialized_token,
@@ -104,6 +109,13 @@ pub open spec fn canonical_expected_step_spec(
     ordinal: u32,
 ) -> Option<Qwen3PlanStep> {
     graph::expected_step_spec(role, mode, bucket, ordinal)
+}
+
+/// Cross-crate verifier view of exact logical M1 step-input validity.
+pub open spec fn m1_step_input_candidate_valid_spec(
+    candidate: &M1StepInputCandidate,
+) -> bool {
+    m1_step_inputs::m1_step_input_candidate_valid(candidate)
 }
 
 } // verus!
