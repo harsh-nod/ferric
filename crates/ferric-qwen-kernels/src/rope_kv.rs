@@ -3261,7 +3261,8 @@ fn exact_pointer_argument(
         && argument.value_kind() == ExplicitValueKind::GlobalBuffer
         && argument.value_type().is_none_or(accepted_type)
         && argument.address_space() == Some(ArgumentAddressSpace::Global)
-        && argument.access() == Some(access)
+        && argument.access().is_none_or(|declared| declared == access)
+        && argument.actual_access() == Some(access)
 }
 
 fn exact_length_argument(argument: &ExplicitArgument, name: &str, offset: u64) -> bool {
@@ -3274,6 +3275,7 @@ fn exact_length_argument(argument: &ExplicitArgument, name: &str, offset: u64) -
             .is_none_or(|value_type| value_type == ExplicitValueType::U64)
         && argument.address_space().is_none()
         && argument.access().is_none()
+        && argument.actual_access().is_none()
 }
 
 fn exact_rope_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
@@ -3465,6 +3467,7 @@ fn exact_scalar_argument(
             .is_none_or(|actual| actual == value_type)
         && argument.address_space().is_none()
         && argument.access().is_none()
+        && argument.actual_access().is_none()
 }
 
 const fn is_bf16_metadata_carrier(value_type: ExplicitValueType) -> bool {
