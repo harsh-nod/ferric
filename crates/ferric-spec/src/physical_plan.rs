@@ -25,6 +25,8 @@ verus! {
 pub const M1_PHYSICAL_PLAN_DECLARATION_VERSION: u32 = 1;
 /// Exact maximum of the currently reviewed batch-arithmetic declaration.
 pub const M1_REVIEWED_BATCH_PACKET_CAPACITY_V1: u32 = 256;
+/// Exact maximum of the reviewed fixed-batch V2 declaration.
+pub const M1_REVIEWED_BATCH_PACKET_CAPACITY_V2: u32 = 1_024;
 /// Smallest ring capacity named by the reviewed arithmetic profile.
 pub const M1_MIN_DECLARED_RING_PACKETS_V1: u32 = 64;
 /// Largest ring capacity named by the reviewed arithmetic profile.
@@ -40,6 +42,11 @@ pub enum PhysicalCapacitySource {
     /// This tag and its identity are not fe2o3 authentication or support
     /// evidence.
     ReviewedBatchArithmeticV1,
+    /// Declares the reviewed fixed-batch V2 maximum of 1,024 packets.
+    ///
+    /// This tag is a Ferric structural expectation only. It is not an
+    /// authenticated fe2o3 build, runtime observation, or support receipt.
+    ReviewedBatchArithmeticV2,
     /// Explicitly untrusted future capacity, usable only for structural tests
     /// and future integration validation.
     FutureUntrusted,
@@ -336,6 +343,9 @@ pub closed spec fn physical_capacity_expectation_is_structurally_valid(
         && match capacity.source {
             PhysicalCapacitySource::ReviewedBatchArithmeticV1 => {
                 capacity.batch_packet_capacity == M1_REVIEWED_BATCH_PACKET_CAPACITY_V1
+            },
+            PhysicalCapacitySource::ReviewedBatchArithmeticV2 => {
+                capacity.batch_packet_capacity == M1_REVIEWED_BATCH_PACKET_CAPACITY_V2
             },
             PhysicalCapacitySource::FutureUntrusted => true,
         }
@@ -686,11 +696,16 @@ fn validate_capacity_expectation(
     {
         return Err(PhysicalPlanError::InvalidCapacity);
     }
-    if matches!(
-        capacity.source,
-        PhysicalCapacitySource::ReviewedBatchArithmeticV1
-    ) && capacity.batch_packet_capacity != M1_REVIEWED_BATCH_PACKET_CAPACITY_V1
-    {
+    let reviewed_capacity = match capacity.source {
+        PhysicalCapacitySource::ReviewedBatchArithmeticV1 => {
+            Some(M1_REVIEWED_BATCH_PACKET_CAPACITY_V1)
+        }
+        PhysicalCapacitySource::ReviewedBatchArithmeticV2 => {
+            Some(M1_REVIEWED_BATCH_PACKET_CAPACITY_V2)
+        }
+        PhysicalCapacitySource::FutureUntrusted => None,
+    };
+    if reviewed_capacity.is_some_and(|expected| capacity.batch_packet_capacity != expected) {
         return Err(PhysicalPlanError::InvalidCapacity);
     }
     Ok(())
@@ -1428,6 +1443,7 @@ mod tests {
         PhysicalPacketSpanDeclaration, PhysicalPlanDeclaration, PhysicalPlanError,
         PhysicalPlanExpectation, PhysicalPublicationDeclaration,
         M1_PHYSICAL_PLAN_DECLARATION_VERSION, M1_REVIEWED_BATCH_PACKET_CAPACITY_V1,
+        M1_REVIEWED_BATCH_PACKET_CAPACITY_V2,
     };
     use crate::{
         Identity, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection,
@@ -1589,6 +1605,36 @@ mod tests {
                 validate_physical_plan_declaration(declaration, &expected),
                 Err(PhysicalPlanError::InvalidExpectation)
             ));
+        }
+    }
+
+    #[test]
+    fn direct_target_and_draft_fit_reviewed_v2_without_fusion() {
+        let capacity = capacity(
+            PhysicalCapacitySource::ReviewedBatchArithmeticV2,
+            M1_REVIEWED_BATCH_PACKET_CAPACITY_V2,
+            1_024,
+        );
+        for (selection, logical_count) in [
+            (target_selection(), QWEN3_TARGET_PLAN_STEPS),
+            (draft_selection(), QWEN3_DRAFT_PLAN_STEPS),
+        ] {
+            let declaration = synthetic_unproved_declaration(selection, logical_count, 1, capacity);
+            assert!(declaration
+                .packets
+                .iter()
+                .all(|packet| { packet.logical_count == 1 && packet.fusion.is_none() }));
+            let expected = expectation(&declaration, capacity);
+            let validated = validate_physical_plan_declaration(declaration, &expected)
+                .expect("reviewed V2 retains one packet per generated operation");
+            assert_eq!(
+                validated.declaration().packets.len(),
+                logical_count as usize
+            );
+            assert_eq!(
+                validated.capacity_source(),
+                PhysicalCapacitySource::ReviewedBatchArithmeticV2
+            );
         }
     }
 
@@ -1824,6 +1870,11 @@ mod tests {
             capacity(PhysicalCapacitySource::FutureUntrusted, 128, 192),
             capacity(PhysicalCapacitySource::FutureUntrusted, 512, 256),
             capacity(PhysicalCapacitySource::ReviewedBatchArithmeticV1, 255, 256),
+            capacity(
+                PhysicalCapacitySource::ReviewedBatchArithmeticV2,
+                1_023,
+                1_024,
+            ),
         ] {
             let declaration = synthetic_unproved_declaration(
                 draft_selection(),

@@ -168,6 +168,7 @@ pub closed spec fn structural_binding_error_matches(
 
 closed spec fn reviewed_capacity_source(source: PhysicalCapacitySource) -> bool {
     source == PhysicalCapacitySource::ReviewedBatchArithmeticV1
+        || source == PhysicalCapacitySource::ReviewedBatchArithmeticV2
 }
 
 closed spec fn role_operation_count_matches(
@@ -200,7 +201,8 @@ fn is_reviewed_capacity_source(source: PhysicalCapacitySource) -> (reviewed: boo
     ensures reviewed == reviewed_capacity_source(source),
 {
     match source {
-        PhysicalCapacitySource::ReviewedBatchArithmeticV1 => true,
+        PhysicalCapacitySource::ReviewedBatchArithmeticV1
+        | PhysicalCapacitySource::ReviewedBatchArithmeticV2 => true,
         PhysicalCapacitySource::FutureUntrusted => false,
     }
 }
@@ -320,7 +322,8 @@ mod tests {
         PhysicalPlanError, PhysicalPlanExpectation, PhysicalPublicationDeclaration,
         Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection, RequestId,
         StepPlan, StructurallyValidatedPhysicalPlan, M1_PHYSICAL_PLAN_DECLARATION_VERSION,
-        M1_REVIEWED_BATCH_PACKET_CAPACITY_V1, QWEN3_TARGET_PLAN_STEPS,
+        M1_REVIEWED_BATCH_PACKET_CAPACITY_V1, M1_REVIEWED_BATCH_PACKET_CAPACITY_V2,
+        QWEN3_TARGET_PLAN_STEPS,
     };
 
     fn identity(role: u8, index: u32) -> Identity {
@@ -352,11 +355,18 @@ mod tests {
         logical_operation_count: u32,
         logical_plan_id: Identity,
     ) -> Result<StructurallyValidatedPhysicalPlan, PhysicalPlanError> {
+        let batch_packet_capacity = match source {
+            PhysicalCapacitySource::ReviewedBatchArithmeticV1
+            | PhysicalCapacitySource::FutureUntrusted => M1_REVIEWED_BATCH_PACKET_CAPACITY_V1,
+            PhysicalCapacitySource::ReviewedBatchArithmeticV2 => {
+                M1_REVIEWED_BATCH_PACKET_CAPACITY_V2
+            }
+        };
         let capacity = PhysicalCapacityExpectation {
             source,
             descriptor_id: identity(10, 0),
-            batch_packet_capacity: M1_REVIEWED_BATCH_PACKET_CAPACITY_V1,
-            ring_packet_capacity: M1_REVIEWED_BATCH_PACKET_CAPACITY_V1,
+            batch_packet_capacity,
+            ring_packet_capacity: batch_packet_capacity,
         };
         let declaration = PhysicalPlanDeclaration {
             version: M1_PHYSICAL_PLAN_DECLARATION_VERSION,
@@ -420,29 +430,31 @@ mod tests {
 
     #[test]
     fn exact_reviewed_binding_retains_both_inert_inputs() {
-        let plan_id = identity(3, 0);
-        let physical = synthetic_unproved_physical_plan(
+        for source in [
             PhysicalCapacitySource::ReviewedBatchArithmeticV1,
-            target_selection(),
-            QWEN3_TARGET_PLAN_STEPS,
-            plan_id,
-        )
-        .unwrap();
-        let expected_declaration = physical.declaration().clone();
-        let expected_step = step(plan_id, target_selection());
-        let bound = match bind_structural_physical_step(expected_step, physical) {
-            StructuralPhysicalStepBindingOutcome::Bound(bound) => bound,
-            StructuralPhysicalStepBindingOutcome::Rejected(failure) => {
-                panic!("unexpected structural binding rejection: {failure:?}")
-            }
-        };
+            PhysicalCapacitySource::ReviewedBatchArithmeticV2,
+        ] {
+            let plan_id = identity(3, 0);
+            let physical = synthetic_unproved_physical_plan(
+                source,
+                target_selection(),
+                QWEN3_TARGET_PLAN_STEPS,
+                plan_id,
+            )
+            .unwrap();
+            let expected_declaration = physical.declaration().clone();
+            let expected_step = step(plan_id, target_selection());
+            let bound = match bind_structural_physical_step(expected_step, physical) {
+                StructuralPhysicalStepBindingOutcome::Bound(bound) => bound,
+                StructuralPhysicalStepBindingOutcome::Rejected(failure) => {
+                    panic!("unexpected structural binding rejection: {failure:?}")
+                }
+            };
 
-        assert_eq!(bound.step(), expected_step);
-        assert_eq!(bound.physical_plan().declaration(), &expected_declaration);
-        assert_eq!(
-            bound.physical_plan().capacity_source(),
-            PhysicalCapacitySource::ReviewedBatchArithmeticV1
-        );
+            assert_eq!(bound.step(), expected_step);
+            assert_eq!(bound.physical_plan().declaration(), &expected_declaration);
+            assert_eq!(bound.physical_plan().capacity_source(), source);
+        }
     }
 
     #[test]

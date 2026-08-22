@@ -62,7 +62,7 @@ pub use physical_plan::{
     PhysicalPlanExpectation, PhysicalPublicationDeclaration, StructurallyValidatedPhysicalPlan,
     M1_MAX_DECLARED_RING_PACKETS_V1, M1_MAX_UNTRUSTED_PACKET_CAPACITY_V1,
     M1_MIN_DECLARED_RING_PACKETS_V1, M1_PHYSICAL_PLAN_DECLARATION_VERSION,
-    M1_REVIEWED_BATCH_PACKET_CAPACITY_V1,
+    M1_REVIEWED_BATCH_PACKET_CAPACITY_V1, M1_REVIEWED_BATCH_PACKET_CAPACITY_V2,
 };
 pub use qwen3::{
     Qwen3TensorError, Qwen3TensorKind, Qwen3TensorMetadata, TensorDType, QWEN3_DRAFT_TENSOR_COUNT,
