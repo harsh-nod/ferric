@@ -20,7 +20,6 @@ pub const M1_QUALIFICATION_PROMPT_CONTEXT_TOKENS: u32 = 8_191;
 pub const M1_QUALIFICATION_FINAL_INPUT_TOKEN: u32 = 8_191;
 /// Exact number of unit-token steps in every lane's context plan.
 pub const M1_QUALIFICATION_CONTEXT_PLAN_STEPS: usize = 8_192;
-
 /// The only admitted lane groupings for M1 context-length qualification.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum M1QualificationLaneGrouping {
@@ -41,22 +40,22 @@ impl M1QualificationLaneGrouping {
     pub closed spec fn plan_identity_bytes_spec(self) -> Seq<u8> {
         match self {
             Self::S1 => seq![
-                0xda, 0x4c, 0xe6, 0x39, 0xcc, 0xf6, 0xcb, 0x56,
-                0x9b, 0xdc, 0x77, 0x67, 0xd1, 0xfc, 0x10, 0x1d,
-                0x6a, 0x03, 0xe3, 0x21, 0xcd, 0xf5, 0x89, 0x87,
-                0xef, 0x35, 0x61, 0xc1, 0x93, 0xbf, 0x68, 0x9b,
+                0x4a, 0x67, 0x77, 0x95, 0x11, 0x42, 0xeb, 0x54,
+                0xde, 0x8b, 0x95, 0xd5, 0xbb, 0xb8, 0x7e, 0x34,
+                0xb3, 0xf1, 0xc5, 0xfd, 0xf7, 0x57, 0xee, 0xab,
+                0x7a, 0x53, 0x0d, 0x21, 0x1a, 0x6e, 0x81, 0x0f,
             ],
             Self::S8 => seq![
-                0xa5, 0xa1, 0xe3, 0xd6, 0xfc, 0xd7, 0xce, 0xea,
-                0x02, 0x61, 0x15, 0xa9, 0x9d, 0x7f, 0xf5, 0x4a,
-                0xf5, 0xe4, 0x90, 0x26, 0x3e, 0x59, 0x6e, 0x83,
-                0x03, 0x52, 0xe3, 0x8e, 0x29, 0xd9, 0xe3, 0xe0,
+                0xdc, 0xa4, 0x04, 0x02, 0xfe, 0x0b, 0x86, 0x80,
+                0x7f, 0x5f, 0x84, 0xb8, 0x57, 0x00, 0x83, 0x6b,
+                0x52, 0x4a, 0x6a, 0x8b, 0x7b, 0x1a, 0xc2, 0xf8,
+                0x62, 0x26, 0xf2, 0x16, 0x02, 0x74, 0xd0, 0x5f,
             ],
             Self::S32 => seq![
-                0x7b, 0x43, 0x08, 0xbe, 0xb3, 0x88, 0x77, 0x43,
-                0x9b, 0xc6, 0xa1, 0xdc, 0x43, 0xf7, 0x38, 0x53,
-                0x24, 0x52, 0xf6, 0x81, 0x76, 0xe6, 0xe1, 0xde,
-                0x91, 0x22, 0x00, 0x71, 0x01, 0xc1, 0xd8, 0x91,
+                0x01, 0x9c, 0x6a, 0x17, 0xb3, 0x85, 0x45, 0x79,
+                0x2e, 0xf2, 0x15, 0x2a, 0xf3, 0x1f, 0x7b, 0x43,
+                0xfb, 0xe8, 0xe6, 0xd0, 0x42, 0x2c, 0xf3, 0xb8,
+                0x04, 0x09, 0x26, 0x9a, 0x59, 0xa6, 0x4b, 0xd1,
             ],
         }
     }
@@ -94,22 +93,22 @@ pub const fn m1_qualification_context_plan_identity(
 {
     match grouping {
         M1QualificationLaneGrouping::S1 => Identity::new([
-            0xda, 0x4c, 0xe6, 0x39, 0xcc, 0xf6, 0xcb, 0x56,
-            0x9b, 0xdc, 0x77, 0x67, 0xd1, 0xfc, 0x10, 0x1d,
-            0x6a, 0x03, 0xe3, 0x21, 0xcd, 0xf5, 0x89, 0x87,
-            0xef, 0x35, 0x61, 0xc1, 0x93, 0xbf, 0x68, 0x9b,
+            0x4a, 0x67, 0x77, 0x95, 0x11, 0x42, 0xeb, 0x54,
+            0xde, 0x8b, 0x95, 0xd5, 0xbb, 0xb8, 0x7e, 0x34,
+            0xb3, 0xf1, 0xc5, 0xfd, 0xf7, 0x57, 0xee, 0xab,
+            0x7a, 0x53, 0x0d, 0x21, 0x1a, 0x6e, 0x81, 0x0f,
         ]),
         M1QualificationLaneGrouping::S8 => Identity::new([
-            0xa5, 0xa1, 0xe3, 0xd6, 0xfc, 0xd7, 0xce, 0xea,
-            0x02, 0x61, 0x15, 0xa9, 0x9d, 0x7f, 0xf5, 0x4a,
-            0xf5, 0xe4, 0x90, 0x26, 0x3e, 0x59, 0x6e, 0x83,
-            0x03, 0x52, 0xe3, 0x8e, 0x29, 0xd9, 0xe3, 0xe0,
+            0xdc, 0xa4, 0x04, 0x02, 0xfe, 0x0b, 0x86, 0x80,
+            0x7f, 0x5f, 0x84, 0xb8, 0x57, 0x00, 0x83, 0x6b,
+            0x52, 0x4a, 0x6a, 0x8b, 0x7b, 0x1a, 0xc2, 0xf8,
+            0x62, 0x26, 0xf2, 0x16, 0x02, 0x74, 0xd0, 0x5f,
         ]),
         M1QualificationLaneGrouping::S32 => Identity::new([
-            0x7b, 0x43, 0x08, 0xbe, 0xb3, 0x88, 0x77, 0x43,
-            0x9b, 0xc6, 0xa1, 0xdc, 0x43, 0xf7, 0x38, 0x53,
-            0x24, 0x52, 0xf6, 0x81, 0x76, 0xe6, 0xe1, 0xde,
-            0x91, 0x22, 0x00, 0x71, 0x01, 0xc1, 0xd8, 0x91,
+            0x01, 0x9c, 0x6a, 0x17, 0xb3, 0x85, 0x45, 0x79,
+            0x2e, 0xf2, 0x15, 0x2a, 0xf3, 0x1f, 0x7b, 0x43,
+            0xfb, 0xe8, 0xe6, 0xd0, 0x42, 0x2c, 0xf3, 0xb8,
+            0x04, 0x09, 0x26, 0x9a, 0x59, 0xa6, 0x4b, 0xd1,
         ]),
     }
 }
@@ -203,6 +202,9 @@ impl M1QualificationNextInputPolicy {
 /// fields. Every step commits one supplied prompt token. Priming steps also
 /// observe a model compact choice, but suppress it and independently select the
 /// next teacher-forced prompt token; no choice-to-prompt equality is required.
+/// `qualification_buffer_attached` models the one buffer retained in queue
+/// custody and overwritten by every generation. Host publication remains a
+/// separate terminal-only decision.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct M1QualificationContextStep {
     pub kind: M1QualificationContextStepKind,
@@ -211,7 +213,8 @@ pub struct M1QualificationContextStep {
     pub compact_choice: M1QualificationCompactChoiceDisposition,
     pub next_input: M1QualificationNextInputPolicy,
     pub externally_emitted_output_count: u32,
-    pub capture_qualification_output: bool,
+    pub qualification_buffer_attached: bool,
+    pub publish_qualification_output_to_host: bool,
 }
 
 impl M1QualificationContextStep {
@@ -226,7 +229,8 @@ impl M1QualificationContextStep {
                 && self.next_input
                     == M1QualificationNextInputPolicy::IndependentTeacherForcedPrompt
                 && self.externally_emitted_output_count == 0
-                && !self.capture_qualification_output
+                && self.qualification_buffer_attached
+                && !self.publish_qualification_output_to_host
         } else if ordinal == M1_QUALIFICATION_FINAL_INPUT_TOKEN {
             self.kind == M1QualificationContextStepKind::FinalObserved
                 && self.input_tokens.start == M1_QUALIFICATION_FINAL_INPUT_TOKEN
@@ -236,7 +240,8 @@ impl M1QualificationContextStep {
                     == M1QualificationCompactChoiceDisposition::ObservedAndPublished
                 && self.next_input == M1QualificationNextInputPolicy::Terminal
                 && self.externally_emitted_output_count == 1
-                && self.capture_qualification_output
+                && self.qualification_buffer_attached
+                && self.publish_qualification_output_to_host
         } else {
             false
         }
@@ -269,7 +274,7 @@ impl M1QualificationContextStep {
             M1QualificationNextInputPolicy::Terminal
         };
         let expected_outputs = if priming { 0 } else { 1 };
-        let expected_capture = !priming;
+        let expected_host_publication = !priming;
         let expected_end = ordinal + 1;
 
         if !self.kind.matches(expected_kind) {
@@ -301,8 +306,13 @@ impl M1QualificationContextStep {
         if self.externally_emitted_output_count != expected_outputs {
             return Err(M1QualificationContextPlanError::ExternallyEmittedOutputCount { ordinal });
         }
-        if self.capture_qualification_output != expected_capture {
-            return Err(M1QualificationContextPlanError::CapturePolicy { ordinal });
+        if !self.qualification_buffer_attached {
+            return Err(M1QualificationContextPlanError::QualificationBufferAttachment {
+                ordinal,
+            });
+        }
+        if self.publish_qualification_output_to_host != expected_host_publication {
+            return Err(M1QualificationContextPlanError::HostPublicationPolicy { ordinal });
         }
         Ok(())
     }
@@ -368,12 +378,14 @@ impl M1QualificationContextPlan {
     }
 
     /// Validates exact unit-token coverage, prompt commits, compact-choice
-    /// disposition, capture policy, stable identity, and lane grouping.
+    /// disposition, buffer custody, host publication, stable identity, and lane
+    /// grouping.
     ///
     /// # Errors
     ///
     /// Fails closed on any header, grouping, identity, coverage, commit,
-    /// choice, next-input, external-emission, or capture-policy substitution.
+    /// choice, next-input, external-emission, attachment, or host-publication
+    /// substitution.
     pub fn validate(
         &self,
         expected_grouping: M1QualificationLaneGrouping,
@@ -452,7 +464,8 @@ impl M1QualificationContextPlan {
                 &&& self.steps@[ordinal].next_input
                     == M1QualificationNextInputPolicy::IndependentTeacherForcedPrompt
                 &&& self.steps@[ordinal].externally_emitted_output_count == 0
-                &&& !self.steps@[ordinal].capture_qualification_output
+                &&& self.steps@[ordinal].qualification_buffer_attached
+                &&& !self.steps@[ordinal].publish_qualification_output_to_host
             },
             self.steps@[8_191].kind == M1QualificationContextStepKind::FinalObserved,
             self.steps@[8_191].input_tokens
@@ -462,7 +475,8 @@ impl M1QualificationContextPlan {
                 == M1QualificationCompactChoiceDisposition::ObservedAndPublished,
             self.steps@[8_191].next_input == M1QualificationNextInputPolicy::Terminal,
             self.steps@[8_191].externally_emitted_output_count == 1,
-            self.steps@[8_191].capture_qualification_output,
+            self.steps@[8_191].qualification_buffer_attached,
+            self.steps@[8_191].publish_qualification_output_to_host,
     {
         reveal(M1QualificationContextPlan::valid_for);
         reveal(M1QualificationContextPlan::every_step_is_valid);
@@ -515,7 +529,8 @@ pub fn m1_qualification_context_plan(
                 M1QualificationNextInputPolicy::Terminal
             },
             externally_emitted_output_count: if priming { 0 } else { 1 },
-            capture_qualification_output: !priming,
+            qualification_buffer_attached: true,
+            publish_qualification_output_to_host: !priming,
         };
         assert(step.valid_at(ordinal));
         steps.push(step);
@@ -559,22 +574,45 @@ pub enum M1QualificationContextPlanError {
     CompactChoiceDisposition { ordinal: u32 },
     NextInputPolicy { ordinal: u32 },
     ExternallyEmittedOutputCount { ordinal: u32 },
-    CapturePolicy { ordinal: u32 },
+    QualificationBufferAttachment { ordinal: u32 },
+    HostPublicationPolicy { ordinal: u32 },
 }
 
 } // verus!
+
+/// Domain prefix of the canonical qualification context-plan identity bytes.
+pub const M1_QUALIFICATION_CONTEXT_PLAN_IDENTITY_DOMAIN: &[u8; 40] =
+    b"ferric.m1.qualification-context-plan.v1|";
+
+/// Returns the exact canonical ASCII preimage hashed for the plan identity.
+///
+/// The formula is `DOMAIN || GROUP_TAG || POLICY`, with no NUL terminator or
+/// length framing. `GROUP_TAG` is `s1`, `s8`, or `s32`; the complete policy is
+/// exposed literally by this function so identity changes remain reviewable.
+#[must_use]
+pub const fn m1_qualification_context_plan_identity_preimage(
+    grouping: M1QualificationLaneGrouping,
+) -> &'static [u8] {
+    match grouping {
+        M1QualificationLaneGrouping::S1 => b"ferric.m1.qualification-context-plan.v1|s1|8192|priming:8191x(input-one,commit-prompt-one,compact-choice-observed-suppressed,qualification-buffer-attached-overwrite,host-observation-suppressed,no-external-output,next-prompt-independent)|final:input8191,commit-prompt-one,compact-choice-observed-published,qualification-buffer-attached-overwrite,host-observation-published,one-external-output",
+        M1QualificationLaneGrouping::S8 => b"ferric.m1.qualification-context-plan.v1|s8|8192|priming:8191x(input-one,commit-prompt-one,compact-choice-observed-suppressed,qualification-buffer-attached-overwrite,host-observation-suppressed,no-external-output,next-prompt-independent)|final:input8191,commit-prompt-one,compact-choice-observed-published,qualification-buffer-attached-overwrite,host-observation-published,one-external-output",
+        M1QualificationLaneGrouping::S32 => b"ferric.m1.qualification-context-plan.v1|s32|8192|priming:8191x(input-one,commit-prompt-one,compact-choice-observed-suppressed,qualification-buffer-attached-overwrite,host-observation-suppressed,no-external-output,next-prompt-independent)|final:input8191,commit-prompt-one,compact-choice-observed-published,qualification-buffer-attached-overwrite,host-observation-published,one-external-output",
+    }
+}
 
 #[cfg(test)]
 mod tests {
     use super::{
         m1_qualification_context_plan, m1_qualification_context_plan_identity,
-        M1QualificationCompactChoiceDisposition, M1QualificationContextPlanError,
-        M1QualificationContextStepKind, M1QualificationLaneGrouping,
-        M1QualificationNextInputPolicy, M1_QUALIFICATION_CONTEXT_PLAN_STEPS,
+        m1_qualification_context_plan_identity_preimage, M1QualificationCompactChoiceDisposition,
+        M1QualificationContextPlanError, M1QualificationContextStepKind,
+        M1QualificationLaneGrouping, M1QualificationNextInputPolicy,
+        M1_QUALIFICATION_CONTEXT_PLAN_IDENTITY_DOMAIN, M1_QUALIFICATION_CONTEXT_PLAN_STEPS,
         M1_QUALIFICATION_CONTEXT_PLAN_VERSION, M1_QUALIFICATION_PROMPT_CONTEXT_TOKENS,
         M1_QUALIFICATION_TOKENS_PER_LANE,
     };
     use crate::Identity;
+    use sha2::{Digest as _, Sha256};
 
     const GROUPINGS: [M1QualificationLaneGrouping; 3] = [
         M1QualificationLaneGrouping::S1,
@@ -611,7 +649,8 @@ mod tests {
                     M1QualificationNextInputPolicy::IndependentTeacherForcedPrompt
                 );
                 assert_eq!(priming.externally_emitted_output_count, 0);
-                assert!(!priming.capture_qualification_output);
+                assert!(priming.qualification_buffer_attached);
+                assert!(!priming.publish_qualification_output_to_host);
             }
 
             let terminal = plan.steps[M1_QUALIFICATION_PROMPT_CONTEXT_TOKENS as usize];
@@ -628,7 +667,8 @@ mod tests {
                 M1QualificationNextInputPolicy::Terminal
             );
             assert_eq!(terminal.externally_emitted_output_count, 1);
-            assert!(terminal.capture_qualification_output);
+            assert!(terminal.qualification_buffer_attached);
+            assert!(terminal.publish_qualification_output_to_host);
         }
     }
 
@@ -636,19 +676,19 @@ mod tests {
     fn stable_plan_identities_are_group_specific_and_repeatable() {
         let expected = [
             [
-                0xda, 0x4c, 0xe6, 0x39, 0xcc, 0xf6, 0xcb, 0x56, 0x9b, 0xdc, 0x77, 0x67, 0xd1, 0xfc,
-                0x10, 0x1d, 0x6a, 0x03, 0xe3, 0x21, 0xcd, 0xf5, 0x89, 0x87, 0xef, 0x35, 0x61, 0xc1,
-                0x93, 0xbf, 0x68, 0x9b,
+                0x4a, 0x67, 0x77, 0x95, 0x11, 0x42, 0xeb, 0x54, 0xde, 0x8b, 0x95, 0xd5, 0xbb, 0xb8,
+                0x7e, 0x34, 0xb3, 0xf1, 0xc5, 0xfd, 0xf7, 0x57, 0xee, 0xab, 0x7a, 0x53, 0x0d, 0x21,
+                0x1a, 0x6e, 0x81, 0x0f,
             ],
             [
-                0xa5, 0xa1, 0xe3, 0xd6, 0xfc, 0xd7, 0xce, 0xea, 0x02, 0x61, 0x15, 0xa9, 0x9d, 0x7f,
-                0xf5, 0x4a, 0xf5, 0xe4, 0x90, 0x26, 0x3e, 0x59, 0x6e, 0x83, 0x03, 0x52, 0xe3, 0x8e,
-                0x29, 0xd9, 0xe3, 0xe0,
+                0xdc, 0xa4, 0x04, 0x02, 0xfe, 0x0b, 0x86, 0x80, 0x7f, 0x5f, 0x84, 0xb8, 0x57, 0x00,
+                0x83, 0x6b, 0x52, 0x4a, 0x6a, 0x8b, 0x7b, 0x1a, 0xc2, 0xf8, 0x62, 0x26, 0xf2, 0x16,
+                0x02, 0x74, 0xd0, 0x5f,
             ],
             [
-                0x7b, 0x43, 0x08, 0xbe, 0xb3, 0x88, 0x77, 0x43, 0x9b, 0xc6, 0xa1, 0xdc, 0x43, 0xf7,
-                0x38, 0x53, 0x24, 0x52, 0xf6, 0x81, 0x76, 0xe6, 0xe1, 0xde, 0x91, 0x22, 0x00, 0x71,
-                0x01, 0xc1, 0xd8, 0x91,
+                0x01, 0x9c, 0x6a, 0x17, 0xb3, 0x85, 0x45, 0x79, 0x2e, 0xf2, 0x15, 0x2a, 0xf3, 0x1f,
+                0x7b, 0x43, 0xfb, 0xe8, 0xe6, 0xd0, 0x42, 0x2c, 0xf3, 0xb8, 0x04, 0x09, 0x26, 0x9a,
+                0x59, 0xa6, 0x4b, 0xd1,
             ],
         ];
 
@@ -660,6 +700,10 @@ mod tests {
             assert!(first
                 .plan_id
                 .equals(&m1_qualification_context_plan_identity(grouping)));
+            let preimage = m1_qualification_context_plan_identity_preimage(grouping);
+            assert!(preimage.starts_with(M1_QUALIFICATION_CONTEXT_PLAN_IDENTITY_DOMAIN));
+            let recomputed: [u8; 32] = Sha256::digest(preimage).into();
+            assert_eq!(&recomputed, first.plan_id.as_bytes());
         }
     }
 
@@ -729,7 +773,7 @@ mod tests {
     }
 
     #[test]
-    fn priming_choice_commit_emission_and_capture_mutations_fail_closed() {
+    fn priming_choice_commit_emission_and_observation_mutations_fail_closed() {
         let grouping = M1QualificationLaneGrouping::S8;
 
         let mut commit_drift = m1_qualification_context_plan(grouping);
@@ -762,11 +806,18 @@ mod tests {
             Err(M1QualificationContextPlanError::ExternallyEmittedOutputCount { ordinal: 8_190 })
         );
 
-        let mut priming_captures = m1_qualification_context_plan(grouping);
-        priming_captures.steps[1].capture_qualification_output = true;
+        let mut priming_detaches_buffer = m1_qualification_context_plan(grouping);
+        priming_detaches_buffer.steps[1].qualification_buffer_attached = false;
         assert_eq!(
-            priming_captures.validate(grouping),
-            Err(M1QualificationContextPlanError::CapturePolicy { ordinal: 1 })
+            priming_detaches_buffer.validate(grouping),
+            Err(M1QualificationContextPlanError::QualificationBufferAttachment { ordinal: 1 })
+        );
+
+        let mut priming_publishes = m1_qualification_context_plan(grouping);
+        priming_publishes.steps[1].publish_qualification_output_to_host = true;
+        assert_eq!(
+            priming_publishes.validate(grouping),
+            Err(M1QualificationContextPlanError::HostPublicationPolicy { ordinal: 1 })
         );
     }
 
@@ -789,11 +840,18 @@ mod tests {
             Err(M1QualificationContextPlanError::ExternallyEmittedOutputCount { ordinal: 8_191 })
         );
 
-        let mut terminal_not_captured = m1_qualification_context_plan(grouping);
-        terminal_not_captured.steps[8_191].capture_qualification_output = false;
+        let mut terminal_detaches_buffer = m1_qualification_context_plan(grouping);
+        terminal_detaches_buffer.steps[8_191].qualification_buffer_attached = false;
         assert_eq!(
-            terminal_not_captured.validate(grouping),
-            Err(M1QualificationContextPlanError::CapturePolicy { ordinal: 8_191 })
+            terminal_detaches_buffer.validate(grouping),
+            Err(M1QualificationContextPlanError::QualificationBufferAttachment { ordinal: 8_191 })
+        );
+
+        let mut terminal_not_published = m1_qualification_context_plan(grouping);
+        terminal_not_published.steps[8_191].publish_qualification_output_to_host = false;
+        assert_eq!(
+            terminal_not_published.validate(grouping),
+            Err(M1QualificationContextPlanError::HostPublicationPolicy { ordinal: 8_191 })
         );
 
         let mut phase_substitution = m1_qualification_context_plan(grouping);

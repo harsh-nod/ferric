@@ -9,6 +9,9 @@ publish = false
 [dependencies]
 vstd.workspace = true
 
+[dev-dependencies]
+sha2.workspace = true
+
 [package.metadata.verus]
 verify = true
 

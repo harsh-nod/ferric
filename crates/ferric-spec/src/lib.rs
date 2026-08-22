@@ -52,9 +52,10 @@ pub use m1_completion::{
 };
 pub use m1_qualification_context::{
     m1_qualification_context_plan, m1_qualification_context_plan_identity,
-    M1QualificationCompactChoiceDisposition, M1QualificationContextPlan,
-    M1QualificationContextPlanError, M1QualificationContextStep, M1QualificationContextStepKind,
-    M1QualificationLaneGrouping, M1QualificationNextInputPolicy, M1QualificationTokenRange,
+    m1_qualification_context_plan_identity_preimage, M1QualificationCompactChoiceDisposition,
+    M1QualificationContextPlan, M1QualificationContextPlanError, M1QualificationContextStep,
+    M1QualificationContextStepKind, M1QualificationLaneGrouping, M1QualificationNextInputPolicy,
+    M1QualificationTokenRange, M1_QUALIFICATION_CONTEXT_PLAN_IDENTITY_DOMAIN,
     M1_QUALIFICATION_CONTEXT_PLAN_STEPS, M1_QUALIFICATION_CONTEXT_PLAN_VERSION,
     M1_QUALIFICATION_FINAL_INPUT_TOKEN, M1_QUALIFICATION_PROMPT_CONTEXT_TOKENS,
     M1_QUALIFICATION_TOKENS_PER_LANE,
