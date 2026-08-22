@@ -16,7 +16,7 @@ const RUNTIME_TCB_PATH: &str = "proofs/RUNTIME_DEPENDENCY_TCB";
 const CRATES_IO_SOURCE: &str = "registry+https://github.com/rust-lang/crates.io-index";
 const VERUS_SOURCE: &str = "git+https://github.com/verus-lang/verus.git?rev=b677dd5";
 const FE2O3_SOURCE: &str =
-    "git+https://github.com/harsh-nod/fe2o3.git?rev=c69befaa7d797930e64bb5f48a6090fe7d82ed58";
+    "git+https://github.com/harsh-nod/fe2o3.git?rev=174bc1b0e3c5552724f3169a7c6527a7838e077d";
 const RUNTIME_ROOTS: &[(&str, &str, &str, bool)] = &[
     ("ferric-build", "onig", "=6.5.3", false),
     (
@@ -29,6 +29,9 @@ const RUNTIME_ROOTS: &[(&str, &str, &str, bool)] = &[
     ("ferric-qwen-kernels", "sha2", "^0.11.0", true),
 ];
 const FE2O3_ROOTS: &[(&str, &str)] = &[
+    ("ferric-engine", "fe2o3-amdhsa-loader"),
+    ("ferric-engine", "fe2o3-aql"),
+    ("ferric-engine", "fe2o3-service-host"),
     ("ferric-qwen-kernels", "fe2o3-amdhsa-loader"),
     ("ferric-qwen-kernels", "fe2o3-artifact-transaction"),
     ("ferric-qwen-kernels", "fe2o3-compiler-ffi"),
