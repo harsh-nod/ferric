@@ -1842,6 +1842,17 @@ pub proof fn isolated_action_preserves_other_request(
     reveal(isolated_other_frame);
 }
 
+/// Exact structural equality is an exact target/draft physical-owner frame.
+pub proof fn equal_isolated_request_kv_is_exact_frame(
+    before: &IsolatedRequestKv,
+    after: &IsolatedRequestKv,
+)
+    requires *after == *before,
+    ensures after.exact_physical_frame(before),
+{
+    reveal(IsolatedRequestKv::exact_physical_frame);
+}
+
 } // verus!
 
 #[cfg(test)]

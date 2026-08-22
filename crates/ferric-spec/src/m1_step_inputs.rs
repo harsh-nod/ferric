@@ -581,6 +581,85 @@ proof fn valid_candidate_uses_prefix(
     live_prefix_is_unique(candidate, live_lanes, witness);
 }
 
+/// Exposes the request and fixed-shape row separation carried by two live
+/// lanes of one validated M1 input owner.
+///
+/// This is a logical input-layout fact. It grants no allocation, address,
+/// sublease, queue, device, or execution authority.
+pub proof fn validated_m1_step_input_lane_isolation(
+    inputs: &ValidatedM1StepInputs,
+    left: int,
+    right: int,
+)
+    requires
+        inputs.valid(),
+        0 <= left < inputs.live_lanes_spec(),
+        0 <= right < inputs.live_lanes_spec(),
+        left != right,
+    ensures
+        inputs.dimensions_spec().active_tokens > 0,
+        inputs.lanes_spec()[left].is_some(),
+        inputs.lanes_spec()[right].is_some(),
+        inputs.lanes_spec()[left].unwrap().selection_spec()
+            == inputs.selection_spec(),
+        inputs.lanes_spec()[right].unwrap().selection_spec()
+            == inputs.selection_spec(),
+        inputs.lanes_spec()[left].unwrap().plan_id_spec()
+            == inputs.lanes_spec()[right].unwrap().plan_id_spec(),
+        inputs.lanes_spec()[left].unwrap().completion_epoch_spec()
+            == inputs.lanes_spec()[right].unwrap().completion_epoch_spec(),
+        inputs.lanes_spec()[left].unwrap().request_spec().slot_spec()
+            != inputs.lanes_spec()[right].unwrap().request_spec().slot_spec(),
+        if left < right {
+            (left + 1) * inputs.dimensions_spec().active_tokens as int
+                <= right * inputs.dimensions_spec().active_tokens as int
+        } else {
+            (right + 1) * inputs.dimensions_spec().active_tokens as int
+                <= left * inputs.dimensions_spec().active_tokens as int
+        },
+{
+    reveal(ValidatedM1StepInputs::valid);
+    valid_candidate_uses_prefix(
+        &inputs.candidate,
+        inputs.dimensions,
+        inputs.live_lanes as int,
+    );
+    reveal(live_metadata_valid);
+    reveal(live_plan_metadata_valid);
+    assert(live_plan_metadata_valid(
+        &inputs.candidate,
+        inputs.live_lanes as int,
+        left,
+    ));
+    assert(live_plan_metadata_valid(
+        &inputs.candidate,
+        inputs.live_lanes as int,
+        right,
+    ));
+
+    inputs.selection_spec().bucket.dimensions_have_nonzero_active_tokens(
+        inputs.selection_spec().role,
+        inputs.selection_spec().mode,
+        inputs.dimensions,
+    );
+    assert(inputs.dimensions.active_tokens > 0);
+    if left < right {
+        assert(left + 1 <= right);
+        vstd::arithmetic::mul::lemma_mul_inequality(
+            left + 1,
+            right,
+            inputs.dimensions.active_tokens as int,
+        );
+    } else {
+        assert(right + 1 <= left);
+        vstd::arithmetic::mul::lemma_mul_inequality(
+            right + 1,
+            left,
+            inputs.dimensions.active_tokens as int,
+        );
+    }
+}
+
 proof fn valid_candidate_has_prefix(candidate: &M1StepInputCandidate)
     requires m1_step_input_candidate_valid(candidate),
     ensures exists|live_lanes: int| live_prefix_valid(candidate, live_lanes),

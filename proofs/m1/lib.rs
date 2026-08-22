@@ -4,6 +4,7 @@
 
 pub mod batching;
 pub mod graph;
+pub mod isolation;
 pub mod kv_physical;
 pub mod scheduler;
 pub mod speculative_graph;

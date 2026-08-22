@@ -157,6 +157,19 @@ impl Qwen3PlanBucket {
             _ => None,
         }
     }
+
+    /// Every supported finite plan bucket has a nonempty active-token row.
+    pub proof fn dimensions_have_nonzero_active_tokens(
+        self,
+        role: Qwen3ModelRole,
+        mode: Qwen3ExecutionMode,
+        dimensions: Qwen3PlanDimensions,
+    )
+        requires self.dimensions_spec(role, mode) == Some(dimensions),
+        ensures dimensions.active_tokens > 0,
+    {
+        reveal(Qwen3PlanBucket::dimensions_spec);
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

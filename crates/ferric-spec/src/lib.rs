@@ -127,4 +127,83 @@ pub open spec fn m1_step_input_error_matches_spec(
     m1_step_inputs::m1_step_input_error_matches(error, candidate)
 }
 
+/// Cross-crate verifier view of exact compact completion acceptance.
+pub open spec fn compact_completion_matches(
+    record: CompactCompletionRecord,
+    expected_request: RequestId,
+    expected_epoch: completion::CompletionEpoch,
+    expected_plan_id: Identity,
+    draft_token_count: u8,
+) -> bool {
+    m1_completion::compact_completion_matches(
+        record,
+        expected_request,
+        expected_epoch,
+        expected_plan_id,
+        draft_token_count,
+    )
+}
+
+/// Exposes the scalar route authenticated by exact compact completion acceptance.
+pub proof fn compact_completion_matches_exposes_route(
+    record: CompactCompletionRecord,
+    expected_request: RequestId,
+    expected_epoch: completion::CompletionEpoch,
+    expected_plan_id: Identity,
+    draft_token_count: u8,
+)
+    requires compact_completion_matches(
+        record,
+        expected_request,
+        expected_epoch,
+        expected_plan_id,
+        draft_token_count,
+    ),
+    ensures
+        record.request.slot_spec() == expected_request.slot_spec(),
+        record.request.generation_spec() == expected_request.generation_spec(),
+        record.epoch == expected_epoch,
+        record.plan_id.bytes_spec() == expected_plan_id.bytes_spec(),
+{
+    reveal(compact_completion_matches);
+    reveal(m1_completion::compact_completion_matches);
+    reveal(m1_completion::compact_completion_header_matches);
+}
+
+/// Cross-crate exposure of validated logical workspace-lane separation.
+pub proof fn validated_m1_step_input_lane_isolation(
+    inputs: &ValidatedM1StepInputs,
+    left: int,
+    right: int,
+)
+    requires
+        inputs.valid(),
+        0 <= left < inputs.live_lanes_spec(),
+        0 <= right < inputs.live_lanes_spec(),
+        left != right,
+    ensures
+        inputs.dimensions_spec().active_tokens > 0,
+        inputs.lanes_spec()[left].is_some(),
+        inputs.lanes_spec()[right].is_some(),
+        inputs.lanes_spec()[left].unwrap().selection_spec()
+            == inputs.selection_spec(),
+        inputs.lanes_spec()[right].unwrap().selection_spec()
+            == inputs.selection_spec(),
+        inputs.lanes_spec()[left].unwrap().plan_id_spec()
+            == inputs.lanes_spec()[right].unwrap().plan_id_spec(),
+        inputs.lanes_spec()[left].unwrap().completion_epoch_spec()
+            == inputs.lanes_spec()[right].unwrap().completion_epoch_spec(),
+        inputs.lanes_spec()[left].unwrap().request_spec().slot_spec()
+            != inputs.lanes_spec()[right].unwrap().request_spec().slot_spec(),
+        if left < right {
+            (left + 1) * inputs.dimensions_spec().active_tokens as int
+                <= right * inputs.dimensions_spec().active_tokens as int
+        } else {
+            (right + 1) * inputs.dimensions_spec().active_tokens as int
+                <= left * inputs.dimensions_spec().active_tokens as int
+        },
+{
+    m1_step_inputs::validated_m1_step_input_lane_isolation(inputs, left, right);
+}
+
 } // verus!
