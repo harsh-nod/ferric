@@ -53,6 +53,7 @@ def copy_fixture(repo: Path, destination: Path) -> None:
     )
     for relative in (
         "crates/ferric-build/src/auth.rs",
+        "crates/ferric-kernels/src/validation.rs",
         "crates/ferric-spec/src/continuous_batching.rs",
         "crates/ferric-spec/src/graph.rs",
         "crates/ferric-spec/src/paged_kv_refinement.rs",
@@ -196,8 +197,8 @@ def main() -> None:
         if result.returncode != 0:
             fail(f"baseline M1 negative registry check failed\n{result.stdout}")
         rows = active.read_text(encoding="utf-8").splitlines()
-        if len(rows) != 13:
-            fail(f"baseline selected {len(rows)} M1 mutations instead of 13")
+        if len(rows) != 15:
+            fail(f"baseline selected {len(rows)} M1 mutations instead of 15")
         mutator_count = verify_current_mutators(repo, root, active)
 
         cases: list[tuple[str, str, FixtureMutation]] = []
@@ -217,8 +218,8 @@ def main() -> None:
                 fixture,
                 lambda lines: lines.append(
                     lines[1]
-                    .replace("batching-publish-once", "unknown-row")
-                    .replace("exact-once-completion-publication", "unknown-clause")
+                    .replace("artifact-manifest-commitment-digest", "unknown-row")
+                    .replace("canonical-manifest-digest-binding", "unknown-clause")
                 ),
             ),
         ))
@@ -275,6 +276,18 @@ def main() -> None:
             ),
         ))
         cases.append((
+            "target-binding-drift", "M1 foundation mutation binding drifted",
+            lambda fixture: mutate_registry(
+                fixture,
+                lambda lines: replace_field(
+                    lines,
+                    registry_row(lines, "target-catalog-processor-features"),
+                    10,
+                    "wrong-target-clause",
+                ),
+            ),
+        ))
+        cases.append((
             "unsafe-source", "unsafe foundation source path",
             lambda fixture: mutate_registry(
                 fixture, lambda lines: replace_field(lines, 1, 5, "../continuous_batching.rs")
@@ -299,6 +312,20 @@ def main() -> None:
             ).unlink(),
         ))
         cases.append((
+            "missing-artifact-auth-mutator", "M1 foundation mutator is unavailable",
+            lambda fixture: (
+                fixture
+                / "proofs/m1/negative/components/artifact-manifest-commitment-digest.py"
+            ).unlink(),
+        ))
+        cases.append((
+            "missing-target-mutator", "M1 foundation mutator is unavailable",
+            lambda fixture: (
+                fixture
+                / "proofs/m1/negative/components/target-catalog-processor-features.py"
+            ).unlink(),
+        ))
+        cases.append((
             "missing-source", "M1 foundation source is unavailable",
             lambda fixture: (fixture / "crates/ferric-spec/src/continuous_batching.rs").unlink(),
         ))
@@ -311,6 +338,10 @@ def main() -> None:
         cases.append((
             "missing-model-bundle-source", "M1 foundation source is unavailable",
             lambda fixture: (fixture / "crates/ferric-build/src/auth.rs").unlink(),
+        ))
+        cases.append((
+            "missing-target-source", "M1 foundation source is unavailable",
+            lambda fixture: (fixture / "crates/ferric-kernels/src/validation.rs").unlink(),
         ))
         cases.append((
             "missing-module-record", "compiler module path is not inventoried",
@@ -350,6 +381,39 @@ def main() -> None:
                 "\n".join(
                     line for line in (fixture / "proofs/VERIFIED_MODULES").read_text(encoding="utf-8").splitlines()
                     if line != "verified=ferric-build|crates/ferric-build/src/auth.rs|ferric_build::auth::admission_records_equal"
+                ) + "\n",
+                encoding="utf-8",
+            ),
+        ))
+        cases.append((
+            "missing-artifact-auth-function-record",
+            "compiler function path is not directly verified",
+            lambda fixture: (fixture / "proofs/VERIFIED_MODULES").write_text(
+                "\n".join(
+                    line for line in (fixture / "proofs/VERIFIED_MODULES").read_text(encoding="utf-8").splitlines()
+                    if line != "verified=ferric-build|crates/ferric-build/src/auth.rs|ferric_build::auth::validate_manifest_commitment_verified"
+                ) + "\n",
+                encoding="utf-8",
+            ),
+        ))
+        cases.append((
+            "missing-target-module-record",
+            "compiler module path is not inventoried",
+            lambda fixture: (fixture / "proofs/VERIFIED_MODULES").write_text(
+                "\n".join(
+                    line for line in (fixture / "proofs/VERIFIED_MODULES").read_text(encoding="utf-8").splitlines()
+                    if line != "module=ferric-kernels|crates/ferric-kernels/src/validation.rs|ferric_kernels::validation"
+                ) + "\n",
+                encoding="utf-8",
+            ),
+        ))
+        cases.append((
+            "missing-target-function-record",
+            "compiler function path is not directly verified",
+            lambda fixture: (fixture / "proofs/VERIFIED_MODULES").write_text(
+                "\n".join(
+                    line for line in (fixture / "proofs/VERIFIED_MODULES").read_text(encoding="utf-8").splitlines()
+                    if line != "verified=ferric-kernels|crates/ferric-kernels/src/validation.rs|ferric_kernels::validation::validate_kernel_catalog_input"
                 ) + "\n",
                 encoding="utf-8",
             ),

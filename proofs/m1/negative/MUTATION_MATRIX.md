@@ -7,6 +7,7 @@ closure status.
 
 | Mutation | Existing direct-Verus target | Distinct body clause | Open association |
 | --- | --- | --- | --- |
+| `artifact-manifest-commitment-digest` | `auth::validate_manifest_commitment_verified` | the canonical manifest digest must exactly match the retained aggregate identity | `artifact_authenticated` / `bundle-auth` |
 | `batching-publish-once` | `continuous_batching::apply_continuous_publish_step` | first publication succeeds; repeated publication is rejected | `scheduler_refined` / `batching-proof` |
 | `batching-request-routing` | `continuous_batching::apply_continuous_batch_step` | stale generations are rejected without state change | `scheduler_refined` / `scheduler-proof` |
 | `graph-operator-order` | `graph::expected_step` | every layer uses the exact operator order | `graph_refined` / `graph-proof` |
@@ -20,6 +21,7 @@ closure status.
 | `publication-plan-identity` | `step_plan_publication::validate_step_plan` | publication authority binds the exact plan identity | `graph_refined` / `graph-proof` |
 | `speculative-accepted-count-binding` | `speculative_step_composition::settle_and_publish_speculative_step` | KV preflight uses the exact publication-derived accepted count | `rollback_refined` / `speculation-proof` |
 | `speculative-atomic-failure-frame` | `speculative_step_composition::settle_and_publish_speculative_step` | all publication and KV validation precedes mutation, and any rejection preserves publication and selected state | `request_isolated` / `isolation-proof` |
+| `target-catalog-processor-features` | `validation::validate_kernel_catalog_input` | any processor or target-feature drift is rejected before retaining the catalog input | `target_conforming` / `identity-closure` |
 
 The path column is an obligation association, not a claim that the named
 future `proofs/m1/*.rs` path exists or has been discharged.

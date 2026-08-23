@@ -5,7 +5,8 @@
 bodies that currently exist for exact graph planning, step-plan publication,
 atomic speculative publication/KV composition, logical paged KV, continuous
 batching, request-slot noninterference, and retained model-bundle record
-composition.
+composition, canonical manifest commitment authentication, and exact kernel
+catalog processor/target-feature conformance.
 
 Each row binds one unique body mutation and contract clause to:
 
@@ -17,7 +18,7 @@ Each row binds one unique body mutation and contract clause to:
 - the exact `postcondition` or `assertion` failure class required from pinned
   Verus after the mutated source first passes ordinary Cargo compilation.
 
-`check-registry.py` hard-codes the exact thirteen-row roster. It first runs the M1
+`check-registry.py` hard-codes the exact fifteen-row roster. It first runs the M1
 requirements checker, then rejects row omission, addition, reordering,
 rebinding, duplicate mutators or clauses, unsafe paths, missing files, targets
 outside compiler-rooted coverage, and any property or path that is no longer
@@ -33,6 +34,16 @@ and a freshly recomputed verified seal. That is an internal consistency check,
 not independent authentication, `WeightSectionManifest::valid_commitment`,
 manifest destination layout, tensor-name semantics, runtime `BTreeSet` roster
 completeness, or plan composition.
+
+The manifest-commitment row inverts the executable digest mismatch gate before
+the directly verified retained commitment is returned. It authenticates only
+the exact canonical manifest digest-to-aggregate binding at `bundle-auth`; it
+does not establish signatures, independent validation, weight layout, or the
+full `artifact_authenticated` boundary. The catalog-target row weakens the
+executable rejection of processor or target-feature drift to reject only when
+both drift. Its `identity-closure` association covers the exact target tuple
+consumed by that join, not ELF, AMDHSA ABI, ISA/resource inspection, runtime
+device matching, or the full `target_conforming` boundary.
 
 Run the structural policy directly:
 

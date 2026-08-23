@@ -22,6 +22,13 @@ MARKERS = {"assertion", "postcondition"}
 # Open M1 obligation with an existing direct-Verus foundation; they do not
 # claim that the future path obligation has been implemented or closed.
 EXPECTED = {
+    "artifact-manifest-commitment-digest": (
+        "manifest-commitment-authentication", "artifact_authenticated",
+        "bundle-auth", "ferric-build", "crates/ferric-build/src/auth.rs",
+        "artifact-manifest-commitment-digest.py", "assertion", "auth",
+        "validate_manifest_commitment_verified",
+        "canonical-manifest-digest-binding",
+    ),
     "batching-publish-once": (
         "continuous-batching", "scheduler_refined", "batching-proof",
         "ferric-spec", "crates/ferric-spec/src/continuous_batching.rs",
@@ -109,6 +116,14 @@ EXPECTED = {
         "speculative-atomic-failure-frame.py", "postcondition",
         "speculative_step_composition", "settle_and_publish_speculative_step",
         "atomic-preflight-failure-frame",
+    ),
+    "target-catalog-processor-features": (
+        "kernel-catalog-target-conformance", "target_conforming",
+        "identity-closure", "ferric-kernels",
+        "crates/ferric-kernels/src/validation.rs",
+        "target-catalog-processor-features.py", "postcondition",
+        "validation", "validate_kernel_catalog_input",
+        "exact-processor-target-rejection",
     ),
 }
 
