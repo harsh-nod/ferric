@@ -23,16 +23,25 @@ use ferric_build::{
 };
 use ferric_engine::{
     bind_m1_kv_workspace_table_v1, bind_m1_physical_runner_v1, complete_m1_physical_step_v1,
-    initialize_m1_physical_runner_memory_v1, release_m1_completed_step_kv_pages_v1,
-    reopen_persisted_m1_kernel_artifacts_v1, ActiveDeviceKvCache, Engine, M1CompletedStepOutcomeV1,
+    initialize_m1_physical_runner_memory_v1, prelease_m1_qualification_target_pages_v1,
+    prepare_m1_long_lived_queue_rearm_v1, release_m1_completed_step_kv_pages_v1,
+    reopen_persisted_m1_kernel_artifacts_v1, reserve_m1_long_lived_queue_rearm_kv_v1,
+    schedule_m1_long_lived_queue_rearm_v1, ActiveDeviceKvCache, CompletionWireSemanticExpectation,
+    Engine, M1CompletedStepOutcomeV1, M1DeviceKvCompletionDispositionV1,
     M1DeviceKvCompletionMemberV1, M1DeviceKvCompletionRosterV1, M1FullStepKvWorkspaceTablesV1,
-    M1FullStepWorkspacePlans, M1ObservedQualificationOutputV1, M1PhysicalRunnerRecipeOutcomeV1,
-    M1QualificationObservationFailureCustodyV1, M1StepDispatchIntent,
+    M1FullStepWorkspacePlans, M1LongLivedQueueRearmKvInputsV1, M1LongLivedQueueReleasedRoundV1,
+    M1ObservedQualificationOutputV1, M1PhysicalRunnerFirstCompletionOutcomeV1,
+    M1PhysicalRunnerRecipeOutcomeV1, M1QualificationCompletionEvidenceV1,
+    M1QualificationObservationFailureCustodyV1, M1RearmedQualifiedRoundReleaseOutcomeV1,
+    M1RearmedRoundReleaseOutcomeV1, M1ScheduledLongLivedQueueRearmV1, M1StepDispatchIntent,
 };
 use ferric_spec::{
-    validate_m1_step_inputs, EngineLimits, Identity, M1StepInputCandidate,
-    M1StepInputValidationOutcome, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket,
-    Qwen3PlanSelection, StepPlan, ValidatedM1StepInputs, M1_KV_PAGE_TOKENS, QWEN3_VOCABULARY_SIZE,
+    m1_qualification_context_plan, validate_m1_step_inputs, EngineLimits, Identity,
+    M1QualificationExecutionBindingDeclaration, M1QualificationLaneExecutionBinding,
+    M1QualificationLaneGrouping, M1StepInputCandidate, M1StepInputValidationOutcome,
+    Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection, RequestId, StepPlan,
+    ValidatedM1StepInputs, M1_KV_PAGE_TOKENS, M1_QUALIFICATION_CONTEXT_PLAN_STEPS,
+    M1_QUALIFICATION_FINAL_INPUT_TOKEN, M1_QUALIFICATION_TOKENS_PER_LANE, QWEN3_VOCABULARY_SIZE,
 };
 use rustix::fd::OwnedFd;
 use rustix::fs::{
@@ -54,15 +63,15 @@ const WORKLOAD_FORMAT: &str = "FERRIC-M1-QUALIFICATION-WORKLOAD-V1";
 const CLOSURE_FORMAT: &str = "FERRIC-M1-QUALIFICATION-CLOSURE-V1";
 const ENVIRONMENT_FORMAT: &str = "FERRIC-M1-QUALIFICATION-ENVIRONMENT-V1";
 const OUTPUT_FORMAT: &str = "FERRIC-M1-DIFFERENTIAL-OUTPUT-V1";
-const TRANSCRIPT_FORMAT: &str = "FERRIC-M1-QUALIFICATION-CAPTURE-V1";
+const TRANSCRIPT_FORMAT: &str = "FERRIC-M1-QUALIFICATION-CAPTURE-V2";
 const TARGET: &str = "gfx942:xnack-";
 const DIFFERENTIAL_NONCLAIM: &str = "Structural acceptance authenticates externally collected target-only differential records only. It does not validate a logit tolerance, prove token equality, establish numerical or hardware correctness, qualify performance, or close m1.r29.";
 const MAX_DOCUMENT_BYTES: usize = 8 * 1_024 * 1_024;
 const MAX_POLLS: u64 = 100_000_000;
 const METADATA_BYTES: u64 = 64 * 1_024;
 const BF16_BYTES: u64 = 2;
-const DECODE_CONTEXT_LENGTH: u32 = 8_191;
-const DECODE_PRIMING_UNAVAILABLE: &str = "canonical c8192 decode capture requires 8191 authenticated initialized target-KV tokens per lane, but Ferric M1 has no chunked-prefill continuation beyond PrefillS1T2048's 2048-token context capacity, no prefill-to-decode PhysicalKvState/queue selection transition, and no final-only qualification-capture rearm; refusing an uninitialized decode capture";
+const DECODE_CONTEXT_LENGTH: u32 = M1_QUALIFICATION_FINAL_INPUT_TOKEN;
+const QUALIFICATION_LOGICAL_KV_PAGE_TOKENS: u32 = 256;
 
 const COMMON_IDENTITIES: &[&str] = &[
     "benchmark-executable",
@@ -629,10 +638,28 @@ fn run(arguments: Vec<OsString>) -> CaptureResult<()> {
 struct CapturedOutput {
     compact_sha256: [u8; 32],
     device_id: Identity,
-    dispatch_generation: u64,
+    execution: CapturedExecutionV1,
     logits: Vec<u8>,
     logits_row_sha256: Vec<[u8; 32]>,
     tokens: Vec<u8>,
+}
+
+#[derive(Debug)]
+enum CapturedExecutionV1 {
+    OneShotPrefill {
+        dispatch_generation: u64,
+        epoch: u64,
+    },
+    C8192 {
+        execution_binding: M1QualificationExecutionBindingDeclaration,
+        first_dispatch_generation: u64,
+        first_epoch: u64,
+        qualification_plan_id: Identity,
+        round_count: u32,
+        round_history_sha256: [u8; 32],
+        terminal_dispatch_generation: u64,
+        terminal_epoch: u64,
+    },
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -643,94 +670,604 @@ struct CaptureIdentities {
     program_catalog: Identity,
 }
 
+#[derive(Debug)]
+struct QualificationExecutionBindingV1 {
+    declaration: M1QualificationExecutionBindingDeclaration,
+    grouping: M1QualificationLaneGrouping,
+}
+
+#[derive(Debug)]
+struct QualificationRoundCommitmentV1 {
+    hasher: Sha256,
+    count: u32,
+    selection: Qwen3PlanSelection,
+    first_epoch: u64,
+    first_generation: u64,
+    terminal_epoch: u64,
+    terminal_generation: u64,
+}
+
+struct QualificationRoundReceiptV1<'a> {
+    logical_accepted: &'a [u32],
+    externally_published: &'a [u32],
+    release_counts: &'a [ferric_engine::M1CompletedKvPageReleaseCountsV1],
+    device_id: Identity,
+}
+
+impl QualificationRoundCommitmentV1 {
+    fn new(
+        plan_id: Identity,
+        declaration: &M1QualificationExecutionBindingDeclaration,
+        selection: Qwen3PlanSelection,
+    ) -> Self {
+        let mut hasher = Sha256::new();
+        hash_field(&mut hasher, b"ferric.m1.qualification-round-history.v1");
+        hash_field(&mut hasher, plan_id.as_bytes());
+        hash_field(&mut hasher, declaration.declared_workload_digest.as_bytes());
+        hash_field(&mut hasher, &selection_bytes(selection));
+        for lane in &declaration.ordered_lanes {
+            hash_field(&mut hasher, &lane.lane_ordinal.to_le_bytes());
+            hash_field(&mut hasher, lane.lane_identity.as_bytes());
+            hash_field(&mut hasher, lane.token_sequence_identity.as_bytes());
+        }
+        Self {
+            hasher,
+            count: 0,
+            selection,
+            first_epoch: 0,
+            first_generation: 0,
+            terminal_epoch: 0,
+            terminal_generation: 0,
+        }
+    }
+
+    fn observe(
+        &mut self,
+        ordinal: u32,
+        checked: &ferric_engine::M1CheckedCompletionOutputV1,
+        expected_requests: &[RequestId],
+        receipt: QualificationRoundReceiptV1<'_>,
+    ) -> CaptureResult<()> {
+        let terminal = ordinal == M1_QUALIFICATION_FINAL_INPUT_TOKEN;
+        if ordinal != self.count
+            || checked.selection() != self.selection
+            || checked.records().len() != expected_requests.len()
+            || receipt.logical_accepted.len() != expected_requests.len()
+            || receipt.externally_published.len() != expected_requests.len()
+            || receipt.release_counts.len() != expected_requests.len()
+            || receipt.logical_accepted.iter().any(|count| *count != 1)
+            || receipt
+                .externally_published
+                .iter()
+                .any(|count| *count != u32::from(terminal))
+        {
+            return Err(format!(
+                "qualification round {ordinal} history cardinality or order drifted"
+            ));
+        }
+        let epoch = checked.epoch().value();
+        let generation = checked.dispatch_generation();
+        if self.count == 0 {
+            self.first_epoch = epoch;
+            self.first_generation = generation;
+        }
+        self.terminal_epoch = epoch;
+        self.terminal_generation = generation;
+        hash_field(&mut self.hasher, &ordinal.to_le_bytes());
+        hash_field(&mut self.hasher, &epoch.to_le_bytes());
+        hash_field(&mut self.hasher, &generation.to_le_bytes());
+        hash_field(&mut self.hasher, receipt.device_id.as_bytes());
+        for (lane, (((record, expected), logical), external)) in checked
+            .records()
+            .iter()
+            .zip(expected_requests)
+            .zip(receipt.logical_accepted)
+            .zip(receipt.externally_published)
+            .enumerate()
+        {
+            let record = record.record();
+            if record.request != *expected || record.epoch.value() != epoch {
+                return Err(format!(
+                    "qualification round {ordinal} lane {lane} checked request order drifted"
+                ));
+            }
+            hash_field(&mut self.hasher, &record.request.slot().to_le_bytes());
+            hash_field(&mut self.hasher, &record.request.generation().to_le_bytes());
+            hash_field(&mut self.hasher, record.plan_id.as_bytes());
+            hash_field(&mut self.hasher, &[record.accepted_draft_tokens]);
+            hash_field(&mut self.hasher, &[record.emitted_token_count]);
+            for token in record
+                .emitted_tokens
+                .iter()
+                .take(usize::from(record.emitted_token_count))
+            {
+                hash_field(&mut self.hasher, &token.to_le_bytes());
+            }
+            hash_field(&mut self.hasher, &logical.to_le_bytes());
+            hash_field(&mut self.hasher, &external.to_le_bytes());
+            let released = receipt.release_counts[lane];
+            hash_field(
+                &mut self.hasher,
+                &u64::try_from(released.draft())
+                    .unwrap_or(u64::MAX)
+                    .to_le_bytes(),
+            );
+            hash_field(
+                &mut self.hasher,
+                &u64::try_from(released.target())
+                    .unwrap_or(u64::MAX)
+                    .to_le_bytes(),
+            );
+        }
+        self.count = self
+            .count
+            .checked_add(1)
+            .ok_or_else(|| "qualification round count overflowed".to_owned())?;
+        Ok(())
+    }
+
+    fn finish(self) -> CaptureResult<([u8; 32], u32, u64, u64, u64, u64)> {
+        if usize::try_from(self.count).ok() != Some(M1_QUALIFICATION_CONTEXT_PLAN_STEPS) {
+            return Err(format!(
+                "qualification completed {} rounds instead of {}",
+                self.count, M1_QUALIFICATION_CONTEXT_PLAN_STEPS
+            ));
+        }
+        Ok((
+            self.hasher.finalize().into(),
+            self.count,
+            self.first_epoch,
+            self.first_generation,
+            self.terminal_epoch,
+            self.terminal_generation,
+        ))
+    }
+}
+
+fn qualification_grouping(
+    selection: Qwen3PlanSelection,
+) -> CaptureResult<M1QualificationLaneGrouping> {
+    if selection.role != Qwen3ModelRole::Target8B || selection.mode != Qwen3ExecutionMode::Decode {
+        return Err("qualification capture accepts target-only decode selections".to_owned());
+    }
+    match selection.bucket {
+        Qwen3PlanBucket::DecodeS1C8192 => Ok(M1QualificationLaneGrouping::S1),
+        Qwen3PlanBucket::DecodeS8C8192 => Ok(M1QualificationLaneGrouping::S8),
+        Qwen3PlanBucket::DecodeS32C8192 => Ok(M1QualificationLaneGrouping::S32),
+        _ => Err("qualification capture accepts exactly DecodeS1/S8/S32C8192".to_owned()),
+    }
+}
+
+fn qualification_engine_page_capacity(grouping: M1QualificationLaneGrouping) -> CaptureResult<u32> {
+    let pages_per_lane = M1_QUALIFICATION_TOKENS_PER_LANE
+        .checked_add(QUALIFICATION_LOGICAL_KV_PAGE_TOKENS - 1)
+        .ok_or_else(|| "qualification logical page count overflowed".to_owned())?
+        / QUALIFICATION_LOGICAL_KV_PAGE_TOKENS;
+    grouping
+        .sequences()
+        .checked_mul(pages_per_lane)
+        .ok_or_else(|| "qualification logical page capacity overflowed".to_owned())
+}
+
+fn qualification_execution_binding(
+    workload: &Workload,
+    input_tokens: &[u32],
+) -> CaptureResult<QualificationExecutionBindingV1> {
+    let grouping = qualification_grouping(workload.selection)?;
+    let lanes = usize::try_from(grouping.sequences())
+        .map_err(|_| "qualification grouping does not fit usize".to_owned())?;
+    let tokens_per_lane = usize::try_from(M1_QUALIFICATION_TOKENS_PER_LANE)
+        .map_err(|_| "qualification lane width does not fit usize".to_owned())?;
+    let expected = lanes
+        .checked_mul(tokens_per_lane)
+        .ok_or_else(|| "qualification token extent overflowed".to_owned())?;
+    if workload.lanes.len() != lanes || input_tokens.len() != expected {
+        return Err("qualification binding token or lane extent drifted".to_owned());
+    }
+    let selection = selection_bytes(workload.selection);
+    let grouping_bytes = grouping.sequences().to_le_bytes();
+    let workload_digest = domain_identity(
+        b"ferric.m1.qualification-workload-binding.v1",
+        &[&grouping_bytes, &selection, &workload.bytes],
+    );
+    let mut ordered_lanes = Vec::new();
+    ordered_lanes
+        .try_reserve_exact(lanes)
+        .map_err(|_| "cannot reserve qualification lane bindings".to_owned())?;
+    for lane in 0..lanes {
+        let lane_u32 = u32::try_from(lane)
+            .map_err(|_| "qualification lane ordinal does not fit u32".to_owned())?;
+        let start = lane
+            .checked_mul(tokens_per_lane)
+            .ok_or_else(|| "qualification lane token offset overflowed".to_owned())?;
+        let end = start
+            .checked_add(tokens_per_lane)
+            .ok_or_else(|| "qualification lane token extent overflowed".to_owned())?;
+        let mut canonical_tokens = Vec::new();
+        canonical_tokens
+            .try_reserve_exact(tokens_per_lane.saturating_mul(4))
+            .map_err(|_| "cannot reserve canonical qualification token bytes".to_owned())?;
+        for token in &input_tokens[start..end] {
+            canonical_tokens.extend_from_slice(&token.to_le_bytes());
+        }
+        let token_sequence_identity = domain_identity(
+            b"ferric.m1.qualification-token-sequence.v1",
+            &[
+                &grouping_bytes,
+                &selection,
+                &lane_u32.to_le_bytes(),
+                &canonical_tokens,
+            ],
+        );
+        let lane_identity = domain_identity(
+            b"ferric.m1.qualification-lane.v1",
+            &[
+                workload_digest.as_bytes(),
+                &grouping_bytes,
+                &selection,
+                &lane_u32.to_le_bytes(),
+                token_sequence_identity.as_bytes(),
+            ],
+        );
+        ordered_lanes.push(M1QualificationLaneExecutionBinding {
+            lane_ordinal: lane_u32,
+            lane_identity,
+            token_sequence_identity,
+        });
+    }
+    Ok(QualificationExecutionBindingV1 {
+        declaration: M1QualificationExecutionBindingDeclaration {
+            declared_workload_digest: workload_digest,
+            ordered_lanes,
+        },
+        grouping,
+    })
+}
+
+fn validate_scheduled_roster(
+    scheduled: &ferric_engine::M1ScheduledDispatchV1,
+    expected: &[RequestId],
+    ordinal: u32,
+) -> CaptureResult<()> {
+    if scheduled.member_count() != expected.len() {
+        return Err(format!(
+            "qualification ordinal {ordinal} scheduler member count drifted"
+        ));
+    }
+    for (lane, expected_request) in expected.iter().copied().enumerate() {
+        if scheduled.member(lane) != Some(expected_request) {
+            return Err(format!(
+                "qualification ordinal {ordinal} scheduler lane {lane} request order drifted"
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn qualification_step_inputs(
+    workload: &Workload,
+    plans: &[StepPlan],
+    input_tokens: &[u32],
+    ordinal: u32,
+) -> CaptureResult<ValidatedM1StepInputs> {
+    let lane_width = usize::try_from(M1_QUALIFICATION_TOKENS_PER_LANE)
+        .map_err(|_| "qualification lane width does not fit usize".to_owned())?;
+    if ordinal >= M1_QUALIFICATION_TOKENS_PER_LANE || plans.len() != workload.lanes.len() {
+        return Err(format!(
+            "qualification ordinal {ordinal} or plan roster is outside the admitted context"
+        ));
+    }
+    let ordinal_index = usize::try_from(ordinal)
+        .map_err(|_| "qualification ordinal does not fit usize".to_owned())?;
+    let mut tokens = Vec::new();
+    tokens
+        .try_reserve_exact(plans.len())
+        .map_err(|_| "cannot reserve qualification step tokens".to_owned())?;
+    for lane in 0..plans.len() {
+        let index = lane
+            .checked_mul(lane_width)
+            .and_then(|start| start.checked_add(ordinal_index))
+            .ok_or_else(|| "qualification lane-major input offset overflowed".to_owned())?;
+        tokens.push(
+            *input_tokens
+                .get(index)
+                .ok_or_else(|| "qualification lane-major input is truncated".to_owned())?,
+        );
+    }
+    if input_tokens.len() != plans.len().saturating_mul(lane_width) {
+        return Err("qualification lane-major input has trailing or missing tokens".to_owned());
+    }
+    let candidate = M1StepInputCandidate::new(
+        workload.selection,
+        plans.iter().copied().map(Some).collect(),
+        tokens,
+        vec![ordinal; plans.len()],
+        vec![1; plans.len()],
+        vec![ordinal; plans.len()],
+    );
+    match validate_m1_step_inputs(candidate) {
+        M1StepInputValidationOutcome::Validated(inputs) => Ok(inputs),
+        M1StepInputValidationOutcome::Rejected(rejection) => Err(format!(
+            "qualification ordinal {ordinal} inputs were rejected: {:?}",
+            rejection.error()
+        )),
+    }
+}
+
+fn qualification_contexts(
+    plan: ferric_engine::M1ValidatedQualificationContextPlanV1<'_>,
+    lanes: usize,
+    ordinal: u32,
+) -> CaptureResult<Vec<ferric_engine::M1ValidatedQualificationContextStepV1>> {
+    (0..lanes)
+        .map(|lane| plan.step(ordinal, u32::try_from(lane).unwrap_or(u32::MAX)))
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|error| {
+            format!("cannot derive qualification ordinal {ordinal} context witnesses: {error}")
+        })
+}
+
+fn bind_qualification_step_plans(
+    runner: &ferric_engine::M1PhysicalRunnerV1,
+    scheduled: &ferric_engine::M1ScheduledDispatchV1,
+    selection: Qwen3PlanSelection,
+    requests: &[RequestId],
+    ordinal: u32,
+) -> CaptureResult<Vec<StepPlan>> {
+    validate_scheduled_roster(scheduled, requests, ordinal)?;
+    requests
+        .iter()
+        .copied()
+        .map(|request| {
+            runner
+                .logical_runner()
+                .bind_step_plan(request, scheduled.epoch(), selection)
+                .map_err(|error| {
+                    format!("cannot bind qualification ordinal {ordinal} step plan: {error:?}")
+                })
+        })
+        .collect()
+}
+
+fn derive_qualification_recipe(
+    runner: &ferric_engine::M1PhysicalRunnerV1,
+    selection: Qwen3PlanSelection,
+    workspace_identity: [u8; 32],
+) -> CaptureResult<ferric_engine::AddresslessM1PhysicalBufferRecipeV1> {
+    match runner.derive_step_recipe(
+        M1StepDispatchIntent::TargetOnly(selection),
+        M1FullStepWorkspacePlans::target_only(workload_workspace_plan(
+            selection,
+            workspace_identity,
+        )?),
+    ) {
+        M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => Ok(recipe),
+        M1PhysicalRunnerRecipeOutcomeV1::Rejected(error) => Err(format!(
+            "cannot derive qualification physical recipe: {error:?}"
+        )),
+    }
+}
+
+fn schedule_qualification_round(
+    released: QualificationReleasedRoundV1,
+    engine: &mut Engine<32>,
+    ordinal: u32,
+) -> CaptureResult<M1ScheduledLongLivedQueueRearmV1> {
+    match released.schedule(engine) {
+        Ok(scheduled) => Ok(scheduled),
+        Err(failure) => {
+            let diagnostic = format!("{:?}", failure.error());
+            let unscheduled = failure.into_unscheduled().map_err(|failure| {
+                format!(
+                    "qualification ordinal {ordinal} scheduling failed terminally at {:?}: {diagnostic}; retained owners={}",
+                    failure.phase(),
+                    failure.retained_owner_count()
+                )
+            })?;
+            unscheduled.retry(engine).map_err(|failure| {
+                format!(
+                    "qualification ordinal {ordinal} scheduling rejected after retry at {:?}: {:?}; retained owners={}",
+                    failure.phase(),
+                    failure.error(),
+                    failure.retained_owner_count()
+                )
+            })
+        }
+    }
+}
+
+fn validate_round_counts(
+    ordinal: u32,
+    logical: &[u32],
+    external: &[u32],
+    lanes: usize,
+    terminal: bool,
+) -> CaptureResult<()> {
+    if logical.len() != lanes
+        || external.len() != lanes
+        || logical.iter().any(|count| *count != 1)
+        || external.iter().any(|count| *count != u32::from(terminal))
+        || terminal != (ordinal == M1_QUALIFICATION_FINAL_INPUT_TOKEN)
+    {
+        return Err(format!(
+            "qualification ordinal {ordinal} logical/external completion policy drifted"
+        ));
+    }
+    Ok(())
+}
+
+fn validate_checked_terminal_counts(
+    checked: &ferric_engine::M1CheckedCompletionOutputV1,
+    lanes: usize,
+) -> CaptureResult<()> {
+    if checked.records().len() != lanes
+        || checked.records().iter().any(|record| {
+            record.record().accepted_draft_tokens != 0 || record.record().emitted_token_count != 1
+        })
+    {
+        return Err("terminal compact completion count or target-only shape drifted".to_owned());
+    }
+    Ok(())
+}
+
+#[derive(Debug)]
+enum QualificationReleasedRoundV1 {
+    First(ferric_engine::M1ReleasedCompletedStepV1),
+    Rearmed(Box<M1LongLivedQueueReleasedRoundV1>),
+}
+
+impl QualificationReleasedRoundV1 {
+    fn schedule(
+        self,
+        engine: &mut Engine<32>,
+    ) -> Result<
+        M1ScheduledLongLivedQueueRearmV1,
+        ferric_engine::M1LongLivedQueueRearmScheduleFailureV1,
+    > {
+        match self {
+            Self::First(released) => schedule_m1_long_lived_queue_rearm_v1(engine, released),
+            Self::Rearmed(released) => (*released).schedule_next(engine),
+        }
+    }
+}
+
 fn execute_capture(
     runner: &ferric_engine::M1PhysicalRunnerV1,
-    mut memory: ferric_engine::M1PartitionedModelMemoryKvPoolV1,
+    memory: ferric_engine::M1PartitionedModelMemoryKvPoolV1,
+    workload: &Workload,
+    input_tokens: Vec<u32>,
+    gpu_unique_id: u64,
+) -> CaptureResult<CapturedOutput> {
+    match workload.selection.mode {
+        Qwen3ExecutionMode::Prefill => {
+            execute_prefill_capture(runner, memory, workload, input_tokens, gpu_unique_id)
+        }
+        Qwen3ExecutionMode::Decode => {
+            execute_decode_capture(runner, memory, workload, input_tokens, gpu_unique_id)
+        }
+        Qwen3ExecutionMode::Speculative => {
+            Err("qualification capture does not admit speculative selections".to_owned())
+        }
+    }
+}
+
+fn execute_decode_capture(
+    runner: &ferric_engine::M1PhysicalRunnerV1,
+    memory: ferric_engine::M1PartitionedModelMemoryKvPoolV1,
     workload: &Workload,
     input_tokens: Vec<u32>,
     _gpu_unique_id: u64,
 ) -> CaptureResult<CapturedOutput> {
+    require_supported_capture(workload)?;
+    let binding = qualification_execution_binding(workload, &input_tokens)?;
+    let context_plan = m1_qualification_context_plan(binding.grouping, binding.declaration.clone());
+    let validated_context_plan = ferric_engine::validate_m1_qualification_context_plan_v1(
+        &context_plan,
+        binding.grouping,
+        &binding.declaration,
+    )
+    .map_err(|error| format!("qualification context plan rejected: {error}"))?;
     let selection = workload.selection;
     let draft_selection = Qwen3PlanSelection {
         role: Qwen3ModelRole::Draft06B,
-        mode: selection.mode,
+        mode: Qwen3ExecutionMode::Decode,
         bucket: selection.bucket,
     };
-    let dimensions = selection
-        .bucket
-        .dimensions(selection.role, selection.mode)
-        .ok_or_else(|| "workload selection has no admitted dimensions".to_owned())?;
-    let mut engine = Engine::<32>::new(512, 256, 8_192)
-        .map_err(|error| format!("cannot construct M1 engine: {error:?}"))?;
-    let mut requests = Vec::with_capacity(workload.lanes.len());
-    for lane in &workload.lanes {
+    let logical_page_capacity = qualification_engine_page_capacity(binding.grouping)?;
+    let mut engine = Engine::<32>::new(
+        logical_page_capacity,
+        QUALIFICATION_LOGICAL_KV_PAGE_TOKENS,
+        M1_QUALIFICATION_TOKENS_PER_LANE,
+    )
+    .map_err(|error| format!("cannot construct M1 engine: {error:?}"))?;
+    let mut requests = Vec::new();
+    let mut caches = Vec::new();
+    requests
+        .try_reserve_exact(workload.lanes.len())
+        .map_err(|_| "cannot reserve qualification request roster".to_owned())?;
+    caches
+        .try_reserve_exact(workload.lanes.len())
+        .map_err(|_| "cannot reserve qualification cache roster".to_owned())?;
+    for lane in 0..workload.lanes.len() {
         let request = engine
             .admit()
-            .map_err(|error| format!("cannot admit workload lane: {error:?}"))?;
-        engine
-            .append_tentative(request, lane.active_length)
-            .map_err(|error| format!("cannot make workload lane schedulable: {error:?}"))?;
+            .map_err(|error| format!("cannot admit qualification lane {lane}: {error:?}"))?;
+        let cache = ActiveDeviceKvCache::new(memory.device(), request, selection, draft_selection)
+            .map_err(|error| format!("cannot create lane {lane} device KV cache: {error:?}"))?;
         requests.push(request);
+        caches.push(cache);
+    }
+    let initial_contexts = (0..requests.len())
+        .map(|lane| validated_context_plan.step(0, u32::try_from(lane).unwrap_or(u32::MAX)))
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|error| format!("cannot derive ordinal-zero context witnesses: {error}"))?;
+    let preleased = match prelease_m1_qualification_target_pages_v1(
+        memory,
+        caches,
+        initial_contexts.clone(),
+        binding.grouping,
+    ) {
+        Ok(preleased) => preleased,
+        Err(failure) => {
+            let first_error = format!("{:?}", failure.error());
+            let first_progress = failure.progress();
+            let (_error, recovery) = (*failure).into_parts();
+            recovery.retry().map_err(|failure| {
+                format!(
+                    "qualification target-page prelease rejected after consuming retry; first={first_error} at {first_progress:?}; retry={:?} at {:?}",
+                    failure.error(),
+                    failure.progress()
+                )
+            })?
+        }
+    };
+    let (mut memory, mut caches) = preleased.into_parts();
+    let device_id = memory.device().device_id();
+    for request in &requests {
+        engine
+            .append_tentative(*request, 1)
+            .map_err(|error| format!("cannot enqueue ordinal-zero request: {error:?}"))?;
     }
     let scheduled = engine
         .dispatch_m1_ready()
-        .map_err(|error| format!("cannot schedule workload: {error:?}"))?
-        .ok_or_else(|| "workload produced no schedulable batch".to_owned())?;
-    if scheduled.member_count() != workload.lanes.len() {
-        return Err("scheduler live roster differs from workload lanes".to_owned());
-    }
-    let mut plans = Vec::with_capacity(requests.len());
-    for request in &requests {
-        plans.push(
-            runner
-                .logical_runner()
-                .bind_step_plan(*request, scheduled.epoch(), selection)
-                .map_err(|error| format!("cannot bind workload step plan: {error:?}"))?,
-        );
-    }
-    let inputs = validated_inputs(workload, &plans, input_tokens, dimensions.active_tokens)?;
-    let active_lengths = inputs.active_lengths().to_vec();
-    let context_lengths = inputs.context_lengths().to_vec();
-    let mut caches = Vec::with_capacity(requests.len());
-    let mut reservations = Vec::with_capacity(requests.len());
-    for (lane, request) in requests.iter().copied().enumerate() {
-        let mut cache =
-            ActiveDeviceKvCache::new(memory.device(), request, selection, draft_selection)
-                .map_err(|error| format!("cannot create lane {lane} device KV cache: {error:?}"))?;
-        let pages = qualification_kv_page_count(context_lengths[lane], active_lengths[lane])
-            .map_err(|error| format!("lane {lane} {error}"))?;
-        let mut leases = Vec::with_capacity(pages as usize);
-        for page in 0..pages {
-            leases.push(
-                memory
-                    .lease_page(request, Qwen3ModelRole::Target8B, page)
-                    .map_err(|error| format!("cannot lease lane {lane} page {page}: {error:?}"))?,
-            );
-        }
-        let pending = cache
-            .reserve_step_write(
-                request,
-                Qwen3ModelRole::Target8B,
-                context_lengths[lane],
-                active_lengths[lane],
+        .map_err(|error| format!("cannot schedule qualification ordinal zero: {error:?}"))?
+        .ok_or_else(|| "qualification ordinal zero produced no scheduler batch".to_owned())?;
+    validate_scheduled_roster(&scheduled, &requests, 0)?;
+    let plans = bind_qualification_step_plans(runner, &scheduled, selection, &requests, 0)?;
+    let inputs = qualification_step_inputs(workload, &plans, &input_tokens, 0)?;
+    let mut reservations = Vec::new();
+    reservations
+        .try_reserve_exact(caches.len())
+        .map_err(|_| "cannot reserve ordinal-zero KV custody".to_owned())?;
+    for (lane, cache) in caches.iter_mut().enumerate() {
+        let reservation = cache
+            .reserve_m1_qualification_context_step_write_v1(
+                requests[lane],
+                u32::try_from(lane).unwrap_or(u32::MAX),
+                initial_contexts[lane],
                 scheduled.epoch(),
-                leases,
             )
-            .map_err(|error| format!("cannot reserve lane {lane} KV write: {error:?}"))?;
-        caches.push(cache);
-        reservations.push(pending);
+            .map_err(|failure| {
+                format!(
+                    "cannot reserve qualification ordinal zero lane {lane}: {:?}",
+                    failure.error()
+                )
+            })?;
+        reservations.push(reservation.into_pending_step_write());
     }
     let table = bind_m1_kv_workspace_table_v1(inputs, reservations)
-        .map_err(|error| format!("cannot bind target KV workspace: {error:?}"))?;
-    let tables = M1FullStepKvWorkspaceTablesV1::TargetOnly { target: table };
-    let workspace_plan = workload_workspace_plan(selection, sha256_array(&workload.bytes))?;
+        .map_err(|error| format!("cannot bind ordinal-zero target KV workspace: {error:?}"))?;
+    let workspace_identity = *binding.declaration.declared_workload_digest.as_bytes();
     let prepared = runner
         .prepare_scheduled_workspaces(
             scheduled,
-            M1FullStepWorkspacePlans::target_only(workspace_plan),
-            tables,
+            M1FullStepWorkspacePlans::target_only(workload_workspace_plan(
+                selection,
+                workspace_identity,
+            )?),
+            M1FullStepKvWorkspaceTablesV1::TargetOnly { target: table },
         )
-        .map_err(|error| format!("cannot prepare scheduled workspace: {error:?}"))?;
+        .map_err(|error| format!("cannot prepare ordinal-zero workspace: {error:?}"))?;
     let completion = memory
         .allocate_completion_output(selection)
         .map_err(|error| format!("cannot allocate compact completion: {error}"))?;
@@ -739,52 +1276,664 @@ fn execute_capture(
         .map_err(|error| format!("cannot enable qualification logits: {error:?}"))?;
     let allocated = runner
         .allocate_scheduled_workspaces(memory, prepared)
-        .map_err(|error| format!("cannot allocate scheduled workspaces: {error:?}"))?;
-    let recipe = match runner.derive_step_recipe(
-        M1StepDispatchIntent::TargetOnly(selection),
-        M1FullStepWorkspacePlans::target_only(workload_workspace_plan(
-            selection,
-            sha256_array(&workload.bytes),
-        )?),
-    ) {
-        M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
-        M1PhysicalRunnerRecipeOutcomeV1::Rejected(error) => {
-            return Err(format!("cannot derive physical recipe: {error:?}"));
-        }
-    };
+        .map_err(|error| format!("cannot allocate ordinal-zero workspaces: {error:?}"))?;
+    let recipe = derive_qualification_recipe(runner, selection, workspace_identity)?;
     let published = runner
         .publish_first_step(&mut engine, 1 << 20, allocated, recipe, completion)
-        .map_err(|error| format!("cannot publish qualification step: {error:?}"))?;
-    let completed = match published.wait(workload.max_polls) {
-        Ok(completed) => completed,
-        Err(error) => {
+        .map_err(|error| format!("cannot publish qualification ordinal zero: {error:?}"))?;
+    let semantics = initial_contexts
+        .iter()
+        .map(|context| CompletionWireSemanticExpectation::QualificationPromptCommit { context })
+        .collect::<Vec<_>>();
+    let roster = M1DeviceKvCompletionRosterV1::new(
+        caches
+            .into_iter()
+            .map(M1DeviceKvCompletionMemberV1::continuing)
+            .collect(),
+    );
+    let first_outcome = runner.complete_first_step(
+        &mut engine,
+        published,
+        workload.max_polls,
+        &semantics,
+        roster,
+    );
+    let first = consume_first_completion_outcome(&mut engine, first_outcome)?;
+    validate_round_counts(
+        0,
+        first.logical_accepted_counts(),
+        first.externally_published_counts(),
+        requests.len(),
+        false,
+    )?;
+    let mut history =
+        QualificationRoundCommitmentV1::new(context_plan.plan_id, &binding.declaration, selection);
+    history.observe(
+        0,
+        first.checked(),
+        &requests,
+        QualificationRoundReceiptV1 {
+            logical_accepted: first.logical_accepted_counts(),
+            externally_published: first.externally_published_counts(),
+            release_counts: first.release_counts(),
+            device_id,
+        },
+    )?;
+    let mut released = QualificationReleasedRoundV1::First(first);
+
+    for ordinal in 1..M1_QUALIFICATION_FINAL_INPUT_TOKEN {
+        for request in &requests {
+            engine.append_tentative(*request, 1).map_err(|error| {
+                format!("cannot enqueue qualification ordinal {ordinal}: {error:?}")
+            })?;
+        }
+        let scheduled = schedule_qualification_round(released, &mut engine, ordinal)?;
+        validate_scheduled_roster(scheduled.scheduled_dispatch(), &requests, ordinal)?;
+        if scheduled.selected_requests().ne(requests.iter().copied())
+            || scheduled.parked_count() != 0
+            || scheduled.terminal_count() != 0
+        {
             return Err(format!(
-                "qualification queue wait entered terminal quarantine: {error:?}"
+                "qualification ordinal {ordinal} selected/parked scheduler custody drifted"
             ));
         }
-    };
-    let recycled = match completed.recycle() {
-        Ok(recycled) => recycled,
-        Err(error) => {
+        let plans = bind_qualification_step_plans(
+            runner,
+            scheduled.scheduled_dispatch(),
+            selection,
+            &requests,
+            ordinal,
+        )?;
+        let inputs = qualification_step_inputs(workload, &plans, &input_tokens, ordinal)?;
+        let contexts = qualification_contexts(validated_context_plan, requests.len(), ordinal)?;
+        let reserved = reserve_m1_long_lived_queue_rearm_kv_v1(
+            &mut engine,
+            scheduled,
+            M1LongLivedQueueRearmKvInputsV1::qualification_target_only(inputs, contexts.clone()),
+        )
+        .map_err(|failure| {
+            format!(
+                "qualification ordinal {ordinal} KV reservation retained custody at {:?}",
+                failure.phase()
+            )
+        })?;
+        let prepared = prepare_m1_long_lived_queue_rearm_v1(
+            &mut engine,
+            reserved,
+            runner.logical_runner(),
+            M1FullStepWorkspacePlans::target_only(workload_workspace_plan(
+                selection,
+                workspace_identity,
+            )?),
+        )
+        .map_err(|failure| {
+            format!(
+                "qualification ordinal {ordinal} workspace preparation retained custody: {:?}",
+                failure.source()
+            )
+        })?;
+        let published = runner
+            .submit_rearm(
+                &mut engine,
+                prepared,
+                derive_qualification_recipe(runner, selection, workspace_identity)?,
+            )
+            .map_err(|failure| {
+                format!(
+                    "qualification ordinal {ordinal} queue submission retained custody: {failure:?}"
+                )
+            })?;
+        let completed = published
+            .wait(&mut engine, workload.max_polls)
+            .map_err(|failure| {
+                format!(
+                    "qualification ordinal {ordinal} queue wait retained custody at {:?}",
+                    failure.phase()
+                )
+            })?;
+        let recycled = completed.recycle(&mut engine).map_err(|failure| {
+            format!(
+                "qualification ordinal {ordinal} signal recycle retained custody at {:?}",
+                failure.phase()
+            )
+        })?;
+        let semantics = contexts
+            .iter()
+            .map(|context| CompletionWireSemanticExpectation::QualificationPromptCommit { context })
+            .collect::<Vec<_>>();
+        let readback = match recycled.read_and_check_completion(&semantics) {
+            Ok(readback) => readback,
+            Err(failure) => match failure.retry(&semantics) {
+                Ok(readback) => readback,
+                Err(failure) => {
+                    let diagnostic = format!("{:?}", failure.source());
+                    let teardown = failure.destroy_queue_and_retain_custody(&mut engine);
+                    return Err(format!(
+                        "qualification ordinal {ordinal} compact readback rejected after retry: {diagnostic}; {}",
+                        release_result("rearmed readback teardown", teardown)
+                    ));
+                }
+            },
+        };
+        let completion = match readback.complete(
+            &mut engine,
+            vec![M1DeviceKvCompletionDispositionV1::Continue; requests.len()],
+        ) {
+            Ok(completion) => completion,
+            Err(failure) => failure.retry(&mut engine).map_err(|failure| {
+                format!(
+                    "qualification ordinal {ordinal} completion preflight retained custody: {:?}",
+                    failure.error()
+                )
+            })?,
+        };
+        let released_round = match completion.release_completed() {
+            M1RearmedRoundReleaseOutcomeV1::Released(released) => released,
+            M1RearmedRoundReleaseOutcomeV1::Rejected(failure) => match (*failure).retry() {
+                M1RearmedRoundReleaseOutcomeV1::Released(released) => released,
+                retry => {
+                    return Err(format!(
+                        "qualification ordinal {ordinal} page release remained incomplete after retry: {retry:?}"
+                    ))
+                }
+            },
+            incomplete @ M1RearmedRoundReleaseOutcomeV1::NotCompleted(_) => {
+                return Err(format!(
+                    "qualification ordinal {ordinal} completion did not commit: {incomplete:?}"
+                ))
+            }
+        };
+        if released_round.parked_count() != 0
+            || released_round.terminal_lineage_count() != 0
+            || released_round.round_history_len() != usize::try_from(ordinal).unwrap_or(usize::MAX)
+        {
             return Err(format!(
-                "qualification queue recycle entered terminal quarantine: {error:?}"
+                "qualification ordinal {ordinal} release history or lineage drifted"
             ));
         }
-    };
-    let device_id = recycled.custody().device().device_id();
+        let current = released_round.current_released();
+        validate_round_counts(
+            ordinal,
+            current.logical_accepted_counts(),
+            current.externally_published_counts(),
+            requests.len(),
+            false,
+        )?;
+        history.observe(
+            ordinal,
+            current.checked(),
+            &requests,
+            QualificationRoundReceiptV1 {
+                logical_accepted: current.logical_accepted_counts(),
+                externally_published: current.externally_published_counts(),
+                release_counts: current.release_counts(),
+                device_id,
+            },
+        )?;
+        released = QualificationReleasedRoundV1::Rearmed(Box::new(released_round));
+    }
+
+    let terminal_ordinal = M1_QUALIFICATION_FINAL_INPUT_TOKEN;
+    for request in &requests {
+        engine
+            .append_tentative(*request, 1)
+            .map_err(|error| format!("cannot enqueue terminal qualification ordinal: {error:?}"))?;
+    }
+    let scheduled = schedule_qualification_round(released, &mut engine, terminal_ordinal)?;
+    validate_scheduled_roster(scheduled.scheduled_dispatch(), &requests, terminal_ordinal)?;
+    if scheduled.selected_requests().ne(requests.iter().copied())
+        || scheduled.parked_count() != 0
+        || scheduled.terminal_count() != 0
+        || scheduled.round_history_len() != M1_QUALIFICATION_CONTEXT_PLAN_STEPS - 2
+    {
+        return Err("terminal qualification scheduler lineage drifted".to_owned());
+    }
+    let plans = bind_qualification_step_plans(
+        runner,
+        scheduled.scheduled_dispatch(),
+        selection,
+        &requests,
+        terminal_ordinal,
+    )?;
+    let inputs = qualification_step_inputs(workload, &plans, &input_tokens, terminal_ordinal)?;
+    let terminal_contexts =
+        qualification_contexts(validated_context_plan, requests.len(), terminal_ordinal)?;
+    let reserved = reserve_m1_long_lived_queue_rearm_kv_v1(
+        &mut engine,
+        scheduled,
+        M1LongLivedQueueRearmKvInputsV1::qualification_target_only(
+            inputs,
+            terminal_contexts.clone(),
+        ),
+    )
+    .map_err(|failure| {
+        format!(
+            "terminal qualification KV reservation retained custody at {:?}",
+            failure.phase()
+        )
+    })?;
+    let prepared = prepare_m1_long_lived_queue_rearm_v1(
+        &mut engine,
+        reserved,
+        runner.logical_runner(),
+        M1FullStepWorkspacePlans::target_only(workload_workspace_plan(
+            selection,
+            workspace_identity,
+        )?),
+    )
+    .map_err(|failure| {
+        format!(
+            "terminal qualification workspace preparation retained custody: {:?}",
+            failure.source()
+        )
+    })?;
+    let published = runner
+        .submit_rearm(
+            &mut engine,
+            prepared,
+            derive_qualification_recipe(runner, selection, workspace_identity)?,
+        )
+        .map_err(|failure| {
+            format!("terminal qualification submission retained custody: {failure:?}")
+        })?;
+    let completed = published
+        .wait(&mut engine, workload.max_polls)
+        .map_err(|failure| {
+            format!(
+                "terminal qualification wait retained custody at {:?}",
+                failure.phase()
+            )
+        })?;
+    let recycled = completed.recycle(&mut engine).map_err(|failure| {
+        format!(
+            "terminal qualification recycle retained custody at {:?}",
+            failure.phase()
+        )
+    })?;
     let observed = match recycled.observe_qualification_completion() {
         Ok(observed) => observed,
-        Err(failure) => return Err(release_qualification_failure(*failure)),
+        Err(failure) => match (*failure).retry() {
+            Ok(observed) => observed,
+            Err(failure) => {
+                let diagnostic = format!("{:?}", failure.source().error());
+                let teardown = (*failure).destroy_queue_and_retain_custody(&mut engine);
+                return Err(format!(
+                    "terminal qualification observation rejected after retry: {diagnostic}; {}",
+                    release_result("terminal observation teardown", teardown)
+                ));
+            }
+        },
     };
-    let output = match copy_capture_candidate(&observed, device_id, workload.lanes.len()) {
-        Ok(output) => output,
-        Err(error) => return Err(release_observed_after_error(observed, error)),
+    if observed.selected_requests().ne(requests.iter().copied()) || observed.parked_count() != 0 {
+        return Err("terminal qualification observation roster drifted".to_owned());
+    }
+    let qualified = match observed.check_final_completion(&terminal_contexts) {
+        Ok(qualified) => qualified,
+        Err(failure) => {
+            let diagnostic = format!("{}", failure.error());
+            let teardown = failure.destroy_queue_and_retain_custody(&mut engine);
+            return Err(format!(
+                "terminal qualification semantic join rejected: {diagnostic}; {}",
+                release_result("terminal semantic teardown", teardown)
+            ));
+        }
     };
+    validate_checked_terminal_counts(qualified.checked(), requests.len())?;
+    let retiring = qualified.selected_requests().collect::<Vec<_>>();
+    if retiring != requests {
+        return Err("terminal qualification retirement roster drifted".to_owned());
+    }
+    for request in &retiring {
+        engine
+            .retire(*request)
+            .map_err(|error| format!("cannot retire terminal request: {error:?}"))?;
+    }
+    let completion = match qualified.complete_retiring(&mut engine) {
+        Ok(completion) => completion,
+        Err(failure) => (*failure).retry(&mut engine).map_err(|failure| {
+            format!(
+                "terminal qualification completion preflight retained custody: {:?}",
+                failure.error()
+            )
+        })?,
+    };
+    let released = match completion.release_completed() {
+        M1RearmedQualifiedRoundReleaseOutcomeV1::Released(released) => released,
+        M1RearmedQualifiedRoundReleaseOutcomeV1::Rejected(failure) => match (*failure).retry() {
+            M1RearmedQualifiedRoundReleaseOutcomeV1::Released(released) => released,
+            retry => {
+                return Err(format!(
+                    "terminal qualification page release remained incomplete after retry: {retry:?}"
+                ))
+            }
+        },
+        incomplete @ M1RearmedQualifiedRoundReleaseOutcomeV1::NotCompleted(_) => {
+            return Err(format!(
+                "terminal qualification completion did not commit: {incomplete:?}"
+            ))
+        }
+    };
+    let teardown = released
+        .destroy_queue_and_retain_round()
+        .map_err(|failure| format!("terminal qualification queue teardown failed: {failure:?}"))?;
+    if teardown.round_history_len() != M1_QUALIFICATION_CONTEXT_PLAN_STEPS - 1
+        || teardown.teardown().parked_count() != 0
+        || teardown.teardown().terminal_count() != 0
+        || teardown.teardown().released().members().len() != requests.len()
+        || teardown
+            .teardown()
+            .released()
+            .members()
+            .iter()
+            .any(|member| matches!(member, ferric_engine::M1ReleasedDeviceKvMemberV1::Active(_)))
+    {
+        return Err("terminal qualification teardown custody drifted".to_owned());
+    }
+    validate_round_counts(
+        terminal_ordinal,
+        teardown.teardown().released().logical_accepted_counts(),
+        teardown.teardown().released().externally_published_counts(),
+        requests.len(),
+        true,
+    )?;
+    history.observe(
+        terminal_ordinal,
+        teardown.teardown().released().checked(),
+        &requests,
+        QualificationRoundReceiptV1 {
+            logical_accepted: teardown.teardown().released().logical_accepted_counts(),
+            externally_published: teardown.teardown().released().externally_published_counts(),
+            release_counts: teardown.teardown().released().release_counts(),
+            device_id,
+        },
+    )?;
+    let copied = copy_capture_candidate(
+        teardown.teardown().released().checked(),
+        teardown.evidence(),
+        requests.len(),
+    )?;
+    let (
+        round_history_sha256,
+        round_count,
+        first_epoch,
+        first_dispatch_generation,
+        terminal_epoch,
+        terminal_dispatch_generation,
+    ) = history.finish()?;
+    Ok(CapturedOutput {
+        compact_sha256: copied.compact_sha256,
+        device_id,
+        execution: CapturedExecutionV1::C8192 {
+            execution_binding: binding.declaration,
+            first_dispatch_generation,
+            first_epoch,
+            qualification_plan_id: context_plan.plan_id,
+            round_count,
+            round_history_sha256,
+            terminal_dispatch_generation,
+            terminal_epoch,
+        },
+        logits: copied.logits,
+        logits_row_sha256: copied.logits_row_sha256,
+        tokens: copied.tokens,
+    })
+}
+
+fn consume_first_completion_outcome(
+    engine: &mut Engine<32>,
+    outcome: M1PhysicalRunnerFirstCompletionOutcomeV1,
+) -> CaptureResult<ferric_engine::M1ReleasedCompletedStepV1> {
+    let completed = match outcome {
+        M1PhysicalRunnerFirstCompletionOutcomeV1::Released(released) => return Ok(released),
+        M1PhysicalRunnerFirstCompletionOutcomeV1::CompletionNotCommitted(
+            M1CompletedStepOutcomeV1::Completed(completed),
+        ) => completed,
+        M1PhysicalRunnerFirstCompletionOutcomeV1::CompletionNotCommitted(
+            M1CompletedStepOutcomeV1::Rejected(rejected),
+        ) => {
+            let first_error = rejected.error();
+            let (_error, readback, roster) = rejected.into_parts();
+            match complete_m1_physical_step_v1(engine, readback, roster) {
+                M1CompletedStepOutcomeV1::Completed(completed) => completed,
+                M1CompletedStepOutcomeV1::Rejected(rejected) => {
+                    let retry_error = rejected.error();
+                    return Err(teardown_rejected_first_completion(
+                        rejected,
+                        format!(
+                            "ordinal-zero completion preflight rejected after consuming retry; first={first_error:?}; retry={retry_error:?}"
+                        ),
+                    ));
+                }
+                M1CompletedStepOutcomeV1::Poisoned(poisoned) => {
+                    return Err(format!(
+                        "ordinal-zero completion retry entered terminal poison with retained custody: {:?}",
+                        poisoned.error()
+                    ));
+                }
+            }
+        }
+        M1PhysicalRunnerFirstCompletionOutcomeV1::CompletionNotCommitted(
+            M1CompletedStepOutcomeV1::Poisoned(poisoned),
+        ) => {
+            return Err(format!(
+                "ordinal-zero completion entered terminal poison with retained custody: {:?}",
+                poisoned.error()
+            ));
+        }
+        M1PhysicalRunnerFirstCompletionOutcomeV1::PageReleaseRejected(failure) => {
+            let first_error = format!("{:?}", failure.error());
+            let (_error, completed) = (*failure).into_parts();
+            return release_first_completed_step(completed, Some(first_error));
+        }
+        M1PhysicalRunnerFirstCompletionOutcomeV1::ObservationRejected { failure, roster } => {
+            let roster = first_completion_roster(&roster);
+            let (error, custody) = (*failure).into_parts();
+            let release = match custody {
+                ferric_engine::M1CompletionObservationFailureCustodyV1::Recycled(queue) => {
+                    queue.destroy_and_release()
+                }
+                ferric_engine::M1CompletionObservationFailureCustodyV1::Rejected(output) => {
+                    output.destroy_and_release()
+                }
+            };
+            return Err(format!(
+                "ordinal-zero completion observation rejected: {error:?}; roster={roster}; {}",
+                release_result("ordinal-zero observation queue", release)
+            ));
+        }
+        M1PhysicalRunnerFirstCompletionOutcomeV1::ReadbackRejected { failure, roster } => {
+            let roster = first_completion_roster(&roster);
+            let (error, observed) = (*failure).into_parts();
+            let release = observed.destroy_and_release();
+            return Err(format!(
+                "ordinal-zero completion semantic join rejected: {error}; roster={roster}; {}",
+                release_result("ordinal-zero observed queue", release)
+            ));
+        }
+        M1PhysicalRunnerFirstCompletionOutcomeV1::QueueQuarantined {
+            stage,
+            failure,
+            roster,
+        } => {
+            return Err(format!(
+                "ordinal-zero queue entered terminal quarantine at {stage:?}: {failure:?}; roster={}",
+                first_completion_roster(&roster)
+            ));
+        }
+    };
+    release_first_completed_step(completed, None)
+}
+
+fn release_first_completed_step(
+    completed: ferric_engine::M1CompletedStepSuccessV1,
+    prior_error: Option<String>,
+) -> CaptureResult<ferric_engine::M1ReleasedCompletedStepV1> {
+    match release_m1_completed_step_kv_pages_v1(completed) {
+        Ok(released) => Ok(released),
+        Err(failure) => {
+            let retry_error = format!("{:?}", failure.error());
+            let (_error, completed) = (*failure).into_parts();
+            match release_m1_completed_step_kv_pages_v1(completed) {
+                Ok(released) => Ok(released),
+                Err(failure) => {
+                    let final_error = format!("{:?}", failure.error());
+                    let (_error, completed) = (*failure).into_parts();
+                    let (queue, checked, members, logical, external) = completed.into_parts();
+                    let release = queue.destroy_and_release();
+                    drop((checked, members, logical, external));
+                    Err(format!(
+                        "ordinal-zero page release rejected after consuming retry; prior={}; first={retry_error}; retry={final_error}; {}",
+                        prior_error.as_deref().unwrap_or("none"),
+                        release_result("ordinal-zero page-release queue", release)
+                    ))
+                }
+            }
+        }
+    }
+}
+
+fn teardown_rejected_first_completion(
+    rejected: ferric_engine::M1CompletedStepRejectionV1,
+    diagnostic: String,
+) -> String {
+    let (_error, readback, roster) = rejected.into_parts();
+    let roster = first_completion_roster(&roster);
+    let (queue, checked, completion, reservations) = readback.into_parts();
+    let release = queue.destroy_and_release();
+    drop((checked, completion, reservations));
+    format!(
+        "{diagnostic}; roster={roster}; {}",
+        release_result("ordinal-zero rejected queue", release)
+    )
+}
+
+fn first_completion_roster(roster: &M1DeviceKvCompletionRosterV1) -> String {
+    format!(
+        "{:?}",
+        roster
+            .members()
+            .iter()
+            .map(|member| (member.request(), member.disposition()))
+            .collect::<Vec<_>>()
+    )
+}
+
+fn execute_prefill_capture(
+    runner: &ferric_engine::M1PhysicalRunnerV1,
+    mut memory: ferric_engine::M1PartitionedModelMemoryKvPoolV1,
+    workload: &Workload,
+    input_tokens: Vec<u32>,
+    _gpu_unique_id: u64,
+) -> CaptureResult<CapturedOutput> {
+    let selection = workload.selection;
+    if selection.role != Qwen3ModelRole::Target8B || selection.mode != Qwen3ExecutionMode::Prefill {
+        return Err("one-shot qualification capture accepts target prefill only".to_owned());
+    }
+    let dimensions = selection
+        .bucket
+        .dimensions(selection.role, selection.mode)
+        .ok_or_else(|| "prefill workload selection has no admitted dimensions".to_owned())?;
+    let draft_selection = Qwen3PlanSelection {
+        role: Qwen3ModelRole::Draft06B,
+        mode: selection.mode,
+        bucket: selection.bucket,
+    };
+    let mut engine = Engine::<32>::new(512, 256, 8_192)
+        .map_err(|error| format!("cannot construct M1 engine: {error:?}"))?;
+    let mut requests = Vec::with_capacity(workload.lanes.len());
+    for lane in &workload.lanes {
+        let request = engine
+            .admit()
+            .map_err(|error| format!("cannot admit prefill lane: {error:?}"))?;
+        engine
+            .append_tentative(request, lane.active_length)
+            .map_err(|error| format!("cannot make prefill lane schedulable: {error:?}"))?;
+        requests.push(request);
+    }
+    let scheduled = engine
+        .dispatch_m1_ready()
+        .map_err(|error| format!("cannot schedule prefill workload: {error:?}"))?
+        .ok_or_else(|| "prefill workload produced no schedulable batch".to_owned())?;
+    validate_scheduled_roster(&scheduled, &requests, 0)?;
+    let plans = bind_qualification_step_plans(runner, &scheduled, selection, &requests, 0)?;
+    let inputs = validated_inputs(workload, &plans, input_tokens, dimensions.active_tokens)?;
+    let active_lengths = inputs.active_lengths().to_vec();
+    let context_lengths = inputs.context_lengths().to_vec();
+    let mut caches = Vec::with_capacity(requests.len());
+    let mut reservations = Vec::with_capacity(requests.len());
+    for (lane, request) in requests.iter().copied().enumerate() {
+        let mut cache =
+            ActiveDeviceKvCache::new(memory.device(), request, selection, draft_selection)
+                .map_err(|error| format!("cannot create prefill lane {lane} cache: {error:?}"))?;
+        let pages = qualification_kv_page_count(context_lengths[lane], active_lengths[lane])
+            .map_err(|error| format!("prefill lane {lane} {error}"))?;
+        let mut leases = Vec::with_capacity(pages as usize);
+        for page in 0..pages {
+            leases.push(
+                memory
+                    .lease_page(request, Qwen3ModelRole::Target8B, page)
+                    .map_err(|error| {
+                        format!("cannot lease prefill lane {lane} page {page}: {error:?}")
+                    })?,
+            );
+        }
+        reservations.push(
+            cache
+                .reserve_step_write(
+                    request,
+                    Qwen3ModelRole::Target8B,
+                    context_lengths[lane],
+                    active_lengths[lane],
+                    scheduled.epoch(),
+                    leases,
+                )
+                .map_err(|error| {
+                    format!("cannot reserve prefill lane {lane} KV write: {error:?}")
+                })?,
+        );
+        caches.push(cache);
+    }
+    let table = bind_m1_kv_workspace_table_v1(inputs, reservations)
+        .map_err(|error| format!("cannot bind prefill target KV workspace: {error:?}"))?;
+    let workspace_identity = sha256_array(&workload.bytes);
+    let prepared = runner
+        .prepare_scheduled_workspaces(
+            scheduled,
+            M1FullStepWorkspacePlans::target_only(workload_workspace_plan(
+                selection,
+                workspace_identity,
+            )?),
+            M1FullStepKvWorkspaceTablesV1::TargetOnly { target: table },
+        )
+        .map_err(|error| format!("cannot prepare prefill workspace: {error:?}"))?;
+    let completion = memory
+        .allocate_completion_output(selection)
+        .map_err(|error| format!("cannot allocate prefill compact completion: {error}"))?;
+    let completion = memory
+        .enable_qualification_logits_capture(completion)
+        .map_err(|error| format!("cannot enable prefill qualification logits: {error:?}"))?;
+    let allocated = runner
+        .allocate_scheduled_workspaces(memory, prepared)
+        .map_err(|error| format!("cannot allocate prefill workspaces: {error:?}"))?;
+    let recipe = derive_qualification_recipe(runner, selection, workspace_identity)?;
+    let published = runner
+        .publish_first_step(&mut engine, 1 << 20, allocated, recipe, completion)
+        .map_err(|error| format!("cannot publish prefill qualification step: {error:?}"))?;
+    let completed = published.wait(workload.max_polls).map_err(|error| {
+        format!("prefill qualification wait entered terminal quarantine: {error:?}")
+    })?;
+    let recycled = completed.recycle().map_err(|error| {
+        format!("prefill qualification recycle entered terminal quarantine: {error:?}")
+    })?;
+    let device_id = recycled.custody().device().device_id();
+    let observed = recycled
+        .observe_qualification_completion()
+        .map_err(|failure| release_qualification_failure(*failure))?;
     for request in &requests {
         if let Err(error) = engine.retire(*request) {
             return Err(release_observed_after_error(
                 observed,
-                format!("cannot retire captured request before completion: {error:?}"),
+                format!("cannot retire prefill request before completion: {error:?}"),
             ));
         }
     }
@@ -794,12 +1943,11 @@ fn execute_capture(
             let (error, observed) = failure.into_parts();
             return Err(release_observed_after_error(
                 observed,
-                format!("qualification semantic completion join failed: {error}"),
+                format!("prefill qualification semantic join failed: {error}"),
             ));
         }
     };
     let (completed, evidence) = qualified.into_parts();
-    drop(evidence);
     let roster = M1DeviceKvCompletionRosterV1::new(
         caches
             .into_iter()
@@ -814,67 +1962,86 @@ fn execute_capture(
             let release = queue.destroy_and_release();
             drop((checked, completion, reservations, roster));
             return Err(format!(
-                "qualification completion was rejected: {error:?}; {}",
-                release_result("rejected completion queue", release)
+                "prefill qualification completion rejected: {error:?}; {}",
+                release_result("rejected prefill queue", release)
             ));
         }
         M1CompletedStepOutcomeV1::Poisoned(poisoned) => {
             return Err(format!(
-                "qualification completion entered terminal quarantine: {:?}",
+                "prefill qualification completion entered terminal quarantine: {:?}",
                 poisoned.error()
             ));
         }
     };
-    let released = match release_m1_completed_step_kv_pages_v1(completed) {
-        Ok(released) => released,
-        Err(failure) => {
-            let (error, completed) = (*failure).into_parts();
-            let (queue, checked, members, logical_accepted_counts, externally_published_counts) =
-                completed.into_parts();
-            let release = queue.destroy_and_release();
-            drop((
-                checked,
-                members,
-                logical_accepted_counts,
-                externally_published_counts,
-            ));
-            return Err(format!(
-                "qualification KV page release failed: {error:?}; {}",
-                release_result("page-release queue", release)
-            ));
-        }
-    };
+    let released = release_m1_completed_step_kv_pages_v1(completed).map_err(|failure| {
+        format!(
+            "prefill qualification KV page release failed with retained custody: {:?}",
+            failure.error()
+        )
+    })?;
     let teardown = released
         .destroy_queue_and_retain_step()
-        .map_err(|failure| format!("qualification final queue teardown failed: {failure:?}"))?;
-    if teardown.members().len() != workload.lanes.len()
+        .map_err(|failure| format!("prefill final queue teardown failed: {failure:?}"))?;
+    if teardown.logical_accepted_counts().len() != requests.len()
+        || teardown.externally_published_counts().len() != requests.len()
+        || teardown
+            .logical_accepted_counts()
+            .iter()
+            .any(|count| *count != 1)
+        || teardown
+            .externally_published_counts()
+            .iter()
+            .any(|count| *count != 1)
+    {
+        return Err("prefill qualification completion counts drifted".to_owned());
+    }
+    if teardown.members().len() != requests.len()
         || teardown
             .members()
             .iter()
             .any(|member| matches!(member, ferric_engine::M1ReleasedDeviceKvMemberV1::Active(_)))
     {
-        return Err("qualification teardown retained a nonterminal KV member".to_owned());
+        return Err("prefill teardown retained a nonterminal KV member".to_owned());
     }
-    Ok(output)
+    let copied = copy_capture_candidate(teardown.checked(), &evidence, workload.lanes.len())?;
+    let epoch = teardown.checked().epoch().value();
+    let dispatch_generation = teardown.checked().dispatch_generation();
+    Ok(CapturedOutput {
+        compact_sha256: copied.compact_sha256,
+        device_id,
+        execution: CapturedExecutionV1::OneShotPrefill {
+            dispatch_generation,
+            epoch,
+        },
+        logits: copied.logits,
+        logits_row_sha256: copied.logits_row_sha256,
+        tokens: copied.tokens,
+    })
+}
+
+#[derive(Debug)]
+struct CopiedCaptureCandidateV1 {
+    compact_sha256: [u8; 32],
+    logits: Vec<u8>,
+    logits_row_sha256: Vec<[u8; 32]>,
+    tokens: Vec<u8>,
 }
 
 fn copy_capture_candidate(
-    observed: &M1ObservedQualificationOutputV1,
-    device_id: Identity,
+    checked: &ferric_engine::M1CheckedCompletionOutputV1,
+    evidence: &M1QualificationCompletionEvidenceV1,
     expected_lanes: usize,
-) -> CaptureResult<CapturedOutput> {
-    let compact = observed.compact();
-    let records = compact.records();
+) -> CaptureResult<CopiedCaptureCandidateV1> {
+    let records = checked.records();
     if records.len() != expected_lanes {
         return Err("compact live record count differs from workload lanes".to_owned());
     }
-    let evidence = observed.evidence();
     if evidence.logits().rows().len() != records.len() {
         return Err("captured logits row count differs from compact records".to_owned());
     }
     let mut tokens = Vec::with_capacity(records.len() * 4);
     for (lane, record) in records.iter().enumerate() {
-        if record.record().emitted_token_count != 1 || record.accepted_draft_tokens() != 0 {
+        if record.record().emitted_token_count != 1 || record.record().accepted_draft_tokens != 0 {
             return Err(format!(
                 "lane {lane} compact target-only record is not exactly one emitted token"
             ));
@@ -895,20 +2062,29 @@ fn copy_capture_candidate(
         if row.lane() != lane || row.raw_bytes().len() != row_bytes {
             return Err(format!("captured logits row {lane} geometry drifted"));
         }
-        let choice = lowest_id_finite_bf16_argmax(row.raw_bytes(), lane)?;
+        let compact_choice = records[lane].record().emitted_tokens[0];
+        let choice = checked_bf16_row_choice(row.raw_bytes(), lane, compact_choice)?;
         tokens.extend_from_slice(&choice.to_le_bytes());
         logits.extend_from_slice(row.raw_bytes());
         logits_row_sha256.push(*row.raw_sha256());
     }
-    let output = CapturedOutput {
+    let output = CopiedCaptureCandidateV1 {
         compact_sha256: *evidence.compact_raw_sha256(),
-        device_id,
-        dispatch_generation: compact.dispatch_generation(),
         logits,
         logits_row_sha256,
         tokens,
     };
     Ok(output)
+}
+
+fn checked_bf16_row_choice(bytes: &[u8], lane: usize, compact_choice: u32) -> CaptureResult<u32> {
+    let choice = lowest_id_finite_bf16_argmax(bytes, lane)?;
+    if choice != compact_choice {
+        return Err(format!(
+            "captured logits row {lane} argmax differs from checked compact choice"
+        ));
+    }
+    Ok(choice)
 }
 
 fn lowest_id_finite_bf16_argmax(bytes: &[u8], lane: usize) -> CaptureResult<u32> {
@@ -978,10 +2154,12 @@ fn release_result<T, E: core::fmt::Debug>(description: &str, result: Result<T, E
 }
 
 fn require_supported_capture(workload: &Workload) -> CaptureResult<()> {
-    if workload.selection.mode == Qwen3ExecutionMode::Decode {
-        Err(DECODE_PRIMING_UNAVAILABLE.to_owned())
-    } else {
-        Ok(())
+    match workload.selection.mode {
+        Qwen3ExecutionMode::Prefill => Ok(()),
+        Qwen3ExecutionMode::Decode => qualification_grouping(workload.selection).map(|_| ()),
+        Qwen3ExecutionMode::Speculative => {
+            Err("qualification capture does not admit speculative selections".to_owned())
+        }
     }
 }
 
@@ -1729,14 +2907,71 @@ fn capture_transcript(
         .iter()
         .map(|digest| hex_bytes(digest))
         .collect::<Vec<_>>();
+    let (dispatch_generation, execution) = match &capture.execution {
+        CapturedExecutionV1::OneShotPrefill {
+            dispatch_generation,
+            epoch,
+        } => (
+            *dispatch_generation,
+            json!({
+                "dispatch_generation": dispatch_generation,
+                "epoch": epoch,
+                "mode": "one-shot-prefill",
+                "round_count": 1,
+            }),
+        ),
+        CapturedExecutionV1::C8192 {
+            execution_binding,
+            first_dispatch_generation,
+            first_epoch,
+            qualification_plan_id,
+            round_count,
+            round_history_sha256,
+            terminal_dispatch_generation,
+            terminal_epoch,
+        } => {
+            let ordered_lanes = execution_binding
+                .ordered_lanes
+                .iter()
+                .map(|lane| {
+                    json!({
+                        "lane_identity_sha256": hex_identity(lane.lane_identity),
+                        "lane_ordinal": lane.lane_ordinal,
+                        "token_sequence_identity_sha256": hex_identity(lane.token_sequence_identity),
+                    })
+                })
+                .collect::<Vec<_>>();
+            (
+                *terminal_dispatch_generation,
+                json!({
+                    "context_plan_sha256": hex_identity(*qualification_plan_id),
+                    "declared_workload_binding_sha256": hex_identity(execution_binding.declared_workload_digest),
+                    "first_dispatch_generation": first_dispatch_generation,
+                    "first_epoch": first_epoch,
+                    "mode": "teacher-forced-c8192",
+                    "ordered_lane_bindings": ordered_lanes,
+                    "round_count": round_count,
+                    "round_history_sha256": hex_bytes(round_history_sha256),
+                    "terminal_dispatch_generation": terminal_dispatch_generation,
+                    "terminal_epoch": terminal_epoch,
+                    "terminal_ordinal": M1_QUALIFICATION_FINAL_INPUT_TOKEN,
+                }),
+            )
+        }
+    };
     canonical_bytes(&json!({
         "authority": "observed-target-only-qualification-capture",
+        "benchmark_executable_sha256": plan.identity("benchmark-executable")?,
+        "benchmark_protocol_sha256": plan.identity("benchmark-protocol")?,
         "case_id": case.id,
         "compact_sha256": hex_bytes(&capture.compact_sha256),
         "device_identity_sha256": hex_identity(capture.device_id),
-        "dispatch_generation": capture.dispatch_generation,
+        "dispatch_generation": dispatch_generation,
+        "environment_sha256": plan.identity("environment")?,
+        "execution": execution,
         "format": TRANSCRIPT_FORMAT,
         "gpu_unique_id": identities.gpu_unique_id,
+        "input_sha256": case.input_sha256,
         "kernel_artifact_manifest_sha256": hex_identity(identities.kernel_manifest),
         "kind": workload.kind,
         "logits_row_sha256": row_hashes,
@@ -2210,6 +3445,8 @@ mod tests {
         row[4 * 2..4 * 2 + 2].copy_from_slice(&maximum);
         row[7 * 2..7 * 2 + 2].copy_from_slice(&maximum);
         assert_eq!(lowest_id_finite_bf16_argmax(&row, 0).unwrap(), 4);
+        assert_eq!(checked_bf16_row_choice(&row, 0, 4).unwrap(), 4);
+        assert!(checked_bf16_row_choice(&row, 0, 7).is_err());
 
         row[4 * 2..4 * 2 + 2].copy_from_slice(&0x8000_u16.to_le_bytes());
         row[7 * 2..7 * 2 + 2].copy_from_slice(&0_u16.to_le_bytes());
@@ -2217,6 +3454,22 @@ mod tests {
 
         row[9 * 2..9 * 2 + 2].copy_from_slice(&0x7fc0_u16.to_le_bytes());
         assert!(lowest_id_finite_bf16_argmax(&row, 0).is_err());
+    }
+
+    #[test]
+    fn qualification_engine_capacity_covers_every_lane_full_context() {
+        assert_eq!(
+            qualification_engine_page_capacity(M1QualificationLaneGrouping::S1).unwrap(),
+            32
+        );
+        assert_eq!(
+            qualification_engine_page_capacity(M1QualificationLaneGrouping::S8).unwrap(),
+            256
+        );
+        assert_eq!(
+            qualification_engine_page_capacity(M1QualificationLaneGrouping::S32).unwrap(),
+            1_024
+        );
     }
 
     #[test]
@@ -2379,7 +3632,7 @@ mod tests {
     }
 
     #[test]
-    fn decode_final_step_uses_token_after_authenticated_context() {
+    fn decode_steps_use_exact_lane_major_prompt_ordinals() {
         let selection = kind_selection("decode-s1-c8192").unwrap();
         let workload = Workload {
             bytes: canonical(workload_value("decode-s1-c8192", "decode.001", 1)),
@@ -2401,13 +3654,225 @@ mod tests {
             selection,
         );
         let mut tokens = vec![3; 8_192];
+        tokens[0] = 11;
         tokens[8_191] = 17;
-        let inputs = validated_inputs(&workload, &[plan], tokens, 1).unwrap();
-        assert_eq!(inputs.token_ids(), &[17]);
-        assert_eq!(inputs.position_ids(), &[DECODE_CONTEXT_LENGTH]);
+        let initial = qualification_step_inputs(&workload, &[plan], &tokens, 0).unwrap();
+        assert_eq!(initial.token_ids(), &[11]);
+        assert_eq!(initial.position_ids(), &[0]);
+        assert_eq!(initial.context_lengths(), &[0]);
+        let terminal =
+            qualification_step_inputs(&workload, &[plan], &tokens, DECODE_CONTEXT_LENGTH).unwrap();
+        assert_eq!(terminal.token_ids(), &[17]);
+        assert_eq!(terminal.position_ids(), &[DECODE_CONTEXT_LENGTH]);
+        assert_eq!(terminal.context_lengths(), &[DECODE_CONTEXT_LENGTH]);
+        assert_eq!(require_supported_capture(&workload), Ok(()));
+    }
+
+    #[test]
+    fn qualification_binding_authenticates_workload_selection_lane_order_and_tokens() {
+        let selection = kind_selection("decode-s8-c8192").unwrap();
+        let mut workload = Workload {
+            bytes: canonical(workload_value("decode-s8-c8192", "decode.008", 8)),
+            input_path: PathBuf::from("tokens.u32le"),
+            input_bytes: 8 * 8_192 * 4,
+            input_sha256: digest("tokens"),
+            kind: "decode-s8-c8192".to_owned(),
+            lanes: vec![
+                LaneInput {
+                    active_length: 1,
+                    context_length: DECODE_CONTEXT_LENGTH,
+                };
+                8
+            ],
+            max_polls: 1,
+            selection,
+        };
+        let mut tokens = (0..8 * 8_192)
+            .map(|index| u32::try_from(index).unwrap() % QWEN3_VOCABULARY_SIZE)
+            .collect::<Vec<_>>();
+        let original = qualification_execution_binding(&workload, &tokens).unwrap();
+        let repeated = qualification_execution_binding(&workload, &tokens).unwrap();
+        assert_eq!(original.grouping, M1QualificationLaneGrouping::S8);
+        assert_eq!(original.declaration, repeated.declaration);
+        assert_eq!(original.declaration.ordered_lanes.len(), 8);
+
+        tokens[8_192 + 17] ^= 1;
+        let token_mutation = qualification_execution_binding(&workload, &tokens).unwrap();
+        assert_ne!(
+            original.declaration.ordered_lanes[1].token_sequence_identity,
+            token_mutation.declaration.ordered_lanes[1].token_sequence_identity
+        );
         assert_eq!(
-            require_supported_capture(&workload),
-            Err(DECODE_PRIMING_UNAVAILABLE.to_owned())
+            original.declaration.ordered_lanes[0].token_sequence_identity,
+            token_mutation.declaration.ordered_lanes[0].token_sequence_identity
+        );
+
+        workload.bytes.push(b' ');
+        let workload_mutation = qualification_execution_binding(&workload, &tokens).unwrap();
+        assert_ne!(
+            original.declaration.declared_workload_digest,
+            workload_mutation.declaration.declared_workload_digest
+        );
+        assert_ne!(
+            original.declaration.ordered_lanes[0].lane_identity,
+            workload_mutation.declaration.ordered_lanes[0].lane_identity
+        );
+    }
+
+    #[test]
+    fn qualification_lane_major_input_rejects_truncation_trailing_and_reorder() {
+        let selection = kind_selection("decode-s8-c8192").unwrap();
+        let workload = Workload {
+            bytes: canonical(workload_value("decode-s8-c8192", "decode.008", 8)),
+            input_path: PathBuf::from("tokens.u32le"),
+            input_bytes: 8 * 8_192 * 4,
+            input_sha256: digest("tokens"),
+            kind: "decode-s8-c8192".to_owned(),
+            lanes: vec![
+                LaneInput {
+                    active_length: 1,
+                    context_length: DECODE_CONTEXT_LENGTH,
+                };
+                8
+            ],
+            max_polls: 1,
+            selection,
+        };
+        let requests = (0..8)
+            .map(|slot| RequestId::new(slot, 1))
+            .collect::<Vec<_>>();
+        let plans = requests
+            .iter()
+            .map(|request| {
+                StepPlan::new(
+                    *request,
+                    ferric_spec::completion::CompletionEpoch::new(1),
+                    Identity::new([7; 32]),
+                    selection,
+                )
+            })
+            .collect::<Vec<_>>();
+        let mut tokens = vec![0; 8 * 8_192];
+        for lane in 0..8 {
+            tokens[lane * 8_192 + 41] = u32::try_from(lane + 101).unwrap();
+        }
+        let inputs = qualification_step_inputs(&workload, &plans, &tokens, 41).unwrap();
+        assert_eq!(
+            inputs.token_ids(),
+            &[101, 102, 103, 104, 105, 106, 107, 108]
+        );
+        assert!(
+            qualification_step_inputs(&workload, &plans, &tokens[..tokens.len() - 1], 41).is_err()
+        );
+        tokens.push(9);
+        assert!(qualification_step_inputs(&workload, &plans, &tokens, 41).is_err());
+
+        let mut engine = Engine::<8>::new(16, 8, 128).unwrap();
+        let mut live = Vec::new();
+        for _ in 0..8 {
+            let request = engine.admit().unwrap();
+            engine.append_tentative(request, 1).unwrap();
+            live.push(request);
+        }
+        let scheduled = engine.dispatch_m1_ready().unwrap().unwrap();
+        let mut hostile = live.clone();
+        hostile.swap(0, 1);
+        assert!(validate_scheduled_roster(&scheduled, &hostile, 41).is_err());
+    }
+
+    #[test]
+    fn qualification_completion_policy_is_terminal_only() {
+        assert_eq!(validate_round_counts(0, &[1; 8], &[0; 8], 8, false), Ok(()));
+        assert_eq!(
+            validate_round_counts(DECODE_CONTEXT_LENGTH, &[1; 8], &[1; 8], 8, true),
+            Ok(())
+        );
+        assert!(validate_round_counts(17, &[1; 8], &[1; 8], 8, false).is_err());
+        assert!(validate_round_counts(DECODE_CONTEXT_LENGTH, &[1; 8], &[0; 8], 8, true).is_err());
+    }
+
+    #[test]
+    fn c8192_transcript_binds_exact_plan_lanes_and_round_receipts() {
+        let selection = kind_selection("decode-s1-c8192").unwrap();
+        let workload = Workload {
+            bytes: canonical(workload_value("decode-s1-c8192", "decode.001", 1)),
+            input_path: PathBuf::from("tokens.u32le"),
+            input_bytes: 8_192 * 4,
+            input_sha256: digest("tokens"),
+            kind: "decode-s1-c8192".to_owned(),
+            lanes: vec![LaneInput {
+                active_length: 1,
+                context_length: DECODE_CONTEXT_LENGTH,
+            }],
+            max_polls: 1,
+            selection,
+        };
+        let binding = qualification_execution_binding(&workload, &vec![3; 8_192])
+            .unwrap()
+            .declaration;
+        let case = PlanCase {
+            id: "decode.001".to_owned(),
+            input_sha256: digest("input"),
+            kind: workload.kind.clone(),
+            workload_sha256: sha256_hex(&workload.bytes),
+        };
+        let plan = DifferentialPlan {
+            bytes: canonical(json!({"plan": "fixture"})),
+            cases: vec![case.clone()],
+            identities: BTreeMap::from([
+                ("benchmark-executable".to_owned(), digest("executable")),
+                ("benchmark-protocol".to_owned(), digest("protocol")),
+                ("environment".to_owned(), digest("environment")),
+            ]),
+        };
+        let capture = CapturedOutput {
+            compact_sha256: [7; 32],
+            device_id: Identity::new([8; 32]),
+            execution: CapturedExecutionV1::C8192 {
+                execution_binding: binding.clone(),
+                first_dispatch_generation: 11,
+                first_epoch: 17,
+                qualification_plan_id: Identity::new([9; 32]),
+                round_count: 8_192,
+                round_history_sha256: [10; 32],
+                terminal_dispatch_generation: 8_202,
+                terminal_epoch: 8_208,
+            },
+            logits: vec![0; QWEN3_VOCABULARY_SIZE as usize * 2],
+            logits_row_sha256: vec![[12; 32]],
+            tokens: 0_u32.to_le_bytes().to_vec(),
+        };
+        let transcript = capture_transcript(
+            &plan,
+            &case,
+            &workload,
+            &capture,
+            CaptureIdentities {
+                gpu_unique_id: 23,
+                runner_declaration: Identity::new([13; 32]),
+                kernel_manifest: Identity::new([14; 32]),
+                program_catalog: Identity::new([15; 32]),
+            },
+        )
+        .unwrap();
+        let value = parse_canonical(&transcript, "transcript").unwrap();
+        assert_eq!(value["format"], TRANSCRIPT_FORMAT);
+        assert_eq!(value["execution"]["mode"], "teacher-forced-c8192");
+        assert_eq!(value["execution"]["round_count"], 8_192);
+        assert_eq!(value["execution"]["terminal_ordinal"], 8_191);
+        assert_eq!(value["execution"]["first_epoch"], 17);
+        assert_eq!(value["execution"]["terminal_epoch"], 8_208);
+        assert_eq!(value["input_sha256"], case.input_sha256);
+        assert_eq!(value["benchmark_executable_sha256"], digest("executable"));
+        assert_eq!(value["benchmark_protocol_sha256"], digest("protocol"));
+        assert_eq!(value["environment_sha256"], digest("environment"));
+        assert_eq!(
+            value["execution"]["declared_workload_binding_sha256"],
+            hex_identity(binding.declared_workload_digest)
+        );
+        assert_eq!(
+            value["execution"]["ordered_lane_bindings"][0]["token_sequence_identity_sha256"],
+            hex_identity(binding.ordered_lanes[0].token_sequence_identity)
         );
     }
 
