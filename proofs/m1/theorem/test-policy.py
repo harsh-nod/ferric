@@ -31,6 +31,7 @@ def copy_fixture(repo: Path, destination: Path) -> None:
         "proofs/m1/theorem/check-registry.py",
         str(REGISTRY),
         "proofs/m1/model_bundle.rs",
+        "proofs/m1/kv_physical.rs",
         "proofs/m1/speculative_graph.rs",
         "crates/ferric-spec/src/continuous_batching.rs",
         "crates/ferric-spec/src/graph.rs",
@@ -117,8 +118,8 @@ def main() -> None:
         result = run_checker(baseline, active)
         if result.returncode != 0:
             fail(f"baseline theorem registry failed\n{result.stdout}")
-        if len(active.read_text(encoding="ascii").splitlines()) != 14:
-            fail("baseline theorem registry did not select exactly fourteen rows")
+        if len(active.read_text(encoding="ascii").splitlines()) != 15:
+            fail("baseline theorem registry did not select exactly fifteen rows")
 
         cases: list[tuple[str, str, FixtureMutation]] = [
             (
@@ -204,6 +205,19 @@ def main() -> None:
                 ),
             ),
             (
+                "lifetime-binding-drift",
+                "positive theorem binding drifted",
+                lambda fixture: mutate_registry(
+                    fixture,
+                    lambda lines: replace_field(
+                        lines,
+                        registry_row(lines, "kv-terminal-page-lifetime"),
+                        7,
+                        "m1_terminal_page_release_relation_theorem",
+                    ),
+                ),
+            ),
+            (
                 "unsafe-source",
                 "unsafe theorem source path",
                 lambda fixture: mutate_registry(
@@ -245,6 +259,11 @@ def main() -> None:
                 "missing-sampler-source",
                 "M1 theorem source is unavailable",
                 lambda fixture: (fixture / "proofs/m1/speculative_graph.rs").unlink(),
+            ),
+            (
+                "missing-lifetime-source",
+                "M1 theorem source is unavailable",
+                lambda fixture: (fixture / "proofs/m1/kv_physical.rs").unlink(),
             ),
             (
                 "missing-function-coverage",
@@ -305,6 +324,22 @@ def main() -> None:
                         .splitlines()
                         if line
                         != "verified=ferric-m1-proof|proofs/m1/speculative_graph.rs|ferric_m1_proof::speculative_graph::m1_deterministic_sampler_refinement_theorem"
+                    )
+                    + "\n",
+                    encoding="utf-8",
+                ),
+            ),
+            (
+                "missing-lifetime-function-coverage",
+                "function path is not directly verified",
+                lambda fixture: (fixture / "proofs/VERIFIED_MODULES").write_text(
+                    "\n".join(
+                        line
+                        for line in (fixture / "proofs/VERIFIED_MODULES")
+                        .read_text(encoding="utf-8")
+                        .splitlines()
+                        if line
+                        != "verified=ferric-m1-proof|proofs/m1/kv_physical.rs|ferric_m1_proof::kv_physical::m1_terminal_page_release_theorem"
                     )
                     + "\n",
                     encoding="utf-8",

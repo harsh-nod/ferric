@@ -257,7 +257,8 @@
         "fe2o3-kfd-memory-foundation",
         "fe2o3-kfd-queue-foundation",
         "fe2o3-queue",
-        "fe2o3-typed-allocation"
+        "fe2o3-typed-allocation",
+        "kv-proof"
       ],
       "required_status_at_closure": "Proved"
     },

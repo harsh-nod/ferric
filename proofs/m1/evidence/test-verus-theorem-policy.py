@@ -617,7 +617,7 @@ def main() -> None:
         fail(f"usage: {sys.argv[0]} REPO [REAL_RESULT]")
     repo = Path(sys.argv[1]).resolve(strict=True)
     active, rows = registry(repo)
-    if len(rows) != 14 or not active:
+    if len(rows) != 15 or not active:
         fail("M1 positive-theorem registry baseline drifted")
     row = rows[0]
     with tempfile.TemporaryDirectory(prefix="ferric-m1-theorem-policy.") as scratch:
@@ -641,6 +641,13 @@ def main() -> None:
         sampler_root.mkdir()
         _, sampler_context = build_run(repo, sampler_root, sampler_row, source_identity)
         expect_pass(repo, sampler_context, "canonical sampler theorem fixture")
+        lifetime_row = next(
+            selected for selected in rows if selected[0] == "kv-terminal-page-lifetime"
+        )
+        lifetime_root = root / "lifetime-baseline"
+        lifetime_root.mkdir()
+        _, lifetime_context = build_run(repo, lifetime_root, lifetime_row, source_identity)
+        expect_pass(repo, lifetime_context, "canonical lifetime theorem fixture")
 
         cases: list[tuple[str, str, FixtureMutation]] = [
             (

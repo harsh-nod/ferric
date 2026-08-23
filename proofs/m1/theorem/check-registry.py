@@ -82,6 +82,15 @@ EXPECTED = {
         "m1_foundation_theorems",
         "kv_rollback_retirement_theorem",
     ),
+    "kv-terminal-page-lifetime": (
+        "terminal-page-lifetime-release",
+        "lifetime_safe",
+        "kv-proof",
+        "ferric-m1-proof",
+        "proofs/m1/kv_physical.rs",
+        "kv_physical",
+        "m1_terminal_page_release_theorem",
+    ),
     "kv-write-prefix": (
         "logical-paged-kv",
         "kv_refined",

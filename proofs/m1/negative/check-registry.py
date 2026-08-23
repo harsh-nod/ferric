@@ -76,6 +76,13 @@ EXPECTED = {
         "paged_kv_refinement", "rollback_physical_token",
         "retired-tail-prefix",
     ),
+    "kv-terminal-release-exact-epoch": (
+        "terminal-page-lifetime-release", "lifetime_safe", "kv-proof",
+        "ferric-spec", "crates/ferric-spec/src/request_isolation.rs",
+        "kv-terminal-release-exact-epoch.py", "assertion",
+        "request_isolation", "release_isolated_page",
+        "exact-quiescent-epoch-match",
+    ),
     "kv-write-prefix": (
         "logical-paged-kv", "kv_refined", "kv-proof", "ferric-spec",
         "crates/ferric-spec/src/paged_kv_refinement.rs", "kv-write-prefix.py",

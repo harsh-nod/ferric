@@ -16,6 +16,10 @@ numerical premise, not a device-logit refinement. The paired negative registry
 remains bound to actual implementation bodies. The two
 speculative wrappers cover publication-to-KV accepted-count agreement and
 immutable-preflight failure framing under distinct Open obligations.
+The lifetime row selects the production-facing terminal page-release theorem,
+which calls the executable Ferric release body and proves only exact quiescence,
+source physical-metadata retirement, and generation-safe release. It does not
+establish device-ledger bytes, later reuse, or hardware execution.
 
 `run-same-source.sh` accepts a clean committed Ferric worktree and the exact
 pinned Verus release. It records the source commit, tree, complete M1 source

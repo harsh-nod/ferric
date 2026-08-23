@@ -15,6 +15,7 @@ closure status.
 | `isolation-other-request-frame` | `continuous_batching::apply_continuous_batch_step` | a selected step preserves every other request slot | `request_isolated` / `isolation-proof` |
 | `kv-release-generation` | `paged_kv_refinement::release_retired_page` | reuse advances the retired physical generation | `kv_refined` / `kv-proof` |
 | `kv-rollback-retirement` | `paged_kv_refinement::rollback_physical_token` | removing a one-token tentative tail retires its exact initialized prefix | `kv_refined` / `kv-proof` |
+| `kv-terminal-release-exact-epoch` | `request_isolation::release_isolated_page` | the selected request's recorded quiescent epoch exactly matches the release authority epoch | `lifetime_safe` / `kv-proof` |
 | `kv-write-prefix` | `paged_kv_refinement::write_physical_token` | physical initialization advances with logical residency | `kv_refined` / `kv-proof` |
 | `model-bundle-record-binding` | `auth::admission_records_equal` | mismatching retained and recomputed record bytes are rejected before proof custody | `model_bundle_well_formed` / `model-bundle-proof` |
 | `publication-phase-transition` | `step_plan_publication::publish_reserved_delta` | publication moves only from validated to published | `graph_refined` / `graph-proof` |

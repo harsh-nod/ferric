@@ -572,7 +572,7 @@ def main() -> None:
         fail(f"usage: {sys.argv[0]} REPO [REAL_RESULT]")
     repo = Path(sys.argv[1]).resolve(strict=True)
     active, rows = registry(repo)
-    if len(rows) != 16 or not active:
+    if len(rows) != 17 or not active:
         fail("M1 negative registry baseline drifted")
     artifact_row = rows[0]
     if artifact_row[0] != "artifact-manifest-commitment-digest":
@@ -637,6 +637,19 @@ def main() -> None:
         expect_pass(repo, sampler_context, "canonical sampler mutation fixture")
         if sampler_result.name != f"{sampler_row[0]}.result":
             fail("sampler result identity drifted")
+        lifetime_row = next(
+            selected
+            for selected in rows
+            if selected[0] == "kv-terminal-release-exact-epoch"
+        )
+        lifetime_root = root / "lifetime-baseline"
+        lifetime_root.mkdir()
+        lifetime_result, lifetime_context = build_run(
+            repo, lifetime_root, lifetime_row, source_identity
+        )
+        expect_pass(repo, lifetime_context, "canonical lifetime mutation fixture")
+        if lifetime_result.name != f"{lifetime_row[0]}.result":
+            fail("lifetime result identity drifted")
 
         cases: list[tuple[str, str, FixtureMutation]] = [
             (

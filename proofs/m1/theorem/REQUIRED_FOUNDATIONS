@@ -6,6 +6,7 @@ theorem=graph-role-step-count|exact-graph-plan|graph_refined|graph-proof|ferric-
 theorem=isolation-other-request-frame|continuous-batching|request_isolated|isolation-proof|ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|m1_foundation_theorems|isolation_other_request_frame_theorem
 theorem=kv-release-generation|logical-paged-kv|kv_refined|kv-proof|ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|m1_foundation_theorems|kv_release_generation_theorem
 theorem=kv-rollback-retirement|logical-paged-kv|kv_refined|kv-proof|ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|m1_foundation_theorems|kv_rollback_retirement_theorem
+theorem=kv-terminal-page-lifetime|terminal-page-lifetime-release|lifetime_safe|kv-proof|ferric-m1-proof|proofs/m1/kv_physical.rs|kv_physical|m1_terminal_page_release_theorem
 theorem=kv-write-prefix|logical-paged-kv|kv_refined|kv-proof|ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|m1_foundation_theorems|kv_write_prefix_theorem
 theorem=model-bundle-composition|model-bundle-composition|model_bundle_well_formed|model-bundle-proof|ferric-m1-proof|proofs/m1/model_bundle.rs|model_bundle|model_bundle_well_formed_composition_theorem
 theorem=publication-phase-transition|step-plan-publication|graph_refined|graph-proof|ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|m1_foundation_theorems|publication_phase_transition_theorem
