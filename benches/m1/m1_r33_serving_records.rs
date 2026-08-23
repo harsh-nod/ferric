@@ -34,11 +34,16 @@ const TARGET: &str = "gfx942:xnack-";
 const WARMUPS_PER_START: usize = 10;
 const RECORDED_PER_START: usize = 10;
 const SERVER_STARTS: usize = 3;
+const BOOTSTRAP_RESAMPLES: usize = 10_000;
+const BOOTSTRAP_CONFIDENCE_PPM: u64 = 950_000;
+const BOOTSTRAP_LOWER_RANK: usize = 250;
+const BOOTSTRAP_UPPER_RANK: usize = 9_750;
+const COMPETITIVENESS_GATE_PPM: u64 = 950_000;
 const RATE_SCALE: u128 = 1_000_000_000;
 const PPM_SCALE: u128 = 1_000_000;
 const ENGINES: &[&str] = &["ferric", "vllm", "sglang"];
-const PROTOCOL_SHA256: &str = "1751423043814ddc3c34e0a31843abf77e9b3fb3450f95c4ce3284c6ed50c5e3";
-const NONCLAIM: &str = "This record checks one exact externally frozen Ferric, tuned vLLM, and tuned SGLang comparison roster and recomputes integer window throughput, exact medians, the fastest-baseline selection, and Ferric-to-baseline ratio from externally collected counters. It does not validate the external plan, versions, sources, tuning choices, budget, SLO, collector arithmetic, observation truth, server freshness, hardware behavior, numerical correctness, or independent reproduction; it is not qualification evidence and does not close m1.r33 or M1.";
+const PROTOCOL_SHA256: &str = "9ea7dd7e4bf7b04f90062da2479e699bd5fca5857a4afc910224006cfa7307f5";
+const NONCLAIM: &str = "This record checks one exact externally frozen Ferric, tuned vLLM, and tuned SGLang comparison roster and recomputes integer window throughput, exact medians, the fastest-baseline selection, and a deterministic paired-percentile-bootstrap 95% confidence interval from externally collected counters. It enforces a 0.95 lower confidence bound but does not validate the external plan, versions, sources, tuning choices, budget, SLO, collector arithmetic, observation truth, server freshness, hardware behavior, numerical correctness, or independent reproduction; it is not qualification evidence and does not close m1.r33 or M1.";
 
 const POLICY_KEYS: &[&str] = &[
     "authority",
@@ -172,6 +177,44 @@ impl Inputs {
 struct EngineSamples {
     latency: Vec<u64>,
     throughput: Vec<u64>,
+}
+
+#[derive(Debug, Eq, PartialEq)]
+struct BootstrapInterval {
+    lower_ppm: u64,
+    seed_sha256: String,
+    upper_ppm: u64,
+}
+
+#[derive(Debug)]
+struct SplitMix64 {
+    state: u64,
+}
+
+impl SplitMix64 {
+    fn next(&mut self) -> u64 {
+        self.state = self.state.wrapping_add(0x9e37_79b9_7f4a_7c15);
+        let mut value = self.state;
+        value = (value ^ (value >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
+        value = (value ^ (value >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
+        value ^ (value >> 31)
+    }
+
+    fn index(&mut self, bound: usize) -> BenchResult<usize> {
+        let bound = u64::try_from(bound)
+            .map_err(|_| "serving bootstrap population does not fit u64".to_owned())?;
+        if bound == 0 {
+            return Err("serving bootstrap population is empty".to_owned());
+        }
+        let rejection_floor = bound.wrapping_neg() % bound;
+        loop {
+            let value = self.next();
+            if value >= rejection_floor {
+                return usize::try_from(value % bound)
+                    .map_err(|_| "serving bootstrap index does not fit usize".to_owned());
+            }
+        }
+    }
 }
 
 struct RecordPublication {
@@ -585,8 +628,10 @@ fn build_record(
     )?;
     let mut summaries = Vec::with_capacity(ENGINES.len());
     let mut throughput_medians = Vec::with_capacity(ENGINES.len());
+    let mut throughput_samples = Vec::with_capacity(ENGINES.len());
     for (engine, mut sample) in ENGINES.iter().zip(samples) {
-        let throughput = median(&mut sample.throughput)?;
+        let mut throughput_for_median = sample.throughput.clone();
+        let throughput = median(&mut throughput_for_median)?;
         let latency = median(&mut sample.latency)?;
         if latency.numerator > u128::from(slo) * latency.denominator {
             return Err(format!(
@@ -600,6 +645,7 @@ fn build_record(
             "recorded_windows": SERVER_STARTS * RECORDED_PER_START,
         }));
         throughput_medians.push(throughput);
+        throughput_samples.push(sample.throughput);
     }
     let fastest_baseline_index = if ratio_ge(&throughput_medians[1], &throughput_medians[2]) {
         1
@@ -610,6 +656,18 @@ fn build_record(
         &throughput_medians[0],
         &throughput_medians[fastest_baseline_index],
     )?;
+    let bootstrap = paired_bootstrap_interval(
+        &throughput_samples[0],
+        &throughput_samples[fastest_baseline_index],
+        &sha256_identity(&inputs.policy_bytes),
+        &sha256_identity(&inputs.observations_bytes),
+    )?;
+    if bootstrap.lower_ppm < COMPETITIVENESS_GATE_PPM {
+        return Err(format!(
+            "serving comparison paired-bootstrap lower bound {} is below the {} gate",
+            bootstrap.lower_ppm, COMPETITIVENESS_GATE_PPM
+        ));
+    }
     let observation_object = observations
         .as_object()
         .ok_or_else(|| "serving comparison observations must be an object".to_owned())?;
@@ -630,6 +688,15 @@ fn build_record(
         "obligation_id": "m1.r33",
         "observations_sha256": sha256_identity(&inputs.observations_bytes),
         "policy_sha256": sha256_identity(&inputs.policy_bytes),
+        "paired_bootstrap_95_percent": {
+            "algorithm": "paired-percentile-bootstrap-splitmix64-v1",
+            "confidence_level_ppm": BOOTSTRAP_CONFIDENCE_PPM,
+            "gate_lower_bound_ppm": COMPETITIVENESS_GATE_PPM,
+            "lower_bound_ppm": bootstrap.lower_ppm,
+            "resamples": BOOTSTRAP_RESAMPLES,
+            "seed_sha256": bootstrap.seed_sha256,
+            "upper_bound_ppm": bootstrap.upper_ppm,
+        },
         "raw_rows": field(observation_object, "rows", "serving comparison observations")?,
         "recorded_windows_per_engine": SERVER_STARTS * RECORDED_PER_START,
         "server_starts": SERVER_STARTS,
@@ -685,6 +752,51 @@ fn ratio_ppm(numerator: &Rational, denominator: &Rational) -> BenchResult<u64> {
 
 fn ratio_ge(left: &Rational, right: &Rational) -> bool {
     left.numerator * right.denominator >= right.numerator * left.denominator
+}
+
+fn paired_bootstrap_interval(
+    ferric: &[u64],
+    baseline: &[u64],
+    policy_sha256: &str,
+    observations_sha256: &str,
+) -> BenchResult<BootstrapInterval> {
+    if ferric.len() != baseline.len() || ferric.len() != SERVER_STARTS * RECORDED_PER_START {
+        return Err("serving bootstrap paired sample roster is incomplete".to_owned());
+    }
+    if BOOTSTRAP_LOWER_RANK == 0
+        || BOOTSTRAP_LOWER_RANK > BOOTSTRAP_UPPER_RANK
+        || BOOTSTRAP_UPPER_RANK > BOOTSTRAP_RESAMPLES
+    {
+        return Err("serving bootstrap percentile ranks are invalid".to_owned());
+    }
+    let seed_material =
+        format!("ferric-m1-r33-paired-bootstrap-v1|{policy_sha256}|{observations_sha256}");
+    let seed_sha256 = sha256_identity(seed_material.as_bytes());
+    let seed = u64::from_str_radix(&seed_sha256[..16], 16)
+        .map_err(|_| "serving bootstrap seed digest is invalid".to_owned())?;
+    let mut generator = SplitMix64 { state: seed };
+    let mut estimates = Vec::new();
+    estimates
+        .try_reserve_exact(BOOTSTRAP_RESAMPLES)
+        .map_err(|_| "cannot reserve serving bootstrap estimates".to_owned())?;
+    let mut ferric_resample = vec![0_u64; ferric.len()];
+    let mut baseline_resample = vec![0_u64; baseline.len()];
+    for _ in 0..BOOTSTRAP_RESAMPLES {
+        for pair in 0..ferric.len() {
+            let index = generator.index(ferric.len())?;
+            ferric_resample[pair] = ferric[index];
+            baseline_resample[pair] = baseline[index];
+        }
+        let ferric_median = median(&mut ferric_resample)?;
+        let baseline_median = median(&mut baseline_resample)?;
+        estimates.push(ratio_ppm(&ferric_median, &baseline_median)?);
+    }
+    estimates.sort_unstable();
+    Ok(BootstrapInterval {
+        lower_ppm: estimates[BOOTSTRAP_LOWER_RANK - 1],
+        seed_sha256,
+        upper_ppm: estimates[BOOTSTRAP_UPPER_RANK - 1],
+    })
 }
 
 fn gcd(mut left: u128, mut right: u128) -> u128 {
@@ -1278,7 +1390,7 @@ mod tests {
                         "server_start": start,
                         "status": "passed",
                         "values": {
-                            "ferric": {"duration_ns": 1000, "failed_requests": 0, "p99_latency_ns": 100, "successful_requests": 4, "total_tokens": 10},
+                            "ferric": {"duration_ns": 1000, "failed_requests": 0, "p99_latency_ns": 100, "successful_requests": 4, "total_tokens": 12},
                             "vllm": {"duration_ns": 1000, "failed_requests": 0, "p99_latency_ns": 110, "successful_requests": 4, "total_tokens": 12},
                             "sglang": {"duration_ns": 1000, "failed_requests": 0, "p99_latency_ns": 120, "successful_requests": 4, "total_tokens": 11},
                         },
@@ -1324,7 +1436,15 @@ mod tests {
         let (policy_path, observations_path) = write_fixture(&temporary.0, &policy, &observations);
         let record = validate(&policy_path, &observations_path).unwrap();
         assert_eq!(record["fastest_baseline"], "vllm");
-        assert_eq!(record["ferric_to_fastest_baseline_ratio_ppm"], 833_333);
+        assert_eq!(record["ferric_to_fastest_baseline_ratio_ppm"], 1_000_000);
+        assert_eq!(
+            record["paired_bootstrap_95_percent"]["lower_bound_ppm"],
+            1_000_000
+        );
+        assert_eq!(
+            record["paired_bootstrap_95_percent"]["upper_bound_ppm"],
+            1_000_000
+        );
         assert_eq!(record["raw_rows"].as_array().unwrap().len(), 60);
         assert_eq!(record["recorded_windows_per_engine"], 30);
         assert_eq!(record["status"], STATUS);
@@ -1400,6 +1520,31 @@ mod tests {
         }
         let (policy_path, observations_path) = write_fixture(&temporary.0, &original, &too_slow);
         assert!(validate(&policy_path, &observations_path).is_err());
+    }
+
+    #[test]
+    fn paired_bootstrap_is_reproducible_and_enforces_the_lower_bound() {
+        let ferric = vec![12_000_000; SERVER_STARTS * RECORDED_PER_START];
+        let baseline = vec![12_000_000; SERVER_STARTS * RECORDED_PER_START];
+        let first =
+            paired_bootstrap_interval(&ferric, &baseline, &digest("policy"), &digest("rows"))
+                .unwrap();
+        let replay =
+            paired_bootstrap_interval(&ferric, &baseline, &digest("policy"), &digest("rows"))
+                .unwrap();
+        assert_eq!(first, replay);
+        assert_eq!(first.lower_ppm, 1_000_000);
+        assert_eq!(first.upper_ppm, 1_000_000);
+
+        let temporary = Temporary::new();
+        let policy = policy();
+        let mut below_gate = observations(&policy);
+        for row in below_gate["rows"].as_array_mut().unwrap() {
+            row["values"]["ferric"]["total_tokens"] = json!(11);
+        }
+        let (policy_path, observations_path) = write_fixture(&temporary.0, &policy, &below_gate);
+        let error = validate(&policy_path, &observations_path).unwrap_err();
+        assert!(error.contains("paired-bootstrap lower bound"));
     }
 
     #[test]

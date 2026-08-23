@@ -466,10 +466,16 @@ The checker derives each integer tokens-per-second sample as
 `floor(total_tokens * 1_000_000_000 / duration_ns)`, uses exact rational
 medians, selects the baseline with the larger median throughput (vLLM on an
 exact tie), checks every engine's median p99 against the externally supplied
-common SLO, and computes the floored Ferric-to-fastest-baseline PPM ratio.
+common SLO, and computes the floored Ferric-to-fastest-baseline PPM ratio. It
+then performs 10,000 paired percentile-bootstrap resamples over the 30 aligned
+recorded-window throughput pairs. SplitMix64 is seeded by a domain-separated
+SHA-256 binding of the exact policy and observation identities; the 250th and
+9,750th nearest-rank estimates form the deterministic 95% interval. The
+record fails closed unless its lower bound is at least 950,000 PPM.
 `OUTPUT-RECORD` is created without replacement and carries all exact raw rows,
-policy bindings, input SHA-256 identities, and recomputed summaries; submitted
-summaries are not in the input schema and cannot act as authority.
+policy bindings, input SHA-256 identities, recomputed summaries, bootstrap
+seed identity, and confidence interval; submitted summaries are not in the
+input schema and cannot act as authority.
 Publication uses an exclusive one-link sibling staging file retained by file
 descriptor, rereads and hashes its exact bytes, renames with
 `RENAME_NOREPLACE`, synchronizes the parent directory, then rebinds and rereads
