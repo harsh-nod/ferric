@@ -31,6 +31,14 @@ SHA-256, which are supplied and checked by the checker invocation. This
 single-record self-exclusion avoids an impossible recursive self-hash; the
 receipt still names its exact artifact ID, kind, and canonical path.
 
+Before invoking any trusted producer or test-only callback, the checker runs
+the positive-theorem and negative-mutation foundation registry checkers from
+the exact Ferric source closure. Every Assurance theorem or mutation binding
+must use a Ferric path and select an exact checked row for the same property
+and path through both its `.result` filename and `THEOREM=` or `MUTATION=`
+record. This is a reachability preflight only; the source-pinned theorem and
+mutation validators still authenticate the complete run and its row identities.
+
 ## Independent closure checks
 
 The validator independently requires:

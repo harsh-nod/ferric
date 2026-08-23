@@ -11,6 +11,7 @@ import re
 import stat
 import subprocess
 import sys
+import tempfile
 from pathlib import Path, PurePosixPath
 from typing import Any, NoReturn
 
@@ -37,6 +38,22 @@ PROTOCOL = re.compile(r"ferric\.m1-validator\.[a-z0-9.-]+\.v1\Z")
 ARTIFACT_KIND = re.compile(r"[A-Z][A-Za-z0-9]+\Z")
 MAX_JSON_BYTES = 2_000_000
 MAX_PYTHON_BYTES = 4_000_000
+EXPECTED_FOUNDATION_SELECTOR_KEYS = {
+    "negative-mutation": "MUTATION",
+    "verus-theorem": "THEOREM",
+}
+EXPECTED_FOUNDATION_REGISTRIES = {
+    "negative-mutation": (
+        "proofs/m1/negative/REQUIRED_FOUNDATIONS",
+        "proofs/m1/negative/check-registry.py",
+        11,
+    ),
+    "verus-theorem": (
+        "proofs/m1/theorem/REQUIRED_FOUNDATIONS",
+        "proofs/m1/theorem/check-registry.py",
+        8,
+    ),
+}
 
 
 def fail(message: str) -> NoReturn:
@@ -272,6 +289,113 @@ def validate_receipt_mirror(
         fail("qualification-receipt gate roster drifted")
 
 
+def checked_foundation_rows(
+    repo: Path, evidence_kind: str, specification: tuple[str, str, int]
+) -> list[tuple[str, ...]]:
+    registry_relative, checker_relative, field_count = specification
+    registry = repo / registry_relative
+    checker = repo / checker_relative
+    regular_file(registry, f"{evidence_kind} foundation registry")
+    regular_file(checker, f"{evidence_kind} foundation registry checker")
+    with tempfile.TemporaryDirectory(
+        prefix=f"ferric-m1-{evidence_kind}-registry-"
+    ) as raw:
+        output = Path(raw) / "checked-foundations"
+        try:
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-I",
+                    str(checker),
+                    str(repo),
+                    str(registry),
+                    str(output),
+                ],
+                check=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                timeout=60,
+                cwd=repo,
+                env={"PATH": os.environ.get("PATH", "")},
+            )
+        except (OSError, subprocess.TimeoutExpired) as error:
+            fail(f"checked {evidence_kind} foundation registry could not run: {error}")
+        if result.returncode != 0:
+            fail(
+                f"checked {evidence_kind} foundation registry is invalid: "
+                f"{result.stdout.strip()}"
+            )
+        raw_rows = read_bounded(
+            output, MAX_JSON_BYTES, f"checked {evidence_kind} foundation rows"
+        )
+    try:
+        text = raw_rows.decode("ascii")
+    except UnicodeDecodeError as error:
+        fail(f"checked {evidence_kind} foundation rows are not ASCII: {error}")
+    if not raw_rows.endswith(b"\n") or raw_rows.endswith(b"\n\n"):
+        fail(f"checked {evidence_kind} foundation rows are not canonical")
+    rows = [tuple(line.split("|")) for line in text.splitlines()]
+    if (
+        not rows
+        or any(len(row) != field_count or not all(row) for row in rows)
+        or [row[0] for row in rows] != sorted(row[0] for row in rows)
+        or len({row[0] for row in rows}) != len(rows)
+    ):
+        fail(f"checked {evidence_kind} foundation roster is malformed")
+    return rows
+
+
+def validate_foundation_reachability_infrastructure(
+    repo: Path, requirements: dict[str, Any]
+) -> tuple[int, int]:
+    properties = {
+        record["name"]: record for record in requirements["assurance_properties"]
+    }
+    paths = {record["id"]: record for record in requirements["path_obligations"]}
+    counts: dict[str, int] = {}
+    for evidence_kind, specification in EXPECTED_FOUNDATION_REGISTRIES.items():
+        rows = checked_foundation_rows(repo, evidence_kind, specification)
+        for row in rows:
+            name, property_name, path_id = row[0], row[2], row[3]
+            property_record = properties.get(property_name)
+            path_record = paths.get(path_id)
+            if (
+                property_record is None
+                or path_id not in property_record["path_obligations"]
+                or path_record is None
+            ):
+                fail(
+                    f"checked {evidence_kind} foundation selector is cross-property "
+                    f"or cross-path: {name}"
+                )
+            status = property_record["required_status_at_closure"]
+            if status == "Unsupported" or (
+                evidence_kind == "verus-theorem" and status != "Proved"
+            ):
+                fail(
+                    f"checked {evidence_kind} foundation selector misuses {status}: "
+                    f"{name}"
+                )
+            if path_record["repository"] != "ferric":
+                fail(
+                    f"checked {evidence_kind} foundation selector names a non-Ferric "
+                    f"path: {name}"
+                )
+            source = PurePosixPath(row[5])
+            if (
+                source.is_absolute()
+                or ".." in source.parts
+                or not (repo / Path(*source.parts)).is_file()
+            ):
+                fail(
+                    f"checked {evidence_kind} foundation selector has no exact Ferric "
+                    f"source: {name}"
+                )
+        counts[evidence_kind] = len(rows)
+    return counts["verus-theorem"], counts["negative-mutation"]
+
+
 def validate_infrastructure(repo: Path) -> None:
     try:
         repo = repo.resolve(strict=True)
@@ -320,6 +444,8 @@ def validate_infrastructure(repo: Path) -> None:
         checker_tree,
         {
             "EVIDENCE_ARTIFACT_KINDS",
+            "FOUNDATION_REGISTRIES",
+            "FOUNDATION_SELECTOR_KEYS",
             "FORMAT",
             "SOURCE_IDS",
             "TCB_IDS",
@@ -333,6 +459,10 @@ def validate_infrastructure(repo: Path) -> None:
         fail("M1 evidence-index trusted-boundary roster drifted")
     if checker_values["SOURCE_IDS"] != EXPECTED_SOURCE_IDS:
         fail("M1 evidence-index source roster drifted")
+    if checker_values["FOUNDATION_SELECTOR_KEYS"] != EXPECTED_FOUNDATION_SELECTOR_KEYS:
+        fail("M1 evidence-index foundation-selector key registry drifted")
+    if checker_values["FOUNDATION_REGISTRIES"] != EXPECTED_FOUNDATION_REGISTRIES:
+        fail("M1 evidence-index foundation registry roster drifted")
     artifact_kinds = checker_values["EVIDENCE_ARTIFACT_KINDS"]
     if not isinstance(artifact_kinds, dict) or tuple(artifact_kinds) != evidence_kinds:
         fail("M1 evidence-index artifact-kind registry is incomplete or reordered")
@@ -399,12 +529,17 @@ def validate_infrastructure(repo: Path) -> None:
         validator_ids,
         artifact_kinds,
     )
+    positive_foundations, negative_foundations = (
+        validate_foundation_reachability_infrastructure(repo, requirements)
+    )
 
     print(
         "PASS: M1 evidence infrastructure is internally pinned "
         f"({len(evidence_kinds)} evidence kinds, {len(validator_ids)} validators, "
         f"{len(EXPECTED_TCB_IDS)} TCB classes, "
-        f"{len(EXPECTED_GATE_IDS)} receipt gates); "
+        f"{len(EXPECTED_GATE_IDS)} receipt gates, "
+        f"{positive_foundations} positive and {negative_foundations} negative "
+        "Ferric foundation selectors); "
         "external closure remains absent"
     )
 

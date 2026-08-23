@@ -45,6 +45,18 @@ ARTIFACT_KINDS = {
 }
 EXCLUDED_DIRECTORIES = {".git", ".ruff_cache", "__pycache__", "target"}
 EXCLUDED_SUFFIXES = {".pyc", ".receipt"}
+FOUNDATION_REGISTRIES = {
+    "negative-mutation": (
+        Path("proofs/m1/negative/REQUIRED_FOUNDATIONS"),
+        "mutation=",
+        "MUTATION",
+    ),
+    "verus-theorem": (
+        Path("proofs/m1/theorem/REQUIRED_FOUNDATIONS"),
+        "theorem=",
+        "THEOREM",
+    ),
+}
 
 
 def sha256(value: bytes) -> str:
@@ -109,6 +121,21 @@ def source_closure(repo: Path) -> bytes:
     return ("\n".join(records) + "\n").encode("utf-8")
 
 
+def foundation_rows(repo: Path) -> dict[str, list[tuple[str, ...]]]:
+    result: dict[str, list[tuple[str, ...]]] = {}
+    for evidence_kind, (
+        relative,
+        prefix,
+        _selector_key,
+    ) in FOUNDATION_REGISTRIES.items():
+        lines = (repo / relative).read_text(encoding="ascii").splitlines()[1:]
+        rows = [tuple(line.removeprefix(prefix).split("|")) for line in lines]
+        if not rows or any(not line.startswith(prefix) for line in lines):
+            raise AssertionError(f"fixture {evidence_kind} registry is malformed")
+        result[evidence_kind] = rows
+    return result
+
+
 def load_checker() -> Any:
     spec = importlib.util.spec_from_file_location("m1_evidence_checker", CHECKER)
     if spec is None or spec.loader is None:
@@ -130,6 +157,7 @@ class Fixture:
         self.payloads: dict[str, bytes] = {}
         self.next_artifact = 0
         self._create_repositories()
+        self.foundation_rows = foundation_rows(self.ferric)
         self.index = self._create_index()
 
     def _create_repositories(self) -> None:
@@ -157,10 +185,21 @@ class Fixture:
         commit_fixture(self.ferric)
         commit_fixture(self.fe2o3)
 
-    def add_artifact(self, kind: str, description: str, content: bytes) -> str:
+    def add_artifact(
+        self,
+        kind: str,
+        description: str,
+        content: bytes,
+        *,
+        foundation_selector: str | None = None,
+    ) -> str:
         identifier = f"artifact.{self.next_artifact:05d}"
         self.next_artifact += 1
-        relative = f"artifacts/{identifier}.txt"
+        relative = (
+            f"artifacts/{identifier}/{foundation_selector}.result"
+            if foundation_selector is not None
+            else f"artifacts/{identifier}.txt"
+        )
         self.payloads[relative] = content
         self.artifacts.append(
             {
@@ -277,25 +316,67 @@ class Fixture:
                 for kind in profiles[profile]
                 if spec["class"] in binding_classes[kind]
             ]
-            pair_paths = [
-                (profile, kind, spec["paths"][pair_index % len(spec["paths"])])
-                for pair_index, (profile, kind) in enumerate(pairs)
-            ]
+            pair_paths: list[tuple[str, str, str]] = []
+            for pair_index, (profile, kind) in enumerate(pairs):
+                matching_paths = sorted(
+                    {
+                        row[3]
+                        for row in self.foundation_rows.get(kind, [])
+                        if row[2] == spec["id"] and row[3] in spec["paths"]
+                    }
+                )
+                path_id = (
+                    matching_paths[pair_index % len(matching_paths)]
+                    if matching_paths
+                    else spec["paths"][pair_index % len(spec["paths"])]
+                )
+                pair_paths.append((profile, kind, path_id))
             covered_paths = {path_id for _profile, _kind, path_id in pair_paths}
             for path_index, path_id in enumerate(spec["paths"]):
                 if path_id not in covered_paths:
-                    profile, kind = pairs[path_index % len(pairs)]
+                    alternatives = [
+                        (profile, kind)
+                        for profile, kind in pairs
+                        if kind not in FOUNDATION_REGISTRIES
+                        and (profile, kind, path_id) not in pair_paths
+                    ]
+                    if not alternatives:
+                        alternatives = [
+                            (profile, kind)
+                            for profile, kind in pairs
+                            if (profile, kind, path_id) not in pair_paths
+                        ]
+                    profile, kind = alternatives[path_index % len(alternatives)]
                     pair_paths.append((profile, kind, path_id))
             for profile, kind, path_id in pair_paths:
                 binding_id = f"binding.{next_binding:05d}"
                 next_binding += 1
+                selector_rows = [
+                    row
+                    for row in self.foundation_rows.get(kind, [])
+                    if row[2] == spec["id"] and row[3] == path_id
+                ]
+                selector = selector_rows[0][0] if selector_rows else None
+                if kind in FOUNDATION_REGISTRIES:
+                    selector_key = FOUNDATION_REGISTRIES[kind][2]
+                    selected = selector or (
+                        f"missing-{spec['id'].replace('_', '-')}-{path_id}"
+                    )
+                    content = f"{selector_key}={selected}\n".encode("ascii")
+                else:
+                    content = (
+                        f"synthetic test-only {kind} artifact for "
+                        f"{spec['class']} {spec['id']} {profile}\n"
+                    ).encode("utf-8")
                 artifact_id = self.add_artifact(
                     ARTIFACT_KINDS[kind],
                     f"{kind} for {spec['class']} {spec['id']}",
-                    (
-                        f"synthetic test-only {kind} artifact for "
-                        f"{spec['class']} {spec['id']} {profile}\n"
-                    ).encode("utf-8"),
+                    content,
+                    foundation_selector=(
+                        selector or f"missing-{spec['id'].replace('_', '-')}-{path_id}"
+                        if kind in FOUNDATION_REGISTRIES
+                        else None
+                    ),
                 )
                 binding = {
                     "artifact_id": artifact_id,
@@ -399,6 +480,18 @@ def binding_of_kind(index: dict[str, Any], kind: str) -> dict[str, Any]:
     )
 
 
+def foundation_binding(
+    index: dict[str, Any], kind: str, property_name: str | None = None
+) -> dict[str, Any]:
+    return next(
+        record
+        for record in index["evidence_bindings"]
+        if record["evidence_kind"] == kind
+        and record["obligation_class"] == "Assurance"
+        and (property_name is None or record["obligation_id"] == property_name)
+    )
+
+
 def obligation_with_status(index: dict[str, Any], status: str) -> dict[str, Any]:
     return next(
         record for record in index["obligations"] if record["closure_status"] == status
@@ -420,6 +513,25 @@ def recompute_binding(record: dict[str, Any]) -> None:
     record["binding_sha256"] = canonical_digest(payload)
 
 
+def rewrite_foundation_artifact(
+    value: dict[str, Any],
+    fixture: Fixture,
+    binding: dict[str, Any],
+    selector: str,
+    content: bytes,
+) -> None:
+    record = artifact(value, binding["artifact_id"])
+    old_path = fixture.evidence / record["path"]
+    old_path.unlink()
+    relative = f"artifacts/{record['id']}/hostile/{selector}.result"
+    path = fixture.evidence / relative
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(content)
+    record["path"] = relative
+    record["sha256"] = sha256(content)
+    record["size_bytes"] = len(content)
+
+
 def fixture_validator(kind: str, context: dict[str, Any]) -> None:
     if kind not in {
         *ARTIFACT_KINDS,
@@ -431,7 +543,12 @@ def fixture_validator(kind: str, context: dict[str, Any]) -> None:
         raise AssertionError("synthetic validator received the wrong artifact")
 
 
-def invoke(checker: Any, fixture: Fixture, index_path: Path) -> tuple[bool, str]:
+def invoke(
+    checker: Any,
+    fixture: Fixture,
+    index_path: Path,
+    validator: Callable[[str, dict[str, Any]], None] = fixture_validator,
+) -> tuple[bool, str]:
     output = io.StringIO()
     try:
         with contextlib.redirect_stdout(output), contextlib.redirect_stderr(output):
@@ -439,7 +556,7 @@ def invoke(checker: Any, fixture: Fixture, index_path: Path) -> tuple[bool, str]
                 fixture.ferric,
                 index_path,
                 fixture.fe2o3,
-                _test_only_validator=fixture_validator,
+                _test_only_validator=validator,
             )
     except SystemExit:
         return False, output.getvalue()
@@ -516,6 +633,42 @@ def main() -> None:
             raise AssertionError(f"synthetic complete index was rejected:\n{output}")
         print("PASS: complete synthetic index through test-only validator harness")
 
+        callback_count = 0
+
+        def counting_validator(kind: str, context: dict[str, Any]) -> None:
+            nonlocal callback_count
+            callback_count += 1
+            fixture_validator(kind, context)
+
+        bypass_value = copy.deepcopy(fixture.index)
+        bypass_binding = foundation_binding(bypass_value, "verus-theorem")
+        rewrite_foundation_artifact(
+            bypass_value,
+            fixture,
+            bypass_binding,
+            "fake-unregistered-theorem",
+            b"THEOREM=fake-unregistered-theorem\n",
+        )
+        write_json(fixture.index_path, bypass_value)
+        passed, output = invoke(
+            checker,
+            fixture,
+            fixture.index_path,
+            counting_validator,
+        )
+        if (
+            passed
+            or "foundation selector is not in the checked registry" not in output
+            or callback_count != 0
+        ):
+            raise AssertionError(
+                "test-only callback ran before foundation reachability failed:\n"
+                f"callbacks={callback_count}\n{output}"
+            )
+        print("PASS: foundation reachability cannot be bypassed by test callback")
+        fixture.reset_evidence()
+        write_json(fixture.index_path, fixture.index)
+
         production = subprocess.run(
             [
                 sys.executable,
@@ -553,6 +706,134 @@ def main() -> None:
             encoding: str = "canonical",
         ) -> None:
             cases.append((name, marker, mutate, encoding))
+
+        def missing_theorem_selector(value: dict[str, Any], fixture: Fixture) -> None:
+            binding = foundation_binding(value, "verus-theorem")
+            current = Path(artifact(value, binding["artifact_id"])["path"]).stem
+            rewrite_foundation_artifact(
+                value,
+                fixture,
+                binding,
+                current,
+                b"FORMAT=FERRIC-M1-POSITIVE-RESULT-V1\n",
+            )
+
+        add(
+            "missing theorem foundation selector",
+            "foundation selector is missing or has the wrong kind",
+            missing_theorem_selector,
+        )
+
+        def malformed_mutation_selector(
+            value: dict[str, Any], fixture: Fixture
+        ) -> None:
+            binding = foundation_binding(value, "negative-mutation")
+            current = Path(artifact(value, binding["artifact_id"])["path"]).stem
+            rewrite_foundation_artifact(
+                value,
+                fixture,
+                binding,
+                current,
+                f"MUTATION={current}\nnot-a-record\n".encode("ascii"),
+            )
+
+        add(
+            "malformed mutation foundation selector",
+            "foundation selector artifact is malformed",
+            malformed_mutation_selector,
+        )
+
+        def fake_theorem_selector(value: dict[str, Any], fixture: Fixture) -> None:
+            binding = foundation_binding(value, "verus-theorem")
+            selector = "fake-unregistered-theorem"
+            rewrite_foundation_artifact(
+                value,
+                fixture,
+                binding,
+                selector,
+                f"THEOREM={selector}\n".encode("ascii"),
+            )
+
+        add(
+            "fake theorem foundation selector",
+            "foundation selector is not in the checked registry",
+            fake_theorem_selector,
+        )
+
+        def cross_property_theorem_selector(
+            value: dict[str, Any], fixture: Fixture
+        ) -> None:
+            binding = foundation_binding(
+                value, "verus-theorem", "model_bundle_well_formed"
+            )
+            selector = next(
+                row[0]
+                for row in fixture.foundation_rows["verus-theorem"]
+                if row[2] != binding["obligation_id"]
+            )
+            rewrite_foundation_artifact(
+                value,
+                fixture,
+                binding,
+                selector,
+                f"THEOREM={selector}\n".encode("ascii"),
+            )
+
+        add(
+            "cross-property theorem selector",
+            "foundation selector substituted a different property",
+            cross_property_theorem_selector,
+        )
+
+        def cross_path_theorem_selector(
+            value: dict[str, Any], fixture: Fixture
+        ) -> None:
+            binding = foundation_binding(value, "verus-theorem", "scheduler_refined")
+            selector = next(
+                row[0]
+                for row in fixture.foundation_rows["verus-theorem"]
+                if row[2] == binding["obligation_id"] and row[3] != binding["path_id"]
+            )
+            rewrite_foundation_artifact(
+                value,
+                fixture,
+                binding,
+                selector,
+                f"THEOREM={selector}\n".encode("ascii"),
+            )
+
+        add(
+            "cross-path theorem selector",
+            "foundation selector substituted a different path",
+            cross_path_theorem_selector,
+        )
+
+        def fe2o3_foundation_substitution(value: dict[str, Any], _: Fixture) -> None:
+            binding = foundation_binding(value, "verus-theorem", "lifetime_safe")
+            property_record = next(
+                record
+                for record in fixture.requirements["assurance_properties"]
+                if record["name"] == "lifetime_safe"
+            )
+            fe2o3_path = next(
+                path_id
+                for path_id in property_record["path_obligations"]
+                if next(
+                    record
+                    for record in value["path_resolutions"]
+                    if record["id"] == path_id
+                )["source_identity_id"]
+                == "source.fe2o3"
+            )
+            binding["path_id"] = fe2o3_path
+            binding["source_identity_id"] = "source.fe2o3"
+            recompute_binding(binding)
+
+        add(
+            "fe2o3 theorem source substitution",
+            "foundation selector substituted a non-Ferric source",
+            fe2o3_foundation_substitution,
+        )
 
         add(
             "roadmap omission",

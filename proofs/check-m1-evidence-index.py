@@ -10,6 +10,7 @@ import re
 import stat
 import subprocess
 import sys
+import tempfile
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, Callable, NoReturn
@@ -54,6 +55,24 @@ ARTIFACT_KINDS = set(EVIDENCE_ARTIFACT_KINDS.values()) | {
 }
 SOURCE_EXCLUDED_DIRECTORIES = {".git", ".ruff_cache", "__pycache__", "target"}
 SOURCE_EXCLUDED_SUFFIXES = {".pyc", ".receipt"}
+FOUNDATION_SELECTOR_KEYS = {
+    "negative-mutation": "MUTATION",
+    "verus-theorem": "THEOREM",
+}
+FOUNDATION_REGISTRIES = {
+    "negative-mutation": (
+        "proofs/m1/negative/REQUIRED_FOUNDATIONS",
+        "proofs/m1/negative/check-registry.py",
+        11,
+    ),
+    "verus-theorem": (
+        "proofs/m1/theorem/REQUIRED_FOUNDATIONS",
+        "proofs/m1/theorem/check-registry.py",
+        8,
+    ),
+}
+SELECTOR_KEY = re.compile(r"[A-Z][A-Z0-9_]*\Z")
+MAX_FOUNDATION_SELECTOR_BYTES = 2_000_000
 
 # Validator paths, protocols, and reviewed source identities are checker-owned,
 # so an evidence index cannot select or substitute an executable. A None source
@@ -578,6 +597,185 @@ def obligation_specs(requirements: dict[str, Any]) -> list[dict[str, Any]]:
     return specs
 
 
+def checked_foundation_registries(
+    ferric: Path, ferric_closure_paths: set[str]
+) -> dict[str, dict[str, tuple[str, ...]]]:
+    checked: dict[str, dict[str, tuple[str, ...]]] = {}
+    with tempfile.TemporaryDirectory(prefix="ferric-m1-foundation-registry-") as raw:
+        temporary = Path(raw)
+        for evidence_kind, (
+            registry_relative,
+            checker_relative,
+            field_count,
+        ) in FOUNDATION_REGISTRIES.items():
+            for relative, description in (
+                (registry_relative, f"{evidence_kind} foundation registry"),
+                (checker_relative, f"{evidence_kind} foundation registry checker"),
+            ):
+                if relative not in ferric_closure_paths:
+                    fail(
+                        f"{description} is absent from the exact Ferric source closure"
+                    )
+                regular_file(ferric / relative, description)
+            output = temporary / evidence_kind
+            try:
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        "-I",
+                        str(ferric / checker_relative),
+                        str(ferric),
+                        str(ferric / registry_relative),
+                        str(output),
+                    ],
+                    check=False,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    timeout=60,
+                    cwd=ferric,
+                    env={"PATH": os.environ.get("PATH", "")},
+                )
+            except (OSError, subprocess.TimeoutExpired) as error:
+                fail(
+                    f"checked {evidence_kind} foundation registry could not run: {error}"
+                )
+            if result.returncode != 0:
+                fail(
+                    f"checked {evidence_kind} foundation registry is invalid: "
+                    f"{result.stdout.strip()}"
+                )
+            regular_file(output, f"checked {evidence_kind} foundation rows")
+            try:
+                raw_rows = output.read_bytes()
+                text = raw_rows.decode("ascii")
+            except (OSError, UnicodeDecodeError) as error:
+                fail(f"cannot read checked {evidence_kind} foundation rows: {error}")
+            if not raw_rows.endswith(b"\n") or raw_rows.endswith(b"\n\n"):
+                fail(f"checked {evidence_kind} foundation rows are not canonical")
+            rows: dict[str, tuple[str, ...]] = {}
+            for line in text.splitlines():
+                fields = tuple(line.split("|"))
+                if len(fields) != field_count or not all(fields):
+                    fail(f"checked {evidence_kind} foundation row is malformed")
+                name = fields[0]
+                if not SAFE_ID.fullmatch(name) or name in rows:
+                    fail(
+                        f"checked {evidence_kind} foundation selector is invalid: {name!r}"
+                    )
+                source = safe_relative(fields[5], f"{evidence_kind} foundation source")
+                source_relative = source.as_posix()
+                if source_relative not in ferric_closure_paths:
+                    fail(
+                        f"checked {evidence_kind} foundation source is absent from "
+                        f"the exact Ferric source closure: {name}"
+                    )
+                if evidence_kind == "negative-mutation":
+                    mutator = safe_relative(fields[6], "negative-mutation mutator")
+                    mutator_relative = (
+                        Path("proofs/m1/negative/components") / mutator
+                    ).as_posix()
+                    if mutator_relative not in ferric_closure_paths:
+                        fail(
+                            "checked negative-mutation mutator is absent from the exact "
+                            f"Ferric source closure: {name}"
+                        )
+                rows[name] = fields
+            if not rows or tuple(rows) != tuple(sorted(rows)):
+                fail(f"checked {evidence_kind} foundation roster is empty or reordered")
+            checked[evidence_kind] = rows
+    return checked
+
+
+def artifact_foundation_selector(artifact_path: Path, evidence_kind: str) -> str:
+    selector_key = FOUNDATION_SELECTOR_KEYS[evidence_kind]
+    try:
+        with artifact_path.open("rb") as stream:
+            raw = stream.read(MAX_FOUNDATION_SELECTOR_BYTES + 1)
+        text = raw.decode("ascii")
+    except (OSError, UnicodeDecodeError) as error:
+        fail(f"{evidence_kind} foundation selector artifact is unreadable: {error}")
+    lines = text.splitlines()
+    canonical = ("\n".join(lines) + "\n").encode("ascii")
+    if (
+        not raw
+        or len(raw) > MAX_FOUNDATION_SELECTOR_BYTES
+        or raw != canonical
+        or raw.endswith(b"\n\n")
+    ):
+        fail(f"{evidence_kind} foundation selector artifact is not canonical")
+    values: dict[str, str] = {}
+    for line in lines:
+        if "=" not in line:
+            fail(f"{evidence_kind} foundation selector artifact is malformed")
+        key, value = line.split("=", 1)
+        if not SELECTOR_KEY.fullmatch(key) or not value or key in values:
+            fail(f"{evidence_kind} foundation selector artifact is malformed")
+        values[key] = value
+    opposite_key = "THEOREM" if selector_key == "MUTATION" else "MUTATION"
+    if selector_key not in values or opposite_key in values:
+        fail(f"{evidence_kind} foundation selector is missing or has the wrong kind")
+    selector = values[selector_key]
+    if not SAFE_ID.fullmatch(selector):
+        fail(f"{evidence_kind} foundation selector is malformed: {selector!r}")
+    if artifact_path.name != f"{selector}.result":
+        fail(
+            f"{evidence_kind} artifact filename does not match its foundation selector"
+        )
+    return selector
+
+
+def validate_foundation_reachability(
+    ferric: Path,
+    ferric_closure_paths: set[str],
+    specs: list[dict[str, Any]],
+    bindings: dict[str, dict[str, Any]],
+    artifact_files: dict[str, Path],
+) -> None:
+    registries = checked_foundation_registries(ferric, ferric_closure_paths)
+    status_by_key = {(spec["class"], spec["id"]): spec["status"] for spec in specs}
+    for identifier, binding in bindings.items():
+        evidence_kind = binding["evidence_kind"]
+        rows = registries.get(evidence_kind)
+        if rows is None:
+            continue
+        if binding["obligation_class"] != "Assurance":
+            fail(
+                f"{evidence_kind} foundation selector is not Assurance-bound: {identifier}"
+            )
+        status = status_by_key[("Assurance", binding["obligation_id"])]
+        if status == "Unsupported" or (
+            evidence_kind == "verus-theorem" and status != "Proved"
+        ):
+            fail(
+                f"{evidence_kind} foundation selector cannot discharge {status}: "
+                f"{identifier}"
+            )
+        if binding["source_identity_id"] != "source.ferric":
+            fail(
+                f"{evidence_kind} foundation selector substituted a non-Ferric source: "
+                f"{identifier}"
+            )
+        artifact_path = artifact_files[binding["artifact_id"]]
+        selector = artifact_foundation_selector(artifact_path, evidence_kind)
+        row = rows.get(selector)
+        if row is None:
+            fail(
+                f"{evidence_kind} foundation selector is not in the checked registry: "
+                f"{selector}"
+            )
+        if row[2] != binding["obligation_id"]:
+            fail(
+                f"{evidence_kind} foundation selector substituted a different property: "
+                f"{identifier}"
+            )
+        if row[3] != binding["path_id"]:
+            fail(
+                f"{evidence_kind} foundation selector substituted a different path: "
+                f"{identifier}"
+            )
+
+
 def validate_bindings(
     value: Any,
     specs: list[dict[str, Any]],
@@ -1055,6 +1253,13 @@ def validate_evidence_index(
     if used_artifacts != set(artifacts):
         unused = sorted(set(artifacts) - used_artifacts)
         fail(f"M1 evidence index contains unreferenced artifacts: {unused}")
+    validate_foundation_reachability(
+        ferric,
+        closure_paths["source.ferric"],
+        specs,
+        bindings,
+        artifact_files,
+    )
     validate_with_trusted_producers(
         ferric,
         fe2o3,

@@ -21,6 +21,10 @@ ARTIFACT_VALIDATOR = Path("proofs/m1/evidence/validate-artifact-identity.py")
 NEGATIVE_VALIDATOR = Path("proofs/m1/evidence/validate-negative-mutation.py")
 TCB_VALIDATOR = Path("proofs/m1/evidence/validate-tcb-report.py")
 RECEIPT_VALIDATOR = Path("proofs/m1/evidence/validate-qualification-receipt.py")
+POSITIVE_REGISTRY = Path("proofs/m1/theorem/REQUIRED_FOUNDATIONS")
+POSITIVE_REGISTRY_CHECKER = Path("proofs/m1/theorem/check-registry.py")
+NEGATIVE_REGISTRY = Path("proofs/m1/negative/REQUIRED_FOUNDATIONS")
+NEGATIVE_REGISTRY_CHECKER = Path("proofs/m1/negative/check-registry.py")
 
 
 def invoke(repo: Path) -> tuple[bool, str]:
@@ -130,6 +134,120 @@ def main() -> None:
             "M1 evidence-index checker is unavailable",
             (INDEX_CHECKER,),
             lambda repo: (repo / INDEX_CHECKER).unlink(),
+        )
+        add(
+            "missing positive foundation registry",
+            "verus-theorem foundation registry is unavailable",
+            (POSITIVE_REGISTRY,),
+            lambda repo: (repo / POSITIVE_REGISTRY).unlink(),
+        )
+
+        def delete_positive_selector(repo: Path) -> None:
+            path = repo / POSITIVE_REGISTRY
+            lines = path.read_text(encoding="ascii").splitlines(keepends=True)
+            del lines[1]
+            path.write_text("".join(lines), encoding="ascii")
+
+        add(
+            "deleted positive foundation selector",
+            "checked verus-theorem foundation registry is invalid",
+            (POSITIVE_REGISTRY,),
+            delete_positive_selector,
+        )
+
+        def fake_negative_selector(repo: Path) -> None:
+            path = repo / NEGATIVE_REGISTRY
+            source = path.read_text(encoding="ascii")
+            path.write_text(
+                source.replace("mutation=artifact-", "mutation=fake-artifact-", 1),
+                encoding="ascii",
+            )
+
+        add(
+            "fake negative foundation selector",
+            "checked negative-mutation foundation registry is invalid",
+            (NEGATIVE_REGISTRY,),
+            fake_negative_selector,
+        )
+
+        def drift_foundation_registry_path(repo: Path) -> None:
+            replace_once(
+                repo / INDEX_CHECKER,
+                '"proofs/m1/theorem/REQUIRED_FOUNDATIONS",',
+                '"proofs/m1/theorem/FAKE_FOUNDATIONS",',
+            )
+
+        add(
+            "foundation registry dispatch substitution",
+            "foundation registry roster drifted",
+            (INDEX_CHECKER,),
+            drift_foundation_registry_path,
+        )
+
+        def fe2o3_path_foundation(repo: Path) -> None:
+            registry = repo / POSITIVE_REGISTRY
+            source = registry.read_text(encoding="ascii")
+            old = (
+                "theorem=kv-terminal-page-lifetime|terminal-page-lifetime-release|"
+                "lifetime_safe|kv-proof|"
+            )
+            new = old.replace("|kv-proof|", "|fe2o3-queue|")
+            if source.count(old) != 1:
+                raise AssertionError("lifetime theorem registry anchor drifted")
+            registry.write_text(source.replace(old, new, 1), encoding="ascii")
+            replace_once(
+                repo / POSITIVE_REGISTRY_CHECKER,
+                '        "lifetime_safe",\n        "kv-proof",',
+                '        "lifetime_safe",\n        "fe2o3-queue",',
+            )
+
+        add(
+            "fe2o3 foundation path substitution",
+            "foundation selector names a non-Ferric path",
+            (POSITIVE_REGISTRY, POSITIVE_REGISTRY_CHECKER),
+            fe2o3_path_foundation,
+        )
+
+        def validated_theorem_misuse(repo: Path) -> None:
+            registry = repo / POSITIVE_REGISTRY
+            source = registry.read_text(encoding="ascii")
+            old = "|model_bundle_well_formed|model-bundle-proof|"
+            new = "|artifact_authenticated|bundle-auth|"
+            if source.count(old) != 1:
+                raise AssertionError("model-bundle theorem registry anchor drifted")
+            registry.write_text(source.replace(old, new, 1), encoding="ascii")
+            replace_once(
+                repo / POSITIVE_REGISTRY_CHECKER,
+                '        "model_bundle_well_formed",\n        "model-bundle-proof",',
+                '        "artifact_authenticated",\n        "bundle-auth",',
+            )
+
+        add(
+            "Validated theorem selector misuse",
+            "foundation selector misuses Validated",
+            (POSITIVE_REGISTRY, POSITIVE_REGISTRY_CHECKER),
+            validated_theorem_misuse,
+        )
+
+        def unsupported_mutation_misuse(repo: Path) -> None:
+            registry = repo / NEGATIVE_REGISTRY
+            source = registry.read_text(encoding="ascii")
+            old = "|rollback_refined|speculation-proof|"
+            new = "|distribution_preserved|speculation-proof|"
+            if source.count(old) != 1:
+                raise AssertionError("rollback mutation registry anchor drifted")
+            registry.write_text(source.replace(old, new, 1), encoding="ascii")
+            replace_once(
+                repo / NEGATIVE_REGISTRY_CHECKER,
+                '"speculative-step-composition", "rollback_refined", "speculation-proof",',
+                '"speculative-step-composition", "distribution_preserved", "speculation-proof",',
+            )
+
+        add(
+            "Unsupported mutation selector misuse",
+            "foundation selector misuses Unsupported",
+            (NEGATIVE_REGISTRY, NEGATIVE_REGISTRY_CHECKER),
+            unsupported_mutation_misuse,
         )
         add(
             "missing validator",
