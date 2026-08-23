@@ -71,6 +71,47 @@ const INPUT_FILES: &[&str] = &[
 
 const OUTPUT_FILES: &[&str] = &["admission.json", "protocol.json"];
 
+/// Descriptor-held view of one policy root after the existing admission checks.
+pub(super) struct HeldValidatedPolicy {
+    admission: Value,
+    admission_bytes: Vec<u8>,
+    root: PolicyRoot,
+}
+
+impl HeldValidatedPolicy {
+    pub(super) fn admission(&self) -> &Value {
+        &self.admission
+    }
+
+    pub(super) fn admission_bytes(&self) -> &[u8] {
+        &self.admission_bytes
+    }
+
+    pub(super) fn document_bytes(&self, path: &str) -> BenchResult<&[u8]> {
+        Ok(&self.root.document(path)?.bytes)
+    }
+
+    pub(super) fn document_value(&self, path: &str) -> BenchResult<&Value> {
+        Ok(&self.root.document(path)?.value)
+    }
+
+    pub(super) fn revalidate(&mut self) -> BenchResult<()> {
+        self.root.revalidate()
+    }
+}
+
+/// Holds and validates the exact original policy root without publishing admission.
+pub(super) fn hold_validated_policy(path: &Path) -> BenchResult<HeldValidatedPolicy> {
+    let root = PolicyRoot::open(path)?;
+    let admission = validate_policy(&root)?;
+    let admission_bytes = encode_canonical_document(&admission)?;
+    Ok(HeldValidatedPolicy {
+        admission,
+        admission_bytes,
+        root,
+    })
+}
+
 struct HeldDocument {
     bytes: Vec<u8>,
     file: File,
@@ -1617,7 +1658,7 @@ fn same_directory_publication_transition(initial: &Stat, published: &Stat) -> bo
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use std::cell::RefCell;
     use std::fs;
@@ -1627,7 +1668,7 @@ mod tests {
 
     static NONCE: AtomicU64 = AtomicU64::new(0);
 
-    struct TestDirectory(PathBuf);
+    pub(crate) struct TestDirectory(pub(crate) PathBuf);
 
     impl TestDirectory {
         fn new() -> Self {
@@ -1676,7 +1717,7 @@ mod tests {
         sha256_identity(&encode_canonical_document(members).unwrap())
     }
 
-    fn fixture() -> (TestDirectory, PathBuf, PathBuf) {
+    pub(crate) fn fixture() -> (TestDirectory, PathBuf, PathBuf) {
         let temporary = TestDirectory::new();
         let root = temporary.0.join("policy");
         fs::create_dir(&root).unwrap();

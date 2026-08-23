@@ -1,0 +1,62 @@
+{
+  "admission_format": "FERRIC-M1-D10-EXPERIMENT-POLICY-ADMISSION-V1",
+  "authority": "source-controlled-d10-observation-validation-protocol-only",
+  "case_roster": [
+    {
+      "case_id": "flash-attention-prefill",
+      "kernel_family": "k4-gqa-prefill"
+    },
+    {
+      "case_id": "gemm-gemv",
+      "kernel_family": "k1-gemm-gemv"
+    },
+    {
+      "case_id": "gqa-paged-decode",
+      "kernel_family": "k5-paged-gqa-decode"
+    },
+    {
+      "case_id": "logits-argmax",
+      "kernel_family": "k7-logits-compact"
+    },
+    {
+      "case_id": "rmsnorm-residual",
+      "kernel_family": "k2-rmsnorm-residual"
+    },
+    {
+      "case_id": "rope-paged-kv",
+      "kernel_family": "k3-rope-paged-kv"
+    },
+    {
+      "case_id": "swiglu-projection",
+      "kernel_family": "k6-swiglu"
+    }
+  ],
+  "exact_aggregate_maximum_case_weight": 8192,
+  "format": "FERRIC-M1-D10-POLICY-OBSERVATION-VALIDATION-PROTOCOL-V1",
+  "future_required_binding": "policy-sha256-bound-d10-observation-validator",
+  "implementation_roster": [
+    "ferric-reference",
+    "ferric",
+    "vendor"
+  ],
+  "input_format": "FERRIC-M1-D10-POLICY-OBSERVATIONS-V1",
+  "nonclaim": "This protocol checks exact canonical raw D10 observation structure, order, one exact shared admitted holdout member per case, equal policy tuning budgets, and recomputes policy-bound integer throughput medians and gates. Telemetry/resource companions define identities but no parseable raw-output schema, so only those identities are bound; their output bytes and semantics are not authenticated. It does not validate externally supplied policy values, observation truth, timing hardware, telemetry meaning, kernel correctness, independent reproduction, qualification, or close m1.r31.",
+  "observation_bundle_roster": [
+    "observations.json",
+    "protocol.json"
+  ],
+  "order_projection": "canonical-array-of-implementation-exact-holdout-member-and-ordered-sample-id-rosters-in-ferric-reference-ferric-vendor-order-with-inapplicable-vendor-null-and-empty",
+  "output_format": "FERRIC-M1-D10-POLICY-OBSERVATION-VALIDATION-V1",
+  "publication_roster": [
+    "observations.json",
+    "protocol.json",
+    "validation.json"
+  ],
+  "rate_formula": "floor-of-policy-work-unit-count-per-iteration-times-iterations-times-1000000000-divided-by-positive-elapsed-nanoseconds",
+  "rate_unit": "integer-policy-work-units-per-second",
+  "recorded_samples": 30,
+  "status": "PARTIAL_NON_EVIDENCE",
+  "suite": "d10",
+  "target": "gfx942:xnack-",
+  "warmups": 10
+}
