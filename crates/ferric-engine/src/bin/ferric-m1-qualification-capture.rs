@@ -215,20 +215,6 @@ enum DecodeInitialPhaseCustodyV1 {
         _table: ferric_engine::BoundM1KvWorkspaceTableV1,
         _workspace_plan: ferric_build::AddresslessM1StepWorkspacePlan,
     },
-    CompletionOutput {
-        _diagnostic: ferric_engine::M1CompletionOutputErrorV1,
-        _plans: Vec<StepPlan>,
-        _table: ferric_engine::BoundM1KvWorkspaceTableV1,
-        _workspace_plan: ferric_build::AddresslessM1StepWorkspacePlan,
-        _recipe: ferric_engine::AddresslessM1PhysicalBufferRecipeV1,
-    },
-    QualificationLogits {
-        _failure: Box<ferric_engine::M1QualificationLogitsAllocationFailureV1>,
-        _plans: Vec<StepPlan>,
-        _table: ferric_engine::BoundM1KvWorkspaceTableV1,
-        _workspace_plan: ferric_build::AddresslessM1StepWorkspacePlan,
-        _recipe: ferric_engine::AddresslessM1PhysicalBufferRecipeV1,
-    },
 }
 
 struct DecodeInitialDispatchAbandonmentV1 {
@@ -291,20 +277,6 @@ enum PrefillInitialPhaseCustodyV1 {
         _plans: Vec<StepPlan>,
         _table: ferric_engine::BoundM1KvWorkspaceTableV1,
         _workspace_plan: ferric_build::AddresslessM1StepWorkspacePlan,
-    },
-    CompletionOutput {
-        _diagnostic: ferric_engine::M1CompletionOutputErrorV1,
-        _plans: Vec<StepPlan>,
-        _table: ferric_engine::BoundM1KvWorkspaceTableV1,
-        _workspace_plan: ferric_build::AddresslessM1StepWorkspacePlan,
-        _recipe: ferric_engine::AddresslessM1PhysicalBufferRecipeV1,
-    },
-    QualificationLogits {
-        _failure: Box<ferric_engine::M1QualificationLogitsAllocationFailureV1>,
-        _plans: Vec<StepPlan>,
-        _table: ferric_engine::BoundM1KvWorkspaceTableV1,
-        _workspace_plan: ferric_build::AddresslessM1StepWorkspacePlan,
-        _recipe: ferric_engine::AddresslessM1PhysicalBufferRecipeV1,
     },
 }
 
@@ -487,6 +459,31 @@ struct R30RollbackCacheCustodyV1<T> {
 }
 
 impl<T: CaptureTerminalCustodyV1> CaptureTerminalCustodyV1 for R30RollbackCacheCustodyV1<T> {}
+
+enum SingleSpeculativePrepublicationFailureV1 {
+    Workspace {
+        _failure: ferric_engine::M1PrepublicationAllocationFailureV1,
+        _recipe: ferric_engine::AddresslessM1PhysicalBufferRecipeV1,
+    },
+    CompletionOutput {
+        _allocated: Box<ferric_engine::M1AllocatedScheduledStepV1>,
+        _diagnostic: ferric_engine::M1CompletionOutputErrorV1,
+        _recipe: ferric_engine::AddresslessM1PhysicalBufferRecipeV1,
+    },
+    DiagnosticChoices {
+        _allocated: Box<ferric_engine::M1AllocatedScheduledStepV1>,
+        _failure: Box<ferric_engine::M1SpeculativeDiagnosticChoicesAllocationFailureV1>,
+        _recipe: ferric_engine::AddresslessM1PhysicalBufferRecipeV1,
+    },
+}
+
+struct SingleSpeculativePrepublicationAbandonmentV1 {
+    _engine: ferric_engine::M1CaptureQuarantinedEngineV1<1>,
+    _cache: ActiveDeviceKvCache,
+    _phase: Box<SingleSpeculativePrepublicationFailureV1>,
+}
+
+impl CaptureTerminalCustodyV1 for SingleSpeculativePrepublicationAbandonmentV1 {}
 
 struct R30RollbackChoiceCustodyV1<T> {
     _choices: ferric_engine::M1ObservedSpeculativeDiagnosticChoicesV1,
@@ -936,6 +933,22 @@ fn abandon_prefill_initial_dispatch(
             _active_lengths: active_lengths,
             _context_lengths: context_lengths,
             _scheduled: scheduled,
+            _phase: Box::new(phase),
+        },
+    )
+}
+
+fn abandon_single_speculative_prepublication(
+    phase_name: &'static str,
+    engine: Engine<1>,
+    cache: ActiveDeviceKvCache,
+    phase: SingleSpeculativePrepublicationFailureV1,
+) -> ! {
+    terminal_quarantine(
+        phase_name,
+        SingleSpeculativePrepublicationAbandonmentV1 {
+            _engine: engine.into_m1_capture_quarantine(),
+            _cache: cache,
             _phase: Box::new(phase),
         },
     )
@@ -2394,23 +2407,6 @@ fn execute_r30_rollback_capture(
         workload_workspace_plan(draft_decode, draft_workspace_identity)?,
         workload_workspace_plan(target, target_workspace_identity)?,
     );
-    let prepared = runner
-        .prepare_scheduled_workspaces(scheduled, plans, tables)
-        .map_err(|failure| format!("cannot prepare rollback workspaces: {failure:?}"))?;
-    let completion = memory
-        .allocate_completion_output(target)
-        .map_err(|error| format!("cannot allocate rollback compact output: {error:?}"))?;
-    let completion = memory
-        .enable_speculative_k4_diagnostic_choices_capture(completion)
-        .map_err(|failure| {
-            format!(
-                "cannot attach rollback choice readbacks: {:?}",
-                failure.error()
-            )
-        })?;
-    let allocated = runner
-        .allocate_scheduled_workspaces(memory, prepared)
-        .map_err(|failure| format!("cannot allocate rollback workspaces: {failure:?}"))?;
     let recipe = match runner.derive_step_recipe(
         M1StepDispatchIntent::SpeculativeRound(target),
         M1FullStepWorkspacePlans::speculative_round(
@@ -2424,6 +2420,47 @@ fn execute_r30_rollback_capture(
                 "cannot derive exact rollback physical recipe: {failure:?}"
             ))
         }
+    };
+    let prepared = runner
+        .prepare_scheduled_workspaces(scheduled, plans, tables)
+        .map_err(|failure| format!("cannot prepare rollback workspaces: {failure:?}"))?;
+    let mut allocated = match runner.allocate_scheduled_workspaces(memory, prepared) {
+        Ok(allocated) => allocated,
+        Err(failure) => abandon_single_speculative_prepublication(
+            "r30 rollback workspace allocation failure",
+            engine,
+            cache,
+            SingleSpeculativePrepublicationFailureV1::Workspace {
+                _failure: failure,
+                _recipe: recipe,
+            },
+        ),
+    };
+    let completion = match allocated.allocate_completion_output(target) {
+        Ok(completion) => completion,
+        Err(diagnostic) => abandon_single_speculative_prepublication(
+            "r30 rollback compact output allocation failure",
+            engine,
+            cache,
+            SingleSpeculativePrepublicationFailureV1::CompletionOutput {
+                _allocated: Box::new(allocated),
+                _diagnostic: diagnostic,
+                _recipe: recipe,
+            },
+        ),
+    };
+    let completion = match allocated.enable_speculative_k4_diagnostic_choices_capture(completion) {
+        Ok(completion) => completion,
+        Err(failure) => abandon_single_speculative_prepublication(
+            "r30 rollback diagnostic choice allocation failure",
+            engine,
+            cache,
+            SingleSpeculativePrepublicationFailureV1::DiagnosticChoices {
+                _allocated: Box::new(allocated),
+                _failure: failure,
+                _recipe: recipe,
+            },
+        ),
     };
     let published =
         match publish_first_step_with_retries(runner, &mut engine, allocated, recipe, completion) {
@@ -2734,18 +2771,6 @@ fn execute_r32_speculative_capture(
         workload_workspace_plan(draft_decode, draft_workspace_identity)?,
         workload_workspace_plan(target, target_workspace_identity)?,
     );
-    let prepared = runner
-        .prepare_scheduled_workspaces(scheduled, plans, tables)
-        .map_err(|failure| format!("cannot prepare r32 workspaces: {failure:?}"))?;
-    let completion = memory
-        .allocate_completion_output(target)
-        .map_err(|error| format!("cannot allocate r32 compact output: {error:?}"))?;
-    let completion = memory
-        .enable_speculative_k4_diagnostic_choices_capture(completion)
-        .map_err(|failure| format!("cannot attach r32 choice readbacks: {:?}", failure.error()))?;
-    let allocated = runner
-        .allocate_scheduled_workspaces(memory, prepared)
-        .map_err(|failure| format!("cannot allocate r32 workspaces: {failure:?}"))?;
     let recipe = match runner.derive_step_recipe(
         M1StepDispatchIntent::SpeculativeRound(target),
         M1FullStepWorkspacePlans::speculative_round(
@@ -2759,6 +2784,47 @@ fn execute_r32_speculative_capture(
                 "cannot derive exact r32 physical recipe: {failure:?}"
             ))
         }
+    };
+    let prepared = runner
+        .prepare_scheduled_workspaces(scheduled, plans, tables)
+        .map_err(|failure| format!("cannot prepare r32 workspaces: {failure:?}"))?;
+    let mut allocated = match runner.allocate_scheduled_workspaces(memory, prepared) {
+        Ok(allocated) => allocated,
+        Err(failure) => abandon_single_speculative_prepublication(
+            "r32 workspace allocation failure",
+            engine,
+            cache,
+            SingleSpeculativePrepublicationFailureV1::Workspace {
+                _failure: failure,
+                _recipe: recipe,
+            },
+        ),
+    };
+    let completion = match allocated.allocate_completion_output(target) {
+        Ok(completion) => completion,
+        Err(diagnostic) => abandon_single_speculative_prepublication(
+            "r32 compact output allocation failure",
+            engine,
+            cache,
+            SingleSpeculativePrepublicationFailureV1::CompletionOutput {
+                _allocated: Box::new(allocated),
+                _diagnostic: diagnostic,
+                _recipe: recipe,
+            },
+        ),
+    };
+    let completion = match allocated.enable_speculative_k4_diagnostic_choices_capture(completion) {
+        Ok(completion) => completion,
+        Err(failure) => abandon_single_speculative_prepublication(
+            "r32 diagnostic choice allocation failure",
+            engine,
+            cache,
+            SingleSpeculativePrepublicationFailureV1::DiagnosticChoices {
+                _allocated: Box::new(allocated),
+                _failure: failure,
+                _recipe: recipe,
+            },
+        ),
     };
     let published =
         match publish_first_step_with_retries(runner, &mut engine, allocated, recipe, completion) {
@@ -3641,13 +3707,21 @@ enum FirstGenerationPhaseFailureV1<'runner> {
     Preparation {
         _memory: Box<ferric_engine::M1PartitionedModelMemoryKvPoolV1>,
         _recipe: ferric_engine::AddresslessM1PhysicalBufferRecipeV1,
-        _completion: ferric_engine::BoundM1CompletionOutputV1,
         _failure: Box<CapturePreparationFailureV1>,
     },
     Allocation {
         _recipe: ferric_engine::AddresslessM1PhysicalBufferRecipeV1,
-        _completion: ferric_engine::BoundM1CompletionOutputV1,
         _failure: Box<CaptureAllocationFailureV1>,
+    },
+    CompletionOutput {
+        _allocated: Box<ferric_engine::M1AllocatedScheduledStepV1>,
+        _recipe: ferric_engine::AddresslessM1PhysicalBufferRecipeV1,
+        _diagnostic: ferric_engine::M1CompletionOutputErrorV1,
+    },
+    QualificationLogits {
+        _allocated: Box<ferric_engine::M1AllocatedScheduledStepV1>,
+        _recipe: ferric_engine::AddresslessM1PhysicalBufferRecipeV1,
+        _failure: Box<ferric_engine::M1QualificationLogitsAllocationFailureV1>,
     },
     Publication {
         _failure: ferric_engine::M1PhysicalRunnerFirstPublicationExhaustedV1<'runner>,
@@ -4349,7 +4423,7 @@ fn execute_decode_capture(
             PrePhysicalDiagnosticV1::Engine(diagnostic),
         ),
     };
-    let (mut memory, mut caches) = preleased.into_parts();
+    let (memory, mut caches) = preleased.into_parts();
     let device_id = memory.device().device_id();
     if let Err(diagnostic) = validate_scheduled_roster(&scheduled, &requests, 0) {
         abandon_decode_initial_dispatch(
@@ -4479,44 +4553,6 @@ fn execute_decode_capture(
             },
         ),
     };
-    let completion = match memory.allocate_completion_output(selection) {
-        Ok(completion) => completion,
-        Err(diagnostic) => abandon_decode_initial_dispatch(
-            "ordinal-zero compact completion allocation",
-            engine,
-            memory,
-            caches,
-            requests,
-            initial_contexts,
-            scheduled,
-            DecodeInitialPhaseCustodyV1::CompletionOutput {
-                _diagnostic: diagnostic,
-                _plans: plans,
-                _table: table,
-                _workspace_plan: workspace_plan,
-                _recipe: recipe,
-            },
-        ),
-    };
-    let completion = match memory.enable_qualification_logits_capture(completion) {
-        Ok(completion) => completion,
-        Err(failure) => abandon_decode_initial_dispatch(
-            "ordinal-zero qualification logits allocation",
-            engine,
-            memory,
-            caches,
-            requests,
-            initial_contexts,
-            scheduled,
-            DecodeInitialPhaseCustodyV1::QualificationLogits {
-                _failure: failure,
-                _plans: plans,
-                _table: table,
-                _workspace_plan: workspace_plan,
-                _recipe: recipe,
-            },
-        ),
-    };
     let prepared = match prepare_scheduled_workspaces_with_retries(
         runner,
         scheduled,
@@ -4535,12 +4571,11 @@ fn execute_decode_capture(
             FirstGenerationPhaseFailureV1::Preparation {
                 _memory: Box::new(memory),
                 _recipe: recipe,
-                _completion: completion,
                 _failure: failure,
             },
         ),
     };
-    let allocated = match allocate_scheduled_workspaces_with_retries(runner, memory, prepared) {
+    let mut allocated = match allocate_scheduled_workspaces_with_retries(runner, memory, prepared) {
         Ok(allocated) => allocated,
         Err(failure) => abandon_first_generation(
             "ordinal-zero allocation retry exhaustion",
@@ -4552,7 +4587,40 @@ fn execute_decode_capture(
             },
             FirstGenerationPhaseFailureV1::Allocation {
                 _recipe: recipe,
-                _completion: completion,
+                _failure: failure,
+            },
+        ),
+    };
+    let completion = match allocated.allocate_completion_output(selection) {
+        Ok(completion) => completion,
+        Err(diagnostic) => abandon_first_generation(
+            "ordinal-zero compact completion allocation",
+            engine,
+            FirstGenerationLiveEvidenceV1::Decode {
+                _caches: caches,
+                _requests: requests,
+                _contexts: initial_contexts,
+            },
+            FirstGenerationPhaseFailureV1::CompletionOutput {
+                _allocated: Box::new(allocated),
+                _recipe: recipe,
+                _diagnostic: diagnostic,
+            },
+        ),
+    };
+    let completion = match allocated.enable_qualification_logits_capture(completion) {
+        Ok(completion) => completion,
+        Err(failure) => abandon_first_generation(
+            "ordinal-zero qualification logits allocation",
+            engine,
+            FirstGenerationLiveEvidenceV1::Decode {
+                _caches: caches,
+                _requests: requests,
+                _contexts: initial_contexts,
+            },
+            FirstGenerationPhaseFailureV1::QualificationLogits {
+                _allocated: Box::new(allocated),
+                _recipe: recipe,
                 _failure: failure,
             },
         ),
@@ -5709,51 +5777,6 @@ fn execute_prefill_capture(
             },
         ),
     };
-    let completion = match match purpose {
-        CapturePurposeV1::R30PartialCanary => memory.allocate_guarded_completion_output(selection),
-        CapturePurposeV1::Qualification | CapturePurposeV1::R30PartialCancellation => {
-            memory.allocate_completion_output(selection)
-        }
-    } {
-        Ok(completion) => completion,
-        Err(diagnostic) => abandon_prefill_initial_dispatch(
-            "prefill compact completion allocation",
-            engine,
-            memory,
-            caches,
-            requests,
-            active_lengths,
-            context_lengths,
-            scheduled,
-            PrefillInitialPhaseCustodyV1::CompletionOutput {
-                _diagnostic: diagnostic,
-                _plans: plans,
-                _table: table,
-                _workspace_plan: workspace_plan,
-                _recipe: recipe,
-            },
-        ),
-    };
-    let completion = match memory.enable_qualification_logits_capture(completion) {
-        Ok(completion) => completion,
-        Err(failure) => abandon_prefill_initial_dispatch(
-            "prefill qualification logits allocation",
-            engine,
-            memory,
-            caches,
-            requests,
-            active_lengths,
-            context_lengths,
-            scheduled,
-            PrefillInitialPhaseCustodyV1::QualificationLogits {
-                _failure: failure,
-                _plans: plans,
-                _table: table,
-                _workspace_plan: workspace_plan,
-                _recipe: recipe,
-            },
-        ),
-    };
     let prepared = match prepare_scheduled_workspaces_with_retries(
         runner,
         scheduled,
@@ -5773,12 +5796,11 @@ fn execute_prefill_capture(
             FirstGenerationPhaseFailureV1::Preparation {
                 _memory: Box::new(memory),
                 _recipe: recipe,
-                _completion: completion,
                 _failure: failure,
             },
         ),
     };
-    let allocated = match allocate_scheduled_workspaces_with_retries(runner, memory, prepared) {
+    let mut allocated = match allocate_scheduled_workspaces_with_retries(runner, memory, prepared) {
         Ok(allocated) => allocated,
         Err(failure) => abandon_first_generation(
             "prefill allocation retry exhaustion",
@@ -5791,7 +5813,50 @@ fn execute_prefill_capture(
             },
             FirstGenerationPhaseFailureV1::Allocation {
                 _recipe: recipe,
-                _completion: completion,
+                _failure: failure,
+            },
+        ),
+    };
+    let completion = match purpose {
+        CapturePurposeV1::R30PartialCanary => {
+            allocated.allocate_guarded_completion_output(selection)
+        }
+        CapturePurposeV1::Qualification | CapturePurposeV1::R30PartialCancellation => {
+            allocated.allocate_completion_output(selection)
+        }
+    };
+    let completion = match completion {
+        Ok(completion) => completion,
+        Err(diagnostic) => abandon_first_generation(
+            "prefill compact completion allocation",
+            engine,
+            FirstGenerationLiveEvidenceV1::Prefill {
+                _caches: caches,
+                _requests: requests,
+                _active_lengths: active_lengths,
+                _context_lengths: context_lengths,
+            },
+            FirstGenerationPhaseFailureV1::CompletionOutput {
+                _allocated: Box::new(allocated),
+                _recipe: recipe,
+                _diagnostic: diagnostic,
+            },
+        ),
+    };
+    let completion = match allocated.enable_qualification_logits_capture(completion) {
+        Ok(completion) => completion,
+        Err(failure) => abandon_first_generation(
+            "prefill qualification logits allocation",
+            engine,
+            FirstGenerationLiveEvidenceV1::Prefill {
+                _caches: caches,
+                _requests: requests,
+                _active_lengths: active_lengths,
+                _context_lengths: context_lengths,
+            },
+            FirstGenerationPhaseFailureV1::QualificationLogits {
+                _allocated: Box::new(allocated),
+                _recipe: recipe,
                 _failure: failure,
             },
         ),

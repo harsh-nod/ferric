@@ -1429,12 +1429,12 @@ mod tests {
                 tables,
             )
             .expect("prepare scheduler-bound workspace image");
-        let completion = memory
-            .allocate_completion_output(selection)
-            .expect("allocate completion output");
-        let allocated = runner
+        let mut allocated = runner
             .allocate_scheduled_workspaces(memory, prepared)
             .expect("allocate initialized target workspace");
+        let completion = allocated
+            .allocate_completion_output(selection)
+            .expect("allocate completion output after device workspaces");
         let recipe = match runner.derive_step_recipe(
             M1StepDispatchIntent::TargetOnly(selection),
             M1FullStepWorkspacePlans::target_only(workspace_plan(selection, 90)),
@@ -1672,15 +1672,15 @@ mod tests {
         let prepared = runner
             .prepare_scheduled_workspaces(scheduled, plans, tables)
             .expect("prepare scheduler-bound S1/K4 workspace images");
-        let completion = memory
-            .allocate_completion_output(target)
-            .expect("allocate compact completion output");
-        let completion = memory
-            .enable_speculative_k4_diagnostic_choices_capture(completion)
-            .expect("attach exact draft and target choice outputs");
-        let allocated = runner
+        let mut allocated = runner
             .allocate_scheduled_workspaces(memory, prepared)
             .expect("allocate initialized speculative workspaces");
+        let completion = allocated
+            .allocate_completion_output(target)
+            .expect("allocate compact completion output after device workspaces");
+        let completion = allocated
+            .enable_speculative_k4_diagnostic_choices_capture(completion)
+            .expect("attach exact draft and target choice outputs");
         let recipe = match runner.derive_step_recipe(
             M1StepDispatchIntent::SpeculativeRound(target),
             M1FullStepWorkspacePlans::speculative_round(

@@ -361,6 +361,21 @@ impl M1PreparedScheduledWorkspaceImagesV1 {
 }
 
 /// Allocated workspace owners joined to scheduler and KV authority.
+///
+/// Completion host ranges are intentionally available only from this phase,
+/// after the final device workspace has fixed the generic allocation ordering.
+///
+/// ```compile_fail
+/// use ferric_engine::M1PartitionedModelMemoryKvPoolV1;
+/// use ferric_spec::Qwen3PlanSelection;
+///
+/// fn allocate_too_early(
+///     memory: &mut M1PartitionedModelMemoryKvPoolV1,
+///     selection: Qwen3PlanSelection,
+/// ) {
+///     let _ = memory.allocate_completion_output(selection);
+/// }
+/// ```
 #[must_use = "allocated prepublication custody must enter physical batch construction"]
 #[derive(Debug)]
 pub struct M1AllocatedScheduledStepV1 {
@@ -390,6 +405,69 @@ impl M1AllocatedScheduledStepV1 {
     #[must_use = "partitioned memory custody remains retained through prepublication"]
     pub const fn partitioned_memory(&self) -> &M1PartitionedModelMemoryKvPoolV1 {
         &self.partitioned_memory
+    }
+
+    /// Allocates the ordinary compact output after every device workspace.
+    ///
+    /// This ordering keeps the generic host-range data index stable through
+    /// queue construction because this allocated-step phase cannot append
+    /// another device allocation.
+    ///
+    /// # Errors
+    ///
+    /// Returns the exact compact-output allocation diagnostic while retaining
+    /// this allocated step unchanged apart from the allocation session's
+    /// documented failure state.
+    pub fn allocate_completion_output(
+        &mut self,
+        selection: Qwen3PlanSelection,
+    ) -> Result<BoundM1CompletionOutputV1, crate::M1CompletionOutputErrorV1> {
+        self.partitioned_memory
+            .allocate_completion_output(selection)
+    }
+
+    /// Allocates the guarded compact output after every device workspace.
+    ///
+    /// # Errors
+    ///
+    /// Returns the exact guarded-output allocation diagnostic while retaining
+    /// allocated-step custody.
+    pub fn allocate_guarded_completion_output(
+        &mut self,
+        selection: Qwen3PlanSelection,
+    ) -> Result<BoundM1CompletionOutputV1, crate::M1CompletionOutputErrorV1> {
+        self.partitioned_memory
+            .allocate_guarded_completion_output(selection)
+    }
+
+    /// Attaches qualification logits without permitting another device allocation.
+    ///
+    /// # Errors
+    ///
+    /// Returns the exact attachment failure with compact-output custody.
+    pub fn enable_qualification_logits_capture(
+        &mut self,
+        completion: BoundM1CompletionOutputV1,
+    ) -> Result<BoundM1CompletionOutputV1, Box<crate::M1QualificationLogitsAllocationFailureV1>>
+    {
+        self.partitioned_memory
+            .enable_qualification_logits_capture(completion)
+    }
+
+    /// Attaches S1/K4 diagnostic choices after every device allocation.
+    ///
+    /// # Errors
+    ///
+    /// Returns the exact attachment failure with compact-output custody.
+    pub fn enable_speculative_k4_diagnostic_choices_capture(
+        &mut self,
+        completion: BoundM1CompletionOutputV1,
+    ) -> Result<
+        BoundM1CompletionOutputV1,
+        Box<crate::M1SpeculativeDiagnosticChoicesAllocationFailureV1>,
+    > {
+        self.partitioned_memory
+            .enable_speculative_k4_diagnostic_choices_capture(completion)
     }
 
     fn into_parts(

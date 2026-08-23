@@ -1017,7 +1017,7 @@ impl M1PartitionedModelMemoryKvPoolV1 {
     ///
     /// Rejects selection, extent, allocation, mapping, or range drift while
     /// retaining the allocation session inside the pool.
-    pub fn allocate_completion_output(
+    pub(crate) fn allocate_completion_output(
         &mut self,
         selection: Qwen3PlanSelection,
     ) -> Result<BoundM1CompletionOutputV1, M1CompletionOutputErrorV1> {
@@ -1033,7 +1033,7 @@ impl M1PartitionedModelMemoryKvPoolV1 {
     ///
     /// Rejects selection, guarded layout, initialized allocation, mapping, or
     /// range drift while retaining the allocation session inside the pool.
-    pub fn allocate_guarded_completion_output(
+    pub(crate) fn allocate_guarded_completion_output(
         &mut self,
         selection: Qwen3PlanSelection,
     ) -> Result<BoundM1CompletionOutputV1, M1CompletionOutputErrorV1> {
@@ -1049,7 +1049,7 @@ impl M1PartitionedModelMemoryKvPoolV1 {
     ///
     /// Rejects shape, allocation, mapping, or range drift while retaining the
     /// already-bound compact output inside the boxed failure.
-    pub fn enable_qualification_logits_capture(
+    pub(crate) fn enable_qualification_logits_capture(
         &mut self,
         completion: BoundM1CompletionOutputV1,
     ) -> Result<BoundM1CompletionOutputV1, Box<crate::M1QualificationLogitsAllocationFailureV1>>
@@ -1067,7 +1067,7 @@ impl M1PartitionedModelMemoryKvPoolV1 {
     ///
     /// Rejects another selection or allocation/range drift while returning the
     /// unchanged compact output inside the boxed failure.
-    pub fn enable_speculative_k4_diagnostic_choices_capture(
+    pub(crate) fn enable_speculative_k4_diagnostic_choices_capture(
         &mut self,
         completion: BoundM1CompletionOutputV1,
     ) -> Result<
