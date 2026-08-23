@@ -392,6 +392,7 @@ impl M1PhysicalRunnerV1 {
                 return M1PhysicalRunnerFirstCompletionOutcomeV1::QueueQuarantined {
                     stage: M1PhysicalRunnerQueueFailureStageV1::Wait,
                     failure: Box::new(failure),
+                    roster,
                 };
             }
         };
@@ -402,23 +403,26 @@ impl M1PhysicalRunnerV1 {
                 return M1PhysicalRunnerFirstCompletionOutcomeV1::QueueQuarantined {
                     stage: M1PhysicalRunnerQueueFailureStageV1::Recycle,
                     failure: Box::new(failure),
+                    roster,
                 };
             }
         };
         let observed = match recycled.observe_completion() {
             Ok(observed) => observed,
             Err(failure) => {
-                return M1PhysicalRunnerFirstCompletionOutcomeV1::ObservationRejected(Box::new(
-                    failure,
-                ))
+                return M1PhysicalRunnerFirstCompletionOutcomeV1::ObservationRejected {
+                    failure: Box::new(failure),
+                    roster,
+                }
             }
         };
         let readback = match observed.check_completion(semantics) {
             Ok(readback) => readback,
             Err(failure) => {
-                return M1PhysicalRunnerFirstCompletionOutcomeV1::ReadbackRejected(Box::new(
-                    failure,
-                ))
+                return M1PhysicalRunnerFirstCompletionOutcomeV1::ReadbackRejected {
+                    failure: Box::new(failure),
+                    roster,
+                }
             }
         };
         match complete_m1_physical_step_v1(engine, readback, roster) {
@@ -708,9 +712,16 @@ pub enum M1PhysicalRunnerFirstCompletionOutcomeV1 {
     QueueQuarantined {
         stage: M1PhysicalRunnerQueueFailureStageV1,
         failure: Box<M1PhysicalQueueOperationFailureV1>,
+        roster: M1DeviceKvCompletionRosterV1,
     },
-    ObservationRejected(Box<M1CompletionObservationFailureV1>),
-    ReadbackRejected(Box<M1CompletedReadbackJoinFailureV1>),
+    ObservationRejected {
+        failure: Box<M1CompletionObservationFailureV1>,
+        roster: M1DeviceKvCompletionRosterV1,
+    },
+    ReadbackRejected {
+        failure: Box<M1CompletedReadbackJoinFailureV1>,
+        roster: M1DeviceKvCompletionRosterV1,
+    },
     CompletionNotCommitted(M1CompletedStepOutcomeV1),
     PageReleaseRejected(Box<M1CompletedStepKvReleaseFailureV1>),
 }

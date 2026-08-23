@@ -1136,6 +1136,10 @@ pub enum M1LongLivedQueueRearmKvInputsV1 {
         target: ferric_spec::ValidatedM1StepInputs,
         target_page_leases: Vec<Vec<crate::DeviceKvPageLease>>,
     },
+    QualificationTargetOnly {
+        target: ferric_spec::ValidatedM1StepInputs,
+        contexts: Vec<crate::M1ValidatedQualificationContextStepV1>,
+    },
     SpeculativeRound {
         draft_decode: ferric_spec::ValidatedM1StepInputs,
         target_speculative: ferric_spec::ValidatedM1StepInputs,
@@ -1153,6 +1157,15 @@ impl M1LongLivedQueueRearmKvInputsV1 {
             target,
             target_page_leases,
         }
+    }
+
+    /// Binds one C8192 teacher-forced or terminal step to the exact validated
+    /// context witnesses whose attached cache reserves own all future pages.
+    pub const fn qualification_target_only(
+        target: ferric_spec::ValidatedM1StepInputs,
+        contexts: Vec<crate::M1ValidatedQualificationContextStepV1>,
+    ) -> Self {
+        Self::QualificationTargetOnly { target, contexts }
     }
 
     pub const fn speculative_round(
@@ -1263,6 +1276,20 @@ fn input_roster_matches(
             })
 }
 
+fn qualification_logits_preflight(
+    selection: Qwen3PlanSelection,
+    logits: Option<&crate::BoundM1QualificationLogitsV1>,
+) -> bool {
+    let Some(logits) = logits else {
+        return false;
+    };
+    let Ok(expected) = crate::m1_qualification_logits_shape_v1(selection) else {
+        return false;
+    };
+    logits.shape() == expected
+        && logits.retained_host_dispatch_range().extent_bytes() == expected.extent_bytes()
+}
+
 /// Installs exact next-epoch KV reservations inside the retained selected caches
 /// and binds the closed target-only or speculative workspace tables.
 ///
@@ -1333,6 +1360,62 @@ fn reserve_m1_long_lived_queue_rearm_kv_inner_v1(
                     return Err(kv_reservation_failure(
                         M1LongLivedQueueRearmKvReservationPhaseV1::TargetTableBinding,
                         (scheduled, target_page_leases, failure),
+                    ));
+                }
+            };
+            Ok(M1ReservedLongLivedQueueRearmV1 {
+                scheduled,
+                tables: M1FullStepKvWorkspaceTablesV1::TargetOnly { target },
+            })
+        }
+        M1LongLivedQueueRearmKvInputsV1::QualificationTargetOnly { target, contexts } => {
+            let custody = scheduled.queue.custody();
+            if scheduled.queue.shape() != M1PhysicalFixedBatchShapeV1::TargetOnly
+                || !input_roster_matches(&scheduled, &target)
+                || contexts.len() != scheduled.selected.len()
+                || !qualification_logits_preflight(
+                    custody.selection(),
+                    custody.completion_output().qualification_logits(),
+                )
+            {
+                return Err(kv_reservation_failure(
+                    M1LongLivedQueueRearmKvReservationPhaseV1::Preflight,
+                    (scheduled, target, contexts),
+                ));
+            }
+            let mut reservations = Vec::new();
+            if reservations
+                .try_reserve_exact(scheduled.selected.len())
+                .is_err()
+            {
+                return Err(kv_reservation_failure(
+                    M1LongLivedQueueRearmKvReservationPhaseV1::Preflight,
+                    (scheduled, target, contexts),
+                ));
+            }
+            for (lane, context) in contexts.iter().copied().enumerate() {
+                let request = scheduled.selected[lane].projection().request;
+                match scheduled.selected[lane].reserve_m1_qualification_context_step_write_v1(
+                    request,
+                    u32::try_from(lane).unwrap_or(u32::MAX),
+                    context,
+                    scheduled.scheduled.epoch(),
+                ) {
+                    Ok(reservation) => reservations.push(reservation.into_pending_step_write()),
+                    Err(failure) => {
+                        return Err(kv_reservation_failure(
+                            M1LongLivedQueueRearmKvReservationPhaseV1::TargetReservation,
+                            (scheduled, target, contexts, reservations, lane, failure),
+                        ));
+                    }
+                }
+            }
+            let target = match crate::bind_m1_kv_workspace_table_v1(target, reservations) {
+                Ok(table) => table,
+                Err(failure) => {
+                    return Err(kv_reservation_failure(
+                        M1LongLivedQueueRearmKvReservationPhaseV1::TargetTableBinding,
+                        (scheduled, contexts, failure),
                     ));
                 }
             };
@@ -4236,6 +4319,12 @@ impl M1RearmedQualifiedCompletedReadbackV1 {
         &self.evidence
     }
 
+    /// Exact checked terminal compact records before completion fan-out.
+    #[must_use = "terminal checked records remain tied to this readback"]
+    pub const fn checked(&self) -> &crate::M1CheckedCompletionOutputV1 {
+        self.readback.readback.checked()
+    }
+
     /// Selected requests that must enter Engine retirement before completion.
     #[must_use]
     pub fn selected_requests(&self) -> impl ExactSizeIterator<Item = RequestId> + '_ {
@@ -5997,6 +6086,12 @@ mod tests {
         let direct = [crate::CompletionWireSemanticExpectation::DirectFinalRow { choice: 41 }];
         assert_eq!(validate_rearmed_generic_semantics(true, &direct), Err(0));
         assert_eq!(validate_rearmed_generic_semantics(false, &direct), Ok(()));
+    }
+
+    #[test]
+    fn qualification_context_reservation_rejects_a_queue_without_capture_custody() {
+        let selection = selection(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192);
+        assert!(!qualification_logits_preflight(selection, None));
     }
 
     #[test]
