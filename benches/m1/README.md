@@ -287,6 +287,40 @@ intake, supplies no independent validation, covers none of the canary,
 exhaustion, rollback, or injected device-fault cases, and cannot close
 `m1.r30`.
 
+A separate Ferric-only command captures the strict-prefix rollback case through
+the production S1/K4 diagnostic path:
+
+```text
+cargo run --locked -p ferric-engine --bin ferric-m1-qualification-capture -- \
+  capture-r30-rollback MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS \
+  CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE
+```
+
+The command authenticates the same model, artifacts, runner, closure, and
+exclusive gfx942 device as the qualification path. It reads exactly four draft
+choices (16 bytes) and five target choices (20 bytes), requires the accepted
+draft count to be less than four and equal to their maximal matching prefix,
+and checks the emitted draft prefix plus target correction. It snapshots typed
+target and draft KV projections after writes are pending, then again immediately
+after the single Engine-completion attempt and before page-release accounting.
+Both roles must settle to exactly `accepted_draft_tokens + 1` committed and
+resident tokens with no pending write. The capture reports the rejected target
+and draft suffix token counts.
+
+The continuing member retains one active target page and one active draft page
+in the post-completion projection and in closed teardown custody. No retired
+pages exist, every release count and `total_released` is zero, and neither page
+is described as physically released. The command performs completion, release
+accounting, and queue destruction once each, then publishes exactly
+`capture.json` and canonical
+`FERRIC-M1-R30-ROLLBACK-PARTIAL-PROTOCOL-V1` `protocol.json` without
+replacement.
+
+This bundle is `partial-non-evidence` and covers only rollback among the five
+required `m1.r30` cases. It grants no physical page or subpage return/reuse
+authority and makes no evidence, external or independent validation, hardware
+correctness, performance, qualification, `m1.r30`, or M1 closure claim.
+
 The serving suite has an additive pre-observation producer for one bounded,
 externally declared target-load diagnostic:
 

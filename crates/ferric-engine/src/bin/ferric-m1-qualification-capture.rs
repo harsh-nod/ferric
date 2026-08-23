@@ -28,12 +28,13 @@ use ferric_engine::{
     prepare_m1_long_lived_queue_rearm_v1, release_m1_completed_step_kv_pages_v1,
     reopen_persisted_m1_kernel_artifacts_v1, reserve_m1_long_lived_queue_rearm_kv_v1,
     schedule_m1_long_lived_queue_rearm_v1, ActiveDeviceKvCache, CompletionWireSemanticExpectation,
-    Engine, M1CompletedStepOutcomeV1, M1DeviceKvCompletionDispositionV1,
-    M1DeviceKvCompletionMemberV1, M1DeviceKvCompletionRosterV1, M1FullStepKvWorkspaceTablesV1,
-    M1FullStepWorkspacePlans, M1LongLivedQueueRearmKvInputsV1, M1LongLivedQueueReleasedRoundV1,
-    M1PhysicalRunnerFirstCompletionOutcomeV1, M1PhysicalRunnerRecipeOutcomeV1,
-    M1QualificationCompletionEvidenceV1, M1RearmedQualifiedRoundReleaseOutcomeV1,
-    M1RearmedRoundReleaseOutcomeV1, M1ScheduledLongLivedQueueRearmV1, M1StepDispatchIntent,
+    Engine, M1CompletedDeviceKvMemberV1, M1CompletedStepOutcomeV1,
+    M1DeviceKvCompletionDispositionV1, M1DeviceKvCompletionMemberV1, M1DeviceKvCompletionRosterV1,
+    M1FullStepKvWorkspaceTablesV1, M1FullStepWorkspacePlans, M1LongLivedQueueRearmKvInputsV1,
+    M1LongLivedQueueReleasedRoundV1, M1PhysicalRunnerFirstCompletionOutcomeV1,
+    M1PhysicalRunnerRecipeOutcomeV1, M1QualificationCompletionEvidenceV1,
+    M1RearmedQualifiedRoundReleaseOutcomeV1, M1RearmedRoundReleaseOutcomeV1,
+    M1ScheduledLongLivedQueueRearmV1, M1StepDispatchIntent,
 };
 use ferric_engine::{
     EngineError, M1CompletedStepKvReleaseErrorV1, M1CompletedStepPoisonV1,
@@ -102,6 +103,7 @@ use std::process::ExitCode;
 
 mod input_bundle;
 mod m1_r30_partial_capture;
+mod m1_r30_rollback_partial_capture;
 mod m1_r32_partial_capture;
 
 const PLAN_FORMAT: &str = "FERRIC-M1-BENCHMARK-PLAN-V1";
@@ -477,6 +479,27 @@ struct R32CaptureReadyV1 {
     _closed: M1ReleasedQueueTeardownSuccessV1,
 }
 
+struct R30RollbackCacheCustodyV1<T> {
+    _cache: ActiveDeviceKvCache,
+    _custody: T,
+}
+
+impl<T: CaptureTerminalCustodyV1> CaptureTerminalCustodyV1 for R30RollbackCacheCustodyV1<T> {}
+
+struct R30RollbackChoiceCustodyV1<T> {
+    _choices: ferric_engine::M1ObservedSpeculativeDiagnosticChoicesV1,
+    _custody: T,
+}
+
+impl<T: CaptureClosedCustodyV1> CaptureClosedCustodyV1 for R30RollbackChoiceCustodyV1<T> {}
+impl<T: CaptureTerminalCustodyV1> CaptureTerminalCustodyV1 for R30RollbackChoiceCustodyV1<T> {}
+
+struct R30RollbackCaptureReadyV1 {
+    capture: m1_r30_rollback_partial_capture::CaptureArtifactV1,
+    _choices: ferric_engine::M1ObservedSpeculativeDiagnosticChoicesV1,
+    _closed: M1ReleasedQueueTeardownSuccessV1,
+}
+
 #[allow(dead_code)]
 enum QualificationEvidenceDiagnosticV1 {
     Message(String),
@@ -767,6 +790,40 @@ fn close_or_quarantine_r32_choices<
             DiagnosticCustodyV1 {
                 _diagnostic: diagnostic,
                 _custody: R32ChoiceCustodyV1 {
+                    _choices: choices,
+                    _custody: quarantine,
+                },
+            },
+        ),
+    }
+}
+
+fn close_or_quarantine_r30_rollback_choices<
+    D: CaptureDiagnosticEvidenceV1,
+    S: CaptureClosedCustodyV1,
+    F: CaptureTerminalCustodyV1,
+>(
+    phase: &'static str,
+    diagnostic: D,
+    choices: ferric_engine::M1ObservedSpeculativeDiagnosticChoicesV1,
+    teardown: Result<S, F>,
+) -> ! {
+    match teardown {
+        Ok(closed) => closed_teardown(
+            phase,
+            DiagnosticCustodyV1 {
+                _diagnostic: diagnostic,
+                _custody: R30RollbackChoiceCustodyV1 {
+                    _choices: choices,
+                    _custody: closed,
+                },
+            },
+        ),
+        Err(quarantine) => terminal_quarantine(
+            phase,
+            DiagnosticCustodyV1 {
+                _diagnostic: diagnostic,
+                _custody: R30RollbackChoiceCustodyV1 {
                     _choices: choices,
                     _custody: quarantine,
                 },
@@ -1747,6 +1804,11 @@ fn main() -> ExitCode {
 
 fn run(arguments: Vec<OsString>) -> CaptureResult<()> {
     if arguments.first().and_then(|argument| argument.to_str())
+        == Some(m1_r30_rollback_partial_capture::COMMAND)
+    {
+        return run_r30_rollback_capture(&arguments[1..]);
+    }
+    if arguments.first().and_then(|argument| argument.to_str())
         == Some(m1_r32_partial_capture::COMMAND)
     {
         return run_r32_speculative_capture(&arguments[1..]);
@@ -1765,6 +1827,363 @@ fn run(arguments: Vec<OsString>) -> CaptureResult<()> {
         }
     }
     run_capture(&arguments)
+}
+
+fn run_r30_rollback_capture(arguments: &[OsString]) -> CaptureResult<()> {
+    let [source_root, prepacked_root, artifact_root, closure_path, environment_path, gpu_unique_id, output] =
+        arguments
+    else {
+        return Err("usage: ferric-m1-qualification-capture capture-r30-rollback MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned());
+    };
+    let gpu_unique_id = gpu_unique_id
+        .to_str()
+        .ok_or_else(|| "GPU unique ID must be UTF-8 decimal".to_owned())?
+        .parse::<u64>()
+        .map_err(|_| "GPU unique ID must be a decimal u64".to_owned())?;
+    let closure = load_closure(Path::new(closure_path))?;
+    let _environment = load_environment(Path::new(environment_path), gpu_unique_id)?;
+    let artifacts = reopen_persisted_m1_kernel_artifacts_v1(Path::new(artifact_root))
+        .map_err(|error| format!("cannot authenticate persisted kernel artifacts: {error}"))?;
+    let executable_catalog_id = artifacts.program_catalog_id();
+    let source = SecureDirectory::open(Path::new(source_root), "model source root")?;
+    let snapshot = SecureDirectory::open(Path::new(prepacked_root), "prepacked snapshot root")?;
+    let model = load_model_inputs(&source, &snapshot)?;
+    let runner_admission = model.authenticate()?;
+    let plan_catalog = build_authenticated_sequential_plan_catalog(runner_admission)
+        .map_err(|error| format!("cannot build authenticated plan catalog: {error:?}"))?;
+    let external = complete_closure(&closure, &plan_catalog, executable_catalog_id)?;
+    let identity_closure = build_preliminary_identity_closure(plan_catalog, external)
+        .map_err(|error| format!("cannot build runner identity closure: {error:?}"))?;
+    let declaration = generate_qwen3_gfx942_runner_declaration(identity_closure)
+        .map_err(|error| format!("cannot generate authenticated runner declaration: {error:?}"))?;
+    let publication = publish_qwen3_gfx942_runner_declaration(declaration)
+        .map_err(|error| format!("cannot publish runner declaration: {error:?}"))?;
+    let runner = bind_m1_physical_runner_v1(artifacts, publication)
+        .map_err(|error| format!("cannot bind physical runner: {error:?}"))?;
+
+    let memory_admission = model.authenticate()?;
+    let memory_plan = model_memory_plan(memory_admission)?;
+    let checked = OpenedKfd::open_default()
+        .map_err(|error| format!("cannot open KFD: {error}"))?
+        .admit_uapi()
+        .map_err(|error| format!("cannot admit pinned KFD UAPI: {error}"))?
+        .bind_gfx942_xnack_minus(DeviceSelector::UniqueId(gpu_unique_id))
+        .map_err(|error| format!("cannot bind selected gfx942:xnack- device: {error}"))?;
+    let memory = initialize_m1_physical_runner_memory_v1(
+        checked,
+        memory_plan,
+        model.target_weights,
+        model.draft_weights,
+    )
+    .map_err(|error| format!("cannot initialize physical model memory: {error:?}"))?;
+    let ready = execute_r30_rollback_capture(&runner, memory)?;
+    let capture_sha256 = sha256_hex(ready.capture.bytes());
+    m1_r30_rollback_partial_capture::publish(Path::new(output), ready.capture)?;
+    println!("output={}", Path::new(output).display());
+    println!("capture_sha256={capture_sha256}");
+    println!("status=partial-non-evidence");
+    Ok(())
+}
+
+fn execute_r30_rollback_capture(
+    runner: &ferric_engine::M1PhysicalRunnerV1,
+    mut memory: ferric_engine::M1PartitionedModelMemoryKvPoolV1,
+) -> CaptureResult<R30RollbackCaptureReadyV1> {
+    let target = Qwen3PlanSelection {
+        role: Qwen3ModelRole::Target8B,
+        mode: Qwen3ExecutionMode::Speculative,
+        bucket: Qwen3PlanBucket::SpeculativeS1K4C8192,
+    };
+    let draft_speculative = Qwen3PlanSelection {
+        role: Qwen3ModelRole::Draft06B,
+        mode: Qwen3ExecutionMode::Speculative,
+        bucket: Qwen3PlanBucket::SpeculativeS1K4C8192,
+    };
+    let draft_decode = Qwen3PlanSelection {
+        role: Qwen3ModelRole::Draft06B,
+        mode: Qwen3ExecutionMode::Decode,
+        bucket: Qwen3PlanBucket::DecodeS1C8192,
+    };
+    let mut engine = Engine::<1>::new(512, 256, 8_192)
+        .map_err(|error| format!("cannot construct one-lane r30 rollback engine: {error:?}"))?;
+    let request = engine
+        .admit()
+        .map_err(|error| format!("cannot admit r30 rollback request: {error:?}"))?;
+    engine
+        .append_tentative(request, 5)
+        .map_err(|error| format!("cannot append exact r30 rollback K4 round: {error:?}"))?;
+    let scheduled = engine
+        .dispatch_m1_ready()
+        .map_err(|error| format!("cannot dispatch r30 rollback request: {error:?}"))?
+        .ok_or_else(|| "r30 rollback request was not scheduler-ready".to_owned())?;
+    let target_plan = runner
+        .logical_runner()
+        .bind_step_plan(request, scheduled.epoch(), target)
+        .map_err(|error| format!("cannot bind rollback target speculative plan: {error:?}"))?;
+    let draft_plan = runner
+        .logical_runner()
+        .bind_step_plan(request, scheduled.epoch(), draft_decode)
+        .map_err(|error| format!("cannot bind rollback draft decode plan: {error:?}"))?;
+    let draft_inputs = speculative_s1_k4_validated_inputs(draft_plan, vec![1], vec![0], 1)?;
+    let target_inputs =
+        speculative_s1_k4_validated_inputs(target_plan, vec![1, 0, 0, 0, 0], (0..5).collect(), 5)?;
+
+    let mut cache =
+        ActiveDeviceKvCache::new(memory.device(), request, target, draft_speculative)
+            .map_err(|error| format!("cannot construct rollback paired KV cache: {error:?}"))?;
+    let draft_lease = memory
+        .lease_page(request, Qwen3ModelRole::Draft06B, 0)
+        .map_err(|error| format!("cannot lease rollback draft KV page: {error:?}"))?;
+    let draft_pending = cache
+        .reserve_speculative_draft_round_write(
+            request,
+            target,
+            draft_decode,
+            0,
+            scheduled.epoch(),
+            vec![draft_lease],
+        )
+        .map_err(|failure| {
+            format!(
+                "cannot reserve rollback draft KV write: {:?}",
+                failure.error()
+            )
+        })?;
+    let target_lease = memory
+        .lease_page(request, Qwen3ModelRole::Target8B, 0)
+        .map_err(|error| format!("cannot lease rollback target KV page: {error:?}"))?;
+    let target_pending = cache
+        .reserve_step_write(
+            request,
+            Qwen3ModelRole::Target8B,
+            0,
+            5,
+            scheduled.epoch(),
+            vec![target_lease],
+        )
+        .map_err(|failure| {
+            format!(
+                "cannot reserve rollback target KV write: {:?}",
+                failure.error()
+            )
+        })?;
+    let pre_completion = cache.projection();
+    let draft_table = bind_m1_speculative_draft_kv_round_workspace_table_v1(
+        target,
+        draft_inputs,
+        vec![draft_pending],
+    )
+    .map_err(|failure| format!("cannot bind rollback draft KV table: {:?}", failure.error()))?;
+    let target_table =
+        bind_m1_kv_workspace_table_v1(target_inputs, vec![target_pending]).map_err(|failure| {
+            format!(
+                "cannot bind rollback target KV table: {:?}",
+                failure.error()
+            )
+        })?;
+    let tables = M1FullStepKvWorkspaceTablesV1::SpeculativeRound {
+        draft_decode: draft_table,
+        target_speculative: target_table,
+    };
+    let draft_workspace_identity =
+        *domain_identity(b"ferric.m1.r30.rollback.draft-workspace.v1", &[]).as_bytes();
+    let target_workspace_identity =
+        *domain_identity(b"ferric.m1.r30.rollback.target-workspace.v1", &[]).as_bytes();
+    let plans = M1FullStepWorkspacePlans::speculative_round(
+        workload_workspace_plan(draft_decode, draft_workspace_identity)?,
+        workload_workspace_plan(target, target_workspace_identity)?,
+    );
+    let prepared = runner
+        .prepare_scheduled_workspaces(scheduled, plans, tables)
+        .map_err(|failure| format!("cannot prepare rollback workspaces: {failure:?}"))?;
+    let completion = memory
+        .allocate_completion_output(target)
+        .map_err(|error| format!("cannot allocate rollback compact output: {error:?}"))?;
+    let completion = memory
+        .enable_speculative_k4_diagnostic_choices_capture(completion)
+        .map_err(|failure| {
+            format!(
+                "cannot attach rollback choice readbacks: {:?}",
+                failure.error()
+            )
+        })?;
+    let allocated = runner
+        .allocate_scheduled_workspaces(memory, prepared)
+        .map_err(|failure| format!("cannot allocate rollback workspaces: {failure:?}"))?;
+    let recipe = match runner.derive_step_recipe(
+        M1StepDispatchIntent::SpeculativeRound(target),
+        M1FullStepWorkspacePlans::speculative_round(
+            workload_workspace_plan(draft_decode, draft_workspace_identity)?,
+            workload_workspace_plan(target, target_workspace_identity)?,
+        ),
+    ) {
+        M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
+        M1PhysicalRunnerRecipeOutcomeV1::Rejected(failure) => {
+            return Err(format!(
+                "cannot derive exact rollback physical recipe: {failure:?}"
+            ))
+        }
+    };
+    let published =
+        match publish_first_step_with_retries(runner, &mut engine, allocated, recipe, completion) {
+            Ok(published) => published,
+            Err(failure) => terminal_quarantine(
+                "r30 rollback first publication retry exhaustion",
+                R30RollbackCacheCustodyV1 {
+                    _cache: cache,
+                    _custody: failure.quarantine_after_retry_exhaustion(&mut engine),
+                },
+            ),
+        };
+    let roster =
+        M1DeviceKvCompletionRosterV1::new(vec![M1DeviceKvCompletionMemberV1::continuing(cache)]);
+    let completed = match published.wait(u32::try_from(MAX_POLLS).expect("MAX_POLLS fits u32")) {
+        Ok(completed) => completed,
+        Err(failure) => terminal_quarantine(
+            "r30 rollback physical dispatch wait failure",
+            CompletionRosterCustodyV1 {
+                _roster: roster,
+                _custody: failure.quarantine_engine(&mut engine),
+            },
+        ),
+    };
+    let recycled = match completed.recycle() {
+        Ok(recycled) => recycled,
+        Err(failure) => terminal_quarantine(
+            "r30 rollback physical queue recycle failure",
+            CompletionRosterCustodyV1 {
+                _roster: roster,
+                _custody: failure.quarantine_engine(&mut engine),
+            },
+        ),
+    };
+    let observed = match recycled.observe_completion() {
+        Ok(observed) => observed,
+        Err(failure) => match failure.retry() {
+            Ok(observed) => observed,
+            Err(failure) => close_or_quarantine_roster(
+                "r30 rollback compact observation rejected after bounded retry",
+                roster,
+                (*failure).destroy_queue_and_retain_evidence(&mut engine),
+            ),
+        },
+    };
+    let diagnostic = match observed.observe_speculative_k4_diagnostic_choices() {
+        Ok(diagnostic) => diagnostic,
+        Err(failure) => close_or_quarantine_roster(
+            "r30 rollback diagnostic choice observation rejected",
+            roster,
+            (*failure).destroy_queue_and_retain_evidence(&mut engine),
+        ),
+    };
+    let joined = match diagnostic.check_completion() {
+        Ok(joined) => joined,
+        Err(failure) => match (*failure).retry() {
+            Ok(joined) => joined,
+            Err(failure) => close_or_quarantine_roster(
+                "r30 rollback maximal-prefix semantic join rejected after bounded retry",
+                roster,
+                (*failure).destroy_queue_and_retain_evidence(&mut engine),
+            ),
+        },
+    };
+    if !joined.target_token_matches() {
+        close_or_quarantine_roster_with_diagnostic(
+            "r30 rollback corresponding target-token equality rejection",
+            "rollback speculative token differs from corresponding target choice".to_owned(),
+            roster,
+            joined.destroy_queue_and_retain_evidence(&mut engine),
+        );
+    }
+    let (physical, choices) = joined.into_parts();
+    let completed = match complete_m1_physical_step_v1(&mut engine, physical, roster) {
+        M1CompletedStepOutcomeV1::Completed(completed) => completed,
+        M1CompletedStepOutcomeV1::Rejected(rejected) => {
+            let diagnostic = format!(
+                "r30 rollback exact Engine completion rejected: {:?}",
+                rejected.error()
+            );
+            close_or_quarantine_r30_rollback_choices(
+                "r30 rollback Engine completion rejected",
+                diagnostic,
+                choices,
+                rejected.destroy_queue_and_retain_rejection(&mut engine),
+            )
+        }
+        M1CompletedStepOutcomeV1::Poisoned(poison) => terminal_quarantine(
+            "r30 rollback Engine completion entered terminal poison",
+            R30RollbackChoiceCustodyV1 {
+                _choices: choices,
+                _custody: poison,
+            },
+        ),
+    };
+    let [M1CompletedDeviceKvMemberV1::Active(active)] = completed.members() else {
+        close_or_quarantine_r30_rollback_choices(
+            "r30 rollback completed cache roster rejected",
+            "rollback completion did not retain exactly one active cache".to_owned(),
+            choices,
+            completed.destroy_queue_and_retain_completion(&mut engine),
+        );
+    };
+    let post_completion_pre_release = active.projection();
+    let queue = match m1_r30_rollback_partial_capture::capture_queue_bindings(&completed, runner) {
+        Ok(queue) => queue,
+        Err(diagnostic) => close_or_quarantine_r30_rollback_choices(
+            "r30 rollback queue binding capture rejected",
+            diagnostic,
+            choices,
+            completed.destroy_queue_and_retain_completion(&mut engine),
+        ),
+    };
+    let released = match release_m1_completed_step_kv_pages_v1(completed) {
+        Ok(released) => released,
+        Err(failure) => {
+            let (error, completed) = (*failure).into_parts();
+            close_or_quarantine_r30_rollback_choices(
+                "r30 rollback single KV page release attempt rejected",
+                error,
+                choices,
+                completed.destroy_queue_and_retain_completion(&mut engine),
+            )
+        }
+    };
+    let closed = match released.destroy_queue_and_retain_step(&mut engine) {
+        Ok(closed) => closed,
+        Err(quarantine) => terminal_quarantine(
+            "r30 rollback single queue destruction failed",
+            R30RollbackChoiceCustodyV1 {
+                _choices: choices,
+                _custody: quarantine,
+            },
+        ),
+    };
+    let capture = match m1_r30_rollback_partial_capture::manifest(
+        m1_r30_rollback_partial_capture::ClosedCaptureInputsV1 {
+            choices: &choices,
+            closed: &closed,
+            post_completion_pre_release,
+            pre_completion,
+            queue,
+        },
+    ) {
+        Ok(capture) => capture,
+        Err(diagnostic) => closed_teardown(
+            "r30 rollback closed manifest construction rejected",
+            DiagnosticCustodyV1 {
+                _diagnostic: diagnostic,
+                _custody: R30RollbackChoiceCustodyV1 {
+                    _choices: choices,
+                    _custody: closed,
+                },
+            },
+        ),
+    };
+    Ok(R30RollbackCaptureReadyV1 {
+        capture,
+        _choices: choices,
+        _closed: closed,
+    })
 }
 
 fn run_r32_speculative_capture(arguments: &[OsString]) -> CaptureResult<()> {
@@ -1862,9 +2281,9 @@ fn execute_r32_speculative_capture(
         .logical_runner()
         .bind_step_plan(request, scheduled.epoch(), draft_decode)
         .map_err(|error| format!("cannot bind draft decode plan: {error:?}"))?;
-    let draft_inputs = r32_validated_inputs(draft_plan, vec![1], vec![0], 1)?;
+    let draft_inputs = speculative_s1_k4_validated_inputs(draft_plan, vec![1], vec![0], 1)?;
     let target_inputs =
-        r32_validated_inputs(target_plan, vec![1, 0, 0, 0, 0], (0..5).collect(), 5)?;
+        speculative_s1_k4_validated_inputs(target_plan, vec![1, 0, 0, 0, 0], (0..5).collect(), 5)?;
 
     let mut cache = ActiveDeviceKvCache::new(memory.device(), request, target, draft_speculative)
         .map_err(|error| format!("cannot construct r32 paired KV cache: {error:?}"))?;
@@ -2085,7 +2504,7 @@ fn execute_r32_speculative_capture(
     })
 }
 
-fn r32_validated_inputs(
+fn speculative_s1_k4_validated_inputs(
     plan: StepPlan,
     tokens: Vec<u32>,
     positions: Vec<u32>,
@@ -6810,6 +7229,17 @@ mod tests {
         legacy[0] = OsString::from(m1_r30_partial_capture::COMMAND);
         let legacy_error = run(legacy).unwrap_err();
         assert!(!legacy_error.contains("capture-r30-cancellation PLAN ROSTER"));
+
+        let rollback_error = run(vec![OsString::from(
+            m1_r30_rollback_partial_capture::COMMAND,
+        )])
+        .unwrap_err();
+        assert!(rollback_error.contains("capture-r30-rollback MODEL-SOURCE"));
+
+        let mut wrong_width = vec![OsString::from("unused"); 11];
+        wrong_width[0] = OsString::from(m1_r30_rollback_partial_capture::COMMAND);
+        let rollback_error = run(wrong_width).unwrap_err();
+        assert!(rollback_error.contains("capture-r30-rollback MODEL-SOURCE"));
 
         let r32_error = run(vec![OsString::from(m1_r32_partial_capture::COMMAND)]).unwrap_err();
         assert!(r32_error.contains("capture-r32-speculative-k4 MODEL-SOURCE"));
