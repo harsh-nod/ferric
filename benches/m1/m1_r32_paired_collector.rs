@@ -15,6 +15,7 @@ use std::ffi::OsString;
 use std::fmt::Write as _;
 use std::fs::{File, Metadata};
 use std::io::{Read, Seek};
+use std::os::fd::AsRawFd;
 use std::os::unix::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode, Stdio};
@@ -204,6 +205,14 @@ impl StablePath {
             .map_err(|error| format!("cannot reinspect held {description}: {error}"))?;
         require_same_metadata(&self.initial, &path_metadata, description)?;
         require_same_metadata(&self.initial, &held_metadata, description)
+    }
+
+    fn proc_fd_path(&self) -> PathBuf {
+        PathBuf::from(format!(
+            "/proc/{}/fd/{}",
+            std::process::id(),
+            self.file.as_raw_fd()
+        ))
     }
 }
 
@@ -604,10 +613,10 @@ fn collect_rows(
 }
 
 fn execute_engine(execution: &ExecutionPlan, context: &RunContext<'_>) -> BenchResult<Value> {
-    let mut command = Command::new(&execution.executable.path);
+    let mut command = Command::new(execution.executable.proc_fd_path());
     command
         .args(&context.engine_command.arguments)
-        .current_dir(&execution.working_directory.path)
+        .current_dir(execution.working_directory.proc_fd_path())
         .env_clear()
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
@@ -1540,6 +1549,40 @@ print(json.dumps(value, indent=2, sort_keys=True))
             Ok(_) => panic!("mutated command environment was accepted"),
         };
         assert!(error.contains("environment SHA-256"));
+    }
+
+    #[test]
+    fn held_descriptor_launch_ignores_post_validation_path_substitution() {
+        let temporary = Temporary::new();
+        let executable_path = temporary.0.join("runner.sh");
+        fs::write(&executable_path, b"#!/bin/sh\ncat marker\n").unwrap();
+        let mut permissions = fs::metadata(&executable_path).unwrap().permissions();
+        permissions.set_mode(0o700);
+        fs::set_permissions(&executable_path, permissions).unwrap();
+        let executable_sha256 = sha256_identity(&fs::read(&executable_path).unwrap());
+        let working_path = temporary.0.join("working");
+        fs::create_dir(&working_path).unwrap();
+        fs::write(working_path.join("marker"), b"held\n").unwrap();
+
+        let executable =
+            StablePath::executable(executable_path.to_str().unwrap(), &executable_sha256).unwrap();
+        let working = StablePath::directory(working_path.to_str().unwrap()).unwrap();
+        fs::rename(&executable_path, temporary.0.join("held-runner.sh")).unwrap();
+        fs::write(&executable_path, b"#!/bin/sh\nprintf 'substituted\\n'\n").unwrap();
+        let mut permissions = fs::metadata(&executable_path).unwrap().permissions();
+        permissions.set_mode(0o700);
+        fs::set_permissions(&executable_path, permissions).unwrap();
+        fs::rename(&working_path, temporary.0.join("held-working")).unwrap();
+        fs::create_dir(&working_path).unwrap();
+        fs::write(working_path.join("marker"), b"substituted\n").unwrap();
+
+        let output = Command::new(executable.proc_fd_path())
+            .current_dir(working.proc_fd_path())
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_eq!(output.stdout, b"held\n");
+        assert!(output.stderr.is_empty());
     }
 
     #[test]
