@@ -48,8 +48,9 @@ use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::{
     append_physical_page, cancel_physical_kv, commit_physical_kv, map_initialized_token,
     retire_cancelled_tail, rollback_physical_token, write_physical_token, Identity, LogicalKvState,
-    PhysicalKvError, PhysicalKvLifecycle, PhysicalKvLocation, PhysicalKvState, PhysicalPageId,
-    Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection, RequestId, Target,
+    M1QualificationLaneExecutionBinding, M1QualificationLaneGrouping, PhysicalKvError,
+    PhysicalKvLifecycle, PhysicalKvLocation, PhysicalKvState, PhysicalPageId, Qwen3ExecutionMode,
+    Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection, RequestId, Target,
     M1_KV_PAGE_TABLE_ENTRIES, M1_KV_PAGE_TOKENS, M1_KV_PHYSICAL_PAGE_SLOTS,
     M1_MAX_ACTIVE_SEQUENCES,
 };
@@ -59,6 +60,8 @@ use vstd::prelude::*;
 pub const GFX942_PROCESSOR: &str = "gfx942";
 /// Exact target-feature declaration admitted by the M1 generated-runner template.
 pub const GFX942_TARGET_FEATURES: &str = "+wavefrontsize64,-xnack";
+/// Exact P16 target-page cardinality required by one C8192 qualification lane.
+pub const M1_QUALIFICATION_TARGET_PAGE_COUNT_V1: usize = M1_KV_PAGE_TABLE_ENTRIES;
 
 verus! {
 
@@ -222,6 +225,15 @@ pub enum DeviceKvCacheError {
     UnsettledPriorRetirement,
     OwnedPageTableDrift,
     ActivePagesRemain,
+    QualificationLaneCountMismatch,
+    QualificationInitialWitnessMismatch,
+    QualificationCacheNotFresh,
+    QualificationReserveAlreadyInstalled,
+    QualificationReserveMissing,
+    QualificationWitnessMismatch,
+    QualificationPageOrderMismatch,
+    QualificationFuturePagesRemain,
+    QualificationHostCustodyAllocation,
     Physical(PhysicalKvError),
 }
 
@@ -276,6 +288,127 @@ impl DeviceKvPageLease {
     #[must_use]
     pub const fn page(&self) -> PhysicalPageId {
         self.page
+    }
+}
+
+/// Linear custody of every not-yet-reachable target P16 page for one lane.
+///
+/// The vector is stored in reverse physical order so `pop()` yields exact
+/// request-local page indices `0..511`. Construction is private to the typed
+/// all-lane prelease boundary; callers cannot add, remove, or reorder leases.
+///
+/// ```compile_fail
+/// use ferric_engine::M1QualificationTargetPageReserveV1;
+/// fn require_clone<T: Clone>() {}
+/// require_clone::<M1QualificationTargetPageReserveV1>();
+/// ```
+#[must_use = "qualification future-page custody must remain attached to its exact cache"]
+#[derive(Debug, PartialEq, Eq)]
+pub struct M1QualificationTargetPageReserveV1 {
+    device: Gfx942DeviceBinding,
+    allocation_id: Identity,
+    request: RequestId,
+    policy_identity: Identity,
+    grouping: M1QualificationLaneGrouping,
+    declared_workload_digest: Identity,
+    lane: M1QualificationLaneExecutionBinding,
+    unused_pages: Vec<DeviceKvPageLease>,
+}
+
+impl M1QualificationTargetPageReserveV1 {
+    /// Exact request generation owning this reserve.
+    #[must_use]
+    pub const fn request(&self) -> RequestId {
+        self.request
+    }
+
+    /// Exact target-arena allocation identity shared by every retained page.
+    #[must_use]
+    pub const fn allocation_id(&self) -> Identity {
+        self.allocation_id
+    }
+
+    /// Exact ordered qualification lane bound before queue admission.
+    #[must_use]
+    pub const fn lane(&self) -> M1QualificationLaneExecutionBinding {
+        self.lane
+    }
+
+    /// Number of future pages that remain outside the active page table.
+    #[must_use]
+    pub const fn unused_page_count(&self) -> usize {
+        self.unused_pages.len()
+    }
+
+    fn matches_context(&self, context: crate::M1ValidatedQualificationContextStepV1) -> bool {
+        self.policy_identity.equals(&context.policy_identity())
+            && self.grouping == context.grouping()
+            && self
+                .declared_workload_digest
+                .equals(&context.declared_workload_digest())
+            && self.lane == context.lane()
+    }
+
+    fn ordered_state_is_valid(&self) -> bool {
+        self.unused_pages
+            .iter()
+            .rev()
+            .enumerate()
+            .all(|(offset, lease)| {
+                let consumed =
+                    M1_QUALIFICATION_TARGET_PAGE_COUNT_V1.saturating_sub(self.unused_pages.len());
+                usize::try_from(lease.page.index()) == Ok(consumed + offset)
+                    && lease.device == self.device
+                    && lease.request == self.request
+                    && lease.page.role() == Qwen3ModelRole::Target8B
+                    && lease.allocation_id.equals(&self.allocation_id)
+                    && lease.page.generation() != 0
+            })
+    }
+}
+
+/// Progress retained by a failed all-lane qualification page prelease.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct M1QualificationTargetPagePreleaseProgressV1 {
+    /// First lane whose reserve is not yet complete.
+    pub lane: u32,
+    /// Next request-local P16 page index required for that lane.
+    pub page: u32,
+}
+
+/// Fail-closed all-lane qualification prelease diagnostic.
+#[derive(Debug)]
+pub enum M1QualificationTargetPagePreleaseErrorV1 {
+    /// Host custody for one bounded lane vector could not be reserved.
+    HostCustodyAllocation,
+    /// A cache, grouping, request roster, or initial witness was invalid.
+    Cache {
+        lane: u32,
+        source: DeviceKvCacheError,
+    },
+    /// The model-memory pool rejected the exact next target page.
+    Page {
+        lane: u32,
+        page: u32,
+        source: M1DeviceKvArenaLeaseErrorV1,
+    },
+}
+
+impl fmt::Display for M1QualificationTargetPagePreleaseErrorV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            formatter,
+            "M1 qualification target-page prelease rejected: {self:?}"
+        )
+    }
+}
+
+impl std::error::Error for M1QualificationTargetPagePreleaseErrorV1 {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Page { source, .. } => Some(source),
+            Self::HostCustodyAllocation | Self::Cache { .. } => None,
+        }
     }
 }
 
@@ -1141,6 +1274,320 @@ impl M1PartitionedModelMemoryKvPoolV1 {
     }
 }
 
+/// Successful all-lane qualification page prelease.
+///
+/// The model-memory pool remains paired with every cache. Each cache now owns
+/// one complete target future-page reserve and can proceed to queue admission.
+#[must_use = "preleased model memory and cache custody must proceed together"]
+#[derive(Debug)]
+pub struct M1QualificationTargetPagePreleaseSuccessV1 {
+    pool: M1PartitionedModelMemoryKvPoolV1,
+    caches: Vec<ActiveDeviceKvCache>,
+}
+
+impl M1QualificationTargetPagePreleaseSuccessV1 {
+    /// Recovers the exact pool and ordered lane caches after successful prelease.
+    #[must_use = "the exact pool and all ordered caches remain linear"]
+    pub fn into_parts(self) -> (M1PartitionedModelMemoryKvPoolV1, Vec<ActiveDeviceKvCache>) {
+        (self.pool, self.caches)
+    }
+}
+
+/// Retry owner for an incomplete all-lane qualification target-page prelease.
+///
+/// It retains model memory, all ordered caches, validated initial witnesses,
+/// and every target page minted before a failure. No extraction path can split
+/// a partial prefix from its pool ledger; the only consuming operation retries
+/// from the exact next lane/page coordinate.
+///
+/// ```compile_fail
+/// use ferric_engine::M1QualificationTargetPagePreleaseRecoveryV1;
+/// fn require_clone<T: Clone>() {}
+/// require_clone::<M1QualificationTargetPagePreleaseRecoveryV1>();
+/// ```
+#[must_use = "partial target-page prelease custody must be retried or retained"]
+#[derive(Debug)]
+pub struct M1QualificationTargetPagePreleaseRecoveryV1 {
+    pool: M1PartitionedModelMemoryKvPoolV1,
+    caches: Vec<ActiveDeviceKvCache>,
+    initial_contexts: Vec<crate::M1ValidatedQualificationContextStepV1>,
+    grouping: M1QualificationLaneGrouping,
+    pages_by_lane: Vec<Vec<DeviceKvPageLease>>,
+}
+
+impl M1QualificationTargetPagePreleaseRecoveryV1 {
+    /// Exact first incomplete lane/page coordinate retained for retry.
+    #[must_use]
+    pub fn progress(&self) -> M1QualificationTargetPagePreleaseProgressV1 {
+        qualification_target_page_prelease_progress(&self.pages_by_lane)
+    }
+
+    /// Retries from the exact retained lane/page coordinate.
+    ///
+    /// # Errors
+    ///
+    /// Returns all owners unchanged except for any additional successfully
+    /// minted prefix pages, which remain inside the returned retry owner.
+    pub fn retry(
+        mut self,
+    ) -> Result<
+        M1QualificationTargetPagePreleaseSuccessV1,
+        Box<M1QualificationTargetPagePreleaseFailureV1>,
+    > {
+        if let Err((lane, source)) = validate_qualification_prelease_inputs(
+            &self.pool,
+            &self.caches,
+            &self.initial_contexts,
+            self.grouping,
+        ) {
+            return Err(Box::new(M1QualificationTargetPagePreleaseFailureV1 {
+                error: M1QualificationTargetPagePreleaseErrorV1::Cache { lane, source },
+                recovery: self,
+            }));
+        }
+
+        if self.pages_by_lane.len() < self.caches.len()
+            && self
+                .pages_by_lane
+                .try_reserve_exact(self.caches.len() - self.pages_by_lane.len())
+                .is_err()
+        {
+            return Err(Box::new(M1QualificationTargetPagePreleaseFailureV1 {
+                error: M1QualificationTargetPagePreleaseErrorV1::HostCustodyAllocation,
+                recovery: self,
+            }));
+        }
+        while self.pages_by_lane.len() < self.caches.len() {
+            let mut pages = Vec::new();
+            if pages
+                .try_reserve_exact(M1_QUALIFICATION_TARGET_PAGE_COUNT_V1)
+                .is_err()
+            {
+                return Err(Box::new(M1QualificationTargetPagePreleaseFailureV1 {
+                    error: M1QualificationTargetPagePreleaseErrorV1::HostCustodyAllocation,
+                    recovery: self,
+                }));
+            }
+            self.pages_by_lane.push(pages);
+        }
+
+        let acquisition = acquire_qualification_target_page_prefix(
+            &self.caches,
+            &mut self.pages_by_lane,
+            |request, page| {
+                self.pool
+                    .lease_page(request, Qwen3ModelRole::Target8B, page)
+            },
+        );
+        if let Err((lane, page, source)) = acquisition {
+            return Err(Box::new(M1QualificationTargetPagePreleaseFailureV1 {
+                error: M1QualificationTargetPagePreleaseErrorV1::Page { lane, page, source },
+                recovery: self,
+            }));
+        }
+
+        let target_allocation_id = self.pool.allocation_id(Qwen3ModelRole::Target8B);
+        for (lane, cache) in self.caches.iter_mut().enumerate() {
+            let mut pages = core::mem::take(&mut self.pages_by_lane[lane]);
+            pages.reverse();
+            let context = self.initial_contexts[lane];
+            cache.common.target_qualification_reserve = Some(M1QualificationTargetPageReserveV1 {
+                device: self.pool.device(),
+                allocation_id: target_allocation_id,
+                request: cache.common.request,
+                policy_identity: context.policy_identity(),
+                grouping: context.grouping(),
+                declared_workload_digest: context.declared_workload_digest(),
+                lane: context.lane(),
+                unused_pages: pages,
+            });
+        }
+        Ok(M1QualificationTargetPagePreleaseSuccessV1 {
+            pool: self.pool,
+            caches: self.caches,
+        })
+    }
+}
+
+fn qualification_target_page_prelease_progress(
+    pages_by_lane: &[Vec<DeviceKvPageLease>],
+) -> M1QualificationTargetPagePreleaseProgressV1 {
+    for (lane, pages) in pages_by_lane.iter().enumerate() {
+        if pages.len() < M1_QUALIFICATION_TARGET_PAGE_COUNT_V1 {
+            return M1QualificationTargetPagePreleaseProgressV1 {
+                lane: u32::try_from(lane).unwrap_or(u32::MAX),
+                page: u32::try_from(pages.len()).unwrap_or(u32::MAX),
+            };
+        }
+    }
+    M1QualificationTargetPagePreleaseProgressV1 {
+        lane: u32::try_from(pages_by_lane.len()).unwrap_or(u32::MAX),
+        page: 0,
+    }
+}
+
+fn acquire_qualification_target_page_prefix<E>(
+    caches: &[ActiveDeviceKvCache],
+    pages_by_lane: &mut [Vec<DeviceKvPageLease>],
+    mut lease_page: impl FnMut(RequestId, u32) -> Result<DeviceKvPageLease, E>,
+) -> Result<(), (u32, u32, E)> {
+    for lane in 0..caches.len() {
+        while pages_by_lane[lane].len() < M1_QUALIFICATION_TARGET_PAGE_COUNT_V1 {
+            let lane_u32 = u32::try_from(lane).unwrap_or(u32::MAX);
+            let page = u32::try_from(pages_by_lane[lane].len()).unwrap_or(u32::MAX);
+            let lease = lease_page(caches[lane].common.request, page)
+                .map_err(|source| (lane_u32, page, source))?;
+            pages_by_lane[lane].push(lease);
+        }
+    }
+    Ok(())
+}
+
+/// Failed all-lane prelease retaining every linear owner for consuming retry.
+#[must_use = "the exact partial-prelease owner must be retried or retained"]
+#[derive(Debug)]
+pub struct M1QualificationTargetPagePreleaseFailureV1 {
+    error: M1QualificationTargetPagePreleaseErrorV1,
+    recovery: M1QualificationTargetPagePreleaseRecoveryV1,
+}
+
+impl M1QualificationTargetPagePreleaseFailureV1 {
+    /// Exact fail-closed diagnostic.
+    #[must_use]
+    pub const fn error(&self) -> &M1QualificationTargetPagePreleaseErrorV1 {
+        &self.error
+    }
+
+    /// Exact retained lane/page progress.
+    #[must_use]
+    pub fn progress(&self) -> M1QualificationTargetPagePreleaseProgressV1 {
+        self.recovery.progress()
+    }
+
+    /// Recovers the diagnostic and the only owner capable of retrying it.
+    #[must_use = "the exact diagnostic and partial-prelease recovery remain paired"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1QualificationTargetPagePreleaseErrorV1,
+        M1QualificationTargetPagePreleaseRecoveryV1,
+    ) {
+        (self.error, self.recovery)
+    }
+}
+
+/// Preleases exactly 512 target P16 pages for every ordered qualification lane.
+///
+/// All cache and ordinal-zero witness validation precedes the first page mint.
+/// A later pool or host-allocation failure retains the pool, every cache, every
+/// acquired page, and the exact retry coordinate inside the returned failure.
+///
+/// # Errors
+///
+/// Rejects grouping/cardinality, non-fresh or substituted caches, initial
+/// witness drift, host custody allocation, or exact page-pool failures.
+pub fn prelease_m1_qualification_target_pages_v1(
+    pool: M1PartitionedModelMemoryKvPoolV1,
+    caches: Vec<ActiveDeviceKvCache>,
+    initial_contexts: Vec<crate::M1ValidatedQualificationContextStepV1>,
+    grouping: M1QualificationLaneGrouping,
+) -> Result<
+    M1QualificationTargetPagePreleaseSuccessV1,
+    Box<M1QualificationTargetPagePreleaseFailureV1>,
+> {
+    M1QualificationTargetPagePreleaseRecoveryV1 {
+        pool,
+        caches,
+        initial_contexts,
+        grouping,
+        pages_by_lane: Vec::new(),
+    }
+    .retry()
+}
+
+const fn qualification_decode_bucket(grouping: M1QualificationLaneGrouping) -> Qwen3PlanBucket {
+    match grouping {
+        M1QualificationLaneGrouping::S1 => Qwen3PlanBucket::DecodeS1C8192,
+        M1QualificationLaneGrouping::S8 => Qwen3PlanBucket::DecodeS8C8192,
+        M1QualificationLaneGrouping::S32 => Qwen3PlanBucket::DecodeS32C8192,
+    }
+}
+
+fn validate_qualification_prelease_inputs(
+    pool: &M1PartitionedModelMemoryKvPoolV1,
+    caches: &[ActiveDeviceKvCache],
+    contexts: &[crate::M1ValidatedQualificationContextStepV1],
+    grouping: M1QualificationLaneGrouping,
+) -> Result<(), (u32, DeviceKvCacheError)> {
+    let lane_count = usize::try_from(grouping.sequences()).unwrap_or(usize::MAX);
+    if caches.len() != lane_count || contexts.len() != lane_count {
+        return Err((0, DeviceKvCacheError::QualificationLaneCountMismatch));
+    }
+    let bucket = qualification_decode_bucket(grouping);
+    for lane in 0..lane_count {
+        let lane_u32 = u32::try_from(lane).unwrap_or(u32::MAX);
+        let cache = &caches[lane];
+        let context = contexts[lane];
+        if cache.common.device != pool.device()
+            || cache.common.target.selection()
+                != (Qwen3PlanSelection {
+                    role: Qwen3ModelRole::Target8B,
+                    mode: Qwen3ExecutionMode::Decode,
+                    bucket,
+                })
+            || cache.common.draft.selection()
+                != (Qwen3PlanSelection {
+                    role: Qwen3ModelRole::Draft06B,
+                    mode: Qwen3ExecutionMode::Decode,
+                    bucket,
+                })
+            || cache.common.target.logical().committed_tokens != 0
+            || cache.common.target.logical().resident_tokens != 0
+            || cache.common.draft.logical().committed_tokens != 0
+            || cache.common.draft.logical().resident_tokens != 0
+            || !cache.common.target.active_pages.is_empty()
+            || !cache.common.target.retired_pages.is_empty()
+            || !cache.common.draft.active_pages.is_empty()
+            || !cache.common.draft.retired_pages.is_empty()
+            || cache.common.target.pending.is_some()
+            || cache.common.draft.pending.is_some()
+            || cache.common.target.arena_allocation_id.is_some()
+            || cache.common.draft.arena_allocation_id.is_some()
+        {
+            return Err((lane_u32, DeviceKvCacheError::QualificationCacheNotFresh));
+        }
+        if cache.common.target_qualification_reserve.is_some() {
+            return Err((
+                lane_u32,
+                DeviceKvCacheError::QualificationReserveAlreadyInstalled,
+            ));
+        }
+        if context.ordinal() != 0
+            || context.grouping() != grouping
+            || context.lane().lane_ordinal != lane_u32
+            || (lane > 0
+                && (!context
+                    .policy_identity()
+                    .equals(&contexts[0].policy_identity())
+                    || !context
+                        .declared_workload_digest()
+                        .equals(&contexts[0].declared_workload_digest())))
+        {
+            return Err((
+                lane_u32,
+                DeviceKvCacheError::QualificationInitialWitnessMismatch,
+            ));
+        }
+        if caches[..lane]
+            .iter()
+            .any(|prior| prior.common.request == cache.common.request)
+        {
+            return Err((lane_u32, DeviceKvCacheError::WrongRequest));
+        }
+    }
+    Ok(())
+}
+
 /// Consumes exact model memory into sole generic KV plane partitions.
 ///
 /// Both bounded page-generation ledgers and all host-only geometry are
@@ -1589,6 +2036,84 @@ pub struct PendingDeviceKvStepWrite {
     page_table: Box<[DeviceKvStepPageIdentity]>,
     write_pages: Box<[DeviceKvStepPageBinding]>,
     new_page_leases: Vec<DeviceKvPageLease>,
+}
+
+/// Typed one-token target-KV reservation for an authenticated C8192 context step.
+///
+/// This wrapper binds the ordinary physical write reservation to the exact
+/// validated policy/workload/lane/ordinal witness that authorized consuming a
+/// future page. It is intentionally linear and can be unwrapped only by value.
+#[must_use = "qualification context and pending target write must proceed together"]
+#[derive(Debug, PartialEq, Eq)]
+pub struct M1PendingQualificationContextStepWriteV1 {
+    context: crate::M1ValidatedQualificationContextStepV1,
+    pending: PendingDeviceKvStepWrite,
+    active_pages: usize,
+    unused_future_pages: usize,
+}
+
+/// Transactional qualification-step rejection.
+///
+/// The borrowed cache has already recovered any temporarily popped future page
+/// before this value is returned, so the diagnostic owns no linear resource.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct M1QualificationContextStepReservationFailureV1 {
+    error: DeviceKvCacheError,
+}
+
+impl M1QualificationContextStepReservationFailureV1 {
+    /// Exact fail-closed cache or witness diagnostic.
+    #[must_use]
+    pub const fn error(self) -> DeviceKvCacheError {
+        self.error
+    }
+}
+
+impl M1PendingQualificationContextStepWriteV1 {
+    /// Exact validated context witness authorizing this physical write.
+    #[must_use]
+    pub const fn context(&self) -> crate::M1ValidatedQualificationContextStepV1 {
+        self.context
+    }
+
+    /// Borrows the ordinary one-token pending write for workspace binding.
+    #[must_use]
+    pub const fn pending_step_write(&self) -> &PendingDeviceKvStepWrite {
+        &self.pending
+    }
+
+    /// Exact number of already-active target pages at reservation time.
+    #[must_use]
+    pub const fn active_page_count(&self) -> usize {
+        self.active_pages
+    }
+
+    /// Exact number of pages transferred from the future reserve into this write.
+    #[must_use]
+    pub const fn pending_new_page_count(&self) -> usize {
+        self.pending.new_page_count()
+    }
+
+    /// Exact future-page suffix remaining inside the cache.
+    #[must_use]
+    pub const fn unused_future_page_count(&self) -> usize {
+        self.unused_future_pages
+    }
+
+    /// Checks the fixed 512-page conservation equation for this reservation.
+    #[must_use]
+    pub const fn conserves_target_pages(&self) -> bool {
+        self.active_pages
+            .saturating_add(self.pending.new_page_count())
+            .saturating_add(self.unused_future_pages)
+            == M1_QUALIFICATION_TARGET_PAGE_COUNT_V1
+    }
+
+    /// Recovers the ordinary pending write for the exact-completion bridge.
+    #[must_use = "the pending target write remains linear"]
+    pub fn into_pending_step_write(self) -> PendingDeviceKvStepWrite {
+        self.pending
+    }
 }
 
 /// One full speculative round's aggregate draft-KV reservation.
@@ -2080,6 +2605,7 @@ pub struct DeviceKvCacheProjection {
     pub draft_quiescent_retired_pages: usize,
     pub target_write_pending: bool,
     pub draft_write_pending: bool,
+    pub target_qualification_future_pages: usize,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -2145,6 +2671,7 @@ struct DeviceKvCacheCommon {
     request: RequestId,
     target: RoleDeviceKvCache,
     draft: RoleDeviceKvCache,
+    target_qualification_reserve: Option<M1QualificationTargetPageReserveV1>,
 }
 
 impl DeviceKvCacheCommon {
@@ -2174,6 +2701,10 @@ impl DeviceKvCacheCommon {
                 .count(),
             target_write_pending: self.target.pending.is_some(),
             draft_write_pending: self.draft.pending.is_some(),
+            target_qualification_future_pages: self
+                .target_qualification_reserve
+                .as_ref()
+                .map_or(0, M1QualificationTargetPageReserveV1::unused_page_count),
         }
     }
 
@@ -2225,6 +2756,10 @@ impl DeviceKvCacheCommon {
     fn release_state_is_valid(&self) -> bool {
         self.target.pending.is_none()
             && self.draft.pending.is_none()
+            && self
+                .target_qualification_reserve
+                .as_ref()
+                .is_none_or(|reserve| reserve.unused_pages.is_empty())
             && Self::owned_table_matches(&self.target)
             && Self::owned_table_matches(&self.draft)
     }
@@ -2345,6 +2880,7 @@ impl ActiveDeviceKvCache {
                 request,
                 target,
                 draft,
+                target_qualification_reserve: None,
             },
         })
     }
@@ -2364,6 +2900,130 @@ impl ActiveDeviceKvCache {
 
     pub(crate) fn take_retired_pages(&mut self, role: Qwen3ModelRole) -> Vec<RetiredPageLease> {
         self.common.take_retired_pages(role)
+    }
+
+    /// Borrows qualification-only future target-page custody, when installed.
+    #[must_use]
+    pub const fn qualification_target_page_reserve(
+        &self,
+    ) -> Option<&M1QualificationTargetPageReserveV1> {
+        self.common.target_qualification_reserve.as_ref()
+    }
+
+    /// Reserves the exact one-token target write for one C8192 qualification step.
+    ///
+    /// The validated witness must match the reserve's exact grouping, policy,
+    /// workload declaration, and ordered lane identity. Its ordinal must equal
+    /// the cache's committed/resident token count. Exactly at ordinals divisible
+    /// by 16, this method pops physical page `ordinal / 16`; every other ordinal
+    /// supplies no new lease. A downstream reservation rejection reinserts the
+    /// popped lease before returning.
+    ///
+    /// # Errors
+    ///
+    /// Rejects request, witness, decode shape, ordinal, reserve order,
+    /// conservation, host custody, or ordinary step-reservation drift without
+    /// losing any page lease or installing a pending marker.
+    pub fn reserve_m1_qualification_context_step_write_v1(
+        &mut self,
+        request: RequestId,
+        lane_ordinal: u32,
+        context: crate::M1ValidatedQualificationContextStepV1,
+        epoch: CompletionEpoch,
+    ) -> Result<
+        M1PendingQualificationContextStepWriteV1,
+        M1QualificationContextStepReservationFailureV1,
+    > {
+        let reject = |error| Err(M1QualificationContextStepReservationFailureV1 { error });
+        if self.common.request != request {
+            return reject(DeviceKvCacheError::WrongRequest);
+        }
+        let Some(reserve) = self.common.target_qualification_reserve.as_ref() else {
+            return reject(DeviceKvCacheError::QualificationReserveMissing);
+        };
+        if reserve.request != request
+            || reserve.device != self.common.device
+            || reserve.lane.lane_ordinal != lane_ordinal
+            || context.lane().lane_ordinal != lane_ordinal
+            || !reserve.matches_context(context)
+        {
+            return reject(DeviceKvCacheError::QualificationWitnessMismatch);
+        }
+        let expected_selection = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Decode,
+            bucket: qualification_decode_bucket(reserve.grouping),
+        };
+        if self.common.target.selection() != expected_selection {
+            return reject(DeviceKvCacheError::StepSelectionMismatch);
+        }
+        let ordinal = context.ordinal();
+        let consumed_before =
+            usize::try_from(ordinal.div_ceil(M1_KV_PAGE_TOKENS)).unwrap_or(usize::MAX);
+        let Some(expected_unused) =
+            M1_QUALIFICATION_TARGET_PAGE_COUNT_V1.checked_sub(consumed_before)
+        else {
+            return reject(DeviceKvCacheError::QualificationPageOrderMismatch);
+        };
+        if !reserve.ordered_state_is_valid()
+            || reserve.unused_pages.len() != expected_unused
+            || self.common.target.active_pages.len() != consumed_before
+        {
+            return reject(DeviceKvCacheError::QualificationPageOrderMismatch);
+        }
+
+        let needs_page = ordinal.is_multiple_of(M1_KV_PAGE_TOKENS);
+        let mut page_leases = Vec::new();
+        if needs_page && page_leases.try_reserve_exact(1).is_err() {
+            return reject(DeviceKvCacheError::QualificationHostCustodyAllocation);
+        }
+        if needs_page {
+            let expected_page = ordinal / M1_KV_PAGE_TOKENS;
+            let Some(reserve) = self.common.target_qualification_reserve.as_mut() else {
+                return reject(DeviceKvCacheError::QualificationReserveMissing);
+            };
+            let Some(lease) = reserve.unused_pages.pop() else {
+                return reject(DeviceKvCacheError::QualificationPageOrderMismatch);
+            };
+            if lease.page.index() != expected_page {
+                reserve.unused_pages.push(lease);
+                return reject(DeviceKvCacheError::QualificationPageOrderMismatch);
+            }
+            page_leases.push(lease);
+        }
+
+        let pending = match self.reserve_step_write(
+            request,
+            Qwen3ModelRole::Target8B,
+            ordinal,
+            1,
+            epoch,
+            page_leases,
+        ) {
+            Ok(pending) => pending,
+            Err(failure) => {
+                let (error, returned) = failure.into_parts();
+                if !returned.is_empty() {
+                    let Some(reserve) = self.common.target_qualification_reserve.as_mut() else {
+                        return reject(DeviceKvCacheError::QualificationReserveMissing);
+                    };
+                    reserve.unused_pages.extend(returned);
+                }
+                return reject(error);
+            }
+        };
+        let active_pages = self.common.target.active_pages.len();
+        let unused_future_pages = self
+            .common
+            .target_qualification_reserve
+            .as_ref()
+            .map_or(0, M1QualificationTargetPageReserveV1::unused_page_count);
+        Ok(M1PendingQualificationContextStepWriteV1 {
+            context,
+            pending,
+            active_pages,
+            unused_future_pages,
+        })
     }
 
     /// Consumes one allocation lease into the exact role page table.
@@ -3350,6 +4010,14 @@ impl ActiveDeviceKvCache {
         if after_epoch.value() == 0 {
             return Err(DeviceKvCacheError::ZeroCompletionEpoch);
         }
+        if self
+            .common
+            .target_qualification_reserve
+            .as_ref()
+            .is_some_and(|reserve| !reserve.unused_pages.is_empty())
+        {
+            return Err(DeviceKvCacheError::QualificationFuturePagesRemain);
+        }
         let cache = self.common.role_mut(role);
         if cache.pending.is_some() {
             return Err(DeviceKvCacheError::PendingWriteExists);
@@ -3407,6 +4075,13 @@ impl ActiveDeviceKvCache {
             Some(DeviceKvCacheError::WrongRequest)
         } else if after_epoch.value() == 0 {
             Some(DeviceKvCacheError::ZeroCompletionEpoch)
+        } else if self
+            .common
+            .target_qualification_reserve
+            .as_ref()
+            .is_some_and(|reserve| !reserve.unused_pages.is_empty())
+        {
+            Some(DeviceKvCacheError::QualificationFuturePagesRemain)
         } else if self.common.target.pending.is_some() || self.common.draft.pending.is_some() {
             Some(DeviceKvCacheError::PendingWriteExists)
         } else if !matches!(
@@ -3825,7 +4500,12 @@ mod tests {
     use super::test_support::bind_gfx942_device;
     use super::*;
     use ferric_build::qwen3_kv_arena_bytes;
-    use ferric_spec::{Qwen3ExecutionMode, Qwen3PlanBucket, M1_KV_PHYSICAL_PAGE_SLOTS};
+    use ferric_spec::{
+        m1_qualification_context_plan, M1QualificationContextPlan,
+        M1QualificationExecutionBindingDeclaration, M1QualificationLaneExecutionBinding,
+        M1QualificationLaneGrouping, Qwen3ExecutionMode, Qwen3PlanBucket,
+        M1_KV_PHYSICAL_PAGE_SLOTS,
+    };
 
     impl DeviceKvPageLease {
         fn from_contracted_gfx942_allocation(
@@ -4269,6 +4949,90 @@ mod tests {
                 )
             })
             .collect()
+    }
+
+    fn qualification_execution_binding(
+        grouping: M1QualificationLaneGrouping,
+    ) -> M1QualificationExecutionBindingDeclaration {
+        let ordered_lanes = (0..grouping.sequences())
+            .map(|lane_ordinal| {
+                let lane_tag = u8::try_from(lane_ordinal).unwrap();
+                M1QualificationLaneExecutionBinding {
+                    lane_ordinal,
+                    lane_identity: Identity::new([0x20 + lane_tag; 32]),
+                    token_sequence_identity: Identity::new([0x60 + lane_tag; 32]),
+                }
+            })
+            .collect();
+        M1QualificationExecutionBindingDeclaration {
+            declared_workload_digest: Identity::new(
+                [0xa0 + u8::try_from(grouping.sequences()).unwrap(); 32],
+            ),
+            ordered_lanes,
+        }
+    }
+
+    fn qualification_plan(
+        grouping: M1QualificationLaneGrouping,
+    ) -> (
+        M1QualificationContextPlan,
+        M1QualificationExecutionBindingDeclaration,
+    ) {
+        let expected = qualification_execution_binding(grouping);
+        let plan = m1_qualification_context_plan(grouping, expected.clone());
+        (plan, expected)
+    }
+
+    fn qualification_cache(
+        request: RequestId,
+        grouping: M1QualificationLaneGrouping,
+    ) -> ActiveDeviceKvCache {
+        cache_for(
+            request,
+            Qwen3ExecutionMode::Decode,
+            qualification_decode_bucket(grouping),
+        )
+    }
+
+    fn qualification_page_lease(
+        request: RequestId,
+        index: u32,
+        allocation_tag: u8,
+    ) -> DeviceKvPageLease {
+        DeviceKvPageLease::from_contracted_gfx942_allocation(
+            device(),
+            identity(allocation_tag),
+            request,
+            PhysicalPageId::new(Qwen3ModelRole::Target8B, index, 1),
+        )
+        .unwrap()
+    }
+
+    fn install_qualification_reserve_for_test(
+        cache: &mut ActiveDeviceKvCache,
+        context: crate::M1ValidatedQualificationContextStepV1,
+        allocation_tag: u8,
+    ) {
+        let mut unused_pages: Vec<_> = (0..M1_QUALIFICATION_TARGET_PAGE_COUNT_V1)
+            .map(|index| {
+                qualification_page_lease(
+                    cache.common.request,
+                    u32::try_from(index).unwrap(),
+                    allocation_tag,
+                )
+            })
+            .collect();
+        unused_pages.reverse();
+        cache.common.target_qualification_reserve = Some(M1QualificationTargetPageReserveV1 {
+            device: cache.common.device,
+            allocation_id: identity(allocation_tag),
+            request: cache.common.request,
+            policy_identity: context.policy_identity(),
+            grouping: context.grouping(),
+            declared_workload_digest: context.declared_workload_digest(),
+            lane: context.lane(),
+            unused_pages,
+        });
     }
 
     fn complete(
@@ -5558,5 +6322,300 @@ mod tests {
         assert_eq!(projection.target_retired_pages, 0);
         assert_eq!(projection.draft_arena_allocation_id, None);
         assert_eq!(projection.target_arena_allocation_id, None);
+    }
+
+    #[test]
+    fn qualification_reserve_holds_exact_s1_s8_s32_page_rosters_in_pop_order() {
+        for grouping in [
+            M1QualificationLaneGrouping::S1,
+            M1QualificationLaneGrouping::S8,
+            M1QualificationLaneGrouping::S32,
+        ] {
+            let (plan, expected) = qualification_plan(grouping);
+            let validated =
+                crate::validate_m1_qualification_context_plan_v1(&plan, grouping, &expected)
+                    .unwrap();
+            for lane in 0..grouping.sequences() {
+                let lane_request = RequestId::new(lane, 11);
+                let context = validated.step(0, lane).unwrap();
+                let mut cache = qualification_cache(lane_request, grouping);
+                install_qualification_reserve_for_test(&mut cache, context, 71);
+                let reserve = cache.qualification_target_page_reserve().unwrap();
+                assert_eq!(reserve.request(), lane_request);
+                assert_eq!(reserve.lane().lane_ordinal, lane);
+                assert_eq!(
+                    reserve.unused_page_count(),
+                    M1_QUALIFICATION_TARGET_PAGE_COUNT_V1
+                );
+                assert!(reserve.ordered_state_is_valid());
+                assert_eq!(reserve.unused_pages.last().unwrap().page().index(), 0);
+                assert_eq!(reserve.unused_pages.first().unwrap().page().index(), 511);
+            }
+        }
+    }
+
+    #[test]
+    fn qualification_partial_acquisition_failures_retain_exact_retry_prefix() {
+        let caches: Vec<_> = (0..8)
+            .map(|lane| {
+                qualification_cache(RequestId::new(lane, 12), M1QualificationLaneGrouping::S8)
+            })
+            .collect();
+        let mut pages_by_lane: Vec<Vec<DeviceKvPageLease>> = (0..8)
+            .map(|_| Vec::with_capacity(M1_QUALIFICATION_TARGET_PAGE_COUNT_V1))
+            .collect();
+
+        let first = acquire_qualification_target_page_prefix(
+            &caches,
+            &mut pages_by_lane,
+            |request, page| {
+                if request.slot() == 0 && page == 37 {
+                    Err(())
+                } else {
+                    Ok(qualification_page_lease(request, page, 76))
+                }
+            },
+        );
+        assert_eq!(first, Err((0, 37, ())));
+        assert_eq!(pages_by_lane[0].len(), 37);
+        assert!(pages_by_lane[1..].iter().all(Vec::is_empty));
+        assert_eq!(
+            qualification_target_page_prelease_progress(&pages_by_lane),
+            M1QualificationTargetPagePreleaseProgressV1 { lane: 0, page: 37 }
+        );
+
+        let second = acquire_qualification_target_page_prefix(
+            &caches,
+            &mut pages_by_lane,
+            |request, page| {
+                if request.slot() == 3 && page == 41 {
+                    Err(())
+                } else {
+                    Ok(qualification_page_lease(request, page, 76))
+                }
+            },
+        );
+        assert_eq!(second, Err((3, 41, ())));
+        assert!(pages_by_lane[..3]
+            .iter()
+            .all(|pages| pages.len() == M1_QUALIFICATION_TARGET_PAGE_COUNT_V1));
+        assert_eq!(pages_by_lane[3].len(), 41);
+        assert!(pages_by_lane[4..].iter().all(Vec::is_empty));
+
+        acquire_qualification_target_page_prefix(&caches, &mut pages_by_lane, |request, page| {
+            Ok::<_, ()>(qualification_page_lease(request, page, 76))
+        })
+        .unwrap();
+        assert!(pages_by_lane
+            .iter()
+            .all(|pages| pages.len() == M1_QUALIFICATION_TARGET_PAGE_COUNT_V1));
+        for (lane, pages) in pages_by_lane.iter().enumerate() {
+            assert!(pages.iter().enumerate().all(|(page, lease)| {
+                lease.request() == RequestId::new(u32::try_from(lane).unwrap(), 12)
+                    && lease.page().index() == u32::try_from(page).unwrap()
+            }));
+        }
+    }
+
+    #[test]
+    fn qualification_step_rejects_request_lane_witness_and_ordinal_substitution() {
+        let grouping = M1QualificationLaneGrouping::S8;
+        let (plan, expected) = qualification_plan(grouping);
+        let validated =
+            crate::validate_m1_qualification_context_plan_v1(&plan, grouping, &expected).unwrap();
+        let context0 = validated.step(0, 0).unwrap();
+        let mut cache = qualification_cache(RequestId::new(0, 19), grouping);
+        install_qualification_reserve_for_test(&mut cache, context0, 72);
+
+        assert_eq!(
+            cache
+                .reserve_m1_qualification_context_step_write_v1(
+                    RequestId::new(1, 19),
+                    0,
+                    context0,
+                    CompletionEpoch::new(1),
+                )
+                .unwrap_err()
+                .error(),
+            DeviceKvCacheError::WrongRequest
+        );
+        assert_eq!(
+            cache
+                .reserve_m1_qualification_context_step_write_v1(
+                    RequestId::new(0, 19),
+                    0,
+                    validated.step(0, 1).unwrap(),
+                    CompletionEpoch::new(1),
+                )
+                .unwrap_err()
+                .error(),
+            DeviceKvCacheError::QualificationWitnessMismatch
+        );
+        assert_eq!(
+            cache
+                .reserve_m1_qualification_context_step_write_v1(
+                    RequestId::new(0, 19),
+                    0,
+                    validated.step(16, 0).unwrap(),
+                    CompletionEpoch::new(1),
+                )
+                .unwrap_err()
+                .error(),
+            DeviceKvCacheError::QualificationPageOrderMismatch
+        );
+        assert_eq!(
+            cache.projection().target_qualification_future_pages,
+            M1_QUALIFICATION_TARGET_PAGE_COUNT_V1
+        );
+        assert!(!cache.projection().target_write_pending);
+    }
+
+    #[test]
+    fn qualification_boundary_failure_reinserts_page_and_preserves_conservation() {
+        let grouping = M1QualificationLaneGrouping::S1;
+        let (plan, expected) = qualification_plan(grouping);
+        let validated =
+            crate::validate_m1_qualification_context_plan_v1(&plan, grouping, &expected).unwrap();
+        let context = validated.step(0, 0).unwrap();
+        let mut cache = qualification_cache(request(), grouping);
+        install_qualification_reserve_for_test(&mut cache, context, 73);
+
+        let error = cache
+            .reserve_m1_qualification_context_step_write_v1(
+                request(),
+                0,
+                context,
+                CompletionEpoch::new(0),
+            )
+            .unwrap_err();
+        assert_eq!(error.error(), DeviceKvCacheError::ZeroCompletionEpoch);
+        let projection = cache.projection();
+        assert_eq!(projection.target_active_pages, 0);
+        assert_eq!(
+            projection.target_qualification_future_pages,
+            M1_QUALIFICATION_TARGET_PAGE_COUNT_V1
+        );
+        assert!(!projection.target_write_pending);
+        assert_eq!(
+            cache
+                .qualification_target_page_reserve()
+                .unwrap()
+                .unused_pages
+                .last()
+                .unwrap()
+                .page()
+                .index(),
+            0
+        );
+
+        let pending = cache
+            .reserve_m1_qualification_context_step_write_v1(
+                request(),
+                0,
+                context,
+                CompletionEpoch::new(1),
+            )
+            .unwrap();
+        assert_eq!(pending.active_page_count(), 0);
+        assert_eq!(pending.pending_new_page_count(), 1);
+        assert_eq!(pending.unused_future_page_count(), 511);
+        assert!(pending.conserves_target_pages());
+        let aborted = cache
+            .abort_step_write(pending.into_pending_step_write())
+            .unwrap();
+        cache
+            .common
+            .target_qualification_reserve
+            .as_mut()
+            .unwrap()
+            .unused_pages
+            .extend(aborted.into_page_leases());
+        assert_eq!(
+            cache.projection().target_qualification_future_pages,
+            M1_QUALIFICATION_TARGET_PAGE_COUNT_V1
+        );
+    }
+
+    #[test]
+    fn qualification_future_pages_block_rollback_cancel_and_release() {
+        let grouping = M1QualificationLaneGrouping::S1;
+        let (plan, expected) = qualification_plan(grouping);
+        let validated =
+            crate::validate_m1_qualification_context_plan_v1(&plan, grouping, &expected).unwrap();
+        let context = validated.step(0, 0).unwrap();
+        let mut cache = qualification_cache(request(), grouping);
+        install_qualification_reserve_for_test(&mut cache, context, 74);
+        assert!(!cache.release_state_is_valid());
+        assert_eq!(
+            cache.rollback_one(request(), Qwen3ModelRole::Target8B, CompletionEpoch::new(1),),
+            Err(DeviceKvCacheError::QualificationFuturePagesRemain)
+        );
+        let failure = match cache.cancel(request(), CompletionEpoch::new(1)) {
+            DeviceKvCancellationOutcome::Rejected(failure) => failure,
+            other => panic!("unexpected cancellation outcome: {other:?}"),
+        };
+        assert_eq!(
+            failure.error(),
+            DeviceKvCacheError::QualificationFuturePagesRemain
+        );
+        let (_, cache) = failure.into_parts();
+        assert_eq!(
+            cache.projection().target_qualification_future_pages,
+            M1_QUALIFICATION_TARGET_PAGE_COUNT_V1
+        );
+    }
+
+    #[test]
+    fn qualification_s1_full_context_consumes_exact_boundary_pages() {
+        let grouping = M1QualificationLaneGrouping::S1;
+        let (plan, expected) = qualification_plan(grouping);
+        let validated =
+            crate::validate_m1_qualification_context_plan_v1(&plan, grouping, &expected).unwrap();
+        let mut cache = qualification_cache(request(), grouping);
+        install_qualification_reserve_for_test(&mut cache, validated.step(0, 0).unwrap(), 75);
+
+        for ordinal in 0..8_192u32 {
+            let epoch = CompletionEpoch::new(u64::from(ordinal) + 1);
+            let qualified = cache
+                .reserve_m1_qualification_context_step_write_v1(
+                    request(),
+                    0,
+                    validated.step(ordinal, 0).unwrap(),
+                    epoch,
+                )
+                .unwrap();
+            let expected_active = usize::try_from(ordinal.div_ceil(16)).unwrap();
+            let expected_pending = usize::from(ordinal.is_multiple_of(16));
+            assert_eq!(qualified.active_page_count(), expected_active);
+            assert_eq!(qualified.pending_new_page_count(), expected_pending);
+            assert!(qualified.conserves_target_pages());
+            if matches!(ordinal, 0 | 15 | 16 | 8_176 | 8_191) {
+                assert_eq!(
+                    qualified.unused_future_page_count(),
+                    512 - expected_active - expected_pending
+                );
+            }
+
+            let completed =
+                match complete_step(cache, qualified.into_pending_step_write(), epoch.value()) {
+                    DeviceKvStepCompletionOutcome::Completed(completed) => completed,
+                    other => panic!("unexpected qualification completion outcome: {other:?}"),
+                };
+            let (mut completed_cache, initialized, _completion) = completed.into_parts();
+            assert_eq!(
+                completed_cache
+                    .settle_completed_step(&initialized, 1, epoch)
+                    .unwrap(),
+                0
+            );
+            cache = completed_cache;
+        }
+
+        let projection = cache.projection();
+        assert_eq!(projection.target.committed_tokens, 8_192);
+        assert_eq!(projection.target.resident_tokens, 8_192);
+        assert_eq!(projection.target_active_pages, 512);
+        assert_eq!(projection.target_qualification_future_pages, 0);
+        assert!(cache.release_state_is_valid());
     }
 }
