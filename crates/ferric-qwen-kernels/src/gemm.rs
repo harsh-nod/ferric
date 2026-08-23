@@ -46,6 +46,9 @@ use fe2o3_hsaco_finalize::{
 use fe2o3_llvm_handoff::GFX942_AMDHSA_DATA_LAYOUT_V1;
 use sha2::{Digest as _, Sha256};
 
+#[allow(unused_imports)]
+use vstd::prelude::*;
+
 /// Exact reference-schedule kernel entry.
 pub const QWEN3_GEMM_REFERENCE_KERNEL_SYMBOL_V1: &str =
     "ferric_qwen3_gemm_reference_bf16_f32_bf16_v1";
@@ -3113,9 +3116,13 @@ impl CheckedQwen3TokenEmbeddingLaunchV1 {
     }
 }
 
+verus! {
+
 fn checked_ceil_div_16(value: u32) -> Option<u32> {
     value.checked_add(15).map(|sum| sum / 16)
 }
+
+} // verus!
 
 fn exact_target() -> DeviceTargetV1 {
     DeviceTargetV1::parse(QWEN3_GEMM_TARGET_V1).expect("the fixed Qwen3 GEMM target is canonical")
@@ -3133,6 +3140,18 @@ fn hash(domain: &[u8], bytes: &[u8]) -> [u8; 32] {
 mod tests {
     use super::*;
     use std::collections::BTreeSet;
+
+    #[test]
+    fn checked_tile_division_preserves_boundaries_and_overflow() {
+        assert_eq!(checked_ceil_div_16(0), Some(0));
+        assert_eq!(checked_ceil_div_16(1), Some(1));
+        assert_eq!(checked_ceil_div_16(15), Some(1));
+        assert_eq!(checked_ceil_div_16(16), Some(1));
+        assert_eq!(checked_ceil_div_16(17), Some(2));
+        assert_eq!(checked_ceil_div_16(u32::MAX - 15), Some(u32::MAX / 16));
+        assert_eq!(checked_ceil_div_16(u32::MAX - 14), None);
+        assert_eq!(checked_ceil_div_16(u32::MAX), None);
+    }
 
     fn bindings(seed: u8) -> Qwen3GemmSourceBindingsV1 {
         Qwen3GemmSourceBindingsV1::new(

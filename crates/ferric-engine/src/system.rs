@@ -1037,11 +1037,12 @@ impl<const C: usize> Engine<C> {
 
     /// Consumes the Engine into terminal capture-quarantine custody.
     #[must_use = "the quarantined Engine remains the terminal scheduler/KV owner"]
-    pub fn into_m1_capture_quarantine(mut self) -> M1CaptureQuarantinedEngineV1<C>
-        requires old(self).well_formed(),
+    pub fn into_m1_capture_quarantine(self) -> M1CaptureQuarantinedEngineV1<C>
+        requires self.well_formed(),
     {
-        self.quarantine_m1_queue_rearm_failure();
-        M1CaptureQuarantinedEngineV1 { engine: self }
+        let mut engine = self;
+        engine.quarantine_m1_queue_rearm_failure();
+        M1CaptureQuarantinedEngineV1 { engine }
     }
 
     #[must_use]

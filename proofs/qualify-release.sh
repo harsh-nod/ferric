@@ -100,6 +100,7 @@ verus_root=$authenticated_verus
 source_snapshot="$scratch/source"
 mkdir -p "$source_snapshot"
 cp -a "$repo/Cargo.toml" "$repo/Cargo.lock" "$repo/rust-toolchain.toml" "$source_snapshot/"
+cp -a "$repo/benches" "$source_snapshot/"
 cp -a "$repo/crates" "$repo/proofs" "$source_snapshot/"
 cp -a "$repo/docs" "$source_snapshot/"
 cp -a "$repo/generated" "$source_snapshot/"
