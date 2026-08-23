@@ -181,6 +181,7 @@ struct SourceWalker<'a> {
     repo: &'a Path,
     package: &'a Package,
     source_root: PathBuf,
+    module_dir: PathBuf,
     visited: BTreeSet<PathBuf>,
     modules: ModuleMap,
     functions: BTreeSet<Function>,
@@ -1502,9 +1503,9 @@ fn inherent_owner_module(
 impl SourceWalker<'_> {
     fn walk(mut self) -> GateResult<WalkOutput> {
         let root = self.package.root.clone();
-        let source_root = self.source_root.clone();
+        let module_dir = self.module_dir.clone();
         let module_path = self.package.crate_name.clone();
-        self.walk_file(&root, &source_root, &module_path)?;
+        self.walk_file(&root, &module_dir, &module_path)?;
         self.resolve_inherent_methods()?;
         Ok((self.modules, self.functions, self.visited))
     }
@@ -1809,6 +1810,12 @@ fn collect_rs_files(root: &Path, output: &mut BTreeSet<PathBuf>) -> GateResult<(
     Ok(())
 }
 
+fn target_module_dir(root: &Path) -> GateResult<PathBuf> {
+    root.parent()
+        .map(Path::to_path_buf)
+        .ok_or_else(|| format!("target root has no parent: {}", root.display()))
+}
+
 fn inventory(repo: &Path, metadata: &Value) -> GateResult<Inventory> {
     let runtime_tcb = validate_runtime_dependency_tcb(repo, metadata)?;
     let packages = packages(repo, metadata, &runtime_tcb.roots)?;
@@ -1830,6 +1837,7 @@ fn inventory(repo: &Path, metadata: &Value) -> GateResult<Inventory> {
         targets.extend(package.additional_targets.iter().cloned());
         let mut visited = BTreeSet::new();
         for target in targets {
+            let module_dir = target_module_dir(&target.root)?;
             let target_package = Package {
                 name: package.name.clone(),
                 crate_name: target.crate_name,
@@ -1841,6 +1849,7 @@ fn inventory(repo: &Path, metadata: &Value) -> GateResult<Inventory> {
                 repo,
                 package: &target_package,
                 source_root: source_root.clone(),
+                module_dir,
                 visited: BTreeSet::new(),
                 modules: BTreeMap::new(),
                 functions: BTreeSet::new(),
@@ -2099,8 +2108,9 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::inherent_owner_module;
+    use super::{inherent_owner_module, target_module_dir};
     use std::collections::{BTreeMap, BTreeSet};
+    use std::path::{Path, PathBuf};
 
     fn owners(records: &[(&str, &[&str])]) -> BTreeMap<String, BTreeSet<String>> {
         records
@@ -2132,5 +2142,17 @@ mod tests {
         let type_owners = owners(&[("Role", &["crate_name::a", "crate_name::b"])]);
         assert!(inherent_owner_module(&type_owners, "crate_name::c", "Role").is_err());
         assert!(inherent_owner_module(&type_owners, "crate_name::c", "Missing").is_err());
+    }
+
+    #[test]
+    fn target_modules_resolve_from_each_cargo_target_root() {
+        assert_eq!(
+            target_module_dir(Path::new("crate/src/lib.rs")),
+            Ok(PathBuf::from("crate/src"))
+        );
+        assert_eq!(
+            target_module_dir(Path::new("crate/src/bin/tool.rs")),
+            Ok(PathBuf::from("crate/src/bin"))
+        );
     }
 }

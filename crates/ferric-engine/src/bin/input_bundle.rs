@@ -13,8 +13,6 @@ use super::{
     DIFFERENTIAL_NONCLAIM, ENVIRONMENT_FORMAT, M1_QUALIFICATION_TOKENS_PER_LANE, PLAN_FORMAT,
     ROSTER_FORMAT, TARGET, WORKLOAD_FORMAT,
 };
-#[cfg(test)]
-use super::{COMMON_IDENTITIES, DIFFERENTIAL_DISPATCH_GRAPH_IDENTITIES, DIFFERENTIAL_IDENTITIES};
 use ferric_spec::{Qwen3ExecutionMode, Qwen3PlanSelection};
 use rustix::fs::Dir;
 use serde_json::{json, Value};
@@ -22,8 +20,6 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::ffi::{OsStr, OsString};
 use std::io::Write;
 use std::path::Path;
-#[cfg(test)]
-use std::path::{Component, PathBuf};
 
 const BENCHMARK_INPUT_FORMAT: &str = "FERRIC-M1-BENCHMARK-INPUT-V1";
 const ACCEPTANCE_POLICY_FORMAT: &str = "FERRIC-M1-DIFFERENTIAL-ACCEPTANCE-POLICY-V1";
@@ -819,8 +815,12 @@ fn path_string(path: &Path) -> CaptureResult<&str> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{
+        COMMON_IDENTITIES, DIFFERENTIAL_DISPATCH_GRAPH_IDENTITIES, DIFFERENTIAL_IDENTITIES,
+    };
     use std::fs;
     use std::os::unix::fs::symlink;
+    use std::path::{Component, PathBuf};
     use std::sync::atomic::{AtomicU64, Ordering};
 
     static NONCE: AtomicU64 = AtomicU64::new(0);

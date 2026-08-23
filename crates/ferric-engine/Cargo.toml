@@ -1,6 +1,7 @@
 [package]
 name = "ferric-engine"
 description = "Safe runtime state machines for Ferric inference"
+autobins = false
 edition.workspace = true
 rust-version.workspace = true
 version.workspace = true

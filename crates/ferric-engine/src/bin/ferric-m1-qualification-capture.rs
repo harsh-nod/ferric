@@ -93,7 +93,6 @@ use std::io::{Cursor, Read, Write};
 use std::path::{Component, Path, PathBuf};
 use std::process::ExitCode;
 
-#[path = "ferric-m1-qualification-capture/input_bundle.rs"]
 mod input_bundle;
 
 const PLAN_FORMAT: &str = "FERRIC-M1-BENCHMARK-PLAN-V1";
@@ -1336,10 +1335,12 @@ fn main() -> ExitCode {
 }
 
 fn run(arguments: Vec<OsString>) -> CaptureResult<()> {
-    match arguments.first().and_then(|argument| argument.to_str()) {
-        Some("generate-inputs") => return input_bundle::generate_inputs(&arguments[1..]),
-        Some("validate-inputs") => return input_bundle::validate_inputs(&arguments[1..]),
-        _ => {}
+    if arguments.len() != 11 {
+        match arguments.first().and_then(|argument| argument.to_str()) {
+            Some("generate-inputs") => return input_bundle::generate_inputs(&arguments[1..]),
+            Some("validate-inputs") => return input_bundle::validate_inputs(&arguments[1..]),
+            _ => {}
+        }
     }
     run_capture(&arguments)
 }
@@ -5827,6 +5828,18 @@ mod tests {
             "max_polls": 20_000_000,
             "selection": selection_json(kind_selection(kind).unwrap()),
         })
+    }
+
+    #[test]
+    fn input_subcommands_do_not_reserve_legacy_eleven_argument_plan_names() {
+        let new_mode_error = run(vec![OsString::from("generate-inputs")]).unwrap_err();
+        assert!(new_mode_error
+            .starts_with("usage: ferric-m1-qualification-capture generate-inputs MODEL-SOURCE"));
+
+        let mut legacy = vec![OsString::from("unused"); 11];
+        legacy[0] = OsString::from("generate-inputs");
+        let legacy_error = run(legacy).unwrap_err();
+        assert!(!legacy_error.contains("generate-inputs MODEL-SOURCE"));
     }
 
     #[test]
