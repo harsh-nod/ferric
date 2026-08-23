@@ -5,8 +5,9 @@
 //! does not claim kernel dispatch, physical memory pressure, or M1 evidence.
 
 use super::{
-    canonical_bytes, exact_object, expect_string, field, hex_bytes, parse_canonical,
-    require_sha256, CaptureResult, StagingOutput, TARGET,
+    canonical_bytes, decode_identity, exact_object, expect_string, field, hex_bytes,
+    parse_canonical, require_sha256, CaptureResult, R30PhysicalCaptureBindingsV1, StagingOutput,
+    TARGET,
 };
 use ferric_engine::{Gfx942DeviceBinding, M1PhysicalRunnerV1};
 use ferric_spec::{Identity, RequestId, M1_KV_PHYSICAL_PAGE_SLOTS};
@@ -172,6 +173,78 @@ pub(super) fn publish(output: &Path, capture: CaptureArtifactV1) -> CaptureResul
         ("capture.json", capture.bytes.as_slice()),
         ("protocol.json", protocol.as_slice()),
     ])
+}
+
+pub(super) fn admit_persisted_bundle(
+    capture: &[u8],
+    protocol: &[u8],
+) -> CaptureResult<R30PhysicalCaptureBindingsV1> {
+    let expected_protocol = protocol_bytes()?;
+    if protocol != expected_protocol {
+        return Err("partial r30 exhaustion protocol bytes drifted".to_owned());
+    }
+    let value = parse_canonical(capture, "persisted partial r30 exhaustion capture")?;
+    let root = value
+        .as_object()
+        .ok_or_else(|| "persisted partial r30 exhaustion capture must be an object".to_owned())?;
+    let identities = field(root, "identities")?.as_object().ok_or_else(|| {
+        "persisted partial r30 exhaustion identities must be an object".to_owned()
+    })?;
+    let result = field(root, "result")?
+        .as_object()
+        .ok_or_else(|| "persisted partial r30 exhaustion result must be an object".to_owned())?;
+    let trace = field(root, "trace")?
+        .as_object()
+        .ok_or_else(|| "persisted partial r30 exhaustion trace must be an object".to_owned())?;
+    let expected = ExpectedBindingsV1 {
+        device_id: persisted_digest(identities, "device_id_sha256")?,
+        draft_arena: persisted_digest(identities, "draft_kv_arena_sha256")?,
+        first_generation: u32::try_from(persisted_u64(result, "first_generation")?)
+            .map_err(|_| "persisted exhaustion first generation does not fit u32".to_owned())?,
+        gpu_unique_id: persisted_u64(identities, "gpu_unique_id")?,
+        kernel_catalog: persisted_digest(identities, "kernel_catalog_sha256")?,
+        kernel_manifest: persisted_digest(identities, "kernel_manifest_sha256")?,
+        program_catalog: persisted_digest(identities, "program_catalog_sha256")?,
+        request_generation: u32::try_from(persisted_u64(trace, "request_generation")?)
+            .map_err(|_| "persisted exhaustion request generation does not fit u32".to_owned())?,
+        request_slot: u32::try_from(persisted_u64(trace, "request_slot")?)
+            .map_err(|_| "persisted exhaustion request slot does not fit u32".to_owned())?,
+        reused_generation: u32::try_from(persisted_u64(result, "reused_generation")?)
+            .map_err(|_| "persisted exhaustion reused generation does not fit u32".to_owned())?,
+        runner_declaration: persisted_digest(identities, "runner_declaration_sha256")?,
+        target_arena: persisted_digest(identities, "target_kv_arena_sha256")?,
+    };
+    if expected.reused_generation
+        != expected
+            .first_generation
+            .checked_add(1)
+            .ok_or_else(|| "persisted exhaustion page generation overflowed".to_owned())?
+        || expected.target_arena == expected.draft_arena
+        || expected.request_generation == 0
+    {
+        return Err("persisted exhaustion generation or arena relation drifted".to_owned());
+    }
+    validate_manifest(capture, &expected)?;
+    Ok(R30PhysicalCaptureBindingsV1 {
+        device_identity_sha256: hex_bytes(&expected.device_id),
+        gpu_unique_id: expected.gpu_unique_id,
+        kernel_artifact_manifest_sha256: hex_bytes(&expected.kernel_manifest),
+        program_catalog_sha256: hex_bytes(&expected.program_catalog),
+        runner_declaration_sha256: hex_bytes(&expected.runner_declaration),
+    })
+}
+
+fn persisted_digest(object: &Map<String, Value>, name: &str) -> CaptureResult<[u8; 32]> {
+    let value = field(object, name)?
+        .as_str()
+        .ok_or_else(|| format!("persisted exhaustion {name} must be a string"))?;
+    Ok(*decode_identity(value)?.as_bytes())
+}
+
+fn persisted_u64(object: &Map<String, Value>, name: &str) -> CaptureResult<u64> {
+    field(object, name)?
+        .as_u64()
+        .ok_or_else(|| format!("persisted exhaustion {name} must be a nonnegative integer"))
 }
 
 fn validate_manifest(bytes: &[u8], expected: &ExpectedBindingsV1) -> CaptureResult<()> {
@@ -498,6 +571,31 @@ mod tests {
         )
         .unwrap();
         assert_eq!(protocol_bytes().unwrap(), checked_in);
+    }
+
+    #[test]
+    fn persisted_bundle_admission_revalidates_capture_and_protocol() {
+        let bytes = canonical_bytes(&fixture()).unwrap();
+        let admitted = admit_persisted_bundle(&bytes, &protocol_bytes().unwrap()).unwrap();
+        assert_eq!(admitted.device_identity_sha256, "01".repeat(32));
+        assert_eq!(admitted.gpu_unique_id, 23);
+        assert_eq!(admitted.runner_declaration_sha256, "06".repeat(32));
+
+        let mut hostile = fixture();
+        hostile["result"]["returned_pages"] = json!(511);
+        assert!(admit_persisted_bundle(
+            &canonical_bytes(&hostile).unwrap(),
+            &protocol_bytes().unwrap()
+        )
+        .is_err());
+
+        let mut hostile_generation = fixture();
+        hostile_generation["result"]["reused_generation"] = json!(9);
+        assert!(admit_persisted_bundle(
+            &canonical_bytes(&hostile_generation).unwrap(),
+            &protocol_bytes().unwrap()
+        )
+        .is_err());
     }
 
     #[test]

@@ -5,8 +5,9 @@
 //! output and deliberately grants no broader memory-safety or evidence claim.
 
 use super::{
-    canonical_bytes, exact_object, expect_string, field, hex_bytes, parse_canonical,
-    require_sha256, sha256_array, CaptureResult, StagingOutput, TARGET,
+    canonical_bytes, decode_identity, exact_object, expect_string, field, hex_bytes,
+    parse_canonical, require_sha256, sha256_array, CaptureResult, R30PhysicalCaptureBindingsV1,
+    StagingOutput, TARGET,
 };
 use ferric_engine::{
     CheckedCompletionSemantics, M1PhysicalRunnerV1, M1ReleasedDeviceKvMemberV1,
@@ -270,6 +271,91 @@ pub(super) fn publish(output: &Path, capture: CaptureArtifactV1) -> CaptureResul
         ("capture.json", capture.bytes.as_slice()),
         ("protocol.json", protocol.as_slice()),
     ])
+}
+
+pub(super) fn admit_persisted_bundle(
+    capture: &[u8],
+    protocol: &[u8],
+) -> CaptureResult<R30PhysicalCaptureBindingsV1> {
+    let expected_protocol = protocol_bytes()?;
+    if protocol != expected_protocol {
+        return Err("partial r30 canary protocol bytes drifted".to_owned());
+    }
+    let value = parse_canonical(capture, "persisted partial r30 canary capture")?;
+    let root = value
+        .as_object()
+        .ok_or_else(|| "persisted partial r30 canary capture must be an object".to_owned())?;
+    let identities = field(root, "identities")?
+        .as_object()
+        .ok_or_else(|| "persisted partial r30 canary identities must be an object".to_owned())?;
+    let layout = field(root, "layout")?
+        .as_object()
+        .ok_or_else(|| "persisted partial r30 canary layout must be an object".to_owned())?;
+    let interior = field(layout, "interior")?
+        .as_object()
+        .ok_or_else(|| "persisted partial r30 canary interior must be an object".to_owned())?;
+    let prefix = field(layout, "prefix_guard")?
+        .as_object()
+        .ok_or_else(|| "persisted partial r30 canary prefix must be an object".to_owned())?;
+    let snapshot = field(layout, "snapshot")?
+        .as_object()
+        .ok_or_else(|| "persisted partial r30 canary snapshot must be an object".to_owned())?;
+    let suffix = field(layout, "suffix_guard")?
+        .as_object()
+        .ok_or_else(|| "persisted partial r30 canary suffix must be an object".to_owned())?;
+    let result = field(root, "result")?
+        .as_object()
+        .ok_or_else(|| "persisted partial r30 canary result must be an object".to_owned())?;
+    let trace = field(root, "trace")?
+        .as_object()
+        .ok_or_else(|| "persisted partial r30 canary trace must be an object".to_owned())?;
+    let expected = ExpectedBindingsV1 {
+        completion_epoch: persisted_u64(trace, "completion_epoch")?,
+        data_index: usize::try_from(persisted_u64(trace, "data_index")?)
+            .map_err(|_| "persisted canary data index does not fit usize".to_owned())?,
+        device_id: persisted_digest(identities, "device_id_sha256")?,
+        dispatch_generation: persisted_u64(trace, "dispatch_generation")?,
+        emitted_token: u32::try_from(persisted_u64(result, "emitted_token")?)
+            .map_err(|_| "persisted canary emitted token does not fit u32".to_owned())?,
+        gpu_unique_id: persisted_u64(identities, "gpu_unique_id")?,
+        interior_offset: persisted_u64(interior, "absolute_offset_bytes")?,
+        interior_sha256: persisted_digest(interior, "completed_sha256")?,
+        kernel_catalog: persisted_digest(identities, "kernel_catalog_sha256")?,
+        kernel_manifest: persisted_digest(identities, "kernel_manifest_sha256")?,
+        plan_id: persisted_digest(trace, "plan_id_sha256")?,
+        prefix_sha256: persisted_digest(prefix, "completed_sha256")?,
+        program_catalog: persisted_digest(identities, "program_catalog_sha256")?,
+        protocol_sha256: sha256_array(protocol),
+        request_generation: u32::try_from(persisted_u64(trace, "request_generation")?)
+            .map_err(|_| "persisted canary request generation does not fit u32".to_owned())?,
+        request_slot: u32::try_from(persisted_u64(trace, "request_slot")?)
+            .map_err(|_| "persisted canary request slot does not fit u32".to_owned())?,
+        runner_declaration: persisted_digest(identities, "runner_declaration_sha256")?,
+        snapshot_offset: persisted_u64(snapshot, "absolute_offset_bytes")?,
+        snapshot_sha256: persisted_digest(snapshot, "completed_sha256")?,
+        suffix_sha256: persisted_digest(suffix, "completed_sha256")?,
+    };
+    validate_manifest(capture, &expected)?;
+    Ok(R30PhysicalCaptureBindingsV1 {
+        device_identity_sha256: hex_bytes(&expected.device_id),
+        gpu_unique_id: expected.gpu_unique_id,
+        kernel_artifact_manifest_sha256: hex_bytes(&expected.kernel_manifest),
+        program_catalog_sha256: hex_bytes(&expected.program_catalog),
+        runner_declaration_sha256: hex_bytes(&expected.runner_declaration),
+    })
+}
+
+fn persisted_digest(object: &Map<String, Value>, name: &str) -> CaptureResult<[u8; 32]> {
+    let value = field(object, name)?
+        .as_str()
+        .ok_or_else(|| format!("persisted canary {name} must be a string"))?;
+    Ok(*decode_identity(value)?.as_bytes())
+}
+
+fn persisted_u64(object: &Map<String, Value>, name: &str) -> CaptureResult<u64> {
+    field(object, name)?
+        .as_u64()
+        .ok_or_else(|| format!("persisted canary {name} must be a nonnegative integer"))
 }
 
 fn validate_manifest(bytes: &[u8], expected: &ExpectedBindingsV1) -> CaptureResult<()> {
@@ -717,6 +803,23 @@ mod tests {
         )
         .unwrap();
         assert_eq!(protocol_bytes().unwrap(), checked_in);
+    }
+
+    #[test]
+    fn persisted_bundle_admission_revalidates_capture_and_protocol() {
+        let bytes = canonical_bytes(&fixture()).unwrap();
+        let admitted = admit_persisted_bundle(&bytes, &protocol_bytes().unwrap()).unwrap();
+        assert_eq!(admitted.device_identity_sha256, "01".repeat(32));
+        assert_eq!(admitted.gpu_unique_id, 23);
+        assert_eq!(admitted.kernel_artifact_manifest_sha256, "04".repeat(32));
+
+        let mut hostile = fixture();
+        hostile["layout"]["prefix_guard"]["unchanged"] = json!(false);
+        assert!(admit_persisted_bundle(
+            &canonical_bytes(&hostile).unwrap(),
+            &protocol_bytes().unwrap()
+        )
+        .is_err());
     }
 
     #[test]

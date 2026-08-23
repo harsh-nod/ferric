@@ -7,7 +7,7 @@
 use super::{
     canonical_bytes, dispatch_graph_identity_name, exact_object, expect_string, field, hex_bytes,
     parse_canonical, require_safe_id, require_sha256, sha256_hex, CaptureIdentities, CaptureResult,
-    DifferentialPlan, PlanCase, StagingOutput, Workload, TARGET,
+    DifferentialPlan, PlanCase, R30PhysicalCaptureBindingsV1, StagingOutput, Workload, TARGET,
 };
 use ferric_spec::{Identity, RequestId};
 use serde_json::{json, Value};
@@ -343,6 +343,50 @@ pub(super) fn publish(output: &Path, capture: &[u8]) -> CaptureResult<()> {
     staging.write("capture.json", capture)?;
     staging.write("protocol.json", &protocol)?;
     staging.publish_exact(&[("capture.json", capture), ("protocol.json", &protocol)])
+}
+
+pub(super) fn admit_persisted_bundle(
+    capture: &[u8],
+    protocol: &[u8],
+) -> CaptureResult<R30PhysicalCaptureBindingsV1> {
+    let expected_protocol = protocol_bytes()?;
+    if protocol != expected_protocol {
+        return Err("partial r30 cancellation protocol bytes drifted".to_owned());
+    }
+    validate_manifest(capture)?;
+    let value = parse_canonical(capture, "persisted partial r30 cancellation capture")?;
+    let root = value
+        .as_object()
+        .ok_or_else(|| "persisted partial r30 cancellation capture must be an object".to_owned())?;
+    let admission = field(root, "admission")?.as_object().ok_or_else(|| {
+        "persisted partial r30 cancellation admission must be an object".to_owned()
+    })?;
+    Ok(R30PhysicalCaptureBindingsV1 {
+        device_identity_sha256: admission_string(admission, "device_identity_sha256")?.to_owned(),
+        gpu_unique_id: field(admission, "gpu_unique_id")?
+            .as_u64()
+            .filter(|value| *value != 0)
+            .ok_or_else(|| "persisted cancellation GPU identity is invalid".to_owned())?,
+        kernel_artifact_manifest_sha256: admission_string(
+            admission,
+            "kernel_artifact_manifest_sha256",
+        )?
+        .to_owned(),
+        program_catalog_sha256: admission_string(admission, "program_catalog_sha256")?.to_owned(),
+        runner_declaration_sha256: admission_string(admission, "runner_declaration_sha256")?
+            .to_owned(),
+    })
+}
+
+fn admission_string<'a>(
+    object: &'a serde_json::Map<String, Value>,
+    name: &str,
+) -> CaptureResult<&'a str> {
+    let value = field(object, name)?
+        .as_str()
+        .ok_or_else(|| format!("persisted cancellation {name} must be a string"))?;
+    require_sha256(value)?;
+    Ok(value)
 }
 
 fn validate_manifest(bytes: &[u8]) -> CaptureResult<()> {
@@ -708,6 +752,19 @@ mod tests {
                     .iter()
                     .position(|event| *event == "physical-completion-observed")
         );
+    }
+
+    #[test]
+    fn persisted_bundle_admission_recovers_only_checked_runtime_bindings() {
+        let bytes = capture(lifecycle());
+        let admitted = admit_persisted_bundle(&bytes, &protocol_bytes().unwrap()).unwrap();
+        assert_eq!(admitted.device_identity_sha256, "11".repeat(32));
+        assert_eq!(admitted.gpu_unique_id, 1);
+        assert_eq!(admitted.kernel_artifact_manifest_sha256, "11".repeat(32));
+
+        let mut wrong_protocol = protocol_bytes().unwrap();
+        wrong_protocol.push(b'\n');
+        assert!(admit_persisted_bundle(&bytes, &wrong_protocol).is_err());
     }
 
     #[test]

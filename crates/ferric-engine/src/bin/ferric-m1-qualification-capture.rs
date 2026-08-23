@@ -103,6 +103,7 @@ use std::process::ExitCode;
 
 mod input_bundle;
 mod m1_r30_canary_partial_capture;
+mod m1_r30_capture_composition;
 mod m1_r30_exhaustion_partial_capture;
 mod m1_r30_partial_capture;
 mod m1_r30_rollback_partial_capture;
@@ -167,6 +168,15 @@ const DIFFERENTIAL_DISPATCH_GRAPH_IDENTITIES: &[(&str, &str)] = &[
 ];
 
 type CaptureResult<T> = Result<T, String>;
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct R30PhysicalCaptureBindingsV1 {
+    device_identity_sha256: String,
+    gpu_unique_id: u64,
+    kernel_artifact_manifest_sha256: String,
+    program_catalog_sha256: String,
+    runner_declaration_sha256: String,
+}
 
 const CAPTURE_RECOVERY_RETRIES: usize = 2;
 
@@ -1818,6 +1828,11 @@ fn main() -> ExitCode {
 }
 
 fn run(arguments: Vec<OsString>) -> CaptureResult<()> {
+    if arguments.first().and_then(|argument| argument.to_str())
+        == Some(m1_r30_capture_composition::COMMAND)
+    {
+        return m1_r30_capture_composition::run(&arguments[1..]);
+    }
     if arguments.first().and_then(|argument| argument.to_str())
         == Some(m1_r30_canary_partial_capture::COMMAND)
     {
@@ -7716,6 +7731,10 @@ mod tests {
 
         let r30_error = run(vec![OsString::from(m1_r30_partial_capture::COMMAND)]).unwrap_err();
         assert!(r30_error.contains("capture-r30-cancellation PLAN ROSTER"));
+
+        let composed_error =
+            run(vec![OsString::from(m1_r30_capture_composition::COMMAND)]).unwrap_err();
+        assert!(composed_error.contains("compose-r30-runner CANARY-BUNDLE"));
 
         let mut legacy = vec![OsString::from("unused"); 11];
         legacy[0] = OsString::from(m1_r30_partial_capture::COMMAND);

@@ -377,6 +377,33 @@ target-prefill S1 K7 output; it still lacks broader canary coverage and an
 admitted physical queue/device fault-injection authority. Those missing runtime
 boundaries cannot be replaced by the existing external self-reported intake.
 
+The four Ferric-owned partial bundles can be joined with one canonical external
+fault-observation document without conflating their authorities:
+
+```text
+ferric-m1-qualification-capture compose-r30-runner \
+  CANARY-BUNDLE CANCELLATION-BUNDLE EXHAUSTION-BUNDLE ROLLBACK-BUNDLE \
+  FAULT-OBSERVATION OUTPUT-BUNDLE
+```
+
+`FAULT-OBSERVATION` must be canonical
+`FERRIC-M1-R30-FAULT-OBSERVATION-V1`, use authority
+`externally-reported-r30-fault-observation-only`, declare
+`hardware_claim: none`, bind its source executable, protocol, environment, and
+transcript identities, and contain a nonempty, uniquely named bounded fault
+roster. The composer re-admits every physical capture against its exact
+checked-in protocol, requires the four captures to bind the same device,
+kernel-artifact manifest, program catalog, runner declaration, and GPU unique
+ID. It also descriptor-measures the running composer executable and publishes
+exactly `runner.json` and `protocol.json` without replacement.
+
+The composed runner remains `partial-non-evidence`. It records four physical
+partial authorities and one `reported-unvalidated` external authority, carries
+`hardware_claim: none`, and fixes `evidence_case_count` to zero. It cannot turn
+reported fault fields into physical observations. A production physical
+queue/device fault-injection API, broader canary coverage, and independent
+evidence validation remain required before `m1.r30` can close.
+
 The serving suite has an additive pre-observation producer for one bounded,
 externally declared target-load diagnostic:
 

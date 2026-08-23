@@ -5,16 +5,17 @@
 //! completion and deliberately grants no physical subpage-return authority.
 
 use super::{
-    canonical_bytes, exact_object, expect_string, field, hex_bytes, parse_canonical,
-    require_sha256, sha256_array, CaptureResult, StagingOutput, TARGET,
+    canonical_bytes, decode_identity, exact_object, expect_string, field, hex_bytes,
+    parse_canonical, require_sha256, sha256_array, CaptureResult, R30PhysicalCaptureBindingsV1,
+    StagingOutput, TARGET,
 };
 use ferric_engine::{
     CheckedCompletionSemantics, DeviceKvCacheProjection, M1CompletedStepSuccessV1,
     M1ObservedSpeculativeDiagnosticChoicesV1, M1PhysicalRunnerV1, M1ReleasedDeviceKvMemberV1,
     M1ReleasedQueueTeardownSuccessV1, M1StepDispatchIntent,
 };
-use ferric_spec::{Identity, PhysicalKvLifecycle, Qwen3ModelRole};
-use serde_json::{json, Value};
+use ferric_spec::{Identity, PhysicalKvLifecycle, Qwen3ModelRole, RequestId};
+use serde_json::{json, Map, Value};
 use std::path::Path;
 
 pub(super) const COMMAND: &str = "capture-r30-rollback";
@@ -360,6 +361,165 @@ pub(super) fn publish(output: &Path, capture: CaptureArtifactV1) -> CaptureResul
         ("capture.json", &capture.bytes),
         ("protocol.json", &protocol),
     ])
+}
+
+pub(super) fn admit_persisted_bundle(
+    capture: &[u8],
+    protocol: &[u8],
+) -> CaptureResult<R30PhysicalCaptureBindingsV1> {
+    let expected_protocol = protocol_bytes()?;
+    if protocol != expected_protocol {
+        return Err("partial r30 rollback protocol bytes drifted".to_owned());
+    }
+    let value = parse_canonical(capture, "persisted partial r30 rollback capture")?;
+    let root = value
+        .as_object()
+        .ok_or_else(|| "persisted partial r30 rollback capture must be an object".to_owned())?;
+    let identities = persisted_object(root, "identities", "rollback identities")?;
+    let trace = persisted_object(root, "trace", "rollback trace")?;
+    let choices = persisted_object(root, "choices", "rollback choices")?;
+    let projections = persisted_object(root, "kv_projections", "rollback projections")?;
+    let result = persisted_object(root, "result", "rollback result")?;
+    let request_generation = u32::try_from(persisted_u64(trace, "request_generation")?)
+        .map_err(|_| "persisted rollback request generation does not fit u32".to_owned())?;
+    let request_slot = u32::try_from(persisted_u64(trace, "request_slot")?)
+        .map_err(|_| "persisted rollback request slot does not fit u32".to_owned())?;
+    let queue = QueueBindingsV1 {
+        device_id: persisted_digest(identities, "device_id_sha256")?,
+        gpu_unique_id: persisted_u64(identities, "gpu_unique_id")?,
+        kernel_catalog: persisted_digest(identities, "kernel_catalog_sha256")?,
+        kernel_manifest: persisted_digest(identities, "kernel_manifest_sha256")?,
+        program_catalog: persisted_digest(identities, "program_catalog_sha256")?,
+        runner_declaration: persisted_digest(identities, "runner_declaration_sha256")?,
+    };
+    let expected = ExpectedBindingsV1 {
+        compact_sha256: persisted_digest(trace, "compact_sha256")?,
+        completion_epoch: persisted_u64(trace, "completion_epoch")?,
+        dispatch_generation: persisted_u64(trace, "dispatch_generation")?,
+        draft_sha256: persisted_digest(choices, "draft_sha256")?,
+        plan_id: persisted_digest(trace, "plan_id_sha256")?,
+        post: persisted_projection(
+            field(projections, "post_engine_completion_pre_release")?,
+            "post-completion",
+        )?,
+        pre: persisted_projection(field(projections, "pre_completion")?, "pre-completion")?,
+        queue,
+        request_generation,
+        request_slot,
+        target_sha256: persisted_digest(choices, "target_sha256")?,
+    };
+    validate_manifest(capture, &expected)?;
+    let accepted = u32::try_from(persisted_u64(result, "accepted_draft_tokens")?)
+        .map_err(|_| "persisted rollback accepted count does not fit u32".to_owned())?;
+    let logical_prefix = accepted
+        .checked_add(1)
+        .ok_or_else(|| "persisted rollback logical prefix overflowed".to_owned())?;
+    validate_projection_transition(
+        expected.pre,
+        expected.post,
+        RequestId::new(request_slot, request_generation),
+        logical_prefix,
+        expected.queue.device_id,
+    )?;
+    Ok(R30PhysicalCaptureBindingsV1 {
+        device_identity_sha256: hex_bytes(&expected.queue.device_id),
+        gpu_unique_id: expected.queue.gpu_unique_id,
+        kernel_artifact_manifest_sha256: hex_bytes(&expected.queue.kernel_manifest),
+        program_catalog_sha256: hex_bytes(&expected.queue.program_catalog),
+        runner_declaration_sha256: hex_bytes(&expected.queue.runner_declaration),
+    })
+}
+
+fn persisted_projection(value: &Value, context: &str) -> CaptureResult<ProjectionV1> {
+    let projection = value
+        .as_object()
+        .ok_or_else(|| format!("persisted rollback {context} projection must be an object"))?;
+    Ok(ProjectionV1 {
+        device_id: persisted_digest(projection, "device_id_sha256")?,
+        draft: persisted_role(
+            field(projection, "draft")?,
+            Qwen3ModelRole::Draft06B,
+            context,
+        )?,
+        request_generation: u32::try_from(persisted_u64(projection, "request_generation")?)
+            .map_err(|_| format!("persisted rollback {context} generation does not fit u32"))?,
+        request_slot: u32::try_from(persisted_u64(projection, "request_slot")?)
+            .map_err(|_| format!("persisted rollback {context} slot does not fit u32"))?,
+        target: persisted_role(
+            field(projection, "target")?,
+            Qwen3ModelRole::Target8B,
+            context,
+        )?,
+        target_qualification_future_pages: usize::try_from(persisted_u64(
+            projection,
+            "target_qualification_future_pages",
+        )?)
+        .map_err(|_| {
+            format!("persisted rollback {context} future-page count does not fit usize")
+        })?,
+    })
+}
+
+fn persisted_role(
+    value: &Value,
+    role: Qwen3ModelRole,
+    context: &str,
+) -> CaptureResult<RoleProjectionV1> {
+    let object = value
+        .as_object()
+        .ok_or_else(|| format!("persisted rollback {context} role must be an object"))?;
+    let arena = match field(object, "arena_allocation_id_sha256")? {
+        Value::Null => None,
+        Value::String(value) => Some(*decode_identity(value)?.as_bytes()),
+        _ => {
+            return Err(format!(
+                "persisted rollback {context} arena identity is invalid"
+            ))
+        }
+    };
+    Ok(RoleProjectionV1 {
+        active_pages: usize::try_from(persisted_u64(object, "active_pages")?)
+            .map_err(|_| format!("persisted rollback {context} active pages do not fit usize"))?,
+        arena_allocation_id: arena,
+        committed_tokens: u32::try_from(persisted_u64(object, "committed_tokens")?).map_err(
+            |_| format!("persisted rollback {context} committed count does not fit u32"),
+        )?,
+        quiescent_retired_pages: usize::try_from(persisted_u64(object, "quiescent_retired_pages")?)
+            .map_err(|_| {
+                format!("persisted rollback {context} quiescent pages do not fit usize")
+            })?,
+        resident_tokens: u32::try_from(persisted_u64(object, "resident_tokens")?)
+            .map_err(|_| format!("persisted rollback {context} resident count does not fit u32"))?,
+        retired_pages: usize::try_from(persisted_u64(object, "retired_pages")?)
+            .map_err(|_| format!("persisted rollback {context} retired pages do not fit usize"))?,
+        role,
+        write_pending: field(object, "write_pending")?
+            .as_bool()
+            .ok_or_else(|| format!("persisted rollback {context} write-pending flag is invalid"))?,
+    })
+}
+
+fn persisted_object<'a>(
+    object: &'a Map<String, Value>,
+    name: &str,
+    context: &str,
+) -> CaptureResult<&'a Map<String, Value>> {
+    field(object, name)?
+        .as_object()
+        .ok_or_else(|| format!("persisted {context} must be an object"))
+}
+
+fn persisted_digest(object: &Map<String, Value>, name: &str) -> CaptureResult<[u8; 32]> {
+    let value = field(object, name)?
+        .as_str()
+        .ok_or_else(|| format!("persisted rollback {name} must be a string"))?;
+    Ok(*decode_identity(value)?.as_bytes())
+}
+
+fn persisted_u64(object: &Map<String, Value>, name: &str) -> CaptureResult<u64> {
+    field(object, name)?
+        .as_u64()
+        .ok_or_else(|| format!("persisted rollback {name} must be a nonnegative integer"))
 }
 
 fn validate_projection_transition(
@@ -1038,6 +1198,26 @@ mod tests {
         .unwrap();
         assert_eq!(protocol_bytes().unwrap(), checked_in);
         validate_manifest(&canonical_bytes(&fixture()).unwrap(), &expected()).unwrap();
+    }
+
+    #[test]
+    fn persisted_bundle_admission_revalidates_rollback_transition() {
+        let bytes = canonical_bytes(&fixture()).unwrap();
+        let admitted = admit_persisted_bundle(&bytes, &protocol_bytes().unwrap()).unwrap();
+        assert_eq!(admitted.device_identity_sha256, "02".repeat(32));
+        assert_eq!(admitted.gpu_unique_id, 23);
+        assert_eq!(admitted.program_catalog_sha256, "04".repeat(32));
+
+        let mut hostile = fixture();
+        hostile["kv_projections"]["post_engine_completion_pre_release"]["target"]
+            ["committed_tokens"] = json!(2);
+        hostile["kv_projections"]["post_engine_completion_pre_release"]["target"]
+            ["resident_tokens"] = json!(2);
+        assert!(admit_persisted_bundle(
+            &canonical_bytes(&hostile).unwrap(),
+            &protocol_bytes().unwrap()
+        )
+        .is_err());
     }
 
     #[test]
