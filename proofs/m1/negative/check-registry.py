@@ -103,6 +103,14 @@ EXPECTED = {
         "step_plan_publication", "validate_step_plan",
         "exact-plan-identity",
     ),
+    "sampler-lowest-id-publication": (
+        "deterministic-sampler-composition", "sampler_refined",
+        "speculation-proof", "ferric-spec",
+        "crates/ferric-spec/src/m1_completion.rs",
+        "sampler-lowest-id-publication.py", "assertion",
+        "m1_completion", "select_lowest_argmax",
+        "lowest-token-id-tie-breaking",
+    ),
     "speculative-accepted-count-binding": (
         "speculative-step-composition", "rollback_refined", "speculation-proof",
         "ferric-spec", "crates/ferric-spec/src/speculative_step_composition.rs",

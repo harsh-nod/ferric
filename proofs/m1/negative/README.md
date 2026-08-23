@@ -18,7 +18,7 @@ Each row binds one unique body mutation and contract clause to:
 - the exact `postcondition` or `assertion` failure class required from pinned
   Verus after the mutated source first passes ordinary Cargo compilation.
 
-`check-registry.py` hard-codes the exact fifteen-row roster. It first runs the M1
+`check-registry.py` hard-codes the exact sixteen-row roster. It first runs the M1
 requirements checker, then rejects row omission, addition, reordering,
 rebinding, duplicate mutators or clauses, unsafe paths, missing files, targets
 outside compiler-rooted coverage, and any property or path that is no longer
@@ -29,6 +29,9 @@ publication on the KV rejection path. Both are ordinary executable-body edits,
 not contract, specification-relation, assertion-only, or proof-tool mutations.
 Their paired positive rows select dedicated query-bearing wrappers; negative
 rows continue to mutate these actual bodies rather than the wrappers.
+The sampler mutation changes the executable argmax improvement test from `>`
+to `>=`, so a later token replaces the first token on a tie and violates the
+explicit lowest-token-ID invariant assertion used to prove the postcondition.
 The model-bundle mutation removes the equality gate between the retained record
 and a freshly recomputed verified seal. That is an internal consistency check,
 not independent authentication, `WeightSectionManifest::valid_commitment`,

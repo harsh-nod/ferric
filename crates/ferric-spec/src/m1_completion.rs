@@ -305,6 +305,8 @@ pub fn select_lowest_argmax(
         if scores[index as usize] > scores[best as usize] {
             best = index;
         }
+        assert(forall|prior: int|
+            0 <= prior < best ==> scores@[prior] < scores@[best as int]);
         index += 1;
     }
     assert(best < QWEN3_VOCABULARY_SIZE);

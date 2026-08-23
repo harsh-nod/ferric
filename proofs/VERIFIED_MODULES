@@ -5119,4 +5119,6 @@ module=ferric-m1-proof|proofs/m1/scheduler.rs|ferric_m1_proof::scheduler
 verified=ferric-m1-proof|proofs/m1/scheduler.rs|ferric_m1_proof::scheduler::m1_reordered_completion_rejection_theorem
 verified=ferric-m1-proof|proofs/m1/scheduler.rs|ferric_m1_proof::scheduler::m1_scheduler_dispatch_theorem
 module=ferric-m1-proof|proofs/m1/speculative_graph.rs|ferric_m1_proof::speculative_graph
+verified=ferric-m1-proof|proofs/m1/speculative_graph.rs|ferric_m1_proof::speculative_graph::m1_deterministic_sampler_refinement_theorem
 verified=ferric-m1-proof|proofs/m1/speculative_graph.rs|ferric_m1_proof::speculative_graph::m1_single_member_speculative_graph_theorem
+verified=ferric-m1-proof|proofs/m1/speculative_graph.rs|ferric_m1_proof::speculative_graph::select_exact_lowest_argmax

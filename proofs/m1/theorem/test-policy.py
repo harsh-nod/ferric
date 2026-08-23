@@ -31,6 +31,7 @@ def copy_fixture(repo: Path, destination: Path) -> None:
         "proofs/m1/theorem/check-registry.py",
         str(REGISTRY),
         "proofs/m1/model_bundle.rs",
+        "proofs/m1/speculative_graph.rs",
         "crates/ferric-spec/src/continuous_batching.rs",
         "crates/ferric-spec/src/graph.rs",
         "crates/ferric-spec/src/m1_foundation_theorems.rs",
@@ -116,8 +117,8 @@ def main() -> None:
         result = run_checker(baseline, active)
         if result.returncode != 0:
             fail(f"baseline theorem registry failed\n{result.stdout}")
-        if len(active.read_text(encoding="ascii").splitlines()) != 13:
-            fail("baseline theorem registry did not select exactly thirteen rows")
+        if len(active.read_text(encoding="ascii").splitlines()) != 14:
+            fail("baseline theorem registry did not select exactly fourteen rows")
 
         cases: list[tuple[str, str, FixtureMutation]] = [
             (
@@ -190,6 +191,19 @@ def main() -> None:
                 ),
             ),
             (
+                "sampler-binding-drift",
+                "positive theorem binding drifted",
+                lambda fixture: mutate_registry(
+                    fixture,
+                    lambda lines: replace_field(
+                        lines,
+                        registry_row(lines, "sampler-lowest-id-publication"),
+                        7,
+                        "m1_single_member_speculative_graph_theorem",
+                    ),
+                ),
+            ),
+            (
                 "unsafe-source",
                 "unsafe theorem source path",
                 lambda fixture: mutate_registry(
@@ -226,6 +240,11 @@ def main() -> None:
                     + "\n",
                     encoding="utf-8",
                 ),
+            ),
+            (
+                "missing-sampler-source",
+                "M1 theorem source is unavailable",
+                lambda fixture: (fixture / "proofs/m1/speculative_graph.rs").unlink(),
             ),
             (
                 "missing-function-coverage",
@@ -270,6 +289,22 @@ def main() -> None:
                         .splitlines()
                         if line
                         != "verified=ferric-m1-proof|proofs/m1/model_bundle.rs|ferric_m1_proof::model_bundle::model_bundle_well_formed_composition_theorem"
+                    )
+                    + "\n",
+                    encoding="utf-8",
+                ),
+            ),
+            (
+                "missing-sampler-function-coverage",
+                "function path is not directly verified",
+                lambda fixture: (fixture / "proofs/VERIFIED_MODULES").write_text(
+                    "\n".join(
+                        line
+                        for line in (fixture / "proofs/VERIFIED_MODULES")
+                        .read_text(encoding="utf-8")
+                        .splitlines()
+                        if line
+                        != "verified=ferric-m1-proof|proofs/m1/speculative_graph.rs|ferric_m1_proof::speculative_graph::m1_deterministic_sampler_refinement_theorem"
                     )
                     + "\n",
                     encoding="utf-8",

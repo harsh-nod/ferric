@@ -255,6 +255,16 @@ EXPECTED_ROWS = (
         "publication_plan_identity_theorem",
     ),
     (
+        "sampler-lowest-id-publication",
+        "deterministic-sampler-composition",
+        "sampler_refined",
+        "speculation-proof",
+        "ferric-m1-proof",
+        "proofs/m1/speculative_graph.rs",
+        "speculative_graph",
+        "m1_deterministic_sampler_refinement_theorem",
+    ),
+    (
         "speculative-accepted-count-binding",
         "speculative-step-composition",
         "rollback_refined",

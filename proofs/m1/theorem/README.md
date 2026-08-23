@@ -8,8 +8,12 @@ verified compiler path in `VERIFIED_MODULES`. Each positive row selects one
 loop-free query-bearing function; most remain in `m1_foundation_theorems`,
 while the model-bundle row selects the exact compiler-rooted roadmap path in
 `proofs/m1/model_bundle.rs`. That thin theorem lifts the consuming
-`ferric-build` boundary without adding authority. The paired negative registry
-remains bound to the actual implementation bodies. The two
+`ferric-build` boundary without adding authority. The sampler row selects the
+Ferric composition that computes five exact lowest-ID target choices and feeds
+them to compact completion, maximal-prefix greedy acceptance, isolated KV, and
+publication for the fixed M1 `K=4` round. Its integer score rows are an external
+numerical premise, not a device-logit refinement. The paired negative registry
+remains bound to actual implementation bodies. The two
 speculative wrappers cover publication-to-KV accepted-count agreement and
 immutable-preflight failure framing under distinct Open obligations.
 

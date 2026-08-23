@@ -187,7 +187,14 @@ impl<'a> SingleMemberSpeculativeGraphInputs<'a> {
         index: &'a SpeculativeKvRoundIndex,
         expected: &'a IsolatedSpeculativeKvExpectation,
         token_inputs: SpeculativeTokenInputs<'a>,
-    ) -> Self {
+    ) -> (result: Self)
+        ensures
+            result.batch_valid_spec() == batch.valid(),
+            result.index_spec() == index,
+            result.expected_spec() == expected,
+            result.draft_tokens_spec() == token_inputs.draft_tokens@,
+            result.target_choices_spec() == token_inputs.target_choices@,
+    {
         Self {
             batch,
             other,

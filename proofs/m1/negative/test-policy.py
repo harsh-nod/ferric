@@ -56,6 +56,7 @@ def copy_fixture(repo: Path, destination: Path) -> None:
         "crates/ferric-kernels/src/validation.rs",
         "crates/ferric-spec/src/continuous_batching.rs",
         "crates/ferric-spec/src/graph.rs",
+        "crates/ferric-spec/src/m1_completion.rs",
         "crates/ferric-spec/src/paged_kv_refinement.rs",
         "crates/ferric-spec/src/speculative_step_composition.rs",
         "crates/ferric-spec/src/step_plan_publication.rs",
@@ -197,8 +198,8 @@ def main() -> None:
         if result.returncode != 0:
             fail(f"baseline M1 negative registry check failed\n{result.stdout}")
         rows = active.read_text(encoding="utf-8").splitlines()
-        if len(rows) != 15:
-            fail(f"baseline selected {len(rows)} M1 mutations instead of 15")
+        if len(rows) != 16:
+            fail(f"baseline selected {len(rows)} M1 mutations instead of 16")
         mutator_count = verify_current_mutators(repo, root, active)
 
         cases: list[tuple[str, str, FixtureMutation]] = []
@@ -276,6 +277,18 @@ def main() -> None:
             ),
         ))
         cases.append((
+            "sampler-binding-drift", "M1 foundation mutation binding drifted",
+            lambda fixture: mutate_registry(
+                fixture,
+                lambda lines: replace_field(
+                    lines,
+                    registry_row(lines, "sampler-lowest-id-publication"),
+                    10,
+                    "last-token-id-tie-breaking",
+                ),
+            ),
+        ))
+        cases.append((
             "target-binding-drift", "M1 foundation mutation binding drifted",
             lambda fixture: mutate_registry(
                 fixture,
@@ -302,6 +315,13 @@ def main() -> None:
             lambda fixture: (
                 fixture
                 / "proofs/m1/negative/components/speculative-accepted-count-binding.py"
+            ).unlink(),
+        ))
+        cases.append((
+            "missing-sampler-mutator", "M1 foundation mutator is unavailable",
+            lambda fixture: (
+                fixture
+                / "proofs/m1/negative/components/sampler-lowest-id-publication.py"
             ).unlink(),
         ))
         cases.append((
@@ -333,6 +353,12 @@ def main() -> None:
             "missing-speculative-source", "M1 foundation source is unavailable",
             lambda fixture: (
                 fixture / "crates/ferric-spec/src/speculative_step_composition.rs"
+            ).unlink(),
+        ))
+        cases.append((
+            "missing-sampler-source", "M1 foundation source is unavailable",
+            lambda fixture: (
+                fixture / "crates/ferric-spec/src/m1_completion.rs"
             ).unlink(),
         ))
         cases.append((
@@ -425,6 +451,17 @@ def main() -> None:
                 "\n".join(
                     line for line in (fixture / "proofs/VERIFIED_MODULES").read_text(encoding="utf-8").splitlines()
                     if line != "verified=ferric-spec|crates/ferric-spec/src/speculative_step_composition.rs|ferric_spec::speculative_step_composition::settle_and_publish_speculative_step"
+                ) + "\n",
+                encoding="utf-8",
+            ),
+        ))
+        cases.append((
+            "missing-sampler-function-record",
+            "compiler function path is not directly verified",
+            lambda fixture: (fixture / "proofs/VERIFIED_MODULES").write_text(
+                "\n".join(
+                    line for line in (fixture / "proofs/VERIFIED_MODULES").read_text(encoding="utf-8").splitlines()
+                    if line != "verified=ferric-spec|crates/ferric-spec/src/m1_completion.rs|ferric_spec::m1_completion::select_lowest_argmax"
                 ) + "\n",
                 encoding="utf-8",
             ),

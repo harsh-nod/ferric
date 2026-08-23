@@ -19,13 +19,122 @@ use ferric_engine::{
 };
 #[allow(unused_imports)]
 use ferric_spec::{
-    ContinuousBatch, GreedyCommit, IsolatedRequestKv, IsolatedSpeculativeKvExpectation,
-    SpeculativeKvRoundIndex, StepPublication, TokenId,
+    select_lowest_argmax, CompactCompletionError, ContinuousBatch, GreedyCommit, IsolatedRequestKv,
+    IsolatedSpeculativeKvExpectation, SpeculativeKvRoundIndex, SpeculativeTokenInputs,
+    StepPublication, TokenId, QWEN3_VOCABULARY_SIZE,
 };
 #[allow(unused_imports)]
 use vstd::prelude::*;
 
 verus! {
+
+/// Five exact target-logit rows for the fixed M1 `K=4` speculative round.
+///
+/// Each row is interpreted through [`ferric_spec::select_lowest_argmax`]. The
+/// rows carry no device, numerical-representation, or completion authority.
+pub struct M1DeterministicSamplerScoreRowsV1<'a> {
+    /// Target choice for draft position zero.
+    pub choice_0: &'a [i64],
+    /// Target choice for draft position one.
+    pub choice_1: &'a [i64],
+    /// Target choice for draft position two.
+    pub choice_2: &'a [i64],
+    /// Target choice for draft position three.
+    pub choice_3: &'a [i64],
+    /// Target bonus choice after accepting all four draft tokens.
+    pub choice_4: &'a [i64],
+}
+
+/// Exact logical witnesses consumed by the deterministic sampler theorem.
+pub struct M1DeterministicSamplerInputsV1<'a> {
+    /// Independently valid logical scheduler witness.
+    pub batch: &'a ContinuousBatch,
+    /// Distinct request owner framed by the single-member composition.
+    pub other: &'a IsolatedRequestKv,
+    /// Exact target/draft speculative KV index.
+    pub index: &'a SpeculativeKvRoundIndex,
+    /// Exact isolated-KV settlement expectation.
+    pub expected: &'a IsolatedSpeculativeKvExpectation,
+    /// Four live draft candidates for the fixed M1 round.
+    pub draft_tokens: &'a [TokenId],
+    /// Five target-logit rows, one per target choice.
+    pub scores: M1DeterministicSamplerScoreRowsV1<'a>,
+}
+
+/// Selects one exact lowest-ID argmax through the executable Ferric body.
+fn select_exact_lowest_argmax(scores: &[i64]) -> (token: TokenId)
+    requires scores@.len() == QWEN3_VOCABULARY_SIZE,
+    ensures ferric_spec::is_lowest_argmax(scores@, token),
+{
+    match select_lowest_argmax(scores) {
+        Ok(token) => token,
+        Err(CompactCompletionError::ScoreCountMismatch) => {
+            assert(scores@.len() != QWEN3_VOCABULARY_SIZE);
+            assert(false);
+            0
+        },
+        Err(_) => {
+            assert(false);
+            0
+        },
+    }
+}
+
+/// Complete source-level deterministic sampler composition for one M1 round.
+pub open spec fn m1_deterministic_sampler_refinement_success(
+    before_publication: &StepPublication,
+    after_publication: &StepPublication,
+    before_selected: &IsolatedRequestKv,
+    after_selected: &IsolatedRequestKv,
+    index: &SpeculativeKvRoundIndex,
+    expected: &IsolatedSpeculativeKvExpectation,
+    draft_tokens: Seq<TokenId>,
+    choice_0_scores: Seq<i64>,
+    choice_1_scores: Seq<i64>,
+    choice_2_scores: Seq<i64>,
+    choice_3_scores: Seq<i64>,
+    choice_4_scores: Seq<i64>,
+    completion_epoch: ferric_spec::completion::CompletionEpoch,
+    final_engine_epoch: ferric_spec::completion::CompletionEpoch,
+    outcome: SingleMemberSpeculativeGraphOutcome,
+) -> bool {
+    draft_tokens.len() == 4
+        && exists|target_choices: Seq<TokenId>|
+            target_choices.len() == 5
+            && ferric_spec::is_lowest_argmax(
+                choice_0_scores,
+                target_choices[0],
+            )
+            && ferric_spec::is_lowest_argmax(
+                choice_1_scores,
+                target_choices[1],
+            )
+            && ferric_spec::is_lowest_argmax(
+                choice_2_scores,
+                target_choices[2],
+            )
+            && ferric_spec::is_lowest_argmax(
+                choice_3_scores,
+                target_choices[3],
+            )
+            && ferric_spec::is_lowest_argmax(
+                choice_4_scores,
+                target_choices[4],
+            )
+            && m1_single_member_speculative_success(
+                before_publication,
+                after_publication,
+                before_selected,
+                after_selected,
+                index,
+                expected,
+                draft_tokens,
+                target_choices,
+                completion_epoch,
+                final_engine_epoch,
+                outcome,
+            )
+}
 
 /// Exact success boundary proved for the current M1 single-member handoff.
 pub open spec fn m1_single_member_speculative_success(
@@ -239,6 +348,156 @@ pub fn m1_single_member_speculative_graph_theorem<const C: usize>(
                 reveal(m1_single_member_speculative_failure);
             }
         },
+    }
+    result
+}
+
+/// Computes exact lowest-ID target choices and publishes one M1 `K=4` round.
+///
+/// The five target choices are produced by the executable Ferric argmax body,
+/// then consumed by the existing compact-completion, maximal-prefix greedy,
+/// isolated-KV, publication, and exact-engine-completion composition. Mapping
+/// device FP values to the integer score rows is a named external numerical
+/// premise; physical graph execution, machine refinement, and hardware remain
+/// separate obligations.
+///
+/// # Errors
+///
+/// Returns the same ownership-preserving failure as
+/// [`m1_single_member_speculative_graph_theorem`].
+pub fn m1_deterministic_sampler_refinement_theorem<const C: usize>(
+    engine: &mut Engine<C>,
+    publication: &mut StepPublication,
+    selected: &mut IsolatedRequestKv,
+    completion: ExactCompletion,
+    inputs: M1DeterministicSamplerInputsV1<'_>,
+) -> (result: Result<SingleMemberSpeculativeGraphOutcome, SingleMemberSpeculativeGraphFailure>)
+    requires
+        old(engine).well_formed(),
+        inputs.batch.valid(),
+        inputs.draft_tokens@.len() == 4,
+        inputs.scores.choice_0@.len() == QWEN3_VOCABULARY_SIZE,
+        inputs.scores.choice_1@.len() == QWEN3_VOCABULARY_SIZE,
+        inputs.scores.choice_2@.len() == QWEN3_VOCABULARY_SIZE,
+        inputs.scores.choice_3@.len() == QWEN3_VOCABULARY_SIZE,
+        inputs.scores.choice_4@.len() == QWEN3_VOCABULARY_SIZE,
+    ensures
+        final(engine).well_formed(),
+        match result {
+            Ok(outcome) => m1_deterministic_sampler_refinement_success(
+                old(publication),
+                final(publication),
+                old(selected),
+                final(selected),
+                inputs.index,
+                inputs.expected,
+                inputs.draft_tokens@,
+                inputs.scores.choice_0@,
+                inputs.scores.choice_1@,
+                inputs.scores.choice_2@,
+                inputs.scores.choice_3@,
+                inputs.scores.choice_4@,
+                completion.epoch_spec(),
+                final(engine).completed_epoch_spec(),
+                outcome,
+            ),
+            Err(failure) => m1_single_member_speculative_failure(
+                old(publication),
+                final(publication),
+                old(selected),
+                final(selected),
+                completion.epoch_spec(),
+                final(engine).faulted_spec(),
+                &failure,
+            ),
+        },
+{
+    let choice_0 = select_exact_lowest_argmax(inputs.scores.choice_0);
+    let choice_1 = select_exact_lowest_argmax(inputs.scores.choice_1);
+    let choice_2 = select_exact_lowest_argmax(inputs.scores.choice_2);
+    let choice_3 = select_exact_lowest_argmax(inputs.scores.choice_3);
+    let choice_4 = select_exact_lowest_argmax(inputs.scores.choice_4);
+    let target_choices = [choice_0, choice_1, choice_2, choice_3, choice_4];
+    let graph_inputs = SingleMemberSpeculativeGraphInputs::new(
+        inputs.batch,
+        inputs.other,
+        inputs.index,
+        inputs.expected,
+        SpeculativeTokenInputs {
+            draft_tokens: inputs.draft_tokens,
+            target_choices: &target_choices,
+        },
+    );
+    let result = m1_single_member_speculative_graph_theorem(
+        engine,
+        publication,
+        selected,
+        completion,
+        graph_inputs,
+    );
+    match &result {
+        Ok(_outcome) => {
+            proof {
+                reveal(m1_deterministic_sampler_refinement_success);
+                assert(target_choices@.len() == 5);
+                assert(target_choices@[0] == choice_0);
+                assert(target_choices@[1] == choice_1);
+                assert(target_choices@[2] == choice_2);
+                assert(target_choices@[3] == choice_3);
+                assert(target_choices@[4] == choice_4);
+                assert(exists|choices: Seq<TokenId>|
+                    choices.len() == 5
+                    && ferric_spec::is_lowest_argmax(
+                        inputs.scores.choice_0@,
+                        choices[0],
+                    )
+                    && ferric_spec::is_lowest_argmax(
+                        inputs.scores.choice_1@,
+                        choices[1],
+                    )
+                    && ferric_spec::is_lowest_argmax(
+                        inputs.scores.choice_2@,
+                        choices[2],
+                    )
+                    && ferric_spec::is_lowest_argmax(
+                        inputs.scores.choice_3@,
+                        choices[3],
+                    )
+                    && ferric_spec::is_lowest_argmax(
+                        inputs.scores.choice_4@,
+                        choices[4],
+                    )
+                    && m1_single_member_speculative_success(
+                        old(publication),
+                        publication,
+                        old(selected),
+                        selected,
+                        inputs.index,
+                        inputs.expected,
+                        inputs.draft_tokens@,
+                        choices,
+                        completion.epoch_spec(),
+                        engine.completed_epoch_spec(),
+                        *_outcome,
+                    )) by {
+                    let choices = target_choices@;
+                    assert(m1_single_member_speculative_success(
+                        old(publication),
+                        publication,
+                        old(selected),
+                        selected,
+                        inputs.index,
+                        inputs.expected,
+                        inputs.draft_tokens@,
+                        choices,
+                        completion.epoch_spec(),
+                        engine.completed_epoch_spec(),
+                        *_outcome,
+                    ));
+                }
+            }
+        },
+        Err(_) => {},
     }
     result
 }

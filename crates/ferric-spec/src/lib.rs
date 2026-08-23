@@ -114,6 +114,11 @@ pub use step_plan_publication::{
 
 verus! {
 
+/// Public proof view of the executable lowest-token-ID argmax contract.
+pub open spec fn is_lowest_argmax(scores: Seq<i64>, token: TokenId) -> bool {
+    m1_completion::is_lowest_argmax(scores, token)
+}
+
 /// Exposes the exact finite logical dimensions for one admitted Qwen3 B3
 /// bucket to downstream proof crates.
 pub proof fn qwen3_m1_plan_dimensions_are_bounded(

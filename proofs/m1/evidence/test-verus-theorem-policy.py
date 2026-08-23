@@ -617,7 +617,7 @@ def main() -> None:
         fail(f"usage: {sys.argv[0]} REPO [REAL_RESULT]")
     repo = Path(sys.argv[1]).resolve(strict=True)
     active, rows = registry(repo)
-    if len(rows) != 13 or not active:
+    if len(rows) != 14 or not active:
         fail("M1 positive-theorem registry baseline drifted")
     row = rows[0]
     with tempfile.TemporaryDirectory(prefix="ferric-m1-theorem-policy.") as scratch:
@@ -634,6 +634,13 @@ def main() -> None:
         model_root.mkdir()
         _, model_context = build_run(repo, model_root, model_row, source_identity)
         expect_pass(repo, model_context, "canonical model-bundle theorem fixture")
+        sampler_row = next(
+            selected for selected in rows if selected[0] == "sampler-lowest-id-publication"
+        )
+        sampler_root = root / "sampler-baseline"
+        sampler_root.mkdir()
+        _, sampler_context = build_run(repo, sampler_root, sampler_row, source_identity)
+        expect_pass(repo, sampler_context, "canonical sampler theorem fixture")
 
         cases: list[tuple[str, str, FixtureMutation]] = [
             (
