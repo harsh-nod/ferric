@@ -14,6 +14,7 @@ from typing import Any, BinaryIO, NoReturn
 
 
 PROTOCOL = "ferric.m1-validator.independent-validator.v1"
+OBLIGATION_CLASSES = ("Assurance", "Roadmap")
 INDEX_FORMAT = "ferric.m1-evidence-index.v1"
 REPORT_FORMAT = "FERRIC-M1-INDEPENDENT-VALIDATOR-REPORT-V1"
 ROSTER_FORMAT = "FERRIC-M1-INDEPENDENT-VALIDATOR-ROSTER-V1"
@@ -578,6 +579,7 @@ def validate(context: dict[str, Any]) -> None:
         "M1 requirements manifest",
         {
             "assurance_properties",
+            "evidence_kind_binding_classes",
             "evidence_kinds",
             "evidence_profiles",
             "format",

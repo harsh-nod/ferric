@@ -17,6 +17,7 @@ from typing import Any, NoReturn
 
 
 PROTOCOL = "ferric.m1-validator.negative-mutation.v1"
+OBLIGATION_CLASSES = ("Assurance",)
 INDEX_FORMAT = "ferric.m1-evidence-index.v1"
 REGISTRY_FORMAT = "format=FERRIC-M1-NEGATIVE-FOUNDATIONS-V1"
 RUN_FORMAT = "FERRIC-M1-NEGATIVE-RUN-V1"

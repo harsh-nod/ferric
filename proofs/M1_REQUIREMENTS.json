@@ -293,6 +293,79 @@
       "required_status_at_closure": "Validated"
     }
   ],
+  "evidence_kind_binding_classes": [
+    {
+      "classes": [
+        "Assurance",
+        "Roadmap"
+      ],
+      "kind": "artifact-identity"
+    },
+    {
+      "classes": [
+        "Assurance",
+        "Roadmap"
+      ],
+      "kind": "canonical-structure-check"
+    },
+    {
+      "classes": [
+        "Assurance",
+        "Roadmap"
+      ],
+      "kind": "external-contract"
+    },
+    {
+      "classes": [
+        "Assurance",
+        "Roadmap"
+      ],
+      "kind": "fe2o3-contract"
+    },
+    {
+      "classes": [
+        "Assurance",
+        "Roadmap"
+      ],
+      "kind": "hardware-test"
+    },
+    {
+      "classes": [
+        "Assurance",
+        "Roadmap"
+      ],
+      "kind": "independent-validator"
+    },
+    {
+      "classes": [
+        "Assurance"
+      ],
+      "kind": "negative-mutation"
+    },
+    {
+      "classes": [
+        "Assurance",
+        "Roadmap"
+      ],
+      "kind": "performance-gate"
+    },
+    {
+      "classes": [],
+      "kind": "tcb-report"
+    },
+    {
+      "classes": [
+        "Assurance"
+      ],
+      "kind": "unsupported-rationale"
+    },
+    {
+      "classes": [
+        "Assurance"
+      ],
+      "kind": "verus-theorem"
+    }
+  ],
   "evidence_kinds": [
     "artifact-identity",
     "canonical-structure-check",

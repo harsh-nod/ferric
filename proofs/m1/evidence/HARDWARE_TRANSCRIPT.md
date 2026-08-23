@@ -2,7 +2,7 @@
 
 `proofs/m1/evidence/validate-hardware-transcript.py` implements protocol
 `ferric.m1-validator.hardware-transcript.v1`. Its reviewed source SHA-256 is
-`8a1e06fab53e38f1d48a8c26f132204a169c54ce56cf4bd283695cdc38b6e21f`.
+`1c84dbe9f4bfea8d4e3a1859522320b56848c39f61a949c7244745cd995a070b`.
 The production evidence-index checker owns the path, protocol, and source pin;
 an evidence index cannot select or substitute the validator.
 

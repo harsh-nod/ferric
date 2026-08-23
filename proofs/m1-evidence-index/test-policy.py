@@ -236,6 +236,10 @@ class Fixture:
             record["id"]: record["kinds"]
             for record in self.requirements["evidence_profiles"]
         }
+        binding_classes = {
+            record["kind"]: record["classes"]
+            for record in self.requirements["evidence_kind_binding_classes"]
+        }
         specs: list[dict[str, Any]] = []
         for record in self.requirements["roadmap_requirements"]:
             specs.append(
@@ -271,9 +275,18 @@ class Fixture:
                 (profile, kind)
                 for profile in spec["profiles"]
                 for kind in profiles[profile]
+                if spec["class"] in binding_classes[kind]
             ]
-            for pair_index, (profile, kind) in enumerate(pairs):
-                path_id = spec["paths"][pair_index % len(spec["paths"])]
+            pair_paths = [
+                (profile, kind, spec["paths"][pair_index % len(spec["paths"])])
+                for pair_index, (profile, kind) in enumerate(pairs)
+            ]
+            covered_paths = {path_id for _profile, _kind, path_id in pair_paths}
+            for path_index, path_id in enumerate(spec["paths"]):
+                if path_id not in covered_paths:
+                    profile, kind = pairs[path_index % len(pairs)]
+                    pair_paths.append((profile, kind, path_id))
+            for profile, kind, path_id in pair_paths:
                 binding_id = f"binding.{next_binding:05d}"
                 next_binding += 1
                 artifact_id = self.add_artifact(
@@ -349,7 +362,7 @@ class Fixture:
                 ]
                 record["nonclaim_tcb_ids"] = list(TCB_IDS)
                 record["rationale"] = spec["statement"]
-                record["rationale_artifact_id"] = rationale_ids[0]
+                record["rationale_artifact_ids"] = rationale_ids
             obligations.append(record)
 
         return {
@@ -389,6 +402,16 @@ def binding_of_kind(index: dict[str, Any], kind: str) -> dict[str, Any]:
 def obligation_with_status(index: dict[str, Any], status: str) -> dict[str, Any]:
     return next(
         record for record in index["obligations"] if record["closure_status"] == status
+    )
+
+
+def obligation(
+    index: dict[str, Any], obligation_class: str, identifier: str
+) -> dict[str, Any]:
+    return next(
+        record
+        for record in index["obligations"]
+        if record["obligation_class"] == obligation_class and record["id"] == identifier
     )
 
 
@@ -460,6 +483,31 @@ def main() -> None:
         fixture = Fixture(Path(temporary))
         fixture.reset_evidence()
         write_json(fixture.index_path, fixture.index)
+        roadmap_forbidden = {
+            "negative-mutation",
+            "unsupported-rationale",
+            "verus-theorem",
+        }
+        if any(
+            record["obligation_class"] == "Roadmap"
+            and record["evidence_kind"] in roadmap_forbidden
+            for record in fixture.index["evidence_bindings"]
+        ):
+            raise AssertionError(
+                "synthetic Roadmap closure contains Assurance-only evidence"
+            )
+        if any(
+            record["evidence_kind"] == "tcb-report"
+            for record in fixture.index["evidence_bindings"]
+        ):
+            raise AssertionError("synthetic closure binds globally scoped TCB evidence")
+        for kind in roadmap_forbidden:
+            if not any(
+                record["obligation_class"] == "Assurance"
+                and record["evidence_kind"] == kind
+                for record in fixture.index["evidence_bindings"]
+            ):
+                raise AssertionError(f"synthetic Assurance closure lacks {kind}")
         passed, output = invoke(checker, fixture, fixture.index_path)
         if (
             not passed
@@ -587,12 +635,101 @@ def main() -> None:
                 "evidence_kind", "hardware-test"
             ),
         )
+
+        def add_inapplicable_roadmap_binding(
+            value: dict[str, Any], kind: str, roadmap_id: str, profile: str
+        ) -> None:
+            source = (
+                value["evidence_bindings"][0]
+                if kind == "tcb-report"
+                else binding_of_kind(value, kind)
+            )
+            roadmap = next(
+                record
+                for record in fixture.requirements["roadmap_requirements"]
+                if record["id"] == roadmap_id
+            )
+            path_id = roadmap["path_obligations"][0]
+            path = next(
+                record
+                for record in value["path_resolutions"]
+                if record["id"] == path_id
+            )
+            record = copy.deepcopy(source)
+            record.update(
+                {
+                    "id": f"binding.zz-{kind}",
+                    "artifact_id": (
+                        value["tcb"][0]["artifact_id"]
+                        if kind == "tcb-report"
+                        else source["artifact_id"]
+                    ),
+                    "evidence_kind": kind,
+                    "obligation_class": "Roadmap",
+                    "obligation_id": roadmap_id,
+                    "path_id": path_id,
+                    "profile_id": profile,
+                    "source_identity_id": path["source_identity_id"],
+                    "statement_sha256": sha256(roadmap["title"].encode("utf-8")),
+                }
+            )
+            recompute_binding(record)
+            value["evidence_bindings"].append(record)
+
+        for kind, roadmap_id, profile in (
+            ("negative-mutation", "m1.r01", "admission"),
+            ("unsupported-rationale", "m1.r24", "nonclaim"),
+            ("verus-theorem", "m1.r01", "admission"),
+            ("tcb-report", "m1.r01", "admission"),
+        ):
+            add(
+                f"Roadmap {kind} binding",
+                "evidence kind does not support the obligation class",
+                lambda value, _fixture, kind=kind, roadmap_id=roadmap_id, profile=profile: (
+                    add_inapplicable_roadmap_binding(value, kind, roadmap_id, profile)
+                ),
+            )
         add(
             "duplicate binding",
             "duplicate M1 evidence binding id",
             lambda value, _: value["evidence_bindings"].__setitem__(
                 -1, copy.deepcopy(value["evidence_bindings"][0])
             ),
+        )
+
+        def duplicate_profile_kind_path(value: dict[str, Any], _: Fixture) -> None:
+            record = copy.deepcopy(value["evidence_bindings"][0])
+            record["id"] = "binding.zz-duplicate-triplet"
+            recompute_binding(record)
+            value["evidence_bindings"].append(record)
+
+        add(
+            "duplicate profile-kind-path binding",
+            "duplicate M1 profile-kind-path evidence binding",
+            duplicate_profile_kind_path,
+        )
+
+        def omit_graph_path(value: dict[str, Any], _: Fixture) -> None:
+            graph = next(
+                record
+                for record in fixture.requirements["assurance_properties"]
+                if record["name"] == "graph_refined"
+            )
+            path_id = graph["path_obligations"][-1]
+            value["evidence_bindings"][:] = [
+                record
+                for record in value["evidence_bindings"]
+                if not (
+                    record["obligation_class"] == "Assurance"
+                    and record["obligation_id"] == "graph_refined"
+                    and record["path_id"] == path_id
+                )
+            ]
+
+        add(
+            "required binding path omission",
+            "M1 evidence path coverage is incomplete: Assurance:graph_refined",
+            omit_graph_path,
         )
         add(
             "wrong binding source",
@@ -631,6 +768,42 @@ def main() -> None:
             reuse_artifact,
         )
 
+        def reuse_artifact_across_repeated_pair(
+            value: dict[str, Any], _: Fixture
+        ) -> None:
+            graph_bindings = [
+                record
+                for record in value["evidence_bindings"]
+                if record["obligation_class"] == "Assurance"
+                and record["obligation_id"] == "graph_refined"
+            ]
+            first = next(
+                record
+                for record in graph_bindings
+                if any(
+                    other["profile_id"] == record["profile_id"]
+                    and other["evidence_kind"] == record["evidence_kind"]
+                    and other["path_id"] != record["path_id"]
+                    for other in graph_bindings
+                )
+            )
+            second = next(
+                record
+                for record in graph_bindings
+                if record is not first
+                and record["profile_id"] == first["profile_id"]
+                and record["evidence_kind"] == first["evidence_kind"]
+                and record["path_id"] != first["path_id"]
+            )
+            second["artifact_id"] = first["artifact_id"]
+            recompute_binding(second)
+
+        add(
+            "artifact reused across repeated pair",
+            "artifact is reused across incompatible bindings",
+            reuse_artifact_across_repeated_pair,
+        )
+
         def mistype_receipt(value: dict[str, Any], _: Fixture) -> None:
             receipt = value["obligations"][0]["receipt_artifact_id"]
             artifact(value, receipt)["kind"] = "CheckerTranscript"
@@ -663,6 +836,16 @@ def main() -> None:
             "TCB kind drift",
             "TCB kind or identity drifted",
             lambda value, _: value["tcb"][0].__setitem__("kind", "Runtime"),
+        )
+
+        def substitute_global_tcb(value: dict[str, Any], _: Fixture) -> None:
+            value["tcb"][0]["artifact_id"] = value["tcb"][1]["artifact_id"]
+            value["tcb"][0]["identity_sha256"] = value["tcb"][1]["identity_sha256"]
+
+        add(
+            "global TCB report substitution",
+            "TCB artifact or identity is reused",
+            substitute_global_tcb,
         )
 
         def substitute_proof(value: dict[str, Any], _: Fixture) -> None:
@@ -698,6 +881,21 @@ def main() -> None:
             target = binding_of_kind(value, kind)
             value["evidence_bindings"].remove(target)
 
+        def remove_applicable_pair(
+            value: dict[str, Any], _: Fixture, kind: str
+        ) -> None:
+            target = binding_of_kind(value, kind)
+            value["evidence_bindings"][:] = [
+                record
+                for record in value["evidence_bindings"]
+                if not (
+                    record["obligation_class"] == target["obligation_class"]
+                    and record["obligation_id"] == target["obligation_id"]
+                    and record["profile_id"] == target["profile_id"]
+                    and record["evidence_kind"] == target["evidence_kind"]
+                )
+            ]
+
         add(
             "hardware evidence omission",
             "profile-kind closure is incomplete",
@@ -707,6 +905,25 @@ def main() -> None:
             "performance evidence omission",
             "profile-kind closure is incomplete",
             lambda value, fixture: remove_kind(value, fixture, "performance-gate"),
+        )
+        for kind in (
+            "negative-mutation",
+            "unsupported-rationale",
+            "verus-theorem",
+        ):
+            add(
+                f"Assurance {kind} omission",
+                "profile-kind closure is incomplete",
+                lambda value, fixture, kind=kind: remove_applicable_pair(
+                    value, fixture, kind
+                ),
+            )
+        add(
+            "unsupported Roadmap dependency drift",
+            "roadmap assurance dependencies drifted",
+            lambda value, _: obligation(value, "Roadmap", "m1.r24")[
+                "assurance_dependencies"
+            ].remove("distribution_preserved"),
         )
         add(
             "unsupported rationale drift",
@@ -719,14 +936,52 @@ def main() -> None:
             "unsupported rationale substitution",
             "no exact rationale artifact",
             lambda value, _: obligation_with_status(value, "Unsupported").__setitem__(
-                "rationale_artifact_id", value["tcb"][0]["artifact_id"]
+                "rationale_artifact_ids", [value["tcb"][0]["artifact_id"]]
             ),
+        )
+        add(
+            "unsupported rationale artifact omission",
+            "no exact rationale artifact",
+            lambda value, _: obligation_with_status(value, "Unsupported")[
+                "rationale_artifact_ids"
+            ].pop(),
+        )
+        add(
+            "unsupported rationale artifact addition",
+            "no exact rationale artifact",
+            lambda value, _: obligation_with_status(value, "Unsupported")[
+                "rationale_artifact_ids"
+            ].append(value["tcb"][0]["artifact_id"]),
+        )
+        add(
+            "unsupported rationale artifact duplication",
+            "contains a duplicate reference",
+            lambda value, _: obligation_with_status(value, "Unsupported")[
+                "rationale_artifact_ids"
+            ].append(
+                obligation_with_status(value, "Unsupported")["rationale_artifact_ids"][
+                    0
+                ]
+            ),
+        )
+
+        def drift_rationale_binding_statement(
+            value: dict[str, Any], _: Fixture
+        ) -> None:
+            record = binding_of_kind(value, "unsupported-rationale")
+            record["statement_sha256"] = "34" * 32
+            recompute_binding(record)
+
+        add(
+            "unsupported rationale binding statement drift",
+            "wrong statement identity",
+            drift_rationale_binding_statement,
         )
 
         def unsupported_as_proof(value: dict[str, Any], _: Fixture) -> None:
             unsupported = obligation_with_status(value, "Unsupported")
             proved = obligation_with_status(value, "Proved")
-            proved["proof_artifact_ids"] = [unsupported["rationale_artifact_id"]]
+            proved["proof_artifact_ids"] = unsupported["rationale_artifact_ids"]
 
         add(
             "unsupported cannot discharge Proved",

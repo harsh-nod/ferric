@@ -14,6 +14,7 @@ from typing import Any, BinaryIO, NoReturn
 
 
 PROTOCOL = "ferric.m1-validator.canonical-structure.v1"
+OBLIGATION_CLASSES = ("Assurance", "Roadmap")
 INDEX_FORMAT = "ferric.m1-evidence-index.v1"
 REPORT_FORMAT = "FERRIC-M1-CANONICAL-STRUCTURE-V1"
 PAYLOAD_FORMAT = "FERRIC-M1-CANONICAL-RECORDS-V1"

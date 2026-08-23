@@ -2,7 +2,7 @@
 
 `proofs/m1/evidence/validate-qualification-receipt.py` implements protocol
 `ferric.m1-validator.qualification-receipt.v1`. Its reviewed source SHA-256 is
-`266d14ed4cff8dffd7dc0e383f49df835cd0bebef4a1f1682b557a059f518702`.
+`a0442dfb098e01d01b0078cd97e72d0db88d249134656efc6e024fd650abcb67`.
 The production evidence-index checker owns the path, protocol, and source pin;
 an evidence index cannot select or substitute an executable.
 
@@ -40,6 +40,9 @@ The validator independently requires:
 - the exact statement, assurance-dependency, path, profile, evidence-kind,
   proof, mutation, independent-validator, unsupported-rationale, and TCB
   rosters implied by the canonical requirements manifest;
+- exact evidence-kind binding-class filtering, with theorem, mutation, and
+  unsupported rationale restricted to Assurance rows and TCB reports fulfilled
+  only by the global TCB roster;
 - every artifact to be a unique, stable, single-link regular file below the
   nonsymlink evidence root with its exact size and SHA-256;
 - the exact clean `HEAD` commit and tree for Ferric and fe2o3, and source

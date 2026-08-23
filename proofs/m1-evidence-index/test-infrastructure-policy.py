@@ -18,10 +18,9 @@ ROOT = Path(__file__).resolve().parents[2]
 CHECKER = ROOT / "proofs/m1-evidence-index/check-infrastructure.py"
 INDEX_CHECKER = Path("proofs/check-m1-evidence-index.py")
 ARTIFACT_VALIDATOR = Path("proofs/m1/evidence/validate-artifact-identity.py")
+NEGATIVE_VALIDATOR = Path("proofs/m1/evidence/validate-negative-mutation.py")
 TCB_VALIDATOR = Path("proofs/m1/evidence/validate-tcb-report.py")
-RECEIPT_VALIDATOR = Path(
-    "proofs/m1/evidence/validate-qualification-receipt.py"
-)
+RECEIPT_VALIDATOR = Path("proofs/m1/evidence/validate-qualification-receipt.py")
 
 
 def invoke(repo: Path) -> tuple[bool, str]:
@@ -116,9 +115,7 @@ def main() -> None:
             raise AssertionError(f"baseline infrastructure preflight failed:\n{output}")
         print("PASS: baseline M1 evidence-infrastructure preflight")
 
-        cases: list[
-            tuple[str, str, tuple[Path, ...], Callable[[Path], None]]
-        ] = []
+        cases: list[tuple[str, str, tuple[Path, ...], Callable[[Path], None]]] = []
 
         def add(
             name: str,
@@ -175,9 +172,7 @@ def main() -> None:
             "validator registry omission",
             "trusted-validator registry is incomplete or reordered",
             (INDEX_CHECKER,),
-            lambda repo: remove_registry_row(
-                repo / INDEX_CHECKER, "artifact-identity"
-            ),
+            lambda repo: remove_registry_row(repo / INDEX_CHECKER, "artifact-identity"),
         )
 
         def drift_protocol(repo: Path) -> None:
@@ -193,6 +188,36 @@ def main() -> None:
             "trusted validator protocol mismatch",
             (INDEX_CHECKER, ARTIFACT_VALIDATOR),
             drift_protocol,
+        )
+
+        def widen_negative_support(repo: Path) -> None:
+            replace_once(
+                repo / NEGATIVE_VALIDATOR,
+                'OBLIGATION_CLASSES = ("Assurance",)',
+                'OBLIGATION_CLASSES = ("Assurance", "Roadmap")',
+            )
+            repin_validator(repo, NEGATIVE_VALIDATOR)
+
+        add(
+            "validator binding-class widening",
+            "trusted validator obligation-class support drifted: negative-mutation",
+            (INDEX_CHECKER, NEGATIVE_VALIDATOR),
+            widen_negative_support,
+        )
+
+        def remove_artifact_support(repo: Path) -> None:
+            replace_once(
+                repo / ARTIFACT_VALIDATOR,
+                'OBLIGATION_CLASSES = ("Assurance", "Roadmap")',
+                'OBLIGATION_CLASSES = ("Assurance",)',
+            )
+            repin_validator(repo, ARTIFACT_VALIDATOR)
+
+        add(
+            "validator binding-class removal",
+            "trusted validator obligation-class support drifted: artifact-identity",
+            (INDEX_CHECKER, ARTIFACT_VALIDATOR),
+            remove_artifact_support,
         )
 
         def drift_artifact_registry(repo: Path) -> None:
@@ -214,8 +239,7 @@ def main() -> None:
             source = path.read_text(encoding="utf-8")
             marker = 'VALIDATOR_SPECS = (\n    (\n        "artifact-identity",'
             replacement = (
-                'VALIDATOR_SPECS = (\n    (\n'
-                '        "artifact-identity-substitute",'
+                'VALIDATOR_SPECS = (\n    (\n        "artifact-identity-substitute",'
             )
             if source.count(marker) != 1:
                 raise AssertionError("TCB validator registry anchor drifted")
@@ -227,6 +251,21 @@ def main() -> None:
             "TCB-report trusted-validator registry drifted",
             (INDEX_CHECKER, TCB_VALIDATOR),
             drift_tcb_mirror,
+        )
+
+        def drift_tcb_binding_classes(repo: Path) -> None:
+            replace_once(
+                repo / TCB_VALIDATOR,
+                '("negative-mutation", ("Assurance",)),',
+                '("negative-mutation", ("Assurance", "Roadmap")),',
+            )
+            repin_validator(repo, TCB_VALIDATOR)
+
+        add(
+            "TCB binding-class mirror drift",
+            "TCB-report evidence-kind binding-class roster drifted",
+            (INDEX_CHECKER, TCB_VALIDATOR),
+            drift_tcb_binding_classes,
         )
 
         def drift_receipt_mirror(repo: Path) -> None:
@@ -242,6 +281,21 @@ def main() -> None:
             "qualification-receipt trusted-validator roster drifted",
             (INDEX_CHECKER, RECEIPT_VALIDATOR),
             drift_receipt_mirror,
+        )
+
+        def drift_receipt_binding_classes(repo: Path) -> None:
+            replace_once(
+                repo / RECEIPT_VALIDATOR,
+                '("negative-mutation", ("Assurance",)),',
+                '("negative-mutation", ("Assurance", "Roadmap")),',
+            )
+            repin_validator(repo, RECEIPT_VALIDATOR)
+
+        add(
+            "receipt binding-class mirror drift",
+            "qualification-receipt evidence-kind binding-class roster drifted",
+            (INDEX_CHECKER, RECEIPT_VALIDATOR),
+            drift_receipt_binding_classes,
         )
 
         def drift_receipt_gate(repo: Path) -> None:

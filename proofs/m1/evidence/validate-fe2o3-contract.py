@@ -14,6 +14,7 @@ from typing import Any, BinaryIO, NoReturn
 
 
 PROTOCOL = "ferric.m1-validator.fe2o3-contract.v1"
+OBLIGATION_CLASSES = ("Assurance", "Roadmap")
 INDEX_FORMAT = "ferric.m1-evidence-index.v1"
 REPORT_FORMAT = "FERRIC-M1-FE2O3-CONTRACT-V1"
 CONTRACT_BODY_FORMAT = "FERRIC-M1-FE2O3-CONTRACT-BODY-V1"

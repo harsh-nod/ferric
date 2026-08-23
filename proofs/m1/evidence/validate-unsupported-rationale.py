@@ -13,6 +13,7 @@ from typing import Any, NoReturn
 
 
 PROTOCOL = "ferric.m1-validator.unsupported-rationale.v1"
+OBLIGATION_CLASSES = ("Assurance",)
 INDEX_FORMAT = "ferric.m1-evidence-index.v1"
 ARTIFACT_FORMAT = "FERRIC-M1-UNSUPPORTED-RATIONALE-V1"
 AUTHORITY = "nonclaim-only"

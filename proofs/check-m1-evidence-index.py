@@ -62,62 +62,62 @@ TRUSTED_VALIDATORS = {
     "artifact-identity": (
         "proofs/m1/evidence/validate-artifact-identity.py",
         "ferric.m1-validator.artifact-identity.v1",
-        "a72f2e33e92ac9064302194a341f146480950ee090b0ff8de037c7fc71919092",
+        "9556e8b8f833edd62fa982b2e2f159c8a39ae266fc3d5818c5e8daed159818d9",
     ),
     "canonical-structure-check": (
         "proofs/m1/evidence/validate-canonical-structure.py",
         "ferric.m1-validator.canonical-structure.v1",
-        "f8760f0edd21d996c0f59fa2b5aa16a1ab07ecd67b4352e226214c47ef9fe288",
+        "dc01a45be09344b1427b1cf9d958302b810201cca69c215b2eb859177d9ec2bb",
     ),
     "external-contract": (
         "proofs/m1/evidence/validate-external-contract.py",
         "ferric.m1-validator.external-contract.v1",
-        "21ddc8a9f00e90ef2255c27fb562279fcd899814fa5ea06824bc4cd9b250c57e",
+        "ab9ddb1b9e8c3b6ee31e54589526a3afbd11d92370a75c2d3f9a1faae75dbdec",
     ),
     "fe2o3-contract": (
         "proofs/m1/evidence/validate-fe2o3-contract.py",
         "ferric.m1-validator.fe2o3-contract.v1",
-        "8e493c1146c4a8e6b2b9992b42e33aabf63b0a6dcd5af87897324cfa9433e024",
+        "d35d69f6132678a7636505798eefc1baf10a1a7dce5579e477aedd7650f1235a",
     ),
     "hardware-test": (
         "proofs/m1/evidence/validate-hardware-transcript.py",
         "ferric.m1-validator.hardware-transcript.v1",
-        "8a1e06fab53e38f1d48a8c26f132204a169c54ce56cf4bd283695cdc38b6e21f",
+        "1c84dbe9f4bfea8d4e3a1859522320b56848c39f61a949c7244745cd995a070b",
     ),
     "independent-validator": (
         "proofs/m1/evidence/validate-independent-validator.py",
         "ferric.m1-validator.independent-validator.v1",
-        "d6188b3a1ff8f637b745fe4100fdd234ebb2c59f86badfddb8c59d10d71b1782",
+        "bcf7622be4d154eddaa023e7570ec36b28a30106408335b26f7e4c3fc7a940ca",
     ),
     "negative-mutation": (
         "proofs/m1/evidence/validate-negative-mutation.py",
         "ferric.m1-validator.negative-mutation.v1",
-        "60c6749c354188c5d6b7834e8cbe002ed13f3243bcf560f061046a59b50a38c4",
+        "6c204405b2ea65ae318055c4e6f5aa69340953a172bc9f51f30998de34f7917c",
     ),
     "performance-gate": (
         "proofs/m1/evidence/validate-performance-report.py",
         "ferric.m1-validator.performance-report.v1",
-        "dac25a582fcb6786d4aeabbfa31ab0fbd00cf962ee9313074ed732894d9feb65",
+        "f9f804f10dfce1ffc83aceba9bd950a4cf5cc462ae8fb7b4288a2f917b19072a",
     ),
     "qualification-receipt": (
         "proofs/m1/evidence/validate-qualification-receipt.py",
         "ferric.m1-validator.qualification-receipt.v1",
-        "266d14ed4cff8dffd7dc0e383f49df835cd0bebef4a1f1682b557a059f518702",
+        "a0442dfb098e01d01b0078cd97e72d0db88d249134656efc6e024fd650abcb67",
     ),
     "tcb-report": (
         "proofs/m1/evidence/validate-tcb-report.py",
         "ferric.m1-validator.tcb-report.v1",
-        "2fe6de0da707b36d46d4e68c1cc3657c14fdf1225b0491acd8baee696f68460f",
+        "edd85198dda98ee7c9e1bbf3b7d1f815ccddeb13be35ff17879a98bc66acc754",
     ),
     "unsupported-rationale": (
         "proofs/m1/evidence/validate-unsupported-rationale.py",
         "ferric.m1-validator.unsupported-rationale.v1",
-        "32d008741e317446e1fda1f5fd021efa13f0ea91b6da3c4b3d5635aca61d560e",
+        "195833cf0d8a18255aec442f49ea5e7e87c191373d981ab25d4650db3831153d",
     ),
     "verus-theorem": (
         "proofs/m1/evidence/validate-verus-theorem.py",
         "ferric.m1-validator.verus-theorem.v1",
-        "f6153eee1e78cf429bb653b74069ab183e1c33f71d5f5ed005b879e4de5f28e2",
+        "48dae58dafc08737904a4c36539e301c9951f18515831b5ef6fca4550d2475a1",
     ),
 }
 
@@ -472,6 +472,8 @@ def validate_tcb(
     if not isinstance(value, list) or len(value) != len(TCB_IDS):
         fail(f"M1 TCB roster must contain exactly {len(TCB_IDS)} records")
     entries: dict[str, dict[str, Any]] = {}
+    artifact_ids: set[str] = set()
+    identities: set[str] = set()
     for record in value:
         if not isinstance(record, dict):
             fail("M1 TCB entry must be an object")
@@ -487,12 +489,16 @@ def validate_tcb(
         artifact = artifacts.get(artifact_id)
         if artifact is None or artifact["kind"] != "TcbReport":
             fail(f"M1 TCB artifact is unavailable or mistyped: {identifier}")
-        if (
-            require_sha256(record["identity_sha256"], f"TCB identity: {identifier}")
-            != artifact["sha256"]
-        ):
+        identity = require_sha256(
+            record["identity_sha256"], f"TCB identity: {identifier}"
+        )
+        if identity != artifact["sha256"]:
             fail(f"M1 TCB identity does not bind its report: {identifier}")
+        if artifact_id in artifact_ids or identity in identities:
+            fail(f"M1 TCB artifact or identity is reused: {identifier}")
         entries[identifier] = record
+        artifact_ids.add(artifact_id)
+        identities.add(identity)
         used_artifacts.add(artifact_id)
     if tuple(entries) != TCB_IDS:
         fail("M1 TCB roster is not canonically ordered")
@@ -576,6 +582,7 @@ def validate_bindings(
     value: Any,
     specs: list[dict[str, Any]],
     profiles: dict[str, tuple[str, ...]],
+    binding_classes: dict[str, tuple[str, ...]],
     resolutions: dict[str, dict[str, Any]],
     artifacts: dict[str, dict[str, Any]],
     used_artifacts: set[str],
@@ -586,6 +593,9 @@ def validate_bindings(
     bindings: dict[str, dict[str, Any]] = {}
     grouped: dict[tuple[str, str], list[str]] = defaultdict(list)
     observed_pairs: dict[tuple[str, str], set[tuple[str, str]]] = defaultdict(set)
+    observed_triplets: dict[tuple[str, str], set[tuple[str, str, str]]] = defaultdict(
+        set
+    )
     observed_paths: dict[tuple[str, str], set[str]] = defaultdict(set)
     binding_artifacts: set[str] = set()
     for record in value:
@@ -621,13 +631,19 @@ def validate_bindings(
         kind = record["evidence_kind"]
         if profile not in spec["profiles"] or kind not in profiles.get(profile, ()):
             fail(f"M1 evidence binding has the wrong profile or kind: {identifier}")
-        if (profile, kind) in observed_pairs[key]:
+        if spec["class"] not in binding_classes.get(kind, ()):
             fail(
-                f"duplicate M1 profile-kind evidence binding: {key[0]}:{key[1]}:{profile}:{kind}"
+                f"M1 evidence kind does not support the obligation class: {identifier}"
             )
         path_id = record["path_id"]
         if path_id not in spec["paths"] or path_id not in resolutions:
             fail(f"M1 evidence binding has the wrong path: {identifier}")
+        triplet = (profile, kind, path_id)
+        if triplet in observed_triplets[key]:
+            fail(
+                "duplicate M1 profile-kind-path evidence binding: "
+                f"{key[0]}:{key[1]}:{profile}:{kind}:{path_id}"
+            )
         source_id = record["source_identity_id"]
         if source_id != resolutions[path_id]["source_identity_id"]:
             fail(f"M1 evidence binding has the wrong source identity: {identifier}")
@@ -654,6 +670,7 @@ def validate_bindings(
         bindings[identifier] = record
         grouped[key].append(identifier)
         observed_pairs[key].add((profile, kind))
+        observed_triplets[key].add(triplet)
         observed_paths[key].add(path_id)
         binding_artifacts.add(artifact_id)
         used_artifacts.add(artifact_id)
@@ -664,6 +681,7 @@ def validate_bindings(
             (profile, kind)
             for profile in spec["profiles"]
             for kind in profiles[profile]
+            if spec["class"] in binding_classes[kind]
         }
         if observed_pairs[key] != expected_pairs:
             fail(f"M1 evidence profile-kind closure is incomplete: {key[0]}:{key[1]}")
@@ -721,7 +739,7 @@ def validate_obligations(
             expected_keys = common | {
                 "nonclaim_tcb_ids",
                 "rationale",
-                "rationale_artifact_id",
+                "rationale_artifact_ids",
             }
         else:
             fail(f"unknown required M1 closure status: {status}")
@@ -803,10 +821,11 @@ def validate_obligations(
             )
             if record["rationale"] != spec["statement"]:
                 fail(f"M1 Unsupported closure rationale drifted: {spec['id']}")
-            if (
-                len(rationale_ids) != 1
-                or record["rationale_artifact_id"] != rationale_ids[0]
-            ):
+            supplied_rationale_ids = string_list(
+                record["rationale_artifact_ids"],
+                f"closure {key} rationale artifacts",
+            )
+            if supplied_rationale_ids != rationale_ids:
                 fail(
                     f"M1 Unsupported closure has no exact rationale artifact: {spec['id']}"
                 )
@@ -1011,11 +1030,16 @@ def validate_evidence_index(
         record["id"]: tuple(record["kinds"])
         for record in requirements["evidence_profiles"]
     }
+    binding_classes = {
+        record["kind"]: tuple(record["classes"])
+        for record in requirements["evidence_kind_binding_classes"]
+    }
     specs = obligation_specs(requirements)
     bindings, grouped = validate_bindings(
         index["evidence_bindings"],
         specs,
         profiles,
+        binding_classes,
         resolutions,
         artifacts,
         used_artifacts,

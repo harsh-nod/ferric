@@ -65,6 +65,14 @@ def profile(value: JsonObject, identifier: str) -> JsonObject:
     )
 
 
+def binding_classes(value: JsonObject, kind: str) -> JsonObject:
+    return next(
+        record
+        for record in value["evidence_kind_binding_classes"]
+        if record["kind"] == kind
+    )
+
+
 def copy_fixture(repo: Path, root: Path, name: str) -> Path:
     fixture = root / name
     (fixture / "docs").mkdir(parents=True)
@@ -222,6 +230,49 @@ def main() -> None:
             "unknown-evidence-kind",
             "M1 evidence profile references an unknown evidence kind: admission",
             manifest_mutation(unknown_evidence_kind),
+        )
+    )
+
+    cases.append(
+        (
+            "binding-class-roster-omission",
+            "M1 evidence-kind binding-class roster is incomplete",
+            manifest_mutation(
+                lambda value: value["evidence_kind_binding_classes"].pop()
+            ),
+        )
+    )
+    cases.append(
+        (
+            "Assurance-only-binding-class-widening",
+            "M1 evidence-kind binding-class roster drifted",
+            manifest_mutation(
+                lambda value: binding_classes(value, "negative-mutation")[
+                    "classes"
+                ].append("Roadmap")
+            ),
+        )
+    )
+    cases.append(
+        (
+            "global-kind-binding-class-injection",
+            "global M1 evidence kind has an obligation binding class",
+            manifest_mutation(
+                lambda value: binding_classes(value, "tcb-report")["classes"].append(
+                    "Assurance"
+                )
+            ),
+        )
+    )
+    cases.append(
+        (
+            "non-global-kind-empty-binding-class",
+            "non-global M1 evidence kind has no binding class",
+            manifest_mutation(
+                lambda value: binding_classes(value, "artifact-identity").__setitem__(
+                    "classes", []
+                )
+            ),
         )
     )
 

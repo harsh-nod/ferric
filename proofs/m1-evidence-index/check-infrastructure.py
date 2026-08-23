@@ -22,6 +22,7 @@ RECEIPT_VALIDATOR_ID = "qualification-receipt"
 EXPECTED_INDEX_FORMAT = "ferric.m1-evidence-index.v1"
 EXPECTED_TCB_IDS = ("tcb.compiler", "tcb.hardware", "tcb.runtime")
 EXPECTED_SOURCE_IDS = ("source.fe2o3", "source.ferric")
+EXPECTED_OBLIGATION_CLASSES = ("Assurance", "Roadmap")
 EXPECTED_GATE_IDS = (
     "evidence-index",
     "hardware",
@@ -182,15 +183,23 @@ def protocol_from_validator(tree: ast.Module, evidence_kind: str) -> str:
 def validate_tcb_mirror(
     tree: ast.Module,
     evidence_kinds: tuple[str, ...],
+    binding_classes: tuple[tuple[str, tuple[str, ...]], ...],
     validator_specs: tuple[tuple[str, str, str], ...],
 ) -> None:
     values = literal_assignments(
         tree,
-        {"EVIDENCE_KINDS", "TCB_IDS", "VALIDATOR_SPECS"},
+        {
+            "EVIDENCE_KIND_BINDING_CLASSES",
+            "EVIDENCE_KINDS",
+            "TCB_IDS",
+            "VALIDATOR_SPECS",
+        },
         "TCB-report validator",
     )
     if values["EVIDENCE_KINDS"] != evidence_kinds:
         fail("TCB-report evidence-kind roster drifted")
+    if values["EVIDENCE_KIND_BINDING_CLASSES"] != binding_classes:
+        fail("TCB-report evidence-kind binding-class roster drifted")
     if values["TCB_IDS"] != EXPECTED_TCB_IDS:
         fail("TCB-report trusted-boundary roster drifted")
     raw_specs = values["VALIDATOR_SPECS"]
@@ -231,6 +240,7 @@ def tcb_tree_with_literal_self_protocol(tree: ast.Module) -> ast.Module:
 def validate_receipt_mirror(
     tree: ast.Module,
     evidence_kinds: tuple[str, ...],
+    binding_classes: tuple[tuple[str, tuple[str, ...]], ...],
     validator_ids: tuple[str, ...],
     artifact_kinds: dict[str, str],
 ) -> None:
@@ -238,6 +248,7 @@ def validate_receipt_mirror(
         tree,
         {
             "EVIDENCE_ARTIFACT_KINDS",
+            "EVIDENCE_KIND_BINDING_CLASSES",
             "GATE_IDS",
             "SOURCE_IDS",
             "TCB_IDS",
@@ -249,6 +260,8 @@ def validate_receipt_mirror(
         fail("qualification-receipt trusted-validator roster drifted")
     if values["EVIDENCE_ARTIFACT_KINDS"] != artifact_kinds:
         fail("qualification-receipt artifact-kind registry drifted")
+    if values["EVIDENCE_KIND_BINDING_CLASSES"] != binding_classes:
+        fail("qualification-receipt evidence-kind binding-class roster drifted")
     if tuple(values["EVIDENCE_ARTIFACT_KINDS"]) != evidence_kinds:
         fail("qualification-receipt evidence-kind roster drifted")
     if values["TCB_IDS"] != EXPECTED_TCB_IDS:
@@ -279,6 +292,27 @@ def validate_infrastructure(repo: Path) -> None:
     ):
         fail("M1 evidence-kind roster is not a unique canonical string array")
     evidence_kinds = tuple(evidence_value)
+    applicability_value = requirements.get("evidence_kind_binding_classes")
+    if not isinstance(applicability_value, list):
+        fail("M1 evidence-kind binding-class roster must be an array")
+    binding_classes: list[tuple[str, tuple[str, ...]]] = []
+    for record in applicability_value:
+        if not isinstance(record, dict) or set(record) != {"classes", "kind"}:
+            fail("M1 evidence-kind binding-class record is malformed")
+        kind = record["kind"]
+        classes = record["classes"]
+        if (
+            not isinstance(kind, str)
+            or not isinstance(classes, list)
+            or not all(isinstance(item, str) for item in classes)
+            or tuple(classes) not in ((), ("Assurance",), EXPECTED_OBLIGATION_CLASSES)
+        ):
+            fail("M1 evidence-kind binding-class roster is invalid")
+        binding_classes.append((kind, tuple(classes)))
+    binding_class_roster = tuple(binding_classes)
+    if tuple(kind for kind, _classes in binding_class_roster) != evidence_kinds:
+        fail("M1 evidence-kind binding-class roster is incomplete or reordered")
+    binding_classes_by_kind = dict(binding_class_roster)
 
     checker_path = repo / INDEX_CHECKER
     _checker_raw, checker_tree = parse_python(checker_path, "M1 evidence-index checker")
@@ -336,6 +370,16 @@ def validate_infrastructure(repo: Path) -> None:
             fail(f"trusted validator source identity mismatch: {evidence_kind}")
         if protocol_from_validator(tree, evidence_kind) != protocol:
             fail(f"trusted validator protocol mismatch: {evidence_kind}")
+        support = literal_assignments(
+            tree, {"OBLIGATION_CLASSES"}, f"trusted {evidence_kind} validator"
+        )["OBLIGATION_CLASSES"]
+        expected_support = (
+            ()
+            if evidence_kind == RECEIPT_VALIDATOR_ID
+            else binding_classes_by_kind[evidence_kind]
+        )
+        if support != expected_support:
+            fail(f"trusted validator obligation-class support drifted: {evidence_kind}")
         if relative in paths or protocol in protocols or source_pin in source_pins:
             fail(f"trusted validator identity is reused: {evidence_kind}")
         paths.add(relative)
@@ -345,10 +389,13 @@ def validate_infrastructure(repo: Path) -> None:
         validator_specs.append((evidence_kind, relative, protocol))
 
     tcb_tree = tcb_tree_with_literal_self_protocol(trees[TCB_VALIDATOR_ID])
-    validate_tcb_mirror(tcb_tree, evidence_kinds, tuple(validator_specs))
+    validate_tcb_mirror(
+        tcb_tree, evidence_kinds, binding_class_roster, tuple(validator_specs)
+    )
     validate_receipt_mirror(
         trees[RECEIPT_VALIDATOR_ID],
         evidence_kinds,
+        binding_class_roster,
         validator_ids,
         artifact_kinds,
     )

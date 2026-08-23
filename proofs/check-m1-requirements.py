@@ -32,6 +32,21 @@ EVIDENCE_KINDS = (
     "unsupported-rationale",
     "verus-theorem",
 )
+OBLIGATION_CLASSES = ("Assurance", "Roadmap")
+GLOBAL_EVIDENCE_KINDS = ("tcb-report",)
+EVIDENCE_KIND_BINDING_CLASSES = (
+    ("artifact-identity", OBLIGATION_CLASSES),
+    ("canonical-structure-check", OBLIGATION_CLASSES),
+    ("external-contract", OBLIGATION_CLASSES),
+    ("fe2o3-contract", OBLIGATION_CLASSES),
+    ("hardware-test", OBLIGATION_CLASSES),
+    ("independent-validator", OBLIGATION_CLASSES),
+    ("negative-mutation", ("Assurance",)),
+    ("performance-gate", OBLIGATION_CLASSES),
+    ("tcb-report", ()),
+    ("unsupported-rationale", ("Assurance",)),
+    ("verus-theorem", ("Assurance",)),
+)
 EVIDENCE_PROFILE_IDS = (
     "admission",
     "authentication",
@@ -225,6 +240,7 @@ def validate_manifest(
         value,
         {
             "assurance_properties",
+            "evidence_kind_binding_classes",
             "evidence_kinds",
             "evidence_profiles",
             "format",
@@ -247,6 +263,35 @@ def validate_manifest(
         fail("M1 fe2o3 upstream base tree drifted")
     if value["evidence_kinds"] != list(EVIDENCE_KINDS):
         fail("M1 evidence-kind roster drifted")
+
+    applicability = value["evidence_kind_binding_classes"]
+    if not isinstance(applicability, list) or len(applicability) != len(
+        EVIDENCE_KIND_BINDING_CLASSES
+    ):
+        fail("M1 evidence-kind binding-class roster is incomplete")
+    observed_applicability: list[tuple[str, tuple[str, ...]]] = []
+    for record in applicability:
+        if not isinstance(record, dict):
+            fail("M1 evidence-kind binding-class record must be an object")
+        exact_keys(record, {"classes", "kind"}, "M1 evidence-kind binding classes")
+        kind = record["kind"]
+        classes = record["classes"]
+        if not isinstance(kind, str) or kind not in EVIDENCE_KINDS:
+            fail(f"unknown M1 evidence kind in binding-class roster: {kind!r}")
+        if (
+            not isinstance(classes, list)
+            or not all(isinstance(item, str) for item in classes)
+            or len(classes) != len(set(classes))
+            or any(item not in OBLIGATION_CLASSES for item in classes)
+        ):
+            fail(f"invalid M1 binding-class roster for evidence kind: {kind}")
+        if not classes and kind not in GLOBAL_EVIDENCE_KINDS:
+            fail(f"non-global M1 evidence kind has no binding class: {kind}")
+        if classes and kind in GLOBAL_EVIDENCE_KINDS:
+            fail(f"global M1 evidence kind has an obligation binding class: {kind}")
+        observed_applicability.append((kind, tuple(classes)))
+    if tuple(observed_applicability) != EVIDENCE_KIND_BINDING_CLASSES:
+        fail("M1 evidence-kind binding-class roster drifted")
 
     profiles = value["evidence_profiles"]
     if not isinstance(profiles, list):

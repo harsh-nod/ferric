@@ -17,6 +17,7 @@ from typing import Any, NoReturn
 
 
 PROTOCOL = "ferric.m1-validator.qualification-receipt.v1"
+OBLIGATION_CLASSES = ()
 INDEX_FORMAT = "ferric.m1-evidence-index.v1"
 REPORT_FORMAT = "FERRIC-M1-QUALIFICATION-RECEIPT-V1"
 TRANSCRIPT_FORMAT = "FERRIC-M1-QUALIFICATION-TRANSCRIPT-V1"
@@ -75,6 +76,19 @@ EVIDENCE_ARTIFACT_KINDS = {
     "unsupported-rationale": "UnsupportedRationale",
     "verus-theorem": "TheoremTranscript",
 }
+EVIDENCE_KIND_BINDING_CLASSES = (
+    ("artifact-identity", ("Assurance", "Roadmap")),
+    ("canonical-structure-check", ("Assurance", "Roadmap")),
+    ("external-contract", ("Assurance", "Roadmap")),
+    ("fe2o3-contract", ("Assurance", "Roadmap")),
+    ("hardware-test", ("Assurance", "Roadmap")),
+    ("independent-validator", ("Assurance", "Roadmap")),
+    ("negative-mutation", ("Assurance",)),
+    ("performance-gate", ("Assurance", "Roadmap")),
+    ("tcb-report", ()),
+    ("unsupported-rationale", ("Assurance",)),
+    ("verus-theorem", ("Assurance",)),
+)
 ARTIFACT_KINDS = set(EVIDENCE_ARTIFACT_KINDS.values()) | {
     "QualificationReceipt",
     "SourceClosure",
@@ -160,6 +174,7 @@ BINDING_KEYS = {
 }
 REQUIREMENTS_KEYS = {
     "assurance_properties",
+    "evidence_kind_binding_classes",
     "evidence_kinds",
     "evidence_profiles",
     "format",
@@ -588,6 +603,7 @@ def validate_requirements(value: dict[str, Any]) -> None:
     assurances = value["assurance_properties"]
     paths = value["path_obligations"]
     profiles = value["evidence_profiles"]
+    applicability = value["evidence_kind_binding_classes"]
     if not isinstance(roadmaps, list) or len(roadmaps) != 33:
         fail("qualification requires exactly 33 roadmap requirements")
     if not isinstance(assurances, list) or len(assurances) != 17:
@@ -596,6 +612,22 @@ def validate_requirements(value: dict[str, Any]) -> None:
         fail("qualification requires exactly 39 path obligations")
     if not isinstance(profiles, list) or len(profiles) != 7:
         fail("qualification requires exactly seven evidence profiles")
+    if not isinstance(applicability, list):
+        fail("qualification evidence-kind binding-class roster is invalid")
+    observed_applicability: list[tuple[str, tuple[str, ...]]] = []
+    for record in applicability:
+        exact_keys(record, {"classes", "kind"}, "evidence-kind binding classes")
+        kind = record["kind"]
+        classes = record["classes"]
+        if (
+            not isinstance(kind, str)
+            or not isinstance(classes, list)
+            or not all(isinstance(item, str) for item in classes)
+        ):
+            fail("qualification evidence-kind binding-class roster is malformed")
+        observed_applicability.append((kind, tuple(classes)))
+    if tuple(observed_applicability) != EVIDENCE_KIND_BINDING_CLASSES:
+        fail("qualification evidence-kind binding-class roster drifted")
     if any(record.get("obligation_state") != "Open" for record in roadmaps):
         fail("repository roadmap obligations must remain Open")
     if any(record.get("obligation_state") != "Open" for record in assurances):
@@ -823,10 +855,14 @@ def validate_bindings(
         record["id"]: tuple(record["kinds"])
         for record in requirements["evidence_profiles"]
     }
+    binding_classes = {kind: classes for kind, classes in EVIDENCE_KIND_BINDING_CLASSES}
     spec_by_key = {(record["class"], record["id"]): record for record in specs}
     result: dict[str, dict[str, Any]] = {}
     grouped: dict[tuple[str, str], list[str]] = {key: [] for key in spec_by_key}
     pairs: dict[tuple[str, str], set[tuple[str, str]]] = {
+        key: set() for key in spec_by_key
+    }
+    triplets: dict[tuple[str, str], set[tuple[str, str, str]]] = {
         key: set() for key in spec_by_key
     }
     covered_paths: dict[tuple[str, str], set[str]] = {key: set() for key in spec_by_key}
@@ -846,10 +882,15 @@ def validate_bindings(
             fail(f"duplicate or unknown qualification binding: {identifier}")
         if profile not in spec["profiles"] or kind not in profiles.get(profile, ()):
             fail(f"qualification binding profile or kind drifted: {identifier}")
-        if (profile, kind) in pairs[key]:
-            fail(f"duplicate qualification profile-kind binding: {identifier}")
+        if spec["class"] not in binding_classes.get(kind, ()):
+            fail(
+                f"qualification evidence kind does not support the obligation class: {identifier}"
+            )
         if path_id not in spec["paths"] or path_id not in paths:
             fail(f"qualification binding path drifted: {identifier}")
+        triplet = (profile, kind, path_id)
+        if triplet in triplets[key]:
+            fail(f"duplicate qualification profile-kind-path binding: {identifier}")
         if record["source_identity_id"] != paths[path_id]["source_identity_id"]:
             fail(f"qualification binding source drifted: {identifier}")
         if record["statement_sha256"] != digest_bytes(
@@ -875,6 +916,7 @@ def validate_bindings(
         result[identifier] = record
         grouped[key].append(identifier)
         pairs[key].add((profile, kind))
+        triplets[key].add(triplet)
         covered_paths[key].add(path_id)
         bound_artifacts.add(artifact_id)
         used.add(artifact_id)
@@ -885,6 +927,7 @@ def validate_bindings(
             (profile, kind)
             for profile in spec["profiles"]
             for kind in profiles[profile]
+            if spec["class"] in binding_classes[kind]
         }
         if pairs[key] != expected_pairs or covered_paths[key] != set(spec["paths"]):
             fail(f"qualification evidence closure is incomplete: {key[0]}:{key[1]}")
@@ -936,7 +979,7 @@ def validate_obligations(
             expected_keys = common | {
                 "nonclaim_tcb_ids",
                 "rationale",
-                "rationale_artifact_id",
+                "rationale_artifact_ids",
             }
         exact_keys(record, expected_keys, "qualification closure obligation")
         key = (record["obligation_class"], record["id"])
@@ -996,8 +1039,12 @@ def validate_obligations(
             rationales = bound_artifacts(binding_ids, bindings, "unsupported-rationale")
             if (
                 record["rationale"] != spec["statement"]
-                or len(rationales) != 1
-                or record["rationale_artifact_id"] != rationales[0]
+                or not rationales
+                or string_list(
+                    record["rationale_artifact_ids"],
+                    f"Unsupported {spec['id']} rationale artifacts",
+                )
+                != rationales
                 or record["nonclaim_tcb_ids"] != list(TCB_IDS)
             ):
                 fail(f"qualification Unsupported boundary drifted: {spec['id']}")

@@ -15,6 +15,7 @@ from typing import Any, BinaryIO, NoReturn
 
 
 PROTOCOL = "ferric.m1-validator.performance-report.v1"
+OBLIGATION_CLASSES = ("Assurance", "Roadmap")
 INDEX_FORMAT = "ferric.m1-evidence-index.v1"
 REPORT_FORMAT = "FERRIC-M1-PERFORMANCE-REPORT-V1"
 MEASUREMENT_FORMAT = "FERRIC-M1-PERFORMANCE-MEASUREMENTS-V1"

@@ -15,6 +15,7 @@ from typing import Any, BinaryIO, NoReturn
 
 
 PROTOCOL = "ferric.m1-validator.tcb-report.v1"
+OBLIGATION_CLASSES = ()
 INDEX_FORMAT = "ferric.m1-evidence-index.v1"
 REPORT_FORMAT = "FERRIC-M1-TCB-REPORT-V1"
 REPORT_TARGET = "gfx942:xnack-"
@@ -66,6 +67,19 @@ EVIDENCE_KINDS = (
     "tcb-report",
     "unsupported-rationale",
     "verus-theorem",
+)
+EVIDENCE_KIND_BINDING_CLASSES = (
+    ("artifact-identity", ("Assurance", "Roadmap")),
+    ("canonical-structure-check", ("Assurance", "Roadmap")),
+    ("external-contract", ("Assurance", "Roadmap")),
+    ("fe2o3-contract", ("Assurance", "Roadmap")),
+    ("hardware-test", ("Assurance", "Roadmap")),
+    ("independent-validator", ("Assurance", "Roadmap")),
+    ("negative-mutation", ("Assurance",)),
+    ("performance-gate", ("Assurance", "Roadmap")),
+    ("tcb-report", ()),
+    ("unsupported-rationale", ("Assurance",)),
+    ("verus-theorem", ("Assurance",)),
 )
 
 # This is the complete checker-owned version-1 validator TCB vocabulary. The
@@ -197,6 +211,7 @@ REPORT_KEYS = {
 }
 REQUIREMENTS_KEYS = {
     "assurance_properties",
+    "evidence_kind_binding_classes",
     "evidence_kinds",
     "evidence_profiles",
     "format",
@@ -435,6 +450,24 @@ def validate_requirements(requirements: dict[str, Any]) -> None:
         "m1_upstream_base_tree",
     ):
         require_git_id(requirements[key], f"requirements {key}")
+    applicability = requirements["evidence_kind_binding_classes"]
+    if not isinstance(applicability, list):
+        fail("M1 evidence-kind binding-class roster is invalid")
+    observed_applicability: list[tuple[str, tuple[str, ...]]] = []
+    for record in applicability:
+        if not isinstance(record, dict) or set(record) != {"classes", "kind"}:
+            fail("M1 evidence-kind binding-class record drifted")
+        kind = record["kind"]
+        classes = record["classes"]
+        if (
+            not isinstance(kind, str)
+            or not isinstance(classes, list)
+            or not all(isinstance(item, str) for item in classes)
+        ):
+            fail("M1 evidence-kind binding-class roster is malformed")
+        observed_applicability.append((kind, tuple(classes)))
+    if tuple(observed_applicability) != EVIDENCE_KIND_BINDING_CLASSES:
+        fail("M1 evidence-kind binding-class roster drifted")
     if any(
         record.get("obligation_state") != "Open"
         for group in (

@@ -25,6 +25,8 @@ subjects. Every report repeats the same complete global declaration and binds:
 - all 39 path obligations, including availability, repository, source owner,
   and still-`Open` state;
 - all seven ordered evidence profiles and their exact evidence-kind rosters;
+- the canonical evidence-kind binding-class roster, including the empty
+  obligation-binding scope of the globally fulfilled `tcb-report` kind;
 - the ordered fe2o3 and Ferric commit, tree, base, and source-closure identities;
 - the ordered compiler, hardware, and runtime TCB structure;
 - fixed Rust, Verus, LLVM/AMDGPU, linker, HSA, driver, firmware, Ferric, fe2o3,
@@ -48,6 +50,8 @@ cycle. Instead, each report binds the complete ordered TCB IDs, kinds, and
 artifact IDs; the validator binds its subject report hash to the corresponding
 outer TCB identity; and the checker-bound canonical invocation context binds
 all three outer identities. This is the exact version-1 identity boundary.
+No `tcb-report` evidence binding is accepted. Profile-level TCB requirements are
+fulfilled only by this exact global three-report roster.
 
 All inputs are bounded. The validator rejects noncanonical or duplicate-key
 JSON, absolute paths, traversal, symlinks in any report-path component,

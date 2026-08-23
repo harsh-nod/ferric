@@ -15,6 +15,7 @@ from typing import Any, BinaryIO, NoReturn
 
 
 PROTOCOL = "ferric.m1-validator.hardware-transcript.v1"
+OBLIGATION_CLASSES = ("Assurance", "Roadmap")
 INDEX_FORMAT = "ferric.m1-evidence-index.v1"
 REPORT_FORMAT = "FERRIC-M1-HARDWARE-TRANSCRIPT-REPORT-V1"
 TRANSCRIPT_FORMAT = "FERRIC-M1-MI300X-HARDWARE-RUN-V1"

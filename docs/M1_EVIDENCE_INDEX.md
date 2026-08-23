@@ -21,9 +21,10 @@ python3 -I proofs/m1-evidence-index/test-infrastructure-policy.py
 ```
 
 The preflight independently checks that the requirements evidence vocabulary,
-index-checker artifact and validator registries, validator source pins and
-protocols, TCB-report mirror, qualification-receipt mirror, and seven receipt
-gates are mutually complete. It does not read or generate an evidence index,
+index-checker artifact and validator registries, validator source pins,
+protocols, literal obligation-class support, TCB-report mirror,
+qualification-receipt mirror, and seven receipt gates are mutually complete.
+It does not read or generate an evidence index,
 run a qualification gate, create a receipt, or change any `Open` obligation.
 
 After the external evidence products and receipt exist, validate them with:
@@ -52,7 +53,8 @@ statuses are separate contracts, not an ordered scale:
 - `Validated` requires the exact independent-validator artifacts and explicit
   validator TCB.
 - `Unsupported` requires the manifest's exact nonclaim boundary, one bound
-  rationale artifact, and explicit nonclaim TCB. It cannot discharge a
+  rationale artifact per required path, and explicit nonclaim TCB. It cannot
+  discharge a
   dependency of a `Proved` row.
 
 Changing a required status in either direction is rejected. A self-authored
@@ -82,10 +84,33 @@ are unique.
 ## Evidence Products
 
 For every closure row, the Cartesian product of its evidence profiles and each
-profile's evidence kinds appears exactly once. Every binding names one
-obligation, profile, evidence kind, resolved path, source identity, complete
-TCB, statement SHA-256, uniquely owned artifact, and canonical binding
-SHA-256. The bindings collectively cover every path named by the obligation.
+profile's evidence kinds is filtered by the manifest's exact
+`evidence_kind_binding_classes` roster and every remaining pair appears at
+least once. A pair may repeat on a distinct path to complete path coverage; a
+profile-kind-path triple may appear only once. Every binding names one
+obligation, profile, evidence kind, resolved
+path, source identity, complete TCB, statement SHA-256, uniquely owned artifact,
+and canonical binding SHA-256. The bindings collectively cover every path named
+by the obligation.
+
+`negative-mutation`, `unsupported-rationale`, and `verus-theorem` bind only
+`Assurance` rows. A Roadmap row depends on the exact manifest-named Assurance
+rows and the shared qualification receipt; it neither duplicates nor reuses
+their artifacts. This preserves the theorem, mutation, or nonclaim statement's
+property boundary when one Assurance row supports several Roadmap rows.
+
+`tcb-report` has no obligation-binding class. Its appearance in every profile
+requires the separate exact global roster of `tcb.compiler`, `tcb.hardware`,
+and `tcb.runtime` reports. Those three artifacts are unique and validator-bound;
+an evidence binding with kind `tcb-report` is always rejected. Only an explicitly
+global evidence kind may have an empty binding-class roster.
+
+For example, `graph_refined` names six paths but its `composition` profile has
+five applicable binding kinds after global TCB handling, so one pair must repeat
+on a sixth distinct path. Unsupported properties with multiple paths carry a
+canonical sorted `rationale_artifact_ids` roster containing the exact per-path
+rationale artifacts; every artifact retains the same manifest nonclaim statement
+and remains uniquely owned.
 
 The compiler, runtime, and hardware TCB entries are explicit and independently
 authenticated. Evidence kinds map to distinct artifact kinds; in particular,
@@ -98,20 +123,20 @@ validation, the production CLI invokes checker-owned validators from the exact
 Ferric source closure. The evidence index cannot provide or override these
 paths. The version 1 registry is:
 
-| Evidence | Trusted validator path | Protocol |
-| --- | --- | --- |
-| Artifact identity | `proofs/m1/evidence/validate-artifact-identity.py` | `ferric.m1-validator.artifact-identity.v1` |
-| Canonical structure | `proofs/m1/evidence/validate-canonical-structure.py` | `ferric.m1-validator.canonical-structure.v1` |
-| External contract | `proofs/m1/evidence/validate-external-contract.py` | `ferric.m1-validator.external-contract.v1` |
-| fe2o3 contract | `proofs/m1/evidence/validate-fe2o3-contract.py` | `ferric.m1-validator.fe2o3-contract.v1` |
-| Hardware transcript | `proofs/m1/evidence/validate-hardware-transcript.py` | `ferric.m1-validator.hardware-transcript.v1` |
-| Independent validator | `proofs/m1/evidence/validate-independent-validator.py` | `ferric.m1-validator.independent-validator.v1` |
-| Negative mutation | `proofs/m1/evidence/validate-negative-mutation.py` | `ferric.m1-validator.negative-mutation.v1` |
-| Performance report | `proofs/m1/evidence/validate-performance-report.py` | `ferric.m1-validator.performance-report.v1` |
-| Qualification receipt | `proofs/m1/evidence/validate-qualification-receipt.py` | `ferric.m1-validator.qualification-receipt.v1` |
-| TCB report | `proofs/m1/evidence/validate-tcb-report.py` | `ferric.m1-validator.tcb-report.v1` |
-| Unsupported rationale | `proofs/m1/evidence/validate-unsupported-rationale.py` | `ferric.m1-validator.unsupported-rationale.v1` |
-| Verus theorem | `proofs/m1/evidence/validate-verus-theorem.py` | `ferric.m1-validator.verus-theorem.v1` |
+| Evidence | Binding classes | Trusted validator path | Protocol |
+| --- | --- | --- | --- |
+| Artifact identity | Assurance, Roadmap | `proofs/m1/evidence/validate-artifact-identity.py` | `ferric.m1-validator.artifact-identity.v1` |
+| Canonical structure | Assurance, Roadmap | `proofs/m1/evidence/validate-canonical-structure.py` | `ferric.m1-validator.canonical-structure.v1` |
+| External contract | Assurance, Roadmap | `proofs/m1/evidence/validate-external-contract.py` | `ferric.m1-validator.external-contract.v1` |
+| fe2o3 contract | Assurance, Roadmap | `proofs/m1/evidence/validate-fe2o3-contract.py` | `ferric.m1-validator.fe2o3-contract.v1` |
+| Hardware transcript | Assurance, Roadmap | `proofs/m1/evidence/validate-hardware-transcript.py` | `ferric.m1-validator.hardware-transcript.v1` |
+| Independent validator | Assurance, Roadmap | `proofs/m1/evidence/validate-independent-validator.py` | `ferric.m1-validator.independent-validator.v1` |
+| Negative mutation | Assurance | `proofs/m1/evidence/validate-negative-mutation.py` | `ferric.m1-validator.negative-mutation.v1` |
+| Performance report | Assurance, Roadmap | `proofs/m1/evidence/validate-performance-report.py` | `ferric.m1-validator.performance-report.v1` |
+| Qualification receipt | global closure only | `proofs/m1/evidence/validate-qualification-receipt.py` | `ferric.m1-validator.qualification-receipt.v1` |
+| TCB report | global TCB roster only | `proofs/m1/evidence/validate-tcb-report.py` | `ferric.m1-validator.tcb-report.v1` |
+| Unsupported rationale | Assurance | `proofs/m1/evidence/validate-unsupported-rationale.py` | `ferric.m1-validator.unsupported-rationale.v1` |
+| Verus theorem | Assurance | `proofs/m1/evidence/validate-verus-theorem.py` | `ferric.m1-validator.verus-theorem.v1` |
 
 The artifact-identity, canonical-structure, external-contract, fe2o3-contract,
 hardware-transcript, independent-validator, negative-mutation,
@@ -156,7 +181,7 @@ authenticates a fixed MI300X/gfx942 report plus immutable run-transcript and
 case-roster companions, requires positive completed GPU work for every case,
 and binds the exact source, device, ROCm, driver, firmware, harness, obligation,
 path, profile, and TCB identities. Its reviewed source SHA-256 is
-`8a1e06fab53e38f1d48a8c26f132204a169c54ce56cf4bd283695cdc38b6e21f`.
+`1c84dbe9f4bfea8d4e3a1859522320b56848c39f61a949c7244745cd995a070b`.
 Hardware observations grant no theorem, machine-refinement, performance, or
 qualification authority. The independent-validator authenticates a
 fixed-location canonical report, exact case roster,
