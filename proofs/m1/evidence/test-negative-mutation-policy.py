@@ -660,9 +660,35 @@ def main() -> None:
         operator_result, operator_context = build_run(
             repo, operator_root, operator_row, source_identity
         )
+        edit_transcript(
+            operator_root / "run",
+            operator_context,
+            operator_row,
+            "verus",
+            "due to 1 previous error\n",
+            "due to 1 previous error; 1 warning emitted\n",
+        )
         expect_pass(repo, operator_context, "canonical operator mutation fixture")
         if operator_result.name != f"{operator_row[0]}.result":
             fail("operator result identity drifted")
+        operator_ten_root = root / "operator-ten-warnings-baseline"
+        operator_ten_root.mkdir()
+        _, operator_ten_context = build_run(
+            repo, operator_ten_root, operator_row, source_identity
+        )
+        edit_transcript(
+            operator_ten_root / "run",
+            operator_ten_context,
+            operator_row,
+            "verus",
+            "due to 1 previous error\n",
+            "due to 1 previous error; 10 warnings emitted\n",
+        )
+        expect_pass(
+            repo,
+            operator_ten_context,
+            "canonical operator ten-warning mutation fixture",
+        )
 
         cases: list[tuple[str, str, FixtureMutation]] = [
             (
@@ -932,6 +958,38 @@ def main() -> None:
                 parse_kv(run / f"{selected[0]}.mutation"),
             ),
         )
+        expect_rejected(
+            repo,
+            root,
+            source_identity,
+            operator_row,
+            "operator-invalid-warning-count",
+            "no exact rejected terminal result",
+            lambda run, context, selected: edit_transcript(
+                run,
+                context,
+                selected,
+                "verus",
+                "due to 1 previous error\n",
+                "due to 1 previous error; 0 warnings emitted\n",
+            ),
+        )
+        expect_rejected(
+            repo,
+            root,
+            source_identity,
+            operator_row,
+            "operator-leading-zero-warning-count",
+            "no exact rejected terminal result",
+            lambda run, context, selected: edit_transcript(
+                run,
+                context,
+                selected,
+                "verus",
+                "due to 1 previous error\n",
+                "due to 1 previous error; 01 warnings emitted\n",
+            ),
+        )
 
         incomplete_root = root / "incomplete-property-product"
         incomplete_root.mkdir()
@@ -986,7 +1044,7 @@ def main() -> None:
 
     print(
         f"PASS: M1 negative validator accepted its canonical fixtures and rejected "
-        f"{len(cases) + 3} hostile artifacts"
+        f"{len(cases) + 4} hostile artifacts"
     )
 
 

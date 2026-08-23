@@ -860,9 +860,11 @@ def validate_verus_transcript(raw: bytes, row: tuple[str, ...]) -> None:
     ):
         fail(f"negative-mutation Verus result count drifted: {name}")
     terminal_suffix = "error" if proof_diagnostic_count == 1 else "errors"
+    warning_suffix = r"(?:; (?:1 warning|(?:[2-9]|[1-9][0-9]+) warnings) emitted)?"
     terminal = re.compile(
         rf"error: could not compile `{re.escape(package)}` \(lib\) "
-        rf"due to {proof_diagnostic_count} previous {terminal_suffix}\n\Z"
+        rf"due to {proof_diagnostic_count} previous {terminal_suffix}"
+        rf"{warning_suffix}\n\Z"
     )
     if terminal.search(body) is None:
         fail(
