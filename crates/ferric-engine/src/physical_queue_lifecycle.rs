@@ -718,6 +718,37 @@ fn release_rejected_case<const N: usize>(
     release_case(case, shape)
 }
 
+fn release_observed_case_retaining_image<const N: usize>(
+    case: M1ObservedCompletionCaseV1<N>,
+    shape: M1PhysicalFixedBatchShapeV1,
+) -> Result<
+    (
+        ServiceQueueReleaseObservationV1,
+        M1ObservedCompletionImageV1,
+    ),
+    Box<(M1PhysicalQueueReleaseFailureV1, M1ObservedCompletionImageV1)>,
+> {
+    let M1ObservedCompletionCaseV1 { case, image } = case;
+    match release_case(case, shape) {
+        Ok(released) => Ok((released, image)),
+        Err(source) => Err(Box::new((source, image))),
+    }
+}
+
+fn release_rejected_case_retaining_readback<const N: usize>(
+    case: M1RejectedCompletionCaseV1<N>,
+    shape: M1PhysicalFixedBatchShapeV1,
+) -> Result<
+    (ServiceQueueReleaseObservationV1, ServiceCompletedReadbackV1),
+    Box<(M1PhysicalQueueReleaseFailureV1, ServiceCompletedReadbackV1)>,
+> {
+    let M1RejectedCompletionCaseV1 { case, readback } = case;
+    match release_case(case, shape) {
+        Ok(released) => Ok((released, readback)),
+        Err(source) => Err(Box::new((source, readback))),
+    }
+}
+
 impl M1ObservedCompletionOutputV1 {
     /// Returns the exact former M1 publication shape.
     #[must_use]
@@ -794,6 +825,41 @@ impl M1ObservedCompletionOutputV1 {
             Self::SpeculativeK4(case) => case.case.step.kv_reservations(),
             Self::SpeculativeK8(case) => case.case.step.kv_reservations(),
             Self::SpeculativeK16(case) => case.case.step.kv_reservations(),
+        }
+    }
+
+    pub(crate) const fn qualification_logits_enabled(&self) -> bool {
+        match self {
+            Self::TargetOnly(case) => case
+                .case
+                .custody
+                .completion_output()
+                .qualification_logits()
+                .is_some(),
+            Self::PairedPrefill(case) => case
+                .case
+                .custody
+                .completion_output()
+                .qualification_logits()
+                .is_some(),
+            Self::SpeculativeK4(case) => case
+                .case
+                .custody
+                .completion_output()
+                .qualification_logits()
+                .is_some(),
+            Self::SpeculativeK8(case) => case
+                .case
+                .custody
+                .completion_output()
+                .qualification_logits()
+                .is_some(),
+            Self::SpeculativeK16(case) => case
+                .case
+                .custody
+                .completion_output()
+                .qualification_logits()
+                .is_some(),
         }
     }
 }
@@ -1317,6 +1383,13 @@ impl M1CompletionObservationFailureV1 {
     ) {
         (self.error, self.custody)
     }
+
+    pub(crate) const fn from_parts(
+        error: M1CompletionObservationErrorV1,
+        custody: M1CompletionObservationFailureCustodyV1,
+    ) -> Self {
+        Self { error, custody }
+    }
 }
 
 /// Semantic-join diagnostic after an exact structural observation exists.
@@ -1783,6 +1856,13 @@ impl M1QualificationObservationFailureV1 {
         M1QualificationObservationFailureCustodyV1,
     ) {
         (self.error, self.custody)
+    }
+
+    pub(crate) const fn from_parts(
+        error: M1QualificationObservationErrorV1,
+        custody: M1QualificationObservationFailureCustodyV1,
+    ) -> Self {
+        Self { error, custody }
     }
 }
 
@@ -3452,6 +3532,39 @@ impl M1ObservedCompletionOutputV1 {
             }
         }
     }
+
+    pub(crate) fn destroy_and_release_retaining_image(
+        self,
+    ) -> Result<
+        (
+            ServiceQueueReleaseObservationV1,
+            M1ObservedCompletionImageV1,
+        ),
+        Box<(M1PhysicalQueueReleaseFailureV1, M1ObservedCompletionImageV1)>,
+    > {
+        match self {
+            Self::TargetOnly(case) => release_observed_case_retaining_image(
+                *case,
+                M1PhysicalFixedBatchShapeV1::TargetOnly,
+            ),
+            Self::PairedPrefill(case) => release_observed_case_retaining_image(
+                *case,
+                M1PhysicalFixedBatchShapeV1::PairedPrefill,
+            ),
+            Self::SpeculativeK4(case) => release_observed_case_retaining_image(
+                *case,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+            ),
+            Self::SpeculativeK8(case) => release_observed_case_retaining_image(
+                *case,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+            ),
+            Self::SpeculativeK16(case) => release_observed_case_retaining_image(
+                *case,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+            ),
+        }
+    }
 }
 
 impl M1RejectedCompletionOutputV1 {
@@ -3483,6 +3596,36 @@ impl M1RejectedCompletionOutputV1 {
             Self::SpeculativeK16(case) => {
                 release_rejected_case(*case, M1PhysicalFixedBatchShapeV1::SpeculativeK16)
             }
+        }
+    }
+
+    pub(crate) fn destroy_and_release_retaining_readback(
+        self,
+    ) -> Result<
+        (ServiceQueueReleaseObservationV1, ServiceCompletedReadbackV1),
+        Box<(M1PhysicalQueueReleaseFailureV1, ServiceCompletedReadbackV1)>,
+    > {
+        match self {
+            Self::TargetOnly(case) => release_rejected_case_retaining_readback(
+                *case,
+                M1PhysicalFixedBatchShapeV1::TargetOnly,
+            ),
+            Self::PairedPrefill(case) => release_rejected_case_retaining_readback(
+                *case,
+                M1PhysicalFixedBatchShapeV1::PairedPrefill,
+            ),
+            Self::SpeculativeK4(case) => release_rejected_case_retaining_readback(
+                *case,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+            ),
+            Self::SpeculativeK8(case) => release_rejected_case_retaining_readback(
+                *case,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+            ),
+            Self::SpeculativeK16(case) => release_rejected_case_retaining_readback(
+                *case,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+            ),
         }
     }
 }

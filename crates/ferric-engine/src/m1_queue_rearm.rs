@@ -18,9 +18,9 @@ use core::fmt;
 use fe2o3_kfd::{ComputeAqlQueueObservationV1, Gfx942DeviceContentDescriptorV1};
 use fe2o3_service_host::{
     DeviceWorkspaceRoleV1, ServiceCompletedReadbackV1, ServiceDeviceDispatchRangeV1,
-    ServiceFixedBatchV1, ServiceFixedDispatchBufferV1, ServiceFixedDispatchPacketV1,
-    ServiceQueueDataUpdateFailureV1, ServiceQueueReleaseObservationV1,
-    ServiceQueueUnboundSessionV1,
+    ServiceDispatchRangeV1, ServiceFixedBatchV1, ServiceFixedDispatchBufferV1,
+    ServiceFixedDispatchPacketV1, ServiceHostDispatchRangeV1, ServiceQueueDataUpdateFailureV1,
+    ServiceQueueReleaseObservationV1, ServiceQueueUnboundSessionV1,
 };
 use ferric_build::{AddresslessM1StepWorkspacePlan, M1StepWorkspaceRange};
 use ferric_spec::{
@@ -1481,11 +1481,33 @@ fn append_workspace_ranges<const N: usize>(
     }));
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum RearmRangeRequestV1 {
+    FreshWorkspace(M1FullStepWorkspaceRole, M1StepWorkspaceRange),
+    RetainedCompletionOutput,
+    RetainedQualificationLogits,
+    Unchanged,
+}
+
+#[derive(Clone, Copy, Debug)]
+struct RetainedCaptureRangesV1 {
+    completion_output: ServiceHostDispatchRangeV1,
+    qualification_logits: Option<ServiceHostDispatchRangeV1>,
+}
+
 fn requested_workspace_range(
     source: M1PhysicalBufferSourceV1,
     composition: &AddresslessM1FullStepWorkspaceComposition,
-) -> Option<(M1FullStepWorkspaceRole, M1StepWorkspaceRange)> {
+    qualification_logits_enabled: bool,
+) -> Result<RearmRangeRequestV1, ()> {
     match source {
+        M1PhysicalBufferSourceV1::Workspace { workspace, range }
+            if qualification_logits_enabled
+                && workspace == M1FullStepWorkspaceRole::Target
+                && range == ferric_build::M1StepWorkspaceRangeRole::Logits =>
+        {
+            Ok(RearmRangeRequestV1::RetainedQualificationLogits)
+        }
         M1PhysicalBufferSourceV1::Workspace { workspace, range }
         | M1PhysicalBufferSourceV1::WorkspaceSentinel {
             workspace, range, ..
@@ -1499,42 +1521,42 @@ fn requested_workspace_range(
             .workspace_plans()
             .workspace(workspace)
             .and_then(|plan| plan.range(range))
-            .map(|range| (workspace, range)),
-        M1PhysicalBufferSourceV1::SpeculativeDraftChoices(row) => {
-            Some((M1FullStepWorkspaceRole::Target, row.range()))
-        }
+            .map(|range| RearmRangeRequestV1::FreshWorkspace(workspace, range))
+            .ok_or(()),
+        M1PhysicalBufferSourceV1::SpeculativeDraftChoices(row) => Ok(
+            RearmRangeRequestV1::FreshWorkspace(M1FullStepWorkspaceRole::Target, row.range()),
+        ),
         M1PhysicalBufferSourceV1::SpeculativeDraftIterationMetadata {
             workspace,
             range,
             draft_segment,
             ..
         } => {
-            let binding = composition.segment_binding(draft_segment)?;
+            let binding = composition.segment_binding(draft_segment).ok_or(())?;
             let row = match range {
                 ferric_build::M1StepWorkspaceRangeRole::DraftPositionIds => {
-                    binding.draft_position_ids_subrange()?.range()
+                    binding.draft_position_ids_subrange().ok_or(())?.range()
                 }
                 ferric_build::M1StepWorkspaceRangeRole::DraftContextLengths => {
-                    binding.draft_context_lengths_subrange()?.range()
+                    binding.draft_context_lengths_subrange().ok_or(())?.range()
                 }
-                _ => return None,
+                _ => return Err(()),
             };
-            Some((workspace, row))
+            Ok(RearmRangeRequestV1::FreshWorkspace(workspace, row))
         }
-        M1PhysicalBufferSourceV1::CompletionOutput { .. }
-        | M1PhysicalBufferSourceV1::ModelWeight { .. }
-        | M1PhysicalBufferSourceV1::KvCachePlane { .. } => None,
+        M1PhysicalBufferSourceV1::CompletionOutput { .. } => {
+            Ok(RearmRangeRequestV1::RetainedCompletionOutput)
+        }
+        M1PhysicalBufferSourceV1::ModelWeight { .. }
+        | M1PhysicalBufferSourceV1::KvCachePlane { .. } => Ok(RearmRangeRequestV1::Unchanged),
     }
 }
 
 fn resolve_fresh_workspace_range(
-    source: M1PhysicalBufferSourceV1,
-    composition: &AddresslessM1FullStepWorkspaceComposition,
+    workspace: M1FullStepWorkspaceRole,
+    requested: M1StepWorkspaceRange,
     ranges: &[FreshWorkspaceRangeV1],
-) -> Result<Option<ServiceDeviceDispatchRangeV1>, ()> {
-    let Some((workspace, requested)) = requested_workspace_range(source, composition) else {
-        return Ok(None);
-    };
+) -> Result<ServiceDeviceDispatchRangeV1, ()> {
     let parent = ranges
         .iter()
         .find(|entry| entry.workspace == workspace && entry.semantic.role() == requested.role())
@@ -1546,8 +1568,61 @@ fn resolve_fresh_workspace_range(
     parent
         .dispatch
         .checked_subrange(relative, requested.byte_len(), requested.alignment())
-        .map(Some)
         .map_err(|_| ())
+}
+
+#[derive(Debug)]
+struct RearmRangeSelectionV1 {
+    completion_output_sources: usize,
+    qualification_logits_sources: usize,
+    qualification_logits_enabled: bool,
+}
+
+impl RearmRangeSelectionV1 {
+    const fn new(qualification_logits_enabled: bool) -> Self {
+        Self {
+            completion_output_sources: 0,
+            qualification_logits_sources: 0,
+            qualification_logits_enabled,
+        }
+    }
+
+    fn select<T: Copy + Eq>(
+        &mut self,
+        request: RearmRangeRequestV1,
+        old: T,
+        fresh: Option<T>,
+        retained_completion: T,
+        retained_logits: Option<T>,
+    ) -> Result<T, ()> {
+        match request {
+            RearmRangeRequestV1::FreshWorkspace(_, _) => fresh.ok_or(()),
+            RearmRangeRequestV1::RetainedCompletionOutput => {
+                self.completion_output_sources += 1;
+                (old == retained_completion)
+                    .then_some(retained_completion)
+                    .ok_or(())
+            }
+            RearmRangeRequestV1::RetainedQualificationLogits => {
+                self.qualification_logits_sources += 1;
+                let expected = retained_logits.ok_or(())?;
+                (old == expected).then_some(expected).ok_or(())
+            }
+            RearmRangeRequestV1::Unchanged => Ok(old),
+        }
+    }
+
+    fn validate(self) -> Result<(), ()> {
+        let expected_qualification_logits_sources = if self.qualification_logits_enabled {
+            2
+        } else {
+            0
+        };
+        (self.completion_output_sources == 1
+            && self.qualification_logits_sources == expected_qualification_logits_sources)
+            .then_some(())
+            .ok_or(())
+    }
 }
 
 fn rebuild_bound_rows(
@@ -1555,11 +1630,14 @@ fn rebuild_bound_rows(
     old_bound_rows: &[M1BoundPhysicalBufferRowV1],
     composition: &AddresslessM1FullStepWorkspaceComposition,
     workspace_ranges: &[FreshWorkspaceRangeV1],
+    retained_capture: RetainedCaptureRangesV1,
 ) -> Result<Box<[M1BoundPhysicalBufferRowV1]>, ()> {
     if source_rows.len() != old_bound_rows.len() {
         return Err(());
     }
     let mut rows = Vec::new();
+    let mut range_selection =
+        RearmRangeSelectionV1::new(retained_capture.qualification_logits.is_some());
     rows.try_reserve_exact(source_rows.len()).map_err(|_| ())?;
     for (source, old) in source_rows.iter().zip(old_bound_rows) {
         if source.dispatch_index() != old.dispatch_index()
@@ -1577,15 +1655,40 @@ fn rebuild_bound_rows(
             if semantic.explicit_argument_index() != old_buffer.explicit_argument_index() {
                 return Err(());
             }
-            let buffer = match resolve_fresh_workspace_range(
+            let request = requested_workspace_range(
                 semantic.source(),
                 composition,
-                workspace_ranges,
-            )? {
-                Some(range) => {
+                retained_capture.qualification_logits.is_some(),
+            )?;
+            let fresh = match request {
+                RearmRangeRequestV1::FreshWorkspace(workspace, requested) => {
+                    Some(ServiceDispatchRangeV1::Device(
+                        resolve_fresh_workspace_range(workspace, requested, workspace_ranges)?,
+                    ))
+                }
+                RearmRangeRequestV1::RetainedCompletionOutput
+                | RearmRangeRequestV1::RetainedQualificationLogits
+                | RearmRangeRequestV1::Unchanged => None,
+            };
+            let selected = range_selection.select(
+                request,
+                old_buffer.range(),
+                fresh,
+                ServiceDispatchRangeV1::HostVisible(retained_capture.completion_output),
+                retained_capture
+                    .qualification_logits
+                    .map(ServiceDispatchRangeV1::HostVisible),
+            )?;
+            let buffer = match selected {
+                ServiceDispatchRangeV1::Device(range) => {
                     ServiceFixedDispatchBufferV1::new(semantic.explicit_argument_index(), range)
                 }
-                None => *old_buffer,
+                ServiceDispatchRangeV1::HostVisible(range) => {
+                    ServiceFixedDispatchBufferV1::new_host_visible(
+                        semantic.explicit_argument_index(),
+                        range,
+                    )
+                }
             };
             buffers.push(buffer);
         }
@@ -1594,6 +1697,7 @@ fn rebuild_bound_rows(
             buffers.into_boxed_slice(),
         ));
     }
+    range_selection.validate()?;
     Ok(rows.into_boxed_slice())
 }
 
@@ -2157,7 +2261,7 @@ impl M1RearmedQualificationObservationFailureV1 {
             queue_observation,
             device,
         } = self;
-        let retry = retry_physical_qualification_observation_source(source);
+        let retry = retry_physical_qualification_observation_source(*source);
         match rejoin_qualification_observation_retry(retry, carry, queue_observation, device) {
             Ok(joined) => Ok(M1RearmedObservedQualificationOutputV1 {
                 observed: joined.source,
@@ -2256,20 +2360,18 @@ fn rejoin_qualification_observation_retry<T, E, Q>(
 }
 
 fn retry_physical_qualification_observation_source(
-    source: Box<crate::M1QualificationObservationFailureV1>,
+    source: crate::M1QualificationObservationFailureV1,
 ) -> Result<crate::M1ObservedQualificationOutputV1, Box<crate::M1QualificationObservationFailureV1>>
 {
-    if !matches!(
-        source.custody(),
-        crate::M1QualificationObservationFailureCustodyV1::Recycled(_)
-    ) {
-        return Err(source);
+    let (error, custody) = source.into_parts();
+    match custody {
+        crate::M1QualificationObservationFailureCustodyV1::Recycled(queue) => {
+            queue.observe_qualification_completion()
+        }
+        custody => Err(Box::new(
+            crate::M1QualificationObservationFailureV1::from_parts(error, custody),
+        )),
     }
-    let (_error, custody) = (*source).into_parts();
-    let crate::M1QualificationObservationFailureCustodyV1::Recycled(queue) = custody else {
-        unreachable!("borrowed qualification failure custody was recycled")
-    };
-    queue.observe_qualification_completion()
 }
 
 #[derive(Debug)]
@@ -2877,10 +2979,87 @@ impl M1RearmedReadbackFailureV1 {
     pub fn recover_recycled_after_semantic_rejection(
         self: Box<Self>,
     ) -> Result<M1RearmedRecycledQueueV1, Box<Self>> {
-        if !matches!(
+        let Self {
+            source,
+            carry,
+            queue_observation,
+            device,
+        } = *self;
+        match source {
+            M1RearmedReadbackFailureSourceV1::QualificationCaptureRequiresEvidence {
+                queue,
+                ..
+            } => Ok(M1RearmedRecycledQueueV1 {
+                queue: *queue,
+                carry,
+                queue_observation,
+                device,
+            }),
+            source => Err(Box::new(Self {
+                source,
+                carry,
+                queue_observation,
+                device,
+            })),
+        }
+    }
+
+    /// Retries the exact admissible stage without reopening a successful copy.
+    ///
+    /// A lower `Recycled` observation retries the physical read and then joins
+    /// the supplied semantics. A lower `Rejected` observation and the pre-read
+    /// qualification gate return this owner unchanged. A semantic `Join`
+    /// failure retries only the retained observation join.
+    ///
+    /// ```compile_fail
+    /// use ferric_engine::M1RearmedReadbackFailureV1;
+    /// fn retry_twice(failure: Box<M1RearmedReadbackFailureV1>) {
+    ///     let expectations = [];
+    ///     let _first = failure.retry(&expectations);
+    ///     let _second = failure.retry(&expectations);
+    /// }
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns unchanged closed custody when retry is not admitted, or fresh
+    /// phase-accurate failure custody if the admitted retry rejects again.
+    pub fn retry(
+        self: Box<Self>,
+        expectations: &[crate::CompletionWireSemanticExpectation<'_>],
+    ) -> Result<M1RearmedCompletedReadbackV1, Box<Self>> {
+        if matches!(
             &self.source,
             M1RearmedReadbackFailureSourceV1::QualificationCaptureRequiresEvidence { .. }
         ) {
+            return Err(self);
+        }
+        if let M1RearmedReadbackFailureSourceV1::Observation(source) = &self.source {
+            if matches!(
+                source.custody(),
+                crate::M1CompletionObservationFailureCustodyV1::Rejected(_)
+            ) {
+                return Err(self);
+            }
+        }
+        let qualification_capture_enabled = match &self.source {
+            M1RearmedReadbackFailureSourceV1::QualificationCaptureRequiresEvidence { .. } => true,
+            M1RearmedReadbackFailureSourceV1::Observation(source) => match source.custody() {
+                crate::M1CompletionObservationFailureCustodyV1::Recycled(queue) => queue
+                    .custody()
+                    .completion_output()
+                    .qualification_logits()
+                    .is_some(),
+                crate::M1CompletionObservationFailureCustodyV1::Rejected(_) => {
+                    return Err(self);
+                }
+            },
+            M1RearmedReadbackFailureSourceV1::Join(source) => {
+                source.observed().qualification_logits_enabled()
+            }
+        };
+        if validate_rearmed_generic_semantics(qualification_capture_enabled, expectations).is_err()
+        {
             return Err(self);
         }
         let Self {
@@ -2889,18 +3068,113 @@ impl M1RearmedReadbackFailureV1 {
             queue_observation,
             device,
         } = *self;
-        let M1RearmedReadbackFailureSourceV1::QualificationCaptureRequiresEvidence {
-            queue, ..
-        } = source
-        else {
-            unreachable!("the pre-read source variant was checked before consuming failure")
-        };
-        Ok(M1RearmedRecycledQueueV1 {
-            queue: *queue,
+        match source {
+            M1RearmedReadbackFailureSourceV1::QualificationCaptureRequiresEvidence {
+                lane,
+                queue,
+            } => Err(Box::new(Self {
+                source: M1RearmedReadbackFailureSourceV1::QualificationCaptureRequiresEvidence {
+                    lane,
+                    queue,
+                },
+                carry,
+                queue_observation,
+                device,
+            })),
+            M1RearmedReadbackFailureSourceV1::Observation(source) => {
+                let (error, custody) = source.into_parts();
+                match custody {
+                    crate::M1CompletionObservationFailureCustodyV1::Recycled(queue) => {
+                        match queue.observe_completion() {
+                            Ok(observed) => rejoin_rearmed_readback(
+                                observed,
+                                expectations,
+                                carry,
+                                queue_observation,
+                                device,
+                            ),
+                            Err(source) => Err(Box::new(Self {
+                                source: M1RearmedReadbackFailureSourceV1::Observation(source),
+                                carry,
+                                queue_observation,
+                                device,
+                            })),
+                        }
+                    }
+                    crate::M1CompletionObservationFailureCustodyV1::Rejected(rejected) => {
+                        Err(Box::new(Self {
+                            source: M1RearmedReadbackFailureSourceV1::Observation(
+                                crate::M1CompletionObservationFailureV1::from_parts(
+                                    error,
+                                    crate::M1CompletionObservationFailureCustodyV1::Rejected(
+                                        rejected,
+                                    ),
+                                ),
+                            ),
+                            carry,
+                            queue_observation,
+                            device,
+                        }))
+                    }
+                }
+            }
+            M1RearmedReadbackFailureSourceV1::Join(source) => {
+                let (_error, observed) = source.into_parts();
+                rejoin_rearmed_readback(observed, expectations, carry, queue_observation, device)
+            }
+        }
+    }
+
+    /// Fail-stops `engine` before destroying and releasing the physical queue.
+    ///
+    /// Every source state is accepted. Copied rejected or observed bytes remain
+    /// attached as diagnostic evidence, and every continuation owner remains
+    /// quarantined beside the exact lower release outcome.
+    ///
+    /// ```compile_fail
+    /// use ferric_engine::{Engine, M1RearmedReadbackFailureV1};
+    /// fn teardown_twice(engine: &mut Engine<32>, failure: Box<M1RearmedReadbackFailureV1>) {
+    ///     let _first = failure.destroy_queue_and_retain_custody(engine);
+    ///     let _second = failure.destroy_queue_and_retain_custody(engine);
+    /// }
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns the exact terminal lower release owner together with the same
+    /// diagnostic, copied evidence, and rearm continuation custody.
+    pub fn destroy_queue_and_retain_custody<const C: usize>(
+        self: Box<Self>,
+        engine: &mut Engine<C>,
+    ) -> Result<M1RearmedReadbackTeardownSuccessV1, Box<M1RearmedReadbackTeardownFailureV1>> {
+        quarantine_readback_teardown(engine);
+        let Self {
+            source,
             carry,
             queue_observation,
             device,
-        })
+        } = *self;
+        match teardown_rearmed_readback_source(source) {
+            Ok(source) => Ok(M1RearmedReadbackTeardownSuccessV1 {
+                diagnostic: source.diagnostic,
+                queue_release: source.queue_release,
+                evidence: source.evidence,
+                carry,
+                queue_observation,
+                device,
+            }),
+            Err(source) => {
+                let source = *source;
+                Err(Box::new(M1RearmedReadbackTeardownFailureV1 {
+                    diagnostic: source.diagnostic,
+                    source: source.source,
+                    evidence: source.evidence,
+                    carry,
+                    queue_observation,
+                    device,
+                }))
+            }
+        }
     }
 
     /// Returns the queue observation retained from the completed generation.
@@ -2919,6 +3193,442 @@ impl M1RearmedReadbackFailureV1 {
     #[must_use]
     pub const fn previous_epoch(&self) -> CompletionEpoch {
         self.carry.previous_epoch
+    }
+
+    #[must_use]
+    pub fn selected_requests(&self) -> impl ExactSizeIterator<Item = RequestId> + '_ {
+        self.carry
+            .selected
+            .iter()
+            .map(|cache| cache.projection().request)
+    }
+
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        self.carry.parked.len()
+    }
+
+    #[must_use]
+    pub const fn terminal_count(&self) -> usize {
+        self.carry.terminal.len()
+    }
+
+    pub const fn prior_checked(&self) -> &crate::M1CheckedCompletionOutputV1 {
+        &self.carry.prior_checked
+    }
+
+    #[must_use]
+    pub fn prior_logical_accepted_counts(&self) -> &[u32] {
+        &self.carry.logical_accepted_counts
+    }
+
+    #[must_use]
+    pub fn prior_externally_published_counts(&self) -> &[u32] {
+        &self.carry.externally_published_counts
+    }
+
+    #[must_use]
+    pub fn prior_release_counts(&self) -> &[M1CompletedKvPageReleaseCountsV1] {
+        &self.carry.release_counts
+    }
+
+    #[must_use]
+    pub const fn prior_completed_members(&self) -> usize {
+        self.carry.completed_members
+    }
+
+    #[must_use]
+    pub const fn prior_total_released(&self) -> usize {
+        self.carry.total_released
+    }
+}
+
+fn quarantine_readback_teardown<const C: usize>(engine: &mut Engine<C>) {
+    engine.quarantine_m1_queue_rearm_failure();
+}
+
+#[derive(Debug)]
+struct M1RearmedReadbackRetryJoinV1<T, Q> {
+    source: T,
+    carry: M1RearmContinuationCustodyV1,
+    queue_observation: Q,
+    device: Gfx942DeviceBinding,
+}
+
+fn rejoin_readback_retry<T, E, Q>(
+    source: Result<T, E>,
+    carry: M1RearmContinuationCustodyV1,
+    queue_observation: Q,
+    device: Gfx942DeviceBinding,
+) -> Result<M1RearmedReadbackRetryJoinV1<T, Q>, Box<M1RearmedReadbackRetryJoinV1<E, Q>>> {
+    match source {
+        Ok(source) => Ok(M1RearmedReadbackRetryJoinV1 {
+            source,
+            carry,
+            queue_observation,
+            device,
+        }),
+        Err(source) => Err(Box::new(M1RearmedReadbackRetryJoinV1 {
+            source,
+            carry,
+            queue_observation,
+            device,
+        })),
+    }
+}
+
+fn rejoin_rearmed_readback(
+    observed: crate::M1ObservedCompletionOutputV1,
+    expectations: &[crate::CompletionWireSemanticExpectation<'_>],
+    carry: M1RearmContinuationCustodyV1,
+    queue_observation: ComputeAqlQueueObservationV1,
+    device: Gfx942DeviceBinding,
+) -> Result<M1RearmedCompletedReadbackV1, Box<M1RearmedReadbackFailureV1>> {
+    match rejoin_readback_retry(
+        observed.check_completion(expectations),
+        carry,
+        queue_observation,
+        device,
+    ) {
+        Ok(joined) => Ok(M1RearmedCompletedReadbackV1 {
+            readback: joined.source,
+            carry: joined.carry,
+            queue_observation: joined.queue_observation,
+            device: joined.device,
+        }),
+        Err(joined) => {
+            let joined = *joined;
+            Err(Box::new(M1RearmedReadbackFailureV1 {
+                source: M1RearmedReadbackFailureSourceV1::Join(joined.source),
+                carry: joined.carry,
+                queue_observation: joined.queue_observation,
+                device: joined.device,
+            }))
+        }
+    }
+}
+
+/// Exact diagnostic retained after generic rearm readback teardown.
+#[derive(Debug)]
+pub enum M1RearmedReadbackTeardownDiagnosticV1 {
+    QualificationCaptureRequiresEvidence { lane: usize },
+    Observation(crate::M1CompletionObservationErrorV1),
+    Join(crate::M1CompletedReadbackJoinErrorV1),
+}
+
+/// Copied completion evidence retained independently of allocation release.
+#[derive(Debug)]
+pub enum M1RearmedReadbackTeardownEvidenceV1 {
+    None,
+    RejectedCompact(Box<ServiceCompletedReadbackV1>),
+    ObservedCompact(Box<crate::M1ObservedCompletionImageV1>),
+}
+
+impl M1RearmedReadbackTeardownEvidenceV1 {
+    #[must_use]
+    pub fn raw_bytes(&self) -> Option<&[u8]> {
+        match self {
+            Self::None => None,
+            Self::RejectedCompact(readback) => Some(readback.bytes()),
+            Self::ObservedCompact(image) => Some(image.raw_bytes()),
+        }
+    }
+}
+
+/// Truthful allocation-release state after fail-stop readback teardown.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1RearmedReadbackCaptureReleaseStateV1 {
+    /// The lower queue and its completion capture allocations were released.
+    Released,
+    /// Lower release failed; the returned physical owner remains quarantined.
+    LowerReleaseFailure,
+}
+
+#[derive(Debug)]
+struct RearmedReadbackTeardownSuccessV1 {
+    diagnostic: M1RearmedReadbackTeardownDiagnosticV1,
+    queue_release: ServiceQueueReleaseObservationV1,
+    evidence: M1RearmedReadbackTeardownEvidenceV1,
+}
+
+#[derive(Debug)]
+struct RearmedReadbackTeardownFailureV1 {
+    diagnostic: M1RearmedReadbackTeardownDiagnosticV1,
+    source: crate::M1PhysicalQueueReleaseFailureV1,
+    evidence: M1RearmedReadbackTeardownEvidenceV1,
+}
+
+fn teardown_rearmed_readback_source(
+    source: M1RearmedReadbackFailureSourceV1,
+) -> Result<RearmedReadbackTeardownSuccessV1, Box<RearmedReadbackTeardownFailureV1>> {
+    let finish = |diagnostic, evidence, released| match released {
+        Ok(queue_release) => Ok(RearmedReadbackTeardownSuccessV1 {
+            diagnostic,
+            queue_release,
+            evidence,
+        }),
+        Err(source) => Err(Box::new(RearmedReadbackTeardownFailureV1 {
+            diagnostic,
+            source,
+            evidence,
+        })),
+    };
+    match source {
+        M1RearmedReadbackFailureSourceV1::QualificationCaptureRequiresEvidence { lane, queue } => {
+            finish(
+                M1RearmedReadbackTeardownDiagnosticV1::QualificationCaptureRequiresEvidence {
+                    lane,
+                },
+                M1RearmedReadbackTeardownEvidenceV1::None,
+                queue.destroy_and_release(),
+            )
+        }
+        M1RearmedReadbackFailureSourceV1::Observation(source) => {
+            let (error, custody) = source.into_parts();
+            match custody {
+                crate::M1CompletionObservationFailureCustodyV1::Recycled(queue) => finish(
+                    M1RearmedReadbackTeardownDiagnosticV1::Observation(error),
+                    M1RearmedReadbackTeardownEvidenceV1::None,
+                    queue.destroy_and_release(),
+                ),
+                crate::M1CompletionObservationFailureCustodyV1::Rejected(rejected) => {
+                    let diagnostic = M1RearmedReadbackTeardownDiagnosticV1::Observation(error);
+                    match rejected.destroy_and_release_retaining_readback() {
+                        Ok((queue_release, readback)) => Ok(RearmedReadbackTeardownSuccessV1 {
+                            diagnostic,
+                            queue_release,
+                            evidence: M1RearmedReadbackTeardownEvidenceV1::RejectedCompact(
+                                Box::new(readback),
+                            ),
+                        }),
+                        Err(failure) => {
+                            let (source, readback) = *failure;
+                            Err(Box::new(RearmedReadbackTeardownFailureV1 {
+                                diagnostic,
+                                source,
+                                evidence: M1RearmedReadbackTeardownEvidenceV1::RejectedCompact(
+                                    Box::new(readback),
+                                ),
+                            }))
+                        }
+                    }
+                }
+            }
+        }
+        M1RearmedReadbackFailureSourceV1::Join(source) => {
+            let (error, observed) = source.into_parts();
+            let diagnostic = M1RearmedReadbackTeardownDiagnosticV1::Join(error);
+            match observed.destroy_and_release_retaining_image() {
+                Ok((queue_release, image)) => Ok(RearmedReadbackTeardownSuccessV1 {
+                    diagnostic,
+                    queue_release,
+                    evidence: M1RearmedReadbackTeardownEvidenceV1::ObservedCompact(Box::new(image)),
+                }),
+                Err(failure) => {
+                    let (source, image) = *failure;
+                    Err(Box::new(RearmedReadbackTeardownFailureV1 {
+                        diagnostic,
+                        source,
+                        evidence: M1RearmedReadbackTeardownEvidenceV1::ObservedCompact(Box::new(
+                            image,
+                        )),
+                    }))
+                }
+            }
+        }
+    }
+}
+
+/// Clean fail-stop teardown retaining the exact readback diagnostic and lineage.
+#[must_use = "readback diagnostic and terminal cache quarantine remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedReadbackTeardownSuccessV1 {
+    diagnostic: M1RearmedReadbackTeardownDiagnosticV1,
+    queue_release: ServiceQueueReleaseObservationV1,
+    evidence: M1RearmedReadbackTeardownEvidenceV1,
+    carry: M1RearmContinuationCustodyV1,
+    queue_observation: ComputeAqlQueueObservationV1,
+    device: Gfx942DeviceBinding,
+}
+
+impl M1RearmedReadbackTeardownSuccessV1 {
+    #[must_use]
+    pub const fn diagnostic(&self) -> &M1RearmedReadbackTeardownDiagnosticV1 {
+        &self.diagnostic
+    }
+
+    #[must_use]
+    pub const fn queue_release(&self) -> ServiceQueueReleaseObservationV1 {
+        self.queue_release
+    }
+
+    #[must_use = "copied evidence remains retained"]
+    pub const fn evidence(&self) -> &M1RearmedReadbackTeardownEvidenceV1 {
+        &self.evidence
+    }
+
+    /// Completion capture allocation release completed successfully.
+    #[must_use]
+    pub const fn capture_release_state(&self) -> M1RearmedReadbackCaptureReleaseStateV1 {
+        M1RearmedReadbackCaptureReleaseStateV1::Released
+    }
+
+    #[must_use]
+    pub fn selected_requests(&self) -> impl ExactSizeIterator<Item = RequestId> + '_ {
+        self.carry
+            .selected
+            .iter()
+            .map(|cache| cache.projection().request)
+    }
+
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        self.carry.parked.len()
+    }
+
+    #[must_use]
+    pub const fn terminal_count(&self) -> usize {
+        self.carry.terminal.len()
+    }
+
+    #[must_use]
+    pub const fn previous_epoch(&self) -> CompletionEpoch {
+        self.carry.previous_epoch
+    }
+
+    pub const fn prior_checked(&self) -> &crate::M1CheckedCompletionOutputV1 {
+        &self.carry.prior_checked
+    }
+
+    #[must_use]
+    pub fn prior_logical_accepted_counts(&self) -> &[u32] {
+        &self.carry.logical_accepted_counts
+    }
+
+    #[must_use]
+    pub fn prior_externally_published_counts(&self) -> &[u32] {
+        &self.carry.externally_published_counts
+    }
+
+    #[must_use]
+    pub fn prior_release_counts(&self) -> &[M1CompletedKvPageReleaseCountsV1] {
+        &self.carry.release_counts
+    }
+
+    #[must_use]
+    pub const fn prior_completed_members(&self) -> usize {
+        self.carry.completed_members
+    }
+
+    #[must_use]
+    pub const fn prior_total_released(&self) -> usize {
+        self.carry.total_released
+    }
+
+    #[must_use]
+    pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
+        self.queue_observation
+    }
+
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.device
+    }
+}
+
+/// Terminal lower release failure retaining physical and Ferric custody.
+#[must_use = "lower release owner and readback quarantine remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedReadbackTeardownFailureV1 {
+    diagnostic: M1RearmedReadbackTeardownDiagnosticV1,
+    source: crate::M1PhysicalQueueReleaseFailureV1,
+    evidence: M1RearmedReadbackTeardownEvidenceV1,
+    carry: M1RearmContinuationCustodyV1,
+    queue_observation: ComputeAqlQueueObservationV1,
+    device: Gfx942DeviceBinding,
+}
+
+impl M1RearmedReadbackTeardownFailureV1 {
+    #[must_use]
+    pub const fn diagnostic(&self) -> &M1RearmedReadbackTeardownDiagnosticV1 {
+        &self.diagnostic
+    }
+
+    pub const fn source(&self) -> &crate::M1PhysicalQueueReleaseFailureV1 {
+        &self.source
+    }
+
+    #[must_use = "copied evidence remains retained"]
+    pub const fn evidence(&self) -> &M1RearmedReadbackTeardownEvidenceV1 {
+        &self.evidence
+    }
+
+    /// Lower release failed and the physical release owner remains retained.
+    #[must_use]
+    pub const fn capture_release_state(&self) -> M1RearmedReadbackCaptureReleaseStateV1 {
+        M1RearmedReadbackCaptureReleaseStateV1::LowerReleaseFailure
+    }
+
+    #[must_use]
+    pub fn selected_requests(&self) -> impl ExactSizeIterator<Item = RequestId> + '_ {
+        self.carry
+            .selected
+            .iter()
+            .map(|cache| cache.projection().request)
+    }
+
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        self.carry.parked.len()
+    }
+
+    #[must_use]
+    pub const fn terminal_count(&self) -> usize {
+        self.carry.terminal.len()
+    }
+
+    #[must_use]
+    pub const fn previous_epoch(&self) -> CompletionEpoch {
+        self.carry.previous_epoch
+    }
+
+    pub const fn prior_checked(&self) -> &crate::M1CheckedCompletionOutputV1 {
+        &self.carry.prior_checked
+    }
+
+    #[must_use]
+    pub fn prior_logical_accepted_counts(&self) -> &[u32] {
+        &self.carry.logical_accepted_counts
+    }
+
+    #[must_use]
+    pub fn prior_externally_published_counts(&self) -> &[u32] {
+        &self.carry.externally_published_counts
+    }
+
+    #[must_use]
+    pub fn prior_release_counts(&self) -> &[M1CompletedKvPageReleaseCountsV1] {
+        &self.carry.release_counts
+    }
+
+    #[must_use]
+    pub const fn prior_completed_members(&self) -> usize {
+        self.carry.completed_members
+    }
+
+    #[must_use]
+    pub const fn prior_total_released(&self) -> usize {
+        self.carry.total_released
+    }
+
+    #[must_use]
+    pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
+        self.queue_observation
+    }
+
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.device
     }
 }
 
@@ -4001,11 +4711,19 @@ fn finish_rearm_submission(
     step: M1PrepublicationStepCustodyV1,
     expected_observation: ComputeAqlQueueObservationV1,
 ) -> Result<M1PhysicalPublishedQueueSessionV1, M1LongLivedQueueRearmSubmissionFailureV1<'_>> {
+    let retained_capture = RetainedCaptureRangesV1 {
+        completion_output: custody.completion_output.retained_host_dispatch_range(),
+        qualification_logits: custody
+            .completion_output
+            .qualification_logits()
+            .map(crate::BoundM1QualificationLogitsV1::retained_host_dispatch_range),
+    };
     let bound_rows = match rebuild_bound_rows(
         recipe.rows(),
         &custody.bound_rows,
         recipe.workspace_composition(),
         &workspace_ranges,
+        retained_capture,
     ) {
         Ok(rows) => rows,
         Err(()) => {
@@ -4608,6 +5326,160 @@ mod tests {
         };
         assert_eq!(&*history.logical_accepted_counts, &[1]);
         assert_eq!(&*history.externally_published_counts, &[0]);
+    }
+
+    #[test]
+    fn qualification_capture_ranges_survive_two_fresh_workspace_generations() {
+        use ferric_build::M1StepWorkspaceRangeRole;
+
+        let fresh_request = RearmRangeRequestV1::FreshWorkspace(
+            M1FullStepWorkspaceRole::Target,
+            M1StepWorkspaceRange::new(M1StepWorkspaceRangeRole::TokenIds, 0, 8, 8),
+        );
+        let requests = [
+            RearmRangeRequestV1::RetainedCompletionOutput,
+            RearmRangeRequestV1::RetainedQualificationLogits,
+            RearmRangeRequestV1::RetainedQualificationLogits,
+            fresh_request,
+        ];
+        let retained_compact = 101_u64;
+        let retained_logits = 202_u64;
+        let generation_zero = [retained_compact, retained_logits, retained_logits, 303];
+        let generation_one_fresh = [None, None, None, Some(404)];
+        let mut generation_one_selection = RearmRangeSelectionV1::new(true);
+        let generation_one = core::array::from_fn(|index| {
+            generation_one_selection
+                .select(
+                    requests[index],
+                    generation_zero[index],
+                    generation_one_fresh[index],
+                    retained_compact,
+                    Some(retained_logits),
+                )
+                .unwrap()
+        });
+        assert_eq!(generation_one_selection.validate(), Ok(()));
+        assert_eq!(
+            generation_one,
+            [retained_compact, retained_logits, retained_logits, 404]
+        );
+
+        let generation_two_fresh = [None, None, None, Some(505)];
+        let mut generation_two_selection = RearmRangeSelectionV1::new(true);
+        let generation_two = core::array::from_fn(|index| {
+            generation_two_selection
+                .select(
+                    requests[index],
+                    generation_one[index],
+                    generation_two_fresh[index],
+                    retained_compact,
+                    Some(retained_logits),
+                )
+                .unwrap()
+        });
+        assert_eq!(generation_two_selection.validate(), Ok(()));
+        assert_eq!(
+            generation_two,
+            [retained_compact, retained_logits, retained_logits, 505]
+        );
+        assert_ne!(generation_zero[3], generation_one[3]);
+        assert_ne!(generation_one[3], generation_two[3]);
+    }
+
+    #[test]
+    fn qualification_capture_range_substitution_is_rejected() {
+        let mut selection = RearmRangeSelectionV1::new(true);
+        assert_eq!(
+            selection.select(
+                RearmRangeRequestV1::RetainedQualificationLogits,
+                909_u64,
+                None,
+                101,
+                Some(202),
+            ),
+            Err(())
+        );
+        let mut selection = RearmRangeSelectionV1::new(true);
+        assert_eq!(
+            selection.select(
+                RearmRangeRequestV1::RetainedCompletionOutput,
+                808_u64,
+                None,
+                101,
+                Some(202),
+            ),
+            Err(())
+        );
+        assert_eq!(RearmRangeSelectionV1::new(true).validate(), Err(()));
+    }
+
+    #[test]
+    fn generic_readback_retry_rejoins_exact_continuation_custody() {
+        let selected = RequestId::new(0, 3);
+        let parked = RequestId::new(1, 5);
+        let success = rejoin_readback_retry(
+            Ok::<u8, u16>(41),
+            test_rearm_carry(selected, parked),
+            73_u32,
+            test_device(),
+        )
+        .unwrap();
+        assert_eq!(success.source, 41);
+        assert_eq!(success.queue_observation, 73);
+        assert_eq!(success.carry.selected[0].projection().request, selected);
+        assert_eq!(success.carry.parked[0].projection().request, parked);
+        assert_eq!(&*success.carry.logical_accepted_counts, &[1]);
+        assert_eq!(&*success.carry.externally_published_counts, &[0]);
+        assert_eq!(success.device, test_device());
+
+        let failure = rejoin_readback_retry(
+            Err::<u8, u16>(97),
+            test_rearm_carry(selected, parked),
+            89_u32,
+            test_device(),
+        )
+        .unwrap_err();
+        assert_eq!(failure.source, 97);
+        assert_eq!(failure.queue_observation, 89);
+        assert_eq!(failure.carry.selected[0].projection().request, selected);
+        assert_eq!(failure.carry.parked[0].projection().request, parked);
+        assert_eq!(&*failure.carry.logical_accepted_counts, &[1]);
+        assert_eq!(&*failure.carry.externally_published_counts, &[0]);
+        assert_eq!(failure.device, test_device());
+    }
+
+    #[test]
+    fn generic_readback_teardown_quarantines_in_flight_engine() {
+        let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+        let request = engine.admit().unwrap();
+        engine.append_tentative(request, 1).unwrap();
+        let scheduled = engine.dispatch_m1_ready().unwrap().unwrap();
+        assert_eq!(scheduled.member(0), Some(request));
+        assert!(!engine.is_faulted());
+
+        quarantine_readback_teardown(&mut engine);
+        assert!(engine.is_faulted());
+        assert_eq!(engine.state(request), Some(RequestState::InFlight));
+    }
+
+    #[test]
+    fn generic_readback_failure_has_consuming_retry_and_teardown_signatures() {
+        type Retry =
+            for<'a, 'b> fn(
+                Box<M1RearmedReadbackFailureV1>,
+                &'a [crate::CompletionWireSemanticExpectation<'b>],
+            )
+                -> Result<M1RearmedCompletedReadbackV1, Box<M1RearmedReadbackFailureV1>>;
+        type Teardown = fn(
+            Box<M1RearmedReadbackFailureV1>,
+            &mut Engine<32>,
+        ) -> Result<
+            M1RearmedReadbackTeardownSuccessV1,
+            Box<M1RearmedReadbackTeardownFailureV1>,
+        >;
+
+        let _: Retry = M1RearmedReadbackFailureV1::retry;
+        let _: Teardown = M1RearmedReadbackFailureV1::destroy_queue_and_retain_custody::<32>;
     }
 
     #[test]

@@ -151,7 +151,10 @@ pub use m1_queue_rearm::{
     M1RearmedQualifiedReleasedRoundV1, M1RearmedQualifiedRoundPageReleaseFailureV1,
     M1RearmedQualifiedRoundReleaseOutcomeV1, M1RearmedQualifiedTeardownFailureV1,
     M1RearmedQualifiedTeardownSuccessV1, M1RearmedQueueProgressFailureV1,
-    M1RearmedReadbackFailureSourceV1, M1RearmedReadbackFailureV1, M1RearmedRecycledQueueV1,
+    M1RearmedReadbackCaptureReleaseStateV1, M1RearmedReadbackFailureSourceV1,
+    M1RearmedReadbackFailureV1, M1RearmedReadbackTeardownDiagnosticV1,
+    M1RearmedReadbackTeardownEvidenceV1, M1RearmedReadbackTeardownFailureV1,
+    M1RearmedReadbackTeardownSuccessV1, M1RearmedRecycledQueueV1,
     M1RearmedRoundPageReleaseFailureV1, M1RearmedRoundReleaseOutcomeV1,
     M1ReservedLongLivedQueueRearmV1, M1ScheduledLongLivedQueueRearmV1,
 };
