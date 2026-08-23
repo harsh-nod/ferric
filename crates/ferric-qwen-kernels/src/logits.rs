@@ -17,7 +17,7 @@
 use core::fmt;
 use std::fmt::Write as _;
 
-use fe2o3_amdhsa_loader::{AdmittedProfile, LoadPlan, PlanError};
+use fe2o3_amdhsa_loader::{AdmittedProfile, KernelGlobalBufferAbiV1, LoadPlan, PlanError};
 use fe2o3_artifact_transaction::{
     CompilerModuleHandoffIdentityV1, ConsumedCompilerModuleHandoffV1,
 };
@@ -57,6 +57,30 @@ pub const QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_KERNEL_SYMBOL_V1: &str =
 /// Exact speculative target-token assembly descriptor.
 pub const QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_DESCRIPTOR_SYMBOL_V1: &str =
     "ferric_qwen3_speculative_token_assembly_v1.kd";
+/// Canonical global-buffer ABI for lowest-ID logits argmax.
+pub const QWEN3_LOGITS_ARGMAX_GLOBAL_BUFFER_ABI_V1: [KernelGlobalBufferAbiV1<'static>; 2] = [
+    KernelGlobalBufferAbiV1::new(0, "logits.data", 0, 2, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(2, "choices.data", 16, 4, ArgumentAccess::WriteOnly),
+];
+/// Canonical global-buffer ABI for compact completion publication.
+pub const QWEN3_LOGITS_COMPACT_GLOBAL_BUFFER_ABI_V1: [KernelGlobalBufferAbiV1<'static>; 8] = [
+    KernelGlobalBufferAbiV1::new(0, "choices.data", 0, 4, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(2, "draft.data", 16, 4, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(4, "active.lengths.data", 32, 4, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(6, "slots.data", 48, 4, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(8, "generations.data", 64, 4, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(10, "epochs.data", 80, 8, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(12, "plans.data", 96, 1, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(14, "records.data", 112, 4, ArgumentAccess::WriteOnly),
+];
+/// Canonical global-buffer ABI for speculative target-token assembly.
+pub const QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_GLOBAL_BUFFER_ABI_V1: [KernelGlobalBufferAbiV1<
+    'static,
+>; 3] = [
+    KernelGlobalBufferAbiV1::new(0, "anchor.data", 0, 4, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(2, "draft.choices.data", 16, 4, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(4, "target.tokens.data", 32, 4, ArgumentAccess::WriteOnly),
+];
 /// Exact device target.
 pub const QWEN3_LOGITS_TARGET_V1: &str = "gfx942:xnack-";
 /// Exact code-object version.
@@ -2528,6 +2552,12 @@ impl fmt::Debug for InspectedQwen3LogitsKernelV1 {
 }
 
 impl InspectedQwen3LogitsKernelV1 {
+    /// Exact compiler handoff identity retained through Worker inspection.
+    #[must_use]
+    pub const fn compiler_handoff_identity(&self) -> CompilerModuleHandoffIdentityV2 {
+        self.compiler_handoff_identity
+    }
+
     /// Complete finite catalog.
     #[must_use]
     pub const fn catalog(&self) -> &Qwen3LogitsProfileCatalogV1 {
@@ -2814,23 +2844,20 @@ fn exact_kernel_profile(
 
 fn exact_argmax_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
     arguments.len() == 6
-        && exact_pointer_argument(
-            &arguments[0],
-            "logits.data",
-            0,
-            2,
-            ArgumentAccess::ReadOnly,
-            is_u16_metadata_carrier,
-        )
+        && QWEN3_LOGITS_ARGMAX_GLOBAL_BUFFER_ABI_V1
+            .into_iter()
+            .zip([
+                is_u16_metadata_carrier as fn(ExplicitValueType) -> bool,
+                is_u32_metadata_carrier,
+            ])
+            .all(|(expected, accepted_type)| {
+                exact_pointer_argument(
+                    &arguments[expected.explicit_argument_index()],
+                    expected,
+                    accepted_type,
+                )
+            })
         && exact_integer_argument(&arguments[1], "logits.len", 8, 8, is_u64_metadata_carrier)
-        && exact_pointer_argument(
-            &arguments[2],
-            "choices.data",
-            16,
-            4,
-            ArgumentAccess::WriteOnly,
-            is_u32_metadata_carrier,
-        )
         && exact_integer_argument(&arguments[3], "choices.len", 24, 8, is_u64_metadata_carrier)
         && exact_integer_argument(&arguments[4], "rows", 32, 4, is_u32_metadata_carrier)
         && exact_integer_argument(&arguments[5], "vocabulary", 36, 4, is_u32_metadata_carrier)
@@ -2840,74 +2867,22 @@ fn exact_compact_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
     if arguments.len() != 19 {
         return false;
     }
-    let pointers = [
-        (
-            0,
-            "choices.data",
-            0,
-            4,
-            ArgumentAccess::ReadOnly,
-            is_u32_metadata_carrier as fn(_) -> _,
-        ),
-        (
-            2,
-            "draft.data",
-            16,
-            4,
-            ArgumentAccess::ReadOnly,
-            is_u32_metadata_carrier,
-        ),
-        (
-            4,
-            "active.lengths.data",
-            32,
-            4,
-            ArgumentAccess::ReadOnly,
-            is_u32_metadata_carrier,
-        ),
-        (
-            6,
-            "slots.data",
-            48,
-            4,
-            ArgumentAccess::ReadOnly,
-            is_u32_metadata_carrier,
-        ),
-        (
-            8,
-            "generations.data",
-            64,
-            4,
-            ArgumentAccess::ReadOnly,
-            is_u32_metadata_carrier,
-        ),
-        (
-            10,
-            "epochs.data",
-            80,
-            8,
-            ArgumentAccess::ReadOnly,
-            is_u64_metadata_carrier,
-        ),
-        (
-            12,
-            "plans.data",
-            96,
-            1,
-            ArgumentAccess::ReadOnly,
-            is_u8_metadata_carrier,
-        ),
-        (
-            14,
-            "records.data",
-            112,
-            4,
-            ArgumentAccess::WriteOnly,
-            is_u8_metadata_carrier,
-        ),
+    let accepted_types = [
+        is_u32_metadata_carrier as fn(ExplicitValueType) -> bool,
+        is_u32_metadata_carrier,
+        is_u32_metadata_carrier,
+        is_u32_metadata_carrier,
+        is_u32_metadata_carrier,
+        is_u64_metadata_carrier,
+        is_u8_metadata_carrier,
+        is_u8_metadata_carrier,
     ];
-    for (index, name, offset, alignment, access, accepted) in pointers {
-        if !exact_pointer_argument(&arguments[index], name, offset, alignment, access, accepted) {
+    for (expected, accepted_type) in QWEN3_LOGITS_COMPACT_GLOBAL_BUFFER_ABI_V1
+        .into_iter()
+        .zip(accepted_types)
+    {
+        let index = expected.explicit_argument_index();
+        if !exact_pointer_argument(&arguments[index], expected, accepted_type) {
             return false;
         }
         if !exact_integer_argument(
@@ -2923,7 +2898,7 @@ fn exact_compact_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
                 14 => "records.len",
                 _ => return false,
             },
-            offset + 8,
+            expected.offset() + 8,
             8,
             is_u64_metadata_carrier,
         ) {
@@ -2949,37 +2924,22 @@ fn exact_compact_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
 
 fn exact_speculative_token_assembly_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
     arguments.len() == 8
-        && exact_pointer_argument(
-            &arguments[0],
-            "anchor.data",
-            0,
-            4,
-            ArgumentAccess::ReadOnly,
-            is_u32_metadata_carrier,
-        )
+        && QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_GLOBAL_BUFFER_ABI_V1
+            .into_iter()
+            .all(|expected| {
+                exact_pointer_argument(
+                    &arguments[expected.explicit_argument_index()],
+                    expected,
+                    is_u32_metadata_carrier,
+                )
+            })
         && exact_integer_argument(&arguments[1], "anchor.len", 8, 8, is_u64_metadata_carrier)
-        && exact_pointer_argument(
-            &arguments[2],
-            "draft.choices.data",
-            16,
-            4,
-            ArgumentAccess::ReadOnly,
-            is_u32_metadata_carrier,
-        )
         && exact_integer_argument(
             &arguments[3],
             "draft.choices.len",
             24,
             8,
             is_u64_metadata_carrier,
-        )
-        && exact_pointer_argument(
-            &arguments[4],
-            "target.tokens.data",
-            32,
-            4,
-            ArgumentAccess::WriteOnly,
-            is_u32_metadata_carrier,
         )
         && exact_integer_argument(
             &arguments[5],
@@ -3000,23 +2960,20 @@ fn exact_speculative_token_assembly_explicit_arguments(arguments: &[ExplicitArgu
 
 fn exact_pointer_argument(
     argument: &ExplicitArgument,
-    name: &str,
-    offset: u64,
-    pointee_alignment: u64,
-    access: ArgumentAccess,
+    expected: KernelGlobalBufferAbiV1<'_>,
     accepted_type: fn(ExplicitValueType) -> bool,
 ) -> bool {
-    argument.name() == Some(name)
-        && argument.offset() == offset
+    argument.name() == Some(expected.name())
+        && argument.offset() == expected.offset()
         && argument.size() == 8
         && argument.alignment().is_none_or(|actual| actual == 8)
         && argument
             .pointee_alignment()
-            .is_none_or(|actual| actual == pointee_alignment)
+            .is_none_or(|actual| actual == expected.pointee_alignment())
         && argument.value_kind() == ExplicitValueKind::GlobalBuffer
         && argument.value_type().is_none_or(accepted_type)
         && argument.address_space() == Some(ArgumentAddressSpace::Global)
-        && argument.access() == Some(access)
+        && argument.access() == Some(expected.access())
 }
 
 fn exact_integer_argument(

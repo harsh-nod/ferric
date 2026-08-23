@@ -18,7 +18,7 @@
 use core::fmt;
 use std::fmt::Write as _;
 
-use fe2o3_amdhsa_loader::{AdmittedProfile, LoadPlan, PlanError};
+use fe2o3_amdhsa_loader::{AdmittedProfile, KernelGlobalBufferAbiV1, LoadPlan, PlanError};
 use fe2o3_artifact_transaction::{
     CompilerModuleHandoffIdentityV1, ConsumedCompilerModuleHandoffV1,
 };
@@ -52,6 +52,14 @@ pub const QWEN3_PREFILL_KERNEL_SYMBOL_V1: &str = "qwen3_gqa_prefill_causal_bf16_
 /// Exact AMDHSA descriptor symbol.
 pub const QWEN3_PREFILL_KERNEL_DESCRIPTOR_SYMBOL_V1: &str =
     "qwen3_gqa_prefill_causal_bf16_f32_v1.kd";
+/// Canonical global-buffer ABI for causal paged-GQA prefill.
+pub const QWEN3_PREFILL_GLOBAL_BUFFER_ABI_V1: [KernelGlobalBufferAbiV1<'static>; 5] = [
+    KernelGlobalBufferAbiV1::new(0, "q.data", 0, 2, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(2, "k.data", 16, 2, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(4, "v.data", 32, 2, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(6, "pages.data", 48, 4, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(8, "output.data", 64, 2, ArgumentAccess::WriteOnly),
+];
 /// Exact gfx942 feature profile.
 pub const QWEN3_PREFILL_TARGET_V1: &str = "gfx942:xnack-";
 /// Exact code-object version.
@@ -1842,6 +1850,12 @@ impl fmt::Debug for InspectedQwen3PrefillKernelV1 {
 }
 
 impl InspectedQwen3PrefillKernelV1 {
+    /// Exact compiler handoff identity retained through Worker inspection.
+    #[must_use]
+    pub const fn compiler_handoff_identity(&self) -> CompilerModuleHandoffIdentityV2 {
+        self.compiler_handoff_identity
+    }
+
     /// Exact profile catalog retained with the inspected output owner.
     #[must_use]
     pub const fn catalog(&self) -> &Qwen3PrefillProfileCatalogV1 {
@@ -2087,49 +2101,20 @@ fn exact_prefill_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
     if arguments.len() != 10 {
         return false;
     }
-    for (index, name, access, alignment, accepted_type) in [
-        (
-            0,
-            "q.data",
-            ArgumentAccess::ReadOnly,
-            2,
-            is_bf16_metadata_carrier as fn(ExplicitValueType) -> bool,
-        ),
-        (
-            2,
-            "k.data",
-            ArgumentAccess::ReadOnly,
-            2,
-            is_bf16_metadata_carrier,
-        ),
-        (
-            4,
-            "v.data",
-            ArgumentAccess::ReadOnly,
-            2,
-            is_bf16_metadata_carrier,
-        ),
-        (
-            6,
-            "pages.data",
-            ArgumentAccess::ReadOnly,
-            4,
-            is_i32_metadata_carrier,
-        ),
-        (
-            8,
-            "output.data",
-            ArgumentAccess::WriteOnly,
-            2,
-            is_bf16_metadata_carrier,
-        ),
-    ] {
+    let accepted_types = [
+        is_bf16_metadata_carrier as fn(ExplicitValueType) -> bool,
+        is_bf16_metadata_carrier,
+        is_bf16_metadata_carrier,
+        is_i32_metadata_carrier,
+        is_bf16_metadata_carrier,
+    ];
+    for (expected, accepted_type) in QWEN3_PREFILL_GLOBAL_BUFFER_ABI_V1
+        .into_iter()
+        .zip(accepted_types)
+    {
         if !exact_pointer_argument(
-            &arguments[index],
-            name,
-            (index as u64 / 2) * 16,
-            access,
-            alignment,
+            &arguments[expected.explicit_argument_index()],
+            expected,
             accepted_type,
         ) {
             return false;
@@ -2151,23 +2136,20 @@ fn exact_prefill_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
 
 fn exact_pointer_argument(
     argument: &ExplicitArgument,
-    name: &str,
-    offset: u64,
-    access: ArgumentAccess,
-    alignment: u64,
+    expected: KernelGlobalBufferAbiV1<'_>,
     accepted_type: fn(ExplicitValueType) -> bool,
 ) -> bool {
-    argument.name() == Some(name)
-        && argument.offset() == offset
+    argument.name() == Some(expected.name())
+        && argument.offset() == expected.offset()
         && argument.size() == 8
         && argument.alignment().is_none_or(|actual| actual == 8)
         && argument
             .pointee_alignment()
-            .is_none_or(|actual| actual == alignment)
+            .is_none_or(|actual| actual == expected.pointee_alignment())
         && argument.value_kind() == ExplicitValueKind::GlobalBuffer
         && argument.value_type().is_none_or(accepted_type)
         && argument.address_space() == Some(ArgumentAddressSpace::Global)
-        && argument.access() == Some(access)
+        && argument.access() == Some(expected.access())
 }
 
 fn exact_length_argument(argument: &ExplicitArgument, name: &str, offset: u64) -> bool {

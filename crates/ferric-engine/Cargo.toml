@@ -26,6 +26,7 @@ sha2.workspace = true
 vstd.workspace = true
 
 [dev-dependencies]
+fe2o3-hsaco.workspace = true
 ferric-build = { path = "../ferric-build", features = ["test-fixtures"] }
 
 [package.metadata.verus]

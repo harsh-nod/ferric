@@ -268,6 +268,132 @@ impl From<M1KernelArtifactManifestErrorV1> for M1KernelArtifactBuildErrorV1 {
     }
 }
 
+/// Recomputes the seven canonical compiler-input fact sets from current Ferric
+/// source without invoking a Worker or publishing any artifact.
+///
+/// Persisted artifact admission uses the exact module, handoff, symbol, and
+/// profile identities as Ferric-owned pins for its ABI join. A manifest-carried
+/// digest is inert until it matches the corresponding value returned here.
+/// These facts do not authenticate compiler provenance or Worker execution.
+///
+/// # Errors
+///
+/// Returns a family-local `Prepare` failure if any canonical Qwen source,
+/// profile catalog, symbol manifest, or compiler handoff cannot be rebuilt.
+pub fn current_m1_kernel_source_facts_v1() -> Result<
+    [M1CurrentKernelSourceFactsV1; M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1],
+    M1KernelArtifactBuildErrorV1,
+> {
+    let gemm_family = M1KernelArtifactFamilyV1::Gemm;
+    let gemm_labels = inert_labels(gemm_family);
+    let gemm = gemm::prepare_qwen3_gemm_kernel_v1(gemm::Qwen3GemmSourceBindingsV1::new(
+        gemm_labels[0],
+        gemm_labels[1],
+        gemm_labels[2],
+        gemm_labels[3],
+    ))
+    .map_err(|source| family_error(gemm_family, M1KernelArtifactBuildStageV1::Prepare, source))?;
+
+    let rmsnorm_family = M1KernelArtifactFamilyV1::RmsNorm;
+    let rmsnorm_labels = inert_labels(rmsnorm_family);
+    let rmsnorm =
+        rmsnorm::prepare_qwen3_rmsnorm_kernel_v1(rmsnorm::Qwen3RmsNormSourceBindingsV1::new(
+            rmsnorm_labels[0],
+            rmsnorm_labels[1],
+            rmsnorm_labels[2],
+            rmsnorm_labels[3],
+        ))
+        .map_err(|source| {
+            family_error(
+                rmsnorm_family,
+                M1KernelArtifactBuildStageV1::Prepare,
+                source,
+            )
+        })?;
+
+    let rope_kv_family = M1KernelArtifactFamilyV1::RopeKv;
+    let rope_kv_labels = inert_labels(rope_kv_family);
+    let rope_kv =
+        rope_kv::prepare_qwen3_rope_kv_kernel_v1(rope_kv::Qwen3RopeKvSourceBindingsV1::new(
+            rope_kv_labels[0],
+            rope_kv_labels[1],
+            rope_kv_labels[2],
+            rope_kv_labels[3],
+        ))
+        .map_err(|source| {
+            family_error(
+                rope_kv_family,
+                M1KernelArtifactBuildStageV1::Prepare,
+                source,
+            )
+        })?;
+
+    let prefill_family = M1KernelArtifactFamilyV1::Prefill;
+    let prefill_labels = inert_labels(prefill_family);
+    let prefill =
+        prefill::prepare_qwen3_prefill_kernel_v1(prefill::Qwen3PrefillSourceBindingsV1::new(
+            prefill_labels[0],
+            prefill_labels[1],
+            prefill_labels[2],
+            prefill_labels[3],
+        ))
+        .map_err(|source| {
+            family_error(
+                prefill_family,
+                M1KernelArtifactBuildStageV1::Prepare,
+                source,
+            )
+        })?;
+
+    let paged_decode_family = M1KernelArtifactFamilyV1::PagedDecode;
+    let paged_decode_labels = inert_labels(paged_decode_family);
+    let paged_decode = paged_decode::prepare_qwen3_paged_decode_kernel_v1(
+        paged_decode::Qwen3PagedDecodeSourceBindingsV1::new(
+            paged_decode_labels[0],
+            paged_decode_labels[1],
+            paged_decode_labels[2],
+            paged_decode_labels[3],
+        ),
+    )
+    .map_err(|source| {
+        family_error(
+            paged_decode_family,
+            M1KernelArtifactBuildStageV1::Prepare,
+            source,
+        )
+    })?;
+
+    let swiglu_family = M1KernelArtifactFamilyV1::SwiGlu;
+    let swiglu_labels = inert_labels(swiglu_family);
+    let swiglu = swiglu::prepare_qwen3_swiglu_kernel_v1(swiglu::Qwen3SwiGluSourceBindingsV1::new(
+        swiglu_labels[0],
+        swiglu_labels[1],
+        swiglu_labels[2],
+        swiglu_labels[3],
+    ))
+    .map_err(|source| family_error(swiglu_family, M1KernelArtifactBuildStageV1::Prepare, source))?;
+
+    let logits_family = M1KernelArtifactFamilyV1::Logits;
+    let logits_labels = inert_labels(logits_family);
+    let logits = logits::prepare_qwen3_logits_kernel_v1(logits::Qwen3LogitsSourceBindingsV1::new(
+        logits_labels[0],
+        logits_labels[1],
+        logits_labels[2],
+        logits_labels[3],
+    ))
+    .map_err(|source| family_error(logits_family, M1KernelArtifactBuildStageV1::Prepare, source))?;
+
+    Ok([
+        gemm_source_facts(&gemm),
+        rmsnorm_source_facts(&rmsnorm),
+        rope_kv_source_facts(&rope_kv),
+        prefill_source_facts(&prefill),
+        paged_decode_source_facts(&paged_decode),
+        swiglu_source_facts(&swiglu),
+        logits_source_facts(&logits),
+    ])
+}
+
 /// Builds, structurally inspects, and atomically publishes exactly one HSACO
 /// for each K1-K7 family.
 ///
@@ -393,25 +519,9 @@ struct CompletedFamily<T> {
     entry: M1KernelArtifactEntryV1,
 }
 
-struct PreparedFacts {
-    compiler_module: ContentIdentityV1,
-    compiler_handoff: ContentIdentityV1,
-    symbol_manifest: ContentIdentityV1,
-    profile_catalogs: Vec<M1KernelProfileCatalogV1>,
-}
-
-fn build_gemm(
-    transactions: &Path,
-    worker: &PinnedWorkerV1,
-    limits: WorkerExecutionLimitsV1,
-) -> Result<CompletedFamily<gemm::InspectedQwen3GemmKernelV1>, M1KernelArtifactBuildErrorV1> {
-    let family = M1KernelArtifactFamilyV1::Gemm;
-    let labels = inert_labels(family);
-    let prepared = gemm::prepare_qwen3_gemm_kernel_v1(gemm::Qwen3GemmSourceBindingsV1::new(
-        labels[0], labels[1], labels[2], labels[3],
-    ))
-    .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Prepare, source))?;
-    let facts = PreparedFacts {
+fn gemm_source_facts(prepared: &gemm::PreparedQwen3GemmKernelV1) -> M1CurrentKernelSourceFactsV1 {
+    M1CurrentKernelSourceFactsV1 {
+        family: M1KernelArtifactFamilyV1::Gemm,
         compiler_module: ContentIdentityV1::calculate(prepared.compiler_handoff().module_bytes()),
         compiler_handoff: handoff_identity(prepared.compiler_handoff_identity()),
         symbol_manifest: symbol_identity(prepared.manifest_identity()),
@@ -427,7 +537,166 @@ fn build_gemm(
                 *prepared.token_embedding_catalog().identity().as_bytes(),
             ),
         ],
-    };
+    }
+}
+
+fn rmsnorm_source_facts(
+    prepared: &rmsnorm::PreparedQwen3RmsNormKernelV1,
+) -> M1CurrentKernelSourceFactsV1 {
+    M1CurrentKernelSourceFactsV1 {
+        family: M1KernelArtifactFamilyV1::RmsNorm,
+        compiler_module: ContentIdentityV1::calculate(prepared.compiler_handoff().module_bytes()),
+        compiler_handoff: handoff_identity(prepared.compiler_handoff_identity()),
+        symbol_manifest: symbol_identity(prepared.manifest_identity()),
+        profile_catalogs: vec![M1KernelProfileCatalogV1::new(
+            "rmsnorm",
+            rmsnorm::QWEN3_RMSNORM_PROFILE_COUNT_V1,
+            *prepared.catalog().identity().as_bytes(),
+        )],
+    }
+}
+
+fn rope_kv_source_facts(
+    prepared: &rope_kv::PreparedQwen3RopeKvKernelV1,
+) -> M1CurrentKernelSourceFactsV1 {
+    M1CurrentKernelSourceFactsV1 {
+        family: M1KernelArtifactFamilyV1::RopeKv,
+        compiler_module: ContentIdentityV1::calculate(prepared.compiler_handoff().module_bytes()),
+        compiler_handoff: handoff_identity(prepared.compiler_handoff_identity()),
+        symbol_manifest: symbol_identity(prepared.manifest_identity()),
+        profile_catalogs: vec![M1KernelProfileCatalogV1::new(
+            "rope-kv",
+            rope_kv::QWEN3_ROPE_KV_PROFILE_COUNT_V1,
+            *prepared.catalog().identity().as_bytes(),
+        )],
+    }
+}
+
+fn prefill_source_facts(
+    prepared: &prefill::PreparedQwen3PrefillKernelV1,
+) -> M1CurrentKernelSourceFactsV1 {
+    M1CurrentKernelSourceFactsV1 {
+        family: M1KernelArtifactFamilyV1::Prefill,
+        compiler_module: ContentIdentityV1::calculate(prepared.compiler_handoff().module_bytes()),
+        compiler_handoff: handoff_identity(prepared.compiler_handoff_identity()),
+        symbol_manifest: symbol_identity(prepared.manifest_identity()),
+        profile_catalogs: vec![M1KernelProfileCatalogV1::new(
+            "prefill",
+            prefill::QWEN3_PREFILL_PROFILE_COUNT_V1,
+            *prepared.catalog().identity().as_bytes(),
+        )],
+    }
+}
+
+fn paged_decode_source_facts(
+    prepared: &paged_decode::PreparedQwen3PagedDecodeKernelV1,
+) -> M1CurrentKernelSourceFactsV1 {
+    M1CurrentKernelSourceFactsV1 {
+        family: M1KernelArtifactFamilyV1::PagedDecode,
+        compiler_module: ContentIdentityV1::calculate(prepared.compiler_handoff().module_bytes()),
+        compiler_handoff: handoff_identity(prepared.compiler_handoff_identity()),
+        symbol_manifest: symbol_identity(prepared.manifest_identity()),
+        profile_catalogs: vec![M1KernelProfileCatalogV1::new(
+            "paged-decode",
+            paged_decode::QWEN3_PAGED_DECODE_PROFILE_COUNT_V1,
+            *prepared.catalog().identity().as_bytes(),
+        )],
+    }
+}
+
+fn swiglu_source_facts(
+    prepared: &swiglu::PreparedQwen3SwiGluKernelV1,
+) -> M1CurrentKernelSourceFactsV1 {
+    M1CurrentKernelSourceFactsV1 {
+        family: M1KernelArtifactFamilyV1::SwiGlu,
+        compiler_module: ContentIdentityV1::calculate(prepared.compiler_handoff().module_bytes()),
+        compiler_handoff: handoff_identity(prepared.compiler_handoff_identity()),
+        symbol_manifest: symbol_identity(prepared.manifest_identity()),
+        profile_catalogs: vec![M1KernelProfileCatalogV1::new(
+            "swiglu",
+            swiglu::QWEN3_SWIGLU_PROFILE_COUNT_V1,
+            *prepared.catalog().identity().as_bytes(),
+        )],
+    }
+}
+
+fn logits_source_facts(
+    prepared: &logits::PreparedQwen3LogitsKernelV1,
+) -> M1CurrentKernelSourceFactsV1 {
+    M1CurrentKernelSourceFactsV1 {
+        family: M1KernelArtifactFamilyV1::Logits,
+        compiler_module: ContentIdentityV1::calculate(prepared.compiler_handoff().module_bytes()),
+        compiler_handoff: handoff_identity(prepared.compiler_handoff_identity()),
+        symbol_manifest: symbol_identity(prepared.manifest_identity()),
+        profile_catalogs: vec![
+            M1KernelProfileCatalogV1::new(
+                "logits",
+                logits::QWEN3_LOGITS_PROFILE_COUNT_V1,
+                *prepared.catalog().identity().as_bytes(),
+            ),
+            M1KernelProfileCatalogV1::new(
+                "speculative-token-assembly",
+                logits::QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_PROFILE_COUNT_V1,
+                speculative_assembly_catalog_identity(),
+            ),
+        ],
+    }
+}
+
+/// Current canonical source facts for one M1 kernel family.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct M1CurrentKernelSourceFactsV1 {
+    family: M1KernelArtifactFamilyV1,
+    compiler_module: ContentIdentityV1,
+    compiler_handoff: ContentIdentityV1,
+    symbol_manifest: ContentIdentityV1,
+    profile_catalogs: Vec<M1KernelProfileCatalogV1>,
+}
+
+impl M1CurrentKernelSourceFactsV1 {
+    /// Stable K1-K7 family whose source was reconstructed.
+    #[must_use]
+    pub const fn family(&self) -> M1KernelArtifactFamilyV1 {
+        self.family
+    }
+
+    /// Identity of the exact current LLVM module bytes.
+    #[must_use]
+    pub const fn compiler_module(&self) -> ContentIdentityV1 {
+        self.compiler_module
+    }
+
+    /// Identity of the exact current canonical compiler handoff.
+    #[must_use]
+    pub const fn compiler_handoff(&self) -> ContentIdentityV1 {
+        self.compiler_handoff
+    }
+
+    /// Identity of the exact current compiler symbol manifest.
+    #[must_use]
+    pub const fn symbol_manifest(&self) -> ContentIdentityV1 {
+        self.symbol_manifest
+    }
+
+    /// Complete current finite profile catalogs for this family.
+    #[must_use]
+    pub fn profile_catalogs(&self) -> &[M1KernelProfileCatalogV1] {
+        &self.profile_catalogs
+    }
+}
+
+fn build_gemm(
+    transactions: &Path,
+    worker: &PinnedWorkerV1,
+    limits: WorkerExecutionLimitsV1,
+) -> Result<CompletedFamily<gemm::InspectedQwen3GemmKernelV1>, M1KernelArtifactBuildErrorV1> {
+    let family = M1KernelArtifactFamilyV1::Gemm;
+    let labels = inert_labels(family);
+    let prepared = gemm::prepare_qwen3_gemm_kernel_v1(gemm::Qwen3GemmSourceBindingsV1::new(
+        labels[0], labels[1], labels[2], labels[3],
+    ))
+    .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Prepare, source))?;
+    let facts = gemm_source_facts(&prepared);
     let consumed = transport_handoff(
         transactions,
         family,
@@ -458,16 +727,7 @@ fn build_rmsnorm(
         rmsnorm::Qwen3RmsNormSourceBindingsV1::new(labels[0], labels[1], labels[2], labels[3]),
     )
     .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Prepare, source))?;
-    let facts = PreparedFacts {
-        compiler_module: ContentIdentityV1::calculate(prepared.compiler_handoff().module_bytes()),
-        compiler_handoff: handoff_identity(prepared.compiler_handoff_identity()),
-        symbol_manifest: symbol_identity(prepared.manifest_identity()),
-        profile_catalogs: vec![M1KernelProfileCatalogV1::new(
-            "rmsnorm",
-            rmsnorm::QWEN3_RMSNORM_PROFILE_COUNT_V1,
-            *prepared.catalog().identity().as_bytes(),
-        )],
-    };
+    let facts = rmsnorm_source_facts(&prepared);
     let consumed = transport_handoff(
         transactions,
         family,
@@ -498,16 +758,7 @@ fn build_rope_kv(
         rope_kv::Qwen3RopeKvSourceBindingsV1::new(labels[0], labels[1], labels[2], labels[3]),
     )
     .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Prepare, source))?;
-    let facts = PreparedFacts {
-        compiler_module: ContentIdentityV1::calculate(prepared.compiler_handoff().module_bytes()),
-        compiler_handoff: handoff_identity(prepared.compiler_handoff_identity()),
-        symbol_manifest: symbol_identity(prepared.manifest_identity()),
-        profile_catalogs: vec![M1KernelProfileCatalogV1::new(
-            "rope-kv",
-            rope_kv::QWEN3_ROPE_KV_PROFILE_COUNT_V1,
-            *prepared.catalog().identity().as_bytes(),
-        )],
-    };
+    let facts = rope_kv_source_facts(&prepared);
     let consumed = transport_handoff(
         transactions,
         family,
@@ -538,16 +789,7 @@ fn build_prefill(
         prefill::Qwen3PrefillSourceBindingsV1::new(labels[0], labels[1], labels[2], labels[3]),
     )
     .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Prepare, source))?;
-    let facts = PreparedFacts {
-        compiler_module: ContentIdentityV1::calculate(prepared.compiler_handoff().module_bytes()),
-        compiler_handoff: handoff_identity(prepared.compiler_handoff_identity()),
-        symbol_manifest: symbol_identity(prepared.manifest_identity()),
-        profile_catalogs: vec![M1KernelProfileCatalogV1::new(
-            "prefill",
-            prefill::QWEN3_PREFILL_PROFILE_COUNT_V1,
-            *prepared.catalog().identity().as_bytes(),
-        )],
-    };
+    let facts = prefill_source_facts(&prepared);
     let consumed = transport_handoff(
         transactions,
         family,
@@ -583,16 +825,7 @@ fn build_paged_decode(
         ),
     )
     .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Prepare, source))?;
-    let facts = PreparedFacts {
-        compiler_module: ContentIdentityV1::calculate(prepared.compiler_handoff().module_bytes()),
-        compiler_handoff: handoff_identity(prepared.compiler_handoff_identity()),
-        symbol_manifest: symbol_identity(prepared.manifest_identity()),
-        profile_catalogs: vec![M1KernelProfileCatalogV1::new(
-            "paged-decode",
-            paged_decode::QWEN3_PAGED_DECODE_PROFILE_COUNT_V1,
-            *prepared.catalog().identity().as_bytes(),
-        )],
-    };
+    let facts = paged_decode_source_facts(&prepared);
     let consumed = transport_handoff(
         transactions,
         family,
@@ -623,16 +856,7 @@ fn build_swiglu(
         swiglu::Qwen3SwiGluSourceBindingsV1::new(labels[0], labels[1], labels[2], labels[3]),
     )
     .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Prepare, source))?;
-    let facts = PreparedFacts {
-        compiler_module: ContentIdentityV1::calculate(prepared.compiler_handoff().module_bytes()),
-        compiler_handoff: handoff_identity(prepared.compiler_handoff_identity()),
-        symbol_manifest: symbol_identity(prepared.manifest_identity()),
-        profile_catalogs: vec![M1KernelProfileCatalogV1::new(
-            "swiglu",
-            swiglu::QWEN3_SWIGLU_PROFILE_COUNT_V1,
-            *prepared.catalog().identity().as_bytes(),
-        )],
-    };
+    let facts = swiglu_source_facts(&prepared);
     let consumed = transport_handoff(
         transactions,
         family,
@@ -663,23 +887,7 @@ fn build_logits(
         logits::Qwen3LogitsSourceBindingsV1::new(labels[0], labels[1], labels[2], labels[3]),
     )
     .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Prepare, source))?;
-    let facts = PreparedFacts {
-        compiler_module: ContentIdentityV1::calculate(prepared.compiler_handoff().module_bytes()),
-        compiler_handoff: handoff_identity(prepared.compiler_handoff_identity()),
-        symbol_manifest: symbol_identity(prepared.manifest_identity()),
-        profile_catalogs: vec![
-            M1KernelProfileCatalogV1::new(
-                "logits",
-                logits::QWEN3_LOGITS_PROFILE_COUNT_V1,
-                *prepared.catalog().identity().as_bytes(),
-            ),
-            M1KernelProfileCatalogV1::new(
-                "speculative-token-assembly",
-                logits::QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_PROFILE_COUNT_V1,
-                speculative_assembly_catalog_identity(),
-            ),
-        ],
-    };
+    let facts = logits_source_facts(&prepared);
     let consumed = transport_handoff(
         transactions,
         family,
@@ -701,7 +909,7 @@ fn build_logits(
 
 fn completed<T>(
     family: M1KernelArtifactFamilyV1,
-    facts: PreparedFacts,
+    facts: M1CurrentKernelSourceFactsV1,
     load_plan: fe2o3_amdhsa_loader::LoadPlan,
     artifact: ContentIdentityV1,
     owner: T,

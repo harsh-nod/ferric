@@ -21,7 +21,7 @@
 use core::fmt;
 use std::fmt::Write as _;
 
-use fe2o3_amdhsa_loader::{AdmittedProfile, LoadPlan, PlanError};
+use fe2o3_amdhsa_loader::{AdmittedProfile, KernelGlobalBufferAbiV1, LoadPlan, PlanError};
 use fe2o3_artifact_transaction::{
     CompilerModuleHandoffIdentityV1, ConsumedCompilerModuleHandoffV1,
 };
@@ -67,6 +67,18 @@ pub const QWEN3_TOKEN_EMBEDDING_KERNEL_SYMBOL_V1: &str =
 /// Exact BF16 token-embedding descriptor symbol.
 pub const QWEN3_TOKEN_EMBEDDING_DESCRIPTOR_SYMBOL_V1: &str =
     "ferric_qwen3_token_embedding_bf16_copy_v1.kd";
+/// Canonical global-buffer ABI shared by both dense GEMM schedules.
+pub const QWEN3_GEMM_GLOBAL_BUFFER_ABI_V1: [KernelGlobalBufferAbiV1<'static>; 3] = [
+    KernelGlobalBufferAbiV1::new(0, "a.data", 0, 2, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(2, "b.data", 16, 2, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(4, "c.data", 32, 2, ArgumentAccess::ReadWrite),
+];
+/// Canonical global-buffer ABI for token embedding.
+pub const QWEN3_TOKEN_EMBEDDING_GLOBAL_BUFFER_ABI_V1: [KernelGlobalBufferAbiV1<'static>; 3] = [
+    KernelGlobalBufferAbiV1::new(0, "tokens.data", 0, 4, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(2, "weight.data", 16, 2, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(4, "output.data", 32, 2, ArgumentAccess::WriteOnly),
+];
 /// Exact device target required by every profile.
 pub const QWEN3_GEMM_TARGET_V1: &str = "gfx942:xnack-";
 /// Exact code-object version required by every profile.
@@ -2520,6 +2532,12 @@ impl fmt::Debug for InspectedQwen3GemmKernelV1 {
 }
 
 impl InspectedQwen3GemmKernelV1 {
+    /// Exact compiler handoff identity retained through Worker inspection.
+    #[must_use]
+    pub const fn compiler_handoff_identity(&self) -> CompilerModuleHandoffIdentityV2 {
+        self.compiler_handoff_identity
+    }
+
     /// Complete finite catalog retained by the inspected owner.
     #[must_use]
     pub const fn catalog(&self) -> &Qwen3GemmProfileCatalogV1 {
@@ -2837,12 +2855,8 @@ fn exact_gemm_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
     if arguments.len() != 10 {
         return false;
     }
-    for (index, name, access) in [
-        (0, "a.data", ArgumentAccess::ReadOnly),
-        (2, "b.data", ArgumentAccess::ReadOnly),
-        (4, "c.data", ArgumentAccess::ReadWrite),
-    ] {
-        if !exact_bf16_pointer_argument(&arguments[index], name, (index as u64 / 2) * 16, access) {
+    for expected in QWEN3_GEMM_GLOBAL_BUFFER_ABI_V1 {
+        if !exact_bf16_pointer_argument(&arguments[expected.explicit_argument_index()], expected) {
             return false;
         }
     }
@@ -2872,30 +2886,20 @@ fn exact_gemm_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
 
 fn exact_token_embedding_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
     arguments.len() == 9
-        && exact_global_pointer_argument(
-            &arguments[0],
-            "tokens.data",
-            0,
-            4,
-            ArgumentAccess::ReadOnly,
-            is_u32_metadata_carrier,
-        )
-        && exact_global_pointer_argument(
-            &arguments[2],
-            "weight.data",
-            16,
-            2,
-            ArgumentAccess::ReadOnly,
-            is_bf16_metadata_carrier,
-        )
-        && exact_global_pointer_argument(
-            &arguments[4],
-            "output.data",
-            32,
-            2,
-            ArgumentAccess::WriteOnly,
-            is_bf16_metadata_carrier,
-        )
+        && QWEN3_TOKEN_EMBEDDING_GLOBAL_BUFFER_ABI_V1
+            .into_iter()
+            .zip([
+                is_u32_metadata_carrier as fn(ExplicitValueType) -> bool,
+                is_bf16_metadata_carrier,
+                is_bf16_metadata_carrier,
+            ])
+            .all(|(expected, accepted_type)| {
+                exact_global_pointer_argument(
+                    &arguments[expected.explicit_argument_index()],
+                    expected,
+                    accepted_type,
+                )
+            })
         && [(1, "tokens.len"), (3, "weight.len"), (5, "output.len")]
             .into_iter()
             .all(|(index, name)| {
@@ -2916,32 +2920,27 @@ fn exact_token_embedding_explicit_arguments(arguments: &[ExplicitArgument]) -> b
 
 fn exact_bf16_pointer_argument(
     argument: &ExplicitArgument,
-    name: &str,
-    offset: u64,
-    access: ArgumentAccess,
+    expected: KernelGlobalBufferAbiV1<'_>,
 ) -> bool {
-    exact_global_pointer_argument(argument, name, offset, 2, access, is_bf16_metadata_carrier)
+    exact_global_pointer_argument(argument, expected, is_bf16_metadata_carrier)
 }
 
 fn exact_global_pointer_argument(
     argument: &ExplicitArgument,
-    name: &str,
-    offset: u64,
-    pointee_alignment: u64,
-    access: ArgumentAccess,
+    expected: KernelGlobalBufferAbiV1<'_>,
     accepted_type: fn(ExplicitValueType) -> bool,
 ) -> bool {
-    argument.name() == Some(name)
-        && argument.offset() == offset
+    argument.name() == Some(expected.name())
+        && argument.offset() == expected.offset()
         && argument.size() == 8
         && argument.alignment().is_none_or(|actual| actual == 8)
         && argument
             .pointee_alignment()
-            .is_none_or(|actual| actual == pointee_alignment)
+            .is_none_or(|actual| actual == expected.pointee_alignment())
         && argument.value_kind() == ExplicitValueKind::GlobalBuffer
         && argument.value_type().is_none_or(accepted_type)
         && argument.address_space() == Some(ArgumentAddressSpace::Global)
-        && argument.access() == Some(access)
+        && argument.access() == Some(expected.access())
 }
 
 fn exact_integer_argument(

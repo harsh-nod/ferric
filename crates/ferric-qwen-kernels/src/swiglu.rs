@@ -19,7 +19,7 @@
 use core::fmt;
 use std::fmt::Write as _;
 
-use fe2o3_amdhsa_loader::{AdmittedProfile, LoadPlan, PlanError};
+use fe2o3_amdhsa_loader::{AdmittedProfile, KernelGlobalBufferAbiV1, LoadPlan, PlanError};
 use fe2o3_artifact_transaction::{
     CompilerModuleHandoffIdentityV1, ConsumedCompilerModuleHandoffV1,
 };
@@ -52,6 +52,12 @@ use sha2::{Digest as _, Sha256};
 pub const QWEN3_SWIGLU_KERNEL_SYMBOL_V1: &str = "qwen3_swiglu_bf16_f32_v1";
 /// Exact AMDHSA descriptor symbol.
 pub const QWEN3_SWIGLU_KERNEL_DESCRIPTOR_SYMBOL_V1: &str = "qwen3_swiglu_bf16_f32_v1.kd";
+/// Canonical global-buffer ABI for `SwiGLU` activation.
+pub const QWEN3_SWIGLU_GLOBAL_BUFFER_ABI_V1: [KernelGlobalBufferAbiV1<'static>; 3] = [
+    KernelGlobalBufferAbiV1::new(0, "gate.data", 0, 2, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(2, "up.data", 16, 2, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(4, "output.data", 32, 2, ArgumentAccess::WriteOnly),
+];
 /// Exact gfx942 feature profile.
 pub const QWEN3_SWIGLU_TARGET_V1: &str = "gfx942:xnack-";
 /// Exact code-object version.
@@ -1644,6 +1650,12 @@ impl fmt::Debug for InspectedQwen3SwiGluKernelV1 {
 }
 
 impl InspectedQwen3SwiGluKernelV1 {
+    /// Exact compiler handoff identity retained through Worker inspection.
+    #[must_use]
+    pub const fn compiler_handoff_identity(&self) -> CompilerModuleHandoffIdentityV2 {
+        self.compiler_handoff_identity
+    }
+
     /// Exact profile catalog retained with the inspected output owner.
     #[must_use]
     pub const fn catalog(&self) -> &Qwen3SwiGluProfileCatalogV1 {
@@ -1904,36 +1916,11 @@ fn exact_swiglu_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
     if arguments.len() != 6 {
         return false;
     }
-    for (index, name, access, alignment, accepted_type) in [
-        (
-            0,
-            "gate.data",
-            ArgumentAccess::ReadOnly,
-            2,
-            is_bf16_metadata_carrier as fn(ExplicitValueType) -> bool,
-        ),
-        (
-            2,
-            "up.data",
-            ArgumentAccess::ReadOnly,
-            2,
-            is_bf16_metadata_carrier,
-        ),
-        (
-            4,
-            "output.data",
-            ArgumentAccess::WriteOnly,
-            2,
-            is_bf16_metadata_carrier,
-        ),
-    ] {
+    for expected in QWEN3_SWIGLU_GLOBAL_BUFFER_ABI_V1 {
         if !exact_pointer_argument(
-            &arguments[index],
-            name,
-            (index as u64 / 2) * 16,
-            access,
-            alignment,
-            accepted_type,
+            &arguments[expected.explicit_argument_index()],
+            expected,
+            is_bf16_metadata_carrier,
         ) {
             return false;
         }
@@ -1948,23 +1935,20 @@ fn exact_swiglu_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
 
 fn exact_pointer_argument(
     argument: &ExplicitArgument,
-    name: &str,
-    offset: u64,
-    access: ArgumentAccess,
-    alignment: u64,
+    expected: KernelGlobalBufferAbiV1<'_>,
     accepted_type: fn(ExplicitValueType) -> bool,
 ) -> bool {
-    argument.name() == Some(name)
-        && argument.offset() == offset
+    argument.name() == Some(expected.name())
+        && argument.offset() == expected.offset()
         && argument.size() == 8
         && argument.alignment().is_none_or(|actual| actual == 8)
         && argument
             .pointee_alignment()
-            .is_none_or(|actual| actual == alignment)
+            .is_none_or(|actual| actual == expected.pointee_alignment())
         && argument.value_kind() == ExplicitValueKind::GlobalBuffer
         && argument.value_type().is_none_or(accepted_type)
         && argument.address_space() == Some(ArgumentAddressSpace::Global)
-        && argument.access() == Some(access)
+        && argument.access() == Some(expected.access())
 }
 
 fn exact_length_argument(argument: &ExplicitArgument, name: &str, offset: u64) -> bool {

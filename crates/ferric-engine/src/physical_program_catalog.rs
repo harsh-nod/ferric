@@ -11,16 +11,38 @@
 use std::fmt;
 
 use fe2o3_amdhsa_loader::{
-    AdmittedProfile, KernelClosureError, LoadPlan, PlanError, ValidatedKernelEnvelope,
+    AdmittedProfile, KernelClosureError, KernelDispatchAbiErrorV1, KernelGlobalBufferAbiV1,
+    LoadPlan, PlanError, ValidatedKernelEnvelope,
 };
 use ferric_qwen_kernels::{gemm, logits, paged_decode, prefill, rmsnorm, rope_kv, swiglu};
 use ferric_spec::Identity;
 use sha2::{Digest, Sha256};
 
 const PROGRAM_CATALOG_IDENTITY_DOMAIN: &[u8] = b"ferric.m1.physical-program-catalog.v1";
+const PROGRAM_SOURCE_CONTRACT_IDENTITY_DOMAIN: &[u8] =
+    b"ferric.m1.physical-program-source-contract.v1";
 
 /// Exact number of selected entry points across the seven M1 kernel artifacts.
 pub const M1_PHYSICAL_PROGRAM_COUNT_V1: usize = 12;
+
+/// Compiler-handoff lineage used to bind a program-specific Ferric ABI roster.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) struct M1PhysicalProgramSourceContractV1 {
+    compiler_handoff_sha256: [u8; 32],
+    compiler_handoff_byte_len: u64,
+}
+
+impl M1PhysicalProgramSourceContractV1 {
+    pub(crate) const fn new(
+        compiler_handoff_sha256: [u8; 32],
+        compiler_handoff_byte_len: u64,
+    ) -> Self {
+        Self {
+            compiler_handoff_sha256,
+            compiler_handoff_byte_len,
+        }
+    }
+}
 
 /// Stable physical-program ordinal used by future fixed packet batches.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -175,36 +197,67 @@ impl<'a> InspectedM1KernelArtifacts<'a> {
         }
     }
 
-    fn bytes_and_plan(self, program: M1PhysicalProgramV1) -> (&'a [u8], LoadPlan) {
+    fn bytes_plan_and_source(
+        self,
+        program: M1PhysicalProgramV1,
+    ) -> (&'a [u8], LoadPlan, M1PhysicalProgramSourceContractV1) {
         match program.family() {
-            M1PhysicalProgramFamilyV1::Gemm => (
-                self.gemm.exact_worker_output_bytes(),
-                *self.gemm.loader_plan(),
-            ),
-            M1PhysicalProgramFamilyV1::RmsNorm => (
-                self.rmsnorm.exact_worker_output_bytes(),
-                *self.rmsnorm.loader_plan(),
-            ),
-            M1PhysicalProgramFamilyV1::RopeKv => (
-                self.rope_kv.exact_worker_output_bytes(),
-                *self.rope_kv.loader_plan(),
-            ),
-            M1PhysicalProgramFamilyV1::Prefill => (
-                self.prefill.exact_worker_output_bytes(),
-                *self.prefill.loader_plan(),
-            ),
-            M1PhysicalProgramFamilyV1::PagedDecode => (
-                self.paged_decode.exact_worker_output_bytes(),
-                *self.paged_decode.loader_plan(),
-            ),
-            M1PhysicalProgramFamilyV1::SwiGlu => (
-                self.swiglu.exact_worker_output_bytes(),
-                *self.swiglu.loader_plan(),
-            ),
-            M1PhysicalProgramFamilyV1::Logits => (
-                self.logits.exact_worker_output_bytes(),
-                *self.logits.loader_plan(),
-            ),
+            M1PhysicalProgramFamilyV1::Gemm => {
+                let identity = self.gemm.compiler_handoff_identity();
+                (
+                    self.gemm.exact_worker_output_bytes(),
+                    *self.gemm.loader_plan(),
+                    M1PhysicalProgramSourceContractV1::new(*identity.sha256(), identity.byte_len()),
+                )
+            }
+            M1PhysicalProgramFamilyV1::RmsNorm => {
+                let identity = self.rmsnorm.compiler_handoff_identity();
+                (
+                    self.rmsnorm.exact_worker_output_bytes(),
+                    *self.rmsnorm.loader_plan(),
+                    M1PhysicalProgramSourceContractV1::new(*identity.sha256(), identity.byte_len()),
+                )
+            }
+            M1PhysicalProgramFamilyV1::RopeKv => {
+                let identity = self.rope_kv.compiler_handoff_identity();
+                (
+                    self.rope_kv.exact_worker_output_bytes(),
+                    *self.rope_kv.loader_plan(),
+                    M1PhysicalProgramSourceContractV1::new(*identity.sha256(), identity.byte_len()),
+                )
+            }
+            M1PhysicalProgramFamilyV1::Prefill => {
+                let identity = self.prefill.compiler_handoff_identity();
+                (
+                    self.prefill.exact_worker_output_bytes(),
+                    *self.prefill.loader_plan(),
+                    M1PhysicalProgramSourceContractV1::new(*identity.sha256(), identity.byte_len()),
+                )
+            }
+            M1PhysicalProgramFamilyV1::PagedDecode => {
+                let identity = self.paged_decode.compiler_handoff_identity();
+                (
+                    self.paged_decode.exact_worker_output_bytes(),
+                    *self.paged_decode.loader_plan(),
+                    M1PhysicalProgramSourceContractV1::new(*identity.sha256(), identity.byte_len()),
+                )
+            }
+            M1PhysicalProgramFamilyV1::SwiGlu => {
+                let identity = self.swiglu.compiler_handoff_identity();
+                (
+                    self.swiglu.exact_worker_output_bytes(),
+                    *self.swiglu.loader_plan(),
+                    M1PhysicalProgramSourceContractV1::new(*identity.sha256(), identity.byte_len()),
+                )
+            }
+            M1PhysicalProgramFamilyV1::Logits => {
+                let identity = self.logits.compiler_handoff_identity();
+                (
+                    self.logits.exact_worker_output_bytes(),
+                    *self.logits.loader_plan(),
+                    M1PhysicalProgramSourceContractV1::new(*identity.sha256(), identity.byte_len()),
+                )
+            }
         }
     }
 }
@@ -236,6 +289,13 @@ pub enum M1PhysicalProgramCatalogErrorV1 {
         program: M1PhysicalProgramV1,
         /// Exact generic semantic-closure error.
         error: KernelClosureError,
+    },
+    /// Ferric's complete source ABI roster did not reconcile with the object.
+    DispatchAbi {
+        /// Program whose source/physical ABI join failed.
+        program: M1PhysicalProgramV1,
+        /// Exact generic reconciliation error.
+        error: KernelDispatchAbiErrorV1,
     },
 }
 
@@ -327,25 +387,32 @@ impl<'a> ContentBoundM1ProgramCatalogV1<'a> {
 pub fn bind_content_bound_m1_program_catalog_v1(
     artifacts: InspectedM1KernelArtifacts<'_>,
 ) -> Result<ContentBoundM1ProgramCatalogV1<'_>, M1PhysicalProgramCatalogErrorV1> {
-    bind_content_bound_catalog_from_source(|program| artifacts.bytes_and_plan(program))
+    bind_content_bound_catalog_from_source(|program| artifacts.bytes_plan_and_source(program))
 }
 
 pub(crate) fn bind_content_bound_m1_program_catalog_from_persisted_v1<'bytes>(
     bytes: [&'bytes [u8]; 7],
     plans: &[LoadPlan; 7],
+    sources: &[M1PhysicalProgramSourceContractV1; 7],
 ) -> Result<ContentBoundM1ProgramCatalogV1<'bytes>, M1PhysicalProgramCatalogErrorV1> {
     bind_content_bound_catalog_from_source(|program| {
         let family = program.family();
-        (bytes[family_index(family)], plans[family_index(family)])
+        (
+            bytes[family_index(family)],
+            plans[family_index(family)],
+            sources[family_index(family)],
+        )
     })
 }
 
 fn bind_content_bound_catalog_from_source<'a>(
-    mut source: impl FnMut(M1PhysicalProgramV1) -> (&'a [u8], LoadPlan),
+    mut source: impl FnMut(
+        M1PhysicalProgramV1,
+    ) -> (&'a [u8], LoadPlan, M1PhysicalProgramSourceContractV1),
 ) -> Result<ContentBoundM1ProgramCatalogV1<'a>, M1PhysicalProgramCatalogErrorV1> {
     let programs = M1PhysicalProgramV1::ALL.map(|program| {
-        let (bytes, retained_plan) = source(program);
-        bind_program(bytes, retained_plan, program)
+        let (bytes, retained_plan, source_contract) = source(program);
+        bind_program(bytes, retained_plan, source_contract, program)
     });
     let programs = collect_programs(programs)?;
     let catalog_id = program_catalog_identity(&programs);
@@ -358,6 +425,7 @@ fn bind_content_bound_catalog_from_source<'a>(
 fn bind_program(
     bytes: &[u8],
     retained_plan: LoadPlan,
+    source_contract: M1PhysicalProgramSourceContractV1,
     program: M1PhysicalProgramV1,
 ) -> Result<ValidatedKernelEnvelope<'_>, M1PhysicalProgramCatalogErrorV1> {
     let envelope = fe2o3_amdhsa_loader::validate(bytes, AdmittedProfile::Gfx942XnackOffCov6)
@@ -367,9 +435,55 @@ fn bind_program(
             program.family(),
         ));
     }
-    envelope
+    let envelope = envelope
         .bind_kernel(program.kernel_symbol())
-        .map_err(|error| M1PhysicalProgramCatalogErrorV1::KernelClosure { program, error })
+        .map_err(|error| M1PhysicalProgramCatalogErrorV1::KernelClosure { program, error })?;
+    envelope
+        .reconcile_dispatch_abi(
+            program_source_contract_identity(program, source_contract),
+            program_dispatch_abi(program),
+        )
+        .map_err(|error| M1PhysicalProgramCatalogErrorV1::DispatchAbi { program, error })
+}
+
+fn program_dispatch_abi(
+    program: M1PhysicalProgramV1,
+) -> &'static [KernelGlobalBufferAbiV1<'static>] {
+    match program {
+        M1PhysicalProgramV1::GemmReference | M1PhysicalProgramV1::GemmVectorized => {
+            &gemm::QWEN3_GEMM_GLOBAL_BUFFER_ABI_V1
+        }
+        M1PhysicalProgramV1::TokenEmbedding => &gemm::QWEN3_TOKEN_EMBEDDING_GLOBAL_BUFFER_ABI_V1,
+        M1PhysicalProgramV1::RmsNorm => &rmsnorm::QWEN3_RMSNORM_GLOBAL_BUFFER_ABI_V1,
+        M1PhysicalProgramV1::Rope => &rope_kv::QWEN3_ROPE_GLOBAL_BUFFER_ABI_V1,
+        M1PhysicalProgramV1::PagedKvWrite => &rope_kv::QWEN3_PAGED_KV_WRITE_GLOBAL_BUFFER_ABI_V1,
+        M1PhysicalProgramV1::GqaPrefill => &prefill::QWEN3_PREFILL_GLOBAL_BUFFER_ABI_V1,
+        M1PhysicalProgramV1::PagedGqaDecode => {
+            &paged_decode::QWEN3_PAGED_DECODE_GLOBAL_BUFFER_ABI_V1
+        }
+        M1PhysicalProgramV1::SwiGlu => &swiglu::QWEN3_SWIGLU_GLOBAL_BUFFER_ABI_V1,
+        M1PhysicalProgramV1::LogitsArgmax => &logits::QWEN3_LOGITS_ARGMAX_GLOBAL_BUFFER_ABI_V1,
+        M1PhysicalProgramV1::LogitsCompact => &logits::QWEN3_LOGITS_COMPACT_GLOBAL_BUFFER_ABI_V1,
+        M1PhysicalProgramV1::SpeculativeTokenAssembly => {
+            &logits::QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_GLOBAL_BUFFER_ABI_V1
+        }
+    }
+}
+
+fn program_source_contract_identity(
+    program: M1PhysicalProgramV1,
+    source: M1PhysicalProgramSourceContractV1,
+) -> [u8; 32] {
+    let mut hasher = Sha256::new();
+    hasher.update((PROGRAM_SOURCE_CONTRACT_IDENTITY_DOMAIN.len() as u64).to_le_bytes());
+    hasher.update(PROGRAM_SOURCE_CONTRACT_IDENTITY_DOMAIN);
+    hasher.update([program.family() as u8]);
+    hasher.update([program as u8]);
+    hasher.update((program.kernel_symbol().len() as u64).to_le_bytes());
+    hasher.update(program.kernel_symbol().as_bytes());
+    hasher.update(source.compiler_handoff_sha256);
+    hasher.update(source.compiler_handoff_byte_len.to_le_bytes());
+    hasher.finalize().into()
 }
 
 const fn family_index(family: M1PhysicalProgramFamilyV1) -> usize {
@@ -412,6 +526,11 @@ fn program_catalog_identity(
         hasher.update((program.kernel_symbol().len() as u64).to_le_bytes());
         hasher.update(program.kernel_symbol().as_bytes());
         hasher.update(envelope.identity_inputs().closure_sha256());
+        hasher.update(
+            envelope
+                .dispatch_abi_identity()
+                .expect("M1 catalog contains only source-reconciled programs"),
+        );
     }
     Identity::new(hasher.finalize().into())
 }
@@ -420,7 +539,10 @@ fn program_catalog_identity(
 mod tests {
     use std::collections::HashSet;
 
-    use super::{M1PhysicalProgramV1, M1_PHYSICAL_PROGRAM_COUNT_V1};
+    use super::{
+        program_dispatch_abi, program_source_contract_identity, M1PhysicalProgramSourceContractV1,
+        M1PhysicalProgramV1, M1_PHYSICAL_PROGRAM_COUNT_V1,
+    };
 
     #[test]
     fn stable_program_order_is_complete_unique_and_symbol_bound() {
@@ -431,5 +553,49 @@ mod tests {
             assert!(!program.kernel_symbol().is_empty());
             assert!(symbols.insert(program.kernel_symbol()));
         }
+    }
+
+    #[test]
+    fn canonical_dispatch_abi_roster_covers_exactly_54_global_arguments() {
+        let mut total = 0usize;
+        for program in M1PhysicalProgramV1::ALL {
+            let roster = program_dispatch_abi(program);
+            assert!(!roster.is_empty());
+            let mut ordinals = HashSet::new();
+            for row in roster {
+                assert!(ordinals.insert(row.explicit_argument_index()));
+                assert_eq!(row.explicit_argument_index() % 2, 0);
+                assert_eq!(
+                    row.offset(),
+                    (row.explicit_argument_index() as u64 / 2) * 16
+                );
+                assert!(!row.name().is_empty());
+                assert!(row.pointee_alignment().is_power_of_two());
+            }
+            total += roster.len();
+        }
+        assert_eq!(total, 54);
+    }
+
+    #[test]
+    fn source_contract_identity_binds_program_handoff_digest_and_length() {
+        let program = M1PhysicalProgramV1::TokenEmbedding;
+        let baseline = M1PhysicalProgramSourceContractV1::new([0x11; 32], 4096);
+        let changed_digest = M1PhysicalProgramSourceContractV1::new([0x12; 32], 4096);
+        let changed_length = M1PhysicalProgramSourceContractV1::new([0x11; 32], 4097);
+        let identity = program_source_contract_identity(program, baseline);
+        assert_ne!(identity, [0; 32]);
+        assert_ne!(
+            identity,
+            program_source_contract_identity(program, changed_digest)
+        );
+        assert_ne!(
+            identity,
+            program_source_contract_identity(program, changed_length)
+        );
+        assert_ne!(
+            identity,
+            program_source_contract_identity(M1PhysicalProgramV1::GemmReference, baseline)
+        );
     }
 }

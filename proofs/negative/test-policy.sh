@@ -200,7 +200,7 @@ compiler_dependency = next(
     d for d in qwen_package["dependencies"] if d["name"] == "fe2o3-compiler-ffi"
 )
 compiler_dependency["source"] = compiler_dependency["source"].replace(
-    "786bbb9ec97d3d21ee7175aa47586adfad2a103d", "0" * 40
+    "f29022b20bf2ce9dfd38f2f03cc7c578770beb38", "0" * 40
 )
 (scratch / "fe2o3-source.metadata").write_text(json.dumps(fe2o3), encoding="utf-8")
 

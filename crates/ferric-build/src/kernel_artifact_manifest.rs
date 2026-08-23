@@ -513,6 +513,41 @@ pub fn m1_kernel_artifact_manifest_test_fixture_v1(
     M1KernelArtifactManifestV1::new(entries)
 }
 
+/// Constructs a structural test manifest carrying caller-supplied current source facts.
+///
+/// This helper exists only under the `test-fixtures` feature. The resulting
+/// manifest remains inert: persisted admission must independently reproduce
+/// the supplied facts before using them.
+#[cfg(feature = "test-fixtures")]
+#[doc(hidden)]
+pub fn m1_kernel_artifact_manifest_with_source_facts_test_fixture_v1(
+    objects: [&[u8]; M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1],
+    plans: &[LoadPlan; M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1],
+    source_facts: &[super::kernel_artifacts::M1CurrentKernelSourceFactsV1;
+         M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1],
+) -> Result<M1KernelArtifactManifestV1, M1KernelArtifactManifestErrorV1> {
+    for (facts, expected_family) in source_facts.iter().zip(M1KernelArtifactFamilyV1::ALL) {
+        if facts.family() != expected_family {
+            return Err(M1KernelArtifactManifestErrorV1::Invalid(
+                "test source-fact order",
+            ));
+        }
+    }
+    let entries = std::array::from_fn(|index| {
+        let facts = &source_facts[index];
+        M1KernelArtifactEntryV1::new(
+            M1KernelArtifactFamilyV1::ALL[index],
+            ContentIdentityV1::calculate(objects[index]),
+            facts.compiler_module(),
+            facts.compiler_handoff(),
+            facts.symbol_manifest(),
+            facts.profile_catalogs().to_vec(),
+            &plans[index],
+        )
+    });
+    M1KernelArtifactManifestV1::new(entries)
+}
+
 impl From<M1KernelCanonicalCatalogErrorV1> for M1KernelArtifactManifestErrorV1 {
     fn from(source: M1KernelCanonicalCatalogErrorV1) -> Self {
         Self::CanonicalCatalog(source)

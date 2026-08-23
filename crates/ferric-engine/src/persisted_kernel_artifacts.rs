@@ -12,10 +12,12 @@ use std::fmt;
 use std::fs::File;
 use std::io::{self, Read};
 use std::path::Path;
+use std::sync::OnceLock;
 
 use fe2o3_amdhsa_loader::{AdmittedProfile, LoadPlan, PlanError};
 use ferric_build::{
-    decode_m1_kernel_artifact_manifest_v1, M1KernelArtifactFamilyV1,
+    current_m1_kernel_source_facts_v1, decode_m1_kernel_artifact_manifest_v1,
+    M1CurrentKernelSourceFactsV1, M1KernelArtifactBuildErrorV1, M1KernelArtifactFamilyV1,
     M1KernelArtifactManifestErrorV1, M1KernelArtifactManifestV1,
     M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1, M1_KERNEL_ARTIFACT_MANIFEST_FILENAME_V1,
     M1_KERNEL_ARTIFACT_MANIFEST_MAX_BYTES_V1,
@@ -27,7 +29,7 @@ use sha2::{Digest, Sha256};
 
 use crate::physical_program_catalog::{
     bind_content_bound_m1_program_catalog_from_persisted_v1, ContentBoundM1ProgramCatalogV1,
-    M1PhysicalProgramCatalogErrorV1,
+    M1PhysicalProgramCatalogErrorV1, M1PhysicalProgramSourceContractV1,
 };
 
 /// Canonical file or directory involved in persisted M1 artifact admission.
@@ -78,6 +80,10 @@ pub enum M1PersistedKernelArtifactOpenErrorV1 {
     },
     /// Fresh loader validation did not reproduce the exact persisted plan.
     LoaderPlanDrift(M1KernelArtifactFamilyV1),
+    /// Current canonical Ferric source could not reproduce its compiler-input facts.
+    CurrentSourceContract(M1KernelArtifactBuildErrorV1),
+    /// Manifest source facts did not match current canonical Ferric source.
+    CurrentSourceIdentityDrift(M1KernelArtifactFamilyV1),
     /// Exact twelve-symbol structural closure failed.
     ProgramCatalog(M1PhysicalProgramCatalogErrorV1),
 }
@@ -96,6 +102,7 @@ impl std::error::Error for M1PersistedKernelArtifactOpenErrorV1 {
         match self {
             Self::StrictNoFollowUnavailable(source) | Self::Io { source, .. } => Some(source),
             Self::Manifest(source) => Some(source),
+            Self::CurrentSourceContract(source) => Some(source),
             Self::ProgramCatalog(source) => Some(source),
             Self::NotRegularFile(_)
             | Self::InvalidSize(_)
@@ -103,7 +110,8 @@ impl std::error::Error for M1PersistedKernelArtifactOpenErrorV1 {
             | Self::ChangedWhileReading(_)
             | Self::ObjectIdentity(_)
             | Self::Loader { .. }
-            | Self::LoaderPlanDrift(_) => None,
+            | Self::LoaderPlanDrift(_)
+            | Self::CurrentSourceIdentityDrift(_) => None,
         }
     }
 }
@@ -144,6 +152,7 @@ pub struct AdmittedPersistedM1KernelArtifactsV1 {
     manifest: M1KernelArtifactManifestV1,
     objects: [Box<[u8]>; M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1],
     plans: [LoadPlan; M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1],
+    source_contracts: [M1PhysicalProgramSourceContractV1; M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1],
     program_catalog_id: Identity,
 }
 
@@ -165,6 +174,7 @@ impl AdmittedPersistedM1KernelArtifactsV1 {
         bind_content_bound_m1_program_catalog_from_persisted_v1(
             object_borrows(&self.objects),
             &self.plans,
+            &self.source_contracts,
         )
     }
 
@@ -316,9 +326,32 @@ fn reopen_with_hook(
     let plans: [LoadPlan; M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1] = plans
         .try_into()
         .unwrap_or_else(|_| unreachable!("canonical manifest has exactly seven families"));
-    let catalog =
-        bind_content_bound_m1_program_catalog_from_persisted_v1(object_borrows(&objects), &plans)
-            .map_err(M1PersistedKernelArtifactOpenErrorV1::ProgramCatalog)?;
+    let current_source = current_source_facts()?;
+    for ((entry, expected), family) in manifest
+        .entries()
+        .iter()
+        .zip(current_source)
+        .zip(M1KernelArtifactFamilyV1::ALL)
+    {
+        if expected.family() != family
+            || entry.compiler_module() != expected.compiler_module()
+            || entry.compiler_handoff() != expected.compiler_handoff()
+            || entry.symbol_manifest() != expected.symbol_manifest()
+            || entry.profile_catalogs() != expected.profile_catalogs()
+        {
+            return Err(M1PersistedKernelArtifactOpenErrorV1::CurrentSourceIdentityDrift(family));
+        }
+    }
+    let source_contracts = std::array::from_fn(|index| {
+        let identity = current_source[index].compiler_handoff();
+        M1PhysicalProgramSourceContractV1::new(*identity.sha256(), identity.byte_len())
+    });
+    let catalog = bind_content_bound_m1_program_catalog_from_persisted_v1(
+        object_borrows(&objects),
+        &plans,
+        &source_contracts,
+    )
+    .map_err(M1PersistedKernelArtifactOpenErrorV1::ProgramCatalog)?;
     let program_catalog_id = catalog.catalog_id();
     drop(catalog);
 
@@ -326,8 +359,25 @@ fn reopen_with_hook(
         manifest,
         objects,
         plans,
+        source_contracts,
         program_catalog_id,
     })
+}
+
+static CURRENT_SOURCE_FACTS: OnceLock<
+    [M1CurrentKernelSourceFactsV1; M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1],
+> = OnceLock::new();
+
+fn current_source_facts() -> Result<
+    &'static [M1CurrentKernelSourceFactsV1; M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1],
+    M1PersistedKernelArtifactOpenErrorV1,
+> {
+    if let Some(facts) = CURRENT_SOURCE_FACTS.get() {
+        return Ok(facts);
+    }
+    let facts = current_m1_kernel_source_facts_v1()
+        .map_err(M1PersistedKernelArtifactOpenErrorV1::CurrentSourceContract)?;
+    Ok(CURRENT_SOURCE_FACTS.get_or_init(|| facts))
 }
 
 #[derive(Clone, Copy)]
@@ -470,15 +520,16 @@ mod tests {
 
     use fe2o3_amdhsa_loader::{AdmittedProfile, LoadPlan};
     use ferric_build::{
-        m1_kernel_artifact_manifest_test_fixture_v1, M1KernelArtifactFamilyV1,
+        m1_kernel_artifact_manifest_test_fixture_v1,
+        m1_kernel_artifact_manifest_with_source_facts_test_fixture_v1, M1KernelArtifactFamilyV1,
         M1KernelArtifactManifestErrorV1, M1KernelArtifactManifestV1,
         M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1, M1_KERNEL_ARTIFACT_MANIFEST_FILENAME_V1,
         M1_KERNEL_ARTIFACT_MANIFEST_MAX_BYTES_V1,
     };
 
     use super::{
-        reopen_persisted_m1_kernel_artifacts_v1, reopen_with_hook, M1PersistedKernelArtifactFileV1,
-        M1PersistedKernelArtifactOpenErrorV1,
+        current_source_facts, reopen_persisted_m1_kernel_artifacts_v1, reopen_with_hook,
+        M1PersistedKernelArtifactFileV1, M1PersistedKernelArtifactOpenErrorV1,
     };
 
     const PHOFF: usize = 64;
@@ -557,6 +608,14 @@ mod tests {
             let entry = &self.manifest.entries()[family as usize - 1];
             self.root.join(entry.object_path())
         }
+
+        fn new_with_inert_source_facts(label: &str) -> Self {
+            let mut fixture = Self::new(label);
+            let manifest = inert_fixture_manifest(&fixture.objects, &fixture.plans);
+            write_fixture(&fixture.root, &manifest, &fixture.objects);
+            fixture.manifest = manifest;
+            fixture
+        }
     }
 
     #[test]
@@ -566,6 +625,54 @@ mod tests {
             reopen_persisted_m1_kernel_artifacts_v1(&fixture.root),
             Err(M1PersistedKernelArtifactOpenErrorV1::ProgramCatalog(_))
         ));
+    }
+
+    #[test]
+    fn inert_synthetic_manifest_cannot_mint_current_source_authority() {
+        let fixture = Fixture::new_with_inert_source_facts("source-authority");
+        assert!(matches!(
+            reopen_persisted_m1_kernel_artifacts_v1(&fixture.root),
+            Err(
+                M1PersistedKernelArtifactOpenErrorV1::CurrentSourceIdentityDrift(
+                    M1KernelArtifactFamilyV1::Gemm
+                )
+            )
+        ));
+    }
+
+    #[test]
+    fn every_source_identity_field_and_family_drift_fails_closed() {
+        let fixture = Fixture::new("source-identity-matrix");
+        let canonical = fixture.manifest.canonical_bytes();
+        for family in M1KernelArtifactFamilyV1::ALL {
+            let entry = &fixture.manifest.entries()[family as usize - 1];
+            for identity in [
+                entry.compiler_module(),
+                entry.compiler_handoff(),
+                entry.symbol_manifest(),
+            ] {
+                let mut hostile = canonical.to_vec();
+                let matches = hostile
+                    .windows(identity.sha256().len())
+                    .enumerate()
+                    .filter_map(|(offset, bytes)| (bytes == identity.sha256()).then_some(offset))
+                    .collect::<Vec<_>>();
+                assert_eq!(
+                    matches.len(),
+                    1,
+                    "source identity must be unique in manifest"
+                );
+                hostile[matches[0]] ^= 0x80;
+                fs::write(fixture.manifest_path(), hostile).unwrap();
+                assert!(matches!(
+                    reopen_persisted_m1_kernel_artifacts_v1(&fixture.root),
+                    Err(M1PersistedKernelArtifactOpenErrorV1::CurrentSourceIdentityDrift(
+                        actual
+                    )) if actual == family
+                ));
+            }
+        }
+        fs::write(fixture.manifest_path(), canonical).unwrap();
     }
 
     #[test]
@@ -915,6 +1022,21 @@ mod tests {
             .with_content_bound_program_catalog_v1(|catalog| {
                 assert_eq!(catalog.catalog_id(), owner.program_catalog_id());
                 assert_eq!(catalog.program_count(), 12);
+                for program in crate::M1PhysicalProgramV1::ALL {
+                    let envelope = catalog.program(program);
+                    assert!(envelope.dispatch_abi_identity().is_some());
+                    for (index, argument) in envelope
+                        .selected_kernel()
+                        .explicit_arguments()
+                        .iter()
+                        .enumerate()
+                    {
+                        if argument.value_kind() == fe2o3_hsaco::ExplicitValueKind::GlobalBuffer {
+                            assert!(envelope.dispatch_pointee_alignment(index).is_some());
+                            assert!(envelope.dispatch_actual_access(index).is_some());
+                        }
+                    }
+                }
             })
             .unwrap();
         assert!(!owner.reconstructs_inspected_worker_custody());
@@ -924,6 +1046,18 @@ mod tests {
     }
 
     fn fixture_manifest(
+        objects: &[Vec<u8>; M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1],
+        plans: &[LoadPlan; M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1],
+    ) -> M1KernelArtifactManifestV1 {
+        m1_kernel_artifact_manifest_with_source_facts_test_fixture_v1(
+            std::array::from_fn(|index| objects[index].as_slice()),
+            plans,
+            current_source_facts().expect("current source facts remain constructible"),
+        )
+        .unwrap()
+    }
+
+    fn inert_fixture_manifest(
         objects: &[Vec<u8>; M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1],
         plans: &[LoadPlan; M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1],
     ) -> M1KernelArtifactManifestV1 {

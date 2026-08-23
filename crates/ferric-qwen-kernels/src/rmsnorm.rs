@@ -9,7 +9,7 @@
 
 use core::fmt;
 
-use fe2o3_amdhsa_loader::{AdmittedProfile, LoadPlan, PlanError};
+use fe2o3_amdhsa_loader::{AdmittedProfile, KernelGlobalBufferAbiV1, LoadPlan, PlanError};
 use fe2o3_artifact_transaction::{
     CompilerModuleHandoffIdentityV1, ConsumedCompilerModuleHandoffV1,
 };
@@ -53,6 +53,14 @@ use sha2::{Digest as _, Sha256};
 pub const QWEN3_RMSNORM_KERNEL_SYMBOL_V1: &str = "qwen3_rmsnorm_v1";
 /// Exact AMDHSA descriptor symbol for the typed graph.
 pub const QWEN3_RMSNORM_KERNEL_DESCRIPTOR_SYMBOL_V1: &str = "qwen3_rmsnorm_v1.kd";
+/// Canonical global-buffer ABI for `RMSNorm` and residual fusion.
+pub const QWEN3_RMSNORM_GLOBAL_BUFFER_ABI_V1: [KernelGlobalBufferAbiV1<'static>; 5] = [
+    KernelGlobalBufferAbiV1::new(0, "input_bf16", 0, 2, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(2, "residual_bf16", 16, 2, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(4, "weight_bf16", 32, 2, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(6, "fused_residual_bf16", 48, 2, ArgumentAccess::WriteOnly),
+    KernelGlobalBufferAbiV1::new(8, "normalized_bf16", 64, 2, ArgumentAccess::WriteOnly),
+];
 /// Exact device target required by this compiler lane.
 pub const QWEN3_RMSNORM_TARGET_V1: &str = "gfx942:xnack-";
 /// Exact code-object version required by this compiler lane.
@@ -2107,6 +2115,12 @@ impl fmt::Debug for InspectedQwen3RmsNormKernelV1 {
 }
 
 impl InspectedQwen3RmsNormKernelV1 {
+    /// Exact compiler handoff identity retained through Worker inspection.
+    #[must_use]
+    pub const fn compiler_handoff_identity(&self) -> CompilerModuleHandoffIdentityV2 {
+        self.compiler_handoff_identity
+    }
+
     /// Exact profile catalog retained with the inspected output owner.
     #[must_use]
     pub const fn catalog(&self) -> &Qwen3RmsNormProfileCatalogV1 {
@@ -2370,27 +2384,22 @@ fn exact_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
     if arguments.len() != 14 {
         return false;
     }
-    let pointers = [
-        (0, "input_bf16", ArgumentAccess::ReadOnly),
-        (2, "residual_bf16", ArgumentAccess::ReadOnly),
-        (4, "weight_bf16", ArgumentAccess::ReadOnly),
-        (6, "fused_residual_bf16", ArgumentAccess::WriteOnly),
-        (8, "normalized_bf16", ArgumentAccess::WriteOnly),
-    ];
-    for (index, name, access) in pointers {
-        let argument = &arguments[index];
-        if argument.name() != Some(name)
-            || argument.offset() != (index as u64 / 2) * 16
+    for expected in QWEN3_RMSNORM_GLOBAL_BUFFER_ABI_V1 {
+        let argument = &arguments[expected.explicit_argument_index()];
+        if argument.name() != Some(expected.name())
+            || argument.offset() != expected.offset()
             || argument.size() != 8
             || argument.alignment().is_some_and(|alignment| alignment != 8)
             || argument
                 .pointee_alignment()
-                .is_some_and(|alignment| alignment != 2)
+                .is_some_and(|alignment| alignment != expected.pointee_alignment())
             || argument.value_kind() != ExplicitValueKind::GlobalBuffer
             || !argument.value_type().is_none_or(is_bf16_metadata_carrier)
             || argument.address_space() != Some(ArgumentAddressSpace::Global)
-            || argument.access().is_some_and(|declared| declared != access)
-            || argument.actual_access() != Some(access)
+            || argument
+                .access()
+                .is_some_and(|declared| declared != expected.access())
+            || argument.actual_access() != Some(expected.access())
         {
             return false;
         }

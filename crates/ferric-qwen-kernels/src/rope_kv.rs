@@ -9,7 +9,7 @@
 
 use core::fmt;
 
-use fe2o3_amdhsa_loader::{AdmittedProfile, LoadPlan, PlanError};
+use fe2o3_amdhsa_loader::{AdmittedProfile, KernelGlobalBufferAbiV1, LoadPlan, PlanError};
 use fe2o3_artifact_transaction::{
     CompilerModuleHandoffIdentityV1, ConsumedCompilerModuleHandoffV1,
 };
@@ -57,6 +57,25 @@ pub const QWEN3_ROPE_KERNEL_DESCRIPTOR_SYMBOL_V1: &str = "qwen3_rope_v1.kd";
 pub const QWEN3_PAGED_KV_WRITE_KERNEL_SYMBOL_V1: &str = "qwen3_paged_kv_write_v1";
 /// Exact paged-KV-write AMDHSA descriptor symbol.
 pub const QWEN3_PAGED_KV_WRITE_KERNEL_DESCRIPTOR_SYMBOL_V1: &str = "qwen3_paged_kv_write_v1.kd";
+/// Canonical global-buffer ABI for split-half rotary embedding.
+pub const QWEN3_ROPE_GLOBAL_BUFFER_ABI_V1: [KernelGlobalBufferAbiV1<'static>; 7] = [
+    KernelGlobalBufferAbiV1::new(0, "query_bf16", 0, 2, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(2, "key_bf16", 16, 2, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(4, "position_ids", 32, 4, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(6, "cos_table_f32", 48, 4, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(8, "sin_table_f32", 64, 4, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(10, "rotated_query_bf16", 80, 2, ArgumentAccess::WriteOnly),
+    KernelGlobalBufferAbiV1::new(12, "rotated_key_bf16", 96, 2, ArgumentAccess::WriteOnly),
+];
+/// Canonical global-buffer ABI for paged KV writes.
+pub const QWEN3_PAGED_KV_WRITE_GLOBAL_BUFFER_ABI_V1: [KernelGlobalBufferAbiV1<'static>; 6] = [
+    KernelGlobalBufferAbiV1::new(0, "rotated_key_bf16", 0, 2, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(2, "value_bf16", 16, 2, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(4, "logical_starts", 32, 4, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(6, "page_indices", 48, 4, ArgumentAccess::ReadOnly),
+    KernelGlobalBufferAbiV1::new(8, "key_cache_bf16", 64, 2, ArgumentAccess::WriteOnly),
+    KernelGlobalBufferAbiV1::new(10, "value_cache_bf16", 80, 2, ArgumentAccess::WriteOnly),
+];
 /// Exact device target required by this compiler lane.
 pub const QWEN3_ROPE_KV_TARGET_V1: &str = "gfx942:xnack-";
 /// Exact code-object version required by this compiler lane.
@@ -2800,6 +2819,12 @@ impl fmt::Debug for InspectedQwen3RopeKvKernelV1 {
 }
 
 impl InspectedQwen3RopeKvKernelV1 {
+    /// Exact compiler handoff identity retained through Worker inspection.
+    #[must_use]
+    pub const fn compiler_handoff_identity(&self) -> CompilerModuleHandoffIdentityV2 {
+        self.compiler_handoff_identity
+    }
+
     /// Exact profile catalog retained with the inspected output owner.
     #[must_use]
     pub const fn catalog(&self) -> &Qwen3RopeKvProfileCatalogV1 {
@@ -3245,24 +3270,23 @@ impl CheckedQwen3RopeKvLaunchV1 {
 
 fn exact_pointer_argument(
     argument: &ExplicitArgument,
-    name: &str,
-    offset: u64,
-    access: ArgumentAccess,
-    alignment: u64,
+    expected: KernelGlobalBufferAbiV1<'_>,
     accepted_type: fn(ExplicitValueType) -> bool,
 ) -> bool {
-    argument.name() == Some(name)
-        && argument.offset() == offset
+    argument.name() == Some(expected.name())
+        && argument.offset() == expected.offset()
         && argument.size() == 8
         && argument.alignment().is_none_or(|actual| actual == 8)
         && argument
             .pointee_alignment()
-            .is_none_or(|actual| actual == alignment)
+            .is_none_or(|actual| actual == expected.pointee_alignment())
         && argument.value_kind() == ExplicitValueKind::GlobalBuffer
         && argument.value_type().is_none_or(accepted_type)
         && argument.address_space() == Some(ArgumentAddressSpace::Global)
-        && argument.access().is_none_or(|declared| declared == access)
-        && argument.actual_access() == Some(access)
+        && argument
+            .access()
+            .is_none_or(|declared| declared == expected.access())
+        && argument.actual_access() == Some(expected.access())
 }
 
 fn exact_length_argument(argument: &ExplicitArgument, name: &str, offset: u64) -> bool {
@@ -3282,64 +3306,22 @@ fn exact_rope_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
     if arguments.len() != 18 {
         return false;
     }
-    let pointers = [
-        (
-            0,
-            "query_bf16",
-            ArgumentAccess::ReadOnly,
-            2,
-            is_bf16_metadata_carrier as fn(ExplicitValueType) -> bool,
-        ),
-        (
-            2,
-            "key_bf16",
-            ArgumentAccess::ReadOnly,
-            2,
-            is_bf16_metadata_carrier,
-        ),
-        (
-            4,
-            "position_ids",
-            ArgumentAccess::ReadOnly,
-            4,
-            is_i32_metadata_carrier,
-        ),
-        (
-            6,
-            "cos_table_f32",
-            ArgumentAccess::ReadOnly,
-            4,
-            is_f32_metadata_carrier,
-        ),
-        (
-            8,
-            "sin_table_f32",
-            ArgumentAccess::ReadOnly,
-            4,
-            is_f32_metadata_carrier,
-        ),
-        (
-            10,
-            "rotated_query_bf16",
-            ArgumentAccess::WriteOnly,
-            2,
-            is_bf16_metadata_carrier,
-        ),
-        (
-            12,
-            "rotated_key_bf16",
-            ArgumentAccess::WriteOnly,
-            2,
-            is_bf16_metadata_carrier,
-        ),
+    let accepted_types = [
+        is_bf16_metadata_carrier as fn(ExplicitValueType) -> bool,
+        is_bf16_metadata_carrier,
+        is_i32_metadata_carrier,
+        is_f32_metadata_carrier,
+        is_f32_metadata_carrier,
+        is_bf16_metadata_carrier,
+        is_bf16_metadata_carrier,
     ];
-    for (index, name, access, alignment, accepted_type) in pointers {
+    for (expected, accepted_type) in QWEN3_ROPE_GLOBAL_BUFFER_ABI_V1
+        .into_iter()
+        .zip(accepted_types)
+    {
         if !exact_pointer_argument(
-            &arguments[index],
-            name,
-            (index as u64 / 2) * 16,
-            access,
-            alignment,
+            &arguments[expected.explicit_argument_index()],
+            expected,
             accepted_type,
         ) {
             return false;
@@ -3374,57 +3356,21 @@ fn exact_kv_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
     if arguments.len() != 15 {
         return false;
     }
-    let pointers = [
-        (
-            0,
-            "rotated_key_bf16",
-            ArgumentAccess::ReadOnly,
-            2,
-            is_bf16_metadata_carrier as fn(ExplicitValueType) -> bool,
-        ),
-        (
-            2,
-            "value_bf16",
-            ArgumentAccess::ReadOnly,
-            2,
-            is_bf16_metadata_carrier,
-        ),
-        (
-            4,
-            "logical_starts",
-            ArgumentAccess::ReadOnly,
-            4,
-            is_i32_metadata_carrier,
-        ),
-        (
-            6,
-            "page_indices",
-            ArgumentAccess::ReadOnly,
-            4,
-            is_i32_metadata_carrier,
-        ),
-        (
-            8,
-            "key_cache_bf16",
-            ArgumentAccess::WriteOnly,
-            2,
-            is_bf16_metadata_carrier,
-        ),
-        (
-            10,
-            "value_cache_bf16",
-            ArgumentAccess::WriteOnly,
-            2,
-            is_bf16_metadata_carrier,
-        ),
+    let accepted_types = [
+        is_bf16_metadata_carrier as fn(ExplicitValueType) -> bool,
+        is_bf16_metadata_carrier,
+        is_i32_metadata_carrier,
+        is_i32_metadata_carrier,
+        is_bf16_metadata_carrier,
+        is_bf16_metadata_carrier,
     ];
-    for (index, name, access, alignment, accepted_type) in pointers {
+    for (expected, accepted_type) in QWEN3_PAGED_KV_WRITE_GLOBAL_BUFFER_ABI_V1
+        .into_iter()
+        .zip(accepted_types)
+    {
         if !exact_pointer_argument(
-            &arguments[index],
-            name,
-            (index as u64 / 2) * 16,
-            access,
-            alignment,
+            &arguments[expected.explicit_argument_index()],
+            expected,
             accepted_type,
         ) {
             return false;
