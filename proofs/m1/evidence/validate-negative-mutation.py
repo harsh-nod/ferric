@@ -791,7 +791,7 @@ def validate_verus_transcript(raw: bytes, row: tuple[str, ...]) -> None:
             f"VERUS_PACKAGE={package}",
             f"VERUS_MODULE={module}",
             f"VERUS_FUNCTION={function}",
-            "COMMAND=cargo-verus-build-locked-release-no-cheating-exact-function",
+            "COMMAND=cargo-verus-build-lib-locked-release-no-cheating-exact-function",
             f"EXPECTED_FAILURE_MARKER={marker}",
         ),
         f"{name} Verus transcript",

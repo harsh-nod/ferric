@@ -66,9 +66,10 @@ trap 'exit 143' TERM
 
 copy_source() {
     destination=$1
-    mkdir -p "$destination"
+    mkdir -p "$destination/proofs"
     cp -a "$repo/Cargo.toml" "$repo/Cargo.lock" "$repo/rust-toolchain.toml" "$destination/"
-    cp -a "$repo/crates" "$destination/"
+    cp -a "$repo/benches" "$repo/crates" "$destination/"
+    cp -a "$repo/proofs/m1" "$destination/proofs/"
     chmod -R u+w "$destination"
 }
 
@@ -93,7 +94,7 @@ run_rejected() {
             CARGO_TERM_COLOR=never \
             timeout "$timeout_seconds" "$verus_root/cargo-verus" build \
                 -p "$package" --locked --release --target-dir "$target" \
-                --fwd-verus-args-to roots -j 1 -- --no-cheating \
+                --fwd-verus-args-to roots -j 1 --lib -- --no-cheating \
                 --verify-only-module "$module" --verify-function "$function"
     ) >>"$transcript" 2>&1 &
     component_child_pid=$!

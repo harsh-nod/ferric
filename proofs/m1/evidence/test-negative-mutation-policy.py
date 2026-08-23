@@ -393,7 +393,7 @@ def build_run(
         f"VERUS_PACKAGE={package}\n"
         f"VERUS_MODULE={module}\n"
         f"VERUS_FUNCTION={function}\n"
-        "COMMAND=cargo-verus-build-locked-release-no-cheating-exact-function\n"
+        "COMMAND=cargo-verus-build-lib-locked-release-no-cheating-exact-function\n"
         f"EXPECTED_FAILURE_MARKER={marker}\n"
         "   Compiling proc-macro2 v1.0.107\n"
         "verification results:: 2044 verified, 0 errors\n"

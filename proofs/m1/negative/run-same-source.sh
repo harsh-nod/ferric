@@ -226,7 +226,7 @@ while IFS='|' read -r name foundation property path_id package source mutator ma
         printf 'VERUS_PACKAGE=%s\n' "$package"
         printf 'VERUS_MODULE=%s\n' "$module"
         printf 'VERUS_FUNCTION=%s\n' "$function"
-        printf 'COMMAND=cargo-verus-build-locked-release-no-cheating-exact-function\n'
+        printf 'COMMAND=cargo-verus-build-lib-locked-release-no-cheating-exact-function\n'
         printf 'EXPECTED_FAILURE_MARKER=%s\n' "$marker"
     } >"$transcript"
     set +e
@@ -235,7 +235,7 @@ while IFS='|' read -r name foundation property path_id package source mutator ma
         VERUS_Z3_PATH="$verus_root/z3" CARGO_TERM_COLOR=never \
             timeout "$timeout_seconds" "$verus_root/cargo-verus" build \
                 -p "$package" --locked --release --target-dir "$verus_target" \
-                --fwd-verus-args-to roots -j 1 -- --no-cheating \
+                --fwd-verus-args-to roots -j 1 --lib -- --no-cheating \
                 --verify-only-module "$module" --verify-function "$function"
     ) >>"$transcript" 2>&1
     proof_status=$?
