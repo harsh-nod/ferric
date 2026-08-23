@@ -1295,6 +1295,240 @@ impl M1QualificationTargetPagePreleaseSuccessV1 {
     }
 }
 
+/// Diagnostic for cancellation of an incomplete qualification prelease.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1QualificationTargetPagePreleaseCancellationErrorV1 {
+    HostCustodyAllocation,
+    Page {
+        lane: u32,
+        page: u32,
+        source: M1QualificationTargetPagePreleaseCancellationPageErrorV1,
+    },
+}
+
+/// Stable reason that one exact partial-prelease page could not be returned.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1QualificationTargetPagePreleaseCancellationPageErrorV1 {
+    Device,
+    Allocation,
+    Request,
+    Role,
+    Index,
+    Ledger,
+    GenerationExhausted,
+}
+
+impl From<M1KvPageReturnErrorV1> for M1QualificationTargetPagePreleaseCancellationPageErrorV1 {
+    fn from(source: M1KvPageReturnErrorV1) -> Self {
+        match source {
+            M1KvPageReturnErrorV1::Device => Self::Device,
+            M1KvPageReturnErrorV1::Allocation => Self::Allocation,
+            M1KvPageReturnErrorV1::Request => Self::Request,
+            M1KvPageReturnErrorV1::Role => Self::Role,
+            M1KvPageReturnErrorV1::Index => Self::Index,
+            M1KvPageReturnErrorV1::Ledger => Self::Ledger,
+            M1KvPageReturnErrorV1::GenerationExhausted => Self::GenerationExhausted,
+        }
+    }
+}
+
+/// Clean cancellation after every partially preleased page was returned to the
+/// exact pool ledger.
+#[must_use = "cancelled prelease pool, caches, and witnesses remain retained"]
+#[derive(Debug)]
+pub struct M1QualificationTargetPagePreleaseCancellationSuccessV1 {
+    pool: M1PartitionedModelMemoryKvPoolV1,
+    caches: Vec<ActiveDeviceKvCache>,
+    initial_contexts: Vec<crate::M1ValidatedQualificationContextStepV1>,
+    grouping: M1QualificationLaneGrouping,
+    returned_pages: usize,
+}
+
+impl M1QualificationTargetPagePreleaseCancellationSuccessV1 {
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.pool.device()
+    }
+
+    #[must_use]
+    pub const fn target_allocation_id(&self) -> Identity {
+        self.pool.allocation_id(Qwen3ModelRole::Target8B)
+    }
+
+    #[must_use]
+    pub fn target_page_slot_count(&self) -> usize {
+        self.pool.page_ledger(Qwen3ModelRole::Target8B).len()
+    }
+
+    #[must_use]
+    pub const fn grouping(&self) -> M1QualificationLaneGrouping {
+        self.grouping
+    }
+
+    #[must_use]
+    pub const fn returned_pages(&self) -> usize {
+        self.returned_pages
+    }
+
+    #[must_use]
+    pub fn cache_count(&self) -> usize {
+        self.caches.len()
+    }
+
+    #[must_use]
+    pub fn initial_contexts(&self) -> &[crate::M1ValidatedQualificationContextStepV1] {
+        &self.initial_contexts
+    }
+}
+
+trait M1QualificationTargetPageCancellationPoolV1 {
+    fn device(&self) -> Gfx942DeviceBinding;
+    fn target_allocation_id(&self) -> Identity;
+    fn target_page_ledger(&self) -> &[M1KvPoolPageStateV1];
+    fn target_page_ledger_mut(&mut self) -> &mut [M1KvPoolPageStateV1];
+}
+
+impl M1QualificationTargetPageCancellationPoolV1 for M1PartitionedModelMemoryKvPoolV1 {
+    fn device(&self) -> Gfx942DeviceBinding {
+        self.device()
+    }
+
+    fn target_allocation_id(&self) -> Identity {
+        self.allocation_id(Qwen3ModelRole::Target8B)
+    }
+
+    fn target_page_ledger(&self) -> &[M1KvPoolPageStateV1] {
+        self.page_ledger(Qwen3ModelRole::Target8B)
+    }
+
+    fn target_page_ledger_mut(&mut self) -> &mut [M1KvPoolPageStateV1] {
+        self.page_ledger_mut(Qwen3ModelRole::Target8B)
+    }
+}
+
+#[derive(Debug)]
+struct M1QualificationTargetPagePreleaseCancellationStateV1<Pool> {
+    pool: Pool,
+    caches: Vec<ActiveDeviceKvCache>,
+    initial_contexts: Vec<crate::M1ValidatedQualificationContextStepV1>,
+    grouping: M1QualificationLaneGrouping,
+    pages_by_lane: Vec<Vec<DeviceKvPageLease>>,
+}
+
+#[derive(Debug)]
+struct M1QualificationTargetPagePreleaseCancellationStateSuccessV1<Pool> {
+    pool: Pool,
+    caches: Vec<ActiveDeviceKvCache>,
+    initial_contexts: Vec<crate::M1ValidatedQualificationContextStepV1>,
+    grouping: M1QualificationLaneGrouping,
+    returned_pages: usize,
+}
+
+#[derive(Debug)]
+struct M1QualificationTargetPagePreleaseCancellationStateFailureV1<Pool> {
+    error: M1QualificationTargetPagePreleaseCancellationErrorV1,
+    recovery: M1QualificationTargetPagePreleaseCancellationStateV1<Pool>,
+}
+
+/// Cancellation rejection retaining the complete partial-prelease owner.
+#[must_use = "cancellation rejection retains every partial prelease owner"]
+#[derive(Debug)]
+pub struct M1QualificationTargetPagePreleaseCancellationFailureV1 {
+    error: M1QualificationTargetPagePreleaseCancellationErrorV1,
+    recovery: M1QualificationTargetPagePreleaseRecoveryV1,
+}
+
+impl M1QualificationTargetPagePreleaseCancellationFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1QualificationTargetPagePreleaseCancellationErrorV1 {
+        self.error
+    }
+
+    #[must_use]
+    pub fn progress(&self) -> M1QualificationTargetPagePreleaseProgressV1 {
+        self.recovery.progress()
+    }
+
+    #[must_use]
+    pub const fn grouping(&self) -> M1QualificationLaneGrouping {
+        self.recovery.grouping()
+    }
+
+    #[must_use]
+    pub fn cache_count(&self) -> usize {
+        self.recovery.cache_count()
+    }
+
+    #[must_use]
+    pub fn initial_contexts(&self) -> &[crate::M1ValidatedQualificationContextStepV1] {
+        self.recovery.initial_contexts()
+    }
+
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.recovery.device()
+    }
+
+    #[must_use]
+    pub const fn target_allocation_id(&self) -> Identity {
+        self.recovery.target_allocation_id()
+    }
+
+    #[must_use]
+    pub fn target_page_slot_count(&self) -> usize {
+        self.recovery.target_page_slot_count()
+    }
+
+    /// Retries cancellation with the exact unchanged partial-prelease owner.
+    ///
+    /// # Errors
+    ///
+    /// Returns renewed failure custody if ledger preflight or bounded host
+    /// allocation rejects again.
+    pub fn retry(
+        self,
+    ) -> Result<
+        M1QualificationTargetPagePreleaseCancellationSuccessV1,
+        Box<M1QualificationTargetPagePreleaseCancellationFailureV1>,
+    > {
+        self.recovery.cancel()
+    }
+
+    /// Closes a caller's bounded cancellation policy while retaining the
+    /// complete pool, cache, witness, and partial-page owner for fail-stop.
+    pub fn exhaust_retry_policy(self) -> M1QualificationTargetPagePreleaseCancellationExhaustedV1 {
+        M1QualificationTargetPagePreleaseCancellationExhaustedV1 { failure: self }
+    }
+}
+
+/// Fail-stop owner after bounded partial-prelease cancellation retries.
+#[must_use = "partial prelease and pool ledger remain retained"]
+#[derive(Debug)]
+pub struct M1QualificationTargetPagePreleaseCancellationExhaustedV1 {
+    failure: M1QualificationTargetPagePreleaseCancellationFailureV1,
+}
+
+impl M1QualificationTargetPagePreleaseCancellationExhaustedV1 {
+    pub const fn failure(&self) -> &M1QualificationTargetPagePreleaseCancellationFailureV1 {
+        &self.failure
+    }
+
+    #[must_use]
+    pub const fn grouping(&self) -> M1QualificationLaneGrouping {
+        self.failure.grouping()
+    }
+
+    #[must_use]
+    pub fn cache_count(&self) -> usize {
+        self.failure.cache_count()
+    }
+
+    #[must_use]
+    pub fn initial_contexts(&self) -> &[crate::M1ValidatedQualificationContextStepV1] {
+        self.failure.initial_contexts()
+    }
+}
+
 /// Retry owner for an incomplete all-lane qualification target-page prelease.
 ///
 /// It retains model memory, all ordered caches, validated initial witnesses,
@@ -1322,6 +1556,36 @@ impl M1QualificationTargetPagePreleaseRecoveryV1 {
     #[must_use]
     pub fn progress(&self) -> M1QualificationTargetPagePreleaseProgressV1 {
         qualification_target_page_prelease_progress(&self.pages_by_lane)
+    }
+
+    #[must_use]
+    pub const fn grouping(&self) -> M1QualificationLaneGrouping {
+        self.grouping
+    }
+
+    #[must_use]
+    pub fn cache_count(&self) -> usize {
+        self.caches.len()
+    }
+
+    #[must_use]
+    pub fn initial_contexts(&self) -> &[crate::M1ValidatedQualificationContextStepV1] {
+        &self.initial_contexts
+    }
+
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.pool.device()
+    }
+
+    #[must_use]
+    pub const fn target_allocation_id(&self) -> Identity {
+        self.pool.allocation_id(Qwen3ModelRole::Target8B)
+    }
+
+    #[must_use]
+    pub fn target_page_slot_count(&self) -> usize {
+        self.pool.page_ledger(Qwen3ModelRole::Target8B).len()
     }
 
     /// Retries from the exact retained lane/page coordinate.
@@ -1408,6 +1672,155 @@ impl M1QualificationTargetPagePreleaseRecoveryV1 {
             pool: self.pool,
             caches: self.caches,
         })
+    }
+
+    /// Cancels an incomplete prelease by transactionally returning every
+    /// acquired page to its exact role/request/generation ledger slot.
+    ///
+    /// # Errors
+    ///
+    /// Returns the unchanged partial-prelease owner if host ticket allocation
+    /// or any page-return preflight rejects before the first ledger mutation.
+    pub fn cancel(
+        self,
+    ) -> Result<
+        M1QualificationTargetPagePreleaseCancellationSuccessV1,
+        Box<M1QualificationTargetPagePreleaseCancellationFailureV1>,
+    > {
+        let state = M1QualificationTargetPagePreleaseCancellationStateV1 {
+            pool: self.pool,
+            caches: self.caches,
+            initial_contexts: self.initial_contexts,
+            grouping: self.grouping,
+            pages_by_lane: self.pages_by_lane,
+        };
+        match state.cancel() {
+            Ok(success) => Ok(M1QualificationTargetPagePreleaseCancellationSuccessV1 {
+                pool: success.pool,
+                caches: success.caches,
+                initial_contexts: success.initial_contexts,
+                grouping: success.grouping,
+                returned_pages: success.returned_pages,
+            }),
+            Err(failure) => Err(Box::new(
+                M1QualificationTargetPagePreleaseCancellationFailureV1 {
+                    error: failure.error,
+                    recovery: M1QualificationTargetPagePreleaseRecoveryV1 {
+                        pool: failure.recovery.pool,
+                        caches: failure.recovery.caches,
+                        initial_contexts: failure.recovery.initial_contexts,
+                        grouping: failure.recovery.grouping,
+                        pages_by_lane: failure.recovery.pages_by_lane,
+                    },
+                },
+            )),
+        }
+    }
+}
+
+impl<Pool: M1QualificationTargetPageCancellationPoolV1>
+    M1QualificationTargetPagePreleaseCancellationStateV1<Pool>
+{
+    fn cancel(
+        mut self,
+    ) -> Result<
+        M1QualificationTargetPagePreleaseCancellationStateSuccessV1<Pool>,
+        Box<M1QualificationTargetPagePreleaseCancellationStateFailureV1<Pool>>,
+    > {
+        let page_count = self.pages_by_lane.iter().map(Vec::len).sum::<usize>();
+        let mut tickets = Vec::new();
+        let mut unique_pages = std::collections::HashSet::new();
+        let mut returns = Vec::new();
+        if tickets.try_reserve_exact(page_count).is_err()
+            || unique_pages.try_reserve(page_count).is_err()
+            || returns.try_reserve_exact(page_count).is_err()
+        {
+            return Err(Box::new(
+                M1QualificationTargetPagePreleaseCancellationStateFailureV1 {
+                    error:
+                        M1QualificationTargetPagePreleaseCancellationErrorV1::HostCustodyAllocation,
+                    recovery: self,
+                },
+            ));
+        }
+        for (lane, pages) in self.pages_by_lane.iter().enumerate() {
+            for (page, lease) in pages.iter().enumerate() {
+                let global_index = match global_page_index(lease.request, lease.page.index()) {
+                    Ok(index) => index,
+                    Err(_) => return Err(Box::new(
+                        M1QualificationTargetPagePreleaseCancellationStateFailureV1 {
+                            error: M1QualificationTargetPagePreleaseCancellationErrorV1::Page {
+                                lane: u32::try_from(lane).unwrap_or(u32::MAX),
+                                page: u32::try_from(page).unwrap_or(u32::MAX),
+                                source:
+                                    M1QualificationTargetPagePreleaseCancellationPageErrorV1::Index,
+                            },
+                            recovery: self,
+                        },
+                    )),
+                };
+                let ticket = match preflight_page_return_identity(
+                    self.pool.device(),
+                    self.pool.target_allocation_id(),
+                    Qwen3ModelRole::Target8B,
+                    self.pool.target_page_ledger().get(global_index).copied(),
+                    global_index,
+                    lease.request,
+                    lease,
+                ) {
+                    Ok(ticket) => ticket,
+                    Err(source) => {
+                        return Err(Box::new(
+                            M1QualificationTargetPagePreleaseCancellationStateFailureV1 {
+                                error: M1QualificationTargetPagePreleaseCancellationErrorV1::Page {
+                                    lane: u32::try_from(lane).unwrap_or(u32::MAX),
+                                    page: u32::try_from(page).unwrap_or(u32::MAX),
+                                    source: source.into(),
+                                },
+                                recovery: self,
+                            },
+                        ))
+                    }
+                };
+                if !unique_pages.insert(ticket.global_index) {
+                    return Err(Box::new(
+                        M1QualificationTargetPagePreleaseCancellationStateFailureV1 {
+                            error: M1QualificationTargetPagePreleaseCancellationErrorV1::Page {
+                                lane: u32::try_from(lane).unwrap_or(u32::MAX),
+                                page: u32::try_from(page).unwrap_or(u32::MAX),
+                                source:
+                                    M1QualificationTargetPagePreleaseCancellationPageErrorV1::Ledger,
+                            },
+                            recovery: self,
+                        },
+                    ));
+                }
+                tickets.push(ticket);
+            }
+        }
+
+        let pages_by_lane = core::mem::take(&mut self.pages_by_lane);
+        for (ticket, lease) in tickets.into_iter().zip(pages_by_lane.into_iter().flatten()) {
+            returns.push((ticket, lease));
+        }
+        returns.sort_unstable_by_key(|(ticket, _)| ticket.global_index);
+        let mut returns = returns.into_iter().peekable();
+        for (global_index, state) in self.pool.target_page_ledger_mut().iter_mut().enumerate() {
+            if matches!(returns.peek(), Some((ticket, _)) if ticket.global_index == global_index) {
+                if let Some((ticket, lease)) = returns.next() {
+                    commit_page_return_state(state, ticket, lease);
+                }
+            }
+        }
+        Ok(
+            M1QualificationTargetPagePreleaseCancellationStateSuccessV1 {
+                pool: self.pool,
+                caches: self.caches,
+                initial_contexts: self.initial_contexts,
+                grouping: self.grouping,
+                returned_pages: page_count,
+            },
+        )
     }
 }
 
@@ -4786,6 +5199,80 @@ mod tests {
         M1_KV_PHYSICAL_PAGE_SLOTS,
     };
 
+    #[derive(Debug)]
+    struct QualificationTargetPageCancellationTestPoolV1 {
+        device: Gfx942DeviceBinding,
+        target_allocation_id: Identity,
+        target_pages: Box<[M1KvPoolPageStateV1]>,
+    }
+
+    impl M1QualificationTargetPageCancellationPoolV1 for QualificationTargetPageCancellationTestPoolV1 {
+        fn device(&self) -> Gfx942DeviceBinding {
+            self.device
+        }
+
+        fn target_allocation_id(&self) -> Identity {
+            self.target_allocation_id
+        }
+
+        fn target_page_ledger(&self) -> &[M1KvPoolPageStateV1] {
+            &self.target_pages
+        }
+
+        fn target_page_ledger_mut(&mut self) -> &mut [M1KvPoolPageStateV1] {
+            &mut self.target_pages
+        }
+    }
+
+    impl
+        M1QualificationTargetPagePreleaseCancellationStateFailureV1<
+            QualificationTargetPageCancellationTestPoolV1,
+        >
+    {
+        fn error(&self) -> M1QualificationTargetPagePreleaseCancellationErrorV1 {
+            self.error
+        }
+
+        fn progress(&self) -> M1QualificationTargetPagePreleaseProgressV1 {
+            qualification_target_page_prelease_progress(&self.recovery.pages_by_lane)
+        }
+
+        fn grouping(&self) -> M1QualificationLaneGrouping {
+            self.recovery.grouping
+        }
+
+        fn cache_count(&self) -> usize {
+            self.recovery.caches.len()
+        }
+
+        fn initial_contexts(&self) -> &[crate::M1ValidatedQualificationContextStepV1] {
+            &self.recovery.initial_contexts
+        }
+
+        fn device(&self) -> Gfx942DeviceBinding {
+            self.recovery.pool.device()
+        }
+
+        fn target_allocation_id(&self) -> Identity {
+            self.recovery.pool.target_allocation_id()
+        }
+
+        fn target_page_slot_count(&self) -> usize {
+            self.recovery.pool.target_page_ledger().len()
+        }
+
+        fn retry(
+            self,
+        ) -> Result<
+            M1QualificationTargetPagePreleaseCancellationStateSuccessV1<
+                QualificationTargetPageCancellationTestPoolV1,
+            >,
+            Box<Self>,
+        > {
+            self.recovery.cancel()
+        }
+    }
+
     impl DeviceKvPageLease {
         fn from_contracted_gfx942_allocation(
             device: Gfx942DeviceBinding,
@@ -6720,6 +7207,223 @@ mod tests {
                     && lease.page().index() == u32::try_from(page).unwrap()
             }));
         }
+    }
+
+    #[test]
+    fn qualification_prelease_cancellation_round_trips_partial_ledger_in_lane_order() {
+        let grouping = M1QualificationLaneGrouping::S1;
+        let request = RequestId::new(0, 12);
+        let (plan, declaration) = qualification_plan(grouping);
+        let validated =
+            crate::validate_m1_qualification_context_plan_v1(&plan, grouping, &declaration)
+                .unwrap();
+        let contexts = vec![validated.step(0, 0).unwrap()];
+        let pages = (0..3)
+            .map(|page| qualification_page_lease(request, page, 76))
+            .collect::<Vec<_>>();
+        let mut ledger = vec![M1KvPoolPageStateV1::INITIAL; M1_GLOBAL_KV_PAGE_SLOTS_V1];
+        for lease in &pages {
+            let index = global_page_index(request, lease.page().index()).unwrap();
+            ledger[index] = M1KvPoolPageStateV1::Leased {
+                request,
+                generation: lease.page().generation(),
+            };
+        }
+        let recovery = M1QualificationTargetPagePreleaseCancellationStateV1 {
+            pool: QualificationTargetPageCancellationTestPoolV1 {
+                device: device(),
+                target_allocation_id: identity(76),
+                target_pages: ledger.into_boxed_slice(),
+            },
+            caches: vec![qualification_cache(request, grouping)],
+            initial_contexts: contexts.clone(),
+            grouping,
+            pages_by_lane: vec![pages],
+        };
+
+        let cancelled = recovery.cancel().unwrap();
+        assert_eq!(cancelled.grouping, grouping);
+        assert_eq!(cancelled.returned_pages, 3);
+        assert_eq!(cancelled.caches.len(), 1);
+        assert_eq!(cancelled.initial_contexts, contexts);
+        let M1QualificationTargetPagePreleaseCancellationStateSuccessV1 {
+            pool,
+            caches,
+            initial_contexts,
+            grouping: retained_grouping,
+            returned_pages,
+        } = cancelled;
+        assert_eq!(returned_pages, 3);
+        assert_eq!(retained_grouping, grouping);
+        assert_eq!(caches[0].projection().request, request);
+        assert_eq!(initial_contexts, contexts);
+        for page in 0..3 {
+            let index = global_page_index(request, page).unwrap();
+            assert_eq!(
+                pool.target_pages[index],
+                M1KvPoolPageStateV1::Free { generation: 2 }
+            );
+        }
+        let untouched = global_page_index(request, 3).unwrap();
+        assert_eq!(pool.target_pages[untouched], M1KvPoolPageStateV1::INITIAL);
+    }
+
+    #[test]
+    fn qualification_prelease_cancellation_failure_is_transactional_and_retryable() {
+        let grouping = M1QualificationLaneGrouping::S1;
+        let request = RequestId::new(0, 12);
+        let (plan, declaration) = qualification_plan(grouping);
+        let validated =
+            crate::validate_m1_qualification_context_plan_v1(&plan, grouping, &declaration)
+                .unwrap();
+        let contexts = vec![validated.step(0, 0).unwrap()];
+        let valid = qualification_page_lease(request, 0, 76);
+        let wrong_allocation = qualification_page_lease(request, 1, 77);
+        let first_index = global_page_index(request, 0).unwrap();
+        let second_index = global_page_index(request, 1).unwrap();
+        let mut ledger = vec![M1KvPoolPageStateV1::INITIAL; M1_GLOBAL_KV_PAGE_SLOTS_V1];
+        ledger[first_index] = M1KvPoolPageStateV1::Leased {
+            request,
+            generation: 1,
+        };
+        ledger[second_index] = M1KvPoolPageStateV1::Leased {
+            request,
+            generation: 1,
+        };
+        let recovery = M1QualificationTargetPagePreleaseCancellationStateV1 {
+            pool: QualificationTargetPageCancellationTestPoolV1 {
+                device: device(),
+                target_allocation_id: identity(76),
+                target_pages: ledger.into_boxed_slice(),
+            },
+            caches: vec![qualification_cache(request, grouping)],
+            initial_contexts: contexts.clone(),
+            grouping,
+            pages_by_lane: vec![vec![valid, wrong_allocation]],
+        };
+
+        let failure = recovery.cancel().unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1QualificationTargetPagePreleaseCancellationErrorV1::Page {
+                lane: 0,
+                page: 1,
+                source: M1QualificationTargetPagePreleaseCancellationPageErrorV1::Allocation,
+            }
+        );
+        assert_eq!(
+            failure.progress(),
+            M1QualificationTargetPagePreleaseProgressV1 { lane: 0, page: 2 }
+        );
+        assert_eq!(failure.grouping(), grouping);
+        assert_eq!(failure.cache_count(), 1);
+        assert_eq!(failure.initial_contexts(), contexts);
+        assert_eq!(failure.target_allocation_id(), identity(76));
+        assert_eq!(failure.target_page_slot_count(), M1_GLOBAL_KV_PAGE_SLOTS_V1);
+        assert_eq!(failure.recovery.pages_by_lane[0].len(), 2);
+        assert_eq!(
+            failure.recovery.pages_by_lane[0][0].allocation_id(),
+            identity(76)
+        );
+        assert_eq!(
+            failure.recovery.pages_by_lane[0][1].allocation_id(),
+            identity(77)
+        );
+        let pool = &failure.recovery.pool;
+        assert_eq!(
+            pool.target_pages[first_index],
+            M1KvPoolPageStateV1::Leased {
+                request,
+                generation: 1,
+            }
+        );
+        assert_eq!(
+            pool.target_pages[second_index],
+            M1KvPoolPageStateV1::Leased {
+                request,
+                generation: 1,
+            }
+        );
+
+        let failure = failure.retry().unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1QualificationTargetPagePreleaseCancellationErrorV1::Page {
+                lane: 0,
+                page: 1,
+                source: M1QualificationTargetPagePreleaseCancellationPageErrorV1::Allocation,
+            }
+        );
+        assert_eq!(
+            failure.progress(),
+            M1QualificationTargetPagePreleaseProgressV1 { lane: 0, page: 2 }
+        );
+        assert_eq!(failure.cache_count(), 1);
+        assert_eq!(failure.initial_contexts(), contexts);
+        assert_eq!(failure.device(), device());
+        assert_eq!(failure.target_allocation_id(), identity(76));
+        assert_eq!(
+            failure.recovery.pages_by_lane[0][0].allocation_id(),
+            identity(76)
+        );
+        assert_eq!(
+            failure.recovery.pages_by_lane[0][1].allocation_id(),
+            identity(77)
+        );
+        let pool = &failure.recovery.pool;
+        assert_eq!(
+            pool.target_pages[first_index],
+            M1KvPoolPageStateV1::Leased {
+                request,
+                generation: 1,
+            }
+        );
+        assert_eq!(
+            pool.target_pages[second_index],
+            M1KvPoolPageStateV1::Leased {
+                request,
+                generation: 1,
+            }
+        );
+        let exhausted = *failure;
+        assert_eq!(exhausted.grouping(), grouping);
+        assert_eq!(exhausted.cache_count(), 1);
+        assert_eq!(exhausted.initial_contexts(), contexts);
+        assert_eq!(
+            exhausted.error(),
+            M1QualificationTargetPagePreleaseCancellationErrorV1::Page {
+                lane: 0,
+                page: 1,
+                source: M1QualificationTargetPagePreleaseCancellationPageErrorV1::Allocation,
+            }
+        );
+        assert_eq!(
+            exhausted.progress(),
+            M1QualificationTargetPagePreleaseProgressV1 { lane: 0, page: 2 }
+        );
+        assert_eq!(
+            exhausted.recovery.pages_by_lane[0][0].allocation_id(),
+            identity(76)
+        );
+        assert_eq!(
+            exhausted.recovery.pages_by_lane[0][1].allocation_id(),
+            identity(77)
+        );
+        let pool = &exhausted.recovery.pool;
+        assert_eq!(
+            pool.target_pages[first_index],
+            M1KvPoolPageStateV1::Leased {
+                request,
+                generation: 1,
+            }
+        );
+        assert_eq!(
+            pool.target_pages[second_index],
+            M1KvPoolPageStateV1::Leased {
+                request,
+                generation: 1,
+            }
+        );
     }
 
     #[test]

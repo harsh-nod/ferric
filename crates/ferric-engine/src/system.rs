@@ -100,6 +100,20 @@ pub struct Engine<const C: usize> {
     faulted: bool,
 }
 
+/// Permanently faulted Engine retained after a capture phase abandons all
+/// admitted request authority.
+#[must_use = "the quarantined Engine remains the terminal scheduler/KV owner"]
+pub struct M1CaptureQuarantinedEngineV1<const C: usize> {
+    engine: Engine<C>,
+}
+
+impl<const C: usize> M1CaptureQuarantinedEngineV1<C> {
+    #[must_use]
+    pub fn is_faulted(&self) -> bool {
+        self.engine.is_faulted()
+    }
+}
+
 impl<const C: usize> Engine<C> {
     closed spec fn identity_agreement(&self) -> bool {
         &&& forall |slot: int| 0 <= slot < C ==> {
@@ -1019,6 +1033,15 @@ impl<const C: usize> Engine<C> {
         reveal(Engine::faulted_spec);
         reveal(Engine::queue_rearm_quarantine_refines);
         self.faulted = true;
+    }
+
+    /// Consumes the Engine into terminal capture-quarantine custody.
+    #[must_use = "the quarantined Engine remains the terminal scheduler/KV owner"]
+    pub fn into_m1_capture_quarantine(mut self) -> M1CaptureQuarantinedEngineV1<C>
+        requires old(self).well_formed(),
+    {
+        self.quarantine_m1_queue_rearm_failure();
+        M1CaptureQuarantinedEngineV1 { engine: self }
     }
 
     #[must_use]

@@ -20,7 +20,7 @@ use fe2o3_service_host::{
     DeviceWorkspaceRoleV1, ServiceCompletedReadbackV1, ServiceDeviceDispatchRangeV1,
     ServiceDispatchRangeV1, ServiceFixedBatchV1, ServiceFixedDispatchBufferV1,
     ServiceFixedDispatchPacketV1, ServiceHostDispatchRangeV1, ServiceQueueDataUpdateFailureV1,
-    ServiceQueueReleaseObservationV1, ServiceQueueUnboundSessionV1,
+    ServiceQueueReleaseFailureV1, ServiceQueueReleaseObservationV1, ServiceQueueUnboundSessionV1,
 };
 use ferric_build::{AddresslessM1StepWorkspacePlan, M1StepWorkspaceRange};
 use ferric_spec::{
@@ -165,6 +165,62 @@ impl M1RearmRoundHistoryEntryV1 {
 struct M1NonEmptyRearmRoundHistoryV1<T = M1RearmRoundHistoryEntryV1> {
     earlier: Vec<T>,
     latest: T,
+}
+
+#[derive(Debug)]
+struct TerminalLineageJoinV1<Source, Parked, Terminal, History> {
+    source: Source,
+    parked: Parked,
+    terminal: Terminal,
+    history: History,
+}
+
+type TerminalLineageJoinResultV1<Success, Failure, Parked, Terminal, History> = Result<
+    TerminalLineageJoinV1<Success, Parked, Terminal, History>,
+    TerminalLineageJoinV1<Failure, Parked, Terminal, History>,
+>;
+
+fn join_terminal_lineage<Success, Failure, Parked, Terminal, History>(
+    result: Result<Success, Failure>,
+    parked: Parked,
+    terminal: Terminal,
+    history: History,
+) -> TerminalLineageJoinResultV1<Success, Failure, Parked, Terminal, History> {
+    match result {
+        Ok(source) => Ok(TerminalLineageJoinV1 {
+            source,
+            parked,
+            terminal,
+            history,
+        }),
+        Err(source) => Err(TerminalLineageJoinV1 {
+            source,
+            parked,
+            terminal,
+            history,
+        }),
+    }
+}
+
+#[derive(Debug)]
+struct QualificationEvidenceJoinV1<Source, Evidence> {
+    source: Source,
+    evidence: Evidence,
+}
+
+type QualificationEvidenceJoinResultV1<Success, Failure, Evidence> = Result<
+    QualificationEvidenceJoinV1<Success, Evidence>,
+    QualificationEvidenceJoinV1<Failure, Evidence>,
+>;
+
+fn join_qualification_evidence<Success, Failure, Evidence>(
+    result: Result<Success, Failure>,
+    evidence: Evidence,
+) -> QualificationEvidenceJoinResultV1<Success, Failure, Evidence> {
+    match result {
+        Ok(source) => Ok(QualificationEvidenceJoinV1 { source, evidence }),
+        Err(source) => Err(QualificationEvidenceJoinV1 { source, evidence }),
+    }
 }
 
 impl<T> M1NonEmptyRearmRoundHistoryV1<T> {
@@ -382,6 +438,217 @@ impl M1LongLivedQueueRearmScheduleFailureV1 {
             failure => Err(failure),
         }
     }
+
+    /// Closes every non-released scheduling failure without relabeling an
+    /// intact released retry owner as terminal.
+    pub fn close_terminal(self) -> M1LongLivedQueueRearmScheduleClosureOutcomeV1 {
+        match self {
+            failure @ Self {
+                custody: ScheduleFailureCustodyV1::ReleasedWithLineage { .. },
+                ..
+            } => M1LongLivedQueueRearmScheduleClosureOutcomeV1::Released(failure),
+            Self {
+                error,
+                custody: ScheduleFailureCustodyV1::Detach { queue, residue },
+            } => M1LongLivedQueueRearmScheduleClosureOutcomeV1::QueueDetach(
+                M1LongLivedQueueRearmScheduleDetachQuarantineV1 {
+                    error,
+                    queue,
+                    residue,
+                },
+            ),
+            Self {
+                error,
+                custody:
+                    ScheduleFailureCustodyV1::Detached {
+                        queue,
+                        residue,
+                        scheduler_error,
+                        scheduled,
+                    },
+            } => {
+                let (shape, lower, batch_custody) = (*queue).into_rearm_parts();
+                let custody = M1LongLivedQueueRearmScheduleDetachedCustodyV1 {
+                    error,
+                    shape,
+                    batch_custody,
+                    residue,
+                    scheduler_error,
+                    scheduled,
+                };
+                M1LongLivedQueueRearmScheduleClosureOutcomeV1::Detached(Box::new(
+                    match lower.destroy_and_release() {
+                        Ok(queue_release) => {
+                            Ok(M1LongLivedQueueRearmScheduleDetachedTeardownSuccessV1 {
+                                queue_release,
+                                custody,
+                            })
+                        }
+                        Err(source) => Err(Box::new(
+                            M1LongLivedQueueRearmScheduleDetachedTeardownFailureV1 {
+                                source,
+                                custody,
+                            },
+                        )),
+                    },
+                ))
+            }
+        }
+    }
+}
+
+/// Exhaustive closure of a failed scheduling transition.
+#[must_use = "schedule closure retains every phase-local owner"]
+#[derive(Debug)]
+pub enum M1LongLivedQueueRearmScheduleClosureOutcomeV1 {
+    Released(M1LongLivedQueueRearmScheduleFailureV1),
+    QueueDetach(M1LongLivedQueueRearmScheduleDetachQuarantineV1),
+    Detached(
+        Box<
+            Result<
+                M1LongLivedQueueRearmScheduleDetachedTeardownSuccessV1,
+                Box<M1LongLivedQueueRearmScheduleDetachedTeardownFailureV1>,
+            >,
+        >,
+    ),
+}
+
+/// Lower detach quarantine retaining exact released-step residue.
+#[must_use = "detach quarantine and released-step residue remain retained"]
+#[derive(Debug)]
+pub struct M1LongLivedQueueRearmScheduleDetachQuarantineV1 {
+    error: M1LongLivedQueueRearmScheduleErrorV1,
+    queue: Box<M1PhysicalReadbackQueueOperationFailureV1>,
+    residue: Box<ReleasedStepResidueV1>,
+}
+
+impl M1LongLivedQueueRearmScheduleDetachQuarantineV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1LongLivedQueueRearmScheduleErrorV1 {
+        self.error
+    }
+
+    pub const fn source(&self) -> &M1PhysicalReadbackQueueOperationFailureV1 {
+        &self.queue
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.residue.history.len()
+    }
+}
+
+#[derive(Debug)]
+struct M1LongLivedQueueRearmScheduleDetachedCustodyV1 {
+    error: M1LongLivedQueueRearmScheduleErrorV1,
+    shape: M1PhysicalFixedBatchShapeV1,
+    batch_custody: M1PhysicalQueueBatchCustodyV1,
+    residue: Box<ReleasedStepResidueV1>,
+    scheduler_error: Option<EngineError>,
+    scheduled: Option<Box<M1ScheduledDispatchV1>>,
+}
+
+/// Clean release after a detached scheduling failure.
+#[must_use = "detached scheduling residue remains retained"]
+#[derive(Debug)]
+pub struct M1LongLivedQueueRearmScheduleDetachedTeardownSuccessV1 {
+    queue_release: ServiceQueueReleaseObservationV1,
+    custody: M1LongLivedQueueRearmScheduleDetachedCustodyV1,
+}
+
+/// Terminal lower release failure after detached scheduling failure.
+#[must_use = "detached scheduling release quarantine remains retained"]
+#[derive(Debug)]
+pub struct M1LongLivedQueueRearmScheduleDetachedTeardownFailureV1 {
+    source: ServiceQueueReleaseFailureV1,
+    custody: M1LongLivedQueueRearmScheduleDetachedCustodyV1,
+}
+
+impl M1LongLivedQueueRearmScheduleDetachedTeardownSuccessV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1LongLivedQueueRearmScheduleErrorV1 {
+        self.custody.error
+    }
+
+    #[must_use]
+    pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
+        self.custody.shape
+    }
+
+    pub const fn batch_custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
+        &self.custody.batch_custody
+    }
+
+    #[must_use]
+    pub const fn retained_member_count(&self) -> usize {
+        self.custody.residue.members.len()
+    }
+
+    #[must_use]
+    pub const fn scheduler_error(&self) -> Option<&EngineError> {
+        self.custody.scheduler_error.as_ref()
+    }
+
+    #[must_use]
+    pub const fn scheduled_dispatch(&self) -> Option<&M1ScheduledDispatchV1> {
+        match &self.custody.scheduled {
+            Some(scheduled) => Some(scheduled),
+            None => None,
+        }
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.custody.residue.history.len()
+    }
+
+    #[must_use]
+    pub const fn queue_release(&self) -> ServiceQueueReleaseObservationV1 {
+        self.queue_release
+    }
+}
+
+impl M1LongLivedQueueRearmScheduleDetachedTeardownFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1LongLivedQueueRearmScheduleErrorV1 {
+        self.custody.error
+    }
+
+    #[must_use]
+    pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
+        self.custody.shape
+    }
+
+    pub const fn batch_custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
+        &self.custody.batch_custody
+    }
+
+    #[must_use]
+    pub const fn retained_member_count(&self) -> usize {
+        self.custody.residue.members.len()
+    }
+
+    #[must_use]
+    pub const fn scheduler_error(&self) -> Option<&EngineError> {
+        self.custody.scheduler_error.as_ref()
+    }
+
+    #[must_use]
+    pub const fn scheduled_dispatch(&self) -> Option<&M1ScheduledDispatchV1> {
+        match &self.custody.scheduled {
+            Some(scheduled) => Some(scheduled),
+            None => None,
+        }
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.custody.residue.history.len()
+    }
+
+    pub const fn source(&self) -> &ServiceQueueReleaseFailureV1 {
+        &self.source
+    }
 }
 
 /// Intact released round that can retry scheduling or cleanly release its queue.
@@ -440,8 +707,9 @@ impl M1LongLivedQueueUnscheduledRoundV1 {
     ///
     /// Returns terminal lower-layer queue release quarantine together with all
     /// parked and terminal lineage custody.
-    pub fn destroy_queue_and_retain_round(
+    pub fn destroy_queue_and_retain_round<const C: usize>(
         self,
+        engine: &mut Engine<C>,
     ) -> Result<M1LongLivedQueueRearmTeardownSuccessV1, Box<M1LongLivedQueueRearmTeardownFailureV1>>
     {
         let Self {
@@ -450,7 +718,7 @@ impl M1LongLivedQueueUnscheduledRoundV1 {
             terminal,
             history,
         } = self;
-        match released.destroy_queue_and_retain_step() {
+        match released.destroy_queue_and_retain_step(engine) {
             Ok(released) => Ok(M1LongLivedQueueRearmTeardownSuccessV1 {
                 released,
                 parked,
@@ -677,6 +945,249 @@ impl M1ScheduledLongLivedQueueRearmV1 {
         &self,
     ) -> impl ExactSizeIterator<Item = crate::DeviceKvCacheProjection> + '_ {
         self.selected.iter().map(ActiveDeviceKvCache::projection)
+    }
+
+    /// Quarantines the Engine and destroys the detached queue while retaining
+    /// the exact scheduler batch, caches, prior completion, and round history.
+    ///
+    /// # Errors
+    ///
+    /// Returns lower queue-release quarantine joined to every retained round
+    /// owner when physical queue destruction fails.
+    pub fn destroy_queue_and_retain_round<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1ScheduledLongLivedQueueRearmTeardownSuccessV1,
+        Box<M1ScheduledLongLivedQueueRearmTeardownFailureV1>,
+    > {
+        engine.quarantine_m1_queue_rearm_failure();
+        let Self {
+            queue,
+            scheduled,
+            selected,
+            parked,
+            terminal,
+            prior_checked,
+            logical_accepted_counts,
+            externally_published_counts,
+            release_counts,
+            completed_members,
+            total_released,
+            history,
+        } = self;
+        let (shape, lower, batch_custody) = queue.into_rearm_parts();
+        let custody = M1ScheduledLongLivedQueueRearmTeardownCustodyV1 {
+            shape,
+            batch_custody,
+            scheduled,
+            selected,
+            parked,
+            terminal,
+            prior_checked,
+            logical_accepted_counts,
+            externally_published_counts,
+            release_counts,
+            completed_members,
+            total_released,
+            history,
+        };
+        match lower.destroy_and_release() {
+            Ok(queue_release) => Ok(M1ScheduledLongLivedQueueRearmTeardownSuccessV1 {
+                queue_release,
+                custody,
+            }),
+            Err(source) => Err(Box::new(M1ScheduledLongLivedQueueRearmTeardownFailureV1 {
+                source,
+                custody,
+            })),
+        }
+    }
+}
+
+#[derive(Debug)]
+struct M1ScheduledLongLivedQueueRearmTeardownCustodyV1 {
+    shape: M1PhysicalFixedBatchShapeV1,
+    batch_custody: M1PhysicalQueueBatchCustodyV1,
+    scheduled: M1ScheduledDispatchV1,
+    selected: Vec<ActiveDeviceKvCache>,
+    parked: Vec<ActiveDeviceKvCache>,
+    terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
+    prior_checked: crate::M1CheckedCompletionOutputV1,
+    logical_accepted_counts: Box<[u32]>,
+    externally_published_counts: Box<[u32]>,
+    release_counts: Box<[M1CompletedKvPageReleaseCountsV1]>,
+    completed_members: usize,
+    total_released: usize,
+    history: M1RearmRoundHistoryV1,
+}
+
+/// Clean teardown of an already scheduled next round.
+#[must_use = "scheduled round custody remains retained"]
+#[derive(Debug)]
+pub struct M1ScheduledLongLivedQueueRearmTeardownSuccessV1 {
+    queue_release: ServiceQueueReleaseObservationV1,
+    custody: M1ScheduledLongLivedQueueRearmTeardownCustodyV1,
+}
+
+/// Terminal lower release quarantine retaining an already scheduled round.
+#[must_use = "scheduled round release quarantine remains retained"]
+#[derive(Debug)]
+pub struct M1ScheduledLongLivedQueueRearmTeardownFailureV1 {
+    source: ServiceQueueReleaseFailureV1,
+    custody: M1ScheduledLongLivedQueueRearmTeardownCustodyV1,
+}
+
+impl M1ScheduledLongLivedQueueRearmTeardownSuccessV1 {
+    #[must_use]
+    pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
+        self.custody.shape
+    }
+
+    pub const fn batch_custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
+        &self.custody.batch_custody
+    }
+
+    pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
+        &self.custody.scheduled
+    }
+
+    #[must_use]
+    pub fn selected_requests(&self) -> impl ExactSizeIterator<Item = RequestId> + '_ {
+        self.custody
+            .selected
+            .iter()
+            .map(|cache| cache.projection().request)
+    }
+
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        self.custody.parked.len()
+    }
+
+    #[must_use]
+    pub const fn terminal_count(&self) -> usize {
+        self.custody.terminal.len()
+    }
+
+    pub const fn prior_checked(&self) -> &crate::M1CheckedCompletionOutputV1 {
+        &self.custody.prior_checked
+    }
+
+    #[must_use]
+    pub fn prior_logical_accepted_counts(&self) -> &[u32] {
+        &self.custody.logical_accepted_counts
+    }
+
+    #[must_use]
+    pub fn prior_externally_published_counts(&self) -> &[u32] {
+        &self.custody.externally_published_counts
+    }
+
+    #[must_use]
+    pub fn prior_release_counts(&self) -> &[M1CompletedKvPageReleaseCountsV1] {
+        &self.custody.release_counts
+    }
+
+    #[must_use]
+    pub const fn prior_completed_members(&self) -> usize {
+        self.custody.completed_members
+    }
+
+    #[must_use]
+    pub const fn prior_total_released(&self) -> usize {
+        self.custody.total_released
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.custody.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.custody.history.get(index)
+    }
+
+    #[must_use]
+    pub const fn queue_release(&self) -> ServiceQueueReleaseObservationV1 {
+        self.queue_release
+    }
+}
+
+impl M1ScheduledLongLivedQueueRearmTeardownFailureV1 {
+    #[must_use]
+    pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
+        self.custody.shape
+    }
+
+    pub const fn batch_custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
+        &self.custody.batch_custody
+    }
+
+    pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
+        &self.custody.scheduled
+    }
+
+    #[must_use]
+    pub fn selected_requests(&self) -> impl ExactSizeIterator<Item = RequestId> + '_ {
+        self.custody
+            .selected
+            .iter()
+            .map(|cache| cache.projection().request)
+    }
+
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        self.custody.parked.len()
+    }
+
+    #[must_use]
+    pub const fn terminal_count(&self) -> usize {
+        self.custody.terminal.len()
+    }
+
+    pub const fn prior_checked(&self) -> &crate::M1CheckedCompletionOutputV1 {
+        &self.custody.prior_checked
+    }
+
+    #[must_use]
+    pub fn prior_logical_accepted_counts(&self) -> &[u32] {
+        &self.custody.logical_accepted_counts
+    }
+
+    #[must_use]
+    pub fn prior_externally_published_counts(&self) -> &[u32] {
+        &self.custody.externally_published_counts
+    }
+
+    #[must_use]
+    pub fn prior_release_counts(&self) -> &[M1CompletedKvPageReleaseCountsV1] {
+        &self.custody.release_counts
+    }
+
+    #[must_use]
+    pub const fn prior_completed_members(&self) -> usize {
+        self.custody.completed_members
+    }
+
+    #[must_use]
+    pub const fn prior_total_released(&self) -> usize {
+        self.custody.total_released
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.custody.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.custody.history.get(index)
+    }
+
+    pub const fn source(&self) -> &ServiceQueueReleaseFailureV1 {
+        &self.source
     }
 }
 
@@ -1393,9 +1904,14 @@ fn reserve_m1_long_lived_queue_rearm_kv_inner_v1(
                     (scheduled, target, contexts),
                 ));
             }
-            for (lane, context) in contexts.iter().copied().enumerate() {
-                let request = scheduled.selected[lane].projection().request;
-                match scheduled.selected[lane].reserve_m1_qualification_context_step_write_v1(
+            for (lane, (cache, context)) in scheduled
+                .selected
+                .iter_mut()
+                .zip(contexts.iter().copied())
+                .enumerate()
+            {
+                let request = cache.projection().request;
+                match cache.reserve_m1_qualification_context_step_write_v1(
                     request,
                     u32::try_from(lane).unwrap_or(u32::MAX),
                     context,
@@ -2278,25 +2794,70 @@ impl<const N: usize> WorkspaceReplacementFailureV1<N> {
     }
 }
 
+struct LowerBatchFailureV1<'a> {
+    catalog: ContentBoundM1ProgramCatalogV1<'a>,
+    images: Box<[crate::M1PhysicalKernargImageV1]>,
+}
+
+struct LowerBatchInputV1 {
+    physical: crate::M1PhysicalDispatchRecipeRowV1,
+    image: crate::M1PhysicalKernargImageV1,
+    buffers: Box<[fe2o3_service_host::ServiceFixedDispatchBufferV1]>,
+}
+
 fn lower_batch<'a, const N: usize>(
     catalog: ContentBoundM1ProgramCatalogV1<'a>,
     physical: &crate::AddresslessM1PhysicalDispatchRecipeV1,
     images: Box<[crate::M1PhysicalKernargImageV1]>,
     bound: &[M1BoundPhysicalBufferRowV1],
-) -> ServiceFixedBatchV1<'a, N> {
-    let mut images = images.into_vec().into_iter();
-    let packets = core::array::from_fn(|index| {
-        let physical = physical.rows()[index];
-        let image = images.next().expect("cardinality was checked");
+) -> Result<ServiceFixedBatchV1<'a, N>, Box<LowerBatchFailureV1<'a>>> {
+    if physical.rows().len() != N || images.len() != N || bound.len() != N {
+        return Err(Box::new(LowerBatchFailureV1 { catalog, images }));
+    }
+    let mut inputs = Vec::new();
+    if inputs.try_reserve_exact(N).is_err() {
+        return Err(Box::new(LowerBatchFailureV1 { catalog, images }));
+    }
+    for ((image, physical), bound) in images
+        .into_vec()
+        .into_iter()
+        .zip(physical.rows().iter().copied())
+        .zip(bound)
+    {
+        inputs.push(LowerBatchInputV1 {
+            physical,
+            image,
+            buffers: bound.buffers().to_vec().into_boxed_slice(),
+        });
+    }
+    let inputs: [LowerBatchInputV1; N] = match inputs.try_into() {
+        Ok(inputs) => inputs,
+        Err(inputs) => {
+            return Err(Box::new(LowerBatchFailureV1 {
+                catalog,
+                images: inputs
+                    .into_iter()
+                    .map(|input| input.image)
+                    .collect::<Vec<_>>()
+                    .into_boxed_slice(),
+            }));
+        }
+    };
+    let packets = inputs.map(|input| {
+        let LowerBatchInputV1 {
+            physical,
+            image,
+            buffers,
+        } = input;
         ServiceFixedDispatchPacketV1::new(
             physical.program_index(),
             physical.geometry(),
             physical.dynamic_group_segment_bytes(),
             image.into_bytes(),
-            bound[index].buffers().to_vec().into_boxed_slice(),
+            buffers,
         )
     });
-    ServiceFixedBatchV1::new(catalog.into_programs(), packets)
+    Ok(ServiceFixedBatchV1::new(catalog.into_programs(), packets))
 }
 
 #[derive(Debug)]
@@ -3271,6 +3832,49 @@ impl M1RearmedObservedQualificationOutputV1 {
         self.carry.previous_epoch
     }
 
+    /// Quarantines the Engine and destroys the observed physical queue while
+    /// retaining the copied qualification evidence and complete round lineage.
+    ///
+    /// This transition is reserved for caller-side invariant failures that
+    /// occur after a successful terminal observation but before semantic join.
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal lower queue-release quarantine joined to the same
+    /// evidence and lineage.
+    pub fn destroy_queue_and_retain_custody<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1RearmedObservedQualificationTeardownSuccessV1,
+        Box<M1RearmedObservedQualificationTeardownFailureV1>,
+    > {
+        quarantine_qualification_teardown(engine);
+        let Self {
+            observed,
+            carry,
+            queue_observation,
+            device,
+        } = self;
+        let (completion, evidence) = observed.into_teardown_parts();
+        let custody = M1RearmedObservedQualificationTeardownCustodyV1 {
+            evidence,
+            carry,
+            queue_observation,
+            device,
+        };
+        match completion.destroy_and_release() {
+            Ok(queue_release) => Ok(M1RearmedObservedQualificationTeardownSuccessV1 {
+                queue_release,
+                custody,
+            }),
+            Err(source) => Err(Box::new(M1RearmedObservedQualificationTeardownFailureV1 {
+                source,
+                custody,
+            })),
+        }
+    }
+
     /// Derives and joins the terminal finite BF16 argmax for every live lane.
     ///
     /// This is the only rearmed transition that admits
@@ -3321,6 +3925,141 @@ impl M1RearmedObservedQualificationOutputV1 {
                 })
             }
         }
+    }
+}
+
+#[derive(Debug)]
+struct M1RearmedObservedQualificationTeardownCustodyV1 {
+    evidence: crate::M1QualificationCompletionEvidenceV1,
+    carry: M1RearmContinuationCustodyV1,
+    queue_observation: ComputeAqlQueueObservationV1,
+    device: Gfx942DeviceBinding,
+}
+
+/// Clean queue teardown after a caller-side terminal observation rejection.
+#[must_use = "terminal observation evidence and lineage remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedObservedQualificationTeardownSuccessV1 {
+    queue_release: ServiceQueueReleaseObservationV1,
+    custody: M1RearmedObservedQualificationTeardownCustodyV1,
+}
+
+/// Terminal queue-release quarantine after caller-side observation rejection.
+#[must_use = "terminal observation release quarantine remains retained"]
+#[derive(Debug)]
+pub struct M1RearmedObservedQualificationTeardownFailureV1 {
+    source: crate::M1PhysicalQueueReleaseFailureV1,
+    custody: M1RearmedObservedQualificationTeardownCustodyV1,
+}
+
+impl M1RearmedObservedQualificationTeardownSuccessV1 {
+    #[must_use = "qualification evidence remains retained"]
+    pub const fn evidence(&self) -> &crate::M1QualificationCompletionEvidenceV1 {
+        &self.custody.evidence
+    }
+
+    #[must_use]
+    pub fn selected_requests(&self) -> impl ExactSizeIterator<Item = RequestId> + '_ {
+        self.custody
+            .carry
+            .selected
+            .iter()
+            .map(|cache| cache.projection().request)
+    }
+
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        self.custody.carry.parked.len()
+    }
+
+    #[must_use]
+    pub const fn terminal_count(&self) -> usize {
+        self.custody.carry.terminal.len()
+    }
+
+    #[must_use]
+    pub const fn previous_epoch(&self) -> CompletionEpoch {
+        self.custody.carry.previous_epoch
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.custody.carry.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.custody.carry.history.get(index)
+    }
+
+    #[must_use]
+    pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
+        self.custody.queue_observation
+    }
+
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.custody.device
+    }
+
+    #[must_use]
+    pub const fn queue_release(&self) -> ServiceQueueReleaseObservationV1 {
+        self.queue_release
+    }
+}
+
+impl M1RearmedObservedQualificationTeardownFailureV1 {
+    #[must_use = "qualification evidence remains retained"]
+    pub const fn evidence(&self) -> &crate::M1QualificationCompletionEvidenceV1 {
+        &self.custody.evidence
+    }
+
+    #[must_use]
+    pub fn selected_requests(&self) -> impl ExactSizeIterator<Item = RequestId> + '_ {
+        self.custody
+            .carry
+            .selected
+            .iter()
+            .map(|cache| cache.projection().request)
+    }
+
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        self.custody.carry.parked.len()
+    }
+
+    #[must_use]
+    pub const fn terminal_count(&self) -> usize {
+        self.custody.carry.terminal.len()
+    }
+
+    #[must_use]
+    pub const fn previous_epoch(&self) -> CompletionEpoch {
+        self.custody.carry.previous_epoch
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.custody.carry.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.custody.carry.history.get(index)
+    }
+
+    #[must_use]
+    pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
+        self.custody.queue_observation
+    }
+
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.custody.device
+    }
+
+    pub const fn source(&self) -> &crate::M1PhysicalQueueReleaseFailureV1 {
+        &self.source
     }
 }
 
@@ -4351,6 +5090,51 @@ impl M1RearmedQualifiedCompletedReadbackV1 {
         self.readback.round_history(index)
     }
 
+    /// Quarantines the Engine and destroys the completed-readback queue while
+    /// retaining exact terminal evidence, checked output, KV reservations, and
+    /// round lineage.
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal lower readback-queue release quarantine joined to all
+    /// of the same terminal custody.
+    pub fn destroy_queue_and_retain_custody<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1RearmedQualifiedReadbackTeardownSuccessV1,
+        Box<M1RearmedQualifiedReadbackTeardownFailureV1>,
+    > {
+        quarantine_readback_teardown(engine);
+        let Self { readback, evidence } = self;
+        let M1RearmedCompletedReadbackV1 {
+            readback,
+            carry,
+            queue_observation,
+            device,
+        } = readback;
+        let (queue, checked, completion, kv) = readback.into_parts();
+        let custody = M1RearmedQualifiedReadbackTeardownCustodyV1 {
+            checked,
+            completion,
+            kv,
+            evidence,
+            carry,
+            queue_observation,
+            device,
+        };
+        match queue.destroy_and_release() {
+            Ok(queue_release) => Ok(M1RearmedQualifiedReadbackTeardownSuccessV1 {
+                queue_release,
+                custody,
+            }),
+            Err(source) => Err(Box::new(M1RearmedQualifiedReadbackTeardownFailureV1 {
+                source,
+                custody,
+            })),
+        }
+    }
+
     /// Completes every selected member with the terminal retiring disposition.
     ///
     /// This local wrapper never permits a qualification-bearing member to
@@ -4405,6 +5189,170 @@ impl M1RearmedQualifiedCompletedReadbackV1 {
                 custody: M1RearmedQualifiedCompletionPreflightCustodyV1::Lower { source, evidence },
             })),
         }
+    }
+}
+
+#[derive(Debug)]
+struct M1RearmedQualifiedReadbackTeardownCustodyV1 {
+    checked: crate::M1CheckedCompletionOutputV1,
+    completion: crate::ExactCompletion,
+    kv: crate::M1FullStepKvReservationCustodyV1,
+    evidence: crate::M1QualificationCompletionEvidenceV1,
+    carry: M1RearmContinuationCustodyV1,
+    queue_observation: ComputeAqlQueueObservationV1,
+    device: Gfx942DeviceBinding,
+}
+
+/// Clean queue teardown retaining a successful terminal qualification join.
+#[must_use = "qualified readback evidence and lineage remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedQualifiedReadbackTeardownSuccessV1 {
+    queue_release: ServiceQueueReleaseObservationV1,
+    custody: M1RearmedQualifiedReadbackTeardownCustodyV1,
+}
+
+/// Terminal lower release quarantine retaining a qualified readback.
+#[must_use = "qualified readback release quarantine remains retained"]
+#[derive(Debug)]
+pub struct M1RearmedQualifiedReadbackTeardownFailureV1 {
+    source: crate::M1PhysicalReadbackQueueReleaseFailureV1,
+    custody: M1RearmedQualifiedReadbackTeardownCustodyV1,
+}
+
+impl M1RearmedQualifiedReadbackTeardownSuccessV1 {
+    pub const fn checked(&self) -> &crate::M1CheckedCompletionOutputV1 {
+        &self.custody.checked
+    }
+
+    #[must_use]
+    pub const fn completion_epoch(&self) -> CompletionEpoch {
+        self.custody.completion.epoch()
+    }
+
+    pub const fn kv_reservations(&self) -> &crate::M1FullStepKvReservationCustodyV1 {
+        &self.custody.kv
+    }
+
+    #[must_use = "qualification evidence remains retained"]
+    pub const fn evidence(&self) -> &crate::M1QualificationCompletionEvidenceV1 {
+        &self.custody.evidence
+    }
+
+    #[must_use]
+    pub fn selected_requests(&self) -> impl ExactSizeIterator<Item = RequestId> + '_ {
+        self.custody
+            .carry
+            .selected
+            .iter()
+            .map(|cache| cache.projection().request)
+    }
+
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        self.custody.carry.parked.len()
+    }
+
+    #[must_use]
+    pub const fn terminal_count(&self) -> usize {
+        self.custody.carry.terminal.len()
+    }
+
+    #[must_use]
+    pub const fn previous_epoch(&self) -> CompletionEpoch {
+        self.custody.carry.previous_epoch
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.custody.carry.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.custody.carry.history.get(index)
+    }
+
+    #[must_use]
+    pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
+        self.custody.queue_observation
+    }
+
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.custody.device
+    }
+
+    #[must_use]
+    pub const fn queue_release(&self) -> ServiceQueueReleaseObservationV1 {
+        self.queue_release
+    }
+}
+
+impl M1RearmedQualifiedReadbackTeardownFailureV1 {
+    pub const fn checked(&self) -> &crate::M1CheckedCompletionOutputV1 {
+        &self.custody.checked
+    }
+
+    #[must_use]
+    pub const fn completion_epoch(&self) -> CompletionEpoch {
+        self.custody.completion.epoch()
+    }
+
+    pub const fn kv_reservations(&self) -> &crate::M1FullStepKvReservationCustodyV1 {
+        &self.custody.kv
+    }
+
+    #[must_use = "qualification evidence remains retained"]
+    pub const fn evidence(&self) -> &crate::M1QualificationCompletionEvidenceV1 {
+        &self.custody.evidence
+    }
+
+    #[must_use]
+    pub fn selected_requests(&self) -> impl ExactSizeIterator<Item = RequestId> + '_ {
+        self.custody
+            .carry
+            .selected
+            .iter()
+            .map(|cache| cache.projection().request)
+    }
+
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        self.custody.carry.parked.len()
+    }
+
+    #[must_use]
+    pub const fn terminal_count(&self) -> usize {
+        self.custody.carry.terminal.len()
+    }
+
+    #[must_use]
+    pub const fn previous_epoch(&self) -> CompletionEpoch {
+        self.custody.carry.previous_epoch
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.custody.carry.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.custody.carry.history.get(index)
+    }
+
+    #[must_use]
+    pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
+        self.custody.queue_observation
+    }
+
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.custody.device
+    }
+
+    pub const fn source(&self) -> &crate::M1PhysicalReadbackQueueReleaseFailureV1 {
+        &self.source
     }
 }
 
@@ -4531,6 +5479,101 @@ impl M1RearmedQualifiedCompletionPreflightFailureV1 {
             }
         }
     }
+
+    /// Quarantines the Engine and destroys the physical queue while retaining
+    /// final qualification evidence and the exact completion-preflight owner.
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal lower queue-release quarantine joined to the same
+    /// final evidence and round lineage.
+    pub fn destroy_queue_and_retain_custody<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1RearmedQualifiedCompletionPreflightTeardownSuccessV1,
+        Box<M1RearmedQualifiedCompletionPreflightTeardownFailureV1>,
+    > {
+        let error = self.error;
+        let (source, evidence) = match self.custody {
+            M1RearmedQualifiedCompletionPreflightCustodyV1::Readback(readback) => {
+                let M1RearmedQualifiedCompletedReadbackV1 { readback, evidence } = *readback;
+                (
+                    teardown_rearmed_completion_preflight(engine, error, readback, Vec::new()),
+                    evidence,
+                )
+            }
+            M1RearmedQualifiedCompletionPreflightCustodyV1::Lower { source, evidence } => {
+                (source.destroy_queue_and_retain_custody(engine), evidence)
+            }
+        };
+        match source {
+            Ok(source) => {
+                Ok(M1RearmedQualifiedCompletionPreflightTeardownSuccessV1 { source, evidence })
+            }
+            Err(source) => Err(Box::new(
+                M1RearmedQualifiedCompletionPreflightTeardownFailureV1 { source, evidence },
+            )),
+        }
+    }
+}
+
+/// Clean completion-preflight teardown retaining final qualification evidence.
+#[must_use = "completion preflight teardown and final evidence remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedQualifiedCompletionPreflightTeardownSuccessV1 {
+    source: M1RearmedCompletionPreflightTeardownSuccessV1,
+    evidence: crate::M1QualificationCompletionEvidenceV1,
+}
+
+impl M1RearmedQualifiedCompletionPreflightTeardownSuccessV1 {
+    pub const fn source(&self) -> &M1RearmedCompletionPreflightTeardownSuccessV1 {
+        &self.source
+    }
+
+    #[must_use = "final qualification evidence remains retained"]
+    pub const fn evidence(&self) -> &crate::M1QualificationCompletionEvidenceV1 {
+        &self.evidence
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.source.round_history_len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.source.round_history(index)
+    }
+}
+
+/// Terminal completion-preflight release quarantine retaining final evidence.
+#[must_use = "completion preflight quarantine and final evidence remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedQualifiedCompletionPreflightTeardownFailureV1 {
+    source: Box<M1RearmedCompletionPreflightTeardownFailureV1>,
+    evidence: crate::M1QualificationCompletionEvidenceV1,
+}
+
+impl M1RearmedQualifiedCompletionPreflightTeardownFailureV1 {
+    pub const fn source(&self) -> &M1RearmedCompletionPreflightTeardownFailureV1 {
+        &self.source
+    }
+
+    #[must_use = "final qualification evidence remains retained"]
+    pub const fn evidence(&self) -> &crate::M1QualificationCompletionEvidenceV1 {
+        &self.evidence
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.source.round_history_len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.source.round_history(index)
+    }
 }
 
 /// Terminal physical completion outcome retaining final qualification evidence.
@@ -4564,6 +5607,95 @@ impl M1RearmedQualifiedCompletionOutcomeV1 {
         self.completion.round_history(index)
     }
 
+    /// Retries only an unchanged physical completion preflight rejection while
+    /// retaining the final qualification evidence across every outcome.
+    ///
+    /// # Errors
+    ///
+    /// Returns the unchanged qualified owner when the physical outcome is
+    /// already completed or terminally poisoned.
+    pub fn retry_rejected<const C: usize>(self, engine: &mut Engine<C>) -> Result<Self, Box<Self>> {
+        let Self {
+            completion,
+            evidence,
+        } = self;
+        match completion.retry_rejected(engine) {
+            Ok(completion) => Ok(Self {
+                completion,
+                evidence,
+            }),
+            Err(completion) => Err(Box::new(Self {
+                completion: *completion,
+                evidence,
+            })),
+        }
+    }
+
+    /// Destroys a retry-exhausted rejected completion while retaining final
+    /// qualification evidence and every round owner.
+    ///
+    /// # Errors
+    ///
+    /// Returns this qualified owner unchanged when its physical outcome is not
+    /// retryably rejected.
+    pub fn destroy_queue_and_retain_rejected<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        Result<
+            M1RearmedQualifiedRejectedCompletionTeardownSuccessV1,
+            Box<M1RearmedQualifiedRejectedCompletionTeardownFailureV1>,
+        >,
+        Box<Self>,
+    > {
+        let Self {
+            completion,
+            evidence,
+        } = self;
+        match completion.destroy_queue_and_retain_rejected(engine) {
+            Ok(result) => Ok(match join_qualification_evidence(result, evidence) {
+                Ok(joined) => Ok(M1RearmedQualifiedRejectedCompletionTeardownSuccessV1 {
+                    source: joined.source,
+                    evidence: joined.evidence,
+                }),
+                Err(joined) => Err(Box::new(
+                    M1RearmedQualifiedRejectedCompletionTeardownFailureV1 {
+                        source: joined.source,
+                        evidence: joined.evidence,
+                    },
+                )),
+            }),
+            Err(completion) => Err(Box::new(Self {
+                completion: *completion,
+                evidence,
+            })),
+        }
+    }
+
+    /// Extracts terminal physical completion poison joined to final
+    /// qualification evidence and round lineage.
+    ///
+    /// # Errors
+    ///
+    /// Returns this qualified owner unchanged unless the physical completion
+    /// is poisoned.
+    pub fn into_terminal_poison(self) -> Result<M1RearmedQualifiedPoisonedCompletionV1, Box<Self>> {
+        let Self {
+            completion,
+            evidence,
+        } = self;
+        match completion.into_terminal_poison() {
+            Ok(completion) => Ok(M1RearmedQualifiedPoisonedCompletionV1 {
+                completion,
+                evidence,
+            }),
+            Err(completion) => Err(Box::new(Self {
+                completion: *completion,
+                evidence,
+            })),
+        }
+    }
+
     /// Releases retired pages from a successful terminal completion while
     /// retaining qualification evidence beside every exhaustive outcome.
     #[must_use = "release outcome retains completion and qualification custody"]
@@ -4584,6 +5716,63 @@ impl M1RearmedQualifiedCompletionOutcomeV1 {
         crate::M1QualificationCompletionEvidenceV1,
     ) {
         (self.completion, self.evidence)
+    }
+}
+
+/// Terminal completion poison retaining final qualification evidence.
+#[must_use = "terminal poison and qualification evidence remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedQualifiedPoisonedCompletionV1 {
+    completion: M1RearmedPoisonedCompletionV1,
+    evidence: crate::M1QualificationCompletionEvidenceV1,
+}
+
+impl M1RearmedQualifiedPoisonedCompletionV1 {
+    pub const fn completion(&self) -> &M1RearmedPoisonedCompletionV1 {
+        &self.completion
+    }
+
+    #[must_use = "qualification evidence remains retained"]
+    pub const fn evidence(&self) -> &crate::M1QualificationCompletionEvidenceV1 {
+        &self.evidence
+    }
+}
+
+/// Clean teardown retaining a rejected terminal completion and final evidence.
+#[must_use = "terminal rejection and qualification evidence remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedQualifiedRejectedCompletionTeardownSuccessV1 {
+    source: M1RearmedRejectedCompletionTeardownSuccessV1,
+    evidence: crate::M1QualificationCompletionEvidenceV1,
+}
+
+impl M1RearmedQualifiedRejectedCompletionTeardownSuccessV1 {
+    pub const fn source(&self) -> &M1RearmedRejectedCompletionTeardownSuccessV1 {
+        &self.source
+    }
+
+    #[must_use = "qualification evidence remains retained"]
+    pub const fn evidence(&self) -> &crate::M1QualificationCompletionEvidenceV1 {
+        &self.evidence
+    }
+}
+
+/// Terminal release quarantine retaining a rejected completion and evidence.
+#[must_use = "terminal rejection release quarantine remains retained"]
+#[derive(Debug)]
+pub struct M1RearmedQualifiedRejectedCompletionTeardownFailureV1 {
+    source: Box<M1RearmedRejectedCompletionTeardownFailureV1>,
+    evidence: crate::M1QualificationCompletionEvidenceV1,
+}
+
+impl M1RearmedQualifiedRejectedCompletionTeardownFailureV1 {
+    pub const fn source(&self) -> &M1RearmedRejectedCompletionTeardownFailureV1 {
+        &self.source
+    }
+
+    #[must_use = "qualification evidence remains retained"]
+    pub const fn evidence(&self) -> &crate::M1QualificationCompletionEvidenceV1 {
+        &self.evidence
     }
 }
 
@@ -4659,6 +5848,87 @@ impl M1RearmedQualifiedRoundPageReleaseFailureV1 {
     pub fn retry(self) -> M1RearmedQualifiedRoundReleaseOutcomeV1 {
         join_qualified_round_release(self.source.retry(), self.evidence)
     }
+
+    /// Destroys the terminal physical queue after page release cannot make
+    /// progress, retaining final evidence and every round owner.
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal lower queue-release quarantine joined to the same
+    /// final evidence and history.
+    pub fn destroy_queue_and_retain_round<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1RearmedQualifiedRoundPageReleaseTeardownSuccessV1,
+        Box<M1RearmedQualifiedRoundPageReleaseTeardownFailureV1>,
+    > {
+        match join_qualification_evidence(
+            self.source.destroy_queue_and_retain_round(engine),
+            self.evidence,
+        ) {
+            Ok(joined) => Ok(M1RearmedQualifiedRoundPageReleaseTeardownSuccessV1 {
+                source: joined.source,
+                evidence: joined.evidence,
+            }),
+            Err(joined) => Err(Box::new(
+                M1RearmedQualifiedRoundPageReleaseTeardownFailureV1 {
+                    source: joined.source,
+                    evidence: joined.evidence,
+                },
+            )),
+        }
+    }
+}
+
+/// Clean page-release-exhaustion teardown retaining final qualification
+/// evidence.
+#[must_use = "page-release teardown and final qualification evidence remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedQualifiedRoundPageReleaseTeardownSuccessV1 {
+    source: M1RearmedRoundPageReleaseTeardownSuccessV1,
+    evidence: crate::M1QualificationCompletionEvidenceV1,
+}
+
+impl M1RearmedQualifiedRoundPageReleaseTeardownSuccessV1 {
+    pub const fn source(&self) -> &M1RearmedRoundPageReleaseTeardownSuccessV1 {
+        &self.source
+    }
+
+    #[must_use = "final qualification evidence remains retained"]
+    pub const fn evidence(&self) -> &crate::M1QualificationCompletionEvidenceV1 {
+        &self.evidence
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.source.round_history_len()
+    }
+}
+
+/// Terminal page-release-exhaustion quarantine retaining final qualification
+/// evidence.
+#[must_use = "page-release quarantine and final qualification evidence remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedQualifiedRoundPageReleaseTeardownFailureV1 {
+    source: Box<M1RearmedRoundPageReleaseTeardownFailureV1>,
+    evidence: crate::M1QualificationCompletionEvidenceV1,
+}
+
+impl M1RearmedQualifiedRoundPageReleaseTeardownFailureV1 {
+    pub const fn source(&self) -> &M1RearmedRoundPageReleaseTeardownFailureV1 {
+        &self.source
+    }
+
+    #[must_use = "final qualification evidence remains retained"]
+    pub const fn evidence(&self) -> &crate::M1QualificationCompletionEvidenceV1 {
+        &self.evidence
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.source.round_history_len()
+    }
 }
 
 /// Released terminal round retaining final qualification evidence.
@@ -4696,10 +5966,10 @@ impl M1RearmedQualifiedReleasedRoundV1 {
     /// parked cache lineage, prior history, and qualification evidence.
     ///
     /// ```compile_fail
-    /// use ferric_engine::M1RearmedQualifiedReleasedRoundV1;
-    /// fn teardown_twice(released: M1RearmedQualifiedReleasedRoundV1) {
-    ///     let _first = released.destroy_queue_and_retain_round();
-    ///     let _second = released.destroy_queue_and_retain_round();
+    /// use ferric_engine::{Engine, M1RearmedQualifiedReleasedRoundV1};
+    /// fn teardown_twice(released: M1RearmedQualifiedReleasedRoundV1, engine: &mut Engine<32>) {
+    ///     let _first = released.destroy_queue_and_retain_round(engine);
+    ///     let _second = released.destroy_queue_and_retain_round(engine);
     /// }
     /// ```
     ///
@@ -4707,11 +5977,12 @@ impl M1RearmedQualifiedReleasedRoundV1 {
     ///
     /// Returns terminal queue-release quarantine joined to the same final
     /// qualification evidence.
-    pub fn destroy_queue_and_retain_round(
+    pub fn destroy_queue_and_retain_round<const C: usize>(
         self,
+        engine: &mut Engine<C>,
     ) -> Result<M1RearmedQualifiedTeardownSuccessV1, Box<M1RearmedQualifiedTeardownFailureV1>> {
         let Self { released, evidence } = self;
-        match released.destroy_queue_and_retain_round() {
+        match released.destroy_queue_and_retain_round(engine) {
             Ok(teardown) => Ok(M1RearmedQualifiedTeardownSuccessV1 { teardown, evidence }),
             Err(teardown) => Err(Box::new(M1RearmedQualifiedTeardownFailureV1 {
                 teardown,
@@ -4842,6 +6113,222 @@ impl M1RearmedCompletionPreflightFailureV1 {
     ) -> Result<M1RearmedCompletionOutcomeV1, Self> {
         (*self.readback).complete(engine, self.dispositions)
     }
+
+    /// Quarantines the Engine and destroys the physical queue while retaining
+    /// the rejected dispositions, completed readback, and complete round
+    /// lineage.
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal lower queue-release quarantine joined to the same
+    /// completion-preflight custody.
+    pub fn destroy_queue_and_retain_custody<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1RearmedCompletionPreflightTeardownSuccessV1,
+        Box<M1RearmedCompletionPreflightTeardownFailureV1>,
+    > {
+        teardown_rearmed_completion_preflight(engine, self.error, *self.readback, self.dispositions)
+    }
+}
+
+#[derive(Debug)]
+struct M1RearmedCompletionPreflightTeardownCustodyV1 {
+    error: M1RearmedCompletionPreflightErrorV1,
+    checked: crate::M1CheckedCompletionOutputV1,
+    completion: crate::ExactCompletion,
+    kv: crate::M1FullStepKvReservationCustodyV1,
+    dispositions: Vec<crate::M1DeviceKvCompletionDispositionV1>,
+    carry: M1RearmContinuationCustodyV1,
+    queue_observation: ComputeAqlQueueObservationV1,
+    device: Gfx942DeviceBinding,
+}
+
+/// Clean queue teardown after completion preflight could not make progress.
+#[must_use = "preflight diagnostic, readback, and round lineage remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedCompletionPreflightTeardownSuccessV1 {
+    queue_release: ServiceQueueReleaseObservationV1,
+    custody: M1RearmedCompletionPreflightTeardownCustodyV1,
+}
+
+/// Terminal queue-release quarantine after completion preflight rejection.
+#[must_use = "release quarantine, readback, and round lineage remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedCompletionPreflightTeardownFailureV1 {
+    source: crate::M1PhysicalReadbackQueueReleaseFailureV1,
+    custody: M1RearmedCompletionPreflightTeardownCustodyV1,
+}
+
+impl M1RearmedCompletionPreflightTeardownSuccessV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1RearmedCompletionPreflightErrorV1 {
+        self.custody.error
+    }
+    pub const fn checked(&self) -> &crate::M1CheckedCompletionOutputV1 {
+        &self.custody.checked
+    }
+    #[must_use]
+    pub const fn completion_epoch(&self) -> CompletionEpoch {
+        self.custody.completion.epoch()
+    }
+    pub const fn kv_reservations(&self) -> &crate::M1FullStepKvReservationCustodyV1 {
+        &self.custody.kv
+    }
+    #[must_use]
+    pub fn disposition_count(&self) -> usize {
+        self.custody.dispositions.len()
+    }
+    #[must_use]
+    pub fn retained_cache_count(&self) -> usize {
+        self.custody.carry.selected.len() + self.custody.carry.parked.len()
+    }
+    #[must_use]
+    pub fn selected_requests(&self) -> impl ExactSizeIterator<Item = RequestId> + '_ {
+        self.custody
+            .carry
+            .selected
+            .iter()
+            .map(|cache| cache.projection().request)
+    }
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        self.custody.carry.parked.len()
+    }
+    #[must_use]
+    pub const fn terminal_count(&self) -> usize {
+        self.custody.carry.terminal.len()
+    }
+    #[must_use]
+    pub const fn previous_epoch(&self) -> CompletionEpoch {
+        self.custody.carry.previous_epoch
+    }
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.custody.carry.history.len()
+    }
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.custody.carry.history.get(index)
+    }
+    #[must_use]
+    pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
+        self.custody.queue_observation
+    }
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.custody.device
+    }
+
+    #[must_use]
+    pub const fn queue_release(&self) -> ServiceQueueReleaseObservationV1 {
+        self.queue_release
+    }
+}
+
+impl M1RearmedCompletionPreflightTeardownFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1RearmedCompletionPreflightErrorV1 {
+        self.custody.error
+    }
+    pub const fn checked(&self) -> &crate::M1CheckedCompletionOutputV1 {
+        &self.custody.checked
+    }
+    #[must_use]
+    pub const fn completion_epoch(&self) -> CompletionEpoch {
+        self.custody.completion.epoch()
+    }
+    pub const fn kv_reservations(&self) -> &crate::M1FullStepKvReservationCustodyV1 {
+        &self.custody.kv
+    }
+    #[must_use]
+    pub fn disposition_count(&self) -> usize {
+        self.custody.dispositions.len()
+    }
+    #[must_use]
+    pub fn retained_cache_count(&self) -> usize {
+        self.custody.carry.selected.len() + self.custody.carry.parked.len()
+    }
+    #[must_use]
+    pub fn selected_requests(&self) -> impl ExactSizeIterator<Item = RequestId> + '_ {
+        self.custody
+            .carry
+            .selected
+            .iter()
+            .map(|cache| cache.projection().request)
+    }
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        self.custody.carry.parked.len()
+    }
+    #[must_use]
+    pub const fn terminal_count(&self) -> usize {
+        self.custody.carry.terminal.len()
+    }
+    #[must_use]
+    pub const fn previous_epoch(&self) -> CompletionEpoch {
+        self.custody.carry.previous_epoch
+    }
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.custody.carry.history.len()
+    }
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.custody.carry.history.get(index)
+    }
+    #[must_use]
+    pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
+        self.custody.queue_observation
+    }
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.custody.device
+    }
+
+    pub const fn source(&self) -> &crate::M1PhysicalReadbackQueueReleaseFailureV1 {
+        &self.source
+    }
+}
+
+fn teardown_rearmed_completion_preflight<const C: usize>(
+    engine: &mut Engine<C>,
+    error: M1RearmedCompletionPreflightErrorV1,
+    readback: M1RearmedCompletedReadbackV1,
+    dispositions: Vec<crate::M1DeviceKvCompletionDispositionV1>,
+) -> Result<
+    M1RearmedCompletionPreflightTeardownSuccessV1,
+    Box<M1RearmedCompletionPreflightTeardownFailureV1>,
+> {
+    quarantine_readback_teardown(engine);
+    let M1RearmedCompletedReadbackV1 {
+        readback,
+        carry,
+        queue_observation,
+        device,
+    } = readback;
+    let (queue, checked, completion, kv) = readback.into_parts();
+    let custody = M1RearmedCompletionPreflightTeardownCustodyV1 {
+        error,
+        checked,
+        completion,
+        kv,
+        dispositions,
+        carry,
+        queue_observation,
+        device,
+    };
+    match queue.destroy_and_release() {
+        Ok(queue_release) => Ok(M1RearmedCompletionPreflightTeardownSuccessV1 {
+            queue_release,
+            custody,
+        }),
+        Err(source) => Err(Box::new(M1RearmedCompletionPreflightTeardownFailureV1 {
+            source,
+            custody,
+        })),
+    }
 }
 
 /// Existing physical completion outcome plus custody parked across the round.
@@ -4949,6 +6436,85 @@ impl M1RearmedCompletionOutcomeV1 {
         })
     }
 
+    /// Quarantines the Engine and destroys an unchanged rejected completion,
+    /// retaining its diagnostic, roster, parked/terminal caches, and history.
+    ///
+    /// # Errors
+    ///
+    /// Returns this owner unchanged when the physical outcome is completed or
+    /// poisoned rather than retryably rejected.
+    pub fn destroy_queue_and_retain_rejected<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        Result<
+            M1RearmedRejectedCompletionTeardownSuccessV1,
+            Box<M1RearmedRejectedCompletionTeardownFailureV1>,
+        >,
+        Box<Self>,
+    > {
+        let Self {
+            outcome,
+            parked,
+            terminal,
+            history,
+        } = self;
+        let crate::M1CompletedStepOutcomeV1::Rejected(rejected) = outcome else {
+            return Err(Box::new(Self {
+                outcome,
+                parked,
+                terminal,
+                history,
+            }));
+        };
+        let teardown = rejected.destroy_queue_and_retain_rejection(engine);
+        Ok(
+            match join_terminal_lineage(teardown, parked, terminal, history) {
+                Ok(joined) => Ok(M1RearmedRejectedCompletionTeardownSuccessV1 {
+                    source: joined.source,
+                    parked: joined.parked,
+                    terminal: joined.terminal,
+                    history: joined.history,
+                }),
+                Err(joined) => Err(Box::new(M1RearmedRejectedCompletionTeardownFailureV1 {
+                    source: joined.source,
+                    parked: joined.parked,
+                    terminal: joined.terminal,
+                    history: joined.history,
+                })),
+            },
+        )
+    }
+
+    /// Extracts an already terminal physical completion poison while retaining
+    /// parked/terminal caches and complete history.
+    ///
+    /// # Errors
+    ///
+    /// Returns this owner unchanged unless its physical outcome is poisoned.
+    pub fn into_terminal_poison(self) -> Result<M1RearmedPoisonedCompletionV1, Box<Self>> {
+        let Self {
+            outcome,
+            parked,
+            terminal,
+            history,
+        } = self;
+        let crate::M1CompletedStepOutcomeV1::Poisoned(poison) = outcome else {
+            return Err(Box::new(Self {
+                outcome,
+                parked,
+                terminal,
+                history,
+            }));
+        };
+        Ok(M1RearmedPoisonedCompletionV1 {
+            poison: *poison,
+            parked,
+            terminal,
+            history,
+        })
+    }
+
     /// Releases exact retired pages only from a successful completion and
     /// returns a closed owner that can schedule another same-shape round.
     #[must_use = "release outcome retains every queue and cache owner"]
@@ -4968,6 +6534,114 @@ impl M1RearmedCompletionOutcomeV1 {
             });
         };
         release_rearmed_round(completed, history, parked, terminal)
+    }
+}
+
+/// Terminal completion poison retaining every rearm lineage owner.
+#[must_use = "completion poison and round lineage remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedPoisonedCompletionV1 {
+    poison: crate::M1CompletedStepPoisonV1,
+    parked: Vec<ActiveDeviceKvCache>,
+    terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
+    history: M1NonEmptyRearmRoundHistoryV1,
+}
+
+impl M1RearmedPoisonedCompletionV1 {
+    pub const fn poison(&self) -> &crate::M1CompletedStepPoisonV1 {
+        &self.poison
+    }
+
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        self.parked.len()
+    }
+
+    #[must_use]
+    pub const fn terminal_count(&self) -> usize {
+        self.terminal.len()
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.history.get(index)
+    }
+}
+
+/// Clean queue teardown retaining a rejected rearmed completion and lineage.
+#[must_use = "rejected completion and round lineage remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedRejectedCompletionTeardownSuccessV1 {
+    source: crate::M1CompletedStepRejectionTeardownSuccessV1,
+    parked: Vec<ActiveDeviceKvCache>,
+    terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
+    history: M1NonEmptyRearmRoundHistoryV1,
+}
+
+/// Terminal lower release quarantine retaining rejected completion lineage.
+#[must_use = "rejected completion release quarantine remains retained"]
+#[derive(Debug)]
+pub struct M1RearmedRejectedCompletionTeardownFailureV1 {
+    source: Box<crate::M1CompletedStepRejectionTeardownFailureV1>,
+    parked: Vec<ActiveDeviceKvCache>,
+    terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
+    history: M1NonEmptyRearmRoundHistoryV1,
+}
+
+impl M1RearmedRejectedCompletionTeardownSuccessV1 {
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        self.parked.len()
+    }
+
+    #[must_use]
+    pub const fn terminal_count(&self) -> usize {
+        self.terminal.len()
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.history.get(index)
+    }
+
+    pub const fn source(&self) -> &crate::M1CompletedStepRejectionTeardownSuccessV1 {
+        &self.source
+    }
+}
+
+impl M1RearmedRejectedCompletionTeardownFailureV1 {
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        self.parked.len()
+    }
+
+    #[must_use]
+    pub const fn terminal_count(&self) -> usize {
+        self.terminal.len()
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.history.get(index)
+    }
+
+    pub const fn source(&self) -> &crate::M1CompletedStepRejectionTeardownFailureV1 {
+        &self.source
     }
 }
 
@@ -5063,10 +6737,10 @@ impl M1LongLivedQueueReleasedRoundV1 {
     /// unless [`Self::parked_count`] was zero before consuming this value.
     ///
     /// ```compile_fail
-    /// use ferric_engine::M1LongLivedQueueReleasedRoundV1;
-    /// fn teardown_twice(released: M1LongLivedQueueReleasedRoundV1) {
-    ///     let _first = released.destroy_queue_and_retain_round();
-    ///     let _second = released.destroy_queue_and_retain_round();
+    /// use ferric_engine::{Engine, M1LongLivedQueueReleasedRoundV1};
+    /// fn teardown_twice(released: M1LongLivedQueueReleasedRoundV1, engine: &mut Engine<32>) {
+    ///     let _first = released.destroy_queue_and_retain_round(engine);
+    ///     let _second = released.destroy_queue_and_retain_round(engine);
     /// }
     /// ```
     ///
@@ -5074,8 +6748,9 @@ impl M1LongLivedQueueReleasedRoundV1 {
     ///
     /// Returns terminal lower-layer queue release quarantine together with all
     /// current, parked, terminal, and prior-round observation custody.
-    pub fn destroy_queue_and_retain_round(
+    pub fn destroy_queue_and_retain_round<const C: usize>(
         self,
+        engine: &mut Engine<C>,
     ) -> Result<M1LongLivedQueueRearmTeardownSuccessV1, Box<M1LongLivedQueueRearmTeardownFailureV1>>
     {
         let Self {
@@ -5084,7 +6759,7 @@ impl M1LongLivedQueueReleasedRoundV1 {
             terminal,
             history,
         } = self;
-        match released.destroy_queue_and_retain_step() {
+        match released.destroy_queue_and_retain_step(engine) {
             Ok(released) => Ok(M1LongLivedQueueRearmTeardownSuccessV1 {
                 released,
                 parked,
@@ -5158,6 +6833,130 @@ impl M1RearmedRoundPageReleaseFailureV1 {
     pub fn retry(self) -> M1RearmedRoundReleaseOutcomeV1 {
         let (_error, completed) = (*self.source).into_parts();
         release_rearmed_round(completed, self.history, self.parked, self.terminal)
+    }
+
+    /// Destroys the physical queue after page release cannot make progress,
+    /// retaining the completed current round and every parked/prior owner.
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal lower queue-release quarantine joined to the same
+    /// release diagnostic and round lineage.
+    pub fn destroy_queue_and_retain_round<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1RearmedRoundPageReleaseTeardownSuccessV1,
+        Box<M1RearmedRoundPageReleaseTeardownFailureV1>,
+    > {
+        let (error, completed) = (*self.source).into_parts();
+        match join_terminal_lineage(
+            completed.destroy_queue_and_retain_completion(engine),
+            self.parked,
+            self.terminal,
+            self.history,
+        ) {
+            Ok(joined) => Ok(M1RearmedRoundPageReleaseTeardownSuccessV1 {
+                error,
+                completed: joined.source,
+                parked: joined.parked,
+                terminal: joined.terminal,
+                history: joined.history,
+            }),
+            Err(joined) => Err(Box::new(M1RearmedRoundPageReleaseTeardownFailureV1 {
+                error,
+                completed: joined.source,
+                parked: joined.parked,
+                terminal: joined.terminal,
+                history: joined.history,
+            })),
+        }
+    }
+}
+
+/// Clean queue teardown retaining a completed round after page-release
+/// exhaustion.
+#[must_use = "page-release diagnostic and complete round lineage remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedRoundPageReleaseTeardownSuccessV1 {
+    error: crate::M1CompletedStepKvReleaseErrorV1,
+    completed: crate::M1CompletedStepTeardownSuccessV1,
+    parked: Vec<ActiveDeviceKvCache>,
+    terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
+    history: M1NonEmptyRearmRoundHistoryV1,
+}
+
+/// Terminal queue-release quarantine retaining a completed round after
+/// page-release exhaustion.
+#[must_use = "page-release and queue-release quarantine retain complete round lineage"]
+#[derive(Debug)]
+pub struct M1RearmedRoundPageReleaseTeardownFailureV1 {
+    error: crate::M1CompletedStepKvReleaseErrorV1,
+    completed: Box<crate::M1CompletedStepTeardownFailureV1>,
+    parked: Vec<ActiveDeviceKvCache>,
+    terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
+    history: M1NonEmptyRearmRoundHistoryV1,
+}
+
+impl M1RearmedRoundPageReleaseTeardownSuccessV1 {
+    #[must_use]
+    pub const fn error(&self) -> &crate::M1CompletedStepKvReleaseErrorV1 {
+        &self.error
+    }
+
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        self.parked.len()
+    }
+
+    #[must_use]
+    pub const fn terminal_lineage_count(&self) -> usize {
+        self.terminal.len()
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.history.get(index)
+    }
+
+    pub const fn completed(&self) -> &crate::M1CompletedStepTeardownSuccessV1 {
+        &self.completed
+    }
+}
+
+impl M1RearmedRoundPageReleaseTeardownFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> &crate::M1CompletedStepKvReleaseErrorV1 {
+        &self.error
+    }
+
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        self.parked.len()
+    }
+
+    #[must_use]
+    pub const fn terminal_lineage_count(&self) -> usize {
+        self.terminal.len()
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.history.get(index)
+    }
+
+    pub const fn completed(&self) -> &crate::M1CompletedStepTeardownFailureV1 {
+        &self.completed
     }
 }
 
@@ -5459,30 +7258,82 @@ fn finish_rearm_submission(
     };
     let (kernargs, workspace_composition, source_rows) = recipe.into_parts();
     let (physical_recipe, images) = kernargs.into_parts();
-    let batch = match shape {
-        M1PhysicalFixedBatchShapeV1::TargetOnly => RebuiltBatchV1::TargetOnly(Box::new(
-            lower_batch(catalog, &physical_recipe, images, &bound_rows),
-        )),
-        M1PhysicalFixedBatchShapeV1::SpeculativeK4 => RebuiltBatchV1::SpeculativeK4(Box::new(
-            lower_batch(catalog, &physical_recipe, images, &bound_rows),
-        )),
-        M1PhysicalFixedBatchShapeV1::SpeculativeK8 => RebuiltBatchV1::SpeculativeK8(Box::new(
-            lower_batch(catalog, &physical_recipe, images, &bound_rows),
-        )),
-        M1PhysicalFixedBatchShapeV1::SpeculativeK16 => RebuiltBatchV1::SpeculativeK16(Box::new(
-            lower_batch(catalog, &physical_recipe, images, &bound_rows),
-        )),
-        M1PhysicalFixedBatchShapeV1::PairedPrefill => {
-            return Err(submission_failure(
-                M1LongLivedQueueRearmSubmissionPhaseV1::FixedBatchRebuild,
-                (lower, custody, physical_recipe, images, bound_rows, step),
-            ));
-        }
-    };
     custody.physical_recipe = physical_recipe;
     custody.workspace_composition = workspace_composition;
     custody.source_rows = source_rows;
     custody.bound_rows = bound_rows;
+    let batch = match shape {
+        M1PhysicalFixedBatchShapeV1::TargetOnly => {
+            match lower_batch(
+                catalog,
+                &custody.physical_recipe,
+                images,
+                &custody.bound_rows,
+            ) {
+                Ok(batch) => RebuiltBatchV1::TargetOnly(Box::new(batch)),
+                Err(failure) => {
+                    return Err(submission_failure(
+                        M1LongLivedQueueRearmSubmissionPhaseV1::FixedBatchRebuild,
+                        (lower, custody, failure.catalog, failure.images, step),
+                    ));
+                }
+            }
+        }
+        M1PhysicalFixedBatchShapeV1::SpeculativeK4 => {
+            match lower_batch(
+                catalog,
+                &custody.physical_recipe,
+                images,
+                &custody.bound_rows,
+            ) {
+                Ok(batch) => RebuiltBatchV1::SpeculativeK4(Box::new(batch)),
+                Err(failure) => {
+                    return Err(submission_failure(
+                        M1LongLivedQueueRearmSubmissionPhaseV1::FixedBatchRebuild,
+                        (lower, custody, failure.catalog, failure.images, step),
+                    ));
+                }
+            }
+        }
+        M1PhysicalFixedBatchShapeV1::SpeculativeK8 => {
+            match lower_batch(
+                catalog,
+                &custody.physical_recipe,
+                images,
+                &custody.bound_rows,
+            ) {
+                Ok(batch) => RebuiltBatchV1::SpeculativeK8(Box::new(batch)),
+                Err(failure) => {
+                    return Err(submission_failure(
+                        M1LongLivedQueueRearmSubmissionPhaseV1::FixedBatchRebuild,
+                        (lower, custody, failure.catalog, failure.images, step),
+                    ));
+                }
+            }
+        }
+        M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
+            match lower_batch(
+                catalog,
+                &custody.physical_recipe,
+                images,
+                &custody.bound_rows,
+            ) {
+                Ok(batch) => RebuiltBatchV1::SpeculativeK16(Box::new(batch)),
+                Err(failure) => {
+                    return Err(submission_failure(
+                        M1LongLivedQueueRearmSubmissionPhaseV1::FixedBatchRebuild,
+                        (lower, custody, failure.catalog, failure.images, step),
+                    ));
+                }
+            }
+        }
+        M1PhysicalFixedBatchShapeV1::PairedPrefill => {
+            return Err(submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::FixedBatchRebuild,
+                (lower, custody, catalog, images, step),
+            ));
+        }
+    };
     let custody = M1PhysicalQueueBatchCustodyV1::from_rearm_parts(custody);
     match batch {
         RebuiltBatchV1::TargetOnly(batch) => {
@@ -6221,6 +8072,92 @@ mod tests {
     }
 
     #[test]
+    fn terminal_lineage_and_qualification_evidence_rejoin_exact_owners() {
+        let parked = vec![RequestId::new(1, 5)];
+        let terminal = vec![Identity::new([95; 32])];
+        let history = vec![Identity::new([96; 32])];
+
+        let success_source = Box::new(Identity::new([97; 32]));
+        let success_pointer = core::ptr::from_ref(success_source.as_ref());
+        let success = join_terminal_lineage(
+            Ok::<_, Box<Identity>>(success_source),
+            parked.clone(),
+            terminal.clone(),
+            history.clone(),
+        )
+        .unwrap();
+        assert_eq!(
+            core::ptr::from_ref(success.source.as_ref()),
+            success_pointer
+        );
+        assert_eq!(success.parked, parked);
+        assert_eq!(success.terminal, terminal);
+        assert_eq!(success.history, history);
+
+        let evidence = Box::new(Identity::new([100; 32]));
+        let evidence_pointer = core::ptr::from_ref(evidence.as_ref());
+        let source_pointer = core::ptr::from_ref(success.source.as_ref());
+        let qualified_success = join_qualification_evidence(
+            Ok::<
+                _,
+                TerminalLineageJoinV1<Box<Identity>, Vec<RequestId>, Vec<Identity>, Vec<Identity>>,
+            >(success),
+            evidence,
+        )
+        .unwrap();
+        assert_eq!(
+            core::ptr::from_ref(qualified_success.source.source.as_ref()),
+            source_pointer
+        );
+        assert_eq!(
+            core::ptr::from_ref(qualified_success.evidence.as_ref()),
+            evidence_pointer
+        );
+        assert_eq!(qualified_success.source.parked, parked);
+        assert_eq!(qualified_success.source.terminal, terminal);
+        assert_eq!(qualified_success.source.history, history);
+
+        let failure_source = Box::new(Identity::new([98; 32]));
+        let failure_pointer = core::ptr::from_ref(failure_source.as_ref());
+        let failure = join_terminal_lineage(
+            Err::<Box<Identity>, _>(failure_source),
+            parked.clone(),
+            terminal.clone(),
+            history.clone(),
+        )
+        .unwrap_err();
+        assert_eq!(
+            core::ptr::from_ref(failure.source.as_ref()),
+            failure_pointer
+        );
+        assert_eq!(failure.parked, parked);
+        assert_eq!(failure.terminal, terminal);
+        assert_eq!(failure.history, history);
+
+        let evidence = Box::new(Identity::new([99; 32]));
+        let evidence_pointer = core::ptr::from_ref(evidence.as_ref());
+        let joined = join_qualification_evidence(
+            Err::<
+                TerminalLineageJoinV1<Box<Identity>, Vec<RequestId>, Vec<Identity>, Vec<Identity>>,
+                _,
+            >(failure),
+            evidence,
+        )
+        .unwrap_err();
+        assert_eq!(
+            core::ptr::from_ref(joined.source.source.as_ref()),
+            failure_pointer
+        );
+        assert_eq!(
+            core::ptr::from_ref(joined.evidence.as_ref()),
+            evidence_pointer
+        );
+        assert_eq!(joined.source.parked, parked);
+        assert_eq!(joined.source.terminal, terminal);
+        assert_eq!(joined.source.history, history);
+    }
+
+    #[test]
     fn qualification_prompt_count_history_keeps_logical_and_external_distinct() {
         let carry = test_rearm_carry(RequestId::new(0, 3), RequestId::new(1, 5));
         assert_eq!(&*carry.logical_accepted_counts, &[1]);
@@ -6277,10 +8214,11 @@ mod tests {
         >;
         fn recover_and_destroy(
             failure: M1LongLivedQueueRearmScheduleFailureV1,
+            engine: &mut Engine<32>,
         ) -> Result<TeardownResult, M1LongLivedQueueRearmScheduleFailureV1> {
             failure
                 .into_unscheduled()
-                .map(M1LongLivedQueueUnscheduledRoundV1::destroy_queue_and_retain_round)
+                .map(|unscheduled| unscheduled.destroy_queue_and_retain_round(engine))
         }
 
         let mut history = M1RearmRoundHistoryV1::<usize>::Empty;
@@ -6299,6 +8237,7 @@ mod tests {
 
         let _: fn(
             M1LongLivedQueueRearmScheduleFailureV1,
+            &mut Engine<32>,
         ) -> Result<TeardownResult, M1LongLivedQueueRearmScheduleFailureV1> = recover_and_destroy;
     }
 
@@ -6861,10 +8800,21 @@ mod tests {
             M1RearmedCompletionOutcomeV1,
             crate::M1QualificationCompletionEvidenceV1,
         );
+        type QualifiedCompletionRetry = fn(
+            M1RearmedQualifiedCompletionOutcomeV1,
+            &mut Engine<32>,
+        ) -> Result<
+            M1RearmedQualifiedCompletionOutcomeV1,
+            Box<M1RearmedQualifiedCompletionOutcomeV1>,
+        >;
         type PageRelease =
             fn(M1RearmedQualifiedCompletionOutcomeV1) -> M1RearmedQualifiedRoundReleaseOutcomeV1;
+        type PageReleaseRetry = fn(
+            M1RearmedQualifiedRoundPageReleaseFailureV1,
+        ) -> M1RearmedQualifiedRoundReleaseOutcomeV1;
         type TerminalTeardown = fn(
             M1RearmedQualifiedReleasedRoundV1,
+            &mut Engine<32>,
         ) -> Result<
             M1RearmedQualifiedTeardownSuccessV1,
             Box<M1RearmedQualifiedTeardownFailureV1>,
@@ -6891,7 +8841,10 @@ mod tests {
         let _: FinalSemanticRetry = retry_final_semantic;
         let _: TerminalCompletion = M1RearmedQualifiedCompletedReadbackV1::complete_retiring::<32>;
         let _: QualifiedRecovery = M1RearmedQualifiedCompletionOutcomeV1::into_parts;
+        let _: QualifiedCompletionRetry =
+            M1RearmedQualifiedCompletionOutcomeV1::retry_rejected::<32>;
         let _: PageRelease = M1RearmedQualifiedCompletionOutcomeV1::release_completed;
+        let _: PageReleaseRetry = M1RearmedQualifiedRoundPageReleaseFailureV1::retry;
         let _: TerminalTeardown = M1RearmedQualifiedReleasedRoundV1::destroy_queue_and_retain_round;
     }
 

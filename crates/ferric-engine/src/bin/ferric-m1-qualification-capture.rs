@@ -30,11 +30,47 @@ use ferric_engine::{
     Engine, M1CompletedStepOutcomeV1, M1DeviceKvCompletionDispositionV1,
     M1DeviceKvCompletionMemberV1, M1DeviceKvCompletionRosterV1, M1FullStepKvWorkspaceTablesV1,
     M1FullStepWorkspacePlans, M1LongLivedQueueRearmKvInputsV1, M1LongLivedQueueReleasedRoundV1,
-    M1ObservedQualificationOutputV1, M1PhysicalRunnerFirstCompletionOutcomeV1,
-    M1PhysicalRunnerRecipeOutcomeV1, M1QualificationCompletionEvidenceV1,
-    M1QualificationObservationFailureCustodyV1, M1RearmedQualifiedRoundReleaseOutcomeV1,
+    M1PhysicalRunnerFirstCompletionOutcomeV1, M1PhysicalRunnerRecipeOutcomeV1,
+    M1QualificationCompletionEvidenceV1, M1RearmedQualifiedRoundReleaseOutcomeV1,
     M1RearmedRoundReleaseOutcomeV1, M1ScheduledLongLivedQueueRearmV1, M1StepDispatchIntent,
 };
+use ferric_engine::{
+    EngineError, M1CompletedStepKvReleaseErrorV1, M1CompletedStepPoisonV1,
+    M1CompletedStepRejectionTeardownFailureV1, M1CompletedStepRejectionTeardownSuccessV1,
+    M1CompletedStepTeardownFailureV1, M1CompletedStepTeardownSuccessV1,
+    M1CompletionEvidenceTeardownFailureV1, M1CompletionEvidenceTeardownSuccessV1,
+    M1EngineQuarantinedPhysicalQueueOperationFailureV1,
+    M1LongLivedQueueRearmKvReservationFailureV1, M1LongLivedQueueRearmPrepareFailureV1,
+    M1LongLivedQueueRearmScheduleDetachQuarantineV1,
+    M1LongLivedQueueRearmScheduleDetachedTeardownFailureV1,
+    M1LongLivedQueueRearmScheduleDetachedTeardownSuccessV1, M1LongLivedQueueRearmTeardownFailureV1,
+    M1LongLivedQueueRearmTeardownSuccessV1, M1PhysicalRunnerFirstPublicationExhaustedV1,
+    M1PhysicalRunnerRearmSubmissionExhaustedV1, M1QualificationEvidenceTeardownFailureV1,
+    M1QualificationEvidenceTeardownSuccessV1, M1QualificationObservationTeardownFailureV1,
+    M1QualificationObservationTeardownSuccessV1, M1QualificationSemanticTeardownFailureV1,
+    M1QualificationSemanticTeardownSuccessV1, M1RearmedCompletionPreflightTeardownFailureV1,
+    M1RearmedCompletionPreflightTeardownSuccessV1, M1RearmedObservedQualificationTeardownFailureV1,
+    M1RearmedObservedQualificationTeardownSuccessV1, M1RearmedPoisonedCompletionV1,
+    M1RearmedQualificationObservationTeardownFailureV1,
+    M1RearmedQualificationObservationTeardownSuccessV1,
+    M1RearmedQualificationSemanticTeardownFailureV1,
+    M1RearmedQualificationSemanticTeardownSuccessV1,
+    M1RearmedQualifiedCompletionPreflightTeardownFailureV1,
+    M1RearmedQualifiedCompletionPreflightTeardownSuccessV1, M1RearmedQualifiedPoisonedCompletionV1,
+    M1RearmedQualifiedReadbackTeardownFailureV1, M1RearmedQualifiedReadbackTeardownSuccessV1,
+    M1RearmedQualifiedRejectedCompletionTeardownFailureV1,
+    M1RearmedQualifiedRejectedCompletionTeardownSuccessV1,
+    M1RearmedQualifiedRoundPageReleaseTeardownFailureV1,
+    M1RearmedQualifiedRoundPageReleaseTeardownSuccessV1, M1RearmedQualifiedTeardownFailureV1,
+    M1RearmedQualifiedTeardownSuccessV1, M1RearmedQueueProgressFailureV1,
+    M1RearmedReadbackTeardownFailureV1, M1RearmedReadbackTeardownSuccessV1,
+    M1RearmedRejectedCompletionTeardownFailureV1, M1RearmedRejectedCompletionTeardownSuccessV1,
+    M1RearmedRoundPageReleaseTeardownFailureV1, M1RearmedRoundPageReleaseTeardownSuccessV1,
+    M1ReleasedQueueTeardownFailureV1, M1ReleasedQueueTeardownSuccessV1,
+    M1ScheduledLongLivedQueueRearmTeardownFailureV1,
+    M1ScheduledLongLivedQueueRearmTeardownSuccessV1,
+};
+use ferric_spec::scheduling::RequestState;
 use ferric_spec::{
     m1_qualification_context_plan, validate_m1_step_inputs, EngineLimits, Identity,
     M1QualificationExecutionBindingDeclaration, M1QualificationLaneExecutionBinding,
@@ -100,6 +136,731 @@ const DIFFERENTIAL_KINDS: &[&str] = &[
 ];
 
 type CaptureResult<T> = Result<T, String>;
+
+const CAPTURE_RECOVERY_RETRIES: usize = 2;
+
+trait CaptureClosedCustodyV1 {}
+trait CaptureTerminalCustodyV1 {}
+trait CaptureInvariantCustodyV1 {}
+trait CaptureDiagnosticEvidenceV1 {}
+
+struct UnexpectedReleasedScheduleFailureV1 {
+    _custody: ferric_engine::M1LongLivedQueueRearmScheduleFailureV1,
+    _requests: Vec<RequestId>,
+    _history: QualificationRoundCommitmentV1,
+}
+struct FirstQueueQuarantineV1 {
+    _stage: ferric_engine::M1PhysicalRunnerQueueFailureStageV1,
+    _failure: Box<ferric_engine::M1PhysicalQueueOperationFailureV1>,
+    _roster: M1DeviceKvCompletionRosterV1,
+}
+
+enum DecodeInitialPhaseCustodyV1 {
+    Scheduled {
+        _diagnostic: String,
+    },
+    Input {
+        _diagnostic: String,
+        _plans: Vec<StepPlan>,
+    },
+    Reservations {
+        _diagnostic: ferric_engine::M1QualificationContextStepReservationFailureV1,
+        _plans: Vec<StepPlan>,
+        _inputs: ValidatedM1StepInputs,
+        _reservations: Vec<ferric_engine::PendingDeviceKvStepWrite>,
+    },
+    KvBinding {
+        _plans: Vec<StepPlan>,
+        _failure: Box<ferric_engine::M1KvWorkspaceTableBindingFailureV1>,
+    },
+    WorkspacePlan {
+        _diagnostic: String,
+        _plans: Vec<StepPlan>,
+        _table: ferric_engine::BoundM1KvWorkspaceTableV1,
+    },
+    Recipe {
+        _diagnostic: String,
+        _plans: Vec<StepPlan>,
+        _table: ferric_engine::BoundM1KvWorkspaceTableV1,
+        _workspace_plan: ferric_build::AddresslessM1StepWorkspacePlan,
+    },
+    CompletionOutput {
+        _diagnostic: ferric_engine::M1CompletionOutputErrorV1,
+        _plans: Vec<StepPlan>,
+        _table: ferric_engine::BoundM1KvWorkspaceTableV1,
+        _workspace_plan: ferric_build::AddresslessM1StepWorkspacePlan,
+        _recipe: ferric_engine::AddresslessM1PhysicalBufferRecipeV1,
+    },
+    QualificationLogits {
+        _failure: Box<ferric_engine::M1QualificationLogitsAllocationFailureV1>,
+        _plans: Vec<StepPlan>,
+        _table: ferric_engine::BoundM1KvWorkspaceTableV1,
+        _workspace_plan: ferric_build::AddresslessM1StepWorkspacePlan,
+        _recipe: ferric_engine::AddresslessM1PhysicalBufferRecipeV1,
+    },
+}
+
+struct DecodeInitialDispatchAbandonmentV1 {
+    _engine: ferric_engine::M1CaptureQuarantinedEngineV1<32>,
+    _memory: ferric_engine::M1PartitionedModelMemoryKvPoolV1,
+    _caches: Vec<ActiveDeviceKvCache>,
+    _requests: Vec<RequestId>,
+    _contexts: Vec<ferric_engine::M1ValidatedQualificationContextStepV1>,
+    _scheduled: ferric_engine::M1ScheduledDispatchV1,
+    _phase: Box<DecodeInitialPhaseCustodyV1>,
+}
+
+enum PrefillInitialPhaseCustodyV1 {
+    Scheduled {
+        _diagnostic: String,
+    },
+    Input {
+        _diagnostic: String,
+        _plans: Vec<StepPlan>,
+    },
+    CacheConstruction {
+        _diagnostic: ferric_engine::DeviceKvCacheError,
+        _plans: Vec<StepPlan>,
+        _inputs: ValidatedM1StepInputs,
+        _reservations: Vec<ferric_engine::PendingDeviceKvStepWrite>,
+    },
+    PageCount {
+        _diagnostic: String,
+        _plans: Vec<StepPlan>,
+        _inputs: ValidatedM1StepInputs,
+        _current_cache: ActiveDeviceKvCache,
+        _reservations: Vec<ferric_engine::PendingDeviceKvStepWrite>,
+    },
+    PageLease {
+        _diagnostic: ferric_engine::M1DeviceKvArenaLeaseErrorV1,
+        _plans: Vec<StepPlan>,
+        _inputs: ValidatedM1StepInputs,
+        _current_cache: ActiveDeviceKvCache,
+        _page_leases: Vec<ferric_engine::DeviceKvPageLease>,
+        _reservations: Vec<ferric_engine::PendingDeviceKvStepWrite>,
+    },
+    StepReservation {
+        _failure: Box<ferric_engine::DeviceKvStepReservationFailure>,
+        _plans: Vec<StepPlan>,
+        _inputs: ValidatedM1StepInputs,
+        _current_cache: ActiveDeviceKvCache,
+        _reservations: Vec<ferric_engine::PendingDeviceKvStepWrite>,
+    },
+    KvBinding {
+        _plans: Vec<StepPlan>,
+        _failure: Box<ferric_engine::M1KvWorkspaceTableBindingFailureV1>,
+    },
+    WorkspacePlan {
+        _diagnostic: String,
+        _plans: Vec<StepPlan>,
+        _table: ferric_engine::BoundM1KvWorkspaceTableV1,
+    },
+    Recipe {
+        _diagnostic: String,
+        _plans: Vec<StepPlan>,
+        _table: ferric_engine::BoundM1KvWorkspaceTableV1,
+        _workspace_plan: ferric_build::AddresslessM1StepWorkspacePlan,
+    },
+    CompletionOutput {
+        _diagnostic: ferric_engine::M1CompletionOutputErrorV1,
+        _plans: Vec<StepPlan>,
+        _table: ferric_engine::BoundM1KvWorkspaceTableV1,
+        _workspace_plan: ferric_build::AddresslessM1StepWorkspacePlan,
+        _recipe: ferric_engine::AddresslessM1PhysicalBufferRecipeV1,
+    },
+    QualificationLogits {
+        _failure: Box<ferric_engine::M1QualificationLogitsAllocationFailureV1>,
+        _plans: Vec<StepPlan>,
+        _table: ferric_engine::BoundM1KvWorkspaceTableV1,
+        _workspace_plan: ferric_build::AddresslessM1StepWorkspacePlan,
+        _recipe: ferric_engine::AddresslessM1PhysicalBufferRecipeV1,
+    },
+}
+
+struct PrefillInitialDispatchAbandonmentV1 {
+    _engine: ferric_engine::M1CaptureQuarantinedEngineV1<32>,
+    _memory: ferric_engine::M1PartitionedModelMemoryKvPoolV1,
+    _caches: Vec<ActiveDeviceKvCache>,
+    _requests: Vec<RequestId>,
+    _active_lengths: Vec<u32>,
+    _context_lengths: Vec<u32>,
+    _scheduled: ferric_engine::M1ScheduledDispatchV1,
+    _phase: Box<PrefillInitialPhaseCustodyV1>,
+}
+
+enum ReleasedRoundPhaseCustodyV1 {
+    Context {
+        _diagnostic: String,
+    },
+    WorkspacePlan {
+        _diagnostic: String,
+        _contexts: Vec<ferric_engine::M1ValidatedQualificationContextStepV1>,
+    },
+    Recipe {
+        _diagnostic: String,
+        _contexts: Vec<ferric_engine::M1ValidatedQualificationContextStepV1>,
+        _workspace_plan: ferric_build::AddresslessM1StepWorkspacePlan,
+    },
+    Enqueue {
+        _diagnostic: ferric_engine::EngineError,
+        _contexts: Vec<ferric_engine::M1ValidatedQualificationContextStepV1>,
+        _workspace_plan: ferric_build::AddresslessM1StepWorkspacePlan,
+        _recipe: ferric_engine::AddresslessM1PhysicalBufferRecipeV1,
+    },
+}
+
+struct PreEngineMemoryAbandonmentV1 {
+    _memory: ferric_engine::M1PartitionedModelMemoryKvPoolV1,
+    _input_tokens: Vec<u32>,
+    _diagnostic: PreEngineDiagnosticV1,
+}
+
+#[allow(dead_code)]
+enum PreEngineDiagnosticV1 {
+    Policy(String),
+    ContextPlan(ferric_engine::M1QualificationContextStepWitnessErrorV1),
+    Engine(ferric_engine::EngineError),
+}
+
+enum PrePhysicalPoolCustodyV1 {
+    Split {
+        _memory: ferric_engine::M1PartitionedModelMemoryKvPoolV1,
+        _caches: Vec<ActiveDeviceKvCache>,
+    },
+    Preleased {
+        _preleased: ferric_engine::M1QualificationTargetPagePreleaseSuccessV1,
+        _initial_contexts: Vec<ferric_engine::M1ValidatedQualificationContextStepV1>,
+    },
+}
+
+#[allow(dead_code)]
+enum PrePhysicalDiagnosticV1 {
+    Engine(ferric_engine::EngineError),
+    DeviceCache(ferric_engine::DeviceKvCacheError),
+    ContextWitness(ferric_engine::M1QualificationContextStepWitnessErrorV1),
+    MissingBatch,
+}
+
+struct PrePhysicalEngineAbandonmentV1 {
+    _engine: ferric_engine::M1CaptureQuarantinedEngineV1<32>,
+    _requests: Vec<RequestId>,
+    _reservations: Vec<ferric_engine::PendingDeviceKvStepWrite>,
+    _pool: PrePhysicalPoolCustodyV1,
+    _input_tokens: Vec<u32>,
+    _diagnostic: PrePhysicalDiagnosticV1,
+}
+
+#[allow(dead_code)]
+enum PreleaseCancellationOutcomeV1 {
+    Cancelled(ferric_engine::M1QualificationTargetPagePreleaseCancellationSuccessV1),
+    Exhausted(ferric_engine::M1QualificationTargetPagePreleaseCancellationExhaustedV1),
+}
+
+struct PreleaseAbandonmentV1 {
+    _engine: ferric_engine::M1CaptureQuarantinedEngineV1<32>,
+    _requests: Vec<RequestId>,
+    _reservations: Vec<ferric_engine::PendingDeviceKvStepWrite>,
+    _input_tokens: Vec<u32>,
+    _outcome: PreleaseCancellationOutcomeV1,
+}
+
+impl CaptureInvariantCustodyV1 for UnexpectedReleasedScheduleFailureV1 {}
+impl CaptureTerminalCustodyV1 for DecodeInitialDispatchAbandonmentV1 {}
+impl CaptureTerminalCustodyV1 for PrefillInitialDispatchAbandonmentV1 {}
+impl CaptureInvariantCustodyV1 for PreEngineMemoryAbandonmentV1 {}
+impl CaptureTerminalCustodyV1 for PrePhysicalEngineAbandonmentV1 {}
+impl CaptureTerminalCustodyV1 for PreleaseAbandonmentV1 {}
+impl CaptureTerminalCustodyV1 for FirstQueueQuarantineV1 {}
+
+struct DiagnosticCustodyV1<D, T> {
+    _diagnostic: D,
+    _custody: T,
+}
+
+impl<D: CaptureDiagnosticEvidenceV1, T: CaptureClosedCustodyV1> CaptureClosedCustodyV1
+    for DiagnosticCustodyV1<D, T>
+{
+}
+impl<D: CaptureDiagnosticEvidenceV1, T: CaptureTerminalCustodyV1> CaptureTerminalCustodyV1
+    for DiagnosticCustodyV1<D, T>
+{
+}
+impl<T: CaptureClosedCustodyV1> CaptureClosedCustodyV1 for Box<T> {}
+impl<T: CaptureTerminalCustodyV1> CaptureTerminalCustodyV1 for Box<T> {}
+
+impl CaptureDiagnosticEvidenceV1 for String {}
+impl CaptureDiagnosticEvidenceV1 for M1CompletedStepKvReleaseErrorV1 {}
+impl CaptureDiagnosticEvidenceV1 for EngineError {}
+
+#[allow(dead_code)]
+enum QualificationRoundDiagnosticV1 {
+    Message(String),
+    Engine(ferric_engine::EngineError),
+}
+
+struct QualificationRoundCustodyV1<T> {
+    _state: QualificationRoundCaptureStateV1,
+    _diagnostic: Option<QualificationRoundDiagnosticV1>,
+    _custody: T,
+}
+
+impl<T: CaptureClosedCustodyV1> CaptureClosedCustodyV1 for QualificationRoundCustodyV1<T> {}
+impl<T: CaptureTerminalCustodyV1> CaptureTerminalCustodyV1 for QualificationRoundCustodyV1<T> {}
+
+struct ReleasedRoundTeardownCustodyV1<T> {
+    _state: QualificationRoundCaptureStateV1,
+    _phase: Box<ReleasedRoundPhaseCustodyV1>,
+    _custody: T,
+}
+
+struct CompletionRosterCustodyV1<T> {
+    _roster: ferric_engine::M1DeviceKvCompletionRosterV1,
+    _custody: T,
+}
+
+impl<T: CaptureClosedCustodyV1> CaptureClosedCustodyV1 for CompletionRosterCustodyV1<T> {}
+impl<T: CaptureTerminalCustodyV1> CaptureTerminalCustodyV1 for CompletionRosterCustodyV1<T> {}
+
+#[allow(dead_code)]
+enum QualificationEvidenceDiagnosticV1 {
+    Message(String),
+    PageRelease(ferric_engine::M1CompletedStepKvReleaseErrorV1),
+}
+
+struct QualificationEvidenceCustodyV1<T> {
+    _evidence: ferric_engine::M1QualificationCompletionEvidenceV1,
+    _diagnostic: Option<QualificationEvidenceDiagnosticV1>,
+    _custody: T,
+}
+
+impl<T: CaptureClosedCustodyV1> CaptureClosedCustodyV1 for QualificationEvidenceCustodyV1<T> {}
+impl<T: CaptureTerminalCustodyV1> CaptureTerminalCustodyV1 for QualificationEvidenceCustodyV1<T> {}
+
+#[allow(dead_code)]
+enum PrefillLiveDiagnosticV1 {
+    Message(String),
+    Engine(ferric_engine::EngineError),
+}
+
+struct PrefillLiveCustodyV1<T> {
+    _evidence: PrefillLiveEvidenceV1,
+    _diagnostic: Option<PrefillLiveDiagnosticV1>,
+    _custody: T,
+}
+
+impl<T: CaptureClosedCustodyV1> CaptureClosedCustodyV1 for PrefillLiveCustodyV1<T> {}
+impl<T: CaptureTerminalCustodyV1> CaptureTerminalCustodyV1 for PrefillLiveCustodyV1<T> {}
+
+impl<T: CaptureClosedCustodyV1> CaptureClosedCustodyV1 for ReleasedRoundTeardownCustodyV1<T> {}
+impl<T: CaptureTerminalCustodyV1> CaptureTerminalCustodyV1 for ReleasedRoundTeardownCustodyV1<T> {}
+
+impl CaptureClosedCustodyV1 for M1LongLivedQueueRearmTeardownSuccessV1 {}
+impl CaptureClosedCustodyV1 for M1ScheduledLongLivedQueueRearmTeardownSuccessV1 {}
+impl CaptureClosedCustodyV1 for M1RearmedReadbackTeardownSuccessV1 {}
+impl CaptureClosedCustodyV1 for M1RearmedCompletionPreflightTeardownSuccessV1 {}
+impl CaptureClosedCustodyV1 for M1RearmedQualifiedCompletionPreflightTeardownSuccessV1 {}
+impl CaptureClosedCustodyV1 for M1RearmedRoundPageReleaseTeardownSuccessV1 {}
+impl CaptureClosedCustodyV1 for M1RearmedQualifiedRoundPageReleaseTeardownSuccessV1 {}
+impl CaptureClosedCustodyV1 for M1RearmedRejectedCompletionTeardownSuccessV1 {}
+impl CaptureClosedCustodyV1 for M1RearmedQualifiedRejectedCompletionTeardownSuccessV1 {}
+impl CaptureClosedCustodyV1 for M1RearmedQualificationObservationTeardownSuccessV1 {}
+impl CaptureClosedCustodyV1 for M1RearmedQualificationSemanticTeardownSuccessV1 {}
+impl CaptureClosedCustodyV1 for M1RearmedObservedQualificationTeardownSuccessV1 {}
+impl CaptureClosedCustodyV1 for M1RearmedQualifiedReadbackTeardownSuccessV1 {}
+impl CaptureClosedCustodyV1 for M1CompletedStepRejectionTeardownSuccessV1 {}
+impl CaptureClosedCustodyV1 for M1CompletedStepTeardownSuccessV1 {}
+impl CaptureClosedCustodyV1 for M1ReleasedQueueTeardownSuccessV1 {}
+impl CaptureClosedCustodyV1 for M1QualificationObservationTeardownSuccessV1 {}
+impl CaptureClosedCustodyV1 for M1QualificationEvidenceTeardownSuccessV1 {}
+impl CaptureClosedCustodyV1 for M1QualificationSemanticTeardownSuccessV1 {}
+impl CaptureClosedCustodyV1 for M1CompletionEvidenceTeardownSuccessV1 {}
+impl CaptureClosedCustodyV1 for M1LongLivedQueueRearmScheduleDetachedTeardownSuccessV1 {}
+impl CaptureClosedCustodyV1 for M1RearmedQualifiedTeardownSuccessV1 {}
+
+impl CaptureTerminalCustodyV1 for M1CompletedStepPoisonV1 {}
+impl CaptureTerminalCustodyV1 for M1RearmedPoisonedCompletionV1 {}
+impl CaptureTerminalCustodyV1 for M1RearmedQualifiedPoisonedCompletionV1 {}
+impl CaptureTerminalCustodyV1 for M1LongLivedQueueRearmTeardownFailureV1 {}
+impl CaptureTerminalCustodyV1 for M1ScheduledLongLivedQueueRearmTeardownFailureV1 {}
+impl CaptureTerminalCustodyV1 for M1RearmedReadbackTeardownFailureV1 {}
+impl CaptureTerminalCustodyV1 for M1RearmedCompletionPreflightTeardownFailureV1 {}
+impl CaptureTerminalCustodyV1 for M1RearmedQualifiedCompletionPreflightTeardownFailureV1 {}
+impl CaptureTerminalCustodyV1 for M1RearmedRoundPageReleaseTeardownFailureV1 {}
+impl CaptureTerminalCustodyV1 for M1RearmedQualifiedRoundPageReleaseTeardownFailureV1 {}
+impl CaptureTerminalCustodyV1 for M1RearmedRejectedCompletionTeardownFailureV1 {}
+impl CaptureTerminalCustodyV1 for M1RearmedQualifiedRejectedCompletionTeardownFailureV1 {}
+impl CaptureTerminalCustodyV1 for M1RearmedQualificationObservationTeardownFailureV1 {}
+impl CaptureTerminalCustodyV1 for M1RearmedQualificationSemanticTeardownFailureV1 {}
+impl CaptureTerminalCustodyV1 for M1RearmedObservedQualificationTeardownFailureV1 {}
+impl CaptureTerminalCustodyV1 for M1RearmedQualifiedReadbackTeardownFailureV1 {}
+impl CaptureTerminalCustodyV1 for M1CompletedStepRejectionTeardownFailureV1 {}
+impl CaptureTerminalCustodyV1 for M1CompletedStepTeardownFailureV1 {}
+impl CaptureTerminalCustodyV1 for M1ReleasedQueueTeardownFailureV1 {}
+impl CaptureTerminalCustodyV1 for M1QualificationObservationTeardownFailureV1 {}
+impl CaptureTerminalCustodyV1 for M1QualificationEvidenceTeardownFailureV1 {}
+impl CaptureTerminalCustodyV1 for M1QualificationSemanticTeardownFailureV1 {}
+impl CaptureTerminalCustodyV1 for M1CompletionEvidenceTeardownFailureV1 {}
+impl CaptureTerminalCustodyV1 for M1RearmedQueueProgressFailureV1 {}
+impl CaptureTerminalCustodyV1 for M1LongLivedQueueRearmKvReservationFailureV1 {}
+impl CaptureTerminalCustodyV1 for M1LongLivedQueueRearmPrepareFailureV1 {}
+impl CaptureTerminalCustodyV1 for M1LongLivedQueueRearmScheduleDetachQuarantineV1 {}
+impl CaptureTerminalCustodyV1 for M1LongLivedQueueRearmScheduleDetachedTeardownFailureV1 {}
+impl CaptureTerminalCustodyV1 for M1PhysicalRunnerFirstPublicationExhaustedV1<'_> {}
+impl CaptureTerminalCustodyV1 for M1PhysicalRunnerRearmSubmissionExhaustedV1<'_> {}
+impl CaptureTerminalCustodyV1 for M1RearmedQualifiedTeardownFailureV1 {}
+impl CaptureTerminalCustodyV1 for M1EngineQuarantinedPhysicalQueueOperationFailureV1 {}
+
+fn abort_with_closed_custody<T: CaptureClosedCustodyV1>(phase: &'static str, custody: T) -> ! {
+    let custody = core::mem::ManuallyDrop::new(custody);
+    let _ = &custody;
+    let _ = writeln!(
+        std::io::stderr().lock(),
+        "FAIL-STOP: {phase}; typed custody retained"
+    );
+    std::process::abort();
+}
+
+fn terminal_quarantine<T: CaptureTerminalCustodyV1>(phase: &'static str, custody: T) -> ! {
+    let custody = core::mem::ManuallyDrop::new(custody);
+    let _ = &custody;
+    let _ = writeln!(
+        std::io::stderr().lock(),
+        "FAIL-STOP: {phase}; typed terminal custody retained"
+    );
+    std::process::abort();
+}
+
+fn invariant_fail_stop<T: CaptureInvariantCustodyV1>(phase: &'static str, custody: T) -> ! {
+    let custody = core::mem::ManuallyDrop::new(custody);
+    let _ = &custody;
+    let _ = writeln!(
+        std::io::stderr().lock(),
+        "FAIL-STOP: {phase}; typed invariant custody retained"
+    );
+    std::process::abort();
+}
+
+fn closed_teardown<T: CaptureClosedCustodyV1>(phase: &'static str, custody: T) -> ! {
+    abort_with_closed_custody(phase, custody)
+}
+
+fn close_or_quarantine<S: CaptureClosedCustodyV1, F: CaptureTerminalCustodyV1>(
+    phase: &'static str,
+    teardown: Result<S, F>,
+) -> ! {
+    match teardown {
+        Ok(closed) => closed_teardown(phase, closed),
+        Err(quarantine) => terminal_quarantine(phase, quarantine),
+    }
+}
+
+fn close_or_quarantine_with_diagnostic<
+    D: CaptureDiagnosticEvidenceV1,
+    S: CaptureClosedCustodyV1,
+    F: CaptureTerminalCustodyV1,
+>(
+    phase: &'static str,
+    diagnostic: D,
+    teardown: Result<S, F>,
+) -> ! {
+    match teardown {
+        Ok(closed) => closed_teardown(
+            phase,
+            DiagnosticCustodyV1 {
+                _diagnostic: diagnostic,
+                _custody: closed,
+            },
+        ),
+        Err(quarantine) => terminal_quarantine(
+            phase,
+            DiagnosticCustodyV1 {
+                _diagnostic: diagnostic,
+                _custody: quarantine,
+            },
+        ),
+    }
+}
+
+fn close_or_quarantine_round<S: CaptureClosedCustodyV1, F: CaptureTerminalCustodyV1>(
+    phase: &'static str,
+    state: QualificationRoundCaptureStateV1,
+    diagnostic: Option<QualificationRoundDiagnosticV1>,
+    teardown: Result<S, F>,
+) -> ! {
+    match teardown {
+        Ok(closed) => closed_teardown(
+            phase,
+            QualificationRoundCustodyV1 {
+                _state: state,
+                _diagnostic: diagnostic,
+                _custody: closed,
+            },
+        ),
+        Err(quarantine) => terminal_quarantine(
+            phase,
+            QualificationRoundCustodyV1 {
+                _state: state,
+                _diagnostic: diagnostic,
+                _custody: quarantine,
+            },
+        ),
+    }
+}
+
+fn terminal_round<T: CaptureTerminalCustodyV1>(
+    phase: &'static str,
+    state: QualificationRoundCaptureStateV1,
+    custody: T,
+) -> ! {
+    terminal_quarantine(
+        phase,
+        QualificationRoundCustodyV1 {
+            _state: state,
+            _diagnostic: None,
+            _custody: custody,
+        },
+    )
+}
+
+fn close_or_quarantine_roster<S: CaptureClosedCustodyV1, F: CaptureTerminalCustodyV1>(
+    phase: &'static str,
+    roster: ferric_engine::M1DeviceKvCompletionRosterV1,
+    teardown: Result<S, F>,
+) -> ! {
+    match teardown {
+        Ok(closed) => closed_teardown(
+            phase,
+            CompletionRosterCustodyV1 {
+                _roster: roster,
+                _custody: closed,
+            },
+        ),
+        Err(quarantine) => terminal_quarantine(
+            phase,
+            CompletionRosterCustodyV1 {
+                _roster: roster,
+                _custody: quarantine,
+            },
+        ),
+    }
+}
+
+fn close_or_quarantine_qualification_evidence<
+    S: CaptureClosedCustodyV1,
+    F: CaptureTerminalCustodyV1,
+>(
+    phase: &'static str,
+    evidence: ferric_engine::M1QualificationCompletionEvidenceV1,
+    diagnostic: Option<QualificationEvidenceDiagnosticV1>,
+    teardown: Result<S, F>,
+) -> ! {
+    match teardown {
+        Ok(closed) => closed_teardown(
+            phase,
+            QualificationEvidenceCustodyV1 {
+                _evidence: evidence,
+                _diagnostic: diagnostic,
+                _custody: closed,
+            },
+        ),
+        Err(quarantine) => terminal_quarantine(
+            phase,
+            QualificationEvidenceCustodyV1 {
+                _evidence: evidence,
+                _diagnostic: diagnostic,
+                _custody: quarantine,
+            },
+        ),
+    }
+}
+
+fn close_or_quarantine_prefill_live<S: CaptureClosedCustodyV1, F: CaptureTerminalCustodyV1>(
+    phase: &'static str,
+    evidence: PrefillLiveEvidenceV1,
+    diagnostic: Option<PrefillLiveDiagnosticV1>,
+    teardown: Result<S, F>,
+) -> ! {
+    match teardown {
+        Ok(closed) => closed_teardown(
+            phase,
+            PrefillLiveCustodyV1 {
+                _evidence: evidence,
+                _diagnostic: diagnostic,
+                _custody: closed,
+            },
+        ),
+        Err(quarantine) => terminal_quarantine(
+            phase,
+            PrefillLiveCustodyV1 {
+                _evidence: evidence,
+                _diagnostic: diagnostic,
+                _custody: quarantine,
+            },
+        ),
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn abandon_decode_initial_dispatch(
+    phase_name: &'static str,
+    engine: Engine<32>,
+    memory: ferric_engine::M1PartitionedModelMemoryKvPoolV1,
+    caches: Vec<ActiveDeviceKvCache>,
+    requests: Vec<RequestId>,
+    contexts: Vec<ferric_engine::M1ValidatedQualificationContextStepV1>,
+    scheduled: ferric_engine::M1ScheduledDispatchV1,
+    phase: DecodeInitialPhaseCustodyV1,
+) -> ! {
+    terminal_quarantine(
+        phase_name,
+        DecodeInitialDispatchAbandonmentV1 {
+            _engine: engine.into_m1_capture_quarantine(),
+            _memory: memory,
+            _caches: caches,
+            _requests: requests,
+            _contexts: contexts,
+            _scheduled: scheduled,
+            _phase: Box::new(phase),
+        },
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn abandon_prefill_initial_dispatch(
+    phase_name: &'static str,
+    engine: Engine<32>,
+    memory: ferric_engine::M1PartitionedModelMemoryKvPoolV1,
+    caches: Vec<ActiveDeviceKvCache>,
+    requests: Vec<RequestId>,
+    active_lengths: Vec<u32>,
+    context_lengths: Vec<u32>,
+    scheduled: ferric_engine::M1ScheduledDispatchV1,
+    phase: PrefillInitialPhaseCustodyV1,
+) -> ! {
+    terminal_quarantine(
+        phase_name,
+        PrefillInitialDispatchAbandonmentV1 {
+            _engine: engine.into_m1_capture_quarantine(),
+            _memory: memory,
+            _caches: caches,
+            _requests: requests,
+            _active_lengths: active_lengths,
+            _context_lengths: context_lengths,
+            _scheduled: scheduled,
+            _phase: Box::new(phase),
+        },
+    )
+}
+
+fn abandon_released_round(
+    phase_name: &'static str,
+    mut engine: Engine<32>,
+    released: QualificationReleasedRoundV1,
+    state: QualificationRoundCaptureStateV1,
+    phase: ReleasedRoundPhaseCustodyV1,
+) -> ! {
+    match released {
+        QualificationReleasedRoundV1::First(released) => {
+            match released.destroy_queue_and_retain_step(&mut engine) {
+                Ok(closed) => closed_teardown(
+                    phase_name,
+                    ReleasedRoundTeardownCustodyV1 {
+                        _state: state,
+                        _phase: Box::new(phase),
+                        _custody: closed,
+                    },
+                ),
+                Err(quarantine) => terminal_quarantine(
+                    phase_name,
+                    ReleasedRoundTeardownCustodyV1 {
+                        _state: state,
+                        _phase: Box::new(phase),
+                        _custody: quarantine,
+                    },
+                ),
+            }
+        }
+        QualificationReleasedRoundV1::Rearmed(released) => {
+            match released.destroy_queue_and_retain_round(&mut engine) {
+                Ok(closed) => closed_teardown(
+                    phase_name,
+                    ReleasedRoundTeardownCustodyV1 {
+                        _state: state,
+                        _phase: Box::new(phase),
+                        _custody: closed,
+                    },
+                ),
+                Err(quarantine) => terminal_quarantine(
+                    phase_name,
+                    ReleasedRoundTeardownCustodyV1 {
+                        _state: state,
+                        _phase: Box::new(phase),
+                        _custody: quarantine,
+                    },
+                ),
+            }
+        }
+    }
+}
+
+fn abandon_pre_engine_memory(
+    phase_name: &'static str,
+    memory: ferric_engine::M1PartitionedModelMemoryKvPoolV1,
+    input_tokens: Vec<u32>,
+    diagnostic: PreEngineDiagnosticV1,
+) -> ! {
+    invariant_fail_stop(
+        phase_name,
+        PreEngineMemoryAbandonmentV1 {
+            _memory: memory,
+            _input_tokens: input_tokens,
+            _diagnostic: diagnostic,
+        },
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn abandon_pre_physical_engine(
+    phase_name: &'static str,
+    engine: Engine<32>,
+    requests: Vec<RequestId>,
+    reservations: Vec<ferric_engine::PendingDeviceKvStepWrite>,
+    pool: PrePhysicalPoolCustodyV1,
+    input_tokens: Vec<u32>,
+    diagnostic: PrePhysicalDiagnosticV1,
+) -> ! {
+    terminal_quarantine(
+        phase_name,
+        PrePhysicalEngineAbandonmentV1 {
+            _engine: engine.into_m1_capture_quarantine(),
+            _requests: requests,
+            _reservations: reservations,
+            _pool: pool,
+            _input_tokens: input_tokens,
+            _diagnostic: diagnostic,
+        },
+    )
+}
+
+fn abandon_prelease(
+    phase_name: &'static str,
+    engine: Engine<32>,
+    requests: Vec<RequestId>,
+    reservations: Vec<ferric_engine::PendingDeviceKvStepWrite>,
+    input_tokens: Vec<u32>,
+    outcome: PreleaseCancellationOutcomeV1,
+) -> ! {
+    terminal_quarantine(
+        phase_name,
+        PreleaseAbandonmentV1 {
+            _engine: engine.into_m1_capture_quarantine(),
+            _requests: requests,
+            _reservations: reservations,
+            _input_tokens: input_tokens,
+            _outcome: outcome,
+        },
+    )
+}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct PlanCase {
@@ -687,6 +1448,18 @@ struct QualificationRoundCommitmentV1 {
     terminal_generation: u64,
 }
 
+struct QualificationRoundCaptureStateV1 {
+    requests: Vec<RequestId>,
+    history: QualificationRoundCommitmentV1,
+}
+
+type QualificationRoundCommitmentOutputV1 = ([u8; 32], u32, u64, u64, u64, u64);
+
+struct QualificationRoundCommitmentFailureV1 {
+    diagnostic: String,
+    history: QualificationRoundCommitmentV1,
+}
+
 struct QualificationRoundReceiptV1<'a> {
     logical_accepted: &'a [u32],
     externally_published: &'a [u32],
@@ -747,6 +1520,20 @@ impl QualificationRoundCommitmentV1 {
         }
         let epoch = checked.epoch().value();
         let generation = checked.dispatch_generation();
+        for (lane, (record, expected)) in
+            checked.records().iter().zip(expected_requests).enumerate()
+        {
+            let record = record.record();
+            if record.request != *expected || record.epoch.value() != epoch {
+                return Err(format!(
+                    "qualification round {ordinal} lane {lane} checked request order drifted"
+                ));
+            }
+        }
+        let next_count = self
+            .count
+            .checked_add(1)
+            .ok_or_else(|| "qualification round count overflowed".to_owned())?;
         if self.count == 0 {
             self.first_epoch = epoch;
             self.first_generation = generation;
@@ -757,20 +1544,14 @@ impl QualificationRoundCommitmentV1 {
         hash_field(&mut self.hasher, &epoch.to_le_bytes());
         hash_field(&mut self.hasher, &generation.to_le_bytes());
         hash_field(&mut self.hasher, receipt.device_id.as_bytes());
-        for (lane, (((record, expected), logical), external)) in checked
+        for (((record, logical), external), released) in checked
             .records()
             .iter()
-            .zip(expected_requests)
             .zip(receipt.logical_accepted)
             .zip(receipt.externally_published)
-            .enumerate()
+            .zip(receipt.release_counts)
         {
             let record = record.record();
-            if record.request != *expected || record.epoch.value() != epoch {
-                return Err(format!(
-                    "qualification round {ordinal} lane {lane} checked request order drifted"
-                ));
-            }
             hash_field(&mut self.hasher, &record.request.slot().to_le_bytes());
             hash_field(&mut self.hasher, &record.request.generation().to_le_bytes());
             hash_field(&mut self.hasher, record.plan_id.as_bytes());
@@ -785,7 +1566,6 @@ impl QualificationRoundCommitmentV1 {
             }
             hash_field(&mut self.hasher, &logical.to_le_bytes());
             hash_field(&mut self.hasher, &external.to_le_bytes());
-            let released = receipt.release_counts[lane];
             hash_field(
                 &mut self.hasher,
                 &u64::try_from(released.draft())
@@ -799,19 +1579,22 @@ impl QualificationRoundCommitmentV1 {
                     .to_le_bytes(),
             );
         }
-        self.count = self
-            .count
-            .checked_add(1)
-            .ok_or_else(|| "qualification round count overflowed".to_owned())?;
+        self.count = next_count;
         Ok(())
     }
 
-    fn finish(self) -> CaptureResult<([u8; 32], u32, u64, u64, u64, u64)> {
+    fn finish(
+        self,
+    ) -> Result<QualificationRoundCommitmentOutputV1, Box<QualificationRoundCommitmentFailureV1>>
+    {
         if usize::try_from(self.count).ok() != Some(M1_QUALIFICATION_CONTEXT_PLAN_STEPS) {
-            return Err(format!(
-                "qualification completed {} rounds instead of {}",
-                self.count, M1_QUALIFICATION_CONTEXT_PLAN_STEPS
-            ));
+            return Err(Box::new(QualificationRoundCommitmentFailureV1 {
+                diagnostic: format!(
+                    "qualification completed {} rounds instead of {}",
+                    self.count, M1_QUALIFICATION_CONTEXT_PLAN_STEPS
+                ),
+                history: self,
+            }));
         }
         Ok((
             self.hasher.finalize().into(),
@@ -1048,31 +1831,485 @@ fn derive_qualification_recipe(
     }
 }
 
+fn publish_first_step_with_retries<'runner>(
+    runner: &'runner ferric_engine::M1PhysicalRunnerV1,
+    engine: &mut Engine<32>,
+    allocated: ferric_engine::M1AllocatedScheduledStepV1,
+    recipe: ferric_engine::AddresslessM1PhysicalBufferRecipeV1,
+    completion: ferric_engine::BoundM1CompletionOutputV1,
+) -> Result<
+    ferric_engine::M1PhysicalPublishedQueueSessionV1,
+    ferric_engine::M1PhysicalRunnerFirstPublicationFailureV1<'runner>,
+> {
+    let failure = match runner.publish_first_step(engine, 1 << 20, allocated, recipe, completion) {
+        Ok(published) => return Ok(published),
+        Err(failure) => failure,
+    };
+    retry_with_bounded_policy(failure, CAPTURE_RECOVERY_RETRIES, |failure| {
+        failure.retry(runner, engine, 1 << 20)
+    })
+}
+
+fn retry_with_bounded_policy<Owner, Success>(
+    mut owner: Owner,
+    attempts: usize,
+    mut retry: impl FnMut(Owner) -> Result<Success, Owner>,
+) -> Result<Success, Owner> {
+    for _ in 0..attempts {
+        owner = match retry(owner) {
+            Ok(success) => return Ok(success),
+            Err(owner) => owner,
+        };
+    }
+    Err(owner)
+}
+
+fn submit_rearm_or_fail_stop(
+    runner: &ferric_engine::M1PhysicalRunnerV1,
+    engine: &mut Engine<32>,
+    prepared: ferric_engine::M1PreparedLongLivedQueueRearmV1,
+    recipe: ferric_engine::AddresslessM1PhysicalBufferRecipeV1,
+    state: QualificationRoundCaptureStateV1,
+) -> (
+    ferric_engine::M1RearmedPublishedQueueV1,
+    QualificationRoundCaptureStateV1,
+) {
+    let mut failure = match runner.submit_rearm(engine, prepared, recipe) {
+        Ok(published) => return (published, state),
+        Err(failure) => failure,
+    };
+    failure = match retry_with_bounded_policy(failure, CAPTURE_RECOVERY_RETRIES, |failure| {
+        failure.retry(runner, engine)
+    }) {
+        Ok(published) => return (published, state),
+        Err(failure) => failure,
+    };
+    terminal_round(
+        "qualification rearm submission retry exhaustion",
+        state,
+        failure.quarantine_after_retry_exhaustion(engine),
+    )
+}
+
+enum CaptureAllocationFailureV1 {
+    Preflight {
+        _diagnostic: ferric_engine::InitializedM1FullStepWorkspacePreflightErrorV1,
+        _memory: Box<ferric_engine::M1PartitionedModelMemoryKvPoolV1>,
+        _prepared: Box<ferric_engine::M1PreparedScheduledWorkspaceImagesV1>,
+    },
+    Terminal {
+        _failure: ferric_engine::M1PrepublicationAllocationFailureV1,
+    },
+}
+
+enum CapturePreparationFailureV1 {
+    Join {
+        _diagnostic: ferric_engine::M1PrepublicationJoinErrorV1,
+        _scheduled: Box<ferric_engine::M1ScheduledDispatchV1>,
+        _plans: M1FullStepWorkspacePlans,
+        _tables: Box<M1FullStepKvWorkspaceTablesV1>,
+    },
+    Composition {
+        _failure: ferric_engine::M1PrepublicationCompositionFailureV1,
+    },
+}
+
+enum FirstGenerationLiveEvidenceV1 {
+    Decode {
+        _caches: Vec<ActiveDeviceKvCache>,
+        _requests: Vec<RequestId>,
+        _contexts: Vec<ferric_engine::M1ValidatedQualificationContextStepV1>,
+    },
+    Prefill {
+        _caches: Vec<ActiveDeviceKvCache>,
+        _requests: Vec<RequestId>,
+        _active_lengths: Vec<u32>,
+        _context_lengths: Vec<u32>,
+    },
+}
+
+struct PrefillLiveEvidenceV1 {
+    _caches: Vec<ActiveDeviceKvCache>,
+    requests: Vec<RequestId>,
+    _active_lengths: Vec<u32>,
+    _context_lengths: Vec<u32>,
+}
+
+enum FirstGenerationPhaseFailureV1<'runner> {
+    Preparation {
+        _memory: Box<ferric_engine::M1PartitionedModelMemoryKvPoolV1>,
+        _recipe: ferric_engine::AddresslessM1PhysicalBufferRecipeV1,
+        _completion: ferric_engine::BoundM1CompletionOutputV1,
+        _failure: Box<CapturePreparationFailureV1>,
+    },
+    Allocation {
+        _recipe: ferric_engine::AddresslessM1PhysicalBufferRecipeV1,
+        _completion: ferric_engine::BoundM1CompletionOutputV1,
+        _failure: Box<CaptureAllocationFailureV1>,
+    },
+    Publication {
+        _failure: ferric_engine::M1PhysicalRunnerFirstPublicationExhaustedV1<'runner>,
+    },
+}
+
+struct FirstGenerationAbandonmentV1<'runner> {
+    _engine: ferric_engine::M1CaptureQuarantinedEngineV1<32>,
+    _evidence: FirstGenerationLiveEvidenceV1,
+    _phase: Box<FirstGenerationPhaseFailureV1<'runner>>,
+}
+
+impl CaptureTerminalCustodyV1 for FirstGenerationAbandonmentV1<'_> {}
+
+fn abandon_first_generation(
+    phase_name: &'static str,
+    engine: Engine<32>,
+    evidence: FirstGenerationLiveEvidenceV1,
+    phase: FirstGenerationPhaseFailureV1<'_>,
+) -> ! {
+    terminal_quarantine(
+        phase_name,
+        FirstGenerationAbandonmentV1 {
+            _engine: engine.into_m1_capture_quarantine(),
+            _evidence: evidence,
+            _phase: Box::new(phase),
+        },
+    )
+}
+
+fn prepare_scheduled_workspaces_with_retries(
+    runner: &ferric_engine::M1PhysicalRunnerV1,
+    scheduled: ferric_engine::M1ScheduledDispatchV1,
+    plans: M1FullStepWorkspacePlans,
+    tables: M1FullStepKvWorkspaceTablesV1,
+) -> Result<ferric_engine::M1PreparedScheduledWorkspaceImagesV1, Box<CapturePreparationFailureV1>> {
+    let mut failure = match runner.prepare_scheduled_workspaces(scheduled, plans, tables) {
+        Ok(prepared) => return Ok(prepared),
+        Err(failure) => failure,
+    };
+    let mut attempts = 0;
+    loop {
+        let (diagnostic, scheduled, plans, tables) = match failure {
+            ferric_engine::M1PrepareFailureV1::Join(failure) => failure.into_parts(),
+            ferric_engine::M1PrepareFailureV1::Composition(failure) => {
+                return Err(Box::new(CapturePreparationFailureV1::Composition {
+                    _failure: failure,
+                }));
+            }
+        };
+        if attempts == CAPTURE_RECOVERY_RETRIES {
+            return Err(Box::new(CapturePreparationFailureV1::Join {
+                _diagnostic: diagnostic,
+                _scheduled: Box::new(scheduled),
+                _plans: plans,
+                _tables: Box::new(tables),
+            }));
+        }
+        attempts += 1;
+        failure = match runner.prepare_scheduled_workspaces(scheduled, plans, tables) {
+            Ok(prepared) => return Ok(prepared),
+            Err(failure) => failure,
+        };
+    }
+}
+
+fn allocate_scheduled_workspaces_with_retries(
+    runner: &ferric_engine::M1PhysicalRunnerV1,
+    memory: ferric_engine::M1PartitionedModelMemoryKvPoolV1,
+    prepared: ferric_engine::M1PreparedScheduledWorkspaceImagesV1,
+) -> Result<ferric_engine::M1AllocatedScheduledStepV1, Box<CaptureAllocationFailureV1>> {
+    let mut failure = match runner.allocate_scheduled_workspaces(memory, prepared) {
+        Ok(allocated) => return Ok(allocated),
+        Err(failure) => failure,
+    };
+    let mut attempts = 0;
+    loop {
+        let (diagnostic, memory, prepared) = match failure.into_preflight_prepared() {
+            Ok(parts) => parts,
+            Err(failure) => {
+                return Err(Box::new(CaptureAllocationFailureV1::Terminal {
+                    _failure: failure,
+                }));
+            }
+        };
+        if attempts == CAPTURE_RECOVERY_RETRIES {
+            return Err(Box::new(CaptureAllocationFailureV1::Preflight {
+                _diagnostic: diagnostic,
+                _memory: Box::new(memory),
+                _prepared: Box::new(prepared),
+            }));
+        }
+        attempts += 1;
+        failure = match runner.allocate_scheduled_workspaces(memory, prepared) {
+            Ok(allocated) => return Ok(allocated),
+            Err(failure) => failure,
+        };
+    }
+}
+
 fn schedule_qualification_round(
     released: QualificationReleasedRoundV1,
     engine: &mut Engine<32>,
-    ordinal: u32,
-) -> CaptureResult<M1ScheduledLongLivedQueueRearmV1> {
+    state: QualificationRoundCaptureStateV1,
+) -> (
+    M1ScheduledLongLivedQueueRearmV1,
+    QualificationRoundCaptureStateV1,
+) {
     match released.schedule(engine) {
-        Ok(scheduled) => Ok(scheduled),
+        Ok(scheduled) => (scheduled, state),
         Err(failure) => {
-            let diagnostic = format!("{:?}", failure.error());
-            let unscheduled = failure.into_unscheduled().map_err(|failure| {
-                format!(
-                    "qualification ordinal {ordinal} scheduling failed terminally at {:?}: {diagnostic}; retained owners={}",
-                    failure.phase(),
-                    failure.retained_owner_count()
-                )
-            })?;
-            unscheduled.retry(engine).map_err(|failure| {
-                format!(
-                    "qualification ordinal {ordinal} scheduling rejected after retry at {:?}: {:?}; retained owners={}",
-                    failure.phase(),
-                    failure.error(),
-                    failure.retained_owner_count()
-                )
-            })
+            let unscheduled = match failure.into_unscheduled() {
+                Ok(unscheduled) => unscheduled,
+                Err(failure) => close_terminal_schedule_failure(failure, state),
+            };
+            match unscheduled.retry(engine) {
+                Ok(scheduled) => (scheduled, state),
+                Err(failure) => {
+                    let unscheduled = match failure.into_unscheduled() {
+                        Ok(unscheduled) => unscheduled,
+                        Err(failure) => close_terminal_schedule_failure(failure, state),
+                    };
+                    let teardown = unscheduled.destroy_queue_and_retain_round(engine);
+                    close_or_quarantine_round(
+                        "qualification scheduling rejected after retry",
+                        state,
+                        None,
+                        teardown,
+                    )
+                }
+            }
         }
+    }
+}
+
+fn close_terminal_schedule_failure(
+    failure: ferric_engine::M1LongLivedQueueRearmScheduleFailureV1,
+    state: QualificationRoundCaptureStateV1,
+) -> ! {
+    match failure.close_terminal() {
+        ferric_engine::M1LongLivedQueueRearmScheduleClosureOutcomeV1::Released(failure) => {
+            invariant_fail_stop(
+                "qualification scheduling closure retained a released retry owner",
+                UnexpectedReleasedScheduleFailureV1 {
+                    _custody: failure,
+                    _requests: state.requests,
+                    _history: state.history,
+                },
+            )
+        }
+        ferric_engine::M1LongLivedQueueRearmScheduleClosureOutcomeV1::QueueDetach(quarantine) => {
+            terminal_round(
+                "qualification scheduling detach quarantine",
+                state,
+                quarantine,
+            )
+        }
+        ferric_engine::M1LongLivedQueueRearmScheduleClosureOutcomeV1::Detached(teardown) => {
+            close_or_quarantine_round(
+                "qualification scheduling detached teardown",
+                state,
+                None,
+                *teardown,
+            )
+        }
+    }
+}
+
+fn release_intermediate_round_or_fail_stop(
+    engine: &mut Engine<32>,
+    mut completion: ferric_engine::M1RearmedCompletionOutcomeV1,
+    mut state: QualificationRoundCaptureStateV1,
+) -> (
+    M1LongLivedQueueReleasedRoundV1,
+    QualificationRoundCaptureStateV1,
+) {
+    let mut completion_retries = 0;
+    'completion: loop {
+        match completion.release_completed() {
+            M1RearmedRoundReleaseOutcomeV1::Released(released) => return (released, state),
+            M1RearmedRoundReleaseOutcomeV1::Rejected(mut failure) => {
+                for _ in 0..CAPTURE_RECOVERY_RETRIES {
+                    match (*failure).retry() {
+                        M1RearmedRoundReleaseOutcomeV1::Released(released) => {
+                            return (released, state);
+                        }
+                        M1RearmedRoundReleaseOutcomeV1::Rejected(next) => failure = next,
+                        M1RearmedRoundReleaseOutcomeV1::NotCompleted(next) => {
+                            let returned = consume_intermediate_non_rejected(
+                                engine,
+                                next,
+                                state,
+                                "qualification intermediate release lost completed state",
+                            );
+                            completion = returned.0;
+                            state = returned.1;
+                            continue 'completion;
+                        }
+                    }
+                }
+                close_or_quarantine_round(
+                    "qualification intermediate page-release retry exhaustion",
+                    state,
+                    None,
+                    failure.destroy_queue_and_retain_round(engine),
+                );
+            }
+            M1RearmedRoundReleaseOutcomeV1::NotCompleted(next) => {
+                if completion_retries == CAPTURE_RECOVERY_RETRIES {
+                    let returned = match next.destroy_queue_and_retain_rejected(engine) {
+                        Ok(teardown) => close_or_quarantine_round(
+                            "qualification intermediate completion retry exhaustion",
+                            state,
+                            None,
+                            teardown,
+                        ),
+                        Err(non_rejected) => consume_intermediate_non_rejected(
+                            engine,
+                            *non_rejected,
+                            state,
+                            "qualification intermediate completion retry exhaustion",
+                        ),
+                    };
+                    completion = returned.0;
+                    state = returned.1;
+                    continue;
+                }
+                completion_retries += 1;
+                let returned = match next.retry_rejected(engine) {
+                    Ok(completion) => (completion, state),
+                    Err(non_rejected) => consume_intermediate_non_rejected(
+                        engine,
+                        *non_rejected,
+                        state,
+                        "qualification intermediate completion retry",
+                    ),
+                };
+                completion = returned.0;
+                state = returned.1;
+            }
+        }
+    }
+}
+
+fn release_terminal_round_or_fail_stop(
+    engine: &mut Engine<32>,
+    mut completion: ferric_engine::M1RearmedQualifiedCompletionOutcomeV1,
+    mut state: QualificationRoundCaptureStateV1,
+) -> (
+    ferric_engine::M1RearmedQualifiedReleasedRoundV1,
+    QualificationRoundCaptureStateV1,
+) {
+    let mut completion_retries = 0;
+    'completion: loop {
+        match completion.release_completed() {
+            M1RearmedQualifiedRoundReleaseOutcomeV1::Released(released) => {
+                return (released, state);
+            }
+            M1RearmedQualifiedRoundReleaseOutcomeV1::Rejected(mut failure) => {
+                for _ in 0..CAPTURE_RECOVERY_RETRIES {
+                    match (*failure).retry() {
+                        M1RearmedQualifiedRoundReleaseOutcomeV1::Released(released) => {
+                            return (released, state);
+                        }
+                        M1RearmedQualifiedRoundReleaseOutcomeV1::Rejected(next) => failure = next,
+                        M1RearmedQualifiedRoundReleaseOutcomeV1::NotCompleted(next) => {
+                            let returned = consume_terminal_non_rejected(
+                                engine,
+                                next,
+                                state,
+                                "terminal qualification release lost completed state",
+                            );
+                            completion = returned.0;
+                            state = returned.1;
+                            continue 'completion;
+                        }
+                    }
+                }
+                close_or_quarantine_round(
+                    "terminal qualification page-release retry exhaustion",
+                    state,
+                    None,
+                    failure.destroy_queue_and_retain_round(engine),
+                );
+            }
+            M1RearmedQualifiedRoundReleaseOutcomeV1::NotCompleted(next) => {
+                if completion_retries == CAPTURE_RECOVERY_RETRIES {
+                    let returned = match next.destroy_queue_and_retain_rejected(engine) {
+                        Ok(teardown) => close_or_quarantine_round(
+                            "terminal qualification completion retry exhaustion",
+                            state,
+                            None,
+                            teardown,
+                        ),
+                        Err(non_rejected) => consume_terminal_non_rejected(
+                            engine,
+                            *non_rejected,
+                            state,
+                            "terminal qualification completion retry exhaustion",
+                        ),
+                    };
+                    completion = returned.0;
+                    state = returned.1;
+                    continue;
+                }
+                completion_retries += 1;
+                let returned = match next.retry_rejected(engine) {
+                    Ok(completion) => (completion, state),
+                    Err(non_rejected) => consume_terminal_non_rejected(
+                        engine,
+                        *non_rejected,
+                        state,
+                        "terminal qualification completion retry",
+                    ),
+                };
+                completion = returned.0;
+                state = returned.1;
+            }
+        }
+    }
+}
+
+fn consume_intermediate_non_rejected(
+    engine: &mut Engine<32>,
+    completion: ferric_engine::M1RearmedCompletionOutcomeV1,
+    state: QualificationRoundCaptureStateV1,
+    phase: &'static str,
+) -> (
+    ferric_engine::M1RearmedCompletionOutcomeV1,
+    QualificationRoundCaptureStateV1,
+) {
+    if matches!(completion.outcome(), M1CompletedStepOutcomeV1::Completed(_)) {
+        return (completion, state);
+    }
+    match completion.into_terminal_poison() {
+        Ok(poison) => terminal_round(phase, state, poison),
+        Err(rejected) => match rejected.destroy_queue_and_retain_rejected(engine) {
+            Ok(teardown) => close_or_quarantine_round(phase, state, None, teardown),
+            Err(completed) => (*completed, state),
+        },
+    }
+}
+
+fn consume_terminal_non_rejected(
+    engine: &mut Engine<32>,
+    completion: ferric_engine::M1RearmedQualifiedCompletionOutcomeV1,
+    state: QualificationRoundCaptureStateV1,
+    phase: &'static str,
+) -> (
+    ferric_engine::M1RearmedQualifiedCompletionOutcomeV1,
+    QualificationRoundCaptureStateV1,
+) {
+    if matches!(
+        completion.completion().outcome(),
+        M1CompletedStepOutcomeV1::Completed(_)
+    ) {
+        return (completion, state);
+    }
+    match completion.into_terminal_poison() {
+        Ok(poison) => terminal_round(phase, state, poison),
+        Err(rejected) => match rejected.destroy_queue_and_retain_rejected(engine) {
+            Ok(teardown) => close_or_quarantine_round(phase, state, None, teardown),
+            Err(completed) => (*completed, state),
+        },
     }
 }
 
@@ -1110,6 +2347,23 @@ fn validate_checked_terminal_counts(
     Ok(())
 }
 
+fn preflight_engine_retirement(engine: &Engine<32>, requests: &[RequestId]) -> CaptureResult<()> {
+    let mut seen = BTreeSet::new();
+    for (lane, request) in requests.iter().copied().enumerate() {
+        if !seen.insert(request) {
+            return Err(format!(
+                "terminal retirement roster repeats the request at lane {lane}"
+            ));
+        }
+        if engine.state(request) != Some(RequestState::InFlight) {
+            return Err(format!(
+                "terminal retirement request at lane {lane} is not in flight"
+            ));
+        }
+    }
+    Ok(())
+}
+
 #[derive(Debug)]
 enum QualificationReleasedRoundV1 {
     First(ferric_engine::M1ReleasedCompletedStepV1),
@@ -1139,15 +2393,28 @@ fn execute_capture(
     gpu_unique_id: u64,
 ) -> CaptureResult<CapturedOutput> {
     match workload.selection.mode {
-        Qwen3ExecutionMode::Prefill => {
-            execute_prefill_capture(runner, memory, workload, input_tokens, gpu_unique_id)
-        }
-        Qwen3ExecutionMode::Decode => {
-            execute_decode_capture(runner, memory, workload, input_tokens, gpu_unique_id)
-        }
-        Qwen3ExecutionMode::Speculative => {
-            Err("qualification capture does not admit speculative selections".to_owned())
-        }
+        Qwen3ExecutionMode::Prefill => Ok(execute_prefill_capture(
+            runner,
+            memory,
+            workload,
+            input_tokens,
+            gpu_unique_id,
+        )),
+        Qwen3ExecutionMode::Decode => Ok(execute_decode_capture(
+            runner,
+            memory,
+            workload,
+            input_tokens,
+            gpu_unique_id,
+        )),
+        Qwen3ExecutionMode::Speculative => abandon_pre_engine_memory(
+            "qualification capture speculative selection rejection",
+            memory,
+            input_tokens,
+            PreEngineDiagnosticV1::Policy(
+                "qualification capture does not admit speculative selections".to_owned(),
+            ),
+        ),
     }
 }
 
@@ -1157,50 +2424,137 @@ fn execute_decode_capture(
     workload: &Workload,
     input_tokens: Vec<u32>,
     _gpu_unique_id: u64,
-) -> CaptureResult<CapturedOutput> {
-    require_supported_capture(workload)?;
-    let binding = qualification_execution_binding(workload, &input_tokens)?;
+) -> CapturedOutput {
+    if let Err(diagnostic) = require_supported_capture(workload) {
+        abandon_pre_engine_memory(
+            "qualification decode policy rejection",
+            memory,
+            input_tokens,
+            PreEngineDiagnosticV1::Policy(diagnostic),
+        );
+    }
+    let binding = match qualification_execution_binding(workload, &input_tokens) {
+        Ok(binding) => binding,
+        Err(diagnostic) => abandon_pre_engine_memory(
+            "qualification execution binding rejection",
+            memory,
+            input_tokens,
+            PreEngineDiagnosticV1::Policy(diagnostic),
+        ),
+    };
     let context_plan = m1_qualification_context_plan(binding.grouping, binding.declaration.clone());
-    let validated_context_plan = ferric_engine::validate_m1_qualification_context_plan_v1(
+    let validated_context_plan = match ferric_engine::validate_m1_qualification_context_plan_v1(
         &context_plan,
         binding.grouping,
         &binding.declaration,
-    )
-    .map_err(|error| format!("qualification context plan rejected: {error}"))?;
+    ) {
+        Ok(plan) => plan,
+        Err(diagnostic) => abandon_pre_engine_memory(
+            "qualification context plan rejection",
+            memory,
+            input_tokens,
+            PreEngineDiagnosticV1::ContextPlan(diagnostic),
+        ),
+    };
     let selection = workload.selection;
     let draft_selection = Qwen3PlanSelection {
         role: Qwen3ModelRole::Draft06B,
         mode: Qwen3ExecutionMode::Decode,
         bucket: selection.bucket,
     };
-    let logical_page_capacity = qualification_engine_page_capacity(binding.grouping)?;
-    let mut engine = Engine::<32>::new(
+    let logical_page_capacity = match qualification_engine_page_capacity(binding.grouping) {
+        Ok(capacity) => capacity,
+        Err(diagnostic) => abandon_pre_engine_memory(
+            "qualification Engine capacity rejection",
+            memory,
+            input_tokens,
+            PreEngineDiagnosticV1::Policy(diagnostic),
+        ),
+    };
+    let mut requests = Vec::new();
+    let mut caches = Vec::new();
+    let mut reservations = Vec::new();
+    if requests.try_reserve_exact(workload.lanes.len()).is_err()
+        || caches.try_reserve_exact(workload.lanes.len()).is_err()
+        || reservations
+            .try_reserve_exact(workload.lanes.len())
+            .is_err()
+    {
+        abandon_pre_engine_memory(
+            "qualification admission-roster allocation",
+            memory,
+            input_tokens,
+            PreEngineDiagnosticV1::Policy(
+                "cannot allocate qualification admission rosters".to_owned(),
+            ),
+        );
+    }
+    let mut engine = match Engine::<32>::new(
         logical_page_capacity,
         QUALIFICATION_LOGICAL_KV_PAGE_TOKENS,
         M1_QUALIFICATION_TOKENS_PER_LANE,
-    )
-    .map_err(|error| format!("cannot construct M1 engine: {error:?}"))?;
-    let mut requests = Vec::new();
-    let mut caches = Vec::new();
-    requests
-        .try_reserve_exact(workload.lanes.len())
-        .map_err(|_| "cannot reserve qualification request roster".to_owned())?;
-    caches
-        .try_reserve_exact(workload.lanes.len())
-        .map_err(|_| "cannot reserve qualification cache roster".to_owned())?;
-    for lane in 0..workload.lanes.len() {
-        let request = engine
-            .admit()
-            .map_err(|error| format!("cannot admit qualification lane {lane}: {error:?}"))?;
-        let cache = ActiveDeviceKvCache::new(memory.device(), request, selection, draft_selection)
-            .map_err(|error| format!("cannot create lane {lane} device KV cache: {error:?}"))?;
+    ) {
+        Ok(engine) => engine,
+        Err(diagnostic) => abandon_pre_engine_memory(
+            "qualification Engine construction",
+            memory,
+            input_tokens,
+            PreEngineDiagnosticV1::Engine(diagnostic),
+        ),
+    };
+    for _ in 0..workload.lanes.len() {
+        let request = match engine.admit() {
+            Ok(request) => request,
+            Err(diagnostic) => abandon_pre_physical_engine(
+                "qualification request admission",
+                engine,
+                requests,
+                reservations,
+                PrePhysicalPoolCustodyV1::Split {
+                    _memory: memory,
+                    _caches: caches,
+                },
+                input_tokens,
+                PrePhysicalDiagnosticV1::Engine(diagnostic),
+            ),
+        };
         requests.push(request);
+        let cache =
+            match ActiveDeviceKvCache::new(memory.device(), request, selection, draft_selection) {
+                Ok(cache) => cache,
+                Err(diagnostic) => abandon_pre_physical_engine(
+                    "qualification device-KV cache construction",
+                    engine,
+                    requests,
+                    reservations,
+                    PrePhysicalPoolCustodyV1::Split {
+                        _memory: memory,
+                        _caches: caches,
+                    },
+                    input_tokens,
+                    PrePhysicalDiagnosticV1::DeviceCache(diagnostic),
+                ),
+            };
         caches.push(cache);
     }
-    let initial_contexts = (0..requests.len())
+    let initial_contexts = match (0..requests.len())
         .map(|lane| validated_context_plan.step(0, u32::try_from(lane).unwrap_or(u32::MAX)))
         .collect::<Result<Vec<_>, _>>()
-        .map_err(|error| format!("cannot derive ordinal-zero context witnesses: {error}"))?;
+    {
+        Ok(contexts) => contexts,
+        Err(diagnostic) => abandon_pre_physical_engine(
+            "ordinal-zero context witness derivation",
+            engine,
+            requests,
+            reservations,
+            PrePhysicalPoolCustodyV1::Split {
+                _memory: memory,
+                _caches: caches,
+            },
+            input_tokens,
+            PrePhysicalDiagnosticV1::ContextWitness(diagnostic),
+        ),
+    };
     let preleased = match prelease_m1_qualification_target_pages_v1(
         memory,
         caches,
@@ -1209,78 +2563,313 @@ fn execute_decode_capture(
     ) {
         Ok(preleased) => preleased,
         Err(failure) => {
-            let first_error = format!("{:?}", failure.error());
-            let first_progress = failure.progress();
             let (_error, recovery) = (*failure).into_parts();
-            recovery.retry().map_err(|failure| {
-                format!(
-                    "qualification target-page prelease rejected after consuming retry; first={first_error} at {first_progress:?}; retry={:?} at {:?}",
-                    failure.error(),
-                    failure.progress()
-                )
-            })?
+            match recovery.retry() {
+                Ok(preleased) => preleased,
+                Err(failure) => {
+                    let (_error, recovery) = (*failure).into_parts();
+                    match recovery.cancel() {
+                        Ok(cancelled) => abandon_prelease(
+                            "qualification target-page prelease cancelled after retry exhaustion",
+                            engine,
+                            requests,
+                            reservations,
+                            input_tokens,
+                            PreleaseCancellationOutcomeV1::Cancelled(cancelled),
+                        ),
+                        Err(failure) => match (*failure).retry() {
+                            Ok(cancelled) => abandon_prelease(
+                                "qualification target-page prelease cancellation retry completed",
+                                engine,
+                                requests,
+                                reservations,
+                                input_tokens,
+                                PreleaseCancellationOutcomeV1::Cancelled(cancelled),
+                            ),
+                            Err(failure) => abandon_prelease(
+                                "qualification target-page prelease cancellation retry exhaustion",
+                                engine,
+                                requests,
+                                reservations,
+                                input_tokens,
+                                PreleaseCancellationOutcomeV1::Exhausted(
+                                    (*failure).exhaust_retry_policy(),
+                                ),
+                            ),
+                        },
+                    }
+                }
+            }
         }
+    };
+    for request in requests.iter().copied() {
+        if let Err(diagnostic) = engine.append_tentative(request, 1) {
+            abandon_pre_physical_engine(
+                "ordinal-zero Engine enqueue",
+                engine,
+                requests,
+                reservations,
+                PrePhysicalPoolCustodyV1::Preleased {
+                    _preleased: preleased,
+                    _initial_contexts: initial_contexts,
+                },
+                input_tokens,
+                PrePhysicalDiagnosticV1::Engine(diagnostic),
+            );
+        }
+    }
+    let scheduled = match engine.dispatch_m1_ready() {
+        Ok(Some(scheduled)) => scheduled,
+        Ok(None) => abandon_pre_physical_engine(
+            "ordinal-zero missing scheduler batch",
+            engine,
+            requests,
+            reservations,
+            PrePhysicalPoolCustodyV1::Preleased {
+                _preleased: preleased,
+                _initial_contexts: initial_contexts,
+            },
+            input_tokens,
+            PrePhysicalDiagnosticV1::MissingBatch,
+        ),
+        Err(diagnostic) => abandon_pre_physical_engine(
+            "ordinal-zero Engine dispatch",
+            engine,
+            requests,
+            reservations,
+            PrePhysicalPoolCustodyV1::Preleased {
+                _preleased: preleased,
+                _initial_contexts: initial_contexts,
+            },
+            input_tokens,
+            PrePhysicalDiagnosticV1::Engine(diagnostic),
+        ),
     };
     let (mut memory, mut caches) = preleased.into_parts();
     let device_id = memory.device().device_id();
-    for request in &requests {
-        engine
-            .append_tentative(*request, 1)
-            .map_err(|error| format!("cannot enqueue ordinal-zero request: {error:?}"))?;
+    if let Err(diagnostic) = validate_scheduled_roster(&scheduled, &requests, 0) {
+        abandon_decode_initial_dispatch(
+            "ordinal-zero scheduled roster validation",
+            engine,
+            memory,
+            caches,
+            requests,
+            initial_contexts,
+            scheduled,
+            DecodeInitialPhaseCustodyV1::Scheduled {
+                _diagnostic: diagnostic,
+            },
+        );
     }
-    let scheduled = engine
-        .dispatch_m1_ready()
-        .map_err(|error| format!("cannot schedule qualification ordinal zero: {error:?}"))?
-        .ok_or_else(|| "qualification ordinal zero produced no scheduler batch".to_owned())?;
-    validate_scheduled_roster(&scheduled, &requests, 0)?;
-    let plans = bind_qualification_step_plans(runner, &scheduled, selection, &requests, 0)?;
-    let inputs = qualification_step_inputs(workload, &plans, &input_tokens, 0)?;
-    let mut reservations = Vec::new();
-    reservations
-        .try_reserve_exact(caches.len())
-        .map_err(|_| "cannot reserve ordinal-zero KV custody".to_owned())?;
-    for (lane, cache) in caches.iter_mut().enumerate() {
-        let reservation = cache
-            .reserve_m1_qualification_context_step_write_v1(
-                requests[lane],
-                u32::try_from(lane).unwrap_or(u32::MAX),
-                initial_contexts[lane],
-                scheduled.epoch(),
-            )
-            .map_err(|failure| {
-                format!(
-                    "cannot reserve qualification ordinal zero lane {lane}: {:?}",
-                    failure.error()
-                )
-            })?;
+    let plans = match bind_qualification_step_plans(runner, &scheduled, selection, &requests, 0) {
+        Ok(plans) => plans,
+        Err(diagnostic) => abandon_decode_initial_dispatch(
+            "ordinal-zero step-plan binding",
+            engine,
+            memory,
+            caches,
+            requests,
+            initial_contexts,
+            scheduled,
+            DecodeInitialPhaseCustodyV1::Scheduled {
+                _diagnostic: diagnostic,
+            },
+        ),
+    };
+    let inputs = match qualification_step_inputs(workload, &plans, &input_tokens, 0) {
+        Ok(inputs) => inputs,
+        Err(diagnostic) => abandon_decode_initial_dispatch(
+            "ordinal-zero input binding",
+            engine,
+            memory,
+            caches,
+            requests,
+            initial_contexts,
+            scheduled,
+            DecodeInitialPhaseCustodyV1::Input {
+                _diagnostic: diagnostic,
+                _plans: plans,
+            },
+        ),
+    };
+    for (lane, ((cache, request), context)) in caches
+        .iter_mut()
+        .zip(requests.iter().copied())
+        .zip(initial_contexts.iter().copied())
+        .enumerate()
+    {
+        let reservation = match cache.reserve_m1_qualification_context_step_write_v1(
+            request,
+            u32::try_from(lane).unwrap_or(u32::MAX),
+            context,
+            scheduled.epoch(),
+        ) {
+            Ok(reservation) => reservation,
+            Err(diagnostic) => abandon_decode_initial_dispatch(
+                "ordinal-zero qualification KV reservation",
+                engine,
+                memory,
+                caches,
+                requests,
+                initial_contexts,
+                scheduled,
+                DecodeInitialPhaseCustodyV1::Reservations {
+                    _diagnostic: diagnostic,
+                    _plans: plans,
+                    _inputs: inputs,
+                    _reservations: reservations,
+                },
+            ),
+        };
         reservations.push(reservation.into_pending_step_write());
     }
-    let table = bind_m1_kv_workspace_table_v1(inputs, reservations)
-        .map_err(|error| format!("cannot bind ordinal-zero target KV workspace: {error:?}"))?;
-    let workspace_identity = *binding.declaration.declared_workload_digest.as_bytes();
-    let prepared = runner
-        .prepare_scheduled_workspaces(
+    let table = match bind_m1_kv_workspace_table_v1(inputs, reservations) {
+        Ok(table) => table,
+        Err(failure) => abandon_decode_initial_dispatch(
+            "ordinal-zero KV workspace binding",
+            engine,
+            memory,
+            caches,
+            requests,
+            initial_contexts,
             scheduled,
-            M1FullStepWorkspacePlans::target_only(workload_workspace_plan(
-                selection,
-                workspace_identity,
-            )?),
-            M1FullStepKvWorkspaceTablesV1::TargetOnly { target: table },
-        )
-        .map_err(|error| format!("cannot prepare ordinal-zero workspace: {error:?}"))?;
-    let completion = memory
-        .allocate_completion_output(selection)
-        .map_err(|error| format!("cannot allocate compact completion: {error}"))?;
-    let completion = memory
-        .enable_qualification_logits_capture(completion)
-        .map_err(|error| format!("cannot enable qualification logits: {error:?}"))?;
-    let allocated = runner
-        .allocate_scheduled_workspaces(memory, prepared)
-        .map_err(|error| format!("cannot allocate ordinal-zero workspaces: {error:?}"))?;
-    let recipe = derive_qualification_recipe(runner, selection, workspace_identity)?;
-    let published = runner
-        .publish_first_step(&mut engine, 1 << 20, allocated, recipe, completion)
-        .map_err(|error| format!("cannot publish qualification ordinal zero: {error:?}"))?;
+            DecodeInitialPhaseCustodyV1::KvBinding {
+                _plans: plans,
+                _failure: failure,
+            },
+        ),
+    };
+    let workspace_identity = *binding.declaration.declared_workload_digest.as_bytes();
+    let workspace_plan = match workload_workspace_plan(selection, workspace_identity) {
+        Ok(plan) => plan,
+        Err(diagnostic) => abandon_decode_initial_dispatch(
+            "ordinal-zero workspace plan",
+            engine,
+            memory,
+            caches,
+            requests,
+            initial_contexts,
+            scheduled,
+            DecodeInitialPhaseCustodyV1::WorkspacePlan {
+                _diagnostic: diagnostic,
+                _plans: plans,
+                _table: table,
+            },
+        ),
+    };
+    let recipe = match derive_qualification_recipe(runner, selection, workspace_identity) {
+        Ok(recipe) => recipe,
+        Err(diagnostic) => abandon_decode_initial_dispatch(
+            "ordinal-zero recipe derivation",
+            engine,
+            memory,
+            caches,
+            requests,
+            initial_contexts,
+            scheduled,
+            DecodeInitialPhaseCustodyV1::Recipe {
+                _diagnostic: diagnostic,
+                _plans: plans,
+                _table: table,
+                _workspace_plan: workspace_plan,
+            },
+        ),
+    };
+    let completion = match memory.allocate_completion_output(selection) {
+        Ok(completion) => completion,
+        Err(diagnostic) => abandon_decode_initial_dispatch(
+            "ordinal-zero compact completion allocation",
+            engine,
+            memory,
+            caches,
+            requests,
+            initial_contexts,
+            scheduled,
+            DecodeInitialPhaseCustodyV1::CompletionOutput {
+                _diagnostic: diagnostic,
+                _plans: plans,
+                _table: table,
+                _workspace_plan: workspace_plan,
+                _recipe: recipe,
+            },
+        ),
+    };
+    let completion = match memory.enable_qualification_logits_capture(completion) {
+        Ok(completion) => completion,
+        Err(failure) => abandon_decode_initial_dispatch(
+            "ordinal-zero qualification logits allocation",
+            engine,
+            memory,
+            caches,
+            requests,
+            initial_contexts,
+            scheduled,
+            DecodeInitialPhaseCustodyV1::QualificationLogits {
+                _failure: failure,
+                _plans: plans,
+                _table: table,
+                _workspace_plan: workspace_plan,
+                _recipe: recipe,
+            },
+        ),
+    };
+    let prepared = match prepare_scheduled_workspaces_with_retries(
+        runner,
+        scheduled,
+        M1FullStepWorkspacePlans::target_only(workspace_plan),
+        M1FullStepKvWorkspaceTablesV1::TargetOnly { target: table },
+    ) {
+        Ok(prepared) => prepared,
+        Err(failure) => abandon_first_generation(
+            "ordinal-zero workspace preparation retry exhaustion",
+            engine,
+            FirstGenerationLiveEvidenceV1::Decode {
+                _caches: caches,
+                _requests: requests,
+                _contexts: initial_contexts,
+            },
+            FirstGenerationPhaseFailureV1::Preparation {
+                _memory: Box::new(memory),
+                _recipe: recipe,
+                _completion: completion,
+                _failure: failure,
+            },
+        ),
+    };
+    let allocated = match allocate_scheduled_workspaces_with_retries(runner, memory, prepared) {
+        Ok(allocated) => allocated,
+        Err(failure) => abandon_first_generation(
+            "ordinal-zero allocation retry exhaustion",
+            engine,
+            FirstGenerationLiveEvidenceV1::Decode {
+                _caches: caches,
+                _requests: requests,
+                _contexts: initial_contexts,
+            },
+            FirstGenerationPhaseFailureV1::Allocation {
+                _recipe: recipe,
+                _completion: completion,
+                _failure: failure,
+            },
+        ),
+    };
+    let published =
+        match publish_first_step_with_retries(runner, &mut engine, allocated, recipe, completion) {
+            Ok(published) => published,
+            Err(failure) => {
+                let failure = failure.quarantine_after_retry_exhaustion(&mut engine);
+                abandon_first_generation(
+                    "ordinal-zero first publication retry exhaustion",
+                    engine,
+                    FirstGenerationLiveEvidenceV1::Decode {
+                        _caches: caches,
+                        _requests: requests,
+                        _contexts: initial_contexts,
+                    },
+                    FirstGenerationPhaseFailureV1::Publication { _failure: failure },
+                )
+            }
+        };
     let semantics = initial_contexts
         .iter()
         .map(|context| CompletionWireSemanticExpectation::QualificationPromptCommit { context })
@@ -1298,105 +2887,190 @@ fn execute_decode_capture(
         &semantics,
         roster,
     );
-    let first = consume_first_completion_outcome(&mut engine, first_outcome)?;
-    validate_round_counts(
+    let first = consume_first_completion_outcome(&mut engine, first_outcome, &semantics);
+    let history =
+        QualificationRoundCommitmentV1::new(context_plan.plan_id, &binding.declaration, selection);
+    let mut state = QualificationRoundCaptureStateV1 { requests, history };
+    if let Err(error) = validate_round_counts(
         0,
         first.logical_accepted_counts(),
         first.externally_published_counts(),
-        requests.len(),
+        state.requests.len(),
         false,
-    )?;
-    let mut history =
-        QualificationRoundCommitmentV1::new(context_plan.plan_id, &binding.declaration, selection);
-    history.observe(
+    ) {
+        let teardown = first.destroy_queue_and_retain_step(&mut engine);
+        close_or_quarantine_round(
+            "ordinal-zero completion-count validation",
+            state,
+            Some(QualificationRoundDiagnosticV1::Message(error)),
+            teardown,
+        );
+    }
+    if let Err(error) = state.history.observe(
         0,
         first.checked(),
-        &requests,
+        &state.requests,
         QualificationRoundReceiptV1 {
             logical_accepted: first.logical_accepted_counts(),
             externally_published: first.externally_published_counts(),
             release_counts: first.release_counts(),
             device_id,
         },
-    )?;
+    ) {
+        let teardown = first.destroy_queue_and_retain_step(&mut engine);
+        close_or_quarantine_round(
+            "ordinal-zero round-history validation",
+            state,
+            Some(QualificationRoundDiagnosticV1::Message(error)),
+            teardown,
+        );
+    }
     let mut released = QualificationReleasedRoundV1::First(first);
 
     for ordinal in 1..M1_QUALIFICATION_FINAL_INPUT_TOKEN {
-        for request in &requests {
-            engine.append_tentative(*request, 1).map_err(|error| {
-                format!("cannot enqueue qualification ordinal {ordinal}: {error:?}")
-            })?;
+        let contexts =
+            match qualification_contexts(validated_context_plan, state.requests.len(), ordinal) {
+                Ok(contexts) => contexts,
+                Err(diagnostic) => abandon_released_round(
+                    "qualification intermediate context witnesses",
+                    engine,
+                    released,
+                    state,
+                    ReleasedRoundPhaseCustodyV1::Context {
+                        _diagnostic: diagnostic,
+                    },
+                ),
+            };
+        let workspace_plan = match workload_workspace_plan(selection, workspace_identity) {
+            Ok(plan) => plan,
+            Err(diagnostic) => abandon_released_round(
+                "qualification intermediate workspace plan",
+                engine,
+                released,
+                state,
+                ReleasedRoundPhaseCustodyV1::WorkspacePlan {
+                    _diagnostic: diagnostic,
+                    _contexts: contexts,
+                },
+            ),
+        };
+        let recipe = match derive_qualification_recipe(runner, selection, workspace_identity) {
+            Ok(recipe) => recipe,
+            Err(diagnostic) => abandon_released_round(
+                "qualification intermediate recipe derivation",
+                engine,
+                released,
+                state,
+                ReleasedRoundPhaseCustodyV1::Recipe {
+                    _diagnostic: diagnostic,
+                    _contexts: contexts,
+                    _workspace_plan: workspace_plan,
+                },
+            ),
+        };
+        for request in state.requests.iter().copied() {
+            if let Err(diagnostic) = engine.append_tentative(request, 1) {
+                abandon_released_round(
+                    "qualification intermediate Engine enqueue",
+                    engine,
+                    released,
+                    state,
+                    ReleasedRoundPhaseCustodyV1::Enqueue {
+                        _diagnostic: diagnostic,
+                        _contexts: contexts,
+                        _workspace_plan: workspace_plan,
+                        _recipe: recipe,
+                    },
+                );
+            }
         }
-        let scheduled = schedule_qualification_round(released, &mut engine, ordinal)?;
-        validate_scheduled_roster(scheduled.scheduled_dispatch(), &requests, ordinal)?;
-        if scheduled.selected_requests().ne(requests.iter().copied())
+        let (scheduled, returned_state) =
+            schedule_qualification_round(released, &mut engine, state);
+        state = returned_state;
+        if let Err(error) =
+            validate_scheduled_roster(scheduled.scheduled_dispatch(), &state.requests, ordinal)
+        {
+            let teardown = scheduled.destroy_queue_and_retain_round(&mut engine);
+            close_or_quarantine_round(
+                "qualification intermediate scheduled-roster drift",
+                state,
+                Some(QualificationRoundDiagnosticV1::Message(error)),
+                teardown,
+            );
+        }
+        if scheduled
+            .selected_requests()
+            .ne(state.requests.iter().copied())
             || scheduled.parked_count() != 0
             || scheduled.terminal_count() != 0
         {
-            return Err(format!(
-                "qualification ordinal {ordinal} selected/parked scheduler custody drifted"
-            ));
+            close_or_quarantine_round(
+                "qualification intermediate scheduler-lineage drift",
+                state,
+                None,
+                scheduled.destroy_queue_and_retain_round(&mut engine),
+            );
         }
-        let plans = bind_qualification_step_plans(
+        let plans = match bind_qualification_step_plans(
             runner,
             scheduled.scheduled_dispatch(),
             selection,
-            &requests,
+            &state.requests,
             ordinal,
-        )?;
-        let inputs = qualification_step_inputs(workload, &plans, &input_tokens, ordinal)?;
-        let contexts = qualification_contexts(validated_context_plan, requests.len(), ordinal)?;
-        let reserved = reserve_m1_long_lived_queue_rearm_kv_v1(
+        ) {
+            Ok(plans) => plans,
+            Err(diagnostic) => close_or_quarantine_round(
+                "qualification intermediate step-plan binding",
+                state,
+                Some(QualificationRoundDiagnosticV1::Message(diagnostic)),
+                scheduled.destroy_queue_and_retain_round(&mut engine),
+            ),
+        };
+        let inputs = match qualification_step_inputs(workload, &plans, &input_tokens, ordinal) {
+            Ok(inputs) => inputs,
+            Err(diagnostic) => close_or_quarantine_round(
+                "qualification intermediate input binding",
+                state,
+                Some(QualificationRoundDiagnosticV1::Message(diagnostic)),
+                scheduled.destroy_queue_and_retain_round(&mut engine),
+            ),
+        };
+        let reserved = match reserve_m1_long_lived_queue_rearm_kv_v1(
             &mut engine,
             scheduled,
             M1LongLivedQueueRearmKvInputsV1::qualification_target_only(inputs, contexts.clone()),
-        )
-        .map_err(|failure| {
-            format!(
-                "qualification ordinal {ordinal} KV reservation retained custody at {:?}",
-                failure.phase()
-            )
-        })?;
-        let prepared = prepare_m1_long_lived_queue_rearm_v1(
+        ) {
+            Ok(reserved) => reserved,
+            Err(failure) => {
+                terminal_round("qualification intermediate KV reservation", state, failure)
+            }
+        };
+        let prepared = match prepare_m1_long_lived_queue_rearm_v1(
             &mut engine,
             reserved,
             runner.logical_runner(),
-            M1FullStepWorkspacePlans::target_only(workload_workspace_plan(
-                selection,
-                workspace_identity,
-            )?),
-        )
-        .map_err(|failure| {
-            format!(
-                "qualification ordinal {ordinal} workspace preparation retained custody: {:?}",
-                failure.source()
-            )
-        })?;
-        let published = runner
-            .submit_rearm(
-                &mut engine,
-                prepared,
-                derive_qualification_recipe(runner, selection, workspace_identity)?,
-            )
-            .map_err(|failure| {
-                format!(
-                    "qualification ordinal {ordinal} queue submission retained custody: {failure:?}"
-                )
-            })?;
-        let completed = published
-            .wait(&mut engine, workload.max_polls)
-            .map_err(|failure| {
-                format!(
-                    "qualification ordinal {ordinal} queue wait retained custody at {:?}",
-                    failure.phase()
-                )
-            })?;
-        let recycled = completed.recycle(&mut engine).map_err(|failure| {
-            format!(
-                "qualification ordinal {ordinal} signal recycle retained custody at {:?}",
-                failure.phase()
-            )
-        })?;
+            M1FullStepWorkspacePlans::target_only(workspace_plan),
+        ) {
+            Ok(prepared) => prepared,
+            Err(failure) => terminal_round(
+                "qualification intermediate workspace preparation",
+                state,
+                failure,
+            ),
+        };
+        let (published, returned_state) =
+            submit_rearm_or_fail_stop(runner, &mut engine, prepared, recipe, state);
+        state = returned_state;
+        let completed = match published.wait(&mut engine, workload.max_polls) {
+            Ok(completed) => completed,
+            Err(failure) => terminal_round("qualification intermediate queue wait", state, failure),
+        };
+        let recycled = match completed.recycle(&mut engine) {
+            Ok(recycled) => recycled,
+            Err(failure) => {
+                terminal_round("qualification intermediate queue recycle", state, failure)
+            }
+        };
         let semantics = contexts
             .iter()
             .map(|context| CompletionWireSemanticExpectation::QualificationPromptCommit { context })
@@ -1406,220 +3080,338 @@ fn execute_decode_capture(
             Err(failure) => match failure.retry(&semantics) {
                 Ok(readback) => readback,
                 Err(failure) => {
-                    let diagnostic = format!("{:?}", failure.source());
                     let teardown = failure.destroy_queue_and_retain_custody(&mut engine);
-                    return Err(format!(
-                        "qualification ordinal {ordinal} compact readback rejected after retry: {diagnostic}; {}",
-                        release_result("rearmed readback teardown", teardown)
-                    ));
+                    close_or_quarantine_round(
+                        "qualification intermediate readback rejected after retry",
+                        state,
+                        None,
+                        teardown,
+                    );
                 }
             },
         };
         let completion = match readback.complete(
             &mut engine,
-            vec![M1DeviceKvCompletionDispositionV1::Continue; requests.len()],
+            vec![M1DeviceKvCompletionDispositionV1::Continue; state.requests.len()],
         ) {
             Ok(completion) => completion,
-            Err(failure) => failure.retry(&mut engine).map_err(|failure| {
-                format!(
-                    "qualification ordinal {ordinal} completion preflight retained custody: {:?}",
-                    failure.error()
-                )
-            })?,
-        };
-        let released_round = match completion.release_completed() {
-            M1RearmedRoundReleaseOutcomeV1::Released(released) => released,
-            M1RearmedRoundReleaseOutcomeV1::Rejected(failure) => match (*failure).retry() {
-                M1RearmedRoundReleaseOutcomeV1::Released(released) => released,
-                retry => {
-                    return Err(format!(
-                        "qualification ordinal {ordinal} page release remained incomplete after retry: {retry:?}"
-                    ))
-                }
+            Err(failure) => match failure.retry(&mut engine) {
+                Ok(completion) => completion,
+                Err(failure) => close_or_quarantine_round(
+                    "qualification intermediate completion preflight teardown",
+                    state,
+                    None,
+                    failure.destroy_queue_and_retain_custody(&mut engine),
+                ),
             },
-            incomplete @ M1RearmedRoundReleaseOutcomeV1::NotCompleted(_) => {
-                return Err(format!(
-                    "qualification ordinal {ordinal} completion did not commit: {incomplete:?}"
-                ))
-            }
         };
+        let (released_round, returned_state) =
+            release_intermediate_round_or_fail_stop(&mut engine, completion, state);
+        state = returned_state;
         if released_round.parked_count() != 0
             || released_round.terminal_lineage_count() != 0
             || released_round.round_history_len() != usize::try_from(ordinal).unwrap_or(usize::MAX)
         {
-            return Err(format!(
-                "qualification ordinal {ordinal} release history or lineage drifted"
-            ));
+            let teardown = released_round.destroy_queue_and_retain_round(&mut engine);
+            close_or_quarantine_round(
+                "qualification intermediate released-lineage drift",
+                state,
+                None,
+                teardown,
+            );
         }
         let current = released_round.current_released();
-        validate_round_counts(
+        if let Err(error) = validate_round_counts(
             ordinal,
             current.logical_accepted_counts(),
             current.externally_published_counts(),
-            requests.len(),
+            state.requests.len(),
             false,
-        )?;
-        history.observe(
+        ) {
+            let teardown = released_round.destroy_queue_and_retain_round(&mut engine);
+            close_or_quarantine_round(
+                "qualification intermediate completion-count drift",
+                state,
+                Some(QualificationRoundDiagnosticV1::Message(error)),
+                teardown,
+            );
+        }
+        if let Err(error) = state.history.observe(
             ordinal,
             current.checked(),
-            &requests,
+            &state.requests,
             QualificationRoundReceiptV1 {
                 logical_accepted: current.logical_accepted_counts(),
                 externally_published: current.externally_published_counts(),
                 release_counts: current.release_counts(),
                 device_id,
             },
-        )?;
+        ) {
+            let teardown = released_round.destroy_queue_and_retain_round(&mut engine);
+            close_or_quarantine_round(
+                "qualification intermediate round-history drift",
+                state,
+                Some(QualificationRoundDiagnosticV1::Message(error)),
+                teardown,
+            );
+        }
         released = QualificationReleasedRoundV1::Rearmed(Box::new(released_round));
     }
 
     let terminal_ordinal = M1_QUALIFICATION_FINAL_INPUT_TOKEN;
-    for request in &requests {
-        engine
-            .append_tentative(*request, 1)
-            .map_err(|error| format!("cannot enqueue terminal qualification ordinal: {error:?}"))?;
+    let terminal_contexts = match qualification_contexts(
+        validated_context_plan,
+        state.requests.len(),
+        terminal_ordinal,
+    ) {
+        Ok(contexts) => contexts,
+        Err(diagnostic) => abandon_released_round(
+            "terminal qualification context witnesses",
+            engine,
+            released,
+            state,
+            ReleasedRoundPhaseCustodyV1::Context {
+                _diagnostic: diagnostic,
+            },
+        ),
+    };
+    let workspace_plan = match workload_workspace_plan(selection, workspace_identity) {
+        Ok(plan) => plan,
+        Err(diagnostic) => abandon_released_round(
+            "terminal qualification workspace plan",
+            engine,
+            released,
+            state,
+            ReleasedRoundPhaseCustodyV1::WorkspacePlan {
+                _diagnostic: diagnostic,
+                _contexts: terminal_contexts,
+            },
+        ),
+    };
+    let recipe = match derive_qualification_recipe(runner, selection, workspace_identity) {
+        Ok(recipe) => recipe,
+        Err(diagnostic) => abandon_released_round(
+            "terminal qualification recipe derivation",
+            engine,
+            released,
+            state,
+            ReleasedRoundPhaseCustodyV1::Recipe {
+                _diagnostic: diagnostic,
+                _contexts: terminal_contexts,
+                _workspace_plan: workspace_plan,
+            },
+        ),
+    };
+    for request in state.requests.iter().copied() {
+        if let Err(diagnostic) = engine.append_tentative(request, 1) {
+            abandon_released_round(
+                "terminal qualification Engine enqueue",
+                engine,
+                released,
+                state,
+                ReleasedRoundPhaseCustodyV1::Enqueue {
+                    _diagnostic: diagnostic,
+                    _contexts: terminal_contexts,
+                    _workspace_plan: workspace_plan,
+                    _recipe: recipe,
+                },
+            );
+        }
     }
-    let scheduled = schedule_qualification_round(released, &mut engine, terminal_ordinal)?;
-    validate_scheduled_roster(scheduled.scheduled_dispatch(), &requests, terminal_ordinal)?;
-    if scheduled.selected_requests().ne(requests.iter().copied())
+    let (scheduled, returned_state) = schedule_qualification_round(released, &mut engine, state);
+    state = returned_state;
+    if let Err(error) = validate_scheduled_roster(
+        scheduled.scheduled_dispatch(),
+        &state.requests,
+        terminal_ordinal,
+    ) {
+        let teardown = scheduled.destroy_queue_and_retain_round(&mut engine);
+        close_or_quarantine_round(
+            "terminal qualification scheduled-roster drift",
+            state,
+            Some(QualificationRoundDiagnosticV1::Message(error)),
+            teardown,
+        );
+    }
+    if scheduled
+        .selected_requests()
+        .ne(state.requests.iter().copied())
         || scheduled.parked_count() != 0
         || scheduled.terminal_count() != 0
         || scheduled.round_history_len() != M1_QUALIFICATION_CONTEXT_PLAN_STEPS - 2
     {
-        return Err("terminal qualification scheduler lineage drifted".to_owned());
+        close_or_quarantine_round(
+            "terminal qualification scheduler-lineage drift",
+            state,
+            None,
+            scheduled.destroy_queue_and_retain_round(&mut engine),
+        );
     }
-    let plans = bind_qualification_step_plans(
+    let plans = match bind_qualification_step_plans(
         runner,
         scheduled.scheduled_dispatch(),
         selection,
-        &requests,
+        &state.requests,
         terminal_ordinal,
-    )?;
-    let inputs = qualification_step_inputs(workload, &plans, &input_tokens, terminal_ordinal)?;
-    let terminal_contexts =
-        qualification_contexts(validated_context_plan, requests.len(), terminal_ordinal)?;
-    let reserved = reserve_m1_long_lived_queue_rearm_kv_v1(
+    ) {
+        Ok(plans) => plans,
+        Err(diagnostic) => close_or_quarantine_round(
+            "terminal qualification step-plan binding",
+            state,
+            Some(QualificationRoundDiagnosticV1::Message(diagnostic)),
+            scheduled.destroy_queue_and_retain_round(&mut engine),
+        ),
+    };
+    let inputs = match qualification_step_inputs(workload, &plans, &input_tokens, terminal_ordinal)
+    {
+        Ok(inputs) => inputs,
+        Err(diagnostic) => close_or_quarantine_round(
+            "terminal qualification input binding",
+            state,
+            Some(QualificationRoundDiagnosticV1::Message(diagnostic)),
+            scheduled.destroy_queue_and_retain_round(&mut engine),
+        ),
+    };
+    let reserved = match reserve_m1_long_lived_queue_rearm_kv_v1(
         &mut engine,
         scheduled,
         M1LongLivedQueueRearmKvInputsV1::qualification_target_only(
             inputs,
             terminal_contexts.clone(),
         ),
-    )
-    .map_err(|failure| {
-        format!(
-            "terminal qualification KV reservation retained custody at {:?}",
-            failure.phase()
-        )
-    })?;
-    let prepared = prepare_m1_long_lived_queue_rearm_v1(
+    ) {
+        Ok(reserved) => reserved,
+        Err(failure) => terminal_round("terminal qualification KV reservation", state, failure),
+    };
+    let prepared = match prepare_m1_long_lived_queue_rearm_v1(
         &mut engine,
         reserved,
         runner.logical_runner(),
-        M1FullStepWorkspacePlans::target_only(workload_workspace_plan(
-            selection,
-            workspace_identity,
-        )?),
-    )
-    .map_err(|failure| {
-        format!(
-            "terminal qualification workspace preparation retained custody: {:?}",
-            failure.source()
-        )
-    })?;
-    let published = runner
-        .submit_rearm(
-            &mut engine,
-            prepared,
-            derive_qualification_recipe(runner, selection, workspace_identity)?,
-        )
-        .map_err(|failure| {
-            format!("terminal qualification submission retained custody: {failure:?}")
-        })?;
-    let completed = published
-        .wait(&mut engine, workload.max_polls)
-        .map_err(|failure| {
-            format!(
-                "terminal qualification wait retained custody at {:?}",
-                failure.phase()
-            )
-        })?;
-    let recycled = completed.recycle(&mut engine).map_err(|failure| {
-        format!(
-            "terminal qualification recycle retained custody at {:?}",
-            failure.phase()
-        )
-    })?;
+        M1FullStepWorkspacePlans::target_only(workspace_plan),
+    ) {
+        Ok(prepared) => prepared,
+        Err(failure) => terminal_round(
+            "terminal qualification workspace preparation",
+            state,
+            failure,
+        ),
+    };
+    let (published, returned_state) =
+        submit_rearm_or_fail_stop(runner, &mut engine, prepared, recipe, state);
+    state = returned_state;
+    let completed = match published.wait(&mut engine, workload.max_polls) {
+        Ok(completed) => completed,
+        Err(failure) => terminal_round("terminal qualification queue wait", state, failure),
+    };
+    let recycled = match completed.recycle(&mut engine) {
+        Ok(recycled) => recycled,
+        Err(failure) => terminal_round("terminal qualification queue recycle", state, failure),
+    };
     let observed = match recycled.observe_qualification_completion() {
         Ok(observed) => observed,
         Err(failure) => match (*failure).retry() {
             Ok(observed) => observed,
             Err(failure) => {
-                let diagnostic = format!("{:?}", failure.source().error());
                 let teardown = (*failure).destroy_queue_and_retain_custody(&mut engine);
-                return Err(format!(
-                    "terminal qualification observation rejected after retry: {diagnostic}; {}",
-                    release_result("terminal observation teardown", teardown)
-                ));
+                close_or_quarantine_round(
+                    "terminal qualification observation rejected after retry",
+                    state,
+                    None,
+                    teardown,
+                );
             }
         },
     };
-    if observed.selected_requests().ne(requests.iter().copied()) || observed.parked_count() != 0 {
-        return Err("terminal qualification observation roster drifted".to_owned());
+    if observed
+        .selected_requests()
+        .ne(state.requests.iter().copied())
+        || observed.parked_count() != 0
+    {
+        close_or_quarantine_round(
+            "terminal qualification observation roster drift",
+            state,
+            None,
+            observed.destroy_queue_and_retain_custody(&mut engine),
+        );
     }
     let qualified = match observed.check_final_completion(&terminal_contexts) {
         Ok(qualified) => qualified,
         Err(failure) => {
-            let diagnostic = format!("{}", failure.error());
             let teardown = failure.destroy_queue_and_retain_custody(&mut engine);
-            return Err(format!(
-                "terminal qualification semantic join rejected: {diagnostic}; {}",
-                release_result("terminal semantic teardown", teardown)
-            ));
+            close_or_quarantine_round(
+                "terminal qualification semantic join rejected",
+                state,
+                None,
+                teardown,
+            );
         }
     };
-    validate_checked_terminal_counts(qualified.checked(), requests.len())?;
+    if let Err(error) = validate_checked_terminal_counts(qualified.checked(), state.requests.len())
+    {
+        close_or_quarantine_round(
+            "terminal qualification compact-count drift",
+            state,
+            Some(QualificationRoundDiagnosticV1::Message(error)),
+            qualified.destroy_queue_and_retain_custody(&mut engine),
+        );
+    }
     let retiring = qualified.selected_requests().collect::<Vec<_>>();
-    if retiring != requests {
-        return Err("terminal qualification retirement roster drifted".to_owned());
+    if retiring != state.requests {
+        close_or_quarantine_round(
+            "terminal qualification retirement roster drift",
+            state,
+            None,
+            qualified.destroy_queue_and_retain_custody(&mut engine),
+        );
+    }
+    if let Err(error) = preflight_engine_retirement(&engine, &retiring) {
+        close_or_quarantine_round(
+            "terminal qualification Engine retirement preflight",
+            state,
+            Some(QualificationRoundDiagnosticV1::Message(error)),
+            qualified.destroy_queue_and_retain_custody(&mut engine),
+        );
     }
     for request in &retiring {
-        engine
-            .retire(*request)
-            .map_err(|error| format!("cannot retire terminal request: {error:?}"))?;
+        if let Err(error) = engine.retire(*request) {
+            close_or_quarantine_round(
+                "terminal qualification Engine retirement failure",
+                state,
+                Some(QualificationRoundDiagnosticV1::Engine(error)),
+                qualified.destroy_queue_and_retain_custody(&mut engine),
+            );
+        }
     }
     let completion = match qualified.complete_retiring(&mut engine) {
         Ok(completion) => completion,
-        Err(failure) => (*failure).retry(&mut engine).map_err(|failure| {
-            format!(
-                "terminal qualification completion preflight retained custody: {:?}",
-                failure.error()
-            )
-        })?,
-    };
-    let released = match completion.release_completed() {
-        M1RearmedQualifiedRoundReleaseOutcomeV1::Released(released) => released,
-        M1RearmedQualifiedRoundReleaseOutcomeV1::Rejected(failure) => match (*failure).retry() {
-            M1RearmedQualifiedRoundReleaseOutcomeV1::Released(released) => released,
-            retry => {
-                return Err(format!(
-                    "terminal qualification page release remained incomplete after retry: {retry:?}"
-                ))
-            }
+        Err(failure) => match (*failure).retry(&mut engine) {
+            Ok(completion) => completion,
+            Err(failure) => close_or_quarantine_round(
+                "terminal qualification completion preflight teardown",
+                state,
+                None,
+                failure.destroy_queue_and_retain_custody(&mut engine),
+            ),
         },
-        incomplete @ M1RearmedQualifiedRoundReleaseOutcomeV1::NotCompleted(_) => {
-            return Err(format!(
-                "terminal qualification completion did not commit: {incomplete:?}"
-            ))
-        }
     };
-    let teardown = released
-        .destroy_queue_and_retain_round()
-        .map_err(|failure| format!("terminal qualification queue teardown failed: {failure:?}"))?;
+    let (released, returned_state) =
+        release_terminal_round_or_fail_stop(&mut engine, completion, state);
+    state = returned_state;
+    let teardown = match released.destroy_queue_and_retain_round(&mut engine) {
+        Ok(teardown) => teardown,
+        Err(quarantine) => terminal_quarantine(
+            "terminal qualification queue teardown",
+            QualificationRoundCustodyV1 {
+                _state: state,
+                _diagnostic: None,
+                _custody: quarantine,
+            },
+        ),
+    };
     if teardown.round_history_len() != M1_QUALIFICATION_CONTEXT_PLAN_STEPS - 1
         || teardown.teardown().parked_count() != 0
         || teardown.teardown().terminal_count() != 0
-        || teardown.teardown().released().members().len() != requests.len()
+        || teardown.teardown().released().members().len() != state.requests.len()
         || teardown
             .teardown()
             .released()
@@ -1627,31 +3419,68 @@ fn execute_decode_capture(
             .iter()
             .any(|member| matches!(member, ferric_engine::M1ReleasedDeviceKvMemberV1::Active(_)))
     {
-        return Err("terminal qualification teardown custody drifted".to_owned());
+        closed_teardown(
+            "terminal qualification teardown custody drifted",
+            QualificationRoundCustodyV1 {
+                _state: state,
+                _diagnostic: Some(QualificationRoundDiagnosticV1::Message(
+                    "terminal qualification teardown custody drifted".to_owned(),
+                )),
+                _custody: teardown,
+            },
+        );
     }
-    validate_round_counts(
+    if let Err(diagnostic) = validate_round_counts(
         terminal_ordinal,
         teardown.teardown().released().logical_accepted_counts(),
         teardown.teardown().released().externally_published_counts(),
-        requests.len(),
+        state.requests.len(),
         true,
-    )?;
-    history.observe(
+    ) {
+        closed_teardown(
+            "terminal qualification completion-count drift",
+            QualificationRoundCustodyV1 {
+                _state: state,
+                _diagnostic: Some(QualificationRoundDiagnosticV1::Message(diagnostic)),
+                _custody: teardown,
+            },
+        );
+    }
+    if let Err(diagnostic) = state.history.observe(
         terminal_ordinal,
         teardown.teardown().released().checked(),
-        &requests,
+        &state.requests,
         QualificationRoundReceiptV1 {
             logical_accepted: teardown.teardown().released().logical_accepted_counts(),
             externally_published: teardown.teardown().released().externally_published_counts(),
             release_counts: teardown.teardown().released().release_counts(),
             device_id,
         },
-    )?;
-    let copied = copy_capture_candidate(
+    ) {
+        closed_teardown(
+            "terminal qualification round-history drift",
+            QualificationRoundCustodyV1 {
+                _state: state,
+                _diagnostic: Some(QualificationRoundDiagnosticV1::Message(diagnostic)),
+                _custody: teardown,
+            },
+        );
+    }
+    let copied = match copy_capture_candidate(
         teardown.teardown().released().checked(),
         teardown.evidence(),
-        requests.len(),
-    )?;
+        state.requests.len(),
+    ) {
+        Ok(copied) => copied,
+        Err(diagnostic) => closed_teardown(
+            "terminal qualification output-copy rejection",
+            QualificationRoundCustodyV1 {
+                _state: state,
+                _diagnostic: Some(QualificationRoundDiagnosticV1::Message(diagnostic)),
+                _custody: teardown,
+            },
+        ),
+    };
     let (
         round_history_sha256,
         round_count,
@@ -1659,8 +3488,21 @@ fn execute_decode_capture(
         first_dispatch_generation,
         terminal_epoch,
         terminal_dispatch_generation,
-    ) = history.finish()?;
-    Ok(CapturedOutput {
+    ) = match state.history.finish() {
+        Ok(history) => history,
+        Err(failure) => closed_teardown(
+            "terminal qualification history finalization",
+            QualificationRoundCustodyV1 {
+                _state: QualificationRoundCaptureStateV1 {
+                    requests: state.requests,
+                    history: failure.history,
+                },
+                _diagnostic: Some(QualificationRoundDiagnosticV1::Message(failure.diagnostic)),
+                _custody: teardown,
+            },
+        ),
+    };
+    CapturedOutput {
         compact_sha256: copied.compact_sha256,
         device_id,
         execution: CapturedExecutionV1::C8192 {
@@ -1676,146 +3518,174 @@ fn execute_decode_capture(
         logits: copied.logits,
         logits_row_sha256: copied.logits_row_sha256,
         tokens: copied.tokens,
-    })
+    }
 }
 
 fn consume_first_completion_outcome(
     engine: &mut Engine<32>,
     outcome: M1PhysicalRunnerFirstCompletionOutcomeV1,
-) -> CaptureResult<ferric_engine::M1ReleasedCompletedStepV1> {
+    semantics: &[CompletionWireSemanticExpectation<'_>],
+) -> ferric_engine::M1ReleasedCompletedStepV1 {
     let completed = match outcome {
-        M1PhysicalRunnerFirstCompletionOutcomeV1::Released(released) => return Ok(released),
+        M1PhysicalRunnerFirstCompletionOutcomeV1::Released(released) => return released,
         M1PhysicalRunnerFirstCompletionOutcomeV1::CompletionNotCommitted(
             M1CompletedStepOutcomeV1::Completed(completed),
         ) => completed,
         M1PhysicalRunnerFirstCompletionOutcomeV1::CompletionNotCommitted(
             M1CompletedStepOutcomeV1::Rejected(rejected),
         ) => {
-            let first_error = rejected.error();
             let (_error, readback, roster) = rejected.into_parts();
             match complete_m1_physical_step_v1(engine, readback, roster) {
                 M1CompletedStepOutcomeV1::Completed(completed) => completed,
-                M1CompletedStepOutcomeV1::Rejected(rejected) => {
-                    let retry_error = rejected.error();
-                    return Err(teardown_rejected_first_completion(
-                        rejected,
-                        format!(
-                            "ordinal-zero completion preflight rejected after consuming retry; first={first_error:?}; retry={retry_error:?}"
-                        ),
-                    ));
-                }
-                M1CompletedStepOutcomeV1::Poisoned(poisoned) => {
-                    return Err(format!(
-                        "ordinal-zero completion retry entered terminal poison with retained custody: {:?}",
-                        poisoned.error()
-                    ));
-                }
+                M1CompletedStepOutcomeV1::Rejected(rejected) => close_or_quarantine(
+                    "ordinal-zero completion rejection teardown",
+                    rejected.destroy_queue_and_retain_rejection(engine),
+                ),
+                M1CompletedStepOutcomeV1::Poisoned(poison) => terminal_quarantine(
+                    "ordinal-zero completion retry entered terminal poison",
+                    poison,
+                ),
             }
         }
         M1PhysicalRunnerFirstCompletionOutcomeV1::CompletionNotCommitted(
             M1CompletedStepOutcomeV1::Poisoned(poisoned),
-        ) => {
-            return Err(format!(
-                "ordinal-zero completion entered terminal poison with retained custody: {:?}",
-                poisoned.error()
-            ));
-        }
+        ) => terminal_quarantine("ordinal-zero completion entered terminal poison", poisoned),
         M1PhysicalRunnerFirstCompletionOutcomeV1::PageReleaseRejected(failure) => {
-            let first_error = format!("{:?}", failure.error());
             let (_error, completed) = (*failure).into_parts();
-            return release_first_completed_step(completed, Some(first_error));
+            return match release_first_completed_step(engine, completed) {
+                Ok(released) => released,
+                Err(teardown) => close_first_page_release_teardown(
+                    "ordinal-zero page-release teardown",
+                    teardown,
+                ),
+            };
         }
         M1PhysicalRunnerFirstCompletionOutcomeV1::ObservationRejected { failure, roster } => {
-            let roster = first_completion_roster(&roster);
-            let (error, custody) = (*failure).into_parts();
-            let release = match custody {
-                ferric_engine::M1CompletionObservationFailureCustodyV1::Recycled(queue) => {
-                    queue.destroy_and_release()
-                }
-                ferric_engine::M1CompletionObservationFailureCustodyV1::Rejected(output) => {
-                    output.destroy_and_release()
-                }
+            let failure = match (*failure).retry() {
+                Ok(observed) => match observed.check_completion(semantics) {
+                    Ok(readback) => {
+                        return consume_first_readback_completion(engine, readback, roster)
+                    }
+                    Err(failure) => {
+                        let teardown = failure.destroy_queue_and_retain_evidence(engine);
+                        close_or_quarantine_roster(
+                            "ordinal-zero observation retry semantic rejection",
+                            roster,
+                            teardown,
+                        )
+                    }
+                },
+                Err(failure) => failure,
             };
-            return Err(format!(
-                "ordinal-zero completion observation rejected: {error:?}; roster={roster}; {}",
-                release_result("ordinal-zero observation queue", release)
-            ));
+            let teardown = (*failure).destroy_queue_and_retain_evidence(engine);
+            close_or_quarantine_roster(
+                "ordinal-zero completion observation rejected",
+                roster,
+                teardown,
+            );
         }
         M1PhysicalRunnerFirstCompletionOutcomeV1::ReadbackRejected { failure, roster } => {
-            let roster = first_completion_roster(&roster);
-            let (error, observed) = (*failure).into_parts();
-            let release = observed.destroy_and_release();
-            return Err(format!(
-                "ordinal-zero completion semantic join rejected: {error}; roster={roster}; {}",
-                release_result("ordinal-zero observed queue", release)
-            ));
+            let failure = match (*failure).retry(semantics) {
+                Ok(readback) => return consume_first_readback_completion(engine, readback, roster),
+                Err(failure) => failure,
+            };
+            let teardown = failure.destroy_queue_and_retain_evidence(engine);
+            close_or_quarantine_roster(
+                "ordinal-zero completion semantic join rejected",
+                roster,
+                teardown,
+            );
         }
         M1PhysicalRunnerFirstCompletionOutcomeV1::QueueQuarantined {
             stage,
             failure,
             roster,
-        } => {
-            return Err(format!(
-                "ordinal-zero queue entered terminal quarantine at {stage:?}: {failure:?}; roster={}",
-                first_completion_roster(&roster)
-            ));
+        } => terminal_quarantine(
+            "ordinal-zero queue entered terminal quarantine",
+            FirstQueueQuarantineV1 {
+                _stage: stage,
+                _failure: failure,
+                _roster: roster,
+            },
+        ),
+    };
+    match release_first_completed_step(engine, completed) {
+        Ok(released) => released,
+        Err(teardown) => {
+            close_first_page_release_teardown("ordinal-zero page-release teardown", teardown)
+        }
+    }
+}
+
+fn consume_first_readback_completion(
+    engine: &mut Engine<32>,
+    readback: ferric_engine::M1PhysicalCompletedReadbackV1,
+    roster: M1DeviceKvCompletionRosterV1,
+) -> ferric_engine::M1ReleasedCompletedStepV1 {
+    let completed = match complete_m1_physical_step_v1(engine, readback, roster) {
+        M1CompletedStepOutcomeV1::Completed(completed) => completed,
+        M1CompletedStepOutcomeV1::Rejected(rejected) => {
+            let (_error, readback, roster) = rejected.into_parts();
+            match complete_m1_physical_step_v1(engine, readback, roster) {
+                M1CompletedStepOutcomeV1::Completed(completed) => completed,
+                M1CompletedStepOutcomeV1::Rejected(rejected) => close_or_quarantine(
+                    "first completion observation retry rejected completion",
+                    rejected.destroy_queue_and_retain_rejection(engine),
+                ),
+                M1CompletedStepOutcomeV1::Poisoned(poison) => {
+                    terminal_quarantine("first completion observation retry entered poison", poison)
+                }
+            }
+        }
+        M1CompletedStepOutcomeV1::Poisoned(poison) => {
+            terminal_quarantine("first completion observation entered poison", poison)
         }
     };
-    release_first_completed_step(completed, None)
+    match release_first_completed_step(engine, completed) {
+        Ok(released) => released,
+        Err(teardown) => close_first_page_release_teardown(
+            "first completion observation page-release teardown",
+            teardown,
+        ),
+    }
+}
+
+struct FirstPageReleaseTeardownV1 {
+    error: ferric_engine::M1CompletedStepKvReleaseErrorV1,
+    teardown: Result<
+        ferric_engine::M1CompletedStepTeardownSuccessV1,
+        Box<ferric_engine::M1CompletedStepTeardownFailureV1>,
+    >,
 }
 
 fn release_first_completed_step(
+    engine: &mut Engine<32>,
     completed: ferric_engine::M1CompletedStepSuccessV1,
-    prior_error: Option<String>,
-) -> CaptureResult<ferric_engine::M1ReleasedCompletedStepV1> {
+) -> Result<ferric_engine::M1ReleasedCompletedStepV1, Box<FirstPageReleaseTeardownV1>> {
     match release_m1_completed_step_kv_pages_v1(completed) {
         Ok(released) => Ok(released),
         Err(failure) => {
-            let retry_error = format!("{:?}", failure.error());
             let (_error, completed) = (*failure).into_parts();
             match release_m1_completed_step_kv_pages_v1(completed) {
                 Ok(released) => Ok(released),
                 Err(failure) => {
-                    let final_error = format!("{:?}", failure.error());
-                    let (_error, completed) = (*failure).into_parts();
-                    let (queue, checked, members, logical, external) = completed.into_parts();
-                    let release = queue.destroy_and_release();
-                    drop((checked, members, logical, external));
-                    Err(format!(
-                        "ordinal-zero page release rejected after consuming retry; prior={}; first={retry_error}; retry={final_error}; {}",
-                        prior_error.as_deref().unwrap_or("none"),
-                        release_result("ordinal-zero page-release queue", release)
-                    ))
+                    let (error, completed) = (*failure).into_parts();
+                    Err(Box::new(FirstPageReleaseTeardownV1 {
+                        error,
+                        teardown: completed.destroy_queue_and_retain_completion(engine),
+                    }))
                 }
             }
         }
     }
 }
 
-fn teardown_rejected_first_completion(
-    rejected: ferric_engine::M1CompletedStepRejectionV1,
-    diagnostic: String,
-) -> String {
-    let (_error, readback, roster) = rejected.into_parts();
-    let roster = first_completion_roster(&roster);
-    let (queue, checked, completion, reservations) = readback.into_parts();
-    let release = queue.destroy_and_release();
-    drop((checked, completion, reservations));
-    format!(
-        "{diagnostic}; roster={roster}; {}",
-        release_result("ordinal-zero rejected queue", release)
-    )
-}
-
-fn first_completion_roster(roster: &M1DeviceKvCompletionRosterV1) -> String {
-    format!(
-        "{:?}",
-        roster
-            .members()
-            .iter()
-            .map(|member| (member.request(), member.disposition()))
-            .collect::<Vec<_>>()
-    )
+fn close_first_page_release_teardown(
+    phase: &'static str,
+    teardown: Box<FirstPageReleaseTeardownV1>,
+) -> ! {
+    let FirstPageReleaseTeardownV1 { error, teardown } = *teardown;
+    close_or_quarantine_with_diagnostic(phase, error, teardown)
 }
 
 fn execute_prefill_capture(
@@ -1824,129 +3694,426 @@ fn execute_prefill_capture(
     workload: &Workload,
     input_tokens: Vec<u32>,
     _gpu_unique_id: u64,
-) -> CaptureResult<CapturedOutput> {
+) -> CapturedOutput {
     let selection = workload.selection;
     if selection.role != Qwen3ModelRole::Target8B || selection.mode != Qwen3ExecutionMode::Prefill {
-        return Err("one-shot qualification capture accepts target prefill only".to_owned());
+        abandon_pre_engine_memory(
+            "prefill selection rejection",
+            memory,
+            input_tokens,
+            PreEngineDiagnosticV1::Policy(
+                "one-shot qualification capture accepts target prefill only".to_owned(),
+            ),
+        );
     }
-    let dimensions = selection
-        .bucket
-        .dimensions(selection.role, selection.mode)
-        .ok_or_else(|| "prefill workload selection has no admitted dimensions".to_owned())?;
+    let dimensions = match selection.bucket.dimensions(selection.role, selection.mode) {
+        Some(dimensions) => dimensions,
+        None => abandon_pre_engine_memory(
+            "prefill dimensions rejection",
+            memory,
+            input_tokens,
+            PreEngineDiagnosticV1::Policy(
+                "prefill workload selection has no admitted dimensions".to_owned(),
+            ),
+        ),
+    };
     let draft_selection = Qwen3PlanSelection {
         role: Qwen3ModelRole::Draft06B,
         mode: selection.mode,
         bucket: selection.bucket,
     };
-    let mut engine = Engine::<32>::new(512, 256, 8_192)
-        .map_err(|error| format!("cannot construct M1 engine: {error:?}"))?;
+    let mut engine = match Engine::<32>::new(512, 256, 8_192) {
+        Ok(engine) => engine,
+        Err(diagnostic) => abandon_pre_engine_memory(
+            "prefill Engine construction",
+            memory,
+            input_tokens,
+            PreEngineDiagnosticV1::Engine(diagnostic),
+        ),
+    };
     let mut requests = Vec::with_capacity(workload.lanes.len());
     for lane in &workload.lanes {
-        let request = engine
-            .admit()
-            .map_err(|error| format!("cannot admit prefill lane: {error:?}"))?;
-        engine
-            .append_tentative(request, lane.active_length)
-            .map_err(|error| format!("cannot make prefill lane schedulable: {error:?}"))?;
+        let request = match engine.admit() {
+            Ok(request) => request,
+            Err(diagnostic) => abandon_pre_physical_engine(
+                "prefill request admission",
+                engine,
+                requests,
+                Vec::new(),
+                PrePhysicalPoolCustodyV1::Split {
+                    _memory: memory,
+                    _caches: Vec::new(),
+                },
+                input_tokens,
+                PrePhysicalDiagnosticV1::Engine(diagnostic),
+            ),
+        };
+        if let Err(diagnostic) = engine.append_tentative(request, lane.active_length) {
+            requests.push(request);
+            abandon_pre_physical_engine(
+                "prefill Engine enqueue",
+                engine,
+                requests,
+                Vec::new(),
+                PrePhysicalPoolCustodyV1::Split {
+                    _memory: memory,
+                    _caches: Vec::new(),
+                },
+                input_tokens,
+                PrePhysicalDiagnosticV1::Engine(diagnostic),
+            );
+        }
         requests.push(request);
     }
-    let scheduled = engine
-        .dispatch_m1_ready()
-        .map_err(|error| format!("cannot schedule prefill workload: {error:?}"))?
-        .ok_or_else(|| "prefill workload produced no schedulable batch".to_owned())?;
-    validate_scheduled_roster(&scheduled, &requests, 0)?;
-    let plans = bind_qualification_step_plans(runner, &scheduled, selection, &requests, 0)?;
-    let inputs = validated_inputs(workload, &plans, input_tokens, dimensions.active_tokens)?;
+    let scheduled = match engine.dispatch_m1_ready() {
+        Ok(Some(scheduled)) => scheduled,
+        Ok(None) => abandon_pre_physical_engine(
+            "prefill Engine dispatch returned no scheduler batch",
+            engine,
+            requests,
+            Vec::new(),
+            PrePhysicalPoolCustodyV1::Split {
+                _memory: memory,
+                _caches: Vec::new(),
+            },
+            input_tokens,
+            PrePhysicalDiagnosticV1::MissingBatch,
+        ),
+        Err(diagnostic) => abandon_pre_physical_engine(
+            "prefill Engine dispatch",
+            engine,
+            requests,
+            Vec::new(),
+            PrePhysicalPoolCustodyV1::Split {
+                _memory: memory,
+                _caches: Vec::new(),
+            },
+            input_tokens,
+            PrePhysicalDiagnosticV1::Engine(diagnostic),
+        ),
+    };
+    if let Err(diagnostic) = validate_scheduled_roster(&scheduled, &requests, 0) {
+        abandon_prefill_initial_dispatch(
+            "prefill scheduled roster validation",
+            engine,
+            memory,
+            Vec::new(),
+            requests,
+            Vec::new(),
+            Vec::new(),
+            scheduled,
+            PrefillInitialPhaseCustodyV1::Scheduled {
+                _diagnostic: diagnostic,
+            },
+        );
+    }
+    let plans = match bind_qualification_step_plans(runner, &scheduled, selection, &requests, 0) {
+        Ok(plans) => plans,
+        Err(diagnostic) => abandon_prefill_initial_dispatch(
+            "prefill step-plan binding",
+            engine,
+            memory,
+            Vec::new(),
+            requests,
+            Vec::new(),
+            Vec::new(),
+            scheduled,
+            PrefillInitialPhaseCustodyV1::Scheduled {
+                _diagnostic: diagnostic,
+            },
+        ),
+    };
+    let inputs = match validated_inputs(workload, &plans, input_tokens, dimensions.active_tokens) {
+        Ok(inputs) => inputs,
+        Err(diagnostic) => abandon_prefill_initial_dispatch(
+            "prefill input binding",
+            engine,
+            memory,
+            Vec::new(),
+            requests,
+            Vec::new(),
+            Vec::new(),
+            scheduled,
+            PrefillInitialPhaseCustodyV1::Input {
+                _diagnostic: diagnostic,
+                _plans: plans,
+            },
+        ),
+    };
     let active_lengths = inputs.active_lengths().to_vec();
     let context_lengths = inputs.context_lengths().to_vec();
     let mut caches = Vec::with_capacity(requests.len());
     let mut reservations = Vec::with_capacity(requests.len());
-    for (lane, request) in requests.iter().copied().enumerate() {
+    for ((request, active_length), context_length) in requests
+        .iter()
+        .copied()
+        .zip(active_lengths.iter().copied())
+        .zip(context_lengths.iter().copied())
+    {
         let mut cache =
-            ActiveDeviceKvCache::new(memory.device(), request, selection, draft_selection)
-                .map_err(|error| format!("cannot create prefill lane {lane} cache: {error:?}"))?;
-        let pages = qualification_kv_page_count(context_lengths[lane], active_lengths[lane])
-            .map_err(|error| format!("prefill lane {lane} {error}"))?;
+            match ActiveDeviceKvCache::new(memory.device(), request, selection, draft_selection) {
+                Ok(cache) => cache,
+                Err(diagnostic) => abandon_prefill_initial_dispatch(
+                    "prefill device-KV cache construction",
+                    engine,
+                    memory,
+                    caches,
+                    requests,
+                    active_lengths,
+                    context_lengths,
+                    scheduled,
+                    PrefillInitialPhaseCustodyV1::CacheConstruction {
+                        _diagnostic: diagnostic,
+                        _plans: plans,
+                        _inputs: inputs,
+                        _reservations: reservations,
+                    },
+                ),
+            };
+        let pages = match qualification_kv_page_count(context_length, active_length) {
+            Ok(pages) => pages,
+            Err(diagnostic) => abandon_prefill_initial_dispatch(
+                "prefill KV page-count derivation",
+                engine,
+                memory,
+                caches,
+                requests,
+                active_lengths,
+                context_lengths,
+                scheduled,
+                PrefillInitialPhaseCustodyV1::PageCount {
+                    _diagnostic: diagnostic,
+                    _plans: plans,
+                    _inputs: inputs,
+                    _current_cache: cache,
+                    _reservations: reservations,
+                },
+            ),
+        };
         let mut leases = Vec::with_capacity(pages as usize);
         for page in 0..pages {
-            leases.push(
-                memory
-                    .lease_page(request, Qwen3ModelRole::Target8B, page)
-                    .map_err(|error| {
-                        format!("cannot lease prefill lane {lane} page {page}: {error:?}")
-                    })?,
-            );
+            let lease = match memory.lease_page(request, Qwen3ModelRole::Target8B, page) {
+                Ok(lease) => lease,
+                Err(diagnostic) => abandon_prefill_initial_dispatch(
+                    "prefill physical KV page lease",
+                    engine,
+                    memory,
+                    caches,
+                    requests,
+                    active_lengths,
+                    context_lengths,
+                    scheduled,
+                    PrefillInitialPhaseCustodyV1::PageLease {
+                        _diagnostic: diagnostic,
+                        _plans: plans,
+                        _inputs: inputs,
+                        _current_cache: cache,
+                        _page_leases: leases,
+                        _reservations: reservations,
+                    },
+                ),
+            };
+            leases.push(lease);
         }
-        reservations.push(
-            cache
-                .reserve_step_write(
-                    request,
-                    Qwen3ModelRole::Target8B,
-                    context_lengths[lane],
-                    active_lengths[lane],
-                    scheduled.epoch(),
-                    leases,
-                )
-                .map_err(|error| {
-                    format!("cannot reserve prefill lane {lane} KV write: {error:?}")
-                })?,
-        );
+        let reservation = match cache.reserve_step_write(
+            request,
+            Qwen3ModelRole::Target8B,
+            context_length,
+            active_length,
+            scheduled.epoch(),
+            leases,
+        ) {
+            Ok(reservation) => reservation,
+            Err(failure) => abandon_prefill_initial_dispatch(
+                "prefill KV step reservation",
+                engine,
+                memory,
+                caches,
+                requests,
+                active_lengths,
+                context_lengths,
+                scheduled,
+                PrefillInitialPhaseCustodyV1::StepReservation {
+                    _failure: failure,
+                    _plans: plans,
+                    _inputs: inputs,
+                    _current_cache: cache,
+                    _reservations: reservations,
+                },
+            ),
+        };
+        reservations.push(reservation);
         caches.push(cache);
     }
-    let table = bind_m1_kv_workspace_table_v1(inputs, reservations)
-        .map_err(|error| format!("cannot bind prefill target KV workspace: {error:?}"))?;
-    let workspace_identity = sha256_array(&workload.bytes);
-    let prepared = runner
-        .prepare_scheduled_workspaces(
+    let table = match bind_m1_kv_workspace_table_v1(inputs, reservations) {
+        Ok(table) => table,
+        Err(failure) => abandon_prefill_initial_dispatch(
+            "prefill KV workspace binding",
+            engine,
+            memory,
+            caches,
+            requests,
+            active_lengths,
+            context_lengths,
             scheduled,
-            M1FullStepWorkspacePlans::target_only(workload_workspace_plan(
-                selection,
-                workspace_identity,
-            )?),
-            M1FullStepKvWorkspaceTablesV1::TargetOnly { target: table },
-        )
-        .map_err(|error| format!("cannot prepare prefill workspace: {error:?}"))?;
-    let completion = memory
-        .allocate_completion_output(selection)
-        .map_err(|error| format!("cannot allocate prefill compact completion: {error}"))?;
-    let completion = memory
-        .enable_qualification_logits_capture(completion)
-        .map_err(|error| format!("cannot enable prefill qualification logits: {error:?}"))?;
-    let allocated = runner
-        .allocate_scheduled_workspaces(memory, prepared)
-        .map_err(|error| format!("cannot allocate prefill workspaces: {error:?}"))?;
-    let recipe = derive_qualification_recipe(runner, selection, workspace_identity)?;
-    let published = runner
-        .publish_first_step(&mut engine, 1 << 20, allocated, recipe, completion)
-        .map_err(|error| format!("cannot publish prefill qualification step: {error:?}"))?;
-    let completed = published.wait(workload.max_polls).map_err(|error| {
-        format!("prefill qualification wait entered terminal quarantine: {error:?}")
-    })?;
-    let recycled = completed.recycle().map_err(|error| {
-        format!("prefill qualification recycle entered terminal quarantine: {error:?}")
-    })?;
-    let device_id = recycled.custody().device().device_id();
-    let observed = recycled
-        .observe_qualification_completion()
-        .map_err(|failure| release_qualification_failure(*failure))?;
-    for request in &requests {
-        if let Err(error) = engine.retire(*request) {
-            return Err(release_observed_after_error(
-                observed,
-                format!("cannot retire prefill request before completion: {error:?}"),
-            ));
-        }
-    }
-    let qualified = match observed.check_prefill_completion() {
-        Ok(qualified) => qualified,
-        Err(failure) => {
-            let (error, observed) = failure.into_parts();
-            return Err(release_observed_after_error(
-                observed,
-                format!("prefill qualification semantic join failed: {error}"),
-            ));
-        }
+            PrefillInitialPhaseCustodyV1::KvBinding {
+                _plans: plans,
+                _failure: failure,
+            },
+        ),
     };
+    let workspace_identity = sha256_array(&workload.bytes);
+    let workspace_plan = match workload_workspace_plan(selection, workspace_identity) {
+        Ok(plan) => plan,
+        Err(diagnostic) => abandon_prefill_initial_dispatch(
+            "prefill workspace plan",
+            engine,
+            memory,
+            caches,
+            requests,
+            active_lengths,
+            context_lengths,
+            scheduled,
+            PrefillInitialPhaseCustodyV1::WorkspacePlan {
+                _diagnostic: diagnostic,
+                _plans: plans,
+                _table: table,
+            },
+        ),
+    };
+    let recipe = match derive_qualification_recipe(runner, selection, workspace_identity) {
+        Ok(recipe) => recipe,
+        Err(diagnostic) => abandon_prefill_initial_dispatch(
+            "prefill recipe derivation",
+            engine,
+            memory,
+            caches,
+            requests,
+            active_lengths,
+            context_lengths,
+            scheduled,
+            PrefillInitialPhaseCustodyV1::Recipe {
+                _diagnostic: diagnostic,
+                _plans: plans,
+                _table: table,
+                _workspace_plan: workspace_plan,
+            },
+        ),
+    };
+    let completion = match memory.allocate_completion_output(selection) {
+        Ok(completion) => completion,
+        Err(diagnostic) => abandon_prefill_initial_dispatch(
+            "prefill compact completion allocation",
+            engine,
+            memory,
+            caches,
+            requests,
+            active_lengths,
+            context_lengths,
+            scheduled,
+            PrefillInitialPhaseCustodyV1::CompletionOutput {
+                _diagnostic: diagnostic,
+                _plans: plans,
+                _table: table,
+                _workspace_plan: workspace_plan,
+                _recipe: recipe,
+            },
+        ),
+    };
+    let completion = match memory.enable_qualification_logits_capture(completion) {
+        Ok(completion) => completion,
+        Err(failure) => abandon_prefill_initial_dispatch(
+            "prefill qualification logits allocation",
+            engine,
+            memory,
+            caches,
+            requests,
+            active_lengths,
+            context_lengths,
+            scheduled,
+            PrefillInitialPhaseCustodyV1::QualificationLogits {
+                _failure: failure,
+                _plans: plans,
+                _table: table,
+                _workspace_plan: workspace_plan,
+                _recipe: recipe,
+            },
+        ),
+    };
+    let prepared = match prepare_scheduled_workspaces_with_retries(
+        runner,
+        scheduled,
+        M1FullStepWorkspacePlans::target_only(workspace_plan),
+        M1FullStepKvWorkspaceTablesV1::TargetOnly { target: table },
+    ) {
+        Ok(prepared) => prepared,
+        Err(failure) => abandon_first_generation(
+            "prefill workspace preparation retry exhaustion",
+            engine,
+            FirstGenerationLiveEvidenceV1::Prefill {
+                _caches: caches,
+                _requests: requests,
+                _active_lengths: active_lengths,
+                _context_lengths: context_lengths,
+            },
+            FirstGenerationPhaseFailureV1::Preparation {
+                _memory: Box::new(memory),
+                _recipe: recipe,
+                _completion: completion,
+                _failure: failure,
+            },
+        ),
+    };
+    let allocated = match allocate_scheduled_workspaces_with_retries(runner, memory, prepared) {
+        Ok(allocated) => allocated,
+        Err(failure) => abandon_first_generation(
+            "prefill allocation retry exhaustion",
+            engine,
+            FirstGenerationLiveEvidenceV1::Prefill {
+                _caches: caches,
+                _requests: requests,
+                _active_lengths: active_lengths,
+                _context_lengths: context_lengths,
+            },
+            FirstGenerationPhaseFailureV1::Allocation {
+                _recipe: recipe,
+                _completion: completion,
+                _failure: failure,
+            },
+        ),
+    };
+    let published =
+        match publish_first_step_with_retries(runner, &mut engine, allocated, recipe, completion) {
+            Ok(published) => published,
+            Err(failure) => {
+                let failure = failure.quarantine_after_retry_exhaustion(&mut engine);
+                abandon_first_generation(
+                    "prefill first publication retry exhaustion",
+                    engine,
+                    FirstGenerationLiveEvidenceV1::Prefill {
+                        _caches: caches,
+                        _requests: requests,
+                        _active_lengths: active_lengths,
+                        _context_lengths: context_lengths,
+                    },
+                    FirstGenerationPhaseFailureV1::Publication { _failure: failure },
+                )
+            }
+        };
+    let evidence = PrefillLiveEvidenceV1 {
+        _caches: caches,
+        requests,
+        _active_lengths: active_lengths,
+        _context_lengths: context_lengths,
+    };
+    let (qualified, evidence, device_id) =
+        qualify_prefill_live_generation(&mut engine, published, workload.max_polls, evidence);
+    let PrefillLiveEvidenceV1 {
+        _caches: caches,
+        requests,
+        _active_lengths: _,
+        _context_lengths: _,
+    } = evidence;
     let (completed, evidence) = qualified.into_parts();
     let roster = M1DeviceKvCompletionRosterV1::new(
         caches
@@ -1957,31 +4124,59 @@ fn execute_prefill_capture(
     let completed = match complete_m1_physical_step_v1(&mut engine, completed, roster) {
         M1CompletedStepOutcomeV1::Completed(completed) => completed,
         M1CompletedStepOutcomeV1::Rejected(rejected) => {
-            let (error, readback, roster) = rejected.into_parts();
-            let (queue, checked, completion, reservations) = readback.into_parts();
-            let release = queue.destroy_and_release();
-            drop((checked, completion, reservations, roster));
-            return Err(format!(
-                "prefill qualification completion rejected: {error:?}; {}",
-                release_result("rejected prefill queue", release)
-            ));
+            let (_error, readback, roster) = rejected.into_parts();
+            match complete_m1_physical_step_v1(&mut engine, readback, roster) {
+                M1CompletedStepOutcomeV1::Completed(completed) => completed,
+                M1CompletedStepOutcomeV1::Rejected(rejected) => {
+                    close_or_quarantine_qualification_evidence(
+                        "prefill completion rejected after retry",
+                        evidence,
+                        None,
+                        rejected.destroy_queue_and_retain_rejection(&mut engine),
+                    )
+                }
+                M1CompletedStepOutcomeV1::Poisoned(poison) => terminal_quarantine(
+                    "prefill completion retry entered terminal poison",
+                    QualificationEvidenceCustodyV1 {
+                        _evidence: evidence,
+                        _diagnostic: None,
+                        _custody: poison,
+                    },
+                ),
+            }
         }
-        M1CompletedStepOutcomeV1::Poisoned(poisoned) => {
-            return Err(format!(
-                "prefill qualification completion entered terminal quarantine: {:?}",
-                poisoned.error()
-            ));
+        M1CompletedStepOutcomeV1::Poisoned(poison) => terminal_quarantine(
+            "prefill completion entered terminal poison",
+            QualificationEvidenceCustodyV1 {
+                _evidence: evidence,
+                _diagnostic: None,
+                _custody: poison,
+            },
+        ),
+    };
+    let released = match release_first_completed_step(&mut engine, completed) {
+        Ok(released) => released,
+        Err(teardown) => {
+            let FirstPageReleaseTeardownV1 { error, teardown } = *teardown;
+            close_or_quarantine_qualification_evidence(
+                "prefill page release rejected after retry",
+                evidence,
+                Some(QualificationEvidenceDiagnosticV1::PageRelease(error)),
+                teardown,
+            )
         }
     };
-    let released = release_m1_completed_step_kv_pages_v1(completed).map_err(|failure| {
-        format!(
-            "prefill qualification KV page release failed with retained custody: {:?}",
-            failure.error()
-        )
-    })?;
-    let teardown = released
-        .destroy_queue_and_retain_step()
-        .map_err(|failure| format!("prefill final queue teardown failed: {failure:?}"))?;
+    let teardown = match released.destroy_queue_and_retain_step(&mut engine) {
+        Ok(teardown) => teardown,
+        Err(quarantine) => terminal_quarantine(
+            "prefill final queue teardown",
+            QualificationEvidenceCustodyV1 {
+                _evidence: evidence,
+                _diagnostic: None,
+                _custody: quarantine,
+            },
+        ),
+    };
     if teardown.logical_accepted_counts().len() != requests.len()
         || teardown.externally_published_counts().len() != requests.len()
         || teardown
@@ -1993,7 +4188,14 @@ fn execute_prefill_capture(
             .iter()
             .any(|count| *count != 1)
     {
-        return Err("prefill qualification completion counts drifted".to_owned());
+        closed_teardown(
+            "prefill qualification completion counts drifted",
+            QualificationEvidenceCustodyV1 {
+                _evidence: evidence,
+                _diagnostic: None,
+                _custody: teardown,
+            },
+        );
     }
     if teardown.members().len() != requests.len()
         || teardown
@@ -2001,12 +4203,29 @@ fn execute_prefill_capture(
             .iter()
             .any(|member| matches!(member, ferric_engine::M1ReleasedDeviceKvMemberV1::Active(_)))
     {
-        return Err("prefill teardown retained a nonterminal KV member".to_owned());
+        closed_teardown(
+            "prefill teardown retained a nonterminal KV member",
+            QualificationEvidenceCustodyV1 {
+                _evidence: evidence,
+                _diagnostic: None,
+                _custody: teardown,
+            },
+        );
     }
-    let copied = copy_capture_candidate(teardown.checked(), &evidence, workload.lanes.len())?;
+    let copied = match copy_capture_candidate(teardown.checked(), &evidence, workload.lanes.len()) {
+        Ok(copied) => copied,
+        Err(diagnostic) => closed_teardown(
+            "prefill qualification output-copy rejection",
+            QualificationEvidenceCustodyV1 {
+                _evidence: evidence,
+                _diagnostic: Some(QualificationEvidenceDiagnosticV1::Message(diagnostic)),
+                _custody: teardown,
+            },
+        ),
+    };
     let epoch = teardown.checked().epoch().value();
     let dispatch_generation = teardown.checked().dispatch_generation();
-    Ok(CapturedOutput {
+    CapturedOutput {
         compact_sha256: copied.compact_sha256,
         device_id,
         execution: CapturedExecutionV1::OneShotPrefill {
@@ -2016,7 +4235,7 @@ fn execute_prefill_capture(
         logits: copied.logits,
         logits_row_sha256: copied.logits_row_sha256,
         tokens: copied.tokens,
-    })
+    }
 }
 
 #[derive(Debug)]
@@ -2058,11 +4277,11 @@ fn copy_capture_candidate(
         .try_reserve_exact(row_bytes.saturating_mul(evidence.logits().rows().len()))
         .map_err(|_| "cannot reserve captured logits output".to_owned())?;
     let mut logits_row_sha256 = Vec::with_capacity(evidence.logits().rows().len());
-    for (lane, row) in evidence.logits().rows().iter().enumerate() {
+    for (lane, (row, record)) in evidence.logits().rows().iter().zip(records).enumerate() {
         if row.lane() != lane || row.raw_bytes().len() != row_bytes {
             return Err(format!("captured logits row {lane} geometry drifted"));
         }
-        let compact_choice = records[lane].record().emitted_tokens[0];
+        let compact_choice = record.record().emitted_tokens[0];
         let choice = checked_bf16_row_choice(row.raw_bytes(), lane, compact_choice)?;
         tokens.extend_from_slice(&choice.to_le_bytes());
         logits.extend_from_slice(row.raw_bytes());
@@ -2112,45 +4331,82 @@ fn lowest_id_finite_bf16_argmax(bytes: &[u8], lane: usize) -> CaptureResult<u32>
     Ok(best_token)
 }
 
-fn release_qualification_failure(
-    failure: ferric_engine::M1QualificationObservationFailureV1,
-) -> String {
-    let (error, custody) = failure.into_parts();
-    let release = match custody {
-        M1QualificationObservationFailureCustodyV1::Recycled(queue) => queue.destroy_and_release(),
-        M1QualificationObservationFailureCustodyV1::CompactRejected(output) => {
-            output.destroy_and_release()
-        }
-        M1QualificationObservationFailureCustodyV1::Observed {
-            completion,
-            partial_logits,
-        } => {
-            drop(partial_logits);
-            completion.destroy_and_release()
-        }
+fn qualify_prefill_live_generation(
+    engine: &mut Engine<32>,
+    published: ferric_engine::M1PhysicalPublishedQueueSessionV1,
+    max_polls: u32,
+    evidence: PrefillLiveEvidenceV1,
+) -> (
+    ferric_engine::M1QualifiedPhysicalCompletedReadbackV1,
+    PrefillLiveEvidenceV1,
+    Identity,
+) {
+    let completed = match published.wait(max_polls) {
+        Ok(completed) => completed,
+        Err(failure) => terminal_quarantine(
+            "prefill queue wait terminal quarantine",
+            PrefillLiveCustodyV1 {
+                _evidence: evidence,
+                _diagnostic: None,
+                _custody: failure.quarantine_engine(engine),
+            },
+        ),
     };
-    format!(
-        "qualification observation failed: {error}; {}",
-        release_result("failed observation queue", release)
-    )
-}
-
-fn release_observed_after_error(
-    observed: M1ObservedQualificationOutputV1,
-    error: String,
-) -> String {
-    let release = observed.destroy_and_release();
-    format!(
-        "{error}; {}",
-        release_result("observed qualification queue", release)
-    )
-}
-
-fn release_result<T, E: core::fmt::Debug>(description: &str, result: Result<T, E>) -> String {
-    match result {
-        Ok(_) => format!("{description} released"),
-        Err(error) => format!("{description} entered terminal release quarantine: {error:?}"),
+    let recycled = match completed.recycle() {
+        Ok(recycled) => recycled,
+        Err(failure) => terminal_quarantine(
+            "prefill queue recycle terminal quarantine",
+            PrefillLiveCustodyV1 {
+                _evidence: evidence,
+                _diagnostic: None,
+                _custody: failure.quarantine_engine(engine),
+            },
+        ),
+    };
+    let device_id = recycled.custody().device().device_id();
+    let observed = match recycled.observe_qualification_completion() {
+        Ok(observed) => observed,
+        Err(failure) => match (*failure).retry() {
+            Ok(observed) => observed,
+            Err(failure) => close_or_quarantine_prefill_live(
+                "prefill qualification observation failed after retry",
+                evidence,
+                None,
+                (*failure).destroy_queue_and_retain_evidence(engine),
+            ),
+        },
+    };
+    if let Err(error) = preflight_engine_retirement(engine, &evidence.requests) {
+        close_or_quarantine_prefill_live(
+            "prefill observed qualification retirement preflight",
+            evidence,
+            Some(PrefillLiveDiagnosticV1::Message(error)),
+            observed.destroy_queue_and_retain_evidence(engine),
+        );
     }
+    for request in &evidence.requests {
+        if let Err(error) = engine.retire(*request) {
+            close_or_quarantine_prefill_live(
+                "prefill observed qualification retirement",
+                evidence,
+                Some(PrefillLiveDiagnosticV1::Engine(error)),
+                observed.destroy_queue_and_retain_evidence(engine),
+            );
+        }
+    }
+    let qualified = match observed.check_prefill_completion() {
+        Ok(qualified) => qualified,
+        Err(failure) => match failure.retry_prefill_completion() {
+            Ok(qualified) => qualified,
+            Err(failure) => close_or_quarantine_prefill_live(
+                "prefill qualification semantic join failed",
+                evidence,
+                None,
+                failure.destroy_queue_and_retain_evidence(engine),
+            ),
+        },
+    };
+    (qualified, evidence, device_id)
 }
 
 fn require_supported_capture(workload: &Workload) -> CaptureResult<()> {
@@ -2549,7 +4805,10 @@ fn load_input_tokens(
     require_identity(&case.input_sha256, &actual, "benchmark case input")?;
     let mut tokens = Vec::with_capacity(bytes.len() / 4);
     for chunk in bytes.chunks_exact(4) {
-        let token = u32::from_le_bytes(chunk.try_into().expect("exact four-byte chunk"));
+        let encoded: [u8; 4] = chunk
+            .try_into()
+            .map_err(|_| "qualification token payload ended inside a u32".to_owned())?;
+        let token = u32::from_le_bytes(encoded);
         if token >= QWEN3_VOCABULARY_SIZE {
             return Err(format!(
                 "qualification input token is out of range: {token}"
@@ -2842,10 +5101,11 @@ fn validate_plan_identities(
         &hex_identity(declaration.kernel_catalog_id()),
         "kernel schedule catalog",
     )?;
+    let selection = kind_selection(&case.kind)?;
     let selected = declaration
         .plans()
         .iter()
-        .find(|candidate| candidate.selection == kind_selection(&case.kind).unwrap())
+        .find(|candidate| candidate.selection == selection)
         .ok_or_else(|| "generated declaration lacks selected workload plan".to_owned())?;
     require_identity(
         plan.identity("dispatch-graph")?,
@@ -3433,6 +5693,55 @@ mod tests {
             "max_polls": 20_000_000,
             "selection": selection_json(kind_selection(kind).unwrap()),
         })
+    }
+
+    #[test]
+    fn live_capture_failure_paths_use_exact_typed_consumers() {
+        type FirstCompletionConsumer = fn(
+            &mut Engine<32>,
+            M1PhysicalRunnerFirstCompletionOutcomeV1,
+            &[CompletionWireSemanticExpectation<'_>],
+        ) -> ferric_engine::M1ReleasedCompletedStepV1;
+
+        fn assert_terminal<T: CaptureTerminalCustodyV1>() {}
+        fn assert_closed<T: CaptureClosedCustodyV1>() {}
+
+        assert_terminal::<ferric_engine::M1LongLivedQueueRearmKvReservationFailureV1>();
+        assert_terminal::<Box<ferric_engine::M1LongLivedQueueRearmPrepareFailureV1>>();
+        assert_terminal::<Box<ferric_engine::M1RearmedQueueProgressFailureV1>>();
+        assert_terminal::<ferric_engine::M1EngineQuarantinedPhysicalQueueOperationFailureV1>();
+        assert_closed::<ferric_engine::M1CompletionEvidenceTeardownSuccessV1>();
+        let _: FirstCompletionConsumer = consume_first_completion_outcome;
+    }
+
+    #[test]
+    fn bounded_retry_policy_preserves_owner_and_attempts_exact_limit() {
+        use std::cell::Cell;
+
+        let attempts = Cell::new(0_usize);
+        let owner = Box::new(Identity::new([94; 32]));
+        let pointer = core::ptr::from_ref(owner.as_ref());
+        let owner = retry_with_bounded_policy(owner, CAPTURE_RECOVERY_RETRIES, |owner| {
+            attempts.set(attempts.get() + 1);
+            Err::<(), _>(owner)
+        })
+        .unwrap_err();
+        assert_eq!(attempts.get(), CAPTURE_RECOVERY_RETRIES);
+        assert_eq!(core::ptr::from_ref(owner.as_ref()), pointer);
+        assert_eq!(*owner, Identity::new([94; 32]));
+
+        let attempts = Cell::new(0_usize);
+        let owner = retry_with_bounded_policy(owner, CAPTURE_RECOVERY_RETRIES, |owner| {
+            attempts.set(attempts.get() + 1);
+            if attempts.get() == CAPTURE_RECOVERY_RETRIES {
+                Ok(owner)
+            } else {
+                Err(owner)
+            }
+        })
+        .unwrap();
+        assert_eq!(attempts.get(), CAPTURE_RECOVERY_RETRIES);
+        assert_eq!(core::ptr::from_ref(owner.as_ref()), pointer);
     }
 
     #[test]

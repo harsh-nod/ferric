@@ -121,6 +121,17 @@ pub struct AddresslessM1PhysicalKernargRecipeV1 {
 }
 
 impl AddresslessM1PhysicalKernargRecipeV1 {
+    pub(crate) fn from_parts(
+        source: AddresslessM1PhysicalDispatchRecipeV1,
+        images: Box<[M1PhysicalKernargImageV1]>,
+    ) -> Self {
+        Self {
+            version: M1_PHYSICAL_KERNARG_RECIPE_VERSION_V1,
+            source,
+            images,
+        }
+    }
+
     /// Kernarg-recipe format version.
     #[must_use]
     pub const fn version(&self) -> u32 {

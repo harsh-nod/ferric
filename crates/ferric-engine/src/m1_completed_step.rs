@@ -7,6 +7,7 @@
 
 use core::fmt;
 
+use fe2o3_service_host::ServiceQueueReleaseObservationV1;
 use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::scheduling::RequestState;
 use ferric_spec::{M1QualificationContextStepKind, Qwen3ModelRole, RequestId};
@@ -19,7 +20,8 @@ use crate::{
     ActiveDeviceKvCache, CheckedCompletionSemantics, DeviceKvCacheError,
     DeviceKvCancellationOutcome, Engine, EngineError, ExactCompletion, M1CheckedCompletionOutputV1,
     M1FullStepKvReservationCustodyV1, M1PhysicalCompletedReadbackV1, M1PhysicalFixedBatchShapeV1,
-    M1PhysicalReadbackQueueSessionV1, PendingDeviceKvStepWrite, SettledQuiescentDeviceKvCache,
+    M1PhysicalReadbackQueueReleaseFailureV1, M1PhysicalReadbackQueueSessionV1,
+    PendingDeviceKvStepWrite, SettledQuiescentDeviceKvCache,
 };
 
 /// Requested post-completion lifecycle for one exact scheduler member.
@@ -171,6 +173,146 @@ impl M1CompletedStepRejectionV1 {
     ) {
         (self.error, self.readback, self.roster)
     }
+
+    /// Destroys the rejected physical queue while retaining the exact
+    /// diagnostic, checked completion, KV reservations, and cache roster.
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal lower readback-queue release quarantine joined to all
+    /// of the same rejected completion custody.
+    pub fn destroy_queue_and_retain_rejection<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1CompletedStepRejectionTeardownSuccessV1,
+        Box<M1CompletedStepRejectionTeardownFailureV1>,
+    > {
+        let owner = quarantine_completion_teardown_owner(engine, self);
+        let Self {
+            error,
+            readback,
+            roster,
+        } = owner;
+        let (queue, checked, completion, kv) = readback.into_parts();
+        let custody = M1CompletedStepRejectionTeardownCustodyV1 {
+            error,
+            checked,
+            completion,
+            kv,
+            roster,
+        };
+        match queue.destroy_and_release() {
+            Ok(queue_release) => Ok(M1CompletedStepRejectionTeardownSuccessV1 {
+                queue_release,
+                custody,
+            }),
+            Err(source) => Err(Box::new(M1CompletedStepRejectionTeardownFailureV1 {
+                source,
+                custody,
+            })),
+        }
+    }
+}
+
+#[derive(Debug)]
+struct M1CompletedStepRejectionTeardownCustodyV1 {
+    error: M1CompletedStepErrorV1,
+    checked: M1CheckedCompletionOutputV1,
+    completion: ExactCompletion,
+    kv: M1FullStepKvReservationCustodyV1,
+    roster: M1DeviceKvCompletionRosterV1,
+}
+
+/// Clean queue teardown retaining an unchanged completion rejection.
+#[must_use = "completion rejection evidence and roster remain retained"]
+#[derive(Debug)]
+pub struct M1CompletedStepRejectionTeardownSuccessV1 {
+    queue_release: ServiceQueueReleaseObservationV1,
+    custody: M1CompletedStepRejectionTeardownCustodyV1,
+}
+
+/// Terminal lower release quarantine retaining a completion rejection.
+#[must_use = "completion rejection release quarantine remains retained"]
+#[derive(Debug)]
+pub struct M1CompletedStepRejectionTeardownFailureV1 {
+    source: M1PhysicalReadbackQueueReleaseFailureV1,
+    custody: M1CompletedStepRejectionTeardownCustodyV1,
+}
+
+impl M1CompletedStepRejectionTeardownSuccessV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1CompletedStepErrorV1 {
+        self.custody.error
+    }
+
+    pub const fn checked(&self) -> &M1CheckedCompletionOutputV1 {
+        &self.custody.checked
+    }
+
+    #[must_use]
+    pub const fn completion_epoch(&self) -> CompletionEpoch {
+        self.custody.completion.epoch()
+    }
+
+    pub const fn kv_reservations(&self) -> &M1FullStepKvReservationCustodyV1 {
+        &self.custody.kv
+    }
+
+    #[must_use]
+    pub const fn roster_member_count(&self) -> usize {
+        self.custody.roster.member_count()
+    }
+
+    pub fn roster_requests(&self) -> impl ExactSizeIterator<Item = RequestId> + '_ {
+        self.custody
+            .roster
+            .members()
+            .iter()
+            .map(M1DeviceKvCompletionMemberV1::request)
+    }
+
+    #[must_use]
+    pub const fn queue_release(&self) -> ServiceQueueReleaseObservationV1 {
+        self.queue_release
+    }
+}
+
+impl M1CompletedStepRejectionTeardownFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1CompletedStepErrorV1 {
+        self.custody.error
+    }
+
+    pub const fn checked(&self) -> &M1CheckedCompletionOutputV1 {
+        &self.custody.checked
+    }
+
+    #[must_use]
+    pub const fn completion_epoch(&self) -> CompletionEpoch {
+        self.custody.completion.epoch()
+    }
+
+    pub const fn kv_reservations(&self) -> &M1FullStepKvReservationCustodyV1 {
+        &self.custody.kv
+    }
+
+    #[must_use]
+    pub const fn roster_member_count(&self) -> usize {
+        self.custody.roster.member_count()
+    }
+
+    pub fn roster_requests(&self) -> impl ExactSizeIterator<Item = RequestId> + '_ {
+        self.custody
+            .roster
+            .members()
+            .iter()
+            .map(M1DeviceKvCompletionMemberV1::request)
+    }
+
+    pub const fn source(&self) -> &M1PhysicalReadbackQueueReleaseFailureV1 {
+        &self.source
+    }
 }
 
 /// Device-KV custody after one member completed successfully.
@@ -203,6 +345,90 @@ pub struct M1CompletedStepSuccessV1 {
     completed_members: usize,
 }
 
+/// Clean queue teardown retaining a completed step whose page release could
+/// not make progress.
+#[must_use = "completed-step teardown observations and KV custody remain retained"]
+#[derive(Debug)]
+pub struct M1CompletedStepTeardownSuccessV1 {
+    queue_release: ServiceQueueReleaseObservationV1,
+    checked: M1CheckedCompletionOutputV1,
+    members: Vec<M1CompletedDeviceKvMemberV1>,
+    logical_accepted_counts: Box<[u32]>,
+    externally_published_counts: Box<[u32]>,
+    completed_members: usize,
+}
+
+impl M1CompletedStepTeardownSuccessV1 {
+    #[must_use]
+    pub const fn queue_release(&self) -> ServiceQueueReleaseObservationV1 {
+        self.queue_release
+    }
+
+    pub const fn checked(&self) -> &M1CheckedCompletionOutputV1 {
+        &self.checked
+    }
+
+    pub fn members(&self) -> &[M1CompletedDeviceKvMemberV1] {
+        &self.members
+    }
+
+    #[must_use]
+    pub fn logical_accepted_counts(&self) -> &[u32] {
+        &self.logical_accepted_counts
+    }
+
+    #[must_use]
+    pub fn externally_published_counts(&self) -> &[u32] {
+        &self.externally_published_counts
+    }
+
+    #[must_use]
+    pub const fn completed_members(&self) -> usize {
+        self.completed_members
+    }
+}
+
+/// Terminal queue-release quarantine retaining the same completed step.
+#[must_use = "queue-release quarantine and completed KV custody remain retained"]
+#[derive(Debug)]
+pub struct M1CompletedStepTeardownFailureV1 {
+    source: M1PhysicalReadbackQueueReleaseFailureV1,
+    checked: M1CheckedCompletionOutputV1,
+    members: Vec<M1CompletedDeviceKvMemberV1>,
+    logical_accepted_counts: Box<[u32]>,
+    externally_published_counts: Box<[u32]>,
+    completed_members: usize,
+}
+
+impl M1CompletedStepTeardownFailureV1 {
+    pub const fn source(&self) -> &M1PhysicalReadbackQueueReleaseFailureV1 {
+        &self.source
+    }
+
+    pub const fn checked(&self) -> &M1CheckedCompletionOutputV1 {
+        &self.checked
+    }
+
+    pub fn members(&self) -> &[M1CompletedDeviceKvMemberV1] {
+        &self.members
+    }
+
+    #[must_use]
+    pub fn logical_accepted_counts(&self) -> &[u32] {
+        &self.logical_accepted_counts
+    }
+
+    #[must_use]
+    pub fn externally_published_counts(&self) -> &[u32] {
+        &self.externally_published_counts
+    }
+
+    #[must_use]
+    pub const fn completed_members(&self) -> usize {
+        self.completed_members
+    }
+}
+
 impl M1CompletedStepSuccessV1 {
     pub const fn queue(&self) -> &M1PhysicalReadbackQueueSessionV1 {
         &self.queue
@@ -230,6 +456,46 @@ impl M1CompletedStepSuccessV1 {
     #[must_use]
     pub const fn completed_members(&self) -> usize {
         self.completed_members
+    }
+
+    /// Destroys the physical queue while retaining every completed member and
+    /// observation after page release cannot make progress.
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal lower queue-release quarantine joined to the same
+    /// completed-step custody.
+    pub fn destroy_queue_and_retain_completion<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<M1CompletedStepTeardownSuccessV1, Box<M1CompletedStepTeardownFailureV1>> {
+        let owner = quarantine_completion_teardown_owner(engine, self);
+        let Self {
+            queue,
+            checked,
+            members,
+            logical_accepted_counts,
+            externally_published_counts,
+            completed_members,
+        } = owner;
+        match queue.destroy_and_release() {
+            Ok(queue_release) => Ok(M1CompletedStepTeardownSuccessV1 {
+                queue_release,
+                checked,
+                members,
+                logical_accepted_counts,
+                externally_published_counts,
+                completed_members,
+            }),
+            Err(source) => Err(Box::new(M1CompletedStepTeardownFailureV1 {
+                source,
+                checked,
+                members,
+                logical_accepted_counts,
+                externally_published_counts,
+                completed_members,
+            })),
+        }
     }
 
     #[must_use = "all successful custody remains linear"]
@@ -1017,18 +1283,35 @@ fn apply_member(
     }
 }
 
-fn poison(
+fn quarantine_completion_teardown_owner<const C: usize, Owner>(
+    engine: &mut Engine<C>,
+    owner: Owner,
+) -> Owner {
+    engine.quarantine_m1_queue_rearm_failure();
+    owner
+}
+
+fn quarantine_poison_owner<const C: usize, Owner>(engine: &mut Engine<C>, owner: Owner) -> Owner {
+    quarantine_completion_teardown_owner(engine, owner)
+}
+
+fn poison<const C: usize>(
+    engine: &mut Engine<C>,
     error: M1CompletedStepErrorV1,
     queue: M1PhysicalReadbackQueueSessionV1,
     checked: M1CheckedCompletionOutputV1,
     custody: M1CompletedStepPoisonCustodyV1,
 ) -> M1CompletedStepOutcomeV1 {
-    M1CompletedStepOutcomeV1::Poisoned(Box::new(M1CompletedStepPoisonV1 {
-        error,
-        queue,
-        checked,
-        custody,
-    }))
+    let poison = quarantine_poison_owner(
+        engine,
+        M1CompletedStepPoisonV1 {
+            error,
+            queue,
+            checked,
+            custody,
+        },
+    );
+    M1CompletedStepOutcomeV1::Poisoned(Box::new(poison))
 }
 
 /// Completes one physical M1 readback across every scheduler member exactly once.
@@ -1067,6 +1350,7 @@ pub fn complete_m1_physical_step_v1<const C: usize>(
     for lane in 0..member_count {
         let Some(work) = remaining.get_mut(lane).and_then(Option::take) else {
             return poison(
+                engine,
                 M1CompletedStepErrorV1::Internal { lane },
                 queue,
                 checked,
@@ -1087,6 +1371,7 @@ pub fn complete_m1_physical_step_v1<const C: usize>(
                 *slot = Some(work);
             }
             return poison(
+                engine,
                 M1CompletedStepErrorV1::Internal { lane },
                 queue,
                 checked,
@@ -1109,6 +1394,7 @@ pub fn complete_m1_physical_step_v1<const C: usize>(
             }
             Err(failure) => {
                 return poison(
+                    engine,
                     M1CompletedStepErrorV1::Cache {
                         lane,
                         source: failure.error,
@@ -1132,6 +1418,7 @@ pub fn complete_m1_physical_step_v1<const C: usize>(
 
     let Some(authority) = completion.take() else {
         return poison(
+            engine,
             M1CompletedStepErrorV1::Internal { lane: member_count },
             queue,
             checked,
@@ -1159,6 +1446,7 @@ pub fn complete_m1_physical_step_v1<const C: usize>(
         Err(failure) => {
             let error = failure.error();
             poison(
+                engine,
                 M1CompletedStepErrorV1::Engine(error),
                 queue,
                 checked,
@@ -1257,6 +1545,48 @@ mod tests {
         };
         assert_eq!(&*custody.logical_accepted_counts, &[1]);
         assert_eq!(&*custody.externally_published_counts, &[0]);
+    }
+
+    #[test]
+    fn poison_transition_faults_in_flight_engine_and_retains_owner_identity() {
+        let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+        let request = engine.admit().unwrap();
+        engine.append_tentative(request, 1).unwrap();
+        let scheduled = engine.dispatch_m1_ready().unwrap().unwrap();
+        assert_eq!(scheduled.member(0), Some(request));
+        assert!(!engine.is_faulted());
+
+        let owner = Box::new(identity(93));
+        let pointer = core::ptr::from_ref(owner.as_ref());
+        let owner = quarantine_poison_owner(&mut engine, owner);
+        assert!(engine.is_faulted());
+        assert_eq!(
+            engine.state(request),
+            Some(ferric_spec::scheduling::RequestState::InFlight)
+        );
+        assert_eq!(core::ptr::from_ref(owner.as_ref()), pointer);
+        assert_eq!(*owner, identity(93));
+    }
+
+    #[test]
+    fn completion_teardown_transition_faults_engine_and_retains_owner_identity() {
+        let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+        let request = engine.admit().unwrap();
+        engine.append_tentative(request, 1).unwrap();
+        let scheduled = engine.dispatch_m1_ready().unwrap().unwrap();
+        assert_eq!(scheduled.member(0), Some(request));
+        assert!(!engine.is_faulted());
+
+        let owner = Box::new(identity(94));
+        let pointer = core::ptr::from_ref(owner.as_ref());
+        let owner = quarantine_completion_teardown_owner(&mut engine, owner);
+        assert!(engine.is_faulted());
+        assert_eq!(
+            engine.state(request),
+            Some(ferric_spec::scheduling::RequestState::InFlight)
+        );
+        assert_eq!(core::ptr::from_ref(owner.as_ref()), pointer);
+        assert_eq!(*owner, identity(94));
     }
 
     fn paired_work(

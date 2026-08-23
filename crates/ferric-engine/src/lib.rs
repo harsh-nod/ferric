@@ -74,6 +74,11 @@ pub use device_cache::{
     M1PartitionedModelMemoryKvPoolV1, M1PartitionedModelMemoryKvQueueCustodyV1,
     M1PendingQualificationContextStepWriteV1, M1QualificationContextStepAbortFailureV1,
     M1QualificationContextStepReservationFailureV1, M1QualificationPendingStepAbortFailureV1,
+    M1QualificationTargetPagePreleaseCancellationErrorV1,
+    M1QualificationTargetPagePreleaseCancellationExhaustedV1,
+    M1QualificationTargetPagePreleaseCancellationFailureV1,
+    M1QualificationTargetPagePreleaseCancellationPageErrorV1,
+    M1QualificationTargetPagePreleaseCancellationSuccessV1,
     M1QualificationTargetPagePreleaseErrorV1, M1QualificationTargetPagePreleaseFailureV1,
     M1QualificationTargetPagePreleaseProgressV1, M1QualificationTargetPagePreleaseRecoveryV1,
     M1QualificationTargetPagePreleaseSuccessV1, M1QualificationTargetPageReserveV1,
@@ -108,9 +113,10 @@ pub use kv_workspace_authority::{
 };
 pub use m1_completed_step::{
     complete_m1_physical_step_v1, M1CompletedDeviceKvMemberV1, M1CompletedStepErrorV1,
-    M1CompletedStepOutcomeV1, M1CompletedStepPoisonV1, M1CompletedStepRejectionV1,
-    M1CompletedStepSuccessV1, M1DeviceKvCompletionDispositionV1, M1DeviceKvCompletionMemberV1,
-    M1DeviceKvCompletionRosterV1,
+    M1CompletedStepOutcomeV1, M1CompletedStepPoisonV1, M1CompletedStepRejectionTeardownFailureV1,
+    M1CompletedStepRejectionTeardownSuccessV1, M1CompletedStepRejectionV1,
+    M1CompletedStepSuccessV1, M1CompletedStepTeardownFailureV1, M1CompletedStepTeardownSuccessV1,
+    M1DeviceKvCompletionDispositionV1, M1DeviceKvCompletionMemberV1, M1DeviceKvCompletionRosterV1,
 };
 pub use m1_completed_step_release::{
     release_m1_completed_step_kv_pages_v1, M1CompletedKvPageIdentityErrorV1,
@@ -134,7 +140,10 @@ pub use m1_queue_rearm::{
     schedule_m1_long_lived_queue_rearm_v1, submit_m1_long_lived_queue_rearm_v1,
     M1LongLivedQueueRearmKvInputsV1, M1LongLivedQueueRearmKvReservationFailureV1,
     M1LongLivedQueueRearmKvReservationPhaseV1, M1LongLivedQueueRearmPrepareFailureV1,
-    M1LongLivedQueueRearmProgressPhaseV1, M1LongLivedQueueRearmScheduleErrorV1,
+    M1LongLivedQueueRearmProgressPhaseV1, M1LongLivedQueueRearmScheduleClosureOutcomeV1,
+    M1LongLivedQueueRearmScheduleDetachQuarantineV1,
+    M1LongLivedQueueRearmScheduleDetachedTeardownFailureV1,
+    M1LongLivedQueueRearmScheduleDetachedTeardownSuccessV1, M1LongLivedQueueRearmScheduleErrorV1,
     M1LongLivedQueueRearmScheduleFailureV1, M1LongLivedQueueRearmSchedulePhaseV1,
     M1LongLivedQueueRearmSubmissionFailureV1, M1LongLivedQueueRearmSubmissionPhaseV1,
     M1LongLivedQueueRearmTeardownFailureV1, M1LongLivedQueueRearmTeardownSuccessV1,
@@ -142,22 +151,34 @@ pub use m1_queue_rearm::{
     M1PreparedLongLivedQueueRearmV1, M1RearmRoundHistoryEntryV1, M1RearmedCompletedQueueV1,
     M1RearmedCompletedReadbackV1, M1RearmedCompletionOutcomeV1,
     M1RearmedCompletionPreflightErrorV1, M1RearmedCompletionPreflightFailureV1,
-    M1RearmedObservedQualificationOutputV1, M1RearmedPublishedQueueV1,
-    M1RearmedQualificationCompletedReadbackJoinFailureV1,
+    M1RearmedCompletionPreflightTeardownFailureV1, M1RearmedCompletionPreflightTeardownSuccessV1,
+    M1RearmedObservedQualificationOutputV1, M1RearmedObservedQualificationTeardownFailureV1,
+    M1RearmedObservedQualificationTeardownSuccessV1, M1RearmedPoisonedCompletionV1,
+    M1RearmedPublishedQueueV1, M1RearmedQualificationCompletedReadbackJoinFailureV1,
     M1RearmedQualificationObservationFailureV1, M1RearmedQualificationObservationTeardownFailureV1,
     M1RearmedQualificationObservationTeardownSuccessV1,
     M1RearmedQualificationSemanticTeardownFailureV1,
     M1RearmedQualificationSemanticTeardownSuccessV1, M1RearmedQualifiedCompletedReadbackV1,
     M1RearmedQualifiedCompletionOutcomeV1, M1RearmedQualifiedCompletionPreflightFailureV1,
-    M1RearmedQualifiedReleasedRoundV1, M1RearmedQualifiedRoundPageReleaseFailureV1,
-    M1RearmedQualifiedRoundReleaseOutcomeV1, M1RearmedQualifiedTeardownFailureV1,
-    M1RearmedQualifiedTeardownSuccessV1, M1RearmedQueueProgressFailureV1,
-    M1RearmedReadbackCaptureReleaseStateV1, M1RearmedReadbackFailureSourceV1,
-    M1RearmedReadbackFailureV1, M1RearmedReadbackTeardownDiagnosticV1,
-    M1RearmedReadbackTeardownEvidenceV1, M1RearmedReadbackTeardownFailureV1,
-    M1RearmedReadbackTeardownSuccessV1, M1RearmedRecycledQueueV1,
-    M1RearmedRoundPageReleaseFailureV1, M1RearmedRoundReleaseOutcomeV1,
-    M1ReservedLongLivedQueueRearmV1, M1ScheduledLongLivedQueueRearmV1,
+    M1RearmedQualifiedCompletionPreflightTeardownFailureV1,
+    M1RearmedQualifiedCompletionPreflightTeardownSuccessV1, M1RearmedQualifiedPoisonedCompletionV1,
+    M1RearmedQualifiedReadbackTeardownFailureV1, M1RearmedQualifiedReadbackTeardownSuccessV1,
+    M1RearmedQualifiedRejectedCompletionTeardownFailureV1,
+    M1RearmedQualifiedRejectedCompletionTeardownSuccessV1, M1RearmedQualifiedReleasedRoundV1,
+    M1RearmedQualifiedRoundPageReleaseFailureV1,
+    M1RearmedQualifiedRoundPageReleaseTeardownFailureV1,
+    M1RearmedQualifiedRoundPageReleaseTeardownSuccessV1, M1RearmedQualifiedRoundReleaseOutcomeV1,
+    M1RearmedQualifiedTeardownFailureV1, M1RearmedQualifiedTeardownSuccessV1,
+    M1RearmedQueueProgressFailureV1, M1RearmedReadbackCaptureReleaseStateV1,
+    M1RearmedReadbackFailureSourceV1, M1RearmedReadbackFailureV1,
+    M1RearmedReadbackTeardownDiagnosticV1, M1RearmedReadbackTeardownEvidenceV1,
+    M1RearmedReadbackTeardownFailureV1, M1RearmedReadbackTeardownSuccessV1,
+    M1RearmedRecycledQueueV1, M1RearmedRejectedCompletionTeardownFailureV1,
+    M1RearmedRejectedCompletionTeardownSuccessV1, M1RearmedRoundPageReleaseFailureV1,
+    M1RearmedRoundPageReleaseTeardownFailureV1, M1RearmedRoundPageReleaseTeardownSuccessV1,
+    M1RearmedRoundReleaseOutcomeV1, M1ReservedLongLivedQueueRearmV1,
+    M1ScheduledLongLivedQueueRearmTeardownFailureV1,
+    M1ScheduledLongLivedQueueRearmTeardownSuccessV1, M1ScheduledLongLivedQueueRearmV1,
     M1_MAX_REARM_ROUND_HISTORY_V1,
 };
 pub use model_memory_allocations::{
@@ -230,10 +251,13 @@ pub use physical_program_catalog::{
 };
 pub use physical_queue_lifecycle::{
     M1CompletedReadbackJoinErrorV1, M1CompletedReadbackJoinFailureV1,
+    M1CompletionEvidenceTeardownDiagnosticV1, M1CompletionEvidenceTeardownEvidenceV1,
+    M1CompletionEvidenceTeardownFailureV1, M1CompletionEvidenceTeardownSuccessV1,
     M1CompletionObservationErrorV1, M1CompletionObservationFailureCustodyV1,
-    M1CompletionObservationFailureV1, M1ObservedCompletionCaseV1, M1ObservedCompletionOutputV1,
-    M1ObservedQualificationOutputV1, M1PhysicalCompletedQueueSessionV1,
-    M1PhysicalCompletedReadbackV1, M1PhysicalDetachedQueueCaseV1, M1PhysicalDetachedQueueSessionV1,
+    M1CompletionObservationFailureV1, M1EngineQuarantinedPhysicalQueueOperationFailureV1,
+    M1ObservedCompletionCaseV1, M1ObservedCompletionOutputV1, M1ObservedQualificationOutputV1,
+    M1PhysicalCompletedQueueSessionV1, M1PhysicalCompletedReadbackV1,
+    M1PhysicalDetachedQueueCaseV1, M1PhysicalDetachedQueueSessionV1,
     M1PhysicalPublishedQueueSessionV1, M1PhysicalQueueCreateFailureClassV1,
     M1PhysicalQueueCreateFailureV1, M1PhysicalQueueOperationFailureV1, M1PhysicalQueuePhaseCaseV1,
     M1PhysicalQueuePhaseV1, M1PhysicalQueueReleaseFailureV1, M1PhysicalQueueSessionV1,
@@ -241,10 +265,13 @@ pub use physical_queue_lifecycle::{
     M1PhysicalReadbackQueueCaseV1, M1PhysicalReadbackQueueOperationFailureV1,
     M1PhysicalReadbackQueueReleaseFailureV1, M1PhysicalReadbackQueueSessionV1,
     M1PhysicalRecycledQueueSessionV1, M1QualificationCompletedReadbackJoinFailureV1,
-    M1QualificationCompletionEvidenceV1, M1QualificationObservationErrorV1,
+    M1QualificationCompletionEvidenceV1, M1QualificationEvidenceTeardownFailureV1,
+    M1QualificationEvidenceTeardownSuccessV1, M1QualificationObservationErrorV1,
     M1QualificationObservationFailureCustodyV1, M1QualificationObservationFailureV1,
-    M1QualifiedPhysicalCompletedReadbackV1, M1RejectedCompletionCaseV1,
-    M1RejectedCompletionOutputV1,
+    M1QualificationObservationTeardownEvidenceV1, M1QualificationObservationTeardownFailureV1,
+    M1QualificationObservationTeardownSuccessV1, M1QualificationSemanticTeardownFailureV1,
+    M1QualificationSemanticTeardownSuccessV1, M1QualifiedPhysicalCompletedReadbackV1,
+    M1RejectedCompletionCaseV1, M1RejectedCompletionOutputV1,
 };
 pub use physical_step::{
     bind_structural_physical_step, StructuralPhysicalStepBindingError,
@@ -261,8 +288,9 @@ pub use qualification_logits::{
 pub use runner::{
     bind_m1_physical_runner_v1, initialize_m1_physical_runner_memory_v1, LogicalRunnerDeclaration,
     LogicalRunnerError, M1PhysicalRunnerBindFailureV1, M1PhysicalRunnerFirstCompletionOutcomeV1,
-    M1PhysicalRunnerFirstPublicationFailureV1, M1PhysicalRunnerMemoryFailureV1,
-    M1PhysicalRunnerQueueFailureStageV1, M1PhysicalRunnerRearmSubmissionFailureV1,
+    M1PhysicalRunnerFirstPublicationExhaustedV1, M1PhysicalRunnerFirstPublicationFailureV1,
+    M1PhysicalRunnerMemoryFailureV1, M1PhysicalRunnerQueueFailureStageV1,
+    M1PhysicalRunnerRearmSubmissionExhaustedV1, M1PhysicalRunnerRearmSubmissionFailureV1,
     M1PhysicalRunnerRecipeFailureV1, M1PhysicalRunnerRecipeOutcomeV1, M1PhysicalRunnerV1,
 };
 pub use scheduler::{DispatchBatch, M1ScheduledDispatchV1, SchedulerError};
@@ -296,7 +324,7 @@ pub use step_workspace_subleases::{
     M1_TARGET_SPECULATIVE_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
     M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
 };
-pub use system::{CompletionFailure, Engine, EngineError};
+pub use system::{CompletionFailure, Engine, EngineError, M1CaptureQuarantinedEngineV1};
 
 verus! {
 

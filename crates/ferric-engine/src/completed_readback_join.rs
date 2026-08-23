@@ -321,9 +321,12 @@ fn check_m1_completed_output(
                 actual: plan.completion_epoch(),
             });
         }
-        let expected_request = scheduled
-            .member(lane)
-            .expect("scheduled member count bounds the canonical roster");
+        let Some(expected_request) = scheduled.member(lane) else {
+            return Err(M1CompletedOutputCheckErrorV1::ExpectationCount {
+                expected: scheduled.member_count(),
+                actual: lane,
+            });
+        };
         if plan.request() != expected_request {
             return Err(M1CompletedOutputCheckErrorV1::RequestOrderDrift {
                 lane,
@@ -341,13 +344,15 @@ fn check_m1_completed_output(
             ))?;
         let checked = match (expectation.semantics(), qualification_final_rows) {
             (CompletionWireSemanticExpectation::QualificationFinalRow { .. }, Some(final_rows)) => {
-                check_inert_qualification_final_completion_record(
-                    record_bytes,
-                    expectation,
-                    final_rows
-                        .choice(lane)
-                        .expect("validated final choice count covers every scheduler lane"),
-                )
+                let Some(choice) = final_rows.choice(lane) else {
+                    return Err(
+                        M1CompletedOutputCheckErrorV1::QualificationFinalChoiceCount {
+                            expected: scheduled.member_count(),
+                            actual: final_rows.len(),
+                        },
+                    );
+                };
+                check_inert_qualification_final_completion_record(record_bytes, expectation, choice)
             }
             _ => check_inert_completion_record(record_bytes, expectation),
         }

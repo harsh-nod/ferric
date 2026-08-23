@@ -697,6 +697,115 @@ pub enum M1PhysicalRunnerFirstPublicationFailureV1<'a> {
     Submit(Box<M1PhysicalQueueOperationFailureV1>),
 }
 
+fn retry_if_recoverable<Owner, Success>(
+    owner: Owner,
+    recoverable: bool,
+    retry: impl FnOnce(Owner) -> Result<Success, Owner>,
+) -> Result<Success, Owner> {
+    if recoverable {
+        retry(owner)
+    } else {
+        Err(owner)
+    }
+}
+
+fn quarantine_and_retain<const C: usize, Owner>(engine: &mut Engine<C>, owner: Owner) -> Owner {
+    engine.quarantine_m1_queue_rearm_failure();
+    owner
+}
+
+impl<'a> M1PhysicalRunnerFirstPublicationFailureV1<'a> {
+    /// Retries only a failure that retained exact unpublished inputs.
+    ///
+    /// Terminal queue creation or submission quarantine is returned unchanged.
+    ///
+    /// # Errors
+    ///
+    /// Returns renewed failure custody if the retry rejects, or the unchanged
+    /// terminal owner when retry is denied.
+    pub fn retry<const C: usize>(
+        self,
+        runner: &'a M1PhysicalRunnerV1,
+        engine: &mut Engine<C>,
+        ring_bytes: u32,
+    ) -> Result<M1PhysicalPublishedQueueSessionV1, Self> {
+        let recoverable = match &self {
+            Self::Catalog { .. } | Self::Batch(_) => true,
+            Self::Create(failure) => {
+                failure.class() == M1PhysicalQueueCreateFailureClassV1::Rejected
+            }
+            Self::Submit(_) => false,
+        };
+        retry_if_recoverable(self, recoverable, |failure| match failure {
+            Self::Catalog {
+                allocated,
+                recipe,
+                completion_output,
+                ..
+            } => runner.publish_first_step(
+                engine,
+                ring_bytes,
+                *allocated,
+                *recipe,
+                *completion_output,
+            ),
+            Self::Batch(failure) => {
+                let (_diagnostic, allocated, recipe, completion_output, catalog) =
+                    failure.into_retry_inputs();
+                drop(catalog);
+                runner.publish_first_step(engine, ring_bytes, allocated, recipe, completion_output)
+            }
+            Self::Create(failure) => {
+                let batch = match (*failure).into_rejected_input_or_self() {
+                    Ok(batch) => batch,
+                    Err(failure) => return Err(Self::Create(Box::new(failure))),
+                };
+                let queue = match M1PhysicalQueueSessionV1::create(ring_bytes, batch) {
+                    Ok(queue) => queue,
+                    Err(failure) => {
+                        if failure.class() == M1PhysicalQueueCreateFailureClassV1::Terminal {
+                            engine.quarantine_m1_queue_rearm_failure();
+                        }
+                        return Err(Self::Create(Box::new(failure)));
+                    }
+                };
+                match queue.submit() {
+                    Ok(published) => Ok(published),
+                    Err(failure) => {
+                        engine.quarantine_m1_queue_rearm_failure();
+                        Err(Self::Submit(Box::new(failure)))
+                    }
+                }
+            }
+            terminal @ Self::Submit(_) => Err(terminal),
+        })
+    }
+
+    /// Permanently quarantines the Engine after the caller's bounded retry
+    /// policy is exhausted, turning unpublished or lower-terminal failure
+    /// custody into a closed fail-stop owner.
+    pub fn quarantine_after_retry_exhaustion<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> M1PhysicalRunnerFirstPublicationExhaustedV1<'a> {
+        let failure = quarantine_and_retain(engine, self);
+        M1PhysicalRunnerFirstPublicationExhaustedV1 { failure }
+    }
+}
+
+/// Engine-quarantined first-publication failure after bounded retry exhaustion.
+#[must_use = "publication failure custody remains retained beside Engine quarantine"]
+#[derive(Debug)]
+pub struct M1PhysicalRunnerFirstPublicationExhaustedV1<'a> {
+    failure: M1PhysicalRunnerFirstPublicationFailureV1<'a>,
+}
+
+impl M1PhysicalRunnerFirstPublicationExhaustedV1<'_> {
+    pub const fn failure(&self) -> &M1PhysicalRunnerFirstPublicationFailureV1<'_> {
+        &self.failure
+    }
+}
+
 /// Terminal generic queue phase for first-generation execution.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum M1PhysicalRunnerQueueFailureStageV1 {
@@ -738,6 +847,52 @@ pub enum M1PhysicalRunnerRearmSubmissionFailureV1<'a> {
     Submission(Box<M1LongLivedQueueRearmSubmissionFailureV1<'a>>),
 }
 
+impl<'a> M1PhysicalRunnerRearmSubmissionFailureV1<'a> {
+    /// Revalidates the catalog and retries only unchanged unpublished rearm
+    /// inputs. A lower submission quarantine is returned unchanged.
+    ///
+    /// # Errors
+    ///
+    /// Returns renewed catalog rejection or unchanged terminal submission
+    /// custody.
+    pub fn retry<const C: usize>(
+        self,
+        runner: &'a M1PhysicalRunnerV1,
+        engine: &mut Engine<C>,
+    ) -> Result<M1RearmedPublishedQueueV1, Self> {
+        let recoverable = matches!(&self, Self::Catalog { .. });
+        retry_if_recoverable(self, recoverable, |failure| match failure {
+            Self::Catalog {
+                prepared, recipe, ..
+            } => runner.submit_rearm(engine, *prepared, *recipe),
+            terminal @ Self::Submission(_) => Err(terminal),
+        })
+    }
+
+    /// Permanently quarantines the Engine after bounded catalog retry
+    /// exhaustion or an existing lower submission quarantine.
+    pub fn quarantine_after_retry_exhaustion<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> M1PhysicalRunnerRearmSubmissionExhaustedV1<'a> {
+        let failure = quarantine_and_retain(engine, self);
+        M1PhysicalRunnerRearmSubmissionExhaustedV1 { failure }
+    }
+}
+
+/// Engine-quarantined rearm submission failure after bounded retry exhaustion.
+#[must_use = "rearm submission custody remains retained beside Engine quarantine"]
+#[derive(Debug)]
+pub struct M1PhysicalRunnerRearmSubmissionExhaustedV1<'a> {
+    failure: M1PhysicalRunnerRearmSubmissionFailureV1<'a>,
+}
+
+impl M1PhysicalRunnerRearmSubmissionExhaustedV1<'_> {
+    pub const fn failure(&self) -> &M1PhysicalRunnerRearmSubmissionFailureV1<'_> {
+        &self.failure
+    }
+}
+
 fn find_plan(
     plans: &[GeneratedPlanDeclaration],
     selection: Qwen3PlanSelection,
@@ -765,8 +920,8 @@ fn checked_operation_range(
 #[cfg(test)]
 mod tests {
     use super::{
-        checked_operation_range, derive_physical_step_recipe, find_plan, LogicalRunnerError,
-        M1PhysicalRunnerRecipeOutcomeV1,
+        checked_operation_range, derive_physical_step_recipe, find_plan, quarantine_and_retain,
+        retry_if_recoverable, LogicalRunnerError, M1PhysicalRunnerRecipeOutcomeV1,
     };
     use ferric_build::{
         m1_step_workspace_requirements, plan_addressless_m1_step_workspace,
@@ -780,7 +935,62 @@ mod tests {
     use serde_json::{json, Value};
 
     use crate::operation_kernel_plan::tests::public_operation_kernel_plan_fixture;
-    use crate::{M1FullStepWorkspacePlans, M1StepDispatchIntent};
+    use crate::{Engine, M1FullStepWorkspacePlans, M1StepDispatchIntent};
+    use ferric_spec::scheduling::RequestState;
+    use std::cell::Cell;
+
+    #[test]
+    fn retry_routing_preserves_owner_identity_and_exact_attempt_policy() {
+        let attempts = Cell::new(0_u32);
+        let mut owner = Box::new(Identity::new([91; 32]));
+        let pointer = core::ptr::from_ref(owner.as_ref());
+        for _ in 0..3 {
+            owner = retry_if_recoverable(owner, true, |owner| {
+                attempts.set(attempts.get() + 1);
+                Err::<(), _>(owner)
+            })
+            .unwrap_err();
+            assert_eq!(core::ptr::from_ref(owner.as_ref()), pointer);
+            assert_eq!(*owner, Identity::new([91; 32]));
+        }
+        assert_eq!(attempts.get(), 3);
+
+        let terminal_attempts = Cell::new(0_u32);
+        let owner = retry_if_recoverable(owner, false, |owner| {
+            terminal_attempts.set(terminal_attempts.get() + 1);
+            Ok::<_, Box<Identity>>(owner)
+        })
+        .unwrap_err();
+        assert_eq!(terminal_attempts.get(), 0);
+        assert_eq!(core::ptr::from_ref(owner.as_ref()), pointer);
+
+        let success_attempts = Cell::new(0_u32);
+        let owner = retry_if_recoverable(owner, true, |owner| {
+            success_attempts.set(success_attempts.get() + 1);
+            Ok::<_, Box<Identity>>(owner)
+        })
+        .unwrap();
+        assert_eq!(success_attempts.get(), 1);
+        assert_eq!(core::ptr::from_ref(owner.as_ref()), pointer);
+    }
+
+    #[test]
+    fn retry_exhaustion_faults_engine_and_retains_exact_owner() {
+        let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+        let request = engine.admit().unwrap();
+        engine.append_tentative(request, 1).unwrap();
+        let scheduled = engine.dispatch_m1_ready().unwrap().unwrap();
+        assert_eq!(scheduled.member(0), Some(request));
+        assert!(!engine.is_faulted());
+
+        let owner = Box::new(Identity::new([92; 32]));
+        let pointer = core::ptr::from_ref(owner.as_ref());
+        let owner = quarantine_and_retain(&mut engine, owner);
+        assert!(engine.is_faulted());
+        assert_eq!(engine.state(request), Some(RequestState::InFlight));
+        assert_eq!(core::ptr::from_ref(owner.as_ref()), pointer);
+        assert_eq!(*owner, Identity::new([92; 32]));
+    }
 
     struct RawObservationTranscriptFieldsV1<'a> {
         catalog_identity: &'a [u8],

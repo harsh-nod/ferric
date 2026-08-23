@@ -102,6 +102,28 @@ pub struct BoundM1PhysicalBufferBindingsV1 {
 }
 
 impl BoundM1PhysicalBufferBindingsV1 {
+    pub(crate) fn from_parts(
+        recipe: AddresslessM1PhysicalBufferRecipeV1,
+        workspace_owners: M1FullStepWorkspaceSubleaseOwners,
+        partitioned_memory: M1PartitionedModelMemoryKvPoolV1,
+        completion_output: BoundM1CompletionOutputV1,
+        rows: Box<[M1BoundPhysicalBufferRowV1]>,
+    ) -> Self {
+        let (kernargs, composition, source_rows) = recipe.into_parts();
+        Self {
+            version: M1_PHYSICAL_BUFFER_BINDING_VERSION_V1,
+            kernargs,
+            source_rows,
+            workspaces: BoundM1FullStepWorkspaceSubleases::from_parts(
+                composition,
+                workspace_owners,
+            ),
+            partitioned_memory,
+            completion_output,
+            rows,
+        }
+    }
+
     /// Binding format version.
     #[must_use]
     pub const fn version(&self) -> u32 {

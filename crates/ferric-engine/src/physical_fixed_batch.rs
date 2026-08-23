@@ -15,7 +15,8 @@ use vstd::prelude::*;
 
 use crate::{
     m1_completion_output_shape_v1, AddresslessM1FullStepWorkspaceComposition,
-    AddresslessM1PhysicalDispatchRecipeV1, BoundM1CompletionOutputV1,
+    AddresslessM1PhysicalBufferRecipeV1, AddresslessM1PhysicalDispatchRecipeV1,
+    AddresslessM1PhysicalKernargRecipeV1, BoundM1CompletionOutputV1,
     BoundM1PhysicalBufferBindingsV1, ContentBoundM1ProgramCatalogV1, Gfx942DeviceBinding,
     M1BoundPhysicalBufferRowV1, M1CompletionOutputShapeV1, M1FullStepWorkspaceSubleaseOwners,
     M1PartitionedModelMemoryKvPoolV1, M1PartitionedModelMemoryKvQueueCustodyV1,
@@ -520,6 +521,8 @@ pub enum M1PhysicalFixedBatchRowSetV1 {
 /// Fail-closed physical fixed-batch build diagnostic.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum M1PhysicalFixedBatchBuildErrorV1 {
+    /// A bounded host allocation failed before consuming any source owner.
+    HostAllocation,
     /// Selected program roster cardinality drifted.
     ProgramCount { expected: usize, actual: usize },
     /// Physical and workspace compositions no longer name the same step.
@@ -699,23 +702,30 @@ pub fn build_m1_physical_fixed_batch_v1(
         bound_rows,
     };
 
-    Ok(match shape {
+    let lowered = match shape {
         M1PhysicalFixedBatchShapeV1::TargetOnly => {
-            M1PhysicalFixedBatchV1::TargetOnly(Box::new(lower_fixed_batch(parts)))
+            lower_fixed_batch(parts).map(|case| M1PhysicalFixedBatchV1::TargetOnly(Box::new(case)))
         }
-        M1PhysicalFixedBatchShapeV1::PairedPrefill => {
-            M1PhysicalFixedBatchV1::PairedPrefill(Box::new(lower_fixed_batch(parts)))
+        M1PhysicalFixedBatchShapeV1::PairedPrefill => lower_fixed_batch(parts)
+            .map(|case| M1PhysicalFixedBatchV1::PairedPrefill(Box::new(case))),
+        M1PhysicalFixedBatchShapeV1::SpeculativeK4 => lower_fixed_batch(parts)
+            .map(|case| M1PhysicalFixedBatchV1::SpeculativeK4(Box::new(case))),
+        M1PhysicalFixedBatchShapeV1::SpeculativeK8 => lower_fixed_batch(parts)
+            .map(|case| M1PhysicalFixedBatchV1::SpeculativeK8(Box::new(case))),
+        M1PhysicalFixedBatchShapeV1::SpeculativeK16 => lower_fixed_batch(parts)
+            .map(|case| M1PhysicalFixedBatchV1::SpeculativeK16(Box::new(case))),
+    };
+    match lowered {
+        Ok(batch) => Ok(batch),
+        Err(failure) => {
+            let (error, catalog, bindings) = (*failure).into_original_inputs();
+            Err(M1PhysicalFixedBatchBuildFailureV1 {
+                error,
+                catalog: Box::new(catalog),
+                bindings: Box::new(bindings),
+            })
         }
-        M1PhysicalFixedBatchShapeV1::SpeculativeK4 => {
-            M1PhysicalFixedBatchV1::SpeculativeK4(Box::new(lower_fixed_batch(parts)))
-        }
-        M1PhysicalFixedBatchShapeV1::SpeculativeK8 => {
-            M1PhysicalFixedBatchV1::SpeculativeK8(Box::new(lower_fixed_batch(parts)))
-        }
-        M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
-            M1PhysicalFixedBatchV1::SpeculativeK16(Box::new(lower_fixed_batch(parts)))
-        }
-    })
+    }
 }
 
 fn validate_inputs(
@@ -952,29 +962,139 @@ struct LoweringPartsV1<'a> {
     bound_rows: Box<[M1BoundPhysicalBufferRowV1]>,
 }
 
+impl<'a> LoweringPartsV1<'a> {
+    fn into_original_inputs(
+        self,
+    ) -> (
+        ContentBoundM1ProgramCatalogV1<'a>,
+        BoundM1PhysicalBufferBindingsV1,
+    ) {
+        let kernargs =
+            AddresslessM1PhysicalKernargRecipeV1::from_parts(self.physical_recipe, self.images);
+        let recipe = AddresslessM1PhysicalBufferRecipeV1::from_parts(
+            kernargs,
+            self.workspace_composition,
+            self.source_rows,
+        );
+        let bindings = BoundM1PhysicalBufferBindingsV1::from_parts(
+            recipe,
+            self.workspace_owners,
+            self.partitioned_memory,
+            self.completion_output,
+            self.bound_rows,
+        );
+        (self.catalog, bindings)
+    }
+}
+
+struct LoweringFailureV1<'a> {
+    error: M1PhysicalFixedBatchBuildErrorV1,
+    parts: LoweringPartsV1<'a>,
+}
+
+impl<'a> LoweringFailureV1<'a> {
+    fn into_original_inputs(
+        self,
+    ) -> (
+        M1PhysicalFixedBatchBuildErrorV1,
+        ContentBoundM1ProgramCatalogV1<'a>,
+        BoundM1PhysicalBufferBindingsV1,
+    ) {
+        let (catalog, bindings) = self.parts.into_original_inputs();
+        (self.error, catalog, bindings)
+    }
+}
+
+struct PacketLoweringInputV1 {
+    physical: crate::M1PhysicalDispatchRecipeRowV1,
+    image: M1PhysicalKernargImageV1,
+    buffers: Box<[fe2o3_service_host::ServiceFixedDispatchBufferV1]>,
+}
+
 fn lower_fixed_batch<const N: usize>(
-    parts: LoweringPartsV1<'_>,
-) -> M1PhysicalFixedBatchCaseV1<'_, N> {
-    let mut images = parts.images.into_vec().into_iter();
-    let mut bound_rows = parts.bound_rows.iter();
-    let packets = core::array::from_fn(|position| {
-        let physical = parts.physical_recipe.rows()[position];
-        let image = images
-            .next()
-            .expect("prevalidated fixed-batch image cardinality");
-        let bound = bound_rows
-            .next()
-            .expect("prevalidated fixed-batch buffer-row cardinality");
+    mut parts: LoweringPartsV1<'_>,
+) -> Result<M1PhysicalFixedBatchCaseV1<'_, N>, Box<LoweringFailureV1<'_>>> {
+    if parts.physical_recipe.rows().len() != N {
+        return Err(Box::new(LoweringFailureV1 {
+            error: M1PhysicalFixedBatchBuildErrorV1::RowCount {
+                rows: M1PhysicalFixedBatchRowSetV1::PhysicalRecipe,
+                expected: N,
+                actual: parts.physical_recipe.rows().len(),
+            },
+            parts,
+        }));
+    }
+    if parts.images.len() != N {
+        return Err(Box::new(LoweringFailureV1 {
+            error: M1PhysicalFixedBatchBuildErrorV1::RowCount {
+                rows: M1PhysicalFixedBatchRowSetV1::KernargImages,
+                expected: N,
+                actual: parts.images.len(),
+            },
+            parts,
+        }));
+    }
+    if parts.bound_rows.len() != N {
+        return Err(Box::new(LoweringFailureV1 {
+            error: M1PhysicalFixedBatchBuildErrorV1::RowCount {
+                rows: M1PhysicalFixedBatchRowSetV1::BoundBuffers,
+                expected: N,
+                actual: parts.bound_rows.len(),
+            },
+            parts,
+        }));
+    }
+    let mut inputs = Vec::new();
+    if inputs.try_reserve_exact(N).is_err() {
+        return Err(Box::new(LoweringFailureV1 {
+            error: M1PhysicalFixedBatchBuildErrorV1::HostAllocation,
+            parts,
+        }));
+    }
+    let images = core::mem::take(&mut parts.images).into_vec();
+    for ((image, physical), bound) in images
+        .into_iter()
+        .zip(parts.physical_recipe.rows().iter().copied())
+        .zip(parts.bound_rows.iter())
+    {
+        inputs.push(PacketLoweringInputV1 {
+            physical,
+            image,
+            buffers: bound.buffers().to_vec().into_boxed_slice(),
+        });
+    }
+    let inputs: [PacketLoweringInputV1; N] = match inputs.try_into() {
+        Ok(inputs) => inputs,
+        Err(inputs) => {
+            parts.images = inputs
+                .into_iter()
+                .map(|input| input.image)
+                .collect::<Vec<_>>()
+                .into_boxed_slice();
+            return Err(Box::new(LoweringFailureV1 {
+                error: M1PhysicalFixedBatchBuildErrorV1::RowCount {
+                    rows: M1PhysicalFixedBatchRowSetV1::KernargImages,
+                    expected: N,
+                    actual: parts.images.len(),
+                },
+                parts,
+            }));
+        }
+    };
+    let packets = inputs.map(|input| {
+        let PacketLoweringInputV1 {
+            physical,
+            image,
+            buffers,
+        } = input;
         ServiceFixedDispatchPacketV1::new(
             physical.program_index(),
             physical.geometry(),
             physical.dynamic_group_segment_bytes(),
             image.into_bytes(),
-            bound.buffers().to_vec().into_boxed_slice(),
+            buffers,
         )
     });
-    debug_assert!(images.next().is_none());
-    debug_assert!(bound_rows.next().is_none());
     let batch = ServiceFixedBatchV1::new(parts.catalog.into_programs(), packets);
     let custody = M1PhysicalFixedBatchCustodyV1 {
         catalog_id: parts.catalog_id,
@@ -987,7 +1107,7 @@ fn lower_fixed_batch<const N: usize>(
         source_rows: parts.source_rows,
         bound_rows: parts.bound_rows,
     };
-    M1PhysicalFixedBatchCaseV1 { batch, custody }
+    Ok(M1PhysicalFixedBatchCaseV1 { batch, custody })
 }
 
 #[cfg(test)]

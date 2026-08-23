@@ -23,7 +23,7 @@ use crate::device_cache::{
     M1_KV_PAGE_RETURN_ROLE_ORDER_V1,
 };
 use crate::{
-    ActiveDeviceKvCache, DeviceKvCacheProjection, M1CheckedCompletionOutputV1,
+    ActiveDeviceKvCache, DeviceKvCacheProjection, Engine, M1CheckedCompletionOutputV1,
     M1CompletedDeviceKvMemberV1, M1CompletedStepSuccessV1, M1DeviceKvArenaLeaseErrorV1,
     M1PhysicalReadbackQueueReleaseFailureV1, M1PhysicalReadbackQueueSessionV1,
 };
@@ -409,9 +409,11 @@ impl M1ReleasedCompletedStepV1 {
     ///
     /// Returns terminal lower-layer release quarantine paired with every
     /// remaining completed-step owner and observation.
-    pub fn destroy_queue_and_retain_step(
+    pub fn destroy_queue_and_retain_step<const C: usize>(
         self,
+        engine: &mut Engine<C>,
     ) -> Result<M1ReleasedQueueTeardownSuccessV1, Box<M1ReleasedQueueTeardownFailureV1>> {
+        engine.quarantine_m1_queue_rearm_failure();
         let Self {
             queue,
             checked,

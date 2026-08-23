@@ -363,6 +363,16 @@ pub struct BoundM1FullStepWorkspaceSubleases {
 }
 
 impl BoundM1FullStepWorkspaceSubleases {
+    pub(crate) fn from_parts(
+        composition: AddresslessM1FullStepWorkspaceComposition,
+        owners: M1FullStepWorkspaceSubleaseOwners,
+    ) -> Self {
+        Self {
+            composition,
+            owners,
+        }
+    }
+
     /// Returns the exact retained addressless composition.
     #[must_use = "the retained full-step composition must remain associated with its owners"]
     pub const fn composition(&self) -> &AddresslessM1FullStepWorkspaceComposition {

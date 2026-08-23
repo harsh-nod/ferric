@@ -26,7 +26,7 @@ use crate::qualification_logits::{
     observe_m1_qualification_logits_v1, M1QualificationFinalRowChoicesV1,
 };
 use crate::{
-    CompletionWireExpectation, CompletionWireSemanticExpectation, ExactCompletion,
+    CompletionWireExpectation, CompletionWireSemanticExpectation, Engine, ExactCompletion,
     Gfx942DeviceBinding, M1CheckedCompletionOutputV1, M1CompletedOutputCheckErrorV1,
     M1FullStepKvReservationCustodyV1, M1ObservedCompletionImageErrorV1,
     M1ObservedCompletionImageV1, M1ObservedQualificationLogitsV1, M1PhysicalFixedBatchCaseV1,
@@ -1390,6 +1390,70 @@ impl M1CompletionObservationFailureV1 {
     ) -> Self {
         Self { error, custody }
     }
+
+    /// Retries only a failure that occurred before the compact copy.
+    ///
+    /// # Errors
+    ///
+    /// Returns renewed failure custody. Post-copy rejections remain closed and
+    /// are returned unchanged without attempting another device read.
+    pub fn retry(
+        self,
+    ) -> Result<M1ObservedCompletionOutputV1, Box<M1CompletionObservationFailureV1>> {
+        let Self { error, custody } = self;
+        match custody {
+            M1CompletionObservationFailureCustodyV1::Recycled(queue) => {
+                queue.observe_completion().map_err(Box::new)
+            }
+            custody @ M1CompletionObservationFailureCustodyV1::Rejected(_) => {
+                Err(Box::new(Self { error, custody }))
+            }
+        }
+    }
+
+    /// Destroys the failed queue after faulting the logical Engine and retains
+    /// any compact bytes already copied before the observation rejection.
+    ///
+    /// # Errors
+    ///
+    /// Returns lower queue-release quarantine joined to the observation
+    /// diagnostic and the same copied evidence.
+    pub fn destroy_queue_and_retain_evidence<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<M1CompletionEvidenceTeardownSuccessV1, Box<M1CompletionEvidenceTeardownFailureV1>>
+    {
+        engine.quarantine_m1_queue_rearm_failure();
+        let Self { error, custody } = self;
+        match custody {
+            M1CompletionObservationFailureCustodyV1::Recycled(queue) => {
+                finish_completion_evidence_teardown(
+                    M1CompletionEvidenceTeardownDiagnosticV1::Observation(error),
+                    M1CompletionEvidenceTeardownEvidenceV1::None,
+                    queue.destroy_and_release(),
+                )
+            }
+            M1CompletionObservationFailureCustodyV1::Rejected(output) => {
+                match output.destroy_and_release_retaining_readback() {
+                    Ok((queue_release, readback)) => Ok(M1CompletionEvidenceTeardownSuccessV1 {
+                        diagnostic: M1CompletionEvidenceTeardownDiagnosticV1::Observation(error),
+                        evidence: M1CompletionEvidenceTeardownEvidenceV1::Rejected(readback),
+                        queue_release,
+                    }),
+                    Err(source) => {
+                        let (source, readback) = *source;
+                        Err(Box::new(M1CompletionEvidenceTeardownFailureV1 {
+                            diagnostic: M1CompletionEvidenceTeardownDiagnosticV1::Observation(
+                                error,
+                            ),
+                            evidence: M1CompletionEvidenceTeardownEvidenceV1::Rejected(readback),
+                            source,
+                        }))
+                    }
+                }
+            }
+        }
+    }
 }
 
 /// Semantic-join diagnostic after an exact structural observation exists.
@@ -1446,6 +1510,141 @@ impl M1CompletedReadbackJoinFailureV1 {
     #[must_use = "captured observation custody must remain retained"]
     pub fn into_parts(self) -> (M1CompletedReadbackJoinErrorV1, M1ObservedCompletionOutputV1) {
         (self.error, *self.observed)
+    }
+
+    /// Rechecks the unchanged copied compact image against corrected semantic
+    /// expectations without issuing another device read.
+    ///
+    /// # Errors
+    ///
+    /// Returns the unchanged captured observation when semantic validation
+    /// still rejects.
+    pub fn retry(
+        self,
+        expectations: &[CompletionWireSemanticExpectation<'_>],
+    ) -> Result<M1PhysicalCompletedReadbackV1, Self> {
+        (*self.observed).check_completion(expectations)
+    }
+
+    /// Destroys the semantically rejected queue after faulting the logical
+    /// Engine and retains the exact compact image used by the failed join.
+    ///
+    /// # Errors
+    ///
+    /// Returns lower queue-release quarantine joined to the semantic diagnostic
+    /// and unchanged compact image.
+    pub fn destroy_queue_and_retain_evidence<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<M1CompletionEvidenceTeardownSuccessV1, Box<M1CompletionEvidenceTeardownFailureV1>>
+    {
+        engine.quarantine_m1_queue_rearm_failure();
+        let Self { error, observed } = self;
+        match observed.destroy_and_release_retaining_image() {
+            Ok((queue_release, image)) => Ok(M1CompletionEvidenceTeardownSuccessV1 {
+                diagnostic: M1CompletionEvidenceTeardownDiagnosticV1::Semantic(error),
+                evidence: M1CompletionEvidenceTeardownEvidenceV1::Observed(image),
+                queue_release,
+            }),
+            Err(source) => {
+                let (source, image) = *source;
+                Err(Box::new(M1CompletionEvidenceTeardownFailureV1 {
+                    diagnostic: M1CompletionEvidenceTeardownDiagnosticV1::Semantic(error),
+                    evidence: M1CompletionEvidenceTeardownEvidenceV1::Observed(image),
+                    source,
+                }))
+            }
+        }
+    }
+}
+
+/// Exact diagnostic retained by a generic completion evidence teardown.
+#[derive(Debug)]
+pub enum M1CompletionEvidenceTeardownDiagnosticV1 {
+    /// Structural observation rejection.
+    Observation(M1CompletionObservationErrorV1),
+    /// Semantic completion-join rejection.
+    Semantic(M1CompletedReadbackJoinErrorV1),
+}
+
+/// Copied evidence retained by a generic completion failure teardown.
+#[derive(Debug)]
+pub enum M1CompletionEvidenceTeardownEvidenceV1 {
+    /// The lower completed read failed before copying bytes.
+    None,
+    /// Raw compact bytes copied but structurally rejected.
+    Rejected(ServiceCompletedReadbackV1),
+    /// Structurally decoded compact image used by a rejected semantic join.
+    Observed(M1ObservedCompletionImageV1),
+}
+
+/// Clean generic queue teardown retaining its failure diagnostic and evidence.
+#[must_use = "completion failure diagnostic and copied evidence remain retained"]
+#[derive(Debug)]
+pub struct M1CompletionEvidenceTeardownSuccessV1 {
+    diagnostic: M1CompletionEvidenceTeardownDiagnosticV1,
+    evidence: M1CompletionEvidenceTeardownEvidenceV1,
+    queue_release: ServiceQueueReleaseObservationV1,
+}
+
+impl M1CompletionEvidenceTeardownSuccessV1 {
+    #[must_use]
+    pub const fn diagnostic(&self) -> &M1CompletionEvidenceTeardownDiagnosticV1 {
+        &self.diagnostic
+    }
+
+    #[must_use]
+    pub const fn evidence(&self) -> &M1CompletionEvidenceTeardownEvidenceV1 {
+        &self.evidence
+    }
+
+    #[must_use]
+    pub const fn queue_release(&self) -> ServiceQueueReleaseObservationV1 {
+        self.queue_release
+    }
+}
+
+/// Terminal lower queue-release quarantine retaining generic completion evidence.
+#[must_use = "completion evidence and release quarantine remain retained"]
+#[derive(Debug)]
+pub struct M1CompletionEvidenceTeardownFailureV1 {
+    diagnostic: M1CompletionEvidenceTeardownDiagnosticV1,
+    evidence: M1CompletionEvidenceTeardownEvidenceV1,
+    source: M1PhysicalQueueReleaseFailureV1,
+}
+
+impl M1CompletionEvidenceTeardownFailureV1 {
+    #[must_use]
+    pub const fn diagnostic(&self) -> &M1CompletionEvidenceTeardownDiagnosticV1 {
+        &self.diagnostic
+    }
+
+    #[must_use]
+    pub const fn evidence(&self) -> &M1CompletionEvidenceTeardownEvidenceV1 {
+        &self.evidence
+    }
+
+    pub const fn source(&self) -> &M1PhysicalQueueReleaseFailureV1 {
+        &self.source
+    }
+}
+
+fn finish_completion_evidence_teardown(
+    diagnostic: M1CompletionEvidenceTeardownDiagnosticV1,
+    evidence: M1CompletionEvidenceTeardownEvidenceV1,
+    release: Result<ServiceQueueReleaseObservationV1, M1PhysicalQueueReleaseFailureV1>,
+) -> Result<M1CompletionEvidenceTeardownSuccessV1, Box<M1CompletionEvidenceTeardownFailureV1>> {
+    match release {
+        Ok(queue_release) => Ok(M1CompletionEvidenceTeardownSuccessV1 {
+            diagnostic,
+            evidence,
+            queue_release,
+        }),
+        Err(source) => Err(Box::new(M1CompletionEvidenceTeardownFailureV1 {
+            diagnostic,
+            evidence,
+            source,
+        })),
     }
 }
 
@@ -1686,6 +1885,36 @@ impl M1ObservedQualificationOutputV1 {
         self.completion.destroy_and_release()
     }
 
+    /// Destroys the queue while retaining the complete copied qualification
+    /// evidence for terminal reporting.
+    ///
+    /// # Errors
+    ///
+    /// Returns lower queue-release quarantine joined to the copied evidence.
+    pub fn destroy_queue_and_retain_evidence<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1QualificationEvidenceTeardownSuccessV1,
+        Box<M1QualificationEvidenceTeardownFailureV1>,
+    > {
+        engine.quarantine_m1_queue_rearm_failure();
+        let Self {
+            completion,
+            evidence,
+        } = self;
+        match completion.destroy_and_release() {
+            Ok(queue_release) => Ok(M1QualificationEvidenceTeardownSuccessV1 {
+                queue_release,
+                evidence,
+            }),
+            Err(source) => Err(Box::new(M1QualificationEvidenceTeardownFailureV1 {
+                source,
+                evidence,
+            })),
+        }
+    }
+
     pub(crate) fn into_teardown_parts(
         self,
     ) -> (
@@ -1693,6 +1922,45 @@ impl M1ObservedQualificationOutputV1 {
         M1QualificationCompletionEvidenceV1,
     ) {
         (self.completion, self.evidence)
+    }
+}
+
+/// Clean queue teardown retaining complete qualification evidence.
+#[must_use = "qualification evidence remains retained"]
+#[derive(Debug)]
+pub struct M1QualificationEvidenceTeardownSuccessV1 {
+    queue_release: ServiceQueueReleaseObservationV1,
+    evidence: M1QualificationCompletionEvidenceV1,
+}
+
+impl M1QualificationEvidenceTeardownSuccessV1 {
+    #[must_use]
+    pub const fn queue_release(&self) -> ServiceQueueReleaseObservationV1 {
+        self.queue_release
+    }
+
+    #[must_use = "qualification evidence remains retained"]
+    pub const fn evidence(&self) -> &M1QualificationCompletionEvidenceV1 {
+        &self.evidence
+    }
+}
+
+/// Terminal lower release quarantine retaining qualification evidence.
+#[must_use = "qualification evidence and release quarantine remain retained"]
+#[derive(Debug)]
+pub struct M1QualificationEvidenceTeardownFailureV1 {
+    source: M1PhysicalQueueReleaseFailureV1,
+    evidence: M1QualificationCompletionEvidenceV1,
+}
+
+impl M1QualificationEvidenceTeardownFailureV1 {
+    pub const fn source(&self) -> &M1PhysicalQueueReleaseFailureV1 {
+        &self.source
+    }
+
+    #[must_use = "qualification evidence remains retained"]
+    pub const fn evidence(&self) -> &M1QualificationCompletionEvidenceV1 {
+        &self.evidence
     }
 }
 
@@ -1759,6 +2027,79 @@ impl M1QualificationCompletedReadbackJoinFailureV1 {
         M1ObservedQualificationOutputV1,
     ) {
         (self.error, *self.observed)
+    }
+
+    /// Rechecks unchanged prefill evidence without reopening either compact or
+    /// logits readback.
+    ///
+    /// # Errors
+    ///
+    /// Returns the unchanged semantic failure when the copied evidence still
+    /// rejects.
+    pub fn retry_prefill_completion(self) -> Result<M1QualifiedPhysicalCompletedReadbackV1, Self> {
+        (*self.observed).check_prefill_completion()
+    }
+
+    /// Destroys the semantically rejected queue while retaining the diagnostic
+    /// and complete copied qualification evidence.
+    ///
+    /// # Errors
+    ///
+    /// Returns lower queue-release quarantine joined to the semantic error and
+    /// copied evidence.
+    pub fn destroy_queue_and_retain_evidence<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1QualificationSemanticTeardownSuccessV1,
+        Box<M1QualificationSemanticTeardownFailureV1>,
+    > {
+        let Self { error, observed } = self;
+        match observed.destroy_queue_and_retain_evidence(engine) {
+            Ok(teardown) => Ok(M1QualificationSemanticTeardownSuccessV1 { error, teardown }),
+            Err(teardown) => Err(Box::new(M1QualificationSemanticTeardownFailureV1 {
+                error,
+                teardown,
+            })),
+        }
+    }
+}
+
+/// Clean queue teardown retaining semantic rejection and qualification evidence.
+#[must_use = "semantic rejection and qualification evidence remain retained"]
+#[derive(Debug)]
+pub struct M1QualificationSemanticTeardownSuccessV1 {
+    error: M1CompletedReadbackJoinErrorV1,
+    teardown: M1QualificationEvidenceTeardownSuccessV1,
+}
+
+impl M1QualificationSemanticTeardownSuccessV1 {
+    #[must_use]
+    pub const fn error(&self) -> &M1CompletedReadbackJoinErrorV1 {
+        &self.error
+    }
+
+    pub const fn teardown(&self) -> &M1QualificationEvidenceTeardownSuccessV1 {
+        &self.teardown
+    }
+}
+
+/// Terminal lower release quarantine retaining semantic rejection and evidence.
+#[must_use = "semantic rejection and release quarantine remain retained"]
+#[derive(Debug)]
+pub struct M1QualificationSemanticTeardownFailureV1 {
+    error: M1CompletedReadbackJoinErrorV1,
+    teardown: Box<M1QualificationEvidenceTeardownFailureV1>,
+}
+
+impl M1QualificationSemanticTeardownFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> &M1CompletedReadbackJoinErrorV1 {
+        &self.error
+    }
+
+    pub const fn teardown(&self) -> &M1QualificationEvidenceTeardownFailureV1 {
+        &self.teardown
     }
 }
 
@@ -1863,6 +2204,191 @@ impl M1QualificationObservationFailureV1 {
         custody: M1QualificationObservationFailureCustodyV1,
     ) -> Self {
         Self { error, custody }
+    }
+
+    /// Retries only a qualification failure that occurred before any completed
+    /// bytes were copied. Post-copy custody is returned unchanged.
+    ///
+    /// # Errors
+    ///
+    /// Returns renewed or unchanged failure custody when observation cannot
+    /// complete.
+    pub fn retry(
+        self,
+    ) -> Result<M1ObservedQualificationOutputV1, Box<M1QualificationObservationFailureV1>> {
+        let Self { error, custody } = self;
+        match custody {
+            M1QualificationObservationFailureCustodyV1::Recycled(queue) => {
+                queue.observe_qualification_completion()
+            }
+            custody => Err(Box::new(Self { error, custody })),
+        }
+    }
+
+    /// Destroys the failed queue while retaining every copied compact/logits
+    /// byte that existed at the point of failure.
+    ///
+    /// # Errors
+    ///
+    /// Returns lower queue-release quarantine joined to all partial evidence.
+    pub fn destroy_queue_and_retain_evidence<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1QualificationObservationTeardownSuccessV1,
+        Box<M1QualificationObservationTeardownFailureV1>,
+    > {
+        engine.quarantine_m1_queue_rearm_failure();
+        let Self { error, custody } = self;
+        match custody {
+            M1QualificationObservationFailureCustodyV1::Recycled(queue) => {
+                finish_qualification_observation_teardown(
+                    error,
+                    M1QualificationObservationTeardownEvidenceV1::None,
+                    queue.destroy_and_release(),
+                )
+            }
+            M1QualificationObservationFailureCustodyV1::CompactRejected(output) => {
+                match output.destroy_and_release_retaining_readback() {
+                    Ok((queue_release, compact)) => {
+                        Ok(M1QualificationObservationTeardownSuccessV1 {
+                            error,
+                            evidence: M1QualificationObservationTeardownEvidenceV1::RejectedCompact(
+                                compact,
+                            ),
+                            queue_release,
+                        })
+                    }
+                    Err(source) => {
+                        let (source, compact) = *source;
+                        Err(Box::new(M1QualificationObservationTeardownFailureV1 {
+                            error,
+                            evidence: M1QualificationObservationTeardownEvidenceV1::RejectedCompact(
+                                compact,
+                            ),
+                            source,
+                        }))
+                    }
+                }
+            }
+            M1QualificationObservationFailureCustodyV1::Observed {
+                completion,
+                partial_logits,
+            } => match completion.destroy_and_release_retaining_image() {
+                Ok((queue_release, compact)) => Ok(M1QualificationObservationTeardownSuccessV1 {
+                    error,
+                    evidence: M1QualificationObservationTeardownEvidenceV1::Observed {
+                        compact,
+                        partial_logits,
+                    },
+                    queue_release,
+                }),
+                Err(source) => {
+                    let (source, compact) = *source;
+                    Err(Box::new(M1QualificationObservationTeardownFailureV1 {
+                        error,
+                        evidence: M1QualificationObservationTeardownEvidenceV1::Observed {
+                            compact,
+                            partial_logits,
+                        },
+                        source,
+                    }))
+                }
+            },
+        }
+    }
+}
+
+/// Copied evidence retained from a failed qualification observation.
+#[must_use = "failed qualification evidence remains retained"]
+#[derive(Debug)]
+pub enum M1QualificationObservationTeardownEvidenceV1 {
+    None,
+    RejectedCompact(ServiceCompletedReadbackV1),
+    Observed {
+        compact: M1ObservedCompletionImageV1,
+        partial_logits: Box<[ServiceCompletedReadbackV1]>,
+    },
+}
+
+impl M1QualificationObservationTeardownEvidenceV1 {
+    #[must_use]
+    pub const fn partial_logits_count(&self) -> usize {
+        match self {
+            Self::Observed { partial_logits, .. } => partial_logits.len(),
+            Self::None | Self::RejectedCompact(_) => 0,
+        }
+    }
+}
+
+/// Clean teardown after qualification observation failure.
+#[must_use = "observation diagnostic and copied evidence remain retained"]
+#[derive(Debug)]
+pub struct M1QualificationObservationTeardownSuccessV1 {
+    error: M1QualificationObservationErrorV1,
+    evidence: M1QualificationObservationTeardownEvidenceV1,
+    queue_release: ServiceQueueReleaseObservationV1,
+}
+
+impl M1QualificationObservationTeardownSuccessV1 {
+    #[must_use]
+    pub const fn error(&self) -> &M1QualificationObservationErrorV1 {
+        &self.error
+    }
+
+    pub const fn evidence(&self) -> &M1QualificationObservationTeardownEvidenceV1 {
+        &self.evidence
+    }
+
+    #[must_use]
+    pub const fn queue_release(&self) -> ServiceQueueReleaseObservationV1 {
+        self.queue_release
+    }
+}
+
+/// Terminal release quarantine after qualification observation failure.
+#[must_use = "observation evidence and release quarantine remain retained"]
+#[derive(Debug)]
+pub struct M1QualificationObservationTeardownFailureV1 {
+    error: M1QualificationObservationErrorV1,
+    evidence: M1QualificationObservationTeardownEvidenceV1,
+    source: M1PhysicalQueueReleaseFailureV1,
+}
+
+impl M1QualificationObservationTeardownFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> &M1QualificationObservationErrorV1 {
+        &self.error
+    }
+
+    pub const fn evidence(&self) -> &M1QualificationObservationTeardownEvidenceV1 {
+        &self.evidence
+    }
+
+    pub const fn source(&self) -> &M1PhysicalQueueReleaseFailureV1 {
+        &self.source
+    }
+}
+
+fn finish_qualification_observation_teardown(
+    error: M1QualificationObservationErrorV1,
+    evidence: M1QualificationObservationTeardownEvidenceV1,
+    release: Result<ServiceQueueReleaseObservationV1, M1PhysicalQueueReleaseFailureV1>,
+) -> Result<
+    M1QualificationObservationTeardownSuccessV1,
+    Box<M1QualificationObservationTeardownFailureV1>,
+> {
+    match release {
+        Ok(queue_release) => Ok(M1QualificationObservationTeardownSuccessV1 {
+            error,
+            evidence,
+            queue_release,
+        }),
+        Err(source) => Err(Box::new(M1QualificationObservationTeardownFailureV1 {
+            error,
+            evidence,
+            source,
+        })),
     }
 }
 
@@ -2049,12 +2575,16 @@ impl<'a> M1PhysicalQueueCreateFailureV1<'a> {
         }
     }
 
-    /// Recovers the exact recombined prepublication input after pure rejection.
-    #[must_use = "pure rejection recovery returns the exact opaque queue input"]
-    pub fn into_rejected_input(self) -> Option<M1PrepublicationBatchV1<'a>> {
+    /// Recovers exact unchanged construction input without consuming terminal
+    /// queue-creation custody.
+    ///
+    /// # Errors
+    ///
+    /// Returns the unchanged terminal failure when retry is denied.
+    pub fn into_rejected_input_or_self(self) -> Result<M1PrepublicationBatchV1<'a>, Self> {
         match self.state {
-            M1PhysicalQueueCreateFailureStateV1::Rejected { batch, .. } => Some(*batch),
-            M1PhysicalQueueCreateFailureStateV1::Terminal { .. } => None,
+            M1PhysicalQueueCreateFailureStateV1::Rejected { batch, .. } => Ok(*batch),
+            state @ M1PhysicalQueueCreateFailureStateV1::Terminal { .. } => Err(Self { state }),
         }
     }
 }
@@ -2069,7 +2599,35 @@ pub struct M1PhysicalQueueOperationFailureV1 {
     custody: Box<M1PhysicalQueueBatchCustodyV1>,
 }
 
+/// Terminal physical queue operation failure after its scheduler Engine has
+/// been permanently faulted.
+#[must_use = "the Engine-quarantined queue operation failure remains terminal custody"]
+#[derive(Debug)]
+pub struct M1EngineQuarantinedPhysicalQueueOperationFailureV1 {
+    failure: Box<M1PhysicalQueueOperationFailureV1>,
+}
+
+impl M1EngineQuarantinedPhysicalQueueOperationFailureV1 {
+    #[must_use = "the exact physical queue failure remains retained"]
+    pub const fn failure(&self) -> &M1PhysicalQueueOperationFailureV1 {
+        &self.failure
+    }
+}
+
 impl M1PhysicalQueueOperationFailureV1 {
+    /// Faults the paired scheduler Engine and retains this exact terminal queue
+    /// operation failure as the sole post-transition owner.
+    #[must_use = "the Engine-quarantined queue operation failure remains terminal custody"]
+    pub fn quarantine_engine<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> M1EngineQuarantinedPhysicalQueueOperationFailureV1 {
+        engine.quarantine_m1_queue_rearm_failure();
+        M1EngineQuarantinedPhysicalQueueOperationFailureV1 {
+            failure: Box::new(self),
+        }
+    }
+
     /// Returns the exact failed M1 shape.
     #[must_use]
     pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
@@ -3019,9 +3577,15 @@ fn check_observed_qualification_prefill_case<const N: usize>(
                 case,
             ));
         };
-        let choice = final_rows
-            .choice(lane)
-            .expect("validated final choice count covers every scheduler lane");
+        let Some(choice) = final_rows.choice(lane) else {
+            return Err((
+                M1CompletedOutputCheckErrorV1::QualificationFinalChoiceCount {
+                    expected: scheduled.member_count(),
+                    actual: final_rows.len(),
+                },
+                case,
+            ));
+        };
         expectations.push(CompletionWireExpectation::new(
             plan,
             CompletionWireSemanticExpectation::DirectFinalRow {
