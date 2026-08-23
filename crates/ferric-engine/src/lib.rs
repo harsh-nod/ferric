@@ -36,6 +36,7 @@ mod physical_step;
 mod qualification_logits;
 mod runner;
 mod scheduler;
+mod speculative_diagnostic_choices;
 mod speculative_graph;
 mod step_dispatch_composition;
 mod step_workspace_composition;
@@ -256,8 +257,8 @@ pub use physical_queue_lifecycle::{
     M1CompletionObservationErrorV1, M1CompletionObservationFailureCustodyV1,
     M1CompletionObservationFailureV1, M1EngineQuarantinedPhysicalQueueOperationFailureV1,
     M1ObservedCompletionCaseV1, M1ObservedCompletionOutputV1, M1ObservedQualificationOutputV1,
-    M1PhysicalCompletedQueueSessionV1, M1PhysicalCompletedReadbackV1,
-    M1PhysicalDetachedQueueCaseV1, M1PhysicalDetachedQueueSessionV1,
+    M1ObservedSpeculativeDiagnosticOutputV1, M1PhysicalCompletedQueueSessionV1,
+    M1PhysicalCompletedReadbackV1, M1PhysicalDetachedQueueCaseV1, M1PhysicalDetachedQueueSessionV1,
     M1PhysicalPublishedQueueSessionV1, M1PhysicalQueueCreateFailureClassV1,
     M1PhysicalQueueCreateFailureV1, M1PhysicalQueueOperationFailureV1, M1PhysicalQueuePhaseCaseV1,
     M1PhysicalQueuePhaseV1, M1PhysicalQueueReleaseFailureV1, M1PhysicalQueueSessionV1,
@@ -272,6 +273,14 @@ pub use physical_queue_lifecycle::{
     M1QualificationObservationTeardownSuccessV1, M1QualificationSemanticTeardownFailureV1,
     M1QualificationSemanticTeardownSuccessV1, M1QualifiedPhysicalCompletedReadbackV1,
     M1RejectedCompletionCaseV1, M1RejectedCompletionOutputV1,
+    M1SpeculativeDiagnosticCompletedReadbackJoinFailureV1,
+    M1SpeculativeDiagnosticCompletedReadbackV1, M1SpeculativeDiagnosticCompletedTeardownFailureV1,
+    M1SpeculativeDiagnosticCompletedTeardownSuccessV1, M1SpeculativeDiagnosticObservationErrorV1,
+    M1SpeculativeDiagnosticObservationFailureV1,
+    M1SpeculativeDiagnosticObservationTeardownFailureV1,
+    M1SpeculativeDiagnosticObservationTeardownSuccessV1,
+    M1SpeculativeDiagnosticSemanticTeardownFailureV1,
+    M1SpeculativeDiagnosticSemanticTeardownSuccessV1,
 };
 pub use physical_step::{
     bind_structural_physical_step, StructuralPhysicalStepBindingError,
@@ -294,6 +303,13 @@ pub use runner::{
     M1PhysicalRunnerRecipeFailureV1, M1PhysicalRunnerRecipeOutcomeV1, M1PhysicalRunnerV1,
 };
 pub use scheduler::{DispatchBatch, M1ScheduledDispatchV1, SchedulerError};
+pub use speculative_diagnostic_choices::{
+    m1_speculative_diagnostic_choices_shape_v1, BoundM1SpeculativeDiagnosticChoicesV1,
+    M1ObservedSpeculativeDiagnosticChoicesV1, M1SpeculativeDiagnosticChoicesAllocationFailureV1,
+    M1SpeculativeDiagnosticChoicesErrorV1, M1SpeculativeDiagnosticChoicesShapeV1,
+    M1_SPECULATIVE_DIAGNOSTIC_CHOICE_ALIGNMENT_V1, M1_SPECULATIVE_DIAGNOSTIC_DRAFT_CHOICES_V1,
+    M1_SPECULATIVE_DIAGNOSTIC_TARGET_CHOICES_V1,
+};
 pub use speculative_graph::{
     complete_single_member_speculative_graph, SingleMemberSpeculativeGraphError,
     SingleMemberSpeculativeGraphFailure, SingleMemberSpeculativeGraphInputs,

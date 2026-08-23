@@ -15,7 +15,7 @@ use fe2o3_service_host::{
 use ferric_qwen_kernels::logits::Qwen3LogitsCompactRecordLayoutV1;
 use ferric_spec::{Qwen3ModelRole, Qwen3PlanSelection};
 
-use crate::BoundM1QualificationLogitsV1;
+use crate::{BoundM1QualificationLogitsV1, BoundM1SpeculativeDiagnosticChoicesV1};
 
 type CompletionOutputAllocationKeyV1 =
     ServiceAllocationKeyV1<HostDownloadRoleV1, HostVisibleAllocationV1>;
@@ -196,6 +196,7 @@ pub struct BoundM1CompletionOutputV1 {
     key: CompletionOutputAllocationKeyV1,
     dispatch_range: ServiceHostDispatchRangeV1,
     qualification_logits: Option<BoundM1QualificationLogitsV1>,
+    speculative_diagnostic_choices: Option<BoundM1SpeculativeDiagnosticChoicesV1>,
 }
 
 impl BoundM1CompletionOutputV1 {
@@ -218,11 +219,27 @@ impl BoundM1CompletionOutputV1 {
         self.qualification_logits.as_ref()
     }
 
+    /// Returns diagnostic-only S1/K4 choice capture when explicitly enabled.
+    #[must_use = "speculative diagnostic choice custody remains paired with compact output"]
+    pub const fn speculative_diagnostic_choices(
+        &self,
+    ) -> Option<&BoundM1SpeculativeDiagnosticChoicesV1> {
+        self.speculative_diagnostic_choices.as_ref()
+    }
+
     pub(crate) fn attach_qualification_logits(
         mut self,
         qualification_logits: BoundM1QualificationLogitsV1,
     ) -> Self {
         self.qualification_logits = Some(qualification_logits);
+        self
+    }
+
+    pub(crate) fn attach_speculative_diagnostic_choices(
+        mut self,
+        choices: BoundM1SpeculativeDiagnosticChoicesV1,
+    ) -> Self {
+        self.speculative_diagnostic_choices = Some(choices);
         self
     }
 
@@ -313,6 +330,7 @@ pub fn allocate_m1_completion_output_v1(
         key,
         dispatch_range,
         qualification_logits: None,
+        speculative_diagnostic_choices: None,
     })
 }
 

@@ -286,6 +286,42 @@ Both carry `partial-non-evidence` status: this first slice does not establish a
 fresh server launch or server saturation, is not continuous serving, has no
 measured vLLM/SGLang comparison or independent validator, and cannot close
 `m1.r33`. Existing `describe`, `plan`, and `validate` commands are unchanged.
+The first `m1.r32` diagnostic slice is likewise Ferric-only and does not alter
+the target-only qualification command. Exact target
+`SpeculativeS1K4C8192` completion output can opt into two additional coherent
+readbacks: four draft choices and five target verification choices. After the
+same queue generation completes, the engine binds those copies to the compact
+K7 record's request, epoch, plan, and dispatch generation, applies the existing
+maximal-prefix checker, compares the first emitted token with the first target
+choice for the same pre-round context, settles exact Engine completion, and
+accounts KV release. The canonical two-file capture protocol remains
+`partial-non-evidence`; the corresponding target token is not a separately
+executed target-only queue, and no holdout, performance, hardware-correctness,
+qualification, or `m1.r32` closure claim is made.
+
+An exclusive gfx942 operator can opt into that single-round path with:
+
+```text
+cargo run --locked -p ferric-engine --bin ferric-m1-qualification-capture -- \
+  capture-r32-speculative-k4 MODEL-SOURCE PREPACKED-SNAPSHOT \
+  KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE
+```
+
+The command authenticates the existing model snapshot, closure, persisted
+kernel artifacts, generated runner declaration, and selected device before
+running one physical S1/K4 round. The compact digest is retained through the
+checked completion owner. Program catalog, kernel catalog, runner declaration,
+and artifact-manifest identities are derived from and cross-checked between the
+settled queue and physical runner; the publisher accepts only the resulting
+opaque capture. It destroys the settled queue before publishing exactly
+`capture.json` and `protocol.json` without replacement. The ordinary
+target-only qualification invocation and its diagnostic-off allocation branch
+are unchanged.
+
+The ignored hardware smoke is
+`configured_mi300x_s1_k4_diagnostic_readback_settles_one_real_round`. It uses
+the same artifact, prepacked-weight, and GPU environment variables as the
+existing target-only smoke and deliberately publishes no evidence artifact.
 
 The policy test uses the distinct `synthetic-policy-fixture-only` authority and
 the nonpublishing `check-policy-fixture` command solely to exercise the shared

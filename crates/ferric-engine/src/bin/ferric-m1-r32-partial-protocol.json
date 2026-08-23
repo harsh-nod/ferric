@@ -1,0 +1,24 @@
+{
+  "authority": "ferric-m1-r32-partial-protocol-only",
+  "bundle_files": [
+    "capture.json",
+    "protocol.json"
+  ],
+  "case": "speculative-s1-k4-c8192",
+  "format": "FERRIC-M1-R32-PARTIAL-PROTOCOL-V1",
+  "lifecycle": [
+    "queue-completed",
+    "compact-readback-observed",
+    "draft-choices-readback-observed",
+    "target-choices-readback-observed",
+    "maximal-prefix-checked",
+    "corresponding-target-token-checked",
+    "exact-completion-settled",
+    "kv-pages-accounted"
+  ],
+  "milestone": "M1",
+  "nonclaim": "Diagnostic S1/K4 physical choice capture only. This protocol does not establish an independent target-only dispatch, holdout eligibility, sampling refinement, performance, external validation, hardware correctness, qualification, or close m1.r32.",
+  "obligation_id": "m1.r32",
+  "status": "partial-non-evidence",
+  "target": "gfx942:xnack-"
+}

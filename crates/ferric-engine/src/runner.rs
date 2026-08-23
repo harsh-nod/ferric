@@ -1440,4 +1440,236 @@ mod tests {
         // values, logits, numerical correctness, performance, or refinement.
         drop(cache);
     }
+
+    #[test]
+    #[ignore = "requires admitted K1-K7 artifacts, prepacked Qwen bytes, and an exclusive MI300X"]
+    fn configured_mi300x_s1_k4_diagnostic_readback_settles_one_real_round() {
+        use std::fs;
+
+        use fe2o3_kfd::{DeviceSelector, OpenedKfd};
+        use ferric_build::{
+            generate_qwen3_gfx942_runner_declaration, publish_qwen3_gfx942_runner_declaration,
+            qwen3_model_memory_plan_test_fixture, qwen3_runner_closure_test_fixture,
+        };
+        use ferric_spec::{
+            validate_m1_step_inputs, M1StepInputCandidate, M1StepInputValidationOutcome,
+            ValidatedM1StepInputs,
+        };
+
+        use super::{bind_m1_physical_runner_v1, initialize_m1_physical_runner_memory_v1};
+        use crate::{
+            bind_m1_kv_workspace_table_v1, bind_m1_speculative_draft_kv_round_workspace_table_v1,
+            complete_m1_physical_step_v1, device_cache::m1_speculative_draft_round_shape_v1,
+            release_m1_completed_step_kv_pages_v1, reopen_persisted_m1_kernel_artifacts_v1,
+            ActiveDeviceKvCache, Engine, M1CompletedStepOutcomeV1, M1DeviceKvCompletionMemberV1,
+            M1DeviceKvCompletionRosterV1, M1FullStepKvWorkspaceTablesV1,
+            M1PhysicalFixedBatchShapeV1,
+        };
+
+        fn required_path(name: &str) -> std::path::PathBuf {
+            std::env::var_os(name).map_or_else(|| panic!("set {name}"), std::path::PathBuf::from)
+        }
+
+        fn input(
+            plan: ferric_spec::StepPlan,
+            tokens: Vec<u32>,
+            positions: Vec<u32>,
+            active_length: u32,
+            context_length: u32,
+        ) -> ValidatedM1StepInputs {
+            let candidate = M1StepInputCandidate::new(
+                plan.selection(),
+                vec![Some(plan)],
+                tokens,
+                positions,
+                vec![active_length],
+                vec![context_length],
+            );
+            match validate_m1_step_inputs(candidate) {
+                M1StepInputValidationOutcome::Validated(inputs) => inputs,
+                M1StepInputValidationOutcome::Rejected(failure) => {
+                    panic!("S1/K4 input rejected: {:?}", failure.error())
+                }
+            }
+        }
+
+        // Required environment contract is identical to the target-only smoke:
+        // FERRIC_M1_KERNEL_ARTIFACT_DIRECTORY
+        // FERRIC_M1_TARGET_PREPACKED_WEIGHTS
+        // FERRIC_M1_DRAFT_PREPACKED_WEIGHTS
+        // FERRIC_M1_GPU_UNIQUE_ID
+        let artifact_directory = required_path("FERRIC_M1_KERNEL_ARTIFACT_DIRECTORY");
+        let target_weights = required_path("FERRIC_M1_TARGET_PREPACKED_WEIGHTS");
+        let draft_weights = required_path("FERRIC_M1_DRAFT_PREPACKED_WEIGHTS");
+        let unique_id = std::env::var("FERRIC_M1_GPU_UNIQUE_ID")
+            .expect("set FERRIC_M1_GPU_UNIQUE_ID to the selected MI300X unique ID")
+            .parse::<u64>()
+            .expect("FERRIC_M1_GPU_UNIQUE_ID must be a decimal u64");
+
+        let artifacts = reopen_persisted_m1_kernel_artifacts_v1(artifact_directory)
+            .expect("admit persisted K1-K7 artifacts");
+        let declaration =
+            generate_qwen3_gfx942_runner_declaration(qwen3_runner_closure_test_fixture())
+                .expect("generate fixture structural publication");
+        let publication = publish_qwen3_gfx942_runner_declaration(declaration)
+            .expect("publish fixture structural declaration");
+        let runner = bind_m1_physical_runner_v1(artifacts, publication)
+            .expect("bind persisted kernels to canonical operations");
+        let checked = OpenedKfd::open_default()
+            .expect("open KFD")
+            .admit_uapi()
+            .expect("admit pinned KFD UAPI")
+            .bind_gfx942_xnack_minus(DeviceSelector::UniqueId(unique_id))
+            .expect("bind checked gfx942:xnack- MI300X");
+        let mut memory = initialize_m1_physical_runner_memory_v1(
+            checked,
+            qwen3_model_memory_plan_test_fixture(),
+            fs::read(target_weights)
+                .expect("read target prepacked bytes")
+                .into_boxed_slice(),
+            fs::read(draft_weights)
+                .expect("read draft prepacked bytes")
+                .into_boxed_slice(),
+        )
+        .expect("initialize target/draft memory and partition KV arenas");
+
+        let target = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Speculative,
+            bucket: Qwen3PlanBucket::SpeculativeS1K4C8192,
+        };
+        let (draft_speculative, draft_decode, draft_tokens) =
+            m1_speculative_draft_round_shape_v1(target).expect("exact K4 paired shapes");
+        assert_eq!(draft_tokens, 4);
+        let mut engine = Engine::<1>::new(512, 256, 8_192).expect("construct one-lane engine");
+        let request = engine.admit().expect("admit one request");
+        engine
+            .append_tentative(request, 5)
+            .expect("append one K4 target round");
+        let scheduled = engine
+            .dispatch_m1_ready()
+            .expect("schedule one M1 batch")
+            .expect("one request is ready");
+        let target_plan = runner
+            .logical_runner()
+            .bind_step_plan(request, scheduled.epoch(), target)
+            .expect("bind target speculative plan");
+        let draft_plan = runner
+            .logical_runner()
+            .bind_step_plan(request, scheduled.epoch(), draft_decode)
+            .expect("bind reusable draft decode plan");
+        let draft_inputs = input(draft_plan, vec![1], vec![0], 1, 0);
+        let target_inputs = input(target_plan, vec![1, 0, 0, 0, 0], (0..5).collect(), 5, 0);
+
+        let mut cache =
+            ActiveDeviceKvCache::new(memory.device(), request, target, draft_speculative)
+                .expect("construct paired speculative cache");
+        let draft_lease = memory
+            .lease_page(request, Qwen3ModelRole::Draft06B, 0)
+            .expect("lease first draft page");
+        let draft_pending = cache
+            .reserve_speculative_draft_round_write(
+                request,
+                target,
+                draft_decode,
+                0,
+                scheduled.epoch(),
+                vec![draft_lease],
+            )
+            .expect("reserve aggregate four-token draft write");
+        let target_lease = memory
+            .lease_page(request, Qwen3ModelRole::Target8B, 0)
+            .expect("lease first target page");
+        let target_pending = cache
+            .reserve_step_write(
+                request,
+                Qwen3ModelRole::Target8B,
+                0,
+                5,
+                scheduled.epoch(),
+                vec![target_lease],
+            )
+            .expect("reserve five-token target verification write");
+        let draft_table = bind_m1_speculative_draft_kv_round_workspace_table_v1(
+            target,
+            draft_inputs,
+            vec![draft_pending],
+        )
+        .expect("bind draft round KV table");
+        let target_table = bind_m1_kv_workspace_table_v1(target_inputs, vec![target_pending])
+            .expect("bind target verification KV table");
+        let tables = M1FullStepKvWorkspaceTablesV1::SpeculativeRound {
+            draft_decode: draft_table,
+            target_speculative: target_table,
+        };
+        let plans = M1FullStepWorkspacePlans::speculative_round(
+            workspace_plan(draft_decode, 92),
+            workspace_plan(target, 93),
+        );
+        let prepared = runner
+            .prepare_scheduled_workspaces(scheduled, plans, tables)
+            .expect("prepare scheduler-bound S1/K4 workspace images");
+        let completion = memory
+            .allocate_completion_output(target)
+            .expect("allocate compact completion output");
+        let completion = memory
+            .enable_speculative_k4_diagnostic_choices_capture(completion)
+            .expect("attach exact draft and target choice outputs");
+        let allocated = runner
+            .allocate_scheduled_workspaces(memory, prepared)
+            .expect("allocate initialized speculative workspaces");
+        let recipe = match runner.derive_step_recipe(
+            M1StepDispatchIntent::SpeculativeRound(target),
+            M1FullStepWorkspacePlans::speculative_round(
+                workspace_plan(draft_decode, 92),
+                workspace_plan(target, 93),
+            ),
+        ) {
+            M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
+            M1PhysicalRunnerRecipeOutcomeV1::Rejected(failure) => {
+                panic!("derive exact S1/K4 recipe: {failure:?}")
+            }
+        };
+        let published = runner
+            .publish_first_step(&mut engine, 1 << 20, allocated, recipe, completion)
+            .expect("create S1/K4 queue and publish exactly once");
+        let completed = published.wait(20_000_000).expect("wait for live dispatch");
+        let recycled = completed.recycle().expect("recycle live dispatch queue");
+        assert_eq!(recycled.shape(), M1PhysicalFixedBatchShapeV1::SpeculativeK4);
+        let observed = recycled
+            .observe_completion()
+            .expect("copy and structurally observe compact K7 output");
+        let diagnostic = observed
+            .observe_speculative_k4_diagnostic_choices()
+            .expect("copy exact four draft and five target choices");
+        let joined = diagnostic
+            .check_completion()
+            .expect("check maximal prefix under exact queue custody");
+        assert!(joined.target_token_matches());
+        let (completed, choices) = joined.into_parts();
+        let roster =
+            M1DeviceKvCompletionRosterV1::new(vec![M1DeviceKvCompletionMemberV1::continuing(
+                cache,
+            )]);
+        let completed = match complete_m1_physical_step_v1(&mut engine, completed, roster) {
+            M1CompletedStepOutcomeV1::Completed(completed) => completed,
+            outcome => panic!("exact speculative Engine completion rejected: {outcome:?}"),
+        };
+        let released = release_m1_completed_step_kv_pages_v1(completed)
+            .expect("settle and account exact speculative KV pages");
+        assert_eq!(
+            released.checked().dispatch_generation(),
+            choices.dispatch_generation()
+        );
+        assert_eq!(released.completed_members(), 1);
+        assert_eq!(released.release_counts().len(), 1);
+        let _closed = released
+            .destroy_queue_and_retain_step(&mut engine)
+            .expect("destroy queue while retaining settled observations");
+
+        // This ignored smoke produces no benchmark artifact. Its fixture
+        // declaration and model plan are structural test authorities only; it
+        // does not establish an independent target-only dispatch, holdout,
+        // numerical correctness, performance, qualification, or m1.r32 closure.
+    }
 }

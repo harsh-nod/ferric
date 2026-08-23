@@ -23,7 +23,7 @@ use crate::{
     M1FullStepWorkspaceSubleaseOwners, M1PartitionedModelMemoryKvPoolV1,
     M1PhysicalBufferRecipeErrorV1, M1PhysicalBufferRecipeRowV1, M1PhysicalBufferSentinelV1,
     M1PhysicalBufferSourceV1, M1PhysicalProgramV1, M1QualificationLogitsErrorV1,
-    M1StepDispatchIntent, ModelMemoryDispatchRangeErrorV1,
+    M1SpeculativeDiagnosticChoicesErrorV1, M1StepDispatchIntent, ModelMemoryDispatchRangeErrorV1,
 };
 
 /// Owner-checked physical-buffer binding format.
@@ -327,6 +327,24 @@ pub enum M1PhysicalBufferBindingErrorV1 {
     QualificationLogitsSources { expected: usize, actual: usize },
     /// The qualification logits owner rejected shape or allocation revalidation.
     QualificationLogitsRange { error: M1QualificationLogitsErrorV1 },
+    /// Diagnostic choices were attached to a non-S1/K4 speculative recipe.
+    SpeculativeDiagnosticChoicesIntent,
+    /// The diagnostic choice owner rejected shape or allocation revalidation.
+    SpeculativeDiagnosticChoicesRange {
+        error: M1SpeculativeDiagnosticChoicesErrorV1,
+    },
+    /// An exact diagnostic draft-choice row could not be narrowed.
+    SpeculativeDiagnosticDraftSubrange {
+        dispatch_index: u32,
+        argument: usize,
+        error: ServiceAllocationErrorV1,
+    },
+    /// The exact K4 draft/target choice source roster drifted.
+    SpeculativeDiagnosticChoiceSources {
+        draft_rows: usize,
+        draft_whole: usize,
+        target_rows: usize,
+    },
 }
 
 impl fmt::Display for M1PhysicalBufferBindingErrorV1 {
@@ -447,6 +465,22 @@ pub fn bind_m1_physical_buffer_ranges_v1(
                 ));
             }
         };
+    let speculative_diagnostic_choices_ranges = match preflight_speculative_diagnostic_choices(
+        &recipe,
+        &completion_output,
+        &partitioned_memory,
+    ) {
+        Ok(ranges) => ranges,
+        Err(error) => {
+            return Err(failure(
+                error,
+                recipe,
+                workspace_owners,
+                partitioned_memory,
+                completion_output,
+            ));
+        }
+    };
 
     let (kernargs, composition, source_rows) = recipe.into_parts();
     let workspaces = match partitioned_memory
@@ -467,15 +501,15 @@ pub fn bind_m1_physical_buffer_ranges_v1(
         }
     };
 
-    match resolve_rows(
-        &kernargs,
-        &source_rows,
-        &workspaces,
-        &partitioned_memory,
-        completion_output.shape(),
+    let resolution = SourceResolutionContextV1 {
+        partitioned_memory: &partitioned_memory,
+        workspaces: &workspaces,
+        completion_shape: completion_output.shape(),
         completion_range,
         qualification_logits_range,
-    ) {
+        speculative_diagnostic_choices_ranges,
+    };
+    match resolve_rows(&kernargs, &source_rows, &resolution) {
         Ok(rows) => Ok(BoundM1PhysicalBufferBindingsV1 {
             version: M1_PHYSICAL_BUFFER_BINDING_VERSION_V1,
             kernargs,
@@ -616,6 +650,132 @@ fn preflight_qualification_logits(
         .map_err(|error| M1PhysicalBufferBindingErrorV1::QualificationLogitsRange { error })
 }
 
+#[derive(Clone, Copy)]
+struct SpeculativeDiagnosticChoiceRangesV1 {
+    draft: ServiceHostDispatchRangeV1,
+    target: ServiceHostDispatchRangeV1,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum SpeculativeDiagnosticChoiceSourceRouteV1 {
+    OrdinaryDevice,
+    DraftWholeHost,
+    TargetWholeHost,
+    DraftScalarHost {
+        relative_offset: u64,
+        extent: u64,
+        alignment: u64,
+    },
+}
+
+fn speculative_diagnostic_draft_choice_geometry(iteration: u8) -> Option<(u64, u64, u64)> {
+    (iteration < 4).then(|| (u64::from(iteration) * 4, 4, 4))
+}
+
+fn speculative_diagnostic_choice_source_route(
+    source: M1PhysicalBufferSourceV1,
+    diagnostics_enabled: bool,
+) -> Result<SpeculativeDiagnosticChoiceSourceRouteV1, ()> {
+    if !diagnostics_enabled {
+        return Ok(SpeculativeDiagnosticChoiceSourceRouteV1::OrdinaryDevice);
+    }
+    match source {
+        M1PhysicalBufferSourceV1::Workspace {
+            workspace: crate::M1FullStepWorkspaceRole::Target,
+            range: ferric_build::M1StepWorkspaceRangeRole::DraftChoices,
+        } => Ok(SpeculativeDiagnosticChoiceSourceRouteV1::DraftWholeHost),
+        M1PhysicalBufferSourceV1::Workspace {
+            workspace: crate::M1FullStepWorkspaceRole::Target,
+            range: ferric_build::M1StepWorkspaceRangeRole::Choices,
+        } => Ok(SpeculativeDiagnosticChoiceSourceRouteV1::TargetWholeHost),
+        M1PhysicalBufferSourceV1::SpeculativeDraftChoices(expected) => {
+            let (relative_offset, extent, alignment) =
+                speculative_diagnostic_draft_choice_geometry(expected.iteration()).ok_or(())?;
+            Ok(SpeculativeDiagnosticChoiceSourceRouteV1::DraftScalarHost {
+                relative_offset,
+                extent,
+                alignment,
+            })
+        }
+        _ => Ok(SpeculativeDiagnosticChoiceSourceRouteV1::OrdinaryDevice),
+    }
+}
+
+fn preflight_speculative_diagnostic_choices(
+    recipe: &AddresslessM1PhysicalBufferRecipeV1,
+    completion_output: &BoundM1CompletionOutputV1,
+    partitioned_memory: &M1PartitionedModelMemoryKvPoolV1,
+) -> Result<Option<SpeculativeDiagnosticChoiceRangesV1>, M1PhysicalBufferBindingErrorV1> {
+    let Some(choices) = completion_output.speculative_diagnostic_choices() else {
+        return Ok(None);
+    };
+    let M1StepDispatchIntent::SpeculativeRound(selection) =
+        recipe.workspace_composition().dispatch_plan().intent()
+    else {
+        return Err(M1PhysicalBufferBindingErrorV1::SpeculativeDiagnosticChoicesIntent);
+    };
+    if selection != choices.shape().selection() {
+        return Err(M1PhysicalBufferBindingErrorV1::SpeculativeDiagnosticChoicesIntent);
+    }
+    let (draft_rows, draft_whole, target_rows, exact) =
+        speculative_diagnostic_choice_source_isolation(recipe);
+    if !exact || (draft_rows, draft_whole, target_rows) != (7, 2, 2) {
+        return Err(
+            M1PhysicalBufferBindingErrorV1::SpeculativeDiagnosticChoiceSources {
+                draft_rows,
+                draft_whole,
+                target_rows,
+            },
+        );
+    }
+    partitioned_memory
+        .speculative_diagnostic_choices_dispatch_ranges(choices, selection)
+        .map(|(draft, target)| Some(SpeculativeDiagnosticChoiceRangesV1 { draft, target }))
+        .map_err(
+            |error| M1PhysicalBufferBindingErrorV1::SpeculativeDiagnosticChoicesRange { error },
+        )
+}
+
+fn speculative_diagnostic_choice_source_isolation(
+    recipe: &AddresslessM1PhysicalBufferRecipeV1,
+) -> (usize, usize, usize, bool) {
+    let mut draft_rows = 0;
+    let mut draft_whole = 0;
+    let mut target_rows = 0;
+    let exact = recipe.rows().iter().all(|row| {
+        row.buffers().iter().all(|buffer| match buffer.source() {
+            M1PhysicalBufferSourceV1::SpeculativeDraftChoices(choice) => {
+                draft_rows += 1;
+                choice.iteration() < 4
+                    && choice.producer_segment() == choice.iteration()
+                    && choice.sequence_count() == 1
+            }
+            M1PhysicalBufferSourceV1::Workspace {
+                workspace: crate::M1FullStepWorkspaceRole::Target,
+                range: ferric_build::M1StepWorkspaceRangeRole::DraftChoices,
+            } => {
+                draft_whole += 1;
+                true
+            }
+            M1PhysicalBufferSourceV1::Workspace {
+                workspace: crate::M1FullStepWorkspaceRole::Target,
+                range: ferric_build::M1StepWorkspaceRangeRole::Choices,
+            } => {
+                target_rows += 1;
+                row.segment_index() == 4
+                    && row.selection()
+                        == recipe
+                            .workspace_composition()
+                            .dispatch_plan()
+                            .intent()
+                            .target_selection()
+            }
+            _ => true,
+        })
+    });
+    (draft_rows, draft_whole, target_rows, exact)
+}
+
 fn qualification_logits_source_isolation(
     recipe: &AddresslessM1PhysicalBufferRecipeV1,
     selection: ferric_spec::Qwen3PlanSelection,
@@ -696,6 +856,7 @@ struct SourceResolutionContextV1<'a> {
     completion_shape: M1CompletionOutputShapeV1,
     completion_range: ServiceHostDispatchRangeV1,
     qualification_logits_range: Option<ServiceHostDispatchRangeV1>,
+    speculative_diagnostic_choices_ranges: Option<SpeculativeDiagnosticChoiceRangesV1>,
 }
 
 impl ResolvedM1PhysicalBufferRangeV1 {
@@ -714,27 +875,123 @@ impl ResolvedM1PhysicalBufferRangeV1 {
     }
 }
 
+trait M1PhysicalBufferResolutionBackendV1 {
+    type ResolvedRange;
+    type Buffer;
+
+    fn speculative_diagnostics_enabled(&self) -> bool;
+    fn qualification_logits_enabled(&self) -> bool;
+
+    fn resolve_diagnostic_source(
+        &mut self,
+        row: &M1PhysicalBufferRecipeRowV1,
+        argument: usize,
+        source: M1PhysicalBufferSourceV1,
+        route: SpeculativeDiagnosticChoiceSourceRouteV1,
+    ) -> Result<Self::ResolvedRange, M1PhysicalBufferBindingErrorV1>;
+
+    fn resolve_device_source(
+        &mut self,
+        row: &M1PhysicalBufferRecipeRowV1,
+        argument: usize,
+        source: M1PhysicalBufferSourceV1,
+    ) -> Result<Self::ResolvedRange, M1PhysicalBufferBindingErrorV1>;
+
+    fn resolve_normal_host_source(
+        &mut self,
+        row: &M1PhysicalBufferRecipeRowV1,
+        argument: usize,
+        source: M1PhysicalBufferSourceV1,
+    ) -> Result<Self::ResolvedRange, M1PhysicalBufferBindingErrorV1>;
+
+    fn bind_buffer(&mut self, argument: usize, range: Self::ResolvedRange) -> Self::Buffer;
+}
+
+struct M1ResolvedPhysicalBufferRowV1<T> {
+    dispatch_index: u32,
+    profile_id: Identity,
+    program: M1PhysicalProgramV1,
+    buffers: Box<[T]>,
+}
+
+struct M1ProductionPhysicalBufferResolutionBackendV1<'a> {
+    context: &'a SourceResolutionContextV1<'a>,
+}
+
+impl M1PhysicalBufferResolutionBackendV1 for M1ProductionPhysicalBufferResolutionBackendV1<'_> {
+    type ResolvedRange = ResolvedM1PhysicalBufferRangeV1;
+    type Buffer = ServiceFixedDispatchBufferV1;
+
+    fn speculative_diagnostics_enabled(&self) -> bool {
+        self.context.speculative_diagnostic_choices_ranges.is_some()
+    }
+
+    fn qualification_logits_enabled(&self) -> bool {
+        self.context.qualification_logits_range.is_some()
+    }
+
+    fn resolve_diagnostic_source(
+        &mut self,
+        row: &M1PhysicalBufferRecipeRowV1,
+        argument: usize,
+        source: M1PhysicalBufferSourceV1,
+        route: SpeculativeDiagnosticChoiceSourceRouteV1,
+    ) -> Result<Self::ResolvedRange, M1PhysicalBufferBindingErrorV1> {
+        resolve_production_diagnostic_source(self.context, row, argument, source, route)
+    }
+
+    fn resolve_device_source(
+        &mut self,
+        row: &M1PhysicalBufferRecipeRowV1,
+        argument: usize,
+        source: M1PhysicalBufferSourceV1,
+    ) -> Result<Self::ResolvedRange, M1PhysicalBufferBindingErrorV1> {
+        resolve_production_ordinary_source(self.context, row, argument, source)
+    }
+
+    fn resolve_normal_host_source(
+        &mut self,
+        row: &M1PhysicalBufferRecipeRowV1,
+        argument: usize,
+        source: M1PhysicalBufferSourceV1,
+    ) -> Result<Self::ResolvedRange, M1PhysicalBufferBindingErrorV1> {
+        resolve_production_ordinary_source(self.context, row, argument, source)
+    }
+
+    fn bind_buffer(&mut self, argument: usize, range: Self::ResolvedRange) -> Self::Buffer {
+        range.into_fixed_buffer(argument)
+    }
+}
+
 fn resolve_rows(
     kernargs: &AddresslessM1PhysicalKernargRecipeV1,
     source_rows: &[M1PhysicalBufferRecipeRowV1],
-    workspaces: &BoundM1FullStepWorkspaceSubleases,
-    partitioned_memory: &M1PartitionedModelMemoryKvPoolV1,
-    completion_shape: M1CompletionOutputShapeV1,
-    completion_range: ServiceHostDispatchRangeV1,
-    qualification_logits_range: Option<ServiceHostDispatchRangeV1>,
+    context: &SourceResolutionContextV1<'_>,
 ) -> Result<Box<[M1BoundPhysicalBufferRowV1]>, M1PhysicalBufferBindingErrorV1> {
+    let mut backend = M1ProductionPhysicalBufferResolutionBackendV1 { context };
+    resolve_rows_with_backend(kernargs, source_rows, &mut backend).map(|rows| {
+        rows.into_vec()
+            .into_iter()
+            .map(|row| M1BoundPhysicalBufferRowV1 {
+                dispatch_index: row.dispatch_index,
+                profile_id: row.profile_id,
+                program: row.program,
+                buffers: row.buffers,
+            })
+            .collect()
+    })
+}
+
+fn resolve_rows_with_backend<B: M1PhysicalBufferResolutionBackendV1>(
+    kernargs: &AddresslessM1PhysicalKernargRecipeV1,
+    source_rows: &[M1PhysicalBufferRecipeRowV1],
+    backend: &mut B,
+) -> Result<Box<[M1ResolvedPhysicalBufferRowV1<B::Buffer>]>, M1PhysicalBufferBindingErrorV1> {
     let physical_rows = kernargs.source_recipe().rows();
     if source_rows.len() != physical_rows.len() {
         return Err(M1PhysicalBufferBindingErrorV1::RowMetadata { dispatch_index: 0 });
     }
     validate_row_metadata(source_rows, physical_rows)?;
-    let context = SourceResolutionContextV1 {
-        partitioned_memory,
-        workspaces,
-        completion_shape,
-        completion_range,
-        qualification_logits_range,
-    };
     let mut rows = Vec::with_capacity(source_rows.len());
     for (position, source_row) in source_rows.iter().enumerate() {
         let dispatch_index =
@@ -748,13 +1005,13 @@ fn resolve_rows(
                 buffer_position,
                 source_buffer.explicit_argument_index(),
             )?;
-            let range = resolve_source(
-                context,
+            let range = resolve_source_with_backend(
+                backend,
                 source_row,
                 source_buffer.explicit_argument_index(),
                 source_buffer.source(),
             )?;
-            buffers.push(range.into_fixed_buffer(expected_ordinal));
+            buffers.push(backend.bind_buffer(expected_ordinal, range));
         }
         if buffers.len() != source_row.buffers().len() {
             return Err(M1PhysicalBufferBindingErrorV1::BufferCount {
@@ -763,7 +1020,7 @@ fn resolve_rows(
                 actual: buffers.len(),
             });
         }
-        rows.push(M1BoundPhysicalBufferRowV1 {
+        rows.push(M1ResolvedPhysicalBufferRowV1 {
             dispatch_index,
             profile_id: source_row.profile_id(),
             program: source_row.program(),
@@ -868,8 +1125,97 @@ fn validate_argument_ordinal(
     Ok(expected)
 }
 
-fn resolve_source(
-    context: SourceResolutionContextV1<'_>,
+fn resolve_source_with_backend<B: M1PhysicalBufferResolutionBackendV1>(
+    backend: &mut B,
+    row: &M1PhysicalBufferRecipeRowV1,
+    argument: usize,
+    source: M1PhysicalBufferSourceV1,
+) -> Result<B::ResolvedRange, M1PhysicalBufferBindingErrorV1> {
+    let route = speculative_diagnostic_choice_source_route(
+        source,
+        backend.speculative_diagnostics_enabled(),
+    )
+    .map_err(|()| M1PhysicalBufferBindingErrorV1::SpeculativeDiagnosticChoicesIntent)?;
+    match route {
+        SpeculativeDiagnosticChoiceSourceRouteV1::OrdinaryDevice => {
+            let normal_host = matches!(source, M1PhysicalBufferSourceV1::CompletionOutput { .. })
+                || matches!(
+                    source,
+                    M1PhysicalBufferSourceV1::Workspace {
+                        workspace: crate::M1FullStepWorkspaceRole::Target,
+                        range: ferric_build::M1StepWorkspaceRangeRole::Logits,
+                    }
+                ) && backend.qualification_logits_enabled();
+            if normal_host {
+                backend.resolve_normal_host_source(row, argument, source)
+            } else {
+                backend.resolve_device_source(row, argument, source)
+            }
+        }
+        route => backend.resolve_diagnostic_source(row, argument, source, route),
+    }
+}
+
+fn resolve_production_diagnostic_source(
+    context: &SourceResolutionContextV1<'_>,
+    row: &M1PhysicalBufferRecipeRowV1,
+    argument: usize,
+    source: M1PhysicalBufferSourceV1,
+    diagnostic_route: SpeculativeDiagnosticChoiceSourceRouteV1,
+) -> Result<ResolvedM1PhysicalBufferRangeV1, M1PhysicalBufferBindingErrorV1> {
+    let dispatch_index = row.dispatch_index();
+    let diagnostic_ranges = context.speculative_diagnostic_choices_ranges;
+    match diagnostic_route {
+        SpeculativeDiagnosticChoiceSourceRouteV1::OrdinaryDevice => {
+            unreachable!("ordinary sources use the production ordinary resolver")
+        }
+        SpeculativeDiagnosticChoiceSourceRouteV1::DraftWholeHost => {
+            Ok(ResolvedM1PhysicalBufferRangeV1::HostVisible(
+                diagnostic_ranges
+                    .expect("diagnostic route retains exact ranges")
+                    .draft,
+            ))
+        }
+        SpeculativeDiagnosticChoiceSourceRouteV1::TargetWholeHost => {
+            Ok(ResolvedM1PhysicalBufferRangeV1::HostVisible(
+                diagnostic_ranges
+                    .expect("diagnostic route retains exact ranges")
+                    .target,
+            ))
+        }
+        SpeculativeDiagnosticChoiceSourceRouteV1::DraftScalarHost {
+            relative_offset,
+            extent,
+            alignment,
+        } => {
+            let M1PhysicalBufferSourceV1::SpeculativeDraftChoices(expected) = source else {
+                unreachable!("draft-scalar route requires a draft-choice source")
+            };
+            if context
+                .workspaces
+                .speculative_draft_choice_subrange(expected.producer_segment())
+                != Some(expected)
+            {
+                return Err(M1PhysicalBufferBindingErrorV1::RowMetadata { dispatch_index });
+            }
+            diagnostic_ranges
+                .expect("diagnostic route retains exact ranges")
+                .draft
+                .checked_subrange(relative_offset, extent, alignment)
+                .map(ResolvedM1PhysicalBufferRangeV1::HostVisible)
+                .map_err(|error| {
+                    M1PhysicalBufferBindingErrorV1::SpeculativeDiagnosticDraftSubrange {
+                        dispatch_index,
+                        argument,
+                        error,
+                    }
+                })
+        }
+    }
+}
+
+fn resolve_production_ordinary_source(
+    context: &SourceResolutionContextV1<'_>,
     row: &M1PhysicalBufferRecipeRowV1,
     argument: usize,
     source: M1PhysicalBufferSourceV1,
@@ -1079,8 +1425,12 @@ mod tests {
 
     use super::{
         first_materialization_requirement, qualification_logits_source_isolation,
-        sentinel_geometry, validate_argument_ordinal, validate_completion_output_shape,
-        validate_row_metadata_entry, BindingRowMetadata, M1PhysicalBufferBindingErrorV1,
+        resolve_rows_with_backend, sentinel_geometry,
+        speculative_diagnostic_choice_source_isolation,
+        speculative_diagnostic_draft_choice_geometry, validate_argument_ordinal,
+        validate_completion_output_shape, validate_row_metadata_entry, BindingRowMetadata,
+        M1PhysicalBufferBindingErrorV1, M1PhysicalBufferResolutionBackendV1,
+        SpeculativeDiagnosticChoiceSourceRouteV1,
     };
     use crate::physical_buffer_recipe::tests::{complete_intents, exact_inputs};
     use crate::{
@@ -1090,6 +1440,93 @@ mod tests {
         M1PhysicalBufferSourceV1, M1PhysicalProgramV1, M1StepDispatchIntent, M1StepDispatchStage,
         M1StepWorkspaceDispatchRangeError,
     };
+
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    enum TestResolutionRouteV1 {
+        Device,
+        HostVisible,
+    }
+
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    struct TestResolvedRangeV1 {
+        source: M1PhysicalBufferSourceV1,
+        route: TestResolutionRouteV1,
+    }
+
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    struct TestBoundRangeV1 {
+        argument: usize,
+        source: M1PhysicalBufferSourceV1,
+        route: TestResolutionRouteV1,
+    }
+
+    #[derive(Debug, Default)]
+    struct DiagnosticOffResolutionBackendV1;
+
+    impl M1PhysicalBufferResolutionBackendV1 for DiagnosticOffResolutionBackendV1 {
+        type ResolvedRange = TestResolvedRangeV1;
+        type Buffer = TestBoundRangeV1;
+
+        fn speculative_diagnostics_enabled(&self) -> bool {
+            false
+        }
+
+        fn qualification_logits_enabled(&self) -> bool {
+            false
+        }
+
+        fn resolve_diagnostic_source(
+            &mut self,
+            _row: &M1PhysicalBufferRecipeRowV1,
+            _argument: usize,
+            _source: M1PhysicalBufferSourceV1,
+            _route: SpeculativeDiagnosticChoiceSourceRouteV1,
+        ) -> Result<Self::ResolvedRange, M1PhysicalBufferBindingErrorV1> {
+            panic!("diagnostic-off binding must not enter a host diagnostic route")
+        }
+
+        fn resolve_device_source(
+            &mut self,
+            row: &M1PhysicalBufferRecipeRowV1,
+            argument: usize,
+            source: M1PhysicalBufferSourceV1,
+        ) -> Result<Self::ResolvedRange, M1PhysicalBufferBindingErrorV1> {
+            if matches!(
+                source,
+                M1PhysicalBufferSourceV1::SpeculativeTargetTokenIds { .. }
+            ) {
+                return Err(M1PhysicalBufferBindingErrorV1::MaterializationRequired {
+                    dispatch_index: row.dispatch_index(),
+                    argument,
+                    source,
+                });
+            }
+            Ok(TestResolvedRangeV1 {
+                source,
+                route: TestResolutionRouteV1::Device,
+            })
+        }
+
+        fn resolve_normal_host_source(
+            &mut self,
+            _row: &M1PhysicalBufferRecipeRowV1,
+            _argument: usize,
+            source: M1PhysicalBufferSourceV1,
+        ) -> Result<Self::ResolvedRange, M1PhysicalBufferBindingErrorV1> {
+            Ok(TestResolvedRangeV1 {
+                source,
+                route: TestResolutionRouteV1::HostVisible,
+            })
+        }
+
+        fn bind_buffer(&mut self, argument: usize, range: Self::ResolvedRange) -> Self::Buffer {
+            TestBoundRangeV1 {
+                argument,
+                source: range.source,
+                route: range.route,
+            }
+        }
+    }
 
     fn exact_recipe(
         intent: M1StepDispatchIntent,
@@ -1227,6 +1664,103 @@ mod tests {
             })
             .count();
         assert_eq!(untouched + 2, total);
+    }
+
+    #[test]
+    fn s1_k4_diagnostic_override_has_exact_choice_source_roster() {
+        let intent = M1StepDispatchIntent::SpeculativeRound(target(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+        ));
+        let recipe = exact_recipe(intent, 212);
+        assert_eq!(
+            speculative_diagnostic_choice_source_isolation(&recipe),
+            (7, 2, 2, true)
+        );
+    }
+
+    #[test]
+    fn s1_k4_diagnostic_draft_subranges_are_exact_and_bounded() {
+        assert_eq!(
+            (0..4)
+                .map(speculative_diagnostic_draft_choice_geometry)
+                .collect::<Vec<_>>(),
+            vec![
+                Some((0, 4, 4)),
+                Some((4, 4, 4)),
+                Some((8, 4, 4)),
+                Some((12, 4, 4)),
+            ]
+        );
+        assert_eq!(speculative_diagnostic_draft_choice_geometry(4), None);
+    }
+
+    #[test]
+    fn diagnostic_absence_traverses_normal_binding_and_preserves_device_routes() {
+        let target_only = exact_recipe(
+            M1StepDispatchIntent::TargetOnly(target(
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS1C8192,
+            )),
+            214,
+        );
+        let speculative = exact_recipe(
+            M1StepDispatchIntent::SpeculativeRound(target(
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K4C8192,
+            )),
+            216,
+        );
+
+        for recipe in [&target_only, &speculative] {
+            let mut backend = DiagnosticOffResolutionBackendV1;
+            let resolved =
+                resolve_rows_with_backend(recipe.kernarg_recipe(), recipe.rows(), &mut backend)
+                    .unwrap();
+            assert_eq!(resolved.len(), recipe.rows().len());
+            for (source_row, resolved_row) in recipe.rows().iter().zip(resolved.iter()) {
+                assert_eq!(resolved_row.dispatch_index, source_row.dispatch_index());
+                assert_eq!(resolved_row.profile_id, source_row.profile_id());
+                assert_eq!(resolved_row.program, source_row.program());
+                assert_eq!(resolved_row.buffers.len(), source_row.buffers().len());
+                for (source_buffer, resolved_buffer) in
+                    source_row.buffers().iter().zip(resolved_row.buffers.iter())
+                {
+                    assert_eq!(
+                        resolved_buffer.argument,
+                        source_buffer.explicit_argument_index()
+                    );
+                    assert_eq!(resolved_buffer.source, source_buffer.source());
+                    let expected_route = if matches!(
+                        source_buffer.source(),
+                        M1PhysicalBufferSourceV1::CompletionOutput { .. }
+                    ) {
+                        TestResolutionRouteV1::HostVisible
+                    } else {
+                        TestResolutionRouteV1::Device
+                    };
+                    assert_eq!(resolved_buffer.route, expected_route);
+                }
+            }
+        }
+
+        let diagnostic_sources = speculative
+            .rows()
+            .iter()
+            .flat_map(M1PhysicalBufferRecipeRowV1::buffers)
+            .filter(|buffer| {
+                matches!(
+                    buffer.source(),
+                    M1PhysicalBufferSourceV1::SpeculativeDraftChoices(_)
+                        | M1PhysicalBufferSourceV1::Workspace {
+                            workspace: M1FullStepWorkspaceRole::Target,
+                            range: M1StepWorkspaceRangeRole::DraftChoices
+                                | M1StepWorkspaceRangeRole::Choices,
+                        }
+                )
+            })
+            .count();
+        assert_eq!(diagnostic_sources, 11);
     }
 
     #[test]

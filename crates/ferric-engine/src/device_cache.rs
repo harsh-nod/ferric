@@ -27,6 +27,7 @@ use crate::bound_step_workspaces::bind_addressless_m1_full_step_workspace_sublea
 use crate::initialized_step_workspaces::allocate_initialized_m1_full_step_workspaces_v1;
 use crate::{
     allocate_m1_completion_output_v1, qualification_logits::attach_m1_qualification_logits_v1,
+    speculative_diagnostic_choices::attach_m1_speculative_diagnostic_choices_v1,
     AddresslessM1FullStepWorkspaceComposition, BoundM1CompletionOutputV1,
     BoundM1FullStepWorkspaceSubleases, BoundModelMemoryAllocationsV1, ExactCompletion,
     InitializedM1FullStepWorkspaceAllocationFailureV1, M1CompletionOutputErrorV1,
@@ -994,6 +995,26 @@ impl M1PartitionedModelMemoryKvPoolV1 {
         attach_m1_qualification_logits_v1(&mut self.allocations, completion)
     }
 
+    /// Adds diagnostic-only S1/K4 choice capture to a compact output.
+    ///
+    /// This does not alter the target-only qualification path. The attachment
+    /// is admitted only for exact target `SpeculativeS1K4C8192` completion
+    /// output and grants no inference or evidence authority.
+    ///
+    /// # Errors
+    ///
+    /// Rejects another selection or allocation/range drift while returning the
+    /// unchanged compact output inside the boxed failure.
+    pub fn enable_speculative_k4_diagnostic_choices_capture(
+        &mut self,
+        completion: BoundM1CompletionOutputV1,
+    ) -> Result<
+        BoundM1CompletionOutputV1,
+        Box<crate::M1SpeculativeDiagnosticChoicesAllocationFailureV1>,
+    > {
+        attach_m1_speculative_diagnostic_choices_v1(&mut self.allocations, completion)
+    }
+
     pub(crate) fn completion_output_dispatch_range(
         &self,
         completion: &BoundM1CompletionOutputV1,
@@ -1009,6 +1030,20 @@ impl M1PartitionedModelMemoryKvPoolV1 {
     ) -> Result<fe2o3_service_host::ServiceHostDispatchRangeV1, crate::M1QualificationLogitsErrorV1>
     {
         logits.host_dispatch_range(&self.allocations, selection)
+    }
+
+    pub(crate) fn speculative_diagnostic_choices_dispatch_ranges(
+        &self,
+        choices: &crate::BoundM1SpeculativeDiagnosticChoicesV1,
+        selection: Qwen3PlanSelection,
+    ) -> Result<
+        (
+            fe2o3_service_host::ServiceHostDispatchRangeV1,
+            fe2o3_service_host::ServiceHostDispatchRangeV1,
+        ),
+        crate::M1SpeculativeDiagnosticChoicesErrorV1,
+    > {
+        choices.host_dispatch_ranges(&self.allocations, selection)
     }
 
     pub(crate) fn allocate_full_step_workspaces(

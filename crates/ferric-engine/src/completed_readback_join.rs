@@ -124,6 +124,7 @@ pub struct M1CheckedCompletionOutputV1 {
     data_index: usize,
     offset_bytes: u64,
     extent_bytes: u64,
+    raw_sha256: [u8; 32],
     records: Box<[InertCheckedCompletionRecord]>,
 }
 
@@ -164,6 +165,12 @@ impl M1CheckedCompletionOutputV1 {
         self.extent_bytes
     }
 
+    /// SHA-256 of the exact full copied completion image checked into custody.
+    #[must_use]
+    pub const fn raw_sha256(&self) -> &[u8; 32] {
+        &self.raw_sha256
+    }
+
     /// Checked records in exact scheduler-member order.
     #[must_use]
     pub fn records(&self) -> &[InertCheckedCompletionRecord] {
@@ -184,6 +191,7 @@ impl M1CheckedCompletionOutputV1 {
             data_index: 0,
             offset_bytes: 0,
             extent_bytes: 0,
+            raw_sha256: [0; 32],
             records: Box::new([]),
         }
     }
@@ -367,6 +375,7 @@ fn check_m1_completed_output(
         data_index: observed.data_index(),
         offset_bytes: observed.offset_bytes(),
         extent_bytes: observed.extent_bytes(),
+        raw_sha256: *observed.raw_sha256(),
         records: records.into_boxed_slice(),
     })
 }
