@@ -1,0 +1,14 @@
+{
+  "authority": "ferric-m1-r33-serving-comparison-protocol-only",
+  "format": "FERRIC-M1-R33-SERVING-COMPARISON-PROTOCOL-V1",
+  "nonclaim": "This record checks one exact externally frozen Ferric, tuned vLLM, and tuned SGLang comparison roster and recomputes integer window throughput, exact medians, the fastest-baseline selection, and Ferric-to-baseline ratio from externally collected counters. It does not validate the external plan, versions, sources, tuning choices, budget, SLO, collector arithmetic, observation truth, server freshness, hardware behavior, numerical correctness, or independent reproduction; it is not qualification evidence and does not close m1.r33 or M1.",
+  "obligation_id": "m1.r33",
+  "schema": {
+    "arithmetic": "Each engine window rate is floor(total_tokens*1000000000/duration_ns). Even medians are exact reduced rationals. The fastest baseline is the larger median rate, with vLLM winning a tie. The comparison ratio is floor(Ferric_median/baseline_median*1000000).",
+    "bindings": "The policy freezes exact plan, executable, environment, Ferric and fe2o3 source closures, model, tokenizer, weights, schedule, workload, trace, output-limit, implementation, protocol, source, config, tuning, and equal tuning-budget SHA-256 identities before observation.",
+    "order": "Exactly three starts appear in ascending order. Each contains ten ordered warmup windows followed by ten ordered recorded windows. Every window carries the exact cyclic Ferric/vLLM/SGLang execution order and all three raw counter sets.",
+    "output": "The checker rereads an exclusive held sibling staging file, publishes with renameat2 RENAME_NOREPLACE, synchronizes the parent, and finally rebinds and rereads the published pathname. The record carries the exact policy bindings, raw rows, input SHA-256 identities, recomputed engine medians, fastest baseline, and Ferric ratio. Submitted summaries are outside the input schema."
+  },
+  "status": "PARTIAL_NON_EVIDENCE",
+  "target": "gfx942:xnack-"
+}

@@ -372,6 +372,61 @@ Both carry `partial-non-evidence` status: this first slice does not establish a
 fresh server launch or server saturation, is not continuous serving, has no
 measured vLLM/SGLang comparison or independent validator, and cannot close
 `m1.r33`. Existing `describe`, `plan`, and `validate` commands are unchanged.
+
+An additive post-observation checker constructs one self-contained comparison
+record from a separately frozen policy and externally collected window
+counters:
+
+```text
+cargo run --locked -p ferric-m1-benchmarks --bin ferric-m1-serving -- \
+  validate-comparison-observations POLICY OBSERVATIONS OUTPUT-RECORD
+```
+
+`POLICY` is canonical
+`FERRIC-M1-R33-SERVING-COMPARISON-POLICY-V1` and has `pre-observation`
+status. It freezes the exact benchmark executable and plan, generated plan,
+schedule, workload, arrival trace, output limits, environment, Ferric and
+fe2o3 source closures, model, tokenizer, and weights. Its ordered Ferric,
+vLLM, and SGLang roster separately freezes each implementation, source,
+protocol, configuration, tuning result, version, and tuning-budget identity.
+All three tuning-budget identities must be byte-equal. That equality binds one
+external declaration; it does not establish that the underlying tuning work or
+opportunity was equal. The fe2o3 source closure is likewise an opaque external
+input identity only and grants no compiler-correctness authority or ownership
+of serving code. The external policy also supplies one positive common p99
+SLO; Ferric supplies no default version, tuning choice, budget, or SLO.
+
+`OBSERVATIONS` is canonical
+`FERRIC-M1-R33-SERVING-COMPARISON-OBSERVATIONS-V1`. It repeats the exact policy
+SHA-256, plan binding, implementation roster, and engine order. Its row roster
+is fixed and complete: three ascending server starts, each with ten ordered
+warmup windows followed by ten ordered recorded windows. Every row carries a
+cyclic Ferric/vLLM/SGLang execution order, passed status, an empty fault roster,
+and raw positive duration, successful-request, token, and p99 latency counters
+for all three engines. Any missing, duplicated, reordered, failed, faulted,
+identity-substituted, or extra summary field fails closed.
+
+The checker derives each integer tokens-per-second sample as
+`floor(total_tokens * 1_000_000_000 / duration_ns)`, uses exact rational
+medians, selects the baseline with the larger median throughput (vLLM on an
+exact tie), checks every engine's median p99 against the externally supplied
+common SLO, and computes the floored Ferric-to-fastest-baseline PPM ratio.
+`OUTPUT-RECORD` is created without replacement and carries all exact raw rows,
+policy bindings, input SHA-256 identities, and recomputed summaries; submitted
+summaries are not in the input schema and cannot act as authority.
+Publication uses an exclusive one-link sibling staging file retained by file
+descriptor, rereads and hashes its exact bytes, renames with
+`RENAME_NOREPLACE`, synchronizes the parent directory, then rebinds and rereads
+the final pathname twice. Concurrent staging or published-name substitution
+therefore fails instead of returning success for a different record.
+
+The output remains `PARTIAL_NON_EVIDENCE`. It authenticates declared bytes and
+recomputes arithmetic but does not validate external plan or policy choices,
+collector aggregation, server freshness, observation truth, hardware or
+numerical correctness, independent reproduction, or qualification. Real
+externally collected inputs and the independent performance/evidence
+validators are still required, and `m1.r33` remains `Open`.
+
 The first `m1.r32` diagnostic slice is likewise Ferric-only and does not alter
 the target-only qualification command. Exact target
 `SpeculativeS1K4C8192` completion output can opt into two additional coherent
