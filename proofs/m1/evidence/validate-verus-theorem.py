@@ -697,7 +697,7 @@ def validate_verus(
             f"VERUS_PACKAGE={package}",
             f"VERUS_MODULE={module}",
             f"VERUS_FUNCTION={function}",
-            "COMMAND=cargo-verus-build-locked-release-no-cheating-output-json-exact-function",
+            "COMMAND=cargo-verus-build-lib-locked-release-no-cheating-output-json-exact-function",
         ),
         f"{name} Verus transcript",
     )

@@ -424,7 +424,7 @@ def build_run(
         f"VERUS_PACKAGE={package}\n"
         f"VERUS_MODULE={module}\n"
         f"VERUS_FUNCTION={function}\n"
-        "COMMAND=cargo-verus-build-locked-release-no-cheating-output-json-exact-function\n"
+        "COMMAND=cargo-verus-build-lib-locked-release-no-cheating-output-json-exact-function\n"
         f"   Compiling {package} v0.1.0 (/qualified/crates/{package})\n"
         f"note: verifying module {module} (selected functions)\n"
         f"{root_json}"

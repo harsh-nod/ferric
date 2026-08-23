@@ -37,7 +37,8 @@ Each `Proved` record must bind:
 
 - this exact statement and its compiler-reported executable function paths;
 - the complete read-only source closure and same-source specifications;
-- the structured whole-crate Verus result produced with `--no-cheating`;
+- the structured whole-crate library-target Verus result produced with
+  `--lib --no-cheating`;
 - the authenticated Verus, `rust_verify`, Z3, vstd, Rust, and configuration
   identities used by the qualification;
 - the exact negative mutations assigned to the property; and

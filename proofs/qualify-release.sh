@@ -210,7 +210,7 @@ while IFS='|' read -r package crate_name extra; do
         cd "$qualified_repo"
         VERUS_Z3_PATH="$verus_root/z3" timeout "$timeout_seconds" \
             "$verus_root/cargo-verus" build -p "$package" --locked --release \
-            --target-dir "$proof_target" --fwd-verus-args-to roots -j 1 -- \
+            --target-dir "$proof_target" --fwd-verus-args-to roots -j 1 --lib -- \
             --no-cheating --output-json
     ) >"$package_transcript" 2>&1
     build_status=$?

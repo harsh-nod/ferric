@@ -14,7 +14,7 @@ from pathlib import Path
 COMMIT = "b677dd5a766f25f56e9aa1e32621aa4e53304b47"
 COMMAND = (
     "for each compiler-rooted package in dependency order: cargo-verus build -p PACKAGE "
-    "--locked --release --target-dir FRESH --fwd-verus-args-to roots -j 1 -- "
+    "--locked --release --target-dir FRESH --fwd-verus-args-to roots -j 1 --lib -- "
     "--no-cheating --output-json"
 )
 EXPECTED_PROPERTY_STATUSES = {

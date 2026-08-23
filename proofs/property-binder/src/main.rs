@@ -1365,7 +1365,7 @@ fn build_contract(
         file_measurement(inventory, "runtime-cargo-lock")?.digest,
         file_measurement(inventory, "verus-closure")?.digest,
         file_measurement(inventory, "verus-version")?.digest,
-        sha256_bytes(b"--locked --release --no-cheating --output-json"),
+        sha256_bytes(b"--locked --release --lib --no-cheating --output-json"),
     ];
     let proof_tool = exact_tool(
         inventory,

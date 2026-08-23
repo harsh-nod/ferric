@@ -235,7 +235,7 @@ while IFS='|' read -r name foundation property path_id package source module fun
         printf 'VERUS_PACKAGE=%s\n' "$package"
         printf 'VERUS_MODULE=%s\n' "$module"
         printf 'VERUS_FUNCTION=%s\n' "$function"
-        printf 'COMMAND=cargo-verus-build-locked-release-no-cheating-output-json-exact-function\n'
+        printf 'COMMAND=cargo-verus-build-lib-locked-release-no-cheating-output-json-exact-function\n'
     } >"$transcript"
     # Cargo does not fingerprint forwarded Verus selector arguments. Remove only
     # this package's prior artifacts so every row emits its own root query while
@@ -250,7 +250,7 @@ while IFS='|' read -r name foundation property path_id package source module fun
     run_child "$transcript" "$repo" env VERUS_Z3_PATH="$verus_root/z3" \
         CARGO_TERM_COLOR=never timeout "$timeout_seconds" \
         "$verus_root/cargo-verus" build -p "$package" --locked --release \
-        --target-dir "$scratch/verus-target" --fwd-verus-args-to roots -j 1 -- \
+        --target-dir "$scratch/verus-target" --fwd-verus-args-to roots -j 1 --lib -- \
         --no-cheating --output-json --verify-only-module "$module" \
         --verify-function "$function"
     proof_status=$child_status
