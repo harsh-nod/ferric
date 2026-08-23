@@ -508,6 +508,27 @@ fn preflight_member(
     Ok(())
 }
 
+fn preflight_target_completion_semantics(
+    lane: usize,
+    pending: &PendingDeviceKvStepWrite,
+    semantics: CheckedCompletionSemantics,
+) -> Result<(), M1CompletedStepErrorV1> {
+    let matches = match semantics {
+        CheckedCompletionSemantics::DirectFinalRow { .. } => {
+            pending.qualification_context().is_none()
+        }
+        CheckedCompletionSemantics::QualificationPromptCommit { context, .. }
+        | CheckedCompletionSemantics::QualificationFinalRow { context, .. } => {
+            pending.qualification_context_exactly_matches(context)
+        }
+        CheckedCompletionSemantics::Speculative { .. } => false,
+    };
+    if !matches {
+        return Err(M1CompletedStepErrorV1::CompletionSemantics { lane });
+    }
+    Ok(())
+}
+
 fn preflight_all<const C: usize>(
     engine: &Engine<C>,
     readback: &M1PhysicalCompletedReadbackV1,
@@ -597,6 +618,7 @@ fn preflight_all<const C: usize>(
                 {
                     return Err(M1CompletedStepErrorV1::CompletionSemantics { lane });
                 }
+                preflight_target_completion_semantics(lane, target, semantics)?;
                 (
                     [Some(target), None],
                     MemberArithmeticV1 {
@@ -1146,8 +1168,9 @@ pub fn complete_m1_physical_step_v1<const C: usize>(
 #[cfg(test)]
 mod tests {
     use ferric_spec::{
-        Identity, PhysicalKvLifecycle, PhysicalPageId, Qwen3ExecutionMode, Qwen3PlanBucket,
-        Qwen3PlanSelection,
+        m1_qualification_context_plan, Identity, M1QualificationExecutionBindingDeclaration,
+        M1QualificationLaneExecutionBinding, M1QualificationLaneGrouping, PhysicalKvLifecycle,
+        PhysicalPageId, Qwen3ExecutionMode, Qwen3PlanBucket, Qwen3PlanSelection,
     };
 
     use super::*;
@@ -1344,6 +1367,82 @@ mod tests {
                 externally_published: 1,
             },
         }
+    }
+
+    fn qualification_context(
+        workload_tag: u8,
+        lane_tag: u8,
+        token_sequence_tag: u8,
+        ordinal: u32,
+    ) -> crate::M1ValidatedQualificationContextStepV1 {
+        let grouping = M1QualificationLaneGrouping::S1;
+        let expected = M1QualificationExecutionBindingDeclaration {
+            declared_workload_digest: identity(workload_tag),
+            ordered_lanes: vec![M1QualificationLaneExecutionBinding {
+                lane_ordinal: 0,
+                lane_identity: identity(lane_tag),
+                token_sequence_identity: identity(token_sequence_tag),
+            }],
+        };
+        let plan = m1_qualification_context_plan(grouping, expected.clone());
+        crate::validate_m1_qualification_context_plan_v1(&plan, grouping, &expected)
+            .unwrap()
+            .step(ordinal, 0)
+            .unwrap()
+    }
+
+    #[test]
+    fn qualification_completion_requires_the_reservation_carried_exact_witness() {
+        with_large_stack(
+            qualification_completion_requires_the_reservation_carried_exact_witness_inner,
+        );
+    }
+
+    fn qualification_completion_requires_the_reservation_carried_exact_witness_inner() {
+        let context_a = qualification_context(81, 82, 83, 0);
+        let context_b = qualification_context(91, 92, 93, 0);
+        let later_context_a = qualification_context(81, 82, 83, 1);
+        let mut work = target_only_work(
+            RequestId::new(0, 21),
+            M1DeviceKvCompletionDispositionV1::Continue,
+        );
+        let MemberReservationsV1::TargetOnly { target } = &mut work.reservations else {
+            unreachable!();
+        };
+        target.bind_qualification_context_for_test(context_a);
+
+        assert_eq!(
+            preflight_target_completion_semantics(
+                0,
+                target,
+                CheckedCompletionSemantics::QualificationPromptCommit {
+                    choice: 7,
+                    context: context_a,
+                },
+            ),
+            Ok(())
+        );
+        for substituted in [context_b, later_context_a] {
+            assert_eq!(
+                preflight_target_completion_semantics(
+                    0,
+                    target,
+                    CheckedCompletionSemantics::QualificationPromptCommit {
+                        choice: 7,
+                        context: substituted,
+                    },
+                ),
+                Err(M1CompletedStepErrorV1::CompletionSemantics { lane: 0 })
+            );
+        }
+        assert_eq!(
+            preflight_target_completion_semantics(
+                0,
+                target,
+                CheckedCompletionSemantics::DirectFinalRow { token: 7 },
+            ),
+            Err(M1CompletedStepErrorV1::CompletionSemantics { lane: 0 })
+        );
     }
 
     #[test]

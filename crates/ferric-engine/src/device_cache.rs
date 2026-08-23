@@ -226,6 +226,7 @@ pub enum DeviceKvCacheError {
     OwnedPageTableDrift,
     ActivePagesRemain,
     QualificationLaneCountMismatch,
+    QualificationDuplicateRequestSlot,
     QualificationInitialWitnessMismatch,
     QualificationCacheNotFresh,
     QualificationReserveAlreadyInstalled,
@@ -234,6 +235,7 @@ pub enum DeviceKvCacheError {
     QualificationPageOrderMismatch,
     QualificationFuturePagesRemain,
     QualificationHostCustodyAllocation,
+    QualificationAbortRequiresTypedCustody,
     Physical(PhysicalKvError),
 }
 
@@ -1335,7 +1337,7 @@ impl M1QualificationTargetPagePreleaseRecoveryV1 {
         Box<M1QualificationTargetPagePreleaseFailureV1>,
     > {
         if let Err((lane, source)) = validate_qualification_prelease_inputs(
-            &self.pool,
+            self.pool.device(),
             &self.caches,
             &self.initial_contexts,
             self.grouping,
@@ -1514,7 +1516,7 @@ const fn qualification_decode_bucket(grouping: M1QualificationLaneGrouping) -> Q
 }
 
 fn validate_qualification_prelease_inputs(
-    pool: &M1PartitionedModelMemoryKvPoolV1,
+    expected_device: Gfx942DeviceBinding,
     caches: &[ActiveDeviceKvCache],
     contexts: &[crate::M1ValidatedQualificationContextStepV1],
     grouping: M1QualificationLaneGrouping,
@@ -1528,7 +1530,7 @@ fn validate_qualification_prelease_inputs(
         let lane_u32 = u32::try_from(lane).unwrap_or(u32::MAX);
         let cache = &caches[lane];
         let context = contexts[lane];
-        if cache.common.device != pool.device()
+        if cache.common.device != expected_device
             || cache.common.target.selection()
                 != (Qwen3PlanSelection {
                     role: Qwen3ModelRole::Target8B,
@@ -1580,9 +1582,12 @@ fn validate_qualification_prelease_inputs(
         }
         if caches[..lane]
             .iter()
-            .any(|prior| prior.common.request == cache.common.request)
+            .any(|prior| prior.common.request.slot() == cache.common.request.slot())
         {
-            return Err((lane_u32, DeviceKvCacheError::WrongRequest));
+            return Err((
+                lane_u32,
+                DeviceKvCacheError::QualificationDuplicateRequestSlot,
+            ));
         }
     }
     Ok(())
@@ -2036,6 +2041,7 @@ pub struct PendingDeviceKvStepWrite {
     page_table: Box<[DeviceKvStepPageIdentity]>,
     write_pages: Box<[DeviceKvStepPageBinding]>,
     new_page_leases: Vec<DeviceKvPageLease>,
+    qualification_context: Option<crate::M1ValidatedQualificationContextStepV1>,
 }
 
 /// Typed one-token target-KV reservation for an authenticated C8192 context step.
@@ -2109,10 +2115,35 @@ impl M1PendingQualificationContextStepWriteV1 {
             == M1_QUALIFICATION_TARGET_PAGE_COUNT_V1
     }
 
-    /// Recovers the ordinary pending write for the exact-completion bridge.
-    #[must_use = "the pending target write remains linear"]
+    /// Moves the pending write into workspace and completion custody.
+    ///
+    /// The exact qualification witness remains embedded in the returned value
+    /// and is joined against checked completion semantics before mutation.
+    #[must_use = "the witness-bearing pending target write remains linear"]
     pub fn into_pending_step_write(self) -> PendingDeviceKvStepWrite {
         self.pending
+    }
+}
+
+/// Retry-safe qualification abort rejection retaining the complete typed write.
+#[must_use = "the qualification witness and pending write remain linear"]
+#[derive(Debug, PartialEq, Eq)]
+pub struct M1QualificationContextStepAbortFailureV1 {
+    error: DeviceKvCacheError,
+    pending: M1PendingQualificationContextStepWriteV1,
+}
+
+impl M1QualificationContextStepAbortFailureV1 {
+    /// Exact fail-closed abort diagnostic.
+    #[must_use]
+    pub const fn error(&self) -> DeviceKvCacheError {
+        self.error
+    }
+
+    /// Recovers the exact diagnostic and unchanged typed reservation for retry.
+    #[must_use = "the diagnostic and typed reservation remain paired"]
+    pub fn into_parts(self) -> (DeviceKvCacheError, M1PendingQualificationContextStepWriteV1) {
+        (self.error, self.pending)
     }
 }
 
@@ -2252,6 +2283,39 @@ impl PendingDeviceKvStepWrite {
     #[must_use]
     pub const fn new_page_count(&self) -> usize {
         self.new_page_leases.len()
+    }
+
+    /// Exact qualification witness retained through workspace and completion
+    /// custody, or `None` for every ordinary non-qualification reservation.
+    #[must_use]
+    pub const fn qualification_context(
+        &self,
+    ) -> Option<crate::M1ValidatedQualificationContextStepV1> {
+        self.qualification_context
+    }
+
+    pub(crate) fn qualification_context_exactly_matches(
+        &self,
+        expected: crate::M1ValidatedQualificationContextStepV1,
+    ) -> bool {
+        self.qualification_context.is_some_and(|actual| {
+            actual.policy_identity().equals(&expected.policy_identity())
+                && actual.grouping() == expected.grouping()
+                && actual.ordinal() == expected.ordinal()
+                && actual.step() == expected.step()
+                && actual
+                    .declared_workload_digest()
+                    .equals(&expected.declared_workload_digest())
+                && actual.lane().lane_ordinal == expected.lane().lane_ordinal
+                && actual
+                    .lane()
+                    .lane_identity
+                    .equals(&expected.lane().lane_identity)
+                && actual
+                    .lane()
+                    .token_sequence_identity
+                    .equals(&expected.lane().token_sequence_identity)
+        })
     }
 }
 
@@ -2433,6 +2497,13 @@ pub(crate) enum DeviceKvStepCompletionOutcome {
 
 #[cfg(test)]
 impl PendingDeviceKvStepWrite {
+    pub(crate) fn bind_qualification_context_for_test(
+        &mut self,
+        context: crate::M1ValidatedQualificationContextStepV1,
+    ) {
+        self.qualification_context = Some(context);
+    }
+
     pub(crate) fn corrupt_workspace_bridge_page_for_test(
         &mut self,
         entry: usize,
@@ -2992,7 +3063,7 @@ impl ActiveDeviceKvCache {
             page_leases.push(lease);
         }
 
-        let pending = match self.reserve_step_write(
+        let mut pending = match self.reserve_step_write(
             request,
             Qwen3ModelRole::Target8B,
             ordinal,
@@ -3012,6 +3083,7 @@ impl ActiveDeviceKvCache {
                 return reject(error);
             }
         };
+        pending.qualification_context = Some(context);
         let active_pages = self.common.target.active_pages.len();
         let unused_future_pages = self
             .common
@@ -3366,6 +3438,7 @@ impl ActiveDeviceKvCache {
             page_table: page_table.into_boxed_slice(),
             write_pages: write_pages.into_boxed_slice(),
             new_page_leases,
+            qualification_context: None,
         })
     }
 
@@ -3438,6 +3511,119 @@ impl ActiveDeviceKvCache {
     /// Rejects a reservation issued by another cache or any pending-marker or
     /// existing owned-page-table drift, retaining the reservation for retry.
     pub fn abort_step_write(
+        &mut self,
+        pending: PendingDeviceKvStepWrite,
+    ) -> Result<AbortedDeviceKvStepWrite, Box<DeviceKvStepAbortFailure>> {
+        if pending.qualification_context.is_some() {
+            return Err(Box::new(DeviceKvStepAbortFailure {
+                error: DeviceKvCacheError::QualificationAbortRequiresTypedCustody,
+                pending,
+            }));
+        }
+        self.abort_step_write_inner(pending)
+    }
+
+    /// Aborts one qualification context reservation and restores its exact
+    /// boundary page directly into the attached future reserve.
+    ///
+    /// Generic abort deliberately rejects qualification-bearing reservations;
+    /// this consuming path retains the policy/workload/lane/ordinal witness,
+    /// validates the complete 512-page conservation state, clears the matching
+    /// pending marker, and pushes the exact boundary lease back into reverse
+    /// pop order before returning the witness for same-ordinal retry.
+    ///
+    /// # Errors
+    ///
+    /// Rejects witness, reserve, request, page order, conservation, or pending
+    /// marker drift while returning the unchanged typed reservation for retry.
+    pub fn abort_m1_qualification_context_step_write_v1(
+        &mut self,
+        qualified: M1PendingQualificationContextStepWriteV1,
+    ) -> Result<
+        crate::M1ValidatedQualificationContextStepV1,
+        Box<M1QualificationContextStepAbortFailureV1>,
+    > {
+        let reject = |error, pending| {
+            Err(Box::new(M1QualificationContextStepAbortFailureV1 {
+                error,
+                pending,
+            }))
+        };
+        let context = qualified.context;
+        let expected_new_pages = usize::from(context.ordinal().is_multiple_of(M1_KV_PAGE_TOKENS));
+        let Some(reserve) = self.common.target_qualification_reserve.as_ref() else {
+            return reject(DeviceKvCacheError::QualificationReserveMissing, qualified);
+        };
+        if !qualified.conserves_target_pages()
+            || qualified.pending.qualification_context != Some(context)
+            || !qualified
+                .pending
+                .qualification_context_exactly_matches(context)
+            || qualified.pending.request() != reserve.request
+            || qualified.pending.selection().role != Qwen3ModelRole::Target8B
+            || qualified.pending.committed_tokens() != context.ordinal()
+            || qualified.pending.active_tokens() != 1
+            || qualified.pending.new_page_leases.len() != expected_new_pages
+            || qualified.active_pages != self.common.target.active_pages.len()
+            || qualified.unused_future_pages != reserve.unused_pages.len()
+            || !reserve.matches_context(context)
+            || !reserve.ordered_state_is_valid()
+        {
+            return reject(DeviceKvCacheError::QualificationWitnessMismatch, qualified);
+        }
+        if let Some(lease) = qualified.pending.new_page_leases.first() {
+            if lease.device != reserve.device
+                || lease.request != reserve.request
+                || lease.page.role() != Qwen3ModelRole::Target8B
+                || lease.page.index() != context.ordinal() / M1_KV_PAGE_TOKENS
+                || !lease.allocation_id.equals(&reserve.allocation_id)
+            {
+                return reject(
+                    DeviceKvCacheError::QualificationPageOrderMismatch,
+                    qualified,
+                );
+            }
+        }
+
+        let M1PendingQualificationContextStepWriteV1 {
+            context,
+            pending,
+            active_pages,
+            unused_future_pages,
+        } = qualified;
+        let Some(mut reserve) = self.common.target_qualification_reserve.take() else {
+            return reject(
+                DeviceKvCacheError::QualificationReserveMissing,
+                M1PendingQualificationContextStepWriteV1 {
+                    context,
+                    pending,
+                    active_pages,
+                    unused_future_pages,
+                },
+            );
+        };
+        let aborted = match self.abort_step_write_inner(pending) {
+            Ok(aborted) => aborted,
+            Err(failure) => {
+                let (error, pending) = failure.into_parts();
+                self.common.target_qualification_reserve = Some(reserve);
+                return reject(
+                    error,
+                    M1PendingQualificationContextStepWriteV1 {
+                        context,
+                        pending,
+                        active_pages,
+                        unused_future_pages,
+                    },
+                );
+            }
+        };
+        reserve.unused_pages.extend(aborted.into_page_leases());
+        self.common.target_qualification_reserve = Some(reserve);
+        Ok(context)
+    }
+
+    fn abort_step_write_inner(
         &mut self,
         pending: PendingDeviceKvStepWrite,
     ) -> Result<AbortedDeviceKvStepWrite, Box<DeviceKvStepAbortFailure>> {
@@ -3722,6 +3908,14 @@ impl ActiveDeviceKvCache {
         if after_epoch.value() == 0 {
             return Err(DeviceKvCacheError::ZeroCompletionEpoch);
         }
+        if self
+            .common
+            .target_qualification_reserve
+            .as_ref()
+            .is_some_and(|reserve| !reserve.unused_pages.is_empty())
+        {
+            return Err(DeviceKvCacheError::QualificationFuturePagesRemain);
+        }
         for cache in [&self.common.target, &self.common.draft] {
             if !matches!(cache.logical().lifecycle, PhysicalKvLifecycle::Active) {
                 return Err(DeviceKvCacheError::Physical(
@@ -3774,6 +3968,7 @@ impl ActiveDeviceKvCache {
             page_table,
             write_pages,
             new_page_leases,
+            qualification_context: _,
         } = pending;
         let role = binding.selection.role;
         let mut common = self.common;
@@ -6418,6 +6613,43 @@ mod tests {
     }
 
     #[test]
+    fn qualification_duplicate_request_slots_reject_before_page_acquisition() {
+        let grouping = M1QualificationLaneGrouping::S8;
+        let (plan, expected) = qualification_plan(grouping);
+        let validated =
+            crate::validate_m1_qualification_context_plan_v1(&plan, grouping, &expected).unwrap();
+        let caches: Vec<_> = (0..grouping.sequences())
+            .map(|lane| {
+                let request = if lane == 1 {
+                    RequestId::new(0, 13)
+                } else {
+                    RequestId::new(lane, 12)
+                };
+                qualification_cache(request, grouping)
+            })
+            .collect();
+        let contexts: Vec<_> = (0..grouping.sequences())
+            .map(|lane| validated.step(0, lane).unwrap())
+            .collect();
+        let before: Vec<_> = caches.iter().map(ActiveDeviceKvCache::projection).collect();
+
+        assert_eq!(
+            validate_qualification_prelease_inputs(device(), &caches, &contexts, grouping),
+            Err((1, DeviceKvCacheError::QualificationDuplicateRequestSlot))
+        );
+        assert_eq!(
+            caches
+                .iter()
+                .map(ActiveDeviceKvCache::projection)
+                .collect::<Vec<_>>(),
+            before
+        );
+        assert!(caches
+            .iter()
+            .all(|cache| cache.qualification_target_page_reserve().is_none()));
+    }
+
+    #[test]
     fn qualification_step_rejects_request_lane_witness_and_ordinal_substitution() {
         let grouping = M1QualificationLaneGrouping::S8;
         let (plan, expected) = qualification_plan(grouping);
@@ -6520,16 +6752,43 @@ mod tests {
         assert_eq!(pending.pending_new_page_count(), 1);
         assert_eq!(pending.unused_future_page_count(), 511);
         assert!(pending.conserves_target_pages());
-        let aborted = cache
-            .abort_step_write(pending.into_pending_step_write())
+        assert_eq!(
+            cache
+                .abort_m1_qualification_context_step_write_v1(pending)
+                .unwrap(),
+            context
+        );
+        assert_eq!(
+            cache.projection().target_qualification_future_pages,
+            M1_QUALIFICATION_TARGET_PAGE_COUNT_V1
+        );
+        assert!(!cache.projection().target_write_pending);
+        assert_eq!(
+            cache
+                .qualification_target_page_reserve()
+                .unwrap()
+                .unused_pages
+                .last()
+                .unwrap()
+                .page()
+                .index(),
+            0
+        );
+
+        let retry = cache
+            .reserve_m1_qualification_context_step_write_v1(
+                request(),
+                0,
+                context,
+                CompletionEpoch::new(2),
+            )
             .unwrap();
+        assert_eq!(retry.pending_new_page_count(), 1);
+        assert_eq!(retry.unused_future_page_count(), 511);
+        assert!(retry.conserves_target_pages());
         cache
-            .common
-            .target_qualification_reserve
-            .as_mut()
-            .unwrap()
-            .unused_pages
-            .extend(aborted.into_page_leases());
+            .abort_m1_qualification_context_step_write_v1(retry)
+            .unwrap();
         assert_eq!(
             cache.projection().target_qualification_future_pages,
             M1_QUALIFICATION_TARGET_PAGE_COUNT_V1
@@ -6545,6 +6804,23 @@ mod tests {
         let context = validated.step(0, 0).unwrap();
         let mut cache = qualification_cache(request(), grouping);
         install_qualification_reserve_for_test(&mut cache, context, 74);
+        let pending = cache
+            .reserve_m1_qualification_context_step_write_v1(
+                request(),
+                0,
+                context,
+                CompletionEpoch::new(1),
+            )
+            .unwrap();
+        let before = cache.projection();
+        assert_eq!(
+            cache.preflight_retirement_after_step(request(), CompletionEpoch::new(1)),
+            Err(DeviceKvCacheError::QualificationFuturePagesRemain)
+        );
+        assert_eq!(cache.projection(), before);
+        cache
+            .abort_m1_qualification_context_step_write_v1(pending)
+            .unwrap();
         assert!(!cache.release_state_is_valid());
         assert_eq!(
             cache.rollback_one(request(), Qwen3ModelRole::Target8B, CompletionEpoch::new(1),),

@@ -1457,7 +1457,9 @@ mod tests {
     };
     use ferric_spec::completion::CompletionEpoch;
     use ferric_spec::{
-        validate_m1_step_inputs, M1StepInputCandidate, M1StepInputValidationOutcome,
+        m1_qualification_context_plan, validate_m1_step_inputs,
+        M1QualificationExecutionBindingDeclaration, M1QualificationLaneExecutionBinding,
+        M1QualificationLaneGrouping, M1StepInputCandidate, M1StepInputValidationOutcome,
         PhysicalPageId, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, RequestId, StepPlan,
     };
 
@@ -1570,6 +1572,45 @@ mod tests {
         let (cache, pending) = pending_reservation(selected, request, 0, active, epoch, 7, 71);
         let bound = bind_m1_kv_workspace_table_v1(inputs, vec![pending]).unwrap();
         (cache, bound)
+    }
+
+    #[test]
+    fn ordinary_workspace_custody_preserves_exact_qualification_witness() {
+        let grouping = M1QualificationLaneGrouping::S1;
+        let expected = M1QualificationExecutionBindingDeclaration {
+            declared_workload_digest: identity(81),
+            ordered_lanes: vec![M1QualificationLaneExecutionBinding {
+                lane_ordinal: 0,
+                lane_identity: identity(82),
+                token_sequence_identity: identity(83),
+            }],
+        };
+        let plan = m1_qualification_context_plan(grouping, expected.clone());
+        let context = crate::validate_m1_qualification_context_plan_v1(&plan, grouping, &expected)
+            .unwrap()
+            .step(0, 0)
+            .unwrap();
+        let selected = selection(
+            Qwen3ModelRole::Target8B,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        let request = RequestId::new(0, 19);
+        let epoch = CompletionEpoch::new(20);
+        let inputs = validated_inputs(selected, &[request], epoch, &[1], &[0]);
+        let (_cache, mut pending) = pending_reservation(selected, request, 0, 1, epoch, 7, 81);
+        pending.bind_qualification_context_for_test(context);
+
+        let bound = bind_m1_kv_workspace_table_v1(inputs, vec![pending]).unwrap();
+        assert_eq!(
+            bound.reservations().reservations()[0].qualification_context(),
+            Some(context)
+        );
+        let (_inputs, _page_indices, custody) = bound.into_workspace_image_parts();
+        assert_eq!(
+            custody.reservations()[0].qualification_context(),
+            Some(context)
+        );
     }
 
     fn speculative_target(bucket: Qwen3PlanBucket) -> Qwen3PlanSelection {
