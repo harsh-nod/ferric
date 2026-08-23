@@ -18,6 +18,7 @@ closure status.
 | `kv-terminal-release-exact-epoch` | `request_isolation::release_isolated_page` | the selected request's recorded quiescent epoch exactly matches the release authority epoch | `lifetime_safe` / `kv-proof` |
 | `kv-write-prefix` | `paged_kv_refinement::write_physical_token` | physical initialization advances with logical residency | `kv_refined` / `kv-proof` |
 | `model-bundle-record-binding` | `auth::admission_records_equal` | mismatching retained and recomputed record bytes are rejected before proof custody | `model_bundle_well_formed` / `model-bundle-proof` |
+| `operator-declared-profile-effect` | `operation_kernel_plan::select_declared_operator_certificate` | the caller-supplied opaque operator profile identity field must be nonempty after the structural match | `operator_refined` / `kernel-contract-proof` |
 | `publication-phase-transition` | `step_plan_publication::publish_reserved_delta` | publication moves only from validated to published | `graph_refined` / `graph-proof` |
 | `publication-plan-identity` | `step_plan_publication::validate_step_plan` | publication authority binds the exact plan identity | `graph_refined` / `graph-proof` |
 | `sampler-lowest-id-publication` | `m1_completion::select_lowest_argmax` | equal scores retain the first, lowest token ID before speculative publication | `sampler_refined` / `speculation-proof` |

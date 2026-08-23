@@ -6,14 +6,20 @@ foundation mutations. Each row binds a still-Open assurance property and path
 to an exact package, source, crate-root Verus module, function, and directly
 verified compiler path in `VERIFIED_MODULES`. Each positive row selects one
 loop-free query-bearing function; most remain in `m1_foundation_theorems`,
-while the model-bundle row selects the exact compiler-rooted roadmap path in
-`proofs/m1/model_bundle.rs`. That thin theorem lifts the consuming
+while the model-bundle and operator rows select exact compiler-rooted roadmap
+paths in `proofs/m1/`. The model-bundle theorem lifts the consuming
 `ferric-build` boundary without adding authority. The sampler row selects the
 Ferric composition that computes five exact lowest-ID target choices and feeds
 them to compact completion, maximal-prefix greedy acceptance, isolated KV, and
 publication for the fixed M1 `K=4` round. Its integer score rows are an external
-numerical premise, not a device-logit refinement. The paired negative registry
-remains bound to actual implementation bodies. The two
+numerical premise, not a device-logit refinement. The operator theorem composes
+a validated K1-K7 modeled effect with a caller-supplied declaration by executing
+`select_declared_operator_certificate` in the registered theorem body. That
+selector matches operation/plan/family/plan ID and checks only that opaque
+profile/catalog/build/artifact/ABI identities are present. Canonical identity
+equality and production-resolver authenticity remain unproved premises, as do
+the separately named compiler-effect preservation and runtime-invocation premises.
+The paired negative registry remains bound to actual implementation bodies. The two
 speculative wrappers cover publication-to-KV accepted-count agreement and
 immutable-preflight failure framing under distinct Open obligations.
 The lifetime row selects the production-facing terminal page-release theorem,
@@ -52,3 +58,7 @@ load, launch, side-channel, or performance authority. The model-bundle row
 proves retained scalar, digest, and wire commitments only; it does not prove
 `WeightSectionManifest::valid_commitment`, manifest destination layout,
 tensor-name semantics, the runtime `BTreeSet` roster, or a later plan join.
+The operator row proves only the conditional modeled access/effect relation.
+It does not authenticate the opaque declaration identities, prove they came
+from the production resolver, discharge its compiler or runtime premises, or
+establish LLVM, object, ABI, loader, GPU, device, numerical, or hardware semantics.

@@ -30,6 +30,7 @@ def copy_fixture(repo: Path, destination: Path) -> None:
         "proofs/VERIFIED_MODULES",
         "proofs/m1/theorem/check-registry.py",
         str(REGISTRY),
+        "proofs/m1/kernel_contracts.rs",
         "proofs/m1/model_bundle.rs",
         "proofs/m1/kv_physical.rs",
         "proofs/m1/speculative_graph.rs",
@@ -118,8 +119,8 @@ def main() -> None:
         result = run_checker(baseline, active)
         if result.returncode != 0:
             fail(f"baseline theorem registry failed\n{result.stdout}")
-        if len(active.read_text(encoding="ascii").splitlines()) != 15:
-            fail("baseline theorem registry did not select exactly fifteen rows")
+        if len(active.read_text(encoding="ascii").splitlines()) != 16:
+            fail("baseline theorem registry did not select exactly sixteen rows")
 
         cases: list[tuple[str, str, FixtureMutation]] = [
             (
@@ -218,6 +219,19 @@ def main() -> None:
                 ),
             ),
             (
+                "operator-binding-drift",
+                "positive theorem binding drifted",
+                lambda fixture: mutate_registry(
+                    fixture,
+                    lambda lines: replace_field(
+                        lines,
+                        registry_row(lines, "operator-declared-profile-effect"),
+                        7,
+                        "m1_k1_k7_modeled_contract_theorem",
+                    ),
+                ),
+            ),
+            (
                 "unsafe-source",
                 "unsafe theorem source path",
                 lambda fixture: mutate_registry(
@@ -237,6 +251,13 @@ def main() -> None:
                 "M1 theorem source is unavailable",
                 lambda fixture: (
                     fixture / "proofs/m1/model_bundle.rs"
+                ).unlink(),
+            ),
+            (
+                "missing-operator-source",
+                "M1 theorem source is unavailable",
+                lambda fixture: (
+                    fixture / "proofs/m1/kernel_contracts.rs"
                 ).unlink(),
             ),
             (
@@ -340,6 +361,22 @@ def main() -> None:
                         .splitlines()
                         if line
                         != "verified=ferric-m1-proof|proofs/m1/kv_physical.rs|ferric_m1_proof::kv_physical::m1_terminal_page_release_theorem"
+                    )
+                    + "\n",
+                    encoding="utf-8",
+                ),
+            ),
+            (
+                "missing-operator-function-coverage",
+                "function path is not directly verified",
+                lambda fixture: (fixture / "proofs/VERIFIED_MODULES").write_text(
+                    "\n".join(
+                        line
+                        for line in (fixture / "proofs/VERIFIED_MODULES")
+                        .read_text(encoding="utf-8")
+                        .splitlines()
+                        if line
+                        != "verified=ferric-m1-proof|proofs/m1/kernel_contracts.rs|ferric_m1_proof::kernel_contracts::m1_ferric_operator_refinement_composition_theorem"
                     )
                     + "\n",
                     encoding="utf-8",

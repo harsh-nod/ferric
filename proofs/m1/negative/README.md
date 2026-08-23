@@ -6,7 +6,8 @@ bodies that currently exist for exact graph planning, step-plan publication,
 atomic speculative publication/KV composition, logical paged KV, continuous
 batching, request-slot noninterference, and retained model-bundle record
 composition, canonical manifest commitment authentication, and exact kernel
-catalog processor/target-feature conformance.
+catalog processor/target-feature conformance, plus the Ferric declaration
+structure-and-presence selector.
 
 Each row binds one unique body mutation and contract clause to:
 
@@ -18,7 +19,7 @@ Each row binds one unique body mutation and contract clause to:
 - the exact `postcondition` or `assertion` failure class required from pinned
   Verus after the mutated source first passes ordinary Cargo compilation.
 
-`check-registry.py` hard-codes the exact seventeen-row roster. It first runs the M1
+`check-registry.py` hard-codes the exact eighteen-row roster. It first runs the M1
 requirements checker, then rejects row omission, addition, reordering,
 rebinding, duplicate mutators or clauses, unsafe paths, missing files, targets
 outside compiler-rooted coverage, and any property or path that is no longer
@@ -51,6 +52,14 @@ executable rejection of processor or target-feature drift to reject only when
 both drift. Its `identity-closure` association covers the exact target tuple
 consumed by that join, not ELF, AMDHSA ABI, ISA/resource inspection, runtime
 device matching, or the full `target_conforming` boundary.
+
+The operator row substitutes the already presence-checked opaque
+profile-catalog identity for the executable opaque profile-identity rejection,
+so a declaration with an absent profile identity could pass the selector.
+Pinned Verus must reject the selector's exact final relation assertion. This tests only
+the source-level structural match and identity-presence boundary; it does not
+authenticate canonical identity bytes or the production resolver and grants no
+compiler, runtime, ABI, load, launch, GPU, numerical, or hardware authority.
 
 Run the structural policy directly:
 

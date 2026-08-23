@@ -9,11 +9,21 @@
 //! accesses by distinct workitems in one modeled phase. Its decreasing rank
 //! is control termination only, not numerical or optimization convergence.
 //!
-//! No theorem here establishes that Ferric LLVM source, a compiler result, an
-//! object, a loader, a driver, firmware, or hardware implements the supplied
-//! certificate. It also grants no numerical-correctness, launch, completion,
-//! timing, throughput, or performance authority.
+//! The operator-refinement composition additionally consumes Ferric's verified
+//! selector for one caller-supplied Qwen declaration. The selector matches
+//! operation/plan/family/plan ID and checks opaque identity presence only;
+//! canonical identity and production-resolver authenticity remain unproved.
+//! Exact compiler preservation and runtime invocation are named premises: no theorem
+//! here establishes those premises for Ferric LLVM source, a compiler result,
+//! an object, a loader, a driver, firmware, or hardware. It also grants no
+//! numerical-correctness, launch, completion, timing, throughput, or
+//! performance authority.
 
+#[allow(unused_imports)]
+use ferric_engine::{
+    select_declared_operator_certificate, DeclaredOperationKernelBinding,
+    DeclaredOperatorCertificateError,
+};
 #[allow(unused_imports)]
 use ferric_kernels::{KernelCatalogInput, KernelFamily, ValidatedKernelCatalogInput};
 #[allow(unused_imports)]
@@ -435,6 +445,184 @@ pub fn m1_k1_k7_modeled_contract_theorem(inputs: M1KernelModeledContractInputsV1
             m1_initialization_certificate_set(inputs.initialized_after@),
         );
     }
+}
+
+/// Checked structural relation for one caller-supplied Qwen declaration.
+///
+/// [`ferric_engine::select_declared_operator_certificate`] checks this relation
+/// for one declaration: graph position, plan, family, and plan ID match, and
+/// every opaque identity is present. It does not compare those identity bytes
+/// with canonical values or prove that the production resolver supplied them.
+pub open spec fn m1_ferric_declared_structure_and_presence_premise(
+    declared: DeclaredOperationKernelBinding,
+    expected: KernelCatalogInput,
+) -> bool {
+    declared.matches_catalog_spec(expected)
+}
+
+/// Named compiler premise for the presence-checked declaration and modeled effect.
+///
+/// Equality here is a premise supplied by future compiler-refinement evidence;
+/// neither the profile identity nor this predicate authenticates compiler
+/// output or proves source-to-object semantics.
+pub open spec fn m1_compiler_preserves_declared_operator_effect_premise(
+    declared: DeclaredOperationKernelBinding,
+    expected: KernelCatalogInput,
+    certified_after: ISet<(nat, nat)>,
+    compiled_after: ISet<(nat, nat)>,
+) -> bool {
+    &&& m1_ferric_declared_structure_and_presence_premise(declared, expected)
+    &&& compiled_after == certified_after
+}
+
+/// Named runtime premise for invocation of the caller-declared artifact effect.
+///
+/// Equality here is a premise supplied by future runtime evidence. It grants no
+/// load, launch, completion, device, or hardware authority.
+pub open spec fn m1_runtime_invokes_declared_operator_effect_premise(
+    declared: DeclaredOperationKernelBinding,
+    expected: KernelCatalogInput,
+    compiled_after: ISet<(nat, nat)>,
+    runtime_after: ISet<(nat, nat)>,
+) -> bool {
+    &&& m1_ferric_declared_structure_and_presence_premise(declared, expected)
+    &&& runtime_after == compiled_after
+}
+
+/// Conditional source-level refinement conclusion for one structurally matched
+/// caller declaration and the runtime-visible modeled byte effect.
+///
+/// This is deliberately a modeled access/effect relation, not numerical,
+/// LLVM, object, ABI, GPU, or hardware semantics.
+pub open spec fn m1_ferric_operator_refined_under_declared_premises(
+    declared: DeclaredOperationKernelBinding,
+    expected: KernelCatalogInput,
+    buffer_extents: Seq<nat>,
+    accesses: Seq<M1KernelModeledAccessV1>,
+    initialized_before: ISet<(nat, nat)>,
+    runtime_after: ISet<(nat, nat)>,
+) -> bool {
+    &&& m1_ferric_declared_structure_and_presence_premise(declared, expected)
+    &&& m1_modeled_effect_is_exact(
+        buffer_extents,
+        accesses,
+        initialized_before,
+        runtime_after,
+    )
+}
+
+/// Finite executable inputs for the conditional Ferric operator composition.
+pub struct M1FerricOperatorRefinementInputsV1<'a> {
+    /// Caller-supplied opaque catalog/profile declaration consumed by the selector.
+    pub declared: DeclaredOperationKernelBinding,
+    /// Independently validated catalog operation and modeled source certificate.
+    pub modeled: M1KernelModeledContractInputsV1<'a>,
+    /// Compiler-visible post-initialization cells named by the compiler premise.
+    pub compiled_initialized_after: &'a [(u16, u64)],
+    /// Runtime-visible post-initialization cells named by the runtime premise.
+    pub runtime_initialized_after: &'a [(u16, u64)],
+}
+
+/// Composes a structurally matched, presence-checked declaration with its
+/// modeled operator effect under named compiler-preservation and
+/// runtime-invocation premises.
+///
+/// The body executes the verified declaration selector before reusing the
+/// K1-K7 finite modeled-contract proof. The selected theorem requires the exact
+/// operation/plan/family/profile relation and transports the certified effect
+/// through two explicit premises. It does not prove either premise, close
+/// `operator_refined`, or establish LLVM, object, loader, GPU, or hardware
+/// semantics.
+///
+/// # Errors
+///
+/// Returns the selector's exact declaration mismatch if its catalog/profile
+/// relation is rejected. The theorem preconditions prove that branch
+/// unreachable for admitted calls; retaining `Result` keeps the executable
+/// selector control flow explicit.
+pub fn m1_ferric_operator_refinement_composition_theorem(
+    inputs: M1FerricOperatorRefinementInputsV1<'_>,
+) -> (result: Result<(), DeclaredOperatorCertificateError>)
+    requires
+        m1_kernel_modeled_contract_admitted(
+            inputs.modeled.validated,
+            inputs.modeled.expected,
+            inputs.modeled.workitems as nat,
+            m1_u32_certificate_values(inputs.modeled.ranks@),
+            m1_u64_certificate_values(inputs.modeled.buffer_extents@),
+            inputs.modeled.accesses@,
+            m1_initialization_certificate_set(inputs.modeled.initialized_before@),
+            m1_initialization_certificate_set(inputs.modeled.initialized_after@),
+        ),
+        m1_ferric_declared_structure_and_presence_premise(
+            inputs.declared,
+            inputs.modeled.expected,
+        ),
+        m1_compiler_preserves_declared_operator_effect_premise(
+            inputs.declared,
+            inputs.modeled.expected,
+            m1_initialization_certificate_set(inputs.modeled.initialized_after@),
+            m1_initialization_certificate_set(inputs.compiled_initialized_after@),
+        ),
+        m1_runtime_invokes_declared_operator_effect_premise(
+            inputs.declared,
+            inputs.modeled.expected,
+            m1_initialization_certificate_set(inputs.compiled_initialized_after@),
+            m1_initialization_certificate_set(inputs.runtime_initialized_after@),
+        ),
+    ensures
+        result.is_ok(),
+        ferric_kernels::m1_kernel_profile_is_finite(inputs.modeled.expected.profile),
+        0 < inputs.modeled.workitems as nat
+            <= m1_family_workitem_bound_spec(inputs.modeled.expected.profile.family),
+        m1_modeled_reads_are_initialized(
+            inputs.modeled.accesses@,
+            m1_initialization_certificate_set(inputs.modeled.initialized_before@),
+        ),
+        m1_modeled_accesses_are_race_free(inputs.modeled.accesses@),
+        m1_ferric_operator_refined_under_declared_premises(
+            inputs.declared,
+            inputs.modeled.expected,
+            m1_u64_certificate_values(inputs.modeled.buffer_extents@),
+            inputs.modeled.accesses@,
+            m1_initialization_certificate_set(inputs.modeled.initialized_before@),
+            m1_initialization_certificate_set(inputs.runtime_initialized_after@),
+        ),
+{
+    proof {
+        reveal(m1_kernel_modeled_contract_admitted);
+        reveal(m1_ferric_declared_structure_and_presence_premise);
+    }
+    let selected = select_declared_operator_certificate(
+        inputs.modeled.validated,
+        inputs.modeled.expected,
+        inputs.declared,
+    );
+    assert(selected.is_ok());
+    let _certificate = match selected {
+        Ok(certificate) => certificate,
+        Err(error) => {
+            assert(false);
+            return Err(error);
+        },
+    };
+    assert(_certificate.matches_catalog_spec(inputs.modeled.expected));
+    proof {
+        m1_k1_k7_modeled_contract_properties(
+            inputs.modeled.validated,
+            inputs.modeled.expected,
+            inputs.modeled.workitems as nat,
+            m1_u32_certificate_values(inputs.modeled.ranks@),
+            m1_u64_certificate_values(inputs.modeled.buffer_extents@),
+            inputs.modeled.accesses@,
+            m1_initialization_certificate_set(inputs.modeled.initialized_before@),
+            m1_initialization_certificate_set(inputs.modeled.initialized_after@),
+        );
+        reveal(m1_compiler_preserves_declared_operator_effect_premise);
+        reveal(m1_runtime_invokes_declared_operator_effect_premise);
+        reveal(m1_ferric_operator_refined_under_declared_premises);
+    }
+    Ok(())
 }
 
 } // verus!

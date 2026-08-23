@@ -572,7 +572,7 @@ def main() -> None:
         fail(f"usage: {sys.argv[0]} REPO [REAL_RESULT]")
     repo = Path(sys.argv[1]).resolve(strict=True)
     active, rows = registry(repo)
-    if len(rows) != 17 or not active:
+    if len(rows) != 18 or not active:
         fail("M1 negative registry baseline drifted")
     artifact_row = rows[0]
     if artifact_row[0] != "artifact-manifest-commitment-digest":
@@ -650,6 +650,19 @@ def main() -> None:
         expect_pass(repo, lifetime_context, "canonical lifetime mutation fixture")
         if lifetime_result.name != f"{lifetime_row[0]}.result":
             fail("lifetime result identity drifted")
+        operator_row = next(
+            selected
+            for selected in rows
+            if selected[0] == "operator-declared-profile-effect"
+        )
+        operator_root = root / "operator-baseline"
+        operator_root.mkdir()
+        operator_result, operator_context = build_run(
+            repo, operator_root, operator_row, source_identity
+        )
+        expect_pass(repo, operator_context, "canonical operator mutation fixture")
+        if operator_result.name != f"{operator_row[0]}.result":
+            fail("operator result identity drifted")
 
         cases: list[tuple[str, str, FixtureMutation]] = [
             (
@@ -898,6 +911,27 @@ def main() -> None:
         ]
         for name, expected, mutation in cases:
             expect_rejected(repo, root, source_identity, row, name, expected, mutation)
+        expect_rejected(
+            repo,
+            root,
+            source_identity,
+            operator_row,
+            "operator-selector-substitution",
+            "marker binding drifted",
+            lambda run, context, selected: (
+                lambda path, values: (
+                    values.__setitem__(
+                        "VERUS_FUNCTION", "bind_declared_operation_kernel_plan"
+                    ),
+                    write_kv(path, tuple(values), values),
+                    refresh_result(run, selected[0]),
+                    refresh_context(context),
+                )
+            )(
+                run / f"{selected[0]}.mutation",
+                parse_kv(run / f"{selected[0]}.mutation"),
+            ),
+        )
 
         incomplete_root = root / "incomplete-property-product"
         incomplete_root.mkdir()

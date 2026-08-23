@@ -19,13 +19,15 @@ use std::collections::HashSet;
 
 use ferric_build::GeneratedOperationDeclaration;
 use ferric_kernels::{
-    KernelFamily, KernelProfileDisposition, M1_B3_PLAN_BUCKETS, M1_KERNEL_OPERATION_BINDINGS,
-    M1_KERNEL_PLAN_COUNT,
+    KernelCatalogInput, KernelFamily, KernelProfileDisposition, ValidatedKernelCatalogInput,
+    M1_B3_PLAN_BUCKETS, M1_KERNEL_OPERATION_BINDINGS, M1_KERNEL_PLAN_COUNT,
 };
 use ferric_qwen_kernels::{gemm, logits, paged_decode, prefill, rmsnorm, rope_kv, swiglu};
 use ferric_spec::{
     Identity, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3Operator, Qwen3PlanSelection,
 };
+#[allow(unused_imports)]
+use vstd::prelude::*;
 
 use crate::{LogicalRunnerDeclaration, LogicalRunnerError};
 
@@ -41,6 +43,8 @@ const FAMILIES: [KernelFamily; FAMILY_COUNT] = [
     KernelFamily::K7LogitsCompact,
 ];
 
+verus! {
+
 /// One caller-declared family build and artifact identity tuple.
 ///
 /// These are structural labels only. Construction does not inspect, hash,
@@ -54,6 +58,22 @@ pub struct DeclaredKernelFamilyArtifact {
 }
 
 impl DeclaredKernelFamilyArtifact {
+    pub closed spec fn family_spec(self) -> KernelFamily {
+        self.family
+    }
+
+    pub closed spec fn build_id_spec(self) -> Identity {
+        self.build_id
+    }
+
+    pub closed spec fn artifact_id_spec(self) -> Identity {
+        self.artifact_id
+    }
+
+    pub closed spec fn abi_layout_id_spec(self) -> Identity {
+        self.abi_layout_id
+    }
+
     /// Constructs one inert family declaration.
     #[must_use]
     pub const fn new(
@@ -61,7 +81,13 @@ impl DeclaredKernelFamilyArtifact {
         build_id: Identity,
         artifact_id: Identity,
         abi_layout_id: Identity,
-    ) -> Self {
+    ) -> (declared: Self)
+        ensures
+            declared.family_spec() == family,
+            declared.build_id_spec() == build_id,
+            declared.artifact_id_spec() == artifact_id,
+            declared.abi_layout_id_spec() == abi_layout_id,
+    {
         Self {
             family,
             build_id,
@@ -72,25 +98,33 @@ impl DeclaredKernelFamilyArtifact {
 
     /// Declared K1-K7 family.
     #[must_use]
-    pub const fn family(self) -> KernelFamily {
+    pub const fn family(self) -> (family: KernelFamily)
+        ensures family == self.family_spec(),
+    {
         self.family
     }
 
     /// Caller-declared family compiler-build identity.
     #[must_use]
-    pub const fn build_id(self) -> Identity {
+    pub const fn build_id(self) -> (build_id: Identity)
+        ensures build_id == self.build_id_spec(),
+    {
         self.build_id
     }
 
     /// Caller-declared family artifact identity.
     #[must_use]
-    pub const fn artifact_id(self) -> Identity {
+    pub const fn artifact_id(self) -> (artifact_id: Identity)
+        ensures artifact_id == self.artifact_id_spec(),
+    {
         self.artifact_id
     }
 
     /// Caller-declared family ABI-layout identity.
     #[must_use]
-    pub const fn abi_layout_id(self) -> Identity {
+    pub const fn abi_layout_id(self) -> (abi_layout_id: Identity)
+        ensures abi_layout_id == self.abi_layout_id_spec(),
+    {
         self.abi_layout_id
     }
 
@@ -112,6 +146,26 @@ pub struct DeclaredOperationIdentity {
 }
 
 impl DeclaredOperationIdentity {
+    pub closed spec fn plan_spec(self) -> Identity {
+        self.plan
+    }
+
+    pub closed spec fn runner_declaration_spec(self) -> Identity {
+        self.runner_declaration
+    }
+
+    pub closed spec fn kernel_catalog_spec(self) -> Identity {
+        self.kernel_catalog
+    }
+
+    pub closed spec fn profile_catalog_spec(self) -> Identity {
+        self.profile_catalog
+    }
+
+    pub closed spec fn profile_spec(self) -> Identity {
+        self.profile
+    }
+
     /// Groups the exact plan, runner, catalog, and Qwen profile identities.
     #[must_use]
     pub const fn new(
@@ -120,7 +174,14 @@ impl DeclaredOperationIdentity {
         kernel_catalog_id: Identity,
         profile_catalog_id: Identity,
         profile_id: Identity,
-    ) -> Self {
+    ) -> (identity: Self)
+        ensures
+            identity.plan_spec() == plan_id,
+            identity.runner_declaration_spec() == runner_declaration_id,
+            identity.kernel_catalog_spec() == kernel_catalog_id,
+            identity.profile_catalog_spec() == profile_catalog_id,
+            identity.profile_spec() == profile_id,
+    {
         Self {
             plan: plan_id,
             runner_declaration: runner_declaration_id,
@@ -152,6 +213,55 @@ pub struct DeclaredOperationKernelBinding {
 }
 
 impl DeclaredOperationKernelBinding {
+    /// Structural catalog match plus presence of caller-supplied opaque identities.
+    pub open spec fn matches_catalog_spec(self, expected: KernelCatalogInput) -> bool {
+        declared_operator_certificate_matches_catalog(self, expected)
+    }
+
+    pub closed spec fn operation_index_spec(self) -> u32 {
+        self.operation_index
+    }
+
+    pub closed spec fn plan_index_spec(self) -> u16 {
+        self.plan_index
+    }
+
+    pub closed spec fn family_spec(self) -> KernelFamily {
+        self.family
+    }
+
+    pub closed spec fn plan_id_spec(self) -> Identity {
+        self.plan_id
+    }
+
+    pub closed spec fn runner_declaration_id_spec(self) -> Identity {
+        self.runner_declaration_id
+    }
+
+    pub closed spec fn kernel_catalog_id_spec(self) -> Identity {
+        self.kernel_catalog_id
+    }
+
+    pub closed spec fn profile_catalog_id_spec(self) -> Identity {
+        self.profile_catalog_id
+    }
+
+    pub closed spec fn profile_id_spec(self) -> Identity {
+        self.profile_id
+    }
+
+    pub closed spec fn family_build_id_spec(self) -> Identity {
+        self.family_build_id
+    }
+
+    pub closed spec fn artifact_id_spec(self) -> Identity {
+        self.artifact_id
+    }
+
+    pub closed spec fn abi_layout_id_spec(self) -> Identity {
+        self.abi_layout_id
+    }
+
     /// Constructs one inert operation declaration.
     #[must_use]
     pub const fn new(
@@ -159,7 +269,20 @@ impl DeclaredOperationKernelBinding {
         plan_index: u16,
         identity: DeclaredOperationIdentity,
         family_artifact: DeclaredKernelFamilyArtifact,
-    ) -> Self {
+    ) -> (binding: Self)
+        ensures
+            binding.operation_index_spec() == operation_index,
+            binding.plan_index_spec() == plan_index,
+            binding.family_spec() == family_artifact.family_spec(),
+            binding.plan_id_spec() == identity.plan_spec(),
+            binding.runner_declaration_id_spec() == identity.runner_declaration_spec(),
+            binding.kernel_catalog_id_spec() == identity.kernel_catalog_spec(),
+            binding.profile_catalog_id_spec() == identity.profile_catalog_spec(),
+            binding.profile_id_spec() == identity.profile_spec(),
+            binding.family_build_id_spec() == family_artifact.build_id_spec(),
+            binding.artifact_id_spec() == family_artifact.artifact_id_spec(),
+            binding.abi_layout_id_spec() == family_artifact.abi_layout_id_spec(),
+    {
         Self {
             operation_index,
             plan_index,
@@ -177,70 +300,278 @@ impl DeclaredOperationKernelBinding {
 
     /// Global generated-operation position.
     #[must_use]
-    pub const fn operation_index(self) -> u32 {
+    pub const fn operation_index(self) -> (operation_index: u32)
+        ensures operation_index == self.operation_index_spec(),
+    {
         self.operation_index
     }
 
     /// Target-then-draft generated-plan position.
     #[must_use]
-    pub const fn plan_index(self) -> u16 {
+    pub const fn plan_index(self) -> (plan_index: u16)
+        ensures plan_index == self.plan_index_spec(),
+    {
         self.plan_index
     }
 
     /// Exact K1-K7 family.
     #[must_use]
-    pub const fn family(self) -> KernelFamily {
+    pub const fn family(self) -> (family: KernelFamily)
+        ensures family == self.family_spec(),
+    {
         self.family
     }
 
     /// Build-published plan identity retained by the generated operation.
     #[must_use]
-    pub const fn plan_id(self) -> Identity {
+    pub const fn plan_id(self) -> (plan_id: Identity)
+        ensures plan_id == self.plan_id_spec(),
+    {
         self.plan_id
     }
 
     /// Exact published generated-runner declaration identity.
     #[must_use]
-    pub const fn runner_declaration_id(self) -> Identity {
+    pub const fn runner_declaration_id(self) -> (runner_declaration_id: Identity)
+        ensures runner_declaration_id == self.runner_declaration_id_spec(),
+    {
         self.runner_declaration_id
     }
 
     /// Exact published structural K1-K7 catalog identity.
     #[must_use]
-    pub const fn kernel_catalog_id(self) -> Identity {
+    pub const fn kernel_catalog_id(self) -> (kernel_catalog_id: Identity)
+        ensures kernel_catalog_id == self.kernel_catalog_id_spec(),
+    {
         self.kernel_catalog_id
     }
 
-    /// Exact canonical Ferric Qwen family-profile catalog identity.
+    /// Caller-supplied opaque Ferric Qwen profile-catalog identity.
     #[must_use]
-    pub const fn profile_catalog_id(self) -> Identity {
+    pub const fn profile_catalog_id(self) -> (profile_catalog_id: Identity)
+        ensures profile_catalog_id == self.profile_catalog_id_spec(),
+    {
         self.profile_catalog_id
     }
 
-    /// Exact canonical Ferric Qwen operation-profile identity.
+    /// Caller-supplied opaque Ferric Qwen operation-profile identity.
     #[must_use]
-    pub const fn profile_id(self) -> Identity {
+    pub const fn profile_id(self) -> (profile_id: Identity)
+        ensures profile_id == self.profile_id_spec(),
+    {
         self.profile_id
     }
 
     /// Caller-declared family compiler-build identity.
     #[must_use]
-    pub const fn family_build_id(self) -> Identity {
+    pub const fn family_build_id(self) -> (family_build_id: Identity)
+        ensures family_build_id == self.family_build_id_spec(),
+    {
         self.family_build_id
     }
 
     /// Caller-declared family artifact identity.
     #[must_use]
-    pub const fn artifact_id(self) -> Identity {
+    pub const fn artifact_id(self) -> (artifact_id: Identity)
+        ensures artifact_id == self.artifact_id_spec(),
+    {
         self.artifact_id
     }
 
     /// Caller-declared family ABI-layout identity.
     #[must_use]
-    pub const fn abi_layout_id(self) -> Identity {
+    pub const fn abi_layout_id(self) -> (abi_layout_id: Identity)
+        ensures abi_layout_id == self.abi_layout_id_spec(),
+    {
         self.abi_layout_id
     }
 }
+
+/// Identity role rejected by the verified operator-certificate selector.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DeclaredOperatorCertificateIdentityRole {
+    /// Published generated-runner declaration.
+    RunnerDeclaration,
+    /// Published structural K1-K7 catalog.
+    KernelCatalog,
+    /// Caller-supplied opaque Ferric Qwen family-profile catalog.
+    ProfileCatalog,
+    /// Caller-supplied opaque Ferric Qwen operation profile.
+    Profile,
+    /// Caller-declared family compiler build.
+    FamilyBuild,
+    /// Caller-declared family artifact.
+    Artifact,
+    /// Caller-declared family ABI layout.
+    AbiLayout,
+}
+
+/// Fail-closed mismatch from the verified operator-certificate selector.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DeclaredOperatorCertificateError {
+    /// Flattened generated-operation position drifted.
+    OperationIndex,
+    /// Generated-plan position drifted.
+    PlanIndex,
+    /// K1-K7 family drifted.
+    Family,
+    /// Build-published plan identity drifted.
+    PlanIdentity,
+    /// One declaration identity was absent.
+    MissingIdentity(DeclaredOperatorCertificateIdentityRole),
+}
+
+closed spec fn declared_identity_present(identity: Identity) -> bool {
+    exists|index: int| 0 <= index < identity.bytes_spec().len()
+        && identity.bytes_spec()[index] != 0
+}
+
+/// Relation checked between one canonical catalog operation and a caller
+/// declaration: exact position, plan, family, and plan ID plus presence of
+/// every opaque declaration identity.
+pub closed spec fn declared_operator_certificate_matches_catalog(
+    declared: DeclaredOperationKernelBinding,
+    expected: KernelCatalogInput,
+) -> bool {
+    &&& declared.operation_index_spec() == expected.operation_index
+    &&& declared.plan_index_spec() == expected.plan_index
+    &&& declared.family_spec() == expected.profile.family
+    &&& declared.plan_id_spec().bytes_spec() == expected.profile.plan_id.bytes_spec()
+    &&& declared_identity_present(declared.runner_declaration_id_spec())
+    &&& declared_identity_present(declared.kernel_catalog_id_spec())
+    &&& declared_identity_present(declared.profile_catalog_id_spec())
+    &&& declared_identity_present(declared.profile_id_spec())
+    &&& declared_identity_present(declared.family_build_id_spec())
+    &&& declared_identity_present(declared.artifact_id_spec())
+    &&& declared_identity_present(declared.abi_layout_id_spec())
+}
+
+fn declared_family_matches(left: KernelFamily, right: KernelFamily) -> (matches: bool)
+    ensures matches == (left == right),
+{
+    matches!((left, right),
+        (KernelFamily::K1GemmGemv, KernelFamily::K1GemmGemv)
+            | (KernelFamily::K2RmsNormResidual, KernelFamily::K2RmsNormResidual)
+            | (KernelFamily::K3RopePagedKv, KernelFamily::K3RopePagedKv)
+            | (KernelFamily::K4GqaPrefill, KernelFamily::K4GqaPrefill)
+            | (KernelFamily::K5PagedGqaDecode, KernelFamily::K5PagedGqaDecode)
+            | (KernelFamily::K6SwiGlu, KernelFamily::K6SwiGlu)
+            | (KernelFamily::K7LogitsCompact, KernelFamily::K7LogitsCompact)
+    )
+}
+
+/// Structurally matched inert declaration retained by the verified selector.
+///
+/// This wrapper is not cloneable and grants no artifact or execution custody.
+#[derive(Debug, Eq, PartialEq)]
+pub struct ValidatedDeclaredOperatorCertificate {
+    declared: DeclaredOperationKernelBinding,
+}
+
+impl ValidatedDeclaredOperatorCertificate {
+    /// Complete caller-supplied declaration retained by this certificate.
+    pub closed spec fn declared_spec(&self) -> DeclaredOperationKernelBinding {
+        self.declared
+    }
+
+    /// Whether structural fields match and opaque identity fields are present.
+    pub closed spec fn matches_catalog_spec(&self, expected: KernelCatalogInput) -> bool {
+        declared_operator_certificate_matches_catalog(self.declared, expected)
+    }
+
+    /// Returns the complete retained inert declaration.
+    #[must_use]
+    pub const fn declared(&self) -> (declared: DeclaredOperationKernelBinding)
+        ensures declared == self.declared_spec(),
+    {
+        self.declared
+    }
+}
+
+/// Checks one caller-supplied opaque Ferric Qwen declaration against an
+/// already validated canonical catalog operation.
+///
+/// This selector proves the exact graph position, plan, family, plan ID, and
+/// presence of every retained caller-supplied identity. It does not compare
+/// profile, catalog, build, artifact, or ABI identity bytes with a canonical
+/// source. The caller must separately establish that the production resolver
+/// supplied authentic canonical identities and that compilation and runtime
+/// execution preserve the modeled contract.
+///
+/// # Errors
+///
+/// Returns a field-specific mismatch when the declared operation does not
+/// match `expected` or any retained declaration identity is absent.
+pub fn select_declared_operator_certificate(
+    _validated: &ValidatedKernelCatalogInput,
+    expected: KernelCatalogInput,
+    declared: DeclaredOperationKernelBinding,
+) -> (result: Result<ValidatedDeclaredOperatorCertificate, DeclaredOperatorCertificateError>)
+    requires _validated.matches_expected_spec(expected),
+    ensures
+        result.is_ok() == declared_operator_certificate_matches_catalog(declared, expected),
+        match result {
+            Ok(certificate) => {
+                &&& certificate.declared_spec() == declared
+                &&& certificate.matches_catalog_spec(expected)
+            },
+            Err(_) => true,
+        },
+{
+    if declared.operation_index() != expected.operation_index {
+        return Err(DeclaredOperatorCertificateError::OperationIndex);
+    }
+    if declared.plan_index() != expected.plan_index {
+        return Err(DeclaredOperatorCertificateError::PlanIndex);
+    }
+    if !declared_family_matches(declared.family(), expected.profile.family) {
+        return Err(DeclaredOperatorCertificateError::Family);
+    }
+    if !declared.plan_id().equals(&expected.profile.plan_id) {
+        return Err(DeclaredOperatorCertificateError::PlanIdentity);
+    }
+    if !declared.runner_declaration_id().is_present() {
+        return Err(DeclaredOperatorCertificateError::MissingIdentity(
+            DeclaredOperatorCertificateIdentityRole::RunnerDeclaration,
+        ));
+    }
+    if !declared.kernel_catalog_id().is_present() {
+        return Err(DeclaredOperatorCertificateError::MissingIdentity(
+            DeclaredOperatorCertificateIdentityRole::KernelCatalog,
+        ));
+    }
+    if !declared.profile_catalog_id().is_present() {
+        return Err(DeclaredOperatorCertificateError::MissingIdentity(
+            DeclaredOperatorCertificateIdentityRole::ProfileCatalog,
+        ));
+    }
+    if !declared.profile_id().is_present() {
+        return Err(DeclaredOperatorCertificateError::MissingIdentity(
+            DeclaredOperatorCertificateIdentityRole::Profile,
+        ));
+    }
+    if !declared.family_build_id().is_present() {
+        return Err(DeclaredOperatorCertificateError::MissingIdentity(
+            DeclaredOperatorCertificateIdentityRole::FamilyBuild,
+        ));
+    }
+    if !declared.artifact_id().is_present() {
+        return Err(DeclaredOperatorCertificateError::MissingIdentity(
+            DeclaredOperatorCertificateIdentityRole::Artifact,
+        ));
+    }
+    if !declared.abi_layout_id().is_present() {
+        return Err(DeclaredOperatorCertificateError::MissingIdentity(
+            DeclaredOperatorCertificateIdentityRole::AbiLayout,
+        ));
+    }
+    assert(declared_operator_certificate_matches_catalog(declared, expected)) by {
+        reveal(declared_operator_certificate_matches_catalog);
+    }
+    Ok(ValidatedDeclaredOperatorCertificate { declared })
+}
+
+} // verus!
 
 /// Identity role whose caller declaration was absent.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

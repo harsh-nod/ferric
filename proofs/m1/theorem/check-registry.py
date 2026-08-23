@@ -109,6 +109,15 @@ EXPECTED = {
         "model_bundle",
         "model_bundle_well_formed_composition_theorem",
     ),
+    "operator-declared-profile-effect": (
+        "k1-k7-operator-composition",
+        "operator_refined",
+        "kernel-contract-proof",
+        "ferric-m1-proof",
+        "proofs/m1/kernel_contracts.rs",
+        "kernel_contracts",
+        "m1_ferric_operator_refinement_composition_theorem",
+    ),
     "publication-phase-transition": (
         "step-plan-publication",
         "graph_refined",

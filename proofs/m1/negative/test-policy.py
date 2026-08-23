@@ -53,6 +53,7 @@ def copy_fixture(repo: Path, destination: Path) -> None:
     )
     for relative in (
         "crates/ferric-build/src/auth.rs",
+        "crates/ferric-engine/src/operation_kernel_plan.rs",
         "crates/ferric-kernels/src/validation.rs",
         "crates/ferric-spec/src/continuous_batching.rs",
         "crates/ferric-spec/src/graph.rs",
@@ -199,8 +200,8 @@ def main() -> None:
         if result.returncode != 0:
             fail(f"baseline M1 negative registry check failed\n{result.stdout}")
         rows = active.read_text(encoding="utf-8").splitlines()
-        if len(rows) != 17:
-            fail(f"baseline selected {len(rows)} M1 mutations instead of 17")
+        if len(rows) != 18:
+            fail(f"baseline selected {len(rows)} M1 mutations instead of 18")
         mutator_count = verify_current_mutators(repo, root, active)
 
         cases: list[tuple[str, str, FixtureMutation]] = []
@@ -314,6 +315,18 @@ def main() -> None:
             ),
         ))
         cases.append((
+            "operator-binding-drift", "M1 foundation mutation binding drifted",
+            lambda fixture: mutate_registry(
+                fixture,
+                lambda lines: replace_field(
+                    lines,
+                    registry_row(lines, "operator-declared-profile-effect"),
+                    9,
+                    "bind_declared_operation_kernel_plan",
+                ),
+            ),
+        ))
+        cases.append((
             "unsafe-source", "unsafe foundation source path",
             lambda fixture: mutate_registry(
                 fixture, lambda lines: replace_field(lines, 1, 5, "../continuous_batching.rs")
@@ -366,6 +379,13 @@ def main() -> None:
             ).unlink(),
         ))
         cases.append((
+            "missing-operator-mutator", "M1 foundation mutator is unavailable",
+            lambda fixture: (
+                fixture
+                / "proofs/m1/negative/components/operator-declared-profile-effect.py"
+            ).unlink(),
+        ))
+        cases.append((
             "missing-source", "M1 foundation source is unavailable",
             lambda fixture: (fixture / "crates/ferric-spec/src/continuous_batching.rs").unlink(),
         ))
@@ -394,6 +414,12 @@ def main() -> None:
         cases.append((
             "missing-target-source", "M1 foundation source is unavailable",
             lambda fixture: (fixture / "crates/ferric-kernels/src/validation.rs").unlink(),
+        ))
+        cases.append((
+            "missing-operator-source", "M1 foundation source is unavailable",
+            lambda fixture: (
+                fixture / "crates/ferric-engine/src/operation_kernel_plan.rs"
+            ).unlink(),
         ))
         cases.append((
             "missing-module-record", "compiler module path is not inventoried",
@@ -466,6 +492,17 @@ def main() -> None:
                 "\n".join(
                     line for line in (fixture / "proofs/VERIFIED_MODULES").read_text(encoding="utf-8").splitlines()
                     if line != "verified=ferric-kernels|crates/ferric-kernels/src/validation.rs|ferric_kernels::validation::validate_kernel_catalog_input"
+                ) + "\n",
+                encoding="utf-8",
+            ),
+        ))
+        cases.append((
+            "missing-operator-function-record",
+            "compiler function path is not directly verified",
+            lambda fixture: (fixture / "proofs/VERIFIED_MODULES").write_text(
+                "\n".join(
+                    line for line in (fixture / "proofs/VERIFIED_MODULES").read_text(encoding="utf-8").splitlines()
+                    if line != "verified=ferric-engine|crates/ferric-engine/src/operation_kernel_plan.rs|ferric_engine::operation_kernel_plan::select_declared_operator_certificate"
                 ) + "\n",
                 encoding="utf-8",
             ),

@@ -96,6 +96,14 @@ EXPECTED = {
         "postcondition", "auth", "admission_records_equal",
         "retained-record-equality",
     ),
+    "operator-declared-profile-effect": (
+        "k1-k7-operator-composition", "operator_refined",
+        "kernel-contract-proof", "ferric-engine",
+        "crates/ferric-engine/src/operation_kernel_plan.rs",
+        "operator-declared-profile-effect.py", "assertion",
+        "operation_kernel_plan", "select_declared_operator_certificate",
+        "profile-identity-presence",
+    ),
     "publication-phase-transition": (
         "step-plan-publication", "graph_refined", "graph-proof",
         "ferric-spec", "crates/ferric-spec/src/step_plan_publication.rs",

@@ -199,9 +199,12 @@ pub use operation_dispatch_expansion::{
     M1_OPERATION_DISPATCH_EXPANSION_VERSION,
 };
 pub use operation_kernel_plan::{
-    bind_declared_operation_kernel_plan, DeclaredKernelFamilyArtifact, DeclaredOperationIdentity,
-    DeclaredOperationKernelBinding, DeclaredOperationKernelPlan, OperationKernelIdentityComponent,
+    bind_declared_operation_kernel_plan, select_declared_operator_certificate,
+    DeclaredKernelFamilyArtifact, DeclaredOperationIdentity, DeclaredOperationKernelBinding,
+    DeclaredOperationKernelPlan, DeclaredOperatorCertificateError,
+    DeclaredOperatorCertificateIdentityRole, OperationKernelIdentityComponent,
     OperationKernelPlanError, OperationKernelPlanFailure, OperationKernelPlanOutcome,
+    ValidatedDeclaredOperatorCertificate,
 };
 pub use persisted_kernel_artifacts::{
     reopen_persisted_m1_kernel_artifacts_v1, AdmittedPersistedM1KernelArtifactsV1,
