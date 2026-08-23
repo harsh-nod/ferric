@@ -7,7 +7,10 @@
 //! expose no native address, add no fallback, and preserve lower recovery or
 //! quarantine owners in every failure result.
 
+use core::fmt;
+
 use fe2o3_kfd::CheckedGfx942XnackMinusDevice;
+use fe2o3_service_host::ServiceQueueErrorV1;
 use ferric_build::{
     AddresslessModelMemoryPlan, GeneratedOperationDeclaration, GeneratedPlanDeclaration,
     M1KernelArtifactFamilyV1, PublishedRunnerDeclaration,
@@ -34,13 +37,15 @@ use crate::{
     M1DeviceModelMemoryAllocationFailureV1, M1FullStepKvWorkspaceTablesV1,
     M1FullStepWorkspaceCompositionFailure, M1FullStepWorkspaceCompositionOutcome,
     M1FullStepWorkspacePlans, M1LongLivedQueueRearmSubmissionFailureV1,
-    M1PhysicalDispatchRecipeErrorV1, M1PhysicalProgramCatalogErrorV1,
+    M1PhysicalBufferBindingErrorV1, M1PhysicalDispatchRecipeErrorV1,
+    M1PhysicalFixedBatchBuildErrorV1, M1PhysicalProgramCatalogErrorV1,
     M1PhysicalPublishedQueueSessionV1, M1PhysicalQueueCreateFailureClassV1,
     M1PhysicalQueueCreateFailureV1, M1PhysicalQueueOperationFailureV1, M1PhysicalQueueSessionV1,
     M1PrepareFailureV1, M1PreparedLongLivedQueueRearmV1, M1PrepublicationAllocationFailureV1,
-    M1PrepublicationBatchBuildFailureV1, M1RearmedPublishedQueueV1, M1ReleasedCompletedStepV1,
-    M1ScheduledDispatchV1, M1StepDispatchCompositionError, M1StepDispatchIntent,
-    OperationKernelPlanError, OperationKernelPlanFailure, OperationKernelPlanOutcome,
+    M1PrepublicationBatchBuildErrorKindV1, M1PrepublicationBatchBuildFailureV1,
+    M1RearmedPublishedQueueV1, M1ReleasedCompletedStepV1, M1ScheduledDispatchV1,
+    M1StepDispatchCompositionError, M1StepDispatchIntent, OperationKernelPlanError,
+    OperationKernelPlanFailure, OperationKernelPlanOutcome,
 };
 
 /// Fail-closed logical declaration lookup error.
@@ -684,7 +689,6 @@ pub enum M1PhysicalRunnerRecipeOutcomeV1 {
 
 /// First-publication failure retaining exact retry or quarantine custody.
 #[must_use = "publication failure retains all available physical owners"]
-#[derive(Debug)]
 pub enum M1PhysicalRunnerFirstPublicationFailureV1<'a> {
     Catalog {
         error: M1PhysicalProgramCatalogErrorV1,
@@ -695,6 +699,37 @@ pub enum M1PhysicalRunnerFirstPublicationFailureV1<'a> {
     Batch(Box<M1PrepublicationBatchBuildFailureV1<'a>>),
     Create(Box<M1PhysicalQueueCreateFailureV1<'a>>),
     Submit(Box<M1PhysicalQueueOperationFailureV1>),
+}
+
+/// Compact first-publication diagnostic that borrows, but never releases, custody.
+#[derive(Debug)]
+pub enum M1PhysicalRunnerFirstPublicationDiagnosticV1<'a> {
+    /// Persisted program bytes or their inspected catalog were rejected.
+    Catalog(&'a M1PhysicalProgramCatalogErrorV1),
+    /// Pure scheduler/recipe/completion preflight was rejected.
+    BatchPreflight(M1PrepublicationBatchBuildErrorKindV1),
+    /// Owner-checked physical-buffer binding was rejected.
+    BatchBinding(&'a M1PhysicalBufferBindingErrorV1),
+    /// Fixed-packet construction was rejected after binding.
+    BatchFixed(M1PhysicalFixedBatchBuildErrorV1),
+    /// Queue creation rejected or terminally consumed the batch.
+    QueueCreate {
+        /// Whether exact pre-creation inputs remain recoverable.
+        class: M1PhysicalQueueCreateFailureClassV1,
+        /// Exact generic queue-creation error.
+        error: &'a ServiceQueueErrorV1,
+    },
+    /// Queue submission failed after native queue creation.
+    QueueSubmit(&'a ServiceQueueErrorV1),
+}
+
+impl fmt::Debug for M1PhysicalRunnerFirstPublicationFailureV1<'_> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_tuple("M1PhysicalRunnerFirstPublicationFailureV1")
+            .field(&self.diagnostic())
+            .finish()
+    }
 }
 
 fn retry_if_recoverable<Owner, Success>(
@@ -715,6 +750,34 @@ fn quarantine_and_retain<const C: usize, Owner>(engine: &mut Engine<C>, owner: O
 }
 
 impl<'a> M1PhysicalRunnerFirstPublicationFailureV1<'a> {
+    /// Returns the exact compact failure diagnostic without moving any owner.
+    #[must_use]
+    pub fn diagnostic(&self) -> M1PhysicalRunnerFirstPublicationDiagnosticV1<'_> {
+        match self {
+            Self::Catalog { error, .. } => {
+                M1PhysicalRunnerFirstPublicationDiagnosticV1::Catalog(error)
+            }
+            Self::Batch(failure) => match failure.as_ref() {
+                M1PrepublicationBatchBuildFailureV1::Rejected { error, .. } => {
+                    M1PhysicalRunnerFirstPublicationDiagnosticV1::BatchPreflight(*error)
+                }
+                M1PrepublicationBatchBuildFailureV1::Binding { failure, .. } => {
+                    M1PhysicalRunnerFirstPublicationDiagnosticV1::BatchBinding(failure.error())
+                }
+                M1PrepublicationBatchBuildFailureV1::FixedBatch { failure, .. } => {
+                    M1PhysicalRunnerFirstPublicationDiagnosticV1::BatchFixed(failure.error())
+                }
+            },
+            Self::Create(failure) => M1PhysicalRunnerFirstPublicationDiagnosticV1::QueueCreate {
+                class: failure.class(),
+                error: failure.error(),
+            },
+            Self::Submit(failure) => {
+                M1PhysicalRunnerFirstPublicationDiagnosticV1::QueueSubmit(failure.error())
+            }
+        }
+    }
+
     /// Retries only a failure that retained exact unpublished inputs.
     ///
     /// Terminal queue creation or submission quarantine is returned unchanged.

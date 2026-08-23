@@ -3539,9 +3539,17 @@ fn publish_first_step_with_retries<'runner, const C: usize>(
         Ok(published) => return Ok(published),
         Err(failure) => failure,
     };
-    retry_with_bounded_policy(failure, CAPTURE_RECOVERY_RETRIES, |failure| {
+    let outcome = retry_with_bounded_policy(failure, CAPTURE_RECOVERY_RETRIES, |failure| {
         failure.retry(runner, engine, 1 << 20)
-    })
+    });
+    if let Err(failure) = &outcome {
+        let _ = writeln!(
+            std::io::stderr().lock(),
+            "FAIL-STOP DETAIL: first publication did not recover under bounded policy (retry_budget={CAPTURE_RECOVERY_RETRIES}): {:?}",
+            failure.diagnostic()
+        );
+    }
+    outcome
 }
 
 fn retry_with_bounded_policy<Owner, Success>(
