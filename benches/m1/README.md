@@ -454,6 +454,50 @@ numerical correctness, independent reproduction, or qualification. Real
 externally collected inputs and the independent performance/evidence
 validators are still required, and `m1.r33` remains `Open`.
 
+The stronger `m1.r32` post-observation boundary accepts a policy frozen before
+measurement, exact externally collected paired counters, and a new output
+pathname:
+
+```text
+cargo run --locked -p ferric-m1-benchmarks --bin ferric-m1-speculation -- \
+  validate-comparison-observations POLICY OBSERVATIONS OUTPUT-RECORD
+```
+
+The policy binds the Ferric and fe2o3 source closures; common model, tokenizer,
+weight, schedule, environment, and artifact identities; distinct speculative
+and target-only config, implementation, protocol, and artifact identities; and
+the same Ferric source and version for both modes. It freezes exactly one
+eligible speculation holdout and one low-acceptance cell with an admitted
+deterministic fallback plan. Each cell carries a canonical workload identity,
+an exact case kind whose `S` and `K` geometry must match batch and draft width,
+one equal p99 SLO, and forty unique pairing identities.
+
+Observations must contain both modes for ten ordered warmup pairs followed by
+thirty ordered recorded pairs in each cell. Each pair must retain the exact
+predeclared identity and alternating mode order, pass without faults or failed
+requests, and report equal successful-request and total-token work. Accepted
+tokens cannot exceed speculative output. Missing, extra, duplicated,
+reordered, unpaired, unequal-work, identity-substituted, or summary-bearing
+rows fail closed.
+The eligible cell must also retain at least one accepted speculative token;
+the record reports its exact mean accepted tokens per speculative target
+invocation.
+
+The checker derives each integer throughput as
+`floor(total_tokens * 1_000_000_000 / duration_ns)` and uses exact reduced
+rational medians. The eligible cell must reach 1,100,000 ppm of target-only
+throughput while its p99 median remains at or below 1,050,000 ppm. The
+low-acceptance deterministic-plan cell must retain at least 950,000 ppm of
+target-only throughput. These thresholds are checker-owned constants and the
+input cannot submit summaries. Publication is descriptor-held, no-replace,
+parent-synchronized, and revalidated by final pathname and bytes.
+
+The resulting `PARTIAL_NON_EVIDENCE` record authenticates declarations and
+recomputes arithmetic only. External eligibility and holdout selection,
+observations, hardware behavior, numerical correctness, independent
+reproduction, and qualification remain unvalidated, so `m1.r32` and M1 remain
+`Open` until real hardware records and independent evidence validators pass.
+
 The first `m1.r32` diagnostic slice is likewise Ferric-only and does not alter
 the target-only qualification command. Exact target
 `SpeculativeS1K4C8192` completion output can opt into two additional coherent
