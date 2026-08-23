@@ -102,6 +102,7 @@ use std::path::{Component, Path, PathBuf};
 use std::process::ExitCode;
 
 mod input_bundle;
+mod m1_r30_exhaustion_partial_capture;
 mod m1_r30_partial_capture;
 mod m1_r30_rollback_partial_capture;
 mod m1_r32_partial_capture;
@@ -1804,6 +1805,11 @@ fn main() -> ExitCode {
 
 fn run(arguments: Vec<OsString>) -> CaptureResult<()> {
     if arguments.first().and_then(|argument| argument.to_str())
+        == Some(m1_r30_exhaustion_partial_capture::COMMAND)
+    {
+        return run_r30_exhaustion_capture(&arguments[1..]);
+    }
+    if arguments.first().and_then(|argument| argument.to_str())
         == Some(m1_r30_rollback_partial_capture::COMMAND)
     {
         return run_r30_rollback_capture(&arguments[1..]);
@@ -1827,6 +1833,284 @@ fn run(arguments: Vec<OsString>) -> CaptureResult<()> {
         }
     }
     run_capture(&arguments)
+}
+
+fn run_r30_exhaustion_capture(arguments: &[OsString]) -> CaptureResult<()> {
+    let [source_root, prepacked_root, artifact_root, closure_path, environment_path, gpu_unique_id, output] =
+        arguments
+    else {
+        return Err("usage: ferric-m1-qualification-capture capture-r30-exhaustion MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned());
+    };
+    let gpu_unique_id = gpu_unique_id
+        .to_str()
+        .ok_or_else(|| "GPU unique ID must be UTF-8 decimal".to_owned())?
+        .parse::<u64>()
+        .map_err(|_| "GPU unique ID must be a decimal u64".to_owned())?;
+    let closure = load_closure(Path::new(closure_path))?;
+    let _environment = load_environment(Path::new(environment_path), gpu_unique_id)?;
+    let artifacts = reopen_persisted_m1_kernel_artifacts_v1(Path::new(artifact_root))
+        .map_err(|error| format!("cannot authenticate persisted kernel artifacts: {error}"))?;
+    let executable_catalog_id = artifacts.program_catalog_id();
+    let source = SecureDirectory::open(Path::new(source_root), "model source root")?;
+    let snapshot = SecureDirectory::open(Path::new(prepacked_root), "prepacked snapshot root")?;
+    let model = load_model_inputs(&source, &snapshot)?;
+    let runner_admission = model.authenticate()?;
+    let plan_catalog = build_authenticated_sequential_plan_catalog(runner_admission)
+        .map_err(|error| format!("cannot build authenticated plan catalog: {error:?}"))?;
+    let external = complete_closure(&closure, &plan_catalog, executable_catalog_id)?;
+    let identity_closure = build_preliminary_identity_closure(plan_catalog, external)
+        .map_err(|error| format!("cannot build runner identity closure: {error:?}"))?;
+    let declaration = generate_qwen3_gfx942_runner_declaration(identity_closure)
+        .map_err(|error| format!("cannot generate authenticated runner declaration: {error:?}"))?;
+    let publication = publish_qwen3_gfx942_runner_declaration(declaration)
+        .map_err(|error| format!("cannot publish runner declaration: {error:?}"))?;
+    let runner = bind_m1_physical_runner_v1(artifacts, publication)
+        .map_err(|error| format!("cannot bind physical runner: {error:?}"))?;
+
+    let memory_admission = model.authenticate()?;
+    let memory_plan = model_memory_plan(memory_admission)?;
+    let checked = OpenedKfd::open_default()
+        .map_err(|error| format!("cannot open KFD: {error}"))?
+        .admit_uapi()
+        .map_err(|error| format!("cannot admit pinned KFD UAPI: {error}"))?
+        .bind_gfx942_xnack_minus(DeviceSelector::UniqueId(gpu_unique_id))
+        .map_err(|error| format!("cannot bind selected gfx942:xnack- device: {error}"))?;
+    let memory = initialize_m1_physical_runner_memory_v1(
+        checked,
+        memory_plan,
+        model.target_weights,
+        model.draft_weights,
+    )
+    .map_err(|error| format!("cannot initialize physical model memory: {error:?}"))?;
+    let capture = execute_r30_exhaustion_capture(&runner, memory)?;
+    let capture_sha256 = sha256_hex(capture.bytes());
+    m1_r30_exhaustion_partial_capture::publish(Path::new(output), capture)?;
+    println!("output={}", Path::new(output).display());
+    println!("capture_sha256={capture_sha256}");
+    println!("status=partial-non-evidence");
+    Ok(())
+}
+
+fn execute_r30_exhaustion_capture(
+    runner: &ferric_engine::M1PhysicalRunnerV1,
+    mut memory: ferric_engine::M1PartitionedModelMemoryKvPoolV1,
+) -> CaptureResult<m1_r30_exhaustion_partial_capture::CaptureArtifactV1> {
+    let mut engine = Engine::<1>::new(512, 256, 8_192)
+        .map_err(|error| format!("cannot construct one-lane r30 exhaustion engine: {error:?}"))?;
+    let request = engine
+        .admit()
+        .map_err(|error| format!("cannot admit r30 exhaustion request: {error:?}"))?;
+    let device = memory.device();
+    let target_arena = memory.allocation_id(Qwen3ModelRole::Target8B);
+    let draft_arena = memory.allocation_id(Qwen3ModelRole::Draft06B);
+    let page_capacity = ferric_spec::M1_KV_PHYSICAL_PAGE_SLOTS;
+    let mut leases = Vec::new();
+    leases
+        .try_reserve_exact(page_capacity)
+        .map_err(|_| "cannot reserve r30 exhaustion page custody".to_owned())?;
+    for page in 0..page_capacity {
+        let page =
+            u32::try_from(page).map_err(|_| "r30 exhaustion page index exceeds u32".to_owned())?;
+        let lease = match memory.lease_page(request, Qwen3ModelRole::Target8B, page) {
+            Ok(lease) => lease,
+            Err(error) => {
+                let diagnostic = format!("cannot lease r30 exhaustion page {page}: {error:?}");
+                if !leases.is_empty() {
+                    cleanup_unpublished_or_abort(
+                        "r30 exhaustion partial page acquisition rejected",
+                        &mut memory,
+                        leases,
+                    );
+                }
+                return Err(diagnostic);
+            }
+        };
+        leases.push(lease);
+    }
+    let first_generation = leases
+        .first()
+        .map(|lease| lease.page().generation())
+        .ok_or_else(|| "r30 exhaustion page roster is empty".to_owned())?;
+    if leases.iter().any(|lease| {
+        lease.request() != request
+            || lease.allocation_id() != target_arena
+            || lease.page().role() != Qwen3ModelRole::Target8B
+            || lease.page().generation() != first_generation
+            || memory
+                .validate_page_identity(request, target_arena, lease.page())
+                .is_err()
+    }) {
+        cleanup_unpublished_or_abort(
+            "r30 exhaustion retained page identity drift",
+            &mut memory,
+            leases,
+        );
+        return Err("r30 exhaustion retained page identity drift".to_owned());
+    }
+    let occupied_roster_len = leases.len();
+    let occupied_page_rejected = match memory.lease_page(request, Qwen3ModelRole::Target8B, 0) {
+        Err(ferric_engine::M1DeviceKvArenaLeaseErrorV1::PageAlreadyLeased) => true,
+        Err(error) => {
+            let diagnostic =
+                format!("r30 exhaustion returned the wrong occupied-slot rejection: {error:?}");
+            cleanup_unpublished_or_abort(
+                "r30 exhaustion returned the wrong occupied-slot rejection",
+                &mut memory,
+                leases,
+            );
+            return Err(diagnostic);
+        }
+        Ok(extra) => {
+            leases.push(extra);
+            cleanup_unpublished_or_abort(
+                "r30 exhaustion re-leased an occupied page",
+                &mut memory,
+                leases,
+            );
+            return Err("r30 exhaustion re-leased an occupied page".to_owned());
+        }
+    };
+    let rejected_page = u32::try_from(page_capacity)
+        .map_err(|_| "r30 exhaustion boundary index exceeds u32".to_owned())?;
+    let out_of_range_page_rejected =
+        match memory.lease_page(request, Qwen3ModelRole::Target8B, rejected_page) {
+            Err(ferric_engine::M1DeviceKvArenaLeaseErrorV1::PageOutOfRange) => true,
+            Err(error) => {
+                let diagnostic =
+                    format!("r30 exhaustion returned the wrong boundary rejection: {error:?}");
+                cleanup_unpublished_or_abort(
+                    "r30 exhaustion returned the wrong boundary rejection",
+                    &mut memory,
+                    leases,
+                );
+                return Err(diagnostic);
+            }
+            Ok(extra) => {
+                leases.push(extra);
+                cleanup_unpublished_or_abort(
+                    "r30 exhaustion admitted a page beyond exact capacity",
+                    &mut memory,
+                    leases,
+                );
+                return Err("r30 exhaustion admitted a page beyond exact capacity".to_owned());
+            }
+        };
+    if leases.len() != occupied_roster_len
+        || leases.iter().any(|lease| {
+            lease.request() != request
+                || lease.allocation_id() != target_arena
+                || lease.page().role() != Qwen3ModelRole::Target8B
+                || lease.page().generation() != first_generation
+                || memory
+                    .validate_page_identity(request, target_arena, lease.page())
+                    .is_err()
+        })
+    {
+        cleanup_unpublished_or_abort(
+            "r30 exhaustion rejection changed retained page custody",
+            &mut memory,
+            leases,
+        );
+        return Err("r30 exhaustion rejection changed retained page custody".to_owned());
+    }
+    let checked_leases = leases.len();
+    let returned_pages = match memory.return_unpublished_pages(leases) {
+        Ok(returned) => returned,
+        Err(failure) => quarantine_unpublished_pages(
+            "r30 exhaustion complete page return rejected",
+            memory,
+            failure,
+        ),
+    };
+    let reused = memory
+        .lease_page(request, Qwen3ModelRole::Target8B, 0)
+        .map_err(|error| format!("cannot re-lease returned r30 exhaustion page: {error:?}"))?;
+    let reused_generation = reused.page().generation();
+    let Some(expected_reused_generation) = first_generation.checked_add(1) else {
+        cleanup_unpublished_or_abort(
+            "r30 exhaustion page generation overflow",
+            &mut memory,
+            vec![reused],
+        );
+        return Err("r30 exhaustion page generation overflow".to_owned());
+    };
+    if reused_generation != expected_reused_generation
+        || memory
+            .validate_page_identity(request, target_arena, reused.page())
+            .is_err()
+    {
+        cleanup_unpublished_or_abort(
+            "r30 exhaustion generation-advanced reuse drift",
+            &mut memory,
+            vec![reused],
+        );
+        return Err("r30 exhaustion generation-advanced reuse drift".to_owned());
+    }
+    let reused_returned_pages = match memory.return_unpublished_pages(vec![reused]) {
+        Ok(returned) => returned,
+        Err(failure) => quarantine_unpublished_pages(
+            "r30 exhaustion reused-page return rejected",
+            memory,
+            failure,
+        ),
+    };
+    engine
+        .retire(request)
+        .map_err(|error| format!("cannot retire r30 exhaustion request: {error:?}"))?;
+    let engine_reclaimed = engine
+        .reclaim_one()
+        .map_err(|error| format!("cannot reclaim r30 exhaustion request: {error:?}"))?
+        .ok_or_else(|| "r30 exhaustion request did not become reclaimable".to_owned())?;
+    m1_r30_exhaustion_partial_capture::manifest(
+        m1_r30_exhaustion_partial_capture::CaptureInputsV1 {
+            checked_leases,
+            device,
+            draft_arena,
+            engine_reclaimed,
+            first_generation,
+            occupied_page_rejected,
+            out_of_range_page_rejected,
+            request,
+            returned_pages,
+            reused_generation,
+            reused_returned_pages,
+            runner,
+            target_arena,
+        },
+    )
+}
+
+fn cleanup_unpublished_or_abort(
+    phase: &'static str,
+    memory: &mut ferric_engine::M1PartitionedModelMemoryKvPoolV1,
+    leases: Vec<ferric_engine::DeviceKvPageLease>,
+) {
+    match memory.return_unpublished_pages(leases) {
+        Ok(_) => {}
+        Err(failure) => {
+            let failure = core::mem::ManuallyDrop::new(failure);
+            let _ = &failure;
+            let _ = writeln!(
+                std::io::stderr().lock(),
+                "FAIL-STOP: {phase}; unpublished page custody retained"
+            );
+            std::process::abort();
+        }
+    }
+}
+
+fn quarantine_unpublished_pages(
+    phase: &'static str,
+    memory: ferric_engine::M1PartitionedModelMemoryKvPoolV1,
+    failure: ferric_engine::M1UnpublishedKvPageReturnFailureV1,
+) -> ! {
+    let custody = core::mem::ManuallyDrop::new((memory, failure));
+    let _ = &custody;
+    let _ = writeln!(
+        std::io::stderr().lock(),
+        "FAIL-STOP: {phase}; physical memory and unpublished page custody retained"
+    );
+    std::process::abort();
 }
 
 fn run_r30_rollback_capture(arguments: &[OsString]) -> CaptureResult<()> {
@@ -7240,6 +7524,17 @@ mod tests {
         wrong_width[0] = OsString::from(m1_r30_rollback_partial_capture::COMMAND);
         let rollback_error = run(wrong_width).unwrap_err();
         assert!(rollback_error.contains("capture-r30-rollback MODEL-SOURCE"));
+
+        let exhaustion_error = run(vec![OsString::from(
+            m1_r30_exhaustion_partial_capture::COMMAND,
+        )])
+        .unwrap_err();
+        assert!(exhaustion_error.contains("capture-r30-exhaustion MODEL-SOURCE"));
+
+        let mut exhaustion_wrong_width = vec![OsString::from("unused"); 11];
+        exhaustion_wrong_width[0] = OsString::from(m1_r30_exhaustion_partial_capture::COMMAND);
+        let exhaustion_error = run(exhaustion_wrong_width).unwrap_err();
+        assert!(exhaustion_error.contains("capture-r30-exhaustion MODEL-SOURCE"));
 
         let r32_error = run(vec![OsString::from(m1_r32_partial_capture::COMMAND)]).unwrap_err();
         assert!(r32_error.contains("capture-r32-speculative-k4 MODEL-SOURCE"));

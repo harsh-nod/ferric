@@ -274,6 +274,51 @@ pub struct DeviceKvPageLease {
     page: PhysicalPageId,
 }
 
+/// Stable rejection from returning a detached, unpublished page roster.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1UnpublishedKvPageReturnErrorV1 {
+    /// The caller supplied no page custody.
+    EmptyRoster,
+    /// Host staging for the all-or-nothing return could not be reserved.
+    HostCustodyAllocation,
+    /// Two roster members name the same role-scoped global page slot.
+    DuplicatePage {
+        /// First occurrence in the supplied roster.
+        first: usize,
+        /// Later duplicate occurrence in the supplied roster.
+        second: usize,
+    },
+    /// One exact roster member failed page-ledger preflight.
+    Page {
+        /// Zero-based position in the supplied roster.
+        position: usize,
+        /// Exact page-return rejection class.
+        source: M1QualificationTargetPagePreleaseCancellationPageErrorV1,
+    },
+}
+
+/// Transactional unpublished-page return rejection retaining every lease.
+#[must_use = "failed unpublished page return retains the complete lease roster"]
+#[derive(Debug)]
+pub struct M1UnpublishedKvPageReturnFailureV1 {
+    error: M1UnpublishedKvPageReturnErrorV1,
+    leases: Vec<DeviceKvPageLease>,
+}
+
+impl M1UnpublishedKvPageReturnFailureV1 {
+    /// Exact stable return diagnostic.
+    #[must_use]
+    pub const fn error(&self) -> M1UnpublishedKvPageReturnErrorV1 {
+        self.error
+    }
+
+    /// Recovers the unchanged lease roster for retry or quarantine.
+    #[must_use = "the exact detached lease roster still requires handling"]
+    pub fn into_leases(self) -> Vec<DeviceKvPageLease> {
+        self.leases
+    }
+}
+
 impl DeviceKvPageLease {
     /// Returns the inert allocation identity without exposing an address.
     #[must_use]
@@ -1241,6 +1286,82 @@ impl M1PartitionedModelMemoryKvPoolV1 {
         })
     }
 
+    /// Returns an exact roster of pages that never entered cache or queue custody.
+    ///
+    /// Every page, request, role, allocation, and generation is preflighted
+    /// before the first ledger mutation. Success advances each returned slot's
+    /// generation exactly once. Rejection leaves the pool unchanged and returns
+    /// every supplied lease in its original order.
+    ///
+    /// # Errors
+    ///
+    /// Rejects an empty or duplicate roster, host staging failure, or any
+    /// substituted, stale, mismatched, or generation-exhausted lease.
+    pub fn return_unpublished_pages(
+        &mut self,
+        leases: Vec<DeviceKvPageLease>,
+    ) -> Result<usize, M1UnpublishedKvPageReturnFailureV1> {
+        if leases.is_empty() {
+            return Err(M1UnpublishedKvPageReturnFailureV1 {
+                error: M1UnpublishedKvPageReturnErrorV1::EmptyRoster,
+                leases,
+            });
+        }
+        // Duplicate preflight is allocation-free and precedes every pool read or mutation.
+        if let Some(error) = duplicate_unpublished_page(&leases) {
+            return Err(M1UnpublishedKvPageReturnFailureV1 { error, leases });
+        }
+        let mut tickets = Vec::new();
+        if tickets.try_reserve_exact(leases.len()).is_err() {
+            return Err(M1UnpublishedKvPageReturnFailureV1 {
+                error: M1UnpublishedKvPageReturnErrorV1::HostCustodyAllocation,
+                leases,
+            });
+        }
+        for (position, lease) in leases.iter().enumerate() {
+            let role = lease.page().role();
+            let global_index = match global_page_index(lease.request(), lease.page().index()) {
+                Ok(index) => index,
+                Err(_) => {
+                    return Err(M1UnpublishedKvPageReturnFailureV1 {
+                        error: M1UnpublishedKvPageReturnErrorV1::Page {
+                            position,
+                            source: M1QualificationTargetPagePreleaseCancellationPageErrorV1::Index,
+                        },
+                        leases,
+                    })
+                }
+            };
+            let ticket = match preflight_page_return_identity(
+                self.device,
+                self.allocation_id(role),
+                role,
+                self.page_ledger(role).get(global_index).copied(),
+                global_index,
+                lease.request(),
+                lease,
+            ) {
+                Ok(ticket) => ticket,
+                Err(source) => {
+                    return Err(M1UnpublishedKvPageReturnFailureV1 {
+                        error: M1UnpublishedKvPageReturnErrorV1::Page {
+                            position,
+                            source: source.into(),
+                        },
+                        leases,
+                    })
+                }
+            };
+            tickets.push(ticket);
+        }
+        let count = leases.len();
+        for (ticket, lease) in tickets.into_iter().zip(leases) {
+            let state = &mut self.page_ledger_mut(ticket.role)[ticket.global_index];
+            commit_page_return_state(state, ticket, lease);
+        }
+        Ok(count)
+    }
+
     fn page_ledger(&self, role: Qwen3ModelRole) -> &[M1KvPoolPageStateV1] {
         match role {
             Qwen3ModelRole::Target8B => &self.target_pages,
@@ -1309,6 +1430,24 @@ impl M1PartitionedModelMemoryKvPoolV1 {
         }
         Ok(())
     }
+}
+
+fn duplicate_unpublished_page(
+    leases: &[DeviceKvPageLease],
+) -> Option<M1UnpublishedKvPageReturnErrorV1> {
+    for second in 1..leases.len() {
+        for first in 0..second {
+            let left = &leases[first];
+            let right = &leases[second];
+            if left.page().role() == right.page().role()
+                && left.request().slot() == right.request().slot()
+                && left.page().index() == right.page().index()
+            {
+                return Some(M1UnpublishedKvPageReturnErrorV1::DuplicatePage { first, second });
+            }
+        }
+    }
+    None
 }
 
 /// Successful all-lane qualification page prelease.
@@ -5427,6 +5566,44 @@ mod tests {
             }),
             Err(M1DeviceKvArenaLeaseErrorV1::PageAlreadyLeased)
         ));
+    }
+
+    #[test]
+    fn unpublished_return_duplicate_preflight_precedes_pool_and_ticket_access() {
+        // The pinned allocation owner has no host fake. This exercises the exact
+        // allocation-free branch that the public method takes before pool access.
+        let lease = |role, request, page, generation| DeviceKvPageLease {
+            device: device(),
+            allocation_id: match role {
+                Qwen3ModelRole::Target8B => identity(31),
+                Qwen3ModelRole::Draft06B => identity(32),
+            },
+            request,
+            page: PhysicalPageId::new(role, page, generation),
+        };
+        let roster = vec![
+            lease(Qwen3ModelRole::Target8B, RequestId::new(3, 7), 9, 1),
+            lease(Qwen3ModelRole::Draft06B, RequestId::new(3, 7), 9, 1),
+            lease(Qwen3ModelRole::Target8B, RequestId::new(3, 8), 9, 2),
+        ];
+        let before: Vec<_> = roster
+            .iter()
+            .map(|lease| (lease.allocation_id(), lease.request(), lease.page()))
+            .collect();
+        assert_eq!(
+            duplicate_unpublished_page(&roster),
+            Some(M1UnpublishedKvPageReturnErrorV1::DuplicatePage {
+                first: 0,
+                second: 2,
+            })
+        );
+        assert_eq!(
+            roster
+                .iter()
+                .map(|lease| (lease.allocation_id(), lease.request(), lease.page()))
+                .collect::<Vec<_>>(),
+            before
+        );
     }
 
     #[test]

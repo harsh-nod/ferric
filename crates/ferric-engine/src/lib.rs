@@ -84,11 +84,11 @@ pub use device_cache::{
     M1QualificationTargetPagePreleaseProgressV1, M1QualificationTargetPagePreleaseRecoveryV1,
     M1QualificationTargetPagePreleaseSuccessV1, M1QualificationTargetPageReserveV1,
     M1TargetPartitionedKvQuarantineV1, M1UnpartitionedModelMemoryKvRecoveryV1,
-    PendingDeviceKvStepWrite, PendingDeviceKvWrite, PendingSpeculativeDraftKvRoundWrite,
-    PendingWriteCompletionFailure, PoisonedDeviceKvCache, QuiescenceFailure,
-    QuiescentDeviceKvCache, RetirementCompletionFailure, SettledQuiescentDeviceKvCache,
-    WriteApplicationFailure, GFX942_PROCESSOR, GFX942_TARGET_FEATURES,
-    M1_QUALIFICATION_TARGET_PAGE_COUNT_V1,
+    M1UnpublishedKvPageReturnErrorV1, M1UnpublishedKvPageReturnFailureV1, PendingDeviceKvStepWrite,
+    PendingDeviceKvWrite, PendingSpeculativeDraftKvRoundWrite, PendingWriteCompletionFailure,
+    PoisonedDeviceKvCache, QuiescenceFailure, QuiescentDeviceKvCache, RetirementCompletionFailure,
+    SettledQuiescentDeviceKvCache, WriteApplicationFailure, GFX942_PROCESSOR,
+    GFX942_TARGET_FEATURES, M1_QUALIFICATION_TARGET_PAGE_COUNT_V1,
 };
 pub use epoch::ExactCompletion;
 pub use initialized_model_memory::{

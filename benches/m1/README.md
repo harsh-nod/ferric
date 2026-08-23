@@ -321,6 +321,33 @@ required `m1.r30` cases. It grants no physical page or subpage return/reuse
 authority and makes no evidence, external or independent validation, hardware
 correctness, performance, qualification, `m1.r30`, or M1 closure claim.
 
+The engine also exposes a Ferric-owned physical KV-ledger saturation capture
+for the R30 exhaustion case:
+
+```text
+cargo run --locked -p ferric-engine --bin ferric-m1-qualification-capture -- \
+  capture-r30-exhaustion MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS \
+  CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE
+```
+
+This command authenticates and initializes the exact gfx942 model-memory
+allocation owner, admits one production Engine request, leases all 512
+request-local target KV pages, and requires a second lease of occupied page zero
+to fail exactly with `PageAlreadyLeased` while the complete roster remains
+valid. It separately requires the static P512/page-513 index check to fail with
+`PageOutOfRange`. It returns all unpublished pages atomically, re-leases page
+zero at the next generation, returns it again, and requires exact Engine
+retirement and reclamation. The two-file output uses canonical
+`FERRIC-M1-R30-EXHAUSTION-PARTIAL-PROTOCOL-V1` and no-replace publication.
+
+The exhaustion bundle remains `partial-non-evidence`: it establishes only
+request-local model-memory ledger saturation, not device-memory exhaustion or
+pressure. It does not dispatch a kernel or create or pressure a queue. The full
+R30 roster still lacks Ferric-owned guard-region readback for canary validation
+and an admitted physical queue/device fault-injection authority. Those missing
+runtime boundaries cannot be replaced by the existing external self-reported
+intake.
+
 The serving suite has an additive pre-observation producer for one bounded,
 externally declared target-load diagnostic:
 
