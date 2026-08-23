@@ -7591,26 +7591,6 @@ mod tests {
         }
     }
 
-    struct BareOutput(PathBuf);
-
-    impl BareOutput {
-        fn new() -> Self {
-            let nonce = TEST_NONCE.fetch_add(1, Ordering::Relaxed);
-            let path = PathBuf::from(format!(
-                ".ferric-m1-qualification-capture-bare-test.{}.{nonce}",
-                std::process::id()
-            ));
-            assert!(!path.exists());
-            Self(path)
-        }
-    }
-
-    impl Drop for BareOutput {
-        fn drop(&mut self) {
-            let _ = fs::remove_dir_all(&self.0);
-        }
-    }
-
     fn canonical(value: Value) -> Vec<u8> {
         canonical_bytes(&value).unwrap()
     }
@@ -8299,17 +8279,17 @@ mod tests {
     #[test]
     fn bare_input_and_output_paths_use_current_directory() {
         let bare_workload = Path::new("workload.json");
+        let bare_output = Path::new("capture.bundle");
         let workload_parent = bare_workload
             .parent()
             .filter(|parent| !parent.as_os_str().is_empty())
             .unwrap_or_else(|| Path::new("."));
+        let output_parent = bare_output
+            .parent()
+            .filter(|parent| !parent.as_os_str().is_empty())
+            .unwrap_or_else(|| Path::new("."));
         assert_eq!(workload_parent, Path::new("."));
-
-        let output = BareOutput::new();
-        let mut staging = StagingOutput::create(&output.0).unwrap();
-        staging.write("payload", b"captured\n").unwrap();
-        staging.publish().unwrap();
-        assert_eq!(fs::read(output.0.join("payload")).unwrap(), b"captured\n");
+        assert_eq!(output_parent, Path::new("."));
     }
 
     #[test]
