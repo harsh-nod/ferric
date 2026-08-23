@@ -2133,6 +2133,31 @@ pub struct M1QualificationContextStepAbortFailureV1 {
     pending: M1PendingQualificationContextStepWriteV1,
 }
 
+/// Retry-safe qualification abort rejection after workspace conversion.
+///
+/// The embedded qualification witness and every pending boundary-page lease
+/// remain inside the returned generic pending write.
+#[must_use = "the witness-bearing pending write remains linear"]
+#[derive(Debug, PartialEq, Eq)]
+pub struct M1QualificationPendingStepAbortFailureV1 {
+    error: DeviceKvCacheError,
+    pending: PendingDeviceKvStepWrite,
+}
+
+impl M1QualificationPendingStepAbortFailureV1 {
+    /// Exact fail-closed abort diagnostic.
+    #[must_use]
+    pub const fn error(&self) -> DeviceKvCacheError {
+        self.error
+    }
+
+    /// Recovers the diagnostic and unchanged witness-bearing pending write.
+    #[must_use = "the diagnostic and pending write remain paired"]
+    pub fn into_parts(self) -> (DeviceKvCacheError, PendingDeviceKvStepWrite) {
+        (self.error, self.pending)
+    }
+}
+
 impl M1QualificationContextStepAbortFailureV1 {
     /// Exact fail-closed abort diagnostic.
     #[must_use]
@@ -3550,39 +3575,15 @@ impl ActiveDeviceKvCache {
             }))
         };
         let context = qualified.context;
-        let expected_new_pages = usize::from(context.ordinal().is_multiple_of(M1_KV_PAGE_TOKENS));
         let Some(reserve) = self.common.target_qualification_reserve.as_ref() else {
             return reject(DeviceKvCacheError::QualificationReserveMissing, qualified);
         };
         if !qualified.conserves_target_pages()
             || qualified.pending.qualification_context != Some(context)
-            || !qualified
-                .pending
-                .qualification_context_exactly_matches(context)
-            || qualified.pending.request() != reserve.request
-            || qualified.pending.selection().role != Qwen3ModelRole::Target8B
-            || qualified.pending.committed_tokens() != context.ordinal()
-            || qualified.pending.active_tokens() != 1
-            || qualified.pending.new_page_leases.len() != expected_new_pages
             || qualified.active_pages != self.common.target.active_pages.len()
             || qualified.unused_future_pages != reserve.unused_pages.len()
-            || !reserve.matches_context(context)
-            || !reserve.ordered_state_is_valid()
         {
             return reject(DeviceKvCacheError::QualificationWitnessMismatch, qualified);
-        }
-        if let Some(lease) = qualified.pending.new_page_leases.first() {
-            if lease.device != reserve.device
-                || lease.request != reserve.request
-                || lease.page.role() != Qwen3ModelRole::Target8B
-                || lease.page.index() != context.ordinal() / M1_KV_PAGE_TOKENS
-                || !lease.allocation_id.equals(&reserve.allocation_id)
-            {
-                return reject(
-                    DeviceKvCacheError::QualificationPageOrderMismatch,
-                    qualified,
-                );
-            }
         }
 
         let M1PendingQualificationContextStepWriteV1 {
@@ -3591,23 +3592,11 @@ impl ActiveDeviceKvCache {
             active_pages,
             unused_future_pages,
         } = qualified;
-        let Some(mut reserve) = self.common.target_qualification_reserve.take() else {
-            return reject(
-                DeviceKvCacheError::QualificationReserveMissing,
-                M1PendingQualificationContextStepWriteV1 {
-                    context,
-                    pending,
-                    active_pages,
-                    unused_future_pages,
-                },
-            );
-        };
-        let aborted = match self.abort_step_write_inner(pending) {
-            Ok(aborted) => aborted,
+        match self.abort_m1_qualification_pending_step_write_v1(pending) {
+            Ok(returned) => Ok(returned),
             Err(failure) => {
                 let (error, pending) = failure.into_parts();
-                self.common.target_qualification_reserve = Some(reserve);
-                return reject(
+                reject(
                     error,
                     M1PendingQualificationContextStepWriteV1 {
                         context,
@@ -3615,7 +3604,101 @@ impl ActiveDeviceKvCache {
                         active_pages,
                         unused_future_pages,
                     },
-                );
+                )
+            }
+        }
+    }
+
+    /// Aborts a qualification reservation recovered from workspace custody.
+    ///
+    /// The exact policy/workload/lane/ordinal witness remains embedded after
+    /// [`M1PendingQualificationContextStepWriteV1::into_pending_step_write`].
+    /// This consuming recovery path revalidates that witness, the target C8192
+    /// selection, the cache prefix, and `active + pending + future = 512`, then
+    /// restores an exact boundary lease directly into reverse pop order.
+    ///
+    /// # Errors
+    ///
+    /// Rejects a non-qualification pending write or any witness, cache, marker,
+    /// conservation, page-order, request, selection, or allocation drift while
+    /// returning the unchanged pending write for retry.
+    pub fn abort_m1_qualification_pending_step_write_v1(
+        &mut self,
+        pending: PendingDeviceKvStepWrite,
+    ) -> Result<
+        crate::M1ValidatedQualificationContextStepV1,
+        Box<M1QualificationPendingStepAbortFailureV1>,
+    > {
+        let reject = |error, pending| {
+            Err(Box::new(M1QualificationPendingStepAbortFailureV1 {
+                error,
+                pending,
+            }))
+        };
+        let Some(context) = pending.qualification_context else {
+            return reject(DeviceKvCacheError::QualificationWitnessMismatch, pending);
+        };
+        let Some(reserve) = self.common.target_qualification_reserve.as_ref() else {
+            return reject(DeviceKvCacheError::QualificationReserveMissing, pending);
+        };
+        let ordinal = context.ordinal();
+        let expected_active =
+            usize::try_from(ordinal.div_ceil(M1_KV_PAGE_TOKENS)).unwrap_or(usize::MAX);
+        let expected_new = usize::from(ordinal.is_multiple_of(M1_KV_PAGE_TOKENS));
+        let expected_unused = expected_active
+            .checked_add(expected_new)
+            .and_then(|used| M1_QUALIFICATION_TARGET_PAGE_COUNT_V1.checked_sub(used));
+        let expected_selection = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Decode,
+            bucket: qualification_decode_bucket(context.grouping()),
+        };
+        let conserved = self
+            .common
+            .target
+            .active_pages
+            .len()
+            .checked_add(pending.new_page_leases.len())
+            .and_then(|used| used.checked_add(reserve.unused_pages.len()))
+            == Some(M1_QUALIFICATION_TARGET_PAGE_COUNT_V1);
+        if !pending.qualification_context_exactly_matches(context)
+            || reserve.device != self.common.device
+            || reserve.request != self.common.request
+            || !reserve.matches_context(context)
+            || !reserve.ordered_state_is_valid()
+            || pending.request() != reserve.request
+            || pending.selection() != expected_selection
+            || pending.committed_tokens() != ordinal
+            || pending.active_tokens() != 1
+            || pending.new_page_leases.len() != expected_new
+            || self.common.target.logical().committed_tokens != ordinal
+            || self.common.target.logical().resident_tokens != ordinal
+            || self.common.target.active_pages.len() != expected_active
+            || expected_unused != Some(reserve.unused_pages.len())
+            || !conserved
+        {
+            return reject(DeviceKvCacheError::QualificationWitnessMismatch, pending);
+        }
+        if let Some(lease) = pending.new_page_leases.first() {
+            if lease.device != reserve.device
+                || lease.request != reserve.request
+                || lease.page.role() != Qwen3ModelRole::Target8B
+                || lease.page.index() != ordinal / M1_KV_PAGE_TOKENS
+                || !lease.allocation_id.equals(&reserve.allocation_id)
+            {
+                return reject(DeviceKvCacheError::QualificationPageOrderMismatch, pending);
+            }
+        }
+
+        let Some(mut reserve) = self.common.target_qualification_reserve.take() else {
+            return reject(DeviceKvCacheError::QualificationReserveMissing, pending);
+        };
+        let aborted = match self.abort_step_write_inner(pending) {
+            Ok(aborted) => aborted,
+            Err(failure) => {
+                let (error, pending) = failure.into_parts();
+                self.common.target_qualification_reserve = Some(reserve);
+                return reject(error, pending);
             }
         };
         reserve.unused_pages.extend(aborted.into_page_leases());
@@ -4696,9 +4779,10 @@ mod tests {
     use super::*;
     use ferric_build::qwen3_kv_arena_bytes;
     use ferric_spec::{
-        m1_qualification_context_plan, M1QualificationContextPlan,
+        m1_qualification_context_plan, validate_m1_step_inputs, M1QualificationContextPlan,
         M1QualificationExecutionBindingDeclaration, M1QualificationLaneExecutionBinding,
-        M1QualificationLaneGrouping, Qwen3ExecutionMode, Qwen3PlanBucket,
+        M1QualificationLaneGrouping, M1StepInputCandidate, M1StepInputValidationOutcome,
+        Qwen3ExecutionMode, Qwen3PlanBucket, StepPlan, ValidatedM1StepInputs,
         M1_KV_PHYSICAL_PAGE_SLOTS,
     };
 
@@ -5201,6 +5285,32 @@ mod tests {
             PhysicalPageId::new(Qwen3ModelRole::Target8B, index, 1),
         )
         .unwrap()
+    }
+
+    fn qualification_workspace_inputs(
+        request: RequestId,
+        epoch: CompletionEpoch,
+        context_tokens: u32,
+    ) -> ValidatedM1StepInputs {
+        let selected = selected(
+            Qwen3ModelRole::Target8B,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        let candidate = M1StepInputCandidate::new(
+            selected,
+            vec![Some(StepPlan::new(request, epoch, identity(91), selected))],
+            vec![1],
+            vec![context_tokens],
+            vec![1],
+            vec![context_tokens],
+        );
+        match validate_m1_step_inputs(candidate) {
+            M1StepInputValidationOutcome::Validated(inputs) => inputs,
+            M1StepInputValidationOutcome::Rejected(failure) => {
+                panic!("qualification workspace fixture must validate: {failure:?}")
+            }
+        }
     }
 
     fn install_qualification_reserve_for_test(
@@ -6793,6 +6903,60 @@ mod tests {
             cache.projection().target_qualification_future_pages,
             M1_QUALIFICATION_TARGET_PAGE_COUNT_V1
         );
+    }
+
+    #[test]
+    fn qualification_workspace_failure_can_publicly_abort_and_retry_boundary() {
+        let grouping = M1QualificationLaneGrouping::S1;
+        let (plan, expected) = qualification_plan(grouping);
+        let validated =
+            crate::validate_m1_qualification_context_plan_v1(&plan, grouping, &expected).unwrap();
+        let context = validated.step(0, 0).unwrap();
+        let mut cache = qualification_cache(request(), grouping);
+        install_qualification_reserve_for_test(&mut cache, context, 78);
+        let epoch = CompletionEpoch::new(3);
+        let pending = cache
+            .reserve_m1_qualification_context_step_write_v1(request(), 0, context, epoch)
+            .unwrap()
+            .into_pending_step_write();
+        let inputs = qualification_workspace_inputs(request(), epoch, 1);
+
+        let failure = crate::bind_m1_kv_workspace_table_v1(inputs, vec![pending]).unwrap_err();
+        assert!(matches!(
+            failure.error(),
+            crate::M1KvWorkspaceTableBindingErrorV1::ReservationCommittedTokens {
+                lane: 0,
+                expected: 1,
+                actual: 0,
+            }
+        ));
+        let (_error, _inputs, mut reservations) = failure.into_parts();
+        let recovered = reservations.pop().unwrap();
+        assert_eq!(recovered.qualification_context(), Some(context));
+        assert_eq!(
+            cache
+                .abort_m1_qualification_pending_step_write_v1(recovered)
+                .unwrap(),
+            context
+        );
+        assert!(!cache.projection().target_write_pending);
+        assert_eq!(
+            cache.projection().target_qualification_future_pages,
+            M1_QUALIFICATION_TARGET_PAGE_COUNT_V1
+        );
+
+        let retry = cache
+            .reserve_m1_qualification_context_step_write_v1(
+                request(),
+                0,
+                context,
+                CompletionEpoch::new(4),
+            )
+            .unwrap();
+        assert!(retry.conserves_target_pages());
+        cache
+            .abort_m1_qualification_context_step_write_v1(retry)
+            .unwrap();
     }
 
     #[test]

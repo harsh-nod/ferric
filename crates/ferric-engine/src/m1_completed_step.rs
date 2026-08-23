@@ -9,7 +9,7 @@ use core::fmt;
 
 use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::scheduling::RequestState;
-use ferric_spec::{Qwen3ModelRole, RequestId};
+use ferric_spec::{M1QualificationContextStepKind, Qwen3ModelRole, RequestId};
 
 use crate::device_cache::{
     DeviceKvStepCompletionOutcome, InertInitializedDeviceKvStepWrite,
@@ -512,14 +512,21 @@ fn preflight_target_completion_semantics(
     lane: usize,
     pending: &PendingDeviceKvStepWrite,
     semantics: CheckedCompletionSemantics,
+    disposition: M1DeviceKvCompletionDispositionV1,
 ) -> Result<(), M1CompletedStepErrorV1> {
     let matches = match semantics {
         CheckedCompletionSemantics::DirectFinalRow { .. } => {
             pending.qualification_context().is_none()
         }
-        CheckedCompletionSemantics::QualificationPromptCommit { context, .. }
-        | CheckedCompletionSemantics::QualificationFinalRow { context, .. } => {
-            pending.qualification_context_exactly_matches(context)
+        CheckedCompletionSemantics::QualificationPromptCommit { context, .. } => {
+            context.step().kind == M1QualificationContextStepKind::TeacherForcedPromptContext
+                && pending.qualification_context_exactly_matches(context)
+                && disposition == M1DeviceKvCompletionDispositionV1::Continue
+        }
+        CheckedCompletionSemantics::QualificationFinalRow { context, .. } => {
+            context.step().kind == M1QualificationContextStepKind::FinalObserved
+                && pending.qualification_context_exactly_matches(context)
+                && disposition == M1DeviceKvCompletionDispositionV1::Retire
         }
         CheckedCompletionSemantics::Speculative { .. } => false,
     };
@@ -618,7 +625,12 @@ fn preflight_all<const C: usize>(
                 {
                     return Err(M1CompletedStepErrorV1::CompletionSemantics { lane });
                 }
-                preflight_target_completion_semantics(lane, target, semantics)?;
+                preflight_target_completion_semantics(
+                    lane,
+                    target,
+                    semantics,
+                    roster.members()[lane].disposition(),
+                )?;
                 (
                     [Some(target), None],
                     MemberArithmeticV1 {
@@ -1419,6 +1431,7 @@ mod tests {
                     choice: 7,
                     context: context_a,
                 },
+                M1DeviceKvCompletionDispositionV1::Continue,
             ),
             Ok(())
         );
@@ -1431,6 +1444,7 @@ mod tests {
                         choice: 7,
                         context: substituted,
                     },
+                    M1DeviceKvCompletionDispositionV1::Continue,
                 ),
                 Err(M1CompletedStepErrorV1::CompletionSemantics { lane: 0 })
             );
@@ -1440,8 +1454,75 @@ mod tests {
                 0,
                 target,
                 CheckedCompletionSemantics::DirectFinalRow { token: 7 },
+                M1DeviceKvCompletionDispositionV1::Continue,
             ),
             Err(M1CompletedStepErrorV1::CompletionSemantics { lane: 0 })
+        );
+    }
+
+    #[test]
+    fn qualification_disposition_follows_exact_step_after_future_reserve_is_empty() {
+        with_large_stack(
+            qualification_disposition_follows_exact_step_after_future_reserve_is_empty_inner,
+        );
+    }
+
+    fn qualification_disposition_follows_exact_step_after_future_reserve_is_empty_inner() {
+        for ordinal in [8_176, 8_190] {
+            let context = qualification_context(81, 82, 83, ordinal);
+            let mut work = target_only_work(
+                RequestId::new(0, 30 + ordinal),
+                M1DeviceKvCompletionDispositionV1::Retire,
+            );
+            let before = work.member.cache.projection();
+            let MemberReservationsV1::TargetOnly { target } = &mut work.reservations else {
+                unreachable!();
+            };
+            target.bind_qualification_context_for_test(context);
+            assert_eq!(
+                preflight_target_completion_semantics(
+                    0,
+                    target,
+                    CheckedCompletionSemantics::QualificationPromptCommit { choice: 7, context },
+                    M1DeviceKvCompletionDispositionV1::Retire,
+                ),
+                Err(M1CompletedStepErrorV1::CompletionSemantics { lane: 0 })
+            );
+            assert_eq!(target.qualification_context(), Some(context));
+            assert_eq!(work.member.cache.projection(), before);
+        }
+
+        let context = qualification_context(81, 82, 83, 8_191);
+        let mut work = target_only_work(
+            RequestId::new(0, 8_221),
+            M1DeviceKvCompletionDispositionV1::Retire,
+        );
+        let before = work.member.cache.projection();
+        let MemberReservationsV1::TargetOnly { target } = &mut work.reservations else {
+            unreachable!();
+        };
+        target.bind_qualification_context_for_test(context);
+        let final_semantics =
+            CheckedCompletionSemantics::QualificationFinalRow { token: 7, context };
+        assert_eq!(
+            preflight_target_completion_semantics(
+                0,
+                target,
+                final_semantics,
+                M1DeviceKvCompletionDispositionV1::Continue,
+            ),
+            Err(M1CompletedStepErrorV1::CompletionSemantics { lane: 0 })
+        );
+        assert_eq!(target.qualification_context(), Some(context));
+        assert_eq!(work.member.cache.projection(), before);
+        assert_eq!(
+            preflight_target_completion_semantics(
+                0,
+                target,
+                final_semantics,
+                M1DeviceKvCompletionDispositionV1::Retire,
+            ),
+            Ok(())
         );
     }
 
