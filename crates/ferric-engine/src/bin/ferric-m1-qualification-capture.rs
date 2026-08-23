@@ -93,6 +93,9 @@ use std::io::{Cursor, Read, Write};
 use std::path::{Component, Path, PathBuf};
 use std::process::ExitCode;
 
+#[path = "ferric-m1-qualification-capture/input_bundle.rs"]
+mod input_bundle;
+
 const PLAN_FORMAT: &str = "FERRIC-M1-BENCHMARK-PLAN-V1";
 const ROSTER_FORMAT: &str = "FERRIC-M1-QUALIFICATION-ROSTER-V1";
 const WORKLOAD_FORMAT: &str = "FERRIC-M1-QUALIFICATION-WORKLOAD-V1";
@@ -891,6 +894,7 @@ struct DifferentialPlan {
     bytes: Vec<u8>,
     cases: Vec<PlanCase>,
     identities: BTreeMap<String, String>,
+    input_sha256: String,
 }
 
 impl DifferentialPlan {
@@ -931,7 +935,7 @@ struct Workload {
     selection: Qwen3PlanSelection,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 struct ClosureIdentities {
     compiler: Identity,
     compiler_configuration: Identity,
@@ -1143,6 +1147,37 @@ impl SecureFile {
         }
         Ok(())
     }
+
+    fn sha256_snapshot(&mut self, description: &str) -> CaptureResult<String> {
+        let expected = self.length(description)?;
+        if expected == 0 {
+            return Err(format!("{description} must not be empty"));
+        }
+        let mut hasher = Sha256::new();
+        let mut actual = 0_usize;
+        let mut buffer = vec![0_u8; 64 * 1_024].into_boxed_slice();
+        loop {
+            let count = self
+                .file
+                .read(&mut buffer)
+                .map_err(|error| format!("cannot read {description}: {error}"))?;
+            if count == 0 {
+                break;
+            }
+            actual = actual
+                .checked_add(count)
+                .ok_or_else(|| format!("{description} length overflowed"))?;
+            if actual > expected {
+                return Err(format!("{description} changed while being measured"));
+            }
+            hasher.update(&buffer[..count]);
+        }
+        self.validate_snapshot(description)?;
+        if actual != expected {
+            return Err(format!("{description} changed while being measured"));
+        }
+        Ok(hex_bytes(&hasher.finalize()))
+    }
 }
 
 struct StagingOutput {
@@ -1301,8 +1336,17 @@ fn main() -> ExitCode {
 }
 
 fn run(arguments: Vec<OsString>) -> CaptureResult<()> {
+    match arguments.first().and_then(|argument| argument.to_str()) {
+        Some("generate-inputs") => return input_bundle::generate_inputs(&arguments[1..]),
+        Some("validate-inputs") => return input_bundle::validate_inputs(&arguments[1..]),
+        _ => {}
+    }
+    run_capture(&arguments)
+}
+
+fn run_capture(arguments: &[OsString]) -> CaptureResult<()> {
     let [plan_path, roster_path, case_id, workload_path, source_root, prepacked_root, artifact_root, closure_path, environment_path, gpu_unique_id, output] =
-        arguments.as_slice()
+        arguments
     else {
         return Err("usage: ferric-m1-qualification-capture PLAN ROSTER CASE-ID WORKLOAD MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned());
     };
@@ -4541,8 +4585,12 @@ fn workload_workspace_plan(
 fn load_plan(path: &Path) -> CaptureResult<DifferentialPlan> {
     let (root, relative) = secure_parent(path, "benchmark plan")?;
     let (value, bytes) = root.read_canonical(&relative, "benchmark plan")?;
+    parse_plan_document(&value, bytes)
+}
+
+fn parse_plan_document(value: &Value, bytes: Vec<u8>) -> CaptureResult<DifferentialPlan> {
     let object = exact_object(
-        &value,
+        value,
         &[
             "authority",
             "cases",
@@ -4568,13 +4616,15 @@ fn load_plan(path: &Path) -> CaptureResult<DifferentialPlan> {
     expect_string(object, "source_path", "benches/m1/differential.rs")?;
     expect_string(object, "suite", "differential")?;
     expect_string(object, "target", TARGET)?;
-    require_sha256(string_field(object, "input_sha256")?)?;
+    let input_sha256 = string_field(object, "input_sha256")?.to_owned();
+    require_sha256(&input_sha256)?;
     let identities = parse_identities(field(object, "identities")?)?;
     let cases = parse_cases(field(object, "cases")?)?;
     Ok(DifferentialPlan {
         bytes,
         cases,
         identities,
+        input_sha256,
     })
 }
 
@@ -4649,12 +4699,20 @@ fn parse_cases(value: &Value) -> CaptureResult<Vec<PlanCase>> {
 fn load_roster(path: &Path, plan: &DifferentialPlan) -> CaptureResult<()> {
     let (root, relative) = secure_parent(path, "workload roster")?;
     let (value, bytes) = root.read_canonical(&relative, "workload roster")?;
+    validate_roster_document(&value, &bytes, plan)
+}
+
+fn validate_roster_document(
+    value: &Value,
+    bytes: &[u8],
+    plan: &DifferentialPlan,
+) -> CaptureResult<()> {
     require_identity(
         plan.identity("workload-roster")?,
-        &sha256_hex(&bytes),
+        &sha256_hex(bytes),
         "workload roster",
     )?;
-    let object = exact_object(&value, &["cases", "format", "suite"], "workload roster")?;
+    let object = exact_object(value, &["cases", "format", "suite"], "workload roster")?;
     expect_string(object, "format", ROSTER_FORMAT)?;
     expect_string(object, "suite", "differential")?;
     if parse_cases(field(object, "cases")?)? != plan.cases {
@@ -4666,13 +4724,21 @@ fn load_roster(path: &Path, plan: &DifferentialPlan) -> CaptureResult<()> {
 fn load_workload(path: &Path, case: &PlanCase) -> CaptureResult<Workload> {
     let (root, relative) = secure_parent(path, "qualification workload")?;
     let (value, bytes) = root.read_canonical(&relative, "qualification workload")?;
+    parse_workload_document(&value, bytes, case)
+}
+
+fn parse_workload_document(
+    value: &Value,
+    bytes: Vec<u8>,
+    case: &PlanCase,
+) -> CaptureResult<Workload> {
     require_identity(
         &case.workload_sha256,
         &sha256_hex(&bytes),
         "qualification workload",
     )?;
     let object = exact_object(
-        &value,
+        value,
         &[
             "case_id",
             "format",
@@ -4812,12 +4878,28 @@ fn load_input_tokens(
         .filter(|parent| !parent.as_os_str().is_empty())
         .unwrap_or_else(|| Path::new("."));
     let root = SecureDirectory::open(parent, "qualification workload parent")?;
+    load_input_tokens_from_root(&root, workload, case)
+}
+
+fn load_input_tokens_from_root(
+    root: &SecureDirectory,
+    workload: &Workload,
+    case: &PlanCase,
+) -> CaptureResult<Vec<u32>> {
     let bytes = root.read_exact(
         &workload.input_path,
         workload.input_bytes,
         "qualification token payload",
     )?;
-    let actual = sha256_hex(&bytes);
+    parse_input_tokens(&bytes, workload, case)
+}
+
+fn parse_input_tokens(
+    bytes: &[u8],
+    workload: &Workload,
+    case: &PlanCase,
+) -> CaptureResult<Vec<u32>> {
+    let actual = sha256_hex(bytes);
     require_identity(&workload.input_sha256, &actual, "workload input payload")?;
     require_identity(&case.input_sha256, &actual, "benchmark case input")?;
     let mut tokens = Vec::with_capacity(bytes.len() / 4);
@@ -4839,8 +4921,12 @@ fn load_input_tokens(
 fn load_closure(path: &Path) -> CaptureResult<ClosureIdentities> {
     let (root, relative) = secure_parent(path, "qualification closure")?;
     let (value, _) = root.read_canonical(&relative, "qualification closure")?;
+    parse_closure_document(&value)
+}
+
+fn parse_closure_document(value: &Value) -> CaptureResult<ClosureIdentities> {
     let object = exact_object(
-        &value,
+        value,
         &[
             "compiler",
             "compiler_configuration",
@@ -4905,17 +4991,22 @@ fn complete_closure(
 fn load_environment(path: &Path, gpu_unique_id: u64) -> CaptureResult<Vec<u8>> {
     let (root, relative) = secure_parent(path, "qualification environment")?;
     let (value, bytes) = root.read_canonical(&relative, "qualification environment")?;
+    let actual_gpu_unique_id = parse_environment_document(&value)?;
+    if actual_gpu_unique_id != gpu_unique_id {
+        return Err("environment GPU unique ID differs from the selected device".to_owned());
+    }
+    Ok(bytes)
+}
+
+fn parse_environment_document(value: &Value) -> CaptureResult<u64> {
     let object = exact_object(
-        &value,
+        value,
         &["format", "gpu_unique_id", "target"],
         "qualification environment",
     )?;
     expect_string(object, "format", ENVIRONMENT_FORMAT)?;
     expect_string(object, "target", TARGET)?;
-    if integer_field(object, "gpu_unique_id")? != gpu_unique_id {
-        return Err("environment GPU unique ID differs from the selected device".to_owned());
-    }
-    Ok(bytes)
+    integer_field(object, "gpu_unique_id")
 }
 
 fn load_model_inputs(
@@ -5892,6 +5983,7 @@ mod tests {
             bytes: canonical(json!({"plan": "fixture"})),
             cases,
             identities,
+            input_sha256: digest("benchmark input"),
         };
 
         for (case, selected_plan_id) in plan.cases.iter().zip(selected) {
@@ -5906,6 +5998,7 @@ mod tests {
             bytes: plan.bytes.clone(),
             cases: plan.cases.clone(),
             identities: wrong_catalog,
+            input_sha256: plan.input_sha256.clone(),
         };
         assert!(validate_dispatch_graph_identities(
             &wrong_catalog,
@@ -5922,6 +6015,7 @@ mod tests {
             bytes: plan.bytes.clone(),
             cases: plan.cases.clone(),
             identities: missing_selected,
+            input_sha256: plan.input_sha256.clone(),
         };
         assert!(validate_dispatch_graph_identities(
             &missing_selected,
@@ -5937,6 +6031,7 @@ mod tests {
             bytes: plan.bytes.clone(),
             cases: plan.cases.clone(),
             identities: wrong_selected,
+            input_sha256: plan.input_sha256.clone(),
         };
         assert!(validate_dispatch_graph_identities(
             &wrong_selected,
@@ -6266,6 +6361,7 @@ mod tests {
                 ("benchmark-protocol".to_owned(), digest("protocol")),
                 ("environment".to_owned(), digest("environment")),
             ]),
+            input_sha256: digest("benchmark input"),
         };
         let capture = CapturedOutput {
             compact_sha256: [7; 32],
@@ -6382,6 +6478,7 @@ mod tests {
             bytes: canonical(json!({"plan": "fixture"})),
             cases: vec![case.clone()],
             identities,
+            input_sha256: digest("benchmark input"),
         };
         let logits = vec![0_u8; QWEN3_VOCABULARY_SIZE as usize * 2];
         let tokens = 0_u32.to_le_bytes();

@@ -89,6 +89,29 @@ authority. It does not establish that the external threshold was independently
 reviewed, create qualification evidence, or close `m1.r29`; those remain duties
 of the independent M1 evidence and qualification validators.
 
+The Ferric qualification capture binary can generate and revalidate the exact
+seven-case input bundle without opening KFD:
+
+```text
+ferric-m1-qualification-capture generate-inputs \
+  MODEL-SOURCE PREPACKED KERNEL-ARTIFACTS CLOSURE ACCEPTANCE-POLICY \
+  REFERENCE-IMPLEMENTATION REFERENCE-PROTOCOL GPU-ID OUTPUT
+ferric-m1-qualification-capture validate-inputs \
+  MODEL-SOURCE PREPACKED KERNEL-ARTIFACTS CLOSURE ACCEPTANCE-POLICY \
+  REFERENCE-IMPLEMENTATION REFERENCE-PROTOCOL GPU-ID INPUT-BUNDLE
+```
+
+The bundle contains exactly 20 flat, regular, single-link files: benchmark
+input, plan, roster, closure, environment, acceptance policy, and adjacent
+workload/token pairs for all seven differential cases. Reference files and the
+running capture executable are measured through retained no-follow descriptors.
+Every token is derived deterministically from its case kind, lane, and ordinal
+and remains below the base vocabulary boundary. Generation publishes through a
+synchronized sibling staging directory without replacement and prints a
+canonical seven-command capture invocation map. Validation authenticates the
+same model, prepack, artifact, closure, policy, executable, and reference inputs
+and byte-recomputes the complete bundle before reporting its plan SHA-256.
+
 The adversarial suite has a separate five-case producer:
 
 ```text
