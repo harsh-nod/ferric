@@ -1,0 +1,22 @@
+[project]
+name = "ferric-m1-reference"
+version = "0.1.0"
+description = "Pinned offline Qwen3-8B reference producer for Ferric M1 qualification"
+requires-python = "==3.12.*"
+dependencies = [
+    "numpy==1.26.4",
+    "safetensors==0.5.3",
+    "tokenizers==0.21.4",
+    "torch==2.12.1+rocm7.2",
+    "transformers==4.51.0",
+    "triton-rocm==3.7.1; sys_platform == 'linux'",
+]
+
+[[tool.uv.index]]
+name = "pytorch-rocm"
+url = "https://download.pytorch.org/whl/rocm7.2"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-rocm" }
+triton-rocm = { index = "pytorch-rocm" }

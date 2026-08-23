@@ -1,0 +1,65 @@
+{
+  "authority": "source-reviewed-independent-qwen3-reference-only",
+  "cases": [
+    "decode-s1-c8192",
+    "decode-s32-c8192",
+    "decode-s8-c8192",
+    "prefill-s1-t128",
+    "prefill-s1-t2048",
+    "prefill-s1-t512",
+    "prefill-s8-t128"
+  ],
+  "dependencies": {
+    "numpy": "1.26.4",
+    "python": "3.12",
+    "safetensors": "0.5.3",
+    "tokenizers": "0.21.4",
+    "torch": "2.12.1+rocm7.2",
+    "transformers": "4.51.0",
+    "triton-rocm": "3.7.1"
+  },
+  "execution": {
+    "attention_implementation": "sdpa",
+    "determinism": "two-byte-identical-executions-per-case",
+    "input_encoding": "lane-major-u32-le",
+    "lane_execution": "sequential-full-context-per-lane-twice",
+    "model_forward": "model.model(use_cache=false)",
+    "network": "offline",
+    "package_provenance": "active-non-base-virtualenv-only",
+    "projection": "model.lm_head(last_hidden_state[:, -1:, :])",
+    "python_isolation": "isolated-ignore-environment-no-user-site-safe-path",
+    "remote_code": false,
+    "row_order": "declared-lane-order",
+    "workload_max_polls": 20000000
+  },
+  "format": "FERRIC-M1-REFERENCE-PROTOCOL-V1",
+  "invocation": {
+    "arguments": [
+      "IMPLEMENTATION-MANIFEST",
+      "PROTOCOL",
+      "PLAN",
+      "INPUT-BUNDLE",
+      "MODEL-SOURCE",
+      "FERRIC-CAPTURE-ROOT",
+      "OUTPUT-ROOT"
+    ],
+    "command": "VENV/bin/python -I run.py",
+    "mode": "all-seven-single-model-load"
+  },
+  "model": {
+    "deployment_bundle_identity": "6dfba0acd1c00ce13cec7b5eebb180691bdb8855a7eee89876df2a0a12a2802b",
+    "dtype": "bfloat16",
+    "repository": "Qwen/Qwen3-8B",
+    "revision": "b968826d9c46dd6066d109eabc6255188de91218",
+    "visible_gpu": "gcnArchName-gfx942-with-xnack-minus",
+    "vocabulary_size": 151936
+  },
+  "nonclaim": "This producer supplies plan-bound independent Qwen3 reference bytes only. It does not establish Ferric correctness, hardware correctness, an acceptance threshold, qualification authority, or close m1.r29.",
+  "output": {
+    "bundle_naming": "KIND.reference.bundle",
+    "logits_encoding": "bf16-le",
+    "publication": "single-root-rename-noreplace",
+    "token_encoding": "lowest-token-id-bf16-argmax-u32-le"
+  },
+  "target": "gfx942:xnack-"
+}
