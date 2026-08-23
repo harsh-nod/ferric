@@ -135,6 +135,22 @@ const DIFFERENTIAL_KINDS: &[&str] = &[
     "prefill-s8-t128",
 ];
 
+const DIFFERENTIAL_IDENTITIES: &[&str] = &[
+    "differential-acceptance-policy",
+    "reference-implementation",
+    "reference-protocol",
+];
+
+const DIFFERENTIAL_DISPATCH_GRAPH_IDENTITIES: &[(&str, &str)] = &[
+    ("decode-s1-c8192", "dispatch-graph-decode-s1-c8192"),
+    ("decode-s32-c8192", "dispatch-graph-decode-s32-c8192"),
+    ("decode-s8-c8192", "dispatch-graph-decode-s8-c8192"),
+    ("prefill-s1-t128", "dispatch-graph-prefill-s1-t128"),
+    ("prefill-s1-t2048", "dispatch-graph-prefill-s1-t2048"),
+    ("prefill-s1-t512", "dispatch-graph-prefill-s1-t512"),
+    ("prefill-s8-t128", "dispatch-graph-prefill-s8-t128"),
+];
+
 type CaptureResult<T> = Result<T, String>;
 
 const CAPTURE_RECOVERY_RETRIES: usize = 2;
@@ -4567,11 +4583,12 @@ fn parse_identities(value: &Value) -> CaptureResult<BTreeMap<String, String>> {
         .as_object()
         .ok_or_else(|| "benchmark identities must be an object".to_owned())?;
     let mut expected = COMMON_IDENTITIES.to_vec();
-    expected.extend([
-        "differential-acceptance-policy",
-        "reference-implementation",
-        "reference-protocol",
-    ]);
+    expected.extend_from_slice(DIFFERENTIAL_IDENTITIES);
+    expected.extend(
+        DIFFERENTIAL_DISPATCH_GRAPH_IDENTITIES
+            .iter()
+            .map(|(_, identity)| *identity),
+    );
     expected.sort_unstable();
     exact_keys(object, &expected, "benchmark identities")?;
     let mut identities = BTreeMap::new();
@@ -5107,10 +5124,11 @@ fn validate_plan_identities(
         .iter()
         .find(|candidate| candidate.selection == selection)
         .ok_or_else(|| "generated declaration lacks selected workload plan".to_owned())?;
-    require_identity(
-        plan.identity("dispatch-graph")?,
-        &hex_identity(selected.plan_id),
-        "selected dispatch graph",
+    validate_dispatch_graph_identities(
+        plan,
+        case,
+        declaration.plan_catalog_id(),
+        selected.plan_id,
     )?;
     let config = aggregate_identity(
         b"ferric.m1.deployment-configs.v1",
@@ -5153,6 +5171,24 @@ fn validate_plan_identities(
         "prepacked deployment weights",
     )?;
     Ok(())
+}
+
+fn validate_dispatch_graph_identities(
+    plan: &DifferentialPlan,
+    case: &PlanCase,
+    plan_catalog_id: Identity,
+    selected_plan_id: Identity,
+) -> CaptureResult<()> {
+    require_identity(
+        plan.identity("dispatch-graph")?,
+        &hex_identity(plan_catalog_id),
+        "generated dispatch graph catalog",
+    )?;
+    require_identity(
+        plan.identity(dispatch_graph_identity_name(&case.kind)?)?,
+        &hex_identity(selected_plan_id),
+        "selected dispatch graph",
+    )
 }
 
 fn capture_transcript(
@@ -5314,6 +5350,13 @@ fn kind_selection(kind: &str) -> CaptureResult<Qwen3PlanSelection> {
         mode,
         bucket,
     })
+}
+
+fn dispatch_graph_identity_name(kind: &str) -> CaptureResult<&'static str> {
+    DIFFERENTIAL_DISPATCH_GRAPH_IDENTITIES
+        .iter()
+        .find_map(|(candidate, identity)| (*candidate == kind).then_some(*identity))
+        .ok_or_else(|| format!("unsupported differential case kind: {kind}"))
 }
 
 fn rows_for_kind(kind: &str) -> CaptureResult<u64> {
@@ -5798,8 +5841,19 @@ mod tests {
 
     #[test]
     fn every_differential_kind_maps_to_exact_target_geometry() {
+        assert_eq!(
+            DIFFERENTIAL_DISPATCH_GRAPH_IDENTITIES
+                .iter()
+                .map(|(kind, _)| *kind)
+                .collect::<Vec<_>>(),
+            DIFFERENTIAL_KINDS
+        );
         for kind in DIFFERENTIAL_KINDS {
             let selection = kind_selection(kind).unwrap();
+            assert_eq!(
+                dispatch_graph_identity_name(kind).unwrap(),
+                format!("dispatch-graph-{kind}")
+            );
             assert_eq!(selection.role, Qwen3ModelRole::Target8B);
             assert_eq!(
                 rows_for_kind(kind).unwrap(),
@@ -5812,6 +5866,85 @@ mod tests {
                 )
             );
         }
+    }
+
+    #[test]
+    fn one_plan_binds_catalog_and_every_selected_dispatch_graph() {
+        let catalog_id = Identity::new([1; 32]);
+        let mut identities =
+            BTreeMap::from([("dispatch-graph".to_owned(), hex_identity(catalog_id))]);
+        let mut cases = Vec::new();
+        let mut selected = Vec::new();
+        for (index, (kind, identity_name)) in
+            DIFFERENTIAL_DISPATCH_GRAPH_IDENTITIES.iter().enumerate()
+        {
+            let plan_id = Identity::new([u8::try_from(index + 2).unwrap(); 32]);
+            identities.insert((*identity_name).to_owned(), hex_identity(plan_id));
+            cases.push(PlanCase {
+                id: format!("{kind}.001"),
+                input_sha256: digest(&format!("{kind}:input")),
+                kind: (*kind).to_owned(),
+                workload_sha256: digest(&format!("{kind}:workload")),
+            });
+            selected.push(plan_id);
+        }
+        let plan = DifferentialPlan {
+            bytes: canonical(json!({"plan": "fixture"})),
+            cases,
+            identities,
+        };
+
+        for (case, selected_plan_id) in plan.cases.iter().zip(selected) {
+            validate_dispatch_graph_identities(&plan, case, catalog_id, selected_plan_id).unwrap();
+        }
+
+        let first = &plan.cases[0];
+        let first_plan_id = Identity::new([2; 32]);
+        let mut wrong_catalog = plan.identities.clone();
+        wrong_catalog.insert("dispatch-graph".to_owned(), digest("wrong catalog"));
+        let wrong_catalog = DifferentialPlan {
+            bytes: plan.bytes.clone(),
+            cases: plan.cases.clone(),
+            identities: wrong_catalog,
+        };
+        assert!(validate_dispatch_graph_identities(
+            &wrong_catalog,
+            first,
+            catalog_id,
+            first_plan_id,
+        )
+        .is_err());
+
+        let first_identity = dispatch_graph_identity_name(&first.kind).unwrap();
+        let mut missing_selected = plan.identities.clone();
+        missing_selected.remove(first_identity);
+        let missing_selected = DifferentialPlan {
+            bytes: plan.bytes.clone(),
+            cases: plan.cases.clone(),
+            identities: missing_selected,
+        };
+        assert!(validate_dispatch_graph_identities(
+            &missing_selected,
+            first,
+            catalog_id,
+            first_plan_id,
+        )
+        .is_err());
+
+        let mut wrong_selected = plan.identities.clone();
+        wrong_selected.insert(first_identity.to_owned(), digest("wrong selected plan"));
+        let wrong_selected = DifferentialPlan {
+            bytes: plan.bytes.clone(),
+            cases: plan.cases.clone(),
+            identities: wrong_selected,
+        };
+        assert!(validate_dispatch_graph_identities(
+            &wrong_selected,
+            first,
+            catalog_id,
+            first_plan_id,
+        )
+        .is_err());
     }
 
     #[test]

@@ -29,6 +29,12 @@ The differential suite can also turn an exact seven-case output-pair manifest
 into immutable raw comparison records plus the common benchmark-record
 envelope:
 
+One differential plan binds `dispatch-graph` to the ordered generated plan
+catalog and binds each of its seven case kinds to a separate
+`dispatch-graph-KIND` identity. The common plan SHA-256 therefore authenticates
+the exact generated graph selected for every output pair without requiring a
+different plan document per case.
+
 ```text
 cargo run --locked -p ferric-m1-benchmarks --bin ferric-m1-differential -- \
   produce PLAN PAIRS OUTPUT-BUNDLE

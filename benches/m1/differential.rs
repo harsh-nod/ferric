@@ -36,6 +36,18 @@ const RAW_AUTHORITY: &str = "computed-differential-comparison-only";
 const ACCEPTANCE_POLICY_AUTHORITY: &str = "externally-admitted-differential-threshold-policy-only";
 const ACCEPTANCE_RESULT_AUTHORITY: &str = "checked-differential-policy-conformance-only";
 const ACCEPTANCE_POLICY_IDENTITY: &str = "differential-acceptance-policy";
+const DIFFERENTIAL_IDENTITIES: &[&str] = &[
+    ACCEPTANCE_POLICY_IDENTITY,
+    "dispatch-graph-decode-s1-c8192",
+    "dispatch-graph-decode-s32-c8192",
+    "dispatch-graph-decode-s8-c8192",
+    "dispatch-graph-prefill-s1-t128",
+    "dispatch-graph-prefill-s1-t2048",
+    "dispatch-graph-prefill-s1-t512",
+    "dispatch-graph-prefill-s8-t128",
+    "reference-implementation",
+    "reference-protocol",
+];
 const TARGET: &str = "gfx942:xnack-";
 const VOCABULARY_SIZE: u64 = 151_936;
 const BF16_BYTES: u64 = 2;
@@ -76,11 +88,7 @@ const SUITE: Suite = Suite {
         "prefill-s1-t512",
         "prefill-s8-t128",
     ],
-    extra_identities: &[
-        ACCEPTANCE_POLICY_IDENTITY,
-        "reference-implementation",
-        "reference-protocol",
-    ],
+    extra_identities: DIFFERENTIAL_IDENTITIES,
     metrics: METRICS,
     extra_record_attributes: &["ferric-output-sha256", "reference-output-sha256"],
     minimum_warmups: 0,
@@ -1681,6 +1689,18 @@ mod tests {
     #[test]
     fn seven_case_roster_and_shapes_are_fixed() {
         assert_eq!(SUITE.case_kinds.len(), 7);
+        assert_eq!(
+            &SUITE.extra_identities[1..8],
+            &[
+                "dispatch-graph-decode-s1-c8192",
+                "dispatch-graph-decode-s32-c8192",
+                "dispatch-graph-decode-s8-c8192",
+                "dispatch-graph-prefill-s1-t128",
+                "dispatch-graph-prefill-s1-t2048",
+                "dispatch-graph-prefill-s1-t512",
+                "dispatch-graph-prefill-s8-t128",
+            ]
+        );
         assert_eq!(rows_for_kind("decode-s1-c8192").unwrap(), 1);
         assert_eq!(rows_for_kind("decode-s32-c8192").unwrap(), 32);
         assert_eq!(rows_for_kind("decode-s8-c8192").unwrap(), 8);

@@ -27,6 +27,15 @@ DIFFERENTIAL_OUTPUT_FORMAT = "FERRIC-M1-DIFFERENTIAL-OUTPUT-V1"
 DIFFERENTIAL_ACCEPTANCE_POLICY_FORMAT = (
     "FERRIC-M1-DIFFERENTIAL-ACCEPTANCE-POLICY-V1"
 )
+DIFFERENTIAL_DISPATCH_GRAPH_IDENTITIES = (
+    "dispatch-graph-decode-s1-c8192",
+    "dispatch-graph-decode-s32-c8192",
+    "dispatch-graph-decode-s8-c8192",
+    "dispatch-graph-prefill-s1-t128",
+    "dispatch-graph-prefill-s1-t2048",
+    "dispatch-graph-prefill-s1-t512",
+    "dispatch-graph-prefill-s8-t128",
+)
 ADVERSARIAL_EXECUTION_FORMAT = "FERRIC-M1-ADVERSARIAL-EXECUTION-V1"
 ADVERSARIAL_OBSERVATION_FORMAT = "FERRIC-M1-ADVERSARIAL-OBSERVATION-V1"
 ADVERSARIAL_RUNNER_TRANSCRIPT_FORMAT = (
@@ -1287,9 +1296,26 @@ def exercise_suite(
     input_value = plan_input(descriptor)
     policy_path = scratch / "differential.acceptance-policy.json"
     if suite == "differential":
+        required = descriptor["required_identities"]
+        graph_identities = tuple(
+            name for name in required if name.startswith("dispatch-graph-")
+        )
+        if graph_identities != DIFFERENTIAL_DISPATCH_GRAPH_IDENTITIES:
+            fail("differential descriptor case dispatch-graph roster drifted")
         write(policy_path, differential_acceptance_policy(descriptor))
         input_value["identities"]["differential-acceptance-policy"] = (
             hashlib.sha256(policy_path.read_bytes()).hexdigest()
+        )
+        missing_identity = dict(input_value)
+        missing_identity["identities"] = dict(input_value["identities"])
+        del missing_identity["identities"][DIFFERENTIAL_DISPATCH_GRAPH_IDENTITIES[0]]
+        missing_identity_path = scratch / "differential.missing-graph-identity.json"
+        write(missing_identity_path, missing_identity)
+        invoke(
+            repo,
+            suite,
+            ["plan", str(missing_identity_path), str(plan_a)],
+            expected_status=1,
         )
     write(input_path, input_value)
     invoke(repo, suite, ["plan", str(input_path), str(plan_a)])

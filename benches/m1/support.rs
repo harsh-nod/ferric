@@ -50,6 +50,16 @@ const COMMON_IDENTITIES: &[&str] = &[
 
 const COMMON_RECORD_ATTRIBUTES: &[&str] = &["raw-record-sha256", "runner-transcript-sha256"];
 
+verus! {
+
+fn metric_value_is_admitted(zero_allowed: bool, value: u64) -> (admitted: bool)
+    ensures admitted == (zero_allowed || value != 0),
+{
+    zero_allowed || value != 0
+}
+
+} // verus!
+
 /// One integer-valued raw metric required from every case observation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Metric {
@@ -631,7 +641,7 @@ fn validate_measurements(suite: &Suite, value: &Value, samples: u64) -> BenchRes
             let value = value
                 .as_u64()
                 .ok_or_else(|| format!("metric is not an unsigned integer: {}", metric.id))?;
-            if value == 0 && !metric.zero_allowed {
+            if !metric_value_is_admitted(metric.zero_allowed, value) {
                 return Err(format!("metric must be positive: {}", metric.id));
             }
         }
@@ -1052,6 +1062,13 @@ mod tests {
         assert!(parse_canonical(br#"{"b":1,"a":2}"#, "test input").is_err());
         assert!(parse_canonical(br#"{"a":1,"a":2}"#, "test input").is_err());
         assert!(require_sha256(&"0".repeat(64)).is_err());
+    }
+
+    #[test]
+    fn metric_value_admission_matches_zero_policy() {
+        assert!(!metric_value_is_admitted(false, 0));
+        assert!(metric_value_is_admitted(false, 1));
+        assert!(metric_value_is_admitted(true, 0));
     }
 
     #[test]
