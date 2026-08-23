@@ -572,9 +572,12 @@ def main() -> None:
         fail(f"usage: {sys.argv[0]} REPO [REAL_RESULT]")
     repo = Path(sys.argv[1]).resolve(strict=True)
     active, rows = registry(repo)
-    if len(rows) != 13 or not active:
+    if len(rows) != 15 or not active:
         fail("M1 negative registry baseline drifted")
-    row = rows[0]
+    artifact_row = rows[0]
+    if artifact_row[0] != "artifact-manifest-commitment-digest":
+        fail("M1 negative registry first-row identity drifted")
+    row = next(selected for selected in rows if selected[0] == "batching-publish-once")
 
     with tempfile.TemporaryDirectory(prefix="ferric-m1-validator-policy.") as scratch:
         root = Path(scratch)
@@ -587,6 +590,14 @@ def main() -> None:
         expect_pass(repo, baseline_context, "canonical negative-mutation fixture")
         if baseline_result.name != f"{row[0]}.result":
             fail("baseline result identity drifted")
+        artifact_root = root / "artifact-manifest-baseline"
+        artifact_root.mkdir()
+        artifact_result, artifact_context = build_run(
+            repo, artifact_root, artifact_row, source_identity
+        )
+        expect_pass(repo, artifact_context, "canonical artifact-manifest mutation fixture")
+        if artifact_result.name != f"{artifact_row[0]}.result":
+            fail("artifact-manifest result identity drifted")
         model_row = next(
             selected
             for selected in rows
@@ -600,6 +611,19 @@ def main() -> None:
         expect_pass(repo, model_context, "canonical model-bundle mutation fixture")
         if model_result.name != f"{model_row[0]}.result":
             fail("model-bundle result identity drifted")
+        target_row = next(
+            selected
+            for selected in rows
+            if selected[0] == "target-catalog-processor-features"
+        )
+        target_root = root / "target-catalog-baseline"
+        target_root.mkdir()
+        target_result, target_context = build_run(
+            repo, target_root, target_row, source_identity
+        )
+        expect_pass(repo, target_context, "canonical target-catalog mutation fixture")
+        if target_result.name != f"{target_row[0]}.result":
+            fail("target-catalog result identity drifted")
 
         cases: list[tuple[str, str, FixtureMutation]] = [
             (
@@ -851,8 +875,11 @@ def main() -> None:
 
         incomplete_root = root / "incomplete-property-product"
         incomplete_root.mkdir()
+        incomplete_row = next(
+            selected for selected in rows if selected[0] == "graph-operator-order"
+        )
         _, incomplete_context = build_run(
-            repo, incomplete_root, rows[2], source_identity
+            repo, incomplete_root, incomplete_row, source_identity
         )
         incomplete = invoke(repo, incomplete_context)
         if (
