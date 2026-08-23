@@ -92,7 +92,7 @@ TRUSTED_VALIDATORS = {
     "negative-mutation": (
         "proofs/m1/evidence/validate-negative-mutation.py",
         "ferric.m1-validator.negative-mutation.v1",
-        "b4ee8e7c362f28506a87a4c7620249950c61a3eb34fbddd963961f45a78092c2",
+        "60c6749c354188c5d6b7834e8cbe002ed13f3243bcf560f061046a59b50a38c4",
     ),
     "performance-gate": (
         "proofs/m1/evidence/validate-performance-report.py",
@@ -117,7 +117,7 @@ TRUSTED_VALIDATORS = {
     "verus-theorem": (
         "proofs/m1/evidence/validate-verus-theorem.py",
         "ferric.m1-validator.verus-theorem.v1",
-        "389fd5beac597c0177ae4a02d57dfecaa314bd4dcca55e0ac09db4d086738d0d",
+        "f6153eee1e78cf429bb653b74069ab183e1c33f71d5f5ed005b879e4de5f28e2",
     ),
 }
 
