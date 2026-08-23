@@ -8,6 +8,7 @@
 
 use rustix::fd::OwnedFd;
 use rustix::fs::{fstat, openat2, FileType, Mode, OFlags, ResolveFlags, Stat, CWD};
+use rustix::io::fcntl_dupfd_cloexec;
 use serde_json::{json, Map, Value};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
@@ -56,6 +57,14 @@ fn metric_value_is_admitted(zero_allowed: bool, value: u64) -> (admitted: bool)
     ensures admitted == (zero_allowed || value != 0),
 {
     zero_allowed || value != 0
+}
+
+/// Returns exactly whether an observed comparison value is within its maximum.
+#[must_use]
+pub fn comparison_within_threshold(value: u64, maximum: u64) -> (within: bool)
+    ensures within == (value <= maximum),
+{
+    value <= maximum
 }
 
 } // verus!
@@ -285,6 +294,35 @@ pub fn load_canonical_document(
     let (root, relative) = secure_parent(path, description)?;
     let (value, bytes, _) = root.read_canonical(&relative, description)?;
     Ok((root, value, bytes))
+}
+
+/// Duplicates one already-open directory as a secure input root.
+///
+/// # Errors
+///
+/// Returns an error if the held descriptor is not a directory or its identity
+/// changes while the close-on-exec duplicate is created.
+pub fn duplicate_secure_input_directory(
+    descriptor: &OwnedFd,
+    description: &str,
+) -> BenchResult<SecureInputDirectory> {
+    let initial = fstat(descriptor)
+        .map_err(|error| format!("cannot inspect held {description} directory: {error}"))?;
+    if FileType::from_raw_mode(initial.st_mode) != FileType::Directory {
+        return Err(format!("held {description} descriptor must be a directory"));
+    }
+    let duplicate = fcntl_dupfd_cloexec(descriptor, 0)
+        .map_err(|error| format!("cannot duplicate held {description} directory: {error}"))?;
+    let final_stat = fstat(&duplicate)
+        .map_err(|error| format!("cannot inspect duplicated {description} directory: {error}"))?;
+    if !same_file_snapshot(&initial, &final_stat) {
+        return Err(format!(
+            "held {description} directory changed during duplication"
+        ));
+    }
+    Ok(SecureInputDirectory {
+        descriptor: duplicate,
+    })
 }
 
 /// Serializes a value with the benchmark protocol's canonical JSON encoding.

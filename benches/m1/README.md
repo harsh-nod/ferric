@@ -25,9 +25,39 @@ or qualification. Real MI300X/model/reference/baseline records and the
 independent M1 evidence validators remain required. Requirements `m1.r29`
 through `m1.r33` remain `Open`.
 
-The differential suite can also turn an exact seven-case output-pair manifest
-into immutable raw comparison records plus the common benchmark-record
-envelope:
+The differential suite first authenticates the exact seven Ferric capture and
+independent reference bundle rosters and writes their canonical output-pair
+manifest:
+
+```text
+cargo run --locked -p ferric-m1-benchmarks --bin ferric-m1-differential -- \
+  write-pairs PLAN CAPTURE-ROOT REFERENCE-ROOT OUTPUT-PAIRS
+```
+
+`CAPTURE-ROOT`, `REFERENCE-ROOT`, and `OUTPUT-PAIRS` must be distinct direct
+children of one safe parent. The roots must contain exactly the seven canonical
+`KIND.capture.bundle` and `KIND.reference.bundle` directories, respectively;
+every bundle must contain only `logits.bf16le`, `output.json`, `runner.json`,
+and `tokens.u32le`. The command requires the reference copy of each canonical
+runner transcript to be byte-identical to the Ferric capture transcript. It
+checks every transcript field against the plan and capture protocol, validates
+both output manifests and their payload identities, streams every payload
+through the full finite-logit, lowest-ID argmax, and shape comparison, and emits
+only relative paths without parent traversal. Every Ferric and reference output
+manifest is carried as a `{path,bytes,sha256}` companion, as is the runner
+transcript, so replacing a manifest after generation changes or invalidates the
+pairs artifact rather than preserving its identity.
+
+`OUTPUT-PAIRS` is created without replacement through a synchronized sibling
+staging file. The created descriptor and metadata snapshot remain held through
+validation, the staging name is rebound to that identity before publication,
+and the parent directory is synchronized after the no-replace rename. A failed
+pre-publication run removes only its own staging inode and leaves an existing or
+substituted caller-owned path untouched. The plan is reread before publication
+and must remain byte-identical.
+
+The differential suite can then turn that exact seven-case output-pair manifest
+into immutable raw comparison records plus the common benchmark-record envelope:
 
 One differential plan binds `dispatch-graph` to the ordered generated plan
 catalog and binds each of its seven case kinds to a separate
@@ -46,7 +76,7 @@ bundle contains `records.json` and exactly seven files under `raw/`. Failed
 runs remove their owned staging files, so the same absent output path can be
 retried without removing or replacing caller-owned data.
 
-`PAIRS` uses `FERRIC-M1-DIFFERENTIAL-PAIRS-V1` and names one canonical
+`PAIRS` uses `FERRIC-M1-DIFFERENTIAL-PAIRS-V2` and binds one canonical
 `FERRIC-M1-DIFFERENTIAL-OUTPUT-V1` manifest for Ferric and one for the
 independent reference in every planned case, plus an immutable canonical runner
 transcript companion. Inputs are opened descriptor-relatively without following

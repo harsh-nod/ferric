@@ -22,7 +22,7 @@ SUITES = (
 )
 INPUT_FORMAT = "FERRIC-M1-BENCHMARK-INPUT-V1"
 RECORDS_FORMAT = "FERRIC-M1-BENCHMARK-RECORDS-V1"
-DIFFERENTIAL_PAIRS_FORMAT = "FERRIC-M1-DIFFERENTIAL-PAIRS-V1"
+DIFFERENTIAL_PAIRS_FORMAT = "FERRIC-M1-DIFFERENTIAL-PAIRS-V2"
 DIFFERENTIAL_OUTPUT_FORMAT = "FERRIC-M1-DIFFERENTIAL-OUTPUT-V1"
 DIFFERENTIAL_ACCEPTANCE_POLICY_FORMAT = (
     "FERRIC-M1-DIFFERENTIAL-ACCEPTANCE-POLICY-V1"
@@ -143,6 +143,14 @@ def companion(path: Path, contents: bytes) -> dict[str, Any]:
         "path": path.name,
         "sha256": hashlib.sha256(contents).hexdigest(),
     }
+
+
+def bind_output_manifest(
+    pairs: dict[str, Any], case_id: str, producer: str, manifest: Path
+) -> None:
+    field = f"{producer}_output_manifest"
+    pair = next(item for item in pairs["pairs"] if item["case_id"] == case_id)
+    pair[field] = companion(manifest, manifest.read_bytes())
 
 
 def plan_input(descriptor: dict[str, Any]) -> dict[str, Any]:
@@ -865,9 +873,13 @@ def exercise_differential_producer(
         pairs.append(
             {
                 "case_id": case["id"],
-                "ferric_output_manifest": manifests["ferric"].name,
+                "ferric_output_manifest": companion(
+                    manifests["ferric"], manifests["ferric"].read_bytes()
+                ),
                 "kind": case["kind"],
-                "reference_output_manifest": manifests["reference"].name,
+                "reference_output_manifest": companion(
+                    manifests["reference"], manifests["reference"].read_bytes()
+                ),
                 "runner_transcript": {
                     "bytes": len(runner_bytes),
                     "path": runner_path.name,
@@ -986,6 +998,25 @@ def exercise_differential_producer(
         logits_path.write_bytes(changed_logits)
         manifest["logits"]["sha256"] = hashlib.sha256(changed_logits).hexdigest()
         write(manifest_path, manifest)
+    invoke(
+        repo,
+        "differential",
+        [
+            "check-acceptance",
+            str(plan_path),
+            str(pairs_path),
+            str(policy_path),
+        ],
+        expected_status=1,
+    )
+    for producer in ("ferric", "reference"):
+        bind_output_manifest(
+            pairs_value,
+            content_case["id"],
+            producer,
+            output_manifests[f"{content_case['id']}:{producer}"],
+        )
+    write(pairs_path, pairs_value)
     substituted_result = invoke(
         repo,
         "differential",
@@ -1002,11 +1033,11 @@ def exercise_differential_producer(
     if substituted_result.stdout == acceptance_result.stdout:
         fail("different valid output content left acceptance identity unchanged")
     if (
-        substituted["pairs_sha256"] != acceptance["pairs_sha256"]
+        substituted["pairs_sha256"] == acceptance["pairs_sha256"]
         or [case["comparison"] for case in substituted["cases"]]
         != [case["comparison"] for case in acceptance["cases"]]
     ):
-        fail("content-substitution fixture did not preserve pairs and comparison metrics")
+        fail("content substitution did not change the pairs seal while preserving metrics")
     original_case = next(
         case for case in acceptance["cases"] if case["case_id"] == content_case["id"]
     )
@@ -1022,6 +1053,14 @@ def exercise_differential_producer(
         fail("acceptance result did not isolate output content from runner identity")
     for path, contents in original_contents.items():
         path.write_bytes(contents)
+    for producer in ("ferric", "reference"):
+        bind_output_manifest(
+            pairs_value,
+            content_case["id"],
+            producer,
+            output_manifests[f"{content_case['id']}:{producer}"],
+        )
+    write(pairs_path, pairs_value)
 
     invoke(
         repo,
@@ -1058,6 +1097,10 @@ def exercise_differential_producer(
     first_logits_path.write_bytes(changed_logits)
     first_manifest["logits"]["sha256"] = hashlib.sha256(changed_logits).hexdigest()
     write(first_manifest_path, first_manifest)
+    bind_output_manifest(
+        pairs_value, first_case["id"], "ferric", first_manifest_path
+    )
+    write(pairs_path, pairs_value)
     invoke(
         repo,
         "differential",
@@ -1072,6 +1115,10 @@ def exercise_differential_producer(
     first_logits_path.write_bytes(first_logits)
     first_manifest["logits"]["sha256"] = hashlib.sha256(first_logits).hexdigest()
     write(first_manifest_path, first_manifest)
+    bind_output_manifest(
+        pairs_value, first_case["id"], "ferric", first_manifest_path
+    )
+    write(pairs_path, pairs_value)
 
     token_case = next(
         case for case in plan["cases"] if case["kind"] == "decode-s32-c8192"
@@ -1091,6 +1138,10 @@ def exercise_differential_producer(
     token_manifest["logits"]["sha256"] = hashlib.sha256(changed_logits).hexdigest()
     token_manifest["tokens"]["sha256"] = hashlib.sha256(changed_tokens).hexdigest()
     write(token_manifest_path, token_manifest)
+    bind_output_manifest(
+        pairs_value, token_case["id"], "ferric", token_manifest_path
+    )
+    write(pairs_path, pairs_value)
     invoke(
         repo,
         "differential",
@@ -1107,6 +1158,10 @@ def exercise_differential_producer(
     token_manifest["logits"]["sha256"] = hashlib.sha256(token_logits).hexdigest()
     token_manifest["tokens"]["sha256"] = hashlib.sha256(token_payload).hexdigest()
     write(token_manifest_path, token_manifest)
+    bind_output_manifest(
+        pairs_value, token_case["id"], "ferric", token_manifest_path
+    )
+    write(pairs_path, pairs_value)
     transcript_path = scratch / "differential.produced-transcript.json"
     invoke(
         repo,
@@ -1151,7 +1206,7 @@ def exercise_differential_producer(
         (outside / escaped_manifest.name).write_bytes(escaped_manifest.read_bytes())
         escape_link = scratch / "manifest-escape"
         os.symlink(outside, escape_link)
-        pairs_value["pairs"][0]["ferric_output_manifest"] = (
+        pairs_value["pairs"][0]["ferric_output_manifest"]["path"] = (
             f"{escape_link.name}/{escaped_manifest.name}"
         )
         write(pairs_path, pairs_value)
@@ -1165,7 +1220,7 @@ def exercise_differential_producer(
         if escaped_bundle.exists():
             fail("producer published output after an intermediate symlink escape")
         escape_link.unlink()
-    pairs_value["pairs"][0]["ferric_output_manifest"] = output_manifests[
+    pairs_value["pairs"][0]["ferric_output_manifest"]["path"] = output_manifests[
         f"{plan['cases'][0]['id']}:ferric"
     ].name
     write(pairs_path, pairs_value)
@@ -1192,6 +1247,10 @@ def exercise_differential_producer(
     )
     ferric_manifest["producer_sha256"] = digest("substituted producer")
     write(ferric_manifest_path, ferric_manifest)
+    bind_output_manifest(
+        pairs_value, first["id"], "ferric", ferric_manifest_path
+    )
+    write(pairs_path, pairs_value)
     invoke(
         repo,
         "differential",
@@ -1206,6 +1265,10 @@ def exercise_differential_producer(
 
     ferric_manifest["producer_sha256"] = plan["identities"]["benchmark-executable"]
     write(ferric_manifest_path, ferric_manifest)
+    bind_output_manifest(
+        pairs_value, first["id"], "ferric", ferric_manifest_path
+    )
+    write(pairs_path, pairs_value)
     reference_manifest_path = output_manifests[f"{first['id']}:reference"]
     reference_manifest = load_canonical(
         reference_manifest_path.read_bytes(), "reference output manifest"
@@ -1232,6 +1295,10 @@ def exercise_differential_producer(
     wrong_tokens_path.write_bytes(wrong_tokens)
     ferric_manifest["tokens"]["sha256"] = hashlib.sha256(wrong_tokens).hexdigest()
     write(ferric_manifest_path, ferric_manifest)
+    bind_output_manifest(
+        pairs_value, first["id"], "ferric", ferric_manifest_path
+    )
+    write(pairs_path, pairs_value)
     invoke(
         repo,
         "differential",
@@ -1253,6 +1320,10 @@ def exercise_differential_producer(
         (0).to_bytes(4, "little")
     ).hexdigest()
     write(ferric_manifest_path, ferric_manifest)
+    bind_output_manifest(
+        pairs_value, first["id"], "ferric", ferric_manifest_path
+    )
+    write(pairs_path, pairs_value)
     invoke(
         repo,
         "differential",
@@ -1267,6 +1338,10 @@ def exercise_differential_producer(
     logits_path.write_bytes(nonfinite_logits)
     ferric_manifest["logits"]["sha256"] = hashlib.sha256(nonfinite_logits).hexdigest()
     write(ferric_manifest_path, ferric_manifest)
+    bind_output_manifest(
+        pairs_value, first["id"], "ferric", ferric_manifest_path
+    )
+    write(pairs_path, pairs_value)
     invoke(
         repo,
         "differential",

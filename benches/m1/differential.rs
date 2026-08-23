@@ -3,20 +3,20 @@
 //! Target-only differential run-plan, comparison, and record-ingestion boundary.
 
 use ferric_m1_benchmarks::{
-    encode_canonical_document, load_benchmark_plan, load_canonical_document, main_for,
-    sha256_identity, BenchResult, Metric, SecureFileIdentity, SecureInputDirectory,
-    SecureInputFile, Suite,
+    comparison_within_threshold, duplicate_secure_input_directory, encode_canonical_document,
+    load_benchmark_plan, load_canonical_document, main_for, sha256_identity, BenchResult, Metric,
+    SecureFileIdentity, SecureInputDirectory, SecureInputFile, Suite,
 };
 use rustix::fd::OwnedFd;
 use rustix::fs::{
-    fsync, mkdirat, openat2, renameat_with, unlinkat, AtFlags, Mode, OFlags, RenameFlags,
-    ResolveFlags, CWD,
+    fstat, fsync, mkdirat, openat2, renameat_with, unlinkat, AtFlags, Dir, FileType, Mode, OFlags,
+    RenameFlags, ResolveFlags, Stat, CWD,
 };
 use serde_json::{json, Map, Value};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::env;
-use std::ffi::OsString;
+use std::ffi::{OsStr, OsString};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Component, Path, PathBuf};
@@ -24,12 +24,13 @@ use std::process::ExitCode;
 #[allow(unused_imports)]
 use vstd::prelude::*;
 
-const PAIRS_FORMAT: &str = "FERRIC-M1-DIFFERENTIAL-PAIRS-V1";
+const PAIRS_FORMAT: &str = "FERRIC-M1-DIFFERENTIAL-PAIRS-V2";
 const OUTPUT_FORMAT: &str = "FERRIC-M1-DIFFERENTIAL-OUTPUT-V1";
 const RAW_RECORD_FORMAT: &str = "FERRIC-M1-DIFFERENTIAL-RAW-RECORD-V1";
 const ACCEPTANCE_POLICY_FORMAT: &str = "FERRIC-M1-DIFFERENTIAL-ACCEPTANCE-POLICY-V1";
 const ACCEPTANCE_RESULT_FORMAT: &str = "FERRIC-M1-DIFFERENTIAL-ACCEPTANCE-RESULT-V1";
 const RECORDS_FORMAT: &str = "FERRIC-M1-BENCHMARK-RECORDS-V1";
+const CAPTURE_FORMAT: &str = "FERRIC-M1-QUALIFICATION-CAPTURE-V2";
 const PAIRS_AUTHORITY: &str = "externally-collected-differential-pairs-only";
 const OUTPUT_AUTHORITY: &str = "externally-collected-model-output-only";
 const RAW_AUTHORITY: &str = "computed-differential-comparison-only";
@@ -52,8 +53,10 @@ const TARGET: &str = "gfx942:xnack-";
 const VOCABULARY_SIZE: u64 = 151_936;
 const BF16_BYTES: u64 = 2;
 const TOKEN_BYTES: u64 = 4;
+const MAX_PAIRS_DOCUMENT_BYTES: usize = 8 * 1_024 * 1_024;
 const ACCEPTANCE_POLICY_NONCLAIM: &str = "This artifact supplies plan-admitted differential thresholds only. It does not establish independent review, numerical correctness, hardware correctness, qualification authority, or close m1.r29.";
 const ACCEPTANCE_RESULT_NONCLAIM: &str = "This result authenticates exact target-only differential comparisons against one plan-admitted threshold policy only. It does not establish an independently reviewed threshold, prove operator or graph refinement, establish hardware correctness, grant qualification authority, or close m1.r29.";
+const CAPTURE_NONCLAIM: &str = "Observed bytes only; this transcript does not establish a reference comparison, tolerance, numerical correctness, hardware correctness, performance, qualification, or m1.r29 closure.";
 
 const METRICS: &[Metric] = &[
     Metric {
@@ -106,10 +109,17 @@ struct Payload {
 
 #[derive(Debug)]
 struct Output {
+    manifest_bytes: u64,
     manifest_identity: SecureFileIdentity,
     manifest_sha256: String,
     logits: Payload,
     tokens: Payload,
+}
+
+struct ManifestCompanion {
+    bytes: u64,
+    path: PathBuf,
+    sha256: String,
 }
 
 struct OutputContext<'a> {
@@ -140,6 +150,18 @@ struct PlanCase {
     input_sha256: String,
     kind: String,
     workload_sha256: String,
+}
+
+struct PairsLayout {
+    parent: PathBuf,
+    capture_root: OsString,
+    reference_root: OsString,
+    output: OsString,
+}
+
+struct TranscriptBinding {
+    logits_sha256: String,
+    tokens_sha256: String,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -388,6 +410,267 @@ impl Drop for StagingBundle {
     }
 }
 
+struct StagingPairs {
+    parent: OwnedFd,
+    file: File,
+    initial: Stat,
+    expected_sha256: String,
+    staging_name: OsString,
+    output_name: OsString,
+    armed: bool,
+}
+
+impl StagingPairs {
+    fn create(layout: &PairsLayout, parent: OwnedFd, bytes: &[u8]) -> BenchResult<Self> {
+        require_absent_at(&parent, &layout.output, "pairs output")?;
+        for nonce in 0..1_024_u16 {
+            let mut staging_name = OsString::from(".");
+            staging_name.push(&layout.output);
+            staging_name.push(format!(".staging.{}.{nonce}", std::process::id()));
+            let descriptor = match openat2(
+                &parent,
+                Path::new(&staging_name),
+                OFlags::WRONLY
+                    | OFlags::CREATE
+                    | OFlags::EXCL
+                    | OFlags::NOFOLLOW
+                    | OFlags::NONBLOCK
+                    | OFlags::CLOEXEC,
+                Mode::RUSR | Mode::WUSR,
+                ResolveFlags::BENEATH | ResolveFlags::NO_SYMLINKS | ResolveFlags::NO_MAGICLINKS,
+            ) {
+                Ok(descriptor) => descriptor,
+                Err(error) if error == rustix::io::Errno::EXIST => continue,
+                Err(error) => {
+                    return Err(format!(
+                        "cannot create staged differential pairs manifest: {error}"
+                    ));
+                }
+            };
+            let mut file = File::from(descriptor);
+            let created = match fstat(&file) {
+                Ok(created)
+                    if FileType::from_raw_mode(created.st_mode) == FileType::RegularFile
+                        && created.st_nlink == 1 =>
+                {
+                    created
+                }
+                Ok(created) => {
+                    cleanup_created_name(&parent, &staging_name, &created);
+                    return Err(
+                        "created pairs staging entry must be a one-link regular file".to_owned(),
+                    );
+                }
+                Err(error) => {
+                    return Err(format!(
+                        "cannot inspect created pairs staging entry: {error}"
+                    ));
+                }
+            };
+            if let Err(error) = file.write_all(bytes) {
+                drop(file);
+                cleanup_created_name(&parent, &staging_name, &created);
+                return Err(format!("cannot write staged pairs manifest: {error}"));
+            }
+            if let Err(error) = file.sync_all() {
+                drop(file);
+                cleanup_created_name(&parent, &staging_name, &created);
+                return Err(format!("cannot sync staged pairs manifest: {error}"));
+            }
+            let initial = match fstat(&file) {
+                Ok(initial)
+                    if FileType::from_raw_mode(initial.st_mode) == FileType::RegularFile
+                        && initial.st_nlink == 1 =>
+                {
+                    initial
+                }
+                Ok(_) => {
+                    drop(file);
+                    cleanup_created_name(&parent, &staging_name, &created);
+                    return Err(
+                        "staged pairs manifest must remain a one-link regular file".to_owned()
+                    );
+                }
+                Err(error) => {
+                    drop(file);
+                    cleanup_created_name(&parent, &staging_name, &created);
+                    return Err(format!("cannot inspect staged pairs manifest: {error}"));
+                }
+            };
+            return Ok(Self {
+                parent,
+                file,
+                initial,
+                expected_sha256: sha256_identity(bytes),
+                staging_name,
+                output_name: layout.output.clone(),
+                armed: true,
+            });
+        }
+        Err("pairs staging namespace was exhausted".to_owned())
+    }
+
+    fn rebind(&self) -> BenchResult<File> {
+        let held = fstat(&self.file)
+            .map_err(|error| format!("cannot reinspect held staged pairs manifest: {error}"))?;
+        if !same_file_snapshot(&self.initial, &held) {
+            return Err("held staged pairs manifest changed after its write".to_owned());
+        }
+        let descriptor = openat2(
+            &self.parent,
+            Path::new(&self.staging_name),
+            OFlags::RDONLY | OFlags::NOFOLLOW | OFlags::NONBLOCK | OFlags::CLOEXEC,
+            Mode::empty(),
+            ResolveFlags::BENEATH | ResolveFlags::NO_SYMLINKS | ResolveFlags::NO_MAGICLINKS,
+        )
+        .map_err(|error| format!("cannot rebind staged pairs manifest name: {error}"))?;
+        let rebound = File::from(descriptor);
+        let rebound_stat = fstat(&rebound)
+            .map_err(|error| format!("cannot inspect rebound staged pairs manifest: {error}"))?;
+        if FileType::from_raw_mode(rebound_stat.st_mode) != FileType::RegularFile
+            || rebound_stat.st_nlink != 1
+            || !same_file_snapshot(&self.initial, &rebound_stat)
+        {
+            return Err(
+                "staged pairs manifest name no longer identifies its created file".to_owned(),
+            );
+        }
+        Ok(rebound)
+    }
+
+    fn staging_name_has_created_identity(&self) -> bool {
+        name_has_identity(&self.parent, &self.staging_name, &self.initial)
+    }
+
+    fn publish(mut self) -> BenchResult<()> {
+        let rebound = self.rebind()?;
+        renameat_with(
+            &self.parent,
+            self.staging_name.as_os_str(),
+            &self.parent,
+            self.output_name.as_os_str(),
+            RenameFlags::NOREPLACE,
+        )
+        .map_err(|error| {
+            if error == rustix::io::Errno::EXIST {
+                "pairs output appeared before no-replace publication".to_owned()
+            } else {
+                format!("cannot publish pairs output without replacement: {error}")
+            }
+        })?;
+        self.armed = false;
+        let rebound_stat = fstat(&rebound)
+            .map_err(|error| format!("cannot inspect published pairs manifest: {error}"))?;
+        if !same_publication_snapshot(&self.initial, &rebound_stat) {
+            return Err("published pairs manifest changed during publication".to_owned());
+        }
+        fsync(&self.parent)
+            .map_err(|error| format!("cannot sync published pairs output parent: {error}"))?;
+        let published = openat2(
+            &self.parent,
+            Path::new(&self.output_name),
+            OFlags::RDONLY | OFlags::NOFOLLOW | OFlags::NONBLOCK | OFlags::CLOEXEC,
+            Mode::empty(),
+            ResolveFlags::BENEATH | ResolveFlags::NO_SYMLINKS | ResolveFlags::NO_MAGICLINKS,
+        )
+        .map_err(|error| format!("cannot rebind published pairs manifest name: {error}"))?;
+        let mut published = File::from(published);
+        let published_stat = fstat(&published)
+            .map_err(|error| format!("cannot inspect rebound published pairs manifest: {error}"))?;
+        if FileType::from_raw_mode(published_stat.st_mode) != FileType::RegularFile
+            || published_stat.st_nlink != 1
+            || !same_publication_snapshot(&self.initial, &published_stat)
+        {
+            return Err(
+                "published pairs output name does not identify its created file".to_owned(),
+            );
+        }
+        let expected_bytes = usize::try_from(self.initial.st_size)
+            .map_err(|_| "published pairs manifest length is invalid".to_owned())?;
+        let mut bytes = Vec::new();
+        bytes
+            .try_reserve_exact(expected_bytes.saturating_add(1))
+            .map_err(|_| "cannot reserve published pairs verification buffer".to_owned())?;
+        Read::by_ref(&mut published)
+            .take(expected_bytes.saturating_add(1) as u64)
+            .read_to_end(&mut bytes)
+            .map_err(|error| format!("cannot reread published pairs manifest: {error}"))?;
+        let final_stat = fstat(&published)
+            .map_err(|error| format!("cannot reinspect published pairs manifest: {error}"))?;
+        if bytes.len() != expected_bytes
+            || sha256_identity(&bytes) != self.expected_sha256
+            || !same_file_snapshot(&published_stat, &final_stat)
+        {
+            return Err("published pairs manifest bytes changed during publication".to_owned());
+        }
+        let final_name = openat2(
+            &self.parent,
+            Path::new(&self.output_name),
+            OFlags::RDONLY | OFlags::NOFOLLOW | OFlags::NONBLOCK | OFlags::CLOEXEC,
+            Mode::empty(),
+            ResolveFlags::BENEATH | ResolveFlags::NO_SYMLINKS | ResolveFlags::NO_MAGICLINKS,
+        )
+        .map_err(|error| format!("cannot finally rebind published pairs name: {error}"))?;
+        let final_name_stat = fstat(&final_name)
+            .map_err(|error| format!("cannot finally inspect published pairs name: {error}"))?;
+        if FileType::from_raw_mode(final_name_stat.st_mode) != FileType::RegularFile
+            || final_name_stat.st_nlink != 1
+            || !same_publication_snapshot(&self.initial, &final_name_stat)
+        {
+            return Err(
+                "published pairs output name changed during content verification".to_owned(),
+            );
+        }
+        Ok(())
+    }
+}
+
+fn name_has_identity(parent: &OwnedFd, name: &OsStr, identity: &Stat) -> bool {
+    let Ok(descriptor) = openat2(
+        parent,
+        Path::new(name),
+        OFlags::RDONLY | OFlags::NOFOLLOW | OFlags::NONBLOCK | OFlags::CLOEXEC,
+        Mode::empty(),
+        ResolveFlags::BENEATH | ResolveFlags::NO_SYMLINKS | ResolveFlags::NO_MAGICLINKS,
+    ) else {
+        return false;
+    };
+    fstat(&descriptor)
+        .is_ok_and(|current| current.st_dev == identity.st_dev && current.st_ino == identity.st_ino)
+}
+
+fn cleanup_created_name(parent: &OwnedFd, name: &OsStr, identity: &Stat) {
+    if name_has_identity(parent, name, identity) {
+        let _ = unlinkat(parent, name, AtFlags::empty());
+    }
+}
+
+impl Drop for StagingPairs {
+    fn drop(&mut self) {
+        if self.armed && self.staging_name_has_created_identity() {
+            let _ = unlinkat(
+                &self.parent,
+                self.staging_name.as_os_str(),
+                AtFlags::empty(),
+            );
+        }
+    }
+}
+
+fn require_absent_at(parent: &OwnedFd, name: &OsStr, description: &str) -> BenchResult<()> {
+    match openat2(
+        parent,
+        Path::new(name),
+        OFlags::RDONLY | OFlags::NOFOLLOW | OFlags::NONBLOCK | OFlags::CLOEXEC,
+        Mode::empty(),
+        ResolveFlags::BENEATH | ResolveFlags::NO_SYMLINKS | ResolveFlags::NO_MAGICLINKS,
+    ) {
+        Ok(_) => Err(format!("{description} already exists")),
+        Err(error) if error == rustix::io::Errno::NOENT => Ok(()),
+        Err(error) => Err(format!("cannot safely inspect {description}: {error}")),
+    }
+}
+
 fn open_directory_at(parent: &OwnedFd, relative: &Path, description: &str) -> BenchResult<OwnedFd> {
     openat2(
         parent,
@@ -429,6 +712,18 @@ fn main() -> ExitCode {
     let arguments = env::args_os().skip(1).collect::<Vec<_>>();
     if arguments
         .first()
+        .is_some_and(|command| command == "write-pairs")
+    {
+        return match write_pairs_command(&arguments) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("FAIL: {error}");
+                ExitCode::FAILURE
+            }
+        };
+    }
+    if arguments
+        .first()
         .is_some_and(|command| command == "produce")
     {
         return match produce_command(&arguments) {
@@ -452,6 +747,628 @@ fn main() -> ExitCode {
         };
     }
     main_for(&SUITE)
+}
+
+fn write_pairs_command(arguments: &[OsString]) -> BenchResult<()> {
+    let [command, plan_path, capture_root, reference_root, output_pairs] = arguments else {
+        return Err(
+            "usage: ferric-m1-differential write-pairs PLAN CAPTURE-ROOT REFERENCE-ROOT OUTPUT-PAIRS"
+                .to_owned(),
+        );
+    };
+    if command != "write-pairs" {
+        return Err("differential pairs command drifted".to_owned());
+    }
+    let plan_path = Path::new(plan_path);
+    let layout = pairs_layout(
+        Path::new(capture_root),
+        Path::new(reference_root),
+        Path::new(output_pairs),
+    )?;
+    let (plan, plan_bytes) = load_benchmark_plan(&SUITE, plan_path)?;
+    let plan_sha256 = sha256_identity(&plan_bytes);
+    let plan_cases = exact_plan_cases(&plan)?;
+    let identities = plan_identities(&plan)?;
+    let parent = open_pairs_parent(&layout.parent)?;
+    validate_pairs_input_layout(&layout, &parent)?;
+    let capture_name = safe_component_string(&layout.capture_root, "capture root")?;
+    let reference_name = safe_component_string(&layout.reference_root, "reference root")?;
+    let mut transcript_bindings = BTreeMap::new();
+    let mut pairs = Vec::with_capacity(plan_cases.len());
+    for (case_id, case) in &plan_cases {
+        let capture_bundle = format!("{}.capture.bundle", case.kind);
+        let reference_bundle = format!("{}.reference.bundle", case.kind);
+        let capture_runner = PathBuf::from(&capture_name)
+            .join(&capture_bundle)
+            .join("runner.json");
+        let reference_runner = PathBuf::from(&reference_name)
+            .join(&reference_bundle)
+            .join("runner.json");
+        let capture_output = PathBuf::from(&capture_name)
+            .join(&capture_bundle)
+            .join("output.json");
+        let reference_output = PathBuf::from(&reference_name)
+            .join(&reference_bundle)
+            .join("output.json");
+        let (runner_value, runner_bytes) = read_canonical_at(
+            &parent,
+            &capture_runner,
+            &format!("Ferric runner transcript {case_id}"),
+        )?;
+        let (_, reference_runner_bytes) = read_canonical_at(
+            &parent,
+            &reference_runner,
+            &format!("reference runner transcript {case_id}"),
+        )?;
+        if reference_runner_bytes != runner_bytes {
+            return Err(format!(
+                "reference runner transcript differs from the Ferric transcript: {case_id}"
+            ));
+        }
+        let (_, capture_output_bytes) = read_canonical_at(
+            &parent,
+            &capture_output,
+            &format!("Ferric output manifest {case_id}"),
+        )?;
+        let (_, reference_output_bytes) = read_canonical_at(
+            &parent,
+            &reference_output,
+            &format!("reference output manifest {case_id}"),
+        )?;
+        let transcript =
+            validate_capture_transcript(&runner_value, case_id, case, &identities, &plan_sha256)?;
+        if transcript_bindings
+            .insert(case_id.clone(), transcript)
+            .is_some()
+        {
+            return Err("differential transcript case ID was reused".to_owned());
+        }
+        pairs.push(json!({
+            "case_id": case_id,
+            "ferric_output_manifest": {
+                "bytes": capture_output_bytes.len(),
+                "path": capture_output
+                    .to_str()
+                    .ok_or_else(|| "Ferric output path must be UTF-8".to_owned())?,
+                "sha256": sha256_identity(&capture_output_bytes),
+            },
+            "kind": case.kind,
+            "reference_output_manifest": {
+                "bytes": reference_output_bytes.len(),
+                "path": reference_output
+                    .to_str()
+                    .ok_or_else(|| "reference output path must be UTF-8".to_owned())?,
+                "sha256": sha256_identity(&reference_output_bytes),
+            },
+            "runner_transcript": {
+                "bytes": runner_bytes.len(),
+                "path": capture_runner
+                    .to_str()
+                    .ok_or_else(|| "runner transcript path must be UTF-8".to_owned())?,
+                "sha256": sha256_identity(&runner_bytes),
+            },
+        }));
+    }
+    let document = json!({
+        "authority": PAIRS_AUTHORITY,
+        "format": PAIRS_FORMAT,
+        "pairs": pairs,
+        "plan_sha256": plan_sha256,
+        "suite": SUITE.name,
+    });
+    let pairs_bytes = encode_canonical_document(&document)?;
+    let staging = StagingPairs::create(&layout, parent, &pairs_bytes)?;
+    {
+        let _staged_binding = staging.rebind()?;
+        let input_root =
+            duplicate_secure_input_directory(&staging.parent, "differential pairs parent")?;
+        let (staged_value, staged_bytes, _) = input_root.read_canonical(
+            Path::new(&staging.staging_name),
+            "staged differential pairs manifest",
+        )?;
+        if staged_bytes != pairs_bytes {
+            return Err("staged differential pairs manifest changed after its write".to_owned());
+        }
+        let mut parsed = parse_pairs(
+            &input_root,
+            &staged_value,
+            &plan_cases,
+            &identities,
+            &plan_sha256,
+        )?;
+        for pair in &mut parsed {
+            let transcript = transcript_bindings
+                .get(&pair.case_id)
+                .ok_or_else(|| "parsed differential pair lacks a transcript binding".to_owned())?;
+            if pair.ferric.logits.sha256 != transcript.logits_sha256
+                || pair.ferric.tokens.sha256 != transcript.tokens_sha256
+            {
+                return Err(format!(
+                    "Ferric output payload identities differ from its runner transcript: {}",
+                    pair.case_id
+                ));
+            }
+            compare_pair(pair)?;
+        }
+    }
+    let (_, final_plan_bytes) = load_benchmark_plan(&SUITE, plan_path)?;
+    if final_plan_bytes != plan_bytes {
+        return Err("benchmark plan changed while writing differential pairs".to_owned());
+    }
+    validate_pairs_input_layout(&layout, &staging.parent)?;
+    staging.publish()
+}
+
+fn pairs_layout(
+    capture_root: &Path,
+    reference_root: &Path,
+    output_pairs: &Path,
+) -> BenchResult<PairsLayout> {
+    let output_parent = admitted_parent(output_pairs, "pairs output")?;
+    let capture_parent = admitted_parent(capture_root, "capture root")?;
+    let reference_parent = admitted_parent(reference_root, "reference root")?;
+    if capture_parent != output_parent || reference_parent != output_parent {
+        return Err(
+            "capture root, reference root, and pairs output must share one direct parent"
+                .to_owned(),
+        );
+    }
+    let capture_name = safe_final_component(capture_root, "capture root")?;
+    let reference_name = safe_final_component(reference_root, "reference root")?;
+    let output_name = safe_final_component(output_pairs, "pairs output")?;
+    if capture_name == reference_name
+        || capture_name == output_name
+        || reference_name == output_name
+    {
+        return Err("pairs input and output names must be distinct".to_owned());
+    }
+    Ok(PairsLayout {
+        parent: output_parent,
+        capture_root: capture_name,
+        reference_root: reference_name,
+        output: output_name,
+    })
+}
+
+fn admitted_parent(path: &Path, description: &str) -> BenchResult<PathBuf> {
+    let parent = path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."));
+    if !parent.as_os_str().as_encoded_bytes().is_ascii()
+        || parent
+            .components()
+            .any(|component| matches!(component, Component::ParentDir | Component::Prefix(_)))
+    {
+        return Err(format!("{description} parent path is not admitted"));
+    }
+    Ok(parent.to_path_buf())
+}
+
+fn safe_final_component(path: &Path, description: &str) -> BenchResult<OsString> {
+    let component = path
+        .file_name()
+        .ok_or_else(|| format!("{description} path has no final component"))?;
+    safe_component_string(component, description)?;
+    Ok(component.to_os_string())
+}
+
+fn safe_component_string(component: &OsStr, description: &str) -> BenchResult<String> {
+    let bytes = component.as_encoded_bytes();
+    if bytes.is_empty()
+        || bytes.len() > 255
+        || !bytes.is_ascii()
+        || Path::new(component).components().count() != 1
+        || !matches!(
+            Path::new(component).components().next(),
+            Some(Component::Normal(_))
+        )
+    {
+        return Err(format!("invalid {description} name"));
+    }
+    component
+        .to_str()
+        .map(str::to_owned)
+        .ok_or_else(|| format!("{description} name must be UTF-8"))
+}
+
+fn open_pairs_parent(parent: &Path) -> BenchResult<OwnedFd> {
+    openat2(
+        CWD,
+        parent,
+        OFlags::RDONLY | OFlags::DIRECTORY | OFlags::NOFOLLOW | OFlags::NONBLOCK | OFlags::CLOEXEC,
+        Mode::empty(),
+        ResolveFlags::NO_SYMLINKS | ResolveFlags::NO_MAGICLINKS,
+    )
+    .map_err(|error| format!("cannot securely open differential pairs parent: {error}"))
+}
+
+fn validate_pairs_input_layout(layout: &PairsLayout, parent: &OwnedFd) -> BenchResult<()> {
+    for (root_name, suffix, description) in [
+        (&layout.capture_root, "capture.bundle", "capture root"),
+        (&layout.reference_root, "reference.bundle", "reference root"),
+    ] {
+        let root = open_directory_at(parent, Path::new(root_name), description)?;
+        let expected = SUITE
+            .case_kinds
+            .iter()
+            .map(|kind| format!("{kind}.{suffix}"))
+            .collect::<BTreeSet<_>>();
+        if directory_roster(&root, description)? != expected {
+            return Err(format!("{description} case-bundle roster drifted"));
+        }
+        for bundle in expected {
+            let bundle_root = open_directory_at(&root, Path::new(&bundle), "case bundle")?;
+            let expected_files = [
+                "logits.bf16le".to_owned(),
+                "output.json".to_owned(),
+                "runner.json".to_owned(),
+                "tokens.u32le".to_owned(),
+            ]
+            .into_iter()
+            .collect::<BTreeSet<_>>();
+            if directory_roster(&bundle_root, "case bundle")? != expected_files {
+                return Err(format!("case bundle file roster drifted: {bundle}"));
+            }
+        }
+    }
+    Ok(())
+}
+
+fn directory_roster(root: &OwnedFd, description: &str) -> BenchResult<BTreeSet<String>> {
+    let mut directory =
+        Dir::read_from(root).map_err(|error| format!("cannot enumerate {description}: {error}"))?;
+    let mut names = BTreeSet::new();
+    while let Some(entry) = directory.read() {
+        let entry = entry.map_err(|error| format!("cannot enumerate {description}: {error}"))?;
+        let name = entry.file_name().to_bytes();
+        if matches!(name, b"." | b"..") {
+            continue;
+        }
+        if !name.is_ascii() {
+            return Err(format!("{description} filename must be ASCII"));
+        }
+        let name = std::str::from_utf8(name)
+            .map_err(|_| format!("{description} filename must be UTF-8"))?;
+        safe_component_string(OsStr::new(name), &format!("{description} member"))?;
+        if !names.insert(name.to_owned()) {
+            return Err(format!("{description} contains a duplicate filename"));
+        }
+    }
+    Ok(names)
+}
+
+fn read_canonical_at(
+    parent: &OwnedFd,
+    relative: &Path,
+    description: &str,
+) -> BenchResult<(Value, Vec<u8>)> {
+    let descriptor = openat2(
+        parent,
+        relative,
+        OFlags::RDONLY | OFlags::NOFOLLOW | OFlags::NONBLOCK | OFlags::CLOEXEC,
+        Mode::empty(),
+        ResolveFlags::BENEATH | ResolveFlags::NO_SYMLINKS | ResolveFlags::NO_MAGICLINKS,
+    )
+    .map_err(|error| format!("cannot securely open {description}: {error}"))?;
+    let initial = fstat(&descriptor)
+        .map_err(|error| format!("cannot inspect opened {description}: {error}"))?;
+    if FileType::from_raw_mode(initial.st_mode) != FileType::RegularFile || initial.st_nlink != 1 {
+        return Err(format!("{description} must be a one-link regular file"));
+    }
+    let length =
+        usize::try_from(initial.st_size).map_err(|_| format!("{description} length is invalid"))?;
+    if length == 0 || length > MAX_PAIRS_DOCUMENT_BYTES {
+        return Err(format!(
+            "{description} length is outside the admitted bound"
+        ));
+    }
+    let mut file = File::from(descriptor);
+    let mut bytes = Vec::new();
+    bytes
+        .try_reserve_exact(length.saturating_add(1))
+        .map_err(|_| format!("cannot reserve {description} read buffer"))?;
+    Read::by_ref(&mut file)
+        .take(MAX_PAIRS_DOCUMENT_BYTES.saturating_add(1) as u64)
+        .read_to_end(&mut bytes)
+        .map_err(|error| format!("cannot read {description}: {error}"))?;
+    let final_stat =
+        fstat(&file).map_err(|error| format!("cannot reinspect {description}: {error}"))?;
+    if bytes.len() != length || !same_file_snapshot(&initial, &final_stat) {
+        return Err(format!("{description} changed while being read"));
+    }
+    let value: Value = serde_json::from_slice(&bytes)
+        .map_err(|error| format!("cannot parse {description}: {error}"))?;
+    if encode_canonical_document(&value)? != bytes {
+        return Err(format!("{description} is not canonical JSON"));
+    }
+    Ok((value, bytes))
+}
+
+fn same_file_snapshot(initial: &Stat, final_stat: &Stat) -> bool {
+    initial.st_dev == final_stat.st_dev
+        && initial.st_ino == final_stat.st_ino
+        && initial.st_mode == final_stat.st_mode
+        && initial.st_nlink == final_stat.st_nlink
+        && initial.st_size == final_stat.st_size
+        && initial.st_mtime == final_stat.st_mtime
+        && initial.st_mtime_nsec == final_stat.st_mtime_nsec
+        && initial.st_ctime == final_stat.st_ctime
+        && initial.st_ctime_nsec == final_stat.st_ctime_nsec
+}
+
+fn same_publication_snapshot(initial: &Stat, published: &Stat) -> bool {
+    initial.st_dev == published.st_dev
+        && initial.st_ino == published.st_ino
+        && initial.st_mode == published.st_mode
+        && initial.st_nlink == published.st_nlink
+        && initial.st_size == published.st_size
+        && initial.st_mtime == published.st_mtime
+        && initial.st_mtime_nsec == published.st_mtime_nsec
+}
+
+fn validate_capture_transcript(
+    value: &Value,
+    case_id: &str,
+    case: &PlanCase,
+    identities: &BTreeMap<String, String>,
+    plan_sha256: &str,
+) -> BenchResult<TranscriptBinding> {
+    let transcript = object(
+        value,
+        &[
+            "authority",
+            "benchmark_executable_sha256",
+            "benchmark_protocol_sha256",
+            "case_id",
+            "compact_sha256",
+            "device_identity_sha256",
+            "dispatch_generation",
+            "environment_sha256",
+            "execution",
+            "format",
+            "gpu_unique_id",
+            "input_sha256",
+            "kernel_artifact_manifest_sha256",
+            "kind",
+            "logits_row_sha256",
+            "logits_sha256",
+            "nonclaim",
+            "plan_sha256",
+            "program_catalog_sha256",
+            "runner_declaration_sha256",
+            "selection",
+            "status",
+            "target",
+            "tokens_sha256",
+            "workload_sha256",
+        ],
+        "Ferric capture transcript",
+    )?;
+    for (key, expected) in [
+        ("authority", "observed-target-only-qualification-capture"),
+        (
+            "benchmark_executable_sha256",
+            identity(identities, "benchmark-executable")?,
+        ),
+        (
+            "benchmark_protocol_sha256",
+            identity(identities, "benchmark-protocol")?,
+        ),
+        ("case_id", case_id),
+        ("environment_sha256", identity(identities, "environment")?),
+        ("format", CAPTURE_FORMAT),
+        ("input_sha256", &case.input_sha256),
+        ("kind", &case.kind),
+        ("nonclaim", CAPTURE_NONCLAIM),
+        ("plan_sha256", plan_sha256),
+        ("status", "OBSERVED"),
+        ("target", TARGET),
+        ("workload_sha256", &case.workload_sha256),
+    ] {
+        expect(transcript, key, expected, "Ferric capture transcript")?;
+    }
+    for key in [
+        "compact_sha256",
+        "device_identity_sha256",
+        "kernel_artifact_manifest_sha256",
+        "logits_sha256",
+        "program_catalog_sha256",
+        "runner_declaration_sha256",
+        "tokens_sha256",
+    ] {
+        require_sha256(
+            string(transcript, key, "Ferric capture transcript")?,
+            &format!("Ferric capture {key}"),
+        )?;
+    }
+    let gpu_unique_id = unsigned(transcript, "gpu_unique_id", "Ferric capture transcript")?;
+    if gpu_unique_id == 0 {
+        return Err("Ferric capture GPU unique ID must be nonzero".to_owned());
+    }
+    let dispatch_generation = unsigned(
+        transcript,
+        "dispatch_generation",
+        "Ferric capture transcript",
+    )?;
+    let mode = mode_for_kind(&case.kind)?;
+    let selection = object(
+        field(transcript, "selection", "Ferric capture transcript")?,
+        &["bucket", "mode", "role"],
+        "Ferric capture selection",
+    )?;
+    expect(selection, "bucket", &case.kind, "Ferric capture selection")?;
+    expect(selection, "mode", mode, "Ferric capture selection")?;
+    expect(selection, "role", "target-8b", "Ferric capture selection")?;
+    let rows = rows_for_kind(&case.kind)?;
+    let row_hashes = field(transcript, "logits_row_sha256", "Ferric capture transcript")?
+        .as_array()
+        .ok_or_else(|| "Ferric capture row identities must be an array".to_owned())?;
+    if u64::try_from(row_hashes.len()) != Ok(rows) {
+        return Err("Ferric capture row identity roster drifted".to_owned());
+    }
+    for value in row_hashes {
+        let digest = value
+            .as_str()
+            .ok_or_else(|| "Ferric capture row identity must be a string".to_owned())?;
+        require_sha256(digest, "Ferric capture row identity")?;
+    }
+    validate_capture_execution(
+        field(transcript, "execution", "Ferric capture transcript")?,
+        &case.kind,
+        mode,
+        rows,
+        dispatch_generation,
+    )?;
+    Ok(TranscriptBinding {
+        logits_sha256: string(transcript, "logits_sha256", "Ferric capture transcript")?.to_owned(),
+        tokens_sha256: string(transcript, "tokens_sha256", "Ferric capture transcript")?.to_owned(),
+    })
+}
+
+fn validate_capture_execution(
+    value: &Value,
+    kind: &str,
+    mode: &str,
+    rows: u64,
+    dispatch_generation: u64,
+) -> BenchResult<()> {
+    if mode == "prefill" {
+        let execution = object(
+            value,
+            &["dispatch_generation", "epoch", "mode", "round_count"],
+            "Ferric prefill capture execution",
+        )?;
+        expect_u64(
+            execution,
+            "dispatch_generation",
+            dispatch_generation,
+            "Ferric prefill dispatch generation",
+        )?;
+        unsigned(execution, "epoch", "Ferric prefill capture execution")?;
+        expect(
+            execution,
+            "mode",
+            "one-shot-prefill",
+            "Ferric prefill capture execution",
+        )?;
+        expect_u64(execution, "round_count", 1, "Ferric prefill round count")?;
+        return Ok(());
+    }
+    let execution = object(
+        value,
+        &[
+            "context_plan_sha256",
+            "declared_workload_binding_sha256",
+            "first_dispatch_generation",
+            "first_epoch",
+            "mode",
+            "ordered_lane_bindings",
+            "round_count",
+            "round_history_sha256",
+            "terminal_dispatch_generation",
+            "terminal_epoch",
+            "terminal_ordinal",
+        ],
+        "Ferric decode capture execution",
+    )?;
+    for key in [
+        "context_plan_sha256",
+        "declared_workload_binding_sha256",
+        "round_history_sha256",
+    ] {
+        require_sha256(
+            string(execution, key, "Ferric decode capture execution")?,
+            &format!("Ferric decode execution {key}"),
+        )?;
+    }
+    unsigned(
+        execution,
+        "first_dispatch_generation",
+        "Ferric decode capture execution",
+    )?;
+    unsigned(execution, "first_epoch", "Ferric decode capture execution")?;
+    expect(
+        execution,
+        "mode",
+        "teacher-forced-c8192",
+        "Ferric decode capture execution",
+    )?;
+    expect_u64(execution, "round_count", 8192, "Ferric decode round count")?;
+    expect_u64(
+        execution,
+        "terminal_dispatch_generation",
+        dispatch_generation,
+        "Ferric decode terminal dispatch generation",
+    )?;
+    unsigned(
+        execution,
+        "terminal_epoch",
+        "Ferric decode capture execution",
+    )?;
+    expect_u64(
+        execution,
+        "terminal_ordinal",
+        8191,
+        "Ferric decode terminal ordinal",
+    )?;
+    let lanes = field(
+        execution,
+        "ordered_lane_bindings",
+        "Ferric decode capture execution",
+    )?
+    .as_array()
+    .ok_or_else(|| "Ferric decode lane bindings must be an array".to_owned())?;
+    if u64::try_from(lanes.len()) != Ok(rows) {
+        return Err(format!("Ferric decode lane roster drifted for {kind}"));
+    }
+    for (ordinal, value) in lanes.iter().enumerate() {
+        let lane = object(
+            value,
+            &[
+                "lane_identity_sha256",
+                "lane_ordinal",
+                "token_sequence_identity_sha256",
+            ],
+            "Ferric decode lane binding",
+        )?;
+        require_sha256(
+            string(lane, "lane_identity_sha256", "Ferric decode lane binding")?,
+            "Ferric decode lane identity",
+        )?;
+        require_sha256(
+            string(
+                lane,
+                "token_sequence_identity_sha256",
+                "Ferric decode lane binding",
+            )?,
+            "Ferric decode token sequence identity",
+        )?;
+        expect_u64(
+            lane,
+            "lane_ordinal",
+            u64::try_from(ordinal)
+                .map_err(|_| "Ferric decode lane ordinal does not fit u64".to_owned())?,
+            "Ferric decode lane ordinal",
+        )?;
+    }
+    Ok(())
+}
+
+fn mode_for_kind(kind: &str) -> BenchResult<&'static str> {
+    match kind {
+        "decode-s1-c8192" | "decode-s32-c8192" | "decode-s8-c8192" => Ok("decode"),
+        "prefill-s1-t128" | "prefill-s1-t2048" | "prefill-s1-t512" | "prefill-s8-t128" => {
+            Ok("prefill")
+        }
+        _ => Err(format!("unknown differential case kind: {kind}")),
+    }
+}
+
+fn unsigned(object: &Map<String, Value>, key: &str, description: &str) -> BenchResult<u64> {
+    field(object, key, description)?
+        .as_u64()
+        .ok_or_else(|| format!("{description} field must be an unsigned integer: {key}"))
 }
 
 fn produce_command(arguments: &[OsString]) -> BenchResult<()> {
@@ -710,12 +1627,18 @@ fn require_comparison_within_policy(
     comparison: Comparison,
     threshold: AcceptanceThreshold,
 ) -> BenchResult<()> {
-    if comparison.maximum_logit_ulp_error > threshold.maximum_logit_ulp_error {
+    if !comparison_within_threshold(
+        comparison.maximum_logit_ulp_error,
+        threshold.maximum_logit_ulp_error,
+    ) {
         return Err(format!(
             "maximum logit ULP error exceeds the admitted policy for {case_id}"
         ));
     }
-    if comparison.token_mismatches > threshold.maximum_token_mismatches {
+    if !comparison_within_threshold(
+        comparison.token_mismatches,
+        threshold.maximum_token_mismatches,
+    ) {
         return Err(format!(
             "token mismatches exceed the admitted policy for {case_id}"
         ));
@@ -785,15 +1708,22 @@ fn exact_plan_cases(plan: &Value) -> BenchResult<BTreeMap<String, PlanCase>> {
         )?;
         let id = string(case, "id", "benchmark case")?;
         let kind = string(case, "kind", "benchmark case")?;
-        by_id.insert(
-            id.to_owned(),
-            PlanCase {
-                input_sha256: string(case, "input_sha256", "benchmark case")?.to_owned(),
-                kind: kind.to_owned(),
-                workload_sha256: string(case, "workload_sha256", "benchmark case")?.to_owned(),
-            },
-        );
-        kinds.insert(kind);
+        if by_id
+            .insert(
+                id.to_owned(),
+                PlanCase {
+                    input_sha256: string(case, "input_sha256", "benchmark case")?.to_owned(),
+                    kind: kind.to_owned(),
+                    workload_sha256: string(case, "workload_sha256", "benchmark case")?.to_owned(),
+                },
+            )
+            .is_some()
+        {
+            return Err("differential producer case ID was reused".to_owned());
+        }
+        if !kinds.insert(kind) {
+            return Err("differential producer case kind was reused".to_owned());
+        }
     }
     if kinds != SUITE.case_kinds.iter().copied().collect() {
         return Err("differential producer case-kind roster drifted".to_owned());
@@ -876,18 +1806,16 @@ fn parse_pairs(
             "runner transcript",
         )?;
         admit_input_identity(&mut input_identities, runner_identity, "runner transcript")?;
-        let ferric_path = relative_path(
-            Path::new(""),
-            string(pair, "ferric_output_manifest", "differential pair")?,
-            "Ferric output manifest",
+        let ferric_companion = parse_manifest_companion(
+            field(pair, "ferric_output_manifest", "differential pair")?,
+            "Ferric output manifest companion",
         )?;
-        let reference_path = relative_path(
-            Path::new(""),
-            string(pair, "reference_output_manifest", "differential pair")?,
-            "reference output manifest",
+        let reference_companion = parse_manifest_companion(
+            field(pair, "reference_output_manifest", "differential pair")?,
+            "reference output manifest companion",
         )?;
-        if !manifest_paths.insert(ferric_path.clone())
-            || !manifest_paths.insert(reference_path.clone())
+        if !manifest_paths.insert(ferric_companion.path.clone())
+            || !manifest_paths.insert(reference_companion.path.clone())
         {
             return Err("differential output manifest was reused".to_owned());
         }
@@ -898,8 +1826,19 @@ fn parse_pairs(
             plan_sha256,
             runner_transcript_sha256: &runner_transcript_sha256,
         };
-        let ferric = parse_output(root, &ferric_path, "ferric", &output_context)?;
-        let reference = parse_output(root, &reference_path, "reference", &output_context)?;
+        let ferric = parse_output(root, &ferric_companion.path, "ferric", &output_context)?;
+        let reference = parse_output(
+            root,
+            &reference_companion.path,
+            "reference",
+            &output_context,
+        )?;
+        require_manifest_companion(&ferric, &ferric_companion, "Ferric output manifest")?;
+        require_manifest_companion(
+            &reference,
+            &reference_companion,
+            "reference output manifest",
+        )?;
         for (identity, description) in [
             (ferric.manifest_identity, "Ferric output manifest"),
             (
@@ -955,6 +1894,38 @@ fn parse_pairs(
         return Err("differential pair roster drifted from the plan".to_owned());
     }
     Ok(pairs)
+}
+
+fn parse_manifest_companion(value: &Value, description: &str) -> BenchResult<ManifestCompanion> {
+    let companion = object(value, &["bytes", "path", "sha256"], description)?;
+    let bytes = unsigned(companion, "bytes", description)?;
+    if bytes == 0 || bytes > MAX_PAIRS_DOCUMENT_BYTES as u64 {
+        return Err(format!(
+            "{description} length is outside the admitted bound"
+        ));
+    }
+    let sha256 = string(companion, "sha256", description)?;
+    require_sha256(sha256, &format!("{description} identity"))?;
+    Ok(ManifestCompanion {
+        bytes,
+        path: relative_path(
+            Path::new(""),
+            string(companion, "path", description)?,
+            description,
+        )?,
+        sha256: sha256.to_owned(),
+    })
+}
+
+fn require_manifest_companion(
+    output: &Output,
+    companion: &ManifestCompanion,
+    description: &str,
+) -> BenchResult<()> {
+    if output.manifest_bytes != companion.bytes || output.manifest_sha256 != companion.sha256 {
+        return Err(format!("{description} companion identity drifted"));
+    }
+    Ok(())
 }
 
 fn parse_companion(
@@ -1110,6 +2081,8 @@ fn parse_output(
         return Err(format!("{producer} output reuses one payload path"));
     }
     Ok(Output {
+        manifest_bytes: u64::try_from(bytes.len())
+            .map_err(|_| format!("{description} length does not fit u64"))?,
         manifest_identity,
         manifest_sha256: sha256_identity(&bytes),
         logits,
@@ -1602,6 +2575,278 @@ mod tests {
         })
     }
 
+    struct PairsFixture {
+        temporary: TestDirectory,
+        plan: PathBuf,
+        captures: PathBuf,
+        references: PathBuf,
+        output: PathBuf,
+    }
+
+    fn fixture_digest(label: &str) -> String {
+        sha256_identity(label.as_bytes())
+    }
+
+    fn differential_identity_fixture() -> BTreeMap<String, String> {
+        [
+            "benchmark-executable",
+            "benchmark-protocol",
+            "config",
+            "dispatch-graph",
+            "environment",
+            "fe2o3-source-closure",
+            "ferric-source-closure",
+            "generated-plan",
+            "model",
+            "schedule-catalog",
+            "tokenizer",
+            "weights",
+            "workload-roster",
+        ]
+        .into_iter()
+        .chain(DIFFERENTIAL_IDENTITIES.iter().copied())
+        .map(|name| (name.to_owned(), fixture_digest(name)))
+        .collect()
+    }
+
+    fn fixture_output_manifest(
+        case_id: &str,
+        case: &PlanCase,
+        identities: &BTreeMap<String, String>,
+        plan_sha256: &str,
+        runner_sha256: &str,
+        producer: &str,
+        payloads: (&[u8], &[u8]),
+    ) -> Value {
+        let (logits, tokens) = payloads;
+        let rows = rows_for_kind(&case.kind).unwrap();
+        let (producer_identity, protocol_identity) = if producer == "ferric" {
+            ("benchmark-executable", "benchmark-protocol")
+        } else {
+            ("reference-implementation", "reference-protocol")
+        };
+        json!({
+            "authority": OUTPUT_AUTHORITY,
+            "case_id": case_id,
+            "environment_sha256": identities["environment"],
+            "format": OUTPUT_FORMAT,
+            "input_sha256": case.input_sha256,
+            "kind": case.kind,
+            "logits": {
+                "bytes": logits.len(),
+                "encoding": "bf16-le",
+                "path": "logits.bf16le",
+                "sha256": sha256_identity(logits),
+            },
+            "plan_sha256": plan_sha256,
+            "producer": producer,
+            "producer_sha256": identities[producer_identity],
+            "protocol_sha256": identities[protocol_identity],
+            "runner_transcript_sha256": runner_sha256,
+            "shape": {
+                "rows": rows,
+                "vocabulary_size": VOCABULARY_SIZE,
+            },
+            "tokens": {
+                "bytes": tokens.len(),
+                "encoding": "u32-le",
+                "path": "tokens.u32le",
+                "sha256": sha256_identity(tokens),
+            },
+            "workload_sha256": case.workload_sha256,
+        })
+    }
+
+    fn fixture_capture_transcript(
+        case_id: &str,
+        case: &PlanCase,
+        identities: &BTreeMap<String, String>,
+        plan_sha256: &str,
+        logits: &[u8],
+        tokens: &[u8],
+    ) -> Value {
+        let rows = rows_for_kind(&case.kind).unwrap();
+        let row_bytes = usize::try_from(VOCABULARY_SIZE * BF16_BYTES).unwrap();
+        let row_sha256 = sha256_identity(&logits[..row_bytes]);
+        let mode = mode_for_kind(&case.kind).unwrap();
+        let dispatch_generation = if mode == "prefill" { 7 } else { 8_202 };
+        let execution = if mode == "prefill" {
+            json!({
+                "dispatch_generation": dispatch_generation,
+                "epoch": 11,
+                "mode": "one-shot-prefill",
+                "round_count": 1,
+            })
+        } else {
+            json!({
+                "context_plan_sha256": fixture_digest(&format!("context:{case_id}")),
+                "declared_workload_binding_sha256": fixture_digest(&format!("workload-binding:{case_id}")),
+                "first_dispatch_generation": 11,
+                "first_epoch": 17,
+                "mode": "teacher-forced-c8192",
+                "ordered_lane_bindings": (0..rows).map(|lane| json!({
+                    "lane_identity_sha256": fixture_digest(&format!("lane:{case_id}:{lane}")),
+                    "lane_ordinal": lane,
+                    "token_sequence_identity_sha256": fixture_digest(&format!("tokens:{case_id}:{lane}")),
+                })).collect::<Vec<_>>(),
+                "round_count": 8_192,
+                "round_history_sha256": fixture_digest(&format!("history:{case_id}")),
+                "terminal_dispatch_generation": dispatch_generation,
+                "terminal_epoch": 8_208,
+                "terminal_ordinal": 8_191,
+            })
+        };
+        json!({
+            "authority": "observed-target-only-qualification-capture",
+            "benchmark_executable_sha256": identities["benchmark-executable"],
+            "benchmark_protocol_sha256": identities["benchmark-protocol"],
+            "case_id": case_id,
+            "compact_sha256": fixture_digest(&format!("compact:{case_id}")),
+            "device_identity_sha256": fixture_digest(&format!("device:{case_id}")),
+            "dispatch_generation": dispatch_generation,
+            "environment_sha256": identities["environment"],
+            "execution": execution,
+            "format": CAPTURE_FORMAT,
+            "gpu_unique_id": 23,
+            "input_sha256": case.input_sha256,
+            "kernel_artifact_manifest_sha256": fixture_digest(&format!("kernel:{case_id}")),
+            "kind": case.kind,
+            "logits_row_sha256": (0..rows).map(|_| row_sha256.clone()).collect::<Vec<_>>(),
+            "logits_sha256": sha256_identity(logits),
+            "nonclaim": CAPTURE_NONCLAIM,
+            "plan_sha256": plan_sha256,
+            "program_catalog_sha256": fixture_digest(&format!("catalog:{case_id}")),
+            "runner_declaration_sha256": fixture_digest(&format!("runner:{case_id}")),
+            "selection": {
+                "bucket": case.kind,
+                "mode": mode,
+                "role": "target-8b",
+            },
+            "status": "OBSERVED",
+            "target": TARGET,
+            "tokens_sha256": sha256_identity(tokens),
+            "workload_sha256": case.workload_sha256,
+        })
+    }
+
+    fn pairs_fixture() -> PairsFixture {
+        let temporary = TestDirectory::new();
+        let plan = temporary.0.join("plan.json");
+        let captures = temporary.0.join("captures");
+        let references = temporary.0.join("references");
+        let output = temporary.0.join("pairs.json");
+        fs::create_dir(&captures).unwrap();
+        fs::create_dir(&references).unwrap();
+        let identities = differential_identity_fixture();
+        let cases = SUITE
+            .case_kinds
+            .iter()
+            .map(|kind| {
+                json!({
+                    "id": format!("{kind}.001"),
+                    "input_sha256": fixture_digest(&format!("input:{kind}")),
+                    "kind": kind,
+                    "workload_sha256": fixture_digest(&format!("workload:{kind}")),
+                })
+            })
+            .collect::<Vec<_>>();
+        let plan_value = json!({
+            "authority": "benchmark-run-plan-only",
+            "cases": cases,
+            "format": "FERRIC-M1-BENCHMARK-PLAN-V1",
+            "identities": identities,
+            "input_sha256": fixture_digest("benchmark-input"),
+            "milestone": "M1",
+            "nonclaim": SUITE.nonclaim,
+            "obligation_id": SUITE.obligation_id,
+            "path_id": SUITE.path_id,
+            "source_path": SUITE.source_path,
+            "suite": SUITE.name,
+            "target": TARGET,
+        });
+        let plan_bytes = encode_canonical_document(&plan_value).unwrap();
+        fs::write(&plan, &plan_bytes).unwrap();
+        let plan_sha256 = sha256_identity(&plan_bytes);
+        let plan_cases = exact_plan_cases(&plan_value).unwrap();
+        let identities = plan_identities(&plan_value).unwrap();
+        for (case_id, case) in plan_cases {
+            let capture_bundle = captures.join(format!("{}.capture.bundle", case.kind));
+            let reference_bundle = references.join(format!("{}.reference.bundle", case.kind));
+            fs::create_dir(&capture_bundle).unwrap();
+            fs::create_dir(&reference_bundle).unwrap();
+            let logits_len =
+                usize::try_from(rows_for_kind(&case.kind).unwrap() * VOCABULARY_SIZE * BF16_BYTES)
+                    .unwrap();
+            let logits = vec![0_u8; logits_len];
+            let tokens =
+                vec![0_u8; usize::try_from(rows_for_kind(&case.kind).unwrap() * 4).unwrap()];
+            for bundle in [&capture_bundle, &reference_bundle] {
+                fs::write(bundle.join("logits.bf16le"), &logits).unwrap();
+                fs::write(bundle.join("tokens.u32le"), &tokens).unwrap();
+            }
+            let runner = encode_canonical_document(&fixture_capture_transcript(
+                &case_id,
+                &case,
+                &identities,
+                &plan_sha256,
+                &logits,
+                &tokens,
+            ))
+            .unwrap();
+            fs::write(capture_bundle.join("runner.json"), &runner).unwrap();
+            fs::write(reference_bundle.join("runner.json"), &runner).unwrap();
+            let runner_sha256 = sha256_identity(&runner);
+            for (producer, bundle) in [
+                ("ferric", &capture_bundle),
+                ("reference", &reference_bundle),
+            ] {
+                let manifest = fixture_output_manifest(
+                    &case_id,
+                    &case,
+                    &identities,
+                    &plan_sha256,
+                    &runner_sha256,
+                    producer,
+                    (&logits, &tokens),
+                );
+                fs::write(
+                    bundle.join("output.json"),
+                    encode_canonical_document(&manifest).unwrap(),
+                )
+                .unwrap();
+            }
+        }
+        PairsFixture {
+            temporary,
+            plan,
+            captures,
+            references,
+            output,
+        }
+    }
+
+    fn write_fixture_pairs(fixture: &PairsFixture) -> BenchResult<()> {
+        write_pairs_command(&[
+            OsString::from("write-pairs"),
+            fixture.plan.as_os_str().to_os_string(),
+            fixture.captures.as_os_str().to_os_string(),
+            fixture.references.as_os_str().to_os_string(),
+            fixture.output.as_os_str().to_os_string(),
+        ])
+    }
+
+    fn assert_no_pairs_staging(fixture: &PairsFixture) {
+        let output_name = fixture.output.file_name().unwrap().to_string_lossy();
+        let prefix = format!(".{output_name}.staging.");
+        assert!(!fs::read_dir(&fixture.temporary.0)
+            .unwrap()
+            .any(|entry| entry
+                .unwrap()
+                .file_name()
+                .to_string_lossy()
+                .starts_with(&prefix)));
+    }
+
     fn compare(
         ferric: &[u16],
         reference: &[u16],
@@ -1766,6 +3011,145 @@ mod tests {
             },
         )
         .is_ok());
+    }
+
+    #[test]
+    fn comparison_threshold_predicate_includes_equality_and_u64_boundaries() {
+        assert!(comparison_within_threshold(0, 0));
+        assert!(comparison_within_threshold(1, 1));
+        assert!(!comparison_within_threshold(1, 0));
+        assert!(comparison_within_threshold(0, u64::MAX));
+        assert!(comparison_within_threshold(u64::MAX, u64::MAX));
+        assert!(!comparison_within_threshold(u64::MAX, u64::MAX - 1));
+    }
+
+    #[test]
+    fn write_pairs_authenticates_exact_bundles_and_cleans_failed_mutations() {
+        let fixture = pairs_fixture();
+        write_fixture_pairs(&fixture).unwrap();
+        let (input_root, value, bytes) =
+            load_canonical_document(&fixture.output, "written pairs fixture").unwrap();
+        assert_eq!(encode_canonical_document(&value).unwrap(), bytes);
+        assert_eq!(value["format"], PAIRS_FORMAT);
+        let pairs = value["pairs"].as_array().unwrap();
+        assert_eq!(pairs.len(), SUITE.case_kinds.len());
+        for pair in pairs {
+            for key in ["ferric_output_manifest", "reference_output_manifest"] {
+                let path = Path::new(pair[key]["path"].as_str().unwrap());
+                assert!(!path.is_absolute());
+                assert!(path
+                    .components()
+                    .all(|component| matches!(component, Component::Normal(_))));
+            }
+            let runner = Path::new(pair["runner_transcript"]["path"].as_str().unwrap());
+            assert!(runner
+                .components()
+                .all(|component| matches!(component, Component::Normal(_))));
+        }
+        assert_no_pairs_staging(&fixture);
+
+        let first_kind = SUITE.case_kinds[0];
+        let reference_bundle = fixture
+            .references
+            .join(format!("{first_kind}.reference.bundle"));
+        let reference_manifest = reference_bundle.join("output.json");
+        let reference_logits = reference_bundle.join("logits.bf16le");
+        let original_manifest = fs::read(&reference_manifest).unwrap();
+        let mut changed_logits = fs::read(&reference_logits).unwrap();
+        let original_logits = changed_logits.clone();
+        changed_logits[1] = 0x80;
+        fs::write(&reference_logits, &changed_logits).unwrap();
+        let mut changed_manifest: Value = serde_json::from_slice(&original_manifest).unwrap();
+        changed_manifest["logits"]["sha256"] = Value::String(sha256_identity(&changed_logits));
+        fs::write(
+            &reference_manifest,
+            encode_canonical_document(&changed_manifest).unwrap(),
+        )
+        .unwrap();
+        let (plan_value, plan_bytes) = load_benchmark_plan(&SUITE, &fixture.plan).unwrap();
+        let error = parse_pairs(
+            &input_root,
+            &value,
+            &exact_plan_cases(&plan_value).unwrap(),
+            &plan_identities(&plan_value).unwrap(),
+            &sha256_identity(&plan_bytes),
+        )
+        .unwrap_err();
+        assert!(error.contains("companion identity drifted"));
+        fs::write(&reference_manifest, original_manifest).unwrap();
+        fs::write(&reference_logits, original_logits).unwrap();
+
+        fs::remove_file(&fixture.output).unwrap();
+        let extra = fixture.captures.join("unexpected");
+        fs::write(&extra, b"not admitted\n").unwrap();
+        assert!(write_fixture_pairs(&fixture).is_err());
+        assert!(!fixture.output.exists());
+        assert_no_pairs_staging(&fixture);
+        fs::remove_file(extra).unwrap();
+
+        let reference_runner = fixture
+            .references
+            .join(format!("{first_kind}.reference.bundle/runner.json"));
+        let original_runner = fs::read(&reference_runner).unwrap();
+        let mut changed_runner: Value = serde_json::from_slice(&original_runner).unwrap();
+        changed_runner["gpu_unique_id"] = Value::from(24_u64);
+        fs::write(
+            &reference_runner,
+            encode_canonical_document(&changed_runner).unwrap(),
+        )
+        .unwrap();
+        assert!(write_fixture_pairs(&fixture).is_err());
+        assert!(!fixture.output.exists());
+        assert_no_pairs_staging(&fixture);
+        fs::write(&reference_runner, original_runner).unwrap();
+
+        fs::write(&fixture.output, b"caller-owned\n").unwrap();
+        assert!(write_fixture_pairs(&fixture).is_err());
+        assert_eq!(fs::read(&fixture.output).unwrap(), b"caller-owned\n");
+        assert_no_pairs_staging(&fixture);
+        fs::remove_file(&fixture.output).unwrap();
+
+        let capture_logits = fixture
+            .captures
+            .join(format!("{first_kind}.capture.bundle/logits.bf16le"));
+        let original_len = fs::metadata(&capture_logits).unwrap().len();
+        fs::OpenOptions::new()
+            .append(true)
+            .open(&capture_logits)
+            .unwrap()
+            .write_all(&[0, 0])
+            .unwrap();
+        assert!(write_fixture_pairs(&fixture).is_err());
+        assert!(!fixture.output.exists());
+        assert_no_pairs_staging(&fixture);
+        fs::OpenOptions::new()
+            .write(true)
+            .open(&capture_logits)
+            .unwrap()
+            .set_len(original_len)
+            .unwrap();
+        write_fixture_pairs(&fixture).unwrap();
+        assert!(fixture.output.is_file());
+        assert_no_pairs_staging(&fixture);
+    }
+
+    #[test]
+    fn staged_pairs_rejects_name_substitution_without_deleting_replacement() {
+        let temporary = TestDirectory::new();
+        let layout = pairs_layout(
+            &temporary.0.join("captures"),
+            &temporary.0.join("references"),
+            &temporary.0.join("pairs.json"),
+        )
+        .unwrap();
+        let parent = open_pairs_parent(&layout.parent).unwrap();
+        let staging = StagingPairs::create(&layout, parent, b"owned staging bytes\n").unwrap();
+        let staged_path = temporary.0.join(&staging.staging_name);
+        fs::remove_file(&staged_path).unwrap();
+        fs::write(&staged_path, b"caller replacement\n").unwrap();
+        assert!(staging.publish().is_err());
+        assert_eq!(fs::read(&staged_path).unwrap(), b"caller replacement\n");
+        assert!(!temporary.0.join("pairs.json").exists());
     }
 
     #[test]
