@@ -139,10 +139,11 @@ pub use m1_queue_rearm::{
     M1LongLivedQueueRearmSubmissionFailureV1, M1LongLivedQueueRearmSubmissionPhaseV1,
     M1LongLivedQueueRearmTeardownFailureV1, M1LongLivedQueueRearmTeardownSuccessV1,
     M1LongLivedQueueReleasedRoundV1, M1LongLivedQueueUnscheduledRoundV1,
-    M1PreparedLongLivedQueueRearmV1, M1RearmedCompletedQueueV1, M1RearmedCompletedReadbackV1,
-    M1RearmedCompletionOutcomeV1, M1RearmedCompletionPreflightErrorV1,
-    M1RearmedCompletionPreflightFailureV1, M1RearmedObservedQualificationOutputV1,
-    M1RearmedPublishedQueueV1, M1RearmedQualificationCompletedReadbackJoinFailureV1,
+    M1PreparedLongLivedQueueRearmV1, M1RearmRoundHistoryEntryV1, M1RearmedCompletedQueueV1,
+    M1RearmedCompletedReadbackV1, M1RearmedCompletionOutcomeV1,
+    M1RearmedCompletionPreflightErrorV1, M1RearmedCompletionPreflightFailureV1,
+    M1RearmedObservedQualificationOutputV1, M1RearmedPublishedQueueV1,
+    M1RearmedQualificationCompletedReadbackJoinFailureV1,
     M1RearmedQualificationObservationFailureV1, M1RearmedQualificationObservationTeardownFailureV1,
     M1RearmedQualificationObservationTeardownSuccessV1,
     M1RearmedQualificationSemanticTeardownFailureV1,
@@ -157,6 +158,7 @@ pub use m1_queue_rearm::{
     M1RearmedReadbackTeardownSuccessV1, M1RearmedRecycledQueueV1,
     M1RearmedRoundPageReleaseFailureV1, M1RearmedRoundReleaseOutcomeV1,
     M1ReservedLongLivedQueueRearmV1, M1ScheduledLongLivedQueueRearmV1,
+    M1_MAX_REARM_ROUND_HISTORY_V1,
 };
 pub use model_memory_allocations::{
     bind_addressless_model_memory_allocations_v1, BoundModelMemoryAllocationsV1,

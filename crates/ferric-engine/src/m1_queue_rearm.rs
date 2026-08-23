@@ -73,6 +73,9 @@ pub enum M1LongLivedQueueRearmScheduleErrorV1 {
     UnownedScheduledRequest {
         lane: usize,
     },
+    RoundHistoryCapacity {
+        maximum: usize,
+    },
     HostAllocation,
 }
 
@@ -230,6 +233,18 @@ impl<T> M1RearmRoundHistoryV1<T> {
                 history
             }
         }
+    }
+}
+
+fn validate_rearm_round_history_schedule_capacity<T>(
+    history: &M1RearmRoundHistoryV1<T>,
+) -> Result<(), M1LongLivedQueueRearmScheduleErrorV1> {
+    if history.len() >= M1_MAX_REARM_ROUND_HISTORY_V1 {
+        Err(M1LongLivedQueueRearmScheduleErrorV1::RoundHistoryCapacity {
+            maximum: M1_MAX_REARM_ROUND_HISTORY_V1,
+        })
+    } else {
+        Ok(())
     }
 }
 
@@ -804,6 +819,18 @@ fn schedule_m1_long_lived_queue_rearm_inner_v1<const C: usize>(
         M1LongLivedQueueRearmScheduleFailureV1,
     ),
 > {
+    if let Err(error) = validate_rearm_round_history_schedule_capacity(&history) {
+        return Err(schedule_phase_failure(
+            M1LongLivedQueueRearmSchedulePhaseV1::Released,
+            error,
+            ScheduleFailureCustodyV1::ReleasedWithLineage {
+                released: Box::new(released),
+                parked: parked_lineage,
+                terminal: terminal_lineage,
+                history: Box::new(history),
+            },
+        ));
+    }
     let shape = released.queue().shape();
     let selection = released.queue().custody().selection();
     if let Err(error) = validate_rearm_eligibility(
@@ -1934,8 +1961,13 @@ fn rebuild_bound_rows(
             .qualification_logits
             .map(ServiceDispatchRangeV1::HostVisible),
         |workspace, requested| {
-            Ok(ServiceDispatchRangeV1::Device(
-                resolve_fresh_workspace_range(workspace, requested, workspace_ranges)?,
+            Ok((
+                workspace,
+                ServiceDispatchRangeV1::Device(resolve_fresh_workspace_range(
+                    workspace,
+                    requested,
+                    workspace_ranges,
+                )?),
             ))
         },
     )?;
@@ -1987,7 +2019,31 @@ fn rebuild_bound_row_ranges<T: Copy + Eq>(
     composition: &AddresslessM1FullStepWorkspaceComposition,
     retained_completion: T,
     retained_logits: Option<T>,
-    mut fresh_range: impl FnMut(M1FullStepWorkspaceRole, M1StepWorkspaceRange) -> Result<T, ()>,
+    fresh_range: impl FnMut(
+        M1FullStepWorkspaceRole,
+        M1StepWorkspaceRange,
+    ) -> Result<(M1FullStepWorkspaceRole, T), ()>,
+) -> Result<Vec<RearmBoundRowV1<T>>, ()> {
+    rebuild_bound_row_ranges_with_requests(
+        source_rows,
+        old_bound_rows,
+        retained_completion,
+        retained_logits,
+        |source| requested_workspace_range(source, composition, retained_logits.is_some()),
+        fresh_range,
+    )
+}
+
+fn rebuild_bound_row_ranges_with_requests<T: Copy + Eq>(
+    source_rows: &[M1PhysicalBufferRecipeRowV1],
+    old_bound_rows: &[RearmBoundRowV1<T>],
+    retained_completion: T,
+    retained_logits: Option<T>,
+    mut range_request: impl FnMut(M1PhysicalBufferSourceV1) -> Result<RearmRangeRequestV1, ()>,
+    mut fresh_range: impl FnMut(
+        M1FullStepWorkspaceRole,
+        M1StepWorkspaceRange,
+    ) -> Result<(M1FullStepWorkspaceRole, T), ()>,
 ) -> Result<Vec<RearmBoundRowV1<T>>, ()> {
     if source_rows.len() != old_bound_rows.len() {
         return Err(());
@@ -2011,14 +2067,14 @@ fn rebuild_bound_row_ranges<T: Copy + Eq>(
             if semantic.explicit_argument_index() != old_buffer.explicit_argument_index {
                 return Err(());
             }
-            let request = requested_workspace_range(
-                semantic.source(),
-                composition,
-                retained_logits.is_some(),
-            )?;
+            let request = range_request(semantic.source())?;
             let fresh = match request {
                 RearmRangeRequestV1::FreshWorkspace(workspace, requested) => {
-                    Some(fresh_range(workspace, requested)?)
+                    let (bound_workspace, range) = fresh_range(workspace, requested)?;
+                    if bound_workspace != workspace {
+                        return Err(());
+                    }
+                    Some(range)
                 }
                 RearmRangeRequestV1::RetainedCompletionOutput
                 | RearmRangeRequestV1::RetainedQualificationLogits
@@ -4196,6 +4252,16 @@ impl M1RearmedQualifiedCompletedReadbackV1 {
         self.readback.carry.previous_epoch
     }
 
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.readback.round_history_len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.readback.round_history(index)
+    }
+
     /// Completes every selected member with the terminal retiring disposition.
     ///
     /// This local wrapper never permits a qualification-bearing member to
@@ -4319,6 +4385,30 @@ impl M1RearmedQualifiedCompletionPreflightFailureV1 {
                 &readback.evidence
             }
             M1RearmedQualifiedCompletionPreflightCustodyV1::Lower { evidence, .. } => evidence,
+        }
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        match &self.custody {
+            M1RearmedQualifiedCompletionPreflightCustodyV1::Readback(readback) => {
+                readback.round_history_len()
+            }
+            M1RearmedQualifiedCompletionPreflightCustodyV1::Lower { source, .. } => {
+                source.round_history_len()
+            }
+        }
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        match &self.custody {
+            M1RearmedQualifiedCompletionPreflightCustodyV1::Readback(readback) => {
+                readback.round_history(index)
+            }
+            M1RearmedQualifiedCompletionPreflightCustodyV1::Lower { source, .. } => {
+                source.round_history(index)
+            }
         }
     }
 
@@ -4561,6 +4651,16 @@ impl M1RearmedQualifiedTeardownSuccessV1 {
     pub const fn evidence(&self) -> &crate::M1QualificationCompletionEvidenceV1 {
         &self.evidence
     }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.teardown.round_history_len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.teardown.round_history(index)
+    }
 }
 
 /// Terminal queue-release failure retaining qualification and round custody.
@@ -4581,6 +4681,16 @@ impl M1RearmedQualifiedTeardownFailureV1 {
     #[must_use = "qualification evidence remains retained"]
     pub const fn evidence(&self) -> &crate::M1QualificationCompletionEvidenceV1 {
         &self.evidence
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.teardown.round_history_len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.teardown.round_history(index)
     }
 }
 
@@ -4616,6 +4726,16 @@ impl M1RearmedCompletionPreflightFailureV1 {
     #[must_use]
     pub fn disposition_count(&self) -> usize {
         self.dispositions.len()
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.readback.round_history_len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.readback.round_history(index)
     }
 
     /// Retries the unchanged local completion preflight.
@@ -6055,6 +6175,75 @@ mod tests {
     }
 
     #[test]
+    fn saturated_round_history_rejects_scheduling_before_consuming_teardown_custody() {
+        type TeardownResult = Result<
+            M1LongLivedQueueRearmTeardownSuccessV1,
+            Box<M1LongLivedQueueRearmTeardownFailureV1>,
+        >;
+        fn recover_and_destroy(
+            failure: M1LongLivedQueueRearmScheduleFailureV1,
+        ) -> Result<TeardownResult, M1LongLivedQueueRearmScheduleFailureV1> {
+            failure
+                .into_unscheduled()
+                .map(M1LongLivedQueueUnscheduledRoundV1::destroy_queue_and_retain_round)
+        }
+
+        let mut history = M1RearmRoundHistoryV1::<usize>::Empty;
+        for round in 0..M1_MAX_REARM_ROUND_HISTORY_V1 {
+            history.try_reserve_append().unwrap();
+            history = M1RearmRoundHistoryV1::NonEmpty(history.append(round));
+        }
+
+        assert_eq!(
+            validate_rearm_round_history_schedule_capacity(&history),
+            Err(M1LongLivedQueueRearmScheduleErrorV1::RoundHistoryCapacity {
+                maximum: M1_MAX_REARM_ROUND_HISTORY_V1,
+            })
+        );
+        assert_eq!(history.len(), M1_MAX_REARM_ROUND_HISTORY_V1);
+
+        let _: fn(
+            M1LongLivedQueueRearmScheduleFailureV1,
+        ) -> Result<TeardownResult, M1LongLivedQueueRearmScheduleFailureV1> = recover_and_destroy;
+    }
+
+    #[test]
+    fn round_history_api_is_nameable_from_the_crate_root_across_failure_owners() {
+        type ReleasedHistory = for<'a> fn(
+            &'a crate::M1LongLivedQueueReleasedRoundV1,
+            usize,
+        ) -> Option<&'a crate::M1RearmRoundHistoryEntryV1>;
+        type PreflightHistory = for<'a> fn(
+            &'a M1RearmedCompletionPreflightFailureV1,
+            usize,
+        )
+            -> Option<&'a crate::M1RearmRoundHistoryEntryV1>;
+        type QualifiedReadbackHistory = for<'a> fn(
+            &'a M1RearmedQualifiedCompletedReadbackV1,
+            usize,
+        )
+            -> Option<&'a crate::M1RearmRoundHistoryEntryV1>;
+        type QualifiedPreflightHistory =
+            for<'a> fn(
+                &'a M1RearmedQualifiedCompletionPreflightFailureV1,
+                usize,
+            ) -> Option<&'a crate::M1RearmRoundHistoryEntryV1>;
+        type QualifiedTeardownFailureHistory =
+            for<'a> fn(
+                &'a M1RearmedQualifiedTeardownFailureV1,
+                usize,
+            ) -> Option<&'a crate::M1RearmRoundHistoryEntryV1>;
+
+        let _: usize = crate::M1_MAX_REARM_ROUND_HISTORY_V1;
+        let _: ReleasedHistory = crate::M1LongLivedQueueReleasedRoundV1::round_history;
+        let _: PreflightHistory = M1RearmedCompletionPreflightFailureV1::round_history;
+        let _: QualifiedReadbackHistory = M1RearmedQualifiedCompletedReadbackV1::round_history;
+        let _: QualifiedPreflightHistory =
+            M1RearmedQualifiedCompletionPreflightFailureV1::round_history;
+        let _: QualifiedTeardownFailureHistory = M1RearmedQualifiedTeardownFailureV1::round_history;
+    }
+
+    #[test]
     fn qualification_capture_ranges_survive_two_fresh_workspace_generations() {
         use ferric_build::M1StepWorkspaceRangeRole;
 
@@ -6121,6 +6310,7 @@ mod tests {
             exact_inputs(crate::M1StepDispatchIntent::TargetOnly(target), 210);
         let recipe = crate::derive_m1_physical_buffer_recipe_v1(kernargs, composition).unwrap();
         let source_rows = recipe.rows();
+        assert_eq!(source_rows.len(), 545);
         let composition = recipe.workspace_composition();
         let retained_compact = 101_u64;
         let retained_logits = 202_u64;
@@ -6166,9 +6356,9 @@ mod tests {
             composition,
             retained_compact,
             Some(retained_logits),
-            |_, _| {
+            |workspace, _| {
                 generation_one_fresh += 1;
-                Ok(generation_one_fresh)
+                Ok((workspace, generation_one_fresh))
             },
         )
         .unwrap();
@@ -6179,9 +6369,9 @@ mod tests {
             composition,
             retained_compact,
             Some(retained_logits),
-            |_, _| {
+            |workspace, _| {
                 generation_two_fresh += 1;
-                Ok(generation_two_fresh)
+                Ok((workspace, generation_two_fresh))
             },
         )
         .unwrap();
@@ -6243,9 +6433,86 @@ mod tests {
             composition,
             retained_compact,
             Some(retained_logits),
-            |_, _| Ok(30_000),
+            |workspace, _| Ok((workspace, 30_000)),
         )
         .is_err());
+
+        let mut substituted_role = false;
+        assert!(rebuild_bound_row_ranges(
+            source_rows,
+            &generation_one,
+            composition,
+            retained_compact,
+            Some(retained_logits),
+            |workspace, _| {
+                substituted_role = true;
+                let hostile = match workspace {
+                    M1FullStepWorkspaceRole::Draft => M1FullStepWorkspaceRole::Target,
+                    M1FullStepWorkspaceRole::Target => M1FullStepWorkspaceRole::Draft,
+                };
+                Ok((hostile, 40_000))
+            },
+        )
+        .is_err());
+        assert!(substituted_role);
+
+        let mut retained_logits_seen = 0;
+        assert!(rebuild_bound_row_ranges_with_requests(
+            source_rows,
+            &old_rows,
+            retained_compact,
+            Some(retained_logits),
+            |source| {
+                let request = requested_workspace_range(source, composition, true)?;
+                if request == RearmRangeRequestV1::RetainedQualificationLogits {
+                    retained_logits_seen += 1;
+                    if retained_logits_seen == 2 {
+                        return Ok(RearmRangeRequestV1::Unchanged);
+                    }
+                }
+                Ok(request)
+            },
+            |workspace, _| Ok((workspace, 50_000)),
+        )
+        .is_err());
+        assert_eq!(retained_logits_seen, 2);
+
+        let mut too_many_old = old_rows.clone();
+        let mut rewrote_fresh_range = false;
+        'rows: for (source, old) in source_rows.iter().zip(&mut too_many_old) {
+            for (semantic, old_buffer) in source.buffers().iter().zip(&mut old.buffers) {
+                if matches!(
+                    requested_workspace_range(semantic.source(), composition, true).unwrap(),
+                    RearmRangeRequestV1::FreshWorkspace(_, _)
+                ) {
+                    old_buffer.range = retained_logits;
+                    rewrote_fresh_range = true;
+                    break 'rows;
+                }
+            }
+        }
+        assert!(rewrote_fresh_range);
+        let mut injected_extra_logits = false;
+        assert!(rebuild_bound_row_ranges_with_requests(
+            source_rows,
+            &too_many_old,
+            retained_compact,
+            Some(retained_logits),
+            |source| {
+                let request = requested_workspace_range(source, composition, true)?;
+                if !injected_extra_logits
+                    && matches!(request, RearmRangeRequestV1::FreshWorkspace(_, _))
+                {
+                    injected_extra_logits = true;
+                    Ok(RearmRangeRequestV1::RetainedQualificationLogits)
+                } else {
+                    Ok(request)
+                }
+            },
+            |workspace, _| Ok((workspace, 60_000)),
+        )
+        .is_err());
+        assert!(injected_extra_logits);
     }
 
     #[test]
