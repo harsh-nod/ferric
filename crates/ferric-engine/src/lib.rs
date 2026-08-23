@@ -243,9 +243,9 @@ pub use physical_step::{
 pub use qualification_logits::{
     m1_qualification_logits_shape_v1, BoundM1QualificationLogitsV1,
     M1ObservedQualificationLogitsRowV1, M1ObservedQualificationLogitsV1,
-    M1QualificationLogitsAllocationFailureV1, M1QualificationLogitsErrorV1,
-    M1QualificationLogitsShapeV1, M1_QUALIFICATION_LOGITS_ALIGNMENT_V1,
-    M1_QUALIFICATION_LOGITS_ELEMENT_BYTES_V1,
+    M1QualificationFinalLogitsErrorV1, M1QualificationLogitsAllocationFailureV1,
+    M1QualificationLogitsErrorV1, M1QualificationLogitsShapeV1,
+    M1_QUALIFICATION_LOGITS_ALIGNMENT_V1, M1_QUALIFICATION_LOGITS_ELEMENT_BYTES_V1,
 };
 pub use runner::{
     bind_m1_physical_runner_v1, initialize_m1_physical_runner_memory_v1, LogicalRunnerDeclaration,

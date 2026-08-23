@@ -12,7 +12,7 @@ use fe2o3_service_host::{
     ServiceAllocationSessionV1, ServiceCompletedReadbackV1, ServiceHostDispatchRangeV1,
 };
 use ferric_build::{m1_step_workspace_requirements, M1StepWorkspaceRangeRole};
-use ferric_spec::{Qwen3ModelRole, Qwen3PlanSelection, QWEN3_VOCABULARY_SIZE};
+use ferric_spec::{Qwen3ModelRole, Qwen3PlanSelection, TokenId, QWEN3_VOCABULARY_SIZE};
 use sha2::{Digest, Sha256};
 
 use crate::BoundM1CompletionOutputV1;
@@ -173,6 +173,82 @@ impl std::error::Error for M1QualificationLogitsErrorV1 {}
 impl From<ServiceAllocationErrorV1> for M1QualificationLogitsErrorV1 {
     fn from(error: ServiceAllocationErrorV1) -> Self {
         Self::Allocation(error)
+    }
+}
+
+/// Numerical rejection while deriving terminal choices from copied BF16 rows.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1QualificationFinalLogitsErrorV1 {
+    /// A retained row appeared outside exact scheduler lane order.
+    LaneOrder { expected: usize, actual: usize },
+    /// A retained row did not cover exactly one full vocabulary.
+    RowExtent {
+        lane: usize,
+        expected: usize,
+        actual: usize,
+    },
+    /// Qualification requires every terminal logit to be finite.
+    NonFinite { lane: usize, token: TokenId },
+    /// Bounded host storage for the derived lane choices was unavailable.
+    HostAllocation,
+}
+
+impl fmt::Display for M1QualificationFinalLogitsErrorV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            formatter,
+            "M1 qualification final logits rejected: {self:?}"
+        )
+    }
+}
+
+impl std::error::Error for M1QualificationFinalLogitsErrorV1 {}
+
+/// Inert terminal choices derived from exact copied BF16 rows.
+///
+/// This value carries no completion or inference authority. It is kept private
+/// to the engine crate so only the qualification-observed queue transition can
+/// use it while joining compact output to quiescence.
+#[derive(Debug)]
+pub(crate) struct M1QualificationFinalRowChoicesV1 {
+    choices: Box<[M1QualificationFinalRowChoiceV1]>,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct M1QualificationFinalRowChoiceV1 {
+    token: TokenId,
+}
+
+impl M1QualificationFinalRowChoiceV1 {
+    pub(crate) const fn token(self) -> TokenId {
+        self.token
+    }
+}
+
+impl M1QualificationFinalRowChoicesV1 {
+    pub(crate) fn len(&self) -> usize {
+        self.choices.len()
+    }
+
+    pub(crate) fn choice(&self, lane: usize) -> Option<M1QualificationFinalRowChoiceV1> {
+        self.choices.get(lane).copied()
+    }
+
+    fn from_raw_rows<'a>(
+        rows: impl ExactSizeIterator<Item = &'a [u8]>,
+    ) -> Result<Self, M1QualificationFinalLogitsErrorV1> {
+        let mut choices = Vec::new();
+        choices
+            .try_reserve_exact(rows.len())
+            .map_err(|_| M1QualificationFinalLogitsErrorV1::HostAllocation)?;
+        for (lane, row) in rows.enumerate() {
+            choices.push(M1QualificationFinalRowChoiceV1 {
+                token: lowest_id_finite_bf16_argmax(row, lane)?,
+            });
+        }
+        Ok(Self {
+            choices: choices.into_boxed_slice(),
+        })
     }
 }
 
@@ -445,6 +521,56 @@ impl M1ObservedQualificationLogitsV1 {
     pub fn rows(&self) -> &[M1ObservedQualificationLogitsRowV1] {
         &self.rows
     }
+
+    pub(crate) fn final_row_choices(
+        &self,
+    ) -> Result<M1QualificationFinalRowChoicesV1, M1QualificationFinalLogitsErrorV1> {
+        for (lane, row) in self.rows.iter().enumerate() {
+            if row.lane != lane {
+                return Err(M1QualificationFinalLogitsErrorV1::LaneOrder {
+                    expected: lane,
+                    actual: row.lane,
+                });
+            }
+        }
+        M1QualificationFinalRowChoicesV1::from_raw_rows(
+            self.rows
+                .iter()
+                .map(M1ObservedQualificationLogitsRowV1::raw_bytes),
+        )
+    }
+}
+
+fn lowest_id_finite_bf16_argmax(
+    bytes: &[u8],
+    lane: usize,
+) -> Result<TokenId, M1QualificationFinalLogitsErrorV1> {
+    let expected = usize::try_from(
+        u64::from(QWEN3_VOCABULARY_SIZE) * M1_QUALIFICATION_LOGITS_ELEMENT_BYTES_V1,
+    )
+    .expect("the fixed M1 BF16 vocabulary row fits usize");
+    if bytes.len() != expected {
+        return Err(M1QualificationFinalLogitsErrorV1::RowExtent {
+            lane,
+            expected,
+            actual: bytes.len(),
+        });
+    }
+    let mut best_token = 0;
+    let mut best_value = f32::NEG_INFINITY;
+    for (token, encoded) in bytes.chunks_exact(2).enumerate() {
+        let bits = u16::from_le_bytes([encoded[0], encoded[1]]);
+        let value = f32::from_bits(u32::from(bits) << 16);
+        let token = TokenId::try_from(token).expect("the fixed M1 vocabulary fits TokenId");
+        if !value.is_finite() {
+            return Err(M1QualificationFinalLogitsErrorV1::NonFinite { lane, token });
+        }
+        if value > best_value {
+            best_value = value;
+            best_token = token;
+        }
+    }
+    Ok(best_token)
 }
 
 pub(crate) fn observe_m1_qualification_logits_v1(
@@ -546,10 +672,27 @@ fn validate_rows<T>(
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use ferric_spec::{Qwen3ExecutionMode, Qwen3PlanBucket};
 
     use super::*;
+
+    fn bf16_row(fill: u16) -> Vec<u8> {
+        let mut row = vec![0; usize::try_from(u64::from(QWEN3_VOCABULARY_SIZE) * 2).unwrap()];
+        for encoded in row.chunks_exact_mut(2) {
+            encoded.copy_from_slice(&fill.to_le_bytes());
+        }
+        row
+    }
+
+    fn set_bf16(row: &mut [u8], token: usize, bits: u16) {
+        let offset = token * 2;
+        row[offset..offset + 2].copy_from_slice(&bits.to_le_bytes());
+    }
+
+    pub(crate) fn final_row_choices_for_join_test(row: &[u8]) -> M1QualificationFinalRowChoicesV1 {
+        M1QualificationFinalRowChoicesV1::from_raw_rows([row].into_iter()).unwrap()
+    }
 
     const TARGET_ONLY_BUCKETS: [Qwen3PlanBucket; 7] = [
         Qwen3PlanBucket::PrefillS1T128,
@@ -607,6 +750,64 @@ mod tests {
                 u64::from(shape.sequences()) * u64::from(shape.active_tokens()) * shape.row_bytes()
             );
         }
+    }
+
+    #[test]
+    fn terminal_bf16_argmax_is_finite_and_uses_lowest_id_for_ties() {
+        let mut tied = bf16_row(0);
+        set_bf16(&mut tied, 4, 0x3f80);
+        set_bf16(&mut tied, 7, 0x3f80);
+        assert_eq!(lowest_id_finite_bf16_argmax(&tied, 3).unwrap(), 4);
+
+        let mut all_negative = bf16_row(0xc000);
+        let last = usize::try_from(QWEN3_VOCABULARY_SIZE - 1).unwrap();
+        set_bf16(&mut all_negative, last, 0xbf80);
+        assert_eq!(
+            lowest_id_finite_bf16_argmax(&all_negative, 3).unwrap(),
+            TokenId::try_from(last).unwrap()
+        );
+
+        let mut signed_zero = bf16_row(0xbf80);
+        set_bf16(&mut signed_zero, 2, 0x8000);
+        set_bf16(&mut signed_zero, 5, 0x0000);
+        assert_eq!(lowest_id_finite_bf16_argmax(&signed_zero, 3).unwrap(), 2);
+        let mut reversed_signed_zero = bf16_row(0xbf80);
+        set_bf16(&mut reversed_signed_zero, 2, 0x0000);
+        set_bf16(&mut reversed_signed_zero, 5, 0x8000);
+        assert_eq!(
+            lowest_id_finite_bf16_argmax(&reversed_signed_zero, 3).unwrap(),
+            2
+        );
+    }
+
+    #[test]
+    fn terminal_bf16_argmax_rejects_nan_infinity_and_extent_drift() {
+        for bits in [0x7f80, 0xff80, 0x7fc0, 0xffc0, 0x7f81, 0xff81] {
+            let mut row = bf16_row(0);
+            set_bf16(&mut row, 11, bits);
+            assert_eq!(
+                lowest_id_finite_bf16_argmax(&row, 7),
+                Err(M1QualificationFinalLogitsErrorV1::NonFinite { lane: 7, token: 11 })
+            );
+        }
+        let mut first_nonfinite = bf16_row(0);
+        set_bf16(&mut first_nonfinite, 0, 0x7f80);
+        assert_eq!(
+            lowest_id_finite_bf16_argmax(&first_nonfinite, 9),
+            Err(M1QualificationFinalLogitsErrorV1::NonFinite { lane: 9, token: 0 })
+        );
+
+        let exact = bf16_row(0);
+        assert!(matches!(
+            lowest_id_finite_bf16_argmax(&exact[..exact.len() - 2], 1),
+            Err(M1QualificationFinalLogitsErrorV1::RowExtent { lane: 1, .. })
+        ));
+        let mut trailing = exact;
+        trailing.extend_from_slice(&[0, 0]);
+        assert!(matches!(
+            lowest_id_finite_bf16_argmax(&trailing, 2),
+            Err(M1QualificationFinalLogitsErrorV1::RowExtent { lane: 2, .. })
+        ));
     }
 
     #[test]

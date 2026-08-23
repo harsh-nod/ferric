@@ -17,7 +17,7 @@
 //! corresponding wire field. This module does not authenticate the catalog
 //! relation between that identity and the retained selection.
 
-use crate::ExactCompletion;
+use crate::{qualification_logits::M1QualificationFinalRowChoiceV1, ExactCompletion};
 use core::fmt;
 use ferric_qwen_kernels::logits::Qwen3LogitsCompactRecordLayoutV1 as Layout;
 use ferric_spec::completion::CompletionEpoch;
@@ -55,8 +55,6 @@ pub enum CompletionWireSemanticExpectation<'a> {
     QualificationFinalRow {
         /// Validated, inert context-policy and lane-declaration witness.
         context: &'a M1ValidatedQualificationContextStepV1,
-        /// Expected lowest-token-ID argmax choice for the terminal logits row.
-        choice: TokenId,
     },
     /// Speculation must publish the maximal accepted prefix and correction or bonus.
     Speculative {
@@ -73,7 +71,7 @@ impl<'a> CompletionWireSemanticExpectation<'a> {
     pub const fn qualification_context(self) -> Option<&'a M1ValidatedQualificationContextStepV1> {
         match self {
             Self::QualificationPromptCommit { context }
-            | Self::QualificationFinalRow { context, .. } => Some(context),
+            | Self::QualificationFinalRow { context } => Some(context),
             Self::DirectFinalRow { .. } | Self::Speculative { .. } => None,
         }
     }
@@ -347,6 +345,8 @@ pub enum CompletionWireError {
     QualificationGroupingMismatch,
     /// The expectation selected the wrong qualification step kind.
     QualificationStepKindMismatch,
+    /// Terminal qualification requires the copied final BF16 logits evidence.
+    QualificationFinalRowRequiresLogitsEvidence,
     /// The semantic draft length differed from the selected speculative K.
     SpeculativeLengthMismatch { expected: usize, actual: usize },
     /// The record failed the shared logical compact-completion validator.
@@ -473,6 +473,22 @@ pub fn check_inert_completion_record(
     bytes: &[u8],
     expectation: CompletionWireExpectation<'_>,
 ) -> Result<InertCheckedCompletionRecord, CompletionWireError> {
+    check_completion_record(bytes, expectation, None)
+}
+
+pub(crate) fn check_inert_qualification_final_completion_record(
+    bytes: &[u8],
+    expectation: CompletionWireExpectation<'_>,
+    derived_choice: M1QualificationFinalRowChoiceV1,
+) -> Result<InertCheckedCompletionRecord, CompletionWireError> {
+    check_completion_record(bytes, expectation, Some(derived_choice.token()))
+}
+
+fn check_completion_record(
+    bytes: &[u8],
+    expectation: CompletionWireExpectation<'_>,
+    qualification_final_choice: Option<TokenId>,
+) -> Result<InertCheckedCompletionRecord, CompletionWireError> {
     let record = decode_completion_record(bytes)?;
     let selection = expectation.plan.selection();
     selection
@@ -530,8 +546,10 @@ pub fn check_inert_completion_record(
         }
         (
             Qwen3ExecutionMode::Decode,
-            CompletionWireSemanticExpectation::QualificationFinalRow { context, choice },
+            CompletionWireSemanticExpectation::QualificationFinalRow { context },
         ) => {
+            let choice = qualification_final_choice
+                .ok_or(CompletionWireError::QualificationFinalRowRequiresLogitsEvidence)?;
             validate_qualification_selection(selection, context)?;
             if context.step().kind != M1QualificationContextStepKind::FinalObserved {
                 return Err(CompletionWireError::QualificationStepKindMismatch);
@@ -839,7 +857,7 @@ mod tests {
     }
 
     #[test]
-    fn qualification_final_row_publishes_only_exact_declared_choice() {
+    fn qualification_final_row_requires_evidence_derived_exact_choice() {
         let binding = qualification_binding();
         let context_plan =
             m1_qualification_context_plan(M1QualificationLaneGrouping::S1, binding.clone());
@@ -856,25 +874,24 @@ mod tests {
         let exact = encode(REQUEST, EPOCH, &PLAN_ID, 0, &[41]);
         let expectation = CompletionWireExpectation::new(
             &step_plan,
-            CompletionWireSemanticExpectation::QualificationFinalRow {
-                context: &context,
-                choice: 41,
-            },
+            CompletionWireSemanticExpectation::QualificationFinalRow { context: &context },
         );
-        let checked = check_inert_completion_record(&exact, expectation).unwrap();
+        assert_eq!(
+            check_inert_completion_record(&exact, expectation),
+            Err(CompletionWireError::QualificationFinalRowRequiresLogitsEvidence)
+        );
+        let checked = check_completion_record(&exact, expectation, Some(41)).unwrap();
         assert_eq!(checked.semantics().logical_accepted_count(), 1);
         assert_eq!(checked.semantics().externally_published_count(), 1);
 
         assert_eq!(
-            check_inert_completion_record(
+            check_completion_record(
                 &exact,
                 CompletionWireExpectation::new(
                     &step_plan,
-                    CompletionWireSemanticExpectation::QualificationFinalRow {
-                        context: &context,
-                        choice: 42,
-                    },
+                    CompletionWireSemanticExpectation::QualificationFinalRow { context: &context },
                 ),
+                Some(42),
             ),
             Err(CompletionWireError::DirectFinalRowMismatch {
                 expected: 42,

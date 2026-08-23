@@ -24,8 +24,7 @@ use ferric_build::{
 use ferric_engine::{
     bind_m1_kv_workspace_table_v1, bind_m1_physical_runner_v1, complete_m1_physical_step_v1,
     initialize_m1_physical_runner_memory_v1, release_m1_completed_step_kv_pages_v1,
-    reopen_persisted_m1_kernel_artifacts_v1, ActiveDeviceKvCache,
-    CompletionWireSemanticExpectation, Engine, M1CompletedStepOutcomeV1,
+    reopen_persisted_m1_kernel_artifacts_v1, ActiveDeviceKvCache, Engine, M1CompletedStepOutcomeV1,
     M1DeviceKvCompletionMemberV1, M1DeviceKvCompletionRosterV1, M1FullStepKvWorkspaceTablesV1,
     M1FullStepWorkspacePlans, M1ObservedQualificationOutputV1, M1PhysicalRunnerRecipeOutcomeV1,
     M1QualificationObservationFailureCustodyV1, M1StepDispatchIntent,
@@ -777,9 +776,8 @@ fn execute_capture(
         Ok(observed) => observed,
         Err(failure) => return Err(release_qualification_failure(*failure)),
     };
-    let (output, choices) = match copy_capture_candidate(&observed, device_id, workload.lanes.len())
-    {
-        Ok(candidate) => candidate,
+    let output = match copy_capture_candidate(&observed, device_id, workload.lanes.len()) {
+        Ok(output) => output,
         Err(error) => return Err(release_observed_after_error(observed, error)),
     };
     for request in &requests {
@@ -790,12 +788,7 @@ fn execute_capture(
             ));
         }
     }
-    let expectations = choices
-        .iter()
-        .copied()
-        .map(|choice| CompletionWireSemanticExpectation::DirectFinalRow { choice })
-        .collect::<Vec<_>>();
-    let qualified = match observed.check_completion(&expectations) {
+    let qualified = match observed.check_prefill_completion() {
         Ok(qualified) => qualified,
         Err(failure) => {
             let (error, observed) = failure.into_parts();
@@ -869,7 +862,7 @@ fn copy_capture_candidate(
     observed: &M1ObservedQualificationOutputV1,
     device_id: Identity,
     expected_lanes: usize,
-) -> CaptureResult<(CapturedOutput, Vec<u32>)> {
+) -> CaptureResult<CapturedOutput> {
     let compact = observed.compact();
     let records = compact.records();
     if records.len() != expected_lanes {
@@ -879,7 +872,6 @@ fn copy_capture_candidate(
     if evidence.logits().rows().len() != records.len() {
         return Err("captured logits row count differs from compact records".to_owned());
     }
-    let mut choices = Vec::with_capacity(records.len());
     let mut tokens = Vec::with_capacity(records.len() * 4);
     for (lane, record) in records.iter().enumerate() {
         if record.record().emitted_token_count != 1 || record.accepted_draft_tokens() != 0 {
@@ -904,7 +896,6 @@ fn copy_capture_candidate(
             return Err(format!("captured logits row {lane} geometry drifted"));
         }
         let choice = lowest_id_finite_bf16_argmax(row.raw_bytes(), lane)?;
-        choices.push(choice);
         tokens.extend_from_slice(&choice.to_le_bytes());
         logits.extend_from_slice(row.raw_bytes());
         logits_row_sha256.push(*row.raw_sha256());
@@ -917,7 +908,7 @@ fn copy_capture_candidate(
         logits_row_sha256,
         tokens,
     };
-    Ok((output, choices))
+    Ok(output)
 }
 
 fn lowest_id_finite_bf16_argmax(bytes: &[u8], lane: usize) -> CaptureResult<u32> {

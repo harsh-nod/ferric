@@ -2026,6 +2026,24 @@ impl M1RearmedRecycledQueueV1 {
             queue_observation,
             device,
         } = self;
+        if let Err(lane) = validate_rearmed_generic_semantics(
+            queue
+                .custody()
+                .completion_output()
+                .qualification_logits()
+                .is_some(),
+            expectations,
+        ) {
+            return Err(Box::new(M1RearmedReadbackFailureV1 {
+                source: M1RearmedReadbackFailureSourceV1::QualificationCaptureRequiresEvidence {
+                    lane,
+                    queue: Box::new(queue),
+                },
+                carry,
+                queue_observation,
+                device,
+            }));
+        }
         let observed = match queue.observe_completion() {
             Ok(observed) => observed,
             Err(source) => {
@@ -2052,6 +2070,23 @@ impl M1RearmedRecycledQueueV1 {
             })),
         }
     }
+}
+
+fn validate_rearmed_generic_semantics(
+    qualification_capture_enabled: bool,
+    expectations: &[crate::CompletionWireSemanticExpectation<'_>],
+) -> Result<(), usize> {
+    if qualification_capture_enabled {
+        if let Some(lane) = expectations.iter().position(|semantic| {
+            !matches!(
+                semantic,
+                crate::CompletionWireSemanticExpectation::QualificationPromptCommit { .. }
+            )
+        }) {
+            return Err(lane);
+        }
+    }
+    Ok(())
 }
 
 /// Qualification-copy rejection retaining every rearm continuation owner.
@@ -2498,15 +2533,20 @@ impl M1RearmedObservedQualificationOutputV1 {
         self.carry.previous_epoch
     }
 
-    /// Joins the copied compact output to exact semantic expectations once.
+    /// Derives and joins the terminal finite BF16 argmax for every live lane.
+    ///
+    /// This is the only rearmed transition that admits
+    /// `QualificationFinalRow`. Callers supply validated context-step witnesses
+    /// but no token choices; choices come exclusively from the retained copied
+    /// logits evidence.
     ///
     /// # Errors
     ///
-    /// Returns the same already-copied qualification observation paired with
-    /// the semantic diagnostic; no completed read can be reissued.
-    pub fn check_completion(
+    /// Returns the same already-copied qualification observation when numerical,
+    /// context-roster, or compact K7 checking rejects.
+    pub fn check_final_completion(
         self,
-        expectations: &[crate::CompletionWireSemanticExpectation<'_>],
+        contexts: &[crate::M1ValidatedQualificationContextStepV1],
     ) -> Result<
         M1RearmedQualifiedCompletedReadbackV1,
         M1RearmedQualificationCompletedReadbackJoinFailureV1,
@@ -2517,7 +2557,7 @@ impl M1RearmedObservedQualificationOutputV1 {
             queue_observation,
             device,
         } = self;
-        match observed.check_completion(expectations) {
+        match observed.check_final_completion(contexts) {
             Ok(qualified) => {
                 let (readback, evidence) = qualified.into_parts();
                 Ok(M1RearmedQualifiedCompletedReadbackV1 {
@@ -2796,6 +2836,12 @@ impl M1RearmedQualificationSemanticTeardownFailureV1 {
 /// Exact observation or semantic-join failure retaining all linear custody.
 #[derive(Debug)]
 pub enum M1RearmedReadbackFailureSourceV1 {
+    /// Generic checking cannot retire a queue that still owns qualification
+    /// logits; only a prompt commit may bypass the terminal evidence join.
+    QualificationCaptureRequiresEvidence {
+        lane: usize,
+        queue: Box<crate::M1PhysicalRecycledQueueSessionV1>,
+    },
     /// Physical copy or structural observation rejection.
     Observation(crate::M1CompletionObservationFailureV1),
     /// Scheduler-roster, plan, wire-identity, or token-semantic rejection.
@@ -2817,6 +2863,44 @@ impl M1RearmedReadbackFailureV1 {
     #[must_use]
     pub const fn source(&self) -> &M1RearmedReadbackFailureSourceV1 {
         &self.source
+    }
+
+    /// Recovers untouched recycled custody after a pre-read semantic rejection.
+    ///
+    /// Observation and post-copy join failures remain in their existing closed
+    /// states. Only the qualification-capture gate runs before a physical read,
+    /// so only that variant can safely return to recycled custody.
+    ///
+    /// # Errors
+    ///
+    /// Returns the unchanged failure for every post-read rejection.
+    pub fn recover_recycled_after_semantic_rejection(
+        self: Box<Self>,
+    ) -> Result<M1RearmedRecycledQueueV1, Box<Self>> {
+        if !matches!(
+            &self.source,
+            M1RearmedReadbackFailureSourceV1::QualificationCaptureRequiresEvidence { .. }
+        ) {
+            return Err(self);
+        }
+        let Self {
+            source,
+            carry,
+            queue_observation,
+            device,
+        } = *self;
+        let M1RearmedReadbackFailureSourceV1::QualificationCaptureRequiresEvidence {
+            queue, ..
+        } = source
+        else {
+            unreachable!("the pre-read source variant was checked before consuming failure")
+        };
+        Ok(M1RearmedRecycledQueueV1 {
+            queue: *queue,
+            carry,
+            queue_observation,
+            device,
+        })
     }
 
     /// Returns the queue observation retained from the completed generation.
@@ -4383,6 +4467,13 @@ mod tests {
     }
 
     #[test]
+    fn qualification_capture_rearm_rejects_generic_direct_final_semantics() {
+        let direct = [crate::CompletionWireSemanticExpectation::DirectFinalRow { choice: 41 }];
+        assert_eq!(validate_rearmed_generic_semantics(true, &direct), Err(0));
+        assert_eq!(validate_rearmed_generic_semantics(false, &direct), Ok(()));
+    }
+
+    #[test]
     fn repeated_slice_excludes_prefill_and_shape_transitions() {
         assert_eq!(
             validate_rearm_eligibility(
@@ -4582,9 +4673,9 @@ mod tests {
             M1RearmedQualificationSemanticTeardownSuccessV1,
             Box<M1RearmedQualificationSemanticTeardownFailureV1>,
         >;
-        type SemanticRetry = for<'a, 'b> fn(
+        type FinalSemanticRetry = for<'a> fn(
             M1RearmedObservedQualificationOutputV1,
-            &'a [crate::CompletionWireSemanticExpectation<'b>],
+            &'a [crate::M1ValidatedQualificationContextStepV1],
         ) -> Result<
             M1RearmedQualifiedCompletedReadbackV1,
             M1RearmedQualificationCompletedReadbackJoinFailureV1,
@@ -4611,14 +4702,14 @@ mod tests {
             Box<M1RearmedQualifiedTeardownFailureV1>,
         >;
 
-        fn retry_semantic(
+        fn retry_final_semantic(
             observed: M1RearmedObservedQualificationOutputV1,
-            expectations: &[crate::CompletionWireSemanticExpectation<'_>],
+            contexts: &[crate::M1ValidatedQualificationContextStepV1],
         ) -> Result<
             M1RearmedQualifiedCompletedReadbackV1,
             M1RearmedQualificationCompletedReadbackJoinFailureV1,
         > {
-            observed.check_completion(expectations)
+            observed.check_final_completion(contexts)
         }
 
         let _: ObservationRetry = M1RearmedQualificationObservationFailureV1::retry;
@@ -4629,7 +4720,7 @@ mod tests {
             M1RearmedQualificationCompletedReadbackJoinFailureV1::destroy_queue_and_retain_custody::<
                 32,
             >;
-        let _: SemanticRetry = retry_semantic;
+        let _: FinalSemanticRetry = retry_final_semantic;
         let _: TerminalCompletion = M1RearmedQualifiedCompletedReadbackV1::complete_retiring::<32>;
         let _: QualifiedRecovery = M1RearmedQualifiedCompletionOutcomeV1::into_parts;
         let _: PageRelease = M1RearmedQualifiedCompletionOutcomeV1::release_completed;

@@ -11,9 +11,11 @@ use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::{Qwen3PlanSelection, RequestId};
 
 use crate::{
-    check_inert_completion_record, CompletionWireError, CompletionWireExpectation,
-    InertCheckedCompletionRecord, M1CompletionOutputErrorV1, M1ObservedCompletionImageV1,
-    M1ScheduledDispatchV1,
+    check_inert_completion_record,
+    completion_wire::check_inert_qualification_final_completion_record,
+    qualification_logits::M1QualificationFinalRowChoicesV1, CompletionWireError,
+    CompletionWireExpectation, CompletionWireSemanticExpectation, InertCheckedCompletionRecord,
+    M1CompletionOutputErrorV1, M1ObservedCompletionImageV1, M1ScheduledDispatchV1,
 };
 
 /// Fail-closed completed-output structural or semantic diagnostic.
@@ -76,6 +78,16 @@ pub enum M1CompletedOutputCheckErrorV1 {
         /// Exact wire or semantic failure.
         source: CompletionWireError,
     },
+    /// Derived terminal choices did not cover the exact scheduler roster.
+    QualificationFinalChoiceCount { expected: usize, actual: usize },
+    /// Copied BF16 terminal rows could not produce exact finite choices.
+    QualificationFinalLogits(crate::M1QualificationFinalLogitsErrorV1),
+    /// Qualification final checking escaped its target-only observation shape.
+    QualificationFinalObservationShape,
+    /// Generic compact checking was requested for a capture-attached non-prompt lane.
+    QualificationCaptureRequiresEvidence { lane: usize },
+    /// Evidence-derived qualification prefill was requested for another selection.
+    QualificationPrefillSelection { actual: Qwen3PlanSelection },
     /// A qualification grouping did not cover the exact scheduler roster.
     QualificationMemberCount { expected: usize, actual: usize },
     /// Qualification and ordinary semantics or distinct context declarations
@@ -183,6 +195,40 @@ pub(crate) fn check_m1_completed_output_v1(
     scheduled: &M1ScheduledDispatchV1,
     expectations: &[CompletionWireExpectation<'_>],
 ) -> Result<M1CheckedCompletionOutputV1, M1CompletedOutputCheckErrorV1> {
+    check_m1_completed_output(observed, queue_selection, scheduled, expectations, None)
+}
+
+pub(crate) fn check_m1_qualification_completed_output_v1(
+    observed: &M1ObservedCompletionImageV1,
+    queue_selection: Qwen3PlanSelection,
+    scheduled: &M1ScheduledDispatchV1,
+    expectations: &[CompletionWireExpectation<'_>],
+    final_rows: &M1QualificationFinalRowChoicesV1,
+) -> Result<M1CheckedCompletionOutputV1, M1CompletedOutputCheckErrorV1> {
+    if let Some(lane) = expectations.iter().position(|expectation| {
+        !matches!(
+            expectation.semantics(),
+            CompletionWireSemanticExpectation::QualificationFinalRow { .. }
+        )
+    }) {
+        return Err(M1CompletedOutputCheckErrorV1::QualificationCaptureRequiresEvidence { lane });
+    }
+    check_m1_completed_output(
+        observed,
+        queue_selection,
+        scheduled,
+        expectations,
+        Some(final_rows),
+    )
+}
+
+fn check_m1_completed_output(
+    observed: &M1ObservedCompletionImageV1,
+    queue_selection: Qwen3PlanSelection,
+    scheduled: &M1ScheduledDispatchV1,
+    expectations: &[CompletionWireExpectation<'_>],
+    qualification_final_rows: Option<&M1QualificationFinalRowChoicesV1>,
+) -> Result<M1CheckedCompletionOutputV1, M1CompletedOutputCheckErrorV1> {
     if observed.selection() != queue_selection {
         return Err(M1CompletedOutputCheckErrorV1::SelectionDrift {
             expected: queue_selection,
@@ -200,6 +246,16 @@ pub(crate) fn check_m1_completed_output_v1(
             expected: scheduled.member_count(),
             actual: expectations.len(),
         });
+    }
+    if let Some(final_rows) = qualification_final_rows {
+        if final_rows.len() != scheduled.member_count() {
+            return Err(
+                M1CompletedOutputCheckErrorV1::QualificationFinalChoiceCount {
+                    expected: scheduled.member_count(),
+                    actual: final_rows.len(),
+                },
+            );
+        }
     }
 
     let qualification_context = expectations
@@ -283,8 +339,19 @@ pub(crate) fn check_m1_completed_output_v1(
                     actual: u32::try_from(lane).unwrap_or(u32::MAX),
                 },
             ))?;
-        let checked = check_inert_completion_record(record_bytes, expectation)
-            .map_err(|source| M1CompletedOutputCheckErrorV1::LiveRecord { lane, source })?;
+        let checked = match (expectation.semantics(), qualification_final_rows) {
+            (CompletionWireSemanticExpectation::QualificationFinalRow { .. }, Some(final_rows)) => {
+                check_inert_qualification_final_completion_record(
+                    record_bytes,
+                    expectation,
+                    final_rows
+                        .choice(lane)
+                        .expect("validated final choice count covers every scheduler lane"),
+                )
+            }
+            _ => check_inert_completion_record(record_bytes, expectation),
+        }
+        .map_err(|source| M1CompletedOutputCheckErrorV1::LiveRecord { lane, source })?;
         records.push(checked);
     }
 
@@ -303,11 +370,17 @@ pub(crate) fn check_m1_completed_output_v1(
 mod tests {
     use ferric_qwen_kernels::logits::Qwen3LogitsCompactRecordLayoutV1 as Layout;
     use ferric_spec::{
-        Identity, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, StepPlan, TokenId,
+        m1_qualification_context_plan, Identity, M1QualificationExecutionBindingDeclaration,
+        M1QualificationLaneExecutionBinding, M1QualificationLaneGrouping, Qwen3ExecutionMode,
+        Qwen3ModelRole, Qwen3PlanBucket, StepPlan, TokenId, QWEN3_VOCABULARY_SIZE,
     };
 
     use super::*;
-    use crate::{m1_completion_output_shape_v1, CompletionWireSemanticExpectation};
+    use crate::{
+        m1_completion_output_shape_v1,
+        qualification_logits::tests::final_row_choices_for_join_test,
+        validate_m1_qualification_context_plan_v1, CompletionWireSemanticExpectation,
+    };
 
     const EPOCH: CompletionEpoch = CompletionEpoch::new(41);
     const OTHER_EPOCH: CompletionEpoch = CompletionEpoch::new(42);
@@ -517,6 +590,116 @@ mod tests {
         assert!(matches!(
             check(&scheduled, &bytes, &expectations),
             Err(M1CompletedOutputCheckErrorV1::LiveRecord { lane: 0, .. })
+        ));
+    }
+
+    #[test]
+    fn terminal_qualification_succeeds_only_with_logits_derived_choice() {
+        let selection = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Decode,
+            bucket: Qwen3PlanBucket::DecodeS1C8192,
+        };
+        let scheduled = M1ScheduledDispatchV1::for_test(EPOCH, &REQUESTS[..1]);
+        let plan = StepPlan::new(REQUESTS[0], EPOCH, PLAN_IDS[0], selection);
+        let binding = M1QualificationExecutionBindingDeclaration {
+            declared_workload_digest: Identity::new([31; 32]),
+            ordered_lanes: vec![M1QualificationLaneExecutionBinding {
+                lane_ordinal: 0,
+                lane_identity: Identity::new([32; 32]),
+                token_sequence_identity: Identity::new([33; 32]),
+            }],
+        };
+        let context_plan =
+            m1_qualification_context_plan(M1QualificationLaneGrouping::S1, binding.clone());
+        let validated = validate_m1_qualification_context_plan_v1(
+            &context_plan,
+            M1QualificationLaneGrouping::S1,
+            &binding,
+        )
+        .unwrap();
+        let context = validated.step(8_191, 0).unwrap();
+        let expectations = [CompletionWireExpectation::new(
+            &plan,
+            CompletionWireSemanticExpectation::QualificationFinalRow { context: &context },
+        )];
+        let observed = M1ObservedCompletionImageV1::from_bytes_for_test(
+            m1_completion_output_shape_v1(selection).unwrap(),
+            selection,
+            &scheduled,
+            19,
+            5,
+            384,
+            encode(REQUESTS[0], EPOCH, PLAN_IDS[0], 41)
+                .to_vec()
+                .into_boxed_slice(),
+        )
+        .unwrap();
+        assert!(matches!(
+            check_m1_completed_output_v1(&observed, selection, &scheduled, &expectations),
+            Err(M1CompletedOutputCheckErrorV1::LiveRecord {
+                source: CompletionWireError::QualificationFinalRowRequiresLogitsEvidence,
+                ..
+            })
+        ));
+
+        let mut row = vec![0; usize::try_from(u64::from(QWEN3_VOCABULARY_SIZE) * 2).unwrap()];
+        row[82..84].copy_from_slice(&0x3f80_u16.to_le_bytes());
+        let choices = final_row_choices_for_join_test(&row);
+        let direct_expectations = [CompletionWireExpectation::new(
+            &plan,
+            CompletionWireSemanticExpectation::DirectFinalRow { choice: 41 },
+        )];
+        assert!(matches!(
+            check_m1_qualification_completed_output_v1(
+                &observed,
+                selection,
+                &scheduled,
+                &direct_expectations,
+                &choices,
+            ),
+            Err(M1CompletedOutputCheckErrorV1::QualificationCaptureRequiresEvidence { lane: 0 })
+        ));
+        let checked = check_m1_qualification_completed_output_v1(
+            &observed,
+            selection,
+            &scheduled,
+            &expectations,
+            &choices,
+        )
+        .unwrap();
+        assert!(matches!(
+            checked.records()[0].semantics(),
+            crate::CheckedCompletionSemantics::QualificationFinalRow { token: 41, .. }
+        ));
+
+        let substituted = M1ObservedCompletionImageV1::from_bytes_for_test(
+            m1_completion_output_shape_v1(selection).unwrap(),
+            selection,
+            &scheduled,
+            19,
+            5,
+            384,
+            encode(REQUESTS[0], EPOCH, PLAN_IDS[0], 42)
+                .to_vec()
+                .into_boxed_slice(),
+        )
+        .unwrap();
+        assert!(matches!(
+            check_m1_qualification_completed_output_v1(
+                &substituted,
+                selection,
+                &scheduled,
+                &expectations,
+                &choices,
+            ),
+            Err(M1CompletedOutputCheckErrorV1::LiveRecord {
+                source: CompletionWireError::DirectFinalRowMismatch {
+                    expected: 41,
+                    actual: 42,
+                },
+                ..
+            })
         ));
     }
 }

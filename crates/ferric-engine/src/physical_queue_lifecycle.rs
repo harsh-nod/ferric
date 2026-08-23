@@ -16,10 +16,15 @@ use fe2o3_service_host::{
     ServiceQueueUnboundSessionV1, ServiceRecycledQueueSessionV1,
 };
 use ferric_spec::completion::CompletionEpoch;
+use ferric_spec::Qwen3ExecutionMode;
 
-use crate::completed_readback_join::check_m1_completed_output_v1;
+use crate::completed_readback_join::{
+    check_m1_completed_output_v1, check_m1_qualification_completed_output_v1,
+};
 use crate::observed_completion::observe_m1_completed_output_v1;
-use crate::qualification_logits::observe_m1_qualification_logits_v1;
+use crate::qualification_logits::{
+    observe_m1_qualification_logits_v1, M1QualificationFinalRowChoicesV1,
+};
 use crate::{
     CompletionWireExpectation, CompletionWireSemanticExpectation, ExactCompletion,
     Gfx942DeviceBinding, M1CheckedCompletionOutputV1, M1CompletedOutputCheckErrorV1,
@@ -27,9 +32,10 @@ use crate::{
     M1ObservedCompletionImageV1, M1ObservedQualificationLogitsV1, M1PhysicalFixedBatchCaseV1,
     M1PhysicalFixedBatchCustodyV1, M1PhysicalFixedBatchShapeV1, M1PhysicalFixedBatchV1,
     M1PhysicalQueueBatchCustodyV1, M1PrepublicationBatchV1, M1PrepublicationStepCustodyV1,
-    M1QualificationLogitsErrorV1, M1ScheduledDispatchV1, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
-    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
-    M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
+    M1QualificationLogitsErrorV1, M1ScheduledDispatchV1, M1ValidatedQualificationContextStepV1,
+    M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
+    M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
 };
 
 /// Observable Ferric phase for one M1 queue generation.
@@ -1423,12 +1429,12 @@ impl M1QualificationCompletionEvidenceV1 {
 /// Move-only target-only observation retaining compact and final-logits evidence.
 ///
 /// ```compile_fail
-/// use ferric_engine::{CompletionWireSemanticExpectation, M1ObservedQualificationOutputV1};
+/// use ferric_engine::{M1ObservedQualificationOutputV1, M1ValidatedQualificationContextStepV1};
 /// fn consume_twice(
 ///     observed: M1ObservedQualificationOutputV1,
-///     expectations: &[CompletionWireSemanticExpectation<'_>],
+///     contexts: &[M1ValidatedQualificationContextStepV1],
 /// ) {
-///     let _first = observed.check_completion(expectations);
+///     let _first = observed.check_final_completion(contexts);
 ///     let _second = observed.destroy_and_release();
 /// }
 /// ```
@@ -1452,38 +1458,146 @@ impl M1ObservedQualificationOutputV1 {
         &self.evidence
     }
 
-    /// Consumes the compact observation through the existing semantic join.
+    /// Derives and joins one direct qualification prefill choice per live lane.
     ///
-    /// Failure retains the same copied evidence and cannot reopen either read.
+    /// This compatibility transition is restricted to target prefill graphs.
+    /// Each choice comes from the same finite lowest-ID BF16 argmax validation
+    /// used by terminal decode qualification; callers supply no token choices.
     ///
     /// # Errors
     ///
-    /// Returns the existing compact semantic rejection while retaining the
-    /// same already-copied qualification evidence in closed custody.
-    pub fn check_completion(
+    /// Rejects a non-prefill selection, nonfinite row, or compact semantic
+    /// mismatch while retaining the same one-shot qualification observation.
+    pub fn check_prefill_completion(
         self,
-        expectations: &[CompletionWireSemanticExpectation<'_>],
     ) -> Result<M1QualifiedPhysicalCompletedReadbackV1, M1QualificationCompletedReadbackJoinFailureV1>
     {
+        let actual = self.compact().selection();
+        if actual.mode != Qwen3ExecutionMode::Prefill {
+            return Err(M1QualificationCompletedReadbackJoinFailureV1 {
+                error: M1CompletedReadbackJoinErrorV1 {
+                    source: M1CompletedOutputCheckErrorV1::QualificationPrefillSelection { actual },
+                },
+                observed: Box::new(self),
+            });
+        }
+        let final_rows = match self.evidence.logits.final_row_choices() {
+            Ok(final_rows) => final_rows,
+            Err(source) => {
+                return Err(M1QualificationCompletedReadbackJoinFailureV1 {
+                    error: M1CompletedReadbackJoinErrorV1 {
+                        source: M1CompletedOutputCheckErrorV1::QualificationFinalLogits(source),
+                    },
+                    observed: Box::new(self),
+                })
+            }
+        };
         let Self {
             completion,
             evidence,
         } = self;
-        match completion.check_completion(expectations) {
-            Ok(completed) => Ok(M1QualifiedPhysicalCompletedReadbackV1 {
-                completed,
+        let M1ObservedCompletionOutputV1::TargetOnly(case) = completion else {
+            return Err(M1QualificationCompletedReadbackJoinFailureV1 {
+                error: M1CompletedReadbackJoinErrorV1 {
+                    source: M1CompletedOutputCheckErrorV1::QualificationFinalObservationShape,
+                },
+                observed: Box::new(Self {
+                    completion,
+                    evidence,
+                }),
+            });
+        };
+        match check_observed_qualification_prefill_case(case, &final_rows) {
+            Ok((case, checked, completion, kv)) => Ok(M1QualifiedPhysicalCompletedReadbackV1 {
+                completed: M1PhysicalCompletedReadbackV1 {
+                    queue: M1PhysicalReadbackQueueSessionV1::TargetOnly(case),
+                    checked,
+                    completion,
+                    kv,
+                },
                 evidence,
             }),
-            Err(failure) => {
-                let (error, completion) = failure.into_parts();
-                Err(M1QualificationCompletedReadbackJoinFailureV1 {
-                    error,
-                    observed: Box::new(Self {
-                        completion,
-                        evidence,
-                    }),
+            Err((source, case)) => Err(M1QualificationCompletedReadbackJoinFailureV1 {
+                error: M1CompletedReadbackJoinErrorV1 { source },
+                observed: Box::new(Self {
+                    completion: M1ObservedCompletionOutputV1::TargetOnly(case),
+                    evidence,
+                }),
+            }),
+        }
+    }
+
+    /// Consumes terminal qualification evidence and derives each final choice.
+    ///
+    /// Every copied BF16 value must be finite. Rows are scanned in ascending
+    /// token-ID order with strict greater-than replacement, so equal maxima
+    /// select the lowest token ID. The derived choices, not caller-supplied
+    /// tokens, are then compared with compact K7 under the exact context roster.
+    ///
+    /// # Errors
+    ///
+    /// Returns the unchanged one-shot observation when BF16 validation, exact
+    /// context roster validation, or the compact semantic join rejects.
+    pub fn check_final_completion(
+        self,
+        contexts: &[M1ValidatedQualificationContextStepV1],
+    ) -> Result<M1QualifiedPhysicalCompletedReadbackV1, M1QualificationCompletedReadbackJoinFailureV1>
+    {
+        let expected = self.compact().records().len();
+        if contexts.len() != expected {
+            return Err(M1QualificationCompletedReadbackJoinFailureV1 {
+                error: M1CompletedReadbackJoinErrorV1 {
+                    source: M1CompletedOutputCheckErrorV1::ExpectationCount {
+                        expected,
+                        actual: contexts.len(),
+                    },
+                },
+                observed: Box::new(self),
+            });
+        }
+        let final_rows = match self.evidence.logits.final_row_choices() {
+            Ok(final_rows) => final_rows,
+            Err(source) => {
+                return Err(M1QualificationCompletedReadbackJoinFailureV1 {
+                    error: M1CompletedReadbackJoinErrorV1 {
+                        source: M1CompletedOutputCheckErrorV1::QualificationFinalLogits(source),
+                    },
+                    observed: Box::new(self),
                 })
             }
+        };
+        let Self {
+            completion,
+            evidence,
+        } = self;
+        let M1ObservedCompletionOutputV1::TargetOnly(case) = completion else {
+            return Err(M1QualificationCompletedReadbackJoinFailureV1 {
+                error: M1CompletedReadbackJoinErrorV1 {
+                    source: M1CompletedOutputCheckErrorV1::QualificationFinalObservationShape,
+                },
+                observed: Box::new(Self {
+                    completion,
+                    evidence,
+                }),
+            });
+        };
+        match check_observed_qualification_final_case(case, contexts, &final_rows) {
+            Ok((case, checked, completion, kv)) => Ok(M1QualifiedPhysicalCompletedReadbackV1 {
+                completed: M1PhysicalCompletedReadbackV1 {
+                    queue: M1PhysicalReadbackQueueSessionV1::TargetOnly(case),
+                    checked,
+                    completion,
+                    kv,
+                },
+                evidence,
+            }),
+            Err((source, case)) => Err(M1QualificationCompletedReadbackJoinFailureV1 {
+                error: M1CompletedReadbackJoinErrorV1 { source },
+                observed: Box::new(Self {
+                    completion: M1ObservedCompletionOutputV1::TargetOnly(case),
+                    evidence,
+                }),
+            }),
         }
     }
 
@@ -2722,6 +2836,16 @@ fn check_observed_case<const N: usize>(
             case,
         ));
     }
+    if let Err(error) = validate_generic_observed_semantics(
+        case.case
+            .custody
+            .completion_output()
+            .qualification_logits()
+            .is_some(),
+        semantics,
+    ) {
+        return Err((error, case));
+    }
     let mut expectations = Vec::new();
     if expectations.try_reserve_exact(semantics.len()).is_err() {
         return Err((
@@ -2746,6 +2870,149 @@ fn check_observed_case<const N: usize>(
         case.case.custody.selection(),
         scheduled,
         &expectations,
+    ) {
+        Ok(checked) => checked,
+        Err(error) => return Err((error, case)),
+    };
+    let M1ObservedCompletionCaseV1 { case, image: _ } = *case;
+    let (lower, custody, step) = (*case).into_parts();
+    let (scheduled, _target_plans, kv) = step.into_parts();
+    let completion = ExactCompletion::from_completed_m1_queue_readback(scheduled);
+    Ok((
+        Box::new(M1PhysicalReadbackQueueCaseV1 { lower, custody }),
+        checked,
+        completion,
+        kv,
+    ))
+}
+
+fn validate_generic_observed_semantics(
+    qualification_capture_enabled: bool,
+    semantics: &[CompletionWireSemanticExpectation<'_>],
+) -> Result<(), M1CompletedOutputCheckErrorV1> {
+    if qualification_capture_enabled {
+        if let Some(lane) = semantics.iter().position(|semantic| {
+            !matches!(
+                semantic,
+                CompletionWireSemanticExpectation::QualificationPromptCommit { .. }
+            )
+        }) {
+            return Err(
+                M1CompletedOutputCheckErrorV1::QualificationCaptureRequiresEvidence { lane },
+            );
+        }
+    }
+    Ok(())
+}
+
+fn check_observed_qualification_prefill_case<const N: usize>(
+    case: Box<M1ObservedCompletionCaseV1<N>>,
+    final_rows: &M1QualificationFinalRowChoicesV1,
+) -> CheckObservedCaseResultV1<N> {
+    let scheduled = case.case.step.scheduled_dispatch();
+    if final_rows.len() != scheduled.member_count() {
+        return Err((
+            M1CompletedOutputCheckErrorV1::QualificationFinalChoiceCount {
+                expected: scheduled.member_count(),
+                actual: final_rows.len(),
+            },
+            case,
+        ));
+    }
+    let mut expectations = Vec::new();
+    if expectations
+        .try_reserve_exact(scheduled.member_count())
+        .is_err()
+    {
+        return Err((
+            M1CompletedOutputCheckErrorV1::Output(crate::M1CompletionOutputErrorV1::ExtentOverflow),
+            case,
+        ));
+    }
+    for lane in 0..scheduled.member_count() {
+        let Some(plan) = case.case.step.target_plans()[lane].as_ref() else {
+            return Err((
+                M1CompletedOutputCheckErrorV1::ExpectationCount {
+                    expected: scheduled.member_count(),
+                    actual: lane,
+                },
+                case,
+            ));
+        };
+        let choice = final_rows
+            .choice(lane)
+            .expect("validated final choice count covers every scheduler lane");
+        expectations.push(CompletionWireExpectation::new(
+            plan,
+            CompletionWireSemanticExpectation::DirectFinalRow {
+                choice: choice.token(),
+            },
+        ));
+    }
+    let checked = match check_m1_completed_output_v1(
+        &case.image,
+        case.case.custody.selection(),
+        scheduled,
+        &expectations,
+    ) {
+        Ok(checked) => checked,
+        Err(error) => return Err((error, case)),
+    };
+    let M1ObservedCompletionCaseV1 { case, image: _ } = *case;
+    let (lower, custody, step) = (*case).into_parts();
+    let (scheduled, _target_plans, kv) = step.into_parts();
+    let completion = ExactCompletion::from_completed_m1_queue_readback(scheduled);
+    Ok((
+        Box::new(M1PhysicalReadbackQueueCaseV1 { lower, custody }),
+        checked,
+        completion,
+        kv,
+    ))
+}
+
+fn check_observed_qualification_final_case<const N: usize>(
+    case: Box<M1ObservedCompletionCaseV1<N>>,
+    contexts: &[M1ValidatedQualificationContextStepV1],
+    final_rows: &M1QualificationFinalRowChoicesV1,
+) -> CheckObservedCaseResultV1<N> {
+    let scheduled = case.case.step.scheduled_dispatch();
+    if contexts.len() != scheduled.member_count() {
+        return Err((
+            M1CompletedOutputCheckErrorV1::ExpectationCount {
+                expected: scheduled.member_count(),
+                actual: contexts.len(),
+            },
+            case,
+        ));
+    }
+    let mut expectations = Vec::new();
+    if expectations.try_reserve_exact(contexts.len()).is_err() {
+        return Err((
+            M1CompletedOutputCheckErrorV1::Output(crate::M1CompletionOutputErrorV1::ExtentOverflow),
+            case,
+        ));
+    }
+    for (lane, context) in contexts.iter().enumerate() {
+        let Some(plan) = case.case.step.target_plans()[lane].as_ref() else {
+            return Err((
+                M1CompletedOutputCheckErrorV1::ExpectationCount {
+                    expected: scheduled.member_count(),
+                    actual: lane,
+                },
+                case,
+            ));
+        };
+        expectations.push(CompletionWireExpectation::new(
+            plan,
+            CompletionWireSemanticExpectation::QualificationFinalRow { context },
+        ));
+    }
+    let checked = match check_m1_qualification_completed_output_v1(
+        &case.image,
+        case.case.custody.selection(),
+        scheduled,
+        &expectations,
+        final_rows,
     ) {
         Ok(checked) => checked,
         Err(error) => return Err((error, case)),
@@ -3236,7 +3503,10 @@ fn operation_failure(
 
 #[cfg(test)]
 mod tests {
-    use super::{M1PhysicalQueueCreateFailureClassV1, M1PhysicalQueuePhaseV1};
+    use super::{
+        validate_generic_observed_semantics, CompletionWireSemanticExpectation,
+        M1CompletedOutputCheckErrorV1, M1PhysicalQueueCreateFailureClassV1, M1PhysicalQueuePhaseV1,
+    };
 
     #[test]
     fn state_capabilities_are_disjoint_and_fail_closed() {
@@ -3275,6 +3545,16 @@ mod tests {
         assert!(!M1PhysicalQueueCreateFailureClassV1::Rejected.denies_retry());
         assert!(!M1PhysicalQueueCreateFailureClassV1::Terminal.can_recover_inputs());
         assert!(M1PhysicalQueueCreateFailureClassV1::Terminal.denies_retry());
+    }
+
+    #[test]
+    fn capture_attached_generic_readback_rejects_caller_direct_choice() {
+        let direct = [CompletionWireSemanticExpectation::DirectFinalRow { choice: 41 }];
+        assert!(matches!(
+            validate_generic_observed_semantics(true, &direct),
+            Err(M1CompletedOutputCheckErrorV1::QualificationCaptureRequiresEvidence { lane: 0 })
+        ));
+        assert!(validate_generic_observed_semantics(false, &direct).is_ok());
     }
 
     fn grants_for(phase: M1PhysicalQueuePhaseV1) -> usize {

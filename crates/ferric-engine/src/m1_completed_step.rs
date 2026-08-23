@@ -325,6 +325,8 @@ enum PoisonedCurrentMemberV1 {
 struct M1CompletedStepPoisonCustodyV1 {
     completion: Option<ExactCompletion>,
     completed: Vec<M1CompletedDeviceKvMemberV1>,
+    logical_accepted_counts: Box<[u32]>,
+    externally_published_counts: Box<[u32]>,
     current: Option<PoisonedCurrentMemberV1>,
     initialized: [Option<InertInitializedDeviceKvStepWrite>; 2],
     pending: [Option<PendingDeviceKvStepWrite>; 2],
@@ -358,6 +360,18 @@ impl M1CompletedStepPoisonV1 {
     #[must_use]
     pub fn completed_member_count(&self) -> usize {
         self.custody.completed.len()
+    }
+
+    /// Exact logical accepted counts derived before the first mutation.
+    #[must_use]
+    pub fn logical_accepted_counts(&self) -> &[u32] {
+        &self.custody.logical_accepted_counts
+    }
+
+    /// Exact externally published counts derived before the first mutation.
+    #[must_use]
+    pub fn externally_published_counts(&self) -> &[u32] {
+        &self.custody.externally_published_counts
     }
 
     #[must_use]
@@ -1025,6 +1039,8 @@ pub fn complete_m1_physical_step_v1<const C: usize>(
                 M1CompletedStepPoisonCustodyV1 {
                     completion,
                     completed,
+                    logical_accepted_counts: logical_accepted.into_boxed_slice(),
+                    externally_published_counts: externally_published.into_boxed_slice(),
                     current: None,
                     initialized: [None, None],
                     pending: [None, None],
@@ -1043,6 +1059,8 @@ pub fn complete_m1_physical_step_v1<const C: usize>(
                 M1CompletedStepPoisonCustodyV1 {
                     completion: None,
                     completed,
+                    logical_accepted_counts: logical_accepted.into_boxed_slice(),
+                    externally_published_counts: externally_published.into_boxed_slice(),
                     current: None,
                     initialized: [None, None],
                     pending: [None, None],
@@ -1066,6 +1084,8 @@ pub fn complete_m1_physical_step_v1<const C: usize>(
                     M1CompletedStepPoisonCustodyV1 {
                         completion: failure.completion,
                         completed,
+                        logical_accepted_counts: logical_accepted.into_boxed_slice(),
+                        externally_published_counts: externally_published.into_boxed_slice(),
                         current: Some(failure.current),
                         initialized: failure.initialized,
                         pending: failure.pending,
@@ -1084,6 +1104,8 @@ pub fn complete_m1_physical_step_v1<const C: usize>(
             M1CompletedStepPoisonCustodyV1 {
                 completion: None,
                 completed,
+                logical_accepted_counts: logical_accepted.into_boxed_slice(),
+                externally_published_counts: externally_published.into_boxed_slice(),
                 current: None,
                 initialized: [None, None],
                 pending: [None, None],
@@ -1109,6 +1131,8 @@ pub fn complete_m1_physical_step_v1<const C: usize>(
                 M1CompletedStepPoisonCustodyV1 {
                     completion: failure.into_completion(),
                     completed,
+                    logical_accepted_counts: logical_accepted.into_boxed_slice(),
+                    externally_published_counts: externally_published.into_boxed_slice(),
                     current: None,
                     initialized: [None, None],
                     pending: [None, None],
@@ -1182,6 +1206,22 @@ mod tests {
             .unwrap()
             .join()
             .unwrap();
+    }
+
+    #[test]
+    fn post_preflight_poison_custody_retains_both_semantic_count_vectors() {
+        let custody = M1CompletedStepPoisonCustodyV1 {
+            completion: None,
+            completed: Vec::new(),
+            logical_accepted_counts: vec![1].into_boxed_slice(),
+            externally_published_counts: vec![0].into_boxed_slice(),
+            current: None,
+            initialized: [None, None],
+            pending: [None, None],
+            remaining: Vec::new(),
+        };
+        assert_eq!(&*custody.logical_accepted_counts, &[1]);
+        assert_eq!(&*custody.externally_published_counts, &[0]);
     }
 
     fn paired_work(
