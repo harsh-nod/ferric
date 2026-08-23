@@ -98,6 +98,139 @@ struct ReleasedStepResidueV1 {
     release_counts: Box<[M1CompletedKvPageReleaseCountsV1]>,
     completed_members: usize,
     total_released: usize,
+    history: M1RearmRoundHistoryV1,
+}
+
+/// Maximum number of append-only rearm round records retained by one queue.
+pub const M1_MAX_REARM_ROUND_HISTORY_V1: usize = 8192;
+
+/// One immutable rearm-round record retained for the life of the native queue.
+#[derive(Debug)]
+pub struct M1RearmRoundHistoryEntryV1 {
+    checked: crate::M1CheckedCompletionOutputV1,
+    logical_accepted_counts: Box<[u32]>,
+    externally_published_counts: Box<[u32]>,
+    release_counts: Box<[M1CompletedKvPageReleaseCountsV1]>,
+    completed_members: usize,
+    total_released: usize,
+    queue_observation: ComputeAqlQueueObservationV1,
+    device: Gfx942DeviceBinding,
+}
+
+impl M1RearmRoundHistoryEntryV1 {
+    pub const fn checked(&self) -> &crate::M1CheckedCompletionOutputV1 {
+        &self.checked
+    }
+
+    #[must_use]
+    pub fn logical_accepted_counts(&self) -> &[u32] {
+        &self.logical_accepted_counts
+    }
+
+    #[must_use]
+    pub fn externally_published_counts(&self) -> &[u32] {
+        &self.externally_published_counts
+    }
+
+    #[must_use]
+    pub fn release_counts(&self) -> &[M1CompletedKvPageReleaseCountsV1] {
+        &self.release_counts
+    }
+
+    #[must_use]
+    pub const fn completed_members(&self) -> usize {
+        self.completed_members
+    }
+
+    #[must_use]
+    pub const fn total_released(&self) -> usize {
+        self.total_released
+    }
+
+    #[must_use]
+    pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
+        self.queue_observation
+    }
+
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.device
+    }
+}
+
+#[derive(Debug)]
+struct M1NonEmptyRearmRoundHistoryV1<T = M1RearmRoundHistoryEntryV1> {
+    earlier: Vec<T>,
+    latest: T,
+}
+
+impl<T> M1NonEmptyRearmRoundHistoryV1<T> {
+    const fn len(&self) -> usize {
+        self.earlier.len() + 1
+    }
+
+    fn get(&self, index: usize) -> Option<&T> {
+        if index == self.earlier.len() {
+            Some(&self.latest)
+        } else {
+            self.earlier.get(index)
+        }
+    }
+
+    const fn latest(&self) -> &T {
+        &self.latest
+    }
+}
+
+#[derive(Debug)]
+enum M1RearmRoundHistoryV1<T = M1RearmRoundHistoryEntryV1> {
+    Empty,
+    NonEmpty(M1NonEmptyRearmRoundHistoryV1<T>),
+}
+
+impl<T> M1RearmRoundHistoryV1<T> {
+    const fn len(&self) -> usize {
+        match self {
+            Self::Empty => 0,
+            Self::NonEmpty(history) => history.len(),
+        }
+    }
+
+    fn get(&self, index: usize) -> Option<&T> {
+        match self {
+            Self::Empty => None,
+            Self::NonEmpty(history) => history.get(index),
+        }
+    }
+
+    fn try_reserve_append(&mut self) -> Result<(), M1RearmedCompletionPreflightErrorV1> {
+        if self.len() >= M1_MAX_REARM_ROUND_HISTORY_V1 {
+            return Err(M1RearmedCompletionPreflightErrorV1::RoundHistoryCapacity {
+                maximum: M1_MAX_REARM_ROUND_HISTORY_V1,
+            });
+        }
+        match self {
+            Self::Empty => Ok(()),
+            Self::NonEmpty(history) => history
+                .earlier
+                .try_reserve(1)
+                .map_err(|_| M1RearmedCompletionPreflightErrorV1::HostAllocation),
+        }
+    }
+
+    fn append(self, entry: T) -> M1NonEmptyRearmRoundHistoryV1<T> {
+        match self {
+            Self::Empty => M1NonEmptyRearmRoundHistoryV1 {
+                earlier: Vec::new(),
+                latest: entry,
+            },
+            Self::NonEmpty(mut history) => {
+                history.earlier.push(history.latest);
+                history.latest = entry;
+                history
+            }
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -106,6 +239,7 @@ enum ScheduleFailureCustodyV1 {
         released: Box<M1ReleasedCompletedStepV1>,
         parked: Vec<ActiveDeviceKvCache>,
         terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
+        history: Box<M1RearmRoundHistoryV1>,
     },
     Detach {
         queue: Box<M1PhysicalReadbackQueueOperationFailureV1>,
@@ -163,6 +297,7 @@ impl M1LongLivedQueueRearmScheduleFailureV1 {
                 released,
                 parked,
                 terminal,
+                ..
             } => released.members().len() + parked.len() + terminal.len() + 1,
             ScheduleFailureCustodyV1::Detach { queue, residue } => {
                 let _ = queue.error();
@@ -180,6 +315,24 @@ impl M1LongLivedQueueRearmScheduleFailureV1 {
                     + residue.members.len()
                     + 1
             }
+        }
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        match &self.custody {
+            ScheduleFailureCustodyV1::ReleasedWithLineage { history, .. } => history.len(),
+            ScheduleFailureCustodyV1::Detach { residue, .. }
+            | ScheduleFailureCustodyV1::Detached { residue, .. } => residue.history.len(),
+        }
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        match &self.custody {
+            ScheduleFailureCustodyV1::ReleasedWithLineage { history, .. } => history.get(index),
+            ScheduleFailureCustodyV1::Detach { residue, .. }
+            | ScheduleFailureCustodyV1::Detached { residue, .. } => residue.history.get(index),
         }
     }
 
@@ -202,12 +355,14 @@ impl M1LongLivedQueueRearmScheduleFailureV1 {
                         released,
                         parked,
                         terminal,
+                        history,
                     },
                 ..
             } => Ok(M1LongLivedQueueUnscheduledRoundV1 {
                 released: *released,
                 parked,
                 terminal,
+                history: *history,
             }),
             failure => Err(failure),
         }
@@ -221,9 +376,20 @@ pub struct M1LongLivedQueueUnscheduledRoundV1 {
     released: M1ReleasedCompletedStepV1,
     parked: Vec<ActiveDeviceKvCache>,
     terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
+    history: M1RearmRoundHistoryV1,
 }
 
 impl M1LongLivedQueueUnscheduledRoundV1 {
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.history.get(index)
+    }
+
     #[must_use]
     pub const fn parked_count(&self) -> usize {
         self.parked.len()
@@ -249,6 +415,7 @@ impl M1LongLivedQueueUnscheduledRoundV1 {
             self.released,
             self.parked,
             self.terminal,
+            self.history,
         )
     }
 
@@ -266,19 +433,20 @@ impl M1LongLivedQueueUnscheduledRoundV1 {
             released,
             parked,
             terminal,
+            history,
         } = self;
         match released.destroy_queue_and_retain_step() {
             Ok(released) => Ok(M1LongLivedQueueRearmTeardownSuccessV1 {
                 released,
                 parked,
                 terminal,
-                history: None,
+                history,
             }),
             Err(released) => Err(Box::new(M1LongLivedQueueRearmTeardownFailureV1 {
                 released,
                 parked,
                 terminal,
-                history: None,
+                history,
             })),
         }
     }
@@ -291,7 +459,7 @@ pub struct M1LongLivedQueueRearmTeardownSuccessV1 {
     released: crate::M1ReleasedQueueTeardownSuccessV1,
     parked: Vec<ActiveDeviceKvCache>,
     terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
-    history: Option<M1PriorRearmRoundHistoryV1>,
+    history: M1RearmRoundHistoryV1,
 }
 
 impl M1LongLivedQueueRearmTeardownSuccessV1 {
@@ -313,25 +481,41 @@ impl M1LongLivedQueueRearmTeardownSuccessV1 {
     #[must_use]
     pub const fn prior_completed_members(&self) -> Option<usize> {
         match &self.history {
-            Some(history) => Some(history.prior_completed_members),
-            None => None,
+            M1RearmRoundHistoryV1::Empty => None,
+            M1RearmRoundHistoryV1::NonEmpty(history) => Some(history.latest().completed_members()),
         }
     }
 
     /// Prior-round Engine logical acceptance when teardown followed a rearm.
     #[must_use]
     pub fn prior_logical_accepted_counts(&self) -> Option<&[u32]> {
-        self.history
-            .as_ref()
-            .map(|history| history.counts.logical_accepted_counts.as_ref())
+        match &self.history {
+            M1RearmRoundHistoryV1::Empty => None,
+            M1RearmRoundHistoryV1::NonEmpty(history) => {
+                Some(history.latest().logical_accepted_counts())
+            }
+        }
     }
 
     /// Prior-round externally published counts when teardown followed a rearm.
     #[must_use]
     pub fn prior_externally_published_counts(&self) -> Option<&[u32]> {
-        self.history
-            .as_ref()
-            .map(|history| history.counts.externally_published_counts.as_ref())
+        match &self.history {
+            M1RearmRoundHistoryV1::Empty => None,
+            M1RearmRoundHistoryV1::NonEmpty(history) => {
+                Some(history.latest().externally_published_counts())
+            }
+        }
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.history.get(index)
     }
 }
 
@@ -342,7 +526,7 @@ pub struct M1LongLivedQueueRearmTeardownFailureV1 {
     released: Box<crate::M1ReleasedQueueTeardownFailureV1>,
     parked: Vec<ActiveDeviceKvCache>,
     terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
-    history: Option<M1PriorRearmRoundHistoryV1>,
+    history: M1RearmRoundHistoryV1,
 }
 
 impl M1LongLivedQueueRearmTeardownFailureV1 {
@@ -364,25 +548,41 @@ impl M1LongLivedQueueRearmTeardownFailureV1 {
     #[must_use]
     pub const fn prior_completed_members(&self) -> Option<usize> {
         match &self.history {
-            Some(history) => Some(history.prior_completed_members),
-            None => None,
+            M1RearmRoundHistoryV1::Empty => None,
+            M1RearmRoundHistoryV1::NonEmpty(history) => Some(history.latest().completed_members()),
         }
     }
 
     /// Prior-round Engine logical acceptance retained on teardown failure.
     #[must_use]
     pub fn prior_logical_accepted_counts(&self) -> Option<&[u32]> {
-        self.history
-            .as_ref()
-            .map(|history| history.counts.logical_accepted_counts.as_ref())
+        match &self.history {
+            M1RearmRoundHistoryV1::Empty => None,
+            M1RearmRoundHistoryV1::NonEmpty(history) => {
+                Some(history.latest().logical_accepted_counts())
+            }
+        }
     }
 
     /// Prior-round external publication retained on teardown failure.
     #[must_use]
     pub fn prior_externally_published_counts(&self) -> Option<&[u32]> {
-        self.history
-            .as_ref()
-            .map(|history| history.counts.externally_published_counts.as_ref())
+        match &self.history {
+            M1RearmRoundHistoryV1::Empty => None,
+            M1RearmRoundHistoryV1::NonEmpty(history) => {
+                Some(history.latest().externally_published_counts())
+            }
+        }
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.history.get(index)
     }
 }
 
@@ -414,6 +614,7 @@ pub struct M1ScheduledLongLivedQueueRearmV1 {
     release_counts: Box<[M1CompletedKvPageReleaseCountsV1]>,
     completed_members: usize,
     total_released: usize,
+    history: M1RearmRoundHistoryV1,
 }
 
 impl M1ScheduledLongLivedQueueRearmV1 {
@@ -444,6 +645,16 @@ impl M1ScheduledLongLivedQueueRearmV1 {
     #[must_use]
     pub fn prior_externally_published_counts(&self) -> &[u32] {
         &self.externally_published_counts
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.history.get(index)
     }
 
     /// Returns immutable selected-cache projections in scheduler order.
@@ -554,7 +765,13 @@ pub fn schedule_m1_long_lived_queue_rearm_v1<const C: usize>(
     engine: &mut Engine<C>,
     released: M1ReleasedCompletedStepV1,
 ) -> Result<M1ScheduledLongLivedQueueRearmV1, M1LongLivedQueueRearmScheduleFailureV1> {
-    schedule_m1_long_lived_queue_rearm_with_lineage_v1(engine, released, Vec::new(), Vec::new())
+    schedule_m1_long_lived_queue_rearm_with_lineage_v1(
+        engine,
+        released,
+        Vec::new(),
+        Vec::new(),
+        M1RearmRoundHistoryV1::Empty,
+    )
 }
 
 fn schedule_m1_long_lived_queue_rearm_with_lineage_v1<const C: usize>(
@@ -562,12 +779,14 @@ fn schedule_m1_long_lived_queue_rearm_with_lineage_v1<const C: usize>(
     released: M1ReleasedCompletedStepV1,
     parked_lineage: Vec<ActiveDeviceKvCache>,
     terminal_lineage: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
+    history: M1RearmRoundHistoryV1,
 ) -> Result<M1ScheduledLongLivedQueueRearmV1, M1LongLivedQueueRearmScheduleFailureV1> {
     let result = schedule_m1_long_lived_queue_rearm_inner_v1(
         engine,
         released,
         parked_lineage,
         terminal_lineage,
+        history,
     );
     finish_schedule_transition(engine, result)
 }
@@ -577,6 +796,7 @@ fn schedule_m1_long_lived_queue_rearm_inner_v1<const C: usize>(
     released: M1ReleasedCompletedStepV1,
     parked_lineage: Vec<ActiveDeviceKvCache>,
     terminal_lineage: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
+    history: M1RearmRoundHistoryV1,
 ) -> Result<
     M1ScheduledLongLivedQueueRearmV1,
     (
@@ -603,6 +823,7 @@ fn schedule_m1_long_lived_queue_rearm_inner_v1<const C: usize>(
                 released: Box::new(released),
                 parked: parked_lineage,
                 terminal: terminal_lineage,
+                history: Box::new(history),
             },
         ));
     }
@@ -619,6 +840,7 @@ fn schedule_m1_long_lived_queue_rearm_inner_v1<const C: usize>(
                 released: Box::new(released),
                 parked: parked_lineage,
                 terminal: terminal_lineage,
+                history: Box::new(history),
             },
         ));
     }
@@ -636,6 +858,7 @@ fn schedule_m1_long_lived_queue_rearm_inner_v1<const C: usize>(
                 released: Box::new(released),
                 parked: parked_lineage,
                 terminal: terminal_lineage,
+                history: Box::new(history),
             },
         ));
     }
@@ -668,6 +891,7 @@ fn schedule_m1_long_lived_queue_rearm_inner_v1<const C: usize>(
         release_counts,
         completed_members,
         total_released,
+        history,
     };
     let queue = match queue.detach() {
         Ok(queue) => queue,
@@ -858,6 +1082,7 @@ fn schedule_m1_long_lived_queue_rearm_inner_v1<const C: usize>(
         release_counts: residue.release_counts,
         completed_members: residue.completed_members,
         total_released: residue.total_released,
+        history: residue.history,
     })
 }
 
@@ -873,6 +1098,7 @@ struct ScheduledRemainderV1 {
     release_counts: Box<[M1CompletedKvPageReleaseCountsV1]>,
     completed_members: usize,
     total_released: usize,
+    history: M1RearmRoundHistoryV1,
 }
 
 /// Fresh page leases and validated workspace inputs for the next same-shape round.
@@ -923,6 +1149,18 @@ impl M1LongLivedQueueRearmKvInputsV1 {
 pub struct M1ReservedLongLivedQueueRearmV1 {
     scheduled: M1ScheduledLongLivedQueueRearmV1,
     tables: M1FullStepKvWorkspaceTablesV1,
+}
+
+impl M1ReservedLongLivedQueueRearmV1 {
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.scheduled.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.scheduled.history.get(index)
+    }
 }
 
 /// Reservation/binding stage for an explicitly terminal closed failure.
@@ -1306,6 +1544,16 @@ impl M1LongLivedQueueRearmPrepareFailureV1 {
     pub const fn is_terminal(&self) -> bool {
         true
     }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.remainder.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.remainder.history.get(index)
+    }
 }
 
 /// Fresh scheduler-bound workspace bytes retained beside the detached queue.
@@ -1325,6 +1573,16 @@ impl M1PreparedLongLivedQueueRearmV1 {
     #[must_use]
     pub const fn next_epoch(&self) -> CompletionEpoch {
         self.prepared.step().scheduled_dispatch().epoch()
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.remainder.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.remainder.history.get(index)
     }
 }
 
@@ -1353,6 +1611,7 @@ fn prepare_m1_long_lived_queue_rearm_inner_v1(
         release_counts,
         completed_members,
         total_released,
+        history,
     } = scheduled;
     let remainder = ScheduledRemainderV1 {
         queue,
@@ -1365,6 +1624,7 @@ fn prepare_m1_long_lived_queue_rearm_inner_v1(
         release_counts,
         completed_members,
         total_released,
+        history,
     };
     match prepare_m1_scheduled_workspace_images_v1(scheduled, runner, plans, tables) {
         Ok(prepared) => Ok(M1PreparedLongLivedQueueRearmV1 {
@@ -1495,19 +1755,34 @@ struct RetainedCaptureRangesV1 {
     qualification_logits: Option<ServiceHostDispatchRangeV1>,
 }
 
-fn requested_workspace_range(
+fn retained_capture_range_request(
     source: M1PhysicalBufferSourceV1,
-    composition: &AddresslessM1FullStepWorkspaceComposition,
     qualification_logits_enabled: bool,
-) -> Result<RearmRangeRequestV1, ()> {
+) -> Option<RearmRangeRequestV1> {
     match source {
         M1PhysicalBufferSourceV1::Workspace { workspace, range }
             if qualification_logits_enabled
                 && workspace == M1FullStepWorkspaceRole::Target
                 && range == ferric_build::M1StepWorkspaceRangeRole::Logits =>
         {
-            Ok(RearmRangeRequestV1::RetainedQualificationLogits)
+            Some(RearmRangeRequestV1::RetainedQualificationLogits)
         }
+        M1PhysicalBufferSourceV1::CompletionOutput { .. } => {
+            Some(RearmRangeRequestV1::RetainedCompletionOutput)
+        }
+        _ => None,
+    }
+}
+
+fn requested_workspace_range(
+    source: M1PhysicalBufferSourceV1,
+    composition: &AddresslessM1FullStepWorkspaceComposition,
+    qualification_logits_enabled: bool,
+) -> Result<RearmRangeRequestV1, ()> {
+    if let Some(request) = retained_capture_range_request(source, qualification_logits_enabled) {
+        return Ok(request);
+    }
+    match source {
         M1PhysicalBufferSourceV1::Workspace { workspace, range }
         | M1PhysicalBufferSourceV1::WorkspaceSentinel {
             workspace, range, ..
@@ -1544,9 +1819,7 @@ fn requested_workspace_range(
             };
             Ok(RearmRangeRequestV1::FreshWorkspace(workspace, row))
         }
-        M1PhysicalBufferSourceV1::CompletionOutput { .. } => {
-            Ok(RearmRangeRequestV1::RetainedCompletionOutput)
-        }
+        M1PhysicalBufferSourceV1::CompletionOutput { .. } => Err(()),
         M1PhysicalBufferSourceV1::ModelWeight { .. }
         | M1PhysicalBufferSourceV1::KvCachePlane { .. } => Ok(RearmRangeRequestV1::Unchanged),
     }
@@ -1632,18 +1905,101 @@ fn rebuild_bound_rows(
     workspace_ranges: &[FreshWorkspaceRangeV1],
     retained_capture: RetainedCaptureRangesV1,
 ) -> Result<Box<[M1BoundPhysicalBufferRowV1]>, ()> {
+    let mut old_rows = Vec::new();
+    old_rows
+        .try_reserve_exact(old_bound_rows.len())
+        .map_err(|_| ())?;
+    for old in old_bound_rows {
+        let mut buffers = Vec::new();
+        buffers
+            .try_reserve_exact(old.buffers().len())
+            .map_err(|_| ())?;
+        buffers.extend(old.buffers().iter().map(|buffer| RearmBoundRangeV1 {
+            explicit_argument_index: buffer.explicit_argument_index(),
+            range: buffer.range(),
+        }));
+        old_rows.push(RearmBoundRowV1 {
+            dispatch_index: old.dispatch_index(),
+            profile_id: old.profile_id(),
+            program: old.program(),
+            buffers,
+        });
+    }
+    let rebuilt = rebuild_bound_row_ranges(
+        source_rows,
+        &old_rows,
+        composition,
+        ServiceDispatchRangeV1::HostVisible(retained_capture.completion_output),
+        retained_capture
+            .qualification_logits
+            .map(ServiceDispatchRangeV1::HostVisible),
+        |workspace, requested| {
+            Ok(ServiceDispatchRangeV1::Device(
+                resolve_fresh_workspace_range(workspace, requested, workspace_ranges)?,
+            ))
+        },
+    )?;
+    let mut rows = Vec::new();
+    rows.try_reserve_exact(rebuilt.len()).map_err(|_| ())?;
+    for (source, rebuilt) in source_rows.iter().zip(rebuilt) {
+        let mut buffers = Vec::new();
+        buffers
+            .try_reserve_exact(rebuilt.buffers.len())
+            .map_err(|_| ())?;
+        for buffer in rebuilt.buffers {
+            buffers.push(match buffer.range {
+                ServiceDispatchRangeV1::Device(range) => {
+                    ServiceFixedDispatchBufferV1::new(buffer.explicit_argument_index, range)
+                }
+                ServiceDispatchRangeV1::HostVisible(range) => {
+                    ServiceFixedDispatchBufferV1::new_host_visible(
+                        buffer.explicit_argument_index,
+                        range,
+                    )
+                }
+            });
+        }
+        rows.push(M1BoundPhysicalBufferRowV1::from_queue_rearm(
+            source,
+            buffers.into_boxed_slice(),
+        ));
+    }
+    Ok(rows.into_boxed_slice())
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct RearmBoundRangeV1<T> {
+    explicit_argument_index: usize,
+    range: T,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct RearmBoundRowV1<T> {
+    dispatch_index: u32,
+    profile_id: ferric_spec::Identity,
+    program: crate::M1PhysicalProgramV1,
+    buffers: Vec<RearmBoundRangeV1<T>>,
+}
+
+fn rebuild_bound_row_ranges<T: Copy + Eq>(
+    source_rows: &[M1PhysicalBufferRecipeRowV1],
+    old_bound_rows: &[RearmBoundRowV1<T>],
+    composition: &AddresslessM1FullStepWorkspaceComposition,
+    retained_completion: T,
+    retained_logits: Option<T>,
+    mut fresh_range: impl FnMut(M1FullStepWorkspaceRole, M1StepWorkspaceRange) -> Result<T, ()>,
+) -> Result<Vec<RearmBoundRowV1<T>>, ()> {
     if source_rows.len() != old_bound_rows.len() {
         return Err(());
     }
     let mut rows = Vec::new();
-    let mut range_selection =
-        RearmRangeSelectionV1::new(retained_capture.qualification_logits.is_some());
+    let mut range_selection = RearmRangeSelectionV1::new(retained_logits.is_some());
     rows.try_reserve_exact(source_rows.len()).map_err(|_| ())?;
     for (source, old) in source_rows.iter().zip(old_bound_rows) {
-        if source.dispatch_index() != old.dispatch_index()
-            || source.profile_id() != old.profile_id()
-            || source.program() != old.program()
-            || source.buffers().len() != old.buffers().len()
+        if source.dispatch_index() != old.dispatch_index
+            || source.profile_id() != old.profile_id
+            || source.program() != old.program
+            || source.buffers().len() != old.buffers.len()
         {
             return Err(());
         }
@@ -1651,20 +2007,18 @@ fn rebuild_bound_rows(
         buffers
             .try_reserve_exact(source.buffers().len())
             .map_err(|_| ())?;
-        for (semantic, old_buffer) in source.buffers().iter().zip(old.buffers()) {
-            if semantic.explicit_argument_index() != old_buffer.explicit_argument_index() {
+        for (semantic, old_buffer) in source.buffers().iter().zip(&old.buffers) {
+            if semantic.explicit_argument_index() != old_buffer.explicit_argument_index {
                 return Err(());
             }
             let request = requested_workspace_range(
                 semantic.source(),
                 composition,
-                retained_capture.qualification_logits.is_some(),
+                retained_logits.is_some(),
             )?;
             let fresh = match request {
                 RearmRangeRequestV1::FreshWorkspace(workspace, requested) => {
-                    Some(ServiceDispatchRangeV1::Device(
-                        resolve_fresh_workspace_range(workspace, requested, workspace_ranges)?,
-                    ))
+                    Some(fresh_range(workspace, requested)?)
                 }
                 RearmRangeRequestV1::RetainedCompletionOutput
                 | RearmRangeRequestV1::RetainedQualificationLogits
@@ -1672,33 +2026,25 @@ fn rebuild_bound_rows(
             };
             let selected = range_selection.select(
                 request,
-                old_buffer.range(),
+                old_buffer.range,
                 fresh,
-                ServiceDispatchRangeV1::HostVisible(retained_capture.completion_output),
-                retained_capture
-                    .qualification_logits
-                    .map(ServiceDispatchRangeV1::HostVisible),
+                retained_completion,
+                retained_logits,
             )?;
-            let buffer = match selected {
-                ServiceDispatchRangeV1::Device(range) => {
-                    ServiceFixedDispatchBufferV1::new(semantic.explicit_argument_index(), range)
-                }
-                ServiceDispatchRangeV1::HostVisible(range) => {
-                    ServiceFixedDispatchBufferV1::new_host_visible(
-                        semantic.explicit_argument_index(),
-                        range,
-                    )
-                }
-            };
-            buffers.push(buffer);
+            buffers.push(RearmBoundRangeV1 {
+                explicit_argument_index: semantic.explicit_argument_index(),
+                range: selected,
+            });
         }
-        rows.push(M1BoundPhysicalBufferRowV1::from_queue_rearm(
-            source,
-            buffers.into_boxed_slice(),
-        ));
+        rows.push(RearmBoundRowV1 {
+            dispatch_index: source.dispatch_index(),
+            profile_id: source.profile_id(),
+            program: source.program(),
+            buffers,
+        });
     }
     range_selection.validate()?;
-    Ok(rows.into_boxed_slice())
+    Ok(rows)
 }
 
 fn preflight_rearm(
@@ -1826,6 +2172,7 @@ struct M1RearmContinuationCustodyV1 {
     release_counts: Box<[M1CompletedKvPageReleaseCountsV1]>,
     completed_members: usize,
     total_released: usize,
+    history: M1RearmRoundHistoryV1,
 }
 
 /// Published next generation on the same native queue, paired with all cache custody.
@@ -2378,6 +2725,7 @@ fn retry_physical_qualification_observation_source(
 struct QualificationObservationTeardownSuccessV1 {
     error: crate::M1QualificationObservationErrorV1,
     queue_release: ServiceQueueReleaseObservationV1,
+    compact_evidence: M1RearmedReadbackTeardownEvidenceV1,
     partial_logits: Box<[ServiceCompletedReadbackV1]>,
 }
 
@@ -2385,6 +2733,7 @@ struct QualificationObservationTeardownSuccessV1 {
 struct QualificationObservationTeardownFailureV1 {
     error: crate::M1QualificationObservationErrorV1,
     source: crate::M1PhysicalQueueReleaseFailureV1,
+    compact_evidence: M1RearmedReadbackTeardownEvidenceV1,
     partial_logits: Box<[ServiceCompletedReadbackV1]>,
 }
 
@@ -2399,43 +2748,63 @@ fn teardown_physical_qualification_observation_source(
                 Ok(queue_release) => Ok(QualificationObservationTeardownSuccessV1 {
                     error,
                     queue_release,
+                    compact_evidence: M1RearmedReadbackTeardownEvidenceV1::None,
                     partial_logits: Box::new([]),
                 }),
                 Err(source) => Err(Box::new(QualificationObservationTeardownFailureV1 {
                     error,
                     source,
+                    compact_evidence: M1RearmedReadbackTeardownEvidenceV1::None,
                     partial_logits: Box::new([]),
                 })),
             }
         }
         crate::M1QualificationObservationFailureCustodyV1::CompactRejected(output) => {
-            match output.destroy_and_release() {
-                Ok(queue_release) => Ok(QualificationObservationTeardownSuccessV1 {
+            match output.destroy_and_release_retaining_readback() {
+                Ok((queue_release, readback)) => Ok(QualificationObservationTeardownSuccessV1 {
                     error,
                     queue_release,
+                    compact_evidence: M1RearmedReadbackTeardownEvidenceV1::RejectedCompact(
+                        Box::new(readback),
+                    ),
                     partial_logits: Box::new([]),
                 }),
-                Err(source) => Err(Box::new(QualificationObservationTeardownFailureV1 {
-                    error,
-                    source,
-                    partial_logits: Box::new([]),
-                })),
+                Err(failure) => {
+                    let (source, readback) = *failure;
+                    Err(Box::new(QualificationObservationTeardownFailureV1 {
+                        error,
+                        source,
+                        compact_evidence: M1RearmedReadbackTeardownEvidenceV1::RejectedCompact(
+                            Box::new(readback),
+                        ),
+                        partial_logits: Box::new([]),
+                    }))
+                }
             }
         }
         crate::M1QualificationObservationFailureCustodyV1::Observed {
             completion,
             partial_logits,
-        } => match completion.destroy_and_release() {
-            Ok(queue_release) => Ok(QualificationObservationTeardownSuccessV1 {
+        } => match completion.destroy_and_release_retaining_image() {
+            Ok((queue_release, image)) => Ok(QualificationObservationTeardownSuccessV1 {
                 error,
                 queue_release,
+                compact_evidence: M1RearmedReadbackTeardownEvidenceV1::ObservedCompact(Box::new(
+                    image,
+                )),
                 partial_logits,
             }),
-            Err(source) => Err(Box::new(QualificationObservationTeardownFailureV1 {
-                error,
-                source,
-                partial_logits,
-            })),
+            Err(failure) => {
+                let (source, image) = *failure;
+                Err(Box::new(QualificationObservationTeardownFailureV1 {
+                    error,
+                    source,
+                    compact_evidence: M1RearmedReadbackTeardownEvidenceV1::ObservedCompact(
+                        Box::new(image),
+                    ),
+                    partial_logits,
+                }))
+            }
         },
     }
 }
@@ -2469,10 +2838,35 @@ impl M1RearmedQualificationObservationTeardownSuccessV1 {
         self.source.queue_release
     }
 
+    /// Compact readback or checked compact image retained after release.
+    #[must_use = "compact qualification evidence remains retained"]
+    pub const fn compact_evidence(&self) -> &M1RearmedReadbackTeardownEvidenceV1 {
+        &self.source.compact_evidence
+    }
+
+    #[must_use]
+    pub const fn capture_release_state(&self) -> M1RearmedReadbackCaptureReleaseStateV1 {
+        M1RearmedReadbackCaptureReleaseStateV1::Released
+    }
+
     /// Number of final-logits rows copied before the original rejection.
     #[must_use]
     pub const fn partial_logits_count(&self) -> usize {
         self.source.partial_logits.len()
+    }
+
+    /// Exact final-logits row readbacks copied before the rejection.
+    #[must_use = "partial qualification logits remain retained"]
+    pub fn partial_logits(&self) -> &[ServiceCompletedReadbackV1] {
+        &self.source.partial_logits
+    }
+
+    #[must_use]
+    pub fn partial_logits_row_bytes(&self, index: usize) -> Option<&[u8]> {
+        self.source
+            .partial_logits
+            .get(index)
+            .map(ServiceCompletedReadbackV1::bytes)
     }
 
     /// Number of selected and parked caches retained after teardown.
@@ -2494,6 +2888,45 @@ impl M1RearmedQualificationObservationTeardownSuccessV1 {
     #[must_use]
     pub const fn parked_count(&self) -> usize {
         self.carry.parked.len()
+    }
+
+    #[must_use]
+    pub const fn terminal_lineage_count(&self) -> usize {
+        self.carry.terminal.len()
+    }
+
+    #[must_use]
+    pub const fn previous_epoch(&self) -> CompletionEpoch {
+        self.carry.previous_epoch
+    }
+
+    pub const fn prior_checked(&self) -> &crate::M1CheckedCompletionOutputV1 {
+        &self.carry.prior_checked
+    }
+
+    #[must_use]
+    pub fn prior_logical_accepted_counts(&self) -> &[u32] {
+        &self.carry.logical_accepted_counts
+    }
+
+    #[must_use]
+    pub fn prior_externally_published_counts(&self) -> &[u32] {
+        &self.carry.externally_published_counts
+    }
+
+    #[must_use]
+    pub fn prior_release_counts(&self) -> &[M1CompletedKvPageReleaseCountsV1] {
+        &self.carry.release_counts
+    }
+
+    #[must_use]
+    pub const fn prior_completed_members(&self) -> usize {
+        self.carry.completed_members
+    }
+
+    #[must_use]
+    pub const fn prior_total_released(&self) -> usize {
+        self.carry.total_released
     }
 
     /// Exact completed queue generation observed before teardown.
@@ -2536,10 +2969,35 @@ impl M1RearmedQualificationObservationTeardownFailureV1 {
         &self.source.source
     }
 
+    /// Compact readback or checked compact image retained beside release failure.
+    #[must_use = "compact qualification evidence remains retained"]
+    pub const fn compact_evidence(&self) -> &M1RearmedReadbackTeardownEvidenceV1 {
+        &self.source.compact_evidence
+    }
+
+    #[must_use]
+    pub const fn capture_release_state(&self) -> M1RearmedReadbackCaptureReleaseStateV1 {
+        M1RearmedReadbackCaptureReleaseStateV1::LowerReleaseFailure
+    }
+
     /// Number of final-logits rows copied before the original rejection.
     #[must_use]
     pub const fn partial_logits_count(&self) -> usize {
         self.source.partial_logits.len()
+    }
+
+    /// Exact final-logits row readbacks retained beside release failure.
+    #[must_use = "partial qualification logits remain retained"]
+    pub fn partial_logits(&self) -> &[ServiceCompletedReadbackV1] {
+        &self.source.partial_logits
+    }
+
+    #[must_use]
+    pub fn partial_logits_row_bytes(&self, index: usize) -> Option<&[u8]> {
+        self.source
+            .partial_logits
+            .get(index)
+            .map(ServiceCompletedReadbackV1::bytes)
     }
 
     /// Number of selected and parked caches retained beside quarantine.
@@ -2561,6 +3019,45 @@ impl M1RearmedQualificationObservationTeardownFailureV1 {
     #[must_use]
     pub const fn parked_count(&self) -> usize {
         self.carry.parked.len()
+    }
+
+    #[must_use]
+    pub const fn terminal_lineage_count(&self) -> usize {
+        self.carry.terminal.len()
+    }
+
+    #[must_use]
+    pub const fn previous_epoch(&self) -> CompletionEpoch {
+        self.carry.previous_epoch
+    }
+
+    pub const fn prior_checked(&self) -> &crate::M1CheckedCompletionOutputV1 {
+        &self.carry.prior_checked
+    }
+
+    #[must_use]
+    pub fn prior_logical_accepted_counts(&self) -> &[u32] {
+        &self.carry.logical_accepted_counts
+    }
+
+    #[must_use]
+    pub fn prior_externally_published_counts(&self) -> &[u32] {
+        &self.carry.externally_published_counts
+    }
+
+    #[must_use]
+    pub fn prior_release_counts(&self) -> &[M1CompletedKvPageReleaseCountsV1] {
+        &self.carry.release_counts
+    }
+
+    #[must_use]
+    pub const fn prior_completed_members(&self) -> usize {
+        self.carry.completed_members
+    }
+
+    #[must_use]
+    pub const fn prior_total_released(&self) -> usize {
+        self.carry.total_released
     }
 
     /// Exact completed queue generation retained beside release quarantine.
@@ -2709,6 +3206,16 @@ impl M1RearmedQualificationCompletedReadbackJoinFailureV1 {
     #[must_use]
     pub const fn error(&self) -> &crate::M1CompletedReadbackJoinErrorV1 {
         &self.error
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.observed.carry.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.observed.carry.history.get(index)
     }
 
     /// Same already-copied qualification observation.
@@ -3868,6 +4375,16 @@ impl M1RearmedQualifiedCompletionOutcomeV1 {
         &self.evidence
     }
 
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.completion.round_history_len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.completion.round_history(index)
+    }
+
     /// Releases retired pages from a successful terminal completion while
     /// retaining qualification evidence beside every exhaustive outcome.
     #[must_use = "release outcome retains completion and qualification custody"]
@@ -3948,6 +4465,16 @@ impl M1RearmedQualifiedRoundPageReleaseFailureV1 {
         &self.evidence
     }
 
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.source.round_history_len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.source.round_history(index)
+    }
+
     /// Retries exact page release and rejoins qualification evidence.
     #[must_use = "release retry retains every exhaustive outcome"]
     pub fn retry(self) -> M1RearmedQualifiedRoundReleaseOutcomeV1 {
@@ -3974,6 +4501,16 @@ impl M1RearmedQualifiedReleasedRoundV1 {
     #[must_use = "qualification evidence remains retained through teardown"]
     pub const fn evidence(&self) -> &crate::M1QualificationCompletionEvidenceV1 {
         &self.evidence
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.released.round_history_len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.released.round_history(index)
     }
 
     /// Destroys the completed native queue and retains the terminal round,
@@ -4052,6 +4589,7 @@ impl M1RearmedQualifiedTeardownFailureV1 {
 pub enum M1RearmedCompletionPreflightErrorV1 {
     DispositionCount { expected: usize, actual: usize },
     SelectedNotRetiring { lane: usize },
+    RoundHistoryCapacity { maximum: usize },
     HostAllocation,
 }
 
@@ -4098,26 +4636,13 @@ impl M1RearmedCompletionPreflightFailureV1 {
 }
 
 /// Existing physical completion outcome plus custody parked across the round.
-#[derive(Debug)]
-struct M1PriorRearmRoundCountHistoryV1 {
-    logical_accepted_counts: Box<[u32]>,
-    externally_published_counts: Box<[u32]>,
-}
-
-/// Existing physical completion outcome plus custody parked across the round.
 #[must_use = "completion outcome and parked rearm custody must remain retained"]
 #[derive(Debug)]
 pub struct M1RearmedCompletionOutcomeV1 {
     outcome: crate::M1CompletedStepOutcomeV1,
     parked: Vec<ActiveDeviceKvCache>,
     terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
-    prior_checked: crate::M1CheckedCompletionOutputV1,
-    prior_counts: M1PriorRearmRoundCountHistoryV1,
-    prior_release_counts: Box<[M1CompletedKvPageReleaseCountsV1]>,
-    prior_completed_members: usize,
-    prior_total_released: usize,
-    queue_observation: ComputeAqlQueueObservationV1,
-    device: Gfx942DeviceBinding,
+    history: M1NonEmptyRearmRoundHistoryV1,
 }
 
 impl M1RearmedCompletionOutcomeV1 {
@@ -4137,41 +4662,51 @@ impl M1RearmedCompletionOutcomeV1 {
 
     #[must_use]
     pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
-        self.queue_observation
+        self.history.latest().queue_observation()
     }
 
     #[must_use]
     pub const fn device(&self) -> Gfx942DeviceBinding {
-        self.device
+        self.history.latest().device()
     }
 
     #[must_use]
     pub const fn prior_completed_members(&self) -> usize {
-        self.prior_completed_members
+        self.history.latest().completed_members()
     }
 
     #[must_use]
     pub const fn prior_total_released(&self) -> usize {
-        self.prior_total_released
+        self.history.latest().total_released()
     }
 
     pub const fn prior_checked(&self) -> &crate::M1CheckedCompletionOutputV1 {
-        &self.prior_checked
+        self.history.latest().checked()
     }
 
     #[must_use]
     pub fn prior_logical_accepted_counts(&self) -> &[u32] {
-        &self.prior_counts.logical_accepted_counts
+        self.history.latest().logical_accepted_counts()
     }
 
     #[must_use]
     pub fn prior_externally_published_counts(&self) -> &[u32] {
-        &self.prior_counts.externally_published_counts
+        self.history.latest().externally_published_counts()
     }
 
     #[must_use]
     pub fn prior_release_counts(&self) -> &[M1CompletedKvPageReleaseCountsV1] {
-        &self.prior_release_counts
+        self.history.latest().release_counts()
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.history.get(index)
     }
 
     /// Retries only the unchanged preflight-rejected physical completion.
@@ -4186,26 +4721,14 @@ impl M1RearmedCompletionOutcomeV1 {
             outcome,
             parked,
             terminal,
-            prior_checked,
-            prior_counts,
-            prior_release_counts,
-            prior_completed_members,
-            prior_total_released,
-            queue_observation,
-            device,
+            history,
         } = self;
         let crate::M1CompletedStepOutcomeV1::Rejected(rejected) = outcome else {
             return Err(Box::new(Self {
                 outcome,
                 parked,
                 terminal,
-                prior_checked,
-                prior_counts,
-                prior_release_counts,
-                prior_completed_members,
-                prior_total_released,
-                queue_observation,
-                device,
+                history,
             }));
         };
         let (_error, readback, roster) = rejected.into_parts();
@@ -4213,13 +4736,7 @@ impl M1RearmedCompletionOutcomeV1 {
             outcome: crate::complete_m1_physical_step_v1(engine, readback, roster),
             parked,
             terminal,
-            prior_checked,
-            prior_counts,
-            prior_release_counts,
-            prior_completed_members,
-            prior_total_released,
-            queue_observation,
-            device,
+            history,
         })
     }
 
@@ -4231,54 +4748,18 @@ impl M1RearmedCompletionOutcomeV1 {
             outcome,
             parked,
             terminal,
-            prior_checked,
-            prior_counts,
-            prior_release_counts,
-            prior_completed_members,
-            prior_total_released,
-            queue_observation,
-            device,
+            history,
         } = self;
         let crate::M1CompletedStepOutcomeV1::Completed(completed) = outcome else {
             return M1RearmedRoundReleaseOutcomeV1::NotCompleted(Self {
                 outcome,
                 parked,
                 terminal,
-                prior_checked,
-                prior_counts,
-                prior_release_counts,
-                prior_completed_members,
-                prior_total_released,
-                queue_observation,
-                device,
+                history,
             });
         };
-        release_rearmed_round(
-            completed,
-            M1PriorRearmRoundHistoryV1 {
-                prior_checked,
-                counts: prior_counts,
-                prior_release_counts,
-                prior_completed_members,
-                prior_total_released,
-                queue_observation,
-                device,
-            },
-            parked,
-            terminal,
-        )
+        release_rearmed_round(completed, history, parked, terminal)
     }
-}
-
-#[derive(Debug)]
-struct M1PriorRearmRoundHistoryV1 {
-    prior_checked: crate::M1CheckedCompletionOutputV1,
-    counts: M1PriorRearmRoundCountHistoryV1,
-    prior_release_counts: Box<[M1CompletedKvPageReleaseCountsV1]>,
-    prior_completed_members: usize,
-    prior_total_released: usize,
-    queue_observation: ComputeAqlQueueObservationV1,
-    device: Gfx942DeviceBinding,
 }
 
 /// Released current round plus active caches parked outside that round.
@@ -4298,7 +4779,7 @@ pub struct M1LongLivedQueueReleasedRoundV1 {
     released: M1ReleasedCompletedStepV1,
     parked: Vec<ActiveDeviceKvCache>,
     terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
-    history: M1PriorRearmRoundHistoryV1,
+    history: M1NonEmptyRearmRoundHistoryV1,
 }
 
 impl M1LongLivedQueueReleasedRoundV1 {
@@ -4317,42 +4798,52 @@ impl M1LongLivedQueueReleasedRoundV1 {
     }
 
     pub const fn prior_checked(&self) -> &crate::M1CheckedCompletionOutputV1 {
-        &self.history.prior_checked
+        self.history.latest().checked()
     }
 
     #[must_use]
     pub fn prior_logical_accepted_counts(&self) -> &[u32] {
-        &self.history.counts.logical_accepted_counts
+        self.history.latest().logical_accepted_counts()
     }
 
     #[must_use]
     pub fn prior_externally_published_counts(&self) -> &[u32] {
-        &self.history.counts.externally_published_counts
+        self.history.latest().externally_published_counts()
     }
 
     #[must_use]
     pub fn prior_release_counts(&self) -> &[M1CompletedKvPageReleaseCountsV1] {
-        &self.history.prior_release_counts
+        self.history.latest().release_counts()
     }
 
     #[must_use]
     pub const fn prior_completed_members(&self) -> usize {
-        self.history.prior_completed_members
+        self.history.latest().completed_members()
     }
 
     #[must_use]
     pub const fn prior_total_released(&self) -> usize {
-        self.history.prior_total_released
+        self.history.latest().total_released()
     }
 
     #[must_use]
     pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
-        self.history.queue_observation
+        self.history.latest().queue_observation()
     }
 
     #[must_use]
     pub const fn device(&self) -> Gfx942DeviceBinding {
-        self.history.device
+        self.history.latest().device()
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.history.get(index)
     }
 
     /// Destroys the completed queue while retaining current and prior lineage.
@@ -4389,13 +4880,13 @@ impl M1LongLivedQueueReleasedRoundV1 {
                 released,
                 parked,
                 terminal,
-                history: Some(history),
+                history: M1RearmRoundHistoryV1::NonEmpty(history),
             }),
             Err(released) => Err(Box::new(M1LongLivedQueueRearmTeardownFailureV1 {
                 released,
                 parked,
                 terminal,
-                history: Some(history),
+                history: M1RearmRoundHistoryV1::NonEmpty(history),
             })),
         }
     }
@@ -4415,9 +4906,15 @@ impl M1LongLivedQueueReleasedRoundV1 {
             released,
             parked,
             terminal,
-            history: _,
+            history,
         } = self;
-        schedule_m1_long_lived_queue_rearm_with_lineage_v1(engine, released, parked, terminal)
+        schedule_m1_long_lived_queue_rearm_with_lineage_v1(
+            engine,
+            released,
+            parked,
+            terminal,
+            M1RearmRoundHistoryV1::NonEmpty(history),
+        )
     }
 }
 
@@ -4428,13 +4925,23 @@ pub struct M1RearmedRoundPageReleaseFailureV1 {
     source: Box<crate::M1CompletedStepKvReleaseFailureV1>,
     parked: Vec<ActiveDeviceKvCache>,
     terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
-    history: M1PriorRearmRoundHistoryV1,
+    history: M1NonEmptyRearmRoundHistoryV1,
 }
 
 impl M1RearmedRoundPageReleaseFailureV1 {
     #[must_use]
     pub const fn source(&self) -> &crate::M1CompletedStepKvReleaseErrorV1 {
         self.source.error()
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.history.get(index)
     }
 
     /// Retries exact page release with the unchanged completed owner.
@@ -4456,7 +4963,7 @@ pub enum M1RearmedRoundReleaseOutcomeV1 {
 
 fn release_rearmed_round(
     completed: crate::M1CompletedStepSuccessV1,
-    history: M1PriorRearmRoundHistoryV1,
+    history: M1NonEmptyRearmRoundHistoryV1,
     parked: Vec<ActiveDeviceKvCache>,
     terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
 ) -> M1RearmedRoundReleaseOutcomeV1 {
@@ -4487,7 +4994,7 @@ impl M1RearmedCompletedReadbackV1 {
     /// Returns unchanged readback/cache custody and all supplied dispositions
     /// for a count mismatch or host reservation failure.
     pub fn complete<const C: usize>(
-        self,
+        mut self,
         engine: &mut Engine<C>,
         dispositions: Vec<crate::M1DeviceKvCompletionDispositionV1>,
     ) -> Result<M1RearmedCompletionOutcomeV1, M1RearmedCompletionPreflightFailureV1> {
@@ -4497,6 +5004,13 @@ impl M1RearmedCompletedReadbackV1 {
                     expected: self.carry.selected.len(),
                     actual: dispositions.len(),
                 },
+                readback: Box::new(self),
+                dispositions,
+            });
+        }
+        if let Err(error) = self.carry.history.try_reserve_append() {
+            return Err(M1RearmedCompletionPreflightFailureV1 {
+                error,
                 readback: Box::new(self),
                 dispositions,
             });
@@ -4530,20 +5044,21 @@ impl M1RearmedCompletedReadbackV1 {
         }
         let roster = crate::M1DeviceKvCompletionRosterV1::new(members);
         let outcome = crate::complete_m1_physical_step_v1(engine, readback, roster);
+        let history = carry.history.append(M1RearmRoundHistoryEntryV1 {
+            checked: carry.prior_checked,
+            logical_accepted_counts: carry.logical_accepted_counts,
+            externally_published_counts: carry.externally_published_counts,
+            release_counts: carry.release_counts,
+            completed_members: carry.completed_members,
+            total_released: carry.total_released,
+            queue_observation,
+            device,
+        });
         Ok(M1RearmedCompletionOutcomeV1 {
             outcome,
             parked: carry.parked,
             terminal: carry.terminal,
-            prior_checked: carry.prior_checked,
-            prior_counts: M1PriorRearmRoundCountHistoryV1 {
-                logical_accepted_counts: carry.logical_accepted_counts,
-                externally_published_counts: carry.externally_published_counts,
-            },
-            prior_release_counts: carry.release_counts,
-            prior_completed_members: carry.completed_members,
-            prior_total_released: carry.total_released,
-            queue_observation,
-            device,
+            history,
         })
     }
 }
@@ -4787,6 +5302,7 @@ struct PostQueueRemainderV1 {
     release_counts: Box<[M1CompletedKvPageReleaseCountsV1]>,
     completed_members: usize,
     total_released: usize,
+    history: M1RearmRoundHistoryV1,
 }
 
 /// Replaces request workspaces, binds the fresh fixed batch to the same queue,
@@ -4828,6 +5344,7 @@ fn submit_m1_long_lived_queue_rearm_inner_v1(
         release_counts,
         completed_members,
         total_released,
+        history,
     } = remainder;
     let post = PostQueueRemainderV1 {
         selected,
@@ -4839,6 +5356,7 @@ fn submit_m1_long_lived_queue_rearm_inner_v1(
         release_counts,
         completed_members,
         total_released,
+        history,
     };
     let (shape, lower, custody) = queue.into_rearm_parts();
     let expected_observation = lower.observation();
@@ -5098,6 +5616,7 @@ fn submit_m1_long_lived_queue_rearm_inner_v1(
             release_counts: post.release_counts,
             completed_members: post.completed_members,
             total_released: post.total_released,
+            history: post.history,
         },
         queue_observation: expected_observation,
         device,
@@ -5122,6 +5641,174 @@ pub fn submit_m1_long_lived_queue_rearm_v1<'a, const C: usize>(
             engine.quarantine_m1_queue_rearm_failure();
             Err(failure)
         }
+    }
+}
+
+impl M1RearmedPublishedQueueV1 {
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.carry.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.carry.history.get(index)
+    }
+}
+
+impl M1RearmedQueueProgressFailureV1 {
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.carry.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.carry.history.get(index)
+    }
+}
+
+impl M1RearmedCompletedQueueV1 {
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.carry.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.carry.history.get(index)
+    }
+}
+
+impl M1RearmedRecycledQueueV1 {
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.carry.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.carry.history.get(index)
+    }
+}
+
+impl M1RearmedQualificationObservationFailureV1 {
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.carry.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.carry.history.get(index)
+    }
+}
+
+impl M1RearmedQualificationObservationTeardownSuccessV1 {
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.carry.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.carry.history.get(index)
+    }
+}
+
+impl M1RearmedQualificationObservationTeardownFailureV1 {
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.carry.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.carry.history.get(index)
+    }
+}
+
+impl M1RearmedObservedQualificationOutputV1 {
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.carry.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.carry.history.get(index)
+    }
+}
+
+impl M1RearmedQualificationSemanticTeardownSuccessV1 {
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.carry.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.carry.history.get(index)
+    }
+}
+
+impl M1RearmedQualificationSemanticTeardownFailureV1 {
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.carry.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.carry.history.get(index)
+    }
+}
+
+impl M1RearmedReadbackFailureV1 {
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.carry.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.carry.history.get(index)
+    }
+}
+
+impl M1RearmedReadbackTeardownSuccessV1 {
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.carry.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.carry.history.get(index)
+    }
+}
+
+impl M1RearmedReadbackTeardownFailureV1 {
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.carry.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.carry.history.get(index)
+    }
+}
+
+impl M1RearmedCompletedReadbackV1 {
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.carry.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.carry.history.get(index)
     }
 }
 
@@ -5181,6 +5868,7 @@ mod tests {
             release_counts: Box::new([]),
             completed_members: 0,
             total_released: 0,
+            history: M1RearmRoundHistoryV1::Empty,
         }
     }
 
@@ -5320,12 +6008,50 @@ mod tests {
     #[test]
     fn qualification_prompt_count_history_keeps_logical_and_external_distinct() {
         let carry = test_rearm_carry(RequestId::new(0, 3), RequestId::new(1, 5));
-        let history = M1PriorRearmRoundCountHistoryV1 {
-            logical_accepted_counts: carry.logical_accepted_counts,
-            externally_published_counts: carry.externally_published_counts,
-        };
-        assert_eq!(&*history.logical_accepted_counts, &[1]);
-        assert_eq!(&*history.externally_published_counts, &[0]);
+        assert_eq!(&*carry.logical_accepted_counts, &[1]);
+        assert_eq!(&*carry.externally_published_counts, &[0]);
+    }
+
+    #[test]
+    fn scheduling_round_c_retains_round_a_and_b_history_before_appending_c() {
+        let mut history = M1RearmRoundHistoryV1::<u64>::Empty;
+        for round in [11, 22] {
+            history.try_reserve_append().unwrap();
+            history = M1RearmRoundHistoryV1::NonEmpty(history.append(round));
+        }
+
+        let mut scheduled_round_c = history;
+        assert_eq!(scheduled_round_c.len(), 2);
+        assert_eq!(scheduled_round_c.get(0), Some(&11));
+        assert_eq!(scheduled_round_c.get(1), Some(&22));
+
+        scheduled_round_c.try_reserve_append().unwrap();
+        let completed_round_c = M1RearmRoundHistoryV1::NonEmpty(scheduled_round_c.append(33));
+        assert_eq!(completed_round_c.len(), 3);
+        assert_eq!(completed_round_c.get(2), Some(&33));
+    }
+
+    #[test]
+    fn rearm_round_history_is_bounded_at_8192_without_rebuilding_prior_entries() {
+        let mut history = M1RearmRoundHistoryV1::<usize>::Empty;
+        for round in 0..M1_MAX_REARM_ROUND_HISTORY_V1 {
+            history.try_reserve_append().unwrap();
+            history = M1RearmRoundHistoryV1::NonEmpty(history.append(round));
+        }
+
+        assert_eq!(history.len(), M1_MAX_REARM_ROUND_HISTORY_V1);
+        assert_eq!(history.get(0), Some(&0));
+        assert_eq!(
+            history.get(M1_MAX_REARM_ROUND_HISTORY_V1 - 1),
+            Some(&(M1_MAX_REARM_ROUND_HISTORY_V1 - 1))
+        );
+        assert_eq!(
+            history.try_reserve_append(),
+            Err(M1RearmedCompletionPreflightErrorV1::RoundHistoryCapacity {
+                maximum: M1_MAX_REARM_ROUND_HISTORY_V1,
+            })
+        );
+        assert_eq!(history.len(), M1_MAX_REARM_ROUND_HISTORY_V1);
     }
 
     #[test]
@@ -5387,6 +6113,142 @@ mod tests {
     }
 
     #[test]
+    fn exact_target_recipe_rebuild_retains_capture_and_rebinds_other_workspaces_twice() {
+        use crate::physical_buffer_recipe::tests::exact_inputs;
+
+        let target = selection(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS8C8192);
+        let (kernargs, composition) =
+            exact_inputs(crate::M1StepDispatchIntent::TargetOnly(target), 210);
+        let recipe = crate::derive_m1_physical_buffer_recipe_v1(kernargs, composition).unwrap();
+        let source_rows = recipe.rows();
+        let composition = recipe.workspace_composition();
+        let retained_compact = 101_u64;
+        let retained_logits = 202_u64;
+        let mut old_token = 1_000_u64;
+        let old_rows = source_rows
+            .iter()
+            .map(|source| {
+                let buffers = source
+                    .buffers()
+                    .iter()
+                    .map(|semantic| {
+                        let request =
+                            requested_workspace_range(semantic.source(), composition, true)
+                                .unwrap();
+                        let range = match request {
+                            RearmRangeRequestV1::RetainedCompletionOutput => retained_compact,
+                            RearmRangeRequestV1::RetainedQualificationLogits => retained_logits,
+                            RearmRangeRequestV1::FreshWorkspace(_, _)
+                            | RearmRangeRequestV1::Unchanged => {
+                                old_token += 1;
+                                old_token
+                            }
+                        };
+                        RearmBoundRangeV1 {
+                            explicit_argument_index: semantic.explicit_argument_index(),
+                            range,
+                        }
+                    })
+                    .collect();
+                RearmBoundRowV1 {
+                    dispatch_index: source.dispatch_index(),
+                    profile_id: source.profile_id(),
+                    program: source.program(),
+                    buffers,
+                }
+            })
+            .collect::<Vec<_>>();
+
+        let mut generation_one_fresh = 10_000_u64;
+        let generation_one = rebuild_bound_row_ranges(
+            source_rows,
+            &old_rows,
+            composition,
+            retained_compact,
+            Some(retained_logits),
+            |_, _| {
+                generation_one_fresh += 1;
+                Ok(generation_one_fresh)
+            },
+        )
+        .unwrap();
+        let mut generation_two_fresh = 20_000_u64;
+        let generation_two = rebuild_bound_row_ranges(
+            source_rows,
+            &generation_one,
+            composition,
+            retained_compact,
+            Some(retained_logits),
+            |_, _| {
+                generation_two_fresh += 1;
+                Ok(generation_two_fresh)
+            },
+        )
+        .unwrap();
+
+        let mut compact_sources = 0;
+        let mut logits_sources = 0;
+        let mut changed_workspaces = 0;
+        for ((source, first), second) in
+            source_rows.iter().zip(&generation_one).zip(&generation_two)
+        {
+            for ((semantic, first), second) in source
+                .buffers()
+                .iter()
+                .zip(&first.buffers)
+                .zip(&second.buffers)
+            {
+                match requested_workspace_range(semantic.source(), composition, true).unwrap() {
+                    RearmRangeRequestV1::RetainedCompletionOutput => {
+                        compact_sources += 1;
+                        assert_eq!(first.range, retained_compact);
+                        assert_eq!(second.range, retained_compact);
+                    }
+                    RearmRangeRequestV1::RetainedQualificationLogits => {
+                        logits_sources += 1;
+                        assert_eq!(first.range, retained_logits);
+                        assert_eq!(second.range, retained_logits);
+                    }
+                    RearmRangeRequestV1::FreshWorkspace(_, _) => {
+                        changed_workspaces += 1;
+                        assert_ne!(first.range, second.range);
+                    }
+                    RearmRangeRequestV1::Unchanged => {
+                        assert_eq!(first.range, second.range);
+                    }
+                }
+            }
+        }
+        assert_eq!(compact_sources, 1);
+        assert_eq!(logits_sources, 2);
+        assert!(changed_workspaces > 0);
+
+        let mut hostile = generation_one.clone();
+        let mut substituted = false;
+        for (source, row) in source_rows.iter().zip(&mut hostile) {
+            for (semantic, buffer) in source.buffers().iter().zip(&mut row.buffers) {
+                if !substituted
+                    && retained_capture_range_request(semantic.source(), true)
+                        == Some(RearmRangeRequestV1::RetainedQualificationLogits)
+                {
+                    buffer.range = 999_999;
+                    substituted = true;
+                }
+            }
+        }
+        assert!(substituted);
+        assert!(rebuild_bound_row_ranges(
+            source_rows,
+            &hostile,
+            composition,
+            retained_compact,
+            Some(retained_logits),
+            |_, _| Ok(30_000),
+        )
+        .is_err());
+    }
+
+    #[test]
     fn qualification_capture_range_substitution_is_rejected() {
         let mut selection = RearmRangeSelectionV1::new(true);
         assert_eq!(
@@ -5411,6 +6273,78 @@ mod tests {
             Err(())
         );
         assert_eq!(RearmRangeSelectionV1::new(true).validate(), Err(()));
+    }
+
+    #[test]
+    fn qualification_capture_role_and_cardinality_substitution_fail_closed() {
+        use ferric_build::M1StepWorkspaceRangeRole;
+
+        assert_eq!(
+            retained_capture_range_request(
+                M1PhysicalBufferSourceV1::Workspace {
+                    workspace: M1FullStepWorkspaceRole::Target,
+                    range: M1StepWorkspaceRangeRole::Logits,
+                },
+                true,
+            ),
+            Some(RearmRangeRequestV1::RetainedQualificationLogits)
+        );
+        assert_eq!(
+            retained_capture_range_request(
+                M1PhysicalBufferSourceV1::Workspace {
+                    workspace: M1FullStepWorkspaceRole::Draft,
+                    range: M1StepWorkspaceRangeRole::Logits,
+                },
+                true,
+            ),
+            None
+        );
+
+        let retained_compact = 101_u64;
+        let retained_logits = 202_u64;
+        let mut too_few = RearmRangeSelectionV1::new(true);
+        too_few
+            .select(
+                RearmRangeRequestV1::RetainedCompletionOutput,
+                retained_compact,
+                None,
+                retained_compact,
+                Some(retained_logits),
+            )
+            .unwrap();
+        too_few
+            .select(
+                RearmRangeRequestV1::RetainedQualificationLogits,
+                retained_logits,
+                None,
+                retained_compact,
+                Some(retained_logits),
+            )
+            .unwrap();
+        assert_eq!(too_few.validate(), Err(()));
+
+        let mut too_many = RearmRangeSelectionV1::new(true);
+        too_many
+            .select(
+                RearmRangeRequestV1::RetainedCompletionOutput,
+                retained_compact,
+                None,
+                retained_compact,
+                Some(retained_logits),
+            )
+            .unwrap();
+        for _ in 0..3 {
+            too_many
+                .select(
+                    RearmRangeRequestV1::RetainedQualificationLogits,
+                    retained_logits,
+                    None,
+                    retained_compact,
+                    Some(retained_logits),
+                )
+                .unwrap();
+        }
+        assert_eq!(too_many.validate(), Err(()));
     }
 
     #[test]
@@ -5597,6 +6531,45 @@ mod tests {
         let _: QualifiedRecovery = M1RearmedQualifiedCompletionOutcomeV1::into_parts;
         let _: PageRelease = M1RearmedQualifiedCompletionOutcomeV1::release_completed;
         let _: TerminalTeardown = M1RearmedQualifiedReleasedRoundV1::destroy_queue_and_retain_round;
+    }
+
+    #[test]
+    fn qualification_observation_teardown_exposes_bytes_and_full_lineage() {
+        fn assert_success(owner: &M1RearmedQualificationObservationTeardownSuccessV1) {
+            let _: &M1RearmedReadbackTeardownEvidenceV1 = owner.compact_evidence();
+            let _: &[ServiceCompletedReadbackV1] = owner.partial_logits();
+            let _: Option<&[u8]> = owner.partial_logits_row_bytes(0);
+            let _: &crate::M1CheckedCompletionOutputV1 = owner.prior_checked();
+            let _: &[u32] = owner.prior_logical_accepted_counts();
+            let _: &[u32] = owner.prior_externally_published_counts();
+            let _: &[M1CompletedKvPageReleaseCountsV1] = owner.prior_release_counts();
+            let _: usize = owner.terminal_lineage_count();
+            let _: Option<&M1RearmRoundHistoryEntryV1> = owner.round_history(0);
+            assert_eq!(
+                owner.capture_release_state(),
+                M1RearmedReadbackCaptureReleaseStateV1::Released
+            );
+        }
+
+        fn assert_failure(owner: &M1RearmedQualificationObservationTeardownFailureV1) {
+            let _: &crate::M1PhysicalQueueReleaseFailureV1 = owner.source();
+            let _: &M1RearmedReadbackTeardownEvidenceV1 = owner.compact_evidence();
+            let _: &[ServiceCompletedReadbackV1] = owner.partial_logits();
+            let _: Option<&[u8]> = owner.partial_logits_row_bytes(0);
+            let _: &crate::M1CheckedCompletionOutputV1 = owner.prior_checked();
+            let _: &[u32] = owner.prior_logical_accepted_counts();
+            let _: &[u32] = owner.prior_externally_published_counts();
+            let _: &[M1CompletedKvPageReleaseCountsV1] = owner.prior_release_counts();
+            let _: usize = owner.terminal_lineage_count();
+            let _: Option<&M1RearmRoundHistoryEntryV1> = owner.round_history(0);
+            assert_eq!(
+                owner.capture_release_state(),
+                M1RearmedReadbackCaptureReleaseStateV1::LowerReleaseFailure
+            );
+        }
+
+        let _: fn(&M1RearmedQualificationObservationTeardownSuccessV1) = assert_success;
+        let _: fn(&M1RearmedQualificationObservationTeardownFailureV1) = assert_failure;
     }
 
     #[test]
