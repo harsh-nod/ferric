@@ -262,6 +262,15 @@ set +e
     printf 'FERRIC_QUALITY_GATE=test-release:BEGIN\n'
     cargo test --workspace --locked --release --target-dir "$runtime_test_target"
     printf 'FERRIC_QUALITY_GATE=test-release:PASS\n'
+    printf 'FERRIC_QUALITY_GATE=m1-benchmark-policy:BEGIN\n'
+    CARGO_TARGET_DIR="$runtime_test_target" PYTHONDONTWRITEBYTECODE=1 \
+        python3 -I -B benches/m1/test-policy.py .
+    printf 'FERRIC_QUALITY_GATE=m1-benchmark-policy:PASS\n'
+    printf 'FERRIC_QUALITY_GATE=m1-reference-policy:BEGIN\n'
+    PYTHONDONTWRITEBYTECODE=1 python3 -I -B benches/m1/reference/test-policy.py
+    PYTHONDONTWRITEBYTECODE=1 python3 -I -B -m unittest discover \
+        -s benches/m1/reference -p 'test*.py'
+    printf 'FERRIC_QUALITY_GATE=m1-reference-policy:PASS\n'
 ) >"$runtime_tests" 2>&1
 runtime_test_status=$?
 set -e

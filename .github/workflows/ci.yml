@@ -20,3 +20,5 @@ jobs:
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
       - run: python3 -I benches/m1/test-policy.py .
+      - run: python3 -I -B benches/m1/reference/test-policy.py
+      - run: python3 -I -B -m unittest discover -s benches/m1/reference -p 'test*.py'
