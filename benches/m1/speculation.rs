@@ -8,6 +8,7 @@ use std::process::ExitCode;
 #[allow(unused_imports)]
 use vstd::prelude::*;
 
+mod m1_r32_paired_collector;
 mod m1_r32_speculation_records;
 
 const METRICS: &[Metric] = &[
@@ -60,6 +61,9 @@ const SUITE: Suite = Suite {
 };
 
 fn main() -> ExitCode {
+    if env::args_os().nth(1).as_deref() == Some(m1_r32_paired_collector::COMMAND.as_ref()) {
+        return m1_r32_paired_collector::main_for_arguments(env::args_os().skip(2).collect());
+    }
     if env::args_os().nth(1).as_deref() == Some(m1_r32_speculation_records::COMMAND.as_ref()) {
         return m1_r32_speculation_records::main_for_arguments(env::args_os().skip(2).collect());
     }

@@ -533,6 +533,48 @@ observations, hardware behavior, numerical correctness, independent
 reproduction, and qualification remain unvalidated, so `m1.r32` and M1 remain
 `Open` until real hardware records and independent evidence validators pass.
 
+The Ferric-only paired collector produces the observation input for that
+checker from separately executed commands:
+
+```text
+cargo run --locked -p ferric-m1-benchmarks --bin ferric-m1-speculation -- \
+  collect-comparison-observations POLICY COMMAND-PLAN OUTPUT-OBSERVATIONS
+```
+
+`COMMAND-PLAN` is canonical
+`FERRIC-M1-R32-PAIRED-COMMAND-PLAN-V1` with `pre-execution` status. It repeats
+the exact policy SHA-256 and plan, the two policy cells and their workload,
+holdout, and deterministic-plan bindings, and both policy implementation
+records. It also freezes one canonical absolute benchmark executable and its
+policy-bound byte SHA-256, one canonical absolute working directory, a cleared
+environment whose canonical identity equals the policy environment SHA-256, a
+bounded timeout, and an exact argument vector for each cell and mode. The
+collector recomputes each command SHA-256 over the executable, environment,
+cell, workload, mode, implementation, and arguments before any execution.
+
+For each cell, the collector executes ten warmup pairs followed by thirty
+recorded pairs. Speculative and target-only are distinct sequential child
+processes in the alternating order required by the existing checker. The
+collector clears the inherited environment and adds reserved
+`FERRIC_M1_R32_*` variables containing the exact policy, command, cell, pair,
+workload, holdout, fallback-plan, implementation, ordinal, and order bindings.
+Each child must emit one bounded canonical
+`FERRIC-M1-R32-PAIRED-COMMAND-RESULT-V1` document repeating all bindings and
+its raw counters. A timeout, nonzero exit, stderr output, malformed or extra
+field, identity drift, failed request, impossible accepted-token count, or
+unequal successful-request or token work aborts collection without publishing
+an observation file.
+
+The collector copies returned counters; it never constructs, rescales, or
+substitutes a duration or latency. After all 160 child executions it builds the
+exact `FERRIC-M1-R32-SPECULATION-COMPARISON-OBSERVATIONS-V1` schema, runs the
+existing structural observation validator over it, and publishes canonical
+JSON through the existing descriptor-held no-replace path. Performance gates
+remain checker-owned, so a truthful real run may publish observations that the
+subsequent comparison-record command rejects. The command plan and child
+reports remain declarations and observations rather than independent evidence;
+the collector does not itself close `m1.r32` or M1.
+
 The first `m1.r32` diagnostic slice is likewise Ferric-only and does not alter
 the target-only qualification command. Exact target
 `SpeculativeS1K4C8192` completion output can opt into two additional coherent
