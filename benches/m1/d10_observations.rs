@@ -399,8 +399,7 @@ fn validate_admission_binding(
 
 fn validate_observation_protocol(observations: &HeldBundle) -> BenchResult<()> {
     let protocol = observations.document("protocol.json")?;
-    let source = include_bytes!("d10_observation_protocol.json");
-    if protocol.bytes != source || sha256_identity(&protocol.bytes) != PROTOCOL_SHA256 {
+    if sha256_identity(&protocol.bytes) != PROTOCOL_SHA256 {
         return Err("D10 observation protocol was substituted".to_owned());
     }
     Ok(())
@@ -1940,6 +1939,11 @@ mod tests {
         fs::write(path, encode_canonical_document(value).unwrap()).unwrap();
     }
 
+    fn protocol_bytes() -> Vec<u8> {
+        fs::read(Path::new(env!("CARGO_MANIFEST_DIR")).join("d10_observation_protocol.json"))
+            .unwrap()
+    }
+
     fn sample_id(case_id: &str, implementation: &str, phase: &str, sequence: usize) -> String {
         format!("{case_id}-{implementation}-{phase}-{sequence:02}")
     }
@@ -2120,11 +2124,7 @@ mod tests {
             "target": TARGET,
         });
         write_canonical(&observations.join("observations.json"), &observation_value);
-        fs::write(
-            observations.join("protocol.json"),
-            include_bytes!("d10_observation_protocol.json"),
-        )
-        .unwrap();
+        fs::write(observations.join("protocol.json"), protocol_bytes()).unwrap();
         let output = temporary.0.join("validated");
         Fixture {
             _temporary: temporary,
