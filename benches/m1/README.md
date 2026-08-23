@@ -235,6 +235,58 @@ intake, supplies no independent validation, covers none of the canary,
 exhaustion, rollback, or injected device-fault cases, and cannot close
 `m1.r30`.
 
+The serving suite has an additive pre-observation producer for one bounded,
+externally declared target-load diagnostic:
+
+```text
+cargo run --locked -p ferric-m1-benchmarks --bin ferric-m1-serving -- \
+  partial-capture EXPERIMENT OUTPUT-BUNDLE
+```
+
+`EXPERIMENT` is canonical `FERRIC-M1-R33-PARTIAL-EXPERIMENT-V1`. It fixes one
+case, one externally declared server start, one warmup window, one recorded
+window, exact request order and arrival offsets, and the TTFT, ITL, TPOT,
+end-to-end, and rate timing boundaries before observation. It binds exact
+descriptor-relative `arrivals`, `artifacts`, `baselines`, `environment`,
+`model`, `policy`, `tuning`, and `workload` companions by path, byte length, and
+SHA-256. Baseline versions, cache and tuning identities, and TTFT/ITL p99 SLOs
+must be supplied by external pre-observation inputs; Ferric supplies no default
+version, tuning, threshold, or acceptance decision.
+
+The separately collected request-event transcript binds the experiment
+SHA-256 and repeats the exact start, window, request, and arrival order. Its
+recorded request count must equal the externally declared offered concurrency,
+and the raw half-open arrival-to-terminal intervals must realize that exact
+peak overlap. This authenticates the declared target load without claiming
+server saturation. Ferric recomputes successful input/output/total tokens per
+second, all-request and successful-request rates, TTFT/ITL/TPOT/end-to-end
+p50/p90/p99, failure counts, and token counts from the raw request events, then
+requires the collector's summary to match exactly. Every rate is an integer
+milli-unit per second: its declared population is multiplied by `1e12`, divided
+by the exact recorded-window duration in nanoseconds, and floored.
+
+Every input remains held through computation and its descriptor-relative name
+is rebound immediately before publication. Every output file remains held from
+exclusive creation through final post-fsync content, metadata, and name
+verification. Symlinks, hard links, aliases, noncanonical JSON, changed
+companions, reordered events, invalid timestamps, summary drift, directory or
+parent metadata drift, and replacement publication fail closed.
+
+Safe Rust provides no atomic directory-create-and-open operation. Across the
+`mkdirat`/open boundary the producer therefore adopts only the exact empty
+`0700`, effective-owner/group directory it opens, without claiming that this
+inode was created by its `mkdirat` call. Any prepublication failure removes only
+file names still bound to retained transaction-created file descriptors. The
+adopted staging directory and its name are retained for inspection, including
+when the name was substituted before it could be opened.
+
+The producer publishes exactly `capture.json` and the canonical
+`FERRIC-M1-R33-PARTIAL-PROTOCOL-V1` as `protocol.json`, without replacement.
+Both carry `partial-non-evidence` status: this first slice does not establish a
+fresh server launch or server saturation, is not continuous serving, has no
+measured vLLM/SGLang comparison or independent validator, and cannot close
+`m1.r33`. Existing `describe`, `plan`, and `validate` commands are unchanged.
+
 The policy test uses the distinct `synthetic-policy-fixture-only` authority and
 the nonpublishing `check-policy-fixture` command solely to exercise the shared
 parsers and mutation rejection. Normal `produce` rejects those fixtures. The

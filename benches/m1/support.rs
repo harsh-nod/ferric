@@ -140,9 +140,42 @@ impl SecureInputDirectory {
         relative: &Path,
         description: &str,
     ) -> BenchResult<(Value, Vec<u8>, SecureFileIdentity)> {
-        let (bytes, identity) = self.read_bounded_bytes(relative, description)?;
-        let value = parse_canonical(&bytes, description)?;
+        let (value, bytes, input) = self.read_canonical_held(relative, description)?;
+        let identity = input.identity();
         Ok((value, bytes, identity))
+    }
+
+    /// Reads one bounded canonical document and retains its open-file custody.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for unsafe traversal, a nonregular file, an invalid size,
+    /// concurrent metadata drift, an incomplete read, or noncanonical JSON.
+    pub fn read_canonical_held(
+        &self,
+        relative: &Path,
+        description: &str,
+    ) -> BenchResult<(Value, Vec<u8>, SecureInputFile)> {
+        let mut input = self.open_bounded(relative, MAX_DOCUMENT_BYTES, description)?;
+        let initial_len = input.length(description)?;
+        let mut bytes = Vec::new();
+        bytes
+            .try_reserve_exact(initial_len.saturating_add(1))
+            .map_err(|_| format!("cannot reserve {description} read buffer"))?;
+        let read_result = Read::by_ref(&mut input)
+            .take(MAX_DOCUMENT_BYTES.saturating_add(1) as u64)
+            .read_to_end(&mut bytes);
+        let snapshot_result = input.validate_snapshot(description);
+        if let Err(error) = read_result {
+            snapshot_result?;
+            return Err(format!("cannot read {description}: {error}"));
+        }
+        snapshot_result?;
+        if bytes.len() != initial_len {
+            return Err(format!("{description} changed during the bounded read"));
+        }
+        let value = parse_canonical(&bytes, description)?;
+        Ok((value, bytes, input))
     }
 
     fn read_bounded_bytes(
@@ -189,6 +222,26 @@ impl SecureInputDirectory {
             return Err(format!("{description} length drifted"));
         }
         Ok(input)
+    }
+
+    /// Rebinds a relative name and checks that it still names the held snapshot.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if either descriptor drifted or the relative name was replaced.
+    pub fn validate_binding(
+        &self,
+        relative: &Path,
+        held: &SecureInputFile,
+        description: &str,
+    ) -> BenchResult<()> {
+        held.validate_snapshot(description)?;
+        let rebound = self.open_file(relative, description)?;
+        rebound.validate_snapshot(description)?;
+        if !same_file_snapshot(&held.initial, &rebound.initial) {
+            return Err(format!("{description} name no longer binds the held input"));
+        }
+        Ok(())
     }
 
     fn open_bounded(
@@ -294,6 +347,20 @@ pub fn load_canonical_document(
     let (root, relative) = secure_parent(path, description)?;
     let (value, bytes, _) = root.read_canonical(&relative, description)?;
     Ok((root, value, bytes))
+}
+
+/// Opens a strict descriptor root and retains the canonical document's file custody.
+///
+/// # Errors
+///
+/// Returns an error when the path, file, or canonical JSON representation is invalid.
+pub fn load_canonical_document_held(
+    path: &Path,
+    description: &str,
+) -> BenchResult<(SecureInputDirectory, Value, Vec<u8>, SecureInputFile)> {
+    let (root, relative) = secure_parent(path, description)?;
+    let (value, bytes, input) = root.read_canonical_held(&relative, description)?;
+    Ok((root, value, bytes, input))
 }
 
 /// Duplicates one already-open directory as a secure input root.
@@ -1149,5 +1216,23 @@ mod tests {
         let mut bytes = Vec::new();
         input.read_to_end(&mut bytes).unwrap();
         assert!(input.validate_snapshot("test payload").is_err());
+    }
+
+    #[test]
+    fn secure_binding_rejects_same_content_name_replacement() {
+        let temporary = TestDirectory::new();
+        let path = temporary.0.join("document.json");
+        let bytes = canonical_bytes(&json!({"value": 1})).unwrap();
+        fs::write(&path, &bytes).unwrap();
+        let (root, relative) = secure_parent(&path, "test document").unwrap();
+        let (_, _, held) = root
+            .read_canonical_held(&relative, "test document")
+            .unwrap();
+
+        fs::rename(&path, temporary.0.join("original.json")).unwrap();
+        fs::write(&path, bytes).unwrap();
+        assert!(root
+            .validate_binding(&relative, &held, "test document")
+            .is_err());
     }
 }

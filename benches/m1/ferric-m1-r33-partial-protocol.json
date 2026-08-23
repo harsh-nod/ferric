@@ -1,0 +1,47 @@
+{
+  "authority": "ferric-m1-r33-partial-protocol-only",
+  "bundle_files": [
+    "capture.json",
+    "protocol.json"
+  ],
+  "companion_kinds": [
+    "arrivals",
+    "artifacts",
+    "baselines",
+    "environment",
+    "model",
+    "policy",
+    "tuning",
+    "workload"
+  ],
+  "format": "FERRIC-M1-R33-PARTIAL-PROTOCOL-V1",
+  "metric_derivation": {
+    "end_to_end": "successful-request-arrival-to-terminal-event",
+    "itl": "all-consecutive-output-token-intervals-from-successful-requests",
+    "percentiles": "nearest-rank-p50-p90-p99-over-the-declared-latency-population",
+    "rates_milli_per_second": {
+      "input_tokens": "floor-of-successful-request-input-token-count-times-1e12-divided-by-exact-recorded-window-duration-nanoseconds",
+      "output_tokens": "floor-of-successful-request-output-token-count-times-1e12-divided-by-exact-recorded-window-duration-nanoseconds",
+      "requests": "floor-of-all-recorded-request-count-including-failures-times-1e12-divided-by-exact-recorded-window-duration-nanoseconds",
+      "successful_requests": "floor-of-successful-recorded-request-count-times-1e12-divided-by-exact-recorded-window-duration-nanoseconds",
+      "total_tokens": "floor-of-successful-request-input-plus-output-token-count-times-1e12-divided-by-exact-recorded-window-duration-nanoseconds",
+      "unit": "integer-milli-units-per-second"
+    },
+    "target_load_predicate": "recorded-request-count-equals-offered-concurrency-and-peak-half-open-arrival-to-terminal-overlap-equals-offered-concurrency",
+    "tpot": "floor-of-each-successful-request-first-to-last-output-token-nanoseconds-divided-by-output-token-count-minus-one",
+    "ttft": "successful-request-arrival-to-first-output-token"
+  },
+  "milestone": "M1",
+  "nonclaim": "Partial externally declared target-load serving diagnostic protocol only. It is not continuous serving or qualification evidence, admits no baseline measurements or thresholds, cannot establish a fresh server launch or server saturation, and cannot establish baseline competitiveness, SLO compliance, hardware correctness, independent validation, or close m1.r33.",
+  "obligation_id": "m1.r33",
+  "roster": {
+    "case_kinds": [
+      "externally-declared-target-load"
+    ],
+    "recorded_windows_per_start": 1,
+    "server_starts": 1,
+    "warmup_windows_per_start": 1
+  },
+  "status": "partial-non-evidence",
+  "target": "gfx942:xnack-"
+}

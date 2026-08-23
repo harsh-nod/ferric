@@ -3,9 +3,12 @@
 //! Serving comparison run-plan and real measurement ingestion boundary.
 
 use ferric_m1_benchmarks::{main_for, Metric, Suite};
+use std::env;
 use std::process::ExitCode;
 #[allow(unused_imports)]
 use vstd::prelude::*;
+
+mod m1_r33_partial;
 
 const METRICS: &[Metric] = &[
     Metric {
@@ -58,5 +61,8 @@ const SUITE: Suite = Suite {
 };
 
 fn main() -> ExitCode {
+    if env::args_os().nth(1).as_deref() == Some(m1_r33_partial::COMMAND.as_ref()) {
+        return m1_r33_partial::main_for_arguments(env::args_os().skip(2).collect());
+    }
     main_for(&SUITE)
 }
