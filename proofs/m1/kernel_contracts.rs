@@ -625,4 +625,56 @@ pub fn m1_ferric_operator_refinement_composition_theorem(
     Ok(())
 }
 
+/// Direct executable foundation for the modeled finite resource bounds.
+///
+/// The caller supplies the complete modeled effects. Success remains
+/// conditional on the named compiler/runtime/target/ABI/TCB premises and
+/// grants no artifact, GPU, numerical, performance, or hardware authority.
+///
+/// # Errors
+///
+/// Returns the exact fail-closed resource or catalog rejection.
+pub fn m1_kernel_resource_bounded_theorem(
+    input: &ferric_kernels::M1KernelSafetyCertificateInputV1<'_>,
+) -> (result: Result<(), ferric_kernels::M1KernelSafetyCertificateErrorV1>)
+    ensures result.is_ok()
+        ==> ferric_kernels::m1_kernel_safety::m1_kernel_resource_bounded(input),
+{
+    ferric_kernels::validate_m1_kernel_resource_bounds(input)
+}
+
+/// Direct executable foundation for modeled range and initialization safety.
+///
+/// This validates caller-supplied complete effects; it does not derive effects
+/// from kernel source or grant artifact, execution, GPU, or numerical authority.
+///
+/// # Errors
+///
+/// Returns the exact fail-closed resource, catalog, range, or read rejection.
+pub fn m1_kernel_memory_safe_theorem(
+    input: &ferric_kernels::M1KernelSafetyCertificateInputV1<'_>,
+) -> (result: Result<(), ferric_kernels::M1KernelSafetyCertificateErrorV1>)
+    ensures result.is_ok()
+        ==> ferric_kernels::m1_kernel_safety::m1_kernel_memory_safe(input),
+{
+    ferric_kernels::validate_m1_kernel_memory_safety(input)
+}
+
+/// Direct executable foundation for modeled same-phase race freedom.
+///
+/// This validates caller-supplied complete effects; it does not derive effects
+/// from kernel source or grant artifact, execution, GPU, or hardware authority.
+///
+/// # Errors
+///
+/// Returns the exact fail-closed resource, memory, or conflict rejection.
+pub fn m1_kernel_race_free_theorem(
+    input: &ferric_kernels::M1KernelSafetyCertificateInputV1<'_>,
+) -> (result: Result<(), ferric_kernels::M1KernelSafetyCertificateErrorV1>)
+    ensures result.is_ok()
+        ==> ferric_kernels::m1_kernel_safety::m1_kernel_race_free(input),
+{
+    ferric_kernels::validate_m1_kernel_race_freedom(input)
+}
+
 } // verus!

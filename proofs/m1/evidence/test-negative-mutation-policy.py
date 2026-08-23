@@ -572,7 +572,7 @@ def main() -> None:
         fail(f"usage: {sys.argv[0]} REPO [REAL_RESULT]")
     repo = Path(sys.argv[1]).resolve(strict=True)
     active, rows = registry(repo)
-    if len(rows) != 18 or not active:
+    if len(rows) != 21 or not active:
         fail("M1 negative registry baseline drifted")
     artifact_row = rows[0]
     if artifact_row[0] != "artifact-manifest-commitment-digest":
@@ -689,6 +689,27 @@ def main() -> None:
             operator_ten_context,
             "canonical operator ten-warning mutation fixture",
         )
+        kernel_rows = [
+            next(selected for selected in rows if selected[0] == name)
+            for name in (
+                "kernel-memory-read-initialization",
+                "kernel-race-conflict",
+                "kernel-resource-workitem-bound",
+            )
+        ]
+        for selected in kernel_rows:
+            kernel_root = root / f"{selected[0]}-baseline"
+            kernel_root.mkdir()
+            kernel_result, kernel_context = build_run(
+                repo, kernel_root, selected, source_identity
+            )
+            expect_pass(
+                repo,
+                kernel_context,
+                f"canonical {selected[0]} mutation fixture",
+            )
+            if kernel_result.name != f"{selected[0]}.result":
+                fail(f"{selected[0]} result identity drifted")
 
         cases: list[tuple[str, str, FixtureMutation]] = [
             (

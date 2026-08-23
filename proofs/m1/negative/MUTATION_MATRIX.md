@@ -13,6 +13,9 @@ closure status.
 | `graph-operator-order` | `graph::expected_step` | every layer uses the exact operator order | `graph_refined` / `graph-proof` |
 | `graph-role-step-count` | `graph::plan_step_count` | target and draft retain their exact distinct counts | `graph_refined` / `graph-proof` |
 | `isolation-other-request-frame` | `continuous_batching::apply_continuous_batch_step` | a selected step preserves every other request slot | `request_isolated` / `isolation-proof` |
+| `kernel-memory-read-initialization` | `m1_kernel_safety::validate_m1_kernel_memory_safety` | every modeled read is covered by one unambiguous initialized half-open range | `memory_safe` / `kernel-contract-proof` |
+| `kernel-race-conflict` | `m1_kernel_safety::validate_m1_kernel_race_freedom` | distinct same-phase workitems reject overlapping access when either writes | `race_free` / `kernel-contract-proof` |
+| `kernel-resource-workitem-bound` | `m1_kernel_safety::validate_m1_kernel_resource_bounds` | the finite workitem count stays within the exact family bound | `resource_bounded` / `kernel-schedule-catalog` |
 | `kv-release-generation` | `paged_kv_refinement::release_retired_page` | reuse advances the retired physical generation | `kv_refined` / `kv-proof` |
 | `kv-rollback-retirement` | `paged_kv_refinement::rollback_physical_token` | removing a one-token tentative tail retires its exact initialized prefix | `kv_refined` / `kv-proof` |
 | `kv-terminal-release-exact-epoch` | `request_isolation::release_isolated_page` | the selected request's recorded quiescent epoch exactly matches the release authority epoch | `lifetime_safe` / `kv-proof` |

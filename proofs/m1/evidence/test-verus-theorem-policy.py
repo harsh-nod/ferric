@@ -617,7 +617,7 @@ def main() -> None:
         fail(f"usage: {sys.argv[0]} REPO [REAL_RESULT]")
     repo = Path(sys.argv[1]).resolve(strict=True)
     active, rows = registry(repo)
-    if len(rows) != 16 or not active:
+    if len(rows) != 19 or not active:
         fail("M1 positive-theorem registry baseline drifted")
     row = rows[0]
     with tempfile.TemporaryDirectory(prefix="ferric-m1-theorem-policy.") as scratch:
@@ -659,6 +659,25 @@ def main() -> None:
             repo, operator_root, operator_row, source_identity
         )
         expect_pass(repo, operator_context, "canonical operator theorem fixture")
+        kernel_rows = [
+            next(selected for selected in rows if selected[0] == name)
+            for name in (
+                "kernel-memory-safety",
+                "kernel-race-freedom",
+                "kernel-resource-bounds",
+            )
+        ]
+        for selected in kernel_rows:
+            kernel_root = root / f"{selected[0]}-baseline"
+            kernel_root.mkdir()
+            _, kernel_context = build_run(
+                repo, kernel_root, selected, source_identity
+            )
+            expect_pass(
+                repo,
+                kernel_context,
+                f"canonical {selected[0]} theorem fixture",
+            )
 
         cases: list[tuple[str, str, FixtureMutation]] = [
             (
@@ -1110,6 +1129,22 @@ def main() -> None:
                 run / "ferric-spec.compile.transcript"
             ).write_text("foreign package transcript\n", encoding="ascii"),
         )
+        for selected in kernel_rows:
+            expect_rejected(
+                repo,
+                root,
+                source_identity,
+                selected,
+                f"{selected[0]}-selector-substitution",
+                "source/function binding drifted",
+                lambda run, context, row: edit_theorem_value(
+                    run,
+                    context,
+                    row,
+                    "VERUS_FUNCTION",
+                    "m1_k1_k7_modeled_contract_theorem",
+                ),
+            )
 
         incomplete_root = root / "incomplete-property-product"
         incomplete_root.mkdir()
@@ -1161,7 +1196,7 @@ def main() -> None:
 
     print(
         f"PASS: M1 theorem validator accepted its canonical fixtures and rejected "
-        f"{len(cases) + 5} hostile artifacts"
+        f"{len(cases) + 9} hostile artifacts"
     )
 
 

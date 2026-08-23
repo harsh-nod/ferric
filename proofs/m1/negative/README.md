@@ -5,9 +5,10 @@
 bodies that currently exist for exact graph planning, step-plan publication,
 atomic speculative publication/KV composition, logical paged KV, continuous
 batching, request-slot noninterference, and retained model-bundle record
-composition, canonical manifest commitment authentication, and exact kernel
-catalog processor/target-feature conformance, plus the Ferric declaration
-structure-and-presence selector.
+composition, canonical manifest commitment authentication, exact kernel
+catalog processor/target-feature conformance, the Ferric declaration
+structure-and-presence selector, and caller-supplied finite K1-K7 resource,
+initialized-range, and same-phase access certificates.
 
 Each row binds one unique body mutation and contract clause to:
 
@@ -19,7 +20,7 @@ Each row binds one unique body mutation and contract clause to:
 - the exact `postcondition` or `assertion` failure class required from pinned
   Verus after the mutated source first passes ordinary Cargo compilation.
 
-`check-registry.py` hard-codes the exact eighteen-row roster. It first runs the M1
+`check-registry.py` hard-codes the exact twenty-one-row roster. It first runs the M1
 requirements checker, then rejects row omission, addition, reordering,
 rebinding, duplicate mutators or clauses, unsafe paths, missing files, targets
 outside compiler-rooted coverage, and any property or path that is no longer
@@ -42,6 +43,14 @@ and a freshly recomputed verified seal. That is an internal consistency check,
 not independent authentication, `WeightSectionManifest::valid_commitment`,
 manifest destination layout, tensor-name semantics, runtime `BTreeSet` roster
 completeness, or plan composition.
+
+The three kernel-safety rows alter distinct executable Ferric checks reached by
+their positive wrappers. Public memory validation first enforces the resource
+roster bounds; public race validation first enforces memory safety before its
+quadratic scan. The composite returns one non-`Clone` token only after all
+three checks pass. The complete access and initialization rosters are supplied
+by the caller, not derived from kernel source, so these foundations grant no
+compiler, object, launch, GPU, numerical, performance, or hardware authority.
 
 The manifest-commitment row inverts the executable digest mismatch gate before
 the directly verified retained commitment is returned. It authenticates only

@@ -80,6 +80,15 @@ Ferric owns every Qwen kernel-family target under
 separate `RequiredFuture` records. Resolution does not assert that any future
 path exists or implements its obligation.
 
+Ferric's source-level K1-K7 safety foundation validates a caller-supplied
+complete finite schedule, buffer roster, initialized half-open ranges, and
+modeled access roster. It bounds those rosters before range or pairwise access
+scans and returns one non-clone certificate only after resource, memory, and
+race checks all pass. It does not derive effects from kernel source, and its
+success remains conditional on the named compiler, runtime, target, ABI, TCB,
+and hardware premises without granting artifact, GPU, numerical, performance,
+or qualification authority.
+
 ## Evidence Profiles
 
 Evidence profiles collect independent evidence kinds without treating any one

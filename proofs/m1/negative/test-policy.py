@@ -55,6 +55,7 @@ def copy_fixture(repo: Path, destination: Path) -> None:
         "crates/ferric-build/src/auth.rs",
         "crates/ferric-engine/src/operation_kernel_plan.rs",
         "crates/ferric-kernels/src/validation.rs",
+        "crates/ferric-kernels/src/m1_kernel_safety.rs",
         "crates/ferric-spec/src/continuous_batching.rs",
         "crates/ferric-spec/src/graph.rs",
         "crates/ferric-spec/src/m1_completion.rs",
@@ -200,8 +201,8 @@ def main() -> None:
         if result.returncode != 0:
             fail(f"baseline M1 negative registry check failed\n{result.stdout}")
         rows = active.read_text(encoding="utf-8").splitlines()
-        if len(rows) != 18:
-            fail(f"baseline selected {len(rows)} M1 mutations instead of 18")
+        if len(rows) != 21:
+            fail(f"baseline selected {len(rows)} M1 mutations instead of 21")
         mutator_count = verify_current_mutators(repo, root, active)
 
         cases: list[tuple[str, str, FixtureMutation]] = []
@@ -327,6 +328,18 @@ def main() -> None:
             ),
         ))
         cases.append((
+            "kernel-memory-binding-drift", "M1 foundation mutation binding drifted",
+            lambda fixture: mutate_registry(
+                fixture,
+                lambda lines: replace_field(
+                    lines,
+                    registry_row(lines, "kernel-memory-read-initialization"),
+                    9,
+                    "validate_m1_kernel_resource_bounds",
+                ),
+            ),
+        ))
+        cases.append((
             "unsafe-source", "unsafe foundation source path",
             lambda fixture: mutate_registry(
                 fixture, lambda lines: replace_field(lines, 1, 5, "../continuous_batching.rs")
@@ -386,6 +399,13 @@ def main() -> None:
             ).unlink(),
         ))
         cases.append((
+            "missing-kernel-memory-mutator", "M1 foundation mutator is unavailable",
+            lambda fixture: (
+                fixture
+                / "proofs/m1/negative/components/kernel-memory-read-initialization.py"
+            ).unlink(),
+        ))
+        cases.append((
             "missing-source", "M1 foundation source is unavailable",
             lambda fixture: (fixture / "crates/ferric-spec/src/continuous_batching.rs").unlink(),
         ))
@@ -419,6 +439,12 @@ def main() -> None:
             "missing-operator-source", "M1 foundation source is unavailable",
             lambda fixture: (
                 fixture / "crates/ferric-engine/src/operation_kernel_plan.rs"
+            ).unlink(),
+        ))
+        cases.append((
+            "missing-kernel-safety-source", "M1 foundation source is unavailable",
+            lambda fixture: (
+                fixture / "crates/ferric-kernels/src/m1_kernel_safety.rs"
             ).unlink(),
         ))
         cases.append((
@@ -503,6 +529,28 @@ def main() -> None:
                 "\n".join(
                     line for line in (fixture / "proofs/VERIFIED_MODULES").read_text(encoding="utf-8").splitlines()
                     if line != "verified=ferric-engine|crates/ferric-engine/src/operation_kernel_plan.rs|ferric_engine::operation_kernel_plan::select_declared_operator_certificate"
+                ) + "\n",
+                encoding="utf-8",
+            ),
+        ))
+        cases.append((
+            "missing-kernel-safety-module-record",
+            "compiler module path is not inventoried",
+            lambda fixture: (fixture / "proofs/VERIFIED_MODULES").write_text(
+                "\n".join(
+                    line for line in (fixture / "proofs/VERIFIED_MODULES").read_text(encoding="utf-8").splitlines()
+                    if line != "module=ferric-kernels|crates/ferric-kernels/src/m1_kernel_safety.rs|ferric_kernels::m1_kernel_safety"
+                ) + "\n",
+                encoding="utf-8",
+            ),
+        ))
+        cases.append((
+            "missing-kernel-memory-function-record",
+            "compiler function path is not directly verified",
+            lambda fixture: (fixture / "proofs/VERIFIED_MODULES").write_text(
+                "\n".join(
+                    line for line in (fixture / "proofs/VERIFIED_MODULES").read_text(encoding="utf-8").splitlines()
+                    if line != "verified=ferric-kernels|crates/ferric-kernels/src/m1_kernel_safety.rs|ferric_kernels::m1_kernel_safety::validate_m1_kernel_memory_safety"
                 ) + "\n",
                 encoding="utf-8",
             ),

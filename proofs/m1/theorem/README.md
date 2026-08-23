@@ -26,6 +26,10 @@ The lifetime row selects the production-facing terminal page-release theorem,
 which calls the executable Ferric release body and proves only exact quiescence,
 source physical-metadata retirement, and generation-safe release. It does not
 establish device-ledger bytes, later reuse, or hardware execution.
+The three kernel-safety wrappers directly call the exact executable Ferric
+resource, memory, and race validators. Those validators admit a bounded,
+caller-supplied complete modeled-effect certificate; they do not derive kernel
+effects or grant artifact, execution, GPU, numerical, or hardware authority.
 
 `run-same-source.sh` accepts a clean committed Ferric worktree and the exact
 pinned Verus release. It records the source commit, tree, complete M1 source

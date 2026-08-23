@@ -10,6 +10,7 @@
 //! completion, hardware, performance, or qualification authority.
 
 mod catalog;
+pub mod m1_kernel_safety;
 mod validation;
 
 pub use catalog::{
@@ -19,6 +20,14 @@ pub use catalog::{
     KernelSourceDeclaration, StructuralKernelCatalog, FERRIC_KERNEL_SOURCE_DECLARATIONS,
     GFX942_PROCESSOR, GFX942_TARGET_FEATURES, M1_B3_PLAN_BUCKETS, M1_KERNEL_CATALOG_VERSION,
     M1_KERNEL_OPERATION_BINDINGS, M1_KERNEL_PLAN_COUNT,
+};
+pub use m1_kernel_safety::{
+    validate_m1_kernel_memory_safety, validate_m1_kernel_race_freedom,
+    validate_m1_kernel_resource_bounds, validate_m1_kernel_safety_certificate,
+    M1KernelInitializedRangeV1, M1KernelModeledAccessModeV1, M1KernelModeledAccessV1,
+    M1KernelSafetyCertificateErrorV1, M1KernelSafetyCertificateInputV1,
+    ValidatedM1KernelSafetyCertificateV1, M1_KERNEL_MAX_INITIALIZED_RANGES_V1,
+    M1_KERNEL_MAX_MODELED_ACCESSES_V1,
 };
 pub use validation::{
     validate_kernel_catalog_input, KernelCatalogAuthorityInputs, KernelCatalogInput,

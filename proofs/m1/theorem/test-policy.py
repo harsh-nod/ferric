@@ -119,8 +119,8 @@ def main() -> None:
         result = run_checker(baseline, active)
         if result.returncode != 0:
             fail(f"baseline theorem registry failed\n{result.stdout}")
-        if len(active.read_text(encoding="ascii").splitlines()) != 16:
-            fail("baseline theorem registry did not select exactly sixteen rows")
+        if len(active.read_text(encoding="ascii").splitlines()) != 19:
+            fail("baseline theorem registry did not select exactly nineteen rows")
 
         cases: list[tuple[str, str, FixtureMutation]] = [
             (
@@ -228,6 +228,19 @@ def main() -> None:
                         registry_row(lines, "operator-declared-profile-effect"),
                         7,
                         "m1_k1_k7_modeled_contract_theorem",
+                    ),
+                ),
+            ),
+            (
+                "kernel-memory-binding-drift",
+                "positive theorem binding drifted",
+                lambda fixture: mutate_registry(
+                    fixture,
+                    lambda lines: replace_field(
+                        lines,
+                        registry_row(lines, "kernel-memory-safety"),
+                        7,
+                        "m1_kernel_resource_bounded_theorem",
                     ),
                 ),
             ),
@@ -393,6 +406,22 @@ def main() -> None:
                         .splitlines()
                         if line
                         != "verified=ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|ferric_spec::m1_foundation_theorems::speculative_accepted_count_binding_theorem"
+                    )
+                    + "\n",
+                    encoding="utf-8",
+                ),
+            ),
+            (
+                "missing-kernel-wrapper-function-coverage",
+                "function path is not directly verified",
+                lambda fixture: (fixture / "proofs/VERIFIED_MODULES").write_text(
+                    "\n".join(
+                        line
+                        for line in (fixture / "proofs/VERIFIED_MODULES")
+                        .read_text(encoding="utf-8")
+                        .splitlines()
+                        if line
+                        != "verified=ferric-m1-proof|proofs/m1/kernel_contracts.rs|ferric_m1_proof::kernel_contracts::m1_kernel_memory_safe_theorem"
                     )
                     + "\n",
                     encoding="utf-8",
