@@ -26,7 +26,8 @@
 use crate::bound_step_workspaces::bind_addressless_m1_full_step_workspace_subleases;
 use crate::initialized_step_workspaces::allocate_initialized_m1_full_step_workspaces_v1;
 use crate::{
-    allocate_m1_completion_output_v1, qualification_logits::attach_m1_qualification_logits_v1,
+    allocate_m1_completion_output_v1, allocate_m1_guarded_completion_output_v1,
+    qualification_logits::attach_m1_qualification_logits_v1,
     speculative_diagnostic_choices::attach_m1_speculative_diagnostic_choices_v1,
     AddresslessM1FullStepWorkspaceComposition, BoundM1CompletionOutputV1,
     BoundM1FullStepWorkspaceSubleases, BoundModelMemoryAllocationsV1, ExactCompletion,
@@ -1021,6 +1022,22 @@ impl M1PartitionedModelMemoryKvPoolV1 {
         selection: Qwen3PlanSelection,
     ) -> Result<BoundM1CompletionOutputV1, M1CompletionOutputErrorV1> {
         allocate_m1_completion_output_v1(&mut self.allocations, selection)
+    }
+
+    /// Allocates initialized host-visible output with adjacent fixed guards.
+    ///
+    /// This opt-in path is reserved for bounded physical qualification capture.
+    /// Ordinary completion allocation and observation remain unchanged.
+    ///
+    /// # Errors
+    ///
+    /// Rejects selection, guarded layout, initialized allocation, mapping, or
+    /// range drift while retaining the allocation session inside the pool.
+    pub fn allocate_guarded_completion_output(
+        &mut self,
+        selection: Qwen3PlanSelection,
+    ) -> Result<BoundM1CompletionOutputV1, M1CompletionOutputErrorV1> {
+        allocate_m1_guarded_completion_output_v1(&mut self.allocations, selection)
     }
 
     /// Adds qualification-only host-visible logits capture to a compact output.

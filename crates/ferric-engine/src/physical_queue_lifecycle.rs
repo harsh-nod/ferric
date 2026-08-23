@@ -21,15 +21,18 @@ use ferric_spec::Qwen3ExecutionMode;
 use crate::completed_readback_join::{
     check_m1_completed_output_v1, check_m1_qualification_completed_output_v1,
 };
-use crate::observed_completion::observe_m1_completed_output_v1;
+use crate::observed_completion::{
+    observe_m1_completed_output_v1, observe_m1_guarded_completed_output_v1,
+};
 use crate::qualification_logits::{
     observe_m1_qualification_logits_v1, M1QualificationFinalRowChoicesV1,
 };
 use crate::speculative_diagnostic_choices::observe_m1_speculative_diagnostic_choices_v1;
 use crate::{
+    preflight_m1_completion_canary_v1, validate_m1_completion_canary_readback_v1,
     CompletionWireExpectation, CompletionWireSemanticExpectation, Engine, ExactCompletion,
     Gfx942DeviceBinding, M1CheckedCompletionOutputV1, M1CompletedOutputCheckErrorV1,
-    M1FullStepKvReservationCustodyV1, M1ObservedCompletionImageErrorV1,
+    M1CompletionCanaryErrorV1, M1FullStepKvReservationCustodyV1, M1ObservedCompletionImageErrorV1,
     M1ObservedCompletionImageV1, M1ObservedQualificationLogitsV1,
     M1ObservedSpeculativeDiagnosticChoicesV1, M1PhysicalFixedBatchCaseV1,
     M1PhysicalFixedBatchCustodyV1, M1PhysicalFixedBatchShapeV1, M1PhysicalFixedBatchV1,
@@ -631,9 +634,11 @@ impl M1PhysicalRecycledQueueSessionV1 {
     }
 }
 
-/// One exact recycled queue generation paired with its single copied K7 image.
+/// One exact recycled queue generation paired with its completed output copy.
 ///
-/// The carrier intentionally has no completed-read method and is not `Clone`.
+/// Ordinary backing owns the copied K7 image. Guarded backing privately owns
+/// the enclosing snapshot while exposing only its K7 interior. The carrier
+/// intentionally has no completed-read method and is not `Clone`.
 #[must_use = "observed bytes and all queue, scheduler, and KV custody remain linear"]
 pub struct M1ObservedCompletionCaseV1<const N: usize> {
     case: Box<M1PhysicalQueuePhaseCaseV1<ServiceRecycledQueueSessionV1<N>>>,
@@ -982,10 +987,11 @@ impl M1ObservedCompletionOutputV1 {
     }
 }
 
-/// One exact recycled queue generation paired with a rejected copied K7 image.
+/// One exact recycled queue generation paired with a rejected completed copy.
 ///
-/// The copied bytes are retained so structural rejection cannot reopen the
-/// lower completed-read operation.
+/// Ordinary backing retains the exact K7 image. Guarded backing retains the
+/// complete enclosing snapshot, including both adjacent guards, so structural
+/// rejection cannot reopen the lower completed-read operation.
 #[must_use = "rejected copied bytes and all Ferric custody remain linear"]
 pub struct M1RejectedCompletionCaseV1<const N: usize> {
     case: Box<M1PhysicalQueuePhaseCaseV1<ServiceRecycledQueueSessionV1<N>>>,
@@ -1002,10 +1008,11 @@ impl<const N: usize> fmt::Debug for M1RejectedCompletionCaseV1<N> {
     }
 }
 
-/// Move-only custody after one copied K7 image failed structural observation.
+/// Move-only custody after one completed copy failed structural observation.
 ///
-/// This owner exposes the rejected raw copy for diagnosis and can tear down the
-/// queue, but has no completed-read or semantic-completion transition.
+/// This owner retains the rejected raw copy for diagnosis and can tear down the
+/// queue, but has no completed-read or semantic-completion transition. The raw
+/// copy may be the enclosing guarded snapshot rather than only compact bytes.
 ///
 /// ```compile_fail
 /// use ferric_engine::M1RejectedCompletionOutputV1;
@@ -1026,6 +1033,152 @@ pub enum M1RejectedCompletionOutputV1 {
     SpeculativeK8(Box<M1RejectedCompletionCaseV1<M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1>>),
     /// Rejected K16 speculative queue observation.
     SpeculativeK16(Box<M1RejectedCompletionCaseV1<M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1>>),
+}
+
+#[derive(Debug)]
+enum M1CompletionSnapshotReadFailedInnerV1 {
+    TargetOnly(
+        Box<
+            M1PhysicalQueuePhaseCaseV1<
+                ServiceRecycledQueueSessionV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    ),
+    PairedPrefill(
+        Box<
+            M1PhysicalQueuePhaseCaseV1<
+                ServiceRecycledQueueSessionV1<M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    ),
+    SpeculativeK4(
+        Box<
+            M1PhysicalQueuePhaseCaseV1<
+                ServiceRecycledQueueSessionV1<M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    ),
+    SpeculativeK8(
+        Box<
+            M1PhysicalQueuePhaseCaseV1<
+                ServiceRecycledQueueSessionV1<M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    ),
+    SpeculativeK16(
+        Box<
+            M1PhysicalQueuePhaseCaseV1<
+                ServiceRecycledQueueSessionV1<M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    ),
+}
+
+/// Opaque terminal custody after the enclosing snapshot read was attempted.
+///
+/// The generic queue may have been poisoned by a memory error. This owner does
+/// not expose recycled custody or any retry/read transition; it supports only
+/// fail-closed queue teardown.
+///
+/// ```compile_fail
+/// use ferric_engine::M1CompletionSnapshotReadFailedOutputV1;
+/// fn retry(failed: M1CompletionSnapshotReadFailedOutputV1) {
+///     let _ = failed.observe_completion();
+/// }
+/// ```
+#[must_use = "failed snapshot-read custody must be destroyed or retained"]
+#[derive(Debug)]
+pub struct M1CompletionSnapshotReadFailedOutputV1 {
+    inner: M1CompletionSnapshotReadFailedInnerV1,
+}
+
+impl M1CompletionSnapshotReadFailedOutputV1 {
+    fn target_only(
+        case: Box<
+            M1PhysicalQueuePhaseCaseV1<
+                ServiceRecycledQueueSessionV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    ) -> Self {
+        Self {
+            inner: M1CompletionSnapshotReadFailedInnerV1::TargetOnly(case),
+        }
+    }
+
+    fn paired_prefill(
+        case: Box<
+            M1PhysicalQueuePhaseCaseV1<
+                ServiceRecycledQueueSessionV1<M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    ) -> Self {
+        Self {
+            inner: M1CompletionSnapshotReadFailedInnerV1::PairedPrefill(case),
+        }
+    }
+
+    fn speculative_k4(
+        case: Box<
+            M1PhysicalQueuePhaseCaseV1<
+                ServiceRecycledQueueSessionV1<M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    ) -> Self {
+        Self {
+            inner: M1CompletionSnapshotReadFailedInnerV1::SpeculativeK4(case),
+        }
+    }
+
+    fn speculative_k8(
+        case: Box<
+            M1PhysicalQueuePhaseCaseV1<
+                ServiceRecycledQueueSessionV1<M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    ) -> Self {
+        Self {
+            inner: M1CompletionSnapshotReadFailedInnerV1::SpeculativeK8(case),
+        }
+    }
+
+    fn speculative_k16(
+        case: Box<
+            M1PhysicalQueuePhaseCaseV1<
+                ServiceRecycledQueueSessionV1<M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    ) -> Self {
+        Self {
+            inner: M1CompletionSnapshotReadFailedInnerV1::SpeculativeK16(case),
+        }
+    }
+
+    /// Destroys the queue without reopening the attempted snapshot read.
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal release failure retaining all available custody.
+    pub fn destroy_and_release(
+        self,
+    ) -> Result<ServiceQueueReleaseObservationV1, M1PhysicalQueueReleaseFailureV1> {
+        match self.inner {
+            M1CompletionSnapshotReadFailedInnerV1::TargetOnly(case) => {
+                release_case(case, M1PhysicalFixedBatchShapeV1::TargetOnly)
+            }
+            M1CompletionSnapshotReadFailedInnerV1::PairedPrefill(case) => {
+                release_case(case, M1PhysicalFixedBatchShapeV1::PairedPrefill)
+            }
+            M1CompletionSnapshotReadFailedInnerV1::SpeculativeK4(case) => {
+                release_case(case, M1PhysicalFixedBatchShapeV1::SpeculativeK4)
+            }
+            M1CompletionSnapshotReadFailedInnerV1::SpeculativeK8(case) => {
+                release_case(case, M1PhysicalFixedBatchShapeV1::SpeculativeK8)
+            }
+            M1CompletionSnapshotReadFailedInnerV1::SpeculativeK16(case) => {
+                release_case(case, M1PhysicalFixedBatchShapeV1::SpeculativeK16)
+            }
+        }
+    }
 }
 
 impl M1RejectedCompletionOutputV1 {
@@ -1430,6 +1583,8 @@ impl M1PhysicalReadbackQueueReleaseFailureV1 {
 pub enum M1CompletionObservationErrorV1 {
     /// The generic generation-bound completed copy failed.
     Queue(ServiceQueueErrorV1),
+    /// Ferric guarded geometry or adjacent bytes rejected.
+    Canary(M1CompletionCanaryErrorV1),
     /// The returned allocation offset differed from the retained K7 range.
     OffsetDrift {
         /// Retained K7 output offset.
@@ -1462,6 +1617,8 @@ impl std::error::Error for M1CompletionObservationErrorV1 {}
 pub enum M1CompletionObservationFailureCustodyV1 {
     /// No completed copy succeeded, so the exact recycled queue remains retryable.
     Recycled(Box<M1PhysicalRecycledQueueSessionV1>),
+    /// The enclosing snapshot read was attempted and can never be retried.
+    SnapshotReadFailed(Box<M1CompletionSnapshotReadFailedOutputV1>),
     /// A completed copy succeeded and is closed against another read.
     Rejected(Box<M1RejectedCompletionOutputV1>),
 }
@@ -1469,8 +1626,9 @@ pub enum M1CompletionObservationFailureCustodyV1 {
 /// Observation failure retaining exact pre-copy or post-copy custody.
 ///
 /// Only [`M1CompletionObservationFailureCustodyV1::Recycled`] permits retry.
-/// Coordinate, extent, and image failures retain the first copied bytes in a
-/// [`M1RejectedCompletionOutputV1`] with no completed-read transition.
+/// Coordinate, extent, guard, and image failures retain the first completed
+/// copy in a [`M1RejectedCompletionOutputV1`] with no completed-read transition.
+/// On the guarded path that owned copy is the complete enclosing snapshot.
 #[must_use = "observation failure retains linear queue and byte custody"]
 #[derive(Debug)]
 pub struct M1CompletionObservationFailureV1 {
@@ -1523,14 +1681,16 @@ impl M1CompletionObservationFailureV1 {
             M1CompletionObservationFailureCustodyV1::Recycled(queue) => {
                 queue.observe_completion().map_err(Box::new)
             }
-            custody @ M1CompletionObservationFailureCustodyV1::Rejected(_) => {
+            custody @ (M1CompletionObservationFailureCustodyV1::Rejected(_)
+            | M1CompletionObservationFailureCustodyV1::SnapshotReadFailed(_)) => {
                 Err(Box::new(Self { error, custody }))
             }
         }
     }
 
     /// Destroys the failed queue after faulting the logical Engine and retains
-    /// any compact bytes already copied before the observation rejection.
+    /// any completed bytes already copied before the observation rejection,
+    /// including the whole enclosing snapshot on the guarded path.
     ///
     /// # Errors
     ///
@@ -1569,6 +1729,13 @@ impl M1CompletionObservationFailureV1 {
                         }))
                     }
                 }
+            }
+            M1CompletionObservationFailureCustodyV1::SnapshotReadFailed(output) => {
+                finish_completion_evidence_teardown(
+                    M1CompletionEvidenceTeardownDiagnosticV1::Observation(error),
+                    M1CompletionEvidenceTeardownEvidenceV1::None,
+                    output.destroy_and_release(),
+                )
             }
         }
     }
@@ -1688,11 +1855,11 @@ pub enum M1CompletionEvidenceTeardownDiagnosticV1 {
 /// Copied evidence retained by a generic completion failure teardown.
 #[derive(Debug)]
 pub enum M1CompletionEvidenceTeardownEvidenceV1 {
-    /// The lower completed read failed before copying bytes.
+    /// No owned completed bytes are available; a snapshot read may be terminal.
     None,
-    /// Raw compact bytes copied but structurally rejected.
+    /// One completed copy was structurally rejected; guarded backing is whole.
     Rejected(ServiceCompletedReadbackV1),
-    /// Structurally decoded compact image used by a rejected semantic join.
+    /// Structurally decoded output used by a rejected semantic join.
     Observed(M1ObservedCompletionImageV1),
 }
 
@@ -2993,6 +3160,9 @@ impl std::error::Error for M1QualificationObservationErrorV1 {}
 ///         M1QualificationObservationFailureCustodyV1::CompactRejected(output) => {
 ///             let _ = output.destroy_and_release();
 ///         }
+///         M1QualificationObservationFailureCustodyV1::CompactSnapshotReadFailed(output) => {
+///             let _ = output.destroy_and_release();
+///         }
 ///         M1QualificationObservationFailureCustodyV1::Observed { completion, .. } => {
 ///             let _ = completion.destroy_and_release();
 ///         }
@@ -3010,6 +3180,8 @@ pub enum M1QualificationObservationFailureCustodyV1 {
     Recycled(Box<M1PhysicalRecycledQueueSessionV1>),
     /// Compact K7 copied but failed structural observation; no read is reopened.
     CompactRejected(Box<M1RejectedCompletionOutputV1>),
+    /// Guarded compact snapshot read was attempted and cannot be retried.
+    CompactSnapshotReadFailed(Box<M1CompletionSnapshotReadFailedOutputV1>),
     /// Compact K7 observed; zero or more final logits rows were also copied.
     Observed {
         completion: Box<M1ObservedCompletionOutputV1>,
@@ -3119,6 +3291,20 @@ impl M1QualificationObservationFailureV1 {
                             source,
                         }))
                     }
+                }
+            }
+            M1QualificationObservationFailureCustodyV1::CompactSnapshotReadFailed(output) => {
+                match output.destroy_and_release() {
+                    Ok(queue_release) => Ok(M1QualificationObservationTeardownSuccessV1 {
+                        error,
+                        evidence: M1QualificationObservationTeardownEvidenceV1::None,
+                        queue_release,
+                    }),
+                    Err(source) => Err(Box::new(M1QualificationObservationTeardownFailureV1 {
+                        error,
+                        evidence: M1QualificationObservationTeardownEvidenceV1::None,
+                        source,
+                    })),
                 }
             }
             M1QualificationObservationFailureCustodyV1::Observed {
@@ -4206,6 +4392,10 @@ enum ObserveCaseFailureV1<const N: usize> {
         error: M1CompletionObservationErrorV1,
         case: Box<M1PhysicalQueuePhaseCaseV1<ServiceRecycledQueueSessionV1<N>>>,
     },
+    SnapshotReadFailed {
+        error: M1CompletionObservationErrorV1,
+        case: Box<M1PhysicalQueuePhaseCaseV1<ServiceRecycledQueueSessionV1<N>>>,
+    },
     AfterCopy {
         error: M1CompletionObservationErrorV1,
         case: Box<M1PhysicalQueuePhaseCaseV1<ServiceRecycledQueueSessionV1<N>>>,
@@ -4222,6 +4412,55 @@ fn observe_case<const N: usize>(
     let output = case.custody.completion_output();
     let output_shape = output.shape();
     let range = output.retained_host_dispatch_range();
+    let canary = output.completion_canary();
+    let queue_selection = case.custody.selection();
+    if let Some(canary) = canary {
+        if let Err(error) = preflight_m1_completion_canary_v1(canary, range) {
+            return Err(Box::new(ObserveCaseFailureV1::BeforeCopy {
+                error: M1CompletionObservationErrorV1::Canary(error),
+                case,
+            }));
+        }
+        let request = case
+            .lower
+            .completed_snapshot_request(canary.snapshot_range());
+        let readback = match case.lower.read_completed_snapshot(request) {
+            Ok(readback) => readback,
+            Err(error) => {
+                return Err(Box::new(ObserveCaseFailureV1::SnapshotReadFailed {
+                    error: M1CompletionObservationErrorV1::Queue(error),
+                    case,
+                }))
+            }
+        };
+        let readback = match validate_m1_completion_canary_readback_v1(canary, range, readback) {
+            Ok(readback) => readback,
+            Err((error, readback)) => {
+                return Err(Box::new(ObserveCaseFailureV1::AfterCopy {
+                    error: M1CompletionObservationErrorV1::Canary(error),
+                    case,
+                    readback,
+                }))
+            }
+        };
+        let scheduled = case.step.scheduled_dispatch();
+        let image = match observe_m1_guarded_completed_output_v1(
+            output_shape,
+            queue_selection,
+            scheduled,
+            Box::new(readback),
+        ) {
+            Ok(image) => image,
+            Err((error, readback)) => {
+                return Err(Box::new(ObserveCaseFailureV1::AfterCopy {
+                    error: M1CompletionObservationErrorV1::Image(error),
+                    case,
+                    readback: (*readback).into_readback(),
+                }))
+            }
+        };
+        return Ok(Box::new(M1ObservedCompletionCaseV1 { case, image }));
+    }
     let request = case.lower.completed_read_request(range);
     let readback = match case.lower.read_completed(request) {
         Ok(readback) => readback,
@@ -4254,21 +4493,17 @@ fn observe_case<const N: usize>(
         }));
     }
     let scheduled = case.step.scheduled_dispatch();
-    let image = match observe_m1_completed_output_v1(
-        output_shape,
-        case.custody.selection(),
-        scheduled,
-        readback,
-    ) {
-        Ok(image) => image,
-        Err((error, readback)) => {
-            return Err(Box::new(ObserveCaseFailureV1::AfterCopy {
-                error: M1CompletionObservationErrorV1::Image(error),
-                case,
-                readback,
-            }))
-        }
-    };
+    let image =
+        match observe_m1_completed_output_v1(output_shape, queue_selection, scheduled, readback) {
+            Ok(image) => image,
+            Err((error, readback)) => {
+                return Err(Box::new(ObserveCaseFailureV1::AfterCopy {
+                    error: M1CompletionObservationErrorV1::Image(error),
+                    case,
+                    readback,
+                }))
+            }
+        };
     Ok(Box::new(M1ObservedCompletionCaseV1 { case, image }))
 }
 
@@ -4278,6 +4513,9 @@ fn retain_observation_failure<const N: usize>(
         Box<M1PhysicalQueuePhaseCaseV1<ServiceRecycledQueueSessionV1<N>>>,
     ) -> M1PhysicalRecycledQueueSessionV1,
     rejected: fn(Box<M1RejectedCompletionCaseV1<N>>) -> M1RejectedCompletionOutputV1,
+    snapshot_read_failed: fn(
+        Box<M1PhysicalQueuePhaseCaseV1<ServiceRecycledQueueSessionV1<N>>>,
+    ) -> M1CompletionSnapshotReadFailedOutputV1,
 ) -> M1CompletionObservationFailureV1 {
     match failure {
         ObserveCaseFailureV1::BeforeCopy { error, case } => M1CompletionObservationFailureV1 {
@@ -4294,6 +4532,14 @@ fn retain_observation_failure<const N: usize>(
                 Box::new(M1RejectedCompletionCaseV1 { case, readback }),
             ))),
         },
+        ObserveCaseFailureV1::SnapshotReadFailed { error, case } => {
+            M1CompletionObservationFailureV1 {
+                error,
+                custody: M1CompletionObservationFailureCustodyV1::SnapshotReadFailed(Box::new(
+                    snapshot_read_failed(case),
+                )),
+            }
+        }
     }
 }
 
@@ -4362,7 +4608,9 @@ fn check_observed_case<const N: usize>(
         Ok(checked) => checked,
         Err(error) => return Err((error, case)),
     };
-    let M1ObservedCompletionCaseV1 { case, image: _ } = *case;
+    let M1ObservedCompletionCaseV1 { case, image } = *case;
+    let checked =
+        checked.retain_completion_canary_readback(image.into_completion_canary_readback());
     let (lower, custody, step) = (*case).into_parts();
     let (scheduled, _target_plans, kv) = step.into_parts();
     let completion = ExactCompletion::from_completed_m1_queue_readback(scheduled);
@@ -4452,7 +4700,9 @@ fn check_observed_qualification_prefill_case<const N: usize>(
         Ok(checked) => checked,
         Err(error) => return Err((error, case)),
     };
-    let M1ObservedCompletionCaseV1 { case, image: _ } = *case;
+    let M1ObservedCompletionCaseV1 { case, image } = *case;
+    let checked =
+        checked.retain_completion_canary_readback(image.into_completion_canary_readback());
     let (lower, custody, step) = (*case).into_parts();
     let (scheduled, _target_plans, kv) = step.into_parts();
     let completion = ExactCompletion::from_completed_m1_queue_readback(scheduled);
@@ -4511,7 +4761,9 @@ fn check_observed_qualification_final_case<const N: usize>(
         Ok(checked) => checked,
         Err(error) => return Err((error, case)),
     };
-    let M1ObservedCompletionCaseV1 { case, image: _ } = *case;
+    let M1ObservedCompletionCaseV1 { case, image } = *case;
+    let checked =
+        checked.retain_completion_canary_readback(image.into_completion_canary_readback());
     let (lower, custody, step) = (*case).into_parts();
     let (scheduled, _target_plans, kv) = step.into_parts();
     let completion = ExactCompletion::from_completed_m1_queue_readback(scheduled);
@@ -4570,6 +4822,9 @@ fn qualification_compact_failure(
         }
         M1CompletionObservationFailureCustodyV1::Rejected(rejected) => {
             M1QualificationObservationFailureCustodyV1::CompactRejected(rejected)
+        }
+        M1CompletionObservationFailureCustodyV1::SnapshotReadFailed(failed) => {
+            M1QualificationObservationFailureCustodyV1::CompactSnapshotReadFailed(failed)
         }
     };
     M1QualificationObservationFailureV1 {
@@ -4754,10 +5009,12 @@ impl M1PhysicalRecycledQueueSessionV1 {
     ///
     /// # Errors
     ///
-    /// A generic read failure returns retryable recycled custody because no copy
-    /// succeeded. Every rejection after a successful copy returns closed
-    /// rejected-observation custody, so the first copy cannot be repeated. No
-    /// completion authority is created on either path.
+    /// An ordinary generic read failure preserves its existing retryable
+    /// recycled custody. Guarded pre-copy validation is also retryable, but an
+    /// attempted enclosing-snapshot read is terminally opaque on error. Every
+    /// guarded rejection after a successful copy retains the whole enclosing
+    /// snapshot in closed rejected custody, so the copy cannot be repeated. No
+    /// completion authority is created on any path.
     pub fn observe_completion(
         self,
     ) -> Result<M1ObservedCompletionOutputV1, M1CompletionObservationFailureV1> {
@@ -4769,6 +5026,7 @@ impl M1PhysicalRecycledQueueSessionV1 {
                         *failure,
                         M1PhysicalRecycledQueueSessionV1::TargetOnly,
                         M1RejectedCompletionOutputV1::TargetOnly,
+                        M1CompletionSnapshotReadFailedOutputV1::target_only,
                     )
                 }),
             Self::PairedPrefill(case) => observe_case(case)
@@ -4778,6 +5036,7 @@ impl M1PhysicalRecycledQueueSessionV1 {
                         *failure,
                         M1PhysicalRecycledQueueSessionV1::PairedPrefill,
                         M1RejectedCompletionOutputV1::PairedPrefill,
+                        M1CompletionSnapshotReadFailedOutputV1::paired_prefill,
                     )
                 }),
             Self::SpeculativeK4(case) => observe_case(case)
@@ -4787,6 +5046,7 @@ impl M1PhysicalRecycledQueueSessionV1 {
                         *failure,
                         M1PhysicalRecycledQueueSessionV1::SpeculativeK4,
                         M1RejectedCompletionOutputV1::SpeculativeK4,
+                        M1CompletionSnapshotReadFailedOutputV1::speculative_k4,
                     )
                 }),
             Self::SpeculativeK8(case) => observe_case(case)
@@ -4796,6 +5056,7 @@ impl M1PhysicalRecycledQueueSessionV1 {
                         *failure,
                         M1PhysicalRecycledQueueSessionV1::SpeculativeK8,
                         M1RejectedCompletionOutputV1::SpeculativeK8,
+                        M1CompletionSnapshotReadFailedOutputV1::speculative_k8,
                     )
                 }),
             Self::SpeculativeK16(case) => observe_case(case)
@@ -4805,6 +5066,7 @@ impl M1PhysicalRecycledQueueSessionV1 {
                         *failure,
                         M1PhysicalRecycledQueueSessionV1::SpeculativeK16,
                         M1RejectedCompletionOutputV1::SpeculativeK16,
+                        M1CompletionSnapshotReadFailedOutputV1::speculative_k16,
                     )
                 }),
         }

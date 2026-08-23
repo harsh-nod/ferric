@@ -102,6 +102,7 @@ use std::path::{Component, Path, PathBuf};
 use std::process::ExitCode;
 
 mod input_bundle;
+mod m1_r30_canary_partial_capture;
 mod m1_r30_exhaustion_partial_capture;
 mod m1_r30_partial_capture;
 mod m1_r30_rollback_partial_capture;
@@ -949,7 +950,7 @@ fn abandon_released_round(
 ) -> ! {
     match released {
         QualificationReleasedRoundV1::First(released) => {
-            match released.destroy_queue_and_retain_step(&mut engine) {
+            match (*released).destroy_queue_and_retain_step(&mut engine) {
                 Ok(closed) => closed_teardown(
                     phase_name,
                     ReleasedRoundTeardownCustodyV1 {
@@ -1805,6 +1806,11 @@ fn main() -> ExitCode {
 
 fn run(arguments: Vec<OsString>) -> CaptureResult<()> {
     if arguments.first().and_then(|argument| argument.to_str())
+        == Some(m1_r30_canary_partial_capture::COMMAND)
+    {
+        return run_r30_canary_capture(&arguments[1..]);
+    }
+    if arguments.first().and_then(|argument| argument.to_str())
         == Some(m1_r30_exhaustion_partial_capture::COMMAND)
     {
         return run_r30_exhaustion_capture(&arguments[1..]);
@@ -1833,6 +1839,117 @@ fn run(arguments: Vec<OsString>) -> CaptureResult<()> {
         }
     }
     run_capture(&arguments)
+}
+
+fn run_r30_canary_capture(arguments: &[OsString]) -> CaptureResult<()> {
+    let [source_root, prepacked_root, artifact_root, closure_path, environment_path, gpu_unique_id, output] =
+        arguments
+    else {
+        return Err("usage: ferric-m1-qualification-capture capture-r30-canary MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned());
+    };
+    let gpu_unique_id = gpu_unique_id
+        .to_str()
+        .ok_or_else(|| "GPU unique ID must be UTF-8 decimal".to_owned())?
+        .parse::<u64>()
+        .map_err(|_| "GPU unique ID must be a decimal u64".to_owned())?;
+    let closure = load_closure(Path::new(closure_path))?;
+    let _environment = load_environment(Path::new(environment_path), gpu_unique_id)?;
+    let artifacts = reopen_persisted_m1_kernel_artifacts_v1(Path::new(artifact_root))
+        .map_err(|error| format!("cannot authenticate persisted kernel artifacts: {error}"))?;
+    let executable_catalog_id = artifacts.program_catalog_id();
+    let source = SecureDirectory::open(Path::new(source_root), "model source root")?;
+    let snapshot = SecureDirectory::open(Path::new(prepacked_root), "prepacked snapshot root")?;
+    let model = load_model_inputs(&source, &snapshot)?;
+    let runner_admission = model.authenticate()?;
+    let plan_catalog = build_authenticated_sequential_plan_catalog(runner_admission)
+        .map_err(|error| format!("cannot build authenticated plan catalog: {error:?}"))?;
+    let external = complete_closure(&closure, &plan_catalog, executable_catalog_id)?;
+    let identity_closure = build_preliminary_identity_closure(plan_catalog, external)
+        .map_err(|error| format!("cannot build runner identity closure: {error:?}"))?;
+    let declaration = generate_qwen3_gfx942_runner_declaration(identity_closure)
+        .map_err(|error| format!("cannot generate authenticated runner declaration: {error:?}"))?;
+    let publication = publish_qwen3_gfx942_runner_declaration(declaration)
+        .map_err(|error| format!("cannot publish runner declaration: {error:?}"))?;
+    let runner = bind_m1_physical_runner_v1(artifacts, publication)
+        .map_err(|error| format!("cannot bind physical runner: {error:?}"))?;
+
+    let memory_admission = model.authenticate()?;
+    let memory_plan = model_memory_plan(memory_admission)?;
+    let checked = OpenedKfd::open_default()
+        .map_err(|error| format!("cannot open KFD: {error}"))?
+        .admit_uapi()
+        .map_err(|error| format!("cannot admit pinned KFD UAPI: {error}"))?
+        .bind_gfx942_xnack_minus(DeviceSelector::UniqueId(gpu_unique_id))
+        .map_err(|error| format!("cannot bind selected gfx942:xnack- device: {error}"))?;
+    let memory = initialize_m1_physical_runner_memory_v1(
+        checked,
+        memory_plan,
+        model.target_weights,
+        model.draft_weights,
+    )
+    .map_err(|error| format!("cannot initialize physical model memory: {error:?}"))?;
+    let capture = execute_r30_canary_capture(&runner, memory, gpu_unique_id)?;
+    let closed = capture
+        .r30_canary_closed
+        .as_ref()
+        .ok_or_else(|| "guarded capture lost closed queue custody".to_owned())?;
+    let artifact = m1_r30_canary_partial_capture::manifest(
+        m1_r30_canary_partial_capture::ClosedCaptureInputsV1 {
+            closed,
+            device_id: capture.device_id,
+            gpu_unique_id,
+            runner: &runner,
+        },
+    )?;
+    let capture_sha256 = sha256_hex(artifact.bytes());
+    m1_r30_canary_partial_capture::publish(Path::new(output), artifact)?;
+    println!("output={}", Path::new(output).display());
+    println!("capture_sha256={capture_sha256}");
+    println!("status=partial-non-evidence");
+    Ok(())
+}
+
+fn execute_r30_canary_capture(
+    runner: &ferric_engine::M1PhysicalRunnerV1,
+    memory: ferric_engine::M1PartitionedModelMemoryKvPoolV1,
+    gpu_unique_id: u64,
+) -> CaptureResult<CapturedOutput> {
+    let input_tokens = vec![1_u32];
+    let input_bytes = 1_u32.to_le_bytes();
+    let selection = Qwen3PlanSelection {
+        role: Qwen3ModelRole::Target8B,
+        mode: Qwen3ExecutionMode::Prefill,
+        bucket: Qwen3PlanBucket::PrefillS1T128,
+    };
+    let workload_bytes = canonical_bytes(&json!({
+        "active_length": 1,
+        "case": "target-prefill-s1-t128",
+        "context_length": 0,
+        "format": "FERRIC-M1-R30-CANARY-WORKLOAD-V1",
+        "input_token": 1,
+        "selection": "target-prefill-s1-t128",
+    }))?;
+    let workload = Workload {
+        bytes: workload_bytes,
+        input_path: PathBuf::from("frozen-r30-canary-input-u32le"),
+        input_bytes: u64::try_from(input_bytes.len()).unwrap_or(u64::MAX),
+        input_sha256: sha256_hex(&input_bytes),
+        kind: "prefill-s1-t128".to_owned(),
+        lanes: vec![LaneInput {
+            active_length: 1,
+            context_length: 0,
+        }],
+        max_polls: u32::try_from(MAX_POLLS).expect("MAX_POLLS fits u32"),
+        selection,
+    };
+    execute_capture(
+        runner,
+        memory,
+        &workload,
+        input_tokens,
+        gpu_unique_id,
+        CapturePurposeV1::R30PartialCanary,
+    )
 }
 
 fn run_r30_exhaustion_capture(arguments: &[OsString]) -> CaptureResult<()> {
@@ -2817,6 +2934,7 @@ fn run_capture(arguments: &[OsString]) -> CaptureResult<()> {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum CapturePurposeV1 {
     Qualification,
+    R30PartialCanary,
     R30PartialCancellation,
 }
 
@@ -2829,6 +2947,7 @@ fn run_capture_with_purpose(
     else {
         return Err(match purpose {
             CapturePurposeV1::Qualification => "usage: ferric-m1-qualification-capture PLAN ROSTER CASE-ID WORKLOAD MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned(),
+            CapturePurposeV1::R30PartialCanary => "capture-r30-canary uses its independent seven-argument path".to_owned(),
             CapturePurposeV1::R30PartialCancellation => "usage: ferric-m1-qualification-capture capture-r30-cancellation PLAN ROSTER CASE-ID WORKLOAD MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned(),
         });
     };
@@ -2975,6 +3094,7 @@ struct CapturedOutput {
     execution: CapturedExecutionV1,
     logits: Vec<u8>,
     logits_row_sha256: Vec<[u8; 32]>,
+    r30_canary_closed: Option<ferric_engine::M1ReleasedQueueTeardownSuccessV1>,
     settlement: Option<m1_r30_partial_capture::CancellationSettlementV1>,
     tokens: Vec<u8>,
 }
@@ -3940,7 +4060,7 @@ fn preflight_engine_retirement(engine: &Engine<32>, requests: &[RequestId]) -> C
 
 #[derive(Debug)]
 enum QualificationReleasedRoundV1 {
-    First(ferric_engine::M1ReleasedCompletedStepV1),
+    First(Box<ferric_engine::M1ReleasedCompletedStepV1>),
     Rearmed(Box<M1LongLivedQueueReleasedRoundV1>),
 }
 
@@ -3953,7 +4073,7 @@ impl QualificationReleasedRoundV1 {
         ferric_engine::M1LongLivedQueueRearmScheduleFailureV1,
     > {
         match self {
-            Self::First(released) => schedule_m1_long_lived_queue_rearm_v1(engine, released),
+            Self::First(released) => schedule_m1_long_lived_queue_rearm_v1(engine, *released),
             Self::Rearmed(released) => (*released).schedule_next(engine),
         }
     }
@@ -4501,7 +4621,7 @@ fn execute_decode_capture(
             teardown,
         );
     }
-    let mut released = QualificationReleasedRoundV1::First(first);
+    let mut released = QualificationReleasedRoundV1::First(Box::new(first));
 
     for ordinal in 1..M1_QUALIFICATION_FINAL_INPUT_TOKEN {
         let contexts =
@@ -5093,6 +5213,7 @@ fn execute_decode_capture(
         },
         logits: copied.logits,
         logits_row_sha256: copied.logits_row_sha256,
+        r30_canary_closed: None,
         settlement: None,
         tokens: copied.tokens,
     }
@@ -5580,7 +5701,12 @@ fn execute_prefill_capture(
             },
         ),
     };
-    let completion = match memory.allocate_completion_output(selection) {
+    let completion = match match purpose {
+        CapturePurposeV1::R30PartialCanary => memory.allocate_guarded_completion_output(selection),
+        CapturePurposeV1::Qualification | CapturePurposeV1::R30PartialCancellation => {
+            memory.allocate_completion_output(selection)
+        }
+    } {
         Ok(completion) => completion,
         Err(diagnostic) => abandon_prefill_initial_dispatch(
             "prefill compact completion allocation",
@@ -5868,6 +5994,31 @@ fn execute_prefill_capture(
             total_released_pages: teardown.total_released(),
         }
     });
+    let r30_canary_closed = if purpose == CapturePurposeV1::R30PartialCanary {
+        if teardown.checked().completion_canary().is_none() {
+            closed_teardown(
+                "guarded prefill lost checked canary summary",
+                QualificationEvidenceCustodyV1 {
+                    _evidence: evidence,
+                    _diagnostic: None,
+                    _custody: teardown,
+                },
+            );
+        }
+        Some(teardown)
+    } else {
+        if teardown.checked().completion_canary().is_some() {
+            closed_teardown(
+                "ordinary prefill acquired guarded completion summary",
+                QualificationEvidenceCustodyV1 {
+                    _evidence: evidence,
+                    _diagnostic: None,
+                    _custody: teardown,
+                },
+            );
+        }
+        None
+    };
     CapturedOutput {
         compact_sha256: copied.compact_sha256,
         device_id,
@@ -5877,6 +6028,7 @@ fn execute_prefill_capture(
         },
         logits: copied.logits,
         logits_row_sha256: copied.logits_row_sha256,
+        r30_canary_closed,
         settlement,
         tokens: copied.tokens,
     }
@@ -6100,7 +6252,10 @@ fn qualify_prefill_live_generation(
             observed.destroy_queue_and_retain_evidence(engine),
         );
     }
-    if purpose == CapturePurposeV1::Qualification {
+    if matches!(
+        purpose,
+        CapturePurposeV1::Qualification | CapturePurposeV1::R30PartialCanary
+    ) {
         if let Err(error) = preflight_engine_retirement(engine, &evidence.requests) {
             close_or_quarantine_prefill_live(
                 "prefill observed qualification retirement preflight",
@@ -7514,6 +7669,15 @@ mod tests {
         let legacy_error = run(legacy).unwrap_err();
         assert!(!legacy_error.contains("capture-r30-cancellation PLAN ROSTER"));
 
+        let canary_error =
+            run(vec![OsString::from(m1_r30_canary_partial_capture::COMMAND)]).unwrap_err();
+        assert!(canary_error.contains("capture-r30-canary MODEL-SOURCE"));
+
+        let mut canary_wrong_width = vec![OsString::from("unused"); 11];
+        canary_wrong_width[0] = OsString::from(m1_r30_canary_partial_capture::COMMAND);
+        let canary_error = run(canary_wrong_width).unwrap_err();
+        assert!(canary_error.contains("capture-r30-canary MODEL-SOURCE"));
+
         let rollback_error = run(vec![OsString::from(
             m1_r30_rollback_partial_capture::COMMAND,
         )])
@@ -8094,6 +8258,7 @@ mod tests {
             },
             logits: vec![0; QWEN3_VOCABULARY_SIZE as usize * 2],
             logits_row_sha256: vec![[12; 32]],
+            r30_canary_closed: None,
             settlement: None,
             tokens: 0_u32.to_le_bytes().to_vec(),
         };

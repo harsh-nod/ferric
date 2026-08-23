@@ -11,7 +11,7 @@ use core::fmt;
 
 use fe2o3_service_host::{
     ServiceAllocationErrorV1, ServiceDeviceDispatchRangeV1, ServiceFixedDispatchBufferV1,
-    ServiceHostDispatchRangeV1,
+    ServiceHostDispatchRangeV1, ServiceHostDispatchSnapshotRangeV1,
 };
 use ferric_spec::Identity;
 
@@ -321,6 +321,16 @@ pub enum M1PhysicalBufferBindingErrorV1 {
         /// Exact host-output owner diagnostic.
         error: M1CompletionOutputErrorV1,
     },
+    /// The generic fixed-buffer constructor rejected the uniquely associated
+    /// completion interior and enclosing initialized snapshot.
+    CompletionSnapshotAssociation {
+        /// Global physical row.
+        dispatch_index: u32,
+        /// Inspected explicit-argument ordinal.
+        argument: usize,
+        /// Exact generic range/association diagnostic.
+        error: ServiceAllocationErrorV1,
+    },
     /// Qualification capture was attached to a non-target-only physical recipe.
     QualificationLogitsIntent,
     /// The physical recipe did not retain exactly the two target logits bindings.
@@ -439,7 +449,7 @@ pub fn bind_m1_physical_buffer_ranges_v1(
         ));
     }
 
-    let completion_range =
+    let completion_binding =
         match preflight_completion_output(&recipe, &completion_output, &partitioned_memory) {
             Ok(range) => range,
             Err(error) => {
@@ -505,7 +515,7 @@ pub fn bind_m1_physical_buffer_ranges_v1(
         partitioned_memory: &partitioned_memory,
         workspaces: &workspaces,
         completion_shape: completion_output.shape(),
-        completion_range,
+        completion_binding,
         qualification_logits_range,
         speculative_diagnostic_choices_ranges,
     };
@@ -571,7 +581,7 @@ fn preflight_completion_output(
     recipe: &AddresslessM1PhysicalBufferRecipeV1,
     completion_output: &BoundM1CompletionOutputV1,
     partitioned_memory: &M1PartitionedModelMemoryKvPoolV1,
-) -> Result<ServiceHostDispatchRangeV1, M1PhysicalBufferBindingErrorV1> {
+) -> Result<CompletionOutputBindingRangeV1, M1PhysicalBufferBindingErrorV1> {
     let mut matches = recipe.rows().iter().flat_map(|row| {
         row.buffers().iter().filter_map(move |buffer| {
             let M1PhysicalBufferSourceV1::CompletionOutput { sequences } = buffer.source() else {
@@ -605,7 +615,7 @@ fn preflight_completion_output(
         source_sequences,
         completion_output.shape(),
     )?;
-    partitioned_memory
+    let interior = partitioned_memory
         .completion_output_dispatch_range(completion_output, selection)
         .map_err(
             |error| M1PhysicalBufferBindingErrorV1::CompletionOutputRange {
@@ -613,7 +623,13 @@ fn preflight_completion_output(
                 argument,
                 error,
             },
-        )
+        )?;
+    Ok(CompletionOutputBindingRangeV1 {
+        interior,
+        snapshot: completion_output
+            .completion_canary()
+            .map(crate::BoundM1CompletionCanaryV1::snapshot_range),
+    })
 }
 
 fn preflight_qualification_logits(
@@ -847,6 +863,13 @@ fn validate_completion_output_shape(
 enum ResolvedM1PhysicalBufferRangeV1 {
     Device(ServiceDeviceDispatchRangeV1),
     HostVisible(ServiceHostDispatchRangeV1),
+    CompletionOutput(CompletionOutputBindingRangeV1),
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct CompletionOutputBindingRangeV1 {
+    interior: ServiceHostDispatchRangeV1,
+    snapshot: Option<ServiceHostDispatchSnapshotRangeV1>,
 }
 
 #[derive(Clone, Copy)]
@@ -854,23 +877,48 @@ struct SourceResolutionContextV1<'a> {
     partitioned_memory: &'a M1PartitionedModelMemoryKvPoolV1,
     workspaces: &'a BoundM1FullStepWorkspaceSubleases,
     completion_shape: M1CompletionOutputShapeV1,
-    completion_range: ServiceHostDispatchRangeV1,
+    completion_binding: CompletionOutputBindingRangeV1,
     qualification_logits_range: Option<ServiceHostDispatchRangeV1>,
     speculative_diagnostic_choices_ranges: Option<SpeculativeDiagnosticChoiceRangesV1>,
 }
 
 impl ResolvedM1PhysicalBufferRangeV1 {
-    const fn into_fixed_buffer(
+    fn into_fixed_buffer(
         self,
+        dispatch_index: u32,
         explicit_argument_index: usize,
-    ) -> ServiceFixedDispatchBufferV1 {
+    ) -> Result<ServiceFixedDispatchBufferV1, M1PhysicalBufferBindingErrorV1> {
         match self {
-            Self::Device(range) => {
-                ServiceFixedDispatchBufferV1::new(explicit_argument_index, range)
-            }
-            Self::HostVisible(range) => {
-                ServiceFixedDispatchBufferV1::new_host_visible(explicit_argument_index, range)
-            }
+            Self::Device(range) => Ok(ServiceFixedDispatchBufferV1::new(
+                explicit_argument_index,
+                range,
+            )),
+            Self::HostVisible(range) => Ok(ServiceFixedDispatchBufferV1::new_host_visible(
+                explicit_argument_index,
+                range,
+            )),
+            Self::CompletionOutput(CompletionOutputBindingRangeV1 {
+                interior,
+                snapshot: None,
+            }) => Ok(ServiceFixedDispatchBufferV1::new_host_visible(
+                explicit_argument_index,
+                interior,
+            )),
+            Self::CompletionOutput(CompletionOutputBindingRangeV1 {
+                interior,
+                snapshot: Some(snapshot),
+            }) => ServiceFixedDispatchBufferV1::new_host_visible_with_completed_snapshot(
+                explicit_argument_index,
+                interior,
+                snapshot,
+            )
+            .map_err(|error| {
+                M1PhysicalBufferBindingErrorV1::CompletionSnapshotAssociation {
+                    dispatch_index,
+                    argument: explicit_argument_index,
+                    error,
+                }
+            }),
         }
     }
 }
@@ -904,7 +952,12 @@ trait M1PhysicalBufferResolutionBackendV1 {
         source: M1PhysicalBufferSourceV1,
     ) -> Result<Self::ResolvedRange, M1PhysicalBufferBindingErrorV1>;
 
-    fn bind_buffer(&mut self, argument: usize, range: Self::ResolvedRange) -> Self::Buffer;
+    fn bind_buffer(
+        &mut self,
+        dispatch_index: u32,
+        argument: usize,
+        range: Self::ResolvedRange,
+    ) -> Result<Self::Buffer, M1PhysicalBufferBindingErrorV1>;
 }
 
 struct M1ResolvedPhysicalBufferRowV1<T> {
@@ -958,8 +1011,13 @@ impl M1PhysicalBufferResolutionBackendV1 for M1ProductionPhysicalBufferResolutio
         resolve_production_ordinary_source(self.context, row, argument, source)
     }
 
-    fn bind_buffer(&mut self, argument: usize, range: Self::ResolvedRange) -> Self::Buffer {
-        range.into_fixed_buffer(argument)
+    fn bind_buffer(
+        &mut self,
+        dispatch_index: u32,
+        argument: usize,
+        range: Self::ResolvedRange,
+    ) -> Result<Self::Buffer, M1PhysicalBufferBindingErrorV1> {
+        range.into_fixed_buffer(dispatch_index, argument)
     }
 }
 
@@ -1011,7 +1069,7 @@ fn resolve_rows_with_backend<B: M1PhysicalBufferResolutionBackendV1>(
                 source_buffer.explicit_argument_index(),
                 source_buffer.source(),
             )?;
-            buffers.push(backend.bind_buffer(expected_ordinal, range));
+            buffers.push(backend.bind_buffer(dispatch_index, expected_ordinal, range)?);
         }
         if buffers.len() != source_row.buffers().len() {
             return Err(M1PhysicalBufferBindingErrorV1::BufferCount {
@@ -1392,8 +1450,8 @@ fn resolve_production_ordinary_source(
                 sequences,
                 context.completion_shape,
             )?;
-            Ok(ResolvedM1PhysicalBufferRangeV1::HostVisible(
-                context.completion_range,
+            Ok(ResolvedM1PhysicalBufferRangeV1::CompletionOutput(
+                context.completion_binding,
             ))
         }
         M1PhysicalBufferSourceV1::SpeculativeTargetTokenIds { .. } => {
@@ -1519,12 +1577,17 @@ mod tests {
             })
         }
 
-        fn bind_buffer(&mut self, argument: usize, range: Self::ResolvedRange) -> Self::Buffer {
-            TestBoundRangeV1 {
+        fn bind_buffer(
+            &mut self,
+            _dispatch_index: u32,
+            argument: usize,
+            range: Self::ResolvedRange,
+        ) -> Result<Self::Buffer, M1PhysicalBufferBindingErrorV1> {
+            Ok(TestBoundRangeV1 {
                 argument,
                 source: range.source,
                 route: range.route,
-            }
+            })
         }
     }
 

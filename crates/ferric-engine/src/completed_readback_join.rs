@@ -15,7 +15,8 @@ use crate::{
     completion_wire::check_inert_qualification_final_completion_record,
     qualification_logits::M1QualificationFinalRowChoicesV1, CompletionWireError,
     CompletionWireExpectation, CompletionWireSemanticExpectation, InertCheckedCompletionRecord,
-    M1CompletionOutputErrorV1, M1ObservedCompletionImageV1, M1ScheduledDispatchV1,
+    M1CompletionOutputErrorV1, M1ObservedCompletionCanarySummaryV1, M1ObservedCompletionImageV1,
+    M1ScheduledDispatchV1, M1ValidatedCompletionCanaryReadbackV1,
 };
 
 /// Fail-closed completed-output structural or semantic diagnostic.
@@ -125,10 +126,26 @@ pub struct M1CheckedCompletionOutputV1 {
     offset_bytes: u64,
     extent_bytes: u64,
     raw_sha256: [u8; 32],
+    completion_canary: Option<Box<M1ObservedCompletionCanarySummaryV1>>,
+    completion_canary_readback: Option<Box<M1ValidatedCompletionCanaryReadbackV1>>,
     records: Box<[InertCheckedCompletionRecord]>,
 }
 
 impl M1CheckedCompletionOutputV1 {
+    pub(crate) fn retain_completion_canary_readback(
+        mut self,
+        readback: Option<Box<M1ValidatedCompletionCanaryReadbackV1>>,
+    ) -> Self {
+        debug_assert_eq!(
+            self.completion_canary.as_deref().copied(),
+            readback
+                .as_deref()
+                .map(M1ValidatedCompletionCanaryReadbackV1::summary)
+        );
+        self.completion_canary_readback = readback;
+        self
+    }
+
     /// Exact physical target selection shared by every checked live record.
     #[must_use]
     pub const fn selection(&self) -> Qwen3PlanSelection {
@@ -171,6 +188,16 @@ impl M1CheckedCompletionOutputV1 {
         &self.raw_sha256
     }
 
+    /// Checked adjacent-guard observation when the completion used opt-in backing.
+    #[must_use]
+    pub fn completion_canary(&self) -> Option<M1ObservedCompletionCanarySummaryV1> {
+        debug_assert_eq!(
+            self.completion_canary.is_some(),
+            self.completion_canary_readback.is_some()
+        );
+        self.completion_canary.as_deref().copied()
+    }
+
     /// Checked records in exact scheduler-member order.
     #[must_use]
     pub fn records(&self) -> &[InertCheckedCompletionRecord] {
@@ -192,6 +219,8 @@ impl M1CheckedCompletionOutputV1 {
             offset_bytes: 0,
             extent_bytes: 0,
             raw_sha256: [0; 32],
+            completion_canary: None,
+            completion_canary_readback: None,
             records: Box::new([]),
         }
     }
@@ -376,6 +405,8 @@ fn check_m1_completed_output(
         offset_bytes: observed.offset_bytes(),
         extent_bytes: observed.extent_bytes(),
         raw_sha256: *observed.raw_sha256(),
+        completion_canary: observed.completion_canary().map(Box::new),
+        completion_canary_readback: None,
         records: records.into_boxed_slice(),
     })
 }

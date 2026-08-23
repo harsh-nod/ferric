@@ -8,6 +8,7 @@ use vstd::prelude::*;
 mod bound_step_workspaces;
 mod cache;
 mod completed_readback_join;
+mod completion_canary;
 mod completion_output;
 mod completion_wire;
 mod device_cache;
@@ -51,9 +52,19 @@ pub use bound_step_workspaces::{
 };
 pub use cache::{KvError, PageId};
 pub use completed_readback_join::{M1CheckedCompletionOutputV1, M1CompletedOutputCheckErrorV1};
+pub(crate) use completion_canary::{
+    preflight_m1_completion_canary_v1, validate_m1_completion_canary_readback_v1,
+    BoundM1CompletionCanaryV1, M1ValidatedCompletionCanaryReadbackV1,
+};
+pub use completion_canary::{
+    M1CompletionCanaryErrorV1, M1CompletionCanaryLayoutV1, M1ObservedCompletionCanarySummaryV1,
+    M1_COMPLETION_CANARY_GUARD_BYTES_V1, M1_COMPLETION_CANARY_PREFIX_BYTE_V1,
+    M1_COMPLETION_CANARY_SUFFIX_BYTE_V1,
+};
 pub use completion_output::{
-    allocate_m1_completion_output_v1, m1_completion_output_shape_v1, BoundM1CompletionOutputV1,
-    M1CompletionOutputErrorV1, M1CompletionOutputShapeV1, M1_COMPLETION_OUTPUT_ALIGNMENT_V1,
+    allocate_m1_completion_output_v1, allocate_m1_guarded_completion_output_v1,
+    m1_completion_output_shape_v1, BoundM1CompletionOutputV1, M1CompletionOutputErrorV1,
+    M1CompletionOutputShapeV1, M1_COMPLETION_OUTPUT_ALIGNMENT_V1,
 };
 pub use completion_wire::{
     bind_inert_completion_epoch, check_inert_completion_record,
@@ -258,8 +269,9 @@ pub use physical_queue_lifecycle::{
     M1CompletionEvidenceTeardownDiagnosticV1, M1CompletionEvidenceTeardownEvidenceV1,
     M1CompletionEvidenceTeardownFailureV1, M1CompletionEvidenceTeardownSuccessV1,
     M1CompletionObservationErrorV1, M1CompletionObservationFailureCustodyV1,
-    M1CompletionObservationFailureV1, M1EngineQuarantinedPhysicalQueueOperationFailureV1,
-    M1ObservedCompletionCaseV1, M1ObservedCompletionOutputV1, M1ObservedQualificationOutputV1,
+    M1CompletionObservationFailureV1, M1CompletionSnapshotReadFailedOutputV1,
+    M1EngineQuarantinedPhysicalQueueOperationFailureV1, M1ObservedCompletionCaseV1,
+    M1ObservedCompletionOutputV1, M1ObservedQualificationOutputV1,
     M1ObservedSpeculativeDiagnosticOutputV1, M1PhysicalCompletedQueueSessionV1,
     M1PhysicalCompletedReadbackV1, M1PhysicalDetachedQueueCaseV1, M1PhysicalDetachedQueueSessionV1,
     M1PhysicalPublishedQueueSessionV1, M1PhysicalQueueCreateFailureClassV1,

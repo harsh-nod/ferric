@@ -15,7 +15,10 @@ use fe2o3_service_host::{
 use ferric_qwen_kernels::logits::Qwen3LogitsCompactRecordLayoutV1;
 use ferric_spec::{Qwen3ModelRole, Qwen3PlanSelection};
 
-use crate::{BoundM1QualificationLogitsV1, BoundM1SpeculativeDiagnosticChoicesV1};
+use crate::{
+    BoundM1CompletionCanaryV1, BoundM1QualificationLogitsV1, BoundM1SpeculativeDiagnosticChoicesV1,
+    M1CompletionCanaryErrorV1, M1CompletionCanaryLayoutV1,
+};
 
 type CompletionOutputAllocationKeyV1 =
     ServiceAllocationKeyV1<HostDownloadRoleV1, HostVisibleAllocationV1>;
@@ -162,6 +165,8 @@ pub enum M1CompletionOutputErrorV1 {
     },
     /// The generic allocation owner rejected allocation, mapping, or range use.
     Allocation(ServiceAllocationErrorV1),
+    /// Guarded output geometry or initialization could not be represented.
+    Canary(M1CompletionCanaryErrorV1),
 }
 
 impl fmt::Display for M1CompletionOutputErrorV1 {
@@ -195,6 +200,7 @@ pub struct BoundM1CompletionOutputV1 {
     shape: M1CompletionOutputShapeV1,
     key: CompletionOutputAllocationKeyV1,
     dispatch_range: ServiceHostDispatchRangeV1,
+    completion_canary: Option<BoundM1CompletionCanaryV1>,
     qualification_logits: Option<BoundM1QualificationLogitsV1>,
     speculative_diagnostic_choices: Option<BoundM1SpeculativeDiagnosticChoicesV1>,
 }
@@ -211,6 +217,12 @@ impl BoundM1CompletionOutputV1 {
     #[must_use]
     pub const fn retained_host_dispatch_range(&self) -> ServiceHostDispatchRangeV1 {
         self.dispatch_range
+    }
+
+    /// Returns the opt-in adjacent-guard snapshot association, when present.
+    #[must_use]
+    pub(crate) const fn completion_canary(&self) -> Option<BoundM1CompletionCanaryV1> {
+        self.completion_canary
     }
 
     /// Returns qualification-only logits capture when explicitly enabled.
@@ -256,16 +268,36 @@ impl BoundM1CompletionOutputV1 {
         selection: Qwen3PlanSelection,
     ) -> Result<ServiceHostDispatchRangeV1, M1CompletionOutputErrorV1> {
         self.shape.revalidate_selection(selection)?;
-        validate_key_geometry(self.key, self.shape)?;
+        let (allocation_extent, interior_offset) = match self.completion_canary {
+            Some(canary) => (
+                canary.layout().snapshot_extent_bytes(),
+                canary.layout().interior_offset_bytes(),
+            ),
+            None => (self.shape.extent_bytes, 0),
+        };
+        validate_key_geometry(self.key, allocation_extent)?;
         let typed = allocations.range(
             self.key,
-            0,
+            interior_offset,
             self.shape.extent_bytes,
             M1_COMPLETION_OUTPUT_ALIGNMENT_V1,
         )?;
         let range = allocations.host_dispatch_range(typed)?;
         if range != self.dispatch_range {
             return Err(M1CompletionOutputErrorV1::DispatchRangeDrift);
+        }
+        if let Some(canary) = self.completion_canary {
+            let snapshot_typed = allocations.range(
+                self.key,
+                0,
+                allocation_extent,
+                M1_COMPLETION_OUTPUT_ALIGNMENT_V1,
+            )?;
+            let snapshot_host = allocations.host_dispatch_range(snapshot_typed)?;
+            let snapshot = allocations.host_dispatch_snapshot_range(snapshot_host)?;
+            if snapshot != canary.snapshot_range() {
+                return Err(M1CompletionOutputErrorV1::DispatchRangeDrift);
+            }
         }
         Ok(range)
     }
@@ -316,7 +348,7 @@ pub fn allocate_m1_completion_output_v1(
     let requested_bytes = usize::try_from(shape.extent_bytes)
         .map_err(|_| M1CompletionOutputErrorV1::ExtentOverflow)?;
     let key = allocations.allocate_host_visible::<HostDownloadRoleV1>(requested_bytes)?;
-    validate_key_geometry(key, shape)?;
+    validate_key_geometry(key, shape.extent_bytes())?;
     let _mapped = allocations.map_host_visible(key)?;
     let typed = allocations.range(
         key,
@@ -329,6 +361,53 @@ pub fn allocate_m1_completion_output_v1(
         shape,
         key,
         dispatch_range,
+        completion_canary: None,
+        qualification_logits: None,
+        speculative_diagnostic_choices: None,
+    })
+}
+
+/// Allocates one opt-in initialized guarded coherent K7 output.
+///
+/// The backing is exactly `[64 * 0xA5 | S * 120 zero bytes | 64 * 0x5A]`.
+/// The retained dispatch range names only the K7 interior, while the retained
+/// snapshot token names the complete initialized enclosing allocation. No
+/// queue association or completed-copy authority is created here.
+///
+/// # Errors
+///
+/// Returns [`M1CompletionOutputErrorV1`] for target/layout rejection or a
+/// generic initialized host-visible allocation/range failure.
+pub fn allocate_m1_guarded_completion_output_v1(
+    allocations: &mut ServiceAllocationSessionV1,
+    selection: Qwen3PlanSelection,
+) -> Result<BoundM1CompletionOutputV1, M1CompletionOutputErrorV1> {
+    let shape = m1_completion_output_shape_v1(selection)?;
+    let layout =
+        M1CompletionCanaryLayoutV1::for_shape(shape).map_err(M1CompletionOutputErrorV1::Canary)?;
+    let initialized = layout
+        .initialized_bytes()
+        .map_err(M1CompletionOutputErrorV1::Canary)?;
+    let key = allocations.allocate_initialized_host_visible::<HostDownloadRoleV1>(initialized)?;
+    validate_key_geometry(key, layout.snapshot_extent_bytes())?;
+    let snapshot_typed = allocations.range(
+        key,
+        0,
+        layout.snapshot_extent_bytes(),
+        M1_COMPLETION_OUTPUT_ALIGNMENT_V1,
+    )?;
+    let snapshot_host = allocations.host_dispatch_range(snapshot_typed)?;
+    let dispatch_range = snapshot_host.checked_subrange(
+        layout.interior_offset_bytes(),
+        layout.interior_extent_bytes(),
+        M1_COMPLETION_OUTPUT_ALIGNMENT_V1,
+    )?;
+    let snapshot_range = allocations.host_dispatch_snapshot_range(snapshot_host)?;
+    Ok(BoundM1CompletionOutputV1 {
+        shape,
+        key,
+        dispatch_range,
+        completion_canary: Some(BoundM1CompletionCanaryV1::new(layout, snapshot_range)),
         qualification_logits: None,
         speculative_diagnostic_choices: None,
     })
@@ -336,11 +415,11 @@ pub fn allocate_m1_completion_output_v1(
 
 fn validate_key_geometry(
     key: CompletionOutputAllocationKeyV1,
-    shape: M1CompletionOutputShapeV1,
+    expected_extent: u64,
 ) -> Result<(), M1CompletionOutputErrorV1> {
-    if key.extent_bytes() != shape.extent_bytes {
+    if key.extent_bytes() != expected_extent {
         return Err(M1CompletionOutputErrorV1::AllocationExtentDrift {
-            expected: shape.extent_bytes,
+            expected: expected_extent,
             actual: key.extent_bytes(),
         });
     }

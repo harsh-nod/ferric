@@ -262,6 +262,35 @@ carry no hardware claim: the Ferric-owned MI300 harness and independent evidence
 validators must still establish snapshot provenance, exact completion, injected
 device failure coverage, and typed custody before `m1.r30` can close.
 
+The Ferric engine exposes one opt-in physical adjacent-guard capture for the
+target-prefill S1 K7 completion range:
+
+```text
+cargo run --locked -p ferric-engine --bin ferric-m1-qualification-capture -- \
+  capture-r30-canary MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS \
+  CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE
+```
+
+The command freezes exactly one target-only `PrefillS1T128` case and allocates
+its 120-byte K7 completion output inside initialized host-visible backing laid
+out as a 64-byte `0xA5` prefix guard, the zeroed K7 interior, and a 64-byte
+`0x5A` suffix guard. The K7 dispatch receives only the checked interior range.
+After exact generation completion and queue recycle, Ferric copies the same
+enclosing allocation once, validates the retained coordinates and both guards,
+and passes only the interior to the existing K7 semantic decoder. A snapshot
+copy failure is terminal; a copied layout, guard, or K7 rejection retains the
+owned enclosing snapshot without copying it again. Publication occurs only
+after normal semantic settlement, target-page release accounting, and queue
+destruction.
+
+The no-replace bundle contains exactly `capture.json` and canonical
+`FERRIC-M1-R30-CANARY-PARTIAL-PROTOCOL-V1` `protocol.json`. Its status is
+`partial-non-evidence`. It checks only the adjacent 64-byte guards around one
+K7 output for one case. It proves neither K1-K6 bounds nor general
+out-of-bounds safety and covers no cancellation, exhaustion, rollback, injected
+fault, independent validation, evidence, hardware or numerical correctness,
+performance, qualification, `m1.r30`, or M1 closure claim.
+
 The Ferric engine also exposes one deliberately partial physical cancellation
 capture using the already admitted qualification inputs:
 
@@ -343,10 +372,10 @@ retirement and reclamation. The two-file output uses canonical
 The exhaustion bundle remains `partial-non-evidence`: it establishes only
 request-local model-memory ledger saturation, not device-memory exhaustion or
 pressure. It does not dispatch a kernel or create or pressure a queue. The full
-R30 roster still lacks Ferric-owned guard-region readback for canary validation
-and an admitted physical queue/device fault-injection authority. Those missing
-runtime boundaries cannot be replaced by the existing external self-reported
-intake.
+R30 roster now has only one Ferric-owned adjacent-guard readback for one
+target-prefill S1 K7 output; it still lacks broader canary coverage and an
+admitted physical queue/device fault-injection authority. Those missing runtime
+boundaries cannot be replaced by the existing external self-reported intake.
 
 The serving suite has an additive pre-observation producer for one bounded,
 externally declared target-load diagnostic:

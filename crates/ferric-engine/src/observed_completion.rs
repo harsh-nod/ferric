@@ -14,12 +14,14 @@ use sha2::{Digest, Sha256};
 
 use crate::{
     completion_wire::decode_completion_record, CompletionWireError, M1CompletionOutputErrorV1,
-    M1CompletionOutputShapeV1, M1ScheduledDispatchV1,
+    M1CompletionOutputShapeV1, M1ObservedCompletionCanarySummaryV1, M1ScheduledDispatchV1,
+    M1ValidatedCompletionCanaryReadbackV1,
 };
 
 #[derive(Debug)]
 enum M1ObservedCompletionBackingV1 {
     Physical(ServiceCompletedReadbackV1),
+    PhysicalCanary(Box<M1ValidatedCompletionCanaryReadbackV1>),
     #[allow(dead_code)]
     Test {
         dispatch_generation: u64,
@@ -33,6 +35,7 @@ impl M1ObservedCompletionBackingV1 {
     const fn dispatch_generation(&self) -> u64 {
         match self {
             Self::Physical(readback) => readback.dispatch_generation(),
+            Self::PhysicalCanary(readback) => readback.dispatch_generation(),
             Self::Test {
                 dispatch_generation,
                 ..
@@ -43,6 +46,7 @@ impl M1ObservedCompletionBackingV1 {
     const fn data_index(&self) -> usize {
         match self {
             Self::Physical(readback) => readback.data_index(),
+            Self::PhysicalCanary(readback) => readback.data_index(),
             Self::Test { data_index, .. } => *data_index,
         }
     }
@@ -50,6 +54,7 @@ impl M1ObservedCompletionBackingV1 {
     const fn offset_bytes(&self) -> u64 {
         match self {
             Self::Physical(readback) => readback.offset_bytes(),
+            Self::PhysicalCanary(readback) => readback.interior_offset_bytes(),
             Self::Test { offset_bytes, .. } => *offset_bytes,
         }
     }
@@ -57,7 +62,15 @@ impl M1ObservedCompletionBackingV1 {
     fn bytes(&self) -> &[u8] {
         match self {
             Self::Physical(readback) => readback.bytes(),
+            Self::PhysicalCanary(readback) => readback.interior_bytes(),
             Self::Test { bytes, .. } => bytes,
+        }
+    }
+
+    const fn completion_canary(&self) -> Option<M1ObservedCompletionCanarySummaryV1> {
+        match self {
+            Self::PhysicalCanary(readback) => Some(readback.summary()),
+            Self::Physical(_) | Self::Test { .. } => None,
         }
     }
 }
@@ -187,6 +200,12 @@ impl M1ObservedCompletionImageV1 {
         &self.records
     }
 
+    /// Checked adjacent-guard coordinates and digests for an opt-in guarded copy.
+    #[must_use]
+    pub const fn completion_canary(&self) -> Option<M1ObservedCompletionCanarySummaryV1> {
+        self.backing.completion_canary()
+    }
+
     /// Exact raw 120-byte record for one fixed-capacity lane.
     #[must_use]
     pub fn raw_record_bytes(&self, lane: u32) -> Option<&[u8]> {
@@ -195,6 +214,16 @@ impl M1ObservedCompletionImageV1 {
 
     pub(crate) const fn shape(&self) -> M1CompletionOutputShapeV1 {
         self.shape
+    }
+
+    pub(crate) fn into_completion_canary_readback(
+        self,
+    ) -> Option<Box<M1ValidatedCompletionCanaryReadbackV1>> {
+        match self.backing {
+            M1ObservedCompletionBackingV1::PhysicalCanary(readback) => Some(readback),
+            M1ObservedCompletionBackingV1::Physical(_)
+            | M1ObservedCompletionBackingV1::Test { .. } => None,
+        }
     }
 }
 
@@ -217,6 +246,32 @@ pub(crate) fn observe_m1_completed_output_v1(
         epoch: scheduled.epoch(),
         raw_sha256,
         backing: M1ObservedCompletionBackingV1::Physical(readback),
+        records,
+    })
+}
+
+pub(crate) fn observe_m1_guarded_completed_output_v1(
+    shape: M1CompletionOutputShapeV1,
+    queue_selection: Qwen3PlanSelection,
+    scheduled: &M1ScheduledDispatchV1,
+    readback: Box<M1ValidatedCompletionCanaryReadbackV1>,
+) -> Result<
+    M1ObservedCompletionImageV1,
+    (
+        M1ObservedCompletionImageErrorV1,
+        Box<M1ValidatedCompletionCanaryReadbackV1>,
+    ),
+> {
+    let observed = observe_records(shape, queue_selection, scheduled, readback.interior_bytes());
+    let (raw_sha256, records) = match observed {
+        Ok(observed) => observed,
+        Err(error) => return Err((error, readback)),
+    };
+    Ok(M1ObservedCompletionImageV1 {
+        shape,
+        epoch: scheduled.epoch(),
+        raw_sha256,
+        backing: M1ObservedCompletionBackingV1::PhysicalCanary(readback),
         records,
     })
 }

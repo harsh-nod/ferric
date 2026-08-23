@@ -1,0 +1,44 @@
+{
+  "authority": "ferric-m1-r30-canary-partial-protocol-only",
+  "bundle_files": [
+    "capture.json",
+    "protocol.json"
+  ],
+  "case": "target-prefill-s1-k7-adjacent-guards",
+  "format": "FERRIC-M1-R30-CANARY-PARTIAL-PROTOCOL-V1",
+  "layout": {
+    "interior_bytes": 120,
+    "interior_relative_offset_bytes": 64,
+    "prefix_byte": 165,
+    "prefix_guard_bytes": 64,
+    "snapshot_bytes": 248,
+    "suffix_byte": 90,
+    "suffix_guard_bytes": 64,
+    "suffix_relative_offset_bytes": 184
+  },
+  "lifecycle": [
+    "initialized-guarded-host-backing",
+    "bound-single-k7-interior",
+    "published-target-prefill-s1",
+    "completed-and-recycled-generation",
+    "copied-enclosing-snapshot-once",
+    "validated-prefix-and-suffix-guards",
+    "checked-existing-k7-semantics",
+    "settled-single-engine-member",
+    "released-single-target-page",
+    "destroyed-physical-queue",
+    "canonical-publication-ready"
+  ],
+  "milestone": "M1",
+  "nonclaim": "Partial one-case adjacent-guard protocol only: exactly 64 initialized bytes before and after one target-prefill S1 K7 output are checked after one completed generation. It grants no K1-K6 or general memory-safety proof, cancellation, exhaustion, rollback, fault-injection, independence, evidence, hardware-correctness, performance, qualification, or m1.r30/M1 closure authority.",
+  "obligation_id": "m1.r30",
+  "required_complete_case_roster": [
+    "canary",
+    "cancellation",
+    "exhaustion",
+    "fault-injection",
+    "rollback"
+  ],
+  "status": "partial-non-evidence",
+  "target": "gfx942:xnack-"
+}

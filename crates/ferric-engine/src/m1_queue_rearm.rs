@@ -19,8 +19,9 @@ use fe2o3_kfd::{ComputeAqlQueueObservationV1, Gfx942DeviceContentDescriptorV1};
 use fe2o3_service_host::{
     DeviceWorkspaceRoleV1, ServiceCompletedReadbackV1, ServiceDeviceDispatchRangeV1,
     ServiceDispatchRangeV1, ServiceFixedBatchV1, ServiceFixedDispatchBufferV1,
-    ServiceFixedDispatchPacketV1, ServiceHostDispatchRangeV1, ServiceQueueDataUpdateFailureV1,
-    ServiceQueueReleaseFailureV1, ServiceQueueReleaseObservationV1, ServiceQueueUnboundSessionV1,
+    ServiceFixedDispatchPacketV1, ServiceHostDispatchRangeV1, ServiceHostDispatchSnapshotRangeV1,
+    ServiceQueueDataUpdateFailureV1, ServiceQueueReleaseFailureV1,
+    ServiceQueueReleaseObservationV1, ServiceQueueUnboundSessionV1,
 };
 use ferric_build::{AddresslessM1StepWorkspacePlan, M1StepWorkspaceRange};
 use ferric_spec::{
@@ -2378,6 +2379,7 @@ enum RearmRangeRequestV1 {
 #[derive(Clone, Copy, Debug)]
 struct RetainedCaptureRangesV1 {
     completion_output: ServiceHostDispatchRangeV1,
+    completion_snapshot: Option<ServiceHostDispatchSnapshotRangeV1>,
     qualification_logits: Option<ServiceHostDispatchRangeV1>,
 }
 
@@ -2448,6 +2450,20 @@ fn requested_workspace_range(
         M1PhysicalBufferSourceV1::CompletionOutput { .. } => Err(()),
         M1PhysicalBufferSourceV1::ModelWeight { .. }
         | M1PhysicalBufferSourceV1::KvCachePlane { .. } => Ok(RearmRangeRequestV1::Unchanged),
+    }
+}
+
+fn select_rearm_completed_snapshot<T: Copy + Eq>(
+    source: M1PhysicalBufferSourceV1,
+    old: Option<T>,
+    retained_completion: Option<T>,
+) -> Result<Option<T>, ()> {
+    if matches!(source, M1PhysicalBufferSourceV1::CompletionOutput { .. }) {
+        (old == retained_completion)
+            .then_some(retained_completion)
+            .ok_or(())
+    } else {
+        old.is_none().then_some(None).ok_or(())
     }
 }
 
@@ -2529,7 +2545,7 @@ fn rebuild_bound_rows(
     old_bound_rows: &[M1BoundPhysicalBufferRowV1],
     composition: &AddresslessM1FullStepWorkspaceComposition,
     workspace_ranges: &[FreshWorkspaceRangeV1],
-    retained_capture: RetainedCaptureRangesV1,
+    retained_capture: &RetainedCaptureRangesV1,
 ) -> Result<Box<[M1BoundPhysicalBufferRowV1]>, ()> {
     let mut old_rows = Vec::new();
     old_rows
@@ -2572,21 +2588,53 @@ fn rebuild_bound_rows(
     )?;
     let mut rows = Vec::new();
     rows.try_reserve_exact(rebuilt.len()).map_err(|_| ())?;
-    for (source, rebuilt) in source_rows.iter().zip(rebuilt) {
+    for ((source, rebuilt), old) in source_rows.iter().zip(rebuilt).zip(old_bound_rows) {
         let mut buffers = Vec::new();
         buffers
             .try_reserve_exact(rebuilt.buffers.len())
             .map_err(|_| ())?;
-        for buffer in rebuilt.buffers {
+        for ((semantic, buffer), old_buffer) in source
+            .buffers()
+            .iter()
+            .zip(rebuilt.buffers)
+            .zip(old.buffers())
+        {
+            let completed_snapshot = select_rearm_completed_snapshot(
+                semantic.source(),
+                old_buffer.completed_snapshot(),
+                retained_capture.completion_snapshot,
+            )?;
             buffers.push(match buffer.range {
                 ServiceDispatchRangeV1::Device(range) => {
+                    if completed_snapshot.is_some() {
+                        return Err(());
+                    }
                     ServiceFixedDispatchBufferV1::new(buffer.explicit_argument_index, range)
                 }
                 ServiceDispatchRangeV1::HostVisible(range) => {
-                    ServiceFixedDispatchBufferV1::new_host_visible(
-                        buffer.explicit_argument_index,
-                        range,
-                    )
+                    if matches!(
+                        semantic.source(),
+                        M1PhysicalBufferSourceV1::CompletionOutput { .. }
+                    ) {
+                        match completed_snapshot {
+                            Some(snapshot) => ServiceFixedDispatchBufferV1::new_host_visible_with_completed_snapshot(
+                                buffer.explicit_argument_index,
+                                range,
+                                snapshot,
+                            )
+                            .map_err(|_| ())?,
+                            None => ServiceFixedDispatchBufferV1::new_host_visible(
+                                buffer.explicit_argument_index,
+                                range,
+                            ),
+                        }
+                    } else {
+                        debug_assert!(completed_snapshot.is_none());
+                        ServiceFixedDispatchBufferV1::new_host_visible(
+                            buffer.explicit_argument_index,
+                            range,
+                        )
+                    }
                 }
             });
         }
@@ -3480,6 +3528,22 @@ fn teardown_physical_qualification_observation_source(
                         partial_logits: Box::new([]),
                     }))
                 }
+            }
+        }
+        crate::M1QualificationObservationFailureCustodyV1::CompactSnapshotReadFailed(output) => {
+            match output.destroy_and_release() {
+                Ok(queue_release) => Ok(QualificationObservationTeardownSuccessV1 {
+                    error,
+                    queue_release,
+                    compact_evidence: M1RearmedReadbackTeardownEvidenceV1::None,
+                    partial_logits: Box::new([]),
+                }),
+                Err(source) => Err(Box::new(QualificationObservationTeardownFailureV1 {
+                    error,
+                    source,
+                    compact_evidence: M1RearmedReadbackTeardownEvidenceV1::None,
+                    partial_logits: Box::new([]),
+                })),
             }
         }
         crate::M1QualificationObservationFailureCustodyV1::Observed {
@@ -4423,6 +4487,7 @@ impl M1RearmedReadbackFailureV1 {
             if matches!(
                 source.custody(),
                 crate::M1CompletionObservationFailureCustodyV1::Rejected(_)
+                    | crate::M1CompletionObservationFailureCustodyV1::SnapshotReadFailed(_)
             ) {
                 return Err(self);
             }
@@ -4435,7 +4500,8 @@ impl M1RearmedReadbackFailureV1 {
                     .completion_output()
                     .qualification_logits()
                     .is_some(),
-                crate::M1CompletionObservationFailureCustodyV1::Rejected(_) => {
+                crate::M1CompletionObservationFailureCustodyV1::Rejected(_)
+                | crate::M1CompletionObservationFailureCustodyV1::SnapshotReadFailed(_) => {
                     return Err(self);
                 }
             },
@@ -4493,6 +4559,21 @@ impl M1RearmedReadbackFailureV1 {
                                     error,
                                     crate::M1CompletionObservationFailureCustodyV1::Rejected(
                                         rejected,
+                                    ),
+                                ),
+                            ),
+                            carry,
+                            queue_observation,
+                            device,
+                        }))
+                    }
+                    crate::M1CompletionObservationFailureCustodyV1::SnapshotReadFailed(failed) => {
+                        Err(Box::new(Self {
+                            source: M1RearmedReadbackFailureSourceV1::Observation(
+                                crate::M1CompletionObservationFailureV1::from_parts(
+                                    error,
+                                    crate::M1CompletionObservationFailureCustodyV1::SnapshotReadFailed(
+                                        failed,
                                     ),
                                 ),
                             ),
@@ -4797,6 +4878,13 @@ fn teardown_rearmed_readback_source(
                             }))
                         }
                     }
+                }
+                crate::M1CompletionObservationFailureCustodyV1::SnapshotReadFailed(failed) => {
+                    finish(
+                        M1RearmedReadbackTeardownDiagnosticV1::Observation(error),
+                        M1RearmedReadbackTeardownEvidenceV1::None,
+                        failed.destroy_and_release(),
+                    )
                 }
             }
         }
@@ -7236,6 +7324,10 @@ fn finish_rearm_submission(
 ) -> Result<M1PhysicalPublishedQueueSessionV1, M1LongLivedQueueRearmSubmissionFailureV1<'_>> {
     let retained_capture = RetainedCaptureRangesV1 {
         completion_output: custody.completion_output.retained_host_dispatch_range(),
+        completion_snapshot: custody
+            .completion_output
+            .completion_canary()
+            .map(crate::BoundM1CompletionCanaryV1::snapshot_range),
         qualification_logits: custody
             .completion_output
             .qualification_logits()
@@ -7246,7 +7338,7 @@ fn finish_rearm_submission(
         &custody.bound_rows,
         recipe.workspace_composition(),
         &workspace_ranges,
-        retained_capture,
+        &retained_capture,
     ) {
         Ok(rows) => rows,
         Err(()) => {
@@ -8574,6 +8666,39 @@ mod tests {
             Err(())
         );
         assert_eq!(RearmRangeSelectionV1::new(true).validate(), Err(()));
+    }
+
+    #[test]
+    fn rearm_snapshot_association_is_preserved_only_for_completion_output() {
+        let completion = M1PhysicalBufferSourceV1::CompletionOutput { sequences: 1 };
+        let ordinary = M1PhysicalBufferSourceV1::Workspace {
+            workspace: M1FullStepWorkspaceRole::Target,
+            range: ferric_build::M1StepWorkspaceRangeRole::ResidualHidden,
+        };
+        assert_eq!(
+            select_rearm_completed_snapshot(completion, Some(41_u64), Some(41)),
+            Ok(Some(41))
+        );
+        assert_eq!(
+            select_rearm_completed_snapshot(completion, None::<u64>, None),
+            Ok(None)
+        );
+        assert_eq!(
+            select_rearm_completed_snapshot(completion, None, Some(41_u64)),
+            Err(())
+        );
+        assert_eq!(
+            select_rearm_completed_snapshot(completion, Some(40_u64), Some(41)),
+            Err(())
+        );
+        assert_eq!(
+            select_rearm_completed_snapshot(ordinary, None::<u64>, Some(41)),
+            Ok(None)
+        );
+        assert_eq!(
+            select_rearm_completed_snapshot(ordinary, Some(41_u64), Some(41)),
+            Err(())
+        );
     }
 
     #[test]

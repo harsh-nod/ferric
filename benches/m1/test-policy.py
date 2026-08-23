@@ -67,6 +67,30 @@ ADVERSARIAL_EXTERNAL_NONCLAIM = (
     "does not establish device execution, exact completion, fault injection, safety, "
     "hardware correctness, or close m1.r30."
 )
+R30_CANARY_PARTIAL_PROTOCOL = Path(
+    "crates/ferric-engine/src/bin/ferric-m1-r30-canary-partial-protocol.json"
+)
+R30_CANARY_PARTIAL_NONCLAIM = (
+    "Partial one-case adjacent-guard protocol only: exactly 64 initialized bytes "
+    "before and after one target-prefill S1 K7 output are checked after one "
+    "completed generation. It grants no K1-K6 or general memory-safety proof, "
+    "cancellation, exhaustion, rollback, fault-injection, independence, evidence, "
+    "hardware-correctness, performance, qualification, or m1.r30/M1 closure "
+    "authority."
+)
+R30_CANARY_PARTIAL_LIFECYCLE = [
+    "initialized-guarded-host-backing",
+    "bound-single-k7-interior",
+    "published-target-prefill-s1",
+    "completed-and-recycled-generation",
+    "copied-enclosing-snapshot-once",
+    "validated-prefix-and-suffix-guards",
+    "checked-existing-k7-semantics",
+    "settled-single-engine-member",
+    "released-single-target-page",
+    "destroyed-physical-queue",
+    "canonical-publication-ready",
+]
 
 
 def fail(message: str) -> NoReturn:
@@ -125,6 +149,86 @@ def load_canonical(raw: bytes, description: str) -> dict[str, Any]:
     if not isinstance(value, dict) or canonical_bytes(value) != raw:
         fail(f"{description} is not canonical JSON")
     return value
+
+
+def r30_canary_partial_policy_accepts(
+    protocol: dict[str, Any], requirements: dict[str, Any]
+) -> bool:
+    obligation = next(
+        (
+            item
+            for item in requirements.get("roadmap_requirements", [])
+            if item.get("id") == "m1.r30"
+        ),
+        None,
+    )
+    return (
+        protocol.get("authority")
+        == "ferric-m1-r30-canary-partial-protocol-only"
+        and protocol.get("bundle_files") == ["capture.json", "protocol.json"]
+        and protocol.get("case") == "target-prefill-s1-k7-adjacent-guards"
+        and protocol.get("format")
+        == "FERRIC-M1-R30-CANARY-PARTIAL-PROTOCOL-V1"
+        and protocol.get("layout")
+        == {
+            "interior_bytes": 120,
+            "interior_relative_offset_bytes": 64,
+            "prefix_byte": 165,
+            "prefix_guard_bytes": 64,
+            "snapshot_bytes": 248,
+            "suffix_byte": 90,
+            "suffix_guard_bytes": 64,
+            "suffix_relative_offset_bytes": 184,
+        }
+        and protocol.get("lifecycle") == R30_CANARY_PARTIAL_LIFECYCLE
+        and protocol.get("milestone") == "M1"
+        and protocol.get("nonclaim") == R30_CANARY_PARTIAL_NONCLAIM
+        and protocol.get("obligation_id") == "m1.r30"
+        and protocol.get("required_complete_case_roster")
+        == ["canary", "cancellation", "exhaustion", "fault-injection", "rollback"]
+        and protocol.get("status") == "partial-non-evidence"
+        and protocol.get("target") == TARGET
+        and obligation is not None
+        and obligation.get("obligation_state") == "Open"
+    )
+
+
+def exercise_r30_canary_partial_policy(
+    repo: Path, requirements: dict[str, Any]
+) -> None:
+    path = repo / R30_CANARY_PARTIAL_PROTOCOL
+    protocol = load_canonical(path.read_bytes(), "R30 canary partial protocol")
+    if not r30_canary_partial_policy_accepts(protocol, requirements):
+        fail("R30 canary partial protocol source policy drifted")
+    mutations = [
+        ("authority", "qualification-evidence"),
+        ("status", "evidence"),
+        ("bundle_files", ["capture.json"]),
+        ("nonclaim", ""),
+        ("required_complete_case_roster", ["canary"]),
+    ]
+    for field, replacement in mutations:
+        hostile = json.loads(json.dumps(protocol))
+        hostile[field] = replacement
+        if r30_canary_partial_policy_accepts(hostile, requirements):
+            fail(f"R30 canary partial policy accepted hostile {field}")
+    hostile = json.loads(json.dumps(protocol))
+    hostile["layout"]["prefix_guard_bytes"] = 63
+    if r30_canary_partial_policy_accepts(hostile, requirements):
+        fail("R30 canary partial policy accepted a short prefix guard")
+    hostile = json.loads(json.dumps(protocol))
+    hostile["lifecycle"][4] = "copied-interior-only"
+    if r30_canary_partial_policy_accepts(hostile, requirements):
+        fail("R30 canary partial policy accepted substituted snapshot custody")
+    hostile_requirements = json.loads(json.dumps(requirements))
+    obligation = next(
+        item
+        for item in hostile_requirements["roadmap_requirements"]
+        if item["id"] == "m1.r30"
+    )
+    obligation["obligation_state"] = "Proved"
+    if r30_canary_partial_policy_accepts(protocol, hostile_requirements):
+        fail("R30 canary partial policy accepted a promoted requirement")
 
 
 def write(path: Path, value: Any) -> None:
@@ -1475,6 +1579,7 @@ def main() -> None:
     requirements = load_canonical(
         requirements_path.read_bytes(), "M1 requirements manifest"
     )
+    exercise_r30_canary_partial_policy(repo, requirements)
     with tempfile.TemporaryDirectory(prefix="ferric-m1-benchmark-policy.") as temporary:
         scratch = Path(temporary)
         for suite in SUITES:
