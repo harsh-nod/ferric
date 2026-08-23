@@ -81,7 +81,7 @@ use ferric_spec::{
 };
 use rustix::fd::OwnedFd;
 use rustix::fs::{
-    fstat, fsync, mkdirat, openat2, renameat_with, unlinkat, AtFlags, FileType, Mode, OFlags,
+    fstat, fsync, mkdirat, openat2, renameat_with, unlinkat, AtFlags, Dir, FileType, Mode, OFlags,
     RenameFlags, ResolveFlags, Stat, CWD,
 };
 use serde_json::{json, Map, Value};
@@ -94,6 +94,7 @@ use std::path::{Component, Path, PathBuf};
 use std::process::ExitCode;
 
 mod input_bundle;
+mod m1_r30_partial_capture;
 
 const PLAN_FORMAT: &str = "FERRIC-M1-BENCHMARK-PLAN-V1";
 const ROSTER_FORMAT: &str = "FERRIC-M1-QUALIFICATION-ROSTER-V1";
@@ -1182,10 +1183,16 @@ impl SecureFile {
 struct StagingOutput {
     parent: OwnedFd,
     staging: OwnedFd,
+    staging_snapshot: Stat,
     staging_name: OsString,
     output_name: OsString,
-    files: Vec<OsString>,
+    files: Vec<StagedOutputFileV1>,
     armed: bool,
+}
+
+struct StagedOutputFileV1 {
+    name: OsString,
+    snapshot: Stat,
 }
 
 impl StagingOutput {
@@ -1242,9 +1249,16 @@ impl StagingOutput {
                             return Err(format!("cannot open staging output: {error}"));
                         }
                     };
+                    let staging_snapshot = fstat(&staging)
+                        .map_err(|error| format!("cannot inspect staging output: {error}"))?;
+                    if FileType::from_raw_mode(staging_snapshot.st_mode) != FileType::Directory {
+                        let _ = unlinkat(&parent, staging_name.as_os_str(), AtFlags::REMOVEDIR);
+                        return Err("created staging output is not a directory".to_owned());
+                    }
                     return Ok(Self {
                         parent,
                         staging,
+                        staging_snapshot,
                         staging_name,
                         output_name,
                         files: Vec::new(),
@@ -1282,16 +1296,56 @@ impl StagingOutput {
         )
         .map_err(|error| format!("cannot create staged output {}: {error}", name.display()))?;
         let mut file = File::from(descriptor);
-        self.files.push(name.clone());
+        let created = fstat(&file)
+            .map_err(|error| format!("cannot inspect staged output {}: {error}", name.display()))?;
+        self.files.push(StagedOutputFileV1 {
+            name: name.clone(),
+            snapshot: created,
+        });
+        if FileType::from_raw_mode(created.st_mode) != FileType::RegularFile
+            || created.st_nlink != 1
+        {
+            return Err(format!(
+                "created staged output must be a one-link regular file: {}",
+                name.display()
+            ));
+        }
         writer(&mut file)
             .map_err(|error| format!("cannot write staged output {}: {error}", name.display()))?;
         file.sync_all()
             .map_err(|error| format!("cannot sync staged output {}: {error}", name.display()))?;
+        let written = fstat(&file).map_err(|error| {
+            format!(
+                "cannot reinspect written staged output {}: {error}",
+                name.display()
+            )
+        })?;
+        if created.st_dev != written.st_dev
+            || created.st_ino != written.st_ino
+            || created.st_mode != written.st_mode
+            || created.st_nlink != written.st_nlink
+            || created.st_uid != written.st_uid
+            || created.st_gid != written.st_gid
+            || FileType::from_raw_mode(written.st_mode) != FileType::RegularFile
+            || written.st_nlink != 1
+        {
+            return Err(format!(
+                "staged output identity changed during write: {}",
+                name.display()
+            ));
+        }
+        let Some(record) = self.files.last_mut() else {
+            return Err("staged output record disappeared during write".to_owned());
+        };
+        record.snapshot = written;
         Ok(())
     }
 
     fn publish(mut self) -> CaptureResult<()> {
         fsync(&self.staging).map_err(|error| format!("cannot sync staging directory: {error}"))?;
+        if !self.name_binds_staging(self.staging_name.as_os_str())? {
+            return Err("staging output name no longer binds the held directory".to_owned());
+        }
         renameat_with(
             &self.parent,
             self.staging_name.as_os_str(),
@@ -1301,10 +1355,237 @@ impl StagingOutput {
         )
         .map_err(|error| format!("cannot publish output without replacement: {error}"))?;
         self.armed = false;
+        if !self.name_binds_staging(self.output_name.as_os_str())? {
+            return Err("published output name does not bind the held directory".to_owned());
+        }
         if let Err(error) = fsync(&self.parent) {
             eprintln!("WARN: output bundle is visible but parent sync failed: {error}");
         }
         Ok(())
+    }
+
+    fn publish_exact(mut self, expected: &[(&str, &[u8])]) -> CaptureResult<()> {
+        let expected_names = expected
+            .iter()
+            .map(|(name, _)| OsString::from(name))
+            .collect::<Vec<_>>();
+        if self.files.iter().map(|file| &file.name).ne(&expected_names) {
+            return Err("staged output roster differs from the exact protocol".to_owned());
+        }
+        let staged = self.rebind_directory(self.staging_name.as_os_str(), "staged")?;
+        self.verify_exact_files(&staged, expected, "staged")?;
+        fsync(&self.staging).map_err(|error| format!("cannot sync staging directory: {error}"))?;
+        if !self.name_binds_staging(self.staging_name.as_os_str())? {
+            return Err("staging output name no longer binds the held directory".to_owned());
+        }
+        renameat_with(
+            &self.parent,
+            self.staging_name.as_os_str(),
+            &self.parent,
+            self.output_name.as_os_str(),
+            RenameFlags::NOREPLACE,
+        )
+        .map_err(|error| format!("cannot publish output without replacement: {error}"))?;
+        self.armed = false;
+        let published = self.rebind_directory(self.output_name.as_os_str(), "published")?;
+        self.verify_exact_files(&published, expected, "published")?;
+        fsync(&self.parent)
+            .map_err(|error| format!("cannot sync published output parent: {error}"))?;
+        let final_binding =
+            self.rebind_directory(self.output_name.as_os_str(), "final published")?;
+        let published_stat = fstat(&published)
+            .map_err(|error| format!("cannot inspect published output directory: {error}"))?;
+        let final_stat = fstat(&final_binding)
+            .map_err(|error| format!("cannot reinspect published output directory: {error}"))?;
+        if published_stat.st_dev != final_stat.st_dev || published_stat.st_ino != final_stat.st_ino
+        {
+            return Err("published output name changed during content verification".to_owned());
+        }
+        Ok(())
+    }
+
+    fn rebind_directory(&self, name: &OsStr, phase: &str) -> CaptureResult<OwnedFd> {
+        let reopened = openat2(
+            &self.parent,
+            Path::new(name),
+            OFlags::RDONLY
+                | OFlags::DIRECTORY
+                | OFlags::NOFOLLOW
+                | OFlags::NONBLOCK
+                | OFlags::CLOEXEC,
+            Mode::empty(),
+            ResolveFlags::BENEATH | ResolveFlags::NO_SYMLINKS | ResolveFlags::NO_MAGICLINKS,
+        )
+        .map_err(|error| format!("cannot rebind {phase} output directory: {error}"))?;
+        let held = fstat(&self.staging)
+            .map_err(|error| format!("cannot inspect held staging directory: {error}"))?;
+        let rebound = fstat(&reopened)
+            .map_err(|error| format!("cannot inspect rebound {phase} output directory: {error}"))?;
+        if [held, rebound].iter().any(|current| {
+            current.st_dev != self.staging_snapshot.st_dev
+                || current.st_ino != self.staging_snapshot.st_ino
+                || current.st_mode != self.staging_snapshot.st_mode
+                || current.st_nlink != self.staging_snapshot.st_nlink
+                || current.st_uid != self.staging_snapshot.st_uid
+                || current.st_gid != self.staging_snapshot.st_gid
+                || FileType::from_raw_mode(current.st_mode) != FileType::Directory
+        }) {
+            return Err(format!(
+                "{phase} output name does not bind the held directory"
+            ));
+        }
+        Ok(reopened)
+    }
+
+    fn verify_exact_files(
+        &self,
+        directory: &OwnedFd,
+        expected: &[(&str, &[u8])],
+        phase: &str,
+    ) -> CaptureResult<()> {
+        let expected_roster = expected
+            .iter()
+            .map(|(name, _)| (*name).to_owned())
+            .collect::<BTreeSet<_>>();
+        if Self::directory_roster(directory, phase)? != expected_roster {
+            return Err(format!("{phase} output file roster drifted"));
+        }
+        for ((name, expected_bytes), created) in expected.iter().zip(&self.files) {
+            if created.name != OsStr::new(name) {
+                return Err(format!("{phase} output file order drifted"));
+            }
+            Self::verify_exact_file(directory, name, expected_bytes, &created.snapshot, phase)?;
+        }
+        if Self::directory_roster(directory, phase)? != expected_roster {
+            return Err(format!(
+                "{phase} output file roster changed during verification"
+            ));
+        }
+        Ok(())
+    }
+
+    fn directory_roster(directory: &OwnedFd, phase: &str) -> CaptureResult<BTreeSet<String>> {
+        let mut entries = Dir::read_from(directory)
+            .map_err(|error| format!("cannot enumerate {phase} output directory: {error}"))?;
+        let mut names = BTreeSet::new();
+        while let Some(entry) = entries.read() {
+            let entry = entry
+                .map_err(|error| format!("cannot enumerate {phase} output directory: {error}"))?;
+            let bytes = entry.file_name().to_bytes();
+            if matches!(bytes, b"." | b"..") {
+                continue;
+            }
+            let name = std::str::from_utf8(bytes)
+                .map_err(|_| format!("{phase} output filename must be UTF-8"))?;
+            if !name.is_ascii() || !names.insert(name.to_owned()) {
+                return Err(format!("{phase} output file roster is invalid"));
+            }
+        }
+        Ok(names)
+    }
+
+    fn verify_exact_file(
+        directory: &OwnedFd,
+        name: &str,
+        expected: &[u8],
+        created: &Stat,
+        phase: &str,
+    ) -> CaptureResult<()> {
+        let descriptor = openat2(
+            directory,
+            Path::new(name),
+            OFlags::RDONLY | OFlags::NOFOLLOW | OFlags::NONBLOCK | OFlags::CLOEXEC,
+            Mode::empty(),
+            ResolveFlags::BENEATH | ResolveFlags::NO_SYMLINKS | ResolveFlags::NO_MAGICLINKS,
+        )
+        .map_err(|error| format!("cannot open {phase} output file {name}: {error}"))?;
+        let initial = fstat(&descriptor)
+            .map_err(|error| format!("cannot inspect {phase} output file {name}: {error}"))?;
+        if !Self::same_file_snapshot(created, &initial)
+            || FileType::from_raw_mode(initial.st_mode) != FileType::RegularFile
+            || initial.st_nlink != 1
+            || usize::try_from(initial.st_size).ok() != Some(expected.len())
+        {
+            return Err(format!("{phase} output file metadata drifted: {name}"));
+        }
+        let mut file = File::from(descriptor);
+        let limit = u64::try_from(expected.len())
+            .unwrap_or(u64::MAX)
+            .saturating_add(1);
+        let mut bytes = Vec::new();
+        bytes
+            .try_reserve_exact(expected.len().saturating_add(1))
+            .map_err(|_| format!("cannot reserve {phase} output verification buffer: {name}"))?;
+        Read::by_ref(&mut file)
+            .take(limit)
+            .read_to_end(&mut bytes)
+            .map_err(|error| format!("cannot reread {phase} output file {name}: {error}"))?;
+        let final_stat = fstat(&file)
+            .map_err(|error| format!("cannot reinspect {phase} output file {name}: {error}"))?;
+        let observed_sha256 = sha256_hex(&bytes);
+        let expected_sha256 = sha256_hex(expected);
+        if bytes != expected
+            || observed_sha256 != expected_sha256
+            || !Self::same_file_snapshot(&initial, &final_stat)
+        {
+            return Err(format!("{phase} output bytes changed: {name}"));
+        }
+        let rebound = openat2(
+            directory,
+            Path::new(name),
+            OFlags::RDONLY | OFlags::NOFOLLOW | OFlags::NONBLOCK | OFlags::CLOEXEC,
+            Mode::empty(),
+            ResolveFlags::BENEATH | ResolveFlags::NO_SYMLINKS | ResolveFlags::NO_MAGICLINKS,
+        )
+        .map_err(|error| format!("cannot rebind {phase} output file {name}: {error}"))?;
+        let rebound_stat = fstat(&rebound).map_err(|error| {
+            format!("cannot inspect rebound {phase} output file {name}: {error}")
+        })?;
+        if !Self::same_file_snapshot(&final_stat, &rebound_stat) {
+            return Err(format!(
+                "{phase} output filename changed during verification: {name}"
+            ));
+        }
+        Ok(())
+    }
+
+    fn same_file_snapshot(left: &Stat, right: &Stat) -> bool {
+        left.st_dev == right.st_dev
+            && left.st_ino == right.st_ino
+            && left.st_mode == right.st_mode
+            && left.st_nlink == right.st_nlink
+            && left.st_uid == right.st_uid
+            && left.st_gid == right.st_gid
+            && left.st_size == right.st_size
+            && left.st_mtime == right.st_mtime
+            && left.st_mtime_nsec == right.st_mtime_nsec
+            && left.st_ctime == right.st_ctime
+            && left.st_ctime_nsec == right.st_ctime_nsec
+    }
+
+    fn name_binds_staging(&self, name: &OsStr) -> CaptureResult<bool> {
+        let reopened = match openat2(
+            &self.parent,
+            Path::new(name),
+            OFlags::RDONLY
+                | OFlags::DIRECTORY
+                | OFlags::NOFOLLOW
+                | OFlags::NONBLOCK
+                | OFlags::CLOEXEC,
+            Mode::empty(),
+            ResolveFlags::BENEATH | ResolveFlags::NO_SYMLINKS | ResolveFlags::NO_MAGICLINKS,
+        ) {
+            Ok(reopened) => reopened,
+            Err(error) if error == rustix::io::Errno::NOENT => return Ok(false),
+            Err(error) => return Err(format!("cannot reopen staged output name: {error}")),
+        };
+        let held = fstat(&self.staging)
+            .map_err(|error| format!("cannot inspect held staging directory: {error}"))?;
+        let named = fstat(&reopened)
+            .map_err(|error| format!("cannot inspect named staging directory: {error}"))?;
+        Ok(held.st_dev == named.st_dev
+            && held.st_ino == named.st_ino
+            && FileType::from_raw_mode(named.st_mode) == FileType::Directory)
     }
 }
 
@@ -1313,14 +1594,33 @@ impl Drop for StagingOutput {
         if !self.armed {
             return;
         }
-        for name in &self.files {
-            let _ = unlinkat(&self.staging, name.as_os_str(), AtFlags::empty());
+        for file in &self.files {
+            let bound = openat2(
+                &self.staging,
+                Path::new(&file.name),
+                OFlags::RDONLY | OFlags::NOFOLLOW | OFlags::NONBLOCK | OFlags::CLOEXEC,
+                Mode::empty(),
+                ResolveFlags::BENEATH | ResolveFlags::NO_SYMLINKS | ResolveFlags::NO_MAGICLINKS,
+            )
+            .ok()
+            .and_then(|descriptor| fstat(&descriptor).ok())
+            .is_some_and(|current| {
+                current.st_dev == file.snapshot.st_dev && current.st_ino == file.snapshot.st_ino
+            });
+            if bound {
+                let _ = unlinkat(&self.staging, file.name.as_os_str(), AtFlags::empty());
+            }
         }
-        let _ = unlinkat(
-            &self.parent,
-            self.staging_name.as_os_str(),
-            AtFlags::REMOVEDIR,
-        );
+        if self
+            .name_binds_staging(self.staging_name.as_os_str())
+            .unwrap_or(false)
+        {
+            let _ = unlinkat(
+                &self.parent,
+                self.staging_name.as_os_str(),
+                AtFlags::REMOVEDIR,
+            );
+        }
     }
 }
 
@@ -1335,6 +1635,12 @@ fn main() -> ExitCode {
 }
 
 fn run(arguments: Vec<OsString>) -> CaptureResult<()> {
+    if arguments.len() != 11
+        && arguments.first().and_then(|argument| argument.to_str())
+            == Some(m1_r30_partial_capture::COMMAND)
+    {
+        return run_capture_with_purpose(&arguments[1..], CapturePurposeV1::R30PartialCancellation);
+    }
     if arguments.len() != 11 {
         match arguments.first().and_then(|argument| argument.to_str()) {
             Some("generate-inputs") => return input_bundle::generate_inputs(&arguments[1..]),
@@ -1346,10 +1652,26 @@ fn run(arguments: Vec<OsString>) -> CaptureResult<()> {
 }
 
 fn run_capture(arguments: &[OsString]) -> CaptureResult<()> {
+    run_capture_with_purpose(arguments, CapturePurposeV1::Qualification)
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum CapturePurposeV1 {
+    Qualification,
+    R30PartialCancellation,
+}
+
+fn run_capture_with_purpose(
+    arguments: &[OsString],
+    purpose: CapturePurposeV1,
+) -> CaptureResult<()> {
     let [plan_path, roster_path, case_id, workload_path, source_root, prepacked_root, artifact_root, closure_path, environment_path, gpu_unique_id, output] =
         arguments
     else {
-        return Err("usage: ferric-m1-qualification-capture PLAN ROSTER CASE-ID WORKLOAD MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned());
+        return Err(match purpose {
+            CapturePurposeV1::Qualification => "usage: ferric-m1-qualification-capture PLAN ROSTER CASE-ID WORKLOAD MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned(),
+            CapturePurposeV1::R30PartialCancellation => "usage: ferric-m1-qualification-capture capture-r30-cancellation PLAN ROSTER CASE-ID WORKLOAD MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned(),
+        });
     };
     let case_id = case_id
         .to_str()
@@ -1364,6 +1686,14 @@ fn run_capture(arguments: &[OsString]) -> CaptureResult<()> {
     let case = plan.case(case_id)?.clone();
     load_roster(Path::new(roster_path), &plan)?;
     let workload = load_workload(Path::new(workload_path), &case)?;
+    if purpose == CapturePurposeV1::R30PartialCancellation
+        && (workload.selection.role != Qwen3ModelRole::Target8B
+            || workload.selection.mode != Qwen3ExecutionMode::Prefill)
+    {
+        return Err(
+            "partial r30 cancellation capture requires an exact target-prefill workload".to_owned(),
+        );
+    }
     let input_tokens = load_input_tokens(Path::new(workload_path), &workload, &case)?;
     let closure = load_closure(Path::new(closure_path))?;
     let environment_bytes = load_environment(Path::new(environment_path), gpu_unique_id)?;
@@ -1418,21 +1748,44 @@ fn run_capture(arguments: &[OsString]) -> CaptureResult<()> {
     )
     .map_err(|error| format!("cannot initialize physical model memory: {error:?}"))?;
 
-    let capture = execute_capture(&runner, memory, &workload, input_tokens, gpu_unique_id)?;
+    let capture = execute_capture(
+        &runner,
+        memory,
+        &workload,
+        input_tokens,
+        gpu_unique_id,
+        purpose,
+    )?;
     let runner_declaration = runner.declaration_id();
     let kernel_manifest = runner.kernel_artifact_manifest_id();
-    let transcript = capture_transcript(
-        &plan,
-        &case,
-        &workload,
-        &capture,
-        CaptureIdentities {
-            gpu_unique_id,
-            runner_declaration,
-            kernel_manifest,
-            program_catalog: executable_catalog_id,
-        },
-    )?;
+    let identities = CaptureIdentities {
+        gpu_unique_id,
+        runner_declaration,
+        kernel_manifest,
+        program_catalog: executable_catalog_id,
+    };
+    if purpose == CapturePurposeV1::R30PartialCancellation {
+        let settlement = capture.settlement.as_ref().ok_or_else(|| {
+            "target-prefill execution omitted partial cancellation settlement".to_owned()
+        })?;
+        let manifest =
+            m1_r30_partial_capture::manifest(m1_r30_partial_capture::CaptureManifestInputsV1 {
+                capture: &capture,
+                case: &case,
+                identities,
+                plan: &plan,
+                settlement,
+                workload: &workload,
+            })?;
+        let protocol_sha256 = m1_r30_partial_capture::protocol_sha256()?;
+        m1_r30_partial_capture::publish(Path::new(output), &manifest)?;
+        println!("output={}", Path::new(output).display());
+        println!("case_id={}", case.id);
+        println!("capture_sha256={}", sha256_hex(&manifest));
+        println!("partial_protocol_sha256={protocol_sha256}");
+        return Ok(());
+    }
+    let transcript = capture_transcript(&plan, &case, &workload, &capture, identities)?;
     let transcript_sha256 = sha256_hex(&transcript);
     let output_manifest = differential_output_manifest(
         &plan,
@@ -1463,6 +1816,7 @@ struct CapturedOutput {
     execution: CapturedExecutionV1,
     logits: Vec<u8>,
     logits_row_sha256: Vec<[u8; 32]>,
+    settlement: Option<m1_r30_partial_capture::CancellationSettlementV1>,
     tokens: Vec<u8>,
 }
 
@@ -2452,6 +2806,7 @@ fn execute_capture(
     workload: &Workload,
     input_tokens: Vec<u32>,
     gpu_unique_id: u64,
+    purpose: CapturePurposeV1,
 ) -> CaptureResult<CapturedOutput> {
     match workload.selection.mode {
         Qwen3ExecutionMode::Prefill => Ok(execute_prefill_capture(
@@ -2460,6 +2815,7 @@ fn execute_capture(
             workload,
             input_tokens,
             gpu_unique_id,
+            purpose,
         )),
         Qwen3ExecutionMode::Decode => Ok(execute_decode_capture(
             runner,
@@ -3578,6 +3934,7 @@ fn execute_decode_capture(
         },
         logits: copied.logits,
         logits_row_sha256: copied.logits_row_sha256,
+        settlement: None,
         tokens: copied.tokens,
     }
 }
@@ -3755,6 +4112,7 @@ fn execute_prefill_capture(
     workload: &Workload,
     input_tokens: Vec<u32>,
     _gpu_unique_id: u64,
+    purpose: CapturePurposeV1,
 ) -> CapturedOutput {
     let selection = workload.selection;
     if selection.role != Qwen3ModelRole::Target8B || selection.mode != Qwen3ExecutionMode::Prefill {
@@ -3904,6 +4262,7 @@ fn execute_prefill_capture(
     let active_lengths = inputs.active_lengths().to_vec();
     let context_lengths = inputs.context_lengths().to_vec();
     let mut caches = Vec::with_capacity(requests.len());
+    let mut expected_target_pages = Vec::with_capacity(requests.len());
     let mut reservations = Vec::with_capacity(requests.len());
     for ((request, active_length), context_length) in requests
         .iter()
@@ -4003,6 +4362,7 @@ fn execute_prefill_capture(
                 },
             ),
         };
+        expected_target_pages.push(pages as usize);
         reservations.push(reservation);
         caches.push(cache);
     }
@@ -4167,8 +4527,14 @@ fn execute_prefill_capture(
         _active_lengths: active_lengths,
         _context_lengths: context_lengths,
     };
-    let (qualified, evidence, device_id) =
-        qualify_prefill_live_generation(&mut engine, published, workload.max_polls, evidence);
+    let (qualified, evidence, device_id, precompletion_cancellation) =
+        qualify_prefill_live_generation(
+            &mut engine,
+            published,
+            workload.max_polls,
+            evidence,
+            purpose,
+        );
     let PrefillLiveEvidenceV1 {
         _caches: caches,
         requests,
@@ -4214,6 +4580,14 @@ fn execute_prefill_capture(
                 _custody: poison,
             },
         ),
+    };
+    let final_absent_count = if purpose == CapturePurposeV1::R30PartialCancellation {
+        requests
+            .iter()
+            .filter(|request| engine.state(**request).is_none())
+            .count()
+    } else {
+        0
     };
     let released = match release_first_completed_step(&mut engine, completed) {
         Ok(released) => released,
@@ -4286,6 +4660,55 @@ fn execute_prefill_capture(
     };
     let epoch = teardown.checked().epoch().value();
     let dispatch_generation = teardown.checked().dispatch_generation();
+    let expected_total_target_pages = match expected_target_pages
+        .iter()
+        .try_fold(0usize, |total, pages| total.checked_add(*pages))
+    {
+        Some(total) => total,
+        None => closed_teardown(
+            "prefill expected target-page total overflowed",
+            QualificationEvidenceCustodyV1 {
+                _evidence: evidence,
+                _diagnostic: None,
+                _custody: teardown,
+            },
+        ),
+    };
+    let settlement = precompletion_cancellation.map(|precompletion| {
+        let terminal_members = teardown
+            .members()
+            .iter()
+            .filter(|member| {
+                matches!(
+                    member,
+                    ferric_engine::M1ReleasedDeviceKvMemberV1::Terminal(_)
+                )
+            })
+            .count();
+        let released_pages = teardown
+            .release_counts()
+            .iter()
+            .map(|counts| (counts.draft(), counts.target()))
+            .collect();
+        m1_r30_partial_capture::CancellationSettlementV1 {
+            checked_records: teardown.checked().records().len(),
+            completed_members: teardown.completed_members(),
+            dispatch_generation,
+            epoch,
+            expected_target_pages,
+            expected_total_target_pages,
+            externally_published_counts: teardown.externally_published_counts().to_vec(),
+            final_absent_count,
+            in_flight_count: precompletion.in_flight_count,
+            logical_accepted_counts: teardown.logical_accepted_counts().to_vec(),
+            precompletion_reclaim_count: precompletion.precompletion_reclaim_count,
+            released_pages,
+            requests: precompletion.requests,
+            retiring_count: precompletion.retiring_count,
+            terminal_members,
+            total_released_pages: teardown.total_released(),
+        }
+    });
     CapturedOutput {
         compact_sha256: copied.compact_sha256,
         device_id,
@@ -4295,6 +4718,7 @@ fn execute_prefill_capture(
         },
         logits: copied.logits,
         logits_row_sha256: copied.logits_row_sha256,
+        settlement,
         tokens: copied.tokens,
     }
 }
@@ -4397,11 +4821,83 @@ fn qualify_prefill_live_generation(
     published: ferric_engine::M1PhysicalPublishedQueueSessionV1,
     max_polls: u32,
     evidence: PrefillLiveEvidenceV1,
+    purpose: CapturePurposeV1,
 ) -> (
     ferric_engine::M1QualifiedPhysicalCompletedReadbackV1,
     PrefillLiveEvidenceV1,
     Identity,
+    Option<m1_r30_partial_capture::PreCompletionCancellationV1>,
 ) {
+    let mut partial_failure = None;
+    let mut precompletion_cancellation = None;
+    if purpose == CapturePurposeV1::R30PartialCancellation {
+        if let Err(error) = preflight_engine_retirement(engine, &evidence.requests) {
+            partial_failure = Some((
+                "partial cancellation in-flight retirement preflight",
+                PrefillLiveDiagnosticV1::Message(error),
+            ));
+        }
+        if partial_failure.is_none() {
+            for request in &evidence.requests {
+                if let Err(error) = engine.retire(*request) {
+                    partial_failure = Some((
+                        "partial cancellation in-flight retirement",
+                        PrefillLiveDiagnosticV1::Engine(error),
+                    ));
+                    break;
+                }
+            }
+        }
+        let retiring_count = if partial_failure.is_none() {
+            evidence
+                .requests
+                .iter()
+                .filter(|request| engine.state(**request) == Some(RequestState::Retiring))
+                .count()
+        } else {
+            0
+        };
+        if partial_failure.is_none() && retiring_count != evidence.requests.len() {
+            partial_failure = Some((
+                "partial cancellation retirement state drift",
+                PrefillLiveDiagnosticV1::Message(
+                    "cancellation did not retain the exact retiring roster".to_owned(),
+                ),
+            ));
+        }
+        if partial_failure.is_none() {
+            match engine.reclaim_one() {
+                Ok(None) => {
+                    precompletion_cancellation =
+                        Some(m1_r30_partial_capture::PreCompletionCancellationV1 {
+                            in_flight_count: evidence.requests.len(),
+                            precompletion_reclaim_count: 0,
+                            requests: evidence
+                                .requests
+                                .iter()
+                                .copied()
+                                .map(m1_r30_partial_capture::RequestIdentityV1::from)
+                                .collect(),
+                            retiring_count,
+                        });
+                }
+                Ok(Some(_)) => {
+                    partial_failure = Some((
+                        "partial cancellation premature reclamation",
+                        PrefillLiveDiagnosticV1::Message(
+                            "a request reclaimed before physical completion observation".to_owned(),
+                        ),
+                    ));
+                }
+                Err(error) => {
+                    partial_failure = Some((
+                        "partial cancellation precompletion reclamation probe",
+                        PrefillLiveDiagnosticV1::Engine(error),
+                    ));
+                }
+            }
+        }
+    }
     let completed = match published.wait(max_polls) {
         Ok(completed) => completed,
         Err(failure) => terminal_quarantine(
@@ -4437,22 +4933,32 @@ fn qualify_prefill_live_generation(
             ),
         },
     };
-    if let Err(error) = preflight_engine_retirement(engine, &evidence.requests) {
+    if let Some((phase, diagnostic)) = partial_failure {
         close_or_quarantine_prefill_live(
-            "prefill observed qualification retirement preflight",
+            phase,
             evidence,
-            Some(PrefillLiveDiagnosticV1::Message(error)),
+            Some(diagnostic),
             observed.destroy_queue_and_retain_evidence(engine),
         );
     }
-    for request in &evidence.requests {
-        if let Err(error) = engine.retire(*request) {
+    if purpose == CapturePurposeV1::Qualification {
+        if let Err(error) = preflight_engine_retirement(engine, &evidence.requests) {
             close_or_quarantine_prefill_live(
-                "prefill observed qualification retirement",
+                "prefill observed qualification retirement preflight",
                 evidence,
-                Some(PrefillLiveDiagnosticV1::Engine(error)),
+                Some(PrefillLiveDiagnosticV1::Message(error)),
                 observed.destroy_queue_and_retain_evidence(engine),
             );
+        }
+        for request in &evidence.requests {
+            if let Err(error) = engine.retire(*request) {
+                close_or_quarantine_prefill_live(
+                    "prefill observed qualification retirement",
+                    evidence,
+                    Some(PrefillLiveDiagnosticV1::Engine(error)),
+                    observed.destroy_queue_and_retain_evidence(engine),
+                );
+            }
         }
     }
     let qualified = match observed.check_prefill_completion() {
@@ -4467,7 +4973,7 @@ fn qualify_prefill_live_generation(
             ),
         },
     };
-    (qualified, evidence, device_id)
+    (qualified, evidence, device_id, precompletion_cancellation)
 }
 
 fn require_supported_capture(workload: &Workload) -> CaptureResult<()> {
@@ -5840,6 +6346,14 @@ mod tests {
         legacy[0] = OsString::from("generate-inputs");
         let legacy_error = run(legacy).unwrap_err();
         assert!(!legacy_error.contains("generate-inputs MODEL-SOURCE"));
+
+        let r30_error = run(vec![OsString::from(m1_r30_partial_capture::COMMAND)]).unwrap_err();
+        assert!(r30_error.contains("capture-r30-cancellation PLAN ROSTER"));
+
+        let mut legacy = vec![OsString::from("unused"); 11];
+        legacy[0] = OsString::from(m1_r30_partial_capture::COMMAND);
+        let legacy_error = run(legacy).unwrap_err();
+        assert!(!legacy_error.contains("capture-r30-cancellation PLAN ROSTER"));
     }
 
     #[test]
@@ -6391,6 +6905,7 @@ mod tests {
             },
             logits: vec![0; QWEN3_VOCABULARY_SIZE as usize * 2],
             logits_row_sha256: vec![[12; 32]],
+            settlement: None,
             tokens: 0_u32.to_le_bytes().to_vec(),
         };
         let transcript = capture_transcript(
@@ -6468,6 +6983,27 @@ mod tests {
         retry.publish().unwrap();
         assert_eq!(fs::read(output.join("payload")).unwrap(), b"retry\n");
         assert!(StagingOutput::create(&output).is_err());
+    }
+
+    #[test]
+    fn staged_output_refuses_name_substitution_without_deleting_substitute() {
+        let temporary = TestDirectory::new();
+        let output = temporary.0.join("capture.bundle");
+        let mut staging = StagingOutput::create(&output).unwrap();
+        staging.write("payload", b"held\n").unwrap();
+        let original_name = staging.staging_name.clone();
+        let original = temporary.0.join(&original_name);
+        let displaced = temporary.0.join("displaced.staging");
+        fs::rename(&original, &displaced).unwrap();
+        fs::create_dir(&original).unwrap();
+        fs::write(original.join("substitute"), b"do not delete\n").unwrap();
+
+        assert!(staging.publish().is_err());
+        assert_eq!(
+            fs::read(original.join("substitute")).unwrap(),
+            b"do not delete\n"
+        );
+        assert!(fs::read_dir(displaced).unwrap().next().is_none());
     }
 
     #[test]

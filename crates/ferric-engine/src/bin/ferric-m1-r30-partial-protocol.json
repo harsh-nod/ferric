@@ -1,0 +1,33 @@
+{
+  "authority": "ferric-m1-r30-partial-protocol-only",
+  "bundle_files": [
+    "capture.json",
+    "protocol.json"
+  ],
+  "case": "cancellation",
+  "format": "FERRIC-M1-R30-PARTIAL-PROTOCOL-V1",
+  "lifecycle": [
+    "queue-published",
+    "in-flight-retirement-requested",
+    "precompletion-reclaim-rejected",
+    "physical-completion-observed",
+    "signals-recycled",
+    "readback-observed",
+    "semantic-completion-joined",
+    "exact-completion-settled",
+    "retired-pages-released",
+    "queue-released"
+  ],
+  "milestone": "M1",
+  "nonclaim": "Partial physical cancellation capture only. This protocol does not establish canary integrity, exhaustion handling, rollback refinement, injected device-fault coverage, required external evidence, independent validation, hardware correctness, or close m1.r30.",
+  "obligation_id": "m1.r30",
+  "required_complete_case_roster": [
+    "canary",
+    "cancellation",
+    "exhaustion",
+    "fault-injection",
+    "rollback"
+  ],
+  "status": "partial-non-evidence",
+  "target": "gfx942:xnack-"
+}

@@ -172,6 +172,31 @@ carry no hardware claim: the Ferric-owned MI300 harness and independent evidence
 validators must still establish snapshot provenance, exact completion, injected
 device failure coverage, and typed custody before `m1.r30` can close.
 
+The Ferric engine also exposes one deliberately partial physical cancellation
+capture using the already admitted qualification inputs:
+
+```text
+cargo run --locked -p ferric-engine --bin ferric-m1-qualification-capture -- \
+  capture-r30-cancellation PLAN ROSTER CASE-ID WORKLOAD MODEL-SOURCE \
+  PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID \
+  OUTPUT-BUNDLE
+```
+
+This command accepts only an authenticated target-prefill workload. Immediately
+after queue publication it requires every scheduler request to still be
+`InFlight`, requests retirement, and requires a reclamation probe to return no
+request before waiting for physical completion. It then observes physical queue
+completion and readback before recording exact completion settlement,
+authenticated nonzero target-page release, and queue release. It publishes
+exactly `capture.json` and the canonical
+`FERRIC-M1-R30-PARTIAL-PROTOCOL-V1` as `protocol.json`, without replacement.
+
+The bundle authority and status are `ferric-physical-partial-capture-only` and
+`partial-non-evidence`. It is not accepted by the adversarial benchmark evidence
+intake, supplies no independent validation, covers none of the canary,
+exhaustion, rollback, or injected device-fault cases, and cannot close
+`m1.r30`.
+
 The policy test uses the distinct `synthetic-policy-fixture-only` authority and
 the nonpublishing `check-policy-fixture` command solely to exercise the shared
 parsers and mutation rejection. Normal `produce` rejects those fixtures. The
