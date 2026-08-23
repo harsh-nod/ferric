@@ -2,7 +2,10 @@
 
 //! D10 core-kernel run-plan and real measurement ingestion boundary.
 
+mod d10_policy;
+
 use ferric_m1_benchmarks::{main_for, Metric, Suite};
+use std::env;
 use std::process::ExitCode;
 #[allow(unused_imports)]
 use vstd::prelude::*;
@@ -45,5 +48,18 @@ const SUITE: Suite = Suite {
 };
 
 fn main() -> ExitCode {
+    let arguments = env::args_os().skip(1).collect::<Vec<_>>();
+    if arguments
+        .first()
+        .is_some_and(|command| command == "admit-experiment-policy")
+    {
+        return match d10_policy::admit_experiment_policy(&arguments) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("FAIL: {error}");
+                ExitCode::FAILURE
+            }
+        };
+    }
     main_for(&SUITE)
 }

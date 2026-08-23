@@ -1,0 +1,60 @@
+{
+  "authority": "source-controlled-pre-observation-protocol-only",
+  "case_roster": [
+    {
+      "case_id": "flash-attention-prefill",
+      "kernel_family": "k4-gqa-prefill"
+    },
+    {
+      "case_id": "gemm-gemv",
+      "kernel_family": "k1-gemm-gemv"
+    },
+    {
+      "case_id": "gqa-paged-decode",
+      "kernel_family": "k5-paged-gqa-decode"
+    },
+    {
+      "case_id": "logits-argmax",
+      "kernel_family": "k7-logits-compact"
+    },
+    {
+      "case_id": "rmsnorm-residual",
+      "kernel_family": "k2-rmsnorm-residual"
+    },
+    {
+      "case_id": "rope-paged-kv",
+      "kernel_family": "k3-rope-paged-kv"
+    },
+    {
+      "case_id": "swiglu-projection",
+      "kernel_family": "k6-swiglu"
+    }
+  ],
+  "companion_roster": [
+    "calibration.json",
+    "execution-order.json",
+    "holdout.json",
+    "regression-reference.json",
+    "resource-inspection.json",
+    "telemetry.json",
+    "timing.json",
+    "tuning.json"
+  ],
+  "format": "FERRIC-M1-D10-EXPERIMENT-POLICY-PROTOCOL-V1",
+  "future_required_binding": "policy-sha256-bound-d10-observation-validator",
+  "input_format": "FERRIC-M1-D10-EXPERIMENT-POLICY-INPUT-V1",
+  "legacy_plan_validate_policy_bound": false,
+  "nonclaim": "This protocol admits only the canonical structure and frozen identity of an externally supplied pre-observation D10 experiment policy. Legacy plan and validate commands do not consume this policy, so the declared 10 warmups and 30 recorded samples are not execution-enforced. A future policy-SHA-256-bound observation validator remains required. This protocol does not endorse policy values, establish vendor applicability, authenticate an observation, decide a performance gate, or close m1.r31.",
+  "obligation_id": "m1.r31",
+  "observation_counts_enforced": false,
+  "output_format": "FERRIC-M1-D10-EXPERIMENT-POLICY-ADMISSION-V1",
+  "publication_roster": [
+    "admission.json",
+    "protocol.json"
+  ],
+  "recorded_samples": 30,
+  "status": "PARTIAL_NON_EVIDENCE",
+  "suite": "d10",
+  "target": "gfx942:xnack-",
+  "warmups": 10
+}

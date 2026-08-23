@@ -25,6 +25,44 @@ or qualification. Real MI300X/model/reference/baseline records and the
 independent M1 evidence validators remain required. Requirements `m1.r29`
 through `m1.r33` remain `Open`.
 
+Before any D10 observations, an external policy owner can freeze the complete
+core-kernel experiment policy:
+
+```text
+cargo run --locked -p ferric-m1-benchmarks --bin ferric-m1-d10 -- \
+  admit-experiment-policy POLICY-ROOT OUTPUT-BUNDLE
+```
+
+`POLICY-ROOT` contains exactly `policy.json`, the source-controlled
+`protocol.json`, and canonical timing, tuning, execution-order, telemetry,
+resource-inspection, calibration, holdout, and regression-reference companions.
+The policy covers the exact seven K1-K7 case/family positions and freezes each
+external profile, work-unit definition, Ferric implementation, vendor
+applicability and implementation, weight, threshold, and companion identity.
+It freezes a requested count of exactly 10 untimed warmups followed by 30
+recorded samples per case. Calibration and holdout companions carry nonempty,
+disjoint canonical member rosters whose digests are recomputed, and the tuning
+companion must bind the calibration roster and give Ferric and the vendor equal
+tuning budgets.
+
+Ferric supplies no default threshold, weight, vendor mapping, tuning budget, or
+work-unit value. All inputs remain held through descriptor-relative rereads and
+no-replace publication. `OUTPUT-BUNDLE` contains exactly `admission.json` and
+the admitted protocol. Its authority is structural only, its status is
+`PARTIAL_NON_EVIDENCE`, and it explicitly admits no observations and cannot
+close `m1.r31`. The legacy `plan` and `validate` commands do not consume this
+policy and therefore do not enforce its 10/30 counts. Admission records
+`observation_counts_enforced=false` and requires a future
+policy-SHA-256-bound D10 observation validator before execution conformance can
+be claimed.
+
+Safe Rust does not provide an atomic directory-create-and-open primitive. The
+publisher therefore adopts only the exact empty `0700`, effective-owner/group
+directory opened after `mkdirat` and makes no claim that this inode is the one
+created by that call. A failed prepublication attempt removes only output file
+names that still identify transaction-created inodes; it retains the staging
+directory and any substituted name for inspection.
+
 The differential suite first authenticates the exact seven Ferric capture and
 independent reference bundle rosters and writes their canonical output-pair
 manifest:
