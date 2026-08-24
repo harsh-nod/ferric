@@ -9,14 +9,17 @@ use ferric_m1_benchmarks::{
     encode_canonical_document, load_canonical_document_held, sha256_identity, BenchResult,
     SecureInputDirectory, SecureInputFile,
 };
+use rustix::fs::{fcntl_getfl, fcntl_setfl, OFlags};
+use rustix::process::{kill_process_group, Pid, Signal};
 use serde_json::{json, Map, Value};
 use sha2::{Digest, Sha256};
 use std::ffi::OsString;
 use std::fmt::Write as _;
 use std::fs::{File, Metadata};
 use std::io::{Read, Seek};
-use std::os::fd::AsRawFd;
+use std::os::fd::{AsFd, AsRawFd};
 use std::os::unix::fs::MetadataExt;
+use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode, Stdio};
 use std::thread;
@@ -618,6 +621,7 @@ fn execute_engine(execution: &ExecutionPlan, context: &RunContext<'_>) -> BenchR
         .args(&context.engine_command.arguments)
         .current_dir(execution.working_directory.proc_fd_path())
         .env_clear()
+        .process_group(0)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
@@ -625,66 +629,102 @@ fn execute_engine(execution: &ExecutionPlan, context: &RunContext<'_>) -> BenchR
         command.env(name, value);
     }
     set_context_environment(&mut command, context)?;
+    let deadline = Instant::now()
+        .checked_add(execution.timeout)
+        .ok_or_else(|| "R32 command deadline overflowed".to_owned())?;
     let mut child = command.spawn().map_err(|error| {
         format!(
             "cannot start R32 command {}/{}: {error}",
             context.pair_id, context.engine
         )
     })?;
-    let stdout = child
-        .stdout
-        .take()
-        .ok_or_else(|| "R32 command stdout pipe is absent".to_owned())?;
-    let stderr = child
-        .stderr
-        .take()
-        .ok_or_else(|| "R32 command stderr pipe is absent".to_owned())?;
-    let stdout_reader = thread::spawn(move || read_capped(stdout));
-    let stderr_reader = thread::spawn(move || read_capped(stderr));
-    let deadline = Instant::now()
-        .checked_add(execution.timeout)
-        .ok_or_else(|| "R32 command deadline overflowed".to_owned())?;
-    let status = loop {
-        if let Some(status) = child.try_wait().map_err(|error| {
-            format!(
-                "cannot inspect R32 command {}/{}: {error}",
-                context.pair_id, context.engine
-            )
-        })? {
-            break status;
+    let process_group = Pid::from_child(&child);
+    let Some(mut stdout) = child.stdout.take() else {
+        terminate_subprocess(&mut child, process_group);
+        return Err("R32 command stdout pipe is absent".to_owned());
+    };
+    let Some(mut stderr) = child.stderr.take() else {
+        terminate_subprocess(&mut child, process_group);
+        return Err("R32 command stderr pipe is absent".to_owned());
+    };
+    for (descriptor, stream) in [(stdout.as_fd(), "stdout"), (stderr.as_fd(), "stderr")] {
+        if let Err(error) = set_nonblocking(descriptor, stream, context) {
+            terminate_subprocess(&mut child, process_group);
+            return Err(error);
         }
+    }
+    let mut stdout_bytes = Vec::new();
+    let mut stderr_bytes = Vec::new();
+    let mut stdout_eof = false;
+    let mut stderr_eof = false;
+    let mut status = None;
+    loop {
         if Instant::now() >= deadline {
-            let _ = child.kill();
-            let _ = child.wait();
-            let _ = stdout_reader.join();
-            let _ = stderr_reader.join();
+            terminate_subprocess(&mut child, process_group);
             return Err(format!(
                 "R32 command timed out: {}/{}",
                 context.pair_id, context.engine
             ));
         }
+        if let Err(error) = drain_capped(
+            &mut stdout,
+            &mut stdout_bytes,
+            &mut stdout_eof,
+            "stdout",
+            context,
+        )
+        .and_then(|()| {
+            drain_capped(
+                &mut stderr,
+                &mut stderr_bytes,
+                &mut stderr_eof,
+                "stderr",
+                context,
+            )
+        }) {
+            terminate_subprocess(&mut child, process_group);
+            return Err(error);
+        }
+        if status.is_none() {
+            match child.try_wait() {
+                Ok(Some(observed)) => {
+                    let _ = kill_process_group(process_group, Signal::KILL);
+                    status = Some(observed);
+                }
+                Ok(None) => {}
+                Err(error) => {
+                    terminate_subprocess(&mut child, process_group);
+                    return Err(format!(
+                        "cannot inspect R32 command {}/{}: {error}",
+                        context.pair_id, context.engine
+                    ));
+                }
+            }
+        }
+        if status.is_some() && stdout_eof && stderr_eof {
+            break;
+        }
         thread::sleep(Duration::from_millis(10));
-    };
-    let stdout = join_reader(stdout_reader, "stdout", context)?;
-    let stderr = join_reader(stderr_reader, "stderr", context)?;
+    }
+    let status = status.expect("completed R32 command status is present");
     if !status.success() {
         return Err(format!(
             "R32 command failed: {}/{} status={} stderr={}",
             context.pair_id,
             context.engine,
             status,
-            diagnostic(&stderr)
+            diagnostic(&stderr_bytes)
         ));
     }
-    if !stderr.is_empty() {
+    if !stderr_bytes.is_empty() {
         return Err(format!(
             "R32 command wrote stderr despite success: {}/{} stderr={}",
             context.pair_id,
             context.engine,
-            diagnostic(&stderr)
+            diagnostic(&stderr_bytes)
         ));
     }
-    let result = parse_canonical_runner_output(&stdout, context)?;
+    let result = parse_canonical_runner_output(&stdout_bytes, context)?;
     validate_runner_result(&result, context)
 }
 
@@ -962,37 +1002,70 @@ fn parse_canonical_runner_output(bytes: &[u8], context: &RunContext<'_>) -> Benc
     Ok(value)
 }
 
-fn read_capped(mut reader: impl Read) -> BenchResult<Vec<u8>> {
-    let mut bytes = Vec::new();
-    Read::by_ref(&mut reader)
-        .take((MAX_RUNNER_OUTPUT_BYTES + 1) as u64)
-        .read_to_end(&mut bytes)
-        .map_err(|error| format!("cannot read R32 command output: {error}"))?;
-    if bytes.len() > MAX_RUNNER_OUTPUT_BYTES {
-        return Err("R32 command output exceeded 64 KiB".to_owned());
-    }
-    Ok(bytes)
-}
-
-fn join_reader(
-    handle: thread::JoinHandle<BenchResult<Vec<u8>>>,
+fn set_nonblocking(
+    descriptor: impl AsFd,
     stream: &str,
     context: &RunContext<'_>,
-) -> BenchResult<Vec<u8>> {
-    handle
-        .join()
-        .map_err(|_| {
-            format!(
-                "R32 command {stream} reader panicked: {}/{}",
-                context.pair_id, context.engine
-            )
-        })?
-        .map_err(|error| {
-            format!(
-                "R32 command {stream} read failed {}/{}: {error}",
-                context.pair_id, context.engine
-            )
-        })
+) -> BenchResult<()> {
+    let flags = fcntl_getfl(descriptor.as_fd()).map_err(|error| {
+        format!(
+            "cannot inspect R32 command {stream} flags {}/{}: {error}",
+            context.pair_id, context.engine
+        )
+    })?;
+    fcntl_setfl(descriptor.as_fd(), flags | OFlags::NONBLOCK).map_err(|error| {
+        format!(
+            "cannot make R32 command {stream} nonblocking {}/{}: {error}",
+            context.pair_id, context.engine
+        )
+    })
+}
+
+fn drain_capped(
+    reader: &mut impl Read,
+    bytes: &mut Vec<u8>,
+    eof: &mut bool,
+    stream: &str,
+    context: &RunContext<'_>,
+) -> BenchResult<()> {
+    let mut chunk = [0_u8; 16 * 1024];
+    loop {
+        match reader.read(&mut chunk) {
+            Ok(0) => {
+                *eof = true;
+                return Ok(());
+            }
+            Ok(read) => {
+                if bytes.len().saturating_add(read) > MAX_RUNNER_OUTPUT_BYTES {
+                    return Err(format!(
+                        "R32 command {stream} exceeded 64 KiB: {}/{}",
+                        context.pair_id, context.engine
+                    ));
+                }
+                bytes.try_reserve(read).map_err(|_| {
+                    format!(
+                        "cannot reserve R32 command {stream} buffer: {}/{}",
+                        context.pair_id, context.engine
+                    )
+                })?;
+                bytes.extend_from_slice(&chunk[..read]);
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::Interrupted => {}
+            Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => return Ok(()),
+            Err(error) => {
+                return Err(format!(
+                    "cannot read R32 command {stream} {}/{}: {error}",
+                    context.pair_id, context.engine
+                ))
+            }
+        }
+    }
+}
+
+fn terminate_subprocess(child: &mut std::process::Child, process_group: Pid) {
+    let _ = kill_process_group(process_group, Signal::KILL);
+    let _ = child.kill();
+    let _ = child.wait();
 }
 
 fn diagnostic(bytes: &[u8]) -> String {

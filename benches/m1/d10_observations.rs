@@ -622,7 +622,7 @@ fn validate_observations(
         "suite": "d10",
         "target": TARGET,
         "telemetry_resource_identity_bindings_enforced": true,
-        "telemetry_resource_outputs_authenticated": true,
+        "telemetry_resource_schema_bindings_enforced": true,
         "holdout_membership_enforced": true,
         "warmups_per_applicable_implementation": WARMUPS,
         "weighted_applicable_vendor_aggregate": aggregate_json,
@@ -2670,7 +2670,7 @@ mod tests {
         assert_eq!(result["independent_validation"], false);
         assert_eq!(result["observation_counts_enforced"], true);
         assert_eq!(result["holdout_membership_enforced"], true);
-        assert_eq!(result["telemetry_resource_outputs_authenticated"], true);
+        assert_eq!(result["telemetry_resource_schema_bindings_enforced"], true);
         assert_eq!(
             result["cases"][0]["ferric_median"]["numerator"],
             "110000000"

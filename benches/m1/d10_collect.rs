@@ -11,16 +11,19 @@ use crate::d10_observations::{
 };
 use crate::d10_policy::{hold_validated_policy, HeldValidatedPolicy};
 use ferric_m1_benchmarks::{encode_canonical_document, sha256_identity, BenchResult};
-use rustix::fs::{fstat, openat2, FileType, Mode, OFlags, ResolveFlags, Stat, CWD};
+use rustix::fs::{
+    fcntl_getfl, fcntl_setfl, fstat, openat2, FileType, Mode, OFlags, ResolveFlags, Stat, CWD,
+};
+use rustix::process::{kill_process_group, Pid, Signal};
 use serde_json::{json, Map, Value};
 use std::collections::BTreeMap;
 use std::ffi::OsString;
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom, Write};
-use std::os::fd::AsRawFd;
+use std::os::fd::{AsFd, AsRawFd};
+use std::os::unix::process::CommandExt;
 use std::path::{Component, Path, PathBuf};
-use std::process::{Command, Stdio};
-use std::thread;
+use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
 
 pub(super) const COMMAND: &str = "collect-policy-observations";
@@ -416,6 +419,7 @@ fn parse_collection_plan(
     }
     let collector_binary =
         HeldExecutable::open(collector_path, collector_sha256, "D10 collector binary")?;
+    require_running_collector_image(&collector_binary)?;
     let (environment, environment_sha256) =
         parse_environment(policy, get(root, "environment", "D10 collection manifest")?)?;
     let cases_value = get(root, "cases", "D10 collection manifest")?
@@ -505,6 +509,23 @@ fn parse_collection_plan(
         manifest_sha256: sha256_identity(&manifest.bytes),
         timeout: Duration::from_millis(timeout_ms),
     })
+}
+
+fn require_running_collector_image(collector: &HeldExecutable) -> BenchResult<()> {
+    let running = openat2(
+        CWD,
+        Path::new("/proc/self/exe"),
+        OFlags::RDONLY | OFlags::CLOEXEC,
+        Mode::empty(),
+        ResolveFlags::empty(),
+    )
+    .map_err(|error| format!("cannot open the running D10 collector image: {error}"))?;
+    let running = fstat(&running)
+        .map_err(|error| format!("cannot inspect the running D10 collector image: {error}"))?;
+    if !same_snapshot(&collector.initial, &running) {
+        return Err("D10 collector path does not identify the running image".to_owned());
+    }
+    Ok(())
 }
 
 fn parse_environment(
@@ -1274,96 +1295,189 @@ fn run_subprocess(
         "request_sha256": request_sha256,
     });
     let command_sha256 = sha256_identity(&encode_canonical_document(&invocation)?);
+    let deadline = Instant::now()
+        .checked_add(timeout)
+        .ok_or_else(|| format!("{description} deadline overflowed"))?;
     let mut child = Command::new(command.binary.proc_path())
         .args(&command.arguments)
         .current_dir("/")
         .env_clear()
         .envs(environment)
+        .process_group(0)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
         .map_err(|error| format!("cannot launch {description}: {error}"))?;
-    let mut stdin = child
-        .stdin
-        .take()
-        .ok_or_else(|| format!("cannot acquire {description} stdin"))?;
-    stdin
-        .write_all(&request_bytes)
-        .map_err(|error| format!("cannot write canonical {description} request: {error}"))?;
-    drop(stdin);
-    let stdout = child
-        .stdout
-        .take()
-        .ok_or_else(|| format!("cannot acquire {description} stdout"))?;
-    let stderr = child
-        .stderr
-        .take()
-        .ok_or_else(|| format!("cannot acquire {description} stderr"))?;
-    let stdout_reader = thread::spawn(move || read_bounded(stdout));
-    let stderr_reader = thread::spawn(move || read_bounded(stderr));
-    let start = Instant::now();
-    let status = loop {
-        match child
-            .try_wait()
-            .map_err(|error| format!("cannot poll {description}: {error}"))?
-        {
-            Some(status) => break status,
-            None if start.elapsed() >= timeout => {
-                let _ = child.kill();
-                let _ = child.wait();
-                let _ = stdout_reader.join();
-                let _ = stderr_reader.join();
-                return Err(format!("{description} timed out"));
-            }
-            None => thread::sleep(Duration::from_millis(1)),
-        }
+    let process_group = Pid::from_child(&child);
+    let Some(stdin) = child.stdin.take() else {
+        terminate_subprocess(&mut child, process_group);
+        return Err(format!("cannot acquire {description} stdin"));
     };
-    let stdout = stdout_reader
-        .join()
-        .map_err(|_| format!("{description} stdout reader panicked"))?
-        .map_err(|error| format!("cannot read {description} stdout: {error}"))?;
-    let stderr = stderr_reader
-        .join()
-        .map_err(|_| format!("{description} stderr reader panicked"))?
-        .map_err(|error| format!("cannot read {description} stderr: {error}"))?;
+    let Some(mut stdout) = child.stdout.take() else {
+        terminate_subprocess(&mut child, process_group);
+        return Err(format!("cannot acquire {description} stdout"));
+    };
+    let Some(mut stderr) = child.stderr.take() else {
+        terminate_subprocess(&mut child, process_group);
+        return Err(format!("cannot acquire {description} stderr"));
+    };
+    let mut stdin = Some(stdin);
+    for (descriptor, stream) in [
+        (stdin.as_ref().expect("stdin is present").as_fd(), "stdin"),
+        (stdout.as_fd(), "stdout"),
+        (stderr.as_fd(), "stderr"),
+    ] {
+        if let Err(error) = set_nonblocking(descriptor, description, stream) {
+            terminate_subprocess(&mut child, process_group);
+            return Err(error);
+        }
+    }
+    let mut stdin_offset = 0_usize;
+    let mut stdout_bytes = Vec::new();
+    let mut stderr_bytes = Vec::new();
+    let mut stdout_eof = false;
+    let mut stderr_eof = false;
+    let mut status = None;
+    loop {
+        if Instant::now() >= deadline {
+            terminate_subprocess(&mut child, process_group);
+            return Err(format!("{description} timed out"));
+        }
+        if let Err(error) =
+            write_nonblocking(&mut stdin, &request_bytes, &mut stdin_offset, description)
+                .and_then(|()| {
+                    drain_nonblocking(
+                        &mut stdout,
+                        &mut stdout_bytes,
+                        &mut stdout_eof,
+                        description,
+                        "stdout",
+                    )
+                })
+                .and_then(|()| {
+                    drain_nonblocking(
+                        &mut stderr,
+                        &mut stderr_bytes,
+                        &mut stderr_eof,
+                        description,
+                        "stderr",
+                    )
+                })
+        {
+            terminate_subprocess(&mut child, process_group);
+            return Err(error);
+        }
+        if status.is_none() {
+            match child.try_wait() {
+                Ok(Some(observed)) => {
+                    let _ = kill_process_group(process_group, Signal::KILL);
+                    status = Some(observed);
+                }
+                Ok(None) => {}
+                Err(error) => {
+                    terminate_subprocess(&mut child, process_group);
+                    return Err(format!("cannot poll {description}: {error}"));
+                }
+            }
+        }
+        if status.is_some() && stdin.is_none() && stdout_eof && stderr_eof {
+            break;
+        }
+        std::thread::sleep(Duration::from_millis(1));
+    }
+    let status = status.expect("completed subprocess status is present");
     command.binary.revalidate(description, false)?;
     if status.code() != Some(0) {
         return Err(format!(
             "{description} did not exit normally with status zero"
         ));
     }
-    if !stderr.is_empty() {
+    if !stderr_bytes.is_empty() {
         return Err(format!("{description} emitted stderr"));
     }
-    if stdout.is_empty() || !stdout.is_ascii() {
+    if stdout_bytes.is_empty() || !stdout_bytes.is_ascii() {
         return Err(format!("{description} stdout must be nonempty ASCII JSON"));
     }
-    let value: Value = serde_json::from_slice(&stdout)
+    let value: Value = serde_json::from_slice(&stdout_bytes)
         .map_err(|error| format!("cannot parse {description} stdout: {error}"))?;
-    if encode_canonical_document(&value)? != stdout {
+    if encode_canonical_document(&value)? != stdout_bytes {
         return Err(format!("{description} stdout must be canonical JSON"));
     }
     Ok(SubprocessResult {
         command_sha256,
-        output_sha256: sha256_identity(&stdout),
+        output_sha256: sha256_identity(&stdout_bytes),
         value,
     })
 }
 
-fn read_bounded(mut reader: impl Read) -> std::io::Result<Vec<u8>> {
-    let mut bytes = Vec::new();
-    reader
-        .by_ref()
-        .take(MAX_SUBPROCESS_BYTES.saturating_add(1) as u64)
-        .read_to_end(&mut bytes)?;
-    if bytes.len() > MAX_SUBPROCESS_BYTES {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            "subprocess output exceeds bound",
-        ));
+fn set_nonblocking(descriptor: impl AsFd, description: &str, stream: &str) -> BenchResult<()> {
+    let flags = fcntl_getfl(descriptor.as_fd())
+        .map_err(|error| format!("cannot inspect {description} {stream} flags: {error}"))?;
+    fcntl_setfl(descriptor.as_fd(), flags | OFlags::NONBLOCK)
+        .map_err(|error| format!("cannot make {description} {stream} nonblocking: {error}"))
+}
+
+fn write_nonblocking(
+    writer_slot: &mut Option<impl Write>,
+    bytes: &[u8],
+    offset: &mut usize,
+    description: &str,
+) -> BenchResult<()> {
+    let Some(writer) = writer_slot.as_mut() else {
+        return Ok(());
+    };
+    while *offset < bytes.len() {
+        match writer.write(&bytes[*offset..]) {
+            Ok(0) => return Err(format!("{description} stdin closed before the request")),
+            Ok(written) => *offset += written,
+            Err(error) if error.kind() == std::io::ErrorKind::Interrupted => {}
+            Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => return Ok(()),
+            Err(error) => {
+                return Err(format!(
+                    "cannot write canonical {description} request: {error}"
+                ))
+            }
+        }
     }
-    Ok(bytes)
+    writer_slot.take();
+    Ok(())
+}
+
+fn drain_nonblocking(
+    reader: &mut impl Read,
+    bytes: &mut Vec<u8>,
+    eof: &mut bool,
+    description: &str,
+    stream: &str,
+) -> BenchResult<()> {
+    let mut chunk = [0_u8; 16 * 1024];
+    loop {
+        match reader.read(&mut chunk) {
+            Ok(0) => {
+                *eof = true;
+                return Ok(());
+            }
+            Ok(read) => {
+                if bytes.len().saturating_add(read) > MAX_SUBPROCESS_BYTES {
+                    return Err(format!("{description} {stream} exceeds the admitted bound"));
+                }
+                bytes
+                    .try_reserve(read)
+                    .map_err(|_| format!("cannot reserve {description} {stream} buffer"))?;
+                bytes.extend_from_slice(&chunk[..read]);
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::Interrupted => {}
+            Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => return Ok(()),
+            Err(error) => return Err(format!("cannot read {description} {stream}: {error}")),
+        }
+    }
+}
+
+fn terminate_subprocess(child: &mut Child, process_group: Pid) {
+    let _ = kill_process_group(process_group, Signal::KILL);
+    let _ = child.kill();
+    let _ = child.wait();
 }
 
 fn inapplicable_vendor(bindings: &Value) -> Value {
@@ -1586,6 +1700,21 @@ mod tests {
             "binary_sha256": binary_sha256,
             "protocol_sha256": protocol_sha256,
         })
+    }
+
+    fn python_command(script: &str) -> CommandSpec {
+        let (binary, binary_sha256) = python_binary();
+        parse_command(
+            &command(
+                &binary,
+                &binary_sha256,
+                &digest("subprocess-test-protocol"),
+                script,
+            ),
+            None,
+            "D10 test command",
+        )
+        .unwrap()
     }
 
     fn bind_companion(root: &Path, policy: &mut Value, name: &str, path: &str, value: &Value) {
@@ -1862,7 +1991,7 @@ mod tests {
         .unwrap();
         let result = read_value(&validated.join("validation.json"));
         assert_eq!(result["observation_counts_enforced"], true);
-        assert_eq!(result["telemetry_resource_outputs_authenticated"], true);
+        assert_eq!(result["telemetry_resource_schema_bindings_enforced"], true);
         assert_eq!(result["qualification_evidence"], false);
     }
 
@@ -1952,5 +2081,74 @@ mod tests {
         let error = collect_policy_observations(&arguments(&fixture)).unwrap_err();
         assert!(error.contains("telemetry error event"), "{error}");
         assert!(!fixture.output.exists());
+    }
+
+    #[test]
+    fn collector_identity_is_the_running_inode() {
+        let (temporary, _, _) = d10_policy::tests::fixture();
+        let current = std::env::current_exe().unwrap();
+        let copy = temporary.0.join("collector-copy");
+        fs::copy(&current, &copy).unwrap();
+        let identity = sha256_identity(&fs::read(&copy).unwrap());
+        let held = HeldExecutable::open(&copy, &identity, "D10 copied collector").unwrap();
+        let error = require_running_collector_image(&held).unwrap_err();
+        assert!(error.contains("does not identify the running image"));
+    }
+
+    #[test]
+    fn subprocess_backpressure_and_escaped_descendants_obey_deadline() {
+        let request = json!({"payload": "x".repeat(256 * 1024)});
+        let environment = BTreeMap::new();
+        let environment_sha256 = digest("empty-test-environment");
+        let mut writes_first =
+            python_command("import os,sys\nos.write(1,b'x'*131072)\nsys.stdin.buffer.read()");
+        let started = Instant::now();
+        let error = match run_subprocess(
+            &mut writes_first,
+            &request,
+            &environment,
+            &environment_sha256,
+            Duration::from_secs(5),
+            "D10 writes-first test",
+        ) {
+            Err(error) => error,
+            Ok(_) => panic!("writes-first subprocess unexpectedly succeeded"),
+        };
+        assert!(error.contains("parse") || error.contains("canonical JSON"));
+        assert!(started.elapsed() < Duration::from_secs(5));
+
+        let mut blocked_writer = python_command("import time;time.sleep(5)");
+        let started = Instant::now();
+        let error = match run_subprocess(
+            &mut blocked_writer,
+            &json!({"payload": "x".repeat(2 * 1024 * 1024)}),
+            &environment,
+            &environment_sha256,
+            Duration::from_millis(50),
+            "D10 blocked-writer test",
+        ) {
+            Err(error) => error,
+            Ok(_) => panic!("blocked-writer subprocess unexpectedly succeeded"),
+        };
+        assert!(error.contains("timed out"));
+        assert!(started.elapsed() < Duration::from_secs(1));
+
+        let mut escaped = python_command(
+            "import subprocess,sys\nsys.stdin.buffer.read()\nsubprocess.Popen([sys.executable,'-c','import time;time.sleep(1)'],start_new_session=True)\nsys.stdout.write('{}\\n')",
+        );
+        let started = Instant::now();
+        let error = match run_subprocess(
+            &mut escaped,
+            &json!({"payload": "small"}),
+            &environment,
+            &environment_sha256,
+            Duration::from_millis(200),
+            "D10 escaped-descendant test",
+        ) {
+            Err(error) => error,
+            Ok(_) => panic!("escaped-descendant subprocess unexpectedly succeeded"),
+        };
+        assert!(error.contains("timed out"));
+        assert!(started.elapsed() < Duration::from_secs(1));
     }
 }

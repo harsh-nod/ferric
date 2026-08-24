@@ -148,13 +148,14 @@ product and PPM comparison remain under the validator's 8,388,608-bit
 representation bound. Admission retains its V1 structural weight domain. This
 is a structural computability bound, not a supplied or default weight.
 
-The validator authenticates the collector's telemetry and resource schemas,
-their exact policy identities, empty error events, physical numeric bounds, and
-exact expected/observed resource equality. `OUTPUT-BUNDLE` is published without
-replacement with exactly
-`observations.json`, its `protocol.json`, and recomputed `validation.json` under
-descriptor-held file, directory, name, and parent custody. Its status remains
-`PARTIAL_NON_EVIDENCE`: it does not validate external policy values or physical
+The validator enforces the supplied telemetry and resource schemas, their exact
+policy identity bindings, empty error events, physical numeric bounds, and exact
+expected/observed resource equality. These checks do not authenticate who
+produced the bundle. `OUTPUT-BUNDLE` is published without replacement with
+exactly `observations.json`, its `protocol.json`, and recomputed
+`validation.json` under descriptor-held file, directory, name, and parent
+custody. Its status remains `PARTIAL_NON_EVIDENCE`: it does not validate
+external policy values or physical
 observation truth, provide independent reproduction or qualification evidence,
 or close `m1.r31`.
 
