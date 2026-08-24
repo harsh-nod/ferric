@@ -174,8 +174,8 @@ def exercise_prepare_boundaries(repo: Path, fe2o3_source: Path, planner: Any) ->
             or queue.get("format") != planner.WORK_FORMAT
             or queue.get("status") != "INCOMPLETE"
             or queue.get("counts", {}).get("missing_items") != 358
-            or queue.get("counts", {}).get("available_producer_items") != 152
-            or queue.get("counts", {}).get("missing_producer_items") != 206
+            or queue.get("counts", {}).get("available_producer_items") != 167
+            or queue.get("counts", {}).get("missing_producer_items") != 191
         ):
             fail("M1 planner positive integration output weakened its nonclaim")
         if any(
@@ -439,12 +439,13 @@ def main() -> None:
     if available_kinds != {
         "artifact-identity": 74,
         "canonical-structure-check": 14,
+        "external-contract": 15,
         "negative-mutation": 30,
         "unsupported-rationale": 5,
         "verus-theorem": 26,
     }:
         fail(f"existing M1 producer coverage drifted: {available_kinds}")
-    if len(first) - len(available) != 205:
+    if len(first) - len(available) != 190:
         fail("missing binding-producer count drifted")
 
     identity_slots = [
@@ -535,6 +536,63 @@ def main() -> None:
         "204b1a90357249a1b3e9ac8094e40a5f424b3ba1a7aac2fccd0661773054814d"
     ):
         fail("M1 canonical-structure allocation topology drifted")
+
+    external_slots = [
+        slot
+        for slot in first
+        if slot["binding"]["evidence_kind"] == "external-contract"
+    ]
+    external_ids = [slot["binding"]["id"] for slot in external_slots]
+    if planner.digest_bytes(("\n".join(external_ids) + "\n").encode("ascii")) != (
+        "1f8baa6f1e37438e0f2643425a38f1747900ebd41e74eed4c8d851cdb05ae20e"
+    ):
+        fail("M1 external-contract binding ID roster drifted")
+    external_rows = []
+    for slot in external_slots:
+        binding = slot["binding"]
+        artifact_id = binding["artifact_id"]
+        expected_artifact = {
+            "id": artifact_id,
+            "kind": "ContractDocument",
+            "path": f"artifacts/{artifact_id}.external-contract.json",
+        }
+        expected_producer = {
+            "availability": "available",
+            "command": [
+                "python3",
+                "-I",
+                "proofs/m1-qualification/produce-external-contract.py",
+                "FERRIC_REPO",
+                "FE2O3_REPO",
+                "PLAN_DIR",
+                binding["id"],
+            ],
+            "role": "ferric-m1-external-assumption-reporter",
+        }
+        if (
+            slot["producer"] != expected_producer
+            or slot["expected_artifact"] != expected_artifact
+        ):
+            fail(f"M1 external-contract producer command drifted: {binding['id']}")
+        external_rows.append(
+            "|".join(
+                [
+                    binding["id"],
+                    binding["obligation_class"],
+                    binding["obligation_id"],
+                    binding["profile_id"],
+                    binding["path_id"],
+                    binding["source_identity_id"],
+                    artifact_id,
+                    expected_artifact["path"],
+                ]
+            )
+            + "\n"
+        )
+    if planner.digest_bytes("".join(external_rows).encode("ascii")) != (
+        "2b88b7e5fdac2bfaecff2f2eef8345b35b101d8185c24fa9fbb43ce1304caf99"
+    ):
+        fail("M1 external-contract allocation topology drifted")
 
     rationale_slots = [
         slot
@@ -702,6 +760,7 @@ def main() -> None:
         if binding["evidence_kind"] in {
             "artifact-identity",
             "canonical-structure-check",
+            "external-contract",
             "unsupported-rationale",
         }:
             continue

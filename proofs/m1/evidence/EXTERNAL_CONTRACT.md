@@ -38,6 +38,25 @@ assumption omission, injection, or reordering, status promotion, self-reported
 stronger authority, and any schema drift. It opens the report as a stable
 regular non-symlink file and independently checks its size and SHA-256.
 
+## Ferric-owned producer
+
+The planner exposes exactly 15 binding-local declarations. After the three
+global TCB reports exist, materialize one with:
+
+```text
+python3 -I proofs/m1-qualification/produce-external-contract.py \
+  FERRIC_REPO FE2O3_REPO PLAN_DIR binding.NNNNN
+```
+
+The producer independently replays the complete plan and queue, authenticates
+both clean source repositories and source closures, and holds all three TCB
+reports through exclusive publication. It creates the canonical owner-private
+report last without replacement and emits no companion payload, evidence index,
+receipt, validation result, or status transition. The producer does not invoke
+or import the trusted validator. Its ownership is legitimate because it records
+Ferric's declared assumptions; it does not attest that an external component
+implements or satisfies them.
+
 ## Authority boundary
 
 Acceptance authenticates only that the fixed external assumptions were

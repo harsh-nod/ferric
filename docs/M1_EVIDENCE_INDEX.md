@@ -155,8 +155,11 @@ documented in `proofs/m1/evidence/ARTIFACT_IDENTITY.md`. The external-contract
 validator accepts only a canonical runtime-profile declaration of the four
 fixed compiler, runtime, driver/firmware, and hardware assumptions for the
 exact identity-bound Open obligation. It does not establish that an assumption
-is implemented or satisfied. Its exact report layout and authority boundary
-are documented in `proofs/m1/evidence/EXTERNAL_CONTRACT.md`. The fe2o3-contract
+is implemented or satisfied. Its 15 exact binding-local reports have a
+Ferric-owned declaration producer that invokes no trusted validator and grants
+only `declared-assumptions-only` authority. Its exact report layout, producer,
+and authority boundary are documented in
+`proofs/m1/evidence/EXTERNAL_CONTRACT.md`. The fe2o3-contract
 validator accepts only a canonical contract body and deterministic one-property,
 one-obligation `ContractSetV1` declaration for the exact Open binding. It binds
 the manifest-declared assurance roster, obligation, path, profile, target,

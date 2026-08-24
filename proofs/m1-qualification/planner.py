@@ -138,7 +138,6 @@ FOUNDATION_FILES = {
     ),
 }
 MISSING_ROLES = {
-    "external-contract": "external-contract-owner",
     "fe2o3-contract": "fe2o3-contract-owner",
     "hardware-test": "mi300x-hardware-harness",
     "independent-validator": "independent-validation-organization",
@@ -516,6 +515,10 @@ def producer(evidence_kind: str, selectors: tuple[str, ...]) -> JsonObject:
             "proofs/m1-qualification/produce-canonical-structure.py",
             "ferric-canonical-structure-reporter",
         ),
+        "external-contract": (
+            "proofs/m1-qualification/produce-external-contract.py",
+            "ferric-m1-external-assumption-reporter",
+        ),
         "unsupported-rationale": (
             "proofs/m1-qualification/produce-unsupported-rationale.py",
             "ferric-m1-nonclaim-reporter",
@@ -630,6 +633,7 @@ def renumber_slots(slots: list[JsonObject]) -> list[JsonObject]:
         elif evidence_kind in {
             "artifact-identity",
             "canonical-structure-check",
+            "external-contract",
             "unsupported-rationale",
         }:
             slot["producer"]["command"][-1] = binding_id

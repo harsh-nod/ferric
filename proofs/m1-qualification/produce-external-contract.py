@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Produce one source-bound M1 canonical-structure report and payload."""
+"""Produce one source-authenticated M1 external-contract report."""
 
 from __future__ import annotations
 
@@ -23,8 +23,23 @@ PLAN_NONCLAIM = (
     "This bundle allocates external M1 evidence work only. It is not an evidence "
     "index, qualification receipt, validation result, or M1 closure claim."
 )
-TCB_REPORT_FORMAT = "FERRIC-M1-TCB-REPORT-V1"
+REPORT_FORMAT = "FERRIC-M1-EXTERNAL-CONTRACT-V1"
 REPORT_TARGET = "gfx942:xnack-"
+REPORT_AUTHORITY = "declared-assumptions-only"
+REPORT_NONCLAIM = (
+    "This report authenticates a declaration of external assumptions only. "
+    "It does not establish that an assumption is implemented or satisfied and "
+    "grants no theorem, machine-refinement, load, launch, hardware, performance, "
+    "or qualification authority."
+)
+CONTRACT_SCOPE = "external-compiler-runtime-hardware-assumptions"
+ASSUMPTION_IDS = [
+    "compiler-object-emission-conforms-to-declared-target",
+    "runtime-load-and-dispatch-conform-to-amdhsa-contract",
+    "driver-firmware-memory-queue-completion-conform-to-declared-abi",
+    "gfx942-execution-conforms-to-declared-isa-and-memory-model",
+]
+TCB_REPORT_FORMAT = "FERRIC-M1-TCB-REPORT-V1"
 TCB_REPORT_AUTHORITY = "trusted-boundary-declaration-only"
 TCB_REPORT_NONCLAIM = (
     "This report authenticates the declared M1 trusted boundary only. It does "
@@ -32,42 +47,12 @@ TCB_REPORT_NONCLAIM = (
     "correctness, hardware behavior, theorem truth, machine refinement, load, "
     "launch, performance, or qualification authority and closes no obligation."
 )
-CANONICAL_REPORT_FORMAT = "FERRIC-M1-CANONICAL-STRUCTURE-V1"
-CANONICAL_PAYLOAD_FORMAT = "FERRIC-M1-CANONICAL-RECORDS-V1"
-CANONICAL_SCHEMA_ID = "ferric.m1-canonical-records.v1"
-CANONICAL_AUTHORITY = "canonical-structure-only"
-CANONICAL_NONCLAIM = (
-    "This transcript establishes only that the referenced bytes conform to "
-    "the checker-owned canonical record schema and exact evidence binding. "
-    "It grants no semantic correctness, theorem, machine, load, launch, "
-    "hardware, performance, or qualification authority."
+EXTERNAL_CONTRACT_ROSTER_SHA256 = (
+    "1f8baa6f1e37438e0f2643425a38f1747900ebd41e74eed4c8d851cdb05ae20e"
 )
-CANONICAL_STRUCTURE_ROSTER_SHA256 = (
-    "9bcebd22a0ae9eaa63322c075ea6f8b69af1599a0ef521948d922dc6e8343b9d"
+EXTERNAL_CONTRACT_TSV_SHA256 = (
+    "2b88b7e5fdac2bfaecff2f2eef8345b35b101d8185c24fa9fbb43ce1304caf99"
 )
-CANONICAL_STRUCTURE_TSV_SHA256 = (
-    "204b1a90357249a1b3e9ac8094e40a5f424b3ba1a7aac2fccd0661773054814d"
-)
-CANONICAL_RECORD_TYPES = {"boolean", "count", "identifier", "sha256", "text"}
-CANONICAL_PAYLOAD_KEYS = {
-    "binding_sha256",
-    "format",
-    "obligation_class",
-    "obligation_id",
-    "path_id",
-    "profile_id",
-    "records",
-    "source_identity_id",
-    "target",
-}
-CANONICAL_PAYLOAD_SCHEMA = {
-    "format": CANONICAL_PAYLOAD_FORMAT,
-    "record_fields": ["name", "type", "value"],
-    "record_types": sorted(CANONICAL_RECORD_TYPES),
-    "required_fields": sorted(CANONICAL_PAYLOAD_KEYS),
-    "schema_id": CANONICAL_SCHEMA_ID,
-    "target": REPORT_TARGET,
-}
 FERRIC_BASE_COMMIT = "c5a86fd56c1c817664593df25c04bbed30e84971"
 ALLOCATION_SHA256 = "948ad3023df7ad4b1313ed865b54464f63b6bad9406f1510c85e60f9db055bd6"
 TCB = (
@@ -149,11 +134,6 @@ SOURCE_KEYS = {
     "source_closure_sha256",
     "tree",
 }
-SAFE_ID = re.compile(r"[a-z0-9][a-z0-9.-]*\Z")
-SHA256 = re.compile(r"[0-9a-f]{64}\Z")
-GIT_ID = re.compile(r"[0-9a-f]{40}\Z")
-MAX_JSON_BYTES = 16_000_000
-MAX_FILE_BYTES = 64_000_000
 TCB_REPORT_KEYS = {
     "authority",
     "component_roster",
@@ -173,19 +153,38 @@ TCB_REPORT_KEYS = {
     "tcb_structure_roster",
     "validator_roster",
 }
+REPORT_KEYS = {
+    "assumption_ids",
+    "assurance_property_ids",
+    "authority",
+    "binding_sha256",
+    "bound_source_identity_sha256",
+    "contract_scope",
+    "contract_target",
+    "evidence_kind",
+    "format",
+    "nonclaim",
+    "obligation_class",
+    "obligation_id",
+    "obligation_state",
+    "path_id",
+    "path_resolution_sha256",
+    "profile_id",
+    "requirements_sha256",
+    "source_identity_id",
+    "source_roster_sha256",
+    "statement_sha256",
+    "tcb_identity_sha256s",
+    "tcb_roster_sha256",
+}
+SAFE_ID = re.compile(r"[a-z0-9][a-z0-9.-]*\Z")
+SHA256 = re.compile(r"[0-9a-f]{64}\Z")
+GIT_ID = re.compile(r"[0-9a-f]{40}\Z")
+MAX_JSON_BYTES = 16_000_000
+MAX_FILE_BYTES = 64_000_000
 
 
 JsonObject = dict[str, Any]
-SourceCustody = tuple[
-    Path,
-    int,
-    list[tuple[int, str, int]],
-    int,
-    str,
-    BinaryIO,
-    os.stat_result,
-    str,
-]
 HeldFile = tuple[str, BinaryIO, os.stat_result, bytes, str]
 HeldDirectoryFiles = tuple[int, list[HeldFile]]
 
@@ -489,43 +488,9 @@ def open_directory(path: Path, description: str) -> int:
     return descriptor
 
 
-def open_directory_at(parent_fd: int, name: str, description: str) -> int:
-    flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_CLOEXEC", 0)
-    if hasattr(os, "O_NOFOLLOW"):
-        flags |= os.O_NOFOLLOW
-    try:
-        before = os.stat(name, dir_fd=parent_fd, follow_symlinks=False)
-        descriptor = os.open(name, flags, dir_fd=parent_fd)
-        opened = os.fstat(descriptor)
-    except OSError as error:
-        fail(f"{description} is unavailable: {error}")
-    if (
-        stat.S_ISLNK(before.st_mode)
-        or not stat.S_ISDIR(opened.st_mode)
-        or directory_binding(before) != directory_binding(opened)
-    ):
-        os.close(descriptor)
-        fail(f"{description} must be a held nonsymlink directory")
-    return descriptor
-
-
 def revalidate_directory(path: Path, descriptor: int, description: str) -> None:
     try:
         named = path.lstat()
-        held = os.fstat(descriptor)
-    except OSError as error:
-        fail(f"cannot revalidate {description}: {error}")
-    if stat.S_ISLNK(named.st_mode) or directory_binding(named) != directory_binding(
-        held
-    ):
-        fail(f"{description} was replaced after it was opened")
-
-
-def revalidate_directory_at(
-    parent_fd: int, name: str, descriptor: int, description: str
-) -> None:
-    try:
-        named = os.stat(name, dir_fd=parent_fd, follow_symlinks=False)
         held = os.fstat(descriptor)
     except OSError as error:
         fail(f"cannot revalidate {description}: {error}")
@@ -599,109 +564,6 @@ def revalidate_child_directory(
     ):
         fail(f"{description} was replaced after it was opened")
     verify_private_directory(held, description)
-
-
-def open_source_file(
-    repository_path: Path,
-    repository_fd: int,
-    relative_value: Any,
-    description: str,
-) -> tuple[bytes, SourceCustody]:
-    relative = safe_relative(relative_value, f"{description} path")
-    if not relative.parts:
-        fail(f"{description} path is empty")
-    directories: list[tuple[int, str, int]] = []
-    parent_fd = repository_fd
-    source: BinaryIO | None = None
-    try:
-        for part in relative.parts[:-1]:
-            child_fd = open_directory_at(parent_fd, part, f"{description} directory")
-            directories.append((parent_fd, part, child_fd))
-            parent_fd = child_fd
-        name = relative.parts[-1]
-        source, before = open_regular_at(parent_fd, name, description)
-        if before.st_size <= 0 or before.st_size > MAX_FILE_BYTES:
-            fail(f"{description} size is outside the admitted bound")
-        raw = source.read(MAX_FILE_BYTES + 1)
-        after = os.fstat(source.fileno())
-        if (
-            len(raw) != before.st_size
-            or len(raw) > MAX_FILE_BYTES
-            or file_identity(before) != file_identity(after)
-        ):
-            fail(f"{description} changed while it was read")
-        custody: SourceCustody = (
-            repository_path,
-            repository_fd,
-            directories,
-            parent_fd,
-            name,
-            source,
-            after,
-            description,
-        )
-        revalidate_source_file(custody)
-        return raw, custody
-    except OSError as error:
-        fail(f"cannot read {description}: {error}")
-    except BaseException:
-        if source is not None:
-            source.close()
-        for _, _, descriptor in reversed(directories):
-            os.close(descriptor)
-        raise
-
-
-def revalidate_source_file(custody: SourceCustody) -> None:
-    (
-        repository_path,
-        repository_fd,
-        directories,
-        parent_fd,
-        name,
-        source,
-        authenticated,
-        description,
-    ) = custody
-    try:
-        named = os.stat(name, dir_fd=parent_fd, follow_symlinks=False)
-        current = os.fstat(source.fileno())
-    except OSError as error:
-        fail(f"cannot revalidate {description}: {error}")
-    if (
-        stat.S_ISLNK(named.st_mode)
-        or file_identity(authenticated) != file_identity(current)
-        or file_identity(current) != file_identity(named)
-    ):
-        fail(f"{description} changed after it was authenticated")
-    for held_parent, directory_name, descriptor in reversed(directories):
-        revalidate_directory_at(
-            held_parent, directory_name, descriptor, f"{description} directory"
-        )
-    revalidate_directory(repository_path, repository_fd, f"{description} repository")
-
-
-def close_source_file(custody: SourceCustody) -> None:
-    directories, source = custody[2], custody[5]
-    source.close()
-    for _, _, descriptor in reversed(directories):
-        os.close(descriptor)
-
-
-def read_source_file(
-    repository_path: Path,
-    repository_fd: int,
-    relative_value: Any,
-    description: str,
-) -> bytes:
-    raw, custody = open_source_file(
-        repository_path, repository_fd, relative_value, description
-    )
-    try:
-        revalidate_source_file(custody)
-        return raw
-    finally:
-        close_source_file(custody)
 
 
 def literal_assignment(path: Path, name: str) -> Any:
@@ -817,9 +679,7 @@ def validate_requirements(requirements: JsonObject) -> None:
         )
         for record in group
     ):
-        fail(
-            "canonical-structure production requires every M1 obligation to remain Open"
-        )
+        fail("external-contract production requires every M1 obligation to remain Open")
     for key in (
         "m0_contracts_commit",
         "m1_upstream_base_commit",
@@ -1257,7 +1117,7 @@ def rederive_candidate_plan(
     candidate_queue: bytes,
 ) -> None:
     with tempfile.TemporaryDirectory(
-        prefix="ferric-m1-canonical-planner-replay-"
+        prefix="ferric-m1-external-contract-planner-replay-"
     ) as raw:
         reproduced = Path(raw) / "plan"
         run(
@@ -1450,125 +1310,18 @@ def validate_plan(
         entry_exists_at(plan_fd, name)
         for name in ("evidence-index.json", "receipt.json")
     ):
-        fail(
-            "canonical-structure production refuses a plan containing a closure output"
-        )
+        fail("external-contract production refuses a plan containing a closure output")
     if replay:
         rederive_candidate_plan(ferric, fe2o3, plan_fd, plan_raw, queue_raw)
-    return requirements, plan, queue, sources, report_validators, plan_raw, queue_raw
-
-
-def select_canonical_structure_binding(
-    plan: JsonObject, queue: JsonObject, binding_id: str
-) -> tuple[JsonObject, JsonObject]:
-    if not isinstance(binding_id, str) or not binding_id.startswith("binding."):
-        fail(f"unknown M1 canonical-structure binding: {binding_id}")
-    slots = [
-        slot
-        for slot in plan["binding_slots"]
-        if slot.get("binding", {}).get("evidence_kind") == "canonical-structure-check"
-    ]
-    if len(slots) != 14:
-        fail("M1 canonical-structure binding roster is incomplete")
-    ids = [slot["binding"]["id"] for slot in slots]
-    if ids != sorted(ids) or digest_bytes(("\n".join(ids) + "\n").encode("ascii")) != (
-        CANONICAL_STRUCTURE_ROSTER_SHA256
-    ):
-        fail("M1 canonical-structure binding ID roster drifted")
-
-    class_counts: dict[str, int] = {}
-    source_counts: dict[str, int] = {}
-    profile_counts: dict[str, int] = {}
-    obligations: set[tuple[str, str]] = set()
-    paths: set[str] = set()
-    tsv_rows = []
-    queue_by_id = {item["id"]: item for item in queue["items"]}
-    for slot in slots:
-        binding = slot["binding"]
-        artifact_id = binding["artifact_id"]
-        expected_artifact = {
-            "id": artifact_id,
-            "kind": "CheckerTranscript",
-            "path": f"artifacts/{artifact_id}.canonical-structure.json",
-        }
-        command = [
-            "python3",
-            "-I",
-            "proofs/m1-qualification/produce-canonical-structure.py",
-            "FERRIC_REPO",
-            "FE2O3_REPO",
-            "PLAN_DIR",
-            binding["id"],
-        ]
-        expected_producer = {
-            "availability": "available",
-            "command": command,
-            "role": "ferric-canonical-structure-reporter",
-        }
-        work_id = binding["id"].replace("binding.", "work.", 1)
-        expected_work = {
-            "expected_artifact": expected_artifact,
-            "id": work_id,
-            "producer": expected_producer,
-            "state": "missing",
-            "subject": f"binding:{binding['id']}",
-        }
-        if (
-            slot["expected_artifact"] != expected_artifact
-            or slot["producer"] != expected_producer
-            or slot["state"] != "missing"
-            or slot["foundation_selectors"] != []
-            or queue_by_id.get(work_id) != expected_work
-        ):
-            fail(f"M1 canonical-structure producer contract drifted: {binding['id']}")
-        for value, counts in (
-            (binding["obligation_class"], class_counts),
-            (binding["source_identity_id"], source_counts),
-            (binding["profile_id"], profile_counts),
-        ):
-            counts[value] = counts.get(value, 0) + 1
-        obligations.add((binding["obligation_class"], binding["obligation_id"]))
-        paths.add(binding["path_id"])
-        tsv_rows.append(
-            "|".join(
-                [
-                    binding["id"],
-                    binding["obligation_class"],
-                    binding["obligation_id"],
-                    binding["profile_id"],
-                    binding["path_id"],
-                    binding["source_identity_id"],
-                    artifact_id,
-                    expected_artifact["path"],
-                ]
-            )
-        )
-    if (
-        class_counts != {"Assurance": 5, "Roadmap": 9}
-        or source_counts != {"source.fe2o3": 1, "source.ferric": 13}
-        or profile_counts
-        != {
-            "admission": 6,
-            "authentication": 8,
-        }
-        or len(obligations) != 11
-        or len(paths) != 7
-        or digest_bytes(("\n".join(tsv_rows) + "\n").encode("ascii"))
-        != CANONICAL_STRUCTURE_TSV_SHA256
-    ):
-        fail("M1 canonical-structure allocation topology drifted")
-    matches = [slot for slot in slots if slot["binding"]["id"] == binding_id]
-    if len(matches) != 1:
-        fail(f"unknown M1 canonical-structure binding: {binding_id}")
-    slot = matches[0]
-    resolution_matches = [
-        row
-        for row in plan["path_resolutions"]
-        if row["id"] == slot["binding"]["path_id"]
-    ]
-    if len(resolution_matches) != 1:
-        fail("selected M1 canonical-structure path resolution drifted")
-    return slot, resolution_matches[0]
+    return (
+        requirements,
+        plan,
+        queue,
+        sources,
+        report_validators,
+        plan_raw,
+        queue_raw,
+    )
 
 
 def tcb_report_for(
@@ -1638,12 +1391,13 @@ def authenticate_tcb_reports(
             ):
                 source.close()
                 fail(f"M1 TCB report changed while it was read: {subject}")
-            expected_report = exact_keys(
-                tcb_report_for(ferric, requirements, sources, validators, subject),
-                TCB_REPORT_KEYS,
-                f"expected M1 TCB report {subject}",
+            expected = canonical_bytes(
+                exact_keys(
+                    tcb_report_for(ferric, requirements, sources, validators, subject),
+                    TCB_REPORT_KEYS,
+                    f"expected M1 TCB report {subject}",
+                )
             )
-            expected = canonical_bytes(expected_report)
             if raw != expected:
                 source.close()
                 fail(
@@ -1679,8 +1433,10 @@ def revalidate_tcb_reports(
 ) -> None:
     for subject, name, source, authenticated, raw in held:
         try:
-            named = os.stat(name, dir_fd=artifact_fd, follow_symlinks=False)
+            source.seek(0)
+            current_raw = source.read(len(raw) + 1)
             current = os.fstat(source.fileno())
+            named = os.stat(name, dir_fd=artifact_fd, follow_symlinks=False)
         except OSError as error:
             fail(f"cannot revalidate M1 TCB report {subject}: {error}")
         expected = canonical_bytes(
@@ -1692,18 +1448,116 @@ def revalidate_tcb_reports(
         )
         if (
             stat.S_ISLNK(named.st_mode)
+            or current_raw != raw
+            or raw != expected
             or file_identity(authenticated) != file_identity(current)
             or file_identity(current) != file_identity(named)
-            or raw != expected
         ):
             fail(f"M1 TCB report changed after authentication: {subject}")
 
 
+def select_external_contract_binding(
+    plan: JsonObject, queue: JsonObject, binding_id: str
+) -> tuple[JsonObject, JsonObject]:
+    if not isinstance(binding_id, str) or not binding_id.startswith("binding."):
+        fail(f"unknown M1 external-contract binding: {binding_id}")
+    slots = [
+        slot
+        for slot in plan["binding_slots"]
+        if slot.get("binding", {}).get("evidence_kind") == "external-contract"
+    ]
+    if len(slots) != 15:
+        fail("M1 external-contract binding roster is incomplete")
+    ids = [slot["binding"]["id"] for slot in slots]
+    if ids != sorted(ids) or digest_bytes(("\n".join(ids) + "\n").encode("ascii")) != (
+        EXTERNAL_CONTRACT_ROSTER_SHA256
+    ):
+        fail("M1 external-contract binding ID roster drifted")
+
+    queue_by_id = {item["id"]: item for item in queue["items"]}
+    rows = []
+    for slot in slots:
+        binding = slot["binding"]
+        artifact_id = binding["artifact_id"]
+        artifact = {
+            "id": artifact_id,
+            "kind": "ContractDocument",
+            "path": f"artifacts/{artifact_id}.external-contract.json",
+        }
+        producer = {
+            "availability": "available",
+            "command": [
+                "python3",
+                "-I",
+                "proofs/m1-qualification/produce-external-contract.py",
+                "FERRIC_REPO",
+                "FE2O3_REPO",
+                "PLAN_DIR",
+                binding["id"],
+            ],
+            "role": "ferric-m1-external-assumption-reporter",
+        }
+        work_id = binding["id"].replace("binding.", "work.", 1)
+        work = {
+            "expected_artifact": artifact,
+            "id": work_id,
+            "producer": producer,
+            "state": "missing",
+            "subject": f"binding:{binding['id']}",
+        }
+        if (
+            binding["obligation_class"] not in {"Assurance", "Roadmap"}
+            or binding["profile_id"] != "runtime"
+            or binding["source_identity_id"] not in SOURCE_IDS
+            or binding["tcb_ids"] != [identifier for identifier, _ in TCB]
+            or slot["expected_artifact"] != artifact
+            or slot["producer"] != producer
+            or slot["state"] != "missing"
+            or slot["foundation_selectors"] != []
+            or queue_by_id.get(work_id) != work
+        ):
+            fail(f"M1 external-contract producer contract drifted: {binding['id']}")
+        rows.append(
+            "|".join(
+                [
+                    binding["id"],
+                    binding["obligation_class"],
+                    binding["obligation_id"],
+                    binding["profile_id"],
+                    binding["path_id"],
+                    binding["source_identity_id"],
+                    artifact_id,
+                    artifact["path"],
+                ]
+            )
+            + "\n"
+        )
+    if digest_bytes("".join(rows).encode("ascii")) != EXTERNAL_CONTRACT_TSV_SHA256:
+        fail("M1 external-contract allocation topology drifted")
+    matches = [slot for slot in slots if slot["binding"]["id"] == binding_id]
+    if len(matches) != 1:
+        fail(f"unknown M1 external-contract binding: {binding_id}")
+    slot = matches[0]
+    binding = slot["binding"]
+    resolutions = [
+        row for row in plan["path_resolutions"] if row["id"] == binding["path_id"]
+    ]
+    if len(resolutions) != 1:
+        fail("selected M1 external-contract path resolution is missing")
+    resolution = resolutions[0]
+    if (
+        resolution["id"] != binding["path_id"]
+        or resolution["source_identity_id"] != binding["source_identity_id"]
+        or binding["source_identity_id"] != f"source.{resolution['repository']}"
+        or resolution["availability"] not in {"ExistingFoundation", "RequiredFuture"}
+    ):
+        fail("selected M1 external-contract path resolution drifted")
+    return slot, resolution
+
+
 def requirement_spec(
-    requirements: JsonObject, binding: JsonObject
-) -> tuple[JsonObject, list[str]]:
-    obligation_class = binding["obligation_class"]
-    obligation_id = binding["obligation_id"]
+    requirements: JsonObject, obligation_class: str, obligation_id: str
+) -> tuple[JsonObject, str, list[str]]:
     if obligation_class == "Roadmap":
         matches = [
             row
@@ -1712,9 +1566,10 @@ def requirement_spec(
         ]
         if len(matches) != 1:
             fail(
-                "selected canonical-structure binding names an unknown roadmap obligation"
+                "selected external-contract binding names an unknown roadmap obligation"
             )
-        return matches[0], matches[0]["assurance_properties"]
+        spec = matches[0]
+        return spec, spec["title"], spec["assurance_properties"]
     if obligation_class == "Assurance":
         matches = [
             row
@@ -1723,124 +1578,70 @@ def requirement_spec(
         ]
         if len(matches) != 1:
             fail(
-                "selected canonical-structure binding names an unknown assurance property"
+                "selected external-contract binding names an unknown assurance property"
             )
-        return matches[0], [obligation_id]
-    fail("selected canonical-structure obligation class drifted")
+        spec = matches[0]
+        return spec, spec["boundary"], [obligation_id]
+    fail("selected external-contract obligation class drifted")
 
 
-def canonical_structure_payload(
-    slot: JsonObject, resolution: JsonObject, source_bytes: bytes
-) -> JsonObject:
-    binding = slot["binding"]
-    availability_values = {
-        "ExistingFoundation": "existing-foundation",
-        "RequiredFuture": "required-future",
-    }
-    availability = availability_values.get(resolution["availability"])
-    if availability is None:
-        fail("selected canonical-structure path availability drifted")
-    records = [
-        {
-            "name": "declared_path_availability",
-            "type": "identifier",
-            "value": availability,
-        },
-        {
-            "name": "source_file_sha256",
-            "type": "sha256",
-            "value": digest_bytes(source_bytes),
-        },
-        {
-            "name": "source_file_size_bytes",
-            "type": "count",
-            "value": len(source_bytes),
-        },
-        {
-            "name": "source_identity_id",
-            "type": "identifier",
-            "value": binding["source_identity_id"],
-        },
-        {"name": "source_is_regular", "type": "boolean", "value": True},
-        {
-            "name": "source_relative_path",
-            "type": "text",
-            "value": resolution["path"],
-        },
-    ]
-    return {
-        "binding_sha256": binding["binding_sha256"],
-        "format": CANONICAL_PAYLOAD_FORMAT,
-        "obligation_class": binding["obligation_class"],
-        "obligation_id": binding["obligation_id"],
-        "path_id": binding["path_id"],
-        "profile_id": binding["profile_id"],
-        "records": records,
-        "source_identity_id": binding["source_identity_id"],
-        "target": REPORT_TARGET,
-    }
-
-
-def canonical_structure_report(
+def external_contract_report(
     requirements_sha256: str,
     requirements: JsonObject,
     sources: list[JsonObject],
     tcb: list[JsonObject],
     slot: JsonObject,
     resolution: JsonObject,
-    payload_bytes: bytes,
 ) -> JsonObject:
     binding = slot["binding"]
-    spec, assurance_property_ids = requirement_spec(requirements, binding)
+    spec, statement, assurance_property_ids = requirement_spec(
+        requirements, binding["obligation_class"], binding["obligation_id"]
+    )
     if (
         spec["obligation_state"] != "Open"
+        or "runtime" not in spec["evidence_profiles"]
+        or binding["path_id"] not in spec["path_obligations"]
+        or binding["statement_sha256"] != digest_bytes(statement.encode("utf-8"))
         or resolution["id"] != binding["path_id"]
         or resolution["source_identity_id"] != binding["source_identity_id"]
     ):
-        fail("selected canonical-structure obligation or path drifted")
-    artifact_id = binding["artifact_id"]
-    return {
-        "assurance_property_ids": assurance_property_ids,
-        "authority": CANONICAL_AUTHORITY,
-        "binding_sha256": binding["binding_sha256"],
-        "canonical_payload_format": CANONICAL_PAYLOAD_FORMAT,
-        "canonical_payload_relative_path": f"canonical-payloads/{artifact_id}.json",
-        "canonical_payload_sha256": digest_bytes(payload_bytes),
-        "canonical_payload_size_bytes": len(payload_bytes),
-        "canonical_schema_id": CANONICAL_SCHEMA_ID,
-        "canonical_schema_sha256": canonical_digest(CANONICAL_PAYLOAD_SCHEMA),
-        "evidence_kind": "canonical-structure-check",
-        "format": CANONICAL_REPORT_FORMAT,
-        "nonclaim": CANONICAL_NONCLAIM,
-        "obligation_class": binding["obligation_class"],
-        "obligation_id": binding["obligation_id"],
-        "obligation_state": "Open",
-        "path_id": binding["path_id"],
-        "path_resolution_sha256": canonical_digest(resolution),
-        "profile_id": binding["profile_id"],
-        "record_count": 6,
-        "requirements_sha256": requirements_sha256,
-        "result": "canonical",
-        "source_identity_id": binding["source_identity_id"],
-        "source_roster_sha256": canonical_digest(sources),
-        "statement_sha256": binding["statement_sha256"],
-        "tcb_identity_sha256s": {row["id"]: row["identity_sha256"] for row in tcb},
-        "tcb_roster_sha256": canonical_digest(tcb),
-    }
+        fail("selected external-contract obligation or path drifted")
+    source_by_id = {row["id"]: row for row in sources}
+    bound_source = source_by_id.get(binding["source_identity_id"])
+    if bound_source is None:
+        fail("selected external-contract source identity is missing")
+    return exact_keys(
+        {
+            "assumption_ids": ASSUMPTION_IDS,
+            "assurance_property_ids": assurance_property_ids,
+            "authority": REPORT_AUTHORITY,
+            "binding_sha256": binding["binding_sha256"],
+            "bound_source_identity_sha256": canonical_digest(bound_source),
+            "contract_scope": CONTRACT_SCOPE,
+            "contract_target": REPORT_TARGET,
+            "evidence_kind": "external-contract",
+            "format": REPORT_FORMAT,
+            "nonclaim": REPORT_NONCLAIM,
+            "obligation_class": binding["obligation_class"],
+            "obligation_id": binding["obligation_id"],
+            "obligation_state": "Open",
+            "path_id": binding["path_id"],
+            "path_resolution_sha256": canonical_digest(resolution),
+            "profile_id": "runtime",
+            "requirements_sha256": requirements_sha256,
+            "source_identity_id": binding["source_identity_id"],
+            "source_roster_sha256": canonical_digest(sources),
+            "statement_sha256": binding["statement_sha256"],
+            "tcb_identity_sha256s": {row["id"]: row["identity_sha256"] for row in tcb},
+            "tcb_roster_sha256": canonical_digest(tcb),
+        },
+        REPORT_KEYS,
+        "M1 external-contract report",
+    )
 
 
 def ensure_artifact_directory(plan_fd: int) -> int:
     return open_private_directory_at(plan_fd, "artifacts", "M1 artifact directory")
-
-
-def ensure_output_directory(plan_fd: int, name: str, description: str) -> int:
-    try:
-        os.mkdir(name, 0o700, dir_fd=plan_fd)
-    except FileExistsError:
-        pass
-    except OSError as error:
-        fail(f"cannot create {description}: {error}")
-    return open_private_directory_at(plan_fd, name, description)
 
 
 def published_binding(metadata: os.stat_result) -> tuple[int, int, int, int, int]:
@@ -1909,27 +1710,17 @@ def create_new_file_at(
         if after_write.st_size != len(value):
             fail(f"published {description} has an unexpected size")
         os.lseek(descriptor, 0, os.SEEK_SET)
-        chunks = []
-        remaining_size = len(value) + 1
-        while remaining_size:
-            chunk = os.read(descriptor, remaining_size)
-            if not chunk:
-                break
-            chunks.append(chunk)
-            remaining_size -= len(chunk)
+        raw = os.read(descriptor, len(value) + 1)
         after_read = os.fstat(descriptor)
-        if b"".join(chunks) != value or file_identity(after_write) != file_identity(
-            after_read
-        ):
-            fail(f"published {description} bytes changed")
         named = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
         if (
-            stat.S_ISLNK(named.st_mode)
+            raw != value
+            or file_identity(after_write) != file_identity(after_read)
+            or stat.S_ISLNK(named.st_mode)
             or not stat.S_ISREG(named.st_mode)
             or published_binding(named) != published_binding(after_read)
-            or named.st_size != len(value)
         ):
-            fail(f"published {description} binding changed")
+            fail(f"published {description} bytes or binding changed")
     except OSError as error:
         rollback_exact_file(directory_fd, name, descriptor, description)
         os.close(descriptor)
@@ -1952,14 +1743,7 @@ def verify_published_file(
     try:
         before = os.fstat(descriptor)
         os.lseek(descriptor, 0, os.SEEK_SET)
-        chunks = []
-        remaining = len(expected) + 1
-        while remaining:
-            chunk = os.read(descriptor, remaining)
-            if not chunk:
-                break
-            chunks.append(chunk)
-            remaining -= len(chunk)
+        raw = os.read(descriptor, len(expected) + 1)
         after = os.fstat(descriptor)
         named = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
     except OSError as error:
@@ -1967,7 +1751,7 @@ def verify_published_file(
     if (
         stat.S_ISLNK(named.st_mode)
         or not stat.S_ISREG(named.st_mode)
-        or b"".join(chunks) != expected
+        or raw != expected
         or file_identity(authenticated) != file_identity(before)
         or file_identity(before) != file_identity(after)
         or file_identity(after) != file_identity(named)
@@ -1975,66 +1759,26 @@ def verify_published_file(
         fail(f"published {description} bytes or binding changed after directory sync")
 
 
-def publish_canonical_structure(
+def publish_external_contract(
     plan_path: Path,
     plan_fd: int,
     artifact_fd: int,
     artifact_id: str,
-    payload: bytes,
     report: bytes,
     custody_check: Callable[[], None],
 ) -> None:
-    revalidate_directory_path(plan_path, plan_fd, "M1 evidence plan directory")
-    payload_fd = ensure_output_directory(
-        plan_fd, "canonical-payloads", "M1 canonical-payload directory"
-    )
-    payload_file_fd = -1
+    report_name = f"{artifact_id}.external-contract.json"
     report_fd = -1
-    payload_identity: os.stat_result | None = None
-    report_identity: os.stat_result | None = None
     try:
         revalidate_child_directory(
             plan_fd, "artifacts", artifact_fd, "M1 artifact directory"
         )
-        revalidate_child_directory(
-            plan_fd,
-            "canonical-payloads",
-            payload_fd,
-            "M1 canonical-payload directory",
-        )
-        payload_name = f"{artifact_id}.json"
-        report_name = f"{artifact_id}.canonical-structure.json"
-        if entry_exists_at(payload_fd, payload_name) or entry_exists_at(
-            artifact_fd, report_name
-        ):
-            fail("canonical-structure publication refuses a preexisting output")
-        payload_file_fd = create_new_file_at(
-            payload_fd, payload_name, payload, "M1 canonical payload"
-        )
-        payload_identity = os.fstat(payload_file_fd)
-        os.fsync(payload_fd)
-        os.fsync(plan_fd)
-        revalidate_child_directory(
-            plan_fd,
-            "canonical-payloads",
-            payload_fd,
-            "M1 canonical-payload directory",
-        )
         revalidate_directory_path(plan_path, plan_fd, "M1 evidence plan directory")
-        verify_published_file(
-            payload_fd,
-            payload_name,
-            payload_file_fd,
-            payload,
-            payload_identity,
-            "M1 canonical payload",
-        )
-        revalidate_child_directory(
-            plan_fd, "artifacts", artifact_fd, "M1 artifact directory"
-        )
+        if entry_exists_at(artifact_fd, report_name):
+            fail("external-contract publication refuses a preexisting output")
         custody_check()
         report_fd = create_new_file_at(
-            artifact_fd, report_name, report, "M1 canonical-structure report"
+            artifact_fd, report_name, report, "M1 external-contract report"
         )
         report_identity = os.fstat(report_fd)
         os.fsync(artifact_fd)
@@ -2043,64 +1787,39 @@ def publish_canonical_structure(
             plan_fd, "artifacts", artifact_fd, "M1 artifact directory"
         )
         revalidate_directory_path(plan_path, plan_fd, "M1 evidence plan directory")
-        verify_published_file(
-            artifact_fd,
-            report_name,
-            report_fd,
-            report,
-            report_identity,
-            "M1 canonical-structure report",
-        )
         custody_check()
         verify_published_file(
-            payload_fd,
-            payload_name,
-            payload_file_fd,
-            payload,
-            payload_identity,
-            "M1 canonical payload",
-        )
-        verify_published_file(
             artifact_fd,
             report_name,
             report_fd,
             report,
             report_identity,
-            "M1 canonical-structure report",
+            "M1 external-contract report",
         )
     except OSError as error:
         if report_fd >= 0:
             rollback_exact_file(
                 artifact_fd,
-                f"{artifact_id}.canonical-structure.json",
+                report_name,
                 report_fd,
-                "M1 canonical-structure report",
+                "M1 external-contract report",
             )
-        fail(f"cannot durably publish M1 canonical structure: {error}")
+        fail(f"cannot durably publish M1 external contract: {error}")
     except BaseException:
         if report_fd >= 0:
             rollback_exact_file(
                 artifact_fd,
-                f"{artifact_id}.canonical-structure.json",
+                report_name,
                 report_fd,
-                "M1 canonical-structure report",
+                "M1 external-contract report",
             )
         raise
     finally:
-        if payload_file_fd >= 0:
-            try:
-                os.close(payload_file_fd)
-            except OSError:
-                pass
         if report_fd >= 0:
             try:
                 os.close(report_fd)
             except OSError:
                 pass
-        try:
-            os.close(payload_fd)
-        except OSError:
-            pass
 
 
 def produce(
@@ -2122,54 +1841,14 @@ def produce(
     plan_fd = open_private_directory(plan_root, "M1 evidence plan directory")
     artifact_fd = ensure_artifact_directory(plan_fd)
     tcb_files: list[tuple[str, str, BinaryIO, os.stat_result, bytes]] = []
-    source_custody: SourceCustody | None = None
-    closure_custody: HeldDirectoryFiles | None = None
     plan_files: list[HeldFile] = []
+    closure_custody: HeldDirectoryFiles | None = None
+    report_bytes = b""
     try:
         revalidate_directory_path(plan_root, plan_fd, "M1 evidence plan directory")
         requirements, plan, queue, sources, validators, plan_raw, queue_raw = (
             validate_plan(ferric, fe2o3, plan_fd)
         )
-        closure_custody = authenticate_source_closures(plan_fd, plan)
-        slot, resolution = select_canonical_structure_binding(plan, queue, binding_id)
-        tcb, tcb_files = authenticate_tcb_reports(
-            artifact_fd, ferric, requirements, sources, validators
-        )
-        repositories = {
-            "source.fe2o3": (fe2o3, fe2o3_fd),
-            "source.ferric": (ferric, ferric_fd),
-        }
-        repository_custody = {
-            "fe2o3": (fe2o3, fe2o3_fd),
-            "ferric": (ferric, ferric_fd),
-        }
-        expected_repository_identities = source_identity_map(sources)
-        source_path, source_fd = repositories[slot["binding"]["source_identity_id"]]
-        source_bytes = read_source_file(
-            source_path,
-            source_fd,
-            resolution["path"],
-            f"selected source file {binding_id}",
-        )
-        payload_bytes = canonical_bytes(
-            canonical_structure_payload(slot, resolution, source_bytes)
-        )
-        report_bytes = canonical_bytes(
-            canonical_structure_report(
-                plan["requirements"]["sha256"],
-                requirements,
-                sources,
-                tcb,
-                slot,
-                resolution,
-                payload_bytes,
-            )
-        )
-
-        revalidate_directory_path(plan_root, plan_fd, "M1 evidence plan directory")
-        repeated = validate_plan(ferric, fe2o3, plan_fd, replay=False)
-        if repeated[5] != plan_raw or repeated[6] != queue_raw:
-            fail("M1 plan or work queue changed during canonical-structure production")
         plan_files = [
             authenticate_held_file_at(
                 plan_fd, "plan.json", plan_raw, "M1 evidence plan"
@@ -2181,57 +1860,50 @@ def produce(
                 "M1 evidence work queue",
             ),
         ]
-        repeated_slot, repeated_resolution = select_canonical_structure_binding(
+        closure_custody = authenticate_source_closures(plan_fd, plan)
+        slot, resolution = select_external_contract_binding(plan, queue, binding_id)
+        tcb, tcb_files = authenticate_tcb_reports(
+            artifact_fd, ferric, requirements, sources, validators
+        )
+        report_bytes = canonical_bytes(
+            external_contract_report(
+                plan["requirements"]["sha256"],
+                requirements,
+                sources,
+                tcb,
+                slot,
+                resolution,
+            )
+        )
+
+        repeated = validate_plan(ferric, fe2o3, plan_fd, replay=False)
+        if repeated[5] != plan_raw or repeated[6] != queue_raw:
+            fail("M1 plan or work queue changed during external-contract production")
+        repeated_slot, repeated_resolution = select_external_contract_binding(
             repeated[1], repeated[2], binding_id
         )
-        revalidate_tcb_reports(
-            artifact_fd,
-            tcb_files,
-            ferric,
-            repeated[0],
-            repeated[3],
-            repeated[4],
-        )
-        repeated_tcb = tcb
-        repeated_source_path, repeated_source_fd = repositories[
-            repeated_slot["binding"]["source_identity_id"]
-        ]
-        repeated_source_bytes, source_custody = open_source_file(
-            repeated_source_path,
-            repeated_source_fd,
-            repeated_resolution["path"],
-            f"selected source file {binding_id}",
-        )
-        repeated_payload_bytes = canonical_bytes(
-            canonical_structure_payload(
-                repeated_slot, repeated_resolution, repeated_source_bytes
+        repeated_report = canonical_bytes(
+            external_contract_report(
+                repeated[1]["requirements"]["sha256"],
+                repeated[0],
+                repeated[3],
+                tcb,
+                repeated_slot,
+                repeated_resolution,
             )
         )
-        if (
-            canonical_bytes(
-                canonical_structure_report(
-                    repeated[1]["requirements"]["sha256"],
-                    repeated[0],
-                    repeated[3],
-                    repeated_tcb,
-                    repeated_slot,
-                    repeated_resolution,
-                    repeated_payload_bytes,
-                )
-            )
-            != report_bytes
-            or repeated_payload_bytes != payload_bytes
-            or repeated_tcb != tcb
-        ):
-            fail("M1 canonical-structure inputs changed during production")
+        if repeated_report != report_bytes:
+            fail("M1 external-contract inputs changed during production")
+        repositories = {
+            "fe2o3": (fe2o3, fe2o3_fd),
+            "ferric": (ferric, ferric_fd),
+        }
+        expected_repository_identities = source_identity_map(repeated[3])
 
         def revalidate_completion_inputs() -> None:
             for held in plan_files:
                 revalidate_held_file(plan_fd, held)
             revalidate_source_closures(plan_fd, closure_custody)
-            revalidate_child_directory(
-                plan_fd, "artifacts", artifact_fd, "M1 artifact directory"
-            )
             revalidate_tcb_reports(
                 artifact_fd,
                 tcb_files,
@@ -2240,25 +1912,24 @@ def produce(
                 repeated[3],
                 repeated[4],
             )
-            revalidate_source_file(source_custody)
             revalidate_repository_identities(
-                repository_custody, expected_repository_identities
+                repositories, expected_repository_identities
             )
             if any(
                 entry_exists_at(plan_fd, name)
                 for name in ("evidence-index.json", "receipt.json")
             ):
-                fail("canonical-structure producer created a forbidden closure output")
+                fail("external-contract producer created a forbidden closure output")
+            revalidate_child_directory(
+                plan_fd, "artifacts", artifact_fd, "M1 artifact directory"
+            )
             revalidate_directory_path(plan_root, plan_fd, "M1 evidence plan directory")
-            revalidate_directory(ferric, ferric_fd, "Ferric source repository")
-            revalidate_directory(fe2o3, fe2o3_fd, "fe2o3 source repository")
 
-        publish_canonical_structure(
+        publish_external_contract(
             plan_root,
             plan_fd,
             artifact_fd,
             slot["binding"]["artifact_id"],
-            payload_bytes,
             report_bytes,
             revalidate_completion_inputs,
         )
@@ -2267,8 +1938,6 @@ def produce(
             close_source_closures(closure_custody)
         for _, source, _, _, _ in plan_files:
             source.close()
-        if source_custody is not None:
-            close_source_file(source_custody)
         for _, _, source, _, _ in tcb_files:
             source.close()
         os.close(artifact_fd)
@@ -2276,8 +1945,7 @@ def produce(
         os.close(fe2o3_fd)
         os.close(ferric_fd)
     print(
-        f"PASS: produced M1 canonical structure binding={binding_id} "
-        f"payload_sha256={digest_bytes(payload_bytes)} "
+        f"PASS: produced M1 external contract binding={binding_id} "
         f"report_sha256={digest_bytes(report_bytes)}"
     )
 

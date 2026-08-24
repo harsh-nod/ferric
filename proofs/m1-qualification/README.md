@@ -22,11 +22,11 @@ count is required because both `graph_refined` foundation kinds can bind only
 The work queue names every expected primary artifact, its producer role, and
 whether an in-repository producer exists. The theorem and negative-mutation
 runners, the three declaration-only TCB reporters, all 74 artifact-identity
-bindings, all 14 canonical-structure bindings, and the five exact
-unsupported-rationale bindings are represented as available commands. The
-queue therefore has 152 available producer items and 206 missing producer
-items. All other binding-evidence producers and the shared receipt remain
-explicitly missing.
+bindings, all 14 canonical-structure bindings, all 15 external-contract
+bindings, and the five exact unsupported-rationale bindings are represented as
+available commands. The queue therefore has 167 available producer items and
+191 missing producer items. All other binding-evidence producers and the shared
+receipt remain explicitly missing.
 
 After producing a plan against the final clean source identities, materialize
 the three global TCB declarations independently:
@@ -83,6 +83,23 @@ only `canonical-structure-only` authority: it validates the record encoding and
 binding, not the truth or semantics suggested by record names, source code,
 kernel behavior, runtime behavior, hardware, or qualification.
 
+Materialize one of the planner's 15 external-contract declarations with:
+
+```text
+python3 -I proofs/m1-qualification/produce-external-contract.py \
+  FERRIC_REPO FE2O3_REPO PLAN_DIR binding.NNNNN
+```
+
+The selected binding is an exact `runtime`-profile Roadmap or Assurance slot.
+The producer replays the complete source-pinned plan, holds and revalidates the
+plan, work queue, both source closures, clean source repository identities, and
+all three TCB reports, then publishes one owner-private report without
+replacement. It independently projects only the validator's four fixed
+compiler, runtime, driver/firmware, and hardware assumptions. It does not invoke
+the trusted validator and grants only `declared-assumptions-only` authority: the
+report does not establish implementation, satisfaction, external review,
+machine refinement, load, launch, hardware, performance, or qualification.
+
 The three M1 properties whose required closure status is `Unsupported` have
 five exact path-bound nonclaim reports. Materialize one selected report with:
 
@@ -113,6 +130,8 @@ python3 -I proofs/m1-qualification/test-tcb-producer-policy.py \
 python3 -I proofs/m1-qualification/test-artifact-identity-producer-policy.py \
   FERRIC_REPO FE2O3_OBJECT_REPO
 python3 -I proofs/m1-qualification/test-canonical-structure-producer-policy.py \
+  FERRIC_REPO FE2O3_OBJECT_REPO
+python3 -I proofs/m1-qualification/test-external-contract-producer-policy.py \
   FERRIC_REPO FE2O3_OBJECT_REPO
 python3 -I proofs/m1-qualification/test-unsupported-rationale-producer-policy.py \
   FERRIC_REPO FE2O3_OBJECT_REPO

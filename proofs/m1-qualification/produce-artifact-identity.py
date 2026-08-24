@@ -1259,9 +1259,9 @@ def validate_plan(
         or queue["plan_sha256"] != digest_bytes(plan_raw)
         or queue["counts"]
         != {
-            "available_producer_items": 152,
+            "available_producer_items": 167,
             "missing_items": 358,
-            "missing_producer_items": 206,
+            "missing_producer_items": 191,
         }
     ):
         fail("M1 work queue identity, counts, or incomplete status drifted")
