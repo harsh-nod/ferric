@@ -175,7 +175,10 @@ independently parses a companion canonical-record payload under a
 checker-owned typed schema, and binds the exact Open obligation, profile,
 path, sources, fixed target, and TCB without granting semantic or qualification
 authority. Its protocol is documented in
-`proofs/m1/evidence/CANONICAL_STRUCTURE.md`. The hardware-transcript
+`proofs/m1/evidence/CANONICAL_STRUCTURE.md`. Its 14 exact binding-local
+payload/report pairs have a Ferric-owned producer that preserves this
+schema-only authority and publishes the report last as the completion marker.
+The hardware-transcript
 validator is documented in `proofs/m1/evidence/HARDWARE_TRANSCRIPT.md`. It
 authenticates a fixed MI300X/gfx942 report plus immutable run-transcript and
 case-roster companions, requires positive completed GPU work for every case,

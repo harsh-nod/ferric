@@ -39,6 +39,31 @@ root. The report uses format `FERRIC-M1-CANONICAL-STRUCTURE-V1`; the payload
 uses format `FERRIC-M1-CANONICAL-RECORDS-V1` and checker-owned schema id
 `ferric.m1-canonical-records.v1`.
 
+## Ferric-owned producer
+
+The planner exposes an in-repository command for each of its exact 14
+`canonical-structure-check` bindings:
+
+```text
+python3 -I proofs/m1-qualification/produce-canonical-structure.py \
+  FERRIC_REPO FE2O3_REPO PLAN_DIR binding.NNNNN
+```
+
+The producer independently replays the source-pinned plan, holds both source
+closures, the exact selected source file, and all three TCB reports, and keeps
+both clean repository commit/tree identities under custody through report
+publication. It writes the payload first and the report last as the completion
+marker. Both outputs are owner-private, durable, and published without
+replacement.
+
+Its exact operational record roster is `declared_path_availability`,
+`source_file_sha256`, `source_file_size_bytes`, `source_identity_id`,
+`source_is_regular`, and `source_relative_path`. Availability is normalized to
+`existing-foundation` or `required-future`. These values make deterministic
+source observations available to the structural checker; the checker does not
+assign semantics to record names or independently establish source-file
+correspondence.
+
 ## Canonical records
 
 The payload repeats the exact binding, obligation, profile, path, source, and
@@ -76,4 +101,6 @@ symlinks, and authority promotion:
 
 ```text
 python3 -I proofs/m1/evidence/test-canonical-structure-policy.py FERRIC_REPO
+python3 -I proofs/m1-qualification/test-canonical-structure-producer-policy.py \
+  FERRIC_REPO FE2O3_OBJECT_REPO
 ```

@@ -22,10 +22,11 @@ count is required because both `graph_refined` foundation kinds can bind only
 The work queue names every expected primary artifact, its producer role, and
 whether an in-repository producer exists. The theorem and negative-mutation
 runners, the three declaration-only TCB reporters, all 74 artifact-identity
-bindings, and the five exact unsupported-rationale bindings are represented as
-available commands. The queue therefore has 138 available producer items and
-220 missing producer items. All other binding-evidence producers and the shared
-receipt remain explicitly missing.
+bindings, all 14 canonical-structure bindings, and the five exact
+unsupported-rationale bindings are represented as available commands. The
+queue therefore has 152 available producer items and 206 missing producer
+items. All other binding-evidence producers and the shared receipt remain
+explicitly missing.
 
 After producing a plan against the final clean source identities, materialize
 the three global TCB declarations independently:
@@ -63,6 +64,25 @@ Each invocation reauthenticates the clean source repositories, exact complete
 plan and work queue, source closures, requirements and validator pins, and all
 three canonical TCB reports. It leaves every obligation `Open`.
 
+Materialize one of the planner's 14 canonical-structure reports and its typed
+companion payload with:
+
+```text
+python3 -I proofs/m1-qualification/produce-canonical-structure.py \
+  FERRIC_REPO FE2O3_REPO PLAN_DIR binding.NNNNN
+```
+
+The payload is an exact six-record operational projection of the selected
+stable source path: normalized declared availability, source-file SHA-256 and
+size, source identity, regular-file observation, and relative path. The
+producer holds and revalidates the exact plan, work queue, source closures,
+source file, clean repository identities, and three TCB reports while it
+publishes the owner-private canonical payload and then its report without
+replacement. The report is the completion marker. The trusted validator grants
+only `canonical-structure-only` authority: it validates the record encoding and
+binding, not the truth or semantics suggested by record names, source code,
+kernel behavior, runtime behavior, hardware, or qualification.
+
 The three M1 properties whose required closure status is `Unsupported` have
 five exact path-bound nonclaim reports. Materialize one selected report with:
 
@@ -91,6 +111,8 @@ python3 -I proofs/m1-qualification/test-policy.py FERRIC_REPO FE2O3_OBJECT_REPO
 python3 -I proofs/m1-qualification/test-tcb-producer-policy.py \
   FERRIC_REPO FE2O3_OBJECT_REPO
 python3 -I proofs/m1-qualification/test-artifact-identity-producer-policy.py \
+  FERRIC_REPO FE2O3_OBJECT_REPO
+python3 -I proofs/m1-qualification/test-canonical-structure-producer-policy.py \
   FERRIC_REPO FE2O3_OBJECT_REPO
 python3 -I proofs/m1-qualification/test-unsupported-rationale-producer-policy.py \
   FERRIC_REPO FE2O3_OBJECT_REPO
