@@ -212,7 +212,7 @@ fn prepare_k7(
     ]
     .into_boxed_slice();
     Ok((
-        ServiceFixedDispatchPacketV1::new(
+        ServiceFixedDispatchPacketV1::new_independent(
             program.program_index(),
             geometry,
             dynamic_group_bytes,
@@ -282,7 +282,7 @@ fn prepare_k1(
         ServiceFixedDispatchBufferV1::new(buffers[2].explicit_argument_index(), output_range),
     ]
     .into_boxed_slice();
-    Ok(ServiceFixedDispatchPacketV1::new(
+    Ok(ServiceFixedDispatchPacketV1::new_independent(
         program.program_index(),
         geometry,
         dynamic_group_bytes,
