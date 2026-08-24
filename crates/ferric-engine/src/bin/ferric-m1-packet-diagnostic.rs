@@ -51,6 +51,7 @@ const K1_INPUT_TOKEN_COUNT: usize = 128;
 enum Command {
     QueueBarrier {
         gpu_unique_id: u64,
+        executable_ring: bool,
     },
     K7Smoke {
         artifact_root: OsString,
@@ -88,6 +89,11 @@ fn parse_command(arguments: Vec<OsString>) -> DiagnosticResult<Command> {
     match arguments.as_slice() {
         [mode, gpu_unique_id] if mode == "queue-barrier" => Ok(Command::QueueBarrier {
             gpu_unique_id: parse_gpu_unique_id(gpu_unique_id)?,
+            executable_ring: false,
+        }),
+        [mode, gpu_unique_id] if mode == "queue-barrier-executable" => Ok(Command::QueueBarrier {
+            gpu_unique_id: parse_gpu_unique_id(gpu_unique_id)?,
+            executable_ring: true,
         }),
         [mode, artifact_root, gpu_unique_id] if mode == "k7-smoke" => Ok(Command::K7Smoke {
             artifact_root: artifact_root.clone(),
@@ -100,7 +106,7 @@ fn parse_command(arguments: Vec<OsString>) -> DiagnosticResult<Command> {
                 gpu_unique_id: parse_gpu_unique_id(gpu_unique_id)?,
             })
         }
-        _ => Err("usage: ferric-m1-packet-diagnostic queue-barrier GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k1-embedding PREPACKED-SNAPSHOT KERNEL-ARTIFACTS GPU-UNIQUE-ID".to_owned()),
+        _ => Err("usage: ferric-m1-packet-diagnostic queue-barrier GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic queue-barrier-executable GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k1-embedding PREPACKED-SNAPSHOT KERNEL-ARTIFACTS GPU-UNIQUE-ID".to_owned()),
     }
 }
 
@@ -114,9 +120,19 @@ fn parse_gpu_unique_id(value: &OsString) -> DiagnosticResult<u64> {
 
 fn execute(command: Command) -> DiagnosticResult<()> {
     match command {
-        Command::QueueBarrier { gpu_unique_id } => {
-            println!("mode=queue-barrier");
-            run_queue_barrier(bind_device(gpu_unique_id)?)
+        Command::QueueBarrier {
+            gpu_unique_id,
+            executable_ring,
+        } => {
+            println!(
+                "mode={}",
+                if executable_ring {
+                    "queue-barrier-executable"
+                } else {
+                    "queue-barrier"
+                }
+            );
+            run_queue_barrier(bind_device(gpu_unique_id)?, executable_ring)
         }
         Command::K7Smoke {
             artifact_root,
@@ -157,15 +173,25 @@ fn execute(command: Command) -> DiagnosticResult<()> {
     }
 }
 
-fn run_queue_barrier(checked: CheckedGfx942XnackMinusDevice) -> DiagnosticResult<()> {
+fn run_queue_barrier(
+    checked: CheckedGfx942XnackMinusDevice,
+    executable_ring: bool,
+) -> DiagnosticResult<()> {
     let poll_bound = Gfx942BarrierProbePollBoundV1::new(BARRIER_COMPLETION_POLL_LIMIT)
         .map_err(|error| format!("cannot construct barrier poll bound: {error:?}"))?;
     println!("phase=queue-barrier");
-    let result =
-        checked.run_compute_aql_barrier_probe(M1_PACKET_DIAGNOSTIC_RING_BYTES_V1, poll_bound);
+    let result = if executable_ring {
+        checked.run_compute_aql_executable_ring_barrier_probe(
+            M1_PACKET_DIAGNOSTIC_RING_BYTES_V1,
+            poll_bound,
+        )
+    } else {
+        checked.run_compute_aql_barrier_probe(M1_PACKET_DIAGNOSTIC_RING_BYTES_V1, poll_bound)
+    };
     match result {
         Ok(success) => {
             let execution = success.execution();
+            println!("ring_backing={:?}", success.backing());
             println!("poll_bound={}", success.poll_bound());
             println!("packet_count={}", execution.packet_count());
             println!("write_counter={}", execution.write_counter());
@@ -195,22 +221,28 @@ fn run_queue_barrier(checked: CheckedGfx942XnackMinusDevice) -> DiagnosticResult
 }
 
 fn barrier_probe_failure(failure: Gfx942BarrierProbeFailureV1) -> DiagnosticResult<()> {
+    let backing = failure.backing();
     let timeout = failure
         .timeout_observation()
         .map(|observation| format!("; timeout_observation={observation:?}"))
         .unwrap_or_default();
     match failure {
-        Gfx942BarrierProbeFailureV1::Creation { error } => Err(format!(
-            "queue barrier creation failed: {error}{timeout}; no live queue was returned"
+        Gfx942BarrierProbeFailureV1::Creation { error, .. } => Err(format!(
+            "queue barrier creation failed with {backing:?}: {error}{timeout}; no live queue was returned"
         )),
-        Gfx942BarrierProbeFailureV1::QuarantinedExecution { error, retained } => {
+        Gfx942BarrierProbeFailureV1::TerminalCreation { error, .. } => Err(format!(
+            "queue barrier creation became terminal with {backing:?}: {error}{timeout}; no authority was recovered and process termination is required"
+        )),
+        Gfx942BarrierProbeFailureV1::QuarantinedExecution {
+            error, retained, ..
+        } => {
             std::mem::forget(retained);
             Err(format!(
-                "queue barrier execution failed: {error}{timeout}; queue quarantined until process teardown"
+                "queue barrier execution failed with {backing:?}: {error}{timeout}; queue quarantined until process teardown"
             ))
         }
-        Gfx942BarrierProbeFailureV1::TerminalTeardown { error } => Err(format!(
-            "queue barrier teardown failed: {error}{timeout}; no authority was recovered and process termination is required"
+        Gfx942BarrierProbeFailureV1::TerminalTeardown { error, .. } => Err(format!(
+            "queue barrier teardown failed with {backing:?}: {error}{timeout}; no authority was recovered and process termination is required"
         )),
     }
 }
@@ -792,7 +824,17 @@ mod tests {
     fn command_modes_are_explicit_and_reject_extra_inputs() {
         assert!(matches!(
             parse_command(vec!["queue-barrier".into(), "5".into()]),
-            Ok(Command::QueueBarrier { gpu_unique_id: 5 })
+            Ok(Command::QueueBarrier {
+                gpu_unique_id: 5,
+                executable_ring: false
+            })
+        ));
+        assert!(matches!(
+            parse_command(vec!["queue-barrier-executable".into(), "6".into()]),
+            Ok(Command::QueueBarrier {
+                gpu_unique_id: 6,
+                executable_ring: true
+            })
         ));
         assert!(parse_command(vec!["queue-barrier".into(), "not-decimal".into()]).is_err());
         assert!(
