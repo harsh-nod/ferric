@@ -174,6 +174,8 @@ def exercise_prepare_boundaries(repo: Path, fe2o3_source: Path, planner: Any) ->
             or queue.get("format") != planner.WORK_FORMAT
             or queue.get("status") != "INCOMPLETE"
             or queue.get("counts", {}).get("missing_items") != 358
+            or queue.get("counts", {}).get("available_producer_items") != 59
+            or queue.get("counts", {}).get("missing_producer_items") != 299
         ):
             fail("M1 planner positive integration output weakened its nonclaim")
         if any(
@@ -438,6 +440,38 @@ def main() -> None:
         fail(f"existing M1 producer coverage drifted: {available_kinds}")
     if len(first) - len(available) != 298:
         fail("missing binding-producer count drifted")
+
+    tcb_work = planner.global_work_items()[:3]
+    expected_tcb_work = []
+    for identifier, kind in planner.TCB:
+        artifact_id = f"artifact.{identifier}"
+        expected_tcb_work.append(
+            {
+                "expected_artifact": {
+                    "id": artifact_id,
+                    "kind": "TcbReport",
+                    "path": f"artifacts/{artifact_id}.tcb-report.json",
+                },
+                "id": f"work.{identifier}",
+                "producer": {
+                    "availability": "available",
+                    "command": [
+                        "python3",
+                        "-I",
+                        "proofs/m1-qualification/produce-tcb-report.py",
+                        "FERRIC_REPO",
+                        "FE2O3_REPO",
+                        "PLAN_DIR",
+                        identifier,
+                    ],
+                    "role": f"ferric-{kind.lower()}-tcb-reporter",
+                },
+                "state": "missing",
+                "subject": f"tcb:{identifier}",
+            }
+        )
+    if tcb_work != expected_tcb_work:
+        fail("M1 planner TCB producer commands drifted")
 
     kind_counts: dict[str, int] = {}
     for slot in first:

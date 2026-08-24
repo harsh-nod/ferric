@@ -44,6 +44,32 @@ The qualification-receipt validator is source-pinned and therefore appears as
 an `ExistingFoundation` entry in this roster; the receipt validator separately
 requires every roster entry to be source-pinned before qualification can pass.
 
+## Production
+
+First create a planning bundle from the exact clean Ferric and fe2o3 source
+trees. Then invoke the Ferric-owned declaration producer once for each global
+subject:
+
+```text
+for subject in tcb.compiler tcb.hardware tcb.runtime; do
+  python3 -I proofs/m1-qualification/produce-tcb-report.py \
+    FERRIC_REPO FE2O3_REPO PLAN_DIR "$subject"
+done
+```
+
+The command consumes the planner's `plan.json`, `missing-work.json`, and source
+closures. It independently projects the requirements, component, source, path,
+profile, TCB-structure, and checker-owned validator rosters. Before publication
+it remeasures both clean repositories and rechecks the complete plan/work
+identity. Output is created without replacement at the canonical artifact path.
+The producer cannot accept component, version, authority, or validator
+overrides and does not import this validator's implementation.
+
+Production remains declaration-only. It creates neither an evidence index nor
+a qualification receipt, and the three reports must still be hashed into the
+outer TCB roster and accepted by this trusted validator in the complete evidence
+context.
+
 The three outer TCB `identity_sha256` values are the hashes of the three report
 artifacts. They cannot be embedded in the reports without a recursive hash
 cycle. Instead, each report binds the complete ordered TCB IDs, kinds, and
