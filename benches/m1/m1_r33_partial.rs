@@ -6,8 +6,8 @@ use ferric_m1_benchmarks::{
 };
 use rustix::fd::OwnedFd;
 use rustix::fs::{
-    fstat, fsync, mkdirat, openat2, renameat_with, unlinkat, AtFlags, Dir, FileType, Mode, OFlags,
-    RenameFlags, ResolveFlags, Stat, CWD,
+    fstat, fsync, inotify, mkdirat, openat2, renameat_with, unlinkat, AtFlags, Dir, FileType, Mode,
+    OFlags, RenameFlags, ResolveFlags, Stat, CWD,
 };
 use rustix::process::{getegid, geteuid};
 use serde_json::{json, Map, Value};
@@ -15,6 +15,8 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::ffi::{OsStr, OsString};
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom, Write};
+use std::mem::MaybeUninit;
+use std::os::fd::AsRawFd;
 use std::path::{Component, Path, PathBuf};
 use std::process::ExitCode;
 
@@ -1566,7 +1568,34 @@ impl ExactBundle {
             &settled_staging,
             "settled staged",
         )?;
+        let mutation_watch =
+            inotify::init(inotify::CreateFlags::CLOEXEC | inotify::CreateFlags::NONBLOCK)
+                .map_err(|error| format!("cannot create staging mutation watch: {error}"))?;
+        let held_staging_path = format!("/proc/self/fd/{}", self.staging.as_raw_fd());
+        inotify::add_watch(
+            &mutation_watch,
+            held_staging_path,
+            inotify::WatchFlags::ATTRIB
+                | inotify::WatchFlags::CLOSE_WRITE
+                | inotify::WatchFlags::CREATE
+                | inotify::WatchFlags::DELETE
+                | inotify::WatchFlags::DELETE_SELF
+                | inotify::WatchFlags::MODIFY
+                | inotify::WatchFlags::MOVE_SELF
+                | inotify::WatchFlags::MOVED_FROM
+                | inotify::WatchFlags::MOVED_TO
+                | inotify::WatchFlags::ONLYDIR,
+        )
+        .map_err(|error| format!("cannot watch held staging directory: {error}"))?;
         pre_publish()?;
+        let mut mutation_events = [MaybeUninit::uninit(); 4096];
+        match inotify::Reader::new(&mutation_watch, &mut mutation_events).next() {
+            Err(rustix::io::Errno::AGAIN) => {}
+            Err(error) => {
+                return Err(format!("cannot inspect staging mutation watch: {error}"));
+            }
+            Ok(_) => return Err("staging output changed during input revalidation".to_owned()),
+        }
         fsync(&self.staging)
             .map_err(|error| format!("cannot resync staging directory: {error}"))?;
         let final_staged = self.rebind_directory_snapshot(
@@ -2534,6 +2563,32 @@ mod tests {
                     let transient = staging.join("transient");
                     fs::write(&transient, b"transient").map_err(|error| error.to_string())?;
                     fs::remove_file(transient).map_err(|error| error.to_string())?;
+                    Ok(())
+                },
+                || Ok(()),
+            )
+            .is_err());
+        assert!(!output.exists());
+    }
+
+    #[test]
+    fn transient_staged_name_round_trip_fails_custody() {
+        let temporary = Temporary::new();
+        let output = temporary.0.join("bundle");
+        let capture = b"capture\n";
+        let protocol = b"protocol\n";
+        let mut bundle = ExactBundle::create(&output).unwrap();
+        bundle.write("capture.json", capture).unwrap();
+        bundle.write("protocol.json", protocol).unwrap();
+        let staging = temporary.0.join(&bundle.staging_name);
+        assert!(bundle
+            .publish_exact(
+                &[("capture.json", capture), ("protocol.json", protocol)],
+                || {
+                    let capture = staging.join("capture.json");
+                    let transient = staging.join("transient");
+                    fs::rename(&capture, &transient).map_err(|error| error.to_string())?;
+                    fs::rename(transient, capture).map_err(|error| error.to_string())?;
                     Ok(())
                 },
                 || Ok(()),
