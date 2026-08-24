@@ -1494,9 +1494,9 @@ mod tests {
     use crate::{
         derive_m1_physical_buffer_recipe_v1, m1_completion_output_shape_v1,
         AddresslessM1PhysicalBufferRecipeV1, M1FullStepWorkspaceDispatchRangeError,
-        M1FullStepWorkspaceRole, M1PhysicalBufferRecipeRowV1, M1PhysicalBufferSentinelV1,
-        M1PhysicalBufferSourceV1, M1PhysicalProgramV1, M1StepDispatchIntent, M1StepDispatchStage,
-        M1StepWorkspaceDispatchRangeError,
+        M1FullStepWorkspaceRole, M1PhysicalBufferAccessV1, M1PhysicalBufferRecipeRowV1,
+        M1PhysicalBufferSentinelV1, M1PhysicalBufferSourceV1, M1PhysicalProgramV1,
+        M1StepDispatchIntent, M1StepDispatchStage, M1StepWorkspaceDispatchRangeError,
     };
 
     #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1706,6 +1706,41 @@ mod tests {
         assert_eq!(
             qualification_logits_source_isolation(&recipe, intent.target_selection()),
             (2, true)
+        );
+        let access_routes = recipe
+            .rows()
+            .iter()
+            .flat_map(|row| {
+                row.buffers().iter().filter_map(move |buffer| {
+                    matches!(
+                        buffer.source(),
+                        M1PhysicalBufferSourceV1::Workspace {
+                            workspace: M1FullStepWorkspaceRole::Target,
+                            range: M1StepWorkspaceRangeRole::Logits,
+                        }
+                    )
+                    .then_some((
+                        row.program(),
+                        buffer.explicit_argument_index(),
+                        buffer.access(),
+                    ))
+                })
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(
+            access_routes,
+            vec![
+                (
+                    M1PhysicalProgramV1::GemmReference,
+                    4,
+                    M1PhysicalBufferAccessV1::ReadWrite,
+                ),
+                (
+                    M1PhysicalProgramV1::LogitsArgmax,
+                    0,
+                    M1PhysicalBufferAccessV1::ReadOnly,
+                ),
+            ]
         );
         let total = recipe
             .rows()

@@ -2,8 +2,11 @@
 //!
 //! This opt-in owner substitutes exactly the four draft choice scalars and the
 //! five target verification choices with coherent host-download allocations.
-//! It is deliberately restricted to `SpeculativeS1K4C8192` and carries no
-//! completion, benchmark, performance, or qualification authority.
+//! Each substituted range is sealed with an invalid-token sentinel before its
+//! inspected producer/consumer sequence, so a missing device write fails closed
+//! during dispatch or observation. It is deliberately restricted to
+//! `SpeculativeS1K4C8192` and carries no completion, benchmark, performance, or
+//! qualification authority.
 
 use core::fmt;
 
@@ -29,6 +32,8 @@ pub const M1_SPECULATIVE_DIAGNOSTIC_DRAFT_CHOICES_V1: u32 = 4;
 pub const M1_SPECULATIVE_DIAGNOSTIC_TARGET_CHOICES_V1: u32 = 5;
 
 const TOKEN_BYTES: u64 = 4;
+// Every device consumer bounds-checks this value before using it as a token index.
+const M1_SPECULATIVE_DIAGNOSTIC_UNWRITTEN_CHOICE_V1: u32 = u32::MAX;
 
 /// Fixed diagnostic choice geometry for one S1/K4 round.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -67,6 +72,8 @@ pub enum M1SpeculativeDiagnosticChoicesErrorV1 {
     AlreadyEnabled,
     /// Checked extent arithmetic overflowed.
     Overflow,
+    /// A complete initialized sentinel image could not be reserved on the host.
+    HostInitialization { requested_bytes: usize },
     /// A retained key no longer has its exact extent.
     AllocationExtent { expected: u64, actual: u64 },
     /// A retained key cannot satisfy `u32` alignment.
@@ -343,9 +350,9 @@ fn allocate_range(
 > {
     let requested =
         usize::try_from(extent).map_err(|_| M1SpeculativeDiagnosticChoicesErrorV1::Overflow)?;
-    let key = allocations.allocate_host_visible::<HostDownloadRoleV1>(requested)?;
+    let initialized = speculative_choice_initial_image(requested)?;
+    let key = allocations.allocate_initialized_host_visible::<HostDownloadRoleV1>(initialized)?;
     validate_key(key, extent)?;
-    let _mapped = allocations.map_host_visible(key)?;
     let typed = allocations.range(
         key,
         0,
@@ -353,6 +360,26 @@ fn allocate_range(
         M1_SPECULATIVE_DIAGNOSTIC_CHOICE_ALIGNMENT_V1,
     )?;
     Ok((key, allocations.host_dispatch_range(typed)?))
+}
+
+fn speculative_choice_initial_image(
+    requested_bytes: usize,
+) -> Result<Box<[u8]>, M1SpeculativeDiagnosticChoicesErrorV1> {
+    let token_bytes = usize::try_from(TOKEN_BYTES).expect("token width fits usize");
+    if requested_bytes == 0 || !requested_bytes.is_multiple_of(token_bytes) {
+        return Err(M1SpeculativeDiagnosticChoicesErrorV1::Overflow);
+    }
+    let sentinel = M1_SPECULATIVE_DIAGNOSTIC_UNWRITTEN_CHOICE_V1.to_le_bytes();
+    let mut image = Vec::new();
+    image.try_reserve_exact(requested_bytes).map_err(|_| {
+        M1SpeculativeDiagnosticChoicesErrorV1::HostInitialization { requested_bytes }
+    })?;
+    image.extend_from_slice(&sentinel);
+    while image.len() < requested_bytes {
+        let copy_len = image.len().min(requested_bytes - image.len());
+        image.extend_from_within(..copy_len);
+    }
+    Ok(image.into_boxed_slice())
 }
 
 fn revalidate_range(
@@ -569,6 +596,35 @@ mod tests {
         assert!(matches!(
             validate_choice_extents(16, 21),
             Err(M1SpeculativeDiagnosticChoicesErrorV1::ChoiceExtents { .. })
+        ));
+    }
+
+    #[test]
+    fn initialized_choice_images_use_invalid_token_sentinels() {
+        assert!(matches!(
+            speculative_choice_initial_image(0),
+            Err(M1SpeculativeDiagnosticChoicesErrorV1::Overflow)
+        ));
+        assert!(matches!(
+            speculative_choice_initial_image(15),
+            Err(M1SpeculativeDiagnosticChoicesErrorV1::Overflow)
+        ));
+        for requested_bytes in [16, 20] {
+            let image = speculative_choice_initial_image(requested_bytes).unwrap();
+            assert!(image
+                .chunks_exact(4)
+                .all(|encoded| encoded == u32::MAX.to_le_bytes()));
+        }
+
+        let image = speculative_choice_initial_image(16).unwrap();
+        assert!(matches!(
+            decode_choices::<4>(&image),
+            Err(
+                M1SpeculativeDiagnosticChoicesErrorV1::ChoiceOutOfVocabulary {
+                    ordinal: 0,
+                    actual: u32::MAX,
+                }
+            )
         ));
     }
 

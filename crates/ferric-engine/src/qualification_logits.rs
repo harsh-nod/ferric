@@ -2,8 +2,11 @@
 //!
 //! Production workspaces remain device-local. Qualification explicitly opts in
 //! to a second coherent output whose complete range substitutes only the target
-//! `Logits` workspace binding. Completed observation narrows that allocation to
-//! one final live BF16 row per scheduled lane.
+//! `Logits` workspace binding. The substituted range is sealed with a BF16
+//! quiet-NaN sentinel before dispatch so its inspected producer/consumer access
+//! remains initialized and any missing final write fails closed. Completed
+//! observation narrows that allocation to one final live BF16 row per scheduled
+//! lane.
 
 use core::fmt;
 
@@ -24,6 +27,8 @@ type QualificationLogitsAllocationKeyV1 =
 pub const M1_QUALIFICATION_LOGITS_ELEMENT_BYTES_V1: u64 = 2;
 /// Exact alignment required by the existing BF16 logits kernel arguments.
 pub const M1_QUALIFICATION_LOGITS_ALIGNMENT_V1: u64 = 2;
+
+const M1_QUALIFICATION_UNWRITTEN_BF16_V1: u16 = 0x7fc0;
 
 /// Exact target workspace shape retained by qualification logits capture.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -115,6 +120,8 @@ pub enum M1QualificationLogitsErrorV1 {
     AlreadyEnabled,
     /// Checked shape arithmetic overflowed.
     Overflow,
+    /// The complete initialized sentinel image could not be reserved on the host.
+    HostInitialization { requested_bytes: usize },
     /// The generated logits range differs from the canonical `[S,A,V]` extent.
     WorkspaceExtent { expected: u64, actual: u64 },
     /// A later target selection differs from the retained capture shape.
@@ -388,9 +395,9 @@ pub(crate) fn allocate_m1_qualification_logits_v1(
     let shape = m1_qualification_logits_shape_v1(selection)?;
     let requested =
         usize::try_from(shape.extent_bytes).map_err(|_| M1QualificationLogitsErrorV1::Overflow)?;
-    let key = allocations.allocate_host_visible::<HostDownloadRoleV1>(requested)?;
+    let initialized = qualification_logits_initial_image(requested)?;
+    let key = allocations.allocate_initialized_host_visible::<HostDownloadRoleV1>(initialized)?;
     validate_key_geometry(key, shape)?;
-    let _mapped = allocations.map_host_visible(key)?;
     let typed = allocations.range(
         key,
         0,
@@ -403,6 +410,25 @@ pub(crate) fn allocate_m1_qualification_logits_v1(
         key,
         dispatch_range,
     })
+}
+
+fn qualification_logits_initial_image(
+    requested_bytes: usize,
+) -> Result<Box<[u8]>, M1QualificationLogitsErrorV1> {
+    if requested_bytes == 0 || !requested_bytes.is_multiple_of(2) {
+        return Err(M1QualificationLogitsErrorV1::Overflow);
+    }
+    let sentinel = M1_QUALIFICATION_UNWRITTEN_BF16_V1.to_le_bytes();
+    let mut image = Vec::new();
+    image
+        .try_reserve_exact(requested_bytes)
+        .map_err(|_| M1QualificationLogitsErrorV1::HostInitialization { requested_bytes })?;
+    image.extend_from_slice(&sentinel);
+    while image.len() < requested_bytes {
+        let copy_len = image.len().min(requested_bytes - image.len());
+        image.extend_from_within(..copy_len);
+    }
+    Ok(image.into_boxed_slice())
 }
 
 pub(crate) fn attach_m1_qualification_logits_v1(
@@ -750,6 +776,38 @@ pub(crate) mod tests {
                 u64::from(shape.sequences()) * u64::from(shape.active_tokens()) * shape.row_bytes()
             );
         }
+    }
+
+    #[test]
+    fn initialized_capture_image_uses_fail_closed_bf16_nan_sentinels() {
+        let s1_t128 =
+            m1_qualification_logits_shape_v1(selection(Qwen3PlanBucket::PrefillS1T128)).unwrap();
+        assert_eq!(s1_t128.extent_bytes(), 38_895_616);
+        assert!(matches!(
+            qualification_logits_initial_image(0),
+            Err(M1QualificationLogitsErrorV1::Overflow)
+        ));
+        assert!(matches!(
+            qualification_logits_initial_image(3),
+            Err(M1QualificationLogitsErrorV1::Overflow)
+        ));
+
+        let image = qualification_logits_initial_image(8).unwrap();
+        assert_eq!(
+            image.as_ref(),
+            [0xc0, 0x7f, 0xc0, 0x7f, 0xc0, 0x7f, 0xc0, 0x7f]
+        );
+
+        let full_row =
+            qualification_logits_initial_image(usize::try_from(QWEN3_VOCABULARY_SIZE).unwrap() * 2)
+                .unwrap();
+        assert_eq!(
+            lowest_id_finite_bf16_argmax(&full_row, 5),
+            Err(M1QualificationFinalLogitsErrorV1::NonFinite {
+                lane: 5,
+                token: TokenId::try_from(0usize).unwrap(),
+            })
+        );
     }
 
     #[test]
