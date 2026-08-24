@@ -23,10 +23,11 @@ The work queue names every expected primary artifact, its producer role, and
 whether an in-repository producer exists. The theorem and negative-mutation
 runners, the three declaration-only TCB reporters, all 74 artifact-identity
 bindings, all 14 canonical-structure bindings, all 15 external-contract
-bindings, and the five exact unsupported-rationale bindings are represented as
-available commands. The queue therefore has 167 available producer items and
-191 missing producer items. All other binding-evidence producers and the shared
-receipt remain explicitly missing.
+bindings, all 58 MI300X hardware-test bindings, and the five exact
+unsupported-rationale bindings are represented as available commands. The
+queue therefore has 225 available producer items and 133 missing producer
+items. All other binding-evidence producers and the shared receipt remain
+explicitly missing.
 
 After producing a plan against the final clean source identities, materialize
 the three global TCB declarations independently:
@@ -99,6 +100,57 @@ compiler, runtime, driver/firmware, and hardware assumptions. It does not invoke
 the trusted validator and grants only `declared-assumptions-only` authority: the
 report does not establish implementation, satisfaction, external review,
 machine refinement, load, launch, hardware, performance, or qualification.
+
+Materialize one of the planner's 58 MI300X hardware observations with the exact
+Ferric harness, persisted kernel-artifact root, and a canonical hardware
+environment input:
+
+```text
+python3 -I proofs/m1-qualification/produce-hardware-transcript.py \
+  FERRIC_REPO FE2O3_REPO PLAN_DIR \
+  HARDWARE_HARNESS KERNEL_ARTIFACTS HARDWARE_ENVIRONMENT binding.NNNNN
+```
+
+`HARDWARE_HARNESS` must name the executable
+`ferric-m1-hardware-harness` and match the reviewed byte length and SHA-256
+stored in `hardware-k7-procedure.json`; a merely same-named executable is
+rejected before invocation. `HARDWARE_ENVIRONMENT` is canonical JSON in
+format `FERRIC-M1-HARDWARE-ENVIRONMENT-V1`; it records the exact KFD GPU unique
+ID, its canonically derived AMD SMI UUID, the PCI BDF, and the
+MI300X/gfx942/XNACK identity. Its ROCm, amdgpu-module, and firmware fields are
+operator-declared identities cross-checked against the harness result; they are
+not independent environment attestation. The checked-in
+`hardware-k7-procedure.json` fixes the singleton request/result schema and one
+K7 speculative-token-assembly launch.
+
+Each invocation authenticates the exact 58-binding allowlist, complete plan and
+queue, both source closures and repositories, three TCB reports, harness bytes,
+kernel tree, procedure, and hardware environment input. It calls the harness
+once, requires one completed and read-back-verified K7 launch for that binding,
+and cross-checks the returned device and environment before publishing exactly:
+
+```text
+hardware-rosters/<artifact-id>.json
+hardware-transcripts/<artifact-id>.json
+artifacts/<artifact-id>.hardware-transcript.json
+```
+
+The transcript retains the semantic kernel-manifest and program-catalog
+identities and the complete binding-local K7 observation. Its tool record binds
+the held harness binary, harness-emitted package version, and exact hashes of
+the five named Ferric harness/runtime sources. These source hashes establish a
+reviewable source association; they do not prove a reproducible build or that
+the binary was produced from those sources.
+
+The roster and transcript publish first and the report publishes last as the
+completion marker; a failed transaction attempts every owned-file cleanup,
+removes only exact files it created, and preserves a replacement inode while
+reporting the rollback failure. The producer never invokes the trusted
+validator, emits no index or receipt, leaves every obligation `Open`, and grants only
+`hardware-observation-only` authority. The K7 observation does not establish
+path-specific semantics, machine refinement, performance, or qualification.
+The producer policy uses a deterministic synthetic harness once per binding;
+its 58 binding-local invocations are not claims of 58 physical GPU launches.
 
 The three M1 properties whose required closure status is `Unsupported` have
 five exact path-bound nonclaim reports. Materialize one selected report with:

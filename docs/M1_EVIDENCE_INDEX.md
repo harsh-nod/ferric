@@ -184,10 +184,14 @@ schema-only authority and publishes the report last as the completion marker.
 The hardware-transcript
 validator is documented in `proofs/m1/evidence/HARDWARE_TRANSCRIPT.md`. It
 authenticates a fixed MI300X/gfx942 report plus immutable run-transcript and
-case-roster companions, requires positive completed GPU work for every case,
-and binds the exact source, device, ROCm, driver, firmware, harness, obligation,
-path, profile, and TCB identities. Its reviewed source SHA-256 is
-`1c84dbe9f4bfea8d4e3a1859522320b56848c39f61a949c7244745cd995a070b`.
+singleton case-roster companions, requires one exact completed K7 observation,
+recomputes its observation and named Ferric tool-source hashes, and binds the
+exact source, device, operator-declared ROCm/driver/firmware, harness, kernel,
+obligation, path, profile, and TCB identities. Tool-source binding is source
+association, not reproducible-build proof. The checked-in procedure pins the
+reviewed harness binary's exact byte length and SHA-256, which the producer and
+validator enforce. Its reviewed source SHA-256 is
+`bfc3a952a0ebac4eee479faf7d7306d2a8a3889ffb22ad9ec3422fcd8b1eace0`.
 Hardware observations grant no theorem, machine-refinement, performance, or
 qualification authority. The independent-validator authenticates a
 fixed-location canonical report, exact case roster,

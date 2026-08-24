@@ -139,7 +139,6 @@ FOUNDATION_FILES = {
 }
 MISSING_ROLES = {
     "fe2o3-contract": "fe2o3-contract-owner",
-    "hardware-test": "mi300x-hardware-harness",
     "independent-validator": "independent-validation-organization",
     "performance-gate": "external-performance-harness",
 }
@@ -540,6 +539,23 @@ def producer(evidence_kind: str, selectors: tuple[str, ...]) -> JsonObject:
             ],
             "role": role,
         }
+    if evidence_kind == "hardware-test":
+        return {
+            "availability": "available",
+            "command": [
+                "python3",
+                "-I",
+                "proofs/m1-qualification/produce-hardware-transcript.py",
+                "FERRIC_REPO",
+                "FE2O3_REPO",
+                "PLAN_DIR",
+                "HARDWARE_HARNESS",
+                "KERNEL_ARTIFACTS",
+                "HARDWARE_ENVIRONMENT",
+                "BINDING_ID",
+            ],
+            "role": "ferric-mi300x-hardware-harness",
+        }
     foundation = FOUNDATION_FILES.get(evidence_kind)
     if foundation is not None:
         return {
@@ -634,6 +650,7 @@ def renumber_slots(slots: list[JsonObject]) -> list[JsonObject]:
             "artifact-identity",
             "canonical-structure-check",
             "external-contract",
+            "hardware-test",
             "unsupported-rationale",
         }:
             slot["producer"]["command"][-1] = binding_id

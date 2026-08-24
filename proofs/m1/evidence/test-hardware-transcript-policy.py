@@ -25,12 +25,21 @@ TEST_PROTOCOL = "ferric.m1.mi300x-hardware-test.v1"
 ARTIFACT_TARGET = "gfx942:xnack-"
 AUTHORITY = "hardware-observation-only"
 NONCLAIM = (
-    "This report authenticates bounded observations from the exact named "
-    "MI300X hardware run. Observations are not proofs, do not establish "
-    "machine refinement, and do not establish performance or M1 qualification."
+    "This report authenticates one bounded binding-local observation from the "
+    "exact named MI300X hardware run. It does not establish path-specific "
+    "semantics, reproducible binary provenance, independently attest "
+    "operator-declared environment identities, prove machine refinement, or "
+    "establish performance or M1 qualification."
 )
 FERRIC_BASE = "c5a86fd56c1c817664593df25c04bbed30e84971"
 DEVICE_UUID = "123e4567-e89b-42d3-a456-426614174000"
+TOOL_SOURCE_PATHS = {
+    "cargo_lock": "Cargo.lock",
+    "hardware_harness": "crates/ferric-engine/src/bin/ferric-m1-hardware-harness.rs",
+    "package_manifest": "crates/ferric-engine/Cargo.toml",
+    "packet_execution": "crates/ferric-engine/src/m1_packet_diagnostic_execution.rs",
+    "persisted_kernel_artifacts": "crates/ferric-engine/src/persisted_kernel_artifacts.rs",
+}
 TCB_IDS = ("tcb.compiler", "tcb.hardware", "tcb.runtime")
 TCB_KINDS = ("Compiler", "Hardware", "Runtime")
 Case = tuple[str, str, str, str, str]
@@ -138,6 +147,8 @@ def refresh_transcript(fixture: Fixture) -> None:
     report["transcript_size_bytes"] = len(raw)
     report["device_identity_sha256"] = canonical_digest(transcript["device"])
     report["environment_identity_sha256"] = canonical_digest(transcript["environment"])
+    report["kernel_manifest_sha256"] = transcript["kernel_manifest_sha256"]
+    report["kernel_catalog_sha256"] = transcript["kernel_catalog_sha256"]
     refresh_report(fixture)
 
 
@@ -174,6 +185,8 @@ def make_fixture(repo: Path, root: Path, case: Case = CASES[0]) -> Fixture:
     name, obligation_class, obligation_id, profile, path_id = case
     requirements_path = repo / "proofs/M1_REQUIREMENTS.json"
     requirements = json.loads(requirements_path.read_text(encoding="ascii"))
+    procedure_path = repo / "proofs/m1-qualification/hardware-k7-procedure.json"
+    procedure = json.loads(procedure_path.read_text(encoding="ascii"))
     statement, assurance_properties = requirement_spec(
         requirements, obligation_class, obligation_id
     )
@@ -272,24 +285,14 @@ def make_fixture(repo: Path, root: Path, case: Case = CASES[0]) -> Fixture:
     cases = [
         {
             "assurance_property_ids": copy.deepcopy(assurance_properties),
-            "id": f"{name}.case-a",
+            "id": f"case.k7.{binding_id.replace('.', '-')}",
             "obligation_class": obligation_class,
             "obligation_id": obligation_id,
             "path_id": path_id,
-            "procedure_sha256": digest_bytes(f"{name} procedure a".encode("ascii")),
+            "procedure_sha256": digest_file(procedure_path),
             "profile_id": profile,
             "requires_gpu_work": True,
-        },
-        {
-            "assurance_property_ids": copy.deepcopy(assurance_properties),
-            "id": f"{name}.case-b",
-            "obligation_class": obligation_class,
-            "obligation_id": obligation_id,
-            "path_id": path_id,
-            "procedure_sha256": digest_bytes(f"{name} procedure b".encode("ascii")),
-            "profile_id": profile,
-            "requires_gpu_work": True,
-        },
+        }
     ]
     roster = {
         "binding_sha256": binding["binding_sha256"],
@@ -331,25 +334,46 @@ def make_fixture(repo: Path, root: Path, case: Case = CASES[0]) -> Fixture:
             "version": "7.1.0",
         },
         "tool": {
-            "binary_sha256": digest_bytes(b"ferric hardware harness binary"),
+            "binary_sha256": procedure["harness_binary"]["sha256"],
+            "binary_size_bytes": procedure["harness_binary"]["size_bytes"],
             "name": "ferric-m1-hardware-harness",
             "protocol": TEST_PROTOCOL,
+            "source_sha256s": {
+                key: digest_file(repo / relative)
+                for key, relative in TOOL_SOURCE_PATHS.items()
+            },
             "version": "1.0.0",
         },
     }
     roster_raw = canonical_bytes(roster)
     roster_path.write_bytes(roster_raw)
+    kernel_manifest_sha256 = digest_bytes(b"authenticated kernel manifest")
+    kernel_catalog_sha256 = digest_bytes(b"authenticated kernel catalog")
+    generation = 7
+    observation = (
+        "ferric-m1-k7-observation-v1|"
+        f"{binding['binding_sha256']}|{cases[0]['id']}|"
+        f"{cases[0]['procedure_sha256']}|{kernel_manifest_sha256}|"
+        f"{kernel_catalog_sha256}|{DEVICE_UUID}|0000:41:00.0|{generation}|"
+        "10,11,12,13,14\n"
+    ).encode("ascii")
     case_results = [
         {
-            "case_id": case_record["id"],
-            "completion_count": index + 1,
-            "gpu_observation_sha256": digest_bytes(
-                f"{case_record['id']} observation".encode("ascii")
-            ),
-            "launch_count": index + 1,
+            "binding_sha256": binding["binding_sha256"],
+            "case_id": cases[0]["id"],
+            "completion_count": 1,
+            "generation": generation,
+            "gpu_observation_sha256": digest_bytes(observation),
+            "grid": [64, 1, 1],
+            "launch_count": 1,
+            "output_tokens": [10, 11, 12, 13, 14],
+            "output_verified": True,
+            "procedure_sha256": cases[0]["procedure_sha256"],
+            "program": "k7-speculative-token-assembly-s1k4",
+            "queue_released": True,
             "result": "pass",
+            "workgroup": [64, 1, 1],
         }
-        for index, case_record in enumerate(cases)
     ]
     transcript = {
         "binding_sha256": binding["binding_sha256"],
@@ -362,6 +386,8 @@ def make_fixture(repo: Path, root: Path, case: Case = CASES[0]) -> Fixture:
         "format": TRANSCRIPT_FORMAT,
         "gpu_work_completed": True,
         "gpu_work_submitted": True,
+        "kernel_catalog_sha256": kernel_catalog_sha256,
+        "kernel_manifest_sha256": kernel_manifest_sha256,
         "no_gpu_work": False,
         "protocol": TEST_PROTOCOL,
         "requirements_sha256": context["requirements_sha256"],
@@ -390,6 +416,8 @@ def make_fixture(repo: Path, root: Path, case: Case = CASES[0]) -> Fixture:
         "environment_identity_sha256": canonical_digest(environment),
         "format": REPORT_FORMAT,
         "gpu_work_observed": True,
+        "kernel_catalog_sha256": kernel_catalog_sha256,
+        "kernel_manifest_sha256": kernel_manifest_sha256,
         "nonclaim": NONCLAIM,
         "obligation_class": obligation_class,
         "obligation_id": obligation_id,
@@ -408,8 +436,8 @@ def make_fixture(repo: Path, root: Path, case: Case = CASES[0]) -> Fixture:
         "tcb_identity_sha256s": copy.deepcopy(tcb_identities),
         "tcb_roster_sha256": canonical_digest(tcb),
         "test_protocol": TEST_PROTOCOL,
-        "total_gpu_completions": 3,
-        "total_gpu_launches": 3,
+        "total_gpu_completions": 1,
+        "total_gpu_launches": 1,
         "transcript_relative_path": transcript_relative,
         "transcript_sha256": digest_bytes(transcript_raw),
         "transcript_size_bytes": len(transcript_raw),
@@ -530,13 +558,21 @@ def hostile_cases(repo: Path, validator: Path, root: Path) -> int:
             report_field("tcb_identity_sha256s", {"tcb.compiler": digest_bytes(b"x")}),
         ),
         ("tcb-roster", report_field("tcb_roster_sha256", digest_bytes(b"tcb"))),
-        ("case-count", report_field("case_count", 1)),
+        ("case-count", report_field("case_count", 2)),
         ("case-count-bool", report_field("case_count", True)),
-        ("passed-count", report_field("passed_case_count", 1)),
+        ("passed-count", report_field("passed_case_count", 2)),
         ("launch-count", report_field("total_gpu_launches", 2)),
         ("launch-count-bool", report_field("total_gpu_launches", True)),
         ("completion-count", report_field("total_gpu_completions", 2)),
         ("device-digest", report_field("device_identity_sha256", digest_bytes(b"d"))),
+        (
+            "kernel-manifest-report",
+            report_field("kernel_manifest_sha256", digest_bytes(b"manifest")),
+        ),
+        (
+            "kernel-catalog-report",
+            report_field("kernel_catalog_sha256", digest_bytes(b"catalog")),
+        ),
         (
             "environment-digest",
             report_field("environment_identity_sha256", digest_bytes(b"e")),
@@ -815,12 +851,13 @@ def hostile_cases(repo: Path, validator: Path, root: Path) -> int:
             ),
         ),
         ("cases-empty", roster_mutation(lambda r: r.__setitem__("cases", []))),
-        ("case-order", roster_mutation(lambda r: r["cases"].reverse())),
+        (
+            "case-injection",
+            roster_mutation(lambda r: r["cases"].append(copy.deepcopy(r["cases"][0]))),
+        ),
         (
             "case-duplicate",
-            roster_mutation(
-                lambda r: r["cases"].__setitem__(1, copy.deepcopy(r["cases"][0]))
-            ),
+            roster_mutation(lambda r: r["cases"].append(copy.deepcopy(r["cases"][0]))),
         ),
         (
             "case-id",
@@ -922,6 +959,22 @@ def hostile_cases(repo: Path, validator: Path, root: Path) -> int:
             "run-roster-size-bool",
             transcript_mutation(
                 lambda t: t.__setitem__("case_roster_size_bytes", True)
+            ),
+        ),
+        (
+            "run-kernel-manifest",
+            transcript_mutation(
+                lambda t: t.__setitem__(
+                    "kernel_manifest_sha256", digest_bytes(b"manifest drift")
+                )
+            ),
+        ),
+        (
+            "run-kernel-catalog",
+            transcript_mutation(
+                lambda t: t.__setitem__(
+                    "kernel_catalog_sha256", digest_bytes(b"catalog drift")
+                )
             ),
         ),
         (
@@ -1101,25 +1154,117 @@ def hostile_cases(repo: Path, validator: Path, root: Path) -> int:
             ),
         ),
         (
+            "tool-binary-size",
+            transcript_mutation(
+                lambda t: t["environment"]["tool"].__setitem__("binary_size_bytes", 1)
+            ),
+        ),
+        (
+            "tool-version-empty",
+            transcript_mutation(
+                lambda t: t["environment"]["tool"].__setitem__("version", "")
+            ),
+        ),
+        (
+            "tool-source",
+            transcript_mutation(
+                lambda t: t["environment"]["tool"]["source_sha256s"].__setitem__(
+                    "cargo_lock", digest_bytes(b"wrong source")
+                )
+            ),
+        ),
+        (
             "results-empty",
             transcript_mutation(lambda t: t.__setitem__("case_results", [])),
         ),
         (
-            "result-order",
-            transcript_mutation(lambda t: t["case_results"].reverse()),
+            "result-injection",
+            transcript_mutation(
+                lambda t: t["case_results"].append(copy.deepcopy(t["case_results"][0]))
+            ),
         ),
         (
             "result-duplicate",
             transcript_mutation(
-                lambda t: t["case_results"].__setitem__(
-                    1, copy.deepcopy(t["case_results"][0])
-                )
+                lambda t: t["case_results"].append(copy.deepcopy(t["case_results"][0]))
             ),
         ),
         (
             "result-case-id",
             transcript_mutation(
                 lambda t: t["case_results"][0].__setitem__("case_id", "other.case")
+            ),
+        ),
+        (
+            "result-binding",
+            transcript_mutation(
+                lambda t: t["case_results"][0].__setitem__(
+                    "binding_sha256", digest_bytes(b"wrong binding")
+                )
+            ),
+        ),
+        (
+            "result-procedure",
+            transcript_mutation(
+                lambda t: t["case_results"][0].__setitem__(
+                    "procedure_sha256", digest_bytes(b"wrong procedure")
+                )
+            ),
+        ),
+        (
+            "result-generation-zero",
+            transcript_mutation(
+                lambda t: t["case_results"][0].__setitem__("generation", 0)
+            ),
+        ),
+        (
+            "result-generation-bool",
+            transcript_mutation(
+                lambda t: t["case_results"][0].__setitem__("generation", True)
+            ),
+        ),
+        (
+            "result-program",
+            transcript_mutation(
+                lambda t: t["case_results"][0].__setitem__("program", "K7")
+            ),
+        ),
+        (
+            "result-grid",
+            transcript_mutation(
+                lambda t: t["case_results"][0].__setitem__("grid", [1, 1, 1])
+            ),
+        ),
+        (
+            "result-grid-bool",
+            transcript_mutation(
+                lambda t: t["case_results"][0].__setitem__("grid", [True, 1, 1])
+            ),
+        ),
+        (
+            "result-workgroup",
+            transcript_mutation(
+                lambda t: t["case_results"][0].__setitem__("workgroup", [32, 1, 1])
+            ),
+        ),
+        (
+            "result-output",
+            transcript_mutation(
+                lambda t: t["case_results"][0].__setitem__(
+                    "output_tokens", [10, 11, 12, 13, 15]
+                )
+            ),
+        ),
+        (
+            "result-output-unverified",
+            transcript_mutation(
+                lambda t: t["case_results"][0].__setitem__("output_verified", False)
+            ),
+        ),
+        (
+            "result-queue-live",
+            transcript_mutation(
+                lambda t: t["case_results"][0].__setitem__("queue_released", False)
             ),
         ),
         (
@@ -1280,6 +1425,17 @@ def hostile_cases(repo: Path, validator: Path, root: Path) -> int:
     hostile_file("transcript-symlink", symlink_file(1))
     hostile_file("roster-symlink", symlink_file(2))
 
+    def symlink_parent(path_index: int) -> Mutation:
+        def mutate(fixture: Fixture) -> None:
+            parent = fixture[path_index].parent
+            target = parent.with_name(parent.name + "-target")
+            parent.rename(target)
+            parent.symlink_to(target, target_is_directory=True)
+
+        return mutate
+
+    hostile_file("transcript-parent-symlink", symlink_parent(1))
+
     def hardlink_file(path_index: int) -> Mutation:
         def mutate(fixture: Fixture) -> None:
             os.link(fixture[path_index], fixture[path_index].with_suffix(".hardlink"))
@@ -1337,12 +1493,14 @@ def audit_toctou_guard(repo: Path, validator: Path, root: Path) -> None:
     fixture = make_fixture(repo, root)
     original = module.file_identity
     calls = 0
+    custody = module.InputCustody()
+    evidence_descriptor = custody.open_absolute_directory(root, "TOCTOU fixture root")
 
     def drifting_identity(metadata: os.stat_result) -> tuple[int, ...]:
         nonlocal calls
         calls += 1
         identity = original(metadata)
-        if calls == 2:
+        if calls == 3:
             return (*identity[:-1], identity[-1] + 1)
         return identity
 
@@ -1350,8 +1508,14 @@ def audit_toctou_guard(repo: Path, validator: Path, root: Path) -> None:
     try:
         try:
             with contextlib.redirect_stderr(io.StringIO()):
-                module.read_bounded(
-                    fixture[1], module.MAX_TRANSCRIPT_BYTES, "TOCTOU fixture"
+                custody.hold_relative_regular(
+                    evidence_descriptor,
+                    module.safe_relative(
+                        fixture[4]["transcript_relative_path"],
+                        "TOCTOU transcript path",
+                    ),
+                    module.MAX_TRANSCRIPT_BYTES,
+                    "TOCTOU fixture",
                 )
         except SystemExit:
             pass
@@ -1359,6 +1523,37 @@ def audit_toctou_guard(repo: Path, validator: Path, root: Path) -> None:
             fail("hardware validator did not reject an in-read identity change")
     finally:
         module.file_identity = original
+        custody.close()
+
+
+def audit_parent_rebinding(repo: Path, validator: Path, root: Path) -> None:
+    module = load_module(validator, "ferric_m1_hardware_validator_parent_rebinding")
+    fixture = make_fixture(repo, root)
+    original = module.InputCustody.revalidate
+    rebound = False
+
+    def rebind_then_revalidate(custody: Any) -> None:
+        nonlocal rebound
+        parent = fixture[1].parent
+        moved = parent.with_name(parent.name + "-opened")
+        parent.rename(moved)
+        parent.mkdir()
+        rebound = True
+        original(custody)
+
+    module.InputCustody.revalidate = rebind_then_revalidate
+    try:
+        try:
+            with contextlib.redirect_stderr(io.StringIO()):
+                module.validate(fixture[3])
+        except SystemExit:
+            pass
+        else:
+            fail("hardware validator accepted a rebound companion parent")
+    finally:
+        module.InputCustody.revalidate = original
+    if not rebound:
+        fail("hardware validator parent-rebinding hook did not execute")
 
 
 def audit_checker_pin(repo: Path, validator: Path) -> None:
@@ -1401,9 +1596,11 @@ def main() -> None:
         canonical_cases(repo, validator, root / "canonical")
         hostile_count = hostile_cases(repo, validator, root / "hostile")
         audit_toctou_guard(repo, validator, root / "toctou")
+        audit_parent_rebinding(repo, validator, root / "parent-rebinding")
     print(
         "PASS: M1 hardware-transcript validator accepted 6 canonical transcripts "
-        f"and rejected {hostile_count} hostile fixtures plus an in-read TOCTOU change"
+        f"and rejected {hostile_count} hostile fixtures, an in-read TOCTOU change, "
+        "and a parent rebinding"
     )
 
 

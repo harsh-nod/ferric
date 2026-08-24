@@ -252,9 +252,25 @@ pub fn reopen_persisted_m1_kernel_artifacts_v1(
     reopen_with_hook(root.as_ref(), |_| {})
 }
 
+/// Strictly reopens canonical artifacts beneath an already-held directory.
+///
+/// This entry point preserves descriptor custody supplied by an orchestrator.
+/// Every child is still opened beneath `root` with the same strict no-symlink
+/// policy as [`reopen_persisted_m1_kernel_artifacts_v1`].
+///
+/// # Errors
+///
+/// Returns [`M1PersistedKernelArtifactOpenErrorV1`] when `root` is not a
+/// directory or any canonical child fails the ordinary persisted admission.
+pub fn reopen_persisted_m1_kernel_artifacts_from_directory_v1(
+    root: OwnedFd,
+) -> Result<AdmittedPersistedM1KernelArtifactsV1, M1PersistedKernelArtifactOpenErrorV1> {
+    reopen_opened_with_hook(root, |_| {})
+}
+
 fn reopen_with_hook(
     root: &Path,
-    mut after_open: impl FnMut(M1PersistedKernelArtifactFileV1),
+    after_open: impl FnMut(M1PersistedKernelArtifactFileV1),
 ) -> Result<AdmittedPersistedM1KernelArtifactsV1, M1PersistedKernelArtifactOpenErrorV1> {
     let root = openat2(
         CWD,
@@ -264,6 +280,22 @@ fn reopen_with_hook(
         ResolveFlags::NO_SYMLINKS | ResolveFlags::NO_MAGICLINKS,
     )
     .map_err(|source| io_error(M1PersistedKernelArtifactFileV1::RootDirectory, source))?;
+
+    reopen_opened_with_hook(root, after_open)
+}
+
+fn reopen_opened_with_hook(
+    root: OwnedFd,
+    mut after_open: impl FnMut(M1PersistedKernelArtifactFileV1),
+) -> Result<AdmittedPersistedM1KernelArtifactsV1, M1PersistedKernelArtifactOpenErrorV1> {
+    let root_stat = fstat(&root)
+        .map_err(|source| io_error(M1PersistedKernelArtifactFileV1::RootDirectory, source))?;
+    if FileType::from_raw_mode(root_stat.st_mode) != FileType::Directory {
+        return Err(io_error(
+            M1PersistedKernelArtifactFileV1::RootDirectory,
+            rustix::io::Errno::NOTDIR,
+        ));
+    }
 
     let manifest_bytes = read_regular_file(
         &root,
@@ -526,10 +558,12 @@ mod tests {
         M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1, M1_KERNEL_ARTIFACT_MANIFEST_FILENAME_V1,
         M1_KERNEL_ARTIFACT_MANIFEST_MAX_BYTES_V1,
     };
+    use rustix::fs::{openat2, Mode, OFlags, ResolveFlags, CWD};
 
     use super::{
-        current_source_facts, reopen_persisted_m1_kernel_artifacts_v1, reopen_with_hook,
-        M1PersistedKernelArtifactFileV1, M1PersistedKernelArtifactOpenErrorV1,
+        current_source_facts, reopen_persisted_m1_kernel_artifacts_from_directory_v1,
+        reopen_persisted_m1_kernel_artifacts_v1, reopen_with_hook, M1PersistedKernelArtifactFileV1,
+        M1PersistedKernelArtifactOpenErrorV1,
     };
 
     const PHOFF: usize = 64;
@@ -1014,13 +1048,37 @@ mod tests {
     #[test]
     #[ignore = "requires a locally persisted complete M1 K1-K7 artifact directory"]
     fn configured_real_directory_reopens_and_scopes_complete_catalog() {
-        let root = std::env::var_os("FERRIC_M1_KERNEL_ARTIFACT_DIRECTORY")
-            .expect("set FERRIC_M1_KERNEL_ARTIFACT_DIRECTORY");
-        let owner = reopen_persisted_m1_kernel_artifacts_v1(root).unwrap();
-        assert_eq!(owner.manifest().entries().len(), 7);
-        owner
+        let root = PathBuf::from(
+            std::env::var_os("FERRIC_M1_KERNEL_ARTIFACT_DIRECTORY")
+                .expect("set FERRIC_M1_KERNEL_ARTIFACT_DIRECTORY"),
+        );
+        let path_owner = reopen_persisted_m1_kernel_artifacts_v1(&root).unwrap();
+        let descriptor = openat2(
+            CWD,
+            &root,
+            OFlags::RDONLY
+                | OFlags::DIRECTORY
+                | OFlags::NOFOLLOW
+                | OFlags::NONBLOCK
+                | OFlags::CLOEXEC,
+            Mode::empty(),
+            ResolveFlags::NO_SYMLINKS | ResolveFlags::NO_MAGICLINKS,
+        )
+        .unwrap();
+        let descriptor_owner =
+            reopen_persisted_m1_kernel_artifacts_from_directory_v1(descriptor).unwrap();
+        assert_eq!(path_owner.manifest().entries().len(), 7);
+        assert_eq!(
+            path_owner.manifest().identity(),
+            descriptor_owner.manifest().identity()
+        );
+        assert_eq!(
+            path_owner.program_catalog_id(),
+            descriptor_owner.program_catalog_id()
+        );
+        descriptor_owner
             .with_content_bound_program_catalog_v1(|catalog| {
-                assert_eq!(catalog.catalog_id(), owner.program_catalog_id());
+                assert_eq!(catalog.catalog_id(), path_owner.program_catalog_id());
                 assert_eq!(catalog.program_count(), 12);
                 for program in crate::M1PhysicalProgramV1::ALL {
                     let envelope = catalog.program(program);
@@ -1039,10 +1097,10 @@ mod tests {
                 }
             })
             .unwrap();
-        assert!(!owner.reconstructs_inspected_worker_custody());
-        assert!(!owner.has_independent_deployment_pin());
-        assert!(!owner.proves_hsa_executable_load());
-        assert!(!owner.proves_hardware_execution());
+        assert!(!descriptor_owner.reconstructs_inspected_worker_custody());
+        assert!(!descriptor_owner.has_independent_deployment_pin());
+        assert!(!descriptor_owner.proves_hsa_executable_load());
+        assert!(!descriptor_owner.proves_hardware_execution());
     }
 
     fn fixture_manifest(

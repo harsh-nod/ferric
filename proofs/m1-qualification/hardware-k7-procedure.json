@@ -1,0 +1,82 @@
+{
+  "case_id_prefix": "case.k7.binding-",
+  "format": "FERRIC-M1-HARDWARE-PROCEDURE-V1",
+  "grid": [
+    64,
+    1,
+    1
+  ],
+  "harness_binary": {
+    "sha256": "33992d261eaa154f80607c02af0dd3afe31b36248c1f1fa1fddd3e636fbc1396",
+    "size_bytes": 3692912
+  },
+  "harness_request": {
+    "case_fields": [
+      "binding_sha256",
+      "case_id",
+      "procedure_sha256"
+    ],
+    "fields": [
+      "case",
+      "format",
+      "protocol",
+      "target"
+    ],
+    "format": "FERRIC-M1-HARDWARE-HARNESS-REQUEST-V1"
+  },
+  "harness_result": {
+    "case_result_fields": [
+      "binding_sha256",
+      "case_id",
+      "completion_count",
+      "generation",
+      "gpu_observation_sha256",
+      "grid",
+      "launch_count",
+      "output_tokens",
+      "output_verified",
+      "procedure_sha256",
+      "program",
+      "queue_released",
+      "workgroup"
+    ],
+    "fields": [
+      "case_result",
+      "device",
+      "environment",
+      "finished_at_utc",
+      "format",
+      "gpu_work_completed",
+      "gpu_work_submitted",
+      "kernel_catalog_sha256",
+      "kernel_manifest_sha256",
+      "no_gpu_work",
+      "protocol",
+      "run_id",
+      "started_at_utc",
+      "status",
+      "target",
+      "tool_source_sha256s",
+      "tool_version"
+    ],
+    "format": "FERRIC-M1-HARDWARE-HARNESS-RESULT-V1"
+  },
+  "kernel": "K7",
+  "launch_count": 1,
+  "nonclaim": "This procedure records one bounded K7 hardware observation only. It does not establish path-specific semantics, machine refinement, performance, or M1 qualification.",
+  "output_tokens": [
+    10,
+    11,
+    12,
+    13,
+    14
+  ],
+  "program": "k7-speculative-token-assembly-s1k4",
+  "protocol": "ferric.m1.mi300x-hardware-test.v1",
+  "target": "gfx942:xnack-",
+  "workgroup": [
+    64,
+    1,
+    1
+  ]
+}

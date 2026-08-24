@@ -19,6 +19,7 @@ mod kv_workspace_authority;
 mod m1_completed_step;
 mod m1_completed_step_release;
 mod m1_packet_diagnostic;
+mod m1_packet_diagnostic_execution;
 mod m1_prepublication;
 mod m1_queue_rearm;
 mod model_memory_allocations;
@@ -144,6 +145,10 @@ pub use m1_packet_diagnostic::{
     M1PacketDiagnosticSpecErrorV1, M1PacketDiagnosticSpecV1,
     M1_PACKET_DIAGNOSTIC_CONTENT_ROLE_IDENTITY_V1, M1_PACKET_DIAGNOSTIC_RING_BYTES_V1,
 };
+pub use m1_packet_diagnostic_execution::{
+    execute_m1_k1_target_s1t128_packet_v1, execute_m1_k7_s1k4_packet_v1,
+    M1K1S1T128PacketObservationV1, M1K7S1K4PacketObservationV1,
+};
 pub use m1_prepublication::{
     allocate_m1_prepublication_workspaces_v1, build_m1_prepublication_batch_v1,
     prepare_m1_scheduled_workspace_images_v1, M1AllocatedScheduledStepV1,
@@ -225,6 +230,7 @@ pub use operation_kernel_plan::{
     ValidatedDeclaredOperatorCertificate,
 };
 pub use persisted_kernel_artifacts::{
+    reopen_persisted_m1_kernel_artifacts_from_directory_v1,
     reopen_persisted_m1_kernel_artifacts_v1, AdmittedPersistedM1KernelArtifactsV1,
     M1PersistedKernelArtifactFileV1, M1PersistedKernelArtifactOpenErrorV1,
 };
