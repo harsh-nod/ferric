@@ -3841,6 +3841,15 @@ impl M1PhysicalQueueOperationFailureV1 {
         self.lower.error()
     }
 
+    /// Returns the generic addressless execution snapshot captured before a
+    /// terminal completion-timeout poison, when that was the lower failure.
+    #[must_use]
+    pub fn timeout_execution_observation(
+        &self,
+    ) -> Option<&fe2o3_kfd::Gfx942TimeoutExecutionObservationV1> {
+        self.lower.timeout_observation()
+    }
+
     /// Returns the exact Ferric custody retained beside generic quarantine.
     #[must_use = "Ferric custody remains retained by terminal failure"]
     pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {

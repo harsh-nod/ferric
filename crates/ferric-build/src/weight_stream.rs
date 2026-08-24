@@ -1922,6 +1922,72 @@ fn verify_persisted_weight_bytes<R: Read>(
     Ok(())
 }
 
+fn reopen_persisted_qwen3_weight_manifest_authority(
+    role: Qwen3ModelRole,
+    commitment: ManifestCommitment,
+    manifest_bytes: &[u8],
+) -> Result<PrepackedWeightSet, PersistedPrepackedWeightError> {
+    let descriptor = validate_persisted_commitment(role, commitment, manifest_bytes)?;
+    reopen_persisted_qwen3_weight_manifest_after_commitment(
+        role,
+        descriptor,
+        commitment.aggregate_id,
+        manifest_bytes,
+    )
+}
+
+fn reopen_persisted_qwen3_weight_manifest_after_commitment(
+    role: Qwen3ModelRole,
+    descriptor: WeightDescriptor,
+    aggregate_id: [u8; 32],
+    manifest_bytes: &[u8],
+) -> Result<PrepackedWeightSet, PersistedPrepackedWeightError> {
+    let parsed = parse_persisted_manifest(manifest_bytes)?;
+    if parsed.role != role
+        || parsed.source_weights_id != descriptor.weights_id
+        || parsed.source_artifact_bytes != descriptor.artifact_bytes
+        || parsed.tensor_data_bytes != descriptor.tensor_data_bytes
+        || parsed.output_bytes != descriptor.tensor_data_bytes
+    {
+        return Err(PersistedPrepackedWeightError::InvalidManifest(
+            "manifest header commitment",
+        ));
+    }
+    let prepacked = finish_prepacked(role, descriptor, parsed.output_bytes, parsed.sections)
+        .map_err(PersistedPrepackedWeightError::Manifest)?;
+    if prepacked.manifest().canonical_bytes() != manifest_bytes
+        || prepacked.manifest().aggregate_id() != aggregate_id
+    {
+        return Err(PersistedPrepackedWeightError::InvalidManifest(
+            "noncanonical re-encoding",
+        ));
+    }
+    validate_persisted_sections(prepacked.manifest())?;
+    Ok(prepacked)
+}
+
+/// Reopens one canonical Qwen3 prepacked manifest under an admission commitment.
+///
+/// This validates the fixed role commitment, canonical encoding, complete tensor
+/// schema, and exact section roster without reading the separately stored weight
+/// image. The returned manifest authenticates its section digests and layout; it
+/// does not claim that any section bytes have been read or matched. Callers must
+/// independently hash every section they consume.
+///
+/// # Errors
+///
+/// Returns [`PersistedPrepackedWeightError`] for commitment, canonical-record,
+/// tensor-schema, section-layout, or roster drift.
+pub fn reopen_persisted_qwen3_weight_manifest(
+    role: Qwen3ModelRole,
+    commitment: ManifestCommitment,
+    manifest_bytes: &[u8],
+) -> Result<WeightSectionManifest, PersistedPrepackedWeightError> {
+    let prepacked =
+        reopen_persisted_qwen3_weight_manifest_authority(role, commitment, manifest_bytes)?;
+    Ok(prepacked.into_parts().1)
+}
+
 /// Reopens one persisted prepacked Qwen3 weight image under an admission commitment.
 ///
 /// The canonical manifest must exactly match the supplied admission-record
@@ -1946,28 +2012,8 @@ pub fn reopen_persisted_qwen3_weights<R: Read>(
     manifest_bytes: &[u8],
     mut weights: R,
 ) -> Result<PrepackedWeightSet, PersistedPrepackedWeightError> {
-    let descriptor = validate_persisted_commitment(role, commitment, manifest_bytes)?;
-    let parsed = parse_persisted_manifest(manifest_bytes)?;
-    if parsed.role != role
-        || parsed.source_weights_id != descriptor.weights_id
-        || parsed.source_artifact_bytes != descriptor.artifact_bytes
-        || parsed.tensor_data_bytes != descriptor.tensor_data_bytes
-        || parsed.output_bytes != descriptor.tensor_data_bytes
-    {
-        return Err(PersistedPrepackedWeightError::InvalidManifest(
-            "manifest header commitment",
-        ));
-    }
-    let prepacked = finish_prepacked(role, descriptor, parsed.output_bytes, parsed.sections)
-        .map_err(PersistedPrepackedWeightError::Manifest)?;
-    if prepacked.manifest().canonical_bytes() != manifest_bytes
-        || prepacked.manifest().aggregate_id() != commitment.aggregate_id
-    {
-        return Err(PersistedPrepackedWeightError::InvalidManifest(
-            "noncanonical re-encoding",
-        ));
-    }
-    validate_persisted_sections(prepacked.manifest())?;
+    let prepacked =
+        reopen_persisted_qwen3_weight_manifest_authority(role, commitment, manifest_bytes)?;
     verify_persisted_weight_bytes(&mut weights, prepacked.manifest())?;
     Ok(prepacked)
 }
@@ -2108,7 +2154,8 @@ pub(crate) mod test_fixtures {
 pub(crate) mod tests {
     use super::{
         exact_weight_descriptor, finish_prepacked, flush_output, parse_header,
-        parse_persisted_manifest, require_shard_name, stream_file, validate_persisted_commitment,
+        parse_persisted_manifest, reopen_persisted_qwen3_weight_manifest_after_commitment,
+        require_shard_name, stream_file, validate_persisted_commitment,
         validate_persisted_sections, validate_stream_plan, verify_persisted_weight_bytes, FilePin,
         ParsedShard, ParsedTensor, PersistedPrepackedWeightError, PrepackedWeightSet,
         WeightSection, WeightSectionManifest, WeightStreamError, WeightTransform, DRAFT_FILE_PIN,
@@ -2415,6 +2462,50 @@ pub(crate) mod tests {
                 ))
             );
         }
+    }
+
+    #[test]
+    fn manifest_only_reopen_accepts_canonical_bytes_and_rejects_drift() {
+        let original = test_prepacked(Qwen3ModelRole::Target8B);
+        let descriptor = exact_weight_descriptor(Qwen3ModelRole::Target8B);
+        let aggregate_id = original.manifest().aggregate_id();
+        let canonical = original.manifest().canonical_bytes().to_vec();
+
+        let reopened = reopen_persisted_qwen3_weight_manifest_after_commitment(
+            Qwen3ModelRole::Target8B,
+            descriptor,
+            aggregate_id,
+            &canonical,
+        )
+        .expect("canonical manifest reopens without weight bytes");
+        assert_eq!(reopened.manifest(), original.manifest());
+
+        let mut changed_commitment = aggregate_id;
+        changed_commitment[0] ^= 1;
+        assert_eq!(
+            reopen_persisted_qwen3_weight_manifest_after_commitment(
+                Qwen3ModelRole::Target8B,
+                descriptor,
+                changed_commitment,
+                &canonical,
+            ),
+            Err(PersistedPrepackedWeightError::InvalidManifest(
+                "noncanonical re-encoding"
+            ))
+        );
+
+        let mut changed_manifest = canonical;
+        let last = changed_manifest
+            .last_mut()
+            .expect("canonical manifest is nonempty");
+        *last ^= 1;
+        assert!(reopen_persisted_qwen3_weight_manifest_after_commitment(
+            Qwen3ModelRole::Target8B,
+            descriptor,
+            aggregate_id,
+            &changed_manifest,
+        )
+        .is_err());
     }
 
     #[test]

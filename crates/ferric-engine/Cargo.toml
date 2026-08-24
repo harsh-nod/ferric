@@ -11,6 +11,10 @@ publish = false
 name = "ferric-m1-qualification-capture"
 path = "src/bin/ferric-m1-qualification-capture.rs"
 
+[[bin]]
+name = "ferric-m1-packet-diagnostic"
+path = "src/bin/ferric-m1-packet-diagnostic.rs"
+
 [dependencies]
 fe2o3-amdhsa-loader.workspace = true
 fe2o3-aql.workspace = true

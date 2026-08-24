@@ -18,6 +18,7 @@ mod initialized_step_workspaces;
 mod kv_workspace_authority;
 mod m1_completed_step;
 mod m1_completed_step_release;
+mod m1_packet_diagnostic;
 mod m1_prepublication;
 mod m1_queue_rearm;
 mod model_memory_allocations;
@@ -136,6 +137,12 @@ pub use m1_completed_step_release::{
     M1CompletedStepKvReleaseFailureV1, M1ReleasedCompletedStepV1, M1ReleasedDeviceKvMemberV1,
     M1ReleasedQueueTeardownFailureV1, M1ReleasedQueueTeardownSuccessV1,
     M1ReleasedTerminalDeviceKvMemberV1,
+};
+pub use m1_packet_diagnostic::{
+    m1_k1_target_s1t128_packet_diagnostic_spec_v1, m1_k7_s1k4_packet_diagnostic_spec_v1,
+    M1PacketDiagnosticBufferAccessV1, M1PacketDiagnosticBufferV1, M1PacketDiagnosticKindV1,
+    M1PacketDiagnosticSpecErrorV1, M1PacketDiagnosticSpecV1,
+    M1_PACKET_DIAGNOSTIC_CONTENT_ROLE_IDENTITY_V1, M1_PACKET_DIAGNOSTIC_RING_BYTES_V1,
 };
 pub use m1_prepublication::{
     allocate_m1_prepublication_workspaces_v1, build_m1_prepublication_batch_v1,

@@ -639,6 +639,22 @@ fn report_physical_queue_failure(
         failure.shape().packet_count(),
         failure.error(),
     );
+    if let Some(observation) = failure.timeout_execution_observation() {
+        let _ = writeln!(
+            std::io::stderr().lock(),
+            "FAIL-STOP QUEUE TIMEOUT SNAPSHOT: packet_count={}; write_counter={}; read_counter={}; first_packet_header=0x{:04x}; first_packet_setup={}; first_signal_kind={}; first_signal_value={}; first_signal_state={:?}; queue_exception_reason_mask=0x{:016x}; currentness_confirmed={}",
+            observation.packet_count(),
+            observation.write_counter(),
+            observation.read_counter(),
+            observation.first_packet_header(),
+            observation.first_packet_setup(),
+            observation.first_signal_kind(),
+            observation.first_signal().value(),
+            observation.first_signal(),
+            observation.queue_exception_reason_mask(),
+            observation.currentness_confirmed(),
+        );
+    }
     if let Some(diagnostic) = failure.completion_progress_wait_diagnostic() {
         let _ = writeln!(
             std::io::stderr().lock(),
