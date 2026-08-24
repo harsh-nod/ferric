@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Produce one source-authenticated, declaration-only M1 TCB report."""
+"""Produce one source-authenticated M1 unsupported-rationale report."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ import stat
 import subprocess
 import sys
 import tempfile
-from typing import Any, BinaryIO, NoReturn
+from typing import Any, BinaryIO, Callable, NoReturn
 
 
 PLAN_FORMAT = "FERRIC-M1-EVIDENCE-PLAN-V1"
@@ -23,15 +23,70 @@ PLAN_NONCLAIM = (
     "This bundle allocates external M1 evidence work only. It is not an evidence "
     "index, qualification receipt, validation result, or M1 closure claim."
 )
-REPORT_FORMAT = "FERRIC-M1-TCB-REPORT-V1"
+REPORT_FORMAT = "FERRIC-M1-UNSUPPORTED-RATIONALE-V1"
 REPORT_TARGET = "gfx942:xnack-"
-REPORT_AUTHORITY = "trusted-boundary-declaration-only"
+REPORT_AUTHORITY = "nonclaim-only"
 REPORT_NONCLAIM = (
+    "This artifact grants no theorem, validation, artifact, load, launch, "
+    "hardware, performance, or qualification authority."
+)
+TCB_REPORT_FORMAT = "FERRIC-M1-TCB-REPORT-V1"
+TCB_REPORT_AUTHORITY = "trusted-boundary-declaration-only"
+TCB_REPORT_NONCLAIM = (
     "This report authenticates the declared M1 trusted boundary only. It does "
     "not establish component presence, version provenance, compiler or runtime "
     "correctness, hardware behavior, theorem truth, machine refinement, load, "
     "launch, performance, or qualification authority and closes no obligation."
 )
+UNSUPPORTED_RATIONALE_ROSTER_SHA256 = (
+    "234623d24473bb78252a0541395d68f09b591d7e947c8e55e286a2e8b57a6b81"
+)
+UNSUPPORTED_RATIONALE_TSV_SHA256 = (
+    "5c5bd4569ae975c44b8cd8292a0216f063fbe9a4461b3eb89225790f7ce5bd41"
+)
+RATIONALES: dict[str, dict[str, Any]] = {
+    "distribution_preserved": {
+        "reason_code": "outside-m1-deterministic-greedy-scope",
+        "rationale": (
+            "Stochastic sampling and stochastic speculative distribution "
+            "preservation are outside the deterministic greedy M1 envelope."
+        ),
+        "excluded_claims": [
+            "stochastic-sampling",
+            "stochastic-speculative-distribution-preservation",
+        ],
+        "paths": ("m1-tcb", "speculation-proof"),
+    },
+    "machine_refined": {
+        "reason_code": "unresolved-machine-correspondence",
+        "rationale": (
+            "The five independent translation validators required by the "
+            "assurance policy do not exist; source proofs do not establish "
+            "machine semantics."
+        ),
+        "excluded_claims": [
+            "mir-to-structured-algorithm-correspondence",
+            "algorithm-to-schedule-refinement",
+            "gpu-subset-to-llvm-correspondence",
+            "llvm-optimization-validation",
+            "object-to-amdgpu-isa-correspondence",
+        ],
+        "paths": ("identity-closure", "m1-tcb"),
+    },
+    "multi_device_refined": {
+        "reason_code": "outside-m1-single-device-scope",
+        "rationale": (
+            "M1 admits exactly one physical gfx942 device and makes no "
+            "collective or multi-device refinement claim."
+        ),
+        "excluded_claims": [
+            "collective-execution",
+            "multi-device-execution",
+            "multi-device-refinement",
+        ],
+        "paths": ("m1-tcb",),
+    },
+}
 FERRIC_BASE_COMMIT = "c5a86fd56c1c817664593df25c04bbed30e84971"
 ALLOCATION_SHA256 = "948ad3023df7ad4b1313ed865b54464f63b6bad9406f1510c85e60f9db055bd6"
 TCB = (
@@ -113,6 +168,44 @@ SOURCE_KEYS = {
     "source_closure_sha256",
     "tree",
 }
+TCB_REPORT_KEYS = {
+    "authority",
+    "component_roster",
+    "evidence_kind",
+    "format",
+    "milestone",
+    "nonclaim",
+    "obligation_roster",
+    "obligation_state",
+    "path_roster",
+    "profile_roster",
+    "requirements_sha256",
+    "source_roster",
+    "subject_tcb_id",
+    "subject_tcb_kind",
+    "target",
+    "tcb_structure_roster",
+    "validator_roster",
+}
+RATIONALE_KEYS = {
+    "authority",
+    "binding_sha256",
+    "excluded_claims",
+    "format",
+    "nonclaim",
+    "obligation_class",
+    "obligation_id",
+    "path_id",
+    "rationale",
+    "reason_code",
+    "required_closure_status",
+    "requirements_sha256",
+    "source_identity_id",
+    "source_roster_sha256",
+    "statement_sha256",
+    "tcb_identity_sha256s",
+    "tcb_roster_sha256",
+}
 SAFE_ID = re.compile(r"[a-z0-9][a-z0-9.-]*\Z")
 SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 GIT_ID = re.compile(r"[0-9a-f]{40}\Z")
@@ -121,6 +214,8 @@ MAX_FILE_BYTES = 64_000_000
 
 
 JsonObject = dict[str, Any]
+HeldFile = tuple[str, BinaryIO, os.stat_result, bytes, str]
+HeldDirectoryFiles = tuple[int, list[HeldFile]]
 
 
 def fail(message: str) -> NoReturn:
@@ -241,6 +336,55 @@ def read_regular_at(
     return raw
 
 
+def authenticate_held_file_at(
+    directory_fd: int, name: str, expected: bytes, description: str
+) -> HeldFile:
+    source, before = open_regular_at(directory_fd, name, description)
+    try:
+        if (
+            before.st_size != len(expected)
+            or stat.S_IMODE(before.st_mode) != 0o600
+            or before.st_uid != os.geteuid()
+        ):
+            fail(f"{description} is not the exact owner-private expected file")
+        raw = source.read(len(expected) + 1)
+        after = os.fstat(source.fileno())
+        named = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
+        if (
+            raw != expected
+            or file_identity(before) != file_identity(after)
+            or file_identity(after) != file_identity(named)
+        ):
+            fail(f"{description} changed while it was authenticated")
+        return name, source, after, expected, description
+    except OSError as error:
+        source.close()
+        fail(f"cannot authenticate {description}: {error}")
+    except BaseException:
+        source.close()
+        raise
+
+
+def revalidate_held_file(directory_fd: int, held: HeldFile) -> None:
+    name, source, authenticated, expected, description = held
+    try:
+        before = os.fstat(source.fileno())
+        source.seek(0)
+        raw = source.read(len(expected) + 1)
+        after = os.fstat(source.fileno())
+        named = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
+    except OSError as error:
+        fail(f"cannot revalidate {description}: {error}")
+    if (
+        stat.S_ISLNK(named.st_mode)
+        or raw != expected
+        or file_identity(authenticated) != file_identity(before)
+        or file_identity(before) != file_identity(after)
+        or file_identity(after) != file_identity(named)
+    ):
+        fail(f"{description} changed after authentication")
+
+
 def digest_file(path: Path) -> str:
     return digest_bytes(read_regular(path, MAX_FILE_BYTES, str(path)))
 
@@ -351,6 +495,38 @@ def verify_private_directory(metadata: os.stat_result, description: str) -> None
         or metadata.st_uid != os.geteuid()
     ):
         fail(f"{description} must be an exact owner-private 0700 directory")
+
+
+def open_directory(path: Path, description: str) -> int:
+    flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_CLOEXEC", 0)
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    try:
+        before = path.lstat()
+        descriptor = os.open(path, flags)
+        opened = os.fstat(descriptor)
+    except OSError as error:
+        fail(f"{description} is unavailable: {error}")
+    if (
+        stat.S_ISLNK(before.st_mode)
+        or not stat.S_ISDIR(opened.st_mode)
+        or directory_binding(before) != directory_binding(opened)
+    ):
+        os.close(descriptor)
+        fail(f"{description} must be a held nonsymlink directory")
+    return descriptor
+
+
+def revalidate_directory(path: Path, descriptor: int, description: str) -> None:
+    try:
+        named = path.lstat()
+        held = os.fstat(descriptor)
+    except OSError as error:
+        fail(f"cannot revalidate {description}: {error}")
+    if stat.S_ISLNK(named.st_mode) or directory_binding(named) != directory_binding(
+        held
+    ):
+        fail(f"{description} was replaced after it was opened")
 
 
 def open_private_directory(path: Path, description: str) -> int:
@@ -532,7 +708,9 @@ def validate_requirements(requirements: JsonObject) -> None:
         )
         for record in group
     ):
-        fail("TCB production requires every M1 obligation to remain Open")
+        fail(
+            "unsupported-rationale production requires every M1 obligation to remain Open"
+        )
     for key in (
         "m0_contracts_commit",
         "m1_upstream_base_commit",
@@ -873,6 +1051,85 @@ def validate_sources(
     return result
 
 
+def authenticate_source_closures(plan_fd: int, plan: JsonObject) -> HeldDirectoryFiles:
+    directory_fd = open_private_directory_at(
+        plan_fd, "source-closures", "M1 source-closure directory"
+    )
+    artifacts = {
+        closure["artifact"]["id"]: closure["artifact"]
+        for closure in plan["source_closures"]
+    }
+    held: list[HeldFile] = []
+    try:
+        for source_id in SOURCE_IDS:
+            artifact = artifacts[f"artifact.{source_id}"]
+            name = f"{source_id}.records"
+            raw = read_regular_at(
+                directory_fd, name, MAX_FILE_BYTES, f"source closure {source_id}"
+            )
+            if (
+                artifact["path"] != f"source-closures/{name}"
+                or len(raw) != artifact["size_bytes"]
+                or digest_bytes(raw) != artifact["sha256"]
+            ):
+                fail(f"source closure identity drifted: {source_id}")
+            held.append(
+                authenticate_held_file_at(
+                    directory_fd, name, raw, f"source closure {source_id}"
+                )
+            )
+        revalidate_child_directory(
+            plan_fd,
+            "source-closures",
+            directory_fd,
+            "M1 source-closure directory",
+        )
+    except BaseException:
+        for _, source, _, _, _ in held:
+            source.close()
+        os.close(directory_fd)
+        raise
+    return directory_fd, held
+
+
+def revalidate_source_closures(plan_fd: int, custody: HeldDirectoryFiles) -> None:
+    directory_fd, held = custody
+    revalidate_child_directory(
+        plan_fd,
+        "source-closures",
+        directory_fd,
+        "M1 source-closure directory",
+    )
+    for file_custody in held:
+        revalidate_held_file(directory_fd, file_custody)
+
+
+def close_source_closures(custody: HeldDirectoryFiles) -> None:
+    directory_fd, held = custody
+    for _, source, _, _, _ in held:
+        source.close()
+    os.close(directory_fd)
+
+
+def source_identity_map(sources: list[JsonObject]) -> dict[str, tuple[str, str]]:
+    return {
+        record["repository"]: (record["commit"], record["tree"]) for record in sources
+    }
+
+
+def revalidate_repository_identities(
+    repositories: dict[str, tuple[Path, int]],
+    expected: dict[str, tuple[str, str]],
+) -> None:
+    if set(repositories) != set(expected):
+        fail("authenticated source repository roster drifted")
+    for name in sorted(repositories):
+        path, descriptor = repositories[name]
+        if repository_identity(path, name) != expected[name]:
+            fail(f"authenticated source commit or tree changed: {name}")
+        revalidate_directory(path, descriptor, f"{name} source repository")
+
+
 def entry_exists_at(directory_fd: int, name: str) -> bool:
     try:
         os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
@@ -890,7 +1147,9 @@ def rederive_candidate_plan(
     candidate_plan: bytes,
     candidate_queue: bytes,
 ) -> None:
-    with tempfile.TemporaryDirectory(prefix="ferric-m1-tcb-planner-replay-") as raw:
+    with tempfile.TemporaryDirectory(
+        prefix="ferric-m1-rationale-planner-replay-"
+    ) as raw:
         reproduced = Path(raw) / "plan"
         run(
             [
@@ -946,8 +1205,16 @@ def rederive_candidate_plan(
 
 
 def validate_plan(
-    ferric: Path, fe2o3: Path, plan_fd: int, subject: str
-) -> tuple[JsonObject, JsonObject, list[JsonObject], list[JsonObject], bytes, bytes]:
+    ferric: Path, fe2o3: Path, plan_fd: int, *, replay: bool = True
+) -> tuple[
+    JsonObject,
+    JsonObject,
+    JsonObject,
+    list[JsonObject],
+    list[JsonObject],
+    bytes,
+    bytes,
+]:
     plan, plan_raw = read_canonical_json_at(plan_fd, "plan.json", "M1 evidence plan")
     queue, queue_raw = read_canonical_json_at(
         plan_fd, "missing-work.json", "M1 evidence work queue"
@@ -1070,18 +1337,27 @@ def validate_plan(
         )
     if tcb_items != expected_tcb_items:
         fail("M1 TCB work-item producer contract drifted")
-    if subject not in {identifier for identifier, _ in TCB}:
-        fail(f"unknown M1 TCB subject: {subject}")
     if any(
         entry_exists_at(plan_fd, name)
         for name in ("evidence-index.json", "receipt.json")
     ):
-        fail("TCB production refuses a plan containing a closure output")
-    rederive_candidate_plan(ferric, fe2o3, plan_fd, plan_raw, queue_raw)
-    return requirements, plan, sources, report_validators, plan_raw, queue_raw
+        fail(
+            "unsupported-rationale production refuses a plan containing a closure output"
+        )
+    if replay:
+        rederive_candidate_plan(ferric, fe2o3, plan_fd, plan_raw, queue_raw)
+    return (
+        requirements,
+        plan,
+        queue,
+        sources,
+        report_validators,
+        plan_raw,
+        queue_raw,
+    )
 
 
-def report_for(
+def tcb_report_for(
     ferric: Path,
     requirements: JsonObject,
     sources: list[JsonObject],
@@ -1094,12 +1370,12 @@ def report_for(
         for identifier, kind in TCB
     ]
     return {
-        "authority": REPORT_AUTHORITY,
+        "authority": TCB_REPORT_AUTHORITY,
         "component_roster": component_roster(ferric, sources),
         "evidence_kind": "tcb-report",
-        "format": REPORT_FORMAT,
+        "format": TCB_REPORT_FORMAT,
         "milestone": "M1",
-        "nonclaim": REPORT_NONCLAIM,
+        "nonclaim": TCB_REPORT_NONCLAIM,
         "obligation_roster": projected_obligations(requirements),
         "obligation_state": "Open",
         "path_roster": projected_paths(requirements),
@@ -1114,17 +1390,266 @@ def report_for(
     }
 
 
-def ensure_artifact_directory(plan_fd: int) -> int:
+def authenticate_tcb_reports(
+    artifact_fd: int,
+    ferric: Path,
+    requirements: JsonObject,
+    sources: list[JsonObject],
+    validators: list[JsonObject],
+) -> tuple[list[JsonObject], list[tuple[str, str, BinaryIO, os.stat_result, bytes]]]:
+    roster = []
+    held: list[tuple[str, str, BinaryIO, os.stat_result, bytes]] = []
     try:
-        os.mkdir("artifacts", 0o700, dir_fd=plan_fd)
-    except FileExistsError:
-        pass
-    except OSError as error:
-        fail(f"cannot create M1 artifact directory: {error}")
+        for subject, kind in TCB:
+            artifact_id = f"artifact.{subject}"
+            name = f"{artifact_id}.tcb-report.json"
+            source, before = open_regular_at(
+                artifact_fd, name, f"M1 TCB report {subject}"
+            )
+            if (
+                before.st_size <= 0
+                or before.st_size > MAX_JSON_BYTES
+                or stat.S_IMODE(before.st_mode) != 0o600
+                or before.st_uid != os.geteuid()
+            ):
+                source.close()
+                fail(f"M1 TCB report {subject} is not an exact owner-private 0600 file")
+            raw = source.read(MAX_JSON_BYTES + 1)
+            after = os.fstat(source.fileno())
+            named = os.stat(name, dir_fd=artifact_fd, follow_symlinks=False)
+            if (
+                len(raw) != before.st_size
+                or file_identity(before) != file_identity(after)
+                or file_identity(after) != file_identity(named)
+            ):
+                source.close()
+                fail(f"M1 TCB report changed while it was read: {subject}")
+            expected = canonical_bytes(
+                exact_keys(
+                    tcb_report_for(ferric, requirements, sources, validators, subject),
+                    TCB_REPORT_KEYS,
+                    f"expected M1 TCB report {subject}",
+                )
+            )
+            if raw != expected:
+                source.close()
+                fail(
+                    f"M1 TCB report is not the exact authenticated projection: {subject}"
+                )
+            held.append((subject, name, source, after, raw))
+            roster.append(
+                {
+                    "artifact_id": artifact_id,
+                    "id": subject,
+                    "identity_sha256": digest_bytes(raw),
+                    "kind": kind,
+                }
+            )
+    except BaseException:
+        for _, _, source, _, _ in held:
+            source.close()
+        raise
+    if len({row["identity_sha256"] for row in roster}) != 3:
+        for _, _, source, _, _ in held:
+            source.close()
+        fail("M1 TCB outer report identities are not unique")
+    return roster, held
+
+
+def revalidate_tcb_reports(
+    artifact_fd: int,
+    held: list[tuple[str, str, BinaryIO, os.stat_result, bytes]],
+    ferric: Path,
+    requirements: JsonObject,
+    sources: list[JsonObject],
+    validators: list[JsonObject],
+) -> None:
+    for subject, name, source, authenticated, raw in held:
+        try:
+            source.seek(0)
+            current_raw = source.read(len(raw) + 1)
+            current = os.fstat(source.fileno())
+            named = os.stat(name, dir_fd=artifact_fd, follow_symlinks=False)
+        except OSError as error:
+            fail(f"cannot revalidate M1 TCB report {subject}: {error}")
+        expected = canonical_bytes(
+            exact_keys(
+                tcb_report_for(ferric, requirements, sources, validators, subject),
+                TCB_REPORT_KEYS,
+                f"expected M1 TCB report {subject}",
+            )
+        )
+        if (
+            stat.S_ISLNK(named.st_mode)
+            or current_raw != raw
+            or raw != expected
+            or file_identity(authenticated) != file_identity(current)
+            or file_identity(current) != file_identity(named)
+        ):
+            fail(f"M1 TCB report changed after authentication: {subject}")
+
+
+def select_unsupported_rationale_binding(
+    plan: JsonObject, queue: JsonObject, binding_id: str
+) -> tuple[JsonObject, JsonObject]:
+    if not isinstance(binding_id, str) or not binding_id.startswith("binding."):
+        fail(f"unknown M1 unsupported-rationale binding: {binding_id}")
+    slots = [
+        slot
+        for slot in plan["binding_slots"]
+        if slot.get("binding", {}).get("evidence_kind") == "unsupported-rationale"
+    ]
+    if len(slots) != 5:
+        fail("M1 unsupported-rationale binding roster is incomplete")
+    ids = [slot["binding"]["id"] for slot in slots]
+    if ids != sorted(ids) or digest_bytes(("\n".join(ids) + "\n").encode("ascii")) != (
+        UNSUPPORTED_RATIONALE_ROSTER_SHA256
+    ):
+        fail("M1 unsupported-rationale binding ID roster drifted")
+
+    queue_by_id = {item["id"]: item for item in queue["items"]}
+    rows = []
+    for slot in slots:
+        binding = slot["binding"]
+        expected = RATIONALES.get(binding["obligation_id"])
+        artifact_id = binding["artifact_id"]
+        artifact = {
+            "id": artifact_id,
+            "kind": "UnsupportedRationale",
+            "path": f"artifacts/{artifact_id}.unsupported-rationale.json",
+        }
+        producer = {
+            "availability": "available",
+            "command": [
+                "python3",
+                "-I",
+                "proofs/m1-qualification/produce-unsupported-rationale.py",
+                "FERRIC_REPO",
+                "FE2O3_REPO",
+                "PLAN_DIR",
+                binding["id"],
+            ],
+            "role": "ferric-m1-nonclaim-reporter",
+        }
+        work_id = binding["id"].replace("binding.", "work.", 1)
+        work = {
+            "expected_artifact": artifact,
+            "id": work_id,
+            "producer": producer,
+            "state": "missing",
+            "subject": f"binding:{binding['id']}",
+        }
+        if (
+            expected is None
+            or binding["obligation_class"] != "Assurance"
+            or binding["profile_id"] != "nonclaim"
+            or binding["source_identity_id"] != "source.ferric"
+            or binding["path_id"] not in expected["paths"]
+            or binding["statement_sha256"]
+            != digest_bytes(expected["rationale"].encode("utf-8"))
+            or binding["tcb_ids"] != [identifier for identifier, _ in TCB]
+            or slot["expected_artifact"] != artifact
+            or slot["producer"] != producer
+            or slot["state"] != "missing"
+            or slot["foundation_selectors"] != []
+            or queue_by_id.get(work_id) != work
+        ):
+            fail(f"M1 unsupported-rationale producer contract drifted: {binding['id']}")
+        rows.append(
+            "|".join(
+                [
+                    binding["id"],
+                    binding["obligation_class"],
+                    binding["obligation_id"],
+                    binding["profile_id"],
+                    binding["path_id"],
+                    binding["source_identity_id"],
+                    artifact_id,
+                    artifact["path"],
+                ]
+            )
+            + "\n"
+        )
+    if digest_bytes("".join(rows).encode("ascii")) != UNSUPPORTED_RATIONALE_TSV_SHA256:
+        fail("M1 unsupported-rationale allocation topology drifted")
+    matches = [slot for slot in slots if slot["binding"]["id"] == binding_id]
+    if len(matches) != 1:
+        fail(f"unknown M1 unsupported-rationale binding: {binding_id}")
+    slot = matches[0]
+    binding = slot["binding"]
+    resolutions = [
+        row for row in plan["path_resolutions"] if row["id"] == binding["path_id"]
+    ]
+    if len(resolutions) != 1:
+        fail("selected M1 unsupported-rationale path resolution is missing")
+    resolution = resolutions[0]
+    if (
+        resolution["source_identity_id"] != "source.ferric"
+        or resolution["repository"] != "ferric"
+        or resolution["availability"] != "RequiredFuture"
+    ):
+        fail("selected M1 unsupported-rationale path resolution drifted")
+    return slot, resolution
+
+
+def unsupported_rationale_report(
+    requirements_sha256: str,
+    requirements: JsonObject,
+    sources: list[JsonObject],
+    tcb: list[JsonObject],
+    slot: JsonObject,
+    resolution: JsonObject,
+) -> JsonObject:
+    binding = slot["binding"]
+    expected = RATIONALES[binding["obligation_id"]]
+    specs = [
+        row
+        for row in requirements["assurance_properties"]
+        if row["name"] == binding["obligation_id"]
+    ]
+    if len(specs) != 1:
+        fail("selected unsupported-rationale binding names an unknown property")
+    spec = specs[0]
+    if (
+        spec["obligation_state"] != "Open"
+        or spec["required_status_at_closure"] != "Unsupported"
+        or spec["boundary"] != expected["rationale"]
+        or spec["evidence_profiles"] != ["nonclaim"]
+        or spec["path_obligations"] != list(expected["paths"])
+        or resolution["id"] != binding["path_id"]
+        or resolution["source_identity_id"] != binding["source_identity_id"]
+    ):
+        fail("selected unsupported-rationale obligation or path drifted")
+    return exact_keys(
+        {
+            "authority": REPORT_AUTHORITY,
+            "binding_sha256": binding["binding_sha256"],
+            "excluded_claims": expected["excluded_claims"],
+            "format": REPORT_FORMAT,
+            "nonclaim": REPORT_NONCLAIM,
+            "obligation_class": "Assurance",
+            "obligation_id": binding["obligation_id"],
+            "path_id": binding["path_id"],
+            "rationale": expected["rationale"],
+            "reason_code": expected["reason_code"],
+            "required_closure_status": "Unsupported",
+            "requirements_sha256": requirements_sha256,
+            "source_identity_id": "source.ferric",
+            "source_roster_sha256": canonical_digest(sources),
+            "statement_sha256": binding["statement_sha256"],
+            "tcb_identity_sha256s": {row["id"]: row["identity_sha256"] for row in tcb},
+            "tcb_roster_sha256": canonical_digest(tcb),
+        },
+        RATIONALE_KEYS,
+        "M1 unsupported-rationale report",
+    )
+
+
+def ensure_artifact_directory(plan_fd: int) -> int:
     return open_private_directory_at(plan_fd, "artifacts", "M1 artifact directory")
 
 
-def report_binding(metadata: os.stat_result) -> tuple[int, int, int, int, int]:
+def published_binding(metadata: os.stat_result) -> tuple[int, int, int, int, int]:
     return (
         metadata.st_dev,
         metadata.st_ino,
@@ -1134,14 +1659,42 @@ def report_binding(metadata: os.stat_result) -> tuple[int, int, int, int, int]:
     )
 
 
-def create_new_report_at(artifact_fd: int, name: str, value: bytes) -> int:
+def rollback_exact_file(
+    directory_fd: int, name: str, descriptor: int, description: str
+) -> None:
+    try:
+        named = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
+    except FileNotFoundError:
+        return
+    except OSError as error:
+        fail(f"cannot inspect failed {description} publication: {error}")
+    try:
+        held = os.fstat(descriptor)
+    except OSError as error:
+        fail(f"cannot identify failed {description} publication: {error}")
+    if (
+        stat.S_ISLNK(named.st_mode)
+        or not stat.S_ISREG(named.st_mode)
+        or published_binding(named) != published_binding(held)
+    ):
+        fail(f"cannot remove replaced failed {description} publication")
+    try:
+        os.unlink(name, dir_fd=directory_fd)
+        os.fsync(directory_fd)
+    except OSError as error:
+        fail(f"cannot remove failed {description} publication: {error}")
+
+
+def create_new_file_at(
+    directory_fd: int, name: str, value: bytes, description: str
+) -> int:
     flags = os.O_RDWR | os.O_CREAT | os.O_EXCL | getattr(os, "O_CLOEXEC", 0)
     if hasattr(os, "O_NOFOLLOW"):
         flags |= os.O_NOFOLLOW
     try:
-        descriptor = os.open(name, flags, 0o600, dir_fd=artifact_fd)
+        descriptor = os.open(name, flags, 0o600, dir_fd=directory_fd)
     except OSError as error:
-        fail(f"cannot create TCB report without replacement: {error}")
+        fail(f"cannot create {description} without replacement: {error}")
     try:
         created = os.fstat(descriptor)
         if (
@@ -1150,87 +1703,135 @@ def create_new_report_at(artifact_fd: int, name: str, value: bytes) -> int:
             or created.st_uid != os.geteuid()
             or created.st_size != 0
         ):
-            fail("new M1 TCB report is not an exact owner-private regular file")
+            fail(f"new {description} is not an exact owner-private regular file")
         remaining = memoryview(value)
         while remaining:
             written = os.write(descriptor, remaining)
             if written <= 0:
-                fail("cannot completely write M1 TCB report")
+                fail(f"cannot completely write {description}")
             remaining = remaining[written:]
         os.fsync(descriptor)
         after_write = os.fstat(descriptor)
         if after_write.st_size != len(value):
-            fail("published M1 TCB report has an unexpected size")
+            fail(f"published {description} has an unexpected size")
         os.lseek(descriptor, 0, os.SEEK_SET)
-        chunks = []
-        remaining_size = len(value) + 1
-        while remaining_size:
-            chunk = os.read(descriptor, remaining_size)
-            if not chunk:
-                break
-            chunks.append(chunk)
-            remaining_size -= len(chunk)
+        raw = os.read(descriptor, len(value) + 1)
         after_read = os.fstat(descriptor)
-        if b"".join(chunks) != value or file_identity(after_write) != file_identity(
-            after_read
-        ):
-            fail("published M1 TCB report bytes changed")
-        named = os.stat(name, dir_fd=artifact_fd, follow_symlinks=False)
+        named = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
         if (
-            stat.S_ISLNK(named.st_mode)
+            raw != value
+            or file_identity(after_write) != file_identity(after_read)
+            or stat.S_ISLNK(named.st_mode)
             or not stat.S_ISREG(named.st_mode)
-            or report_binding(named) != report_binding(after_read)
-            or named.st_size != len(value)
+            or published_binding(named) != published_binding(after_read)
         ):
-            fail("published M1 TCB report binding changed")
+            fail(f"published {description} bytes or binding changed")
     except OSError as error:
+        rollback_exact_file(directory_fd, name, descriptor, description)
         os.close(descriptor)
-        fail(f"cannot publish M1 TCB report: {error}")
+        fail(f"cannot publish {description}: {error}")
     except BaseException:
+        rollback_exact_file(directory_fd, name, descriptor, description)
         os.close(descriptor)
         raise
     return descriptor
 
 
-def publish_report(plan_path: Path, plan_fd: int, subject: str, value: bytes) -> None:
-    revalidate_directory_path(plan_path, plan_fd, "M1 evidence plan directory")
-    artifact_fd = ensure_artifact_directory(plan_fd)
+def verify_published_file(
+    directory_fd: int,
+    name: str,
+    descriptor: int,
+    expected: bytes,
+    authenticated: os.stat_result,
+    description: str,
+) -> None:
+    try:
+        before = os.fstat(descriptor)
+        os.lseek(descriptor, 0, os.SEEK_SET)
+        raw = os.read(descriptor, len(expected) + 1)
+        after = os.fstat(descriptor)
+        named = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
+    except OSError as error:
+        fail(f"cannot revalidate {description}: {error}")
+    if (
+        stat.S_ISLNK(named.st_mode)
+        or not stat.S_ISREG(named.st_mode)
+        or raw != expected
+        or file_identity(authenticated) != file_identity(before)
+        or file_identity(before) != file_identity(after)
+        or file_identity(after) != file_identity(named)
+    ):
+        fail(f"published {description} bytes or binding changed after directory sync")
+
+
+def publish_rationale(
+    plan_path: Path,
+    plan_fd: int,
+    artifact_fd: int,
+    artifact_id: str,
+    report: bytes,
+    custody_check: Callable[[], None],
+) -> None:
+    report_name = f"{artifact_id}.unsupported-rationale.json"
     report_fd = -1
     try:
         revalidate_child_directory(
             plan_fd, "artifacts", artifact_fd, "M1 artifact directory"
         )
-        artifact_id = f"artifact.{subject}"
-        name = f"{artifact_id}.tcb-report.json"
-        report_fd = create_new_report_at(artifact_fd, name, value)
+        revalidate_directory_path(plan_path, plan_fd, "M1 evidence plan directory")
+        if entry_exists_at(artifact_fd, report_name):
+            fail("unsupported-rationale publication refuses a preexisting output")
+        custody_check()
+        report_fd = create_new_file_at(
+            artifact_fd, report_name, report, "M1 unsupported-rationale report"
+        )
+        report_identity = os.fstat(report_fd)
         os.fsync(artifact_fd)
         os.fsync(plan_fd)
         revalidate_child_directory(
             plan_fd, "artifacts", artifact_fd, "M1 artifact directory"
         )
         revalidate_directory_path(plan_path, plan_fd, "M1 evidence plan directory")
-        named = os.stat(name, dir_fd=artifact_fd, follow_symlinks=False)
-        held = os.fstat(report_fd)
-        if (
-            stat.S_ISLNK(named.st_mode)
-            or not stat.S_ISREG(named.st_mode)
-            or report_binding(named) != report_binding(held)
-            or named.st_size != len(value)
-        ):
-            fail("published M1 TCB report binding changed after directory sync")
+        custody_check()
+        verify_published_file(
+            artifact_fd,
+            report_name,
+            report_fd,
+            report,
+            report_identity,
+            "M1 unsupported-rationale report",
+        )
     except OSError as error:
-        fail(f"cannot durably publish M1 TCB report: {error}")
+        if report_fd >= 0:
+            rollback_exact_file(
+                artifact_fd,
+                report_name,
+                report_fd,
+                "M1 unsupported-rationale report",
+            )
+        fail(f"cannot durably publish M1 unsupported rationale: {error}")
+    except BaseException:
+        if report_fd >= 0:
+            rollback_exact_file(
+                artifact_fd,
+                report_name,
+                report_fd,
+                "M1 unsupported-rationale report",
+            )
+        raise
     finally:
         if report_fd >= 0:
-            os.close(report_fd)
-        os.close(artifact_fd)
+            try:
+                os.close(report_fd)
+            except OSError:
+                pass
 
 
 def produce(
     ferric_argument: str,
     fe2o3_argument: str,
     plan_argument: str,
-    subject: str,
+    binding_id: str,
 ) -> None:
     ferric = Path(ferric_argument).resolve(strict=True)
     fe2o3 = Path(fe2o3_argument).resolve(strict=True)
@@ -1240,49 +1841,127 @@ def produce(
             fail("M1 evidence plan path contains a symlink")
     except OSError as error:
         fail(f"M1 evidence plan directory is unavailable: {error}")
+    ferric_fd = open_directory(ferric, "Ferric source repository")
+    fe2o3_fd = open_directory(fe2o3, "fe2o3 source repository")
     plan_fd = open_private_directory(plan_root, "M1 evidence plan directory")
+    artifact_fd = ensure_artifact_directory(plan_fd)
+    tcb_files: list[tuple[str, str, BinaryIO, os.stat_result, bytes]] = []
+    plan_files: list[HeldFile] = []
+    closure_custody: HeldDirectoryFiles | None = None
+    report_bytes = b""
     try:
         revalidate_directory_path(plan_root, plan_fd, "M1 evidence plan directory")
-        requirements, _, sources, validators, plan_raw, queue_raw = validate_plan(
-            ferric, fe2o3, plan_fd, subject
+        requirements, plan, queue, sources, validators, plan_raw, queue_raw = (
+            validate_plan(ferric, fe2o3, plan_fd)
+        )
+        plan_files = [
+            authenticate_held_file_at(
+                plan_fd, "plan.json", plan_raw, "M1 evidence plan"
+            ),
+            authenticate_held_file_at(
+                plan_fd,
+                "missing-work.json",
+                queue_raw,
+                "M1 evidence work queue",
+            ),
+        ]
+        closure_custody = authenticate_source_closures(plan_fd, plan)
+        slot, resolution = select_unsupported_rationale_binding(plan, queue, binding_id)
+        tcb, tcb_files = authenticate_tcb_reports(
+            artifact_fd, ferric, requirements, sources, validators
         )
         report_bytes = canonical_bytes(
-            report_for(ferric, requirements, sources, validators, subject)
+            unsupported_rationale_report(
+                plan["requirements"]["sha256"],
+                requirements,
+                sources,
+                tcb,
+                slot,
+                resolution,
+            )
         )
 
-        revalidate_directory_path(plan_root, plan_fd, "M1 evidence plan directory")
-        repeated = validate_plan(ferric, fe2o3, plan_fd, subject)
-        if repeated[4] != plan_raw or repeated[5] != queue_raw:
-            fail("M1 plan or work queue changed during TCB production")
-        if (
-            canonical_bytes(
-                report_for(ferric, repeated[0], repeated[2], repeated[3], subject)
+        repeated = validate_plan(ferric, fe2o3, plan_fd, replay=False)
+        if repeated[5] != plan_raw or repeated[6] != queue_raw:
+            fail(
+                "M1 plan or work queue changed during unsupported-rationale production"
             )
-            != report_bytes
-        ):
-            fail("M1 TCB report inputs changed during production")
+        repeated_slot, repeated_resolution = select_unsupported_rationale_binding(
+            repeated[1], repeated[2], binding_id
+        )
+        repeated_report = canonical_bytes(
+            unsupported_rationale_report(
+                repeated[1]["requirements"]["sha256"],
+                repeated[0],
+                repeated[3],
+                tcb,
+                repeated_slot,
+                repeated_resolution,
+            )
+        )
+        if repeated_report != report_bytes:
+            fail("M1 unsupported-rationale inputs changed during production")
+        repositories = {
+            "fe2o3": (fe2o3, fe2o3_fd),
+            "ferric": (ferric, ferric_fd),
+        }
+        expected_repository_identities = source_identity_map(repeated[3])
 
-        publish_report(plan_root, plan_fd, subject, report_bytes)
-        if any(
-            entry_exists_at(plan_fd, name)
-            for name in ("evidence-index.json", "receipt.json")
-        ):
-            fail("TCB producer created a forbidden closure output")
-        revalidate_directory_path(plan_root, plan_fd, "M1 evidence plan directory")
+        def revalidate_completion_inputs() -> None:
+            for held in plan_files:
+                revalidate_held_file(plan_fd, held)
+            revalidate_source_closures(plan_fd, closure_custody)
+            revalidate_tcb_reports(
+                artifact_fd,
+                tcb_files,
+                ferric,
+                repeated[0],
+                repeated[3],
+                repeated[4],
+            )
+            revalidate_repository_identities(
+                repositories, expected_repository_identities
+            )
+            if any(
+                entry_exists_at(plan_fd, name)
+                for name in ("evidence-index.json", "receipt.json")
+            ):
+                fail(
+                    "unsupported-rationale producer created a forbidden closure output"
+                )
+            revalidate_child_directory(
+                plan_fd, "artifacts", artifact_fd, "M1 artifact directory"
+            )
+            revalidate_directory_path(plan_root, plan_fd, "M1 evidence plan directory")
+
+        publish_rationale(
+            plan_root,
+            plan_fd,
+            artifact_fd,
+            slot["binding"]["artifact_id"],
+            report_bytes,
+            revalidate_completion_inputs,
+        )
     finally:
+        if closure_custody is not None:
+            close_source_closures(closure_custody)
+        for _, source, _, _, _ in plan_files:
+            source.close()
+        for _, _, source, _, _ in tcb_files:
+            source.close()
+        os.close(artifact_fd)
         os.close(plan_fd)
+        os.close(fe2o3_fd)
+        os.close(ferric_fd)
     print(
-        f"PASS: produced M1 TCB report subject={subject} "
-        f"sha256={digest_bytes(report_bytes)}"
+        f"PASS: produced M1 unsupported rationale binding={binding_id} "
+        f"report_sha256={digest_bytes(report_bytes)}"
     )
 
 
 def main() -> None:
     if len(sys.argv) != 5:
-        fail(
-            f"usage: {sys.argv[0]} FERRIC_REPO FE2O3_REPO PLAN_DIR "
-            "tcb.compiler|tcb.hardware|tcb.runtime"
-        )
+        fail(f"usage: {sys.argv[0]} FERRIC_REPO FE2O3_REPO PLAN_DIR binding.NNNNN")
     produce(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
 
 

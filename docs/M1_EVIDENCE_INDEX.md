@@ -216,7 +216,9 @@ checker-owned summary derives `RESULT=success` from its exact structured fields
 and exit status and binds the transcript SHA-256. Any injected `success` field
 is rejected as schema drift. The unsupported-rationale validator accepts only
 the three fixed M1 nonclaims, binds their exact source, requirements, evidence
-binding, and TCB identities, and grants no positive authority. Every version-1
+binding, and TCB identities, and grants no positive authority. Its five exact
+path-bound reports and Ferric-owned producer are documented in
+`proofs/m1/evidence/UNSUPPORTED_RATIONALE.md`. Every version-1
 validator now has a reviewed source SHA-256 in the checker-owned registry, but
 the production checker cannot print an M1 closure `PASS` unless every validator
 accepts its exact canonical evidence context. The private in-process callback

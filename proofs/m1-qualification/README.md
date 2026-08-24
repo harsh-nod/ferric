@@ -21,9 +21,11 @@ count is required because both `graph_refined` foundation kinds can bind only
 
 The work queue names every expected primary artifact, its producer role, and
 whether an in-repository producer exists. The theorem and negative-mutation
-runners, the three declaration-only TCB reporters, and all 74 artifact-identity
-bindings are represented as available commands. All other binding-evidence
-producers and the shared receipt remain explicitly missing.
+runners, the three declaration-only TCB reporters, all 74 artifact-identity
+bindings, and the five exact unsupported-rationale bindings are represented as
+available commands. The queue therefore has 138 available producer items and
+220 missing producer items. All other binding-evidence producers and the shared
+receipt remain explicitly missing.
 
 After producing a plan against the final clean source identities, materialize
 the three global TCB declarations independently:
@@ -61,6 +63,22 @@ Each invocation reauthenticates the clean source repositories, exact complete
 plan and work queue, source closures, requirements and validator pins, and all
 three canonical TCB reports. It leaves every obligation `Open`.
 
+The three M1 properties whose required closure status is `Unsupported` have
+five exact path-bound nonclaim reports. Materialize one selected report with:
+
+```text
+python3 -I proofs/m1-qualification/produce-unsupported-rationale.py \
+  FERRIC_REPO FE2O3_REPO PLAN_DIR binding.NNNNN
+```
+
+The selected binding must be one of the planner's five `unsupported-rationale`
+slots. The producer independently replays the complete source-pinned plan,
+reauthenticates the exact clean source closures and all three canonical TCB
+reports, and projects only the validator's fixed rationale, reason code, and
+excluded-claim roster. It publishes one owner-private canonical report without
+replacement and grants only `nonclaim-only` authority. It emits no companion
+payload, evidence index, receipt, positive validation result, or status closure.
+
 This command never emits an evidence index or qualification receipt. Those
 outputs remain forbidden until every external artifact exists and the complete
 candidate closure passes `proofs/check-m1-evidence-index.py`. The plan has
@@ -73,6 +91,8 @@ python3 -I proofs/m1-qualification/test-policy.py FERRIC_REPO FE2O3_OBJECT_REPO
 python3 -I proofs/m1-qualification/test-tcb-producer-policy.py \
   FERRIC_REPO FE2O3_OBJECT_REPO
 python3 -I proofs/m1-qualification/test-artifact-identity-producer-policy.py \
+  FERRIC_REPO FE2O3_OBJECT_REPO
+python3 -I proofs/m1-qualification/test-unsupported-rationale-producer-policy.py \
   FERRIC_REPO FE2O3_OBJECT_REPO
 ```
 

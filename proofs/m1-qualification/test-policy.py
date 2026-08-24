@@ -174,8 +174,8 @@ def exercise_prepare_boundaries(repo: Path, fe2o3_source: Path, planner: Any) ->
             or queue.get("format") != planner.WORK_FORMAT
             or queue.get("status") != "INCOMPLETE"
             or queue.get("counts", {}).get("missing_items") != 358
-            or queue.get("counts", {}).get("available_producer_items") != 133
-            or queue.get("counts", {}).get("missing_producer_items") != 225
+            or queue.get("counts", {}).get("available_producer_items") != 138
+            or queue.get("counts", {}).get("missing_producer_items") != 220
         ):
             fail("M1 planner positive integration output weakened its nonclaim")
         if any(
@@ -439,10 +439,11 @@ def main() -> None:
     if available_kinds != {
         "artifact-identity": 74,
         "negative-mutation": 30,
+        "unsupported-rationale": 5,
         "verus-theorem": 26,
     }:
         fail(f"existing M1 producer coverage drifted: {available_kinds}")
-    if len(first) - len(available) != 224:
+    if len(first) - len(available) != 219:
         fail("missing binding-producer count drifted")
 
     identity_slots = [
@@ -476,6 +477,63 @@ def main() -> None:
             "path": f"artifacts/{artifact_id}.artifact-identity.json",
         }:
             fail(f"M1 artifact-identity producer command drifted: {binding['id']}")
+
+    rationale_slots = [
+        slot
+        for slot in first
+        if slot["binding"]["evidence_kind"] == "unsupported-rationale"
+    ]
+    rationale_ids = [slot["binding"]["id"] for slot in rationale_slots]
+    if planner.digest_bytes(("\n".join(rationale_ids) + "\n").encode("ascii")) != (
+        "234623d24473bb78252a0541395d68f09b591d7e947c8e55e286a2e8b57a6b81"
+    ):
+        fail("M1 unsupported-rationale binding ID roster drifted")
+    rationale_rows = []
+    for slot in rationale_slots:
+        binding = slot["binding"]
+        artifact_id = binding["artifact_id"]
+        expected_artifact = {
+            "id": artifact_id,
+            "kind": "UnsupportedRationale",
+            "path": f"artifacts/{artifact_id}.unsupported-rationale.json",
+        }
+        expected_producer = {
+            "availability": "available",
+            "command": [
+                "python3",
+                "-I",
+                "proofs/m1-qualification/produce-unsupported-rationale.py",
+                "FERRIC_REPO",
+                "FE2O3_REPO",
+                "PLAN_DIR",
+                binding["id"],
+            ],
+            "role": "ferric-m1-nonclaim-reporter",
+        }
+        if (
+            slot["producer"] != expected_producer
+            or slot["expected_artifact"] != expected_artifact
+        ):
+            fail(f"M1 unsupported-rationale producer command drifted: {binding['id']}")
+        rationale_rows.append(
+            "|".join(
+                [
+                    binding["id"],
+                    binding["obligation_class"],
+                    binding["obligation_id"],
+                    binding["profile_id"],
+                    binding["path_id"],
+                    binding["source_identity_id"],
+                    artifact_id,
+                    expected_artifact["path"],
+                ]
+            )
+            + "\n"
+        )
+    if planner.digest_bytes("".join(rationale_rows).encode("ascii")) != (
+        "5c5bd4569ae975c44b8cd8292a0216f063fbe9a4461b3eb89225790f7ce5bd41"
+    ):
+        fail("M1 unsupported-rationale allocation topology drifted")
 
     tcb_work = planner.global_work_items()[:3]
     expected_tcb_work = []
@@ -583,7 +641,10 @@ def main() -> None:
     registries = planner.foundation_registries(repo)
     for slot in available:
         binding = slot["binding"]
-        if binding["evidence_kind"] == "artifact-identity":
+        if binding["evidence_kind"] in {
+            "artifact-identity",
+            "unsupported-rationale",
+        }:
             continue
         expected = registries[binding["evidence_kind"]][binding["obligation_id"]][
             binding["path_id"]

@@ -144,7 +144,6 @@ MISSING_ROLES = {
     "hardware-test": "mi300x-hardware-harness",
     "independent-validator": "independent-validation-organization",
     "performance-gate": "external-performance-harness",
-    "unsupported-rationale": "m1-nonclaim-artifact-producer",
 }
 
 
@@ -509,19 +508,31 @@ def artifact_path(
 
 
 def producer(evidence_kind: str, selectors: tuple[str, ...]) -> JsonObject:
-    if evidence_kind == "artifact-identity":
+    producer_contracts = {
+        "artifact-identity": (
+            "proofs/m1-qualification/produce-artifact-identity.py",
+            "ferric-artifact-identity-reporter",
+        ),
+        "unsupported-rationale": (
+            "proofs/m1-qualification/produce-unsupported-rationale.py",
+            "ferric-m1-nonclaim-reporter",
+        ),
+    }
+    contract = producer_contracts.get(evidence_kind)
+    if contract is not None:
+        producer_path, role = contract
         return {
             "availability": "available",
             "command": [
                 "python3",
                 "-I",
-                "proofs/m1-qualification/produce-artifact-identity.py",
+                producer_path,
                 "FERRIC_REPO",
                 "FE2O3_REPO",
                 "PLAN_DIR",
                 "BINDING_ID",
             ],
-            "role": "ferric-artifact-identity-reporter",
+            "role": role,
         }
     foundation = FOUNDATION_FILES.get(evidence_kind)
     if foundation is not None:
@@ -613,7 +624,7 @@ def renumber_slots(slots: list[JsonObject]) -> list[JsonObject]:
                 f"foundation-runs/{artifact_id}/{selectors[0]}.result"
             )
             slot["producer"]["command"][3] = f"foundation-runs/{artifact_id}"
-        elif evidence_kind == "artifact-identity":
+        elif evidence_kind in {"artifact-identity", "unsupported-rationale"}:
             slot["producer"]["command"][-1] = binding_id
     return slots
 
