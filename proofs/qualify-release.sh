@@ -250,6 +250,7 @@ set +e
 (
     set -e
     cd "$qualified_repo"
+    export CARGO_TARGET_DIR="$runtime_test_target"
     printf 'FERRIC_QUALITY_GATE=fmt:BEGIN\n'
     cargo fmt --all -- --check
     printf 'FERRIC_QUALITY_GATE=fmt:PASS\n'
