@@ -46,12 +46,20 @@ const K7_DRAFT_CHOICES: [u32; 4] = [11, 12, 13, 14];
 const K7_EXPECTED_TARGET: [u32; 5] = [10, 11, 12, 13, 14];
 const K1_INPUT_TOKEN: u32 = 1;
 const K1_INPUT_TOKEN_COUNT: usize = 128;
+const USAGE: &str = "usage: ferric-m1-packet-diagnostic queue-barrier GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic queue-barrier-executable GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic queue-barrier-userptr GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k1-embedding PREPACKED-SNAPSHOT KERNEL-ARTIFACTS GPU-UNIQUE-ID";
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum QueueBarrierRing {
+    AqlSpecial,
+    Executable,
+    Userptr,
+}
 
 #[derive(Debug)]
 enum Command {
     QueueBarrier {
         gpu_unique_id: u64,
-        executable_ring: bool,
+        ring: QueueBarrierRing,
     },
     K7Smoke {
         artifact_root: OsString,
@@ -89,11 +97,15 @@ fn parse_command(arguments: Vec<OsString>) -> DiagnosticResult<Command> {
     match arguments.as_slice() {
         [mode, gpu_unique_id] if mode == "queue-barrier" => Ok(Command::QueueBarrier {
             gpu_unique_id: parse_gpu_unique_id(gpu_unique_id)?,
-            executable_ring: false,
+            ring: QueueBarrierRing::AqlSpecial,
         }),
         [mode, gpu_unique_id] if mode == "queue-barrier-executable" => Ok(Command::QueueBarrier {
             gpu_unique_id: parse_gpu_unique_id(gpu_unique_id)?,
-            executable_ring: true,
+            ring: QueueBarrierRing::Executable,
+        }),
+        [mode, gpu_unique_id] if mode == "queue-barrier-userptr" => Ok(Command::QueueBarrier {
+            gpu_unique_id: parse_gpu_unique_id(gpu_unique_id)?,
+            ring: QueueBarrierRing::Userptr,
         }),
         [mode, artifact_root, gpu_unique_id] if mode == "k7-smoke" => Ok(Command::K7Smoke {
             artifact_root: artifact_root.clone(),
@@ -106,7 +118,7 @@ fn parse_command(arguments: Vec<OsString>) -> DiagnosticResult<Command> {
                 gpu_unique_id: parse_gpu_unique_id(gpu_unique_id)?,
             })
         }
-        _ => Err("usage: ferric-m1-packet-diagnostic queue-barrier GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic queue-barrier-executable GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k1-embedding PREPACKED-SNAPSHOT KERNEL-ARTIFACTS GPU-UNIQUE-ID".to_owned()),
+        _ => Err(USAGE.to_owned()),
     }
 }
 
@@ -122,17 +134,15 @@ fn execute(command: Command) -> DiagnosticResult<()> {
     match command {
         Command::QueueBarrier {
             gpu_unique_id,
-            executable_ring,
+            ring,
         } => {
-            println!(
-                "mode={}",
-                if executable_ring {
-                    "queue-barrier-executable"
-                } else {
-                    "queue-barrier"
-                }
-            );
-            run_queue_barrier(bind_device(gpu_unique_id)?, executable_ring)
+            let mode = match ring {
+                QueueBarrierRing::AqlSpecial => "queue-barrier",
+                QueueBarrierRing::Executable => "queue-barrier-executable",
+                QueueBarrierRing::Userptr => "queue-barrier-userptr",
+            };
+            println!("mode={mode}");
+            run_queue_barrier(bind_device(gpu_unique_id)?, ring)
         }
         Command::K7Smoke {
             artifact_root,
@@ -175,18 +185,23 @@ fn execute(command: Command) -> DiagnosticResult<()> {
 
 fn run_queue_barrier(
     checked: CheckedGfx942XnackMinusDevice,
-    executable_ring: bool,
+    ring: QueueBarrierRing,
 ) -> DiagnosticResult<()> {
     let poll_bound = Gfx942BarrierProbePollBoundV1::new(BARRIER_COMPLETION_POLL_LIMIT)
         .map_err(|error| format!("cannot construct barrier poll bound: {error:?}"))?;
     println!("phase=queue-barrier");
-    let result = if executable_ring {
-        checked.run_compute_aql_executable_ring_barrier_probe(
+    let result = match ring {
+        QueueBarrierRing::AqlSpecial => {
+            checked.run_compute_aql_barrier_probe(M1_PACKET_DIAGNOSTIC_RING_BYTES_V1, poll_bound)
+        }
+        QueueBarrierRing::Executable => checked.run_compute_aql_executable_ring_barrier_probe(
             M1_PACKET_DIAGNOSTIC_RING_BYTES_V1,
             poll_bound,
-        )
-    } else {
-        checked.run_compute_aql_barrier_probe(M1_PACKET_DIAGNOSTIC_RING_BYTES_V1, poll_bound)
+        ),
+        QueueBarrierRing::Userptr => checked.run_compute_aql_userptr_ring_barrier_probe(
+            M1_PACKET_DIAGNOSTIC_RING_BYTES_V1,
+            poll_bound,
+        ),
     };
     match result {
         Ok(success) => {
@@ -826,14 +841,21 @@ mod tests {
             parse_command(vec!["queue-barrier".into(), "5".into()]),
             Ok(Command::QueueBarrier {
                 gpu_unique_id: 5,
-                executable_ring: false
+                ring: QueueBarrierRing::AqlSpecial
             })
         ));
         assert!(matches!(
             parse_command(vec!["queue-barrier-executable".into(), "6".into()]),
             Ok(Command::QueueBarrier {
                 gpu_unique_id: 6,
-                executable_ring: true
+                ring: QueueBarrierRing::Executable
+            })
+        ));
+        assert!(matches!(
+            parse_command(vec!["queue-barrier-userptr".into(), "7".into()]),
+            Ok(Command::QueueBarrier {
+                gpu_unique_id: 7,
+                ring: QueueBarrierRing::Userptr
             })
         ));
         assert!(parse_command(vec!["queue-barrier".into(), "not-decimal".into()]).is_err());
@@ -841,6 +863,15 @@ mod tests {
             parse_command(vec!["queue-barrier".into(), "18446744073709551616".into(),]).is_err()
         );
         assert!(parse_command(vec!["queue-barrier".into(), "5".into(), "extra".into(),]).is_err());
+        assert!(parse_command(vec![
+            "queue-barrier-userptr".into(),
+            "7".into(),
+            "extra".into(),
+        ])
+        .is_err());
+        assert!(parse_command(Vec::new())
+            .unwrap_err()
+            .contains("ferric-m1-packet-diagnostic queue-barrier-userptr GPU-UNIQUE-ID"));
         assert!(matches!(
             parse_command(vec!["k7-smoke".into(), "artifacts".into(), "7".into()]),
             Ok(Command::K7Smoke {
