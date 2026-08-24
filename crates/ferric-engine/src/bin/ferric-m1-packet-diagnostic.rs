@@ -38,7 +38,7 @@ use std::time::Duration;
 type DiagnosticResult<T> = Result<T, String>;
 
 const DEVICE_ALLOCATION_ALIGNMENT: u64 = 4_096;
-const BARRIER_COMPLETION_POLL_LIMIT: u32 = 100_000;
+const BARRIER_COMPLETION_POLL_LIMIT: u32 = 10_000;
 const COMPLETION_POLL_INTERVAL: Duration = Duration::from_millis(10);
 const COMPLETION_POLL_LIMIT: u32 = 6_000;
 const K7_ANCHOR: u32 = 10;
