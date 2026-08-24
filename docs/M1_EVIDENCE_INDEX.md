@@ -161,13 +161,21 @@ only `declared-assumptions-only` authority. Its exact report layout, producer,
 and authority boundary are documented in
 `proofs/m1/evidence/EXTERNAL_CONTRACT.md`. The fe2o3-contract
 validator accepts only a canonical contract body and deterministic one-property,
-one-obligation `ContractSetV1` declaration for the exact Open binding. It binds
-the manifest-declared assurance roster, obligation, path, profile, target,
-Ferric and generic fe2o3 compiler/runtime source closures, and complete outer
-TCB. Structural acceptance
-does not establish implementation, proof, machine refinement, load, launch,
-hardware, performance, or qualification authority. Its exact file layout and
-authority boundary are documented in
+one-obligation Ferric-defined JSON projection for the exact Open binding. It
+binds the manifest-declared assurance roster, obligation, path, profile,
+target, Ferric and generic fe2o3 compiler/runtime source closures, and complete
+outer TCB. Its Ferric-owned producer exposes exactly 52 binding-local commands,
+publishes the contract body and contract set before the report, and uses the
+report as the rollback-protected completion marker. The producer grants only
+`contract-declaration-structure-only` authority and does not change the
+checker-owned trusted validator or its source pin. The source establishes the
+upstream Rust structs and `ContractSetV1::validate_closed()`, but the producer
+and trusted Python validator do not instantiate or execute fe2o3 Rust.
+`ContractSetV1::validate_closed-structural-only` is a descriptive Ferric label,
+not an upstream symbol. Structural acceptance makes no implementation,
+semantic, proof, machine behavior or refinement, load, launch, hardware,
+performance, or qualification claim. Its exact file layout, producer
+transaction, and authority boundary are documented in
 `proofs/m1/evidence/FE2O3_CONTRACT.md`. The TCB-report
 validator binds each compiler, hardware, or runtime TCB report to the complete
 Open M1 obligation, path, profile, source, target, component, and checker-owned

@@ -23,11 +23,11 @@ The work queue names every expected primary artifact, its producer role, and
 whether an in-repository producer exists. The theorem and negative-mutation
 runners, the three declaration-only TCB reporters, all 74 artifact-identity
 bindings, all 14 canonical-structure bindings, all 15 external-contract
-bindings, all 58 MI300X hardware-test bindings, and the five exact
-unsupported-rationale bindings are represented as available commands. The
-queue therefore has 225 available producer items and 133 missing producer
-items. All other binding-evidence producers and the shared receipt remain
-explicitly missing.
+bindings, all 52 fe2o3-contract bindings, all 58 MI300X hardware-test bindings,
+and the five exact unsupported-rationale bindings are represented as available
+commands. The queue therefore has 277 available producer items and 81 missing
+producer items. All other binding-evidence producers and the shared receipt
+remain explicitly missing.
 
 After producing a plan against the final clean source identities, materialize
 the three global TCB declarations independently:
@@ -100,6 +100,39 @@ compiler, runtime, driver/firmware, and hardware assumptions. It does not invoke
 the trusted validator and grants only `declared-assumptions-only` authority: the
 report does not establish implementation, satisfaction, external review,
 machine refinement, load, launch, hardware, performance, or qualification.
+
+Materialize one of the planner's 52 fe2o3-contract declarations with:
+
+```text
+python3 -I proofs/m1-qualification/produce-fe2o3-contract.py \
+  FERRIC_REPO FE2O3_REPO PLAN_DIR binding.NNNNN
+```
+
+The selected binding must be one of the exact 52 `fe2o3-contract` slots. The
+producer publishes the Ferric-defined JSON projection at the binding-owned
+locations, without replacement and in this order:
+
+```text
+contracts/<artifact-id>.fe2o3-contract-body.json
+contract-sets/<artifact-id>.fe2o3-contract-set.json
+artifacts/<artifact-id>.fe2o3-contract.json
+```
+
+The report publishes last as the completion marker. A failed transaction rolls
+back only the exact files created by that invocation, preserves a substituted
+inode, and reports the rollback failure. The producer grants only
+`contract-declaration-structure-only` authority, leaves every obligation
+`Open`, and neither invokes nor changes the trusted validator or its
+checker-owned source pin.
+
+The authenticated fe2o3 source establishes the Rust contract structs and
+`ContractSetV1::validate_closed()`. The producer and trusted Python validator
+do not instantiate those structs or execute fe2o3 Rust; they emit and validate
+only the Ferric-defined JSON projection.
+`ContractSetV1::validate_closed-structural-only` is a descriptive Ferric label,
+not an upstream symbol. The resulting declaration makes no implementation,
+semantic, proof, machine behavior or refinement, load, launch, hardware,
+performance, or qualification claim.
 
 Materialize one of the planner's 58 MI300X hardware observations with the exact
 Ferric harness, persisted kernel-artifact root, and a canonical hardware
@@ -184,6 +217,8 @@ python3 -I proofs/m1-qualification/test-artifact-identity-producer-policy.py \
 python3 -I proofs/m1-qualification/test-canonical-structure-producer-policy.py \
   FERRIC_REPO FE2O3_OBJECT_REPO
 python3 -I proofs/m1-qualification/test-external-contract-producer-policy.py \
+  FERRIC_REPO FE2O3_OBJECT_REPO
+python3 -I proofs/m1-qualification/test-fe2o3-contract-producer-policy.py \
   FERRIC_REPO FE2O3_OBJECT_REPO
 python3 -I proofs/m1-qualification/test-unsupported-rationale-producer-policy.py \
   FERRIC_REPO FE2O3_OBJECT_REPO

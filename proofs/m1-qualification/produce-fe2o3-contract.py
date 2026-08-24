@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Produce one source-authenticated M1 external-contract report."""
+"""Produce one source-authenticated M1 fe2o3-contract declaration."""
 
 from __future__ import annotations
 
@@ -23,22 +23,22 @@ PLAN_NONCLAIM = (
     "This bundle allocates external M1 evidence work only. It is not an evidence "
     "index, qualification receipt, validation result, or M1 closure claim."
 )
-REPORT_FORMAT = "FERRIC-M1-EXTERNAL-CONTRACT-V1"
+REPORT_FORMAT = "FERRIC-M1-FE2O3-CONTRACT-V1"
 REPORT_TARGET = "gfx942:xnack-"
-REPORT_AUTHORITY = "declared-assumptions-only"
+REPORT_AUTHORITY = "contract-declaration-structure-only"
 REPORT_NONCLAIM = (
-    "This report authenticates a declaration of external assumptions only. "
-    "It does not establish that an assumption is implemented or satisfied and "
-    "grants no theorem, machine-refinement, load, launch, hardware, performance, "
-    "or qualification authority."
+    "This report authenticates an exact fe2o3 ContractSetV1 and Contracted "
+    "property declaration only. A contract is not implementation or proof and "
+    "grants no machine-refinement, load, launch, hardware, performance, or "
+    "qualification authority."
 )
-CONTRACT_SCOPE = "external-compiler-runtime-hardware-assumptions"
-ASSUMPTION_IDS = [
-    "compiler-object-emission-conforms-to-declared-target",
-    "runtime-load-and-dispatch-conform-to-amdhsa-contract",
-    "driver-firmware-memory-queue-completion-conform-to-declared-abi",
-    "gfx942-execution-conforms-to-declared-isa-and-memory-model",
-]
+CONTRACT_BODY_FORMAT = "FERRIC-M1-FE2O3-CONTRACT-BODY-V1"
+CONTRACT_SET_FORMAT = "FERRIC-M1-FE2O3-CONTRACT-SET-V1"
+CONTRACT_SET_SCHEMA = "fe2o3-proof-contracts::ContractSetV1"
+CONTRACT_SET_SOURCE_PATH = "crates/fe2o3-proof-contracts/src/model.rs"
+CONTRACT_SET_VALIDATION = "ContractSetV1::validate_closed-structural-only"
+PROPERTY_KIND_NAMESPACE = "harsh-nod.ferric.m1.fe2o3-contract-binding.v1"
+PROPERTY_KIND_CODE = 1
 TCB_REPORT_FORMAT = "FERRIC-M1-TCB-REPORT-V1"
 TCB_REPORT_AUTHORITY = "trusted-boundary-declaration-only"
 TCB_REPORT_NONCLAIM = (
@@ -47,11 +47,11 @@ TCB_REPORT_NONCLAIM = (
     "correctness, hardware behavior, theorem truth, machine refinement, load, "
     "launch, performance, or qualification authority and closes no obligation."
 )
-EXTERNAL_CONTRACT_ROSTER_SHA256 = (
-    "1f8baa6f1e37438e0f2643425a38f1747900ebd41e74eed4c8d851cdb05ae20e"
+FE2O3_CONTRACT_ROSTER_SHA256 = (
+    "3a9caeaddd98840035fb55233aa1b3ccf53993313a955f95248a03f831cd45a9"
 )
-EXTERNAL_CONTRACT_TSV_SHA256 = (
-    "2b88b7e5fdac2bfaecff2f2eef8345b35b101d8185c24fa9fbb43ce1304caf99"
+FE2O3_CONTRACT_TSV_SHA256 = (
+    "04dee49ed87d5e3659abdf5478617188d45af3a278b4db958048f4598bfcf841"
 )
 FERRIC_BASE_COMMIT = "c5a86fd56c1c817664593df25c04bbed30e84971"
 ALLOCATION_SHA256 = "948ad3023df7ad4b1313ed865b54464f63b6bad9406f1510c85e60f9db055bd6"
@@ -154,12 +154,19 @@ TCB_REPORT_KEYS = {
     "validator_roster",
 }
 REPORT_KEYS = {
-    "assumption_ids",
-    "assurance_property_ids",
+    "assurance_property_declarations",
     "authority",
     "binding_sha256",
     "bound_source_identity_sha256",
-    "contract_scope",
+    "contract_body_path",
+    "contract_body_sha256",
+    "contract_body_size_bytes",
+    "contract_set_path",
+    "contract_set_schema",
+    "contract_set_sha256",
+    "contract_set_size_bytes",
+    "contract_set_source_path",
+    "contract_set_validation",
     "contract_target",
     "evidence_kind",
     "format",
@@ -177,6 +184,30 @@ REPORT_KEYS = {
     "tcb_identity_sha256s",
     "tcb_roster_sha256",
 }
+CONTRACT_BODY_KEYS = {
+    "assurance_property_declarations",
+    "binding_sha256",
+    "format",
+    "obligation_class",
+    "obligation_id",
+    "path_id",
+    "profile_id",
+    "requirements_sha256",
+    "source_roster_sha256",
+    "statement_sha256",
+    "target",
+    "tcb_roster_sha256",
+}
+CONTRACT_SET_KEYS = {
+    "correspondences",
+    "format",
+    "obligations",
+    "properties",
+    "schema",
+    "schema_source_path",
+    "trusted_computing_base",
+    "validation",
+}
 SAFE_ID = re.compile(r"[a-z0-9][a-z0-9.-]*\Z")
 SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 GIT_ID = re.compile(r"[0-9a-f]{40}\Z")
@@ -187,6 +218,8 @@ MAX_FILE_BYTES = 64_000_000
 JsonObject = dict[str, Any]
 HeldFile = tuple[str, BinaryIO, os.stat_result, bytes, str]
 HeldDirectoryFiles = tuple[int, list[HeldFile]]
+HeldDirectoryComponent = tuple[int, str, int, os.stat_result, str]
+AbsoluteDirectoryCustody = tuple[int, list[HeldDirectoryComponent], str]
 
 
 def fail(message: str) -> NoReturn:
@@ -217,6 +250,128 @@ def directory_binding(metadata: os.stat_result) -> tuple[int, int, int, int, int
         metadata.st_uid,
         metadata.st_gid,
     )
+
+
+def single_component(name: str, description: str) -> str:
+    if (
+        not isinstance(name, str)
+        or not name
+        or name in {".", ".."}
+        or "/" in name
+        or "\0" in name
+    ):
+        fail(f"{description} must be a single path component")
+    return name
+
+
+def directory_open_flags() -> int:
+    required = ("O_NOFOLLOW", "O_DIRECTORY", "O_CLOEXEC")
+    if any(not hasattr(os, name) for name in required):
+        fail("descriptor-relative custody requires O_NOFOLLOW/O_DIRECTORY/O_CLOEXEC")
+    return os.O_RDONLY | os.O_NOFOLLOW | os.O_DIRECTORY | os.O_CLOEXEC
+
+
+def open_directory_component_at(
+    parent_fd: int, name: str, description: str
+) -> HeldDirectoryComponent:
+    component = single_component(name, description)
+    descriptor = -1
+    try:
+        before = os.stat(component, dir_fd=parent_fd, follow_symlinks=False)
+        descriptor = os.open(component, directory_open_flags(), dir_fd=parent_fd)
+        opened = os.fstat(descriptor)
+    except OSError as error:
+        if descriptor >= 0:
+            os.close(descriptor)
+        fail(f"{description} is unavailable: {error}")
+    if (
+        stat.S_ISLNK(before.st_mode)
+        or not stat.S_ISDIR(before.st_mode)
+        or directory_binding(before) != directory_binding(opened)
+    ):
+        os.close(descriptor)
+        fail(f"{description} must be a held nonsymlink directory")
+    return parent_fd, component, descriptor, opened, description
+
+
+def revalidate_directory_component(
+    held: HeldDirectoryComponent, *, private: bool = False
+) -> None:
+    parent_fd, name, descriptor, authenticated, description = held
+    try:
+        named = os.stat(name, dir_fd=parent_fd, follow_symlinks=False)
+        opened = os.fstat(descriptor)
+    except OSError as error:
+        fail(f"cannot revalidate {description}: {error}")
+    if (
+        stat.S_ISLNK(named.st_mode)
+        or directory_binding(authenticated) != directory_binding(opened)
+        or directory_binding(opened) != directory_binding(named)
+    ):
+        fail(f"{description} was replaced after it was opened")
+    if private:
+        verify_private_directory(opened, description)
+
+
+def authenticate_absolute_directory(
+    path: Path, description: str, *, private: bool = False
+) -> AbsoluteDirectoryCustody:
+    absolute = path.absolute()
+    if not absolute.is_absolute() or not absolute.parts or absolute.parts[0] != "/":
+        fail(f"{description} must resolve from the filesystem root")
+    components = absolute.parts[1:]
+    for component in components:
+        single_component(component, description)
+    try:
+        root_fd = os.open("/", directory_open_flags())
+    except OSError as error:
+        fail(f"filesystem root is unavailable for {description}: {error}")
+    chain: list[HeldDirectoryComponent] = []
+    parent_fd = root_fd
+    try:
+        for ordinal, component in enumerate(components, 1):
+            held = open_directory_component_at(
+                parent_fd, component, f"{description} component {ordinal}"
+            )
+            chain.append(held)
+            parent_fd = held[2]
+        final = os.fstat(chain[-1][2] if chain else root_fd)
+        if private:
+            verify_private_directory(final, description)
+        return root_fd, chain, description
+    except BaseException:
+        for held in reversed(chain):
+            os.close(held[2])
+        os.close(root_fd)
+        raise
+
+
+def directory_custody_fd(custody: AbsoluteDirectoryCustody) -> int:
+    root_fd, chain, _ = custody
+    return chain[-1][2] if chain else root_fd
+
+
+def revalidate_absolute_directory(
+    custody: AbsoluteDirectoryCustody, *, private: bool = False
+) -> None:
+    root_fd, chain, description = custody
+    try:
+        root_metadata = os.fstat(root_fd)
+    except OSError as error:
+        fail(f"cannot revalidate filesystem root for {description}: {error}")
+    if not stat.S_ISDIR(root_metadata.st_mode):
+        fail(f"filesystem root changed for {description}")
+    for ordinal, held in enumerate(chain):
+        revalidate_directory_component(
+            held, private=private and ordinal == len(chain) - 1
+        )
+
+
+def close_absolute_directory(custody: AbsoluteDirectoryCustody) -> None:
+    root_fd, chain, _ = custody
+    for held in reversed(chain):
+        os.close(held[2])
+    os.close(root_fd)
 
 
 def open_regular(path: Path, description: str) -> tuple[BinaryIO, os.stat_result]:
@@ -593,7 +748,13 @@ def literal_assignment(path: Path, name: str) -> Any:
         fail(f"{path} {name} is not literal data: {error}")
 
 
-def run(arguments: list[str], description: str, *, cwd: Path) -> str:
+def run(
+    arguments: list[str],
+    description: str,
+    *,
+    cwd: Path,
+    timeout_seconds: int = 120,
+) -> str:
     try:
         result = subprocess.run(
             arguments,
@@ -602,7 +763,7 @@ def run(arguments: list[str], description: str, *, cwd: Path) -> str:
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
-            timeout=120,
+            timeout=timeout_seconds,
             env={"PATH": os.environ.get("PATH", "")},
         )
     except (OSError, subprocess.TimeoutExpired) as error:
@@ -679,7 +840,7 @@ def validate_requirements(requirements: JsonObject) -> None:
         )
         for record in group
     ):
-        fail("external-contract production requires every M1 obligation to remain Open")
+        fail("fe2o3-contract production requires every M1 obligation to remain Open")
     for key in (
         "m0_contracts_commit",
         "m1_upstream_base_commit",
@@ -1087,16 +1248,16 @@ def source_identity_map(sources: list[JsonObject]) -> dict[str, tuple[str, str]]
 
 
 def revalidate_repository_identities(
-    repositories: dict[str, tuple[Path, int]],
+    repositories: dict[str, tuple[Path, AbsoluteDirectoryCustody]],
     expected: dict[str, tuple[str, str]],
 ) -> None:
     if set(repositories) != set(expected):
         fail("authenticated source repository roster drifted")
     for name in sorted(repositories):
-        path, descriptor = repositories[name]
+        path, custody = repositories[name]
         if repository_identity(path, name) != expected[name]:
             fail(f"authenticated source commit or tree changed: {name}")
-        revalidate_directory(path, descriptor, f"{name} source repository")
+        revalidate_absolute_directory(custody)
 
 
 def entry_exists_at(directory_fd: int, name: str) -> bool:
@@ -1117,7 +1278,7 @@ def rederive_candidate_plan(
     candidate_queue: bytes,
 ) -> None:
     with tempfile.TemporaryDirectory(
-        prefix="ferric-m1-external-contract-planner-replay-"
+        prefix="ferric-m1-fe2o3-contract-planner-replay-"
     ) as raw:
         reproduced = Path(raw) / "plan"
         run(
@@ -1131,6 +1292,7 @@ def rederive_candidate_plan(
             ],
             "rederive complete M1 evidence plan",
             cwd=ferric,
+            timeout_seconds=300,
         )
         reproduced_plan = read_regular(
             reproduced / "plan.json", MAX_JSON_BYTES, "rederived M1 evidence plan"
@@ -1310,7 +1472,7 @@ def validate_plan(
         entry_exists_at(plan_fd, name)
         for name in ("evidence-index.json", "receipt.json")
     ):
-        fail("external-contract production refuses a plan containing a closure output")
+        fail("fe2o3-contract production refuses a plan containing a closure output")
     if replay:
         rederive_candidate_plan(ferric, fe2o3, plan_fd, plan_raw, queue_raw)
     return (
@@ -1456,23 +1618,23 @@ def revalidate_tcb_reports(
             fail(f"M1 TCB report changed after authentication: {subject}")
 
 
-def select_external_contract_binding(
+def select_fe2o3_contract_binding(
     plan: JsonObject, queue: JsonObject, binding_id: str
 ) -> tuple[JsonObject, JsonObject]:
     if not isinstance(binding_id, str) or not binding_id.startswith("binding."):
-        fail(f"unknown M1 external-contract binding: {binding_id}")
+        fail(f"unknown M1 fe2o3-contract binding: {binding_id}")
     slots = [
         slot
         for slot in plan["binding_slots"]
-        if slot.get("binding", {}).get("evidence_kind") == "external-contract"
+        if slot.get("binding", {}).get("evidence_kind") == "fe2o3-contract"
     ]
-    if len(slots) != 15:
-        fail("M1 external-contract binding roster is incomplete")
+    if len(slots) != 52:
+        fail("M1 fe2o3-contract binding roster is incomplete")
     ids = [slot["binding"]["id"] for slot in slots]
     if ids != sorted(ids) or digest_bytes(("\n".join(ids) + "\n").encode("ascii")) != (
-        EXTERNAL_CONTRACT_ROSTER_SHA256
+        FE2O3_CONTRACT_ROSTER_SHA256
     ):
-        fail("M1 external-contract binding ID roster drifted")
+        fail("M1 fe2o3-contract binding ID roster drifted")
 
     queue_by_id = {item["id"]: item for item in queue["items"]}
     rows = []
@@ -1482,20 +1644,20 @@ def select_external_contract_binding(
         artifact = {
             "id": artifact_id,
             "kind": "ContractDocument",
-            "path": f"artifacts/{artifact_id}.external-contract.json",
+            "path": f"artifacts/{artifact_id}.fe2o3-contract.json",
         }
         producer = {
             "availability": "available",
             "command": [
                 "python3",
                 "-I",
-                "proofs/m1-qualification/produce-external-contract.py",
+                "proofs/m1-qualification/produce-fe2o3-contract.py",
                 "FERRIC_REPO",
                 "FE2O3_REPO",
                 "PLAN_DIR",
                 binding["id"],
             ],
-            "role": "ferric-m1-external-assumption-reporter",
+            "role": "ferric-m1-fe2o3-contract-reporter",
         }
         work_id = binding["id"].replace("binding.", "work.", 1)
         work = {
@@ -1507,7 +1669,7 @@ def select_external_contract_binding(
         }
         if (
             binding["obligation_class"] not in {"Assurance", "Roadmap"}
-            or binding["profile_id"] != "runtime"
+            or binding["profile_id"] not in {"composition", "kernel", "runtime"}
             or binding["source_identity_id"] not in SOURCE_IDS
             or binding["tcb_ids"] != [identifier for identifier, _ in TCB]
             or slot["expected_artifact"] != artifact
@@ -1516,7 +1678,7 @@ def select_external_contract_binding(
             or slot["foundation_selectors"] != []
             or queue_by_id.get(work_id) != work
         ):
-            fail(f"M1 external-contract producer contract drifted: {binding['id']}")
+            fail(f"M1 fe2o3-contract producer contract drifted: {binding['id']}")
         rows.append(
             "|".join(
                 [
@@ -1532,18 +1694,18 @@ def select_external_contract_binding(
             )
             + "\n"
         )
-    if digest_bytes("".join(rows).encode("ascii")) != EXTERNAL_CONTRACT_TSV_SHA256:
-        fail("M1 external-contract allocation topology drifted")
+    if digest_bytes("".join(rows).encode("ascii")) != FE2O3_CONTRACT_TSV_SHA256:
+        fail("M1 fe2o3-contract allocation topology drifted")
     matches = [slot for slot in slots if slot["binding"]["id"] == binding_id]
     if len(matches) != 1:
-        fail(f"unknown M1 external-contract binding: {binding_id}")
+        fail(f"unknown M1 fe2o3-contract binding: {binding_id}")
     slot = matches[0]
     binding = slot["binding"]
     resolutions = [
         row for row in plan["path_resolutions"] if row["id"] == binding["path_id"]
     ]
     if len(resolutions) != 1:
-        fail("selected M1 external-contract path resolution is missing")
+        fail("selected M1 fe2o3-contract path resolution is missing")
     resolution = resolutions[0]
     if (
         resolution["id"] != binding["path_id"]
@@ -1551,7 +1713,7 @@ def select_external_contract_binding(
         or binding["source_identity_id"] != f"source.{resolution['repository']}"
         or resolution["availability"] not in {"ExistingFoundation", "RequiredFuture"}
     ):
-        fail("selected M1 external-contract path resolution drifted")
+        fail("selected M1 fe2o3-contract path resolution drifted")
     return slot, resolution
 
 
@@ -1565,9 +1727,7 @@ def requirement_spec(
             if row["id"] == obligation_id
         ]
         if len(matches) != 1:
-            fail(
-                "selected external-contract binding names an unknown roadmap obligation"
-            )
+            fail("selected fe2o3-contract binding names an unknown roadmap obligation")
         spec = matches[0]
         return spec, spec["title"], spec["assurance_properties"]
     if obligation_class == "Assurance":
@@ -1577,49 +1737,210 @@ def requirement_spec(
             if row["name"] == obligation_id
         ]
         if len(matches) != 1:
-            fail(
-                "selected external-contract binding names an unknown assurance property"
-            )
+            fail("selected fe2o3-contract binding names an unknown assurance property")
         spec = matches[0]
         return spec, spec["boundary"], [obligation_id]
-    fail("selected external-contract obligation class drifted")
+    fail("selected fe2o3-contract obligation class drifted")
 
 
-def external_contract_report(
+def domain_digest(domain: str, parts: list[bytes]) -> str:
+    hasher = hashlib.sha256()
+    encoded_domain = domain.encode("ascii")
+    hasher.update(len(encoded_domain).to_bytes(8, "big"))
+    hasher.update(encoded_domain)
+    for part in parts:
+        hasher.update(len(part).to_bytes(8, "big"))
+        hasher.update(part)
+    return hasher.hexdigest()
+
+
+def assurance_declarations(
+    requirements: JsonObject, assurance_property_ids: list[str]
+) -> list[JsonObject]:
+    by_name = {
+        record["name"]: record for record in requirements["assurance_properties"]
+    }
+    declarations = []
+    for identifier in assurance_property_ids:
+        record = by_name.get(identifier)
+        if record is None:
+            fail("fe2o3-contract assurance declaration is unknown")
+        declarations.append(
+            {
+                "boundary_sha256": digest_bytes(record["boundary"].encode("utf-8")),
+                "fe2o3_kind": record["fe2o3_kind"],
+                "name": identifier,
+                "obligation_state": "Open",
+                "required_status_at_closure": record["required_status_at_closure"],
+            }
+        )
+    return declarations
+
+
+def contract_body(
+    binding: JsonObject,
+    declarations: list[JsonObject],
+    requirements_sha256: str,
+    source_roster_sha256: str,
+    tcb_roster_sha256: str,
+) -> JsonObject:
+    return exact_keys(
+        {
+            "assurance_property_declarations": declarations,
+            "binding_sha256": binding["binding_sha256"],
+            "format": CONTRACT_BODY_FORMAT,
+            "obligation_class": binding["obligation_class"],
+            "obligation_id": binding["obligation_id"],
+            "path_id": binding["path_id"],
+            "profile_id": binding["profile_id"],
+            "requirements_sha256": requirements_sha256,
+            "source_roster_sha256": source_roster_sha256,
+            "statement_sha256": binding["statement_sha256"],
+            "target": REPORT_TARGET,
+            "tcb_roster_sha256": tcb_roster_sha256,
+        },
+        CONTRACT_BODY_KEYS,
+        "M1 fe2o3 contract body",
+    )
+
+
+def contract_set(binding: JsonObject, body_sha256: str) -> JsonObject:
+    identity_parts = [
+        binding["obligation_class"].encode("ascii"),
+        binding["obligation_id"].encode("ascii"),
+        binding["path_id"].encode("ascii"),
+        binding["profile_id"].encode("ascii"),
+        binding["binding_sha256"].encode("ascii"),
+    ]
+    property_identity = domain_digest(
+        "ferric.m1.fe2o3-contract.property-identity.v1", identity_parts
+    )
+    evidence_identity = domain_digest(
+        "ferric.m1.fe2o3-contract.evidence-identity.v1",
+        identity_parts + [bytes.fromhex(body_sha256)],
+    )
+    obligation_identity = domain_digest(
+        "ferric.m1.fe2o3-contract.obligation-identity.v1", identity_parts
+    )
+    return exact_keys(
+        {
+            "correspondences": [],
+            "format": CONTRACT_SET_FORMAT,
+            "obligations": [
+                {
+                    "identity_sha256": obligation_identity,
+                    "property_identity_sha256": property_identity,
+                    "required_status": "Contracted",
+                    "satisfaction": {
+                        "evidence_identity_sha256": evidence_identity,
+                        "property_identity_sha256": property_identity,
+                        "statement_identity_sha256": binding["statement_sha256"],
+                        "status": "Contracted",
+                    },
+                    "statement_identity_sha256": binding["statement_sha256"],
+                }
+            ],
+            "properties": [
+                {
+                    "evidence": {
+                        "binding": {
+                            "identity_sha256": evidence_identity,
+                            "property_identity_sha256": property_identity,
+                            "statement_identity_sha256": binding["statement_sha256"],
+                        },
+                        "contract_artifact": {
+                            "bytes_sha256": body_sha256,
+                            "format_sha256": domain_digest(
+                                "ferric.artifact-format.v1",
+                                [CONTRACT_BODY_FORMAT.encode("ascii")],
+                            ),
+                        },
+                        "variant": "ContractedEvidenceV1",
+                    },
+                    "identity_sha256": property_identity,
+                    "kind": {
+                        "code": PROPERTY_KIND_CODE,
+                        "namespace_sha256": domain_digest(
+                            "ferric.property-kind.extension.v1",
+                            [PROPERTY_KIND_NAMESPACE.encode("ascii")],
+                        ),
+                        "variant": "Extension",
+                    },
+                    "statement_identity_sha256": binding["statement_sha256"],
+                    "status": "Contracted",
+                }
+            ],
+            "schema": CONTRACT_SET_SCHEMA,
+            "schema_source_path": CONTRACT_SET_SOURCE_PATH,
+            "trusted_computing_base": [],
+            "validation": CONTRACT_SET_VALIDATION,
+        },
+        CONTRACT_SET_KEYS,
+        "M1 fe2o3 ContractSet declaration",
+    )
+
+
+def fe2o3_contract_documents(
     requirements_sha256: str,
     requirements: JsonObject,
     sources: list[JsonObject],
     tcb: list[JsonObject],
     slot: JsonObject,
     resolution: JsonObject,
-) -> JsonObject:
+) -> tuple[JsonObject, JsonObject, JsonObject]:
     binding = slot["binding"]
     spec, statement, assurance_property_ids = requirement_spec(
         requirements, binding["obligation_class"], binding["obligation_id"]
     )
     if (
         spec["obligation_state"] != "Open"
-        or "runtime" not in spec["evidence_profiles"]
+        or binding["profile_id"] not in spec["evidence_profiles"]
         or binding["path_id"] not in spec["path_obligations"]
         or binding["statement_sha256"] != digest_bytes(statement.encode("utf-8"))
         or resolution["id"] != binding["path_id"]
         or resolution["source_identity_id"] != binding["source_identity_id"]
     ):
-        fail("selected external-contract obligation or path drifted")
+        fail("selected fe2o3-contract obligation or path drifted")
+    profiles = {row["id"]: row["kinds"] for row in requirements["evidence_profiles"]}
+    if profiles.get(binding["profile_id"], []).count("fe2o3-contract") != 1:
+        fail("selected profile does not admit exactly one fe2o3-contract kind")
     source_by_id = {row["id"]: row for row in sources}
     bound_source = source_by_id.get(binding["source_identity_id"])
     if bound_source is None:
-        fail("selected external-contract source identity is missing")
-    return exact_keys(
+        fail("selected fe2o3-contract source identity is missing")
+    declarations = assurance_declarations(requirements, assurance_property_ids)
+    source_roster_sha256 = canonical_digest(sources)
+    tcb_roster_sha256 = canonical_digest(tcb)
+    body = contract_body(
+        binding,
+        declarations,
+        requirements_sha256,
+        source_roster_sha256,
+        tcb_roster_sha256,
+    )
+    body_bytes = canonical_bytes(body)
+    contract_set_value = contract_set(binding, digest_bytes(body_bytes))
+    contract_set_bytes = canonical_bytes(contract_set_value)
+    artifact_id = binding["artifact_id"]
+    report = exact_keys(
         {
-            "assumption_ids": ASSUMPTION_IDS,
-            "assurance_property_ids": assurance_property_ids,
+            "assurance_property_declarations": declarations,
             "authority": REPORT_AUTHORITY,
             "binding_sha256": binding["binding_sha256"],
             "bound_source_identity_sha256": canonical_digest(bound_source),
-            "contract_scope": CONTRACT_SCOPE,
+            "contract_body_path": (f"contracts/{artifact_id}.fe2o3-contract-body.json"),
+            "contract_body_sha256": digest_bytes(body_bytes),
+            "contract_body_size_bytes": len(body_bytes),
+            "contract_set_path": (
+                f"contract-sets/{artifact_id}.fe2o3-contract-set.json"
+            ),
+            "contract_set_schema": CONTRACT_SET_SCHEMA,
+            "contract_set_sha256": digest_bytes(contract_set_bytes),
+            "contract_set_size_bytes": len(contract_set_bytes),
+            "contract_set_source_path": CONTRACT_SET_SOURCE_PATH,
+            "contract_set_validation": CONTRACT_SET_VALIDATION,
             "contract_target": REPORT_TARGET,
-            "evidence_kind": "external-contract",
+            "evidence_kind": "fe2o3-contract",
             "format": REPORT_FORMAT,
             "nonclaim": REPORT_NONCLAIM,
             "obligation_class": binding["obligation_class"],
@@ -1627,21 +1948,41 @@ def external_contract_report(
             "obligation_state": "Open",
             "path_id": binding["path_id"],
             "path_resolution_sha256": canonical_digest(resolution),
-            "profile_id": "runtime",
+            "profile_id": binding["profile_id"],
             "requirements_sha256": requirements_sha256,
             "source_identity_id": binding["source_identity_id"],
-            "source_roster_sha256": canonical_digest(sources),
+            "source_roster_sha256": source_roster_sha256,
             "statement_sha256": binding["statement_sha256"],
             "tcb_identity_sha256s": {row["id"]: row["identity_sha256"] for row in tcb},
-            "tcb_roster_sha256": canonical_digest(tcb),
+            "tcb_roster_sha256": tcb_roster_sha256,
         },
         REPORT_KEYS,
-        "M1 external-contract report",
+        "M1 fe2o3-contract report",
     )
+    return body, contract_set_value, report
 
 
 def ensure_artifact_directory(plan_fd: int) -> int:
     return open_private_directory_at(plan_fd, "artifacts", "M1 artifact directory")
+
+
+def ensure_private_child_directory(
+    plan_fd: int, name: str, description: str
+) -> tuple[int, bool]:
+    created = False
+    try:
+        os.mkdir(name, 0o700, dir_fd=plan_fd)
+        created = True
+        os.fsync(plan_fd)
+    except FileExistsError:
+        pass
+    except OSError as error:
+        fail(f"cannot create {description}: {error}")
+    try:
+        descriptor = open_private_directory_at(plan_fd, name, description)
+    except BaseException:
+        raise
+    return descriptor, created
 
 
 def published_binding(metadata: os.stat_result) -> tuple[int, int, int, int, int]:
@@ -1656,28 +1997,40 @@ def published_binding(metadata: os.stat_result) -> tuple[int, int, int, int, int
 
 def rollback_exact_file(
     directory_fd: int, name: str, descriptor: int, description: str
-) -> None:
+) -> str | None:
     try:
         named = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
     except FileNotFoundError:
-        return
+        return None
     except OSError as error:
-        fail(f"cannot inspect failed {description} publication: {error}")
+        return f"cannot inspect failed {description} publication: {error}"
     try:
         held = os.fstat(descriptor)
     except OSError as error:
-        fail(f"cannot identify failed {description} publication: {error}")
+        return f"cannot identify failed {description} publication: {error}"
     if (
         stat.S_ISLNK(named.st_mode)
         or not stat.S_ISREG(named.st_mode)
         or published_binding(named) != published_binding(held)
     ):
-        fail(f"cannot remove replaced failed {description} publication")
+        return f"cannot remove replaced failed {description} publication"
     try:
         os.unlink(name, dir_fd=directory_fd)
         os.fsync(directory_fd)
     except OSError as error:
-        fail(f"cannot remove failed {description} publication: {error}")
+        return f"cannot remove failed {description} publication: {error}"
+    return None
+
+
+def rollback_publications(
+    published: list[tuple[int, str, int, bytes, str, os.stat_result]],
+) -> list[str]:
+    failures = []
+    for directory_fd, name, descriptor, _, description, _ in reversed(published):
+        failure = rollback_exact_file(directory_fd, name, descriptor, description)
+        if failure is not None:
+            failures.append(failure)
+    return failures
 
 
 def create_new_file_at(
@@ -1722,12 +2075,20 @@ def create_new_file_at(
         ):
             fail(f"published {description} bytes or binding changed")
     except OSError as error:
-        rollback_exact_file(directory_fd, name, descriptor, description)
+        rollback_failure = rollback_exact_file(
+            directory_fd, name, descriptor, description
+        )
         os.close(descriptor)
+        if rollback_failure is not None:
+            fail(f"cannot publish {description}: {error}; {rollback_failure}")
         fail(f"cannot publish {description}: {error}")
     except BaseException:
-        rollback_exact_file(directory_fd, name, descriptor, description)
+        rollback_failure = rollback_exact_file(
+            directory_fd, name, descriptor, description
+        )
         os.close(descriptor)
+        if rollback_failure is not None:
+            fail(f"{description} publication rollback failed: {rollback_failure}")
         raise
     return descriptor
 
@@ -1759,65 +2120,130 @@ def verify_published_file(
         fail(f"published {description} bytes or binding changed after directory sync")
 
 
-def publish_external_contract(
-    plan_path: Path,
+def publish_fe2o3_contract(
+    plan_custody: AbsoluteDirectoryCustody,
     plan_fd: int,
     artifact_fd: int,
+    body_fd: int,
+    set_fd: int,
     artifact_id: str,
+    body: bytes,
+    contract_set_value: bytes,
     report: bytes,
     custody_check: Callable[[], None],
 ) -> None:
-    report_name = f"{artifact_id}.external-contract.json"
-    report_fd = -1
+    report_name = f"{artifact_id}.fe2o3-contract.json"
+    body_name = f"{artifact_id}.fe2o3-contract-body.json"
+    set_name = f"{artifact_id}.fe2o3-contract-set.json"
+    published: list[tuple[int, str, int, bytes, str, os.stat_result]] = []
     try:
         revalidate_child_directory(
             plan_fd, "artifacts", artifact_fd, "M1 artifact directory"
         )
-        revalidate_directory_path(plan_path, plan_fd, "M1 evidence plan directory")
-        if entry_exists_at(artifact_fd, report_name):
-            fail("external-contract publication refuses a preexisting output")
-        custody_check()
-        report_fd = create_new_file_at(
-            artifact_fd, report_name, report, "M1 external-contract report"
+        revalidate_child_directory(
+            plan_fd, "contracts", body_fd, "M1 contract body directory"
         )
-        report_identity = os.fstat(report_fd)
+        revalidate_child_directory(
+            plan_fd, "contract-sets", set_fd, "M1 ContractSet directory"
+        )
+        revalidate_absolute_directory(plan_custody, private=True)
+        if (
+            entry_exists_at(artifact_fd, report_name)
+            or entry_exists_at(body_fd, body_name)
+            or entry_exists_at(set_fd, set_name)
+        ):
+            fail("fe2o3-contract publication refuses a preexisting output")
+        custody_check()
+        body_file_fd = create_new_file_at(
+            body_fd, body_name, body, "M1 fe2o3 contract body"
+        )
+        published.append(
+            (
+                body_fd,
+                body_name,
+                body_file_fd,
+                body,
+                "M1 fe2o3 contract body",
+                os.fstat(body_file_fd),
+            )
+        )
+        custody_check()
+        set_file_fd = create_new_file_at(
+            set_fd,
+            set_name,
+            contract_set_value,
+            "M1 fe2o3 ContractSet declaration",
+        )
+        published.append(
+            (
+                set_fd,
+                set_name,
+                set_file_fd,
+                contract_set_value,
+                "M1 fe2o3 ContractSet declaration",
+                os.fstat(set_file_fd),
+            )
+        )
+        custody_check()
+        report_file_fd = create_new_file_at(
+            artifact_fd, report_name, report, "M1 fe2o3-contract report"
+        )
+        published.append(
+            (
+                artifact_fd,
+                report_name,
+                report_file_fd,
+                report,
+                "M1 fe2o3-contract report",
+                os.fstat(report_file_fd),
+            )
+        )
+        os.fsync(body_fd)
+        os.fsync(set_fd)
         os.fsync(artifact_fd)
         os.fsync(plan_fd)
         revalidate_child_directory(
             plan_fd, "artifacts", artifact_fd, "M1 artifact directory"
         )
-        revalidate_directory_path(plan_path, plan_fd, "M1 evidence plan directory")
-        custody_check()
-        verify_published_file(
-            artifact_fd,
-            report_name,
-            report_fd,
-            report,
-            report_identity,
-            "M1 external-contract report",
+        revalidate_child_directory(
+            plan_fd, "contracts", body_fd, "M1 contract body directory"
         )
-    except OSError as error:
-        if report_fd >= 0:
-            rollback_exact_file(
-                artifact_fd,
-                report_name,
-                report_fd,
-                "M1 external-contract report",
+        revalidate_child_directory(
+            plan_fd, "contract-sets", set_fd, "M1 ContractSet directory"
+        )
+        revalidate_absolute_directory(plan_custody, private=True)
+        custody_check()
+        for (
+            directory_fd,
+            name,
+            descriptor,
+            expected,
+            description,
+            identity,
+        ) in published:
+            verify_published_file(
+                directory_fd, name, descriptor, expected, identity, description
             )
-        fail(f"cannot durably publish M1 external contract: {error}")
+    except OSError as error:
+        failures = rollback_publications(published)
+        if failures:
+            fail(
+                f"cannot durably publish M1 fe2o3 contract: {error}; "
+                f"rollback failures: {' | '.join(failures)}"
+            )
+        fail(f"cannot durably publish M1 fe2o3 contract: {error}")
     except BaseException:
-        if report_fd >= 0:
-            rollback_exact_file(
-                artifact_fd,
-                report_name,
-                report_fd,
-                "M1 external-contract report",
+        failures = rollback_publications(published)
+        if failures:
+            fail(
+                "M1 fe2o3 contract publication rollback failures: "
+                + " | ".join(failures)
             )
         raise
     finally:
-        if report_fd >= 0:
+        for _, _, descriptor, _, _, _ in published:
             try:
-                os.close(report_fd)
+                os.close(descriptor)
             except OSError:
                 pass
 
@@ -1828,24 +2254,35 @@ def produce(
     plan_argument: str,
     binding_id: str,
 ) -> None:
-    ferric = Path(ferric_argument).resolve(strict=True)
-    fe2o3 = Path(fe2o3_argument).resolve(strict=True)
+    ferric = Path(ferric_argument).absolute()
+    fe2o3 = Path(fe2o3_argument).absolute()
     plan_root = Path(plan_argument).absolute()
-    try:
-        if plan_root.resolve(strict=True) != plan_root:
-            fail("M1 evidence plan path contains a symlink")
-    except OSError as error:
-        fail(f"M1 evidence plan directory is unavailable: {error}")
-    ferric_fd = open_directory(ferric, "Ferric source repository")
-    fe2o3_fd = open_directory(fe2o3, "fe2o3 source repository")
-    plan_fd = open_private_directory(plan_root, "M1 evidence plan directory")
-    artifact_fd = ensure_artifact_directory(plan_fd)
+    ferric_custody: AbsoluteDirectoryCustody | None = None
+    fe2o3_custody: AbsoluteDirectoryCustody | None = None
+    plan_custody: AbsoluteDirectoryCustody | None = None
+    plan_fd = -1
+    artifact_fd = -1
+    body_fd = -1
+    set_fd = -1
     tcb_files: list[tuple[str, str, BinaryIO, os.stat_result, bytes]] = []
     plan_files: list[HeldFile] = []
     closure_custody: HeldDirectoryFiles | None = None
     report_bytes = b""
+    body_bytes = b""
+    set_bytes = b""
     try:
-        revalidate_directory_path(plan_root, plan_fd, "M1 evidence plan directory")
+        ferric_custody = authenticate_absolute_directory(
+            ferric, "Ferric source repository"
+        )
+        fe2o3_custody = authenticate_absolute_directory(
+            fe2o3, "fe2o3 source repository"
+        )
+        plan_custody = authenticate_absolute_directory(
+            plan_root, "M1 evidence plan directory", private=True
+        )
+        plan_fd = directory_custody_fd(plan_custody)
+        artifact_fd = ensure_artifact_directory(plan_fd)
+        revalidate_absolute_directory(plan_custody, private=True)
         requirements, plan, queue, sources, validators, plan_raw, queue_raw = (
             validate_plan(ferric, fe2o3, plan_fd)
         )
@@ -1861,42 +2298,45 @@ def produce(
             ),
         ]
         closure_custody = authenticate_source_closures(plan_fd, plan)
-        slot, resolution = select_external_contract_binding(plan, queue, binding_id)
+        slot, resolution = select_fe2o3_contract_binding(plan, queue, binding_id)
         tcb, tcb_files = authenticate_tcb_reports(
             artifact_fd, ferric, requirements, sources, validators
         )
-        report_bytes = canonical_bytes(
-            external_contract_report(
-                plan["requirements"]["sha256"],
-                requirements,
-                sources,
-                tcb,
-                slot,
-                resolution,
-            )
+        documents = fe2o3_contract_documents(
+            plan["requirements"]["sha256"],
+            requirements,
+            sources,
+            tcb,
+            slot,
+            resolution,
+        )
+        body_bytes, set_bytes, report_bytes = tuple(
+            canonical_bytes(value) for value in documents
         )
 
         repeated = validate_plan(ferric, fe2o3, plan_fd, replay=False)
         if repeated[5] != plan_raw or repeated[6] != queue_raw:
-            fail("M1 plan or work queue changed during external-contract production")
-        repeated_slot, repeated_resolution = select_external_contract_binding(
+            fail("M1 plan or work queue changed during fe2o3-contract production")
+        repeated_slot, repeated_resolution = select_fe2o3_contract_binding(
             repeated[1], repeated[2], binding_id
         )
-        repeated_report = canonical_bytes(
-            external_contract_report(
-                repeated[1]["requirements"]["sha256"],
-                repeated[0],
-                repeated[3],
-                tcb,
-                repeated_slot,
-                repeated_resolution,
-            )
+        repeated_documents = fe2o3_contract_documents(
+            repeated[1]["requirements"]["sha256"],
+            repeated[0],
+            repeated[3],
+            tcb,
+            repeated_slot,
+            repeated_resolution,
         )
-        if repeated_report != report_bytes:
-            fail("M1 external-contract inputs changed during production")
+        if tuple(canonical_bytes(value) for value in repeated_documents) != (
+            body_bytes,
+            set_bytes,
+            report_bytes,
+        ):
+            fail("M1 fe2o3-contract inputs changed during production")
         repositories = {
-            "fe2o3": (fe2o3, fe2o3_fd),
-            "ferric": (ferric, ferric_fd),
+            "fe2o3": (fe2o3, fe2o3_custody),
+            "ferric": (ferric, ferric_custody),
         }
         expected_repository_identities = source_identity_map(repeated[3])
 
@@ -1919,17 +2359,28 @@ def produce(
                 entry_exists_at(plan_fd, name)
                 for name in ("evidence-index.json", "receipt.json")
             ):
-                fail("external-contract producer created a forbidden closure output")
+                fail("fe2o3-contract producer created a forbidden closure output")
             revalidate_child_directory(
                 plan_fd, "artifacts", artifact_fd, "M1 artifact directory"
             )
-            revalidate_directory_path(plan_root, plan_fd, "M1 evidence plan directory")
+            revalidate_absolute_directory(plan_custody, private=True)
 
-        publish_external_contract(
-            plan_root,
+        revalidate_completion_inputs()
+        body_fd, _ = ensure_private_child_directory(
+            plan_fd, "contracts", "M1 contract body directory"
+        )
+        set_fd, _ = ensure_private_child_directory(
+            plan_fd, "contract-sets", "M1 ContractSet directory"
+        )
+        publish_fe2o3_contract(
+            plan_custody,
             plan_fd,
             artifact_fd,
+            body_fd,
+            set_fd,
             slot["binding"]["artifact_id"],
+            body_bytes,
+            set_bytes,
             report_bytes,
             revalidate_completion_inputs,
         )
@@ -1940,12 +2391,20 @@ def produce(
             source.close()
         for _, _, source, _, _ in tcb_files:
             source.close()
-        os.close(artifact_fd)
-        os.close(plan_fd)
-        os.close(fe2o3_fd)
-        os.close(ferric_fd)
+        if set_fd >= 0:
+            os.close(set_fd)
+        if body_fd >= 0:
+            os.close(body_fd)
+        if artifact_fd >= 0:
+            os.close(artifact_fd)
+        if plan_custody is not None:
+            close_absolute_directory(plan_custody)
+        if fe2o3_custody is not None:
+            close_absolute_directory(fe2o3_custody)
+        if ferric_custody is not None:
+            close_absolute_directory(ferric_custody)
     print(
-        f"PASS: produced M1 external contract binding={binding_id} "
+        f"PASS: produced M1 fe2o3 contract binding={binding_id} "
         f"report_sha256={digest_bytes(report_bytes)}"
     )
 

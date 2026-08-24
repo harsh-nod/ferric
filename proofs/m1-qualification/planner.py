@@ -138,7 +138,6 @@ FOUNDATION_FILES = {
     ),
 }
 MISSING_ROLES = {
-    "fe2o3-contract": "fe2o3-contract-owner",
     "independent-validator": "independent-validation-organization",
     "performance-gate": "external-performance-harness",
 }
@@ -518,6 +517,10 @@ def producer(evidence_kind: str, selectors: tuple[str, ...]) -> JsonObject:
             "proofs/m1-qualification/produce-external-contract.py",
             "ferric-m1-external-assumption-reporter",
         ),
+        "fe2o3-contract": (
+            "proofs/m1-qualification/produce-fe2o3-contract.py",
+            "ferric-m1-fe2o3-contract-reporter",
+        ),
         "unsupported-rationale": (
             "proofs/m1-qualification/produce-unsupported-rationale.py",
             "ferric-m1-nonclaim-reporter",
@@ -650,6 +653,7 @@ def renumber_slots(slots: list[JsonObject]) -> list[JsonObject]:
             "artifact-identity",
             "canonical-structure-check",
             "external-contract",
+            "fe2o3-contract",
             "hardware-test",
             "unsupported-rationale",
         }:
