@@ -2,6 +2,7 @@
 
 //! D10 core-kernel run-plan and real measurement ingestion boundary.
 
+mod d10_collect;
 mod d10_observations;
 mod d10_policy;
 
@@ -50,6 +51,18 @@ const SUITE: Suite = Suite {
 
 fn main() -> ExitCode {
     let arguments = env::args_os().skip(1).collect::<Vec<_>>();
+    if arguments
+        .first()
+        .is_some_and(|command| command == d10_collect::COMMAND)
+    {
+        return match d10_collect::collect_policy_observations(&arguments) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("FAIL: {error}");
+                ExitCode::FAILURE
+            }
+        };
+    }
     if arguments
         .first()
         .is_some_and(|command| command == d10_observations::COMMAND)

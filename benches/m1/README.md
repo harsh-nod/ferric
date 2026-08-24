@@ -62,8 +62,50 @@ created by that call. A failed prepublication attempt removes only output file
 names that still identify transaction-created inodes; it retains the staging
 directory and any substituted name for inspection.
 
-The additive observation validator checks one exact admitted policy against one
-exact canonical raw-observation bundle:
+The additive collector runs one exact admitted policy through externally
+supplied measurement commands and publishes one canonical raw-observation
+bundle without replacement:
+
+```text
+cargo run --locked -p ferric-m1-benchmarks --bin ferric-m1-d10 -- \
+  collect-policy-observations POLICY-ROOT ADMISSION-BUNDLE \
+  COLLECTION-MANIFEST OBSERVATION-BUNDLE
+```
+
+`COLLECTION-MANIFEST` is canonical
+`FERRIC-M1-D10-COLLECTION-MANIFEST-V1`. It binds the exact collector ELF,
+policy, cleared environment snapshot, timeout, K1-K7 case order, admitted
+holdout member, per-case expected resource counters, and exact resource and
+measurement ELF, argument, configuration, and protocol identities. All paths
+are held without symlink traversal and every ELF is executed through its held
+descriptor. The environment snapshot digest must equal the policy telemetry
+binding, implementation and configuration bytes must match their policy
+identities, and reference and resource command protocols must match their
+respective policy companions.
+
+Before launching a command, the collector derives the complete deterministic
+case, implementation, phase, and sample-ID order and requires its canonical
+projection to match the policy execution-order hashes. It runs cases in the
+source-controlled K1-K7 order, performs one resource inspection, then runs
+`ferric-reference`, `ferric`, and any applicable `vendor` in that order. Each
+applicable implementation receives exactly ten warmup requests followed by
+thirty recorded requests. Every request is canonical JSON on stdin under an
+empty inherited environment. A timeout, signal, nonzero exit, nonempty stderr,
+oversized, non-ASCII, malformed, or noncanonical stdout, reported telemetry
+error, or resource mismatch fails closed and publishes nothing.
+
+Sample results are canonical `FERRIC-M1-D10-SAMPLE-RESULT-V1` documents. A
+warmup has null timing counters; a recorded result has positive raw
+`elapsed_ns` and `iterations`. Both carry policy-protocol-bound start/end clock
+and temperature readings, the exact environment identity, and an empty
+structured error-event roster. Resource results are canonical
+`FERRIC-M1-D10-RESOURCE-RESULT-V1` documents with the case, artifact,
+inspection protocol, and a nonempty unsigned resource map that must equal the
+manifest value whose canonical digest is frozen by the policy. These are
+parseable raw schemas, not supplied summaries or generated thresholds.
+
+The additive observation validator then checks that exact admitted policy
+against the collector's exact canonical raw-observation bundle:
 
 ```text
 cargo run --locked -p ferric-m1-benchmarks --bin ferric-m1-d10 -- \
@@ -73,7 +115,7 @@ cargo run --locked -p ferric-m1-benchmarks --bin ferric-m1-d10 -- \
 
 `ADMISSION-BUNDLE` must contain exactly the original `admission.json` and
 policy `protocol.json`. `OBSERVATION-BUNDLE` must contain exactly canonical
-`observations.json` in `FERRIC-M1-D10-POLICY-OBSERVATIONS-V1` and the
+`observations.json` in `FERRIC-M1-D10-POLICY-OBSERVATIONS-V2` and the
 source-controlled `d10_observation_protocol.json` as `protocol.json`. The
 validator holds and repeatedly rebinds those four files plus the original ten
 policy-root files. It recomputes the admission and requires every policy,
@@ -82,9 +124,10 @@ resource-policy, tuning, admitted-holdout-member, and regression measurement
 roster identity to match.
 
 Every applicable Ferric-reference, Ferric, and vendor stream has exactly 10
-ordered untimed `{sample_id,sequence}` warmups and exactly 30 ordered raw
-`{sample_id,sequence,iterations,elapsed_ns}` samples. All applicable streams in
-one case must use one exact shared admitted `{id,sha256}` holdout member. An
+ordered untimed warmups and exactly 30 ordered raw timing samples. Each row also
+binds the exact command, runner output, successful subprocess outcome, and
+parseable telemetry. All applicable streams in one case must use one exact
+shared admitted `{id,sha256}` holdout member. An
 inapplicable vendor has null identities and member plus an exact empty sample
 roster and is excluded from vendor gates and the weighted aggregate. The
 execution-order companion binds the canonical per-case projection of each
@@ -105,10 +148,10 @@ product and PPM comparison remain under the validator's 8,388,608-bit
 representation bound. Admission retains its V1 structural weight domain. This
 is a structural computability bound, not a supplied or default weight.
 
-Telemetry and resource companions do not define parseable raw-output schemas.
-The validator therefore checks their exact policy identities but explicitly
-reports that it did not authenticate telemetry/resource output bytes or
-semantics. `OUTPUT-BUNDLE` is published without replacement with exactly
+The validator authenticates the collector's telemetry and resource schemas,
+their exact policy identities, empty error events, physical numeric bounds, and
+exact expected/observed resource equality. `OUTPUT-BUNDLE` is published without
+replacement with exactly
 `observations.json`, its `protocol.json`, and recomputed `validation.json` under
 descriptor-held file, directory, name, and parent custody. Its status remains
 `PARTIAL_NON_EVIDENCE`: it does not validate external policy values or physical

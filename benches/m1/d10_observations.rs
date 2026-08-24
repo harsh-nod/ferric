@@ -23,9 +23,9 @@ use std::path::{Component, Path, PathBuf};
 
 pub(super) const COMMAND: &str = "validate-policy-observations";
 
-const INPUT_FORMAT: &str = "FERRIC-M1-D10-POLICY-OBSERVATIONS-V1";
+const INPUT_FORMAT: &str = "FERRIC-M1-D10-POLICY-OBSERVATIONS-V2";
 const OUTPUT_FORMAT: &str = "FERRIC-M1-D10-POLICY-OBSERVATION-VALIDATION-V1";
-const INPUT_AUTHORITY: &str = "externally-collected-policy-bound-d10-observations-only";
+const INPUT_AUTHORITY: &str = "ferric-collected-policy-bound-d10-observations-only";
 const OUTPUT_AUTHORITY: &str = "checked-policy-bound-d10-observation-structure-and-arithmetic-only";
 const STATUS: &str = "PARTIAL_NON_EVIDENCE";
 const TARGET: &str = "gfx942:xnack-";
@@ -36,10 +36,84 @@ const PPM_SCALE: u64 = 1_000_000;
 const MAX_DOCUMENT_BYTES: usize = 8 * 1024 * 1024;
 const MAX_EXACT_AGGREGATE_BITS: u64 = 8 * 1024 * 1024;
 const MAX_EXACT_AGGREGATE_CASE_WEIGHT: u64 = 8_192;
-const PROTOCOL_SHA256: &str = "758485a3166ebaa0723c444862e988f3c5b1b2cf3069dd4804ac1464e13eedec";
-const NONCLAIM: &str = "This artifact checks exact canonical policy-bound raw D10 timing rows, order, holdout membership, tuning budgets, identity bindings, and recomputes integer throughput medians, regression gates, applicable-vendor gates, and the applicable-vendor weighted geometric aggregate. Telemetry and resource companions expose identities but no parseable raw-output schema, so this validator binds those identities without authenticating telemetry/resource output bytes or semantics. It does not validate externally supplied policy values, prove that observations or hardware telemetry are truthful, independently reproduce results, establish kernel correctness, constitute qualification evidence, or close m1.r31.";
+pub(super) const PROTOCOL_SHA256: &str =
+    "ed6cc9b2ec94a1db4c1c1c6a724cdf4f1edca648340ca29630b52dfab1cf8b47";
+pub(super) const PROTOCOL_BYTES: &[u8] = br#"{
+  "admission_format": "FERRIC-M1-D10-EXPERIMENT-POLICY-ADMISSION-V1",
+  "authority": "source-controlled-d10-observation-collection-and-validation-protocol-only",
+  "case_roster": [
+    {
+      "case_id": "flash-attention-prefill",
+      "kernel_family": "k4-gqa-prefill"
+    },
+    {
+      "case_id": "gemm-gemv",
+      "kernel_family": "k1-gemm-gemv"
+    },
+    {
+      "case_id": "gqa-paged-decode",
+      "kernel_family": "k5-paged-gqa-decode"
+    },
+    {
+      "case_id": "logits-argmax",
+      "kernel_family": "k7-logits-compact"
+    },
+    {
+      "case_id": "rmsnorm-residual",
+      "kernel_family": "k2-rmsnorm-residual"
+    },
+    {
+      "case_id": "rope-paged-kv",
+      "kernel_family": "k3-rope-paged-kv"
+    },
+    {
+      "case_id": "swiglu-projection",
+      "kernel_family": "k6-swiglu"
+    }
+  ],
+  "collection_manifest_format": "FERRIC-M1-D10-COLLECTION-MANIFEST-V1",
+  "collection_order": "case-roster-order-then-resource-inspection-then-ferric-reference-ferric-vendor-order-with-ten-warmups-followed-by-thirty-recorded-samples-per-applicable-implementation",
+  "exact_aggregate_maximum_case_weight": 8192,
+  "format": "FERRIC-M1-D10-POLICY-OBSERVATION-COLLECTION-AND-VALIDATION-PROTOCOL-V2",
+  "future_required_binding": "policy-sha256-bound-d10-observation-validator",
+  "implementation_roster": [
+    "ferric-reference",
+    "ferric",
+    "vendor"
+  ],
+  "input_format": "FERRIC-M1-D10-POLICY-OBSERVATIONS-V2",
+  "nonclaim": "This protocol collects exact policy-bound raw D10 observations from held ELF commands under a cleared policy-bound environment, requires canonical stdin/stdout, empty stderr, zero exit, a bound timeout, parseable telemetry, and exact resource agreement, then validates structure and arithmetic. It does not validate externally supplied policy values, observation truth, timing hardware, telemetry meaning, kernel correctness, independent reproduction, qualification, or close m1.r31.",
+  "observation_bundle_roster": [
+    "observations.json",
+    "protocol.json"
+  ],
+  "order_projection": "canonical-array-of-implementation-exact-holdout-member-and-ordered-sample-id-rosters-in-ferric-reference-ferric-vendor-order-with-inapplicable-vendor-null-and-empty",
+  "output_format": "FERRIC-M1-D10-POLICY-OBSERVATION-VALIDATION-V1",
+  "publication_roster": [
+    "observations.json",
+    "protocol.json",
+    "validation.json"
+  ],
+  "rate_formula": "floor-of-policy-work-unit-count-per-iteration-times-iterations-times-1000000000-divided-by-positive-elapsed-nanoseconds",
+  "rate_unit": "integer-policy-work-units-per-second",
+  "recorded_samples": 30,
+  "resource_request_format": "FERRIC-M1-D10-RESOURCE-REQUEST-V1",
+  "resource_result_format": "FERRIC-M1-D10-RESOURCE-RESULT-V1",
+  "sample_id_format": "case-id-dot-implementation-dot-phase-dot-two-digit-zero-based-sequence",
+  "sample_request_format": "FERRIC-M1-D10-SAMPLE-REQUEST-V1",
+  "sample_result_format": "FERRIC-M1-D10-SAMPLE-RESULT-V1",
+  "status": "PARTIAL_NON_EVIDENCE",
+  "subprocess_contract": "held-elf-cleared-environment-canonical-stdin-canonical-stdout-empty-stderr-zero-exit-timeout-v1",
+  "suite": "d10",
+  "target": "gfx942:xnack-",
+  "telemetry_schema": "positive-start-and-end-clock-hz-bounded-at-10ghz-empty-error-events-and-start-end-millicelsius-bounded-at-200000-all-policy-protocol-bound",
+  "timing_schema": "every-sample-binds-the-exact-clock-source-iteration-boundary-synchronization-and-timer-overhead-policy-identities",
+  "warmups": 10
+}
+"#;
+const NONCLAIM: &str = "This artifact checks exact canonical policy-bound raw D10 timing rows, deterministic order, holdout membership, tuning budgets, collector, command, binary, environment, telemetry, resource, and subprocess bindings, and recomputes integer throughput medians, regression gates, applicable-vendor gates, and the applicable-vendor weighted geometric aggregate. It does not validate externally supplied policy values, prove that observations or hardware telemetry are truthful, independently reproduce results, establish kernel correctness, constitute qualification evidence, or close m1.r31.";
 
-const CASE_ROSTER: &[(&str, &str)] = &[
+pub(super) const CASE_ROSTER: &[(&str, &str)] = &[
     ("flash-attention-prefill", "k4-gqa-prefill"),
     ("gemm-gemv", "k1-gemm-gemv"),
     ("gqa-paged-decode", "k5-paged-gqa-decode"),
@@ -48,7 +122,7 @@ const CASE_ROSTER: &[(&str, &str)] = &[
     ("rope-paged-kv", "k3-rope-paged-kv"),
     ("swiglu-projection", "k6-swiglu"),
 ];
-const IMPLEMENTATIONS: &[&str] = &["ferric-reference", "ferric", "vendor"];
+pub(super) const IMPLEMENTATIONS: &[&str] = &["ferric-reference", "ferric", "vendor"];
 const COMPANIONS: &[(&str, &str)] = &[
     ("calibration", "calibration.json"),
     ("execution-order", "execution-order.json"),
@@ -59,7 +133,7 @@ const COMPANIONS: &[(&str, &str)] = &[
     ("timing", "timing.json"),
     ("tuning", "tuning.json"),
 ];
-const ADMISSION_FILES: &[&str] = &["admission.json", "protocol.json"];
+pub(super) const ADMISSION_FILES: &[&str] = &["admission.json", "protocol.json"];
 const OBSERVATION_FILES: &[&str] = &["observations.json", "protocol.json"];
 const OUTPUT_FILES: &[&str] = &["observations.json", "protocol.json", "validation.json"];
 
@@ -87,7 +161,7 @@ impl Rational {
 }
 
 #[derive(Debug)]
-struct HeldDocument {
+pub(super) struct HeldDocument {
     bytes: Vec<u8>,
     file: File,
     initial: Stat,
@@ -200,7 +274,7 @@ impl HeldDocument {
     }
 }
 
-struct HeldBundle {
+pub(super) struct HeldBundle {
     description: &'static str,
     documents: BTreeMap<&'static str, HeldDocument>,
     initial: Stat,
@@ -209,7 +283,7 @@ struct HeldBundle {
 }
 
 impl HeldBundle {
-    fn open(
+    pub(super) fn open(
         path: &Path,
         roster: &'static [&'static str],
         description: &'static str,
@@ -256,13 +330,17 @@ impl HeldBundle {
         })
     }
 
-    fn document(&self, name: &str) -> BenchResult<&HeldDocument> {
+    pub(super) fn document(&self, name: &str) -> BenchResult<&HeldDocument> {
         self.documents
             .get(name)
             .ok_or_else(|| format!("missing held {} {name}", self.description))
     }
 
-    fn revalidate(&mut self) -> BenchResult<()> {
+    pub(super) fn document_bytes(&self, name: &str) -> BenchResult<&[u8]> {
+        Ok(&self.document(name)?.bytes)
+    }
+
+    pub(super) fn revalidate(&mut self) -> BenchResult<()> {
         validate_roster(&self.root, self.roster, self.description)?;
         for document in self.documents.values_mut() {
             document.revalidate(&self.root, self.description)?;
@@ -341,7 +419,7 @@ where
     let protocol_bytes = observations.document("protocol.json")?.bytes.clone();
     after_inputs()?;
     revalidate_inputs(&mut policy, &mut admission, &mut observations)?;
-    let mut bundle = ExactBundle::create_with_hook(Path::new(output), after_mkdir)?;
+    let mut bundle = ExactBundle::create_with_hook(Path::new(output), OUTPUT_FILES, after_mkdir)?;
     bundle.write("observations.json", &observation_bytes)?;
     bundle.write("protocol.json", &protocol_bytes)?;
     bundle.write("validation.json", &validation_bytes)?;
@@ -376,7 +454,7 @@ fn revalidate_inputs(
     observations.revalidate()
 }
 
-fn validate_admission_binding(
+pub(super) fn validate_admission_binding(
     policy: &HeldValidatedPolicy,
     admission: &HeldBundle,
 ) -> BenchResult<()> {
@@ -417,6 +495,7 @@ fn validate_observations(
             "admission_sha256",
             "authority",
             "cases",
+            "collection",
             "companion_sha256",
             "format",
             "policy_sha256",
@@ -436,6 +515,7 @@ fn validate_observations(
         &sha256_identity(&admission.document("admission.json")?.bytes),
         "D10 observation admission identity",
     )?;
+    let environment_sha256 = validate_collection(get(root, "collection", "D10 observations")?)?;
     let admission_value = policy
         .admission()
         .as_object()
@@ -498,6 +578,7 @@ fn validate_observations(
             index,
             max_regression,
             min_vendor,
+            &environment_sha256,
             &mut sample_ids,
         )?);
     }
@@ -541,7 +622,7 @@ fn validate_observations(
         "suite": "d10",
         "target": TARGET,
         "telemetry_resource_identity_bindings_enforced": true,
-        "telemetry_resource_outputs_authenticated": false,
+        "telemetry_resource_outputs_authenticated": true,
         "holdout_membership_enforced": true,
         "warmups_per_applicable_implementation": WARMUPS,
         "weighted_applicable_vendor_aggregate": aggregate_json,
@@ -568,6 +649,33 @@ fn validate_companion_identities(policy: &HeldValidatedPolicy, value: &Value) ->
     Ok(())
 }
 
+fn validate_collection(value: &Value) -> BenchResult<String> {
+    let collection = exact_object(
+        value,
+        &[
+            "collector_binary_sha256",
+            "environment_sha256",
+            "manifest_sha256",
+            "subprocess_contract",
+        ],
+        "D10 collection identity",
+    )?;
+    for field in [
+        "collector_binary_sha256",
+        "environment_sha256",
+        "manifest_sha256",
+    ] {
+        require_sha256(get_string(collection, field, "D10 collection identity")?)?;
+    }
+    expect_string(
+        collection,
+        "subprocess_contract",
+        "held-elf-cleared-environment-canonical-stdin-canonical-stdout-empty-stderr-zero-exit-timeout-v1",
+        "D10 subprocess contract",
+    )?;
+    Ok(get_string(collection, "environment_sha256", "D10 collection identity")?.to_owned())
+}
+
 #[allow(clippy::too_many_arguments)]
 fn validate_case(
     policy: &HeldValidatedPolicy,
@@ -578,6 +686,7 @@ fn validate_case(
     case_index: usize,
     maximum_regression_ppm: u64,
     minimum_vendor_ppm: u64,
+    environment_sha256: &str,
     global_sample_ids: &mut BTreeSet<String>,
 ) -> BenchResult<CaseMetric> {
     let case = exact_object(
@@ -588,6 +697,7 @@ fn validate_case(
             "kernel_family",
             "profile_sha256",
             "resource_bindings",
+            "resource_observation",
             "work_unit_semantics_sha256",
         ],
         "D10 observation case",
@@ -632,6 +742,11 @@ fn validate_case(
         get(case, "resource_bindings", "D10 observation case")?,
         case_index,
     )?;
+    validate_resource_observation(
+        policy,
+        get(case, "resource_observation", "D10 observation case")?,
+        case_index,
+    )?;
     let implementations = get(case, "implementations", "D10 observation case")?
         .as_array()
         .ok_or_else(|| "D10 implementations must be an array".to_owned())?;
@@ -666,6 +781,7 @@ fn validate_case(
             expected_identity,
             expected_config,
             count_per_iteration,
+            environment_sha256,
             global_sample_ids,
         )?;
         if let Some(member) = &validated.holdout_member {
@@ -785,14 +901,19 @@ fn validate_implementation(
     expected_identity: Option<&str>,
     expected_config: Option<&str>,
     count_per_iteration: u64,
+    environment_sha256: &str,
     global_sample_ids: &mut BTreeSet<String>,
 ) -> BenchResult<ValidatedImplementation> {
     let implementation = exact_object(
         value,
         &[
             "applicable",
+            "base_command_sha256",
+            "binary_sha256",
             "bindings",
+            "command_protocol_sha256",
             "config_sha256",
+            "environment_sha256",
             "implementation",
             "implementation_sha256",
             "recorded",
@@ -820,6 +941,25 @@ fn validate_implementation(
         "implementation_sha256",
         expected_identity,
         "D10 observation implementation identity",
+    )?;
+    for field in ["base_command_sha256", "command_protocol_sha256"] {
+        validate_optional_sha256(
+            get(implementation, field, "D10 observation implementation")?,
+            applicable,
+            "D10 observation command identity",
+        )?;
+    }
+    expect_optional_string(
+        implementation,
+        "binary_sha256",
+        expected_identity,
+        "D10 observation binary identity",
+    )?;
+    expect_optional_string(
+        implementation,
+        "environment_sha256",
+        applicable.then_some(environment_sha256),
+        "D10 observation environment identity",
     )?;
     expect_optional_string(
         implementation,
@@ -869,8 +1009,21 @@ fn validate_implementation(
     }
     let mut warmup_ids = Vec::with_capacity(WARMUPS);
     for (sequence, sample) in warmups.iter().enumerate() {
-        let sample = exact_object(sample, &["sample_id", "sequence"], "D10 untimed warmup")?;
+        let sample = exact_object(
+            sample,
+            &[
+                "command_sha256",
+                "runner_output_sha256",
+                "sample_id",
+                "sequence",
+                "subprocess",
+                "telemetry",
+                "timing",
+            ],
+            "D10 untimed warmup",
+        )?;
         expect_u64(sample, "sequence", sequence as u64, "D10 warmup sequence")?;
+        validate_collected_sample(sample, policy, environment_sha256)?;
         warmup_ids.push(insert_sample_id(sample, global_sample_ids, "D10 warmup")?);
     }
     let mut recorded_ids = Vec::with_capacity(RECORDED);
@@ -878,10 +1031,21 @@ fn validate_implementation(
     for (sequence, sample) in recorded.iter().enumerate() {
         let sample = exact_object(
             sample,
-            &["elapsed_ns", "iterations", "sample_id", "sequence"],
+            &[
+                "command_sha256",
+                "elapsed_ns",
+                "iterations",
+                "runner_output_sha256",
+                "sample_id",
+                "sequence",
+                "subprocess",
+                "telemetry",
+                "timing",
+            ],
             "D10 recorded sample",
         )?;
         expect_u64(sample, "sequence", sequence as u64, "D10 recorded sequence")?;
+        validate_collected_sample(sample, policy, environment_sha256)?;
         recorded_ids.push(insert_sample_id(
             sample,
             global_sample_ids,
@@ -1065,6 +1229,241 @@ fn validate_resource_binding(
         );
     }
     Ok(())
+}
+
+fn validate_resource_observation(
+    policy: &HeldValidatedPolicy,
+    value: &Value,
+    case_index: usize,
+) -> BenchResult<()> {
+    let observation = exact_object(
+        value,
+        &[
+            "artifact_manifest_sha256",
+            "command_sha256",
+            "expected_resources",
+            "expected_resources_sha256",
+            "inspection_protocol_sha256",
+            "inspector_binary_sha256",
+            "observed_resources",
+            "runner_output_sha256",
+            "subprocess",
+        ],
+        "D10 resource observation",
+    )?;
+    let resources = policy
+        .document_value("resource-inspection.json")?
+        .get("cases")
+        .and_then(Value::as_array)
+        .ok_or_else(|| "held D10 resource cases are unavailable".to_owned())?;
+    let policy_case = resources[case_index]
+        .as_object()
+        .ok_or_else(|| "held D10 resource case must be an object".to_owned())?;
+    for field in [
+        "artifact_manifest_sha256",
+        "expected_resources_sha256",
+        "inspection_protocol_sha256",
+    ] {
+        expect_string(
+            observation,
+            field,
+            get_string(policy_case, field, "held D10 resource case")?,
+            "D10 resource observation",
+        )?;
+    }
+    for field in [
+        "command_sha256",
+        "inspector_binary_sha256",
+        "runner_output_sha256",
+    ] {
+        require_sha256(get_string(observation, field, "D10 resource observation")?)?;
+    }
+    let expected = get(
+        observation,
+        "expected_resources",
+        "D10 resource observation",
+    )?;
+    let observed = get(
+        observation,
+        "observed_resources",
+        "D10 resource observation",
+    )?;
+    validate_resource_map(expected, "D10 expected resource counters")?;
+    validate_resource_map(observed, "D10 observed resource counters")?;
+    if expected != observed
+        || sha256_identity(&encode_canonical_document(expected)?)
+            != get_string(
+                observation,
+                "expected_resources_sha256",
+                "D10 resource observation",
+            )?
+    {
+        return Err(
+            "D10 resource observation does not match the policy-bound expectation".to_owned(),
+        );
+    }
+    validate_subprocess(get(observation, "subprocess", "D10 resource observation")?)
+}
+
+fn validate_resource_map(value: &Value, description: &str) -> BenchResult<()> {
+    let resources = value
+        .as_object()
+        .ok_or_else(|| format!("{description} must be an object"))?;
+    if resources.is_empty() || resources.len() > 64 {
+        return Err(format!(
+            "{description} field count is outside the admitted bound"
+        ));
+    }
+    for (name, value) in resources {
+        require_safe_id(name, description)?;
+        if value.as_u64().is_none() {
+            return Err(format!("{description} values must be unsigned integers"));
+        }
+    }
+    Ok(())
+}
+
+fn validate_collected_sample(
+    sample: &Map<String, Value>,
+    policy: &HeldValidatedPolicy,
+    environment_sha256: &str,
+) -> BenchResult<()> {
+    for field in ["command_sha256", "runner_output_sha256"] {
+        require_sha256(get_string(sample, field, "D10 collected sample")?)?;
+    }
+    validate_subprocess(get(sample, "subprocess", "D10 collected sample")?)?;
+    let telemetry = exact_object(
+        get(sample, "telemetry", "D10 collected sample")?,
+        &["clock", "environment_sha256", "errors", "temperature"],
+        "D10 telemetry observation",
+    )?;
+    expect_string(
+        telemetry,
+        "environment_sha256",
+        environment_sha256,
+        "D10 telemetry environment identity",
+    )?;
+    let policy_telemetry = policy
+        .document_value("telemetry.json")?
+        .as_object()
+        .ok_or_else(|| "held D10 telemetry policy must be an object".to_owned())?;
+    let clock = exact_object(
+        get(telemetry, "clock", "D10 telemetry observation")?,
+        &["end_hz", "protocol_sha256", "start_hz"],
+        "D10 clock telemetry observation",
+    )?;
+    expect_string(
+        clock,
+        "protocol_sha256",
+        get_string(
+            policy_telemetry,
+            "clock_trace_sha256",
+            "held D10 telemetry policy",
+        )?,
+        "D10 clock telemetry protocol",
+    )?;
+    for field in ["start_hz", "end_hz"] {
+        let value = get_u64(clock, field, "D10 clock telemetry observation")?;
+        if value == 0 || value > 10_000_000_000 {
+            return Err("D10 clock telemetry is outside the admitted physical bound".to_owned());
+        }
+    }
+    let errors = exact_object(
+        get(telemetry, "errors", "D10 telemetry observation")?,
+        &["events", "protocol_sha256"],
+        "D10 error telemetry observation",
+    )?;
+    expect_string(
+        errors,
+        "protocol_sha256",
+        get_string(
+            policy_telemetry,
+            "error_trace_sha256",
+            "held D10 telemetry policy",
+        )?,
+        "D10 error telemetry protocol",
+    )?;
+    if !get(errors, "events", "D10 error telemetry observation")?
+        .as_array()
+        .is_some_and(Vec::is_empty)
+    {
+        return Err("D10 error telemetry must report an exact empty event roster".to_owned());
+    }
+    let temperature = exact_object(
+        get(telemetry, "temperature", "D10 telemetry observation")?,
+        &["end_millicelsius", "protocol_sha256", "start_millicelsius"],
+        "D10 temperature telemetry observation",
+    )?;
+    expect_string(
+        temperature,
+        "protocol_sha256",
+        get_string(
+            policy_telemetry,
+            "temperature_trace_sha256",
+            "held D10 telemetry policy",
+        )?,
+        "D10 temperature telemetry protocol",
+    )?;
+    for field in ["start_millicelsius", "end_millicelsius"] {
+        if get_u64(temperature, field, "D10 temperature telemetry observation")? > 200_000 {
+            return Err(
+                "D10 temperature telemetry is outside the admitted physical bound".to_owned(),
+            );
+        }
+    }
+    let timing = exact_object(
+        get(sample, "timing", "D10 collected sample")?,
+        &[
+            "clock_source_sha256",
+            "iteration_boundary_sha256",
+            "synchronization_sha256",
+            "timer_overhead_sha256",
+        ],
+        "D10 timing observation",
+    )?;
+    let policy_timing = policy
+        .document_value("timing.json")?
+        .as_object()
+        .ok_or_else(|| "held D10 timing policy must be an object".to_owned())?;
+    for field in [
+        "clock_source_sha256",
+        "iteration_boundary_sha256",
+        "synchronization_sha256",
+        "timer_overhead_sha256",
+    ] {
+        expect_string(
+            timing,
+            field,
+            get_string(policy_timing, field, "held D10 timing policy")?,
+            "D10 timing identity",
+        )?;
+    }
+    Ok(())
+}
+
+fn validate_subprocess(value: &Value) -> BenchResult<()> {
+    let subprocess = exact_object(
+        value,
+        &["exit_code", "stderr_sha256"],
+        "D10 subprocess outcome",
+    )?;
+    expect_u64(subprocess, "exit_code", 0, "D10 subprocess exit code")?;
+    expect_string(
+        subprocess,
+        "stderr_sha256",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "D10 subprocess stderr identity",
+    )
+}
+
+fn validate_optional_sha256(value: &Value, applicable: bool, description: &str) -> BenchResult<()> {
+    match (applicable, value) {
+        (true, Value::String(value)) => require_sha256(value),
+        (false, Value::Null) => Ok(()),
+        _ => Err(format!(
+            "{description} must be a SHA-256 exactly when applicable"
+        )),
+    }
 }
 
 fn validate_order_binding(
@@ -1363,6 +1762,18 @@ fn require_safe_id(value: &str, description: &str) -> BenchResult<()> {
     Ok(())
 }
 
+fn require_sha256(value: &str) -> BenchResult<()> {
+    if value.len() != 64
+        || !value
+            .bytes()
+            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+        || value.bytes().all(|byte| byte == value.as_bytes()[0])
+    {
+        return Err("invalid D10 SHA-256 identity".to_owned());
+    }
+    Ok(())
+}
+
 fn require_safe_path(path: &Path, description: &str) -> BenchResult<()> {
     if path.as_os_str().is_empty()
         || path
@@ -1427,7 +1838,7 @@ struct StagedFile {
     snapshot: Stat,
 }
 
-struct ExactBundle {
+pub(super) struct ExactBundle {
     armed: bool,
     files: Vec<StagedFile>,
     output_name: OsString,
@@ -1437,11 +1848,13 @@ struct ExactBundle {
     staging_name: OsString,
     staging_path: PathBuf,
     staging_snapshot: Stat,
+    roster: &'static [&'static str],
 }
 
 impl ExactBundle {
-    fn create_with_hook(
+    pub(super) fn create_with_hook(
         output: &Path,
+        roster: &'static [&'static str],
         after_mkdir: impl FnOnce(&Path) -> BenchResult<()>,
     ) -> BenchResult<Self> {
         let output_name = safe_output_name(output)?;
@@ -1508,6 +1921,7 @@ impl ExactBundle {
                         staging_name,
                         staging_path,
                         staging_snapshot,
+                        roster,
                     });
                 }
                 Err(error) if error == rustix::io::Errno::EXIST => {}
@@ -1519,8 +1933,8 @@ impl ExactBundle {
         Err("D10 observation staging namespace was exhausted".to_owned())
     }
 
-    fn write(&mut self, name: &str, bytes: &[u8]) -> BenchResult<()> {
-        if !OUTPUT_FILES.contains(&name) || self.files.iter().any(|file| file.name == name) {
+    pub(super) fn write(&mut self, name: &str, bytes: &[u8]) -> BenchResult<()> {
+        if !self.roster.contains(&name) || self.files.iter().any(|file| file.name == name) {
             return Err("D10 observation output name or order drifted".to_owned());
         }
         let descriptor = openat2(
@@ -1580,7 +1994,7 @@ impl ExactBundle {
         Ok(())
     }
 
-    fn publish_exact(
+    pub(super) fn publish_exact(
         mut self,
         expected: &[(&str, &[u8])],
         revalidate_inputs: &mut impl FnMut() -> BenchResult<()>,
@@ -1590,11 +2004,17 @@ impl ExactBundle {
         if expected
             .iter()
             .map(|(name, _)| *name)
-            .ne(OUTPUT_FILES.iter().copied())
+            .ne(self.roster.iter().copied())
         {
             return Err("D10 observation publication roster drifted".to_owned());
         }
-        Self::verify_directory(&mut self.files, &self.staging, expected, "staged")?;
+        Self::verify_directory(
+            &mut self.files,
+            &self.staging,
+            self.roster,
+            expected,
+            "staged",
+        )?;
         fsync(&self.staging)
             .map_err(|error| format!("cannot sync D10 observation staging: {error}"))?;
         let settled = fstat(&self.staging)
@@ -1607,6 +2027,7 @@ impl ExactBundle {
         Self::verify_directory(
             &mut self.files,
             &self.staging,
+            self.roster,
             expected,
             "final prepublication",
         )?;
@@ -1626,7 +2047,13 @@ impl ExactBundle {
         let published_snapshot = fstat(&published).map_err(|error| {
             format!("cannot snapshot published D10 observation output: {error}")
         })?;
-        Self::verify_directory(&mut self.files, &published, expected, "published")?;
+        Self::verify_directory(
+            &mut self.files,
+            &published,
+            self.roster,
+            expected,
+            "published",
+        )?;
         after_published_verification()?;
         revalidate_inputs()?;
         let parent_published = fstat(&self.parent)
@@ -1644,6 +2071,7 @@ impl ExactBundle {
         Self::verify_directory(
             &mut self.files,
             &final_directory,
+            self.roster,
             expected,
             "final published",
         )?;
@@ -1688,12 +2116,13 @@ impl ExactBundle {
     fn verify_directory(
         files: &mut [StagedFile],
         directory: &OwnedFd,
+        roster: &[&str],
         expected: &[(&str, &[u8])],
         phase: &str,
     ) -> BenchResult<()> {
         validate_roster(
             directory,
-            OUTPUT_FILES,
+            roster,
             &format!("{phase} D10 observation output"),
         )?;
         for ((name, bytes), staged) in expected.iter().zip(files) {
@@ -1940,8 +2369,11 @@ mod tests {
     }
 
     fn protocol_bytes() -> Vec<u8> {
-        fs::read(Path::new(env!("CARGO_MANIFEST_DIR")).join("d10_observation_protocol.json"))
-            .unwrap()
+        let bytes =
+            fs::read(Path::new(env!("CARGO_MANIFEST_DIR")).join("d10_observation_protocol.json"))
+                .unwrap();
+        assert_eq!(bytes, PROTOCOL_BYTES);
+        bytes
     }
 
     fn sample_id(case_id: &str, implementation: &str, phase: &str, sequence: usize) -> String {
@@ -1962,9 +2394,14 @@ mod tests {
         let regression: Value =
             serde_json::from_slice(&fs::read(policy.join("regression-reference.json")).unwrap())
                 .unwrap();
-        let resources: Value =
+        let mut resources: Value =
             serde_json::from_slice(&fs::read(policy.join("resource-inspection.json")).unwrap())
                 .unwrap();
+        let telemetry: Value =
+            serde_json::from_slice(&fs::read(policy.join("telemetry.json")).unwrap()).unwrap();
+        let timing: Value =
+            serde_json::from_slice(&fs::read(policy.join("timing.json")).unwrap()).unwrap();
+        let environment_sha256 = telemetry["environment_snapshot_sha256"].as_str().unwrap();
         let holdout: Value =
             serde_json::from_slice(&fs::read(policy.join("holdout.json")).unwrap()).unwrap();
         let tuning: Value =
@@ -1973,6 +2410,15 @@ mod tests {
         let mut observation_cases = Vec::new();
         let mut order_cases = Vec::new();
         for (case_index, (case_id, family)) in CASE_ROSTER.iter().enumerate() {
+            let expected_resources = json!({
+                "group-segment-fixed-size": case_index,
+                "private-segment-fixed-size": 0,
+                "sgpr-count": 32,
+                "vgpr-count": 16,
+            });
+            resources["cases"][case_index]["expected_resources_sha256"] = json!(sha256_identity(
+                &encode_canonical_document(&expected_resources).unwrap()
+            ));
             let policy_case = &policy_value["cases"][case_index];
             let vendor_applicable = policy_case["vendor"]["applicable"].as_bool().unwrap();
             let identities = [
@@ -1999,9 +2445,25 @@ mod tests {
                 let warmups = if applicable {
                     (0..WARMUPS)
                         .map(|sequence| {
+                            let sample_id = sample_id(case_id, implementation, "warmup", sequence);
                             json!({
-                                "sample_id": sample_id(case_id, implementation, "warmup", sequence),
+                                "command_sha256": sha256_identity(format!("command:{sample_id}").as_bytes()),
+                                "runner_output_sha256": sha256_identity(format!("output:{sample_id}").as_bytes()),
+                                "sample_id": sample_id,
                                 "sequence": sequence,
+                                "subprocess": {"exit_code": 0, "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+                                "telemetry": {
+                                    "clock": {"end_hz": 1_500_000_000_u64, "protocol_sha256": telemetry["clock_trace_sha256"], "start_hz": 1_500_000_000_u64},
+                                    "environment_sha256": environment_sha256,
+                                    "errors": {"events": [], "protocol_sha256": telemetry["error_trace_sha256"]},
+                                    "temperature": {"end_millicelsius": 55_000, "protocol_sha256": telemetry["temperature_trace_sha256"], "start_millicelsius": 54_000},
+                                },
+                                "timing": {
+                                    "clock_source_sha256": timing["clock_source_sha256"],
+                                    "iteration_boundary_sha256": timing["iteration_boundary_sha256"],
+                                    "synchronization_sha256": timing["synchronization_sha256"],
+                                    "timer_overhead_sha256": timing["timer_overhead_sha256"],
+                                },
                             })
                         })
                         .collect::<Vec<_>>()
@@ -2011,11 +2473,27 @@ mod tests {
                 let recorded = if applicable {
                     (0..RECORDED)
                         .map(|sequence| {
+                            let sample_id = sample_id(case_id, implementation, "recorded", sequence);
                             json!({
+                                "command_sha256": sha256_identity(format!("command:{sample_id}").as_bytes()),
                                 "elapsed_ns": if *implementation == "vendor" { 200 } else { 100 },
                                 "iterations": 1,
-                                "sample_id": sample_id(case_id, implementation, "recorded", sequence),
+                                "runner_output_sha256": sha256_identity(format!("output:{sample_id}").as_bytes()),
+                                "sample_id": sample_id,
                                 "sequence": sequence,
+                                "subprocess": {"exit_code": 0, "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+                                "telemetry": {
+                                    "clock": {"end_hz": 1_500_000_000_u64, "protocol_sha256": telemetry["clock_trace_sha256"], "start_hz": 1_500_000_000_u64},
+                                    "environment_sha256": environment_sha256,
+                                    "errors": {"events": [], "protocol_sha256": telemetry["error_trace_sha256"]},
+                                    "temperature": {"end_millicelsius": 55_000, "protocol_sha256": telemetry["temperature_trace_sha256"], "start_millicelsius": 54_000},
+                                },
+                                "timing": {
+                                    "clock_source_sha256": timing["clock_source_sha256"],
+                                    "iteration_boundary_sha256": timing["iteration_boundary_sha256"],
+                                    "synchronization_sha256": timing["synchronization_sha256"],
+                                    "timer_overhead_sha256": timing["timer_overhead_sha256"],
+                                },
                             })
                         })
                         .collect::<Vec<_>>()
@@ -2045,8 +2523,12 @@ mod tests {
                 };
                 implementations.push(json!({
                     "applicable": applicable,
+                    "base_command_sha256": if applicable { Value::String(sha256_identity(format!("base:{case_id}:{implementation}").as_bytes())) } else { Value::Null },
+                    "binary_sha256": identity,
                     "bindings": {},
+                    "command_protocol_sha256": if applicable { Value::String(sha256_identity(format!("protocol:{case_id}:{implementation}").as_bytes())) } else { Value::Null },
                     "config_sha256": config,
+                    "environment_sha256": if applicable { Value::String(environment_sha256.to_owned()) } else { Value::Null },
                     "holdout_member": if applicable { holdout_member.clone() } else { Value::Null },
                     "implementation": implementation,
                     "implementation_sha256": identity,
@@ -2067,6 +2549,17 @@ mod tests {
                 "kernel_family": family,
                 "profile_sha256": policy_case["profile"]["sha256"],
                 "resource_bindings": resources["cases"][case_index],
+                "resource_observation": {
+                    "artifact_manifest_sha256": resources["cases"][case_index]["artifact_manifest_sha256"],
+                    "command_sha256": sha256_identity(format!("resource-command:{case_id}").as_bytes()),
+                    "expected_resources": expected_resources,
+                    "expected_resources_sha256": resources["cases"][case_index]["expected_resources_sha256"],
+                    "inspection_protocol_sha256": resources["cases"][case_index]["inspection_protocol_sha256"],
+                    "inspector_binary_sha256": sha256_identity(format!("resource-binary:{case_id}").as_bytes()),
+                    "observed_resources": expected_resources,
+                    "runner_output_sha256": sha256_identity(format!("resource-output:{case_id}").as_bytes()),
+                    "subprocess": {"exit_code": 0, "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+                },
                 "work_unit_semantics_sha256": policy_case["work_unit"]["semantics_sha256"],
             }));
         }
@@ -2075,10 +2568,15 @@ mod tests {
                 .unwrap();
         order["cases"] = Value::Array(order_cases);
         write_canonical(&policy.join("execution-order.json"), &order);
+        write_canonical(&policy.join("resource-inspection.json"), &resources);
         let order_bytes = fs::read(policy.join("execution-order.json")).unwrap();
         policy_value["companions"]["execution-order"]["bytes"] = json!(order_bytes.len());
         policy_value["companions"]["execution-order"]["sha256"] =
             json!(sha256_identity(&order_bytes));
+        let resources_bytes = fs::read(policy.join("resource-inspection.json")).unwrap();
+        policy_value["companions"]["resource-inspection"]["bytes"] = json!(resources_bytes.len());
+        policy_value["companions"]["resource-inspection"]["sha256"] =
+            json!(sha256_identity(&resources_bytes));
         write_canonical(&policy.join("policy.json"), &policy_value);
 
         let admission_arguments = vec![
@@ -2116,6 +2614,12 @@ mod tests {
             "admission_sha256": sha256_identity(&fs::read(admission.join("admission.json")).unwrap()),
             "authority": INPUT_AUTHORITY,
             "cases": observation_cases,
+            "collection": {
+                "collector_binary_sha256": sha256_identity(b"collector-binary"),
+                "environment_sha256": environment_sha256,
+                "manifest_sha256": sha256_identity(b"collector-manifest"),
+                "subprocess_contract": "held-elf-cleared-environment-canonical-stdin-canonical-stdout-empty-stderr-zero-exit-timeout-v1",
+            },
             "companion_sha256": companion_sha256,
             "format": INPUT_FORMAT,
             "policy_sha256": sha256_identity(&fs::read(policy.join("policy.json")).unwrap()),
@@ -2166,7 +2670,7 @@ mod tests {
         assert_eq!(result["independent_validation"], false);
         assert_eq!(result["observation_counts_enforced"], true);
         assert_eq!(result["holdout_membership_enforced"], true);
-        assert_eq!(result["telemetry_resource_outputs_authenticated"], false);
+        assert_eq!(result["telemetry_resource_outputs_authenticated"], true);
         assert_eq!(
             result["cases"][0]["ferric_median"]["numerator"],
             "110000000"
