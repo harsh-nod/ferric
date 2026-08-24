@@ -246,6 +246,33 @@ class CanonicalTests(unittest.TestCase):
 
 
 class ParserTests(unittest.TestCase):
+    def test_reference_protocol_requires_fixed_completion_wait_policy(self) -> None:
+        data = MODULE_PATH.with_name("protocol.json").read_bytes()
+        value = reference.parse_canonical(data, "reference protocol fixture")
+        reference.validate_protocol(value)
+        self.assertEqual(value["format"], "FERRIC-M1-REFERENCE-PROTOCOL-V2")
+
+        replacements = (
+            {**reference.COMPLETION_WAIT_POLICY, "unexpected": True},
+            {
+                **reference.COMPLETION_WAIT_POLICY,
+                "max_consecutive_scans_without_progress": 8_191,
+            },
+        )
+        for replacement in replacements:
+            execution = {**value["execution"], "completion_wait_policy": replacement}
+            mutated = {**value, "execution": execution}
+            with self.subTest(replacement=replacement), self.assertRaises(
+                reference.ReferenceFailure
+            ):
+                reference.validate_protocol(mutated)
+
+        legacy_execution = dict(value["execution"])
+        del legacy_execution["completion_wait_policy"]
+        legacy_execution["workload_max_polls"] = 20_000_000
+        with self.assertRaises(reference.ReferenceFailure):
+            reference.validate_protocol({**value, "execution": legacy_execution})
+
     def test_capture_gpu_runner_and_row_identities_are_cross_bound(self) -> None:
         plan, workload, files = prefill_capture_fixture()
         with tempfile.TemporaryDirectory() as temporary:
@@ -320,13 +347,14 @@ class ParserTests(unittest.TestCase):
             reference.parse_plan(value, reference.canonical_bytes(value))
 
     def test_workload_input_is_canonical_hash_bound_and_range_checked(self) -> None:
-        self.assertEqual(reference.MAX_POLLS, 20_000_000)
+        self.assertEqual(reference.WORKLOAD_FORMAT, "FERRIC-M1-QUALIFICATION-WORKLOAD-V2")
         kind = "prefill-s1-t128"
         tokens = tuple(range(128))
         payload = struct.pack("<128I", *tokens)
         input_sha = reference.sha256_bytes(payload)
         value = {
             "case_id": f"{kind}.001",
+            "completion_wait_policy": reference.COMPLETION_WAIT_POLICY,
             "format": reference.WORKLOAD_FORMAT,
             "input": {
                 "bytes": len(payload),
@@ -336,7 +364,6 @@ class ParserTests(unittest.TestCase):
             },
             "kind": kind,
             "lanes": [{"active_length": 128, "context_length": 0}],
-            "max_polls": reference.MAX_POLLS,
             "selection": {"bucket": kind, "mode": "prefill", "role": "target-8b"},
         }
         data = reference.canonical_bytes(value)
@@ -350,6 +377,42 @@ class ParserTests(unittest.TestCase):
             with reference.SecureDirectory.open(root_path, "fixture root") as root:
                 workload = reference.parse_workload(value, data, case, root)
                 self.assertEqual(workload.tokens, (tokens,))
+                replacements = (
+                    {**reference.COMPLETION_WAIT_POLICY, "unexpected": True},
+                    {
+                        **reference.COMPLETION_WAIT_POLICY,
+                        "timeout_basis": "wall-clock",
+                    },
+                )
+                for replacement in replacements:
+                    mutated = {**value, "completion_wait_policy": replacement}
+                    mutated_data = reference.canonical_bytes(mutated)
+                    mutated_case = reference.PlanCase(
+                        f"{kind}.001",
+                        input_sha,
+                        kind,
+                        reference.sha256_bytes(mutated_data),
+                    )
+                    with self.subTest(replacement=replacement), self.assertRaises(
+                        reference.ReferenceFailure
+                    ):
+                        reference.parse_workload(
+                            mutated, mutated_data, mutated_case, root
+                        )
+
+                legacy = dict(value)
+                del legacy["completion_wait_policy"]
+                legacy["max_polls"] = 20_000_000
+                legacy_data = reference.canonical_bytes(legacy)
+                legacy_case = reference.PlanCase(
+                    f"{kind}.001",
+                    input_sha,
+                    kind,
+                    reference.sha256_bytes(legacy_data),
+                )
+                with self.assertRaises(reference.ReferenceFailure):
+                    reference.parse_workload(legacy, legacy_data, legacy_case, root)
+
                 payload_path.write_bytes(payload[:-4] + struct.pack("<I", 151_643))
                 with self.assertRaises(reference.ReferenceFailure):
                     reference.parse_workload(value, data, case, root)

@@ -30,6 +30,12 @@ DIRECT_PINS = {
     "triton-rocm": "3.7.1",
 }
 ROCM_INDEX = "https://download.pytorch.org/whl/rocm7.2"
+COMPLETION_WAIT_POLICY = {
+    "id": "ferric-m1-completion-progress-wait-v1",
+    "max_consecutive_scans_without_progress": 8_192,
+    "timeout_basis": "completion-signal-scans-only",
+    "total_scan_bound_rule": "(packet-count+1)*max-consecutive-scans-without-progress",
+}
 
 
 def fail(message: str) -> None:
@@ -124,11 +130,14 @@ def implementation_policy() -> None:
 
 def protocol_policy() -> None:
     protocol, _ = load_canonical("protocol.json")
+    if protocol["format"] != "FERRIC-M1-REFERENCE-PROTOCOL-V2":
+        fail("protocol format drifted")
     if protocol["dependencies"] != {"python": "3.12", **DIRECT_PINS}:
         fail("protocol dependency contract drifted")
     execution = protocol["execution"]
     expected = {
         "attention_implementation": "sdpa",
+        "completion_wait_policy": COMPLETION_WAIT_POLICY,
         "determinism": "two-byte-identical-executions-per-case",
         "input_encoding": "lane-major-u32-le",
         "lane_execution": "sequential-full-context-per-lane-twice",
@@ -139,7 +148,6 @@ def protocol_policy() -> None:
         "python_isolation": "isolated-ignore-environment-no-user-site-safe-path",
         "remote_code": False,
         "row_order": "declared-lane-order",
-        "workload_max_polls": 20_000_000,
     }
     if execution != expected:
         fail("protocol execution semantics drifted")

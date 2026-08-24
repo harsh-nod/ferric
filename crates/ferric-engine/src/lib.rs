@@ -265,11 +265,13 @@ pub use physical_program_catalog::{
     M1PhysicalProgramV1, M1_PHYSICAL_PROGRAM_COUNT_V1,
 };
 pub use physical_queue_lifecycle::{
-    M1CompletedReadbackJoinErrorV1, M1CompletedReadbackJoinFailureV1,
-    M1CompletionEvidenceTeardownDiagnosticV1, M1CompletionEvidenceTeardownEvidenceV1,
-    M1CompletionEvidenceTeardownFailureV1, M1CompletionEvidenceTeardownSuccessV1,
-    M1CompletionObservationErrorV1, M1CompletionObservationFailureCustodyV1,
-    M1CompletionObservationFailureV1, M1CompletionSnapshotReadFailedOutputV1,
+    m1_completion_progress_total_scan_bound_v1, M1CompletedReadbackJoinErrorV1,
+    M1CompletedReadbackJoinFailureV1, M1CompletionEvidenceTeardownDiagnosticV1,
+    M1CompletionEvidenceTeardownEvidenceV1, M1CompletionEvidenceTeardownFailureV1,
+    M1CompletionEvidenceTeardownSuccessV1, M1CompletionObservationErrorV1,
+    M1CompletionObservationFailureCustodyV1, M1CompletionObservationFailureV1,
+    M1CompletionProgressObservationV1, M1CompletionProgressWaitDiagnosticV1,
+    M1CompletionProgressWaitTerminalReasonV1, M1CompletionSnapshotReadFailedOutputV1,
     M1EngineQuarantinedPhysicalQueueOperationFailureV1, M1ObservedCompletionCaseV1,
     M1ObservedCompletionOutputV1, M1ObservedQualificationOutputV1,
     M1ObservedSpeculativeDiagnosticOutputV1, M1PhysicalCompletedQueueSessionV1,
@@ -296,6 +298,8 @@ pub use physical_queue_lifecycle::{
     M1SpeculativeDiagnosticObservationTeardownSuccessV1,
     M1SpeculativeDiagnosticSemanticTeardownFailureV1,
     M1SpeculativeDiagnosticSemanticTeardownSuccessV1,
+    M1_COMPLETION_PROGRESS_MAX_CONSECUTIVE_STALLED_SCANS_V1,
+    M1_COMPLETION_PROGRESS_WAIT_POLICY_ID_V1,
 };
 pub use physical_step::{
     bind_structural_physical_step, StructuralPhysicalStepBindingError,

@@ -386,11 +386,10 @@ impl M1PhysicalRunnerV1 {
         &self,
         engine: &mut Engine<C>,
         published: M1PhysicalPublishedQueueSessionV1,
-        polls: u32,
         semantics: &[crate::CompletionWireSemanticExpectation<'_>],
         roster: M1DeviceKvCompletionRosterV1,
     ) -> M1PhysicalRunnerFirstCompletionOutcomeV1 {
-        let completed = match published.wait(polls) {
+        let completed = match published.wait() {
             Ok(completed) => completed,
             Err(failure) => {
                 engine.quarantine_m1_queue_rearm_failure();
@@ -1447,7 +1446,7 @@ mod tests {
         let published = runner
             .publish_first_step(&mut engine, 1 << 20, allocated, recipe, completion)
             .expect("create queue and publish exactly once");
-        let completed = published.wait(20_000_000).expect("wait for live dispatch");
+        let completed = published.wait().expect("wait for live dispatch");
         let recycled = completed.recycle().expect("recycle live dispatch queue");
         assert_eq!(recycled.shape(), M1PhysicalFixedBatchShapeV1::TargetOnly);
         let observed = recycled
@@ -1696,7 +1695,7 @@ mod tests {
         let published = runner
             .publish_first_step(&mut engine, 1 << 20, allocated, recipe, completion)
             .expect("create S1/K4 queue and publish exactly once");
-        let completed = published.wait(20_000_000).expect("wait for live dispatch");
+        let completed = published.wait().expect("wait for live dispatch");
         let recycled = completed.recycle().expect("recycle live dispatch queue");
         assert_eq!(recycled.shape(), M1PhysicalFixedBatchShapeV1::SpeculativeK4);
         let observed = recycled

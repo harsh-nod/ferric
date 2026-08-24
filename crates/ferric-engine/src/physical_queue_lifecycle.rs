@@ -12,9 +12,9 @@ use core::fmt;
 use fe2o3_service_host::{
     ServiceCompletedQueueSessionV1, ServiceCompletedReadbackV1, ServiceHostDispatchRangeV1,
     ServicePublishedQueueSessionV1, ServiceQueueCreateFailureV1, ServiceQueueErrorV1,
-    ServiceQueueOperationFailureV1, ServiceQueuePollV1, ServiceQueueReleaseFailureV1,
-    ServiceQueueReleaseObservationV1, ServiceQueueSessionV1, ServiceQueueUnboundSessionV1,
-    ServiceRecycledQueueSessionV1,
+    ServiceQueueOperationFailureV1, ServiceQueuePollWithProgressV1, ServiceQueueProgressV1,
+    ServiceQueueReleaseFailureV1, ServiceQueueReleaseObservationV1, ServiceQueueSessionV1,
+    ServiceQueueUnboundSessionV1, ServiceRecycledQueueSessionV1,
 };
 use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::Qwen3ExecutionMode;
@@ -35,14 +35,156 @@ use crate::{
     Gfx942DeviceBinding, M1CheckedCompletionOutputV1, M1CompletedOutputCheckErrorV1,
     M1CompletionCanaryErrorV1, M1FullStepKvReservationCustodyV1, M1ObservedCompletionImageErrorV1,
     M1ObservedCompletionImageV1, M1ObservedQualificationLogitsV1,
-    M1ObservedSpeculativeDiagnosticChoicesV1, M1PhysicalFixedBatchCaseV1,
-    M1PhysicalFixedBatchCustodyV1, M1PhysicalFixedBatchShapeV1, M1PhysicalFixedBatchV1,
-    M1PhysicalQueueBatchCustodyV1, M1PrepublicationBatchV1, M1PrepublicationStepCustodyV1,
-    M1QualificationLogitsErrorV1, M1ScheduledDispatchV1, M1SpeculativeDiagnosticChoicesErrorV1,
-    M1ValidatedQualificationContextStepV1, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
-    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
-    M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
+    M1ObservedSpeculativeDiagnosticChoicesV1, M1PhysicalDispatchRecipeRowV1,
+    M1PhysicalFixedBatchCaseV1, M1PhysicalFixedBatchCustodyV1, M1PhysicalFixedBatchShapeV1,
+    M1PhysicalFixedBatchV1, M1PhysicalQueueBatchCustodyV1, M1PrepublicationBatchV1,
+    M1PrepublicationStepCustodyV1, M1QualificationLogitsErrorV1, M1ScheduledDispatchV1,
+    M1SpeculativeDiagnosticChoicesErrorV1, M1ValidatedQualificationContextStepV1,
+    M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
+    M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
 };
+
+/// Stable identity of Ferric's M1 completion-progress liveness policy.
+pub const M1_COMPLETION_PROGRESS_WAIT_POLICY_ID_V1: &str = "ferric-m1-completion-progress-wait-v1";
+
+/// Maximum consecutive completion scans that may show no liveness progress.
+pub const M1_COMPLETION_PROGRESS_MAX_CONSECUTIVE_STALLED_SCANS_V1: u32 = 8_192;
+
+/// Addressless counts retained from one sequential completion-signal scan.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct M1CompletionProgressObservationV1 {
+    packet_count: u16,
+    completed_count: u16,
+    pending_count: u16,
+    first_pending_batch_index: Option<u16>,
+}
+
+impl M1CompletionProgressObservationV1 {
+    fn from_service(progress: ServiceQueueProgressV1) -> Self {
+        Self {
+            packet_count: progress.packet_count(),
+            completed_count: progress.completed_count(),
+            pending_count: progress.pending_count(),
+            first_pending_batch_index: progress.first_pending_batch_index(),
+        }
+    }
+
+    /// Returns the fixed-batch packet count reported by the scan.
+    #[must_use]
+    pub const fn packet_count(self) -> u16 {
+        self.packet_count
+    }
+
+    /// Returns the number of signals observed completed in the scan.
+    #[must_use]
+    pub const fn completed_count(self) -> u16 {
+        self.completed_count
+    }
+
+    /// Returns the number of signals observed pending in the scan.
+    #[must_use]
+    pub const fn pending_count(self) -> u16 {
+        self.pending_count
+    }
+
+    /// Returns the earliest batch-local index observed pending in the scan.
+    #[must_use]
+    pub const fn first_pending_batch_index(self) -> Option<u16> {
+        self.first_pending_batch_index
+    }
+}
+
+/// Ferric reason for terminalizing an otherwise live lower queue generation.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1CompletionProgressWaitTerminalReasonV1 {
+    /// The compile-time packet count cannot be represented by the lower progress ABI.
+    PacketCountNotRepresentable,
+    /// A scan reported a packet count other than the retained fixed-batch shape.
+    PacketCountMismatch,
+    /// Completed and pending counts did not sum to the exact packet count.
+    CountSumMismatch,
+    /// A pending result reported no pending signal or omitted its first pending index.
+    PendingObservationInvalid,
+    /// The first pending index was outside the exact fixed batch.
+    FirstPendingIndexOutOfBounds,
+    /// A ready result did not report the canonical all-completed observation.
+    ReadyObservationInvalid,
+    /// Completed-count liveness regressed below its prior high-water mark.
+    CompletedCountRegressed,
+    /// The bounded number of consecutive scans without progress was exhausted.
+    ConsecutiveScansWithoutProgress,
+    /// The checked whole-policy scan bound was exhausted.
+    TotalScanBoundReached,
+    /// The whole-policy scan bound could not be represented.
+    TotalScanBoundOverflow,
+}
+
+/// Bounded addressless evidence retained when Ferric terminalizes a wait policy.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct M1CompletionProgressWaitDiagnosticV1 {
+    reason: M1CompletionProgressWaitTerminalReasonV1,
+    scans_performed: u32,
+    consecutive_scans_without_progress: u32,
+    total_scan_bound: Option<u32>,
+    completed_count_high_water: u16,
+    last_observation: Option<M1CompletionProgressObservationV1>,
+}
+
+impl M1CompletionProgressWaitDiagnosticV1 {
+    /// Returns the stable policy identity governing this diagnostic.
+    #[must_use]
+    pub const fn policy_id(&self) -> &'static str {
+        M1_COMPLETION_PROGRESS_WAIT_POLICY_ID_V1
+    }
+
+    /// Returns the exact terminal policy reason.
+    #[must_use]
+    pub const fn reason(&self) -> M1CompletionProgressWaitTerminalReasonV1 {
+        self.reason
+    }
+
+    /// Returns the number of consuming progress scans performed.
+    #[must_use]
+    pub const fn scans_performed(&self) -> u32 {
+        self.scans_performed
+    }
+
+    /// Returns the final count of consecutive scans without high-water progress.
+    #[must_use]
+    pub const fn consecutive_scans_without_progress(&self) -> u32 {
+        self.consecutive_scans_without_progress
+    }
+
+    /// Returns the checked whole-policy scan bound, when representable.
+    #[must_use]
+    pub const fn total_scan_bound(&self) -> Option<u32> {
+        self.total_scan_bound
+    }
+
+    /// Returns the monotonic completed-count liveness high-water mark.
+    #[must_use]
+    pub const fn completed_count_high_water(&self) -> u16 {
+        self.completed_count_high_water
+    }
+
+    /// Returns the exact last scan, including a malformed or regressing scan.
+    #[must_use]
+    pub const fn last_observation(&self) -> Option<M1CompletionProgressObservationV1> {
+        self.last_observation
+    }
+}
+
+/// Derives the checked whole-policy scan bound for one closed M1 shape.
+#[must_use]
+pub fn m1_completion_progress_total_scan_bound_v1(
+    shape: M1PhysicalFixedBatchShapeV1,
+) -> Option<u32> {
+    checked_completion_progress_total_scan_bound(
+        shape.packet_count(),
+        M1_COMPLETION_PROGRESS_MAX_CONSECUTIVE_STALLED_SCANS_V1,
+    )
+}
 
 /// Observable Ferric phase for one M1 queue generation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -3632,8 +3774,9 @@ impl<'a> M1PhysicalQueueCreateFailureV1<'a> {
 pub struct M1PhysicalQueueOperationFailureV1 {
     shape: M1PhysicalFixedBatchShapeV1,
     step: Box<M1PrepublicationStepCustodyV1>,
-    lower: ServiceQueueOperationFailureV1,
+    lower: Box<ServiceQueueOperationFailureV1>,
     custody: Box<M1PhysicalQueueBatchCustodyV1>,
+    completion_progress_wait: Option<Box<M1CompletionProgressWaitDiagnosticV1>>,
 }
 
 /// Terminal physical queue operation failure after its scheduler Engine has
@@ -3691,7 +3834,7 @@ impl M1PhysicalQueueOperationFailureV1 {
 
     /// Returns the exact generic operation error without discarding custody.
     #[must_use]
-    pub const fn error(&self) -> &ServiceQueueErrorV1 {
+    pub fn error(&self) -> &ServiceQueueErrorV1 {
         self.lower.error()
     }
 
@@ -3699,6 +3842,28 @@ impl M1PhysicalQueueOperationFailureV1 {
     #[must_use = "Ferric custody remains retained by terminal failure"]
     pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
         &self.custody
+    }
+
+    /// Returns Ferric's bounded completion-progress diagnostic when its wait
+    /// policy, rather than an ordinary lower fault, terminalized the queue.
+    #[must_use]
+    pub fn completion_progress_wait_diagnostic(
+        &self,
+    ) -> Option<&M1CompletionProgressWaitDiagnosticV1> {
+        self.completion_progress_wait.as_deref()
+    }
+
+    /// Maps the retained scan's first observed-pending index back to the exact
+    /// retained addressless physical recipe row.
+    #[must_use]
+    pub fn first_observed_pending_recipe_row(&self) -> Option<&M1PhysicalDispatchRecipeRowV1> {
+        let index = usize::from(
+            self.completion_progress_wait
+                .as_deref()?
+                .last_observation?
+                .first_pending_batch_index?,
+        );
+        self.custody.physical_recipe().rows().get(index)
     }
 }
 
@@ -4071,58 +4236,268 @@ fn submit_case<const N: usize>(
     }
 }
 
-enum BoundedCompletionPollV1<P, C> {
-    Pending(P),
-    Ready(C),
+enum CompletionProgressPollV1<P, C> {
+    Pending {
+        session: P,
+        progress: M1CompletionProgressObservationV1,
+    },
+    Ready {
+        session: C,
+        progress: M1CompletionProgressObservationV1,
+    },
 }
 
-fn wait_with_ferric_poll_budget<P, C, E>(
-    pending: P,
-    polls: u32,
-    mut poll: impl FnMut(P) -> Result<BoundedCompletionPollV1<P, C>, E>,
-    wait: impl FnOnce(P, u32) -> Result<C, E>,
-) -> Result<C, E> {
-    let mut pending = pending;
-    let mut remaining = polls;
-    while remaining > 1 {
-        match poll(pending)? {
-            BoundedCompletionPollV1::Pending(next) => pending = next,
-            BoundedCompletionPollV1::Ready(completed) => return Ok(completed),
-        }
-        remaining -= 1;
+enum CompletionProgressWaitFailureV1<E> {
+    Lower(E),
+    Policy {
+        lower: E,
+        diagnostic: M1CompletionProgressWaitDiagnosticV1,
+    },
+}
+
+fn checked_completion_progress_total_scan_bound(
+    packet_count: usize,
+    maximum_consecutive_stalled_scans: u32,
+) -> Option<u32> {
+    u32::try_from(packet_count)
+        .ok()?
+        .checked_add(1)?
+        .checked_mul(maximum_consecutive_stalled_scans)
+}
+
+fn completion_progress_diagnostic(
+    reason: M1CompletionProgressWaitTerminalReasonV1,
+    scans_performed: u32,
+    consecutive_scans_without_progress: u32,
+    total_scan_bound: Option<u32>,
+    completed_count_high_water: u16,
+    last_observation: Option<M1CompletionProgressObservationV1>,
+) -> M1CompletionProgressWaitDiagnosticV1 {
+    M1CompletionProgressWaitDiagnosticV1 {
+        reason,
+        scans_performed,
+        consecutive_scans_without_progress,
+        total_scan_bound,
+        completed_count_high_water,
+        last_observation,
     }
-    wait(pending, remaining)
+}
+
+fn validate_completion_progress_observation(
+    progress: M1CompletionProgressObservationV1,
+    expected_packet_count: u16,
+    ready: bool,
+    completed_count_high_water: u16,
+) -> Result<(), M1CompletionProgressWaitTerminalReasonV1> {
+    if progress.packet_count != expected_packet_count {
+        return Err(M1CompletionProgressWaitTerminalReasonV1::PacketCountMismatch);
+    }
+    if progress.completed_count > expected_packet_count
+        || progress.pending_count > expected_packet_count
+        || progress.completed_count.checked_add(progress.pending_count)
+            != Some(expected_packet_count)
+    {
+        return Err(M1CompletionProgressWaitTerminalReasonV1::CountSumMismatch);
+    }
+    if ready {
+        if progress.completed_count != expected_packet_count
+            || progress.pending_count != 0
+            || progress.first_pending_batch_index.is_some()
+        {
+            return Err(M1CompletionProgressWaitTerminalReasonV1::ReadyObservationInvalid);
+        }
+    } else {
+        if progress.pending_count == 0 || progress.first_pending_batch_index.is_none() {
+            return Err(M1CompletionProgressWaitTerminalReasonV1::PendingObservationInvalid);
+        }
+        if progress.first_pending_batch_index >= Some(expected_packet_count) {
+            return Err(M1CompletionProgressWaitTerminalReasonV1::FirstPendingIndexOutOfBounds);
+        }
+    }
+    if progress.completed_count < completed_count_high_water {
+        return Err(M1CompletionProgressWaitTerminalReasonV1::CompletedCountRegressed);
+    }
+    Ok(())
+}
+
+fn wait_with_completion_progress_policy<const N: usize, P, C, E>(
+    pending: P,
+    maximum_consecutive_stalled_scans: u32,
+    mut poll: impl FnMut(P) -> Result<CompletionProgressPollV1<P, C>, E>,
+    terminalize: impl FnOnce(P) -> E,
+) -> Result<C, CompletionProgressWaitFailureV1<E>> {
+    let expected_packet_count = match u16::try_from(N) {
+        Ok(packet_count) => packet_count,
+        Err(_) => {
+            let lower = terminalize(pending);
+            return Err(CompletionProgressWaitFailureV1::Policy {
+                lower,
+                diagnostic: completion_progress_diagnostic(
+                    M1CompletionProgressWaitTerminalReasonV1::PacketCountNotRepresentable,
+                    0,
+                    0,
+                    None,
+                    0,
+                    None,
+                ),
+            });
+        }
+    };
+    let total_scan_bound =
+        match checked_completion_progress_total_scan_bound(N, maximum_consecutive_stalled_scans) {
+            Some(bound) => bound,
+            None => {
+                let lower = terminalize(pending);
+                return Err(CompletionProgressWaitFailureV1::Policy {
+                    lower,
+                    diagnostic: completion_progress_diagnostic(
+                        M1CompletionProgressWaitTerminalReasonV1::TotalScanBoundOverflow,
+                        0,
+                        0,
+                        None,
+                        0,
+                        None,
+                    ),
+                });
+            }
+        };
+    if total_scan_bound == 0 {
+        let lower = terminalize(pending);
+        return Err(CompletionProgressWaitFailureV1::Policy {
+            lower,
+            diagnostic: completion_progress_diagnostic(
+                M1CompletionProgressWaitTerminalReasonV1::TotalScanBoundReached,
+                0,
+                0,
+                Some(total_scan_bound),
+                0,
+                None,
+            ),
+        });
+    }
+
+    let mut pending = pending;
+    let mut scans_performed = 0_u32;
+    let mut consecutive_scans_without_progress = 0_u32;
+    let mut completed_count_high_water = 0_u16;
+    loop {
+        let outcome = poll(pending).map_err(CompletionProgressWaitFailureV1::Lower)?;
+        scans_performed = scans_performed
+            .checked_add(1)
+            .expect("the checked total scan bound contains every policy scan");
+        let (next, progress) = match outcome {
+            CompletionProgressPollV1::Pending { session, progress } => (session, progress),
+            CompletionProgressPollV1::Ready { session, progress } => {
+                // The safe lower API constructs Ready and its canonical progress
+                // together, after consuming published custody into completed
+                // custody. No published owner remains to terminalize with wait(0),
+                // so this lower-layer invariant is checked in debug builds and
+                // Ready wins the liveness-threshold boundary in all builds.
+                debug_assert!(validate_completion_progress_observation(
+                    progress,
+                    expected_packet_count,
+                    true,
+                    completed_count_high_water,
+                )
+                .is_ok());
+                return Ok(session);
+            }
+        };
+        if let Err(reason) = validate_completion_progress_observation(
+            progress,
+            expected_packet_count,
+            false,
+            completed_count_high_water,
+        ) {
+            let lower = terminalize(next);
+            return Err(CompletionProgressWaitFailureV1::Policy {
+                lower,
+                diagnostic: completion_progress_diagnostic(
+                    reason,
+                    scans_performed,
+                    consecutive_scans_without_progress,
+                    Some(total_scan_bound),
+                    completed_count_high_water,
+                    Some(progress),
+                ),
+            });
+        }
+        pending = next;
+        if progress.completed_count > completed_count_high_water {
+            completed_count_high_water = progress.completed_count;
+            consecutive_scans_without_progress = 0;
+        } else {
+            consecutive_scans_without_progress = consecutive_scans_without_progress
+                .checked_add(1)
+                .expect("the consecutive scan counter is policy bounded");
+        }
+
+        let reason = if consecutive_scans_without_progress >= maximum_consecutive_stalled_scans {
+            Some(M1CompletionProgressWaitTerminalReasonV1::ConsecutiveScansWithoutProgress)
+        } else if scans_performed >= total_scan_bound {
+            Some(M1CompletionProgressWaitTerminalReasonV1::TotalScanBoundReached)
+        } else {
+            None
+        };
+        if let Some(reason) = reason {
+            let lower = terminalize(pending);
+            return Err(CompletionProgressWaitFailureV1::Policy {
+                lower,
+                diagnostic: completion_progress_diagnostic(
+                    reason,
+                    scans_performed,
+                    consecutive_scans_without_progress,
+                    Some(total_scan_bound),
+                    completed_count_high_water,
+                    Some(progress),
+                ),
+            });
+        }
+    }
 }
 
 fn wait_case<const N: usize>(
     case: Box<M1PhysicalQueuePhaseCaseV1<ServicePublishedQueueSessionV1<N>>>,
     shape: M1PhysicalFixedBatchShapeV1,
-    polls: u32,
 ) -> Result<
     Box<M1PhysicalQueuePhaseCaseV1<ServiceCompletedQueueSessionV1<N>>>,
     M1PhysicalQueueOperationFailureV1,
 > {
     let (lower, custody, step) = (*case).into_parts();
-    // The generic bounded wait has a smaller per-call policy ceiling. Polling
-    // preserves published custody so Ferric can enforce its full inference budget.
-    let completed = wait_with_ferric_poll_budget(
+    let completed = wait_with_completion_progress_policy::<N, _, _, _>(
         lower,
-        polls,
+        M1_COMPLETION_PROGRESS_MAX_CONSECUTIVE_STALLED_SCANS_V1,
         |published| {
-            published.poll().map(|outcome| match outcome {
-                ServiceQueuePollV1::Pending(published) => {
-                    BoundedCompletionPollV1::Pending(published)
+            published.poll_with_progress().map(|outcome| match outcome {
+                ServiceQueuePollWithProgressV1::Pending { session, progress } => {
+                    CompletionProgressPollV1::Pending {
+                        session,
+                        progress: M1CompletionProgressObservationV1::from_service(progress),
+                    }
                 }
-                ServiceQueuePollV1::Ready(completed) => BoundedCompletionPollV1::Ready(completed),
+                ServiceQueuePollWithProgressV1::Ready { session, progress } => {
+                    CompletionProgressPollV1::Ready {
+                        session,
+                        progress: M1CompletionProgressObservationV1::from_service(progress),
+                    }
+                }
             })
         },
-        ServicePublishedQueueSessionV1::wait,
+        |published| match published.wait(0) {
+            Ok(_) => unreachable!("a zero-scan lower wait cannot complete a published batch"),
+            Err(lower) => lower,
+        },
     );
     match completed {
         Ok(lower) => Ok(Box::new(M1PhysicalQueuePhaseCaseV1::new(
             lower, custody, step,
         ))),
-        Err(lower) => Err(operation_failure(shape, step, lower, custody)),
+        Err(CompletionProgressWaitFailureV1::Lower(lower)) => {
+            Err(operation_failure(shape, step, lower, custody))
+        }
+        Err(CompletionProgressWaitFailureV1::Policy { lower, diagnostic }) => Err(
+            operation_failure_with_completion_progress(shape, step, lower, custody, diagnostic),
+        ),
     }
 }
 
@@ -4264,34 +4639,31 @@ impl M1PhysicalQueueSessionV1 {
 }
 
 impl M1PhysicalPublishedQueueSessionV1 {
-    /// Waits for every exact completion signal using Ferric's bounded poll count.
+    /// Waits for every exact completion signal under Ferric's fixed progress policy.
     ///
     /// # Errors
     ///
     /// Returns terminal generic quarantine paired with exact Ferric custody.
     pub fn wait(
         self,
-        polls: u32,
     ) -> Result<M1PhysicalCompletedQueueSessionV1, M1PhysicalQueueOperationFailureV1> {
         match self {
-            Self::TargetOnly(case) => {
-                wait_case(case, M1PhysicalFixedBatchShapeV1::TargetOnly, polls)
-                    .map(M1PhysicalCompletedQueueSessionV1::TargetOnly)
-            }
+            Self::TargetOnly(case) => wait_case(case, M1PhysicalFixedBatchShapeV1::TargetOnly)
+                .map(M1PhysicalCompletedQueueSessionV1::TargetOnly),
             Self::PairedPrefill(case) => {
-                wait_case(case, M1PhysicalFixedBatchShapeV1::PairedPrefill, polls)
+                wait_case(case, M1PhysicalFixedBatchShapeV1::PairedPrefill)
                     .map(M1PhysicalCompletedQueueSessionV1::PairedPrefill)
             }
             Self::SpeculativeK4(case) => {
-                wait_case(case, M1PhysicalFixedBatchShapeV1::SpeculativeK4, polls)
+                wait_case(case, M1PhysicalFixedBatchShapeV1::SpeculativeK4)
                     .map(M1PhysicalCompletedQueueSessionV1::SpeculativeK4)
             }
             Self::SpeculativeK8(case) => {
-                wait_case(case, M1PhysicalFixedBatchShapeV1::SpeculativeK8, polls)
+                wait_case(case, M1PhysicalFixedBatchShapeV1::SpeculativeK8)
                     .map(M1PhysicalCompletedQueueSessionV1::SpeculativeK8)
             }
             Self::SpeculativeK16(case) => {
-                wait_case(case, M1PhysicalFixedBatchShapeV1::SpeculativeK16, polls)
+                wait_case(case, M1PhysicalFixedBatchShapeV1::SpeculativeK16)
                     .map(M1PhysicalCompletedQueueSessionV1::SpeculativeK16)
             }
         }
@@ -5354,72 +5726,131 @@ fn operation_failure(
     M1PhysicalQueueOperationFailureV1 {
         shape,
         step: Box::new(step),
-        lower,
+        lower: Box::new(lower),
         custody: Box::new(custody),
+        completion_progress_wait: None,
+    }
+}
+
+fn operation_failure_with_completion_progress(
+    shape: M1PhysicalFixedBatchShapeV1,
+    step: M1PrepublicationStepCustodyV1,
+    lower: ServiceQueueOperationFailureV1,
+    custody: M1PhysicalQueueBatchCustodyV1,
+    completion_progress_wait: M1CompletionProgressWaitDiagnosticV1,
+) -> M1PhysicalQueueOperationFailureV1 {
+    M1PhysicalQueueOperationFailureV1 {
+        shape,
+        step: Box::new(step),
+        lower: Box::new(lower),
+        custody: Box::new(custody),
+        completion_progress_wait: Some(Box::new(completion_progress_wait)),
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::{
-        read_m1_diagnostic_choice_pair_v1, validate_generic_observed_semantics,
-        wait_with_ferric_poll_budget, BoundedCompletionPollV1, CompletionWireSemanticExpectation,
-        M1CompletedOutputCheckErrorV1, M1DiagnosticChoiceCopyCustodyV1,
-        M1DiagnosticChoiceReadBackendV1, M1PhysicalQueueCreateFailureClassV1,
-        M1PhysicalQueuePhaseV1,
+        checked_completion_progress_total_scan_bound, m1_completion_progress_total_scan_bound_v1,
+        read_m1_diagnostic_choice_pair_v1, validate_completion_progress_observation,
+        validate_generic_observed_semantics, wait_with_completion_progress_policy,
+        CompletionProgressPollV1, CompletionProgressWaitFailureV1,
+        CompletionWireSemanticExpectation, M1CompletedOutputCheckErrorV1,
+        M1CompletionProgressObservationV1, M1CompletionProgressWaitDiagnosticV1,
+        M1CompletionProgressWaitTerminalReasonV1, M1DiagnosticChoiceCopyCustodyV1,
+        M1DiagnosticChoiceReadBackendV1, M1PhysicalFixedBatchShapeV1,
+        M1PhysicalQueueCreateFailureClassV1, M1PhysicalQueuePhaseV1,
+        M1_COMPLETION_PROGRESS_MAX_CONSECUTIVE_STALLED_SCANS_V1,
     };
     use crate::Engine;
     use std::cell::{Cell, RefCell};
 
     #[derive(Clone, Copy, Debug, Eq, PartialEq)]
     enum MockPollEventV1 {
-        Pending,
-        Ready,
+        Pending(M1CompletionProgressObservationV1),
+        Ready(M1CompletionProgressObservationV1),
         Fault,
     }
 
     #[derive(Clone, Copy, Debug, Eq, PartialEq)]
     enum MockPollFailureV1 {
-        Timeout(u32),
+        Terminalized(u32),
         Fault(u32),
     }
 
-    fn drive_mock_poll_budget(
-        budget: u32,
+    #[derive(Debug, Eq, PartialEq)]
+    enum MockWaitOutcomeV1 {
+        Ready(u32),
+        LowerFault(MockPollFailureV1),
+        Policy {
+            lower: MockPollFailureV1,
+            diagnostic: M1CompletionProgressWaitDiagnosticV1,
+        },
+    }
+
+    fn pending_progress<const N: usize>(
+        completed_count: u16,
+        first_pending_batch_index: u16,
+    ) -> M1CompletionProgressObservationV1 {
+        let packet_count = u16::try_from(N).expect("mock packet count fits u16");
+        M1CompletionProgressObservationV1 {
+            packet_count,
+            completed_count,
+            pending_count: packet_count - completed_count,
+            first_pending_batch_index: Some(first_pending_batch_index),
+        }
+    }
+
+    fn ready_progress<const N: usize>() -> M1CompletionProgressObservationV1 {
+        let packet_count = u16::try_from(N).expect("mock packet count fits u16");
+        M1CompletionProgressObservationV1 {
+            packet_count,
+            completed_count: packet_count,
+            pending_count: 0,
+            first_pending_batch_index: None,
+        }
+    }
+
+    fn drive_mock_progress_wait<const N: usize>(
+        maximum_consecutive_stalled_scans: u32,
         events: &[MockPollEventV1],
-    ) -> (Result<u32, MockPollFailureV1>, Vec<(bool, u32)>) {
+    ) -> (MockWaitOutcomeV1, usize, Vec<u32>) {
         let cursor = Cell::new(0_usize);
-        let observations = RefCell::new(Vec::new());
-        let next_event = || {
-            let index = cursor.get();
-            let event = events[index];
-            cursor.set(index + 1);
-            event
-        };
-        let result = wait_with_ferric_poll_budget(
+        let terminalized = RefCell::new(Vec::new());
+        let result = wait_with_completion_progress_policy::<N, _, _, _>(
             0_u32,
-            budget,
+            maximum_consecutive_stalled_scans,
             |owner| {
-                observations.borrow_mut().push((false, 1));
-                match next_event() {
-                    MockPollEventV1::Pending => Ok(BoundedCompletionPollV1::Pending(owner + 1)),
-                    MockPollEventV1::Ready => Ok(BoundedCompletionPollV1::Ready(owner + 1)),
+                let index = cursor.get();
+                let event = events[index];
+                cursor.set(index + 1);
+                match event {
+                    MockPollEventV1::Pending(progress) => Ok(CompletionProgressPollV1::Pending {
+                        session: owner + 1,
+                        progress,
+                    }),
+                    MockPollEventV1::Ready(progress) => Ok(CompletionProgressPollV1::Ready {
+                        session: owner + 1,
+                        progress,
+                    }),
                     MockPollEventV1::Fault => Err(MockPollFailureV1::Fault(owner)),
                 }
             },
-            |owner, polls| {
-                observations.borrow_mut().push((true, polls));
-                if polls == 0 {
-                    return Err(MockPollFailureV1::Timeout(0));
-                }
-                match next_event() {
-                    MockPollEventV1::Ready => Ok(owner + 1),
-                    MockPollEventV1::Pending => Err(MockPollFailureV1::Timeout(polls)),
-                    MockPollEventV1::Fault => Err(MockPollFailureV1::Fault(owner)),
-                }
+            |owner| {
+                terminalized.borrow_mut().push(owner);
+                MockPollFailureV1::Terminalized(owner)
             },
         );
-        (result, observations.into_inner())
+        let outcome = match result {
+            Ok(completed) => MockWaitOutcomeV1::Ready(completed),
+            Err(CompletionProgressWaitFailureV1::Lower(lower)) => {
+                MockWaitOutcomeV1::LowerFault(lower)
+            }
+            Err(CompletionProgressWaitFailureV1::Policy { lower, diagnostic }) => {
+                MockWaitOutcomeV1::Policy { lower, diagnostic }
+            }
+        };
+        (outcome, cursor.get(), terminalized.into_inner())
     }
 
     #[derive(Debug, Eq, PartialEq)]
@@ -5510,50 +5941,171 @@ mod tests {
     }
 
     #[test]
-    fn ferric_poll_budget_preserves_boundaries_faults_and_linear_progress() {
+    fn completion_progress_increase_resets_the_small_injected_stall_lease() {
+        let events = [
+            MockPollEventV1::Pending(pending_progress::<3>(0, 0)),
+            MockPollEventV1::Pending(pending_progress::<3>(1, 1)),
+            MockPollEventV1::Pending(pending_progress::<3>(1, 1)),
+            MockPollEventV1::Pending(pending_progress::<3>(2, 2)),
+            MockPollEventV1::Pending(pending_progress::<3>(2, 0)),
+            MockPollEventV1::Ready(ready_progress::<3>()),
+        ];
         assert_eq!(
-            drive_mock_poll_budget(0, &[]),
-            (Err(MockPollFailureV1::Timeout(0)), vec![(true, 0)])
+            drive_mock_progress_wait::<3>(3, &events),
+            (MockWaitOutcomeV1::Ready(6), 6, Vec::new())
         );
+    }
+
+    #[test]
+    fn completion_progress_stall_terminalizes_without_an_extra_scan() {
+        let progress = pending_progress::<3>(0, 0);
+        let events = [
+            MockPollEventV1::Pending(progress),
+            MockPollEventV1::Pending(progress),
+            MockPollEventV1::Pending(progress),
+        ];
+        let (outcome, scans, terminalized) = drive_mock_progress_wait::<3>(3, &events);
+        let MockWaitOutcomeV1::Policy { lower, diagnostic } = outcome else {
+            panic!("stall must terminalize through the lower zero-scan wait");
+        };
+        assert_eq!(lower, MockPollFailureV1::Terminalized(3));
+        assert_eq!(scans, 3);
+        assert_eq!(terminalized, vec![3]);
         assert_eq!(
-            drive_mock_poll_budget(1, &[MockPollEventV1::Pending]),
-            (Err(MockPollFailureV1::Timeout(1)), vec![(true, 1)])
+            diagnostic.reason(),
+            M1CompletionProgressWaitTerminalReasonV1::ConsecutiveScansWithoutProgress
         );
+        assert_eq!(diagnostic.scans_performed(), 3);
+        assert_eq!(diagnostic.consecutive_scans_without_progress(), 3);
+        assert_eq!(diagnostic.completed_count_high_water(), 0);
+        assert_eq!(diagnostic.last_observation(), Some(progress));
+    }
+
+    #[test]
+    fn completion_progress_regression_terminalizes_with_prior_high_water() {
+        let regressing = pending_progress::<3>(0, 0);
+        let events = [
+            MockPollEventV1::Pending(pending_progress::<3>(1, 1)),
+            MockPollEventV1::Pending(regressing),
+        ];
+        let (outcome, scans, terminalized) = drive_mock_progress_wait::<3>(3, &events);
+        let MockWaitOutcomeV1::Policy { diagnostic, .. } = outcome else {
+            panic!("completed-count regression must terminalize");
+        };
+        assert_eq!(scans, 2);
+        assert_eq!(terminalized, vec![2]);
         assert_eq!(
-            drive_mock_poll_budget(3, &[MockPollEventV1::Pending, MockPollEventV1::Ready]),
-            (Ok(2), vec![(false, 1), (false, 1)])
+            diagnostic.reason(),
+            M1CompletionProgressWaitTerminalReasonV1::CompletedCountRegressed
         );
+        assert_eq!(diagnostic.completed_count_high_water(), 1);
+        assert_eq!(diagnostic.last_observation(), Some(regressing));
+    }
+
+    #[test]
+    fn non_atomic_first_pending_index_is_diagnostic_not_a_prefix_claim() {
+        let events = [
+            MockPollEventV1::Pending(pending_progress::<4>(3, 0)),
+            MockPollEventV1::Ready(ready_progress::<4>()),
+        ];
         assert_eq!(
-            drive_mock_poll_budget(
-                3,
-                &[
-                    MockPollEventV1::Pending,
-                    MockPollEventV1::Pending,
-                    MockPollEventV1::Ready,
-                ]
-            ),
-            (Ok(3), vec![(false, 1), (false, 1), (true, 1)])
+            drive_mock_progress_wait::<4>(2, &events),
+            (MockWaitOutcomeV1::Ready(2), 2, Vec::new())
         );
+    }
+
+    #[test]
+    fn ready_wins_the_small_injected_stall_lease_boundary() {
+        let events = [
+            MockPollEventV1::Pending(pending_progress::<2>(0, 0)),
+            MockPollEventV1::Ready(ready_progress::<2>()),
+        ];
         assert_eq!(
-            drive_mock_poll_budget(
-                3,
-                &[
-                    MockPollEventV1::Pending,
-                    MockPollEventV1::Pending,
-                    MockPollEventV1::Pending,
-                ]
-            ),
+            drive_mock_progress_wait::<2>(2, &events),
+            (MockWaitOutcomeV1::Ready(2), 2, Vec::new())
+        );
+    }
+
+    #[test]
+    fn pure_ready_validation_rejects_malformed_and_regressing_observations() {
+        let malformed = M1CompletionProgressObservationV1 {
+            packet_count: 3,
+            completed_count: 2,
+            pending_count: 1,
+            first_pending_batch_index: Some(0),
+        };
+        assert_eq!(
+            validate_completion_progress_observation(malformed, 3, true, 2),
+            Err(M1CompletionProgressWaitTerminalReasonV1::ReadyObservationInvalid)
+        );
+
+        let regressing = M1CompletionProgressObservationV1 {
+            packet_count: 3,
+            completed_count: 3,
+            pending_count: 0,
+            first_pending_batch_index: None,
+        };
+        assert_eq!(
+            validate_completion_progress_observation(regressing, 3, true, 4),
+            Err(M1CompletionProgressWaitTerminalReasonV1::CompletedCountRegressed)
+        );
+    }
+
+    #[test]
+    fn malformed_pending_progress_terminalizes_and_lower_faults_remain_ordinary() {
+        let malformed = M1CompletionProgressObservationV1 {
+            packet_count: 3,
+            completed_count: 1,
+            pending_count: 1,
+            first_pending_batch_index: Some(3),
+        };
+        let (outcome, scans, terminalized) =
+            drive_mock_progress_wait::<3>(3, &[MockPollEventV1::Pending(malformed)]);
+        let MockWaitOutcomeV1::Policy { diagnostic, .. } = outcome else {
+            panic!("malformed count sum must terminalize");
+        };
+        assert_eq!(scans, 1);
+        assert_eq!(terminalized, vec![1]);
+        assert_eq!(
+            diagnostic.reason(),
+            M1CompletionProgressWaitTerminalReasonV1::CountSumMismatch
+        );
+
+        assert_eq!(
+            drive_mock_progress_wait::<3>(3, &[MockPollEventV1::Fault]),
             (
-                Err(MockPollFailureV1::Timeout(1)),
-                vec![(false, 1), (false, 1), (true, 1)]
+                MockWaitOutcomeV1::LowerFault(MockPollFailureV1::Fault(0)),
+                1,
+                Vec::new()
             )
         );
+    }
+
+    #[test]
+    fn production_progress_scan_bounds_are_exact_for_every_m1_shape() {
+        let cases = [
+            (M1PhysicalFixedBatchShapeV1::TargetOnly, 4_472_832),
+            (M1PhysicalFixedBatchShapeV1::PairedPrefill, 7_946_240),
+            (M1PhysicalFixedBatchShapeV1::SpeculativeK4, 18_374_656),
+            (M1PhysicalFixedBatchShapeV1::SpeculativeK8, 32_268_288),
+            (M1PhysicalFixedBatchShapeV1::SpeculativeK16, 60_055_552),
+        ];
+        for (shape, expected) in cases {
+            assert_eq!(
+                m1_completion_progress_total_scan_bound_v1(shape),
+                Some(expected)
+            );
+            assert_eq!(
+                checked_completion_progress_total_scan_bound(
+                    shape.packet_count(),
+                    M1_COMPLETION_PROGRESS_MAX_CONSECUTIVE_STALLED_SCANS_V1,
+                ),
+                Some(expected)
+            );
+        }
         assert_eq!(
-            drive_mock_poll_budget(3, &[MockPollEventV1::Pending, MockPollEventV1::Fault]),
-            (
-                Err(MockPollFailureV1::Fault(1)),
-                vec![(false, 1), (false, 1)]
-            )
+            checked_completion_progress_total_scan_bound(usize::MAX, u32::MAX),
+            None
         );
     }
 

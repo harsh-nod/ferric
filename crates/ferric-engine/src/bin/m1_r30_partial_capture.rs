@@ -5,9 +5,11 @@
 //! cases.
 
 use super::{
-    canonical_bytes, exact_object, expect_string, field, hex_bytes, parse_canonical,
-    require_sha256, sha256_hex, CaptureResult, CapturedExecutionV1, R30PhysicalCaptureBindingsV1,
-    StagingOutput, Workload, MAX_POLLS, TARGET,
+    canonical_bytes, completion_wait_policy_contract, exact_object, expect_string, field,
+    fixed_r30_prefill_input_bytes, hex_bytes, parse_canonical, require_sha256, sha256_hex,
+    validate_completion_wait_policy, CaptureResult, CapturedExecutionV1,
+    R30PhysicalCaptureBindingsV1, StagingOutput, Workload, R30_PREFILL_ACTIVE_TOKENS,
+    R30_PREFILL_INPUT_BYTES, R30_PREFILL_INPUT_TOKEN, R30_PREFILL_TARGET_PAGES, TARGET,
 };
 use ferric_engine::M1PhysicalRunnerV1;
 use ferric_spec::{Identity, RequestId};
@@ -15,12 +17,12 @@ use serde_json::{json, Value};
 use std::path::Path;
 
 pub(super) const COMMAND: &str = "capture-r30-cancellation";
-const CAPTURE_FORMAT: &str = "FERRIC-M1-R30-PARTIAL-CAPTURE-V2";
-const PROTOCOL_FORMAT: &str = "FERRIC-M1-R30-PARTIAL-PROTOCOL-V2";
+const CAPTURE_FORMAT: &str = "FERRIC-M1-R30-PARTIAL-CAPTURE-V4";
+const PROTOCOL_FORMAT: &str = "FERRIC-M1-R30-PARTIAL-PROTOCOL-V4";
 const AUTHORITY: &str = "ferric-physical-partial-capture-only";
 const STATUS: &str = "partial-non-evidence";
 const CASE: &str = "target-prefill-s1-t128-retirement-before-observation";
-const WORKLOAD_FORMAT: &str = "FERRIC-M1-R30-CANCELLATION-WORKLOAD-V2";
+const WORKLOAD_FORMAT: &str = "FERRIC-M1-R30-CANCELLATION-WORKLOAD-V4";
 const NONCLAIM: &str = "Authenticated Ferric scheduler retirement before positive physical completion observation and exact settlement for one fixed target-prefill S1/T128 workload only. Retirement is not GPU work preemption. This partial capture is not benchmark evidence, makes no hardware claim, does not establish general hardware correctness, does not cover canary, exhaustion, rollback, or injected device-fault cases, supplies none of the required external or independent validation evidence, and does not close m1.r30.";
 const PROTOCOL_NONCLAIM: &str = "Partial fixed-workload physical cancellation capture only. Scheduler retirement before completion observation is not GPU work preemption. This protocol makes no hardware claim, does not establish canary integrity, exhaustion handling, rollback refinement, injected device-fault coverage, required external evidence, independent validation, hardware correctness, or close m1.r30.";
 
@@ -124,7 +126,9 @@ impl CancellationSettlementV1 {
         {
             return Err("target-prefill completion counts are not exact".to_owned());
         }
-        if self.expected_target_pages != [1] || self.released_pages != [(0, 1)] {
+        if self.expected_target_pages != [R30_PREFILL_TARGET_PAGES]
+            || self.released_pages != [(0, R30_PREFILL_TARGET_PAGES)]
+        {
             return Err(
                 "released pages differ from the fixed target-prefill S1 contract".to_owned(),
             );
@@ -134,7 +138,7 @@ impl CancellationSettlementV1 {
             .iter()
             .try_fold(0usize, |total, expected| total.checked_add(*expected))
             .ok_or_else(|| "expected target-page count overflowed".to_owned())?;
-        if expected_total != 1
+        if expected_total != R30_PREFILL_TARGET_PAGES
             || expected_total != self.expected_total_target_pages
             || expected_total != self.total_released_pages
         {
@@ -189,7 +193,7 @@ impl CancellationSettlementV1 {
     }
 }
 
-pub(super) struct CaptureManifestInputsV2<'a> {
+pub(super) struct CaptureManifestInputsV4<'a> {
     pub(super) capture: &'a super::CapturedOutput,
     pub(super) closure_sha256: &'a str,
     pub(super) environment_sha256: &'a str,
@@ -307,13 +311,15 @@ fn protocol_bytes() -> CaptureResult<Vec<u8>> {
 
 fn fixed_workload_contract() -> Value {
     json!({
-        "active_length": 1,
+        "active_length": R30_PREFILL_ACTIVE_TOKENS,
         "case": CASE,
+        "completion_wait_policy": completion_wait_policy_contract(),
         "context_length": 0,
         "format": WORKLOAD_FORMAT,
-        "input_token": 1,
+        "input_bytes": R30_PREFILL_INPUT_BYTES,
+        "input_token": R30_PREFILL_INPUT_TOKEN,
+        "input_token_count": R30_PREFILL_ACTIVE_TOKENS,
         "lane_count": 1,
-        "max_polls": MAX_POLLS,
         "selection": "target-prefill-s1-t128",
     })
 }
@@ -322,7 +328,7 @@ pub(super) fn protocol_sha256() -> CaptureResult<String> {
     Ok(sha256_hex(&protocol_bytes()?))
 }
 
-pub(super) fn manifest(inputs: CaptureManifestInputsV2<'_>) -> CaptureResult<Vec<u8>> {
+pub(super) fn manifest(inputs: CaptureManifestInputsV4<'_>) -> CaptureResult<Vec<u8>> {
     require_protocol()?;
     inputs.settlement.validate()?;
     validate_fixed_workload(inputs.workload)?;
@@ -377,12 +383,14 @@ pub(super) fn manifest(inputs: CaptureManifestInputsV2<'_>) -> CaptureResult<Vec
         "status": STATUS,
         "target": TARGET,
         "workload": {
-            "active_length": 1,
+            "active_length": R30_PREFILL_ACTIVE_TOKENS,
+            "completion_wait_policy": completion_wait_policy_contract(),
             "context_length": 0,
+            "input_bytes": inputs.workload.input_bytes,
             "input_payload_sha256": inputs.workload.input_sha256,
-            "input_token": 1,
+            "input_token": R30_PREFILL_INPUT_TOKEN,
+            "input_token_count": R30_PREFILL_ACTIVE_TOKENS,
             "lane_count": 1,
-            "max_polls": inputs.workload.max_polls,
             "selection": "target-prefill-s1-t128",
             "workload_sha256": sha256_hex(&inputs.workload.bytes),
         },
@@ -391,18 +399,17 @@ pub(super) fn manifest(inputs: CaptureManifestInputsV2<'_>) -> CaptureResult<Vec
 
 fn validate_fixed_workload(workload: &Workload) -> CaptureResult<()> {
     let expected_bytes = canonical_bytes(&fixed_workload_contract())?;
-    let expected_input_sha256 = sha256_hex(&1_u32.to_le_bytes());
+    let expected_input_sha256 = sha256_hex(&fixed_r30_prefill_input_bytes());
     if workload.bytes != expected_bytes
         || workload.input_path != Path::new("frozen-r30-cancellation-input-u32le")
-        || workload.input_bytes != 4
+        || workload.input_bytes != R30_PREFILL_INPUT_BYTES
         || workload.input_sha256 != expected_input_sha256
         || workload.kind != "prefill-s1-t128"
         || workload.lanes
             != [super::LaneInput {
-                active_length: 1,
+                active_length: R30_PREFILL_ACTIVE_TOKENS,
                 context_length: 0,
             }]
-        || u64::from(workload.max_polls) != MAX_POLLS
         || workload.selection.role != ferric_spec::Qwen3ModelRole::Target8B
         || workload.selection.mode != ferric_spec::Qwen3ExecutionMode::Prefill
         || workload.selection.bucket != ferric_spec::Qwen3PlanBucket::PrefillS1T128
@@ -548,11 +555,13 @@ fn validate_workload(value: &Value) -> CaptureResult<()> {
         value,
         &[
             "active_length",
+            "completion_wait_policy",
             "context_length",
+            "input_bytes",
             "input_payload_sha256",
             "input_token",
+            "input_token_count",
             "lane_count",
-            "max_polls",
             "selection",
             "workload_sha256",
         ],
@@ -566,15 +575,18 @@ fn validate_workload(value: &Value) -> CaptureResult<()> {
         .ok_or_else(|| "partial r30 workload identity must be a string".to_owned())?;
     require_sha256(input_sha256)?;
     require_sha256(workload_sha256)?;
-    if field(object, "active_length")?.as_u64() != Some(1)
+    validate_completion_wait_policy(field(object, "completion_wait_policy")?)?;
+    if field(object, "active_length")?.as_u64() != Some(u64::from(R30_PREFILL_ACTIVE_TOKENS))
         || field(object, "context_length")?.as_u64() != Some(0)
-        || field(object, "input_token")?.as_u64() != Some(1)
+        || field(object, "input_bytes")?.as_u64() != Some(R30_PREFILL_INPUT_BYTES)
+        || field(object, "input_token")?.as_u64() != Some(u64::from(R30_PREFILL_INPUT_TOKEN))
+        || field(object, "input_token_count")?.as_u64()
+            != Some(u64::from(R30_PREFILL_ACTIVE_TOKENS))
         || field(object, "lane_count")?.as_u64() != Some(1)
-        || field(object, "max_polls")?.as_u64() != Some(MAX_POLLS)
     {
         return Err("partial r30 fixed workload dimensions drifted".to_owned());
     }
-    if input_sha256 != sha256_hex(&1_u32.to_le_bytes())
+    if input_sha256 != sha256_hex(&fixed_r30_prefill_input_bytes())
         || workload_sha256 != sha256_hex(&canonical_bytes(&fixed_workload_contract())?)
     {
         return Err("partial r30 fixed workload identity drifted".to_owned());
@@ -696,9 +708,9 @@ fn validate_lifecycle(value: &Value) -> CaptureResult<()> {
             .as_u64()
             .ok_or_else(|| "partial r30 total release count is invalid".to_owned())?;
         if draft != 0
-            || target != 1
-            || expected_target != 1
-            || total != 1
+            || target != R30_PREFILL_TARGET_PAGES as u64
+            || expected_target != R30_PREFILL_TARGET_PAGES as u64
+            || total != R30_PREFILL_TARGET_PAGES as u64
             || draft.checked_add(target) != Some(total)
         {
             return Err("partial r30 released-page entry differs from target contract".to_owned());
@@ -707,7 +719,7 @@ fn validate_lifecycle(value: &Value) -> CaptureResult<()> {
             .checked_add(total)
             .ok_or_else(|| "partial r30 released-page total overflowed".to_owned())?;
     }
-    if released_total != 1
+    if released_total != R30_PREFILL_TARGET_PAGES as u64
         || field(object, "expected_total_target_pages")?.as_u64() != Some(released_total)
         || field(object, "total_released_pages")?.as_u64() != Some(released_total)
     {
@@ -759,7 +771,7 @@ mod tests {
             "completed_members": 1,
             "dispatch_generation": 1,
             "epoch": 1,
-            "expected_total_target_pages": 1,
+            "expected_total_target_pages": R30_PREFILL_TARGET_PAGES,
             "events": EVENTS,
             "externally_published_counts": [1],
             "final_absent_count": 1,
@@ -767,11 +779,16 @@ mod tests {
             "logical_accepted_counts": [1],
             "physical_completion_observed": true,
             "precompletion_reclaim_count": 0,
-            "released_pages": [{"draft": 0, "expected_target": 1, "target": 1, "total": 1}],
+            "released_pages": [{
+                "draft": 0,
+                "expected_target": R30_PREFILL_TARGET_PAGES,
+                "target": R30_PREFILL_TARGET_PAGES,
+                "total": R30_PREFILL_TARGET_PAGES,
+            }],
             "requests": [{"generation": 1, "slot": 0}],
             "retiring_count_after_request": 1,
             "terminal_members": 1,
-            "total_released_pages": 1,
+            "total_released_pages": R30_PREFILL_TARGET_PAGES,
         })
     }
 
@@ -793,12 +810,14 @@ mod tests {
 
     fn workload() -> Value {
         json!({
-            "active_length": 1,
+            "active_length": R30_PREFILL_ACTIVE_TOKENS,
+            "completion_wait_policy": completion_wait_policy_contract(),
             "context_length": 0,
-            "input_payload_sha256": sha256_hex(&1_u32.to_le_bytes()),
-            "input_token": 1,
+            "input_bytes": R30_PREFILL_INPUT_BYTES,
+            "input_payload_sha256": sha256_hex(&fixed_r30_prefill_input_bytes()),
+            "input_token": R30_PREFILL_INPUT_TOKEN,
+            "input_token_count": R30_PREFILL_ACTIVE_TOKENS,
             "lane_count": 1,
-            "max_polls": MAX_POLLS,
             "selection": "target-prefill-s1-t128",
             "workload_sha256": sha256_hex(&canonical_bytes(&fixed_workload_contract()).unwrap()),
         })
@@ -875,22 +894,22 @@ mod tests {
             completed_members: 1,
             dispatch_generation: 1,
             epoch: 1,
-            expected_target_pages: vec![1],
-            expected_total_target_pages: 1,
+            expected_target_pages: vec![R30_PREFILL_TARGET_PAGES],
+            expected_total_target_pages: R30_PREFILL_TARGET_PAGES,
             externally_published_counts: vec![1],
             final_absent_count: 1,
             in_flight_count: 0,
             logical_accepted_counts: vec![1],
             plan_id: Identity::new([7; 32]),
             precompletion_reclaim_count: 0,
-            released_pages: vec![(0, 1)],
+            released_pages: vec![(0, R30_PREFILL_TARGET_PAGES)],
             requests: vec![RequestIdentityV1 {
                 generation: 1,
                 slot: 0,
             }],
             retiring_count: 1,
             terminal_members: 1,
-            total_released_pages: 1,
+            total_released_pages: R30_PREFILL_TARGET_PAGES,
         };
         assert!(settlement.validate().is_err());
         settlement.in_flight_count = 1;
@@ -908,9 +927,9 @@ mod tests {
         assert!(validate_manifest(&capture(zero)).is_err());
 
         let mut mismatched = lifecycle();
-        mismatched["released_pages"][0]["target"] = json!(2);
-        mismatched["released_pages"][0]["total"] = json!(2);
-        mismatched["total_released_pages"] = json!(2);
+        mismatched["released_pages"][0]["target"] = json!(R30_PREFILL_TARGET_PAGES + 1);
+        mismatched["released_pages"][0]["total"] = json!(R30_PREFILL_TARGET_PAGES + 1);
+        mismatched["total_released_pages"] = json!(R30_PREFILL_TARGET_PAGES + 1);
         assert!(validate_manifest(&capture(mismatched)).is_err());
     }
 
@@ -1031,7 +1050,7 @@ mod tests {
         assert!(validate_manifest(&canonical_bytes(&value).unwrap()).is_err());
 
         let mut value = parse_canonical(&bytes, "fixture").unwrap();
-        value["workload"]["input_token"] = json!(2);
+        value["workload"]["input_token_count"] = json!(R30_PREFILL_ACTIVE_TOKENS - 1);
         assert!(validate_manifest(&canonical_bytes(&value).unwrap()).is_err());
     }
 }

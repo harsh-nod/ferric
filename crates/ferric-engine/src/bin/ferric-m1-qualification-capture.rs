@@ -111,7 +111,7 @@ mod m1_r32_partial_capture;
 
 const PLAN_FORMAT: &str = "FERRIC-M1-BENCHMARK-PLAN-V1";
 const ROSTER_FORMAT: &str = "FERRIC-M1-QUALIFICATION-ROSTER-V1";
-const WORKLOAD_FORMAT: &str = "FERRIC-M1-QUALIFICATION-WORKLOAD-V1";
+const WORKLOAD_FORMAT: &str = "FERRIC-M1-QUALIFICATION-WORKLOAD-V2";
 const CLOSURE_FORMAT: &str = "FERRIC-M1-QUALIFICATION-CLOSURE-V1";
 const ENVIRONMENT_FORMAT: &str = "FERRIC-M1-QUALIFICATION-ENVIRONMENT-V1";
 const OUTPUT_FORMAT: &str = "FERRIC-M1-DIFFERENTIAL-OUTPUT-V1";
@@ -119,7 +119,10 @@ const TRANSCRIPT_FORMAT: &str = "FERRIC-M1-QUALIFICATION-CAPTURE-V2";
 const TARGET: &str = "gfx942:xnack-";
 const DIFFERENTIAL_NONCLAIM: &str = "Structural acceptance authenticates externally collected target-only differential records only. It does not validate a logit tolerance, prove token equality, establish numerical or hardware correctness, qualify performance, or close m1.r29.";
 const MAX_DOCUMENT_BYTES: usize = 8 * 1_024 * 1_024;
-const MAX_POLLS: u64 = 100_000_000;
+const R30_PREFILL_ACTIVE_TOKENS: u32 = 128;
+const R30_PREFILL_INPUT_TOKEN: u32 = 1;
+const R30_PREFILL_INPUT_BYTES: u64 = R30_PREFILL_ACTIVE_TOKENS as u64 * 4;
+const R30_PREFILL_TARGET_PAGES: usize = 8;
 const METADATA_BYTES: u64 = 64 * 1_024;
 const BF16_BYTES: u64 = 2;
 const DECODE_CONTEXT_LENGTH: u32 = M1_QUALIFICATION_FINAL_INPUT_TOKEN;
@@ -627,16 +630,49 @@ fn terminal_quarantine<T: CaptureTerminalCustodyV1>(phase: &'static str, custody
 fn report_physical_queue_failure(
     phase: &'static str,
     failure: &ferric_engine::M1PhysicalQueueOperationFailureV1,
-    aggregate_poll_budget: Option<u32>,
 ) {
     let _ = writeln!(
         std::io::stderr().lock(),
-        "FAIL-STOP DETAIL: {phase}; shape={:?}; epoch={}; packets={}; aggregate_poll_budget={aggregate_poll_budget:?}; lower_error={:?}",
+        "FAIL-STOP DETAIL: {phase}; shape={:?}; epoch={}; packets={}; lower_error={:?}",
         failure.shape(),
         failure.queue_epoch().value(),
         failure.shape().packet_count(),
         failure.error(),
     );
+    if let Some(diagnostic) = failure.completion_progress_wait_diagnostic() {
+        let _ = writeln!(
+            std::io::stderr().lock(),
+            "FAIL-STOP COMPLETION WAIT: policy_id={}; reason={:?}; scans={}; consecutive_scans_without_progress={}; total_scan_bound={:?}; completed_count_high_water={}",
+            diagnostic.policy_id(),
+            diagnostic.reason(),
+            diagnostic.scans_performed(),
+            diagnostic.consecutive_scans_without_progress(),
+            diagnostic.total_scan_bound(),
+            diagnostic.completed_count_high_water(),
+        );
+        if let Some(observation) = diagnostic.last_observation() {
+            let _ = writeln!(
+                std::io::stderr().lock(),
+                "FAIL-STOP COMPLETION WAIT OBSERVATION: packet_count={}; completed_count={}; pending_count={}; first_observed_pending_batch_index={:?}",
+                observation.packet_count(),
+                observation.completed_count(),
+                observation.pending_count(),
+                observation.first_pending_batch_index(),
+            );
+        }
+        if let Some(row) = failure.first_observed_pending_recipe_row() {
+            let _ = writeln!(
+                std::io::stderr().lock(),
+                "FAIL-STOP FIRST OBSERVED-PENDING RECIPE ROW: dispatch_index={}; segment_index={}; stage={:?}; selection={:?}; kind={:?}; program_index={}",
+                row.dispatch_index(),
+                row.segment_index(),
+                row.stage(),
+                row.selection(),
+                row.kind(),
+                row.program_index(),
+            );
+        }
+    }
 }
 
 fn invariant_fail_stop<T: CaptureInvariantCustodyV1>(phase: &'static str, custody: T) -> ! {
@@ -734,10 +770,9 @@ fn terminal_round<T: CaptureTerminalCustodyV1>(
 fn terminal_queue_round(
     phase: &'static str,
     state: QualificationRoundCaptureStateV1,
-    aggregate_poll_budget: Option<u32>,
     failure: Box<M1RearmedQueueProgressFailureV1>,
 ) -> ! {
-    report_physical_queue_failure(phase, failure.source(), aggregate_poll_budget);
+    report_physical_queue_failure(phase, failure.source());
     terminal_round(phase, state, failure)
 }
 
@@ -1149,7 +1184,6 @@ struct Workload {
     input_sha256: String,
     kind: String,
     lanes: Vec<LaneInput>,
-    max_polls: u32,
     selection: Qwen3PlanSelection,
 }
 
@@ -1940,7 +1974,7 @@ fn run_r30_canary_capture(arguments: &[OsString]) -> CaptureResult<()> {
         model.draft_weights,
     )
     .map_err(|error| format!("cannot initialize physical model memory: {error:?}"))?;
-    let capture = execute_r30_canary_capture(&runner, memory, gpu_unique_id)?;
+    let (capture, workload) = execute_r30_canary_capture(&runner, memory, gpu_unique_id)?;
     let closed = capture
         .r30_canary_closed
         .as_ref()
@@ -1951,6 +1985,7 @@ fn run_r30_canary_capture(arguments: &[OsString]) -> CaptureResult<()> {
             device_id: capture.device_id,
             gpu_unique_id,
             runner: &runner,
+            workload: &workload,
         },
     )?;
     let capture_sha256 = sha256_hex(artifact.bytes());
@@ -1965,20 +2000,88 @@ fn execute_r30_canary_capture(
     runner: &ferric_engine::M1PhysicalRunnerV1,
     memory: ferric_engine::M1PartitionedModelMemoryKvPoolV1,
     gpu_unique_id: u64,
-) -> CaptureResult<CapturedOutput> {
-    let input_tokens = vec![1_u32];
-    let input_bytes = 1_u32.to_le_bytes();
+) -> CaptureResult<(CapturedOutput, Workload)> {
+    let (workload, input_tokens) = fixed_r30_canary_workload()?;
+    execute_capture(
+        runner,
+        memory,
+        &workload,
+        input_tokens,
+        gpu_unique_id,
+        CapturePurposeV1::R30PartialCanary,
+    )
+    .map(|capture| (capture, workload))
+}
+
+fn fixed_r30_prefill_input_tokens() -> Vec<u32> {
+    vec![R30_PREFILL_INPUT_TOKEN; R30_PREFILL_ACTIVE_TOKENS as usize]
+}
+
+fn fixed_r30_prefill_input_bytes() -> Vec<u8> {
+    fixed_r30_prefill_input_tokens()
+        .into_iter()
+        .flat_map(u32::to_le_bytes)
+        .collect()
+}
+
+fn completion_wait_policy_contract() -> Value {
+    json!({
+        "id": ferric_engine::M1_COMPLETION_PROGRESS_WAIT_POLICY_ID_V1,
+        "max_consecutive_scans_without_progress": ferric_engine::M1_COMPLETION_PROGRESS_MAX_CONSECUTIVE_STALLED_SCANS_V1,
+        "timeout_basis": "completion-signal-scans-only",
+        "total_scan_bound_rule": "(packet-count+1)*max-consecutive-scans-without-progress",
+    })
+}
+
+fn validate_completion_wait_policy(value: &Value) -> CaptureResult<()> {
+    let object = exact_object(
+        value,
+        &[
+            "id",
+            "max_consecutive_scans_without_progress",
+            "timeout_basis",
+            "total_scan_bound_rule",
+        ],
+        "qualification completion wait policy",
+    )?;
+    if object
+        != completion_wait_policy_contract()
+            .as_object()
+            .expect("fixed completion wait policy is an object")
+    {
+        return Err("qualification completion wait policy drifted".to_owned());
+    }
+    Ok(())
+}
+
+fn validate_r30_prefill_page_contract() -> CaptureResult<()> {
+    let pages = usize::try_from(qualification_kv_page_count(0, R30_PREFILL_ACTIVE_TOKENS)?)
+        .map_err(|_| "fixed R30 target-page count does not fit usize".to_owned())?;
+    if pages != R30_PREFILL_TARGET_PAGES {
+        return Err("fixed R30 target-page count drifted from qualification geometry".to_owned());
+    }
+    Ok(())
+}
+
+fn fixed_r30_canary_workload() -> CaptureResult<(Workload, Vec<u32>)> {
+    validate_r30_prefill_page_contract()?;
+    let input_tokens = fixed_r30_prefill_input_tokens();
+    let input_bytes = fixed_r30_prefill_input_bytes();
     let selection = Qwen3PlanSelection {
         role: Qwen3ModelRole::Target8B,
         mode: Qwen3ExecutionMode::Prefill,
         bucket: Qwen3PlanBucket::PrefillS1T128,
     };
     let workload_bytes = canonical_bytes(&json!({
-        "active_length": 1,
+        "active_length": R30_PREFILL_ACTIVE_TOKENS,
         "case": "target-prefill-s1-t128",
         "context_length": 0,
-        "format": "FERRIC-M1-R30-CANARY-WORKLOAD-V1",
-        "input_token": 1,
+        "completion_wait_policy": completion_wait_policy_contract(),
+        "format": "FERRIC-M1-R30-CANARY-WORKLOAD-V3",
+        "input_bytes": R30_PREFILL_INPUT_BYTES,
+        "input_token": R30_PREFILL_INPUT_TOKEN,
+        "input_token_count": R30_PREFILL_ACTIVE_TOKENS,
+        "lane_count": 1,
         "selection": "target-prefill-s1-t128",
     }))?;
     let workload = Workload {
@@ -1988,20 +2091,13 @@ fn execute_r30_canary_capture(
         input_sha256: sha256_hex(&input_bytes),
         kind: "prefill-s1-t128".to_owned(),
         lanes: vec![LaneInput {
-            active_length: 1,
+            active_length: R30_PREFILL_ACTIVE_TOKENS,
             context_length: 0,
         }],
-        max_polls: u32::try_from(MAX_POLLS).expect("MAX_POLLS fits u32"),
         selection,
     };
-    execute_capture(
-        runner,
-        memory,
-        &workload,
-        input_tokens,
-        gpu_unique_id,
-        CapturePurposeV1::R30PartialCanary,
-    )
+    validate_workload_geometry(&workload)?;
+    Ok((workload, input_tokens))
 }
 
 fn run_r30_cancellation_capture(arguments: &[OsString]) -> CaptureResult<()> {
@@ -2067,7 +2163,7 @@ fn run_r30_cancellation_capture(arguments: &[OsString]) -> CaptureResult<()> {
     let closure_sha256 = sha256_hex(&closure_bytes);
     let environment_sha256 = sha256_hex(&environment_bytes);
     let manifest =
-        m1_r30_partial_capture::manifest(m1_r30_partial_capture::CaptureManifestInputsV2 {
+        m1_r30_partial_capture::manifest(m1_r30_partial_capture::CaptureManifestInputsV4 {
             capture: &capture,
             closure_sha256: &closure_sha256,
             environment_sha256: &environment_sha256,
@@ -2087,40 +2183,39 @@ fn run_r30_cancellation_capture(arguments: &[OsString]) -> CaptureResult<()> {
 }
 
 fn fixed_r30_cancellation_workload() -> CaptureResult<(Workload, Vec<u32>)> {
-    let input_token = 1_u32;
-    let input_bytes = input_token.to_le_bytes();
-    let max_polls =
-        u32::try_from(MAX_POLLS).map_err(|_| "MAX_POLLS does not fit u32".to_owned())?;
+    validate_r30_prefill_page_contract()?;
+    let input_tokens = fixed_r30_prefill_input_tokens();
+    let input_bytes = fixed_r30_prefill_input_bytes();
     let workload_bytes = canonical_bytes(&json!({
-        "active_length": 1,
+        "active_length": R30_PREFILL_ACTIVE_TOKENS,
         "case": "target-prefill-s1-t128-retirement-before-observation",
         "context_length": 0,
-        "format": "FERRIC-M1-R30-CANCELLATION-WORKLOAD-V2",
-        "input_token": input_token,
+        "completion_wait_policy": completion_wait_policy_contract(),
+        "format": "FERRIC-M1-R30-CANCELLATION-WORKLOAD-V4",
+        "input_bytes": R30_PREFILL_INPUT_BYTES,
+        "input_token": R30_PREFILL_INPUT_TOKEN,
+        "input_token_count": R30_PREFILL_ACTIVE_TOKENS,
         "lane_count": 1,
-        "max_polls": max_polls,
         "selection": "target-prefill-s1-t128",
     }))?;
-    Ok((
-        Workload {
-            bytes: workload_bytes,
-            input_path: PathBuf::from("frozen-r30-cancellation-input-u32le"),
-            input_bytes: u64::try_from(input_bytes.len()).unwrap_or(u64::MAX),
-            input_sha256: sha256_hex(&input_bytes),
-            kind: "prefill-s1-t128".to_owned(),
-            lanes: vec![LaneInput {
-                active_length: 1,
-                context_length: 0,
-            }],
-            max_polls,
-            selection: Qwen3PlanSelection {
-                role: Qwen3ModelRole::Target8B,
-                mode: Qwen3ExecutionMode::Prefill,
-                bucket: Qwen3PlanBucket::PrefillS1T128,
-            },
+    let workload = Workload {
+        bytes: workload_bytes,
+        input_path: PathBuf::from("frozen-r30-cancellation-input-u32le"),
+        input_bytes: u64::try_from(input_bytes.len()).unwrap_or(u64::MAX),
+        input_sha256: sha256_hex(&input_bytes),
+        kind: "prefill-s1-t128".to_owned(),
+        lanes: vec![LaneInput {
+            active_length: R30_PREFILL_ACTIVE_TOKENS,
+            context_length: 0,
+        }],
+        selection: Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Prefill,
+            bucket: Qwen3PlanBucket::PrefillS1T128,
         },
-        vec![input_token],
-    ))
+    };
+    validate_workload_geometry(&workload)?;
+    Ok((workload, input_tokens))
 }
 
 fn run_r30_exhaustion_capture(arguments: &[OsString]) -> CaptureResult<()> {
@@ -2633,14 +2728,10 @@ fn execute_r30_rollback_capture(
         };
     let roster =
         M1DeviceKvCompletionRosterV1::new(vec![M1DeviceKvCompletionMemberV1::continuing(cache)]);
-    let completed = match published.wait(u32::try_from(MAX_POLLS).expect("MAX_POLLS fits u32")) {
+    let completed = match published.wait() {
         Ok(completed) => completed,
         Err(failure) => {
-            report_physical_queue_failure(
-                "r30 rollback physical dispatch wait failure",
-                &failure,
-                u32::try_from(MAX_POLLS).ok(),
-            );
+            report_physical_queue_failure("r30 rollback physical dispatch wait failure", &failure);
             terminal_quarantine(
                 "r30 rollback physical dispatch wait failure",
                 CompletionRosterCustodyV1 {
@@ -2653,11 +2744,7 @@ fn execute_r30_rollback_capture(
     let recycled = match completed.recycle() {
         Ok(recycled) => recycled,
         Err(failure) => {
-            report_physical_queue_failure(
-                "r30 rollback physical queue recycle failure",
-                &failure,
-                None,
-            );
+            report_physical_queue_failure("r30 rollback physical queue recycle failure", &failure);
             terminal_quarantine(
                 "r30 rollback physical queue recycle failure",
                 CompletionRosterCustodyV1 {
@@ -3011,14 +3098,10 @@ fn execute_r32_speculative_capture(
         };
     let roster =
         M1DeviceKvCompletionRosterV1::new(vec![M1DeviceKvCompletionMemberV1::continuing(cache)]);
-    let completed = match published.wait(u32::try_from(MAX_POLLS).expect("MAX_POLLS fits u32")) {
+    let completed = match published.wait() {
         Ok(completed) => completed,
         Err(failure) => {
-            report_physical_queue_failure(
-                "r32 physical dispatch wait failure",
-                &failure,
-                u32::try_from(MAX_POLLS).ok(),
-            );
+            report_physical_queue_failure("r32 physical dispatch wait failure", &failure);
             terminal_quarantine(
                 "r32 physical dispatch wait failure",
                 CompletionRosterCustodyV1 {
@@ -3031,7 +3114,7 @@ fn execute_r32_speculative_capture(
     let recycled = match completed.recycle() {
         Ok(recycled) => recycled,
         Err(failure) => {
-            report_physical_queue_failure("r32 physical queue recycle failure", &failure, None);
+            report_physical_queue_failure("r32 physical queue recycle failure", &failure);
             terminal_quarantine(
                 "r32 physical queue recycle failure",
                 CompletionRosterCustodyV1 {
@@ -4330,6 +4413,14 @@ fn execute_capture(
     gpu_unique_id: u64,
     purpose: CapturePurposeV1,
 ) -> CaptureResult<CapturedOutput> {
+    if let Err(diagnostic) = validate_workload_geometry(workload) {
+        abandon_pre_engine_memory(
+            "qualification capture workload geometry rejection",
+            memory,
+            input_tokens,
+            PreEngineDiagnosticV1::Policy(diagnostic),
+        );
+    }
     match workload.selection.mode {
         Qwen3ExecutionMode::Prefill => Ok(execute_prefill_capture(
             runner,
@@ -4813,13 +4904,7 @@ fn execute_decode_capture(
             .map(M1DeviceKvCompletionMemberV1::continuing)
             .collect(),
     );
-    let first_outcome = runner.complete_first_step(
-        &mut engine,
-        published,
-        workload.max_polls,
-        &semantics,
-        roster,
-    );
+    let first_outcome = runner.complete_first_step(&mut engine, published, &semantics, roster);
     let first = consume_first_completion_outcome(&mut engine, first_outcome, &semantics);
     let history =
         QualificationRoundCommitmentV1::new(context_plan.plan_id, &binding.declaration, selection);
@@ -4994,23 +5079,17 @@ fn execute_decode_capture(
         let (published, returned_state) =
             submit_rearm_or_fail_stop(runner, &mut engine, prepared, recipe, state);
         state = returned_state;
-        let completed = match published.wait(&mut engine, workload.max_polls) {
+        let completed = match published.wait(&mut engine) {
             Ok(completed) => completed,
-            Err(failure) => terminal_queue_round(
-                "qualification intermediate queue wait",
-                state,
-                Some(workload.max_polls),
-                failure,
-            ),
+            Err(failure) => {
+                terminal_queue_round("qualification intermediate queue wait", state, failure)
+            }
         };
         let recycled = match completed.recycle(&mut engine) {
             Ok(recycled) => recycled,
-            Err(failure) => terminal_queue_round(
-                "qualification intermediate queue recycle",
-                state,
-                None,
-                failure,
-            ),
+            Err(failure) => {
+                terminal_queue_round("qualification intermediate queue recycle", state, failure)
+            }
         };
         let semantics = contexts
             .iter()
@@ -5240,19 +5319,14 @@ fn execute_decode_capture(
     let (published, returned_state) =
         submit_rearm_or_fail_stop(runner, &mut engine, prepared, recipe, state);
     state = returned_state;
-    let completed = match published.wait(&mut engine, workload.max_polls) {
+    let completed = match published.wait(&mut engine) {
         Ok(completed) => completed,
-        Err(failure) => terminal_queue_round(
-            "terminal qualification queue wait",
-            state,
-            Some(workload.max_polls),
-            failure,
-        ),
+        Err(failure) => terminal_queue_round("terminal qualification queue wait", state, failure),
     };
     let recycled = match completed.recycle(&mut engine) {
         Ok(recycled) => recycled,
         Err(failure) => {
-            terminal_queue_round("terminal qualification queue recycle", state, None, failure)
+            terminal_queue_round("terminal qualification queue recycle", state, failure)
         }
     };
     let observed = match recycled.observe_qualification_completion() {
@@ -5550,14 +5624,20 @@ fn consume_first_completion_outcome(
             stage,
             failure,
             roster,
-        } => terminal_quarantine(
-            "ordinal-zero queue entered terminal quarantine",
-            FirstQueueQuarantineV1 {
-                _stage: stage,
-                _failure: failure,
-                _roster: roster,
-            },
-        ),
+        } => {
+            report_physical_queue_failure(
+                "ordinal-zero queue entered terminal quarantine",
+                &failure,
+            );
+            terminal_quarantine(
+                "ordinal-zero queue entered terminal quarantine",
+                FirstQueueQuarantineV1 {
+                    _stage: stage,
+                    _failure: failure,
+                    _roster: roster,
+                },
+            )
+        }
     };
     match release_first_completed_step(engine, completed) {
         Ok(released) => released,
@@ -6062,13 +6142,7 @@ fn execute_prefill_capture(
         _context_lengths: context_lengths,
     };
     let (qualified, evidence, device_id, precompletion_cancellation) =
-        qualify_prefill_live_generation(
-            &mut engine,
-            published,
-            workload.max_polls,
-            evidence,
-            purpose,
-        );
+        qualify_prefill_live_generation(&mut engine, published, evidence, purpose);
     let PrefillLiveEvidenceV1 {
         _caches: caches,
         requests,
@@ -6396,7 +6470,6 @@ fn lowest_id_finite_bf16_argmax(bytes: &[u8], lane: usize) -> CaptureResult<u32>
 fn qualify_prefill_live_generation(
     engine: &mut Engine<32>,
     published: ferric_engine::M1PhysicalPublishedQueueSessionV1,
-    max_polls: u32,
     evidence: PrefillLiveEvidenceV1,
     purpose: CapturePurposeV1,
 ) -> (
@@ -6475,14 +6548,10 @@ fn qualify_prefill_live_generation(
             }
         }
     }
-    let completed = match published.wait(max_polls) {
+    let completed = match published.wait() {
         Ok(completed) => completed,
         Err(failure) => {
-            report_physical_queue_failure(
-                "prefill queue wait terminal quarantine",
-                &failure,
-                Some(max_polls),
-            );
+            report_physical_queue_failure("prefill queue wait terminal quarantine", &failure);
             terminal_quarantine(
                 "prefill queue wait terminal quarantine",
                 PrefillLiveCustodyV1 {
@@ -6496,11 +6565,7 @@ fn qualify_prefill_live_generation(
     let recycled = match completed.recycle() {
         Ok(recycled) => recycled,
         Err(failure) => {
-            report_physical_queue_failure(
-                "prefill queue recycle terminal quarantine",
-                &failure,
-                None,
-            );
+            report_physical_queue_failure("prefill queue recycle terminal quarantine", &failure);
             terminal_quarantine(
                 "prefill queue recycle terminal quarantine",
                 PrefillLiveCustodyV1 {
@@ -6842,11 +6907,11 @@ fn parse_workload_document(
         value,
         &[
             "case_id",
+            "completion_wait_policy",
             "format",
             "input",
             "kind",
             "lanes",
-            "max_polls",
             "selection",
         ],
         "qualification workload",
@@ -6854,6 +6919,7 @@ fn parse_workload_document(
     expect_string(object, "format", WORKLOAD_FORMAT)?;
     expect_string(object, "case_id", &case.id)?;
     expect_string(object, "kind", &case.kind)?;
+    validate_completion_wait_policy(field(object, "completion_wait_policy")?)?;
     let selection = kind_selection(&case.kind)?;
     validate_selection(field(object, "selection")?, selection)?;
     let dimensions = selection
@@ -6861,10 +6927,6 @@ fn parse_workload_document(
         .dimensions(selection.role, selection.mode)
         .ok_or_else(|| "qualification selection is not admitted".to_owned())?;
     let lanes = parse_lanes(field(object, "lanes")?, selection, dimensions.sequences)?;
-    let max_polls = integer_field(object, "max_polls")?;
-    if max_polls == 0 || max_polls > MAX_POLLS {
-        return Err("qualification max_polls is outside 1..=100000000".to_owned());
-    }
     let input = exact_object(
         field(object, "input")?,
         &["bytes", "encoding", "path", "sha256"],
@@ -6898,8 +6960,6 @@ fn parse_workload_document(
         input_sha256,
         kind: case.kind.clone(),
         lanes,
-        max_polls: u32::try_from(max_polls)
-            .map_err(|_| "qualification max_polls does not fit u32".to_owned())?,
         selection,
     })
 }
@@ -6912,13 +6972,6 @@ fn parse_lanes(
     let values = value
         .as_array()
         .ok_or_else(|| "qualification lanes must be an array".to_owned())?;
-    if values.len() != expected as usize {
-        return Err("qualification lane count differs from selected bucket".to_owned());
-    }
-    let dimensions = selection
-        .bucket
-        .dimensions(selection.role, selection.mode)
-        .ok_or_else(|| "qualification selection has no dimensions".to_owned())?;
     let mut lanes = Vec::with_capacity(values.len());
     for (lane, value) in values.iter().enumerate() {
         let object = exact_object(
@@ -6930,16 +6983,47 @@ fn parse_lanes(
             .map_err(|_| format!("lane {lane} active length does not fit u32"))?;
         let context = u32::try_from(integer_field(object, "context_length")?)
             .map_err(|_| format!("lane {lane} context length does not fit u32"))?;
+        lanes.push(LaneInput {
+            active_length: active,
+            context_length: context,
+        });
+    }
+    validate_lane_geometry(selection, &lanes, expected)?;
+    Ok(lanes)
+}
+
+fn validate_workload_geometry(workload: &Workload) -> CaptureResult<()> {
+    let dimensions = workload
+        .selection
+        .bucket
+        .dimensions(workload.selection.role, workload.selection.mode)
+        .ok_or_else(|| "qualification selection has no dimensions".to_owned())?;
+    validate_lane_geometry(workload.selection, &workload.lanes, dimensions.sequences)
+}
+
+fn validate_lane_geometry(
+    selection: Qwen3PlanSelection,
+    lanes: &[LaneInput],
+    expected: u32,
+) -> CaptureResult<()> {
+    if lanes.len() != expected as usize {
+        return Err("qualification lane count differs from selected bucket".to_owned());
+    }
+    let dimensions = selection
+        .bucket
+        .dimensions(selection.role, selection.mode)
+        .ok_or_else(|| "qualification selection has no dimensions".to_owned())?;
+    for (lane, input) in lanes.iter().copied().enumerate() {
         match selection.mode {
             Qwen3ExecutionMode::Prefill => {
-                if active != dimensions.active_tokens || context != 0 {
+                if input.active_length != dimensions.active_tokens || input.context_length != 0 {
                     return Err(format!(
                         "lane {lane} canonical prefill geometry requires the full declared active width at empty context"
                     ));
                 }
             }
             Qwen3ExecutionMode::Decode => {
-                if active != 1 || context != DECODE_CONTEXT_LENGTH {
+                if input.active_length != 1 || input.context_length != DECODE_CONTEXT_LENGTH {
                     return Err(format!(
                         "lane {lane} canonical c8192 decode geometry requires one active token after exactly 8191 committed context tokens"
                     ));
@@ -6949,12 +7033,8 @@ fn parse_lanes(
                 return Err("qualification capture accepts target-only modes only".to_owned());
             }
         }
-        lanes.push(LaneInput {
-            active_length: active,
-            context_length: context,
-        });
     }
-    Ok(lanes)
+    Ok(())
 }
 
 fn validate_selection(value: &Value, expected: Qwen3PlanSelection) -> CaptureResult<()> {
@@ -7897,6 +7977,7 @@ mod tests {
         let active_length = dimensions.active_tokens;
         json!({
             "case_id": case_id,
+            "completion_wait_policy": completion_wait_policy_contract(),
             "format": WORKLOAD_FORMAT,
             "input": {
                 "bytes": lanes * usize::try_from(context_length + active_length).unwrap() * 4,
@@ -7909,7 +7990,6 @@ mod tests {
                 "active_length": active_length,
                 "context_length": context_length,
             })).collect::<Vec<_>>(),
-            "max_polls": 20_000_000,
             "selection": selection_json(kind_selection(kind).unwrap()),
         })
     }
@@ -7980,29 +8060,107 @@ mod tests {
     }
 
     #[test]
+    fn r30_canary_workload_binds_exact_canonical_bytes_path_and_payload_hash() {
+        let (workload, tokens) = fixed_r30_canary_workload().unwrap();
+        let input = fixed_r30_prefill_input_bytes();
+        assert_eq!(tokens, vec![R30_PREFILL_INPUT_TOKEN; 128]);
+        assert_eq!(
+            workload.input_path,
+            Path::new("frozen-r30-canary-input-u32le")
+        );
+        assert_eq!(workload.input_bytes, R30_PREFILL_INPUT_BYTES);
+        assert_eq!(
+            workload.input_sha256,
+            "d585e10d1e2240e9af79fc1cf8d11e11420b5306480b469b587e85630fcb0c9f"
+        );
+        assert_eq!(workload.input_sha256, sha256_hex(&input));
+        assert_eq!(
+            workload.bytes,
+            canonical(json!({
+                "active_length": R30_PREFILL_ACTIVE_TOKENS,
+                "case": "target-prefill-s1-t128",
+                "completion_wait_policy": completion_wait_policy_contract(),
+                "context_length": 0,
+                "format": "FERRIC-M1-R30-CANARY-WORKLOAD-V3",
+                "input_bytes": R30_PREFILL_INPUT_BYTES,
+                "input_token": R30_PREFILL_INPUT_TOKEN,
+                "input_token_count": R30_PREFILL_ACTIVE_TOKENS,
+                "lane_count": 1,
+                "selection": "target-prefill-s1-t128",
+            }))
+        );
+        assert_eq!(
+            sha256_hex(&workload.bytes),
+            "1475875584037a87184137f9172e0a6b67722e07a8f8581523b29866f60dd289"
+        );
+    }
+
+    #[test]
     fn r30_cancellation_workload_is_fixed_and_policy_independent() {
         let (workload, tokens) = fixed_r30_cancellation_workload().unwrap();
-        assert_eq!(tokens, [1]);
-        assert_eq!(workload.input_sha256, sha256_hex(&1_u32.to_le_bytes()));
+        assert_eq!(tokens, vec![R30_PREFILL_INPUT_TOKEN; 128]);
+        assert_eq!(workload.input_bytes, R30_PREFILL_INPUT_BYTES);
+        assert_eq!(
+            workload.input_sha256,
+            sha256_hex(&fixed_r30_prefill_input_bytes())
+        );
         assert_eq!(workload.lanes.len(), 1);
         assert_eq!(workload.lanes[0].context_length, 0);
-        assert_eq!(workload.lanes[0].active_length, 1);
+        assert_eq!(workload.lanes[0].active_length, R30_PREFILL_ACTIVE_TOKENS);
         assert_eq!(workload.selection.role, Qwen3ModelRole::Target8B);
         assert_eq!(workload.selection.mode, Qwen3ExecutionMode::Prefill);
         assert_eq!(workload.selection.bucket, Qwen3PlanBucket::PrefillS1T128);
         assert_eq!(
             workload.bytes,
             canonical(json!({
-                "active_length": 1,
+                "active_length": R30_PREFILL_ACTIVE_TOKENS,
                 "case": "target-prefill-s1-t128-retirement-before-observation",
                 "context_length": 0,
-                "format": "FERRIC-M1-R30-CANCELLATION-WORKLOAD-V2",
-                "input_token": 1,
+                "completion_wait_policy": completion_wait_policy_contract(),
+                "format": "FERRIC-M1-R30-CANCELLATION-WORKLOAD-V4",
+                "input_bytes": R30_PREFILL_INPUT_BYTES,
+                "input_token": R30_PREFILL_INPUT_TOKEN,
+                "input_token_count": R30_PREFILL_ACTIVE_TOKENS,
                 "lane_count": 1,
-                "max_polls": 100_000_000,
                 "selection": "target-prefill-s1-t128",
             }))
         );
+    }
+
+    #[test]
+    fn completion_wait_policy_is_exact_and_rejects_caller_control() {
+        validate_completion_wait_policy(&completion_wait_policy_contract()).unwrap();
+        let mutations: &[fn(&mut Value)] = &[
+            |value| value["id"] = json!("other"),
+            |value| value["max_consecutive_scans_without_progress"] = json!(8191),
+            |value| value["timeout_basis"] = json!("wall-clock"),
+            |value| value["total_scan_bound_rule"] = json!("caller-selected"),
+            |value| value["caller_override"] = json!(100_000_000),
+        ];
+        for mutate in mutations {
+            let mut policy = completion_wait_policy_contract();
+            mutate(&mut policy);
+            assert!(validate_completion_wait_policy(&policy).is_err());
+        }
+    }
+
+    #[test]
+    fn direct_r30_workloads_are_full_width_and_cannot_bypass_geometry_validation() {
+        for (workload, tokens) in [
+            fixed_r30_canary_workload().unwrap(),
+            fixed_r30_cancellation_workload().unwrap(),
+        ] {
+            assert_eq!(tokens.len(), R30_PREFILL_ACTIVE_TOKENS as usize);
+            assert!(tokens.iter().all(|token| *token == R30_PREFILL_INPUT_TOKEN));
+            assert_eq!(workload.input_bytes, R30_PREFILL_INPUT_BYTES);
+            assert_eq!(workload.lanes[0].active_length, R30_PREFILL_ACTIVE_TOKENS);
+            validate_workload_geometry(&workload).unwrap();
+
+            let mut partial = workload;
+            partial.lanes[0].active_length = 1;
+            let error = validate_workload_geometry(&partial).unwrap_err();
+            assert!(error.contains("full declared active width"));
+        }
     }
 
     #[test]
@@ -8233,11 +8391,11 @@ mod tests {
             &value,
             &[
                 "case_id",
+                "completion_wait_policy",
                 "format",
                 "input",
                 "kind",
                 "lanes",
-                "max_polls",
                 "selection",
             ],
             "workload",
@@ -8250,11 +8408,11 @@ mod tests {
             &value,
             &[
                 "case_id",
+                "completion_wait_policy",
                 "format",
                 "input",
                 "kind",
                 "lanes",
-                "max_polls",
                 "selection",
             ],
             "workload",
@@ -8272,6 +8430,11 @@ mod tests {
 
     #[test]
     fn qualification_kv_leases_follow_the_exact_p16_contract() {
+        validate_r30_prefill_page_contract().unwrap();
+        assert_eq!(
+            usize::try_from(qualification_kv_page_count(0, 128).unwrap()).unwrap(),
+            R30_PREFILL_TARGET_PAGES
+        );
         for (context, active, expected_pages) in [
             (0, 128, 8),
             (0, 512, 32),
@@ -8320,7 +8483,6 @@ mod tests {
                 };
                 8
             ],
-            max_polls: 1,
             selection,
         };
         workload.bytes = canonical(workload_value(&workload.kind, "prefill.001", 8));
@@ -8357,7 +8519,6 @@ mod tests {
                 active_length: 1,
                 context_length: DECODE_CONTEXT_LENGTH,
             }],
-            max_polls: 1,
             selection,
         };
         let plan = StepPlan::new(
@@ -8397,7 +8558,6 @@ mod tests {
                 };
                 8
             ],
-            max_polls: 1,
             selection,
         };
         let mut tokens = (0..8 * 8_192)
@@ -8448,7 +8608,6 @@ mod tests {
                 };
                 8
             ],
-            max_polls: 1,
             selection,
         };
         let requests = (0..8)
@@ -8517,7 +8676,6 @@ mod tests {
                 active_length: 1,
                 context_length: DECODE_CONTEXT_LENGTH,
             }],
-            max_polls: 1,
             selection,
         };
         let binding = qualification_execution_binding(&workload, &vec![3; 8_192])

@@ -87,7 +87,7 @@ R30_CANARY_PARTIAL_LIFECYCLE = [
     "validated-prefix-and-suffix-guards",
     "checked-existing-k7-semantics",
     "settled-single-engine-member",
-    "released-single-target-page",
+    "released-eight-target-pages",
     "destroyed-physical-queue",
     "canonical-publication-ready",
 ]
@@ -168,7 +168,26 @@ def r30_canary_partial_policy_accepts(
         and protocol.get("bundle_files") == ["capture.json", "protocol.json"]
         and protocol.get("case") == "target-prefill-s1-k7-adjacent-guards"
         and protocol.get("format")
-        == "FERRIC-M1-R30-CANARY-PARTIAL-PROTOCOL-V1"
+        == "FERRIC-M1-R30-CANARY-PARTIAL-PROTOCOL-V3"
+        and protocol.get("fixed_workload")
+        == {
+            "active_length": 128,
+            "case": "target-prefill-s1-t128",
+            "completion_wait_policy": {
+                "id": "ferric-m1-completion-progress-wait-v1",
+                "max_consecutive_scans_without_progress": 8_192,
+                "timeout_basis": "completion-signal-scans-only",
+                "total_scan_bound_rule": "(packet-count+1)*max-consecutive-scans-without-progress",
+            },
+            "context_length": 0,
+            "format": "FERRIC-M1-R30-CANARY-WORKLOAD-V3",
+            "input_bytes": 512,
+            "input_token": 1,
+            "input_token_count": 128,
+            "lane_count": 1,
+            "selection": "target-prefill-s1-t128",
+        }
+        and protocol.get("hardware_claim") == "none"
         and protocol.get("layout")
         == {
             "interior_bytes": 120,
@@ -204,6 +223,8 @@ def exercise_r30_canary_partial_policy(
         ("authority", "qualification-evidence"),
         ("status", "evidence"),
         ("bundle_files", ["capture.json"]),
+        ("fixed_workload", {}),
+        ("hardware_claim", "validated"),
         ("nonclaim", ""),
         ("required_complete_case_roster", ["canary"]),
     ]

@@ -315,8 +315,12 @@ cargo run --locked -p ferric-engine --bin ferric-m1-qualification-capture -- \
   CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE
 ```
 
-The command freezes exactly one target-only `PrefillS1T128` case and allocates
-its 120-byte K7 completion output inside initialized host-visible backing laid
+The command freezes exactly one target-only `PrefillS1T128` lane at context
+zero with active length 128 and 128 copies of token ID one encoded as exactly
+512 little-endian input bytes. Its canonical workload binds the fixed
+`ferric-m1-completion-progress-wait-v1` scan policy rather than a caller poll
+budget. It allocates its 120-byte K7 completion output
+inside initialized host-visible backing laid
 out as a 64-byte `0xA5` prefix guard, the zeroed K7 interior, and a 64-byte
 `0x5A` suffix guard. The K7 dispatch receives only the checked interior range.
 After exact generation completion and queue recycle, Ferric copies the same
@@ -324,11 +328,11 @@ enclosing allocation once, validates the retained coordinates and both guards,
 and passes only the interior to the existing K7 semantic decoder. A snapshot
 copy failure is terminal; a copied layout, guard, or K7 rejection retains the
 owned enclosing snapshot without copying it again. Publication occurs only
-after normal semantic settlement, target-page release accounting, and queue
-destruction.
+after normal semantic settlement, exact eight-target-page release accounting,
+and queue destruction.
 
 The no-replace bundle contains exactly `capture.json` and canonical
-`FERRIC-M1-R30-CANARY-PARTIAL-PROTOCOL-V1` `protocol.json`. Its status is
+`FERRIC-M1-R30-CANARY-PARTIAL-PROTOCOL-V3` `protocol.json`. Its status is
 `partial-non-evidence`. It checks only the adjacent 64-byte guards around one
 K7 output for one case. It proves neither K1-K6 bounds nor general
 out-of-bounds safety and covers no cancellation, exhaustion, rollback, injected
@@ -345,7 +349,11 @@ cargo run --locked -p ferric-engine --bin ferric-m1-qualification-capture -- \
 ```
 
 The command freezes one `Target8B` `PrefillS1T128` lane with context zero,
-active length one, input token one, and the compiled maximum poll bound. It
+active length 128, and 128 copies of input token one encoded as exactly 512
+little-endian bytes. Its workload binds the fixed
+`ferric-m1-completion-progress-wait-v1` policy: at most 8,192 consecutive
+completion-signal scans without completed-count progress, with the checked
+whole-wait bound derived as `(packet-count+1)*8192`. It
 authenticates the model, artifacts, closure, runner, and exclusive gfx942 device
 directly, and measures and binds the environment and executable; no
 differential plan, roster, case ID, workload file, or external m1.r29 acceptance
@@ -354,10 +362,10 @@ scheduler request to still be
 `InFlight`, requests retirement, and requires a reclamation probe to return no
 request before waiting for physical completion. This is scheduler retirement,
 not GPU work preemption. It then observes physical queue completion and
-readback before recording exact one-member completion settlement, one target
-page release, and queue release. The capture binds the actual checked plan ID
+readback before recording exact one-member completion settlement, eight target
+page releases, and queue release. The capture binds the actual checked plan ID
 and compact digest. It publishes exactly `capture.json` and canonical
-`FERRIC-M1-R30-PARTIAL-PROTOCOL-V2` `protocol.json`, without replacement.
+`FERRIC-M1-R30-PARTIAL-PROTOCOL-V4` `protocol.json`, without replacement.
 
 The bundle authority and status are `ferric-physical-partial-capture-only` and
 `partial-non-evidence`. It is not accepted by the adversarial benchmark evidence
@@ -444,7 +452,9 @@ roster. The composer re-admits every physical capture against its exact
 checked-in protocol, requires the four captures to bind the same device,
 kernel-artifact manifest, program catalog, runner declaration, and GPU unique
 ID. It also descriptor-measures the running composer executable and publishes
-exactly `runner.json` and `protocol.json` without replacement.
+exactly `runner.json` and canonical
+`FERRIC-M1-R30-COMPOSED-RUNNER-PROTOCOL-V4` `protocol.json` without
+replacement.
 
 The composed runner remains `partial-non-evidence`. It records four physical
 partial authorities and one `reported-unvalidated` external authority, carries

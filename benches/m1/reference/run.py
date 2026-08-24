@@ -19,21 +19,26 @@ from typing import Any, Iterable
 PLAN_FORMAT = "FERRIC-M1-BENCHMARK-PLAN-V1"
 BENCHMARK_INPUT_FORMAT = "FERRIC-M1-BENCHMARK-INPUT-V1"
 ROSTER_FORMAT = "FERRIC-M1-QUALIFICATION-ROSTER-V1"
-WORKLOAD_FORMAT = "FERRIC-M1-QUALIFICATION-WORKLOAD-V1"
+WORKLOAD_FORMAT = "FERRIC-M1-QUALIFICATION-WORKLOAD-V2"
 ENVIRONMENT_FORMAT = "FERRIC-M1-QUALIFICATION-ENVIRONMENT-V1"
 QUALIFICATION_CLOSURE_FORMAT = "FERRIC-M1-QUALIFICATION-CLOSURE-V1"
 CAPTURE_FORMAT = "FERRIC-M1-QUALIFICATION-CAPTURE-V2"
 OUTPUT_FORMAT = "FERRIC-M1-DIFFERENTIAL-OUTPUT-V1"
 ACCEPTANCE_POLICY_FORMAT = "FERRIC-M1-DIFFERENTIAL-ACCEPTANCE-POLICY-V1"
 IMPLEMENTATION_FORMAT = "FERRIC-M1-REFERENCE-IMPLEMENTATION-V1"
-PROTOCOL_FORMAT = "FERRIC-M1-REFERENCE-PROTOCOL-V1"
+PROTOCOL_FORMAT = "FERRIC-M1-REFERENCE-PROTOCOL-V2"
 TARGET = "gfx942:xnack-"
 VOCABULARY_SIZE = 151_936
 INPUT_VOCABULARY_SIZE = 151_643
 MAX_DOCUMENT_BYTES = 8 * 1_024 * 1_024
-MAX_POLLS = 20_000_000
 BF16_BYTES = 2
 TOKEN_BYTES = 4
+COMPLETION_WAIT_POLICY = {
+    "id": "ferric-m1-completion-progress-wait-v1",
+    "max_consecutive_scans_without_progress": 8_192,
+    "timeout_basis": "completion-signal-scans-only",
+    "total_scan_bound_rule": "(packet-count+1)*max-consecutive-scans-without-progress",
+}
 PINNED_MODEL_IDENTITY = (
     "6dfba0acd1c00ce13cec7b5eebb180691bdb8855a7eee89876df2a0a12a2802b"
 )
@@ -647,6 +652,7 @@ def validate_protocol(value: Any) -> None:
         document["execution"],
         (
             "attention_implementation",
+            "completion_wait_policy",
             "determinism",
             "input_encoding",
             "lane_execution",
@@ -657,12 +663,19 @@ def validate_protocol(value: Any) -> None:
             "python_isolation",
             "remote_code",
             "row_order",
-            "workload_max_polls",
         ),
         "reference protocol execution",
     )
+    completion_wait_policy = exact_object(
+        execution["completion_wait_policy"],
+        COMPLETION_WAIT_POLICY,
+        "reference protocol completion wait policy",
+    )
+    if completion_wait_policy != COMPLETION_WAIT_POLICY:
+        raise ReferenceFailure("reference protocol completion wait policy drifted")
     expected_execution = {
         "attention_implementation": "sdpa",
+        "completion_wait_policy": COMPLETION_WAIT_POLICY,
         "determinism": "two-byte-identical-executions-per-case",
         "input_encoding": "lane-major-u32-le",
         "lane_execution": "sequential-full-context-per-lane-twice",
@@ -673,7 +686,6 @@ def validate_protocol(value: Any) -> None:
         "python_isolation": "isolated-ignore-environment-no-user-site-safe-path",
         "remote_code": False,
         "row_order": "declared-lane-order",
-        "workload_max_polls": MAX_POLLS,
     }
     if execution != expected_execution:
         raise ReferenceFailure("reference protocol execution contract drifted")
@@ -829,13 +841,27 @@ def parse_workload(
         raise ReferenceFailure(f"workload identity drifted for {case.case_id}")
     document = exact_object(
         value,
-        ("case_id", "format", "input", "kind", "lanes", "max_polls", "selection"),
+        (
+            "case_id",
+            "completion_wait_policy",
+            "format",
+            "input",
+            "kind",
+            "lanes",
+            "selection",
+        ),
         "qualification workload",
     )
     expect_string(document, "case_id", case.case_id, "qualification workload")
     expect_string(document, "format", WORKLOAD_FORMAT, "qualification workload")
     expect_string(document, "kind", case.kind, "qualification workload")
-    expect_integer(document, "max_polls", MAX_POLLS, "qualification workload")
+    completion_wait_policy = exact_object(
+        document["completion_wait_policy"],
+        COMPLETION_WAIT_POLICY,
+        "qualification completion wait policy",
+    )
+    if completion_wait_policy != COMPLETION_WAIT_POLICY:
+        raise ReferenceFailure("qualification completion wait policy drifted")
     rows, width, mode = CASE_GEOMETRY[case.kind]
     selection = exact_object(
         document["selection"], ("bucket", "mode", "role"), "qualification selection"

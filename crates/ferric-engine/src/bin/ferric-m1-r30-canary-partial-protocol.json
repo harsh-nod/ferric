@@ -5,7 +5,25 @@
     "protocol.json"
   ],
   "case": "target-prefill-s1-k7-adjacent-guards",
-  "format": "FERRIC-M1-R30-CANARY-PARTIAL-PROTOCOL-V1",
+  "fixed_workload": {
+    "active_length": 128,
+    "case": "target-prefill-s1-t128",
+    "completion_wait_policy": {
+      "id": "ferric-m1-completion-progress-wait-v1",
+      "max_consecutive_scans_without_progress": 8192,
+      "timeout_basis": "completion-signal-scans-only",
+      "total_scan_bound_rule": "(packet-count+1)*max-consecutive-scans-without-progress"
+    },
+    "context_length": 0,
+    "format": "FERRIC-M1-R30-CANARY-WORKLOAD-V3",
+    "input_bytes": 512,
+    "input_token": 1,
+    "input_token_count": 128,
+    "lane_count": 1,
+    "selection": "target-prefill-s1-t128"
+  },
+  "format": "FERRIC-M1-R30-CANARY-PARTIAL-PROTOCOL-V3",
+  "hardware_claim": "none",
   "layout": {
     "interior_bytes": 120,
     "interior_relative_offset_bytes": 64,
@@ -25,7 +43,7 @@
     "validated-prefix-and-suffix-guards",
     "checked-existing-k7-semantics",
     "settled-single-engine-member",
-    "released-single-target-page",
+    "released-eight-target-pages",
     "destroyed-physical-queue",
     "canonical-publication-ready"
   ],

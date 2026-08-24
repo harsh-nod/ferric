@@ -5,9 +5,11 @@
 //! output and deliberately grants no broader memory-safety or evidence claim.
 
 use super::{
-    canonical_bytes, decode_identity, exact_object, expect_string, field, hex_bytes,
-    parse_canonical, require_sha256, sha256_array, CaptureResult, R30PhysicalCaptureBindingsV1,
-    StagingOutput, TARGET,
+    canonical_bytes, completion_wait_policy_contract, decode_identity, exact_object, expect_string,
+    field, fixed_r30_prefill_input_bytes, hex_bytes, parse_canonical, require_sha256, sha256_array,
+    sha256_hex, CaptureResult, R30PhysicalCaptureBindingsV1, StagingOutput, Workload,
+    R30_PREFILL_ACTIVE_TOKENS, R30_PREFILL_INPUT_BYTES, R30_PREFILL_INPUT_TOKEN,
+    R30_PREFILL_TARGET_PAGES, TARGET,
 };
 use ferric_engine::{
     CheckedCompletionSemantics, M1PhysicalRunnerV1, M1ReleasedDeviceKvMemberV1,
@@ -19,8 +21,9 @@ use serde_json::{json, Map, Value};
 use std::path::Path;
 
 pub(super) const COMMAND: &str = "capture-r30-canary";
-const CAPTURE_FORMAT: &str = "FERRIC-M1-R30-CANARY-PARTIAL-CAPTURE-V1";
-const PROTOCOL_FORMAT: &str = "FERRIC-M1-R30-CANARY-PARTIAL-PROTOCOL-V1";
+const CAPTURE_FORMAT: &str = "FERRIC-M1-R30-CANARY-PARTIAL-CAPTURE-V3";
+const PROTOCOL_FORMAT: &str = "FERRIC-M1-R30-CANARY-PARTIAL-PROTOCOL-V3";
+const WORKLOAD_FORMAT: &str = "FERRIC-M1-R30-CANARY-WORKLOAD-V3";
 const STATUS: &str = "partial-non-evidence";
 const CASE: &str = "target-prefill-s1-k7-adjacent-guards";
 const INTERIOR_BYTES: u64 = 120;
@@ -38,7 +41,7 @@ const EVENTS: &[&str] = &[
     "validated-prefix-and-suffix-guards",
     "checked-existing-k7-semantics",
     "settled-single-engine-member",
-    "released-single-target-page",
+    "released-eight-target-pages",
     "destroyed-physical-queue",
     "canonical-publication-ready",
 ];
@@ -72,6 +75,7 @@ pub(super) struct ClosedCaptureInputsV1<'a> {
     pub(super) device_id: Identity,
     pub(super) gpu_unique_id: u64,
     pub(super) runner: &'a M1PhysicalRunnerV1,
+    pub(super) workload: &'a Workload,
 }
 
 pub(super) struct CaptureArtifactV1 {
@@ -87,6 +91,7 @@ impl CaptureArtifactV1 {
 
 pub(super) fn manifest(inputs: ClosedCaptureInputsV1<'_>) -> CaptureResult<CaptureArtifactV1> {
     require_protocol()?;
+    validate_fixed_workload(inputs.workload)?;
     let checked = inputs.closed.checked();
     let summary = checked
         .completion_canary()
@@ -128,10 +133,10 @@ pub(super) fn manifest(inputs: ClosedCaptureInputsV1<'_>) -> CaptureResult<Captu
         || inputs.closed.completed_members() != 1
         || inputs.closed.logical_accepted_counts() != [1]
         || inputs.closed.externally_published_counts() != [1]
-        || inputs.closed.total_released() != 1
+        || inputs.closed.total_released() != R30_PREFILL_TARGET_PAGES
         || inputs.closed.release_counts().len() != 1
         || inputs.closed.release_counts()[0].draft() != 0
-        || inputs.closed.release_counts()[0].target() != 1
+        || inputs.closed.release_counts()[0].target() != R30_PREFILL_TARGET_PAGES
         || inputs.closed.queue_release().dispatch_generation() != summary.dispatch_generation()
     {
         return Err("partial canary retained lifecycle or layout custody drifted".to_owned());
@@ -192,6 +197,7 @@ fn capture_value(
         "authority": "ferric-physical-partial-capture-only",
         "case": CASE,
         "format": CAPTURE_FORMAT,
+        "hardware_claim": "none",
         "identities": {
             "device_id_sha256": hex_bytes(&expected.device_id),
             "gpu_unique_id": expected.gpu_unique_id,
@@ -245,7 +251,7 @@ fn capture_value(
             "logical_accepted_count": 1,
             "queue_destroyed": true,
             "released_draft_pages": 0,
-            "released_target_pages": 1,
+            "released_target_pages": R30_PREFILL_TARGET_PAGES,
             "single_k7_case_only": true,
         },
         "status": STATUS,
@@ -258,7 +264,58 @@ fn capture_value(
             "request_generation": expected.request_generation,
             "request_slot": expected.request_slot,
         },
+        "workload": fixed_workload_manifest(),
     })
+}
+
+fn fixed_workload_contract() -> Value {
+    json!({
+        "active_length": R30_PREFILL_ACTIVE_TOKENS,
+        "case": "target-prefill-s1-t128",
+        "completion_wait_policy": completion_wait_policy_contract(),
+        "context_length": 0,
+        "format": WORKLOAD_FORMAT,
+        "input_bytes": R30_PREFILL_INPUT_BYTES,
+        "input_token": R30_PREFILL_INPUT_TOKEN,
+        "input_token_count": R30_PREFILL_ACTIVE_TOKENS,
+        "lane_count": 1,
+        "selection": "target-prefill-s1-t128",
+    })
+}
+
+fn fixed_workload_manifest() -> Value {
+    json!({
+        "active_length": R30_PREFILL_ACTIVE_TOKENS,
+        "completion_wait_policy": completion_wait_policy_contract(),
+        "context_length": 0,
+        "input_bytes": R30_PREFILL_INPUT_BYTES,
+        "input_payload_sha256": sha256_hex(&fixed_r30_prefill_input_bytes()),
+        "input_token": R30_PREFILL_INPUT_TOKEN,
+        "input_token_count": R30_PREFILL_ACTIVE_TOKENS,
+        "lane_count": 1,
+        "selection": "target-prefill-s1-t128",
+        "workload_sha256": sha256_hex(&canonical_bytes(&fixed_workload_contract()).expect("fixed workload is canonical")),
+    })
+}
+
+fn validate_fixed_workload(workload: &Workload) -> CaptureResult<()> {
+    if workload.bytes != canonical_bytes(&fixed_workload_contract())?
+        || workload.input_path != Path::new("frozen-r30-canary-input-u32le")
+        || workload.input_bytes != R30_PREFILL_INPUT_BYTES
+        || workload.input_sha256 != sha256_hex(&fixed_r30_prefill_input_bytes())
+        || workload.kind != "prefill-s1-t128"
+        || workload.lanes
+            != [super::LaneInput {
+                active_length: R30_PREFILL_ACTIVE_TOKENS,
+                context_length: 0,
+            }]
+        || workload.selection.role != ferric_spec::Qwen3ModelRole::Target8B
+        || workload.selection.mode != ferric_spec::Qwen3ExecutionMode::Prefill
+        || workload.selection.bucket != ferric_spec::Qwen3PlanBucket::PrefillS1T128
+    {
+        return Err("partial canary workload differs from the fixed S1/T128 contract".to_owned());
+    }
+    Ok(())
 }
 
 pub(super) fn publish(output: &Path, capture: CaptureArtifactV1) -> CaptureResult<()> {
@@ -366,6 +423,7 @@ fn validate_manifest(bytes: &[u8], expected: &ExpectedBindingsV1) -> CaptureResu
             "authority",
             "case",
             "format",
+            "hardware_claim",
             "identities",
             "layout",
             "milestone",
@@ -375,17 +433,22 @@ fn validate_manifest(bytes: &[u8], expected: &ExpectedBindingsV1) -> CaptureResu
             "status",
             "target",
             "trace",
+            "workload",
         ],
         "partial r30 canary capture",
     )?;
     expect_string(root, "authority", "ferric-physical-partial-capture-only")?;
     expect_string(root, "case", CASE)?;
     expect_string(root, "format", CAPTURE_FORMAT)?;
+    expect_string(root, "hardware_claim", "none")?;
     expect_string(root, "milestone", "M1")?;
     expect_string(root, "nonclaim", NONCLAIM)?;
     expect_string(root, "obligation_id", "m1.r30")?;
     expect_string(root, "status", STATUS)?;
     expect_string(root, "target", TARGET)?;
+    if field(root, "workload")? != &fixed_workload_manifest() {
+        return Err("partial canary fixed workload manifest drifted".to_owned());
+    }
 
     let identities = exact_object(
         field(root, "identities")?,
@@ -545,7 +608,7 @@ fn validate_manifest(bytes: &[u8], expected: &ExpectedBindingsV1) -> CaptureResu
         ("guard_corruptions", 0),
         ("logical_accepted_count", 1),
         ("released_draft_pages", 0),
-        ("released_target_pages", 1),
+        ("released_target_pages", R30_PREFILL_TARGET_PAGES as u64),
     ] {
         require_u64(result, name, expected)?;
     }
@@ -603,7 +666,9 @@ fn validate_protocol(bytes: &[u8]) -> CaptureResult<()> {
             "authority",
             "bundle_files",
             "case",
+            "fixed_workload",
             "format",
+            "hardware_claim",
             "layout",
             "lifecycle",
             "milestone",
@@ -622,11 +687,15 @@ fn validate_protocol(bytes: &[u8]) -> CaptureResult<()> {
     )?;
     expect_string(root, "case", CASE)?;
     expect_string(root, "format", PROTOCOL_FORMAT)?;
+    expect_string(root, "hardware_claim", "none")?;
     expect_string(root, "milestone", "M1")?;
     expect_string(root, "nonclaim", PROTOCOL_NONCLAIM)?;
     expect_string(root, "obligation_id", "m1.r30")?;
     expect_string(root, "status", STATUS)?;
     expect_string(root, "target", TARGET)?;
+    if field(root, "fixed_workload")? != &fixed_workload_contract() {
+        return Err("partial canary fixed workload protocol drifted".to_owned());
+    }
     require_strings(root, "bundle_files", &["capture.json", "protocol.json"])?;
     require_strings(root, "lifecycle", EVENTS)?;
     require_strings(
@@ -683,7 +752,9 @@ fn protocol_bytes() -> CaptureResult<Vec<u8>> {
         "authority": "ferric-m1-r30-canary-partial-protocol-only",
         "bundle_files": ["capture.json", "protocol.json"],
         "case": CASE,
+        "fixed_workload": fixed_workload_contract(),
         "format": PROTOCOL_FORMAT,
+        "hardware_claim": "none",
         "layout": {
             "interior_bytes": INTERIOR_BYTES,
             "interior_relative_offset_bytes": M1_COMPLETION_CANARY_GUARD_BYTES_V1,
@@ -839,6 +910,8 @@ mod tests {
             |value| value["result"]["emitted_token"] = json!(42),
             |value| value["result"]["guard_corruptions"] = json!(1),
             |value| value["result"]["events"][4] = json!("substituted"),
+            |value| value["workload"]["active_length"] = json!(1),
+            |value| value["hardware_claim"] = json!("validated"),
             |value| value["status"] = json!("evidence"),
             |value| value["identities"]["program_catalog_sha256"] = json!("09".repeat(32)),
             |value| value["extra"] = json!(true),
@@ -872,6 +945,8 @@ mod tests {
             |value| value["bundle_files"] = json!(["capture.json"]),
             |value| value["layout"]["prefix_guard_bytes"] = json!(63),
             |value| value["layout"]["interior_relative_offset_bytes"] = json!(63),
+            |value| value["fixed_workload"]["input_token_count"] = json!(1),
+            |value| value["hardware_claim"] = json!("validated"),
             |value| value["lifecycle"][5] = json!("substituted"),
             |value| value["required_complete_case_roster"][1] = json!("other"),
         ];

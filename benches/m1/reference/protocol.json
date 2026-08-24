@@ -20,6 +20,12 @@
   },
   "execution": {
     "attention_implementation": "sdpa",
+    "completion_wait_policy": {
+      "id": "ferric-m1-completion-progress-wait-v1",
+      "max_consecutive_scans_without_progress": 8192,
+      "timeout_basis": "completion-signal-scans-only",
+      "total_scan_bound_rule": "(packet-count+1)*max-consecutive-scans-without-progress"
+    },
     "determinism": "two-byte-identical-executions-per-case",
     "input_encoding": "lane-major-u32-le",
     "lane_execution": "sequential-full-context-per-lane-twice",
@@ -29,10 +35,9 @@
     "projection": "model.lm_head(last_hidden_state[:, -1:, :])",
     "python_isolation": "isolated-ignore-environment-no-user-site-safe-path",
     "remote_code": false,
-    "row_order": "declared-lane-order",
-    "workload_max_polls": 20000000
+    "row_order": "declared-lane-order"
   },
-  "format": "FERRIC-M1-REFERENCE-PROTOCOL-V1",
+  "format": "FERRIC-M1-REFERENCE-PROTOCOL-V2",
   "invocation": {
     "arguments": [
       "IMPLEMENTATION-MANIFEST",

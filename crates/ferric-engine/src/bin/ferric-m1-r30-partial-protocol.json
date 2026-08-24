@@ -6,16 +6,23 @@
   ],
   "case": "cancellation",
   "fixed_workload": {
-    "active_length": 1,
+    "active_length": 128,
     "case": "target-prefill-s1-t128-retirement-before-observation",
+    "completion_wait_policy": {
+      "id": "ferric-m1-completion-progress-wait-v1",
+      "max_consecutive_scans_without_progress": 8192,
+      "timeout_basis": "completion-signal-scans-only",
+      "total_scan_bound_rule": "(packet-count+1)*max-consecutive-scans-without-progress"
+    },
     "context_length": 0,
-    "format": "FERRIC-M1-R30-CANCELLATION-WORKLOAD-V2",
+    "format": "FERRIC-M1-R30-CANCELLATION-WORKLOAD-V4",
+    "input_bytes": 512,
     "input_token": 1,
+    "input_token_count": 128,
     "lane_count": 1,
-    "max_polls": 100000000,
     "selection": "target-prefill-s1-t128"
   },
-  "format": "FERRIC-M1-R30-PARTIAL-PROTOCOL-V2",
+  "format": "FERRIC-M1-R30-PARTIAL-PROTOCOL-V4",
   "hardware_claim": "none",
   "lifecycle": [
     "queue-published",

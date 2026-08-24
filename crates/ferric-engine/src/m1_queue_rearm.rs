@@ -2938,8 +2938,8 @@ struct M1RearmContinuationCustodyV1 {
 /// ```compile_fail
 /// use ferric_engine::{Engine, M1RearmedPublishedQueueV1};
 /// fn wait_twice<const C: usize>(engine: &mut Engine<C>, published: M1RearmedPublishedQueueV1) {
-///     let _first = published.wait(engine, 1);
-///     let _second = published.wait(engine, 1);
+///     let _first = published.wait(engine);
+///     let _second = published.wait(engine);
 /// }
 /// ```
 #[must_use = "published rearm custody must enter the completion pipeline"]
@@ -3022,7 +3022,6 @@ impl M1RearmedPublishedQueueV1 {
     pub fn wait<const C: usize>(
         self,
         engine: &mut Engine<C>,
-        polls: u32,
     ) -> Result<M1RearmedCompletedQueueV1, Box<M1RearmedQueueProgressFailureV1>> {
         let Self {
             queue,
@@ -3030,7 +3029,7 @@ impl M1RearmedPublishedQueueV1 {
             queue_observation,
             device,
         } = self;
-        match queue.wait(polls) {
+        match queue.wait() {
             Ok(queue) => Ok(M1RearmedCompletedQueueV1 {
                 queue,
                 carry,
