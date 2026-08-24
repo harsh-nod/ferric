@@ -1,8 +1,9 @@
 //! One-packet hardware diagnostics for the Ferric M1 service queue path.
 
 use fe2o3_kfd::{
-    CheckedGfx942XnackMinusDevice, DeviceSelector, Gfx942DeviceContentDescriptorV1,
-    Gfx942DeviceContentRoleV1, OpenedKfd,
+    CheckedGfx942XnackMinusDevice, DeviceSelector, Gfx942BarrierProbeFailureV1,
+    Gfx942BarrierProbePollBoundV1, Gfx942DeviceContentDescriptorV1, Gfx942DeviceContentRoleV1,
+    OpenedKfd,
 };
 use fe2o3_service_host::{
     DeviceInputRoleV1, DeviceOutputRoleV1, HostDownloadRoleV1, ServiceAllocationSessionV1,
@@ -47,6 +48,9 @@ const K1_INPUT_TOKEN_COUNT: usize = 128;
 
 #[derive(Debug)]
 enum Command {
+    QueueBarrier {
+        gpu_unique_id: u64,
+    },
     K7Smoke {
         artifact_root: OsString,
         gpu_unique_id: u64,
@@ -81,6 +85,9 @@ fn main() -> ExitCode {
 
 fn parse_command(arguments: Vec<OsString>) -> DiagnosticResult<Command> {
     match arguments.as_slice() {
+        [mode, gpu_unique_id] if mode == "queue-barrier" => Ok(Command::QueueBarrier {
+            gpu_unique_id: parse_gpu_unique_id(gpu_unique_id)?,
+        }),
         [mode, artifact_root, gpu_unique_id] if mode == "k7-smoke" => Ok(Command::K7Smoke {
             artifact_root: artifact_root.clone(),
             gpu_unique_id: parse_gpu_unique_id(gpu_unique_id)?,
@@ -92,7 +99,7 @@ fn parse_command(arguments: Vec<OsString>) -> DiagnosticResult<Command> {
                 gpu_unique_id: parse_gpu_unique_id(gpu_unique_id)?,
             })
         }
-        _ => Err("usage: ferric-m1-packet-diagnostic k7-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k1-embedding PREPACKED-SNAPSHOT KERNEL-ARTIFACTS GPU-UNIQUE-ID".to_owned()),
+        _ => Err("usage: ferric-m1-packet-diagnostic queue-barrier GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k1-embedding PREPACKED-SNAPSHOT KERNEL-ARTIFACTS GPU-UNIQUE-ID".to_owned()),
     }
 }
 
@@ -106,6 +113,10 @@ fn parse_gpu_unique_id(value: &OsString) -> DiagnosticResult<u64> {
 
 fn execute(command: Command) -> DiagnosticResult<()> {
     match command {
+        Command::QueueBarrier { gpu_unique_id } => {
+            println!("mode=queue-barrier");
+            run_queue_barrier(bind_device(gpu_unique_id)?)
+        }
         Command::K7Smoke {
             artifact_root,
             gpu_unique_id,
@@ -142,6 +153,64 @@ fn execute(command: Command) -> DiagnosticResult<()> {
                 .map_err(|error| format!("cannot bind content-bound program catalog: {error}"))??;
             Ok(())
         }
+    }
+}
+
+fn run_queue_barrier(checked: CheckedGfx942XnackMinusDevice) -> DiagnosticResult<()> {
+    let poll_bound = Gfx942BarrierProbePollBoundV1::new(Gfx942BarrierProbePollBoundV1::maximum())
+        .map_err(|error| format!("cannot construct barrier poll bound: {error:?}"))?;
+    println!("phase=queue-barrier");
+    let result =
+        checked.run_compute_aql_barrier_probe(M1_PACKET_DIAGNOSTIC_RING_BYTES_V1, poll_bound);
+    match result {
+        Ok(success) => {
+            let execution = success.execution();
+            println!("poll_bound={}", success.poll_bound());
+            println!("packet_count={}", execution.packet_count());
+            println!("write_counter={}", execution.write_counter());
+            println!("read_counter={}", execution.read_counter());
+            println!("packet_header=0x{:04x}", execution.packet_header());
+            println!("packet_setup={}", execution.packet_setup());
+            println!("signal_kind={}", execution.signal_kind());
+            println!("signal={:?}", execution.signal());
+            println!(
+                "queue_exception_reason_mask=0x{:x}",
+                execution.queue_exception_reason_mask()
+            );
+            println!(
+                "currentness_confirmed={}",
+                execution.currentness_confirmed()
+            );
+            println!("recycled_signal_count={}", success.recycled_signal_count());
+            println!(
+                "released_queue_resources={}",
+                success.destroyed().released_resources()
+            );
+            println!("status=completed-non-qualification");
+            Ok(())
+        }
+        Err(failure) => barrier_probe_failure(failure),
+    }
+}
+
+fn barrier_probe_failure(failure: Gfx942BarrierProbeFailureV1) -> DiagnosticResult<()> {
+    let timeout = failure
+        .timeout_observation()
+        .map(|observation| format!("; timeout_observation={observation:?}"))
+        .unwrap_or_default();
+    match failure {
+        Gfx942BarrierProbeFailureV1::Creation { error } => Err(format!(
+            "queue barrier creation failed: {error}{timeout}; no live queue was returned"
+        )),
+        Gfx942BarrierProbeFailureV1::QuarantinedExecution { error, retained } => {
+            std::mem::forget(retained);
+            Err(format!(
+                "queue barrier execution failed: {error}{timeout}; queue quarantined until process teardown"
+            ))
+        }
+        Gfx942BarrierProbeFailureV1::TerminalTeardown { error } => Err(format!(
+            "queue barrier teardown failed: {error}{timeout}; no authority was recovered and process termination is required"
+        )),
     }
 }
 
@@ -721,6 +790,15 @@ mod tests {
     #[test]
     fn command_modes_are_explicit_and_reject_extra_inputs() {
         assert!(matches!(
+            parse_command(vec!["queue-barrier".into(), "5".into()]),
+            Ok(Command::QueueBarrier { gpu_unique_id: 5 })
+        ));
+        assert!(parse_command(vec!["queue-barrier".into(), "not-decimal".into()]).is_err());
+        assert!(
+            parse_command(vec!["queue-barrier".into(), "18446744073709551616".into(),]).is_err()
+        );
+        assert!(parse_command(vec!["queue-barrier".into(), "5".into(), "extra".into(),]).is_err());
+        assert!(matches!(
             parse_command(vec!["k7-smoke".into(), "artifacts".into(), "7".into()]),
             Ok(Command::K7Smoke {
                 gpu_unique_id: 7,
@@ -740,6 +818,12 @@ mod tests {
             })
         ));
         assert!(parse_command(vec!["k7-smoke".into()]).is_err());
+        let barrier_bound =
+            Gfx942BarrierProbePollBoundV1::new(Gfx942BarrierProbePollBoundV1::maximum()).unwrap();
+        assert_eq!(
+            barrier_bound.get(),
+            Gfx942BarrierProbePollBoundV1::maximum()
+        );
     }
 
     #[test]
