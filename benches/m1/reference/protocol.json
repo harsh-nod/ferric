@@ -21,9 +21,10 @@
   "execution": {
     "attention_implementation": "sdpa",
     "completion_wait_policy": {
-      "id": "ferric-m1-completion-progress-wait-v1",
+      "id": "ferric-m1-completion-progress-wait-v2",
       "max_consecutive_scans_without_progress": 8192,
-      "timeout_basis": "completion-signal-scans-only",
+      "minimum_pending_scan_pause_micros": 10000,
+      "timeout_basis": "paced-completion-signal-scans",
       "total_scan_bound_rule": "(packet-count+1)*max-consecutive-scans-without-progress"
     },
     "determinism": "two-byte-identical-executions-per-case",
@@ -37,7 +38,7 @@
     "remote_code": false,
     "row_order": "declared-lane-order"
   },
-  "format": "FERRIC-M1-REFERENCE-PROTOCOL-V2",
+  "format": "FERRIC-M1-REFERENCE-PROTOCOL-V3",
   "invocation": {
     "arguments": [
       "IMPLEMENTATION-MANIFEST",

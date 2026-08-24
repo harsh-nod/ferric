@@ -46,10 +46,13 @@ use crate::{
 };
 
 /// Stable identity of Ferric's M1 completion-progress liveness policy.
-pub const M1_COMPLETION_PROGRESS_WAIT_POLICY_ID_V1: &str = "ferric-m1-completion-progress-wait-v1";
+pub const M1_COMPLETION_PROGRESS_WAIT_POLICY_ID_V2: &str = "ferric-m1-completion-progress-wait-v2";
 
 /// Maximum consecutive completion scans that may show no liveness progress.
 pub const M1_COMPLETION_PROGRESS_MAX_CONSECUTIVE_STALLED_SCANS_V1: u32 = 8_192;
+
+/// Minimum pause between two consecutive pending completion scans.
+pub const M1_COMPLETION_PROGRESS_PENDING_SCAN_PAUSE_MICROS_V1: u64 = 10_000;
 
 /// Addressless counts retained from one sequential completion-signal scan.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -135,7 +138,7 @@ impl M1CompletionProgressWaitDiagnosticV1 {
     /// Returns the stable policy identity governing this diagnostic.
     #[must_use]
     pub const fn policy_id(&self) -> &'static str {
-        M1_COMPLETION_PROGRESS_WAIT_POLICY_ID_V1
+        M1_COMPLETION_PROGRESS_WAIT_POLICY_ID_V2
     }
 
     /// Returns the exact terminal policy reason.
@@ -4324,6 +4327,7 @@ fn wait_with_completion_progress_policy<const N: usize, P, C, E>(
     pending: P,
     maximum_consecutive_stalled_scans: u32,
     mut poll: impl FnMut(P) -> Result<CompletionProgressPollV1<P, C>, E>,
+    mut pace_pending_scan: impl FnMut(),
     terminalize: impl FnOnce(P) -> E,
 ) -> Result<C, CompletionProgressWaitFailureV1<E>> {
     let expected_packet_count = match u16::try_from(N) {
@@ -4453,6 +4457,7 @@ fn wait_with_completion_progress_policy<const N: usize, P, C, E>(
                 ),
             });
         }
+        pace_pending_scan();
     }
 }
 
@@ -4482,6 +4487,11 @@ fn wait_case<const N: usize>(
                     }
                 }
             })
+        },
+        || {
+            std::thread::sleep(std::time::Duration::from_micros(
+                M1_COMPLETION_PROGRESS_PENDING_SCAN_PAUSE_MICROS_V1,
+            ));
         },
         |published| match published.wait(0) {
             Ok(_) => unreachable!("a zero-scan lower wait cannot complete a published batch"),
@@ -5814,8 +5824,9 @@ mod tests {
     fn drive_mock_progress_wait<const N: usize>(
         maximum_consecutive_stalled_scans: u32,
         events: &[MockPollEventV1],
-    ) -> (MockWaitOutcomeV1, usize, Vec<u32>) {
+    ) -> (MockWaitOutcomeV1, usize, Vec<u32>, usize) {
         let cursor = Cell::new(0_usize);
+        let paces = Cell::new(0_usize);
         let terminalized = RefCell::new(Vec::new());
         let result = wait_with_completion_progress_policy::<N, _, _, _>(
             0_u32,
@@ -5836,6 +5847,7 @@ mod tests {
                     MockPollEventV1::Fault => Err(MockPollFailureV1::Fault(owner)),
                 }
             },
+            || paces.set(paces.get() + 1),
             |owner| {
                 terminalized.borrow_mut().push(owner);
                 MockPollFailureV1::Terminalized(owner)
@@ -5850,7 +5862,12 @@ mod tests {
                 MockWaitOutcomeV1::Policy { lower, diagnostic }
             }
         };
-        (outcome, cursor.get(), terminalized.into_inner())
+        (
+            outcome,
+            cursor.get(),
+            terminalized.into_inner(),
+            paces.get(),
+        )
     }
 
     #[derive(Debug, Eq, PartialEq)]
@@ -5952,7 +5969,7 @@ mod tests {
         ];
         assert_eq!(
             drive_mock_progress_wait::<3>(3, &events),
-            (MockWaitOutcomeV1::Ready(6), 6, Vec::new())
+            (MockWaitOutcomeV1::Ready(6), 6, Vec::new(), 5)
         );
     }
 
@@ -5964,13 +5981,14 @@ mod tests {
             MockPollEventV1::Pending(progress),
             MockPollEventV1::Pending(progress),
         ];
-        let (outcome, scans, terminalized) = drive_mock_progress_wait::<3>(3, &events);
+        let (outcome, scans, terminalized, paces) = drive_mock_progress_wait::<3>(3, &events);
         let MockWaitOutcomeV1::Policy { lower, diagnostic } = outcome else {
             panic!("stall must terminalize through the lower zero-scan wait");
         };
         assert_eq!(lower, MockPollFailureV1::Terminalized(3));
         assert_eq!(scans, 3);
         assert_eq!(terminalized, vec![3]);
+        assert_eq!(paces, 2);
         assert_eq!(
             diagnostic.reason(),
             M1CompletionProgressWaitTerminalReasonV1::ConsecutiveScansWithoutProgress
@@ -5982,18 +6000,39 @@ mod tests {
     }
 
     #[test]
+    fn production_stall_threshold_paces_every_retry_but_not_terminalization() {
+        let progress = pending_progress::<1>(0, 0);
+        let events = vec![
+            MockPollEventV1::Pending(progress);
+            M1_COMPLETION_PROGRESS_MAX_CONSECUTIVE_STALLED_SCANS_V1 as usize
+        ];
+        let (outcome, scans, terminalized, paces) = drive_mock_progress_wait::<1>(
+            M1_COMPLETION_PROGRESS_MAX_CONSECUTIVE_STALLED_SCANS_V1,
+            &events,
+        );
+        assert!(matches!(outcome, MockWaitOutcomeV1::Policy { .. }));
+        assert_eq!(scans, events.len());
+        assert_eq!(
+            terminalized,
+            vec![M1_COMPLETION_PROGRESS_MAX_CONSECUTIVE_STALLED_SCANS_V1]
+        );
+        assert_eq!(paces + 1, events.len());
+    }
+
+    #[test]
     fn completion_progress_regression_terminalizes_with_prior_high_water() {
         let regressing = pending_progress::<3>(0, 0);
         let events = [
             MockPollEventV1::Pending(pending_progress::<3>(1, 1)),
             MockPollEventV1::Pending(regressing),
         ];
-        let (outcome, scans, terminalized) = drive_mock_progress_wait::<3>(3, &events);
+        let (outcome, scans, terminalized, paces) = drive_mock_progress_wait::<3>(3, &events);
         let MockWaitOutcomeV1::Policy { diagnostic, .. } = outcome else {
             panic!("completed-count regression must terminalize");
         };
         assert_eq!(scans, 2);
         assert_eq!(terminalized, vec![2]);
+        assert_eq!(paces, 1);
         assert_eq!(
             diagnostic.reason(),
             M1CompletionProgressWaitTerminalReasonV1::CompletedCountRegressed
@@ -6010,7 +6049,7 @@ mod tests {
         ];
         assert_eq!(
             drive_mock_progress_wait::<4>(2, &events),
-            (MockWaitOutcomeV1::Ready(2), 2, Vec::new())
+            (MockWaitOutcomeV1::Ready(2), 2, Vec::new(), 1)
         );
     }
 
@@ -6022,7 +6061,7 @@ mod tests {
         ];
         assert_eq!(
             drive_mock_progress_wait::<2>(2, &events),
-            (MockWaitOutcomeV1::Ready(2), 2, Vec::new())
+            (MockWaitOutcomeV1::Ready(2), 2, Vec::new(), 1)
         );
     }
 
@@ -6059,13 +6098,14 @@ mod tests {
             pending_count: 1,
             first_pending_batch_index: Some(3),
         };
-        let (outcome, scans, terminalized) =
+        let (outcome, scans, terminalized, paces) =
             drive_mock_progress_wait::<3>(3, &[MockPollEventV1::Pending(malformed)]);
         let MockWaitOutcomeV1::Policy { diagnostic, .. } = outcome else {
             panic!("malformed count sum must terminalize");
         };
         assert_eq!(scans, 1);
         assert_eq!(terminalized, vec![1]);
+        assert_eq!(paces, 0);
         assert_eq!(
             diagnostic.reason(),
             M1CompletionProgressWaitTerminalReasonV1::CountSumMismatch
@@ -6076,7 +6116,8 @@ mod tests {
             (
                 MockWaitOutcomeV1::LowerFault(MockPollFailureV1::Fault(0)),
                 1,
-                Vec::new()
+                Vec::new(),
+                0
             )
         );
     }

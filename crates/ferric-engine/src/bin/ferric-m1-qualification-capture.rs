@@ -111,7 +111,7 @@ mod m1_r32_partial_capture;
 
 const PLAN_FORMAT: &str = "FERRIC-M1-BENCHMARK-PLAN-V1";
 const ROSTER_FORMAT: &str = "FERRIC-M1-QUALIFICATION-ROSTER-V1";
-const WORKLOAD_FORMAT: &str = "FERRIC-M1-QUALIFICATION-WORKLOAD-V2";
+const WORKLOAD_FORMAT: &str = "FERRIC-M1-QUALIFICATION-WORKLOAD-V3";
 const CLOSURE_FORMAT: &str = "FERRIC-M1-QUALIFICATION-CLOSURE-V1";
 const ENVIRONMENT_FORMAT: &str = "FERRIC-M1-QUALIFICATION-ENVIRONMENT-V1";
 const OUTPUT_FORMAT: &str = "FERRIC-M1-DIFFERENTIAL-OUTPUT-V1";
@@ -2026,9 +2026,10 @@ fn fixed_r30_prefill_input_bytes() -> Vec<u8> {
 
 fn completion_wait_policy_contract() -> Value {
     json!({
-        "id": ferric_engine::M1_COMPLETION_PROGRESS_WAIT_POLICY_ID_V1,
+        "id": ferric_engine::M1_COMPLETION_PROGRESS_WAIT_POLICY_ID_V2,
         "max_consecutive_scans_without_progress": ferric_engine::M1_COMPLETION_PROGRESS_MAX_CONSECUTIVE_STALLED_SCANS_V1,
-        "timeout_basis": "completion-signal-scans-only",
+        "minimum_pending_scan_pause_micros": ferric_engine::M1_COMPLETION_PROGRESS_PENDING_SCAN_PAUSE_MICROS_V1,
+        "timeout_basis": "paced-completion-signal-scans",
         "total_scan_bound_rule": "(packet-count+1)*max-consecutive-scans-without-progress",
     })
 }
@@ -2039,6 +2040,7 @@ fn validate_completion_wait_policy(value: &Value) -> CaptureResult<()> {
         &[
             "id",
             "max_consecutive_scans_without_progress",
+            "minimum_pending_scan_pause_micros",
             "timeout_basis",
             "total_scan_bound_rule",
         ],
@@ -2077,7 +2079,7 @@ fn fixed_r30_canary_workload() -> CaptureResult<(Workload, Vec<u32>)> {
         "case": "target-prefill-s1-t128",
         "context_length": 0,
         "completion_wait_policy": completion_wait_policy_contract(),
-        "format": "FERRIC-M1-R30-CANARY-WORKLOAD-V3",
+        "format": "FERRIC-M1-R30-CANARY-WORKLOAD-V4",
         "input_bytes": R30_PREFILL_INPUT_BYTES,
         "input_token": R30_PREFILL_INPUT_TOKEN,
         "input_token_count": R30_PREFILL_ACTIVE_TOKENS,
@@ -2191,7 +2193,7 @@ fn fixed_r30_cancellation_workload() -> CaptureResult<(Workload, Vec<u32>)> {
         "case": "target-prefill-s1-t128-retirement-before-observation",
         "context_length": 0,
         "completion_wait_policy": completion_wait_policy_contract(),
-        "format": "FERRIC-M1-R30-CANCELLATION-WORKLOAD-V4",
+        "format": "FERRIC-M1-R30-CANCELLATION-WORKLOAD-V5",
         "input_bytes": R30_PREFILL_INPUT_BYTES,
         "input_token": R30_PREFILL_INPUT_TOKEN,
         "input_token_count": R30_PREFILL_ACTIVE_TOKENS,
@@ -8081,7 +8083,7 @@ mod tests {
                 "case": "target-prefill-s1-t128",
                 "completion_wait_policy": completion_wait_policy_contract(),
                 "context_length": 0,
-                "format": "FERRIC-M1-R30-CANARY-WORKLOAD-V3",
+                "format": "FERRIC-M1-R30-CANARY-WORKLOAD-V4",
                 "input_bytes": R30_PREFILL_INPUT_BYTES,
                 "input_token": R30_PREFILL_INPUT_TOKEN,
                 "input_token_count": R30_PREFILL_ACTIVE_TOKENS,
@@ -8091,7 +8093,7 @@ mod tests {
         );
         assert_eq!(
             sha256_hex(&workload.bytes),
-            "1475875584037a87184137f9172e0a6b67722e07a8f8581523b29866f60dd289"
+            "a50aa2bd495fbd936cd15ff82f351f398bce38c1317750a8ee020305d1e93b7b"
         );
     }
 
@@ -8117,7 +8119,7 @@ mod tests {
                 "case": "target-prefill-s1-t128-retirement-before-observation",
                 "context_length": 0,
                 "completion_wait_policy": completion_wait_policy_contract(),
-                "format": "FERRIC-M1-R30-CANCELLATION-WORKLOAD-V4",
+                "format": "FERRIC-M1-R30-CANCELLATION-WORKLOAD-V5",
                 "input_bytes": R30_PREFILL_INPUT_BYTES,
                 "input_token": R30_PREFILL_INPUT_TOKEN,
                 "input_token_count": R30_PREFILL_ACTIVE_TOKENS,
@@ -8133,6 +8135,7 @@ mod tests {
         let mutations: &[fn(&mut Value)] = &[
             |value| value["id"] = json!("other"),
             |value| value["max_consecutive_scans_without_progress"] = json!(8191),
+            |value| value["minimum_pending_scan_pause_micros"] = json!(9_999),
             |value| value["timeout_basis"] = json!("wall-clock"),
             |value| value["total_scan_bound_rule"] = json!("caller-selected"),
             |value| value["caller_override"] = json!(100_000_000),

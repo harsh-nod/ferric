@@ -21,9 +21,9 @@ use serde_json::{json, Map, Value};
 use std::path::Path;
 
 pub(super) const COMMAND: &str = "capture-r30-canary";
-const CAPTURE_FORMAT: &str = "FERRIC-M1-R30-CANARY-PARTIAL-CAPTURE-V3";
-const PROTOCOL_FORMAT: &str = "FERRIC-M1-R30-CANARY-PARTIAL-PROTOCOL-V3";
-const WORKLOAD_FORMAT: &str = "FERRIC-M1-R30-CANARY-WORKLOAD-V3";
+const CAPTURE_FORMAT: &str = "FERRIC-M1-R30-CANARY-PARTIAL-CAPTURE-V4";
+const PROTOCOL_FORMAT: &str = "FERRIC-M1-R30-CANARY-PARTIAL-PROTOCOL-V4";
+const WORKLOAD_FORMAT: &str = "FERRIC-M1-R30-CANARY-WORKLOAD-V4";
 const STATUS: &str = "partial-non-evidence";
 const CASE: &str = "target-prefill-s1-k7-adjacent-guards";
 const INTERIOR_BYTES: u64 = 120;

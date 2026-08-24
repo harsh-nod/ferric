@@ -250,7 +250,7 @@ class ParserTests(unittest.TestCase):
         data = MODULE_PATH.with_name("protocol.json").read_bytes()
         value = reference.parse_canonical(data, "reference protocol fixture")
         reference.validate_protocol(value)
-        self.assertEqual(value["format"], "FERRIC-M1-REFERENCE-PROTOCOL-V2")
+        self.assertEqual(value["format"], "FERRIC-M1-REFERENCE-PROTOCOL-V3")
 
         replacements = (
             {**reference.COMPLETION_WAIT_POLICY, "unexpected": True},
@@ -347,7 +347,7 @@ class ParserTests(unittest.TestCase):
             reference.parse_plan(value, reference.canonical_bytes(value))
 
     def test_workload_input_is_canonical_hash_bound_and_range_checked(self) -> None:
-        self.assertEqual(reference.WORKLOAD_FORMAT, "FERRIC-M1-QUALIFICATION-WORKLOAD-V2")
+        self.assertEqual(reference.WORKLOAD_FORMAT, "FERRIC-M1-QUALIFICATION-WORKLOAD-V3")
         kind = "prefill-s1-t128"
         tokens = tuple(range(128))
         payload = struct.pack("<128I", *tokens)

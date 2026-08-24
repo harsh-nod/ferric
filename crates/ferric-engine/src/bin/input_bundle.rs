@@ -28,9 +28,10 @@ const ACCEPTANCE_POLICY_NONCLAIM: &str = "This artifact supplies plan-admitted d
 const INVOCATION_FORMAT: &str = "FERRIC-M1-QUALIFICATION-INVOCATIONS-V1";
 const TOKEN_ID_DOMAIN: &[u8] = b"ferric.m1.qualification-token.v1";
 const BASE_VOCABULARY_SIZE: u32 = 151_643;
-const COMPLETION_WAIT_POLICY_ID: &str = "ferric-m1-completion-progress-wait-v1";
+const COMPLETION_WAIT_POLICY_ID: &str = "ferric-m1-completion-progress-wait-v2";
 const MAX_CONSECUTIVE_SCANS_WITHOUT_PROGRESS: u32 = 8_192;
-const COMPLETION_WAIT_TIMEOUT_BASIS: &str = "completion-signal-scans-only";
+const MINIMUM_PENDING_SCAN_PAUSE_MICROS: u64 = 10_000;
+const COMPLETION_WAIT_TIMEOUT_BASIS: &str = "paced-completion-signal-scans";
 const TOTAL_SCAN_BOUND_RULE: &str = "(packet-count+1)*max-consecutive-scans-without-progress";
 const EXACT_BUNDLE_FILE_COUNT: usize = 20;
 
@@ -430,6 +431,7 @@ fn build_case_documents() -> CaptureResult<CaseDocuments> {
             "completion_wait_policy": {
                 "id": COMPLETION_WAIT_POLICY_ID,
                 "max_consecutive_scans_without_progress": MAX_CONSECUTIVE_SCANS_WITHOUT_PROGRESS,
+                "minimum_pending_scan_pause_micros": MINIMUM_PENDING_SCAN_PAUSE_MICROS,
                 "timeout_basis": COMPLETION_WAIT_TIMEOUT_BASIS,
                 "total_scan_bound_rule": TOTAL_SCAN_BOUND_RULE,
             },
@@ -1016,6 +1018,7 @@ mod tests {
                 json!({
                     "id": COMPLETION_WAIT_POLICY_ID,
                     "max_consecutive_scans_without_progress": MAX_CONSECUTIVE_SCANS_WITHOUT_PROGRESS,
+                    "minimum_pending_scan_pause_micros": MINIMUM_PENDING_SCAN_PAUSE_MICROS,
                     "timeout_basis": COMPLETION_WAIT_TIMEOUT_BASIS,
                     "total_scan_bound_rule": TOTAL_SCAN_BOUND_RULE,
                 })

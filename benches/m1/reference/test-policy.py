@@ -31,9 +31,10 @@ DIRECT_PINS = {
 }
 ROCM_INDEX = "https://download.pytorch.org/whl/rocm7.2"
 COMPLETION_WAIT_POLICY = {
-    "id": "ferric-m1-completion-progress-wait-v1",
+    "id": "ferric-m1-completion-progress-wait-v2",
     "max_consecutive_scans_without_progress": 8_192,
-    "timeout_basis": "completion-signal-scans-only",
+    "minimum_pending_scan_pause_micros": 10_000,
+    "timeout_basis": "paced-completion-signal-scans",
     "total_scan_bound_rule": "(packet-count+1)*max-consecutive-scans-without-progress",
 }
 
@@ -130,7 +131,7 @@ def implementation_policy() -> None:
 
 def protocol_policy() -> None:
     protocol, _ = load_canonical("protocol.json")
-    if protocol["format"] != "FERRIC-M1-REFERENCE-PROTOCOL-V2":
+    if protocol["format"] != "FERRIC-M1-REFERENCE-PROTOCOL-V3":
         fail("protocol format drifted")
     if protocol["dependencies"] != {"python": "3.12", **DIRECT_PINS}:
         fail("protocol dependency contract drifted")

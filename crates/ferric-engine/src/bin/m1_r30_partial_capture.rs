@@ -17,12 +17,12 @@ use serde_json::{json, Value};
 use std::path::Path;
 
 pub(super) const COMMAND: &str = "capture-r30-cancellation";
-const CAPTURE_FORMAT: &str = "FERRIC-M1-R30-PARTIAL-CAPTURE-V4";
-const PROTOCOL_FORMAT: &str = "FERRIC-M1-R30-PARTIAL-PROTOCOL-V4";
+const CAPTURE_FORMAT: &str = "FERRIC-M1-R30-PARTIAL-CAPTURE-V5";
+const PROTOCOL_FORMAT: &str = "FERRIC-M1-R30-PARTIAL-PROTOCOL-V5";
 const AUTHORITY: &str = "ferric-physical-partial-capture-only";
 const STATUS: &str = "partial-non-evidence";
 const CASE: &str = "target-prefill-s1-t128-retirement-before-observation";
-const WORKLOAD_FORMAT: &str = "FERRIC-M1-R30-CANCELLATION-WORKLOAD-V4";
+const WORKLOAD_FORMAT: &str = "FERRIC-M1-R30-CANCELLATION-WORKLOAD-V5";
 const NONCLAIM: &str = "Authenticated Ferric scheduler retirement before positive physical completion observation and exact settlement for one fixed target-prefill S1/T128 workload only. Retirement is not GPU work preemption. This partial capture is not benchmark evidence, makes no hardware claim, does not establish general hardware correctness, does not cover canary, exhaustion, rollback, or injected device-fault cases, supplies none of the required external or independent validation evidence, and does not close m1.r30.";
 const PROTOCOL_NONCLAIM: &str = "Partial fixed-workload physical cancellation capture only. Scheduler retirement before completion observation is not GPU work preemption. This protocol makes no hardware claim, does not establish canary integrity, exhaustion handling, rollback refinement, injected device-fault coverage, required external evidence, independent validation, hardware correctness, or close m1.r30.";
 

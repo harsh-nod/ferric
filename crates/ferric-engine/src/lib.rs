@@ -299,7 +299,7 @@ pub use physical_queue_lifecycle::{
     M1SpeculativeDiagnosticSemanticTeardownFailureV1,
     M1SpeculativeDiagnosticSemanticTeardownSuccessV1,
     M1_COMPLETION_PROGRESS_MAX_CONSECUTIVE_STALLED_SCANS_V1,
-    M1_COMPLETION_PROGRESS_WAIT_POLICY_ID_V1,
+    M1_COMPLETION_PROGRESS_PENDING_SCAN_PAUSE_MICROS_V1, M1_COMPLETION_PROGRESS_WAIT_POLICY_ID_V2,
 };
 pub use physical_step::{
     bind_structural_physical_step, StructuralPhysicalStepBindingError,

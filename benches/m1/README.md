@@ -318,8 +318,10 @@ cargo run --locked -p ferric-engine --bin ferric-m1-qualification-capture -- \
 The command freezes exactly one target-only `PrefillS1T128` lane at context
 zero with active length 128 and 128 copies of token ID one encoded as exactly
 512 little-endian input bytes. Its canonical workload binds the fixed
-`ferric-m1-completion-progress-wait-v1` scan policy rather than a caller poll
-budget. It allocates its 120-byte K7 completion output
+`ferric-m1-completion-progress-wait-v2` paced-scan policy rather than a caller poll
+budget. Consecutive pending scans are separated by a fixed minimum 10 ms pause;
+the pause supplies execution opportunity but does not add scans or change the
+checked scan-count termination rule. It allocates its 120-byte K7 completion output
 inside initialized host-visible backing laid
 out as a 64-byte `0xA5` prefix guard, the zeroed K7 interior, and a 64-byte
 `0x5A` suffix guard. The K7 dispatch receives only the checked interior range.
@@ -332,7 +334,7 @@ after normal semantic settlement, exact eight-target-page release accounting,
 and queue destruction.
 
 The no-replace bundle contains exactly `capture.json` and canonical
-`FERRIC-M1-R30-CANARY-PARTIAL-PROTOCOL-V3` `protocol.json`. Its status is
+`FERRIC-M1-R30-CANARY-PARTIAL-PROTOCOL-V4` `protocol.json`. Its status is
 `partial-non-evidence`. It checks only the adjacent 64-byte guards around one
 K7 output for one case. It proves neither K1-K6 bounds nor general
 out-of-bounds safety and covers no cancellation, exhaustion, rollback, injected
@@ -351,9 +353,10 @@ cargo run --locked -p ferric-engine --bin ferric-m1-qualification-capture -- \
 The command freezes one `Target8B` `PrefillS1T128` lane with context zero,
 active length 128, and 128 copies of input token one encoded as exactly 512
 little-endian bytes. Its workload binds the fixed
-`ferric-m1-completion-progress-wait-v1` policy: at most 8,192 consecutive
+`ferric-m1-completion-progress-wait-v2` policy: at most 8,192 consecutive
 completion-signal scans without completed-count progress, with the checked
-whole-wait bound derived as `(packet-count+1)*8192`. It
+whole-wait bound derived as `(packet-count+1)*8192`. A fixed minimum 10 ms pause
+separates consecutive pending scans without granting any additional scan. It
 authenticates the model, artifacts, closure, runner, and exclusive gfx942 device
 directly, and measures and binds the environment and executable; no
 differential plan, roster, case ID, workload file, or external m1.r29 acceptance
@@ -365,7 +368,7 @@ not GPU work preemption. It then observes physical queue completion and
 readback before recording exact one-member completion settlement, eight target
 page releases, and queue release. The capture binds the actual checked plan ID
 and compact digest. It publishes exactly `capture.json` and canonical
-`FERRIC-M1-R30-PARTIAL-PROTOCOL-V4` `protocol.json`, without replacement.
+`FERRIC-M1-R30-PARTIAL-PROTOCOL-V5` `protocol.json`, without replacement.
 
 The bundle authority and status are `ferric-physical-partial-capture-only` and
 `partial-non-evidence`. It is not accepted by the adversarial benchmark evidence
@@ -453,7 +456,7 @@ checked-in protocol, requires the four captures to bind the same device,
 kernel-artifact manifest, program catalog, runner declaration, and GPU unique
 ID. It also descriptor-measures the running composer executable and publishes
 exactly `runner.json` and canonical
-`FERRIC-M1-R30-COMPOSED-RUNNER-PROTOCOL-V4` `protocol.json` without
+`FERRIC-M1-R30-COMPOSED-RUNNER-PROTOCOL-V5` `protocol.json` without
 replacement.
 
 The composed runner remains `partial-non-evidence`. It records four physical

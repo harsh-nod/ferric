@@ -17,8 +17,8 @@ use std::path::Path;
 
 pub(super) const COMMAND: &str = "compose-r30-runner";
 
-const RUNNER_FORMAT: &str = "FERRIC-M1-R30-COMPOSED-RUNNER-V3";
-const PROTOCOL_FORMAT: &str = "FERRIC-M1-R30-COMPOSED-RUNNER-PROTOCOL-V4";
+const RUNNER_FORMAT: &str = "FERRIC-M1-R30-COMPOSED-RUNNER-V4";
+const PROTOCOL_FORMAT: &str = "FERRIC-M1-R30-COMPOSED-RUNNER-PROTOCOL-V5";
 const FAULT_OBSERVATION_FORMAT: &str = "FERRIC-M1-R30-FAULT-OBSERVATION-V1";
 const STATUS: &str = "partial-non-evidence";
 const AUTHORITY: &str = "ferric-r30-composed-runner-only";
@@ -54,12 +54,12 @@ pub(super) fn run(arguments: &[OsString]) -> CaptureResult<()> {
     let canary = read_physical_bundle(
         Path::new(canary),
         "canary",
-        "FERRIC-M1-R30-CANARY-PARTIAL-CAPTURE-V3",
+        "FERRIC-M1-R30-CANARY-PARTIAL-CAPTURE-V4",
     )?;
     let cancellation = read_physical_bundle(
         Path::new(cancellation),
         "cancellation",
-        "FERRIC-M1-R30-PARTIAL-CAPTURE-V4",
+        "FERRIC-M1-R30-PARTIAL-CAPTURE-V5",
     )?;
     let exhaustion = read_physical_bundle(
         Path::new(exhaustion),
@@ -397,8 +397,8 @@ fn protocol_bytes() -> CaptureResult<Vec<u8>> {
         "obligation_id": "m1.r30",
         "required_case_roster": ["canary", "cancellation", "exhaustion", "fault-injection", "rollback"],
         "source_capture_formats": [
-            "FERRIC-M1-R30-CANARY-PARTIAL-CAPTURE-V3",
-            "FERRIC-M1-R30-PARTIAL-CAPTURE-V4",
+            "FERRIC-M1-R30-CANARY-PARTIAL-CAPTURE-V4",
+            "FERRIC-M1-R30-PARTIAL-CAPTURE-V5",
             "FERRIC-M1-R30-EXHAUSTION-PARTIAL-CAPTURE-V1",
             FAULT_OBSERVATION_FORMAT,
             "FERRIC-M1-R30-ROLLBACK-PARTIAL-CAPTURE-V1",
@@ -455,8 +455,8 @@ mod tests {
 
     fn physical() -> Vec<PhysicalSourceV1> {
         [
-            ("canary", "FERRIC-M1-R30-CANARY-PARTIAL-CAPTURE-V3"),
-            ("cancellation", "FERRIC-M1-R30-PARTIAL-CAPTURE-V4"),
+            ("canary", "FERRIC-M1-R30-CANARY-PARTIAL-CAPTURE-V4"),
+            ("cancellation", "FERRIC-M1-R30-PARTIAL-CAPTURE-V5"),
             ("exhaustion", "FERRIC-M1-R30-EXHAUSTION-PARTIAL-CAPTURE-V1"),
             ("rollback", "FERRIC-M1-R30-ROLLBACK-PARTIAL-CAPTURE-V1"),
         ]
