@@ -14,7 +14,7 @@ use ferric_m1_benchmarks::{encode_canonical_document, sha256_identity, BenchResu
 use rustix::fs::{
     fcntl_getfl, fcntl_setfl, fstat, openat2, FileType, Mode, OFlags, ResolveFlags, Stat, CWD,
 };
-use rustix::process::{kill_process_group, Pid, Signal};
+use rustix::process::{kill_process_group, waitid, Pid, Signal, WaitId, WaitIdOptions};
 use serde_json::{json, Map, Value};
 use std::collections::BTreeMap;
 use std::ffi::OsString;
@@ -1311,16 +1311,25 @@ fn run_subprocess(
         .map_err(|error| format!("cannot launch {description}: {error}"))?;
     let process_group = Pid::from_child(&child);
     let Some(stdin) = child.stdin.take() else {
-        terminate_subprocess(&mut child, process_group);
-        return Err(format!("cannot acquire {description} stdin"));
+        return Err(terminate_with_error(
+            &mut child,
+            process_group,
+            format!("cannot acquire {description} stdin"),
+        ));
     };
     let Some(mut stdout) = child.stdout.take() else {
-        terminate_subprocess(&mut child, process_group);
-        return Err(format!("cannot acquire {description} stdout"));
+        return Err(terminate_with_error(
+            &mut child,
+            process_group,
+            format!("cannot acquire {description} stdout"),
+        ));
     };
     let Some(mut stderr) = child.stderr.take() else {
-        terminate_subprocess(&mut child, process_group);
-        return Err(format!("cannot acquire {description} stderr"));
+        return Err(terminate_with_error(
+            &mut child,
+            process_group,
+            format!("cannot acquire {description} stderr"),
+        ));
     };
     let mut stdin = Some(stdin);
     for (descriptor, stream) in [
@@ -1329,8 +1338,7 @@ fn run_subprocess(
         (stderr.as_fd(), "stderr"),
     ] {
         if let Err(error) = set_nonblocking(descriptor, description, stream) {
-            terminate_subprocess(&mut child, process_group);
-            return Err(error);
+            return Err(terminate_with_error(&mut child, process_group, error));
         }
     }
     let mut stdin_offset = 0_usize;
@@ -1338,11 +1346,14 @@ fn run_subprocess(
     let mut stderr_bytes = Vec::new();
     let mut stdout_eof = false;
     let mut stderr_eof = false;
-    let mut status = None;
+    let mut exited = false;
     loop {
         if Instant::now() >= deadline {
-            terminate_subprocess(&mut child, process_group);
-            return Err(format!("{description} timed out"));
+            return Err(terminate_with_error(
+                &mut child,
+                process_group,
+                format!("{description} timed out"),
+            ));
         }
         if let Err(error) =
             write_nonblocking(&mut stdin, &request_bytes, &mut stdin_offset, description)
@@ -1365,32 +1376,45 @@ fn run_subprocess(
                     )
                 })
         {
-            terminate_subprocess(&mut child, process_group);
-            return Err(error);
+            return Err(terminate_with_error(&mut child, process_group, error));
         }
-        if status.is_none() {
-            match child.try_wait() {
-                Ok(Some(observed)) => {
-                    let _ = kill_process_group(process_group, Signal::KILL);
-                    status = Some(observed);
+        if !exited {
+            match waitid(
+                WaitId::Pid(process_group),
+                WaitIdOptions::EXITED | WaitIdOptions::NOHANG | WaitIdOptions::NOWAIT,
+            ) {
+                Ok(Some(_)) => {
+                    if let Err(error) = kill_process_group_if_present(process_group) {
+                        return Err(terminate_with_error(
+                            &mut child,
+                            process_group,
+                            format!("cannot terminate {description} descendants: {error}"),
+                        ));
+                    }
+                    exited = true;
                 }
                 Ok(None) => {}
                 Err(error) => {
-                    terminate_subprocess(&mut child, process_group);
-                    return Err(format!("cannot poll {description}: {error}"));
+                    return Err(terminate_with_error(
+                        &mut child,
+                        process_group,
+                        format!("cannot poll {description}: {error}"),
+                    ));
                 }
             }
         }
-        if status.is_some() && stdin.is_none() && stdout_eof && stderr_eof {
+        if exited && stdin.is_none() && stdout_eof && stderr_eof {
             break;
         }
         std::thread::sleep(Duration::from_millis(1));
     }
-    let status = status.expect("completed subprocess status is present");
+    let status = child
+        .wait()
+        .map_err(|error| format!("cannot reap {description}: {error}"))?;
     command.binary.revalidate(description, false)?;
     if status.code() != Some(0) {
         return Err(format!(
-            "{description} did not exit normally with status zero"
+            "{description} did not exit normally with status zero: {status}"
         ));
     }
     if !stderr_bytes.is_empty() {
@@ -1474,10 +1498,29 @@ fn drain_nonblocking(
     }
 }
 
-fn terminate_subprocess(child: &mut Child, process_group: Pid) {
-    let _ = kill_process_group(process_group, Signal::KILL);
+fn kill_process_group_if_present(process_group: Pid) -> rustix::io::Result<()> {
+    match kill_process_group(process_group, Signal::KILL) {
+        Ok(()) | Err(rustix::io::Errno::SRCH) => Ok(()),
+        Err(error) => Err(error),
+    }
+}
+
+fn terminate_subprocess(child: &mut Child, process_group: Pid) -> BenchResult<()> {
+    let group = kill_process_group_if_present(process_group)
+        .map_err(|error| format!("cannot terminate subprocess group: {error}"));
     let _ = child.kill();
-    let _ = child.wait();
+    let reap = child
+        .wait()
+        .map(|_| ())
+        .map_err(|error| format!("cannot reap terminated subprocess: {error}"));
+    group.and(reap)
+}
+
+fn terminate_with_error(child: &mut Child, process_group: Pid, error: String) -> String {
+    match terminate_subprocess(child, process_group) {
+        Ok(()) => error,
+        Err(cleanup) => format!("{error}; {cleanup}"),
+    }
 }
 
 fn inapplicable_vendor(bindings: &Value) -> Value {
@@ -2096,6 +2139,41 @@ mod tests {
     }
 
     #[test]
+    fn subprocess_reaps_leader_only_after_same_group_descendant_cleanup() {
+        let request = json!({"payload": "small"});
+        let environment = BTreeMap::new();
+        let environment_sha256 = digest("empty-test-environment");
+        let mut successful = python_command(
+            "import subprocess,sys\nsys.stdin.buffer.read()\nsubprocess.Popen(['/usr/bin/python3','-c','import time;time.sleep(5)'])\nsys.stdout.write('{}\\n')",
+        );
+        run_subprocess(
+            &mut successful,
+            &request,
+            &environment,
+            &environment_sha256,
+            Duration::from_secs(2),
+            "D10 same-group successful descendant test",
+        )
+        .unwrap();
+
+        let mut failed = python_command(
+            "import subprocess,sys\nsys.stdin.buffer.read()\nsubprocess.Popen(['/usr/bin/python3','-c','import time;time.sleep(5)'])\nsys.exit(7)",
+        );
+        let error = match run_subprocess(
+            &mut failed,
+            &request,
+            &environment,
+            &environment_sha256,
+            Duration::from_secs(2),
+            "D10 same-group failed descendant test",
+        ) {
+            Err(error) => error,
+            Ok(_) => panic!("failed same-group subprocess unexpectedly succeeded"),
+        };
+        assert!(error.contains("did not exit normally"), "{error}");
+    }
+
+    #[test]
     fn subprocess_backpressure_and_escaped_descendants_obey_deadline() {
         let request = json!({"payload": "x".repeat(256 * 1024)});
         let environment = BTreeMap::new();
@@ -2134,7 +2212,7 @@ mod tests {
         assert!(started.elapsed() < Duration::from_secs(1));
 
         let mut escaped = python_command(
-            "import subprocess,sys\nsys.stdin.buffer.read()\nsubprocess.Popen([sys.executable,'-c','import time;time.sleep(1)'],start_new_session=True)\nsys.stdout.write('{}\\n')",
+            "import subprocess,sys\nsys.stdin.buffer.read()\nsubprocess.Popen(['/usr/bin/python3','-c','import time;time.sleep(1)'],start_new_session=True)\nsys.stdout.write('{}\\n')",
         );
         let started = Instant::now();
         let error = match run_subprocess(
@@ -2148,7 +2226,7 @@ mod tests {
             Err(error) => error,
             Ok(_) => panic!("escaped-descendant subprocess unexpectedly succeeded"),
         };
-        assert!(error.contains("timed out"));
+        assert!(error.contains("timed out"), "{error}");
         assert!(started.elapsed() < Duration::from_secs(1));
     }
 }

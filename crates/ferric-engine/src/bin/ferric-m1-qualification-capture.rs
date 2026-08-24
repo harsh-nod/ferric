@@ -624,6 +624,21 @@ fn terminal_quarantine<T: CaptureTerminalCustodyV1>(phase: &'static str, custody
     std::process::abort();
 }
 
+fn report_physical_queue_failure(
+    phase: &'static str,
+    failure: &ferric_engine::M1PhysicalQueueOperationFailureV1,
+    aggregate_poll_budget: Option<u32>,
+) {
+    let _ = writeln!(
+        std::io::stderr().lock(),
+        "FAIL-STOP DETAIL: {phase}; shape={:?}; epoch={}; packets={}; aggregate_poll_budget={aggregate_poll_budget:?}; lower_error={:?}",
+        failure.shape(),
+        failure.queue_epoch().value(),
+        failure.shape().packet_count(),
+        failure.error(),
+    );
+}
+
 fn invariant_fail_stop<T: CaptureInvariantCustodyV1>(phase: &'static str, custody: T) -> ! {
     let custody = core::mem::ManuallyDrop::new(custody);
     let _ = &custody;
@@ -714,6 +729,16 @@ fn terminal_round<T: CaptureTerminalCustodyV1>(
             _custody: custody,
         },
     )
+}
+
+fn terminal_queue_round(
+    phase: &'static str,
+    state: QualificationRoundCaptureStateV1,
+    aggregate_poll_budget: Option<u32>,
+    failure: Box<M1RearmedQueueProgressFailureV1>,
+) -> ! {
+    report_physical_queue_failure(phase, failure.source(), aggregate_poll_budget);
+    terminal_round(phase, state, failure)
 }
 
 fn close_or_quarantine_roster<S: CaptureClosedCustodyV1, F: CaptureTerminalCustodyV1>(
@@ -1839,6 +1864,11 @@ fn run(arguments: Vec<OsString>) -> CaptureResult<()> {
         return run_r30_canary_capture(&arguments[1..]);
     }
     if arguments.first().and_then(|argument| argument.to_str())
+        == Some(m1_r30_partial_capture::COMMAND)
+    {
+        return run_r30_cancellation_capture(&arguments[1..]);
+    }
+    if arguments.first().and_then(|argument| argument.to_str())
         == Some(m1_r30_exhaustion_partial_capture::COMMAND)
     {
         return run_r30_exhaustion_capture(&arguments[1..]);
@@ -1852,12 +1882,6 @@ fn run(arguments: Vec<OsString>) -> CaptureResult<()> {
         == Some(m1_r32_partial_capture::COMMAND)
     {
         return run_r32_speculative_capture(&arguments[1..]);
-    }
-    if arguments.len() != 11
-        && arguments.first().and_then(|argument| argument.to_str())
-            == Some(m1_r30_partial_capture::COMMAND)
-    {
-        return run_capture_with_purpose(&arguments[1..], CapturePurposeV1::R30PartialCancellation);
     }
     if arguments.len() != 11 {
         match arguments.first().and_then(|argument| argument.to_str()) {
@@ -1978,6 +2002,125 @@ fn execute_r30_canary_capture(
         gpu_unique_id,
         CapturePurposeV1::R30PartialCanary,
     )
+}
+
+fn run_r30_cancellation_capture(arguments: &[OsString]) -> CaptureResult<()> {
+    let [source_root, prepacked_root, artifact_root, closure_path, environment_path, gpu_unique_id, output] =
+        arguments
+    else {
+        return Err("usage: ferric-m1-qualification-capture capture-r30-cancellation MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned());
+    };
+    let gpu_unique_id = gpu_unique_id
+        .to_str()
+        .ok_or_else(|| "GPU unique ID must be UTF-8 decimal".to_owned())?
+        .parse::<u64>()
+        .map_err(|_| "GPU unique ID must be a decimal u64".to_owned())?;
+    let (closure, closure_bytes) = load_closure_with_bytes(Path::new(closure_path))?;
+    let environment_bytes = load_environment(Path::new(environment_path), gpu_unique_id)?;
+    let executable_sha256 = current_executable_sha256()?;
+    let artifacts = reopen_persisted_m1_kernel_artifacts_v1(Path::new(artifact_root))
+        .map_err(|error| format!("cannot authenticate persisted kernel artifacts: {error}"))?;
+    let executable_catalog_id = artifacts.program_catalog_id();
+    let source = SecureDirectory::open(Path::new(source_root), "model source root")?;
+    let snapshot = SecureDirectory::open(Path::new(prepacked_root), "prepacked snapshot root")?;
+    let model = load_model_inputs(&source, &snapshot)?;
+    let runner_admission = model.authenticate()?;
+    let plan_catalog = build_authenticated_sequential_plan_catalog(runner_admission)
+        .map_err(|error| format!("cannot build authenticated plan catalog: {error:?}"))?;
+    let external = complete_closure(&closure, &plan_catalog, executable_catalog_id)?;
+    let identity_closure = build_preliminary_identity_closure(plan_catalog, external)
+        .map_err(|error| format!("cannot build runner identity closure: {error:?}"))?;
+    let declaration = generate_qwen3_gfx942_runner_declaration(identity_closure)
+        .map_err(|error| format!("cannot generate authenticated runner declaration: {error:?}"))?;
+    let publication = publish_qwen3_gfx942_runner_declaration(declaration)
+        .map_err(|error| format!("cannot publish runner declaration: {error:?}"))?;
+    let runner = bind_m1_physical_runner_v1(artifacts, publication)
+        .map_err(|error| format!("cannot bind physical runner: {error:?}"))?;
+
+    let memory_admission = model.authenticate()?;
+    let memory_plan = model_memory_plan(memory_admission)?;
+    let checked = OpenedKfd::open_default()
+        .map_err(|error| format!("cannot open KFD: {error}"))?
+        .admit_uapi()
+        .map_err(|error| format!("cannot admit pinned KFD UAPI: {error}"))?
+        .bind_gfx942_xnack_minus(DeviceSelector::UniqueId(gpu_unique_id))
+        .map_err(|error| format!("cannot bind selected gfx942:xnack- device: {error}"))?;
+    let memory = initialize_m1_physical_runner_memory_v1(
+        checked,
+        memory_plan,
+        model.target_weights,
+        model.draft_weights,
+    )
+    .map_err(|error| format!("cannot initialize physical model memory: {error:?}"))?;
+    let (workload, input_tokens) = fixed_r30_cancellation_workload()?;
+    let capture = execute_capture(
+        &runner,
+        memory,
+        &workload,
+        input_tokens,
+        gpu_unique_id,
+        CapturePurposeV1::R30PartialCancellation,
+    )?;
+    let settlement = capture.settlement.as_ref().ok_or_else(|| {
+        "fixed target-prefill execution omitted partial cancellation settlement".to_owned()
+    })?;
+    let closure_sha256 = sha256_hex(&closure_bytes);
+    let environment_sha256 = sha256_hex(&environment_bytes);
+    let manifest =
+        m1_r30_partial_capture::manifest(m1_r30_partial_capture::CaptureManifestInputsV2 {
+            capture: &capture,
+            closure_sha256: &closure_sha256,
+            environment_sha256: &environment_sha256,
+            executable_sha256: &executable_sha256,
+            gpu_unique_id,
+            runner: &runner,
+            settlement,
+            workload: &workload,
+        })?;
+    let protocol_sha256 = m1_r30_partial_capture::protocol_sha256()?;
+    m1_r30_partial_capture::publish(Path::new(output), &manifest)?;
+    println!("output={}", Path::new(output).display());
+    println!("capture_sha256={}", sha256_hex(&manifest));
+    println!("partial_protocol_sha256={protocol_sha256}");
+    println!("status=partial-non-evidence");
+    Ok(())
+}
+
+fn fixed_r30_cancellation_workload() -> CaptureResult<(Workload, Vec<u32>)> {
+    let input_token = 1_u32;
+    let input_bytes = input_token.to_le_bytes();
+    let max_polls =
+        u32::try_from(MAX_POLLS).map_err(|_| "MAX_POLLS does not fit u32".to_owned())?;
+    let workload_bytes = canonical_bytes(&json!({
+        "active_length": 1,
+        "case": "target-prefill-s1-t128-retirement-before-observation",
+        "context_length": 0,
+        "format": "FERRIC-M1-R30-CANCELLATION-WORKLOAD-V2",
+        "input_token": input_token,
+        "lane_count": 1,
+        "max_polls": max_polls,
+        "selection": "target-prefill-s1-t128",
+    }))?;
+    Ok((
+        Workload {
+            bytes: workload_bytes,
+            input_path: PathBuf::from("frozen-r30-cancellation-input-u32le"),
+            input_bytes: u64::try_from(input_bytes.len()).unwrap_or(u64::MAX),
+            input_sha256: sha256_hex(&input_bytes),
+            kind: "prefill-s1-t128".to_owned(),
+            lanes: vec![LaneInput {
+                active_length: 1,
+                context_length: 0,
+            }],
+            max_polls,
+            selection: Qwen3PlanSelection {
+                role: Qwen3ModelRole::Target8B,
+                mode: Qwen3ExecutionMode::Prefill,
+                bucket: Qwen3PlanBucket::PrefillS1T128,
+            },
+        },
+        vec![input_token],
+    ))
 }
 
 fn run_r30_exhaustion_capture(arguments: &[OsString]) -> CaptureResult<()> {
@@ -2492,23 +2635,37 @@ fn execute_r30_rollback_capture(
         M1DeviceKvCompletionRosterV1::new(vec![M1DeviceKvCompletionMemberV1::continuing(cache)]);
     let completed = match published.wait(u32::try_from(MAX_POLLS).expect("MAX_POLLS fits u32")) {
         Ok(completed) => completed,
-        Err(failure) => terminal_quarantine(
-            "r30 rollback physical dispatch wait failure",
-            CompletionRosterCustodyV1 {
-                _roster: roster,
-                _custody: failure.quarantine_engine(&mut engine),
-            },
-        ),
+        Err(failure) => {
+            report_physical_queue_failure(
+                "r30 rollback physical dispatch wait failure",
+                &failure,
+                u32::try_from(MAX_POLLS).ok(),
+            );
+            terminal_quarantine(
+                "r30 rollback physical dispatch wait failure",
+                CompletionRosterCustodyV1 {
+                    _roster: roster,
+                    _custody: failure.quarantine_engine(&mut engine),
+                },
+            )
+        }
     };
     let recycled = match completed.recycle() {
         Ok(recycled) => recycled,
-        Err(failure) => terminal_quarantine(
-            "r30 rollback physical queue recycle failure",
-            CompletionRosterCustodyV1 {
-                _roster: roster,
-                _custody: failure.quarantine_engine(&mut engine),
-            },
-        ),
+        Err(failure) => {
+            report_physical_queue_failure(
+                "r30 rollback physical queue recycle failure",
+                &failure,
+                None,
+            );
+            terminal_quarantine(
+                "r30 rollback physical queue recycle failure",
+                CompletionRosterCustodyV1 {
+                    _roster: roster,
+                    _custody: failure.quarantine_engine(&mut engine),
+                },
+            )
+        }
     };
     let observed = match recycled.observe_completion() {
         Ok(observed) => observed,
@@ -2856,23 +3013,33 @@ fn execute_r32_speculative_capture(
         M1DeviceKvCompletionRosterV1::new(vec![M1DeviceKvCompletionMemberV1::continuing(cache)]);
     let completed = match published.wait(u32::try_from(MAX_POLLS).expect("MAX_POLLS fits u32")) {
         Ok(completed) => completed,
-        Err(failure) => terminal_quarantine(
-            "r32 physical dispatch wait failure",
-            CompletionRosterCustodyV1 {
-                _roster: roster,
-                _custody: failure.quarantine_engine(&mut engine),
-            },
-        ),
+        Err(failure) => {
+            report_physical_queue_failure(
+                "r32 physical dispatch wait failure",
+                &failure,
+                u32::try_from(MAX_POLLS).ok(),
+            );
+            terminal_quarantine(
+                "r32 physical dispatch wait failure",
+                CompletionRosterCustodyV1 {
+                    _roster: roster,
+                    _custody: failure.quarantine_engine(&mut engine),
+                },
+            )
+        }
     };
     let recycled = match completed.recycle() {
         Ok(recycled) => recycled,
-        Err(failure) => terminal_quarantine(
-            "r32 physical queue recycle failure",
-            CompletionRosterCustodyV1 {
-                _roster: roster,
-                _custody: failure.quarantine_engine(&mut engine),
-            },
-        ),
+        Err(failure) => {
+            report_physical_queue_failure("r32 physical queue recycle failure", &failure, None);
+            terminal_quarantine(
+                "r32 physical queue recycle failure",
+                CompletionRosterCustodyV1 {
+                    _roster: roster,
+                    _custody: failure.quarantine_engine(&mut engine),
+                },
+            )
+        }
     };
     let observed = match recycled.observe_completion() {
         Ok(observed) => observed,
@@ -3029,7 +3196,7 @@ fn run_capture_with_purpose(
         return Err(match purpose {
             CapturePurposeV1::Qualification => "usage: ferric-m1-qualification-capture PLAN ROSTER CASE-ID WORKLOAD MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned(),
             CapturePurposeV1::R30PartialCanary => "capture-r30-canary uses its independent seven-argument path".to_owned(),
-            CapturePurposeV1::R30PartialCancellation => "usage: ferric-m1-qualification-capture capture-r30-cancellation PLAN ROSTER CASE-ID WORKLOAD MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned(),
+            CapturePurposeV1::R30PartialCancellation => "capture-r30-cancellation uses its independent seven-argument path".to_owned(),
         });
     };
     let case_id = case_id
@@ -3123,27 +3290,6 @@ fn run_capture_with_purpose(
         kernel_manifest,
         program_catalog: executable_catalog_id,
     };
-    if purpose == CapturePurposeV1::R30PartialCancellation {
-        let settlement = capture.settlement.as_ref().ok_or_else(|| {
-            "target-prefill execution omitted partial cancellation settlement".to_owned()
-        })?;
-        let manifest =
-            m1_r30_partial_capture::manifest(m1_r30_partial_capture::CaptureManifestInputsV1 {
-                capture: &capture,
-                case: &case,
-                identities,
-                plan: &plan,
-                settlement,
-                workload: &workload,
-            })?;
-        let protocol_sha256 = m1_r30_partial_capture::protocol_sha256()?;
-        m1_r30_partial_capture::publish(Path::new(output), &manifest)?;
-        println!("output={}", Path::new(output).display());
-        println!("case_id={}", case.id);
-        println!("capture_sha256={}", sha256_hex(&manifest));
-        println!("partial_protocol_sha256={protocol_sha256}");
-        return Ok(());
-    }
     let transcript = capture_transcript(&plan, &case, &workload, &capture, identities)?;
     let transcript_sha256 = sha256_hex(&transcript);
     let output_manifest = differential_output_manifest(
@@ -4850,13 +4996,21 @@ fn execute_decode_capture(
         state = returned_state;
         let completed = match published.wait(&mut engine, workload.max_polls) {
             Ok(completed) => completed,
-            Err(failure) => terminal_round("qualification intermediate queue wait", state, failure),
+            Err(failure) => terminal_queue_round(
+                "qualification intermediate queue wait",
+                state,
+                Some(workload.max_polls),
+                failure,
+            ),
         };
         let recycled = match completed.recycle(&mut engine) {
             Ok(recycled) => recycled,
-            Err(failure) => {
-                terminal_round("qualification intermediate queue recycle", state, failure)
-            }
+            Err(failure) => terminal_queue_round(
+                "qualification intermediate queue recycle",
+                state,
+                None,
+                failure,
+            ),
         };
         let semantics = contexts
             .iter()
@@ -5088,11 +5242,18 @@ fn execute_decode_capture(
     state = returned_state;
     let completed = match published.wait(&mut engine, workload.max_polls) {
         Ok(completed) => completed,
-        Err(failure) => terminal_round("terminal qualification queue wait", state, failure),
+        Err(failure) => terminal_queue_round(
+            "terminal qualification queue wait",
+            state,
+            Some(workload.max_polls),
+            failure,
+        ),
     };
     let recycled = match completed.recycle(&mut engine) {
         Ok(recycled) => recycled,
-        Err(failure) => terminal_round("terminal qualification queue recycle", state, failure),
+        Err(failure) => {
+            terminal_queue_round("terminal qualification queue recycle", state, None, failure)
+        }
     };
     let observed = match recycled.observe_qualification_completion() {
         Ok(observed) => observed,
@@ -6047,6 +6208,21 @@ fn execute_prefill_capture(
             },
         ),
     };
+    let cancellation_plan_id = if purpose == CapturePurposeV1::R30PartialCancellation {
+        match teardown.checked().records() {
+            [record] => Some(record.record().plan_id),
+            _ => closed_teardown(
+                "fixed cancellation checked roster drifted",
+                QualificationEvidenceCustodyV1 {
+                    _evidence: evidence,
+                    _diagnostic: None,
+                    _custody: teardown,
+                },
+            ),
+        }
+    } else {
+        None
+    };
     let settlement = precompletion_cancellation.map(|precompletion| {
         let terminal_members = teardown
             .members()
@@ -6074,6 +6250,8 @@ fn execute_prefill_capture(
             final_absent_count,
             in_flight_count: precompletion.in_flight_count,
             logical_accepted_counts: teardown.logical_accepted_counts().to_vec(),
+            plan_id: cancellation_plan_id
+                .expect("partial cancellation always records the checked plan identity"),
             precompletion_reclaim_count: precompletion.precompletion_reclaim_count,
             released_pages,
             requests: precompletion.requests,
@@ -6299,25 +6477,39 @@ fn qualify_prefill_live_generation(
     }
     let completed = match published.wait(max_polls) {
         Ok(completed) => completed,
-        Err(failure) => terminal_quarantine(
-            "prefill queue wait terminal quarantine",
-            PrefillLiveCustodyV1 {
-                _evidence: evidence,
-                _diagnostic: None,
-                _custody: failure.quarantine_engine(engine),
-            },
-        ),
+        Err(failure) => {
+            report_physical_queue_failure(
+                "prefill queue wait terminal quarantine",
+                &failure,
+                Some(max_polls),
+            );
+            terminal_quarantine(
+                "prefill queue wait terminal quarantine",
+                PrefillLiveCustodyV1 {
+                    _evidence: evidence,
+                    _diagnostic: None,
+                    _custody: failure.quarantine_engine(engine),
+                },
+            )
+        }
     };
     let recycled = match completed.recycle() {
         Ok(recycled) => recycled,
-        Err(failure) => terminal_quarantine(
-            "prefill queue recycle terminal quarantine",
-            PrefillLiveCustodyV1 {
-                _evidence: evidence,
-                _diagnostic: None,
-                _custody: failure.quarantine_engine(engine),
-            },
-        ),
+        Err(failure) => {
+            report_physical_queue_failure(
+                "prefill queue recycle terminal quarantine",
+                &failure,
+                None,
+            );
+            terminal_quarantine(
+                "prefill queue recycle terminal quarantine",
+                PrefillLiveCustodyV1 {
+                    _evidence: evidence,
+                    _diagnostic: None,
+                    _custody: failure.quarantine_engine(engine),
+                },
+            )
+        }
     };
     let device_id = recycled.custody().device().device_id();
     let observed = match recycled.observe_qualification_completion() {
@@ -6828,9 +7020,13 @@ fn parse_input_tokens(
 }
 
 fn load_closure(path: &Path) -> CaptureResult<ClosureIdentities> {
+    load_closure_with_bytes(path).map(|(identities, _)| identities)
+}
+
+fn load_closure_with_bytes(path: &Path) -> CaptureResult<(ClosureIdentities, Vec<u8>)> {
     let (root, relative) = secure_parent(path, "qualification closure")?;
-    let (value, _) = root.read_canonical(&relative, "qualification closure")?;
-    parse_closure_document(&value)
+    let (value, bytes) = root.read_canonical(&relative, "qualification closure")?;
+    Ok((parse_closure_document(&value)?, bytes))
 }
 
 fn parse_closure_document(value: &Value) -> CaptureResult<ClosureIdentities> {
@@ -7730,7 +7926,8 @@ mod tests {
         assert!(!legacy_error.contains("generate-inputs MODEL-SOURCE"));
 
         let r30_error = run(vec![OsString::from(m1_r30_partial_capture::COMMAND)]).unwrap_err();
-        assert!(r30_error.contains("capture-r30-cancellation PLAN ROSTER"));
+        assert!(r30_error.contains("capture-r30-cancellation MODEL-SOURCE"));
+        assert!(!r30_error.contains("PLAN ROSTER"));
 
         let composed_error =
             run(vec![OsString::from(m1_r30_capture_composition::COMMAND)]).unwrap_err();
@@ -7739,7 +7936,8 @@ mod tests {
         let mut legacy = vec![OsString::from("unused"); 11];
         legacy[0] = OsString::from(m1_r30_partial_capture::COMMAND);
         let legacy_error = run(legacy).unwrap_err();
-        assert!(!legacy_error.contains("capture-r30-cancellation PLAN ROSTER"));
+        assert!(legacy_error.contains("capture-r30-cancellation MODEL-SOURCE"));
+        assert!(!legacy_error.contains("PLAN ROSTER"));
 
         let canary_error =
             run(vec![OsString::from(m1_r30_canary_partial_capture::COMMAND)]).unwrap_err();
@@ -7779,6 +7977,32 @@ mod tests {
         wrong_width[0] = OsString::from(m1_r32_partial_capture::COMMAND);
         let r32_error = run(wrong_width).unwrap_err();
         assert!(r32_error.contains("capture-r32-speculative-k4 MODEL-SOURCE"));
+    }
+
+    #[test]
+    fn r30_cancellation_workload_is_fixed_and_policy_independent() {
+        let (workload, tokens) = fixed_r30_cancellation_workload().unwrap();
+        assert_eq!(tokens, [1]);
+        assert_eq!(workload.input_sha256, sha256_hex(&1_u32.to_le_bytes()));
+        assert_eq!(workload.lanes.len(), 1);
+        assert_eq!(workload.lanes[0].context_length, 0);
+        assert_eq!(workload.lanes[0].active_length, 1);
+        assert_eq!(workload.selection.role, Qwen3ModelRole::Target8B);
+        assert_eq!(workload.selection.mode, Qwen3ExecutionMode::Prefill);
+        assert_eq!(workload.selection.bucket, Qwen3PlanBucket::PrefillS1T128);
+        assert_eq!(
+            workload.bytes,
+            canonical(json!({
+                "active_length": 1,
+                "case": "target-prefill-s1-t128-retirement-before-observation",
+                "context_length": 0,
+                "format": "FERRIC-M1-R30-CANCELLATION-WORKLOAD-V2",
+                "input_token": 1,
+                "lane_count": 1,
+                "max_polls": 100_000_000,
+                "selection": "target-prefill-s1-t128",
+            }))
+        );
     }
 
     #[test]

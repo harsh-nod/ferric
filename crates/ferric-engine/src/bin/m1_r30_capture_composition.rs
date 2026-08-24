@@ -17,8 +17,8 @@ use std::path::Path;
 
 pub(super) const COMMAND: &str = "compose-r30-runner";
 
-const RUNNER_FORMAT: &str = "FERRIC-M1-R30-COMPOSED-RUNNER-V1";
-const PROTOCOL_FORMAT: &str = "FERRIC-M1-R30-COMPOSED-RUNNER-PROTOCOL-V1";
+const RUNNER_FORMAT: &str = "FERRIC-M1-R30-COMPOSED-RUNNER-V2";
+const PROTOCOL_FORMAT: &str = "FERRIC-M1-R30-COMPOSED-RUNNER-PROTOCOL-V2";
 const FAULT_OBSERVATION_FORMAT: &str = "FERRIC-M1-R30-FAULT-OBSERVATION-V1";
 const STATUS: &str = "partial-non-evidence";
 const AUTHORITY: &str = "ferric-r30-composed-runner-only";
@@ -59,7 +59,7 @@ pub(super) fn run(arguments: &[OsString]) -> CaptureResult<()> {
     let cancellation = read_physical_bundle(
         Path::new(cancellation),
         "cancellation",
-        "FERRIC-M1-R30-PARTIAL-CAPTURE-V1",
+        "FERRIC-M1-R30-PARTIAL-CAPTURE-V2",
     )?;
     let exhaustion = read_physical_bundle(
         Path::new(exhaustion),
@@ -398,7 +398,7 @@ fn protocol_bytes() -> CaptureResult<Vec<u8>> {
         "required_case_roster": ["canary", "cancellation", "exhaustion", "fault-injection", "rollback"],
         "source_capture_formats": [
             "FERRIC-M1-R30-CANARY-PARTIAL-CAPTURE-V1",
-            "FERRIC-M1-R30-PARTIAL-CAPTURE-V1",
+            "FERRIC-M1-R30-PARTIAL-CAPTURE-V2",
             "FERRIC-M1-R30-EXHAUSTION-PARTIAL-CAPTURE-V1",
             FAULT_OBSERVATION_FORMAT,
             "FERRIC-M1-R30-ROLLBACK-PARTIAL-CAPTURE-V1",
@@ -456,7 +456,7 @@ mod tests {
     fn physical() -> Vec<PhysicalSourceV1> {
         [
             ("canary", "FERRIC-M1-R30-CANARY-PARTIAL-CAPTURE-V1"),
-            ("cancellation", "FERRIC-M1-R30-PARTIAL-CAPTURE-V1"),
+            ("cancellation", "FERRIC-M1-R30-PARTIAL-CAPTURE-V2"),
             ("exhaustion", "FERRIC-M1-R30-EXHAUSTION-PARTIAL-CAPTURE-V1"),
             ("rollback", "FERRIC-M1-R30-ROLLBACK-PARTIAL-CAPTURE-V1"),
         ]

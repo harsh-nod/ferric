@@ -5,21 +5,32 @@
     "protocol.json"
   ],
   "case": "cancellation",
-  "format": "FERRIC-M1-R30-PARTIAL-PROTOCOL-V1",
+  "fixed_workload": {
+    "active_length": 1,
+    "case": "target-prefill-s1-t128-retirement-before-observation",
+    "context_length": 0,
+    "format": "FERRIC-M1-R30-CANCELLATION-WORKLOAD-V2",
+    "input_token": 1,
+    "lane_count": 1,
+    "max_polls": 100000000,
+    "selection": "target-prefill-s1-t128"
+  },
+  "format": "FERRIC-M1-R30-PARTIAL-PROTOCOL-V2",
+  "hardware_claim": "none",
   "lifecycle": [
     "queue-published",
-    "in-flight-retirement-requested",
+    "scheduler-retirement-requested",
     "precompletion-reclaim-rejected",
-    "physical-completion-observed",
+    "queue-completion-wait-satisfied",
     "signals-recycled",
-    "readback-observed",
+    "physical-completion-readback-observed",
     "semantic-completion-joined",
     "exact-completion-settled",
     "retired-pages-released",
     "queue-released"
   ],
   "milestone": "M1",
-  "nonclaim": "Partial physical cancellation capture only. This protocol does not establish canary integrity, exhaustion handling, rollback refinement, injected device-fault coverage, required external evidence, independent validation, hardware correctness, or close m1.r30.",
+  "nonclaim": "Partial fixed-workload physical cancellation capture only. Scheduler retirement before completion observation is not GPU work preemption. This protocol makes no hardware claim, does not establish canary integrity, exhaustion handling, rollback refinement, injected device-fault coverage, required external evidence, independent validation, hardware correctness, or close m1.r30.",
   "obligation_id": "m1.r30",
   "required_complete_case_roster": [
     "canary",
@@ -28,6 +39,10 @@
     "fault-injection",
     "rollback"
   ],
+  "retirement_semantics": {
+    "device_preemption": false,
+    "operation": "scheduler-retirement-before-positive-physical-completion-observation"
+  },
   "status": "partial-non-evidence",
   "target": "gfx942:xnack-"
 }

@@ -335,30 +335,35 @@ out-of-bounds safety and covers no cancellation, exhaustion, rollback, injected
 fault, independent validation, evidence, hardware or numerical correctness,
 performance, qualification, `m1.r30`, or M1 closure claim.
 
-The Ferric engine also exposes one deliberately partial physical cancellation
-capture using the already admitted qualification inputs:
+The Ferric engine also exposes one deliberately partial fixed-workload physical
+cancellation capture:
 
 ```text
 cargo run --locked -p ferric-engine --bin ferric-m1-qualification-capture -- \
-  capture-r30-cancellation PLAN ROSTER CASE-ID WORKLOAD MODEL-SOURCE \
-  PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID \
-  OUTPUT-BUNDLE
+  capture-r30-cancellation MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS \
+  CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE
 ```
 
-This command accepts only an authenticated target-prefill workload. Immediately
-after queue publication it requires every scheduler request to still be
+The command freezes one `Target8B` `PrefillS1T128` lane with context zero,
+active length one, input token one, and the compiled maximum poll bound. It
+authenticates the model, artifacts, closure, runner, and exclusive gfx942 device
+directly, and measures and binds the environment and executable; no
+differential plan, roster, case ID, workload file, or external m1.r29 acceptance
+policy is accepted. Immediately after queue publication it requires the
+scheduler request to still be
 `InFlight`, requests retirement, and requires a reclamation probe to return no
-request before waiting for physical completion. It then observes physical queue
-completion and readback before recording exact completion settlement,
-authenticated nonzero target-page release, and queue release. It publishes
-exactly `capture.json` and the canonical
-`FERRIC-M1-R30-PARTIAL-PROTOCOL-V1` as `protocol.json`, without replacement.
+request before waiting for physical completion. This is scheduler retirement,
+not GPU work preemption. It then observes physical queue completion and
+readback before recording exact one-member completion settlement, one target
+page release, and queue release. The capture binds the actual checked plan ID
+and compact digest. It publishes exactly `capture.json` and canonical
+`FERRIC-M1-R30-PARTIAL-PROTOCOL-V2` `protocol.json`, without replacement.
 
 The bundle authority and status are `ferric-physical-partial-capture-only` and
 `partial-non-evidence`. It is not accepted by the adversarial benchmark evidence
-intake, supplies no independent validation, covers none of the canary,
-exhaustion, rollback, or injected device-fault cases, and cannot close
-`m1.r30`.
+intake, has `hardware_claim` `none`, supplies no independent validation, covers
+none of the canary, exhaustion, rollback, or injected device-fault cases, and
+cannot close `m1.r30`.
 
 A separate Ferric-only command captures the strict-prefix rollback case through
 the production S1/K4 diagnostic path:

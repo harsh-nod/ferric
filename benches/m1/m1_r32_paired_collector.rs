@@ -10,7 +10,7 @@ use ferric_m1_benchmarks::{
     SecureInputDirectory, SecureInputFile,
 };
 use rustix::fs::{fcntl_getfl, fcntl_setfl, OFlags};
-use rustix::process::{kill_process_group, Pid, Signal};
+use rustix::process::{kill_process_group, waitid, Pid, Signal, WaitId, WaitIdOptions};
 use serde_json::{json, Map, Value};
 use sha2::{Digest, Sha256};
 use std::ffi::OsString;
@@ -640,30 +640,38 @@ fn execute_engine(execution: &ExecutionPlan, context: &RunContext<'_>) -> BenchR
     })?;
     let process_group = Pid::from_child(&child);
     let Some(mut stdout) = child.stdout.take() else {
-        terminate_subprocess(&mut child, process_group);
-        return Err("R32 command stdout pipe is absent".to_owned());
+        return Err(terminate_with_error(
+            &mut child,
+            process_group,
+            "R32 command stdout pipe is absent".to_owned(),
+        ));
     };
     let Some(mut stderr) = child.stderr.take() else {
-        terminate_subprocess(&mut child, process_group);
-        return Err("R32 command stderr pipe is absent".to_owned());
+        return Err(terminate_with_error(
+            &mut child,
+            process_group,
+            "R32 command stderr pipe is absent".to_owned(),
+        ));
     };
     for (descriptor, stream) in [(stdout.as_fd(), "stdout"), (stderr.as_fd(), "stderr")] {
         if let Err(error) = set_nonblocking(descriptor, stream, context) {
-            terminate_subprocess(&mut child, process_group);
-            return Err(error);
+            return Err(terminate_with_error(&mut child, process_group, error));
         }
     }
     let mut stdout_bytes = Vec::new();
     let mut stderr_bytes = Vec::new();
     let mut stdout_eof = false;
     let mut stderr_eof = false;
-    let mut status = None;
+    let mut exited = false;
     loop {
         if Instant::now() >= deadline {
-            terminate_subprocess(&mut child, process_group);
-            return Err(format!(
-                "R32 command timed out: {}/{}",
-                context.pair_id, context.engine
+            return Err(terminate_with_error(
+                &mut child,
+                process_group,
+                format!(
+                    "R32 command timed out: {}/{}",
+                    context.pair_id, context.engine
+                ),
             ));
         }
         if let Err(error) = drain_capped(
@@ -682,31 +690,50 @@ fn execute_engine(execution: &ExecutionPlan, context: &RunContext<'_>) -> BenchR
                 context,
             )
         }) {
-            terminate_subprocess(&mut child, process_group);
-            return Err(error);
+            return Err(terminate_with_error(&mut child, process_group, error));
         }
-        if status.is_none() {
-            match child.try_wait() {
-                Ok(Some(observed)) => {
-                    let _ = kill_process_group(process_group, Signal::KILL);
-                    status = Some(observed);
+        if !exited {
+            match waitid(
+                WaitId::Pid(process_group),
+                WaitIdOptions::EXITED | WaitIdOptions::NOHANG | WaitIdOptions::NOWAIT,
+            ) {
+                Ok(Some(_)) => {
+                    if let Err(error) = kill_process_group_if_present(process_group) {
+                        return Err(terminate_with_error(
+                            &mut child,
+                            process_group,
+                            format!(
+                                "cannot terminate R32 command descendants {}/{}: {error}",
+                                context.pair_id, context.engine
+                            ),
+                        ));
+                    }
+                    exited = true;
                 }
                 Ok(None) => {}
                 Err(error) => {
-                    terminate_subprocess(&mut child, process_group);
-                    return Err(format!(
-                        "cannot inspect R32 command {}/{}: {error}",
-                        context.pair_id, context.engine
+                    return Err(terminate_with_error(
+                        &mut child,
+                        process_group,
+                        format!(
+                            "cannot inspect R32 command {}/{}: {error}",
+                            context.pair_id, context.engine
+                        ),
                     ));
                 }
             }
         }
-        if status.is_some() && stdout_eof && stderr_eof {
+        if exited && stdout_eof && stderr_eof {
             break;
         }
         thread::sleep(Duration::from_millis(10));
     }
-    let status = status.expect("completed R32 command status is present");
+    let status = child.wait().map_err(|error| {
+        format!(
+            "cannot reap R32 command {}/{}: {error}",
+            context.pair_id, context.engine
+        )
+    })?;
     if !status.success() {
         return Err(format!(
             "R32 command failed: {}/{} status={} stderr={}",
@@ -1062,10 +1089,33 @@ fn drain_capped(
     }
 }
 
-fn terminate_subprocess(child: &mut std::process::Child, process_group: Pid) {
-    let _ = kill_process_group(process_group, Signal::KILL);
+fn kill_process_group_if_present(process_group: Pid) -> rustix::io::Result<()> {
+    match kill_process_group(process_group, Signal::KILL) {
+        Ok(()) | Err(rustix::io::Errno::SRCH) => Ok(()),
+        Err(error) => Err(error),
+    }
+}
+
+fn terminate_subprocess(child: &mut std::process::Child, process_group: Pid) -> BenchResult<()> {
+    let group = kill_process_group_if_present(process_group)
+        .map_err(|error| format!("cannot terminate R32 command group: {error}"));
     let _ = child.kill();
-    let _ = child.wait();
+    let reap = child
+        .wait()
+        .map(|_| ())
+        .map_err(|error| format!("cannot reap terminated R32 command: {error}"));
+    group.and(reap)
+}
+
+fn terminate_with_error(
+    child: &mut std::process::Child,
+    process_group: Pid,
+    error: String,
+) -> String {
+    match terminate_subprocess(child, process_group) {
+        Ok(()) => error,
+        Err(cleanup) => format!("{error}; {cleanup}"),
+    }
 }
 
 fn diagnostic(bytes: &[u8]) -> String {

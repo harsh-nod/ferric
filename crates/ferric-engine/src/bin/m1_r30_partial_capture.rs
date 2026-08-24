@@ -5,29 +5,32 @@
 //! cases.
 
 use super::{
-    canonical_bytes, dispatch_graph_identity_name, exact_object, expect_string, field, hex_bytes,
-    parse_canonical, require_safe_id, require_sha256, sha256_hex, CaptureIdentities, CaptureResult,
-    DifferentialPlan, PlanCase, R30PhysicalCaptureBindingsV1, StagingOutput, Workload, TARGET,
+    canonical_bytes, exact_object, expect_string, field, hex_bytes, parse_canonical,
+    require_sha256, sha256_hex, CaptureResult, CapturedExecutionV1, R30PhysicalCaptureBindingsV1,
+    StagingOutput, Workload, MAX_POLLS, TARGET,
 };
+use ferric_engine::M1PhysicalRunnerV1;
 use ferric_spec::{Identity, RequestId};
 use serde_json::{json, Value};
 use std::path::Path;
 
 pub(super) const COMMAND: &str = "capture-r30-cancellation";
-const CAPTURE_FORMAT: &str = "FERRIC-M1-R30-PARTIAL-CAPTURE-V1";
-const PROTOCOL_FORMAT: &str = "FERRIC-M1-R30-PARTIAL-PROTOCOL-V1";
+const CAPTURE_FORMAT: &str = "FERRIC-M1-R30-PARTIAL-CAPTURE-V2";
+const PROTOCOL_FORMAT: &str = "FERRIC-M1-R30-PARTIAL-PROTOCOL-V2";
 const AUTHORITY: &str = "ferric-physical-partial-capture-only";
 const STATUS: &str = "partial-non-evidence";
-const NONCLAIM: &str = "Authenticated Ferric physical completion and in-flight cancellation settlement for one target-prefill workload only. This partial capture is not benchmark evidence, does not establish general hardware correctness, does not cover canary, exhaustion, rollback, or injected device-fault cases, supplies none of the required external or independent validation evidence, and does not close m1.r30.";
-const PROTOCOL_NONCLAIM: &str = "Partial physical cancellation capture only. This protocol does not establish canary integrity, exhaustion handling, rollback refinement, injected device-fault coverage, required external evidence, independent validation, hardware correctness, or close m1.r30.";
+const CASE: &str = "target-prefill-s1-t128-retirement-before-observation";
+const WORKLOAD_FORMAT: &str = "FERRIC-M1-R30-CANCELLATION-WORKLOAD-V2";
+const NONCLAIM: &str = "Authenticated Ferric scheduler retirement before positive physical completion observation and exact settlement for one fixed target-prefill S1/T128 workload only. Retirement is not GPU work preemption. This partial capture is not benchmark evidence, makes no hardware claim, does not establish general hardware correctness, does not cover canary, exhaustion, rollback, or injected device-fault cases, supplies none of the required external or independent validation evidence, and does not close m1.r30.";
+const PROTOCOL_NONCLAIM: &str = "Partial fixed-workload physical cancellation capture only. Scheduler retirement before completion observation is not GPU work preemption. This protocol makes no hardware claim, does not establish canary integrity, exhaustion handling, rollback refinement, injected device-fault coverage, required external evidence, independent validation, hardware correctness, or close m1.r30.";
 
 const EVENTS: &[&str] = &[
     "queue-published",
-    "in-flight-retirement-requested",
+    "scheduler-retirement-requested",
     "precompletion-reclaim-rejected",
-    "physical-completion-observed",
+    "queue-completion-wait-satisfied",
     "signals-recycled",
-    "readback-observed",
+    "physical-completion-readback-observed",
     "semantic-completion-joined",
     "exact-completion-settled",
     "retired-pages-released",
@@ -69,6 +72,7 @@ pub(super) struct CancellationSettlementV1 {
     pub(super) final_absent_count: usize,
     pub(super) in_flight_count: usize,
     pub(super) logical_accepted_counts: Vec<u32>,
+    pub(super) plan_id: Identity,
     pub(super) precompletion_reclaim_count: usize,
     pub(super) released_pages: Vec<(usize, usize)>,
     pub(super) requests: Vec<RequestIdentityV1>,
@@ -80,10 +84,12 @@ pub(super) struct CancellationSettlementV1 {
 impl CancellationSettlementV1 {
     fn validate(&self) -> CaptureResult<()> {
         let count = self.requests.len();
-        if count == 0 {
-            return Err("partial cancellation capture requires at least one request".to_owned());
+        if count != 1 {
+            return Err(
+                "fixed partial cancellation capture requires exactly one request".to_owned(),
+            );
         }
-        if self.dispatch_generation == 0 || self.epoch == 0 {
+        if self.dispatch_generation == 0 || self.epoch == 0 || !self.plan_id.is_present() {
             return Err(
                 "partial cancellation capture requires nonzero physical identities".to_owned(),
             );
@@ -118,14 +124,9 @@ impl CancellationSettlementV1 {
         {
             return Err("target-prefill completion counts are not exact".to_owned());
         }
-        if self
-            .released_pages
-            .iter()
-            .zip(&self.expected_target_pages)
-            .any(|((draft, target), expected)| *draft != 0 || *expected == 0 || target != expected)
-        {
+        if self.expected_target_pages != [1] || self.released_pages != [(0, 1)] {
             return Err(
-                "released pages differ from the authenticated target-prefill contract".to_owned(),
+                "released pages differ from the fixed target-prefill S1 contract".to_owned(),
             );
         }
         let expected_total = self
@@ -133,7 +134,7 @@ impl CancellationSettlementV1 {
             .iter()
             .try_fold(0usize, |total, expected| total.checked_add(*expected))
             .ok_or_else(|| "expected target-page count overflowed".to_owned())?;
-        if expected_total == 0
+        if expected_total != 1
             || expected_total != self.expected_total_target_pages
             || expected_total != self.total_released_pages
         {
@@ -188,11 +189,13 @@ impl CancellationSettlementV1 {
     }
 }
 
-pub(super) struct CaptureManifestInputsV1<'a> {
+pub(super) struct CaptureManifestInputsV2<'a> {
     pub(super) capture: &'a super::CapturedOutput,
-    pub(super) case: &'a PlanCase,
-    pub(super) identities: CaptureIdentities,
-    pub(super) plan: &'a DifferentialPlan,
+    pub(super) closure_sha256: &'a str,
+    pub(super) environment_sha256: &'a str,
+    pub(super) executable_sha256: &'a str,
+    pub(super) gpu_unique_id: u64,
+    pub(super) runner: &'a M1PhysicalRunnerV1,
     pub(super) settlement: &'a CancellationSettlementV1,
     pub(super) workload: &'a Workload,
 }
@@ -206,12 +209,15 @@ pub(super) fn require_protocol() -> CaptureResult<()> {
             "authority",
             "bundle_files",
             "case",
+            "fixed_workload",
             "format",
+            "hardware_claim",
             "lifecycle",
             "milestone",
             "nonclaim",
             "obligation_id",
             "required_complete_case_roster",
+            "retirement_semantics",
             "status",
             "target",
         ],
@@ -220,11 +226,23 @@ pub(super) fn require_protocol() -> CaptureResult<()> {
     expect_string(object, "authority", "ferric-m1-r30-partial-protocol-only")?;
     expect_string(object, "case", "cancellation")?;
     expect_string(object, "format", PROTOCOL_FORMAT)?;
+    expect_string(object, "hardware_claim", "none")?;
     expect_string(object, "milestone", "M1")?;
     expect_string(object, "nonclaim", PROTOCOL_NONCLAIM)?;
     expect_string(object, "obligation_id", "m1.r30")?;
     expect_string(object, "status", STATUS)?;
     expect_string(object, "target", TARGET)?;
+    if field(object, "fixed_workload")? != &fixed_workload_contract() {
+        return Err("partial r30 fixed workload protocol drifted".to_owned());
+    }
+    if field(object, "retirement_semantics")?
+        != &json!({
+            "device_preemption": false,
+            "operation": "scheduler-retirement-before-positive-physical-completion-observation",
+        })
+    {
+        return Err("partial r30 retirement semantics drifted".to_owned());
+    }
     if field(object, "bundle_files")?
         .as_array()
         .map(|files| files.iter().map(Value::as_str).collect::<Option<Vec<_>>>())
@@ -264,7 +282,9 @@ fn protocol_bytes() -> CaptureResult<Vec<u8>> {
         "authority": "ferric-m1-r30-partial-protocol-only",
         "bundle_files": ["capture.json", "protocol.json"],
         "case": "cancellation",
+        "fixed_workload": fixed_workload_contract(),
         "format": PROTOCOL_FORMAT,
+        "hardware_claim": "none",
         "lifecycle": EVENTS,
         "milestone": "M1",
         "nonclaim": PROTOCOL_NONCLAIM,
@@ -276,64 +296,122 @@ fn protocol_bytes() -> CaptureResult<Vec<u8>> {
             "fault-injection",
             "rollback",
         ],
+        "retirement_semantics": {
+            "device_preemption": false,
+            "operation": "scheduler-retirement-before-positive-physical-completion-observation",
+        },
         "status": STATUS,
         "target": TARGET,
     }))
+}
+
+fn fixed_workload_contract() -> Value {
+    json!({
+        "active_length": 1,
+        "case": CASE,
+        "context_length": 0,
+        "format": WORKLOAD_FORMAT,
+        "input_token": 1,
+        "lane_count": 1,
+        "max_polls": MAX_POLLS,
+        "selection": "target-prefill-s1-t128",
+    })
 }
 
 pub(super) fn protocol_sha256() -> CaptureResult<String> {
     Ok(sha256_hex(&protocol_bytes()?))
 }
 
-pub(super) fn manifest(inputs: CaptureManifestInputsV1<'_>) -> CaptureResult<Vec<u8>> {
+pub(super) fn manifest(inputs: CaptureManifestInputsV2<'_>) -> CaptureResult<Vec<u8>> {
     require_protocol()?;
     inputs.settlement.validate()?;
-    let protocol_sha256 = protocol_sha256()?;
-    if inputs.workload.selection.role != ferric_spec::Qwen3ModelRole::Target8B
-        || inputs.workload.selection.mode != ferric_spec::Qwen3ExecutionMode::Prefill
-    {
-        return Err("partial cancellation capture requires exact target prefill".to_owned());
+    validate_fixed_workload(inputs.workload)?;
+    for identity in [
+        inputs.closure_sha256,
+        inputs.environment_sha256,
+        inputs.executable_sha256,
+    ] {
+        require_sha256(identity)?;
     }
-    let plan = inputs.plan;
+    if inputs.gpu_unique_id == 0 || !inputs.capture.device_id.is_present() {
+        return Err("partial cancellation capture requires nonzero device identities".to_owned());
+    }
     let capture = inputs.capture;
+    let CapturedExecutionV1::OneShotPrefill {
+        dispatch_generation,
+        epoch,
+    } = capture.execution
+    else {
+        return Err("fixed cancellation capture requires one-shot prefill execution".to_owned());
+    };
+    if dispatch_generation != inputs.settlement.dispatch_generation
+        || epoch != inputs.settlement.epoch
+        || capture.tokens.len() != 4
+        || capture.logits_row_sha256.len() != 1
+    {
+        return Err("fixed cancellation output differs from settled physical execution".to_owned());
+    }
+    let protocol_sha256 = protocol_sha256()?;
     canonical_bytes(&json!({
-        "admission": {
-            "benchmark_executable_sha256": plan.identity("benchmark-executable")?,
-            "benchmark_protocol_sha256": plan.identity("benchmark-protocol")?,
-            "config_sha256": plan.identity("config")?,
-            "device_identity_sha256": hex_identity(capture.device_id),
-            "dispatch_graph_sha256": plan.identity("dispatch-graph")?,
-            "environment_sha256": plan.identity("environment")?,
-            "fe2o3_source_closure_sha256": plan.identity("fe2o3-source-closure")?,
-            "ferric_source_closure_sha256": plan.identity("ferric-source-closure")?,
-            "generated_plan_sha256": plan.identity("generated-plan")?,
-            "gpu_unique_id": inputs.identities.gpu_unique_id,
-            "kernel_artifact_manifest_sha256": hex_identity(inputs.identities.kernel_manifest),
-            "model_sha256": plan.identity("model")?,
-            "program_catalog_sha256": hex_identity(inputs.identities.program_catalog),
-            "runner_declaration_sha256": hex_identity(inputs.identities.runner_declaration),
-            "schedule_catalog_sha256": plan.identity("schedule-catalog")?,
-            "selected_dispatch_graph_sha256": plan.identity(dispatch_graph_identity_name(&inputs.case.kind)?)?,
-            "tokenizer_sha256": plan.identity("tokenizer")?,
-            "weights_sha256": plan.identity("weights")?,
-            "workload_roster_sha256": plan.identity("workload-roster")?,
-        },
         "authority": AUTHORITY,
-        "case_id": inputs.case.id,
-        "case_kind": "cancellation",
+        "case": CASE,
         "format": CAPTURE_FORMAT,
-        "input_sha256": inputs.case.input_sha256,
+        "hardware_claim": "none",
+        "identities": {
+            "closure_document_sha256": inputs.closure_sha256,
+            "device_identity_sha256": hex_identity(capture.device_id),
+            "environment_sha256": inputs.environment_sha256,
+            "executable_sha256": inputs.executable_sha256,
+            "gpu_unique_id": inputs.gpu_unique_id,
+            "kernel_artifact_manifest_sha256": hex_identity(inputs.runner.kernel_artifact_manifest_id()),
+            "kernel_catalog_sha256": hex_identity(inputs.runner.kernel_catalog_id()),
+            "plan_id_sha256": hex_identity(inputs.settlement.plan_id),
+            "program_catalog_sha256": hex_identity(inputs.runner.program_catalog_id()),
+            "runner_declaration_sha256": hex_identity(inputs.runner.declaration_id()),
+        },
         "lifecycle": inputs.settlement.as_json(),
         "nonclaim": NONCLAIM,
         "obligation_id": "m1.r30",
         "protocol_sha256": protocol_sha256,
-        "source_case_kind": inputs.case.kind,
         "source_compact_sha256": hex_bytes(&capture.compact_sha256),
-        "source_plan_sha256": plan.sha256(),
-        "source_workload_sha256": sha256_hex(&inputs.workload.bytes),
         "status": STATUS,
         "target": TARGET,
+        "workload": {
+            "active_length": 1,
+            "context_length": 0,
+            "input_payload_sha256": inputs.workload.input_sha256,
+            "input_token": 1,
+            "lane_count": 1,
+            "max_polls": inputs.workload.max_polls,
+            "selection": "target-prefill-s1-t128",
+            "workload_sha256": sha256_hex(&inputs.workload.bytes),
+        },
     }))
+}
+
+fn validate_fixed_workload(workload: &Workload) -> CaptureResult<()> {
+    let expected_bytes = canonical_bytes(&fixed_workload_contract())?;
+    let expected_input_sha256 = sha256_hex(&1_u32.to_le_bytes());
+    if workload.bytes != expected_bytes
+        || workload.input_path != Path::new("frozen-r30-cancellation-input-u32le")
+        || workload.input_bytes != 4
+        || workload.input_sha256 != expected_input_sha256
+        || workload.kind != "prefill-s1-t128"
+        || workload.lanes
+            != [super::LaneInput {
+                active_length: 1,
+                context_length: 0,
+            }]
+        || u64::from(workload.max_polls) != MAX_POLLS
+        || workload.selection.role != ferric_spec::Qwen3ModelRole::Target8B
+        || workload.selection.mode != ferric_spec::Qwen3ExecutionMode::Prefill
+        || workload.selection.bucket != ferric_spec::Qwen3PlanBucket::PrefillS1T128
+    {
+        return Err(
+            "partial cancellation workload differs from the fixed S1/T128 contract".to_owned(),
+        );
+    }
+    Ok(())
 }
 
 pub(super) fn publish(output: &Path, capture: &[u8]) -> CaptureResult<()> {
@@ -358,33 +436,33 @@ pub(super) fn admit_persisted_bundle(
     let root = value
         .as_object()
         .ok_or_else(|| "persisted partial r30 cancellation capture must be an object".to_owned())?;
-    let admission = field(root, "admission")?.as_object().ok_or_else(|| {
-        "persisted partial r30 cancellation admission must be an object".to_owned()
+    let identities = field(root, "identities")?.as_object().ok_or_else(|| {
+        "persisted partial r30 cancellation identities must be an object".to_owned()
     })?;
     Ok(R30PhysicalCaptureBindingsV1 {
-        device_identity_sha256: admission_string(admission, "device_identity_sha256")?.to_owned(),
-        gpu_unique_id: field(admission, "gpu_unique_id")?
+        device_identity_sha256: identity_string(identities, "device_identity_sha256")?.to_owned(),
+        gpu_unique_id: field(identities, "gpu_unique_id")?
             .as_u64()
             .filter(|value| *value != 0)
             .ok_or_else(|| "persisted cancellation GPU identity is invalid".to_owned())?,
-        kernel_artifact_manifest_sha256: admission_string(
-            admission,
+        kernel_artifact_manifest_sha256: identity_string(
+            identities,
             "kernel_artifact_manifest_sha256",
         )?
         .to_owned(),
-        program_catalog_sha256: admission_string(admission, "program_catalog_sha256")?.to_owned(),
-        runner_declaration_sha256: admission_string(admission, "runner_declaration_sha256")?
+        program_catalog_sha256: identity_string(identities, "program_catalog_sha256")?.to_owned(),
+        runner_declaration_sha256: identity_string(identities, "runner_declaration_sha256")?
             .to_owned(),
     })
 }
 
-fn admission_string<'a>(
+fn identity_string<'a>(
     object: &'a serde_json::Map<String, Value>,
     name: &str,
 ) -> CaptureResult<&'a str> {
     let value = field(object, name)?
         .as_str()
-        .ok_or_else(|| format!("persisted cancellation {name} must be a string"))?;
+        .ok_or_else(|| format!("persisted cancellation identity {name} must be a string"))?;
     require_sha256(value)?;
     Ok(value)
 }
@@ -394,97 +472,64 @@ fn validate_manifest(bytes: &[u8]) -> CaptureResult<()> {
     let object = exact_object(
         &value,
         &[
-            "admission",
             "authority",
-            "case_id",
-            "case_kind",
+            "case",
             "format",
-            "input_sha256",
+            "hardware_claim",
+            "identities",
             "lifecycle",
             "nonclaim",
             "obligation_id",
             "protocol_sha256",
-            "source_case_kind",
             "source_compact_sha256",
-            "source_plan_sha256",
-            "source_workload_sha256",
             "status",
             "target",
+            "workload",
         ],
         "partial r30 capture",
     )?;
     expect_string(object, "authority", AUTHORITY)?;
-    expect_string(object, "case_kind", "cancellation")?;
+    expect_string(object, "case", CASE)?;
     expect_string(object, "format", CAPTURE_FORMAT)?;
+    expect_string(object, "hardware_claim", "none")?;
     expect_string(object, "nonclaim", NONCLAIM)?;
     expect_string(object, "obligation_id", "m1.r30")?;
     expect_string(object, "protocol_sha256", &protocol_sha256()?)?;
     expect_string(object, "status", STATUS)?;
     expect_string(object, "target", TARGET)?;
-    let case_id = field(object, "case_id")?
-        .as_str()
-        .ok_or_else(|| "partial r30 case ID must be a string".to_owned())?;
-    require_safe_id(case_id, "partial r30 case ID")?;
-    let source_kind = field(object, "source_case_kind")?
-        .as_str()
-        .ok_or_else(|| "partial r30 source case kind must be a string".to_owned())?;
-    if ![
-        "prefill-s1-t128",
-        "prefill-s1-t2048",
-        "prefill-s1-t512",
-        "prefill-s8-t128",
-    ]
-    .contains(&source_kind)
-    {
-        return Err("partial r30 source case is not an admitted target prefill".to_owned());
-    }
-    for name in [
-        "input_sha256",
-        "protocol_sha256",
-        "source_compact_sha256",
-        "source_plan_sha256",
-        "source_workload_sha256",
-    ] {
+    for name in ["protocol_sha256", "source_compact_sha256"] {
         let identity = field(object, name)?
             .as_str()
             .ok_or_else(|| format!("partial r30 identity must be a string: {name}"))?;
         require_sha256(identity)?;
     }
-    validate_admission(field(object, "admission")?)?;
+    validate_identities(field(object, "identities")?)?;
+    validate_workload(field(object, "workload")?)?;
     validate_lifecycle(field(object, "lifecycle")?)
 }
 
-fn validate_admission(value: &Value) -> CaptureResult<()> {
+fn validate_identities(value: &Value) -> CaptureResult<()> {
     let object = exact_object(
         value,
         &[
-            "benchmark_executable_sha256",
-            "benchmark_protocol_sha256",
-            "config_sha256",
+            "closure_document_sha256",
             "device_identity_sha256",
-            "dispatch_graph_sha256",
             "environment_sha256",
-            "fe2o3_source_closure_sha256",
-            "ferric_source_closure_sha256",
-            "generated_plan_sha256",
+            "executable_sha256",
             "gpu_unique_id",
             "kernel_artifact_manifest_sha256",
-            "model_sha256",
+            "kernel_catalog_sha256",
+            "plan_id_sha256",
             "program_catalog_sha256",
             "runner_declaration_sha256",
-            "schedule_catalog_sha256",
-            "selected_dispatch_graph_sha256",
-            "tokenizer_sha256",
-            "weights_sha256",
-            "workload_roster_sha256",
         ],
-        "partial r30 admission",
+        "partial r30 identities",
     )?;
     if field(object, "gpu_unique_id")?
         .as_u64()
         .is_none_or(|id| id == 0)
     {
-        return Err("partial r30 admission GPU identity is invalid".to_owned());
+        return Err("partial r30 GPU identity is invalid".to_owned());
     }
     for (name, value) in object {
         if name == "gpu_unique_id" {
@@ -492,10 +537,49 @@ fn validate_admission(value: &Value) -> CaptureResult<()> {
         }
         let identity = value
             .as_str()
-            .ok_or_else(|| format!("partial r30 admission identity must be a string: {name}"))?;
+            .ok_or_else(|| format!("partial r30 identity must be a string: {name}"))?;
         require_sha256(identity)?;
     }
     Ok(())
+}
+
+fn validate_workload(value: &Value) -> CaptureResult<()> {
+    let object = exact_object(
+        value,
+        &[
+            "active_length",
+            "context_length",
+            "input_payload_sha256",
+            "input_token",
+            "lane_count",
+            "max_polls",
+            "selection",
+            "workload_sha256",
+        ],
+        "partial r30 workload",
+    )?;
+    let input_sha256 = field(object, "input_payload_sha256")?
+        .as_str()
+        .ok_or_else(|| "partial r30 workload input identity must be a string".to_owned())?;
+    let workload_sha256 = field(object, "workload_sha256")?
+        .as_str()
+        .ok_or_else(|| "partial r30 workload identity must be a string".to_owned())?;
+    require_sha256(input_sha256)?;
+    require_sha256(workload_sha256)?;
+    if field(object, "active_length")?.as_u64() != Some(1)
+        || field(object, "context_length")?.as_u64() != Some(0)
+        || field(object, "input_token")?.as_u64() != Some(1)
+        || field(object, "lane_count")?.as_u64() != Some(1)
+        || field(object, "max_polls")?.as_u64() != Some(MAX_POLLS)
+    {
+        return Err("partial r30 fixed workload dimensions drifted".to_owned());
+    }
+    if input_sha256 != sha256_hex(&1_u32.to_le_bytes())
+        || workload_sha256 != sha256_hex(&canonical_bytes(&fixed_workload_contract())?)
+    {
+        return Err("partial r30 fixed workload identity drifted".to_owned());
+    }
+    expect_string(object, "selection", "target-prefill-s1-t128")
 }
 
 fn validate_lifecycle(value: &Value) -> CaptureResult<()> {
@@ -538,8 +622,8 @@ fn validate_lifecycle(value: &Value) -> CaptureResult<()> {
         .as_array()
         .ok_or_else(|| "partial r30 request roster must be an array".to_owned())?;
     let request_count = requests.len();
-    if request_count == 0 {
-        return Err("partial r30 request roster must not be empty".to_owned());
+    if request_count != 1 {
+        return Err("fixed partial r30 request roster must contain exactly one member".to_owned());
     }
     let mut request_ids = std::collections::BTreeSet::new();
     for request in requests {
@@ -611,14 +695,19 @@ fn validate_lifecycle(value: &Value) -> CaptureResult<()> {
         let total = field(release, "total")?
             .as_u64()
             .ok_or_else(|| "partial r30 total release count is invalid".to_owned())?;
-        if draft != 0 || target != expected_target || draft.checked_add(target) != Some(total) {
+        if draft != 0
+            || target != 1
+            || expected_target != 1
+            || total != 1
+            || draft.checked_add(target) != Some(total)
+        {
             return Err("partial r30 released-page entry differs from target contract".to_owned());
         }
         released_total = released_total
             .checked_add(total)
             .ok_or_else(|| "partial r30 released-page total overflowed".to_owned())?;
     }
-    if released_total == 0
+    if released_total != 1
         || field(object, "expected_total_target_pages")?.as_u64() != Some(released_total)
         || field(object, "total_released_pages")?.as_u64() != Some(released_total)
     {
@@ -686,49 +775,50 @@ mod tests {
         })
     }
 
-    fn admission() -> Value {
+    fn identities() -> Value {
         let identity = "11".repeat(32);
         json!({
-            "benchmark_executable_sha256": identity,
-            "benchmark_protocol_sha256": identity,
-            "config_sha256": identity,
+            "closure_document_sha256": identity,
             "device_identity_sha256": identity,
-            "dispatch_graph_sha256": identity,
             "environment_sha256": identity,
-            "fe2o3_source_closure_sha256": identity,
-            "ferric_source_closure_sha256": identity,
-            "generated_plan_sha256": identity,
+            "executable_sha256": identity,
             "gpu_unique_id": 1,
             "kernel_artifact_manifest_sha256": identity,
-            "model_sha256": identity,
+            "kernel_catalog_sha256": identity,
+            "plan_id_sha256": identity,
             "program_catalog_sha256": identity,
             "runner_declaration_sha256": identity,
-            "schedule_catalog_sha256": identity,
-            "selected_dispatch_graph_sha256": identity,
-            "tokenizer_sha256": identity,
-            "weights_sha256": identity,
-            "workload_roster_sha256": identity,
+        })
+    }
+
+    fn workload() -> Value {
+        json!({
+            "active_length": 1,
+            "context_length": 0,
+            "input_payload_sha256": sha256_hex(&1_u32.to_le_bytes()),
+            "input_token": 1,
+            "lane_count": 1,
+            "max_polls": MAX_POLLS,
+            "selection": "target-prefill-s1-t128",
+            "workload_sha256": sha256_hex(&canonical_bytes(&fixed_workload_contract()).unwrap()),
         })
     }
 
     fn capture(lifecycle: Value) -> Vec<u8> {
         canonical_bytes(&json!({
-            "admission": admission(),
             "authority": AUTHORITY,
-            "case_id": "prefill.001",
-            "case_kind": "cancellation",
+            "case": CASE,
             "format": CAPTURE_FORMAT,
-            "input_sha256": "01".repeat(32),
+            "hardware_claim": "none",
+            "identities": identities(),
             "lifecycle": lifecycle,
             "nonclaim": NONCLAIM,
             "obligation_id": "m1.r30",
             "protocol_sha256": protocol_sha256().unwrap(),
-            "source_case_kind": "prefill-s1-t128",
             "source_compact_sha256": "11".repeat(32),
-            "source_plan_sha256": "22".repeat(32),
-            "source_workload_sha256": "33".repeat(32),
             "status": STATUS,
             "target": TARGET,
+            "workload": workload(),
         }))
         .unwrap()
     }
@@ -747,10 +837,10 @@ mod tests {
         assert!(
             EVENTS
                 .iter()
-                .position(|event| *event == "in-flight-retirement-requested")
+                .position(|event| *event == "scheduler-retirement-requested")
                 < EVENTS
                     .iter()
-                    .position(|event| *event == "physical-completion-observed")
+                    .position(|event| *event == "physical-completion-readback-observed")
         );
     }
 
@@ -791,6 +881,7 @@ mod tests {
             final_absent_count: 1,
             in_flight_count: 0,
             logical_accepted_counts: vec![1],
+            plan_id: Identity::new([7; 32]),
             precompletion_reclaim_count: 0,
             released_pages: vec![(0, 1)],
             requests: vec![RequestIdentityV1 {
@@ -933,6 +1024,14 @@ mod tests {
         let mut value = parse_canonical(&bytes, "fixture").unwrap();
         let object: &mut Map<String, Value> = value.as_object_mut().unwrap();
         object.insert("status".to_owned(), json!("observed"));
+        assert!(validate_manifest(&canonical_bytes(&value).unwrap()).is_err());
+
+        let mut value = parse_canonical(&bytes, "fixture").unwrap();
+        value["hardware_claim"] = json!("validated");
+        assert!(validate_manifest(&canonical_bytes(&value).unwrap()).is_err());
+
+        let mut value = parse_canonical(&bytes, "fixture").unwrap();
+        value["workload"]["input_token"] = json!(2);
         assert!(validate_manifest(&canonical_bytes(&value).unwrap()).is_err());
     }
 }

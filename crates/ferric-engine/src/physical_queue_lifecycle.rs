@@ -12,8 +12,9 @@ use core::fmt;
 use fe2o3_service_host::{
     ServiceCompletedQueueSessionV1, ServiceCompletedReadbackV1, ServiceHostDispatchRangeV1,
     ServicePublishedQueueSessionV1, ServiceQueueCreateFailureV1, ServiceQueueErrorV1,
-    ServiceQueueOperationFailureV1, ServiceQueueReleaseFailureV1, ServiceQueueReleaseObservationV1,
-    ServiceQueueSessionV1, ServiceQueueUnboundSessionV1, ServiceRecycledQueueSessionV1,
+    ServiceQueueOperationFailureV1, ServiceQueuePollV1, ServiceQueueReleaseFailureV1,
+    ServiceQueueReleaseObservationV1, ServiceQueueSessionV1, ServiceQueueUnboundSessionV1,
+    ServiceRecycledQueueSessionV1,
 };
 use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::Qwen3ExecutionMode;
@@ -4070,6 +4071,29 @@ fn submit_case<const N: usize>(
     }
 }
 
+enum BoundedCompletionPollV1<P, C> {
+    Pending(P),
+    Ready(C),
+}
+
+fn wait_with_ferric_poll_budget<P, C, E>(
+    pending: P,
+    polls: u32,
+    mut poll: impl FnMut(P) -> Result<BoundedCompletionPollV1<P, C>, E>,
+    wait: impl FnOnce(P, u32) -> Result<C, E>,
+) -> Result<C, E> {
+    let mut pending = pending;
+    let mut remaining = polls;
+    while remaining > 1 {
+        match poll(pending)? {
+            BoundedCompletionPollV1::Pending(next) => pending = next,
+            BoundedCompletionPollV1::Ready(completed) => return Ok(completed),
+        }
+        remaining -= 1;
+    }
+    wait(pending, remaining)
+}
+
 fn wait_case<const N: usize>(
     case: Box<M1PhysicalQueuePhaseCaseV1<ServicePublishedQueueSessionV1<N>>>,
     shape: M1PhysicalFixedBatchShapeV1,
@@ -4079,7 +4103,22 @@ fn wait_case<const N: usize>(
     M1PhysicalQueueOperationFailureV1,
 > {
     let (lower, custody, step) = (*case).into_parts();
-    match lower.wait(polls) {
+    // The generic bounded wait has a smaller per-call policy ceiling. Polling
+    // preserves published custody so Ferric can enforce its full inference budget.
+    let completed = wait_with_ferric_poll_budget(
+        lower,
+        polls,
+        |published| {
+            published.poll().map(|outcome| match outcome {
+                ServiceQueuePollV1::Pending(published) => {
+                    BoundedCompletionPollV1::Pending(published)
+                }
+                ServiceQueuePollV1::Ready(completed) => BoundedCompletionPollV1::Ready(completed),
+            })
+        },
+        ServicePublishedQueueSessionV1::wait,
+    );
+    match completed {
         Ok(lower) => Ok(Box::new(M1PhysicalQueuePhaseCaseV1::new(
             lower, custody, step,
         ))),
@@ -4225,7 +4264,7 @@ impl M1PhysicalQueueSessionV1 {
 }
 
 impl M1PhysicalPublishedQueueSessionV1 {
-    /// Waits for every exact completion signal using a bounded poll count.
+    /// Waits for every exact completion signal using Ferric's bounded poll count.
     ///
     /// # Errors
     ///
@@ -5324,11 +5363,64 @@ fn operation_failure(
 mod tests {
     use super::{
         read_m1_diagnostic_choice_pair_v1, validate_generic_observed_semantics,
-        CompletionWireSemanticExpectation, M1CompletedOutputCheckErrorV1,
-        M1DiagnosticChoiceCopyCustodyV1, M1DiagnosticChoiceReadBackendV1,
-        M1PhysicalQueueCreateFailureClassV1, M1PhysicalQueuePhaseV1,
+        wait_with_ferric_poll_budget, BoundedCompletionPollV1, CompletionWireSemanticExpectation,
+        M1CompletedOutputCheckErrorV1, M1DiagnosticChoiceCopyCustodyV1,
+        M1DiagnosticChoiceReadBackendV1, M1PhysicalQueueCreateFailureClassV1,
+        M1PhysicalQueuePhaseV1,
     };
     use crate::Engine;
+    use std::cell::{Cell, RefCell};
+
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    enum MockPollEventV1 {
+        Pending,
+        Ready,
+        Fault,
+    }
+
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    enum MockPollFailureV1 {
+        Timeout(u32),
+        Fault(u32),
+    }
+
+    fn drive_mock_poll_budget(
+        budget: u32,
+        events: &[MockPollEventV1],
+    ) -> (Result<u32, MockPollFailureV1>, Vec<(bool, u32)>) {
+        let cursor = Cell::new(0_usize);
+        let observations = RefCell::new(Vec::new());
+        let next_event = || {
+            let index = cursor.get();
+            let event = events[index];
+            cursor.set(index + 1);
+            event
+        };
+        let result = wait_with_ferric_poll_budget(
+            0_u32,
+            budget,
+            |owner| {
+                observations.borrow_mut().push((false, 1));
+                match next_event() {
+                    MockPollEventV1::Pending => Ok(BoundedCompletionPollV1::Pending(owner + 1)),
+                    MockPollEventV1::Ready => Ok(BoundedCompletionPollV1::Ready(owner + 1)),
+                    MockPollEventV1::Fault => Err(MockPollFailureV1::Fault(owner)),
+                }
+            },
+            |owner, polls| {
+                observations.borrow_mut().push((true, polls));
+                if polls == 0 {
+                    return Err(MockPollFailureV1::Timeout(0));
+                }
+                match next_event() {
+                    MockPollEventV1::Ready => Ok(owner + 1),
+                    MockPollEventV1::Pending => Err(MockPollFailureV1::Timeout(polls)),
+                    MockPollEventV1::Fault => Err(MockPollFailureV1::Fault(owner)),
+                }
+            },
+        );
+        (result, observations.into_inner())
+    }
 
     #[derive(Debug, Eq, PartialEq)]
     struct InjectedReadErrorV1 {
@@ -5415,6 +5507,54 @@ mod tests {
         assert!(!M1PhysicalQueueCreateFailureClassV1::Rejected.denies_retry());
         assert!(!M1PhysicalQueueCreateFailureClassV1::Terminal.can_recover_inputs());
         assert!(M1PhysicalQueueCreateFailureClassV1::Terminal.denies_retry());
+    }
+
+    #[test]
+    fn ferric_poll_budget_preserves_boundaries_faults_and_linear_progress() {
+        assert_eq!(
+            drive_mock_poll_budget(0, &[]),
+            (Err(MockPollFailureV1::Timeout(0)), vec![(true, 0)])
+        );
+        assert_eq!(
+            drive_mock_poll_budget(1, &[MockPollEventV1::Pending]),
+            (Err(MockPollFailureV1::Timeout(1)), vec![(true, 1)])
+        );
+        assert_eq!(
+            drive_mock_poll_budget(3, &[MockPollEventV1::Pending, MockPollEventV1::Ready]),
+            (Ok(2), vec![(false, 1), (false, 1)])
+        );
+        assert_eq!(
+            drive_mock_poll_budget(
+                3,
+                &[
+                    MockPollEventV1::Pending,
+                    MockPollEventV1::Pending,
+                    MockPollEventV1::Ready,
+                ]
+            ),
+            (Ok(3), vec![(false, 1), (false, 1), (true, 1)])
+        );
+        assert_eq!(
+            drive_mock_poll_budget(
+                3,
+                &[
+                    MockPollEventV1::Pending,
+                    MockPollEventV1::Pending,
+                    MockPollEventV1::Pending,
+                ]
+            ),
+            (
+                Err(MockPollFailureV1::Timeout(1)),
+                vec![(false, 1), (false, 1), (true, 1)]
+            )
+        );
+        assert_eq!(
+            drive_mock_poll_budget(3, &[MockPollEventV1::Pending, MockPollEventV1::Fault]),
+            (
+                Err(MockPollFailureV1::Fault(1)),
+                vec![(false, 1), (false, 1)]
+            )
+        );
     }
 
     #[test]
