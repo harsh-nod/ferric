@@ -174,8 +174,8 @@ def exercise_prepare_boundaries(repo: Path, fe2o3_source: Path, planner: Any) ->
             or queue.get("format") != planner.WORK_FORMAT
             or queue.get("status") != "INCOMPLETE"
             or queue.get("counts", {}).get("missing_items") != 358
-            or queue.get("counts", {}).get("available_producer_items") != 59
-            or queue.get("counts", {}).get("missing_producer_items") != 299
+            or queue.get("counts", {}).get("available_producer_items") != 133
+            or queue.get("counts", {}).get("missing_producer_items") != 225
         ):
             fail("M1 planner positive integration output weakened its nonclaim")
         if any(
@@ -436,10 +436,46 @@ def main() -> None:
     for slot in available:
         kind = slot["binding"]["evidence_kind"]
         available_kinds[kind] = available_kinds.get(kind, 0) + 1
-    if available_kinds != {"negative-mutation": 30, "verus-theorem": 26}:
+    if available_kinds != {
+        "artifact-identity": 74,
+        "negative-mutation": 30,
+        "verus-theorem": 26,
+    }:
         fail(f"existing M1 producer coverage drifted: {available_kinds}")
-    if len(first) - len(available) != 298:
+    if len(first) - len(available) != 224:
         fail("missing binding-producer count drifted")
+
+    identity_slots = [
+        slot
+        for slot in first
+        if slot["binding"]["evidence_kind"] == "artifact-identity"
+    ]
+    identity_ids = [slot["binding"]["id"] for slot in identity_slots]
+    if planner.digest_bytes(("\n".join(identity_ids) + "\n").encode("ascii")) != (
+        "036a350d44c964bd96c44328087d541db7116452093ed9067987fa8497e57258"
+    ):
+        fail("M1 artifact-identity binding ID roster drifted")
+    for slot in identity_slots:
+        binding = slot["binding"]
+        artifact_id = binding["artifact_id"]
+        if slot["producer"] != {
+            "availability": "available",
+            "command": [
+                "python3",
+                "-I",
+                "proofs/m1-qualification/produce-artifact-identity.py",
+                "FERRIC_REPO",
+                "FE2O3_REPO",
+                "PLAN_DIR",
+                binding["id"],
+            ],
+            "role": "ferric-artifact-identity-reporter",
+        } or slot["expected_artifact"] != {
+            "id": artifact_id,
+            "kind": "ArtifactIdentityReport",
+            "path": f"artifacts/{artifact_id}.artifact-identity.json",
+        }:
+            fail(f"M1 artifact-identity producer command drifted: {binding['id']}")
 
     tcb_work = planner.global_work_items()[:3]
     expected_tcb_work = []
@@ -547,6 +583,8 @@ def main() -> None:
     registries = planner.foundation_registries(repo)
     for slot in available:
         binding = slot["binding"]
+        if binding["evidence_kind"] == "artifact-identity":
+            continue
         expected = registries[binding["evidence_kind"]][binding["obligation_id"]][
             binding["path_id"]
         ]

@@ -138,7 +138,6 @@ FOUNDATION_FILES = {
     ),
 }
 MISSING_ROLES = {
-    "artifact-identity": "external-artifact-identity-reporter",
     "canonical-structure-check": "external-canonical-structure-reporter",
     "external-contract": "external-contract-owner",
     "fe2o3-contract": "fe2o3-contract-owner",
@@ -510,6 +509,20 @@ def artifact_path(
 
 
 def producer(evidence_kind: str, selectors: tuple[str, ...]) -> JsonObject:
+    if evidence_kind == "artifact-identity":
+        return {
+            "availability": "available",
+            "command": [
+                "python3",
+                "-I",
+                "proofs/m1-qualification/produce-artifact-identity.py",
+                "FERRIC_REPO",
+                "FE2O3_REPO",
+                "PLAN_DIR",
+                "BINDING_ID",
+            ],
+            "role": "ferric-artifact-identity-reporter",
+        }
     foundation = FOUNDATION_FILES.get(evidence_kind)
     if foundation is not None:
         return {
@@ -600,6 +613,8 @@ def renumber_slots(slots: list[JsonObject]) -> list[JsonObject]:
                 f"foundation-runs/{artifact_id}/{selectors[0]}.result"
             )
             slot["producer"]["command"][3] = f"foundation-runs/{artifact_id}"
+        elif evidence_kind == "artifact-identity":
+            slot["producer"]["command"][-1] = binding_id
     return slots
 
 
