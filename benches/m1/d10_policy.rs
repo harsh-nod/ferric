@@ -31,9 +31,9 @@ const RECORDED_SAMPLES: u64 = 30;
 const MAX_DOCUMENT_BYTES: usize = 8 * 1024 * 1024;
 const MAX_POLICY_INTEGER: u64 = 1_000_000_000_000_000;
 const POLICY_NONCLAIM: &str = "This input freezes externally supplied D10 experiment-policy values before observation. It does not claim that the values are reviewed, fair, sufficient, measured, passing, or able to close m1.r31.";
-const ADMISSION_NONCLAIM: &str = "This admission authenticates only canonical structure and frozen identity for an externally supplied pre-observation D10 experiment policy. Legacy plan and validate commands do not consume this policy, so its 10 warmups and 30 recorded samples are not execution-enforced. A future policy-SHA-256-bound D10 observation validator remains required. This admission does not endorse thresholds, weights, work units, vendor mappings, tuning budgets, observations, performance, hardware correctness, qualification, or close m1.r31.";
+const ADMISSION_NONCLAIM: &str = "This admission authenticates only canonical structure and frozen identity for an externally supplied pre-observation D10 experiment policy. Legacy plan and validate commands do not consume this policy, so its 10 warmups and 30 recorded samples are not execution-enforced. The separate policy-SHA-256-bound D10 observation validator does not retroactively bind those legacy commands or validate the supplied policy values. This admission does not endorse thresholds, weights, work units, vendor mappings, tuning budgets, observations, performance, hardware correctness, qualification, or close m1.r31.";
 const FUTURE_OBSERVATION_BINDING: &str = "policy-sha256-bound-d10-observation-validator";
-const PROTOCOL_SHA256: &str = "7327260dafb2ccdd326aed8906493ee44369ff400949bb0668e7e34b260794e4";
+const PROTOCOL_SHA256: &str = "ab6523c1332cd61a6a437651d9a4dd93df900f52bf2a10bb08e38162ed589c21";
 
 const CASE_ROSTER: &[(&str, &str)] = &[
     ("flash-attention-prefill", "k4-gqa-prefill"),
