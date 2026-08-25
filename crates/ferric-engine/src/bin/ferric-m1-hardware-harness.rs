@@ -2,14 +2,17 @@
 
 #![forbid(unsafe_code)]
 
+mod ferric_m1_hardware_harness_source_identity;
+
 use fe2o3_kfd::{DeviceSelector, OpenedKfd};
 use ferric_engine::{
     execute_m1_k7_s1k4_packet_v1, reopen_persisted_m1_kernel_artifacts_from_directory_v1,
     reopen_persisted_m1_kernel_artifacts_v1,
 };
+use ferric_m1_hardware_harness_source_identity::TOOL_SOURCE_SHA256S;
 use rustix::fd::OwnedFd;
 use rustix::fs::{fstat, openat2, FileType, Mode, OFlags, ResolveFlags, Stat, CWD};
-use serde::{Deserialize, Serialize};
+use serde_json::{json, Map, Value};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 use std::ffi::OsString;
@@ -41,8 +44,7 @@ const TOOL_VERSION: &str = env!("CARGO_PKG_VERSION");
 const MAX_JSON_BYTES: u64 = 64 * 1_024;
 const USAGE: &str = "usage: ferric-m1-hardware-harness KERNEL_ARTIFACTS HARDWARE_ENVIRONMENT";
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(deny_unknown_fields)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 struct HardwareHarnessRequestV1 {
     case: HardwareHarnessCaseV1,
     format: String,
@@ -50,16 +52,14 @@ struct HardwareHarnessRequestV1 {
     target: String,
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(deny_unknown_fields)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 struct HardwareHarnessCaseV1 {
     binding_sha256: String,
     case_id: String,
     procedure_sha256: String,
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(deny_unknown_fields)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 struct HardwareEnvironmentV1 {
     device: HardwareDeviceV1,
     driver: DriverEnvironmentV1,
@@ -70,8 +70,7 @@ struct HardwareEnvironmentV1 {
     target: String,
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(deny_unknown_fields)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 struct HardwareDeviceV1 {
     device_count: u32,
     device_uuid: String,
@@ -82,29 +81,26 @@ struct HardwareDeviceV1 {
     xnack: String,
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(deny_unknown_fields)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 struct DriverEnvironmentV1 {
     module_sha256: String,
     name: String,
     version: String,
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(deny_unknown_fields)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 struct FirmwareEnvironmentV1 {
     bundle_sha256: String,
     package_version: String,
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(deny_unknown_fields)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 struct RocmEnvironmentV1 {
     installation_sha256: String,
     version: String,
 }
 
-#[derive(Debug, Eq, PartialEq, Serialize)]
+#[derive(Debug, Eq, PartialEq)]
 struct HardwareHarnessResultV1 {
     case_result: HardwareCaseResultV1,
     device: HardwareDeviceV1,
@@ -125,7 +121,7 @@ struct HardwareHarnessResultV1 {
     tool_version: &'static str,
 }
 
-#[derive(Debug, Eq, PartialEq, Serialize)]
+#[derive(Debug, Eq, PartialEq)]
 struct HardwareCaseResultV1 {
     binding_sha256: String,
     case_id: String,
@@ -142,7 +138,7 @@ struct HardwareCaseResultV1 {
     workgroup: [u32; 3],
 }
 
-#[derive(Debug, Eq, PartialEq, Serialize)]
+#[derive(Debug, Eq, PartialEq)]
 struct ResultEnvironmentV1 {
     driver: DriverEnvironmentV1,
     firmware: FirmwareEnvironmentV1,
@@ -180,7 +176,11 @@ fn execute(command: Command) -> HarnessResult<()> {
     let run_nonce = unix_nanos()?;
     let started_at_utc = utc_timestamp(started_seconds)?;
 
-    let request: HardwareHarnessRequestV1 = read_canonical_stdin("hardware request")?;
+    let request_document = read_canonical_stdin("hardware request")?;
+    let request = parse_request(&request_document)?;
+    if request_value(&request) != request_document {
+        return Err("hardware request typed reconstruction drifted".to_owned());
+    }
     validate_request(&request)?;
     let binding_id = request
         .case
@@ -188,8 +188,12 @@ fn execute(command: Command) -> HarnessResult<()> {
         .strip_prefix("case.k7.")
         .ok_or_else(|| "validated case ID lost its binding prefix".to_owned())?;
     let run_id = format!("run.{binding_id}.{run_nonce}.{}", std::process::id());
-    let environment: HardwareEnvironmentV1 =
+    let environment_document =
         read_canonical_file(&command.environment_path, "hardware environment")?;
+    let environment = parse_environment(&environment_document)?;
+    if environment_value(&environment) != environment_document {
+        return Err("hardware environment typed reconstruction drifted".to_owned());
+    }
     validate_environment(&environment)?;
 
     let artifacts = if is_proc_self_fd_path(&command.artifact_root) {
@@ -284,10 +288,251 @@ fn execute(command: Command) -> HarnessResult<()> {
         started_at_utc,
         status: STATUS,
         target: TARGET,
-        tool_source_sha256s: tool_source_sha256s(),
+        tool_source_sha256s: tool_source_sha256s()?,
         tool_version: TOOL_VERSION,
     };
-    write_canonical_stdout(&result)
+    write_canonical_stdout(&result_value(&result))
+}
+
+fn exact_object<'a>(
+    value: &'a Value,
+    fields: &[&str],
+    description: &str,
+) -> HarnessResult<&'a Map<String, Value>> {
+    let object = value
+        .as_object()
+        .ok_or_else(|| format!("{description} must be an object"))?;
+    if object.len() != fields.len() || !fields.iter().all(|field| object.contains_key(*field)) {
+        return Err(format!("{description} fields drifted"));
+    }
+    Ok(object)
+}
+
+fn object_field<'a>(
+    object: &'a Map<String, Value>,
+    name: &str,
+    description: &str,
+) -> HarnessResult<&'a Value> {
+    object
+        .get(name)
+        .ok_or_else(|| format!("{description} field {name:?} is missing"))
+}
+
+fn string_field(
+    object: &Map<String, Value>,
+    name: &str,
+    description: &str,
+) -> HarnessResult<String> {
+    object_field(object, name, description)?
+        .as_str()
+        .map(str::to_owned)
+        .ok_or_else(|| format!("{description} field {name:?} must be a string"))
+}
+
+fn u64_field(object: &Map<String, Value>, name: &str, description: &str) -> HarnessResult<u64> {
+    object_field(object, name, description)?
+        .as_u64()
+        .ok_or_else(|| format!("{description} field {name:?} must be an unsigned integer"))
+}
+
+fn u32_field(object: &Map<String, Value>, name: &str, description: &str) -> HarnessResult<u32> {
+    u32::try_from(u64_field(object, name, description)?)
+        .map_err(|_| format!("{description} field {name:?} exceeds u32"))
+}
+
+fn parse_request(value: &Value) -> HarnessResult<HardwareHarnessRequestV1> {
+    let object = exact_object(
+        value,
+        &["case", "format", "protocol", "target"],
+        "hardware request",
+    )?;
+    let case = exact_object(
+        object_field(object, "case", "hardware request")?,
+        &["binding_sha256", "case_id", "procedure_sha256"],
+        "hardware request case",
+    )?;
+    Ok(HardwareHarnessRequestV1 {
+        case: HardwareHarnessCaseV1 {
+            binding_sha256: string_field(case, "binding_sha256", "hardware request case")?,
+            case_id: string_field(case, "case_id", "hardware request case")?,
+            procedure_sha256: string_field(case, "procedure_sha256", "hardware request case")?,
+        },
+        format: string_field(object, "format", "hardware request")?,
+        protocol: string_field(object, "protocol", "hardware request")?,
+        target: string_field(object, "target", "hardware request")?,
+    })
+}
+
+fn parse_environment(value: &Value) -> HarnessResult<HardwareEnvironmentV1> {
+    let object = exact_object(
+        value,
+        &[
+            "device",
+            "driver",
+            "firmware",
+            "format",
+            "gpu_unique_id",
+            "rocm",
+            "target",
+        ],
+        "hardware environment",
+    )?;
+    let device = exact_object(
+        object_field(object, "device", "hardware environment")?,
+        &[
+            "device_count",
+            "device_uuid",
+            "marketing_name",
+            "pci_bdf",
+            "processor",
+            "vendor_id",
+            "xnack",
+        ],
+        "hardware device",
+    )?;
+    let driver = exact_object(
+        object_field(object, "driver", "hardware environment")?,
+        &["module_sha256", "name", "version"],
+        "hardware driver",
+    )?;
+    let firmware = exact_object(
+        object_field(object, "firmware", "hardware environment")?,
+        &["bundle_sha256", "package_version"],
+        "hardware firmware",
+    )?;
+    let rocm = exact_object(
+        object_field(object, "rocm", "hardware environment")?,
+        &["installation_sha256", "version"],
+        "hardware ROCm",
+    )?;
+    Ok(HardwareEnvironmentV1 {
+        device: HardwareDeviceV1 {
+            device_count: u32_field(device, "device_count", "hardware device")?,
+            device_uuid: string_field(device, "device_uuid", "hardware device")?,
+            marketing_name: string_field(device, "marketing_name", "hardware device")?,
+            pci_bdf: string_field(device, "pci_bdf", "hardware device")?,
+            processor: string_field(device, "processor", "hardware device")?,
+            vendor_id: string_field(device, "vendor_id", "hardware device")?,
+            xnack: string_field(device, "xnack", "hardware device")?,
+        },
+        driver: DriverEnvironmentV1 {
+            module_sha256: string_field(driver, "module_sha256", "hardware driver")?,
+            name: string_field(driver, "name", "hardware driver")?,
+            version: string_field(driver, "version", "hardware driver")?,
+        },
+        firmware: FirmwareEnvironmentV1 {
+            bundle_sha256: string_field(firmware, "bundle_sha256", "hardware firmware")?,
+            package_version: string_field(firmware, "package_version", "hardware firmware")?,
+        },
+        format: string_field(object, "format", "hardware environment")?,
+        gpu_unique_id: u64_field(object, "gpu_unique_id", "hardware environment")?,
+        rocm: RocmEnvironmentV1 {
+            installation_sha256: string_field(rocm, "installation_sha256", "hardware ROCm")?,
+            version: string_field(rocm, "version", "hardware ROCm")?,
+        },
+        target: string_field(object, "target", "hardware environment")?,
+    })
+}
+
+fn request_value(request: &HardwareHarnessRequestV1) -> Value {
+    json!({
+        "case": {
+            "binding_sha256": &request.case.binding_sha256,
+            "case_id": &request.case.case_id,
+            "procedure_sha256": &request.case.procedure_sha256,
+        },
+        "format": &request.format,
+        "protocol": &request.protocol,
+        "target": &request.target,
+    })
+}
+
+fn environment_value(environment: &HardwareEnvironmentV1) -> Value {
+    json!({
+        "device": {
+            "device_count": environment.device.device_count,
+            "device_uuid": &environment.device.device_uuid,
+            "marketing_name": &environment.device.marketing_name,
+            "pci_bdf": &environment.device.pci_bdf,
+            "processor": &environment.device.processor,
+            "vendor_id": &environment.device.vendor_id,
+            "xnack": &environment.device.xnack,
+        },
+        "driver": {
+            "module_sha256": &environment.driver.module_sha256,
+            "name": &environment.driver.name,
+            "version": &environment.driver.version,
+        },
+        "firmware": {
+            "bundle_sha256": &environment.firmware.bundle_sha256,
+            "package_version": &environment.firmware.package_version,
+        },
+        "format": &environment.format,
+        "gpu_unique_id": environment.gpu_unique_id,
+        "rocm": {
+            "installation_sha256": &environment.rocm.installation_sha256,
+            "version": &environment.rocm.version,
+        },
+        "target": &environment.target,
+    })
+}
+
+fn result_value(result: &HardwareHarnessResultV1) -> Value {
+    json!({
+        "case_result": {
+            "binding_sha256": &result.case_result.binding_sha256,
+            "case_id": &result.case_result.case_id,
+            "completion_count": result.case_result.completion_count,
+            "generation": result.case_result.generation,
+            "gpu_observation_sha256": &result.case_result.gpu_observation_sha256,
+            "grid": result.case_result.grid,
+            "launch_count": result.case_result.launch_count,
+            "output_tokens": result.case_result.output_tokens,
+            "output_verified": result.case_result.output_verified,
+            "procedure_sha256": &result.case_result.procedure_sha256,
+            "program": result.case_result.program,
+            "queue_released": result.case_result.queue_released,
+            "workgroup": result.case_result.workgroup,
+        },
+        "device": {
+            "device_count": result.device.device_count,
+            "device_uuid": &result.device.device_uuid,
+            "marketing_name": &result.device.marketing_name,
+            "pci_bdf": &result.device.pci_bdf,
+            "processor": &result.device.processor,
+            "vendor_id": &result.device.vendor_id,
+            "xnack": &result.device.xnack,
+        },
+        "environment": {
+            "driver": {
+                "module_sha256": &result.environment.driver.module_sha256,
+                "name": &result.environment.driver.name,
+                "version": &result.environment.driver.version,
+            },
+            "firmware": {
+                "bundle_sha256": &result.environment.firmware.bundle_sha256,
+                "package_version": &result.environment.firmware.package_version,
+            },
+            "rocm": {
+                "installation_sha256": &result.environment.rocm.installation_sha256,
+                "version": &result.environment.rocm.version,
+            },
+        },
+        "finished_at_utc": &result.finished_at_utc,
+        "format": result.format,
+        "gpu_work_completed": result.gpu_work_completed,
+        "gpu_work_submitted": result.gpu_work_submitted,
+        "kernel_catalog_sha256": &result.kernel_catalog_sha256,
+        "kernel_manifest_sha256": &result.kernel_manifest_sha256,
+        "no_gpu_work": result.no_gpu_work,
+        "protocol": result.protocol,
+        "run_id": &result.run_id,
+        "started_at_utc": &result.started_at_utc,
+        "status": result.status,
+        "target": result.target,
+        "tool_source_sha256s": &result.tool_source_sha256s,
+        "tool_version": result.tool_version,
+    })
 }
 
 fn validate_request(request: &HardwareHarnessRequestV1) -> HarnessResult<()> {
@@ -431,32 +676,15 @@ fn amd_smi_uuid(gpu_unique_id: u64) -> String {
     format!("{top_byte:02x}ff74a1-0000-1000-80{next_byte:02x}-{low_48_bits:012x}")
 }
 
-fn tool_source_sha256s() -> BTreeMap<&'static str, String> {
-    [
-        (
-            "cargo_lock",
-            include_bytes!("../../../../Cargo.lock").as_slice(),
-        ),
-        (
-            "hardware_harness",
-            include_bytes!("ferric-m1-hardware-harness.rs").as_slice(),
-        ),
-        (
-            "package_manifest",
-            include_bytes!("../../Cargo.toml").as_slice(),
-        ),
-        (
-            "packet_execution",
-            include_bytes!("../m1_packet_diagnostic_execution.rs").as_slice(),
-        ),
-        (
-            "persisted_kernel_artifacts",
-            include_bytes!("../persisted_kernel_artifacts.rs").as_slice(),
-        ),
-    ]
-    .into_iter()
-    .map(|(path, bytes)| (path, hex(&Sha256::digest(bytes))))
-    .collect()
+fn tool_source_sha256s() -> HarnessResult<BTreeMap<&'static str, String>> {
+    let mut values = BTreeMap::new();
+    for (key, value) in TOOL_SOURCE_SHA256S {
+        require_sha256(value, key)?;
+        if values.insert(key, value.to_owned()).is_some() {
+            return Err("tool source identity key roster is not unique".to_owned());
+        }
+    }
+    Ok(values)
 }
 
 fn is_proc_self_fd_path(path: &Path) -> bool {
@@ -518,10 +746,7 @@ fn observation_sha256(
     hex(&Sha256::digest(preimage.as_bytes()))
 }
 
-fn read_canonical_stdin<T>(description: &str) -> HarnessResult<T>
-where
-    T: for<'de> Deserialize<'de> + Serialize,
-{
+fn read_canonical_stdin(description: &str) -> HarnessResult<Value> {
     let mut raw = Vec::new();
     std::io::stdin()
         .lock()
@@ -531,10 +756,7 @@ where
     decode_canonical_json(&raw, description)
 }
 
-fn read_canonical_file<T>(path: &Path, description: &str) -> HarnessResult<T>
-where
-    T: for<'de> Deserialize<'de> + Serialize,
-{
+fn read_canonical_file(path: &Path, description: &str) -> HarnessResult<Value> {
     let descriptor = if is_proc_self_fd_path(path) {
         openat2(
             CWD,
@@ -557,10 +779,7 @@ where
     read_canonical_descriptor(descriptor, description)
 }
 
-fn read_canonical_descriptor<T>(descriptor: OwnedFd, description: &str) -> HarnessResult<T>
-where
-    T: for<'de> Deserialize<'de> + Serialize,
-{
+fn read_canonical_descriptor(descriptor: OwnedFd, description: &str) -> HarnessResult<Value> {
     let initial =
         fstat(&descriptor).map_err(|error| format!("cannot inspect {description}: {error}"))?;
     let initial_size = u64::try_from(initial.st_size)
@@ -600,14 +819,11 @@ fn same_file(left: &Stat, right: &Stat) -> bool {
         && left.st_ctime_nsec == right.st_ctime_nsec
 }
 
-fn decode_canonical_json<T>(raw: &[u8], description: &str) -> HarnessResult<T>
-where
-    T: for<'de> Deserialize<'de> + Serialize,
-{
+fn decode_canonical_json(raw: &[u8], description: &str) -> HarnessResult<Value> {
     if raw.is_empty() || raw.len() as u64 > MAX_JSON_BYTES {
         return Err(format!("{description} size is outside the admitted bound"));
     }
-    let value: T = serde_json::from_slice(raw)
+    let value: Value = serde_json::from_slice(raw)
         .map_err(|error| format!("cannot decode {description}: {error}"))?;
     let expected = canonical_json(&value)?;
     if raw != expected {
@@ -618,7 +834,7 @@ where
     Ok(value)
 }
 
-fn canonical_json<T: Serialize>(value: &T) -> HarnessResult<Vec<u8>> {
+fn canonical_json(value: &Value) -> HarnessResult<Vec<u8>> {
     let mut raw = serde_json::to_vec_pretty(value)
         .map_err(|error| format!("cannot encode canonical JSON: {error}"))?;
     if !raw.is_ascii() {
@@ -628,7 +844,7 @@ fn canonical_json<T: Serialize>(value: &T) -> HarnessResult<Vec<u8>> {
     Ok(raw)
 }
 
-fn write_canonical_stdout<T: Serialize>(value: &T) -> HarnessResult<()> {
+fn write_canonical_stdout(value: &Value) -> HarnessResult<()> {
     let raw = canonical_json(value)?;
     std::io::stdout()
         .lock()
@@ -764,17 +980,18 @@ mod tests {
     #[test]
     fn request_accepts_only_exact_canonical_json() {
         let expected = request();
-        let canonical = canonical_json(&expected).unwrap();
+        let value = request_value(&expected);
+        let canonical = canonical_json(&value).unwrap();
         assert_eq!(
-            decode_canonical_json::<HardwareHarnessRequestV1>(&canonical, "request").unwrap(),
+            parse_request(&decode_canonical_json(&canonical, "request").unwrap()).unwrap(),
             expected
         );
-        let compact = serde_json::to_vec(&expected).unwrap();
-        assert!(decode_canonical_json::<HardwareHarnessRequestV1>(&compact, "request").is_err());
+        let compact = serde_json::to_vec(&value).unwrap();
+        assert!(decode_canonical_json(&compact, "request").is_err());
         let mut extra: serde_json::Value = serde_json::from_slice(&canonical).unwrap();
         extra["extra"] = json!(true);
-        let extra = serde_json::to_vec_pretty(&extra).unwrap();
-        assert!(decode_canonical_json::<HardwareHarnessRequestV1>(&extra, "request").is_err());
+        let extra = canonical_json(&extra).unwrap();
+        assert!(parse_request(&decode_canonical_json(&extra, "request").unwrap()).is_err());
     }
 
     #[test]
@@ -816,35 +1033,40 @@ mod tests {
     }
 
     #[test]
-    fn tool_version_and_source_identities_are_binary_derived() {
+    fn tool_version_and_embedded_source_identity_roster_are_exact() {
         assert_eq!(TOOL_VERSION, env!("CARGO_PKG_VERSION"));
-        let sources = tool_source_sha256s();
-        let expected_sources = [
-            ("cargo_lock", "Cargo.lock"),
-            (
-                "hardware_harness",
-                "crates/ferric-engine/src/bin/ferric-m1-hardware-harness.rs",
-            ),
-            ("package_manifest", "crates/ferric-engine/Cargo.toml"),
-            (
-                "packet_execution",
-                "crates/ferric-engine/src/m1_packet_diagnostic_execution.rs",
-            ),
-            (
-                "persisted_kernel_artifacts",
-                "crates/ferric-engine/src/persisted_kernel_artifacts.rs",
-            ),
-        ];
         assert_eq!(
-            sources.keys().copied().collect::<Vec<_>>(),
-            expected_sources.map(|(key, _)| key)
+            TOOL_SOURCE_SHA256S.map(|(key, _)| key),
+            [
+                "cargo_lock",
+                "hardware_harness",
+                "package_manifest",
+                "packet_execution",
+                "persisted_kernel_artifacts",
+            ]
         );
+        for (key, value) in TOOL_SOURCE_SHA256S {
+            require_sha256(value, key).unwrap();
+        }
+    }
 
-        let repository = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-        for (key, path) in expected_sources {
-            let bytes = std::fs::read(repository.join(path)).unwrap();
-            assert_eq!(sources[key], hex(&Sha256::digest(bytes)));
-            require_sha256(&sources[key], key).unwrap();
+    #[test]
+    fn result_source_identity_roster_is_canonical_and_complete() {
+        let source_values = [
+            ("cargo_lock", DIGEST_A.to_owned()),
+            ("hardware_harness", DIGEST_B.to_owned()),
+            ("package_manifest", DIGEST_A.to_owned()),
+            ("packet_execution", DIGEST_B.to_owned()),
+            ("persisted_kernel_artifacts", DIGEST_A.to_owned()),
+        ]
+        .into_iter()
+        .collect::<BTreeMap<_, _>>();
+        assert_eq!(
+            source_values.keys().copied().collect::<Vec<_>>(),
+            TOOL_SOURCE_SHA256S.map(|(key, _)| key)
+        );
+        for (key, value) in source_values {
+            require_sha256(&value, key).unwrap();
         }
     }
 
@@ -914,34 +1136,29 @@ mod tests {
             std::process::id()
         ));
         let expected = environment();
-        std::fs::write(&file_path, canonical_json(&expected).unwrap()).unwrap();
+        let value = environment_value(&expected);
+        std::fs::write(&file_path, canonical_json(&value).unwrap()).unwrap();
         assert_eq!(
-            read_canonical_file::<HardwareEnvironmentV1>(&file_path, "hardware environment")
+            parse_environment(&read_canonical_file(&file_path, "hardware environment").unwrap())
                 .unwrap(),
             expected
         );
         let held = File::open(&file_path).unwrap();
         let descriptor_path = PathBuf::from(format!("/proc/self/fd/{}", held.as_raw_fd()));
-        let actual =
-            read_canonical_file::<HardwareEnvironmentV1>(&descriptor_path, "hardware environment")
-                .unwrap();
+        let actual = parse_environment(
+            &read_canonical_file(&descriptor_path, "hardware environment").unwrap(),
+        )
+        .unwrap();
         assert_eq!(actual, expected);
 
-        std::fs::write(&file_path, serde_json::to_vec(&expected).unwrap()).unwrap();
-        assert!(read_canonical_file::<HardwareEnvironmentV1>(
-            &descriptor_path,
-            "hardware environment"
-        )
-        .is_err());
+        std::fs::write(&file_path, serde_json::to_vec(&value).unwrap()).unwrap();
+        assert!(read_canonical_file(&descriptor_path, "hardware environment").is_err());
         std::fs::remove_file(&file_path).unwrap();
 
         let held_directory = File::open(".").unwrap();
         let directory_path = PathBuf::from(format!("/proc/self/fd/{}", held_directory.as_raw_fd()));
-        assert!(read_canonical_file::<HardwareEnvironmentV1>(
-            &directory_path,
-            "hardware environment"
-        )
-        .unwrap_err()
-        .contains("regular single-link file"));
+        assert!(read_canonical_file(&directory_path, "hardware environment")
+            .unwrap_err()
+            .contains("regular single-link file"));
     }
 }

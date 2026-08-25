@@ -210,13 +210,20 @@ requirements, properties, path, profile, source closures, target, and TCB. It
 rejects declared self-validation but treats the resulting observations as
 neither theorem nor machine, launch, hardware, performance, or qualification
 authority. Its protocol is documented in
-`proofs/m1/evidence/INDEPENDENT_VALIDATOR.md`. The performance-gate validator
+`proofs/m1/evidence/INDEPENDENT_VALIDATOR.md`. Ferric can export all 44 exact
+requests and ingest a returned package without executing its checker, but a
+real outside organization must still supply that package. V1 has no external
+signature or trust root and does not by itself establish social independence.
+The performance-gate validator
 recomputes the declared M1 release thresholds from a canonical immutable raw
 measurement roster. It binds the exact Open obligation, profile, path, source
 closures, target environment, artifact/plan/schedule/workload/baseline
 identities, protocol, ordered samples, and complete TCB. Acceptance grants
 checked-performance authority only; the exact protocol and nonclaims are
-documented in `proofs/m1/evidence/PERFORMANCE_REPORT.md`. The negative-mutation
+documented in `proofs/m1/evidence/PERFORMANCE_REPORT.md`. Ferric provides all
+36 exact intake commands and never synthesizes or repairs external sample
+values; producer and validator acceptance do not independently attest physical
+observation. The negative-mutation
 and theorem validators validate the complete versioned run directory behind a
 bound `.result` artifact. The qualification-receipt validator requires one
 canonical receipt shared by all 33 roadmap closure rows, independently

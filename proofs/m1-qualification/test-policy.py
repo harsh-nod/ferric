@@ -174,8 +174,8 @@ def exercise_prepare_boundaries(repo: Path, fe2o3_source: Path, planner: Any) ->
             or queue.get("format") != planner.WORK_FORMAT
             or queue.get("status") != "INCOMPLETE"
             or queue.get("counts", {}).get("missing_items") != 358
-            or queue.get("counts", {}).get("available_producer_items") != 277
-            or queue.get("counts", {}).get("missing_producer_items") != 81
+            or queue.get("counts", {}).get("available_producer_items") != 357
+            or queue.get("counts", {}).get("missing_producer_items") != 1
         ):
             fail("M1 planner positive integration output weakened its nonclaim")
         if any(
@@ -239,7 +239,7 @@ def exercise_prepare_boundaries(repo: Path, fe2o3_source: Path, planner: Any) ->
         lock_path = resolved_case / "Cargo.lock"
         lock_source = lock_path.read_text(encoding="utf-8")
         expected_url = "git+https://github.com/harsh-nod/fe2o3.git"
-        if lock_source.count(expected_url) != 27:
+        if lock_source.count(expected_url) != 39:
             fail("integration fixture resolved fe2o3 roster drifted before mutation")
         lock_path.write_text(
             lock_source.replace(expected_url, "git+https://evil.invalid/fe2o3.git"),
@@ -442,12 +442,14 @@ def main() -> None:
         "external-contract": 15,
         "fe2o3-contract": 52,
         "hardware-test": 58,
+        "independent-validator": 44,
         "negative-mutation": 30,
+        "performance-gate": 36,
         "unsupported-rationale": 5,
         "verus-theorem": 26,
     }:
         fail(f"existing M1 producer coverage drifted: {available_kinds}")
-    if len(available) != 274 or len(first) - len(available) != 80:
+    if len(available) != 354 or len(first) - len(available) != 0:
         fail("missing binding-producer count drifted")
 
     identity_slots = [
@@ -709,6 +711,121 @@ def main() -> None:
     ):
         fail("M1 hardware-test allocation topology drifted")
 
+    independent_slots = [
+        slot
+        for slot in first
+        if slot["binding"]["evidence_kind"] == "independent-validator"
+    ]
+    independent_ids = [slot["binding"]["id"] for slot in independent_slots]
+    if planner.digest_bytes(("\n".join(independent_ids) + "\n").encode("ascii")) != (
+        "1f462479589b1e4bf3e1138997109d297c25279c89fd9f2d5fd6ec53192f0305"
+    ):
+        fail("M1 independent-validator binding ID roster drifted")
+    independent_rows = []
+    for slot in independent_slots:
+        binding = slot["binding"]
+        artifact_id = binding["artifact_id"]
+        expected_artifact = {
+            "id": artifact_id,
+            "kind": "ValidatorTranscript",
+            "path": f"artifacts/{artifact_id}.independent-validator.json",
+        }
+        expected_producer = {
+            "availability": "available",
+            "command": [
+                "python3",
+                "-I",
+                "proofs/m1-qualification/produce-independent-validator.py",
+                "intake",
+                "FERRIC_REPO",
+                "FE2O3_REPO",
+                "PLAN_DIR",
+                "INDEPENDENT_REVIEW_ROOT",
+                binding["id"],
+            ],
+            "role": "ferric-m1-independent-review-intake",
+        }
+        if (
+            slot["producer"] != expected_producer
+            or slot["expected_artifact"] != expected_artifact
+        ):
+            fail(f"M1 independent-validator producer command drifted: {binding['id']}")
+        independent_rows.append(
+            "|".join(
+                [
+                    binding["id"],
+                    binding["obligation_class"],
+                    binding["obligation_id"],
+                    binding["profile_id"],
+                    binding["path_id"],
+                    binding["source_identity_id"],
+                    artifact_id,
+                    expected_artifact["path"],
+                ]
+            )
+            + "\n"
+        )
+    if planner.digest_bytes("".join(independent_rows).encode("ascii")) != (
+        "440500fce0f0aebc108454b5d6b4b0dac2b03738643ef092b6b0fa639019d620"
+    ):
+        fail("M1 independent-validator allocation topology drifted")
+
+    performance_slots = [
+        slot for slot in first if slot["binding"]["evidence_kind"] == "performance-gate"
+    ]
+    performance_ids = [slot["binding"]["id"] for slot in performance_slots]
+    if planner.digest_bytes(("\n".join(performance_ids) + "\n").encode("ascii")) != (
+        "534b95746e961c13f470aca4be53fa4d35f54fa5c8efe6a79792a8c28fe7e645"
+    ):
+        fail("M1 performance-gate binding ID roster drifted")
+    performance_rows = []
+    for slot in performance_slots:
+        binding = slot["binding"]
+        artifact_id = binding["artifact_id"]
+        expected_artifact = {
+            "id": artifact_id,
+            "kind": "PerformanceReport",
+            "path": f"artifacts/{artifact_id}.performance-report.json",
+        }
+        expected_producer = {
+            "availability": "available",
+            "command": [
+                "python3",
+                "-I",
+                "proofs/m1-qualification/produce-performance-report.py",
+                "FERRIC_REPO",
+                "FE2O3_REPO",
+                "PLAN_DIR",
+                "PERFORMANCE_INTAKE",
+                binding["id"],
+            ],
+            "role": "ferric-m1-performance-intake-reporter",
+        }
+        if (
+            slot["producer"] != expected_producer
+            or slot["expected_artifact"] != expected_artifact
+        ):
+            fail(f"M1 performance-gate producer command drifted: {binding['id']}")
+        performance_rows.append(
+            "|".join(
+                [
+                    binding["id"],
+                    binding["obligation_class"],
+                    binding["obligation_id"],
+                    binding["profile_id"],
+                    binding["path_id"],
+                    binding["source_identity_id"],
+                    artifact_id,
+                    expected_artifact["path"],
+                ]
+            )
+            + "\n"
+        )
+    if planner.digest_bytes("".join(performance_rows).encode("ascii")) != (
+        "0901f56b657064ba46bacf72435e8756975257bda5a7485eb6db46d2e62f3812"
+    ):
+        fail("M1 performance-gate allocation topology drifted")
+
     rationale_slots = [
         slot
         for slot in first
@@ -797,6 +914,22 @@ def main() -> None:
         )
     if tcb_work != expected_tcb_work:
         fail("M1 planner TCB producer commands drifted")
+    if planner.global_work_items()[3] != {
+        "expected_artifact": {
+            "id": "artifact.qualification.m1",
+            "kind": "QualificationReceipt",
+            "path": "artifacts/artifact.qualification.m1.qualification-receipt.json",
+        },
+        "id": "work.qualification.m1",
+        "producer": {
+            "availability": "missing",
+            "command": None,
+            "role": "external-m1-qualification-receipt-producer",
+        },
+        "state": "blocked-on-all-validated-evidence",
+        "subject": "qualification:M1",
+    }:
+        fail("M1 planner qualification-receipt nonavailability drifted")
 
     kind_counts: dict[str, int] = {}
     for slot in first:
@@ -878,6 +1011,8 @@ def main() -> None:
             "external-contract",
             "fe2o3-contract",
             "hardware-test",
+            "independent-validator",
+            "performance-gate",
             "unsupported-rationale",
         }:
             continue

@@ -796,6 +796,7 @@ def main() -> None:
         "with os.scandir(directory_fd) as entries:",
         "procedure_file = authenticate_relative_component_file(",
         "tool_source_sha256s, tool_source_files = authenticate_tool_sources(ferric_fd)",
+        'env={"PATH": os.environ.get("PATH", "")}',
         "harness_file = authenticate_absolute_component_file(",
         "environment_file = authenticate_absolute_component_file(",
         "kernel_fd = kernel_root_fd(kernel)",

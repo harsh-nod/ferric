@@ -77,6 +77,35 @@ are checker-owned constants. NaN, infinity, JSON floating-point arithmetic,
 threshold changes, baseline swaps, summary substitutions, workload or
 environment drift, sample loss, and cross-binding replay fail closed.
 
+## Ferric intake producer
+
+The planner exposes one intake command for each of the exact 36
+`performance-gate` bindings:
+
+```text
+python3 -I proofs/m1-qualification/produce-performance-report.py \
+  FERRIC_REPO FE2O3_REPO PLAN_DIR PERFORMANCE_INTAKE binding.NNNNN
+```
+
+`PERFORMANCE_INTAKE` is a canonical owner-private single-link file under an
+owner-private `0700` parent outside the source repositories and plan root. It
+contains the environment declaration and complete raw measurement roster.
+Those values belong to the external harness; the Ferric producer does not
+synthesize, default, repair, reorder, filter, or discard them. It recomputes
+the fixed V1 summaries and release arithmetic, reconstructs the complete
+current TCB declarations, and publishes exactly:
+
+```text
+measurements/<artifact-id>.measurements.json
+artifacts/<artifact-id>.performance-report.json
+```
+
+The measurement roster publishes first and the report publishes last as the
+completion marker. Both are held through post-sync revalidation, and a failed
+transaction removes only exact producer-owned files while preserving and
+reporting a rebound inode. The producer does not invoke or modify the trusted
+validator; validate the published pair separately.
+
 ## Authority boundary
 
 Acceptance authenticates checked performance only. It does not establish
@@ -85,4 +114,6 @@ queue publication, kernel launch, hardware correctness, or M1 qualification.
 The validator creates neither an evidence index nor a qualification receipt,
 changes no `Open` status, and closes no roadmap requirement, assurance
 property, or path obligation. Real external measurement artifacts are still
-required before M1 closure.
+required before M1 closure. Producer and validator acceptance authenticate the
+declared samples and recomputed arithmetic; neither independently attests that
+the samples were physically observed on the declared system.

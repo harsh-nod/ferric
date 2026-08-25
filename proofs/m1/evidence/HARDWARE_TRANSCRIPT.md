@@ -49,7 +49,8 @@ protocol `ferric.m1.mi300x-hardware-test.v1`. It requires:
   module, and firmware bundle, plus the fixed Ferric hardware harness/protocol;
 - the held harness binary hash and byte length exactly matching the reviewed
   pin in the checked-in procedure, harness-emitted package version, and exact
-  hashes of the five named Ferric harness/runtime source files;
+  immutable hashes of the five named Ferric harness/runtime source files
+  embedded when that harness was built;
 - the authenticated semantic kernel-manifest and program-catalog identities;
 - one full K7 result joined to the roster's binding, case, and procedure, with
   program `k7-speculative-token-assembly-s1k4`, grid and workgroup `[64,1,1]`,
@@ -66,8 +67,10 @@ identities, and requires the exact case and aggregate launch/completion counts.
 It repeats both kernel identities. The validator independently recomputes the
 domain-separated K7 observation digest and every named Ferric tool-source hash,
 and enforces the procedure's reviewed harness byte-length/SHA-256 pin.
-The source hashes provide source association only; they are not reproducible-
-build proof or proof that the recorded binary was built from those sources.
+The producer independently hashes the five held files and rejects a stale
+harness whose embedded roster differs. The source hashes provide source
+association only; they are not reproducible-build proof or proof that the
+recorded binary was built from those sources.
 
 ## Ferric producer
 

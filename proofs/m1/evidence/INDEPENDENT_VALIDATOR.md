@@ -87,6 +87,40 @@ any path component, unstable file metadata, oversized files, duplicate JSON
 keys, noncanonical serialization, malformed timestamps or statuses, unknown
 fields, source or validator substitution, and authority promotion.
 
+## Ferric handoff and intake
+
+Export the exact 44 binding-local requests and ordered 440 case inputs without
+creating evidence:
+
+```text
+python3 -I proofs/m1-qualification/produce-independent-validator.py \
+  export-all FERRIC_REPO FE2O3_REPO PLAN_DIR HANDOFF_DIR
+```
+
+`HANDOFF_DIR` must be a new canonical path under an existing owner-private
+`0700` parent directory. The producer creates the handoff root and its complete
+tree with owner-private permissions; it refuses a preexisting output path.
+
+A real outside organization must execute its independently owned checker and
+return the exact response manifest, checker source closure, executable, input
+and output schemas, and ten immutable outputs for each binding. Ferric does
+not create a production response. Ingest one returned binding with:
+
+```text
+python3 -I proofs/m1-qualification/produce-independent-validator.py \
+  intake FERRIC_REPO FE2O3_REPO PLAN_DIR \
+  INDEPENDENT_REVIEW_ROOT binding.NNNNN
+```
+
+`INDEPENDENT_REVIEW_ROOT` must be an existing canonical owner-private `0700`
+directory disjoint from both source repositories and the plan root.
+
+Intake never executes, imports, loads, or builds the returned checker. It
+regenerates the exact request, descriptor-authenticates the complete response
+and subject context, and publishes roster, transcript, then report. The report
+publishes last as the completion marker. Failed publication removes only exact
+producer-owned files and preserves and reports a rebound replacement.
+
 ## Authority boundary
 
 Acceptance authenticates an independent checker identity and the exact
@@ -94,7 +128,9 @@ observations in its immutable transcript. Those observations are not a theorem,
 machine refinement, artifact load, device launch, hardware result, performance
 result, or qualification authority. The validator does not inspect or execute
 the external checker, and it does not convert an observation into semantic
-proof.
+proof. V1 has no external signature or trust root, so its identity and
+self-alias checks authenticate the declaration but cannot establish social or
+organizational independence.
 
 This validator creates neither an M1 evidence index nor a qualification
 receipt. It does not change `RequiredFuture` path availability and closes no

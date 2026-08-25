@@ -2,7 +2,7 @@
 
 `planner.py` is the first planning-only slice of the external M1 qualification
 orchestrator. It authenticates clean, exact Ferric and fe2o3 source identities,
-the admitted 12-package direct pin roster, 27-package resolved pin roster and
+the admitted 12-package direct pin roster, 39-package resolved pin roster and
 19-edge dependency topology, all 39 source paths, the requirements manifest,
 and the checker-owned validator registry. It runs the existing source closure
 producer once for each repository and creates a new external planning bundle:
@@ -24,10 +24,12 @@ whether an in-repository producer exists. The theorem and negative-mutation
 runners, the three declaration-only TCB reporters, all 74 artifact-identity
 bindings, all 14 canonical-structure bindings, all 15 external-contract
 bindings, all 52 fe2o3-contract bindings, all 58 MI300X hardware-test bindings,
-and the five exact unsupported-rationale bindings are represented as available
-commands. The queue therefore has 277 available producer items and 81 missing
-producer items. All other binding-evidence producers and the shared receipt
-remain explicitly missing.
+all 36 performance-gate bindings, all 44 independent-validator bindings, and
+the five exact unsupported-rationale bindings are represented as available
+commands. The queue therefore has 357 available producer items and one missing
+producer item: the shared qualification receipt. Availability means that the
+in-repository production or intake command exists; it does not mean that the
+required external measurement or independent-review input has been supplied.
 
 After producing a plan against the final clean source identities, materialize
 the three global TCB declarations independently:
@@ -134,6 +136,52 @@ not an upstream symbol. The resulting declaration makes no implementation,
 semantic, proof, machine behavior or refinement, load, launch, hardware,
 performance, or qualification claim.
 
+Import one externally measured suite for any of the 36 exact performance-gate
+bindings with:
+
+```text
+python3 -I proofs/m1-qualification/produce-performance-report.py \
+  FERRIC_REPO FE2O3_REPO PLAN_DIR PERFORMANCE_INTAKE binding.NNNNN
+```
+
+`PERFORMANCE_INTAKE` is one owner-private canonical JSON file under an
+owner-private `0700` parent outside both repositories and `PLAN_DIR`. The
+external harness owns every environment, artifact, model, workload, baseline,
+and sample value. The Ferric producer does not synthesize, default, repair,
+reorder, or discard those values. It recomputes the fixed V1 arithmetic,
+authenticates the current source/TCB/plan context, then publishes the immutable
+measurement roster before the report.
+The report is the completion marker and grants only `checked-performance-only`
+authority. The unchanged trusted validator must still be invoked separately;
+neither producer nor validator attests that declared samples were physically
+observed.
+
+Export the exact 44 independent-review requests and 440 case inputs with:
+
+```text
+python3 -I proofs/m1-qualification/produce-independent-validator.py \
+  export-all FERRIC_REPO FE2O3_REPO PLAN_DIR HANDOFF_DIR
+```
+
+`HANDOFF_DIR` must be a new canonical path under an existing owner-private
+`0700` parent. This handoff creates no evidence artifact. After a real outside
+organization returns the exact response/checker-material package in an
+owner-private `0700` response root, ingest one binding with:
+
+```text
+python3 -I proofs/m1-qualification/produce-independent-validator.py \
+  intake FERRIC_REPO FE2O3_REPO PLAN_DIR \
+  INDEPENDENT_REVIEW_ROOT binding.NNNNN
+```
+
+Intake never executes, imports, or builds the returned checker. It
+descriptor-authenticates the response, reconstructs the canonical roster and
+transcript, then publishes roster, transcript, and report in that order. The
+report is the completion marker and grants only
+`independent-validation-observation-only` authority. The V1 identity and
+attestation checks reject declared self-validation but contain no external
+signature or trust root and cannot establish social independence.
+
 Materialize one of the planner's 58 MI300X hardware observations with the exact
 Ferric harness, persisted kernel-artifact root, and a canonical hardware
 environment input:
@@ -170,8 +218,10 @@ artifacts/<artifact-id>.hardware-transcript.json
 
 The transcript retains the semantic kernel-manifest and program-catalog
 identities and the complete binding-local K7 observation. Its tool record binds
-the held harness binary, harness-emitted package version, and exact hashes of
-the five named Ferric harness/runtime sources. These source hashes establish a
+the held harness binary, harness-emitted package version, and immutable hashes
+of the five named Ferric harness/runtime sources embedded when that harness was
+built. The producer independently hashes the held source files and rejects a
+stale harness whose embedded roster differs. These source hashes establish a
 reviewable source association; they do not prove a reproducible build or that
 the binary was produced from those sources.
 
@@ -219,6 +269,10 @@ python3 -I proofs/m1-qualification/test-canonical-structure-producer-policy.py \
 python3 -I proofs/m1-qualification/test-external-contract-producer-policy.py \
   FERRIC_REPO FE2O3_OBJECT_REPO
 python3 -I proofs/m1-qualification/test-fe2o3-contract-producer-policy.py \
+  FERRIC_REPO FE2O3_OBJECT_REPO
+python3 -I proofs/m1-qualification/test-performance-producer-policy.py \
+  FERRIC_REPO FE2O3_OBJECT_REPO
+python3 -I proofs/m1-qualification/test-independent-validator-producer-policy.py \
   FERRIC_REPO FE2O3_OBJECT_REPO
 python3 -I proofs/m1-qualification/test-unsupported-rationale-producer-policy.py \
   FERRIC_REPO FE2O3_OBJECT_REPO

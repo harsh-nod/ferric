@@ -43,6 +43,10 @@ FE2O3_DIRECT_PACKAGES = (
 )
 FE2O3_RESOLVED_PACKAGES = (
     ("dialect-amdgcn", "0.1.0"),
+    ("dialect-gpu", "0.1.0"),
+    ("dialect-kernel", "0.1.0"),
+    ("dialect-mir", "0.1.0"),
+    ("dialect-proof", "0.1.0"),
     ("fe2o3-amd-target", "0.1.0"),
     ("fe2o3-amdgcn-model", "0.1.0"),
     ("fe2o3-amdhsa-loader", "0.1.0"),
@@ -51,11 +55,14 @@ FE2O3_RESOLVED_PACKAGES = (
     ("fe2o3-artifacts", "0.1.0"),
     ("fe2o3-build-authority", "0.1.0"),
     ("fe2o3-compiler-ffi", "0.1.0"),
+    ("fe2o3-compiler-lineage", "0.1.0"),
     ("fe2o3-contracts", "0.1.0"),
     ("fe2o3-drm-uapi", "0.1.0"),
+    ("fe2o3-functional-proof", "0.1.0"),
     ("fe2o3-host-api", "0.1.0"),
     ("fe2o3-hsaco", "0.1.0"),
     ("fe2o3-hsaco-finalize", "0.1.0"),
+    ("fe2o3-kernel-analysis", "0.1.0"),
     ("fe2o3-kernel-descriptor", "0.1.0"),
     ("fe2o3-kernel-ir", "0.1.0"),
     ("fe2o3-kfd", "0.1.0"),
@@ -63,8 +70,13 @@ FE2O3_RESOLVED_PACKAGES = (
     ("fe2o3-llvm-handoff", "0.1.0"),
     ("fe2o3-llvm-text", "0.1.0"),
     ("fe2o3-llvm-worker-handoff", "0.1.0"),
+    ("fe2o3-mir-model", "0.1.0"),
+    ("fe2o3-pliron", "0.1.0"),
+    ("fe2o3-pliron-owner-core", "0.1.0"),
+    ("fe2o3-proof-contracts", "0.1.0"),
     ("fe2o3-runtime-model", "0.1.0"),
     ("fe2o3-rustc-front", "0.1.0"),
+    ("fe2o3-rustc-invocation", "0.1.0"),
     ("fe2o3-service-host", "0.1.0"),
     ("fe2o3-service-model", "0.1.0"),
     ("fe2o3-verifier", "0.1.0"),
@@ -137,12 +149,6 @@ FOUNDATION_FILES = {
         "proofs/m1/theorem/run-same-source.sh",
     ),
 }
-MISSING_ROLES = {
-    "independent-validator": "independent-validation-organization",
-    "performance-gate": "external-performance-harness",
-}
-
-
 JsonObject = dict[str, Any]
 
 
@@ -559,6 +565,37 @@ def producer(evidence_kind: str, selectors: tuple[str, ...]) -> JsonObject:
             ],
             "role": "ferric-mi300x-hardware-harness",
         }
+    if evidence_kind == "performance-gate":
+        return {
+            "availability": "available",
+            "command": [
+                "python3",
+                "-I",
+                "proofs/m1-qualification/produce-performance-report.py",
+                "FERRIC_REPO",
+                "FE2O3_REPO",
+                "PLAN_DIR",
+                "PERFORMANCE_INTAKE",
+                "BINDING_ID",
+            ],
+            "role": "ferric-m1-performance-intake-reporter",
+        }
+    if evidence_kind == "independent-validator":
+        return {
+            "availability": "available",
+            "command": [
+                "python3",
+                "-I",
+                "proofs/m1-qualification/produce-independent-validator.py",
+                "intake",
+                "FERRIC_REPO",
+                "FE2O3_REPO",
+                "PLAN_DIR",
+                "INDEPENDENT_REVIEW_ROOT",
+                "BINDING_ID",
+            ],
+            "role": "ferric-m1-independent-review-intake",
+        }
     foundation = FOUNDATION_FILES.get(evidence_kind)
     if foundation is not None:
         return {
@@ -572,11 +609,7 @@ def producer(evidence_kind: str, selectors: tuple[str, ...]) -> JsonObject:
             ],
             "role": f"ferric-{evidence_kind}-runner",
         }
-    return {
-        "availability": "missing",
-        "command": None,
-        "role": MISSING_ROLES[evidence_kind],
-    }
+    fail(f"no M1 producer contract exists for evidence kind: {evidence_kind}")
 
 
 def make_slot(
@@ -655,6 +688,8 @@ def renumber_slots(slots: list[JsonObject]) -> list[JsonObject]:
             "external-contract",
             "fe2o3-contract",
             "hardware-test",
+            "independent-validator",
+            "performance-gate",
             "unsupported-rationale",
         }:
             slot["producer"]["command"][-1] = binding_id
