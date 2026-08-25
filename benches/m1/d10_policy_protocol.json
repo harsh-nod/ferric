@@ -40,14 +40,14 @@
     "timing.json",
     "tuning.json"
   ],
-  "format": "FERRIC-M1-D10-EXPERIMENT-POLICY-PROTOCOL-V1",
+  "format": "FERRIC-M1-D10-EXPERIMENT-POLICY-PROTOCOL-V2",
   "future_required_binding": "policy-sha256-bound-d10-observation-validator",
-  "input_format": "FERRIC-M1-D10-EXPERIMENT-POLICY-INPUT-V1",
+  "input_format": "FERRIC-M1-D10-EXPERIMENT-POLICY-INPUT-V2",
   "legacy_plan_validate_policy_bound": false,
-  "nonclaim": "This protocol admits only the canonical structure and frozen identity of an externally supplied pre-observation D10 experiment policy. Legacy plan and validate commands do not consume this policy, so the declared 10 warmups and 30 recorded samples are not execution-enforced. The separate policy-SHA-256-bound D10 observation validator does not retroactively bind those legacy commands or validate the supplied policy values. This protocol does not endorse policy values, establish vendor applicability, authenticate an observation, decide a performance gate, or close m1.r31.",
+  "nonclaim": "This protocol admits only the canonical structure and frozen identity of an externally supplied pre-observation D10 experiment policy and its Ferric, pinned-fe2o3, compiler-worker, runtime, and KFD bindings. Legacy plan and validate commands do not consume this policy, so the declared 10 warmups and 30 recorded samples are not execution-enforced. The separate policy-SHA-256-bound D10 observation validator does not retroactively bind those legacy commands or validate the supplied policy values or closure truth. This protocol does not endorse policy values, establish vendor applicability, authenticate an observation, decide a performance gate, or close m1.r31.",
   "obligation_id": "m1.r31",
   "observation_counts_enforced": false,
-  "output_format": "FERRIC-M1-D10-EXPERIMENT-POLICY-ADMISSION-V1",
+  "output_format": "FERRIC-M1-D10-EXPERIMENT-POLICY-ADMISSION-V2",
   "publication_roster": [
     "admission.json",
     "protocol.json"
@@ -56,5 +56,6 @@
   "status": "PARTIAL_NON_EVIDENCE",
   "suite": "d10",
   "target": "gfx942:xnack-",
+  "toolchain_binding_schema": "canonical-external-ferric-source-commit-and-closure-pinned-fe2o3-source-commit-and-closure-compiler-configuration-and-worker-closure-runtime-and-kfd-closure-v1",
   "warmups": 10
 }

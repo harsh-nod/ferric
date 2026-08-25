@@ -39,6 +39,12 @@ resource-inspection, calibration, holdout, and regression-reference companions.
 The policy covers the exact seven K1-K7 case/family positions and freezes each
 external profile, work-unit definition, Ferric implementation, vendor
 applicability and implementation, weight, threshold, and companion identity.
+Its canonical `toolchain` object also freezes the externally supplied Ferric
+commit and source closure, the exact workspace-pinned fe2o3 commit and supplied
+source closure, compiler configuration and worker closure, and runtime and KFD
+closure identities. Ferric checks their syntax, the pinned fe2o3 commit, and
+their cross-artifact identity; it does not attest that a supplied closure
+digest describes the named source or executable.
 It freezes a requested count of exactly 10 untimed warmups followed by 30
 recorded samples per case. Calibration and holdout companions carry nonempty,
 disjoint canonical member rosters whose digests are recomputed, and the tuning
@@ -73,7 +79,7 @@ cargo run --locked -p ferric-m1-benchmarks --bin ferric-m1-d10 -- \
 ```
 
 `COLLECTION-MANIFEST` is canonical
-`FERRIC-M1-D10-COLLECTION-MANIFEST-V1`. It binds the exact collector ELF,
+`FERRIC-M1-D10-COLLECTION-MANIFEST-V2`. It binds the exact collector ELF,
 policy, cleared environment snapshot, timeout, K1-K7 case order, admitted
 holdout member, per-case expected resource counters, and exact resource and
 measurement ELF, argument, configuration, and protocol identities. All paths
@@ -82,6 +88,10 @@ descriptor. The environment snapshot digest must equal the policy telemetry
 binding, implementation and configuration bytes must match their policy
 identities, and reference and resource command protocols must match their
 respective policy companions.
+The manifest repeats the complete canonical toolchain object and digest;
+collection rejects either a self-inconsistent digest or any difference from
+the held policy. Every resource and measurement request carries that digest,
+and every implementation observation repeats it in its binding set.
 
 Before launching a command, the collector derives the complete deterministic
 case, implementation, phase, and sample-ID order and requires its canonical
@@ -115,13 +125,16 @@ cargo run --locked -p ferric-m1-benchmarks --bin ferric-m1-d10 -- \
 
 `ADMISSION-BUNDLE` must contain exactly the original `admission.json` and
 policy `protocol.json`. `OBSERVATION-BUNDLE` must contain exactly canonical
-`observations.json` in `FERRIC-M1-D10-POLICY-OBSERVATIONS-V2` and the
+`observations.json` in `FERRIC-M1-D10-POLICY-OBSERVATIONS-V3` and the
 source-controlled `d10_observation_protocol.json` as `protocol.json`. The
 validator holds and repeatedly rebinds those four files plus the original ten
 policy-root files. It recomputes the admission and requires every policy,
 protocol, admission, companion, case, implementation, profile, work-unit,
 resource-policy, tuning, admitted-holdout-member, and regression measurement
 roster identity to match.
+It also recomputes the complete toolchain digest and requires the policy,
+admission, collected bundle, and every implementation binding to name the same
+Ferric, pinned-fe2o3, compiler-worker, runtime, and KFD closure tuple.
 
 Every applicable Ferric-reference, Ferric, and vendor stream has exactly 10
 ordered untimed warmups and exactly 30 ordered raw timing samples. Each row also
@@ -151,7 +164,8 @@ is a structural computability bound, not a supplied or default weight.
 The validator enforces the supplied telemetry and resource schemas, their exact
 policy identity bindings, empty error events, physical numeric bounds, and exact
 expected/observed resource equality. These checks do not authenticate who
-produced the bundle. `OUTPUT-BUNDLE` is published without replacement with
+produced the bundle or establish that an externally supplied closure digest is
+truthful. `OUTPUT-BUNDLE` is published without replacement with
 exactly `observations.json`, its `protocol.json`, and recomputed
 `validation.json` under descriptor-held file, directory, name, and parent
 custody. Its status remains `PARTIAL_NON_EVIDENCE`: it does not validate
@@ -252,6 +266,14 @@ The canonical result has `checked-differential-policy-conformance-only`
 authority. It does not establish that the external threshold was independently
 reviewed, create qualification evidence, or close `m1.r29`; those remain duties
 of the independent M1 evidence and qualification validators.
+
+Ferric can admit the complete result into an identity-bound, deliberately
+non-qualifying r29 handoff. The additive intake fixes the exact plan, policy and
+declared review, seven Ferric captures, seven reference outputs, pair manifest,
+raw comparisons, acceptance result, source closures, toolchain, target, and TCB
+identities. See `proofs/m1/evidence/R29_DIFFERENTIAL_EVIDENCE.md`. Its status is
+`partial-non-evidence`; it supplies neither independent validation nor r29
+closure authority.
 
 The Ferric qualification capture binary can generate and revalidate the exact
 seven-case input bundle without opening KFD:

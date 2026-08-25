@@ -9,7 +9,7 @@ use crate::d10_observations::{
     validate_admission_binding, ExactBundle, HeldBundle, ADMISSION_FILES, CASE_ROSTER,
     IMPLEMENTATIONS, PROTOCOL_BYTES, PROTOCOL_SHA256,
 };
-use crate::d10_policy::{hold_validated_policy, HeldValidatedPolicy};
+use crate::d10_policy::{hold_validated_policy, validate_toolchain, HeldValidatedPolicy};
 use ferric_m1_benchmarks::{encode_canonical_document, sha256_identity, BenchResult};
 use rustix::fs::{
     fcntl_getfl, fcntl_setfl, fstat, openat2, FileType, Mode, OFlags, ResolveFlags, Stat, CWD,
@@ -28,13 +28,13 @@ use std::time::{Duration, Instant};
 
 pub(super) const COMMAND: &str = "collect-policy-observations";
 
-const MANIFEST_FORMAT: &str = "FERRIC-M1-D10-COLLECTION-MANIFEST-V1";
+const MANIFEST_FORMAT: &str = "FERRIC-M1-D10-COLLECTION-MANIFEST-V2";
 const MANIFEST_AUTHORITY: &str = "externally-supplied-pre-observation-d10-collection-manifest-only";
-const OBSERVATION_FORMAT: &str = "FERRIC-M1-D10-POLICY-OBSERVATIONS-V2";
+const OBSERVATION_FORMAT: &str = "FERRIC-M1-D10-POLICY-OBSERVATIONS-V3";
 const OBSERVATION_AUTHORITY: &str = "ferric-collected-policy-bound-d10-observations-only";
-const SAMPLE_REQUEST_FORMAT: &str = "FERRIC-M1-D10-SAMPLE-REQUEST-V1";
+const SAMPLE_REQUEST_FORMAT: &str = "FERRIC-M1-D10-SAMPLE-REQUEST-V2";
 const SAMPLE_RESULT_FORMAT: &str = "FERRIC-M1-D10-SAMPLE-RESULT-V1";
-const RESOURCE_REQUEST_FORMAT: &str = "FERRIC-M1-D10-RESOURCE-REQUEST-V1";
+const RESOURCE_REQUEST_FORMAT: &str = "FERRIC-M1-D10-RESOURCE-REQUEST-V2";
 const RESOURCE_RESULT_FORMAT: &str = "FERRIC-M1-D10-RESOURCE-RESULT-V1";
 const ENVIRONMENT_FORMAT: &str = "FERRIC-M1-D10-ENVIRONMENT-SNAPSHOT-V1";
 const TARGET: &str = "gfx942:xnack-";
@@ -281,6 +281,8 @@ struct CollectionPlan {
     environment_sha256: String,
     manifest_sha256: String,
     timeout: Duration,
+    toolchain: Value,
+    toolchain_sha256: String,
 }
 
 impl CollectionPlan {
@@ -383,6 +385,8 @@ fn parse_collection_plan(
             "suite",
             "target",
             "timeout_ms",
+            "toolchain",
+            "toolchain_sha256",
         ],
         "D10 collection manifest",
     )?;
@@ -395,6 +399,17 @@ fn parse_collection_plan(
     expect_string(root, "format", MANIFEST_FORMAT, "D10 collection manifest")?;
     expect_string(root, "suite", "d10", "D10 collection manifest")?;
     expect_string(root, "target", TARGET, "D10 collection manifest")?;
+    let toolchain = get(root, "toolchain", "D10 collection manifest")?;
+    let toolchain_sha256 = validate_toolchain(toolchain)?;
+    expect_string(
+        root,
+        "toolchain_sha256",
+        &toolchain_sha256,
+        "D10 collection toolchain identity",
+    )?;
+    if toolchain != policy.toolchain()? || toolchain_sha256 != policy.toolchain_sha256()? {
+        return Err("D10 collection toolchain drifted from the held policy".to_owned());
+    }
     expect_string(
         root,
         "policy_sha256",
@@ -508,6 +523,8 @@ fn parse_collection_plan(
         environment_sha256,
         manifest_sha256: sha256_identity(&manifest.bytes),
         timeout: Duration::from_millis(timeout_ms),
+        toolchain: toolchain.clone(),
+        toolchain_sha256,
     })
 }
 
@@ -829,6 +846,7 @@ fn collect_observations(
         .ok_or_else(|| "held D10 tuning policy must be an object".to_owned())?;
     let bindings = execution_bindings(policy)?;
     let telemetry_protocols = telemetry_protocols(policy)?;
+    let toolchain_sha256 = plan.toolchain_sha256.clone();
     let mut cases = Vec::with_capacity(CASE_ROSTER.len());
     for ((((case, policy_case), resource_policy), (_, family)), case_index) in plan
         .cases
@@ -849,6 +867,7 @@ fn collect_observations(
             "format": RESOURCE_REQUEST_FORMAT,
             "inspection_protocol_sha256": case.resource_command.protocol_sha256,
             "target": TARGET,
+            "toolchain_sha256": toolchain_sha256,
         });
         let resource_result = run_subprocess(
             &mut case.resource_command,
@@ -887,6 +906,7 @@ fn collect_observations(
                     sequence,
                     &plan.environment,
                     &plan.environment_sha256,
+                    &toolchain_sha256,
                     &telemetry_protocols,
                     plan.timeout,
                 )?);
@@ -902,6 +922,7 @@ fn collect_observations(
                     sequence,
                     &plan.environment,
                     &plan.environment_sha256,
+                    &toolchain_sha256,
                     &telemetry_protocols,
                     plan.timeout,
                 )?);
@@ -985,6 +1006,7 @@ fn collect_observations(
             "environment_sha256": plan.environment_sha256,
             "manifest_sha256": plan.manifest_sha256,
             "subprocess_contract": "held-elf-cleared-environment-canonical-stdin-canonical-stdout-empty-stderr-zero-exit-timeout-v1",
+            "toolchain_sha256": plan.toolchain_sha256.clone(),
         },
         "companion_sha256": companion_sha256,
         "format": OBSERVATION_FORMAT,
@@ -992,6 +1014,8 @@ fn collect_observations(
         "protocol_sha256": PROTOCOL_SHA256,
         "suite": "d10",
         "target": TARGET,
+        "toolchain": plan.toolchain.clone(),
+        "toolchain_sha256": plan.toolchain_sha256.clone(),
     }))
 }
 
@@ -1005,6 +1029,7 @@ fn collect_sample(
     sequence: usize,
     environment: &BTreeMap<String, String>,
     environment_sha256: &str,
+    toolchain_sha256: &str,
     telemetry_protocols: &TelemetryProtocols,
     timeout: Duration,
 ) -> BenchResult<Value> {
@@ -1021,6 +1046,7 @@ fn collect_sample(
         "sample_id": sample_id,
         "sequence": sequence,
         "target": TARGET,
+        "toolchain_sha256": toolchain_sha256,
         "timing": telemetry_protocols.timing,
     });
     let result = run_subprocess(
@@ -1560,6 +1586,10 @@ fn execution_bindings(policy: &HeldValidatedPolicy) -> BenchResult<Value> {
             Value::String(sha256_identity(policy.document_bytes(path)?)),
         );
     }
+    bindings.insert(
+        "toolchain_sha256".to_owned(),
+        Value::String(policy.toolchain_sha256()?),
+    );
     Ok(Value::Object(bindings))
 }
 
@@ -1977,6 +2007,8 @@ mod tests {
                 "suite": "d10",
                 "target": TARGET,
                 "timeout_ms": 5_000,
+                "toolchain": policy["toolchain"],
+                "toolchain_sha256": validate_toolchain(&policy["toolchain"]).unwrap(),
             }),
         );
         let output = temporary.0.join("collected");
@@ -2052,6 +2084,25 @@ mod tests {
         let error = collect_policy_observations(&arguments(&fixture)).unwrap_err();
         assert!(error.contains("already exists"));
         assert_eq!(fs::read_dir(&fixture.output).unwrap().count(), 0);
+    }
+
+    #[test]
+    fn collection_toolchain_substitution_fails_before_execution() {
+        let fixture = make_fixture();
+        let mut manifest = read_value(&fixture.manifest);
+        manifest["toolchain_sha256"] = json!(digest("substituted-toolchain-digest"));
+        write_canonical(&fixture.manifest, &manifest);
+        assert!(collect_policy_observations(&arguments(&fixture)).is_err());
+        assert!(!fixture.output.exists());
+
+        let fixture = make_fixture();
+        let mut manifest = read_value(&fixture.manifest);
+        manifest["toolchain"]["runtime_closure_sha256"] =
+            json!(digest("substituted-runtime-closure"));
+        manifest["toolchain_sha256"] = json!(validate_toolchain(&manifest["toolchain"]).unwrap());
+        write_canonical(&fixture.manifest, &manifest);
+        assert!(collect_policy_observations(&arguments(&fixture)).is_err());
+        assert!(!fixture.output.exists());
     }
 
     #[test]
