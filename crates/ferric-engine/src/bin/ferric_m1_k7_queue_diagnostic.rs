@@ -173,6 +173,129 @@ pub(super) fn execute_independent_pair(
     Ok(())
 }
 
+pub(super) fn execute_independent_pair_shared_inputs(
+    checked: CheckedGfx942XnackMinusDevice,
+    catalog: ContentBoundM1ProgramCatalogV1<'_>,
+    report: &mut impl FnMut(String),
+) -> DiagnosticResult<()> {
+    execute_independent_pair_shared_inputs_impl(checked, catalog, 0, report)
+}
+
+pub(super) fn execute_independent_pair_shared_inputs_with_one_unreferenced(
+    checked: CheckedGfx942XnackMinusDevice,
+    catalog: ContentBoundM1ProgramCatalogV1<'_>,
+    report: &mut impl FnMut(String),
+) -> DiagnosticResult<()> {
+    execute_independent_pair_shared_inputs_impl(checked, catalog, 1, report)
+}
+
+pub(super) fn execute_independent_pair_shared_inputs_with_unreferenced(
+    checked: CheckedGfx942XnackMinusDevice,
+    catalog: ContentBoundM1ProgramCatalogV1<'_>,
+    report: &mut impl FnMut(String),
+) -> DiagnosticResult<()> {
+    execute_independent_pair_shared_inputs_impl(checked, catalog, 2, report)
+}
+
+fn execute_independent_pair_shared_inputs_impl(
+    checked: CheckedGfx942XnackMinusDevice,
+    catalog: ContentBoundM1ProgramCatalogV1<'_>,
+    unreferenced_input_count: u8,
+    report: &mut impl FnMut(String),
+) -> DiagnosticResult<()> {
+    let first_spec = k7_spec()?;
+    let second_spec = k7_spec()?;
+    report_spec(&first_spec, report);
+    let mut allocations = ServiceAllocationSessionV1::acquire(checked)
+        .map_err(|error| format!("cannot acquire service allocation session: {error:?}"))?;
+    report("phase=allocate".to_owned());
+    let anchor = allocate_device_input(
+        &mut allocations,
+        FIRST_ANCHOR.to_le_bytes().to_vec().into_boxed_slice(),
+        0,
+        first_spec.buffers()[0],
+    )?;
+    let draft = allocate_device_input(
+        &mut allocations,
+        u32_bytes(&FIRST_DRAFT),
+        1,
+        first_spec.buffers()[1],
+    )?;
+    if unreferenced_input_count >= 1 {
+        let _second_anchor = allocate_device_input(
+            &mut allocations,
+            SECOND_ANCHOR.to_le_bytes().to_vec().into_boxed_slice(),
+            2,
+            second_spec.buffers()[0],
+        )?;
+    }
+    if unreferenced_input_count >= 2 {
+        let _second_draft = allocate_device_input(
+            &mut allocations,
+            u32_bytes(&SECOND_DRAFT),
+            3,
+            second_spec.buffers()[1],
+        )?;
+    }
+    let first_output = allocate_host_output(&mut allocations, first_spec.buffers()[2])?;
+    let second_output = allocate_host_output(&mut allocations, second_spec.buffers()[2])?;
+    let first_packet = build_k7_packet(
+        first_spec,
+        anchor,
+        draft,
+        first_output,
+        AqlDispatchOrderingV1::Independent,
+    );
+    let second_packet = build_k7_packet(
+        second_spec,
+        anchor,
+        draft,
+        second_output,
+        AqlDispatchOrderingV1::Independent,
+    );
+    let completed =
+        publish_and_complete(allocations, catalog, [first_packet, second_packet], report)?;
+    let mut recycled = completed
+        .recycle()
+        .map_err(queue_operation_error("cannot recycle shared-input K7 pair"))?;
+    if let Err(error) = verify_output(
+        &mut recycled,
+        first_output,
+        &FIRST_EXPECTED,
+        "first shared-input K7",
+    ) {
+        return destroy_recycled_after_error(recycled, error);
+    }
+    if let Err(error) = verify_output(
+        &mut recycled,
+        second_output,
+        &FIRST_EXPECTED,
+        "second shared-input K7",
+    ) {
+        return destroy_recycled_after_error(recycled, error);
+    }
+    let released = recycled.destroy_and_release().map_err(|failure| {
+        format!("cannot destroy shared-input K7 pair and release allocations: {failure:?}")
+    })?;
+    report(format!(
+        "dispatch_generation={}",
+        released.dispatch_generation()
+    ));
+    report("packet_count=2".to_owned());
+    report("ordering=independent".to_owned());
+    report(
+        match unreferenced_input_count {
+            0 => "data_roster=shared-singleton-inputs",
+            1 => "data_roster=shared-inputs-plus-one-unreferenced-device",
+            _ => "data_roster=shared-inputs-plus-two-unreferenced-device",
+        }
+        .to_owned(),
+    );
+    report("outputs_verified=2".to_owned());
+    report("status=completed-non-qualification".to_owned());
+    Ok(())
+}
+
 fn k7_spec() -> DiagnosticResult<M1PacketDiagnosticSpecV1> {
     m1_k7_s1k4_packet_diagnostic_spec_v1()
         .map_err(|error| format!("cannot build exact K7 packet: {error}"))
