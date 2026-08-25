@@ -3152,6 +3152,51 @@ pub struct M1RearmedRecycledQueueV1 {
 }
 
 impl M1RearmedRecycledQueueV1 {
+    /// Copies and structurally observes the exact fresh K7 completion once.
+    ///
+    /// The returned move-only owner exposes the inert compact image before any
+    /// semantic authority exists. Callers may inspect the observed token and
+    /// must then consume the owner through
+    /// [`M1RearmedObservedCompletionOutputV1::check_completion`].
+    ///
+    /// ```compile_fail
+    /// use ferric_engine::M1RearmedRecycledQueueV1;
+    /// fn observe_twice(recycled: M1RearmedRecycledQueueV1) {
+    ///     let _first = recycled.observe_completion();
+    ///     let _second = recycled.observe_completion();
+    /// }
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns the existing phase-accurate observation failure joined to every
+    /// selected or parked cache owner. A retryable lower pre-copy rejection
+    /// remains retryable; no path can repeat a successful physical copy.
+    pub fn observe_completion(
+        self,
+    ) -> Result<M1RearmedObservedCompletionOutputV1, Box<M1RearmedReadbackFailureV1>> {
+        let Self {
+            queue,
+            carry,
+            queue_observation,
+            device,
+        } = self;
+        match queue.observe_completion() {
+            Ok(observed) => Ok(M1RearmedObservedCompletionOutputV1 {
+                observed,
+                carry,
+                queue_observation,
+                device,
+            }),
+            Err(source) => Err(Box::new(M1RearmedReadbackFailureV1 {
+                source: M1RearmedReadbackFailureSourceV1::Observation(source),
+                carry,
+                queue_observation,
+                device,
+            })),
+        }
+    }
+
     /// Copies one rearmed target-decode compact output and its final live logits.
     ///
     /// This consuming path is intended only after the caller identifies the
@@ -3836,6 +3881,162 @@ impl M1RearmedQualificationObservationTeardownFailureV1 {
     }
 }
 
+/// Move-only structural completion observation with complete rearm lineage.
+///
+/// The copied K7 image is inert: inspecting its records grants no completion,
+/// KV, inference, or publication authority. Semantic rejection retains this
+/// same owner, so corrected expectations never repeat the physical read.
+///
+/// ```compile_fail
+/// use ferric_engine::M1RearmedObservedCompletionOutputV1;
+/// fn require_clone<T: Clone>() {}
+/// require_clone::<M1RearmedObservedCompletionOutputV1>();
+/// ```
+#[must_use = "observed completion must be checked, destroyed, or retained"]
+#[derive(Debug)]
+pub struct M1RearmedObservedCompletionOutputV1 {
+    observed: crate::M1ObservedCompletionOutputV1,
+    carry: M1RearmContinuationCustodyV1,
+    queue_observation: ComputeAqlQueueObservationV1,
+    device: Gfx942DeviceBinding,
+}
+
+impl M1RearmedObservedCompletionOutputV1 {
+    /// Borrows the inert copied K7 image and structurally decoded records.
+    #[must_use = "the observed image remains paired with rearm custody"]
+    pub const fn image(&self) -> &crate::M1ObservedCompletionImageV1 {
+        self.observed.image()
+    }
+
+    /// Selected request owners in exact scheduler order.
+    #[must_use]
+    pub fn selected_requests(&self) -> impl ExactSizeIterator<Item = RequestId> + '_ {
+        self.carry
+            .selected
+            .iter()
+            .map(|cache| cache.projection().request)
+    }
+
+    /// Number of active caches parked outside the observed selected roster.
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        self.carry.parked.len()
+    }
+
+    /// Number of terminal members retained from the predecessor round.
+    #[must_use]
+    pub const fn terminal_count(&self) -> usize {
+        self.carry.terminal.len()
+    }
+
+    /// Exact predecessor completion epoch.
+    #[must_use]
+    pub const fn previous_epoch(&self) -> CompletionEpoch {
+        self.carry.previous_epoch
+    }
+
+    /// Exact completed queue generation observation.
+    #[must_use]
+    pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
+        self.queue_observation
+    }
+
+    /// Checked physical-device receipt retained through observation.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.device
+    }
+
+    /// Fail-stops `engine`, destroys the unchecked observed queue, and retains
+    /// the exact copied image with all continuation lineage.
+    ///
+    /// This path is for caller-side invariant failures after inspection but
+    /// before semantic join. It does not mint completion or KV authority.
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal lower release quarantine paired with the same copied
+    /// image, device receipt, queue observation, and cache owners.
+    pub fn destroy_queue_and_retain_custody<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<M1RearmedReadbackTeardownSuccessV1, Box<M1RearmedReadbackTeardownFailureV1>> {
+        quarantine_readback_teardown(engine);
+        let Self {
+            observed,
+            carry,
+            queue_observation,
+            device,
+        } = self;
+        match teardown_unchecked_rearmed_observation(observed) {
+            Ok(source) => Ok(M1RearmedReadbackTeardownSuccessV1 {
+                diagnostic: source.diagnostic,
+                queue_release: source.queue_release,
+                evidence: source.evidence,
+                carry,
+                queue_observation,
+                device,
+            }),
+            Err(source) => {
+                let source = *source;
+                Err(Box::new(M1RearmedReadbackTeardownFailureV1 {
+                    diagnostic: source.diagnostic,
+                    source: source.source,
+                    evidence: source.evidence,
+                    carry,
+                    queue_observation,
+                    device,
+                }))
+            }
+        }
+    }
+
+    /// Consumes the copied image through the existing roster and semantic join.
+    ///
+    /// Qualification-capture queues retain their existing restriction to prompt
+    /// commits; a rejected expectation preserves the already-copied observation
+    /// and cannot return to recycled readback custody.
+    ///
+    /// # Errors
+    ///
+    /// Returns the exact semantic rejection together with the same observation
+    /// and every rearm continuation owner. Corrected expectations can retry the
+    /// join without issuing another physical read.
+    pub fn check_completion(
+        self,
+        expectations: &[crate::CompletionWireSemanticExpectation<'_>],
+    ) -> Result<M1RearmedCompletedReadbackV1, Box<M1RearmedReadbackFailureV1>> {
+        if let Err(lane) = validate_rearmed_generic_semantics(
+            self.observed.qualification_logits_enabled(),
+            expectations,
+        ) {
+            let Self {
+                observed,
+                carry,
+                queue_observation,
+                device,
+            } = self;
+            return Err(Box::new(M1RearmedReadbackFailureV1 {
+                source:
+                    M1RearmedReadbackFailureSourceV1::ObservedQualificationCaptureRequiresEvidence {
+                        lane,
+                        observed: Box::new(observed),
+                    },
+                carry,
+                queue_observation,
+                device,
+            }));
+        }
+        let Self {
+            observed,
+            carry,
+            queue_observation,
+            device,
+        } = self;
+        rejoin_rearmed_readback(observed, expectations, carry, queue_observation, device)
+    }
+}
+
 /// Move-only final qualification observation with complete rearm lineage.
 ///
 /// Semantic rejection returns this same owner, so corrected expectations never
@@ -4392,6 +4593,11 @@ pub enum M1RearmedReadbackFailureSourceV1 {
         lane: usize,
         queue: Box<crate::M1PhysicalRecycledQueueSessionV1>,
     },
+    /// Post-copy semantic gate rejection retaining the inert observation.
+    ObservedQualificationCaptureRequiresEvidence {
+        lane: usize,
+        observed: Box<crate::M1ObservedCompletionOutputV1>,
+    },
     /// Physical copy or structural observation rejection.
     Observation(crate::M1CompletionObservationFailureV1),
     /// Scheduler-roster, plan, wire-identity, or token-semantic rejection.
@@ -4452,6 +4658,112 @@ impl M1RearmedReadbackFailureV1 {
         }
     }
 
+    /// Recovers an already-copied observation after a semantic rejection.
+    ///
+    /// Both the post-copy qualification gate and the ordinary completion join
+    /// retain the same inert image. Pre-copy and structurally rejected states
+    /// remain in their existing phase-accurate failure owner.
+    ///
+    /// # Errors
+    ///
+    /// Returns the unchanged failure when no complete structural observation
+    /// exists.
+    pub fn recover_observed_after_semantic_rejection(
+        self: Box<Self>,
+    ) -> Result<M1RearmedObservedCompletionOutputV1, Box<Self>> {
+        let Self {
+            source,
+            carry,
+            queue_observation,
+            device,
+        } = *self;
+        match source {
+            M1RearmedReadbackFailureSourceV1::ObservedQualificationCaptureRequiresEvidence {
+                observed,
+                ..
+            } => Ok(M1RearmedObservedCompletionOutputV1 {
+                observed: *observed,
+                carry,
+                queue_observation,
+                device,
+            }),
+            M1RearmedReadbackFailureSourceV1::Join(source) => {
+                let (_error, observed) = source.into_parts();
+                Ok(M1RearmedObservedCompletionOutputV1 {
+                    observed,
+                    carry,
+                    queue_observation,
+                    device,
+                })
+            }
+            source => Err(Box::new(Self {
+                source,
+                carry,
+                queue_observation,
+                device,
+            })),
+        }
+    }
+
+    /// Retries only a lower pre-copy structural observation rejection.
+    ///
+    /// Success returns the split observed owner so the caller can inspect the
+    /// copied token before supplying semantic expectations. Rejected or opaque
+    /// post-copy lower states, semantic failures, and qualification gates return
+    /// unchanged custody and never issue another completed read.
+    ///
+    /// # Errors
+    ///
+    /// Returns unchanged closed custody when retry is not admitted, or a fresh
+    /// phase-accurate observation failure if the lower retry rejects again.
+    pub fn retry_observation(
+        self: Box<Self>,
+    ) -> Result<M1RearmedObservedCompletionOutputV1, Box<Self>> {
+        let Self {
+            source,
+            carry,
+            queue_observation,
+            device,
+        } = *self;
+        match source {
+            M1RearmedReadbackFailureSourceV1::Observation(source) => {
+                let (error, custody) = source.into_parts();
+                match custody {
+                    crate::M1CompletionObservationFailureCustodyV1::Recycled(queue) => {
+                        match queue.observe_completion() {
+                            Ok(observed) => Ok(M1RearmedObservedCompletionOutputV1 {
+                                observed,
+                                carry,
+                                queue_observation,
+                                device,
+                            }),
+                            Err(source) => Err(Box::new(Self {
+                                source: M1RearmedReadbackFailureSourceV1::Observation(source),
+                                carry,
+                                queue_observation,
+                                device,
+                            })),
+                        }
+                    }
+                    custody => Err(Box::new(Self {
+                        source: M1RearmedReadbackFailureSourceV1::Observation(
+                            crate::M1CompletionObservationFailureV1::from_parts(error, custody),
+                        ),
+                        carry,
+                        queue_observation,
+                        device,
+                    })),
+                }
+            }
+            source => Err(Box::new(Self {
+                source,
+                carry,
+                queue_observation,
+                device,
+            })),
+        }
+    }
+
     /// Retries the exact admissible stage without reopening a successful copy.
     ///
     /// A lower `Recycled` observation retries the physical read and then joins
@@ -4492,7 +4804,10 @@ impl M1RearmedReadbackFailureV1 {
             }
         }
         let qualification_capture_enabled = match &self.source {
-            M1RearmedReadbackFailureSourceV1::QualificationCaptureRequiresEvidence { .. } => true,
+            M1RearmedReadbackFailureSourceV1::QualificationCaptureRequiresEvidence { .. }
+            | M1RearmedReadbackFailureSourceV1::ObservedQualificationCaptureRequiresEvidence {
+                ..
+            } => true,
             M1RearmedReadbackFailureSourceV1::Observation(source) => match source.custody() {
                 crate::M1CompletionObservationFailureCustodyV1::Recycled(queue) => queue
                     .custody()
@@ -4531,6 +4846,10 @@ impl M1RearmedReadbackFailureV1 {
                 queue_observation,
                 device,
             })),
+            M1RearmedReadbackFailureSourceV1::ObservedQualificationCaptureRequiresEvidence {
+                observed,
+                ..
+            } => rejoin_rearmed_readback(*observed, expectations, carry, queue_observation, device),
             M1RearmedReadbackFailureSourceV1::Observation(source) => {
                 let (error, custody) = source.into_parts();
                 match custody {
@@ -4776,6 +5095,7 @@ fn rejoin_rearmed_readback(
 /// Exact diagnostic retained after generic rearm readback teardown.
 #[derive(Debug)]
 pub enum M1RearmedReadbackTeardownDiagnosticV1 {
+    ObservedBeforeSemanticJoin,
     QualificationCaptureRequiresEvidence { lane: usize },
     Observation(crate::M1CompletionObservationErrorV1),
     Join(crate::M1CompletedReadbackJoinErrorV1),
@@ -4823,6 +5143,27 @@ struct RearmedReadbackTeardownFailureV1 {
     evidence: M1RearmedReadbackTeardownEvidenceV1,
 }
 
+fn teardown_unchecked_rearmed_observation(
+    observed: crate::M1ObservedCompletionOutputV1,
+) -> Result<RearmedReadbackTeardownSuccessV1, Box<RearmedReadbackTeardownFailureV1>> {
+    let diagnostic = M1RearmedReadbackTeardownDiagnosticV1::ObservedBeforeSemanticJoin;
+    match observed.destroy_and_release_retaining_image() {
+        Ok((queue_release, image)) => Ok(RearmedReadbackTeardownSuccessV1 {
+            diagnostic,
+            queue_release,
+            evidence: M1RearmedReadbackTeardownEvidenceV1::ObservedCompact(Box::new(image)),
+        }),
+        Err(failure) => {
+            let (source, image) = *failure;
+            Err(Box::new(RearmedReadbackTeardownFailureV1 {
+                diagnostic,
+                source,
+                evidence: M1RearmedReadbackTeardownEvidenceV1::ObservedCompact(Box::new(image)),
+            }))
+        }
+    }
+}
+
 fn teardown_rearmed_readback_source(
     source: M1RearmedReadbackFailureSourceV1,
 ) -> Result<RearmedReadbackTeardownSuccessV1, Box<RearmedReadbackTeardownFailureV1>> {
@@ -4847,6 +5188,32 @@ fn teardown_rearmed_readback_source(
                 M1RearmedReadbackTeardownEvidenceV1::None,
                 queue.destroy_and_release(),
             )
+        }
+        M1RearmedReadbackFailureSourceV1::ObservedQualificationCaptureRequiresEvidence {
+            lane,
+            observed,
+        } => {
+            let diagnostic =
+                M1RearmedReadbackTeardownDiagnosticV1::QualificationCaptureRequiresEvidence {
+                    lane,
+                };
+            match observed.destroy_and_release_retaining_image() {
+                Ok((queue_release, image)) => Ok(RearmedReadbackTeardownSuccessV1 {
+                    diagnostic,
+                    queue_release,
+                    evidence: M1RearmedReadbackTeardownEvidenceV1::ObservedCompact(Box::new(image)),
+                }),
+                Err(failure) => {
+                    let (source, image) = *failure;
+                    Err(Box::new(RearmedReadbackTeardownFailureV1 {
+                        diagnostic,
+                        source,
+                        evidence: M1RearmedReadbackTeardownEvidenceV1::ObservedCompact(Box::new(
+                            image,
+                        )),
+                    }))
+                }
+            }
         }
         M1RearmedReadbackFailureSourceV1::Observation(source) => {
             let (error, custody) = source.into_parts();
@@ -7843,6 +8210,18 @@ impl M1RearmedRecycledQueueV1 {
     }
 }
 
+impl M1RearmedObservedCompletionOutputV1 {
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.carry.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.carry.history.get(index)
+    }
+}
+
 impl M1RearmedQualificationObservationFailureV1 {
     #[must_use]
     pub const fn round_history_len(&self) -> usize {
@@ -8348,6 +8727,10 @@ mod tests {
             usize,
         )
             -> Option<&'a crate::M1RearmRoundHistoryEntryV1>;
+        type ObservedHistory = for<'a> fn(
+            &'a crate::M1RearmedObservedCompletionOutputV1,
+            usize,
+        ) -> Option<&'a crate::M1RearmRoundHistoryEntryV1>;
         type QualifiedPreflightHistory =
             for<'a> fn(
                 &'a M1RearmedQualifiedCompletionPreflightFailureV1,
@@ -8362,6 +8745,7 @@ mod tests {
         let _: usize = crate::M1_MAX_REARM_ROUND_HISTORY_V1;
         let _: ReleasedHistory = crate::M1LongLivedQueueReleasedRoundV1::round_history;
         let _: PreflightHistory = M1RearmedCompletionPreflightFailureV1::round_history;
+        let _: ObservedHistory = crate::M1RearmedObservedCompletionOutputV1::round_history;
         let _: QualifiedReadbackHistory = M1RearmedQualifiedCompletedReadbackV1::round_history;
         let _: QualifiedPreflightHistory =
             M1RearmedQualifiedCompletionPreflightFailureV1::round_history;
@@ -8823,6 +9207,37 @@ mod tests {
 
     #[test]
     fn generic_readback_failure_has_consuming_retry_and_teardown_signatures() {
+        type Observe =
+            fn(
+                M1RearmedRecycledQueueV1,
+            )
+                -> Result<M1RearmedObservedCompletionOutputV1, Box<M1RearmedReadbackFailureV1>>;
+        type Image = for<'a> fn(
+            &'a M1RearmedObservedCompletionOutputV1,
+        ) -> &'a crate::M1ObservedCompletionImageV1;
+        type Check =
+            for<'a, 'b> fn(
+                M1RearmedObservedCompletionOutputV1,
+                &'a [crate::CompletionWireSemanticExpectation<'b>],
+            )
+                -> Result<M1RearmedCompletedReadbackV1, Box<M1RearmedReadbackFailureV1>>;
+        type ObservationRetry =
+            fn(
+                Box<M1RearmedReadbackFailureV1>,
+            )
+                -> Result<M1RearmedObservedCompletionOutputV1, Box<M1RearmedReadbackFailureV1>>;
+        type ObservedRecovery =
+            fn(
+                Box<M1RearmedReadbackFailureV1>,
+            )
+                -> Result<M1RearmedObservedCompletionOutputV1, Box<M1RearmedReadbackFailureV1>>;
+        type ObservedTeardown = fn(
+            M1RearmedObservedCompletionOutputV1,
+            &mut Engine<32>,
+        ) -> Result<
+            M1RearmedReadbackTeardownSuccessV1,
+            Box<M1RearmedReadbackTeardownFailureV1>,
+        >;
         type Retry =
             for<'a, 'b> fn(
                 Box<M1RearmedReadbackFailureV1>,
@@ -8837,6 +9252,14 @@ mod tests {
             Box<M1RearmedReadbackTeardownFailureV1>,
         >;
 
+        let _: Observe = M1RearmedRecycledQueueV1::observe_completion;
+        let _: Image = M1RearmedObservedCompletionOutputV1::image;
+        let _: Check = M1RearmedObservedCompletionOutputV1::check_completion;
+        let _: ObservationRetry = M1RearmedReadbackFailureV1::retry_observation;
+        let _: ObservedRecovery =
+            M1RearmedReadbackFailureV1::recover_observed_after_semantic_rejection;
+        let _: ObservedTeardown =
+            M1RearmedObservedCompletionOutputV1::destroy_queue_and_retain_custody::<32>;
         let _: Retry = M1RearmedReadbackFailureV1::retry;
         let _: Teardown = M1RearmedReadbackFailureV1::destroy_queue_and_retain_custody::<32>;
     }

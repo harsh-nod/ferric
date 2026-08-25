@@ -110,6 +110,7 @@ mod m1_r30_fault_transition_partial_capture;
 mod m1_r30_partial_capture;
 mod m1_r30_rollback_partial_capture;
 mod m1_r32_partial_capture;
+mod m1_target_smoke;
 
 const PLAN_FORMAT: &str = "FERRIC-M1-BENCHMARK-PLAN-V1";
 const ROSTER_FORMAT: &str = "FERRIC-M1-QUALIFICATION-ROSTER-V1";
@@ -1957,6 +1958,9 @@ fn run(arguments: Vec<OsString>) -> CaptureResult<()> {
         == Some(m1_r32_partial_capture::COMMAND)
     {
         return run_r32_speculative_capture(&arguments[1..]);
+    }
+    if arguments.first().and_then(|argument| argument.to_str()) == Some(m1_target_smoke::COMMAND) {
+        return m1_target_smoke::run(&arguments[1..]);
     }
     if arguments.len() != 11 {
         match arguments.first().and_then(|argument| argument.to_str()) {
@@ -8328,6 +8332,9 @@ mod tests {
         wrong_width[0] = OsString::from(m1_r32_partial_capture::COMMAND);
         let r32_error = run(wrong_width).unwrap_err();
         assert!(r32_error.contains("capture-r32-speculative-k4 MODEL-SOURCE"));
+
+        let smoke_error = run(vec![OsString::from(m1_target_smoke::COMMAND)]).unwrap_err();
+        assert!(smoke_error.contains("run-target-smoke MODEL-SOURCE PREPACKED-SNAPSHOT"));
     }
 
     #[test]

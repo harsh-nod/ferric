@@ -742,6 +742,31 @@ The ignored hardware smoke is
 the same artifact, prepacked-weight, and GPU environment variables as the
 existing target-only smoke and deliberately publishes no evidence artifact.
 
+For a one-shot target-only prompt-to-text smoke on an exclusive gfx942, run:
+
+```text
+cargo run --locked -p ferric-engine --bin ferric-m1-qualification-capture -- \
+  run-target-smoke MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE \
+  GPU-UNIQUE-ID MAX-NEW-TOKENS 'RAW PROMPT'
+```
+
+The command authenticates the same model source, prepacked snapshot, persisted
+K1-K7 artifacts, closure, generated runner, and selected device as the physical
+capture path. It passes the raw prompt directly to the authenticated target
+tokenizer without adding a chat template, teacher-feeds those token IDs from
+context zero, and then feeds each structurally observed physical K7 token back
+through the same S1 target-decode queue. It eagerly leases only the bounded
+number of ordinary KV pages the invocation can reach, retains unused lease
+identities until queue destruction, and is not a serving or reusable-inference
+interface. Generation stops at the Qwen3
+`<|im_end|>` token, the requested new-token limit, or the C8192 context bound.
+Its single JSON result includes every directly published prompt-priming choice,
+the generated token IDs, decoded text, exact decoded-byte hex, an explicit
+lossy-replacement UTF-8 display policy, and the fixed
+`smoke-non-evidence-non-qualification` status. It writes no evidence bundle and
+makes no qualification, numerical-correctness, hardware-correctness, or M1
+closure claim.
+
 The policy test uses the distinct `synthetic-policy-fixture-only` authority and
 the nonpublishing `check-policy-fixture` command solely to exercise the shared
 parsers and mutation rejection. Normal `produce` rejects those fixtures. The
