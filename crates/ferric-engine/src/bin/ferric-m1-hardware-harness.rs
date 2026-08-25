@@ -657,8 +657,8 @@ fn require_pci_bdf(value: &str) -> HarnessResult<()> {
         .and_then(|part| u8::from_str_radix(part, 16).ok());
     if !punctuation
         || !hex
-        || !device.is_some_and(|number| number <= 31)
-        || !function.is_some_and(|number| number <= 7)
+        || device.is_none_or(|number| number > 31)
+        || function.is_none_or(|number| number > 7)
     {
         return Err("device PCI BDF must be canonical lowercase dddd:bb:ss.f".to_owned());
     }
