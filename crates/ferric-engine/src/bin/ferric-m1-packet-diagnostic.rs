@@ -18,7 +18,7 @@ use ferric_m1_k7_queue_diagnostic::{
     execute_independent_pair, execute_independent_pair_shared_inputs,
     execute_independent_pair_shared_inputs_with_one_unreferenced,
     execute_independent_pair_shared_inputs_with_unreferenced, execute_ordered_pair,
-    execute_ordered_single,
+    execute_ordered_single, execute_rearm,
 };
 use ferric_spec::{
     Qwen3ModelRole, Qwen3TensorKind, QWEN3_NO_LAYER, QWEN3_TARGET_TENSOR_DATA_BYTES,
@@ -35,7 +35,7 @@ use std::process::ExitCode;
 type DiagnosticResult<T> = Result<T, String>;
 
 const BARRIER_COMPLETION_POLL_LIMIT: u32 = 1_000;
-const USAGE: &str = "usage: ferric-m1-packet-diagnostic queue-barrier GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic queue-barrier-executable GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic queue-barrier-userptr GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-ordered-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-two-ordered-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-two-independent-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-two-shared-input-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-two-shared-input-one-extra-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-two-shared-input-extra-roster-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k1-embedding PREPACKED-SNAPSHOT KERNEL-ARTIFACTS GPU-UNIQUE-ID";
+const USAGE: &str = "usage: ferric-m1-packet-diagnostic queue-barrier GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic queue-barrier-executable GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic queue-barrier-userptr GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-ordered-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-rearm-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-two-ordered-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-two-independent-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-two-shared-input-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-two-shared-input-one-extra-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-two-shared-input-extra-roster-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k1-embedding PREPACKED-SNAPSHOT KERNEL-ARTIFACTS GPU-UNIQUE-ID";
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum QueueBarrierRing {
@@ -55,6 +55,10 @@ enum Command {
         gpu_unique_id: u64,
     },
     K7OrderedSmoke {
+        artifact_root: OsString,
+        gpu_unique_id: u64,
+    },
+    K7RearmSmoke {
         artifact_root: OsString,
         gpu_unique_id: u64,
     },
@@ -126,6 +130,12 @@ fn parse_command(arguments: Vec<OsString>) -> DiagnosticResult<Command> {
         }),
         [mode, artifact_root, gpu_unique_id] if mode == "k7-ordered-smoke" => {
             Ok(Command::K7OrderedSmoke {
+                artifact_root: artifact_root.clone(),
+                gpu_unique_id: parse_gpu_unique_id(gpu_unique_id)?,
+            })
+        }
+        [mode, artifact_root, gpu_unique_id] if mode == "k7-rearm-smoke" => {
+            Ok(Command::K7RearmSmoke {
                 artifact_root: artifact_root.clone(),
                 gpu_unique_id: parse_gpu_unique_id(gpu_unique_id)?,
             })
@@ -229,6 +239,40 @@ fn execute(command: Command) -> DiagnosticResult<()> {
                     execute_ordered_single(checked, catalog, &mut report)
                 })
                 .map_err(|error| format!("cannot bind content-bound program catalog: {error}"))??;
+            Ok(())
+        }
+        Command::K7RearmSmoke {
+            artifact_root,
+            gpu_unique_id,
+        } => {
+            println!("mode=k7-rearm-smoke");
+            let first_artifacts = reopen_persisted_m1_kernel_artifacts_v1(Path::new(
+                &artifact_root,
+            ))
+            .map_err(|error| {
+                format!("cannot authenticate first persisted kernel artifacts: {error}")
+            })?;
+            let second_artifacts = reopen_persisted_m1_kernel_artifacts_v1(Path::new(
+                &artifact_root,
+            ))
+            .map_err(|error| {
+                format!("cannot authenticate second persisted kernel artifacts: {error}")
+            })?;
+            let checked = bind_device(gpu_unique_id)?;
+            first_artifacts
+                .with_content_bound_program_catalog_v1(|first_catalog| {
+                    second_artifacts
+                        .with_content_bound_program_catalog_v1(|second_catalog| {
+                            let mut report = |line| println!("{line}");
+                            execute_rearm(checked, first_catalog, second_catalog, &mut report)
+                        })
+                        .map_err(|error| {
+                            format!("cannot bind second content-bound program catalog: {error}")
+                        })?
+                })
+                .map_err(|error| {
+                    format!("cannot bind first content-bound program catalog: {error}")
+                })??;
             Ok(())
         }
         Command::K7TwoOrderedSmoke {
@@ -691,6 +735,17 @@ mod tests {
         ));
         assert!(matches!(
             parse_command(vec![
+                "k7-rearm-smoke".into(),
+                "artifacts".into(),
+                "9".into(),
+            ]),
+            Ok(Command::K7RearmSmoke {
+                gpu_unique_id: 9,
+                ..
+            })
+        ));
+        assert!(matches!(
+            parse_command(vec![
                 "k7-two-ordered-smoke".into(),
                 "artifacts".into(),
                 "9".into(),
@@ -759,6 +814,13 @@ mod tests {
         assert!(parse_command(vec!["k7-smoke".into()]).is_err());
         assert!(parse_command(vec![
             "k7-ordered-smoke".into(),
+            "artifacts".into(),
+            "8".into(),
+            "extra".into(),
+        ])
+        .is_err());
+        assert!(parse_command(vec![
+            "k7-rearm-smoke".into(),
             "artifacts".into(),
             "8".into(),
             "extra".into(),

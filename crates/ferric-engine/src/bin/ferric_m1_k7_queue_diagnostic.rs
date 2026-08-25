@@ -7,7 +7,8 @@ use fe2o3_kfd::{
 use fe2o3_service_host::{
     DeviceInputRoleV1, HostDownloadRoleV1, ServiceAllocationSessionV1, ServiceFixedBatchV1,
     ServiceFixedDispatchBufferV1, ServiceFixedDispatchPacketV1, ServiceHostDispatchRangeV1,
-    ServicePublishedQueueSessionV1, ServiceQueuePollWithProgressV1, ServiceQueueSessionV1,
+    ServicePublishedQueueSessionV1, ServiceQueueBindFailureV1, ServiceQueuePollWithProgressV1,
+    ServiceQueueSessionV1,
 };
 use ferric_engine::{
     m1_k7_s1k4_packet_diagnostic_spec_v1, ContentBoundM1ProgramCatalogV1,
@@ -59,6 +60,111 @@ pub(super) fn execute_ordered_single(
     report("packet_count=1".to_owned());
     report("ordering=wait-for-prior".to_owned());
     report("output_verified=true".to_owned());
+    report("status=completed-non-qualification".to_owned());
+    Ok(())
+}
+
+pub(super) fn execute_rearm(
+    checked: CheckedGfx942XnackMinusDevice,
+    first_catalog: ContentBoundM1ProgramCatalogV1<'_>,
+    second_catalog: ContentBoundM1ProgramCatalogV1<'_>,
+    report: &mut impl FnMut(String),
+) -> DiagnosticResult<()> {
+    let first_spec = k7_spec()?;
+    let second_spec = k7_spec()?;
+    report_spec(&first_spec, report);
+    let mut allocations = ServiceAllocationSessionV1::acquire(checked)
+        .map_err(|error| format!("cannot acquire service allocation session: {error:?}"))?;
+    report("phase=allocate-two-generations".to_owned());
+    let ([first_packet, second_packet], [first_output, second_output]) = match prepare_k7_pair(
+        &mut allocations,
+        first_spec,
+        second_spec,
+        AqlDispatchOrderingV1::WaitForPrior,
+    ) {
+        Ok(prepared) => prepared,
+        Err(error) => return release_unpublished_after_error(allocations, error),
+    };
+
+    let first_completed = publish_and_complete(allocations, first_catalog, [first_packet], report)?;
+    let mut first_recycled = first_completed
+        .recycle()
+        .map_err(queue_operation_error("cannot recycle first K7 generation"))?;
+    let first_generation = match verify_output(
+        &mut first_recycled,
+        first_output,
+        &FIRST_EXPECTED,
+        "first rearm K7",
+    ) {
+        Ok(generation) => generation,
+        Err(error) => return destroy_recycled_after_error(first_recycled, error),
+    };
+
+    report("phase=detach".to_owned());
+    let unbound = first_recycled
+        .detach()
+        .map_err(queue_operation_error("cannot detach first K7 generation"))?;
+    if unbound.detached_dispatch_generation() != first_generation {
+        return destroy_unbound_after_error(
+            unbound,
+            "detached generation differs from first completed generation".to_owned(),
+        );
+    }
+
+    report("phase=bind-second-generation".to_owned());
+    let second_batch = ServiceFixedBatchV1::new(second_catalog.into_programs(), [second_packet]);
+    let second_queue = match unbound.bind(second_batch) {
+        Ok(queue) => queue,
+        Err(ServiceQueueBindFailureV1::Rejected {
+            error,
+            queue,
+            batch: _,
+        }) => {
+            return destroy_unbound_after_error(
+                *queue,
+                format!("second K7 generation was rejected before rebind: {error}"),
+            );
+        }
+        Err(ServiceQueueBindFailureV1::Terminal { error, retained }) => {
+            let _quarantined = retained;
+            return Err(format!(
+                "second K7 generation failed during rebind: {error}; queue quarantined until process teardown"
+            ));
+        }
+    };
+    report("phase=submit-second-generation".to_owned());
+    let second_published = second_queue
+        .submit()
+        .map_err(queue_operation_error("cannot submit second K7 generation"))?;
+    let second_completed = wait_with_pacing(second_published, report)?;
+    let mut second_recycled = second_completed
+        .recycle()
+        .map_err(queue_operation_error("cannot recycle second K7 generation"))?;
+    let second_generation = match verify_output(
+        &mut second_recycled,
+        second_output,
+        &SECOND_EXPECTED,
+        "second rearm K7",
+    ) {
+        Ok(generation) => generation,
+        Err(error) => return destroy_recycled_after_error(second_recycled, error),
+    };
+    if second_generation <= first_generation {
+        return destroy_recycled_after_error(
+            second_recycled,
+            "second completed generation did not advance".to_owned(),
+        );
+    }
+    let released = second_recycled.destroy_and_release().map_err(|failure| {
+        format!("cannot destroy rearmed K7 queue and release allocations: {failure:?}")
+    })?;
+    if released.dispatch_generation() != second_generation {
+        return Err("released generation differs from second completed generation".to_owned());
+    }
+    report(format!("first_dispatch_generation={first_generation}"));
+    report(format!("second_dispatch_generation={second_generation}"));
+    report("queue_reused=true".to_owned());
+    report("outputs_verified=2".to_owned());
     report("status=completed-non-qualification".to_owned());
     Ok(())
 }
@@ -578,7 +684,7 @@ fn verify_output<const N: usize>(
     output: ServiceHostDispatchRangeV1,
     expected: &[u32; 5],
     description: &str,
-) -> DiagnosticResult<()> {
+) -> DiagnosticResult<u64> {
     let request = recycled.completed_read_request(output);
     let readback = recycled
         .read_completed(request)
@@ -589,7 +695,7 @@ fn verify_output<const N: usize>(
             "{description} output mismatch: expected {expected:?}, got {actual:?}"
         ));
     }
-    Ok(())
+    Ok(readback.dispatch_generation())
 }
 
 fn queue_operation_error(
@@ -634,6 +740,18 @@ fn destroy_recycled_after_error<T, const N: usize>(
         Ok(_) => Err(error),
         Err(failure) => Err(format!(
             "{error}; completed queue teardown also failed: {failure:?}"
+        )),
+    }
+}
+
+fn destroy_unbound_after_error<T>(
+    unbound: fe2o3_service_host::ServiceQueueUnboundSessionV1,
+    error: String,
+) -> DiagnosticResult<T> {
+    match unbound.destroy_and_release() {
+        Ok(_) => Err(error),
+        Err(failure) => Err(format!(
+            "{error}; detached queue teardown also failed: {failure:?}"
         )),
     }
 }
