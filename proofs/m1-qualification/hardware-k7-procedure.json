@@ -7,8 +7,8 @@
     1
   ],
   "harness_binary": {
-    "sha256": "e0e5f7fd68d32c206a8d3ec35a1be2fc86597fffd43bb324f34e4c2fdeb6df6f",
-    "size_bytes": 9006696
+    "sha256": "d07e2501d3df78c77667db866b5ff46d72257c5a74cefc0ee0dceff0db9beb10",
+    "size_bytes": 9556784
   },
   "harness_request": {
     "case_fields": [
