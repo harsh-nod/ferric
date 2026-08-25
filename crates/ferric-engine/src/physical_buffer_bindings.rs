@@ -1775,6 +1775,33 @@ mod tests {
             speculative_diagnostic_choice_source_isolation(&recipe),
             (7, 2, 2, true)
         );
+        let draft_scalar_writes = recipe
+            .rows()
+            .iter()
+            .flat_map(M1PhysicalBufferRecipeRowV1::buffers)
+            .filter(|buffer| {
+                matches!(
+                    buffer.source(),
+                    M1PhysicalBufferSourceV1::SpeculativeDraftChoices(_)
+                ) && buffer.access() == M1PhysicalBufferAccessV1::WriteOnly
+            })
+            .count();
+        let target_full_writes = recipe
+            .rows()
+            .iter()
+            .flat_map(M1PhysicalBufferRecipeRowV1::buffers)
+            .filter(|buffer| {
+                matches!(
+                    buffer.source(),
+                    M1PhysicalBufferSourceV1::Workspace {
+                        workspace: M1FullStepWorkspaceRole::Target,
+                        range: M1StepWorkspaceRangeRole::Choices,
+                    }
+                ) && buffer.access() == M1PhysicalBufferAccessV1::WriteOnly
+            })
+            .count();
+        assert_eq!(draft_scalar_writes, 4);
+        assert_eq!(target_full_writes, 1);
     }
 
     #[test]

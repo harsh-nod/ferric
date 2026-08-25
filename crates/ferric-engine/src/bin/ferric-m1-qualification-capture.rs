@@ -3155,11 +3155,19 @@ fn execute_r32_speculative_capture(
     };
     let diagnostic = match observed.observe_speculative_k4_diagnostic_choices() {
         Ok(diagnostic) => diagnostic,
-        Err(failure) => close_or_quarantine_roster(
-            "r32 diagnostic choice observation rejected",
-            roster,
-            (*failure).destroy_queue_and_retain_evidence(&mut engine),
-        ),
+        Err(failure) => {
+            let _ = writeln!(
+                std::io::stderr().lock(),
+                "FAIL-STOP DETAIL: r32 diagnostic choice observation rejected: {:?}; copied_choice_ranges={}",
+                failure.error(),
+                failure.copied_choice_ranges(),
+            );
+            close_or_quarantine_roster(
+                "r32 diagnostic choice observation rejected",
+                roster,
+                (*failure).destroy_queue_and_retain_evidence(&mut engine),
+            )
+        }
     };
     let joined = match diagnostic.check_completion() {
         Ok(joined) => joined,

@@ -1035,7 +1035,7 @@ impl M1ObservedCompletionOutputV1 {
         M1ObservedSpeculativeDiagnosticOutputV1,
         Box<M1SpeculativeDiagnosticObservationFailureV1>,
     > {
-        let (draft_range, target_range, generation) = match &self {
+        let (draft_ranges, target_range, generation) = match &self {
             Self::SpeculativeK4(case) => {
                 let Some(choices) = case
                     .case
@@ -1051,8 +1051,20 @@ impl M1ObservedCompletionOutputV1 {
                         },
                     }));
                 };
+                let draft_ranges = match choices.retained_draft_read_ranges() {
+                    Ok(ranges) => ranges,
+                    Err(error) => {
+                        return Err(Box::new(M1SpeculativeDiagnosticObservationFailureV1 {
+                            custody: M1SpeculativeDiagnosticObservationFailureCustodyV1::Direct {
+                                error: M1SpeculativeDiagnosticObservationErrorV1::Choices(error),
+                                completion: Box::new(self),
+                                partial_choices: Box::new([]),
+                            },
+                        }));
+                    }
+                };
                 (
-                    choices.retained_draft_range(),
+                    draft_ranges,
                     choices.retained_target_range(),
                     case.image.dispatch_generation(),
                 )
@@ -1067,9 +1079,9 @@ impl M1ObservedCompletionOutputV1 {
                 }))
             }
         };
-        let (backend, draft, target) = match read_m1_diagnostic_choice_pair_v1(
+        let (backend, draft, target) = match read_m1_diagnostic_choice_ranges_v1(
             M1ProductionDiagnosticChoiceReadBackendV1 { completion: self },
-            draft_range,
+            draft_ranges,
             target_range,
         ) {
             Ok(copies) => copies,
@@ -1092,7 +1104,7 @@ impl M1ObservedCompletionOutputV1 {
                         custody: M1SpeculativeDiagnosticObservationFailureCustodyV1::Direct {
                             error: M1SpeculativeDiagnosticObservationErrorV1::CaptureNotEnabled,
                             completion: Box::new(self),
-                            partial_choices: vec![draft, target].into_boxed_slice(),
+                            partial_choices: retain_all_m1_diagnostic_choice_copies(draft, target),
                         },
                     }));
                 };
@@ -1103,7 +1115,7 @@ impl M1ObservedCompletionOutputV1 {
                     custody: M1SpeculativeDiagnosticObservationFailureCustodyV1::Direct {
                         error: M1SpeculativeDiagnosticObservationErrorV1::NotSpeculativeK4,
                         completion: Box::new(self),
-                        partial_choices: vec![draft, target].into_boxed_slice(),
+                        partial_choices: retain_all_m1_diagnostic_choice_copies(draft, target),
                     },
                 }))
             }
@@ -1121,7 +1133,7 @@ impl M1ObservedCompletionOutputV1 {
                     custody: M1SpeculativeDiagnosticObservationFailureCustodyV1::Direct {
                         error: M1SpeculativeDiagnosticObservationErrorV1::Choices(error),
                         completion: Box::new(self),
-                        partial_choices: vec![draft, target].into_boxed_slice(),
+                        partial_choices: retain_all_m1_diagnostic_choice_copies(draft, target),
                     },
                 }));
             }
@@ -2109,14 +2121,14 @@ pub enum M1SpeculativeDiagnosticObservationErrorV1 {
     CaptureNotEnabled,
     /// One completed generic copy failed.
     Queue {
-        /// `draft` or `target` full-choice range.
+        /// One exact `draft-N` scalar or `target` full-choice range.
         range: &'static str,
         /// Existing generation-bound queue diagnostic.
         source: ServiceQueueErrorV1,
     },
     /// Copied coordinates, extent, or token values rejected.
     Choices(M1SpeculativeDiagnosticChoicesErrorV1),
-    /// Internal typed copy custody did not contain exact draft then target copies.
+    /// Internal typed copy custody did not contain four draft scalars then target.
     PartialCopyCount { actual: usize },
 }
 
@@ -2128,7 +2140,7 @@ struct M1DiagnosticChoiceCopyCustodyV1<T> {
 impl<T> M1DiagnosticChoiceCopyCustodyV1<T> {
     fn new() -> Self {
         Self {
-            copies: Vec::with_capacity(2),
+            copies: Vec::with_capacity(5),
         }
     }
 
@@ -2140,13 +2152,19 @@ impl<T> M1DiagnosticChoiceCopyCustodyV1<T> {
         self.copies.into_boxed_slice()
     }
 
-    fn into_pair(self) -> Result<(T, T), Box<[T]>> {
-        let pair: Result<[T; 2], Vec<T>> = self.copies.try_into();
-        match pair {
-            Ok([draft, target]) => Ok((draft, target)),
+    fn into_complete(self) -> Result<([T; 4], T), Box<[T]>> {
+        let complete: Result<[T; 5], Vec<T>> = self.copies.try_into();
+        match complete {
+            Ok([draft_0, draft_1, draft_2, draft_3, target]) => {
+                Ok(([draft_0, draft_1, draft_2, draft_3], target))
+            }
             Err(copies) => Err(copies.into_boxed_slice()),
         }
     }
+}
+
+fn retain_all_m1_diagnostic_choice_copies<T>(draft: [T; 4], target: T) -> Box<[T]> {
+    draft.into_iter().chain(core::iter::once(target)).collect()
 }
 
 trait M1DiagnosticChoiceReadBackendV1: fmt::Debug + Sized {
@@ -2164,6 +2182,15 @@ trait M1DiagnosticChoiceReadBackendV1: fmt::Debug + Sized {
 
     fn destroy_or_quarantine(self) -> Result<Self::TeardownSuccess, Self::TeardownFailure>;
 }
+
+type M1DiagnosticChoiceReadSuccessV1<B> = (
+    B,
+    [<B as M1DiagnosticChoiceReadBackendV1>::Readback; 4],
+    <B as M1DiagnosticChoiceReadBackendV1>::Readback,
+);
+
+type M1DiagnosticChoiceReadResultV1<B> =
+    Result<M1DiagnosticChoiceReadSuccessV1<B>, M1DiagnosticChoiceReadFailureV1<B>>;
 
 #[derive(Debug)]
 struct M1DiagnosticChoiceReadFailureV1<B: M1DiagnosticChoiceReadBackendV1> {
@@ -2228,23 +2255,27 @@ impl<B: M1DiagnosticChoiceReadBackendV1> M1DiagnosticChoiceReadFailureV1<B> {
     }
 }
 
-fn read_m1_diagnostic_choice_pair_v1<B: M1DiagnosticChoiceReadBackendV1>(
+fn read_m1_diagnostic_choice_ranges_v1<B: M1DiagnosticChoiceReadBackendV1>(
     mut backend: B,
-    draft_range: B::Range,
+    draft_ranges: [B::Range; 4],
     target_range: B::Range,
-) -> Result<(B, B::Readback, B::Readback), M1DiagnosticChoiceReadFailureV1<B>> {
+) -> M1DiagnosticChoiceReadResultV1<B> {
     let mut partial = M1DiagnosticChoiceCopyCustodyV1::new();
-    let draft = match backend.read_completed("draft", draft_range) {
-        Ok(draft) => draft,
-        Err(error) => {
-            return Err(M1DiagnosticChoiceReadFailureV1 {
-                error,
-                partial,
-                backend,
-            })
+    for (range_name, range) in ["draft-0", "draft-1", "draft-2", "draft-3"]
+        .into_iter()
+        .zip(draft_ranges)
+    {
+        match backend.read_completed(range_name, range) {
+            Ok(draft) => partial.retain(draft),
+            Err(error) => {
+                return Err(M1DiagnosticChoiceReadFailureV1 {
+                    error,
+                    partial,
+                    backend,
+                });
+            }
         }
-    };
-    partial.retain(draft);
+    }
     let target = match backend.read_completed("target", target_range) {
         Ok(target) => target,
         Err(error) => {
@@ -2256,9 +2287,9 @@ fn read_m1_diagnostic_choice_pair_v1<B: M1DiagnosticChoiceReadBackendV1>(
         }
     };
     partial.retain(target);
-    match partial.into_pair() {
+    match partial.into_complete() {
         Ok((draft, target)) => Ok((backend, draft, target)),
-        Err(_) => unreachable!("the helper retained exactly two successful choice copies"),
+        Err(_) => unreachable!("the helper retained exactly five successful choice copies"),
     }
 }
 
@@ -2512,7 +2543,7 @@ impl M1SpeculativeDiagnosticObservationTeardownFailureV1 {
     }
 }
 
-/// One compact K7 observation paired with both completed S1/K4 choice copies.
+/// One compact K7 observation paired with five completed S1/K4 range copies.
 #[must_use = "diagnostic observation must be checked, destroyed, or retained"]
 #[derive(Debug)]
 pub struct M1ObservedSpeculativeDiagnosticOutputV1 {
@@ -5773,7 +5804,7 @@ fn operation_failure_with_completion_progress(
 mod tests {
     use super::{
         checked_completion_progress_total_scan_bound, m1_completion_progress_total_scan_bound_v1,
-        read_m1_diagnostic_choice_pair_v1, validate_completion_progress_observation,
+        read_m1_diagnostic_choice_ranges_v1, validate_completion_progress_observation,
         validate_generic_observed_semantics, wait_with_completion_progress_policy,
         CompletionProgressPollV1, CompletionProgressWaitFailureV1,
         CompletionWireSemanticExpectation, M1CompletedOutputCheckErrorV1,
@@ -5894,11 +5925,12 @@ mod tests {
     }
 
     #[derive(Debug)]
-    struct InjectedSecondReadBackendV1 {
+    struct InjectedReadBackendV1 {
         calls: Vec<u64>,
+        fail_at: Option<usize>,
     }
 
-    impl M1DiagnosticChoiceReadBackendV1 for InjectedSecondReadBackendV1 {
+    impl M1DiagnosticChoiceReadBackendV1 for InjectedReadBackendV1 {
         type Range = u64;
         type Readback = Vec<u32>;
         type Error = InjectedReadErrorV1;
@@ -5910,14 +5942,15 @@ mod tests {
             range_name: &'static str,
             range: Self::Range,
         ) -> Result<Self::Readback, Self::Error> {
+            let index = self.calls.len();
             self.calls.push(range);
-            if self.calls.len() == 1 {
-                Ok(vec![11_u32; 4])
-            } else {
+            if self.fail_at == Some(index) {
                 Err(InjectedReadErrorV1 {
                     range: range_name,
-                    message: "injected target read_completed fault",
+                    message: "injected read_completed fault",
                 })
+            } else {
+                Ok(vec![u32::try_from(range).unwrap()])
             }
         }
 
@@ -6183,43 +6216,71 @@ mod tests {
         assert_eq!(&*after_draft.into_partial(), &[11]);
 
         let mut complete = M1DiagnosticChoiceCopyCustodyV1::new();
-        complete.retain(11_u32);
-        complete.retain(12_u32);
-        assert_eq!(complete.copies.len(), 2);
-        assert_eq!(complete.into_pair().unwrap(), (11, 12));
+        for value in 11_u32..=15 {
+            complete.retain(value);
+        }
+        assert_eq!(complete.copies.len(), 5);
+        assert_eq!(complete.into_complete().unwrap(), ([11, 12, 13, 14], 15));
     }
 
     #[test]
-    fn second_diagnostic_read_fault_retains_first_copy_without_retry() {
-        let failure = read_m1_diagnostic_choice_pair_v1(
-            InjectedSecondReadBackendV1 { calls: Vec::new() },
-            16_u64,
-            20_u64,
+    fn five_diagnostic_ranges_are_ordered_and_each_fault_retains_its_exact_prefix() {
+        let ranges = [0_u64, 4, 8, 12, 20];
+        let names = ["draft-0", "draft-1", "draft-2", "draft-3", "target"];
+        let (backend, draft, target) = read_m1_diagnostic_choice_ranges_v1(
+            InjectedReadBackendV1 {
+                calls: Vec::new(),
+                fail_at: None,
+            },
+            ranges[..4].try_into().unwrap(),
+            ranges[4],
         )
-        .unwrap_err();
-        assert_eq!(
-            failure.error(),
-            &InjectedReadErrorV1 {
-                range: "target",
-                message: "injected target read_completed fault",
-            }
-        );
-        assert_eq!(failure.copied_choice_ranges(), 1);
+        .unwrap();
+        assert_eq!(backend.calls, ranges);
+        assert_eq!(draft, [vec![0], vec![4], vec![8], vec![12]]);
+        assert_eq!(target, vec![20]);
 
-        let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
-        let teardown = failure.destroy_or_quarantine(&mut engine).unwrap();
-        assert!(engine.is_faulted());
-        assert_eq!(
-            teardown.error,
-            InjectedReadErrorV1 {
-                range: "target",
-                message: "injected target read_completed fault",
-            }
-        );
-        assert_eq!(teardown.partial.len(), 1);
-        assert_eq!(&*teardown.partial[0], &[11_u32; 4]);
-        assert_eq!(teardown.teardown.calls, [16, 20]);
-        assert_eq!(teardown.teardown.destroy_calls, 1);
+        for fail_at in 0..ranges.len() {
+            let failure = read_m1_diagnostic_choice_ranges_v1(
+                InjectedReadBackendV1 {
+                    calls: Vec::new(),
+                    fail_at: Some(fail_at),
+                },
+                ranges[..4].try_into().unwrap(),
+                ranges[4],
+            )
+            .unwrap_err();
+            assert_eq!(
+                failure.error(),
+                &InjectedReadErrorV1 {
+                    range: names[fail_at],
+                    message: "injected read_completed fault",
+                }
+            );
+            assert_eq!(failure.copied_choice_ranges(), fail_at);
+
+            let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+            let teardown = failure.destroy_or_quarantine(&mut engine).unwrap();
+            assert!(engine.is_faulted());
+            assert_eq!(
+                teardown.error,
+                InjectedReadErrorV1 {
+                    range: names[fail_at],
+                    message: "injected read_completed fault",
+                }
+            );
+            assert_eq!(teardown.partial.len(), fail_at);
+            assert_eq!(
+                teardown.partial,
+                ranges[..fail_at]
+                    .iter()
+                    .map(|range| vec![u32::try_from(*range).unwrap()])
+                    .collect::<Vec<_>>()
+                    .into_boxed_slice()
+            );
+            assert_eq!(teardown.teardown.calls, ranges[..=fail_at]);
+            assert_eq!(teardown.teardown.destroy_calls, 1);
+        }
     }
 
     fn grants_for(phase: M1PhysicalQueuePhaseV1) -> usize {

@@ -32,6 +32,9 @@ pub const M1_SPECULATIVE_DIAGNOSTIC_DRAFT_CHOICES_V1: u32 = 4;
 pub const M1_SPECULATIVE_DIAGNOSTIC_TARGET_CHOICES_V1: u32 = 5;
 
 const TOKEN_BYTES: u64 = 4;
+const TOKEN_BYTES_USIZE: usize = 4;
+const DRAFT_CHOICE_BYTES: usize =
+    M1_SPECULATIVE_DIAGNOSTIC_DRAFT_CHOICES_V1 as usize * TOKEN_BYTES_USIZE;
 // Every device consumer bounds-checks this value before using it as a token index.
 const M1_SPECULATIVE_DIAGNOSTIC_UNWRITTEN_CHOICE_V1: u32 = u32::MAX;
 
@@ -140,6 +143,24 @@ impl BoundM1SpeculativeDiagnosticChoicesV1 {
         self.draft_range
     }
 
+    pub(crate) fn retained_draft_read_ranges(
+        &self,
+    ) -> Result<
+        [ServiceHostDispatchRangeV1; M1_SPECULATIVE_DIAGNOSTIC_DRAFT_CHOICES_V1 as usize],
+        M1SpeculativeDiagnosticChoicesErrorV1,
+    > {
+        let scalar = |iteration: u64| {
+            self.draft_range
+                .checked_subrange(
+                    iteration * TOKEN_BYTES,
+                    TOKEN_BYTES,
+                    M1_SPECULATIVE_DIAGNOSTIC_CHOICE_ALIGNMENT_V1,
+                )
+                .map_err(M1SpeculativeDiagnosticChoicesErrorV1::from)
+        };
+        Ok([scalar(0)?, scalar(1)?, scalar(2)?, scalar(3)?])
+    }
+
     /// Initially owner-checked full target range.
     #[must_use]
     pub const fn retained_target_range(&self) -> ServiceHostDispatchRangeV1 {
@@ -206,7 +227,8 @@ impl M1SpeculativeDiagnosticChoicesAllocationFailureV1 {
 #[derive(Debug)]
 pub struct M1ObservedSpeculativeDiagnosticChoicesV1 {
     dispatch_generation: u64,
-    draft: ServiceCompletedReadbackV1,
+    _draft: [ServiceCompletedReadbackV1; M1_SPECULATIVE_DIAGNOSTIC_DRAFT_CHOICES_V1 as usize],
+    draft_bytes: [u8; DRAFT_CHOICE_BYTES],
     draft_choices: [TokenId; M1_SPECULATIVE_DIAGNOSTIC_DRAFT_CHOICES_V1 as usize],
     draft_sha256: [u8; 32],
     target: ServiceCompletedReadbackV1,
@@ -215,7 +237,7 @@ pub struct M1ObservedSpeculativeDiagnosticChoicesV1 {
 }
 
 impl M1ObservedSpeculativeDiagnosticChoicesV1 {
-    /// Queue generation authorizing both completed copies.
+    /// Queue generation authorizing all five completed range copies.
     #[must_use]
     pub const fn dispatch_generation(&self) -> u64 {
         self.dispatch_generation
@@ -236,7 +258,7 @@ impl M1ObservedSpeculativeDiagnosticChoicesV1 {
     /// Exact copied draft bytes.
     #[must_use]
     pub fn draft_bytes(&self) -> &[u8] {
-        self.draft.bytes()
+        &self.draft_bytes
     }
 
     /// SHA-256 of the copied draft bytes.
@@ -428,13 +450,13 @@ fn validate_key(
 pub(crate) fn observe_m1_speculative_diagnostic_choices_v1(
     owner: &BoundM1SpeculativeDiagnosticChoicesV1,
     dispatch_generation: u64,
-    draft: ServiceCompletedReadbackV1,
+    draft: [ServiceCompletedReadbackV1; M1_SPECULATIVE_DIAGNOSTIC_DRAFT_CHOICES_V1 as usize],
     target: ServiceCompletedReadbackV1,
 ) -> Result<
     M1ObservedSpeculativeDiagnosticChoicesV1,
     Box<(
         M1SpeculativeDiagnosticChoicesErrorV1,
-        ServiceCompletedReadbackV1,
+        [ServiceCompletedReadbackV1; M1_SPECULATIVE_DIAGNOSTIC_DRAFT_CHOICES_V1 as usize],
         ServiceCompletedReadbackV1,
     )>,
 > {
@@ -444,13 +466,17 @@ pub(crate) fn observe_m1_speculative_diagnostic_choices_v1(
     ) {
         return Err(Box::new((error, draft, target)));
     }
-    if let Err(error) = validate_readback(
-        &draft,
-        owner.draft_range,
-        owner.shape.draft_extent_bytes,
-        dispatch_generation,
-    ) {
-        return Err(Box::new((error, draft, target)));
+    let draft_ranges = match owner.retained_draft_read_ranges() {
+        Ok(ranges) => ranges,
+        Err(error) => return Err(Box::new((error, draft, target))),
+    };
+    let mut draft_bytes = [0_u8; DRAFT_CHOICE_BYTES];
+    for (index, (readback, range)) in draft.iter().zip(draft_ranges).enumerate() {
+        if let Err(error) = validate_readback(readback, range, TOKEN_BYTES, dispatch_generation) {
+            return Err(Box::new((error, draft, target)));
+        }
+        let start = index * TOKEN_BYTES_USIZE;
+        draft_bytes[start..start + TOKEN_BYTES_USIZE].copy_from_slice(readback.bytes());
     }
     if let Err(error) = validate_readback(
         &target,
@@ -460,7 +486,7 @@ pub(crate) fn observe_m1_speculative_diagnostic_choices_v1(
     ) {
         return Err(Box::new((error, draft, target)));
     }
-    let draft_choices = match decode_choices(draft.bytes()) {
+    let draft_choices = match decode_choices(&draft_bytes) {
         Ok(choices) => choices,
         Err(error) => return Err(Box::new((error, draft, target))),
     };
@@ -470,8 +496,9 @@ pub(crate) fn observe_m1_speculative_diagnostic_choices_v1(
     };
     Ok(M1ObservedSpeculativeDiagnosticChoicesV1 {
         dispatch_generation,
-        draft_sha256: Sha256::digest(draft.bytes()).into(),
-        draft,
+        draft_sha256: Sha256::digest(draft_bytes).into(),
+        _draft: draft,
+        draft_bytes,
         draft_choices,
         target_sha256: Sha256::digest(target.bytes()).into(),
         target,
