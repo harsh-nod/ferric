@@ -33,7 +33,7 @@ const MAX_POLICY_INTEGER: u64 = 1_000_000_000_000_000;
 const POLICY_NONCLAIM: &str = "This input freezes externally supplied D10 experiment-policy values and source, compiler-worker, runtime, and KFD closure identities before observation. It does not claim that the values or identities are reviewed, truthful, fair, sufficient, measured, passing, or able to close m1.r31.";
 const ADMISSION_NONCLAIM: &str = "This admission authenticates only canonical structure and frozen identity for an externally supplied pre-observation D10 experiment policy and its Ferric, pinned-fe2o3, compiler-worker, runtime, and KFD bindings. Legacy plan and validate commands do not consume this policy, so its 10 warmups and 30 recorded samples are not execution-enforced. The separate policy-SHA-256-bound D10 observation validator does not retroactively bind those legacy commands or validate the supplied policy values or closure truth. This admission does not endorse thresholds, weights, work units, vendor mappings, tuning budgets, observations, performance, hardware correctness, qualification, or close m1.r31.";
 const FUTURE_OBSERVATION_BINDING: &str = "policy-sha256-bound-d10-observation-validator";
-pub(super) const PINNED_FE2O3_SOURCE_COMMIT: &str = "5367884d426268b876376eb3d16072bbe5a0596d";
+pub(super) const PINNED_FE2O3_SOURCE_COMMIT: &str = "2d6f75f1fed9d821db14182b6fe6ec57d03a442d";
 pub(super) const TOOLCHAIN_BINDING_SCHEMA: &str = "canonical-external-ferric-source-commit-and-closure-pinned-fe2o3-source-commit-and-closure-compiler-configuration-and-worker-closure-runtime-and-kfd-closure-v1";
 const PROTOCOL_SHA256: &str = "d3563541f74b9506c22743398c1a38055dc600053d76e78fc30160513504284f";
 
