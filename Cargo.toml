@@ -17,18 +17,18 @@ rust-version = "1.97.1"
 version = "0.1.0"
 
 [workspace.dependencies]
-fe2o3-amdhsa-loader = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "b838131a10e00861dc3a5758e33dfa0a13162e13" }
-fe2o3-aql = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "b838131a10e00861dc3a5758e33dfa0a13162e13" }
-fe2o3-kfd = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "b838131a10e00861dc3a5758e33dfa0a13162e13" }
-fe2o3-artifact-transaction = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "b838131a10e00861dc3a5758e33dfa0a13162e13" }
-fe2o3-compiler-ffi = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "b838131a10e00861dc3a5758e33dfa0a13162e13" }
-fe2o3-hsaco = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "b838131a10e00861dc3a5758e33dfa0a13162e13" }
-fe2o3-hsaco-finalize = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "b838131a10e00861dc3a5758e33dfa0a13162e13" }
-fe2o3-llvm-handoff = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "b838131a10e00861dc3a5758e33dfa0a13162e13" }
-fe2o3-llvm-text = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "b838131a10e00861dc3a5758e33dfa0a13162e13" }
-fe2o3-llvm-worker-handoff = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "b838131a10e00861dc3a5758e33dfa0a13162e13" }
-fe2o3-service-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "b838131a10e00861dc3a5758e33dfa0a13162e13" }
-reserved-fe2o3-symbols = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "b838131a10e00861dc3a5758e33dfa0a13162e13" }
+fe2o3-amdhsa-loader = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "2198a5d3690b8c6f64b6bd658fea4fec5f9df484" }
+fe2o3-aql = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "2198a5d3690b8c6f64b6bd658fea4fec5f9df484" }
+fe2o3-kfd = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "2198a5d3690b8c6f64b6bd658fea4fec5f9df484" }
+fe2o3-artifact-transaction = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "2198a5d3690b8c6f64b6bd658fea4fec5f9df484" }
+fe2o3-compiler-ffi = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "2198a5d3690b8c6f64b6bd658fea4fec5f9df484" }
+fe2o3-hsaco = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "2198a5d3690b8c6f64b6bd658fea4fec5f9df484" }
+fe2o3-hsaco-finalize = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "2198a5d3690b8c6f64b6bd658fea4fec5f9df484" }
+fe2o3-llvm-handoff = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "2198a5d3690b8c6f64b6bd658fea4fec5f9df484" }
+fe2o3-llvm-text = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "2198a5d3690b8c6f64b6bd658fea4fec5f9df484" }
+fe2o3-llvm-worker-handoff = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "2198a5d3690b8c6f64b6bd658fea4fec5f9df484" }
+fe2o3-service-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "2198a5d3690b8c6f64b6bd658fea4fec5f9df484" }
+reserved-fe2o3-symbols = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "2198a5d3690b8c6f64b6bd658fea4fec5f9df484" }
 rustix = { version = "=1.1.4", features = ["fs"] }
 sha2 = "0.11.0"
 vstd = { git = "https://github.com/verus-lang/verus.git", rev = "b677dd5" }
