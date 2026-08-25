@@ -2,7 +2,7 @@
 pub const TOOL_SOURCE_SHA256S: [(&str, &str); 5] = [
     (
         "cargo_lock",
-        "08661b451950620f20e68e3a19f91341afda415e048c259b08b2a5662ea334c2",
+        "f5fd87d75b323be03d9bd57d2580165c9cd038654f3cd7bb05ceeb958f6d17eb",
     ),
     (
         "hardware_harness",
