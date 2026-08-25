@@ -25,7 +25,7 @@ closure status.
 | `publication-phase-transition` | `step_plan_publication::publish_reserved_delta` | publication moves only from validated to published | `graph_refined` / `graph-proof` |
 | `publication-plan-identity` | `step_plan_publication::validate_step_plan` | publication authority binds the exact plan identity | `graph_refined` / `graph-proof` |
 | `sampler-lowest-id-publication` | `m1_completion::select_lowest_argmax` | equal scores retain the first, lowest token ID before speculative publication | `sampler_refined` / `speculation-proof` |
-| `speculative-accepted-count-binding` | `speculative_step_composition::settle_and_publish_speculative_step` | KV preflight uses the exact publication-derived accepted count | `rollback_refined` / `speculation-proof` |
+| `speculative-accepted-count-binding` | `speculative_step_composition::preflight_speculative_step` | KV preflight uses the exact publication-derived accepted count | `rollback_refined` / `speculation-proof` |
 | `speculative-atomic-failure-frame` | `speculative_step_composition::settle_and_publish_speculative_step` | all publication and KV validation precedes mutation, and any rejection preserves publication and selected state | `request_isolated` / `isolation-proof` |
 | `target-catalog-processor-features` | `validation::validate_kernel_catalog_input` | any processor or target-feature drift is rejected before retaining the catalog input | `target_conforming` / `identity-closure` |
 

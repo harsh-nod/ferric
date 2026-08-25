@@ -154,7 +154,7 @@ EXPECTED = {
         "speculative-step-composition", "rollback_refined", "speculation-proof",
         "ferric-spec", "crates/ferric-spec/src/speculative_step_composition.rs",
         "speculative-accepted-count-binding.py", "assertion",
-        "speculative_step_composition", "settle_and_publish_speculative_step",
+        "speculative_step_composition", "preflight_speculative_step",
         "publication-kv-accepted-count",
     ),
     "speculative-atomic-failure-frame": (

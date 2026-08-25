@@ -280,6 +280,19 @@ def main() -> None:
             ),
         ))
         cases.append((
+            "speculative-function-binding-drift",
+            "M1 foundation mutation binding drifted",
+            lambda fixture: mutate_registry(
+                fixture,
+                lambda lines: replace_field(
+                    lines,
+                    registry_row(lines, "speculative-accepted-count-binding"),
+                    9,
+                    "settle_and_publish_speculative_step",
+                ),
+            ),
+        ))
+        cases.append((
             "sampler-binding-drift", "M1 foundation mutation binding drifted",
             lambda fixture: mutate_registry(
                 fixture,
