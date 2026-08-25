@@ -272,6 +272,10 @@ set +e
     PYTHONDONTWRITEBYTECODE=1 python3 -I -B -m unittest discover \
         -s benches/m1/reference -p 'test*.py'
     printf 'FERRIC_QUALITY_GATE=m1-reference-policy:PASS\n'
+    printf 'FERRIC_QUALITY_GATE=m1-r29-differential-evidence:BEGIN\n'
+    PYTHONDONTWRITEBYTECODE=1 python3 -I -B \
+        proofs/m1/evidence/test-r29-differential-evidence-policy.py
+    printf 'FERRIC_QUALITY_GATE=m1-r29-differential-evidence:PASS\n'
 ) >"$runtime_tests" 2>&1
 runtime_test_status=$?
 set -e

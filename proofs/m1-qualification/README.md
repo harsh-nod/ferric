@@ -31,6 +31,24 @@ producer item: the shared qualification receipt. Availability means that the
 in-repository production or intake command exists; it does not mean that the
 required external measurement or independent-review input has been supplied.
 
+An additive r29-specific handoff can authenticate one complete differential run
+before the external evidence plan is assembled:
+
+```text
+python3 -I proofs/m1-qualification/produce-r29-differential-evidence.py \
+  INTAKE-ROOT OUTPUT-BUNDLE
+python3 -I proofs/m1/evidence/validate-r29-differential-evidence.py \
+  validate INTAKE-ROOT OUTPUT-BUNDLE
+```
+
+The fixed intake binds the exact seven-case plan, external policy-review
+declaration, Ferric and reference bundles, pairs, comparisons, acceptance,
+source/toolchain/target, and TCB identities. This source-paired replay remains
+`partial-non-evidence`; it is not an evidence-index artifact, independent
+validation, qualification receipt, or r29 closure. The complete schema and
+authority boundary are documented in
+`proofs/m1/evidence/R29_DIFFERENTIAL_EVIDENCE.md`.
+
 After producing a plan against the final clean source identities, materialize
 the three global TCB declarations independently:
 
