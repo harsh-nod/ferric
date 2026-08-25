@@ -314,6 +314,14 @@ pub use physical_queue_lifecycle::{
     M1_COMPLETION_PROGRESS_MAX_CONSECUTIVE_STALLED_SCANS_V1,
     M1_COMPLETION_PROGRESS_PENDING_SCAN_PAUSE_MICROS_V1, M1_COMPLETION_PROGRESS_WAIT_POLICY_ID_V2,
 };
+#[cfg(feature = "qualification-fault-injection")]
+pub use physical_queue_lifecycle::{
+    M1QualificationQueueTransitionFaultInjectionRejectionReasonV1,
+    M1QualificationQueueTransitionFaultInjectionRejectionV1,
+    M1QualificationQueueTransitionFaultSessionV1,
+    M1QualificationQueueTransitionFaultTeardownFailureV1,
+    M1QualificationQueueTransitionFaultTeardownSuccessV1,
+};
 pub use physical_step::{
     bind_structural_physical_step, StructuralPhysicalStepBindingError,
     StructuralPhysicalStepBindingFailure, StructuralPhysicalStepBindingOutcome,

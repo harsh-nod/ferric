@@ -105,6 +105,8 @@ mod input_bundle;
 mod m1_r30_canary_partial_capture;
 mod m1_r30_capture_composition;
 mod m1_r30_exhaustion_partial_capture;
+#[cfg(feature = "qualification-fault-injection")]
+mod m1_r30_fault_transition_partial_capture;
 mod m1_r30_partial_capture;
 mod m1_r30_rollback_partial_capture;
 mod m1_r32_partial_capture;
@@ -606,6 +608,23 @@ impl CaptureTerminalCustodyV1 for M1EngineQuarantinedPhysicalQueueOperationFailu
 impl CaptureTerminalCustodyV1 for M1SpeculativeDiagnosticCompletedTeardownFailureV1 {}
 impl CaptureTerminalCustodyV1 for M1SpeculativeDiagnosticObservationTeardownFailureV1 {}
 impl CaptureTerminalCustodyV1 for M1SpeculativeDiagnosticSemanticTeardownFailureV1 {}
+#[cfg(feature = "qualification-fault-injection")]
+impl CaptureTerminalCustodyV1
+    for ferric_engine::M1QualificationQueueTransitionFaultTeardownFailureV1
+{
+}
+#[cfg(feature = "qualification-fault-injection")]
+impl CaptureClosedCustodyV1
+    for ferric_engine::M1QualificationQueueTransitionFaultTeardownSuccessV1
+{
+}
+#[cfg(feature = "qualification-fault-injection")]
+impl CaptureTerminalCustodyV1 for R30FaultTransitionCaptureV1 {}
+#[cfg(feature = "qualification-fault-injection")]
+impl CaptureInvariantCustodyV1
+    for ferric_engine::M1QualificationQueueTransitionFaultInjectionRejectionV1
+{
+}
 
 fn abort_with_closed_custody<T: CaptureClosedCustodyV1>(phase: &'static str, custody: T) -> ! {
     let custody = core::mem::ManuallyDrop::new(custody);
@@ -1923,6 +1942,12 @@ fn run(arguments: Vec<OsString>) -> CaptureResult<()> {
     {
         return run_r30_exhaustion_capture(&arguments[1..]);
     }
+    #[cfg(feature = "qualification-fault-injection")]
+    if arguments.first().and_then(|argument| argument.to_str())
+        == Some(m1_r30_fault_transition_partial_capture::COMMAND)
+    {
+        return run_r30_fault_transition_capture(&arguments[1..]);
+    }
     if arguments.first().and_then(|argument| argument.to_str())
         == Some(m1_r30_rollback_partial_capture::COMMAND)
     {
@@ -2029,6 +2054,84 @@ fn execute_r30_canary_capture(
     .map(|capture| (capture, workload))
 }
 
+#[cfg(feature = "qualification-fault-injection")]
+fn run_r30_fault_transition_capture(arguments: &[OsString]) -> CaptureResult<()> {
+    let [source_root, prepacked_root, artifact_root, closure_path, environment_path, gpu_unique_id, output] =
+        arguments
+    else {
+        return Err("usage: ferric-m1-qualification-capture capture-r30-fault-transition MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned());
+    };
+    let gpu_unique_id = gpu_unique_id
+        .to_str()
+        .ok_or_else(|| "GPU unique ID must be UTF-8 decimal".to_owned())?
+        .parse::<u64>()
+        .map_err(|_| "GPU unique ID must be a decimal u64".to_owned())?;
+    let closure = load_closure(Path::new(closure_path))?;
+    let _environment = load_environment(Path::new(environment_path), gpu_unique_id)?;
+    let artifacts = reopen_persisted_m1_kernel_artifacts_v1(Path::new(artifact_root))
+        .map_err(|error| format!("cannot authenticate persisted kernel artifacts: {error}"))?;
+    let executable_catalog_id = artifacts.program_catalog_id();
+    let source = SecureDirectory::open(Path::new(source_root), "model source root")?;
+    let snapshot = SecureDirectory::open(Path::new(prepacked_root), "prepacked snapshot root")?;
+    let model = load_model_inputs(&source, &snapshot)?;
+    let runner_admission = model.authenticate()?;
+    let plan_catalog = build_authenticated_sequential_plan_catalog(runner_admission)
+        .map_err(|error| format!("cannot build authenticated plan catalog: {error:?}"))?;
+    let external = complete_closure(&closure, &plan_catalog, executable_catalog_id)?;
+    let identity_closure = build_preliminary_identity_closure(plan_catalog, external)
+        .map_err(|error| format!("cannot build runner identity closure: {error:?}"))?;
+    let declaration = generate_qwen3_gfx942_runner_declaration(identity_closure)
+        .map_err(|error| format!("cannot generate authenticated runner declaration: {error:?}"))?;
+    let publication = publish_qwen3_gfx942_runner_declaration(declaration)
+        .map_err(|error| format!("cannot publish runner declaration: {error:?}"))?;
+    let runner = bind_m1_physical_runner_v1(artifacts, publication)
+        .map_err(|error| format!("cannot bind physical runner: {error:?}"))?;
+
+    let memory_admission = model.authenticate()?;
+    let memory_plan = model_memory_plan(memory_admission)?;
+    let checked = OpenedKfd::open_default()
+        .map_err(|error| format!("cannot open KFD: {error}"))?
+        .admit_uapi()
+        .map_err(|error| format!("cannot admit pinned KFD UAPI: {error}"))?
+        .bind_gfx942_xnack_minus(DeviceSelector::UniqueId(gpu_unique_id))
+        .map_err(|error| format!("cannot bind selected gfx942:xnack- device: {error}"))?;
+    let memory = initialize_m1_physical_runner_memory_v1(
+        checked,
+        memory_plan,
+        model.target_weights,
+        model.draft_weights,
+    )
+    .map_err(|error| format!("cannot initialize physical model memory: {error:?}"))?;
+    let (workload, input_tokens) = fixed_r30_fault_transition_workload()?;
+    let capture = match execute_prefill_capture(
+        &runner,
+        memory,
+        &workload,
+        input_tokens,
+        gpu_unique_id,
+        CapturePurposeV1::R30PartialFaultTransition,
+    ) {
+        PrefillCaptureOutcomeV1::FaultTransition(capture) => capture,
+        PrefillCaptureOutcomeV1::Captured(_) => {
+            return Err("fault-transition execution returned an ordinary capture".to_owned())
+        }
+    };
+    let artifact = m1_r30_fault_transition_partial_capture::manifest(
+        m1_r30_fault_transition_partial_capture::ClosedCaptureInputsV1 {
+            capture: &capture,
+            gpu_unique_id,
+            runner: &runner,
+            workload: &workload,
+        },
+    )?;
+    let capture_sha256 = sha256_hex(artifact.bytes());
+    m1_r30_fault_transition_partial_capture::publish(Path::new(output), artifact)?;
+    println!("output={}", Path::new(output).display());
+    println!("capture_sha256={capture_sha256}");
+    println!("status=partial-non-evidence");
+    Ok(())
+}
+
 fn fixed_r30_prefill_input_tokens() -> Vec<u32> {
     vec![R30_PREFILL_INPUT_TOKEN; R30_PREFILL_ACTIVE_TOKENS as usize]
 }
@@ -2105,6 +2208,44 @@ fn fixed_r30_canary_workload() -> CaptureResult<(Workload, Vec<u32>)> {
     let workload = Workload {
         bytes: workload_bytes,
         input_path: PathBuf::from("frozen-r30-canary-input-u32le"),
+        input_bytes: u64::try_from(input_bytes.len()).unwrap_or(u64::MAX),
+        input_sha256: sha256_hex(&input_bytes),
+        kind: "prefill-s1-t128".to_owned(),
+        lanes: vec![LaneInput {
+            active_length: R30_PREFILL_ACTIVE_TOKENS,
+            context_length: 0,
+        }],
+        selection,
+    };
+    validate_workload_geometry(&workload)?;
+    Ok((workload, input_tokens))
+}
+
+#[cfg(feature = "qualification-fault-injection")]
+fn fixed_r30_fault_transition_workload() -> CaptureResult<(Workload, Vec<u32>)> {
+    validate_r30_prefill_page_contract()?;
+    let input_tokens = fixed_r30_prefill_input_tokens();
+    let input_bytes = fixed_r30_prefill_input_bytes();
+    let selection = Qwen3PlanSelection {
+        role: Qwen3ModelRole::Target8B,
+        mode: Qwen3ExecutionMode::Prefill,
+        bucket: Qwen3PlanBucket::PrefillS1T128,
+    };
+    let workload_bytes = canonical_bytes(&json!({
+        "active_length": R30_PREFILL_ACTIVE_TOKENS,
+        "case": "target-prefill-s1-t128-post-recycle-fault-transition",
+        "context_length": 0,
+        "completion_wait_policy": completion_wait_policy_contract(),
+        "format": "FERRIC-M1-R30-FAULT-TRANSITION-WORKLOAD-V1",
+        "input_bytes": R30_PREFILL_INPUT_BYTES,
+        "input_token": R30_PREFILL_INPUT_TOKEN,
+        "input_token_count": R30_PREFILL_ACTIVE_TOKENS,
+        "lane_count": 1,
+        "selection": "target-prefill-s1-t128",
+    }))?;
+    let workload = Workload {
+        bytes: workload_bytes,
+        input_path: PathBuf::from("frozen-r30-fault-transition-input-u32le"),
         input_bytes: u64::try_from(input_bytes.len()).unwrap_or(u64::MAX),
         input_sha256: sha256_hex(&input_bytes),
         kind: "prefill-s1-t128".to_owned(),
@@ -3293,6 +3434,8 @@ enum CapturePurposeV1 {
     Qualification,
     R30PartialCanary,
     R30PartialCancellation,
+    #[cfg(feature = "qualification-fault-injection")]
+    R30PartialFaultTransition,
 }
 
 fn run_capture_with_purpose(
@@ -3306,6 +3449,8 @@ fn run_capture_with_purpose(
             CapturePurposeV1::Qualification => "usage: ferric-m1-qualification-capture PLAN ROSTER CASE-ID WORKLOAD MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned(),
             CapturePurposeV1::R30PartialCanary => "capture-r30-canary uses its independent seven-argument path".to_owned(),
             CapturePurposeV1::R30PartialCancellation => "capture-r30-cancellation uses its independent seven-argument path".to_owned(),
+            #[cfg(feature = "qualification-fault-injection")]
+            CapturePurposeV1::R30PartialFaultTransition => "capture-r30-fault-transition uses its independent seven-argument path".to_owned(),
         });
     };
     let case_id = case_id
@@ -3433,6 +3578,37 @@ struct CapturedOutput {
     r30_canary_closed: Option<ferric_engine::M1ReleasedQueueTeardownSuccessV1>,
     settlement: Option<m1_r30_partial_capture::CancellationSettlementV1>,
     tokens: Vec<u8>,
+}
+
+#[cfg(feature = "qualification-fault-injection")]
+struct R30FaultTransitionCaptureV1 {
+    device_id: Identity,
+    retry_denial: EngineError,
+    teardown: ferric_engine::M1QualificationQueueTransitionFaultTeardownSuccessV1,
+    _engine: ferric_engine::M1CaptureQuarantinedEngineV1<32>,
+    _evidence: PrefillLiveEvidenceV1,
+}
+
+enum PrefillCaptureOutcomeV1 {
+    Captured(Box<CapturedOutput>),
+    #[cfg(feature = "qualification-fault-injection")]
+    FaultTransition(Box<R30FaultTransitionCaptureV1>),
+}
+
+enum PrefillLiveGenerationOutcomeV1 {
+    Qualified {
+        qualified: Box<ferric_engine::M1QualifiedPhysicalCompletedReadbackV1>,
+        evidence: PrefillLiveEvidenceV1,
+        device_id: Identity,
+        precompletion_cancellation: Option<m1_r30_partial_capture::PreCompletionCancellationV1>,
+    },
+    #[cfg(feature = "qualification-fault-injection")]
+    FaultTransition {
+        device_id: Identity,
+        evidence: PrefillLiveEvidenceV1,
+        retry_denial: EngineError,
+        teardown: ferric_engine::M1QualificationQueueTransitionFaultTeardownSuccessV1,
+    },
 }
 
 #[derive(Debug)]
@@ -4448,14 +4624,21 @@ fn execute_capture(
         );
     }
     match workload.selection.mode {
-        Qwen3ExecutionMode::Prefill => Ok(execute_prefill_capture(
+        Qwen3ExecutionMode::Prefill => match execute_prefill_capture(
             runner,
             memory,
             workload,
             input_tokens,
             gpu_unique_id,
             purpose,
-        )),
+        ) {
+            PrefillCaptureOutcomeV1::Captured(capture) => Ok(*capture),
+            #[cfg(feature = "qualification-fault-injection")]
+            PrefillCaptureOutcomeV1::FaultTransition(capture) => terminal_quarantine(
+                "fault-transition capture reached ordinary capture caller",
+                capture,
+            ),
+        },
         Qwen3ExecutionMode::Decode => Ok(execute_decode_capture(
             runner,
             memory,
@@ -5751,7 +5934,7 @@ fn execute_prefill_capture(
     input_tokens: Vec<u32>,
     _gpu_unique_id: u64,
     purpose: CapturePurposeV1,
-) -> CapturedOutput {
+) -> PrefillCaptureOutcomeV1 {
     let selection = workload.selection;
     if selection.role != Qwen3ModelRole::Target8B || selection.mode != Qwen3ExecutionMode::Prefill {
         abandon_pre_engine_memory(
@@ -6106,6 +6289,10 @@ fn execute_prefill_capture(
         CapturePurposeV1::Qualification | CapturePurposeV1::R30PartialCancellation => {
             allocated.allocate_completion_output(selection)
         }
+        #[cfg(feature = "qualification-fault-injection")]
+        CapturePurposeV1::R30PartialFaultTransition => {
+            allocated.allocate_completion_output(selection)
+        }
     };
     let completion = match completion {
         Ok(completion) => completion,
@@ -6168,7 +6355,31 @@ fn execute_prefill_capture(
         _context_lengths: context_lengths,
     };
     let (qualified, evidence, device_id, precompletion_cancellation) =
-        qualify_prefill_live_generation(&mut engine, published, evidence, purpose);
+        match qualify_prefill_live_generation(&mut engine, published, evidence, purpose) {
+            PrefillLiveGenerationOutcomeV1::Qualified {
+                qualified,
+                evidence,
+                device_id,
+                precompletion_cancellation,
+            } => (qualified, evidence, device_id, precompletion_cancellation),
+            #[cfg(feature = "qualification-fault-injection")]
+            PrefillLiveGenerationOutcomeV1::FaultTransition {
+                device_id,
+                evidence,
+                retry_denial,
+                teardown,
+            } => {
+                return PrefillCaptureOutcomeV1::FaultTransition(Box::new(
+                    R30FaultTransitionCaptureV1 {
+                        device_id,
+                        retry_denial,
+                        teardown,
+                        _engine: engine.into_m1_capture_quarantine(),
+                        _evidence: evidence,
+                    },
+                ))
+            }
+        };
     let PrefillLiveEvidenceV1 {
         _caches: caches,
         requests,
@@ -6385,7 +6596,7 @@ fn execute_prefill_capture(
         }
         None
     };
-    CapturedOutput {
+    PrefillCaptureOutcomeV1::Captured(Box::new(CapturedOutput {
         compact_sha256: copied.compact_sha256,
         device_id,
         execution: CapturedExecutionV1::OneShotPrefill {
@@ -6397,7 +6608,7 @@ fn execute_prefill_capture(
         r30_canary_closed,
         settlement,
         tokens: copied.tokens,
-    }
+    }))
 }
 
 #[derive(Debug)]
@@ -6498,12 +6709,7 @@ fn qualify_prefill_live_generation(
     published: ferric_engine::M1PhysicalPublishedQueueSessionV1,
     evidence: PrefillLiveEvidenceV1,
     purpose: CapturePurposeV1,
-) -> (
-    ferric_engine::M1QualifiedPhysicalCompletedReadbackV1,
-    PrefillLiveEvidenceV1,
-    Identity,
-    Option<m1_r30_partial_capture::PreCompletionCancellationV1>,
-) {
+) -> PrefillLiveGenerationOutcomeV1 {
     let mut partial_failure = None;
     let mut precompletion_cancellation = None;
     if purpose == CapturePurposeV1::R30PartialCancellation {
@@ -6603,6 +6809,40 @@ fn qualify_prefill_live_generation(
         }
     };
     let device_id = recycled.custody().device().device_id();
+    #[cfg(feature = "qualification-fault-injection")]
+    if purpose == CapturePurposeV1::R30PartialFaultTransition {
+        let faulted = match recycled.inject_qualification_queue_transition_fault(engine) {
+            Ok(faulted) => faulted,
+            Err(rejection) => {
+                invariant_fail_stop("r30 fault-transition injection rejected", rejection)
+            }
+        };
+        if !engine.is_faulted() {
+            close_or_quarantine(
+                "r30 fault-transition Engine did not terminalize",
+                faulted.destroy_and_release(),
+            );
+        }
+        let retry_denial = match engine.admit() {
+            Err(error @ EngineError::Faulted) => error,
+            _ => close_or_quarantine(
+                "r30 fault-transition Engine retry was not denied",
+                faulted.destroy_and_release(),
+            ),
+        };
+        let teardown = match faulted.destroy_and_release() {
+            Ok(teardown) => teardown,
+            Err(failure) => {
+                terminal_quarantine("r30 fault-transition queue teardown failed", failure)
+            }
+        };
+        return PrefillLiveGenerationOutcomeV1::FaultTransition {
+            device_id,
+            evidence,
+            retry_denial,
+            teardown,
+        };
+    }
     let observed = match recycled.observe_qualification_completion() {
         Ok(observed) => observed,
         Err(failure) => match (*failure).retry() {
@@ -6658,7 +6898,12 @@ fn qualify_prefill_live_generation(
             ),
         },
     };
-    (qualified, evidence, device_id, precompletion_cancellation)
+    PrefillLiveGenerationOutcomeV1::Qualified {
+        qualified: Box::new(qualified),
+        evidence,
+        device_id,
+        precompletion_cancellation,
+    }
 }
 
 fn require_supported_capture(workload: &Workload) -> CaptureResult<()> {

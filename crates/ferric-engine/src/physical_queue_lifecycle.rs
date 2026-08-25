@@ -9,12 +9,18 @@
 
 use core::fmt;
 
+#[cfg(feature = "qualification-fault-injection")]
+use fe2o3_kfd::Gfx942CompletionRecycleObservationV1;
 use fe2o3_service_host::{
     ServiceCompletedQueueSessionV1, ServiceCompletedReadbackV1, ServiceHostDispatchRangeV1,
     ServicePublishedQueueSessionV1, ServiceQueueCreateFailureV1, ServiceQueueErrorV1,
     ServiceQueueOperationFailureV1, ServiceQueuePollWithProgressV1, ServiceQueueProgressV1,
     ServiceQueueReleaseFailureV1, ServiceQueueReleaseObservationV1, ServiceQueueSessionV1,
     ServiceQueueUnboundSessionV1, ServiceRecycledQueueSessionV1,
+};
+#[cfg(feature = "qualification-fault-injection")]
+use fe2o3_service_host::{
+    ServiceQualificationFaultedQueueSessionV1, ServiceQualificationQueueFaultPointV1,
 };
 use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::Qwen3ExecutionMode;
@@ -200,6 +206,9 @@ pub enum M1PhysicalQueuePhaseV1 {
     Completed,
     /// Every completion signal was recycled; readback, detach, or release is allowed.
     Recycled,
+    /// A deliberate qualification transition consumed recycled custody; only release remains.
+    #[cfg(feature = "qualification-fault-injection")]
+    QualificationFaulted,
     /// Exact K7 bytes were copied once and structurally observed without semantic authority.
     Observed,
     /// Exact completed bytes were checked and completion authority was minted once.
@@ -239,6 +248,13 @@ impl M1PhysicalQueuePhaseV1 {
     #[must_use]
     pub const fn can_detach_or_release(self) -> bool {
         matches!(self, Self::Recycled | Self::Observed | Self::ReadbackJoined)
+    }
+
+    /// Whether this qualification-only phase grants returning teardown and no other transition.
+    #[cfg(feature = "qualification-fault-injection")]
+    #[must_use]
+    pub const fn can_release_only(self) -> bool {
+        matches!(self, Self::QualificationFaulted)
     }
 }
 
@@ -777,6 +793,340 @@ impl M1PhysicalRecycledQueueSessionV1 {
             Self::SpeculativeK8(case) => case.scheduled_dispatch(),
             Self::SpeculativeK16(case) => case.scheduled_dispatch(),
         }
+    }
+}
+
+/// Ferric classification of a rejected deliberate queue-transition fault.
+#[cfg(feature = "qualification-fault-injection")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1QualificationQueueTransitionFaultInjectionRejectionReasonV1 {
+    /// The Engine was already terminal before the qualification transition.
+    EngineAlreadyFaulted,
+    /// A completed-read attempt preceded the requested fault point.
+    CompletedReadAlreadyAttempted,
+}
+
+/// Pure fault-injection rejection retaining the unchanged recycled M1 queue.
+#[cfg(feature = "qualification-fault-injection")]
+#[must_use = "rejection retains exact recycled queue custody"]
+#[derive(Debug)]
+pub struct M1QualificationQueueTransitionFaultInjectionRejectionV1 {
+    reason: M1QualificationQueueTransitionFaultInjectionRejectionReasonV1,
+    queue: Box<M1PhysicalRecycledQueueSessionV1>,
+}
+
+#[cfg(feature = "qualification-fault-injection")]
+impl M1QualificationQueueTransitionFaultInjectionRejectionV1 {
+    /// Returns why the deliberate transition was rejected without faulting the Engine.
+    #[must_use]
+    pub const fn reason(&self) -> M1QualificationQueueTransitionFaultInjectionRejectionReasonV1 {
+        self.reason
+    }
+
+    /// Recovers the exact unchanged recycled M1 queue.
+    #[must_use = "recycled queue custody must remain retained"]
+    pub fn into_queue(self) -> M1PhysicalRecycledQueueSessionV1 {
+        *self.queue
+    }
+}
+
+/// Terminal M1 queue after a deliberate post-recycle qualification transition.
+///
+/// The lower service owner and Ferric scheduler/KV custody remain paired. This
+/// type exposes returning teardown but no readback, reuse, detach, or submit
+/// transition. It is not evidence of a native KFD or device fault.
+///
+/// ```compile_fail
+/// use ferric_engine::M1QualificationQueueTransitionFaultSessionV1;
+/// fn read(queue: M1QualificationQueueTransitionFaultSessionV1) {
+///     let _ = queue.observe_completion();
+/// }
+/// ```
+///
+/// ```compile_fail
+/// use ferric_engine::M1QualificationQueueTransitionFaultSessionV1;
+/// fn detach(queue: M1QualificationQueueTransitionFaultSessionV1) {
+///     let _ = queue.detach();
+/// }
+/// ```
+#[cfg(feature = "qualification-fault-injection")]
+#[must_use = "the qualification-faulted queue must be destroyed or retained"]
+#[derive(Debug)]
+pub enum M1QualificationQueueTransitionFaultSessionV1 {
+    /// Faulted target-only queue.
+    TargetOnly(
+        Box<
+            M1PhysicalQueuePhaseCaseV1<
+                ServiceQualificationFaultedQueueSessionV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    ),
+    /// Faulted paired-prefill queue.
+    PairedPrefill(
+        Box<
+            M1PhysicalQueuePhaseCaseV1<
+                ServiceQualificationFaultedQueueSessionV1<M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    ),
+    /// Faulted K4 speculative queue.
+    SpeculativeK4(
+        Box<
+            M1PhysicalQueuePhaseCaseV1<
+                ServiceQualificationFaultedQueueSessionV1<M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    ),
+    /// Faulted K8 speculative queue.
+    SpeculativeK8(
+        Box<
+            M1PhysicalQueuePhaseCaseV1<
+                ServiceQualificationFaultedQueueSessionV1<M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    ),
+    /// Faulted K16 speculative queue.
+    SpeculativeK16(
+        Box<
+            M1PhysicalQueuePhaseCaseV1<
+                ServiceQualificationFaultedQueueSessionV1<
+                    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
+                >,
+            >,
+        >,
+    ),
+}
+
+#[cfg(feature = "qualification-fault-injection")]
+impl M1QualificationQueueTransitionFaultSessionV1 {
+    /// Returns the exact closed M1 publication shape.
+    #[must_use]
+    pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
+        match self {
+            Self::TargetOnly(_) => M1PhysicalFixedBatchShapeV1::TargetOnly,
+            Self::PairedPrefill(_) => M1PhysicalFixedBatchShapeV1::PairedPrefill,
+            Self::SpeculativeK4(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+            Self::SpeculativeK8(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+            Self::SpeculativeK16(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+        }
+    }
+
+    /// Returns the compile-time packet cardinality of the retained queue.
+    #[must_use]
+    pub const fn packet_count(&self) -> usize {
+        self.shape().packet_count()
+    }
+
+    /// Returns the terminal qualification-only queue phase.
+    #[must_use]
+    pub const fn phase(&self) -> M1PhysicalQueuePhaseV1 {
+        M1PhysicalQueuePhaseV1::QualificationFaulted
+    }
+
+    /// Returns the immutable scheduler-issued logical epoch.
+    #[must_use]
+    pub const fn queue_epoch(&self) -> CompletionEpoch {
+        match self {
+            Self::TargetOnly(case) => case.queue_epoch(),
+            Self::PairedPrefill(case) => case.queue_epoch(),
+            Self::SpeculativeK4(case) => case.queue_epoch(),
+            Self::SpeculativeK8(case) => case.queue_epoch(),
+            Self::SpeculativeK16(case) => case.queue_epoch(),
+        }
+    }
+
+    /// Returns the lower dispatch generation at the deliberate transition.
+    #[must_use]
+    pub const fn dispatch_generation(&self) -> u64 {
+        match self {
+            Self::TargetOnly(case) => case.lower.dispatch_generation(),
+            Self::PairedPrefill(case) => case.lower.dispatch_generation(),
+            Self::SpeculativeK4(case) => case.lower.dispatch_generation(),
+            Self::SpeculativeK8(case) => case.lower.dispatch_generation(),
+            Self::SpeculativeK16(case) => case.lower.dispatch_generation(),
+        }
+    }
+
+    /// Returns the deliberate lower service transition point.
+    #[must_use]
+    pub const fn fault_point(&self) -> ServiceQualificationQueueFaultPointV1 {
+        match self {
+            Self::TargetOnly(case) => case.lower.point(),
+            Self::PairedPrefill(case) => case.lower.point(),
+            Self::SpeculativeK4(case) => case.lower.point(),
+            Self::SpeculativeK8(case) => case.lower.point(),
+            Self::SpeculativeK16(case) => case.lower.point(),
+        }
+    }
+
+    /// Returns the exact lower recycle observation preceding the transition.
+    #[must_use]
+    pub const fn recycle_observation(&self) -> Gfx942CompletionRecycleObservationV1 {
+        match self {
+            Self::TargetOnly(case) => case.lower.recycle_observation(),
+            Self::PairedPrefill(case) => case.lower.recycle_observation(),
+            Self::SpeculativeK4(case) => case.lower.recycle_observation(),
+            Self::SpeculativeK8(case) => case.lower.recycle_observation(),
+            Self::SpeculativeK16(case) => case.lower.recycle_observation(),
+        }
+    }
+
+    /// Returns retained Ferric recipe and allocation custody by borrow.
+    #[must_use = "Ferric custody remains paired with the terminal queue"]
+    pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
+        match self {
+            Self::TargetOnly(case) => case.custody(),
+            Self::PairedPrefill(case) => case.custody(),
+            Self::SpeculativeK4(case) => case.custody(),
+            Self::SpeculativeK8(case) => case.custody(),
+            Self::SpeculativeK16(case) => case.custody(),
+        }
+    }
+
+    /// Returns the exact scheduler dispatch retained beside the terminal queue.
+    #[must_use = "scheduler dispatch authority remains paired with physical custody"]
+    pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
+        match self {
+            Self::TargetOnly(case) => case.scheduled_dispatch(),
+            Self::PairedPrefill(case) => case.scheduled_dispatch(),
+            Self::SpeculativeK4(case) => case.scheduled_dispatch(),
+            Self::SpeculativeK8(case) => case.scheduled_dispatch(),
+            Self::SpeculativeK16(case) => case.scheduled_dispatch(),
+        }
+    }
+
+    /// Destroys the native queue through the qualification state's only transition.
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal lower release failure with all available Ferric custody.
+    pub fn destroy_and_release(
+        self,
+    ) -> Result<
+        M1QualificationQueueTransitionFaultTeardownSuccessV1,
+        Box<M1QualificationQueueTransitionFaultTeardownFailureV1>,
+    > {
+        match self {
+            Self::TargetOnly(case) => {
+                release_qualification_fault_case(case, M1PhysicalFixedBatchShapeV1::TargetOnly)
+            }
+            Self::PairedPrefill(case) => {
+                release_qualification_fault_case(case, M1PhysicalFixedBatchShapeV1::PairedPrefill)
+            }
+            Self::SpeculativeK4(case) => {
+                release_qualification_fault_case(case, M1PhysicalFixedBatchShapeV1::SpeculativeK4)
+            }
+            Self::SpeculativeK8(case) => {
+                release_qualification_fault_case(case, M1PhysicalFixedBatchShapeV1::SpeculativeK8)
+            }
+            Self::SpeculativeK16(case) => {
+                release_qualification_fault_case(case, M1PhysicalFixedBatchShapeV1::SpeculativeK16)
+            }
+        }
+    }
+}
+
+/// Successful returning teardown of a deliberately faulted qualification queue.
+#[cfg(feature = "qualification-fault-injection")]
+#[must_use]
+#[derive(Debug)]
+pub struct M1QualificationQueueTransitionFaultTeardownSuccessV1 {
+    shape: M1PhysicalFixedBatchShapeV1,
+    queue_epoch: CompletionEpoch,
+    dispatch_generation: u64,
+    fault_point: ServiceQualificationQueueFaultPointV1,
+    release: ServiceQueueReleaseObservationV1,
+}
+
+#[cfg(feature = "qualification-fault-injection")]
+impl M1QualificationQueueTransitionFaultTeardownSuccessV1 {
+    /// Returns the exact former M1 shape.
+    #[must_use]
+    pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
+        self.shape
+    }
+
+    /// Returns the immutable scheduler-issued logical epoch.
+    #[must_use]
+    pub const fn queue_epoch(&self) -> CompletionEpoch {
+        self.queue_epoch
+    }
+
+    /// Returns the lower dispatch generation at injection.
+    #[must_use]
+    pub const fn dispatch_generation(&self) -> u64 {
+        self.dispatch_generation
+    }
+
+    /// Returns the deliberate lower service transition point.
+    #[must_use]
+    pub const fn fault_point(&self) -> ServiceQualificationQueueFaultPointV1 {
+        self.fault_point
+    }
+
+    /// Returns the exact native queue and allocation release observation.
+    #[must_use]
+    pub const fn release(&self) -> &ServiceQueueReleaseObservationV1 {
+        &self.release
+    }
+}
+
+/// Terminal release failure retaining lower and Ferric qualification custody.
+#[cfg(feature = "qualification-fault-injection")]
+#[must_use = "release failure retains all available lower and Ferric custody"]
+#[derive(Debug)]
+pub struct M1QualificationQueueTransitionFaultTeardownFailureV1 {
+    shape: M1PhysicalFixedBatchShapeV1,
+    queue_epoch: CompletionEpoch,
+    dispatch_generation: u64,
+    fault_point: ServiceQualificationQueueFaultPointV1,
+    lower: ServiceQueueReleaseFailureV1,
+    step: Box<M1PrepublicationStepCustodyV1>,
+    custody: Box<M1PhysicalQueueBatchCustodyV1>,
+}
+
+#[cfg(feature = "qualification-fault-injection")]
+impl M1QualificationQueueTransitionFaultTeardownFailureV1 {
+    /// Returns the exact failed M1 shape.
+    #[must_use]
+    pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
+        self.shape
+    }
+
+    /// Returns the immutable scheduler-issued logical epoch.
+    #[must_use]
+    pub const fn queue_epoch(&self) -> CompletionEpoch {
+        self.queue_epoch
+    }
+
+    /// Returns the lower dispatch generation at injection.
+    #[must_use]
+    pub const fn dispatch_generation(&self) -> u64 {
+        self.dispatch_generation
+    }
+
+    /// Returns the deliberate lower service transition point.
+    #[must_use]
+    pub const fn fault_point(&self) -> ServiceQualificationQueueFaultPointV1 {
+        self.fault_point
+    }
+
+    /// Returns the lower terminal release failure by borrow.
+    #[must_use = "lower failure retains available generic custody"]
+    pub const fn lower(&self) -> &ServiceQueueReleaseFailureV1 {
+        &self.lower
+    }
+
+    /// Returns the exact scheduler dispatch retained after release failure.
+    #[must_use = "scheduler dispatch authority remains retained"]
+    pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
+        self.step.scheduled_dispatch()
+    }
+
+    /// Returns retained Ferric recipe and allocation custody by borrow.
+    #[must_use = "Ferric custody remains retained"]
+    pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
+        &self.custody
     }
 }
 
@@ -4600,6 +4950,60 @@ fn release_case<const N: usize>(
     }
 }
 
+#[cfg(feature = "qualification-fault-injection")]
+fn inject_qualification_fault_case<const N: usize>(
+    case: Box<M1PhysicalQueuePhaseCaseV1<ServiceRecycledQueueSessionV1<N>>>,
+) -> Result<
+    Box<M1PhysicalQueuePhaseCaseV1<ServiceQualificationFaultedQueueSessionV1<N>>>,
+    Box<M1PhysicalQueuePhaseCaseV1<ServiceRecycledQueueSessionV1<N>>>,
+> {
+    let (lower, custody, step) = (*case).into_parts();
+    match lower.inject_qualification_fault(
+        ServiceQualificationQueueFaultPointV1::PostRecycleBeforeCompletedReadAttempt,
+    ) {
+        Ok(lower) => Ok(Box::new(M1PhysicalQueuePhaseCaseV1::new(
+            lower, custody, step,
+        ))),
+        Err(lower) => Err(Box::new(M1PhysicalQueuePhaseCaseV1::new(
+            *lower, custody, step,
+        ))),
+    }
+}
+
+#[cfg(feature = "qualification-fault-injection")]
+fn release_qualification_fault_case<const N: usize>(
+    case: Box<M1PhysicalQueuePhaseCaseV1<ServiceQualificationFaultedQueueSessionV1<N>>>,
+    shape: M1PhysicalFixedBatchShapeV1,
+) -> Result<
+    M1QualificationQueueTransitionFaultTeardownSuccessV1,
+    Box<M1QualificationQueueTransitionFaultTeardownFailureV1>,
+> {
+    let (lower, custody, step) = (*case).into_parts();
+    let queue_epoch = step.scheduled_dispatch().epoch();
+    let dispatch_generation = lower.dispatch_generation();
+    let fault_point = lower.point();
+    match lower.destroy_and_release() {
+        Ok(release) => Ok(M1QualificationQueueTransitionFaultTeardownSuccessV1 {
+            shape,
+            queue_epoch,
+            dispatch_generation,
+            fault_point,
+            release,
+        }),
+        Err(lower) => Err(Box::new(
+            M1QualificationQueueTransitionFaultTeardownFailureV1 {
+                shape,
+                queue_epoch,
+                dispatch_generation,
+                fault_point,
+                lower,
+                step: Box::new(step),
+                custody: Box::new(custody),
+            },
+        )),
+    }
+}
+
 impl M1PhysicalQueueSessionV1 {
     /// Privately transfers the prepublication owner's allocation session into a queue.
     ///
@@ -5420,6 +5824,106 @@ fn finish_qualification_observation(
 }
 
 impl M1PhysicalRecycledQueueSessionV1 {
+    /// Deliberately terminalizes a real recycled queue before any completed-read attempt.
+    ///
+    /// Success consumes recycled custody into a release-only lower typestate and
+    /// permanently faults the Ferric Engine, which denies subsequent admission.
+    /// This service transition does not synthesize a KFD error or claim a native
+    /// device fault. An already faulted Engine or any prior completed-read attempt
+    /// rejects without mutating the Engine and returns the exact recycled queue.
+    ///
+    /// ```compile_fail
+    /// use ferric_engine::{Engine, M1PhysicalRecycledQueueSessionV1};
+    /// fn inject_twice<const C: usize>(
+    ///     queue: M1PhysicalRecycledQueueSessionV1,
+    ///     engine: &mut Engine<C>,
+    /// ) {
+    ///     let _faulted = queue.inject_qualification_queue_transition_fault(engine);
+    ///     let _again = queue.destroy_and_release();
+    /// }
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns pure rejection with unchanged recycled custody.
+    #[cfg(feature = "qualification-fault-injection")]
+    pub fn inject_qualification_queue_transition_fault<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1QualificationQueueTransitionFaultSessionV1,
+        M1QualificationQueueTransitionFaultInjectionRejectionV1,
+    > {
+        if engine.is_faulted() {
+            return Err(
+                M1QualificationQueueTransitionFaultInjectionRejectionV1 {
+                    reason:
+                        M1QualificationQueueTransitionFaultInjectionRejectionReasonV1::EngineAlreadyFaulted,
+                    queue: Box::new(self),
+                },
+            );
+        }
+        let faulted = match self {
+            Self::TargetOnly(case) => match inject_qualification_fault_case(case) {
+                Ok(case) => M1QualificationQueueTransitionFaultSessionV1::TargetOnly(case),
+                Err(case) => {
+                    return Err(
+                        M1QualificationQueueTransitionFaultInjectionRejectionV1 {
+                            reason: M1QualificationQueueTransitionFaultInjectionRejectionReasonV1::CompletedReadAlreadyAttempted,
+                            queue: Box::new(Self::TargetOnly(case)),
+                        },
+                    )
+                }
+            },
+            Self::PairedPrefill(case) => match inject_qualification_fault_case(case) {
+                Ok(case) => M1QualificationQueueTransitionFaultSessionV1::PairedPrefill(case),
+                Err(case) => {
+                    return Err(
+                        M1QualificationQueueTransitionFaultInjectionRejectionV1 {
+                            reason: M1QualificationQueueTransitionFaultInjectionRejectionReasonV1::CompletedReadAlreadyAttempted,
+                            queue: Box::new(Self::PairedPrefill(case)),
+                        },
+                    )
+                }
+            },
+            Self::SpeculativeK4(case) => match inject_qualification_fault_case(case) {
+                Ok(case) => M1QualificationQueueTransitionFaultSessionV1::SpeculativeK4(case),
+                Err(case) => {
+                    return Err(
+                        M1QualificationQueueTransitionFaultInjectionRejectionV1 {
+                            reason: M1QualificationQueueTransitionFaultInjectionRejectionReasonV1::CompletedReadAlreadyAttempted,
+                            queue: Box::new(Self::SpeculativeK4(case)),
+                        },
+                    )
+                }
+            },
+            Self::SpeculativeK8(case) => match inject_qualification_fault_case(case) {
+                Ok(case) => M1QualificationQueueTransitionFaultSessionV1::SpeculativeK8(case),
+                Err(case) => {
+                    return Err(
+                        M1QualificationQueueTransitionFaultInjectionRejectionV1 {
+                            reason: M1QualificationQueueTransitionFaultInjectionRejectionReasonV1::CompletedReadAlreadyAttempted,
+                            queue: Box::new(Self::SpeculativeK8(case)),
+                        },
+                    )
+                }
+            },
+            Self::SpeculativeK16(case) => match inject_qualification_fault_case(case) {
+                Ok(case) => M1QualificationQueueTransitionFaultSessionV1::SpeculativeK16(case),
+                Err(case) => {
+                    return Err(
+                        M1QualificationQueueTransitionFaultInjectionRejectionV1 {
+                            reason: M1QualificationQueueTransitionFaultInjectionRejectionReasonV1::CompletedReadAlreadyAttempted,
+                            queue: Box::new(Self::SpeculativeK16(case)),
+                        },
+                    )
+                }
+            },
+        };
+        engine.quarantine_m1_queue_rearm_failure();
+        Ok(faulted)
+    }
+
     /// Copies target-only compact K7 output and each final live BF16 logits row.
     ///
     /// Qualification capture must have been explicitly enabled before physical
@@ -5991,6 +6495,12 @@ mod tests {
         assert!(!M1PhysicalQueuePhaseV1::ReadbackJoined.can_read_detach_or_release());
         assert_eq!(0, grants_for(M1PhysicalQueuePhaseV1::Detached));
         assert_eq!(0, grants_for(M1PhysicalQueuePhaseV1::Quarantined));
+        #[cfg(feature = "qualification-fault-injection")]
+        {
+            let faulted = M1PhysicalQueuePhaseV1::QualificationFaulted;
+            assert!(faulted.can_release_only());
+            assert_eq!(0, grants_for(faulted));
+        }
     }
 
     #[test]

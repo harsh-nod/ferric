@@ -433,37 +433,56 @@ The exhaustion bundle remains `partial-non-evidence`: it establishes only
 request-local model-memory ledger saturation, not device-memory exhaustion or
 pressure. It does not dispatch a kernel or create or pressure a queue. The full
 R30 roster now has only one Ferric-owned adjacent-guard readback for one
-target-prefill S1 K7 output; it still lacks broader canary coverage and an
-admitted physical queue/device fault-injection authority. Those missing runtime
-boundaries cannot be replaced by the existing external self-reported intake.
+target-prefill S1 K7 output, so it still lacks broader canary coverage.
 
-The four Ferric-owned partial bundles can be joined with one canonical external
-fault-observation document without conflating their authorities:
+The feature-gated R30 queue-transition capture exercises one real target-prefill
+S1 physical queue at the exact post-completion/recycle and pre-read boundary:
 
 ```text
-ferric-m1-qualification-capture compose-r30-runner \
-  CANARY-BUNDLE CANCELLATION-BUNDLE EXHAUSTION-BUNDLE ROLLBACK-BUNDLE \
-  FAULT-OBSERVATION OUTPUT-BUNDLE
+cargo run --locked -p ferric-engine --features qualification-fault-injection \
+  --bin ferric-m1-qualification-capture -- \
+  capture-r30-fault-transition MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS \
+  CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE
 ```
 
-`FAULT-OBSERVATION` must be canonical
-`FERRIC-M1-R30-FAULT-OBSERVATION-V1`, use authority
-`externally-reported-r30-fault-observation-only`, declare
-`hardware_claim: none`, bind its source executable, protocol, environment, and
-transcript identities, and contain a nonempty, uniquely named bounded fault
-roster. The composer re-admits every physical capture against its exact
-checked-in protocol, requires the four captures to bind the same device,
+The service-host transition consumes the recycled queue before any completed
+read attempt. Ferric then terminalizes the Engine, requires a subsequent
+admission to fail with `EngineError::Faulted`, and performs the faulted queue's
+only transition: returning native queue destruction and allocation release.
+The two-file output uses canonical
+`FERRIC-M1-R30-FAULT-TRANSITION-PARTIAL-PROTOCOL-V1` and no-replace
+publication.
+
+This bundle remains `partial-non-evidence`. The injected event is a deliberate
+Ferric/service queue-state transition, not a synthetic KFD error, native KFD or
+GPU fault, or GPU reset. It grants no native device-fault, global-resource,
+hardware-correctness, benchmark-evidence, external-validation, independent-
+validation, `m1.r30`, or M1 closure authority.
+
+The five Ferric-owned physical partial bundles can be joined without conflating
+their authorities:
+
+```text
+cargo run --locked -p ferric-engine --features qualification-fault-injection \
+  --bin ferric-m1-qualification-capture -- compose-r30-runner \
+  CANARY-BUNDLE CANCELLATION-BUNDLE EXHAUSTION-BUNDLE ROLLBACK-BUNDLE \
+  FAULT-TRANSITION-BUNDLE OUTPUT-BUNDLE
+```
+
+The composer re-admits every physical capture against its exact checked-in
+protocol and requires all five captures to bind the same device,
 kernel-artifact manifest, program catalog, runner declaration, and GPU unique
-ID. It also descriptor-measures the running composer executable and publishes
+ID. It separately preserves the queue-transition capture's lack of native fault
+authority. It descriptor-measures the running composer executable and publishes
 exactly `runner.json` and canonical
-`FERRIC-M1-R30-COMPOSED-RUNNER-PROTOCOL-V5` `protocol.json` without
+`FERRIC-M1-R30-COMPOSED-RUNNER-PROTOCOL-V6` `protocol.json` without
 replacement.
 
-The composed runner remains `partial-non-evidence`. It records four physical
-partial authorities and one `reported-unvalidated` external authority, carries
-`hardware_claim: none`, and fixes `evidence_case_count` to zero. It cannot turn
-reported fault fields into physical observations. A production physical
-queue/device fault-injection API, broader canary coverage, and independent
+The composed runner remains `partial-non-evidence`. It records five physical
+partial authorities, carries `hardware_claim: none`, and fixes
+`evidence_case_count` to zero. It cannot promote the deliberate service
+transition into a native KFD/device-fault observation. Broader canary coverage,
+native fault authority where required by the acceptance policy, and independent
 evidence validation remain required before `m1.r30` can close.
 
 The serving suite has an additive pre-observation producer for one bounded,
