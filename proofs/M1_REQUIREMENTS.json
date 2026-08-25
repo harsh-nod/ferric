@@ -460,8 +460,8 @@
   ],
   "format": "ferric.m1-requirements.v1",
   "m0_contracts_commit": "a6fa86b5ccf8f0438925cfec8f48a5d713874da3",
-  "m1_upstream_base_commit": "a6c779f6f8052839c3a07901f9bfafa681f7b09a",
-  "m1_upstream_base_tree": "1636cae7363b421f8850d6c455a53216f374667c",
+  "m1_upstream_base_commit": "d036920d5beffda4d7f9e2465ba4214355dc9b4a",
+  "m1_upstream_base_tree": "18d558abce9b4ad9e336cfee54afc282be2e70e1",
   "milestone": "M1",
   "path_obligations": [
     {
