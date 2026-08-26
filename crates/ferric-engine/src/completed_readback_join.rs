@@ -87,6 +87,10 @@ pub enum M1CompletedOutputCheckErrorV1 {
     QualificationFinalObservationShape,
     /// Generic compact checking was requested for a capture-attached non-prompt lane.
     QualificationCaptureRequiresEvidence { lane: usize },
+    /// Generic compact checking was requested while direct-choice evidence was attached.
+    DirectDiagnosticCaptureRequiresEvidence,
+    /// Generic compact checking was requested while speculative-choice evidence was attached.
+    SpeculativeDiagnosticCaptureRequiresEvidence,
     /// Evidence-derived qualification prefill was requested for another selection.
     QualificationPrefillSelection { actual: Qwen3PlanSelection },
     /// A qualification grouping did not cover the exact scheduler roster.

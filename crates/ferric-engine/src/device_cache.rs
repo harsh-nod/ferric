@@ -27,6 +27,7 @@ use crate::bound_step_workspaces::bind_addressless_m1_full_step_workspace_sublea
 use crate::initialized_step_workspaces::allocate_initialized_m1_full_step_workspaces_v1;
 use crate::{
     allocate_m1_completion_output_v1, allocate_m1_guarded_completion_output_v1,
+    direct_diagnostic_choices::attach_m1_direct_diagnostic_choices_v1,
     qualification_logits::attach_m1_qualification_logits_v1,
     speculative_diagnostic_choices::attach_m1_speculative_diagnostic_choices_v1,
     AddresslessM1FullStepWorkspaceComposition, BoundM1CompletionOutputV1,
@@ -1078,6 +1079,23 @@ impl M1PartitionedModelMemoryKvPoolV1 {
         attach_m1_speculative_diagnostic_choices_v1(&mut self.allocations, completion)
     }
 
+    /// Adds direct target-choice capture to a compact output.
+    ///
+    /// The attachment replaces the existing target `Choices [S,A]` workspace
+    /// with initialized host-visible storage before physical buffer binding.
+    ///
+    /// # Errors
+    ///
+    /// Rejects a non-direct target selection or allocation/range drift while
+    /// returning unchanged compact-output custody inside the boxed failure.
+    pub(crate) fn enable_direct_diagnostic_choices_capture(
+        &mut self,
+        completion: BoundM1CompletionOutputV1,
+    ) -> Result<BoundM1CompletionOutputV1, Box<crate::M1DirectDiagnosticChoicesAllocationFailureV1>>
+    {
+        attach_m1_direct_diagnostic_choices_v1(&mut self.allocations, completion)
+    }
+
     pub(crate) fn completion_output_dispatch_range(
         &self,
         completion: &BoundM1CompletionOutputV1,
@@ -1107,6 +1125,17 @@ impl M1PartitionedModelMemoryKvPoolV1 {
         crate::M1SpeculativeDiagnosticChoicesErrorV1,
     > {
         choices.host_dispatch_ranges(&self.allocations, selection)
+    }
+
+    pub(crate) fn direct_diagnostic_choices_dispatch_range(
+        &self,
+        choices: &crate::BoundM1DirectDiagnosticChoicesV1,
+        selection: Qwen3PlanSelection,
+    ) -> Result<
+        fe2o3_service_host::ServiceHostDispatchRangeV1,
+        crate::M1DirectDiagnosticChoicesErrorV1,
+    > {
+        choices.host_dispatch_range(&self.allocations, selection)
     }
 
     pub(crate) fn allocate_full_step_workspaces(

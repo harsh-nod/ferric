@@ -12,6 +12,7 @@ mod completion_canary;
 mod completion_output;
 mod completion_wire;
 mod device_cache;
+mod direct_diagnostic_choices;
 mod epoch;
 mod initialized_model_memory;
 mod initialized_step_workspaces;
@@ -107,6 +108,12 @@ pub use device_cache::{
     SettledQuiescentDeviceKvCache, WriteApplicationFailure, GFX942_PROCESSOR,
     GFX942_TARGET_FEATURES, M1_QUALIFICATION_TARGET_PAGE_COUNT_V1,
 };
+pub use direct_diagnostic_choices::{
+    m1_direct_diagnostic_choices_shape_v1, BoundM1DirectDiagnosticChoicesV1,
+    M1DirectDiagnosticChoicesAllocationFailureV1, M1DirectDiagnosticChoicesErrorV1,
+    M1DirectDiagnosticChoicesShapeV1, M1ObservedDirectDiagnosticChoicesV1,
+    M1_DIRECT_DIAGNOSTIC_CHOICE_ALIGNMENT_V1,
+};
 pub use epoch::ExactCompletion;
 pub use initialized_model_memory::{
     allocate_initialized_model_memory_v1, m1_model_memory_content_descriptor_v1,
@@ -180,6 +187,12 @@ pub use m1_queue_rearm::{
     M1RearmedCompletedReadbackV1, M1RearmedCompletionOutcomeV1,
     M1RearmedCompletionPreflightErrorV1, M1RearmedCompletionPreflightFailureV1,
     M1RearmedCompletionPreflightTeardownFailureV1, M1RearmedCompletionPreflightTeardownSuccessV1,
+    M1RearmedDirectDiagnosticCompletedReadbackV1, M1RearmedDirectDiagnosticReadbackFailureSourceV1,
+    M1RearmedDirectDiagnosticReadbackFailureV1,
+    M1RearmedDirectDiagnosticReadbackTeardownFailureSourceV1,
+    M1RearmedDirectDiagnosticReadbackTeardownFailureV1,
+    M1RearmedDirectDiagnosticReadbackTeardownSuccessSourceV1,
+    M1RearmedDirectDiagnosticReadbackTeardownSuccessV1, M1RearmedDirectDiagnosticRetainedCustodyV1,
     M1RearmedObservedCompletionOutputV1, M1RearmedObservedQualificationOutputV1,
     M1RearmedObservedQualificationTeardownFailureV1,
     M1RearmedObservedQualificationTeardownSuccessV1, M1RearmedPoisonedCompletionV1,
@@ -238,9 +251,10 @@ pub use m1_serving_physical_operations::{
     M1ServingPhysicalRunnerDiagnosticHistoryV1, M1ServingPhysicalRunnerOperationErrorV1,
     M1ServingPhysicalRunnerOperationsCreateErrorV1, M1ServingPhysicalRunnerOperationsV1,
     M1ServingPhysicalRunnerPublishedV1, M1ServingPhysicalRunnerQuiescentV1,
-    M1ServingPhysicalRunnerReadbackV1, M1ServingPhysicalRunnerTerminalCustodyV1,
-    M1ServingPhysicalRunnerTerminalLowerCustodyV1, M1ServingPreparedFirstPublicationV1,
-    M1ServingPreparedSameShapeRearmV1, M1ServingRearmedReadbackStateV1,
+    M1ServingPhysicalRunnerReadbackEvidenceV1, M1ServingPhysicalRunnerReadbackV1,
+    M1ServingPhysicalRunnerTerminalCustodyV1, M1ServingPhysicalRunnerTerminalLowerCustodyV1,
+    M1ServingPreparedFirstPublicationV1, M1ServingPreparedSameShapeRearmV1,
+    M1ServingPreparedSemanticEvidenceV1, M1ServingRearmedReadbackStateV1,
 };
 pub use m1_serving_registry::{
     M1ServingBatchPlanV1, M1ServingCompletionDispositionV1, M1ServingPlanV1,
@@ -329,10 +343,15 @@ pub use physical_queue_lifecycle::{
     M1CompletionObservationFailureCustodyV1, M1CompletionObservationFailureV1,
     M1CompletionProgressObservationV1, M1CompletionProgressWaitDiagnosticV1,
     M1CompletionProgressWaitTerminalReasonV1, M1CompletionSnapshotReadFailedOutputV1,
+    M1DirectDiagnosticCompletedReadbackJoinFailureV1, M1DirectDiagnosticCompletedReadbackV1,
+    M1DirectDiagnosticObservationErrorV1, M1DirectDiagnosticObservationFailureV1,
+    M1DirectDiagnosticObservationTeardownFailureV1, M1DirectDiagnosticObservationTeardownSuccessV1,
+    M1DirectDiagnosticSemanticTeardownFailureV1, M1DirectDiagnosticSemanticTeardownSuccessV1,
     M1EngineQuarantinedPhysicalQueueOperationFailureV1, M1ObservedCompletionCaseV1,
-    M1ObservedCompletionOutputV1, M1ObservedQualificationOutputV1,
-    M1ObservedSpeculativeDiagnosticOutputV1, M1PhysicalCompletedQueueSessionV1,
-    M1PhysicalCompletedReadbackV1, M1PhysicalDetachedQueueCaseV1, M1PhysicalDetachedQueueSessionV1,
+    M1ObservedCompletionOutputV1, M1ObservedDirectDiagnosticOutputV1,
+    M1ObservedQualificationOutputV1, M1ObservedSpeculativeDiagnosticOutputV1,
+    M1PhysicalCompletedQueueSessionV1, M1PhysicalCompletedReadbackV1,
+    M1PhysicalDetachedQueueCaseV1, M1PhysicalDetachedQueueSessionV1,
     M1PhysicalPublishedQueueSessionV1, M1PhysicalQueueCreateFailureClassV1,
     M1PhysicalQueueCreateFailureV1, M1PhysicalQueueOperationFailureV1, M1PhysicalQueuePhaseCaseV1,
     M1PhysicalQueuePhaseV1, M1PhysicalQueueReleaseFailureV1, M1PhysicalQueueSessionV1,

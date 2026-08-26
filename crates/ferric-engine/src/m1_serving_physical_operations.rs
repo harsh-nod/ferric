@@ -4,8 +4,9 @@
 //! or active device-cache owners. Those inputs stay behind
 //! [`M1ServingPhysicalInputProviderV1`], while this adapter alone performs the
 //! exact scheduler transition and consumes the resulting physical typestates.
-//! The initial implementation admits only S1/K4 speculative generations with
-//! the independent diagnostic-choice attachment. Other serving shapes fail
+//! Direct paired-prefill and target-only generations use compact final-row
+//! semantics. S1/K4 speculative generations additionally require the
+//! independent diagnostic-choice attachment. Wider speculative shapes fail
 //! before scheduler or queue progress.
 
 use core::{
@@ -40,6 +41,17 @@ pub struct M1ServingPreparedFirstPublicationV1 {
     recipe: AddresslessM1PhysicalBufferRecipeV1,
     completion_output: BoundM1CompletionOutputV1,
     selected: Vec<ActiveDeviceKvCache>,
+    semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
+}
+
+/// Provider-owned semantic evidence prepared independently of compact readback.
+#[must_use = "prepared semantic evidence must remain paired with publication custody"]
+#[derive(Debug)]
+pub enum M1ServingPreparedSemanticEvidenceV1 {
+    /// Direct choices will come from the attached independent K6 capture.
+    Direct,
+    /// S1/K4 will derive its expectations from the attached independent choices.
+    SpeculativeK4,
 }
 
 impl M1ServingPreparedFirstPublicationV1 {
@@ -49,12 +61,14 @@ impl M1ServingPreparedFirstPublicationV1 {
         recipe: AddresslessM1PhysicalBufferRecipeV1,
         completion_output: BoundM1CompletionOutputV1,
         selected: Vec<ActiveDeviceKvCache>,
+        semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
     ) -> Self {
         Self {
             allocated,
             recipe,
             completion_output,
             selected,
+            semantic_evidence,
         }
     }
 
@@ -67,12 +81,14 @@ impl M1ServingPreparedFirstPublicationV1 {
         AddresslessM1PhysicalBufferRecipeV1,
         BoundM1CompletionOutputV1,
         Vec<ActiveDeviceKvCache>,
+        M1ServingPreparedSemanticEvidenceV1,
     ) {
         (
             self.allocated,
             self.recipe,
             self.completion_output,
             self.selected,
+            self.semantic_evidence,
         )
     }
 }
@@ -83,6 +99,7 @@ impl M1ServingPreparedFirstPublicationV1 {
 pub struct M1ServingPreparedSameShapeRearmV1 {
     prepared: M1PreparedLongLivedQueueRearmV1,
     recipe: AddresslessM1PhysicalBufferRecipeV1,
+    semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
 }
 
 impl M1ServingPreparedSameShapeRearmV1 {
@@ -90,8 +107,13 @@ impl M1ServingPreparedSameShapeRearmV1 {
     pub const fn new(
         prepared: M1PreparedLongLivedQueueRearmV1,
         recipe: AddresslessM1PhysicalBufferRecipeV1,
+        semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
     ) -> Self {
-        Self { prepared, recipe }
+        Self {
+            prepared,
+            recipe,
+            semantic_evidence,
+        }
     }
 }
 
@@ -100,7 +122,10 @@ impl M1ServingPreparedSameShapeRearmV1 {
 /// Implementations must retain every consumed scheduler, cache, lease, table,
 /// workspace, and allocation owner inside `Failure` on rejection. The adapter
 /// treats either failure as terminal because exact scheduling has already
-/// advanced or detached the predecessor queue.
+/// advanced or detached the predecessor queue. Direct final-row expectations
+/// must come from provider-owned evidence independent of the compact completion
+/// image; deriving them from that image would be self-authenticating and is not
+/// admitted by this production boundary.
 pub trait M1ServingPhysicalInputProviderV1<const C: usize> {
     type Failure: fmt::Debug;
 
@@ -148,34 +173,34 @@ impl M1ServingPhysicalRunnerAdapterIdentityV1 {
 #[must_use = "diagnostic evidence must remain retained"]
 #[derive(Debug)]
 pub struct M1ServingPhysicalRunnerDiagnosticHistoryV1 {
-    choices: Vec<M1ObservedSpeculativeDiagnosticChoicesV1>,
+    evidence: Vec<M1ServingPhysicalRunnerReadbackEvidenceV1>,
 }
 
 impl M1ServingPhysicalRunnerDiagnosticHistoryV1 {
     fn new() -> Self {
         Self {
-            choices: Vec::new(),
+            evidence: Vec::new(),
         }
     }
 
     fn len(&self) -> usize {
-        self.choices.len()
+        self.evidence.len()
     }
 
     fn try_reserve_exact(
         &mut self,
         additional: usize,
     ) -> Result<(), std::collections::TryReserveError> {
-        self.choices.try_reserve_exact(additional)
+        self.evidence.try_reserve_exact(additional)
     }
 
-    fn push(&mut self, choices: M1ObservedSpeculativeDiagnosticChoicesV1) {
-        self.choices.push(choices);
+    fn push(&mut self, evidence: M1ServingPhysicalRunnerReadbackEvidenceV1) {
+        self.evidence.push(evidence);
     }
 
-    /// Borrows the settled choice evidence in generation order.
-    pub fn choices(&self) -> &[M1ObservedSpeculativeDiagnosticChoicesV1] {
-        &self.choices
+    /// Borrows settled direct or speculative evidence in generation order.
+    pub fn evidence(&self) -> &[M1ServingPhysicalRunnerReadbackEvidenceV1] {
+        &self.evidence
     }
 }
 
@@ -185,6 +210,7 @@ impl M1ServingPhysicalRunnerDiagnosticHistoryV1 {
 pub struct M1ServingPhysicalRunnerQuiescentV1 {
     adapter_identity: M1ServingPhysicalRunnerAdapterIdentityV1,
     epoch: CompletionEpoch,
+    plan: M1ServingPlanV1,
     state: M1ServingPhysicalRunnerQuiescentStateV1,
 }
 
@@ -213,15 +239,38 @@ impl M1ServingPhysicalRunnerQuiescentV1 {
         self.epoch
     }
 
+    /// Returns the exact serving plan retained by this physical queue.
+    #[must_use]
+    pub const fn plan(&self) -> M1ServingPlanV1 {
+        self.plan
+    }
+
+    /// Borrows settled direct or speculative evidence in generation order.
+    pub fn diagnostic_history(&self) -> &M1ServingPhysicalRunnerDiagnosticHistoryV1 {
+        match &self.state {
+            M1ServingPhysicalRunnerQuiescentStateV1::First {
+                diagnostic_history, ..
+            }
+            | M1ServingPhysicalRunnerQuiescentStateV1::Rearmed {
+                diagnostic_history, ..
+            }
+            | M1ServingPhysicalRunnerQuiescentStateV1::Unscheduled {
+                diagnostic_history, ..
+            } => diagnostic_history,
+        }
+    }
+
     fn first(
         adapter_identity: M1ServingPhysicalRunnerAdapterIdentityV1,
         epoch: CompletionEpoch,
+        plan: M1ServingPlanV1,
         released: M1ReleasedCompletedStepV1,
         diagnostic_history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
     ) -> Self {
         Self {
             adapter_identity,
             epoch,
+            plan,
             state: M1ServingPhysicalRunnerQuiescentStateV1::First {
                 released,
                 diagnostic_history,
@@ -232,12 +281,14 @@ impl M1ServingPhysicalRunnerQuiescentV1 {
     fn rearmed(
         adapter_identity: M1ServingPhysicalRunnerAdapterIdentityV1,
         epoch: CompletionEpoch,
+        plan: M1ServingPlanV1,
         released: M1LongLivedQueueReleasedRoundV1,
         diagnostic_history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
     ) -> Self {
         Self {
             adapter_identity,
             epoch,
+            plan,
             state: M1ServingPhysicalRunnerQuiescentStateV1::Rearmed {
                 released,
                 diagnostic_history,
@@ -253,6 +304,7 @@ impl M1ServingPhysicalRunnerQuiescentV1 {
 pub struct M1ServingPhysicalRunnerPublishedV1 {
     adapter_identity: M1ServingPhysicalRunnerAdapterIdentityV1,
     epoch: CompletionEpoch,
+    plan: M1ServingPlanV1,
     state: M1ServingPhysicalRunnerPublishedStateV1,
 }
 
@@ -262,10 +314,12 @@ enum M1ServingPhysicalRunnerPublishedStateV1 {
     First {
         published: M1PhysicalPublishedQueueSessionV1,
         selected: Vec<ActiveDeviceKvCache>,
+        semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
         diagnostic_history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
     },
     Rearmed {
         published: M1RearmedPublishedQueueV1,
+        semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
         diagnostic_history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
     },
 }
@@ -277,6 +331,12 @@ impl M1ServingPhysicalRunnerPublishedV1 {
 
     fn epoch(&self) -> CompletionEpoch {
         self.epoch
+    }
+
+    /// Returns the exact serving plan bound to this physical publication.
+    #[must_use]
+    pub const fn plan(&self) -> M1ServingPlanV1 {
+        self.plan
     }
 }
 
@@ -297,6 +357,22 @@ pub enum M1ServingRearmedReadbackStateV1 {
     CompletionRejected(M1RearmedCompletionOutcomeV1),
 }
 
+/// Exact semantic evidence retained through one serving readback.
+#[must_use = "checked readback evidence must settle or remain retained"]
+#[derive(Debug)]
+pub enum M1ServingPhysicalRunnerReadbackEvidenceV1 {
+    /// Independent target choices for paired-prefill or target-only semantics.
+    Direct(crate::M1ObservedDirectDiagnosticChoicesV1),
+    /// Independent S1/K4 draft and target choices.
+    SpeculativeK4(Box<M1ObservedSpeculativeDiagnosticChoicesV1>),
+}
+
+impl M1ServingPhysicalRunnerReadbackEvidenceV1 {
+    fn append_diagnostic_history(self, history: &mut M1ServingPhysicalRunnerDiagnosticHistoryV1) {
+        history.push(self);
+    }
+}
+
 /// Semantically joined readback retaining independent S1/K4 choice evidence.
 #[must_use = "readback, caches, and diagnostic choices must settle or remain retained"]
 #[derive(Debug)]
@@ -304,6 +380,7 @@ pub enum M1ServingRearmedReadbackStateV1 {
 pub struct M1ServingPhysicalRunnerReadbackV1 {
     adapter_identity: M1ServingPhysicalRunnerAdapterIdentityV1,
     epoch: CompletionEpoch,
+    plan: M1ServingPlanV1,
     state: M1ServingPhysicalRunnerReadbackStateV1,
 }
 
@@ -312,12 +389,12 @@ pub struct M1ServingPhysicalRunnerReadbackV1 {
 enum M1ServingPhysicalRunnerReadbackStateV1 {
     First {
         state: M1ServingFirstReadbackStateV1,
-        choices: M1ObservedSpeculativeDiagnosticChoicesV1,
+        evidence: M1ServingPhysicalRunnerReadbackEvidenceV1,
         diagnostic_history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
     },
     Rearmed {
         state: M1ServingRearmedReadbackStateV1,
-        choices: M1ObservedSpeculativeDiagnosticChoicesV1,
+        evidence: M1ServingPhysicalRunnerReadbackEvidenceV1,
         diagnostic_history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
     },
 }
@@ -331,19 +408,27 @@ impl M1ServingPhysicalRunnerReadbackV1 {
         self.epoch
     }
 
+    /// Returns the exact serving plan bound to this checked readback.
+    #[must_use]
+    pub const fn plan(&self) -> M1ServingPlanV1 {
+        self.plan
+    }
+
     fn first(
         adapter_identity: M1ServingPhysicalRunnerAdapterIdentityV1,
         epoch: CompletionEpoch,
+        plan: M1ServingPlanV1,
         state: M1ServingFirstReadbackStateV1,
-        choices: M1ObservedSpeculativeDiagnosticChoicesV1,
+        evidence: M1ServingPhysicalRunnerReadbackEvidenceV1,
         diagnostic_history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
     ) -> Self {
         Self {
             adapter_identity,
             epoch,
+            plan,
             state: M1ServingPhysicalRunnerReadbackStateV1::First {
                 state,
-                choices,
+                evidence,
                 diagnostic_history,
             },
         }
@@ -352,16 +437,18 @@ impl M1ServingPhysicalRunnerReadbackV1 {
     fn rearmed(
         adapter_identity: M1ServingPhysicalRunnerAdapterIdentityV1,
         epoch: CompletionEpoch,
+        plan: M1ServingPlanV1,
         state: M1ServingRearmedReadbackStateV1,
-        choices: M1ObservedSpeculativeDiagnosticChoicesV1,
+        evidence: M1ServingPhysicalRunnerReadbackEvidenceV1,
         diagnostic_history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
     ) -> Self {
         Self {
             adapter_identity,
             epoch,
+            plan,
             state: M1ServingPhysicalRunnerReadbackStateV1::Rearmed {
                 state,
-                choices,
+                evidence,
                 diagnostic_history,
             },
         }
@@ -378,6 +465,7 @@ pub enum M1ServingPhysicalRunnerOperationsCreateErrorV1 {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum M1ServingPhysicalRunnerOperationErrorV1 {
     UnsupportedEvidenceShape,
+    PlanMismatch,
     ExactFirstDispatch(M1ExactDispatchErrorV1),
     ProviderPreparation,
     SelectedRosterCount,
@@ -388,6 +476,7 @@ pub enum M1ServingPhysicalRunnerOperationErrorV1 {
     EpochMismatch,
     QueueWait,
     QueueRecycle,
+    CompletionReadback,
     DiagnosticReadback,
     DiagnosticHistoryCapacity,
     DispositionCount,
@@ -425,10 +514,12 @@ pub enum M1ServingPhysicalRunnerTerminalLowerCustodyV1<'a, F> {
     FirstPublication {
         failure: crate::M1PhysicalRunnerFirstPublicationFailureV1<'a>,
         selected: Vec<ActiveDeviceKvCache>,
+        semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
     },
     FirstUnexpectedShape {
         published: M1PhysicalPublishedQueueSessionV1,
         selected: Vec<ActiveDeviceKvCache>,
+        semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
     },
     RearmSchedule {
         failure: crate::M1LongLivedQueueRearmScheduleFailureV1,
@@ -438,65 +529,95 @@ pub enum M1ServingPhysicalRunnerTerminalLowerCustodyV1<'a, F> {
         failure: Box<F>,
         history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
     },
+    RearmPreparedInputRejected {
+        prepared: Box<M1ServingPreparedSameShapeRearmV1>,
+        history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    },
     RearmPublication {
         failure: crate::M1PhysicalRunnerRearmSubmissionFailureV1<'a>,
+        semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
         history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
     },
     RearmUnexpectedShape {
-        published: M1RearmedPublishedQueueV1,
+        published: Box<M1RearmedPublishedQueueV1>,
+        semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
         history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
     },
     FirstQueueWait {
         failure: crate::M1PhysicalQueueOperationFailureV1,
         selected: Vec<ActiveDeviceKvCache>,
+        semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
         history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
     },
     FirstQueueRecycle {
         failure: crate::M1PhysicalQueueOperationFailureV1,
         selected: Vec<ActiveDeviceKvCache>,
+        semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
         history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
     },
     FirstCompactObservation {
         failure: crate::M1CompletionObservationFailureV1,
         selected: Vec<ActiveDeviceKvCache>,
+        semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
         history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
     },
     FirstChoiceObservation {
         failure: Box<crate::M1SpeculativeDiagnosticObservationFailureV1>,
         selected: Vec<ActiveDeviceKvCache>,
+        semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
         history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
     },
     FirstDiagnosticJoin {
         failure: Box<crate::M1SpeculativeDiagnosticCompletedReadbackJoinFailureV1>,
         selected: Vec<ActiveDeviceKvCache>,
+        semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
+        history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    },
+    FirstDirectObservation {
+        failure: Box<crate::M1DirectDiagnosticObservationFailureV1>,
+        selected: Vec<ActiveDeviceKvCache>,
+        semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
+        history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    },
+    FirstDirectJoin {
+        failure: Box<crate::M1DirectDiagnosticCompletedReadbackJoinFailureV1>,
+        selected: Vec<ActiveDeviceKvCache>,
+        semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
         history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
     },
     RearmedQueueProgress {
         failure: Box<crate::M1RearmedQueueProgressFailureV1>,
+        semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
         history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
     },
     RearmedDiagnosticReadback {
         failure: Box<crate::M1RearmedSpeculativeDiagnosticReadbackFailureV1>,
+        semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
+        history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    },
+    RearmedDirectReadback {
+        failure: Box<crate::M1RearmedDirectDiagnosticReadbackFailureV1>,
+        semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
         history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
     },
     FirstPageRelease {
         failure: Box<crate::M1CompletedStepKvReleaseFailureV1>,
-        choices: M1ObservedSpeculativeDiagnosticChoicesV1,
+        evidence: M1ServingPhysicalRunnerReadbackEvidenceV1,
         history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
     },
     FirstCompletionPoison {
         poison: Box<crate::M1CompletedStepPoisonV1>,
-        choices: M1ObservedSpeculativeDiagnosticChoicesV1,
+        evidence: M1ServingPhysicalRunnerReadbackEvidenceV1,
         history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
     },
     RearmedCompletionTerminal {
-        outcome: M1RearmedCompletionOutcomeV1,
-        choices: M1ObservedSpeculativeDiagnosticChoicesV1,
+        outcome: Box<M1RearmedCompletionOutcomeV1>,
+        evidence: M1ServingPhysicalRunnerReadbackEvidenceV1,
         history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
     },
     RearmedPageRelease {
         failure: Box<crate::M1RearmedRoundPageReleaseFailureV1>,
-        choices: M1ObservedSpeculativeDiagnosticChoicesV1,
+        evidence: M1ServingPhysicalRunnerReadbackEvidenceV1,
         history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
     },
 }
@@ -520,14 +641,14 @@ impl<F> M1ServingPhysicalRunnerTerminalLowerCustodyV1<'_, F> {
             Self::FirstPreparedRosterRejected(_) => {
                 M1ServingPhysicalRunnerOperationErrorV1::SelectedRosterCount
             }
-            Self::FirstPreparedEvidenceRejected(_) => {
+            Self::FirstPreparedEvidenceRejected(_)
+            | Self::RearmPreparedInputRejected { .. }
+            | Self::FirstUnexpectedShape { .. }
+            | Self::RearmUnexpectedShape { .. } => {
                 M1ServingPhysicalRunnerOperationErrorV1::UnsupportedEvidenceShape
             }
             Self::FirstPublication { .. } => {
                 M1ServingPhysicalRunnerOperationErrorV1::FirstPublication
-            }
-            Self::FirstUnexpectedShape { .. } | Self::RearmUnexpectedShape { .. } => {
-                M1ServingPhysicalRunnerOperationErrorV1::UnsupportedEvidenceShape
             }
             Self::RearmSchedule { .. } => {
                 M1ServingPhysicalRunnerOperationErrorV1::SameShapeSchedule
@@ -538,7 +659,12 @@ impl<F> M1ServingPhysicalRunnerTerminalLowerCustodyV1<'_, F> {
             Self::FirstQueueWait { .. } => M1ServingPhysicalRunnerOperationErrorV1::QueueWait,
             Self::FirstQueueRecycle { .. } => M1ServingPhysicalRunnerOperationErrorV1::QueueRecycle,
             Self::FirstCompactObservation { .. }
-            | Self::FirstChoiceObservation { .. }
+            | Self::FirstDirectObservation { .. }
+            | Self::FirstDirectJoin { .. }
+            | Self::RearmedDirectReadback { .. } => {
+                M1ServingPhysicalRunnerOperationErrorV1::CompletionReadback
+            }
+            Self::FirstChoiceObservation { .. }
             | Self::FirstDiagnosticJoin { .. }
             | Self::RearmedDiagnosticReadback { .. } => {
                 M1ServingPhysicalRunnerOperationErrorV1::DiagnosticReadback
@@ -573,6 +699,7 @@ impl<F> M1ServingPhysicalRunnerTerminalLowerCustodyV1<'_, F> {
 #[must_use = "terminal physical custody must remain retained for teardown or diagnosis"]
 pub struct M1ServingPhysicalRunnerTerminalCustodyV1<'a, P, F> {
     provider: Option<P>,
+    plan: Option<M1ServingPlanV1>,
     lower: Box<M1ServingPhysicalRunnerTerminalLowerCustodyV1<'a, F>>,
 }
 
@@ -582,6 +709,7 @@ impl<P, F: fmt::Debug> fmt::Debug for M1ServingPhysicalRunnerTerminalCustodyV1<'
             .debug_struct("M1ServingPhysicalRunnerTerminalCustodyV1")
             .field("stage", &self.stage())
             .field("provider_retained", &self.provider.is_some())
+            .field("plan", &self.plan)
             .field("lower", &self.lower)
             .finish()
     }
@@ -598,6 +726,12 @@ impl<'a, P, F> M1ServingPhysicalRunnerTerminalCustodyV1<'a, P, F> {
         self.provider.as_ref()
     }
 
+    /// Returns the exact serving plan retained when a batch had been selected.
+    #[must_use]
+    pub const fn plan(&self) -> Option<M1ServingPlanV1> {
+        self.plan
+    }
+
     pub fn lower(&self) -> &M1ServingPhysicalRunnerTerminalLowerCustodyV1<'a, F> {
         &self.lower
     }
@@ -608,9 +742,10 @@ impl<'a, P, F> M1ServingPhysicalRunnerTerminalCustodyV1<'a, P, F> {
         self,
     ) -> (
         Option<P>,
+        Option<M1ServingPlanV1>,
         Box<M1ServingPhysicalRunnerTerminalLowerCustodyV1<'a, F>>,
     ) {
-        (self.provider, self.lower)
+        (self.provider, self.plan, self.lower)
     }
 }
 
@@ -622,6 +757,7 @@ pub struct M1ServingPhysicalRunnerOperationsV1<'a, const C: usize, P> {
     ring_bytes: u32,
     identity: M1ServingPhysicalRunnerAdapterIdentityV1,
     phase: M1ServingPhysicalRunnerAdapterPhaseV1,
+    active_plan: Option<M1ServingPlanV1>,
 }
 
 impl<'a, const C: usize, P> M1ServingPhysicalRunnerOperationsV1<'a, C, P> {
@@ -646,6 +782,7 @@ impl<'a, const C: usize, P> M1ServingPhysicalRunnerOperationsV1<'a, C, P> {
             ring_bytes,
             identity,
             phase: M1ServingPhysicalRunnerAdapterPhaseV1::InitialReady,
+            active_plan: None,
         })
     }
 
@@ -672,6 +809,7 @@ impl<'a, const C: usize, P> M1ServingPhysicalRunnerOperationsV1<'a, C, P> {
             source,
             custody: M1ServingPhysicalRunnerTerminalCustodyV1 {
                 provider: self.provider.take(),
+                plan: self.active_plan,
                 lower: Box::new(lower),
             },
         }
@@ -695,6 +833,78 @@ fn supports_evidence_bound_s1_k4(plan: M1ServingPlanV1) -> bool {
     plan.shape() == M1PhysicalFixedBatchShapeV1::SpeculativeK4
         && plan.sequence_capacity() == 1
         && plan.target().bucket == Qwen3PlanBucket::SpeculativeS1K4C8192
+}
+
+fn supports_direct_serving(plan: M1ServingPlanV1) -> bool {
+    matches!(
+        plan.shape(),
+        M1PhysicalFixedBatchShapeV1::PairedPrefill | M1PhysicalFixedBatchShapeV1::TargetOnly
+    )
+}
+
+fn supports_serving_plan(plan: M1ServingPlanV1) -> bool {
+    supports_direct_serving(plan) || supports_evidence_bound_s1_k4(plan)
+}
+
+fn supports_same_shape_rearm(plan: M1ServingPlanV1) -> bool {
+    plan.shape() == M1PhysicalFixedBatchShapeV1::TargetOnly || supports_evidence_bound_s1_k4(plan)
+}
+
+fn validate_exact_serving_plan(
+    expected: M1ServingPlanV1,
+    actual: M1ServingPlanV1,
+) -> Result<(), M1ServingPhysicalRunnerOperationErrorV1> {
+    if expected == actual {
+        Ok(())
+    } else {
+        Err(M1ServingPhysicalRunnerOperationErrorV1::PlanMismatch)
+    }
+}
+
+fn completion_selection_matches(
+    plan: M1ServingPlanV1,
+    actual: ferric_spec::Qwen3PlanSelection,
+) -> bool {
+    actual == plan.target()
+}
+
+fn prepared_evidence_matches(
+    plan: M1ServingPlanV1,
+    expected_lanes: usize,
+    completion_output: &BoundM1CompletionOutputV1,
+    semantic_evidence: &M1ServingPreparedSemanticEvidenceV1,
+) -> bool {
+    if !completion_selection_matches(plan, completion_output.shape().selection()) {
+        return false;
+    }
+    let diagnostic_attached = completion_output.speculative_diagnostic_choices().is_some();
+    let direct_attached = completion_output.direct_diagnostic_choices().is_some();
+    if !prepared_semantic_evidence_matches(plan, expected_lanes, semantic_evidence) {
+        return false;
+    }
+    match semantic_evidence {
+        M1ServingPreparedSemanticEvidenceV1::Direct => direct_attached && !diagnostic_attached,
+        M1ServingPreparedSemanticEvidenceV1::SpeculativeK4 => {
+            diagnostic_attached && !direct_attached
+        }
+    }
+}
+
+fn prepared_semantic_evidence_matches(
+    plan: M1ServingPlanV1,
+    expected_lanes: usize,
+    semantic_evidence: &M1ServingPreparedSemanticEvidenceV1,
+) -> bool {
+    match semantic_evidence {
+        M1ServingPreparedSemanticEvidenceV1::Direct => {
+            supports_direct_serving(plan)
+                && expected_lanes > 0
+                && expected_lanes <= plan.sequence_capacity()
+        }
+        M1ServingPreparedSemanticEvidenceV1::SpeculativeK4 => {
+            supports_evidence_bound_s1_k4(plan) && expected_lanes == plan.sequence_capacity()
+        }
+    }
 }
 
 fn phase_allows_fresh_launch(phase: M1ServingPhysicalRunnerAdapterPhaseV1) -> bool {
@@ -810,12 +1020,13 @@ where
                 custody: (),
             });
         }
-        if !supports_evidence_bound_s1_k4(batch.plan()) {
+        if !supports_serving_plan(batch.plan()) {
             return Err(M1ServingPhysicalOperationFailureV1::Retryable {
                 source: M1ServingPhysicalRunnerOperationErrorV1::UnsupportedEvidenceShape,
                 custody: (),
             });
         }
+        self.active_plan = Some(batch.plan());
         let scheduled = match self
             .engine
             .dispatch_m1_exact_ready(batch.epoch(), batch.requests())
@@ -861,11 +1072,12 @@ where
                 ),
             ));
         }
-        if prepared
-            .completion_output
-            .speculative_diagnostic_choices()
-            .is_none()
-        {
+        if !prepared_evidence_matches(
+            batch.plan(),
+            batch.requests().len(),
+            &prepared.completion_output,
+            &prepared.semantic_evidence,
+        ) {
             return Err(self.terminal(
                 M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstPreparedEvidenceRejected(
                     Box::new(prepared),
@@ -877,6 +1089,7 @@ where
             recipe,
             completion_output,
             selected,
+            semantic_evidence,
         } = prepared;
         let published = match self.runner.publish_first_step(
             self.engine,
@@ -891,15 +1104,17 @@ where
                     M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstPublication {
                         failure,
                         selected,
+                        semantic_evidence,
                     },
                 ));
             }
         };
-        if published.shape() != M1PhysicalFixedBatchShapeV1::SpeculativeK4 {
+        if published.shape() != batch.plan().shape() {
             return Err(self.terminal(
                 M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstUnexpectedShape {
                     published,
                     selected,
+                    semantic_evidence,
                 },
             ));
         }
@@ -909,9 +1124,11 @@ where
         Ok(M1ServingPhysicalRunnerPublishedV1 {
             adapter_identity: self.identity,
             epoch: batch.epoch(),
+            plan: batch.plan(),
             state: M1ServingPhysicalRunnerPublishedStateV1::First {
                 published,
                 selected,
+                semantic_evidence,
                 diagnostic_history: M1ServingPhysicalRunnerDiagnosticHistoryV1::new(),
             },
         })
@@ -944,15 +1161,19 @@ where
         ) {
             return Err(M1ServingPhysicalOperationFailureV1::Retryable { source, custody });
         }
-        if !supports_evidence_bound_s1_k4(batch.plan()) {
+        if !supports_same_shape_rearm(batch.plan()) {
             return Err(M1ServingPhysicalOperationFailureV1::Retryable {
                 source: M1ServingPhysicalRunnerOperationErrorV1::UnsupportedEvidenceShape,
                 custody,
             });
         }
+        if let Err(source) = validate_exact_serving_plan(custody.plan(), batch.plan()) {
+            return Err(M1ServingPhysicalOperationFailureV1::Retryable { source, custody });
+        }
         let M1ServingPhysicalRunnerQuiescentV1 {
             adapter_identity,
             epoch: custody_epoch,
+            plan,
             state,
         } = custody;
         let (scheduled, diagnostic_history) = match state {
@@ -980,6 +1201,7 @@ where
                                 custody: M1ServingPhysicalRunnerQuiescentV1 {
                                     adapter_identity,
                                     epoch: custody_epoch,
+                                    plan,
                                     state: M1ServingPhysicalRunnerQuiescentStateV1::Unscheduled {
                                         unscheduled,
                                         diagnostic_history,
@@ -1020,6 +1242,7 @@ where
                                 custody: M1ServingPhysicalRunnerQuiescentV1 {
                                     adapter_identity,
                                     epoch: custody_epoch,
+                                    plan,
                                     state: M1ServingPhysicalRunnerQuiescentStateV1::Unscheduled {
                                         unscheduled,
                                         diagnostic_history,
@@ -1058,6 +1281,7 @@ where
                                     custody: M1ServingPhysicalRunnerQuiescentV1 {
                                         adapter_identity,
                                         epoch: custody_epoch,
+                                        plan,
                                         state:
                                             M1ServingPhysicalRunnerQuiescentStateV1::Unscheduled {
                                                 unscheduled,
@@ -1093,25 +1317,40 @@ where
                 ));
             }
         };
-        let published =
-            match self
-                .runner
-                .submit_rearm(self.engine, prepared.prepared, prepared.recipe)
-            {
-                Ok(published) => published,
-                Err(failure) => {
-                    return Err(self.terminal(
-                        M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmPublication {
-                            failure,
-                            history: diagnostic_history,
-                        },
-                    ));
-                }
-            };
-        if published.shape() != M1PhysicalFixedBatchShapeV1::SpeculativeK4 {
+        if !prepared_semantic_evidence_matches(
+            batch.plan(),
+            batch.requests().len(),
+            &prepared.semantic_evidence,
+        ) {
+            return Err(self.terminal(
+                M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmPreparedInputRejected {
+                    prepared: Box::new(prepared),
+                    history: diagnostic_history,
+                },
+            ));
+        }
+        let M1ServingPreparedSameShapeRearmV1 {
+            prepared,
+            recipe,
+            semantic_evidence,
+        } = prepared;
+        let published = match self.runner.submit_rearm(self.engine, prepared, recipe) {
+            Ok(published) => published,
+            Err(failure) => {
+                return Err(self.terminal(
+                    M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmPublication {
+                        failure,
+                        semantic_evidence,
+                        history: diagnostic_history,
+                    },
+                ));
+            }
+        };
+        if published.shape() != batch.plan().shape() {
             return Err(self.terminal(
                 M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmUnexpectedShape {
-                    published,
+                    published: Box::new(published),
+                    semantic_evidence,
                     history: diagnostic_history,
                 },
             ));
@@ -1122,8 +1361,10 @@ where
         Ok(M1ServingPhysicalRunnerPublishedV1 {
             adapter_identity,
             epoch: batch.epoch(),
+            plan,
             state: M1ServingPhysicalRunnerPublishedStateV1::Rearmed {
                 published,
+                semantic_evidence,
                 diagnostic_history,
             },
         })
@@ -1195,7 +1436,7 @@ where
         }
         if epoch != custody.epoch()
             || epoch != batch.epoch()
-            || !supports_evidence_bound_s1_k4(batch.plan())
+            || !supports_serving_plan(batch.plan())
         {
             return Err(M1ServingPhysicalOperationFailureV1::Retryable {
                 source: if epoch == custody.epoch() && epoch == batch.epoch() {
@@ -1206,26 +1447,39 @@ where
                 custody,
             });
         }
+        if let Err(source) = validate_exact_serving_plan(custody.plan(), batch.plan()) {
+            return Err(M1ServingPhysicalOperationFailureV1::Retryable { source, custody });
+        }
         let M1ServingPhysicalRunnerPublishedV1 {
             adapter_identity,
             epoch: custody_epoch,
+            plan,
             state,
         } = custody;
         match state {
             M1ServingPhysicalRunnerPublishedStateV1::First {
                 published,
                 selected,
+                semantic_evidence,
                 diagnostic_history,
             } => {
-                if published.shape() != M1PhysicalFixedBatchShapeV1::SpeculativeK4 {
+                if published.shape() != batch.plan().shape()
+                    || !prepared_semantic_evidence_matches(
+                        batch.plan(),
+                        batch.requests().len(),
+                        &semantic_evidence,
+                    )
+                {
                     return Err(M1ServingPhysicalOperationFailureV1::Retryable {
                         source: M1ServingPhysicalRunnerOperationErrorV1::UnsupportedEvidenceShape,
                         custody: M1ServingPhysicalRunnerPublishedV1 {
                             adapter_identity,
                             epoch: custody_epoch,
+                            plan,
                             state: M1ServingPhysicalRunnerPublishedStateV1::First {
                                 published,
                                 selected,
+                                semantic_evidence,
                                 diagnostic_history,
                             },
                         },
@@ -1238,6 +1492,7 @@ where
                             M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstQueueWait {
                                 failure,
                                 selected,
+                                semantic_evidence,
                                 history: diagnostic_history,
                             },
                         ));
@@ -1250,6 +1505,7 @@ where
                             M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstQueueRecycle {
                                 failure,
                                 selected,
+                                semantic_evidence,
                                 history: diagnostic_history,
                             },
                         ));
@@ -1262,59 +1518,124 @@ where
                             M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstCompactObservation {
                                 failure,
                                 selected,
+                                semantic_evidence,
                                 history: diagnostic_history,
                             },
                         ));
                     }
                 };
-                let diagnostic = match observed.observe_speculative_k4_diagnostic_choices() {
-                    Ok(diagnostic) => diagnostic,
-                    Err(failure) => {
-                        return Err(self.terminal(
-                            M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstChoiceObservation {
-                                failure,
-                                selected,
-                                history: diagnostic_history,
-                            },
-                        ));
+                let (readback, evidence) = match (batch.plan().shape(), semantic_evidence) {
+                    (
+                        M1PhysicalFixedBatchShapeV1::PairedPrefill
+                        | M1PhysicalFixedBatchShapeV1::TargetOnly,
+                        semantic_evidence @ M1ServingPreparedSemanticEvidenceV1::Direct,
+                    ) => {
+                        let diagnostic = match observed.observe_direct_diagnostic_choices() {
+                            Ok(diagnostic) => diagnostic,
+                            Err(failure) => {
+                                return Err(self.terminal(
+                                    M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstDirectObservation {
+                                        failure,
+                                        selected,
+                                        semantic_evidence,
+                                        history: diagnostic_history,
+                                    },
+                                ));
+                            }
+                        };
+                        let joined = match diagnostic.check_completion() {
+                            Ok(joined) => joined,
+                            Err(failure) => {
+                                return Err(self.terminal(
+                                    M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstDirectJoin {
+                                        failure,
+                                        selected,
+                                        semantic_evidence,
+                                        history: diagnostic_history,
+                                    },
+                                ));
+                            }
+                        };
+                        let (readback, choices) = joined.into_parts();
+                        (
+                            readback,
+                            M1ServingPhysicalRunnerReadbackEvidenceV1::Direct(choices),
+                        )
                     }
-                };
-                let joined = match diagnostic.check_completion() {
-                    Ok(joined) => joined,
-                    Err(failure) => {
-                        return Err(self.terminal(
-                            M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstDiagnosticJoin {
-                                failure,
-                                selected,
-                                history: diagnostic_history,
-                            },
-                        ));
+                    (
+                        M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+                        semantic_evidence @ M1ServingPreparedSemanticEvidenceV1::SpeculativeK4,
+                    ) => {
+                        let diagnostic = match observed.observe_speculative_k4_diagnostic_choices()
+                        {
+                            Ok(diagnostic) => diagnostic,
+                            Err(failure) => {
+                                return Err(self.terminal(
+                                        M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstChoiceObservation {
+                                            failure,
+                                            selected,
+                                            semantic_evidence,
+                                            history: diagnostic_history,
+                                        },
+                                    ));
+                            }
+                        };
+                        let joined = match diagnostic.check_completion() {
+                            Ok(joined) => joined,
+                            Err(failure) => {
+                                return Err(self.terminal(
+                                    M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstDiagnosticJoin {
+                                        failure,
+                                        selected,
+                                        semantic_evidence,
+                                        history: diagnostic_history,
+                                    },
+                                ));
+                            }
+                        };
+                        let (readback, choices) = joined.into_parts();
+                        (
+                            readback,
+                            M1ServingPhysicalRunnerReadbackEvidenceV1::SpeculativeK4(Box::new(
+                                choices,
+                            )),
+                        )
                     }
+                    _ => unreachable!("unsupported evidence shape passed readback preflight"),
                 };
-                let (readback, choices) = joined.into_parts();
                 self.phase = M1ServingPhysicalRunnerAdapterPhaseV1::Readback { epoch };
                 Ok(M1ServingPhysicalRunnerReadbackV1 {
                     adapter_identity,
                     epoch: custody_epoch,
+                    plan,
                     state: M1ServingPhysicalRunnerReadbackStateV1::First {
                         state: M1ServingFirstReadbackStateV1::Ready { readback, selected },
-                        choices,
+                        evidence,
                         diagnostic_history,
                     },
                 })
             }
             M1ServingPhysicalRunnerPublishedStateV1::Rearmed {
                 published,
+                semantic_evidence,
                 diagnostic_history,
             } => {
-                if published.shape() != M1PhysicalFixedBatchShapeV1::SpeculativeK4 {
+                if published.shape() != batch.plan().shape()
+                    || !prepared_semantic_evidence_matches(
+                        batch.plan(),
+                        batch.requests().len(),
+                        &semantic_evidence,
+                    )
+                {
                     return Err(M1ServingPhysicalOperationFailureV1::Retryable {
                         source: M1ServingPhysicalRunnerOperationErrorV1::UnsupportedEvidenceShape,
                         custody: M1ServingPhysicalRunnerPublishedV1 {
                             adapter_identity,
                             epoch: custody_epoch,
+                            plan,
                             state: M1ServingPhysicalRunnerPublishedStateV1::Rearmed {
                                 published,
+                                semantic_evidence,
                                 diagnostic_history,
                             },
                         },
@@ -1326,6 +1647,7 @@ where
                         return Err(self.terminal(
                             M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmedQueueProgress {
                                 failure,
+                                semantic_evidence,
                                 history: diagnostic_history,
                             },
                         ));
@@ -1337,30 +1659,71 @@ where
                         return Err(self.terminal(
                             M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmedQueueProgress {
                                 failure,
+                                semantic_evidence,
                                 history: diagnostic_history,
                             },
                         ));
                     }
                 };
-                let joined = match recycled.read_and_check_speculative_k4_diagnostic_completion() {
-                    Ok(joined) => joined,
-                    Err(failure) => {
-                        return Err(self.terminal(
-                            M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmedDiagnosticReadback {
-                                failure,
-                                history: diagnostic_history,
-                            },
-                        ));
+                let (readback, evidence) = match (batch.plan().shape(), semantic_evidence) {
+                    (
+                        M1PhysicalFixedBatchShapeV1::TargetOnly,
+                        semantic_evidence @ M1ServingPreparedSemanticEvidenceV1::Direct,
+                    ) => {
+                        let joined = match recycled.read_and_check_direct_diagnostic_completion() {
+                            Ok(joined) => joined,
+                            Err(failure) => {
+                                return Err(self.terminal(
+                                        M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmedDirectReadback {
+                                            failure,
+                                            semantic_evidence,
+                                            history: diagnostic_history,
+                                        },
+                                    ));
+                            }
+                        };
+                        let (readback, choices) = joined.into_parts();
+                        (
+                            readback,
+                            M1ServingPhysicalRunnerReadbackEvidenceV1::Direct(choices),
+                        )
                     }
+                    (
+                        M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+                        semantic_evidence @ M1ServingPreparedSemanticEvidenceV1::SpeculativeK4,
+                    ) => {
+                        let joined = match recycled
+                            .read_and_check_speculative_k4_diagnostic_completion()
+                        {
+                            Ok(joined) => joined,
+                            Err(failure) => {
+                                return Err(self.terminal(
+                                        M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmedDiagnosticReadback {
+                                            failure,
+                                            semantic_evidence,
+                                            history: diagnostic_history,
+                                        },
+                                    ));
+                            }
+                        };
+                        let (readback, choices) = joined.into_parts();
+                        (
+                            readback,
+                            M1ServingPhysicalRunnerReadbackEvidenceV1::SpeculativeK4(Box::new(
+                                choices,
+                            )),
+                        )
+                    }
+                    _ => unreachable!("unsupported rearm evidence passed publication preflight"),
                 };
-                let (readback, choices) = joined.into_parts();
                 self.phase = M1ServingPhysicalRunnerAdapterPhaseV1::Readback { epoch };
                 Ok(M1ServingPhysicalRunnerReadbackV1 {
                     adapter_identity,
                     epoch: custody_epoch,
+                    plan,
                     state: M1ServingPhysicalRunnerReadbackStateV1::Rearmed {
                         state: M1ServingRearmedReadbackStateV1::Ready(readback),
-                        choices,
+                        evidence,
                         diagnostic_history,
                     },
                 })
@@ -1427,12 +1790,13 @@ where
         let M1ServingPhysicalRunnerReadbackV1 {
             adapter_identity,
             epoch: _,
+            plan,
             state,
         } = custody;
         match state {
             M1ServingPhysicalRunnerReadbackStateV1::First {
                 state,
-                choices,
+                evidence,
                 mut diagnostic_history,
             } => {
                 if !diagnostic_history_can_append(diagnostic_history.len())
@@ -1443,8 +1807,9 @@ where
                         custody: M1ServingPhysicalRunnerReadbackV1::first(
                             adapter_identity,
                             readback_epoch,
+                            plan,
                             state,
-                            choices,
+                            evidence,
                             diagnostic_history,
                         ),
                     });
@@ -1457,8 +1822,9 @@ where
                                 custody: M1ServingPhysicalRunnerReadbackV1::first(
                                     adapter_identity,
                                     readback_epoch,
+                                    plan,
                                     M1ServingFirstReadbackStateV1::Ready { readback, selected },
-                                    choices,
+                                    evidence,
                                     diagnostic_history,
                                 ),
                             });
@@ -1471,11 +1837,12 @@ where
                                 custody: M1ServingPhysicalRunnerReadbackV1::first(
                                     adapter_identity,
                                     readback_epoch,
+                                    plan,
                                     M1ServingFirstReadbackStateV1::Ready {
                                         readback,
                                         selected,
                                     },
-                                    choices,
+                                    evidence,
                                     diagnostic_history,
                                 ),
                             });
@@ -1503,8 +1870,9 @@ where
                                 custody: M1ServingPhysicalRunnerReadbackV1::first(
                                     adapter_identity,
                                     readback_epoch,
+                                    plan,
                                     M1ServingFirstReadbackStateV1::Rejected(rejected),
-                                    choices,
+                                    evidence,
                                     diagnostic_history,
                                 ),
                             });
@@ -1517,13 +1885,14 @@ where
                     M1CompletedStepOutcomeV1::Completed(completed) => {
                         match release_m1_completed_step_kv_pages_v1(completed) {
                             Ok(released) => {
-                                diagnostic_history.push(choices);
+                                evidence.append_diagnostic_history(&mut diagnostic_history);
                                 self.phase = M1ServingPhysicalRunnerAdapterPhaseV1::Quiescent {
                                     epoch: readback_epoch,
                                 };
                                 Ok(M1ServingPhysicalRunnerQuiescentV1::first(
                                     adapter_identity,
                                     readback_epoch,
+                                    plan,
                                     released,
                                     diagnostic_history,
                                 ))
@@ -1531,7 +1900,7 @@ where
                             Err(failure) => Err(self.terminal(
                                 M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstPageRelease {
                                     failure,
-                                    choices,
+                                    evidence,
                                     history: diagnostic_history,
                                 },
                             )),
@@ -1543,8 +1912,9 @@ where
                             custody: M1ServingPhysicalRunnerReadbackV1::first(
                                 adapter_identity,
                                 readback_epoch,
+                                plan,
                                 M1ServingFirstReadbackStateV1::Rejected(rejected),
-                                choices,
+                                evidence,
                                 diagnostic_history,
                             ),
                         })
@@ -1552,7 +1922,7 @@ where
                     M1CompletedStepOutcomeV1::Poisoned(poison) => Err(self.terminal(
                         M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstCompletionPoison {
                             poison,
-                            choices,
+                            evidence,
                             history: diagnostic_history,
                         },
                     )),
@@ -1560,7 +1930,7 @@ where
             }
             M1ServingPhysicalRunnerReadbackStateV1::Rearmed {
                 state,
-                choices,
+                evidence,
                 mut diagnostic_history,
             } => {
                 if !diagnostic_history_can_append(diagnostic_history.len())
@@ -1571,8 +1941,9 @@ where
                         custody: M1ServingPhysicalRunnerReadbackV1::rearmed(
                             adapter_identity,
                             readback_epoch,
+                            plan,
                             state,
-                            choices,
+                            evidence,
                             diagnostic_history,
                         ),
                     });
@@ -1588,8 +1959,9 @@ where
                                     custody: M1ServingPhysicalRunnerReadbackV1::rearmed(
                                         adapter_identity,
                                         readback_epoch,
+                                        plan,
                                         M1ServingRearmedReadbackStateV1::PreflightRejected(failure),
-                                        choices,
+                                        evidence,
                                         diagnostic_history,
                                     ),
                                 });
@@ -1603,8 +1975,9 @@ where
                                 custody: M1ServingPhysicalRunnerReadbackV1::rearmed(
                                     adapter_identity,
                                     readback_epoch,
+                                    plan,
                                     M1ServingRearmedReadbackStateV1::PreflightRejected(failure),
-                                    choices,
+                                    evidence,
                                     diagnostic_history,
                                 ),
                             });
@@ -1619,8 +1992,9 @@ where
                                     custody: M1ServingPhysicalRunnerReadbackV1::rearmed(
                                         adapter_identity,
                                         readback_epoch,
+                                        plan,
                                         M1ServingRearmedReadbackStateV1::PreflightRejected(failure),
-                                        choices,
+                                        evidence,
                                         diagnostic_history,
                                     ),
                                 });
@@ -1631,8 +2005,8 @@ where
                         let M1CompletedStepOutcomeV1::Rejected(rejected) = outcome.outcome() else {
                             return Err(self.terminal(
                                 M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmedCompletionTerminal {
-                                    outcome,
-                                    choices,
+                                    outcome: Box::new(outcome),
+                                    evidence,
                                     history: diagnostic_history,
                                 },
                             ));
@@ -1643,8 +2017,9 @@ where
                                 custody: M1ServingPhysicalRunnerReadbackV1::rearmed(
                                     adapter_identity,
                                     readback_epoch,
+                                    plan,
                                     M1ServingRearmedReadbackStateV1::CompletionRejected(outcome),
-                                    choices,
+                                    evidence,
                                     diagnostic_history,
                                 ),
                             });
@@ -1654,8 +2029,8 @@ where
                             Err(outcome) => {
                                 return Err(self.terminal(
                                     M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmedCompletionTerminal {
-                                        outcome: *outcome,
-                                        choices,
+                                        outcome,
+                                        evidence,
                                         history: diagnostic_history,
                                     },
                                 ));
@@ -1665,13 +2040,14 @@ where
                 };
                 match outcome.release_completed() {
                     M1RearmedRoundReleaseOutcomeV1::Released(released) => {
-                        diagnostic_history.push(choices);
+                        evidence.append_diagnostic_history(&mut diagnostic_history);
                         self.phase = M1ServingPhysicalRunnerAdapterPhaseV1::Quiescent {
                             epoch: readback_epoch,
                         };
                         Ok(M1ServingPhysicalRunnerQuiescentV1::rearmed(
                             adapter_identity,
                             readback_epoch,
+                            plan,
                             released,
                             diagnostic_history,
                         ))
@@ -1679,7 +2055,7 @@ where
                     M1RearmedRoundReleaseOutcomeV1::Rejected(failure) => Err(self.terminal(
                         M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmedPageRelease {
                             failure,
-                            choices,
+                            evidence,
                             history: diagnostic_history,
                         },
                     )),
@@ -1692,10 +2068,11 @@ where
                                     custody: M1ServingPhysicalRunnerReadbackV1::rearmed(
                                         adapter_identity,
                                         readback_epoch,
+                                        plan,
                                         M1ServingRearmedReadbackStateV1::CompletionRejected(
                                             outcome,
                                         ),
-                                        choices,
+                                        evidence,
                                         diagnostic_history,
                                     ),
                                 })
@@ -1703,8 +2080,8 @@ where
                             M1CompletedStepOutcomeV1::Completed(_)
                             | M1CompletedStepOutcomeV1::Poisoned(_) => Err(self.terminal(
                                 M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmedCompletionTerminal {
-                                    outcome,
-                                    choices,
+                                    outcome: Box::new(outcome),
+                                    evidence,
                                     history: diagnostic_history,
                                 },
                             )),
@@ -1719,11 +2096,40 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ferric_spec::{Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanSelection};
+
+    fn serving_plan(
+        target_mode: Qwen3ExecutionMode,
+        target_bucket: Qwen3PlanBucket,
+        draft_mode: Qwen3ExecutionMode,
+        draft_bucket: Qwen3PlanBucket,
+    ) -> M1ServingPlanV1 {
+        M1ServingPlanV1::new(
+            Qwen3PlanSelection {
+                role: Qwen3ModelRole::Target8B,
+                mode: target_mode,
+                bucket: target_bucket,
+            },
+            Qwen3PlanSelection {
+                role: Qwen3ModelRole::Draft06B,
+                mode: draft_mode,
+                bucket: draft_bucket,
+            },
+        )
+        .expect("test plan must be canonical")
+    }
 
     #[test]
     fn terminal_stage_is_derived_from_typed_lower_custody() {
+        let retained_plan = serving_plan(
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
         let terminal = M1ServingPhysicalRunnerTerminalCustodyV1 {
             provider: Some(17_u8),
+            plan: Some(retained_plan),
             lower: Box::new(
                 M1ServingPhysicalRunnerTerminalLowerCustodyV1::<()>::ExactFirstDispatch(
                     M1ExactDispatchErrorV1::SubmissionEpochExhausted,
@@ -1737,9 +2143,11 @@ mod tests {
             )
         );
         assert_eq!(terminal.provider(), Some(&17));
+        assert_eq!(terminal.plan(), Some(retained_plan));
 
-        let (provider, lower) = terminal.into_parts();
+        let (provider, plan, lower) = terminal.into_parts();
         assert_eq!(provider, Some(17));
+        assert_eq!(plan, Some(retained_plan));
         assert!(matches!(
             *lower,
             M1ServingPhysicalRunnerTerminalLowerCustodyV1::ExactFirstDispatch(
@@ -1831,6 +2239,161 @@ mod tests {
         assert!(!diagnostic_history_can_append(
             M1_MAX_REARM_ROUND_HISTORY_V1.saturating_add(1)
         ));
+    }
+
+    #[test]
+    fn direct_prefill_and_decode_plans_are_admitted_without_widening_rearm() {
+        for bucket in [
+            Qwen3PlanBucket::PrefillS1T128,
+            Qwen3PlanBucket::PrefillS8T128,
+            Qwen3PlanBucket::PrefillS1T512,
+            Qwen3PlanBucket::PrefillS1T2048,
+        ] {
+            let plan = serving_plan(
+                Qwen3ExecutionMode::Prefill,
+                bucket,
+                Qwen3ExecutionMode::Prefill,
+                bucket,
+            );
+            assert!(supports_direct_serving(plan));
+            assert!(supports_serving_plan(plan));
+            assert!(!supports_same_shape_rearm(plan));
+            assert!(prepared_semantic_evidence_matches(
+                plan,
+                1,
+                &M1ServingPreparedSemanticEvidenceV1::Direct,
+            ));
+        }
+
+        for bucket in [
+            Qwen3PlanBucket::DecodeS1C8192,
+            Qwen3PlanBucket::DecodeS8C8192,
+            Qwen3PlanBucket::DecodeS32C8192,
+        ] {
+            let plan = serving_plan(
+                Qwen3ExecutionMode::Decode,
+                bucket,
+                Qwen3ExecutionMode::Decode,
+                bucket,
+            );
+            assert!(supports_direct_serving(plan));
+            assert!(supports_serving_plan(plan));
+            assert!(supports_same_shape_rearm(plan));
+            assert!(prepared_semantic_evidence_matches(
+                plan,
+                plan.sequence_capacity(),
+                &M1ServingPreparedSemanticEvidenceV1::Direct,
+            ));
+            assert!(!prepared_semantic_evidence_matches(
+                plan,
+                0,
+                &M1ServingPreparedSemanticEvidenceV1::Direct,
+            ));
+            assert!(!prepared_semantic_evidence_matches(
+                plan,
+                plan.sequence_capacity() + 1,
+                &M1ServingPreparedSemanticEvidenceV1::Direct,
+            ));
+        }
+    }
+
+    #[test]
+    fn exact_plan_binding_rejects_same_shape_bucket_substitution() {
+        let prefill_128 = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        );
+        let prefill_512 = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T512,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T512,
+        );
+        assert_eq!(prefill_128.shape(), prefill_512.shape());
+        assert_eq!(
+            validate_exact_serving_plan(prefill_128, prefill_512),
+            Err(M1ServingPhysicalRunnerOperationErrorV1::PlanMismatch)
+        );
+        assert!(!completion_selection_matches(
+            prefill_128,
+            prefill_512.target()
+        ));
+
+        let decode_s1 = serving_plan(
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        let decode_s8 = serving_plan(
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS8C8192,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS8C8192,
+        );
+        assert_eq!(decode_s1.shape(), decode_s8.shape());
+        assert_eq!(
+            validate_exact_serving_plan(decode_s1, decode_s8),
+            Err(M1ServingPhysicalRunnerOperationErrorV1::PlanMismatch)
+        );
+        assert!(!completion_selection_matches(decode_s1, decode_s8.target()));
+
+        assert_eq!(validate_exact_serving_plan(decode_s1, decode_s1), Ok(()));
+        assert!(completion_selection_matches(decode_s1, decode_s1.target()));
+    }
+
+    #[test]
+    fn only_s1_k4_speculation_is_admitted() {
+        let s1_k4 = serving_plan(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        assert!(supports_evidence_bound_s1_k4(s1_k4));
+        assert!(supports_serving_plan(s1_k4));
+        assert!(supports_same_shape_rearm(s1_k4));
+        assert!(prepared_semantic_evidence_matches(
+            s1_k4,
+            1,
+            &M1ServingPreparedSemanticEvidenceV1::SpeculativeK4,
+        ));
+        assert!(!prepared_semantic_evidence_matches(
+            s1_k4,
+            0,
+            &M1ServingPreparedSemanticEvidenceV1::SpeculativeK4,
+        ));
+
+        for (target_bucket, draft_bucket) in [
+            (
+                Qwen3PlanBucket::SpeculativeS8K4C8192,
+                Qwen3PlanBucket::DecodeS8C8192,
+            ),
+            (
+                Qwen3PlanBucket::SpeculativeS1K8C8192,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+            (
+                Qwen3PlanBucket::SpeculativeS1K16C8192,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+        ] {
+            let plan = serving_plan(
+                Qwen3ExecutionMode::Speculative,
+                target_bucket,
+                Qwen3ExecutionMode::Decode,
+                draft_bucket,
+            );
+            assert!(!supports_serving_plan(plan));
+            assert!(!supports_same_shape_rearm(plan));
+            assert!(!prepared_semantic_evidence_matches(
+                plan,
+                plan.sequence_capacity(),
+                &M1ServingPreparedSemanticEvidenceV1::SpeculativeK4,
+            ));
+        }
     }
 
     #[test]

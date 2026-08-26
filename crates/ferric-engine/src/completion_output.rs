@@ -16,8 +16,8 @@ use ferric_qwen_kernels::logits::Qwen3LogitsCompactRecordLayoutV1;
 use ferric_spec::{Qwen3ModelRole, Qwen3PlanSelection};
 
 use crate::{
-    BoundM1CompletionCanaryV1, BoundM1QualificationLogitsV1, BoundM1SpeculativeDiagnosticChoicesV1,
-    M1CompletionCanaryErrorV1, M1CompletionCanaryLayoutV1,
+    BoundM1CompletionCanaryV1, BoundM1DirectDiagnosticChoicesV1, BoundM1QualificationLogitsV1,
+    BoundM1SpeculativeDiagnosticChoicesV1, M1CompletionCanaryErrorV1, M1CompletionCanaryLayoutV1,
 };
 
 type CompletionOutputAllocationKeyV1 =
@@ -201,6 +201,7 @@ pub struct BoundM1CompletionOutputV1 {
     key: CompletionOutputAllocationKeyV1,
     dispatch_range: ServiceHostDispatchRangeV1,
     completion_canary: Option<BoundM1CompletionCanaryV1>,
+    direct_diagnostic_choices: Option<BoundM1DirectDiagnosticChoicesV1>,
     qualification_logits: Option<BoundM1QualificationLogitsV1>,
     speculative_diagnostic_choices: Option<BoundM1SpeculativeDiagnosticChoicesV1>,
 }
@@ -225,6 +226,18 @@ impl BoundM1CompletionOutputV1 {
         self.completion_canary
     }
 
+    /// Returns direct target choice capture when explicitly enabled.
+    #[must_use = "direct diagnostic choice custody remains paired with compact output"]
+    pub const fn direct_diagnostic_choices(&self) -> Option<&BoundM1DirectDiagnosticChoicesV1> {
+        self.direct_diagnostic_choices.as_ref()
+    }
+
+    pub(crate) fn direct_diagnostic_choices_mut(
+        &mut self,
+    ) -> Option<&mut BoundM1DirectDiagnosticChoicesV1> {
+        self.direct_diagnostic_choices.as_mut()
+    }
+
     /// Returns qualification-only logits capture when explicitly enabled.
     #[must_use = "qualification logits custody remains paired with compact output"]
     pub const fn qualification_logits(&self) -> Option<&BoundM1QualificationLogitsV1> {
@@ -239,11 +252,25 @@ impl BoundM1CompletionOutputV1 {
         self.speculative_diagnostic_choices.as_ref()
     }
 
+    pub(crate) fn speculative_diagnostic_choices_mut(
+        &mut self,
+    ) -> Option<&mut BoundM1SpeculativeDiagnosticChoicesV1> {
+        self.speculative_diagnostic_choices.as_mut()
+    }
+
     pub(crate) fn attach_qualification_logits(
         mut self,
         qualification_logits: BoundM1QualificationLogitsV1,
     ) -> Self {
         self.qualification_logits = Some(qualification_logits);
+        self
+    }
+
+    pub(crate) fn attach_direct_diagnostic_choices(
+        mut self,
+        choices: BoundM1DirectDiagnosticChoicesV1,
+    ) -> Self {
+        self.direct_diagnostic_choices = Some(choices);
         self
     }
 
@@ -362,6 +389,7 @@ pub fn allocate_m1_completion_output_v1(
         key,
         dispatch_range,
         completion_canary: None,
+        direct_diagnostic_choices: None,
         qualification_logits: None,
         speculative_diagnostic_choices: None,
     })
@@ -408,6 +436,7 @@ pub fn allocate_m1_guarded_completion_output_v1(
         key,
         dispatch_range,
         completion_canary: Some(BoundM1CompletionCanaryV1::new(layout, snapshot_range)),
+        direct_diagnostic_choices: None,
         qualification_logits: None,
         speculative_diagnostic_choices: None,
     })

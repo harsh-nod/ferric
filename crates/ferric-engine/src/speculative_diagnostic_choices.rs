@@ -143,6 +143,21 @@ impl BoundM1SpeculativeDiagnosticChoicesV1 {
         self.draft_range
     }
 
+    pub(crate) fn replacement_draft_image(
+        &self,
+    ) -> Result<Box<[u8]>, M1SpeculativeDiagnosticChoicesErrorV1> {
+        replacement_image(self.shape.draft_extent_bytes)
+    }
+
+    pub(crate) fn replace_retained_draft_range(
+        &mut self,
+        range: ServiceHostDispatchRangeV1,
+    ) -> Result<(), M1SpeculativeDiagnosticChoicesErrorV1> {
+        validate_replacement_range(range, self.shape.draft_extent_bytes)?;
+        self.draft_range = range;
+        Ok(())
+    }
+
     pub(crate) fn retained_draft_read_ranges(
         &self,
     ) -> Result<
@@ -165,6 +180,21 @@ impl BoundM1SpeculativeDiagnosticChoicesV1 {
     #[must_use]
     pub const fn retained_target_range(&self) -> ServiceHostDispatchRangeV1 {
         self.target_range
+    }
+
+    pub(crate) fn replacement_target_image(
+        &self,
+    ) -> Result<Box<[u8]>, M1SpeculativeDiagnosticChoicesErrorV1> {
+        replacement_image(self.shape.target_extent_bytes)
+    }
+
+    pub(crate) fn replace_retained_target_range(
+        &mut self,
+        range: ServiceHostDispatchRangeV1,
+    ) -> Result<(), M1SpeculativeDiagnosticChoicesErrorV1> {
+        validate_replacement_range(range, self.shape.target_extent_bytes)?;
+        self.target_range = range;
+        Ok(())
     }
 
     pub(crate) fn host_dispatch_ranges(
@@ -402,6 +432,33 @@ fn speculative_choice_initial_image(
         image.extend_from_within(..copy_len);
     }
     Ok(image.into_boxed_slice())
+}
+
+fn replacement_image(extent: u64) -> Result<Box<[u8]>, M1SpeculativeDiagnosticChoicesErrorV1> {
+    let requested =
+        usize::try_from(extent).map_err(|_| M1SpeculativeDiagnosticChoicesErrorV1::Overflow)?;
+    speculative_choice_initial_image(requested)
+}
+
+fn validate_replacement_range(
+    range: ServiceHostDispatchRangeV1,
+    expected_extent: u64,
+) -> Result<(), M1SpeculativeDiagnosticChoicesErrorV1> {
+    if range.extent_bytes() != expected_extent {
+        return Err(M1SpeculativeDiagnosticChoicesErrorV1::AllocationExtent {
+            expected: expected_extent,
+            actual: range.extent_bytes(),
+        });
+    }
+    let checked = range.checked_subrange(
+        0,
+        expected_extent,
+        M1_SPECULATIVE_DIAGNOSTIC_CHOICE_ALIGNMENT_V1,
+    )?;
+    if checked != range {
+        return Err(M1SpeculativeDiagnosticChoicesErrorV1::DispatchRangeDrift);
+    }
+    Ok(())
 }
 
 fn revalidate_range(

@@ -19,11 +19,11 @@ use core::fmt;
 
 use fe2o3_kfd::{ComputeAqlQueueObservationV1, Gfx942DeviceContentDescriptorV1};
 use fe2o3_service_host::{
-    DeviceWorkspaceRoleV1, ServiceCompletedReadbackV1, ServiceDeviceDispatchRangeV1,
-    ServiceDispatchRangeV1, ServiceFixedBatchV1, ServiceFixedDispatchBufferV1,
-    ServiceFixedDispatchPacketV1, ServiceHostDispatchRangeV1, ServiceHostDispatchSnapshotRangeV1,
-    ServiceQueueDataUpdateFailureV1, ServiceQueueReleaseFailureV1,
-    ServiceQueueReleaseObservationV1, ServiceQueueUnboundSessionV1,
+    DeviceWorkspaceRoleV1, HostDownloadRoleV1, ServiceCompletedReadbackV1,
+    ServiceDeviceDispatchRangeV1, ServiceDispatchRangeV1, ServiceFixedBatchV1,
+    ServiceFixedDispatchBufferV1, ServiceFixedDispatchPacketV1, ServiceHostDispatchRangeV1,
+    ServiceHostDispatchSnapshotRangeV1, ServiceQueueDataUpdateFailureV1,
+    ServiceQueueReleaseFailureV1, ServiceQueueReleaseObservationV1, ServiceQueueUnboundSessionV1,
 };
 use ferric_build::{AddresslessM1StepWorkspacePlan, M1StepWorkspaceRange};
 use ferric_spec::{
@@ -31,6 +31,9 @@ use ferric_spec::{
     RequestId, M1_MAX_ACTIVE_SEQUENCES,
 };
 
+use crate::physical_buffer_bindings::{
+    speculative_diagnostic_choice_source_route, SpeculativeDiagnosticChoiceSourceRouteV1,
+};
 use crate::physical_fixed_batch::M1PhysicalQueueBatchRearmPartsV1;
 use crate::step_workspace_subleases::{
     bind_queue_replaced_m1_step_workspace, M1QueueReplacedWorkspaceBindingFailureV1,
@@ -2541,6 +2544,9 @@ pub enum M1LongLivedQueueRearmSubmissionPhaseV1 {
     Preflight,
     DraftWorkspaceReplacement,
     TargetWorkspaceReplacement,
+    DirectDiagnosticChoiceReplacement,
+    SpeculativeDraftChoiceReplacement,
+    SpeculativeTargetChoiceReplacement,
     WorkspaceRangeRebinding,
     FixedBatchRebuild,
     QueueBind,
@@ -2622,23 +2628,114 @@ enum RearmRangeRequestV1 {
     FreshWorkspace(M1FullStepWorkspaceRole, M1StepWorkspaceRange),
     RetainedCompletionOutput,
     RetainedQualificationLogits,
+    RetainedDirectDiagnosticChoices,
+    RetainedSpeculativeDraftChoices,
+    RetainedSpeculativeDraftChoice { iteration: u8 },
+    RetainedSpeculativeTargetChoices,
     Unchanged,
 }
 
 #[derive(Clone, Copy, Debug)]
-struct RetainedCaptureRangesV1 {
-    completion_output: ServiceHostDispatchRangeV1,
+enum RetainedSemanticCaptureRangesV1<T> {
+    Ordinary,
+    Qualification {
+        logits: T,
+    },
+    DirectDiagnostic {
+        choices: T,
+    },
+    SpeculativeDiagnostic {
+        draft: T,
+        draft_scalars: [T; 4],
+        target: T,
+    },
+}
+
+impl<T> RetainedSemanticCaptureRangesV1<T> {
+    const fn qualification_enabled(&self) -> bool {
+        matches!(self, Self::Qualification { .. })
+    }
+
+    const fn direct_diagnostic_enabled(&self) -> bool {
+        matches!(self, Self::DirectDiagnostic { .. })
+    }
+
+    const fn speculative_diagnostic_enabled(&self) -> bool {
+        matches!(self, Self::SpeculativeDiagnostic { .. })
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+struct RetainedCaptureRangesV1<T> {
+    completion_output: T,
+    semantic: RetainedSemanticCaptureRangesV1<T>,
+}
+
+impl<T> RetainedCaptureRangesV1<T> {
+    fn map<U>(self, mut map: impl FnMut(T) -> U) -> RetainedCaptureRangesV1<U> {
+        let semantic = match self.semantic {
+            RetainedSemanticCaptureRangesV1::Ordinary => RetainedSemanticCaptureRangesV1::Ordinary,
+            RetainedSemanticCaptureRangesV1::Qualification { logits } => {
+                RetainedSemanticCaptureRangesV1::Qualification {
+                    logits: map(logits),
+                }
+            }
+            RetainedSemanticCaptureRangesV1::DirectDiagnostic { choices } => {
+                RetainedSemanticCaptureRangesV1::DirectDiagnostic {
+                    choices: map(choices),
+                }
+            }
+            RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
+                draft,
+                draft_scalars,
+                target,
+            } => RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
+                draft: map(draft),
+                draft_scalars: draft_scalars.map(&mut map),
+                target: map(target),
+            },
+        };
+        RetainedCaptureRangesV1 {
+            completion_output: map(self.completion_output),
+            semantic,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+struct RetainedHostCaptureRangesV1 {
+    ranges: RetainedCaptureRangesV1<ServiceHostDispatchRangeV1>,
     completion_snapshot: Option<ServiceHostDispatchSnapshotRangeV1>,
-    qualification_logits: Option<ServiceHostDispatchRangeV1>,
 }
 
 fn retained_capture_range_request(
     source: M1PhysicalBufferSourceV1,
-    qualification_logits_enabled: bool,
+    semantic: &RetainedSemanticCaptureRangesV1<impl Copy>,
 ) -> Option<RearmRangeRequestV1> {
+    let diagnostic_route = speculative_diagnostic_choice_source_route(
+        source,
+        semantic.speculative_diagnostic_enabled(),
+        semantic.direct_diagnostic_enabled(),
+    )
+    .ok()?;
+    match diagnostic_route {
+        SpeculativeDiagnosticChoiceSourceRouteV1::DirectTargetWholeHost => {
+            return Some(RearmRangeRequestV1::RetainedDirectDiagnosticChoices)
+        }
+        SpeculativeDiagnosticChoiceSourceRouteV1::DraftWholeHost => {
+            return Some(RearmRangeRequestV1::RetainedSpeculativeDraftChoices)
+        }
+        SpeculativeDiagnosticChoiceSourceRouteV1::TargetWholeHost => {
+            return Some(RearmRangeRequestV1::RetainedSpeculativeTargetChoices)
+        }
+        SpeculativeDiagnosticChoiceSourceRouteV1::DraftScalarHost { iteration, .. } => {
+            return Some(RearmRangeRequestV1::RetainedSpeculativeDraftChoice { iteration })
+        }
+        SpeculativeDiagnosticChoiceSourceRouteV1::OrdinaryDevice => {}
+    }
     match source {
         M1PhysicalBufferSourceV1::Workspace { workspace, range }
-            if qualification_logits_enabled
+            if semantic.qualification_enabled()
                 && workspace == M1FullStepWorkspaceRole::Target
                 && range == ferric_build::M1StepWorkspaceRangeRole::Logits =>
         {
@@ -2654,9 +2751,9 @@ fn retained_capture_range_request(
 fn requested_workspace_range(
     source: M1PhysicalBufferSourceV1,
     composition: &AddresslessM1FullStepWorkspaceComposition,
-    qualification_logits_enabled: bool,
+    semantic: &RetainedSemanticCaptureRangesV1<impl Copy>,
 ) -> Result<RearmRangeRequestV1, ()> {
-    if let Some(request) = retained_capture_range_request(source, qualification_logits_enabled) {
+    if let Some(request) = retained_capture_range_request(source, semantic) {
         return Ok(request);
     }
     match source {
@@ -2739,15 +2836,39 @@ fn resolve_fresh_workspace_range(
 struct RearmRangeSelectionV1 {
     completion_output_sources: usize,
     qualification_logits_sources: usize,
-    qualification_logits_enabled: bool,
+    direct_diagnostic_sources: usize,
+    speculative_draft_sources: usize,
+    speculative_draft_scalar_sources: usize,
+    speculative_target_sources: usize,
+    semantic: RetainedSemanticCaptureRangesV1<()>,
 }
 
 impl RearmRangeSelectionV1 {
-    const fn new(qualification_logits_enabled: bool) -> Self {
+    const fn new<T>(semantic: &RetainedSemanticCaptureRangesV1<T>) -> Self {
+        let semantic = match semantic {
+            RetainedSemanticCaptureRangesV1::Ordinary => RetainedSemanticCaptureRangesV1::Ordinary,
+            RetainedSemanticCaptureRangesV1::Qualification { .. } => {
+                RetainedSemanticCaptureRangesV1::Qualification { logits: () }
+            }
+            RetainedSemanticCaptureRangesV1::DirectDiagnostic { .. } => {
+                RetainedSemanticCaptureRangesV1::DirectDiagnostic { choices: () }
+            }
+            RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic { .. } => {
+                RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
+                    draft: (),
+                    draft_scalars: [(); 4],
+                    target: (),
+                }
+            }
+        };
         Self {
             completion_output_sources: 0,
             qualification_logits_sources: 0,
-            qualification_logits_enabled,
+            direct_diagnostic_sources: 0,
+            speculative_draft_sources: 0,
+            speculative_draft_scalar_sources: 0,
+            speculative_target_sources: 0,
+            semantic,
         }
     }
 
@@ -2756,34 +2877,106 @@ impl RearmRangeSelectionV1 {
         request: RearmRangeRequestV1,
         old: T,
         fresh: Option<T>,
-        retained_completion: T,
-        retained_logits: Option<T>,
+        previous: RetainedCaptureRangesV1<T>,
+        retained: RetainedCaptureRangesV1<T>,
     ) -> Result<T, ()> {
         match request {
             RearmRangeRequestV1::FreshWorkspace(_, _) => fresh.ok_or(()),
             RearmRangeRequestV1::RetainedCompletionOutput => {
                 self.completion_output_sources += 1;
-                (old == retained_completion)
-                    .then_some(retained_completion)
+                (old == previous.completion_output)
+                    .then_some(retained.completion_output)
                     .ok_or(())
             }
             RearmRangeRequestV1::RetainedQualificationLogits => {
                 self.qualification_logits_sources += 1;
-                let expected = retained_logits.ok_or(())?;
-                (old == expected).then_some(expected).ok_or(())
+                let (
+                    RetainedSemanticCaptureRangesV1::Qualification { logits: previous },
+                    RetainedSemanticCaptureRangesV1::Qualification { logits: retained },
+                ) = (&previous.semantic, &retained.semantic)
+                else {
+                    return Err(());
+                };
+                (old == *previous).then_some(*retained).ok_or(())
+            }
+            RearmRangeRequestV1::RetainedDirectDiagnosticChoices => {
+                self.direct_diagnostic_sources += 1;
+                let (
+                    RetainedSemanticCaptureRangesV1::DirectDiagnostic { choices: previous },
+                    RetainedSemanticCaptureRangesV1::DirectDiagnostic { choices: retained },
+                ) = (&previous.semantic, &retained.semantic)
+                else {
+                    return Err(());
+                };
+                (old == *previous).then_some(*retained).ok_or(())
+            }
+            RearmRangeRequestV1::RetainedSpeculativeDraftChoices => {
+                self.speculative_draft_sources += 1;
+                let (
+                    RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
+                        draft: previous, ..
+                    },
+                    RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
+                        draft: retained, ..
+                    },
+                ) = (&previous.semantic, &retained.semantic)
+                else {
+                    return Err(());
+                };
+                (old == *previous).then_some(*retained).ok_or(())
+            }
+            RearmRangeRequestV1::RetainedSpeculativeDraftChoice { iteration } => {
+                self.speculative_draft_scalar_sources += 1;
+                let (
+                    RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
+                        draft_scalars: previous,
+                        ..
+                    },
+                    RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
+                        draft_scalars: retained,
+                        ..
+                    },
+                ) = (&previous.semantic, &retained.semantic)
+                else {
+                    return Err(());
+                };
+                let index = usize::from(iteration);
+                let previous = *previous.get(index).ok_or(())?;
+                let retained = *retained.get(index).ok_or(())?;
+                (old == previous).then_some(retained).ok_or(())
+            }
+            RearmRangeRequestV1::RetainedSpeculativeTargetChoices => {
+                self.speculative_target_sources += 1;
+                let (
+                    RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
+                        target: previous, ..
+                    },
+                    RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
+                        target: retained, ..
+                    },
+                ) = (&previous.semantic, &retained.semantic)
+                else {
+                    return Err(());
+                };
+                (old == *previous).then_some(*retained).ok_or(())
             }
             RearmRangeRequestV1::Unchanged => Ok(old),
         }
     }
 
     fn validate(self) -> Result<(), ()> {
-        let expected_qualification_logits_sources = if self.qualification_logits_enabled {
-            2
-        } else {
-            0
+        let expected = match self.semantic {
+            RetainedSemanticCaptureRangesV1::Ordinary => (0, 0, 0, 0, 0),
+            RetainedSemanticCaptureRangesV1::Qualification { .. } => (2, 0, 0, 0, 0),
+            RetainedSemanticCaptureRangesV1::DirectDiagnostic { .. } => (0, 2, 0, 0, 0),
+            RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic { .. } => (0, 0, 2, 7, 2),
         };
         (self.completion_output_sources == 1
-            && self.qualification_logits_sources == expected_qualification_logits_sources)
+            && self.qualification_logits_sources == expected.0
+            && self.direct_diagnostic_sources == expected.1
+            && self.speculative_draft_sources == expected.2
+            && self.speculative_draft_scalar_sources == expected.3
+            && self.speculative_target_sources == expected.4)
             .then_some(())
             .ok_or(())
     }
@@ -2794,7 +2987,8 @@ fn rebuild_bound_rows(
     old_bound_rows: &[M1BoundPhysicalBufferRowV1],
     composition: &AddresslessM1FullStepWorkspaceComposition,
     workspace_ranges: &[FreshWorkspaceRangeV1],
-    retained_capture: &RetainedCaptureRangesV1,
+    previous_capture: &RetainedHostCaptureRangesV1,
+    retained_capture: &RetainedHostCaptureRangesV1,
 ) -> Result<Box<[M1BoundPhysicalBufferRowV1]>, ()> {
     let mut old_rows = Vec::new();
     old_rows
@@ -2820,9 +3014,11 @@ fn rebuild_bound_rows(
         source_rows,
         &old_rows,
         composition,
-        ServiceDispatchRangeV1::HostVisible(retained_capture.completion_output),
+        previous_capture
+            .ranges
+            .map(ServiceDispatchRangeV1::HostVisible),
         retained_capture
-            .qualification_logits
+            .ranges
             .map(ServiceDispatchRangeV1::HostVisible),
         |workspace, requested| {
             Ok((
@@ -2913,8 +3109,8 @@ fn rebuild_bound_row_ranges<T: Copy + Eq>(
     source_rows: &[M1PhysicalBufferRecipeRowV1],
     old_bound_rows: &[RearmBoundRowV1<T>],
     composition: &AddresslessM1FullStepWorkspaceComposition,
-    retained_completion: T,
-    retained_logits: Option<T>,
+    previous: RetainedCaptureRangesV1<T>,
+    retained: RetainedCaptureRangesV1<T>,
     fresh_range: impl FnMut(
         M1FullStepWorkspaceRole,
         M1StepWorkspaceRange,
@@ -2923,9 +3119,9 @@ fn rebuild_bound_row_ranges<T: Copy + Eq>(
     rebuild_bound_row_ranges_with_requests(
         source_rows,
         old_bound_rows,
-        retained_completion,
-        retained_logits,
-        |source| requested_workspace_range(source, composition, retained_logits.is_some()),
+        previous,
+        retained,
+        |source| requested_workspace_range(source, composition, &retained.semantic),
         fresh_range,
     )
 }
@@ -2933,8 +3129,8 @@ fn rebuild_bound_row_ranges<T: Copy + Eq>(
 fn rebuild_bound_row_ranges_with_requests<T: Copy + Eq>(
     source_rows: &[M1PhysicalBufferRecipeRowV1],
     old_bound_rows: &[RearmBoundRowV1<T>],
-    retained_completion: T,
-    retained_logits: Option<T>,
+    previous: RetainedCaptureRangesV1<T>,
+    retained: RetainedCaptureRangesV1<T>,
     mut range_request: impl FnMut(M1PhysicalBufferSourceV1) -> Result<RearmRangeRequestV1, ()>,
     mut fresh_range: impl FnMut(
         M1FullStepWorkspaceRole,
@@ -2945,7 +3141,7 @@ fn rebuild_bound_row_ranges_with_requests<T: Copy + Eq>(
         return Err(());
     }
     let mut rows = Vec::new();
-    let mut range_selection = RearmRangeSelectionV1::new(retained_logits.is_some());
+    let mut range_selection = RearmRangeSelectionV1::new(&retained.semantic);
     rows.try_reserve_exact(source_rows.len()).map_err(|_| ())?;
     for (source, old) in source_rows.iter().zip(old_bound_rows) {
         if source.dispatch_index() != old.dispatch_index
@@ -2974,15 +3170,14 @@ fn rebuild_bound_row_ranges_with_requests<T: Copy + Eq>(
                 }
                 RearmRangeRequestV1::RetainedCompletionOutput
                 | RearmRangeRequestV1::RetainedQualificationLogits
+                | RearmRangeRequestV1::RetainedDirectDiagnosticChoices
+                | RearmRangeRequestV1::RetainedSpeculativeDraftChoices
+                | RearmRangeRequestV1::RetainedSpeculativeDraftChoice { .. }
+                | RearmRangeRequestV1::RetainedSpeculativeTargetChoices
                 | RearmRangeRequestV1::Unchanged => None,
             };
-            let selected = range_selection.select(
-                request,
-                old_buffer.range,
-                fresh,
-                retained_completion,
-                retained_logits,
-            )?;
+            let selected =
+                range_selection.select(request, old_buffer.range, fresh, previous, retained)?;
             buffers.push(RearmBoundRangeV1 {
                 explicit_argument_index: semantic.explicit_argument_index(),
                 range: selected,
@@ -3540,19 +3735,44 @@ impl M1RearmedRecycledQueueV1 {
             queue_observation,
             device,
         } = self;
-        if let Err(lane) = validate_rearmed_generic_semantics(
+        if let Err(gate) = validate_rearmed_generic_semantics(
             queue
                 .custody()
                 .completion_output()
                 .qualification_logits()
                 .is_some(),
+            queue
+                .custody()
+                .completion_output()
+                .direct_diagnostic_choices()
+                .is_some(),
+            queue
+                .custody()
+                .completion_output()
+                .speculative_diagnostic_choices()
+                .is_some(),
             expectations,
         ) {
+            let source = match gate {
+                M1RearmedGenericSemanticGateV1::Qualification { lane } => {
+                    M1RearmedReadbackFailureSourceV1::QualificationCaptureRequiresEvidence {
+                        lane,
+                        queue: Box::new(queue),
+                    }
+                }
+                M1RearmedGenericSemanticGateV1::DirectDiagnostic => {
+                    M1RearmedReadbackFailureSourceV1::DirectDiagnosticCaptureRequiresEvidence {
+                        queue: Box::new(queue),
+                    }
+                }
+                M1RearmedGenericSemanticGateV1::SpeculativeDiagnostic => {
+                    M1RearmedReadbackFailureSourceV1::SpeculativeDiagnosticCaptureRequiresEvidence {
+                        queue: Box::new(queue),
+                    }
+                }
+            };
             return Err(Box::new(M1RearmedReadbackFailureV1 {
-                source: M1RearmedReadbackFailureSourceV1::QualificationCaptureRequiresEvidence {
-                    lane,
-                    queue: Box::new(queue),
-                },
+                source,
                 carry,
                 queue_observation,
                 device,
@@ -3583,6 +3803,70 @@ impl M1RearmedRecycledQueueV1 {
                 device,
             })),
         }
+    }
+
+    /// Copies and joins independent final-row target choices for one rearmed
+    /// `TargetOnly` completion.
+    ///
+    /// # Errors
+    ///
+    /// Returns every selected/parked cache and prior-round owner beside the
+    /// exact compact, direct-choice observation, or semantic-join failure.
+    pub fn read_and_check_direct_diagnostic_completion(
+        self,
+    ) -> Result<
+        M1RearmedDirectDiagnosticCompletedReadbackV1,
+        Box<M1RearmedDirectDiagnosticReadbackFailureV1>,
+    > {
+        let Self {
+            queue,
+            carry,
+            queue_observation,
+            device,
+        } = self;
+        let observed = match queue.observe_completion() {
+            Ok(observed) => observed,
+            Err(source) => {
+                return Err(Box::new(M1RearmedDirectDiagnosticReadbackFailureV1 {
+                    source: M1RearmedDirectDiagnosticReadbackFailureSourceV1::Compact(source),
+                    carry,
+                    queue_observation,
+                    device,
+                }))
+            }
+        };
+        let diagnostic = match observed.observe_direct_diagnostic_choices() {
+            Ok(diagnostic) => diagnostic,
+            Err(source) => {
+                return Err(Box::new(M1RearmedDirectDiagnosticReadbackFailureV1 {
+                    source: M1RearmedDirectDiagnosticReadbackFailureSourceV1::Choices(source),
+                    carry,
+                    queue_observation,
+                    device,
+                }))
+            }
+        };
+        let joined = match diagnostic.check_completion() {
+            Ok(joined) => joined,
+            Err(source) => {
+                return Err(Box::new(M1RearmedDirectDiagnosticReadbackFailureV1 {
+                    source: M1RearmedDirectDiagnosticReadbackFailureSourceV1::Join(source),
+                    carry,
+                    queue_observation,
+                    device,
+                }))
+            }
+        };
+        let (readback, choices) = joined.into_parts();
+        Ok(M1RearmedDirectDiagnosticCompletedReadbackV1 {
+            readback: M1RearmedCompletedReadbackV1 {
+                readback,
+                carry,
+                queue_observation,
+                device,
+            },
+            choices,
+        })
     }
 
     /// Copies, independently observes, and semantically joins one rearmed
@@ -3652,6 +3936,265 @@ impl M1RearmedRecycledQueueV1 {
             },
             choices,
         })
+    }
+}
+
+/// Phase-local failure for evidence-bearing rearmed direct readback.
+#[must_use = "failed direct diagnostic readback retains queue, cache, and evidence custody"]
+#[derive(Debug)]
+pub enum M1RearmedDirectDiagnosticReadbackFailureSourceV1 {
+    Compact(crate::M1CompletionObservationFailureV1),
+    Choices(Box<crate::M1DirectDiagnosticObservationFailureV1>),
+    Join(Box<crate::M1DirectDiagnosticCompletedReadbackJoinFailureV1>),
+}
+
+/// Failed rearmed direct diagnostic join with complete continuation custody.
+#[must_use = "failed direct diagnostic readback must be retained or torn down"]
+#[derive(Debug)]
+pub struct M1RearmedDirectDiagnosticReadbackFailureV1 {
+    source: M1RearmedDirectDiagnosticReadbackFailureSourceV1,
+    carry: M1RearmContinuationCustodyV1,
+    queue_observation: ComputeAqlQueueObservationV1,
+    device: Gfx942DeviceBinding,
+}
+
+impl M1RearmedDirectDiagnosticReadbackFailureV1 {
+    pub const fn source(&self) -> &M1RearmedDirectDiagnosticReadbackFailureSourceV1 {
+        &self.source
+    }
+
+    #[must_use]
+    pub const fn retained_cache_count(&self) -> usize {
+        self.carry.selected.len() + self.carry.parked.len()
+    }
+
+    #[must_use]
+    pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
+        self.queue_observation
+    }
+
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.device
+    }
+
+    /// Separates exact lower failure from opaque retained rearm lineage.
+    #[must_use = "both direct failure and retained rearm lineage remain linear"]
+    pub fn into_parts(
+        self: Box<Self>,
+    ) -> (
+        M1RearmedDirectDiagnosticReadbackFailureSourceV1,
+        M1RearmedDirectDiagnosticRetainedCustodyV1,
+    ) {
+        let Self {
+            source,
+            carry,
+            queue_observation,
+            device,
+        } = *self;
+        (
+            source,
+            M1RearmedDirectDiagnosticRetainedCustodyV1 {
+                carry,
+                queue_observation,
+                device,
+            },
+        )
+    }
+
+    /// Fail-stops `engine`, releases the failed physical queue, and retains all
+    /// direct evidence and rearm continuation custody.
+    ///
+    /// # Errors
+    ///
+    /// Returns exact lower release quarantine joined to unchanged evidence.
+    pub fn destroy_queue_and_retain_custody<const C: usize>(
+        self: Box<Self>,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1RearmedDirectDiagnosticReadbackTeardownSuccessV1,
+        Box<M1RearmedDirectDiagnosticReadbackTeardownFailureV1>,
+    > {
+        let (source, retained) = self.into_parts();
+        let teardown = match source {
+            M1RearmedDirectDiagnosticReadbackFailureSourceV1::Compact(source) => source
+                .destroy_queue_and_retain_evidence(engine)
+                .map(M1RearmedDirectDiagnosticReadbackTeardownSuccessSourceV1::Compact)
+                .map_err(|source| {
+                    M1RearmedDirectDiagnosticReadbackTeardownFailureSourceV1::Compact(source)
+                }),
+            M1RearmedDirectDiagnosticReadbackFailureSourceV1::Choices(source) => (*source)
+                .destroy_queue_and_retain_evidence(engine)
+                .map(M1RearmedDirectDiagnosticReadbackTeardownSuccessSourceV1::Choices)
+                .map_err(|source| {
+                    M1RearmedDirectDiagnosticReadbackTeardownFailureSourceV1::Choices(source)
+                }),
+            M1RearmedDirectDiagnosticReadbackFailureSourceV1::Join(source) => (*source)
+                .destroy_queue_and_retain_evidence(engine)
+                .map(M1RearmedDirectDiagnosticReadbackTeardownSuccessSourceV1::Join)
+                .map_err(|source| {
+                    M1RearmedDirectDiagnosticReadbackTeardownFailureSourceV1::Join(source)
+                }),
+        };
+        match teardown {
+            Ok(source) => {
+                Ok(M1RearmedDirectDiagnosticReadbackTeardownSuccessV1 { source, retained })
+            }
+            Err(source) => Err(Box::new(
+                M1RearmedDirectDiagnosticReadbackTeardownFailureV1 { source, retained },
+            )),
+        }
+    }
+}
+
+/// Opaque rearm continuation custody retained independently of direct readback.
+#[must_use = "rearm continuation custody must remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedDirectDiagnosticRetainedCustodyV1 {
+    carry: M1RearmContinuationCustodyV1,
+    queue_observation: ComputeAqlQueueObservationV1,
+    device: Gfx942DeviceBinding,
+}
+
+impl M1RearmedDirectDiagnosticRetainedCustodyV1 {
+    #[must_use]
+    pub fn selected_requests(&self) -> impl ExactSizeIterator<Item = RequestId> + '_ {
+        self.carry
+            .selected
+            .iter()
+            .map(|cache| cache.projection().request)
+    }
+
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        self.carry.parked.len()
+    }
+
+    #[must_use]
+    pub const fn terminal_count(&self) -> usize {
+        self.carry.terminal.len()
+    }
+
+    #[must_use]
+    pub const fn previous_epoch(&self) -> CompletionEpoch {
+        self.carry.previous_epoch
+    }
+
+    pub const fn prior_checked(&self) -> &crate::M1CheckedCompletionOutputV1 {
+        &self.carry.prior_checked
+    }
+
+    #[must_use]
+    pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
+        self.queue_observation
+    }
+
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.device
+    }
+}
+
+/// Exact lower success after terminal direct diagnostic teardown.
+#[must_use = "direct diagnostic teardown evidence must remain retained"]
+#[derive(Debug)]
+pub enum M1RearmedDirectDiagnosticReadbackTeardownSuccessSourceV1 {
+    Compact(crate::M1CompletionEvidenceTeardownSuccessV1),
+    Choices(crate::M1DirectDiagnosticObservationTeardownSuccessV1),
+    Join(crate::M1DirectDiagnosticSemanticTeardownSuccessV1),
+}
+
+/// Exact lower release quarantine after terminal direct diagnostic teardown.
+#[must_use = "direct diagnostic teardown quarantine must remain retained"]
+#[derive(Debug)]
+pub enum M1RearmedDirectDiagnosticReadbackTeardownFailureSourceV1 {
+    Compact(Box<crate::M1CompletionEvidenceTeardownFailureV1>),
+    Choices(Box<crate::M1DirectDiagnosticObservationTeardownFailureV1>),
+    Join(Box<crate::M1DirectDiagnosticSemanticTeardownFailureV1>),
+}
+
+/// Clean queue release retaining direct evidence and all rearm lineage.
+#[must_use = "direct evidence and rearm lineage must remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedDirectDiagnosticReadbackTeardownSuccessV1 {
+    source: M1RearmedDirectDiagnosticReadbackTeardownSuccessSourceV1,
+    retained: M1RearmedDirectDiagnosticRetainedCustodyV1,
+}
+
+impl M1RearmedDirectDiagnosticReadbackTeardownSuccessV1 {
+    pub const fn source(&self) -> &M1RearmedDirectDiagnosticReadbackTeardownSuccessSourceV1 {
+        &self.source
+    }
+
+    pub const fn retained(&self) -> &M1RearmedDirectDiagnosticRetainedCustodyV1 {
+        &self.retained
+    }
+
+    #[must_use = "teardown evidence and retained lineage remain linear"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1RearmedDirectDiagnosticReadbackTeardownSuccessSourceV1,
+        M1RearmedDirectDiagnosticRetainedCustodyV1,
+    ) {
+        (self.source, self.retained)
+    }
+}
+
+/// Failed release retaining direct evidence and all rearm lineage.
+#[must_use = "direct release quarantine and rearm lineage must remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedDirectDiagnosticReadbackTeardownFailureV1 {
+    source: M1RearmedDirectDiagnosticReadbackTeardownFailureSourceV1,
+    retained: M1RearmedDirectDiagnosticRetainedCustodyV1,
+}
+
+impl M1RearmedDirectDiagnosticReadbackTeardownFailureV1 {
+    pub const fn source(&self) -> &M1RearmedDirectDiagnosticReadbackTeardownFailureSourceV1 {
+        &self.source
+    }
+
+    pub const fn retained(&self) -> &M1RearmedDirectDiagnosticRetainedCustodyV1 {
+        &self.retained
+    }
+
+    #[must_use = "release quarantine and retained lineage remain linear"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1RearmedDirectDiagnosticReadbackTeardownFailureSourceV1,
+        M1RearmedDirectDiagnosticRetainedCustodyV1,
+    ) {
+        (self.source, self.retained)
+    }
+}
+
+/// Rearmed direct completed readback retaining independent choice evidence.
+#[must_use = "direct readback and choice evidence must remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedDirectDiagnosticCompletedReadbackV1 {
+    readback: M1RearmedCompletedReadbackV1,
+    choices: crate::M1ObservedDirectDiagnosticChoicesV1,
+}
+
+impl M1RearmedDirectDiagnosticCompletedReadbackV1 {
+    pub const fn checked(&self) -> &crate::M1CheckedCompletionOutputV1 {
+        self.readback.checked()
+    }
+
+    pub const fn choices(&self) -> &crate::M1ObservedDirectDiagnosticChoicesV1 {
+        &self.choices
+    }
+
+    /// Separates normal completion custody from independent direct evidence.
+    #[must_use = "both normal readback and direct evidence must remain retained"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1RearmedCompletedReadbackV1,
+        crate::M1ObservedDirectDiagnosticChoicesV1,
+    ) {
+        (self.readback, self.choices)
     }
 }
 
@@ -3932,10 +4475,25 @@ impl M1RearmedSpeculativeDiagnosticCompletedReadbackV1 {
     }
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum M1RearmedGenericSemanticGateV1 {
+    Qualification { lane: usize },
+    DirectDiagnostic,
+    SpeculativeDiagnostic,
+}
+
 fn validate_rearmed_generic_semantics(
     qualification_capture_enabled: bool,
+    direct_diagnostic_capture_enabled: bool,
+    speculative_diagnostic_capture_enabled: bool,
     expectations: &[crate::CompletionWireSemanticExpectation<'_>],
-) -> Result<(), usize> {
+) -> Result<(), M1RearmedGenericSemanticGateV1> {
+    if direct_diagnostic_capture_enabled {
+        return Err(M1RearmedGenericSemanticGateV1::DirectDiagnostic);
+    }
+    if speculative_diagnostic_capture_enabled {
+        return Err(M1RearmedGenericSemanticGateV1::SpeculativeDiagnostic);
+    }
     if qualification_capture_enabled {
         if let Some(lane) = expectations.iter().position(|semantic| {
             !matches!(
@@ -3943,7 +4501,7 @@ fn validate_rearmed_generic_semantics(
                 crate::CompletionWireSemanticExpectation::QualificationPromptCommit { .. }
             )
         }) {
-            return Err(lane);
+            return Err(M1RearmedGenericSemanticGateV1::Qualification { lane });
         }
     }
     Ok(())
@@ -4623,8 +5181,10 @@ impl M1RearmedObservedCompletionOutputV1 {
         self,
         expectations: &[crate::CompletionWireSemanticExpectation<'_>],
     ) -> Result<M1RearmedCompletedReadbackV1, Box<M1RearmedReadbackFailureV1>> {
-        if let Err(lane) = validate_rearmed_generic_semantics(
+        if let Err(gate) = validate_rearmed_generic_semantics(
             self.observed.qualification_logits_enabled(),
+            self.observed.direct_diagnostic_choices_enabled(),
+            self.observed.speculative_diagnostic_choices_enabled(),
             expectations,
         ) {
             let Self {
@@ -4633,12 +5193,26 @@ impl M1RearmedObservedCompletionOutputV1 {
                 queue_observation,
                 device,
             } = self;
-            return Err(Box::new(M1RearmedReadbackFailureV1 {
-                source:
+            let source = match gate {
+                M1RearmedGenericSemanticGateV1::Qualification { lane } => {
                     M1RearmedReadbackFailureSourceV1::ObservedQualificationCaptureRequiresEvidence {
                         lane,
                         observed: Box::new(observed),
-                    },
+                    }
+                }
+                M1RearmedGenericSemanticGateV1::DirectDiagnostic => {
+                    M1RearmedReadbackFailureSourceV1::ObservedDirectDiagnosticCaptureRequiresEvidence {
+                        observed: Box::new(observed),
+                    }
+                }
+                M1RearmedGenericSemanticGateV1::SpeculativeDiagnostic => {
+                    M1RearmedReadbackFailureSourceV1::ObservedSpeculativeDiagnosticCaptureRequiresEvidence {
+                        observed: Box::new(observed),
+                    }
+                }
+            };
+            return Err(Box::new(M1RearmedReadbackFailureV1 {
+                source,
                 carry,
                 queue_observation,
                 device,
@@ -5215,6 +5789,22 @@ pub enum M1RearmedReadbackFailureSourceV1 {
         lane: usize,
         observed: Box<crate::M1ObservedCompletionOutputV1>,
     },
+    /// Generic checking cannot retire a queue with attached direct-choice evidence.
+    DirectDiagnosticCaptureRequiresEvidence {
+        queue: Box<crate::M1PhysicalRecycledQueueSessionV1>,
+    },
+    /// Post-copy direct-choice gate rejection retaining the inert observation.
+    ObservedDirectDiagnosticCaptureRequiresEvidence {
+        observed: Box<crate::M1ObservedCompletionOutputV1>,
+    },
+    /// Generic checking cannot retire a queue with attached speculative-choice evidence.
+    SpeculativeDiagnosticCaptureRequiresEvidence {
+        queue: Box<crate::M1PhysicalRecycledQueueSessionV1>,
+    },
+    /// Post-copy speculative-choice gate rejection retaining the inert observation.
+    ObservedSpeculativeDiagnosticCaptureRequiresEvidence {
+        observed: Box<crate::M1ObservedCompletionOutputV1>,
+    },
     /// Physical copy or structural observation rejection.
     Observation(crate::M1CompletionObservationFailureV1),
     /// Scheduler-roster, plan, wire-identity, or token-semantic rejection.
@@ -5260,6 +5850,10 @@ impl M1RearmedReadbackFailureV1 {
             M1RearmedReadbackFailureSourceV1::QualificationCaptureRequiresEvidence {
                 queue,
                 ..
+            }
+            | M1RearmedReadbackFailureSourceV1::DirectDiagnosticCaptureRequiresEvidence { queue }
+            | M1RearmedReadbackFailureSourceV1::SpeculativeDiagnosticCaptureRequiresEvidence {
+                queue,
             } => Ok(M1RearmedRecycledQueueV1 {
                 queue: *queue,
                 carry,
@@ -5298,6 +5892,12 @@ impl M1RearmedReadbackFailureV1 {
             M1RearmedReadbackFailureSourceV1::ObservedQualificationCaptureRequiresEvidence {
                 observed,
                 ..
+            }
+            | M1RearmedReadbackFailureSourceV1::ObservedDirectDiagnosticCaptureRequiresEvidence {
+                observed,
+            }
+            | M1RearmedReadbackFailureSourceV1::ObservedSpeculativeDiagnosticCaptureRequiresEvidence {
+                observed,
             } => Ok(M1RearmedObservedCompletionOutputV1 {
                 observed: *observed,
                 carry,
@@ -5408,6 +6008,8 @@ impl M1RearmedReadbackFailureV1 {
         if matches!(
             &self.source,
             M1RearmedReadbackFailureSourceV1::QualificationCaptureRequiresEvidence { .. }
+                | M1RearmedReadbackFailureSourceV1::DirectDiagnosticCaptureRequiresEvidence { .. }
+                | M1RearmedReadbackFailureSourceV1::SpeculativeDiagnosticCaptureRequiresEvidence { .. }
         ) {
             return Err(self);
         }
@@ -5420,27 +6022,48 @@ impl M1RearmedReadbackFailureV1 {
                 return Err(self);
             }
         }
-        let qualification_capture_enabled = match &self.source {
+        let capture_enabled = match &self.source {
             M1RearmedReadbackFailureSourceV1::QualificationCaptureRequiresEvidence { .. }
             | M1RearmedReadbackFailureSourceV1::ObservedQualificationCaptureRequiresEvidence {
                 ..
-            } => true,
+            } => (true, false, false),
+            M1RearmedReadbackFailureSourceV1::DirectDiagnosticCaptureRequiresEvidence { .. }
+            | M1RearmedReadbackFailureSourceV1::ObservedDirectDiagnosticCaptureRequiresEvidence {
+                ..
+            } => (false, true, false),
+            M1RearmedReadbackFailureSourceV1::SpeculativeDiagnosticCaptureRequiresEvidence {
+                ..
+            }
+            | M1RearmedReadbackFailureSourceV1::ObservedSpeculativeDiagnosticCaptureRequiresEvidence {
+                ..
+            } => (false, false, true),
             M1RearmedReadbackFailureSourceV1::Observation(source) => match source.custody() {
-                crate::M1CompletionObservationFailureCustodyV1::Recycled(queue) => queue
-                    .custody()
-                    .completion_output()
-                    .qualification_logits()
-                    .is_some(),
+                crate::M1CompletionObservationFailureCustodyV1::Recycled(queue) => {
+                    let output = queue.custody().completion_output();
+                    (
+                        output.qualification_logits().is_some(),
+                        output.direct_diagnostic_choices().is_some(),
+                        output.speculative_diagnostic_choices().is_some(),
+                    )
+                }
                 crate::M1CompletionObservationFailureCustodyV1::Rejected(_)
                 | crate::M1CompletionObservationFailureCustodyV1::SnapshotReadFailed(_) => {
                     return Err(self);
                 }
             },
-            M1RearmedReadbackFailureSourceV1::Join(source) => {
-                source.observed().qualification_logits_enabled()
-            }
+            M1RearmedReadbackFailureSourceV1::Join(source) => (
+                source.observed().qualification_logits_enabled(),
+                source.observed().direct_diagnostic_choices_enabled(),
+                source.observed().speculative_diagnostic_choices_enabled(),
+            ),
         };
-        if validate_rearmed_generic_semantics(qualification_capture_enabled, expectations).is_err()
+        if validate_rearmed_generic_semantics(
+            capture_enabled.0,
+            capture_enabled.1,
+            capture_enabled.2,
+            expectations,
+        )
+        .is_err()
         {
             return Err(self);
         }
@@ -5463,10 +6086,53 @@ impl M1RearmedReadbackFailureV1 {
                 queue_observation,
                 device,
             })),
+            M1RearmedReadbackFailureSourceV1::DirectDiagnosticCaptureRequiresEvidence {
+                queue,
+            } => Err(Box::new(Self {
+                source: M1RearmedReadbackFailureSourceV1::DirectDiagnosticCaptureRequiresEvidence {
+                    queue,
+                },
+                carry,
+                queue_observation,
+                device,
+            })),
+            M1RearmedReadbackFailureSourceV1::SpeculativeDiagnosticCaptureRequiresEvidence {
+                queue,
+            } => Err(Box::new(Self {
+                source:
+                    M1RearmedReadbackFailureSourceV1::SpeculativeDiagnosticCaptureRequiresEvidence {
+                        queue,
+                    },
+                carry,
+                queue_observation,
+                device,
+            })),
             M1RearmedReadbackFailureSourceV1::ObservedQualificationCaptureRequiresEvidence {
                 observed,
                 ..
             } => rejoin_rearmed_readback(*observed, expectations, carry, queue_observation, device),
+            M1RearmedReadbackFailureSourceV1::ObservedDirectDiagnosticCaptureRequiresEvidence {
+                observed,
+            } => Err(Box::new(Self {
+                source:
+                    M1RearmedReadbackFailureSourceV1::ObservedDirectDiagnosticCaptureRequiresEvidence {
+                        observed,
+                    },
+                carry,
+                queue_observation,
+                device,
+            })),
+            M1RearmedReadbackFailureSourceV1::ObservedSpeculativeDiagnosticCaptureRequiresEvidence {
+                observed,
+            } => Err(Box::new(Self {
+                source:
+                    M1RearmedReadbackFailureSourceV1::ObservedSpeculativeDiagnosticCaptureRequiresEvidence {
+                        observed,
+                    },
+                carry,
+                queue_observation,
+                device,
+            })),
             M1RearmedReadbackFailureSourceV1::Observation(source) => {
                 let (error, custody) = source.into_parts();
                 match custody {
@@ -5714,6 +6380,8 @@ fn rejoin_rearmed_readback(
 pub enum M1RearmedReadbackTeardownDiagnosticV1 {
     ObservedBeforeSemanticJoin,
     QualificationCaptureRequiresEvidence { lane: usize },
+    DirectDiagnosticCaptureRequiresEvidence,
+    SpeculativeDiagnosticCaptureRequiresEvidence,
     Observation(crate::M1CompletionObservationErrorV1),
     Join(crate::M1CompletedReadbackJoinErrorV1),
 }
@@ -5814,6 +6482,66 @@ fn teardown_rearmed_readback_source(
                 M1RearmedReadbackTeardownDiagnosticV1::QualificationCaptureRequiresEvidence {
                     lane,
                 };
+            match observed.destroy_and_release_retaining_image() {
+                Ok((queue_release, image)) => Ok(RearmedReadbackTeardownSuccessV1 {
+                    diagnostic,
+                    queue_release,
+                    evidence: M1RearmedReadbackTeardownEvidenceV1::ObservedCompact(Box::new(image)),
+                }),
+                Err(failure) => {
+                    let (source, image) = *failure;
+                    Err(Box::new(RearmedReadbackTeardownFailureV1 {
+                        diagnostic,
+                        source,
+                        evidence: M1RearmedReadbackTeardownEvidenceV1::ObservedCompact(Box::new(
+                            image,
+                        )),
+                    }))
+                }
+            }
+        }
+        M1RearmedReadbackFailureSourceV1::DirectDiagnosticCaptureRequiresEvidence { queue } => {
+            finish(
+                M1RearmedReadbackTeardownDiagnosticV1::DirectDiagnosticCaptureRequiresEvidence,
+                M1RearmedReadbackTeardownEvidenceV1::None,
+                queue.destroy_and_release(),
+            )
+        }
+        M1RearmedReadbackFailureSourceV1::ObservedDirectDiagnosticCaptureRequiresEvidence {
+            observed,
+        } => {
+            let diagnostic =
+                M1RearmedReadbackTeardownDiagnosticV1::DirectDiagnosticCaptureRequiresEvidence;
+            match observed.destroy_and_release_retaining_image() {
+                Ok((queue_release, image)) => Ok(RearmedReadbackTeardownSuccessV1 {
+                    diagnostic,
+                    queue_release,
+                    evidence: M1RearmedReadbackTeardownEvidenceV1::ObservedCompact(Box::new(image)),
+                }),
+                Err(failure) => {
+                    let (source, image) = *failure;
+                    Err(Box::new(RearmedReadbackTeardownFailureV1 {
+                        diagnostic,
+                        source,
+                        evidence: M1RearmedReadbackTeardownEvidenceV1::ObservedCompact(Box::new(
+                            image,
+                        )),
+                    }))
+                }
+            }
+        }
+        M1RearmedReadbackFailureSourceV1::SpeculativeDiagnosticCaptureRequiresEvidence {
+            queue,
+        } => finish(
+            M1RearmedReadbackTeardownDiagnosticV1::SpeculativeDiagnosticCaptureRequiresEvidence,
+            M1RearmedReadbackTeardownEvidenceV1::None,
+            queue.destroy_and_release(),
+        ),
+        M1RearmedReadbackFailureSourceV1::ObservedSpeculativeDiagnosticCaptureRequiresEvidence {
+            observed,
+        } => {
+            let diagnostic =
+                M1RearmedReadbackTeardownDiagnosticV1::SpeculativeDiagnosticCaptureRequiresEvidence;
             match observed.destroy_and_release_retaining_image() {
                 Ok((queue_release, image)) => Ok(RearmedReadbackTeardownSuccessV1 {
                     diagnostic,
@@ -8361,6 +9089,184 @@ fn bind_submit_speculative_k16(
     })
 }
 
+#[derive(Debug)]
+struct DiagnosticCaptureResetFailureV1 {
+    phase: M1LongLivedQueueRearmSubmissionPhaseV1,
+    _retained: Box<dyn fmt::Debug>,
+}
+
+fn diagnostic_capture_reset_failure(
+    phase: M1LongLivedQueueRearmSubmissionPhaseV1,
+    retained: impl fmt::Debug + 'static,
+) -> DiagnosticCaptureResetFailureV1 {
+    DiagnosticCaptureResetFailureV1 {
+        phase,
+        _retained: Box::new(retained),
+    }
+}
+
+fn reset_retained_diagnostic_capture(
+    lower: ServiceQueueUnboundSessionV1,
+    mut completion: crate::BoundM1CompletionOutputV1,
+) -> Result<
+    (
+        ServiceQueueUnboundSessionV1,
+        crate::BoundM1CompletionOutputV1,
+    ),
+    DiagnosticCaptureResetFailureV1,
+> {
+    if completion.direct_diagnostic_choices().is_some() {
+        let (old, image) = {
+            let choices = completion
+                .direct_diagnostic_choices()
+                .expect("presence checked above");
+            let image = match choices.replacement_image() {
+                Ok(image) => image,
+                Err(error) => {
+                    return Err(diagnostic_capture_reset_failure(
+                        M1LongLivedQueueRearmSubmissionPhaseV1::DirectDiagnosticChoiceReplacement,
+                        (lower, completion, error),
+                    ));
+                }
+            };
+            (choices.retained_range(), image)
+        };
+        let update = match lower.replace_initialized_host_visible::<HostDownloadRoleV1>(old, image)
+        {
+            Ok(update) => update,
+            Err(failure) => {
+                return Err(diagnostic_capture_reset_failure(
+                    M1LongLivedQueueRearmSubmissionPhaseV1::DirectDiagnosticChoiceReplacement,
+                    (failure, completion),
+                ));
+            }
+        };
+        let (lower, range, _snapshot) = update.into_parts();
+        if let Err(error) = completion
+            .direct_diagnostic_choices_mut()
+            .expect("presence checked above")
+            .replace_retained_range(range)
+        {
+            return Err(diagnostic_capture_reset_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::DirectDiagnosticChoiceReplacement,
+                (lower, completion, error),
+            ));
+        }
+        return Ok((lower, completion));
+    }
+
+    if completion.speculative_diagnostic_choices().is_some() {
+        let (old_draft, draft_image, old_target, target_image) = {
+            let choices = completion
+                .speculative_diagnostic_choices()
+                .expect("presence checked above");
+            let draft_image = match choices.replacement_draft_image() {
+                Ok(image) => image,
+                Err(error) => {
+                    return Err(diagnostic_capture_reset_failure(
+                        M1LongLivedQueueRearmSubmissionPhaseV1::SpeculativeDraftChoiceReplacement,
+                        (lower, completion, error),
+                    ));
+                }
+            };
+            let target_image = match choices.replacement_target_image() {
+                Ok(image) => image,
+                Err(error) => {
+                    return Err(diagnostic_capture_reset_failure(
+                        M1LongLivedQueueRearmSubmissionPhaseV1::SpeculativeTargetChoiceReplacement,
+                        (lower, completion, draft_image, error),
+                    ));
+                }
+            };
+            (
+                choices.retained_draft_range(),
+                draft_image,
+                choices.retained_target_range(),
+                target_image,
+            )
+        };
+        let draft_update = match lower
+            .replace_initialized_host_visible::<HostDownloadRoleV1>(old_draft, draft_image)
+        {
+            Ok(update) => update,
+            Err(failure) => {
+                return Err(diagnostic_capture_reset_failure(
+                    M1LongLivedQueueRearmSubmissionPhaseV1::SpeculativeDraftChoiceReplacement,
+                    (failure, completion, target_image),
+                ));
+            }
+        };
+        let (lower, draft_range, _draft_snapshot) = draft_update.into_parts();
+        if let Err(error) = completion
+            .speculative_diagnostic_choices_mut()
+            .expect("presence checked above")
+            .replace_retained_draft_range(draft_range)
+        {
+            return Err(diagnostic_capture_reset_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::SpeculativeDraftChoiceReplacement,
+                (lower, completion, target_image, error),
+            ));
+        }
+        let target_update = match lower
+            .replace_initialized_host_visible::<HostDownloadRoleV1>(old_target, target_image)
+        {
+            Ok(update) => update,
+            Err(failure) => {
+                return Err(diagnostic_capture_reset_failure(
+                    M1LongLivedQueueRearmSubmissionPhaseV1::SpeculativeTargetChoiceReplacement,
+                    (failure, completion),
+                ));
+            }
+        };
+        let (lower, target_range, _target_snapshot) = target_update.into_parts();
+        if let Err(error) = completion
+            .speculative_diagnostic_choices_mut()
+            .expect("presence checked above")
+            .replace_retained_target_range(target_range)
+        {
+            return Err(diagnostic_capture_reset_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::SpeculativeTargetChoiceReplacement,
+                (lower, completion, error),
+            ));
+        }
+        return Ok((lower, completion));
+    }
+
+    Ok((lower, completion))
+}
+
+fn retained_host_capture_ranges(
+    completion: &crate::BoundM1CompletionOutputV1,
+) -> Result<RetainedHostCaptureRangesV1, ()> {
+    let qualification = completion.qualification_logits();
+    let direct = completion.direct_diagnostic_choices();
+    let speculative = completion.speculative_diagnostic_choices();
+    let semantic = match (qualification, direct, speculative) {
+        (None, None, None) => RetainedSemanticCaptureRangesV1::Ordinary,
+        (Some(logits), None, None) => RetainedSemanticCaptureRangesV1::Qualification {
+            logits: logits.retained_host_dispatch_range(),
+        },
+        (None, Some(choices), None) => RetainedSemanticCaptureRangesV1::DirectDiagnostic {
+            choices: choices.retained_range(),
+        },
+        (None, None, Some(choices)) => RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
+            draft: choices.retained_draft_range(),
+            draft_scalars: choices.retained_draft_read_ranges().map_err(|_| ())?,
+            target: choices.retained_target_range(),
+        },
+        _ => return Err(()),
+    };
+    Ok(RetainedHostCaptureRangesV1 {
+        ranges: RetainedCaptureRangesV1 {
+            completion_output: completion.retained_host_dispatch_range(),
+            semantic,
+        },
+        completion_snapshot: completion
+            .completion_canary()
+            .map(crate::BoundM1CompletionCanaryV1::snapshot_range),
+    })
+}
+
 #[allow(clippy::too_many_arguments)]
 fn finish_rearm_submission(
     shape: M1PhysicalFixedBatchShapeV1,
@@ -8372,22 +9278,54 @@ fn finish_rearm_submission(
     step: M1PrepublicationStepCustodyV1,
     expected_observation: ComputeAqlQueueObservationV1,
 ) -> Result<M1PhysicalPublishedQueueSessionV1, M1LongLivedQueueRearmSubmissionFailureV1<'_>> {
-    let retained_capture = RetainedCaptureRangesV1 {
-        completion_output: custody.completion_output.retained_host_dispatch_range(),
-        completion_snapshot: custody
-            .completion_output
-            .completion_canary()
-            .map(crate::BoundM1CompletionCanaryV1::snapshot_range),
-        qualification_logits: custody
-            .completion_output
-            .qualification_logits()
-            .map(crate::BoundM1QualificationLogitsV1::retained_host_dispatch_range),
+    let previous_capture = match retained_host_capture_ranges(&custody.completion_output) {
+        Ok(retained_capture) => retained_capture,
+        Err(()) => {
+            return Err(submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::WorkspaceRangeRebinding,
+                (lower, custody, recipe, catalog, step),
+            ));
+        }
+    };
+    let (lower, completion_output) =
+        match reset_retained_diagnostic_capture(lower, custody.completion_output) {
+            Ok(reset) => reset,
+            Err(failure) => {
+                return Err(submission_failure(
+                    failure.phase,
+                    (
+                        failure,
+                        custody.catalog_id,
+                        custody.selection,
+                        custody.physical_recipe,
+                        custody.workspace_composition,
+                        custody.workspace_owners,
+                        custody.source_rows,
+                        custody.bound_rows,
+                        custody.partitioned_memory,
+                        recipe,
+                        catalog,
+                        step,
+                    ),
+                ));
+            }
+        };
+    custody.completion_output = completion_output;
+    let retained_capture = match retained_host_capture_ranges(&custody.completion_output) {
+        Ok(retained_capture) => retained_capture,
+        Err(()) => {
+            return Err(submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::WorkspaceRangeRebinding,
+                (lower, custody, recipe, catalog, step),
+            ));
+        }
     };
     let bound_rows = match rebuild_bound_rows(
         recipe.rows(),
         &custody.bound_rows,
         recipe.workspace_composition(),
         &workspace_ranges,
+        &previous_capture,
         &retained_capture,
     ) {
         Ok(rows) => rows,
@@ -9108,6 +10046,42 @@ mod tests {
         .unwrap()
     }
 
+    const fn qualification_capture_ranges(
+        completion_output: u64,
+        logits: u64,
+    ) -> RetainedCaptureRangesV1<u64> {
+        RetainedCaptureRangesV1 {
+            completion_output,
+            semantic: RetainedSemanticCaptureRangesV1::Qualification { logits },
+        }
+    }
+
+    const fn direct_capture_ranges(
+        completion_output: u64,
+        choices: u64,
+    ) -> RetainedCaptureRangesV1<u64> {
+        RetainedCaptureRangesV1 {
+            completion_output,
+            semantic: RetainedSemanticCaptureRangesV1::DirectDiagnostic { choices },
+        }
+    }
+
+    const fn speculative_capture_ranges(
+        completion_output: u64,
+        draft: u64,
+        draft_scalars: [u64; 4],
+        target: u64,
+    ) -> RetainedCaptureRangesV1<u64> {
+        RetainedCaptureRangesV1 {
+            completion_output,
+            semantic: RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
+                draft,
+                draft_scalars,
+                target,
+            },
+        }
+    }
+
     fn test_cache(request: RequestId, device: Gfx942DeviceBinding) -> ActiveDeviceKvCache {
         let bucket = Qwen3PlanBucket::DecodeS1C8192;
         ActiveDeviceKvCache::new(
@@ -9147,8 +10121,22 @@ mod tests {
     #[test]
     fn qualification_capture_rearm_rejects_generic_direct_final_semantics() {
         let direct = [crate::CompletionWireSemanticExpectation::DirectFinalRow { choice: 41 }];
-        assert_eq!(validate_rearmed_generic_semantics(true, &direct), Err(0));
-        assert_eq!(validate_rearmed_generic_semantics(false, &direct), Ok(()));
+        assert_eq!(
+            validate_rearmed_generic_semantics(true, false, false, &direct),
+            Err(M1RearmedGenericSemanticGateV1::Qualification { lane: 0 })
+        );
+        assert_eq!(
+            validate_rearmed_generic_semantics(false, true, false, &direct),
+            Err(M1RearmedGenericSemanticGateV1::DirectDiagnostic)
+        );
+        assert_eq!(
+            validate_rearmed_generic_semantics(false, false, true, &direct),
+            Err(M1RearmedGenericSemanticGateV1::SpeculativeDiagnostic)
+        );
+        assert_eq!(
+            validate_rearmed_generic_semantics(false, false, false, &direct),
+            Ok(())
+        );
     }
 
     #[test]
@@ -9510,17 +10498,18 @@ mod tests {
         ];
         let retained_compact = 101_u64;
         let retained_logits = 202_u64;
+        let retained = qualification_capture_ranges(retained_compact, retained_logits);
         let generation_zero = [retained_compact, retained_logits, retained_logits, 303];
         let generation_one_fresh = [None, None, None, Some(404)];
-        let mut generation_one_selection = RearmRangeSelectionV1::new(true);
+        let mut generation_one_selection = RearmRangeSelectionV1::new(&retained.semantic);
         let generation_one = core::array::from_fn(|index| {
             generation_one_selection
                 .select(
                     requests[index],
                     generation_zero[index],
                     generation_one_fresh[index],
-                    retained_compact,
-                    Some(retained_logits),
+                    retained,
+                    retained,
                 )
                 .unwrap()
         });
@@ -9531,15 +10520,15 @@ mod tests {
         );
 
         let generation_two_fresh = [None, None, None, Some(505)];
-        let mut generation_two_selection = RearmRangeSelectionV1::new(true);
+        let mut generation_two_selection = RearmRangeSelectionV1::new(&retained.semantic);
         let generation_two = core::array::from_fn(|index| {
             generation_two_selection
                 .select(
                     requests[index],
                     generation_one[index],
                     generation_two_fresh[index],
-                    retained_compact,
-                    Some(retained_logits),
+                    retained,
+                    retained,
                 )
                 .unwrap()
         });
@@ -9550,6 +10539,210 @@ mod tests {
         );
         assert_ne!(generation_zero[3], generation_one[3]);
         assert_ne!(generation_one[3], generation_two[3]);
+    }
+
+    #[test]
+    fn direct_capture_rebinds_both_k6_users_to_each_fresh_generation() {
+        use crate::physical_buffer_recipe::tests::exact_inputs;
+
+        let target = selection(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS8C8192);
+        let (kernargs, composition) =
+            exact_inputs(crate::M1StepDispatchIntent::TargetOnly(target), 208);
+        let recipe = crate::derive_m1_physical_buffer_recipe_v1(kernargs, composition).unwrap();
+        let source_rows = recipe.rows();
+        let composition = recipe.workspace_composition();
+        let generation_zero_capture = direct_capture_ranges(101, 202);
+        let generation_one_capture = direct_capture_ranges(101, 303);
+        let generation_two_capture = direct_capture_ranges(101, 404);
+        let mut old_token = 1_000_u64;
+        let generation_zero = source_rows
+            .iter()
+            .map(|source| {
+                let buffers = source
+                    .buffers()
+                    .iter()
+                    .map(|semantic| {
+                        let request = requested_workspace_range(
+                            semantic.source(),
+                            composition,
+                            &generation_zero_capture.semantic,
+                        )
+                        .unwrap();
+                        let range = match request {
+                            RearmRangeRequestV1::RetainedCompletionOutput => 101,
+                            RearmRangeRequestV1::RetainedDirectDiagnosticChoices => 202,
+                            RearmRangeRequestV1::FreshWorkspace(_, _)
+                            | RearmRangeRequestV1::Unchanged => {
+                                old_token += 1;
+                                old_token
+                            }
+                            RearmRangeRequestV1::RetainedQualificationLogits
+                            | RearmRangeRequestV1::RetainedSpeculativeDraftChoices
+                            | RearmRangeRequestV1::RetainedSpeculativeDraftChoice { .. }
+                            | RearmRangeRequestV1::RetainedSpeculativeTargetChoices => {
+                                panic!("direct recipe entered another capture route")
+                            }
+                        };
+                        RearmBoundRangeV1 {
+                            explicit_argument_index: semantic.explicit_argument_index(),
+                            range,
+                        }
+                    })
+                    .collect();
+                RearmBoundRowV1 {
+                    dispatch_index: source.dispatch_index(),
+                    profile_id: source.profile_id(),
+                    program: source.program(),
+                    buffers,
+                }
+            })
+            .collect::<Vec<_>>();
+
+        let mut generation_one_fresh = 10_000_u64;
+        let generation_one = rebuild_bound_row_ranges(
+            source_rows,
+            &generation_zero,
+            composition,
+            generation_zero_capture,
+            generation_one_capture,
+            |workspace, _| {
+                generation_one_fresh += 1;
+                Ok((workspace, generation_one_fresh))
+            },
+        )
+        .unwrap();
+        let mut generation_two_fresh = 20_000_u64;
+        let generation_two = rebuild_bound_row_ranges(
+            source_rows,
+            &generation_one,
+            composition,
+            generation_one_capture,
+            generation_two_capture,
+            |workspace, _| {
+                generation_two_fresh += 1;
+                Ok((workspace, generation_two_fresh))
+            },
+        )
+        .unwrap();
+
+        let mut direct_sources = 0;
+        for ((source, first), second) in
+            source_rows.iter().zip(&generation_one).zip(&generation_two)
+        {
+            for ((semantic, first), second) in source
+                .buffers()
+                .iter()
+                .zip(&first.buffers)
+                .zip(&second.buffers)
+            {
+                if requested_workspace_range(
+                    semantic.source(),
+                    composition,
+                    &generation_one_capture.semantic,
+                )
+                .unwrap()
+                    == RearmRangeRequestV1::RetainedDirectDiagnosticChoices
+                {
+                    direct_sources += 1;
+                    assert_eq!(first.range, 303);
+                    assert_eq!(second.range, 404);
+                }
+            }
+        }
+        assert_eq!(direct_sources, 2);
+
+        let mut hostile = generation_one.clone();
+        let hostile_choice = source_rows
+            .iter()
+            .zip(&mut hostile)
+            .flat_map(|(source, row)| source.buffers().iter().zip(&mut row.buffers))
+            .find(|(semantic, _)| {
+                retained_capture_range_request(semantic.source(), &generation_one_capture.semantic)
+                    == Some(RearmRangeRequestV1::RetainedDirectDiagnosticChoices)
+            })
+            .map(|(_, buffer)| buffer)
+            .expect("direct choice source exists");
+        hostile_choice.range = 999_999;
+        assert!(rebuild_bound_row_ranges(
+            source_rows,
+            &hostile,
+            composition,
+            generation_one_capture,
+            generation_two_capture,
+            |workspace, _| Ok((workspace, 30_000)),
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn speculative_capture_rebinds_every_choice_use_to_fresh_ranges() {
+        let requests = [
+            RearmRangeRequestV1::RetainedCompletionOutput,
+            RearmRangeRequestV1::RetainedSpeculativeDraftChoices,
+            RearmRangeRequestV1::RetainedSpeculativeDraftChoices,
+            RearmRangeRequestV1::RetainedSpeculativeDraftChoice { iteration: 0 },
+            RearmRangeRequestV1::RetainedSpeculativeDraftChoice { iteration: 1 },
+            RearmRangeRequestV1::RetainedSpeculativeDraftChoice { iteration: 2 },
+            RearmRangeRequestV1::RetainedSpeculativeDraftChoice { iteration: 3 },
+            RearmRangeRequestV1::RetainedSpeculativeDraftChoice { iteration: 0 },
+            RearmRangeRequestV1::RetainedSpeculativeDraftChoice { iteration: 1 },
+            RearmRangeRequestV1::RetainedSpeculativeDraftChoice { iteration: 2 },
+            RearmRangeRequestV1::RetainedSpeculativeTargetChoices,
+            RearmRangeRequestV1::RetainedSpeculativeTargetChoices,
+        ];
+        let generation_zero_capture =
+            speculative_capture_ranges(101, 201, [211, 212, 213, 214], 301);
+        let generation_one_capture =
+            speculative_capture_ranges(101, 401, [411, 412, 413, 414], 501);
+        let generation_two_capture =
+            speculative_capture_ranges(101, 601, [611, 612, 613, 614], 701);
+        let generation_zero = [101, 201, 201, 211, 212, 213, 214, 211, 212, 213, 301, 301];
+        let expected_one = [101, 401, 401, 411, 412, 413, 414, 411, 412, 413, 501, 501];
+        let expected_two = [101, 601, 601, 611, 612, 613, 614, 611, 612, 613, 701, 701];
+
+        let mut first = RearmRangeSelectionV1::new(&generation_one_capture.semantic);
+        let generation_one = core::array::from_fn(|index| {
+            first
+                .select(
+                    requests[index],
+                    generation_zero[index],
+                    None,
+                    generation_zero_capture,
+                    generation_one_capture,
+                )
+                .unwrap()
+        });
+        assert_eq!(first.validate(), Ok(()));
+        assert_eq!(generation_one, expected_one);
+
+        let mut second = RearmRangeSelectionV1::new(&generation_two_capture.semantic);
+        let generation_two = core::array::from_fn(|index| {
+            second
+                .select(
+                    requests[index],
+                    generation_one[index],
+                    None,
+                    generation_one_capture,
+                    generation_two_capture,
+                )
+                .unwrap()
+        });
+        assert_eq!(second.validate(), Ok(()));
+        assert_eq!(generation_two, expected_two);
+
+        let mut hostile = generation_one;
+        hostile[6] = 999_999;
+        let mut rejected = RearmRangeSelectionV1::new(&generation_two_capture.semantic);
+        assert_eq!(
+            rejected.select(
+                requests[6],
+                hostile[6],
+                None,
+                generation_one_capture,
+                generation_two_capture,
+            ),
+            Err(())
+        );
     }
 
     #[test]
@@ -9565,6 +10758,7 @@ mod tests {
         let composition = recipe.workspace_composition();
         let retained_compact = 101_u64;
         let retained_logits = 202_u64;
+        let retained = qualification_capture_ranges(retained_compact, retained_logits);
         let mut old_token = 1_000_u64;
         let old_rows = source_rows
             .iter()
@@ -9573,12 +10767,21 @@ mod tests {
                     .buffers()
                     .iter()
                     .map(|semantic| {
-                        let request =
-                            requested_workspace_range(semantic.source(), composition, true)
-                                .unwrap();
+                        let request = requested_workspace_range(
+                            semantic.source(),
+                            composition,
+                            &retained.semantic,
+                        )
+                        .unwrap();
                         let range = match request {
                             RearmRangeRequestV1::RetainedCompletionOutput => retained_compact,
                             RearmRangeRequestV1::RetainedQualificationLogits => retained_logits,
+                            RearmRangeRequestV1::RetainedDirectDiagnosticChoices
+                            | RearmRangeRequestV1::RetainedSpeculativeDraftChoices
+                            | RearmRangeRequestV1::RetainedSpeculativeDraftChoice { .. }
+                            | RearmRangeRequestV1::RetainedSpeculativeTargetChoices => {
+                                panic!("qualification recipe entered a diagnostic route")
+                            }
                             RearmRangeRequestV1::FreshWorkspace(_, _)
                             | RearmRangeRequestV1::Unchanged => {
                                 old_token += 1;
@@ -9605,8 +10808,8 @@ mod tests {
             source_rows,
             &old_rows,
             composition,
-            retained_compact,
-            Some(retained_logits),
+            retained,
+            retained,
             |workspace, _| {
                 generation_one_fresh += 1;
                 Ok((workspace, generation_one_fresh))
@@ -9618,8 +10821,8 @@ mod tests {
             source_rows,
             &generation_one,
             composition,
-            retained_compact,
-            Some(retained_logits),
+            retained,
+            retained,
             |workspace, _| {
                 generation_two_fresh += 1;
                 Ok((workspace, generation_two_fresh))
@@ -9639,7 +10842,9 @@ mod tests {
                 .zip(&first.buffers)
                 .zip(&second.buffers)
             {
-                match requested_workspace_range(semantic.source(), composition, true).unwrap() {
+                match requested_workspace_range(semantic.source(), composition, &retained.semantic)
+                    .unwrap()
+                {
                     RearmRangeRequestV1::RetainedCompletionOutput => {
                         compact_sources += 1;
                         assert_eq!(first.range, retained_compact);
@@ -9649,6 +10854,12 @@ mod tests {
                         logits_sources += 1;
                         assert_eq!(first.range, retained_logits);
                         assert_eq!(second.range, retained_logits);
+                    }
+                    RearmRangeRequestV1::RetainedDirectDiagnosticChoices
+                    | RearmRangeRequestV1::RetainedSpeculativeDraftChoices
+                    | RearmRangeRequestV1::RetainedSpeculativeDraftChoice { .. }
+                    | RearmRangeRequestV1::RetainedSpeculativeTargetChoices => {
+                        panic!("qualification recipe entered a diagnostic route")
                     }
                     RearmRangeRequestV1::FreshWorkspace(_, _) => {
                         changed_workspaces += 1;
@@ -9669,7 +10880,7 @@ mod tests {
         for (source, row) in source_rows.iter().zip(&mut hostile) {
             for (semantic, buffer) in source.buffers().iter().zip(&mut row.buffers) {
                 if !substituted
-                    && retained_capture_range_request(semantic.source(), true)
+                    && retained_capture_range_request(semantic.source(), &retained.semantic)
                         == Some(RearmRangeRequestV1::RetainedQualificationLogits)
                 {
                     buffer.range = 999_999;
@@ -9682,8 +10893,8 @@ mod tests {
             source_rows,
             &hostile,
             composition,
-            retained_compact,
-            Some(retained_logits),
+            retained,
+            retained,
             |workspace, _| Ok((workspace, 30_000)),
         )
         .is_err());
@@ -9693,8 +10904,8 @@ mod tests {
             source_rows,
             &generation_one,
             composition,
-            retained_compact,
-            Some(retained_logits),
+            retained,
+            retained,
             |workspace, _| {
                 substituted_role = true;
                 let hostile = match workspace {
@@ -9711,10 +10922,10 @@ mod tests {
         assert!(rebuild_bound_row_ranges_with_requests(
             source_rows,
             &old_rows,
-            retained_compact,
-            Some(retained_logits),
+            retained,
+            retained,
             |source| {
-                let request = requested_workspace_range(source, composition, true)?;
+                let request = requested_workspace_range(source, composition, &retained.semantic)?;
                 if request == RearmRangeRequestV1::RetainedQualificationLogits {
                     retained_logits_seen += 1;
                     if retained_logits_seen == 2 {
@@ -9733,7 +10944,8 @@ mod tests {
         'rows: for (source, old) in source_rows.iter().zip(&mut too_many_old) {
             for (semantic, old_buffer) in source.buffers().iter().zip(&mut old.buffers) {
                 if matches!(
-                    requested_workspace_range(semantic.source(), composition, true).unwrap(),
+                    requested_workspace_range(semantic.source(), composition, &retained.semantic,)
+                        .unwrap(),
                     RearmRangeRequestV1::FreshWorkspace(_, _)
                 ) {
                     old_buffer.range = retained_logits;
@@ -9747,10 +10959,10 @@ mod tests {
         assert!(rebuild_bound_row_ranges_with_requests(
             source_rows,
             &too_many_old,
-            retained_compact,
-            Some(retained_logits),
+            retained,
+            retained,
             |source| {
-                let request = requested_workspace_range(source, composition, true)?;
+                let request = requested_workspace_range(source, composition, &retained.semantic)?;
                 if !injected_extra_logits
                     && matches!(request, RearmRangeRequestV1::FreshWorkspace(_, _))
                 {
@@ -9768,29 +10980,33 @@ mod tests {
 
     #[test]
     fn qualification_capture_range_substitution_is_rejected() {
-        let mut selection = RearmRangeSelectionV1::new(true);
+        let retained = qualification_capture_ranges(101, 202);
+        let mut selection = RearmRangeSelectionV1::new(&retained.semantic);
         assert_eq!(
             selection.select(
                 RearmRangeRequestV1::RetainedQualificationLogits,
                 909_u64,
                 None,
-                101,
-                Some(202),
+                retained,
+                retained,
             ),
             Err(())
         );
-        let mut selection = RearmRangeSelectionV1::new(true);
+        let mut selection = RearmRangeSelectionV1::new(&retained.semantic);
         assert_eq!(
             selection.select(
                 RearmRangeRequestV1::RetainedCompletionOutput,
                 808_u64,
                 None,
-                101,
-                Some(202),
+                retained,
+                retained,
             ),
             Err(())
         );
-        assert_eq!(RearmRangeSelectionV1::new(true).validate(), Err(()));
+        assert_eq!(
+            RearmRangeSelectionV1::new(&retained.semantic).validate(),
+            Err(())
+        );
     }
 
     #[test]
@@ -9830,13 +11046,15 @@ mod tests {
     fn qualification_capture_role_and_cardinality_substitution_fail_closed() {
         use ferric_build::M1StepWorkspaceRangeRole;
 
+        let retained = qualification_capture_ranges(101, 202);
+
         assert_eq!(
             retained_capture_range_request(
                 M1PhysicalBufferSourceV1::Workspace {
                     workspace: M1FullStepWorkspaceRole::Target,
                     range: M1StepWorkspaceRangeRole::Logits,
                 },
-                true,
+                &retained.semantic,
             ),
             Some(RearmRangeRequestV1::RetainedQualificationLogits)
         );
@@ -9846,21 +11064,21 @@ mod tests {
                     workspace: M1FullStepWorkspaceRole::Draft,
                     range: M1StepWorkspaceRangeRole::Logits,
                 },
-                true,
+                &retained.semantic,
             ),
             None
         );
 
         let retained_compact = 101_u64;
         let retained_logits = 202_u64;
-        let mut too_few = RearmRangeSelectionV1::new(true);
+        let mut too_few = RearmRangeSelectionV1::new(&retained.semantic);
         too_few
             .select(
                 RearmRangeRequestV1::RetainedCompletionOutput,
                 retained_compact,
                 None,
-                retained_compact,
-                Some(retained_logits),
+                retained,
+                retained,
             )
             .unwrap();
         too_few
@@ -9868,20 +11086,20 @@ mod tests {
                 RearmRangeRequestV1::RetainedQualificationLogits,
                 retained_logits,
                 None,
-                retained_compact,
-                Some(retained_logits),
+                retained,
+                retained,
             )
             .unwrap();
         assert_eq!(too_few.validate(), Err(()));
 
-        let mut too_many = RearmRangeSelectionV1::new(true);
+        let mut too_many = RearmRangeSelectionV1::new(&retained.semantic);
         too_many
             .select(
                 RearmRangeRequestV1::RetainedCompletionOutput,
                 retained_compact,
                 None,
-                retained_compact,
-                Some(retained_logits),
+                retained,
+                retained,
             )
             .unwrap();
         for _ in 0..3 {
@@ -9890,8 +11108,8 @@ mod tests {
                     RearmRangeRequestV1::RetainedQualificationLogits,
                     retained_logits,
                     None,
-                    retained_compact,
-                    Some(retained_logits),
+                    retained,
+                    retained,
                 )
                 .unwrap();
         }

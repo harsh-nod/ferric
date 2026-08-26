@@ -470,6 +470,20 @@ impl M1AllocatedScheduledStepV1 {
             .enable_speculative_k4_diagnostic_choices_capture(completion)
     }
 
+    /// Attaches direct target-choice capture after every device allocation.
+    ///
+    /// # Errors
+    ///
+    /// Returns the exact attachment failure with compact-output custody.
+    pub fn enable_direct_diagnostic_choices_capture(
+        &mut self,
+        completion: BoundM1CompletionOutputV1,
+    ) -> Result<BoundM1CompletionOutputV1, Box<crate::M1DirectDiagnosticChoicesAllocationFailureV1>>
+    {
+        self.partitioned_memory
+            .enable_direct_diagnostic_choices_capture(completion)
+    }
+
     fn into_parts(
         self,
     ) -> (
