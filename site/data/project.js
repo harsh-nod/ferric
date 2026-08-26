@@ -6,7 +6,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "The target-only path has an MI300X smoke observation. Exact S1 paired-prefill to S1/K4 native queue rollover is implemented with independent choice evidence; the concrete production provider and qualification evidence set remain in progress.",
+      "The target-only path has an MI300X smoke observation. Exact S1 paired-prefill to S1/K4 native queue rollover and its concrete production input provider are implemented; hardware and qualification evidence remain open.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -27,7 +27,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "S1/K4 speculative serving",
       state: "integration",
       detail:
-        "Direct and S1/K4 adapter paths retain exact plan custody and independent choices. Native paired-prefill rollover is implemented; production-provider integration and hardware qualification remain active work.",
+        "Direct and S1/K4 adapter paths retain exact plan custody and independent choices. Native paired-prefill rollover and ordered production inputs are implemented; hardware qualification remains active work.",
     },
     {
       label: "M1 qualification",
@@ -106,6 +106,13 @@ window.FERRIC_PROJECT = Object.freeze({
       "Smoke observation only. It is not evidence, numerical qualification, hardware qualification, performance qualification, or M1 closure.",
   },
   recentProgress: [
+    {
+      commit: "c4404c8",
+      title: "Add queued physical input provider",
+      state: "verified",
+      detail:
+        "A concrete move-only provider binds every generation to its exact plan, epoch, and roster; prepares first publication, same-shape rearm, and S1/K4 rollover; and retains typed custody on every rejection.",
+    },
     {
       commit: "5051113",
       title: "Publish native S1/K4 queue rollover",
