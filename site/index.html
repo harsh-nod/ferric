@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Ferric project status, architecture, capabilities, and M1 qualification progress."
+    />
+    <meta name="theme-color" content="#111917" />
+    <title>Ferric | Project status</title>
+    <link rel="icon" href="assets/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="data/project.js"></script>
+    <script defer src="app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="wordmark" href="#overview" aria-label="Ferric project status home">
+          <img src="assets/mark.svg" width="28" height="28" alt="" />
+          <span>Ferric</span>
+        </a>
+        <nav aria-label="Primary navigation">
+          <a href="#capabilities">Capabilities</a>
+          <a href="#architecture">Architecture</a>
+          <a href="#progress">Progress</a>
+          <a href="#evidence">Evidence</a>
+        </nav>
+        <a class="repo-link" data-repository href="https://github.com/harsh-nod/ferric">
+          GitHub <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="overview band" id="overview" aria-labelledby="overview-title">
+        <div class="shell overview-grid">
+          <div class="overview-copy">
+            <div class="section-label">Proof-carrying LLM inference</div>
+            <h1 id="overview-title">Ferric</h1>
+            <p class="lede">
+              A Rust inference engine that connects authenticated model inputs to
+              Ferric-owned Qwen kernels and reviewed direct HSA execution through fe2o3.
+            </p>
+            <div class="milestone-line">
+              <span class="status-dot" data-milestone-dot aria-hidden="true"></span>
+              <strong data-milestone-name>M1</strong>
+              <span data-milestone-label>Qwen3 speculative inference on one gfx942</span>
+            </div>
+            <p class="milestone-summary" data-milestone-summary>
+              Current project data requires JavaScript.
+            </p>
+          </div>
+
+          <aside class="readiness" aria-labelledby="readiness-title">
+            <div class="panel-heading">
+              <h2 id="readiness-title">Current readiness</h2>
+              <time data-updated datetime="2026-08-26">Updated 2026-08-26</time>
+            </div>
+            <div class="readiness-list" data-readiness></div>
+          </aside>
+        </div>
+
+        <div class="shell envelope" aria-label="M1 declared envelope">
+          <div class="envelope-title">Declared M1 envelope</div>
+          <dl data-envelope></dl>
+        </div>
+      </section>
+
+      <section class="band capabilities-band" id="capabilities" aria-labelledby="capabilities-title">
+        <div class="shell">
+          <div class="section-heading">
+            <div>
+              <div class="section-label">Functional surface</div>
+              <h2 id="capabilities-title">What Ferric can do now</h2>
+            </div>
+            <p>
+              Support is exact-configuration specific. An admitted path never implies a
+              fallback or silent generalization.
+            </p>
+          </div>
+          <div class="capability-layout" data-capabilities></div>
+        </div>
+      </section>
+
+      <section class="band architecture-band" id="architecture" aria-labelledby="architecture-title">
+        <div class="shell">
+          <div class="section-heading">
+            <div>
+              <div class="section-label">Ownership boundary</div>
+              <h2 id="architecture-title">One production path, two repositories</h2>
+            </div>
+            <p>
+              Ferric owns inference semantics and kernels. fe2o3 supplies reusable compiler,
+              runtime, KFD, and HSA capabilities.
+            </p>
+          </div>
+          <figure class="architecture-figure">
+            <img
+              src="assets/architecture.svg"
+              alt="Ferric pipeline from authenticated model bundle through planning, Ferric kernels, fe2o3 compiler and runtime, to a gfx942 device."
+              width="1200"
+              height="420"
+            />
+            <figcaption>
+              The boundary is deliberate: model and inference work stays in Ferric; generic
+              compiler and runtime work stays in fe2o3.
+            </figcaption>
+          </figure>
+          <div class="boundary-grid" data-boundaries></div>
+        </div>
+      </section>
+
+      <section class="band progress-band" id="progress" aria-labelledby="progress-title">
+        <div class="shell">
+          <div class="section-heading">
+            <div>
+              <div class="section-label">Live engineering record</div>
+              <h2 id="progress-title">M1 progress</h2>
+            </div>
+            <p>
+              Recent checkpoints are source-bound. Hardware observations retain their exact,
+              narrower authority.
+            </p>
+          </div>
+          <article class="observation" data-observation></article>
+          <ol class="timeline" data-progress></ol>
+        </div>
+      </section>
+
+      <section class="band evidence-band" id="evidence" aria-labelledby="evidence-title">
+        <div class="shell evidence-grid">
+          <div>
+            <div class="section-label">Assurance posture</div>
+            <h2 id="evidence-title">A smoke pass is not qualification</h2>
+            <p class="evidence-summary" data-evidence-summary></p>
+            <div class="authority-legend" data-authority-legend></div>
+          </div>
+          <div class="gate-panel">
+            <div class="panel-heading">
+              <h3>M1 closure roster</h3>
+              <span class="state-tag state-open">Open</span>
+            </div>
+            <div class="gate-list" data-gates></div>
+            <p class="gate-note">
+              Counts describe required closure products, not a percent-complete calculation.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="band next-band" aria-labelledby="next-title">
+        <div class="shell next-layout">
+          <div>
+            <div class="section-label">Next engineering checkpoint</div>
+            <h2 id="next-title">From target smoke to continuous speculation</h2>
+          </div>
+          <p>
+            Complete typed shape rollover and multi-round S1/K4 custody, run hostile lifecycle
+            tests, then collect exact-source hardware and independent qualification artifacts.
+          </p>
+          <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
+            Read the full roadmap <span aria-hidden="true">→</span>
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="shell footer-inner">
+        <div class="footer-brand">
+          <img src="assets/mark.svg" width="22" height="22" alt="" />
+          <strong>Ferric</strong>
+        </div>
+        <p>Exact configuration. Explicit authority. No fallback path.</p>
+        <a data-repository href="https://github.com/harsh-nod/ferric">Source repository</a>
+      </div>
+    </footer>
+
+    <noscript>
+      <div class="noscript">Enable JavaScript to load the current structured project status.</div>
+    </noscript>
+  </body>
+</html>

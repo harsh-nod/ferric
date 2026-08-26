@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
+  <title id="title">Ferric and fe2o3 architecture boundary</title>
+  <desc id="desc">Authenticated Qwen inputs flow through Ferric planning and kernels, then through the generic fe2o3 compiler and runtime to one gfx942 device. Completion and custody return to the Ferric engine.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 10 5 0 10z" fill="#9ba8a4"/>
+    </marker>
+  </defs>
+  <style>
+    .label { font: 700 12px Inter, system-ui, sans-serif; fill: #f7faf8; letter-spacing: 0; }
+    .small { font: 500 10px Inter, system-ui, sans-serif; fill: #bdc8c4; letter-spacing: 0; }
+    .owner { font: 800 10px Inter, system-ui, sans-serif; letter-spacing: 0; text-transform: uppercase; }
+    .box { fill: #202b28; stroke: #53615d; stroke-width: 1; rx: 5; }
+    .ferric { stroke: #e58267; }
+    .fe { stroke: #63abb1; }
+    .device { stroke: #7fb591; }
+    .line { fill: none; stroke: #9ba8a4; stroke-width: 1.5; marker-end: url(#arrow); }
+    .return { fill: none; stroke: #e0ac53; stroke-width: 1.5; stroke-dasharray: 5 5; marker-end: url(#arrow); }
+  </style>
+
+  <text x="24" y="31" class="owner" fill="#f2a48d">Ferric-owned inference layer</text>
+  <line x1="24" y1="44" x2="716" y2="44" stroke="#74483e"/>
+  <text x="748" y="31" class="owner" fill="#7ec0c5">Reusable fe2o3 layer</text>
+  <line x1="748" y1="44" x2="1176" y2="44" stroke="#365c5e"/>
+
+  <rect x="24" y="82" width="190" height="88" class="box ferric"/>
+  <text x="43" y="111" class="label">Authenticated bundle</text>
+  <text x="43" y="133" class="small">Qwen config + tokenizer</text>
+  <text x="43" y="150" class="small">prepacked BF16 weights</text>
+
+  <rect x="258" y="82" width="190" height="88" class="box ferric"/>
+  <text x="277" y="111" class="label">Build and planning</text>
+  <text x="277" y="133" class="small">exact graph + workspace</text>
+  <text x="277" y="150" class="small">generated runner identity</text>
+
+  <rect x="492" y="82" width="224" height="88" class="box ferric"/>
+  <text x="511" y="111" class="label">Ferric Qwen kernels</text>
+  <text x="511" y="133" class="small">GEMM, attention, RoPE/KV</text>
+  <text x="511" y="150" class="small">RMSNorm, SwiGLU, logits</text>
+
+  <rect x="748" y="82" width="190" height="88" class="box fe"/>
+  <text x="767" y="111" class="label">Compiler APIs</text>
+  <text x="767" y="133" class="small">gfx942 artifacts</text>
+  <text x="767" y="150" class="small">descriptor + target identity</text>
+
+  <rect x="982" y="82" width="194" height="88" class="box fe"/>
+  <text x="1001" y="111" class="label">Runtime / KFD</text>
+  <text x="1001" y="133" class="small">typed memory + transfers</text>
+  <text x="1001" y="150" class="small">long-lived HSA queue</text>
+
+  <path d="M214 126h38" class="line"/>
+  <path d="M448 126h38" class="line"/>
+  <path d="M716 126h26" class="line"/>
+  <path d="M938 126h38" class="line"/>
+
+  <rect x="982" y="226" width="194" height="88" class="box device"/>
+  <text x="1001" y="255" class="label">gfx942 device</text>
+  <text x="1001" y="277" class="small">one bounded command batch</text>
+  <text x="1001" y="294" class="small">exact completion epoch</text>
+  <path d="M1079 170v50" class="line"/>
+
+  <rect x="492" y="226" width="446" height="88" class="box ferric"/>
+  <text x="511" y="255" class="label">Ferric engine state</text>
+  <text x="511" y="277" class="small">continuous scheduler • paged KV • speculative commit / rollback</text>
+  <text x="511" y="294" class="small">linear custody • terminal quarantine • quiescent retirement</text>
+  <path d="M976 270H944" class="return"/>
+
+  <path d="M604 220v-44" class="line"/>
+  <text x="621" y="200" class="small">next exact step</text>
+
+  <line x1="24" y1="358" x2="1176" y2="358" stroke="#53615d"/>
+  <circle cx="32" cy="385" r="4" fill="#e58267"/>
+  <text x="44" y="389" class="small">Model-specific work remains in Ferric</text>
+  <circle cx="368" cy="385" r="4" fill="#63abb1"/>
+  <text x="380" y="389" class="small">Generic compiler/runtime work remains in fe2o3</text>
+  <circle cx="800" cy="385" r="4" fill="#e0ac53"/>
+  <text x="812" y="389" class="small">Dashed path carries observed completion custody</text>
+</svg>
