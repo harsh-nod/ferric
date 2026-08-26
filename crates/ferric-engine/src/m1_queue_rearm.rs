@@ -3102,6 +3102,17 @@ struct LowerBatchInputV1 {
     buffers: Box<[fe2o3_service_host::ServiceFixedDispatchBufferV1]>,
 }
 
+// Keep each const-cardinality array construction out of the shape dispatcher.
+#[inline(never)]
+fn lower_boxed_rearm_batch<'a, const N: usize>(
+    catalog: ContentBoundM1ProgramCatalogV1<'a>,
+    physical: &crate::AddresslessM1PhysicalDispatchRecipeV1,
+    images: Box<[crate::M1PhysicalKernargImageV1]>,
+    bound: &[M1BoundPhysicalBufferRowV1],
+) -> Result<Box<ServiceFixedBatchV1<'a, N>>, Box<LowerBatchFailureV1<'a>>> {
+    lower_batch(catalog, physical, images, bound).map(Box::new)
+}
+
 fn lower_batch<'a, const N: usize>(
     catalog: ContentBoundM1ProgramCatalogV1<'a>,
     physical: &crate::AddresslessM1PhysicalDispatchRecipeV1,
@@ -8014,14 +8025,15 @@ fn replace_target<const N: usize>(
         .map_err(WorkspaceReplacementFailureV1::Binding)
 }
 
+#[inline(never)]
 fn bind_submit_target_only(
     lower: ServiceQueueUnboundSessionV1,
-    batch: ServiceFixedBatchV1<'_, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>,
+    batch: Box<ServiceFixedBatchV1<'_, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>>,
     custody: M1PhysicalQueueBatchCustodyV1,
     step: M1PrepublicationStepCustodyV1,
     expected_observation: ComputeAqlQueueObservationV1,
 ) -> Result<M1PhysicalPublishedQueueSessionV1, M1LongLivedQueueRearmSubmissionFailureV1<'_>> {
-    let lower = match lower.bind(batch) {
+    let lower = match lower.bind(*batch) {
         Ok(lower) => lower,
         Err(failure) => {
             return Err(submission_failure(
@@ -8045,14 +8057,15 @@ fn bind_submit_target_only(
     })
 }
 
+#[inline(never)]
 fn bind_submit_speculative_k4(
     lower: ServiceQueueUnboundSessionV1,
-    batch: ServiceFixedBatchV1<'_, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1>,
+    batch: Box<ServiceFixedBatchV1<'_, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1>>,
     custody: M1PhysicalQueueBatchCustodyV1,
     step: M1PrepublicationStepCustodyV1,
     expected_observation: ComputeAqlQueueObservationV1,
 ) -> Result<M1PhysicalPublishedQueueSessionV1, M1LongLivedQueueRearmSubmissionFailureV1<'_>> {
-    let lower = match lower.bind(batch) {
+    let lower = match lower.bind(*batch) {
         Ok(lower) => lower,
         Err(failure) => {
             return Err(submission_failure(
@@ -8076,14 +8089,15 @@ fn bind_submit_speculative_k4(
     })
 }
 
+#[inline(never)]
 fn bind_submit_speculative_k8(
     lower: ServiceQueueUnboundSessionV1,
-    batch: ServiceFixedBatchV1<'_, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1>,
+    batch: Box<ServiceFixedBatchV1<'_, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1>>,
     custody: M1PhysicalQueueBatchCustodyV1,
     step: M1PrepublicationStepCustodyV1,
     expected_observation: ComputeAqlQueueObservationV1,
 ) -> Result<M1PhysicalPublishedQueueSessionV1, M1LongLivedQueueRearmSubmissionFailureV1<'_>> {
-    let lower = match lower.bind(batch) {
+    let lower = match lower.bind(*batch) {
         Ok(lower) => lower,
         Err(failure) => {
             return Err(submission_failure(
@@ -8107,14 +8121,15 @@ fn bind_submit_speculative_k8(
     })
 }
 
+#[inline(never)]
 fn bind_submit_speculative_k16(
     lower: ServiceQueueUnboundSessionV1,
-    batch: ServiceFixedBatchV1<'_, M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1>,
+    batch: Box<ServiceFixedBatchV1<'_, M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1>>,
     custody: M1PhysicalQueueBatchCustodyV1,
     step: M1PrepublicationStepCustodyV1,
     expected_observation: ComputeAqlQueueObservationV1,
 ) -> Result<M1PhysicalPublishedQueueSessionV1, M1LongLivedQueueRearmSubmissionFailureV1<'_>> {
-    let lower = match lower.bind(batch) {
+    let lower = match lower.bind(*batch) {
         Ok(lower) => lower,
         Err(failure) => {
             return Err(submission_failure(
@@ -8183,13 +8198,13 @@ fn finish_rearm_submission(
     custody.bound_rows = bound_rows;
     let batch = match shape {
         M1PhysicalFixedBatchShapeV1::TargetOnly => {
-            match lower_batch(
+            match lower_boxed_rearm_batch(
                 catalog,
                 &custody.physical_recipe,
                 images,
                 &custody.bound_rows,
             ) {
-                Ok(batch) => RebuiltBatchV1::TargetOnly(Box::new(batch)),
+                Ok(batch) => RebuiltBatchV1::TargetOnly(batch),
                 Err(failure) => {
                     return Err(submission_failure(
                         M1LongLivedQueueRearmSubmissionPhaseV1::FixedBatchRebuild,
@@ -8199,13 +8214,13 @@ fn finish_rearm_submission(
             }
         }
         M1PhysicalFixedBatchShapeV1::SpeculativeK4 => {
-            match lower_batch(
+            match lower_boxed_rearm_batch(
                 catalog,
                 &custody.physical_recipe,
                 images,
                 &custody.bound_rows,
             ) {
-                Ok(batch) => RebuiltBatchV1::SpeculativeK4(Box::new(batch)),
+                Ok(batch) => RebuiltBatchV1::SpeculativeK4(batch),
                 Err(failure) => {
                     return Err(submission_failure(
                         M1LongLivedQueueRearmSubmissionPhaseV1::FixedBatchRebuild,
@@ -8215,13 +8230,13 @@ fn finish_rearm_submission(
             }
         }
         M1PhysicalFixedBatchShapeV1::SpeculativeK8 => {
-            match lower_batch(
+            match lower_boxed_rearm_batch(
                 catalog,
                 &custody.physical_recipe,
                 images,
                 &custody.bound_rows,
             ) {
-                Ok(batch) => RebuiltBatchV1::SpeculativeK8(Box::new(batch)),
+                Ok(batch) => RebuiltBatchV1::SpeculativeK8(batch),
                 Err(failure) => {
                     return Err(submission_failure(
                         M1LongLivedQueueRearmSubmissionPhaseV1::FixedBatchRebuild,
@@ -8231,13 +8246,13 @@ fn finish_rearm_submission(
             }
         }
         M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
-            match lower_batch(
+            match lower_boxed_rearm_batch(
                 catalog,
                 &custody.physical_recipe,
                 images,
                 &custody.bound_rows,
             ) {
-                Ok(batch) => RebuiltBatchV1::SpeculativeK16(Box::new(batch)),
+                Ok(batch) => RebuiltBatchV1::SpeculativeK16(batch),
                 Err(failure) => {
                     return Err(submission_failure(
                         M1LongLivedQueueRearmSubmissionPhaseV1::FixedBatchRebuild,
@@ -8256,16 +8271,16 @@ fn finish_rearm_submission(
     let custody = M1PhysicalQueueBatchCustodyV1::from_rearm_parts(custody);
     match batch {
         RebuiltBatchV1::TargetOnly(batch) => {
-            bind_submit_target_only(lower, *batch, custody, step, expected_observation)
+            bind_submit_target_only(lower, batch, custody, step, expected_observation)
         }
         RebuiltBatchV1::SpeculativeK4(batch) => {
-            bind_submit_speculative_k4(lower, *batch, custody, step, expected_observation)
+            bind_submit_speculative_k4(lower, batch, custody, step, expected_observation)
         }
         RebuiltBatchV1::SpeculativeK8(batch) => {
-            bind_submit_speculative_k8(lower, *batch, custody, step, expected_observation)
+            bind_submit_speculative_k8(lower, batch, custody, step, expected_observation)
         }
         RebuiltBatchV1::SpeculativeK16(batch) => {
-            bind_submit_speculative_k16(lower, *batch, custody, step, expected_observation)
+            bind_submit_speculative_k16(lower, batch, custody, step, expected_observation)
         }
     }
 }
@@ -8284,24 +8299,27 @@ struct PostQueueRemainderV1 {
     history: M1RearmRoundHistoryV1,
 }
 
-/// Replaces request workspaces, binds the fresh fixed batch to the same queue,
-/// compares exact queue/device observations, and submits the next generation.
-///
-/// Model, KV-arena, page-ledger, and coherent completion-output custody are
-/// transferred unchanged. Every workspace allocation is replaced through the
-/// generic initialized partition replacement API, producing fresh allocation
-/// generations, sublease witnesses, and dispatch ranges. Only non-workspace
-/// buffers from an exactly equal retained semantic row are reused.
-///
-/// # Errors
-///
-/// Returns a closed, phase-tagged failure retaining every queue, allocation,
-/// sublease, range, batch, cache, and scheduler owner available at rejection.
-fn submit_m1_long_lived_queue_rearm_inner_v1(
+struct StagedRearmSubmissionV1<'a> {
+    shape: M1PhysicalFixedBatchShapeV1,
+    lower: ServiceQueueUnboundSessionV1,
+    custody: M1PhysicalQueueBatchRearmPartsV1,
+    workspace_ranges: Vec<FreshWorkspaceRangeV1>,
+    recipe: AddresslessM1PhysicalBufferRecipeV1,
+    catalog: ContentBoundM1ProgramCatalogV1<'a>,
+    step: M1PrepublicationStepCustodyV1,
+    expected_observation: ComputeAqlQueueObservationV1,
+    post: PostQueueRemainderV1,
+    previous_epoch: CompletionEpoch,
+    device: Gfx942DeviceBinding,
+}
+
+// Finish preparation before any const-cardinality fixed batch is lowered.
+#[inline(never)]
+fn prepare_rearm_submission<'a>(
     prepared: M1PreparedLongLivedQueueRearmV1,
     recipe: AddresslessM1PhysicalBufferRecipeV1,
-    catalog: ContentBoundM1ProgramCatalogV1<'_>,
-) -> Result<M1RearmedPublishedQueueV1, M1LongLivedQueueRearmSubmissionFailureV1<'_>> {
+    catalog: ContentBoundM1ProgramCatalogV1<'a>,
+) -> Result<Box<StagedRearmSubmissionV1<'a>>, M1LongLivedQueueRearmSubmissionFailureV1<'a>> {
     if preflight_rearm(&prepared, &recipe, &catalog).is_err() {
         return Err(submission_failure(
             M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
@@ -8567,6 +8585,39 @@ fn submit_m1_long_lived_queue_rearm_inner_v1(
     // The stale former workspace witnesses are intentionally dropped only
     // after fresh generic replacement witnesses are retained above.
     custody.workspace_owners = workspace_owners;
+    Ok(Box::new(StagedRearmSubmissionV1 {
+        shape,
+        lower,
+        custody,
+        workspace_ranges,
+        recipe,
+        catalog,
+        step,
+        expected_observation,
+        post,
+        previous_epoch,
+        device,
+    }))
+}
+
+// This boundary keeps fixed-batch lowering out of the larger preparation frame.
+#[inline(never)]
+fn finish_staged_rearm_submission<'a>(
+    staged: Box<StagedRearmSubmissionV1<'a>>,
+) -> Result<M1RearmedPublishedQueueV1, M1LongLivedQueueRearmSubmissionFailureV1<'a>> {
+    let StagedRearmSubmissionV1 {
+        shape,
+        lower,
+        custody,
+        workspace_ranges,
+        recipe,
+        catalog,
+        step,
+        expected_observation,
+        post,
+        previous_epoch,
+        device,
+    } = *staged;
     let published = match finish_rearm_submission(
         shape,
         lower,
@@ -8600,6 +8651,28 @@ fn submit_m1_long_lived_queue_rearm_inner_v1(
         queue_observation: expected_observation,
         device,
     })
+}
+
+/// Replaces request workspaces, binds the fresh fixed batch to the same queue,
+/// compares exact queue/device observations, and submits the next generation.
+///
+/// Model, KV-arena, page-ledger, and coherent completion-output custody are
+/// transferred unchanged. Every workspace allocation is replaced through the
+/// generic initialized partition replacement API, producing fresh allocation
+/// generations, sublease witnesses, and dispatch ranges. Only non-workspace
+/// buffers from an exactly equal retained semantic row are reused.
+///
+/// # Errors
+///
+/// Returns a closed, phase-tagged failure retaining every queue, allocation,
+/// sublease, range, batch, cache, and scheduler owner available at rejection.
+fn submit_m1_long_lived_queue_rearm_inner_v1<'a>(
+    prepared: M1PreparedLongLivedQueueRearmV1,
+    recipe: AddresslessM1PhysicalBufferRecipeV1,
+    catalog: ContentBoundM1ProgramCatalogV1<'a>,
+) -> Result<M1RearmedPublishedQueueV1, M1LongLivedQueueRearmSubmissionFailureV1<'a>> {
+    let staged = prepare_rearm_submission(prepared, recipe, catalog)?;
+    finish_staged_rearm_submission(staged)
 }
 
 /// Replaces workspaces and submits the fresh queue generation, or permanently
