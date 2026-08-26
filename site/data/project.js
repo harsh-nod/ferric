@@ -26,7 +26,8 @@ window.FERRIC_PROJECT = Object.freeze({
     {
       label: "S1/K4 speculative serving",
       state: "integration",
-      detail: "Fail-closed physical adapter exists; multi-round and rollover closure are active work.",
+      detail:
+        "The fail-closed adapter has typed terminal cleanup; production inputs and rollover remain active work.",
     },
     {
       label: "M1 qualification",
@@ -61,7 +62,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Continuous S1/K4 speculation",
         detail:
-          "A physical lifecycle adapter owns fresh publication and same-shape rearm with independent choice readback.",
+          "A physical lifecycle adapter owns fresh publication, same-shape rearm, independent choice readback, and typed terminal cleanup.",
       },
       {
         name: "Paired prefill and shape rollover",
@@ -106,6 +107,13 @@ window.FERRIC_PROJECT = Object.freeze({
   },
   recentProgress: [
     {
+      commit: "1c685e4",
+      title: "Type terminal serving custody",
+      state: "verified",
+      detail:
+        "Terminal adapter failures now retain the provider and exact lower owner, derive stages structurally, and expose typed diagnostic queue teardown without reopening serving authority.",
+    },
+    {
       commit: "375f23a",
       title: "Bound rearm submission stack frames",
       state: "observed",
@@ -125,13 +133,6 @@ window.FERRIC_PROJECT = Object.freeze({
       state: "verified",
       detail:
         "Added identity-branded lifecycle custody, terminal quarantine, exact S1/K4 dispatch, same-shape rearm, and diagnostic history.",
-    },
-    {
-      commit: "cf14c93",
-      title: "Quarantine terminal serving failures",
-      state: "verified",
-      detail:
-        "Hostile bridge tests cover terminal readback and settlement failures plus retryable custody recovery.",
     },
   ],
   evidence: {
