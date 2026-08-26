@@ -1348,8 +1348,9 @@ def validate_plan(
         }
         or plan["finalization"]
         != {
-            "evidence_index_output": "forbidden-while-work-queue-is-incomplete",
-            "qualification_receipt_output": "forbidden-while-work-queue-is-incomplete",
+            "completion_transition_output": "completed-work.json",
+            "evidence_index_output": "requires-authenticated-work-queue-completion-v1",
+            "qualification_receipt_output": "requires-authenticated-work-queue-completion-v1",
             "required_validator": "proofs/check-m1-evidence-index.py",
         }
     ):
@@ -1363,9 +1364,9 @@ def validate_plan(
         or queue["plan_sha256"] != digest_bytes(plan_raw)
         or queue["counts"]
         != {
-            "available_producer_items": 357,
+            "available_producer_items": 358,
             "missing_items": 358,
-            "missing_producer_items": 1,
+            "missing_producer_items": 0,
         }
     ):
         fail("M1 work queue identity, counts, or incomplete status drifted")

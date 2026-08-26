@@ -1330,9 +1330,9 @@ def validate_plan_and_select(
             or len(items) != 358
             or counts
             != {
-                "available_producer_items": 357,
+                "available_producer_items": 358,
                 "missing_items": 358,
-                "missing_producer_items": 1,
+                "missing_producer_items": 0,
             }
         ):
             fail("M1 performance producer work-queue counts drifted")

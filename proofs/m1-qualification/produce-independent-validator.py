@@ -1041,9 +1041,9 @@ def load_plan(
         or len(queue["items"]) != 358
         or queue.get("counts")
         != {
-            "available_producer_items": 357,
+            "available_producer_items": 358,
             "missing_items": 358,
-            "missing_producer_items": 1,
+            "missing_producer_items": 0,
         }
     ):
         fail("M1 plan or work queue identity drifted")

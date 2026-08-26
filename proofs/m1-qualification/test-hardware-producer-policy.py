@@ -825,6 +825,7 @@ def main() -> None:
         for relative in (
             "proofs/check-m1-evidence-index.py",
             "proofs/m1/evidence/validate-hardware-transcript.py",
+            "proofs/m1/evidence/validate-qualification-receipt.py",
         ):
             shutil.copy2(repo / relative, ferric / relative)
         for relative in TOOL_SOURCE_PATHS.values():
