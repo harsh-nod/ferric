@@ -3,15 +3,17 @@
 //! This Ferric-only bridge consumes a released completed step, detaches the
 //! recycled generic queue, captures exactly one next scheduler dispatch, and
 //! replaces every request-specific workspace allocation before binding and
-//! submitting the same native queue. The first version deliberately admits
-//! only an unchanged decode or speculative selection and fixed-batch shape.
-//! It does not admit prefill transitions, shape changes, new requests, or a
-//! complete serving registry, and makes no hardware, numerical, or performance
-//! claim. A qualification capture attached to target decode remains physically
-//! bound and is overwritten by every admitted generation; Ferric observes it
-//! only after the caller selects the terminal generation. Completion custody
-//! retains Engine logical acceptance independently from external publication,
-//! including qualification prompt commits with logical one and external zero.
+//! submitting the same native queue. This direct path admits only an unchanged
+//! decode or speculative selection and fixed-batch shape. The serving registry
+//! routes paired prefill, mode/shape changes, admissions, cancellation, and
+//! roster changes through homogeneous planning and explicit quiescent rollover
+//! instead of weakening this same-plan boundary. This module makes no hardware,
+//! numerical, or performance claim. A qualification capture attached to target
+//! decode remains physically bound and is overwritten by every admitted
+//! generation; Ferric observes it only after the caller selects the terminal
+//! generation. Completion custody retains Engine logical acceptance
+//! independently from external publication, including qualification prompt
+//! commits with logical one and external zero.
 
 use core::fmt;
 

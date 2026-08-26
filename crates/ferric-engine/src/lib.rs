@@ -22,6 +22,7 @@ mod m1_packet_diagnostic;
 mod m1_packet_diagnostic_execution;
 mod m1_prepublication;
 mod m1_queue_rearm;
+mod m1_serving_registry;
 mod model_memory_allocations;
 mod observed_completion;
 mod operation_dispatch_expansion;
@@ -205,6 +206,12 @@ pub use m1_queue_rearm::{
     M1ScheduledLongLivedQueueRearmTeardownFailureV1,
     M1ScheduledLongLivedQueueRearmTeardownSuccessV1, M1ScheduledLongLivedQueueRearmV1,
     M1_MAX_REARM_ROUND_HISTORY_V1,
+};
+pub use m1_serving_registry::{
+    M1ServingBatchPlanV1, M1ServingCompletionDispositionV1, M1ServingPlanV1,
+    M1ServingQueueActionV1, M1ServingQuiescenceV1, M1ServingQuiescentQueueActionV1,
+    M1ServingRegistryErrorV1, M1ServingRegistryV1, M1ServingRequestPhaseV1,
+    M1ServingRolloverReasonV1,
 };
 pub use model_memory_allocations::{
     bind_addressless_model_memory_allocations_v1, BoundModelMemoryAllocationsV1,
