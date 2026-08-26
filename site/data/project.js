@@ -6,7 +6,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "The target-only physical path now generates tokens on MI300X. The speculative serving path and the qualification evidence set remain in progress.",
+      "The target-only path has an MI300X smoke observation and now binds independent K6 choice evidence with generation-safe rearm. The S1/K4 production provider, rollover, and qualification evidence set remain in progress.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -15,7 +15,7 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Precision", "BF16 / FP32 accumulate"],
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
-    ["Runtime", "direct HSA command batches"],
+    ["Runtime", "fe2o3 2317f300 / direct HSA command batches"],
   ],
   readiness: [
     {
@@ -27,7 +27,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "S1/K4 speculative serving",
       state: "integration",
       detail:
-        "The fail-closed adapter has typed terminal cleanup; production inputs and rollover remain active work.",
+        "Direct and S1/K4 adapter paths retain exact plan custody, independent choices, and fresh diagnostic reset; the production provider, rollover, and hardware qualification remain active work.",
     },
     {
       label: "M1 qualification",
@@ -50,7 +50,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Physical target-only generation",
         detail:
-          "Direct HSA publication, completion readback, queue rearm, KV ownership, and token decode on MI300X.",
+          "Direct HSA publication, completion readback, independent K6 choice capture, generation-safe queue rearm, KV ownership, and token decode on MI300X.",
       },
       {
         name: "Bounded engine state",
@@ -106,6 +106,20 @@ window.FERRIC_PROJECT = Object.freeze({
       "Smoke observation only. It is not evidence, numerical qualification, hardware qualification, performance qualification, or M1 closure.",
   },
   recentProgress: [
+    {
+      commit: "2d071fb",
+      title: "Update the fe2o3 compiler revision",
+      state: "verified",
+      detail:
+        "Pinned Ferric to fe2o3 2317f300, which adds verified rooted tensor-layout composition while preserving the previously qualified KFD and service-host runtime trees byte-for-byte.",
+    },
+    {
+      commit: "6fd41b9",
+      title: "Bind direct serving evidence",
+      state: "verified",
+      detail:
+        "Direct and speculative paths retain exact serving plans and independent diagnostic choices, reject generic evidence bypass, and replace host-visible choice buffers with fresh sentinel images on every rearm generation.",
+    },
     {
       commit: "1c685e4",
       title: "Type terminal serving custody",
