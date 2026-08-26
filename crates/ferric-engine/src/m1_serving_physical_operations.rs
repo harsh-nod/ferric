@@ -57,6 +57,24 @@ impl M1ServingPreparedFirstPublicationV1 {
             selected,
         }
     }
+
+    /// Recovers every unpublished physical owner after a fail-stop preparation rejection.
+    #[must_use = "all prepared publication owners remain linear"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1AllocatedScheduledStepV1,
+        AddresslessM1PhysicalBufferRecipeV1,
+        BoundM1CompletionOutputV1,
+        Vec<ActiveDeviceKvCache>,
+    ) {
+        (
+            self.allocated,
+            self.recipe,
+            self.completion_output,
+            self.selected,
+        )
+    }
 }
 
 /// Request-owned inputs prepared after exact same-shape rearm scheduling.
@@ -392,41 +410,207 @@ enum M1ServingPhysicalRunnerAdapterPhaseV1 {
     Sealed,
 }
 
-/// Opaque exhaustive terminal custody retained at the exact failed stage.
-#[must_use = "terminal physical custody must remain retained for teardown/diagnosis"]
-pub struct M1ServingPhysicalRunnerTerminalCustodyV1<'a, P> {
-    stage: M1ServingPhysicalRunnerOperationErrorV1,
-    provider: Option<P>,
-    custody: Box<dyn fmt::Debug + 'a>,
+/// Exhaustive phase-accurate lower custody after the serving adapter seals.
+#[must_use = "terminal lower custody must remain retained for teardown or diagnosis"]
+#[derive(Debug)]
+pub enum M1ServingPhysicalRunnerTerminalLowerCustodyV1<'a, F> {
+    AdapterSealedVacant,
+    AdapterSealedQuiescent(Box<M1ServingPhysicalRunnerQuiescentV1>),
+    AdapterSealedPublished(Box<M1ServingPhysicalRunnerPublishedV1>),
+    AdapterSealedReadback(Box<M1ServingPhysicalRunnerReadbackV1>),
+    ExactFirstDispatch(M1ExactDispatchErrorV1),
+    FirstProviderPreparation(Box<F>),
+    FirstPreparedRosterRejected(Box<M1ServingPreparedFirstPublicationV1>),
+    FirstPreparedEvidenceRejected(Box<M1ServingPreparedFirstPublicationV1>),
+    FirstPublication {
+        failure: crate::M1PhysicalRunnerFirstPublicationFailureV1<'a>,
+        selected: Vec<ActiveDeviceKvCache>,
+    },
+    FirstUnexpectedShape {
+        published: M1PhysicalPublishedQueueSessionV1,
+        selected: Vec<ActiveDeviceKvCache>,
+    },
+    RearmSchedule {
+        failure: crate::M1LongLivedQueueRearmScheduleFailureV1,
+        history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    },
+    RearmProviderPreparation {
+        failure: Box<F>,
+        history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    },
+    RearmPublication {
+        failure: crate::M1PhysicalRunnerRearmSubmissionFailureV1<'a>,
+        history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    },
+    RearmUnexpectedShape {
+        published: M1RearmedPublishedQueueV1,
+        history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    },
+    FirstQueueWait {
+        failure: crate::M1PhysicalQueueOperationFailureV1,
+        selected: Vec<ActiveDeviceKvCache>,
+        history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    },
+    FirstQueueRecycle {
+        failure: crate::M1PhysicalQueueOperationFailureV1,
+        selected: Vec<ActiveDeviceKvCache>,
+        history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    },
+    FirstCompactObservation {
+        failure: crate::M1CompletionObservationFailureV1,
+        selected: Vec<ActiveDeviceKvCache>,
+        history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    },
+    FirstChoiceObservation {
+        failure: Box<crate::M1SpeculativeDiagnosticObservationFailureV1>,
+        selected: Vec<ActiveDeviceKvCache>,
+        history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    },
+    FirstDiagnosticJoin {
+        failure: Box<crate::M1SpeculativeDiagnosticCompletedReadbackJoinFailureV1>,
+        selected: Vec<ActiveDeviceKvCache>,
+        history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    },
+    RearmedQueueProgress {
+        failure: Box<crate::M1RearmedQueueProgressFailureV1>,
+        history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    },
+    RearmedDiagnosticReadback {
+        failure: Box<crate::M1RearmedSpeculativeDiagnosticReadbackFailureV1>,
+        history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    },
+    FirstPageRelease {
+        failure: Box<crate::M1CompletedStepKvReleaseFailureV1>,
+        choices: M1ObservedSpeculativeDiagnosticChoicesV1,
+        history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    },
+    FirstCompletionPoison {
+        poison: Box<crate::M1CompletedStepPoisonV1>,
+        choices: M1ObservedSpeculativeDiagnosticChoicesV1,
+        history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    },
+    RearmedCompletionTerminal {
+        outcome: M1RearmedCompletionOutcomeV1,
+        choices: M1ObservedSpeculativeDiagnosticChoicesV1,
+        history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    },
+    RearmedPageRelease {
+        failure: Box<crate::M1RearmedRoundPageReleaseFailureV1>,
+        choices: M1ObservedSpeculativeDiagnosticChoicesV1,
+        history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    },
 }
 
-impl<P> fmt::Debug for M1ServingPhysicalRunnerTerminalCustodyV1<'_, P> {
+impl<F> M1ServingPhysicalRunnerTerminalLowerCustodyV1<'_, F> {
+    #[must_use]
+    pub const fn stage(&self) -> M1ServingPhysicalRunnerOperationErrorV1 {
+        match self {
+            Self::AdapterSealedVacant
+            | Self::AdapterSealedQuiescent(_)
+            | Self::AdapterSealedPublished(_)
+            | Self::AdapterSealedReadback(_) => {
+                M1ServingPhysicalRunnerOperationErrorV1::AdapterSealed
+            }
+            Self::ExactFirstDispatch(error) => {
+                M1ServingPhysicalRunnerOperationErrorV1::ExactFirstDispatch(*error)
+            }
+            Self::FirstProviderPreparation(_) | Self::RearmProviderPreparation { .. } => {
+                M1ServingPhysicalRunnerOperationErrorV1::ProviderPreparation
+            }
+            Self::FirstPreparedRosterRejected(_) => {
+                M1ServingPhysicalRunnerOperationErrorV1::SelectedRosterCount
+            }
+            Self::FirstPreparedEvidenceRejected(_) => {
+                M1ServingPhysicalRunnerOperationErrorV1::UnsupportedEvidenceShape
+            }
+            Self::FirstPublication { .. } => {
+                M1ServingPhysicalRunnerOperationErrorV1::FirstPublication
+            }
+            Self::FirstUnexpectedShape { .. } | Self::RearmUnexpectedShape { .. } => {
+                M1ServingPhysicalRunnerOperationErrorV1::UnsupportedEvidenceShape
+            }
+            Self::RearmSchedule { .. } => {
+                M1ServingPhysicalRunnerOperationErrorV1::SameShapeSchedule
+            }
+            Self::RearmPublication { .. } => {
+                M1ServingPhysicalRunnerOperationErrorV1::SameShapePublication
+            }
+            Self::FirstQueueWait { .. } => M1ServingPhysicalRunnerOperationErrorV1::QueueWait,
+            Self::FirstQueueRecycle { .. } => M1ServingPhysicalRunnerOperationErrorV1::QueueRecycle,
+            Self::FirstCompactObservation { .. }
+            | Self::FirstChoiceObservation { .. }
+            | Self::FirstDiagnosticJoin { .. }
+            | Self::RearmedDiagnosticReadback { .. } => {
+                M1ServingPhysicalRunnerOperationErrorV1::DiagnosticReadback
+            }
+            Self::RearmedQueueProgress { failure, .. } => match failure.phase() {
+                crate::M1LongLivedQueueRearmProgressPhaseV1::QueueWait => {
+                    M1ServingPhysicalRunnerOperationErrorV1::QueueWait
+                }
+                crate::M1LongLivedQueueRearmProgressPhaseV1::SignalRecycle => {
+                    M1ServingPhysicalRunnerOperationErrorV1::QueueRecycle
+                }
+            },
+            Self::FirstPageRelease { .. } | Self::RearmedPageRelease { .. } => {
+                M1ServingPhysicalRunnerOperationErrorV1::PageReleaseRejected
+            }
+            Self::FirstCompletionPoison { .. } | Self::RearmedCompletionTerminal { .. } => {
+                M1ServingPhysicalRunnerOperationErrorV1::CompletionPoisoned
+            }
+        }
+    }
+}
+
+/// Opaque exhaustive terminal custody retaining the provider and typed lower owner.
+///
+/// ```compile_fail
+/// use ferric_engine::M1ServingPhysicalRunnerTerminalCustodyV1;
+/// fn split(custody: M1ServingPhysicalRunnerTerminalCustodyV1<'static, (), ()>) {
+///     let M1ServingPhysicalRunnerTerminalCustodyV1 { provider, lower } = custody;
+///     let _ = (provider, lower);
+/// }
+/// ```
+#[must_use = "terminal physical custody must remain retained for teardown or diagnosis"]
+pub struct M1ServingPhysicalRunnerTerminalCustodyV1<'a, P, F> {
+    provider: Option<P>,
+    lower: Box<M1ServingPhysicalRunnerTerminalLowerCustodyV1<'a, F>>,
+}
+
+impl<P, F: fmt::Debug> fmt::Debug for M1ServingPhysicalRunnerTerminalCustodyV1<'_, P, F> {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter
             .debug_struct("M1ServingPhysicalRunnerTerminalCustodyV1")
-            .field("stage", &self.stage)
+            .field("stage", &self.stage())
             .field("provider_retained", &self.provider.is_some())
-            .field("custody", &self.custody)
+            .field("lower", &self.lower)
             .finish()
     }
 }
 
-impl<'a, P> M1ServingPhysicalRunnerTerminalCustodyV1<'a, P> {
+impl<'a, P, F> M1ServingPhysicalRunnerTerminalCustodyV1<'a, P, F> {
     #[must_use]
-    pub const fn stage(&self) -> M1ServingPhysicalRunnerOperationErrorV1 {
-        self.stage
+    pub fn stage(&self) -> M1ServingPhysicalRunnerOperationErrorV1 {
+        self.lower.stage()
     }
 
-    /// Separates the stage, provider, and erased lower custody without dropping either owner.
+    #[must_use]
+    pub const fn provider(&self) -> Option<&P> {
+        self.provider.as_ref()
+    }
+
+    pub fn lower(&self) -> &M1ServingPhysicalRunnerTerminalLowerCustodyV1<'a, F> {
+        &self.lower
+    }
+
+    /// Separates the provider from exact typed lower custody without dropping either owner.
     #[must_use = "terminal provider and lower custody must both remain retained"]
     pub fn into_parts(
         self,
     ) -> (
-        M1ServingPhysicalRunnerOperationErrorV1,
         Option<P>,
-        Box<dyn fmt::Debug + 'a>,
+        Box<M1ServingPhysicalRunnerTerminalLowerCustodyV1<'a, F>>,
     ) {
-        (self.stage, self.provider, self.custody)
+        (self.provider, self.lower)
     }
 }
 
@@ -470,23 +654,25 @@ impl<'a, const C: usize, P> M1ServingPhysicalRunnerOperationsV1<'a, C, P> {
         self.provider.as_ref()
     }
 
-    fn terminal<Q, T: fmt::Debug + 'a>(
+    fn terminal<Q, F>(
         &mut self,
-        stage: M1ServingPhysicalRunnerOperationErrorV1,
-        custody: T,
+        lower: M1ServingPhysicalRunnerTerminalLowerCustodyV1<'a, F>,
     ) -> M1ServingPhysicalOperationFailureV1<
         Q,
-        M1ServingPhysicalRunnerTerminalCustodyV1<'a, P>,
+        M1ServingPhysicalRunnerTerminalCustodyV1<'a, P, F>,
         M1ServingPhysicalRunnerOperationErrorV1,
-    > {
+    >
+    where
+        F: fmt::Debug + 'a,
+    {
         self.engine.quarantine_m1_queue_rearm_failure();
         self.phase = M1ServingPhysicalRunnerAdapterPhaseV1::Sealed;
+        let source = lower.stage();
         M1ServingPhysicalOperationFailureV1::Terminal {
-            source: stage,
+            source,
             custody: M1ServingPhysicalRunnerTerminalCustodyV1 {
-                stage,
                 provider: self.provider.take(),
-                custody: Box::new(custody),
+                lower: Box::new(lower),
             },
         }
     }
@@ -595,7 +781,7 @@ where
     type Published = M1ServingPhysicalRunnerPublishedV1;
     type Readback = M1ServingPhysicalRunnerReadbackV1;
     type Error = M1ServingPhysicalRunnerOperationErrorV1;
-    type TerminalCustody = M1ServingPhysicalRunnerTerminalCustodyV1<'a, P>;
+    type TerminalCustody = M1ServingPhysicalRunnerTerminalCustodyV1<'a, P, P::Failure>;
 
     fn scheduled_dispatch<'b>(&self, custody: &'b Self::Published) -> &'b M1ScheduledDispatchV1 {
         match &custody.state {
@@ -614,7 +800,9 @@ where
     ) -> M1ServingPhysicalOperationResultV1<Self::Published, (), Self::TerminalCustody, Self::Error>
     {
         if self.provider.is_none() {
-            return Err(self.terminal(M1ServingPhysicalRunnerOperationErrorV1::AdapterSealed, ()));
+            return Err(
+                self.terminal(M1ServingPhysicalRunnerTerminalLowerCustodyV1::AdapterSealedVacant)
+            );
         }
         if !phase_allows_fresh_launch(self.phase) {
             return Err(M1ServingPhysicalOperationFailureV1::Retryable {
@@ -635,8 +823,7 @@ where
             Ok(scheduled) => scheduled,
             Err(error) if exact_dispatch_failure_is_fail_stop(error) => {
                 return Err(self.terminal(
-                    M1ServingPhysicalRunnerOperationErrorV1::ExactFirstDispatch(error),
-                    error,
+                    M1ServingPhysicalRunnerTerminalLowerCustodyV1::ExactFirstDispatch(error),
                 ));
             }
             Err(error) => {
@@ -655,8 +842,9 @@ where
             Ok(prepared) => prepared,
             Err(failure) => {
                 return Err(self.terminal(
-                    M1ServingPhysicalRunnerOperationErrorV1::ProviderPreparation,
-                    failure,
+                    M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstProviderPreparation(
+                        Box::new(failure),
+                    ),
                 ));
             }
         };
@@ -666,14 +854,22 @@ where
                 .selected
                 .iter()
                 .map(|cache| cache.projection().request),
-        ) || prepared
+        ) {
+            return Err(self.terminal(
+                M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstPreparedRosterRejected(
+                    Box::new(prepared),
+                ),
+            ));
+        }
+        if prepared
             .completion_output
             .speculative_diagnostic_choices()
             .is_none()
         {
             return Err(self.terminal(
-                M1ServingPhysicalRunnerOperationErrorV1::SelectedRosterCount,
-                prepared,
+                M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstPreparedEvidenceRejected(
+                    Box::new(prepared),
+                ),
             ));
         }
         let M1ServingPreparedFirstPublicationV1 {
@@ -692,15 +888,19 @@ where
             Ok(published) => published,
             Err(failure) => {
                 return Err(self.terminal(
-                    M1ServingPhysicalRunnerOperationErrorV1::FirstPublication,
-                    (failure, selected),
+                    M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstPublication {
+                        failure,
+                        selected,
+                    },
                 ));
             }
         };
         if published.shape() != M1PhysicalFixedBatchShapeV1::SpeculativeK4 {
             return Err(self.terminal(
-                M1ServingPhysicalRunnerOperationErrorV1::UnsupportedEvidenceShape,
-                (published, selected),
+                M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstUnexpectedShape {
+                    published,
+                    selected,
+                },
             ));
         }
         self.phase = M1ServingPhysicalRunnerAdapterPhaseV1::Published {
@@ -729,8 +929,9 @@ where
     > {
         if self.provider.is_none() {
             return Err(self.terminal(
-                M1ServingPhysicalRunnerOperationErrorV1::AdapterSealed,
-                custody,
+                M1ServingPhysicalRunnerTerminalLowerCustodyV1::AdapterSealedQuiescent(Box::new(
+                    custody,
+                )),
             ));
         }
         if let Err(source) = validate_custody_guard(
@@ -787,8 +988,10 @@ where
                             });
                         }
                         return Err(self.terminal(
-                            M1ServingPhysicalRunnerOperationErrorV1::SameShapeSchedule,
-                            (failure, diagnostic_history),
+                            M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmSchedule {
+                                failure,
+                                history: diagnostic_history,
+                            },
                         ));
                     }
                 };
@@ -825,8 +1028,10 @@ where
                             });
                         }
                         return Err(self.terminal(
-                            M1ServingPhysicalRunnerOperationErrorV1::SameShapeSchedule,
-                            (failure, diagnostic_history),
+                            M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmSchedule {
+                                failure,
+                                history: diagnostic_history,
+                            },
                         ));
                     }
                 };
@@ -862,8 +1067,10 @@ where
                                 });
                             }
                             return Err(self.terminal(
-                                M1ServingPhysicalRunnerOperationErrorV1::SameShapeSchedule,
-                                (failure, diagnostic_history),
+                                M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmSchedule {
+                                    failure,
+                                    history: diagnostic_history,
+                                },
                             ));
                         }
                     };
@@ -879,8 +1086,10 @@ where
             Ok(prepared) => prepared,
             Err(failure) => {
                 return Err(self.terminal(
-                    M1ServingPhysicalRunnerOperationErrorV1::ProviderPreparation,
-                    (failure, diagnostic_history),
+                    M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmProviderPreparation {
+                        failure: Box::new(failure),
+                        history: diagnostic_history,
+                    },
                 ));
             }
         };
@@ -892,15 +1101,19 @@ where
                 Ok(published) => published,
                 Err(failure) => {
                     return Err(self.terminal(
-                        M1ServingPhysicalRunnerOperationErrorV1::SameShapePublication,
-                        (failure, diagnostic_history),
+                        M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmPublication {
+                            failure,
+                            history: diagnostic_history,
+                        },
                     ));
                 }
             };
         if published.shape() != M1PhysicalFixedBatchShapeV1::SpeculativeK4 {
             return Err(self.terminal(
-                M1ServingPhysicalRunnerOperationErrorV1::UnsupportedEvidenceShape,
-                (published, diagnostic_history),
+                M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmUnexpectedShape {
+                    published,
+                    history: diagnostic_history,
+                },
             ));
         }
         self.phase = M1ServingPhysicalRunnerAdapterPhaseV1::Published {
@@ -931,8 +1144,9 @@ where
     > {
         if self.provider.is_none() {
             return Err(self.terminal(
-                M1ServingPhysicalRunnerOperationErrorV1::AdapterSealed,
-                custody,
+                M1ServingPhysicalRunnerTerminalLowerCustodyV1::AdapterSealedQuiescent(Box::new(
+                    custody,
+                )),
             ));
         }
         if let Err(source) = validate_custody_guard(
@@ -964,8 +1178,9 @@ where
     > {
         if self.provider.is_none() {
             return Err(self.terminal(
-                M1ServingPhysicalRunnerOperationErrorV1::AdapterSealed,
-                custody,
+                M1ServingPhysicalRunnerTerminalLowerCustodyV1::AdapterSealedPublished(Box::new(
+                    custody,
+                )),
             ));
         }
         if let Err(source) = validate_custody_guard(
@@ -1020,8 +1235,11 @@ where
                     Ok(completed) => completed,
                     Err(failure) => {
                         return Err(self.terminal(
-                            M1ServingPhysicalRunnerOperationErrorV1::QueueWait,
-                            (failure, selected, diagnostic_history),
+                            M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstQueueWait {
+                                failure,
+                                selected,
+                                history: diagnostic_history,
+                            },
                         ));
                     }
                 };
@@ -1029,8 +1247,11 @@ where
                     Ok(recycled) => recycled,
                     Err(failure) => {
                         return Err(self.terminal(
-                            M1ServingPhysicalRunnerOperationErrorV1::QueueRecycle,
-                            (failure, selected, diagnostic_history),
+                            M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstQueueRecycle {
+                                failure,
+                                selected,
+                                history: diagnostic_history,
+                            },
                         ));
                     }
                 };
@@ -1038,8 +1259,11 @@ where
                     Ok(observed) => observed,
                     Err(failure) => {
                         return Err(self.terminal(
-                            M1ServingPhysicalRunnerOperationErrorV1::DiagnosticReadback,
-                            (failure, selected, diagnostic_history),
+                            M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstCompactObservation {
+                                failure,
+                                selected,
+                                history: diagnostic_history,
+                            },
                         ));
                     }
                 };
@@ -1047,8 +1271,11 @@ where
                     Ok(diagnostic) => diagnostic,
                     Err(failure) => {
                         return Err(self.terminal(
-                            M1ServingPhysicalRunnerOperationErrorV1::DiagnosticReadback,
-                            (failure, selected, diagnostic_history),
+                            M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstChoiceObservation {
+                                failure,
+                                selected,
+                                history: diagnostic_history,
+                            },
                         ));
                     }
                 };
@@ -1056,8 +1283,11 @@ where
                     Ok(joined) => joined,
                     Err(failure) => {
                         return Err(self.terminal(
-                            M1ServingPhysicalRunnerOperationErrorV1::DiagnosticReadback,
-                            (failure, selected, diagnostic_history),
+                            M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstDiagnosticJoin {
+                                failure,
+                                selected,
+                                history: diagnostic_history,
+                            },
                         ));
                     }
                 };
@@ -1094,8 +1324,10 @@ where
                     Ok(completed) => completed,
                     Err(failure) => {
                         return Err(self.terminal(
-                            M1ServingPhysicalRunnerOperationErrorV1::QueueWait,
-                            (failure, diagnostic_history),
+                            M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmedQueueProgress {
+                                failure,
+                                history: diagnostic_history,
+                            },
                         ));
                     }
                 };
@@ -1103,8 +1335,10 @@ where
                     Ok(recycled) => recycled,
                     Err(failure) => {
                         return Err(self.terminal(
-                            M1ServingPhysicalRunnerOperationErrorV1::QueueRecycle,
-                            (failure, diagnostic_history),
+                            M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmedQueueProgress {
+                                failure,
+                                history: diagnostic_history,
+                            },
                         ));
                     }
                 };
@@ -1112,8 +1346,10 @@ where
                     Ok(joined) => joined,
                     Err(failure) => {
                         return Err(self.terminal(
-                            M1ServingPhysicalRunnerOperationErrorV1::DiagnosticReadback,
-                            (failure, diagnostic_history),
+                            M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmedDiagnosticReadback {
+                                failure,
+                                history: diagnostic_history,
+                            },
                         ));
                     }
                 };
@@ -1166,8 +1402,9 @@ where
     > {
         if self.provider.is_none() {
             return Err(self.terminal(
-                M1ServingPhysicalRunnerOperationErrorV1::AdapterSealed,
-                custody,
+                M1ServingPhysicalRunnerTerminalLowerCustodyV1::AdapterSealedReadback(Box::new(
+                    custody,
+                )),
             ));
         }
         let readback_epoch = custody.epoch();
@@ -1292,8 +1529,11 @@ where
                                 ))
                             }
                             Err(failure) => Err(self.terminal(
-                                M1ServingPhysicalRunnerOperationErrorV1::PageReleaseRejected,
-                                (failure, choices, diagnostic_history),
+                                M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstPageRelease {
+                                    failure,
+                                    choices,
+                                    history: diagnostic_history,
+                                },
                             )),
                         }
                     }
@@ -1310,8 +1550,11 @@ where
                         })
                     }
                     M1CompletedStepOutcomeV1::Poisoned(poison) => Err(self.terminal(
-                        M1ServingPhysicalRunnerOperationErrorV1::CompletionPoisoned,
-                        (poison, choices, diagnostic_history),
+                        M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstCompletionPoison {
+                            poison,
+                            choices,
+                            history: diagnostic_history,
+                        },
                     )),
                 }
             }
@@ -1387,8 +1630,11 @@ where
                     M1ServingRearmedReadbackStateV1::CompletionRejected(outcome) => {
                         let M1CompletedStepOutcomeV1::Rejected(rejected) = outcome.outcome() else {
                             return Err(self.terminal(
-                                M1ServingPhysicalRunnerOperationErrorV1::CompletionPoisoned,
-                                (outcome, choices, diagnostic_history),
+                                M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmedCompletionTerminal {
+                                    outcome,
+                                    choices,
+                                    history: diagnostic_history,
+                                },
                             ));
                         };
                         if !dispositions_match_roster(&dispositions, rejected.roster()) {
@@ -1407,8 +1653,11 @@ where
                             Ok(outcome) => outcome,
                             Err(outcome) => {
                                 return Err(self.terminal(
-                                    M1ServingPhysicalRunnerOperationErrorV1::CompletionPoisoned,
-                                    (outcome, choices, diagnostic_history),
+                                    M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmedCompletionTerminal {
+                                        outcome: *outcome,
+                                        choices,
+                                        history: diagnostic_history,
+                                    },
                                 ));
                             }
                         }
@@ -1428,8 +1677,11 @@ where
                         ))
                     }
                     M1RearmedRoundReleaseOutcomeV1::Rejected(failure) => Err(self.terminal(
-                        M1ServingPhysicalRunnerOperationErrorV1::PageReleaseRejected,
-                        (failure, choices, diagnostic_history),
+                        M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmedPageRelease {
+                            failure,
+                            choices,
+                            history: diagnostic_history,
+                        },
                     )),
                     M1RearmedRoundReleaseOutcomeV1::NotCompleted(outcome) => {
                         match outcome.outcome() {
@@ -1450,8 +1702,11 @@ where
                             }
                             M1CompletedStepOutcomeV1::Completed(_)
                             | M1CompletedStepOutcomeV1::Poisoned(_) => Err(self.terminal(
-                                M1ServingPhysicalRunnerOperationErrorV1::CompletionPoisoned,
-                                (outcome, choices, diagnostic_history),
+                                M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmedCompletionTerminal {
+                                    outcome,
+                                    choices,
+                                    history: diagnostic_history,
+                                },
                             )),
                         }
                     }
@@ -1464,6 +1719,44 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn terminal_stage_is_derived_from_typed_lower_custody() {
+        let terminal = M1ServingPhysicalRunnerTerminalCustodyV1 {
+            provider: Some(17_u8),
+            lower: Box::new(
+                M1ServingPhysicalRunnerTerminalLowerCustodyV1::<()>::ExactFirstDispatch(
+                    M1ExactDispatchErrorV1::SubmissionEpochExhausted,
+                ),
+            ),
+        };
+        assert_eq!(
+            terminal.stage(),
+            M1ServingPhysicalRunnerOperationErrorV1::ExactFirstDispatch(
+                M1ExactDispatchErrorV1::SubmissionEpochExhausted
+            )
+        );
+        assert_eq!(terminal.provider(), Some(&17));
+
+        let (provider, lower) = terminal.into_parts();
+        assert_eq!(provider, Some(17));
+        assert!(matches!(
+            *lower,
+            M1ServingPhysicalRunnerTerminalLowerCustodyV1::ExactFirstDispatch(
+                M1ExactDispatchErrorV1::SubmissionEpochExhausted
+            )
+        ));
+    }
+
+    #[test]
+    fn terminal_vacant_stage_cannot_drift() {
+        let lower =
+            M1ServingPhysicalRunnerTerminalLowerCustodyV1::<'static, ()>::AdapterSealedVacant;
+        assert_eq!(
+            lower.stage(),
+            M1ServingPhysicalRunnerOperationErrorV1::AdapterSealed
+        );
+    }
 
     #[test]
     fn adapter_identity_rejects_cross_adapter_custody() {

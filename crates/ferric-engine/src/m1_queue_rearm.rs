@@ -3693,6 +3693,214 @@ impl M1RearmedSpeculativeDiagnosticReadbackFailureV1 {
     pub const fn device(&self) -> Gfx942DeviceBinding {
         self.device
     }
+
+    /// Separates the exact lower failure from opaque retained rearm lineage.
+    ///
+    /// This does not reopen serving or scheduler authority. The originating
+    /// serving adapter and Engine remain sealed; the split owners are only for
+    /// phase-accurate diagnosis and terminal cleanup.
+    #[must_use = "both diagnostic failure and retained rearm lineage remain linear"]
+    pub fn into_parts(
+        self: Box<Self>,
+    ) -> (
+        M1RearmedSpeculativeDiagnosticReadbackFailureSourceV1,
+        M1RearmedSpeculativeDiagnosticRetainedCustodyV1,
+    ) {
+        let Self {
+            source,
+            carry,
+            queue_observation,
+            device,
+        } = *self;
+        (
+            source,
+            M1RearmedSpeculativeDiagnosticRetainedCustodyV1 {
+                carry,
+                queue_observation,
+                device,
+            },
+        )
+    }
+
+    /// Fail-stops `engine`, releases the failed physical queue, and retains all
+    /// diagnostic evidence and rearm continuation custody.
+    ///
+    /// # Errors
+    ///
+    /// Returns the exact lower release quarantine joined to the same evidence
+    /// and lineage when queue release fails.
+    pub fn destroy_queue_and_retain_custody<const C: usize>(
+        self: Box<Self>,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1RearmedSpeculativeDiagnosticReadbackTeardownSuccessV1,
+        Box<M1RearmedSpeculativeDiagnosticReadbackTeardownFailureV1>,
+    > {
+        let (source, retained) = self.into_parts();
+        let teardown = match source {
+            M1RearmedSpeculativeDiagnosticReadbackFailureSourceV1::Compact(source) => source
+                .destroy_queue_and_retain_evidence(engine)
+                .map(M1RearmedSpeculativeDiagnosticReadbackTeardownSuccessSourceV1::Compact)
+                .map_err(|source| {
+                    Box::new(
+                        M1RearmedSpeculativeDiagnosticReadbackTeardownFailureSourceV1::Compact(
+                            source,
+                        ),
+                    )
+                }),
+            M1RearmedSpeculativeDiagnosticReadbackFailureSourceV1::Choices(source) => (*source)
+                .destroy_queue_and_retain_evidence(engine)
+                .map(M1RearmedSpeculativeDiagnosticReadbackTeardownSuccessSourceV1::Choices)
+                .map_err(|source| {
+                    Box::new(
+                        M1RearmedSpeculativeDiagnosticReadbackTeardownFailureSourceV1::Choices(
+                            source,
+                        ),
+                    )
+                }),
+            M1RearmedSpeculativeDiagnosticReadbackFailureSourceV1::Join(source) => (*source)
+                .destroy_queue_and_retain_evidence(engine)
+                .map(M1RearmedSpeculativeDiagnosticReadbackTeardownSuccessSourceV1::Join)
+                .map_err(|source| {
+                    Box::new(
+                        M1RearmedSpeculativeDiagnosticReadbackTeardownFailureSourceV1::Join(source),
+                    )
+                }),
+        };
+        match teardown {
+            Ok(source) => {
+                Ok(M1RearmedSpeculativeDiagnosticReadbackTeardownSuccessV1 { source, retained })
+            }
+            Err(source) => Err(Box::new(
+                M1RearmedSpeculativeDiagnosticReadbackTeardownFailureV1 {
+                    source: *source,
+                    retained,
+                },
+            )),
+        }
+    }
+}
+
+/// Opaque rearm continuation custody retained independently of readback phase.
+#[must_use = "rearm continuation custody must remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedSpeculativeDiagnosticRetainedCustodyV1 {
+    carry: M1RearmContinuationCustodyV1,
+    queue_observation: ComputeAqlQueueObservationV1,
+    device: Gfx942DeviceBinding,
+}
+
+impl M1RearmedSpeculativeDiagnosticRetainedCustodyV1 {
+    #[must_use]
+    pub fn selected_requests(&self) -> impl ExactSizeIterator<Item = RequestId> + '_ {
+        self.carry
+            .selected
+            .iter()
+            .map(|cache| cache.projection().request)
+    }
+
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        self.carry.parked.len()
+    }
+
+    #[must_use]
+    pub const fn terminal_count(&self) -> usize {
+        self.carry.terminal.len()
+    }
+
+    #[must_use]
+    pub const fn previous_epoch(&self) -> CompletionEpoch {
+        self.carry.previous_epoch
+    }
+
+    pub const fn prior_checked(&self) -> &crate::M1CheckedCompletionOutputV1 {
+        &self.carry.prior_checked
+    }
+
+    #[must_use]
+    pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
+        self.queue_observation
+    }
+
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.device
+    }
+}
+
+/// Exact lower success after terminal diagnostic readback teardown.
+#[must_use = "diagnostic teardown evidence must remain retained"]
+#[derive(Debug)]
+pub enum M1RearmedSpeculativeDiagnosticReadbackTeardownSuccessSourceV1 {
+    Compact(crate::M1CompletionEvidenceTeardownSuccessV1),
+    Choices(crate::M1SpeculativeDiagnosticObservationTeardownSuccessV1),
+    Join(crate::M1SpeculativeDiagnosticSemanticTeardownSuccessV1),
+}
+
+/// Exact lower release quarantine after terminal diagnostic readback teardown.
+#[must_use = "diagnostic teardown quarantine must remain retained"]
+#[derive(Debug)]
+pub enum M1RearmedSpeculativeDiagnosticReadbackTeardownFailureSourceV1 {
+    Compact(Box<crate::M1CompletionEvidenceTeardownFailureV1>),
+    Choices(Box<crate::M1SpeculativeDiagnosticObservationTeardownFailureV1>),
+    Join(Box<crate::M1SpeculativeDiagnosticSemanticTeardownFailureV1>),
+}
+
+/// Clean queue release retaining diagnostic evidence and all rearm lineage.
+#[must_use = "diagnostic evidence and rearm lineage must remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedSpeculativeDiagnosticReadbackTeardownSuccessV1 {
+    source: M1RearmedSpeculativeDiagnosticReadbackTeardownSuccessSourceV1,
+    retained: M1RearmedSpeculativeDiagnosticRetainedCustodyV1,
+}
+
+impl M1RearmedSpeculativeDiagnosticReadbackTeardownSuccessV1 {
+    pub const fn source(&self) -> &M1RearmedSpeculativeDiagnosticReadbackTeardownSuccessSourceV1 {
+        &self.source
+    }
+
+    pub const fn retained(&self) -> &M1RearmedSpeculativeDiagnosticRetainedCustodyV1 {
+        &self.retained
+    }
+
+    #[must_use = "teardown evidence and retained lineage remain linear"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1RearmedSpeculativeDiagnosticReadbackTeardownSuccessSourceV1,
+        M1RearmedSpeculativeDiagnosticRetainedCustodyV1,
+    ) {
+        (self.source, self.retained)
+    }
+}
+
+/// Failed queue release retaining diagnostic evidence and all rearm lineage.
+#[must_use = "diagnostic release quarantine and rearm lineage must remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedSpeculativeDiagnosticReadbackTeardownFailureV1 {
+    source: M1RearmedSpeculativeDiagnosticReadbackTeardownFailureSourceV1,
+    retained: M1RearmedSpeculativeDiagnosticRetainedCustodyV1,
+}
+
+impl M1RearmedSpeculativeDiagnosticReadbackTeardownFailureV1 {
+    pub const fn source(&self) -> &M1RearmedSpeculativeDiagnosticReadbackTeardownFailureSourceV1 {
+        &self.source
+    }
+
+    pub const fn retained(&self) -> &M1RearmedSpeculativeDiagnosticRetainedCustodyV1 {
+        &self.retained
+    }
+
+    #[must_use = "release quarantine and retained lineage remain linear"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1RearmedSpeculativeDiagnosticReadbackTeardownFailureSourceV1,
+        M1RearmedSpeculativeDiagnosticRetainedCustodyV1,
+    ) {
+        (self.source, self.retained)
+    }
 }
 
 /// Rearmed S1/K4 completed readback retaining independent choice evidence.
@@ -10223,6 +10431,27 @@ mod tests {
                 M1ExactDispatchErrorV1::EmptyRoster,
             )
         );
+    }
+
+    #[test]
+    fn speculative_diagnostic_failure_exposes_typed_terminal_closure() {
+        type IntoParts = fn(
+            Box<M1RearmedSpeculativeDiagnosticReadbackFailureV1>,
+        ) -> (
+            M1RearmedSpeculativeDiagnosticReadbackFailureSourceV1,
+            M1RearmedSpeculativeDiagnosticRetainedCustodyV1,
+        );
+        type Teardown = fn(
+            Box<M1RearmedSpeculativeDiagnosticReadbackFailureV1>,
+            &mut Engine<32>,
+        ) -> Result<
+            M1RearmedSpeculativeDiagnosticReadbackTeardownSuccessV1,
+            Box<M1RearmedSpeculativeDiagnosticReadbackTeardownFailureV1>,
+        >;
+
+        let _: IntoParts = M1RearmedSpeculativeDiagnosticReadbackFailureV1::into_parts;
+        let _: Teardown =
+            M1RearmedSpeculativeDiagnosticReadbackFailureV1::destroy_queue_and_retain_custody::<32>;
     }
 
     #[test]
