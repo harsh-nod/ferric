@@ -25,6 +25,7 @@ mod m1_prepublication;
 mod m1_queue_rearm;
 mod m1_queue_rollover;
 mod m1_serving_physical_bridge;
+mod m1_serving_physical_input_provider;
 mod m1_serving_physical_operations;
 mod m1_serving_registry;
 mod model_memory_allocations;
@@ -263,6 +264,14 @@ pub use m1_serving_physical_bridge::{
     M1ServingRegistryCompletionFailureV1, M1ServingRegistryCompletionResultV1,
     M1ServingSpeculativeCompletionErrorV1, M1ServingSpeculativeCompletionFailureCustodyV1,
     M1ServingSpeculativeCompletionFailureV1, M1ServingSpeculativeCompletionResultV1,
+};
+pub use m1_serving_physical_input_provider::{
+    M1QueuedServingPhysicalInputProviderV1, M1ServingPhysicalInputEnqueueFailureV1,
+    M1ServingPhysicalInputPreparationErrorV1, M1ServingPhysicalInputPreparationFailureV1,
+    M1ServingPhysicalInputPreparationPhaseV1, M1ServingQueuedFirstPublicationV1,
+    M1ServingQueuedGenerationBindingV1, M1ServingQueuedGenerationInputV1,
+    M1ServingQueuedGenerationPhaseV1, M1ServingQueuedS1K4RolloverV1,
+    M1ServingQueuedSameShapeRearmV1,
 };
 pub use m1_serving_physical_operations::{
     M1ServingFirstReadbackStateV1, M1ServingPhysicalInputProviderV1,
