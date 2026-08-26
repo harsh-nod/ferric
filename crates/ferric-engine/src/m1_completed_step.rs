@@ -168,6 +168,15 @@ impl M1CompletedStepRejectionV1 {
         self.readback.checked()
     }
 
+    /// Borrows the unchanged scheduler-ordered cache/disposition roster.
+    ///
+    /// This grants no cache extraction or retry authority; it lets a higher
+    /// lifecycle verify that replacement retry inputs are byte-for-byte the
+    /// same logical dispositions before consuming this rejection.
+    pub const fn roster(&self) -> &M1DeviceKvCompletionRosterV1 {
+        &self.roster
+    }
+
     #[must_use = "the exact rejected owners remain linear"]
     pub fn into_parts(
         self,

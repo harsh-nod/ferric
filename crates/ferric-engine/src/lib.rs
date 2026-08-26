@@ -23,6 +23,7 @@ mod m1_packet_diagnostic_execution;
 mod m1_prepublication;
 mod m1_queue_rearm;
 mod m1_serving_physical_bridge;
+mod m1_serving_physical_operations;
 mod m1_serving_registry;
 mod model_memory_allocations;
 mod observed_completion;
@@ -204,7 +205,9 @@ pub use m1_queue_rearm::{
     M1RearmedRecycledQueueV1, M1RearmedRejectedCompletionTeardownFailureV1,
     M1RearmedRejectedCompletionTeardownSuccessV1, M1RearmedRoundPageReleaseFailureV1,
     M1RearmedRoundPageReleaseTeardownFailureV1, M1RearmedRoundPageReleaseTeardownSuccessV1,
-    M1RearmedRoundReleaseOutcomeV1, M1ReservedLongLivedQueueRearmV1,
+    M1RearmedRoundReleaseOutcomeV1, M1RearmedSpeculativeDiagnosticCompletedReadbackV1,
+    M1RearmedSpeculativeDiagnosticReadbackFailureSourceV1,
+    M1RearmedSpeculativeDiagnosticReadbackFailureV1, M1ReservedLongLivedQueueRearmV1,
     M1ScheduledLongLivedQueueRearmTeardownFailureV1,
     M1ScheduledLongLivedQueueRearmTeardownSuccessV1, M1ScheduledLongLivedQueueRearmV1,
     M1_MAX_REARM_ROUND_HISTORY_V1,
@@ -224,6 +227,15 @@ pub use m1_serving_physical_bridge::{
     M1ServingRegistryCompletionFailureV1, M1ServingRegistryCompletionResultV1,
     M1ServingSpeculativeCompletionErrorV1, M1ServingSpeculativeCompletionFailureCustodyV1,
     M1ServingSpeculativeCompletionFailureV1, M1ServingSpeculativeCompletionResultV1,
+};
+pub use m1_serving_physical_operations::{
+    M1ServingFirstReadbackStateV1, M1ServingPhysicalInputProviderV1,
+    M1ServingPhysicalRunnerDiagnosticHistoryV1, M1ServingPhysicalRunnerOperationErrorV1,
+    M1ServingPhysicalRunnerOperationsCreateErrorV1, M1ServingPhysicalRunnerOperationsV1,
+    M1ServingPhysicalRunnerPublishedV1, M1ServingPhysicalRunnerQuiescentV1,
+    M1ServingPhysicalRunnerReadbackV1, M1ServingPhysicalRunnerTerminalCustodyV1,
+    M1ServingPreparedFirstPublicationV1, M1ServingPreparedSameShapeRearmV1,
+    M1ServingRearmedReadbackStateV1,
 };
 pub use m1_serving_registry::{
     M1ServingBatchPlanV1, M1ServingCompletionDispositionV1, M1ServingPlanV1,

@@ -3206,6 +3206,12 @@ impl M1RearmedPublishedQueueV1 {
         self.queue.scheduled_dispatch()
     }
 
+    /// Exact closed physical shape retained by this publication.
+    #[must_use]
+    pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
+        self.queue.shape()
+    }
+
     #[must_use]
     pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
         self.queue_observation
@@ -3566,6 +3572,144 @@ impl M1RearmedRecycledQueueV1 {
                 device,
             })),
         }
+    }
+
+    /// Copies, independently observes, and semantically joins one rearmed
+    /// S1/K4 speculative completion.
+    ///
+    /// This is the only production rearm path that accepts speculative
+    /// completion today. The lower diagnostic transition itself rejects every
+    /// shape other than K4 and requires the pre-publication choice attachment.
+    /// K8 and K16 therefore cannot silently fall back to compact-only checking.
+    ///
+    /// # Errors
+    ///
+    /// Returns every selected/parked cache and prior-round owner beside the
+    /// exact diagnostic observation or semantic-join failure.
+    pub fn read_and_check_speculative_k4_diagnostic_completion(
+        self,
+    ) -> Result<
+        M1RearmedSpeculativeDiagnosticCompletedReadbackV1,
+        Box<M1RearmedSpeculativeDiagnosticReadbackFailureV1>,
+    > {
+        let Self {
+            queue,
+            carry,
+            queue_observation,
+            device,
+        } = self;
+        let observed = match queue.observe_completion() {
+            Ok(observed) => observed,
+            Err(source) => {
+                return Err(Box::new(M1RearmedSpeculativeDiagnosticReadbackFailureV1 {
+                    source: M1RearmedSpeculativeDiagnosticReadbackFailureSourceV1::Compact(source),
+                    carry,
+                    queue_observation,
+                    device,
+                }));
+            }
+        };
+        let diagnostic = match observed.observe_speculative_k4_diagnostic_choices() {
+            Ok(diagnostic) => diagnostic,
+            Err(source) => {
+                return Err(Box::new(M1RearmedSpeculativeDiagnosticReadbackFailureV1 {
+                    source: M1RearmedSpeculativeDiagnosticReadbackFailureSourceV1::Choices(source),
+                    carry,
+                    queue_observation,
+                    device,
+                }));
+            }
+        };
+        let joined = match diagnostic.check_completion() {
+            Ok(joined) => joined,
+            Err(source) => {
+                return Err(Box::new(M1RearmedSpeculativeDiagnosticReadbackFailureV1 {
+                    source: M1RearmedSpeculativeDiagnosticReadbackFailureSourceV1::Join(source),
+                    carry,
+                    queue_observation,
+                    device,
+                }));
+            }
+        };
+        let (readback, choices) = joined.into_parts();
+        Ok(M1RearmedSpeculativeDiagnosticCompletedReadbackV1 {
+            readback: M1RearmedCompletedReadbackV1 {
+                readback,
+                carry,
+                queue_observation,
+                device,
+            },
+            choices,
+        })
+    }
+}
+
+/// Phase-local failure for the evidence-bearing rearmed S1/K4 readback.
+#[must_use = "failed diagnostic readback retains queue, cache, and evidence custody"]
+#[derive(Debug)]
+pub enum M1RearmedSpeculativeDiagnosticReadbackFailureSourceV1 {
+    Compact(crate::M1CompletionObservationFailureV1),
+    Choices(Box<crate::M1SpeculativeDiagnosticObservationFailureV1>),
+    Join(Box<crate::M1SpeculativeDiagnosticCompletedReadbackJoinFailureV1>),
+}
+
+/// Failed rearmed S1/K4 diagnostic join with complete continuation custody.
+#[must_use = "failed diagnostic readback must be retained or torn down"]
+#[derive(Debug)]
+pub struct M1RearmedSpeculativeDiagnosticReadbackFailureV1 {
+    source: M1RearmedSpeculativeDiagnosticReadbackFailureSourceV1,
+    carry: M1RearmContinuationCustodyV1,
+    queue_observation: ComputeAqlQueueObservationV1,
+    device: Gfx942DeviceBinding,
+}
+
+impl M1RearmedSpeculativeDiagnosticReadbackFailureV1 {
+    pub const fn source(&self) -> &M1RearmedSpeculativeDiagnosticReadbackFailureSourceV1 {
+        &self.source
+    }
+
+    #[must_use]
+    pub const fn retained_cache_count(&self) -> usize {
+        self.carry.selected.len() + self.carry.parked.len()
+    }
+
+    #[must_use]
+    pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
+        self.queue_observation
+    }
+
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.device
+    }
+}
+
+/// Rearmed S1/K4 completed readback retaining independent choice evidence.
+#[must_use = "diagnostic readback and choice evidence must remain retained"]
+#[derive(Debug)]
+pub struct M1RearmedSpeculativeDiagnosticCompletedReadbackV1 {
+    readback: M1RearmedCompletedReadbackV1,
+    choices: crate::M1ObservedSpeculativeDiagnosticChoicesV1,
+}
+
+impl M1RearmedSpeculativeDiagnosticCompletedReadbackV1 {
+    pub const fn checked(&self) -> &crate::M1CheckedCompletionOutputV1 {
+        self.readback.checked()
+    }
+
+    pub const fn choices(&self) -> &crate::M1ObservedSpeculativeDiagnosticChoicesV1 {
+        &self.choices
+    }
+
+    /// Separates normal completion custody from independent choice evidence.
+    #[must_use = "both normal readback and diagnostic evidence must remain retained"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1RearmedCompletedReadbackV1,
+        crate::M1ObservedSpeculativeDiagnosticChoicesV1,
+    ) {
+        (self.readback, self.choices)
     }
 }
 
@@ -6799,6 +6943,25 @@ impl M1RearmedCompletionPreflightFailureV1 {
     #[must_use]
     pub fn disposition_count(&self) -> usize {
         self.dispositions.len()
+    }
+
+    /// Borrows the exact dispositions retained for a local retry.
+    #[must_use]
+    pub fn dispositions(&self) -> &[crate::M1DeviceKvCompletionDispositionV1] {
+        &self.dispositions
+    }
+
+    /// Recovers the unchanged readback and requested dispositions after a pure
+    /// local preflight rejection.
+    #[must_use = "readback and dispositions remain the sole retry inputs"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1RearmedCompletionPreflightErrorV1,
+        M1RearmedCompletedReadbackV1,
+        Vec<crate::M1DeviceKvCompletionDispositionV1>,
+    ) {
+        (self.error, *self.readback, self.dispositions)
     }
 
     #[must_use]
