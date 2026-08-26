@@ -23,6 +23,7 @@ mod m1_packet_diagnostic;
 mod m1_packet_diagnostic_execution;
 mod m1_prepublication;
 mod m1_queue_rearm;
+mod m1_queue_rollover;
 mod m1_serving_physical_bridge;
 mod m1_serving_physical_operations;
 mod m1_serving_registry;
@@ -176,18 +177,19 @@ pub use m1_prepublication::{
 pub use m1_queue_rearm::{
     prepare_m1_long_lived_queue_rearm_v1, reserve_m1_long_lived_queue_rearm_kv_v1,
     schedule_m1_long_lived_queue_rearm_exact_v1, schedule_m1_long_lived_queue_rearm_v1,
-    submit_m1_long_lived_queue_rearm_v1, M1LongLivedQueueRearmKvInputsV1,
-    M1LongLivedQueueRearmKvReservationFailureV1, M1LongLivedQueueRearmKvReservationPhaseV1,
-    M1LongLivedQueueRearmPrepareFailureV1, M1LongLivedQueueRearmProgressPhaseV1,
-    M1LongLivedQueueRearmScheduleClosureOutcomeV1, M1LongLivedQueueRearmScheduleDetachQuarantineV1,
+    submit_m1_long_lived_queue_rearm_v1, submit_m1_s1_k4_queue_rollover_v1,
+    M1LongLivedQueueRearmKvInputsV1, M1LongLivedQueueRearmKvReservationFailureV1,
+    M1LongLivedQueueRearmKvReservationPhaseV1, M1LongLivedQueueRearmPrepareFailureV1,
+    M1LongLivedQueueRearmProgressPhaseV1, M1LongLivedQueueRearmScheduleClosureOutcomeV1,
+    M1LongLivedQueueRearmScheduleDetachQuarantineV1,
     M1LongLivedQueueRearmScheduleDetachedTeardownFailureV1,
     M1LongLivedQueueRearmScheduleDetachedTeardownSuccessV1, M1LongLivedQueueRearmScheduleErrorV1,
     M1LongLivedQueueRearmScheduleFailureV1, M1LongLivedQueueRearmSchedulePhaseV1,
     M1LongLivedQueueRearmSubmissionFailureV1, M1LongLivedQueueRearmSubmissionPhaseV1,
     M1LongLivedQueueRearmTeardownFailureV1, M1LongLivedQueueRearmTeardownSuccessV1,
     M1LongLivedQueueReleasedRoundV1, M1LongLivedQueueUnscheduledRoundV1,
-    M1PreparedLongLivedQueueRearmV1, M1RearmRoundHistoryEntryV1, M1RearmedCompletedQueueV1,
-    M1RearmedCompletedReadbackV1, M1RearmedCompletionOutcomeV1,
+    M1PreparedLongLivedQueueRearmV1, M1QueueRolloverObservationV1, M1RearmRoundHistoryEntryV1,
+    M1RearmedCompletedQueueV1, M1RearmedCompletedReadbackV1, M1RearmedCompletionOutcomeV1,
     M1RearmedCompletionPreflightErrorV1, M1RearmedCompletionPreflightFailureV1,
     M1RearmedCompletionPreflightTeardownFailureV1, M1RearmedCompletionPreflightTeardownSuccessV1,
     M1RearmedDirectDiagnosticCompletedReadbackV1, M1RearmedDirectDiagnosticReadbackFailureSourceV1,
@@ -233,6 +235,19 @@ pub use m1_queue_rearm::{
     M1ScheduledLongLivedQueueRearmTeardownSuccessV1, M1ScheduledLongLivedQueueRearmV1,
     M1_MAX_REARM_ROUND_HISTORY_V1,
 };
+pub use m1_queue_rollover::{
+    prepare_m1_s1_k4_queue_rollover_v1, reserve_m1_s1_k4_queue_rollover_kv_v1,
+    schedule_m1_s1_k4_queue_rollover_exact_v1, M1PreparedS1K4QueueRolloverV1,
+    M1ReservedS1K4QueueRolloverV1, M1S1K4QueueRolloverKvInputsV1,
+    M1S1K4QueueRolloverKvReservationFailureV1, M1S1K4QueueRolloverKvReservationPhaseV1,
+    M1S1K4QueueRolloverPrepareFailureV1, M1S1K4QueueRolloverResidueV1,
+    M1S1K4QueueRolloverScheduleClosureOutcomeV1, M1S1K4QueueRolloverScheduleDetachQuarantineV1,
+    M1S1K4QueueRolloverScheduleDetachedTeardownFailureV1,
+    M1S1K4QueueRolloverScheduleDetachedTeardownSuccessV1, M1S1K4QueueRolloverScheduleErrorV1,
+    M1S1K4QueueRolloverScheduleFailureCustodyV1, M1S1K4QueueRolloverScheduleFailureV1,
+    M1ScheduledS1K4QueueRolloverTeardownFailureV1, M1ScheduledS1K4QueueRolloverTeardownSuccessV1,
+    M1ScheduledS1K4QueueRolloverV1,
+};
 pub use m1_serving_physical_bridge::{
     M1ServingPhysicalAbortFailureV1, M1ServingPhysicalBridgeErrorV1,
     M1ServingPhysicalBridgeFailureV1, M1ServingPhysicalCompletionErrorV1,
@@ -256,8 +271,9 @@ pub use m1_serving_physical_operations::{
     M1ServingPhysicalRunnerPublishedV1, M1ServingPhysicalRunnerQuiescentV1,
     M1ServingPhysicalRunnerReadbackEvidenceV1, M1ServingPhysicalRunnerReadbackV1,
     M1ServingPhysicalRunnerTerminalCustodyV1, M1ServingPhysicalRunnerTerminalLowerCustodyV1,
-    M1ServingPreparedFirstPublicationV1, M1ServingPreparedSameShapeRearmV1,
-    M1ServingPreparedSemanticEvidenceV1, M1ServingRearmedReadbackStateV1,
+    M1ServingPreparedFirstPublicationV1, M1ServingPreparedS1K4RolloverV1,
+    M1ServingPreparedSameShapeRearmV1, M1ServingPreparedSemanticEvidenceV1,
+    M1ServingRearmedReadbackStateV1,
 };
 pub use m1_serving_registry::{
     M1ServingBatchPlanV1, M1ServingCompletionDispositionV1, M1ServingPlanV1,
@@ -407,7 +423,8 @@ pub use runner::{
     M1PhysicalRunnerFirstPublicationFailureV1, M1PhysicalRunnerMemoryFailureV1,
     M1PhysicalRunnerQueueFailureStageV1, M1PhysicalRunnerRearmSubmissionExhaustedV1,
     M1PhysicalRunnerRearmSubmissionFailureV1, M1PhysicalRunnerRecipeFailureV1,
-    M1PhysicalRunnerRecipeOutcomeV1, M1PhysicalRunnerV1,
+    M1PhysicalRunnerRecipeOutcomeV1, M1PhysicalRunnerS1K4RolloverSubmissionFailureV1,
+    M1PhysicalRunnerV1,
 };
 pub use scheduler::{DispatchBatch, M1ExactDispatchErrorV1, M1ScheduledDispatchV1, SchedulerError};
 pub use speculative_diagnostic_choices::{

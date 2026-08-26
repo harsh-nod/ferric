@@ -17,7 +17,9 @@
 
 use core::fmt;
 
-use fe2o3_kfd::{ComputeAqlQueueObservationV1, Gfx942DeviceContentDescriptorV1};
+use fe2o3_kfd::{
+    ComputeAqlQueueDestroyedV1, ComputeAqlQueueObservationV1, Gfx942DeviceContentDescriptorV1,
+};
 use fe2o3_service_host::{
     DeviceWorkspaceRoleV1, HostDownloadRoleV1, ServiceCompletedReadbackV1,
     ServiceDeviceDispatchRangeV1, ServiceDispatchRangeV1, ServiceFixedBatchV1,
@@ -49,9 +51,10 @@ use crate::{
     M1PhysicalBufferRecipeRowV1, M1PhysicalBufferSourceV1, M1PhysicalFixedBatchShapeV1,
     M1PhysicalPublishedQueueSessionV1, M1PhysicalQueueBatchCustodyV1, M1PhysicalQueuePhaseCaseV1,
     M1PhysicalQueueSessionV1, M1PhysicalReadbackDetachedQueueSessionV1,
-    M1PhysicalReadbackQueueOperationFailureV1, M1PrepareFailureV1,
+    M1PhysicalReadbackQueueOperationFailureV1, M1PrepareFailureV1, M1PreparedS1K4QueueRolloverV1,
     M1PreparedScheduledWorkspaceImagesV1, M1PrepublicationStepCustodyV1, M1ReleasedCompletedStepV1,
-    M1ReleasedDeviceKvMemberV1, M1ReleasedTerminalDeviceKvMemberV1, M1ScheduledDispatchV1,
+    M1ReleasedDeviceKvMemberV1, M1ReleasedTerminalDeviceKvMemberV1,
+    M1S1K4RolloverOutputPortfolioStateV1, M1ScheduledDispatchV1,
     M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
     M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
 };
@@ -125,6 +128,7 @@ pub struct M1RearmRoundHistoryEntryV1 {
     total_released: usize,
     queue_observation: ComputeAqlQueueObservationV1,
     device: Gfx942DeviceBinding,
+    rollover: Option<M1QueueRolloverObservationV1>,
 }
 
 impl M1RearmRoundHistoryEntryV1 {
@@ -165,6 +169,12 @@ impl M1RearmRoundHistoryEntryV1 {
     #[must_use]
     pub const fn device(&self) -> Gfx942DeviceBinding {
         self.device
+    }
+
+    /// Native rollover evidence when this round replaced its predecessor queue.
+    #[must_use]
+    pub const fn rollover_observation(&self) -> Option<M1QueueRolloverObservationV1> {
+        self.rollover
     }
 }
 
@@ -2548,8 +2558,10 @@ pub enum M1LongLivedQueueRearmSubmissionPhaseV1 {
     SpeculativeDraftChoiceReplacement,
     SpeculativeTargetChoiceReplacement,
     WorkspaceRangeRebinding,
+    RolloverOutputActivation,
     FixedBatchRebuild,
     QueueBind,
+    QueueRollover,
     QueueObservation,
     QueueSubmit,
 }
@@ -2964,6 +2976,68 @@ impl RearmRangeSelectionV1 {
         }
     }
 
+    fn select_fresh<T: Copy>(
+        &mut self,
+        request: RearmRangeRequestV1,
+        fresh: Option<T>,
+        retained: RetainedCaptureRangesV1<T>,
+    ) -> Result<T, ()> {
+        match request {
+            RearmRangeRequestV1::FreshWorkspace(_, _) | RearmRangeRequestV1::Unchanged => {
+                fresh.ok_or(())
+            }
+            RearmRangeRequestV1::RetainedCompletionOutput => {
+                self.completion_output_sources += 1;
+                Ok(retained.completion_output)
+            }
+            RearmRangeRequestV1::RetainedQualificationLogits => {
+                self.qualification_logits_sources += 1;
+                let RetainedSemanticCaptureRangesV1::Qualification { logits } = retained.semantic
+                else {
+                    return Err(());
+                };
+                Ok(logits)
+            }
+            RearmRangeRequestV1::RetainedDirectDiagnosticChoices => {
+                self.direct_diagnostic_sources += 1;
+                let RetainedSemanticCaptureRangesV1::DirectDiagnostic { choices } =
+                    retained.semantic
+                else {
+                    return Err(());
+                };
+                Ok(choices)
+            }
+            RearmRangeRequestV1::RetainedSpeculativeDraftChoices => {
+                self.speculative_draft_sources += 1;
+                let RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic { draft, .. } =
+                    retained.semantic
+                else {
+                    return Err(());
+                };
+                Ok(draft)
+            }
+            RearmRangeRequestV1::RetainedSpeculativeDraftChoice { iteration } => {
+                self.speculative_draft_scalar_sources += 1;
+                let RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
+                    draft_scalars, ..
+                } = retained.semantic
+                else {
+                    return Err(());
+                };
+                draft_scalars.get(usize::from(iteration)).copied().ok_or(())
+            }
+            RearmRangeRequestV1::RetainedSpeculativeTargetChoices => {
+                self.speculative_target_sources += 1;
+                let RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic { target, .. } =
+                    retained.semantic
+                else {
+                    return Err(());
+                };
+                Ok(target)
+            }
+        }
+    }
+
     fn validate(self) -> Result<(), ()> {
         let expected = match self.semantic {
             RetainedSemanticCaptureRangesV1::Ordinary => (0, 0, 0, 0, 0),
@@ -3088,6 +3162,110 @@ fn rebuild_bound_rows(
             buffers.into_boxed_slice(),
         ));
     }
+    Ok(rows.into_boxed_slice())
+}
+
+fn retained_unchanged_range(
+    source: M1PhysicalBufferSourceV1,
+    old_source_rows: &[M1PhysicalBufferRecipeRowV1],
+    old_bound_rows: &[M1BoundPhysicalBufferRowV1],
+) -> Result<ServiceDispatchRangeV1, ()> {
+    if old_source_rows.len() != old_bound_rows.len() {
+        return Err(());
+    }
+    let mut found = None;
+    for (semantic_row, bound_row) in old_source_rows.iter().zip(old_bound_rows) {
+        if semantic_row.buffers().len() != bound_row.buffers().len() {
+            return Err(());
+        }
+        for (semantic, bound) in semantic_row.buffers().iter().zip(bound_row.buffers()) {
+            if semantic.source() == source {
+                let candidate = bound.range();
+                if found.is_some_and(|retained| retained != candidate) {
+                    return Err(());
+                }
+                found = Some(candidate);
+            }
+        }
+    }
+    found.ok_or(())
+}
+
+fn build_rollover_bound_rows(
+    source_rows: &[M1PhysicalBufferRecipeRowV1],
+    old_source_rows: &[M1PhysicalBufferRecipeRowV1],
+    old_bound_rows: &[M1BoundPhysicalBufferRowV1],
+    composition: &AddresslessM1FullStepWorkspaceComposition,
+    workspace_ranges: &[FreshWorkspaceRangeV1],
+    retained_capture: &RetainedHostCaptureRangesV1,
+) -> Result<Box<[M1BoundPhysicalBufferRowV1]>, ()> {
+    let retained = retained_capture
+        .ranges
+        .map(ServiceDispatchRangeV1::HostVisible);
+    let mut selection = RearmRangeSelectionV1::new(&retained_capture.ranges.semantic);
+    let mut rows = Vec::new();
+    rows.try_reserve_exact(source_rows.len()).map_err(|_| ())?;
+    for source_row in source_rows {
+        let mut buffers = Vec::new();
+        buffers
+            .try_reserve_exact(source_row.buffers().len())
+            .map_err(|_| ())?;
+        for semantic in source_row.buffers() {
+            let request = requested_workspace_range(
+                semantic.source(),
+                composition,
+                &retained_capture.ranges.semantic,
+            )?;
+            let fresh = match request {
+                RearmRangeRequestV1::FreshWorkspace(workspace, range) => {
+                    Some(ServiceDispatchRangeV1::Device(
+                        resolve_fresh_workspace_range(workspace, range, workspace_ranges)?,
+                    ))
+                }
+                RearmRangeRequestV1::Unchanged => Some(retained_unchanged_range(
+                    semantic.source(),
+                    old_source_rows,
+                    old_bound_rows,
+                )?),
+                RearmRangeRequestV1::RetainedCompletionOutput
+                | RearmRangeRequestV1::RetainedQualificationLogits
+                | RearmRangeRequestV1::RetainedDirectDiagnosticChoices
+                | RearmRangeRequestV1::RetainedSpeculativeDraftChoices
+                | RearmRangeRequestV1::RetainedSpeculativeDraftChoice { .. }
+                | RearmRangeRequestV1::RetainedSpeculativeTargetChoices => None,
+            };
+            let range = selection.select_fresh(request, fresh, retained)?;
+            let argument = semantic.explicit_argument_index();
+            buffers.push(match range {
+                ServiceDispatchRangeV1::Device(range) => {
+                    ServiceFixedDispatchBufferV1::new(argument, range)
+                }
+                ServiceDispatchRangeV1::HostVisible(range) => {
+                    if matches!(
+                        semantic.source(),
+                        M1PhysicalBufferSourceV1::CompletionOutput { .. }
+                    ) {
+                        match retained_capture.completion_snapshot {
+                            Some(snapshot) => {
+                                ServiceFixedDispatchBufferV1::new_host_visible_with_completed_snapshot(
+                                    argument, range, snapshot,
+                                )
+                                .map_err(|_| ())?
+                            }
+                            None => ServiceFixedDispatchBufferV1::new_host_visible(argument, range),
+                        }
+                    } else {
+                        ServiceFixedDispatchBufferV1::new_host_visible(argument, range)
+                    }
+                }
+            });
+        }
+        rows.push(M1BoundPhysicalBufferRowV1::from_queue_rearm(
+            source_row,
+            buffers.into_boxed_slice(),
+        ));
+    }
+    selection.validate()?;
     Ok(rows.into_boxed_slice())
 }
 
@@ -3363,6 +3541,41 @@ fn lower_batch<'a, const N: usize>(
     Ok(ServiceFixedBatchV1::new(catalog.into_programs(), packets))
 }
 
+/// Confirmed native predecessor destruction and replacement queue identity.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct M1QueueRolloverObservationV1 {
+    previous_queue_destroyed: ComputeAqlQueueDestroyedV1,
+    previous_dispatch_generation: u64,
+    replacement_queue_observation: ComputeAqlQueueObservationV1,
+    replacement_dispatch_generation: u64,
+}
+
+impl M1QueueRolloverObservationV1 {
+    /// Returns the lower observation proving predecessor queue destruction.
+    #[must_use]
+    pub const fn previous_queue_destroyed(&self) -> ComputeAqlQueueDestroyedV1 {
+        self.previous_queue_destroyed
+    }
+
+    /// Returns the predecessor queue's final dispatch generation.
+    #[must_use]
+    pub const fn previous_dispatch_generation(&self) -> u64 {
+        self.previous_dispatch_generation
+    }
+
+    /// Returns the native identity of the replacement queue.
+    #[must_use]
+    pub const fn replacement_queue_observation(&self) -> ComputeAqlQueueObservationV1 {
+        self.replacement_queue_observation
+    }
+
+    /// Returns the replacement queue's first dispatch generation.
+    #[must_use]
+    pub const fn replacement_dispatch_generation(&self) -> u64 {
+        self.replacement_dispatch_generation
+    }
+}
+
 #[derive(Debug)]
 struct M1RearmContinuationCustodyV1 {
     selected: Vec<ActiveDeviceKvCache>,
@@ -3376,6 +3589,7 @@ struct M1RearmContinuationCustodyV1 {
     completed_members: usize,
     total_released: usize,
     history: M1RearmRoundHistoryV1,
+    rollover: Option<M1QueueRolloverObservationV1>,
 }
 
 /// Published next generation on the same native queue, paired with all cache custody.
@@ -3426,6 +3640,12 @@ impl M1RearmedPublishedQueueV1 {
     #[must_use]
     pub const fn device(&self) -> Gfx942DeviceBinding {
         self.device
+    }
+
+    /// Native rollover evidence when this generation replaced another queue.
+    #[must_use]
+    pub const fn rollover_observation(&self) -> Option<M1QueueRolloverObservationV1> {
+        self.carry.rollover
     }
 
     #[must_use]
@@ -8923,6 +9143,7 @@ impl M1RearmedCompletedReadbackV1 {
             total_released: carry.total_released,
             queue_observation,
             device,
+            rollover: carry.rollover,
         });
         Ok(M1RearmedCompletionOutcomeV1 {
             outcome,
@@ -8950,6 +9171,34 @@ fn replace_target<const N: usize>(
     let allocation = plan.allocation();
     let update = queue
         .replace_initialized_partitioned_device_local::<DeviceWorkspaceRoleV1, N, N>(
+            old.replacement_subleases(),
+            bytes,
+            allocation.alignment(),
+            descriptor,
+            member_layout(&plan),
+        )
+        .map_err(WorkspaceReplacementFailureV1::Update)?;
+    bind_queue_replaced_m1_step_workspace(plan, update)
+        .map_err(WorkspaceReplacementFailureV1::Binding)
+}
+
+fn replace_rollover_workspace<const OLD_N: usize, const NEW_N: usize>(
+    queue: ServiceQueueUnboundSessionV1,
+    old: &BoundM1StepWorkspaceSubleases<OLD_N>,
+    plan: AddresslessM1StepWorkspacePlan,
+    bytes: Box<[u8]>,
+    descriptor: Gfx942DeviceContentDescriptorV1,
+) -> Result<
+    (
+        ServiceQueueUnboundSessionV1,
+        BoundM1StepWorkspaceSubleases<NEW_N>,
+        [ServiceDeviceDispatchRangeV1; NEW_N],
+    ),
+    WorkspaceReplacementFailureV1<NEW_N>,
+> {
+    let allocation = plan.allocation();
+    let update = queue
+        .replace_initialized_partitioned_device_local::<DeviceWorkspaceRoleV1, OLD_N, NEW_N>(
             old.replacement_subleases(),
             bytes,
             allocation.alignment(),
@@ -9793,6 +10042,7 @@ fn finish_staged_rearm_submission<'a>(
             completed_members: post.completed_members,
             total_released: post.total_released,
             history: post.history,
+            rollover: None,
         },
         queue_observation: expected_observation,
         device,
@@ -9834,6 +10084,555 @@ pub fn submit_m1_long_lived_queue_rearm_v1<'a, const C: usize>(
     catalog: ContentBoundM1ProgramCatalogV1<'a>,
 ) -> Result<M1RearmedPublishedQueueV1, M1LongLivedQueueRearmSubmissionFailureV1<'a>> {
     match submit_m1_long_lived_queue_rearm_inner_v1(prepared, recipe, catalog) {
+        Ok(published) => Ok(published),
+        Err(failure) => {
+            engine.quarantine_m1_queue_rearm_failure();
+            Err(failure)
+        }
+    }
+}
+
+fn submit_m1_s1_k4_queue_rollover_inner_v1<'a>(
+    prepared: M1PreparedS1K4QueueRolloverV1,
+    recipe: AddresslessM1PhysicalBufferRecipeV1,
+    catalog: ContentBoundM1ProgramCatalogV1<'a>,
+    ring_bytes: u32,
+) -> Result<M1RearmedPublishedQueueV1, M1LongLivedQueueRearmSubmissionFailureV1<'a>> {
+    let (prepared, prior, next, reason, queue, selected, residue) =
+        prepared.into_submission_parts();
+    let old = queue.custody();
+    if queue.shape() != M1PhysicalFixedBatchShapeV1::PairedPrefill
+        || prior.shape() != M1PhysicalFixedBatchShapeV1::PairedPrefill
+        || next.shape() != M1PhysicalFixedBatchShapeV1::SpeculativeK4
+        || reason != crate::M1ServingRolloverReasonV1::Mode
+        || old.selection() != prior.target()
+        || old.catalog_id() != catalog.catalog_id()
+        || old.partitioned_memory().s1_k4_rollover_output_state()
+            != M1S1K4RolloverOutputPortfolioStateV1::Reserved
+        || prepared.kind() != M1FullStepWorkspaceInputKind::SpeculativeRound
+        || prepared.step().kv_reservations().target_selection() != next.target()
+        || recipe.workspace_composition().workspace_plans() != prepared.plans()
+        || recipe.requires_future_materialization()
+        || recipe.rows().len() != M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1
+        || recipe.kernarg_recipe().images().len() != M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1
+        || selected.projection().device != old.device()
+    {
+        return Err(submission_failure(
+            M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+            (
+                prepared, prior, next, reason, queue, selected, residue, recipe, catalog,
+            ),
+        ));
+    }
+
+    let (old_shape, lower, custody) = queue.into_rearm_parts();
+    let predecessor_observation = lower.observation();
+    let predecessor_generation = lower.detached_dispatch_generation();
+    let device = custody.device();
+    let M1PhysicalQueueBatchRearmPartsV1 {
+        catalog_id,
+        selection: old_selection,
+        physical_recipe: old_physical_recipe,
+        workspace_composition: old_workspace_composition,
+        workspace_owners,
+        mut partitioned_memory,
+        completion_output: prior_output,
+        source_rows: old_source_rows,
+        bound_rows: old_bound_rows,
+    } = custody.into_rearm_parts();
+    let (plans, workspace_images, step) = prepared.into_rearm_parts();
+    let (old_draft, old_target, draft_plan, target_plan, draft_bytes, target_bytes) =
+        match (workspace_owners, plans, workspace_images) {
+            (
+                M1FullStepWorkspaceSubleaseOwners::PairedPrefill { draft, target },
+                M1FullStepWorkspacePlans::SpeculativeRound {
+                    draft_decode,
+                    target_speculative,
+                },
+                M1FullStepWorkspaceImagesV1::SpeculativeRound {
+                    draft_decode: draft_bytes,
+                    target_speculative: target_bytes,
+                },
+            ) => (
+                draft,
+                target,
+                draft_decode,
+                target_speculative,
+                draft_bytes,
+                target_bytes,
+            ),
+            (workspace_owners, plans, workspace_images) => {
+                return Err(submission_failure(
+                    M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+                    (
+                        (
+                            lower,
+                            old_shape,
+                            catalog_id,
+                            old_selection,
+                            old_physical_recipe,
+                            old_workspace_composition,
+                            workspace_owners,
+                            partitioned_memory,
+                            prior_output,
+                        ),
+                        (
+                            old_source_rows,
+                            old_bound_rows,
+                            plans,
+                            workspace_images,
+                            step,
+                            selected,
+                            residue,
+                            recipe,
+                            catalog,
+                        ),
+                    ),
+                ));
+            }
+        };
+    let draft_descriptor = match crate::m1_step_workspace_content_descriptor_v1(
+        M1InitializedWorkspaceSlotV1::SpeculativeDraftDecode,
+        &draft_bytes,
+    ) {
+        Ok(descriptor) => descriptor,
+        Err(error) => {
+            return Err(submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+                (
+                    (
+                        lower,
+                        old_shape,
+                        catalog_id,
+                        old_selection,
+                        old_physical_recipe,
+                        old_workspace_composition,
+                        old_draft,
+                        old_target,
+                        draft_plan,
+                        target_plan,
+                        draft_bytes,
+                    ),
+                    (
+                        target_bytes,
+                        partitioned_memory,
+                        prior_output,
+                        old_source_rows,
+                        old_bound_rows,
+                        step,
+                        selected,
+                        residue,
+                        recipe,
+                        catalog,
+                        error,
+                    ),
+                ),
+            ));
+        }
+    };
+    let target_descriptor = match crate::m1_step_workspace_content_descriptor_v1(
+        M1InitializedWorkspaceSlotV1::SpeculativeTarget,
+        &target_bytes,
+    ) {
+        Ok(descriptor) => descriptor,
+        Err(error) => {
+            return Err(submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+                (
+                    (
+                        lower,
+                        old_shape,
+                        catalog_id,
+                        old_selection,
+                        old_physical_recipe,
+                        old_workspace_composition,
+                        old_draft,
+                        old_target,
+                        draft_plan,
+                        target_plan,
+                        draft_bytes,
+                    ),
+                    (
+                        target_bytes,
+                        partitioned_memory,
+                        prior_output,
+                        old_source_rows,
+                        old_bound_rows,
+                        step,
+                        selected,
+                        residue,
+                        recipe,
+                        catalog,
+                        error,
+                    ),
+                ),
+            ));
+        }
+    };
+    let (lower, draft, draft_ranges) = match replace_rollover_workspace(
+        lower,
+        &old_draft,
+        *draft_plan,
+        draft_bytes,
+        draft_descriptor,
+    ) {
+        Ok(replaced) => replaced,
+        Err(failure) => {
+            return Err(submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::DraftWorkspaceReplacement,
+                (
+                    (
+                        failure,
+                        old_shape,
+                        catalog_id,
+                        old_selection,
+                        old_physical_recipe,
+                        old_workspace_composition,
+                        old_target,
+                        target_plan,
+                        target_bytes,
+                    ),
+                    (
+                        partitioned_memory,
+                        prior_output,
+                        old_source_rows,
+                        old_bound_rows,
+                        step,
+                        selected,
+                        residue,
+                        recipe,
+                        catalog,
+                    ),
+                ),
+            ));
+        }
+    };
+    let (lower, target, target_ranges) = match replace_rollover_workspace(
+        lower,
+        &old_target,
+        *target_plan,
+        target_bytes,
+        target_descriptor,
+    ) {
+        Ok(replaced) => replaced,
+        Err(failure) => {
+            return Err(submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::TargetWorkspaceReplacement,
+                (
+                    (
+                        failure,
+                        old_shape,
+                        catalog_id,
+                        old_selection,
+                        old_physical_recipe,
+                        old_workspace_composition,
+                        draft,
+                        draft_ranges,
+                    ),
+                    (
+                        partitioned_memory,
+                        prior_output,
+                        old_source_rows,
+                        old_bound_rows,
+                        step,
+                        selected,
+                        residue,
+                        recipe,
+                        catalog,
+                    ),
+                ),
+            ));
+        }
+    };
+    let mut workspace_ranges = Vec::new();
+    if workspace_ranges
+        .try_reserve_exact(draft_ranges.len() + target_ranges.len())
+        .is_err()
+    {
+        return Err(submission_failure(
+            M1LongLivedQueueRearmSubmissionPhaseV1::WorkspaceRangeRebinding,
+            (
+                (
+                    lower,
+                    old_shape,
+                    catalog_id,
+                    old_selection,
+                    old_physical_recipe,
+                    old_workspace_composition,
+                    draft,
+                    target,
+                    draft_ranges,
+                    target_ranges,
+                ),
+                (
+                    partitioned_memory,
+                    prior_output,
+                    old_source_rows,
+                    old_bound_rows,
+                    step,
+                    selected,
+                    residue,
+                    recipe,
+                    catalog,
+                ),
+            ),
+        ));
+    }
+    append_workspace_ranges(
+        &mut workspace_ranges,
+        M1FullStepWorkspaceRole::Draft,
+        &draft,
+        draft_ranges,
+    );
+    append_workspace_ranges(
+        &mut workspace_ranges,
+        M1FullStepWorkspaceRole::Target,
+        &target,
+        target_ranges,
+    );
+    let completion_output = match partitioned_memory.activate_s1_k4_rollover_output(prior_output) {
+        Ok(output) => output,
+        Err(failure) => {
+            return Err(submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::RolloverOutputActivation,
+                (
+                    (
+                        lower,
+                        old_shape,
+                        catalog_id,
+                        old_selection,
+                        old_physical_recipe,
+                        old_workspace_composition,
+                        draft,
+                        target,
+                        workspace_ranges,
+                    ),
+                    (
+                        partitioned_memory,
+                        failure,
+                        old_source_rows,
+                        old_bound_rows,
+                        step,
+                        selected,
+                        residue,
+                        recipe,
+                        catalog,
+                    ),
+                ),
+            ));
+        }
+    };
+    let retained_capture = match retained_host_capture_ranges(&completion_output) {
+        Ok(capture) => capture,
+        Err(()) => {
+            return Err(submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::WorkspaceRangeRebinding,
+                (
+                    (
+                        lower,
+                        old_shape,
+                        catalog_id,
+                        old_selection,
+                        old_physical_recipe,
+                        old_workspace_composition,
+                        draft,
+                        target,
+                        workspace_ranges,
+                    ),
+                    (
+                        partitioned_memory,
+                        completion_output,
+                        old_source_rows,
+                        old_bound_rows,
+                        step,
+                        selected,
+                        residue,
+                        recipe,
+                        catalog,
+                    ),
+                ),
+            ));
+        }
+    };
+    let bound_rows = match build_rollover_bound_rows(
+        recipe.rows(),
+        &old_source_rows,
+        &old_bound_rows,
+        recipe.workspace_composition(),
+        &workspace_ranges,
+        &retained_capture,
+    ) {
+        Ok(rows) => rows,
+        Err(()) => {
+            return Err(submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::WorkspaceRangeRebinding,
+                (
+                    (
+                        lower,
+                        old_shape,
+                        catalog_id,
+                        old_selection,
+                        old_physical_recipe,
+                        old_workspace_composition,
+                        draft,
+                        target,
+                        workspace_ranges,
+                    ),
+                    (
+                        partitioned_memory,
+                        completion_output,
+                        old_source_rows,
+                        old_bound_rows,
+                        step,
+                        selected,
+                        residue,
+                        recipe,
+                        catalog,
+                    ),
+                ),
+            ));
+        }
+    };
+    let (kernargs, workspace_composition, source_rows) = recipe.into_parts();
+    let (physical_recipe, images) = kernargs.into_parts();
+    let batch = match lower_boxed_rearm_batch(catalog, &physical_recipe, images, &bound_rows) {
+        Ok(batch) => batch,
+        Err(failure) => {
+            return Err(submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::FixedBatchRebuild,
+                (
+                    (
+                        lower,
+                        old_shape,
+                        catalog_id,
+                        old_selection,
+                        old_physical_recipe,
+                        old_workspace_composition,
+                        draft,
+                        target,
+                        partitioned_memory,
+                        completion_output,
+                    ),
+                    (
+                        old_source_rows,
+                        old_bound_rows,
+                        physical_recipe,
+                        source_rows,
+                        bound_rows,
+                        failure.catalog,
+                        failure.images,
+                        step,
+                        selected,
+                        residue,
+                    ),
+                ),
+            ));
+        }
+    };
+    let custody =
+        M1PhysicalQueueBatchCustodyV1::from_rearm_parts(M1PhysicalQueueBatchRearmPartsV1 {
+            catalog_id,
+            selection: next.target(),
+            physical_recipe,
+            workspace_composition,
+            workspace_owners: M1FullStepWorkspaceSubleaseOwners::speculative_round(draft, target),
+            partitioned_memory,
+            completion_output,
+            source_rows,
+            bound_rows,
+        });
+    let rollover = match lower.rollover(ring_bytes, *batch) {
+        Ok(rollover) => rollover,
+        Err(failure) => {
+            return Err(submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::QueueRollover,
+                (failure, custody, step, selected, residue),
+            ));
+        }
+    };
+    let rollover_observation = M1QueueRolloverObservationV1 {
+        previous_queue_destroyed: rollover.previous_queue_destroyed(),
+        previous_dispatch_generation: rollover.previous_dispatch_generation(),
+        replacement_queue_observation: rollover.replacement_queue_observation(),
+        replacement_dispatch_generation: rollover.replacement_dispatch_generation(),
+    };
+    let Some(expected_replacement_generation) = predecessor_generation.checked_add(1) else {
+        return Err(submission_failure(
+            M1LongLivedQueueRearmSubmissionPhaseV1::QueueObservation,
+            (
+                rollover,
+                custody,
+                step,
+                selected,
+                residue,
+                rollover_observation,
+            ),
+        ));
+    };
+    if rollover_observation.previous_dispatch_generation != predecessor_generation
+        || rollover_observation.replacement_dispatch_generation != expected_replacement_generation
+    {
+        return Err(submission_failure(
+            M1LongLivedQueueRearmSubmissionPhaseV1::QueueObservation,
+            (
+                rollover,
+                custody,
+                step,
+                selected,
+                residue,
+                rollover_observation,
+            ),
+        ));
+    }
+    let queue = M1PhysicalQueueSessionV1::SpeculativeK4(Box::new(
+        M1PhysicalQueuePhaseCaseV1::from_queue_rearm(rollover.into_queue(), custody, step),
+    ));
+    let queue = match queue.submit() {
+        Ok(published) => published,
+        Err(failure) => {
+            return Err(submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::QueueSubmit,
+                (failure, selected, residue, rollover_observation),
+            ));
+        }
+    };
+    let residue = residue.into_parts();
+    let prior_checked = residue.checked;
+    let previous_epoch = prior_checked.epoch();
+    Ok(M1RearmedPublishedQueueV1 {
+        queue,
+        carry: M1RearmContinuationCustodyV1 {
+            selected: vec![selected],
+            parked: Vec::new(),
+            terminal: Vec::new(),
+            previous_epoch,
+            prior_checked,
+            logical_accepted_counts: residue.logical_accepted_counts,
+            externally_published_counts: residue.externally_published_counts,
+            release_counts: residue.release_counts,
+            completed_members: residue.completed_members,
+            total_released: residue.total_released,
+            history: M1RearmRoundHistoryV1::Empty,
+            rollover: Some(rollover_observation),
+        },
+        queue_observation: predecessor_observation,
+        device,
+    })
+}
+
+/// Replaces an S1 paired-prefill queue with a native S1/K4 generation.
+///
+/// # Errors
+///
+/// Returns phase-tagged terminal custody and permanently faults `engine`.
+pub fn submit_m1_s1_k4_queue_rollover_v1<'a, const C: usize>(
+    engine: &mut Engine<C>,
+    prepared: M1PreparedS1K4QueueRolloverV1,
+    recipe: AddresslessM1PhysicalBufferRecipeV1,
+    catalog: ContentBoundM1ProgramCatalogV1<'a>,
+    ring_bytes: u32,
+) -> Result<M1RearmedPublishedQueueV1, M1LongLivedQueueRearmSubmissionFailureV1<'a>> {
+    match submit_m1_s1_k4_queue_rollover_inner_v1(prepared, recipe, catalog, ring_bytes) {
         Ok(published) => Ok(published),
         Err(failure) => {
             engine.quarantine_m1_queue_rearm_failure();
@@ -10115,6 +10914,7 @@ mod tests {
             completed_members: 0,
             total_released: 0,
             history: M1RearmRoundHistoryV1::Empty,
+            rollover: None,
         }
     }
 
@@ -11401,12 +12201,14 @@ mod tests {
             M1LongLivedQueueRearmSubmissionPhaseV1::DraftWorkspaceReplacement,
             M1LongLivedQueueRearmSubmissionPhaseV1::TargetWorkspaceReplacement,
             M1LongLivedQueueRearmSubmissionPhaseV1::WorkspaceRangeRebinding,
+            M1LongLivedQueueRearmSubmissionPhaseV1::RolloverOutputActivation,
             M1LongLivedQueueRearmSubmissionPhaseV1::FixedBatchRebuild,
             M1LongLivedQueueRearmSubmissionPhaseV1::QueueBind,
+            M1LongLivedQueueRearmSubmissionPhaseV1::QueueRollover,
             M1LongLivedQueueRearmSubmissionPhaseV1::QueueObservation,
             M1LongLivedQueueRearmSubmissionPhaseV1::QueueSubmit,
         ];
-        assert_eq!(phases.len(), 8);
+        assert_eq!(phases.len(), 10);
     }
 
     #[test]

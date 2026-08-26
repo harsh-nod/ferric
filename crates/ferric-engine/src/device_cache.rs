@@ -53,9 +53,9 @@ use ferric_spec::{
     commit_physical_kv, map_initialized_token, preflight_physical_kv_reselection,
     retire_cancelled_tail, rollback_physical_token, write_physical_token, Identity, LogicalKvState,
     M1QualificationLaneExecutionBinding, M1QualificationLaneGrouping, PhysicalKvError,
-    PhysicalKvLifecycle, PhysicalKvLocation, PhysicalKvState, PhysicalPageId, Qwen3ExecutionMode,
-    Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection, RequestId, Target,
-    M1_KV_PAGE_TABLE_ENTRIES, M1_KV_PAGE_TOKENS, M1_KV_PHYSICAL_PAGE_SLOTS,
+    PhysicalKvLifecycle, PhysicalKvLocation, PhysicalKvReselectionPermit, PhysicalKvState,
+    PhysicalPageId, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection,
+    RequestId, Target, M1_KV_PAGE_TABLE_ENTRIES, M1_KV_PAGE_TOKENS, M1_KV_PHYSICAL_PAGE_SLOTS,
     M1_MAX_ACTIVE_SEQUENCES,
 };
 use vstd::prelude::*;
@@ -3850,6 +3850,22 @@ impl ActiveDeviceKvCache {
         self.common.projection()
     }
 
+    /// Preflights an exact role-stable quiescent selection pair without mutation.
+    ///
+    /// # Errors
+    ///
+    /// Returns the same pending-write, qualification-reserve, page-table,
+    /// lifecycle, role, selection, pair, and capacity diagnostics as
+    /// [`Self::reselect_quiescent`].
+    pub fn preflight_quiescent_reselection(
+        &self,
+        target_selection: Qwen3PlanSelection,
+        draft_selection: Qwen3PlanSelection,
+    ) -> Result<(), DeviceKvCacheError> {
+        self.preflight_quiescent_reselection_permits(target_selection, draft_selection)
+            .map(|_| ())
+    }
+
     /// Changes the exact target/draft plan pair while retaining quiescent KV
     /// contents and all device-page custody.
     ///
@@ -3869,6 +3885,20 @@ impl ActiveDeviceKvCache {
         target_selection: Qwen3PlanSelection,
         draft_selection: Qwen3PlanSelection,
     ) -> Result<(), DeviceKvCacheError> {
+        let (target_permit, draft_permit) =
+            self.preflight_quiescent_reselection_permits(target_selection, draft_selection)?;
+
+        apply_preflighted_physical_kv_reselection(&mut self.common.target.physical, target_permit);
+        apply_preflighted_physical_kv_reselection(&mut self.common.draft.physical, draft_permit);
+        Ok(())
+    }
+
+    fn preflight_quiescent_reselection_permits(
+        &self,
+        target_selection: Qwen3PlanSelection,
+        draft_selection: Qwen3PlanSelection,
+    ) -> Result<(PhysicalKvReselectionPermit, PhysicalKvReselectionPermit), DeviceKvCacheError>
+    {
         if self.common.target.pending.is_some() || self.common.draft.pending.is_some() {
             return Err(DeviceKvCacheError::PendingWriteExists);
         }
@@ -3888,10 +3918,7 @@ impl ActiveDeviceKvCache {
         if !quiescent_reselection_pair_is_valid(target_selection, draft_selection) {
             return Err(DeviceKvCacheError::PlanPairMismatch);
         }
-
-        apply_preflighted_physical_kv_reselection(&mut self.common.target.physical, target_permit);
-        apply_preflighted_physical_kv_reselection(&mut self.common.draft.physical, draft_permit);
-        Ok(())
+        Ok((target_permit, draft_permit))
     }
 
     pub(crate) fn release_state_is_valid(&self) -> bool {
@@ -6571,6 +6598,47 @@ mod tests {
         let before = reselection_snapshot(cache);
         assert_eq!(cache.reselect_quiescent(target, draft), Err(expected));
         assert_eq!(reselection_snapshot(cache), before);
+    }
+
+    #[test]
+    fn quiescent_reselection_preflight_is_nonmutating_and_predictive() {
+        let target = selected(
+            Qwen3ModelRole::Target8B,
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+        );
+        let draft = selected(
+            Qwen3ModelRole::Draft06B,
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+        );
+        let mut cache = cache_for(
+            request(),
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        );
+        let before = reselection_snapshot(&cache);
+
+        assert_eq!(cache.preflight_quiescent_reselection(target, draft), Ok(()));
+        assert_eq!(reselection_snapshot(&cache), before);
+        assert_eq!(cache.reselect_quiescent(target, draft), Ok(()));
+
+        let wrong_draft = selected(
+            Qwen3ModelRole::Draft06B,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        let before = reselection_snapshot(&cache);
+        let predicted = cache
+            .preflight_quiescent_reselection(target, wrong_draft)
+            .unwrap_err();
+        assert_eq!(predicted, DeviceKvCacheError::PlanPairMismatch);
+        assert_eq!(reselection_snapshot(&cache), before);
+        assert_eq!(
+            cache.reselect_quiescent(target, wrong_draft),
+            Err(predicted)
+        );
+        assert_eq!(reselection_snapshot(&cache), before);
     }
 
     #[test]

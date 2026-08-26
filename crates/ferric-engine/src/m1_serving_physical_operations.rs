@@ -18,8 +18,8 @@ use ferric_spec::{completion::CompletionEpoch, Qwen3PlanBucket, RequestId};
 
 use crate::{
     complete_m1_physical_step_v1, release_m1_completed_step_kv_pages_v1,
-    schedule_m1_long_lived_queue_rearm_exact_v1, ActiveDeviceKvCache,
-    AddresslessM1PhysicalBufferRecipeV1, BoundM1CompletionOutputV1, Engine,
+    schedule_m1_long_lived_queue_rearm_exact_v1, schedule_m1_s1_k4_queue_rollover_exact_v1,
+    ActiveDeviceKvCache, AddresslessM1PhysicalBufferRecipeV1, BoundM1CompletionOutputV1, Engine,
     M1AllocatedScheduledStepV1, M1CheckedCompletionOutputV1, M1CompletedStepOutcomeV1,
     M1CompletedStepRejectionV1, M1DeviceKvCompletionDispositionV1, M1DeviceKvCompletionMemberV1,
     M1DeviceKvCompletionRosterV1, M1ExactDispatchErrorV1, M1LongLivedQueueReleasedRoundV1,
@@ -27,10 +27,12 @@ use crate::{
     M1PhysicalCompletedReadbackV1, M1PhysicalFixedBatchShapeV1, M1PhysicalPublishedQueueSessionV1,
     M1PhysicalRunnerV1, M1PreparedLongLivedQueueRearmV1, M1RearmedCompletedReadbackV1,
     M1RearmedCompletionOutcomeV1, M1RearmedCompletionPreflightFailureV1, M1RearmedPublishedQueueV1,
-    M1RearmedRoundReleaseOutcomeV1, M1ReleasedCompletedStepV1, M1ScheduledDispatchV1,
-    M1ScheduledLongLivedQueueRearmV1, M1ServingBatchPlanV1, M1ServingPhysicalOperationFailureV1,
-    M1ServingPhysicalOperationResultV1, M1ServingPhysicalOperationsV1, M1ServingPlanV1,
-    M1ServingRolloverReasonV1, M1_MAX_REARM_ROUND_HISTORY_V1,
+    M1RearmedRoundReleaseOutcomeV1, M1ReleasedCompletedStepV1,
+    M1S1K4QueueRolloverScheduleFailureCustodyV1, M1ScheduledDispatchV1,
+    M1ScheduledLongLivedQueueRearmV1, M1ScheduledS1K4QueueRolloverV1, M1ServingBatchPlanV1,
+    M1ServingPhysicalOperationFailureV1, M1ServingPhysicalOperationResultV1,
+    M1ServingPhysicalOperationsV1, M1ServingPlanV1, M1ServingRolloverReasonV1,
+    M1_MAX_REARM_ROUND_HISTORY_V1,
 };
 
 /// Request-owned inputs prepared after the adapter issues the exact first dispatch.
@@ -102,6 +104,31 @@ pub struct M1ServingPreparedSameShapeRearmV1 {
     semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
 }
 
+/// Request-owned inputs prepared after exact paired-prefill to S1/K4 scheduling.
+#[must_use = "prepared rollover custody must publish or remain retained"]
+#[derive(Debug)]
+pub struct M1ServingPreparedS1K4RolloverV1 {
+    prepared: crate::M1PreparedS1K4QueueRolloverV1,
+    recipe: AddresslessM1PhysicalBufferRecipeV1,
+    semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
+}
+
+impl M1ServingPreparedS1K4RolloverV1 {
+    /// Joins a prepared native rollover to its exact physical recipe and
+    /// independent S1/K4 semantic evidence.
+    pub const fn new(
+        prepared: crate::M1PreparedS1K4QueueRolloverV1,
+        recipe: AddresslessM1PhysicalBufferRecipeV1,
+        semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
+    ) -> Self {
+        Self {
+            prepared,
+            recipe,
+            semantic_evidence,
+        }
+    }
+}
+
 impl M1ServingPreparedSameShapeRearmV1 {
     /// Joins the existing prepared-rearm typestate to its exact physical recipe.
     pub const fn new(
@@ -152,6 +179,18 @@ pub trait M1ServingPhysicalInputProviderV1<const C: usize> {
         batch: &M1ServingBatchPlanV1,
         scheduled: M1ScheduledLongLivedQueueRearmV1,
     ) -> Result<M1ServingPreparedSameShapeRearmV1, Self::Failure>;
+
+    /// # Errors
+    ///
+    /// Returns exhaustive detached queue, cache, reservation, workspace, and
+    /// semantic-evidence custody when S1/K4 rollover inputs cannot be prepared.
+    fn prepare_s1_k4_rollover(
+        &mut self,
+        runner: &M1PhysicalRunnerV1,
+        engine: &mut Engine<C>,
+        batch: &M1ServingBatchPlanV1,
+        scheduled: M1ScheduledS1K4QueueRolloverV1,
+    ) -> Result<M1ServingPreparedS1K4RolloverV1, Self::Failure>;
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -472,6 +511,8 @@ pub enum M1ServingPhysicalRunnerOperationErrorV1 {
     FirstPublication,
     SameShapeSchedule,
     SameShapePublication,
+    RolloverSchedule,
+    RolloverPublication,
     RolloverUnavailable,
     EpochMismatch,
     QueueWait,
@@ -539,6 +580,28 @@ pub enum M1ServingPhysicalRunnerTerminalLowerCustodyV1<'a, F> {
         history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
     },
     RearmUnexpectedShape {
+        published: Box<M1RearmedPublishedQueueV1>,
+        semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
+        history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    },
+    RolloverSchedule {
+        failure: Box<crate::M1S1K4QueueRolloverScheduleFailureV1>,
+        history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    },
+    RolloverProviderPreparation {
+        failure: Box<F>,
+        history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    },
+    RolloverPreparedInputRejected {
+        prepared: Box<M1ServingPreparedS1K4RolloverV1>,
+        history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    },
+    RolloverPublication {
+        failure: crate::M1PhysicalRunnerS1K4RolloverSubmissionFailureV1<'a>,
+        semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
+        history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    },
+    RolloverUnexpectedShape {
         published: Box<M1RearmedPublishedQueueV1>,
         semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
         history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
@@ -635,7 +698,9 @@ impl<F> M1ServingPhysicalRunnerTerminalLowerCustodyV1<'_, F> {
             Self::ExactFirstDispatch(error) => {
                 M1ServingPhysicalRunnerOperationErrorV1::ExactFirstDispatch(*error)
             }
-            Self::FirstProviderPreparation(_) | Self::RearmProviderPreparation { .. } => {
+            Self::FirstProviderPreparation(_)
+            | Self::RearmProviderPreparation { .. }
+            | Self::RolloverProviderPreparation { .. } => {
                 M1ServingPhysicalRunnerOperationErrorV1::ProviderPreparation
             }
             Self::FirstPreparedRosterRejected(_) => {
@@ -643,8 +708,10 @@ impl<F> M1ServingPhysicalRunnerTerminalLowerCustodyV1<'_, F> {
             }
             Self::FirstPreparedEvidenceRejected(_)
             | Self::RearmPreparedInputRejected { .. }
+            | Self::RolloverPreparedInputRejected { .. }
             | Self::FirstUnexpectedShape { .. }
-            | Self::RearmUnexpectedShape { .. } => {
+            | Self::RearmUnexpectedShape { .. }
+            | Self::RolloverUnexpectedShape { .. } => {
                 M1ServingPhysicalRunnerOperationErrorV1::UnsupportedEvidenceShape
             }
             Self::FirstPublication { .. } => {
@@ -655,6 +722,12 @@ impl<F> M1ServingPhysicalRunnerTerminalLowerCustodyV1<'_, F> {
             }
             Self::RearmPublication { .. } => {
                 M1ServingPhysicalRunnerOperationErrorV1::SameShapePublication
+            }
+            Self::RolloverSchedule { .. } => {
+                M1ServingPhysicalRunnerOperationErrorV1::RolloverSchedule
+            }
+            Self::RolloverPublication { .. } => {
+                M1ServingPhysicalRunnerOperationErrorV1::RolloverPublication
             }
             Self::FirstQueueWait { .. } => M1ServingPhysicalRunnerOperationErrorV1::QueueWait,
             Self::FirstQueueRecycle { .. } => M1ServingPhysicalRunnerOperationErrorV1::QueueRecycle,
@@ -1373,10 +1446,10 @@ where
     fn quiescent_rollover(
         &mut self,
         custody: Self::Quiescent,
-        _prior: M1ServingPlanV1,
-        _next: M1ServingPlanV1,
-        _reason: M1ServingRolloverReasonV1,
-        _batch: &M1ServingBatchPlanV1,
+        prior: M1ServingPlanV1,
+        next: M1ServingPlanV1,
+        reason: M1ServingRolloverReasonV1,
+        batch: &M1ServingBatchPlanV1,
     ) -> M1ServingPhysicalOperationResultV1<
         Self::Published,
         Self::Quiescent,
@@ -1400,9 +1473,143 @@ where
         ) {
             return Err(M1ServingPhysicalOperationFailureV1::Retryable { source, custody });
         }
-        Err(M1ServingPhysicalOperationFailureV1::Retryable {
-            source: M1ServingPhysicalRunnerOperationErrorV1::RolloverUnavailable,
-            custody,
+        if custody.plan() != prior || batch.plan() != next {
+            return Err(M1ServingPhysicalOperationFailureV1::Retryable {
+                source: M1ServingPhysicalRunnerOperationErrorV1::PlanMismatch,
+                custody,
+            });
+        }
+        if prior.shape() != M1PhysicalFixedBatchShapeV1::PairedPrefill
+            || !supports_evidence_bound_s1_k4(next)
+            || reason != M1ServingRolloverReasonV1::Mode
+            || !matches!(
+                &custody.state,
+                M1ServingPhysicalRunnerQuiescentStateV1::First { .. }
+            )
+        {
+            return Err(M1ServingPhysicalOperationFailureV1::Retryable {
+                source: M1ServingPhysicalRunnerOperationErrorV1::RolloverUnavailable,
+                custody,
+            });
+        }
+        let M1ServingPhysicalRunnerQuiescentV1 {
+            adapter_identity,
+            epoch: custody_epoch,
+            plan,
+            state,
+        } = custody;
+        let M1ServingPhysicalRunnerQuiescentStateV1::First {
+            released,
+            diagnostic_history,
+        } = state
+        else {
+            unreachable!("rollover state checked before consuming custody")
+        };
+        let scheduled =
+            match schedule_m1_s1_k4_queue_rollover_exact_v1(self.engine, released, batch) {
+                Ok(scheduled) => scheduled,
+                Err(failure) if !failure.is_terminal() => {
+                    let M1S1K4QueueRolloverScheduleFailureCustodyV1::Released(released) =
+                        failure.into_custody()
+                    else {
+                        unreachable!("nonterminal rollover schedule retains released custody")
+                    };
+                    return Err(M1ServingPhysicalOperationFailureV1::Retryable {
+                        source: M1ServingPhysicalRunnerOperationErrorV1::RolloverSchedule,
+                        custody: M1ServingPhysicalRunnerQuiescentV1::first(
+                            adapter_identity,
+                            custody_epoch,
+                            plan,
+                            *released,
+                            diagnostic_history,
+                        ),
+                    });
+                }
+                Err(failure) => {
+                    return Err(self.terminal(
+                        M1ServingPhysicalRunnerTerminalLowerCustodyV1::RolloverSchedule {
+                            failure,
+                            history: diagnostic_history,
+                        },
+                    ));
+                }
+            };
+        self.active_plan = Some(next);
+        let prepared = match self
+            .provider
+            .as_mut()
+            .expect("provider presence checked before rollover scheduling")
+            .prepare_s1_k4_rollover(self.runner, self.engine, batch, scheduled)
+        {
+            Ok(prepared) => prepared,
+            Err(failure) => {
+                return Err(self.terminal(
+                    M1ServingPhysicalRunnerTerminalLowerCustodyV1::RolloverProviderPreparation {
+                        failure: Box::new(failure),
+                        history: diagnostic_history,
+                    },
+                ));
+            }
+        };
+        if !matches!(
+            prepared.semantic_evidence,
+            M1ServingPreparedSemanticEvidenceV1::SpeculativeK4
+        ) || !prepared_semantic_evidence_matches(
+            batch.plan(),
+            batch.requests().len(),
+            &prepared.semantic_evidence,
+        ) {
+            return Err(self.terminal(
+                M1ServingPhysicalRunnerTerminalLowerCustodyV1::RolloverPreparedInputRejected {
+                    prepared: Box::new(prepared),
+                    history: diagnostic_history,
+                },
+            ));
+        }
+        let M1ServingPreparedS1K4RolloverV1 {
+            prepared,
+            recipe,
+            semantic_evidence,
+        } = prepared;
+        let published =
+            match self
+                .runner
+                .submit_s1_k4_rollover(self.engine, self.ring_bytes, prepared, recipe)
+            {
+                Ok(published) => published,
+                Err(failure) => {
+                    return Err(self.terminal(
+                        M1ServingPhysicalRunnerTerminalLowerCustodyV1::RolloverPublication {
+                            failure,
+                            semantic_evidence,
+                            history: diagnostic_history,
+                        },
+                    ));
+                }
+            };
+        if published.shape() != M1PhysicalFixedBatchShapeV1::SpeculativeK4
+            || published.rollover_observation().is_none()
+        {
+            return Err(self.terminal(
+                M1ServingPhysicalRunnerTerminalLowerCustodyV1::RolloverUnexpectedShape {
+                    published: Box::new(published),
+                    semantic_evidence,
+                    history: diagnostic_history,
+                },
+            ));
+        }
+        self.phase = M1ServingPhysicalRunnerAdapterPhaseV1::Published {
+            epoch: batch.epoch(),
+        };
+        Ok(M1ServingPhysicalRunnerPublishedV1 {
+            adapter_identity,
+            epoch: batch.epoch(),
+            plan: next,
+            state: M1ServingPhysicalRunnerPublishedStateV1::Rearmed {
+                published,
+                semantic_evidence,
+                diagnostic_history,
+            },
         })
     }
 
@@ -2205,6 +2412,33 @@ mod tests {
         assert!(!phase_allows_fresh_launch(
             M1ServingPhysicalRunnerAdapterPhaseV1::Sealed
         ));
+    }
+
+    #[test]
+    fn rollover_admission_is_closed_to_paired_prefill_into_exact_s1_k4() {
+        let prefill = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        );
+        let speculative = serving_plan(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        let decode = serving_plan(
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+
+        assert_eq!(prefill.shape(), M1PhysicalFixedBatchShapeV1::PairedPrefill);
+        assert!(supports_evidence_bound_s1_k4(speculative));
+        assert_ne!(decode.shape(), M1PhysicalFixedBatchShapeV1::PairedPrefill);
+        assert!(!supports_evidence_bound_s1_k4(decode));
     }
 
     #[test]

@@ -2009,11 +2009,7 @@ mod tests {
         .enumerate()
         {
             let recipe = exact_recipe(intent, 220 + u8::try_from(case).unwrap() * 2);
-            let target_segment = if matches!(intent, M1StepDispatchIntent::PairedPrefill(_)) {
-                1
-            } else {
-                0
-            };
+            let target_segment = u8::from(matches!(intent, M1StepDispatchIntent::PairedPrefill(_)));
             assert_eq!(
                 direct_diagnostic_choice_source_isolation(
                     &recipe,
