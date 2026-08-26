@@ -48,7 +48,8 @@ use ferric_build::{
 };
 use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::{
-    append_physical_page, cancel_physical_kv, commit_physical_kv, map_initialized_token,
+    append_physical_page, apply_preflighted_physical_kv_reselection, cancel_physical_kv,
+    commit_physical_kv, map_initialized_token, preflight_physical_kv_reselection,
     retire_cancelled_tail, rollback_physical_token, write_physical_token, Identity, LogicalKvState,
     M1QualificationLaneExecutionBinding, M1QualificationLaneGrouping, PhysicalKvError,
     PhysicalKvLifecycle, PhysicalKvLocation, PhysicalKvState, PhysicalPageId, Qwen3ExecutionMode,
@@ -3374,6 +3375,44 @@ struct DeviceKvCacheCommon {
     target_qualification_reserve: Option<M1QualificationTargetPageReserveV1>,
 }
 
+fn quiescent_reselection_pair_is_valid(
+    target: Qwen3PlanSelection,
+    draft: Qwen3PlanSelection,
+) -> bool {
+    if target.role != Qwen3ModelRole::Target8B || draft.role != Qwen3ModelRole::Draft06B {
+        return false;
+    }
+    match (target.mode, target.bucket) {
+        (
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128
+            | Qwen3PlanBucket::PrefillS8T128
+            | Qwen3PlanBucket::PrefillS1T512
+            | Qwen3PlanBucket::PrefillS1T2048,
+        )
+        | (
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192
+            | Qwen3PlanBucket::DecodeS8C8192
+            | Qwen3PlanBucket::DecodeS32C8192,
+        ) => draft.mode == target.mode && draft.bucket == target.bucket,
+        (
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192
+            | Qwen3PlanBucket::SpeculativeS1K8C8192
+            | Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ) => {
+            draft.mode == Qwen3ExecutionMode::Decode
+                && draft.bucket == Qwen3PlanBucket::DecodeS1C8192
+        }
+        (Qwen3ExecutionMode::Speculative, Qwen3PlanBucket::SpeculativeS8K4C8192) => {
+            draft.mode == Qwen3ExecutionMode::Decode
+                && draft.bucket == Qwen3PlanBucket::DecodeS8C8192
+        }
+        _ => false,
+    }
+}
+
 impl DeviceKvCacheCommon {
     fn projection(&self) -> DeviceKvCacheProjection {
         DeviceKvCacheProjection {
@@ -3588,6 +3627,50 @@ impl ActiveDeviceKvCache {
     #[must_use]
     pub fn projection(&self) -> DeviceKvCacheProjection {
         self.common.projection()
+    }
+
+    /// Changes the exact target/draft plan pair while retaining quiescent KV
+    /// contents and all device-page custody.
+    ///
+    /// Both role transitions are preflighted before either physical state is
+    /// changed. Success changes only the selections and their derived context
+    /// capacities. Request identity, logical counts, page tables, physical
+    /// generations, arena bindings, retirement custody, and write generations
+    /// remain unchanged.
+    ///
+    /// # Errors
+    ///
+    /// Rejects pending writes, qualification reserves, incoherent page-table
+    /// custody, non-active physical state, role drift, invalid or mismatched
+    /// plan pairs, and resident prefixes exceeding a new bucket's capacity.
+    pub fn reselect_quiescent(
+        &mut self,
+        target_selection: Qwen3PlanSelection,
+        draft_selection: Qwen3PlanSelection,
+    ) -> Result<(), DeviceKvCacheError> {
+        if self.common.target.pending.is_some() || self.common.draft.pending.is_some() {
+            return Err(DeviceKvCacheError::PendingWriteExists);
+        }
+        if self.common.target_qualification_reserve.is_some() {
+            return Err(DeviceKvCacheError::QualificationReserveAlreadyInstalled);
+        }
+        if !DeviceKvCacheCommon::owned_table_matches(&self.common.target)
+            || !DeviceKvCacheCommon::owned_table_matches(&self.common.draft)
+        {
+            return Err(DeviceKvCacheError::OwnedPageTableDrift);
+        }
+
+        let target_permit =
+            preflight_physical_kv_reselection(&self.common.target.physical, target_selection)?;
+        let draft_permit =
+            preflight_physical_kv_reselection(&self.common.draft.physical, draft_selection)?;
+        if !quiescent_reselection_pair_is_valid(target_selection, draft_selection) {
+            return Err(DeviceKvCacheError::PlanPairMismatch);
+        }
+
+        apply_preflighted_physical_kv_reselection(&mut self.common.target.physical, target_permit);
+        apply_preflighted_physical_kv_reselection(&mut self.common.draft.physical, draft_permit);
+        Ok(())
     }
 
     pub(crate) fn release_state_is_valid(&self) -> bool {
@@ -6160,6 +6243,347 @@ mod tests {
             let read = cache.apply_initialized_write(initialized).unwrap();
             assert_eq!(read.logical_position, position);
         }
+    }
+
+    #[derive(Debug, PartialEq, Eq)]
+    struct KvReselectionPreservedState {
+        projection: DeviceKvCacheProjection,
+        target_page_table: Vec<Option<PhysicalPageId>>,
+        draft_page_table: Vec<Option<PhysicalPageId>>,
+        target_generations: Vec<Option<u32>>,
+        draft_generations: Vec<Option<u32>>,
+        target_active_pages: String,
+        draft_active_pages: String,
+        target_retired_pages: String,
+        draft_retired_pages: String,
+        target_pending: Option<PendingWriteState>,
+        draft_pending: Option<PendingWriteState>,
+        target_next_write_generation: u64,
+        draft_next_write_generation: u64,
+        qualification_reserve: String,
+    }
+
+    #[derive(Debug, PartialEq, Eq)]
+    struct KvReselectionSnapshot {
+        preserved: KvReselectionPreservedState,
+        target_selection: Qwen3PlanSelection,
+        draft_selection: Qwen3PlanSelection,
+        target_max_context_tokens: u32,
+        draft_max_context_tokens: u32,
+    }
+
+    fn preserved_reselection_state(cache: &ActiveDeviceKvCache) -> KvReselectionPreservedState {
+        let page_positions = 0..u32::try_from(M1_KV_PAGE_TABLE_ENTRIES).unwrap();
+        let slot_indices = 0..u32::try_from(M1_KV_PHYSICAL_PAGE_SLOTS).unwrap();
+        KvReselectionPreservedState {
+            projection: cache.projection(),
+            target_page_table: page_positions
+                .clone()
+                .map(|position| cache.common.target.physical.page_at(position))
+                .collect(),
+            draft_page_table: page_positions
+                .map(|position| cache.common.draft.physical.page_at(position))
+                .collect(),
+            target_generations: slot_indices
+                .clone()
+                .map(|index| cache.common.target.physical.page_generation(index))
+                .collect(),
+            draft_generations: slot_indices
+                .map(|index| cache.common.draft.physical.page_generation(index))
+                .collect(),
+            target_active_pages: format!("{:?}", cache.common.target.active_pages),
+            draft_active_pages: format!("{:?}", cache.common.draft.active_pages),
+            target_retired_pages: format!("{:?}", cache.common.target.retired_pages),
+            draft_retired_pages: format!("{:?}", cache.common.draft.retired_pages),
+            target_pending: cache.common.target.pending,
+            draft_pending: cache.common.draft.pending,
+            target_next_write_generation: cache.common.target.next_write_generation,
+            draft_next_write_generation: cache.common.draft.next_write_generation,
+            qualification_reserve: format!("{:?}", cache.common.target_qualification_reserve),
+        }
+    }
+
+    fn reselection_snapshot(cache: &ActiveDeviceKvCache) -> KvReselectionSnapshot {
+        KvReselectionSnapshot {
+            preserved: preserved_reselection_state(cache),
+            target_selection: cache.common.target.selection(),
+            draft_selection: cache.common.draft.selection(),
+            target_max_context_tokens: cache.common.target.physical.max_context_tokens(),
+            draft_max_context_tokens: cache.common.draft.physical.max_context_tokens(),
+        }
+    }
+
+    fn assert_successful_reselection(
+        cache: &mut ActiveDeviceKvCache,
+        target: Qwen3PlanSelection,
+        draft: Qwen3PlanSelection,
+    ) {
+        let preserved = preserved_reselection_state(cache);
+        cache.reselect_quiescent(target, draft).unwrap();
+        assert_eq!(preserved_reselection_state(cache), preserved);
+        assert_eq!(cache.common.target.selection(), target);
+        assert_eq!(cache.common.draft.selection(), draft);
+        assert_eq!(
+            cache.common.target.physical.max_context_tokens(),
+            target
+                .bucket
+                .dimensions(target.role, target.mode)
+                .unwrap()
+                .context_tokens
+        );
+        assert_eq!(
+            cache.common.draft.physical.max_context_tokens(),
+            draft
+                .bucket
+                .dimensions(draft.role, draft.mode)
+                .unwrap()
+                .context_tokens
+        );
+    }
+
+    fn assert_reselection_rejected_unchanged(
+        cache: &mut ActiveDeviceKvCache,
+        target: Qwen3PlanSelection,
+        draft: Qwen3PlanSelection,
+        expected: DeviceKvCacheError,
+    ) {
+        let before = reselection_snapshot(cache);
+        assert_eq!(cache.reselect_quiescent(target, draft), Err(expected));
+        assert_eq!(reselection_snapshot(cache), before);
+    }
+
+    #[test]
+    fn quiescent_reselection_covers_serving_transition_matrix_without_custody_drift() {
+        let mut cache = cache_for(
+            request(),
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        );
+        for (role, allocation_tag) in [
+            (Qwen3ModelRole::Target8B, 80),
+            (Qwen3ModelRole::Draft06B, 81),
+        ] {
+            append_and_initialize(&mut cache, role, 0, allocation_tag, 16, 50);
+            cache.accept_initialized(request(), role, 16).unwrap();
+            append_and_initialize(&mut cache, role, 1, allocation_tag, 1, 50);
+            assert!(matches!(
+                cache
+                    .rollback_one(request(), role, CompletionEpoch::new(50))
+                    .unwrap(),
+                DeviceKvRetirementOutcome::PageRetired(_)
+            ));
+        }
+        let (settled, _completion) = cache
+            .settle_retired_epoch(ExactCompletion::from_contracted_hsa_quiescence(
+                CompletionEpoch::new(50),
+            ))
+            .unwrap();
+        assert_eq!(settled, 2);
+
+        let target_decode_s1 = selected(
+            Qwen3ModelRole::Target8B,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        let draft_decode_s1 = selected(
+            Qwen3ModelRole::Draft06B,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        assert_successful_reselection(&mut cache, target_decode_s1, draft_decode_s1);
+
+        for bucket in [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ] {
+            assert_successful_reselection(
+                &mut cache,
+                selected(
+                    Qwen3ModelRole::Target8B,
+                    Qwen3ExecutionMode::Speculative,
+                    bucket,
+                ),
+                draft_decode_s1,
+            );
+        }
+
+        let target_speculative_s8 = selected(
+            Qwen3ModelRole::Target8B,
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS8K4C8192,
+        );
+        let draft_decode_s8 = selected(
+            Qwen3ModelRole::Draft06B,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS8C8192,
+        );
+        assert_successful_reselection(&mut cache, target_speculative_s8, draft_decode_s8);
+        assert_successful_reselection(
+            &mut cache,
+            selected(
+                Qwen3ModelRole::Target8B,
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K4C8192,
+            ),
+            draft_decode_s1,
+        );
+        assert_successful_reselection(&mut cache, target_decode_s1, draft_decode_s1);
+    }
+
+    #[test]
+    fn hostile_quiescent_reselection_rejections_are_exactly_nonmutating() {
+        let target_decode = selected(
+            Qwen3ModelRole::Target8B,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        let draft_decode = selected(
+            Qwen3ModelRole::Draft06B,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+
+        let mut role_drift = cache_for(
+            request(),
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        assert_reselection_rejected_unchanged(
+            &mut role_drift,
+            selected(
+                Qwen3ModelRole::Draft06B,
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+            draft_decode,
+            DeviceKvCacheError::Physical(PhysicalKvError::RoleMismatch),
+        );
+
+        let mut invalid = cache_for(
+            request(),
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        assert_reselection_rejected_unchanged(
+            &mut invalid,
+            selected(
+                Qwen3ModelRole::Target8B,
+                Qwen3ExecutionMode::Prefill,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+            draft_decode,
+            DeviceKvCacheError::Physical(PhysicalKvError::InvalidSelection),
+        );
+
+        let mut mismatched_pair = cache_for(
+            request(),
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        assert_reselection_rejected_unchanged(
+            &mut mismatched_pair,
+            target_decode,
+            selected(
+                Qwen3ModelRole::Draft06B,
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS8C8192,
+            ),
+            DeviceKvCacheError::PlanPairMismatch,
+        );
+
+        let mut pending = cache_for(
+            request(),
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        pending
+            .append_page(request(), lease(Qwen3ModelRole::Target8B, 0, 82))
+            .unwrap();
+        let _pending_write = pending
+            .prepare_write(
+                request(),
+                Qwen3ModelRole::Target8B,
+                0,
+                CompletionEpoch::new(51),
+            )
+            .unwrap();
+        assert_reselection_rejected_unchanged(
+            &mut pending,
+            target_decode,
+            draft_decode,
+            DeviceKvCacheError::PendingWriteExists,
+        );
+
+        let grouping = M1QualificationLaneGrouping::S1;
+        let (plan, expected) = qualification_plan(grouping);
+        let validated =
+            crate::validate_m1_qualification_context_plan_v1(&plan, grouping, &expected).unwrap();
+        let mut reserved = qualification_cache(request(), grouping);
+        install_qualification_reserve_for_test(&mut reserved, validated.step(0, 0).unwrap(), 83);
+        assert_reselection_rejected_unchanged(
+            &mut reserved,
+            target_decode,
+            draft_decode,
+            DeviceKvCacheError::QualificationReserveAlreadyInstalled,
+        );
+
+        let mut insufficient = cache_for(
+            request(),
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        for page_index in 0..9 {
+            let count = if page_index == 8 {
+                1
+            } else {
+                M1_KV_PAGE_TOKENS
+            };
+            append_and_initialize(
+                &mut insufficient,
+                Qwen3ModelRole::Target8B,
+                page_index,
+                84,
+                count,
+                52,
+            );
+        }
+        insufficient
+            .accept_initialized(request(), Qwen3ModelRole::Target8B, 129)
+            .unwrap();
+        assert_reselection_rejected_unchanged(
+            &mut insufficient,
+            selected(
+                Qwen3ModelRole::Target8B,
+                Qwen3ExecutionMode::Prefill,
+                Qwen3PlanBucket::PrefillS1T128,
+            ),
+            selected(
+                Qwen3ModelRole::Draft06B,
+                Qwen3ExecutionMode::Prefill,
+                Qwen3PlanBucket::PrefillS1T128,
+            ),
+            DeviceKvCacheError::Physical(PhysicalKvError::ContextExceeded),
+        );
+
+        let mut nonactive = cache_for(
+            request(),
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        cancel_physical_kv(
+            &mut nonactive.common.target.physical,
+            request(),
+            target_decode,
+            CompletionEpoch::new(53),
+        )
+        .unwrap();
+        assert_reselection_rejected_unchanged(
+            &mut nonactive,
+            target_decode,
+            draft_decode,
+            DeviceKvCacheError::Physical(PhysicalKvError::WrongLifecycle),
+        );
     }
 
     #[test]

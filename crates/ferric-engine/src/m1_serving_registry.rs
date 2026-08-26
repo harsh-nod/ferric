@@ -7,12 +7,31 @@
 //! result: the caller must retain and rebuild the physical queue custody before
 //! publishing the returned roster.
 
+use core::sync::atomic::{AtomicU64, Ordering};
+
 use ferric_spec::{
     completion::CompletionEpoch, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket,
     Qwen3PlanSelection, RequestId, M1_MAX_ACTIVE_SEQUENCES,
 };
 
 use crate::M1PhysicalFixedBatchShapeV1;
+
+static NEXT_M1_SERVING_REGISTRY_IDENTITY_V1: AtomicU64 = AtomicU64::new(1);
+
+/// Opaque identity binding every move-only authority to one registry instance.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct M1ServingRegistryIdentityV1(u64);
+
+impl M1ServingRegistryIdentityV1 {
+    fn fresh() -> Result<Self, M1ServingRegistryErrorV1> {
+        NEXT_M1_SERVING_REGISTRY_IDENTITY_V1
+            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |current| {
+                current.checked_add(1)
+            })
+            .map(Self)
+            .map_err(|_| M1ServingRegistryErrorV1::RegistryIdentityExhausted)
+    }
+}
 
 /// Exact paired target/draft plan used by one homogeneous serving roster.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -36,39 +55,58 @@ impl M1ServingPlanV1 {
     ) -> Result<Self, M1ServingRegistryErrorV1> {
         if target.role != Qwen3ModelRole::Target8B
             || draft.role != Qwen3ModelRole::Draft06B
-            || target.mode != draft.mode
-            || target.bucket != draft.bucket
             || target.validate().is_err()
             || draft.validate().is_err()
         {
             return Err(M1ServingRegistryErrorV1::InvalidPlanPair);
         }
-        let shape = match (target.mode, target.bucket) {
+        let (shape, draft_mode, draft_bucket) = match (target.mode, target.bucket) {
             (
                 Qwen3ExecutionMode::Prefill,
                 Qwen3PlanBucket::PrefillS1T128
                 | Qwen3PlanBucket::PrefillS8T128
                 | Qwen3PlanBucket::PrefillS1T512
                 | Qwen3PlanBucket::PrefillS1T2048,
-            ) => M1PhysicalFixedBatchShapeV1::PairedPrefill,
+            ) => (
+                M1PhysicalFixedBatchShapeV1::PairedPrefill,
+                Qwen3ExecutionMode::Prefill,
+                target.bucket,
+            ),
             (
                 Qwen3ExecutionMode::Decode,
                 Qwen3PlanBucket::DecodeS1C8192
                 | Qwen3PlanBucket::DecodeS8C8192
                 | Qwen3PlanBucket::DecodeS32C8192,
-            ) => M1PhysicalFixedBatchShapeV1::TargetOnly,
-            (
-                Qwen3ExecutionMode::Speculative,
-                Qwen3PlanBucket::SpeculativeS1K4C8192 | Qwen3PlanBucket::SpeculativeS8K4C8192,
-            ) => M1PhysicalFixedBatchShapeV1::SpeculativeK4,
-            (Qwen3ExecutionMode::Speculative, Qwen3PlanBucket::SpeculativeS1K8C8192) => {
-                M1PhysicalFixedBatchShapeV1::SpeculativeK8
-            }
-            (Qwen3ExecutionMode::Speculative, Qwen3PlanBucket::SpeculativeS1K16C8192) => {
-                M1PhysicalFixedBatchShapeV1::SpeculativeK16
-            }
+            ) => (
+                M1PhysicalFixedBatchShapeV1::TargetOnly,
+                Qwen3ExecutionMode::Decode,
+                target.bucket,
+            ),
+            (Qwen3ExecutionMode::Speculative, Qwen3PlanBucket::SpeculativeS1K4C8192) => (
+                M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+            (Qwen3ExecutionMode::Speculative, Qwen3PlanBucket::SpeculativeS8K4C8192) => (
+                M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS8C8192,
+            ),
+            (Qwen3ExecutionMode::Speculative, Qwen3PlanBucket::SpeculativeS1K8C8192) => (
+                M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+            (Qwen3ExecutionMode::Speculative, Qwen3PlanBucket::SpeculativeS1K16C8192) => (
+                M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
             _ => return Err(M1ServingRegistryErrorV1::InvalidPlanPair),
         };
+        if draft.mode != draft_mode || draft.bucket != draft_bucket {
+            return Err(M1ServingRegistryErrorV1::InvalidPlanPair);
+        }
         let dimensions = target
             .bucket
             .dimensions(target.role, target.mode)
@@ -198,6 +236,12 @@ pub enum M1ServingRegistryErrorV1 {
     CompletionDispositionCount,
     QueuePlanMismatch,
     ReadyWorkRequiresQueue,
+    PublicationReservationActive,
+    PublicationReservationRequired,
+    PublicationReservationMismatch,
+    PublicationReservationExhausted,
+    RegistryIdentityExhausted,
+    RegistryIdentityMismatch,
 }
 
 /// One exact completion disposition in scheduler roster order.
@@ -237,6 +281,80 @@ impl M1ServingBatchPlanV1 {
     pub const fn action(&self) -> M1ServingQueueActionV1 {
         self.action
     }
+
+    fn duplicate(&self) -> Self {
+        Self {
+            plan: self.plan,
+            requests: self.requests.clone(),
+            epoch: self.epoch,
+            action: self.action,
+        }
+    }
+}
+
+/// Move-only authority for publishing one exact registry roster.
+///
+/// Reserving does not move requests out of `Ready`. The token instead freezes
+/// registry mutations which could invalidate the physical submission. A
+/// coordinator may duplicate the immutable batch descriptor for the physical
+/// bridge while retaining this capability for the publication join.
+#[must_use = "a publication reservation must be recorded or aborted"]
+#[derive(Debug, Eq, PartialEq)]
+pub struct M1ServingPublicationReservationV1 {
+    registry_identity: M1ServingRegistryIdentityV1,
+    id: u64,
+    batch: M1ServingBatchPlanV1,
+}
+
+impl M1ServingPublicationReservationV1 {
+    pub(crate) const fn registry_identity(&self) -> M1ServingRegistryIdentityV1 {
+        self.registry_identity
+    }
+
+    #[must_use]
+    pub const fn plan(&self) -> M1ServingPlanV1 {
+        self.batch.plan()
+    }
+
+    #[must_use]
+    pub fn requests(&self) -> &[RequestId] {
+        self.batch.requests()
+    }
+
+    #[must_use]
+    pub const fn epoch(&self) -> CompletionEpoch {
+        self.batch.epoch()
+    }
+
+    #[must_use]
+    pub const fn action(&self) -> M1ServingQueueActionV1 {
+        self.batch.action()
+    }
+
+    /// Produces the immutable descriptor consumed by the physical bridge while
+    /// this move-only reservation remains with the publication coordinator.
+    pub fn physical_batch(&self) -> M1ServingBatchPlanV1 {
+        self.batch.duplicate()
+    }
+}
+
+/// Failed publication or abort with the reservation capability retained.
+#[must_use]
+#[derive(Debug, Eq, PartialEq)]
+pub struct M1ServingPublicationFailureV1 {
+    error: M1ServingRegistryErrorV1,
+    reservation: M1ServingPublicationReservationV1,
+}
+
+impl M1ServingPublicationFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1ServingRegistryErrorV1 {
+        self.error
+    }
+
+    pub fn into_reservation(self) -> M1ServingPublicationReservationV1 {
+        self.reservation
+    }
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -246,6 +364,12 @@ struct M1ServingInFlightBatchV1 {
     epoch: CompletionEpoch,
 }
 
+#[derive(Debug, Eq, PartialEq)]
+struct M1ServingReservedBatchV1 {
+    id: u64,
+    batch: M1ServingBatchPlanV1,
+}
+
 /// Deterministic Ferric registry for homogeneous M1 serving batches.
 ///
 /// Prefill has priority over decode, and decode has priority over speculative
@@ -253,9 +377,12 @@ struct M1ServingInFlightBatchV1 {
 /// loop hold unlike ready requests while the physical queue executes one valid
 /// fixed-batch shape.
 pub struct M1ServingRegistryV1<const C: usize> {
+    identity: M1ServingRegistryIdentityV1,
     entries: Vec<M1ServingEntryV1>,
     bound_plan: Option<M1ServingPlanV1>,
+    reservation: Option<M1ServingReservedBatchV1>,
     in_flight: Option<M1ServingInFlightBatchV1>,
+    next_reservation_id: u64,
     submitted_epoch: u64,
     completed_epoch: u64,
 }
@@ -273,10 +400,14 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         if C > M1_MAX_ACTIVE_SEQUENCES as usize {
             return Err(M1ServingRegistryErrorV1::CapacityExceedsM1);
         }
+        let identity = M1ServingRegistryIdentityV1::fresh()?;
         Ok(Self {
+            identity,
             entries: Vec::with_capacity(C),
             bound_plan: None,
+            reservation: None,
             in_flight: None,
+            next_reservation_id: 1,
             submitted_epoch: 0,
             completed_epoch: 0,
         })
@@ -294,6 +425,7 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         request: RequestId,
         prefill: M1ServingPlanV1,
     ) -> Result<(), M1ServingRegistryErrorV1> {
+        self.reject_live_reservation()?;
         if request.generation() == 0 {
             return Err(M1ServingRegistryErrorV1::InvalidRequest);
         }
@@ -335,6 +467,11 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         self.in_flight.is_some()
     }
 
+    #[must_use]
+    pub const fn has_publication_reservation(&self) -> bool {
+        self.reservation.is_some()
+    }
+
     /// Classifies the retained physical queue while no generation is in flight.
     ///
     /// # Errors
@@ -343,6 +480,7 @@ impl<const C: usize> M1ServingRegistryV1<C> {
     pub fn quiescent_queue_action(
         &self,
     ) -> Result<M1ServingQuiescentQueueActionV1, M1ServingRegistryErrorV1> {
+        self.reject_live_reservation()?;
         if self.in_flight.is_some() {
             return Err(M1ServingRegistryErrorV1::BatchAlreadyInFlight);
         }
@@ -372,6 +510,7 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         &mut self,
         bound: M1ServingPlanV1,
     ) -> Result<(), M1ServingRegistryErrorV1> {
+        self.reject_live_reservation()?;
         if self.in_flight.is_some() {
             return Err(M1ServingRegistryErrorV1::BatchAlreadyInFlight);
         }
@@ -402,6 +541,7 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         request: RequestId,
         next: M1ServingPlanV1,
     ) -> Result<(), M1ServingRegistryErrorV1> {
+        self.reject_live_reservation()?;
         let entry = self.entry_mut(request)?;
         if entry.phase != M1ServingRequestPhaseV1::Ready || entry.last_quiescence.is_none() {
             return Err(M1ServingRegistryErrorV1::TransitionRequiresQuiescence);
@@ -422,6 +562,7 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         &mut self,
         request: RequestId,
     ) -> Result<M1ServingRequestPhaseV1, M1ServingRegistryErrorV1> {
+        self.reject_live_reservation()?;
         let entry = self.entry_mut(request)?;
         entry.phase = match entry.phase {
             M1ServingRequestPhaseV1::Ready => M1ServingRequestPhaseV1::Retired {
@@ -451,6 +592,7 @@ impl<const C: usize> M1ServingRegistryV1<C> {
     /// Rejects planning while another roster remains in flight or epoch
     /// exhaustion.
     pub fn plan_next(&self) -> Result<Option<M1ServingBatchPlanV1>, M1ServingRegistryErrorV1> {
+        self.reject_live_reservation()?;
         if self.in_flight.is_some() {
             return Err(M1ServingRegistryErrorV1::BatchAlreadyInFlight);
         }
@@ -487,6 +629,62 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         }))
     }
 
+    /// Freezes the exact next deterministic plan, epoch, and ordered roster.
+    /// Requests remain `Ready` until physical publication succeeds.
+    ///
+    /// # Errors
+    ///
+    /// Rejects an overlapping reservation or in-flight batch, an exhausted
+    /// reservation identity, or any stale/reordered/non-deterministic plan.
+    pub fn reserve_publication(
+        &mut self,
+        batch: M1ServingBatchPlanV1,
+    ) -> Result<M1ServingPublicationReservationV1, M1ServingRegistryErrorV1> {
+        self.reject_live_reservation()?;
+        if self.in_flight.is_some() {
+            return Err(M1ServingRegistryErrorV1::BatchAlreadyInFlight);
+        }
+        let Some(expected) = self.plan_next()? else {
+            return Err(M1ServingRegistryErrorV1::RequestNotReady);
+        };
+        if batch != expected {
+            return Err(M1ServingRegistryErrorV1::PublicationReservationMismatch);
+        }
+        let following_id = self
+            .next_reservation_id
+            .checked_add(1)
+            .ok_or(M1ServingRegistryErrorV1::PublicationReservationExhausted)?;
+        let id = self.next_reservation_id;
+        self.reservation = Some(M1ServingReservedBatchV1 {
+            id,
+            batch: batch.duplicate(),
+        });
+        self.next_reservation_id = following_id;
+        Ok(M1ServingPublicationReservationV1 {
+            registry_identity: self.identity,
+            id,
+            batch,
+        })
+    }
+
+    /// Consumes the matching pre-dispatch reservation without advancing the
+    /// completion epoch or changing any request, plan, or queue state.
+    ///
+    /// # Errors
+    ///
+    /// A stale, forged, or mismatched token is returned to the caller and does
+    /// not clear the live reservation.
+    pub fn abort_publication(
+        &mut self,
+        reservation: M1ServingPublicationReservationV1,
+    ) -> Result<(), M1ServingPublicationFailureV1> {
+        if let Err(error) = self.validate_reservation(&reservation) {
+            return Err(M1ServingPublicationFailureV1 { error, reservation });
+        }
+        self.reservation = None;
+        Ok(())
+    }
+
     /// Records successful physical publication of the exact planned roster.
     /// A caller must not invoke this until any required quiescent rollover has
     /// completed and retained physical custody has been rebound.
@@ -494,29 +692,39 @@ impl<const C: usize> M1ServingRegistryV1<C> {
     /// # Errors
     ///
     /// Rejects an overlapping batch, stale epoch, missing request, or a roster
-    /// whose ready phase or exact plan changed after planning.
-    pub fn record_publication(
-        &mut self,
-        batch: M1ServingBatchPlanV1,
+    /// whose ready phase or exact plan drifted. Every rejection returns the
+    /// reservation for retry or abort.
+    ///
+    /// ```compile_fail
+    /// use ferric_engine::{M1ServingBatchPlanV1, M1ServingRegistryV1};
+    /// fn publish_without_reservation(
+    ///     registry: &mut M1ServingRegistryV1<32>,
+    ///     batch: M1ServingBatchPlanV1,
+    /// ) {
+    ///     let _ = registry.record_publication(batch);
+    /// }
+    /// ```
+    pub(crate) fn preflight_publication(
+        &self,
+        reservation: &M1ServingPublicationReservationV1,
     ) -> Result<(), M1ServingRegistryErrorV1> {
-        if self.in_flight.is_some() {
-            return Err(M1ServingRegistryErrorV1::BatchAlreadyInFlight);
+        self.validate_reservation(reservation)
+    }
+
+    pub(crate) fn record_publication(
+        &mut self,
+        reservation: M1ServingPublicationReservationV1,
+    ) -> Result<(), M1ServingPublicationFailureV1> {
+        if let Err(error) = self.validate_reservation(&reservation) {
+            return Err(M1ServingPublicationFailureV1 { error, reservation });
         }
-        if batch.epoch.value() != self.submitted_epoch.saturating_add(1) {
-            return Err(M1ServingRegistryErrorV1::CompletionEpochMismatch);
-        }
-        for (lane, request) in batch.requests.iter().copied().enumerate() {
-            let Some(entry) = self.entries.iter().find(|entry| entry.request == request) else {
-                return Err(M1ServingRegistryErrorV1::CompletionRosterMismatch { lane });
-            };
-            if entry.phase != M1ServingRequestPhaseV1::Ready || entry.plan != batch.plan {
-                return Err(M1ServingRegistryErrorV1::CompletionRosterMismatch { lane });
+        let batch = reservation.batch;
+        for entry in &mut self.entries {
+            if batch.requests.contains(&entry.request) {
+                entry.phase = M1ServingRequestPhaseV1::InFlight { epoch: batch.epoch };
             }
         }
-        for request in batch.requests.iter().copied() {
-            self.entry_mut(request)?.phase =
-                M1ServingRequestPhaseV1::InFlight { epoch: batch.epoch };
-        }
+        self.reservation = None;
         self.submitted_epoch = batch.epoch.value();
         self.bound_plan = Some(batch.plan);
         self.in_flight = Some(M1ServingInFlightBatchV1 {
@@ -527,19 +735,74 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         Ok(())
     }
 
-    /// Joins one exact completed generation and applies the complete ordered
-    /// disposition roster atomically after preflight.
-    ///
-    /// # Errors
-    ///
-    /// Rejects an absent batch, stale/reordered epoch, incomplete disposition
-    /// roster, request/plan drift, continuation after cancellation, or an
-    /// invalid next-plan transition.
-    pub fn complete_exact(
+    pub(crate) fn preflight_completion_exact_for(
+        &self,
+        identity: M1ServingRegistryIdentityV1,
+        epoch: CompletionEpoch,
+        dispositions: &[M1ServingCompletionDispositionV1],
+    ) -> Result<(), M1ServingRegistryErrorV1> {
+        if identity != self.identity {
+            return Err(M1ServingRegistryErrorV1::RegistryIdentityMismatch);
+        }
+        self.validate_completion_exact(epoch, dispositions)
+    }
+
+    pub(crate) fn apply_preflighted_completion(
+        &mut self,
+        epoch: CompletionEpoch,
+        dispositions: &[M1ServingCompletionDispositionV1],
+    ) {
+        self.apply_validated_completion(epoch, dispositions);
+    }
+
+    #[cfg(test)]
+    pub(crate) fn complete_exact(
         &mut self,
         epoch: CompletionEpoch,
         dispositions: &[M1ServingCompletionDispositionV1],
     ) -> Result<(), M1ServingRegistryErrorV1> {
+        self.validate_completion_exact(epoch, dispositions)?;
+        self.apply_validated_completion(epoch, dispositions);
+        Ok(())
+    }
+
+    fn apply_validated_completion(
+        &mut self,
+        epoch: CompletionEpoch,
+        dispositions: &[M1ServingCompletionDispositionV1],
+    ) {
+        let in_flight = self
+            .in_flight
+            .take()
+            .expect("validated completion retains its in-flight batch");
+        for (request, disposition) in in_flight.requests.iter().copied().zip(dispositions) {
+            let entry = self
+                .entries
+                .iter_mut()
+                .find(|entry| entry.request == request)
+                .expect("validated completion retains every roster entry");
+            entry.last_quiescence = Some(epoch);
+            match disposition {
+                M1ServingCompletionDispositionV1::Continue(next) => {
+                    entry.plan = *next;
+                    entry.phase = M1ServingRequestPhaseV1::Ready;
+                }
+                M1ServingCompletionDispositionV1::Retire => {
+                    entry.phase = M1ServingRequestPhaseV1::Retired {
+                        quiescence: M1ServingQuiescenceV1::Completed(epoch),
+                    };
+                }
+            }
+        }
+        self.completed_epoch = epoch.value();
+    }
+
+    fn validate_completion_exact(
+        &self,
+        epoch: CompletionEpoch,
+        dispositions: &[M1ServingCompletionDispositionV1],
+    ) -> Result<(), M1ServingRegistryErrorV1> {
+        self.reject_live_reservation()?;
         let Some(in_flight) = self.in_flight.as_ref() else {
             return Err(M1ServingRegistryErrorV1::NoBatchInFlight);
         };
@@ -582,26 +845,6 @@ impl<const C: usize> M1ServingRegistryV1<C> {
                 (_, M1ServingCompletionDispositionV1::Retire) => {}
             }
         }
-        let in_flight = self
-            .in_flight
-            .take()
-            .ok_or(M1ServingRegistryErrorV1::NoBatchInFlight)?;
-        for (request, disposition) in in_flight.requests.iter().copied().zip(dispositions) {
-            let entry = self.entry_mut(request)?;
-            entry.last_quiescence = Some(epoch);
-            match disposition {
-                M1ServingCompletionDispositionV1::Continue(next) => {
-                    entry.plan = *next;
-                    entry.phase = M1ServingRequestPhaseV1::Ready;
-                }
-                M1ServingCompletionDispositionV1::Retire => {
-                    entry.phase = M1ServingRequestPhaseV1::Retired {
-                        quiescence: M1ServingQuiescenceV1::Completed(epoch),
-                    };
-                }
-            }
-        }
-        self.completed_epoch = epoch.value();
         Ok(())
     }
 
@@ -615,6 +858,7 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         &mut self,
         request: RequestId,
     ) -> Result<M1ServingQuiescenceV1, M1ServingRegistryErrorV1> {
+        self.reject_live_reservation()?;
         let Some(index) = self
             .entries
             .iter()
@@ -641,6 +885,45 @@ impl<const C: usize> M1ServingRegistryV1<C> {
             .iter_mut()
             .find(|entry| entry.request == request)
             .ok_or(M1ServingRegistryErrorV1::UnknownRequest)
+    }
+
+    fn reject_live_reservation(&self) -> Result<(), M1ServingRegistryErrorV1> {
+        if self.reservation.is_some() {
+            Err(M1ServingRegistryErrorV1::PublicationReservationActive)
+        } else {
+            Ok(())
+        }
+    }
+
+    fn validate_reservation(
+        &self,
+        reservation: &M1ServingPublicationReservationV1,
+    ) -> Result<(), M1ServingRegistryErrorV1> {
+        if reservation.registry_identity != self.identity {
+            return Err(M1ServingRegistryErrorV1::RegistryIdentityMismatch);
+        }
+        if self.in_flight.is_some() {
+            return Err(M1ServingRegistryErrorV1::BatchAlreadyInFlight);
+        }
+        let Some(live) = self.reservation.as_ref() else {
+            return Err(M1ServingRegistryErrorV1::PublicationReservationRequired);
+        };
+        if live.id != reservation.id || live.batch != reservation.batch {
+            return Err(M1ServingRegistryErrorV1::PublicationReservationMismatch);
+        }
+        if reservation.batch.epoch.value() != self.submitted_epoch.saturating_add(1) {
+            return Err(M1ServingRegistryErrorV1::CompletionEpochMismatch);
+        }
+        for (lane, request) in reservation.batch.requests.iter().copied().enumerate() {
+            let Some(entry) = self.entries.iter().find(|entry| entry.request == request) else {
+                return Err(M1ServingRegistryErrorV1::CompletionRosterMismatch { lane });
+            };
+            if entry.phase != M1ServingRequestPhaseV1::Ready || entry.plan != reservation.batch.plan
+            {
+                return Err(M1ServingRegistryErrorV1::CompletionRosterMismatch { lane });
+            }
+        }
+        Ok(())
     }
 }
 
@@ -693,24 +976,44 @@ fn classify_queue_action(
 mod tests {
     use super::*;
 
+    fn selection(
+        role: Qwen3ModelRole,
+        mode: Qwen3ExecutionMode,
+        bucket: Qwen3PlanBucket,
+    ) -> Qwen3PlanSelection {
+        Qwen3PlanSelection { role, mode, bucket }
+    }
+
     fn pair(mode: Qwen3ExecutionMode, bucket: Qwen3PlanBucket) -> M1ServingPlanV1 {
+        let (draft_mode, draft_bucket) = match (mode, bucket) {
+            (
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K4C8192
+                | Qwen3PlanBucket::SpeculativeS1K8C8192
+                | Qwen3PlanBucket::SpeculativeS1K16C8192,
+            ) => (Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192),
+            (Qwen3ExecutionMode::Speculative, Qwen3PlanBucket::SpeculativeS8K4C8192) => {
+                (Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS8C8192)
+            }
+            _ => (mode, bucket),
+        };
         M1ServingPlanV1::new(
-            Qwen3PlanSelection {
-                role: Qwen3ModelRole::Target8B,
-                mode,
-                bucket,
-            },
-            Qwen3PlanSelection {
-                role: Qwen3ModelRole::Draft06B,
-                mode,
-                bucket,
-            },
+            selection(Qwen3ModelRole::Target8B, mode, bucket),
+            selection(Qwen3ModelRole::Draft06B, draft_mode, draft_bucket),
         )
         .unwrap()
     }
 
     fn prefill_s1() -> M1ServingPlanV1 {
         pair(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128)
+    }
+
+    fn prefill_s1_t512() -> M1ServingPlanV1 {
+        pair(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T512)
+    }
+
+    fn prefill_s8() -> M1ServingPlanV1 {
+        pair(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS8T128)
     }
 
     fn decode_s1() -> M1ServingPlanV1 {
@@ -742,9 +1045,110 @@ mod tests {
         let batch = registry.plan_next().unwrap().unwrap();
         let epoch = batch.epoch();
         let action = batch.action();
-        registry.record_publication(batch).unwrap();
+        reserve_and_record(registry, batch);
         registry.complete_exact(epoch, dispositions).unwrap();
         action
+    }
+
+    fn reserve_and_record<const C: usize>(
+        registry: &mut M1ServingRegistryV1<C>,
+        batch: M1ServingBatchPlanV1,
+    ) {
+        let reservation = registry.reserve_publication(batch).unwrap();
+        registry.record_publication(reservation).unwrap();
+    }
+
+    #[test]
+    fn speculative_plans_accept_canonical_draft_decode_mappings() {
+        let cases = [
+            (
+                Qwen3PlanBucket::SpeculativeS1K4C8192,
+                Qwen3PlanBucket::DecodeS1C8192,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+            ),
+            (
+                Qwen3PlanBucket::SpeculativeS8K4C8192,
+                Qwen3PlanBucket::DecodeS8C8192,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+            ),
+            (
+                Qwen3PlanBucket::SpeculativeS1K8C8192,
+                Qwen3PlanBucket::DecodeS1C8192,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+            ),
+            (
+                Qwen3PlanBucket::SpeculativeS1K16C8192,
+                Qwen3PlanBucket::DecodeS1C8192,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+            ),
+        ];
+
+        for (target_bucket, draft_bucket, expected_shape) in cases {
+            let target = selection(
+                Qwen3ModelRole::Target8B,
+                Qwen3ExecutionMode::Speculative,
+                target_bucket,
+            );
+            let draft = selection(
+                Qwen3ModelRole::Draft06B,
+                Qwen3ExecutionMode::Decode,
+                draft_bucket,
+            );
+            let plan = M1ServingPlanV1::new(target, draft).unwrap();
+
+            assert_eq!(plan.target(), target);
+            assert_eq!(plan.draft(), draft);
+            assert_eq!(plan.shape(), expected_shape);
+        }
+    }
+
+    #[test]
+    fn speculative_plans_reject_noncanonical_draft_mappings() {
+        let cases = [
+            (
+                Qwen3PlanBucket::SpeculativeS1K4C8192,
+                Qwen3PlanBucket::DecodeS8C8192,
+            ),
+            (
+                Qwen3PlanBucket::SpeculativeS8K4C8192,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+            (
+                Qwen3PlanBucket::SpeculativeS1K8C8192,
+                Qwen3PlanBucket::DecodeS8C8192,
+            ),
+            (
+                Qwen3PlanBucket::SpeculativeS1K16C8192,
+                Qwen3PlanBucket::DecodeS8C8192,
+            ),
+        ];
+
+        for (target_bucket, wrong_draft_bucket) in cases {
+            let target = selection(
+                Qwen3ModelRole::Target8B,
+                Qwen3ExecutionMode::Speculative,
+                target_bucket,
+            );
+            let same_speculative_selection = selection(
+                Qwen3ModelRole::Draft06B,
+                Qwen3ExecutionMode::Speculative,
+                target_bucket,
+            );
+            let wrong_decode_selection = selection(
+                Qwen3ModelRole::Draft06B,
+                Qwen3ExecutionMode::Decode,
+                wrong_draft_bucket,
+            );
+
+            assert_eq!(
+                M1ServingPlanV1::new(target, same_speculative_selection),
+                Err(M1ServingRegistryErrorV1::InvalidPlanPair)
+            );
+            assert_eq!(
+                M1ServingPlanV1::new(target, wrong_decode_selection),
+                Err(M1ServingRegistryErrorV1::InvalidPlanPair)
+            );
+        }
     }
 
     #[test]
@@ -769,7 +1173,7 @@ mod tests {
             }
         ));
         let epoch = decode.epoch();
-        registry.record_publication(decode).unwrap();
+        reserve_and_record(&mut registry, decode);
         registry
             .complete_exact(
                 epoch,
@@ -785,7 +1189,7 @@ mod tests {
             }
         ));
         let epoch = speculative.epoch();
-        registry.record_publication(speculative).unwrap();
+        reserve_and_record(&mut registry, speculative);
         registry
             .complete_exact(
                 epoch,
@@ -822,7 +1226,7 @@ mod tests {
         let prefill = registry.plan_next().unwrap().unwrap();
         assert_eq!(prefill.requests(), &[second]);
         let epoch = prefill.epoch();
-        registry.record_publication(prefill).unwrap();
+        reserve_and_record(&mut registry, prefill);
         registry
             .complete_exact(
                 epoch,
@@ -902,7 +1306,7 @@ mod tests {
         registry.admit(in_flight, prefill_s1()).unwrap();
         let batch = registry.plan_next().unwrap().unwrap();
         let epoch = batch.epoch();
-        registry.record_publication(batch).unwrap();
+        reserve_and_record(&mut registry, batch);
         assert_eq!(
             registry.cancel(in_flight).unwrap(),
             M1ServingRequestPhaseV1::CancellationPending { epoch }
@@ -950,7 +1354,7 @@ mod tests {
         );
         let batch = registry.plan_next().unwrap().unwrap();
         let epoch = batch.epoch();
-        registry.record_publication(batch).unwrap();
+        reserve_and_record(&mut registry, batch);
         assert_eq!(
             registry.complete_exact(CompletionEpoch::new(epoch.value() + 1), &[]),
             Err(M1ServingRegistryErrorV1::CompletionEpochMismatch)
@@ -1002,5 +1406,239 @@ mod tests {
             registry.admit(request, prefill_s1()),
             Err(M1ServingRegistryErrorV1::DuplicateRequest)
         );
+    }
+
+    #[test]
+    fn live_reservation_excludes_planning_and_invalidating_mutations() {
+        let first = RequestId::new(0, 1);
+        let second = RequestId::new(1, 1);
+        let mut registry = M1ServingRegistryV1::<4>::new().unwrap();
+        registry.admit(first, prefill_s1()).unwrap();
+        registry.admit(second, prefill_s1_t512()).unwrap();
+        let batch = registry.plan_next().unwrap().unwrap();
+        let reservation = registry.reserve_publication(batch).unwrap();
+        let duplicate_plan = reservation.physical_batch();
+
+        assert!(registry.has_publication_reservation());
+        assert_eq!(
+            registry.plan_next(),
+            Err(M1ServingRegistryErrorV1::PublicationReservationActive)
+        );
+        assert_eq!(
+            registry.reserve_publication(duplicate_plan),
+            Err(M1ServingRegistryErrorV1::PublicationReservationActive)
+        );
+        assert_eq!(
+            registry.admit(RequestId::new(2, 1), prefill_s1()),
+            Err(M1ServingRegistryErrorV1::PublicationReservationActive)
+        );
+        assert_eq!(
+            registry.transition(first, decode_s1()),
+            Err(M1ServingRegistryErrorV1::PublicationReservationActive)
+        );
+        assert_eq!(
+            registry.cancel(second),
+            Err(M1ServingRegistryErrorV1::PublicationReservationActive)
+        );
+        assert_eq!(
+            registry.quiescent_queue_action(),
+            Err(M1ServingRegistryErrorV1::PublicationReservationActive)
+        );
+        assert_eq!(
+            registry.record_quiescent_queue_retirement(prefill_s1()),
+            Err(M1ServingRegistryErrorV1::PublicationReservationActive)
+        );
+        assert_eq!(
+            registry.complete_exact(CompletionEpoch::new(1), &[]),
+            Err(M1ServingRegistryErrorV1::PublicationReservationActive)
+        );
+        assert_eq!(
+            registry.remove_retired(second),
+            Err(M1ServingRegistryErrorV1::PublicationReservationActive)
+        );
+        assert_eq!(registry.phase(first), Some(M1ServingRequestPhaseV1::Ready));
+        assert_eq!(registry.phase(second), Some(M1ServingRequestPhaseV1::Ready));
+
+        registry.abort_publication(reservation).unwrap();
+    }
+
+    #[test]
+    fn abort_is_exact_nonmutating_and_does_not_advance_epoch() {
+        let request = RequestId::new(0, 1);
+        let mut registry = M1ServingRegistryV1::<2>::new().unwrap();
+        registry.admit(request, prefill_s1()).unwrap();
+        let planned = registry.plan_next().unwrap().unwrap();
+        let expected = planned.duplicate();
+        let reservation = registry.reserve_publication(planned).unwrap();
+        let registry_identity = reservation.registry_identity;
+        let stale_id = reservation.id;
+        let stale_batch = reservation.physical_batch();
+
+        let forged = M1ServingPublicationReservationV1 {
+            registry_identity,
+            id: stale_id + 1,
+            batch: stale_batch.duplicate(),
+        };
+        let failure = registry.abort_publication(forged).unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1ServingRegistryErrorV1::PublicationReservationMismatch
+        );
+        let _forged = failure.into_reservation();
+        assert!(registry.has_publication_reservation());
+
+        registry.abort_publication(reservation).unwrap();
+        assert!(!registry.has_publication_reservation());
+        assert_eq!(
+            registry.phase(request),
+            Some(M1ServingRequestPhaseV1::Ready)
+        );
+        assert_eq!(registry.bound_plan(), None);
+        assert_eq!(registry.plan_next().unwrap(), Some(expected));
+
+        let replacement = registry.plan_next().unwrap().unwrap();
+        let replacement = registry.reserve_publication(replacement).unwrap();
+        let stale = M1ServingPublicationReservationV1 {
+            registry_identity,
+            id: stale_id,
+            batch: stale_batch,
+        };
+        let failure = registry.abort_publication(stale).unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1ServingRegistryErrorV1::PublicationReservationMismatch
+        );
+        assert!(registry.has_publication_reservation());
+        registry.abort_publication(replacement).unwrap();
+    }
+
+    #[test]
+    fn reserve_rejects_a_stale_roster_without_mutation() {
+        let stale = RequestId::new(0, 1);
+        let next = RequestId::new(1, 1);
+        let mut registry = M1ServingRegistryV1::<2>::new().unwrap();
+        registry.admit(stale, prefill_s1()).unwrap();
+        registry.admit(next, prefill_s1()).unwrap();
+        let planned = registry.plan_next().unwrap().unwrap();
+        assert_eq!(planned.requests(), &[stale]);
+        registry.cancel(stale).unwrap();
+
+        assert_eq!(
+            registry.reserve_publication(planned),
+            Err(M1ServingRegistryErrorV1::PublicationReservationMismatch)
+        );
+        assert!(!registry.has_publication_reservation());
+        assert_eq!(
+            registry.phase(stale),
+            Some(M1ServingRequestPhaseV1::Retired {
+                quiescence: M1ServingQuiescenceV1::NeverSubmitted,
+            })
+        );
+        assert_eq!(registry.phase(next), Some(M1ServingRequestPhaseV1::Ready));
+        assert_eq!(registry.plan_next().unwrap().unwrap().requests(), &[next]);
+    }
+
+    #[test]
+    fn record_requires_exact_token_epoch_plan_and_ordered_roster() {
+        let first = RequestId::new(0, 1);
+        let second = RequestId::new(1, 1);
+        let unrelated = RequestId::new(2, 1);
+        let mut registry = M1ServingRegistryV1::<4>::new().unwrap();
+        registry.admit(first, prefill_s8()).unwrap();
+        registry.admit(second, prefill_s8()).unwrap();
+        registry.admit(unrelated, prefill_s1()).unwrap();
+        let batch = registry.plan_next().unwrap().unwrap();
+        assert_eq!(batch.requests(), &[first, second]);
+        let reservation = registry.reserve_publication(batch).unwrap();
+        let registry_identity = reservation.registry_identity;
+        let id = reservation.id;
+
+        let wrong_id = M1ServingPublicationReservationV1 {
+            registry_identity,
+            id: id + 1,
+            batch: reservation.physical_batch(),
+        };
+        let failure = registry.record_publication(wrong_id).unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1ServingRegistryErrorV1::PublicationReservationMismatch
+        );
+        let _wrong_id = failure.into_reservation();
+
+        let wrong_epoch = M1ServingPublicationReservationV1 {
+            registry_identity,
+            id,
+            batch: M1ServingBatchPlanV1 {
+                plan: reservation.plan(),
+                requests: reservation.requests().into(),
+                epoch: CompletionEpoch::new(reservation.epoch().value() + 1),
+                action: reservation.action(),
+            },
+        };
+        let failure = registry.record_publication(wrong_epoch).unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1ServingRegistryErrorV1::PublicationReservationMismatch
+        );
+        let _wrong_epoch = failure.into_reservation();
+
+        let wrong_plan = M1ServingPublicationReservationV1 {
+            registry_identity,
+            id,
+            batch: M1ServingBatchPlanV1 {
+                plan: prefill_s1(),
+                requests: reservation.requests().into(),
+                epoch: reservation.epoch(),
+                action: reservation.action(),
+            },
+        };
+        assert_eq!(
+            registry.record_publication(wrong_plan).unwrap_err().error(),
+            M1ServingRegistryErrorV1::PublicationReservationMismatch
+        );
+
+        let reordered = M1ServingPublicationReservationV1 {
+            registry_identity,
+            id,
+            batch: M1ServingBatchPlanV1 {
+                plan: reservation.plan(),
+                requests: vec![second, first].into_boxed_slice(),
+                epoch: reservation.epoch(),
+                action: reservation.action(),
+            },
+        };
+        assert_eq!(
+            registry.record_publication(reordered).unwrap_err().error(),
+            M1ServingRegistryErrorV1::PublicationReservationMismatch
+        );
+        assert!(registry.has_publication_reservation());
+
+        let epoch = reservation.epoch();
+        let replay = M1ServingPublicationReservationV1 {
+            registry_identity,
+            id,
+            batch: reservation.physical_batch(),
+        };
+        registry.record_publication(reservation).unwrap();
+        assert!(!registry.has_publication_reservation());
+        assert!(registry.has_in_flight_batch());
+        assert_eq!(
+            registry.phase(first),
+            Some(M1ServingRequestPhaseV1::InFlight { epoch })
+        );
+        assert_eq!(
+            registry.phase(second),
+            Some(M1ServingRequestPhaseV1::InFlight { epoch })
+        );
+        assert_eq!(
+            registry.phase(unrelated),
+            Some(M1ServingRequestPhaseV1::Ready)
+        );
+        let failure = registry.record_publication(replay).unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1ServingRegistryErrorV1::BatchAlreadyInFlight
+        );
+        let _replay = failure.into_reservation();
     }
 }

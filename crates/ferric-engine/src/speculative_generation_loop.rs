@@ -11,6 +11,7 @@
 //! No queue, allocation, KFD, packet, or device authority is represented here.
 
 use core::fmt;
+use core::sync::atomic::{AtomicU64, Ordering};
 
 use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::{
@@ -24,6 +25,21 @@ use crate::{
 };
 
 const M1_SPECULATIVE_STOP_TOKEN_CAPACITY_V1: usize = 2;
+static NEXT_M1_SPECULATIVE_COORDINATOR_IDENTITY_V1: AtomicU64 = AtomicU64::new(1);
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct M1SpeculativeCoordinatorIdentityV1(u64);
+
+impl M1SpeculativeCoordinatorIdentityV1 {
+    fn fresh() -> Result<Self, M1SpeculativeGenerationLoopErrorV1> {
+        NEXT_M1_SPECULATIVE_COORDINATOR_IDENTITY_V1
+            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |current| {
+                current.checked_add(1)
+            })
+            .map(Self)
+            .map_err(|_| M1SpeculativeGenerationLoopErrorV1::CoordinatorIdentityExhausted)
+    }
+}
 
 /// One fixed physical speculative graph shape admitted by M1.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -327,6 +343,7 @@ impl M1SpeculativeRoundMemberInputV1 {
 #[must_use = "a bound round must be completed or retained unchanged"]
 #[derive(Debug)]
 pub struct M1SpeculativeRoundBindingV1 {
+    coordinator_identity: M1SpeculativeCoordinatorIdentityV1,
     shape: M1SpeculativePhysicalShapeV1,
     round: u64,
     epoch: CompletionEpoch,
@@ -785,6 +802,8 @@ pub enum M1SpeculativeGenerationLoopErrorV1 {
         actual: RequestId,
     },
     HostAllocation,
+    CoordinatorIdentityExhausted,
+    CoordinatorIdentityMismatch,
 }
 
 impl fmt::Display for M1SpeculativeGenerationLoopErrorV1 {
@@ -801,6 +820,7 @@ impl std::error::Error for M1SpeculativeGenerationLoopErrorV1 {}
 /// Host-only repeated-round coordinator over already-checked physical outputs.
 #[derive(Debug)]
 pub struct M1SpeculativeGenerationLoopV1 {
+    identity: M1SpeculativeCoordinatorIdentityV1,
     shape: M1SpeculativePhysicalShapeV1,
     members: Vec<M1SpeculativeMemberStateV1>,
     next_round: u64,
@@ -820,6 +840,7 @@ impl M1SpeculativeGenerationLoopV1 {
         seeds: &[M1SpeculativeMemberSeedV1],
     ) -> Result<Self, M1SpeculativeGenerationLoopErrorV1> {
         let shape = M1SpeculativePhysicalShapeV1::from_selection(selection)?;
+        let identity = M1SpeculativeCoordinatorIdentityV1::fresh()?;
         if seeds.is_empty() {
             return Err(M1SpeculativeGenerationLoopErrorV1::EmptyRoster);
         }
@@ -847,6 +868,7 @@ impl M1SpeculativeGenerationLoopV1 {
             });
         }
         Ok(Self {
+            identity,
             shape,
             members,
             next_round: 0,
@@ -959,6 +981,7 @@ impl M1SpeculativeGenerationLoopV1 {
             });
         }
         Ok(M1SpeculativeRoundBindingV1 {
+            coordinator_identity: self.identity,
             shape: self.shape,
             round,
             epoch,
@@ -1043,7 +1066,7 @@ impl M1SpeculativeGenerationLoopV1 {
     ///
     /// Returns the unchanged permit when coordinator state drifted after
     /// preflight.
-    pub fn commit_preflighted_round(
+    pub(crate) fn commit_preflighted_round(
         &mut self,
         preflighted: M1SpeculativePreflightedRoundV1,
     ) -> Result<M1SpeculativeRoundOutcomeV1, Box<M1SpeculativePreparedRoundCommitFailureV1>> {
@@ -1077,6 +1100,13 @@ impl M1SpeculativeGenerationLoopV1 {
             members: outcomes,
             next_active_roster,
         })
+    }
+
+    pub(crate) fn preflight_prepared_round_commit(
+        &self,
+        preflighted: &M1SpeculativePreflightedRoundV1,
+    ) -> Result<(), M1SpeculativeGenerationLoopErrorV1> {
+        validate_binding(self, &preflighted.binding)
     }
 
     fn preflight_observed_round(
@@ -1264,6 +1294,9 @@ fn validate_binding(
     coordinator: &M1SpeculativeGenerationLoopV1,
     binding: &M1SpeculativeRoundBindingV1,
 ) -> Result<(), M1SpeculativeGenerationLoopErrorV1> {
+    if binding.coordinator_identity != coordinator.identity {
+        return Err(M1SpeculativeGenerationLoopErrorV1::CoordinatorIdentityMismatch);
+    }
     if binding.shape != coordinator.shape {
         return Err(M1SpeculativeGenerationLoopErrorV1::SelectionDrift {
             expected: coordinator.shape.selection(),
@@ -1475,10 +1508,10 @@ fn with_emitted_lane(
 mod tests {
     use super::*;
     use crate::{
-        M1ServingBatchPlanV1, M1ServingCompletionDispositionV1,
-        M1ServingPhysicalOperationFailureV1, M1ServingPhysicalOperationsV1,
-        M1ServingPhysicalQueueCustodyV1, M1ServingPlanV1, M1ServingRegistryV1,
-        M1ServingRolloverReasonV1,
+        M1ScheduledDispatchV1, M1ServingBatchPlanV1, M1ServingCompletionDispositionV1,
+        M1ServingPhysicalOperationFailureV1, M1ServingPhysicalOperationResultV1,
+        M1ServingPhysicalOperationsV1, M1ServingPhysicalQueueCustodyV1, M1ServingPlanV1,
+        M1ServingPublicationReservationV1, M1ServingRegistryV1, M1ServingRolloverReasonV1,
     };
 
     fn selection(bucket: Qwen3PlanBucket) -> Qwen3PlanSelection {
@@ -1541,17 +1574,33 @@ mod tests {
     #[derive(Debug, Eq, PartialEq)]
     struct PhysicalCustody(u64);
 
+    #[derive(Debug, Eq, PartialEq)]
+    struct PhysicalPublishedCustody {
+        value: u64,
+        scheduled: M1ScheduledDispatchV1,
+    }
+
     struct RolloverOperations;
 
-    impl M1ServingPhysicalOperationsV1<PhysicalCustody> for RolloverOperations {
+    impl M1ServingPhysicalOperationsV1 for RolloverOperations {
+        type Quiescent = PhysicalCustody;
+        type Published = PhysicalPublishedCustody;
+        type Readback = PhysicalPublishedCustody;
         type Error = &'static str;
         type TerminalCustody = PhysicalCustody;
+
+        fn scheduled_dispatch<'a>(
+            &self,
+            custody: &'a Self::Published,
+        ) -> &'a M1ScheduledDispatchV1 {
+            &custody.scheduled
+        }
 
         fn fresh_launch(
             &mut self,
             _: &M1ServingBatchPlanV1,
         ) -> Result<
-            PhysicalCustody,
+            PhysicalPublishedCustody,
             M1ServingPhysicalOperationFailureV1<(), Self::TerminalCustody, Self::Error>,
         > {
             unreachable!()
@@ -1562,7 +1611,7 @@ mod tests {
             _: PhysicalCustody,
             _: &M1ServingBatchPlanV1,
         ) -> Result<
-            PhysicalCustody,
+            PhysicalPublishedCustody,
             M1ServingPhysicalOperationFailureV1<
                 PhysicalCustody,
                 Self::TerminalCustody,
@@ -1578,20 +1627,68 @@ mod tests {
             _: M1ServingPlanV1,
             _: M1ServingPlanV1,
             _: M1ServingRolloverReasonV1,
-            _: &M1ServingBatchPlanV1,
+            batch: &M1ServingBatchPlanV1,
         ) -> Result<
-            PhysicalCustody,
+            PhysicalPublishedCustody,
             M1ServingPhysicalOperationFailureV1<
                 PhysicalCustody,
                 Self::TerminalCustody,
                 Self::Error,
             >,
         > {
-            Ok(PhysicalCustody(custody.0 + 1))
+            Ok(PhysicalPublishedCustody {
+                value: custody.0 + 1,
+                scheduled: M1ScheduledDispatchV1::for_test(batch.epoch(), batch.requests()),
+            })
+        }
+
+        fn read_published(
+            &mut self,
+            custody: PhysicalPublishedCustody,
+            _: CompletionEpoch,
+            _: &M1ServingBatchPlanV1,
+        ) -> Result<
+            PhysicalPublishedCustody,
+            M1ServingPhysicalOperationFailureV1<
+                PhysicalPublishedCustody,
+                Self::TerminalCustody,
+                Self::Error,
+            >,
+        > {
+            Ok(custody)
+        }
+
+        fn checked_completion<'a>(&self, _: &'a Self::Readback) -> &'a M1CheckedCompletionOutputV1 {
+            panic!("integration fake constructs its permit from checked observations")
+        }
+
+        fn settle_readback(
+            &mut self,
+            custody: Self::Readback,
+            _: Vec<M1DeviceKvCompletionDispositionV1>,
+        ) -> M1ServingPhysicalOperationResultV1<
+            Self::Quiescent,
+            Self::Readback,
+            Self::TerminalCustody,
+            Self::Error,
+        > {
+            Ok(PhysicalCustody(custody.value))
         }
     }
 
     fn serving_pair(mode: Qwen3ExecutionMode, bucket: Qwen3PlanBucket) -> M1ServingPlanV1 {
+        let (draft_mode, draft_bucket) = match (mode, bucket) {
+            (
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K4C8192
+                | Qwen3PlanBucket::SpeculativeS1K8C8192
+                | Qwen3PlanBucket::SpeculativeS1K16C8192,
+            ) => (Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192),
+            (Qwen3ExecutionMode::Speculative, Qwen3PlanBucket::SpeculativeS8K4C8192) => {
+                (Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS8C8192)
+            }
+            _ => (mode, bucket),
+        };
         M1ServingPlanV1::new(
             Qwen3PlanSelection {
                 role: Qwen3ModelRole::Target8B,
@@ -1600,8 +1697,8 @@ mod tests {
             },
             Qwen3PlanSelection {
                 role: Qwen3ModelRole::Draft06B,
-                mode,
-                bucket,
+                mode: draft_mode,
+                bucket: draft_bucket,
             },
         )
         .unwrap()
@@ -1610,7 +1707,7 @@ mod tests {
     fn speculative_rollover_batch(
         prior: M1ServingPlanV1,
         next: M1ServingPlanV1,
-    ) -> M1ServingBatchPlanV1 {
+    ) -> (M1ServingRegistryV1<8>, M1ServingPublicationReservationV1) {
         let prefill = serving_pair(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128);
         let mut registry = M1ServingRegistryV1::<8>::new().unwrap();
         let request = request(0);
@@ -1618,7 +1715,8 @@ mod tests {
         for next_plan in [prior, next] {
             let batch = registry.plan_next().unwrap().unwrap();
             let epoch = batch.epoch();
-            registry.record_publication(batch).unwrap();
+            let reservation = registry.reserve_publication(batch).unwrap();
+            registry.record_publication(reservation).unwrap();
             registry
                 .complete_exact(
                     epoch,
@@ -1626,7 +1724,9 @@ mod tests {
                 )
                 .unwrap();
         }
-        registry.plan_next().unwrap().unwrap()
+        let batch = registry.plan_next().unwrap().unwrap();
+        let reservation = registry.reserve_publication(batch).unwrap();
+        (registry, reservation)
     }
 
     #[test]
@@ -1790,8 +1890,8 @@ mod tests {
         let target = selection(bucket);
         let decode = serving_pair(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192);
         let speculative = serving_pair(Qwen3ExecutionMode::Speculative, bucket);
-        let batch = speculative_rollover_batch(decode, speculative);
-        let epoch = batch.epoch();
+        let (mut registry, reservation) = speculative_rollover_batch(decode, speculative);
+        let epoch = reservation.epoch();
         let mut coordinator = M1SpeculativeGenerationLoopV1::new(target, &[seed(0, 32)]).unwrap();
         let binding = coordinator.bind_round(0, epoch, &[request(0)]).unwrap();
         let permit = coordinator
@@ -1803,26 +1903,30 @@ mod tests {
                 &[M1SpeculativeMemberControlV1::continuing(request(0))],
             )
             .unwrap();
+        let mut operations = RolloverOperations;
         let published = M1ServingPhysicalQueueCustodyV1::Quiescent {
             plan: decode,
             custody: PhysicalCustody(10),
         }
-        .publish(batch, &mut RolloverOperations)
+        .publish(reservation, &mut registry, &mut operations)
         .unwrap();
 
         let failure = published
-            .complete_speculative_physical(
-                CompletionEpoch::new(epoch.value() + 1),
-                &mut coordinator,
-                permit,
-            )
+            .read_physical(CompletionEpoch::new(epoch.value() + 1), &mut operations)
             .unwrap_err();
         assert_eq!(coordinator.next_round(), 0);
-        let (_, published, permit) = failure.into_parts();
-        let (_, custody, outcome) = published
-            .complete_speculative_physical(epoch, &mut coordinator, permit)
+        let (_, failure_custody) = failure.into_parts();
+        let crate::M1ServingPhysicalCompletionFailureCustodyV1::Retryable(published) =
+            failure_custody
+        else {
+            panic!("epoch drift must retain the published queue owner");
+        };
+        let readback = published.read_physical(epoch, &mut operations).unwrap();
+        let (_, custody, outcome) = readback
+            .commit_speculative(&mut registry, &mut coordinator, permit, &mut operations)
             .unwrap();
         assert_eq!(coordinator.next_round(), 1);
+        assert!(!registry.has_in_flight_batch());
         assert_eq!(outcome.completed_epoch(), epoch);
         assert_eq!(outcome.members()[0].published().tokens(), &[400, 900]);
         assert!(matches!(
@@ -2053,6 +2157,36 @@ mod tests {
                 actual: 9,
             })
         ));
+    }
+
+    #[test]
+    fn checked_permit_is_bound_to_its_exact_coordinator_instance() {
+        let target = selection(Qwen3PlanBucket::SpeculativeS1K4C8192);
+        let mut first = M1SpeculativeGenerationLoopV1::new(target, &[seed(0, 32)]).unwrap();
+        let mut other = M1SpeculativeGenerationLoopV1::new(target, &[seed(0, 32)]).unwrap();
+        let binding = first
+            .bind_round(0, CompletionEpoch::new(1), &[request(0)])
+            .unwrap();
+        let permit = first
+            .preflight_observed_round(
+                binding,
+                target,
+                CompletionEpoch::new(1),
+                &[observation(request(0), 1, &[400, 900])],
+                &[M1SpeculativeMemberControlV1::continuing(request(0))],
+            )
+            .unwrap();
+
+        let failure = other.commit_preflighted_round(permit).unwrap_err();
+        assert_eq!(
+            failure.error(),
+            &M1SpeculativeGenerationLoopErrorV1::CoordinatorIdentityMismatch
+        );
+        let (_, permit) = failure.into_parts();
+        assert_eq!(other.next_round(), 0);
+        assert_eq!(first.next_round(), 0);
+        let _ = first.commit_preflighted_round(permit).unwrap();
+        assert_eq!(first.next_round(), 1);
     }
 
     #[test]

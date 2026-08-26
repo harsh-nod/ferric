@@ -170,6 +170,21 @@ pub(crate) struct PhysicalKvSettlementPermit {
     retained_page: Option<PhysicalPageId>,
 }
 
+/// Checked authority to change only the admitted graph selection of one active
+/// physical KV state. The private snapshot prevents construction outside this
+/// module and makes the subsequent commit an infallible framed transition.
+#[derive(Debug, PartialEq, Eq)]
+pub struct PhysicalKvReselectionPermit {
+    request: RequestId,
+    prior_selection: Qwen3PlanSelection,
+    next_selection: Qwen3PlanSelection,
+    prior_max_context_tokens: u32,
+    next_max_context_tokens: u32,
+    resident_tokens: u32,
+    committed_tokens: u32,
+    page_count: u32,
+}
+
 impl KvQuiescenceAuthority {
     pub(crate) closed spec fn request_spec(&self) -> RequestId { self.request }
 
@@ -424,6 +439,140 @@ impl PhysicalKvState {
         }
         false
     }
+}
+
+/// An active physical KV state can retain its exact contents under a new
+/// role-stable selection when the new bucket still covers its resident prefix.
+pub closed spec fn physical_kv_reselection_enabled(
+    state: &PhysicalKvState,
+    next_selection: Qwen3PlanSelection,
+) -> bool {
+    &&& lifecycle_matches(state.lifecycle, PhysicalKvLifecycle::Active)
+    &&& role_matches(state.selection.role, next_selection.role)
+    &&& kv_selection_valid(next_selection)
+    &&& state.resident_tokens
+        <= next_selection
+            .bucket
+            .dimensions_spec(next_selection.role, next_selection.mode)
+            .unwrap()
+            .context_tokens
+}
+
+/// Reselection changes only the exact selection and its derived capacity.
+pub closed spec fn physical_kv_reselection_transition(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    next_selection: Qwen3PlanSelection,
+) -> bool {
+    &&& physical_kv_reselection_enabled(before, next_selection)
+    &&& after.request == before.request
+    &&& after.selection == next_selection
+    &&& after.lifecycle == before.lifecycle
+    &&& after.max_context_tokens
+        == next_selection
+            .bucket
+            .dimensions_spec(next_selection.role, next_selection.mode)
+            .unwrap()
+            .context_tokens
+    &&& after.resident_tokens == before.resident_tokens
+    &&& after.committed_tokens == before.committed_tokens
+    &&& after.page_count == before.page_count
+    &&& after.page_table == before.page_table
+    &&& after.page_slots == before.page_slots
+}
+
+impl PhysicalKvReselectionPermit {
+    pub closed spec fn next_selection_spec(&self) -> Qwen3PlanSelection {
+        self.next_selection
+    }
+
+    pub closed spec fn valid_for(&self, state: &PhysicalKvState) -> bool {
+        &&& self.request == state.request
+        &&& self.prior_selection == state.selection
+        &&& self.prior_max_context_tokens == state.max_context_tokens
+        &&& self.resident_tokens == state.resident_tokens
+        &&& self.committed_tokens == state.committed_tokens
+        &&& self.page_count == state.page_count
+        &&& self.next_max_context_tokens
+            == self
+                .next_selection
+                .bucket
+                .dimensions_spec(self.next_selection.role, self.next_selection.mode)
+                .unwrap()
+                .context_tokens
+        &&& physical_kv_reselection_enabled(state, self.next_selection)
+    }
+}
+
+/// Preflights a role-stable, capacity-safe selection change without mutation.
+///
+/// # Errors
+///
+/// Rejects non-active state, role drift, invalid mode/bucket selections, or a
+/// new context capacity smaller than the resident prefix.
+pub fn preflight_physical_kv_reselection(
+    state: &PhysicalKvState,
+    next_selection: Qwen3PlanSelection,
+) -> (result: Result<PhysicalKvReselectionPermit, PhysicalKvError>)
+    ensures
+        result.is_ok() == physical_kv_reselection_enabled(state, next_selection),
+        result.is_ok() ==> result.unwrap().valid_for(state),
+{
+    proof {
+        reveal(physical_kv_reselection_enabled);
+        reveal(PhysicalKvReselectionPermit::valid_for);
+        reveal(kv_selection_valid);
+        reveal(lifecycle_matches);
+        reveal(role_matches);
+    }
+    if !is_active(state.lifecycle) {
+        return Err(PhysicalKvError::WrongLifecycle);
+    }
+    if !same_role(state.selection.role, next_selection.role) {
+        return Err(PhysicalKvError::RoleMismatch);
+    }
+    let Some(dimensions) = next_selection
+        .bucket
+        .dimensions(next_selection.role, next_selection.mode)
+    else {
+        return Err(PhysicalKvError::InvalidSelection);
+    };
+    if state.resident_tokens > dimensions.context_tokens {
+        return Err(PhysicalKvError::ContextExceeded);
+    }
+    Ok(PhysicalKvReselectionPermit {
+        request: state.request,
+        prior_selection: state.selection,
+        next_selection,
+        prior_max_context_tokens: state.max_context_tokens,
+        next_max_context_tokens: dimensions.context_tokens,
+        resident_tokens: state.resident_tokens,
+        committed_tokens: state.committed_tokens,
+        page_count: state.page_count,
+    })
+}
+
+/// Commits a preflighted selection change while retaining the complete logical
+/// state, page table, slot ownership, and physical generations.
+pub fn apply_preflighted_physical_kv_reselection(
+    state: &mut PhysicalKvState,
+    permit: PhysicalKvReselectionPermit,
+)
+    requires permit.valid_for(old(state)),
+    ensures physical_kv_reselection_transition(
+        old(state),
+        final(state),
+        permit.next_selection_spec(),
+    ),
+{
+    proof {
+        reveal(PhysicalKvReselectionPermit::valid_for);
+        reveal(PhysicalKvReselectionPermit::next_selection_spec);
+        reveal(physical_kv_reselection_enabled);
+        reveal(physical_kv_reselection_transition);
+    }
+    state.selection = permit.next_selection;
+    state.max_context_tokens = permit.next_max_context_tokens;
 }
 
 fn same_role(left: Qwen3ModelRole, right: Qwen3ModelRole) -> (same: bool)
@@ -2281,6 +2430,108 @@ mod tests {
             write_physical_token(state, request(), selection, position).unwrap();
         }
         page
+    }
+
+    #[test]
+    fn preflighted_reselection_frames_logical_pages_generations_and_retirement() {
+        let selection = target_decode();
+        let mut state = PhysicalKvState::new(request(), selection).unwrap();
+        append_and_write(&mut state, selection, 9, M1_KV_PAGE_TOKENS);
+        append_and_write(&mut state, selection, 2, 1);
+        commit_physical_kv(&mut state, request(), selection, M1_KV_PAGE_TOKENS).unwrap();
+        rollback_physical_token(&mut state, request(), selection, CompletionEpoch::new(40))
+            .unwrap();
+
+        let next = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Speculative,
+            bucket: Qwen3PlanBucket::SpeculativeS8K4C8192,
+        };
+        let request_before = state.request;
+        let lifecycle_before = state.lifecycle;
+        let resident_before = state.resident_tokens;
+        let committed_before = state.committed_tokens;
+        let page_count_before = state.page_count;
+        let page_table_before = state.page_table;
+        let page_slots_before = state.page_slots;
+
+        let permit = preflight_physical_kv_reselection(&state, next).unwrap();
+        apply_preflighted_physical_kv_reselection(&mut state, permit);
+
+        assert_eq!(state.request, request_before);
+        assert_eq!(state.selection, next);
+        assert_eq!(state.lifecycle, lifecycle_before);
+        assert_eq!(state.max_context_tokens, 8_192);
+        assert_eq!(state.resident_tokens, resident_before);
+        assert_eq!(state.committed_tokens, committed_before);
+        assert_eq!(state.page_count, page_count_before);
+        assert_eq!(state.page_table, page_table_before);
+        assert_eq!(state.page_slots, page_slots_before);
+    }
+
+    #[test]
+    fn reselection_preflight_rejects_hostile_state_and_capacity_without_mutation() {
+        let selection = target_decode();
+        let mut state = PhysicalKvState::new(request(), selection).unwrap();
+        for page_index in 0..9 {
+            let count = if page_index == 8 {
+                1
+            } else {
+                M1_KV_PAGE_TOKENS
+            };
+            append_and_write(&mut state, selection, page_index, count);
+        }
+        let logical_before = state.logical_state();
+        let pages_before = state.page_table;
+        let generations_before = state.page_slots;
+
+        let role_drift = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Draft06B,
+            mode: Qwen3ExecutionMode::Decode,
+            bucket: Qwen3PlanBucket::DecodeS1C8192,
+        };
+        assert_eq!(
+            preflight_physical_kv_reselection(&state, role_drift).unwrap_err(),
+            PhysicalKvError::RoleMismatch
+        );
+        let invalid = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Prefill,
+            bucket: Qwen3PlanBucket::DecodeS1C8192,
+        };
+        assert_eq!(
+            preflight_physical_kv_reselection(&state, invalid).unwrap_err(),
+            PhysicalKvError::InvalidSelection
+        );
+        let too_small = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Prefill,
+            bucket: Qwen3PlanBucket::PrefillS1T128,
+        };
+        assert_eq!(
+            preflight_physical_kv_reselection(&state, too_small).unwrap_err(),
+            PhysicalKvError::ContextExceeded
+        );
+        assert_eq!(state.selection(), selection);
+        assert_eq!(state.logical_state(), logical_before);
+        assert_eq!(state.page_table, pages_before);
+        assert_eq!(state.page_slots, generations_before);
+
+        let mut nonactive = PhysicalKvState::new(request(), selection).unwrap();
+        cancel_physical_kv(
+            &mut nonactive,
+            request(),
+            selection,
+            CompletionEpoch::new(41),
+        )
+        .unwrap();
+        let nonactive_before = nonactive.logical_state();
+        assert_eq!(
+            preflight_physical_kv_reselection(&nonactive, selection).unwrap_err(),
+            PhysicalKvError::WrongLifecycle
+        );
+        assert_eq!(nonactive.logical_state(), nonactive_before);
+        assert_eq!(nonactive.selection(), selection);
     }
 
     #[test]

@@ -28,7 +28,7 @@ use fe2o3_service_host::{
 use ferric_build::{AddresslessM1StepWorkspacePlan, M1StepWorkspaceRange};
 use ferric_spec::{
     completion::CompletionEpoch, scheduling::RequestState, Qwen3ExecutionMode, Qwen3PlanSelection,
-    RequestId,
+    RequestId, M1_MAX_ACTIVE_SEQUENCES,
 };
 
 use crate::physical_fixed_batch::M1PhysicalQueueBatchRearmPartsV1;
@@ -40,17 +40,17 @@ use crate::{
     AddresslessM1FullStepWorkspaceComposition, AddresslessM1PhysicalBufferRecipeV1,
     BoundM1StepWorkspaceSubleases, ContentBoundM1ProgramCatalogV1, Engine, EngineError,
     Gfx942DeviceBinding, LogicalRunnerDeclaration, M1BoundPhysicalBufferRowV1,
-    M1CompletedKvPageReleaseCountsV1, M1FullStepKvWorkspaceTablesV1, M1FullStepWorkspaceImagesV1,
-    M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans, M1FullStepWorkspaceRole,
-    M1FullStepWorkspaceSubleaseOwners, M1InitializedWorkspaceSlotV1, M1PhysicalBufferRecipeRowV1,
-    M1PhysicalBufferSourceV1, M1PhysicalFixedBatchShapeV1, M1PhysicalPublishedQueueSessionV1,
-    M1PhysicalQueueBatchCustodyV1, M1PhysicalQueuePhaseCaseV1, M1PhysicalQueueSessionV1,
-    M1PhysicalReadbackDetachedQueueSessionV1, M1PhysicalReadbackQueueOperationFailureV1,
-    M1PrepareFailureV1, M1PreparedScheduledWorkspaceImagesV1, M1PrepublicationStepCustodyV1,
-    M1ReleasedCompletedStepV1, M1ReleasedDeviceKvMemberV1, M1ReleasedTerminalDeviceKvMemberV1,
-    M1ScheduledDispatchV1, M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
-    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
-    M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
+    M1CompletedKvPageReleaseCountsV1, M1ExactDispatchErrorV1, M1FullStepKvWorkspaceTablesV1,
+    M1FullStepWorkspaceImagesV1, M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans,
+    M1FullStepWorkspaceRole, M1FullStepWorkspaceSubleaseOwners, M1InitializedWorkspaceSlotV1,
+    M1PhysicalBufferRecipeRowV1, M1PhysicalBufferSourceV1, M1PhysicalFixedBatchShapeV1,
+    M1PhysicalPublishedQueueSessionV1, M1PhysicalQueueBatchCustodyV1, M1PhysicalQueuePhaseCaseV1,
+    M1PhysicalQueueSessionV1, M1PhysicalReadbackDetachedQueueSessionV1,
+    M1PhysicalReadbackQueueOperationFailureV1, M1PrepareFailureV1,
+    M1PreparedScheduledWorkspaceImagesV1, M1PrepublicationStepCustodyV1, M1ReleasedCompletedStepV1,
+    M1ReleasedDeviceKvMemberV1, M1ReleasedTerminalDeviceKvMemberV1, M1ScheduledDispatchV1,
+    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
 };
 
 /// Stable rejection before a fresh workspace replacement begins.
@@ -60,6 +60,7 @@ pub enum M1LongLivedQueueRearmScheduleErrorV1 {
     NoContinuingRequests,
     Detach,
     Scheduler,
+    ExactScheduler(M1ExactDispatchErrorV1),
     EmptySchedulerBatch,
     EpochExhausted,
     EpochNotExactNext {
@@ -341,6 +342,15 @@ impl M1LongLivedQueueRearmScheduleFailureV1 {
         self.error
     }
 
+    /// Exact-roster scheduler rejection retained after queue detach.
+    #[must_use]
+    pub const fn exact_scheduler_error(&self) -> Option<M1ExactDispatchErrorV1> {
+        match self.error {
+            M1LongLivedQueueRearmScheduleErrorV1::ExactScheduler(error) => Some(error),
+            _ => None,
+        }
+    }
+
     #[must_use]
     pub const fn phase(&self) -> M1LongLivedQueueRearmSchedulePhaseV1 {
         match &self.custody {
@@ -574,6 +584,14 @@ impl M1LongLivedQueueRearmScheduleDetachedTeardownSuccessV1 {
     }
 
     #[must_use]
+    pub const fn exact_scheduler_error(&self) -> Option<M1ExactDispatchErrorV1> {
+        match self.custody.error {
+            M1LongLivedQueueRearmScheduleErrorV1::ExactScheduler(error) => Some(error),
+            _ => None,
+        }
+    }
+
+    #[must_use]
     pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
         self.custody.shape
     }
@@ -615,6 +633,14 @@ impl M1LongLivedQueueRearmScheduleDetachedTeardownFailureV1 {
     #[must_use]
     pub const fn error(&self) -> M1LongLivedQueueRearmScheduleErrorV1 {
         self.custody.error
+    }
+
+    #[must_use]
+    pub const fn exact_scheduler_error(&self) -> Option<M1ExactDispatchErrorV1> {
+        match self.custody.error {
+            M1LongLivedQueueRearmScheduleErrorV1::ExactScheduler(error) => Some(error),
+            _ => None,
+        }
     }
 
     #[must_use]
@@ -701,6 +727,33 @@ impl M1LongLivedQueueUnscheduledRoundV1 {
             self.parked,
             self.terminal,
             self.history,
+        )
+    }
+
+    /// Retries intact released custody with one exact caller-named roster.
+    ///
+    /// Exact scheduler rejection happens only after queue detach and is
+    /// therefore terminal under the same irreversible-phase policy as the
+    /// automatic scheduling path.
+    ///
+    /// # Errors
+    ///
+    /// Returns the same phase-tagged exhaustive custody as the initial exact
+    /// scheduling entry point.
+    pub fn retry_exact<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        expected_epoch: CompletionEpoch,
+        requests: &[RequestId],
+    ) -> Result<M1ScheduledLongLivedQueueRearmV1, M1LongLivedQueueRearmScheduleFailureV1> {
+        schedule_m1_long_lived_queue_rearm_exact_with_lineage_v1(
+            engine,
+            self.released,
+            self.parked,
+            self.terminal,
+            self.history,
+            expected_epoch,
+            requests,
         )
     }
 
@@ -1226,8 +1279,18 @@ fn validate_request_partition(
     available: &[RequestId],
     scheduled: &[RequestId],
 ) -> Result<(), M1LongLivedQueueRearmScheduleErrorV1> {
+    validate_request_partition_by(scheduled, |request| available.contains(&request))
+}
+
+fn validate_request_partition_by(
+    scheduled: &[RequestId],
+    mut is_available: impl FnMut(RequestId) -> bool,
+) -> Result<(), M1LongLivedQueueRearmScheduleErrorV1> {
     for (lane, request) in scheduled.iter().copied().enumerate() {
-        if let Some(first_lane) = scheduled[..lane].iter().position(|prior| *prior == request) {
+        if let Some(first_lane) = scheduled[..lane]
+            .iter()
+            .position(|prior| prior.slot() == request.slot())
+        {
             return Err(
                 M1LongLivedQueueRearmScheduleErrorV1::DuplicateScheduledRequest {
                     first_lane,
@@ -1235,8 +1298,75 @@ fn validate_request_partition(
                 },
             );
         }
-        if !available.contains(&request) {
+        if !is_available(request) {
             return Err(M1LongLivedQueueRearmScheduleErrorV1::UnownedScheduledRequest { lane });
+        }
+    }
+    Ok(())
+}
+
+fn validate_exact_rearm_preflight<const C: usize>(
+    engine: &Engine<C>,
+    released: &M1ReleasedCompletedStepV1,
+    parked: &[ActiveDeviceKvCache],
+    expected_epoch: CompletionEpoch,
+    requests: &[RequestId],
+) -> Result<(), M1LongLivedQueueRearmScheduleErrorV1> {
+    if engine.is_faulted() {
+        return Err(M1LongLivedQueueRearmScheduleErrorV1::ExactScheduler(
+            M1ExactDispatchErrorV1::Faulted,
+        ));
+    }
+    if requests.is_empty() {
+        return Err(M1LongLivedQueueRearmScheduleErrorV1::ExactScheduler(
+            M1ExactDispatchErrorV1::EmptyRoster,
+        ));
+    }
+    if requests.len() > M1_MAX_ACTIVE_SEQUENCES as usize {
+        return Err(M1LongLivedQueueRearmScheduleErrorV1::ExactScheduler(
+            M1ExactDispatchErrorV1::RosterTooLarge {
+                maximum: M1_MAX_ACTIVE_SEQUENCES as usize,
+                actual: requests.len(),
+            },
+        ));
+    }
+    let Some(next_epoch) = exact_next_epoch(released.checked().epoch()) else {
+        return Err(M1LongLivedQueueRearmScheduleErrorV1::EpochExhausted);
+    };
+    if expected_epoch != next_epoch {
+        return Err(M1LongLivedQueueRearmScheduleErrorV1::EpochNotExactNext {
+            expected: next_epoch,
+            actual: expected_epoch,
+        });
+    }
+    validate_request_partition_by(requests, |request| {
+        released.members().iter().any(|member| {
+            matches!(
+                member,
+                M1ReleasedDeviceKvMemberV1::Active(cache)
+                    if cache.projection().request == request
+            )
+        }) || parked
+            .iter()
+            .any(|cache| cache.projection().request == request)
+    })?;
+    for (lane, request) in requests.iter().copied().enumerate() {
+        match engine.state(request) {
+            Some(RequestState::Ready) => {}
+            None => {
+                return Err(M1LongLivedQueueRearmScheduleErrorV1::ExactScheduler(
+                    M1ExactDispatchErrorV1::MissingRequest { lane, request },
+                ));
+            }
+            Some(state) => {
+                return Err(M1LongLivedQueueRearmScheduleErrorV1::ExactScheduler(
+                    M1ExactDispatchErrorV1::RequestNotReady {
+                        lane,
+                        request,
+                        state,
+                    },
+                ));
+            }
         }
     }
     Ok(())
@@ -1275,6 +1405,40 @@ fn finish_schedule_transition<const C: usize, T, E>(
     }
 }
 
+#[derive(Clone, Copy)]
+enum M1LongLivedQueueRearmDispatchV1<'a> {
+    Automatic,
+    Exact {
+        expected_epoch: CompletionEpoch,
+        requests: &'a [RequestId],
+    },
+}
+
+#[derive(Debug)]
+enum M1LongLivedQueueRearmDispatchFailureV1 {
+    EmptyAutomatic,
+    Automatic(EngineError),
+    Exact(M1ExactDispatchErrorV1),
+}
+
+fn dispatch_m1_long_lived_queue_rearm_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    dispatch: M1LongLivedQueueRearmDispatchV1<'_>,
+) -> Result<M1ScheduledDispatchV1, M1LongLivedQueueRearmDispatchFailureV1> {
+    match dispatch {
+        M1LongLivedQueueRearmDispatchV1::Automatic => engine
+            .dispatch_m1_ready()
+            .map_err(M1LongLivedQueueRearmDispatchFailureV1::Automatic)?
+            .ok_or(M1LongLivedQueueRearmDispatchFailureV1::EmptyAutomatic),
+        M1LongLivedQueueRearmDispatchV1::Exact {
+            expected_epoch,
+            requests,
+        } => engine
+            .dispatch_m1_exact_ready(expected_epoch, requests)
+            .map_err(M1LongLivedQueueRearmDispatchFailureV1::Exact),
+    }
+}
+
 /// Detaches one released queue and captures exactly one next scheduler batch.
 ///
 /// Scheduler order is authoritative. Every selected request must be one of the
@@ -1303,6 +1467,38 @@ pub fn schedule_m1_long_lived_queue_rearm_v1<const C: usize>(
     )
 }
 
+/// Detaches one released queue and captures exactly the caller-named ready
+/// roster in caller-provided lane order at `expected_epoch`.
+///
+/// Other ready Engine requests remain unchanged. Duplicate or unowned requests
+/// are rejected against retained cache custody before physical queue detach.
+/// Other exact scheduler rejection is pre-mutation for the Engine, but occurs
+/// after detach, so the returned custody is terminal and the Engine is
+/// quarantined. Once dispatch succeeds, every later failure retains its
+/// [`M1ScheduledDispatchV1`] and no retry path can dispatch the roster twice.
+///
+/// # Errors
+///
+/// Returns the same closed physical custody as the automatic path, including
+/// [`M1LongLivedQueueRearmScheduleErrorV1::ExactScheduler`] for exact-roster
+/// scheduler rejection.
+pub fn schedule_m1_long_lived_queue_rearm_exact_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    released: M1ReleasedCompletedStepV1,
+    expected_epoch: CompletionEpoch,
+    requests: &[RequestId],
+) -> Result<M1ScheduledLongLivedQueueRearmV1, M1LongLivedQueueRearmScheduleFailureV1> {
+    schedule_m1_long_lived_queue_rearm_exact_with_lineage_v1(
+        engine,
+        released,
+        Vec::new(),
+        Vec::new(),
+        M1RearmRoundHistoryV1::Empty,
+        expected_epoch,
+        requests,
+    )
+}
+
 fn schedule_m1_long_lived_queue_rearm_with_lineage_v1<const C: usize>(
     engine: &mut Engine<C>,
     released: M1ReleasedCompletedStepV1,
@@ -1316,6 +1512,30 @@ fn schedule_m1_long_lived_queue_rearm_with_lineage_v1<const C: usize>(
         parked_lineage,
         terminal_lineage,
         history,
+        M1LongLivedQueueRearmDispatchV1::Automatic,
+    );
+    finish_schedule_transition(engine, result)
+}
+
+fn schedule_m1_long_lived_queue_rearm_exact_with_lineage_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    released: M1ReleasedCompletedStepV1,
+    parked_lineage: Vec<ActiveDeviceKvCache>,
+    terminal_lineage: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
+    history: M1RearmRoundHistoryV1,
+    expected_epoch: CompletionEpoch,
+    requests: &[RequestId],
+) -> Result<M1ScheduledLongLivedQueueRearmV1, M1LongLivedQueueRearmScheduleFailureV1> {
+    let result = schedule_m1_long_lived_queue_rearm_inner_v1(
+        engine,
+        released,
+        parked_lineage,
+        terminal_lineage,
+        history,
+        M1LongLivedQueueRearmDispatchV1::Exact {
+            expected_epoch,
+            requests,
+        },
     );
     finish_schedule_transition(engine, result)
 }
@@ -1326,6 +1546,7 @@ fn schedule_m1_long_lived_queue_rearm_inner_v1<const C: usize>(
     parked_lineage: Vec<ActiveDeviceKvCache>,
     terminal_lineage: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
     history: M1RearmRoundHistoryV1,
+    dispatch: M1LongLivedQueueRearmDispatchV1<'_>,
 ) -> Result<
     M1ScheduledLongLivedQueueRearmV1,
     (
@@ -1384,6 +1605,31 @@ fn schedule_m1_long_lived_queue_rearm_inner_v1<const C: usize>(
                 history: Box::new(history),
             },
         ));
+    }
+
+    if let M1LongLivedQueueRearmDispatchV1::Exact {
+        expected_epoch,
+        requests,
+    } = dispatch
+    {
+        if let Err(error) = validate_exact_rearm_preflight(
+            engine,
+            &released,
+            &parked_lineage,
+            expected_epoch,
+            requests,
+        ) {
+            return Err(schedule_phase_failure(
+                M1LongLivedQueueRearmSchedulePhaseV1::Released,
+                error,
+                ScheduleFailureCustodyV1::ReleasedWithLineage {
+                    released: Box::new(released),
+                    parked: parked_lineage,
+                    terminal: terminal_lineage,
+                    history: Box::new(history),
+                },
+            ));
+        }
     }
 
     let additional_members = parked_lineage.len() + terminal_lineage.len();
@@ -1447,28 +1693,29 @@ fn schedule_m1_long_lived_queue_rearm_inner_v1<const C: usize>(
             ));
         }
     };
-    let scheduled = match engine.dispatch_m1_ready() {
-        Ok(Some(scheduled)) => scheduled,
-        Ok(None) => {
-            return Err(schedule_phase_failure(
-                M1LongLivedQueueRearmSchedulePhaseV1::Detached,
-                M1LongLivedQueueRearmScheduleErrorV1::EmptySchedulerBatch,
-                ScheduleFailureCustodyV1::Detached {
-                    queue: Box::new(queue),
-                    residue: Box::new(residue),
-                    scheduler_error: None,
-                    scheduled: None,
-                },
-            ));
-        }
+    let scheduled = match dispatch_m1_long_lived_queue_rearm_v1(engine, dispatch) {
+        Ok(scheduled) => scheduled,
         Err(error) => {
+            let (error, scheduler_error) = match error {
+                M1LongLivedQueueRearmDispatchFailureV1::EmptyAutomatic => (
+                    M1LongLivedQueueRearmScheduleErrorV1::EmptySchedulerBatch,
+                    None,
+                ),
+                M1LongLivedQueueRearmDispatchFailureV1::Automatic(error) => {
+                    (M1LongLivedQueueRearmScheduleErrorV1::Scheduler, Some(error))
+                }
+                M1LongLivedQueueRearmDispatchFailureV1::Exact(error) => (
+                    M1LongLivedQueueRearmScheduleErrorV1::ExactScheduler(error),
+                    None,
+                ),
+            };
             return Err(schedule_phase_failure(
                 M1LongLivedQueueRearmSchedulePhaseV1::Detached,
-                M1LongLivedQueueRearmScheduleErrorV1::Scheduler,
+                error,
                 ScheduleFailureCustodyV1::Detached {
                     queue: Box::new(queue),
                     residue: Box::new(residue),
-                    scheduler_error: Some(error),
+                    scheduler_error,
                     scheduled: None,
                 },
             ));
@@ -2954,6 +3201,11 @@ pub struct M1RearmedPublishedQueueV1 {
 }
 
 impl M1RearmedPublishedQueueV1 {
+    /// Exact scheduler authority retained through physical publication.
+    pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
+        self.queue.scheduled_dispatch()
+    }
+
     #[must_use]
     pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
         self.queue_observation
@@ -7256,6 +7508,40 @@ impl M1LongLivedQueueReleasedRoundV1 {
             M1RearmRoundHistoryV1::NonEmpty(history),
         )
     }
+
+    /// Consumes current released custody and schedules exactly the named Ready
+    /// subset in caller-provided lane order at `expected_epoch`.
+    ///
+    /// Unnamed active caches remain parked. Duplicate or unowned requests are
+    /// rejected before detach; later exact scheduler rejection returns terminal
+    /// exhaustive custody after detach.
+    ///
+    /// # Errors
+    ///
+    /// Returns phase-tagged exhaustive custody for any preflight, detach,
+    /// exact-scheduler, or post-dispatch rejection.
+    pub fn schedule_next_exact<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        expected_epoch: CompletionEpoch,
+        requests: &[RequestId],
+    ) -> Result<M1ScheduledLongLivedQueueRearmV1, M1LongLivedQueueRearmScheduleFailureV1> {
+        let Self {
+            released,
+            parked,
+            terminal,
+            history,
+        } = self;
+        schedule_m1_long_lived_queue_rearm_exact_with_lineage_v1(
+            engine,
+            released,
+            parked,
+            terminal,
+            M1RearmRoundHistoryV1::NonEmpty(history),
+            expected_epoch,
+            requests,
+        )
+    }
 }
 
 /// Retry-safe page-release rejection retaining the separately parked lineage.
@@ -7450,6 +7736,11 @@ fn release_rearmed_round(
 }
 
 impl M1RearmedCompletedReadbackV1 {
+    /// Semantically checked compact completion retained before KV settlement.
+    pub const fn checked(&self) -> &crate::M1CheckedCompletionOutputV1 {
+        self.readback.checked()
+    }
+
     /// Completes the fresh physical generation using selected caches in the
     /// exact scheduler order retained since scheduling.
     ///
@@ -9496,6 +9787,7 @@ mod tests {
     #[test]
     fn hostile_partition_rejects_duplicate_and_new_requests() {
         let first = RequestId::new(0, 1);
+        let stale_first = RequestId::new(0, 2);
         let second = RequestId::new(1, 1);
         assert_eq!(
             validate_request_partition(&[first, second], &[second, second]),
@@ -9509,6 +9801,186 @@ mod tests {
         assert_eq!(
             validate_request_partition(&[first], &[second]),
             Err(M1LongLivedQueueRearmScheduleErrorV1::UnownedScheduledRequest { lane: 0 })
+        );
+        assert_eq!(
+            validate_request_partition(&[first, stale_first], &[first, stale_first]),
+            Err(
+                M1LongLivedQueueRearmScheduleErrorV1::DuplicateScheduledRequest {
+                    first_lane: 0,
+                    lane: 1,
+                }
+            )
+        );
+    }
+
+    #[test]
+    fn exact_rearm_dispatch_preserves_named_order_and_parks_unrelated_ready() {
+        let mut engine = Engine::<4>::new(32, 4, 64).unwrap();
+        let first = engine.admit().unwrap();
+        let unrelated = engine.admit().unwrap();
+        let third = engine.admit().unwrap();
+
+        let scheduled = dispatch_m1_long_lived_queue_rearm_v1(
+            &mut engine,
+            M1LongLivedQueueRearmDispatchV1::Exact {
+                expected_epoch: CompletionEpoch::new(1),
+                requests: &[third, first],
+            },
+        )
+        .unwrap();
+
+        assert_eq!(scheduled.epoch(), CompletionEpoch::new(1));
+        assert_eq!(scheduled.member_count(), 2);
+        assert_eq!(scheduled.member(0), Some(third));
+        assert_eq!(scheduled.member(1), Some(first));
+        assert_eq!(engine.state(third), Some(RequestState::InFlight));
+        assert_eq!(engine.state(first), Some(RequestState::InFlight));
+        assert_eq!(engine.state(unrelated), Some(RequestState::Ready));
+    }
+
+    #[test]
+    fn exact_rearm_dispatch_rejects_hostile_rosters_before_engine_mutation() {
+        fn exact_error(
+            result: Result<M1ScheduledDispatchV1, M1LongLivedQueueRearmDispatchFailureV1>,
+        ) -> M1ExactDispatchErrorV1 {
+            match result {
+                Err(M1LongLivedQueueRearmDispatchFailureV1::Exact(error)) => error,
+                Ok(_) | Err(_) => panic!("expected exact scheduler rejection"),
+            }
+        }
+
+        let mut duplicate_engine = Engine::<4>::new(32, 4, 64).unwrap();
+        let duplicate = duplicate_engine.admit().unwrap();
+        assert_eq!(
+            exact_error(dispatch_m1_long_lived_queue_rearm_v1(
+                &mut duplicate_engine,
+                M1LongLivedQueueRearmDispatchV1::Exact {
+                    expected_epoch: CompletionEpoch::new(1),
+                    requests: &[duplicate, duplicate],
+                },
+            )),
+            M1ExactDispatchErrorV1::DuplicateRequest {
+                first_lane: 0,
+                lane: 1,
+            }
+        );
+        assert_eq!(duplicate_engine.state(duplicate), Some(RequestState::Ready));
+
+        let mut missing_engine = Engine::<4>::new(32, 4, 64).unwrap();
+        let retained = missing_engine.admit().unwrap();
+        let missing = RequestId::new(3, 99);
+        assert_eq!(
+            exact_error(dispatch_m1_long_lived_queue_rearm_v1(
+                &mut missing_engine,
+                M1LongLivedQueueRearmDispatchV1::Exact {
+                    expected_epoch: CompletionEpoch::new(1),
+                    requests: &[missing],
+                },
+            )),
+            M1ExactDispatchErrorV1::MissingRequest {
+                lane: 0,
+                request: missing,
+            }
+        );
+        assert_eq!(missing_engine.state(retained), Some(RequestState::Ready));
+
+        let mut nonready_engine = Engine::<2>::new(16, 4, 32).unwrap();
+        let nonready = nonready_engine.admit().unwrap();
+        let _scheduled = dispatch_m1_long_lived_queue_rearm_v1(
+            &mut nonready_engine,
+            M1LongLivedQueueRearmDispatchV1::Exact {
+                expected_epoch: CompletionEpoch::new(1),
+                requests: &[nonready],
+            },
+        )
+        .unwrap();
+        let retained_ready = nonready_engine.admit().unwrap();
+        assert_eq!(
+            exact_error(dispatch_m1_long_lived_queue_rearm_v1(
+                &mut nonready_engine,
+                M1LongLivedQueueRearmDispatchV1::Exact {
+                    expected_epoch: CompletionEpoch::new(2),
+                    requests: &[nonready],
+                },
+            )),
+            M1ExactDispatchErrorV1::RequestNotReady {
+                lane: 0,
+                request: nonready,
+                state: RequestState::InFlight,
+            }
+        );
+        assert_eq!(
+            nonready_engine.state(nonready),
+            Some(RequestState::InFlight)
+        );
+        assert_eq!(
+            nonready_engine.state(retained_ready),
+            Some(RequestState::Ready)
+        );
+
+        let mut epoch_engine = Engine::<2>::new(16, 4, 32).unwrap();
+        let epoch_request = epoch_engine.admit().unwrap();
+        assert_eq!(
+            exact_error(dispatch_m1_long_lived_queue_rearm_v1(
+                &mut epoch_engine,
+                M1LongLivedQueueRearmDispatchV1::Exact {
+                    expected_epoch: CompletionEpoch::new(2),
+                    requests: &[epoch_request],
+                },
+            )),
+            M1ExactDispatchErrorV1::EpochMismatch {
+                expected: CompletionEpoch::new(1),
+                actual: CompletionEpoch::new(2),
+            }
+        );
+        assert_eq!(epoch_engine.state(epoch_request), Some(RequestState::Ready));
+    }
+
+    #[test]
+    fn exact_rearm_api_keeps_terminal_and_post_dispatch_custody_nameable() {
+        type ExactInitial =
+            fn(
+                &mut Engine<32>,
+                M1ReleasedCompletedStepV1,
+                CompletionEpoch,
+                &[RequestId],
+            )
+                -> Result<M1ScheduledLongLivedQueueRearmV1, M1LongLivedQueueRearmScheduleFailureV1>;
+        type ExactNext =
+            fn(
+                M1LongLivedQueueReleasedRoundV1,
+                &mut Engine<32>,
+                CompletionEpoch,
+                &[RequestId],
+            )
+                -> Result<M1ScheduledLongLivedQueueRearmV1, M1LongLivedQueueRearmScheduleFailureV1>;
+        type ExactRetry =
+            fn(
+                M1LongLivedQueueUnscheduledRoundV1,
+                &mut Engine<32>,
+                CompletionEpoch,
+                &[RequestId],
+            )
+                -> Result<M1ScheduledLongLivedQueueRearmV1, M1LongLivedQueueRearmScheduleFailureV1>;
+        type Close = fn(
+            M1LongLivedQueueRearmScheduleFailureV1,
+        ) -> M1LongLivedQueueRearmScheduleClosureOutcomeV1;
+        type RetainedDispatch =
+            for<'a> fn(&'a M1ScheduledLongLivedQueueRearmV1) -> &'a M1ScheduledDispatchV1;
+
+        let _: ExactInitial = schedule_m1_long_lived_queue_rearm_exact_v1::<32>;
+        let _: ExactNext = M1LongLivedQueueReleasedRoundV1::schedule_next_exact::<32>;
+        let _: ExactRetry = M1LongLivedQueueUnscheduledRoundV1::retry_exact::<32>;
+        let _: Close = M1LongLivedQueueRearmScheduleFailureV1::close_terminal;
+        let _: RetainedDispatch = M1ScheduledLongLivedQueueRearmV1::scheduled_dispatch;
+
+        assert_eq!(
+            M1LongLivedQueueRearmScheduleErrorV1::ExactScheduler(
+                M1ExactDispatchErrorV1::EmptyRoster,
+            ),
+            M1LongLivedQueueRearmScheduleErrorV1::ExactScheduler(
+                M1ExactDispatchErrorV1::EmptyRoster,
+            )
         );
     }
 

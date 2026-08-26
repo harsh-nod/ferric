@@ -66,10 +66,12 @@ pub use m1_step_inputs::{
     M1StepInputRejection, M1StepInputValidationOutcome, ValidatedM1StepInputs,
 };
 pub use paged_kv_refinement::{
-    append_physical_page, cancel_physical_kv, commit_physical_kv, map_initialized_token,
+    append_physical_page, apply_preflighted_physical_kv_reselection, cancel_physical_kv,
+    commit_physical_kv, map_initialized_token, preflight_physical_kv_reselection,
     release_retired_page, retire_cancelled_tail, rollback_physical_token, write_physical_token,
-    LogicalKvState, PhysicalKvError, PhysicalKvLifecycle, PhysicalKvLocation, PhysicalKvState,
-    PhysicalPageId, M1_KV_PAGE_TABLE_ENTRIES, M1_KV_PAGE_TOKENS, M1_KV_PHYSICAL_PAGE_SLOTS,
+    LogicalKvState, PhysicalKvError, PhysicalKvLifecycle, PhysicalKvLocation,
+    PhysicalKvReselectionPermit, PhysicalKvState, PhysicalPageId, M1_KV_PAGE_TABLE_ENTRIES,
+    M1_KV_PAGE_TOKENS, M1_KV_PHYSICAL_PAGE_SLOTS,
 };
 pub use physical_plan::{
     physical_plan_structural_validation_theorem, validate_physical_plan_declaration,
