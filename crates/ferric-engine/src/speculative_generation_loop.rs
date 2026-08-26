@@ -1474,6 +1474,12 @@ fn with_emitted_lane(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{
+        M1ServingBatchPlanV1, M1ServingCompletionDispositionV1,
+        M1ServingPhysicalOperationFailureV1, M1ServingPhysicalOperationsV1,
+        M1ServingPhysicalQueueCustodyV1, M1ServingPlanV1, M1ServingRegistryV1,
+        M1ServingRolloverReasonV1,
+    };
 
     fn selection(bucket: Qwen3PlanBucket) -> Qwen3PlanSelection {
         Qwen3PlanSelection {
@@ -1530,6 +1536,97 @@ mod tests {
         coordinator
             .commit_preflighted_round(preflighted)
             .map_err(|failure| failure.into_parts().0)
+    }
+
+    #[derive(Debug, Eq, PartialEq)]
+    struct PhysicalCustody(u64);
+
+    struct RolloverOperations;
+
+    impl M1ServingPhysicalOperationsV1<PhysicalCustody> for RolloverOperations {
+        type Error = &'static str;
+        type TerminalCustody = PhysicalCustody;
+
+        fn fresh_launch(
+            &mut self,
+            _: &M1ServingBatchPlanV1,
+        ) -> Result<
+            PhysicalCustody,
+            M1ServingPhysicalOperationFailureV1<(), Self::TerminalCustody, Self::Error>,
+        > {
+            unreachable!()
+        }
+
+        fn same_shape_rearm(
+            &mut self,
+            _: PhysicalCustody,
+            _: &M1ServingBatchPlanV1,
+        ) -> Result<
+            PhysicalCustody,
+            M1ServingPhysicalOperationFailureV1<
+                PhysicalCustody,
+                Self::TerminalCustody,
+                Self::Error,
+            >,
+        > {
+            unreachable!()
+        }
+
+        fn quiescent_rollover(
+            &mut self,
+            custody: PhysicalCustody,
+            _: M1ServingPlanV1,
+            _: M1ServingPlanV1,
+            _: M1ServingRolloverReasonV1,
+            _: &M1ServingBatchPlanV1,
+        ) -> Result<
+            PhysicalCustody,
+            M1ServingPhysicalOperationFailureV1<
+                PhysicalCustody,
+                Self::TerminalCustody,
+                Self::Error,
+            >,
+        > {
+            Ok(PhysicalCustody(custody.0 + 1))
+        }
+    }
+
+    fn serving_pair(mode: Qwen3ExecutionMode, bucket: Qwen3PlanBucket) -> M1ServingPlanV1 {
+        M1ServingPlanV1::new(
+            Qwen3PlanSelection {
+                role: Qwen3ModelRole::Target8B,
+                mode,
+                bucket,
+            },
+            Qwen3PlanSelection {
+                role: Qwen3ModelRole::Draft06B,
+                mode,
+                bucket,
+            },
+        )
+        .unwrap()
+    }
+
+    fn speculative_rollover_batch(
+        prior: M1ServingPlanV1,
+        next: M1ServingPlanV1,
+    ) -> M1ServingBatchPlanV1 {
+        let prefill = serving_pair(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128);
+        let mut registry = M1ServingRegistryV1::<8>::new().unwrap();
+        let request = request(0);
+        registry.admit(request, prefill).unwrap();
+        for next_plan in [prior, next] {
+            let batch = registry.plan_next().unwrap().unwrap();
+            let epoch = batch.epoch();
+            registry.record_publication(batch).unwrap();
+            registry
+                .complete_exact(
+                    epoch,
+                    &[M1ServingCompletionDispositionV1::Continue(next_plan)],
+                )
+                .unwrap();
+        }
+        registry.plan_next().unwrap().unwrap()
     }
 
     #[test]
@@ -1685,6 +1782,56 @@ mod tests {
         assert_eq!(recovered.round(), 0);
         assert_eq!(recovered.epoch(), CompletionEpoch::new(12));
         assert_eq!(coordinator.next_round(), 1);
+    }
+
+    #[test]
+    fn physical_epoch_must_complete_before_speculative_permit_commits() {
+        let bucket = Qwen3PlanBucket::SpeculativeS1K4C8192;
+        let target = selection(bucket);
+        let decode = serving_pair(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192);
+        let speculative = serving_pair(Qwen3ExecutionMode::Speculative, bucket);
+        let batch = speculative_rollover_batch(decode, speculative);
+        let epoch = batch.epoch();
+        let mut coordinator = M1SpeculativeGenerationLoopV1::new(target, &[seed(0, 32)]).unwrap();
+        let binding = coordinator.bind_round(0, epoch, &[request(0)]).unwrap();
+        let permit = coordinator
+            .preflight_observed_round(
+                binding,
+                target,
+                epoch,
+                &[observation(request(0), 1, &[400, 900])],
+                &[M1SpeculativeMemberControlV1::continuing(request(0))],
+            )
+            .unwrap();
+        let published = M1ServingPhysicalQueueCustodyV1::Quiescent {
+            plan: decode,
+            custody: PhysicalCustody(10),
+        }
+        .publish(batch, &mut RolloverOperations)
+        .unwrap();
+
+        let failure = published
+            .complete_speculative_physical(
+                CompletionEpoch::new(epoch.value() + 1),
+                &mut coordinator,
+                permit,
+            )
+            .unwrap_err();
+        assert_eq!(coordinator.next_round(), 0);
+        let (_, published, permit) = failure.into_parts();
+        let (_, custody, outcome) = published
+            .complete_speculative_physical(epoch, &mut coordinator, permit)
+            .unwrap();
+        assert_eq!(coordinator.next_round(), 1);
+        assert_eq!(outcome.completed_epoch(), epoch);
+        assert_eq!(outcome.members()[0].published().tokens(), &[400, 900]);
+        assert!(matches!(
+            custody,
+            M1ServingPhysicalQueueCustodyV1::Quiescent {
+                plan,
+                custody: PhysicalCustody(11)
+            } if plan == speculative
+        ));
     }
 
     #[test]

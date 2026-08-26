@@ -22,6 +22,7 @@ mod m1_packet_diagnostic;
 mod m1_packet_diagnostic_execution;
 mod m1_prepublication;
 mod m1_queue_rearm;
+mod m1_serving_physical_bridge;
 mod m1_serving_registry;
 mod model_memory_allocations;
 mod observed_completion;
@@ -207,6 +208,14 @@ pub use m1_queue_rearm::{
     M1ScheduledLongLivedQueueRearmTeardownFailureV1,
     M1ScheduledLongLivedQueueRearmTeardownSuccessV1, M1ScheduledLongLivedQueueRearmV1,
     M1_MAX_REARM_ROUND_HISTORY_V1,
+};
+pub use m1_serving_physical_bridge::{
+    M1ServingPhysicalBridgeErrorV1, M1ServingPhysicalBridgeFailureV1,
+    M1ServingPhysicalCompletionFailureV1, M1ServingPhysicalFailureCustodyV1,
+    M1ServingPhysicalOperationFailureV1, M1ServingPhysicalOperationsV1,
+    M1ServingPhysicalPublishResultV1, M1ServingPhysicalPublishedV1,
+    M1ServingPhysicalQueueCustodyV1, M1ServingSpeculativeCompletionErrorV1,
+    M1ServingSpeculativeCompletionFailureV1,
 };
 pub use m1_serving_registry::{
     M1ServingBatchPlanV1, M1ServingCompletionDispositionV1, M1ServingPlanV1,
