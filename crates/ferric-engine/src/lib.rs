@@ -41,6 +41,7 @@ mod qualification_logits;
 mod runner;
 mod scheduler;
 mod speculative_diagnostic_choices;
+mod speculative_generation_loop;
 mod speculative_graph;
 mod step_dispatch_composition;
 mod step_workspace_composition;
@@ -358,6 +359,16 @@ pub use speculative_diagnostic_choices::{
     M1SpeculativeDiagnosticChoicesErrorV1, M1SpeculativeDiagnosticChoicesShapeV1,
     M1_SPECULATIVE_DIAGNOSTIC_CHOICE_ALIGNMENT_V1, M1_SPECULATIVE_DIAGNOSTIC_DRAFT_CHOICES_V1,
     M1_SPECULATIVE_DIAGNOSTIC_TARGET_CHOICES_V1,
+};
+pub use speculative_generation_loop::{
+    M1SpeculativeCancellationReasonV1, M1SpeculativeGenerationLoopErrorV1,
+    M1SpeculativeGenerationLoopV1, M1SpeculativeGenerationPolicyV1,
+    M1SpeculativeKvRoleSettlementV1, M1SpeculativeMemberControlActionV1,
+    M1SpeculativeMemberControlV1, M1SpeculativeMemberRoundOutcomeV1, M1SpeculativeMemberSeedV1,
+    M1SpeculativeMemberSnapshotV1, M1SpeculativeMemberStatusV1, M1SpeculativePhysicalShapeV1,
+    M1SpeculativePreflightedRoundV1, M1SpeculativePreparedRoundCommitFailureV1,
+    M1SpeculativeRoundBindingV1, M1SpeculativeRoundMemberInputV1, M1SpeculativeRoundOutcomeV1,
+    M1SpeculativeTerminalReasonV1, M1SpeculativeTokenBlockV1, M1SpeculativeVerificationChoiceV1,
 };
 pub use speculative_graph::{
     complete_single_member_speculative_graph, SingleMemberSpeculativeGraphError,
