@@ -693,7 +693,7 @@ where
             Err(failure) => {
                 return Err(self.terminal(
                     M1ServingPhysicalRunnerOperationErrorV1::FirstPublication,
-                    failure,
+                    (failure, selected),
                 ));
             }
         };
