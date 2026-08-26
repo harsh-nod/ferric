@@ -163,6 +163,11 @@ impl M1CompletedStepRejectionV1 {
         self.error
     }
 
+    /// Semantically checked compact completion retained by this rejection.
+    pub const fn checked(&self) -> &M1CheckedCompletionOutputV1 {
+        self.readback.checked()
+    }
+
     #[must_use = "the exact rejected owners remain linear"]
     pub fn into_parts(
         self,

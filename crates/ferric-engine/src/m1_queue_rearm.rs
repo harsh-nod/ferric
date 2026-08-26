@@ -6786,6 +6786,11 @@ impl M1RearmedCompletionPreflightFailureV1 {
         self.error
     }
 
+    /// Semantically checked compact completion retained by this rejection.
+    pub const fn checked(&self) -> &crate::M1CheckedCompletionOutputV1 {
+        self.readback.checked()
+    }
+
     #[must_use]
     pub const fn retained_cache_count(&self) -> usize {
         self.readback.carry.selected.len() + self.readback.carry.parked.len()

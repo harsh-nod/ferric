@@ -1580,7 +1580,10 @@ mod tests {
         scheduled: M1ScheduledDispatchV1,
     }
 
-    struct RolloverOperations;
+    #[derive(Default)]
+    struct RolloverOperations {
+        settled: Vec<Vec<M1DeviceKvCompletionDispositionV1>>,
+    }
 
     impl M1ServingPhysicalOperationsV1 for RolloverOperations {
         type Quiescent = PhysicalCustody;
@@ -1665,13 +1668,14 @@ mod tests {
         fn settle_readback(
             &mut self,
             custody: Self::Readback,
-            _: Vec<M1DeviceKvCompletionDispositionV1>,
+            dispositions: Vec<M1DeviceKvCompletionDispositionV1>,
         ) -> M1ServingPhysicalOperationResultV1<
             Self::Quiescent,
             Self::Readback,
             Self::TerminalCustody,
             Self::Error,
         > {
+            self.settled.push(dispositions);
             Ok(PhysicalCustody(custody.value))
         }
     }
@@ -1727,6 +1731,43 @@ mod tests {
         let batch = registry.plan_next().unwrap().unwrap();
         let reservation = registry.reserve_publication(batch).unwrap();
         (registry, reservation)
+    }
+
+    fn speculative_permit(
+        coordinator: &M1SpeculativeGenerationLoopV1,
+        target: Qwen3PlanSelection,
+        epoch: CompletionEpoch,
+        accepted: u8,
+        tokens: &[TokenId],
+        control: M1SpeculativeMemberControlV1,
+    ) -> M1SpeculativePreflightedRoundV1 {
+        let binding = coordinator.bind_round(0, epoch, &[request(0)]).unwrap();
+        coordinator
+            .preflight_observed_round(
+                binding,
+                target,
+                epoch,
+                &[observation(request(0), accepted, tokens)],
+                &[control],
+            )
+            .unwrap()
+    }
+
+    fn speculative_readback(
+        registry: &mut M1ServingRegistryV1<8>,
+        reservation: M1ServingPublicationReservationV1,
+        prior: M1ServingPlanV1,
+        operations: &mut RolloverOperations,
+    ) -> crate::M1ServingPhysicalReadbackV1<PhysicalPublishedCustody> {
+        let epoch = reservation.epoch();
+        M1ServingPhysicalQueueCustodyV1::Quiescent {
+            plan: prior,
+            custody: PhysicalCustody(10),
+        }
+        .publish(reservation, registry, operations)
+        .unwrap()
+        .read_physical(epoch, operations)
+        .unwrap()
     }
 
     #[test]
@@ -1893,17 +1934,15 @@ mod tests {
         let (mut registry, reservation) = speculative_rollover_batch(decode, speculative);
         let epoch = reservation.epoch();
         let mut coordinator = M1SpeculativeGenerationLoopV1::new(target, &[seed(0, 32)]).unwrap();
-        let binding = coordinator.bind_round(0, epoch, &[request(0)]).unwrap();
-        let permit = coordinator
-            .preflight_observed_round(
-                binding,
-                target,
-                epoch,
-                &[observation(request(0), 1, &[400, 900])],
-                &[M1SpeculativeMemberControlV1::continuing(request(0))],
-            )
-            .unwrap();
-        let mut operations = RolloverOperations;
+        let permit = speculative_permit(
+            &coordinator,
+            target,
+            epoch,
+            1,
+            &[400, 900],
+            M1SpeculativeMemberControlV1::continuing(request(0)),
+        );
+        let mut operations = RolloverOperations::default();
         let published = M1ServingPhysicalQueueCustodyV1::Quiescent {
             plan: decode,
             custody: PhysicalCustody(10),
@@ -1936,6 +1975,256 @@ mod tests {
                 custody: PhysicalCustody(11)
             } if plan == speculative
         ));
+        assert_eq!(
+            operations.settled,
+            [vec![M1DeviceKvCompletionDispositionV1::Continue]]
+        );
+    }
+
+    #[test]
+    fn speculative_wrong_registry_retains_readback_and_permit_before_settlement() {
+        let bucket = Qwen3PlanBucket::SpeculativeS1K4C8192;
+        let target = selection(bucket);
+        let decode = serving_pair(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192);
+        let speculative = serving_pair(Qwen3ExecutionMode::Speculative, bucket);
+        let (mut registry, reservation) = speculative_rollover_batch(decode, speculative);
+        let (mut wrong_registry, _wrong_reservation) =
+            speculative_rollover_batch(decode, speculative);
+        let epoch = reservation.epoch();
+        let mut coordinator = M1SpeculativeGenerationLoopV1::new(target, &[seed(0, 32)]).unwrap();
+        let permit = speculative_permit(
+            &coordinator,
+            target,
+            epoch,
+            1,
+            &[400, 900],
+            M1SpeculativeMemberControlV1::continuing(request(0)),
+        );
+        let mut operations = RolloverOperations::default();
+        let readback = speculative_readback(&mut registry, reservation, decode, &mut operations);
+
+        let failure = readback
+            .commit_speculative(
+                &mut wrong_registry,
+                &mut coordinator,
+                permit,
+                &mut operations,
+            )
+            .unwrap_err();
+        assert_eq!(
+            failure.error(),
+            &crate::M1ServingSpeculativeCompletionErrorV1::Registry(
+                crate::M1ServingRegistryErrorV1::RegistryIdentityMismatch
+            )
+        );
+        assert!(operations.settled.is_empty());
+        assert_eq!(coordinator.next_round(), 0);
+        assert!(registry.has_in_flight_batch());
+        assert!(wrong_registry.has_publication_reservation());
+        let (_, custody) = failure.into_parts();
+        let crate::M1ServingSpeculativeCompletionFailureCustodyV1::BeforeCommit {
+            readback,
+            permit,
+        } = custody
+        else {
+            panic!("wrong registry must retain checked readback and permit");
+        };
+        let (_batch, _custody, _outcome) = readback
+            .commit_speculative(&mut registry, &mut coordinator, permit, &mut operations)
+            .unwrap();
+        assert_eq!(coordinator.next_round(), 1);
+        assert_eq!(operations.settled.len(), 1);
+    }
+
+    #[test]
+    fn speculative_wrong_coordinator_leaves_both_coordinators_and_registry_unchanged() {
+        let bucket = Qwen3PlanBucket::SpeculativeS1K4C8192;
+        let target = selection(bucket);
+        let decode = serving_pair(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192);
+        let speculative = serving_pair(Qwen3ExecutionMode::Speculative, bucket);
+        let (mut registry, reservation) = speculative_rollover_batch(decode, speculative);
+        let epoch = reservation.epoch();
+        let mut coordinator = M1SpeculativeGenerationLoopV1::new(target, &[seed(0, 32)]).unwrap();
+        let mut wrong_coordinator =
+            M1SpeculativeGenerationLoopV1::new(target, &[seed(0, 32)]).unwrap();
+        let permit = speculative_permit(
+            &coordinator,
+            target,
+            epoch,
+            1,
+            &[400, 900],
+            M1SpeculativeMemberControlV1::continuing(request(0)),
+        );
+        let mut operations = RolloverOperations::default();
+        let readback = speculative_readback(&mut registry, reservation, decode, &mut operations);
+
+        let failure = readback
+            .commit_speculative(
+                &mut registry,
+                &mut wrong_coordinator,
+                permit,
+                &mut operations,
+            )
+            .unwrap_err();
+        assert_eq!(
+            failure.error(),
+            &crate::M1ServingSpeculativeCompletionErrorV1::Coordinator(
+                M1SpeculativeGenerationLoopErrorV1::CoordinatorIdentityMismatch
+            )
+        );
+        assert!(operations.settled.is_empty());
+        assert_eq!(coordinator.next_round(), 0);
+        assert_eq!(wrong_coordinator.next_round(), 0);
+        assert!(registry.has_in_flight_batch());
+        let (_, custody) = failure.into_parts();
+        let crate::M1ServingSpeculativeCompletionFailureCustodyV1::BeforeCommit {
+            readback,
+            permit,
+        } = custody
+        else {
+            panic!("wrong coordinator must retain checked readback and permit");
+        };
+        let (_batch, _custody, _outcome) = readback
+            .commit_speculative(&mut registry, &mut coordinator, permit, &mut operations)
+            .unwrap();
+        assert_eq!(coordinator.next_round(), 1);
+        assert_eq!(wrong_coordinator.next_round(), 0);
+    }
+
+    #[test]
+    fn speculative_wrong_permit_roster_rejects_before_any_state_mutates() {
+        let bucket = Qwen3PlanBucket::SpeculativeS1K4C8192;
+        let target = selection(bucket);
+        let decode = serving_pair(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192);
+        let speculative = serving_pair(Qwen3ExecutionMode::Speculative, bucket);
+        let (mut registry, reservation) = speculative_rollover_batch(decode, speculative);
+        let epoch = reservation.epoch();
+        let mut coordinator = M1SpeculativeGenerationLoopV1::new(target, &[seed(0, 32)]).unwrap();
+        let mut permit = speculative_permit(
+            &coordinator,
+            target,
+            epoch,
+            1,
+            &[400, 900],
+            M1SpeculativeMemberControlV1::continuing(request(0)),
+        );
+        permit.outcomes[0].request = request(1);
+        let mut operations = RolloverOperations::default();
+        let readback = speculative_readback(&mut registry, reservation, decode, &mut operations);
+
+        let failure = readback
+            .commit_speculative(&mut registry, &mut coordinator, permit, &mut operations)
+            .unwrap_err();
+        assert!(matches!(
+            failure.error(),
+            crate::M1ServingSpeculativeCompletionErrorV1::PermitRoster {
+                lane: 0,
+                expected,
+                actual,
+            } if *expected == request(0) && *actual == request(1)
+        ));
+        assert!(matches!(
+            failure.into_parts().1,
+            crate::M1ServingSpeculativeCompletionFailureCustodyV1::BeforeCommit { .. }
+        ));
+        assert!(operations.settled.is_empty());
+        assert_eq!(coordinator.next_round(), 0);
+        assert!(registry.has_in_flight_batch());
+    }
+
+    #[test]
+    fn speculative_cancellation_and_terminal_policy_settle_exact_retire_dispositions() {
+        for (cancel, tokens) in [(true, &[400, 900][..]), (false, &[999][..])] {
+            let bucket = Qwen3PlanBucket::SpeculativeS1K4C8192;
+            let target = selection(bucket);
+            let decode = serving_pair(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192);
+            let speculative = serving_pair(Qwen3ExecutionMode::Speculative, bucket);
+            let (mut registry, reservation) = speculative_rollover_batch(decode, speculative);
+            let epoch = reservation.epoch();
+            let mut coordinator =
+                M1SpeculativeGenerationLoopV1::new(target, &[seed(0, 32)]).unwrap();
+            let control = if cancel {
+                M1SpeculativeMemberControlV1::cancelling(
+                    request(0),
+                    M1SpeculativeCancellationReasonV1::Client,
+                )
+            } else {
+                M1SpeculativeMemberControlV1::continuing(request(0))
+            };
+            let permit = speculative_permit(
+                &coordinator,
+                target,
+                epoch,
+                u8::from(cancel),
+                tokens,
+                control,
+            );
+            let mut operations = RolloverOperations::default();
+            let readback =
+                speculative_readback(&mut registry, reservation, decode, &mut operations);
+            if cancel {
+                assert!(matches!(
+                    registry.cancel(request(0)).unwrap(),
+                    crate::M1ServingRequestPhaseV1::CancellationPending { .. }
+                ));
+            }
+
+            let (_, _, outcome) = readback
+                .commit_speculative(&mut registry, &mut coordinator, permit, &mut operations)
+                .unwrap();
+            assert_eq!(
+                operations.settled,
+                [vec![M1DeviceKvCompletionDispositionV1::Retire]]
+            );
+            assert!(matches!(
+                registry.phase(request(0)),
+                Some(crate::M1ServingRequestPhaseV1::Retired { .. })
+            ));
+            assert!(matches!(
+                outcome.members()[0].status(),
+                M1SpeculativeMemberStatusV1::Cancelled(M1SpeculativeCancellationReasonV1::Client)
+                    | M1SpeculativeMemberStatusV1::Completed(
+                        M1SpeculativeTerminalReasonV1::StopToken { token: 999 }
+                    )
+            ));
+        }
+    }
+
+    #[test]
+    fn speculative_hostile_physical_disposition_is_rejected_before_settlement() {
+        let bucket = Qwen3PlanBucket::SpeculativeS1K4C8192;
+        let target = selection(bucket);
+        let decode = serving_pair(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192);
+        let speculative = serving_pair(Qwen3ExecutionMode::Speculative, bucket);
+        let (mut registry, reservation) = speculative_rollover_batch(decode, speculative);
+        let epoch = reservation.epoch();
+        let mut coordinator = M1SpeculativeGenerationLoopV1::new(target, &[seed(0, 32)]).unwrap();
+        let mut permit = speculative_permit(
+            &coordinator,
+            target,
+            epoch,
+            0,
+            &[999],
+            M1SpeculativeMemberControlV1::continuing(request(0)),
+        );
+        permit.outcomes[0].physical_disposition = M1DeviceKvCompletionDispositionV1::Continue;
+        let mut operations = RolloverOperations::default();
+        let readback = speculative_readback(&mut registry, reservation, decode, &mut operations);
+
+        let failure = readback
+            .commit_speculative(&mut registry, &mut coordinator, permit, &mut operations)
+            .unwrap_err();
+        assert!(matches!(
+            failure.error(),
+            crate::M1ServingSpeculativeCompletionErrorV1::PhysicalDisposition {
+                request: actual_request,
+                expected: M1DeviceKvCompletionDispositionV1::Retire,
+                actual: M1DeviceKvCompletionDispositionV1::Continue,
+            } if *actual_request == request(0)
+        ));
+        assert!(operations.settled.is_empty());
+        assert_eq!(coordinator.next_round(), 0);
+        assert!(registry.has_in_flight_batch());
     }
 
     #[test]
