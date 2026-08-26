@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-labelledby="title">
+  <title id="title">Ferric</title>
+  <rect width="32" height="32" rx="5" fill="#b5442d"/>
+  <path d="M8 7h16v4H13v4h9v4h-9v7H8z" fill="#fff"/>
+  <rect x="22" y="22" width="3" height="4" fill="#111917"/>
+</svg>
