@@ -1390,9 +1390,15 @@ impl<Q, T, E> M1ServingPhysicalRouteFailureV1<Q, T, E> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::M1ServingRequestPhaseV1;
+    use crate::{
+        completed_readback_join::check_m1_completed_output_v1, m1_completion_output_shape_v1,
+        CompletionWireExpectation, CompletionWireSemanticExpectation, M1ObservedCompletionImageV1,
+        M1ServingRequestPhaseV1,
+    };
+    use ferric_qwen_kernels::logits::Qwen3LogitsCompactRecordLayoutV1 as CompletionLayout;
     use ferric_spec::{
-        Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection, RequestId,
+        Identity, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection,
+        RequestId, StepPlan, TokenId,
     };
 
     #[derive(Debug, Eq, PartialEq)]
@@ -1636,6 +1642,72 @@ mod tests {
         let batch = registry.plan_next().unwrap().unwrap();
         let reservation = registry.reserve_publication(batch).unwrap();
         (registry, reservation, requests)
+    }
+
+    fn encode_speculative_completion(
+        request: RequestId,
+        epoch: CompletionEpoch,
+        plan_id: Identity,
+        accepted: u8,
+        emitted: &[TokenId],
+    ) -> Box<[u8]> {
+        let mut bytes = vec![0; CompletionLayout::RECORD_BYTES_USIZE];
+        bytes[CompletionLayout::REQUEST_SLOT_OFFSET..CompletionLayout::REQUEST_SLOT_OFFSET + 4]
+            .copy_from_slice(&request.slot().to_le_bytes());
+        bytes[CompletionLayout::REQUEST_GENERATION_OFFSET
+            ..CompletionLayout::REQUEST_GENERATION_OFFSET + 4]
+            .copy_from_slice(&request.generation().to_le_bytes());
+        bytes[CompletionLayout::COMPLETION_EPOCH_OFFSET
+            ..CompletionLayout::COMPLETION_EPOCH_OFFSET + 8]
+            .copy_from_slice(&epoch.value().to_le_bytes());
+        bytes[CompletionLayout::PLAN_IDENTITY_OFFSET
+            ..CompletionLayout::PLAN_IDENTITY_OFFSET + CompletionLayout::PLAN_IDENTITY_BYTES]
+            .copy_from_slice(plan_id.as_bytes());
+        bytes[CompletionLayout::ACCEPTED_DRAFT_TOKENS_OFFSET] = accepted;
+        bytes[CompletionLayout::EMITTED_TOKEN_COUNT_OFFSET] = u8::try_from(emitted.len()).unwrap();
+        for (index, token) in emitted.iter().enumerate() {
+            let offset = CompletionLayout::token_offset(index).unwrap();
+            bytes[offset..offset + 4].copy_from_slice(&token.to_le_bytes());
+        }
+        bytes.into_boxed_slice()
+    }
+
+    fn speculative_permit(
+        coordinator: &M1SpeculativeGenerationLoopV1,
+        selection: Qwen3PlanSelection,
+        request: RequestId,
+        epoch: CompletionEpoch,
+    ) -> M1SpeculativePreflightedRoundV1 {
+        let plan_id = Identity::new([71; 32]);
+        let scheduled = M1ScheduledDispatchV1::for_test(epoch, &[request]);
+        let plan = StepPlan::new(request, epoch, plan_id, selection);
+        let expectations = [CompletionWireExpectation::new(
+            &plan,
+            CompletionWireSemanticExpectation::Speculative {
+                draft_tokens: &[3, 4, 5, 6],
+                target_choices: &[3, 4, 9, 7, 8],
+            },
+        )];
+        let observed = M1ObservedCompletionImageV1::from_bytes_for_test(
+            m1_completion_output_shape_v1(selection).unwrap(),
+            selection,
+            &scheduled,
+            19,
+            5,
+            384,
+            encode_speculative_completion(request, epoch, plan_id, 2, &[3, 4, 9]),
+        )
+        .unwrap();
+        let checked =
+            check_m1_completed_output_v1(&observed, selection, &scheduled, &expectations).unwrap();
+        let binding = coordinator.bind_round(0, epoch, &[request]).unwrap();
+        coordinator
+            .preflight_checked_round(
+                binding,
+                &checked,
+                &[crate::M1SpeculativeMemberControlV1::continuing(request)],
+            )
+            .unwrap()
     }
 
     #[test]
@@ -1943,6 +2015,253 @@ mod tests {
         };
         assert_eq!(readback.epoch(), epoch);
         assert_eq!(readback.plan(), speculative);
+    }
+
+    #[test]
+    fn terminal_readback_quarantines_lower_custody_and_leaves_registry_in_flight() {
+        let plan = pair(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128);
+        let (mut registry, reservation, requests) = fresh_context(plan, 1);
+        let epoch = reservation.epoch();
+        let mut operations = Operations::default();
+        let published = M1ServingPhysicalQueueCustodyV1::Vacant
+            .publish(reservation, &mut registry, &mut operations)
+            .unwrap();
+        operations.terminal = true;
+
+        let failure = published.read_physical(epoch, &mut operations).unwrap_err();
+        let (error, custody) = failure.into_parts();
+        assert!(matches!(
+            error,
+            M1ServingPhysicalCompletionErrorV1::Operation("read")
+        ));
+        let M1ServingPhysicalCompletionFailureCustodyV1::Terminal {
+            plan: failed_plan,
+            epoch: failed_epoch,
+            batch,
+            custody,
+            ..
+        } = custody
+        else {
+            panic!("terminal read failure exposed retryable published custody");
+        };
+        assert_eq!(failed_plan, plan);
+        assert_eq!(failed_epoch, epoch);
+        assert_eq!(batch.epoch(), epoch);
+        assert_eq!(batch.requests(), requests);
+        assert_eq!(custody, Custody(1));
+        assert_eq!(operations.calls, ["fresh", "read"]);
+        assert!(operations.settled.is_empty());
+        assert_eq!(
+            registry.phase(requests[0]),
+            Some(M1ServingRequestPhaseV1::InFlight { epoch })
+        );
+        assert!(registry.has_in_flight_batch());
+    }
+
+    #[test]
+    fn retryable_ordinary_settlement_retains_readback_until_exact_retry_succeeds() {
+        let plan = pair(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128);
+        let (mut registry, reservation, requests) = fresh_context(plan, 1);
+        let epoch = reservation.epoch();
+        let mut operations = Operations::default();
+        let readback = M1ServingPhysicalQueueCustodyV1::Vacant
+            .publish(reservation, &mut registry, &mut operations)
+            .unwrap()
+            .read_physical(epoch, &mut operations)
+            .unwrap();
+        operations.fail = true;
+
+        let failure = readback
+            .complete_exact(
+                &mut registry,
+                &[M1ServingCompletionDispositionV1::Retire],
+                &mut operations,
+            )
+            .unwrap_err();
+        assert_eq!(
+            failure.error(),
+            &M1ServingRegistryCompletionErrorV1::Operation("settle")
+        );
+        assert_eq!(
+            registry.phase(requests[0]),
+            Some(M1ServingRequestPhaseV1::InFlight { epoch })
+        );
+        assert!(registry.has_in_flight_batch());
+        assert_eq!(
+            operations.settled,
+            [vec![M1DeviceKvCompletionDispositionV1::Retire]]
+        );
+
+        let (_, custody) = failure.into_parts();
+        let M1ServingRegistryCompletionFailureCustodyV1::Retryable(readback) = custody else {
+            panic!("retryable settlement lost checked readback custody");
+        };
+        operations.fail = false;
+        let (_, quiescent) = readback
+            .complete_exact(
+                &mut registry,
+                &[M1ServingCompletionDispositionV1::Retire],
+                &mut operations,
+            )
+            .unwrap();
+        assert!(matches!(
+            quiescent,
+            M1ServingPhysicalQueueCustodyV1::Quiescent {
+                plan: released_plan,
+                custody: Custody(1),
+            } if released_plan == plan
+        ));
+        assert_eq!(
+            operations.settled,
+            [
+                vec![M1DeviceKvCompletionDispositionV1::Retire],
+                vec![M1DeviceKvCompletionDispositionV1::Retire],
+            ]
+        );
+        assert_eq!(
+            registry.phase(requests[0]),
+            Some(M1ServingRequestPhaseV1::Retired {
+                quiescence: crate::M1ServingQuiescenceV1::Completed(epoch),
+            })
+        );
+        assert!(!registry.has_in_flight_batch());
+    }
+
+    #[test]
+    fn terminal_ordinary_settlement_quarantines_lower_custody_before_registry_mutation() {
+        let plan = pair(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128);
+        let (mut registry, reservation, requests) = fresh_context(plan, 1);
+        let epoch = reservation.epoch();
+        let mut operations = Operations::default();
+        let readback = M1ServingPhysicalQueueCustodyV1::Vacant
+            .publish(reservation, &mut registry, &mut operations)
+            .unwrap()
+            .read_physical(epoch, &mut operations)
+            .unwrap();
+        operations.terminal = true;
+
+        let failure = readback
+            .complete_exact(
+                &mut registry,
+                &[M1ServingCompletionDispositionV1::Retire],
+                &mut operations,
+            )
+            .unwrap_err();
+        let (error, custody) = failure.into_parts();
+        assert_eq!(
+            error,
+            M1ServingRegistryCompletionErrorV1::Operation("settle")
+        );
+        let M1ServingRegistryCompletionFailureCustodyV1::Terminal {
+            plan: failed_plan,
+            epoch: failed_epoch,
+            batch,
+            custody,
+            ..
+        } = custody
+        else {
+            panic!("terminal settlement exposed retryable checked readback");
+        };
+        assert_eq!(failed_plan, plan);
+        assert_eq!(failed_epoch, epoch);
+        assert_eq!(batch.requests(), requests);
+        assert_eq!(custody, Custody(1));
+        assert_eq!(operations.calls, ["fresh", "read", "settle"]);
+        assert_eq!(
+            operations.settled,
+            [vec![M1DeviceKvCompletionDispositionV1::Retire]]
+        );
+        assert_eq!(
+            registry.phase(requests[0]),
+            Some(M1ServingRequestPhaseV1::InFlight { epoch })
+        );
+        assert!(registry.has_in_flight_batch());
+    }
+
+    #[test]
+    fn terminal_speculative_settlement_quarantines_permit_without_logical_commit() {
+        let prefill = pair(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128);
+        let plan = pair(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+        );
+        let (mut registry, reservation, requests) = fresh_context(prefill, 1);
+        let request = requests[0];
+        let prefill_epoch = reservation.epoch();
+        let mut operations = Operations::default();
+        let prefill_readback = M1ServingPhysicalQueueCustodyV1::Vacant
+            .publish(reservation, &mut registry, &mut operations)
+            .unwrap()
+            .read_physical(prefill_epoch, &mut operations)
+            .unwrap();
+        let (_, queue) = prefill_readback
+            .complete_exact(
+                &mut registry,
+                &[M1ServingCompletionDispositionV1::Continue(plan)],
+                &mut operations,
+            )
+            .unwrap();
+        let batch = registry.plan_next().unwrap().unwrap();
+        let reservation = registry.reserve_publication(batch).unwrap();
+        let epoch = reservation.epoch();
+        let target = plan.target();
+        let seed = crate::M1SpeculativeMemberSeedV1::new(
+            request,
+            70,
+            10,
+            10,
+            crate::M1SpeculativeGenerationPolicyV1::new(32, &[999]).unwrap(),
+        );
+        let mut coordinator = M1SpeculativeGenerationLoopV1::new(target, &[seed]).unwrap();
+        let permit = speculative_permit(&coordinator, target, request, epoch);
+        let readback = queue
+            .publish(reservation, &mut registry, &mut operations)
+            .unwrap()
+            .read_physical(epoch, &mut operations)
+            .unwrap();
+        operations.terminal = true;
+
+        let failure = readback
+            .commit_speculative(&mut registry, &mut coordinator, permit, &mut operations)
+            .unwrap_err();
+        let (error, custody) = failure.into_parts();
+        assert_eq!(
+            error,
+            M1ServingSpeculativeCompletionErrorV1::Operation("settle")
+        );
+        let M1ServingSpeculativeCompletionFailureCustodyV1::Terminal {
+            plan: failed_plan,
+            epoch: failed_epoch,
+            batch,
+            custody,
+            permit,
+            ..
+        } = custody
+        else {
+            panic!("terminal speculative settlement lost terminal quarantine");
+        };
+        assert_eq!(failed_plan, plan);
+        assert_eq!(failed_epoch, epoch);
+        assert_eq!(batch.requests(), requests);
+        assert_eq!(custody, Custody(11));
+        assert_eq!(permit.selection(), target);
+        assert_eq!(permit.epoch(), epoch);
+        assert_eq!(permit.members().len(), 1);
+        assert_eq!(permit.members()[0].request(), request);
+        assert_eq!(coordinator.next_round(), 0);
+        assert_eq!(coordinator.last_epoch(), None);
+        assert_eq!(
+            operations.settled,
+            [
+                vec![M1DeviceKvCompletionDispositionV1::Continue],
+                vec![M1DeviceKvCompletionDispositionV1::Continue],
+            ]
+        );
+        assert_eq!(
+            registry.phase(request),
+            Some(M1ServingRequestPhaseV1::InFlight { epoch })
+        );
+        assert!(registry.has_in_flight_batch());
     }
 
     #[test]
