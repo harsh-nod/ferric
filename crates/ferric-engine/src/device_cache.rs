@@ -67,6 +67,12 @@ pub const GFX942_TARGET_FEATURES: &str = "+wavefrontsize64,-xnack";
 /// Exact P16 target-page cardinality required by one C8192 qualification lane.
 pub const M1_QUALIFICATION_TARGET_PAGE_COUNT_V1: usize = M1_KV_PAGE_TABLE_ENTRIES;
 
+const M1_S1_K4_TARGET_SELECTION_V1: Qwen3PlanSelection = Qwen3PlanSelection {
+    role: Qwen3ModelRole::Target8B,
+    mode: Qwen3ExecutionMode::Speculative,
+    bucket: Qwen3PlanBucket::SpeculativeS1K4C8192,
+};
+
 verus! {
 
 /// Detached receipt for one checked physical M1 device admission.
@@ -763,6 +769,102 @@ pub struct M1PartitionedModelMemoryKvPoolV1 {
     draft_planes: DraftKvPlaneSubleasesV1,
     target_pages: Box<[M1KvPoolPageStateV1]>,
     draft_pages: Box<[M1KvPoolPageStateV1]>,
+    s1_k4_rollover_output: M1S1K4RolloverOutputPortfolioV1,
+}
+
+/// Public projection of the one-shot S1/K4 rollover-output portfolio.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1S1K4RolloverOutputPortfolioStateV1 {
+    /// No future output has been allocated.
+    Vacant,
+    /// A complete inactive S1/K4 output is retained before activation.
+    Reserved,
+    /// The S1/K4 output was activated and the predecessor direct output is retained.
+    Activated,
+}
+
+/// Inactive compact output and independent choices for one future S1/K4 queue.
+#[must_use = "the future S1/K4 output must remain retained until rollover"]
+#[derive(Debug)]
+pub struct M1S1K4RolloverOutputReserveV1 {
+    output: BoundM1CompletionOutputV1,
+}
+
+#[derive(Debug)]
+enum M1S1K4RolloverOutputPortfolioV1 {
+    Vacant,
+    Reserved(M1S1K4RolloverOutputReserveV1),
+    Activated {
+        retired_direct: BoundM1CompletionOutputV1,
+    },
+}
+
+impl M1S1K4RolloverOutputPortfolioV1 {
+    const fn state(&self) -> M1S1K4RolloverOutputPortfolioStateV1 {
+        match self {
+            Self::Vacant => M1S1K4RolloverOutputPortfolioStateV1::Vacant,
+            Self::Reserved(_) => M1S1K4RolloverOutputPortfolioStateV1::Reserved,
+            Self::Activated { .. } => M1S1K4RolloverOutputPortfolioStateV1::Activated,
+        }
+    }
+}
+
+/// Pre-publication failure while reserving an inactive S1/K4 output.
+#[derive(Debug)]
+pub enum M1S1K4RolloverOutputReserveErrorV1 {
+    /// This pool already retains a reserve or an activated predecessor output.
+    AlreadyReserved(M1S1K4RolloverOutputPortfolioStateV1),
+    /// The compact S1/K4 output allocation failed.
+    Completion(M1CompletionOutputErrorV1),
+    /// Independent S1/K4 choice capture failed and retains the compact output.
+    Diagnostic(Box<crate::M1SpeculativeDiagnosticChoicesAllocationFailureV1>),
+}
+
+impl fmt::Display for M1S1K4RolloverOutputReserveErrorV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            formatter,
+            "M1 S1/K4 rollover output reserve rejected: {self:?}"
+        )
+    }
+}
+
+impl std::error::Error for M1S1K4RolloverOutputReserveErrorV1 {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Completion(source) => Some(source),
+            Self::Diagnostic(source) => Some(source.error()),
+            Self::AlreadyReserved(_) => None,
+        }
+    }
+}
+
+/// Fail-closed activation diagnostic for the preallocated S1/K4 output.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1S1K4RolloverOutputActivationErrorV1 {
+    ReserveUnavailable(M1S1K4RolloverOutputPortfolioStateV1),
+    PriorOutputNotDirect,
+    ReserveOutputDrift,
+}
+
+/// Failed activation retaining the unchanged predecessor direct output.
+#[must_use = "the predecessor output remains live after activation rejection"]
+#[derive(Debug)]
+pub struct M1S1K4RolloverOutputActivationFailureV1 {
+    error: M1S1K4RolloverOutputActivationErrorV1,
+    prior: BoundM1CompletionOutputV1,
+}
+
+impl M1S1K4RolloverOutputActivationFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1S1K4RolloverOutputActivationErrorV1 {
+        self.error
+    }
+
+    #[must_use = "the unchanged predecessor output remains live"]
+    pub fn into_prior(self) -> BoundM1CompletionOutputV1 {
+        self.prior
+    }
 }
 
 /// Opaque Ferric custody retained after generic queue ownership is created.
@@ -788,6 +890,7 @@ pub struct M1PartitionedModelMemoryKvQueueCustodyV1 {
     draft_planes: DraftKvPlaneSubleasesV1,
     target_pages: Box<[M1KvPoolPageStateV1]>,
     draft_pages: Box<[M1KvPoolPageStateV1]>,
+    s1_k4_rollover_output: M1S1K4RolloverOutputPortfolioV1,
 }
 
 impl M1PartitionedModelMemoryKvQueueCustodyV1 {
@@ -795,6 +898,65 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
     #[must_use]
     pub const fn device(&self) -> Gfx942DeviceBinding {
         self.device
+    }
+
+    /// State of the future S1/K4 host-output custody retained in this queue ledger.
+    #[must_use]
+    pub const fn s1_k4_rollover_output_state(&self) -> M1S1K4RolloverOutputPortfolioStateV1 {
+        self.s1_k4_rollover_output.state()
+    }
+
+    /// Retired direct output retained after successful S1/K4 activation.
+    #[must_use = "retired direct host-allocation custody remains live"]
+    pub const fn retired_direct_rollover_output(&self) -> Option<&BoundM1CompletionOutputV1> {
+        match &self.s1_k4_rollover_output {
+            M1S1K4RolloverOutputPortfolioV1::Activated { retired_direct } => Some(retired_direct),
+            M1S1K4RolloverOutputPortfolioV1::Vacant
+            | M1S1K4RolloverOutputPortfolioV1::Reserved(_) => None,
+        }
+    }
+
+    /// Activates the exact preallocated S1/K4 output and retains the replaced
+    /// direct output as typed retired custody in the same queue ledger owner.
+    ///
+    /// # Errors
+    ///
+    /// Returns the unchanged predecessor output when the reserve is absent,
+    /// already activated, or either output's semantic attachment drifted.
+    pub fn activate_s1_k4_rollover_output(
+        &mut self,
+        prior: BoundM1CompletionOutputV1,
+    ) -> Result<BoundM1CompletionOutputV1, M1S1K4RolloverOutputActivationFailureV1> {
+        let state = self.s1_k4_rollover_output.state();
+        let M1S1K4RolloverOutputPortfolioV1::Reserved(reserve) = &self.s1_k4_rollover_output else {
+            return Err(M1S1K4RolloverOutputActivationFailureV1 {
+                error: M1S1K4RolloverOutputActivationErrorV1::ReserveUnavailable(state),
+                prior,
+            });
+        };
+        if !direct_s1_prefill_output_is_valid(&prior) {
+            return Err(M1S1K4RolloverOutputActivationFailureV1 {
+                error: M1S1K4RolloverOutputActivationErrorV1::PriorOutputNotDirect,
+                prior,
+            });
+        }
+        if !s1_k4_rollover_reserve_output_is_valid(&reserve.output) {
+            return Err(M1S1K4RolloverOutputActivationFailureV1 {
+                error: M1S1K4RolloverOutputActivationErrorV1::ReserveOutputDrift,
+                prior,
+            });
+        }
+
+        let M1S1K4RolloverOutputPortfolioV1::Reserved(reserve) = core::mem::replace(
+            &mut self.s1_k4_rollover_output,
+            M1S1K4RolloverOutputPortfolioV1::Vacant,
+        ) else {
+            unreachable!("reserve presence was checked before portfolio activation")
+        };
+        self.s1_k4_rollover_output = M1S1K4RolloverOutputPortfolioV1::Activated {
+            retired_direct: prior,
+        };
+        Ok(reserve.output)
     }
 
     /// Returns one exact role-scoped KV allocation identity without exposing its owner.
@@ -880,6 +1042,24 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
     }
 }
 
+fn direct_s1_prefill_output_is_valid(output: &BoundM1CompletionOutputV1) -> bool {
+    let selection = output.shape().selection();
+    selection.role == Qwen3ModelRole::Target8B
+        && selection.mode == Qwen3ExecutionMode::Prefill
+        && output.shape().sequences() == 1
+        && output.direct_diagnostic_choices().is_some()
+        && output.speculative_diagnostic_choices().is_none()
+        && output.qualification_logits().is_none()
+}
+
+fn s1_k4_rollover_reserve_output_is_valid(output: &BoundM1CompletionOutputV1) -> bool {
+    output.shape().selection() == M1_S1_K4_TARGET_SELECTION_V1
+        && output.shape().sequences() == 1
+        && output.direct_diagnostic_choices().is_none()
+        && output.speculative_diagnostic_choices().is_some()
+        && output.qualification_logits().is_none()
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum M1KvPageReturnErrorV1 {
     Device,
@@ -958,6 +1138,41 @@ impl M1PartitionedModelMemoryKvPoolV1 {
     #[must_use]
     pub const fn device(&self) -> Gfx942DeviceBinding {
         self.device
+    }
+
+    /// State of the one-shot future S1/K4 output portfolio.
+    #[must_use]
+    pub const fn s1_k4_rollover_output_state(&self) -> M1S1K4RolloverOutputPortfolioStateV1 {
+        self.s1_k4_rollover_output.state()
+    }
+
+    /// Allocates a complete inactive S1/K4 compact output and both independent
+    /// diagnostic choice ranges before this pool enters a queue ledger.
+    ///
+    /// The reserve is intentionally not attached to the active direct output,
+    /// so it cannot route buffers or authenticate the predecessor generation.
+    ///
+    /// # Errors
+    ///
+    /// Rejects repeated reservation or returns the exact compact/diagnostic
+    /// allocation failure while retaining this pool's allocation session.
+    pub(crate) fn reserve_s1_k4_rollover_output(
+        &mut self,
+    ) -> Result<(), M1S1K4RolloverOutputReserveErrorV1> {
+        let state = self.s1_k4_rollover_output.state();
+        if state != M1S1K4RolloverOutputPortfolioStateV1::Vacant {
+            return Err(M1S1K4RolloverOutputReserveErrorV1::AlreadyReserved(state));
+        }
+        let completion = self
+            .allocate_completion_output(M1_S1_K4_TARGET_SELECTION_V1)
+            .map_err(M1S1K4RolloverOutputReserveErrorV1::Completion)?;
+        let output = self
+            .enable_speculative_k4_diagnostic_choices_capture(completion)
+            .map_err(M1S1K4RolloverOutputReserveErrorV1::Diagnostic)?;
+        debug_assert!(s1_k4_rollover_reserve_output_is_valid(&output));
+        self.s1_k4_rollover_output =
+            M1S1K4RolloverOutputPortfolioV1::Reserved(M1S1K4RolloverOutputReserveV1 { output });
+        Ok(())
     }
 
     /// Returns the exact inert arena identity retained for one model role.
@@ -1215,6 +1430,7 @@ impl M1PartitionedModelMemoryKvPoolV1 {
                 draft_planes: self.draft_planes,
                 target_pages: self.target_pages,
                 draft_pages: self.draft_pages,
+                s1_k4_rollover_output: self.s1_k4_rollover_output,
             },
         )
     }
@@ -1231,6 +1447,7 @@ impl M1PartitionedModelMemoryKvPoolV1 {
             draft_planes: custody.draft_planes,
             target_pages: custody.target_pages,
             draft_pages: custody.draft_pages,
+            s1_k4_rollover_output: custody.s1_k4_rollover_output,
         }
     }
 
@@ -2378,6 +2595,7 @@ pub fn bind_m1_partitioned_model_memory_kv_pool_v1(
         draft_planes,
         target_pages,
         draft_pages,
+        s1_k4_rollover_output: M1S1K4RolloverOutputPortfolioV1::Vacant,
     })
 }
 
@@ -3408,38 +3626,12 @@ fn quiescent_reselection_pair_is_valid(
     target: Qwen3PlanSelection,
     draft: Qwen3PlanSelection,
 ) -> bool {
-    if target.role != Qwen3ModelRole::Target8B || draft.role != Qwen3ModelRole::Draft06B {
-        return false;
-    }
-    match (target.mode, target.bucket) {
-        (
-            Qwen3ExecutionMode::Prefill,
-            Qwen3PlanBucket::PrefillS1T128
-            | Qwen3PlanBucket::PrefillS8T128
-            | Qwen3PlanBucket::PrefillS1T512
-            | Qwen3PlanBucket::PrefillS1T2048,
-        )
-        | (
-            Qwen3ExecutionMode::Decode,
-            Qwen3PlanBucket::DecodeS1C8192
-            | Qwen3PlanBucket::DecodeS8C8192
-            | Qwen3PlanBucket::DecodeS32C8192,
-        ) => draft.mode == target.mode && draft.bucket == target.bucket,
-        (
-            Qwen3ExecutionMode::Speculative,
-            Qwen3PlanBucket::SpeculativeS1K4C8192
-            | Qwen3PlanBucket::SpeculativeS1K8C8192
-            | Qwen3PlanBucket::SpeculativeS1K16C8192,
-        ) => {
-            draft.mode == Qwen3ExecutionMode::Decode
-                && draft.bucket == Qwen3PlanBucket::DecodeS1C8192
-        }
-        (Qwen3ExecutionMode::Speculative, Qwen3PlanBucket::SpeculativeS8K4C8192) => {
-            draft.mode == Qwen3ExecutionMode::Decode
-                && draft.bucket == Qwen3PlanBucket::DecodeS8C8192
-        }
-        _ => false,
-    }
+    target.role == Qwen3ModelRole::Target8B
+        && draft.role == Qwen3ModelRole::Draft06B
+        && target.mode == draft.mode
+        && target.bucket == draft.bucket
+        && target.validate().is_ok()
+        && draft.validate().is_ok()
 }
 
 impl DeviceKvCacheCommon {
@@ -6426,6 +6618,11 @@ mod tests {
             Qwen3PlanBucket::SpeculativeS1K8C8192,
             Qwen3PlanBucket::SpeculativeS1K16C8192,
         ] {
+            let draft_speculative = selected(
+                Qwen3ModelRole::Draft06B,
+                Qwen3ExecutionMode::Speculative,
+                bucket,
+            );
             assert_successful_reselection(
                 &mut cache,
                 selected(
@@ -6433,7 +6630,7 @@ mod tests {
                     Qwen3ExecutionMode::Speculative,
                     bucket,
                 ),
-                draft_decode_s1,
+                draft_speculative,
             );
         }
 
@@ -6442,20 +6639,31 @@ mod tests {
             Qwen3ExecutionMode::Speculative,
             Qwen3PlanBucket::SpeculativeS8K4C8192,
         );
-        let draft_decode_s8 = selected(
+        let draft_speculative_s8 = selected(
             Qwen3ModelRole::Draft06B,
-            Qwen3ExecutionMode::Decode,
-            Qwen3PlanBucket::DecodeS8C8192,
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS8K4C8192,
         );
-        assert_successful_reselection(&mut cache, target_speculative_s8, draft_decode_s8);
+        assert_successful_reselection(&mut cache, target_speculative_s8, draft_speculative_s8);
+        let target_speculative_s1 = selected(
+            Qwen3ModelRole::Target8B,
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+        );
         assert_successful_reselection(
             &mut cache,
+            target_speculative_s1,
             selected(
-                Qwen3ModelRole::Target8B,
+                Qwen3ModelRole::Draft06B,
                 Qwen3ExecutionMode::Speculative,
                 Qwen3PlanBucket::SpeculativeS1K4C8192,
             ),
+        );
+        assert_reselection_rejected_unchanged(
+            &mut cache,
+            target_speculative_s1,
             draft_decode_s1,
+            DeviceKvCacheError::PlanPairMismatch,
         );
         assert_successful_reselection(&mut cache, target_decode_s1, draft_decode_s1);
     }
@@ -7205,6 +7413,39 @@ mod tests {
                 .unwrap();
             assert_eq!(recovered.draft_tokens(), 4);
         }
+    }
+
+    #[test]
+    fn quiescent_prefill_to_speculative_reselection_admits_exact_draft_round() {
+        let bucket = Qwen3PlanBucket::SpeculativeS1K4C8192;
+        let target = selected(
+            Qwen3ModelRole::Target8B,
+            Qwen3ExecutionMode::Speculative,
+            bucket,
+        );
+        let (draft_cache, draft_decode, _) = m1_speculative_draft_round_shape_v1(target).unwrap();
+        let mut cache = cache_for(
+            request(),
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        );
+
+        cache.reselect_quiescent(target, draft_cache).unwrap();
+        let reservation = cache
+            .reserve_speculative_draft_round_write(
+                request(),
+                target,
+                draft_decode,
+                0,
+                CompletionEpoch::new(151),
+                leases(Qwen3ModelRole::Draft06B, 0, 1, 151),
+            )
+            .unwrap();
+
+        assert_eq!(reservation.target_speculative_selection(), target);
+        assert_eq!(reservation.draft_decode_selection(), draft_decode);
+        assert_eq!(reservation.draft_tokens(), 4);
+        assert!(cache.projection().draft_write_pending);
     }
 
     #[test]

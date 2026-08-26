@@ -134,6 +134,25 @@ impl M1ServingPlanV1 {
         self.draft
     }
 
+    /// Exact draft selection retained by device-KV state.
+    ///
+    /// Speculative execution reuses a one-token draft-decode workspace, but
+    /// its device-KV reservation spans the complete speculative round. The KV
+    /// cache therefore retains the role-adjusted speculative selection while
+    /// [`Self::draft`] continues to name the reusable decode workspace.
+    #[must_use]
+    pub const fn draft_cache_selection(self) -> Qwen3PlanSelection {
+        if matches!(self.target.mode, Qwen3ExecutionMode::Speculative) {
+            Qwen3PlanSelection {
+                role: Qwen3ModelRole::Draft06B,
+                mode: self.target.mode,
+                bucket: self.target.bucket,
+            }
+        } else {
+            self.draft
+        }
+    }
+
     #[must_use]
     pub const fn mode(self) -> Qwen3ExecutionMode {
         self.target.mode
@@ -1098,6 +1117,14 @@ mod tests {
 
             assert_eq!(plan.target(), target);
             assert_eq!(plan.draft(), draft);
+            assert_eq!(
+                plan.draft_cache_selection(),
+                selection(
+                    Qwen3ModelRole::Draft06B,
+                    Qwen3ExecutionMode::Speculative,
+                    target_bucket,
+                )
+            );
             assert_eq!(plan.shape(), expected_shape);
         }
     }

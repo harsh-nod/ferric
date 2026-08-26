@@ -440,6 +440,23 @@ impl M1AllocatedScheduledStepV1 {
             .allocate_guarded_completion_output(selection)
     }
 
+    /// Preallocates the inactive compact output and independent diagnostic
+    /// choices required by a future exact S1/K4 queue rollover.
+    ///
+    /// This must complete before first queue construction because the generic
+    /// detached-queue API can replace, but cannot insert, host-visible
+    /// allocations.
+    ///
+    /// # Errors
+    ///
+    /// Rejects repeated reservation or returns the exact host allocation
+    /// failure while this allocated step retains the model/allocation pool.
+    pub fn reserve_s1_k4_rollover_output(
+        &mut self,
+    ) -> Result<(), crate::M1S1K4RolloverOutputReserveErrorV1> {
+        self.partitioned_memory.reserve_s1_k4_rollover_output()
+    }
+
     /// Attaches qualification logits without permitting another device allocation.
     ///
     /// # Errors
