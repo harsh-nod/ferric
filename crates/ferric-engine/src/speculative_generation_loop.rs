@@ -585,6 +585,50 @@ impl M1SpeculativeMemberRoundOutcomeV1 {
     }
 }
 
+#[cfg(test)]
+impl M1SpeculativeMemberRoundOutcomeV1 {
+    pub(crate) fn for_serving_rearm_test(
+        request: RequestId,
+        status: M1SpeculativeMemberStatusV1,
+        next_draft_anchor: Option<TokenId>,
+        target_commit_end: u32,
+        draft_commit_end: u32,
+    ) -> Self {
+        let token = next_draft_anchor.unwrap_or_default();
+        let emitted = M1SpeculativeTokenBlockV1::from_slice(&[token])
+            .expect("one test token fits the bounded speculative block");
+        let active = status == M1SpeculativeMemberStatusV1::Active;
+        Self {
+            request,
+            accepted_draft_tokens: 0,
+            raw_emitted: emitted,
+            published: emitted,
+            verification_choice: M1SpeculativeVerificationChoiceV1::Correction { token },
+            target_settlement: M1SpeculativeKvRoleSettlementV1 {
+                role: Qwen3ModelRole::Target8B,
+                pre_committed: target_commit_end.saturating_sub(1),
+                tentative_end: target_commit_end,
+                commit_end: target_commit_end,
+                rollback_tokens: 0,
+            },
+            draft_settlement: M1SpeculativeKvRoleSettlementV1 {
+                role: Qwen3ModelRole::Draft06B,
+                pre_committed: draft_commit_end.saturating_sub(1),
+                tentative_end: draft_commit_end,
+                commit_end: draft_commit_end,
+                rollback_tokens: 0,
+            },
+            status,
+            physical_disposition: if active {
+                M1DeviceKvCompletionDispositionV1::Continue
+            } else {
+                M1DeviceKvCompletionDispositionV1::Retire
+            },
+            next_draft_anchor,
+        }
+    }
+}
+
 /// Whole-roster result after atomic coordinator state mutation.
 #[must_use = "round publication and next-roster state must be consumed"]
 #[derive(Debug)]

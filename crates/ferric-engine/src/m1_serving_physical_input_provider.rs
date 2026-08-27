@@ -5,7 +5,7 @@
 //! front, rejects a wrong next phase or batch binding without dequeueing it,
 //! and retains every subsequently consumed owner in terminal phase custody.
 //! Completion semantics are never derived from compact completion bytes: the
-//! provider attaches the independent direct or S1/K4 diagnostic allocation
+//! provider attaches the independent direct or finite-speculative allocation
 //! required by the selected serving plan.
 
 use core::fmt;
@@ -127,6 +127,14 @@ pub struct M1ServingQueuedSameShapeRearmV1 {
     recipe_plans: M1FullStepWorkspacePlans,
 }
 
+pub(crate) struct M1ServingCommittedSpeculativeMemberBindingV1 {
+    pub(crate) request: RequestId,
+    pub(crate) epoch: CompletionEpoch,
+    pub(crate) anchor: ferric_spec::TokenId,
+    pub(crate) target_committed: u32,
+    pub(crate) draft_committed: u32,
+}
+
 impl M1ServingQueuedSameShapeRearmV1 {
     pub const fn new(
         binding: M1ServingQueuedGenerationBindingV1,
@@ -147,13 +155,11 @@ impl M1ServingQueuedSameShapeRearmV1 {
         &self.binding
     }
 
-    pub(crate) fn matches_committed_s1_k4_member(
+    pub(crate) fn matches_committed_speculative_member(
         &self,
-        request: RequestId,
-        epoch: CompletionEpoch,
-        anchor: ferric_spec::TokenId,
-        target_committed: u32,
-        draft_committed: u32,
+        lane: usize,
+        expected_live_lanes: usize,
+        member: &M1ServingCommittedSpeculativeMemberBindingV1,
     ) -> bool {
         let M1LongLivedQueueRearmKvInputsV1::SpeculativeRound {
             draft_decode,
@@ -163,47 +169,61 @@ impl M1ServingQueuedSameShapeRearmV1 {
         else {
             return false;
         };
+        let target_width = target_speculative.dimensions().active_tokens as usize;
+        let Some(target_row_start) = lane.checked_mul(target_width) else {
+            return false;
+        };
+        let Some(target_row_end) = target_row_start.checked_add(target_width) else {
+            return false;
+        };
+        let Some(target_future_start) = target_row_start.checked_add(1) else {
+            return false;
+        };
         speculative_role_input_matches(
             draft_decode,
             self.binding.plan().draft(),
-            request,
-            epoch,
-            anchor,
-            draft_committed,
-            1,
+            lane,
+            expected_live_lanes,
+            member,
+            member.draft_committed,
         ) && speculative_role_input_matches(
             target_speculative,
             self.binding.plan().target(),
-            request,
-            epoch,
-            anchor,
-            target_committed,
-            5,
-        ) && target_speculative.token_ids().get(1..) == Some(&[0, 0, 0, 0])
+            lane,
+            expected_live_lanes,
+            member,
+            member.target_committed,
+        ) && target_speculative
+            .token_ids()
+            .get(target_future_start..target_row_end)
+            .is_some_and(|future| future.iter().all(|token| *token == 0))
     }
 }
 
 fn speculative_role_input_matches(
     input: &ferric_spec::ValidatedM1StepInputs,
     selection: ferric_spec::Qwen3PlanSelection,
-    request: RequestId,
-    epoch: CompletionEpoch,
-    anchor: ferric_spec::TokenId,
+    lane: usize,
+    expected_live_lanes: usize,
+    member: &M1ServingCommittedSpeculativeMemberBindingV1,
     committed: u32,
-    active_width: u32,
 ) -> bool {
-    let Some(plan) = input.lanes().first().and_then(Option::as_ref) else {
+    let Some(plan) = input.lanes().get(lane).and_then(Option::as_ref) else {
+        return false;
+    };
+    let width = input.dimensions().active_tokens as usize;
+    let Some(row_start) = lane.checked_mul(width) else {
         return false;
     };
     input.selection() == selection
-        && input.live_lane_count() == 1
+        && input.live_lane_count() as usize == expected_live_lanes
         && plan.selection() == selection
-        && plan.request() == request
-        && plan.completion_epoch() == epoch
-        && input.token_ids().first() == Some(&anchor)
-        && input.position_ids().first() == Some(&committed)
-        && input.active_lengths().first() == Some(&active_width)
-        && input.context_lengths().first() == Some(&committed)
+        && plan.request() == member.request
+        && plan.completion_epoch() == member.epoch
+        && input.token_ids().get(row_start) == Some(&member.anchor)
+        && input.position_ids().get(row_start) == Some(&committed)
+        && input.active_lengths().get(lane) == Some(&input.dimensions().active_tokens)
+        && input.context_lengths().get(lane) == Some(&committed)
 }
 
 /// Exact paired-prefill to S1/K4 successor owners queued before detachment.
@@ -448,12 +468,12 @@ impl M1QueuedServingPhysicalInputProviderV1 {
         Ok(())
     }
 
-    /// Appends one typed same-shape S1/K4 rearm for the validated serving adapter.
+    /// Appends one finite-speculative same-shape rearm for the serving adapter.
     ///
     /// # Errors
     ///
     /// Returns the allocation diagnostic and unchanged pre-boxed input.
-    pub(crate) fn try_enqueue_s1_k4_rearm(
+    pub(crate) fn try_enqueue_speculative_rearm(
         &mut self,
         input: Box<M1ServingQueuedSameShapeRearmV1>,
     ) -> Result<(), (TryReserveError, Box<M1ServingQueuedSameShapeRearmV1>)> {
@@ -484,46 +504,42 @@ impl M1QueuedServingPhysicalInputProviderV1 {
     }
 }
 
-fn workspace_kind(plan: M1ServingPlanV1) -> Option<M1FullStepWorkspaceInputKind> {
+fn workspace_kind(plan: M1ServingPlanV1) -> M1FullStepWorkspaceInputKind {
     match plan.shape() {
-        M1PhysicalFixedBatchShapeV1::PairedPrefill => {
-            Some(M1FullStepWorkspaceInputKind::PairedPrefill)
+        M1PhysicalFixedBatchShapeV1::PairedPrefill => M1FullStepWorkspaceInputKind::PairedPrefill,
+        M1PhysicalFixedBatchShapeV1::TargetOnly => M1FullStepWorkspaceInputKind::TargetOnly,
+        M1PhysicalFixedBatchShapeV1::SpeculativeK4
+        | M1PhysicalFixedBatchShapeV1::SpeculativeK8
+        | M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
+            M1FullStepWorkspaceInputKind::SpeculativeRound
         }
-        M1PhysicalFixedBatchShapeV1::TargetOnly => Some(M1FullStepWorkspaceInputKind::TargetOnly),
-        M1PhysicalFixedBatchShapeV1::SpeculativeK4 => {
-            Some(M1FullStepWorkspaceInputKind::SpeculativeRound)
-        }
-        M1PhysicalFixedBatchShapeV1::SpeculativeK8
-        | M1PhysicalFixedBatchShapeV1::SpeculativeK16 => None,
     }
 }
 
-fn dispatch_intent(plan: M1ServingPlanV1) -> Option<M1StepDispatchIntent> {
+fn dispatch_intent(plan: M1ServingPlanV1) -> M1StepDispatchIntent {
     match plan.shape() {
         M1PhysicalFixedBatchShapeV1::PairedPrefill => {
-            Some(M1StepDispatchIntent::PairedPrefill(plan.target()))
+            M1StepDispatchIntent::PairedPrefill(plan.target())
         }
-        M1PhysicalFixedBatchShapeV1::TargetOnly => {
-            Some(M1StepDispatchIntent::TargetOnly(plan.target()))
+        M1PhysicalFixedBatchShapeV1::TargetOnly => M1StepDispatchIntent::TargetOnly(plan.target()),
+        M1PhysicalFixedBatchShapeV1::SpeculativeK4
+        | M1PhysicalFixedBatchShapeV1::SpeculativeK8
+        | M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
+            M1StepDispatchIntent::SpeculativeRound(plan.target())
         }
-        M1PhysicalFixedBatchShapeV1::SpeculativeK4 => {
-            Some(M1StepDispatchIntent::SpeculativeRound(plan.target()))
-        }
-        M1PhysicalFixedBatchShapeV1::SpeculativeK8
-        | M1PhysicalFixedBatchShapeV1::SpeculativeK16 => None,
     }
 }
 
-fn semantic_evidence(plan: M1ServingPlanV1) -> Option<M1ServingPreparedSemanticEvidenceV1> {
+fn semantic_evidence(plan: M1ServingPlanV1) -> M1ServingPreparedSemanticEvidenceV1 {
     match plan.shape() {
         M1PhysicalFixedBatchShapeV1::PairedPrefill | M1PhysicalFixedBatchShapeV1::TargetOnly => {
-            Some(M1ServingPreparedSemanticEvidenceV1::Direct)
+            M1ServingPreparedSemanticEvidenceV1::Direct
         }
-        M1PhysicalFixedBatchShapeV1::SpeculativeK4 => {
-            Some(M1ServingPreparedSemanticEvidenceV1::SpeculativeK4)
+        M1PhysicalFixedBatchShapeV1::SpeculativeK4
+        | M1PhysicalFixedBatchShapeV1::SpeculativeK8
+        | M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
+            M1ServingPreparedSemanticEvidenceV1::SpeculativeK4
         }
-        M1PhysicalFixedBatchShapeV1::SpeculativeK8
-        | M1PhysicalFixedBatchShapeV1::SpeculativeK16 => None,
     }
 }
 
@@ -554,9 +570,7 @@ fn first_physical_preflight(
     input: &M1ServingQueuedFirstPublicationV1,
     batch: &M1ServingBatchPlanV1,
 ) -> Result<(), M1ServingPhysicalInputPreparationErrorV1> {
-    let Some(expected_kind) = workspace_kind(batch.plan()) else {
-        return Err(M1ServingPhysicalInputPreparationErrorV1::UnsupportedPlanShape);
-    };
+    let expected_kind = workspace_kind(batch.plan());
     if input.tables.kind() != expected_kind
         || input.preparation_plans.kind() != expected_kind
         || input.recipe_plans.kind() != expected_kind
@@ -588,9 +602,7 @@ fn continuation_physical_preflight(
     recipe_plans: &M1FullStepWorkspacePlans,
     batch: &M1ServingBatchPlanV1,
 ) -> Result<(), M1ServingPhysicalInputPreparationErrorV1> {
-    let Some(expected_kind) = workspace_kind(batch.plan()) else {
-        return Err(M1ServingPhysicalInputPreparationErrorV1::UnsupportedPlanShape);
-    };
+    let expected_kind = workspace_kind(batch.plan());
     if preparation_plans.kind() == expected_kind && recipe_plans.kind() == expected_kind {
         Ok(())
     } else {
@@ -659,21 +671,7 @@ impl<const C: usize> M1ServingPhysicalInputProviderV1<C>
             recipe_plans,
             selected,
         } = *input;
-        let Some(intent) = dispatch_intent(binding.plan()) else {
-            return Err(preparation_failure(
-                M1ServingPhysicalInputPreparationPhaseV1::RecipeDerivation,
-                M1ServingPhysicalInputPreparationErrorV1::UnsupportedPlanShape,
-                (
-                    binding,
-                    memory,
-                    tables,
-                    preparation_plans,
-                    recipe_plans,
-                    selected,
-                    scheduled,
-                ),
-            ));
-        };
+        let intent = dispatch_intent(binding.plan());
         let recipe = match runner.derive_step_recipe(intent, recipe_plans) {
             M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
             M1PhysicalRunnerRecipeOutcomeV1::Rejected(failure) => {
@@ -733,13 +731,7 @@ impl<const C: usize> M1ServingPhysicalInputProviderV1<C>
                 ));
             }
         };
-        let Some(semantic_evidence) = semantic_evidence(binding.plan()) else {
-            return Err(preparation_failure(
-                M1ServingPhysicalInputPreparationPhaseV1::SemanticEvidenceAllocation,
-                M1ServingPhysicalInputPreparationErrorV1::UnsupportedPlanShape,
-                (binding, allocated, selected, recipe, completion_output),
-            ));
-        };
+        let semantic_evidence = semantic_evidence(binding.plan());
         let completion_output = match semantic_evidence {
             M1ServingPreparedSemanticEvidenceV1::Direct => {
                 match allocated.enable_direct_diagnostic_choices_capture(completion_output) {
@@ -753,9 +745,26 @@ impl<const C: usize> M1ServingPhysicalInputProviderV1<C>
                     }
                 }
             }
-            M1ServingPreparedSemanticEvidenceV1::SpeculativeK4 => {
+            M1ServingPreparedSemanticEvidenceV1::SpeculativeK4
+                if binding.plan().shape() == M1PhysicalFixedBatchShapeV1::SpeculativeK4
+                    && binding.plan().sequence_capacity() == 1
+                    && binding.plan().target().bucket
+                        == ferric_spec::Qwen3PlanBucket::SpeculativeS1K4C8192 =>
+            {
                 match allocated.enable_speculative_k4_diagnostic_choices_capture(completion_output)
                 {
+                    Ok(completion_output) => completion_output,
+                    Err(failure) => {
+                        return Err(preparation_failure(
+                            M1ServingPhysicalInputPreparationPhaseV1::SemanticEvidenceAllocation,
+                            M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
+                            (binding, allocated, selected, recipe, failure),
+                        ));
+                    }
+                }
+            }
+            M1ServingPreparedSemanticEvidenceV1::SpeculativeK4 => {
+                match allocated.enable_speculative_diagnostic_choices_capture(completion_output) {
                     Ok(completion_output) => completion_output,
                     Err(failure) => {
                         return Err(preparation_failure(
@@ -832,19 +841,7 @@ impl<const C: usize> M1ServingPhysicalInputProviderV1<C>
             preparation_plans,
             recipe_plans,
         } = *input;
-        let Some(intent) = dispatch_intent(binding.plan()) else {
-            return Err(preparation_failure(
-                M1ServingPhysicalInputPreparationPhaseV1::RecipeDerivation,
-                M1ServingPhysicalInputPreparationErrorV1::UnsupportedPlanShape,
-                (
-                    binding,
-                    kv_inputs,
-                    preparation_plans,
-                    recipe_plans,
-                    scheduled,
-                ),
-            ));
-        };
+        let intent = dispatch_intent(binding.plan());
         let recipe = match runner.derive_step_recipe(intent, recipe_plans) {
             M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
             M1PhysicalRunnerRecipeOutcomeV1::Rejected(failure) => {
@@ -880,13 +877,7 @@ impl<const C: usize> M1ServingPhysicalInputProviderV1<C>
                 ));
             }
         };
-        let Some(semantic_evidence) = semantic_evidence(binding.plan()) else {
-            return Err(preparation_failure(
-                M1ServingPhysicalInputPreparationPhaseV1::PhysicalInputPreflight,
-                M1ServingPhysicalInputPreparationErrorV1::UnsupportedPlanShape,
-                (binding, prepared, recipe),
-            ));
-        };
+        let semantic_evidence = semantic_evidence(binding.plan());
         Ok(M1ServingPreparedSameShapeRearmV1::new(
             prepared,
             recipe,
@@ -1078,62 +1069,70 @@ mod tests {
             Qwen3ExecutionMode::Decode,
             Qwen3PlanBucket::DecodeS8C8192,
         );
-        let speculative = serving_plan(
-            Qwen3ExecutionMode::Speculative,
-            Qwen3PlanBucket::SpeculativeS1K4C8192,
-            Qwen3ExecutionMode::Decode,
-            Qwen3PlanBucket::DecodeS1C8192,
-        );
-
         assert_eq!(paired.shape(), M1PhysicalFixedBatchShapeV1::PairedPrefill);
         assert_eq!(
             workspace_kind(paired),
-            Some(M1FullStepWorkspaceInputKind::PairedPrefill)
+            M1FullStepWorkspaceInputKind::PairedPrefill
         );
         assert_eq!(
             dispatch_intent(paired),
-            Some(M1StepDispatchIntent::PairedPrefill(paired.target()))
+            M1StepDispatchIntent::PairedPrefill(paired.target())
         );
         assert!(matches!(
             semantic_evidence(paired),
-            Some(M1ServingPreparedSemanticEvidenceV1::Direct)
+            M1ServingPreparedSemanticEvidenceV1::Direct
         ));
 
         assert_eq!(
             workspace_kind(direct),
-            Some(M1FullStepWorkspaceInputKind::TargetOnly)
+            M1FullStepWorkspaceInputKind::TargetOnly
         );
         assert_eq!(
             dispatch_intent(direct),
-            Some(M1StepDispatchIntent::TargetOnly(direct.target()))
+            M1StepDispatchIntent::TargetOnly(direct.target())
         );
         assert!(matches!(
             semantic_evidence(direct),
-            Some(M1ServingPreparedSemanticEvidenceV1::Direct)
+            M1ServingPreparedSemanticEvidenceV1::Direct
         ));
 
-        assert_eq!(
-            workspace_kind(speculative),
-            Some(M1FullStepWorkspaceInputKind::SpeculativeRound)
-        );
-        assert_eq!(
-            dispatch_intent(speculative),
-            Some(M1StepDispatchIntent::SpeculativeRound(speculative.target()))
-        );
-        assert!(matches!(
-            semantic_evidence(speculative),
-            Some(M1ServingPreparedSemanticEvidenceV1::SpeculativeK4)
-        ));
-
-        let unsupported = serving_plan(
-            Qwen3ExecutionMode::Speculative,
-            Qwen3PlanBucket::SpeculativeS1K8C8192,
-            Qwen3ExecutionMode::Decode,
-            Qwen3PlanBucket::DecodeS1C8192,
-        );
-        assert_eq!(workspace_kind(unsupported), None);
-        assert_eq!(dispatch_intent(unsupported), None);
-        assert!(semantic_evidence(unsupported).is_none());
+        for (target_bucket, draft_bucket) in [
+            (
+                Qwen3PlanBucket::SpeculativeS1K4C8192,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+            (
+                Qwen3PlanBucket::SpeculativeS8K4C8192,
+                Qwen3PlanBucket::DecodeS8C8192,
+            ),
+            (
+                Qwen3PlanBucket::SpeculativeS1K8C8192,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+            (
+                Qwen3PlanBucket::SpeculativeS1K16C8192,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+        ] {
+            let speculative = serving_plan(
+                Qwen3ExecutionMode::Speculative,
+                target_bucket,
+                Qwen3ExecutionMode::Decode,
+                draft_bucket,
+            );
+            assert_eq!(
+                workspace_kind(speculative),
+                M1FullStepWorkspaceInputKind::SpeculativeRound
+            );
+            assert_eq!(
+                dispatch_intent(speculative),
+                M1StepDispatchIntent::SpeculativeRound(speculative.target())
+            );
+            assert!(matches!(
+                semantic_evidence(speculative),
+                M1ServingPreparedSemanticEvidenceV1::SpeculativeK4
+            ));
+        }
     }
 
     #[test]

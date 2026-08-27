@@ -228,6 +228,25 @@ impl M1CheckedCompletionOutputV1 {
             records: Box::new([]),
         }
     }
+
+    pub(crate) fn for_serving_history_test(
+        selection: Qwen3PlanSelection,
+        epoch: CompletionEpoch,
+        records: Box<[InertCheckedCompletionRecord]>,
+    ) -> Self {
+        Self {
+            selection,
+            epoch,
+            dispatch_generation: 0,
+            data_index: 0,
+            offset_bytes: 0,
+            extent_bytes: 0,
+            raw_sha256: [0; 32],
+            completion_canary: None,
+            completion_canary_readback: None,
+            records,
+        }
+    }
 }
 
 pub(crate) fn check_m1_completed_output_v1(

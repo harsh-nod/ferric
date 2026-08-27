@@ -275,15 +275,18 @@ pub use m1_serving_physical_input_provider::{
 };
 pub use m1_serving_physical_operations::{
     M1ServingFirstReadbackStateV1, M1ServingPhysicalInputProviderV1,
-    M1ServingPhysicalRunnerDiagnosticHistoryV1, M1ServingPhysicalRunnerGenerationEnqueueFailureV1,
+    M1ServingPhysicalRunnerDiagnosticBindingV1, M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    M1ServingPhysicalRunnerGenerationEnqueueFailureV1,
     M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1, M1ServingPhysicalRunnerOperationErrorV1,
     M1ServingPhysicalRunnerOperationsCreateErrorV1, M1ServingPhysicalRunnerOperationsV1,
     M1ServingPhysicalRunnerPublishedV1, M1ServingPhysicalRunnerQuiescentV1,
     M1ServingPhysicalRunnerReadbackEvidenceV1, M1ServingPhysicalRunnerReadbackV1,
-    M1ServingPhysicalRunnerS1K4RearmEnqueueFailureV1, M1ServingPhysicalRunnerTerminalCustodyV1,
-    M1ServingPhysicalRunnerTerminalLowerCustodyV1, M1ServingPreparedFirstPublicationV1,
-    M1ServingPreparedS1K4RolloverV1, M1ServingPreparedSameShapeRearmV1,
-    M1ServingPreparedSemanticEvidenceV1, M1ServingRearmedReadbackStateV1,
+    M1ServingPhysicalRunnerS1K4RearmEnqueueFailureV1,
+    M1ServingPhysicalRunnerSpeculativeRearmEnqueueFailureV1,
+    M1ServingPhysicalRunnerTerminalCustodyV1, M1ServingPhysicalRunnerTerminalLowerCustodyV1,
+    M1ServingPreparedFirstPublicationV1, M1ServingPreparedS1K4RolloverV1,
+    M1ServingPreparedSameShapeRearmV1, M1ServingPreparedSemanticEvidenceV1,
+    M1ServingRearmedReadbackStateV1,
 };
 pub use m1_serving_registry::{
     M1ServingBatchPlanV1, M1ServingCompletionDispositionV1, M1ServingPlanV1,

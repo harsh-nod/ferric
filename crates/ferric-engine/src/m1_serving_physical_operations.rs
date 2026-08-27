@@ -5,9 +5,8 @@
 //! [`M1ServingPhysicalInputProviderV1`], while this adapter alone performs the
 //! exact scheduler transition and consumes the resulting physical typestates.
 //! Direct paired-prefill and target-only generations use compact final-row
-//! semantics. S1/K4 speculative generations additionally require the
-//! independent diagnostic-choice attachment. Wider speculative shapes fail
-//! before scheduler or queue progress.
+//! semantics. Finite speculative generations additionally require the exact
+//! independent diagnostic-choice attachment for their selected S/K shape.
 
 use core::{
     fmt,
@@ -15,6 +14,8 @@ use core::{
 };
 
 use ferric_spec::{completion::CompletionEpoch, Qwen3PlanBucket, RequestId};
+
+use crate::m1_serving_physical_input_provider::M1ServingCommittedSpeculativeMemberBindingV1;
 
 use crate::{
     complete_m1_physical_step_v1, release_m1_completed_step_kv_pages_v1,
@@ -55,7 +56,10 @@ pub struct M1ServingPreparedFirstPublicationV1 {
 pub enum M1ServingPreparedSemanticEvidenceV1 {
     /// Direct choices will come from the attached independent K6 capture.
     Direct,
-    /// S1/K4 will derive its expectations from the attached independent choices.
+    /// Finite speculation derives expectations from attached independent choices.
+    ///
+    /// The variant name is retained for source compatibility with the original
+    /// exact S1/K4 serving API.
     SpeculativeK4,
 }
 
@@ -216,12 +220,40 @@ impl M1ServingPhysicalRunnerAdapterIdentityV1 {
 #[derive(Debug)]
 pub struct M1ServingPhysicalRunnerDiagnosticHistoryV1 {
     evidence: Vec<M1ServingPhysicalRunnerReadbackEvidenceV1>,
+    bindings: Vec<M1ServingPhysicalRunnerDiagnosticBindingV1>,
+}
+
+/// Exact serving identity for one retained diagnostic evidence generation.
+#[derive(Debug, Eq, PartialEq)]
+pub struct M1ServingPhysicalRunnerDiagnosticBindingV1 {
+    plan: M1ServingPlanV1,
+    epoch: CompletionEpoch,
+    requests: Vec<RequestId>,
+}
+
+impl M1ServingPhysicalRunnerDiagnosticBindingV1 {
+    #[must_use]
+    pub const fn plan(&self) -> M1ServingPlanV1 {
+        self.plan
+    }
+
+    #[must_use]
+    pub const fn epoch(&self) -> CompletionEpoch {
+        self.epoch
+    }
+
+    /// Ordered live request roster corresponding to evidence lane order.
+    #[must_use]
+    pub fn requests(&self) -> &[RequestId] {
+        &self.requests
+    }
 }
 
 impl M1ServingPhysicalRunnerDiagnosticHistoryV1 {
     fn new() -> Self {
         Self {
             evidence: Vec::new(),
+            bindings: Vec::new(),
         }
     }
 
@@ -233,17 +265,50 @@ impl M1ServingPhysicalRunnerDiagnosticHistoryV1 {
         &mut self,
         additional: usize,
     ) -> Result<(), std::collections::TryReserveError> {
-        self.evidence.try_reserve_exact(additional)
+        self.evidence.try_reserve_exact(additional)?;
+        self.bindings.try_reserve_exact(additional)
     }
 
-    fn push(&mut self, evidence: M1ServingPhysicalRunnerReadbackEvidenceV1) {
+    fn push(
+        &mut self,
+        evidence: M1ServingPhysicalRunnerReadbackEvidenceV1,
+        binding: M1ServingPhysicalRunnerDiagnosticBindingV1,
+    ) {
         self.evidence.push(evidence);
+        self.bindings.push(binding);
     }
 
     /// Borrows settled direct or speculative evidence in generation order.
     pub fn evidence(&self) -> &[M1ServingPhysicalRunnerReadbackEvidenceV1] {
         &self.evidence
     }
+
+    /// Borrows exact plan, epoch, and live-roster bindings in evidence order.
+    #[must_use]
+    pub fn bindings(&self) -> &[M1ServingPhysicalRunnerDiagnosticBindingV1] {
+        debug_assert_eq!(self.evidence.len(), self.bindings.len());
+        &self.bindings
+    }
+}
+
+fn prepare_diagnostic_binding(
+    plan: M1ServingPlanV1,
+    epoch: CompletionEpoch,
+    checked: &M1CheckedCompletionOutputV1,
+) -> Result<M1ServingPhysicalRunnerDiagnosticBindingV1, std::collections::TryReserveError> {
+    let mut requests = Vec::new();
+    requests.try_reserve_exact(checked.records().len())?;
+    requests.extend(
+        checked
+            .records()
+            .iter()
+            .map(|record| record.record().request),
+    );
+    Ok(M1ServingPhysicalRunnerDiagnosticBindingV1 {
+        plan,
+        epoch,
+        requests,
+    })
 }
 
 /// Complete quiescent physical custody returned after one serving settlement.
@@ -339,7 +404,7 @@ impl M1ServingPhysicalRunnerQuiescentV1 {
     }
 }
 
-/// One physically published S1/K4 serving generation.
+/// One physically published serving generation.
 #[must_use = "published physical generation must complete or remain retained"]
 #[derive(Debug)]
 #[allow(clippy::large_enum_variant)]
@@ -405,17 +470,24 @@ pub enum M1ServingRearmedReadbackStateV1 {
 pub enum M1ServingPhysicalRunnerReadbackEvidenceV1 {
     /// Independent target choices for paired-prefill or target-only semantics.
     Direct(crate::M1ObservedDirectDiagnosticChoicesV1),
-    /// Independent S1/K4 draft and target choices.
+    /// Independent finite-speculative draft and target choices.
+    ///
+    /// The variant name is retained for source compatibility with the original
+    /// exact S1/K4 serving API.
     SpeculativeK4(Box<M1ObservedSpeculativeDiagnosticChoicesV1>),
 }
 
 impl M1ServingPhysicalRunnerReadbackEvidenceV1 {
-    fn append_diagnostic_history(self, history: &mut M1ServingPhysicalRunnerDiagnosticHistoryV1) {
-        history.push(self);
+    fn append_diagnostic_history(
+        self,
+        history: &mut M1ServingPhysicalRunnerDiagnosticHistoryV1,
+        binding: M1ServingPhysicalRunnerDiagnosticBindingV1,
+    ) {
+        history.push(self, binding);
     }
 }
 
-/// Semantically joined readback retaining independent S1/K4 choice evidence.
+/// Semantically joined readback retaining independent choice evidence.
 #[must_use = "readback, caches, and diagnostic choices must settle or remain retained"]
 #[derive(Debug)]
 #[allow(clippy::large_enum_variant)]
@@ -590,7 +662,7 @@ impl M1ServingPhysicalRunnerGenerationEnqueueFailureV1 {
     }
 }
 
-/// Exhaustive failure to append one committed same-shape S1/K4 rearm.
+/// Exhaustive failure to append one committed finite-speculative rearm.
 ///
 /// Both variants retain the exact pre-boxed input. `Unavailable` means no
 /// provider queue mutation was attempted; `Provider` preserves the lower
@@ -651,6 +723,10 @@ impl M1ServingPhysicalRunnerS1K4RearmEnqueueFailureV1 {
         }
     }
 }
+
+/// Shape-generic name for finite-speculative rearm enqueue failures.
+pub type M1ServingPhysicalRunnerSpeculativeRearmEnqueueFailureV1 =
+    M1ServingPhysicalRunnerS1K4RearmEnqueueFailureV1;
 
 /// Stable stage reported through the generic serving bridge.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1113,7 +1189,7 @@ impl<const C: usize>
             })
     }
 
-    /// Appends one same-shape S1/K4 successor after atomic speculative commit.
+    /// Appends one finite-speculative successor after atomic speculative commit.
     ///
     /// The borrowed outcome is coordinator authority produced only after
     /// physical settlement and registry commit. The provider queue changes
@@ -1124,19 +1200,15 @@ impl<const C: usize>
     ///
     /// Returns the pre-boxed input unchanged when the adapter, committed
     /// outcome, or role inputs drift, or when provider queue growth fails.
-    pub fn try_enqueue_s1_k4_rearm_after_commit(
+    pub fn try_enqueue_speculative_rearm_after_commit(
         &mut self,
         committed: &M1ServingCommittedSpeculativeRoundV1<M1ServingPhysicalRunnerQuiescentV1>,
         input: Box<M1ServingQueuedSameShapeRearmV1>,
-    ) -> Result<(), M1ServingPhysicalRunnerS1K4RearmEnqueueFailureV1> {
+    ) -> Result<(), M1ServingPhysicalRunnerSpeculativeRearmEnqueueFailureV1> {
         let quiescent = committed.quiescent();
         let outcome = committed.outcome();
-        if let Err(source) = validate_s1_k4_rearm_enqueue(
-            self.provider.is_some(),
-            self.provider.as_ref().map_or(
-                0,
-                M1QueuedServingPhysicalInputProviderV1::pending_generation_count,
-            ),
+        try_enqueue_committed_speculative_rearm(
+            &mut self.provider,
             self.identity,
             self.phase,
             self.active_plan,
@@ -1146,47 +1218,35 @@ impl<const C: usize>
             outcome.selection(),
             outcome.completed_epoch(),
             outcome.next_active_roster(),
-            input.binding(),
-        ) {
+            outcome.members(),
+            input,
+        )
+    }
+
+    /// Appends an exact same-shape S1/K4 successor after atomic commit.
+    ///
+    /// This compatibility entry point remains closed to every other finite
+    /// speculative shape. Use [`Self::try_enqueue_speculative_rearm_after_commit`]
+    /// for S8/K4, S1/K8, or S1/K16.
+    ///
+    /// # Errors
+    ///
+    /// Returns the pre-boxed input unchanged for a wider plan or when generic
+    /// committed-rearm validation or transactional provider growth fails.
+    pub fn try_enqueue_s1_k4_rearm_after_commit(
+        &mut self,
+        committed: &M1ServingCommittedSpeculativeRoundV1<M1ServingPhysicalRunnerQuiescentV1>,
+        input: Box<M1ServingQueuedSameShapeRearmV1>,
+    ) -> Result<(), M1ServingPhysicalRunnerS1K4RearmEnqueueFailureV1> {
+        if let Err(source) = validate_s1_k4_rearm_compatibility_plan(committed.plan()) {
             return Err(
-                M1ServingPhysicalRunnerS1K4RearmEnqueueFailureV1::Unavailable { source, input },
-            );
-        }
-        let authorities = outcome
-            .members()
-            .iter()
-            .copied()
-            .filter(|member| member.status() == M1SpeculativeMemberStatusV1::Active)
-            .map(|member| M1CommittedS1K4RearmMemberAuthorityV1 {
-                request: member.request(),
-                anchor: member.next_draft_anchor(),
-                target_committed: member.target_settlement().commit_end(),
-                draft_committed: member.draft_settlement().commit_end(),
-            });
-        if let Err(source) =
-            validate_committed_s1_k4_rearm_input(&input, outcome.next_active_roster(), authorities)
-        {
-            return Err(
-                M1ServingPhysicalRunnerS1K4RearmEnqueueFailureV1::Unavailable { source, input },
-            );
-        }
-        let Some(provider) = self.provider.as_mut() else {
-            return Err(
-                M1ServingPhysicalRunnerS1K4RearmEnqueueFailureV1::Unavailable {
-                    source:
-                        M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1::ProviderUnavailable,
-                    input,
-                },
-            );
-        };
-        provider
-            .try_enqueue_s1_k4_rearm(input)
-            .map_err(
-                |(source, input)| M1ServingPhysicalRunnerS1K4RearmEnqueueFailureV1::Provider {
+                M1ServingPhysicalRunnerSpeculativeRearmEnqueueFailureV1::Unavailable {
                     source,
                     input,
                 },
-            )
+            );
+        }
+        self.try_enqueue_speculative_rearm_after_commit(committed, input)
     }
 }
 
@@ -1207,6 +1267,32 @@ fn supports_evidence_bound_s1_k4(plan: M1ServingPlanV1) -> bool {
     plan.shape() == M1PhysicalFixedBatchShapeV1::SpeculativeK4
         && plan.sequence_capacity() == 1
         && plan.target().bucket == Qwen3PlanBucket::SpeculativeS1K4C8192
+}
+
+fn validate_s1_k4_rearm_compatibility_plan(
+    plan: M1ServingPlanV1,
+) -> Result<(), M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1> {
+    if supports_evidence_bound_s1_k4(plan) {
+        Ok(())
+    } else {
+        Err(M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1::UnsupportedTransition)
+    }
+}
+
+fn supports_evidence_bound_speculation(plan: M1ServingPlanV1) -> bool {
+    matches!(
+        (plan.shape(), plan.target().bucket),
+        (
+            M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+            Qwen3PlanBucket::SpeculativeS1K4C8192 | Qwen3PlanBucket::SpeculativeS8K4C8192
+        ) | (
+            M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+            Qwen3PlanBucket::SpeculativeS1K8C8192
+        ) | (
+            M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+            Qwen3PlanBucket::SpeculativeS1K16C8192
+        )
+    )
 }
 
 fn supports_s1_paired_prefill_rollover_source(plan: M1ServingPlanV1) -> bool {
@@ -1230,7 +1316,7 @@ fn validate_s1_k4_rollover_anchor(
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-struct M1CommittedS1K4RearmMemberAuthorityV1 {
+struct M1CommittedSpeculativeRearmMemberAuthorityV1 {
     request: RequestId,
     anchor: Option<ferric_spec::TokenId>,
     target_committed: u32,
@@ -1238,7 +1324,75 @@ struct M1CommittedS1K4RearmMemberAuthorityV1 {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn validate_s1_k4_rearm_enqueue(
+fn try_enqueue_committed_speculative_rearm(
+    provider: &mut Option<M1QueuedServingPhysicalInputProviderV1>,
+    expected_identity: M1ServingPhysicalRunnerAdapterIdentityV1,
+    phase: M1ServingPhysicalRunnerAdapterPhaseV1,
+    active_plan: Option<M1ServingPlanV1>,
+    custody_identity: M1ServingPhysicalRunnerAdapterIdentityV1,
+    custody_epoch: CompletionEpoch,
+    custody_plan: M1ServingPlanV1,
+    outcome_selection: ferric_spec::Qwen3PlanSelection,
+    outcome_epoch: CompletionEpoch,
+    outcome_next_roster: &[RequestId],
+    outcome_members: &[crate::M1SpeculativeMemberRoundOutcomeV1],
+    input: Box<M1ServingQueuedSameShapeRearmV1>,
+) -> Result<(), M1ServingPhysicalRunnerSpeculativeRearmEnqueueFailureV1> {
+    if let Err(source) = validate_speculative_rearm_enqueue(
+        provider.is_some(),
+        provider.as_ref().map_or(
+            0,
+            M1QueuedServingPhysicalInputProviderV1::pending_generation_count,
+        ),
+        expected_identity,
+        phase,
+        active_plan,
+        custody_identity,
+        custody_epoch,
+        custody_plan,
+        outcome_selection,
+        outcome_epoch,
+        outcome_next_roster,
+        input.binding(),
+    ) {
+        return Err(
+            M1ServingPhysicalRunnerSpeculativeRearmEnqueueFailureV1::Unavailable { source, input },
+        );
+    }
+    let authorities = outcome_members
+        .iter()
+        .copied()
+        .filter(|member| member.status() == M1SpeculativeMemberStatusV1::Active)
+        .map(|member| M1CommittedSpeculativeRearmMemberAuthorityV1 {
+            request: member.request(),
+            anchor: member.next_draft_anchor(),
+            target_committed: member.target_settlement().commit_end(),
+            draft_committed: member.draft_settlement().commit_end(),
+        });
+    if let Err(source) =
+        validate_committed_speculative_rearm_input(&input, outcome_next_roster, authorities)
+    {
+        return Err(
+            M1ServingPhysicalRunnerSpeculativeRearmEnqueueFailureV1::Unavailable { source, input },
+        );
+    }
+    let Some(provider) = provider.as_mut() else {
+        return Err(
+            M1ServingPhysicalRunnerSpeculativeRearmEnqueueFailureV1::Unavailable {
+                source: M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1::ProviderUnavailable,
+                input,
+            },
+        );
+    };
+    provider
+        .try_enqueue_speculative_rearm(input)
+        .map_err(|(source, input)| {
+            M1ServingPhysicalRunnerSpeculativeRearmEnqueueFailureV1::Provider { source, input }
+        })
+}
+
+#[allow(clippy::too_many_arguments)]
+fn validate_speculative_rearm_enqueue(
     provider_available: bool,
     pending_generation_count: usize,
     expected_identity: M1ServingPhysicalRunnerAdapterIdentityV1,
@@ -1270,7 +1424,7 @@ fn validate_s1_k4_rearm_enqueue(
     {
         return Err(Unavailable::QuiescentPhaseMismatch);
     }
-    if active_plan != Some(custody_plan) || !supports_evidence_bound_s1_k4(custody_plan) {
+    if active_plan != Some(custody_plan) || !supports_evidence_bound_speculation(custody_plan) {
         return Err(Unavailable::UnsupportedTransition);
     }
     if outcome_selection != custody_plan.target() || outcome_epoch != custody_epoch {
@@ -1279,7 +1433,8 @@ fn validate_s1_k4_rearm_enqueue(
     let Some(next_epoch) = custody_epoch.value().checked_add(1) else {
         return Err(Unavailable::BindingMismatch);
     };
-    if outcome_next_roster.len() != 1
+    if outcome_next_roster.is_empty()
+        || outcome_next_roster.len() > custody_plan.sequence_capacity()
         || binding.plan() != custody_plan
         || binding.epoch() != CompletionEpoch::new(next_epoch)
         || binding.requests() != outcome_next_roster
@@ -1289,33 +1444,39 @@ fn validate_s1_k4_rearm_enqueue(
     Ok(())
 }
 
-fn validate_committed_s1_k4_rearm_input(
+fn validate_committed_speculative_rearm_input(
     input: &M1ServingQueuedSameShapeRearmV1,
     expected_roster: &[RequestId],
-    mut authorities: impl Iterator<Item = M1CommittedS1K4RearmMemberAuthorityV1>,
+    mut authorities: impl Iterator<Item = M1CommittedSpeculativeRearmMemberAuthorityV1>,
 ) -> Result<(), M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1> {
     use M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1 as Unavailable;
 
-    let [request] = expected_roster else {
+    if expected_roster.is_empty() {
         return Err(Unavailable::BindingMismatch);
-    };
-    let Some(authority) = authorities.next() else {
-        return Err(Unavailable::CommitOutcomeMismatch);
-    };
-    if authority.request != *request || authorities.next().is_some() {
-        return Err(Unavailable::CommitOutcomeMismatch);
     }
-    let Some(anchor) = authority.anchor else {
+    for (lane, request) in expected_roster.iter().copied().enumerate() {
+        let Some(authority) = authorities.next() else {
+            return Err(Unavailable::CommitOutcomeMismatch);
+        };
+        if authority.request != request {
+            return Err(Unavailable::CommitOutcomeMismatch);
+        }
+        let Some(anchor) = authority.anchor else {
+            return Err(Unavailable::CommitOutcomeMismatch);
+        };
+        let member = M1ServingCommittedSpeculativeMemberBindingV1 {
+            request,
+            epoch: input.binding().epoch(),
+            anchor,
+            target_committed: authority.target_committed,
+            draft_committed: authority.draft_committed,
+        };
+        if !input.matches_committed_speculative_member(lane, expected_roster.len(), &member) {
+            return Err(Unavailable::CommittedInputMismatch);
+        }
+    }
+    if authorities.next().is_some() {
         return Err(Unavailable::CommitOutcomeMismatch);
-    };
-    if !input.matches_committed_s1_k4_member(
-        *request,
-        input.binding().epoch(),
-        anchor,
-        authority.target_committed,
-        authority.draft_committed,
-    ) {
-        return Err(Unavailable::CommittedInputMismatch);
     }
     Ok(())
 }
@@ -1374,11 +1535,12 @@ fn supports_direct_serving(plan: M1ServingPlanV1) -> bool {
 }
 
 fn supports_serving_plan(plan: M1ServingPlanV1) -> bool {
-    supports_direct_serving(plan) || supports_evidence_bound_s1_k4(plan)
+    supports_direct_serving(plan) || supports_evidence_bound_speculation(plan)
 }
 
 fn supports_same_shape_rearm(plan: M1ServingPlanV1) -> bool {
-    plan.shape() == M1PhysicalFixedBatchShapeV1::TargetOnly || supports_evidence_bound_s1_k4(plan)
+    plan.shape() == M1PhysicalFixedBatchShapeV1::TargetOnly
+        || supports_evidence_bound_speculation(plan)
 }
 
 fn validate_exact_serving_plan(
@@ -1433,7 +1595,9 @@ fn prepared_semantic_evidence_matches(
                 && expected_lanes <= plan.sequence_capacity()
         }
         M1ServingPreparedSemanticEvidenceV1::SpeculativeK4 => {
-            supports_evidence_bound_s1_k4(plan) && expected_lanes == plan.sequence_capacity()
+            supports_evidence_bound_speculation(plan)
+                && expected_lanes > 0
+                && expected_lanes <= plan.sequence_capacity()
         }
     }
 }
@@ -2230,9 +2394,49 @@ where
                     (
                         M1PhysicalFixedBatchShapeV1::SpeculativeK4,
                         semantic_evidence @ M1ServingPreparedSemanticEvidenceV1::SpeculativeK4,
-                    ) => {
+                    ) if supports_evidence_bound_s1_k4(batch.plan()) => {
                         let diagnostic = match observed.observe_speculative_k4_diagnostic_choices()
                         {
+                            Ok(diagnostic) => diagnostic,
+                            Err(failure) => {
+                                return Err(self.terminal(
+                                        M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstChoiceObservation {
+                                            failure,
+                                            selected,
+                                            semantic_evidence,
+                                            history: diagnostic_history,
+                                        },
+                                    ));
+                            }
+                        };
+                        let joined = match diagnostic.check_completion() {
+                            Ok(joined) => joined,
+                            Err(failure) => {
+                                return Err(self.terminal(
+                                    M1ServingPhysicalRunnerTerminalLowerCustodyV1::FirstDiagnosticJoin {
+                                        failure,
+                                        selected,
+                                        semantic_evidence,
+                                        history: diagnostic_history,
+                                    },
+                                ));
+                            }
+                        };
+                        let (readback, choices) = joined.into_parts();
+                        (
+                            readback,
+                            M1ServingPhysicalRunnerReadbackEvidenceV1::SpeculativeK4(Box::new(
+                                choices,
+                            )),
+                        )
+                    }
+                    (
+                        M1PhysicalFixedBatchShapeV1::SpeculativeK4
+                        | M1PhysicalFixedBatchShapeV1::SpeculativeK8
+                        | M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+                        semantic_evidence @ M1ServingPreparedSemanticEvidenceV1::SpeculativeK4,
+                    ) => {
+                        let diagnostic = match observed.observe_speculative_diagnostic_choices() {
                             Ok(diagnostic) => diagnostic,
                             Err(failure) => {
                                 return Err(self.terminal(
@@ -2356,9 +2560,37 @@ where
                     (
                         M1PhysicalFixedBatchShapeV1::SpeculativeK4,
                         semantic_evidence @ M1ServingPreparedSemanticEvidenceV1::SpeculativeK4,
-                    ) => {
+                    ) if supports_evidence_bound_s1_k4(batch.plan()) => {
                         let joined = match recycled
                             .read_and_check_speculative_k4_diagnostic_completion()
+                        {
+                            Ok(joined) => joined,
+                            Err(failure) => {
+                                return Err(self.terminal(
+                                        M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmedDiagnosticReadback {
+                                            failure,
+                                            semantic_evidence,
+                                            history: diagnostic_history,
+                                        },
+                                    ));
+                            }
+                        };
+                        let (readback, choices) = joined.into_parts();
+                        (
+                            readback,
+                            M1ServingPhysicalRunnerReadbackEvidenceV1::SpeculativeK4(Box::new(
+                                choices,
+                            )),
+                        )
+                    }
+                    (
+                        M1PhysicalFixedBatchShapeV1::SpeculativeK4
+                        | M1PhysicalFixedBatchShapeV1::SpeculativeK8
+                        | M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+                        semantic_evidence @ M1ServingPreparedSemanticEvidenceV1::SpeculativeK4,
+                    ) => {
+                        let joined = match recycled
+                            .read_and_check_speculative_diagnostic_completion()
                         {
                             Ok(joined) => joined,
                             Err(failure) => {
@@ -2452,6 +2684,19 @@ where
         ) {
             return Err(M1ServingPhysicalOperationFailureV1::Retryable { source, custody });
         }
+        let diagnostic_binding = match prepare_diagnostic_binding(
+            custody.plan(),
+            readback_epoch,
+            self.checked_completion(&custody),
+        ) {
+            Ok(binding) => binding,
+            Err(_) => {
+                return Err(M1ServingPhysicalOperationFailureV1::Retryable {
+                    source: M1ServingPhysicalRunnerOperationErrorV1::DiagnosticHistoryCapacity,
+                    custody,
+                });
+            }
+        };
         let M1ServingPhysicalRunnerReadbackV1 {
             adapter_identity,
             epoch: _,
@@ -2550,7 +2795,10 @@ where
                     M1CompletedStepOutcomeV1::Completed(completed) => {
                         match release_m1_completed_step_kv_pages_v1(completed) {
                             Ok(released) => {
-                                evidence.append_diagnostic_history(&mut diagnostic_history);
+                                evidence.append_diagnostic_history(
+                                    &mut diagnostic_history,
+                                    diagnostic_binding,
+                                );
                                 self.phase = M1ServingPhysicalRunnerAdapterPhaseV1::Quiescent {
                                     epoch: readback_epoch,
                                 };
@@ -2705,7 +2953,8 @@ where
                 };
                 match outcome.release_completed() {
                     M1RearmedRoundReleaseOutcomeV1::Released(released) => {
-                        evidence.append_diagnostic_history(&mut diagnostic_history);
+                        evidence
+                            .append_diagnostic_history(&mut diagnostic_history, diagnostic_binding);
                         self.phase = M1ServingPhysicalRunnerAdapterPhaseV1::Quiescent {
                             epoch: readback_epoch,
                         };
@@ -2870,13 +3119,14 @@ mod tests {
         )
     }
 
-    fn queued_s1_k4_rearm_test_input(
-        request: RequestId,
+    fn queued_speculative_rearm_test_input(
+        plan: M1ServingPlanV1,
+        requests: &[RequestId],
         epoch: CompletionEpoch,
-        anchor: ferric_spec::TokenId,
-        target_committed: u32,
-        draft_committed: u32,
-        target_future_token: ferric_spec::TokenId,
+        anchors: &[ferric_spec::TokenId],
+        target_committed: &[u32],
+        draft_committed: &[u32],
+        target_future_override: Option<(usize, usize, ferric_spec::TokenId)>,
     ) -> M1ServingQueuedSameShapeRearmV1 {
         use ferric_build::{
             m1_step_workspace_requirements, plan_addressless_m1_step_workspace,
@@ -2889,25 +3139,47 @@ mod tests {
         };
 
         fn input(
-            plan: StepPlan,
+            selection: Qwen3PlanSelection,
+            requests: &[RequestId],
+            epoch: CompletionEpoch,
+            identity_byte: u8,
             tokens: Vec<u32>,
             positions: Vec<u32>,
-            committed: u32,
+            committed: &[u32],
         ) -> ValidatedM1StepInputs {
-            let active_length = u32::try_from(tokens.len()).expect("test token count fits u32");
+            let dimensions = selection
+                .bucket
+                .dimensions(selection.role, selection.mode)
+                .expect("canonical test selection has dimensions");
+            let capacity = dimensions.sequences as usize;
+            let mut lanes = Vec::with_capacity(capacity);
+            for lane in 0..capacity {
+                lanes.push(requests.get(lane).copied().map(|request| {
+                    StepPlan::new(
+                        request,
+                        epoch,
+                        Identity::new([identity_byte; 32]),
+                        selection,
+                    )
+                }));
+            }
+            let mut active_lengths = vec![0; capacity];
+            active_lengths[..requests.len()].fill(dimensions.active_tokens);
+            let mut context_lengths = vec![0; capacity];
+            context_lengths[..committed.len()].copy_from_slice(committed);
             let candidate = M1StepInputCandidate::new(
-                plan.selection(),
-                vec![Some(plan)],
+                selection,
+                lanes,
                 tokens,
                 positions,
-                vec![active_length],
-                vec![committed],
+                active_lengths,
+                context_lengths,
             );
             match validate_m1_step_inputs(candidate) {
                 M1StepInputValidationOutcome::Validated(inputs) => inputs,
                 M1StepInputValidationOutcome::Rejected(failure) => {
                     panic!(
-                        "host-only S1/K4 rearm input rejected: {:?}",
+                        "host-only speculative rearm input rejected: {:?}",
                         failure.error()
                     )
                 }
@@ -2935,22 +3207,56 @@ mod tests {
             }
         }
 
-        let plan = serving_plan(
-            Qwen3ExecutionMode::Speculative,
-            Qwen3PlanBucket::SpeculativeS1K4C8192,
-            Qwen3ExecutionMode::Decode,
-            Qwen3PlanBucket::DecodeS1C8192,
-        );
+        assert_eq!(requests.len(), anchors.len());
+        assert_eq!(requests.len(), target_committed.len());
+        assert_eq!(requests.len(), draft_committed.len());
+        let target_dimensions = plan
+            .target()
+            .bucket
+            .dimensions(plan.target().role, plan.target().mode)
+            .expect("canonical target selection has dimensions");
+        let draft_dimensions = plan
+            .draft()
+            .bucket
+            .dimensions(plan.draft().role, plan.draft().mode)
+            .expect("canonical draft selection has dimensions");
+        let target_width = target_dimensions.active_tokens as usize;
+        let draft_width = draft_dimensions.active_tokens as usize;
+        let mut draft_tokens = vec![0; draft_dimensions.sequences as usize * draft_width];
+        let mut draft_positions = vec![0; draft_tokens.len()];
+        let mut target_tokens = vec![0; target_dimensions.sequences as usize * target_width];
+        let mut target_positions = vec![0; target_tokens.len()];
+        for lane in 0..requests.len() {
+            draft_tokens[lane * draft_width] = anchors[lane];
+            for column in 0..draft_width {
+                draft_positions[lane * draft_width + column] = draft_committed[lane]
+                    + u32::try_from(column).expect("finite speculative width fits u32");
+            }
+            target_tokens[lane * target_width] = anchors[lane];
+            for column in 0..target_width {
+                target_positions[lane * target_width + column] = target_committed[lane]
+                    + u32::try_from(column).expect("finite speculative width fits u32");
+            }
+        }
+        if let Some((lane, column, token)) = target_future_override {
+            target_tokens[lane * target_width + column] = token;
+        }
         let draft = input(
-            StepPlan::new(request, epoch, Identity::new([51; 32]), plan.draft()),
-            vec![anchor],
-            vec![draft_committed],
+            plan.draft(),
+            requests,
+            epoch,
+            51,
+            draft_tokens,
+            draft_positions,
             draft_committed,
         );
         let target = input(
-            StepPlan::new(request, epoch, Identity::new([52; 32]), plan.target()),
-            vec![anchor, target_future_token, 0, 0, 0],
-            (target_committed..target_committed + 5).collect(),
+            plan.target(),
+            requests,
+            epoch,
+            52,
+            target_tokens,
+            target_positions,
             target_committed,
         );
         let preparation = crate::M1FullStepWorkspacePlans::speculative_round(
@@ -2962,15 +3268,44 @@ mod tests {
             workspace(plan.target(), 54),
         );
         M1ServingQueuedSameShapeRearmV1::new(
-            M1ServingQueuedGenerationBindingV1::new(plan, vec![request].into_boxed_slice(), epoch),
+            M1ServingQueuedGenerationBindingV1::new(
+                plan,
+                requests.to_vec().into_boxed_slice(),
+                epoch,
+            ),
             crate::M1LongLivedQueueRearmKvInputsV1::speculative_round(
                 draft,
                 target,
-                vec![Vec::new()],
-                vec![Vec::new()],
+                (0..requests.len()).map(|_| Vec::new()).collect(),
+                (0..requests.len()).map(|_| Vec::new()).collect(),
             ),
             preparation,
             recipe,
+        )
+    }
+
+    fn queued_s1_k4_rearm_test_input(
+        request: RequestId,
+        epoch: CompletionEpoch,
+        anchor: ferric_spec::TokenId,
+        target_committed: u32,
+        draft_committed: u32,
+        target_future_token: ferric_spec::TokenId,
+    ) -> M1ServingQueuedSameShapeRearmV1 {
+        let plan = serving_plan(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        queued_speculative_rearm_test_input(
+            plan,
+            &[request],
+            epoch,
+            &[anchor],
+            &[target_committed],
+            &[draft_committed],
+            (target_future_token != 0).then_some((0, 1, target_future_token)),
         )
     }
 
@@ -3372,7 +3707,7 @@ mod tests {
             CompletionEpoch::new(3),
         );
         let validate = |provider_available, pending_generation_count, phase, custody_identity| {
-            validate_s1_k4_rearm_enqueue(
+            validate_speculative_rearm_enqueue(
                 provider_available,
                 pending_generation_count,
                 identity,
@@ -3435,7 +3770,7 @@ mod tests {
         );
 
         assert_eq!(
-            validate_s1_k4_rearm_enqueue(
+            validate_speculative_rearm_enqueue(
                 true,
                 0,
                 identity,
@@ -3452,7 +3787,7 @@ mod tests {
             Err(Unavailable::CommitOutcomeMismatch)
         );
         assert_eq!(
-            validate_s1_k4_rearm_enqueue(
+            validate_speculative_rearm_enqueue(
                 true,
                 0,
                 identity,
@@ -3469,7 +3804,7 @@ mod tests {
             Err(Unavailable::UnsupportedTransition)
         );
         assert_eq!(
-            validate_s1_k4_rearm_enqueue(
+            validate_speculative_rearm_enqueue(
                 true,
                 0,
                 identity,
@@ -3486,7 +3821,7 @@ mod tests {
             Err(Unavailable::CommitOutcomeMismatch)
         );
         assert_eq!(
-            validate_s1_k4_rearm_enqueue(
+            validate_speculative_rearm_enqueue(
                 true,
                 0,
                 identity,
@@ -3508,7 +3843,7 @@ mod tests {
             CompletionEpoch::new(4),
         );
         assert_eq!(
-            validate_s1_k4_rearm_enqueue(
+            validate_speculative_rearm_enqueue(
                 true,
                 0,
                 identity,
@@ -3527,26 +3862,186 @@ mod tests {
     }
 
     #[test]
+    fn speculative_rearm_admits_nonempty_rosters_up_to_shape_capacity() {
+        use M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1 as Unavailable;
+
+        let identity = M1ServingPhysicalRunnerAdapterIdentityV1::fresh()
+            .expect("test process has adapter identities");
+        let plan = serving_plan(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS8K4C8192,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS8C8192,
+        );
+        let epoch = CompletionEpoch::new(2);
+        let requests: Vec<_> = (0..8).map(|lane| RequestId::new(100 + lane, 1)).collect();
+        for live in [1, 3, 8] {
+            let binding = M1ServingQueuedGenerationBindingV1::new(
+                plan,
+                requests[..live].to_vec().into_boxed_slice(),
+                CompletionEpoch::new(3),
+            );
+            assert_eq!(
+                validate_speculative_rearm_enqueue(
+                    true,
+                    0,
+                    identity,
+                    M1ServingPhysicalRunnerAdapterPhaseV1::Quiescent { epoch },
+                    Some(plan),
+                    identity,
+                    epoch,
+                    plan,
+                    plan.target(),
+                    epoch,
+                    &requests[..live],
+                    &binding,
+                ),
+                Ok(())
+            );
+        }
+
+        for roster in [&requests[..0], &requests[..8]] {
+            let bound_requests = if roster.is_empty() {
+                Vec::new()
+            } else {
+                let mut over_capacity = roster.to_vec();
+                over_capacity.push(RequestId::new(108, 1));
+                over_capacity
+            };
+            let binding = M1ServingQueuedGenerationBindingV1::new(
+                plan,
+                bound_requests.clone().into_boxed_slice(),
+                CompletionEpoch::new(3),
+            );
+            assert_eq!(
+                validate_speculative_rearm_enqueue(
+                    true,
+                    0,
+                    identity,
+                    M1ServingPhysicalRunnerAdapterPhaseV1::Quiescent { epoch },
+                    Some(plan),
+                    identity,
+                    epoch,
+                    plan,
+                    plan.target(),
+                    epoch,
+                    &bound_requests,
+                    &binding,
+                ),
+                Err(Unavailable::BindingMismatch)
+            );
+        }
+    }
+
+    #[test]
+    fn generic_rearm_enqueue_filters_inactive_members_and_inserts_s8_successor() {
+        let identity = M1ServingPhysicalRunnerAdapterIdentityV1::fresh()
+            .expect("test process has adapter identities");
+        let plan = serving_plan(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS8K4C8192,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS8C8192,
+        );
+        let completed_epoch = CompletionEpoch::new(2);
+        let next_epoch = CompletionEpoch::new(3);
+        let first = RequestId::new(0, 1);
+        let retired = RequestId::new(1, 1);
+        let third = RequestId::new(2, 1);
+        let active_roster = [first, third];
+        let members = [
+            crate::M1SpeculativeMemberRoundOutcomeV1::for_serving_rearm_test(
+                first,
+                M1SpeculativeMemberStatusV1::Active,
+                Some(501),
+                130,
+                129,
+            ),
+            crate::M1SpeculativeMemberRoundOutcomeV1::for_serving_rearm_test(
+                retired,
+                M1SpeculativeMemberStatusV1::Cancelled(
+                    crate::M1SpeculativeCancellationReasonV1::ServerShutdown,
+                ),
+                None,
+                230,
+                229,
+            ),
+            crate::M1SpeculativeMemberRoundOutcomeV1::for_serving_rearm_test(
+                third,
+                M1SpeculativeMemberStatusV1::Active,
+                Some(503),
+                330,
+                329,
+            ),
+        ];
+        let input = Box::new(queued_speculative_rearm_test_input(
+            plan,
+            &active_roster,
+            next_epoch,
+            &[501, 503],
+            &[130, 330],
+            &[129, 329],
+            None,
+        ));
+        let mut provider = Some(M1QueuedServingPhysicalInputProviderV1::new());
+
+        try_enqueue_committed_speculative_rearm(
+            &mut provider,
+            identity,
+            M1ServingPhysicalRunnerAdapterPhaseV1::Quiescent {
+                epoch: completed_epoch,
+            },
+            Some(plan),
+            identity,
+            completed_epoch,
+            plan,
+            plan.target(),
+            completed_epoch,
+            &active_roster,
+            &members,
+            input,
+        )
+        .expect("active S8 members authorize one exact queued successor");
+
+        let provider = provider.expect("successful enqueue retains provider");
+        assert_eq!(provider.pending_generation_count(), 1);
+        assert_eq!(
+            provider.next_generation_phase(),
+            Some(crate::M1ServingQueuedGenerationPhaseV1::SameShapeRearm)
+        );
+        let mut pending = provider.into_pending_inputs();
+        let Some(crate::M1ServingQueuedGenerationInputV1::SameShapeRearm(queued)) =
+            pending.pop_front()
+        else {
+            panic!("generic enqueue must insert the typed same-shape successor")
+        };
+        assert_eq!(queued.binding().plan(), plan);
+        assert_eq!(queued.binding().epoch(), next_epoch);
+        assert_eq!(queued.binding().requests(), &active_roster);
+        assert!(pending.is_empty());
+    }
+
+    #[test]
     fn dynamic_s1_k4_rearm_requires_committed_anchor_and_role_cursors() {
         use M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1 as Unavailable;
 
         let request = RequestId::new(7, 1);
         let epoch = CompletionEpoch::new(3);
         let exact = queued_s1_k4_rearm_test_input(request, epoch, 900, 133, 132, 0);
-        let authority = M1CommittedS1K4RearmMemberAuthorityV1 {
+        let authority = M1CommittedSpeculativeRearmMemberAuthorityV1 {
             request,
             anchor: Some(900),
             target_committed: 133,
             draft_committed: 132,
         };
         assert_eq!(
-            validate_committed_s1_k4_rearm_input(&exact, &[request], [authority].into_iter()),
+            validate_committed_speculative_rearm_input(&exact, &[request], [authority].into_iter(),),
             Ok(())
         );
 
         let substituted_anchor = queued_s1_k4_rearm_test_input(request, epoch, 901, 133, 132, 0);
         assert_eq!(
-            validate_committed_s1_k4_rearm_input(
+            validate_committed_speculative_rearm_input(
                 &substituted_anchor,
                 &[request],
                 [authority].into_iter(),
@@ -3555,7 +4050,7 @@ mod tests {
         );
         let substituted_cursor = queued_s1_k4_rearm_test_input(request, epoch, 900, 134, 132, 0);
         assert_eq!(
-            validate_committed_s1_k4_rearm_input(
+            validate_committed_speculative_rearm_input(
                 &substituted_cursor,
                 &[request],
                 [authority].into_iter(),
@@ -3565,7 +4060,7 @@ mod tests {
         let substituted_draft_cursor =
             queued_s1_k4_rearm_test_input(request, epoch, 900, 133, 131, 0);
         assert_eq!(
-            validate_committed_s1_k4_rearm_input(
+            validate_committed_speculative_rearm_input(
                 &substituted_draft_cursor,
                 &[request],
                 [authority].into_iter(),
@@ -3575,7 +4070,7 @@ mod tests {
         let nonzero_future_placeholder =
             queued_s1_k4_rearm_test_input(request, epoch, 900, 133, 132, 1);
         assert_eq!(
-            validate_committed_s1_k4_rearm_input(
+            validate_committed_speculative_rearm_input(
                 &nonzero_future_placeholder,
                 &[request],
                 [authority].into_iter(),
@@ -3583,10 +4078,10 @@ mod tests {
             Err(Unavailable::CommittedInputMismatch)
         );
         assert_eq!(
-            validate_committed_s1_k4_rearm_input(
+            validate_committed_speculative_rearm_input(
                 &exact,
                 &[request],
-                [M1CommittedS1K4RearmMemberAuthorityV1 {
+                [M1CommittedSpeculativeRearmMemberAuthorityV1 {
                     request: RequestId::new(8, 1),
                     ..authority
                 }]
@@ -3595,10 +4090,10 @@ mod tests {
             Err(Unavailable::CommitOutcomeMismatch)
         );
         assert_eq!(
-            validate_committed_s1_k4_rearm_input(
+            validate_committed_speculative_rearm_input(
                 &exact,
                 &[request],
-                [M1CommittedS1K4RearmMemberAuthorityV1 {
+                [M1CommittedSpeculativeRearmMemberAuthorityV1 {
                     request,
                     anchor: None,
                     target_committed: 133,
@@ -3608,6 +4103,359 @@ mod tests {
             ),
             Err(Unavailable::CommitOutcomeMismatch)
         );
+    }
+
+    #[test]
+    fn multi_lane_speculative_rearm_binds_each_roster_member_anchor_and_cursor() {
+        use M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1 as Unavailable;
+
+        let plan = serving_plan(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS8K4C8192,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS8C8192,
+        );
+        let requests = [
+            RequestId::new(7, 1),
+            RequestId::new(8, 1),
+            RequestId::new(9, 1),
+        ];
+        let epoch = CompletionEpoch::new(3);
+        let anchors = [900, 901, 902];
+        let target_committed = [133, 211, 377];
+        let draft_committed = [132, 210, 376];
+        let authorities = [
+            M1CommittedSpeculativeRearmMemberAuthorityV1 {
+                request: requests[0],
+                anchor: Some(anchors[0]),
+                target_committed: target_committed[0],
+                draft_committed: draft_committed[0],
+            },
+            M1CommittedSpeculativeRearmMemberAuthorityV1 {
+                request: requests[1],
+                anchor: Some(anchors[1]),
+                target_committed: target_committed[1],
+                draft_committed: draft_committed[1],
+            },
+            M1CommittedSpeculativeRearmMemberAuthorityV1 {
+                request: requests[2],
+                anchor: Some(anchors[2]),
+                target_committed: target_committed[2],
+                draft_committed: draft_committed[2],
+            },
+        ];
+        let exact = queued_speculative_rearm_test_input(
+            plan,
+            &requests,
+            epoch,
+            &anchors,
+            &target_committed,
+            &draft_committed,
+            None,
+        );
+        assert_eq!(
+            validate_committed_speculative_rearm_input(&exact, &requests, authorities.into_iter(),),
+            Ok(())
+        );
+
+        let full_requests: Vec<_> = (0..8).map(|lane| RequestId::new(10 + lane, 1)).collect();
+        let full_anchors: Vec<_> = (0_u32..8).map(|lane| 1_000 + lane).collect();
+        let full_target_committed: Vec<_> = (0_u32..8).map(|lane| 200 + lane).collect();
+        let full_draft_committed: Vec<_> = (0_u32..8).map(|lane| 190 + lane).collect();
+        let full_authorities: Vec<_> = (0..8)
+            .map(|lane| M1CommittedSpeculativeRearmMemberAuthorityV1 {
+                request: full_requests[lane],
+                anchor: Some(full_anchors[lane]),
+                target_committed: full_target_committed[lane],
+                draft_committed: full_draft_committed[lane],
+            })
+            .collect();
+        let full = queued_speculative_rearm_test_input(
+            plan,
+            &full_requests,
+            epoch,
+            &full_anchors,
+            &full_target_committed,
+            &full_draft_committed,
+            None,
+        );
+        assert_eq!(
+            validate_committed_speculative_rearm_input(
+                &full,
+                &full_requests,
+                full_authorities.into_iter(),
+            ),
+            Ok(())
+        );
+
+        let mut swapped = authorities;
+        swapped.swap(0, 1);
+        assert_eq!(
+            validate_committed_speculative_rearm_input(&exact, &requests, swapped.into_iter(),),
+            Err(Unavailable::CommitOutcomeMismatch)
+        );
+        let mut missing_anchor = authorities;
+        missing_anchor[1].anchor = None;
+        assert_eq!(
+            validate_committed_speculative_rearm_input(
+                &exact,
+                &requests,
+                missing_anchor.into_iter(),
+            ),
+            Err(Unavailable::CommitOutcomeMismatch)
+        );
+        assert_eq!(
+            validate_committed_speculative_rearm_input(
+                &exact,
+                &requests,
+                authorities.into_iter().chain([authorities[0]].into_iter()),
+            ),
+            Err(Unavailable::CommitOutcomeMismatch)
+        );
+        let regenerated = [RequestId::new(7, 2), requests[1], requests[2]];
+        assert_eq!(
+            validate_committed_speculative_rearm_input(
+                &exact,
+                &regenerated,
+                authorities.into_iter(),
+            ),
+            Err(Unavailable::CommitOutcomeMismatch)
+        );
+
+        let substituted_anchor = queued_speculative_rearm_test_input(
+            plan,
+            &requests,
+            epoch,
+            &[anchors[0], 999, anchors[2]],
+            &target_committed,
+            &draft_committed,
+            None,
+        );
+        assert_eq!(
+            validate_committed_speculative_rearm_input(
+                &substituted_anchor,
+                &requests,
+                authorities.into_iter(),
+            ),
+            Err(Unavailable::CommittedInputMismatch)
+        );
+        let substituted_cursor = queued_speculative_rearm_test_input(
+            plan,
+            &requests,
+            epoch,
+            &anchors,
+            &[target_committed[0], target_committed[1], 378],
+            &draft_committed,
+            None,
+        );
+        assert_eq!(
+            validate_committed_speculative_rearm_input(
+                &substituted_cursor,
+                &requests,
+                authorities.into_iter(),
+            ),
+            Err(Unavailable::CommittedInputMismatch)
+        );
+        let nonzero_future_placeholder = queued_speculative_rearm_test_input(
+            plan,
+            &requests,
+            epoch,
+            &anchors,
+            &target_committed,
+            &draft_committed,
+            Some((1, 4, 77)),
+        );
+        assert_eq!(
+            validate_committed_speculative_rearm_input(
+                &nonzero_future_placeholder,
+                &requests,
+                authorities.into_iter(),
+            ),
+            Err(Unavailable::CommittedInputMismatch)
+        );
+    }
+
+    #[test]
+    fn k8_and_k16_rearm_validate_their_full_target_placeholder_widths() {
+        use M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1 as Unavailable;
+
+        let request = RequestId::new(7, 1);
+        let epoch = CompletionEpoch::new(3);
+        let authority = M1CommittedSpeculativeRearmMemberAuthorityV1 {
+            request,
+            anchor: Some(900),
+            target_committed: 133,
+            draft_committed: 132,
+        };
+        for (target_bucket, final_column) in [
+            (Qwen3PlanBucket::SpeculativeS1K8C8192, 8),
+            (Qwen3PlanBucket::SpeculativeS1K16C8192, 16),
+        ] {
+            let plan = serving_plan(
+                Qwen3ExecutionMode::Speculative,
+                target_bucket,
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS1C8192,
+            );
+            let exact = queued_speculative_rearm_test_input(
+                plan,
+                &[request],
+                epoch,
+                &[900],
+                &[133],
+                &[132],
+                None,
+            );
+            assert_eq!(
+                validate_committed_speculative_rearm_input(
+                    &exact,
+                    &[request],
+                    [authority].into_iter(),
+                ),
+                Ok(())
+            );
+            let nonzero_final_placeholder = queued_speculative_rearm_test_input(
+                plan,
+                &[request],
+                epoch,
+                &[900],
+                &[133],
+                &[132],
+                Some((0, final_column, 77)),
+            );
+            assert_eq!(
+                validate_committed_speculative_rearm_input(
+                    &nonzero_final_placeholder,
+                    &[request],
+                    [authority].into_iter(),
+                ),
+                Err(Unavailable::CommittedInputMismatch)
+            );
+        }
+    }
+
+    #[test]
+    fn legacy_s1_k4_rearm_plan_gate_rejects_every_wider_shape() {
+        use M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1 as Unavailable;
+
+        let s1_k4 = serving_plan(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        assert_eq!(validate_s1_k4_rearm_compatibility_plan(s1_k4), Ok(()));
+        for (target_bucket, draft_bucket) in [
+            (
+                Qwen3PlanBucket::SpeculativeS8K4C8192,
+                Qwen3PlanBucket::DecodeS8C8192,
+            ),
+            (
+                Qwen3PlanBucket::SpeculativeS1K8C8192,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+            (
+                Qwen3PlanBucket::SpeculativeS1K16C8192,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+        ] {
+            let plan = serving_plan(
+                Qwen3ExecutionMode::Speculative,
+                target_bucket,
+                Qwen3ExecutionMode::Decode,
+                draft_bucket,
+            );
+            assert_eq!(
+                validate_s1_k4_rearm_compatibility_plan(plan),
+                Err(Unavailable::UnsupportedTransition)
+            );
+        }
+    }
+
+    #[test]
+    fn diagnostic_bindings_preserve_lane_attribution_across_roster_shrink() {
+        use ferric_qwen_kernels::logits::Qwen3LogitsCompactRecordLayoutV1 as Layout;
+        use ferric_spec::{Identity, StepPlan};
+
+        fn checked_output(
+            selection: Qwen3PlanSelection,
+            epoch: CompletionEpoch,
+            requests: &[RequestId],
+        ) -> M1CheckedCompletionOutputV1 {
+            let plan_id = Identity::new([91; 32]);
+            let draft_tokens: [ferric_spec::TokenId; 4] = [31, 32, 33, 34];
+            let target_choices: [ferric_spec::TokenId; 5] = [41, 42, 43, 44, 45];
+            let records = requests
+                .iter()
+                .map(|request| {
+                    let mut bytes = [0; Layout::RECORD_BYTES_USIZE];
+                    bytes[Layout::REQUEST_SLOT_OFFSET..Layout::REQUEST_SLOT_OFFSET + 4]
+                        .copy_from_slice(&request.slot().to_le_bytes());
+                    bytes[Layout::REQUEST_GENERATION_OFFSET..Layout::REQUEST_GENERATION_OFFSET + 4]
+                        .copy_from_slice(&request.generation().to_le_bytes());
+                    bytes[Layout::COMPLETION_EPOCH_OFFSET..Layout::COMPLETION_EPOCH_OFFSET + 8]
+                        .copy_from_slice(&epoch.value().to_le_bytes());
+                    bytes[Layout::PLAN_IDENTITY_OFFSET
+                        ..Layout::PLAN_IDENTITY_OFFSET + Layout::PLAN_IDENTITY_BYTES]
+                        .copy_from_slice(plan_id.as_bytes());
+                    bytes[Layout::EMITTED_TOKEN_COUNT_OFFSET] = 1;
+                    let token_offset = Layout::token_offset(0).expect("first token slot exists");
+                    bytes[token_offset..token_offset + 4]
+                        .copy_from_slice(&target_choices[0].to_le_bytes());
+                    let step = StepPlan::new(*request, epoch, plan_id, selection);
+                    crate::check_inert_completion_record(
+                        &bytes,
+                        crate::CompletionWireExpectation::new(
+                            &step,
+                            crate::CompletionWireSemanticExpectation::Speculative {
+                                draft_tokens: &draft_tokens,
+                                target_choices: &target_choices,
+                            },
+                        ),
+                    )
+                    .expect("synthetic K7 bytes satisfy the independent S8/K4 expectation")
+                })
+                .collect::<Vec<_>>()
+                .into_boxed_slice();
+            M1CheckedCompletionOutputV1::for_serving_history_test(selection, epoch, records)
+        }
+
+        let plan = serving_plan(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS8K4C8192,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS8C8192,
+        );
+        let first = RequestId::new(7, 1);
+        let second = RequestId::new(8, 1);
+        let third = RequestId::new(9, 1);
+        let first_epoch = CompletionEpoch::new(2);
+        let second_epoch = CompletionEpoch::new(3);
+        let first_checked = checked_output(plan.target(), first_epoch, &[first, second, third]);
+        let second_checked = checked_output(plan.target(), second_epoch, &[first, third]);
+        let mut history = M1ServingPhysicalRunnerDiagnosticHistoryV1::new();
+        for (epoch, checked) in [
+            (first_epoch, &first_checked),
+            (second_epoch, &second_checked),
+        ] {
+            let binding = prepare_diagnostic_binding(plan, epoch, checked)
+                .expect("bounded checked roster fits diagnostic history");
+            let choices = vec![41; checked.records().len()].into_boxed_slice();
+            history
+                .try_reserve_exact(1)
+                .expect("two diagnostic entries fit host memory");
+            M1ServingPhysicalRunnerReadbackEvidenceV1::Direct(
+                crate::M1ObservedDirectDiagnosticChoicesV1::for_serving_history_test(choices),
+            )
+            .append_diagnostic_history(&mut history, binding);
+        }
+        let bindings = history.bindings();
+        assert_eq!(history.evidence().len(), 2);
+        assert_eq!(bindings[0].plan(), plan);
+        assert_eq!(bindings[0].epoch(), first_epoch);
+        assert_eq!(bindings[0].requests(), &[first, second, third]);
+        assert_eq!(bindings[1].epoch(), second_epoch);
+        assert_eq!(bindings[1].requests(), &[first, third]);
     }
 
     #[test]
@@ -3646,6 +4494,19 @@ mod tests {
         assert_eq!(failure.input().binding().epoch(), epoch);
         let recovered = failure.into_input();
         assert_eq!(recovered.binding().requests(), &[request]);
+    }
+
+    #[test]
+    fn legacy_s1_k4_failure_variants_remain_importable_from_the_enum() {
+        use M1ServingPhysicalRunnerS1K4RearmEnqueueFailureV1::{Provider, Unavailable};
+
+        fn exhaustively_match(value: M1ServingPhysicalRunnerS1K4RearmEnqueueFailureV1) {
+            match value {
+                Unavailable { .. } | Provider { .. } => {}
+            }
+        }
+
+        let _ = exhaustively_match as fn(M1ServingPhysicalRunnerS1K4RearmEnqueueFailureV1);
     }
 
     #[test]
@@ -3786,7 +4647,7 @@ mod tests {
     }
 
     #[test]
-    fn only_s1_k4_speculation_is_admitted() {
+    fn all_finite_speculative_shapes_are_admitted_with_exact_evidence_contracts() {
         let s1_k4 = serving_plan(
             Qwen3ExecutionMode::Speculative,
             Qwen3PlanBucket::SpeculativeS1K4C8192,
@@ -3794,6 +4655,7 @@ mod tests {
             Qwen3PlanBucket::DecodeS1C8192,
         );
         assert!(supports_evidence_bound_s1_k4(s1_k4));
+        assert!(supports_evidence_bound_speculation(s1_k4));
         assert!(supports_serving_plan(s1_k4));
         assert!(supports_same_shape_rearm(s1_k4));
         assert!(prepared_semantic_evidence_matches(
@@ -3806,7 +4668,6 @@ mod tests {
             0,
             &M1ServingPreparedSemanticEvidenceV1::SpeculativeK4,
         ));
-
         for (target_bucket, draft_bucket) in [
             (
                 Qwen3PlanBucket::SpeculativeS8K4C8192,
@@ -3827,11 +4688,28 @@ mod tests {
                 Qwen3ExecutionMode::Decode,
                 draft_bucket,
             );
-            assert!(!supports_serving_plan(plan));
-            assert!(!supports_same_shape_rearm(plan));
-            assert!(!prepared_semantic_evidence_matches(
+            assert!(!supports_evidence_bound_s1_k4(plan));
+            assert!(supports_evidence_bound_speculation(plan));
+            assert!(supports_serving_plan(plan));
+            assert!(supports_same_shape_rearm(plan));
+            assert!(prepared_semantic_evidence_matches(
+                plan,
+                1,
+                &M1ServingPreparedSemanticEvidenceV1::SpeculativeK4,
+            ));
+            assert!(prepared_semantic_evidence_matches(
                 plan,
                 plan.sequence_capacity(),
+                &M1ServingPreparedSemanticEvidenceV1::SpeculativeK4,
+            ));
+            assert!(!prepared_semantic_evidence_matches(
+                plan,
+                0,
+                &M1ServingPreparedSemanticEvidenceV1::SpeculativeK4,
+            ));
+            assert!(!prepared_semantic_evidence_matches(
+                plan,
+                plan.sequence_capacity() + 1,
                 &M1ServingPreparedSemanticEvidenceV1::SpeculativeK4,
             ));
         }
@@ -4400,6 +5278,19 @@ mod tests {
                 M1ServingPhysicalRunnerReadbackEvidenceV1::SpeculativeK4(_),
                 M1ServingPhysicalRunnerReadbackEvidenceV1::SpeculativeK4(_)
             ]
+        ));
+        assert!(matches!(
+            diagnostic_history.bindings(),
+            [first, rollover, rearm]
+                if first.plan() == prefill
+                    && first.epoch() == prefill_epoch
+                    && first.requests() == [request]
+                    && rollover.plan() == speculative
+                    && rollover.epoch() == rollover_epoch
+                    && rollover.requests() == [request]
+                    && rearm.plan() == speculative
+                    && rearm.epoch() == rearm_epoch
+                    && rearm.requests() == [request]
         ));
         assert_eq!(released.round_history_len(), 2);
         let history = released

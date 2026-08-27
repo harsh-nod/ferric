@@ -4116,7 +4116,55 @@ impl M1RearmedRecycledQueueV1 {
         M1RearmedSpeculativeDiagnosticCompletedReadbackV1,
         Box<M1RearmedSpeculativeDiagnosticReadbackFailureV1>,
     > {
-        self.read_and_check_speculative_diagnostic_completion()
+        let Self {
+            queue,
+            carry,
+            queue_observation,
+            device,
+        } = self;
+        let observed = match queue.observe_completion() {
+            Ok(observed) => observed,
+            Err(source) => {
+                return Err(Box::new(M1RearmedSpeculativeDiagnosticReadbackFailureV1 {
+                    source: M1RearmedSpeculativeDiagnosticReadbackFailureSourceV1::Compact(source),
+                    carry,
+                    queue_observation,
+                    device,
+                }));
+            }
+        };
+        let diagnostic = match observed.observe_speculative_k4_diagnostic_choices() {
+            Ok(diagnostic) => diagnostic,
+            Err(source) => {
+                return Err(Box::new(M1RearmedSpeculativeDiagnosticReadbackFailureV1 {
+                    source: M1RearmedSpeculativeDiagnosticReadbackFailureSourceV1::Choices(source),
+                    carry,
+                    queue_observation,
+                    device,
+                }));
+            }
+        };
+        let joined = match diagnostic.check_completion() {
+            Ok(joined) => joined,
+            Err(source) => {
+                return Err(Box::new(M1RearmedSpeculativeDiagnosticReadbackFailureV1 {
+                    source: M1RearmedSpeculativeDiagnosticReadbackFailureSourceV1::Join(source),
+                    carry,
+                    queue_observation,
+                    device,
+                }));
+            }
+        };
+        let (readback, choices) = joined.into_parts();
+        Ok(M1RearmedSpeculativeDiagnosticCompletedReadbackV1 {
+            readback: M1RearmedCompletedReadbackV1 {
+                readback,
+                carry,
+                queue_observation,
+                device,
+            },
+            choices,
+        })
     }
 
     /// Copies, independently observes, and semantically joins one rearmed

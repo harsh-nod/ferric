@@ -310,6 +310,20 @@ impl M1ObservedDirectDiagnosticChoicesV1 {
     }
 }
 
+#[cfg(test)]
+impl M1ObservedDirectDiagnosticChoicesV1 {
+    pub(crate) fn for_serving_history_test(choices: Box<[TokenId]>) -> Self {
+        let live_sequences = choices.len();
+        Self {
+            dispatch_generation: 0,
+            active_lengths: vec![1; live_sequences].into_boxed_slice(),
+            _readbacks: Box::new([]),
+            choices,
+            raw_sha256: vec![[0; 32]; live_sequences].into_boxed_slice(),
+        }
+    }
+}
+
 /// Derives exact target `Choices [S,A]` geometry for a direct graph.
 ///
 /// # Errors

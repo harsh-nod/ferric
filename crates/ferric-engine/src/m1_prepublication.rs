@@ -499,7 +499,8 @@ impl M1AllocatedScheduledStepV1 {
         BoundM1CompletionOutputV1,
         Box<crate::M1SpeculativeDiagnosticChoicesAllocationFailureV1>,
     > {
-        self.enable_speculative_diagnostic_choices_capture(completion)
+        self.partitioned_memory
+            .enable_speculative_k4_diagnostic_choices_capture(completion)
     }
 
     /// Attaches direct target-choice capture after every device allocation.
