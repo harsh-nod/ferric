@@ -32,8 +32,8 @@ use crate::{
     M1S1K4QueueRolloverScheduleFailureCustodyV1, M1ScheduledDispatchV1,
     M1ScheduledLongLivedQueueRearmV1, M1ScheduledS1K4QueueRolloverV1, M1ServingBatchPlanV1,
     M1ServingCommittedSpeculativeRoundV1, M1ServingPhysicalOperationFailureV1,
-    M1ServingPhysicalOperationResultV1, M1ServingPhysicalOperationsV1, M1ServingPlanV1,
-    M1ServingQueuedGenerationBindingV1, M1ServingQueuedS1K4RolloverV1,
+    M1ServingPhysicalOperationResultV1, M1ServingPhysicalOperationsV1, M1ServingPhysicalReadbackV1,
+    M1ServingPlanV1, M1ServingQueuedGenerationBindingV1, M1ServingQueuedS1K4RolloverV1,
     M1ServingQueuedSameShapeRearmV1, M1ServingRolloverReasonV1, M1SpeculativeMemberStatusV1,
     M1_MAX_REARM_ROUND_HISTORY_V1,
 };
@@ -1057,9 +1057,10 @@ impl<const C: usize>
     /// accept a successor or when transactional provider queue growth fails.
     pub fn try_enqueue_s1_k4_rollover_after_readback(
         &mut self,
-        readback: &M1ServingPhysicalRunnerReadbackV1,
+        readback: &M1ServingPhysicalReadbackV1<M1ServingPhysicalRunnerReadbackV1>,
         input: Box<M1ServingQueuedS1K4RolloverV1>,
     ) -> Result<(), M1ServingPhysicalRunnerGenerationEnqueueFailureV1> {
+        let readback = readback.operation_custody();
         let checked = self.checked_completion(readback);
         if let Err(source) = validate_generation_enqueue(
             self.provider.is_some(),
@@ -3875,7 +3876,7 @@ mod tests {
 
     #[test]
     #[ignore = "requires admitted K1-K7 artifacts, prepacked Qwen bytes, and an exclusive MI300X"]
-    fn configured_mi300x_queued_provider_rolls_s1_prefill_into_native_s1_k4() {
+    fn configured_mi300x_bridge_runs_output_fed_s1_k4_rollover_and_rearm() {
         use std::fs;
 
         use fe2o3_kfd::{DeviceSelector, OpenedKfd};
@@ -3895,13 +3896,16 @@ mod tests {
         use crate::{
             bind_m1_kv_workspace_table_v1, bind_m1_physical_runner_v1,
             initialize_m1_physical_runner_memory_v1, reopen_persisted_m1_kernel_artifacts_v1,
-            ActiveDeviceKvCache, Engine, M1DeviceKvCompletionDispositionV1,
-            M1FullStepKvWorkspaceTablesV1, M1FullStepWorkspacePlans,
+            ActiveDeviceKvCache, Engine, M1FullStepKvWorkspaceTablesV1, M1FullStepWorkspacePlans,
             M1QueuedServingPhysicalInputProviderV1, M1RearmRoundHistoryEntryV1,
             M1S1K4QueueRolloverKvInputsV1, M1ServingCompletionDispositionV1,
-            M1ServingQueueActionV1, M1ServingQueuedFirstPublicationV1,
-            M1ServingQueuedGenerationBindingV1, M1ServingQueuedGenerationInputV1,
-            M1ServingQueuedS1K4RolloverV1, M1ServingRegistryV1,
+            M1ServingPhysicalQueueCustodyV1, M1ServingQueueActionV1,
+            M1ServingQueuedFirstPublicationV1, M1ServingQueuedGenerationBindingV1,
+            M1ServingQueuedGenerationInputV1, M1ServingQueuedS1K4RolloverV1,
+            M1ServingQueuedSameShapeRearmV1, M1ServingRegistryV1,
+            M1SpeculativeCancellationReasonV1, M1SpeculativeGenerationLoopV1,
+            M1SpeculativeGenerationPolicyV1, M1SpeculativeMemberControlV1,
+            M1SpeculativeMemberSeedV1,
         };
 
         fn required_path(name: &str) -> std::path::PathBuf {
@@ -3954,8 +3958,8 @@ mod tests {
             }
         }
 
-        // This output-fed ignored smoke observes only typed lifecycle and
-        // native queue rollover structure. Fixture artifacts do not
+        // This output-fed ignored smoke observes only typed bridge lifecycle,
+        // native queue rollover, and same-shape rearm structure. Fixture artifacts do not
         // authenticate deployment inputs, so it makes no numerical,
         // performance, evidence, qualification, or Qwen-correctness claim.
         let artifact_directory = required_path("FERRIC_M1_KERNEL_ARTIFACT_DIRECTORY");
@@ -4115,6 +4119,7 @@ mod tests {
         let mut operations =
             M1ServingPhysicalRunnerOperationsV1::new(&runner, &mut engine, provider, 1 << 20)
                 .expect("construct queued physical serving adapter");
+        let physical = M1ServingPhysicalQueueCustodyV1::Vacant;
 
         let prefill_batch = registry
             .plan_next()
@@ -4125,17 +4130,14 @@ mod tests {
             .expect("reserve paired-prefill publication");
         let prefill_batch = prefill_reservation.physical_batch();
         assert_eq!(prefill_batch.action(), M1ServingQueueActionV1::FreshLaunch);
-        let published = operations
-            .fresh_launch(&prefill_batch)
-            .expect("publish paired prefill through queued provider");
-        registry
-            .record_publication(prefill_reservation)
-            .expect("record paired-prefill publication");
-        let readback = operations
-            .read_published(published, prefill_epoch, &prefill_batch)
-            .expect("read paired-prefill completion");
+        let published = physical
+            .publish(prefill_reservation, &mut registry, &mut operations)
+            .expect("publish paired prefill through the generic serving bridge");
+        let readback = published
+            .read_physical(prefill_epoch, &mut operations)
+            .expect("read paired-prefill completion through the generic serving bridge");
         let anchor = {
-            let checked = operations.checked_completion(&readback);
+            let checked = readback.checked(&operations);
             let [record] = checked.records() else {
                 panic!("S1 paired prefill must produce one checked record")
             };
@@ -4195,15 +4197,13 @@ mod tests {
                 .pending_generation_count(),
             1
         );
-        let quiescent = operations
-            .settle_readback(readback, vec![M1DeviceKvCompletionDispositionV1::Continue])
-            .expect("settle paired-prefill completion");
-        registry
+        let (_, physical) = readback
             .complete_exact(
-                prefill_epoch,
+                &mut registry,
                 &[M1ServingCompletionDispositionV1::Continue(speculative)],
+                &mut operations,
             )
-            .expect("advance registry from prefill to speculative");
+            .expect("settle paired prefill and advance the registry through the bridge");
         operations
             .engine
             .append_tentative(request, 5)
@@ -4225,32 +4225,150 @@ mod tests {
         let rollover_reservation = registry
             .reserve_publication(rollover_batch)
             .expect("reserve exact S1/K4 rollover publication");
-        let rollover_batch = rollover_reservation.physical_batch();
-        let published = operations
-            .quiescent_rollover(
-                quiescent,
-                prefill,
-                speculative,
-                M1ServingRolloverReasonV1::Mode,
-                &rollover_batch,
+        let published = physical
+            .publish(rollover_reservation, &mut registry, &mut operations)
+            .expect("roll over into native S1/K4 through the generic serving bridge");
+        let readback = published
+            .read_physical(rollover_epoch, &mut operations)
+            .expect("read the first native S1/K4 round through the generic bridge");
+        let policy = M1SpeculativeGenerationPolicyV1::new(512, &[])
+            .expect("construct nonterminal structural policy");
+        let seed = M1SpeculativeMemberSeedV1::new(request, anchor, 128, 128, policy);
+        let mut coordinator = M1SpeculativeGenerationLoopV1::new(speculative.target(), &[seed])
+            .expect("construct S1/K4 speculative coordinator");
+        let binding = coordinator
+            .bind_round(0, rollover_epoch, &[request])
+            .expect("bind first native S1/K4 round");
+        let permit = coordinator
+            .preflight_checked_round(
+                binding,
+                readback.checked(&operations),
+                &[M1SpeculativeMemberControlV1::continuing(request)],
             )
-            .expect("replace paired-prefill queue with native S1/K4 queue");
-        registry
-            .record_publication(rollover_reservation)
-            .expect("record exact S1/K4 rollover publication");
-        let readback = operations
-            .read_published(published, rollover_epoch, &rollover_batch)
-            .expect("read replacement S1/K4 completion");
+            .expect("preflight actual first-round checked output");
+        let committed = readback
+            .commit_speculative(&mut registry, &mut coordinator, permit, &mut operations)
+            .expect("atomically settle and commit the first speculative round");
+        let [member] = committed.outcome().members() else {
+            panic!("S1/K4 commit must retain one exact member outcome")
+        };
+        assert_eq!(member.status(), M1SpeculativeMemberStatusV1::Active);
+        let next_anchor = member
+            .next_draft_anchor()
+            .expect("continuing first round must retain its actual next anchor");
+        let target_committed = member.target_settlement().commit_end();
+        let draft_committed = member.draft_settlement().commit_end();
+
+        let rearm_epoch = CompletionEpoch::new(3);
+        let target_rearm_plan = runner
+            .logical_runner()
+            .bind_step_plan(request, rearm_epoch, speculative.target())
+            .expect("bind second-round target plan");
+        let draft_rearm_plan = runner
+            .logical_runner()
+            .bind_step_plan(request, rearm_epoch, speculative.draft())
+            .expect("bind second-round draft plan");
+        let target_rearm_inputs = input(
+            target_rearm_plan,
+            vec![next_anchor, 0, 0, 0, 0],
+            (target_committed..target_committed + 5).collect(),
+            5,
+            target_committed,
+        );
+        let draft_rearm_inputs = input(
+            draft_rearm_plan,
+            vec![next_anchor],
+            vec![draft_committed],
+            1,
+            draft_committed,
+        );
+        let rearm_preparation_plans = M1FullStepWorkspacePlans::speculative_round(
+            workspace_plan(speculative.draft(), 94),
+            workspace_plan(speculative.target(), 95),
+        );
+        let rearm_recipe_plans = M1FullStepWorkspacePlans::speculative_round(
+            workspace_plan(speculative.draft(), 94),
+            workspace_plan(speculative.target(), 95),
+        );
+        let rearm = M1ServingQueuedSameShapeRearmV1::new(
+            M1ServingQueuedGenerationBindingV1::new(
+                speculative,
+                vec![request].into_boxed_slice(),
+                rearm_epoch,
+            ),
+            crate::M1LongLivedQueueRearmKvInputsV1::speculative_round(
+                draft_rearm_inputs,
+                target_rearm_inputs,
+                vec![Vec::new()],
+                vec![Vec::new()],
+            ),
+            rearm_preparation_plans,
+            rearm_recipe_plans,
+        );
+        operations
+            .try_enqueue_s1_k4_rearm_after_commit(&committed, Box::new(rearm))
+            .expect("enqueue the exact committed output-fed same-shape rearm");
+        assert_eq!(
+            operations
+                .provider()
+                .expect("adapter retains queued provider")
+                .pending_generation_count(),
+            1
+        );
+        let (_, physical, first_outcome) = committed.into_parts();
+        assert_eq!(first_outcome.completed_epoch(), rollover_epoch);
+        assert_eq!(first_outcome.next_active_roster(), &[request]);
+        operations
+            .engine
+            .append_tentative(request, 5)
+            .expect("append the second exact S1/K4 target span");
+
+        let rearm_batch = registry
+            .plan_next()
+            .expect("plan second exact S1/K4 generation")
+            .expect("same-shape S1/K4 successor is ready");
+        assert_eq!(rearm_batch.epoch(), rearm_epoch);
+        assert_eq!(rearm_batch.action(), M1ServingQueueActionV1::SameShapeRearm);
+        let rearm_reservation = registry
+            .reserve_publication(rearm_batch)
+            .expect("reserve second S1/K4 publication");
+        let published = physical
+            .publish(rearm_reservation, &mut registry, &mut operations)
+            .expect("publish same-shape S1/K4 rearm through the generic bridge");
+        let readback = published
+            .read_physical(rearm_epoch, &mut operations)
+            .expect("read the second native S1/K4 round through the generic bridge");
+        let binding = coordinator
+            .bind_round(1, rearm_epoch, &[request])
+            .expect("bind second native S1/K4 round");
+        let permit = coordinator
+            .preflight_checked_round(
+                binding,
+                readback.checked(&operations),
+                &[M1SpeculativeMemberControlV1::cancelling(
+                    request,
+                    M1SpeculativeCancellationReasonV1::ServerShutdown,
+                )],
+            )
+            .expect("preflight actual second-round checked output");
         operations
             .engine
             .retire(request)
-            .expect("mark final Engine member retiring before physical settlement");
-        let quiescent = operations
-            .settle_readback(readback, vec![M1DeviceKvCompletionDispositionV1::Retire])
-            .expect("settle replacement S1/K4 completion");
-        registry
-            .complete_exact(rollover_epoch, &[M1ServingCompletionDispositionV1::Retire])
-            .expect("retire final serving-registry member");
+            .expect("mark the final Engine member retiring before atomic settlement");
+        let committed = readback
+            .commit_speculative(&mut registry, &mut coordinator, permit, &mut operations)
+            .expect("atomically settle and commit the second speculative round");
+        assert!(committed.outcome().next_active_roster().is_empty());
+        assert!(matches!(
+            committed.outcome().members(),
+            [member]
+                if member.status()
+                    == M1SpeculativeMemberStatusV1::Cancelled(
+                        M1SpeculativeCancellationReasonV1::ServerShutdown
+                    )
+        ));
+        let (_, physical, second_outcome) = committed.into_parts();
+        assert_eq!(second_outcome.completed_epoch(), rearm_epoch);
         assert_eq!(
             operations
                 .provider()
@@ -4259,22 +4377,31 @@ mod tests {
             0
         );
 
+        let M1ServingPhysicalQueueCustodyV1::Quiescent {
+            plan: released_plan,
+            custody: quiescent,
+        } = physical
+        else {
+            panic!("second commit must retain quiescent native queue custody")
+        };
+        assert_eq!(released_plan, speculative);
         let M1ServingPhysicalRunnerQuiescentV1 { state, .. } = quiescent;
         let M1ServingPhysicalRunnerQuiescentStateV1::Rearmed {
             released,
             diagnostic_history,
         } = state
         else {
-            panic!("S1/K4 rollover did not return rearmed queue custody")
+            panic!("second S1/K4 round did not return rearmed queue custody")
         };
         assert!(matches!(
             diagnostic_history.evidence(),
             [
                 M1ServingPhysicalRunnerReadbackEvidenceV1::Direct(_),
+                M1ServingPhysicalRunnerReadbackEvidenceV1::SpeculativeK4(_),
                 M1ServingPhysicalRunnerReadbackEvidenceV1::SpeculativeK4(_)
             ]
         ));
-        assert_eq!(released.round_history_len(), 1);
+        assert_eq!(released.round_history_len(), 2);
         let history = released
             .round_history(0)
             .expect("replacement round retains rollover history");
@@ -4292,11 +4419,16 @@ mod tests {
             rollover.replacement_queue_observation().ring_bytes(),
             1 << 20
         );
+        assert!(released
+            .round_history(1)
+            .expect("second round retains same-shape queue history")
+            .rollover_observation()
+            .is_none());
 
         let teardown = released
             .destroy_queue_and_retain_round(operations.engine)
             .expect("destroy replacement queue and retain exact round lineage");
-        assert_eq!(teardown.round_history_len(), 1);
+        assert_eq!(teardown.round_history_len(), 2);
         assert!(teardown
             .round_history(0)
             .and_then(M1RearmRoundHistoryEntryV1::rollover_observation)

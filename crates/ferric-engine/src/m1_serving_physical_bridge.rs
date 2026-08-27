@@ -545,6 +545,10 @@ impl<R> M1ServingPhysicalReadbackV1<R> {
         &self.batch
     }
 
+    pub(crate) const fn operation_custody(&self) -> &R {
+        &self.custody
+    }
+
     /// Borrows the checked output without granting settlement authority.
     pub fn checked<'a, O>(&'a self, operations: &'a O) -> &'a M1CheckedCompletionOutputV1
     where
