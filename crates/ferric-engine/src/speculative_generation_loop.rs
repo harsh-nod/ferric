@@ -1757,21 +1757,17 @@ mod tests {
         next: M1ServingPlanV1,
     ) -> (M1ServingRegistryV1<8>, M1ServingPublicationReservationV1) {
         let prefill = serving_pair(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128);
+        assert_eq!(prior, prefill);
         let mut registry = M1ServingRegistryV1::<8>::new().unwrap();
         let request = request(0);
         registry.admit(request, prefill).unwrap();
-        for next_plan in [prior, next] {
-            let batch = registry.plan_next().unwrap().unwrap();
-            let epoch = batch.epoch();
-            let reservation = registry.reserve_publication(batch).unwrap();
-            registry.record_publication(reservation).unwrap();
-            registry
-                .complete_exact(
-                    epoch,
-                    &[M1ServingCompletionDispositionV1::Continue(next_plan)],
-                )
-                .unwrap();
-        }
+        let batch = registry.plan_next().unwrap().unwrap();
+        let epoch = batch.epoch();
+        let reservation = registry.reserve_publication(batch).unwrap();
+        registry.record_publication(reservation).unwrap();
+        registry
+            .complete_exact(epoch, &[M1ServingCompletionDispositionV1::Continue(next)])
+            .unwrap();
         let batch = registry.plan_next().unwrap().unwrap();
         let reservation = registry.reserve_publication(batch).unwrap();
         (registry, reservation)
@@ -1973,9 +1969,9 @@ mod tests {
     fn physical_epoch_must_complete_before_speculative_permit_commits() {
         let bucket = Qwen3PlanBucket::SpeculativeS1K4C8192;
         let target = selection(bucket);
-        let decode = serving_pair(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192);
+        let prior = serving_pair(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128);
         let speculative = serving_pair(Qwen3ExecutionMode::Speculative, bucket);
-        let (mut registry, reservation) = speculative_rollover_batch(decode, speculative);
+        let (mut registry, reservation) = speculative_rollover_batch(prior, speculative);
         let epoch = reservation.epoch();
         let mut coordinator = M1SpeculativeGenerationLoopV1::new(target, &[seed(0, 32)]).unwrap();
         let permit = speculative_permit(
@@ -1988,7 +1984,7 @@ mod tests {
         );
         let mut operations = RolloverOperations::default();
         let published = M1ServingPhysicalQueueCustodyV1::Quiescent {
-            plan: decode,
+            plan: prior,
             custody: PhysicalCustody(10),
         }
         .publish(reservation, &mut registry, &mut operations)
@@ -2030,11 +2026,11 @@ mod tests {
     fn speculative_wrong_registry_retains_readback_and_permit_before_settlement() {
         let bucket = Qwen3PlanBucket::SpeculativeS1K4C8192;
         let target = selection(bucket);
-        let decode = serving_pair(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192);
+        let prior = serving_pair(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128);
         let speculative = serving_pair(Qwen3ExecutionMode::Speculative, bucket);
-        let (mut registry, reservation) = speculative_rollover_batch(decode, speculative);
+        let (mut registry, reservation) = speculative_rollover_batch(prior, speculative);
         let (mut wrong_registry, _wrong_reservation) =
-            speculative_rollover_batch(decode, speculative);
+            speculative_rollover_batch(prior, speculative);
         let epoch = reservation.epoch();
         let mut coordinator = M1SpeculativeGenerationLoopV1::new(target, &[seed(0, 32)]).unwrap();
         let permit = speculative_permit(
@@ -2046,7 +2042,7 @@ mod tests {
             M1SpeculativeMemberControlV1::continuing(request(0)),
         );
         let mut operations = RolloverOperations::default();
-        let readback = speculative_readback(&mut registry, reservation, decode, &mut operations);
+        let readback = speculative_readback(&mut registry, reservation, prior, &mut operations);
 
         let failure = readback
             .commit_speculative(
@@ -2085,9 +2081,9 @@ mod tests {
     fn speculative_wrong_coordinator_leaves_both_coordinators_and_registry_unchanged() {
         let bucket = Qwen3PlanBucket::SpeculativeS1K4C8192;
         let target = selection(bucket);
-        let decode = serving_pair(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192);
+        let prior = serving_pair(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128);
         let speculative = serving_pair(Qwen3ExecutionMode::Speculative, bucket);
-        let (mut registry, reservation) = speculative_rollover_batch(decode, speculative);
+        let (mut registry, reservation) = speculative_rollover_batch(prior, speculative);
         let epoch = reservation.epoch();
         let mut coordinator = M1SpeculativeGenerationLoopV1::new(target, &[seed(0, 32)]).unwrap();
         let mut wrong_coordinator =
@@ -2101,7 +2097,7 @@ mod tests {
             M1SpeculativeMemberControlV1::continuing(request(0)),
         );
         let mut operations = RolloverOperations::default();
-        let readback = speculative_readback(&mut registry, reservation, decode, &mut operations);
+        let readback = speculative_readback(&mut registry, reservation, prior, &mut operations);
 
         let failure = readback
             .commit_speculative(
@@ -2140,9 +2136,9 @@ mod tests {
     fn speculative_wrong_permit_roster_rejects_before_any_state_mutates() {
         let bucket = Qwen3PlanBucket::SpeculativeS1K4C8192;
         let target = selection(bucket);
-        let decode = serving_pair(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192);
+        let prior = serving_pair(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128);
         let speculative = serving_pair(Qwen3ExecutionMode::Speculative, bucket);
-        let (mut registry, reservation) = speculative_rollover_batch(decode, speculative);
+        let (mut registry, reservation) = speculative_rollover_batch(prior, speculative);
         let epoch = reservation.epoch();
         let mut coordinator = M1SpeculativeGenerationLoopV1::new(target, &[seed(0, 32)]).unwrap();
         let mut permit = speculative_permit(
@@ -2155,7 +2151,7 @@ mod tests {
         );
         permit.outcomes[0].request = request(1);
         let mut operations = RolloverOperations::default();
-        let readback = speculative_readback(&mut registry, reservation, decode, &mut operations);
+        let readback = speculative_readback(&mut registry, reservation, prior, &mut operations);
 
         let failure = readback
             .commit_speculative(&mut registry, &mut coordinator, permit, &mut operations)
@@ -2182,9 +2178,9 @@ mod tests {
         for (cancel, tokens) in [(true, &[400, 900][..]), (false, &[999][..])] {
             let bucket = Qwen3PlanBucket::SpeculativeS1K4C8192;
             let target = selection(bucket);
-            let decode = serving_pair(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192);
+            let prior = serving_pair(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128);
             let speculative = serving_pair(Qwen3ExecutionMode::Speculative, bucket);
-            let (mut registry, reservation) = speculative_rollover_batch(decode, speculative);
+            let (mut registry, reservation) = speculative_rollover_batch(prior, speculative);
             let epoch = reservation.epoch();
             let mut coordinator =
                 M1SpeculativeGenerationLoopV1::new(target, &[seed(0, 32)]).unwrap();
@@ -2205,8 +2201,7 @@ mod tests {
                 control,
             );
             let mut operations = RolloverOperations::default();
-            let readback =
-                speculative_readback(&mut registry, reservation, decode, &mut operations);
+            let readback = speculative_readback(&mut registry, reservation, prior, &mut operations);
             if cancel {
                 assert!(matches!(
                     registry.cancel(request(0)).unwrap(),
@@ -2240,9 +2235,9 @@ mod tests {
     fn speculative_hostile_physical_disposition_is_rejected_before_settlement() {
         let bucket = Qwen3PlanBucket::SpeculativeS1K4C8192;
         let target = selection(bucket);
-        let decode = serving_pair(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192);
+        let prior = serving_pair(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128);
         let speculative = serving_pair(Qwen3ExecutionMode::Speculative, bucket);
-        let (mut registry, reservation) = speculative_rollover_batch(decode, speculative);
+        let (mut registry, reservation) = speculative_rollover_batch(prior, speculative);
         let epoch = reservation.epoch();
         let mut coordinator = M1SpeculativeGenerationLoopV1::new(target, &[seed(0, 32)]).unwrap();
         let mut permit = speculative_permit(
@@ -2255,7 +2250,7 @@ mod tests {
         );
         permit.outcomes[0].physical_disposition = M1DeviceKvCompletionDispositionV1::Continue;
         let mut operations = RolloverOperations::default();
-        let readback = speculative_readback(&mut registry, reservation, decode, &mut operations);
+        let readback = speculative_readback(&mut registry, reservation, prior, &mut operations);
 
         let failure = readback
             .commit_speculative(&mut registry, &mut coordinator, permit, &mut operations)

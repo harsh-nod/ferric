@@ -16,27 +16,29 @@ use core::{
 use ferric_spec::{completion::CompletionEpoch, Qwen3PlanBucket, RequestId};
 
 use crate::m1_serving_physical_input_provider::M1ServingCommittedSpeculativeMemberBindingV1;
+use crate::m1_serving_registry::admit_m1_production_rollover_transition_v1;
 
 use crate::{
     complete_m1_physical_step_v1, release_m1_completed_step_kv_pages_v1,
-    schedule_m1_long_lived_queue_rearm_exact_v1, schedule_m1_s1_k4_queue_rollover_exact_v1,
+    schedule_m1_finite_speculative_queue_rollover_v1, schedule_m1_long_lived_queue_rearm_exact_v1,
     ActiveDeviceKvCache, AddresslessM1PhysicalBufferRecipeV1, BoundM1CompletionOutputV1, Engine,
     M1AllocatedScheduledStepV1, M1CheckedCompletionOutputV1, M1CompletedStepOutcomeV1,
     M1CompletedStepRejectionV1, M1DeviceKvCompletionDispositionV1, M1DeviceKvCompletionMemberV1,
-    M1DeviceKvCompletionRosterV1, M1ExactDispatchErrorV1, M1LongLivedQueueReleasedRoundV1,
+    M1DeviceKvCompletionRosterV1, M1ExactDispatchErrorV1,
+    M1FiniteSpeculativeQueueRolloverScheduleFailureCustodyV1, M1LongLivedQueueReleasedRoundV1,
     M1LongLivedQueueUnscheduledRoundV1, M1ObservedSpeculativeDiagnosticChoicesV1,
     M1PhysicalCompletedReadbackV1, M1PhysicalFixedBatchShapeV1, M1PhysicalPublishedQueueSessionV1,
     M1PhysicalRunnerV1, M1PreparedLongLivedQueueRearmV1, M1QueuedServingPhysicalInputProviderV1,
     M1RearmedCompletedReadbackV1, M1RearmedCompletionOutcomeV1,
     M1RearmedCompletionPreflightFailureV1, M1RearmedPublishedQueueV1,
-    M1RearmedRoundReleaseOutcomeV1, M1ReleasedCompletedStepV1,
-    M1S1K4QueueRolloverScheduleFailureCustodyV1, M1ScheduledDispatchV1,
-    M1ScheduledLongLivedQueueRearmV1, M1ScheduledS1K4QueueRolloverV1, M1ServingBatchPlanV1,
-    M1ServingCommittedSpeculativeRoundV1, M1ServingPhysicalOperationFailureV1,
-    M1ServingPhysicalOperationResultV1, M1ServingPhysicalOperationsV1, M1ServingPhysicalReadbackV1,
-    M1ServingPlanV1, M1ServingQueuedGenerationBindingV1, M1ServingQueuedS1K4RolloverV1,
-    M1ServingQueuedSameShapeRearmV1, M1ServingRolloverReasonV1, M1SpeculativeMemberStatusV1,
-    M1_MAX_REARM_ROUND_HISTORY_V1,
+    M1RearmedRoundReleaseOutcomeV1, M1ReleasedCompletedStepV1, M1ScheduledDispatchV1,
+    M1ScheduledFiniteSpeculativeQueueRolloverV1, M1ScheduledLongLivedQueueRearmV1,
+    M1ScheduledS1K4QueueRolloverV1, M1ServingBatchPlanV1, M1ServingCommittedSpeculativeRoundV1,
+    M1ServingPhysicalOperationFailureV1, M1ServingPhysicalOperationResultV1,
+    M1ServingPhysicalOperationsV1, M1ServingPhysicalReadbackV1, M1ServingPlanV1,
+    M1ServingQueuedFiniteSpeculativeRolloverV1, M1ServingQueuedGenerationBindingV1,
+    M1ServingQueuedS1K4RolloverV1, M1ServingQueuedSameShapeRearmV1, M1ServingRolloverReasonV1,
+    M1SpeculativeMemberStatusV1, M1_MAX_REARM_ROUND_HISTORY_V1,
 };
 
 /// Request-owned inputs prepared after the adapter issues the exact first dispatch.
@@ -111,20 +113,20 @@ pub struct M1ServingPreparedSameShapeRearmV1 {
     semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
 }
 
-/// Request-owned inputs prepared after exact paired-prefill to S1/K4 scheduling.
+/// Request-owned inputs prepared after one finite paired-prefill rollover.
 #[must_use = "prepared rollover custody must publish or remain retained"]
 #[derive(Debug)]
-pub struct M1ServingPreparedS1K4RolloverV1 {
-    prepared: crate::M1PreparedS1K4QueueRolloverV1,
+pub struct M1ServingPreparedFiniteSpeculativeRolloverV1 {
+    prepared: crate::M1PreparedFiniteSpeculativeQueueRolloverV1,
     recipe: AddresslessM1PhysicalBufferRecipeV1,
     semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
 }
 
-impl M1ServingPreparedS1K4RolloverV1 {
+impl M1ServingPreparedFiniteSpeculativeRolloverV1 {
     /// Joins a prepared native rollover to its exact physical recipe and
-    /// independent S1/K4 semantic evidence.
+    /// independent finite-speculative semantic evidence.
     pub const fn new(
-        prepared: crate::M1PreparedS1K4QueueRolloverV1,
+        prepared: crate::M1PreparedFiniteSpeculativeQueueRolloverV1,
         recipe: AddresslessM1PhysicalBufferRecipeV1,
         semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
     ) -> Self {
@@ -135,6 +137,9 @@ impl M1ServingPreparedS1K4RolloverV1 {
         }
     }
 }
+
+/// Source-compatible name for the original exact S1/K4 prepared rollover.
+pub type M1ServingPreparedS1K4RolloverV1 = M1ServingPreparedFiniteSpeculativeRolloverV1;
 
 impl M1ServingPreparedSameShapeRearmV1 {
     /// Joins the existing prepared-rearm typestate to its exact physical recipe.
@@ -198,6 +203,32 @@ pub trait M1ServingPhysicalInputProviderV1<const C: usize> {
         batch: &M1ServingBatchPlanV1,
         scheduled: M1ScheduledS1K4QueueRolloverV1,
     ) -> Result<M1ServingPreparedS1K4RolloverV1, Self::Failure>;
+
+    /// Declares support for rollover shapes beyond the original exact S1/K4
+    /// provider contract. Existing providers remain exact and fail closed.
+    #[must_use]
+    fn supports_wider_finite_speculative_rollover(&self) -> bool {
+        false
+    }
+
+    /// Prepares one transition admitted by the finite production rollover catalog.
+    ///
+    /// The adapter calls this default only for the original exact S1/K4 shape.
+    /// Wider shapes require an explicit capability opt-in before queue detach.
+    ///
+    /// # Errors
+    ///
+    /// Returns exhaustive provider custody when rollover inputs cannot be
+    /// prepared.
+    fn prepare_finite_speculative_rollover(
+        &mut self,
+        runner: &M1PhysicalRunnerV1,
+        engine: &mut Engine<C>,
+        batch: &M1ServingBatchPlanV1,
+        scheduled: M1ScheduledFiniteSpeculativeQueueRolloverV1,
+    ) -> Result<M1ServingPreparedFiniteSpeculativeRolloverV1, Self::Failure> {
+        self.prepare_s1_k4_rollover(runner, engine, batch, scheduled)
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -600,31 +631,31 @@ pub enum M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1 {
     CommittedInputMismatch,
 }
 
-/// Exhaustive failure to append one checked S1/K4 successor generation.
+/// Exhaustive failure to append one checked finite-speculative successor.
 ///
 /// Both variants retain the exact rejected input. `Unavailable` means no
 /// provider queue mutation was attempted; `Provider` preserves the lower
 /// allocation diagnostic after a failed transactional enqueue.
 #[must_use = "failed dynamic enqueue retains the exact generation input"]
 #[derive(Debug)]
-pub enum M1ServingPhysicalRunnerGenerationEnqueueFailureV1 {
+pub enum M1ServingPhysicalRunnerFiniteSpeculativeRolloverEnqueueFailureV1 {
     /// Adapter/readback validation rejected before provider queue mutation.
     Unavailable {
         /// Stable reason enqueue was unavailable.
         source: M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1,
         /// Exact unchanged generation input.
-        input: Box<M1ServingQueuedS1K4RolloverV1>,
+        input: Box<M1ServingQueuedFiniteSpeculativeRolloverV1>,
     },
     /// Transactional provider queue growth failed with lower custody intact.
     Provider {
         /// Lower host queue-growth diagnostic.
         source: std::collections::TryReserveError,
         /// Exact unchanged generation input.
-        input: Box<M1ServingQueuedS1K4RolloverV1>,
+        input: Box<M1ServingQueuedFiniteSpeculativeRolloverV1>,
     },
 }
 
-impl M1ServingPhysicalRunnerGenerationEnqueueFailureV1 {
+impl M1ServingPhysicalRunnerFiniteSpeculativeRolloverEnqueueFailureV1 {
     /// Stable unavailable reason, or `None` for a lower provider failure.
     #[must_use]
     pub const fn unavailable(
@@ -647,7 +678,7 @@ impl M1ServingPhysicalRunnerGenerationEnqueueFailureV1 {
 
     /// Borrows the unchanged generation input retained on every failure path.
     #[must_use = "the rejected generation input remains linear"]
-    pub const fn input(&self) -> &M1ServingQueuedS1K4RolloverV1 {
+    pub const fn input(&self) -> &M1ServingQueuedFiniteSpeculativeRolloverV1 {
         match self {
             Self::Unavailable { input, .. } | Self::Provider { input, .. } => input,
         }
@@ -655,12 +686,16 @@ impl M1ServingPhysicalRunnerGenerationEnqueueFailureV1 {
 
     /// Recovers the unchanged pre-boxed input from either failure class.
     #[must_use = "the rejected generation input remains linear"]
-    pub fn into_input(self) -> Box<M1ServingQueuedS1K4RolloverV1> {
+    pub fn into_input(self) -> Box<M1ServingQueuedFiniteSpeculativeRolloverV1> {
         match self {
             Self::Unavailable { input, .. } | Self::Provider { input, .. } => input,
         }
     }
 }
+
+/// Source-compatible name for the original exact S1/K4 enqueue failure.
+pub type M1ServingPhysicalRunnerGenerationEnqueueFailureV1 =
+    M1ServingPhysicalRunnerFiniteSpeculativeRolloverEnqueueFailureV1;
 
 /// Exhaustive failure to append one committed finite-speculative rearm.
 ///
@@ -825,7 +860,7 @@ pub enum M1ServingPhysicalRunnerTerminalLowerCustodyV1<'a, F> {
         history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
     },
     RolloverPublication {
-        failure: crate::M1PhysicalRunnerS1K4RolloverSubmissionFailureV1<'a>,
+        failure: crate::M1PhysicalRunnerFiniteSpeculativeRolloverSubmissionFailureV1<'a>,
         semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
         history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
     },
@@ -1120,22 +1155,22 @@ impl<'a, const C: usize, P> M1ServingPhysicalRunnerOperationsV1<'a, C, P> {
 impl<const C: usize>
     M1ServingPhysicalRunnerOperationsV1<'_, C, M1QueuedServingPhysicalInputProviderV1>
 {
-    /// Appends an exact S1/K4 successor after paired-prefill readback.
+    /// Appends one finite-speculative successor after paired-prefill readback.
     ///
     /// This capability is deliberately available only for the concrete queued
     /// provider. It validates the readback custody, exact next epoch and
-    /// request roster, and closed S1-prefill to S1/K4 transition before the
-    /// provider queue can change.
+    /// request roster, finite transition catalog, and every direct lane anchor
+    /// before the provider queue can change.
     ///
     /// # Errors
     ///
     /// Returns the pre-boxed input unchanged when the adapter/readback cannot
     /// accept a successor or when transactional provider queue growth fails.
-    pub fn try_enqueue_s1_k4_rollover_after_readback(
+    pub fn try_enqueue_finite_speculative_rollover_after_readback(
         &mut self,
         readback: &M1ServingPhysicalReadbackV1<M1ServingPhysicalRunnerReadbackV1>,
-        input: Box<M1ServingQueuedS1K4RolloverV1>,
-    ) -> Result<(), M1ServingPhysicalRunnerGenerationEnqueueFailureV1> {
+        input: Box<M1ServingQueuedFiniteSpeculativeRolloverV1>,
+    ) -> Result<(), M1ServingPhysicalRunnerFiniteSpeculativeRolloverEnqueueFailureV1> {
         let readback = readback.operation_custody();
         let checked = self.checked_completion(readback);
         if let Err(source) = validate_generation_enqueue(
@@ -1156,26 +1191,35 @@ impl<const C: usize>
                 .map(|record| record.record().request),
         ) {
             return Err(
-                M1ServingPhysicalRunnerGenerationEnqueueFailureV1::Unavailable { source, input },
-            );
-        }
-        let [record] = checked.records() else {
-            return Err(
-                M1ServingPhysicalRunnerGenerationEnqueueFailureV1::Unavailable {
-                    source:
-                        M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1::UnsupportedTransition,
+                M1ServingPhysicalRunnerFiniteSpeculativeRolloverEnqueueFailureV1::Unavailable {
+                    source,
                     input,
                 },
             );
-        };
-        if let Err(source) = validate_s1_k4_rollover_anchor(&input, record.semantics()) {
-            return Err(
-                M1ServingPhysicalRunnerGenerationEnqueueFailureV1::Unavailable { source, input },
-            );
+        }
+        for (lane, record) in checked.records().iter().enumerate() {
+            let crate::CheckedCompletionSemantics::DirectFinalRow { token } = record.semantics()
+            else {
+                return Err(
+                    M1ServingPhysicalRunnerFiniteSpeculativeRolloverEnqueueFailureV1::Unavailable {
+                        source: M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1::UnsupportedTransition,
+                        input,
+                    },
+                );
+            };
+            if !input.matches_anchor_at(lane, token) {
+                return Err(
+                    M1ServingPhysicalRunnerFiniteSpeculativeRolloverEnqueueFailureV1::Unavailable {
+                        source:
+                            M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1::AnchorMismatch,
+                        input,
+                    },
+                );
+            }
         }
         let Some(provider) = self.provider.as_mut() else {
             return Err(
-                M1ServingPhysicalRunnerGenerationEnqueueFailureV1::Unavailable {
+                M1ServingPhysicalRunnerFiniteSpeculativeRolloverEnqueueFailureV1::Unavailable {
                     source:
                         M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1::ProviderUnavailable,
                     input,
@@ -1183,10 +1227,38 @@ impl<const C: usize>
             );
         };
         provider
-            .try_enqueue_s1_k4_rollover(input)
+            .try_enqueue_finite_speculative_rollover(input)
             .map_err(|(source, input)| {
-                M1ServingPhysicalRunnerGenerationEnqueueFailureV1::Provider { source, input }
+                M1ServingPhysicalRunnerFiniteSpeculativeRolloverEnqueueFailureV1::Provider {
+                    source,
+                    input,
+                }
             })
+    }
+
+    /// Appends the original exact S1/K4 successor after paired-prefill readback.
+    ///
+    /// # Errors
+    ///
+    /// Returns the input unchanged when it is not the legacy exact S1/K4 case,
+    /// or forwards the generic finite-rollover rejection.
+    pub fn try_enqueue_s1_k4_rollover_after_readback(
+        &mut self,
+        readback: &M1ServingPhysicalReadbackV1<M1ServingPhysicalRunnerReadbackV1>,
+        input: Box<M1ServingQueuedS1K4RolloverV1>,
+    ) -> Result<(), M1ServingPhysicalRunnerGenerationEnqueueFailureV1> {
+        if input.binding().plan().target().bucket != Qwen3PlanBucket::SpeculativeS1K4C8192
+            || input.binding().requests().len() != 1
+        {
+            return Err(
+                M1ServingPhysicalRunnerFiniteSpeculativeRolloverEnqueueFailureV1::Unavailable {
+                    source:
+                        M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1::UnsupportedTransition,
+                    input,
+                },
+            );
+        }
+        self.try_enqueue_finite_speculative_rollover_after_readback(readback, input)
     }
 
     /// Appends one finite-speculative successor after atomic speculative commit.
@@ -1295,13 +1367,7 @@ fn supports_evidence_bound_speculation(plan: M1ServingPlanV1) -> bool {
     )
 }
 
-fn supports_s1_paired_prefill_rollover_source(plan: M1ServingPlanV1) -> bool {
-    plan.shape() == M1PhysicalFixedBatchShapeV1::PairedPrefill
-        && plan.sequence_capacity() == 1
-        && plan.target().mode == ferric_spec::Qwen3ExecutionMode::Prefill
-        && plan.target().bucket == Qwen3PlanBucket::PrefillS1T128
-}
-
+#[cfg(test)]
 fn validate_s1_k4_rollover_anchor(
     input: &M1ServingQueuedS1K4RolloverV1,
     semantics: crate::CheckedCompletionSemantics,
@@ -1511,9 +1577,7 @@ fn validate_generation_enqueue(
     {
         return Err(Unavailable::ReadbackPhaseMismatch);
     }
-    if !supports_s1_paired_prefill_rollover_source(prior)
-        || !supports_evidence_bound_s1_k4(binding.plan())
-    {
+    if admit_m1_production_rollover_transition_v1(prior, binding.plan()).is_none() {
         return Err(Unavailable::UnsupportedTransition);
     }
     let Some(next_epoch) = readback_epoch.value().checked_add(1) else {
@@ -2101,9 +2165,13 @@ where
                 custody,
             });
         }
-        if prior.shape() != M1PhysicalFixedBatchShapeV1::PairedPrefill
-            || !supports_evidence_bound_s1_k4(next)
-            || reason != M1ServingRolloverReasonV1::Mode
+        let transition = admit_m1_production_rollover_transition_v1(prior, next);
+        let exact_s1_k4 = supports_evidence_bound_s1_k4(next);
+        let supports_wider = self.provider.as_ref().is_some_and(
+            M1ServingPhysicalInputProviderV1::supports_wider_finite_speculative_rollover,
+        );
+        if transition.is_none_or(|transition| transition.reason() != reason)
+            || (!exact_s1_k4 && !supports_wider)
             || !matches!(
                 &custody.state,
                 M1ServingPhysicalRunnerQuiescentStateV1::First { .. }
@@ -2128,11 +2196,12 @@ where
             unreachable!("rollover state checked before consuming custody")
         };
         let scheduled =
-            match schedule_m1_s1_k4_queue_rollover_exact_v1(self.engine, released, batch) {
+            match schedule_m1_finite_speculative_queue_rollover_v1(self.engine, released, batch) {
                 Ok(scheduled) => scheduled,
                 Err(failure) if !failure.is_terminal() => {
-                    let M1S1K4QueueRolloverScheduleFailureCustodyV1::Released(released) =
-                        failure.into_custody()
+                    let M1FiniteSpeculativeQueueRolloverScheduleFailureCustodyV1::Released(
+                        released,
+                    ) = failure.into_custody()
                     else {
                         unreachable!("nonterminal rollover schedule retains released custody")
                     };
@@ -2157,12 +2226,15 @@ where
                 }
             };
         self.active_plan = Some(next);
-        let prepared = match self
+        let provider = self
             .provider
             .as_mut()
-            .expect("provider presence checked before rollover scheduling")
-            .prepare_s1_k4_rollover(self.runner, self.engine, batch, scheduled)
-        {
+            .expect("provider presence checked before rollover scheduling");
+        let prepared = match if exact_s1_k4 {
+            provider.prepare_s1_k4_rollover(self.runner, self.engine, batch, scheduled)
+        } else {
+            provider.prepare_finite_speculative_rollover(self.runner, self.engine, batch, scheduled)
+        } {
             Ok(prepared) => prepared,
             Err(failure) => {
                 return Err(self.terminal(
@@ -2188,30 +2260,29 @@ where
                 },
             ));
         }
-        let M1ServingPreparedS1K4RolloverV1 {
+        let M1ServingPreparedFiniteSpeculativeRolloverV1 {
             prepared,
             recipe,
             semantic_evidence,
         } = prepared;
-        let published =
-            match self
-                .runner
-                .submit_s1_k4_rollover(self.engine, self.ring_bytes, prepared, recipe)
-            {
-                Ok(published) => published,
-                Err(failure) => {
-                    return Err(self.terminal(
-                        M1ServingPhysicalRunnerTerminalLowerCustodyV1::RolloverPublication {
-                            failure,
-                            semantic_evidence,
-                            history: diagnostic_history,
-                        },
-                    ));
-                }
-            };
-        if published.shape() != M1PhysicalFixedBatchShapeV1::SpeculativeK4
-            || published.rollover_observation().is_none()
-        {
+        let published = match self.runner.submit_finite_speculative_rollover(
+            self.engine,
+            self.ring_bytes,
+            prepared,
+            recipe,
+        ) {
+            Ok(published) => published,
+            Err(failure) => {
+                return Err(self.terminal(
+                    M1ServingPhysicalRunnerTerminalLowerCustodyV1::RolloverPublication {
+                        failure,
+                        semantic_evidence,
+                        history: diagnostic_history,
+                    },
+                ));
+            }
+        };
+        if published.shape() != next.shape() || published.rollover_observation().is_none() {
             return Err(self.terminal(
                 M1ServingPhysicalRunnerTerminalLowerCustodyV1::RolloverUnexpectedShape {
                     published: Box::new(published),
@@ -4754,7 +4825,7 @@ mod tests {
 
     #[test]
     #[ignore = "requires admitted K1-K7 artifacts, prepacked Qwen bytes, and an exclusive MI300X"]
-    fn configured_mi300x_bridge_runs_output_fed_s1_k4_rollover_and_rearm() {
+    fn configured_mi300x_bridge_runs_output_fed_s1_k8_rollover_and_rearm() {
         use std::fs;
 
         use fe2o3_kfd::{DeviceSelector, OpenedKfd};
@@ -4774,13 +4845,13 @@ mod tests {
         use crate::{
             bind_m1_kv_workspace_table_v1, bind_m1_physical_runner_v1,
             initialize_m1_physical_runner_memory_v1, reopen_persisted_m1_kernel_artifacts_v1,
-            ActiveDeviceKvCache, Engine, M1FullStepKvWorkspaceTablesV1, M1FullStepWorkspacePlans,
+            ActiveDeviceKvCache, Engine, M1FiniteSpeculativeQueueRolloverKvInputsV1,
+            M1FullStepKvWorkspaceTablesV1, M1FullStepWorkspacePlans,
             M1QueuedServingPhysicalInputProviderV1, M1RearmRoundHistoryEntryV1,
-            M1S1K4QueueRolloverKvInputsV1, M1ServingCompletionDispositionV1,
-            M1ServingPhysicalQueueCustodyV1, M1ServingQueueActionV1,
+            M1ServingCompletionDispositionV1, M1ServingPhysicalQueueCustodyV1,
+            M1ServingQueueActionV1, M1ServingQueuedFiniteSpeculativeRolloverV1,
             M1ServingQueuedFirstPublicationV1, M1ServingQueuedGenerationBindingV1,
-            M1ServingQueuedGenerationInputV1, M1ServingQueuedS1K4RolloverV1,
-            M1ServingQueuedSameShapeRearmV1, M1ServingRegistryV1,
+            M1ServingQueuedGenerationInputV1, M1ServingQueuedSameShapeRearmV1, M1ServingRegistryV1,
             M1SpeculativeCancellationReasonV1, M1SpeculativeGenerationLoopV1,
             M1SpeculativeGenerationPolicyV1, M1SpeculativeMemberControlV1,
             M1SpeculativeMemberSeedV1,
@@ -4883,7 +4954,7 @@ mod tests {
         );
         let speculative = serving_plan(
             Qwen3ExecutionMode::Speculative,
-            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
             Qwen3ExecutionMode::Decode,
             Qwen3PlanBucket::DecodeS1C8192,
         );
@@ -5035,13 +5106,13 @@ mod tests {
             .expect("bind draft decode plan");
         let target_speculative_inputs = input(
             target_speculative_plan,
-            vec![anchor, 0, 0, 0, 0],
-            (128..133).collect(),
-            5,
+            vec![anchor, 0, 0, 0, 0, 0, 0, 0, 0],
+            (128..137).collect(),
+            9,
             128,
         );
         let draft_decode_inputs = input(draft_decode_plan, vec![anchor], vec![128], 1, 128);
-        let rollover_inputs = M1S1K4QueueRolloverKvInputsV1::new(
+        let rollover_inputs = M1FiniteSpeculativeQueueRolloverKvInputsV1::new(
             draft_decode_inputs,
             target_speculative_inputs,
             vec![draft_rollover_lease],
@@ -5055,7 +5126,7 @@ mod tests {
             workspace_plan(speculative.draft(), 92),
             workspace_plan(speculative.target(), 93),
         );
-        let rollover = M1ServingQueuedS1K4RolloverV1::new(
+        let rollover = M1ServingQueuedFiniteSpeculativeRolloverV1::new(
             M1ServingQueuedGenerationBindingV1::new(
                 speculative,
                 vec![request].into_boxed_slice(),
@@ -5066,8 +5137,8 @@ mod tests {
             rollover_recipe_plans,
         );
         operations
-            .try_enqueue_s1_k4_rollover_after_readback(&readback, Box::new(rollover))
-            .expect("enqueue output-fed S1/K4 successor after paired-prefill readback");
+            .try_enqueue_finite_speculative_rollover_after_readback(&readback, Box::new(rollover))
+            .expect("enqueue output-fed S1/K8 successor after paired-prefill readback");
         assert_eq!(
             operations
                 .provider()
@@ -5084,13 +5155,13 @@ mod tests {
             .expect("settle paired prefill and advance the registry through the bridge");
         operations
             .engine
-            .append_tentative(request, 5)
-            .expect("append one exact S1/K4 target span");
+            .append_tentative(request, 9)
+            .expect("append one exact S1/K8 target span");
 
         let rollover_batch = registry
             .plan_next()
-            .expect("plan exact S1/K4 successor")
-            .expect("S1/K4 successor is ready");
+            .expect("plan exact S1/K8 successor")
+            .expect("S1/K8 successor is ready");
         assert_eq!(rollover_batch.epoch(), rollover_epoch);
         assert_eq!(
             rollover_batch.action(),
@@ -5102,21 +5173,21 @@ mod tests {
         );
         let rollover_reservation = registry
             .reserve_publication(rollover_batch)
-            .expect("reserve exact S1/K4 rollover publication");
+            .expect("reserve exact S1/K8 rollover publication");
         let published = physical
             .publish(rollover_reservation, &mut registry, &mut operations)
-            .expect("roll over into native S1/K4 through the generic serving bridge");
+            .expect("roll over into native S1/K8 through the generic serving bridge");
         let readback = published
             .read_physical(rollover_epoch, &mut operations)
-            .expect("read the first native S1/K4 round through the generic bridge");
+            .expect("read the first native S1/K8 round through the generic bridge");
         let policy = M1SpeculativeGenerationPolicyV1::new(512, &[])
             .expect("construct nonterminal structural policy");
         let seed = M1SpeculativeMemberSeedV1::new(request, anchor, 128, 128, policy);
         let mut coordinator = M1SpeculativeGenerationLoopV1::new(speculative.target(), &[seed])
-            .expect("construct S1/K4 speculative coordinator");
+            .expect("construct S1/K8 speculative coordinator");
         let binding = coordinator
             .bind_round(0, rollover_epoch, &[request])
-            .expect("bind first native S1/K4 round");
+            .expect("bind first native S1/K8 round");
         let permit = coordinator
             .preflight_checked_round(
                 binding,
@@ -5128,7 +5199,7 @@ mod tests {
             .commit_speculative(&mut registry, &mut coordinator, permit, &mut operations)
             .expect("atomically settle and commit the first speculative round");
         let [member] = committed.outcome().members() else {
-            panic!("S1/K4 commit must retain one exact member outcome")
+            panic!("S1/K8 commit must retain one exact member outcome")
         };
         assert_eq!(member.status(), M1SpeculativeMemberStatusV1::Active);
         let next_anchor = member
@@ -5148,9 +5219,9 @@ mod tests {
             .expect("bind second-round draft plan");
         let target_rearm_inputs = input(
             target_rearm_plan,
-            vec![next_anchor, 0, 0, 0, 0],
-            (target_committed..target_committed + 5).collect(),
-            5,
+            vec![next_anchor, 0, 0, 0, 0, 0, 0, 0, 0],
+            (target_committed..target_committed + 9).collect(),
+            9,
             target_committed,
         );
         let draft_rearm_inputs = input(
@@ -5184,7 +5255,7 @@ mod tests {
             rearm_recipe_plans,
         );
         operations
-            .try_enqueue_s1_k4_rearm_after_commit(&committed, Box::new(rearm))
+            .try_enqueue_speculative_rearm_after_commit(&committed, Box::new(rearm))
             .expect("enqueue the exact committed output-fed same-shape rearm");
         assert_eq!(
             operations
@@ -5198,27 +5269,27 @@ mod tests {
         assert_eq!(first_outcome.next_active_roster(), &[request]);
         operations
             .engine
-            .append_tentative(request, 5)
-            .expect("append the second exact S1/K4 target span");
+            .append_tentative(request, 9)
+            .expect("append the second exact S1/K8 target span");
 
         let rearm_batch = registry
             .plan_next()
-            .expect("plan second exact S1/K4 generation")
-            .expect("same-shape S1/K4 successor is ready");
+            .expect("plan second exact S1/K8 generation")
+            .expect("same-shape S1/K8 successor is ready");
         assert_eq!(rearm_batch.epoch(), rearm_epoch);
         assert_eq!(rearm_batch.action(), M1ServingQueueActionV1::SameShapeRearm);
         let rearm_reservation = registry
             .reserve_publication(rearm_batch)
-            .expect("reserve second S1/K4 publication");
+            .expect("reserve second S1/K8 publication");
         let published = physical
             .publish(rearm_reservation, &mut registry, &mut operations)
-            .expect("publish same-shape S1/K4 rearm through the generic bridge");
+            .expect("publish same-shape S1/K8 rearm through the generic bridge");
         let readback = published
             .read_physical(rearm_epoch, &mut operations)
-            .expect("read the second native S1/K4 round through the generic bridge");
+            .expect("read the second native S1/K8 round through the generic bridge");
         let binding = coordinator
             .bind_round(1, rearm_epoch, &[request])
-            .expect("bind second native S1/K4 round");
+            .expect("bind second native S1/K8 round");
         let permit = coordinator
             .preflight_checked_round(
                 binding,
@@ -5269,7 +5340,7 @@ mod tests {
             diagnostic_history,
         } = state
         else {
-            panic!("second S1/K4 round did not return rearmed queue custody")
+            panic!("second S1/K8 round did not return rearmed queue custody")
         };
         assert!(matches!(
             diagnostic_history.evidence(),

@@ -11,17 +11,18 @@
 use core::fmt;
 use std::collections::{TryReserveError, VecDeque};
 
-use ferric_spec::{completion::CompletionEpoch, RequestId};
+use ferric_spec::{completion::CompletionEpoch, Qwen3ExecutionMode, Qwen3PlanBucket, RequestId};
 
 use crate::{
-    prepare_m1_long_lived_queue_rearm_v1, prepare_m1_s1_k4_queue_rollover_v1,
-    reserve_m1_long_lived_queue_rearm_kv_v1, reserve_m1_s1_k4_queue_rollover_kv_v1,
-    ActiveDeviceKvCache, Engine, M1FullStepKvWorkspaceTablesV1, M1FullStepWorkspaceInputKind,
-    M1FullStepWorkspacePlans, M1LongLivedQueueRearmKvInputsV1, M1PartitionedModelMemoryKvPoolV1,
-    M1PhysicalFixedBatchShapeV1, M1PhysicalRunnerRecipeOutcomeV1, M1PhysicalRunnerV1,
-    M1S1K4QueueRolloverKvInputsV1, M1ScheduledDispatchV1, M1ScheduledLongLivedQueueRearmV1,
-    M1ScheduledS1K4QueueRolloverV1, M1ServingBatchPlanV1, M1ServingPhysicalInputProviderV1,
-    M1ServingPlanV1, M1ServingPreparedFirstPublicationV1, M1ServingPreparedS1K4RolloverV1,
+    prepare_m1_finite_speculative_queue_rollover_v1, prepare_m1_long_lived_queue_rearm_v1,
+    reserve_m1_finite_speculative_queue_rollover_kv_v1, reserve_m1_long_lived_queue_rearm_kv_v1,
+    ActiveDeviceKvCache, Engine, M1FiniteSpeculativeQueueRolloverKvInputsV1,
+    M1FullStepKvWorkspaceTablesV1, M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans,
+    M1LongLivedQueueRearmKvInputsV1, M1PartitionedModelMemoryKvPoolV1, M1PhysicalFixedBatchShapeV1,
+    M1PhysicalRunnerRecipeOutcomeV1, M1PhysicalRunnerV1, M1ScheduledDispatchV1,
+    M1ScheduledFiniteSpeculativeQueueRolloverV1, M1ScheduledLongLivedQueueRearmV1,
+    M1ServingBatchPlanV1, M1ServingPhysicalInputProviderV1, M1ServingPlanV1,
+    M1ServingPreparedFiniteSpeculativeRolloverV1, M1ServingPreparedFirstPublicationV1,
     M1ServingPreparedSameShapeRearmV1, M1ServingPreparedSemanticEvidenceV1, M1StepDispatchIntent,
 };
 
@@ -30,6 +31,7 @@ use crate::{
 pub enum M1ServingQueuedGenerationPhaseV1 {
     FirstPublication,
     SameShapeRearm,
+    /// Finite-speculative rollover; retains its original public name.
     S1K4Rollover,
 }
 
@@ -226,20 +228,20 @@ fn speculative_role_input_matches(
         && input.context_lengths().get(lane) == Some(&committed)
 }
 
-/// Exact paired-prefill to S1/K4 successor owners queued before detachment.
+/// Exact paired-prefill to finite-speculative successor owners queued before detachment.
 #[must_use = "rollover inputs own linear KV page leases and workspace plans"]
 #[derive(Debug)]
-pub struct M1ServingQueuedS1K4RolloverV1 {
+pub struct M1ServingQueuedFiniteSpeculativeRolloverV1 {
     binding: M1ServingQueuedGenerationBindingV1,
-    kv_inputs: M1S1K4QueueRolloverKvInputsV1,
+    kv_inputs: M1FiniteSpeculativeQueueRolloverKvInputsV1,
     preparation_plans: M1FullStepWorkspacePlans,
     recipe_plans: M1FullStepWorkspacePlans,
 }
 
-impl M1ServingQueuedS1K4RolloverV1 {
+impl M1ServingQueuedFiniteSpeculativeRolloverV1 {
     pub const fn new(
         binding: M1ServingQueuedGenerationBindingV1,
-        kv_inputs: M1S1K4QueueRolloverKvInputsV1,
+        kv_inputs: M1FiniteSpeculativeQueueRolloverKvInputsV1,
         preparation_plans: M1FullStepWorkspacePlans,
         recipe_plans: M1FullStepWorkspacePlans,
     ) -> Self {
@@ -259,9 +261,25 @@ impl M1ServingQueuedS1K4RolloverV1 {
     /// Whether draft decode and target verification share this first token.
     #[must_use]
     pub fn matches_anchor(&self, anchor: ferric_spec::TokenId) -> bool {
-        self.kv_inputs.matches_anchor(anchor)
+        self.binding.requests().len() == 1 && self.kv_inputs.matches_anchor(anchor)
+    }
+
+    /// Whether every draft and target lane starts from the corresponding
+    /// checked paired-prefill token in exact scheduler order.
+    #[must_use]
+    pub fn matches_anchors(&self, anchors: &[ferric_spec::TokenId]) -> bool {
+        anchors.len() == self.binding.requests().len() && self.kv_inputs.matches_anchors(anchors)
+    }
+
+    /// Whether one exact draft and target lane starts from `anchor`.
+    #[must_use]
+    pub fn matches_anchor_at(&self, lane: usize, anchor: ferric_spec::TokenId) -> bool {
+        lane < self.binding.requests().len() && self.kv_inputs.matches_anchor_at(lane, anchor)
     }
 }
+
+/// Source-compatible name for the original one-lane S1/K4 rollover owner.
+pub type M1ServingQueuedS1K4RolloverV1 = M1ServingQueuedFiniteSpeculativeRolloverV1;
 
 /// One move-only physical generation in exact serving order.
 #[must_use = "queued generation inputs must be consumed in serving order"]
@@ -269,6 +287,7 @@ impl M1ServingQueuedS1K4RolloverV1 {
 pub enum M1ServingQueuedGenerationInputV1 {
     FirstPublication(Box<M1ServingQueuedFirstPublicationV1>),
     SameShapeRearm(Box<M1ServingQueuedSameShapeRearmV1>),
+    /// Finite-speculative rollover; retains its original public variant name.
     S1K4Rollover(Box<M1ServingQueuedS1K4RolloverV1>),
 }
 
@@ -281,6 +300,11 @@ impl M1ServingQueuedGenerationInputV1 {
     /// Boxes one same-shape rearm owner before it enters the fallible queue.
     pub fn same_shape_rearm(input: M1ServingQueuedSameShapeRearmV1) -> Self {
         Self::SameShapeRearm(Box::new(input))
+    }
+
+    /// Boxes one finite-speculative rollover owner before it enters the queue.
+    pub fn finite_speculative_rollover(input: M1ServingQueuedFiniteSpeculativeRolloverV1) -> Self {
+        Self::S1K4Rollover(Box::new(input))
     }
 
     /// Boxes one S1/K4 rollover owner before it enters the fallible queue.
@@ -451,15 +475,21 @@ impl M1QueuedServingPhysicalInputProviderV1 {
         Ok(())
     }
 
-    /// Appends one typed rollover input for the validated serving adapter.
+    /// Appends one typed finite-speculative rollover for the validated adapter.
     ///
     /// # Errors
     ///
     /// Returns the allocation diagnostic and unchanged typed input.
-    pub(crate) fn try_enqueue_s1_k4_rollover(
+    pub(crate) fn try_enqueue_finite_speculative_rollover(
         &mut self,
-        input: Box<M1ServingQueuedS1K4RolloverV1>,
-    ) -> Result<(), (TryReserveError, Box<M1ServingQueuedS1K4RolloverV1>)> {
+        input: Box<M1ServingQueuedFiniteSpeculativeRolloverV1>,
+    ) -> Result<
+        (),
+        (
+            TryReserveError,
+            Box<M1ServingQueuedFiniteSpeculativeRolloverV1>,
+        ),
+    > {
         if let Err(source) = self.pending.try_reserve(1) {
             return Err((source, input));
         }
@@ -610,10 +640,178 @@ fn continuation_physical_preflight(
     }
 }
 
+fn is_admitted_finite_speculative_plan(plan: M1ServingPlanV1) -> bool {
+    if plan.mode() != Qwen3ExecutionMode::Speculative
+        || plan.draft().mode != Qwen3ExecutionMode::Decode
+    {
+        return false;
+    }
+    matches!(
+        (
+            plan.shape(),
+            plan.sequence_capacity(),
+            plan.target().bucket,
+            plan.draft().bucket,
+        ),
+        (
+            M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+            1,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::DecodeS1C8192,
+        ) | (
+            M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+            8,
+            Qwen3PlanBucket::SpeculativeS8K4C8192,
+            Qwen3PlanBucket::DecodeS8C8192,
+        ) | (
+            M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+            1,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::DecodeS1C8192,
+        ) | (
+            M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+            1,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+            Qwen3PlanBucket::DecodeS1C8192,
+        )
+    )
+}
+
+fn is_finite_rollover_source_plan(plan: M1ServingPlanV1) -> bool {
+    plan.shape() == M1PhysicalFixedBatchShapeV1::PairedPrefill
+        && plan.mode() == Qwen3ExecutionMode::Prefill
+        && matches!(
+            plan.target().bucket,
+            Qwen3PlanBucket::PrefillS1T128 | Qwen3PlanBucket::PrefillS8T128
+        )
+}
+
+fn is_exact_s1_k4_plan(plan: M1ServingPlanV1) -> bool {
+    plan.shape() == M1PhysicalFixedBatchShapeV1::SpeculativeK4
+        && plan.sequence_capacity() == 1
+        && plan.target().bucket == Qwen3PlanBucket::SpeculativeS1K4C8192
+        && plan.draft().bucket == Qwen3PlanBucket::DecodeS1C8192
+}
+
+fn prepare_queued_finite_speculative_rollover<const C: usize>(
+    provider: &mut M1QueuedServingPhysicalInputProviderV1,
+    runner: &M1PhysicalRunnerV1,
+    engine: &mut Engine<C>,
+    batch: &M1ServingBatchPlanV1,
+    scheduled: M1ScheduledFiniteSpeculativeQueueRolloverV1,
+) -> Result<M1ServingPreparedFiniteSpeculativeRolloverV1, M1ServingPhysicalInputPreparationFailureV1>
+{
+    let expected = M1ServingQueuedGenerationPhaseV1::S1K4Rollover;
+    let Some(front) = provider.pending.front() else {
+        return Err(preparation_failure(
+            M1ServingPhysicalInputPreparationPhaseV1::QueueSelection,
+            M1ServingPhysicalInputPreparationErrorV1::QueueEmpty { expected },
+            scheduled,
+        ));
+    };
+    if front.phase() != expected {
+        return Err(preparation_failure(
+            M1ServingPhysicalInputPreparationPhaseV1::QueueSelection,
+            M1ServingPhysicalInputPreparationErrorV1::QueuePhaseMismatch {
+                expected,
+                actual: front.phase(),
+            },
+            scheduled,
+        ));
+    }
+    if !exact_batch_binding_matches(front.binding(), batch, scheduled.scheduled_dispatch())
+        || scheduled.next_plan() != batch.plan()
+    {
+        return Err(preparation_failure(
+            M1ServingPhysicalInputPreparationPhaseV1::BatchBinding,
+            M1ServingPhysicalInputPreparationErrorV1::BatchBindingMismatch,
+            scheduled,
+        ));
+    }
+    let M1ServingQueuedGenerationInputV1::S1K4Rollover(front) = front else {
+        unreachable!("phase checked above")
+    };
+    if !is_admitted_finite_speculative_plan(batch.plan()) {
+        return Err(preparation_failure(
+            M1ServingPhysicalInputPreparationPhaseV1::PhysicalInputPreflight,
+            M1ServingPhysicalInputPreparationErrorV1::UnsupportedPlanShape,
+            scheduled,
+        ));
+    }
+    if let Err(error) =
+        continuation_physical_preflight(&front.preparation_plans, &front.recipe_plans, batch)
+    {
+        return Err(preparation_failure(
+            M1ServingPhysicalInputPreparationPhaseV1::PhysicalInputPreflight,
+            error,
+            scheduled,
+        ));
+    }
+
+    let Some(M1ServingQueuedGenerationInputV1::S1K4Rollover(input)) = provider.pending.pop_front()
+    else {
+        unreachable!("front variant checked before dequeue")
+    };
+    let M1ServingQueuedFiniteSpeculativeRolloverV1 {
+        binding,
+        kv_inputs,
+        preparation_plans,
+        recipe_plans,
+    } = *input;
+    let recipe = match runner.derive_step_recipe(
+        M1StepDispatchIntent::SpeculativeRound(binding.plan().target()),
+        recipe_plans,
+    ) {
+        M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
+        M1PhysicalRunnerRecipeOutcomeV1::Rejected(failure) => {
+            return Err(preparation_failure(
+                M1ServingPhysicalInputPreparationPhaseV1::RecipeDerivation,
+                M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
+                (binding, kv_inputs, preparation_plans, scheduled, failure),
+            ));
+        }
+    };
+    let reserved =
+        match reserve_m1_finite_speculative_queue_rollover_kv_v1(engine, scheduled, kv_inputs) {
+            Ok(reserved) => reserved,
+            Err(failure) => {
+                return Err(preparation_failure(
+                    M1ServingPhysicalInputPreparationPhaseV1::S1K4KvReservation,
+                    M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
+                    (binding, preparation_plans, recipe, failure),
+                ));
+            }
+        };
+    let prepared = match prepare_m1_finite_speculative_queue_rollover_v1(
+        engine,
+        reserved,
+        runner.logical_runner(),
+        preparation_plans,
+    ) {
+        Ok(prepared) => prepared,
+        Err(failure) => {
+            return Err(preparation_failure(
+                M1ServingPhysicalInputPreparationPhaseV1::S1K4WorkspacePreparation,
+                M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
+                (binding, recipe, failure),
+            ));
+        }
+    };
+    Ok(M1ServingPreparedFiniteSpeculativeRolloverV1::new(
+        prepared,
+        recipe,
+        M1ServingPreparedSemanticEvidenceV1::SpeculativeK4,
+    ))
+}
+
 impl<const C: usize> M1ServingPhysicalInputProviderV1<C>
     for M1QueuedServingPhysicalInputProviderV1
 {
     type Failure = M1ServingPhysicalInputPreparationFailureV1;
+
+    fn supports_wider_finite_speculative_rollover(&self) -> bool {
+        true
+    }
 
     fn prepare_first_publication(
         &mut self,
@@ -711,8 +909,8 @@ impl<const C: usize> M1ServingPhysicalInputProviderV1<C>
                 ));
             }
         };
-        if binding.plan().shape() == M1PhysicalFixedBatchShapeV1::PairedPrefill {
-            if let Err(failure) = allocated.reserve_s1_k4_rollover_output() {
+        if is_finite_rollover_source_plan(binding.plan()) {
+            if let Err(failure) = allocated.reserve_finite_speculative_rollover_outputs() {
                 return Err(preparation_failure(
                     M1ServingPhysicalInputPreparationPhaseV1::S1K4OutputReservation,
                     M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
@@ -890,106 +1088,26 @@ impl<const C: usize> M1ServingPhysicalInputProviderV1<C>
         runner: &M1PhysicalRunnerV1,
         engine: &mut Engine<C>,
         batch: &M1ServingBatchPlanV1,
-        scheduled: M1ScheduledS1K4QueueRolloverV1,
-    ) -> Result<M1ServingPreparedS1K4RolloverV1, Self::Failure> {
-        let expected = M1ServingQueuedGenerationPhaseV1::S1K4Rollover;
-        let Some(front) = self.pending.front() else {
-            return Err(preparation_failure(
-                M1ServingPhysicalInputPreparationPhaseV1::QueueSelection,
-                M1ServingPhysicalInputPreparationErrorV1::QueueEmpty { expected },
-                scheduled,
-            ));
-        };
-        if front.phase() != expected {
-            return Err(preparation_failure(
-                M1ServingPhysicalInputPreparationPhaseV1::QueueSelection,
-                M1ServingPhysicalInputPreparationErrorV1::QueuePhaseMismatch {
-                    expected,
-                    actual: front.phase(),
-                },
-                scheduled,
-            ));
-        }
-        if !exact_batch_binding_matches(front.binding(), batch, scheduled.scheduled_dispatch()) {
-            return Err(preparation_failure(
-                M1ServingPhysicalInputPreparationPhaseV1::BatchBinding,
-                M1ServingPhysicalInputPreparationErrorV1::BatchBindingMismatch,
-                scheduled,
-            ));
-        }
-        let M1ServingQueuedGenerationInputV1::S1K4Rollover(front) = front else {
-            unreachable!("phase checked above")
-        };
-        if batch.plan().shape() != M1PhysicalFixedBatchShapeV1::SpeculativeK4 {
+        scheduled: M1ScheduledFiniteSpeculativeQueueRolloverV1,
+    ) -> Result<M1ServingPreparedFiniteSpeculativeRolloverV1, Self::Failure> {
+        if !is_exact_s1_k4_plan(batch.plan()) {
             return Err(preparation_failure(
                 M1ServingPhysicalInputPreparationPhaseV1::PhysicalInputPreflight,
                 M1ServingPhysicalInputPreparationErrorV1::UnsupportedPlanShape,
                 scheduled,
             ));
         }
-        if let Err(error) =
-            continuation_physical_preflight(&front.preparation_plans, &front.recipe_plans, batch)
-        {
-            return Err(preparation_failure(
-                M1ServingPhysicalInputPreparationPhaseV1::PhysicalInputPreflight,
-                error,
-                scheduled,
-            ));
-        }
+        prepare_queued_finite_speculative_rollover(self, runner, engine, batch, scheduled)
+    }
 
-        let Some(M1ServingQueuedGenerationInputV1::S1K4Rollover(input)) = self.pending.pop_front()
-        else {
-            unreachable!("front variant checked before dequeue")
-        };
-        let M1ServingQueuedS1K4RolloverV1 {
-            binding,
-            kv_inputs,
-            preparation_plans,
-            recipe_plans,
-        } = *input;
-        let recipe = match runner.derive_step_recipe(
-            M1StepDispatchIntent::SpeculativeRound(binding.plan().target()),
-            recipe_plans,
-        ) {
-            M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
-            M1PhysicalRunnerRecipeOutcomeV1::Rejected(failure) => {
-                return Err(preparation_failure(
-                    M1ServingPhysicalInputPreparationPhaseV1::RecipeDerivation,
-                    M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
-                    (binding, kv_inputs, preparation_plans, scheduled, failure),
-                ));
-            }
-        };
-        let reserved = match reserve_m1_s1_k4_queue_rollover_kv_v1(engine, scheduled, kv_inputs) {
-            Ok(reserved) => reserved,
-            Err(failure) => {
-                return Err(preparation_failure(
-                    M1ServingPhysicalInputPreparationPhaseV1::S1K4KvReservation,
-                    M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
-                    (binding, preparation_plans, recipe, failure),
-                ));
-            }
-        };
-        let prepared = match prepare_m1_s1_k4_queue_rollover_v1(
-            engine,
-            reserved,
-            runner.logical_runner(),
-            preparation_plans,
-        ) {
-            Ok(prepared) => prepared,
-            Err(failure) => {
-                return Err(preparation_failure(
-                    M1ServingPhysicalInputPreparationPhaseV1::S1K4WorkspacePreparation,
-                    M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
-                    (binding, recipe, failure),
-                ));
-            }
-        };
-        Ok(M1ServingPreparedS1K4RolloverV1::new(
-            prepared,
-            recipe,
-            M1ServingPreparedSemanticEvidenceV1::SpeculativeK4,
-        ))
+    fn prepare_finite_speculative_rollover(
+        &mut self,
+        runner: &M1PhysicalRunnerV1,
+        engine: &mut Engine<C>,
+        batch: &M1ServingBatchPlanV1,
+        scheduled: M1ScheduledFiniteSpeculativeQueueRolloverV1,
+    ) -> Result<M1ServingPreparedFiniteSpeculativeRolloverV1, Self::Failure> {
+        prepare_queued_finite_speculative_rollover(self, runner, engine, batch, scheduled)
     }
 }
 
@@ -1001,8 +1119,9 @@ mod tests {
     };
 
     use super::{
-        dispatch_intent, semantic_evidence, workspace_kind, M1QueuedServingPhysicalInputProviderV1,
-        M1ServingQueuedGenerationBindingV1,
+        dispatch_intent, is_admitted_finite_speculative_plan, is_exact_s1_k4_plan,
+        is_finite_rollover_source_plan, semantic_evidence, workspace_kind,
+        M1QueuedServingPhysicalInputProviderV1, M1ServingQueuedGenerationBindingV1,
     };
     use crate::{
         M1FullStepWorkspaceInputKind, M1PhysicalFixedBatchShapeV1, M1ServingPlanV1,
@@ -1082,6 +1201,22 @@ mod tests {
             semantic_evidence(paired),
             M1ServingPreparedSemanticEvidenceV1::Direct
         ));
+        assert!(is_finite_rollover_source_plan(paired));
+
+        let paired_s8 = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS8T128,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS8T128,
+        );
+        assert!(is_finite_rollover_source_plan(paired_s8));
+        let long_prefill = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T512,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T512,
+        );
+        assert!(!is_finite_rollover_source_plan(long_prefill));
 
         assert_eq!(
             workspace_kind(direct),
@@ -1132,7 +1267,13 @@ mod tests {
                 semantic_evidence(speculative),
                 M1ServingPreparedSemanticEvidenceV1::SpeculativeK4
             ));
+            assert!(is_admitted_finite_speculative_plan(speculative));
+            assert_eq!(
+                is_exact_s1_k4_plan(speculative),
+                target_bucket == Qwen3PlanBucket::SpeculativeS1K4C8192
+            );
         }
+        assert!(!is_admitted_finite_speculative_plan(direct));
     }
 
     #[test]

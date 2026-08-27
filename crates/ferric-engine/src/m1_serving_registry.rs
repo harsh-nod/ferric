@@ -201,7 +201,8 @@ pub enum M1ServingQuiescentQueueActionV1 {
     /// At least one request is ready; [`M1ServingRegistryV1::plan_next`] decides
     /// whether the queue can rearm or must roll over.
     RetainForReadyWork { bound: M1ServingPlanV1 },
-    /// No request remains ready, so the quiescent physical queue may retire.
+    /// No ready request needs this exact queue or one of its admitted native
+    /// rollover paths, so the quiescent physical queue may retire.
     Retire { bound: M1ServingPlanV1 },
 }
 
@@ -254,6 +255,7 @@ pub enum M1ServingRegistryErrorV1 {
     CompletionRosterMismatch { lane: usize },
     CompletionDispositionCount,
     QueuePlanMismatch,
+    QueueTransitionUnsupported,
     ReadyWorkRequiresQueue,
     PublicationReservationActive,
     PublicationReservationRequired,
@@ -506,11 +508,9 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         let Some(bound) = self.bound_plan else {
             return Ok(M1ServingQuiescentQueueActionV1::NoQueue);
         };
-        if self
-            .entries
-            .iter()
-            .any(|entry| entry.phase == M1ServingRequestPhaseV1::Ready)
-        {
+        if self.next_ready_plan().is_some_and(|next| {
+            next == bound || admit_m1_production_rollover_transition_v1(bound, next).is_some()
+        }) {
             Ok(M1ServingQuiescentQueueActionV1::RetainForReadyWork { bound })
         } else {
             Ok(M1ServingQuiescentQueueActionV1::Retire { bound })
@@ -536,11 +536,9 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         if self.bound_plan != Some(bound) {
             return Err(M1ServingRegistryErrorV1::QueuePlanMismatch);
         }
-        if self
-            .entries
-            .iter()
-            .any(|entry| entry.phase == M1ServingRequestPhaseV1::Ready)
-        {
+        if self.next_ready_plan().is_some_and(|next| {
+            next == bound || admit_m1_production_rollover_transition_v1(bound, next).is_some()
+        }) {
             return Err(M1ServingRegistryErrorV1::ReadyWorkRequiresQueue);
         }
         self.bound_plan = None;
@@ -615,13 +613,7 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         if self.in_flight.is_some() {
             return Err(M1ServingRegistryErrorV1::BatchAlreadyInFlight);
         }
-        let Some(selected_plan) = self
-            .entries
-            .iter()
-            .filter(|entry| entry.phase == M1ServingRequestPhaseV1::Ready)
-            .min_by_key(|entry| plan_priority(entry.plan))
-            .map(|entry| entry.plan)
-        else {
+        let Some(selected_plan) = self.next_ready_plan() else {
             return Ok(None);
         };
         let limit = C.min(selected_plan.sequence_capacity());
@@ -639,7 +631,7 @@ impl<const C: usize> M1ServingRegistryV1<C> {
             .submitted_epoch
             .checked_add(1)
             .ok_or(M1ServingRegistryErrorV1::CompletionEpochMismatch)?;
-        let action = classify_queue_action(self.bound_plan, selected_plan);
+        let action = classify_queue_action(self.bound_plan, selected_plan)?;
         Ok(Some(M1ServingBatchPlanV1 {
             plan: selected_plan,
             requests,
@@ -896,6 +888,14 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         self.entries.iter().find(|entry| entry.request == request)
     }
 
+    fn next_ready_plan(&self) -> Option<M1ServingPlanV1> {
+        self.entries
+            .iter()
+            .filter(|entry| entry.phase == M1ServingRequestPhaseV1::Ready)
+            .min_by_key(|entry| plan_priority(entry.plan))
+            .map(|entry| entry.plan)
+    }
+
     fn entry_mut(
         &mut self,
         request: RequestId,
@@ -967,28 +967,81 @@ fn plan_priority(plan: M1ServingPlanV1) -> u8 {
     }
 }
 
+/// One exact cross-plan transition implemented by the production physical
+/// serving path.
+///
+/// This crate-private authority is shared by registry planning and the
+/// physical adapter. It deliberately excludes identity transitions, which use
+/// same-shape rearm, and every transition without a production rollover
+/// implementation.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) struct M1ServingProductionRolloverTransitionV1 {
+    prior: M1ServingPlanV1,
+    next: M1ServingPlanV1,
+    reason: M1ServingRolloverReasonV1,
+}
+
+impl M1ServingProductionRolloverTransitionV1 {
+    pub(crate) const fn prior(self) -> M1ServingPlanV1 {
+        self.prior
+    }
+
+    pub(crate) const fn next(self) -> M1ServingPlanV1 {
+        self.next
+    }
+
+    pub(crate) const fn reason(self) -> M1ServingRolloverReasonV1 {
+        self.reason
+    }
+}
+
+/// Admits the exact finite production rollover catalog.
+///
+/// The only admitted cross-plan successors are S1/T128 paired prefill into
+/// S1/K4, S1/K8, or S1/K16 speculation and S8/T128 paired prefill into S8/K4
+/// speculation. Callers must fail closed for `None`.
+pub(crate) fn admit_m1_production_rollover_transition_v1(
+    prior: M1ServingPlanV1,
+    next: M1ServingPlanV1,
+) -> Option<M1ServingProductionRolloverTransitionV1> {
+    let admitted = matches!(
+        (prior.target().bucket, next.target().bucket),
+        (
+            Qwen3PlanBucket::PrefillS1T128,
+            Qwen3PlanBucket::SpeculativeS1K4C8192
+                | Qwen3PlanBucket::SpeculativeS1K8C8192
+                | Qwen3PlanBucket::SpeculativeS1K16C8192
+        ) | (
+            Qwen3PlanBucket::PrefillS8T128,
+            Qwen3PlanBucket::SpeculativeS8K4C8192
+        )
+    ) && prior.mode() == Qwen3ExecutionMode::Prefill
+        && prior.shape() == M1PhysicalFixedBatchShapeV1::PairedPrefill
+        && next.mode() == Qwen3ExecutionMode::Speculative;
+    admitted.then_some(M1ServingProductionRolloverTransitionV1 {
+        prior,
+        next,
+        reason: M1ServingRolloverReasonV1::Mode,
+    })
+}
+
 fn classify_queue_action(
     prior: Option<M1ServingPlanV1>,
     next: M1ServingPlanV1,
-) -> M1ServingQueueActionV1 {
+) -> Result<M1ServingQueueActionV1, M1ServingRegistryErrorV1> {
     let Some(prior) = prior else {
-        return M1ServingQueueActionV1::FreshLaunch;
+        return Ok(M1ServingQueueActionV1::FreshLaunch);
     };
     if prior == next {
-        return M1ServingQueueActionV1::SameShapeRearm;
+        return Ok(M1ServingQueueActionV1::SameShapeRearm);
     }
-    let reason = if prior.mode() != next.mode() {
-        M1ServingRolloverReasonV1::Mode
-    } else if prior.shape() != next.shape() {
-        M1ServingRolloverReasonV1::Shape
-    } else {
-        M1ServingRolloverReasonV1::Bucket
-    };
-    M1ServingQueueActionV1::QuiescentRollover {
-        prior,
-        next,
-        reason,
-    }
+    let transition = admit_m1_production_rollover_transition_v1(prior, next)
+        .ok_or(M1ServingRegistryErrorV1::QueueTransitionUnsupported)?;
+    Ok(M1ServingQueueActionV1::QuiescentRollover {
+        prior: transition.prior(),
+        next: transition.next(),
+        reason: transition.reason(),
+    })
 }
 
 #[cfg(test)]
@@ -1054,6 +1107,51 @@ mod tests {
         pair(
             Qwen3ExecutionMode::Speculative,
             Qwen3PlanBucket::SpeculativeS1K8C8192,
+        )
+    }
+
+    fn speculative_s1_k16() -> M1ServingPlanV1 {
+        pair(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        )
+    }
+
+    fn speculative_s8() -> M1ServingPlanV1 {
+        pair(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS8K4C8192,
+        )
+    }
+
+    fn all_plans() -> [M1ServingPlanV1; 11] {
+        [
+            prefill_s1(),
+            prefill_s8(),
+            prefill_s1_t512(),
+            pair(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T2048),
+            decode_s1(),
+            decode_s8(),
+            pair(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS32C8192),
+            speculative_s1(),
+            speculative_s8(),
+            speculative_s1_k8(),
+            speculative_s1_k16(),
+        ]
+    }
+
+    fn expected_production_rollover(prior: M1ServingPlanV1, next: M1ServingPlanV1) -> bool {
+        matches!(
+            (prior.target().bucket, next.target().bucket),
+            (
+                Qwen3PlanBucket::PrefillS1T128,
+                Qwen3PlanBucket::SpeculativeS1K4C8192
+                    | Qwen3PlanBucket::SpeculativeS1K8C8192
+                    | Qwen3PlanBucket::SpeculativeS1K16C8192
+            ) | (
+                Qwen3PlanBucket::PrefillS8T128,
+                Qwen3PlanBucket::SpeculativeS8K4C8192
+            )
         )
     }
 
@@ -1179,109 +1277,182 @@ mod tests {
     }
 
     #[test]
-    fn paired_prefill_decode_and_speculative_changes_require_quiescent_rollover() {
-        let request = RequestId::new(3, 1);
-        let mut registry = M1ServingRegistryV1::<4>::new().unwrap();
-        registry.admit(request, prefill_s1()).unwrap();
+    fn finite_production_rollover_catalog_and_planner_agree_for_every_plan_pair() {
+        let plans = all_plans();
+        let mut admitted = 0;
+        for prior in plans {
+            for next in plans {
+                let expected = expected_production_rollover(prior, next);
+                let transition = admit_m1_production_rollover_transition_v1(prior, next);
+                assert_eq!(transition.is_some(), expected, "{prior:?} -> {next:?}");
+                if let Some(transition) = transition {
+                    admitted += 1;
+                    assert_eq!(transition.prior(), prior);
+                    assert_eq!(transition.next(), next);
+                    assert_eq!(transition.reason(), M1ServingRolloverReasonV1::Mode);
+                }
+
+                let classified = classify_queue_action(Some(prior), next);
+                if prior == next {
+                    assert_eq!(classified, Ok(M1ServingQueueActionV1::SameShapeRearm));
+                } else if expected {
+                    assert_eq!(
+                        classified,
+                        Ok(M1ServingQueueActionV1::QuiescentRollover {
+                            prior,
+                            next,
+                            reason: M1ServingRolloverReasonV1::Mode,
+                        })
+                    );
+                } else {
+                    assert_eq!(
+                        classified,
+                        Err(M1ServingRegistryErrorV1::QueueTransitionUnsupported)
+                    );
+                }
+            }
+            assert_eq!(
+                classify_queue_action(None, prior),
+                Ok(M1ServingQueueActionV1::FreshLaunch)
+            );
+        }
+        assert_eq!(admitted, 4);
+    }
+
+    #[test]
+    fn registry_plans_each_exact_prompt_compatible_rollover() {
+        let cases = [
+            (prefill_s1(), speculative_s1()),
+            (prefill_s1(), speculative_s1_k8()),
+            (prefill_s1(), speculative_s1_k16()),
+            (prefill_s8(), speculative_s8()),
+        ];
+        for (lane, (prior, next)) in cases.into_iter().enumerate() {
+            let request = RequestId::new(u32::try_from(lane).unwrap(), 1);
+            let mut registry = M1ServingRegistryV1::<8>::new().unwrap();
+            registry.admit(request, prior).unwrap();
+            assert_eq!(
+                publish_and_complete(
+                    &mut registry,
+                    &[M1ServingCompletionDispositionV1::Continue(next)],
+                ),
+                M1ServingQueueActionV1::FreshLaunch
+            );
+            assert_eq!(
+                registry.quiescent_queue_action().unwrap(),
+                M1ServingQuiescentQueueActionV1::RetainForReadyWork { bound: prior }
+            );
+            assert_eq!(
+                registry.record_quiescent_queue_retirement(prior),
+                Err(M1ServingRegistryErrorV1::ReadyWorkRequiresQueue)
+            );
+            let rollover = registry.plan_next().unwrap().unwrap();
+            assert_eq!(rollover.plan(), next);
+            assert_eq!(rollover.requests(), &[request]);
+            assert_eq!(
+                rollover.action(),
+                M1ServingQueueActionV1::QuiescentRollover {
+                    prior,
+                    next,
+                    reason: M1ServingRolloverReasonV1::Mode,
+                }
+            );
+        }
+    }
+
+    #[test]
+    fn unsupported_native_rollover_retires_before_fresh_successor_launch() {
+        let request = RequestId::new(0, 1);
+        let prior = prefill_s1();
+        let successor = decode_s1();
+        let mut registry = M1ServingRegistryV1::<1>::new().unwrap();
+        registry.admit(request, prior).unwrap();
+        let batch = registry.plan_next().unwrap().unwrap();
+        let epoch = batch.epoch();
+        reserve_and_record(&mut registry, batch);
+
+        registry
+            .complete_exact(
+                epoch,
+                &[M1ServingCompletionDispositionV1::Continue(successor)],
+            )
+            .unwrap();
+        assert_eq!(registry.plan(request), Some(successor));
+        assert_eq!(registry.bound_plan(), Some(prior));
+        assert_eq!(
+            registry.phase(request),
+            Some(M1ServingRequestPhaseV1::Ready)
+        );
+        assert_eq!(
+            registry.plan_next(),
+            Err(M1ServingRegistryErrorV1::QueueTransitionUnsupported)
+        );
+        assert_eq!(
+            registry.quiescent_queue_action().unwrap(),
+            M1ServingQuiescentQueueActionV1::Retire { bound: prior }
+        );
+        registry.record_quiescent_queue_retirement(prior).unwrap();
+        let fresh = registry.plan_next().unwrap().unwrap();
+        assert_eq!(fresh.plan(), successor);
+        assert_eq!(fresh.action(), M1ServingQueueActionV1::FreshLaunch);
+    }
+
+    #[test]
+    fn new_prefill_behind_a_speculative_queue_fails_closed_without_reordering() {
+        let active = RequestId::new(0, 1);
+        let arrival = RequestId::new(1, 1);
+        let speculative = speculative_s8();
+        let mut registry = M1ServingRegistryV1::<8>::new().unwrap();
+        registry.admit(active, prefill_s8()).unwrap();
+        publish_and_complete(
+            &mut registry,
+            &[M1ServingCompletionDispositionV1::Continue(speculative)],
+        );
+        publish_and_complete(
+            &mut registry,
+            &[M1ServingCompletionDispositionV1::Continue(speculative)],
+        );
+        registry.admit(arrival, prefill_s1()).unwrap();
 
         assert_eq!(
-            publish_and_complete(
-                &mut registry,
-                &[M1ServingCompletionDispositionV1::Continue(decode_s1())],
-            ),
-            M1ServingQueueActionV1::FreshLaunch
+            registry.plan_next(),
+            Err(M1ServingRegistryErrorV1::QueueTransitionUnsupported)
         );
-        let decode = registry.plan_next().unwrap().unwrap();
-        assert!(matches!(
-            decode.action(),
-            M1ServingQueueActionV1::QuiescentRollover {
-                reason: M1ServingRolloverReasonV1::Mode,
-                ..
-            }
-        ));
-        let epoch = decode.epoch();
-        reserve_and_record(&mut registry, decode);
+        assert_eq!(registry.plan(active), Some(speculative));
+        assert_eq!(registry.plan(arrival), Some(prefill_s1()));
+        assert_eq!(registry.phase(active), Some(M1ServingRequestPhaseV1::Ready));
+        assert_eq!(
+            registry.phase(arrival),
+            Some(M1ServingRequestPhaseV1::Ready)
+        );
+        assert_eq!(registry.bound_plan(), Some(speculative));
+        assert!(!registry.has_in_flight_batch());
+        assert!(!registry.has_publication_reservation());
+        assert_eq!(
+            registry.quiescent_queue_action().unwrap(),
+            M1ServingQuiescentQueueActionV1::Retire { bound: speculative }
+        );
         registry
-            .complete_exact(
-                epoch,
-                &[M1ServingCompletionDispositionV1::Continue(speculative_s1())],
-            )
+            .record_quiescent_queue_retirement(speculative)
             .unwrap();
-        let speculative = registry.plan_next().unwrap().unwrap();
-        assert!(matches!(
-            speculative.action(),
-            M1ServingQueueActionV1::QuiescentRollover {
-                reason: M1ServingRolloverReasonV1::Mode,
-                ..
-            }
-        ));
-        let epoch = speculative.epoch();
-        reserve_and_record(&mut registry, speculative);
-        registry
-            .complete_exact(
-                epoch,
-                &[M1ServingCompletionDispositionV1::Continue(
-                    speculative_s1_k8(),
-                )],
-            )
-            .unwrap();
-        assert!(matches!(
-            registry.plan_next().unwrap().unwrap().action(),
-            M1ServingQueueActionV1::QuiescentRollover {
-                reason: M1ServingRolloverReasonV1::Shape,
-                ..
-            }
-        ));
+        let fresh = registry.plan_next().unwrap().unwrap();
+        assert_eq!(fresh.plan(), prefill_s1());
+        assert_eq!(fresh.requests(), &[arrival]);
+        assert_eq!(fresh.action(), M1ServingQueueActionV1::FreshLaunch);
     }
 
     #[test]
-    fn new_prefill_admission_isolated_then_joins_changed_decode_roster() {
-        let first = RequestId::new(0, 1);
-        let second = RequestId::new(1, 1);
-        let mut registry = M1ServingRegistryV1::<4>::new().unwrap();
-        registry.admit(first, prefill_s1()).unwrap();
-        publish_and_complete(
-            &mut registry,
-            &[M1ServingCompletionDispositionV1::Continue(decode_s8())],
-        );
-        publish_and_complete(
-            &mut registry,
-            &[M1ServingCompletionDispositionV1::Continue(decode_s8())],
-        );
-
-        registry.admit(second, prefill_s1()).unwrap();
-        let prefill = registry.plan_next().unwrap().unwrap();
-        assert_eq!(prefill.requests(), &[second]);
-        let epoch = prefill.epoch();
-        reserve_and_record(&mut registry, prefill);
-        registry
-            .complete_exact(
-                epoch,
-                &[M1ServingCompletionDispositionV1::Continue(decode_s8())],
-            )
-            .unwrap();
-
-        let joined = registry.plan_next().unwrap().unwrap();
-        assert_eq!(joined.requests(), &[first, second]);
-        assert_eq!(joined.plan(), decode_s8());
-        assert!(matches!(
-            joined.action(),
-            M1ServingQueueActionV1::QuiescentRollover { .. }
-        ));
-    }
-
-    #[test]
-    fn unchanged_decode_plan_uses_same_shape_rearm() {
+    fn unchanged_speculative_plan_uses_same_shape_rearm() {
         let request = RequestId::new(0, 1);
         let mut registry = M1ServingRegistryV1::<1>::new().unwrap();
         registry.admit(request, prefill_s1()).unwrap();
         publish_and_complete(
             &mut registry,
-            &[M1ServingCompletionDispositionV1::Continue(decode_s1())],
+            &[M1ServingCompletionDispositionV1::Continue(speculative_s1())],
         );
         publish_and_complete(
             &mut registry,
-            &[M1ServingCompletionDispositionV1::Continue(decode_s1())],
+            &[M1ServingCompletionDispositionV1::Continue(speculative_s1())],
         );
         assert_eq!(
             registry.plan_next().unwrap().unwrap().action(),
@@ -1290,27 +1461,38 @@ mod tests {
     }
 
     #[test]
-    fn quiescent_sequence_bucket_change_requires_rollover() {
+    fn unsupported_quiescent_sequence_bucket_change_retires_then_launches() {
         let request = RequestId::new(0, 1);
         let mut registry = M1ServingRegistryV1::<8>::new().unwrap();
         registry.admit(request, prefill_s1()).unwrap();
         publish_and_complete(
             &mut registry,
-            &[M1ServingCompletionDispositionV1::Continue(decode_s1())],
+            &[M1ServingCompletionDispositionV1::Continue(speculative_s1())],
         );
         publish_and_complete(
             &mut registry,
-            &[M1ServingCompletionDispositionV1::Continue(decode_s1())],
+            &[M1ServingCompletionDispositionV1::Continue(speculative_s1())],
         );
 
-        registry.transition(request, decode_s8()).unwrap();
-        assert!(matches!(
-            registry.plan_next().unwrap().unwrap().action(),
-            M1ServingQueueActionV1::QuiescentRollover {
-                reason: M1ServingRolloverReasonV1::Bucket,
-                ..
+        registry.transition(request, speculative_s1_k8()).unwrap();
+        assert_eq!(registry.plan(request), Some(speculative_s1_k8()));
+        assert_eq!(registry.bound_plan(), Some(speculative_s1()));
+        assert_eq!(
+            registry.plan_next(),
+            Err(M1ServingRegistryErrorV1::QueueTransitionUnsupported)
+        );
+        assert_eq!(
+            registry.quiescent_queue_action().unwrap(),
+            M1ServingQuiescentQueueActionV1::Retire {
+                bound: speculative_s1()
             }
-        ));
+        );
+        registry
+            .record_quiescent_queue_retirement(speculative_s1())
+            .unwrap();
+        let fresh = registry.plan_next().unwrap().unwrap();
+        assert_eq!(fresh.plan(), speculative_s1_k8());
+        assert_eq!(fresh.action(), M1ServingQueueActionV1::FreshLaunch);
     }
 
     #[test]
@@ -1393,7 +1575,7 @@ mod tests {
         registry
             .complete_exact(
                 epoch,
-                &[M1ServingCompletionDispositionV1::Continue(decode_s1())],
+                &[M1ServingCompletionDispositionV1::Continue(speculative_s1())],
             )
             .unwrap();
         assert_eq!(
@@ -1404,7 +1586,7 @@ mod tests {
             validate_plan_transition(prefill_s1(), prefill_s1()),
             Err(M1ServingRegistryErrorV1::PrefillMustAdvance)
         );
-        assert_eq!(registry.plan(request), Some(decode_s1()));
+        assert_eq!(registry.plan(request), Some(speculative_s1()));
     }
 
     #[test]

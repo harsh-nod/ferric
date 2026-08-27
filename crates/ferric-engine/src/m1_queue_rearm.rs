@@ -25,7 +25,8 @@ use fe2o3_service_host::{
     ServiceDeviceDispatchRangeV1, ServiceDispatchRangeV1, ServiceFixedBatchV1,
     ServiceFixedDispatchBufferV1, ServiceFixedDispatchPacketV1, ServiceHostDispatchRangeV1,
     ServiceHostDispatchSnapshotRangeV1, ServiceQueueDataUpdateFailureV1,
-    ServiceQueueReleaseFailureV1, ServiceQueueReleaseObservationV1, ServiceQueueUnboundSessionV1,
+    ServiceQueueReleaseFailureV1, ServiceQueueReleaseObservationV1, ServiceQueueSessionV1,
+    ServiceQueueUnboundSessionV1,
 };
 use ferric_build::{AddresslessM1StepWorkspacePlan, M1StepWorkspaceRange};
 use ferric_spec::{
@@ -45,16 +46,17 @@ use crate::{
     AddresslessM1FullStepWorkspaceComposition, AddresslessM1PhysicalBufferRecipeV1,
     BoundM1StepWorkspaceSubleases, ContentBoundM1ProgramCatalogV1, Engine, EngineError,
     Gfx942DeviceBinding, LogicalRunnerDeclaration, M1BoundPhysicalBufferRowV1,
-    M1CompletedKvPageReleaseCountsV1, M1ExactDispatchErrorV1, M1FullStepKvWorkspaceTablesV1,
+    M1CompletedKvPageReleaseCountsV1, M1ExactDispatchErrorV1,
+    M1FiniteSpeculativeRolloverOutputPortfolioStateV1, M1FullStepKvWorkspaceTablesV1,
     M1FullStepWorkspaceImagesV1, M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans,
     M1FullStepWorkspaceRole, M1FullStepWorkspaceSubleaseOwners, M1InitializedWorkspaceSlotV1,
     M1PhysicalBufferRecipeRowV1, M1PhysicalBufferSourceV1, M1PhysicalFixedBatchShapeV1,
     M1PhysicalPublishedQueueSessionV1, M1PhysicalQueueBatchCustodyV1, M1PhysicalQueuePhaseCaseV1,
     M1PhysicalQueueSessionV1, M1PhysicalReadbackDetachedQueueSessionV1,
-    M1PhysicalReadbackQueueOperationFailureV1, M1PrepareFailureV1, M1PreparedS1K4QueueRolloverV1,
+    M1PhysicalReadbackQueueOperationFailureV1, M1PrepareFailureV1,
+    M1PreparedFiniteSpeculativeQueueRolloverV1, M1PreparedS1K4QueueRolloverV1,
     M1PreparedScheduledWorkspaceImagesV1, M1PrepublicationStepCustodyV1, M1ReleasedCompletedStepV1,
-    M1ReleasedDeviceKvMemberV1, M1ReleasedTerminalDeviceKvMemberV1,
-    M1S1K4RolloverOutputPortfolioStateV1, M1ScheduledDispatchV1,
+    M1ReleasedDeviceKvMemberV1, M1ReleasedTerminalDeviceKvMemberV1, M1ScheduledDispatchV1,
     M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
     M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
 };
@@ -10167,8 +10169,91 @@ pub fn submit_m1_long_lived_queue_rearm_v1<'a, const C: usize>(
     }
 }
 
-fn submit_m1_s1_k4_queue_rollover_inner_v1(
-    prepared: M1PreparedS1K4QueueRolloverV1,
+#[allow(clippy::too_many_arguments)]
+fn rollover_and_submit_finite_speculative<const N: usize, F>(
+    lower: ServiceQueueUnboundSessionV1,
+    ring_bytes: u32,
+    batch: ServiceFixedBatchV1<'_, N>,
+    custody: M1PhysicalQueueBatchCustodyV1,
+    step: M1PrepublicationStepCustodyV1,
+    selected: Vec<ActiveDeviceKvCache>,
+    residue: crate::M1FiniteSpeculativeQueueRolloverResidueV1,
+    predecessor_generation: u64,
+    wrap: F,
+) -> Result<
+    (
+        M1PhysicalPublishedQueueSessionV1,
+        Vec<ActiveDeviceKvCache>,
+        crate::M1FiniteSpeculativeQueueRolloverResidueV1,
+        M1QueueRolloverObservationV1,
+    ),
+    M1LongLivedQueueRearmSubmissionFailureV1<'_>,
+>
+where
+    F: FnOnce(M1PhysicalQueuePhaseCaseV1<ServiceQueueSessionV1<N>>) -> M1PhysicalQueueSessionV1,
+{
+    let rollover = match lower.rollover(ring_bytes, batch) {
+        Ok(rollover) => rollover,
+        Err(failure) => {
+            return Err(submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::QueueRollover,
+                (failure, custody, step, selected, residue),
+            ));
+        }
+    };
+    let rollover_observation = M1QueueRolloverObservationV1 {
+        previous_queue_destroyed: rollover.previous_queue_destroyed(),
+        previous_dispatch_generation: rollover.previous_dispatch_generation(),
+        replacement_queue_observation: rollover.replacement_queue_observation(),
+        replacement_dispatch_generation: rollover.replacement_dispatch_generation(),
+    };
+    let Some(expected_replacement_generation) = predecessor_generation.checked_add(1) else {
+        return Err(submission_failure(
+            M1LongLivedQueueRearmSubmissionPhaseV1::QueueObservation,
+            (
+                rollover,
+                custody,
+                step,
+                selected,
+                residue,
+                rollover_observation,
+            ),
+        ));
+    };
+    if rollover_observation.previous_dispatch_generation != predecessor_generation
+        || rollover_observation.replacement_dispatch_generation != expected_replacement_generation
+    {
+        return Err(submission_failure(
+            M1LongLivedQueueRearmSubmissionPhaseV1::QueueObservation,
+            (
+                rollover,
+                custody,
+                step,
+                selected,
+                residue,
+                rollover_observation,
+            ),
+        ));
+    }
+    let queue = wrap(M1PhysicalQueuePhaseCaseV1::from_queue_rearm(
+        rollover.into_queue(),
+        custody,
+        step,
+    ));
+    let queue = match queue.submit() {
+        Ok(published) => published,
+        Err(failure) => {
+            return Err(submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::QueueSubmit,
+                (failure, selected, residue, rollover_observation),
+            ));
+        }
+    };
+    Ok((queue, selected, residue, rollover_observation))
+}
+
+fn submit_m1_finite_speculative_queue_rollover_inner_v1(
+    prepared: M1PreparedFiniteSpeculativeQueueRolloverV1,
     recipe: AddresslessM1PhysicalBufferRecipeV1,
     catalog: ContentBoundM1ProgramCatalogV1<'_>,
     ring_bytes: u32,
@@ -10178,19 +10263,29 @@ fn submit_m1_s1_k4_queue_rollover_inner_v1(
     let old = queue.custody();
     if queue.shape() != M1PhysicalFixedBatchShapeV1::PairedPrefill
         || prior.shape() != M1PhysicalFixedBatchShapeV1::PairedPrefill
-        || next.shape() != M1PhysicalFixedBatchShapeV1::SpeculativeK4
+        || !matches!(
+            next.shape(),
+            M1PhysicalFixedBatchShapeV1::SpeculativeK4
+                | M1PhysicalFixedBatchShapeV1::SpeculativeK8
+                | M1PhysicalFixedBatchShapeV1::SpeculativeK16
+        )
         || reason != crate::M1ServingRolloverReasonV1::Mode
         || old.selection() != prior.target()
         || old.catalog_id() != catalog.catalog_id()
-        || old.partitioned_memory().s1_k4_rollover_output_state()
-            != M1S1K4RolloverOutputPortfolioStateV1::Reserved
+        || old
+            .partitioned_memory()
+            .finite_speculative_rollover_output_state()
+            != M1FiniteSpeculativeRolloverOutputPortfolioStateV1::Reserved
         || prepared.kind() != M1FullStepWorkspaceInputKind::SpeculativeRound
         || prepared.step().kv_reservations().target_selection() != next.target()
         || recipe.workspace_composition().workspace_plans() != prepared.plans()
         || recipe.requires_future_materialization()
-        || recipe.rows().len() != M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1
-        || recipe.kernarg_recipe().images().len() != M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1
-        || selected.projection().device != old.device()
+        || recipe.rows().len() != next.shape().packet_count()
+        || recipe.kernarg_recipe().images().len() != next.shape().packet_count()
+        || selected.is_empty()
+        || selected
+            .iter()
+            .any(|cache| cache.projection().device != old.device())
     {
         return Err(submission_failure(
             M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
@@ -10465,7 +10560,9 @@ fn submit_m1_s1_k4_queue_rollover_inner_v1(
         &target,
         target_ranges,
     );
-    let completion_output = match partitioned_memory.activate_s1_k4_rollover_output(prior_output) {
+    let completion_output = match partitioned_memory
+        .activate_finite_speculative_rollover_output(next.target(), prior_output)
+    {
         Ok(output) => output,
         Err(failure) => {
             return Err(submission_failure(
@@ -10570,38 +10667,118 @@ fn submit_m1_s1_k4_queue_rollover_inner_v1(
     };
     let (kernargs, workspace_composition, source_rows) = recipe.into_parts();
     let (physical_recipe, images) = kernargs.into_parts();
-    let batch = match lower_boxed_rearm_batch(catalog, &physical_recipe, images, &bound_rows) {
-        Ok(batch) => batch,
-        Err(failure) => {
-            return Err(submission_failure(
-                M1LongLivedQueueRearmSubmissionPhaseV1::FixedBatchRebuild,
-                (
-                    (
-                        lower,
-                        old_shape,
-                        catalog_id,
-                        old_selection,
-                        old_physical_recipe,
-                        old_workspace_composition,
-                        draft,
-                        target,
-                        partitioned_memory,
-                        completion_output,
-                    ),
-                    (
-                        old_source_rows,
-                        old_bound_rows,
-                        physical_recipe,
-                        source_rows,
-                        bound_rows,
-                        failure.catalog,
-                        failure.images,
-                        step,
-                        selected,
-                        residue,
-                    ),
-                ),
-            ));
+    let successor_shape = next.shape();
+    let batch = match successor_shape {
+        M1PhysicalFixedBatchShapeV1::SpeculativeK4 => {
+            match lower_boxed_rearm_batch(catalog, &physical_recipe, images, &bound_rows) {
+                Ok(batch) => RebuiltBatchV1::SpeculativeK4(batch),
+                Err(failure) => {
+                    return Err(submission_failure(
+                        M1LongLivedQueueRearmSubmissionPhaseV1::FixedBatchRebuild,
+                        (
+                            (
+                                lower,
+                                old_shape,
+                                catalog_id,
+                                old_selection,
+                                old_physical_recipe,
+                                old_workspace_composition,
+                                draft,
+                                target,
+                                partitioned_memory,
+                                completion_output,
+                            ),
+                            (
+                                old_source_rows,
+                                old_bound_rows,
+                                physical_recipe,
+                                source_rows,
+                                bound_rows,
+                                failure.catalog,
+                                failure.images,
+                                step,
+                                selected,
+                                residue,
+                            ),
+                        ),
+                    ));
+                }
+            }
+        }
+        M1PhysicalFixedBatchShapeV1::SpeculativeK8 => {
+            match lower_boxed_rearm_batch(catalog, &physical_recipe, images, &bound_rows) {
+                Ok(batch) => RebuiltBatchV1::SpeculativeK8(batch),
+                Err(failure) => {
+                    return Err(submission_failure(
+                        M1LongLivedQueueRearmSubmissionPhaseV1::FixedBatchRebuild,
+                        (
+                            (
+                                lower,
+                                old_shape,
+                                catalog_id,
+                                old_selection,
+                                old_physical_recipe,
+                                old_workspace_composition,
+                                draft,
+                                target,
+                                partitioned_memory,
+                                completion_output,
+                            ),
+                            (
+                                old_source_rows,
+                                old_bound_rows,
+                                physical_recipe,
+                                source_rows,
+                                bound_rows,
+                                failure.catalog,
+                                failure.images,
+                                step,
+                                selected,
+                                residue,
+                            ),
+                        ),
+                    ));
+                }
+            }
+        }
+        M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
+            match lower_boxed_rearm_batch(catalog, &physical_recipe, images, &bound_rows) {
+                Ok(batch) => RebuiltBatchV1::SpeculativeK16(batch),
+                Err(failure) => {
+                    return Err(submission_failure(
+                        M1LongLivedQueueRearmSubmissionPhaseV1::FixedBatchRebuild,
+                        (
+                            (
+                                lower,
+                                old_shape,
+                                catalog_id,
+                                old_selection,
+                                old_physical_recipe,
+                                old_workspace_composition,
+                                draft,
+                                target,
+                                partitioned_memory,
+                                completion_output,
+                            ),
+                            (
+                                old_source_rows,
+                                old_bound_rows,
+                                physical_recipe,
+                                source_rows,
+                                bound_rows,
+                                failure.catalog,
+                                failure.images,
+                                step,
+                                selected,
+                                residue,
+                            ),
+                        ),
+                    ));
+                }
+            }
+        }
+        M1PhysicalFixedBatchShapeV1::TargetOnly | M1PhysicalFixedBatchShapeV1::PairedPrefill => {
+            unreachable!("finite-speculative successor shape was preflighted")
         }
     };
     let custody =
@@ -10616,59 +10793,42 @@ fn submit_m1_s1_k4_queue_rollover_inner_v1(
             source_rows,
             bound_rows,
         });
-    let rollover = match lower.rollover(ring_bytes, *batch) {
-        Ok(rollover) => rollover,
-        Err(failure) => {
-            return Err(submission_failure(
-                M1LongLivedQueueRearmSubmissionPhaseV1::QueueRollover,
-                (failure, custody, step, selected, residue),
-            ));
-        }
-    };
-    let rollover_observation = M1QueueRolloverObservationV1 {
-        previous_queue_destroyed: rollover.previous_queue_destroyed(),
-        previous_dispatch_generation: rollover.previous_dispatch_generation(),
-        replacement_queue_observation: rollover.replacement_queue_observation(),
-        replacement_dispatch_generation: rollover.replacement_dispatch_generation(),
-    };
-    let Some(expected_replacement_generation) = predecessor_generation.checked_add(1) else {
-        return Err(submission_failure(
-            M1LongLivedQueueRearmSubmissionPhaseV1::QueueObservation,
-            (
-                rollover,
-                custody,
-                step,
-                selected,
-                residue,
-                rollover_observation,
-            ),
-        ));
-    };
-    if rollover_observation.previous_dispatch_generation != predecessor_generation
-        || rollover_observation.replacement_dispatch_generation != expected_replacement_generation
-    {
-        return Err(submission_failure(
-            M1LongLivedQueueRearmSubmissionPhaseV1::QueueObservation,
-            (
-                rollover,
-                custody,
-                step,
-                selected,
-                residue,
-                rollover_observation,
-            ),
-        ));
-    }
-    let queue = M1PhysicalQueueSessionV1::SpeculativeK4(Box::new(
-        M1PhysicalQueuePhaseCaseV1::from_queue_rearm(rollover.into_queue(), custody, step),
-    ));
-    let queue = match queue.submit() {
-        Ok(published) => published,
-        Err(failure) => {
-            return Err(submission_failure(
-                M1LongLivedQueueRearmSubmissionPhaseV1::QueueSubmit,
-                (failure, selected, residue, rollover_observation),
-            ));
+    let (queue, selected, residue, rollover_observation) = match batch {
+        RebuiltBatchV1::SpeculativeK4(batch) => rollover_and_submit_finite_speculative(
+            lower,
+            ring_bytes,
+            *batch,
+            custody,
+            step,
+            selected,
+            residue,
+            predecessor_generation,
+            |case| M1PhysicalQueueSessionV1::SpeculativeK4(Box::new(case)),
+        )?,
+        RebuiltBatchV1::SpeculativeK8(batch) => rollover_and_submit_finite_speculative(
+            lower,
+            ring_bytes,
+            *batch,
+            custody,
+            step,
+            selected,
+            residue,
+            predecessor_generation,
+            |case| M1PhysicalQueueSessionV1::SpeculativeK8(Box::new(case)),
+        )?,
+        RebuiltBatchV1::SpeculativeK16(batch) => rollover_and_submit_finite_speculative(
+            lower,
+            ring_bytes,
+            *batch,
+            custody,
+            step,
+            selected,
+            residue,
+            predecessor_generation,
+            |case| M1PhysicalQueueSessionV1::SpeculativeK16(Box::new(case)),
+        )?,
+        RebuiltBatchV1::TargetOnly(_) => {
+            unreachable!("finite-speculative rollover cannot build target-only")
         }
     };
     let residue = residue.into_parts();
@@ -10677,7 +10837,7 @@ fn submit_m1_s1_k4_queue_rollover_inner_v1(
     Ok(M1RearmedPublishedQueueV1 {
         queue,
         carry: M1RearmContinuationCustodyV1 {
-            selected: vec![selected],
+            selected,
             parked: Vec::new(),
             terminal: Vec::new(),
             previous_epoch,
@@ -10707,7 +10867,36 @@ pub fn submit_m1_s1_k4_queue_rollover_v1<'a, const C: usize>(
     catalog: ContentBoundM1ProgramCatalogV1<'a>,
     ring_bytes: u32,
 ) -> Result<M1RearmedPublishedQueueV1, M1LongLivedQueueRearmSubmissionFailureV1<'a>> {
-    match submit_m1_s1_k4_queue_rollover_inner_v1(prepared, recipe, catalog, ring_bytes) {
+    let exact = prepared.next_plan().target().bucket
+        == ferric_spec::Qwen3PlanBucket::SpeculativeS1K4C8192
+        && prepared.next_plan().shape() == M1PhysicalFixedBatchShapeV1::SpeculativeK4
+        && prepared.next_plan().sequence_capacity() == 1;
+    if !exact {
+        engine.quarantine_m1_queue_rearm_failure();
+        return Err(submission_failure(
+            M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+            (prepared, recipe, catalog),
+        ));
+    }
+    submit_m1_finite_speculative_queue_rollover_v1(engine, prepared, recipe, catalog, ring_bytes)
+}
+
+/// Replaces paired-prefill with one finite-speculative native queue.
+///
+/// # Errors
+///
+/// Returns phase-tagged terminal custody and permanently faults `engine` when
+/// replacement construction, queue rollover, or submission rejects.
+pub fn submit_m1_finite_speculative_queue_rollover_v1<'a, const C: usize>(
+    engine: &mut Engine<C>,
+    prepared: M1PreparedFiniteSpeculativeQueueRolloverV1,
+    recipe: AddresslessM1PhysicalBufferRecipeV1,
+    catalog: ContentBoundM1ProgramCatalogV1<'a>,
+    ring_bytes: u32,
+) -> Result<M1RearmedPublishedQueueV1, M1LongLivedQueueRearmSubmissionFailureV1<'a>> {
+    match submit_m1_finite_speculative_queue_rollover_inner_v1(
+        prepared, recipe, catalog, ring_bytes,
+    ) {
         Ok(published) => Ok(published),
         Err(failure) => {
             engine.quarantine_m1_queue_rearm_failure();

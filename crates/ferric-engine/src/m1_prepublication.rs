@@ -457,6 +457,23 @@ impl M1AllocatedScheduledStepV1 {
         self.partitioned_memory.reserve_s1_k4_rollover_output()
     }
 
+    /// Preallocates inactive outputs for every finite speculative successor.
+    ///
+    /// This catalog must be complete before first queue construction because
+    /// the detached-queue rollover path may replace host allocations but
+    /// cannot add a successor output after publication.
+    ///
+    /// # Errors
+    ///
+    /// Rejects repeated reservation or returns the exact host allocation
+    /// failure while this allocated step retains the model/allocation pool.
+    pub fn reserve_finite_speculative_rollover_outputs(
+        &mut self,
+    ) -> Result<(), crate::device_cache::M1FiniteSpeculativeRolloverOutputReserveErrorV1> {
+        self.partitioned_memory
+            .reserve_finite_speculative_rollover_outputs()
+    }
+
     /// Attaches qualification logits without permitting another device allocation.
     ///
     /// # Errors

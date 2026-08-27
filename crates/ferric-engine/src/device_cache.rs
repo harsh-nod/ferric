@@ -75,6 +75,25 @@ const M1_S1_K4_TARGET_SELECTION_V1: Qwen3PlanSelection = Qwen3PlanSelection {
     bucket: Qwen3PlanBucket::SpeculativeS1K4C8192,
 };
 
+const M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1: [Qwen3PlanSelection; 4] = [
+    M1_S1_K4_TARGET_SELECTION_V1,
+    Qwen3PlanSelection {
+        role: Qwen3ModelRole::Target8B,
+        mode: Qwen3ExecutionMode::Speculative,
+        bucket: Qwen3PlanBucket::SpeculativeS8K4C8192,
+    },
+    Qwen3PlanSelection {
+        role: Qwen3ModelRole::Target8B,
+        mode: Qwen3ExecutionMode::Speculative,
+        bucket: Qwen3PlanBucket::SpeculativeS1K8C8192,
+    },
+    Qwen3PlanSelection {
+        role: Qwen3ModelRole::Target8B,
+        mode: Qwen3ExecutionMode::Speculative,
+        bucket: Qwen3PlanBucket::SpeculativeS1K16C8192,
+    },
+];
+
 verus! {
 
 /// Detached receipt for one checked physical M1 device admission.
@@ -795,9 +814,13 @@ pub struct M1S1K4RolloverOutputReserveV1 {
 #[derive(Debug)]
 enum M1S1K4RolloverOutputPortfolioV1 {
     Vacant,
-    Reserved(M1S1K4RolloverOutputReserveV1),
+    Partial {
+        _retained: Vec<M1S1K4RolloverOutputReserveV1>,
+    },
+    Reserved(Vec<M1S1K4RolloverOutputReserveV1>),
     Activated {
-        retired_direct: BoundM1CompletionOutputV1,
+        retired_direct: Box<BoundM1CompletionOutputV1>,
+        _unused: Vec<M1S1K4RolloverOutputReserveV1>,
     },
 }
 
@@ -805,7 +828,9 @@ impl M1S1K4RolloverOutputPortfolioV1 {
     const fn state(&self) -> M1S1K4RolloverOutputPortfolioStateV1 {
         match self {
             Self::Vacant => M1S1K4RolloverOutputPortfolioStateV1::Vacant,
-            Self::Reserved(_) => M1S1K4RolloverOutputPortfolioStateV1::Reserved,
+            Self::Partial { .. } | Self::Reserved(_) => {
+                M1S1K4RolloverOutputPortfolioStateV1::Reserved
+            }
             Self::Activated { .. } => M1S1K4RolloverOutputPortfolioStateV1::Activated,
         }
     }
@@ -821,6 +846,12 @@ pub enum M1S1K4RolloverOutputReserveErrorV1 {
     /// Independent S1/K4 choice capture failed and retains the compact output.
     Diagnostic(Box<crate::M1SpeculativeDiagnosticChoicesAllocationFailureV1>),
 }
+
+/// Shape-generic name for finite-speculative rollover output reservation.
+pub type M1FiniteSpeculativeRolloverOutputReserveErrorV1 = M1S1K4RolloverOutputReserveErrorV1;
+
+/// Shape-generic name for the finite-speculative rollover portfolio state.
+pub type M1FiniteSpeculativeRolloverOutputPortfolioStateV1 = M1S1K4RolloverOutputPortfolioStateV1;
 
 impl fmt::Display for M1S1K4RolloverOutputReserveErrorV1 {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -849,6 +880,9 @@ pub enum M1S1K4RolloverOutputActivationErrorV1 {
     ReserveOutputDrift,
 }
 
+/// Shape-generic finite-speculative rollover activation diagnostic.
+pub type M1FiniteSpeculativeRolloverOutputActivationErrorV1 = M1S1K4RolloverOutputActivationErrorV1;
+
 /// Failed activation retaining the unchanged predecessor direct output.
 #[must_use = "the predecessor output remains live after activation rejection"]
 #[derive(Debug)]
@@ -856,6 +890,10 @@ pub struct M1S1K4RolloverOutputActivationFailureV1 {
     error: M1S1K4RolloverOutputActivationErrorV1,
     prior: BoundM1CompletionOutputV1,
 }
+
+/// Shape-generic finite-speculative rollover activation failure custody.
+pub type M1FiniteSpeculativeRolloverOutputActivationFailureV1 =
+    M1S1K4RolloverOutputActivationFailureV1;
 
 impl M1S1K4RolloverOutputActivationFailureV1 {
     #[must_use]
@@ -908,12 +946,23 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
         self.s1_k4_rollover_output.state()
     }
 
+    /// State of the future finite-speculative output catalog.
+    #[must_use]
+    pub const fn finite_speculative_rollover_output_state(
+        &self,
+    ) -> M1FiniteSpeculativeRolloverOutputPortfolioStateV1 {
+        self.s1_k4_rollover_output.state()
+    }
+
     /// Retired direct output retained after successful S1/K4 activation.
     #[must_use = "retired direct host-allocation custody remains live"]
     pub const fn retired_direct_rollover_output(&self) -> Option<&BoundM1CompletionOutputV1> {
         match &self.s1_k4_rollover_output {
-            M1S1K4RolloverOutputPortfolioV1::Activated { retired_direct } => Some(retired_direct),
+            M1S1K4RolloverOutputPortfolioV1::Activated { retired_direct, .. } => {
+                Some(retired_direct)
+            }
             M1S1K4RolloverOutputPortfolioV1::Vacant
+            | M1S1K4RolloverOutputPortfolioV1::Partial { .. }
             | M1S1K4RolloverOutputPortfolioV1::Reserved(_) => None,
         }
     }
@@ -930,34 +979,66 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
         &mut self,
         prior: BoundM1CompletionOutputV1,
     ) -> Result<BoundM1CompletionOutputV1, M1S1K4RolloverOutputActivationFailureV1> {
+        self.activate_finite_speculative_rollover_output(M1_S1_K4_TARGET_SELECTION_V1, prior)
+    }
+
+    /// Activates one exact preallocated finite-speculative output while
+    /// retaining every unused catalog member and the replaced direct output.
+    ///
+    /// # Errors
+    ///
+    /// Returns the unchanged predecessor output when the reserve is absent,
+    /// already activated, outside the finite catalog, or semantically drifted.
+    #[allow(clippy::result_large_err)]
+    pub fn activate_finite_speculative_rollover_output(
+        &mut self,
+        selection: Qwen3PlanSelection,
+        prior: BoundM1CompletionOutputV1,
+    ) -> Result<BoundM1CompletionOutputV1, M1FiniteSpeculativeRolloverOutputActivationFailureV1>
+    {
         let state = self.s1_k4_rollover_output.state();
-        let M1S1K4RolloverOutputPortfolioV1::Reserved(reserve) = &self.s1_k4_rollover_output else {
+        let M1S1K4RolloverOutputPortfolioV1::Reserved(reserves) = &self.s1_k4_rollover_output
+        else {
             return Err(M1S1K4RolloverOutputActivationFailureV1 {
                 error: M1S1K4RolloverOutputActivationErrorV1::ReserveUnavailable(state),
                 prior,
             });
         };
-        if !direct_s1_prefill_output_is_valid(&prior) {
+        if !direct_prefill_output_is_valid_for(&prior, selection) {
             return Err(M1S1K4RolloverOutputActivationFailureV1 {
                 error: M1S1K4RolloverOutputActivationErrorV1::PriorOutputNotDirect,
                 prior,
             });
         }
-        if !s1_k4_rollover_reserve_output_is_valid(&reserve.output) {
+        let Some(reserve_index) = reserves
+            .iter()
+            .position(|reserve| reserve.output.shape().selection() == selection)
+        else {
+            return Err(M1S1K4RolloverOutputActivationFailureV1 {
+                error: M1S1K4RolloverOutputActivationErrorV1::ReserveOutputDrift,
+                prior,
+            });
+        };
+        if !finite_speculative_rollover_reserve_output_is_valid(
+            &reserves[reserve_index].output,
+            selection,
+        ) {
             return Err(M1S1K4RolloverOutputActivationFailureV1 {
                 error: M1S1K4RolloverOutputActivationErrorV1::ReserveOutputDrift,
                 prior,
             });
         }
 
-        let M1S1K4RolloverOutputPortfolioV1::Reserved(reserve) = core::mem::replace(
+        let M1S1K4RolloverOutputPortfolioV1::Reserved(mut reserves) = core::mem::replace(
             &mut self.s1_k4_rollover_output,
             M1S1K4RolloverOutputPortfolioV1::Vacant,
         ) else {
             unreachable!("reserve presence was checked before portfolio activation")
         };
+        let reserve = reserves.remove(reserve_index);
         self.s1_k4_rollover_output = M1S1K4RolloverOutputPortfolioV1::Activated {
-            retired_direct: prior,
+            retired_direct: Box::new(prior),
+            _unused: reserves,
         };
         Ok(reserve.output)
     }
@@ -1045,19 +1126,29 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
     }
 }
 
-fn direct_s1_prefill_output_is_valid(output: &BoundM1CompletionOutputV1) -> bool {
+fn direct_prefill_output_is_valid_for(
+    output: &BoundM1CompletionOutputV1,
+    successor: Qwen3PlanSelection,
+) -> bool {
     let selection = output.shape().selection();
     selection.role == Qwen3ModelRole::Target8B
         && selection.mode == Qwen3ExecutionMode::Prefill
-        && output.shape().sequences() == 1
+        && output.shape().sequences()
+            == successor
+                .bucket
+                .dimensions(successor.role, successor.mode)
+                .map_or(0, |dimensions| dimensions.sequences)
         && output.direct_diagnostic_choices().is_some()
         && output.speculative_diagnostic_choices().is_none()
         && output.qualification_logits().is_none()
 }
 
-fn s1_k4_rollover_reserve_output_is_valid(output: &BoundM1CompletionOutputV1) -> bool {
-    output.shape().selection() == M1_S1_K4_TARGET_SELECTION_V1
-        && output.shape().sequences() == 1
+fn finite_speculative_rollover_reserve_output_is_valid(
+    output: &BoundM1CompletionOutputV1,
+    selection: Qwen3PlanSelection,
+) -> bool {
+    M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1.contains(&selection)
+        && output.shape().selection() == selection
         && output.direct_diagnostic_choices().is_none()
         && output.speculative_diagnostic_choices().is_some()
         && output.qualification_logits().is_none()
@@ -1136,6 +1227,20 @@ fn commit_page_return_state(
     *state = returned_page_state(&preflighted);
 }
 
+fn build_exact_reserve_catalog<S: Copy, T, E>(
+    selections: &[S],
+    mut reserves: Vec<T>,
+    mut reserve: impl FnMut(S) -> Result<T, E>,
+) -> Result<Vec<T>, (Vec<T>, E)> {
+    for selection in selections.iter().copied() {
+        match reserve(selection) {
+            Ok(output) => reserves.push(output),
+            Err(source) => return Err((reserves, source)),
+        }
+    }
+    Ok(reserves)
+}
+
 impl M1PartitionedModelMemoryKvPoolV1 {
     /// Returns the exact device declaration retained by the pool.
     #[must_use]
@@ -1146,6 +1251,14 @@ impl M1PartitionedModelMemoryKvPoolV1 {
     /// State of the one-shot future S1/K4 output portfolio.
     #[must_use]
     pub const fn s1_k4_rollover_output_state(&self) -> M1S1K4RolloverOutputPortfolioStateV1 {
+        self.s1_k4_rollover_output.state()
+    }
+
+    /// State of the one-shot finite-speculative rollover output catalog.
+    #[must_use]
+    pub const fn finite_speculative_rollover_output_state(
+        &self,
+    ) -> M1FiniteSpeculativeRolloverOutputPortfolioStateV1 {
         self.s1_k4_rollover_output.state()
     }
 
@@ -1162,20 +1275,59 @@ impl M1PartitionedModelMemoryKvPoolV1 {
     pub(crate) fn reserve_s1_k4_rollover_output(
         &mut self,
     ) -> Result<(), M1S1K4RolloverOutputReserveErrorV1> {
+        self.reserve_finite_speculative_rollover_output_catalog(&[M1_S1_K4_TARGET_SELECTION_V1])
+    }
+
+    /// Preallocates outputs and independent diagnostic choices for every
+    /// finite speculative successor before first queue construction.
+    pub(crate) fn reserve_finite_speculative_rollover_outputs(
+        &mut self,
+    ) -> Result<(), M1FiniteSpeculativeRolloverOutputReserveErrorV1> {
+        self.reserve_finite_speculative_rollover_output_catalog(
+            &M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1,
+        )
+    }
+
+    fn reserve_finite_speculative_rollover_output_catalog(
+        &mut self,
+        selections: &[Qwen3PlanSelection],
+    ) -> Result<(), M1FiniteSpeculativeRolloverOutputReserveErrorV1> {
         let state = self.s1_k4_rollover_output.state();
         if state != M1S1K4RolloverOutputPortfolioStateV1::Vacant {
             return Err(M1S1K4RolloverOutputReserveErrorV1::AlreadyReserved(state));
         }
-        let completion = self
-            .allocate_completion_output(M1_S1_K4_TARGET_SELECTION_V1)
-            .map_err(M1S1K4RolloverOutputReserveErrorV1::Completion)?;
-        let output = self
-            .enable_speculative_k4_diagnostic_choices_capture(completion)
+        let mut reserves = Vec::new();
+        reserves.try_reserve_exact(selections.len()).map_err(|_| {
+            M1S1K4RolloverOutputReserveErrorV1::Completion(
+                M1CompletionOutputErrorV1::ExtentOverflow,
+            )
+        })?;
+        match build_exact_reserve_catalog(selections, reserves, |selection| {
+            let completion = self
+                .allocate_completion_output(selection)
+                .map_err(M1S1K4RolloverOutputReserveErrorV1::Completion)?;
+            let output = if selection == M1_S1_K4_TARGET_SELECTION_V1 {
+                self.enable_speculative_k4_diagnostic_choices_capture(completion)
+            } else {
+                self.enable_speculative_diagnostic_choices_capture(completion)
+            }
             .map_err(M1S1K4RolloverOutputReserveErrorV1::Diagnostic)?;
-        debug_assert!(s1_k4_rollover_reserve_output_is_valid(&output));
-        self.s1_k4_rollover_output =
-            M1S1K4RolloverOutputPortfolioV1::Reserved(M1S1K4RolloverOutputReserveV1 { output });
-        Ok(())
+            debug_assert!(finite_speculative_rollover_reserve_output_is_valid(
+                &output, selection
+            ));
+            Ok(M1S1K4RolloverOutputReserveV1 { output })
+        }) {
+            Ok(reserves) => {
+                self.s1_k4_rollover_output = M1S1K4RolloverOutputPortfolioV1::Reserved(reserves);
+                Ok(())
+            }
+            Err((reserves, source)) => {
+                self.s1_k4_rollover_output = M1S1K4RolloverOutputPortfolioV1::Partial {
+                    _retained: reserves,
+                };
+                Err(source)
+            }
+        }
     }
 
     /// Returns the exact inert arena identity retained for one model role.
@@ -5734,6 +5886,39 @@ mod tests {
         Qwen3ExecutionMode, Qwen3PlanBucket, StepPlan, ValidatedM1StepInputs,
         M1_KV_PHYSICAL_PAGE_SLOTS,
     };
+
+    #[test]
+    fn finite_rollover_catalog_failures_retain_every_prior_member() {
+        let selections = [0_u8, 1, 2, 3];
+        for fail_at in 1..selections.len() {
+            let mut calls = 0;
+            let failure = build_exact_reserve_catalog(
+                &selections,
+                Vec::with_capacity(selections.len()),
+                |selection| {
+                    let current = calls;
+                    calls += 1;
+                    if current == fail_at {
+                        Err(selection)
+                    } else {
+                        Ok(selection)
+                    }
+                },
+            )
+            .unwrap_err();
+            assert_eq!(failure.0, selections[..fail_at]);
+            assert_eq!(failure.1, selections[fail_at]);
+            assert_eq!(calls, fail_at + 1);
+        }
+
+        assert_eq!(
+            M1S1K4RolloverOutputPortfolioV1::Partial {
+                _retained: Vec::new(),
+            }
+            .state(),
+            M1S1K4RolloverOutputPortfolioStateV1::Reserved
+        );
+    }
 
     #[derive(Debug)]
     struct QualificationTargetPageCancellationTestPoolV1 {

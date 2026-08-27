@@ -8,10 +8,10 @@ use core::fmt;
 
 use fe2o3_service_host::{ServiceQueueReleaseFailureV1, ServiceQueueReleaseObservationV1};
 use ferric_spec::{
-    completion::CompletionEpoch, scheduling::RequestState, Qwen3ExecutionMode, Qwen3PlanBucket,
-    ValidatedM1StepInputs,
+    completion::CompletionEpoch, scheduling::RequestState, Qwen3PlanBucket, ValidatedM1StepInputs,
 };
 
+use crate::m1_serving_registry::admit_m1_production_rollover_transition_v1;
 use crate::{
     ActiveDeviceKvCache, DeviceKvCacheError, DeviceKvCacheProjection, DeviceKvPageLease, Engine,
     LogicalRunnerDeclaration, M1CheckedCompletionOutputV1, M1CompletedKvPageReleaseCountsV1,
@@ -349,7 +349,7 @@ pub struct M1ScheduledS1K4QueueRolloverV1 {
     reason: M1ServingRolloverReasonV1,
     queue: M1PhysicalReadbackDetachedQueueSessionV1,
     scheduled: M1ScheduledDispatchV1,
-    selected: ActiveDeviceKvCache,
+    selected: Vec<ActiveDeviceKvCache>,
     residue: M1S1K4QueueRolloverResidueV1,
 }
 
@@ -375,7 +375,19 @@ impl M1ScheduledS1K4QueueRolloverV1 {
 
     #[must_use]
     pub fn selected_cache(&self) -> DeviceKvCacheProjection {
-        self.selected.projection()
+        self.selected[0].projection()
+    }
+
+    /// Returns one roster-indexed selected cache projection.
+    #[must_use]
+    pub fn selected_cache_at(&self, lane: usize) -> Option<DeviceKvCacheProjection> {
+        self.selected.get(lane).map(ActiveDeviceKvCache::projection)
+    }
+
+    /// Exact number of successor caches in scheduler order.
+    #[must_use]
+    pub fn selected_cache_count(&self) -> usize {
+        self.selected.len()
     }
 
     #[must_use]
@@ -442,7 +454,7 @@ impl M1ScheduledS1K4QueueRolloverV1 {
         M1ServingRolloverReasonV1,
         M1PhysicalReadbackDetachedQueueSessionV1,
         M1ScheduledDispatchV1,
-        ActiveDeviceKvCache,
+        Vec<ActiveDeviceKvCache>,
         M1S1K4QueueRolloverResidueV1,
     ) {
         (
@@ -465,7 +477,7 @@ struct M1ScheduledS1K4QueueRolloverTeardownCustodyV1 {
     shape: M1PhysicalFixedBatchShapeV1,
     batch_custody: M1PhysicalQueueBatchCustodyV1,
     scheduled: M1ScheduledDispatchV1,
-    selected: ActiveDeviceKvCache,
+    selected: Vec<ActiveDeviceKvCache>,
     residue: M1S1K4QueueRolloverResidueV1,
 }
 
@@ -517,7 +529,7 @@ impl M1ScheduledS1K4QueueRolloverTeardownSuccessV1 {
 
     #[must_use]
     pub fn selected_cache(&self) -> DeviceKvCacheProjection {
-        self.custody.selected.projection()
+        self.custody.selected[0].projection()
     }
 
     pub const fn residue(&self) -> &M1S1K4QueueRolloverResidueV1 {
@@ -552,7 +564,7 @@ impl M1ScheduledS1K4QueueRolloverTeardownFailureV1 {
 
     #[must_use]
     pub fn selected_cache(&self) -> DeviceKvCacheProjection {
-        self.custody.selected.projection()
+        self.custody.selected[0].projection()
     }
 
     pub const fn residue(&self) -> &M1S1K4QueueRolloverResidueV1 {
@@ -570,8 +582,19 @@ impl M1ScheduledS1K4QueueRolloverTeardownFailureV1 {
 pub struct M1S1K4QueueRolloverKvInputsV1 {
     draft_decode: ValidatedM1StepInputs,
     target_speculative: ValidatedM1StepInputs,
-    draft_page_leases: Vec<DeviceKvPageLease>,
-    target_page_leases: Vec<DeviceKvPageLease>,
+    page_leases: M1FiniteSpeculativeQueueRolloverPageLeasesV1,
+}
+
+#[derive(Debug, Eq, PartialEq)]
+enum M1FiniteSpeculativeQueueRolloverPageLeasesV1 {
+    ExactS1 {
+        draft: Vec<DeviceKvPageLease>,
+        target: Vec<DeviceKvPageLease>,
+    },
+    Roster {
+        draft: Vec<Vec<DeviceKvPageLease>>,
+        target: Vec<Vec<DeviceKvPageLease>>,
+    },
 }
 
 impl M1S1K4QueueRolloverKvInputsV1 {
@@ -584,18 +607,67 @@ impl M1S1K4QueueRolloverKvInputsV1 {
         Self {
             draft_decode,
             target_speculative,
-            draft_page_leases,
-            target_page_leases,
+            page_leases: M1FiniteSpeculativeQueueRolloverPageLeasesV1::ExactS1 {
+                draft: draft_page_leases,
+                target: target_page_leases,
+            },
+        }
+    }
+
+    /// Constructs exact roster-indexed finite-speculative rollover inputs.
+    pub const fn from_lane_leases(
+        draft_decode: ValidatedM1StepInputs,
+        target_speculative: ValidatedM1StepInputs,
+        draft_page_leases: Vec<Vec<DeviceKvPageLease>>,
+        target_page_leases: Vec<Vec<DeviceKvPageLease>>,
+    ) -> Self {
+        Self {
+            draft_decode,
+            target_speculative,
+            page_leases: M1FiniteSpeculativeQueueRolloverPageLeasesV1::Roster {
+                draft: draft_page_leases,
+                target: target_page_leases,
+            },
         }
     }
 
     /// Whether both successor token streams start from the checked prefill token.
     #[must_use]
     pub fn matches_anchor(&self, anchor: ferric_spec::TokenId) -> bool {
-        self.draft_decode.token_ids().first() == Some(&anchor)
-            && self.target_speculative.token_ids().first() == Some(&anchor)
+        self.matches_anchor_at(0, anchor)
+    }
+
+    /// Whether every live successor lane starts from the ordered anchor.
+    #[must_use]
+    pub fn matches_anchors(&self, anchors: &[ferric_spec::TokenId]) -> bool {
+        anchors.len() == self.draft_decode.live_lane_count() as usize
+            && anchors
+                .iter()
+                .copied()
+                .enumerate()
+                .all(|(lane, anchor)| self.matches_anchor_at(lane, anchor))
+    }
+
+    /// Whether one exact live lane starts both role rows from `anchor`.
+    #[must_use]
+    pub fn matches_anchor_at(&self, lane: usize, anchor: ferric_spec::TokenId) -> bool {
+        if lane >= self.draft_decode.live_lane_count() as usize
+            || lane >= self.target_speculative.live_lane_count() as usize
+        {
+            return false;
+        }
+        let draft_width = self.draft_decode.dimensions().active_tokens as usize;
+        let target_width = self.target_speculative.dimensions().active_tokens as usize;
+        let draft_index = lane.checked_mul(draft_width);
+        let target_index = lane.checked_mul(target_width);
+        draft_index.and_then(|index| self.draft_decode.token_ids().get(index)) == Some(&anchor)
+            && target_index.and_then(|index| self.target_speculative.token_ids().get(index))
+                == Some(&anchor)
     }
 }
+
+/// Generic finite-speculative rollover input custody.
+pub type M1FiniteSpeculativeQueueRolloverKvInputsV1 = M1S1K4QueueRolloverKvInputsV1;
 
 /// Reservation or table-binding stage of an S1/K4 rollover failure.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -646,16 +718,22 @@ fn kv_reservation_failure(
     }
 }
 
-fn exact_s1_input_matches(
+fn exact_roster_input_matches(
     input: &ValidatedM1StepInputs,
     selection: ferric_spec::Qwen3PlanSelection,
     scheduled: &M1ScheduledDispatchV1,
-    request: ferric_spec::RequestId,
 ) -> bool {
     input.selection() == selection
-        && input.live_lane_count() == 1
-        && input.lanes()[0].is_some_and(|lane| {
-            lane.request() == request && lane.completion_epoch() == scheduled.epoch()
+        && input.live_lane_count() as usize == scheduled.member_count()
+        && input.lanes().iter().enumerate().all(|(lane, plan)| {
+            if lane < scheduled.member_count() {
+                plan.is_some_and(|plan| {
+                    Some(plan.request()) == scheduled.member(lane)
+                        && plan.completion_epoch() == scheduled.epoch()
+                })
+            } else {
+                plan.is_none()
+            }
         })
 }
 
@@ -668,7 +746,7 @@ pub struct M1ReservedS1K4QueueRolloverV1 {
     reason: M1ServingRolloverReasonV1,
     queue: M1PhysicalReadbackDetachedQueueSessionV1,
     scheduled: M1ScheduledDispatchV1,
-    selected: ActiveDeviceKvCache,
+    selected: Vec<ActiveDeviceKvCache>,
     tables: M1FullStepKvWorkspaceTablesV1,
     residue: M1S1K4QueueRolloverResidueV1,
 }
@@ -685,7 +763,7 @@ impl M1ReservedS1K4QueueRolloverV1 {
 
     #[must_use]
     pub fn selected_cache(&self) -> DeviceKvCacheProjection {
-        self.selected.projection()
+        self.selected[0].projection()
     }
 }
 
@@ -697,15 +775,25 @@ fn reserve_m1_s1_k4_queue_rollover_kv_inner_v1(
     let M1S1K4QueueRolloverKvInputsV1 {
         draft_decode,
         target_speculative,
-        draft_page_leases,
-        target_page_leases,
+        page_leases,
     } = inputs;
-    let request = selected.projection().request;
+    let (draft_page_leases, target_page_leases) = match page_leases {
+        M1FiniteSpeculativeQueueRolloverPageLeasesV1::ExactS1 { draft, target } => {
+            (vec![draft], vec![target])
+        }
+        M1FiniteSpeculativeQueueRolloverPageLeasesV1::Roster { draft, target } => (draft, target),
+    };
     if queue.shape() != M1PhysicalFixedBatchShapeV1::PairedPrefill
-        || scheduled.member_count() != 1
-        || scheduled.member(0) != Some(request)
-        || !exact_s1_input_matches(&draft_decode, next.draft(), &scheduled, request)
-        || !exact_s1_input_matches(&target_speculative, next.target(), &scheduled, request)
+        || scheduled.member_count() == 0
+        || selected.len() != scheduled.member_count()
+        || selected
+            .iter()
+            .enumerate()
+            .any(|(lane, cache)| Some(cache.projection().request) != scheduled.member(lane))
+        || draft_page_leases.len() != scheduled.member_count()
+        || target_page_leases.len() != scheduled.member_count()
+        || !exact_roster_input_matches(&draft_decode, next.draft(), &scheduled)
+        || !exact_roster_input_matches(&target_speculative, next.target(), &scheduled)
     {
         return Err(kv_reservation_failure(
             M1S1K4QueueRolloverKvReservationPhaseV1::Preflight,
@@ -725,91 +813,127 @@ fn reserve_m1_s1_k4_queue_rollover_kv_inner_v1(
         ));
     }
 
-    let draft_reservation = match selected.reserve_speculative_draft_round_write(
-        request,
-        next.target(),
-        next.draft(),
-        draft_decode.context_lengths()[0],
-        scheduled.epoch(),
-        draft_page_leases,
-    ) {
-        Ok(reservation) => reservation,
-        Err(failure) => {
-            let (source, draft_page_leases) = (*failure).into_parts();
-            return Err(kv_reservation_failure(
-                M1S1K4QueueRolloverKvReservationPhaseV1::DraftReservation,
-                (
-                    prior,
-                    next,
-                    reason,
-                    queue,
-                    scheduled,
-                    selected,
-                    residue,
-                    draft_decode,
-                    target_speculative,
-                    draft_page_leases,
-                    target_page_leases,
-                    source,
-                ),
-            ));
-        }
-    };
-    let target_reservation = match selected.reserve_step_write(
-        request,
-        ferric_spec::Qwen3ModelRole::Target8B,
-        target_speculative.context_lengths()[0],
-        target_speculative.active_lengths()[0],
-        scheduled.epoch(),
-        target_page_leases,
-    ) {
-        Ok(reservation) => reservation,
-        Err(failure) => {
-            let (source, target_page_leases) = (*failure).into_parts();
-            return Err(kv_reservation_failure(
-                M1S1K4QueueRolloverKvReservationPhaseV1::TargetReservation,
-                (
-                    prior,
-                    next,
-                    reason,
-                    queue,
-                    scheduled,
-                    selected,
-                    residue,
-                    draft_decode,
-                    target_speculative,
-                    draft_reservation,
-                    target_page_leases,
-                    source,
-                ),
-            ));
-        }
-    };
-    let target =
-        match crate::bind_m1_kv_workspace_table_v1(target_speculative, vec![target_reservation]) {
-            Ok(table) => table,
+    let mut draft_reservations = Vec::new();
+    let mut target_reservations = Vec::new();
+    if draft_reservations
+        .try_reserve_exact(selected.len())
+        .is_err()
+        || target_reservations
+            .try_reserve_exact(selected.len())
+            .is_err()
+    {
+        return Err(kv_reservation_failure(
+            M1S1K4QueueRolloverKvReservationPhaseV1::Preflight,
+            (
+                prior,
+                next,
+                reason,
+                queue,
+                scheduled,
+                selected,
+                residue,
+                draft_decode,
+                target_speculative,
+                draft_page_leases,
+                target_page_leases,
+            ),
+        ));
+    }
+    let mut draft_leases = draft_page_leases.into_iter();
+    for (lane, cache) in selected.iter_mut().enumerate() {
+        let request = cache.projection().request;
+        let leases = draft_leases
+            .next()
+            .expect("preflight matched draft lease roster");
+        match cache.reserve_speculative_draft_round_write(
+            request,
+            next.target(),
+            next.draft(),
+            draft_decode.context_lengths()[lane],
+            scheduled.epoch(),
+            leases,
+        ) {
+            Ok(reservation) => draft_reservations.push(reservation),
             Err(failure) => {
+                let (source, leases) = (*failure).into_parts();
                 return Err(kv_reservation_failure(
-                    M1S1K4QueueRolloverKvReservationPhaseV1::TargetTableBinding,
+                    M1S1K4QueueRolloverKvReservationPhaseV1::DraftReservation,
                     (
-                        prior,
-                        next,
-                        reason,
-                        queue,
-                        scheduled,
-                        selected,
-                        residue,
-                        draft_decode,
-                        draft_reservation,
-                        failure,
+                        (prior, next, reason, queue, scheduled, selected, residue),
+                        (
+                            draft_decode,
+                            target_speculative,
+                            draft_reservations,
+                            leases,
+                            draft_leases,
+                            target_page_leases,
+                            source,
+                        ),
                     ),
                 ));
             }
-        };
+        }
+    }
+    let mut target_leases = target_page_leases.into_iter();
+    for (lane, cache) in selected.iter_mut().enumerate() {
+        let request = cache.projection().request;
+        let leases = target_leases
+            .next()
+            .expect("preflight matched target lease roster");
+        match cache.reserve_step_write(
+            request,
+            ferric_spec::Qwen3ModelRole::Target8B,
+            target_speculative.context_lengths()[lane],
+            target_speculative.active_lengths()[lane],
+            scheduled.epoch(),
+            leases,
+        ) {
+            Ok(reservation) => target_reservations.push(reservation),
+            Err(failure) => {
+                let (source, leases) = (*failure).into_parts();
+                return Err(kv_reservation_failure(
+                    M1S1K4QueueRolloverKvReservationPhaseV1::TargetReservation,
+                    (
+                        (prior, next, reason, queue, scheduled, selected, residue),
+                        (
+                            draft_decode,
+                            target_speculative,
+                            draft_reservations,
+                            target_reservations,
+                            leases,
+                            target_leases,
+                            source,
+                        ),
+                    ),
+                ));
+            }
+        }
+    }
+    let target = match crate::bind_m1_kv_workspace_table_v1(target_speculative, target_reservations)
+    {
+        Ok(table) => table,
+        Err(failure) => {
+            return Err(kv_reservation_failure(
+                M1S1K4QueueRolloverKvReservationPhaseV1::TargetTableBinding,
+                (
+                    prior,
+                    next,
+                    reason,
+                    queue,
+                    scheduled,
+                    selected,
+                    residue,
+                    draft_decode,
+                    draft_reservations,
+                    failure,
+                ),
+            ));
+        }
+    };
     let draft = match crate::bind_m1_speculative_draft_kv_round_workspace_table_v1(
         next.target(),
         draft_decode,
-        vec![draft_reservation],
+        draft_reservations,
     ) {
         Ok(table) => table,
         Err(failure) => {
@@ -846,8 +970,37 @@ pub fn reserve_m1_s1_k4_queue_rollover_kv_v1<const C: usize>(
     scheduled: M1ScheduledS1K4QueueRolloverV1,
     inputs: M1S1K4QueueRolloverKvInputsV1,
 ) -> Result<M1ReservedS1K4QueueRolloverV1, M1S1K4QueueRolloverKvReservationFailureV1> {
+    if validate_s1_k4_transition(scheduled.prior, scheduled.next, scheduled.reason).is_err() {
+        engine.quarantine_m1_queue_rearm_failure();
+        return Err(kv_reservation_failure(
+            M1S1K4QueueRolloverKvReservationPhaseV1::Preflight,
+            (scheduled, inputs),
+        ));
+    }
     match reserve_m1_s1_k4_queue_rollover_kv_inner_v1(scheduled, inputs) {
         Ok(reserved) => Ok(reserved),
+        Err(failure) => {
+            engine.quarantine_m1_queue_rearm_failure();
+            Err(failure)
+        }
+    }
+}
+
+/// Installs exact roster-indexed finite-speculative successor KV reservations.
+///
+/// # Errors
+///
+/// Returns terminal retained custody after successor scheduling has advanced.
+pub fn reserve_m1_finite_speculative_queue_rollover_kv_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    scheduled: M1ScheduledFiniteSpeculativeQueueRolloverV1,
+    inputs: M1FiniteSpeculativeQueueRolloverKvInputsV1,
+) -> Result<
+    M1ReservedFiniteSpeculativeQueueRolloverV1,
+    M1FiniteSpeculativeQueueRolloverKvReservationFailureV1,
+> {
+    match reserve_m1_s1_k4_queue_rollover_kv_inner_v1(scheduled, inputs) {
+        Ok(reserved) => Ok(M1ReservedFiniteSpeculativeQueueRolloverV1(reserved)),
         Err(failure) => {
             engine.quarantine_m1_queue_rearm_failure();
             Err(failure)
@@ -861,7 +1014,7 @@ struct M1S1K4QueueRolloverPreparedRemainderV1 {
     next: M1ServingPlanV1,
     reason: M1ServingRolloverReasonV1,
     queue: M1PhysicalReadbackDetachedQueueSessionV1,
-    selected: ActiveDeviceKvCache,
+    selected: Vec<ActiveDeviceKvCache>,
     residue: M1S1K4QueueRolloverResidueV1,
 }
 
@@ -901,7 +1054,7 @@ impl M1PreparedS1K4QueueRolloverV1 {
 
     #[must_use]
     pub fn selected_cache(&self) -> DeviceKvCacheProjection {
-        self.remainder.selected.projection()
+        self.remainder.selected[0].projection()
     }
 
     pub const fn residue(&self) -> &M1S1K4QueueRolloverResidueV1 {
@@ -916,7 +1069,7 @@ impl M1PreparedS1K4QueueRolloverV1 {
         M1ServingPlanV1,
         M1ServingRolloverReasonV1,
         M1PhysicalReadbackDetachedQueueSessionV1,
-        ActiveDeviceKvCache,
+        Vec<ActiveDeviceKvCache>,
         M1S1K4QueueRolloverResidueV1,
     ) {
         (
@@ -1010,6 +1163,29 @@ pub fn prepare_m1_s1_k4_queue_rollover_v1<const C: usize>(
     }
 }
 
+/// Prepares finite-speculative rollover workspace images after KV reservation.
+///
+/// # Errors
+///
+/// Returns terminal detached custody and faults the Engine on rejection.
+pub fn prepare_m1_finite_speculative_queue_rollover_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    reserved: M1ReservedFiniteSpeculativeQueueRolloverV1,
+    runner: &LogicalRunnerDeclaration,
+    plans: M1FullStepWorkspacePlans,
+) -> Result<
+    M1PreparedFiniteSpeculativeQueueRolloverV1,
+    Box<M1FiniteSpeculativeQueueRolloverPrepareFailureV1>,
+> {
+    match prepare_m1_s1_k4_queue_rollover_inner_v1(reserved.0, runner, plans) {
+        Ok(prepared) => Ok(prepared),
+        Err(failure) => {
+            engine.quarantine_m1_queue_rearm_failure();
+            Err(failure)
+        }
+    }
+}
+
 fn exact_next_epoch(epoch: CompletionEpoch) -> Option<CompletionEpoch> {
     epoch.value().checked_add(1).map(CompletionEpoch::new)
 }
@@ -1033,21 +1209,48 @@ fn exact_s1_k4_transition(
     Ok((prior, next, reason))
 }
 
+fn finite_speculative_transition(
+    batch: &M1ServingBatchPlanV1,
+) -> Result<
+    (M1ServingPlanV1, M1ServingPlanV1, M1ServingRolloverReasonV1),
+    M1S1K4QueueRolloverScheduleErrorV1,
+> {
+    let M1ServingQueueActionV1::QuiescentRollover {
+        prior,
+        next,
+        reason,
+    } = batch.action()
+    else {
+        return Err(M1S1K4QueueRolloverScheduleErrorV1::Action);
+    };
+    validate_finite_speculative_transition(prior, next, reason)?;
+    Ok((prior, next, reason))
+}
+
 fn validate_s1_k4_transition(
     prior: M1ServingPlanV1,
     next: M1ServingPlanV1,
     reason: M1ServingRolloverReasonV1,
 ) -> Result<(), M1S1K4QueueRolloverScheduleErrorV1> {
-    let prior_is_s1_prefill = prior.shape() == M1PhysicalFixedBatchShapeV1::PairedPrefill
-        && prior.mode() == Qwen3ExecutionMode::Prefill
-        && prior.sequence_capacity() == 1;
     let next_is_exact_s1_k4 = next.shape() == M1PhysicalFixedBatchShapeV1::SpeculativeK4
-        && next.target().mode == Qwen3ExecutionMode::Speculative
         && next.target().bucket == Qwen3PlanBucket::SpeculativeS1K4C8192
-        && next.draft().mode == Qwen3ExecutionMode::Decode
         && next.draft().bucket == Qwen3PlanBucket::DecodeS1C8192
         && next.sequence_capacity() == 1;
-    if !prior_is_s1_prefill || !next_is_exact_s1_k4 || reason != M1ServingRolloverReasonV1::Mode {
+    let admitted = admit_m1_production_rollover_transition_v1(prior, next);
+    if !next_is_exact_s1_k4 || admitted.is_none_or(|transition| transition.reason() != reason) {
+        return Err(M1S1K4QueueRolloverScheduleErrorV1::UnsupportedTransition);
+    }
+    Ok(())
+}
+
+fn validate_finite_speculative_transition(
+    prior: M1ServingPlanV1,
+    next: M1ServingPlanV1,
+    reason: M1ServingRolloverReasonV1,
+) -> Result<(), M1S1K4QueueRolloverScheduleErrorV1> {
+    if admit_m1_production_rollover_transition_v1(prior, next)
+        .is_none_or(|transition| transition.reason() != reason)
+    {
         return Err(M1S1K4QueueRolloverScheduleErrorV1::UnsupportedTransition);
     }
     Ok(())
@@ -1061,7 +1264,7 @@ fn preflight_released<const C: usize>(
     (M1ServingPlanV1, M1ServingPlanV1, M1ServingRolloverReasonV1),
     M1S1K4QueueRolloverScheduleErrorV1,
 > {
-    let plans = exact_s1_k4_transition(batch)?;
+    let plans = finite_speculative_transition(batch)?;
     let (prior, next, _) = plans;
     let Some(expected_epoch) = exact_next_epoch(released.checked().epoch()) else {
         return Err(M1S1K4QueueRolloverScheduleErrorV1::EpochExhausted);
@@ -1072,9 +1275,9 @@ fn preflight_released<const C: usize>(
             actual: batch.epoch(),
         });
     }
-    let [request] = batch.requests() else {
+    if batch.requests().is_empty() || batch.requests().len() > next.sequence_capacity() {
         return Err(M1S1K4QueueRolloverScheduleErrorV1::Roster);
-    };
+    }
     if released.queue().shape() != M1PhysicalFixedBatchShapeV1::PairedPrefill {
         return Err(M1S1K4QueueRolloverScheduleErrorV1::QueueShape);
     }
@@ -1086,26 +1289,36 @@ fn preflight_released<const C: usize>(
     }
     let reserve_state = queue_custody
         .partitioned_memory()
-        .s1_k4_rollover_output_state();
+        .finite_speculative_rollover_output_state();
     if reserve_state != M1S1K4RolloverOutputPortfolioStateV1::Reserved {
         return Err(M1S1K4QueueRolloverScheduleErrorV1::OutputReserve(
             reserve_state,
         ));
     }
-    let [M1ReleasedDeviceKvMemberV1::Active(cache)] = released.members() else {
-        return Err(M1S1K4QueueRolloverScheduleErrorV1::MemberCustody);
-    };
-    if cache.projection().request != *request {
+    if released.members().len() != batch.requests().len() {
         return Err(M1S1K4QueueRolloverScheduleErrorV1::MemberCustody);
     }
-    cache
-        .preflight_quiescent_reselection(next.target(), next.draft_cache_selection())
-        .map_err(M1S1K4QueueRolloverScheduleErrorV1::CacheReselection)?;
+    for (lane, (member, request)) in released
+        .members()
+        .iter()
+        .zip(batch.requests().iter().copied())
+        .enumerate()
+    {
+        let M1ReleasedDeviceKvMemberV1::Active(cache) = member else {
+            return Err(M1S1K4QueueRolloverScheduleErrorV1::MemberCustody);
+        };
+        if cache.projection().request != request || batch.requests().get(lane) != Some(&request) {
+            return Err(M1S1K4QueueRolloverScheduleErrorV1::MemberCustody);
+        }
+        cache
+            .preflight_quiescent_reselection(next.target(), next.draft_cache_selection())
+            .map_err(M1S1K4QueueRolloverScheduleErrorV1::CacheReselection)?;
+        if engine.state(request) != Some(RequestState::Ready) {
+            return Err(M1S1K4QueueRolloverScheduleErrorV1::RequestNotReady);
+        }
+    }
     if engine.is_faulted() {
         return Err(M1S1K4QueueRolloverScheduleErrorV1::EngineFaulted);
-    }
-    if engine.state(*request) != Some(RequestState::Ready) {
-        return Err(M1S1K4QueueRolloverScheduleErrorV1::RequestNotReady);
     }
     Ok(plans)
 }
@@ -1142,7 +1355,7 @@ fn terminal_failure<const C: usize>(
 /// Every rejection before detachment returns the original released owner.
 /// Detach, exact-dispatch, or post-dispatch reselection failure quarantines the
 /// Engine and returns all available detached/scheduler/member custody.
-pub fn schedule_m1_s1_k4_queue_rollover_exact_v1<const C: usize>(
+pub fn schedule_m1_finite_speculative_queue_rollover_v1<const C: usize>(
     engine: &mut Engine<C>,
     released: M1ReleasedCompletedStepV1,
     batch: &M1ServingBatchPlanV1,
@@ -1197,16 +1410,11 @@ pub fn schedule_m1_s1_k4_queue_rollover_exact_v1<const C: usize>(
             )));
         }
     };
-    let Some(M1ReleasedDeviceKvMemberV1::Active(mut selected)) = residue.members.pop() else {
-        unreachable!("exact one-member active custody was checked before detachment")
-    };
-    if let Err(source) = selected.reselect_quiescent(next.target(), next.draft_cache_selection()) {
-        residue
-            .members
-            .push(M1ReleasedDeviceKvMemberV1::Active(selected));
+    let mut selected = Vec::new();
+    if selected.try_reserve_exact(residue.members.len()).is_err() {
         return Err(Box::new(terminal_failure(
             engine,
-            M1S1K4QueueRolloverScheduleErrorV1::CacheReselection(source),
+            M1S1K4QueueRolloverScheduleErrorV1::MemberCustody,
             M1S1K4QueueRolloverScheduleFailureCustodyV1::Detached {
                 queue: Box::new(queue),
                 scheduled: Some(Box::new(scheduled)),
@@ -1214,6 +1422,33 @@ pub fn schedule_m1_s1_k4_queue_rollover_exact_v1<const C: usize>(
             },
         )));
     }
+    while let Some(member) = residue.members.pop() {
+        let M1ReleasedDeviceKvMemberV1::Active(mut cache) = member else {
+            unreachable!("all-active custody was checked before detachment")
+        };
+        if let Err(source) = cache.reselect_quiescent(next.target(), next.draft_cache_selection()) {
+            residue
+                .members
+                .push(M1ReleasedDeviceKvMemberV1::Active(cache));
+            residue.members.extend(
+                selected
+                    .drain(..)
+                    .rev()
+                    .map(M1ReleasedDeviceKvMemberV1::Active),
+            );
+            return Err(Box::new(terminal_failure(
+                engine,
+                M1S1K4QueueRolloverScheduleErrorV1::CacheReselection(source),
+                M1S1K4QueueRolloverScheduleFailureCustodyV1::Detached {
+                    queue: Box::new(queue),
+                    scheduled: Some(Box::new(scheduled)),
+                    residue: Box::new(residue),
+                },
+            )));
+        }
+        selected.push(cache);
+    }
+    selected.reverse();
     Ok(M1ScheduledS1K4QueueRolloverV1 {
         prior,
         next,
@@ -1225,10 +1460,76 @@ pub fn schedule_m1_s1_k4_queue_rollover_exact_v1<const C: usize>(
     })
 }
 
+/// Exact-gated source-compatible S1/K4 rollover scheduler.
+///
+/// # Errors
+///
+/// Returns the original released owner before detachment or complete terminal
+/// detached custody after scheduling has advanced.
+pub fn schedule_m1_s1_k4_queue_rollover_exact_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    released: M1ReleasedCompletedStepV1,
+    batch: &M1ServingBatchPlanV1,
+) -> Result<M1ScheduledS1K4QueueRolloverV1, Box<M1S1K4QueueRolloverScheduleFailureV1>> {
+    if let Err(error) = exact_s1_k4_transition(batch) {
+        return Err(Box::new(released_failure(error, released)));
+    }
+    schedule_m1_finite_speculative_queue_rollover_v1(engine, released, batch)
+}
+
+/// Generic finite-speculative scheduled rollover custody.
+pub type M1ScheduledFiniteSpeculativeQueueRolloverV1 = M1ScheduledS1K4QueueRolloverV1;
+/// Generic finite-speculative reserved rollover custody.
+///
+/// This nominal owner keeps wider reservations out of the legacy exact S1/K4
+/// preparation entry point while preserving the original exact type.
+#[must_use = "reserved rollover custody must prepare fresh workspace images"]
+#[derive(Debug)]
+pub struct M1ReservedFiniteSpeculativeQueueRolloverV1(M1ReservedS1K4QueueRolloverV1);
+
+impl M1ReservedFiniteSpeculativeQueueRolloverV1 {
+    #[must_use]
+    pub const fn next_plan(&self) -> M1ServingPlanV1 {
+        self.0.next_plan()
+    }
+
+    pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
+        self.0.scheduled_dispatch()
+    }
+
+    #[must_use]
+    pub fn selected_cache(&self) -> DeviceKvCacheProjection {
+        self.0.selected_cache()
+    }
+}
+/// Generic finite-speculative prepared rollover custody.
+pub type M1PreparedFiniteSpeculativeQueueRolloverV1 = M1PreparedS1K4QueueRolloverV1;
+/// Generic finite-speculative scheduling error.
+pub type M1FiniteSpeculativeQueueRolloverScheduleErrorV1 = M1S1K4QueueRolloverScheduleErrorV1;
+/// Generic finite-speculative scheduling failure custody.
+pub type M1FiniteSpeculativeQueueRolloverScheduleFailureV1 = M1S1K4QueueRolloverScheduleFailureV1;
+/// Generic finite-speculative scheduling failure phase custody.
+pub type M1FiniteSpeculativeQueueRolloverScheduleFailureCustodyV1 =
+    M1S1K4QueueRolloverScheduleFailureCustodyV1;
+/// Generic finite-speculative predecessor residue.
+pub type M1FiniteSpeculativeQueueRolloverResidueV1 = M1S1K4QueueRolloverResidueV1;
+/// Generic finite-speculative KV reservation failure.
+pub type M1FiniteSpeculativeQueueRolloverKvReservationFailureV1 =
+    M1S1K4QueueRolloverKvReservationFailureV1;
+/// Generic finite-speculative KV reservation phase.
+pub type M1FiniteSpeculativeQueueRolloverKvReservationPhaseV1 =
+    M1S1K4QueueRolloverKvReservationPhaseV1;
+/// Generic finite-speculative workspace preparation failure.
+pub type M1FiniteSpeculativeQueueRolloverPrepareFailureV1 = M1S1K4QueueRolloverPrepareFailureV1;
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ferric_spec::{Qwen3ModelRole, Qwen3PlanSelection};
+    use ferric_spec::{
+        validate_m1_step_inputs, Identity, M1StepInputCandidate, M1StepInputValidationOutcome,
+        Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanSelection, RequestId, StepPlan,
+        ValidatedM1StepInputs,
+    };
 
     fn selection(
         role: Qwen3ModelRole,
@@ -1240,14 +1541,69 @@ mod tests {
 
     fn plan(mode: Qwen3ExecutionMode, bucket: Qwen3PlanBucket) -> M1ServingPlanV1 {
         let draft = match (mode, bucket) {
-            (Qwen3ExecutionMode::Speculative, Qwen3PlanBucket::SpeculativeS1K4C8192) => selection(
+            (
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K4C8192
+                | Qwen3PlanBucket::SpeculativeS1K8C8192
+                | Qwen3PlanBucket::SpeculativeS1K16C8192,
+            ) => selection(
                 Qwen3ModelRole::Draft06B,
                 Qwen3ExecutionMode::Decode,
                 Qwen3PlanBucket::DecodeS1C8192,
             ),
+            (Qwen3ExecutionMode::Speculative, Qwen3PlanBucket::SpeculativeS8K4C8192) => selection(
+                Qwen3ModelRole::Draft06B,
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS8C8192,
+            ),
             _ => selection(Qwen3ModelRole::Draft06B, mode, bucket),
         };
         M1ServingPlanV1::new(selection(Qwen3ModelRole::Target8B, mode, bucket), draft).unwrap()
+    }
+
+    fn anchored_inputs(
+        selected: Qwen3PlanSelection,
+        anchors: &[ferric_spec::TokenId],
+    ) -> ValidatedM1StepInputs {
+        let dimensions = selected
+            .bucket
+            .dimensions(selected.role, selected.mode)
+            .unwrap();
+        let sequences = dimensions.sequences as usize;
+        let width = dimensions.active_tokens as usize;
+        let mut lanes = vec![None; sequences];
+        let mut tokens = vec![0; sequences * width];
+        let mut positions = vec![0; sequences * width];
+        let mut active_lengths = vec![0; sequences];
+        let mut context_lengths = vec![0; sequences];
+        for (lane, anchor) in anchors.iter().copied().enumerate() {
+            lanes[lane] = Some(StepPlan::new(
+                RequestId::new(u32::try_from(lane).unwrap(), 1),
+                CompletionEpoch::new(1),
+                Identity::new([1; 32]),
+                selected,
+            ));
+            active_lengths[lane] = dimensions.active_tokens;
+            context_lengths[lane] = 128;
+            for column in 0..width {
+                let index = lane * width + column;
+                tokens[index] = if column == 0 { anchor } else { 1 };
+                positions[index] = 128 + u32::try_from(column).unwrap();
+            }
+        }
+        match validate_m1_step_inputs(M1StepInputCandidate::new(
+            selected,
+            lanes,
+            tokens,
+            positions,
+            active_lengths,
+            context_lengths,
+        )) {
+            M1StepInputValidationOutcome::Validated(inputs) => inputs,
+            M1StepInputValidationOutcome::Rejected(failure) => {
+                panic!("anchor fixture rejected: {:?}", failure.error())
+            }
+        }
     }
 
     #[test]
@@ -1281,6 +1637,109 @@ mod tests {
             validate_s1_k4_transition(decode_prior, next, M1ServingRolloverReasonV1::Mode),
             Err(M1S1K4QueueRolloverScheduleErrorV1::UnsupportedTransition)
         ));
+    }
+
+    #[test]
+    fn finite_speculative_transition_predicate_accepts_only_the_four_canonical_pairs() {
+        for (prior_bucket, next_bucket) in [
+            (
+                Qwen3PlanBucket::PrefillS1T128,
+                Qwen3PlanBucket::SpeculativeS1K4C8192,
+            ),
+            (
+                Qwen3PlanBucket::PrefillS8T128,
+                Qwen3PlanBucket::SpeculativeS8K4C8192,
+            ),
+            (
+                Qwen3PlanBucket::PrefillS1T128,
+                Qwen3PlanBucket::SpeculativeS1K8C8192,
+            ),
+            (
+                Qwen3PlanBucket::PrefillS1T128,
+                Qwen3PlanBucket::SpeculativeS1K16C8192,
+            ),
+        ] {
+            let prior = plan(Qwen3ExecutionMode::Prefill, prior_bucket);
+            let next = plan(Qwen3ExecutionMode::Speculative, next_bucket);
+            assert!(validate_finite_speculative_transition(
+                prior,
+                next,
+                M1ServingRolloverReasonV1::Mode
+            )
+            .is_ok());
+        }
+
+        let s8_prior = plan(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS8T128);
+        let s1_next = plan(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+        );
+        assert!(matches!(
+            validate_finite_speculative_transition(
+                s8_prior,
+                s1_next,
+                M1ServingRolloverReasonV1::Mode
+            ),
+            Err(M1S1K4QueueRolloverScheduleErrorV1::UnsupportedTransition)
+        ));
+        assert!(matches!(
+            validate_finite_speculative_transition(
+                plan(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128),
+                s1_next,
+                M1ServingRolloverReasonV1::Shape
+            ),
+            Err(M1S1K4QueueRolloverScheduleErrorV1::UnsupportedTransition)
+        ));
+
+        for unsupported_prefill in [
+            Qwen3PlanBucket::PrefillS1T512,
+            Qwen3PlanBucket::PrefillS1T2048,
+        ] {
+            let prior = plan(Qwen3ExecutionMode::Prefill, unsupported_prefill);
+            for next_bucket in [
+                Qwen3PlanBucket::SpeculativeS1K4C8192,
+                Qwen3PlanBucket::SpeculativeS1K8C8192,
+                Qwen3PlanBucket::SpeculativeS1K16C8192,
+            ] {
+                let next = plan(Qwen3ExecutionMode::Speculative, next_bucket);
+                assert!(matches!(
+                    validate_finite_speculative_transition(
+                        prior,
+                        next,
+                        M1ServingRolloverReasonV1::Mode,
+                    ),
+                    Err(M1S1K4QueueRolloverScheduleErrorV1::UnsupportedTransition)
+                ));
+            }
+        }
+    }
+
+    #[test]
+    fn roster_anchor_checks_are_lane_indexed_and_reject_inactive_padding() {
+        let target = selection(
+            Qwen3ModelRole::Target8B,
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS8K4C8192,
+        );
+        let draft = selection(
+            Qwen3ModelRole::Draft06B,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS8C8192,
+        );
+        let inputs = M1S1K4QueueRolloverKvInputsV1::from_lane_leases(
+            anchored_inputs(draft, &[11, 22]),
+            anchored_inputs(target, &[11, 22]),
+            Vec::new(),
+            Vec::new(),
+        );
+
+        assert!(inputs.matches_anchor_at(0, 11));
+        assert!(inputs.matches_anchor_at(1, 22));
+        assert!(!inputs.matches_anchor_at(0, 22));
+        assert!(!inputs.matches_anchor_at(2, 0));
+        assert!(inputs.matches_anchors(&[11, 22]));
+        assert!(!inputs.matches_anchors(&[11]));
+        assert!(!inputs.matches_anchors(&[11, 23]));
     }
 
     #[test]
