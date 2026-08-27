@@ -6,7 +6,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "The target-only path has an MI300X smoke observation. Exact S1 paired-prefill to S1/K4 native queue rollover and its concrete production input provider are implemented; hardware and qualification evidence remain open.",
+      "The target-only path has an MI300X smoke observation. An opt-in output-fed paired-prefill to native S1/K4 rollover path is implemented and compiles, with host validation green; its MI300X fixture has not run and M1 qualification remains open.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -27,7 +27,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "S1/K4 speculative serving",
       state: "integration",
       detail:
-        "Direct and S1/K4 adapter paths retain exact plan custody and independent choices. Native paired-prefill rollover and ordered production inputs are implemented; hardware qualification remains active work.",
+        "The output-fed lifecycle validates exact readback custody and phase, next epoch, roster, an empty queued provider, and both draft and target anchor tokens against the checked prefill token. Host validation is green; the ignored MI300X fixture compiles but has not run.",
     },
     {
       label: "M1 qualification",
@@ -67,7 +67,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Paired prefill and shape rollover",
         detail:
-          "Exact S1 paired-prefill to S1/K4 scheduling, KV reselection, workspace replacement, output activation, native queue rollover, and terminal custody closure are implemented.",
+          "Exact S1 paired-prefill to S1/K4 scheduling, output-fed successor enqueue, KV reselection, workspace replacement, output activation, native queue rollover, and terminal custody closure are implemented.",
       },
       {
         name: "Qualification capture tooling",
@@ -106,6 +106,13 @@ window.FERRIC_PROJECT = Object.freeze({
       "Smoke observation only. It is not evidence, numerical qualification, hardware qualification, performance qualification, or M1 closure.",
   },
   recentProgress: [
+    {
+      commit: "e29112e",
+      title: "Feed native rollover from prefill output",
+      state: "implemented",
+      detail:
+        "The opt-in lifecycle path is implemented and compiles, and host validation is green. Its ignored MI300X fixture also compiles but has not run on hardware. This is non-evidentiary and does not qualify M1 or claim Qwen correctness.",
+    },
     {
       commit: "c4404c8",
       title: "Add queued physical input provider",
