@@ -1,12 +1,13 @@
-//! Diagnostic-only host readback for the live S1/K4 speculative choices.
+//! Diagnostic-only host readback for the live M1 speculative choices.
 //!
-//! This opt-in owner substitutes exactly the four draft choice scalars and the
-//! five target verification choices with coherent host-download allocations.
+//! This opt-in owner substitutes the exact target `[K,S]` draft-choice matrix
+//! and `[S,K+1]` verification-choice matrix with coherent host-download
+//! allocations.
 //! Each substituted range is sealed with an invalid-token sentinel before its
-//! inspected producer/consumer sequence, so a missing device write fails closed
-//! during dispatch or observation. It is deliberately restricted to
-//! `SpeculativeS1K4C8192` and carries no completion, benchmark, performance, or
-//! qualification authority.
+//! inspected producer/consumer sequence, so a missing live-lane device write
+//! fails closed during dispatch or observation. It is deliberately restricted to
+//! the four finite M1 speculative buckets and carries no completion, benchmark,
+//! performance, or qualification authority.
 
 use core::fmt;
 
@@ -30,18 +31,20 @@ pub const M1_SPECULATIVE_DIAGNOSTIC_CHOICE_ALIGNMENT_V1: u64 = 4;
 pub const M1_SPECULATIVE_DIAGNOSTIC_DRAFT_CHOICES_V1: u32 = 4;
 /// Exact number of target verification choices, including the bonus row.
 pub const M1_SPECULATIVE_DIAGNOSTIC_TARGET_CHOICES_V1: u32 = 5;
+/// Maximum speculative width admitted by the finite M1 catalog.
+pub const M1_SPECULATIVE_DIAGNOSTIC_MAX_DRAFT_TOKENS_V1: usize = 16;
 
 const TOKEN_BYTES: u64 = 4;
 const TOKEN_BYTES_USIZE: usize = 4;
-const DRAFT_CHOICE_BYTES: usize =
-    M1_SPECULATIVE_DIAGNOSTIC_DRAFT_CHOICES_V1 as usize * TOKEN_BYTES_USIZE;
 // Every device consumer bounds-checks this value before using it as a token index.
 const M1_SPECULATIVE_DIAGNOSTIC_UNWRITTEN_CHOICE_V1: u32 = u32::MAX;
 
-/// Fixed diagnostic choice geometry for one S1/K4 round.
+/// Exact diagnostic choice geometry for one finite M1 speculative round.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct M1SpeculativeDiagnosticChoicesShapeV1 {
     selection: Qwen3PlanSelection,
+    sequences: u32,
+    draft_tokens: u8,
     draft_extent_bytes: u64,
     target_extent_bytes: u64,
 }
@@ -53,23 +56,51 @@ impl M1SpeculativeDiagnosticChoicesShapeV1 {
         self.selection
     }
 
-    /// Four little-endian `u32` draft choices.
+    /// Fixed sequence width `S`.
+    #[must_use]
+    pub const fn sequences(self) -> u32 {
+        self.sequences
+    }
+
+    /// Fixed speculative width `K`.
+    #[must_use]
+    pub const fn draft_tokens(self) -> u8 {
+        self.draft_tokens
+    }
+
+    /// Complete little-endian `u32 [K,S]` draft-choice extent.
     #[must_use]
     pub const fn draft_extent_bytes(self) -> u64 {
         self.draft_extent_bytes
     }
 
-    /// Five little-endian `u32` target choices.
+    /// Complete little-endian `u32 [S,K+1]` target-choice extent.
     #[must_use]
     pub const fn target_extent_bytes(self) -> u64 {
         self.target_extent_bytes
+    }
+
+    /// Byte extent of one iteration-major `[S]` draft row.
+    #[must_use]
+    pub const fn draft_iteration_extent_bytes(self) -> u64 {
+        self.sequences as u64 * TOKEN_BYTES
+    }
+
+    /// Returns one iteration-major draft row's relative byte offset.
+    #[must_use]
+    pub const fn draft_iteration_relative_offset(self, iteration: u8) -> Option<u64> {
+        if iteration < self.draft_tokens {
+            Some(iteration as u64 * self.draft_iteration_extent_bytes())
+        } else {
+            None
+        }
     }
 }
 
 /// Allocation, binding, copy, or token-shape rejection.
 #[derive(Debug)]
 pub enum M1SpeculativeDiagnosticChoicesErrorV1 {
-    /// The selection is not exact target S1/K4 speculation.
+    /// The selection is not one of the four exact target M1 speculative buckets.
     InvalidSelection { selection: Qwen3PlanSelection },
     /// This compact output already owns a diagnostic choice capture.
     AlreadyEnabled,
@@ -83,13 +114,19 @@ pub enum M1SpeculativeDiagnosticChoicesErrorV1 {
     AllocationAlignment { required: u64, actual: u64 },
     /// Owner revalidation returned another host dispatch range.
     DispatchRangeDrift,
-    /// Retained draft/target byte geometry is not exact `[4, 1]`/`[5, 1]`.
+    /// Retained draft/target byte geometry does not match exact `[K,S]`/`[S,K+1]`.
     ChoiceExtents {
         draft_expected: u64,
         draft_actual: u64,
         target_expected: u64,
         target_actual: u64,
     },
+    /// The number of live scheduler lanes is outside `1..=S`.
+    LiveSequenceCount { capacity: u32, actual: u32 },
+    /// The number of completed draft-row copies does not equal `K`.
+    DraftReadbackCount { expected: usize, actual: usize },
+    /// A retained bounded draft-row slot was unexpectedly absent.
+    DraftReadRangeMissing { iteration: usize },
     /// A copied range came from another dispatch generation.
     DispatchGeneration { expected: u64, actual: u64 },
     /// A copied range began at another allocation offset.
@@ -131,7 +168,7 @@ pub struct BoundM1SpeculativeDiagnosticChoicesV1 {
 }
 
 impl BoundM1SpeculativeDiagnosticChoicesV1 {
-    /// Exact S1/K4 geometry bound by this owner.
+    /// Exact finite speculative geometry bound by this owner.
     #[must_use]
     pub const fn shape(&self) -> M1SpeculativeDiagnosticChoicesShapeV1 {
         self.shape
@@ -161,19 +198,27 @@ impl BoundM1SpeculativeDiagnosticChoicesV1 {
     pub(crate) fn retained_draft_read_ranges(
         &self,
     ) -> Result<
-        [ServiceHostDispatchRangeV1; M1_SPECULATIVE_DIAGNOSTIC_DRAFT_CHOICES_V1 as usize],
+        [Option<ServiceHostDispatchRangeV1>; M1_SPECULATIVE_DIAGNOSTIC_MAX_DRAFT_TOKENS_V1],
         M1SpeculativeDiagnosticChoicesErrorV1,
     > {
-        let scalar = |iteration: u64| {
-            self.draft_range
-                .checked_subrange(
-                    iteration * TOKEN_BYTES,
-                    TOKEN_BYTES,
-                    M1_SPECULATIVE_DIAGNOSTIC_CHOICE_ALIGNMENT_V1,
-                )
-                .map_err(M1SpeculativeDiagnosticChoicesErrorV1::from)
-        };
-        Ok([scalar(0)?, scalar(1)?, scalar(2)?, scalar(3)?])
+        let mut ranges = [None; M1_SPECULATIVE_DIAGNOSTIC_MAX_DRAFT_TOKENS_V1];
+        let extent = self.shape.draft_iteration_extent_bytes();
+        for iteration in 0..self.shape.draft_tokens {
+            let relative = self
+                .shape
+                .draft_iteration_relative_offset(iteration)
+                .ok_or(M1SpeculativeDiagnosticChoicesErrorV1::Overflow)?;
+            ranges[usize::from(iteration)] = Some(
+                self.draft_range
+                    .checked_subrange(
+                        relative,
+                        extent,
+                        M1_SPECULATIVE_DIAGNOSTIC_CHOICE_ALIGNMENT_V1,
+                    )
+                    .map_err(M1SpeculativeDiagnosticChoicesErrorV1::from)?,
+            );
+        }
+        Ok(ranges)
     }
 
     /// Initially owner-checked full target range.
@@ -256,33 +301,90 @@ impl M1SpeculativeDiagnosticChoicesAllocationFailureV1 {
 #[must_use = "diagnostic choice bytes must be reported or retained"]
 #[derive(Debug)]
 pub struct M1ObservedSpeculativeDiagnosticChoicesV1 {
+    shape: M1SpeculativeDiagnosticChoicesShapeV1,
+    live_sequences: u32,
     dispatch_generation: u64,
-    _draft: [ServiceCompletedReadbackV1; M1_SPECULATIVE_DIAGNOSTIC_DRAFT_CHOICES_V1 as usize],
-    draft_bytes: [u8; DRAFT_CHOICE_BYTES],
-    draft_choices: [TokenId; M1_SPECULATIVE_DIAGNOSTIC_DRAFT_CHOICES_V1 as usize],
+    _draft: Box<[ServiceCompletedReadbackV1]>,
+    draft_bytes: Box<[u8]>,
+    draft_choice_matrix: Box<[TokenId]>,
+    lane_major_draft_choices: Box<[TokenId]>,
+    legacy_k4_draft_choices: [TokenId; M1_SPECULATIVE_DIAGNOSTIC_DRAFT_CHOICES_V1 as usize],
     draft_sha256: [u8; 32],
     target: ServiceCompletedReadbackV1,
-    target_choices: [TokenId; M1_SPECULATIVE_DIAGNOSTIC_TARGET_CHOICES_V1 as usize],
+    target_choice_matrix: Box<[TokenId]>,
+    legacy_k4_target_choices: [TokenId; M1_SPECULATIVE_DIAGNOSTIC_TARGET_CHOICES_V1 as usize],
     target_sha256: [u8; 32],
 }
 
 impl M1ObservedSpeculativeDiagnosticChoicesV1 {
-    /// Queue generation authorizing all five completed range copies.
+    /// Exact finite speculative geometry carried by these copied choices.
+    #[must_use]
+    pub const fn shape(&self) -> M1SpeculativeDiagnosticChoicesShapeV1 {
+        self.shape
+    }
+
+    /// Number of leading scheduler lanes that were live for this round.
+    #[must_use]
+    pub const fn live_sequences(&self) -> u32 {
+        self.live_sequences
+    }
+
+    /// Queue generation authorizing all `K+1` completed range copies.
     #[must_use]
     pub const fn dispatch_generation(&self) -> u64 {
         self.dispatch_generation
     }
 
-    /// Exact four draft proposals in iteration order.
+    /// Exact four lane-zero draft proposals for the legacy S1/K4 API.
     #[must_use]
     pub const fn draft_choices(&self) -> &[TokenId; 4] {
-        &self.draft_choices
+        &self.legacy_k4_draft_choices
     }
 
-    /// Exact five target choices in verification-row order.
+    /// Exact five lane-zero target choices for the legacy S1/K4 API.
     #[must_use]
     pub const fn target_choices(&self) -> &[TokenId; 5] {
-        &self.target_choices
+        &self.legacy_k4_target_choices
+    }
+
+    /// Exact physical draft words in raw iteration-major `[K,S]` order.
+    ///
+    /// Inactive capacity lanes are retained as non-authoritative padding.
+    #[must_use]
+    pub fn draft_choice_matrix(&self) -> &[TokenId] {
+        &self.draft_choice_matrix
+    }
+
+    /// Exact physical target words in sequence-major `[S,K+1]` order.
+    ///
+    /// Inactive capacity lanes are retained as non-authoritative padding.
+    #[must_use]
+    pub fn target_choice_matrix(&self) -> &[TokenId] {
+        &self.target_choice_matrix
+    }
+
+    /// Exact `K` draft words for one capacity lane.
+    #[must_use]
+    pub fn draft_choices_for_lane(&self, lane: usize) -> Option<&[TokenId]> {
+        if lane >= self.shape.sequences as usize {
+            return None;
+        }
+        let width = usize::from(self.shape.draft_tokens);
+        let start = lane.checked_mul(width)?;
+        self.lane_major_draft_choices
+            .get(start..start.checked_add(width)?)
+    }
+
+    /// Exact `K+1` target verification words for one capacity lane.
+    #[must_use]
+    pub fn target_choices_for_lane(&self, lane: usize) -> Option<&[TokenId]> {
+        if lane >= self.shape.sequences as usize {
+            return None;
+        }
+        let width = usize::from(self.shape.draft_tokens) + 1;
+        let start = lane.checked_mul(width)?;
+        self.target_choice_matrix
+            .get(start..start.checked_add(width)?)
     }
 
     /// Exact copied draft bytes.
@@ -310,35 +412,60 @@ impl M1ObservedSpeculativeDiagnosticChoicesV1 {
     }
 }
 
-/// Derives the only admitted diagnostic shape.
+/// Derives one of the four admitted diagnostic shapes.
 ///
 /// # Errors
 ///
-/// Rejects every selection other than exact target S1/K4 speculation.
+/// Rejects every selection outside the finite target speculative catalog.
 pub fn m1_speculative_diagnostic_choices_shape_v1(
     selection: Qwen3PlanSelection,
 ) -> Result<M1SpeculativeDiagnosticChoicesShapeV1, M1SpeculativeDiagnosticChoicesErrorV1> {
     if selection.role != Qwen3ModelRole::Target8B
         || selection.mode != Qwen3ExecutionMode::Speculative
-        || selection.bucket != Qwen3PlanBucket::SpeculativeS1K4C8192
     {
         return Err(M1SpeculativeDiagnosticChoicesErrorV1::InvalidSelection { selection });
     }
+    let (sequences, draft_tokens) = match selection.bucket {
+        Qwen3PlanBucket::SpeculativeS1K4C8192 => (1, 4),
+        Qwen3PlanBucket::SpeculativeS8K4C8192 => (8, 4),
+        Qwen3PlanBucket::SpeculativeS1K8C8192 => (1, 8),
+        Qwen3PlanBucket::SpeculativeS1K16C8192 => (1, 16),
+        _ => return Err(M1SpeculativeDiagnosticChoicesErrorV1::InvalidSelection { selection }),
+    };
+    let draft_extent_bytes = u64::from(sequences)
+        .checked_mul(u64::from(draft_tokens))
+        .and_then(|elements| elements.checked_mul(TOKEN_BYTES))
+        .ok_or(M1SpeculativeDiagnosticChoicesErrorV1::Overflow)?;
+    let target_extent_bytes = u64::from(sequences)
+        .checked_mul(u64::from(draft_tokens) + 1)
+        .and_then(|elements| elements.checked_mul(TOKEN_BYTES))
+        .ok_or(M1SpeculativeDiagnosticChoicesErrorV1::Overflow)?;
     let shape = M1SpeculativeDiagnosticChoicesShapeV1 {
         selection,
-        draft_extent_bytes: u64::from(M1_SPECULATIVE_DIAGNOSTIC_DRAFT_CHOICES_V1) * TOKEN_BYTES,
-        target_extent_bytes: u64::from(M1_SPECULATIVE_DIAGNOSTIC_TARGET_CHOICES_V1) * TOKEN_BYTES,
+        sequences,
+        draft_tokens,
+        draft_extent_bytes,
+        target_extent_bytes,
     };
-    validate_choice_extents(shape.draft_extent_bytes, shape.target_extent_bytes)?;
+    validate_choice_extents(shape, shape.draft_extent_bytes, shape.target_extent_bytes)?;
     Ok(shape)
 }
 
+pub(crate) const fn m1_speculative_diagnostic_is_s1_k4_selection_v1(
+    selection: Qwen3PlanSelection,
+) -> bool {
+    matches!(selection.role, Qwen3ModelRole::Target8B)
+        && matches!(selection.mode, Qwen3ExecutionMode::Speculative)
+        && matches!(selection.bucket, Qwen3PlanBucket::SpeculativeS1K4C8192)
+}
+
 fn validate_choice_extents(
+    shape: M1SpeculativeDiagnosticChoicesShapeV1,
     draft_actual: u64,
     target_actual: u64,
 ) -> Result<(), M1SpeculativeDiagnosticChoicesErrorV1> {
-    let draft_expected = u64::from(M1_SPECULATIVE_DIAGNOSTIC_DRAFT_CHOICES_V1) * TOKEN_BYTES;
-    let target_expected = u64::from(M1_SPECULATIVE_DIAGNOSTIC_TARGET_CHOICES_V1) * TOKEN_BYTES;
+    let draft_expected = shape.draft_extent_bytes;
+    let target_expected = shape.target_extent_bytes;
     if (draft_actual, target_actual) != (draft_expected, target_expected) {
         return Err(M1SpeculativeDiagnosticChoicesErrorV1::ChoiceExtents {
             draft_expected,
@@ -376,6 +503,22 @@ pub(crate) fn attach_m1_speculative_diagnostic_choices_v1(
             M1SpeculativeDiagnosticChoicesAllocationFailureV1 { error, completion },
         )),
     }
+}
+
+pub(crate) fn attach_m1_speculative_k4_diagnostic_choices_v1(
+    allocations: &mut ServiceAllocationSessionV1,
+    completion: BoundM1CompletionOutputV1,
+) -> Result<BoundM1CompletionOutputV1, Box<M1SpeculativeDiagnosticChoicesAllocationFailureV1>> {
+    let selection = completion.shape().selection();
+    if !m1_speculative_diagnostic_is_s1_k4_selection_v1(selection) {
+        return Err(Box::new(
+            M1SpeculativeDiagnosticChoicesAllocationFailureV1 {
+                error: M1SpeculativeDiagnosticChoicesErrorV1::InvalidSelection { selection },
+                completion,
+            },
+        ));
+    }
+    attach_m1_speculative_diagnostic_choices_v1(allocations, completion)
 }
 
 fn allocate(
@@ -504,36 +647,87 @@ fn validate_key(
     Ok(())
 }
 
-pub(crate) fn observe_m1_speculative_diagnostic_choices_v1(
-    owner: &BoundM1SpeculativeDiagnosticChoicesV1,
-    dispatch_generation: u64,
-    draft: [ServiceCompletedReadbackV1; M1_SPECULATIVE_DIAGNOSTIC_DRAFT_CHOICES_V1 as usize],
-    target: ServiceCompletedReadbackV1,
-) -> Result<
+type M1SpeculativeDiagnosticChoicesObservationResultV1 = Result<
     M1ObservedSpeculativeDiagnosticChoicesV1,
     Box<(
         M1SpeculativeDiagnosticChoicesErrorV1,
-        [ServiceCompletedReadbackV1; M1_SPECULATIVE_DIAGNOSTIC_DRAFT_CHOICES_V1 as usize],
+        Box<[ServiceCompletedReadbackV1]>,
         ServiceCompletedReadbackV1,
     )>,
-> {
+>;
+
+pub(crate) fn observe_m1_speculative_diagnostic_choices_v1(
+    owner: &BoundM1SpeculativeDiagnosticChoicesV1,
+    dispatch_generation: u64,
+    live_sequences: u32,
+    draft: Box<[ServiceCompletedReadbackV1]>,
+    target: ServiceCompletedReadbackV1,
+) -> M1SpeculativeDiagnosticChoicesObservationResultV1 {
     if let Err(error) = validate_choice_extents(
+        owner.shape,
         owner.shape.draft_extent_bytes,
         owner.shape.target_extent_bytes,
     ) {
         return Err(Box::new((error, draft, target)));
     }
+    if live_sequences == 0 || live_sequences > owner.shape.sequences {
+        return Err(Box::new((
+            M1SpeculativeDiagnosticChoicesErrorV1::LiveSequenceCount {
+                capacity: owner.shape.sequences,
+                actual: live_sequences,
+            },
+            draft,
+            target,
+        )));
+    }
+    let expected_draft_readbacks = usize::from(owner.shape.draft_tokens);
+    if draft.len() != expected_draft_readbacks {
+        return Err(Box::new((
+            M1SpeculativeDiagnosticChoicesErrorV1::DraftReadbackCount {
+                expected: expected_draft_readbacks,
+                actual: draft.len(),
+            },
+            draft,
+            target,
+        )));
+    }
     let draft_ranges = match owner.retained_draft_read_ranges() {
         Ok(ranges) => ranges,
         Err(error) => return Err(Box::new((error, draft, target))),
     };
-    let mut draft_bytes = [0_u8; DRAFT_CHOICE_BYTES];
-    for (index, (readback, range)) in draft.iter().zip(draft_ranges).enumerate() {
-        if let Err(error) = validate_readback(readback, range, TOKEN_BYTES, dispatch_generation) {
+    let draft_extent = match usize::try_from(owner.shape.draft_extent_bytes) {
+        Ok(extent) => extent,
+        Err(_) => {
+            return Err(Box::new((
+                M1SpeculativeDiagnosticChoicesErrorV1::Overflow,
+                draft,
+                target,
+            )))
+        }
+    };
+    let mut draft_bytes = Vec::new();
+    if draft_bytes.try_reserve_exact(draft_extent).is_err() {
+        return Err(Box::new((
+            M1SpeculativeDiagnosticChoicesErrorV1::HostInitialization {
+                requested_bytes: draft_extent,
+            },
+            draft,
+            target,
+        )));
+    }
+    let row_extent = owner.shape.draft_iteration_extent_bytes();
+    for (index, readback) in draft.iter().enumerate() {
+        let Some(range) = draft_ranges[index] else {
+            return Err(Box::new((
+                M1SpeculativeDiagnosticChoicesErrorV1::DraftReadRangeMissing { iteration: index },
+                draft,
+                target,
+            )));
+        };
+        if let Err(error) = validate_readback(readback, range, row_extent, dispatch_generation) {
             return Err(Box::new((error, draft, target)));
         }
-        let start = index * TOKEN_BYTES_USIZE;
-        draft_bytes[start..start + TOKEN_BYTES_USIZE].copy_from_slice(readback.bytes());
+        draft_bytes.extend_from_slice(readback.bytes());
     }
     if let Err(error) = validate_readback(
         &target,
@@ -543,23 +737,54 @@ pub(crate) fn observe_m1_speculative_diagnostic_choices_v1(
     ) {
         return Err(Box::new((error, draft, target)));
     }
-    let draft_choices = match decode_choices(&draft_bytes) {
+    let draft_choice_matrix = match decode_choice_matrix(
+        &draft_bytes,
+        owner.shape.sequences,
+        owner.shape.draft_tokens,
+        live_sequences,
+        ChoiceMatrixLayout::IterationMajor,
+    ) {
         Ok(choices) => choices,
         Err(error) => return Err(Box::new((error, draft, target))),
     };
-    let target_choices = match decode_choices(target.bytes()) {
+    let lane_major_draft_choices = match transpose_draft_choices(
+        &draft_choice_matrix,
+        owner.shape.sequences,
+        owner.shape.draft_tokens,
+    ) {
         Ok(choices) => choices,
         Err(error) => return Err(Box::new((error, draft, target))),
     };
+    let target_choice_matrix = match decode_choice_matrix(
+        target.bytes(),
+        owner.shape.sequences,
+        owner.shape.draft_tokens + 1,
+        live_sequences,
+        ChoiceMatrixLayout::SequenceMajor,
+    ) {
+        Ok(choices) => choices,
+        Err(error) => return Err(Box::new((error, draft, target))),
+    };
+    let legacy_k4_draft_choices = lane_major_draft_choices[..4]
+        .try_into()
+        .expect("every finite speculative shape has at least four lane-zero draft choices");
+    let legacy_k4_target_choices = target_choice_matrix[..5]
+        .try_into()
+        .expect("every finite speculative shape has at least five lane-zero target choices");
     Ok(M1ObservedSpeculativeDiagnosticChoicesV1 {
+        shape: owner.shape,
+        live_sequences,
         dispatch_generation,
-        draft_sha256: Sha256::digest(draft_bytes).into(),
+        draft_sha256: Sha256::digest(&draft_bytes).into(),
         _draft: draft,
-        draft_bytes,
-        draft_choices,
+        draft_bytes: draft_bytes.into_boxed_slice(),
+        draft_choice_matrix,
+        lane_major_draft_choices,
+        legacy_k4_draft_choices,
         target_sha256: Sha256::digest(target.bytes()).into(),
         target,
-        target_choices,
+        target_choice_matrix,
+        legacy_k4_target_choices,
     })
 }
 
@@ -608,11 +833,25 @@ fn validate_readback_coordinates(
     Ok(())
 }
 
-fn decode_choices<const N: usize>(
+#[derive(Clone, Copy)]
+enum ChoiceMatrixLayout {
+    IterationMajor,
+    SequenceMajor,
+}
+
+fn decode_choice_matrix(
     bytes: &[u8],
-) -> Result<[TokenId; N], M1SpeculativeDiagnosticChoicesErrorV1> {
-    let expected = N
-        .checked_mul(usize::try_from(TOKEN_BYTES).expect("token width fits usize"))
+    sequences: u32,
+    width: u8,
+    live_sequences: u32,
+    layout: ChoiceMatrixLayout,
+) -> Result<Box<[TokenId]>, M1SpeculativeDiagnosticChoicesErrorV1> {
+    let elements = usize::try_from(sequences)
+        .ok()
+        .and_then(|sequences| sequences.checked_mul(usize::from(width)))
+        .ok_or(M1SpeculativeDiagnosticChoicesErrorV1::Overflow)?;
+    let expected = elements
+        .checked_mul(TOKEN_BYTES_USIZE)
         .ok_or(M1SpeculativeDiagnosticChoicesErrorV1::Overflow)?;
     if bytes.len() != expected {
         return Err(M1SpeculativeDiagnosticChoicesErrorV1::ReadbackExtent {
@@ -620,10 +859,19 @@ fn decode_choices<const N: usize>(
             actual: u64::try_from(bytes.len()).unwrap_or(u64::MAX),
         });
     }
-    let mut choices = [0; N];
+    let mut choices = Vec::new();
+    choices.try_reserve_exact(elements).map_err(|_| {
+        M1SpeculativeDiagnosticChoicesErrorV1::HostInitialization {
+            requested_bytes: expected,
+        }
+    })?;
     for (ordinal, encoded) in bytes.chunks_exact(4).enumerate() {
         let token = u32::from_le_bytes(encoded.try_into().expect("exact u32 chunk"));
-        if token >= QWEN3_VOCABULARY_SIZE {
+        let lane = match layout {
+            ChoiceMatrixLayout::IterationMajor => ordinal % sequences as usize,
+            ChoiceMatrixLayout::SequenceMajor => ordinal / usize::from(width),
+        };
+        if lane < live_sequences as usize && token >= QWEN3_VOCABULARY_SIZE {
             return Err(
                 M1SpeculativeDiagnosticChoicesErrorV1::ChoiceOutOfVocabulary {
                     ordinal,
@@ -631,9 +879,41 @@ fn decode_choices<const N: usize>(
                 },
             );
         }
-        choices[ordinal] = token;
+        choices.push(token);
     }
-    Ok(choices)
+    Ok(choices.into_boxed_slice())
+}
+
+fn transpose_draft_choices(
+    iteration_major: &[TokenId],
+    sequences: u32,
+    draft_tokens: u8,
+) -> Result<Box<[TokenId]>, M1SpeculativeDiagnosticChoicesErrorV1> {
+    let sequences =
+        usize::try_from(sequences).map_err(|_| M1SpeculativeDiagnosticChoicesErrorV1::Overflow)?;
+    let draft_tokens = usize::from(draft_tokens);
+    let elements = sequences
+        .checked_mul(draft_tokens)
+        .ok_or(M1SpeculativeDiagnosticChoicesErrorV1::Overflow)?;
+    if iteration_major.len() != elements {
+        return Err(M1SpeculativeDiagnosticChoicesErrorV1::ReadbackExtent {
+            expected: u64::try_from(elements.saturating_mul(TOKEN_BYTES_USIZE)).unwrap_or(u64::MAX),
+            actual: u64::try_from(iteration_major.len().saturating_mul(TOKEN_BYTES_USIZE))
+                .unwrap_or(u64::MAX),
+        });
+    }
+    let mut lane_major = Vec::new();
+    lane_major.try_reserve_exact(elements).map_err(|_| {
+        M1SpeculativeDiagnosticChoicesErrorV1::HostInitialization {
+            requested_bytes: elements.saturating_mul(TOKEN_BYTES_USIZE),
+        }
+    })?;
+    for lane in 0..sequences {
+        for iteration in 0..draft_tokens {
+            lane_major.push(iteration_major[iteration * sequences + lane]);
+        }
+    }
+    Ok(lane_major.into_boxed_slice())
 }
 
 #[cfg(test)]
@@ -649,17 +929,19 @@ mod tests {
     }
 
     #[test]
-    fn shape_is_exactly_s1_k4() {
-        let shape = m1_speculative_diagnostic_choices_shape_v1(selection(
-            Qwen3PlanBucket::SpeculativeS1K4C8192,
-        ))
-        .unwrap();
-        assert_eq!(shape.draft_extent_bytes(), 16);
-        assert_eq!(shape.target_extent_bytes(), 20);
-        assert!(m1_speculative_diagnostic_choices_shape_v1(selection(
-            Qwen3PlanBucket::SpeculativeS1K8C8192,
-        ))
-        .is_err());
+    fn shapes_are_exactly_the_four_finite_m1_speculative_buckets() {
+        for (bucket, sequences, draft_tokens, draft_bytes, target_bytes) in [
+            (Qwen3PlanBucket::SpeculativeS1K4C8192, 1, 4, 16, 20),
+            (Qwen3PlanBucket::SpeculativeS8K4C8192, 8, 4, 128, 160),
+            (Qwen3PlanBucket::SpeculativeS1K8C8192, 1, 8, 32, 36),
+            (Qwen3PlanBucket::SpeculativeS1K16C8192, 1, 16, 64, 68),
+        ] {
+            let shape = m1_speculative_diagnostic_choices_shape_v1(selection(bucket)).unwrap();
+            assert_eq!(shape.sequences(), sequences);
+            assert_eq!(shape.draft_tokens(), draft_tokens);
+            assert_eq!(shape.draft_extent_bytes(), draft_bytes);
+            assert_eq!(shape.target_extent_bytes(), target_bytes);
+        }
         assert!(
             m1_speculative_diagnostic_choices_shape_v1(Qwen3PlanSelection {
                 role: Qwen3ModelRole::Target8B,
@@ -671,14 +953,34 @@ mod tests {
     }
 
     #[test]
+    fn legacy_k4_gate_admits_only_exact_s1_k4() {
+        assert!(m1_speculative_diagnostic_is_s1_k4_selection_v1(selection(
+            Qwen3PlanBucket::SpeculativeS1K4C8192
+        )));
+        for bucket in [
+            Qwen3PlanBucket::SpeculativeS8K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ] {
+            assert!(!m1_speculative_diagnostic_is_s1_k4_selection_v1(selection(
+                bucket
+            )));
+        }
+    }
+
+    #[test]
     fn exact_choice_extents_reject_16_or_20_byte_substitution() {
-        validate_choice_extents(16, 20).unwrap();
+        let shape = m1_speculative_diagnostic_choices_shape_v1(selection(
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+        ))
+        .unwrap();
+        validate_choice_extents(shape, 16, 20).unwrap();
         assert!(matches!(
-            validate_choice_extents(15, 20),
+            validate_choice_extents(shape, 15, 20),
             Err(M1SpeculativeDiagnosticChoicesErrorV1::ChoiceExtents { .. })
         ));
         assert!(matches!(
-            validate_choice_extents(16, 21),
+            validate_choice_extents(shape, 16, 21),
             Err(M1SpeculativeDiagnosticChoicesErrorV1::ChoiceExtents { .. })
         ));
     }
@@ -693,7 +995,7 @@ mod tests {
             speculative_choice_initial_image(15),
             Err(M1SpeculativeDiagnosticChoicesErrorV1::Overflow)
         ));
-        for requested_bytes in [16, 20] {
+        for requested_bytes in [16, 20, 32, 36, 64, 68, 128, 160] {
             let image = speculative_choice_initial_image(requested_bytes).unwrap();
             assert!(image
                 .chunks_exact(4)
@@ -702,7 +1004,7 @@ mod tests {
 
         let image = speculative_choice_initial_image(16).unwrap();
         assert!(matches!(
-            decode_choices::<4>(&image),
+            decode_choice_matrix(&image, 1, 4, 1, ChoiceMatrixLayout::IterationMajor),
             Err(
                 M1SpeculativeDiagnosticChoicesErrorV1::ChoiceOutOfVocabulary {
                     ordinal: 0,
@@ -731,13 +1033,73 @@ mod tests {
 
     #[test]
     fn choice_decoder_rejects_extent_and_vocabulary_substitution() {
-        assert_eq!(decode_choices::<4>(&[0; 15]).unwrap_err().to_string(),
+        assert_eq!(decode_choice_matrix(&[0; 15], 1, 4, 1, ChoiceMatrixLayout::IterationMajor).unwrap_err().to_string(),
             "M1 speculative diagnostic choices rejected: ReadbackExtent { expected: 16, actual: 15 }");
         let mut bytes = [0_u8; 16];
         bytes[4..8].copy_from_slice(&QWEN3_VOCABULARY_SIZE.to_le_bytes());
         assert!(matches!(
-            decode_choices::<4>(&bytes),
+            decode_choice_matrix(&bytes, 1, 4, 1, ChoiceMatrixLayout::IterationMajor),
             Err(M1SpeculativeDiagnosticChoicesErrorV1::ChoiceOutOfVocabulary { ordinal: 1, .. })
         ));
+    }
+
+    #[test]
+    fn s8_decode_preserves_layout_and_ignores_inactive_capacity_rows() {
+        let mut draft = speculative_choice_initial_image(128).unwrap();
+        for iteration in 0..4_usize {
+            for lane in 0..3_usize {
+                let ordinal = iteration * 8 + lane;
+                draft[ordinal * 4..ordinal * 4 + 4].copy_from_slice(
+                    &(100 + u32::try_from(ordinal).expect("small test matrix ordinal"))
+                        .to_le_bytes(),
+                );
+            }
+        }
+        let decoded =
+            decode_choice_matrix(&draft, 8, 4, 3, ChoiceMatrixLayout::IterationMajor).unwrap();
+        let transposed = transpose_draft_choices(&decoded, 8, 4).unwrap();
+        assert_eq!(&transposed[..4], &[100, 108, 116, 124]);
+        assert_eq!(&transposed[8..12], &[102, 110, 118, 126]);
+        assert_eq!(&transposed[12..16], &[u32::MAX; 4]);
+
+        draft[3 * 4..3 * 4 + 4].copy_from_slice(&7_u32.to_le_bytes());
+        let decoded =
+            decode_choice_matrix(&draft, 8, 4, 3, ChoiceMatrixLayout::IterationMajor).unwrap();
+        assert_eq!(decoded[3], 7);
+    }
+
+    #[test]
+    fn s8_target_matrix_authenticates_only_live_sequence_major_rows() {
+        let mut target = speculative_choice_initial_image(160).unwrap();
+        for lane in 0..3_usize {
+            for choice in 0..5_usize {
+                let ordinal = lane * 5 + choice;
+                target[ordinal * 4..ordinal * 4 + 4].copy_from_slice(
+                    &(200 + u32::try_from(ordinal).expect("small target matrix ordinal"))
+                        .to_le_bytes(),
+                );
+            }
+        }
+        let decoded =
+            decode_choice_matrix(&target, 8, 5, 3, ChoiceMatrixLayout::SequenceMajor).unwrap();
+        assert_eq!(&decoded[..5], &[200, 201, 202, 203, 204]);
+        assert_eq!(&decoded[10..15], &[210, 211, 212, 213, 214]);
+        assert_eq!(&decoded[15..20], &[u32::MAX; 5]);
+
+        target[15 * 4..15 * 4 + 4].copy_from_slice(&QWEN3_VOCABULARY_SIZE.to_le_bytes());
+        assert!(decode_choice_matrix(&target, 8, 5, 3, ChoiceMatrixLayout::SequenceMajor).is_ok());
+        target[7 * 4..7 * 4 + 4].copy_from_slice(&QWEN3_VOCABULARY_SIZE.to_le_bytes());
+        assert!(matches!(
+            decode_choice_matrix(&target, 8, 5, 3, ChoiceMatrixLayout::SequenceMajor),
+            Err(M1SpeculativeDiagnosticChoicesErrorV1::ChoiceOutOfVocabulary { ordinal: 7, .. })
+        ));
+    }
+
+    #[test]
+    fn legacy_choice_accessors_retain_typed_array_signatures() {
+        let _: for<'a> fn(&'a M1ObservedSpeculativeDiagnosticChoicesV1) -> &'a [TokenId; 4] =
+            M1ObservedSpeculativeDiagnosticChoicesV1::draft_choices;
+        let _: for<'a> fn(&'a M1ObservedSpeculativeDiagnosticChoicesV1) -> &'a [TokenId; 5] =
+            M1ObservedSpeculativeDiagnosticChoicesV1::target_choices;
     }
 }

@@ -1777,6 +1777,13 @@ mod tests {
             .check_completion()
             .expect("check maximal prefix under exact queue custody");
         assert!(joined.target_token_matches());
+        assert_eq!(
+            joined.corresponding_target_only_token_for_lane(0),
+            Some(joined.corresponding_target_only_token())
+        );
+        assert_eq!(joined.corresponding_target_only_token_for_lane(1), None);
+        assert_eq!(joined.target_token_matches_for_lane(0), Some(true));
+        assert_eq!(joined.target_token_matches_for_lane(1), None);
         let (completed, choices) = joined.into_parts();
         let roster =
             M1DeviceKvCompletionRosterV1::new(vec![M1DeviceKvCompletionMemberV1::continuing(

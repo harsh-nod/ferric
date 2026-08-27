@@ -442,7 +442,7 @@ pub use speculative_diagnostic_choices::{
     M1ObservedSpeculativeDiagnosticChoicesV1, M1SpeculativeDiagnosticChoicesAllocationFailureV1,
     M1SpeculativeDiagnosticChoicesErrorV1, M1SpeculativeDiagnosticChoicesShapeV1,
     M1_SPECULATIVE_DIAGNOSTIC_CHOICE_ALIGNMENT_V1, M1_SPECULATIVE_DIAGNOSTIC_DRAFT_CHOICES_V1,
-    M1_SPECULATIVE_DIAGNOSTIC_TARGET_CHOICES_V1,
+    M1_SPECULATIVE_DIAGNOSTIC_MAX_DRAFT_TOKENS_V1, M1_SPECULATIVE_DIAGNOSTIC_TARGET_CHOICES_V1,
 };
 pub use speculative_generation_loop::{
     M1SpeculativeCancellationReasonV1, M1SpeculativeGenerationLoopErrorV1,

@@ -2658,7 +2658,8 @@ enum RetainedSemanticCaptureRangesV1<T> {
     },
     SpeculativeDiagnostic {
         draft: T,
-        draft_scalars: [T; 4],
+        draft_tokens: u8,
+        draft_rows: [Option<T>; crate::M1_SPECULATIVE_DIAGNOSTIC_MAX_DRAFT_TOKENS_V1],
         target: T,
     },
 }
@@ -2699,11 +2700,13 @@ impl<T> RetainedCaptureRangesV1<T> {
             }
             RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
                 draft,
-                draft_scalars,
+                draft_tokens,
+                draft_rows,
                 target,
             } => RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
                 draft: map(draft),
-                draft_scalars: draft_scalars.map(&mut map),
+                draft_tokens,
+                draft_rows: draft_rows.map(|row| row.map(&mut map)),
                 target: map(target),
             },
         };
@@ -2865,10 +2868,11 @@ impl RearmRangeSelectionV1 {
             RetainedSemanticCaptureRangesV1::DirectDiagnostic { .. } => {
                 RetainedSemanticCaptureRangesV1::DirectDiagnostic { choices: () }
             }
-            RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic { .. } => {
+            RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic { draft_tokens, .. } => {
                 RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
                     draft: (),
-                    draft_scalars: [(); 4],
+                    draft_tokens: *draft_tokens,
+                    draft_rows: [None; crate::M1_SPECULATIVE_DIAGNOSTIC_MAX_DRAFT_TOKENS_V1],
                     target: (),
                 }
             }
@@ -2941,11 +2945,11 @@ impl RearmRangeSelectionV1 {
                 self.speculative_draft_scalar_sources += 1;
                 let (
                     RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
-                        draft_scalars: previous,
+                        draft_rows: previous,
                         ..
                     },
                     RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
-                        draft_scalars: retained,
+                        draft_rows: retained,
                         ..
                     },
                 ) = (&previous.semantic, &retained.semantic)
@@ -2953,8 +2957,8 @@ impl RearmRangeSelectionV1 {
                     return Err(());
                 };
                 let index = usize::from(iteration);
-                let previous = *previous.get(index).ok_or(())?;
-                let retained = *retained.get(index).ok_or(())?;
+                let previous = previous.get(index).copied().flatten().ok_or(())?;
+                let retained = retained.get(index).copied().flatten().ok_or(())?;
                 (old == previous).then_some(retained).ok_or(())
             }
             RearmRangeRequestV1::RetainedSpeculativeTargetChoices => {
@@ -3018,13 +3022,16 @@ impl RearmRangeSelectionV1 {
             }
             RearmRangeRequestV1::RetainedSpeculativeDraftChoice { iteration } => {
                 self.speculative_draft_scalar_sources += 1;
-                let RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
-                    draft_scalars, ..
-                } = retained.semantic
+                let RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic { draft_rows, .. } =
+                    retained.semantic
                 else {
                     return Err(());
                 };
-                draft_scalars.get(usize::from(iteration)).copied().ok_or(())
+                draft_rows
+                    .get(usize::from(iteration))
+                    .copied()
+                    .flatten()
+                    .ok_or(())
             }
             RearmRangeRequestV1::RetainedSpeculativeTargetChoices => {
                 self.speculative_target_sources += 1;
@@ -3043,7 +3050,13 @@ impl RearmRangeSelectionV1 {
             RetainedSemanticCaptureRangesV1::Ordinary => (0, 0, 0, 0, 0),
             RetainedSemanticCaptureRangesV1::Qualification { .. } => (2, 0, 0, 0, 0),
             RetainedSemanticCaptureRangesV1::DirectDiagnostic { .. } => (0, 2, 0, 0, 0),
-            RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic { .. } => (0, 0, 2, 7, 2),
+            RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic { draft_tokens, .. } => (
+                0,
+                0,
+                2,
+                usize::from(draft_tokens.saturating_mul(2).saturating_sub(1)),
+                2,
+            ),
         };
         (self.completion_output_sources == 1
             && self.qualification_logits_sources == expected.0
@@ -4089,19 +4102,31 @@ impl M1RearmedRecycledQueueV1 {
         })
     }
 
-    /// Copies, independently observes, and semantically joins one rearmed
-    /// S1/K4 speculative completion.
+    /// Source-compatible S1/K4 entry point for evidence-bearing rearmed readback.
     ///
-    /// This is the only production rearm path that accepts speculative
-    /// completion today. The lower diagnostic transition itself rejects every
-    /// shape other than K4 and requires the pre-publication choice attachment.
-    /// K8 and K16 therefore cannot silently fall back to compact-only checking.
+    /// Production serving currently calls this entry point only for S1/K4.
     ///
     /// # Errors
     ///
     /// Returns every selected/parked cache and prior-round owner beside the
     /// exact diagnostic observation or semantic-join failure.
     pub fn read_and_check_speculative_k4_diagnostic_completion(
+        self,
+    ) -> Result<
+        M1RearmedSpeculativeDiagnosticCompletedReadbackV1,
+        Box<M1RearmedSpeculativeDiagnosticReadbackFailureV1>,
+    > {
+        self.read_and_check_speculative_diagnostic_completion()
+    }
+
+    /// Copies, independently observes, and semantically joins one rearmed
+    /// finite M1 speculative completion.
+    ///
+    /// # Errors
+    ///
+    /// Returns exact continuation custody beside compact-copy, choice-copy, or
+    /// semantic-join failure.
+    pub fn read_and_check_speculative_diagnostic_completion(
         self,
     ) -> Result<
         M1RearmedSpeculativeDiagnosticCompletedReadbackV1,
@@ -4124,7 +4149,7 @@ impl M1RearmedRecycledQueueV1 {
                 }));
             }
         };
-        let diagnostic = match observed.observe_speculative_k4_diagnostic_choices() {
+        let diagnostic = match observed.observe_speculative_diagnostic_choices() {
             Ok(diagnostic) => diagnostic,
             Err(source) => {
                 return Err(Box::new(M1RearmedSpeculativeDiagnosticReadbackFailureV1 {
@@ -4418,7 +4443,7 @@ impl M1RearmedDirectDiagnosticCompletedReadbackV1 {
     }
 }
 
-/// Phase-local failure for the evidence-bearing rearmed S1/K4 readback.
+/// Phase-local failure for an evidence-bearing rearmed speculative readback.
 #[must_use = "failed diagnostic readback retains queue, cache, and evidence custody"]
 #[derive(Debug)]
 pub enum M1RearmedSpeculativeDiagnosticReadbackFailureSourceV1 {
@@ -4427,7 +4452,7 @@ pub enum M1RearmedSpeculativeDiagnosticReadbackFailureSourceV1 {
     Join(Box<crate::M1SpeculativeDiagnosticCompletedReadbackJoinFailureV1>),
 }
 
-/// Failed rearmed S1/K4 diagnostic join with complete continuation custody.
+/// Failed rearmed speculative diagnostic join with complete continuation custody.
 #[must_use = "failed diagnostic readback must be retained or torn down"]
 #[derive(Debug)]
 pub struct M1RearmedSpeculativeDiagnosticReadbackFailureV1 {
@@ -4667,7 +4692,7 @@ impl M1RearmedSpeculativeDiagnosticReadbackTeardownFailureV1 {
     }
 }
 
-/// Rearmed S1/K4 completed readback retaining independent choice evidence.
+/// Rearmed speculative completed readback retaining independent choice evidence.
 #[must_use = "diagnostic readback and choice evidence must remain retained"]
 #[derive(Debug)]
 pub struct M1RearmedSpeculativeDiagnosticCompletedReadbackV1 {
@@ -9501,7 +9526,8 @@ fn retained_host_capture_ranges(
         },
         (None, None, Some(choices)) => RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
             draft: choices.retained_draft_range(),
-            draft_scalars: choices.retained_draft_read_ranges().map_err(|_| ())?,
+            draft_tokens: choices.shape().draft_tokens(),
+            draft_rows: choices.retained_draft_read_ranges().map_err(|_| ())?,
             target: choices.retained_target_range(),
         },
         _ => return Err(()),
@@ -10866,17 +10892,28 @@ mod tests {
         }
     }
 
-    const fn speculative_capture_ranges(
+    fn speculative_capture_ranges(
         completion_output: u64,
         draft: u64,
-        draft_scalars: [u64; 4],
+        draft_tokens: u8,
+        draft_row_base: u64,
         target: u64,
     ) -> RetainedCaptureRangesV1<u64> {
+        let mut draft_rows = [None; crate::M1_SPECULATIVE_DIAGNOSTIC_MAX_DRAFT_TOKENS_V1];
+        for (index, row) in draft_rows
+            .iter_mut()
+            .take(usize::from(draft_tokens))
+            .enumerate()
+        {
+            *row =
+                Some(draft_row_base + u64::try_from(index).expect("bounded diagnostic test row"));
+        }
         RetainedCaptureRangesV1 {
             completion_output,
             semantic: RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
                 draft,
-                draft_scalars,
+                draft_tokens,
+                draft_rows,
                 target,
             },
         }
@@ -11476,74 +11513,109 @@ mod tests {
     }
 
     #[test]
-    fn speculative_capture_rebinds_every_choice_use_to_fresh_ranges() {
-        let requests = [
-            RearmRangeRequestV1::RetainedCompletionOutput,
-            RearmRangeRequestV1::RetainedSpeculativeDraftChoices,
-            RearmRangeRequestV1::RetainedSpeculativeDraftChoices,
-            RearmRangeRequestV1::RetainedSpeculativeDraftChoice { iteration: 0 },
-            RearmRangeRequestV1::RetainedSpeculativeDraftChoice { iteration: 1 },
-            RearmRangeRequestV1::RetainedSpeculativeDraftChoice { iteration: 2 },
-            RearmRangeRequestV1::RetainedSpeculativeDraftChoice { iteration: 3 },
-            RearmRangeRequestV1::RetainedSpeculativeDraftChoice { iteration: 0 },
-            RearmRangeRequestV1::RetainedSpeculativeDraftChoice { iteration: 1 },
-            RearmRangeRequestV1::RetainedSpeculativeDraftChoice { iteration: 2 },
-            RearmRangeRequestV1::RetainedSpeculativeTargetChoices,
-            RearmRangeRequestV1::RetainedSpeculativeTargetChoices,
-        ];
-        let generation_zero_capture =
-            speculative_capture_ranges(101, 201, [211, 212, 213, 214], 301);
-        let generation_one_capture =
-            speculative_capture_ranges(101, 401, [411, 412, 413, 414], 501);
-        let generation_two_capture =
-            speculative_capture_ranges(101, 601, [611, 612, 613, 614], 701);
-        let generation_zero = [101, 201, 201, 211, 212, 213, 214, 211, 212, 213, 301, 301];
-        let expected_one = [101, 401, 401, 411, 412, 413, 414, 411, 412, 413, 501, 501];
-        let expected_two = [101, 601, 601, 611, 612, 613, 614, 611, 612, 613, 701, 701];
+    fn speculative_capture_rebinds_every_k4_k8_k16_choice_use_to_fresh_ranges() {
+        for draft_tokens in [4_u8, 8, 16] {
+            let mut requests = vec![
+                RearmRangeRequestV1::RetainedCompletionOutput,
+                RearmRangeRequestV1::RetainedSpeculativeDraftChoices,
+                RearmRangeRequestV1::RetainedSpeculativeDraftChoices,
+            ];
+            requests.extend((0..draft_tokens).map(|iteration| {
+                RearmRangeRequestV1::RetainedSpeculativeDraftChoice { iteration }
+            }));
+            requests.extend((0..draft_tokens - 1).map(|iteration| {
+                RearmRangeRequestV1::RetainedSpeculativeDraftChoice { iteration }
+            }));
+            requests.extend([
+                RearmRangeRequestV1::RetainedSpeculativeTargetChoices,
+                RearmRangeRequestV1::RetainedSpeculativeTargetChoices,
+            ]);
+            let generation_zero_capture =
+                speculative_capture_ranges(101, 201, draft_tokens, 211, 301);
+            let generation_one_capture =
+                speculative_capture_ranges(101, 401, draft_tokens, 411, 501);
+            let generation_two_capture =
+                speculative_capture_ranges(101, 601, draft_tokens, 611, 701);
+            let materialize = |capture: RetainedCaptureRangesV1<u64>| {
+                let RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
+                    draft,
+                    draft_rows,
+                    target,
+                    ..
+                } = capture.semantic
+                else {
+                    unreachable!()
+                };
+                requests
+                    .iter()
+                    .map(|request| match request {
+                        RearmRangeRequestV1::RetainedCompletionOutput => capture.completion_output,
+                        RearmRangeRequestV1::RetainedSpeculativeDraftChoices => draft,
+                        RearmRangeRequestV1::RetainedSpeculativeDraftChoice { iteration } => {
+                            draft_rows[usize::from(*iteration)].unwrap()
+                        }
+                        RearmRangeRequestV1::RetainedSpeculativeTargetChoices => target,
+                        _ => unreachable!(),
+                    })
+                    .collect::<Vec<_>>()
+            };
+            let generation_zero = materialize(generation_zero_capture);
+            let expected_one = materialize(generation_one_capture);
+            let expected_two = materialize(generation_two_capture);
 
-        let mut first = RearmRangeSelectionV1::new(&generation_one_capture.semantic);
-        let generation_one = core::array::from_fn(|index| {
-            first
-                .select(
-                    requests[index],
-                    generation_zero[index],
-                    None,
-                    generation_zero_capture,
-                    generation_one_capture,
-                )
-                .unwrap()
-        });
-        assert_eq!(first.validate(), Ok(()));
-        assert_eq!(generation_one, expected_one);
+            let mut first = RearmRangeSelectionV1::new(&generation_one_capture.semantic);
+            let generation_one = requests
+                .iter()
+                .enumerate()
+                .map(|(index, request)| {
+                    first
+                        .select(
+                            *request,
+                            generation_zero[index],
+                            None,
+                            generation_zero_capture,
+                            generation_one_capture,
+                        )
+                        .unwrap()
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(first.validate(), Ok(()));
+            assert_eq!(generation_one, expected_one);
 
-        let mut second = RearmRangeSelectionV1::new(&generation_two_capture.semantic);
-        let generation_two = core::array::from_fn(|index| {
-            second
-                .select(
-                    requests[index],
-                    generation_one[index],
+            let mut second = RearmRangeSelectionV1::new(&generation_two_capture.semantic);
+            let generation_two = requests
+                .iter()
+                .enumerate()
+                .map(|(index, request)| {
+                    second
+                        .select(
+                            *request,
+                            generation_one[index],
+                            None,
+                            generation_one_capture,
+                            generation_two_capture,
+                        )
+                        .unwrap()
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(second.validate(), Ok(()));
+            assert_eq!(generation_two, expected_two);
+
+            let hostile_index = 3 + usize::from(draft_tokens) - 1;
+            let mut hostile = generation_one;
+            hostile[hostile_index] = 999_999;
+            let mut rejected = RearmRangeSelectionV1::new(&generation_two_capture.semantic);
+            assert_eq!(
+                rejected.select(
+                    requests[hostile_index],
+                    hostile[hostile_index],
                     None,
                     generation_one_capture,
                     generation_two_capture,
-                )
-                .unwrap()
-        });
-        assert_eq!(second.validate(), Ok(()));
-        assert_eq!(generation_two, expected_two);
-
-        let mut hostile = generation_one;
-        hostile[6] = 999_999;
-        let mut rejected = RearmRangeSelectionV1::new(&generation_two_capture.semantic);
-        assert_eq!(
-            rejected.select(
-                requests[6],
-                hostile[6],
-                None,
-                generation_one_capture,
-                generation_two_capture,
-            ),
-            Err(())
-        );
+                ),
+                Err(())
+            );
+        }
     }
 
     #[test]

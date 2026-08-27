@@ -29,7 +29,9 @@ use crate::{
     allocate_m1_completion_output_v1, allocate_m1_guarded_completion_output_v1,
     direct_diagnostic_choices::attach_m1_direct_diagnostic_choices_v1,
     qualification_logits::attach_m1_qualification_logits_v1,
-    speculative_diagnostic_choices::attach_m1_speculative_diagnostic_choices_v1,
+    speculative_diagnostic_choices::{
+        attach_m1_speculative_diagnostic_choices_v1, attach_m1_speculative_k4_diagnostic_choices_v1,
+    },
     AddresslessM1FullStepWorkspaceComposition, BoundM1CompletionOutputV1,
     BoundM1FullStepWorkspaceSubleases, BoundModelMemoryAllocationsV1, ExactCompletion,
     InitializedM1FullStepWorkspaceAllocationFailureV1, M1CompletionOutputErrorV1,
@@ -1275,17 +1277,17 @@ impl M1PartitionedModelMemoryKvPoolV1 {
         attach_m1_qualification_logits_v1(&mut self.allocations, completion)
     }
 
-    /// Adds diagnostic-only S1/K4 choice capture to a compact output.
+    /// Adds diagnostic-only finite speculative choice capture to a compact output.
     ///
     /// This does not alter the target-only qualification path. The attachment
-    /// is admitted only for exact target `SpeculativeS1K4C8192` completion
-    /// output and grants no inference or evidence authority.
+    /// is admitted only for the four finite M1 speculative completion shapes
+    /// and grants no inference or evidence authority.
     ///
     /// # Errors
     ///
     /// Rejects another selection or allocation/range drift while returning the
     /// unchanged compact output inside the boxed failure.
-    pub(crate) fn enable_speculative_k4_diagnostic_choices_capture(
+    pub(crate) fn enable_speculative_diagnostic_choices_capture(
         &mut self,
         completion: BoundM1CompletionOutputV1,
     ) -> Result<
@@ -1293,6 +1295,17 @@ impl M1PartitionedModelMemoryKvPoolV1 {
         Box<crate::M1SpeculativeDiagnosticChoicesAllocationFailureV1>,
     > {
         attach_m1_speculative_diagnostic_choices_v1(&mut self.allocations, completion)
+    }
+
+    /// Source-compatible S1/K4 entry point for diagnostic choice capture.
+    pub(crate) fn enable_speculative_k4_diagnostic_choices_capture(
+        &mut self,
+        completion: BoundM1CompletionOutputV1,
+    ) -> Result<
+        BoundM1CompletionOutputV1,
+        Box<crate::M1SpeculativeDiagnosticChoicesAllocationFailureV1>,
+    > {
+        attach_m1_speculative_k4_diagnostic_choices_v1(&mut self.allocations, completion)
     }
 
     /// Adds direct target-choice capture to a compact output.
