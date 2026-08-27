@@ -6,7 +6,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "The target-only path has an MI300X smoke observation and now binds independent K6 choice evidence with generation-safe rearm. The S1/K4 production provider, rollover, and qualification evidence set remain in progress.",
+      "The target-only path has an MI300X smoke observation. Exact S1 paired-prefill to S1/K4 native queue rollover and its concrete production input provider are implemented; hardware and qualification evidence remain open.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -27,7 +27,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "S1/K4 speculative serving",
       state: "integration",
       detail:
-        "Direct and S1/K4 adapter paths retain exact plan custody, independent choices, and fresh diagnostic reset; the production provider, rollover, and hardware qualification remain active work.",
+        "Direct and S1/K4 adapter paths retain exact plan custody and independent choices. Native paired-prefill rollover and ordered production inputs are implemented; hardware qualification remains active work.",
     },
     {
       label: "M1 qualification",
@@ -67,7 +67,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Paired prefill and shape rollover",
         detail:
-          "Typed paths exist in pieces; end-to-end production rollover and custody closure are not finished.",
+          "Exact S1 paired-prefill to S1/K4 scheduling, KV reselection, workspace replacement, output activation, native queue rollover, and terminal custody closure are implemented.",
       },
       {
         name: "Qualification capture tooling",
@@ -106,6 +106,20 @@ window.FERRIC_PROJECT = Object.freeze({
       "Smoke observation only. It is not evidence, numerical qualification, hardware qualification, performance qualification, or M1 closure.",
   },
   recentProgress: [
+    {
+      commit: "c4404c8",
+      title: "Add queued physical input provider",
+      state: "verified",
+      detail:
+        "A concrete move-only provider binds every generation to its exact plan, epoch, and roster; prepares first publication, same-shape rearm, and S1/K4 rollover; and retains typed custody on every rejection.",
+    },
+    {
+      commit: "5051113",
+      title: "Publish native S1/K4 queue rollover",
+      state: "verified",
+      detail:
+        "A completed S1 paired-prefill queue can transition into exact S1/K4 through fresh KV reservations and workspaces, preallocated independent output, native predecessor destruction, and a generation-bound replacement observation.",
+    },
     {
       commit: "2d071fb",
       title: "Update the fe2o3 compiler revision",
