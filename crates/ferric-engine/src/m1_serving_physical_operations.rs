@@ -25,14 +25,15 @@ use crate::{
     M1DeviceKvCompletionRosterV1, M1ExactDispatchErrorV1, M1LongLivedQueueReleasedRoundV1,
     M1LongLivedQueueUnscheduledRoundV1, M1ObservedSpeculativeDiagnosticChoicesV1,
     M1PhysicalCompletedReadbackV1, M1PhysicalFixedBatchShapeV1, M1PhysicalPublishedQueueSessionV1,
-    M1PhysicalRunnerV1, M1PreparedLongLivedQueueRearmV1, M1RearmedCompletedReadbackV1,
-    M1RearmedCompletionOutcomeV1, M1RearmedCompletionPreflightFailureV1, M1RearmedPublishedQueueV1,
+    M1PhysicalRunnerV1, M1PreparedLongLivedQueueRearmV1, M1QueuedServingPhysicalInputProviderV1,
+    M1RearmedCompletedReadbackV1, M1RearmedCompletionOutcomeV1,
+    M1RearmedCompletionPreflightFailureV1, M1RearmedPublishedQueueV1,
     M1RearmedRoundReleaseOutcomeV1, M1ReleasedCompletedStepV1,
     M1S1K4QueueRolloverScheduleFailureCustodyV1, M1ScheduledDispatchV1,
     M1ScheduledLongLivedQueueRearmV1, M1ScheduledS1K4QueueRolloverV1, M1ServingBatchPlanV1,
     M1ServingPhysicalOperationFailureV1, M1ServingPhysicalOperationResultV1,
-    M1ServingPhysicalOperationsV1, M1ServingPlanV1, M1ServingRolloverReasonV1,
-    M1_MAX_REARM_ROUND_HISTORY_V1,
+    M1ServingPhysicalOperationsV1, M1ServingPlanV1, M1ServingQueuedGenerationBindingV1,
+    M1ServingQueuedS1K4RolloverV1, M1ServingRolloverReasonV1, M1_MAX_REARM_ROUND_HISTORY_V1,
 };
 
 /// Request-owned inputs prepared after the adapter issues the exact first dispatch.
@@ -500,6 +501,87 @@ pub enum M1ServingPhysicalRunnerOperationsCreateErrorV1 {
     AdapterIdentityExhausted,
 }
 
+/// Stable reason a dynamic queued generation is unavailable at one readback.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1 {
+    /// The adapter already transferred or sealed its concrete provider.
+    ProviderUnavailable,
+    /// Another queued generation would run before the output-dependent input.
+    ProviderQueueNotEmpty,
+    /// Readback belongs to a different process-local adapter instance.
+    CustodyIdentityMismatch,
+    /// The adapter does not currently own this exact unsettled readback epoch.
+    ReadbackPhaseMismatch,
+    /// Source shape or successor phase/shape is outside the closed transition.
+    UnsupportedTransition,
+    /// Successor epoch or ordered request roster drifted from readback.
+    BindingMismatch,
+    /// Draft or target successor input did not start from the checked token.
+    AnchorMismatch,
+}
+
+/// Exhaustive failure to append one checked S1/K4 successor generation.
+///
+/// Both variants retain the exact rejected input. `Unavailable` means no
+/// provider queue mutation was attempted; `Provider` preserves the lower
+/// allocation diagnostic after a failed transactional enqueue.
+#[must_use = "failed dynamic enqueue retains the exact generation input"]
+#[derive(Debug)]
+pub enum M1ServingPhysicalRunnerGenerationEnqueueFailureV1 {
+    /// Adapter/readback validation rejected before provider queue mutation.
+    Unavailable {
+        /// Stable reason enqueue was unavailable.
+        source: M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1,
+        /// Exact unchanged generation input.
+        input: Box<M1ServingQueuedS1K4RolloverV1>,
+    },
+    /// Transactional provider queue growth failed with lower custody intact.
+    Provider {
+        /// Lower host queue-growth diagnostic.
+        source: std::collections::TryReserveError,
+        /// Exact unchanged generation input.
+        input: Box<M1ServingQueuedS1K4RolloverV1>,
+    },
+}
+
+impl M1ServingPhysicalRunnerGenerationEnqueueFailureV1 {
+    /// Stable unavailable reason, or `None` for a lower provider failure.
+    #[must_use]
+    pub const fn unavailable(
+        &self,
+    ) -> Option<M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1> {
+        match self {
+            Self::Unavailable { source, .. } => Some(*source),
+            Self::Provider { .. } => None,
+        }
+    }
+
+    /// Lower queue-growth failure, or `None` when enqueue was unavailable.
+    #[must_use]
+    pub const fn provider_failure(&self) -> Option<&std::collections::TryReserveError> {
+        match self {
+            Self::Unavailable { .. } => None,
+            Self::Provider { source, .. } => Some(source),
+        }
+    }
+
+    /// Borrows the unchanged generation input retained on every failure path.
+    #[must_use = "the rejected generation input remains linear"]
+    pub const fn input(&self) -> &M1ServingQueuedS1K4RolloverV1 {
+        match self {
+            Self::Unavailable { input, .. } | Self::Provider { input, .. } => input,
+        }
+    }
+
+    /// Recovers the unchanged pre-boxed input from either failure class.
+    #[must_use = "the rejected generation input remains linear"]
+    pub fn into_input(self) -> Box<M1ServingQueuedS1K4RolloverV1> {
+        match self {
+            Self::Unavailable { input, .. } | Self::Provider { input, .. } => input,
+        }
+    }
+}
+
 /// Stable stage reported through the generic serving bridge.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum M1ServingPhysicalRunnerOperationErrorV1 {
@@ -889,6 +971,78 @@ impl<'a, const C: usize, P> M1ServingPhysicalRunnerOperationsV1<'a, C, P> {
     }
 }
 
+impl<const C: usize>
+    M1ServingPhysicalRunnerOperationsV1<'_, C, M1QueuedServingPhysicalInputProviderV1>
+{
+    /// Appends an exact S1/K4 successor after paired-prefill readback.
+    ///
+    /// This capability is deliberately available only for the concrete queued
+    /// provider. It validates the readback custody, exact next epoch and
+    /// request roster, and closed S1-prefill to S1/K4 transition before the
+    /// provider queue can change.
+    ///
+    /// # Errors
+    ///
+    /// Returns the pre-boxed input unchanged when the adapter/readback cannot
+    /// accept a successor or when transactional provider queue growth fails.
+    pub fn try_enqueue_s1_k4_rollover_after_readback(
+        &mut self,
+        readback: &M1ServingPhysicalRunnerReadbackV1,
+        input: Box<M1ServingQueuedS1K4RolloverV1>,
+    ) -> Result<(), M1ServingPhysicalRunnerGenerationEnqueueFailureV1> {
+        let checked = self.checked_completion(readback);
+        if let Err(source) = validate_generation_enqueue(
+            self.provider.is_some(),
+            self.provider.as_ref().map_or(
+                0,
+                M1QueuedServingPhysicalInputProviderV1::pending_generation_count,
+            ),
+            self.identity,
+            self.phase,
+            readback.adapter_identity(),
+            readback.epoch(),
+            readback.plan(),
+            input.binding(),
+            checked
+                .records()
+                .iter()
+                .map(|record| record.record().request),
+        ) {
+            return Err(
+                M1ServingPhysicalRunnerGenerationEnqueueFailureV1::Unavailable { source, input },
+            );
+        }
+        let [record] = checked.records() else {
+            return Err(
+                M1ServingPhysicalRunnerGenerationEnqueueFailureV1::Unavailable {
+                    source:
+                        M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1::UnsupportedTransition,
+                    input,
+                },
+            );
+        };
+        if let Err(source) = validate_s1_k4_rollover_anchor(&input, record.semantics()) {
+            return Err(
+                M1ServingPhysicalRunnerGenerationEnqueueFailureV1::Unavailable { source, input },
+            );
+        }
+        let Some(provider) = self.provider.as_mut() else {
+            return Err(
+                M1ServingPhysicalRunnerGenerationEnqueueFailureV1::Unavailable {
+                    source:
+                        M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1::ProviderUnavailable,
+                    input,
+                },
+            );
+        };
+        provider
+            .try_enqueue_s1_k4_rollover(input)
+            .map_err(|(source, input)| {
+                M1ServingPhysicalRunnerGenerationEnqueueFailureV1::Provider { source, input }
+            })
+    }
+}
+
 impl<const C: usize, P> Drop for M1ServingPhysicalRunnerOperationsV1<'_, C, P> {
     fn drop(&mut self) {
         if !matches!(
@@ -906,6 +1060,72 @@ fn supports_evidence_bound_s1_k4(plan: M1ServingPlanV1) -> bool {
     plan.shape() == M1PhysicalFixedBatchShapeV1::SpeculativeK4
         && plan.sequence_capacity() == 1
         && plan.target().bucket == Qwen3PlanBucket::SpeculativeS1K4C8192
+}
+
+fn supports_s1_paired_prefill_rollover_source(plan: M1ServingPlanV1) -> bool {
+    plan.shape() == M1PhysicalFixedBatchShapeV1::PairedPrefill
+        && plan.sequence_capacity() == 1
+        && plan.target().mode == ferric_spec::Qwen3ExecutionMode::Prefill
+        && plan.target().bucket == Qwen3PlanBucket::PrefillS1T128
+}
+
+fn validate_s1_k4_rollover_anchor(
+    input: &M1ServingQueuedS1K4RolloverV1,
+    semantics: crate::CheckedCompletionSemantics,
+) -> Result<(), M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1> {
+    let crate::CheckedCompletionSemantics::DirectFinalRow { token } = semantics else {
+        return Err(M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1::UnsupportedTransition);
+    };
+    if !input.matches_anchor(token) {
+        return Err(M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1::AnchorMismatch);
+    }
+    Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn validate_generation_enqueue(
+    provider_available: bool,
+    pending_generation_count: usize,
+    expected_identity: M1ServingPhysicalRunnerAdapterIdentityV1,
+    phase: M1ServingPhysicalRunnerAdapterPhaseV1,
+    readback_identity: M1ServingPhysicalRunnerAdapterIdentityV1,
+    readback_epoch: CompletionEpoch,
+    prior: M1ServingPlanV1,
+    binding: &M1ServingQueuedGenerationBindingV1,
+    readback_requests: impl ExactSizeIterator<Item = RequestId>,
+) -> Result<(), M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1> {
+    use M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1 as Unavailable;
+
+    if !provider_available {
+        return Err(Unavailable::ProviderUnavailable);
+    }
+    if pending_generation_count != 0 {
+        return Err(Unavailable::ProviderQueueNotEmpty);
+    }
+    if expected_identity != readback_identity {
+        return Err(Unavailable::CustodyIdentityMismatch);
+    }
+    if phase
+        != (M1ServingPhysicalRunnerAdapterPhaseV1::Readback {
+            epoch: readback_epoch,
+        })
+    {
+        return Err(Unavailable::ReadbackPhaseMismatch);
+    }
+    if !supports_s1_paired_prefill_rollover_source(prior)
+        || !supports_evidence_bound_s1_k4(binding.plan())
+    {
+        return Err(Unavailable::UnsupportedTransition);
+    }
+    let Some(next_epoch) = readback_epoch.value().checked_add(1) else {
+        return Err(Unavailable::BindingMismatch);
+    };
+    if binding.epoch() != CompletionEpoch::new(next_epoch)
+        || !exact_request_roster_matches(binding.requests(), readback_requests)
+    {
+        return Err(Unavailable::BindingMismatch);
+    }
+    Ok(())
 }
 
 fn supports_direct_serving(plan: M1ServingPlanV1) -> bool {
@@ -2326,6 +2546,92 @@ mod tests {
         .expect("test plan must be canonical")
     }
 
+    fn queued_s1_k4_test_input(
+        request: RequestId,
+        epoch: CompletionEpoch,
+        anchor: ferric_spec::TokenId,
+    ) -> M1ServingQueuedS1K4RolloverV1 {
+        use ferric_build::{
+            m1_step_workspace_requirements, plan_addressless_m1_step_workspace,
+            AvailableM1StepWorkspace, DeclaredM1StepWorkspaceAllocation,
+            M1StepWorkspaceDeclaration, M1StepWorkspacePlanOutcome,
+        };
+        use ferric_spec::{
+            validate_m1_step_inputs, Identity, M1StepInputCandidate, M1StepInputValidationOutcome,
+            StepPlan, ValidatedM1StepInputs,
+        };
+
+        fn input(plan: StepPlan, tokens: Vec<u32>, positions: Vec<u32>) -> ValidatedM1StepInputs {
+            let active_length = u32::try_from(tokens.len()).expect("test token count fits u32");
+            let candidate = M1StepInputCandidate::new(
+                plan.selection(),
+                vec![Some(plan)],
+                tokens,
+                positions,
+                vec![active_length],
+                vec![128],
+            );
+            match validate_m1_step_inputs(candidate) {
+                M1StepInputValidationOutcome::Validated(inputs) => inputs,
+                M1StepInputValidationOutcome::Rejected(failure) => {
+                    panic!("host-only rollover input rejected: {:?}", failure.error())
+                }
+            }
+        }
+
+        fn workspace(
+            selection: Qwen3PlanSelection,
+            identity_byte: u8,
+        ) -> ferric_build::AddresslessM1StepWorkspacePlan {
+            let requirements = m1_step_workspace_requirements(selection)
+                .expect("canonical selection has workspace requirements");
+            let available = AvailableM1StepWorkspace::new(M1StepWorkspaceDeclaration::new(
+                selection,
+                DeclaredM1StepWorkspaceAllocation::new(
+                    Identity::new([identity_byte; 32]),
+                    requirements.allocation_byte_len(),
+                    requirements.allocation_alignment(),
+                ),
+                requirements.ranges().to_vec().into_boxed_slice(),
+            ));
+            match plan_addressless_m1_step_workspace(selection, available) {
+                M1StepWorkspacePlanOutcome::Planned(plan) => plan,
+                M1StepWorkspacePlanOutcome::Rejected(_) => panic!("test workspace rejected"),
+            }
+        }
+
+        let plan = serving_plan(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        let draft = input(
+            StepPlan::new(request, epoch, Identity::new([41; 32]), plan.draft()),
+            vec![anchor],
+            vec![128],
+        );
+        let target = input(
+            StepPlan::new(request, epoch, Identity::new([42; 32]), plan.target()),
+            vec![anchor, 0, 0, 0, 0],
+            (128..133).collect(),
+        );
+        let preparation = crate::M1FullStepWorkspacePlans::speculative_round(
+            workspace(plan.draft(), 43),
+            workspace(plan.target(), 44),
+        );
+        let recipe = crate::M1FullStepWorkspacePlans::speculative_round(
+            workspace(plan.draft(), 43),
+            workspace(plan.target(), 44),
+        );
+        M1ServingQueuedS1K4RolloverV1::new(
+            M1ServingQueuedGenerationBindingV1::new(plan, vec![request].into_boxed_slice(), epoch),
+            crate::M1S1K4QueueRolloverKvInputsV1::new(draft, target, Vec::new(), Vec::new()),
+            preparation,
+            recipe,
+        )
+    }
+
     #[test]
     fn terminal_stage_is_derived_from_typed_lower_custody() {
         let retained_plan = serving_plan(
@@ -2439,6 +2745,267 @@ mod tests {
         assert!(supports_evidence_bound_s1_k4(speculative));
         assert_ne!(decode.shape(), M1PhysicalFixedBatchShapeV1::PairedPrefill);
         assert!(!supports_evidence_bound_s1_k4(decode));
+    }
+
+    #[test]
+    fn dynamic_enqueue_reports_provider_unavailable_before_custody_checks() {
+        let identity = M1ServingPhysicalRunnerAdapterIdentityV1::fresh()
+            .expect("test process has adapter identities");
+        let other = M1ServingPhysicalRunnerAdapterIdentityV1::fresh()
+            .expect("test process has adapter identities");
+        let request = RequestId::new(7, 1);
+        let speculative = serving_plan(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        let binding = M1ServingQueuedGenerationBindingV1::new(
+            speculative,
+            vec![request].into_boxed_slice(),
+            CompletionEpoch::new(2),
+        );
+
+        assert_eq!(
+            validate_generation_enqueue(
+                false,
+                0,
+                identity,
+                M1ServingPhysicalRunnerAdapterPhaseV1::InitialReady,
+                other,
+                CompletionEpoch::new(1),
+                speculative,
+                &binding,
+                core::iter::empty(),
+            ),
+            Err(M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1::ProviderUnavailable)
+        );
+        assert_eq!(
+            validate_generation_enqueue(
+                true,
+                1,
+                identity,
+                M1ServingPhysicalRunnerAdapterPhaseV1::InitialReady,
+                other,
+                CompletionEpoch::new(1),
+                speculative,
+                &binding,
+                core::iter::empty(),
+            ),
+            Err(M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1::ProviderQueueNotEmpty)
+        );
+    }
+
+    #[test]
+    fn dynamic_enqueue_requires_the_exact_unsettled_readback_phase() {
+        let identity = M1ServingPhysicalRunnerAdapterIdentityV1::fresh()
+            .expect("test process has adapter identities");
+        let request = RequestId::new(7, 1);
+        let prefill = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        );
+        let speculative = serving_plan(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        let epoch = CompletionEpoch::new(1);
+        let binding = M1ServingQueuedGenerationBindingV1::new(
+            speculative,
+            vec![request].into_boxed_slice(),
+            CompletionEpoch::new(2),
+        );
+
+        for phase in [
+            M1ServingPhysicalRunnerAdapterPhaseV1::InitialReady,
+            M1ServingPhysicalRunnerAdapterPhaseV1::Published { epoch },
+            M1ServingPhysicalRunnerAdapterPhaseV1::Quiescent { epoch },
+            M1ServingPhysicalRunnerAdapterPhaseV1::Sealed,
+        ] {
+            assert_eq!(
+                validate_generation_enqueue(
+                    true,
+                    0,
+                    identity,
+                    phase,
+                    identity,
+                    epoch,
+                    prefill,
+                    &binding,
+                    [request].into_iter(),
+                ),
+                Err(M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1::ReadbackPhaseMismatch)
+            );
+        }
+        assert_eq!(
+            validate_generation_enqueue(
+                true,
+                0,
+                identity,
+                M1ServingPhysicalRunnerAdapterPhaseV1::Readback { epoch },
+                identity,
+                epoch,
+                prefill,
+                &binding,
+                [request].into_iter(),
+            ),
+            Ok(())
+        );
+    }
+
+    #[test]
+    fn dynamic_enqueue_rejects_identity_transition_epoch_and_roster_drift() {
+        use M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1 as Unavailable;
+
+        let identity = M1ServingPhysicalRunnerAdapterIdentityV1::fresh()
+            .expect("test process has adapter identities");
+        let other = M1ServingPhysicalRunnerAdapterIdentityV1::fresh()
+            .expect("test process has adapter identities");
+        let request = RequestId::new(7, 1);
+        let prefill = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        );
+        let speculative = serving_plan(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        let epoch = CompletionEpoch::new(1);
+        let exact = M1ServingQueuedGenerationBindingV1::new(
+            speculative,
+            vec![request].into_boxed_slice(),
+            CompletionEpoch::new(2),
+        );
+        let stale = M1ServingQueuedGenerationBindingV1::new(
+            speculative,
+            vec![request].into_boxed_slice(),
+            CompletionEpoch::new(3),
+        );
+
+        assert_eq!(
+            validate_generation_enqueue(
+                true,
+                0,
+                identity,
+                M1ServingPhysicalRunnerAdapterPhaseV1::Readback { epoch },
+                other,
+                epoch,
+                prefill,
+                &exact,
+                [request].into_iter(),
+            ),
+            Err(Unavailable::CustodyIdentityMismatch)
+        );
+        assert_eq!(
+            validate_generation_enqueue(
+                true,
+                0,
+                identity,
+                M1ServingPhysicalRunnerAdapterPhaseV1::Readback { epoch },
+                identity,
+                epoch,
+                speculative,
+                &exact,
+                [request].into_iter(),
+            ),
+            Err(Unavailable::UnsupportedTransition)
+        );
+        assert_eq!(
+            validate_generation_enqueue(
+                true,
+                0,
+                identity,
+                M1ServingPhysicalRunnerAdapterPhaseV1::Readback { epoch },
+                identity,
+                epoch,
+                prefill,
+                &stale,
+                [request].into_iter(),
+            ),
+            Err(Unavailable::BindingMismatch)
+        );
+        assert_eq!(
+            validate_generation_enqueue(
+                true,
+                0,
+                identity,
+                M1ServingPhysicalRunnerAdapterPhaseV1::Readback { epoch },
+                identity,
+                epoch,
+                prefill,
+                &exact,
+                [RequestId::new(8, 1)].into_iter(),
+            ),
+            Err(Unavailable::BindingMismatch)
+        );
+    }
+
+    #[test]
+    fn dynamic_enqueue_requires_the_checked_prefill_anchor() {
+        use M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1 as Unavailable;
+
+        let request = RequestId::new(7, 1);
+        let epoch = CompletionEpoch::new(2);
+        let exact = queued_s1_k4_test_input(request, epoch, 7);
+        assert_eq!(
+            validate_s1_k4_rollover_anchor(
+                &exact,
+                crate::CheckedCompletionSemantics::DirectFinalRow { token: 7 },
+            ),
+            Ok(())
+        );
+
+        let substituted = queued_s1_k4_test_input(request, epoch, 8);
+        assert_eq!(
+            validate_s1_k4_rollover_anchor(
+                &substituted,
+                crate::CheckedCompletionSemantics::DirectFinalRow { token: 7 },
+            ),
+            Err(Unavailable::AnchorMismatch)
+        );
+    }
+
+    #[test]
+    fn dynamic_enqueue_failures_retain_the_exact_generation_input() {
+        let request = RequestId::new(7, 1);
+        let epoch = CompletionEpoch::new(2);
+        let input = queued_s1_k4_test_input(request, epoch, 7);
+        let failure = M1ServingPhysicalRunnerGenerationEnqueueFailureV1::Unavailable {
+            source: M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1::ReadbackPhaseMismatch,
+            input: Box::new(input),
+        };
+        assert_eq!(
+            failure.unavailable(),
+            Some(M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1::ReadbackPhaseMismatch)
+        );
+        assert!(failure.provider_failure().is_none());
+        assert_eq!(failure.input().binding().requests(), &[request],);
+        let recovered = failure.into_input();
+        assert_eq!(recovered.binding().epoch(), epoch);
+        assert!(recovered.matches_anchor(7));
+
+        let input = queued_s1_k4_test_input(request, epoch, 7);
+        let allocation = Vec::<u8>::new()
+            .try_reserve(usize::MAX)
+            .expect_err("usize::MAX queue growth must fail");
+        let failure = M1ServingPhysicalRunnerGenerationEnqueueFailureV1::Provider {
+            source: allocation,
+            input: Box::new(input),
+        };
+        assert_eq!(failure.unavailable(), None);
+        assert!(failure.provider_failure().is_some());
+        assert_eq!(failure.input().binding().requests(), &[request],);
+        let recovered = failure.into_input();
+        assert_eq!(recovered.binding().epoch(), epoch);
+        assert!(recovered.matches_anchor(7));
     }
 
     #[test]
@@ -2748,10 +3315,10 @@ mod tests {
             }
         }
 
-        // This ignored smoke observes only typed lifecycle and native queue
-        // rollover structure. Its fixed successor token is not the prefill
-        // output, so it makes no inference, numerical, performance, evidence,
-        // qualification, or end-to-end Qwen-correctness claim.
+        // This output-fed ignored smoke observes only typed lifecycle and
+        // native queue rollover structure. Fixture artifacts do not
+        // authenticate deployment inputs, so it makes no numerical,
+        // performance, evidence, qualification, or Qwen-correctness claim.
         let artifact_directory = required_path("FERRIC_M1_KERNEL_ARTIFACT_DIRECTORY");
         let target_weights = required_path("FERRIC_M1_TARGET_PREPACKED_WEIGHTS");
         let draft_weights = required_path("FERRIC_M1_DRAFT_PREPACKED_WEIGHTS");
@@ -2905,49 +3472,7 @@ mod tests {
         );
 
         let rollover_epoch = CompletionEpoch::new(2);
-        let target_speculative_plan = runner
-            .logical_runner()
-            .bind_step_plan(request, rollover_epoch, speculative.target())
-            .expect("bind target speculative plan");
-        let draft_decode_plan = runner
-            .logical_runner()
-            .bind_step_plan(request, rollover_epoch, speculative.draft())
-            .expect("bind draft decode plan");
-        let target_speculative_inputs = input(
-            target_speculative_plan,
-            vec![1, 0, 0, 0, 0],
-            (128..133).collect(),
-            5,
-            128,
-        );
-        let draft_decode_inputs = input(draft_decode_plan, vec![1], vec![128], 1, 128);
-        let rollover_inputs = M1S1K4QueueRolloverKvInputsV1::new(
-            draft_decode_inputs,
-            target_speculative_inputs,
-            vec![draft_rollover_lease],
-            vec![target_rollover_lease],
-        );
-        let rollover_preparation_plans = M1FullStepWorkspacePlans::speculative_round(
-            workspace_plan(speculative.draft(), 92),
-            workspace_plan(speculative.target(), 93),
-        );
-        let rollover_recipe_plans = M1FullStepWorkspacePlans::speculative_round(
-            workspace_plan(speculative.draft(), 92),
-            workspace_plan(speculative.target(), 93),
-        );
-        let rollover =
-            M1ServingQueuedGenerationInputV1::s1_k4_rollover(M1ServingQueuedS1K4RolloverV1::new(
-                M1ServingQueuedGenerationBindingV1::new(
-                    speculative,
-                    vec![request].into_boxed_slice(),
-                    rollover_epoch,
-                ),
-                rollover_inputs,
-                rollover_preparation_plans,
-                rollover_recipe_plans,
-            ));
-        let provider =
-            M1QueuedServingPhysicalInputProviderV1::from_ordered_inputs(vec![first, rollover]);
+        let provider = M1QueuedServingPhysicalInputProviderV1::from_ordered_inputs(vec![first]);
         let mut operations =
             M1ServingPhysicalRunnerOperationsV1::new(&runner, &mut engine, provider, 1 << 20)
                 .expect("construct queued physical serving adapter");
@@ -2970,6 +3495,67 @@ mod tests {
         let readback = operations
             .read_published(published, prefill_epoch, &prefill_batch)
             .expect("read paired-prefill completion");
+        let anchor = {
+            let checked = operations.checked_completion(&readback);
+            let [record] = checked.records() else {
+                panic!("S1 paired prefill must produce one checked record")
+            };
+            let crate::CheckedCompletionSemantics::DirectFinalRow { token } = record.semantics()
+            else {
+                panic!("paired-prefill checked record must retain direct semantics")
+            };
+            token
+        };
+        let target_speculative_plan = runner
+            .logical_runner()
+            .bind_step_plan(request, rollover_epoch, speculative.target())
+            .expect("bind target speculative plan");
+        let draft_decode_plan = runner
+            .logical_runner()
+            .bind_step_plan(request, rollover_epoch, speculative.draft())
+            .expect("bind draft decode plan");
+        let target_speculative_inputs = input(
+            target_speculative_plan,
+            vec![anchor, 0, 0, 0, 0],
+            (128..133).collect(),
+            5,
+            128,
+        );
+        let draft_decode_inputs = input(draft_decode_plan, vec![anchor], vec![128], 1, 128);
+        let rollover_inputs = M1S1K4QueueRolloverKvInputsV1::new(
+            draft_decode_inputs,
+            target_speculative_inputs,
+            vec![draft_rollover_lease],
+            vec![target_rollover_lease],
+        );
+        let rollover_preparation_plans = M1FullStepWorkspacePlans::speculative_round(
+            workspace_plan(speculative.draft(), 92),
+            workspace_plan(speculative.target(), 93),
+        );
+        let rollover_recipe_plans = M1FullStepWorkspacePlans::speculative_round(
+            workspace_plan(speculative.draft(), 92),
+            workspace_plan(speculative.target(), 93),
+        );
+        let rollover = M1ServingQueuedS1K4RolloverV1::new(
+            M1ServingQueuedGenerationBindingV1::new(
+                speculative,
+                vec![request].into_boxed_slice(),
+                rollover_epoch,
+            ),
+            rollover_inputs,
+            rollover_preparation_plans,
+            rollover_recipe_plans,
+        );
+        operations
+            .try_enqueue_s1_k4_rollover_after_readback(&readback, Box::new(rollover))
+            .expect("enqueue output-fed S1/K4 successor after paired-prefill readback");
+        assert_eq!(
+            operations
+                .provider()
+                .expect("adapter retains queued provider")
+                .pending_generation_count(),
+            1
+        );
         let quiescent = operations
             .settle_readback(readback, vec![M1DeviceKvCompletionDispositionV1::Continue])
             .expect("settle paired-prefill completion");

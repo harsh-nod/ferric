@@ -275,7 +275,8 @@ pub use m1_serving_physical_input_provider::{
 };
 pub use m1_serving_physical_operations::{
     M1ServingFirstReadbackStateV1, M1ServingPhysicalInputProviderV1,
-    M1ServingPhysicalRunnerDiagnosticHistoryV1, M1ServingPhysicalRunnerOperationErrorV1,
+    M1ServingPhysicalRunnerDiagnosticHistoryV1, M1ServingPhysicalRunnerGenerationEnqueueFailureV1,
+    M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1, M1ServingPhysicalRunnerOperationErrorV1,
     M1ServingPhysicalRunnerOperationsCreateErrorV1, M1ServingPhysicalRunnerOperationsV1,
     M1ServingPhysicalRunnerPublishedV1, M1ServingPhysicalRunnerQuiescentV1,
     M1ServingPhysicalRunnerReadbackEvidenceV1, M1ServingPhysicalRunnerReadbackV1,

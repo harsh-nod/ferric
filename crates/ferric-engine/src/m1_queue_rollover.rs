@@ -588,6 +588,13 @@ impl M1S1K4QueueRolloverKvInputsV1 {
             target_page_leases,
         }
     }
+
+    /// Whether both successor token streams start from the checked prefill token.
+    #[must_use]
+    pub fn matches_anchor(&self, anchor: ferric_spec::TokenId) -> bool {
+        self.draft_decode.token_ids().first() == Some(&anchor)
+            && self.target_speculative.token_ids().first() == Some(&anchor)
+    }
 }
 
 /// Reservation or table-binding stage of an S1/K4 rollover failure.

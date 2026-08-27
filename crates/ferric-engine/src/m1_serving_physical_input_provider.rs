@@ -177,6 +177,12 @@ impl M1ServingQueuedS1K4RolloverV1 {
     pub const fn binding(&self) -> &M1ServingQueuedGenerationBindingV1 {
         &self.binding
     }
+
+    /// Whether draft decode and target verification share this first token.
+    #[must_use]
+    pub fn matches_anchor(&self, anchor: ferric_spec::TokenId) -> bool {
+        self.kv_inputs.matches_anchor(anchor)
+    }
 }
 
 /// One move-only physical generation in exact serving order.
@@ -364,6 +370,23 @@ impl M1QueuedServingPhysicalInputProviderV1 {
             return Err(M1ServingPhysicalInputEnqueueFailureV1 { source, input });
         }
         self.pending.push_back(input);
+        Ok(())
+    }
+
+    /// Appends one typed rollover input for the validated serving adapter.
+    ///
+    /// # Errors
+    ///
+    /// Returns the allocation diagnostic and unchanged typed input.
+    pub(crate) fn try_enqueue_s1_k4_rollover(
+        &mut self,
+        input: Box<M1ServingQueuedS1K4RolloverV1>,
+    ) -> Result<(), (TryReserveError, Box<M1ServingQueuedS1K4RolloverV1>)> {
+        if let Err(source) = self.pending.try_reserve(1) {
+            return Err((source, input));
+        }
+        self.pending
+            .push_back(M1ServingQueuedGenerationInputV1::S1K4Rollover(input));
         Ok(())
     }
 
