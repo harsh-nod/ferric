@@ -1039,7 +1039,7 @@ impl M1SpeculativeGenerationLoopV1 {
     ///
     /// Physical integration should instead use [`Self::preflight_checked_round`],
     /// complete the physical KV transition from the permit's dispositions, and
-    /// then call [`Self::commit_preflighted_round`]. This convenience method is
+    /// then call `Self::commit_preflighted_round`. This convenience method is
     /// intended for already-settled or host-only composition.
     ///
     /// # Errors

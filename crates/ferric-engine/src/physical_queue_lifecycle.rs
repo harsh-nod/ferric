@@ -4649,7 +4649,7 @@ enum M1PhysicalQueueCreateFailureStateV1<'a> {
 /// Opaque queue-creation rejection or terminal failure with exact Ferric custody.
 ///
 /// Pure rejection can recover only the exact recombined prepublication input
-/// through [`Self::into_rejected_input`]. Terminal model, partition, ledger,
+/// through [`Self::into_rejected_input_or_self`]. Terminal model, partition, ledger,
 /// scheduler, and batch custody cannot be pattern-matched apart.
 ///
 /// ```compile_fail
