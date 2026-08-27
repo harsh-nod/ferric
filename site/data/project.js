@@ -6,7 +6,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "The target-only path has an MI300X smoke observation. Output-fed rollover and committed-outcome-fed repeated S1/K4 rearm are implemented; an ignored two-round structural fixture compiles through the real bridge but has not run on GPU and remains non-evidentiary.",
+      "The target-only path has an MI300X smoke observation. Generic speculative evidence capture and rearm now cover four exact shapes while serving admission remains S1/K4 only; validation is host-only and does not establish GPU behavior or M1 qualification.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -27,7 +27,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "S1/K4 speculative serving",
       state: "integration",
       detail:
-        "The ignored MI300X structural fixture compiles through the real generic bridge: paired prefill -> output-fed native S1/K4 rollover -> actual checked speculative commit -> opaque committed-authority same-shape rearm -> second native round -> atomic cancellation and teardown with two-round history. It has not run on GPU. Host validation remains 417 passed with 5 hardware cases ignored; strict workspace Clippy and docs are green.",
+        "Serving provider and operations admission remains S1/K4 only. Host validation passes 421 engine tests with 5 hardware cases ignored; strict workspace Clippy and rustdoc pass. This structural validation includes no GPU run.",
     },
     {
       label: "M1 qualification",
@@ -72,14 +72,14 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Qualification capture tooling",
         detail:
-          "Identity-bound diagnostic and evidence producers exist, but partial artifacts grant no qualification authority.",
+          "Speculative evidence allocation, binding, readback, and rearm support exactly S1/K4, S8/K4, S1/K8, and S1/K16. Active lanes are authenticated; inactive fixed-width rows remain non-authoritative padding. Legacy S1/K4 APIs stay gated and source-compatible.",
       },
     ],
     roadmap: [
       {
-        name: "Wider speculative shapes",
+        name: "Wider speculative serving",
         detail:
-          "S8/K4, K8, and K16 stay disabled until independent choice evidence and exact lifecycle coverage exist.",
+          "Generic evidence infrastructure covers four exact shapes, but serving provider and operations admission stays restricted to S1/K4 pending wider lifecycle closure.",
       },
       {
         name: "Full M1 evidence closure",
@@ -106,6 +106,13 @@ window.FERRIC_PROJECT = Object.freeze({
       "Smoke observation only. It is not evidence, numerical qualification, hardware qualification, performance qualification, or M1 closure.",
   },
   recentProgress: [
+    {
+      commit: "9aa7e60",
+      title: "Generalize speculative evidence capture",
+      state: "implemented",
+      detail:
+        "Allocation, binding, readback, and rearm now preserve exact active-lane authority across four supported shapes while retaining inactive padding as non-authoritative. The 421-pass host result is structural only: no GPU run, Qwen correctness or performance proof, evidence authority, or M1 qualification claim.",
+    },
     {
       commit: "a9d1d7e",
       title: "Compose the two-round bridge lifecycle",
