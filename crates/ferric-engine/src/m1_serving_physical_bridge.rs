@@ -141,6 +141,10 @@ pub trait M1ServingPhysicalOperationsV1 {
     /// A retryable rejection must return the unchanged checked readback. Any
     /// failure after device-KV or Engine mutation is terminal and retains all
     /// residual custody.
+    ///
+    /// # Errors
+    ///
+    /// Returns retryable unchanged readback custody or terminal lower custody.
     fn settle_readback(
         &mut self,
         custody: Self::Readback,
@@ -879,6 +883,7 @@ fn physical_dispositions_from_registry(
     Ok(physical)
 }
 
+#[allow(clippy::unnecessary_box_returns)]
 fn registry_completion_retryable<R, T, E>(
     error: M1ServingRegistryCompletionErrorV1<E>,
     readback: M1ServingPhysicalReadbackV1<R>,
@@ -1226,6 +1231,7 @@ impl<Q> M1ServingPhysicalRetryablePublicationV1<Q> {
     ///
     /// Returns the unchanged queue owner and reservation failure when the
     /// registry no longer recognizes the exact live reservation.
+    #[allow(clippy::result_large_err)]
     pub fn abort<const C: usize>(
         self,
         registry: &mut M1ServingRegistryV1<C>,

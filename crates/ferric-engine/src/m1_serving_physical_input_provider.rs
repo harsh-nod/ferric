@@ -183,12 +183,27 @@ impl M1ServingQueuedS1K4RolloverV1 {
 #[must_use = "queued generation inputs must be consumed in serving order"]
 #[derive(Debug)]
 pub enum M1ServingQueuedGenerationInputV1 {
-    FirstPublication(M1ServingQueuedFirstPublicationV1),
-    SameShapeRearm(M1ServingQueuedSameShapeRearmV1),
-    S1K4Rollover(M1ServingQueuedS1K4RolloverV1),
+    FirstPublication(Box<M1ServingQueuedFirstPublicationV1>),
+    SameShapeRearm(Box<M1ServingQueuedSameShapeRearmV1>),
+    S1K4Rollover(Box<M1ServingQueuedS1K4RolloverV1>),
 }
 
 impl M1ServingQueuedGenerationInputV1 {
+    /// Boxes one first-publication owner before it enters the fallible queue.
+    pub fn first_publication(input: M1ServingQueuedFirstPublicationV1) -> Self {
+        Self::FirstPublication(Box::new(input))
+    }
+
+    /// Boxes one same-shape rearm owner before it enters the fallible queue.
+    pub fn same_shape_rearm(input: M1ServingQueuedSameShapeRearmV1) -> Self {
+        Self::SameShapeRearm(Box::new(input))
+    }
+
+    /// Boxes one S1/K4 rollover owner before it enters the fallible queue.
+    pub fn s1_k4_rollover(input: M1ServingQueuedS1K4RolloverV1) -> Self {
+        Self::S1K4Rollover(Box::new(input))
+    }
+
     #[must_use]
     pub const fn phase(&self) -> M1ServingQueuedGenerationPhaseV1 {
         match self {
@@ -545,7 +560,7 @@ impl<const C: usize> M1ServingPhysicalInputProviderV1<C>
             preparation_plans,
             recipe_plans,
             selected,
-        } = input;
+        } = *input;
         let Some(intent) = dispatch_intent(binding.plan()) else {
             return Err(preparation_failure(
                 M1ServingPhysicalInputPreparationPhaseV1::RecipeDerivation,
@@ -718,7 +733,7 @@ impl<const C: usize> M1ServingPhysicalInputProviderV1<C>
             kv_inputs,
             preparation_plans,
             recipe_plans,
-        } = input;
+        } = *input;
         let Some(intent) = dispatch_intent(binding.plan()) else {
             return Err(preparation_failure(
                 M1ServingPhysicalInputPreparationPhaseV1::RecipeDerivation,
@@ -842,7 +857,7 @@ impl<const C: usize> M1ServingPhysicalInputProviderV1<C>
             kv_inputs,
             preparation_plans,
             recipe_plans,
-        } = input;
+        } = *input;
         let recipe = match runner.derive_step_recipe(
             M1StepDispatchIntent::SpeculativeRound(binding.plan().target()),
             recipe_plans,

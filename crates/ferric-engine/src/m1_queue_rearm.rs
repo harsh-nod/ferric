@@ -4595,6 +4595,7 @@ impl M1RearmedSpeculativeDiagnosticRetainedCustodyV1 {
 /// Exact lower success after terminal diagnostic readback teardown.
 #[must_use = "diagnostic teardown evidence must remain retained"]
 #[derive(Debug)]
+#[allow(clippy::large_enum_variant)]
 pub enum M1RearmedSpeculativeDiagnosticReadbackTeardownSuccessSourceV1 {
     Compact(crate::M1CompletionEvidenceTeardownSuccessV1),
     Choices(crate::M1SpeculativeDiagnosticObservationTeardownSuccessV1),
@@ -9710,11 +9711,11 @@ struct StagedRearmSubmissionV1<'a> {
 
 // Finish preparation before any const-cardinality fixed batch is lowered.
 #[inline(never)]
-fn prepare_rearm_submission<'a>(
+fn prepare_rearm_submission(
     prepared: M1PreparedLongLivedQueueRearmV1,
     recipe: AddresslessM1PhysicalBufferRecipeV1,
-    catalog: ContentBoundM1ProgramCatalogV1<'a>,
-) -> Result<Box<StagedRearmSubmissionV1<'a>>, M1LongLivedQueueRearmSubmissionFailureV1<'a>> {
+    catalog: ContentBoundM1ProgramCatalogV1<'_>,
+) -> Result<Box<StagedRearmSubmissionV1<'_>>, M1LongLivedQueueRearmSubmissionFailureV1<'_>> {
     if preflight_rearm(&prepared, &recipe, &catalog).is_err() {
         return Err(submission_failure(
             M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
@@ -9997,9 +9998,9 @@ fn prepare_rearm_submission<'a>(
 
 // This boundary keeps fixed-batch lowering out of the larger preparation frame.
 #[inline(never)]
-fn finish_staged_rearm_submission<'a>(
-    staged: Box<StagedRearmSubmissionV1<'a>>,
-) -> Result<M1RearmedPublishedQueueV1, M1LongLivedQueueRearmSubmissionFailureV1<'a>> {
+fn finish_staged_rearm_submission(
+    staged: Box<StagedRearmSubmissionV1<'_>>,
+) -> Result<M1RearmedPublishedQueueV1, M1LongLivedQueueRearmSubmissionFailureV1<'_>> {
     let StagedRearmSubmissionV1 {
         shape,
         lower,
@@ -10062,11 +10063,11 @@ fn finish_staged_rearm_submission<'a>(
 ///
 /// Returns a closed, phase-tagged failure retaining every queue, allocation,
 /// sublease, range, batch, cache, and scheduler owner available at rejection.
-fn submit_m1_long_lived_queue_rearm_inner_v1<'a>(
+fn submit_m1_long_lived_queue_rearm_inner_v1(
     prepared: M1PreparedLongLivedQueueRearmV1,
     recipe: AddresslessM1PhysicalBufferRecipeV1,
-    catalog: ContentBoundM1ProgramCatalogV1<'a>,
-) -> Result<M1RearmedPublishedQueueV1, M1LongLivedQueueRearmSubmissionFailureV1<'a>> {
+    catalog: ContentBoundM1ProgramCatalogV1<'_>,
+) -> Result<M1RearmedPublishedQueueV1, M1LongLivedQueueRearmSubmissionFailureV1<'_>> {
     let staged = prepare_rearm_submission(prepared, recipe, catalog)?;
     finish_staged_rearm_submission(staged)
 }
@@ -10092,12 +10093,12 @@ pub fn submit_m1_long_lived_queue_rearm_v1<'a, const C: usize>(
     }
 }
 
-fn submit_m1_s1_k4_queue_rollover_inner_v1<'a>(
+fn submit_m1_s1_k4_queue_rollover_inner_v1(
     prepared: M1PreparedS1K4QueueRolloverV1,
     recipe: AddresslessM1PhysicalBufferRecipeV1,
-    catalog: ContentBoundM1ProgramCatalogV1<'a>,
+    catalog: ContentBoundM1ProgramCatalogV1<'_>,
     ring_bytes: u32,
-) -> Result<M1RearmedPublishedQueueV1, M1LongLivedQueueRearmSubmissionFailureV1<'a>> {
+) -> Result<M1RearmedPublishedQueueV1, M1LongLivedQueueRearmSubmissionFailureV1<'_>> {
     let (prepared, prior, next, reason, queue, selected, residue) =
         prepared.into_submission_parts();
     let old = queue.custody();

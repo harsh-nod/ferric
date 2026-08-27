@@ -923,6 +923,7 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
     ///
     /// Returns the unchanged predecessor output when the reserve is absent,
     /// already activated, or either output's semantic attachment drifted.
+    #[allow(clippy::result_large_err)]
     pub fn activate_s1_k4_rollover_output(
         &mut self,
         prior: BoundM1CompletionOutputV1,
