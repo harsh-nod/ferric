@@ -1,12 +1,12 @@
 window.FERRIC_PROJECT = Object.freeze({
-  updated: "2026-08-26",
+  updated: "2026-08-27",
   repository: "https://github.com/harsh-nod/ferric",
   milestone: {
     name: "M1",
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "The target-only path has a source-bound MI300X smoke observation. Four finite speculative shapes and four exact production rollover transitions pass the full host workspace gate at 8940b28. That source has not run on MI300X, and formal M1 qualification remains open.",
+      "Four finite speculative shapes and four exact production rollover transitions pass the authenticated host gate at 58fd37e. The scoped release proof also passes for that exact source. Current-source MI300X validation, Qwen correctness and performance evidence, independent validation, and formal M1 qualification remain open.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -15,7 +15,7 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Precision", "BF16 / FP32 accumulate"],
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
-    ["Runtime", "fe2o3 2317f300 / direct HSA command batches"],
+    ["Runtime", "compatible fe2o3 pin 2317f300 / direct HSA command batches"],
   ],
   readiness: [
     {
@@ -27,18 +27,25 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Finite-shape speculative serving",
       state: "implemented",
       detail:
-        "Exact S1/K4, S8/K4, S1/K8, and S1/K16 admission and same-shape rearm remain covered by the exact-source workspace gate at 8940b28. This establishes source behavior, not GPU or Qwen correctness.",
+        "Exact S1/K4, S8/K4, S1/K8, and S1/K16 admission and same-shape rearm pass the exact-source workspace gate at 58fd37e. This establishes source behavior, not GPU or Qwen correctness.",
     },
     {
       label: "Production shape rollover",
       state: "implemented",
       detail:
-        "Paired-prefill rollover covers four exact transitions with roster-indexed KV, output, provider, and queue custody. The exact-source workspace gate passes at 8940b28; MI300X execution remains open.",
+        "Paired-prefill rollover covers four exact transitions with roster-indexed KV, output, provider, and queue custody. The exact-source workspace gate passes at 58fd37e; MI300X execution remains open.",
+    },
+    {
+      label: "Authenticated proof release",
+      state: "qualified",
+      detail:
+        "The strict wrapper passes for source closure b922a6cd...2c933: 645 admitted proof bodies, 1,490 verification queries, 37 rejected exact-body mutations, and 10 same-source quality gates.",
     },
     {
       label: "M1 qualification",
       state: "open",
-      detail: "No evidence index or qualification receipt exists. M1 is not complete.",
+      detail:
+        "No complete M1 evidence index or M1 qualification receipt exists. The scoped proof-release receipt does not close M1.",
     },
   ],
   capabilities: {
@@ -76,21 +83,21 @@ window.FERRIC_PROJECT = Object.freeze({
           "Host-validated production paths cover Prefill S1/T128 to S1/K4, S1/K8, and S1/K16, plus Prefill S8/T128 to S8/K4. Unsupported transitions fail closed.",
       },
       {
-        name: "Qualification capture tooling",
+        name: "Proof-policy source gate",
         detail:
-          "Identity-bound diagnostic and evidence producers exist, but partial artifacts grant no qualification authority.",
+          "The authenticated source gate matches 143 verified modules to 6,121 executable bodies and binds 645 admitted proof bodies to 1,490 successful verification queries.",
       },
     ],
     roadmap: [
       {
         name: "Current-source MI300X lifecycle run",
         detail:
-          "The generic rollover source has not run on MI300X. The latest recheck could not resolve SSH host 300x; the last known device state had unrelated /dev/kfd use. No new hardware authority exists.",
+          "Source 58fd37e has not run its generic rollover path on MI300X. The latest recheck could not resolve SSH host 300x; the last known device state had unrelated /dev/kfd use. No new hardware authority exists.",
       },
       {
         name: "Full M1 evidence closure",
         detail:
-          "Proof, independent validation, hardware, performance, TCB, and receipt gates remain open.",
+          "The scoped release proof is complete. Current-source hardware, Qwen numerical and performance evidence, independent validation, full M1 TCB, and the M1 receipt remain open.",
       },
       {
         name: "Serving breadth",
@@ -115,10 +122,20 @@ window.FERRIC_PROJECT = Object.freeze({
     host: {
       title: "Finite production rollover",
       state: "implemented",
-      source: "8940b28",
-      result: "Workspace all-features: 1,072 passed, 0 failed, 6 ignored",
+      source: "58fd37e",
+      result: "Default and all-feature debug/release workspace suites passed",
       detail:
-        "The aggregate spans 28 test-result groups and includes 119 doctests (9 + 108 + 2), all passed. The engine suite passed 433 with none failed and 5 ignored. Failure injection across output catalog members 2-4 retains earlier move-only output reserves in failure custody.",
+        "The authenticated same-source wrapper passed fmt, default and all-feature clippy, both debug suites, both release suites, and the M1 benchmark, reference, and R29 differential policies.",
+    },
+    proof: {
+      title: "Authenticated release proof",
+      state: "qualified",
+      source: "58fd37e",
+      closureSha256:
+        "b922a6cd2881bd38403afce0c14dc898cf13da770616875489069a2701f2c933",
+      result: "PASS: 645 admitted proof bodies; 1,490 verification queries",
+      detail:
+        "The source gate covers 143 modules and 6,121 executable bodies. This qualifies only the scoped release proof; it does not establish MI300X execution, Qwen numerical correctness, performance, independent validation, or formal M1 qualification.",
     },
     hardware: {
       title: "Generic production rollover",
@@ -126,7 +143,7 @@ window.FERRIC_PROJECT = Object.freeze({
       source: null,
       result: "Current-source MI300X execution pending",
       detail:
-        "The latest access recheck could not resolve SSH host 300x; the last known device state had unrelated /dev/kfd use. Source 8940b28 has not run on gfx942, so no Qwen correctness, numerical, performance, or qualification claim follows.",
+        "The latest access recheck could not resolve SSH host 300x; the last known device state had unrelated /dev/kfd use. Source 58fd37e has not run on gfx942, so no Qwen correctness, numerical, performance, or qualification claim follows.",
     },
     transitions: [
       ["Prefill S1/T128", "Speculative S1/K4", "implemented"],
@@ -138,6 +155,13 @@ window.FERRIC_PROJECT = Object.freeze({
       "The transition catalog is exact. Target-only decode transitions and every unlisted cross-plan transition require explicit queue retirement and fresh launch; they do not inherit native rollover support.",
   },
   recentProgress: [
+    {
+      commit: "58fd37e",
+      title: "Authenticate production lifecycle release",
+      state: "qualified",
+      detail:
+        "The strict same-source wrapper passes 645 admitted proof bodies, 1,490 verification queries, 37 exact-body mutations, and 10 default/all-feature quality gates. Its SHA-256-bound receipt qualifies the release proof only; hardware, Qwen correctness, performance, and M1 closure remain open.",
+    },
     {
       commit: "8940b28",
       title: "Generalize production queue rollover",
@@ -239,7 +263,7 @@ window.FERRIC_PROJECT = Object.freeze({
   ],
   evidence: {
     summary:
-      "Ferric treats implementation, observation, validation, proof, performance, and qualification as separate authorities.",
+      "Ferric treats implementation, authenticated proof release, hardware, Qwen correctness, performance, independent validation, and M1 qualification as separate authorities.",
     gates: [
       ["Roadmap requirements", "33", "open"],
       ["Assurance properties", "17", "open"],
@@ -268,6 +292,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "Typed allocations and host transfers",
       "Long-lived HSA queue and KFD runtime",
       "Generic bounded command publication",
+      "Compatible pin 2317f300; newer remote main is not API-compatible",
     ],
   },
 });

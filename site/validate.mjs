@@ -65,14 +65,25 @@ assert(
   "latestObservation.generatedTokenIds must contain integers",
 );
 
-for (const key of ["host", "hardware"]) {
+for (const key of ["host", "proof", "hardware"]) {
   const validation = project.validation[key];
   assert(validation && typeof validation === "object", `validation.${key} is missing`);
   assertState(validation.state, `validation.${key}`);
   if (validation.source !== null) {
     assertCommit(validation.source, `validation.${key}.source`);
   }
+  if (validation.closureSha256 !== undefined) {
+    assert(
+      /^[0-9a-f]{64}$/.test(validation.closureSha256),
+      `validation.${key}.closureSha256 must be a lowercase SHA-256 digest`,
+    );
+  }
 }
+assert(
+  project.validation.proof.state !== "qualified" ||
+    typeof project.validation.proof.closureSha256 === "string",
+  "qualified proof validation must bind a source closure digest",
+);
 
 assert(
   Array.isArray(project.validation.transitions) &&
