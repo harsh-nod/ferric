@@ -6,7 +6,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Four finite speculative shapes and four exact production rollover transitions pass the authenticated host gate at 58fd37e. The scoped release proof also passes for that exact source. Current-source MI300X validation, Qwen correctness and performance evidence, independent validation, and formal M1 qualification remain open.",
+      "Four finite speculative shapes and four exact production rollover transitions pass the authenticated host gate at 58fd37e. The scoped release proof also passes for that exact source. Ferric is migrating its seven kernels from the retired Worker V2 flow to Rust device targets and Worker V3, beginning with SwiGLU. Current-source MI300X validation, Qwen correctness and performance evidence, independent validation, and formal M1 qualification remain open.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -15,7 +15,7 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Precision", "BF16 / FP32 accumulate"],
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
-    ["Runtime", "compatible fe2o3 pin 2317f300 / direct HSA command batches"],
+    ["Runtime", "qualified fe2o3 pin 2317f300 / Worker V3 migration in progress"],
   ],
   readiness: [
     {
@@ -45,7 +45,13 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "M1 qualification",
       state: "open",
       detail:
-        "No complete M1 evidence index or M1 qualification receipt exists. The scoped proof-release receipt does not close M1.",
+        "All 33 roadmap requirements and 17 assurance properties remain open, along with the required external evidence. No complete M1 evidence index or M1 qualification receipt exists. The scoped proof-release receipt does not close M1.",
+    },
+    {
+      label: "Worker V3 kernel migration",
+      state: "open",
+      detail:
+        "Latest fe2o3 removes the product-facing Worker V2 route. The first standalone SwiGLU Rust device target passes seven managed source/reference tests at 24c078e. Six kernel families and all production artifact, verifier, runtime, and qualification gates remain open.",
     },
   ],
   capabilities: {
@@ -58,7 +64,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Generated gfx942 execution plans",
         detail:
-          "Exact target/draft plans, typed operations, workspace layouts, and Ferric-owned kernel artifacts.",
+          "Exact target/draft plans, typed operations, workspace layouts, and Ferric-owned kernel specifications. Replacement Worker V3 artifacts remain in migration.",
       },
       {
         name: "Physical target-only generation",
@@ -92,7 +98,12 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Current-source MI300X lifecycle run",
         detail:
-          "Source 58fd37e has not run its generic rollover path on MI300X. The latest recheck could not resolve SSH host 300x; the last known device state had unrelated /dev/kfd use. No new hardware authority exists.",
+          "A one-token Qwen diagnostic on exact source 58fd37e ran for 20 minutes without output and timed out after the host lost exclusivity. It is non-evidence. The generic rollover path has not run on MI300X.",
+      },
+      {
+        name: "Worker V3 artifact migration",
+        detail:
+          "Current fe2o3 protects the rustc-produced Worker V3 path and removes Worker V2. Ferric must finish the seven-family Rust device-target migration, beginning with SwiGLU, before producing replacement artifacts.",
       },
       {
         name: "Full M1 evidence closure",
@@ -107,16 +118,16 @@ window.FERRIC_PROJECT = Object.freeze({
     ],
   },
   latestObservation: {
-    title: "Normal-stack target-only smoke passed",
-    date: "2026-08-26",
-    state: "observed",
-    commit: "375f23a",
-    buildId: "fab09edf144588f4c3c82f90d49a789aca4fa762",
-    environment: "MI300X / gfx942, default 8,388,608-byte host stack",
-    result: "Exit 0; GPU allocations released cleanly",
-    generatedTokenIds: [138955, 62696, 41213, 138070],
+    title: "One-token Qwen diagnostic produced no evidence",
+    date: "2026-08-27",
+    state: "open",
+    commit: "58fd37e",
+    buildId: "Not produced",
+    environment: "MI300X / gfx942; host lost exclusivity during the diagnostic",
+    result: "Timed out after 20 minutes with no output",
+    generatedTokenIds: [],
     authority:
-      "Smoke observation only. It is not evidence, numerical qualification, hardware qualification, performance qualification, or M1 closure.",
+      "Non-evidence. The host was not exclusive, no output was produced, and the attempt establishes no Qwen correctness, numerical, performance, hardware, or M1 qualification claim.",
   },
   validation: {
     host: {
@@ -138,12 +149,12 @@ window.FERRIC_PROJECT = Object.freeze({
         "The source gate covers 143 modules and 6,121 executable bodies. This qualifies only the scoped release proof; it does not establish MI300X execution, Qwen numerical correctness, performance, independent validation, or formal M1 qualification.",
     },
     hardware: {
-      title: "Generic production rollover",
+      title: "Current-source Qwen diagnostic",
       state: "open",
-      source: null,
-      result: "Current-source MI300X execution pending",
+      source: "58fd37e",
+      result: "No evidence: timed out after 20 minutes with no output",
       detail:
-        "The latest access recheck could not resolve SSH host 300x; the last known device state had unrelated /dev/kfd use. Source 58fd37e has not run on gfx942, so no Qwen correctness, numerical, performance, or qualification claim follows.",
+        "The one-token MI300X Qwen diagnostic on exact source 58fd37e lost host exclusivity and timed out without output. It is non-evidence. The generic production rollover has not run on gfx942, so no Qwen correctness, numerical, performance, or qualification claim follows.",
     },
     transitions: [
       ["Prefill S1/T128", "Speculative S1/K4", "implemented"],
@@ -155,6 +166,13 @@ window.FERRIC_PROJECT = Object.freeze({
       "The transition catalog is exact. Target-only decode transitions and every unlisted cross-plan transition require explicit queue retirement and fresh launch; they do not inherit native rollover support.",
   },
   recentProgress: [
+    {
+      commit: "24c078e",
+      title: "Start the Worker V3 SwiGLU port",
+      state: "implemented",
+      detail:
+        "A standalone latest-fe2o3 Rust device target preserves the 48-byte BF16-carrier ABI, 256-workitem launch, eight contiguous elements per workitem, and all 15 admitted extents. Seven managed source/reference tests pass. No HSACO, dispatch, numerical, hardware, performance, or M1 authority follows.",
+    },
     {
       commit: "58fd37e",
       title: "Authenticate production lifecycle release",
@@ -292,7 +310,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "Typed allocations and host transfers",
       "Long-lived HSA queue and KFD runtime",
       "Generic bounded command publication",
-      "Compatible pin 2317f300; newer remote main is not API-compatible",
+      "Stable host pin 2317f300; isolated Worker V3 device source pins 2347052f",
     ],
   },
 });
