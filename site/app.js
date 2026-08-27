@@ -17,7 +17,11 @@
 
   const capabilityGroups = [
     ["runnable", "Runnable now", "Implemented for the exact admitted path"],
-    ["experimental", "In integration", "Present, constrained, and not qualified"],
+    [
+      "experimental",
+      "Source implemented",
+      "Host gates passed; current-source hardware remains open",
+    ],
     ["roadmap", "Not enabled", "Fail-closed future functionality"],
   ];
 
@@ -95,6 +99,55 @@
     group.append(heading, list);
     capabilities.append(group);
   });
+
+  const validation = document.querySelector("[data-validation]");
+  [
+    ["host", "Host validation"],
+    ["hardware", "Hardware validation"],
+  ].forEach(([key, label]) => {
+    const item = project.validation[key];
+    const article = element("article", `validation-item validation-${key}`);
+    const heading = element("div", "validation-item-heading");
+    const title = element("div", "");
+    title.append(
+      element("div", "validation-label", label),
+      element("h3", "", item.title),
+    );
+    heading.append(title, stateTag(item.state));
+
+    const facts = element("dl", "validation-facts");
+    const sourceValue = element("dd", "");
+    if (item.source) {
+      sourceValue.append(commitLink(item.source));
+    } else {
+      sourceValue.textContent = "No current-source observation";
+    }
+    facts.append(
+      element("dt", "", "Source"),
+      sourceValue,
+      element("dt", "", "Result"),
+      element("dd", "", item.result),
+    );
+    article.append(
+      heading,
+      facts,
+      element("p", "validation-detail", item.detail),
+    );
+    validation.append(article);
+  });
+
+  const transitions = document.querySelector("[data-transitions]");
+  project.validation.transitions.forEach(([prior, next, state]) => {
+    const row = element("tr", "");
+    const priorCell = element("td", "", prior);
+    const nextCell = element("td", "", next);
+    const stateCell = element("td", "");
+    stateCell.append(stateTag(state));
+    row.append(priorCell, nextCell, stateCell);
+    transitions.append(row);
+  });
+  document.querySelector("[data-transition-limitation]").textContent =
+    project.validation.limitation;
 
   const boundaries = document.querySelector("[data-boundaries]");
   [
