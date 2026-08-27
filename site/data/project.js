@@ -6,7 +6,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "The target-only path has an MI300X smoke observation. Generic speculative evidence capture and rearm now cover four exact shapes while serving admission remains S1/K4 only; validation is host-only and does not establish GPU behavior or M1 qualification.",
+      "The target-only path has an MI300X smoke observation. Production serving admission and same-shape rearm now cover four exact speculative shapes; validation remains host-only and establishes no new GPU behavior, Qwen correctness, performance proof, or formal M1 qualification.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -24,10 +24,10 @@ window.FERRIC_PROJECT = Object.freeze({
       detail: "Completed on MI300X with exact assets and the default 8 MiB host stack.",
     },
     {
-      label: "S1/K4 speculative serving",
+      label: "Finite-shape speculative serving",
       state: "integration",
       detail:
-        "Serving provider and operations admission remains S1/K4 only. Host validation passes 421 engine tests with 5 hardware cases ignored; strict workspace Clippy and rustdoc pass. This structural validation includes no GPU run.",
+        "Serving admission and same-shape rearm cover exact S1/K4, S8/K4, S1/K8, and S1/K16. Host validation passes 428 engine tests with 5 hardware cases ignored, 105 doctests, strict workspace Clippy, and warning-free docs.",
     },
     {
       label: "M1 qualification",
@@ -60,14 +60,14 @@ window.FERRIC_PROJECT = Object.freeze({
     ],
     experimental: [
       {
-        name: "Continuous S1/K4 speculation",
+        name: "Finite-shape speculation",
         detail:
-          "Same-shape rearm validates the exact adapter, phase, epoch, plan, next roster, per-role committed KV cursors, shared next anchor, canonical target placeholders, empty provider queue, and pre-boxed failure custody.",
+          "S8 admits nonempty live prefixes through 8 requests. Same-shape diagnostic history binds the exact plan, epoch, and ordered live request roster across each admitted shape.",
       },
       {
         name: "Paired prefill and shape rollover",
         detail:
-          "Rollover enqueue now requires bridge-bound readback. Exact S1 paired-prefill to S1/K4 scheduling, output-fed successor enqueue, KV reselection, workspace replacement, output activation, native queue rollover, and terminal custody closure are implemented.",
+          "Rollover enqueue requires bridge-bound readback. Legacy K4 APIs and paired-prefill rollover remain exact, including output-fed successor enqueue, KV reselection, workspace replacement, output activation, native queue rollover, and terminal custody closure.",
       },
       {
         name: "Qualification capture tooling",
@@ -77,9 +77,9 @@ window.FERRIC_PROJECT = Object.freeze({
     ],
     roadmap: [
       {
-        name: "Wider speculative serving",
+        name: "Additional speculative shapes",
         detail:
-          "Generic evidence infrastructure covers four exact shapes, but serving provider and operations admission stays restricted to S1/K4 pending wider lifecycle closure.",
+          "Production serving is admitted only for exact S1/K4, S8/K4, S1/K8, and S1/K16; every other shape remains closed pending further lifecycle work.",
       },
       {
         name: "Full M1 evidence closure",
@@ -106,6 +106,13 @@ window.FERRIC_PROJECT = Object.freeze({
       "Smoke observation only. It is not evidence, numerical qualification, hardware qualification, performance qualification, or M1 closure.",
   },
   recentProgress: [
+    {
+      commit: "c593009",
+      title: "Admit finite speculative serving shapes",
+      state: "implemented",
+      detail:
+        "Production serving and same-shape rearm now cover four exact shapes, including nonempty S8 live prefixes through 8 and history bound to plan, epoch, and ordered live roster. The 428-pass host result is structural only: no new GPU run, Qwen correctness, performance proof, or formal M1 qualification claim.",
+    },
     {
       commit: "9aa7e60",
       title: "Generalize speculative evidence capture",
