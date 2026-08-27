@@ -2666,4 +2666,424 @@ mod tests {
             RearmError::ExactScheduler(M1ExactDispatchErrorV1::PendingBatchCapacityExhausted)
         ));
     }
+
+    #[test]
+    #[ignore = "requires admitted K1-K7 artifacts, prepacked Qwen bytes, and an exclusive MI300X"]
+    fn configured_mi300x_queued_provider_rolls_s1_prefill_into_native_s1_k4() {
+        use std::fs;
+
+        use fe2o3_kfd::{DeviceSelector, OpenedKfd};
+        use ferric_build::{
+            generate_qwen3_gfx942_runner_declaration, m1_step_workspace_requirements,
+            plan_addressless_m1_step_workspace, publish_qwen3_gfx942_runner_declaration,
+            qwen3_model_memory_plan_test_fixture, qwen3_runner_closure_test_fixture,
+            AddresslessM1StepWorkspacePlan, AvailableM1StepWorkspace,
+            DeclaredM1StepWorkspaceAllocation, M1StepWorkspaceDeclaration,
+            M1StepWorkspacePlanOutcome,
+        };
+        use ferric_spec::{
+            validate_m1_step_inputs, Identity, M1StepInputCandidate, M1StepInputValidationOutcome,
+            ValidatedM1StepInputs,
+        };
+
+        use crate::{
+            bind_m1_kv_workspace_table_v1, bind_m1_physical_runner_v1,
+            initialize_m1_physical_runner_memory_v1, reopen_persisted_m1_kernel_artifacts_v1,
+            ActiveDeviceKvCache, Engine, M1DeviceKvCompletionDispositionV1,
+            M1FullStepKvWorkspaceTablesV1, M1FullStepWorkspacePlans,
+            M1QueuedServingPhysicalInputProviderV1, M1RearmRoundHistoryEntryV1,
+            M1S1K4QueueRolloverKvInputsV1, M1ServingCompletionDispositionV1,
+            M1ServingQueueActionV1, M1ServingQueuedFirstPublicationV1,
+            M1ServingQueuedGenerationBindingV1, M1ServingQueuedGenerationInputV1,
+            M1ServingQueuedS1K4RolloverV1, M1ServingRegistryV1,
+        };
+
+        fn required_path(name: &str) -> std::path::PathBuf {
+            std::env::var_os(name).map_or_else(|| panic!("set {name}"), std::path::PathBuf::from)
+        }
+
+        fn input(
+            plan: ferric_spec::StepPlan,
+            tokens: Vec<u32>,
+            positions: Vec<u32>,
+            active_length: u32,
+            context_length: u32,
+        ) -> ValidatedM1StepInputs {
+            let candidate = M1StepInputCandidate::new(
+                plan.selection(),
+                vec![Some(plan)],
+                tokens,
+                positions,
+                vec![active_length],
+                vec![context_length],
+            );
+            match validate_m1_step_inputs(candidate) {
+                M1StepInputValidationOutcome::Validated(inputs) => inputs,
+                M1StepInputValidationOutcome::Rejected(failure) => {
+                    panic!("rollover smoke input rejected: {:?}", failure.error())
+                }
+            }
+        }
+
+        fn workspace_plan(
+            selection: Qwen3PlanSelection,
+            identity_byte: u8,
+        ) -> AddresslessM1StepWorkspacePlan {
+            let requirements = m1_step_workspace_requirements(selection)
+                .expect("canonical selection has workspace requirements");
+            let available = AvailableM1StepWorkspace::new(M1StepWorkspaceDeclaration::new(
+                selection,
+                DeclaredM1StepWorkspaceAllocation::new(
+                    Identity::new([identity_byte; 32]),
+                    requirements.allocation_byte_len(),
+                    requirements.allocation_alignment(),
+                ),
+                requirements.ranges().to_vec().into_boxed_slice(),
+            ));
+            match plan_addressless_m1_step_workspace(selection, available) {
+                M1StepWorkspacePlanOutcome::Planned(plan) => plan,
+                M1StepWorkspacePlanOutcome::Rejected(_) => {
+                    panic!("exact workspace fixture rejected")
+                }
+            }
+        }
+
+        // This ignored smoke observes only typed lifecycle and native queue
+        // rollover structure. Its fixed successor token is not the prefill
+        // output, so it makes no inference, numerical, performance, evidence,
+        // qualification, or end-to-end Qwen-correctness claim.
+        let artifact_directory = required_path("FERRIC_M1_KERNEL_ARTIFACT_DIRECTORY");
+        let target_weights = required_path("FERRIC_M1_TARGET_PREPACKED_WEIGHTS");
+        let draft_weights = required_path("FERRIC_M1_DRAFT_PREPACKED_WEIGHTS");
+        let unique_id = std::env::var("FERRIC_M1_GPU_UNIQUE_ID")
+            .expect("set FERRIC_M1_GPU_UNIQUE_ID to the selected MI300X unique ID")
+            .parse::<u64>()
+            .expect("FERRIC_M1_GPU_UNIQUE_ID must be a decimal u64");
+
+        let artifacts = reopen_persisted_m1_kernel_artifacts_v1(artifact_directory)
+            .expect("admit persisted K1-K7 artifacts");
+        let declaration =
+            generate_qwen3_gfx942_runner_declaration(qwen3_runner_closure_test_fixture())
+                .expect("generate fixture structural publication");
+        let publication = publish_qwen3_gfx942_runner_declaration(declaration)
+            .expect("publish fixture structural declaration");
+        let runner = bind_m1_physical_runner_v1(artifacts, publication)
+            .expect("bind persisted kernels to canonical operations");
+        let checked = OpenedKfd::open_default()
+            .expect("open KFD")
+            .admit_uapi()
+            .expect("admit pinned KFD UAPI")
+            .bind_gfx942_xnack_minus(DeviceSelector::UniqueId(unique_id))
+            .expect("bind checked gfx942:xnack- MI300X");
+        let mut memory = initialize_m1_physical_runner_memory_v1(
+            checked,
+            qwen3_model_memory_plan_test_fixture(),
+            fs::read(target_weights)
+                .expect("read target prepacked bytes")
+                .into_boxed_slice(),
+            fs::read(draft_weights)
+                .expect("read draft prepacked bytes")
+                .into_boxed_slice(),
+        )
+        .expect("initialize target/draft memory and partition KV arenas");
+
+        let prefill = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        );
+        let speculative = serving_plan(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        let mut engine = Engine::<1>::new(512, 256, 8_192).expect("construct one-lane engine");
+        let request = engine.admit().expect("admit one request");
+        engine
+            .append_tentative(request, 1)
+            .expect("append the one logical prefill completion token");
+        let mut registry = M1ServingRegistryV1::<1>::new().expect("construct one-lane registry");
+        registry
+            .admit(request, prefill)
+            .expect("admit paired prefill into serving registry");
+
+        let prefill_epoch = CompletionEpoch::new(1);
+        let target_prefill_plan = runner
+            .logical_runner()
+            .bind_step_plan(request, prefill_epoch, prefill.target())
+            .expect("bind target prefill plan");
+        let draft_prefill_plan = runner
+            .logical_runner()
+            .bind_step_plan(request, prefill_epoch, prefill.draft())
+            .expect("bind draft prefill plan");
+        let target_prefill_inputs = input(
+            target_prefill_plan,
+            vec![1; 128],
+            (0..128).collect(),
+            128,
+            0,
+        );
+        let draft_prefill_inputs =
+            input(draft_prefill_plan, vec![1; 128], (0..128).collect(), 128, 0);
+
+        let mut cache =
+            ActiveDeviceKvCache::new(memory.device(), request, prefill.target(), prefill.draft())
+                .expect("construct paired-prefill cache");
+        let target_prefill_leases = (0..8_u32)
+            .map(|page| {
+                memory
+                    .lease_page(request, Qwen3ModelRole::Target8B, page)
+                    .expect("lease target prefill page")
+            })
+            .collect();
+        let draft_prefill_leases = (0..8_u32)
+            .map(|page| {
+                memory
+                    .lease_page(request, Qwen3ModelRole::Draft06B, page)
+                    .expect("lease draft prefill page")
+            })
+            .collect();
+        let target_prefill_pending = cache
+            .reserve_step_write(
+                request,
+                Qwen3ModelRole::Target8B,
+                0,
+                128,
+                prefill_epoch,
+                target_prefill_leases,
+            )
+            .expect("reserve target prefill write");
+        let draft_prefill_pending = cache
+            .reserve_step_write(
+                request,
+                Qwen3ModelRole::Draft06B,
+                0,
+                128,
+                prefill_epoch,
+                draft_prefill_leases,
+            )
+            .expect("reserve draft prefill write");
+        let target_prefill_table =
+            bind_m1_kv_workspace_table_v1(target_prefill_inputs, vec![target_prefill_pending])
+                .expect("bind target prefill KV table");
+        let draft_prefill_table =
+            bind_m1_kv_workspace_table_v1(draft_prefill_inputs, vec![draft_prefill_pending])
+                .expect("bind draft prefill KV table");
+        let draft_rollover_lease = memory
+            .lease_page(request, Qwen3ModelRole::Draft06B, 8)
+            .expect("lease first post-prefill draft page");
+        let target_rollover_lease = memory
+            .lease_page(request, Qwen3ModelRole::Target8B, 8)
+            .expect("lease first post-prefill target page");
+        let prefill_tables = M1FullStepKvWorkspaceTablesV1::PairedPrefill {
+            draft: draft_prefill_table,
+            target: target_prefill_table,
+        };
+        let prefill_preparation_plans = M1FullStepWorkspacePlans::paired_prefill(
+            workspace_plan(prefill.draft(), 90),
+            workspace_plan(prefill.target(), 91),
+        );
+        let prefill_recipe_plans = M1FullStepWorkspacePlans::paired_prefill(
+            workspace_plan(prefill.draft(), 90),
+            workspace_plan(prefill.target(), 91),
+        );
+        let first = M1ServingQueuedGenerationInputV1::first_publication(
+            M1ServingQueuedFirstPublicationV1::new(
+                M1ServingQueuedGenerationBindingV1::new(
+                    prefill,
+                    vec![request].into_boxed_slice(),
+                    prefill_epoch,
+                ),
+                memory,
+                prefill_tables,
+                prefill_preparation_plans,
+                prefill_recipe_plans,
+                vec![cache],
+            ),
+        );
+
+        let rollover_epoch = CompletionEpoch::new(2);
+        let target_speculative_plan = runner
+            .logical_runner()
+            .bind_step_plan(request, rollover_epoch, speculative.target())
+            .expect("bind target speculative plan");
+        let draft_decode_plan = runner
+            .logical_runner()
+            .bind_step_plan(request, rollover_epoch, speculative.draft())
+            .expect("bind draft decode plan");
+        let target_speculative_inputs = input(
+            target_speculative_plan,
+            vec![1, 0, 0, 0, 0],
+            (128..133).collect(),
+            5,
+            128,
+        );
+        let draft_decode_inputs = input(draft_decode_plan, vec![1], vec![128], 1, 128);
+        let rollover_inputs = M1S1K4QueueRolloverKvInputsV1::new(
+            draft_decode_inputs,
+            target_speculative_inputs,
+            vec![draft_rollover_lease],
+            vec![target_rollover_lease],
+        );
+        let rollover_preparation_plans = M1FullStepWorkspacePlans::speculative_round(
+            workspace_plan(speculative.draft(), 92),
+            workspace_plan(speculative.target(), 93),
+        );
+        let rollover_recipe_plans = M1FullStepWorkspacePlans::speculative_round(
+            workspace_plan(speculative.draft(), 92),
+            workspace_plan(speculative.target(), 93),
+        );
+        let rollover =
+            M1ServingQueuedGenerationInputV1::s1_k4_rollover(M1ServingQueuedS1K4RolloverV1::new(
+                M1ServingQueuedGenerationBindingV1::new(
+                    speculative,
+                    vec![request].into_boxed_slice(),
+                    rollover_epoch,
+                ),
+                rollover_inputs,
+                rollover_preparation_plans,
+                rollover_recipe_plans,
+            ));
+        let provider =
+            M1QueuedServingPhysicalInputProviderV1::from_ordered_inputs(vec![first, rollover]);
+        let mut operations =
+            M1ServingPhysicalRunnerOperationsV1::new(&runner, &mut engine, provider, 1 << 20)
+                .expect("construct queued physical serving adapter");
+
+        let prefill_batch = registry
+            .plan_next()
+            .expect("plan paired prefill")
+            .expect("paired prefill is ready");
+        let prefill_reservation = registry
+            .reserve_publication(prefill_batch)
+            .expect("reserve paired-prefill publication");
+        let prefill_batch = prefill_reservation.physical_batch();
+        assert_eq!(prefill_batch.action(), M1ServingQueueActionV1::FreshLaunch);
+        let published = operations
+            .fresh_launch(&prefill_batch)
+            .expect("publish paired prefill through queued provider");
+        registry
+            .record_publication(prefill_reservation)
+            .expect("record paired-prefill publication");
+        let readback = operations
+            .read_published(published, prefill_epoch, &prefill_batch)
+            .expect("read paired-prefill completion");
+        let quiescent = operations
+            .settle_readback(readback, vec![M1DeviceKvCompletionDispositionV1::Continue])
+            .expect("settle paired-prefill completion");
+        registry
+            .complete_exact(
+                prefill_epoch,
+                &[M1ServingCompletionDispositionV1::Continue(speculative)],
+            )
+            .expect("advance registry from prefill to speculative");
+        operations
+            .engine
+            .append_tentative(request, 5)
+            .expect("append one exact S1/K4 target span");
+
+        let rollover_batch = registry
+            .plan_next()
+            .expect("plan exact S1/K4 successor")
+            .expect("S1/K4 successor is ready");
+        assert_eq!(rollover_batch.epoch(), rollover_epoch);
+        assert_eq!(
+            rollover_batch.action(),
+            M1ServingQueueActionV1::QuiescentRollover {
+                prior: prefill,
+                next: speculative,
+                reason: M1ServingRolloverReasonV1::Mode,
+            }
+        );
+        let rollover_reservation = registry
+            .reserve_publication(rollover_batch)
+            .expect("reserve exact S1/K4 rollover publication");
+        let rollover_batch = rollover_reservation.physical_batch();
+        let published = operations
+            .quiescent_rollover(
+                quiescent,
+                prefill,
+                speculative,
+                M1ServingRolloverReasonV1::Mode,
+                &rollover_batch,
+            )
+            .expect("replace paired-prefill queue with native S1/K4 queue");
+        registry
+            .record_publication(rollover_reservation)
+            .expect("record exact S1/K4 rollover publication");
+        let readback = operations
+            .read_published(published, rollover_epoch, &rollover_batch)
+            .expect("read replacement S1/K4 completion");
+        operations
+            .engine
+            .retire(request)
+            .expect("mark final Engine member retiring before physical settlement");
+        let quiescent = operations
+            .settle_readback(readback, vec![M1DeviceKvCompletionDispositionV1::Retire])
+            .expect("settle replacement S1/K4 completion");
+        registry
+            .complete_exact(rollover_epoch, &[M1ServingCompletionDispositionV1::Retire])
+            .expect("retire final serving-registry member");
+        assert_eq!(
+            operations
+                .provider()
+                .expect("adapter retains queued provider")
+                .pending_generation_count(),
+            0
+        );
+
+        let M1ServingPhysicalRunnerQuiescentV1 { state, .. } = quiescent;
+        let M1ServingPhysicalRunnerQuiescentStateV1::Rearmed {
+            released,
+            diagnostic_history,
+        } = state
+        else {
+            panic!("S1/K4 rollover did not return rearmed queue custody")
+        };
+        assert!(matches!(
+            diagnostic_history.evidence(),
+            [
+                M1ServingPhysicalRunnerReadbackEvidenceV1::Direct(_),
+                M1ServingPhysicalRunnerReadbackEvidenceV1::SpeculativeK4(_)
+            ]
+        ));
+        assert_eq!(released.round_history_len(), 1);
+        let history = released
+            .round_history(0)
+            .expect("replacement round retains rollover history");
+        let rollover = history
+            .rollover_observation()
+            .expect("replacement round retains native rollover observation");
+        assert_eq!(
+            rollover.previous_queue_destroyed().queue_id(),
+            history.queue_observation().queue_id()
+        );
+        assert!(rollover.previous_queue_destroyed().released_resources() > 0);
+        assert_eq!(rollover.previous_dispatch_generation(), 1);
+        assert_eq!(rollover.replacement_dispatch_generation(), 2);
+        assert_eq!(
+            rollover.replacement_queue_observation().ring_bytes(),
+            1 << 20
+        );
+
+        let teardown = released
+            .destroy_queue_and_retain_round(operations.engine)
+            .expect("destroy replacement queue and retain exact round lineage");
+        assert_eq!(teardown.round_history_len(), 1);
+        assert!(teardown
+            .round_history(0)
+            .and_then(M1RearmRoundHistoryEntryV1::rollover_observation)
+            .is_some());
+        registry
+            .record_quiescent_queue_retirement(speculative)
+            .expect("record destroyed replacement queue");
+        registry
+            .remove_retired(request)
+            .expect("remove retired serving-registry member");
+        operations.phase = M1ServingPhysicalRunnerAdapterPhaseV1::Sealed;
+        assert!(!operations.engine.is_faulted());
+        drop(teardown);
+    }
 }
