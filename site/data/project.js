@@ -6,7 +6,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "The target-only path has an MI300X smoke observation. Output-fed paired-prefill rollover and committed-outcome-fed repeated S1/K4 rearm are implemented with green host validation; the repeated path has not run on hardware and is not evidence or M1 qualification.",
+      "The target-only path has an MI300X smoke observation. Output-fed rollover and committed-outcome-fed repeated S1/K4 rearm are implemented; an ignored two-round structural fixture compiles through the real bridge but has not run on GPU and remains non-evidentiary.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -27,7 +27,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "S1/K4 speculative serving",
       state: "integration",
       detail:
-        "Committed speculative outcomes can feed repeated same-shape rearm through an opaque bridge authority that inseparably binds physical quiescent custody and coordinator outcome. The full engine host suite passes 417 tests with 5 hardware cases ignored; strict workspace Clippy and docs are green.",
+        "The ignored MI300X structural fixture compiles through the real generic bridge: paired prefill -> output-fed native S1/K4 rollover -> actual checked speculative commit -> opaque committed-authority same-shape rearm -> second native round -> atomic cancellation and teardown with two-round history. It has not run on GPU. Host validation remains 417 passed with 5 hardware cases ignored; strict workspace Clippy and docs are green.",
     },
     {
       label: "M1 qualification",
@@ -67,7 +67,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Paired prefill and shape rollover",
         detail:
-          "Exact S1 paired-prefill to S1/K4 scheduling, output-fed successor enqueue, KV reselection, workspace replacement, output activation, native queue rollover, and terminal custody closure are implemented.",
+          "Rollover enqueue now requires bridge-bound readback. Exact S1 paired-prefill to S1/K4 scheduling, output-fed successor enqueue, KV reselection, workspace replacement, output activation, native queue rollover, and terminal custody closure are implemented.",
       },
       {
         name: "Qualification capture tooling",
@@ -106,6 +106,13 @@ window.FERRIC_PROJECT = Object.freeze({
       "Smoke observation only. It is not evidence, numerical qualification, hardware qualification, performance qualification, or M1 closure.",
   },
   recentProgress: [
+    {
+      commit: "a9d1d7e",
+      title: "Compose the two-round bridge lifecycle",
+      state: "implemented",
+      detail:
+        "The structural fixture compiles through the real generic bridge from paired prefill through a second native round and atomic teardown with two-round history. It has not run on GPU; its artifacts are stale, non-authenticating, and non-evidentiary, with no Qwen correctness, performance, or M1 qualification claim.",
+    },
     {
       commit: "e6ccd4d",
       title: "Bind repeated speculative rearm",
