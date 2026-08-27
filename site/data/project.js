@@ -6,7 +6,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "The target-only path has an MI300X smoke observation. An opt-in output-fed paired-prefill to native S1/K4 rollover path is implemented and compiles, with host validation green; its MI300X fixture has not run and M1 qualification remains open.",
+      "The target-only path has an MI300X smoke observation. Output-fed paired-prefill rollover and committed-outcome-fed repeated S1/K4 rearm are implemented with green host validation; the repeated path has not run on hardware and is not evidence or M1 qualification.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -27,7 +27,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "S1/K4 speculative serving",
       state: "integration",
       detail:
-        "The output-fed lifecycle validates exact readback custody and phase, next epoch, roster, an empty queued provider, and both draft and target anchor tokens against the checked prefill token. Host validation is green; the ignored MI300X fixture compiles but has not run.",
+        "Committed speculative outcomes can feed repeated same-shape rearm through an opaque bridge authority that inseparably binds physical quiescent custody and coordinator outcome. The full engine host suite passes 417 tests with 5 hardware cases ignored; strict workspace Clippy and docs are green.",
     },
     {
       label: "M1 qualification",
@@ -62,7 +62,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Continuous S1/K4 speculation",
         detail:
-          "A physical lifecycle adapter owns fresh publication, same-shape rearm, independent choice readback, and typed terminal cleanup.",
+          "Same-shape rearm validates the exact adapter, phase, epoch, plan, next roster, per-role committed KV cursors, shared next anchor, canonical target placeholders, empty provider queue, and pre-boxed failure custody.",
       },
       {
         name: "Paired prefill and shape rollover",
@@ -106,6 +106,13 @@ window.FERRIC_PROJECT = Object.freeze({
       "Smoke observation only. It is not evidence, numerical qualification, hardware qualification, performance qualification, or M1 closure.",
   },
   recentProgress: [
+    {
+      commit: "e6ccd4d",
+      title: "Bind repeated speculative rearm",
+      state: "implemented",
+      detail:
+        "An opaque bridge authority inseparably binds physical quiescent custody with the coordinator outcome and feeds repeated S1/K4 rearm from the committed speculative result. No repeated hardware run has occurred; this makes no Qwen correctness, evidence, performance, or M1 qualification claim.",
+    },
     {
       commit: "e29112e",
       title: "Feed native rollover from prefill output",
