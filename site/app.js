@@ -103,6 +103,7 @@
   const validation = document.querySelector("[data-validation]");
   [
     ["host", "Host validation"],
+    ["proof", "Proof policy"],
     ["hardware", "Hardware validation"],
   ].forEach(([key, label]) => {
     const item = project.validation[key];
@@ -120,11 +121,20 @@
     if (item.source) {
       sourceValue.append(commitLink(item.source));
     } else {
-      sourceValue.textContent = "No current-source observation";
+      sourceValue.textContent = item.sourceStatus || "No current-source observation";
     }
     facts.append(
       element("dt", "", "Source"),
       sourceValue,
+    );
+    if (item.closureSha256) {
+      const closureValue = element("dd", "");
+      closureValue.append(
+        element("code", "closure-digest", item.closureSha256),
+      );
+      facts.append(element("dt", "", "Source closure"), closureValue);
+    }
+    facts.append(
       element("dt", "", "Result"),
       element("dd", "", item.result),
     );
