@@ -17,7 +17,7 @@ const RUNTIME_TCB_PATH: &str = "proofs/RUNTIME_DEPENDENCY_TCB";
 const CRATES_IO_SOURCE: &str = "registry+https://github.com/rust-lang/crates.io-index";
 const VERUS_SOURCE: &str = "git+https://github.com/verus-lang/verus.git?rev=b677dd5";
 const FE2O3_SOURCE: &str =
-    "git+https://github.com/harsh-nod/fe2o3.git?rev=2198a5d3690b8c6f64b6bd658fea4fec5f9df484";
+    "git+https://github.com/harsh-nod/fe2o3.git?rev=2317f300c5b99bf08db7621197e2cbcb8c1b8a19";
 const QUALIFIED_BINARIES: &[(&str, &str, &str)] = &[
     (
         "ferric-build",
@@ -1080,6 +1080,20 @@ fn validate_attributes(attributes: &[Attribute], allow_solver_attributes: bool) 
     for attribute in attributes {
         let name = path_name(attribute.path());
         match name.as_str() {
+            "cfg"
+                if matches!(
+                    &attribute.meta,
+                    Meta::List(list)
+                        if matches!(
+                            list.tokens.to_string().as_str(),
+                            "feature = \"qualification-fault-injection\""
+                                | "not (feature = \"qualification-fault-injection\")"
+                        )
+                ) =>
+            {
+                // Qualification builds compile both default and all-feature variants of the
+                // admitted fault-transition surface; no other conditional source is accepted.
+            }
             "cfg" | "cfg_attr" => {
                 let detail = match &attribute.meta {
                     Meta::List(list) => format!("({})", list.tokens),
@@ -1154,6 +1168,19 @@ fn validate_attributes(attributes: &[Attribute], allow_solver_attributes: bool) 
                 };
                 if list.tokens.to_string() != "autoderive_clone_without_spec" {
                     return Err(format!("unsupported verifier allowance: {}", list.tokens));
+                }
+            }
+            "verifier::rlimit" if allow_solver_attributes => {
+                let Meta::List(list) = &attribute.meta else {
+                    return Err("malformed verifier resource limit".to_owned());
+                };
+                let limit = list
+                    .tokens
+                    .to_string()
+                    .parse::<u32>()
+                    .map_err(|_| "malformed verifier resource limit".to_owned())?;
+                if !(1..=100).contains(&limit) {
+                    return Err(format!("unsupported verifier resource limit: {limit}"));
                 }
             }
             "trigger" | "verifier::bit_vector" if allow_solver_attributes => {}

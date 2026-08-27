@@ -27,6 +27,11 @@ registry_checker="$repo/proofs/negative/check-registry.py"
     printf 'FAIL: negative registry checker is unavailable\n' >&2
     exit 1
 }
+mutation_checker="$repo/proofs/negative/check-mutation.py"
+[ -f "$mutation_checker" ] || {
+    printf 'FAIL: negative mutation checker is unavailable\n' >&2
+    exit 1
+}
 
 expect_rejected() {
     name=$1
@@ -200,7 +205,7 @@ compiler_dependency = next(
     d for d in qwen_package["dependencies"] if d["name"] == "fe2o3-compiler-ffi"
 )
 compiler_dependency["source"] = compiler_dependency["source"].replace(
-    "2198a5d3690b8c6f64b6bd658fea4fec5f9df484", "0" * 40
+    "2317f300c5b99bf08db7621197e2cbcb8c1b8a19", "0" * 40
 )
 (scratch / "fe2o3-source.metadata").write_text(json.dumps(fe2o3), encoding="utf-8")
 
@@ -332,6 +337,193 @@ if "assume(false)" in source[equals:]:
     raise SystemExit("identity-trust mutation escaped into equals or later source")
 PY
 
+mutation_escape=$(new_copy mutation-closure-escape)
+python3 -I "$repo/proofs/negative/components/identity-trust.py" "$mutation_escape" \
+    >"$scratch/mutation-closure-escape.marker"
+printf '\n// hostile second mutation\n' \
+    >>"$mutation_escape/crates/ferric-spec/src/configuration.rs"
+expect_rejected mutation-closure-escape \
+    'mutator changed source outside its exact attestation' \
+    python3 -I "$mutation_checker" "$repo" "$mutation_escape" \
+    "$scratch/mutation-closure-escape.marker" ferric-spec
+
+lane_fixture=$(new_copy negative-cache-lanes)
+mkdir -p "$lane_fixture/proofs/negative/components" "$scratch/fake-bin" \
+    "$scratch/fake-verus" "$scratch/fake-state"
+cp "$registry_checker" "$mutation_checker" "$lane_fixture/proofs/negative/"
+cat >"$lane_fixture/proofs/negative/REQUIRED_COMPONENTS" <<'REGISTRY'
+format=FERRIC-NEGATIVE-COMPONENTS-V2
+always=engine-one|ferric-engine|engine-one.py|proof|system|Engine::admit
+always=spec-one|ferric-spec|spec-one.py|proof|identity|RequestId::new
+always=spec-two|ferric-spec|spec-two.py|proof|identity|RequestId::new
+REGISTRY
+cat >"$lane_fixture/proofs/negative/components/engine-one.py" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1]) / "crates/ferric-engine/src/system.rs"
+path.write_text(path.read_text(encoding="utf-8") + "\n// engine mutation\n", encoding="utf-8")
+print("MUTATED_SOURCE=crates/ferric-engine/src/system.rs")
+PY
+cat >"$lane_fixture/proofs/negative/components/spec-one.py" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1]) / "crates/ferric-spec/src/configuration.rs"
+path.write_text(path.read_text(encoding="utf-8") + "\n// spec mutation one\n", encoding="utf-8")
+print("MUTATED_SOURCE=crates/ferric-spec/src/configuration.rs")
+PY
+cat >"$lane_fixture/proofs/negative/components/spec-two.py" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1]) / "crates/ferric-spec/src/configuration.rs"
+path.write_text(path.read_text(encoding="utf-8") + "\n// spec mutation two\n", encoding="utf-8")
+print("MUTATED_SOURCE=crates/ferric-spec/src/configuration.rs")
+PY
+cat >"$scratch/fake-bin/cargo" <<'SH'
+#!/bin/sh
+set -eu
+printf 'cargo|%s|%s\n' "$PWD" "$*" >>"$FERRIC_FAKE_TOOL_LOG"
+package=
+target=
+previous=
+for argument in "$@"; do
+    case "$previous" in
+        -p) package=$argument ;;
+        --target-dir) target=$argument ;;
+    esac
+    previous=$argument
+done
+[ -n "$package" ] && [ -n "$target" ] || exit 8
+if [ -d "$target" ] && [ ! -f "$target/CACHEDIR.TAG" ]; then
+    exit 8
+fi
+if [ "${FERRIC_FAKE_FAIL_POST_CLEAN:-false}" = true ]; then
+    flag="$FERRIC_FAKE_TOOL_STATE/$package.pre-clean-seen"
+    if [ -f "$flag" ]; then
+        exit 9
+    fi
+    : >"$flag"
+fi
+SH
+cat >"$scratch/fake-verus/cargo-verus" <<'SH'
+#!/bin/sh
+set -eu
+package=
+target=
+previous=
+for argument in "$@"; do
+    case "$previous" in
+        -p) package=$argument ;;
+        --target-dir) target=$argument ;;
+    esac
+    previous=$argument
+done
+printf 'verus|%s|%s|%s\n' "$PWD" "$package" "$target" >>"$FERRIC_FAKE_TOOL_LOG"
+mkdir -p "$target"
+printf 'Signature: 8a477f597d28d172789f06886806bc55\n' >"$target/CACHEDIR.TAG"
+printf 'Compiling %s v0.0.0\n' "$package"
+printf 'verification results:: 0 verified, 1 errors\n'
+exit "${FERRIC_FAKE_VERUS_STATUS:-101}"
+SH
+cat >"$scratch/fake-verus/z3" <<'SH'
+#!/bin/sh
+exit 0
+SH
+chmod +x "$scratch/fake-bin/cargo" "$scratch/fake-verus/cargo-verus" \
+    "$scratch/fake-verus/z3"
+
+: >"$scratch/fake-tools.log"
+PATH="$scratch/fake-bin:$PATH" \
+FERRIC_FAKE_TOOL_LOG="$scratch/fake-tools.log" \
+FERRIC_FAKE_TOOL_STATE="$scratch/fake-state" \
+FERRIC_NEGATIVE_TIMEOUT_SECONDS=30 FERRIC_NEGATIVE_JOBS=2 \
+    "$repo/proofs/negative/run-same-source.sh" \
+    "$lane_fixture" "$scratch/fake-verus" "$scratch/cache-lane-output" \
+    >"$scratch/cache-lane.stdout"
+python3 -I - "$scratch/fake-tools.log" <<'PY'
+from pathlib import Path
+import sys
+
+lines = Path(sys.argv[1]).read_text(encoding="utf-8").splitlines()
+clean = [line.split("|", 2) for line in lines if line.startswith("cargo|")]
+verus = [line.split("|", 3) for line in lines if line.startswith("verus|")]
+if len(clean) != 6:
+    raise SystemExit(f"negative cache lanes performed {len(clean)} cleans, expected 6")
+if len(verus) != 3:
+    raise SystemExit(f"negative cache lanes invoked {len(verus)} roots, expected 3")
+spec = [fields for fields in verus if fields[2] == "ferric-spec"]
+engine = [fields for fields in verus if fields[2] == "ferric-engine"]
+if len(spec) != 2 or len(engine) != 1:
+    raise SystemExit("negative cache lanes did not preserve package assignment")
+if len({(fields[1], fields[3]) for fields in spec}) != 1:
+    raise SystemExit("ferric-spec mutations did not reuse one stable isolated lane")
+if (engine[0][1], engine[0][3]) == (spec[0][1], spec[0][3]):
+    raise SystemExit("negative package cache lanes were not isolated")
+for package, expected in (("ferric-spec", 4), ("ferric-engine", 2)):
+    actual = sum(f" -p {package} " in f" {fields[2]} " for fields in clean)
+    if actual != expected:
+        raise SystemExit(f"{package} performed {actual} package cleans, expected {expected}")
+PY
+
+cat >"$lane_fixture/proofs/negative/REQUIRED_COMPONENTS" <<'REGISTRY'
+format=FERRIC-NEGATIVE-COMPONENTS-V2
+always=spec-one|ferric-spec|spec-one.py|proof|identity|RequestId::new
+REGISTRY
+for hostile_status in 1 137; do
+    : >"$scratch/fake-tools-status-$hostile_status.log"
+    set +e
+    PATH="$scratch/fake-bin:$PATH" \
+    FERRIC_FAKE_TOOL_LOG="$scratch/fake-tools-status-$hostile_status.log" \
+    FERRIC_FAKE_TOOL_STATE="$scratch/fake-state" \
+    FERRIC_FAKE_VERUS_STATUS="$hostile_status" \
+    FERRIC_NEGATIVE_TIMEOUT_SECONDS=30 FERRIC_NEGATIVE_JOBS=1 \
+        "$repo/proofs/negative/run-same-source.sh" \
+        "$lane_fixture" "$scratch/fake-verus" \
+        "$scratch/cache-lane-status-$hostile_status-output" \
+        >"$scratch/cache-lane-status-$hostile_status.stdout" \
+        2>"$scratch/cache-lane-status-$hostile_status.stderr"
+    lane_status=$?
+    set -e
+    [ "$lane_status" -ne 0 ] && \
+        grep -F "mutation returned unexpected status $hostile_status" \
+            "$scratch/cache-lane-status-$hostile_status.stderr" >/dev/null || {
+        printf 'FAIL: negative cache lane accepted hostile status %s\n' \
+            "$hostile_status" >&2
+        exit 1
+    }
+done
+
+cat >"$lane_fixture/proofs/negative/REQUIRED_COMPONENTS" <<'REGISTRY'
+format=FERRIC-NEGATIVE-COMPONENTS-V2
+always=spec-one|ferric-spec|spec-one.py|proof|identity|RequestId::new
+always=spec-two|ferric-spec|spec-two.py|proof|identity|RequestId::new
+REGISTRY
+rm -rf "$scratch/fake-state"
+mkdir -p "$scratch/fake-state"
+: >"$scratch/fake-tools-failure.log"
+set +e
+PATH="$scratch/fake-bin:$PATH" \
+FERRIC_FAKE_TOOL_LOG="$scratch/fake-tools-failure.log" \
+FERRIC_FAKE_TOOL_STATE="$scratch/fake-state" \
+FERRIC_FAKE_FAIL_POST_CLEAN=true \
+FERRIC_NEGATIVE_TIMEOUT_SECONDS=30 FERRIC_NEGATIVE_JOBS=1 \
+    "$repo/proofs/negative/run-same-source.sh" \
+    "$lane_fixture" "$scratch/fake-verus" "$scratch/cache-lane-failure-output" \
+    >"$scratch/cache-lane-failure.stdout" 2>"$scratch/cache-lane-failure.stderr"
+lane_failure_status=$?
+set -e
+[ "$lane_failure_status" -ne 0 ] || {
+    printf 'FAIL: negative cache lane accepted a failed post-clean\n' >&2
+    exit 1
+}
+[ "$(grep -c '^verus|' "$scratch/fake-tools-failure.log")" -eq 1 ] || {
+    printf 'FAIL: negative cache lane continued after its first failed component\n' >&2
+    exit 1
+}
+printf 'PASS: negative cache lanes isolate packages, invalidate roots, and stop on failure\n'
+
 python3 -I - "$repo/proofs/VERIFIED_MODULES" "$scratch/missing-record.manifest" <<'PY'
 from pathlib import Path
 import sys
@@ -425,10 +617,28 @@ closed spec fn trigger_attribute_probe(values: Seq<u8>, position: int) -> bool {
 proof fn bit_vector_attribute_probe(value: u8)
     ensures value & 0_u8 == 0_u8,
 {}
+
+#[verifier::rlimit(20)]
+proof fn bounded_resource_attribute_probe()
+{}
 }
 RS
 write_metadata "$solver" "$scratch/solver.metadata"
 "$source_gate" "$solver" "$repo/proofs/VERIFIED_MODULES" "$scratch/solver.metadata"
+
+resource_limit=$(new_copy unsupported-resource-limit)
+cat >>"$resource_limit/crates/ferric-spec/src/identity.rs" <<'RS'
+
+verus! {
+#[verifier::rlimit(101)]
+proof fn unsupported_resource_limit_probe()
+{}
+}
+RS
+write_metadata "$resource_limit" "$scratch/resource-limit.metadata"
+expect_rejected parser-unsupported-resource-limit 'unsupported verifier resource limit: 101' \
+    "$source_gate" --generate "$resource_limit" "$scratch/resource-limit.metadata" \
+    "$scratch/resource-limit.manifest"
 
 constructor=$(new_copy admitted-allocation-constructor)
 write_metadata "$constructor" "$scratch/constructor.metadata"

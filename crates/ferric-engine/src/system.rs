@@ -2249,7 +2249,23 @@ impl<const C: usize> Engine<C> {
         if self.faulted {
             return Err(M1ExactDispatchErrorV1::Faulted);
         }
-        self.scheduler.dispatch_m1_exact_ready(expected_epoch, requests)
+        let ghost before_scheduler = self.scheduler;
+        let result = self.scheduler.dispatch_m1_exact_ready(expected_epoch, requests);
+        assert(self.identity_agreement()) by {
+            reveal(Engine::identity_agreement);
+            assert forall|slot: int| 0 <= slot < C implies {
+                &&& self.scheduler.slot_is_live_spec(slot)
+                    == self.kv.request_live_by_slot_spec(slot)
+                &&& self.scheduler.slot_generation_spec(slot)
+                    == self.kv.request_generation_by_slot_spec(slot)
+            } by {
+                assert(self.scheduler.slot_is_live_spec(slot)
+                    == before_scheduler.slot_is_live_spec(slot));
+                assert(self.scheduler.slot_generation_spec(slot)
+                    == before_scheduler.slot_generation_spec(slot));
+            }
+        }
+        result
     }
 
     /// Applies one exact completion and its per-member accepted token counts.

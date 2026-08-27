@@ -5296,14 +5296,15 @@ enum CreateCaseResultV1<'a, const N: usize> {
     },
 }
 
+struct CreateCaseInputV1<'a, const N: usize>(Box<M1PhysicalFixedBatchCaseV1<'a, N>>);
+
 #[inline(never)]
-#[allow(clippy::boxed_local)] // The box keeps this noinline shape boundary off its caller's stack.
 fn create_case<const N: usize>(
     ring_bytes: u32,
     step: M1PrepublicationStepCustodyV1,
-    case: Box<M1PhysicalFixedBatchCaseV1<'_, N>>,
+    case: CreateCaseInputV1<'_, N>,
 ) -> CreateCaseResultV1<'_, N> {
-    let (batch, custody) = (*case).into_parts();
+    let (batch, custody) = (*case.0).into_parts();
     let (allocations, queue_custody) = custody.into_queue_creation_parts();
     match ServiceQueueSessionV1::create(allocations, ring_bytes, batch) {
         Ok(lower) => CreateCaseResultV1::Ready(Box::new(M1PhysicalQueuePhaseCaseV1::new(
@@ -5889,20 +5890,20 @@ impl M1PhysicalQueueSessionV1 {
         let M1PrepublicationBatchV1 { batch, step } = prepublication;
         match batch {
             M1PhysicalFixedBatchV1::TargetOnly(case) => {
-                finish_target_only_create(create_case(ring_bytes, step, case))
+                finish_target_only_create(create_case(ring_bytes, step, CreateCaseInputV1(case)))
             }
             M1PhysicalFixedBatchV1::PairedPrefill(case) => {
-                finish_paired_prefill_create(create_case(ring_bytes, step, case))
+                finish_paired_prefill_create(create_case(ring_bytes, step, CreateCaseInputV1(case)))
             }
             M1PhysicalFixedBatchV1::SpeculativeK4(case) => {
-                finish_speculative_k4_create(create_case(ring_bytes, step, case))
+                finish_speculative_k4_create(create_case(ring_bytes, step, CreateCaseInputV1(case)))
             }
             M1PhysicalFixedBatchV1::SpeculativeK8(case) => {
-                finish_speculative_k8_create(create_case(ring_bytes, step, case))
+                finish_speculative_k8_create(create_case(ring_bytes, step, CreateCaseInputV1(case)))
             }
-            M1PhysicalFixedBatchV1::SpeculativeK16(case) => {
-                finish_speculative_k16_create(create_case(ring_bytes, step, case))
-            }
+            M1PhysicalFixedBatchV1::SpeculativeK16(case) => finish_speculative_k16_create(
+                create_case(ring_bytes, step, CreateCaseInputV1(case)),
+            ),
         }
     }
 

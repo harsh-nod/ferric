@@ -1764,10 +1764,13 @@ mod tests {
         let batch = registry.plan_next().unwrap().unwrap();
         let epoch = batch.epoch();
         let reservation = registry.reserve_publication(batch).unwrap();
+        let registry_identity = reservation.registry_identity();
         registry.record_publication(reservation).unwrap();
+        let dispositions = [M1ServingCompletionDispositionV1::Continue(next)];
         registry
-            .complete_exact(epoch, &[M1ServingCompletionDispositionV1::Continue(next)])
+            .preflight_completion_exact_for(registry_identity, epoch, &dispositions)
             .unwrap();
+        registry.apply_preflighted_completion(epoch, &dispositions);
         let batch = registry.plan_next().unwrap().unwrap();
         let reservation = registry.reserve_publication(batch).unwrap();
         (registry, reservation)

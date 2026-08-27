@@ -766,17 +766,6 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         self.apply_validated_completion(epoch, dispositions);
     }
 
-    #[cfg(test)]
-    pub(crate) fn complete_exact(
-        &mut self,
-        epoch: CompletionEpoch,
-        dispositions: &[M1ServingCompletionDispositionV1],
-    ) -> Result<(), M1ServingRegistryErrorV1> {
-        self.validate_completion_exact(epoch, dispositions)?;
-        self.apply_validated_completion(epoch, dispositions);
-        Ok(())
-    }
-
     fn apply_validated_completion(
         &mut self,
         epoch: CompletionEpoch,
@@ -1048,6 +1037,16 @@ fn classify_queue_action(
 mod tests {
     use super::*;
 
+    fn complete_exact<const C: usize>(
+        registry: &mut M1ServingRegistryV1<C>,
+        epoch: CompletionEpoch,
+        dispositions: &[M1ServingCompletionDispositionV1],
+    ) -> Result<(), M1ServingRegistryErrorV1> {
+        registry.validate_completion_exact(epoch, dispositions)?;
+        registry.apply_validated_completion(epoch, dispositions);
+        Ok(())
+    }
+
     fn selection(
         role: Qwen3ModelRole,
         mode: Qwen3ExecutionMode,
@@ -1163,7 +1162,7 @@ mod tests {
         let epoch = batch.epoch();
         let action = batch.action();
         reserve_and_record(registry, batch);
-        registry.complete_exact(epoch, dispositions).unwrap();
+        complete_exact(registry, epoch, dispositions).unwrap();
         action
     }
 
@@ -1371,12 +1370,12 @@ mod tests {
         let epoch = batch.epoch();
         reserve_and_record(&mut registry, batch);
 
-        registry
-            .complete_exact(
-                epoch,
-                &[M1ServingCompletionDispositionV1::Continue(successor)],
-            )
-            .unwrap();
+        complete_exact(
+            &mut registry,
+            epoch,
+            &[M1ServingCompletionDispositionV1::Continue(successor)],
+        )
+        .unwrap();
         assert_eq!(registry.plan(request), Some(successor));
         assert_eq!(registry.bound_plan(), Some(prior));
         assert_eq!(
@@ -1520,9 +1519,12 @@ mod tests {
             registry.cancel(in_flight).unwrap(),
             M1ServingRequestPhaseV1::CancellationPending { epoch }
         );
-        registry
-            .complete_exact(epoch, &[M1ServingCompletionDispositionV1::Retire])
-            .unwrap();
+        complete_exact(
+            &mut registry,
+            epoch,
+            &[M1ServingCompletionDispositionV1::Retire],
+        )
+        .unwrap();
         assert_eq!(
             registry.quiescent_queue_action().unwrap(),
             M1ServingQuiescentQueueActionV1::Retire {
@@ -1565,19 +1567,19 @@ mod tests {
         let epoch = batch.epoch();
         reserve_and_record(&mut registry, batch);
         assert_eq!(
-            registry.complete_exact(CompletionEpoch::new(epoch.value() + 1), &[]),
+            complete_exact(&mut registry, CompletionEpoch::new(epoch.value() + 1), &[]),
             Err(M1ServingRegistryErrorV1::CompletionEpochMismatch)
         );
         assert_eq!(
             registry.phase(request),
             Some(M1ServingRequestPhaseV1::InFlight { epoch })
         );
-        registry
-            .complete_exact(
-                epoch,
-                &[M1ServingCompletionDispositionV1::Continue(speculative_s1())],
-            )
-            .unwrap();
+        complete_exact(
+            &mut registry,
+            epoch,
+            &[M1ServingCompletionDispositionV1::Continue(speculative_s1())],
+        )
+        .unwrap();
         assert_eq!(
             registry.transition(request, prefill_s1()),
             Err(M1ServingRegistryErrorV1::ReversePrefillTransition)
@@ -1658,7 +1660,7 @@ mod tests {
             Err(M1ServingRegistryErrorV1::PublicationReservationActive)
         );
         assert_eq!(
-            registry.complete_exact(CompletionEpoch::new(1), &[]),
+            complete_exact(&mut registry, CompletionEpoch::new(1), &[]),
             Err(M1ServingRegistryErrorV1::PublicationReservationActive)
         );
         assert_eq!(

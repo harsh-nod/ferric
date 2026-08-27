@@ -1740,7 +1740,7 @@ pub(crate) mod tests {
     use super::*;
     use std::cell::RefCell;
     use std::fs;
-    use std::os::unix::fs::PermissionsExt;
+    use std::os::unix::fs::{MetadataExt, PermissionsExt};
     use std::path::PathBuf;
     use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -2389,9 +2389,19 @@ pub(crate) mod tests {
             |_| Ok(()),
             |published| {
                 let transient = published.join("transient.json");
-                fs::write(&transient, b"{}\n").unwrap();
-                fs::remove_file(transient).unwrap();
-                Ok(())
+                let baseline = fs::metadata(published).unwrap();
+                for _ in 0..100 {
+                    std::thread::sleep(std::time::Duration::from_millis(10));
+                    fs::write(&transient, b"{}\n").unwrap();
+                    fs::remove_file(&transient).unwrap();
+                    let current = fs::metadata(published).unwrap();
+                    if current.ctime() != baseline.ctime()
+                        || current.ctime_nsec() != baseline.ctime_nsec()
+                    {
+                        return Ok(());
+                    }
+                }
+                panic!("test could not induce published directory ctime drift")
             },
         );
         assert!(result.is_err());

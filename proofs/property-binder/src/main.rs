@@ -1218,9 +1218,23 @@ fn validate_checked_evidence(
     if !runtime.contains("test result: ok.") || runtime.contains("FAILED") {
         return Err("runtime test transcript is not an all-pass result".to_owned());
     }
-    for gate in ["fmt", "clippy", "test-debug", "test-release"] {
-        let marker = format!("FERRIC_QUALITY_GATE={gate}:PASS");
-        if runtime.lines().filter(|line| *line == marker).count() != 1 {
+    for gate in [
+        "fmt",
+        "clippy",
+        "clippy-all-features",
+        "test-debug",
+        "test-debug-all-features",
+        "test-release",
+        "test-release-all-features",
+        "m1-benchmark-policy",
+        "m1-reference-policy",
+        "m1-r29-differential-evidence",
+    ] {
+        let begin = format!("FERRIC_QUALITY_GATE={gate}:BEGIN");
+        let pass = format!("FERRIC_QUALITY_GATE={gate}:PASS");
+        if runtime.lines().filter(|line| *line == begin).count() != 1
+            || runtime.lines().filter(|line| *line == pass).count() != 1
+        {
             return Err(format!(
                 "quality gate transcript marker is not exact: {gate}"
             ));

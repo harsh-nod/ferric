@@ -888,7 +888,7 @@ pub type M1FiniteSpeculativeRolloverOutputActivationErrorV1 = M1S1K4RolloverOutp
 #[derive(Debug)]
 pub struct M1S1K4RolloverOutputActivationFailureV1 {
     error: M1S1K4RolloverOutputActivationErrorV1,
-    prior: BoundM1CompletionOutputV1,
+    prior: Box<BoundM1CompletionOutputV1>,
 }
 
 /// Shape-generic finite-speculative rollover activation failure custody.
@@ -903,7 +903,7 @@ impl M1S1K4RolloverOutputActivationFailureV1 {
 
     #[must_use = "the unchanged predecessor output remains live"]
     pub fn into_prior(self) -> BoundM1CompletionOutputV1 {
-        self.prior
+        *self.prior
     }
 }
 
@@ -974,7 +974,6 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
     ///
     /// Returns the unchanged predecessor output when the reserve is absent,
     /// already activated, or either output's semantic attachment drifted.
-    #[allow(clippy::result_large_err)]
     pub fn activate_s1_k4_rollover_output(
         &mut self,
         prior: BoundM1CompletionOutputV1,
@@ -989,7 +988,6 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
     ///
     /// Returns the unchanged predecessor output when the reserve is absent,
     /// already activated, outside the finite catalog, or semantically drifted.
-    #[allow(clippy::result_large_err)]
     pub fn activate_finite_speculative_rollover_output(
         &mut self,
         selection: Qwen3PlanSelection,
@@ -1001,13 +999,13 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
         else {
             return Err(M1S1K4RolloverOutputActivationFailureV1 {
                 error: M1S1K4RolloverOutputActivationErrorV1::ReserveUnavailable(state),
-                prior,
+                prior: Box::new(prior),
             });
         };
         if !direct_prefill_output_is_valid_for(&prior, selection) {
             return Err(M1S1K4RolloverOutputActivationFailureV1 {
                 error: M1S1K4RolloverOutputActivationErrorV1::PriorOutputNotDirect,
-                prior,
+                prior: Box::new(prior),
             });
         }
         let Some(reserve_index) = reserves
@@ -1016,7 +1014,7 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
         else {
             return Err(M1S1K4RolloverOutputActivationFailureV1 {
                 error: M1S1K4RolloverOutputActivationErrorV1::ReserveOutputDrift,
-                prior,
+                prior: Box::new(prior),
             });
         };
         if !finite_speculative_rollover_reserve_output_is_valid(
@@ -1025,7 +1023,7 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
         ) {
             return Err(M1S1K4RolloverOutputActivationFailureV1 {
                 error: M1S1K4RolloverOutputActivationErrorV1::ReserveOutputDrift,
-                prior,
+                prior: Box::new(prior),
             });
         }
 

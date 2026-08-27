@@ -1367,20 +1367,6 @@ fn supports_evidence_bound_speculation(plan: M1ServingPlanV1) -> bool {
     )
 }
 
-#[cfg(test)]
-fn validate_s1_k4_rollover_anchor(
-    input: &M1ServingQueuedS1K4RolloverV1,
-    semantics: crate::CheckedCompletionSemantics,
-) -> Result<(), M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1> {
-    let crate::CheckedCompletionSemantics::DirectFinalRow { token } = semantics else {
-        return Err(M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1::UnsupportedTransition);
-    };
-    if !input.matches_anchor(token) {
-        return Err(M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1::AnchorMismatch);
-    }
-    Ok(())
-}
-
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 struct M1CommittedSpeculativeRearmMemberAuthorityV1 {
     request: RequestId,
@@ -3082,6 +3068,21 @@ where
 mod tests {
     use super::*;
     use ferric_spec::{Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanSelection};
+
+    fn validate_s1_k4_rollover_anchor(
+        input: &M1ServingQueuedS1K4RolloverV1,
+        semantics: crate::CheckedCompletionSemantics,
+    ) -> Result<(), M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1> {
+        let crate::CheckedCompletionSemantics::DirectFinalRow { token } = semantics else {
+            return Err(
+                M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1::UnsupportedTransition,
+            );
+        };
+        if !input.matches_anchor(token) {
+            return Err(M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1::AnchorMismatch);
+        }
+        Ok(())
+    }
 
     fn serving_plan(
         target_mode: Qwen3ExecutionMode,

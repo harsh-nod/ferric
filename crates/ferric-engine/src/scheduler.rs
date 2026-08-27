@@ -5274,6 +5274,19 @@ impl<const C: usize> Scheduler<C> {
         &&& self.live_count == before.live_count
     }
 
+    closed spec fn dispatch_exact_commit_execution(
+        &self,
+        before: &Self,
+        requests: Seq<RequestId>,
+        next_epoch: u64,
+        batch: DispatchBatch,
+    ) -> bool {
+        &&& self.basic_invariant()
+        &&& self.identity_frame(before)
+        &&& batch.epoch_spec().value == next_epoch
+        &&& batch.member_count_spec() == requests.len()
+    }
+
     closed spec fn dispatch_chosen_ready(&self, chosen: Seq<RequestId>) -> bool {
         &&& selected_request_slots(chosen).no_duplicates()
         &&& (forall|offset: int| 0 <= offset < chosen.len() ==> {
@@ -6172,6 +6185,8 @@ impl<const C: usize> Scheduler<C> {
                 offset,
             );
         } else {
+            assert(0 <= offset - before.member_len);
+            assert(offset - before.member_len < chosen.len());
             self.dispatch_commit_selected_member_handle_at(
                 before,
                 chosen,
@@ -10467,6 +10482,221 @@ impl<const C: usize> Scheduler<C> {
         }
     }
 
+    #[verifier::rlimit(20)]
+    proof fn dispatch_exact_step_pre(
+        &self,
+        before: &Self,
+        requests: Seq<RequestId>,
+        lane: usize,
+        next_epoch: u64,
+        member_tail: usize,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(requests),
+            before.member_len + requests.len() <= C,
+            lane < requests.len(),
+            self.slots@ == dispatch_selected_slots(
+                before.slots@,
+                requests.subrange(0, lane as int),
+                next_epoch,
+            ),
+            member_tail as int == ring_position_or_head::<C>(
+                before.member_head,
+                (before.member_len + lane) as nat,
+            ),
+        ensures {
+            let request = requests[lane as int];
+            let slot_index = request.slot_spec() as int;
+            let chosen = requests.subrange(0, lane as int);
+            &&& request.slot_spec() < C
+            &&& before.slots@[slot_index].state == RequestState::Ready
+            &&& !selected_request_slots(chosen).contains(slot_index)
+            &&& self.slots@[slot_index] == before.slots@[slot_index]
+            &&& before.member_len + lane < C
+            &&& member_tail as int == ring_position::<C>(
+                before.member_head,
+                (before.member_len + lane) as nat,
+            )
+        },
+    {
+        let request = requests[lane as int];
+        let slot_index = request.slot_spec() as int;
+        let chosen = requests.subrange(0, lane as int);
+        reveal(Scheduler::dispatch_chosen_ready);
+        reveal(selected_request_slots);
+        assert(request.slot_spec() < C);
+        assert(before.slots@[slot_index].state == RequestState::Ready);
+        assert(!selected_request_slots(chosen).contains(slot_index)) by {
+            if selected_request_slots(chosen).contains(slot_index) {
+                let prior = choose|prior: int| 0 <= prior < chosen.len()
+                    && selected_request_slots(chosen)[prior] == slot_index;
+                assert(chosen.len() == lane);
+                assert(0 <= prior < lane);
+                assert(lane < requests.len());
+                assert(chosen[prior] == requests[prior]);
+                assert(requests[prior].slot_spec() == request.slot_spec());
+                assert(selected_request_slots(requests)[prior] == slot_index);
+                assert(selected_request_slots(requests)[lane as int] == slot_index);
+                assert(selected_request_slots(requests).no_duplicates());
+                reveal(Seq::no_duplicates);
+                assert(false);
+            }
+        }
+        assert forall|offset: int| 0 <= offset < chosen.len() implies
+            chosen[offset].slot_spec() < before.slots@.len() by {
+            assert(chosen[offset] == requests[offset]);
+            assert(requests[offset].slot_spec() < C);
+        }
+        dispatch_selected_slots_frame_fact(
+            before.slots@,
+            chosen,
+            next_epoch,
+            slot_index,
+        );
+        assert(before.member_len + lane < C);
+        reveal(ring_position_or_head);
+    }
+
+    #[verifier::rlimit(20)]
+    proof fn dispatch_exact_step_post(
+        &self,
+        before: &Self,
+        requests: Seq<RequestId>,
+        lane: usize,
+        next_epoch: u64,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(requests),
+            before.member_len + requests.len() <= C,
+            lane < requests.len(),
+            self.slots@ == dispatch_selected_slots(
+                before.slots@,
+                requests.subrange(0, lane as int),
+                next_epoch,
+            ).update(
+                requests[lane as int].slot_spec() as int,
+                Slot {
+                    state: RequestState::InFlight,
+                    active_epoch: next_epoch,
+                    ..before.slots@[requests[lane as int].slot_spec() as int]
+                },
+            ),
+            self.member_ring@ == dispatch_selected_members::<C>(
+                before.member_ring@,
+                before.member_head,
+                before.member_len,
+                requests.subrange(0, lane as int),
+            ).update(
+                ring_position::<C>(
+                    before.member_head,
+                    (before.member_len + lane) as nat,
+                ),
+                requests[lane as int],
+            ),
+        ensures
+            self.slots@ == dispatch_selected_slots(
+                before.slots@,
+                requests.subrange(0, (lane + 1) as int),
+                next_epoch,
+            ),
+            self.member_ring@ == dispatch_selected_members::<C>(
+                before.member_ring@,
+                before.member_head,
+                before.member_len,
+                requests.subrange(0, (lane + 1) as int),
+            ),
+    {
+        let chosen = requests.subrange(0, lane as int);
+        let request = requests[lane as int];
+        let extended = chosen.push(request);
+        assert(extended == requests.subrange(0, (lane + 1) as int));
+        reveal(Scheduler::dispatch_chosen_ready);
+        assert forall|offset: int| 0 <= offset < chosen.len() implies
+            chosen[offset].slot_spec() < before.slots@.len() by {
+            assert(chosen[offset] == requests[offset]);
+            assert(requests[offset].slot_spec() < C);
+        }
+        dispatch_selected_slots_push(before.slots@, chosen, next_epoch, request);
+        dispatch_selected_members_push::<C>(
+            before.member_ring@,
+            before.member_head,
+            before.member_len,
+            chosen,
+            request,
+        );
+    }
+
+    #[verifier::rlimit(20)]
+    proof fn dispatch_exact_commit_establishes(
+        &self,
+        before: &Self,
+        requests: Seq<RequestId>,
+        next_epoch: u64,
+        batch: DispatchBatch,
+    )
+        requires
+            before.basic_invariant(),
+            before.dispatch_chosen_ready(requests),
+            self.dispatch_commit_refines(before, requests, before.cursor, next_epoch),
+            before.member_len + requests.len() <= C,
+            before.cursor < C,
+            next_epoch as int == before.submitted as int + 1,
+            batch.epoch_spec().value == next_epoch,
+            batch.member_count_spec() == requests.len(),
+        ensures self.dispatch_exact_commit_execution(
+            before,
+            requests,
+            next_epoch,
+            batch,
+        ),
+    {
+        self.dispatch_commit_preserves_basic(
+            before,
+            requests,
+            before.cursor,
+            next_epoch,
+        );
+        self.dispatch_enabled_compose_identity_some(
+            before,
+            batch,
+            requests,
+            next_epoch,
+        );
+        assert(self.dispatch_exact_commit_execution(
+            before,
+            requests,
+            next_epoch,
+            batch,
+        )) by {
+            reveal(Scheduler::dispatch_exact_commit_execution);
+        }
+    }
+
+    proof fn expose_dispatch_exact_commit_execution(
+        &self,
+        before: &Self,
+        requests: Seq<RequestId>,
+        next_epoch: u64,
+        batch: DispatchBatch,
+    )
+        requires self.dispatch_exact_commit_execution(
+            before,
+            requests,
+            next_epoch,
+            batch,
+        ),
+        ensures
+            self.basic_invariant(),
+            self.identity_frame(before),
+            batch.epoch_spec().value == next_epoch,
+            batch.member_count_spec() == requests.len(),
+    {
+        reveal(Scheduler::dispatch_exact_commit_execution);
+    }
+
+    #[verifier::rlimit(100)]
     fn dispatch_exact_commit(
         &mut self,
         requests: &[RequestId],
@@ -10479,10 +10709,12 @@ impl<const C: usize> Scheduler<C> {
             old(self).member_len + requests@.len() <= C,
             old(self).batch_len < C,
             next_epoch as int == old(self).submitted as int + 1,
-        ensures
-            final(self).basic_invariant(),
-            batch.epoch_spec().value == next_epoch,
-            batch.member_count_spec() == requests@.len(),
+        ensures final(self).dispatch_exact_commit_execution(
+            old(self),
+            requests@,
+            next_epoch,
+            batch,
+        ),
     {
         let ghost before = self;
         let mut member_tail = ring_tail::<C>(self.member_head, self.member_len);
@@ -10527,33 +10759,13 @@ impl<const C: usize> Scheduler<C> {
             let ghost prior_slots = self.slots@;
             let ghost prior_members = self.member_ring@;
             proof {
-                reveal(Scheduler::dispatch_chosen_ready);
-                reveal(selected_request_slots);
-                assert(request.slot_spec() < C);
-                assert(before.slots@[slot_index as int].state == RequestState::Ready);
-                assert(!selected_request_slots(chosen).contains(slot_index as int)) by {
-                    if selected_request_slots(chosen).contains(slot_index as int) {
-                        let prior = choose|prior: int| 0 <= prior < chosen.len()
-                            && selected_request_slots(chosen)[prior] == slot_index as int;
-                        assert(requests@[prior].slot_spec() == request.slot_spec());
-                        assert(selected_request_slots(requests@).no_duplicates());
-                        assert(false);
-                    }
-                }
-                dispatch_selected_slots_frame_fact(
-                    before.slots@,
-                    chosen,
+                self.dispatch_exact_step_pre(
+                    &before,
+                    requests@,
+                    lane,
                     next_epoch,
-                    slot_index as int,
+                    member_tail,
                 );
-                assert(self.slots@[slot_index as int] == before.slots@[slot_index as int]);
-                assert(before.member_len + lane < C);
-                assert(member_tail as int == ring_position::<C>(
-                    before.member_head,
-                    (before.member_len + lane) as nat,
-                )) by {
-                    reveal(ring_position_or_head);
-                }
             }
 
             self.slots[slot_index].state = RequestState::InFlight;
@@ -10561,33 +10773,58 @@ impl<const C: usize> Scheduler<C> {
             self.member_ring[member_tail] = request;
 
             proof {
-                let ghost extended = chosen.push(request);
-                assert(extended == requests@.subrange(0, (lane + 1) as int));
-                dispatch_selected_slots_push(before.slots@, chosen, next_epoch, request);
-                dispatch_selected_members_push::<C>(
-                    before.member_ring@,
-                    before.member_head,
-                    before.member_len,
-                    chosen,
+                assert(self.slots@ == prior_slots.update(
+                    slot_index as int,
+                    Slot {
+                        state: RequestState::InFlight,
+                        active_epoch: next_epoch,
+                        ..before.slots@[slot_index as int]
+                    },
+                ));
+                assert(self.member_ring@ == prior_members.update(
+                    member_tail as int,
                     request,
-                );
-                assert(self.slots@ == dispatch_selected_slots(
-                    before.slots@,
-                    extended,
+                ));
+                self.dispatch_exact_step_post(
+                    &before,
+                    requests@,
+                    lane,
                     next_epoch,
-                ));
-                assert(self.member_ring@ == dispatch_selected_members::<C>(
-                    before.member_ring@,
-                    before.member_head,
-                    before.member_len,
-                    extended,
-                ));
+                );
                 reveal(Scheduler::dispatch_scan_frames);
             }
             member_tail = advance::<C>(member_tail);
             lane += 1;
         }
 
+        proof {
+            assert(requests@.subrange(0, requests@.len() as int) == requests@);
+            assert(self.slots@ == dispatch_selected_slots(
+                before.slots@,
+                requests@,
+                next_epoch,
+            ));
+            assert(self.member_ring@ == dispatch_selected_members::<C>(
+                before.member_ring@,
+                before.member_head,
+                before.member_len,
+                requests@,
+            ));
+            reveal(Scheduler::dispatch_scan_frames);
+            assert(self.free_ring@ == before.free_ring@);
+            assert(self.free_head == before.free_head);
+            assert(self.free_len == before.free_len);
+            assert(self.reclaim_ring@ == before.reclaim_ring@);
+            assert(self.reclaim_head == before.reclaim_head);
+            assert(self.reclaim_len == before.reclaim_len);
+            assert(self.member_head == before.member_head);
+            assert(self.batch_ring@ == before.batch_ring@);
+            assert(self.batch_head == before.batch_head);
+            assert(self.batch_len == before.batch_len);
+            assert(self.cursor == before.cursor);
+            assert(self.completed == before.completed);
+            assert(self.live_count == before.live_count);
+        }
         let batch_tail = ring_tail::<C>(self.batch_head, self.batch_len);
         let batch = DispatchBatch {
             epoch: CompletionEpoch { value: next_epoch },
@@ -10602,19 +10839,56 @@ impl<const C: usize> Scheduler<C> {
         self.submitted = next_epoch;
 
         proof {
-            reveal(Scheduler::dispatch_scan_frames);
-            reveal(Scheduler::dispatch_commit_refines);
+            assert(requests@.len() > 0);
+            assert(self.slots@ == dispatch_selected_slots(
+                before.slots@,
+                requests@,
+                next_epoch,
+            ));
+            assert(self.free_ring@ == before.free_ring@);
+            assert(self.free_head == before.free_head);
+            assert(self.free_len == before.free_len);
+            assert(self.reclaim_ring@ == before.reclaim_ring@);
+            assert(self.reclaim_head == before.reclaim_head);
+            assert(self.reclaim_len == before.reclaim_len);
+            assert(self.member_ring@ == dispatch_selected_members::<C>(
+                before.member_ring@,
+                before.member_head,
+                before.member_len,
+                requests@,
+            ));
+            assert(self.member_head == before.member_head);
+            assert(self.member_len == before.member_len + requests@.len());
+            assert(self.batch_head == before.batch_head);
+            assert(self.batch_len == before.batch_len + 1);
+            assert(self.cursor == before.cursor);
+            assert(self.submitted == next_epoch);
+            assert(self.completed == before.completed);
+            assert(self.live_count == before.live_count);
+            assert(batch_tail as int == ring_position::<C>(
+                before.batch_head,
+                before.batch_len as nat,
+            ));
+            assert(self.batch_ring@ == before.batch_ring@.update(
+                batch_tail as int,
+                BatchRecord {
+                    epoch: CompletionEpoch { value: next_epoch },
+                    member_count: requests.len(),
+                },
+            ));
             assert(self.dispatch_commit_refines(
                 &before,
                 requests@,
                 before.cursor,
                 next_epoch,
-            ));
-            self.dispatch_commit_preserves_basic(
+            )) by {
+                reveal(Scheduler::dispatch_commit_refines);
+            }
+            self.dispatch_exact_commit_establishes(
                 &before,
                 requests@,
-                before.cursor,
                 next_epoch,
+                batch,
             );
         }
         batch
@@ -10628,8 +10902,14 @@ impl<const C: usize> Scheduler<C> {
         requests: &[RequestId],
     ) -> (result: Result<M1ScheduledDispatchV1, M1ExactDispatchErrorV1>)
         requires old(self).basic_invariant(),
-        ensures final(self).basic_invariant(),
+        ensures
+            final(self).basic_invariant(),
+            final(self).identity_frame(old(self)),
     {
+        proof {
+            self.same_scalars_reflexive();
+            self.same_scalars_preserves_identity(old(self));
+        }
         if requests.is_empty() {
             return Err(M1ExactDispatchErrorV1::EmptyRoster);
         }
@@ -10736,7 +11016,16 @@ impl<const C: usize> Scheduler<C> {
             selected_lane += 1;
         }
 
+        let ghost before_commit = self;
         let batch = self.dispatch_exact_commit(requests, next_epoch.value);
+        proof {
+            self.expose_dispatch_exact_commit_execution(
+                &before_commit,
+                requests@,
+                next_epoch.value,
+                batch,
+            );
+        }
         Ok(M1ScheduledDispatchV1::from_dispatch_batch(batch, &selected))
     }
 
@@ -11194,6 +11483,7 @@ impl<const C: usize> Scheduler<C> {
         Ok(())
     }
 
+    #[verifier::rlimit(20)]
     proof fn completion_success_refinement(
         &self,
         before: &Self,
@@ -11262,6 +11552,7 @@ impl<const C: usize> Scheduler<C> {
         }
     }
 
+    #[verifier::rlimit(20)]
     proof fn completion_completed_batch_from_refinement(
         &self,
         before: &Self,
@@ -13364,6 +13655,7 @@ impl<const C: usize> Scheduler<C> {
         reveal(Scheduler::finalized_slot_refines);
     }
 
+    #[verifier::rlimit(20)]
     proof fn finalized_slot_updates_preserve_transition(
         &self,
         before: &Self,
@@ -13387,7 +13679,8 @@ impl<const C: usize> Scheduler<C> {
             state: RequestState::InFlight,
             phase: LifecyclePhase::AwaitingKv,
         }) by {
-            reveal(Scheduler::slot_invariant);
+            assert(before.slot_invariant_at(slot_index));
+            reveal(Scheduler::slot_invariant_at);
             reveal(Scheduler::finalized_slot_updates);
             reveal(Scheduler::slot_model);
         }

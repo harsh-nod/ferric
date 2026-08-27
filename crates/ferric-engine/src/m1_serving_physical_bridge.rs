@@ -574,28 +574,28 @@ impl<R> M1ServingPhysicalReadbackV1<R> {
         O: M1ServingPhysicalOperationsV1<Readback = R>,
     {
         if self.plan.mode() == ferric_spec::Qwen3ExecutionMode::Speculative {
-            return Err(registry_completion_retryable(
+            return Err(Box::new(registry_completion_retryable(
                 M1ServingRegistryCompletionErrorV1::SpeculativeCoordinatorRequired,
                 self,
-            ));
+            )));
         }
         if let Err(error) = registry.preflight_completion_exact_for(
             self.registry_identity,
             self.epoch,
             dispositions,
         ) {
-            return Err(registry_completion_retryable(
+            return Err(Box::new(registry_completion_retryable(
                 M1ServingRegistryCompletionErrorV1::Registry(error),
                 self,
-            ));
+            )));
         }
         let physical = match physical_dispositions_from_registry(dispositions) {
             Ok(physical) => physical,
             Err(()) => {
-                return Err(registry_completion_retryable(
+                return Err(Box::new(registry_completion_retryable(
                     M1ServingRegistryCompletionErrorV1::HostAllocation,
                     self,
-                ));
+                )));
             }
         };
         let Self {
@@ -888,15 +888,14 @@ fn physical_dispositions_from_registry(
     Ok(physical)
 }
 
-#[allow(clippy::unnecessary_box_returns)]
 fn registry_completion_retryable<R, T, E>(
     error: M1ServingRegistryCompletionErrorV1<E>,
     readback: M1ServingPhysicalReadbackV1<R>,
-) -> Box<M1ServingRegistryCompletionFailureV1<R, T, E>> {
-    Box::new(M1ServingRegistryCompletionFailureV1 {
+) -> M1ServingRegistryCompletionFailureV1<R, T, E> {
+    M1ServingRegistryCompletionFailureV1 {
         error,
         custody: M1ServingRegistryCompletionFailureCustodyV1::Retryable(readback),
-    })
+    }
 }
 
 /// Exact completion failure retaining checked readback or terminal lower custody.
@@ -1308,7 +1307,6 @@ impl<Q> M1ServingPhysicalRetryablePublicationV1<Q> {
     ///
     /// Returns the unchanged queue owner and reservation failure when the
     /// registry no longer recognizes the exact live reservation.
-    #[allow(clippy::result_large_err)]
     pub fn abort<const C: usize>(
         self,
         registry: &mut M1ServingRegistryV1<C>,
@@ -1317,7 +1315,7 @@ impl<Q> M1ServingPhysicalRetryablePublicationV1<Q> {
             Ok(()) => Ok(self.custody),
             Err(failure) => Err(M1ServingPhysicalAbortFailureV1 {
                 custody: self.custody,
-                failure,
+                failure: Box::new(failure),
             }),
         }
     }
@@ -1328,7 +1326,7 @@ impl<Q> M1ServingPhysicalRetryablePublicationV1<Q> {
 #[derive(Debug)]
 pub struct M1ServingPhysicalAbortFailureV1<Q> {
     custody: M1ServingPhysicalQueueCustodyV1<Q>,
-    failure: M1ServingPublicationFailureV1,
+    failure: Box<M1ServingPublicationFailureV1>,
 }
 
 impl<Q> M1ServingPhysicalAbortFailureV1<Q> {
@@ -1338,7 +1336,7 @@ impl<Q> M1ServingPhysicalAbortFailureV1<Q> {
         M1ServingPhysicalQueueCustodyV1<Q>,
         M1ServingPublicationFailureV1,
     ) {
-        (self.custody, self.failure)
+        (self.custody, *self.failure)
     }
 }
 
