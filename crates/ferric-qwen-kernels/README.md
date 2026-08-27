@@ -92,7 +92,7 @@ LLVM-to-machine, hardware, completion, or performance refinement. The
 `ferric-rmsnorm` and `kernel-schedule-catalog` paths and `m1.r07` remain Open.
 
 The workspace dependency revision is pinned to accepted reusable fe2o3 generic
-compiler/runtime commit `dcf16c1572c08cedcbcfa1bc35da4219152e5aad`.
+compiler/runtime commit `2317f300c5b99bf08db7621197e2cbcb8c1b8a19`.
 The reviewed M1 upstream base is
 `d036920d5beffda4d7f9e2465ba4214355dc9b4a`; neither source closure is Ferric
 kernel authority, kernel qualification evidence, or evidence for an M1 row.
