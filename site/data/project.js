@@ -6,7 +6,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "The target-only path has an MI300X smoke observation. Exact S1 paired-prefill to S1/K4 native queue rollover and its concrete production input provider are implemented; hardware and qualification evidence remain open.",
+      "The target-only path has an MI300X smoke observation. Exact S1 paired-prefill to S1/K4 native queue rollover, its concrete production input provider, and an opt-in lifecycle test are implemented; the test awaits an available MI300X and hardware and qualification evidence remain open.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -27,7 +27,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "S1/K4 speculative serving",
       state: "integration",
       detail:
-        "Direct and S1/K4 adapter paths retain exact plan custody and independent choices. Native paired-prefill rollover and ordered production inputs are implemented; hardware qualification remains active work.",
+        "Direct and S1/K4 adapter paths retain exact plan custody and independent choices. The opt-in queued paired-prefill -> native S1/K4 lifecycle test compiles but has not run because the MI300X is occupied; it remains non-evidentiary.",
     },
     {
       label: "M1 qualification",
@@ -106,6 +106,13 @@ window.FERRIC_PROJECT = Object.freeze({
       "Smoke observation only. It is not evidence, numerical qualification, hardware qualification, performance qualification, or M1 closure.",
   },
   recentProgress: [
+    {
+      commit: "08cf5da",
+      title: "Cover queued native rollover lifecycle",
+      state: "implemented",
+      detail:
+        "An opt-in queued paired-prefill -> native S1/K4 lifecycle test is implemented and compiles. It has not run because the MI300X is occupied, and any future run remains non-evidentiary.",
+    },
     {
       commit: "c4404c8",
       title: "Add queued physical input provider",
