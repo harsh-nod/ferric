@@ -6,7 +6,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "The target-only path has an MI300X smoke observation. Production serving admission and same-shape rearm now cover four exact speculative shapes; validation remains host-only and establishes no new GPU behavior, Qwen correctness, performance proof, or formal M1 qualification.",
+      "The target-only path has a source-bound MI300X smoke observation. Four finite speculative shapes and four exact production rollover transitions pass the full host workspace gate at 8940b28. That source has not run on MI300X, and formal M1 qualification remains open.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -25,9 +25,15 @@ window.FERRIC_PROJECT = Object.freeze({
     },
     {
       label: "Finite-shape speculative serving",
-      state: "integration",
+      state: "implemented",
       detail:
-        "Serving admission and same-shape rearm cover exact S1/K4, S8/K4, S1/K8, and S1/K16. Host validation passes 428 engine tests with 5 hardware cases ignored, 105 doctests, strict workspace Clippy, and warning-free docs.",
+        "Exact S1/K4, S8/K4, S1/K8, and S1/K16 admission and same-shape rearm remain covered by the exact-source workspace gate at 8940b28. This establishes source behavior, not GPU or Qwen correctness.",
+    },
+    {
+      label: "Production shape rollover",
+      state: "implemented",
+      detail:
+        "Paired-prefill rollover covers four exact transitions with roster-indexed KV, output, provider, and queue custody. The exact-source workspace gate passes at 8940b28; MI300X execution remains open.",
     },
     {
       label: "M1 qualification",
@@ -62,24 +68,24 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Finite-shape speculation",
         detail:
-          "S8 admits nonempty live prefixes through 8 requests. Same-shape diagnostic history binds the exact plan, epoch, and ordered live request roster across each admitted shape.",
+          "A physical lifecycle adapter owns fresh publication, same-shape rearm, independent choice readback, and typed terminal cleanup for exact S1/K4, S8/K4, S1/K8, and S1/K16 shapes.",
       },
       {
-        name: "Paired prefill and shape rollover",
+        name: "Finite production rollover",
         detail:
-          "Rollover enqueue requires bridge-bound readback. Legacy K4 APIs and paired-prefill rollover remain exact, including output-fed successor enqueue, KV reselection, workspace replacement, output activation, native queue rollover, and terminal custody closure.",
+          "Host-validated production paths cover Prefill S1/T128 to S1/K4, S1/K8, and S1/K16, plus Prefill S8/T128 to S8/K4. Unsupported transitions fail closed.",
       },
       {
         name: "Qualification capture tooling",
         detail:
-          "Speculative evidence allocation, binding, readback, and rearm support exactly S1/K4, S8/K4, S1/K8, and S1/K16. Active lanes are authenticated; inactive fixed-width rows remain non-authoritative padding. Legacy S1/K4 APIs stay gated and source-compatible.",
+          "Identity-bound diagnostic and evidence producers exist, but partial artifacts grant no qualification authority.",
       },
     ],
     roadmap: [
       {
-        name: "Additional speculative shapes",
+        name: "Current-source MI300X lifecycle run",
         detail:
-          "Production serving is admitted only for exact S1/K4, S8/K4, S1/K8, and S1/K16; every other shape remains closed pending further lifecycle work.",
+          "The generic rollover source has not run on MI300X. The latest recheck could not resolve SSH host 300x; the last known device state had unrelated /dev/kfd use. No new hardware authority exists.",
       },
       {
         name: "Full M1 evidence closure",
@@ -105,41 +111,74 @@ window.FERRIC_PROJECT = Object.freeze({
     authority:
       "Smoke observation only. It is not evidence, numerical qualification, hardware qualification, performance qualification, or M1 closure.",
   },
+  validation: {
+    host: {
+      title: "Finite production rollover",
+      state: "implemented",
+      source: "8940b28",
+      result: "Workspace all-features: 1,072 passed, 0 failed, 6 ignored",
+      detail:
+        "The aggregate spans 28 test-result groups and includes 119 doctests (9 + 108 + 2), all passed. The engine suite passed 433 with none failed and 5 ignored. Failure injection across output catalog members 2-4 retains earlier move-only output reserves in failure custody.",
+    },
+    hardware: {
+      title: "Generic production rollover",
+      state: "open",
+      source: null,
+      result: "Current-source MI300X execution pending",
+      detail:
+        "The latest access recheck could not resolve SSH host 300x; the last known device state had unrelated /dev/kfd use. Source 8940b28 has not run on gfx942, so no Qwen correctness, numerical, performance, or qualification claim follows.",
+    },
+    transitions: [
+      ["Prefill S1/T128", "Speculative S1/K4", "implemented"],
+      ["Prefill S1/T128", "Speculative S1/K8", "implemented"],
+      ["Prefill S1/T128", "Speculative S1/K16", "implemented"],
+      ["Prefill S8/T128", "Speculative S8/K4", "implemented"],
+    ],
+    limitation:
+      "The transition catalog is exact. Target-only decode transitions and every unlisted cross-plan transition require explicit queue retirement and fresh launch; they do not inherit native rollover support.",
+  },
   recentProgress: [
+    {
+      commit: "8940b28",
+      title: "Generalize production queue rollover",
+      state: "implemented",
+      detail:
+        "Four exact paired-prefill transitions retain roster-indexed caches, KV reservations, outputs, provider inputs, shape-specific queue submission, retry custody, and fail-closed catalog admission. Hostile output failures retain earlier move-only reserves. The full workspace gate passes; GPU execution remains open.",
+    },
     {
       commit: "c593009",
       title: "Admit finite speculative serving shapes",
       state: "implemented",
       detail:
-        "Production serving and same-shape rearm now cover four exact shapes, including nonempty S8 live prefixes through 8 and history bound to plan, epoch, and ordered live roster. The 428-pass host result is structural only: no new GPU run, Qwen correctness, performance proof, or formal M1 qualification claim.",
+        "Production serving and same-shape rearm cover four exact shapes, including nonempty S8 live prefixes through 8 and history bound to plan, epoch, and ordered live roster. The 428-pass host result is structural only: no new GPU run, Qwen correctness, performance proof, or formal M1 qualification claim.",
     },
     {
       commit: "9aa7e60",
       title: "Generalize speculative evidence capture",
       state: "implemented",
       detail:
-        "Allocation, binding, readback, and rearm now preserve exact active-lane authority across four supported shapes while retaining inactive padding as non-authoritative. The 421-pass host result is structural only: no GPU run, Qwen correctness or performance proof, evidence authority, or M1 qualification claim.",
+        "Allocation, binding, readback, and rearm preserve exact active-lane authority across four supported shapes while inactive fixed-width rows remain non-authoritative padding. The host result grants no hardware or qualification authority.",
     },
     {
       commit: "a9d1d7e",
       title: "Compose the two-round bridge lifecycle",
       state: "implemented",
       detail:
-        "The structural fixture compiles through the real generic bridge from paired prefill through a second native round and atomic teardown with two-round history. It has not run on GPU; its artifacts are stale, non-authenticating, and non-evidentiary, with no Qwen correctness, performance, or M1 qualification claim.",
+        "The structural fixture compiles through the real generic bridge from paired prefill through a second native round and atomic teardown with two-round history. It has not run on GPU and makes no Qwen correctness or qualification claim.",
     },
     {
       commit: "e6ccd4d",
       title: "Bind repeated speculative rearm",
       state: "implemented",
       detail:
-        "An opaque bridge authority inseparably binds physical quiescent custody with the coordinator outcome and feeds repeated S1/K4 rearm from the committed speculative result. No repeated hardware run has occurred; this makes no Qwen correctness, evidence, performance, or M1 qualification claim.",
+        "An opaque bridge authority binds physical quiescent custody with the coordinator outcome and feeds repeated S1/K4 rearm from the committed result. Repeated hardware execution remains open.",
     },
     {
       commit: "e29112e",
-      title: "Feed native rollover from prefill output",
+      title: "Feed rollover from prefill readback",
       state: "implemented",
       detail:
-        "The opt-in lifecycle path is implemented and compiles, and host validation is green. Its ignored MI300X fixture also compiles but has not run on hardware. This is non-evidentiary and does not qualify M1 or claim Qwen correctness.",
+        "The lifecycle path consumes bridge-bound readback rather than caller-authored rollover inputs. Its ignored MI300X fixture compiles but has not run on hardware.",
     },
     {
       commit: "c4404c8",
