@@ -1961,9 +1961,10 @@ mod tests {
             panic!("epoch drift must retain the published queue owner");
         };
         let readback = published.read_physical(epoch, &mut operations).unwrap();
-        let (_, custody, outcome) = readback
+        let committed = readback
             .commit_speculative(&mut registry, &mut coordinator, permit, &mut operations)
             .unwrap();
+        let (_, custody, outcome) = committed.into_parts();
         assert_eq!(coordinator.next_round(), 1);
         assert!(!registry.has_in_flight_batch());
         assert_eq!(outcome.completed_epoch(), epoch);
@@ -2029,7 +2030,7 @@ mod tests {
         else {
             panic!("wrong registry must retain checked readback and permit");
         };
-        let (_batch, _custody, _outcome) = readback
+        let _committed = readback
             .commit_speculative(&mut registry, &mut coordinator, permit, &mut operations)
             .unwrap();
         assert_eq!(coordinator.next_round(), 1);
@@ -2084,7 +2085,7 @@ mod tests {
         else {
             panic!("wrong coordinator must retain checked readback and permit");
         };
-        let (_batch, _custody, _outcome) = readback
+        let _committed = readback
             .commit_speculative(&mut registry, &mut coordinator, permit, &mut operations)
             .unwrap();
         assert_eq!(coordinator.next_round(), 1);
@@ -2169,9 +2170,10 @@ mod tests {
                 ));
             }
 
-            let (_, _, outcome) = readback
+            let committed = readback
                 .commit_speculative(&mut registry, &mut coordinator, permit, &mut operations)
                 .unwrap();
+            let outcome = committed.outcome();
             assert_eq!(
                 operations.settled,
                 [vec![M1DeviceKvCompletionDispositionV1::Retire]]

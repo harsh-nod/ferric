@@ -250,12 +250,12 @@ pub use m1_queue_rollover::{
     M1ScheduledS1K4QueueRolloverV1,
 };
 pub use m1_serving_physical_bridge::{
-    M1ServingPhysicalAbortFailureV1, M1ServingPhysicalBridgeErrorV1,
-    M1ServingPhysicalBridgeFailureV1, M1ServingPhysicalCompletionErrorV1,
-    M1ServingPhysicalCompletionFailureCustodyV1, M1ServingPhysicalCompletionFailureV1,
-    M1ServingPhysicalFailureCustodyV1, M1ServingPhysicalOperationFailureV1,
-    M1ServingPhysicalOperationResultV1, M1ServingPhysicalOperationsV1,
-    M1ServingPhysicalPublishResultV1, M1ServingPhysicalPublishedV1,
+    M1ServingCommittedSpeculativeRoundV1, M1ServingPhysicalAbortFailureV1,
+    M1ServingPhysicalBridgeErrorV1, M1ServingPhysicalBridgeFailureV1,
+    M1ServingPhysicalCompletionErrorV1, M1ServingPhysicalCompletionFailureCustodyV1,
+    M1ServingPhysicalCompletionFailureV1, M1ServingPhysicalFailureCustodyV1,
+    M1ServingPhysicalOperationFailureV1, M1ServingPhysicalOperationResultV1,
+    M1ServingPhysicalOperationsV1, M1ServingPhysicalPublishResultV1, M1ServingPhysicalPublishedV1,
     M1ServingPhysicalQueueCustodyV1, M1ServingPhysicalReadbackResultV1,
     M1ServingPhysicalReadbackV1, M1ServingPhysicalRecordRetryFailureV1,
     M1ServingPhysicalRetryablePublicationV1, M1ServingPhysicalTerminalPublicationV1,
@@ -280,10 +280,10 @@ pub use m1_serving_physical_operations::{
     M1ServingPhysicalRunnerOperationsCreateErrorV1, M1ServingPhysicalRunnerOperationsV1,
     M1ServingPhysicalRunnerPublishedV1, M1ServingPhysicalRunnerQuiescentV1,
     M1ServingPhysicalRunnerReadbackEvidenceV1, M1ServingPhysicalRunnerReadbackV1,
-    M1ServingPhysicalRunnerTerminalCustodyV1, M1ServingPhysicalRunnerTerminalLowerCustodyV1,
-    M1ServingPreparedFirstPublicationV1, M1ServingPreparedS1K4RolloverV1,
-    M1ServingPreparedSameShapeRearmV1, M1ServingPreparedSemanticEvidenceV1,
-    M1ServingRearmedReadbackStateV1,
+    M1ServingPhysicalRunnerS1K4RearmEnqueueFailureV1, M1ServingPhysicalRunnerTerminalCustodyV1,
+    M1ServingPhysicalRunnerTerminalLowerCustodyV1, M1ServingPreparedFirstPublicationV1,
+    M1ServingPreparedS1K4RolloverV1, M1ServingPreparedSameShapeRearmV1,
+    M1ServingPreparedSemanticEvidenceV1, M1ServingRearmedReadbackStateV1,
 };
 pub use m1_serving_registry::{
     M1ServingBatchPlanV1, M1ServingCompletionDispositionV1, M1ServingPlanV1,

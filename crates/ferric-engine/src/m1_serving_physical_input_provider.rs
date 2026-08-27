@@ -146,6 +146,64 @@ impl M1ServingQueuedSameShapeRearmV1 {
     pub const fn binding(&self) -> &M1ServingQueuedGenerationBindingV1 {
         &self.binding
     }
+
+    pub(crate) fn matches_committed_s1_k4_member(
+        &self,
+        request: RequestId,
+        epoch: CompletionEpoch,
+        anchor: ferric_spec::TokenId,
+        target_committed: u32,
+        draft_committed: u32,
+    ) -> bool {
+        let M1LongLivedQueueRearmKvInputsV1::SpeculativeRound {
+            draft_decode,
+            target_speculative,
+            ..
+        } = &self.kv_inputs
+        else {
+            return false;
+        };
+        speculative_role_input_matches(
+            draft_decode,
+            self.binding.plan().draft(),
+            request,
+            epoch,
+            anchor,
+            draft_committed,
+            1,
+        ) && speculative_role_input_matches(
+            target_speculative,
+            self.binding.plan().target(),
+            request,
+            epoch,
+            anchor,
+            target_committed,
+            5,
+        ) && target_speculative.token_ids().get(1..) == Some(&[0, 0, 0, 0])
+    }
+}
+
+fn speculative_role_input_matches(
+    input: &ferric_spec::ValidatedM1StepInputs,
+    selection: ferric_spec::Qwen3PlanSelection,
+    request: RequestId,
+    epoch: CompletionEpoch,
+    anchor: ferric_spec::TokenId,
+    committed: u32,
+    active_width: u32,
+) -> bool {
+    let Some(plan) = input.lanes().first().and_then(Option::as_ref) else {
+        return false;
+    };
+    input.selection() == selection
+        && input.live_lane_count() == 1
+        && plan.selection() == selection
+        && plan.request() == request
+        && plan.completion_epoch() == epoch
+        && input.token_ids().first() == Some(&anchor)
+        && input.position_ids().first() == Some(&committed)
+        && input.active_lengths().first() == Some(&active_width)
+        && input.context_lengths().first() == Some(&committed)
 }
 
 /// Exact paired-prefill to S1/K4 successor owners queued before detachment.
@@ -387,6 +445,23 @@ impl M1QueuedServingPhysicalInputProviderV1 {
         }
         self.pending
             .push_back(M1ServingQueuedGenerationInputV1::S1K4Rollover(input));
+        Ok(())
+    }
+
+    /// Appends one typed same-shape S1/K4 rearm for the validated serving adapter.
+    ///
+    /// # Errors
+    ///
+    /// Returns the allocation diagnostic and unchanged pre-boxed input.
+    pub(crate) fn try_enqueue_s1_k4_rearm(
+        &mut self,
+        input: Box<M1ServingQueuedSameShapeRearmV1>,
+    ) -> Result<(), (TryReserveError, Box<M1ServingQueuedSameShapeRearmV1>)> {
+        if let Err(source) = self.pending.try_reserve(1) {
+            return Err((source, input));
+        }
+        self.pending
+            .push_back(M1ServingQueuedGenerationInputV1::SameShapeRearm(input));
         Ok(())
     }
 

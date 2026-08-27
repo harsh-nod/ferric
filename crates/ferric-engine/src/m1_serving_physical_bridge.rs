@@ -859,11 +859,12 @@ impl<R> M1ServingPhysicalReadbackV1<R> {
             }
         };
         registry.apply_preflighted_completion(epoch, &registry_dispositions);
-        Ok((
+        Ok(M1ServingCommittedSpeculativeRoundV1 {
             batch,
-            M1ServingPhysicalQueueCustodyV1::Quiescent { plan, custody },
+            plan,
+            custody,
             outcome,
-        ))
+        })
     }
 }
 
@@ -1042,13 +1043,85 @@ pub enum M1ServingSpeculativeCompletionFailureCustodyV1<R, Q, T> {
     },
 }
 
-/// Atomic speculative coordinator/registry completion result.
-pub type M1ServingSpeculativeCompletionResultV1<R, Q, T, E> = Result<
-    (
+/// Inseparable authority produced by one atomic physical/coordinator commit.
+///
+/// Private fields prevent callers from cross-pairing same-valued coordinator
+/// outcomes and physical custody. Consuming this owner into parts deliberately
+/// destroys its authority for output-fed enqueue.
+///
+/// ```compile_fail
+/// use ferric_engine::{
+///     M1ServingBatchPlanV1, M1ServingCommittedSpeculativeRoundV1,
+///     M1ServingPlanV1, M1SpeculativeRoundOutcomeV1,
+/// };
+///
+/// fn cross_pair<Q>(
+///     batch: M1ServingBatchPlanV1,
+///     plan: M1ServingPlanV1,
+///     custody: Q,
+///     outcome: M1SpeculativeRoundOutcomeV1,
+/// ) -> M1ServingCommittedSpeculativeRoundV1<Q> {
+///     M1ServingCommittedSpeculativeRoundV1 { batch, plan, custody, outcome }
+/// }
+/// ```
+#[must_use = "committed speculative custody and output authority must remain paired"]
+#[derive(Debug)]
+pub struct M1ServingCommittedSpeculativeRoundV1<Q> {
+    batch: M1ServingBatchPlanV1,
+    plan: M1ServingPlanV1,
+    custody: Q,
+    outcome: M1SpeculativeRoundOutcomeV1,
+}
+
+impl<Q> M1ServingCommittedSpeculativeRoundV1<Q> {
+    /// Exact physical batch settled by this commit.
+    #[must_use = "the settled physical batch remains part of commit authority"]
+    pub const fn batch(&self) -> &M1ServingBatchPlanV1 {
+        &self.batch
+    }
+
+    /// Exact plan retained by the quiescent physical custody.
+    #[must_use]
+    pub const fn plan(&self) -> M1ServingPlanV1 {
+        self.plan
+    }
+
+    /// Exact quiescent physical custody produced by this commit.
+    #[must_use]
+    pub const fn quiescent(&self) -> &Q {
+        &self.custody
+    }
+
+    /// Coordinator outcome committed in the same bridge transaction.
+    #[must_use = "the committed coordinator outcome remains part of commit authority"]
+    pub const fn outcome(&self) -> &M1SpeculativeRoundOutcomeV1 {
+        &self.outcome
+    }
+
+    /// Separates the result for downstream ownership routing and destroys the
+    /// opaque authority required by output-fed enqueue.
+    #[must_use = "separated physical custody and outcome remain linear"]
+    pub fn into_parts(
+        self,
+    ) -> (
         M1ServingBatchPlanV1,
         M1ServingPhysicalQueueCustodyV1<Q>,
         M1SpeculativeRoundOutcomeV1,
-    ),
+    ) {
+        (
+            self.batch,
+            M1ServingPhysicalQueueCustodyV1::Quiescent {
+                plan: self.plan,
+                custody: self.custody,
+            },
+            self.outcome,
+        )
+    }
+}
+
+/// Atomic speculative coordinator/registry completion result.
+pub type M1ServingSpeculativeCompletionResultV1<R, Q, T, E> = Result<
+    M1ServingCommittedSpeculativeRoundV1<Q>,
     Box<M1ServingSpeculativeCompletionFailureV1<R, Q, T, E>>,
 >;
 

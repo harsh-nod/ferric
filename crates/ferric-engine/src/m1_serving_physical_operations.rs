@@ -31,9 +31,11 @@ use crate::{
     M1RearmedRoundReleaseOutcomeV1, M1ReleasedCompletedStepV1,
     M1S1K4QueueRolloverScheduleFailureCustodyV1, M1ScheduledDispatchV1,
     M1ScheduledLongLivedQueueRearmV1, M1ScheduledS1K4QueueRolloverV1, M1ServingBatchPlanV1,
-    M1ServingPhysicalOperationFailureV1, M1ServingPhysicalOperationResultV1,
-    M1ServingPhysicalOperationsV1, M1ServingPlanV1, M1ServingQueuedGenerationBindingV1,
-    M1ServingQueuedS1K4RolloverV1, M1ServingRolloverReasonV1, M1_MAX_REARM_ROUND_HISTORY_V1,
+    M1ServingCommittedSpeculativeRoundV1, M1ServingPhysicalOperationFailureV1,
+    M1ServingPhysicalOperationResultV1, M1ServingPhysicalOperationsV1, M1ServingPlanV1,
+    M1ServingQueuedGenerationBindingV1, M1ServingQueuedS1K4RolloverV1,
+    M1ServingQueuedSameShapeRearmV1, M1ServingRolloverReasonV1, M1SpeculativeMemberStatusV1,
+    M1_MAX_REARM_ROUND_HISTORY_V1,
 };
 
 /// Request-owned inputs prepared after the adapter issues the exact first dispatch.
@@ -512,12 +514,18 @@ pub enum M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1 {
     CustodyIdentityMismatch,
     /// The adapter does not currently own this exact unsettled readback epoch.
     ReadbackPhaseMismatch,
+    /// The adapter does not currently own this exact committed quiescent epoch.
+    QuiescentPhaseMismatch,
     /// Source shape or successor phase/shape is outside the closed transition.
     UnsupportedTransition,
     /// Successor epoch or ordered request roster drifted from readback.
     BindingMismatch,
     /// Draft or target successor input did not start from the checked token.
     AnchorMismatch,
+    /// Committed coordinator outcome drifted from settled physical custody.
+    CommitOutcomeMismatch,
+    /// Successor role inputs drifted from committed anchors or KV cursors.
+    CommittedInputMismatch,
 }
 
 /// Exhaustive failure to append one checked S1/K4 successor generation.
@@ -576,6 +584,68 @@ impl M1ServingPhysicalRunnerGenerationEnqueueFailureV1 {
     /// Recovers the unchanged pre-boxed input from either failure class.
     #[must_use = "the rejected generation input remains linear"]
     pub fn into_input(self) -> Box<M1ServingQueuedS1K4RolloverV1> {
+        match self {
+            Self::Unavailable { input, .. } | Self::Provider { input, .. } => input,
+        }
+    }
+}
+
+/// Exhaustive failure to append one committed same-shape S1/K4 rearm.
+///
+/// Both variants retain the exact pre-boxed input. `Unavailable` means no
+/// provider queue mutation was attempted; `Provider` preserves the lower
+/// allocation diagnostic after a failed transactional enqueue.
+#[must_use = "failed dynamic enqueue retains the exact generation input"]
+#[derive(Debug)]
+pub enum M1ServingPhysicalRunnerS1K4RearmEnqueueFailureV1 {
+    /// Adapter, custody, coordinator, or input validation rejected before mutation.
+    Unavailable {
+        /// Stable reason enqueue was unavailable.
+        source: M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1,
+        /// Exact unchanged same-shape generation input.
+        input: Box<M1ServingQueuedSameShapeRearmV1>,
+    },
+    /// Transactional provider queue growth failed with lower custody intact.
+    Provider {
+        /// Lower host queue-growth diagnostic.
+        source: std::collections::TryReserveError,
+        /// Exact unchanged same-shape generation input.
+        input: Box<M1ServingQueuedSameShapeRearmV1>,
+    },
+}
+
+impl M1ServingPhysicalRunnerS1K4RearmEnqueueFailureV1 {
+    /// Stable unavailable reason, or `None` for a lower provider failure.
+    #[must_use]
+    pub const fn unavailable(
+        &self,
+    ) -> Option<M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1> {
+        match self {
+            Self::Unavailable { source, .. } => Some(*source),
+            Self::Provider { .. } => None,
+        }
+    }
+
+    /// Lower queue-growth failure, or `None` when enqueue was unavailable.
+    #[must_use]
+    pub const fn provider_failure(&self) -> Option<&std::collections::TryReserveError> {
+        match self {
+            Self::Unavailable { .. } => None,
+            Self::Provider { source, .. } => Some(source),
+        }
+    }
+
+    /// Borrows the unchanged same-shape input retained on every failure path.
+    #[must_use = "the rejected generation input remains linear"]
+    pub const fn input(&self) -> &M1ServingQueuedSameShapeRearmV1 {
+        match self {
+            Self::Unavailable { input, .. } | Self::Provider { input, .. } => input,
+        }
+    }
+
+    /// Recovers the unchanged same-shape input from either failure class.
+    #[must_use = "the rejected generation input remains linear"]
+    pub fn into_input(self) -> Box<M1ServingQueuedSameShapeRearmV1> {
         match self {
             Self::Unavailable { input, .. } | Self::Provider { input, .. } => input,
         }
@@ -1041,6 +1111,82 @@ impl<const C: usize>
                 M1ServingPhysicalRunnerGenerationEnqueueFailureV1::Provider { source, input }
             })
     }
+
+    /// Appends one same-shape S1/K4 successor after atomic speculative commit.
+    ///
+    /// The borrowed outcome is coordinator authority produced only after
+    /// physical settlement and registry commit. The provider queue changes
+    /// only after exact custody, epoch, roster, anchor, and committed-role
+    /// cursor validation.
+    ///
+    /// # Errors
+    ///
+    /// Returns the pre-boxed input unchanged when the adapter, committed
+    /// outcome, or role inputs drift, or when provider queue growth fails.
+    pub fn try_enqueue_s1_k4_rearm_after_commit(
+        &mut self,
+        committed: &M1ServingCommittedSpeculativeRoundV1<M1ServingPhysicalRunnerQuiescentV1>,
+        input: Box<M1ServingQueuedSameShapeRearmV1>,
+    ) -> Result<(), M1ServingPhysicalRunnerS1K4RearmEnqueueFailureV1> {
+        let quiescent = committed.quiescent();
+        let outcome = committed.outcome();
+        if let Err(source) = validate_s1_k4_rearm_enqueue(
+            self.provider.is_some(),
+            self.provider.as_ref().map_or(
+                0,
+                M1QueuedServingPhysicalInputProviderV1::pending_generation_count,
+            ),
+            self.identity,
+            self.phase,
+            self.active_plan,
+            quiescent.adapter_identity(),
+            quiescent.epoch(),
+            committed.plan(),
+            outcome.selection(),
+            outcome.completed_epoch(),
+            outcome.next_active_roster(),
+            input.binding(),
+        ) {
+            return Err(
+                M1ServingPhysicalRunnerS1K4RearmEnqueueFailureV1::Unavailable { source, input },
+            );
+        }
+        let authorities = outcome
+            .members()
+            .iter()
+            .copied()
+            .filter(|member| member.status() == M1SpeculativeMemberStatusV1::Active)
+            .map(|member| M1CommittedS1K4RearmMemberAuthorityV1 {
+                request: member.request(),
+                anchor: member.next_draft_anchor(),
+                target_committed: member.target_settlement().commit_end(),
+                draft_committed: member.draft_settlement().commit_end(),
+            });
+        if let Err(source) =
+            validate_committed_s1_k4_rearm_input(&input, outcome.next_active_roster(), authorities)
+        {
+            return Err(
+                M1ServingPhysicalRunnerS1K4RearmEnqueueFailureV1::Unavailable { source, input },
+            );
+        }
+        let Some(provider) = self.provider.as_mut() else {
+            return Err(
+                M1ServingPhysicalRunnerS1K4RearmEnqueueFailureV1::Unavailable {
+                    source:
+                        M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1::ProviderUnavailable,
+                    input,
+                },
+            );
+        };
+        provider
+            .try_enqueue_s1_k4_rearm(input)
+            .map_err(
+                |(source, input)| M1ServingPhysicalRunnerS1K4RearmEnqueueFailureV1::Provider {
+                    source,
+                    input,
+                },
+            )
+    }
 }
 
 impl<const C: usize, P> Drop for M1ServingPhysicalRunnerOperationsV1<'_, C, P> {
@@ -1078,6 +1224,97 @@ fn validate_s1_k4_rollover_anchor(
     };
     if !input.matches_anchor(token) {
         return Err(M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1::AnchorMismatch);
+    }
+    Ok(())
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct M1CommittedS1K4RearmMemberAuthorityV1 {
+    request: RequestId,
+    anchor: Option<ferric_spec::TokenId>,
+    target_committed: u32,
+    draft_committed: u32,
+}
+
+#[allow(clippy::too_many_arguments)]
+fn validate_s1_k4_rearm_enqueue(
+    provider_available: bool,
+    pending_generation_count: usize,
+    expected_identity: M1ServingPhysicalRunnerAdapterIdentityV1,
+    phase: M1ServingPhysicalRunnerAdapterPhaseV1,
+    active_plan: Option<M1ServingPlanV1>,
+    custody_identity: M1ServingPhysicalRunnerAdapterIdentityV1,
+    custody_epoch: CompletionEpoch,
+    custody_plan: M1ServingPlanV1,
+    outcome_selection: ferric_spec::Qwen3PlanSelection,
+    outcome_epoch: CompletionEpoch,
+    outcome_next_roster: &[RequestId],
+    binding: &M1ServingQueuedGenerationBindingV1,
+) -> Result<(), M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1> {
+    use M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1 as Unavailable;
+
+    if !provider_available {
+        return Err(Unavailable::ProviderUnavailable);
+    }
+    if pending_generation_count != 0 {
+        return Err(Unavailable::ProviderQueueNotEmpty);
+    }
+    if expected_identity != custody_identity {
+        return Err(Unavailable::CustodyIdentityMismatch);
+    }
+    if phase
+        != (M1ServingPhysicalRunnerAdapterPhaseV1::Quiescent {
+            epoch: custody_epoch,
+        })
+    {
+        return Err(Unavailable::QuiescentPhaseMismatch);
+    }
+    if active_plan != Some(custody_plan) || !supports_evidence_bound_s1_k4(custody_plan) {
+        return Err(Unavailable::UnsupportedTransition);
+    }
+    if outcome_selection != custody_plan.target() || outcome_epoch != custody_epoch {
+        return Err(Unavailable::CommitOutcomeMismatch);
+    }
+    let Some(next_epoch) = custody_epoch.value().checked_add(1) else {
+        return Err(Unavailable::BindingMismatch);
+    };
+    if outcome_next_roster.len() != 1
+        || binding.plan() != custody_plan
+        || binding.epoch() != CompletionEpoch::new(next_epoch)
+        || binding.requests() != outcome_next_roster
+    {
+        return Err(Unavailable::BindingMismatch);
+    }
+    Ok(())
+}
+
+fn validate_committed_s1_k4_rearm_input(
+    input: &M1ServingQueuedSameShapeRearmV1,
+    expected_roster: &[RequestId],
+    mut authorities: impl Iterator<Item = M1CommittedS1K4RearmMemberAuthorityV1>,
+) -> Result<(), M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1> {
+    use M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1 as Unavailable;
+
+    let [request] = expected_roster else {
+        return Err(Unavailable::BindingMismatch);
+    };
+    let Some(authority) = authorities.next() else {
+        return Err(Unavailable::CommitOutcomeMismatch);
+    };
+    if authority.request != *request || authorities.next().is_some() {
+        return Err(Unavailable::CommitOutcomeMismatch);
+    }
+    let Some(anchor) = authority.anchor else {
+        return Err(Unavailable::CommitOutcomeMismatch);
+    };
+    if !input.matches_committed_s1_k4_member(
+        *request,
+        input.binding().epoch(),
+        anchor,
+        authority.target_committed,
+        authority.draft_committed,
+    ) {
+        return Err(Unavailable::CommittedInputMismatch);
     }
     Ok(())
 }
@@ -2632,6 +2869,110 @@ mod tests {
         )
     }
 
+    fn queued_s1_k4_rearm_test_input(
+        request: RequestId,
+        epoch: CompletionEpoch,
+        anchor: ferric_spec::TokenId,
+        target_committed: u32,
+        draft_committed: u32,
+        target_future_token: ferric_spec::TokenId,
+    ) -> M1ServingQueuedSameShapeRearmV1 {
+        use ferric_build::{
+            m1_step_workspace_requirements, plan_addressless_m1_step_workspace,
+            AvailableM1StepWorkspace, DeclaredM1StepWorkspaceAllocation,
+            M1StepWorkspaceDeclaration, M1StepWorkspacePlanOutcome,
+        };
+        use ferric_spec::{
+            validate_m1_step_inputs, Identity, M1StepInputCandidate, M1StepInputValidationOutcome,
+            StepPlan, ValidatedM1StepInputs,
+        };
+
+        fn input(
+            plan: StepPlan,
+            tokens: Vec<u32>,
+            positions: Vec<u32>,
+            committed: u32,
+        ) -> ValidatedM1StepInputs {
+            let active_length = u32::try_from(tokens.len()).expect("test token count fits u32");
+            let candidate = M1StepInputCandidate::new(
+                plan.selection(),
+                vec![Some(plan)],
+                tokens,
+                positions,
+                vec![active_length],
+                vec![committed],
+            );
+            match validate_m1_step_inputs(candidate) {
+                M1StepInputValidationOutcome::Validated(inputs) => inputs,
+                M1StepInputValidationOutcome::Rejected(failure) => {
+                    panic!(
+                        "host-only S1/K4 rearm input rejected: {:?}",
+                        failure.error()
+                    )
+                }
+            }
+        }
+
+        fn workspace(
+            selection: Qwen3PlanSelection,
+            identity_byte: u8,
+        ) -> ferric_build::AddresslessM1StepWorkspacePlan {
+            let requirements = m1_step_workspace_requirements(selection)
+                .expect("canonical selection has workspace requirements");
+            let available = AvailableM1StepWorkspace::new(M1StepWorkspaceDeclaration::new(
+                selection,
+                DeclaredM1StepWorkspaceAllocation::new(
+                    Identity::new([identity_byte; 32]),
+                    requirements.allocation_byte_len(),
+                    requirements.allocation_alignment(),
+                ),
+                requirements.ranges().to_vec().into_boxed_slice(),
+            ));
+            match plan_addressless_m1_step_workspace(selection, available) {
+                M1StepWorkspacePlanOutcome::Planned(plan) => plan,
+                M1StepWorkspacePlanOutcome::Rejected(_) => panic!("test workspace rejected"),
+            }
+        }
+
+        let plan = serving_plan(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        let draft = input(
+            StepPlan::new(request, epoch, Identity::new([51; 32]), plan.draft()),
+            vec![anchor],
+            vec![draft_committed],
+            draft_committed,
+        );
+        let target = input(
+            StepPlan::new(request, epoch, Identity::new([52; 32]), plan.target()),
+            vec![anchor, target_future_token, 0, 0, 0],
+            (target_committed..target_committed + 5).collect(),
+            target_committed,
+        );
+        let preparation = crate::M1FullStepWorkspacePlans::speculative_round(
+            workspace(plan.draft(), 53),
+            workspace(plan.target(), 54),
+        );
+        let recipe = crate::M1FullStepWorkspacePlans::speculative_round(
+            workspace(plan.draft(), 53),
+            workspace(plan.target(), 54),
+        );
+        M1ServingQueuedSameShapeRearmV1::new(
+            M1ServingQueuedGenerationBindingV1::new(plan, vec![request].into_boxed_slice(), epoch),
+            crate::M1LongLivedQueueRearmKvInputsV1::speculative_round(
+                draft,
+                target,
+                vec![Vec::new()],
+                vec![Vec::new()],
+            ),
+            preparation,
+            recipe,
+        )
+    }
+
     #[test]
     fn terminal_stage_is_derived_from_typed_lower_custody() {
         let retained_plan = serving_plan(
@@ -3006,6 +3347,304 @@ mod tests {
         let recovered = failure.into_input();
         assert_eq!(recovered.binding().epoch(), epoch);
         assert!(recovered.matches_anchor(7));
+    }
+
+    #[test]
+    fn dynamic_s1_k4_rearm_requires_exact_quiescent_commit_binding() {
+        use M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1 as Unavailable;
+
+        let identity = M1ServingPhysicalRunnerAdapterIdentityV1::fresh()
+            .expect("test process has adapter identities");
+        let other = M1ServingPhysicalRunnerAdapterIdentityV1::fresh()
+            .expect("test process has adapter identities");
+        let request = RequestId::new(7, 1);
+        let plan = serving_plan(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        let epoch = CompletionEpoch::new(2);
+        let binding = M1ServingQueuedGenerationBindingV1::new(
+            plan,
+            vec![request].into_boxed_slice(),
+            CompletionEpoch::new(3),
+        );
+        let validate = |provider_available, pending_generation_count, phase, custody_identity| {
+            validate_s1_k4_rearm_enqueue(
+                provider_available,
+                pending_generation_count,
+                identity,
+                phase,
+                Some(plan),
+                custody_identity,
+                epoch,
+                plan,
+                plan.target(),
+                epoch,
+                &[request],
+                &binding,
+            )
+        };
+
+        assert_eq!(
+            validate(
+                false,
+                0,
+                M1ServingPhysicalRunnerAdapterPhaseV1::InitialReady,
+                other,
+            ),
+            Err(Unavailable::ProviderUnavailable)
+        );
+        assert_eq!(
+            validate(
+                true,
+                1,
+                M1ServingPhysicalRunnerAdapterPhaseV1::InitialReady,
+                other,
+            ),
+            Err(Unavailable::ProviderQueueNotEmpty)
+        );
+        assert_eq!(
+            validate(
+                true,
+                0,
+                M1ServingPhysicalRunnerAdapterPhaseV1::Quiescent { epoch },
+                other,
+            ),
+            Err(Unavailable::CustodyIdentityMismatch)
+        );
+        assert_eq!(
+            validate(
+                true,
+                0,
+                M1ServingPhysicalRunnerAdapterPhaseV1::Readback { epoch },
+                identity,
+            ),
+            Err(Unavailable::QuiescentPhaseMismatch)
+        );
+        assert_eq!(
+            validate(
+                true,
+                0,
+                M1ServingPhysicalRunnerAdapterPhaseV1::Quiescent { epoch },
+                identity,
+            ),
+            Ok(())
+        );
+
+        assert_eq!(
+            validate_s1_k4_rearm_enqueue(
+                true,
+                0,
+                identity,
+                M1ServingPhysicalRunnerAdapterPhaseV1::Quiescent { epoch },
+                Some(plan),
+                identity,
+                epoch,
+                plan,
+                plan.target(),
+                CompletionEpoch::new(1),
+                &[request],
+                &binding,
+            ),
+            Err(Unavailable::CommitOutcomeMismatch)
+        );
+        assert_eq!(
+            validate_s1_k4_rearm_enqueue(
+                true,
+                0,
+                identity,
+                M1ServingPhysicalRunnerAdapterPhaseV1::Quiescent { epoch },
+                None,
+                identity,
+                epoch,
+                plan,
+                plan.target(),
+                epoch,
+                &[request],
+                &binding,
+            ),
+            Err(Unavailable::UnsupportedTransition)
+        );
+        assert_eq!(
+            validate_s1_k4_rearm_enqueue(
+                true,
+                0,
+                identity,
+                M1ServingPhysicalRunnerAdapterPhaseV1::Quiescent { epoch },
+                Some(plan),
+                identity,
+                epoch,
+                plan,
+                plan.draft(),
+                epoch,
+                &[request],
+                &binding,
+            ),
+            Err(Unavailable::CommitOutcomeMismatch)
+        );
+        assert_eq!(
+            validate_s1_k4_rearm_enqueue(
+                true,
+                0,
+                identity,
+                M1ServingPhysicalRunnerAdapterPhaseV1::Quiescent { epoch },
+                Some(plan),
+                identity,
+                epoch,
+                plan,
+                plan.target(),
+                epoch,
+                &[],
+                &binding,
+            ),
+            Err(Unavailable::BindingMismatch)
+        );
+        let stale = M1ServingQueuedGenerationBindingV1::new(
+            plan,
+            vec![request].into_boxed_slice(),
+            CompletionEpoch::new(4),
+        );
+        assert_eq!(
+            validate_s1_k4_rearm_enqueue(
+                true,
+                0,
+                identity,
+                M1ServingPhysicalRunnerAdapterPhaseV1::Quiescent { epoch },
+                Some(plan),
+                identity,
+                epoch,
+                plan,
+                plan.target(),
+                epoch,
+                &[request],
+                &stale,
+            ),
+            Err(Unavailable::BindingMismatch)
+        );
+    }
+
+    #[test]
+    fn dynamic_s1_k4_rearm_requires_committed_anchor_and_role_cursors() {
+        use M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1 as Unavailable;
+
+        let request = RequestId::new(7, 1);
+        let epoch = CompletionEpoch::new(3);
+        let exact = queued_s1_k4_rearm_test_input(request, epoch, 900, 133, 132, 0);
+        let authority = M1CommittedS1K4RearmMemberAuthorityV1 {
+            request,
+            anchor: Some(900),
+            target_committed: 133,
+            draft_committed: 132,
+        };
+        assert_eq!(
+            validate_committed_s1_k4_rearm_input(&exact, &[request], [authority].into_iter()),
+            Ok(())
+        );
+
+        let substituted_anchor = queued_s1_k4_rearm_test_input(request, epoch, 901, 133, 132, 0);
+        assert_eq!(
+            validate_committed_s1_k4_rearm_input(
+                &substituted_anchor,
+                &[request],
+                [authority].into_iter(),
+            ),
+            Err(Unavailable::CommittedInputMismatch)
+        );
+        let substituted_cursor = queued_s1_k4_rearm_test_input(request, epoch, 900, 134, 132, 0);
+        assert_eq!(
+            validate_committed_s1_k4_rearm_input(
+                &substituted_cursor,
+                &[request],
+                [authority].into_iter(),
+            ),
+            Err(Unavailable::CommittedInputMismatch)
+        );
+        let substituted_draft_cursor =
+            queued_s1_k4_rearm_test_input(request, epoch, 900, 133, 131, 0);
+        assert_eq!(
+            validate_committed_s1_k4_rearm_input(
+                &substituted_draft_cursor,
+                &[request],
+                [authority].into_iter(),
+            ),
+            Err(Unavailable::CommittedInputMismatch)
+        );
+        let nonzero_future_placeholder =
+            queued_s1_k4_rearm_test_input(request, epoch, 900, 133, 132, 1);
+        assert_eq!(
+            validate_committed_s1_k4_rearm_input(
+                &nonzero_future_placeholder,
+                &[request],
+                [authority].into_iter(),
+            ),
+            Err(Unavailable::CommittedInputMismatch)
+        );
+        assert_eq!(
+            validate_committed_s1_k4_rearm_input(
+                &exact,
+                &[request],
+                [M1CommittedS1K4RearmMemberAuthorityV1 {
+                    request: RequestId::new(8, 1),
+                    ..authority
+                }]
+                .into_iter(),
+            ),
+            Err(Unavailable::CommitOutcomeMismatch)
+        );
+        assert_eq!(
+            validate_committed_s1_k4_rearm_input(
+                &exact,
+                &[request],
+                [M1CommittedS1K4RearmMemberAuthorityV1 {
+                    request,
+                    anchor: None,
+                    target_committed: 133,
+                    draft_committed: 132,
+                }]
+                .into_iter(),
+            ),
+            Err(Unavailable::CommitOutcomeMismatch)
+        );
+    }
+
+    #[test]
+    fn dynamic_s1_k4_rearm_failures_retain_preboxed_input() {
+        let request = RequestId::new(7, 1);
+        let epoch = CompletionEpoch::new(3);
+        let input = Box::new(queued_s1_k4_rearm_test_input(
+            request, epoch, 900, 133, 132, 0,
+        ));
+        let input_address = std::ptr::from_ref(input.as_ref());
+        let failure = M1ServingPhysicalRunnerS1K4RearmEnqueueFailureV1::Unavailable {
+            source: M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1::CommitOutcomeMismatch,
+            input,
+        };
+        assert_eq!(
+            failure.unavailable(),
+            Some(M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1::CommitOutcomeMismatch)
+        );
+        assert!(failure.provider_failure().is_none());
+        assert_eq!(std::ptr::from_ref(failure.input()), input_address);
+        assert_eq!(failure.input().binding().epoch(), epoch);
+        let recovered = failure.into_input();
+        assert_eq!(recovered.binding().requests(), &[request]);
+
+        let input = Box::new(queued_s1_k4_rearm_test_input(
+            request, epoch, 900, 133, 132, 0,
+        ));
+        let input_address = std::ptr::from_ref(input.as_ref());
+        let source = Vec::<u8>::new()
+            .try_reserve(usize::MAX)
+            .expect_err("usize::MAX queue growth must fail");
+        let failure = M1ServingPhysicalRunnerS1K4RearmEnqueueFailureV1::Provider { source, input };
+        assert_eq!(failure.unavailable(), None);
+        assert!(failure.provider_failure().is_some());
+        assert_eq!(std::ptr::from_ref(failure.input()), input_address);
+        assert_eq!(failure.input().binding().epoch(), epoch);
+        let recovered = failure.into_input();
+        assert_eq!(recovered.binding().requests(), &[request]);
     }
 
     #[test]
