@@ -83,6 +83,41 @@ fn source_has_one_exact_attributed_kernel_and_no_worker_escape_hatch() {
 }
 
 #[test]
+fn host_build_exposes_the_exact_mapped_kfd_adapter() {
+    use fe2o3_host::__generated::{
+        CompilerGeneratedKernelExpectationV1, CompilerGeneratedKfdArguments, GeneratedKfdReadSlice,
+        GeneratedKfdReadWriteSlice,
+    };
+    use ferric_qwen3_swiglu_device_v1::qwen3_swiglu_bf16_f32_v1_gpu::{Arguments, Marker};
+
+    fn assert_kfd_adapter<'allocation, K, A>()
+    where
+        K: CompilerGeneratedKernelExpectationV1,
+        A: CompilerGeneratedKfdArguments<'allocation, K>,
+    {
+    }
+
+    assert_kfd_adapter::<
+        Marker,
+        Arguments<
+            'static,
+            GeneratedKfdReadSlice<'static, u16>,
+            GeneratedKfdReadSlice<'static, u16>,
+            GeneratedKfdReadWriteSlice<'static, u16>,
+        >,
+    >();
+
+    let gate = [0_u16; 8];
+    let up = [0_u16; 8];
+    let mut output = [0_u16; 8];
+    let _arguments = Arguments::new(
+        GeneratedKfdReadSlice::new(&gate),
+        GeneratedKfdReadSlice::new(&up),
+        GeneratedKfdReadWriteSlice::new(&mut output),
+    );
+}
+
+#[test]
 fn attribute_pins_launch_grid_without_dynamic_control_contracts() {
     let kernel = kernel();
     let attribute = kernel
