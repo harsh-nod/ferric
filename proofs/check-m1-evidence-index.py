@@ -111,7 +111,7 @@ TRUSTED_VALIDATORS = {
     "negative-mutation": (
         "proofs/m1/evidence/validate-negative-mutation.py",
         "ferric.m1-validator.negative-mutation.v1",
-        "c10d89854319fcbbb90f77d555bb409b90218c78d66d368317acbc14e580ec59",
+        "ff415a6207353f13c374736262c268a42b0c286ff97b76d3e3c64680d3bdae8e",
     ),
     "performance-gate": (
         "proofs/m1/evidence/validate-performance-report.py",
@@ -121,7 +121,7 @@ TRUSTED_VALIDATORS = {
     "qualification-receipt": (
         "proofs/m1/evidence/validate-qualification-receipt.py",
         "ferric.m1-validator.qualification-receipt.v1",
-        "a0442dfb098e01d01b0078cd97e72d0db88d249134656efc6e024fd650abcb67",
+        "cf2f043001815f06220dbf03a8131a3931c01b4c8b96681ed07e626374b36612",
     ),
     "tcb-report": (
         "proofs/m1/evidence/validate-tcb-report.py",
@@ -136,7 +136,7 @@ TRUSTED_VALIDATORS = {
     "verus-theorem": (
         "proofs/m1/evidence/validate-verus-theorem.py",
         "ferric.m1-validator.verus-theorem.v1",
-        "54da72b07191eacf61cd01ab6f4d2620ef8db8ce60e9b09d79591845f70ac447",
+        "6b9c705a9d2f9c26dfcf1836cd2fc62c2da56c73e33ab8314e22437e5f216a01",
     ),
 }
 
@@ -294,26 +294,45 @@ def git_identity(repo: Path) -> tuple[str, str]:
     return values[0], values[1]
 
 
-def git_tree_paths(repo: Path) -> set[str]:
+def git_tree_modes(repo: Path) -> dict[str, int]:
     result = subprocess.run(
-        ["git", "-C", str(repo), "ls-tree", "-r", "--name-only", "HEAD"],
+        ["git", "-C", str(repo), "ls-tree", "-rz", "--full-tree", "HEAD"],
         check=False,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        text=True,
         env={"PATH": os.environ.get("PATH", "")},
     )
     if result.returncode != 0:
-        fail(f"cannot enumerate exact Git tree: {repo}: {result.stderr.strip()}")
-    return {
-        value
-        for value in result.stdout.splitlines()
-        if not any(part in SOURCE_EXCLUDED_DIRECTORIES for part in Path(value).parts)
-        and Path(value).suffix not in SOURCE_EXCLUDED_SUFFIXES
-    }
+        error = result.stderr.decode("utf-8", errors="replace").strip()
+        fail(f"cannot enumerate exact Git tree: {repo}: {error}")
+    modes: dict[str, int] = {}
+    for record in result.stdout.split(b"\0"):
+        if not record:
+            continue
+        header, separator, raw_name = record.partition(b"\t")
+        fields = header.split(b" ")
+        if not separator or len(fields) != 3:
+            fail(f"exact Git tree contains a malformed entry: {repo}")
+        try:
+            git_mode = fields[0].decode("ascii")
+            object_type = fields[1].decode("ascii")
+            name = raw_name.decode("utf-8")
+        except UnicodeDecodeError:
+            fail(f"exact Git tree contains a non-UTF-8 entry: {repo}")
+        if any(part in SOURCE_EXCLUDED_DIRECTORIES for part in Path(name).parts) or (
+            Path(name).suffix in SOURCE_EXCLUDED_SUFFIXES
+        ):
+            continue
+        if object_type != "blob" or git_mode not in {"100644", "100755"}:
+            fail(f"exact Git tree contains a non-regular entry: {name}")
+        if name in modes:
+            fail(f"exact Git tree contains a duplicate entry: {name}")
+        modes[name] = 0o755 if git_mode == "100755" else 0o644
+    return modes
 
 
 def source_closure(repo: Path) -> tuple[bytes, set[str]]:
+    tree_modes = git_tree_modes(repo)
     records: list[str] = []
     paths: set[str] = set()
     try:
@@ -333,15 +352,20 @@ def source_closure(repo: Path) -> tuple[bytes, set[str]]:
             if path.suffix in SOURCE_EXCLUDED_SUFFIXES:
                 fail(f"M1 source closure contains a generated input: {path}")
             relative_name = relative.as_posix()
-            mode = stat.S_IMODE(path.stat().st_mode)
+            metadata = path.stat()
+            mode = tree_modes.get(relative_name)
+            if mode is None:
+                fail(f"M1 source closure is not the exact committed tree: {repo}")
             records.append(
-                f"{relative_name}|{mode:o}|{path.stat().st_size}|{digest_file(path)}"
+                f"{relative_name}|{mode:o}|{metadata.st_size}|{digest_file(path)}"
             )
             paths.add(relative_name)
     except (OSError, ValueError) as error:
         fail(f"cannot measure M1 source closure for {repo}: {error}")
     if not records:
         fail(f"M1 source closure is empty: {repo}")
+    if paths != set(tree_modes):
+        fail(f"M1 source closure is not the exact committed tree: {repo}")
     return ("\n".join(records) + "\n").encode("utf-8"), paths
 
 
@@ -463,7 +487,7 @@ def validate_sources(
         if artifact is None or artifact["kind"] != "SourceClosure":
             fail(f"M1 source closure artifact is unavailable or mistyped: {identifier}")
         closure, members = source_closure(repositories[repository])
-        if members != git_tree_paths(repositories[repository]):
+        if members != set(git_tree_modes(repositories[repository])):
             fail(f"M1 source closure is not the exact committed tree: {identifier}")
         closure_digest = digest_bytes(closure)
         supplied_digest = require_sha256(

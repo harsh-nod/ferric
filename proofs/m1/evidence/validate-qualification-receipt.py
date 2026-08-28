@@ -554,7 +554,47 @@ def included_source_path(name: str) -> bool:
     )
 
 
+def git_tree_modes(repo: Path) -> dict[str, int]:
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repo), "ls-tree", "-rz", "--full-tree", "HEAD"],
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=30,
+            env={"PATH": os.environ.get("PATH", "")},
+        )
+    except (OSError, subprocess.TimeoutExpired) as error:
+        fail(f"Git tree query failed for {repo}: {error}")
+    if result.returncode != 0:
+        error = result.stderr.decode("utf-8", errors="replace").strip()
+        fail(f"Git tree query failed for {repo}: {error}")
+    modes: dict[str, int] = {}
+    for record in result.stdout.split(b"\0"):
+        if not record:
+            continue
+        header, separator, raw_name = record.partition(b"\t")
+        fields = header.split(b" ")
+        if not separator or len(fields) != 3:
+            fail(f"Git tree contains a malformed entry: {repo}")
+        try:
+            git_mode = fields[0].decode("ascii")
+            object_type = fields[1].decode("ascii")
+            name = raw_name.decode("utf-8")
+        except UnicodeDecodeError:
+            fail(f"Git tree contains a non-UTF-8 entry: {repo}")
+        if not included_source_path(name):
+            continue
+        if object_type != "blob" or git_mode not in {"100644", "100755"}:
+            fail(f"Git tree contains a non-regular entry: {name}")
+        if name in modes:
+            fail(f"Git tree contains a duplicate entry: {name}")
+        modes[name] = 0o755 if git_mode == "100755" else 0o644
+    return modes
+
+
 def source_closure(repo: Path) -> tuple[bytes, set[str]]:
+    tree_modes = git_tree_modes(repo)
     records: list[str] = []
     members: set[str] = set()
     try:
@@ -576,18 +616,16 @@ def source_closure(repo: Path) -> tuple[bytes, set[str]]:
             raw = read_bounded(
                 path, MAX_ARTIFACT_BYTES, f"source file {name}", single_link=False
             )
+            mode = tree_modes.get(name)
+            if mode is None:
+                fail(f"source closure is not the exact committed tree: {repo}")
             records.append(
-                f"{name}|{stat.S_IMODE(metadata.st_mode):o}|{len(raw)}|{digest_bytes(raw)}"
+                f"{name}|{mode:o}|{len(raw)}|{digest_bytes(raw)}"
             )
             members.add(name)
     except (OSError, ValueError) as error:
         fail(f"cannot measure source closure for {repo}: {error}")
-    tracked = {
-        name
-        for name in run_git(repo, "ls-tree", "-r", "--name-only", "HEAD").splitlines()
-        if included_source_path(name)
-    }
-    if not records or members != tracked:
+    if not records or members != set(tree_modes):
         fail(f"source closure is not the exact committed tree: {repo}")
     return ("\n".join(records) + "\n").encode("utf-8"), members
 

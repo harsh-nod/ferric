@@ -41,6 +41,42 @@ def git(repo: Path, *arguments: str) -> str:
     return result.stdout
 
 
+def git_tree_modes(repo: Path) -> dict[str, int]:
+    result = subprocess.run(
+        ["git", "-C", str(repo), "ls-tree", "-rz", "--full-tree", "HEAD"],
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if result.returncode != 0:
+        fail(
+            "Git source-closure tree query failed: "
+            + result.stderr.decode("utf-8", errors="replace").strip()
+        )
+    modes: dict[str, int] = {}
+    for record in result.stdout.split(b"\0"):
+        if not record:
+            continue
+        header, separator, raw_name = record.partition(b"\t")
+        fields = header.split(b" ")
+        if not separator or len(fields) != 3:
+            fail("Git source-closure tree entry is malformed")
+        try:
+            git_mode = fields[0].decode("ascii")
+            object_type = fields[1].decode("ascii")
+            name = raw_name.decode("utf-8")
+        except UnicodeDecodeError:
+            fail("Git source-closure tree entry is not UTF-8")
+        if not included(name):
+            continue
+        if object_type != "blob" or git_mode not in {"100644", "100755"}:
+            fail(f"M1 source closure contains a non-regular Git entry: {name}")
+        if name in modes:
+            fail(f"M1 source closure contains a duplicate Git entry: {name}")
+        modes[name] = 0o755 if git_mode == "100755" else 0o644
+    return modes
+
+
 def included(name: str) -> bool:
     path = Path(name)
     return not any(part in EXCLUDED_DIRECTORIES for part in path.parts) and (
@@ -56,6 +92,7 @@ def main() -> None:
     output = Path(sys.argv[2])
     if git(repo, "status", "--porcelain=v1", "--untracked-files=all"):
         fail("M1 source closure requires a clean worktree")
+    tree_modes = git_tree_modes(repo)
 
     records: list[str] = []
     members: set[str] = set()
@@ -75,17 +112,14 @@ def main() -> None:
             if not path.is_file():
                 fail(f"M1 source closure contains a special entry: {name}")
             metadata = path.stat()
-            mode = stat.S_IMODE(metadata.st_mode)
+            mode = tree_modes.get(name)
+            if mode is None:
+                fail("M1 source closure is not the exact committed tree")
             records.append(f"{name}|{mode:o}|{metadata.st_size}|{digest(path)}")
             members.add(name)
     except (OSError, ValueError) as error:
         fail(f"cannot measure M1 source closure: {error}")
-    tracked = {
-        name
-        for name in git(repo, "ls-tree", "-r", "--name-only", "HEAD").splitlines()
-        if included(name)
-    }
-    if not records or members != tracked:
+    if not records or members != set(tree_modes):
         fail("M1 source closure is not the exact committed tree")
     try:
         output.write_text("\n".join(records) + "\n", encoding="utf-8")

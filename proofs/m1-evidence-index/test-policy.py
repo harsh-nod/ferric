@@ -100,8 +100,48 @@ def commit_fixture(repo: Path) -> None:
     git(repo, "commit", "-q", "-m", "synthetic M1 policy fixture")
 
 
+def git_tree_modes(repo: Path) -> dict[str, int]:
+    result = subprocess.run(
+        ["git", "-C", str(repo), "ls-tree", "-rz", "--full-tree", "HEAD"],
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env={"PATH": os.environ.get("PATH", "")},
+    )
+    if result.returncode != 0:
+        error = result.stderr.decode("utf-8", errors="replace").strip()
+        raise RuntimeError(f"cannot enumerate exact Git tree: {error}")
+    modes: dict[str, int] = {}
+    for record in result.stdout.split(b"\0"):
+        if not record:
+            continue
+        header, separator, raw_name = record.partition(b"\t")
+        fields = header.split(b" ")
+        if not separator or len(fields) != 3:
+            raise RuntimeError("exact Git tree contains a malformed entry")
+        try:
+            git_mode = fields[0].decode("ascii")
+            object_type = fields[1].decode("ascii")
+            name = raw_name.decode("utf-8")
+        except UnicodeDecodeError as error:
+            raise RuntimeError("exact Git tree contains a non-UTF-8 entry") from error
+        path = Path(name)
+        if any(part in EXCLUDED_DIRECTORIES for part in path.parts) or (
+            path.suffix in EXCLUDED_SUFFIXES
+        ):
+            continue
+        if object_type != "blob" or git_mode not in {"100644", "100755"}:
+            raise RuntimeError(f"exact Git tree contains a non-regular entry: {name}")
+        if name in modes:
+            raise RuntimeError(f"exact Git tree contains a duplicate entry: {name}")
+        modes[name] = 0o755 if git_mode == "100755" else 0o644
+    return modes
+
+
 def source_closure(repo: Path) -> bytes:
+    tree_modes = git_tree_modes(repo)
     records: list[str] = []
+    members: set[str] = set()
     candidates = sorted(
         repo.rglob("*"), key=lambda path: path.relative_to(repo).as_posix()
     )
@@ -109,15 +149,24 @@ def source_closure(repo: Path) -> bytes:
         relative = path.relative_to(repo)
         if any(part in EXCLUDED_DIRECTORIES for part in relative.parts):
             continue
-        if path.is_dir():
+        metadata = path.lstat()
+        if stat.S_ISLNK(metadata.st_mode):
+            raise RuntimeError(f"source closure contains a symlink: {relative}")
+        if stat.S_ISDIR(metadata.st_mode):
             continue
         if path.suffix in EXCLUDED_SUFFIXES:
             continue
-        mode = stat.S_IMODE(path.stat().st_mode)
+        if not stat.S_ISREG(metadata.st_mode):
+            raise RuntimeError(f"source closure contains a special entry: {relative}")
+        name = relative.as_posix()
+        mode = tree_modes.get(name)
+        if mode is None:
+            raise RuntimeError("source closure is not the exact committed tree")
         content = path.read_bytes()
-        records.append(
-            f"{relative.as_posix()}|{mode:o}|{len(content)}|{sha256(content)}"
-        )
+        records.append(f"{name}|{mode:o}|{len(content)}|{sha256(content)}")
+        members.add(name)
+    if not records or members != set(tree_modes):
+        raise RuntimeError("source closure is not the exact committed tree")
     return ("\n".join(records) + "\n").encode("utf-8")
 
 
