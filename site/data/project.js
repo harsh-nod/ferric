@@ -6,7 +6,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Four finite speculative shapes and four exact production rollover transitions pass the authenticated host gate at 58fd37e. The scoped release proof also passes for that exact source. Ferric source 57f6cfdf completed the protected build for the first Rust Qwen3 kernel family, qualification source 1b77cb5 matched all 3,072 outputs exactly through HIP, and PR #21 at 1ec0d240 records exact protected-build evidence a1b96acf...0960572 without runtime authority. Direct-to-main fe2o3 PR #236 is now at bc237da5 after incorporating main 69980367. Upstream owns issuer pidfd lifecycle, while V2-only admission remains at 2cb6e439 and live provisioning, rustc carriage return, and CompilerExecutionClientV1::acquire remain open. No production Worker V3 verifier, KFD load/dispatch, Qwen execution, performance result, or M1 qualification follows.",
+      "Four finite speculative shapes and four exact production rollover transitions pass the authenticated host gate at 58fd37e. The scoped release proof also passes for that exact source. Ferric source 57f6cfdf completed the protected build for the first Rust Qwen3 kernel family, qualification source 1b77cb5 matched all 3,072 outputs exactly through HIP, and PR #21 at c7362d93 adds an authority-free pending verifier request binder over the exact build and 22 target/draft profiles. Direct-to-main fe2o3 PR #236 is now at bc237da5 after incorporating main 69980367. Upstream owns issuer pidfd lifecycle, while live V2 build and reviewed verifier/rollback authority remain open. No production Worker V3 verifier, KFD load/dispatch, Qwen execution, performance result, or M1 qualification follows.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -30,6 +30,10 @@ window.FERRIC_PROJECT = Object.freeze({
     [
       "Compiler head",
       "fe2o3 PR #236 bc237da5 incorporates main 69980367; V2-only admission feature 2cb6e439",
+    ],
+    [
+      "Pending verifier request",
+      "Ferric PR #21 c7362d93 binds the exact build and 22 profiles; authority-free",
     ],
   ],
   readiness: [
@@ -66,7 +70,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Worker V3 kernel migration",
       state: "observed",
       detail:
-        "Ferric source 57f6cfdf4b3f5177a556159d1e548b25b63a1541 completed the protected qwen3_swiglu_bf16_f32_v1 build on MI300X/gfx942:xnack-. Qualification source 1b77cb5b82e370ca9a46c04d4465d2ba61737d01 matched all 3,072 elements bit-for-bit through HIP. PR #21 at 1ec0d2407f84733f17d24f7049d640b7ba4c71c7 records exact protected-build evidence SHA-256 a1b96acf0b9f32f5f02f0a5c92920df4f24502af674a4d05129eb0c902960572, explicitly without verifier, production load/dispatch, or numerical authority. The exact HIP numerics remain a separate qualification result.",
+        "Ferric source 57f6cfdf4b3f5177a556159d1e548b25b63a1541 completed the protected qwen3_swiglu_bf16_f32_v1 build on MI300X/gfx942:xnack-. Qualification source 1b77cb5b82e370ca9a46c04d4465d2ba61737d01 matched all 3,072 elements bit-for-bit through HIP, and source 1ec0d240 records exact protected-build evidence SHA-256 a1b96acf0b9f32f5f02f0a5c92920df4f24502af674a4d05129eb0c902960572. PR #21 at c7362d93d031f735ade33bf8bfa25ff8250e359b adds an authority-free pending verifier request binder over that build, 22 target/draft profiles, ABI and launch semantics, and untrusted projected V2 carriage axes. It rejects current V1 evidence and grants no compiler, load, or launch authority.",
     },
     {
       label: "Mapped KFD adapter binding",
@@ -135,6 +139,11 @@ window.FERRIC_PROJECT = Object.freeze({
         detail:
           "The harness loaded and dispatched exact HSACO 57ecb86b40db136237e65a5fae04c955f2c92fe3347c085ec5c806984fc6afa7 on gfx942:sramecc+:xnack-. All 3,072 elements matched exactly, max ULP was 0, and no value exceeded 1 ULP. This evidence is intentionally separate from production Worker V3 verification and KFD execution.",
       },
+      {
+        name: "Authority-free pending verifier request",
+        detail:
+          "Ferric PR #21 at c7362d93d031f735ade33bf8bfa25ff8250e359b binds the exact protected build, 22 target/draft profiles, ABI and launch semantics, and untrusted projected V2 carriage axes into a pending SwiGLU verifier request. It rejects current V1 evidence, grants no compiler, load, or launch authority, and is not the future fe2o3 adapter.",
+      },
     ],
     roadmap: [
       {
@@ -145,12 +154,12 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Worker V3 artifact migration",
         detail:
-          "Ferric PR #21 at 1ec0d2407f84733f17d24f7049d640b7ba4c71c7 carries the mapped-adapter artifact, its exact protected-build evidence record, and separate qualification-only HIP numerics. fe2o3 PR #236 at bc237da5af8dc1871f4cd0b963ad948a3e89d52f incorporates current main and retains the V2-only admission feature from 2cb6e439. Fresh production completion remains closed pending live provisioning, rustc receipt carriage return, and compiler-service acquisition. Six kernel families, the generated runner and model bundle, production KFD load/dispatch, performance validation, independent evidence, and formal M1 closure remain open.",
+          "Ferric PR #21 at c7362d93d031f735ade33bf8bfa25ff8250e359b carries the mapped-adapter artifact, exact protected-build evidence, separate qualification-only HIP numerics, and an authority-free pending verifier request binder. fe2o3 PR #236 at bc237da5af8dc1871f4cd0b963ad948a3e89d52f incorporates current main and retains the V2-only admission feature from 2cb6e439. A live V2 build and reviewed verifier/rollback authority remain open. Six kernel families, the generated runner and model bundle, production KFD load/dispatch, performance validation, independent evidence, and formal M1 closure remain open.",
       },
       {
         name: "Production verifier refinement chain",
         detail:
-          "The production path remains fail-closed. Upstream now owns issuer pidfd lifecycle, but live provisioning, rustc carriage return, and the CompilerExecutionClientV1::acquire join are not wired end to end. Borrowed receipt carriage, exact build evidence, and the qualification-only HIP result do not grant production Worker V3 verifier or KFD load/dispatch authority.",
+          "The production path remains fail-closed. The Ferric binder is a pending, authority-free request, not the future fe2o3 adapter. A live V2 build, end-to-end provisioning and receipt carriage, and reviewed verifier/rollback authority remain required. Borrowed receipt carriage, exact build evidence, and qualification-only HIP results do not grant production Worker V3 verifier or KFD load/dispatch authority.",
       },
       {
         name: "Full M1 evidence closure",
@@ -165,16 +174,16 @@ window.FERRIC_PROJECT = Object.freeze({
     ],
   },
   latestObservation: {
-    title: "Protected Worker V3 build evidence is recorded",
+    title: "Pending SwiGLU verifier request is bound",
     date: "2026-08-27",
     state: "implemented",
-    commit: "1ec0d2407f84733f17d24f7049d640b7ba4c71c7",
-    buildId: "Evidence SHA-256 a1b96acf0b9f32f5f02f0a5c92920df4f24502af674a4d05129eb0c902960572",
-    environment: "Ferric PR #21; inert protected-build publication custody",
-    result: "Exact protected-build evidence record added",
+    commit: "c7362d93d031f735ade33bf8bfa25ff8250e359b",
+    buildId: "Exact protected build plus 22 target/draft profiles",
+    environment: "Ferric PR #21; authority-free pending request binding",
+    result: "V1 evidence rejected; projected V2 carriage remains untrusted",
     generatedTokenIds: [],
     authority:
-      "Record custody only. The evidence record explicitly grants no verifier, production load/dispatch, or numerical authority. Exact gfx942 numerics remain a separate qualification-only HIP observation; neither result grants Qwen inference, performance, independent-validation, or M1 qualification authority.",
+      "Request binding only. It grants no compiler, verifier, load, or launch authority and is not the future fe2o3 adapter. A live V2 build and reviewed verifier/rollback authority remain blockers; no Qwen inference, performance, independent-validation, or M1 qualification authority follows.",
   },
   validation: {
     host: {
@@ -213,6 +222,13 @@ window.FERRIC_PROJECT = Object.freeze({
       "The transition catalog is exact. Target-only decode transitions and every unlisted cross-plan transition require explicit queue retirement and fresh launch; they do not inherit native rollover support.",
   },
   recentProgress: [
+    {
+      commit: "c7362d93d031f735ade33bf8bfa25ff8250e359b",
+      title: "Bind the pending SwiGLU verifier request",
+      state: "implemented",
+      detail:
+        "Ferric PR #21 binds the exact protected build, 22 target/draft profiles, ABI and launch semantics, and untrusted projected V2 carriage axes. The binder rejects current V1 evidence, grants no compiler, load, or launch authority, and is not the future fe2o3 adapter. Reviewed verifier/rollback authority and a live V2 build remain blockers.",
+    },
     {
       commit: "bc237da5af8dc1871f4cd0b963ad948a3e89d52f",
       title: "Advance receipt-bearing admission to current fe2o3 main",
@@ -439,7 +455,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "Model and tokenizer admission",
       "Qwen graph and execution planning",
       "Ferric-owned inference kernels",
-      "Mapped-adapter build 57f6cfdf, qualification 1b77cb5, and evidence record 1ec0d240 in PR #21; root legacy V2 workspace remains frozen",
+      "Mapped-adapter build 57f6cfdf, qualification 1b77cb5, evidence record 1ec0d240, and authority-free request binder c7362d93 in PR #21; root legacy V2 workspace remains frozen",
       "Scheduling, paged KV, and speculation",
       "Generated runner and qualification policy",
     ],
