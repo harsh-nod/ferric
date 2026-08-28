@@ -7,14 +7,21 @@ pointer-plus-length slice ABI, exact admitted extents, 256-workitem workgroup,
 and eight contiguous output elements per workitem.
 
 The crate is intentionally outside Ferric's stable host workspace and pins the
-latest reviewed fe2o3 source used for this migration, including the generic
-external-device dependency disambiguation at `2347052f67cf`. Passing its
-host-side source and reference tests establishes only the attributed Rust
-source contract. It does not establish production compilation, HSACO
-inspection, dispatch authority, numerical qualification, or M1 evidence.
+exact combined fe2o3 device-provider revision `2c7668d23326`. That revision
+includes external-device dependency disambiguation, authenticated BF16
+conversion terminals that remain calls in optimized external MIR, and strict
+gfx942 OCML exp admission with the reviewed ROCm 7.2.4 provider hashes. It also
+keeps the blocked-index producer and output accessor visible as authenticated
+semantic terminals in release builds. The kernel spells its eight owned output
+components as eight constant blocked-access calls so M1 does not depend on a
+new loop-carried race/progress proof in fe2o3. Passing its host-side source and
+reference tests establishes only the attributed Rust source contract. It does
+not establish production compilation, HSACO inspection, dispatch authority,
+numerical qualification, or M1 evidence.
 
-The current upstream prerequisites are production BF16 conversion/carrier
-lowering, the compiler-owned gfx942 OCML exponential provider envelope, and the
-generic Worker V3 verifier/runtime authorization join. After those land, build
-this crate only through `cargo fe2o3 authority release build` with an admitted
-`FE2O3_PRODUCTION_BUILD_CONFIG_V1`.
+The pinned fe2o3 stack contains the reviewed BF16, OCML, provenance, and blocked
+terminal support. Production compiler integration remains open; no successful
+replacement artifact exists yet. Every production attempt must use `cargo
+fe2o3 authority release build` with an admitted
+`FE2O3_PRODUCTION_BUILD_CONFIG_V1`, followed by strict Worker V3 artifact
+inspection and the verifier/runtime authorization join.
