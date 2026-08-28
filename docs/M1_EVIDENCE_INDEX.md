@@ -18,12 +18,14 @@ Before external evidence exists, run the static infrastructure preflight:
 ```text
 python3 -I proofs/m1-evidence-index/check-infrastructure.py FERRIC_REPO
 python3 -I proofs/m1-evidence-index/test-infrastructure-policy.py
+python3 -I -B proofs/m1/evidence/test-source-closure-mode-policy.py
 ```
 
 The preflight independently checks that the requirements evidence vocabulary,
 index-checker artifact and validator registries, validator source pins,
 protocols, literal obligation-class support, TCB-report mirror,
-qualification-receipt mirror, and seven receipt gates are mutually complete.
+qualification-receipt mirror, seven receipt gates, and committed-tree source
+mode policy are mutually complete.
 It does not read or generate an evidence index,
 run a qualification gate, create a receipt, or change any `Open` obligation.
 
@@ -72,7 +74,9 @@ base from the requirements manifest. Qualified commits may be descendants,
 but the supplied repositories must have the exact named `HEAD` commit and
 tree. Each repository must be clean, and its measured closure path roster must
 equal the committed tree after the checker's narrowly defined generated-file
-exclusions.
+exclusions. Source records canonicalize regular-file permissions to `0755`
+when the exact `HEAD` tree entry is `100755` and `0644` when it is `100644`.
+Live checkout permission bits and umask do not contribute to this identity.
 
 Every required path resolves through one source identity and must be a regular
 file in that repository's measured source closure. Every external receipt,

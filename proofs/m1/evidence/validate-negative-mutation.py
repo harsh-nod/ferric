@@ -304,7 +304,50 @@ def git_identity(repo: Path) -> tuple[str, str]:
     )
 
 
+def git_tree_modes(repo: Path) -> dict[str, int]:
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repo), "ls-tree", "-rz", "--full-tree", "HEAD"],
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=10,
+            env={"PATH": os.environ.get("PATH", "")},
+        )
+    except (OSError, subprocess.TimeoutExpired) as error:
+        fail(f"cannot enumerate qualified Ferric tree: {error}")
+    if result.returncode != 0:
+        error = result.stderr.decode("utf-8", errors="replace").strip()
+        fail(f"cannot enumerate qualified Ferric tree: {error}")
+    modes: dict[str, int] = {}
+    for record in result.stdout.split(b"\0"):
+        if not record:
+            continue
+        header, separator, raw_name = record.partition(b"\t")
+        fields = header.split(b" ")
+        if not separator or len(fields) != 3:
+            fail("qualified Ferric tree contains a malformed entry")
+        try:
+            git_mode = fields[0].decode("ascii")
+            object_type = fields[1].decode("ascii")
+            name = raw_name.decode("utf-8")
+        except UnicodeDecodeError:
+            fail("qualified Ferric tree contains a non-UTF-8 entry")
+        path = Path(name)
+        if any(part in SOURCE_EXCLUDED_DIRECTORIES for part in path.parts) or (
+            path.suffix in SOURCE_EXCLUDED_SUFFIXES
+        ):
+            continue
+        if object_type != "blob" or git_mode not in {"100644", "100755"}:
+            fail(f"qualified Ferric tree contains a non-regular entry: {name}")
+        if name in modes:
+            fail(f"qualified Ferric tree contains a duplicate entry: {name}")
+        modes[name] = 0o755 if git_mode == "100755" else 0o644
+    return modes
+
+
 def source_closure(repo: Path) -> tuple[bytes, set[str]]:
+    tree_modes = git_tree_modes(repo)
     records: list[str] = []
     members: set[str] = set()
     try:
@@ -329,13 +372,19 @@ def source_closure(repo: Path) -> tuple[bytes, set[str]]:
                 )
             name = relative.as_posix()
             metadata = path.stat()
-            mode = stat.S_IMODE(metadata.st_mode)
+            mode = tree_modes.get(name)
+            if mode is None:
+                fail(
+                    "qualified Ferric source closure is not the exact committed tree"
+                )
             records.append(f"{name}|{mode:o}|{metadata.st_size}|{digest_file(path)}")
             members.add(name)
     except (OSError, ValueError) as error:
         fail(f"cannot measure qualified Ferric source closure: {error}")
     if not records:
         fail("qualified Ferric source closure is empty")
+    if members != set(tree_modes):
+        fail("qualified Ferric source closure is not the exact committed tree")
     return ("\n".join(records) + "\n").encode("utf-8"), members
 
 
@@ -349,15 +398,7 @@ def qualified_source_identity(repo: Path) -> tuple[str, str, str]:
         fail("qualified Ferric source worktree is not clean")
     commit, tree = git_identity(repo)
     closure, members = source_closure(repo)
-    tracked = {
-        name
-        for name in command_output(
-            repo, ["ls-tree", "-r", "--name-only", "HEAD"], "enumerate Ferric tree"
-        ).splitlines()
-        if not any(part in SOURCE_EXCLUDED_DIRECTORIES for part in Path(name).parts)
-        and Path(name).suffix not in SOURCE_EXCLUDED_SUFFIXES
-    }
-    if members != tracked:
+    if members != set(git_tree_modes(repo)):
         fail("qualified Ferric source closure is not the exact committed tree")
     return commit, tree, digest_bytes(closure)
 
