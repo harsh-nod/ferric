@@ -38,7 +38,7 @@ checked-in V1 candidate is rejected explicitly by
 
 The standalone
 `adapters/qwen3-swiglu-worker-v3-envelope-v2` package now pins fe2o3
-`c6b53d97745ceb918dd4972b2154363ce370a75b`. Its raw entry point strictly
+`5362f3cba0fccf1c75c6b34d94240b29f17d7b9b`. Its raw entry point strictly
 decodes V2 into an inert request. Its recovered entry point consumes and
 retains one move-only `RecoveredWorkerV3LoadEnvelopeV2`, derives every
 compiler-receipt identity from that owner's carriage, checks the exact carried
@@ -57,11 +57,16 @@ authority.
 The pinned fe2o3 integration head combines the V2 codec, strict restart
 recovery, retained carriage, and V2-only host admission with pidfd-owned issuer
 lifecycle, the fixed protected listener, a bounded worker pool, and the
-policy-bound rustc FD 202/195/196 client session. Fresh Cargo completion still
-fails closed: deployment does not yet provision the launcher, issuer, root,
-key, distinct-UID service, and fixed listener; Cargo does not construct the
-policy/session or connect to that service; and the backend does not consume FD
-195, acquire the exact-subject carriage, and return it on FD 196.
+policy-bound rustc FD 202/195/196 client session. Its fixed production
+supervisor connector is available: the child-session transfer creates the
+connection internally and permits neither an alternate path nor a caller-owned
+control descriptor. Fresh Cargo completion still fails closed because the
+active `cargo-fe2o3` binding wrapper does not construct that child session or
+invoke the connector. The rustc/backend path does not yet consume FD 195,
+acquire the exact-subject carriage, or return it on FD 196. Deployment also
+remains outstanding: it must provision the launcher and issuer images,
+service-owned root, sealed key, distinct supervisor UID/GID, and service process
+receiving the fixed listener descriptor.
 
 The remaining production join must:
 

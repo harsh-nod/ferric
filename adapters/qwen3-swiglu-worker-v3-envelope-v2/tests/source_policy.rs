@@ -1,10 +1,11 @@
 const SOURCE: &str = include_str!("../src/lib.rs");
 const MANIFEST: &str = include_str!("../Cargo.toml");
 const LOCKFILE: &str = include_str!("../Cargo.lock");
+const ADMISSION_DOC: &str = include_str!("../../../docs/M1_QWEN3_SWIGLU_PRODUCTION_ADMISSION.md");
 const BUILD_EVIDENCE: &str =
     include_str!("../../../proofs/m1/evidence/PROTECTED_WORKER_V3_SWIGLU_BUILD.json");
 
-const FE2O3_REVISION: &str = "c6b53d97745ceb918dd4972b2154363ce370a75b";
+const FE2O3_REVISION: &str = "5362f3cba0fccf1c75c6b34d94240b29f17d7b9b";
 
 #[test]
 fn public_adapter_surface_has_no_parallel_identity_inputs() {
@@ -48,6 +49,26 @@ fn standalone_manifest_and_lock_pin_the_exact_current_fe2o3_revision() {
     assert!(MANIFEST.contains("[workspace]"));
     assert!(MANIFEST.contains(&format!("rev = \"{FE2O3_REVISION}\"")));
     assert!(LOCKFILE.contains(&format!("rev={FE2O3_REVISION}#{FE2O3_REVISION}")));
+    assert!(ADMISSION_DOC.contains(FE2O3_REVISION));
+}
+
+#[test]
+fn admission_doc_does_not_confuse_the_fixed_connector_with_cargo_completion() {
+    let normalized = ADMISSION_DOC
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ");
+    for boundary in [
+        "fixed production supervisor connector is available",
+        "binding wrapper does not construct that child session or invoke the connector",
+        "does not yet consume FD 195, acquire the exact-subject carriage, or return it on FD 196",
+        "Deployment also remains outstanding",
+    ] {
+        assert!(
+            normalized.contains(boundary),
+            "admission document is missing boundary: {boundary}"
+        );
+    }
 }
 
 #[test]
