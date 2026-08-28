@@ -108,6 +108,22 @@ def digest(label: str) -> str:
     return hashlib.sha256(label.encode("ascii")).hexdigest()
 
 
+def cargo_environment() -> dict[str, str]:
+    environment = {"PATH": os.environ.get("PATH", "")}
+    for name in ("CARGO_HOME", "CARGO_TARGET_DIR"):
+        if value := os.environ.get(name):
+            environment[name] = value
+    return environment
+
+
+def cargo_target_directory(repo: Path) -> Path:
+    value = os.environ.get("CARGO_TARGET_DIR")
+    if not value:
+        return repo / "target"
+    path = Path(value)
+    return path if path.is_absolute() else repo / path
+
+
 def invoke(
     repo: Path, suite: str, arguments: list[str], *, expected_status: int = 0
 ) -> subprocess.CompletedProcess[bytes]:
@@ -129,7 +145,7 @@ def invoke(
         check=False,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        env={"PATH": os.environ.get("PATH", "")},
+        env=cargo_environment(),
     )
     if result.returncode != expected_status:
         fail(
@@ -1037,7 +1053,7 @@ def exercise_differential_producer(
     bare_output = scratch / "differential.bare.bundle"
     bare_result = subprocess.run(
         [
-            str(repo / "target/debug/ferric-m1-differential"),
+            str(cargo_target_directory(repo) / "debug/ferric-m1-differential"),
             "produce",
             plan_path.name,
             pairs_path.name,
@@ -1047,7 +1063,7 @@ def exercise_differential_producer(
         check=False,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        env={"PATH": os.environ.get("PATH", "")},
+        env=cargo_environment(),
     )
     if bare_result.returncode != 0 or not (bare_output / "records.json").is_file():
         fail(
