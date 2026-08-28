@@ -6,7 +6,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Four finite speculative shapes and four exact production rollover transitions pass the authenticated host gate at 58fd37e. The scoped release proof also passes for that exact source. Ferric source 57f6cfdf completed the protected build for the first Rust Qwen3 kernel family, qualification source 1b77cb5 matched all 3,072 outputs exactly through HIP, and PR #21 at c7362d93 adds an authority-free pending verifier request binder over the exact build and 22 target/draft profiles. Direct-to-main fe2o3 PR #236 is now at 7eba36c2, incorporating main 002029af and exact PID-bound V2 receipt return. Listener deployment, binding-wrapper coordination, backend installation and exchange, the parent V2 join, and reviewed verifier/rollback authority remain open. No production Worker V3 verifier, KFD load/dispatch, Qwen execution, performance result, or M1 qualification follows.",
+      "Four finite speculative shapes and four exact production rollover transitions pass the authenticated host gate at 58fd37e. The scoped release proof also passes for that exact source. Ferric source 57f6cfdf completed the protected build for the first Rust Qwen3 kernel family, and qualification source 1b77cb5 matched all 3,072 outputs exactly through HIP. Ferric PR #21 at 311a1aa9 now contains a tested recovered-V2 custody adapter at 7b3a05f1, pinned to fe2o3 PR #236 c6b53d97 on main 7639a997. No live V2 kernel occurrence, repository-label or host-descriptor lineage, deployed authority service and FD195/196 exchange, policy/rollback/verifier authority, production KFD load/dispatch, whole-Qwen execution, performance result, or M1 qualification follows.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -29,11 +29,15 @@ window.FERRIC_PROJECT = Object.freeze({
     ],
     [
       "Compiler head",
-      "fe2o3 PR #236 7eba36c2 incorporates main 002029af; FD195 intake and PID-bound FD196 return",
+      "fe2o3 PR #236 c6b53d97 on main 7639a997; bounded issuer service and V2 receipt session",
     ],
     [
       "Pending verifier request",
       "Ferric PR #21 c7362d93 binds the exact build and 22 profiles; authority-free",
+    ],
+    [
+      "V2 custody adapter",
+      "Ferric PR #21 311a1aa9 / feature 7b3a05f1; 7 of 7 tests pass",
     ],
   ],
   readiness: [
@@ -70,13 +74,19 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Worker V3 kernel migration",
       state: "observed",
       detail:
-        "Ferric source 57f6cfdf4b3f5177a556159d1e548b25b63a1541 completed the protected qwen3_swiglu_bf16_f32_v1 build on MI300X/gfx942:xnack-. Qualification source 1b77cb5b82e370ca9a46c04d4465d2ba61737d01 matched all 3,072 elements bit-for-bit through HIP, and source 1ec0d240 records exact protected-build evidence SHA-256 a1b96acf0b9f32f5f02f0a5c92920df4f24502af674a4d05129eb0c902960572. PR #21 at c7362d93d031f735ade33bf8bfa25ff8250e359b adds an authority-free pending verifier request binder over that build, 22 target/draft profiles, ABI and launch semantics, and untrusted projected V2 carriage axes. It rejects current V1 evidence and grants no compiler, load, or launch authority.",
+        "Ferric source 57f6cfdf4b3f5177a556159d1e548b25b63a1541 completed the protected qwen3_swiglu_bf16_f32_v1 build on MI300X/gfx942:xnack-. Qualification source 1b77cb5b82e370ca9a46c04d4465d2ba61737d01 matched all 3,072 elements bit-for-bit through HIP, source 1ec0d240 records exact protected-build evidence SHA-256 a1b96acf0b9f32f5f02f0a5c92920df4f24502af674a4d05129eb0c902960572, and source c7362d93 binds an authority-free pending verifier request. PR #21 at 311a1aa925edb0ab111b1e4286bc2778af044062 adds tested V2 receipt custody without granting live occurrence, verifier, load, or launch authority.",
     },
     {
       label: "Mapped KFD adapter binding",
       state: "observed",
       detail:
-        "Direct-to-main fe2o3 PR #236 is now at 7eba36c2b578c12717f20de15140bbd423993195 after incorporating main 002029af2e78e62d23df82a6fc4c74b71d9d2b9e, and supersedes intermediate PRs #219-#235. Upstream main adds client-readiness admission, retained ServingProtectedIssuer pidfd custody, and Cargo readiness-bridge documentation. The integrated feature adds rustc-owned FD195 client intake and exact PID-bound FD196 inert carriage return with a policy/subject join. This is source integration, not deployed production authority.",
+        "Direct-to-main fe2o3 PR #236 is at c6b53d97745ceb918dd4972b2154363ce370a75b on main 7639a997c3f701467d4e362967b10332425f923c and supersedes intermediate PRs #219-#235. Its source now composes protected issuer sessions, the exact /run/fe2o3/compiler-execution-supervisor.sock UNIX SEQPACKET service, a bounded worker pool, client readiness, and exact PID-bound V2 receipt return. Deployed service and Cargo/backend acquisition remain open.",
+    },
+    {
+      label: "Recovered V2 custody adapter",
+      state: "implemented",
+      detail:
+        "Ferric feature 7b3a05f129a72f32c907388e1e176bfea1384689 consumes and retains a recovered V2 owner, returns it on failure, projects every receipt identity from that owner, checks the exact build and artifact, and permits raw strict decode only as inert data. All 7 adapter tests plus formatting and clippy pass at PR #21 head 311a1aa925edb0ab111b1e4286bc2778af044062. No live V2 kernel occurrence or production authority is claimed.",
     },
     {
       label: "Qualification-only SwiGLU numerics",
@@ -144,6 +154,11 @@ window.FERRIC_PROJECT = Object.freeze({
         detail:
           "Ferric PR #21 at c7362d93d031f735ade33bf8bfa25ff8250e359b binds the exact protected build, 22 target/draft profiles, ABI and launch semantics, and untrusted projected V2 carriage axes into a pending SwiGLU verifier request. It rejects current V1 evidence, grants no compiler, load, or launch authority, and is not the future fe2o3 adapter.",
       },
+      {
+        name: "Recovered V2 receipt custody",
+        detail:
+          "Ferric feature 7b3a05f129a72f32c907388e1e176bfea1384689 retains the recovered V2 owner, returns it on failure, and derives receipt identity from the owner under exact build and artifact checks. Raw strict decode remains inert. The 7-test adapter gate does not establish a live V2 kernel occurrence, repository-label or host-descriptor lineage, or production authority.",
+      },
     ],
     roadmap: [
       {
@@ -154,12 +169,12 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Worker V3 artifact migration",
         detail:
-          "Ferric PR #21 at c7362d93d031f735ade33bf8bfa25ff8250e359b carries the mapped-adapter artifact, exact protected-build evidence, separate qualification-only HIP numerics, and an authority-free pending verifier request binder. fe2o3 PR #236 at 7eba36c2b578c12717f20de15140bbd423993195 adds readiness admission and exact PID-bound V2 receipt return. Deployment, backend exchange, the parent exact-subject join, and reviewed verifier/rollback authority remain open. Six kernel families, the generated runner and model bundle, production KFD load/dispatch, performance validation, independent evidence, and formal M1 closure also remain open.",
+          "Ferric PR #21 at 311a1aa925edb0ab111b1e4286bc2778af044062 carries the mapped artifact, evidence, qualification-only HIP numerics, pending verifier request, and recovered-V2 custody adapter. fe2o3 PR #236 at c6b53d97745ceb918dd4972b2154363ce370a75b provides the pinned issuer-service and receipt-session source. A live V2 kernel occurrence, repository-label and host-descriptor lineage, deployed service and FD exchange, policy/rollback/verifier authority, six kernel families, generated runner and model bundle, production KFD load/dispatch, performance validation, independent evidence, and formal M1 closure remain open.",
       },
       {
         name: "Production verifier refinement chain",
         detail:
-          "The production path remains fail-closed. The Ferric binder is a pending, authority-free request, not the future fe2o3 adapter. Still required are a deployed distinct-UID listener and provisioning, binding-wrapper coordination of readiness and both channels, policy FD202 and service FD195 backend installation, backend acquire/send, the parent exact-subject V2 join, and reviewed verifier/rollback authority. Source receipt carriage, exact build evidence, and qualification-only HIP results do not grant production Worker V3 verifier or KFD load/dispatch authority.",
+          "The production path remains fail-closed. Ferric now has source-level V2 owner custody, but no live V2 kernel occurrence, repository labels or host-descriptor lineage, deployed authority service, Cargo and backend FD195/196 exchange, or reviewed policy/rollback/verifier authority. The adapter, exact build evidence, and qualification-only HIP results do not grant production Worker V3 load, launch, or KFD dispatch authority.",
       },
       {
         name: "Full M1 evidence closure",
@@ -174,16 +189,16 @@ window.FERRIC_PROJECT = Object.freeze({
     ],
   },
   latestObservation: {
-    title: "Exact PID-bound V2 receipt return is integrated",
+    title: "Recovered V2 receipt custody is retained in Ferric",
     date: "2026-08-27",
     state: "implemented",
-    commit: "7eba36c2b578c12717f20de15140bbd423993195",
-    buildId: "rustc-owned FD195 intake / exact PID-bound FD196 inert return",
-    environment: "fe2o3 PR #236; compiler/runtime source integration",
-    result: "Policy and subject join encoded; deployment and backend joins remain open",
+    commit: "7b3a05f129a72f32c907388e1e176bfea1384689",
+    buildId: "Ferric PR #21 311a1aa9 / fe2o3 pin c6b53d97",
+    environment: "Ferric standalone V2 custody adapter; source validation only",
+    result: "PASS: 7 of 7 adapter tests; formatting and clippy green",
     generatedTokenIds: [],
     authority:
-      "Source integration only. Distinct-UID provisioning, binding-wrapper coordination, backend installation and exchange, the parent exact-subject V2 join, and reviewed verifier/rollback authority remain blockers. No production load, launch, Qwen, performance, independent-validation, or M1 authority follows.",
+      "Source custody only. No live V2 kernel occurrence, repository-label or host-descriptor lineage, deployed authority service and Cargo/backend FD exchange, policy/rollback/verifier authority, production load/dispatch, Qwen, performance, independent-validation, or M1 authority follows.",
   },
   validation: {
     host: {
@@ -223,32 +238,46 @@ window.FERRIC_PROJECT = Object.freeze({
   },
   recentProgress: [
     {
+      commit: "7b3a05f129a72f32c907388e1e176bfea1384689",
+      title: "Retain recovered V2 receipt custody in Ferric",
+      state: "implemented",
+      detail:
+        "Ferric PR #21 head 311a1aa925edb0ab111b1e4286bc2778af044062 consumes and retains the recovered V2 owner, returns it on failure, and projects all receipt identities from the owner under exact build and artifact checks. Raw strict decode is inert only. All 7 tests plus formatting and clippy pass; explicit CI steps cover the standalone adapter.",
+    },
+    {
+      commit: "c6b53d97745ceb918dd4972b2154363ce370a75b",
+      title: "Complete the bounded issuer service source path",
+      state: "implemented",
+      detail:
+        "fe2o3 PR #236 pins current main 7639a997c3f701467d4e362967b10332425f923c and integrates readiness, per-connection service sessions, the fixed SEQPACKET listener, bounded workers, and exact V2 receipt return. Supervisor tests report 36 pass and 2 explicit ignores; client gates report 10 unit, 5 channel, 12 client, and 7 receipt tests; semantic-query commands pass 8 of 8. Formatting, clippy, and diff checks are green.",
+    },
+    {
       commit: "7eba36c2b578c12717f20de15140bbd423993195",
       title: "Return the exact PID-bound V2 compiler receipt",
       state: "implemented",
       detail:
-        "fe2o3 PR #236 adds rustc-owned FD195 client intake and exact PID-bound FD196 inert carriage return with a policy/subject join. Deployed distinct-UID provisioning, binding-wrapper channel coordination, backend installation and acquire/send, the parent exact-subject V2 join, and reviewed verifier/rollback authority remain open.",
+        "fe2o3 PR #236 added rustc-owned FD195 client intake and exact PID-bound FD196 inert carriage return with a policy/subject join. This checkpoint was superseded by c6b53d97, which incorporates the bounded service path on current main.",
     },
     {
       commit: "002029af2e78e62d23df82a6fc4c74b71d9d2b9e",
       title: "Admit client readiness and document the Cargo bridge",
       state: "implemented",
       detail:
-        "fe2o3 main adds client-readiness admission, retains ServingProtectedIssuer pidfd custody, and documents the Cargo readiness bridge. PR #236 incorporates this upstream compiler/runtime checkpoint at 7eba36c2.",
+        "fe2o3 main added client-readiness admission, retained ServingProtectedIssuer pidfd custody, and documented the Cargo readiness bridge. PR #236 incorporates this upstream compiler/runtime checkpoint at c6b53d97.",
     },
     {
       commit: "c7362d93d031f735ade33bf8bfa25ff8250e359b",
       title: "Bind the pending SwiGLU verifier request",
       state: "implemented",
       detail:
-        "Ferric PR #21 binds the exact protected build, 22 target/draft profiles, ABI and launch semantics, and untrusted projected V2 carriage axes. The binder rejects current V1 evidence, grants no compiler, load, or launch authority, and is not the future fe2o3 adapter. fe2o3 head 7eba36c2 later integrated receipt-return source work; reviewed verifier/rollback and deployment authority remain open.",
+        "Ferric PR #21 binds the exact protected build, 22 target/draft profiles, ABI and launch semantics, and untrusted projected V2 carriage axes. The binder rejects current V1 evidence and grants no compiler, load, or launch authority. Ferric feature 7b3a05f1 later added source-level recovered-V2 custody without changing that authority boundary.",
     },
     {
       commit: "bc237da5af8dc1871f4cd0b963ad948a3e89d52f",
       title: "Advance receipt-bearing admission to current fe2o3 main",
       state: "implemented",
       detail:
-        "fe2o3 PR #236 incorporated main 699803675d65ce8b93f2c80472ef86fd01fd4c08, where upstream took ownership of issuer pidfd lifecycle. This checkpoint was superseded by integrated receipt-return head 7eba36c2.",
+        "fe2o3 PR #236 incorporated main 699803675d65ce8b93f2c80472ef86fd01fd4c08, where upstream took ownership of issuer pidfd lifecycle. This checkpoint was superseded by current integrated head c6b53d97.",
     },
     {
       commit: "1ec0d2407f84733f17d24f7049d640b7ba4c71c7",
@@ -262,7 +291,7 @@ window.FERRIC_PROJECT = Object.freeze({
       title: "Require receipt-bearing Worker V3 admission",
       state: "implemented",
       detail:
-        "Direct-to-main fe2o3 PR #236 made Cargo, application, and host recovery V2-only and retained borrowed compiler-execution receipt carriage through inert admission. This early fail-closed checkpoint was superseded by the readiness and exact receipt-return source integration at 7eba36c2; deployment and authority joins remain open.",
+        "Direct-to-main fe2o3 PR #236 made Cargo, application, and host recovery V2-only and retained borrowed compiler-execution receipt carriage through inert admission. This early fail-closed checkpoint was superseded by current issuer-service and receipt-session source at c6b53d97; deployment and authority joins remain open.",
     },
     {
       commit: "1b77cb5b82e370ca9a46c04d4465d2ba61737d01",
@@ -469,7 +498,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "Model and tokenizer admission",
       "Qwen graph and execution planning",
       "Ferric-owned inference kernels",
-      "Mapped-adapter build 57f6cfdf, qualification 1b77cb5, evidence record 1ec0d240, and authority-free request binder c7362d93 in PR #21; root legacy V2 workspace remains frozen",
+      "Mapped build 57f6cfdf, qualification 1b77cb5, evidence record 1ec0d240, request binder c7362d93, and recovered-V2 custody feature 7b3a05f1 in PR #21 head 311a1aa9",
       "Scheduling, paged KV, and speculation",
       "Generated runner and qualification policy",
     ],
@@ -479,8 +508,8 @@ window.FERRIC_PROJECT = Object.freeze({
       "Typed allocations and host transfers",
       "Long-lived HSA queue and KFD runtime",
       "Generic bounded command publication",
-      "Direct-to-main fe2o3 PR #236 at 7eba36c2 incorporates main 002029af and supersedes intermediate PRs #219-#235",
-      "Client readiness plus FD195 intake and exact PID-bound FD196 return are integrated; deployment, backend exchange, parent V2 join, and reviewed verifier/rollback authority remain open",
+      "Direct-to-main fe2o3 PR #236 at c6b53d97 pins main 7639a997 and supersedes intermediate PRs #219-#235",
+      "Bounded issuer service, client readiness, and exact V2 receipt return are integrated in source; deployed authority service and Cargo/backend FD195/196 exchange remain open",
       "Current protected build used Ferric source 57f6cfdf; compiler/runtime ownership remains in fe2o3",
     ],
   },
