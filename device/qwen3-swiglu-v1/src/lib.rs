@@ -108,8 +108,10 @@ macro_rules! qwen3_swiglu_element_v1 {
 /// Each workitem owns exactly eight contiguous elements. Non-finite input or
 /// intermediate values trap before the current store; earlier stores are not
 /// rolled back.
+// SHA-256("FERRIC/QWEN3-SWIGLU-BF16-F32-V1/CRATE-BINDING/V1\0").
 #[kernel(
     typed,
+    namespace = "4bef9bfad740d89dfb60af33f8603b7bb1ab193384a8ad946ba83e28b17f3e38",
     launch(
         required = [256, 1, 1],
         max = [256, 1, 1],

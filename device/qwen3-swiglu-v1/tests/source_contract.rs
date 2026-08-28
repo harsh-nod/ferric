@@ -130,6 +130,9 @@ fn attribute_pins_launch_grid_without_dynamic_control_contracts() {
     };
     let tokens = arguments.tokens.to_string();
     assert!(tokens.contains("typed"));
+    assert!(tokens.contains(
+        "namespace = \"4bef9bfad740d89dfb60af33f8603b7bb1ab193384a8ad946ba83e28b17f3e38\""
+    ));
     assert!(tokens.contains("required = [256 , 1 , 1]"));
     assert!(tokens.contains("max = [256 , 1 , 1]"));
     assert!(tokens.contains("max_grid = [12288 , 1 , 1]"));
