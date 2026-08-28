@@ -29,7 +29,7 @@ fn reference_swiglu(gate_bits: u16, up_bits: u16) -> Option<u16> {
         gate.exp()
     };
     let denominator = 1.0 + exponent;
-    if !exponent.is_finite() || !denominator.is_finite() || denominator <= 0.0 {
+    if !exponent.is_finite() || exponent < 0.0 || !denominator.is_finite() || denominator <= 0.0 {
         return None;
     }
     let numerator = if gate >= 0.0 { 1.0 } else { exponent };

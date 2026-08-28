@@ -1,3 +1,4 @@
+use quote::ToTokens as _;
 use syn::{FnArg, Item, ItemFn, Meta, Type};
 
 const SOURCE: &str = include_str!("../src/lib.rs");
@@ -23,6 +24,28 @@ fn kernel() -> ItemFn {
     kernels.into_iter().next().unwrap()
 }
 
+fn named_function(name: &str) -> ItemFn {
+    syn::parse_file(SOURCE)
+        .expect("device source parses as ordinary Rust")
+        .items
+        .into_iter()
+        .find_map(|item| match item {
+            Item::Fn(function) if function.sig.ident == name => Some(function),
+            _ => None,
+        })
+        .unwrap_or_else(|| panic!("missing function {name}"))
+}
+
+fn compact_function_body(function: ItemFn) -> String {
+    function
+        .block
+        .to_token_stream()
+        .to_string()
+        .chars()
+        .filter(|character| !character.is_whitespace())
+        .collect()
+}
+
 #[test]
 fn source_has_one_exact_attributed_kernel_and_no_worker_escape_hatch() {
     let kernel = kernel();
@@ -44,7 +67,7 @@ fn source_has_one_exact_attributed_kernel_and_no_worker_escape_hatch() {
 }
 
 #[test]
-fn attribute_pins_launch_grid_and_loop_bound() {
+fn attribute_pins_launch_grid_without_dynamic_control_contracts() {
     let kernel = kernel();
     let attribute = kernel
         .attrs
@@ -59,7 +82,7 @@ fn attribute_pins_launch_grid_and_loop_bound() {
     assert!(tokens.contains("required = [256 , 1 , 1]"));
     assert!(tokens.contains("max = [256 , 1 , 1]"));
     assert!(tokens.contains("max_grid = [12288 , 1 , 1]"));
-    assert!(tokens.contains("loop_bounds (8)"));
+    assert!(!tokens.contains("control_flow"));
 }
 
 #[test]
@@ -123,22 +146,60 @@ fn quote_type(ty: &Type) -> String {
 }
 
 #[test]
-fn body_retains_stable_sigmoid_and_eight_contiguous_stores() {
+fn helper_retains_stable_sigmoid_and_fail_closed_narrowing() {
+    let body = compact_function_body(named_function("qwen3_swiglu_element_v1"));
     for marker in [
-        "workitem.checked_block::<1, 8>()",
-        "while component < QWEN3_SWIGLU_ELEMENTS_PER_WORKITEM_V1",
-        "Bf16::from_bits(gate[index])",
-        "Bf16::from_bits(up[index])",
-        "math.exp_f32(exponent_argument)",
-        "let denominator = 1.0 + exponent",
-        "let silu = gate_f32 * sigmoid",
-        "let product = silu * up_f32",
+        "Bf16::from_bits(gate_bits)",
+        "Bf16::from_bits(up_bits)",
+        "if!gate_value.is_finite()||!up_value.is_finite()",
+        "letexponent_argument=ifnonnegative{-gate_f32}else{gate_f32}",
+        "Math::current().exp_f32(exponent_argument)",
+        "!f32_is_finite_v1(exponent)||exponent<0.0",
+        "letdenominator=1.0+exponent",
+        "letnumerator=ifnonnegative{1.0}else{exponent}",
+        "letsilu=gate_f32*sigmoid",
+        "letproduct=silu*up_f32",
+        "!f32_is_finite_v1(sigmoid)||!f32_is_finite_v1(silu)||!f32_is_finite_v1(product)",
         "Bf16::from_f32(product)",
-        "output.get_block_mut(&output_block, component)",
+        "if!narrowed.is_finite()",
+        "narrowed.to_bits()",
     ] {
         assert!(
-            SOURCE.contains(marker),
+            body.contains(marker),
             "missing source-contract marker {marker}"
+        );
+    }
+    assert_eq!(body.matches("Math::current().exp_f32(").count(), 1);
+    assert_eq!(body.matches("Bf16::from_f32(product)").count(), 1);
+    assert_eq!(body.matches("fe2o3_device::trap()").count(), 4);
+    for forbidden in ["return", "break", "continue", "macro_rules!"] {
+        assert!(
+            !body.contains(forbidden),
+            "found forbidden body marker {forbidden}"
+        );
+    }
+}
+
+#[test]
+fn kernel_uses_eight_constant_blocked_stores() {
+    let body = compact_function_body(kernel());
+    assert!(body.contains("workitem.checked_block::<1,8>()"));
+    for component in 0..8 {
+        let index = format!("index_{component}");
+        assert!(body.contains(&format!("if{index}<elements")));
+        assert!(body.contains(&format!(
+            "qwen3_swiglu_element_v1(gate[{index}],up[{index}])"
+        )));
+        assert!(body.contains(&format!("output.get_block_mut(&output_block,{component})")));
+    }
+    assert_eq!(body.matches("qwen3_swiglu_element_v1(").count(), 8);
+    assert_eq!(body.matches("output.get_block_mut(").count(), 8);
+    assert_eq!(body.matches("*slot=value;").count(), 8);
+    assert_eq!(body.matches("fe2o3_device::trap()").count(), 10);
+    for forbidden in ["while", "loop", "break", "continue", "macro_rules!"] {
+        assert!(
+            !body.contains(forbidden),
+            "found forbidden body marker {forbidden}"
         );
     }
 }
