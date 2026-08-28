@@ -202,12 +202,12 @@
           <p>
             Ferric source 57f6cfdf completed the protected two-phase build on MI300X and produced
             the exact mapped-adapter semantic, HSACO, and load-envelope lineage identities for
-            gfx942:xnack-. A separate HIP qualification harness at 1b77cb5 loaded and dispatched the
-            HSACO on gfx942:sramecc+:xnack- and matched all 3,072 elements with max ULP 0. Next,
-            supply the authenticated evidence/refinement chain required by the fail-closed
-            production verifier. Production KFD load/dispatch, six kernel families, the generated
-            runner and model bundle, whole-Qwen execution, performance, independent evidence, and
-            M1 remain open.
+            gfx942:xnack-. Ferric PR #21 now records exact build evidence a1b96acf...0960572, while
+            separate HIP qualification remains bit-exact. fe2o3 PR #236 keeps recovery V2-only and
+            preserves borrowed receipt carriage, but fresh production completion fails closed until
+            live CompilerExecutionClientV1::acquire is wired. Production KFD load/dispatch, six
+            kernel families, the generated runner and model bundle, whole-Qwen execution,
+            performance, independent evidence, and M1 remain open.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>

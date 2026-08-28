@@ -6,7 +6,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Four finite speculative shapes and four exact production rollover transitions pass the authenticated host gate at 58fd37e. The scoped release proof also passes for that exact source. Ferric source 57f6cfdf completed the protected two-phase build for the first of seven Rust Qwen3 kernel families on MI300X. A qualification-only HIP harness at 1b77cb5 then loaded and dispatched that exact HSACO on gfx942:sramecc+:xnack- and matched all 3,072 elements with max_ulp=0. fe2o3 PR #236 is retargeted directly to main at 21e4c106 and supersedes intermediate PRs #219-#235. The production verifier remains fail-closed without an authenticated evidence/refinement chain. No production Worker V3 verifier, KFD load/dispatch, whole-Qwen execution, performance result, or M1 qualification follows.",
+      "Four finite speculative shapes and four exact production rollover transitions pass the authenticated host gate at 58fd37e. The scoped release proof also passes for that exact source. Ferric source 57f6cfdf completed the protected build for the first Rust Qwen3 kernel family, and qualification source 1b77cb5 matched all 3,072 outputs exactly through HIP. Ferric PR #21 at 1ec0d240 now records exact protected-build evidence a1b96acf...0960572 without granting runtime authority. Direct-to-main fe2o3 PR #236 at 2cb6e439 makes recovery V2-only and retains borrowed compiler-receipt carriage, but fresh production completion fails closed until the live CompilerExecutionClientV1::acquire path is wired. No production Worker V3 verifier, KFD load/dispatch, Qwen execution, performance result, or M1 qualification follows.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -22,6 +22,10 @@ window.FERRIC_PROJECT = Object.freeze({
     [
       "Protected artifact",
       "semantic fe2ce532...e9569e8f / HSACO 57ecb86b...fc6afa7 / load-envelope lineage 058b9498...b17014a8",
+    ],
+    [
+      "Evidence record",
+      "a1b96acf0b9f32f5f02f0a5c92920df4f24502af674a4d05129eb0c902960572 at Ferric 1ec0d240; custody only",
     ],
   ],
   readiness: [
@@ -58,13 +62,13 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Worker V3 kernel migration",
       state: "observed",
       detail:
-        "Ferric source 57f6cfdf4b3f5177a556159d1e548b25b63a1541 completed the protected two-phase qwen3_swiglu_bf16_f32_v1 build on MI300X/gfx942:xnack-. Qualification source 1b77cb5b82e370ca9a46c04d4465d2ba61737d01 loaded and dispatched the exact HSACO through HIP and matched all 3,072 elements bit-for-bit. The production Worker V3 verifier and KFD load/dispatch path remain unexercised. The root legacy V2 workspace remains frozen because latest fe2o3 removed its orphan routes. Six kernel families plus every production execution and M1 gate remain open.",
+        "Ferric source 57f6cfdf4b3f5177a556159d1e548b25b63a1541 completed the protected qwen3_swiglu_bf16_f32_v1 build on MI300X/gfx942:xnack-. Qualification source 1b77cb5b82e370ca9a46c04d4465d2ba61737d01 matched all 3,072 elements bit-for-bit through HIP. PR #21 at 1ec0d2407f84733f17d24f7049d640b7ba4c71c7 records exact protected-build evidence SHA-256 a1b96acf0b9f32f5f02f0a5c92920df4f24502af674a4d05129eb0c902960572, explicitly without verifier, production load/dispatch, or numerical authority. The exact HIP numerics remain a separate qualification result.",
     },
     {
       label: "Mapped KFD adapter binding",
       state: "observed",
       detail:
-        "fe2o3 commit 06c74c64506f15883d64c5ab2ca476561909181d introduced the exact mapped KFD adapter and 4ad348404a57a2823b199a97bea13baae0f3de18 authorized it. PR #236 is retargeted directly to main at 21e4c10609a7b44687153fc3484d1156b4eb4def after incorporating main e39fdc14 with protected issuer custody; cargo test -p cargo-fe2o3 --locked passes. Renamed Complete the core Worker V3 SwiGLU compiler path, PR #236 supersedes intermediate PRs #219-#235. It remains open and does not grant Ferric production execution authority.",
+        "Direct-to-main fe2o3 PR #236 is now at 2cb6e4390251d56f8c92cefc6873126043c5efeb and supersedes intermediate PRs #219-#235. Cargo, application, and host recovery are V2-only while the path retains borrowed compiler-execution receipt carriage through inert admission. Fresh production completion deliberately fails closed because the live Cargo/compiler-service path does not call CompilerExecutionClientV1::acquire. No ambient or synthetic receipt fallback is admitted.",
     },
     {
       label: "Qualification-only SwiGLU numerics",
@@ -115,12 +119,12 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Rust Qwen3 SwiGLU BF16 production artifact",
         detail:
-          "The protected two-phase qwen3_swiglu_bf16_f32_v1 build emitted semantic identity fe2o3::semantic::fe2ce53206f36841ea363da0db20869f38e21b881241581f455eebf8e9569e8f and a 14,192-byte HSACO with SHA-256 57ecb86b40db136237e65a5fae04c955f2c92fe3347c085ec5c806984fc6afa7. Its exact load-envelope lineage filename identity is 058b9498ba96b0d6969ed60bb6599da860d0c0e4528e48b36bb8ef14b17014a8. The gfx942:xnack- artifact contains one kernel, 304-byte kernarg, wave64, and zero LDS and private segment bytes. Production compilation grants no verifier, load, dispatch, numerical, performance, Qwen, or M1 authority.",
+          "The protected qwen3_swiglu_bf16_f32_v1 build emitted semantic identity fe2o3::semantic::fe2ce53206f36841ea363da0db20869f38e21b881241581f455eebf8e9569e8f and a 14,192-byte HSACO with SHA-256 57ecb86b40db136237e65a5fae04c955f2c92fe3347c085ec5c806984fc6afa7. Its exact load-envelope lineage filename identity is 058b9498ba96b0d6969ed60bb6599da860d0c0e4528e48b36bb8ef14b17014a8. Ferric PR #21 records the build under evidence SHA-256 a1b96acf0b9f32f5f02f0a5c92920df4f24502af674a4d05129eb0c902960572. The record grants no verifier, production load/dispatch, numerical, performance, Qwen, or M1 authority.",
       },
       {
         name: "Host-exposed mapped KFD adapter",
         detail:
-          "Ferric PR #21 exposes the compiler-generated mapped arguments and is now at qualification source 1b77cb5b82e370ca9a46c04d4465d2ba61737d01. Its binding-only gate passed 1 library, 3 numerical reference, and 7 source/adapter contract tests; source 57f6cfdf completed the protected build, and 1b77cb5 added the qualification-only HIP harness. The root legacy V2 workspace remains frozen because latest fe2o3 removed orphan routes.",
+          "Ferric PR #21 exposes the compiler-generated mapped arguments and is now at evidence-record source 1ec0d2407f84733f17d24f7049d640b7ba4c71c7. Its binding-only gate passed 1 library, 3 numerical reference, and 7 source/adapter contract tests; source 57f6cfdf completed the protected build, 1b77cb5 added the qualification-only HIP harness, and 1ec0d240 recorded the exact build evidence. The root legacy V2 workspace remains frozen.",
       },
       {
         name: "Qualification-only HIP numerical run",
@@ -137,12 +141,12 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Worker V3 artifact migration",
         detail:
-          "fe2o3 PR #236 at 21e4c10609a7b44687153fc3484d1156b4eb4def and Ferric source 57f6cfdf4b3f5177a556159d1e548b25b63a1541 produced the protected mapped-adapter artifact on MI300X. Ferric PR #21 at 1b77cb5b82e370ca9a46c04d4465d2ba61737d01 adds qualification-only HIP load, dispatch, and exact numerical evidence. Six kernel families, the generated runner and model bundle, production verifier evidence, production KFD load/dispatch, performance validation, independent evidence, and formal M1 closure remain open.",
+          "Ferric PR #21 at 1ec0d2407f84733f17d24f7049d640b7ba4c71c7 carries the mapped-adapter artifact, its exact protected-build evidence record, and separate qualification-only HIP numerics. fe2o3 PR #236 at 2cb6e4390251d56f8c92cefc6873126043c5efeb retains borrowed compiler-receipt carriage but keeps fresh production completion closed until live compiler-service acquisition is wired. Six kernel families, the generated runner and model bundle, production KFD load/dispatch, performance validation, independent evidence, and formal M1 closure remain open.",
       },
       {
         name: "Production verifier refinement chain",
         detail:
-          "The production verifier remains a named fail-closed blocker. No authenticated evidence/refinement chain currently joins the new semantic identity, HSACO, and load-envelope lineage to production dispatch authority. The qualification-only HIP result does not exercise or grant production Worker V3 verifier or KFD load/dispatch authority.",
+          "The production path remains fail-closed. Exact build evidence exists, but fresh production completion cannot obtain live authority until CompilerExecutionClientV1::acquire is wired into the Cargo/compiler-service path. Borrowed receipt carriage and the qualification-only HIP result do not grant production Worker V3 verifier or KFD load/dispatch authority.",
       },
       {
         name: "Full M1 evidence closure",
@@ -157,16 +161,16 @@ window.FERRIC_PROJECT = Object.freeze({
     ],
   },
   latestObservation: {
-    title: "SwiGLU qualification harness is bit-exact",
+    title: "Protected Worker V3 build evidence is recorded",
     date: "2026-08-27",
-    state: "observed",
-    commit: "1b77cb5b82e370ca9a46c04d4465d2ba61737d01",
-    buildId: "HSACO 57ecb86b40db136237e65a5fae04c955f2c92fe3347c085ec5c806984fc6afa7",
-    environment: "MI300X / gfx942:sramecc+:xnack-; qualification-only HIP harness",
-    result: "PASS: elements=3072 exact=3072 max_ulp=0 mismatches_gt_1ulp=0",
+    state: "implemented",
+    commit: "1ec0d2407f84733f17d24f7049d640b7ba4c71c7",
+    buildId: "Evidence SHA-256 a1b96acf0b9f32f5f02f0a5c92920df4f24502af674a4d05129eb0c902960572",
+    environment: "Ferric PR #21; inert protected-build publication custody",
+    result: "Exact protected-build evidence record added",
     generatedTokenIds: [],
     authority:
-      "Qualification-only HIP load, dispatch, and numerical evidence. This run does not exercise or grant production Worker V3 verifier, KFD load/dispatch, Qwen inference, performance, independent-validation, or M1 qualification authority.",
+      "Record custody only. The evidence record explicitly grants no verifier, production load/dispatch, or numerical authority. Exact gfx942 numerics remain a separate qualification-only HIP observation; neither result grants Qwen inference, performance, independent-validation, or M1 qualification authority.",
   },
   validation: {
     host: {
@@ -205,6 +209,20 @@ window.FERRIC_PROJECT = Object.freeze({
       "The transition catalog is exact. Target-only decode transitions and every unlisted cross-plan transition require explicit queue retirement and fresh launch; they do not inherit native rollover support.",
   },
   recentProgress: [
+    {
+      commit: "1ec0d2407f84733f17d24f7049d640b7ba4c71c7",
+      title: "Record protected Worker V3 build evidence",
+      state: "implemented",
+      detail:
+        "Ferric PR #21 records the exact protected-build evidence under SHA-256 a1b96acf0b9f32f5f02f0a5c92920df4f24502af674a4d05129eb0c902960572. The record grants no production verifier, load/dispatch, or numerical authority. The exact gfx942 numerical result remains separate qualification-only evidence at 1b77cb5.",
+    },
+    {
+      commit: "2cb6e4390251d56f8c92cefc6873126043c5efeb",
+      title: "Require receipt-bearing Worker V3 admission",
+      state: "implemented",
+      detail:
+        "Direct-to-main fe2o3 PR #236 makes Cargo, application, and host recovery V2-only and retains borrowed compiler-execution receipt carriage through inert admission. Fresh production completion deliberately fails closed until the live CompilerExecutionClientV1::acquire path is wired.",
+    },
     {
       commit: "1b77cb5b82e370ca9a46c04d4465d2ba61737d01",
       title: "Qualify the Worker V3 SwiGLU numerics on gfx942",
@@ -410,7 +428,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "Model and tokenizer admission",
       "Qwen graph and execution planning",
       "Ferric-owned inference kernels",
-      "Mapped-adapter protected source 57f6cfdf and qualification harness 1b77cb5 in PR #21; root legacy V2 workspace remains frozen",
+      "Mapped-adapter build 57f6cfdf, qualification 1b77cb5, and evidence record 1ec0d240 in PR #21; root legacy V2 workspace remains frozen",
       "Scheduling, paged KV, and speculation",
       "Generated runner and qualification policy",
     ],
@@ -420,7 +438,8 @@ window.FERRIC_PROJECT = Object.freeze({
       "Typed allocations and host transfers",
       "Long-lived HSA queue and KFD runtime",
       "Generic bounded command publication",
-      "Direct-to-main fe2o3 PR #236 at 21e4c106 supersedes intermediate PRs #219-#235",
+      "Direct-to-main fe2o3 PR #236 at 2cb6e439 supersedes intermediate PRs #219-#235",
+      "Fresh production completion fails closed pending live CompilerExecutionClientV1::acquire",
       "Current protected build used Ferric source 57f6cfdf; compiler/runtime ownership remains in fe2o3",
     ],
   },
