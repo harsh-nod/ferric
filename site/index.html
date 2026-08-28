@@ -197,15 +197,19 @@
         <div class="shell next-layout">
           <div>
             <div class="section-label">Next engineering checkpoint</div>
-            <h2 id="next-title">Load and validate the first artifact</h2>
+            <h2 id="next-title">Exercise the live V2 custody path</h2>
           </div>
           <p>
-            The protected MI300X production build emitted the first Worker V3 HSACO for
-            qwen3_swiglu_bf16_f32_v1 and published its identity-bound readiness claim, envelope, and
-            receipt. Next, bind the artifact into the generated runner, load and dispatch it, and
-            compare its BF16 output with the reference. Six kernel families, the model bundle,
-            whole-Qwen execution, performance and independent evidence, and the M1 receipt remain
-            open.
+            Ferric source 57f6cfdf completed the protected two-phase build on MI300X and produced
+            the exact mapped-adapter semantic, HSACO, and load-envelope lineage identities for
+            gfx942:xnack-. Ferric PR #21 at 41dfb3b2 now retains a recovered V2 owner, returns it on
+            failure, and projects receipt identity from that owner under exact build and artifact
+            checks. Its 8 adapter tests pass against fe2o3 PR #236 5362f3cb, whose fixed connector
+            authenticates the supervisor without exposing FD or path injection. cargo-fe2o3 session
+            construction and invocation, backend FD195/196, deployment, a live V2 kernel occurrence,
+            accepting-verifier authority, and production KFD load/dispatch remain open. Six kernel
+            families, the generated runner and model bundle, whole-Qwen execution, performance,
+            independent evidence, and M1 also remain open.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>
