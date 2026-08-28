@@ -55,42 +55,46 @@ const fn f32_is_finite_v1(value: f32) -> bool {
     value >= f32::MIN && value <= f32::MAX
 }
 
-#[inline(always)]
 #[cfg(target_arch = "amdgpu")]
-fn qwen3_swiglu_element_v1(gate_bits: u16, up_bits: u16) -> u16 {
-    let gate_value = Bf16::from_bits(gate_bits);
-    let up_value = Bf16::from_bits(up_bits);
-    if !gate_value.is_finite() || !up_value.is_finite() {
-        fe2o3_device::trap();
-    }
+macro_rules! qwen3_swiglu_element_v1 {
+    ($gate_bits:expr, $up_bits:expr) => {{
+        let gate_value = Bf16::from_bits($gate_bits);
+        let up_value = Bf16::from_bits($up_bits);
+        if !gate_value.is_finite() || !up_value.is_finite() {
+            fe2o3_device::trap();
+        }
 
-    let gate_f32 = gate_value.to_f32();
-    let up_f32 = up_value.to_f32();
-    let nonnegative = gate_f32 >= 0.0;
-    let exponent_argument = if nonnegative { -gate_f32 } else { gate_f32 };
-    let exponent = Math::current().exp_f32(exponent_argument);
-    let denominator = 1.0 + exponent;
-    if !f32_is_finite_v1(exponent)
-        || exponent < 0.0
-        || !f32_is_finite_v1(denominator)
-        || denominator <= 0.0
-    {
-        fe2o3_device::trap();
-    }
+        let gate_f32 = gate_value.to_f32();
+        let up_f32 = up_value.to_f32();
+        let nonnegative = gate_f32 >= 0.0;
+        let exponent_argument = if nonnegative { -gate_f32 } else { gate_f32 };
+        let exponent = Math::current().exp_f32(exponent_argument);
+        let denominator = 1.0 + exponent;
+        if !(exponent >= f32::MIN && exponent <= f32::MAX)
+            || exponent < 0.0
+            || !(denominator >= f32::MIN && denominator <= f32::MAX)
+            || denominator <= 0.0
+        {
+            fe2o3_device::trap();
+        }
 
-    let numerator = if nonnegative { 1.0 } else { exponent };
-    let sigmoid = numerator / denominator;
-    let silu = gate_f32 * sigmoid;
-    let product = silu * up_f32;
-    if !f32_is_finite_v1(sigmoid) || !f32_is_finite_v1(silu) || !f32_is_finite_v1(product) {
-        fe2o3_device::trap();
-    }
+        let numerator = if nonnegative { 1.0 } else { exponent };
+        let sigmoid = numerator / denominator;
+        let silu = gate_f32 * sigmoid;
+        let product = silu * up_f32;
+        if !(sigmoid >= f32::MIN && sigmoid <= f32::MAX)
+            || !(silu >= f32::MIN && silu <= f32::MAX)
+            || !(product >= f32::MIN && product <= f32::MAX)
+        {
+            fe2o3_device::trap();
+        }
 
-    let narrowed = Bf16::from_f32(product);
-    if !narrowed.is_finite() {
-        fe2o3_device::trap();
-    }
-    narrowed.to_bits()
+        let narrowed = Bf16::from_f32(product);
+        if !narrowed.is_finite() {
+            fe2o3_device::trap();
+        }
+        narrowed.to_bits()
+    }};
 }
 
 /// Applies stable FP32 SiLU to BF16 gate values, multiplies BF16 up values, and
@@ -130,7 +134,7 @@ pub fn qwen3_swiglu_bf16_f32_v1(
 
     let index_0 = base;
     if index_0 < elements {
-        let value = qwen3_swiglu_element_v1(gate[index_0], up[index_0]);
+        let value = qwen3_swiglu_element_v1!(gate[index_0], up[index_0]);
         let Some(slot) = output.get_block_mut(&output_block, 0) else {
             fe2o3_device::trap();
         };
@@ -139,7 +143,7 @@ pub fn qwen3_swiglu_bf16_f32_v1(
 
     let index_1 = base + 1;
     if index_1 < elements {
-        let value = qwen3_swiglu_element_v1(gate[index_1], up[index_1]);
+        let value = qwen3_swiglu_element_v1!(gate[index_1], up[index_1]);
         let Some(slot) = output.get_block_mut(&output_block, 1) else {
             fe2o3_device::trap();
         };
@@ -148,7 +152,7 @@ pub fn qwen3_swiglu_bf16_f32_v1(
 
     let index_2 = base + 2;
     if index_2 < elements {
-        let value = qwen3_swiglu_element_v1(gate[index_2], up[index_2]);
+        let value = qwen3_swiglu_element_v1!(gate[index_2], up[index_2]);
         let Some(slot) = output.get_block_mut(&output_block, 2) else {
             fe2o3_device::trap();
         };
@@ -157,7 +161,7 @@ pub fn qwen3_swiglu_bf16_f32_v1(
 
     let index_3 = base + 3;
     if index_3 < elements {
-        let value = qwen3_swiglu_element_v1(gate[index_3], up[index_3]);
+        let value = qwen3_swiglu_element_v1!(gate[index_3], up[index_3]);
         let Some(slot) = output.get_block_mut(&output_block, 3) else {
             fe2o3_device::trap();
         };
@@ -166,7 +170,7 @@ pub fn qwen3_swiglu_bf16_f32_v1(
 
     let index_4 = base + 4;
     if index_4 < elements {
-        let value = qwen3_swiglu_element_v1(gate[index_4], up[index_4]);
+        let value = qwen3_swiglu_element_v1!(gate[index_4], up[index_4]);
         let Some(slot) = output.get_block_mut(&output_block, 4) else {
             fe2o3_device::trap();
         };
@@ -175,7 +179,7 @@ pub fn qwen3_swiglu_bf16_f32_v1(
 
     let index_5 = base + 5;
     if index_5 < elements {
-        let value = qwen3_swiglu_element_v1(gate[index_5], up[index_5]);
+        let value = qwen3_swiglu_element_v1!(gate[index_5], up[index_5]);
         let Some(slot) = output.get_block_mut(&output_block, 5) else {
             fe2o3_device::trap();
         };
@@ -184,7 +188,7 @@ pub fn qwen3_swiglu_bf16_f32_v1(
 
     let index_6 = base + 6;
     if index_6 < elements {
-        let value = qwen3_swiglu_element_v1(gate[index_6], up[index_6]);
+        let value = qwen3_swiglu_element_v1!(gate[index_6], up[index_6]);
         let Some(slot) = output.get_block_mut(&output_block, 6) else {
             fe2o3_device::trap();
         };
@@ -193,7 +197,7 @@ pub fn qwen3_swiglu_bf16_f32_v1(
 
     let index_7 = base + 7;
     if index_7 < elements {
-        let value = qwen3_swiglu_element_v1(gate[index_7], up[index_7]);
+        let value = qwen3_swiglu_element_v1!(gate[index_7], up[index_7]);
         let Some(slot) = output.get_block_mut(&output_block, 7) else {
             fe2o3_device::trap();
         };

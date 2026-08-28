@@ -24,22 +24,38 @@ fn kernel() -> ItemFn {
     kernels.into_iter().next().unwrap()
 }
 
-fn named_function(name: &str) -> ItemFn {
+fn named_macro(name: &str) -> syn::ItemMacro {
     syn::parse_file(SOURCE)
         .expect("device source parses as ordinary Rust")
         .items
         .into_iter()
         .find_map(|item| match item {
-            Item::Fn(function) if function.sig.ident == name => Some(function),
+            Item::Macro(item)
+                if item
+                    .ident
+                    .as_ref()
+                    .is_some_and(|identifier| identifier == name) =>
+            {
+                Some(item)
+            }
             _ => None,
         })
-        .unwrap_or_else(|| panic!("missing function {name}"))
+        .unwrap_or_else(|| panic!("missing macro {name}"))
 }
 
 fn compact_function_body(function: ItemFn) -> String {
     function
         .block
         .to_token_stream()
+        .to_string()
+        .chars()
+        .filter(|character| !character.is_whitespace())
+        .collect()
+}
+
+fn compact_macro_body(item: syn::ItemMacro) -> String {
+    item.mac
+        .tokens
         .to_string()
         .chars()
         .filter(|character| !character.is_whitespace())
@@ -146,20 +162,22 @@ fn quote_type(ty: &Type) -> String {
 }
 
 #[test]
-fn helper_retains_stable_sigmoid_and_fail_closed_narrowing() {
-    let body = compact_function_body(named_function("qwen3_swiglu_element_v1"));
+fn element_expansion_retains_stable_sigmoid_and_fail_closed_narrowing() {
+    let body = compact_macro_body(named_macro("qwen3_swiglu_element_v1"));
     for marker in [
-        "Bf16::from_bits(gate_bits)",
-        "Bf16::from_bits(up_bits)",
+        "Bf16::from_bits($gate_bits)",
+        "Bf16::from_bits($up_bits)",
         "if!gate_value.is_finite()||!up_value.is_finite()",
         "letexponent_argument=ifnonnegative{-gate_f32}else{gate_f32}",
         "Math::current().exp_f32(exponent_argument)",
-        "!f32_is_finite_v1(exponent)||exponent<0.0",
+        "!(exponent>=f32::MIN&&exponent<=f32::MAX)||exponent<0.0",
         "letdenominator=1.0+exponent",
         "letnumerator=ifnonnegative{1.0}else{exponent}",
         "letsilu=gate_f32*sigmoid",
         "letproduct=silu*up_f32",
-        "!f32_is_finite_v1(sigmoid)||!f32_is_finite_v1(silu)||!f32_is_finite_v1(product)",
+        "!(sigmoid>=f32::MIN&&sigmoid<=f32::MAX)",
+        "!(silu>=f32::MIN&&silu<=f32::MAX)",
+        "!(product>=f32::MIN&&product<=f32::MAX)",
         "Bf16::from_f32(product)",
         "if!narrowed.is_finite()",
         "narrowed.to_bits()",
@@ -172,7 +190,7 @@ fn helper_retains_stable_sigmoid_and_fail_closed_narrowing() {
     assert_eq!(body.matches("Math::current().exp_f32(").count(), 1);
     assert_eq!(body.matches("Bf16::from_f32(product)").count(), 1);
     assert_eq!(body.matches("fe2o3_device::trap()").count(), 4);
-    for forbidden in ["return", "break", "continue", "macro_rules!"] {
+    for forbidden in ["return", "break", "continue", "f32_is_finite_v1"] {
         assert!(
             !body.contains(forbidden),
             "found forbidden body marker {forbidden}"
@@ -188,11 +206,11 @@ fn kernel_uses_eight_constant_blocked_stores() {
         let index = format!("index_{component}");
         assert!(body.contains(&format!("if{index}<elements")));
         assert!(body.contains(&format!(
-            "qwen3_swiglu_element_v1(gate[{index}],up[{index}])"
+            "qwen3_swiglu_element_v1!(gate[{index}],up[{index}])"
         )));
         assert!(body.contains(&format!("output.get_block_mut(&output_block,{component})")));
     }
-    assert_eq!(body.matches("qwen3_swiglu_element_v1(").count(), 8);
+    assert_eq!(body.matches("qwen3_swiglu_element_v1!(").count(), 8);
     assert_eq!(body.matches("output.get_block_mut(").count(), 8);
     assert_eq!(body.matches("*slot=value;").count(), 8);
     assert_eq!(body.matches("fe2o3_device::trap()").count(), 10);
