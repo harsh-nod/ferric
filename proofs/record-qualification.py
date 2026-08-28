@@ -292,7 +292,8 @@ def main() -> None:
         f"cargo={tool_output([str(rust_tools['cargo']), '-V'])}",
         f"rustfmt={tool_output([str(rust_tools['rustfmt']), '--version'])}",
         f"clippy={tool_output([str(rust_tools['clippy-driver']), '--version'])}",
-        "quality-gates=fmt,clippy,test-debug,test-release",
+        "quality-gates=fmt,clippy,test-debug,test-release,source-closure-policy,"
+        "m1-benchmark-policy,m1-reference-policy",
         "claim-boundary=verified Rust source bodies plus default Verus erasure checks",
         "nonclaim=rustc linker runtime GPU execution and machine-code refinement remain outside this proof",
         "qualification-host-tcb=ambient Rust/Cargo, Python, POSIX shell/coreutils, OS, filesystem, and process supervision are contracted",
