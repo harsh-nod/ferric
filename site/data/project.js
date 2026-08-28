@@ -7,7 +7,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Ferric has authenticated Qwen inputs, exact execution plans, bounded engine state, and source-level protected Worker V3 adapters for all seven M1 kernel families. Qualified source 1d666dbc landed in m1/bundle-admission through merge be307d52, while fe2o3 supplies the durable compiler receipt and typed KFD foundations. No authenticated collector currently acquires the seven live owners, and authority-safe custody fixtures, protected policy, deployment, the production runner, end-to-end Qwen, and the M1 qualification receipt remain open.",
+      "Ferric has authenticated Qwen inputs, exact execution plans, bounded engine state, and source-level protected Worker V3 adapters for all seven M1 kernel families. PR #24 qualified canonical Git-tree source-closure modes at 3898bf40 and landed them in m1/bundle-admission through 49a539f2. No authenticated collector currently acquires the seven live owners; current artifacts, protected authority, end-to-end Qwen, hardware and performance qualification, the production receipt, and M1 remain open.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -16,7 +16,7 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Precision", "BF16 / FP32 accumulate"],
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
-    ["Ferric integration", "qualified 1d666dbc / landed be307d52 in m1/bundle-admission"],
+    ["Ferric integration", "PR #24 qualified 3898bf40 / landed 49a539f2"],
     ["fe2o3 integration", "42639ecc; compiler receipt, verifier, and KFD runtime line"],
     [
       "Protected artifact",
@@ -53,6 +53,12 @@ window.FERRIC_PROJECT = Object.freeze({
         "Qualified source 1d666dbc, landed through be307d52, makes GEMM, RMSNorm, RoPE/KV, prefill, paged decode, SwiGLU, and logits accept only matching compiler-produced, move-only Worker V3 owners before strict structural inspection. Tests do not execute Worker V3 or establish current HSACO existence.",
     },
     {
+      label: "Canonical M1 source closure",
+      state: "qualified",
+      detail:
+        "PR #24 qualified exact head 3898bf40 and landed its tree through merge 49a539f2. The 495-file closure hashes to 25bbf05b8cec3d0e7157c4f1b66e6dbe6b31c1cfa647d3cde07a640a2e50699e and derives executable state only from canonical Git tree modes 100644 and 100755. All scoped checks passed.",
+    },
+    {
       label: "Historical SwiGLU candidate",
       state: "observed",
       detail:
@@ -62,13 +68,13 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "End-to-end Qwen through Ferric",
       state: "open",
       detail:
-        "The production path still needs Ferric's protected policy, Worker ledger, external rollback verifier, distinct-UID service deployment and keys, an authenticated seven-owner collector, authority-safe positive and hostile custody fixtures, a runner, and current-source hardware qualification.",
+        "The production path still needs current seven-family artifacts, Ferric's protected policy, Worker ledger, external rollback verifier, distinct-UID service deployment and keys, an authenticated seven-owner collector and roster, authority-safe custody fixtures, a runner, end-to-end Qwen execution, and current-source hardware and performance qualification.",
     },
     {
       label: "M1 qualification",
       state: "open",
       detail:
-        "No complete M1 evidence index or qualification receipt exists. Scoped source checks, proof release, one kernel artifact, and qualification-only numerics do not close M1.",
+        "No complete M1 evidence index or qualification receipt exists. The qualified source closure, scoped proof release, historical kernel artifact, and qualification-only numerics do not close the production receipt or M1.",
     },
   ],
   capabilities: {
@@ -173,12 +179,14 @@ window.FERRIC_PROJECT = Object.freeze({
   },
   validation: {
     host: {
-      title: "Seven protected Worker V3 adapters",
-      state: "implemented",
-      source: "1d666dbce8094fd8e96c40a00e316d6167e17fc2",
-      result: "PASS: seven family adapters and fail-closed artifact policy",
+      title: "Canonical M1 source closure",
+      state: "qualified",
+      source: "3898bf406e5be7f536ead442b05ba3254abafbf3",
+      closureSha256:
+        "25bbf05b8cec3d0e7157c4f1b66e6dbe6b31c1cfa647d3cde07a640a2e50699e",
+      result: "PASS: 495 files; canonical 100644/100755 Git-tree modes",
       detail:
-        "Qualified source 1d666dbc landed in m1/bundle-admission through be307d52. Each family binds exact compiler inputs to compiler-produced V3 custody and rejects mismatched handoffs, transcript limits, link plans, execution limits, or Worker measurements. Policy substitutions are tested, but the public bind paths lack positive and hostile protected-custody fixtures; no checked-in test collects seven live owners or executes Worker V3.",
+        "PR #24 hardened source-closure measurement so regular and executable blobs derive only from exact canonical Git tree modes 100644 and 100755. All scoped checks passed at 3898bf40; merge 49a539f2 landed the identical tree in m1/bundle-admission. This qualifies source-closure integrity only, not the seven-owner collector, current artifacts, hardware, performance, end-to-end Qwen, a production receipt, or M1.",
     },
     proof: {
       title: "Authenticated release proof",
@@ -208,6 +216,20 @@ window.FERRIC_PROJECT = Object.freeze({
       "The catalog records host-validated source paths. Target-only decode and every unlisted cross-plan transition require explicit queue retirement and a fresh admitted launch; none inherit rollover authority.",
   },
   recentProgress: [
+    {
+      commit: "49a539f251c8681644e6551c20fcce35e5fd4216",
+      title: "Land PR #24 source-closure hardening",
+      state: "qualified",
+      detail:
+        "PR #24 merged qualified head 3898bf406e5be7f536ead442b05ba3254abafbf3 into m1/bundle-admission with the identical source tree. M1, end-to-end Qwen, the seven-owner roster and collector, current artifacts, hardware and performance qualification, and the production receipt remain open.",
+    },
+    {
+      commit: "3898bf406e5be7f536ead442b05ba3254abafbf3",
+      title: "Qualify canonical Git-tree source modes",
+      state: "qualified",
+      detail:
+        "The source-closure gate passed all scoped checks over 495 files with SHA-256 25bbf05b8cec3d0e7157c4f1b66e6dbe6b31c1cfa647d3cde07a640a2e50699e. It recognizes exact 100644 regular blobs and 100755 executable blobs and rejects noncanonical mode input; it grants no runtime or qualification authority.",
+    },
     {
       commit: "be307d5269b29f8f2c3326af685df01e5c20c3d5",
       title: "Land the seven-family migration in m1/bundle-admission",
@@ -298,7 +320,8 @@ window.FERRIC_PROJECT = Object.freeze({
       "Worker ledger, repository lineage, host-descriptor lineage, and rollback admission",
       "Scheduling, paged KV, speculation, generated runner, and M1 qualification",
       "Qualified source 1d666dbc binds all seven K1-K7 families to protected Worker V3 custody and landed through be307d52 in m1/bundle-admission",
-      "Authenticated seven-owner collection, generated marker contracts, authority-safe custody fixtures, protected policy, and full runner integration remain Ferric work",
+      "PR #24 qualified canonical 100644/100755 source-closure modes at 3898bf40 and landed them through 49a539f2",
+      "Authenticated seven-owner collection and roster, current artifacts, generated marker contracts, authority-safe custody fixtures, protected policy, end-to-end Qwen, hardware and performance evidence, the production receipt, and M1 remain Ferric work",
     ],
     fe2o3: [
       "Reusable compiler APIs, semantic artifact identities, and protected compilation",
@@ -306,6 +329,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "Generic receipt-complete sealed verification and promotion boundary",
       "Typed KFD allocations, USERPTR/AQL queues, fixed-batch publication, completion, and dispatch",
       "Current integrated compiler/runtime head 42639ecc7f2f377ab57e5e884c36133a126f230e",
+      "PR #236 convergence work is active but unlanded and is not part of Ferric's supported baseline",
       "Deployment identities and Ferric-specific inference authority are intentionally not defined upstream",
     ],
   },
