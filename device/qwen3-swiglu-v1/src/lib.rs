@@ -29,28 +29,34 @@ pub const QWEN3_SWIGLU_ADMITTED_EXTENTS_V1: [usize; 15] = [
     3_145_728, 6_291_456, 12_582_912, 25_165_824,
 ];
 
+macro_rules! qwen3_swiglu_extent_is_admitted_expr_v1 {
+    ($elements:expr) => {
+        $elements == 3_072
+            || $elements == 12_288
+            || $elements == 24_576
+            || $elements == 49_152
+            || $elements == 61_440
+            || $elements == 98_304
+            || $elements == 110_592
+            || $elements == 208_896
+            || $elements == 393_216
+            || $elements == 491_520
+            || $elements == 1_572_864
+            || $elements == 3_145_728
+            || $elements == 6_291_456
+            || $elements == 12_582_912
+            || $elements == 25_165_824
+    };
+}
+
 /// Returns whether `elements` is one of the exact Ferric M1 SwiGLU extents.
 #[must_use]
 pub const fn qwen3_swiglu_extent_is_admitted_v1(elements: usize) -> bool {
-    elements == 3_072
-        || elements == 12_288
-        || elements == 24_576
-        || elements == 49_152
-        || elements == 61_440
-        || elements == 98_304
-        || elements == 110_592
-        || elements == 208_896
-        || elements == 393_216
-        || elements == 491_520
-        || elements == 1_572_864
-        || elements == 3_145_728
-        || elements == 6_291_456
-        || elements == 12_582_912
-        || elements == 25_165_824
+    qwen3_swiglu_extent_is_admitted_expr_v1!(elements)
 }
 
 #[inline(always)]
-#[cfg(any(target_arch = "amdgpu", test))]
+#[cfg(test)]
 const fn f32_is_finite_v1(value: f32) -> bool {
     value >= f32::MIN && value <= f32::MAX
 }
@@ -119,7 +125,7 @@ pub fn qwen3_swiglu_bf16_f32_v1(
     mut output: DisjointSlice<u16, Blocked<Index1D, 1, 8>>,
 ) {
     let elements = gate.len();
-    if !qwen3_swiglu_extent_is_admitted_v1(elements)
+    if !qwen3_swiglu_extent_is_admitted_expr_v1!(elements)
         || up.len() != elements
         || output.len() != elements
     {

@@ -199,8 +199,35 @@ fn element_expansion_retains_stable_sigmoid_and_fail_closed_narrowing() {
 }
 
 #[test]
+fn kernel_extent_expansion_is_closed_and_call_free() {
+    let body = compact_macro_body(named_macro("qwen3_swiglu_extent_is_admitted_expr_v1"));
+    for extent in [
+        "3_072",
+        "12_288",
+        "24_576",
+        "49_152",
+        "61_440",
+        "98_304",
+        "110_592",
+        "208_896",
+        "393_216",
+        "491_520",
+        "1_572_864",
+        "3_145_728",
+        "6_291_456",
+        "12_582_912",
+        "25_165_824",
+    ] {
+        assert!(body.contains(&format!("$elements=={extent}")));
+    }
+    assert_eq!(body.matches("$elements==").count(), 15);
+}
+
+#[test]
 fn kernel_uses_eight_constant_blocked_stores() {
     let body = compact_function_body(kernel());
+    assert!(body.contains("qwen3_swiglu_extent_is_admitted_expr_v1!(elements)"));
+    assert!(!body.contains("qwen3_swiglu_extent_is_admitted_v1("));
     assert!(body.contains("workitem.checked_block::<1,8>()"));
     for component in 0..8 {
         let index = format!("index_{component}");
