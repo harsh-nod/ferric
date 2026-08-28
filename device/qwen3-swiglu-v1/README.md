@@ -14,7 +14,9 @@ gfx942 OCML exp admission with the reviewed ROCm 7.2.4 provider hashes. It also
 keeps the blocked-index producer and output accessor visible as authenticated
 semantic terminals in release builds. The kernel spells its eight owned output
 components as eight constant blocked-access calls so M1 does not depend on a
-new loop-carried race/progress proof in fe2o3. Passing its host-side source and
+new loop-carried race/progress proof in fe2o3. Its repeated pure element math is
+expanded locally before MIR construction, leaving no ordinary helper-function
+call for the production semantic projector. Passing its host-side source and
 reference tests establishes only the attributed Rust source contract. It does
 not establish production compilation, HSACO inspection, dispatch authority,
 numerical qualification, or M1 evidence.
