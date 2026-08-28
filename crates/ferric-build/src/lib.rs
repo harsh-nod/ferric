@@ -72,7 +72,8 @@ pub use kernel_artifacts::{
     build_and_publish_m1_kernel_artifacts_v1, current_m1_kernel_source_facts_v1,
     BuiltAndInspectedM1KernelArtifactsV1, M1CurrentKernelSourceFactsV1,
     M1KernelArtifactBuildErrorV1, M1KernelArtifactBuildStageV1,
-    M1KernelArtifactPublicationStatusV1, M1_KERNEL_ARTIFACT_MANIFEST_FILENAME_V1,
+    M1KernelArtifactPublicationStatusV1, M1KernelWorkerV3EvidenceSetV1,
+    M1_KERNEL_ARTIFACT_MANIFEST_FILENAME_V1,
 };
 #[cfg(feature = "test-fixtures")]
 #[doc(hidden)]

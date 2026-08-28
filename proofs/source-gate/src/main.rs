@@ -17,17 +17,12 @@ const RUNTIME_TCB_PATH: &str = "proofs/RUNTIME_DEPENDENCY_TCB";
 const CRATES_IO_SOURCE: &str = "registry+https://github.com/rust-lang/crates.io-index";
 const VERUS_SOURCE: &str = "git+https://github.com/verus-lang/verus.git?rev=b677dd5";
 const FE2O3_SOURCE: &str =
-    "git+https://github.com/harsh-nod/fe2o3.git?rev=b838131a10e00861dc3a5758e33dfa0a13162e13";
+    "git+https://github.com/harsh-nod/fe2o3.git?rev=42639ecc7f2f377ab57e5e884c36133a126f230e";
 const QUALIFIED_BINARIES: &[(&str, &str, &str)] = &[
     (
         "ferric-build",
         "ferric-m1-generate-runner",
         "crates/ferric-build/src/bin/ferric-m1-generate-runner.rs",
-    ),
-    (
-        "ferric-build",
-        "ferric-m1-kernel-artifacts",
-        "crates/ferric-build/src/bin/ferric-m1-kernel-artifacts.rs",
     ),
     (
         "ferric-build",
@@ -109,10 +104,8 @@ const RUNTIME_ROOTS: &[(&str, &str, &str, bool, &[&str])] = &[
 ];
 const FE2O3_ROOTS: &[(&str, &str)] = &[
     ("ferric-build", "fe2o3-amdhsa-loader"),
-    ("ferric-build", "fe2o3-artifact-transaction"),
     ("ferric-build", "fe2o3-compiler-ffi"),
     ("ferric-build", "fe2o3-hsaco-finalize"),
-    ("ferric-build", "fe2o3-llvm-worker-handoff"),
     ("ferric-engine", "fe2o3-amdhsa-loader"),
     ("ferric-engine", "fe2o3-aql"),
     ("ferric-engine", "fe2o3-kfd"),
@@ -124,7 +117,6 @@ const FE2O3_ROOTS: &[(&str, &str)] = &[
     ("ferric-qwen-kernels", "fe2o3-hsaco-finalize"),
     ("ferric-qwen-kernels", "fe2o3-llvm-handoff"),
     ("ferric-qwen-kernels", "fe2o3-llvm-text"),
-    ("ferric-qwen-kernels", "fe2o3-llvm-worker-handoff"),
     ("ferric-qwen-kernels", "reserved-fe2o3-symbols"),
 ];
 const ENGINE_ALLOCATION_CONSTRUCTORS: &[&str] = &[

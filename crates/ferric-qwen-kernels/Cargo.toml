@@ -14,7 +14,6 @@ fe2o3-hsaco.workspace = true
 fe2o3-hsaco-finalize.workspace = true
 fe2o3-llvm-handoff.workspace = true
 fe2o3-llvm-text.workspace = true
-fe2o3-llvm-worker-handoff.workspace = true
 reserved-fe2o3-symbols.workspace = true
 sha2.workspace = true
 vstd.workspace = true

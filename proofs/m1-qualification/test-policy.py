@@ -239,7 +239,7 @@ def exercise_prepare_boundaries(repo: Path, fe2o3_source: Path, planner: Any) ->
         lock_path = resolved_case / "Cargo.lock"
         lock_source = lock_path.read_text(encoding="utf-8")
         expected_url = "git+https://github.com/harsh-nod/fe2o3.git"
-        if lock_source.count(expected_url) != 39:
+        if lock_source.count(expected_url) != 25:
             fail("integration fixture resolved fe2o3 roster drifted before mutation")
         lock_path.write_text(
             lock_source.replace(expected_url, "git+https://evil.invalid/fe2o3.git"),

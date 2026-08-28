@@ -102,6 +102,7 @@ mkdir -p "$source_snapshot"
 cp -a "$repo/Cargo.toml" "$repo/Cargo.lock" "$repo/rust-toolchain.toml" "$source_snapshot/"
 cp -a "$repo/benches" "$source_snapshot/"
 cp -a "$repo/crates" "$repo/proofs" "$source_snapshot/"
+cp -a "$repo/device" "$source_snapshot/"
 cp -a "$repo/docs" "$source_snapshot/"
 cp -a "$repo/generated" "$source_snapshot/"
 mkdir -p "$source_snapshot/.github/workflows"
@@ -263,6 +264,9 @@ set +e
     printf 'FERRIC_QUALITY_GATE=test-release:BEGIN\n'
     cargo test --workspace --locked --release --target-dir "$runtime_test_target"
     printf 'FERRIC_QUALITY_GATE=test-release:PASS\n'
+    printf 'FERRIC_QUALITY_GATE=source-closure-policy:BEGIN\n'
+    PYTHONDONTWRITEBYTECODE=1 python3 -I -B proofs/test-source-closure.py
+    printf 'FERRIC_QUALITY_GATE=source-closure-policy:PASS\n'
     printf 'FERRIC_QUALITY_GATE=m1-benchmark-policy:BEGIN\n'
     CARGO_TARGET_DIR="$runtime_test_target" PYTHONDONTWRITEBYTECODE=1 \
         python3 -I -B benches/m1/test-policy.py .

@@ -22,6 +22,7 @@ mod m1_packet_diagnostic;
 mod m1_packet_diagnostic_execution;
 mod m1_prepublication;
 mod m1_queue_rearm;
+mod m1_swiglu_worker_v3_verifier;
 mod model_memory_allocations;
 mod observed_completion;
 mod operation_dispatch_expansion;
@@ -204,6 +205,13 @@ pub use m1_queue_rearm::{
     M1ScheduledLongLivedQueueRearmTeardownFailureV1,
     M1ScheduledLongLivedQueueRearmTeardownSuccessV1, M1ScheduledLongLivedQueueRearmV1,
     M1_MAX_REARM_ROUND_HISTORY_V1,
+};
+pub use m1_swiglu_worker_v3_verifier::{
+    current_m1_swiglu_worker_v3_build_v1, prepare_m1_swiglu_protected_verifier_request_v1,
+    require_current_m1_swiglu_receipt_bearing_envelope_v2,
+    M1SwiGluCompilerReceiptCarriageIdentitiesV1, M1SwiGluCurrentEnvelopeSchemaV1,
+    M1SwiGluProtectedBuildIdentitiesV1, M1SwiGluProtectedVerifierRequestErrorV1,
+    M1SwiGluProtectedVerifierRequestV1, M1SwiGluProtectedWorkerV3BuildFieldV1,
 };
 pub use model_memory_allocations::{
     bind_addressless_model_memory_allocations_v1, BoundModelMemoryAllocationsV1,

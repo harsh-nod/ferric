@@ -1662,7 +1662,7 @@ pub(crate) mod tests {
     use super::*;
     use std::cell::RefCell;
     use std::fs;
-    use std::os::unix::fs::PermissionsExt;
+    use std::os::unix::fs::{DirBuilderExt, PermissionsExt};
     use std::path::PathBuf;
     use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -1677,7 +1677,8 @@ pub(crate) mod tests {
                 "ferric-m1-d10-policy-test.{}.{nonce}",
                 std::process::id()
             ));
-            fs::create_dir(&path).unwrap();
+            fs::DirBuilder::new().mode(0o700).create(&path).unwrap();
+            fs::set_permissions(&path, fs::Permissions::from_mode(0o700)).unwrap();
             Self(path)
         }
     }

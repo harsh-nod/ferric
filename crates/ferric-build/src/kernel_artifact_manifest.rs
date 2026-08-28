@@ -11,7 +11,10 @@ use fe2o3_amdhsa_loader::{
     MAX_INPUT_BYTES, MAX_METADATA_BYTES,
 };
 use fe2o3_hsaco_finalize::ContentIdentityV1;
-use ferric_qwen_kernels::{gemm, logits, paged_decode, prefill, rmsnorm, rope_kv, swiglu};
+use ferric_qwen_kernels::{
+    gemm, logits, paged_decode, prefill, rmsnorm, rope_kv, swiglu, QWEN3_GFX942_OCML_IMPORT_V1,
+    QWEN3_GFX942_OCML_PROVIDER_FILES_V1, QWEN3_GFX942_OCML_PROVIDER_IDENTITY_V1,
+};
 use sha2::{Digest, Sha256};
 
 use super::kernel_artifact_policy::{
@@ -31,28 +34,8 @@ const LINK_OPTIONS: [(&str, &str); 4] = [
     ("verify-each", "true"),
 ];
 
-const OCML_PROVIDER: &str = "gfx942-ocml-v1";
-const OCML_IMPORT: &str = "__ocml_exp_f32";
 const ASSEMBLY_CATALOG_DOMAIN: &[u8] =
     b"ferric.m1.kernel-artifact-builder.speculative-assembly-catalog.v1";
-const OCML_FILES: [(&str, [u8; 32]); 4] = [
-    (
-        "ocml.bc",
-        hex_digest("cfe97fe9ee29379f522e5f20ae55aae1cdb96eb41d6aa250ea11c4941c54e019"),
-    ),
-    (
-        "oclc_isa_version_942.bc",
-        hex_digest("580d540cc738c0f9554c8710575bbc9b51ebacdcbc29aa0074ed05d3691dea1d"),
-    ),
-    (
-        "oclc_unsafe_math_off.bc",
-        hex_digest("22c799b9154389f050f8f3368762636b9954a2ea25622199c359366bbd84657f"),
-    ),
-    (
-        "oclc_finite_only_off.bc",
-        hex_digest("f3138eeee65c1d83234260728d124f635f021abb37c495f4ed027dfe92bcb1dd"),
-    ),
-];
 
 /// Canonical manifest format version.
 pub const M1_KERNEL_ARTIFACT_MANIFEST_VERSION_V1: u32 = 1;
@@ -243,9 +226,9 @@ struct DeviceLibraryProviderRecordV1 {
 impl DeviceLibraryProviderRecordV1 {
     fn ocml() -> Self {
         Self {
-            identity: OCML_PROVIDER.to_owned(),
-            import_symbol: OCML_IMPORT.to_owned(),
-            files: OCML_FILES
+            identity: QWEN3_GFX942_OCML_PROVIDER_IDENTITY_V1.to_owned(),
+            import_symbol: QWEN3_GFX942_OCML_IMPORT_V1.to_owned(),
+            files: QWEN3_GFX942_OCML_PROVIDER_FILES_V1
                 .into_iter()
                 .map(|(name, digest)| (name.to_owned(), digest))
                 .collect(),
@@ -1075,7 +1058,7 @@ fn decode_entry(
             let identity = decoder.text()?.to_owned();
             let import_symbol = decoder.text()?.to_owned();
             let file_count = decoder.u8()? as usize;
-            if file_count > OCML_FILES.len() {
+            if file_count > QWEN3_GFX942_OCML_PROVIDER_FILES_V1.len() {
                 return Err(M1KernelArtifactManifestErrorV1::Invalid("provider files"));
             }
             let mut files = Vec::with_capacity(file_count);
@@ -1244,25 +1227,6 @@ impl<'a> Decoder<'a> {
     }
 }
 
-const fn hex_digest(value: &str) -> [u8; 32] {
-    let bytes = value.as_bytes();
-    let mut result = [0; 32];
-    let mut index = 0;
-    while index < 32 {
-        result[index] = (hex_nibble(bytes[index * 2]) << 4) | hex_nibble(bytes[index * 2 + 1]);
-        index += 1;
-    }
-    result
-}
-
-const fn hex_nibble(value: u8) -> u8 {
-    match value {
-        b'0'..=b'9' => value - b'0',
-        b'a'..=b'f' => value - b'a' + 10,
-        _ => panic!("invalid checked-in digest"),
-    }
-}
-
 fn hex(bytes: &[u8]) -> String {
     const DIGITS: &[u8; 16] = b"0123456789abcdef";
     let mut encoded = String::with_capacity(bytes.len() * 2);
@@ -1346,9 +1310,9 @@ mod tests {
 
     #[test]
     fn reviewed_ocml_closure_is_exact() {
-        assert_eq!(OCML_FILES.len(), 4);
+        assert_eq!(QWEN3_GFX942_OCML_PROVIDER_FILES_V1.len(), 4);
         assert_eq!(
-            hex(&OCML_FILES[0].1),
+            hex(&QWEN3_GFX942_OCML_PROVIDER_FILES_V1[0].1),
             "cfe97fe9ee29379f522e5f20ae55aae1cdb96eb41d6aa250ea11c4941c54e019"
         );
         assert!(M1KernelArtifactFamilyV1::Prefill.uses_ocml());

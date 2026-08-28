@@ -18,7 +18,7 @@ runtime-tcb=package=registry+https://github.com/rust-lang/crates.io-index#block-
 runtime-tcb=package=registry+https://github.com/rust-lang/crates.io-index#cc@1.4.4|cc|1.4.4|registry+https://github.com/rust-lang/crates.io-index|0ad534f4357a5264cce5019c989cf66a4f0dc4e0d1b1d15f8aacec0ff7360273
 runtime-tcb=package=registry+https://github.com/rust-lang/crates.io-index#cfg-if@1.0.4|cfg-if|1.0.4|registry+https://github.com/rust-lang/crates.io-index|9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801
 runtime-tcb=package=registry+https://github.com/rust-lang/crates.io-index#const-oid@0.10.2|const-oid|0.10.2|registry+https://github.com/rust-lang/crates.io-index|a6ef517f0926dd24a1582492c791b6a4818a4d94e789a334894aa15b0d12f55c
-runtime-tcb=package=registry+https://github.com/rust-lang/crates.io-index#cpufeatures@0.3.0|cpufeatures|0.3.0|registry+https://github.com/rust-lang/crates.io-index|8b2a41393f66f16b0823bb79094d54ac5fbd34ab292ddafb9a0456ac9f87d201
+runtime-tcb=package=registry+https://github.com/rust-lang/crates.io-index#cpufeatures@0.3.1|cpufeatures|0.3.1|registry+https://github.com/rust-lang/crates.io-index|5ca28b0ae3115b884660db4118d803791fd6756b6e88f39c0f3f7859060d7566
 runtime-tcb=package=registry+https://github.com/rust-lang/crates.io-index#crypto-common@0.2.2|crypto-common|0.2.2|registry+https://github.com/rust-lang/crates.io-index|ce6e4c961d6cd6c9a86db418387425e8bdeaf05b3c8bc1411e6dca4c252f1453
 runtime-tcb=package=registry+https://github.com/rust-lang/crates.io-index#digest@0.11.3|digest|0.11.3|registry+https://github.com/rust-lang/crates.io-index|f1dd6dbb5841937940781866fa1281a1ff7bd3bf827091440879f9994983d5c2
 runtime-tcb=package=registry+https://github.com/rust-lang/crates.io-index#errno@0.3.14|errno|0.3.14|registry+https://github.com/rust-lang/crates.io-index|39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb
@@ -45,7 +45,7 @@ runtime-tcb=package=registry+https://github.com/rust-lang/crates.io-index#serde_
 runtime-tcb=package=registry+https://github.com/rust-lang/crates.io-index#sha2@0.11.0|sha2|0.11.0|registry+https://github.com/rust-lang/crates.io-index|446ba717509524cb3f22f17ecc096f10f4822d76ab5c0b9822c5f9c284e825f4
 runtime-tcb=package=registry+https://github.com/rust-lang/crates.io-index#shlex@2.0.1|shlex|2.0.1|registry+https://github.com/rust-lang/crates.io-index|f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba
 runtime-tcb=package=registry+https://github.com/rust-lang/crates.io-index#smallvec@1.15.2|smallvec|1.15.2|registry+https://github.com/rust-lang/crates.io-index|8ed6a63f02c8539c91a8685a86f4099661ba3da017932f6ebbea6de3f0fa7c90
-runtime-tcb=package=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|syn|3.0.3|registry+https://github.com/rust-lang/crates.io-index|53e9bae58849f64dfa4f5d5ae372c8341f7305f82a3868709269343628b659a3
+runtime-tcb=package=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|syn|3.0.4|registry+https://github.com/rust-lang/crates.io-index|e6275cddf4610d1775e6d1fe9469b2e77d0f39fd98fb7450901b821e0c53649f
 runtime-tcb=package=registry+https://github.com/rust-lang/crates.io-index#typenum@1.20.1|typenum|1.20.1|registry+https://github.com/rust-lang/crates.io-index|b6f5e870be6c3b371b77fe0ee0bafb859fa4964b4404c27de1d380043c4dda20
 runtime-tcb=package=registry+https://github.com/rust-lang/crates.io-index#unicode-ident@1.0.24|unicode-ident|1.0.24|registry+https://github.com/rust-lang/crates.io-index|e6e4313cd5fcd3dad5cafa179702e2b244f760991f45397d14d4ebf38247da75
 runtime-tcb=package=registry+https://github.com/rust-lang/crates.io-index#unicode-normalization-alignments@0.1.12|unicode-normalization-alignments|0.1.12|registry+https://github.com/rust-lang/crates.io-index|43f613e4fa046e69818dd287fdc4bc78175ff20331479dab6e1b0f98d57062de
@@ -58,7 +58,7 @@ runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#block
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#cc@1.4.4|none
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#cfg-if@1.0.4|none
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#const-oid@0.10.2|none
-runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#cpufeatures@0.3.0|none
+runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#cpufeatures@0.3.1|none
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#crypto-common@0.2.2|none
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#digest@0.11.3|alloc,block-api,default,oid
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#errno@0.3.14|std
@@ -77,15 +77,15 @@ runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#onig_
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#pkg-config@0.3.34|none
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#proc-macro2@1.0.107|default,proc-macro,span-locations
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#quote@1.0.47|default,proc-macro
-runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#rustix@1.1.4|alloc,default,fs,mm,net,param,process,std
-runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#serde@1.0.229|alloc,default,derive,serde_derive,std
+runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#rustix@1.1.4|alloc,default,fs,mm,net,param,pipe,process,std,thread
+runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#serde@1.0.229|default,derive,serde_derive,std
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#serde_core@1.0.229|alloc,result,std
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#serde_derive@1.0.229|default
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#serde_json@1.0.151|default,std
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#sha2@0.11.0|alloc,default,oid
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#shlex@2.0.1|default,std
-runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#smallvec@1.15.2|const_generics,const_new,union
-runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|clone-impls,default,derive,full,parsing,printing,proc-macro
+runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#smallvec@1.15.2|none
+runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|clone-impls,derive,parsing,printing,proc-macro
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#typenum@1.20.1|const-generics
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#unicode-ident@1.0.24|none
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#unicode-normalization-alignments@0.1.12|none
@@ -118,10 +118,10 @@ runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#const-o
 runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#const-oid@0.10.2|oid_ref|test|bin
 runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#const-oid@0.10.2|oid|test|bin
 runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#const-oid@0.10.2|proptests|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#cpufeatures@0.3.0|aarch64|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#cpufeatures@0.3.0|cpufeatures|lib|lib
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#cpufeatures@0.3.0|loongarch64|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#cpufeatures@0.3.0|x86|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#cpufeatures@0.3.1|aarch64|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#cpufeatures@0.3.1|cpufeatures|lib|lib
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#cpufeatures@0.3.1|loongarch64|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#cpufeatures@0.3.1|x86|test|bin
 runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#crypto-common@0.2.2|crypto_common|lib|lib
 runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#digest@0.11.3|digest|lib|lib
 runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#digest@0.11.3|dummy_fixed|test|bin
@@ -219,36 +219,36 @@ runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#sha2@0.
 runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#sha2@0.11.0|sha2|lib|lib
 runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#shlex@2.0.1|shlex|lib|lib
 runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#smallvec@1.15.2|smallvec|lib|lib
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|file|bench|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|regression|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|rust|bench|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|syn|lib|lib
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|test_attribute|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|test_derive_input|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|test_expr|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|test_generics|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|test_grouping|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|test_ident|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|test_item|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|test_lit|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|test_meta|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|test_parse_buffer|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|test_parse_quote|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|test_parse_stream|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|test_path|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|test_pat|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|test_precedence|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|test_punctuated|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|test_receiver|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|test_round_trip|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|test_shebang|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|test_size|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|test_stmt|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|test_token_trees|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|test_ty|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|test_unparenthesize|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|test_visibility|test|bin
-runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|zzz_stable|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|file|bench|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|regression|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|rust|bench|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|syn|lib|lib
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|test_attribute|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|test_derive_input|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|test_expr|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|test_generics|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|test_grouping|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|test_ident|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|test_item|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|test_lit|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|test_meta|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|test_parse_buffer|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|test_parse_quote|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|test_parse_stream|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|test_path|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|test_pat|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|test_precedence|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|test_punctuated|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|test_receiver|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|test_round_trip|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|test_shebang|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|test_size|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|test_stmt|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|test_token_trees|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|test_ty|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|test_unparenthesize|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|test_visibility|test|bin
+runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|zzz_stable|test|bin
 runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#typenum@1.20.1|generated|test|bin
 runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#typenum@1.20.1|typenum|lib|lib
 runtime-tcb=target=registry+https://github.com/rust-lang/crates.io-index#unicode-ident@1.0.24|compare|test|bin
@@ -271,7 +271,7 @@ runtime-tcb=build-scripts=registry+https://github.com/rust-lang/crates.io-index#
 runtime-tcb=build-scripts=registry+https://github.com/rust-lang/crates.io-index#cc@1.4.4|none
 runtime-tcb=build-scripts=registry+https://github.com/rust-lang/crates.io-index#cfg-if@1.0.4|none
 runtime-tcb=build-scripts=registry+https://github.com/rust-lang/crates.io-index#const-oid@0.10.2|none
-runtime-tcb=build-scripts=registry+https://github.com/rust-lang/crates.io-index#cpufeatures@0.3.0|none
+runtime-tcb=build-scripts=registry+https://github.com/rust-lang/crates.io-index#cpufeatures@0.3.1|none
 runtime-tcb=build-scripts=registry+https://github.com/rust-lang/crates.io-index#crypto-common@0.2.2|none
 runtime-tcb=build-scripts=registry+https://github.com/rust-lang/crates.io-index#digest@0.11.3|none
 runtime-tcb=build-scripts=registry+https://github.com/rust-lang/crates.io-index#errno@0.3.14|none
@@ -298,7 +298,7 @@ runtime-tcb=build-scripts=registry+https://github.com/rust-lang/crates.io-index#
 runtime-tcb=build-scripts=registry+https://github.com/rust-lang/crates.io-index#sha2@0.11.0|none
 runtime-tcb=build-scripts=registry+https://github.com/rust-lang/crates.io-index#shlex@2.0.1|none
 runtime-tcb=build-scripts=registry+https://github.com/rust-lang/crates.io-index#smallvec@1.15.2|none
-runtime-tcb=build-scripts=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|none
+runtime-tcb=build-scripts=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|none
 runtime-tcb=build-scripts=registry+https://github.com/rust-lang/crates.io-index#typenum@1.20.1|none
 runtime-tcb=build-scripts=registry+https://github.com/rust-lang/crates.io-index#unicode-ident@1.0.24|none
 runtime-tcb=build-scripts=registry+https://github.com/rust-lang/crates.io-index#unicode-normalization-alignments@0.1.12|none
@@ -311,7 +311,7 @@ runtime-tcb=proc-macros=registry+https://github.com/rust-lang/crates.io-index#bl
 runtime-tcb=proc-macros=registry+https://github.com/rust-lang/crates.io-index#cc@1.4.4|none
 runtime-tcb=proc-macros=registry+https://github.com/rust-lang/crates.io-index#cfg-if@1.0.4|none
 runtime-tcb=proc-macros=registry+https://github.com/rust-lang/crates.io-index#const-oid@0.10.2|none
-runtime-tcb=proc-macros=registry+https://github.com/rust-lang/crates.io-index#cpufeatures@0.3.0|none
+runtime-tcb=proc-macros=registry+https://github.com/rust-lang/crates.io-index#cpufeatures@0.3.1|none
 runtime-tcb=proc-macros=registry+https://github.com/rust-lang/crates.io-index#crypto-common@0.2.2|none
 runtime-tcb=proc-macros=registry+https://github.com/rust-lang/crates.io-index#digest@0.11.3|none
 runtime-tcb=proc-macros=registry+https://github.com/rust-lang/crates.io-index#errno@0.3.14|none
@@ -338,7 +338,7 @@ runtime-tcb=proc-macros=registry+https://github.com/rust-lang/crates.io-index#se
 runtime-tcb=proc-macros=registry+https://github.com/rust-lang/crates.io-index#sha2@0.11.0|none
 runtime-tcb=proc-macros=registry+https://github.com/rust-lang/crates.io-index#shlex@2.0.1|none
 runtime-tcb=proc-macros=registry+https://github.com/rust-lang/crates.io-index#smallvec@1.15.2|none
-runtime-tcb=proc-macros=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|none
+runtime-tcb=proc-macros=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|none
 runtime-tcb=proc-macros=registry+https://github.com/rust-lang/crates.io-index#typenum@1.20.1|none
 runtime-tcb=proc-macros=registry+https://github.com/rust-lang/crates.io-index#unicode-ident@1.0.24|none
 runtime-tcb=proc-macros=registry+https://github.com/rust-lang/crates.io-index#unicode-normalization-alignments@0.1.12|none
@@ -348,10 +348,10 @@ runtime-tcb=proc-macros=registry+https://github.com/rust-lang/crates.io-index#zm
 runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#block-buffer@0.12.1|hybrid_array|registry+https://github.com/rust-lang/crates.io-index#hybrid-array@0.4.14|normal|none
 runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#cc@1.4.4|find_msvc_tools|registry+https://github.com/rust-lang/crates.io-index#find-msvc-tools@0.1.11|normal|none
 runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#cc@1.4.4|shlex|registry+https://github.com/rust-lang/crates.io-index#shlex@2.0.1|normal|none
-runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#cpufeatures@0.3.0|libc|registry+https://github.com/rust-lang/crates.io-index#libc@0.2.189|normal|cfg(all(target_arch = "aarch64", target_os = "android"))
-runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#cpufeatures@0.3.0|libc|registry+https://github.com/rust-lang/crates.io-index#libc@0.2.189|normal|cfg(all(target_arch = "aarch64", target_os = "linux"))
-runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#cpufeatures@0.3.0|libc|registry+https://github.com/rust-lang/crates.io-index#libc@0.2.189|normal|cfg(all(target_arch = "aarch64", target_vendor = "apple"))
-runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#cpufeatures@0.3.0|libc|registry+https://github.com/rust-lang/crates.io-index#libc@0.2.189|normal|cfg(all(target_arch = "loongarch64", target_os = "linux"))
+runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#cpufeatures@0.3.1|libc|registry+https://github.com/rust-lang/crates.io-index#libc@0.2.189|normal|cfg(all(target_arch = "aarch64", target_os = "android"))
+runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#cpufeatures@0.3.1|libc|registry+https://github.com/rust-lang/crates.io-index#libc@0.2.189|normal|cfg(all(target_arch = "aarch64", target_os = "linux"))
+runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#cpufeatures@0.3.1|libc|registry+https://github.com/rust-lang/crates.io-index#libc@0.2.189|normal|cfg(all(target_arch = "aarch64", target_vendor = "apple"))
+runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#cpufeatures@0.3.1|libc|registry+https://github.com/rust-lang/crates.io-index#libc@0.2.189|normal|cfg(all(target_arch = "loongarch64", target_os = "linux"))
 runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#crypto-common@0.2.2|hybrid_array|registry+https://github.com/rust-lang/crates.io-index#hybrid-array@0.4.14|normal|none
 runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#digest@0.11.3|block_buffer|registry+https://github.com/rust-lang/crates.io-index#block-buffer@0.12.1|normal|none
 runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#digest@0.11.3|common|registry+https://github.com/rust-lang/crates.io-index#crypto-common@0.2.2|normal|none
@@ -387,18 +387,18 @@ runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#serde@1.0
 runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#serde_core@1.0.229|serde_derive|registry+https://github.com/rust-lang/crates.io-index#serde_derive@1.0.229|normal|cfg(any())
 runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#serde_derive@1.0.229|proc_macro2|registry+https://github.com/rust-lang/crates.io-index#proc-macro2@1.0.107|normal|none
 runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#serde_derive@1.0.229|quote|registry+https://github.com/rust-lang/crates.io-index#quote@1.0.47|normal|none
-runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#serde_derive@1.0.229|syn|registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|normal|none
+runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#serde_derive@1.0.229|syn|registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|normal|none
 runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#serde_json@1.0.151|itoa|registry+https://github.com/rust-lang/crates.io-index#itoa@1.0.18|normal|none
 runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#serde_json@1.0.151|memchr|registry+https://github.com/rust-lang/crates.io-index#memchr@2.8.3|normal|none
 runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#serde_json@1.0.151|serde_core|registry+https://github.com/rust-lang/crates.io-index#serde_core@1.0.229|normal|none
 runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#serde_json@1.0.151|serde|registry+https://github.com/rust-lang/crates.io-index#serde@1.0.229|normal|cfg(any())
 runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#serde_json@1.0.151|zmij|registry+https://github.com/rust-lang/crates.io-index#zmij@1.0.23|normal|none
 runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#sha2@0.11.0|cfg_if|registry+https://github.com/rust-lang/crates.io-index#cfg-if@1.0.4|normal|none
-runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#sha2@0.11.0|cpufeatures|registry+https://github.com/rust-lang/crates.io-index#cpufeatures@0.3.0|normal|cfg(any(target_arch = "aarch64", target_arch = "x86_64", target_arch = "x86"))
+runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#sha2@0.11.0|cpufeatures|registry+https://github.com/rust-lang/crates.io-index#cpufeatures@0.3.1|normal|cfg(any(target_arch = "aarch64", target_arch = "x86_64", target_arch = "x86"))
 runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#sha2@0.11.0|digest|registry+https://github.com/rust-lang/crates.io-index#digest@0.11.3|normal|none
-runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|proc_macro2|registry+https://github.com/rust-lang/crates.io-index#proc-macro2@1.0.107|normal|none
-runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|quote|registry+https://github.com/rust-lang/crates.io-index#quote@1.0.47|normal|none
-runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.3|unicode_ident|registry+https://github.com/rust-lang/crates.io-index#unicode-ident@1.0.24|normal|none
+runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|proc_macro2|registry+https://github.com/rust-lang/crates.io-index#proc-macro2@1.0.107|normal|none
+runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|quote|registry+https://github.com/rust-lang/crates.io-index#quote@1.0.47|normal|none
+runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#syn@3.0.4|unicode_ident|registry+https://github.com/rust-lang/crates.io-index#unicode-ident@1.0.24|normal|none
 runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#unicode-normalization-alignments@0.1.12|smallvec|registry+https://github.com/rust-lang/crates.io-index#smallvec@1.15.2|normal|none
 runtime-tcb=edge=registry+https://github.com/rust-lang/crates.io-index#windows-sys@0.61.2|windows_link|registry+https://github.com/rust-lang/crates.io-index#windows-link@0.2.1|normal|none
 package=ferric-qwen-kernels|ferric_qwen_kernels
@@ -1029,11 +1029,6 @@ module=ferric-build|crates/ferric-build/src/bin/ferric-m1-generate-runner.rs|fer
 unverified=ferric-build|crates/ferric-build/src/bin/ferric-m1-generate-runner.rs|ferric_m1_generate_runner::main
 unverified=ferric-build|crates/ferric-build/src/bin/ferric-m1-generate-runner.rs|ferric_m1_generate_runner::run
 unverified=ferric-build|crates/ferric-build/src/bin/ferric-m1-generate-runner.rs|ferric_m1_generate_runner::usage
-module=ferric-build|crates/ferric-build/src/bin/ferric-m1-kernel-artifacts.rs|ferric_m1_kernel_artifacts
-unverified=ferric-build|crates/ferric-build/src/bin/ferric-m1-kernel-artifacts.rs|ferric_m1_kernel_artifacts::hex
-unverified=ferric-build|crates/ferric-build/src/bin/ferric-m1-kernel-artifacts.rs|ferric_m1_kernel_artifacts::main
-unverified=ferric-build|crates/ferric-build/src/bin/ferric-m1-kernel-artifacts.rs|ferric_m1_kernel_artifacts::run
-unverified=ferric-build|crates/ferric-build/src/bin/ferric-m1-kernel-artifacts.rs|ferric_m1_kernel_artifacts::usage
 module=ferric-build|crates/ferric-build/src/bin/ferric-m1-prepack.rs|ferric_m1_prepack
 unverified=ferric-build|crates/ferric-build/src/bin/ferric-m1-prepack.rs|ferric_m1_prepack::StagingDirectory::Drop::drop
 unverified=ferric-build|crates/ferric-build/src/bin/ferric-m1-prepack.rs|ferric_m1_prepack::StagingDirectory::create
@@ -1179,8 +1174,6 @@ unverified=ferric-build|crates/ferric-build/src/kernel_artifact_manifest.rs|ferr
 unverified=ferric-build|crates/ferric-build/src/kernel_artifact_manifest.rs|ferric_build::kernel_artifact_manifest::exact_u8
 unverified=ferric-build|crates/ferric-build/src/kernel_artifact_manifest.rs|ferric_build::kernel_artifact_manifest::expected_programs
 unverified=ferric-build|crates/ferric-build/src/kernel_artifact_manifest.rs|ferric_build::kernel_artifact_manifest::hex
-unverified=ferric-build|crates/ferric-build/src/kernel_artifact_manifest.rs|ferric_build::kernel_artifact_manifest::hex_digest
-unverified=ferric-build|crates/ferric-build/src/kernel_artifact_manifest.rs|ferric_build::kernel_artifact_manifest::hex_nibble
 unverified=ferric-build|crates/ferric-build/src/kernel_artifact_manifest.rs|ferric_build::kernel_artifact_manifest::push_content
 unverified=ferric-build|crates/ferric-build/src/kernel_artifact_manifest.rs|ferric_build::kernel_artifact_manifest::push_text
 unverified=ferric-build|crates/ferric-build/src/kernel_artifact_manifest.rs|ferric_build::kernel_artifact_manifest::push_u32
@@ -1190,9 +1183,9 @@ unverified=ferric-build|crates/ferric-build/src/kernel_artifact_manifest.rs|ferr
 unverified=ferric-build|crates/ferric-build/src/kernel_artifact_manifest.rs|ferric_build::kernel_artifact_manifest::validate_load_plan
 unverified=ferric-build|crates/ferric-build/src/kernel_artifact_manifest.rs|ferric_build::kernel_artifact_manifest::validate_profiles
 module=ferric-build|crates/ferric-build/src/kernel_artifact_policy.rs|ferric_build::kernel_artifact_policy
-unverified=ferric-build|crates/ferric-build/src/kernel_artifact_policy.rs|ferric_build::kernel_artifact_policy::open_m1_kernel_worker_v1
+unverified=ferric-build|crates/ferric-build/src/kernel_artifact_policy.rs|ferric_build::kernel_artifact_policy::worker_execution_policy_matches_m1_kernel_policy_v1
+unverified=ferric-build|crates/ferric-build/src/kernel_artifact_policy.rs|ferric_build::kernel_artifact_policy::worker_measurement_matches_m1_kernel_policy_v1
 module=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts
-unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::ActiveHandoffAttempt::Drop::drop
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::BuiltAndInspectedM1KernelArtifactsV1::Debug::fmt
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::BuiltAndInspectedM1KernelArtifactsV1::gemm
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::BuiltAndInspectedM1KernelArtifactsV1::has_durable_reopen_authority
@@ -1216,6 +1209,7 @@ unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::M1KernelArtifactBuildErrorV1::Error::source
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::M1KernelArtifactBuildErrorV1::From::from
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::M1KernelArtifactPublicationStatusV1::parent_directory_synced
+unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::M1KernelWorkerV3EvidenceSetV1::new
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::StagingDirectory::Drop::drop
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::StagingDirectory::create
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::StagingDirectory::path
@@ -1230,7 +1224,6 @@ unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::build_rope_kv
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::build_swiglu
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::completed
-unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::create_directory
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::current_m1_kernel_source_facts_v1
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::family_error
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::gemm_source_facts
@@ -1240,8 +1233,6 @@ unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::logits_source_facts
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::paged_decode_source_facts
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::prefill_source_facts
-unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::producer_crate_name
-unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::remove_directory
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::require_distinct_artifacts
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::rmsnorm_source_facts
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::rope_kv_source_facts
@@ -1249,7 +1240,6 @@ unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::symbol_identity
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::sync_directory
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::sync_directory_raw
-unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::transport_handoff
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::write_new_file
 unverified=ferric-build|crates/ferric-build/src/kernel_artifacts.rs|ferric_build::kernel_artifacts::write_object
 module=ferric-build|crates/ferric-build/src/lib.rs|ferric_build
@@ -3373,6 +3363,40 @@ unverified=ferric-engine|crates/ferric-engine/src/m1_queue_rearm.rs|ferric_engin
 unverified=ferric-engine|crates/ferric-engine/src/m1_queue_rearm.rs|ferric_engine::m1_queue_rearm::validate_rearm_round_history_schedule_capacity
 unverified=ferric-engine|crates/ferric-engine/src/m1_queue_rearm.rs|ferric_engine::m1_queue_rearm::validate_rearmed_generic_semantics
 unverified=ferric-engine|crates/ferric-engine/src/m1_queue_rearm.rs|ferric_engine::m1_queue_rearm::validate_request_partition
+module=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::M1SwiGluCompilerReceiptCarriageIdentitiesV1::carriage_identity
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::M1SwiGluCompilerReceiptCarriageIdentitiesV1::compiler_subject_identity
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::M1SwiGluCompilerReceiptCarriageIdentitiesV1::from_untrusted_observation
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::M1SwiGluCompilerReceiptCarriageIdentitiesV1::grants_compiler_authority
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::M1SwiGluCompilerReceiptCarriageIdentitiesV1::identities
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::M1SwiGluCompilerReceiptCarriageIdentitiesV1::sequence
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::M1SwiGluProtectedBuildIdentitiesV1::artifact_length
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::M1SwiGluProtectedBuildIdentitiesV1::artifact_sha256
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::M1SwiGluProtectedBuildIdentitiesV1::authenticates_compiler_origin
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::M1SwiGluProtectedBuildIdentitiesV1::device_source_length
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::M1SwiGluProtectedBuildIdentitiesV1::device_source_sha256
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::M1SwiGluProtectedBuildIdentitiesV1::envelope_schema
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::M1SwiGluProtectedBuildIdentitiesV1::from_untrusted_observation
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::M1SwiGluProtectedBuildIdentitiesV1::grants_launch_authority
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::M1SwiGluProtectedBuildIdentitiesV1::grants_load_authority
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::M1SwiGluProtectedVerifierRequestErrorV1::Display::fmt
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::M1SwiGluProtectedVerifierRequestErrorV1::Error::source
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::M1SwiGluProtectedVerifierRequestErrorV1::From::from
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::M1SwiGluProtectedVerifierRequestV1::Debug::fmt
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::M1SwiGluProtectedVerifierRequestV1::artifact_sha256
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::M1SwiGluProtectedVerifierRequestV1::authenticates_compiler_origin
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::M1SwiGluProtectedVerifierRequestV1::carriage_identity
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::M1SwiGluProtectedVerifierRequestV1::grants_launch_authority
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::M1SwiGluProtectedVerifierRequestV1::grants_load_authority
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::M1SwiGluProtectedVerifierRequestV1::identity
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::M1SwiGluProtectedVerifierRequestV1::profile_catalog_identity
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::M1SwiGluProtectedVerifierRequestV1::requires_protected_verifier
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::current_m1_swiglu_worker_v3_build_v1
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::prepare_m1_swiglu_protected_verifier_request_v1
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::put_bytes
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::require_current_m1_swiglu_receipt_bearing_envelope_v2
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::validate_build
+unverified=ferric-engine|crates/ferric-engine/src/m1_swiglu_worker_v3_verifier.rs|ferric_engine::m1_swiglu_worker_v3_verifier::verifier_request_identity
 module=ferric-engine|crates/ferric-engine/src/model_memory_allocations.rs|ferric_engine::model_memory_allocations
 unverified=ferric-engine|crates/ferric-engine/src/model_memory_allocations.rs|ferric_engine::model_memory_allocations::BoundModelMemoryAllocationsV1::kv_allocation_key
 unverified=ferric-engine|crates/ferric-engine/src/model_memory_allocations.rs|ferric_engine::model_memory_allocations::BoundModelMemoryAllocationsV1::plan
@@ -4614,6 +4638,7 @@ verified=ferric-kernels|crates/ferric-kernels/src/validation.rs|ferric_kernels::
 verified=ferric-kernels|crates/ferric-kernels/src/validation.rs|ferric_kernels::validation::validate_kernel_catalog_input
 module=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::BindQwen3GemmLaunchErrorV1::Display::fmt
+unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::BindQwen3GemmWorkerV3ErrorV1::Display::fmt
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::BindQwen3TokenEmbeddingLaunchErrorV1::Display::fmt
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::CheckedQwen3GemmLaunchV1::buffers
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::CheckedQwen3GemmLaunchV1::grants_launch_authority
@@ -4623,7 +4648,6 @@ unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwe
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::CheckedQwen3TokenEmbeddingLaunchV1::grants_launch_authority
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::CheckedQwen3TokenEmbeddingLaunchV1::kernel_symbol
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::CheckedQwen3TokenEmbeddingLaunchV1::profile
-unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::ExecuteQwen3GemmWorkerErrorV1::Display::fmt
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::InertQwen3GemmWorkerEvidenceV1::Debug::fmt
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::InertQwen3GemmWorkerEvidenceV1::grants_artifact_authority
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::InertQwen3GemmWorkerEvidenceV1::proves_numerical_contract
@@ -4763,6 +4787,7 @@ unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwe
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::Qwen3TokenEmbeddingProfileV1::rows
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::Qwen3TokenEmbeddingProfileV1::shape
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::Qwen3TokenEmbeddingProfileV1::storage_elements
+unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::bind_qwen3_gemm_worker_v3_v1
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::canonical_qwen3_gemm_llvm
 verified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::checked_ceil_div_16
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::emit_allowed_rows
@@ -4779,8 +4804,6 @@ unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwe
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::exact_kernel_profile
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::exact_target
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::exact_token_embedding_explicit_arguments
-unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::execute_qwen3_gemm_worker_v2_v1
-unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::fixed_link_options
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::hash
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::inspect_qwen3_gemm_kernel_v1
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::is_bf16_metadata_carrier
@@ -4794,14 +4817,16 @@ unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwe
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::validate_source_bindings
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::validate_worker_lineage
 module=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/lib.rs|ferric_qwen_kernels
+unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/lib.rs|ferric_qwen_kernels::exact_qwen3_gfx942_ocml_provider_file_v1
+unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/lib.rs|ferric_qwen_kernels::exact_qwen3_gfx942_ocml_provider_v1
 module=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits::BindQwen3LogitsLaunchErrorV1::Display::fmt
+unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits::BindQwen3LogitsWorkerV3ErrorV1::Display::fmt
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits::CheckedQwen3LogitsLaunchV1::argmax_kernel_symbol
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits::CheckedQwen3LogitsLaunchV1::buffers
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits::CheckedQwen3LogitsLaunchV1::compact_kernel_symbol
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits::CheckedQwen3LogitsLaunchV1::grants_launch_authority
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits::CheckedQwen3LogitsLaunchV1::profile
-unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits::ExecuteQwen3LogitsWorkerErrorV1::Display::fmt
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits::InertQwen3LogitsWorkerEvidenceV1::Debug::fmt
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits::InertQwen3LogitsWorkerEvidenceV1::grants_artifact_authority
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits::InertQwen3LogitsWorkerEvidenceV1::proves_numerical_contract
@@ -4908,6 +4933,7 @@ unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_q
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits::Qwen3SpeculativeTokenAssemblyProfileV1::storage_extents
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits::Qwen3SpeculativeTokenAssemblyProfileV1::target_token_index
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits::assemble_qwen3_speculative_target_tokens_v1
+unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits::bind_qwen3_logits_worker_v3_v1
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits::canonical_qwen3_logits_llvm
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits::check_disjoint
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits::check_slice
@@ -4922,8 +4948,6 @@ unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_q
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits::exact_pointer_argument
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits::exact_speculative_token_assembly_explicit_arguments
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits::exact_target
-unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits::execute_qwen3_logits_worker_v2_v1
-unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits::fixed_link_options
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits::hash
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits::inspect_qwen3_logits_kernel_v1
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits::is_u16_metadata_carrier
@@ -4940,11 +4964,11 @@ unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_q
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/logits.rs|ferric_qwen_kernels::logits::validate_worker_lineage
 module=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|ferric_qwen_kernels::paged_decode
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|ferric_qwen_kernels::paged_decode::BindQwen3PagedDecodeLaunchErrorV1::Display::fmt
+unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|ferric_qwen_kernels::paged_decode::BindQwen3PagedDecodeWorkerV3ErrorV1::Display::fmt
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|ferric_qwen_kernels::paged_decode::CheckedQwen3PagedDecodeLaunchV1::buffers
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|ferric_qwen_kernels::paged_decode::CheckedQwen3PagedDecodeLaunchV1::grants_launch_authority
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|ferric_qwen_kernels::paged_decode::CheckedQwen3PagedDecodeLaunchV1::metadata
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|ferric_qwen_kernels::paged_decode::CheckedQwen3PagedDecodeLaunchV1::profile
-unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|ferric_qwen_kernels::paged_decode::ExecuteQwen3PagedDecodeWorkerErrorV1::Display::fmt
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|ferric_qwen_kernels::paged_decode::InertQwen3PagedDecodeWorkerEvidenceV1::Debug::fmt
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|ferric_qwen_kernels::paged_decode::InertQwen3PagedDecodeWorkerEvidenceV1::grants_artifact_authority
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|ferric_qwen_kernels::paged_decode::InertQwen3PagedDecodeWorkerEvidenceV1::proves_memory_or_race_refinement
@@ -5040,6 +5064,7 @@ unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|fe
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|ferric_qwen_kernels::paged_decode::Qwen3PagedDecodeSourceBindingsV1::authenticates_provenance
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|ferric_qwen_kernels::paged_decode::Qwen3PagedDecodeSourceBindingsV1::new
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|ferric_qwen_kernels::paged_decode::argument
+unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|ferric_qwen_kernels::paged_decode::bind_qwen3_paged_decode_worker_v3_v1
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|ferric_qwen_kernels::paged_decode::canonical_qwen3_paged_decode_llvm
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|ferric_qwen_kernels::paged_decode::emit_page_mapping
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|ferric_qwen_kernels::paged_decode::emit_score
@@ -5051,8 +5076,6 @@ unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|fe
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|ferric_qwen_kernels::paged_decode::exact_paged_decode_explicit_arguments
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|ferric_qwen_kernels::paged_decode::exact_pointer_argument
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|ferric_qwen_kernels::paged_decode::exact_target
-unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|ferric_qwen_kernels::paged_decode::execute_qwen3_paged_decode_worker_v2_v1
-unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|ferric_qwen_kernels::paged_decode::fixed_link_options
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|ferric_qwen_kernels::paged_decode::hash
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|ferric_qwen_kernels::paged_decode::inspect_qwen3_paged_decode_kernel_v1
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|ferric_qwen_kernels::paged_decode::is_bf16_metadata_carrier
@@ -5066,11 +5089,11 @@ unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|fe
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/paged_decode.rs|ferric_qwen_kernels::paged_decode::validate_worker_lineage
 module=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_qwen_kernels::prefill
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_qwen_kernels::prefill::BindQwen3PrefillLaunchErrorV1::Display::fmt
+unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_qwen_kernels::prefill::BindQwen3PrefillWorkerV3ErrorV1::Display::fmt
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_qwen_kernels::prefill::CheckedQwen3PrefillLaunchV1::buffers
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_qwen_kernels::prefill::CheckedQwen3PrefillLaunchV1::grants_launch_authority
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_qwen_kernels::prefill::CheckedQwen3PrefillLaunchV1::metadata
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_qwen_kernels::prefill::CheckedQwen3PrefillLaunchV1::profile
-unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_qwen_kernels::prefill::ExecuteQwen3PrefillWorkerErrorV1::Display::fmt
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_qwen_kernels::prefill::InertQwen3PrefillWorkerEvidenceV1::Debug::fmt
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_qwen_kernels::prefill::InertQwen3PrefillWorkerEvidenceV1::grants_artifact_authority
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_qwen_kernels::prefill::InertQwen3PrefillWorkerEvidenceV1::proves_memory_or_race_refinement
@@ -5164,6 +5187,7 @@ unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_qwen_kernels::prefill::Qwen3PrefillSourceBindingsV1::authenticates_provenance
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_qwen_kernels::prefill::Qwen3PrefillSourceBindingsV1::new
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_qwen_kernels::prefill::argument
+unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_qwen_kernels::prefill::bind_qwen3_prefill_worker_v3_v1
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_qwen_kernels::prefill::canonical_qwen3_prefill_llvm
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_qwen_kernels::prefill::emit_page_mapping
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_qwen_kernels::prefill::emit_score
@@ -5175,8 +5199,6 @@ unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_qwen_kernels::prefill::exact_pointer_argument
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_qwen_kernels::prefill::exact_prefill_explicit_arguments
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_qwen_kernels::prefill::exact_target
-unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_qwen_kernels::prefill::execute_qwen3_prefill_worker_v2_v1
-unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_qwen_kernels::prefill::fixed_link_options
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_qwen_kernels::prefill::hash
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_qwen_kernels::prefill::inspect_qwen3_prefill_kernel_v1
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_qwen_kernels::prefill::is_bf16_metadata_carrier
@@ -5190,10 +5212,10 @@ unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/prefill.rs|ferric_qwen_kernels::prefill::validate_worker_lineage
 module=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::BindQwen3RmsNormLaunchErrorV1::Display::fmt
+unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::BindQwen3RmsNormWorkerV3ErrorV1::Display::fmt
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::CheckedQwen3RmsNormLaunchV1::buffers
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::CheckedQwen3RmsNormLaunchV1::grants_launch_authority
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::CheckedQwen3RmsNormLaunchV1::profile
-unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::ExecuteQwen3RmsNormWorkerErrorV1::Display::fmt
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::InertQwen3RmsNormWorkerEvidenceV1::Debug::fmt
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::InertQwen3RmsNormWorkerEvidenceV1::grants_artifact_authority
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::InertQwen3RmsNormWorkerEvidenceV1::proves_numerical_contract
@@ -5230,7 +5252,6 @@ unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::PreparedQwen3RmsNormKernelV1::proves_numerical_contract
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::PreparedQwen3RmsNormKernelV1::source_identity
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::PreparedQwen3RmsNormKernelV1::uses_pliron_lowering
-unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::PreparedQwen3RmsNormKernelV1::worker_admission_identity
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::Qwen3RmsNormBucketKindV1::sequence_and_active_tokens
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::Qwen3RmsNormBucketV1::flattened_rows
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::Qwen3RmsNormBucketV1::kind
@@ -5293,6 +5314,7 @@ unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::TypedFunctionBuilder::start
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::TypedFunctionBuilder::void
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::behavior_accepts_width
+unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::bind_qwen3_rmsnorm_worker_v3_v1
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::bound_stage_identity
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::build_kernel_function
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::construct_typed_handoff
@@ -5301,8 +5323,6 @@ unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::exact_hidden_arguments
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::exact_scalar_argument
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::exact_target
-unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::execute_qwen3_rmsnorm_worker_v2_v1
-unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::fixed_link_options
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::hash
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::inspect_qwen3_rmsnorm_kernel_v1
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::is_bf16_metadata_carrier
@@ -5313,11 +5333,11 @@ unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rmsnorm.rs|ferric_qwen_kernels::rmsnorm::validate_worker_lineage
 module=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::BindQwen3RopeKvLaunchErrorV1::Display::fmt
+unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::BindQwen3RopeKvWorkerV3ErrorV1::Display::fmt
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::CheckedQwen3RopeKvLaunchV1::buffers
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::CheckedQwen3RopeKvLaunchV1::grants_launch_authority
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::CheckedQwen3RopeKvLaunchV1::metadata
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::CheckedQwen3RopeKvLaunchV1::profile
-unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::ExecuteQwen3RopeKvWorkerErrorV1::Display::fmt
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::InertQwen3RopeKvWorkerEvidenceV1::Debug::fmt
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::InertQwen3RopeKvWorkerEvidenceV1::grants_artifact_authority
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::InertQwen3RopeKvWorkerEvidenceV1::proves_kv_refinement
@@ -5365,7 +5385,6 @@ unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::PreparedQwen3RopeKvKernelV1::proves_operator_refinement
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::PreparedQwen3RopeKvKernelV1::source_identity
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::PreparedQwen3RopeKvKernelV1::uses_pliron_lowering
-unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::PreparedQwen3RopeKvKernelV1::worker_admission_identity
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::Qwen3RopeKvBucketKindV1::context_tokens
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::Qwen3RopeKvBucketKindV1::sequence_and_active_tokens
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::Qwen3RopeKvBucketV1::context_tokens
@@ -5435,6 +5454,7 @@ unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::TypedFunctionBuilder::void
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::all
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::any
+unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::bind_qwen3_rope_kv_worker_v3_v1
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::bound_stage_identity
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::bucket_case
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::build_kv_kernel_function
@@ -5453,8 +5473,6 @@ unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::exact_scalar_argument
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::exact_target
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::executable_attributes
-unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::execute_qwen3_rope_kv_worker_v2_v1
-unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::fixed_link_options
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::global_index
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::hash
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::inspect_qwen3_rope_kv_kernel_v1
@@ -5479,11 +5497,11 @@ unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/rope_kv.rs|ferric_qwen_kernels::rope_kv::writeonly_attributes
 module=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::BindQwen3SwiGluLaunchErrorV1::Display::fmt
+unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::BindQwen3SwiGluWorkerV3ErrorV1::Display::fmt
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::CheckedQwen3SwiGluLaunchV1::buffers
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::CheckedQwen3SwiGluLaunchV1::grants_launch_authority
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::CheckedQwen3SwiGluLaunchV1::metadata
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::CheckedQwen3SwiGluLaunchV1::profile
-unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::ExecuteQwen3SwiGluWorkerErrorV1::Display::fmt
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::InertQwen3SwiGluWorkerEvidenceV1::Debug::fmt
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::InertQwen3SwiGluWorkerEvidenceV1::grants_artifact_authority
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::InertQwen3SwiGluWorkerEvidenceV1::proves_memory_or_race_refinement
@@ -5575,6 +5593,7 @@ unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_q
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::Qwen3SwiGluSourceBindingsV1::authenticates_provenance
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::Qwen3SwiGluSourceBindingsV1::new
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::argument
+unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::bind_qwen3_swiglu_worker_v3_v1
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::canonical_qwen3_swiglu_llvm
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::emit_swiglu_element
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::encode_recurrence_step
@@ -5582,12 +5601,9 @@ unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_q
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::exact_length_argument
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::exact_ocml_envelope
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::exact_ocml_provider
-unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::exact_ocml_provider_header
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::exact_pointer_argument
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::exact_swiglu_explicit_arguments
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::exact_target
-unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::execute_qwen3_swiglu_worker_v2_v1
-unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::fixed_link_options
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::hash
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::inspect_qwen3_swiglu_kernel_v1
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/swiglu.rs|ferric_qwen_kernels::swiglu::is_bf16_metadata_carrier
