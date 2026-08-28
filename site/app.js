@@ -176,18 +176,24 @@
   const observationHeader = element("div", "observation-heading");
   const observationTitle = element("div", "");
   observationTitle.append(
-    element("div", "observation-label", "Latest hardware observation"),
+    element("div", "observation-label", "Latest hardware attempt"),
     element("h3", "", project.latestObservation.title),
   );
   observationHeader.append(observationTitle, stateTag(project.latestObservation.state));
   const observationFacts = element("dl", "observation-facts");
-  [
+  const observationEntries = [
     ["Source", commitLink(project.latestObservation.commit)],
     ["Environment", project.latestObservation.environment],
     ["Result", project.latestObservation.result],
-    ["Token IDs", project.latestObservation.generatedTokenIds.join(", ")],
     ["ELF Build ID", project.latestObservation.buildId],
-  ].forEach(([term, value]) => {
+  ];
+  if (project.latestObservation.generatedTokenIds.length > 0) {
+    observationEntries.splice(3, 0, [
+      "Token IDs",
+      project.latestObservation.generatedTokenIds.join(", "),
+    ]);
+  }
+  observationEntries.forEach(([term, value]) => {
     const dd = element("dd", "");
     if (value instanceof Node) {
       dd.append(value);

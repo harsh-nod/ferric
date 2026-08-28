@@ -58,7 +58,7 @@
           <aside class="readiness" aria-labelledby="readiness-title">
             <div class="panel-heading">
               <h2 id="readiness-title">Current readiness</h2>
-              <time data-updated datetime="2026-08-26">Updated 2026-08-26</time>
+              <time data-updated datetime="2026-08-27">Updated 2026-08-27</time>
             </div>
             <div class="readiness-list" data-readiness></div>
           </aside>
@@ -197,12 +197,15 @@
         <div class="shell next-layout">
           <div>
             <div class="section-label">Next engineering checkpoint</div>
-            <h2 id="next-title">Run the qualified source on gfx942</h2>
+            <h2 id="next-title">Load and validate the first artifact</h2>
           </div>
           <p>
-            Run source 58fd37e and its four-transition rollover catalog on MI300X when access is
-            available, then collect numerical, performance, and independent evidence against
-            that exact source. The proof-release receipt alone does not close M1.
+            The protected MI300X production build emitted the first Worker V3 HSACO for
+            qwen3_swiglu_bf16_f32_v1 and published its identity-bound readiness claim, envelope, and
+            receipt. Next, bind the artifact into the generated runner, load and dispatch it, and
+            compare its BF16 output with the reference. Six kernel families, the model bundle,
+            whole-Qwen execution, performance and independent evidence, and the M1 receipt remain
+            open.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>
