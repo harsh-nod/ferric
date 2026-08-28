@@ -36,35 +36,49 @@ fe2o3 authenticated executable, load capability, or KFD invocation. The
 checked-in V1 candidate is rejected explicitly by
 `require_current_m1_swiglu_receipt_bearing_envelope_v2`.
 
-This binder is not the future fe2o3 adapter. It accepts a caller-supplied,
-untrusted identity projection and does not decode an envelope, validate a
-carriage, consult protected policy, or enforce rollback currentness.
+The standalone
+`adapters/qwen3-swiglu-worker-v3-envelope-v2` package now pins fe2o3
+`c6b53d97745ceb918dd4972b2154363ce370a75b`. Its raw entry point strictly
+decodes V2 into an inert request. Its recovered entry point consumes and
+retains one move-only `RecoveredWorkerV3LoadEnvelopeV2`, derives every
+compiler-receipt identity from that owner's carriage, checks the exact carried
+build and artifact bytes, and returns the owner with any validation failure.
+There is no public parallel-identity input.
+
+This is still a verifier precursor, not the accepting host adapter. The V2
+owner does not expose the later host-admitted descriptor lineage or
+authenticate repository commit labels, so those labels remain policy metadata.
+The adapter does not consult protected policy, enforce rollback currentness,
+authenticate compiler supervision, or grant verifier, load, or launch
+authority.
 
 ## Upstream Join
 
-At the time of this audit, fe2o3's active Ferric integration branch has the
-required V2 codec, strict restart recovery, retained carriage, and V2-only host
-admission. Fresh Cargo completion intentionally fails because live
-`CompilerExecutionClientV1::acquire` wiring does not yet supply the carriage.
-Newer fe2o3 main separately adds protected issuer `clone3`/pidfd ownership,
-readiness, cancellation, and exactly-once reaping. Ferric must pin the eventual
-merged head and revalidate the complete API; neither intermediate branch alone
-is the production dependency.
+The pinned fe2o3 integration head combines the V2 codec, strict restart
+recovery, retained carriage, and V2-only host admission with pidfd-owned issuer
+lifecycle, the fixed protected listener, a bounded worker pool, and the
+policy-bound rustc FD 202/195/196 client session. Fresh Cargo completion still
+fails closed: deployment does not yet provision the launcher, issuer, root,
+key, distinct-UID service, and fixed listener; Cargo does not construct the
+policy/session or connect to that service; and the backend does not consume FD
+195, acquire the exact-subject carriage, and return it on FD 196.
 
-After that service path is wired, Ferric must add a narrow adapter that:
+The remaining production join must:
 
-1. consumes one `RecoveredWorkerV3LoadEnvelopeV2` and admits the exact generated
-   SwiGLU marker, never a caller-selected kernel identity;
-2. projects every carriage identity above from the same strictly decoded owner;
-3. supplies the complete carriage, semantic handoff, proof receipts, exact
-   artifact bytes, generated marker contract, and Ferric request identity to a
-   reviewed protected verifier;
-4. compares the carried issuer policy with protected configuration and
-   atomically enforces the external monotonic rollback position;
-5. establishes the missing proof/executable, Rust layout, Rust effect, and
+1. deploy and provision the protected service authority described above;
+2. wire Cargo and the rustc/backend through the exact client session so fresh
+   completion produces one real V2 envelope;
+3. consume the retained owner through fe2o3 host admission, establish the
+   missing repository and descriptor-source lineage, and supply the complete
+   carriage, semantic handoff, proof receipts, exact artifact bytes, generated
+   marker contract, and Ferric request identity to a reviewed protected
+   verifier;
+4. compare the carried issuer policy with protected configuration and
+   atomically enforce the external monotonic rollback position;
+5. establish the missing proof/executable, Rust layout, Rust effect, and
    operator-refinement identities before returning fe2o3's verification
    decision; and
-6. only then consumes the authenticated executable with the generated
+6. only then consume the authenticated executable with the generated
    `Marker`/`Arguments`, checked gfx942 device, exact profile geometry, and KFD
    completion custody.
 
