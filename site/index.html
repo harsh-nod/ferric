@@ -58,7 +58,7 @@
           <aside class="readiness" aria-labelledby="readiness-title">
             <div class="panel-heading">
               <h2 id="readiness-title">Current readiness</h2>
-              <time data-updated datetime="2026-08-26">Updated 2026-08-26</time>
+              <time data-updated datetime="2026-08-27">Updated 2026-08-27</time>
             </div>
             <div class="readiness-list" data-readiness></div>
           </aside>
@@ -197,14 +197,15 @@
         <div class="shell next-layout">
           <div>
             <div class="section-label">Next engineering checkpoint</div>
-            <h2 id="next-title">Complete the Worker V3 kernel migration</h2>
+            <h2 id="next-title">Load and validate the first artifact</h2>
           </div>
           <p>
-            Move all seven Qwen kernel families to Rust device targets and the protected Worker V3
-            flow, beginning with SwiGLU. Then run the exact replacement source and its
-            four-transition rollover catalog on an exclusive MI300X host before collecting
-            numerical, performance, and independent evidence. The proof-release receipt alone
-            does not close M1.
+            The protected MI300X production build emitted the first Worker V3 HSACO for
+            qwen3_swiglu_bf16_f32_v1 and published its identity-bound readiness claim, envelope, and
+            receipt. Next, bind the artifact into the generated runner, load and dispatch it, and
+            compare its BF16 output with the reference. Six kernel families, the model bundle,
+            whole-Qwen execution, performance and independent evidence, and the M1 receipt remain
+            open.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>

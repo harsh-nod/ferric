@@ -6,7 +6,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Four finite speculative shapes and four exact production rollover transitions pass the authenticated host gate at 58fd37e. The scoped release proof also passes for that exact source. Ferric is migrating its seven kernels from the retired Worker V2 flow to Rust device targets and Worker V3, beginning with SwiGLU. Current-source MI300X validation, Qwen correctness and performance evidence, independent validation, and formal M1 qualification remain open.",
+      "Four finite speculative shapes and four exact production rollover transitions pass the authenticated host gate at 58fd37e. The scoped release proof also passes for that exact source. Ferric now has a protected production HSACO for the first of seven Rust Qwen3 kernel families: qwen3_swiglu_bf16_f32_v1. The identity-bound build succeeded on MI300X for gfx942:xnack-, and its readiness claim, envelope, and receipt were published. The artifact has not been loaded or dispatched. Six kernel families, the generated runner and model bundle, numerical and performance validation, independent evidence, whole-Qwen execution, and formal M1 qualification remain open.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -15,7 +15,10 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Precision", "BF16 / FP32 accumulate"],
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
-    ["Runtime", "qualified fe2o3 pin 2317f300 / Worker V3 migration in progress"],
+    [
+      "Build pins",
+      "Ferric device 7e1c36aa / fe2o3 compiler 4cd2af64 atop main 8078fa1d at the production run",
+    ],
   ],
   readiness: [
     {
@@ -49,9 +52,9 @@ window.FERRIC_PROJECT = Object.freeze({
     },
     {
       label: "Worker V3 kernel migration",
-      state: "open",
+      state: "observed",
       detail:
-        "Latest fe2o3 removes the product-facing Worker V2 route. The first standalone SwiGLU Rust device target passes seven managed source/reference tests at 24c078e. Six kernel families and all production artifact, verifier, runtime, and qualification gates remain open.",
+        "The protected production build for qwen3_swiglu_bf16_f32_v1 succeeded on MI300X/gfx942:xnack- at Ferric device commit 7e1c36aa35d743478772ce4bff14c4f4bbff85c0 with fe2o3 compiler commit 4cd2af64645e57bdb3902ac2618baefeb3cb8722 atop main 8078fa1d at the run. The 14,192-byte HSACO, readiness claim, envelope, and receipt were published. This is the first of seven kernel families; it has not been loaded or dispatched, and six families plus every execution and M1 gate remain open.",
     },
   ],
   capabilities: {
@@ -64,7 +67,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Generated gfx942 execution plans",
         detail:
-          "Exact target/draft plans, typed operations, workspace layouts, and Ferric-owned kernel specifications. Replacement Worker V3 artifacts remain in migration.",
+          "Exact target/draft plans, typed operations, workspace layouts, and Ferric-owned kernel specifications. SwiGLU now has a production Worker V3 artifact; the other six kernel families, generated runner, and model bundle remain in migration.",
       },
       {
         name: "Physical target-only generation",
@@ -93,6 +96,11 @@ window.FERRIC_PROJECT = Object.freeze({
         detail:
           "The authenticated source gate matches 143 verified modules to 6,121 executable bodies and binds 645 admitted proof bodies to 1,490 successful verification queries.",
       },
+      {
+        name: "Rust Qwen3 SwiGLU BF16 production artifact",
+        detail:
+          "The qwen3_swiglu_bf16_f32_v1 production build emitted KIR fe2o3::semantic::54361a526f73befabecd65a3a7dc0338ef8653d15209d3b47765356236f34dcc and a 14,192-byte HSACO with SHA-256 and filename identity 0a27ada84a6382331af6a16d4ed0be6fcf1f85333ca5087b908a64618062702a. Its ABI has three pointer-plus-length explicit arguments, 304 bytes of kernarg, workgroup size 256, 84 SGPRs, 11 VGPRs, and no spills or dynamic stack. Dynamic symbols include the protected kernel, its .kd descriptor, and defined weak __ocml_exp_f32. Production compilation grants no load, dispatch, numerical, performance, Qwen, or M1 authority.",
+      },
     ],
     roadmap: [
       {
@@ -103,7 +111,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Worker V3 artifact migration",
         detail:
-          "Current fe2o3 protects the rustc-produced Worker V3 path and removes Worker V2. Ferric must finish the seven-family Rust device-target migration, beginning with SwiGLU, before producing replacement artifacts.",
+          "The protected production run succeeded for the SwiGLU kernel at Ferric device commit 7e1c36aa35d743478772ce4bff14c4f4bbff85c0 using fe2o3 compiler commit 4cd2af64645e57bdb3902ac2618baefeb3cb8722 atop main 8078fa1d at the run. The first family now has an identity-bound production artifact. Six kernel families, the generated runner and model bundle, artifact loading and dispatch, numerical and performance validation, independent evidence, and formal M1 closure remain open.",
       },
       {
         name: "Full M1 evidence closure",
@@ -118,16 +126,16 @@ window.FERRIC_PROJECT = Object.freeze({
     ],
   },
   latestObservation: {
-    title: "One-token Qwen diagnostic produced no evidence",
+    title: "First Worker V3 production artifact succeeds",
     date: "2026-08-27",
-    state: "open",
-    commit: "58fd37e",
-    buildId: "Not produced",
-    environment: "MI300X / gfx942; host lost exclusivity during the diagnostic",
-    result: "Timed out after 20 minutes with no output",
+    state: "observed",
+    commit: "7e1c36aa35d743478772ce4bff14c4f4bbff85c0",
+    buildId: "HSACO SHA/filename 0a27ada84a6382331af6a16d4ed0be6fcf1f85333ca5087b908a64618062702a",
+    environment: "MI300X / gfx942:xnack-; fe2o3 compiler 4cd2af64 atop main 8078fa1d",
+    result: "PASS: qwen3_swiglu_bf16_f32_v1 production build; 14,192-byte HSACO",
     generatedTokenIds: [],
     authority:
-      "Non-evidence. The host was not exclusive, no output was produced, and the attempt establishes no Qwen correctness, numerical, performance, hardware, or M1 qualification claim.",
+      "Identity-bound production compilation only. The readiness claim, envelope, and receipt were published, but the HSACO has not been loaded or dispatched. No numerical result, performance result, whole-Qwen execution, hardware-execution evidence, or M1 qualification claim follows.",
   },
   validation: {
     host: {
@@ -149,12 +157,12 @@ window.FERRIC_PROJECT = Object.freeze({
         "The source gate covers 143 modules and 6,121 executable bodies. This qualifies only the scoped release proof; it does not establish MI300X execution, Qwen numerical correctness, performance, independent validation, or formal M1 qualification.",
     },
     hardware: {
-      title: "Current-source Qwen diagnostic",
-      state: "open",
-      source: "58fd37e",
-      result: "No evidence: timed out after 20 minutes with no output",
+      title: "MI300X production artifact build",
+      state: "observed",
+      source: "7e1c36aa35d743478772ce4bff14c4f4bbff85c0",
+      result: "PASS: qwen3_swiglu_bf16_f32_v1; HSACO 0a27ada8...62702a",
       detail:
-        "The one-token MI300X Qwen diagnostic on exact source 58fd37e lost host exclusivity and timed out without output. It is non-evidence. The generic production rollover has not run on gfx942, so no Qwen correctness, numerical, performance, or qualification claim follows.",
+        "The protected build emitted KIR fe2o3::semantic::54361a526f73befabecd65a3a7dc0338ef8653d15209d3b47765356236f34dcc and a 14,192-byte HSACO with SHA-256 and filename identity 0a27ada84a6382331af6a16d4ed0be6fcf1f85333ca5087b908a64618062702a. The published ABI records three pointer-plus-length arguments, 304-byte kernarg, workgroup size 256, 84 SGPRs, 11 VGPRs, and no spills or dynamic stack. The artifact has not been loaded or dispatched.",
     },
     transitions: [
       ["Prefill S1/T128", "Speculative S1/K4", "implemented"],
@@ -167,11 +175,39 @@ window.FERRIC_PROJECT = Object.freeze({
   },
   recentProgress: [
     {
+      commit: "5c963cba",
+      title: "Advance the compiler integration to current main",
+      state: "implemented",
+      detail:
+        "The Ferric compiler branch merged fe2o3 main b94f30eb, including canonical compiler issuer-key custody. The complete HSACO finalizer suite and all 376 backend library tests remain green. The published SwiGLU artifact retains its exact production-run compiler identity 4cd2af64645e57bdb3902ac2618baefeb3cb8722; it has not been rebuilt or requalified under the newer merge.",
+    },
+    {
+      commit: "7e1c36aa35d743478772ce4bff14c4f4bbff85c0",
+      title: "Produce the first Worker V3 production artifact",
+      state: "observed",
+      detail:
+        "The identity-bound production build for qwen3_swiglu_bf16_f32_v1 succeeded on MI300X/gfx942:xnack- with fe2o3 compiler 4cd2af64645e57bdb3902ac2618baefeb3cb8722. It published the readiness claim, envelope, receipt, semantic KIR identity, and 14,192-byte HSACO identity. Dynamic symbols include the protected kernel, .kd, and defined weak __ocml_exp_f32. Load, dispatch, numerical and performance results, whole-Qwen execution, and M1 completion remain open.",
+    },
+    {
+      commit: "4cd2af64645e57bdb3902ac2618baefeb3cb8722",
+      title: "Bind production LLVM to the measured worker layout",
+      state: "implemented",
+      detail:
+        "The fe2o3 compiler branch at 4cd2af64645e57bdb3902ac2618baefeb3cb8722, atop main 8078fa1d at the run, binds rustc's reviewed target layout to the exact measured ROCm LLVM worker spelling. The subsequent Ferric production run succeeded and produced the first replacement artifact.",
+    },
+    {
+      commit: "2c7668d2",
+      title: "Preserve the blocked access terminal in release builds",
+      state: "implemented",
+      detail:
+        "Diagnostics proved that release inlining erased the trusted ThreadIndex::checked_block and DisjointSlice<Blocked>::get_block_mut terminals before checked-reference projection. fe2o3 PR #234 preserves both terminals and passes the full fe2o3-device suite, 372 compiler library tests, an integration-test build locally, and its pinned-nightly optimized extraction regression on MI300X. That scoped regression established compiler behavior; the production artifact followed at Ferric commit 7e1c36aa.",
+    },
+    {
       commit: "24c078e",
       title: "Start the Worker V3 SwiGLU port",
       state: "implemented",
       detail:
-        "A standalone latest-fe2o3 Rust device target preserves the 48-byte BF16-carrier ABI, 256-workitem launch, eight contiguous elements per workitem, and all 15 admitted extents. Seven managed source/reference tests pass. No HSACO, dispatch, numerical, hardware, performance, or M1 authority follows.",
+        "The compact standalone device target now at Ferric commit 7e1c36aa35d743478772ce4bff14c4f4bbff85c0 preserves the 48-byte BF16-carrier ABI, 256-workitem launch, eight contiguous elements per workitem, and all 15 admitted extents. The first family has a production HSACO; six families and all load, dispatch, numerical, performance, Qwen, evidence, and M1 gates remain open.",
     },
     {
       commit: "58fd37e",
@@ -310,7 +346,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "Typed allocations and host transfers",
       "Long-lived HSA queue and KFD runtime",
       "Generic bounded command publication",
-      "Stable host pin 2317f300; isolated Worker V3 device source pins 2347052f",
+      "Production run used Ferric device 7e1c36aa and fe2o3 compiler 4cd2af64 atop main 8078fa1d; compiler/runtime ownership remains in fe2o3",
     ],
   },
 });
