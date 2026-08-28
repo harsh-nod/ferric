@@ -16,13 +16,13 @@
   };
 
   const capabilityGroups = [
-    ["runnable", "Runnable now", "Implemented for the exact admitted path"],
+    ["runnable", "Implemented surface", "Available for the exact admitted path"],
     [
       "experimental",
-      "Source implemented",
-      "Host gates passed; current-source hardware remains open",
+      "Integration surface",
+      "Scoped source or hardware evidence exists",
     ],
-    ["roadmap", "Not enabled", "Fail-closed future functionality"],
+    ["roadmap", "Still blocked", "Required before end-to-end Qwen and M1"],
   ];
 
   function element(tag, className, text) {
@@ -44,10 +44,10 @@
     );
   }
 
-  function commitLink(commit) {
+  function commitLink(commit, repository = project.repository) {
     const link = element("a", "commit-link", commit);
-    link.href = `${project.repository}/commit/${commit}`;
-    link.setAttribute("aria-label", `View Ferric commit ${commit}`);
+    link.href = `${repository}/commit/${commit}`;
+    link.setAttribute("aria-label", `View source commit ${commit}`);
     return link;
   }
 
@@ -216,7 +216,10 @@
     const body = element("div", "timeline-body");
     const heading = element("div", "timeline-heading");
     const title = element("h3", "");
-    title.append(commitLink(item.commit), document.createTextNode(` ${item.title}`));
+    title.append(
+      commitLink(item.commit, item.repository),
+      document.createTextNode(` ${item.title}`),
+    );
     heading.append(title, stateTag(item.state));
     body.append(heading, element("p", "", item.detail));
     entry.append(marker, body);
