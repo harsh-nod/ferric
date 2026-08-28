@@ -10,9 +10,6 @@
 use core::fmt;
 
 use fe2o3_amdhsa_loader::{AdmittedProfile, KernelGlobalBufferAbiV1, LoadPlan, PlanError};
-use fe2o3_artifact_transaction::{
-    CompilerModuleHandoffIdentityV1, ConsumedCompilerModuleHandoffV1,
-};
 use fe2o3_compiler_ffi::{
     CodeObjectVersion, CompilerFfiEnvelopeError, CompilerFfiEnvelopeV1,
     CompilerModuleHandoffErrorV2, CompilerModuleHandoffIdentityV2, CompilerModuleHandoffV2,
@@ -26,9 +23,7 @@ use fe2o3_hsaco::{
     ExplicitValueType, HiddenArgument, HiddenValueKind, KernelBindingError, MAX_HSACO_BYTES,
 };
 use fe2o3_hsaco_finalize::{
-    execute_reproducible_first_build_worker_v2, FirstBuildWorkerV2Error,
-    InertDecodedWorkerExchangeV2, InertFirstBuildWorkerV2EvidenceV1, LinkOptionV1, PinnedWorkerV1,
-    WorkerExecutionLimitsV1, WorkerOutputConstraintsV1, WorkerProtocolError,
+    InertDecodedWorkerExchangeV2, InertProtectedFirstBuildWorkerV3EvidenceV1, WorkerProtocolError,
 };
 use fe2o3_llvm_handoff::{
     AddressSpaceV1, AxisV2, BasicBlockV2, BinaryOperationV2, BlockIdV2, CallingConventionV2,
@@ -43,10 +38,6 @@ use fe2o3_llvm_handoff::{
     WorkgroupSizeRangeV1,
 };
 use fe2o3_llvm_text::{serialize_gfx942_handoff_v2, Gfx942LlvmAssemblyV2, SerializeErrorV2};
-use fe2o3_llvm_worker_handoff::{
-    MeasuredLlvmLldBuildV1, WorkerAdmissionErrorV2, WorkerAdmissionIdentityV2,
-    WorkerAdmissionRequestV2,
-};
 use sha2::{Digest as _, Sha256};
 
 /// Exact kernel entry emitted by the typed graph.
@@ -798,8 +789,6 @@ pub enum PrepareQwen3RmsNormKernelErrorV1 {
     Serialize(SerializeErrorV2),
     /// The typed graph did not survive exact serializer identity binding.
     SourceIdentity,
-    /// Exact LLVM/LLD Worker policy admission failed.
-    WorkerAdmission(WorkerAdmissionErrorV2),
     /// The compiler-FFI envelope failed closed.
     CompilerEnvelope(CompilerFfiEnvelopeError),
     /// The closed two-symbol manifest failed closed.
@@ -820,7 +809,6 @@ impl std::error::Error for PrepareQwen3RmsNormKernelErrorV1 {}
 pub struct PreparedQwen3RmsNormKernelV1 {
     catalog: Qwen3RmsNormProfileCatalogV1,
     source_identity: HandoffIdentityV2,
-    worker_admission_identity: WorkerAdmissionIdentityV2,
     assembly: Gfx942LlvmAssemblyV2,
     compiler_handoff_identity: CompilerModuleHandoffIdentityV2,
     manifest_identity: CompilerModuleSymbolManifestIdentityV1,
@@ -833,7 +821,6 @@ impl fmt::Debug for PreparedQwen3RmsNormKernelV1 {
             .debug_struct("PreparedQwen3RmsNormKernelV1")
             .field("catalog", &self.catalog.identity)
             .field("source_identity", &self.source_identity)
-            .field("worker_admission", &self.worker_admission_identity)
             .field("assembly_sha256", &self.assembly.sha256())
             .field("compiler_handoff", &self.compiler_handoff_identity)
             .finish_non_exhaustive()
@@ -851,12 +838,6 @@ impl PreparedQwen3RmsNormKernelV1 {
     #[must_use]
     pub const fn source_identity(&self) -> HandoffIdentityV2 {
         self.source_identity
-    }
-
-    /// Identity binding the typed graph to exact LLVM/LLD policy admission.
-    #[must_use]
-    pub const fn worker_admission_identity(&self) -> WorkerAdmissionIdentityV2 {
-        self.worker_admission_identity
     }
 
     /// SHA-256 of the exact canonical LLVM assembly.
@@ -907,7 +888,7 @@ impl PreparedQwen3RmsNormKernelV1 {
         false
     }
 
-    /// Preparation does not establish that Worker V2 executed.
+    /// Preparation does not establish that Worker V3 executed.
     #[must_use]
     pub const fn authenticates_worker_execution(&self) -> bool {
         false
@@ -935,21 +916,7 @@ pub fn prepare_qwen3_rmsnorm_kernel_v1(
         .map_err(PrepareQwen3RmsNormKernelErrorV1::Catalog)?;
     let handoff = construct_typed_handoff(&catalog, bindings)?;
     let source_identity = handoff.identity();
-    let canonical = handoff.encode_canonical();
-    let worker_admission = WorkerAdmissionRequestV2::new(
-        canonical.as_bytes(),
-        *source_identity.as_bytes(),
-        MeasuredLlvmLldBuildV1::exact(),
-    )
-    .admit()
-    .map_err(PrepareQwen3RmsNormKernelErrorV1::WorkerAdmission)?;
-    if worker_admission.handoff() != &handoff
-        || worker_admission.handoff_identity() != source_identity
-    {
-        return Err(PrepareQwen3RmsNormKernelErrorV1::SourceIdentity);
-    }
-    let worker_admission_identity = worker_admission.admission_identity();
-    let assembly = serialize_gfx942_handoff_v2(worker_admission.handoff())
+    let assembly = serialize_gfx942_handoff_v2(&handoff)
         .map_err(PrepareQwen3RmsNormKernelErrorV1::Serialize)?;
     if assembly.source_identity() != source_identity || !assembly.has_embedded_source_identity() {
         return Err(PrepareQwen3RmsNormKernelErrorV1::SourceIdentity);
@@ -983,7 +950,6 @@ pub fn prepare_qwen3_rmsnorm_kernel_v1(
     Ok(PreparedQwen3RmsNormKernelV1 {
         catalog,
         source_identity,
-        worker_admission_identity,
         assembly,
         compiler_handoff_identity,
         manifest_identity,
@@ -1917,7 +1883,7 @@ fn build_kernel_function(
     .map_err(PrepareQwen3RmsNormKernelErrorV1::HandoffV2)
 }
 
-/// Linear exact typed compiler handoff awaiting attempt-scoped Worker V2 execution.
+/// Linear exact typed compiler handoff awaiting upstream Worker V3 evidence.
 pub struct InertQwen3RmsNormWorkerRequestV1 {
     prepared: PreparedQwen3RmsNormKernelV1,
 }
@@ -1952,7 +1918,7 @@ impl InertQwen3RmsNormWorkerRequestV1 {
         self.prepared.source_identity
     }
 
-    /// A request value does not establish Worker V2 execution or artifact existence.
+    /// A request value does not establish Worker V3 execution or artifact existence.
     #[must_use]
     pub const fn authenticates_worker_execution(&self) -> bool {
         false
@@ -1965,7 +1931,7 @@ impl InertQwen3RmsNormWorkerRequestV1 {
     }
 }
 
-/// Consumes a prepared owner into the exact Worker V2 request stage.
+/// Consumes a prepared owner into the exact Worker V3 binding stage.
 #[must_use]
 pub const fn lower_qwen3_rmsnorm_kernel_v1(
     prepared: PreparedQwen3RmsNormKernelV1,
@@ -1973,35 +1939,29 @@ pub const fn lower_qwen3_rmsnorm_kernel_v1(
     InertQwen3RmsNormWorkerRequestV1 { prepared }
 }
 
-/// Failure while executing the exact Handoff V2 module through Worker V2.
+/// Failure while binding upstream Worker V3 evidence to the exact prepared module.
 #[derive(Debug)]
-pub enum ExecuteQwen3RmsNormWorkerErrorV1 {
-    /// Consumed attempt bytes differ from the exact prepared handoff.
+pub enum BindQwen3RmsNormWorkerV3ErrorV1 {
+    /// The nested V2 handoff in the Worker V3 evidence differs from the prepared handoff.
     HandoffSubstitution,
-    /// A fixed link option could not be represented.
-    FixedLinkOption,
-    /// The fixed HSACO output ceiling could not be represented.
-    OutputConstraint(WorkerProtocolError),
-    /// Reproducible bootstrap and exact replay failed.
-    FirstBuild(FirstBuildWorkerV2Error),
 }
 
-impl fmt::Display for ExecuteQwen3RmsNormWorkerErrorV1 {
+impl fmt::Display for BindQwen3RmsNormWorkerV3ErrorV1 {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             formatter,
-            "Qwen3 RMSNorm Worker V2 execution failed: {self:?}"
+            "Qwen3 RMSNorm Worker V3 binding failed: {self:?}"
         )
     }
 }
 
-impl std::error::Error for ExecuteQwen3RmsNormWorkerErrorV1 {}
+impl std::error::Error for BindQwen3RmsNormWorkerV3ErrorV1 {}
 
-/// Linear exact Worker V2 bootstrap/replay evidence awaiting structural inspection.
+/// Linear exact Worker V3 bootstrap/replay evidence awaiting structural inspection.
 pub struct InertQwen3RmsNormWorkerEvidenceV1 {
     prepared: PreparedQwen3RmsNormKernelV1,
-    transaction_handoff: CompilerModuleHandoffIdentityV1,
-    worker: InertFirstBuildWorkerV2EvidenceV1,
+    nested_handoff: CompilerModuleHandoffIdentityV2,
+    worker: InertProtectedFirstBuildWorkerV3EvidenceV1,
 }
 
 impl fmt::Debug for InertQwen3RmsNormWorkerEvidenceV1 {
@@ -2009,7 +1969,7 @@ impl fmt::Debug for InertQwen3RmsNormWorkerEvidenceV1 {
         formatter
             .debug_struct("InertQwen3RmsNormWorkerEvidenceV1")
             .field("source", &self.prepared.source_identity)
-            .field("transaction_handoff", &self.transaction_handoff)
+            .field("nested_handoff", &self.nested_handoff)
             .field("worker", &self.worker.identity())
             .finish_non_exhaustive()
     }
@@ -2029,37 +1989,29 @@ impl InertQwen3RmsNormWorkerEvidenceV1 {
     }
 }
 
-/// Executes the exact transaction handoff through Worker V2 bootstrap and replay.
+/// Binds real upstream Worker V3 evidence to this exact Ferric request.
 ///
 /// # Errors
 ///
-/// Returns an error if the consumed handoff is substituted, fixed link/output
-/// policy cannot be represented, or Worker V2 bootstrap and replay fail.
-pub fn execute_qwen3_rmsnorm_worker_v2_v1(
+/// Returns an error if the evidence's protected V3 binding or retained nested
+/// handoff differs from the exact prepared handoff.
+pub fn bind_qwen3_rmsnorm_worker_v3_v1(
     request: InertQwen3RmsNormWorkerRequestV1,
-    consumed: ConsumedCompilerModuleHandoffV1,
-    worker: &PinnedWorkerV1,
-    limits: WorkerExecutionLimitsV1,
-) -> Result<InertQwen3RmsNormWorkerEvidenceV1, ExecuteQwen3RmsNormWorkerErrorV1> {
+    worker: InertProtectedFirstBuildWorkerV3EvidenceV1,
+) -> Result<InertQwen3RmsNormWorkerEvidenceV1, BindQwen3RmsNormWorkerV3ErrorV1> {
     let InertQwen3RmsNormWorkerRequestV1 { prepared } = request;
-    if consumed.bytes() != prepared.compiler_handoff.canonical_bytes() {
-        return Err(ExecuteQwen3RmsNormWorkerErrorV1::HandoffSubstitution);
+    let nested_handoff = worker.binding().expectation().nested_handoff_identity();
+    let retained_handoff = worker.handoff().module_handoff();
+    if nested_handoff != prepared.compiler_handoff_identity
+        || retained_handoff.identity() != nested_handoff
+        || retained_handoff.canonical_bytes() != prepared.compiler_handoff.canonical_bytes()
+    {
+        return Err(BindQwen3RmsNormWorkerV3ErrorV1::HandoffSubstitution);
     }
-    let transaction_handoff = consumed.identity();
-    let worker_evidence = execute_reproducible_first_build_worker_v2(
-        consumed,
-        worker,
-        Vec::new(),
-        fixed_link_options()?,
-        WorkerOutputConstraintsV1::new(MAX_HSACO_BYTES as u64)
-            .map_err(ExecuteQwen3RmsNormWorkerErrorV1::OutputConstraint)?,
-        limits,
-    )
-    .map_err(ExecuteQwen3RmsNormWorkerErrorV1::FirstBuild)?;
     Ok(InertQwen3RmsNormWorkerEvidenceV1 {
         prepared,
-        transaction_handoff,
-        worker: worker_evidence,
+        nested_handoff,
+        worker,
     })
 }
 
@@ -2091,14 +2043,14 @@ impl fmt::Display for InspectQwen3RmsNormKernelErrorV1 {
 
 impl std::error::Error for InspectQwen3RmsNormKernelErrorV1 {}
 
-/// Linear exact Worker V2 output after strict ABI/resource and loader inspection.
+/// Linear exact Worker V3 output after strict ABI/resource and loader inspection.
 pub struct InspectedQwen3RmsNormKernelV1 {
     catalog: Qwen3RmsNormProfileCatalogV1,
     source_identity: HandoffIdentityV2,
     compiler_handoff_identity: CompilerModuleHandoffIdentityV2,
-    transaction_handoff: CompilerModuleHandoffIdentityV1,
+    nested_handoff: CompilerModuleHandoffIdentityV2,
     loader_plan: LoadPlan,
-    worker: InertFirstBuildWorkerV2EvidenceV1,
+    worker: InertProtectedFirstBuildWorkerV3EvidenceV1,
 }
 
 impl fmt::Debug for InspectedQwen3RmsNormKernelV1 {
@@ -2108,7 +2060,7 @@ impl fmt::Debug for InspectedQwen3RmsNormKernelV1 {
             .field("catalog", &self.catalog.identity)
             .field("source", &self.source_identity)
             .field("compiler_handoff", &self.compiler_handoff_identity)
-            .field("transaction_handoff", &self.transaction_handoff)
+            .field("nested_handoff", &self.nested_handoff)
             .field("worker", &self.worker.identity())
             .finish_non_exhaustive()
     }
@@ -2133,7 +2085,7 @@ impl InspectedQwen3RmsNormKernelV1 {
         &self.loader_plan
     }
 
-    /// Exact bytes retained by sealed Worker V2 evidence.
+    /// Exact bytes retained by protected Worker V3 evidence.
     #[must_use]
     pub fn exact_worker_output_bytes(&self) -> &[u8] {
         self.worker.output_bytes()
@@ -2192,7 +2144,7 @@ impl InspectedQwen3RmsNormKernelV1 {
     }
 }
 
-/// Consumes Worker V2 evidence through exact transcript, HSACO, ABI, and loader checks.
+/// Consumes Worker V3 evidence through exact transcript, HSACO, ABI, and loader checks.
 ///
 /// # Errors
 ///
@@ -2204,10 +2156,10 @@ pub fn inspect_qwen3_rmsnorm_kernel_v1(
 ) -> Result<InspectedQwen3RmsNormKernelV1, InspectQwen3RmsNormKernelErrorV1> {
     let InertQwen3RmsNormWorkerEvidenceV1 {
         prepared,
-        transaction_handoff,
+        nested_handoff,
         worker,
     } = evidence;
-    validate_worker_lineage(&prepared, transaction_handoff, &worker)?;
+    validate_worker_lineage(&prepared, nested_handoff, &worker)?;
     let bytes = worker.output_bytes();
     if !worker.output_identity().matches(bytes) {
         return Err(InspectQwen3RmsNormKernelErrorV1::SourceLineage);
@@ -2283,7 +2235,7 @@ pub fn inspect_qwen3_rmsnorm_kernel_v1(
         catalog: prepared.catalog,
         source_identity: prepared.source_identity,
         compiler_handoff_identity: prepared.compiler_handoff_identity,
-        transaction_handoff,
+        nested_handoff,
         loader_plan,
         worker,
     })
@@ -2291,18 +2243,20 @@ pub fn inspect_qwen3_rmsnorm_kernel_v1(
 
 fn validate_worker_lineage(
     prepared: &PreparedQwen3RmsNormKernelV1,
-    transaction_handoff: CompilerModuleHandoffIdentityV1,
-    worker: &InertFirstBuildWorkerV2EvidenceV1,
+    nested_handoff: CompilerModuleHandoffIdentityV2,
+    worker: &InertProtectedFirstBuildWorkerV3EvidenceV1,
 ) -> Result<(), InspectQwen3RmsNormKernelErrorV1> {
-    let expected_transaction = CompilerModuleHandoffIdentityV1::from_bytes(
-        Sha256::digest(prepared.compiler_handoff.canonical_bytes()).into(),
-    );
-    if transaction_handoff != expected_transaction
-        || worker.handoff_identity() != expected_transaction
-        || worker.compiler_envelope() != prepared.compiler_handoff.envelope()
-        || worker.symbol_manifest() != prepared.compiler_handoff.symbol_manifest()
-        || worker.worker_measurement().llvm_build_identity()
-            != fe2o3_llvm_worker_handoff::EXACT_LLVM_BUILD_IDENTITY_V1
+    let binding = worker.binding();
+    let retained_handoff = worker.handoff().module_handoff();
+    if nested_handoff != prepared.compiler_handoff_identity
+        || binding.expectation().nested_handoff_identity() != nested_handoff
+        || retained_handoff.identity() != nested_handoff
+        || retained_handoff.canonical_bytes() != prepared.compiler_handoff.canonical_bytes()
+        || retained_handoff.envelope() != prepared.compiler_handoff.envelope()
+        || retained_handoff.symbol_manifest() != prepared.compiler_handoff.symbol_manifest()
+        || worker.bootstrap().binding() != binding
+        || worker.exact_replay().binding() != binding
+        || worker.worker_measurement().llvm_build_identity() != crate::QWEN3_LLVM_BUILD_IDENTITY_V1
     {
         return Err(InspectQwen3RmsNormKernelErrorV1::SourceLineage);
     }
@@ -2312,14 +2266,20 @@ fn validate_worker_lineage(
     )
     .map_err(InspectQwen3RmsNormKernelErrorV1::Protocol)?;
     let replay = InertDecodedWorkerExchangeV2::decode(
-        worker.authorized_request_bytes(),
-        worker.authorized().response().canonical_bytes(),
+        worker.exact_replay_request_bytes(),
+        worker.exact_replay().response().canonical_bytes(),
     )
     .map_err(InspectQwen3RmsNormKernelErrorV1::Protocol)?;
+    if bootstrap.request().output_constraints().max_bytes() != MAX_HSACO_BYTES as u64
+        || replay.request().output_constraints().max_bytes() != worker.output_bytes().len() as u64
+    {
+        return Err(InspectQwen3RmsNormKernelErrorV1::SourceLineage);
+    }
     for exchange in [&bootstrap, &replay] {
         let request = exchange.request();
         if request.target() != exact_target()
             || request.code_object_version() != CodeObjectVersion::V6
+            || request.options() != crate::QWEN3_WORKER_OPTIONS_V1
             || request.compiler_module().bytes() != prepared.compiler_handoff.module_bytes()
             || !request.external_providers().is_empty()
             || !request.import_symbols().is_empty()
@@ -2329,6 +2289,7 @@ fn validate_worker_lineage(
                 QWEN3_RMSNORM_KERNEL_DESCRIPTOR_SYMBOL_V1,
             ])
             || exchange.response().request_identity() != request.identity()
+            || exchange.response().device_library_provider().is_some()
         {
             return Err(InspectQwen3RmsNormKernelErrorV1::SourceLineage);
         }
@@ -2480,21 +2441,6 @@ fn exact_hidden_arguments(arguments: &[HiddenArgument]) -> bool {
                 && actual.size() == expected.1
                 && actual.value_kind() == expected.2
         })
-}
-
-fn fixed_link_options() -> Result<Vec<LinkOptionV1>, ExecuteQwen3RmsNormWorkerErrorV1> {
-    [
-        ("code-object-version", "6"),
-        ("opt-level", "2"),
-        ("strip-debug", "true"),
-        ("verify-each", "true"),
-    ]
-    .into_iter()
-    .map(|(name, value)| {
-        LinkOptionV1::new(name, value)
-            .map_err(|_| ExecuteQwen3RmsNormWorkerErrorV1::FixedLinkOption)
-    })
-    .collect()
 }
 
 fn bound_stage_identity(

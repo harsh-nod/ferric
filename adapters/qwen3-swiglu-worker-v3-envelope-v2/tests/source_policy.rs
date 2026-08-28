@@ -5,7 +5,7 @@ const ADMISSION_DOC: &str = include_str!("../../../docs/M1_QWEN3_SWIGLU_PRODUCTI
 const BUILD_EVIDENCE: &str =
     include_str!("../../../proofs/m1/evidence/PROTECTED_WORKER_V3_SWIGLU_BUILD.json");
 
-const FE2O3_REVISION: &str = "5362f3cba0fccf1c75c6b34d94240b29f17d7b9b";
+const FE2O3_REVISION: &str = "42639ecc7f2f377ab57e5e884c36133a126f230e";
 
 #[test]
 fn public_adapter_surface_has_no_parallel_identity_inputs() {
@@ -53,16 +53,16 @@ fn standalone_manifest_and_lock_pin_the_exact_current_fe2o3_revision() {
 }
 
 #[test]
-fn admission_doc_does_not_confuse_the_fixed_connector_with_cargo_completion() {
+fn admission_doc_distinguishes_compiler_completion_from_deployment_authority() {
     let normalized = ADMISSION_DOC
         .split_whitespace()
         .collect::<Vec<_>>()
         .join(" ");
     for boundary in [
-        "fixed production supervisor connector is available",
-        "binding wrapper does not construct that child session or invoke the connector",
-        "does not yet consume FD 195, acquire the exact-subject carriage, or return it on FD 196",
-        "Deployment also remains outstanding",
+        "Cargo now transfers one fixed inherited receipt descriptor to rustc",
+        "the backend acquires the subject-bound receipt",
+        "Cargo reconstructs and admits the durable V2 carriage under currentness",
+        "Those generic mechanisms do not provision Ferric's production authority",
     ] {
         assert!(
             normalized.contains(boundary),

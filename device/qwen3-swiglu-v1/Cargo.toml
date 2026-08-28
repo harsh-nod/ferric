@@ -6,8 +6,8 @@ rust-version = "1.94"
 publish = false
 
 # The device compiler is nightly-pinned independently of Ferric's stable host
-# workspace. This also prevents the in-progress V3 port from granting authority
-# to the retained Worker V2 host path.
+# workspace. This also prevents standalone device compilation from granting
+# host or runtime authority.
 [workspace]
 
 [dependencies]

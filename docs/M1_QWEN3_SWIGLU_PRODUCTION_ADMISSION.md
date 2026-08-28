@@ -1,7 +1,7 @@
 # M1 Qwen3 SwiGLU Production Admission
 
-Status: fail closed pending a receipt-bearing protected compiler occurrence and
-reviewed verifier.
+Status: fail closed pending a fresh receipt-bearing protected compiler occurrence,
+Ferric's protected verifier state, and deployment qualification.
 
 ## Current Candidate
 
@@ -38,48 +38,80 @@ checked-in V1 candidate is rejected explicitly by
 
 The standalone
 `adapters/qwen3-swiglu-worker-v3-envelope-v2` package now pins fe2o3
-`5362f3cba0fccf1c75c6b34d94240b29f17d7b9b`. Its raw entry point strictly
+`42639ecc7f2f377ab57e5e884c36133a126f230e`. Its raw entry point strictly
 decodes V2 into an inert request. Its recovered entry point consumes and
 retains one move-only `RecoveredWorkerV3LoadEnvelopeV2`, derives every
 compiler-receipt identity from that owner's carriage, checks the exact carried
 build and artifact bytes, and returns the owner with any validation failure.
 There is no public parallel-identity input.
 
-This is still a verifier precursor, not the accepting host adapter. The V2
-owner does not expose the later host-admitted descriptor lineage or
-authenticate repository commit labels, so those labels remain policy metadata.
-The adapter does not consult protected policy, enforce rollback currentness,
-authenticate compiler supervision, or grant verifier, load, or launch
-authority.
+This remains an authority-free projection adapter, not the accepting host
+adapter. It intentionally has no dependency on `fe2o3-host`. The accepting
+path must use the exact subject and carriage retained by upstream host
+admission, independently compare protected policy and Worker ledger state, and
+enforce an external monotonic rollback anchor. Repository commit labels remain
+Ferric policy metadata rather than compiler-receipt fields. Ferric does not
+implement an accepting protected backend while those independent inputs are
+unavailable.
 
 ## Upstream Join
 
 The pinned fe2o3 integration head combines the V2 codec, strict restart
 recovery, retained carriage, and V2-only host admission with pidfd-owned issuer
 lifecycle, the fixed protected listener, a bounded worker pool, and the
-policy-bound rustc FD 202/195/196 client session. Its fixed production
-supervisor connector is available: the child-session transfer creates the
-connection internally and permits neither an alternate path nor a caller-owned
-control descriptor. Fresh Cargo completion still fails closed because the
-active `cargo-fe2o3` binding wrapper does not construct that child session or
-invoke the connector. The rustc/backend path does not yet consume FD 195,
-acquire the exact-subject carriage, or return it on FD 196. Deployment also
-remains outstanding: it must provision the launcher and issuer images,
-service-owned root, sealed key, distinct supervisor UID/GID, and service process
-receiving the fixed listener descriptor.
+policy-bound compiler-execution client. Cargo now transfers one fixed inherited
+receipt descriptor to rustc, the backend acquires the subject-bound receipt,
+and Cargo reconstructs and admits the durable V2 carriage under currentness.
+The upstream host boundary retains the exact compiler subject and carriage,
+binds them into lineage evidence, and requires receipt-complete verification
+before promotion. Its sealed `WorkerV3ProtectedVerifierAdapterV1` constructs the
+decision from independently supplied protected evidence. A backend must cross
+an explicit `unsafe` implementation boundary, cannot construct the decision,
+and cannot choose the request coordinates that the adapter verifies.
+
+The integration head also provides authenticated service acquisition and exact
+verification of the current compiler Worker ledger record. This is the generic
+transport and comparison primitive; it is not a deployed Ferric ledger service
+or a source of Ferric policy authority.
+
+Those generic mechanisms do not provision Ferric's production authority.
+Deployment must still provide the launcher and issuer images, service-owned
+root, sealed keys, distinct supervisor UID/GID, and the service process that
+receives the fixed listener descriptor. Ferric must also provide independently
+protected policy, Worker ledger, and external monotonic rollback state to an
+upstream accepting adapter. Any seven compiler-produced Worker V3 owners
+accepted by these adapters are structural, inert evidence only; they do not
+prove that those protected services or authorities exist.
+
+Ferric now rejects any of those owners unless its canonical link plan uses
+exactly COV6, O2, debug stripping, and per-stage verification with the reviewed
+default execution limits. Both transcript passes must also retain the 64 MiB
+bootstrap ceiling and exact artifact-length replay ceiling. The retired Worker
+V2 `ferric-m1-kernel-artifacts` command has been removed. There is no
+replacement executable workflow until an authenticated in-process collector
+can acquire all seven V3 owners and pass them to the fail-closed artifact
+publisher.
+
+Only SwiGLU currently has a generated `Marker`/`Arguments` expectation, and it
+is tied to the older checked-in candidate. GEMM, RMSNorm, RoPE/KV, prefill,
+paged decode, and logits do not yet have receipt-bound generated marker
+contracts. None of the seven lanes has the complete authenticated
+proof/executable, Rust layout, Rust effect, and safety-property evidence needed
+for an accepting protected decision.
 
 The remaining production join must:
 
 1. deploy and provision the protected service authority described above;
-2. wire Cargo and the rustc/backend through the exact client session so fresh
-   completion produces one real V2 envelope;
-3. consume the retained owner through fe2o3 host admission, establish the
+2. run a fresh protected Cargo/backend occurrence through the deployed service
+   so it produces one real V2 envelope for the current artifact;
+3. consume each retained owner through fe2o3 host admission, establish the
    missing repository and descriptor-source lineage, and supply the complete
    carriage, semantic handoff, proof receipts, exact artifact bytes, generated
    marker contract, and Ferric request identity to a reviewed protected
    verifier;
-4. compare the carried issuer policy with protected configuration and
-   atomically enforce the external monotonic rollback position;
+4. compare the carried issuer policy and Worker ledger record with independently
+   protected configuration and atomically enforce the external monotonic
+   rollback position;
 5. establish the missing proof/executable, Rust layout, Rust effect, and
    operator-refinement identities before returning fe2o3's verification
    decision; and

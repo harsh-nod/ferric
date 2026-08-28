@@ -22,9 +22,6 @@ use core::fmt;
 use std::fmt::Write as _;
 
 use fe2o3_amdhsa_loader::{AdmittedProfile, KernelGlobalBufferAbiV1, LoadPlan, PlanError};
-use fe2o3_artifact_transaction::{
-    CompilerModuleHandoffIdentityV1, ConsumedCompilerModuleHandoffV1,
-};
 use fe2o3_compiler_ffi::{
     CodeObjectVersion, CompilerFfiEnvelopeError, CompilerFfiEnvelopeV1,
     CompilerModuleHandoffErrorV2, CompilerModuleHandoffIdentityV2, CompilerModuleHandoffV2,
@@ -39,9 +36,7 @@ use fe2o3_hsaco::{
     KernelDescriptorBinding, MAX_HSACO_BYTES,
 };
 use fe2o3_hsaco_finalize::{
-    execute_reproducible_first_build_worker_v2, FirstBuildWorkerV2Error,
-    InertDecodedWorkerExchangeV2, InertFirstBuildWorkerV2EvidenceV1, LinkOptionV1, PinnedWorkerV1,
-    WorkerExecutionLimitsV1, WorkerOutputConstraintsV1, WorkerProtocolError,
+    InertDecodedWorkerExchangeV2, InertProtectedFirstBuildWorkerV3EvidenceV1, WorkerProtocolError,
 };
 use fe2o3_llvm_handoff::GFX942_AMDHSA_DATA_LAYOUT_V1;
 use sha2::{Digest as _, Sha256};
@@ -2318,7 +2313,7 @@ fn validate_canonical_llvm(module: &str) -> Result<(), PrepareQwen3GemmKernelErr
     Ok(())
 }
 
-/// Linear exact compiler handoff awaiting Worker V2 execution.
+/// Linear exact compiler handoff awaiting protected Worker V3 evidence.
 pub struct InertQwen3GemmWorkerRequestV1 {
     prepared: PreparedQwen3GemmKernelV1,
 }
@@ -2376,7 +2371,7 @@ impl InertQwen3GemmWorkerRequestV1 {
     }
 }
 
-/// Consumes a prepared owner into the exact Worker V2 request stage.
+/// Consumes a prepared owner into the exact Worker V3 binding stage.
 #[must_use]
 pub const fn lower_qwen3_gemm_kernel_v1(
     prepared: PreparedQwen3GemmKernelV1,
@@ -2384,32 +2379,28 @@ pub const fn lower_qwen3_gemm_kernel_v1(
     InertQwen3GemmWorkerRequestV1 { prepared }
 }
 
-/// Failure while executing the exact source through Worker V2.
-#[derive(Debug)]
-pub enum ExecuteQwen3GemmWorkerErrorV1 {
-    /// Consumed transaction bytes differed from the prepared handoff.
+/// Failure while binding protected Worker V3 evidence to the exact source.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BindQwen3GemmWorkerV3ErrorV1 {
+    /// The evidence's nested handoff differed from the prepared handoff.
     HandoffSubstitution,
-    /// A fixed link option could not be represented.
-    FixedLinkOption,
-    /// The fixed HSACO output ceiling could not be represented.
-    OutputConstraint(WorkerProtocolError),
-    /// Reproducible bootstrap and replay failed.
-    FirstBuild(FirstBuildWorkerV2Error),
 }
 
-impl fmt::Display for ExecuteQwen3GemmWorkerErrorV1 {
+impl fmt::Display for BindQwen3GemmWorkerV3ErrorV1 {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(formatter, "Qwen3 GEMM Worker V2 execution failed: {self:?}")
+        write!(
+            formatter,
+            "Qwen3 GEMM Worker V3 evidence binding failed: {self:?}"
+        )
     }
 }
 
-impl std::error::Error for ExecuteQwen3GemmWorkerErrorV1 {}
+impl std::error::Error for BindQwen3GemmWorkerV3ErrorV1 {}
 
-/// Linear Worker V2 bootstrap/replay evidence awaiting inspection.
+/// Linear protected Worker V3 bootstrap/replay evidence awaiting inspection.
 pub struct InertQwen3GemmWorkerEvidenceV1 {
     prepared: PreparedQwen3GemmKernelV1,
-    transaction_handoff: CompilerModuleHandoffIdentityV1,
-    worker: InertFirstBuildWorkerV2EvidenceV1,
+    worker: InertProtectedFirstBuildWorkerV3EvidenceV1,
 }
 
 impl fmt::Debug for InertQwen3GemmWorkerEvidenceV1 {
@@ -2417,7 +2408,6 @@ impl fmt::Debug for InertQwen3GemmWorkerEvidenceV1 {
         formatter
             .debug_struct("InertQwen3GemmWorkerEvidenceV1")
             .field("source_binding", &self.prepared.source_binding_identity)
-            .field("transaction_handoff", &self.transaction_handoff)
             .field("worker", &self.worker.identity())
             .finish_non_exhaustive()
     }
@@ -2443,38 +2433,25 @@ impl InertQwen3GemmWorkerEvidenceV1 {
     }
 }
 
-/// Executes the exact transaction handoff through Worker V2 bootstrap/replay.
+/// Binds protected Worker V3 evidence to the exact prepared compiler handoff.
 ///
 /// # Errors
 ///
-/// Returns an error for a substituted handoff, invalid fixed link options or
-/// output constraints, or a Worker V2 execution failure.
-pub fn execute_qwen3_gemm_worker_v2_v1(
+/// Returns an error if the evidence carries a substituted nested handoff.
+pub fn bind_qwen3_gemm_worker_v3_v1(
     request: InertQwen3GemmWorkerRequestV1,
-    consumed: ConsumedCompilerModuleHandoffV1,
-    worker: &PinnedWorkerV1,
-    limits: WorkerExecutionLimitsV1,
-) -> Result<InertQwen3GemmWorkerEvidenceV1, ExecuteQwen3GemmWorkerErrorV1> {
+    worker: InertProtectedFirstBuildWorkerV3EvidenceV1,
+) -> Result<InertQwen3GemmWorkerEvidenceV1, BindQwen3GemmWorkerV3ErrorV1> {
     let InertQwen3GemmWorkerRequestV1 { prepared } = request;
-    if consumed.bytes() != prepared.compiler_handoff.canonical_bytes() {
-        return Err(ExecuteQwen3GemmWorkerErrorV1::HandoffSubstitution);
+    let nested_handoff = worker.handoff().module_handoff();
+    if nested_handoff.canonical_bytes() != prepared.compiler_handoff.canonical_bytes()
+        || nested_handoff.identity() != prepared.compiler_handoff_identity
+        || worker.binding().expectation().nested_handoff_identity()
+            != prepared.compiler_handoff_identity
+    {
+        return Err(BindQwen3GemmWorkerV3ErrorV1::HandoffSubstitution);
     }
-    let transaction_handoff = consumed.identity();
-    let worker_evidence = execute_reproducible_first_build_worker_v2(
-        consumed,
-        worker,
-        Vec::new(),
-        fixed_link_options()?,
-        WorkerOutputConstraintsV1::new(MAX_HSACO_BYTES as u64)
-            .map_err(ExecuteQwen3GemmWorkerErrorV1::OutputConstraint)?,
-        limits,
-    )
-    .map_err(ExecuteQwen3GemmWorkerErrorV1::FirstBuild)?;
-    Ok(InertQwen3GemmWorkerEvidenceV1 {
-        prepared,
-        transaction_handoff,
-        worker: worker_evidence,
-    })
+    Ok(InertQwen3GemmWorkerEvidenceV1 { prepared, worker })
 }
 
 /// Exact post-worker structural rejection.
@@ -2509,9 +2486,8 @@ pub struct InspectedQwen3GemmKernelV1 {
     token_embedding_catalog: Qwen3TokenEmbeddingProfileCatalogV1,
     source_binding_identity: [u8; 32],
     compiler_handoff_identity: CompilerModuleHandoffIdentityV2,
-    transaction_handoff: CompilerModuleHandoffIdentityV1,
     loader_plan: LoadPlan,
-    worker: InertFirstBuildWorkerV2EvidenceV1,
+    worker: InertProtectedFirstBuildWorkerV3EvidenceV1,
 }
 
 impl fmt::Debug for InspectedQwen3GemmKernelV1 {
@@ -2525,7 +2501,6 @@ impl fmt::Debug for InspectedQwen3GemmKernelV1 {
             )
             .field("source_binding", &self.source_binding_identity)
             .field("compiler_handoff", &self.compiler_handoff_identity)
-            .field("transaction_handoff", &self.transaction_handoff)
             .field("worker", &self.worker.identity())
             .finish_non_exhaustive()
     }
@@ -2688,12 +2663,8 @@ impl InspectedQwen3GemmKernelV1 {
 pub fn inspect_qwen3_gemm_kernel_v1(
     evidence: InertQwen3GemmWorkerEvidenceV1,
 ) -> Result<InspectedQwen3GemmKernelV1, InspectQwen3GemmKernelErrorV1> {
-    let InertQwen3GemmWorkerEvidenceV1 {
-        prepared,
-        transaction_handoff,
-        worker,
-    } = evidence;
-    validate_worker_lineage(&prepared, transaction_handoff, &worker)?;
+    let InertQwen3GemmWorkerEvidenceV1 { prepared, worker } = evidence;
+    validate_worker_lineage(&prepared, &worker)?;
     let bytes = worker.output_bytes();
     if !worker.output_identity().matches(bytes) {
         return Err(InspectQwen3GemmKernelErrorV1::SourceLineage);
@@ -2756,7 +2727,6 @@ pub fn inspect_qwen3_gemm_kernel_v1(
         token_embedding_catalog: prepared.token_embedding_catalog,
         source_binding_identity: prepared.source_binding_identity,
         compiler_handoff_identity: prepared.compiler_handoff_identity,
-        transaction_handoff,
         loader_plan,
         worker,
     })
@@ -2764,18 +2734,18 @@ pub fn inspect_qwen3_gemm_kernel_v1(
 
 fn validate_worker_lineage(
     prepared: &PreparedQwen3GemmKernelV1,
-    transaction_handoff: CompilerModuleHandoffIdentityV1,
-    worker: &InertFirstBuildWorkerV2EvidenceV1,
+    worker: &InertProtectedFirstBuildWorkerV3EvidenceV1,
 ) -> Result<(), InspectQwen3GemmKernelErrorV1> {
-    let expected_transaction = CompilerModuleHandoffIdentityV1::from_bytes(
-        Sha256::digest(prepared.compiler_handoff.canonical_bytes()).into(),
-    );
-    if transaction_handoff != expected_transaction
-        || worker.handoff_identity() != expected_transaction
-        || worker.compiler_envelope() != prepared.compiler_handoff.envelope()
-        || worker.symbol_manifest() != prepared.compiler_handoff.symbol_manifest()
-        || worker.worker_measurement().llvm_build_identity()
-            != fe2o3_llvm_worker_handoff::EXACT_LLVM_BUILD_IDENTITY_V1
+    let binding = worker.binding();
+    let nested_handoff = worker.handoff().module_handoff();
+    if binding.expectation().nested_handoff_identity() != prepared.compiler_handoff_identity
+        || nested_handoff.identity() != prepared.compiler_handoff_identity
+        || nested_handoff.canonical_bytes() != prepared.compiler_handoff.canonical_bytes()
+        || nested_handoff.envelope() != prepared.compiler_handoff.envelope()
+        || nested_handoff.symbol_manifest() != prepared.compiler_handoff.symbol_manifest()
+        || worker.bootstrap().binding() != binding
+        || worker.exact_replay().binding() != binding
+        || worker.worker_measurement().llvm_build_identity() != crate::QWEN3_LLVM_BUILD_IDENTITY_V1
     {
         return Err(InspectQwen3GemmKernelErrorV1::SourceLineage);
     }
@@ -2785,14 +2755,20 @@ fn validate_worker_lineage(
     )
     .map_err(InspectQwen3GemmKernelErrorV1::Protocol)?;
     let replay = InertDecodedWorkerExchangeV2::decode(
-        worker.authorized_request_bytes(),
-        worker.authorized().response().canonical_bytes(),
+        worker.exact_replay_request_bytes(),
+        worker.exact_replay().response().canonical_bytes(),
     )
     .map_err(InspectQwen3GemmKernelErrorV1::Protocol)?;
+    if bootstrap.request().output_constraints().max_bytes() != MAX_HSACO_BYTES as u64
+        || replay.request().output_constraints().max_bytes() != worker.output_bytes().len() as u64
+    {
+        return Err(InspectQwen3GemmKernelErrorV1::SourceLineage);
+    }
     for exchange in [&bootstrap, &replay] {
         let request = exchange.request();
         if request.target() != exact_target()
             || request.code_object_version() != CodeObjectVersion::V6
+            || request.options() != crate::QWEN3_WORKER_OPTIONS_V1
             || request.compiler_module().bytes() != prepared.compiler_handoff.module_bytes()
             || !request.external_providers().is_empty()
             || !request.import_symbols().is_empty()
@@ -2996,20 +2972,6 @@ fn exact_hidden_arguments(arguments: &[HiddenArgument], offset: u64) -> bool {
                 && actual.size() == expected.1
                 && actual.value_kind() == expected.2
         })
-}
-
-fn fixed_link_options() -> Result<Vec<LinkOptionV1>, ExecuteQwen3GemmWorkerErrorV1> {
-    [
-        ("code-object-version", "6"),
-        ("opt-level", "2"),
-        ("strip-debug", "true"),
-        ("verify-each", "true"),
-    ]
-    .into_iter()
-    .map(|(name, value)| {
-        LinkOptionV1::new(name, value).map_err(|_| ExecuteQwen3GemmWorkerErrorV1::FixedLinkOption)
-    })
-    .collect()
 }
 
 /// Failure while binding an inspected output to a finite runtime profile.

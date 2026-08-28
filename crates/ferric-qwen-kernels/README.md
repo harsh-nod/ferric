@@ -44,16 +44,27 @@ use. A sequence selects a translation table; it does not prefix cache storage.
 Generation, exclusive-owner, role, profile, and page-table identities remain
 host labels and are not authenticated by the machine ABI.
 
-The modules construct pinned direct-LLVM or typed Handoff V2 source, form
-linear Worker V2 requests, and define strict post-worker structural
-inspection. The attention lanes retain an exact unresolved OCML exponential
-provider contract. These are explicit compiler boundaries, not evidence that
-the Worker ran or that an executable artifact exists.
+The modules construct pinned direct-LLVM or typed Handoff V2 payloads and bind
+them only to compiler-produced, move-only Worker V3 evidence before strict
+post-worker structural inspection. The nested V2 label describes the module
+codec, not an executable V2 authority route. The attention lanes retain an
+exact unresolved OCML exponential provider contract. These are explicit
+compiler boundaries, not evidence that the Worker ran or that an executable
+artifact exists until the matching V3 owner is supplied.
+
+Every accepted V3 owner must retain the exact canonical link options
+`code-object-version=6`, `opt-level=2`, `strip-debug=true`, and
+`verify-each=true`, a 64 MiB bootstrap output ceiling, and an exact replay
+ceiling equal to the retained artifact length. Artifact-set publication also
+requires the exact reviewed Worker measurement and default execution limits
+for all seven lanes. The retired Worker V2 artifact CLI has no V3 replacement:
+an authenticated in-process collector that acquires all seven owners and
+invokes publication is still unavailable.
 
 The catalogs and structural checks are not evidence of operator or numerical
 refinement, physical-KV refinement, source or artifact authentication,
 machine-code refinement, allocation, load, launch, completion, hardware
-behavior, or performance. Checked-in tests do not execute Worker V2 and do not
+behavior, or performance. Checked-in tests do not execute Worker V3 and do not
 establish HSACO existence. The `ferric-gemm`, `ferric-prefill`,
 `ferric-paged-decode`, `ferric-rope-kv`, `ferric-swiglu`, `ferric-logits`, and
 `kernel-schedule-catalog`
@@ -82,17 +93,17 @@ and its control flow cannot reach residual loads or fused-output stores.
 Residual-fused mode is hidden-width only, requires exact nonzero disjoint spans,
 and rejects width 128.
 
-The `RMSNorm` module uses direct typed Handoff V2 because the reusable Pliron
+The `RMSNorm` module uses a direct typed Handoff V2 payload because the reusable Pliron
 AMDGPU route cannot represent this scalar BF16 graph. It serializes canonical
-LLVM, forms linear Worker V2 custody, and defines strict post-worker ELF,
+LLVM, requires matching linear Worker V3 custody, and defines strict post-worker ELF,
 AMDHSA ABI, descriptor, resource, and loader inspection. Source tests inspect
-the serialized LLVM structure but do not execute Worker V2, create or
+the serialized LLVM structure but do not execute Worker V3, create or
 disassemble an HSACO, or establish numerical, operator, source-to-LLVM,
 LLVM-to-machine, hardware, completion, or performance refinement. The
 `ferric-rmsnorm` and `kernel-schedule-catalog` paths and `m1.r07` remain Open.
 
 The workspace dependency revision is pinned to accepted reusable fe2o3 generic
-compiler/runtime commit `b838131a10e00861dc3a5758e33dfa0a13162e13`.
+compiler/runtime commit `42639ecc7f2f377ab57e5e884c36133a126f230e`.
 The historical M1 upstream base remains
 `a6c779f6f8052839c3a07901f9bfafa681f7b09a`; neither source closure is Ferric
 kernel authority, kernel qualification evidence, or evidence for an M1 row.

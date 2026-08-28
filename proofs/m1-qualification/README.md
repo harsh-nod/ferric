@@ -2,8 +2,8 @@
 
 `planner.py` is the first planning-only slice of the external M1 qualification
 orchestrator. It authenticates clean, exact Ferric and fe2o3 source identities,
-the admitted 12-package direct pin roster, 39-package resolved pin roster and
-19-edge dependency topology, all 39 source paths, the requirements manifest,
+the admitted 11-package direct pin roster, 25-package resolved pin roster and
+16-edge dependency topology, all 39 source paths, the requirements manifest,
 and the checker-owned validator registry. It runs the existing source closure
 producer once for each repository and creates a new external planning bundle:
 

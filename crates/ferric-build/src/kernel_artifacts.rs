@@ -12,12 +12,7 @@ use std::fs::{self, File, OpenOptions};
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
-use fe2o3_artifact_transaction::{
-    begin_build_attempt, consume_compiler_module_handoff_v1, fail_build_attempt,
-    publish_compiler_module_handoff_v1, BuildAttempt, BuildInvocation, BuildSession,
-    ConsumedCompilerModuleHandoffV1, ProducerIdentity,
-};
-use fe2o3_hsaco_finalize::{ContentIdentityV1, PinnedWorkerV1, WorkerExecutionLimitsV1};
+use fe2o3_hsaco_finalize::{ContentIdentityV1, InertProtectedFirstBuildWorkerV3EvidenceV1};
 use ferric_qwen_kernels::{gemm, logits, paged_decode, prefill, rmsnorm, rope_kv, swiglu};
 use rustix::fs::{renameat_with, RenameFlags, CWD};
 use sha2::{Digest, Sha256};
@@ -27,16 +22,15 @@ use super::kernel_artifact_manifest::{
     M1KernelArtifactManifestErrorV1, M1KernelArtifactManifestV1, M1KernelProfileCatalogV1,
     M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1,
 };
-use super::kernel_artifact_policy::open_m1_kernel_worker_v1;
+use super::kernel_artifact_policy::{
+    worker_execution_policy_matches_m1_kernel_policy_v1,
+    worker_measurement_matches_m1_kernel_policy_v1,
+};
 
 /// Stable filename of the canonical manifest inside a published output directory.
 pub const M1_KERNEL_ARTIFACT_MANIFEST_FILENAME_V1: &str = "m1-kernel-artifacts.manifest.bin";
 
 const LABEL_DOMAIN: &[u8] = b"ferric.m1.kernel-artifact-builder.inert-label.v1";
-const INVOCATION_DOMAIN: &[u8] = b"ferric.m1.kernel-artifact-builder.invocation.v1";
-const TRANSACTION_SESSION: BuildSession = BuildSession::from_bytes([
-    0x66, 0x65, 0x72, 0x72, 0x69, 0x63, 0x2d, 0x6d, 0x31, 0x2d, 0x6b, 0x31, 0x6b, 0x37, 0x01, 0x01,
-]);
 
 /// Linear live custody of all seven structurally inspected M1 kernel artifacts.
 ///
@@ -75,6 +69,48 @@ pub struct BuiltAndInspectedM1KernelArtifactsV1 {
     manifest: M1KernelArtifactManifestV1,
     output_directory: PathBuf,
     publication: M1KernelArtifactPublicationStatusV1,
+}
+
+/// Move-only protected Worker V3 evidence for every M1 kernel family.
+///
+/// Each owner must originate from fe2o3's compiler-produced V3 transaction. The
+/// builder checks the exact Worker measurement, link options, and execution
+/// limits, and the family adapters independently compare each nested compiler
+/// handoff with current Ferric source before any HSACO is inspected or
+/// published.
+pub struct M1KernelWorkerV3EvidenceSetV1 {
+    gemm: InertProtectedFirstBuildWorkerV3EvidenceV1,
+    rmsnorm: InertProtectedFirstBuildWorkerV3EvidenceV1,
+    rope_kv: InertProtectedFirstBuildWorkerV3EvidenceV1,
+    prefill: InertProtectedFirstBuildWorkerV3EvidenceV1,
+    paged_decode: InertProtectedFirstBuildWorkerV3EvidenceV1,
+    swiglu: InertProtectedFirstBuildWorkerV3EvidenceV1,
+    logits: InertProtectedFirstBuildWorkerV3EvidenceV1,
+}
+
+impl M1KernelWorkerV3EvidenceSetV1 {
+    /// Retains one exact protected V3 owner for each named K1-K7 family.
+    #[allow(clippy::too_many_arguments)]
+    #[must_use]
+    pub fn new(
+        gemm: InertProtectedFirstBuildWorkerV3EvidenceV1,
+        rmsnorm: InertProtectedFirstBuildWorkerV3EvidenceV1,
+        rope_kv: InertProtectedFirstBuildWorkerV3EvidenceV1,
+        prefill: InertProtectedFirstBuildWorkerV3EvidenceV1,
+        paged_decode: InertProtectedFirstBuildWorkerV3EvidenceV1,
+        swiglu: InertProtectedFirstBuildWorkerV3EvidenceV1,
+        logits: InertProtectedFirstBuildWorkerV3EvidenceV1,
+    ) -> Self {
+        Self {
+            gemm,
+            rmsnorm,
+            rope_kv,
+            prefill,
+            paged_decode,
+            swiglu,
+            logits,
+        }
+    }
 }
 
 impl fmt::Debug for BuiltAndInspectedM1KernelArtifactsV1 {
@@ -199,10 +235,8 @@ impl M1KernelArtifactPublicationStatusV1 {
 pub enum M1KernelArtifactBuildStageV1 {
     /// Closed source, catalog, and compiler handoff construction.
     Prepare,
-    /// Durable one-shot compiler-handoff transport.
-    Handoff,
-    /// Measured Worker V2 bootstrap and exact replay.
-    Execute,
+    /// Binding one compiler-produced Worker V3 owner to current Ferric source.
+    BindWorkerV3,
     /// HSACO, AMDHSA ABI, resource, and loader inspection.
     Inspect,
     /// Content-addressed object or manifest publication.
@@ -216,8 +250,10 @@ pub enum M1KernelArtifactBuildErrorV1 {
     InvalidOutputPath,
     /// The final output already exists and is left unchanged.
     OutputAlreadyExists(PathBuf),
-    /// The Ferric-owned Worker measurement rejected the supplied path/image.
-    Worker(fe2o3_hsaco_finalize::WorkerExecutionError),
+    /// One protected V3 owner carries a Worker measurement outside M1 policy.
+    WorkerMeasurementPolicy(M1KernelArtifactFamilyV1),
+    /// One protected V3 owner carries link options or execution limits outside M1 policy.
+    WorkerExecutionPolicy(M1KernelArtifactFamilyV1),
     /// One family failed in a named closed stage.
     Family {
         /// Exact family whose build failed.
@@ -253,7 +289,6 @@ impl fmt::Display for M1KernelArtifactBuildErrorV1 {
 impl Error for M1KernelArtifactBuildErrorV1 {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
-            Self::Worker(source) => Some(source),
             Self::Family { source, .. } => Some(source.as_ref()),
             Self::Manifest(source) => Some(source),
             Self::Io { source, .. } => Some(source),
@@ -394,51 +429,74 @@ pub fn current_m1_kernel_source_facts_v1() -> Result<
     ])
 }
 
-/// Builds, structurally inspects, and atomically publishes exactly one HSACO
+/// Structurally inspects and atomically publishes one compiler-produced HSACO
 /// for each K1-K7 family.
 ///
-/// `worker_path` is the only caller-controlled Worker input. Ferric supplies
-/// the exact reviewed executable digest, length, Worker claim, LLVM identity,
-/// fixed link options, and measured OCML policy. `output_directory` must not
-/// exist. An atomic no-replace rename happens only after all seven objects and
-/// the strict canonical manifest have been synced. If syncing the parent
-/// directory then fails, the function returns the live owner successfully with
+/// `evidence` must contain seven move-only owners produced by fe2o3's protected
+/// Worker V3 transaction. `output_directory` must not exist. An atomic
+/// no-replace rename happens only after all seven objects and the strict
+/// canonical manifest have been synced. If syncing the parent directory then
+/// fails, the function returns the live owner successfully with
 /// [`M1KernelArtifactPublicationStatusV1::PublishedButParentDirectorySyncFailed`]
 /// because the final directory is already visible and cannot be rolled back
 /// transactionally.
 ///
 /// # Errors
 ///
-/// Returns [`M1KernelArtifactBuildErrorV1`] if the Worker image differs from
-/// Ferric's pin, any prepare/transport/execute/inspect stage fails closed, an
-/// artifact identity drifts, or filesystem staging fails before publication.
+/// Returns [`M1KernelArtifactBuildErrorV1`] if any V3 owner does not carry the
+/// exact M1 Worker measurement, link options, and execution limits or bind to
+/// current Ferric source, a prepare/inspect stage fails closed, an artifact
+/// identity drifts, or filesystem staging fails before publication.
 /// A no-replace collision also returns an error while preserving both the
 /// existing destination and automatic staging cleanup. No error is returned
 /// after the final directory has become visible.
 pub fn build_and_publish_m1_kernel_artifacts_v1(
-    worker_path: impl AsRef<Path>,
+    evidence: M1KernelWorkerV3EvidenceSetV1,
     output_directory: impl AsRef<Path>,
 ) -> Result<BuiltAndInspectedM1KernelArtifactsV1, M1KernelArtifactBuildErrorV1> {
+    let M1KernelWorkerV3EvidenceSetV1 {
+        gemm: gemm_evidence,
+        rmsnorm: rmsnorm_evidence,
+        rope_kv: rope_kv_evidence,
+        prefill: prefill_evidence,
+        paged_decode: paged_decode_evidence,
+        swiglu: swiglu_evidence,
+        logits: logits_evidence,
+    } = evidence;
+    for (family, worker) in [
+        (M1KernelArtifactFamilyV1::Gemm, &gemm_evidence),
+        (M1KernelArtifactFamilyV1::RmsNorm, &rmsnorm_evidence),
+        (M1KernelArtifactFamilyV1::RopeKv, &rope_kv_evidence),
+        (M1KernelArtifactFamilyV1::Prefill, &prefill_evidence),
+        (
+            M1KernelArtifactFamilyV1::PagedDecode,
+            &paged_decode_evidence,
+        ),
+        (M1KernelArtifactFamilyV1::SwiGlu, &swiglu_evidence),
+        (M1KernelArtifactFamilyV1::Logits, &logits_evidence),
+    ] {
+        if !worker_measurement_matches_m1_kernel_policy_v1(worker.worker_measurement()) {
+            return Err(M1KernelArtifactBuildErrorV1::WorkerMeasurementPolicy(
+                family,
+            ));
+        }
+        if !worker_execution_policy_matches_m1_kernel_policy_v1(
+            worker.execution_limits(),
+            worker.plan().options(),
+        ) {
+            return Err(M1KernelArtifactBuildErrorV1::WorkerExecutionPolicy(family));
+        }
+    }
     let output_directory = output_directory.as_ref();
     let mut staging = StagingDirectory::create(output_directory)?;
-    let transaction_directory = staging.path().join("transactions");
-    create_directory(&transaction_directory, "create transaction directory")?;
-    let worker = open_m1_kernel_worker_v1(worker_path.as_ref())
-        .map_err(M1KernelArtifactBuildErrorV1::Worker)?;
-    let limits = WorkerExecutionLimitsV1::default();
 
-    let gemm = build_gemm(&transaction_directory, &worker, limits)?;
-    let rmsnorm = build_rmsnorm(&transaction_directory, &worker, limits)?;
-    let rope_kv = build_rope_kv(&transaction_directory, &worker, limits)?;
-    let prefill = build_prefill(&transaction_directory, &worker, limits)?;
-    let paged_decode = build_paged_decode(&transaction_directory, &worker, limits)?;
-    let swiglu = build_swiglu(&transaction_directory, &worker, limits)?;
-    let logits = build_logits(&transaction_directory, &worker, limits)?;
-
-    remove_directory(
-        &transaction_directory,
-        "remove consumed transaction directory",
-    )?;
+    let gemm = build_gemm(gemm_evidence)?;
+    let rmsnorm = build_rmsnorm(rmsnorm_evidence)?;
+    let rope_kv = build_rope_kv(rope_kv_evidence)?;
+    let prefill = build_prefill(prefill_evidence)?;
+    let paged_decode = build_paged_decode(paged_decode_evidence)?;
+    let swiglu = build_swiglu(swiglu_evidence)?;
+    let logits = build_logits(logits_evidence)?;
 
     let entries = [
         gemm.entry.clone(),
@@ -686,9 +744,7 @@ impl M1CurrentKernelSourceFactsV1 {
 }
 
 fn build_gemm(
-    transactions: &Path,
-    worker: &PinnedWorkerV1,
-    limits: WorkerExecutionLimitsV1,
+    worker: InertProtectedFirstBuildWorkerV3EvidenceV1,
 ) -> Result<CompletedFamily<gemm::InspectedQwen3GemmKernelV1>, M1KernelArtifactBuildErrorV1> {
     let family = M1KernelArtifactFamilyV1::Gemm;
     let labels = inert_labels(family);
@@ -697,18 +753,11 @@ fn build_gemm(
     ))
     .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Prepare, source))?;
     let facts = gemm_source_facts(&prepared);
-    let consumed = transport_handoff(
-        transactions,
-        family,
-        prepared.compiler_handoff().canonical_bytes(),
-    )?;
-    let evidence = gemm::execute_qwen3_gemm_worker_v2_v1(
-        gemm::lower_qwen3_gemm_kernel_v1(prepared),
-        consumed,
-        worker,
-        limits,
-    )
-    .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Execute, source))?;
+    let evidence =
+        gemm::bind_qwen3_gemm_worker_v3_v1(gemm::lower_qwen3_gemm_kernel_v1(prepared), worker)
+            .map_err(|source| {
+                family_error(family, M1KernelArtifactBuildStageV1::BindWorkerV3, source)
+            })?;
     let owner = gemm::inspect_qwen3_gemm_kernel_v1(evidence)
         .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Inspect, source))?;
     let load_plan = *owner.loader_plan();
@@ -717,9 +766,7 @@ fn build_gemm(
 }
 
 fn build_rmsnorm(
-    transactions: &Path,
-    worker: &PinnedWorkerV1,
-    limits: WorkerExecutionLimitsV1,
+    worker: InertProtectedFirstBuildWorkerV3EvidenceV1,
 ) -> Result<CompletedFamily<rmsnorm::InspectedQwen3RmsNormKernelV1>, M1KernelArtifactBuildErrorV1> {
     let family = M1KernelArtifactFamilyV1::RmsNorm;
     let labels = inert_labels(family);
@@ -728,18 +775,11 @@ fn build_rmsnorm(
     )
     .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Prepare, source))?;
     let facts = rmsnorm_source_facts(&prepared);
-    let consumed = transport_handoff(
-        transactions,
-        family,
-        prepared.compiler_handoff().canonical_bytes(),
-    )?;
-    let evidence = rmsnorm::execute_qwen3_rmsnorm_worker_v2_v1(
+    let evidence = rmsnorm::bind_qwen3_rmsnorm_worker_v3_v1(
         rmsnorm::lower_qwen3_rmsnorm_kernel_v1(prepared),
-        consumed,
         worker,
-        limits,
     )
-    .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Execute, source))?;
+    .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::BindWorkerV3, source))?;
     let owner = rmsnorm::inspect_qwen3_rmsnorm_kernel_v1(evidence)
         .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Inspect, source))?;
     let load_plan = *owner.loader_plan();
@@ -748,9 +788,7 @@ fn build_rmsnorm(
 }
 
 fn build_rope_kv(
-    transactions: &Path,
-    worker: &PinnedWorkerV1,
-    limits: WorkerExecutionLimitsV1,
+    worker: InertProtectedFirstBuildWorkerV3EvidenceV1,
 ) -> Result<CompletedFamily<rope_kv::InspectedQwen3RopeKvKernelV1>, M1KernelArtifactBuildErrorV1> {
     let family = M1KernelArtifactFamilyV1::RopeKv;
     let labels = inert_labels(family);
@@ -759,18 +797,11 @@ fn build_rope_kv(
     )
     .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Prepare, source))?;
     let facts = rope_kv_source_facts(&prepared);
-    let consumed = transport_handoff(
-        transactions,
-        family,
-        prepared.compiler_handoff().canonical_bytes(),
-    )?;
-    let evidence = rope_kv::execute_qwen3_rope_kv_worker_v2_v1(
+    let evidence = rope_kv::bind_qwen3_rope_kv_worker_v3_v1(
         rope_kv::lower_qwen3_rope_kv_kernel_v1(prepared),
-        consumed,
         worker,
-        limits,
     )
-    .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Execute, source))?;
+    .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::BindWorkerV3, source))?;
     let owner = rope_kv::inspect_qwen3_rope_kv_kernel_v1(evidence)
         .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Inspect, source))?;
     let load_plan = *owner.loader_plan();
@@ -779,9 +810,7 @@ fn build_rope_kv(
 }
 
 fn build_prefill(
-    transactions: &Path,
-    worker: &PinnedWorkerV1,
-    limits: WorkerExecutionLimitsV1,
+    worker: InertProtectedFirstBuildWorkerV3EvidenceV1,
 ) -> Result<CompletedFamily<prefill::InspectedQwen3PrefillKernelV1>, M1KernelArtifactBuildErrorV1> {
     let family = M1KernelArtifactFamilyV1::Prefill;
     let labels = inert_labels(family);
@@ -790,18 +819,11 @@ fn build_prefill(
     )
     .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Prepare, source))?;
     let facts = prefill_source_facts(&prepared);
-    let consumed = transport_handoff(
-        transactions,
-        family,
-        prepared.compiler_handoff().canonical_bytes(),
-    )?;
-    let evidence = prefill::execute_qwen3_prefill_worker_v2_v1(
+    let evidence = prefill::bind_qwen3_prefill_worker_v3_v1(
         prefill::lower_qwen3_prefill_kernel_v1(prepared),
-        consumed,
         worker,
-        limits,
     )
-    .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Execute, source))?;
+    .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::BindWorkerV3, source))?;
     let owner = prefill::inspect_qwen3_prefill_kernel_v1(evidence)
         .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Inspect, source))?;
     let load_plan = *owner.loader_plan();
@@ -810,9 +832,7 @@ fn build_prefill(
 }
 
 fn build_paged_decode(
-    transactions: &Path,
-    worker: &PinnedWorkerV1,
-    limits: WorkerExecutionLimitsV1,
+    worker: InertProtectedFirstBuildWorkerV3EvidenceV1,
 ) -> Result<
     CompletedFamily<paged_decode::InspectedQwen3PagedDecodeKernelV1>,
     M1KernelArtifactBuildErrorV1,
@@ -826,18 +846,11 @@ fn build_paged_decode(
     )
     .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Prepare, source))?;
     let facts = paged_decode_source_facts(&prepared);
-    let consumed = transport_handoff(
-        transactions,
-        family,
-        prepared.compiler_handoff().canonical_bytes(),
-    )?;
-    let evidence = paged_decode::execute_qwen3_paged_decode_worker_v2_v1(
+    let evidence = paged_decode::bind_qwen3_paged_decode_worker_v3_v1(
         paged_decode::lower_qwen3_paged_decode_kernel_v1(prepared),
-        consumed,
         worker,
-        limits,
     )
-    .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Execute, source))?;
+    .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::BindWorkerV3, source))?;
     let owner = paged_decode::inspect_qwen3_paged_decode_kernel_v1(evidence)
         .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Inspect, source))?;
     let load_plan = *owner.loader_plan();
@@ -846,9 +859,7 @@ fn build_paged_decode(
 }
 
 fn build_swiglu(
-    transactions: &Path,
-    worker: &PinnedWorkerV1,
-    limits: WorkerExecutionLimitsV1,
+    worker: InertProtectedFirstBuildWorkerV3EvidenceV1,
 ) -> Result<CompletedFamily<swiglu::InspectedQwen3SwiGluKernelV1>, M1KernelArtifactBuildErrorV1> {
     let family = M1KernelArtifactFamilyV1::SwiGlu;
     let labels = inert_labels(family);
@@ -857,18 +868,11 @@ fn build_swiglu(
     )
     .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Prepare, source))?;
     let facts = swiglu_source_facts(&prepared);
-    let consumed = transport_handoff(
-        transactions,
-        family,
-        prepared.compiler_handoff().canonical_bytes(),
-    )?;
-    let evidence = swiglu::execute_qwen3_swiglu_worker_v2_v1(
+    let evidence = swiglu::bind_qwen3_swiglu_worker_v3_v1(
         swiglu::lower_qwen3_swiglu_kernel_v1(prepared),
-        consumed,
         worker,
-        limits,
     )
-    .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Execute, source))?;
+    .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::BindWorkerV3, source))?;
     let owner = swiglu::inspect_qwen3_swiglu_kernel_v1(evidence)
         .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Inspect, source))?;
     let load_plan = *owner.loader_plan();
@@ -877,9 +881,7 @@ fn build_swiglu(
 }
 
 fn build_logits(
-    transactions: &Path,
-    worker: &PinnedWorkerV1,
-    limits: WorkerExecutionLimitsV1,
+    worker: InertProtectedFirstBuildWorkerV3EvidenceV1,
 ) -> Result<CompletedFamily<logits::InspectedQwen3LogitsKernelV1>, M1KernelArtifactBuildErrorV1> {
     let family = M1KernelArtifactFamilyV1::Logits;
     let labels = inert_labels(family);
@@ -888,18 +890,11 @@ fn build_logits(
     )
     .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Prepare, source))?;
     let facts = logits_source_facts(&prepared);
-    let consumed = transport_handoff(
-        transactions,
-        family,
-        prepared.compiler_handoff().canonical_bytes(),
-    )?;
-    let evidence = logits::execute_qwen3_logits_worker_v2_v1(
+    let evidence = logits::bind_qwen3_logits_worker_v3_v1(
         logits::lower_qwen3_logits_kernel_v1(prepared),
-        consumed,
         worker,
-        limits,
     )
-    .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Execute, source))?;
+    .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::BindWorkerV3, source))?;
     let owner = logits::inspect_qwen3_logits_kernel_v1(evidence)
         .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Inspect, source))?;
     let load_plan = *owner.loader_plan();
@@ -938,62 +933,6 @@ fn symbol_identity(
     identity: fe2o3_compiler_ffi::CompilerModuleSymbolManifestIdentityV1,
 ) -> ContentIdentityV1 {
     ContentIdentityV1::from_parts(*identity.sha256(), identity.byte_len())
-}
-
-fn transport_handoff(
-    transactions: &Path,
-    family: M1KernelArtifactFamilyV1,
-    bytes: &[u8],
-) -> Result<ConsumedCompilerModuleHandoffV1, M1KernelArtifactBuildErrorV1> {
-    let producer = ProducerIdentity::from_codegen(producer_crate_name(family), None)
-        .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Handoff, source))?;
-    let mut digest = Sha256::new();
-    digest.update((INVOCATION_DOMAIN.len() as u64).to_le_bytes());
-    digest.update(INVOCATION_DOMAIN);
-    digest.update([family as u8]);
-    digest.update(ContentIdentityV1::calculate(bytes).sha256());
-    let invocation = BuildInvocation::from_bytes(digest.finalize().into());
-    let attempt = begin_build_attempt(transactions, &producer, invocation, TRANSACTION_SESSION)
-        .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Handoff, source))?;
-    let mut active = ActiveHandoffAttempt {
-        transactions,
-        producer: &producer,
-        attempt,
-        consumed: false,
-    };
-    publish_compiler_module_handoff_v1(transactions, &producer, attempt, bytes)
-        .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Handoff, source))?;
-    let consumed = consume_compiler_module_handoff_v1(transactions, &producer, attempt)
-        .map_err(|source| family_error(family, M1KernelArtifactBuildStageV1::Handoff, source))?;
-    active.consumed = true;
-    Ok(consumed)
-}
-
-const fn producer_crate_name(family: M1KernelArtifactFamilyV1) -> &'static str {
-    match family {
-        M1KernelArtifactFamilyV1::Gemm => "ferric_m1_k1_gemm",
-        M1KernelArtifactFamilyV1::RmsNorm => "ferric_m1_k2_rmsnorm",
-        M1KernelArtifactFamilyV1::RopeKv => "ferric_m1_k3_rope_kv",
-        M1KernelArtifactFamilyV1::Prefill => "ferric_m1_k4_prefill",
-        M1KernelArtifactFamilyV1::PagedDecode => "ferric_m1_k5_paged_decode",
-        M1KernelArtifactFamilyV1::SwiGlu => "ferric_m1_k6_swiglu",
-        M1KernelArtifactFamilyV1::Logits => "ferric_m1_k7_logits",
-    }
-}
-
-struct ActiveHandoffAttempt<'a> {
-    transactions: &'a Path,
-    producer: &'a ProducerIdentity,
-    attempt: BuildAttempt,
-    consumed: bool,
-}
-
-impl Drop for ActiveHandoffAttempt<'_> {
-    fn drop(&mut self) {
-        if !self.consumed {
-            let _ = fail_build_attempt(self.transactions, self.producer, self.attempt);
-        }
-    }
 }
 
 fn inert_labels(family: M1KernelArtifactFamilyV1) -> [[u8; 32]; 4] {
@@ -1070,28 +1009,6 @@ fn write_new_file(path: &Path, bytes: &[u8]) -> Result<(), M1KernelArtifactBuild
             path: path.to_path_buf(),
             source,
         })
-}
-
-fn create_directory(
-    path: &Path,
-    operation: &'static str,
-) -> Result<(), M1KernelArtifactBuildErrorV1> {
-    fs::create_dir(path).map_err(|source| M1KernelArtifactBuildErrorV1::Io {
-        operation,
-        path: path.to_path_buf(),
-        source,
-    })
-}
-
-fn remove_directory(
-    path: &Path,
-    operation: &'static str,
-) -> Result<(), M1KernelArtifactBuildErrorV1> {
-    fs::remove_dir_all(path).map_err(|source| M1KernelArtifactBuildErrorV1::Io {
-        operation,
-        path: path.to_path_buf(),
-        source,
-    })
 }
 
 fn sync_directory(path: &Path) -> Result<(), M1KernelArtifactBuildErrorV1> {
@@ -1253,18 +1170,6 @@ mod tests {
     }
 
     #[test]
-    fn every_kernel_family_has_a_valid_distinct_compiler_producer() {
-        let mut producers = BTreeSet::new();
-        for family in M1KernelArtifactFamilyV1::ALL {
-            let name = producer_crate_name(family);
-            ProducerIdentity::from_codegen(name, None)
-                .expect("canonical compiler producer must be accepted by the transport");
-            assert!(producers.insert(name));
-        }
-        assert_eq!(producers.len(), M1_KERNEL_ARTIFACT_FAMILY_COUNT_V1);
-    }
-
-    #[test]
     fn staging_drop_removes_partial_output_and_preserves_final_path() {
         let root = TestDirectory::new("staging-drop");
         let output = root.0.join("final");
@@ -1359,37 +1264,5 @@ mod tests {
             ))
         ));
         assert!(!root.0.join("objects").exists());
-    }
-
-    #[test]
-    fn rejected_worker_removes_staging_without_publishing() {
-        let root = TestDirectory::new("worker-rejection");
-        let output = root.0.join("artifacts");
-        let missing_worker = root.0.join("missing-worker");
-        assert!(matches!(
-            build_and_publish_m1_kernel_artifacts_v1(&missing_worker, &output),
-            Err(M1KernelArtifactBuildErrorV1::Worker(_))
-        ));
-        assert!(!output.exists());
-        let remaining: Vec<_> = fs::read_dir(&root.0).unwrap().collect();
-        assert!(remaining.is_empty());
-    }
-
-    #[test]
-    #[ignore = "requires the exact reviewed native Worker and measured ROCm OCML closure"]
-    fn configured_worker_builds_complete_live_owner() {
-        let worker = std::env::var_os("FERRIC_M1_KERNEL_WORKER")
-            .expect("set FERRIC_M1_KERNEL_WORKER to the exact reviewed Worker");
-        let root = TestDirectory::new("configured-worker");
-        let output = root.0.join("artifacts");
-        let built = build_and_publish_m1_kernel_artifacts_v1(worker, &output).unwrap();
-        assert_eq!(built.manifest().entries().len(), 7);
-        assert!(output
-            .join(M1_KERNEL_ARTIFACT_MANIFEST_FILENAME_V1)
-            .is_file());
-        assert!(!built.has_durable_reopen_authority());
-        assert!(!built.has_independent_deployment_pin());
-        assert!(!built.proves_hardware_execution());
-        assert!(built.publication_status().parent_directory_synced());
     }
 }
