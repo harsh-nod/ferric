@@ -6,7 +6,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Four finite speculative shapes and four exact production rollover transitions pass the authenticated host gate at 58fd37e. The scoped release proof also passes for that exact source. Ferric has a protected production HSACO for the first of seven Rust Qwen3 kernel families. fe2o3 PR #236 now carries the exact mapped KFD adapter and its authorized current source, while Ferric PR #21 exposes that adapter to the host; the binding-only 1+3+7 test gate passes. A production artifact rebuild is pending. The production verifier remains a named fail-closed blocker because no authenticated evidence/refinement chain exists. No load, dispatch, numerical result, performance result, whole-Qwen execution, or M1 qualification follows.",
+      "Four finite speculative shapes and four exact production rollover transitions pass the authenticated host gate at 58fd37e. The scoped release proof also passes for that exact source. Ferric source 57f6cfdf completed the protected two-phase build for the first of seven Rust Qwen3 kernel families on MI300X, producing an exact mapped-adapter HSACO for gfx942:xnack-. fe2o3 PR #236 is at compiler commit 21e4c106 after merging main e39fdc14 with protected issuer custody; cargo-fe2o3 tests pass. The production verifier remains a named fail-closed blocker because no authenticated evidence/refinement chain exists. No GPU load, dispatch, numerical result, performance result, whole-Qwen execution, or M1 qualification follows.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -17,11 +17,11 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Concurrency", "up to 32 sequences"],
     [
       "Build pins",
-      "Ferric device 7e1c36aa / fe2o3 compiler 4cd2af64 atop main 8078fa1d at the production run",
+      "Ferric source 57f6cfdf / fe2o3 compiler 21e4c106 with main e39fdc14 at the protected two-phase build",
     ],
     [
-      "Mapped adapter",
-      "fe2o3 06c74c64 / authorized source 4ad34840 in PR #236 / Ferric host exposure a8df223 in PR #21; rebuild pending",
+      "Protected artifact",
+      "semantic fe2ce532...e9569e8f / HSACO 57ecb86b...fc6afa7 / load-envelope lineage 058b9498...b17014a8",
     ],
   ],
   readiness: [
@@ -58,13 +58,13 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Worker V3 kernel migration",
       state: "observed",
       detail:
-        "The protected production build for qwen3_swiglu_bf16_f32_v1 succeeded at Ferric commit 7e1c36aa. The newer mapped-adapter source at Ferric a8df223a passes 1 library, 3 numerical reference, and 7 source/adapter contract tests, but it has not produced a replacement artifact. The root legacy V2 workspace remains frozen because current fe2o3 removed its orphan routes. Six kernel families plus every execution and M1 gate remain open.",
+        "Ferric source 57f6cfdf4b3f5177a556159d1e548b25b63a1541 completed the protected two-phase qwen3_swiglu_bf16_f32_v1 build on MI300X/gfx942:xnack-. The exact 14,192-byte HSACO is bound to the mapped adapter and load-envelope lineage. It has not passed the production verifier or been loaded or dispatched. The root legacy V2 workspace remains frozen because latest fe2o3 removed its orphan routes. Six kernel families plus every execution and M1 gate remain open.",
     },
     {
       label: "Mapped KFD adapter binding",
-      state: "implemented",
+      state: "observed",
       detail:
-        "fe2o3 commit 06c74c64506f15883d64c5ab2ca476561909181d generates the exact mapped KFD adapter. Commit 4ad348404a57a2823b199a97bea13baae0f3de18 advances to current upstream and authorizes that source in PR #236. Ferric commit a8df223a6c4d319e998dfa45f674cfd6c5ab5afc exposes the generated arguments on the host in PR #21. This is binding-only validation; production rebuild and verifier evidence remain open.",
+        "fe2o3 commit 06c74c64506f15883d64c5ab2ca476561909181d introduced the exact mapped KFD adapter and 4ad348404a57a2823b199a97bea13baae0f3de18 authorized it. PR #236 is now at 21e4c10609a7b44687153fc3484d1156b4eb4def after merging main e39fdc14 with protected issuer custody; cargo test -p cargo-fe2o3 --locked passes. Ferric PR #21 is at 57f6cfdf4b3f5177a556159d1e548b25b63a1541 with a completed protected build. Verifier evidence and GPU execution remain open.",
     },
   ],
   capabilities: {
@@ -77,7 +77,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Generated gfx942 execution plans",
         detail:
-          "Exact target/draft plans, typed operations, workspace layouts, and Ferric-owned kernel specifications. SwiGLU has a prior production Worker V3 artifact and a newer host-exposed mapped KFD adapter; rebuilding that artifact, the other six kernel families, the generated runner, and the model bundle remain open.",
+          "Exact target/draft plans, typed operations, workspace layouts, and Ferric-owned kernel specifications. SwiGLU now has a protected mapped-adapter Worker V3 artifact; the other six kernel families, production verifier join, generated runner, model bundle, and GPU execution remain open.",
       },
       {
         name: "Physical target-only generation",
@@ -109,12 +109,12 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Rust Qwen3 SwiGLU BF16 production artifact",
         detail:
-          "The qwen3_swiglu_bf16_f32_v1 production build emitted KIR fe2o3::semantic::54361a526f73befabecd65a3a7dc0338ef8653d15209d3b47765356236f34dcc and a 14,192-byte HSACO with SHA-256 and filename identity 0a27ada84a6382331af6a16d4ed0be6fcf1f85333ca5087b908a64618062702a. The newer mapped-adapter source in Ferric PR #21 has not rebuilt or requalified this artifact. Production compilation grants no load, dispatch, numerical, performance, Qwen, or M1 authority.",
+          "The protected two-phase qwen3_swiglu_bf16_f32_v1 build emitted semantic identity fe2o3::semantic::fe2ce53206f36841ea363da0db20869f38e21b881241581f455eebf8e9569e8f and a 14,192-byte HSACO with SHA-256 57ecb86b40db136237e65a5fae04c955f2c92fe3347c085ec5c806984fc6afa7. Its exact load-envelope lineage filename identity is 058b9498ba96b0d6969ed60bb6599da860d0c0e4528e48b36bb8ef14b17014a8. The gfx942:xnack- artifact contains one kernel, 304-byte kernarg, wave64, and zero LDS and private segment bytes. Production compilation grants no verifier, load, dispatch, numerical, performance, Qwen, or M1 authority.",
       },
       {
         name: "Host-exposed mapped KFD adapter",
         detail:
-          "Ferric PR #21 exposes the compiler-generated mapped arguments at commit a8df223a6c4d319e998dfa45f674cfd6c5ab5afc. Its binding-only gate passes 1 library, 3 numerical reference, and 7 source/adapter contract tests. The root legacy V2 workspace remains frozen because latest fe2o3 removed orphan routes; it does not inherit the standalone Worker V3 adapter.",
+          "Ferric PR #21 exposes the compiler-generated mapped arguments and is now at source 57f6cfdf4b3f5177a556159d1e548b25b63a1541. Its earlier binding-only gate passed 1 library, 3 numerical reference, and 7 source/adapter contract tests; the current source completed the protected two-phase build. The root legacy V2 workspace remains frozen because latest fe2o3 removed orphan routes; it does not inherit the standalone Worker V3 adapter.",
       },
     ],
     roadmap: [
@@ -126,12 +126,12 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Worker V3 artifact migration",
         detail:
-          "fe2o3 PR #236 supplies the exact mapped adapter at 06c74c64506f15883d64c5ab2ca476561909181d and the latest-upstream authorized source at 4ad348404a57a2823b199a97bea13baae0f3de18. Ferric PR #21 exposes it on the host at a8df223a6c4d319e998dfa45f674cfd6c5ab5afc. The binding-only tests pass, but the production artifact rebuild is pending. Six kernel families, the generated runner and model bundle, artifact loading and dispatch, numerical and performance validation, independent evidence, and formal M1 closure remain open.",
+          "fe2o3 PR #236 at 21e4c10609a7b44687153fc3484d1156b4eb4def and Ferric PR #21 at 57f6cfdf4b3f5177a556159d1e548b25b63a1541 produced the protected mapped-adapter artifact on MI300X. Six kernel families, the generated runner and model bundle, production verifier evidence, GPU loading and dispatch, numerical and performance validation, independent evidence, and formal M1 closure remain open.",
       },
       {
         name: "Production verifier refinement chain",
         detail:
-          "The production verifier remains a named fail-closed blocker. No authenticated evidence/refinement chain currently joins the mapped adapter binding to production dispatch authority. The adapter cannot advance to load or dispatch until that chain and the replacement artifact are authenticated.",
+          "The production verifier remains a named fail-closed blocker. No authenticated evidence/refinement chain currently joins the new semantic identity, HSACO, and load-envelope lineage to production dispatch authority. The artifact cannot advance to GPU load or dispatch until that chain is authenticated.",
       },
       {
         name: "Full M1 evidence closure",
@@ -146,16 +146,16 @@ window.FERRIC_PROJECT = Object.freeze({
     ],
   },
   latestObservation: {
-    title: "Mapped Worker V3 adapter bindings pass",
+    title: "Mapped SwiGLU protected build succeeds",
     date: "2026-08-27",
-    state: "implemented",
-    commit: "a8df223a6c4d319e998dfa45f674cfd6c5ab5afc",
-    buildId: "No replacement artifact produced",
-    environment: "Binding-only host gate; fe2o3 PR #236 / Ferric PR #21",
-    result: "PASS: 1 library + 3 numerical reference + 7 source/adapter contract tests",
+    state: "observed",
+    commit: "57f6cfdf4b3f5177a556159d1e548b25b63a1541",
+    buildId: "HSACO 57ecb86b40db136237e65a5fae04c955f2c92fe3347c085ec5c806984fc6afa7",
+    environment: "MI300X / gfx942:xnack-; protected two-phase build",
+    result: "PASS: one-kernel mapped-adapter HSACO; 14,192 bytes",
     generatedTokenIds: [],
     authority:
-      "Binding-only source validation. The production artifact rebuild is pending, and the production verifier fails closed without an authenticated evidence/refinement chain. No load, dispatch, numerical result, performance result, whole-Qwen execution, hardware-execution evidence, or M1 qualification claim follows.",
+      "Identity-bound production compilation only. The production verifier fails closed without an authenticated evidence/refinement chain. No GPU load, dispatch, numerical result, performance result, whole-Qwen execution, hardware-execution evidence, or M1 qualification claim follows.",
   },
   validation: {
     host: {
@@ -164,7 +164,7 @@ window.FERRIC_PROJECT = Object.freeze({
       source: "a8df223a6c4d319e998dfa45f674cfd6c5ab5afc",
       result: "PASS: 1 library + 3 reference + 7 adapter contract tests",
       detail:
-        "Ferric PR #21 exposes fe2o3's exact mapped KFD arguments on the host. These checks validate bindings only. The root legacy V2 workspace remains frozen because latest fe2o3 removed orphan routes, and the standalone Worker V3 source still requires a production artifact rebuild and verifier refinement evidence.",
+        "Ferric PR #21 exposes fe2o3's exact mapped KFD arguments on the host. These checks validate bindings only. The root legacy V2 workspace remains frozen because latest fe2o3 removed orphan routes. The later source at 57f6cfdf completed the protected build, while production verifier refinement evidence and GPU execution remain open.",
     },
     proof: {
       title: "Authenticated release proof",
@@ -177,12 +177,12 @@ window.FERRIC_PROJECT = Object.freeze({
         "The source gate covers 143 modules and 6,121 executable bodies. This qualifies only the scoped release proof; it does not establish MI300X execution, Qwen numerical correctness, performance, independent validation, or formal M1 qualification.",
     },
     hardware: {
-      title: "MI300X production artifact build",
+      title: "MI300X mapped-adapter protected build",
       state: "observed",
-      source: "7e1c36aa35d743478772ce4bff14c4f4bbff85c0",
-      result: "PASS: qwen3_swiglu_bf16_f32_v1; HSACO 0a27ada8...62702a",
+      source: "57f6cfdf4b3f5177a556159d1e548b25b63a1541",
+      result: "PASS: HSACO 57ecb86b...fc6afa7; 14,192 bytes",
       detail:
-        "The protected build emitted KIR fe2o3::semantic::54361a526f73befabecd65a3a7dc0338ef8653d15209d3b47765356236f34dcc and a 14,192-byte HSACO with SHA-256 and filename identity 0a27ada84a6382331af6a16d4ed0be6fcf1f85333ca5087b908a64618062702a. The published ABI records three pointer-plus-length arguments, 304-byte kernarg, workgroup size 256, 84 SGPRs, 11 VGPRs, and no spills or dynamic stack. The artifact has not been loaded or dispatched.",
+        "The protected two-phase build emitted semantic identity fe2o3::semantic::fe2ce53206f36841ea363da0db20869f38e21b881241581f455eebf8e9569e8f and exact HSACO SHA-256 57ecb86b40db136237e65a5fae04c955f2c92fe3347c085ec5c806984fc6afa7. Its load-envelope lineage filename identity is 058b9498ba96b0d6969ed60bb6599da860d0c0e4528e48b36bb8ef14b17014a8. The artifact contains one wave64 kernel with 304-byte kernarg and zero LDS/private bytes. It has not passed the production verifier or been loaded or dispatched.",
     },
     transitions: [
       ["Prefill S1/T128", "Speculative S1/K4", "implemented"],
@@ -195,11 +195,25 @@ window.FERRIC_PROJECT = Object.freeze({
   },
   recentProgress: [
     {
+      commit: "57f6cfdf4b3f5177a556159d1e548b25b63a1541",
+      title: "Complete the mapped SwiGLU protected build",
+      state: "observed",
+      detail:
+        "The Ferric source completed the protected two-phase build on MI300X/gfx942:xnack-. It produced semantic identity fe2o3::semantic::fe2ce53206f36841ea363da0db20869f38e21b881241581f455eebf8e9569e8f, exact 14,192-byte HSACO 57ecb86b...fc6afa7, and load-envelope lineage 058b9498...b17014a8. Production verification, GPU load/dispatch, numerical validation, and Qwen execution remain blocked.",
+    },
+    {
+      commit: "21e4c10609a7b44687153fc3484d1156b4eb4def",
+      title: "Advance the mapped compiler branch with protected issuer custody",
+      state: "implemented",
+      detail:
+        "fe2o3 PR #236 merged origin/main e39fdc140cb5af7560084e34890da74d2c172163, retaining the mapped KFD adapter and protected issuer custody. cargo test -p cargo-fe2o3 --locked passes. This compiler result does not grant Ferric GPU execution authority.",
+    },
+    {
       commit: "a8df223a6c4d319e998dfa45f674cfd6c5ab5afc",
       title: "Expose the exact mapped KFD adapter on the host",
       state: "implemented",
       detail:
-        "Ferric PR #21 exposes the exact generated Worker V3 KFD arguments. The binding-only gate passes 1 library, 3 numerical reference, and 7 source/adapter contract tests. The root legacy V2 workspace remains frozen because latest fe2o3 removed orphan routes. No production rebuild, verifier authority, load, dispatch, or numerical result follows.",
+        "Ferric PR #21 exposed the exact generated Worker V3 KFD arguments. The binding-only gate passed 1 library, 3 numerical reference, and 7 source/adapter contract tests. The later protected build completed at 57f6cfdf; verifier authority, GPU load, dispatch, and numerical validation remain open.",
     },
     {
       commit: "4ad348404a57a2823b199a97bea13baae0f3de18",
@@ -220,7 +234,7 @@ window.FERRIC_PROJECT = Object.freeze({
       title: "Advance the compiler integration to current main",
       state: "implemented",
       detail:
-        "The Ferric compiler branch merged fe2o3 main b94f30eb, including canonical compiler issuer-key custody. The complete HSACO finalizer suite and all 376 backend library tests remain green. The published SwiGLU artifact retains its exact production-run compiler identity 4cd2af64645e57bdb3902ac2618baefeb3cb8722; it has not been rebuilt or requalified under the newer merge.",
+        "The Ferric compiler branch merged fe2o3 main b94f30eb, including canonical compiler issuer-key custody. The complete HSACO finalizer suite and all 376 backend library tests remained green. This intermediate integration was superseded by compiler 21e4c106 and the protected build at Ferric 57f6cfdf.",
     },
     {
       commit: "7e1c36aa35d743478772ce4bff14c4f4bbff85c0",
@@ -378,7 +392,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "Model and tokenizer admission",
       "Qwen graph and execution planning",
       "Ferric-owned inference kernels",
-      "Host-exposed mapped adapter a8df223a in PR #21; root legacy V2 workspace remains frozen",
+      "Mapped-adapter source 57f6cfdf in PR #21; root legacy V2 workspace remains frozen",
       "Scheduling, paged KV, and speculation",
       "Generated runner and qualification policy",
     ],
@@ -388,8 +402,8 @@ window.FERRIC_PROJECT = Object.freeze({
       "Typed allocations and host transfers",
       "Long-lived HSA queue and KFD runtime",
       "Generic bounded command publication",
-      "Mapped adapter 06c74c64 and authorized latest source 4ad34840 in fe2o3 PR #236",
-      "Production run used Ferric device 7e1c36aa and fe2o3 compiler 4cd2af64 atop main 8078fa1d; compiler/runtime ownership remains in fe2o3",
+      "Mapped adapter lineage 06c74c64 / 4ad34840; current fe2o3 PR #236 compiler 21e4c106 with main e39fdc14",
+      "Current protected build used Ferric source 57f6cfdf; compiler/runtime ownership remains in fe2o3",
     ],
   },
 });
