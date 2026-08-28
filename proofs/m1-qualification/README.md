@@ -256,6 +256,39 @@ outputs remain forbidden until every external artifact exists and the complete
 candidate closure passes `proofs/check-m1-evidence-index.py`. The plan has
 `planning-only-no-evidence` authority and changes no `Open` M1 obligation.
 
+Record one completed protected Worker V3 build and its inert load-readiness
+publication with:
+
+```text
+python3 -I proofs/m1-qualification/produce-protected-worker-v3-build.py \
+  FERRIC_SOURCE_REPO FE2O3_COMPILER_REPO PRODUCTION_CONFIG \
+  ARTIFACT_ROOT CARGO_FE2O3 RUSTC_WRAPPER CODEGEN_BACKEND NEW_RECORD
+```
+
+The producer requires exact clean Git worktrees, a canonical production
+configuration, the complete singleton Worker V3 output roster, valid claim and
+readiness checksums and cross-links, compiler images matching the authenticated
+closure, and successful descriptive inspection of the held finalized HSACO.
+It publishes one canonical owner-private record without replacement. Absolute
+build and worker paths are deliberately omitted from the record; the exact
+configuration bytes remain bound by SHA-256, while the stable unit-relative
+path and immutable worker identity fields are projected for review.
+
+This is an observational progress record only. Its authority is limited to the
+observed protected compilation, Worker V3 HSACO finalization, and inert
+load-envelope publication. It does not establish verifier authority, GPU load
+or dispatch, numerical correctness, performance, Qwen execution, or M1
+qualification; it emits no evidence index or qualification receipt and closes
+no M1 obligation. Validate the pinned record and its producer policy with:
+
+```text
+python3 -I proofs/m1/evidence/validate-protected-worker-v3-build.py \
+  proofs/m1/evidence/PROTECTED_WORKER_V3_SWIGLU_BUILD.json
+python3 -I proofs/m1/evidence/test-protected-worker-v3-build-policy.py
+python3 -I \
+  proofs/m1-qualification/test-protected-worker-v3-build-producer-policy.py
+```
+
 Run the focused hostile policy with:
 
 ```text

@@ -1,0 +1,222 @@
+{
+  "artifact": {
+    "path": ".fe2o3-link-artifact-v1-57ecb86b40db136237e65a5fae04c955f2c92fe3347c085ec5c806984fc6afa7.bin",
+    "sha256": "57ecb86b40db136237e65a5fae04c955f2c92fe3347c085ec5c806984fc6afa7",
+    "size_bytes": 14192
+  },
+  "authority": "protected-compilation-finalization-and-inert-publication-only",
+  "compiler": {
+    "cargo_fe2o3_sha256": "5f92afe883dbc572797aa2a2254a95be16973dc372099196bcbe162b68ee7d96",
+    "closure": {
+      "cargo_binding_trampoline_sha256": "21ef8b92cc1d17450b78949736de609f42977f47967f6549e28517f2722bb7f6",
+      "cargo_executable_sha256": "c9ad606cb1dbb4a65aa27c80be88ed61eb2b811b6450eeec6794f60ed78b94a3",
+      "cargo_fe2o3_binding_wrapper_sha256": "5f92afe883dbc572797aa2a2254a95be16973dc372099196bcbe162b68ee7d96",
+      "codegen_backend_sha256": "dc2f55784cd9d88ddb5dd7a4c97a8a5fac1cd30f810332c065f01c23d85f8eae",
+      "identity_sha256": "97664a82bf361020647e36634e90afa30ccc4958c85b2da62baaa01303d75ef8",
+      "rustc_executable_sha256": "08dfef109ad22d90556dbd2f964543cd93843dcd75a2e9792c173667392a1950",
+      "rustc_runtime_tree_sha256": "ec3968ae686e8872ded5e5de84466d5bcaa2cc3b22bf2298176c4c52da903b35",
+      "transition_protocol_version": 1
+    },
+    "codegen_backend_sha256": "dc2f55784cd9d88ddb5dd7a4c97a8a5fac1cd30f810332c065f01c23d85f8eae",
+    "commit": "21e4c10609a7b44687153fc3484d1156b4eb4def",
+    "rustc_wrapper_sha256": "eaa277f44be0de79dd122e6b858ac50ef1d521b831175d0aeafc93729ec064c0",
+    "tree": "b8727d7cbcb640461329654937a66a63f15fe514"
+  },
+  "custody_records": [
+    {
+      "kind": ".codegen-generation-v1",
+      "path": ".codegen-generation-v1",
+      "sha256": "cb68ae6e82e63d97a3cdc3b64ee2694763fce79dfdd8cd288edbfbc9c64447da",
+      "size_bytes": 116
+    },
+    {
+      "kind": ".fe2o3-artifacts.lock",
+      "path": ".fe2o3-artifacts.lock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "kind": ".fe2o3-attempts-v1",
+      "path": ".fe2o3-attempts-v1",
+      "sha256": "0e6d519a3dc5842bb9515f16262701071b9c7011a7f032268fe0a85988bdef52",
+      "size_bytes": 1182
+    },
+    {
+      "kind": "consumed",
+      "path": ".fe2o3-compiler-module-handoff-v3-fcee247fc0617e5ac5b0786457f5a39712e61d907b9a28b67c583b9247d0962a/attempt-a2ff973015ea54e95c769c8d6313e2dccb8a4fc4cbc9c037a5958cf81c56f867/consumed",
+      "sha256": "63bde890dd3bb32033740d3f68cd80891e877cee6fab7a64dc96da2a04381ea4",
+      "size_bytes": 323
+    },
+    {
+      "kind": "artifact",
+      "path": ".fe2o3-link-artifact-v1-57ecb86b40db136237e65a5fae04c955f2c92fe3347c085ec5c806984fc6afa7.bin",
+      "sha256": "57ecb86b40db136237e65a5fae04c955f2c92fe3347c085ec5c806984fc6afa7",
+      "size_bytes": 14192
+    },
+    {
+      "kind": "publication",
+      "path": ".fe2o3-link-publication-v1-ece47d41f4765c917623310efdb48a607c007cbdb95c58b4c283b0b78b96f3d4.record",
+      "sha256": "dade9685c28493a4761f78ad997e155c992da88b61a501a771752b17b1e25ae0",
+      "size_bytes": 581
+    },
+    {
+      "kind": ".fe2o3-owned-v1",
+      "path": ".fe2o3-owned-v1",
+      "sha256": "e2bb78e46d846cb86c1a9335a2b3f25ee778106af7b17c98594d4709c1d0bcc0",
+      "size_bytes": 31
+    },
+    {
+      "kind": "claim",
+      "path": ".fe2o3-worker-v3-load-readiness-v1-058b9498ba96b0d6969ed60bb6599da860d0c0e4528e48b36bb8ef14b17014a8.claim",
+      "sha256": "401b5b2b54190e7bd0e0115da9aa85b17187631e9c9ee2057bf4655c456083e0",
+      "size_bytes": 1219
+    },
+    {
+      "kind": "envelope",
+      "path": ".fe2o3-worker-v3-load-readiness-v1-058b9498ba96b0d6969ed60bb6599da860d0c0e4528e48b36bb8ef14b17014a8.envelope",
+      "sha256": "093b45da9da3b6859553345aa38e5789aad4949b725e33e4e4d6620045455ed1",
+      "size_bytes": 1100878
+    },
+    {
+      "kind": "receipt",
+      "path": ".fe2o3-worker-v3-load-readiness-v1-058b9498ba96b0d6969ed60bb6599da860d0c0e4528e48b36bb8ef14b17014a8.receipt",
+      "sha256": "2f82eb86387b180c1860fb8a4ea013e489036d994ae8e4a2a054cab922677158",
+      "size_bytes": 356
+    }
+  ],
+  "established_claims": [
+    "protected-compiler-closure-bound-compilation",
+    "worker-v3-hsaco-finalization-and-inspection",
+    "inert-load-envelope-durable-publication"
+  ],
+  "excluded_claims": [
+    "gpu-dispatch",
+    "gpu-load",
+    "m1-qualification",
+    "numerical-correctness",
+    "performance",
+    "qwen-execution",
+    "verifier-authority"
+  ],
+  "format": "FERRIC-M1-PROTECTED-WORKER-V3-BUILD-V1",
+  "inspection": {
+    "authority": "descriptive-only",
+    "format": "hsaco-v6",
+    "kernel": {
+      "explicit_argument_count": 6,
+      "group_segment_size_bytes": 0,
+      "hidden_argument_count": 13,
+      "kernarg_alignment_bytes": 8,
+      "kernarg_size_bytes": 304,
+      "name": "qwen3_swiglu_bf16_f32_v1",
+      "private_segment_size_bytes": 0,
+      "sgpr_count": 84,
+      "symbol": "qwen3_swiglu_bf16_f32_v1.kd",
+      "vgpr_count": 11,
+      "wavefront_size": 64
+    },
+    "metadata_version": "1.2",
+    "target": "gfx942:xnack-",
+    "transcript_sha256": "cbf4a5253e996a7d8702e95fa52fd6c19afebaf08a1a9790c910f64d6a4d8e71"
+  },
+  "milestone": "M1",
+  "nonclaim": "This record establishes the observed protected compilation, Worker V3 HSACO finalization, and inert load-envelope publication only. It does not establish verifier authority, GPU load or dispatch, numerical correctness, performance, Qwen model execution, or M1 qualification.",
+  "production_recipe": {
+    "candidate_output_max_bytes": 4194304,
+    "limits": {
+      "stderr_bytes": 65536,
+      "stdout_bytes": 8388608,
+      "timeout_ms": 120000
+    },
+    "link_options": [
+      {
+        "name": "code-object-version",
+        "value": "6"
+      },
+      {
+        "name": "opt-level",
+        "value": "2"
+      },
+      {
+        "name": "strip-debug",
+        "value": "true"
+      },
+      {
+        "name": "verify-each",
+        "value": "true"
+      }
+    ],
+    "sha256": "da719f9a29860c407eeccb5d0a51a7cfde692dee5066a846801254f5bbc3412e",
+    "unit": {
+      "crate_name": "ferric_qwen3_swiglu_device_v1",
+      "source": "src/lib.rs",
+      "working_directory_relative": "device/qwen3-swiglu-v1"
+    },
+    "worker": {
+      "byte_len": 107389072,
+      "llvm_build_identity": "7.2.4",
+      "sha256": "81638afe105f006b86404fc7b34ea7bbd1051618cf59a9a16a46fd6e7a0af335",
+      "worker_build_identity": "fe2o3-worker-v1-sha256-cd00c8e74d3ba6228a9f04640eee2c8930607d4b51eb64627625c92ac028b186"
+    }
+  },
+  "publication": {
+    "claim": {
+      "backend_receipt_sha256": "476b3aaa82b575312956bad8ba237981e8be70186a5e337ba7970cd308c5e6be",
+      "sha256": "401b5b2b54190e7bd0e0115da9aa85b17187631e9c9ee2057bf4655c456083e0",
+      "size_bytes": 1219
+    },
+    "finalization_identity_sha256": "cbd8637d801d1e0a7ab077766bc979082e5423bf80f4ab106ae7b0ec359225dd",
+    "finalized_output_identity_sha256": "57ecb86b40db136237e65a5fae04c955f2c92fe3347c085ec5c806984fc6afa7",
+    "load_readiness": {
+      "backend_receipt_sha256": "476b3aaa82b575312956bad8ba237981e8be70186a5e337ba7970cd308c5e6be",
+      "claim_sha256": "401b5b2b54190e7bd0e0115da9aa85b17187631e9c9ee2057bf4655c456083e0",
+      "claim_size_bytes": 1219,
+      "envelope_sha256": "093b45da9da3b6859553345aa38e5789aad4949b725e33e4e4d6620045455ed1",
+      "envelope_size_bytes": 1100878,
+      "receipt_identity_sha256": "d323a22995cc8c663a02618c0f3f735ed6bd50d281bd70e5f0c2b402c5a1668f"
+    },
+    "publication_identity_sha256": "3de815844502e69df1393df47e77569673d44c35ae4ef262019b8461c3999b1b",
+    "worker_v3_binding": {
+      "compiler_handoff_sha256": "de561a1eb2b66a1b85b05e6bda06c5e545c17d642fd0aa23f0a2458fef532b12",
+      "finalization_sha256": "37aa965af2c771fcd4c13f635660d25961509d37d0a0572efdb9ec569f53f896",
+      "finalized_output_sha256": "57ecb86b40db136237e65a5fae04c955f2c92fe3347c085ec5c806984fc6afa7",
+      "finalized_output_size_bytes": 14192,
+      "publication_intent_sha256": "61db6ef6f80e89dc6ac571f99edc5728edc0a3def3c4ad1d117787d4ef743565",
+      "raw_inspection_sha256": "0397e40dc360f47c3b301c3b7aa8a1ce5342f862b7de8c0909c185179d49523c",
+      "raw_output_sha256": "af9dc3b58ff454dd78253cabbdd1bc2f114e1add2a16c995befbec5a3d50e2b2",
+      "raw_output_size_bytes": 14192,
+      "source_evidence_sha256": "1ce1b7a5c834a14f0334ba75522e9f0aec31ce6761d4516ec36d45c72bfd839f"
+    }
+  },
+  "release_entrypoint": [
+    "cargo-fe2o3",
+    "authority",
+    "release",
+    "build",
+    "--locked"
+  ],
+  "source": {
+    "commit": "57f6cfdf4b3f5177a556159d1e548b25b63a1541",
+    "device_files": [
+      {
+        "path": "device/qwen3-swiglu-v1/Cargo.lock",
+        "sha256": "82d8c4322af5f7d16ef9a6fb5309f99c8266a2d834373393dd8e8ad22f21330d",
+        "size_bytes": 21905
+      },
+      {
+        "path": "device/qwen3-swiglu-v1/Cargo.toml",
+        "sha256": "13ee597339bcfc636af9e493eb98ed88650bd99c71f8cfe7f7551ca24f4597d1",
+        "size_bytes": 819
+      },
+      {
+        "path": "device/qwen3-swiglu-v1/src/lib.rs",
+        "sha256": "8fbbd8464e2f6b66ca43f284d1f894eba88be1eb84913bcd00360a6b7a20239f",
+        "size_bytes": 7961
+      }
+    ],
+    "device_provider_commit": "06c74c64506f15883d64c5ab2ca476561909181d",
+    "device_provider_tree": "4dd036b683c4e8c0fbb3068cb70d59eef4a482bd",
+    "tree": "c7ca664c20a9d30d955161b5f3f924f203cf4770"
+  },
+  "target": "gfx942:xnack-"
+}
