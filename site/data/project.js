@@ -7,7 +7,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Ferric main f5b11d6 has authenticated Qwen inputs, exact execution plans, bounded engine state, and source-level protected Worker V3 adapters for all seven M1 kernel families. fe2o3 main ee93e692 includes verified multi-root semantic rosters, bounded structural gfx942 EXEC-control facts, and a checked production-arithmetic policy that canonicalizes selected kernel compiles to exactly one enabled overflow-check flag. Ferric has not pinned or qualified this upstream line. Runtime authority, aggregate verification, ordered Stage C handoff, multi-root KIR/LLVM/HSACO, authenticated fixed-batch KFD, Ferric authority rosters, end-to-end Qwen, hardware and performance evidence, the production receipt, and M1 remain open.",
+      "Ferric main f5b11d6 has authenticated Qwen inputs, exact execution plans, bounded engine state, and source-level protected Worker V3 adapters for all seven M1 kernel families. fe2o3 main d8904ad8 includes verified multi-root semantic rosters, bounded structural gfx942 EXEC-control facts, canonical checked production arithmetic, and exact rustc induction-snapshot admission for the scalar gfx942 vertical slice. Ferric has not pinned or qualified this upstream line. Aggregate verification in open PR #244, ordered Stage C handoff, multi-root KIR/LLVM/HSACO, runtime authority, authenticated fixed-batch KFD, Ferric authority rosters, end-to-end Qwen, hardware and performance evidence, the production receipt, and M1 remain open.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -18,8 +18,8 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Concurrency", "up to 32 sequences"],
     ["Ferric integration", "main f5b11d6; PR #24 qualified 3898bf40 / landed 49a539f2"],
     ["Ferric-pinned fe2o3", "42639ecc; compiler receipt, verifier, and direct-KFD runtime line"],
-    ["Current fe2o3 upstream", "main ee93e692; checked production arithmetic policy landed"],
-    ["Upstream integration", "compiler policy only; runtime authority, Stage C, emission, and KFD remain open"],
+    ["Current fe2o3 upstream", "main d8904ad8; exact rustc induction snapshots admitted"],
+    ["Upstream integration", "PR #244 aggregate verification open; Stage C, emission, and runtime authority remain open"],
     [
       "Protected artifact",
       "SwiGLU semantic fe2ce532...e9569e8f / HSACO 57ecb86b...fc6afa7",
@@ -77,6 +77,12 @@ window.FERRIC_PROJECT = Object.freeze({
       state: "implemented",
       detail:
         "fe2o3 main ee93e692 canonicalizes each selected production kernel compile to exactly one -Coverflow-checks=on and rejects disabled or conflicting settings before the in-process rustc driver starts; the driver independently requires that exact canonical form. The exact invocation retains the flag, while semantic induction certificates remain inert and cannot authorize removal of LLVM overflow guards without an independent source-to-KIR-to-LLVM refinement join.",
+    },
+    {
+      label: "Exact rustc induction snapshots",
+      state: "implemented",
+      detail:
+        "fe2o3 main d8904ad8 admits an exact single-use u32 header snapshot of the induction variable when rustc places that snapshot before the loop guard. The certificate retains both the compared value and snapshot site, rejects extra uses and structural hazards, and the scalar gfx942 slice reports one identity-bound certificate after examining three checked additions while preserving the LLVM overflow guard.",
     },
     {
       label: "Canonical M1 source closure",
@@ -167,12 +173,17 @@ window.FERRIC_PROJECT = Object.freeze({
         detail:
           "The selected production rustc wrapper inserts or canonicalizes one enabled overflow-check policy, rejects disabled or conflicting settings, and the driver requires exactly one canonical flag. The pipeline reports semantic u32 induction certificates for examined checked additions, but those certificates grant no authority to remove the corresponding LLVM overflow guard.",
       },
+      {
+        name: "Exact induction-snapshot admission",
+        detail:
+          "The semantic analysis accepts either the induction local itself or one uniquely defined, single-use, hazard-free u32 temporary copied from it before the guard. It retains the exact snapshot site and fails closed on extra use; the resulting certificate remains inert until its exact report and source-to-KIR-to-LLVM refinement are durably retained and independently authenticated.",
+      },
     ],
     roadmap: [
       {
         name: "Aggregate verification and Stage C",
         detail:
-          "Admit the complete semantic roster as one fail-closed aggregate and carry its canonical order through the ordered Stage C handoff.",
+          "Complete open fe2o3 PR #244 for fail-closed aggregate Worker V3 verification, then carry the admitted roster's canonical order through the ordered Stage C handoff.",
       },
       {
         name: "Multi-root compiler emission",
@@ -257,6 +268,14 @@ window.FERRIC_PROJECT = Object.freeze({
       "The catalog records host-validated source paths. Target-only decode and every unlisted cross-plan transition require explicit queue retirement and a fresh admitted launch; none inherit rollover authority.",
   },
   recentProgress: [
+    {
+      commit: "d8904ad8b9ce5ca35b08f0b3bff3dddbecceb6cc",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Admit exact rustc induction snapshots",
+      state: "implemented",
+      detail:
+        "fe2o3 retains an exact single-use header snapshot when rustc compares that copied u32 value against the loop bound. The identity-bound scalar gfx942 certificate records the induction value and snapshot site, rejects extra-use and hostile shapes, and preserves the LLVM overflow guard. It grants no compiler-transform, runtime, launch, Qwen, or M1 authority; aggregate verification remains open in PR #244.",
+    },
     {
       commit: "ee93e692ac0e7c2ea69fafadbc07b2f6c5d4a84d",
       repository: "https://github.com/harsh-nod/fe2o3",
@@ -427,11 +446,12 @@ window.FERRIC_PROJECT = Object.freeze({
       "Generic receipt-complete sealed verification and promotion boundary",
       "Typed KFD allocations, USERPTR/AQL queues, fixed-batch publication, completion, and dispatch",
       "Ferric's supported compiler/runtime baseline remains 42639ecc7f2f377ab57e5e884c36133a126f230e until a newer fe2o3 revision is pinned and qualified",
-      "fe2o3 main ee93e692 includes PR #239 workspace repair, PR #240 host-runtime classification, PR #242 exact Worker V3 roster admission, PR #243 verified multi-root ranked semantic rosters, bounded structural gfx942 EXEC-control facts, and canonical checked production arithmetic",
+      "fe2o3 main d8904ad8 includes PR #239 workspace repair, PR #240 host-runtime classification, PR #242 exact Worker V3 roster admission, PR #243 verified multi-root ranked semantic rosters, bounded structural gfx942 EXEC-control facts, canonical checked production arithmetic, and exact rustc induction-snapshot admission",
       "All PR #243 source parity, Generic, and scoped mi300x qualification checks passed before merge; Ferric has not pinned or qualified this line",
       "The gfx942 EXEC-control layer assigns no opcode semantics and proves neither machine reconvergence, empty masks, termination, nor launch authority",
       "Checked arithmetic fixes selected production kernel compiles to one -Coverflow-checks=on; its induction certificates do not authorize removal of LLVM overflow guards",
-      "Aggregate verification, ordered Stage C handoff, multi-root KIR/LLVM/HSACO, and authenticated fixed-batch KFD remain upstream integration work",
+      "Exact single-use u32 guard snapshots may be retained in the induction certificate, but the certificate remains inert without authenticated source-to-KIR-to-LLVM refinement",
+      "Aggregate verification remains open in PR #244; ordered Stage C handoff, multi-root KIR/LLVM/HSACO, and authenticated fixed-batch KFD remain upstream integration work",
       "Deployment identities and Ferric-specific inference authority are intentionally not defined upstream",
     ],
   },
