@@ -7,7 +7,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Ferric main f5b11d6 has authenticated Qwen inputs, exact execution plans, bounded engine state, and source-level protected Worker V3 adapters for all seven M1 kernel families. fe2o3 main 41e542278 includes workspace repair, host-runtime classification, exact Worker V3 roster admission, verified multi-root ranked semantic rosters, and a bounded structural gfx942 EXEC-control analysis over authenticated machine traces. Ferric has not pinned or qualified this upstream line. Aggregate verification, ordered Stage C handoff, multi-root KIR/LLVM/HSACO, authenticated fixed-batch KFD, Ferric authority rosters, end-to-end Qwen, hardware and performance evidence, the production receipt, and M1 remain open.",
+      "Ferric main f5b11d6 has authenticated Qwen inputs, exact execution plans, bounded engine state, and source-level protected Worker V3 adapters for all seven M1 kernel families. fe2o3 main ee93e692 includes verified multi-root semantic rosters, bounded structural gfx942 EXEC-control facts, and a checked production-arithmetic policy that canonicalizes selected kernel compiles to exactly one enabled overflow-check flag. Ferric has not pinned or qualified this upstream line. Runtime authority, aggregate verification, ordered Stage C handoff, multi-root KIR/LLVM/HSACO, authenticated fixed-batch KFD, Ferric authority rosters, end-to-end Qwen, hardware and performance evidence, the production receipt, and M1 remain open.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -18,8 +18,8 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Concurrency", "up to 32 sequences"],
     ["Ferric integration", "main f5b11d6; PR #24 qualified 3898bf40 / landed 49a539f2"],
     ["Ferric-pinned fe2o3", "42639ecc; compiler receipt, verifier, and direct-KFD runtime line"],
-    ["Current fe2o3 upstream", "main 41e542278; semantic rosters plus bounded gfx942 EXEC analysis"],
-    ["Upstream integration", "structural analysis only; aggregate, emission, and authenticated KFD remain open"],
+    ["Current fe2o3 upstream", "main ee93e692; checked production arithmetic policy landed"],
+    ["Upstream integration", "compiler policy only; runtime authority, Stage C, emission, and KFD remain open"],
     [
       "Protected artifact",
       "SwiGLU semantic fe2ce532...e9569e8f / HSACO 57ecb86b...fc6afa7",
@@ -71,6 +71,12 @@ window.FERRIC_PROJECT = Object.freeze({
       state: "implemented",
       detail:
         "fe2o3 main 41e542278 derives bounded structural facts for exact EXECZ/EXECNZ sites in authenticated gfx942 traces: CFG successors, a unique two-half EXEC reaching definition, an immediate post-dominator candidate, scalar mask operands, and a matching saved-mask OR site when structurally present. It assigns no opcode semantics and proves neither an empty mask, hardware reconvergence, termination, nor launch authority.",
+    },
+    {
+      label: "Checked production arithmetic policy",
+      state: "implemented",
+      detail:
+        "fe2o3 main ee93e692 canonicalizes each selected production kernel compile to exactly one -Coverflow-checks=on and rejects disabled or conflicting settings before the in-process rustc driver starts; the driver independently requires that exact canonical form. The exact invocation retains the flag, while semantic induction certificates remain inert and cannot authorize removal of LLVM overflow guards without an independent source-to-KIR-to-LLVM refinement join.",
     },
     {
       label: "Canonical M1 source closure",
@@ -155,6 +161,11 @@ window.FERRIC_PROJECT = Object.freeze({
         name: "Bounded gfx942 EXEC-control analysis",
         detail:
           "An inert upstream analysis joins exact EXEC-conditioned branches in authenticated machine traces to structural CFG, reaching-definition, post-dominator, mask-operand, and possible restore-site facts. It establishes no machine semantics, compiler refinement, hardware reconvergence, empty-mask proof, termination, or launch authority.",
+      },
+      {
+        name: "Checked production arithmetic",
+        detail:
+          "The selected production rustc wrapper inserts or canonicalizes one enabled overflow-check policy, rejects disabled or conflicting settings, and the driver requires exactly one canonical flag. The pipeline reports semantic u32 induction certificates for examined checked additions, but those certificates grant no authority to remove the corresponding LLVM overflow guard.",
       },
     ],
     roadmap: [
@@ -246,6 +257,14 @@ window.FERRIC_PROJECT = Object.freeze({
       "The catalog records host-validated source paths. Target-only decode and every unlisted cross-plan transition require explicit queue retirement and a fresh admitted launch; none inherit rollover authority.",
   },
   recentProgress: [
+    {
+      commit: "ee93e692ac0e7c2ea69fafadbc07b2f6c5d4a84d",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Enforce checked production arithmetic",
+      state: "implemented",
+      detail:
+        "fe2o3 canonicalizes selected production kernel compiles to exactly one -Coverflow-checks=on, rejects disabled or conflicting forms before rustc enters the in-process driver, requires the canonical flag at the driver boundary, retains it in the exact protected invocation, and observes checked u32 addition lowering through llvm.uadd.with.overflow.i32. Semantic induction certificates remain inert; this commit grants no runtime, guard-removal, launch, Qwen, or M1 authority.",
+    },
     {
       commit: "41e5422783e5f45e14e0835c108ec0e51630c8b9",
       repository: "https://github.com/harsh-nod/fe2o3",
@@ -408,9 +427,10 @@ window.FERRIC_PROJECT = Object.freeze({
       "Generic receipt-complete sealed verification and promotion boundary",
       "Typed KFD allocations, USERPTR/AQL queues, fixed-batch publication, completion, and dispatch",
       "Ferric's supported compiler/runtime baseline remains 42639ecc7f2f377ab57e5e884c36133a126f230e until a newer fe2o3 revision is pinned and qualified",
-      "fe2o3 main 41e542278 includes PR #239 workspace repair, PR #240 host-runtime classification, PR #242 exact Worker V3 roster admission, PR #243 verified multi-root ranked semantic rosters, and bounded structural gfx942 EXEC-control facts",
+      "fe2o3 main ee93e692 includes PR #239 workspace repair, PR #240 host-runtime classification, PR #242 exact Worker V3 roster admission, PR #243 verified multi-root ranked semantic rosters, bounded structural gfx942 EXEC-control facts, and canonical checked production arithmetic",
       "All PR #243 source parity, Generic, and scoped mi300x qualification checks passed before merge; Ferric has not pinned or qualified this line",
       "The gfx942 EXEC-control layer assigns no opcode semantics and proves neither machine reconvergence, empty masks, termination, nor launch authority",
+      "Checked arithmetic fixes selected production kernel compiles to one -Coverflow-checks=on; its induction certificates do not authorize removal of LLVM overflow guards",
       "Aggregate verification, ordered Stage C handoff, multi-root KIR/LLVM/HSACO, and authenticated fixed-batch KFD remain upstream integration work",
       "Deployment identities and Ferric-specific inference authority are intentionally not defined upstream",
     ],
