@@ -220,7 +220,7 @@ window.FERRIC_PROJECT = Object.freeze({
     {
       commit: "027157dd9810cd6acb3a25ff1b613f3514463c33",
       repository: "https://github.com/harsh-nod/fe2o3",
-      title: "Land generic Worker V3 and direct-KFD convergence upstream",
+      title: "Land upstream compiler/runtime convergence",
       state: "implemented",
       detail:
         "fe2o3 PR #236 merged qualified head f11317db7afc6a37b8d03ed4b796cfe13d97a261 (tree 06dd1e5b2e8f65c103952d36bb921ce0baf9ac03) with signed-V4 proof inputs, a sealed protected-verifier adapter, compiler-generated dispatch bindings, and reusable direct-KFD runtime foundations. Ferric has not pinned or qualified this upstream line. Current seven-family artifacts, Ferric's protected policy and backend, Worker ledger and rollback authority, distinct-UID deployment and keys, an authenticated seven-owner collector and roster, generated marker contracts, authority-safe custody fixtures, a runner, end-to-end Qwen, current-source hardware and performance evidence, independent validation, the production receipt, and M1 remain open.",
@@ -337,8 +337,8 @@ window.FERRIC_PROJECT = Object.freeze({
       "Durable subject-bound compiler receipt acquisition and recovered V2 carriage",
       "Generic receipt-complete sealed verification and promotion boundary",
       "Typed KFD allocations, USERPTR/AQL queues, fixed-batch publication, completion, and dispatch",
-      "Ferric-pinned compiler/direct-KFD runtime baseline 42639ecc7f2f377ab57e5e884c36133a126f230e",
-      "Current upstream PR #236 merge 027157dd9810cd6acb3a25ff1b613f3514463c33, from qualified head f11317db7afc6a37b8d03ed4b796cfe13d97a261 and tree 06dd1e5b2e8f65c103952d36bb921ce0baf9ac03, is not yet pinned or qualified by Ferric",
+      "Ferric's supported compiler/runtime baseline remains 42639ecc7f2f377ab57e5e884c36133a126f230e until a newer fe2o3 revision is pinned and qualified",
+      "PR #236 landed upstream at 027157dd9810cd6acb3a25ff1b613f3514463c33; its generic signed-Verus V4 proof custody, protected-verifier adapter boundary, and compiler/KFD convergence are not yet part of Ferric's supported baseline",
       "Deployment identities and Ferric-specific inference authority are intentionally not defined upstream",
     ],
   },
