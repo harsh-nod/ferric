@@ -7,7 +7,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Ferric has authenticated Qwen inputs, exact execution plans, bounded engine state, and source-level protected Worker V3 adapters for all seven M1 kernel families. PR #24 qualified canonical Git-tree source-closure modes at 3898bf40 and landed them in m1/bundle-admission through 49a539f2. fe2o3 PR #236 has landed upstream, but Ferric has not pinned or qualified that line. No authenticated collector currently acquires the seven live owners; current artifacts, protected authority, end-to-end Qwen, hardware and performance qualification, the production receipt, and M1 remain open.",
+      "Ferric main f5b11d6 has authenticated Qwen inputs, exact execution plans, bounded engine state, and source-level protected Worker V3 adapters for all seven M1 kernel families. fe2o3 main b167991f now includes workspace repair, host-runtime classification, exact Worker V3 roster admission, and verified multi-root ranked semantic rosters through merged PRs #239, #240, #242, and #243. Ferric has not pinned or qualified this upstream line. Aggregate verification, ordered Stage C handoff, multi-root KIR/LLVM/HSACO, authenticated fixed-batch KFD, Ferric authority rosters, end-to-end Qwen, hardware and performance evidence, the production receipt, and M1 remain open.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -16,9 +16,10 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Precision", "BF16 / FP32 accumulate"],
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
-    ["Ferric integration", "PR #24 qualified 3898bf40 / landed 49a539f2"],
+    ["Ferric integration", "main f5b11d6; PR #24 qualified 3898bf40 / landed 49a539f2"],
     ["Ferric-pinned fe2o3", "42639ecc; compiler receipt, verifier, and direct-KFD runtime line"],
-    ["Current fe2o3 upstream", "PR #236 merge 027157dd; not yet pinned or qualified by Ferric"],
+    ["Current fe2o3 upstream", "main b167991f; PRs #239, #240, #242, and #243 merged"],
+    ["Upstream integration", "semantic rosters landed; aggregate, emission, and authenticated KFD remain open"],
     [
       "Protected artifact",
       "SwiGLU semantic fe2ce532...e9569e8f / HSACO 57ecb86b...fc6afa7",
@@ -54,6 +55,18 @@ window.FERRIC_PROJECT = Object.freeze({
         "Qualified source 1d666dbc, landed through be307d52, makes GEMM, RMSNorm, RoPE/KV, prefill, paged decode, SwiGLU, and logits accept only matching compiler-produced, move-only Worker V3 owners before strict structural inspection. Tests do not execute Worker V3 or establish current HSACO existence.",
     },
     {
+      label: "Generic Worker V3 roster admission",
+      state: "implemented",
+      detail:
+        "fe2o3 PR #242 merged exact, fail-closed Worker V3 descriptor-roster admission at b3cd6534. This is reusable upstream host infrastructure; Ferric has not pinned it, populated its seven production authorities, or used it to run Qwen.",
+    },
+    {
+      label: "Multi-root ranked semantic rosters",
+      state: "implemented",
+      detail:
+        "fe2o3 PR #243 merged at b167991f after source parity, Generic, and scoped mi300x affected, focused, and ROCm qualification checks passed. It retains verified per-root semantic ownership and ranked projections; aggregate verification, ordered Stage C handoff, and multi-root KIR/LLVM/HSACO remain open.",
+    },
+    {
       label: "Canonical M1 source closure",
       state: "qualified",
       detail:
@@ -69,7 +82,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "End-to-end Qwen through Ferric",
       state: "open",
       detail:
-        "The production path still needs current seven-family artifacts, Ferric's protected policy, Worker ledger, external rollback verifier, distinct-UID service deployment and keys, an authenticated seven-owner collector and roster, authority-safe custody fixtures, a runner, end-to-end Qwen execution, and current-source hardware and performance qualification.",
+        "The production path still needs aggregate verification, ordered Stage C handoff, multi-root KIR/LLVM/HSACO, authenticated fixed-batch KFD, a qualified Ferric pin, seven protected authority rosters, current artifacts, a runner, end-to-end Qwen execution, and current-source hardware and performance qualification.",
     },
     {
       label: "M1 qualification",
@@ -127,27 +140,32 @@ window.FERRIC_PROJECT = Object.freeze({
         detail:
           "Reusable typed allocation, USERPTR/AQL queue ownership, fixed-batch publication, completion, and dispatch components are integrated upstream for Ferric to consume.",
       },
+      {
+        name: "Generic multi-root semantic ownership",
+        detail:
+          "fe2o3 admits exact Worker V3 descriptor rosters and retains verified per-root semantic owners with deterministic ranked projections. These merged generic stages do not yet aggregate verification or produce multi-root KIR, LLVM, HSACO, or authenticated KFD execution.",
+      },
     ],
     roadmap: [
       {
-        name: "Ferric production authority",
+        name: "Aggregate verification and Stage C",
         detail:
-          "Define the concrete protected kernel policy, bind a Worker ledger, join repository and host-descriptor lineage, and require an external rollback verifier before promotion.",
+          "Admit the complete semantic roster as one fail-closed aggregate and carry its canonical order through the ordered Stage C handoff.",
       },
       {
-        name: "Authenticated evidence collector",
+        name: "Multi-root compiler emission",
         detail:
-          "Replace the retired Worker V2 artifact command with an in-process collector that acquires all seven real V3 owners and passes them atomically to the fail-closed artifact publisher.",
+          "Lower the admitted roster into canonical multi-root KIR, LLVM, and HSACO while preserving per-root identity, limits, and evidence joins.",
       },
       {
-        name: "Generated contracts and evidence",
+        name: "Authenticated fixed-batch KFD",
         detail:
-          "Add receipt-bound generated marker contracts for the six non-SwiGLU families, exercise every public V3 bind path with authority-safe positive and hostile custody fixtures, and complete authenticated proof/executable, Rust layout, Rust effect, safety, and operator-refinement evidence for all seven lanes.",
+          "Bind the exact emitted roster to fixed-batch publication, completion, and failure handling under authenticated runtime custody.",
       },
       {
-        name: "Protected service deployment",
+        name: "Ferric pin and authority rosters",
         detail:
-          "Deploy the compiler execution service and backend under distinct nonroot identities with production keys, permissions, and operational supervision.",
+          "Pin and qualify the completed fe2o3 line, then join all seven live owners to Ferric's protected policy, Worker ledger, lineage, rollback verifier, deployment identities, and keys.",
       },
       {
         name: "Complete Qwen execution",
@@ -217,6 +235,38 @@ window.FERRIC_PROJECT = Object.freeze({
       "The catalog records host-validated source paths. Target-only decode and every unlisted cross-plan transition require explicit queue retirement and a fresh admitted launch; none inherit rollover authority.",
   },
   recentProgress: [
+    {
+      commit: "b167991f03811594ec2a42be745e3b133cb3a6b8",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Retain verified multi-root ranked semantic rosters",
+      state: "implemented",
+      detail:
+        "fe2o3 PR #243 merged qualified head 06bfae35e68c3f7d69a4bf836e3faa6f5e61e97a after source parity, Generic, and scoped mi300x affected, focused, and ROCm checks passed. The merge establishes generic per-root semantic ownership only; aggregate verification, Stage C, multi-root KIR/LLVM/HSACO, authenticated KFD, Ferric adoption, Qwen, and M1 remain open.",
+    },
+    {
+      commit: "b3cd6534f13a3463fc86eb01306aa72aec6b2c75",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Admit exact Worker V3 descriptor rosters",
+      state: "implemented",
+      detail:
+        "fe2o3 PR #242 merged a generic, fail-closed roster admission boundary for exact Worker V3 descriptors. Ferric remains pinned to 42639ecc and has not supplied or qualified its seven production authority rosters.",
+    },
+    {
+      commit: "bb04ceb05d68169a2a54bebd96e7943bdbdda156",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Classify the external host-runtime anchor",
+      state: "implemented",
+      detail:
+        "fe2o3 PR #240 made the host-runtime service boundary explicit for generic integration. It does not deploy Ferric identities, credentials, policy, or runtime authority.",
+    },
+    {
+      commit: "895d5e4b2b3ee584dfa1fc154197670dd610d132",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Repair standalone workspace locks",
+      state: "implemented",
+      detail:
+        "fe2o3 PR #239 refreshed standalone locks after AMD target ownership so the generic workspaces qualify consistently. This is workspace repair, not Qwen or M1 evidence.",
+    },
     {
       commit: "027157dd9810cd6acb3a25ff1b613f3514463c33",
       repository: "https://github.com/harsh-nod/fe2o3",
@@ -330,7 +380,8 @@ window.FERRIC_PROJECT = Object.freeze({
       "Scheduling, paged KV, speculation, generated runner, and M1 qualification",
       "Qualified source 1d666dbc binds all seven K1-K7 families to protected Worker V3 custody and landed through be307d52 in m1/bundle-admission",
       "PR #24 qualified canonical 100644/100755 source-closure modes at 3898bf40 and landed them through 49a539f2",
-      "Authenticated seven-owner collection and roster, current artifacts, generated marker contracts, authority-safe custody fixtures, protected policy, end-to-end Qwen, hardware and performance evidence, the production receipt, and M1 remain Ferric work",
+      "Ferric main f5b11d6 has not pinned current fe2o3 or admitted its seven production authority rosters",
+      "Current artifacts, protected policy and deployment, end-to-end Qwen, hardware and performance evidence, the production receipt, and M1 remain Ferric work",
     ],
     fe2o3: [
       "Reusable compiler APIs, semantic artifact identities, and protected compilation",
@@ -338,7 +389,9 @@ window.FERRIC_PROJECT = Object.freeze({
       "Generic receipt-complete sealed verification and promotion boundary",
       "Typed KFD allocations, USERPTR/AQL queues, fixed-batch publication, completion, and dispatch",
       "Ferric's supported compiler/runtime baseline remains 42639ecc7f2f377ab57e5e884c36133a126f230e until a newer fe2o3 revision is pinned and qualified",
-      "PR #236 landed upstream at 027157dd9810cd6acb3a25ff1b613f3514463c33; its generic signed-Verus V4 proof custody, protected-verifier adapter boundary, and compiler/KFD convergence are not yet part of Ferric's supported baseline",
+      "fe2o3 main b167991f includes PR #239 workspace repair, PR #240 host-runtime classification, PR #242 exact Worker V3 roster admission, and PR #243 verified multi-root ranked semantic rosters",
+      "All PR #243 source parity, Generic, and scoped mi300x qualification checks passed before merge; Ferric has not pinned or qualified this line",
+      "Aggregate verification, ordered Stage C handoff, multi-root KIR/LLVM/HSACO, and authenticated fixed-batch KFD remain upstream integration work",
       "Deployment identities and Ferric-specific inference authority are intentionally not defined upstream",
     ],
   },
