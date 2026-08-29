@@ -1,5 +1,5 @@
 window.FERRIC_PROJECT = Object.freeze({
-  updated: "2026-08-28",
+  updated: "2026-08-29",
   repository: "https://github.com/harsh-nod/ferric",
   fe2o3Repository: "https://github.com/harsh-nod/fe2o3",
   milestone: {
@@ -7,7 +7,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Ferric has authenticated Qwen inputs, exact execution plans, bounded engine state, and source-level protected Worker V3 adapters for all seven M1 kernel families. PR #24 qualified canonical Git-tree source-closure modes at 3898bf40 and landed them in m1/bundle-admission through 49a539f2. No authenticated collector currently acquires the seven live owners; current artifacts, protected authority, end-to-end Qwen, hardware and performance qualification, the production receipt, and M1 remain open.",
+      "Ferric has authenticated Qwen inputs, exact execution plans, bounded engine state, and source-level protected Worker V3 adapters for all seven M1 kernel families. PR #24 qualified canonical Git-tree source-closure modes at 3898bf40 and landed them in m1/bundle-admission through 49a539f2. fe2o3 PR #236 has landed upstream, but Ferric has not pinned or qualified that line. No authenticated collector currently acquires the seven live owners; current artifacts, protected authority, end-to-end Qwen, hardware and performance qualification, the production receipt, and M1 remain open.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -17,7 +17,8 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
     ["Ferric integration", "PR #24 qualified 3898bf40 / landed 49a539f2"],
-    ["fe2o3 integration", "42639ecc; compiler receipt, verifier, and KFD runtime line"],
+    ["Ferric-pinned fe2o3", "42639ecc; compiler receipt, verifier, and direct-KFD runtime line"],
+    ["Current fe2o3 upstream", "PR #236 merge 027157dd; not yet pinned or qualified by Ferric"],
     [
       "Protected artifact",
       "SwiGLU semantic fe2ce532...e9569e8f / HSACO 57ecb86b...fc6afa7",
@@ -38,16 +39,16 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Durable compiler receipt path",
       state: "implemented",
       detail:
-        "fe2o3 42639ecc carries a durable subject-bound receipt from the compiler backend through inherited FD195 into Cargo, then through recovered V2 admission. Its generic sealed verifier enforces a promotion boundary that requires receipt-complete evidence.",
+        "Ferric's pinned fe2o3 baseline 42639ecc carries a durable subject-bound receipt from the compiler backend through inherited FD195 into Cargo, then through recovered V2 admission. Its generic sealed verifier enforces a promotion boundary that requires receipt-complete evidence.",
     },
     {
       label: "KFD runtime foundations",
       state: "implemented",
       detail:
-        "fe2o3 42639ecc integrates typed memory, queue ownership, fixed-batch publication, completion readback, and dispatch foundations. These reusable primitives do not by themselves make the Ferric Qwen path runnable.",
+        "Ferric's pinned fe2o3 baseline 42639ecc integrates typed memory, queue ownership, fixed-batch publication, completion readback, and dispatch foundations. These reusable primitives do not by themselves make the Ferric Qwen path runnable.",
     },
     {
-      label: "Seven Worker V3 family adapters",
+      label: "Seven Worker V3 source adapters",
       state: "implemented",
       detail:
         "Qualified source 1d666dbc, landed through be307d52, makes GEMM, RMSNorm, RoPE/KV, prefill, paged decode, SwiGLU, and logits accept only matching compiler-produced, move-only Worker V3 owners before strict structural inspection. Tests do not execute Worker V3 or establish current HSACO existence.",
@@ -112,7 +113,7 @@ window.FERRIC_PROJECT = Object.freeze({
           "Four exact paired-prefill transitions preserve queue, KV, output, and provider custody. Every unlisted transition remains rejected.",
       },
       {
-        name: "Seven protected Worker V3 adapters",
+        name: "Seven protected Worker V3 source adapters",
         detail:
           "Every K1-K7 family now binds its exact compiler handoff to one matching move-only Worker V3 owner and applies post-worker structural inspection. Publication also checks canonical link options, execution limits, and the reviewed Worker measurement.",
       },
@@ -216,6 +217,14 @@ window.FERRIC_PROJECT = Object.freeze({
       "The catalog records host-validated source paths. Target-only decode and every unlisted cross-plan transition require explicit queue retirement and a fresh admitted launch; none inherit rollover authority.",
   },
   recentProgress: [
+    {
+      commit: "027157dd9810cd6acb3a25ff1b613f3514463c33",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Land generic Worker V3 and direct-KFD convergence upstream",
+      state: "implemented",
+      detail:
+        "fe2o3 PR #236 merged qualified head f11317db7afc6a37b8d03ed4b796cfe13d97a261 (tree 06dd1e5b2e8f65c103952d36bb921ce0baf9ac03) with signed-V4 proof inputs, a sealed protected-verifier adapter, compiler-generated dispatch bindings, and reusable direct-KFD runtime foundations. Ferric has not pinned or qualified this upstream line. Current seven-family artifacts, Ferric's protected policy and backend, Worker ledger and rollback authority, distinct-UID deployment and keys, an authenticated seven-owner collector and roster, generated marker contracts, authority-safe custody fixtures, a runner, end-to-end Qwen, current-source hardware and performance evidence, independent validation, the production receipt, and M1 remain open.",
+    },
     {
       commit: "49a539f251c8681644e6551c20fcce35e5fd4216",
       title: "Land PR #24 source-closure hardening",
@@ -328,8 +337,8 @@ window.FERRIC_PROJECT = Object.freeze({
       "Durable subject-bound compiler receipt acquisition and recovered V2 carriage",
       "Generic receipt-complete sealed verification and promotion boundary",
       "Typed KFD allocations, USERPTR/AQL queues, fixed-batch publication, completion, and dispatch",
-      "Current integrated compiler/runtime head 42639ecc7f2f377ab57e5e884c36133a126f230e",
-      "PR #236 convergence work is active but unlanded and is not part of Ferric's supported baseline",
+      "Ferric-pinned compiler/direct-KFD runtime baseline 42639ecc7f2f377ab57e5e884c36133a126f230e",
+      "Current upstream PR #236 merge 027157dd9810cd6acb3a25ff1b613f3514463c33, from qualified head f11317db7afc6a37b8d03ed4b796cfe13d97a261 and tree 06dd1e5b2e8f65c103952d36bb921ce0baf9ac03, is not yet pinned or qualified by Ferric",
       "Deployment identities and Ferric-specific inference authority are intentionally not defined upstream",
     ],
   },

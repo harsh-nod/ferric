@@ -42,8 +42,9 @@
             <div class="section-label">Proof-carrying LLM inference</div>
             <h1 id="overview-title">Ferric</h1>
             <p class="lede">
-              A Rust inference engine that connects authenticated model inputs to
-              Ferric-owned Qwen kernels and reviewed direct HSA execution through fe2o3.
+              An authority-bound path from authenticated model inputs toward Ferric-owned
+              Qwen kernels and fe2o3's reusable direct-KFD runtime. End-to-end Qwen execution
+              remains open.
             </p>
             <div class="milestone-line">
               <span class="status-dot" data-milestone-dot aria-hidden="true"></span>
@@ -58,7 +59,7 @@
           <aside class="readiness" aria-labelledby="readiness-title">
             <div class="panel-heading">
               <h2 id="readiness-title">Current readiness</h2>
-              <time data-updated datetime="2026-08-28">Updated 2026-08-28</time>
+              <time data-updated datetime="2026-08-29">Updated 2026-08-29</time>
             </div>
             <div class="readiness-list" data-readiness></div>
           </aside>
@@ -135,8 +136,8 @@
               <h2 id="architecture-title">One production path, two repositories</h2>
             </div>
             <p>
-              Ferric owns inference semantics and kernels. fe2o3 supplies reusable compiler,
-              runtime, KFD, and HSA capabilities.
+              Ferric owns inference semantics and kernels. fe2o3 supplies the reusable compiler
+              and direct-KFD runtime.
             </p>
           </div>
           <figure class="architecture-figure">
@@ -200,19 +201,20 @@
             <h2 id="next-title">Join Ferric policy to the production path</h2>
           </div>
           <p>
-            fe2o3 42639ecc now supplies durable subject-bound compiler receipt acquisition,
-            recovered V2 carriage, a receipt-complete sealed verifier boundary, and the typed KFD
+            Ferric remains pinned to fe2o3 42639ecc for durable subject-bound compiler receipt
+            acquisition, recovered V2 carriage, its sealed verifier boundary, and typed direct-KFD
             memory, queue, completion, and dispatch substrate. Qualified Ferric source 1d666dbc binds
             all seven M1 kernel families to compiler-produced Worker V3 custody and fail-closed
             artifact publication policy. PR #24 then qualified a canonical 495-file source closure at
             3898bf40, using exact Git tree modes 100644 and 100755, and merge 49a539f2 landed the same
-            tree in m1/bundle-admission. The next checkpoint is an authenticated in-process collector
-            and roster for all seven owners plus the missing generated marker contracts and
-            authority-safe custody fixtures. fe2o3 PR #236 convergence is active but unlanded and is
-            not a supported Ferric baseline. Current artifacts, Ferric's protected policy, Worker
-            ledger, external rollback verifier, distinct-UID deployment, generated runner,
-            end-to-end Qwen execution, hardware and performance evidence, the production receipt,
-            independent validation, and M1 remain open.
+            tree in m1/bundle-admission. fe2o3 PR #236 has now landed upstream through merge 027157dd
+            with generic signed-V4, protected-adapter, compiler, and direct-KFD convergence, but Ferric
+            has not pinned or qualified that line. The next checkpoint remains an authenticated
+            in-process collector and roster for all seven owners plus the missing generated marker
+            contracts and authority-safe custody fixtures. Current artifacts, Ferric's protected
+            policy and backend, Worker ledger, external rollback verifier, distinct-UID deployment
+            and keys, a generated runner, end-to-end Qwen execution, current-source hardware and
+            performance evidence, independent validation, the production receipt, and M1 remain open.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>
