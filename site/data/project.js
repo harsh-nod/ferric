@@ -7,7 +7,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Ferric retains authenticated Qwen inputs, exact execution plans, bounded engine state, and protected Worker V3 source adapters for all seven M1 kernel families. fe2o3 main is 12c5a161 and Ferric remains pinned to 42639ecc. O_PATH PR #247 is locally green on its exact mi300x matrix but has not merged and its hosted checks are pending. Checked-arithmetic candidate f05ce92d targets the reviewed scalar-authority gaps and passes scoped tests, but independent review is pending, later general-GEMM and attention blockers remain, and no checked-arithmetic change has merged. Aggregate PR #244 remains open on an older head. Stage C remains unmerged; feature-bypass evidence is not production closure, and the production seccomp capture transition is under implementation. Ferric cannot run Qwen, and all 33 M1 requirements remain open.",
+      "Ferric retains authenticated Qwen inputs, exact execution plans, bounded engine state, and protected Worker V3 source adapters for all seven M1 kernel families. Ferric remains pinned to fe2o3 42639ecc while current fe2o3 main is 7b78c9fe. Main now carries shared root-owned protected-service spawn and pidfd custody, but that is reusable deployment infrastructure rather than Ferric or Qwen authority. O_PATH PR #247 moved to 1ea87a3f and currently fails hosted Generic checks. Aggregate PR #244 is green on its existing head but remains unmerged and behind current main. The production seccomp branch implements authenticated Cargo application capture outside the filtered lineage, yet its hidden supervisor can still be replayed with same-UID, caller-created sockets and sealed memfds because no root-held one-use launch authorization is required. Stage C, multi-root emission, authenticated KFD execution, Ferric adoption, end-to-end Qwen, and all 33 M1 requirements remain open.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -18,8 +18,8 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Concurrency", "up to 32 sequences"],
     ["Ferric integration", "Pages source baseline be94f69e; engine integration through f5b11d6; source closure qualified at 3898bf40"],
     ["Ferric-pinned fe2o3", "42639ecc; compiler receipt, verifier, and direct-KFD runtime line"],
-    ["Current fe2o3 upstream", "main 12c5a161e033ff4cd0adaaea428b3022d8501f65; Ferric has not pinned or qualified it"],
-    ["Unmerged integration", "O_PATH PR #247 at 3f5d757f, checked arithmetic f05ce92d, aggregate PR #244 on an older head, Stage C and seccomp capture, Stage D owner rework, and lower-MIR 2c3140d7"],
+    ["Current fe2o3 upstream", "main 7b78c9fe3dfd9352f9bdf0d13e59fc37e6ff400a; Ferric has not pinned or qualified it"],
+    ["Unmerged integration", "O_PATH PR #247 at 1ea87a3f with failing hosted Generic checks; checked arithmetic f05ce92d; green-but-stale aggregate PR #244 at db096436; Stage C; seccomp capture at 6827646a with an open supervisor-authorization blocker; Stage D owner rework; and lower-MIR 2c3140d7"],
     [
       "Protected artifact",
       "SwiGLU semantic fe2ce532...e9569e8f / HSACO 57ecb86b...fc6afa7",
@@ -106,7 +106,13 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Exact LLVM-to-HSACO stage custody",
       state: "implemented",
       detail:
-        "fe2o3 main 12c5a161e033ff4cd0adaaea428b3022d8501f65 retains 1af36a2's bounded evidence for the exact linked and optimized LLVM modules, generated object, ordered native-link inputs, LLD invocation, and resulting HSACO. This authority-free custody is scalar infrastructure; it does not complete generic multi-root emission, runtime admission, a Ferric pin, or Qwen execution.",
+        "fe2o3 commit 12c5a161e033ff4cd0adaaea428b3022d8501f65 landed 1af36a2's bounded evidence for the exact linked and optimized LLVM modules, generated object, ordered native-link inputs, LLD invocation, and resulting HSACO; current main retains it. This authority-free custody is scalar infrastructure and does not complete generic multi-root emission, runtime admission, a Ferric pin, or Qwen execution.",
+    },
+    {
+      label: "Root-owned protected service custody",
+      state: "implemented",
+      detail:
+        "fe2o3 main 7b78c9fe3dfd9352f9bdf0d13e59fc37e6ff400a adds a shared root-to-distinct-UID protected-service spawn primitive with profile gating, fixed descriptor installation, atomic pidfd custody, PDEATHSIG, and exact kill-and-reap ownership. It does not itself authorize Ferric application supervisors, admit Qwen artifacts, or grant GPU execution authority.",
     },
     {
       label: "Checked-arithmetic repair candidate",
@@ -118,7 +124,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Ordered Stage C artifact-set handoff",
       state: "integration",
       detail:
-        "Stage C remains unmerged. Feature-bypass evidence is a narrow diagnostic and is not production closure. The production host-Cargo/application seccomp capture transition is under implementation, and no Stage C artifact-set handoff is qualified or landed.",
+        "Stage C remains unmerged. The production seccomp candidate at 6827646a captures Cargo's exact application outside the filtered lineage using retained one-use invocation admission, sealed SCM_RIGHTS transfer, exact argv and cwd binding, and a dedicated supervisor. It is not production closure: a direct same-UID caller can still enter the hidden supervisor with caller-created sockets, slots, and sealed images because the supervisor consumes no root-held one-use launch authorization. Error-path kill/reap and parent-death custody also remain incomplete.",
     },
     {
       label: "Stage D owner and provenance boundary",
@@ -148,7 +154,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "End-to-end Qwen through Ferric",
       state: "open",
       detail:
-        "Ferric still pins fe2o3 42639ecc and cannot run Qwen. The production path needs reviewed and merged checked arithmetic, a current aggregate PR #244, completed O_PATH and seccomp capture prerequisites, qualified Stage C and Stage D ownership, whole-module current KIR replay for lower-MIR, generic multi-root emission, authenticated KFD, a qualified Ferric pin, current artifacts and rosters, a runner, and hardware and performance qualification.",
+        "Ferric still pins fe2o3 42639ecc and cannot run Qwen. The production path needs reviewed and merged checked arithmetic, current-main aggregate verification, a passing O_PATH prerequisite, nonforgeable root-backed supervisor launch authorization and complete lifecycle custody, qualified Stage C and Stage D ownership, whole-module current KIR replay for lower-MIR, generic multi-root emission, authenticated KFD, a qualified Ferric pin, current artifacts and rosters, a runner, and hardware and performance qualification.",
     },
     {
       label: "M1 qualification",
@@ -246,12 +252,12 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Checked arithmetic and aggregate verification",
         detail:
-          "Complete independent review and land the f05ce92d checked-arithmetic repair only after its later general-GEMM and attention blockers are resolved or correctly scoped. Then restack and requalify open aggregate Worker V3 PR #244 from its older head onto current main.",
+          "Complete independent review and land the f05ce92d checked-arithmetic repair only after its later general-GEMM and attention blockers are resolved or correctly scoped. Aggregate Worker V3 PR #244 is green at db096436 but remains based on an older mainline; restack and requalify it on current main before merge.",
       },
       {
         name: "Ordered Stage C and joint Stage D",
         detail:
-          "Finish hosted qualification and merge O_PATH PR #247 only if its exact checks pass, then complete the production seccomp capture transition. Stage C remains unmerged, and feature-bypass evidence does not close it. Replace Stage D's rejected raw tuple with an opaque provenance-carrying owner before joint authentication.",
+          "Repair O_PATH PR #247 head 1ea87a3f until its hosted Generic checks pass. Then bind the production supervisor to a root-managed, server-consumed one-use authorization derived from the admitted protected release, add complete PDEATHSIG and kill/reap custody, and qualify the real Stage C path. Replace Stage D's rejected raw tuple with an opaque provenance-carrying owner before joint authentication.",
       },
       {
         name: "Multi-root compiler emission",
@@ -337,20 +343,28 @@ window.FERRIC_PROJECT = Object.freeze({
   },
   recentProgress: [
     {
-      commit: "12c5a161e033ff4cd0adaaea428b3022d8501f65",
+      commit: "7b78c9fe3dfd9352f9bdf0d13e59fc37e6ff400a",
       repository: "https://github.com/harsh-nod/fe2o3",
-      title: "Advance external-anchor coordinator deployment binding",
-      state: "integration",
+      title: "Share root-owned protected service spawn custody",
+      state: "implemented",
       detail:
-        "Current fe2o3 main is exactly 12c5a161e033ff4cd0adaaea428b3022d8501f65. Ferric has not pinned or qualified this line, and the commit does not merge O_PATH PR #247, checked arithmetic, aggregate PR #244, Stage C, or a Ferric Qwen path.",
+        "Current fe2o3 main is exactly 7b78c9fe3dfd9352f9bdf0d13e59fc37e6ff400a. The landed deployment line pins the protected supervisor image, reissues its root key template after profile lock, qualifies a loader-independent static image, and centralizes root credential transition and pidfd reaping in a shared spawn owner. Ferric has not pinned or qualified this line, and it does not provide the missing application-supervisor launch authorization or a Qwen execution path.",
     },
     {
-      commit: "3f5d757fb67d20bccc68791fb61731da06368ad3",
+      commit: "6827646a2a5a541d16b35fb1b937a20a9681ec4c",
       repository: "https://github.com/harsh-nod/fe2o3",
-      title: "Qualify the O_PATH prerequisite locally",
+      title: "Prototype production Cargo application capture",
       state: "integration",
       detail:
-        "PR #247 exact head 3f5d757fb67d20bccc68791fb61731da06368ad3 has a green exact local mi300x matrix. Hosted checks are still pending, so the PR is not merged and grants no Stage C, seccomp capture, production runtime, Ferric, Qwen, or M1 authority.",
+        "The unmerged production seccomp branch moves the Cargo-selected application outside the filtered lineage and binds its sealed image, argv, cwd, and one-use invocation admission through a dedicated supervisor. Review found a blocking replay path: the hidden supervisor accepts a same-UID direct caller's independently created channel, slot, and sealed application without a root-held one-use launch permit. Several frontend failure paths also lack terminal kill-and-reap custody.",
+    },
+    {
+      commit: "1ea87a3f8f35e71f1f0d9836fab55a5fa056c7ae",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Refresh the O_PATH prerequisite on current main",
+      state: "integration",
+      detail:
+        "PR #247 exact head 1ea87a3f8f35e71f1f0d9836fab55a5fa056c7ae is one commit ahead of current main and normalizes imported directory descriptors. Its hosted Rustc shards, source checks, parity policy, and Verus checks pass, but duplicated Generic core and validation jobs fail. The PR remains unmerged and grants no Stage C, runtime, Ferric, Qwen, or M1 authority.",
     },
     {
       commit: "1af36a2b6deb6638e784197791b8aea1d72e8e37",
@@ -612,16 +626,18 @@ window.FERRIC_PROJECT = Object.freeze({
       "Typed KFD allocations, USERPTR/AQL queues, fixed-batch publication, completion, and dispatch",
       "Ferric's supported compiler/runtime baseline remains 42639ecc7f2f377ab57e5e884c36133a126f230e until a newer fe2o3 revision is pinned and qualified",
       "fe2o3 PR #246 merged at eca3bcaa after duplicated 40-minute Generic core runs and all gates passed",
-      "Current fe2o3 main 12c5a161e033ff4cd0adaaea428b3022d8501f65 retains exact LLVM-to-HSACO stage custody from 1af36a2; this authority-free scalar evidence does not close multi-root, runtime, Ferric, or Qwen gates",
+      "Current fe2o3 main 7b78c9fe3dfd9352f9bdf0d13e59fc37e6ff400a retains exact LLVM-to-HSACO stage custody and now centralizes root-to-protected-service spawn and pidfd custody; neither closes multi-root, runtime admission, Ferric, or Qwen gates",
       "Ferric has not pinned or qualified current fe2o3 main",
       "The gfx942 EXEC-control layer assigns no opcode semantics and proves neither machine reconvergence, empty masks, termination, nor launch authority",
       "Checked arithmetic fixes selected production kernel compiles to one -Coverflow-checks=on; its induction certificates do not authorize removal of LLVM overflow guards",
       "Exact single-use u32 guard snapshots may be retained in the induction certificate, but the certificate remains inert without authenticated source-to-KIR-to-LLVM refinement",
       "The landed KIR-to-LLVM replay independently reconstructs target KIR and byte-identical LLVM from canonical neutral KIR; it is exact deterministic derivation evidence, not formal semantic preservation or machine-code authority",
-      "O_PATH PR #247 exact head 3f5d757fb67d20bccc68791fb61731da06368ad3 has a green exact local mi300x matrix, but hosted checks are pending and the PR remains unmerged",
+      "O_PATH PR #247 exact head 1ea87a3f8f35e71f1f0d9836fab55a5fa056c7ae has passing hosted shards and source checks but failing duplicated Generic core and validation jobs; it remains unmerged",
       "Checked-arithmetic candidate f05ce92d289fa99d8a0e71c9544122cc7e97618e has green focused, library, ranked-bounds, and scalar-GEMM evidence; independent review and later general-GEMM and attention blockers remain, and it is not merged",
-      "Aggregate verification PR #244 remains open on an older head",
-      "Stage C remains unmerged; feature-bypass evidence is not production closure, and the production seccomp capture transition is under implementation",
+      "Aggregate verification PR #244 is green at db096436607539e663450fc5aab317f39d0afd06 but remains open on an older base and needs current-main restacking and requalification",
+      "Production seccomp candidate 6827646a implements exact Cargo application capture outside the filtered lineage, but direct same-UID hidden-supervisor replay, incomplete error-path reaping, and missing parent-death custody block production admission",
+      "The missing supervisor authority must be root-backed and server-consumed; parent/current-image equality, a caller-created challenge, or another sealed public memfd is not sufficient",
+      "Stage C remains unmerged; feature-bypass evidence and the current seccomp candidate are not production closure",
       "Stage D's raw-tuple API was rejected and awaits opaque-owner provenance rework",
       "Lower-MIR candidate 2c3140d7 is audit-only and must be reimplemented under whole-module current KIR replay",
       "Generic multi-root LLVM/HSACO emission and authenticated fixed-batch KFD remain unmerged upstream integration work",
