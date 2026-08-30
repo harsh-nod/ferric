@@ -7,7 +7,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Ferric retains authenticated Qwen inputs, exact execution plans, bounded engine state, and protected Worker V3 source adapters for all seven M1 kernel families, but cannot run Qwen through the production path. Its qualified compiler/runtime integration baseline remains fe2o3 42639ecc; current fe2o3 main is 55c1895e and is not pinned or qualified by Ferric. Checked-arithmetic candidate 4bb10089 passes three exact escape regressions, the full 433-test rustc-codegen library, and the production-driver shard on mi300x. It is not fully qualified: its gfx942 general matrix advances beyond exact main's induction-bound rejection, then fails closed because exact callable memory-effect summaries are missing. Mixed-width shift candidate 6c1f7248 is restacked on current main and awaits remote qualification. A descriptor-only Stage C inventory core exists, but lock authentication remains under repair and review; it is neither landed nor integrated. The production seccomp supervisor still lacks a root-held, server-consumed one-use launch authorization. Aggregate verification, Stage C and D, multi-root emission, authenticated KFD execution, end-to-end Qwen, and all 33 M1 requirements remain open.",
+      "Ferric retains authenticated Qwen inputs, exact execution plans, bounded engine state, and protected Worker V3 source adapters for all seven M1 kernel families, but cannot run Qwen through the production path. Its qualified compiler/runtime integration baseline remains fe2o3 42639ecc; current fe2o3 main is e5992869 and is not pinned or qualified by Ferric. Mixed-width KIR PR #249 is merged through 35771d28. The checked-compiler candidate now passes the shared-borrow regression and six callable-summary tests, then the real gfx942 matrix fails closed at FE2O3-TENSOR-LAYOUT-002. Stage C inventory mutation evidence passes its four exact tests and the complete artifact-transaction package, while PR #250 remains unmerged and is being restacked. The production seccomp supervisor still lacks a root-held, server-consumed one-use launch authorization. Aggregate verification, Stage C and D, multi-root emission, authenticated KFD execution, end-to-end Qwen, and all 33 M1 requirements remain open.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -16,10 +16,10 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Precision", "BF16 / FP32 accumulate"],
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
-    ["Ferric integration", "main be94f69e; Pages PR #29 carries the live status branch; engine integration through f5b11d6; source closure qualified at 3898bf40"],
+    ["Ferric integration", "main 8863177c; Pages PR #29 is merged; engine integration through f5b11d6; source closure qualified at 3898bf40"],
     ["Ferric fe2o3 pins", "qualified integration baseline 42639ecc; checked-in SwiGLU fixture 2c7668d2; M0 property binder a6fa86b5"],
-    ["Current fe2o3 upstream", "main 55c1895e30f6e1b8ea25fd974f620630b601b3e6; Ferric has not pinned or qualified it"],
-    ["Unmerged integration", "checked arithmetic 4bb10089 with a still-blocked gfx942 gate; mixed-width shift 6c1f7248 awaiting remote qualification; Stage C descriptor inventory under lock-auth repair; aggregate PR #244; seccomp supervisor authorization; Stage D owner rework; and lower-MIR 2c3140d7"],
+    ["Current fe2o3 upstream", "main e59928697297309678e2c1c2ebc280722dfc8eb2 retains mixed-width KIR merge 35771d28; Ferric has not pinned or qualified it"],
+    ["Unmerged integration", "checked compiler 68f17a2d blocked at FE2O3-TENSOR-LAYOUT-002; Stage C inventory PR #250 being restacked; aggregate PR #244; seccomp supervisor authorization; Stage D owner rework; and lower-MIR 2c3140d7"],
     [
       "Protected artifact",
       "SwiGLU semantic fe2ce532...e9569e8f / HSACO 57ecb86b...fc6afa7",
@@ -112,19 +112,25 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Root-owned protected service custody",
       state: "implemented",
       detail:
-        "fe2o3 main 55c1895e30f6e1b8ea25fd974f620630b601b3e6 retains shared root-to-distinct-UID protected-service spawn, pidfd custody, provisioned supervisor inputs, deployment-readiness publication, and the protected compiler coordinator. Its latest commits add fixed reference-record provisioning and qualification. Ferric has not pinned or qualified this exact main. This reusable deployment infrastructure does not authorize the Cargo application supervisor, admit Ferric or Qwen artifacts, or grant GPU execution authority.",
+        "fe2o3 main e59928697297309678e2c1c2ebc280722dfc8eb2 retains shared root-to-distinct-UID protected-service spawn, pidfd custody, provisioned supervisor inputs, deployment-readiness publication, and the protected compiler coordinator. Ferric has not pinned or qualified this exact main. This reusable deployment infrastructure does not authorize the Cargo application supervisor, admit Ferric or Qwen artifacts, or grant GPU execution authority.",
+    },
+    {
+      label: "Target-neutral mixed-width KIR shifts",
+      state: "implemented",
+      detail:
+        "fe2o3 PR #249 merged qualified candidate 6c1f7248 through main commit 35771d28059dabc4ac7fe8f80be69cbdc9a43356. Target-neutral KIR accepts integer shift operands of different widths, while target lowering remains responsible for rejecting unsupported combinations. This upstream compiler repair does not qualify Ferric's pin, emit the seven-family roster, run Qwen, or close M1.",
     },
     {
       label: "Checked-arithmetic repair candidate",
       state: "integration",
       detail:
-        "Candidate 4bb10089 is restacked on fe2o3 55c1895e. On mi300x, three exact escape regressions pass, the full rustc-codegen library passes 433/433, and the production-driver shard is green. It is not fully qualified: the gfx942 general matrix reaches real tests, then rejects missing exact callable memory-effect summaries. Exact main fails that gate earlier because a uniform induction bound is not an exact total unsigned index expression. The candidate remains unmerged and carries no compiler or M1 authority.",
+        "Candidate 68f17a2d retains the checked-arithmetic and immutable-custody repairs, passes the shared-borrow regression and six exact callable-summary tests on mi300x, and advances the real gfx942 general matrix beyond those gates. The matrix now fails closed at FE2O3-TENSOR-LAYOUT-002. The candidate remains unmerged and is neither a complete compiler qualification nor Ferric, runtime, Qwen, or M1 authority.",
     },
     {
       label: "Ordered Stage C artifact-set handoff",
       state: "integration",
       detail:
-        "Stage C remains unmerged. A descriptor-only core now models a fixed nine-FD inventory of already-open publication objects, with fail-closed roster, identity, currentness, descriptor, and teardown checks. Review found that lock authentication still needs repair, and the core has not been integrated into the authenticated SCM_RIGHTS client/service vertical or qualified under distinct UIDs. Separately, seccomp candidate 6827646a still lets a direct same-UID caller enter the hidden application supervisor because it consumes no root-held one-use launch authorization. Error-path kill/reap and parent-death custody also remain incomplete.",
+        "Stage C remains unmerged. PR #250's descriptor-only core models a fixed nine-FD inventory of already-open publication objects with fail-closed roster, identity, currentness, descriptor, lock, and teardown checks. Its four exact metadata, ready-record, module-digest, and attempt-registry mutation tests pass on mi300x, as does the complete artifact-transaction package; PR #250 is being restacked. The core is not yet integrated into the authenticated SCM_RIGHTS client/service vertical or qualified under distinct UIDs. Separately, seccomp candidate 6827646a still lets a direct same-UID caller enter the hidden application supervisor because it consumes no root-held one-use launch authorization. Error-path kill/reap and parent-death custody also remain incomplete.",
     },
     {
       label: "Stage D owner and provenance boundary",
@@ -154,7 +160,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "End-to-end Qwen through Ferric",
       state: "open",
       detail:
-        "Ferric cannot run Qwen through the production path. The qualified integration baseline remains fe2o3 42639ecc, while current main 55c1895e is unpinned. Closure needs a fully green checked-arithmetic line, qualified mixed-width shifts, repaired and integrated Stage C descriptor custody with a distinct-UID vertical, current-main aggregate verification, nonforgeable root-backed supervisor launch authorization with complete lifecycle custody, qualified Stage D ownership, whole-module current KIR replay for lower-MIR, generic multi-root emission, authenticated KFD, current artifacts and rosters, a runner, and hardware and performance qualification.",
+        "Ferric cannot run Qwen through the production path. The qualified integration baseline remains fe2o3 42639ecc, while current main e5992869 is unpinned. Mixed-width shifts are merged upstream, but closure still needs a fully green checked-compiler line beyond FE2O3-TENSOR-LAYOUT-002, landed and integrated Stage C descriptor custody with a distinct-UID vertical, current-main aggregate verification, nonforgeable root-backed supervisor launch authorization with complete lifecycle custody, qualified Stage D ownership, whole-module current KIR replay for lower-MIR, generic multi-root emission, authenticated KFD, current artifacts and rosters, a runner, and hardware and performance qualification.",
     },
     {
       label: "M1 qualification",
@@ -252,12 +258,12 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Checked arithmetic and aggregate verification",
         detail:
-          "Close candidate 4bb10089's missing exact callable memory-effect summaries, rerun the full gfx942 general matrix, and complete broader qualification. Separately qualify mixed-width shift candidate 6c1f7248 on exact main. Aggregate Worker V3 PR #244 remains based on an older mainline and needs current-main restacking and requalification before merge.",
+          "Continue candidate 68f17a2d beyond the real gfx942 matrix's FE2O3-TENSOR-LAYOUT-002 rejection, then complete broader qualification. Mixed-width shift PR #249 is merged through 35771d28. Aggregate Worker V3 PR #244 remains based on an older mainline and needs current-main restacking and requalification before merge.",
       },
       {
         name: "Ordered Stage C and joint Stage D",
         detail:
-          "Repair lock authentication in the descriptor-only nine-FD inventory core, complete review, then integrate it with the authenticated SCM_RIGHTS client/service path and prove the full distinct-UID vertical. Bind the production application supervisor to a root-managed, server-consumed one-use authorization derived from the admitted protected release; same-UID process checks and caller-created sockets are not authority. Add complete PDEATHSIG and kill/reap custody before qualifying Stage C, and replace Stage D's rejected raw tuple with an opaque provenance-carrying owner.",
+          "Restack and land PR #250's remotely tested descriptor-only nine-FD inventory, then integrate it with the authenticated SCM_RIGHTS client/service path and prove the full distinct-UID vertical. Bind the production application supervisor to a root-managed, server-consumed one-use authorization derived from the admitted protected release; same-UID process checks and caller-created sockets are not authority. Add complete PDEATHSIG and kill/reap custody before qualifying Stage C, and replace Stage D's rejected raw tuple with an opaque provenance-carrying owner.",
       },
       {
         name: "Multi-root compiler emission",
@@ -343,28 +349,28 @@ window.FERRIC_PROJECT = Object.freeze({
   },
   recentProgress: [
     {
-      commit: "55c1895e30f6e1b8ea25fd974f620630b601b3e6",
+      commit: "68f17a2d",
       repository: "https://github.com/harsh-nod/fe2o3",
-      title: "Advance current fe2o3 main",
+      title: "Advance checked compilation to the tensor-layout gate",
       state: "integration",
       detail:
-        "Current fe2o3 main is exactly 55c1895e30f6e1b8ea25fd974f620630b601b3e6. It retains the protected-service runtime foundation and adds fixed reference-record provisioning and qualification for the compiler-execution coordinator. Ferric has not pinned or qualified this exact line. In the gfx942 general matrix, exact main rejects a uniform induction bound before reaching the later callable-summary checks.",
+        "The checked-compiler candidate now admits immutable shared observation without weakening mutable or raw-address escape rejection. Its shared-borrow regression and six exact callable-summary tests pass on mi300x, and the real gfx942 general matrix advances to a fail-closed FE2O3-TENSOR-LAYOUT-002 rejection. The candidate remains unmerged and carries no complete compiler, runtime, Ferric, Qwen, or M1 authority.",
     },
     {
-      commit: "4bb10089",
+      commit: "fcf0a42261cf8035fe6bc9e83a115ac5775b2aad",
       repository: "https://github.com/harsh-nod/fe2o3",
-      title: "Exercise the checked-arithmetic repair on mi300x",
+      title: "Qualify Stage C inventory mutation evidence",
       state: "integration",
       detail:
-        "Three exact escape regressions pass, the complete rustc-codegen library passes 433/433, and the production-driver shard is green. The candidate also advances farther than exact main in the gfx942 general matrix, but then fails closed because exact callable memory-effect summaries are missing. It is not fully qualified or merged and grants no compiler, runtime, or M1 authority.",
+        "Four exact metadata, ready-record, module-digest, and attempt-registry mutation tests pass on mi300x; focused log SHA-256 fba363dd1c81da58f71833ec941b481a34a03d9b5b1848aa5695bbe867be4d60 and complete artifact-transaction package log SHA-256 023e0873aea555034b699c06ec84e785bd1030c56e308ec8179c04b80bf75a37 retain the evidence. PR #250 is open and being restacked, so the inventory is neither merged Stage C nor authenticated SCM_RIGHTS or distinct-UID closure.",
     },
     {
-      commit: "6c1f7248",
+      commit: "35771d28059dabc4ac7fe8f80be69cbdc9a43356",
       repository: "https://github.com/harsh-nod/fe2o3",
-      title: "Restack target-neutral mixed-width shifts",
-      state: "integration",
+      title: "Merge target-neutral mixed-width KIR shifts",
+      state: "implemented",
       detail:
-        "The mixed-width shift repair is restacked on fe2o3 55c1895e. It preserves target-neutral KIR admission while requiring target-specific lowering to fail closed on unsupported operand-type combinations. Remote qualification remains pending, so the candidate is neither merged nor qualified.",
+        "fe2o3 PR #249 merged candidate 6c1f7248 through main commit 35771d28 after focused and package-wide remote qualification passed. The repair preserves target-neutral mixed-width integer-shift admission while target-specific lowering fails closed on unsupported combinations. Ferric has not pinned or qualified the resulting upstream line, and this compiler repair does not run Qwen or close M1.",
     },
     {
       commit: "6c42a0a2",
@@ -388,7 +394,7 @@ window.FERRIC_PROJECT = Object.freeze({
       title: "Refresh the O_PATH prerequisite on current main",
       state: "integration",
       detail:
-        "PR #247 exact head 1ea87a3f8f35e71f1f0d9836fab55a5fa056c7ae soundly normalizes imported directory descriptors but diverges from current main. A separate descriptor-only core now implements the fixed nine-FD publication inventory. Its lock authentication remains under repair and review, and it has not been landed, joined to the authenticated SCM_RIGHTS vertical, or qualified under distinct UIDs.",
+        "PR #247 exact head 1ea87a3f8f35e71f1f0d9836fab55a5fa056c7ae soundly normalizes imported directory descriptors but diverges from current main. PR #250 now carries the fixed nine-FD publication inventory and has passed its scoped lock and mutation evidence on mi300x. It remains unmerged while being restacked and has not been joined to the authenticated SCM_RIGHTS vertical or qualified under distinct UIDs.",
     },
     {
       commit: "1af36a2b6deb6638e784197791b8aea1d72e8e37",
@@ -639,7 +645,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "Scheduling, paged KV, speculation, generated runner, and M1 qualification",
       "Qualified source 1d666dbc binds all seven K1-K7 families to protected Worker V3 custody and landed through be307d52 in m1/bundle-admission",
       "PR #24 qualified canonical 100644/100755 source-closure modes at 3898bf40 and landed them through 49a539f2",
-      "Ferric main remains be94f69e and Pages PR #29 carries the live status branch",
+      "Ferric main is 8863177c, including merged Pages PR #29",
       "Ferric's qualified compiler/runtime integration baseline remains fe2o3 42639ecc; main's checked-in SwiGLU fixture pins 2c7668d2 and the M0 binder pins a6fa86b5",
       "Ferric has no qualified pin to current fe2o3 main and cannot run Qwen through the production path",
       "Current artifacts, protected policy and deployment, end-to-end Qwen, hardware and performance evidence, the production receipt, and M1 remain Ferric work",
@@ -652,16 +658,16 @@ window.FERRIC_PROJECT = Object.freeze({
       "Typed KFD allocations, USERPTR/AQL queues, fixed-batch publication, completion, and dispatch",
       "Ferric's supported compiler/runtime baseline remains 42639ecc7f2f377ab57e5e884c36133a126f230e until a newer fe2o3 revision is pinned and qualified",
       "fe2o3 PR #246 merged at eca3bcaa after duplicated 40-minute Generic core runs and all gates passed",
-      "Current fe2o3 main 55c1895e30f6e1b8ea25fd974f620630b601b3e6 retains the protected-service foundation and adds fixed reference-record provisioning and qualification; Ferric has not qualified this exact line",
+      "Current fe2o3 main e59928697297309678e2c1c2ebc280722dfc8eb2 retains the protected-service foundation and mixed-width KIR merge 35771d28; Ferric has not qualified this exact line",
       "Ferric has not pinned or qualified current fe2o3 main",
       "The gfx942 EXEC-control layer assigns no opcode semantics and proves neither machine reconvergence, empty masks, termination, nor launch authority",
       "Checked arithmetic fixes selected production kernel compiles to one -Coverflow-checks=on; its induction certificates do not authorize removal of LLVM overflow guards",
       "Exact single-use u32 guard snapshots may be retained in the induction certificate, but the certificate remains inert without authenticated source-to-KIR-to-LLVM refinement",
       "The landed KIR-to-LLVM replay independently reconstructs target KIR and byte-identical LLVM from canonical neutral KIR; it is exact deterministic derivation evidence, not formal semantic preservation or machine-code authority",
       "PR #248 was closed as superseded after upstream landed the same protected-service classifications and bounded readiness-EOF fix, leaving its rebased local diff empty",
-      "A descriptor-only fixed nine-FD Stage C inventory core exists, but lock authentication remains under repair and review; it is not landed, integrated with authenticated SCM_RIGHTS, or distinct-UID qualified",
-      "Checked-arithmetic candidate 4bb10089 passes three exact escape regressions, rustc-codegen 433/433, and the production-driver shard on mi300x, but its gfx942 general matrix still fails closed on missing exact callable memory-effect summaries; exact main fails the gate earlier on induction-bound authentication",
-      "Mixed-width shift candidate 6c1f7248 is restacked on exact main and awaits remote qualification",
+      "PR #250's descriptor-only fixed nine-FD Stage C inventory passes its four exact mutation tests and the complete artifact-transaction package on mi300x, but is being restacked and is not landed, integrated with authenticated SCM_RIGHTS, or distinct-UID qualified",
+      "Checked-compiler candidate 68f17a2d passes the shared-borrow regression and six exact callable-summary tests on mi300x, but the real gfx942 general matrix now fails closed at FE2O3-TENSOR-LAYOUT-002",
+      "Mixed-width shift PR #249 is merged through fe2o3 main commit 35771d28 after focused and package-wide remote qualification",
       "Aggregate verification PR #244 is green at db096436607539e663450fc5aab317f39d0afd06 but remains open on an older base and needs current-main restacking and requalification",
       "Production seccomp candidate 6827646a implements exact Cargo application capture outside the filtered lineage, but direct same-UID hidden-supervisor replay and missing root-authorizer custody block production admission",
       "The missing supervisor authority must be root-backed, server-retained, one-use, and consumed directly by the supervisor before FD204 and Stage C; parent/current-image equality, a caller-created challenge, or another sealed public memfd is not sufficient",
