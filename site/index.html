@@ -198,22 +198,21 @@
         <div class="shell next-layout">
           <div>
             <div class="section-label">Next engineering checkpoint</div>
-            <h2 id="next-title">Authorize the production supervisor</h2>
+            <h2 id="next-title">Close compiler and custody gates</h2>
           </div>
           <p>
             Ferric's qualified compiler/runtime integration baseline remains fe2o3 42639ecc; its
             checked-in device fixture and proof binder use narrower 2c7668d2 and a6fa86b5 pins. Ferric
-            cannot run Qwen through the production path. Current fe2o3 main is c77d4e72, which Ferric
-            has not pinned or qualified; it now carries coordinator launch of the protected compiler
-            supervisor and deployment-wiring documentation. PR #248 is open at 1094cd72 with spawn and
-            coordinator classification plus test-only bounded readiness-EOF stabilization. Exact mi300x
-            focused policy, 100-repeat readiness, supervisor, and affected matrices pass, while Generic
-            core checks remain in progress. O_PATH normalization is sound, but same-UID tests do not
-            prove production Stage C: the distinct capability-empty service UID cannot traverse the
-            client-owned 0700 artifact tree. Production needs an identity-bound, service-authorized
-            namespace view and a distinct-UID vertical. Checked-arithmetic head ae188e0 addresses its
-            three reported blockers in source but remains frozen, unreviewed, and remotely unqualified.
-            Separately, seccomp candidate 6827646a still permits same-UID hidden-supervisor replay and
+            cannot run Qwen through the production path. Current fe2o3 main is 55c1895e, which Ferric
+            has not pinned or qualified. Checked-arithmetic candidate 4bb10089 passes three exact escape
+            regressions, the full 433-test rustc-codegen library, and the production-driver shard on
+            mi300x. Its gfx942 general matrix still fails closed on missing exact callable memory-effect
+            summaries; exact main fails the gate earlier on exact unsigned induction-bound authentication.
+            Mixed-width shift candidate 6c1f7248 is restacked on current main and awaits remote
+            qualification. A descriptor-only Stage C nine-FD inventory core exists, but lock
+            authentication is under repair and review; the core is not landed, integrated into the
+            authenticated SCM_RIGHTS vertical, or distinct-UID qualified. Separately, seccomp candidate
+            6827646a still permits same-UID hidden-supervisor replay and
             needs a root-backed, server-retained one-use permit consumed before FD204 and Stage C. Stage D
             ownership, aggregate verification, multi-root emission, authenticated KFD, a qualified Ferric
             pin, current artifacts and rosters, the runner, hardware and performance evidence, the
