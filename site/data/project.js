@@ -7,7 +7,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Ferric main 66262e20 publishes the current project record; its inference source has authenticated Qwen inputs, exact execution plans, bounded engine state, and protected Worker V3 adapters for all seven M1 kernel families. fe2o3 main e017f809 now carries exact deterministic KIR-to-LLVM replay for the scalar production path: an independent verifier reconstructs target KIR and LLVM from canonical neutral KIR and requires byte equality with retained pre-descriptor LLVM. This is derivation evidence, not a formal semantic-refinement proof or execution authority. Checked-arithmetic repair b40eb556, aggregate PR #244 at db096436, ordered Stage C candidates fa6dd736 and ccfb8338, and Stage D joint authentication are all still unmerged integration work. Ferric has not pinned or qualified current fe2o3, does not run Qwen, and M1 remains open.",
+      "Ferric Pages baseline 66262e20 records inference source with authenticated Qwen inputs, exact execution plans, bounded engine state, and protected Worker V3 adapters for all seven M1 kernel families. fe2o3 main e017f809 now carries exact deterministic KIR-to-LLVM replay for the scalar production path: an independent verifier reconstructs target KIR and LLVM from canonical neutral KIR and requires byte equality with retained pre-descriptor LLVM. This is derivation evidence, not a formal semantic-refinement proof or execution authority. Dependency-closure PR #246 at bc6ea0d7, checked-arithmetic repair b40eb556, aggregate PR #244 at db096436, ordered Stage C candidates bf1351a2 and ccfb8338, and Stage D joint authentication are all still unmerged integration work. Ferric has not pinned or qualified current fe2o3, does not run Qwen, and M1 remains open.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -16,10 +16,10 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Precision", "BF16 / FP32 accumulate"],
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
-    ["Ferric integration", "main 66262e20; engine integration through f5b11d6; source closure qualified at 3898bf40"],
+    ["Ferric integration", "Pages baseline 66262e20; engine integration through f5b11d6; source closure qualified at 3898bf40"],
     ["Ferric-pinned fe2o3", "42639ecc; compiler receipt, verifier, and direct-KFD runtime line"],
     ["Current fe2o3 upstream", "main e017f809; exact deterministic scalar KIR-to-LLVM replay is retained and independently rechecked"],
-    ["Upstream integration", "checked repair b40eb556, PR #244 db096436, Stage C fa6dd736 / ccfb8338, and Stage D are unmerged candidates"],
+    ["Upstream integration", "PR #246 bc6ea0d7, checked repair b40eb556, PR #244 db096436, Stage C bf1351a2 / ccfb8338, and Stage D are unmerged candidates"],
     [
       "Protected artifact",
       "SwiGLU semantic fe2ce532...e9569e8f / HSACO 57ecb86b...fc6afa7",
@@ -100,19 +100,19 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Exact deterministic KIR-to-LLVM replay",
       state: "integration",
       detail:
-        "fe2o3 main e017f809 includes shared target-binding and layout transforms, bounded canonical replay evidence for KIR V8/V9, independent verifier replay, and compiler-lineage custody that requires reconstructed target KIR and LLVM to match exact retained identities and bytes. The source is landed, but current-main CI is red because its new verifier-to-dialect dependency is missing the workspace policy edge and root/standalone lock closure updates; a minimal prerequisite repair is under qualification. Replay proves deterministic derivation by the reviewed implementation, not formal semantic preservation, LLVM-to-machine refinement, HSACO existence, or launch authority.",
+        "fe2o3 main e017f809 includes shared target-binding and layout transforms, bounded canonical replay evidence for KIR V8/V9, independent verifier replay, and compiler-lineage custody that requires reconstructed target KIR and LLVM to match exact retained identities and bytes. The source is landed, but current-main CI is red because its new verifier-to-dialect dependency is missing the workspace policy edge and root/standalone lock closure updates. Exact repair PR #246 at bc6ea0d7 has all mi300x gates green and hosted checks pending. Replay proves deterministic derivation by the reviewed implementation, not formal semantic preservation, LLVM-to-machine refinement, HSACO existence, or launch authority.",
     },
     {
       label: "Checked-arithmetic repair candidate",
       state: "integration",
       detail:
-        "Unmerged candidate b40eb556 on 6ede4ea5 extends uniform checked-arithmetic authentication across production scalar and index projections. Focused hostile cases pass on mi300x; broad locked qualification is still blocked by a current-main lock/policy defect, and the candidate must be restacked before it can land.",
+        "Unmerged candidate b40eb556 on 6ede4ea5 extends uniform checked-arithmetic authentication across production scalar and index projections. Focused hostile cases pass on mi300x; broad locked qualification awaits dependency-closure PR #246 and the candidate must then be restacked before it can land.",
     },
     {
       label: "Ordered Stage C artifact-set handoff",
       state: "integration",
       detail:
-        "Unmerged Stage C candidate fa6dd736 retains occurrence and exact artifact-set commitment in an opaque recovered owner. Candidate ccfb8338 adds separately qualified deterministic contention coverage. The 7ef196c1 base passed format, seven token-set cases, the full 184-unit artifact-transaction suite plus integrations, 12 documentation tests, and 28 host UI cases on mi300x; the exact profile and no-ACK rerun remains in progress. None of this is landed or M1 authority.",
+        "Unmerged Stage C candidate bf1351a2 retains occurrence and exact artifact-set commitment in an opaque recovered owner and is rerunning the exact profile path. Candidate ccfb8338 adds separately qualified deterministic contention coverage. The 7ef196c1 base passed format, seven token-set cases, the full 184-unit artifact-transaction suite plus integrations, 12 documentation tests, and 28 host UI cases on mi300x. None of this is landed or M1 authority.",
     },
     {
       label: "Canonical M1 source closure",
@@ -223,7 +223,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Checked arithmetic and aggregate verification",
         detail:
-          "Repair every production checked-arithmetic projection, land the current workspace policy and lock prerequisite, restack candidate b40eb556, and then exactly restack and requalify aggregate Worker V3 PR #244 from its point-in-time head db096436 onto current main.",
+          "Land dependency-closure PR #246 after hosted checks finish, repair every production checked-arithmetic projection, restack candidate b40eb556, and then exactly restack and requalify aggregate Worker V3 PR #244 from its point-in-time head db096436 onto current main.",
       },
       {
         name: "Ordered Stage C and joint Stage D",
@@ -319,7 +319,7 @@ window.FERRIC_PROJECT = Object.freeze({
       title: "Require replayed KIR-to-LLVM custody",
       state: "integration",
       detail:
-        "fe2o3's scalar production compiler now carries an independently validated replay owner through semantic lineage. The verifier reconstructs target-bound KIR, reruns deterministic AMDGPU lowering and exact layout binding, and requires byte equality with retained pre-descriptor LLVM. This source is on main, but current-main workspace policy and lock closure are red pending a prerequisite repair. Formal semantic refinement, LLVM-to-machine proof, HSACO, and runtime authority remain open.",
+        "fe2o3's scalar production compiler now carries an independently validated replay owner through semantic lineage. The verifier reconstructs target-bound KIR, reruns deterministic AMDGPU lowering and exact layout binding, and requires byte equality with retained pre-descriptor LLVM. This source is on main, but current-main workspace policy and lock closure are red; repair PR #246 at bc6ea0d7 has all mi300x gates green and hosted checks pending. Formal semantic refinement, LLVM-to-machine proof, HSACO, and runtime authority remain open.",
     },
     {
       commit: "75b226789a06aa8bf884377f49a2974bc755f34a",
@@ -546,7 +546,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "Scheduling, paged KV, speculation, generated runner, and M1 qualification",
       "Qualified source 1d666dbc binds all seven K1-K7 families to protected Worker V3 custody and landed through be307d52 in m1/bundle-admission",
       "PR #24 qualified canonical 100644/100755 source-closure modes at 3898bf40 and landed them through 49a539f2",
-      "Ferric main 66262e20 publishes the current site; its engine integration remains through f5b11d6 and has not pinned current fe2o3 or admitted seven production authority rosters",
+      "Ferric Pages baseline 66262e20 records the current status; engine integration remains through f5b11d6 and has not pinned current fe2o3 or admitted seven production authority rosters",
       "Current artifacts, protected policy and deployment, end-to-end Qwen, hardware and performance evidence, the production receipt, and M1 remain Ferric work",
     ],
     fe2o3: [
@@ -561,10 +561,10 @@ window.FERRIC_PROJECT = Object.freeze({
       "Checked arithmetic fixes selected production kernel compiles to one -Coverflow-checks=on; its induction certificates do not authorize removal of LLVM overflow guards",
       "Exact single-use u32 guard snapshots may be retained in the induction certificate, but the certificate remains inert without authenticated source-to-KIR-to-LLVM refinement",
       "The landed KIR-to-LLVM replay independently reconstructs target KIR and byte-identical LLVM from canonical neutral KIR; it is exact deterministic derivation evidence, not formal semantic preservation or machine-code authority",
-      "Current fe2o3 main CI is red because the new verifier-to-dialect dependency is missing a workspace policy edge and root/standalone lock closure updates; a minimal unmerged prerequisite repair is under qualification",
-      "Checked-arithmetic repair b40eb556 is an unmerged candidate on 6ede4ea5: focused hostile cases pass, broad locked qualification is blocked by the current-main workspace defect, and an exact restack remains required",
+      "Current fe2o3 main CI is red because the new verifier-to-dialect dependency is missing a workspace policy edge and root/standalone lock closure updates; exact unmerged repair PR #246 at bc6ea0d7 has all mi300x gates green and hosted checks pending",
+      "Checked-arithmetic repair b40eb556 is an unmerged candidate on 6ede4ea5: focused hostile cases pass, broad locked qualification awaits PR #246, and an exact restack remains required",
       "PR #244 head db096436 has point-in-time qualified evidence against 3e40abf7 and needs an exact restack onto current main; aggregate verification has not landed",
-      "Stage C candidate fa6dd736 and separately qualified deterministic-contention candidate ccfb8338 are unmerged; the 7ef196c1 base has scoped mi300x evidence, while exact profile/no-ACK qualification remains in progress",
+      "Stage C candidate bf1351a2 and separately qualified deterministic-contention candidate ccfb8338 are unmerged; the 7ef196c1 base has scoped mi300x evidence, while the updated exact profile path is rerunning",
       "Stage D joint artifact-set authentication, generic multi-root lowering, LLVM/HSACO emission, and authenticated fixed-batch KFD remain unmerged upstream integration work",
       "Deployment identities and Ferric-specific inference authority are intentionally not defined upstream",
     ],
