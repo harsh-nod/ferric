@@ -7,7 +7,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Ferric has authenticated Qwen inputs, exact execution plans, bounded engine state, and source-level protected Worker V3 adapters for all seven M1 kernel families. PR #24 qualified canonical Git-tree source-closure modes at 3898bf40 and landed them in m1/bundle-admission through 49a539f2. fe2o3 PR #236 has landed upstream, but Ferric has not pinned or qualified that line. No authenticated collector currently acquires the seven live owners; current artifacts, protected authority, end-to-end Qwen, hardware and performance qualification, the production receipt, and M1 remain open.",
+      "Ferric main f5b11d6 has authenticated Qwen inputs, exact execution plans, bounded engine state, and source-level protected Worker V3 adapters for all seven M1 kernel families. fe2o3 main 326cd503 includes verified multi-root semantic rosters and, for the scalar production line, exact rustc induction snapshots, canonical authority-free report custody, lossless MIR-to-KIR span evidence, compiler-lineage publication of that evidence, repaired exact-snapshot versus stale-alias integration coverage, and decoded-module custody beside verified canonical KIR V8 bytes. Ferric has not pinned or qualified this upstream line. Aggregate PR #244 at db096436 has point-in-time qualified evidence against 3e40abf7 and needs an exact restack onto current main; it has not landed. Aggregate verification, ordered Stage C handoff, Stage D joint artifact-set authentication, generic multi-root lowering, LLVM/HSACO emission, runtime authority, authenticated fixed-batch KFD, Ferric authority rosters, end-to-end Qwen, hardware and performance evidence, the production receipt, and M1 remain open.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -16,9 +16,10 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Precision", "BF16 / FP32 accumulate"],
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
-    ["Ferric integration", "PR #24 qualified 3898bf40 / landed 49a539f2"],
+    ["Ferric integration", "main f5b11d6; PR #24 qualified 3898bf40 / landed 49a539f2"],
     ["Ferric-pinned fe2o3", "42639ecc; compiler receipt, verifier, and direct-KFD runtime line"],
-    ["Current fe2o3 upstream", "PR #236 merge 027157dd; not yet pinned or qualified by Ferric"],
+    ["Current fe2o3 upstream", "main 326cd503; verified canonical KIR V8 bytes can retain their decoded module"],
+    ["Upstream integration", "PR #244 db096436 evidence is point-in-time and rebase-pending; Stage C, Stage D, lowering, emission, and runtime authority remain open"],
     [
       "Protected artifact",
       "SwiGLU semantic fe2ce532...e9569e8f / HSACO 57ecb86b...fc6afa7",
@@ -54,6 +55,48 @@ window.FERRIC_PROJECT = Object.freeze({
         "Qualified source 1d666dbc, landed through be307d52, makes GEMM, RMSNorm, RoPE/KV, prefill, paged decode, SwiGLU, and logits accept only matching compiler-produced, move-only Worker V3 owners before strict structural inspection. Tests do not execute Worker V3 or establish current HSACO existence.",
     },
     {
+      label: "Generic Worker V3 roster admission",
+      state: "implemented",
+      detail:
+        "fe2o3 PR #242 merged exact, fail-closed Worker V3 descriptor-roster admission at b3cd6534. This is reusable upstream host infrastructure; Ferric has not pinned it, populated its seven production authorities, or used it to run Qwen.",
+    },
+    {
+      label: "Multi-root ranked semantic rosters",
+      state: "implemented",
+      detail:
+        "fe2o3 PR #243 merged at b167991f after source parity, Generic, and scoped mi300x affected, focused, and ROCm qualification checks passed. It retains verified per-root semantic ownership and ranked projections; aggregate verification, ordered Stage C handoff, and multi-root KIR/LLVM/HSACO remain open.",
+    },
+    {
+      label: "Bounded gfx942 EXEC-control facts",
+      state: "implemented",
+      detail:
+        "fe2o3 main 41e542278 derives bounded structural facts for exact EXECZ/EXECNZ sites in authenticated gfx942 traces: CFG successors, a unique two-half EXEC reaching definition, an immediate post-dominator candidate, scalar mask operands, and a matching saved-mask OR site when structurally present. It assigns no opcode semantics and proves neither an empty mask, hardware reconvergence, termination, nor launch authority.",
+    },
+    {
+      label: "Checked production arithmetic policy",
+      state: "implemented",
+      detail:
+        "fe2o3 main ee93e692 canonicalizes each selected production kernel compile to exactly one -Coverflow-checks=on and rejects disabled or conflicting settings before the in-process rustc driver starts; the driver independently requires that exact canonical form. The exact invocation retains the flag, while semantic induction certificates remain inert and cannot authorize removal of LLVM overflow guards without an independent source-to-KIR-to-LLVM refinement join.",
+    },
+    {
+      label: "Exact rustc induction snapshots",
+      state: "implemented",
+      detail:
+        "fe2o3 main 326cd503 includes d8904ad8's exact single-use u32 header-snapshot admission and the merged test-only repair that distinguishes an accepted header snapshot from a rejected stale preheader alias. The certificate retains both the compared value and snapshot site, rejects extra uses and structural hazards, and preserves the LLVM overflow guard.",
+    },
+    {
+      label: "Canonical scalar correspondence evidence",
+      state: "implemented",
+      detail:
+        "fe2o3 a8cfbb32 retains the complete induction report as canonical authority-free evidence. e16ec53a joins that report to bounded block correspondence plus exact MIR statement, terminator, synthetic-operation, and parameter-binding spans, and 5b232a17 publishes the V4 correspondence through the scalar production semantic-lineage receipt. This does not complete Stage C, Stage D, generic multi-root lowering, LLVM/HSACO emission, or runtime authority.",
+    },
+    {
+      label: "Decoded canonical KIR V8 custody",
+      state: "implemented",
+      detail:
+        "fe2o3 main 326cd503 can return one verified canonical KIR V8 byte owner together with the same decoded, verified Module, avoiding a second full decode for inspecting consumers. This narrow custody API does not establish Stage C, multi-root lowering, LLVM/HSACO emission, runtime authority, or Ferric admission.",
+    },
+    {
       label: "Canonical M1 source closure",
       state: "qualified",
       detail:
@@ -69,7 +112,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "End-to-end Qwen through Ferric",
       state: "open",
       detail:
-        "The production path still needs current seven-family artifacts, Ferric's protected policy, Worker ledger, external rollback verifier, distinct-UID service deployment and keys, an authenticated seven-owner collector and roster, authority-safe custody fixtures, a runner, end-to-end Qwen execution, and current-source hardware and performance qualification.",
+        "The production path still needs aggregate verification, ordered Stage C handoff, Stage D joint artifact-set authentication, generic multi-root lowering, LLVM/HSACO emission, authenticated fixed-batch KFD, a qualified Ferric pin, seven protected authority rosters, current artifacts, a runner, end-to-end Qwen execution, and current-source hardware and performance qualification.",
     },
     {
       label: "M1 qualification",
@@ -127,27 +170,52 @@ window.FERRIC_PROJECT = Object.freeze({
         detail:
           "Reusable typed allocation, USERPTR/AQL queue ownership, fixed-batch publication, completion, and dispatch components are integrated upstream for Ferric to consume.",
       },
+      {
+        name: "Generic multi-root semantic ownership",
+        detail:
+          "fe2o3 admits exact Worker V3 descriptor rosters and retains verified per-root semantic owners with deterministic ranked projections. These merged generic stages do not yet aggregate verification or produce multi-root KIR, LLVM, HSACO, or authenticated KFD execution.",
+      },
+      {
+        name: "Bounded gfx942 EXEC-control analysis",
+        detail:
+          "An inert upstream analysis joins exact EXEC-conditioned branches in authenticated machine traces to structural CFG, reaching-definition, post-dominator, mask-operand, and possible restore-site facts. It establishes no machine semantics, compiler refinement, hardware reconvergence, empty-mask proof, termination, or launch authority.",
+      },
+      {
+        name: "Checked production arithmetic",
+        detail:
+          "The selected production rustc wrapper inserts or canonicalizes one enabled overflow-check policy, rejects disabled or conflicting settings, and the driver requires exactly one canonical flag. The pipeline reports semantic u32 induction certificates for examined checked additions, but those certificates grant no authority to remove the corresponding LLVM overflow guard.",
+      },
+      {
+        name: "Exact induction-snapshot admission",
+        detail:
+          "The semantic analysis accepts either the induction local itself or one uniquely defined, single-use, hazard-free u32 temporary copied from it before the guard. Main 326cd503 retains positive exact-header-snapshot coverage and negative stale-preheader-alias evidence. The resulting certificate remains inert and does not authorize compiler transforms or runtime execution.",
+      },
+      {
+        name: "Lossless scalar MIR-to-KIR evidence custody",
+        detail:
+          "Canonical evidence retains the exact induction report with bounded MIR-to-KIR block and operation spans, then the scalar production compiler publishes that V4 correspondence through semantic lineage and redecodes it before final handoff. This is authority-free evidence custody, not completed multi-root lowering, source-to-LLVM refinement, code-object emission, or launch authority.",
+      },
     ],
     roadmap: [
       {
-        name: "Ferric production authority",
+        name: "Aggregate verification, Stage C, and Stage D",
         detail:
-          "Define the concrete protected kernel policy, bind a Worker ledger, join repository and host-descriptor lineage, and require an external rollback verifier before promotion.",
+          "Exactly restack fe2o3 PR #244 from point-in-time qualified head db096436 onto current main and requalify fail-closed aggregate Worker V3 verification, then carry the admitted roster's canonical order through Stage C and complete Stage D joint artifact-set authentication.",
       },
       {
-        name: "Authenticated evidence collector",
+        name: "Multi-root compiler emission",
         detail:
-          "Replace the retired Worker V2 artifact command with an in-process collector that acquires all seven real V3 owners and passes them atomically to the fail-closed artifact publisher.",
+          "Lower the admitted roster into canonical multi-root KIR, LLVM, and HSACO while preserving per-root identity, limits, and evidence joins.",
       },
       {
-        name: "Generated contracts and evidence",
+        name: "Authenticated fixed-batch KFD",
         detail:
-          "Add receipt-bound generated marker contracts for the six non-SwiGLU families, exercise every public V3 bind path with authority-safe positive and hostile custody fixtures, and complete authenticated proof/executable, Rust layout, Rust effect, safety, and operator-refinement evidence for all seven lanes.",
+          "Bind the exact emitted roster to fixed-batch publication, completion, and failure handling under authenticated runtime custody.",
       },
       {
-        name: "Protected service deployment",
+        name: "Ferric pin and authority rosters",
         detail:
-          "Deploy the compiler execution service and backend under distinct nonroot identities with production keys, permissions, and operational supervision.",
+          "Pin and qualify the completed fe2o3 line, then join all seven live owners to Ferric's protected policy, Worker ledger, lineage, rollback verifier, deployment identities, and keys.",
       },
       {
         name: "Complete Qwen execution",
@@ -217,6 +285,102 @@ window.FERRIC_PROJECT = Object.freeze({
       "The catalog records host-validated source paths. Target-only decode and every unlisted cross-plan transition require explicit queue retirement and a fresh admitted launch; none inherit rollover authority.",
   },
   recentProgress: [
+    {
+      commit: "326cd503c64df5d6a5ef24839115ad37c19bfb50",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Retain a decoded KIR V8 module with custody",
+      state: "implemented",
+      detail:
+        "fe2o3 can now return the owner of exact verified canonical KIR V8 bytes together with the same decoded, verified Module, so an inspecting consumer does not need a second full decode. The API adds no Stage C, multi-root lowering, LLVM/HSACO, runtime, launch, Qwen, or M1 authority.",
+    },
+    {
+      commit: "3e40abf75679bb6646cb7bb50a781a2dfdb584de",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Merge exact-snapshot integration repair",
+      state: "implemented",
+      detail:
+        "fe2o3 merged the test-only repair that treats a unique single-use header copy as the admitted exact induction snapshot and retains a separate stale preheader alias as fail-closed negative evidence. The repair adds no compiler-transform, runtime, launch, Qwen, or M1 authority.",
+    },
+    {
+      commit: "5b232a175ca119de2a376d6cba94acaf6725584d",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Publish lossless correspondence evidence",
+      state: "implemented",
+      detail:
+        "The scalar production semantic-lineage path now publishes the V4 canonical MIR-to-KIR correspondence, including its nested induction evidence, and redecodes it before final handoff while checking the semantic MIR and neutral KIR identities. Multi-root Stage C, Stage D, lowering, LLVM/HSACO, and runtime authority remain open.",
+    },
+    {
+      commit: "e16ec53a8495989f2276d8bb6b20d963529a67a4",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Preserve lossless MIR-to-KIR spans",
+      state: "implemented",
+      detail:
+        "fe2o3 adds bounded canonical V4 custody for block correspondence, MIR statement and terminator spans, synthetic-operation spans, parameter bindings, and the nested canonical induction report. The evidence is explicitly authority-free and does not establish source-to-LLVM or machine-code refinement.",
+    },
+    {
+      commit: "a8cfbb326f8ced1b8370e48f2abc8230b978af9c",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Retain canonical induction reports",
+      state: "implemented",
+      detail:
+        "fe2o3 canonically encodes and independently decodes the complete bounded u32 induction report, including exact identities, sites, work counts, and optional header-snapshot custody. The evidence grants no compiler or runtime authority.",
+    },
+    {
+      commit: "d8904ad8b9ce5ca35b08f0b3bff3dddbecceb6cc",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Admit exact rustc induction snapshots",
+      state: "implemented",
+      detail:
+        "fe2o3 retains an exact single-use header snapshot when rustc compares that copied u32 value against the loop bound. The identity-bound scalar gfx942 certificate records the induction value and snapshot site, rejects extra-use and hostile shapes, and preserves the LLVM overflow guard. It grants no compiler-transform, runtime, launch, Qwen, or M1 authority; aggregate verification remains open in PR #244.",
+    },
+    {
+      commit: "ee93e692ac0e7c2ea69fafadbc07b2f6c5d4a84d",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Enforce checked production arithmetic",
+      state: "implemented",
+      detail:
+        "fe2o3 canonicalizes selected production kernel compiles to exactly one -Coverflow-checks=on, rejects disabled or conflicting forms before rustc enters the in-process driver, requires the canonical flag at the driver boundary, retains it in the exact protected invocation, and observes checked u32 addition lowering through llvm.uadd.with.overflow.i32. Semantic induction certificates remain inert; this commit grants no runtime, guard-removal, launch, Qwen, or M1 authority.",
+    },
+    {
+      commit: "41e5422783e5f45e14e0835c108ec0e51630c8b9",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Derive bounded gfx942 EXEC-control facts",
+      state: "implemented",
+      detail:
+        "fe2o3 adds a fail-closed, bounded structural analysis for exact EXECZ/EXECNZ branch sites in authenticated gfx942 instruction/CFG traces. It records branch successors, unique EXEC reaching definitions, immediate post-dominator candidates, canonical mask operands, and structurally matching saved-mask OR sites; it does not establish compiler or machine semantics, hardware reconvergence, empty masks, termination, launch authority, Qwen execution, or M1.",
+    },
+    {
+      commit: "b167991f03811594ec2a42be745e3b133cb3a6b8",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Retain verified multi-root ranked semantic rosters",
+      state: "implemented",
+      detail:
+        "fe2o3 PR #243 merged qualified head 06bfae35e68c3f7d69a4bf836e3faa6f5e61e97a after source parity, Generic, and scoped mi300x affected, focused, and ROCm checks passed. The merge establishes generic per-root semantic ownership only; aggregate verification, Stage C, multi-root KIR/LLVM/HSACO, authenticated KFD, Ferric adoption, Qwen, and M1 remain open.",
+    },
+    {
+      commit: "b3cd6534f13a3463fc86eb01306aa72aec6b2c75",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Admit exact Worker V3 descriptor rosters",
+      state: "implemented",
+      detail:
+        "fe2o3 PR #242 merged a generic, fail-closed roster admission boundary for exact Worker V3 descriptors. Ferric remains pinned to 42639ecc and has not supplied or qualified its seven production authority rosters.",
+    },
+    {
+      commit: "bb04ceb05d68169a2a54bebd96e7943bdbdda156",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Classify the external host-runtime anchor",
+      state: "implemented",
+      detail:
+        "fe2o3 PR #240 made the host-runtime service boundary explicit for generic integration. It does not deploy Ferric identities, credentials, policy, or runtime authority.",
+    },
+    {
+      commit: "895d5e4b2b3ee584dfa1fc154197670dd610d132",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Repair standalone workspace locks",
+      state: "implemented",
+      detail:
+        "fe2o3 PR #239 refreshed standalone locks after AMD target ownership so the generic workspaces qualify consistently. This is workspace repair, not Qwen or M1 evidence.",
+    },
     {
       commit: "027157dd9810cd6acb3a25ff1b613f3514463c33",
       repository: "https://github.com/harsh-nod/fe2o3",
@@ -330,7 +494,8 @@ window.FERRIC_PROJECT = Object.freeze({
       "Scheduling, paged KV, speculation, generated runner, and M1 qualification",
       "Qualified source 1d666dbc binds all seven K1-K7 families to protected Worker V3 custody and landed through be307d52 in m1/bundle-admission",
       "PR #24 qualified canonical 100644/100755 source-closure modes at 3898bf40 and landed them through 49a539f2",
-      "Authenticated seven-owner collection and roster, current artifacts, generated marker contracts, authority-safe custody fixtures, protected policy, end-to-end Qwen, hardware and performance evidence, the production receipt, and M1 remain Ferric work",
+      "Ferric main f5b11d6 has not pinned current fe2o3 or admitted its seven production authority rosters",
+      "Current artifacts, protected policy and deployment, end-to-end Qwen, hardware and performance evidence, the production receipt, and M1 remain Ferric work",
     ],
     fe2o3: [
       "Reusable compiler APIs, semantic artifact identities, and protected compilation",
@@ -338,7 +503,13 @@ window.FERRIC_PROJECT = Object.freeze({
       "Generic receipt-complete sealed verification and promotion boundary",
       "Typed KFD allocations, USERPTR/AQL queues, fixed-batch publication, completion, and dispatch",
       "Ferric's supported compiler/runtime baseline remains 42639ecc7f2f377ab57e5e884c36133a126f230e until a newer fe2o3 revision is pinned and qualified",
-      "PR #236 landed upstream at 027157dd9810cd6acb3a25ff1b613f3514463c33; its generic signed-Verus V4 proof custody, protected-verifier adapter boundary, and compiler/KFD convergence are not yet part of Ferric's supported baseline",
+      "fe2o3 main 326cd503 includes PR #239 workspace repair, PR #240 host-runtime classification, PR #242 exact Worker V3 roster admission, PR #243 verified multi-root ranked semantic rosters, bounded structural gfx942 EXEC-control facts, canonical checked production arithmetic, exact rustc induction-snapshot admission, canonical induction-report custody, lossless MIR-to-KIR span evidence, compiler-lineage publication, repaired exact-snapshot versus stale-alias integration coverage, and decoded verified Module custody beside exact canonical KIR V8 bytes",
+      "All PR #243 source parity, Generic, and scoped mi300x qualification checks passed before merge; Ferric has not pinned or qualified this line",
+      "The gfx942 EXEC-control layer assigns no opcode semantics and proves neither machine reconvergence, empty masks, termination, nor launch authority",
+      "Checked arithmetic fixes selected production kernel compiles to one -Coverflow-checks=on; its induction certificates do not authorize removal of LLVM overflow guards",
+      "Exact single-use u32 guard snapshots may be retained in the induction certificate, but the certificate remains inert without authenticated source-to-KIR-to-LLVM refinement",
+      "PR #244 head db096436 has point-in-time qualified evidence against 3e40abf7 and needs an exact restack onto current main; aggregate verification has not landed",
+      "Ordered Stage C handoff, Stage D joint artifact-set authentication, generic multi-root lowering, LLVM/HSACO emission, and authenticated fixed-batch KFD remain upstream integration work",
       "Deployment identities and Ferric-specific inference authority are intentionally not defined upstream",
     ],
   },
