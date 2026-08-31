@@ -1,0 +1,25 @@
+[package]
+name = "ferric-qwen3-gemm-device-v1"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94"
+publish = false
+
+# The device compiler is nightly-pinned independently of Ferric's stable host
+# workspace. The dependency revision is immutable reviewed source; a newer
+# cargo-fe2o3 compiler must explicitly admit that exact external closure.
+[workspace]
+
+[dependencies]
+fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "d955209099c7b434dfceb69e1152d948dab76b22", version = "=0.1.0" }
+
+[target.'cfg(not(target_arch = "amdgpu"))'.dependencies]
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "d955209099c7b434dfceb69e1152d948dab76b22", version = "=0.1.0" }
+
+[dev-dependencies]
+quote = "1"
+syn = { version = "2", features = ["full"] }
+
+[lib]
+name = "ferric_qwen3_gemm_device_v1"
+path = "src/lib.rs"
