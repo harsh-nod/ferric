@@ -71,7 +71,7 @@ pub const QWEN3_PAGED_KV_WRITE_GLOBAL_BUFFER_ABI_V1: [KernelGlobalBufferAbiV1<'s
 pub const QWEN3_ROPE_KV_TARGET_V1: &str = "gfx942:xnack-";
 /// Exact code-object version required by this compiler lane.
 pub const QWEN3_ROPE_KV_CODE_OBJECT_VERSION_V1: u8 = 6;
-/// One wave64 workgroup is assigned to each active row.
+/// Exact Wave64 workgroup required by both device roots.
 pub const QWEN3_ROPE_KV_WORKGROUP_V1: [u32; 3] = [64, 1, 1];
 /// Exact Qwen3 head dimension.
 pub const QWEN3_ROPE_KV_HEAD_DIMENSION_V1: u32 = 128;
@@ -87,6 +87,9 @@ pub const QWEN3_KV_PAGE_TOKENS_V1: u32 = 16;
 pub const QWEN3_KV_PAGE_TABLE_ENTRIES_V1: u32 = 512;
 /// Fixed physical page slots in the global Ferric KV cache pool.
 pub const QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1: u32 = 16_384;
+/// One Wave64 workgroup owns each physical page during paged KV writes.
+pub const QWEN3_PAGED_KV_WRITE_GRID_WORKITEMS_V1: u32 =
+    QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1 * QWEN3_ROPE_KV_WORKGROUP_V1[0];
 /// BF16 elements in each fixed global key or value cache.
 pub const QWEN3_KV_CACHE_ELEMENTS_V1: u64 = QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1 as u64
     * QWEN3_KV_PAGE_TOKENS_V1 as u64
@@ -342,17 +345,26 @@ impl Qwen3RopeKvProfileV1 {
             .checked_mul(u64::from(bucket.role.key_value_heads()))
             .and_then(|value| value.checked_mul(u64::from(QWEN3_ROPE_KV_HEAD_DIMENSION_V1)))
             .ok_or(Qwen3RopeKvCatalogErrorV1::ExtentOverflow)?;
-        let grid_x = active_tokens
-            .checked_mul(QWEN3_ROPE_KV_WORKGROUP_V1[0])
-            .ok_or(Qwen3RopeKvCatalogErrorV1::GridOverflow)?;
+        let (block_counts, aql_grid_work_items) = match operation {
+            Qwen3RopeKvOperationV1::Rope => {
+                let grid_x = base_rows
+                    .checked_mul(QWEN3_ROPE_KV_WORKGROUP_V1[0])
+                    .ok_or(Qwen3RopeKvCatalogErrorV1::GridOverflow)?;
+                ([base_rows, 1, 1], [grid_x, 1, 1])
+            }
+            Qwen3RopeKvOperationV1::PagedKvWrite => (
+                [QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1, 1, 1],
+                [QWEN3_PAGED_KV_WRITE_GRID_WORKITEMS_V1, 1, 1],
+            ),
+        };
         let mut profile = Self {
             bucket,
             operation,
             base_rows,
             query_elements,
             kv_elements,
-            block_counts: [active_tokens, sequences, 1],
-            aql_grid_work_items: [grid_x, sequences, 1],
+            block_counts,
+            aql_grid_work_items,
             identity: Qwen3RopeKvProfileIdentityV1([0; 32]),
         };
         profile.identity = Qwen3RopeKvProfileIdentityV1(hash(PROFILE_DOMAIN, &profile.encode()));
@@ -3528,8 +3540,28 @@ mod tests {
                         profile.kv_elements(),
                         u64::from(sequences * active * 8 * 128)
                     );
-                    assert_eq!(profile.hsa_adapter_block_counts(), [active, sequences, 1]);
-                    assert_eq!(profile.aql_grid_work_items(), [active * 64, sequences, 1]);
+                    match operation {
+                        Qwen3RopeKvOperationV1::Rope => {
+                            assert_eq!(
+                                profile.hsa_adapter_block_counts(),
+                                [sequences * active, 1, 1]
+                            );
+                            assert_eq!(
+                                profile.aql_grid_work_items(),
+                                [sequences * active * 64, 1, 1]
+                            );
+                        }
+                        Qwen3RopeKvOperationV1::PagedKvWrite => {
+                            assert_eq!(
+                                profile.hsa_adapter_block_counts(),
+                                [QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1, 1, 1]
+                            );
+                            assert_eq!(
+                                profile.aql_grid_work_items(),
+                                [QWEN3_PAGED_KV_WRITE_GRID_WORKITEMS_V1, 1, 1]
+                            );
+                        }
+                    }
                 }
             }
         }
