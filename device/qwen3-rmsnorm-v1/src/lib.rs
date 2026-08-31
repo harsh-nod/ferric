@@ -8,8 +8,8 @@
 //! artifact, launch, KFD dispatch, numerical-qualification, or M1 authority.
 
 use fe2o3_device::{
-    Bf16, Gfx942Collectives, Index1D, Math, RowStriped2D, SubgroupTile, Wave64, WaveLane,
-    WriteOnlyDisjointSlice, kernel, thread,
+    Bf16, Gfx942Collectives, Index1D, Math, RowStriped2D, Wave64, WaveLane, WriteOnlyDisjointSlice,
+    kernel, memory, thread,
 };
 
 /// Exact exported kernel symbol retained from the direct-LLVM implementation.
@@ -326,6 +326,7 @@ pub const fn qwen3_rmsnorm_profile_v1(
 #[must_use]
 pub const fn qwen3_rmsnorm_shape_is_admitted_v1(rows: u32, width: u32, behavior: u32) -> bool {
     rows != 0
+        && rows <= QWEN3_RMSNORM_MAX_GRID_WORKGROUPS_V1
         && ((behavior == QWEN3_RMSNORM_BEHAVIOR_PURE_V1
             && (width == 128 || width == 1_024 || width == 4_096))
             || (behavior == QWEN3_RMSNORM_BEHAVIOR_RESIDUAL_FUSED_V1
@@ -358,73 +359,6 @@ pub const fn qwen3_rmsnorm_lengths_are_admitted_v1(
                 && fused_output == elements))
 }
 
-macro_rules! qwen3_rmsnorm_accumulate_component_v1 {
-    (
-        $lane_index:ident, $width:ident, $row_base:ident, $input:ident,
-        $fused_mode:ident, $residual:ident, $local_sum:ident;
-        $($component:literal),+ $(,)?
-    ) => {{
-        $(
-            let column = $lane_index + $component * 64;
-            if column < $width as usize {
-                let index = $row_base + column;
-                let input_value = Bf16::from_bits($input[index]).to_f32();
-                let normalized_input = if $fused_mode {
-                    input_value + Bf16::from_bits($residual[index]).to_f32()
-                } else {
-                    input_value
-                };
-                $local_sum += normalized_input * normalized_input;
-            }
-        )+
-    }};
-}
-
-macro_rules! qwen3_rmsnorm_write_component_v1 {
-    (
-        $lane_index:ident, $width:ident, $row_base:ident, $input:ident,
-        $fused_mode:ident, $residual:ident, $fused_output:ident, $output_row:ident,
-        $rows:ident, $inverse_rms:ident, $weight:ident, $normalized_output:ident;
-        $($component:literal),+ $(,)?
-    ) => {{
-        $(
-            let column = $lane_index + $component * 64;
-            if column < $width as usize {
-                let index = $row_base + column;
-                let input_value = Bf16::from_bits($input[index]).to_f32();
-                let normalized_input = if $fused_mode {
-                    let fused = input_value + Bf16::from_bits($residual[index]).to_f32();
-                    if !$fused_output.write_row_striped_2d(
-                        &$output_row,
-                        $component,
-                        $rows as usize,
-                        $width as usize,
-                        $width as usize,
-                        Bf16::from_f32(fused).to_bits(),
-                    ) {
-                        fe2o3_device::trap();
-                    }
-                    fused
-                } else {
-                    input_value
-                };
-                let normalized = normalized_input * $inverse_rms;
-                let weighted = normalized * Bf16::from_bits($weight[column]).to_f32();
-                if !$normalized_output.write_row_striped_2d(
-                    &$output_row,
-                    $component,
-                    $rows as usize,
-                    $width as usize,
-                    $width as usize,
-                    Bf16::from_f32(weighted).to_bits(),
-                ) {
-                    fe2o3_device::trap();
-                }
-            }
-        )+
-    }};
-}
-
 /// Computes RMSNorm with one wave64 workgroup per row.
 ///
 /// Inputs and outputs retain physical `u16` BF16 carriers. Pure mode requires
@@ -438,7 +372,8 @@ macro_rules! qwen3_rmsnorm_write_component_v1 {
         required = [64, 1, 1],
         max = [64, 1, 1],
         max_grid = [65536, 1, 1]
-    )
+    ),
+    control_flow(loop_bounds(4096, 64))
 )]
 pub fn qwen3_rmsnorm_v1(
     input_bf16: &[u16],
@@ -455,7 +390,9 @@ pub fn qwen3_rmsnorm_v1(
     let fused_mode = behavior == QWEN3_RMSNORM_BEHAVIOR_RESIDUAL_FUSED_V1;
     let pure_width = width == 128 || width == 1_024 || width == 4_096;
     let fused_width = width == 1_024 || width == 4_096;
-    let shape_valid = rows != 0 && ((pure_mode && pure_width) || (fused_mode && fused_width));
+    let shape_valid = rows != 0
+        && rows <= QWEN3_RMSNORM_MAX_GRID_WORKGROUPS_V1
+        && ((pure_mode && pure_width) || (fused_mode && fused_width));
     let elements = rows as usize * width as usize;
     let required_lengths = input_bf16.len() == elements
         && weight_bf16.len() == width as usize
@@ -478,38 +415,122 @@ pub fn qwen3_rmsnorm_v1(
     let row = thread::block_idx_x() as usize;
     let lane = WaveLane::<Wave64>::current();
     let lane_index = lane.get() as usize;
-    let wave = SubgroupTile::<64>::from_wave64_snapshot(&lane);
     let collectives = Gfx942Collectives::current();
     let row_base = row * width as usize;
     let mut local_sum = 0.0_f32;
-    qwen3_rmsnorm_accumulate_component_v1!(
-        lane_index, width, row_base, input_bf16, fused_mode, residual_bf16, local_sum;
-        0, 1, 2, 3, 4, 5, 6, 7,
-        8, 9, 10, 11, 12, 13, 14, 15,
-        16, 17, 18, 19, 20, 21, 22, 23,
-        24, 25, 26, 27, 28, 29, 30, 31,
-        32, 33, 34, 35, 36, 37, 38, 39,
-        40, 41, 42, 43, 44, 45, 46, 47,
-        48, 49, 50, 51, 52, 53, 54, 55,
-        56, 57, 58, 59, 60, 61, 62, 63,
-    );
-    let sum = wave.reduce_sum(&collectives, local_sum);
+    if lane_index == 0 {
+        let mut column = 0_usize;
+        while column < width as usize {
+            let index = row_base + column;
+            let input = Bf16::from_bits(memory::volatile_load(input_bf16, index));
+            if !input.is_finite() {
+                fe2o3_device::trap();
+            }
+            let input_value = input.to_f32();
+            let normalized_input = if fused_mode {
+                let residual = Bf16::from_bits(memory::volatile_load(residual_bf16, index));
+                if !residual.is_finite() {
+                    fe2o3_device::trap();
+                }
+                let fused = input_value + residual.to_f32();
+                if !fused.is_finite() {
+                    fe2o3_device::trap();
+                }
+                fused
+            } else {
+                input_value
+            };
+            let square = normalized_input * normalized_input;
+            let next_sum = local_sum + square;
+            if !square.is_finite() || !next_sum.is_finite() {
+                fe2o3_device::trap();
+            }
+            local_sum = next_sum;
+            column += 1;
+        }
+    }
+    let sum = collectives.subgroup_reduce_sum_f32::<64>(local_sum);
+    if !sum.is_finite() {
+        fe2o3_device::trap();
+    }
     let mean_square = sum / width as f32;
-    let inverse_rms = 1.0_f32 / Math::current().sqrt_f32(mean_square + epsilon);
+    let stabilized = mean_square + epsilon;
+    if !mean_square.is_finite() || !stabilized.is_finite() || stabilized <= 0.0 {
+        fe2o3_device::trap();
+    }
+    let denominator = Math::current().sqrt_f32(stabilized);
+    if !denominator.is_finite() || denominator <= 0.0 {
+        fe2o3_device::trap();
+    }
+    let inverse_rms = 1.0_f32 / denominator;
+    if !inverse_rms.is_finite() {
+        fe2o3_device::trap();
+    }
     let Some(output_row) = thread::index_1d().checked_row_striped_2d::<64, 64>() else {
         fe2o3_device::trap();
     };
 
-    qwen3_rmsnorm_write_component_v1!(
-        lane_index, width, row_base, input_bf16, fused_mode, residual_bf16,
-        fused_residual_bf16, output_row, rows, inverse_rms, weight_bf16, normalized_bf16;
-        0, 1, 2, 3, 4, 5, 6, 7,
-        8, 9, 10, 11, 12, 13, 14, 15,
-        16, 17, 18, 19, 20, 21, 22, 23,
-        24, 25, 26, 27, 28, 29, 30, 31,
-        32, 33, 34, 35, 36, 37, 38, 39,
-        40, 41, 42, 43, 44, 45, 46, 47,
-        48, 49, 50, 51, 52, 53, 54, 55,
-        56, 57, 58, 59, 60, 61, 62, 63,
-    );
+    let mut component = 0_usize;
+    while component < 64 {
+        let column = lane_index + component * 64;
+        if column < width as usize {
+            let index = row_base + column;
+            let input = Bf16::from_bits(memory::volatile_load(input_bf16, index));
+            if !input.is_finite() {
+                fe2o3_device::trap();
+            }
+            let input_value = input.to_f32();
+            let normalized_input = if fused_mode {
+                let residual = Bf16::from_bits(memory::volatile_load(residual_bf16, index));
+                if !residual.is_finite() {
+                    fe2o3_device::trap();
+                }
+                let fused = input_value + residual.to_f32();
+                if !fused.is_finite() {
+                    fe2o3_device::trap();
+                }
+                let narrowed_fused = Bf16::from_f32(fused);
+                if !narrowed_fused.is_finite() {
+                    fe2o3_device::trap();
+                }
+                if !fused_residual_bf16.write_row_striped_2d(
+                    &output_row,
+                    component,
+                    rows as usize,
+                    width as usize,
+                    width as usize,
+                    narrowed_fused.to_bits(),
+                ) {
+                    fe2o3_device::trap();
+                }
+                fused
+            } else {
+                input_value
+            };
+            let normalized = normalized_input * inverse_rms;
+            let weight = Bf16::from_bits(memory::volatile_load(weight_bf16, column));
+            if !weight.is_finite() {
+                fe2o3_device::trap();
+            }
+            let weighted = normalized * weight.to_f32();
+            if !normalized.is_finite() || !weighted.is_finite() {
+                fe2o3_device::trap();
+            }
+            let narrowed_weighted = Bf16::from_f32(weighted);
+            if !narrowed_weighted.is_finite() {
+                fe2o3_device::trap();
+            }
+            if !normalized_bf16.write_row_striped_2d(
+                &output_row,
+                component,
+                rows as usize,
+                width as usize,
+                width as usize,
+                narrowed_weighted.to_bits(),
+            ) {
+                fe2o3_device::trap();
+            }
+        }
+        component += 1;
+    }
 }

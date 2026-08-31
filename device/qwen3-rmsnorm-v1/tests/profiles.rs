@@ -55,6 +55,13 @@ fn expected_base_rows(role: Qwen3RmsNormModelRoleV1, bucket: Qwen3RmsNormBucketK
     }
 }
 
+fn expected_role_geometry(role: Qwen3RmsNormModelRoleV1) -> (u32, u32, u32) {
+    match role {
+        Qwen3RmsNormModelRoleV1::Target8B => (4_096, 32, 8),
+        Qwen3RmsNormModelRoleV1::Draft06B => (1_024, 16, 8),
+    }
+}
+
 #[test]
 fn exact_abi_order_offsets_access_and_kernarg_sizes_are_frozen() {
     assert_eq!(QWEN3_RMSNORM_KERNEL_SYMBOL_V1, "qwen3_rmsnorm_v1");
@@ -122,31 +129,28 @@ fn all_132_profiles_match_independent_role_bucket_operation_geometry() {
     for role in QWEN3_RMSNORM_MODEL_ROLES_V1 {
         for bucket in QWEN3_RMSNORM_BUCKET_KINDS_V1 {
             let base_rows = expected_base_rows(role, bucket);
+            let (hidden_size, query_heads, key_value_heads) = expected_role_geometry(role);
             for operation in QWEN3_RMSNORM_OPERATIONS_V1 {
                 let profile = qwen3_rmsnorm_profile_v1(role, bucket, operation);
                 let (rows, width, behavior) = match operation {
-                    Qwen3RmsNormOperationV1::QueryRmsNorm => (
-                        base_rows * role.query_heads(),
-                        128,
-                        QWEN3_RMSNORM_BEHAVIOR_PURE_V1,
-                    ),
+                    Qwen3RmsNormOperationV1::QueryRmsNorm => {
+                        (base_rows * query_heads, 128, QWEN3_RMSNORM_BEHAVIOR_PURE_V1)
+                    }
                     Qwen3RmsNormOperationV1::KeyRmsNorm => (
-                        base_rows * role.key_value_heads(),
+                        base_rows * key_value_heads,
                         128,
                         QWEN3_RMSNORM_BEHAVIOR_PURE_V1,
                     ),
                     Qwen3RmsNormOperationV1::ResidualFusedHidden => (
                         base_rows,
-                        role.hidden_size(),
+                        hidden_size,
                         QWEN3_RMSNORM_BEHAVIOR_RESIDUAL_FUSED_V1,
                     ),
                     Qwen3RmsNormOperationV1::InputRmsNorm
                     | Qwen3RmsNormOperationV1::PostAttentionRmsNorm
-                    | Qwen3RmsNormOperationV1::FinalRmsNorm => (
-                        base_rows,
-                        role.hidden_size(),
-                        QWEN3_RMSNORM_BEHAVIOR_PURE_V1,
-                    ),
+                    | Qwen3RmsNormOperationV1::FinalRmsNorm => {
+                        (base_rows, hidden_size, QWEN3_RMSNORM_BEHAVIOR_PURE_V1)
+                    }
                 };
                 assert_eq!(profile.role(), role);
                 assert_eq!(profile.bucket(), bucket);
@@ -189,11 +193,6 @@ fn generic_machine_shape_is_closed_over_behavior_and_width() {
             QWEN3_RMSNORM_BEHAVIOR_RESIDUAL_FUSED_V1
         ));
     }
-    assert!(qwen3_rmsnorm_shape_is_admitted_v1(
-        u32::MAX,
-        128,
-        QWEN3_RMSNORM_BEHAVIOR_PURE_V1,
-    ));
     for (rows, width, behavior) in [
         (0, 128, 0),
         (1, 0, 0),
@@ -201,6 +200,7 @@ fn generic_machine_shape_is_closed_over_behavior_and_width() {
         (1, 128, 1),
         (1, 1_024, 2),
         (1, 4_097, 0),
+        (QWEN3_RMSNORM_MAX_GRID_WORKGROUPS_V1 + 1, 128, 0),
         (u32::MAX, 128, u32::MAX),
     ] {
         assert!(!qwen3_rmsnorm_shape_is_admitted_v1(rows, width, behavior));

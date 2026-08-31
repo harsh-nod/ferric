@@ -16,19 +16,55 @@ fn narrow_bf16_rne(value: f32) -> u16 {
     ((bits + 0x7fff + retained_lsb) >> 16) as u16
 }
 
-fn xor_reduce_f32(mut values: [f32; 64]) -> f32 {
+fn serial_square_sum(input: &[u16]) -> f32 {
+    input.iter().fold(0.0_f32, |sum, bits| {
+        let value = widen_bf16(*bits);
+        sum + value * value
+    })
+}
+
+fn legacy_xor_square_sum(input: &[u16]) -> f32 {
+    let mut lanes = [0.0_f32; 64];
+    for (lane, sum) in lanes.iter_mut().enumerate() {
+        for component in 0..64 {
+            let column = lane + component * 64;
+            if let Some(bits) = input.get(column) {
+                let value = widen_bf16(*bits);
+                *sum += value * value;
+            }
+        }
+    }
     let mut offset = 32;
     while offset != 0 {
-        let previous = values;
+        let previous = lanes;
         for lane in 0..64 {
-            values[lane] = previous[lane] + previous[lane ^ offset];
+            lanes[lane] = previous[lane] + previous[lane ^ offset];
         }
         offset >>= 1;
     }
-    for value in values {
-        assert_eq!(value.to_bits(), values[0].to_bits());
-    }
-    values[0]
+    lanes[0]
+}
+
+#[test]
+fn reassociation_sensitive_row_pins_authoritative_serial_fp32_order() {
+    let input = [
+        16295, 16734, 15610, 16917, 16782, 17267, 16001, 15365, 17397, 15627, 16562, 15898, 15809,
+        16186, 17041, 16392, 16277, 16725, 15587, 16964, 16853, 17263, 16043, 15361, 17318, 15708,
+        16557, 15923, 15850, 16176, 17133, 16399, 16327, 16704, 15535, 16903, 16800, 17182, 16120,
+        15441, 17306, 15648, 16523, 15968, 15767, 16218, 17132, 16489, 16317, 16670, 15584, 16991,
+        16879, 17154, 16106, 15478, 17362, 15705, 16590, 15906, 15816, 16184, 17040, 16407, 16375,
+        16753, 15605, 16970, 16834, 17178, 16127, 15470, 17358, 15622, 16628, 15991, 15869, 16201,
+        17112, 16410, 16373, 16696, 15597, 16969, 16793, 17254, 16057, 15418, 17294, 15655, 16639,
+        15968, 15798, 16143, 17091, 16496, 16311, 16755, 15562, 16989, 16884, 17254, 16022, 15451,
+        17298, 15676, 16621, 15966, 15860, 16137, 17107, 16410, 16317, 16674, 15498, 16900, 16852,
+        17177, 16024, 15439, 17370, 15685, 16576, 15983, 15797, 16183, 17030, 16408,
+    ];
+    assert_eq!(serial_square_sum(&input).to_bits(), 0x49be_1c17);
+    assert_eq!(legacy_xor_square_sum(&input).to_bits(), 0x49be_1c1a);
+    assert_ne!(
+        serial_square_sum(&input).to_bits(),
+        legacy_xor_square_sum(&input).to_bits()
+    );
 }
 
 fn reference_rmsnorm(
@@ -38,7 +74,7 @@ fn reference_rmsnorm(
     rows: usize,
     width: usize,
     behavior: u32,
-) -> (Vec<u16>, Vec<u16>) {
+) -> Option<(Vec<u16>, Vec<u16>)> {
     let fused_mode = behavior == QWEN3_RMSNORM_BEHAVIOR_RESIDUAL_FUSED_V1;
     assert!(fused_mode || behavior == QWEN3_RMSNORM_BEHAVIOR_PURE_V1);
     assert_eq!(input.len(), rows * width);
@@ -53,45 +89,84 @@ fn reference_rmsnorm(
     let epsilon = f32::from_bits(QWEN3_RMSNORM_EPSILON_BITS_V1);
     for row in 0..rows {
         let row_base = row * width;
-        let mut lane_sums = [0.0_f32; 64];
-        for (lane, lane_sum) in lane_sums.iter_mut().enumerate() {
-            for component in 0..64 {
-                let column = lane + component * 64;
-                if column < width {
-                    let index = row_base + column;
-                    let input_value = widen_bf16(input[index]);
-                    let normalized_input = if fused_mode {
-                        input_value + widen_bf16(residual[index])
-                    } else {
-                        input_value
-                    };
-                    *lane_sum += normalized_input * normalized_input;
-                }
+        let mut sum = 0.0_f32;
+        for column in 0..width {
+            let index = row_base + column;
+            let input_value = widen_bf16(input[index]);
+            if !input_value.is_finite() {
+                return None;
             }
+            let normalized_input = if fused_mode {
+                let residual_value = widen_bf16(residual[index]);
+                let fused = input_value + residual_value;
+                if !residual_value.is_finite() || !fused.is_finite() {
+                    return None;
+                }
+                fused
+            } else {
+                input_value
+            };
+            let square = normalized_input * normalized_input;
+            let next_sum = sum + square;
+            if !square.is_finite() || !next_sum.is_finite() {
+                return None;
+            }
+            sum = next_sum;
         }
-        let sum = xor_reduce_f32(lane_sums);
-        let inverse_rms = 1.0 / (sum / width as f32 + epsilon).sqrt();
+        let mean_square = sum / width as f32;
+        let stabilized = mean_square + epsilon;
+        let denominator = stabilized.sqrt();
+        let inverse_rms = 1.0 / denominator;
+        if !mean_square.is_finite()
+            || !stabilized.is_finite()
+            || stabilized <= 0.0
+            || !denominator.is_finite()
+            || denominator <= 0.0
+            || !inverse_rms.is_finite()
+        {
+            return None;
+        }
         for lane in 0..64 {
             for component in 0..64 {
                 let column = lane + component * 64;
                 if column < width {
                     let index = row_base + column;
                     let input_value = widen_bf16(input[index]);
+                    if !input_value.is_finite() {
+                        return None;
+                    }
                     let normalized_input = if fused_mode {
-                        let fused = input_value + widen_bf16(residual[index]);
-                        fused_output[index] = narrow_bf16_rne(fused);
+                        let residual_value = widen_bf16(residual[index]);
+                        let fused = input_value + residual_value;
+                        let narrowed = narrow_bf16_rne(fused);
+                        if !residual_value.is_finite()
+                            || !fused.is_finite()
+                            || !widen_bf16(narrowed).is_finite()
+                        {
+                            return None;
+                        }
+                        fused_output[index] = narrowed;
                         fused
                     } else {
                         input_value
                     };
                     let normalized = normalized_input * inverse_rms;
-                    let weighted = normalized * widen_bf16(weight[column]);
-                    normalized_output[index] = narrow_bf16_rne(weighted);
+                    let weight_value = widen_bf16(weight[column]);
+                    let weighted = normalized * weight_value;
+                    let narrowed = narrow_bf16_rne(weighted);
+                    if !weight_value.is_finite()
+                        || !normalized.is_finite()
+                        || !weighted.is_finite()
+                        || !widen_bf16(narrowed).is_finite()
+                    {
+                        return None;
+                    }
+                    normalized_output[index] = narrowed;
                 }
             }
         }
     }
-    (fused_output, normalized_output)
+    Some((fused_output, normalized_output))
 }
 
 #[test]
@@ -106,7 +181,8 @@ fn pure_mode_consumes_empty_auxiliaries_and_preserves_zero_rows_numerically() {
             2,
             width,
             QWEN3_RMSNORM_BEHAVIOR_PURE_V1,
-        );
+        )
+        .unwrap();
         assert!(fused.is_empty());
         assert_eq!(normalized, input);
     }
@@ -124,7 +200,8 @@ fn pure_uniform_unit_rows_round_back_to_bf16_one() {
             1,
             width,
             QWEN3_RMSNORM_BEHAVIOR_PURE_V1,
-        );
+        )
+        .unwrap();
         assert!(fused.is_empty());
         assert!(normalized.iter().all(|&value| value == 0x3f80));
     }
@@ -149,7 +226,8 @@ fn fused_mode_stores_bf16_sum_but_normalizes_the_full_f32_sum() {
             1,
             width,
             QWEN3_RMSNORM_BEHAVIOR_RESIDUAL_FUSED_V1,
-        );
+        )
+        .unwrap();
         for index in 0..width {
             assert_eq!(
                 fused[index],
@@ -168,4 +246,37 @@ fn bf16_narrowing_is_round_to_nearest_ties_to_even() {
     assert_eq!(narrow_bf16_rne(f32::from_bits(0x3f81_8000)), 0x3f82);
     assert_eq!(narrow_bf16_rne(f32::from_bits(0x3f80_8001)), 0x3f81);
     assert_eq!(narrow_bf16_rne(f32::NAN) & 0x7fc0, 0x7fc0);
+}
+
+#[test]
+fn nonfinite_inputs_intermediates_and_narrowing_fail_closed() {
+    let finite_input = vec![0x3f80_u16; 128];
+    let finite_weight = vec![0x3f80_u16; 128];
+
+    let mut nonfinite_input = finite_input.clone();
+    nonfinite_input[17] = 0x7f80;
+    assert!(reference_rmsnorm(&nonfinite_input, &[], &finite_weight, 1, 128, 0).is_none());
+
+    let mut nonfinite_weight = finite_weight.clone();
+    nonfinite_weight[31] = 0x7fc1;
+    assert!(reference_rmsnorm(&finite_input, &[], &nonfinite_weight, 1, 128, 0).is_none());
+
+    let overflow_input = vec![0x7f7f_u16; 128];
+    assert!(reference_rmsnorm(&overflow_input, &[], &finite_weight, 1, 128, 0).is_none());
+
+    let fused_input = vec![0x3f80_u16; 1_024];
+    let mut nonfinite_residual = vec![0_u16; 1_024];
+    nonfinite_residual[257] = 0xff80;
+    let fused_weight = vec![0x3f80_u16; 1_024];
+    assert!(
+        reference_rmsnorm(
+            &fused_input,
+            &nonfinite_residual,
+            &fused_weight,
+            1,
+            1_024,
+            QWEN3_RMSNORM_BEHAVIOR_RESIDUAL_FUSED_V1,
+        )
+        .is_none()
+    );
 }

@@ -33,25 +33,6 @@ fn compact_tokens(tokens: impl ToTokens) -> String {
         .collect()
 }
 
-fn named_macro(name: &str) -> syn::ItemMacro {
-    syn::parse_file(SOURCE)
-        .expect("device source parses as ordinary Rust")
-        .items
-        .into_iter()
-        .find_map(|item| match item {
-            Item::Macro(item)
-                if item
-                    .ident
-                    .as_ref()
-                    .is_some_and(|identifier| identifier == name) =>
-            {
-                Some(item)
-            }
-            _ => None,
-        })
-        .unwrap_or_else(|| panic!("missing macro {name}"))
-}
-
 #[test]
 fn source_has_one_exact_attributed_kernel_and_no_artifact_escape_hatch() {
     let kernel = kernel();
@@ -118,7 +99,7 @@ fn signature_retains_exact_slice_order_access_and_scalar_tail() {
 }
 
 #[test]
-fn attribute_pins_wave64_grid_bound_without_a_dynamic_loop_contract() {
+fn attribute_pins_wave64_grid_and_serial_reduction_bound() {
     let kernel = kernel();
     let attribute = kernel
         .attrs
@@ -134,10 +115,10 @@ fn attribute_pins_wave64_grid_bound_without_a_dynamic_loop_contract() {
         "required=[64,1,1]",
         "max=[64,1,1]",
         "max_grid=[65536,1,1]",
+        "control_flow(loop_bounds(4096,64))",
     ] {
         assert!(tokens.contains(marker), "missing attribute marker {marker}");
     }
-    assert!(!tokens.contains("control_flow"));
 }
 
 #[test]
@@ -149,6 +130,7 @@ fn kernel_authenticates_shape_lengths_epsilon_and_exact_grid_before_collective()
         "width==128",
         "width==1_024",
         "width==4_096",
+        "rows<=QWEN3_RMSNORM_MAX_GRID_WORKGROUPS_V1",
         "input_bf16.len()==elements",
         "weight_bf16.len()==widthasusize",
         "normalized_bf16.len()==elements",
@@ -162,65 +144,104 @@ fn kernel_authenticates_shape_lengths_epsilon_and_exact_grid_before_collective()
         assert!(body.contains(marker), "missing admission marker {marker}");
     }
     let validation_trap = body.find("if!shape_valid").unwrap();
-    let first_expansion = body
-        .find("qwen3_rmsnorm_accumulate_component_v1!(")
+    let first_serial_load = body
+        .find("memory::volatile_load(input_bf16,index)")
         .unwrap();
-    let collective = body.find("wave.reduce_sum(").unwrap();
-    assert!(validation_trap < first_expansion);
+    let collective = body
+        .find("collectives.subgroup_reduce_sum_f32::<64>(local_sum)")
+        .unwrap();
+    assert!(validation_trap < first_serial_load);
     assert!(validation_trap < collective);
 }
 
 #[test]
 fn wave_math_and_row_striped_writes_retain_the_exact_formula_boundaries() {
     let body = compact_tokens(&kernel().block);
-    let accumulation = compact_tokens(named_macro("qwen3_rmsnorm_accumulate_component_v1"));
-    let write = compact_tokens(named_macro("qwen3_rmsnorm_write_component_v1"));
     for marker in [
         "WaveLane::<Wave64>::current()",
-        "SubgroupTile::<64>::from_wave64_snapshot(&lane)",
         "Gfx942Collectives::current()",
-        "letsum=wave.reduce_sum(&collectives,local_sum)",
+        "iflane_index==0",
+        "letmutcolumn=0_usize",
+        "whilecolumn<widthasusize",
+        "letsquare=normalized_input*normalized_input",
+        "letnext_sum=local_sum+square",
+        "local_sum=next_sum",
+        "column+=1",
+        "letsum=collectives.subgroup_reduce_sum_f32::<64>(local_sum)",
         "letmean_square=sum/widthasf32",
-        "1.0_f32/Math::current().sqrt_f32(mean_square+epsilon)",
+        "letstabilized=mean_square+epsilon",
+        "letdenominator=Math::current().sqrt_f32(stabilized)",
+        "letinverse_rms=1.0_f32/denominator",
         "checked_row_striped_2d::<64,64>()",
+        "letmutcomponent=0_usize",
+        "whilecomponent<64",
+        "letcolumn=lane_index+component*64",
+        "memory::volatile_load(input_bf16,index)",
+        "memory::volatile_load(residual_bf16,index)",
+        "memory::volatile_load(weight_bf16,column)",
+        "letnarrowed_fused=Bf16::from_f32(fused)",
+        "letnormalized=normalized_input*inverse_rms",
+        "letnarrowed_weighted=Bf16::from_f32(weighted)",
     ] {
         assert!(body.contains(marker), "missing numerical marker {marker}");
     }
-    for marker in [
-        "letcolumn=$lane_index+$component*64",
-        "$local_sum+=normalized_input*normalized_input",
-    ] {
-        assert!(
-            accumulation.contains(marker),
-            "missing accumulation marker {marker}"
-        );
-    }
-    for marker in [
-        "letcolumn=$lane_index+$component*64",
-        "Bf16::from_f32(fused).to_bits()",
-        "letnormalized=normalized_input*$inverse_rms",
-        "letweighted=normalized*Bf16::from_bits($weight[column]).to_f32()",
-        "Bf16::from_f32(weighted).to_bits()",
-    ] {
-        assert!(write.contains(marker), "missing write marker {marker}");
-    }
-    let roster = (0..64)
-        .map(|component| component.to_string())
-        .collect::<Vec<_>>()
-        .join(",");
     assert_eq!(
-        body.matches("qwen3_rmsnorm_accumulate_component_v1!(")
+        body.matches("collectives.subgroup_reduce_sum_f32::<64>(local_sum)")
             .count(),
         1
     );
-    assert_eq!(
-        body.matches("qwen3_rmsnorm_write_component_v1!(").count(),
-        1
-    );
-    assert!(body.contains(&format!("local_sum;{roster},)")));
-    assert!(body.contains(&format!("normalized_bf16;{roster},)")));
-    assert_eq!(body.matches("wave.reduce_sum(").count(), 1);
-    assert_eq!(write.matches("write_row_striped_2d(").count(), 2);
+    assert_eq!(body.matches("whilecolumn<widthasusize").count(), 1);
+    assert_eq!(body.matches("whilecomponent<64").count(), 1);
+    assert_eq!(body.matches("component+=1").count(), 1);
+    assert_eq!(body.matches("write_row_striped_2d(").count(), 2);
+}
+
+#[test]
+fn numerical_path_traps_nonfinite_inputs_intermediates_and_bf16_outputs() {
+    let body = compact_tokens(&kernel().block);
+    for marker in [
+        "if!input.is_finite()",
+        "if!residual.is_finite()",
+        "if!fused.is_finite()",
+        "if!square.is_finite()||!next_sum.is_finite()",
+        "if!sum.is_finite()",
+        "if!mean_square.is_finite()||!stabilized.is_finite()||stabilized<=0.0",
+        "if!denominator.is_finite()||denominator<=0.0",
+        "if!inverse_rms.is_finite()",
+        "if!narrowed_fused.is_finite()",
+        "if!weight.is_finite()",
+        "if!normalized.is_finite()||!weighted.is_finite()",
+        "if!narrowed_weighted.is_finite()",
+    ] {
+        assert!(body.contains(marker), "missing finite trap marker {marker}");
+    }
+    assert!(body.matches("fe2o3_device::trap()").count() >= 15);
+}
+
+#[test]
+fn every_shared_observation_uses_the_bounded_volatile_terminal() {
+    let body = compact_tokens(&kernel().block);
+    assert_eq!(body.matches("memory::volatile_load(").count(), 5);
+    for forbidden in [
+        "input_bf16[",
+        "residual_bf16[",
+        "weight_bf16[",
+        "SubgroupTile",
+        "wave.reduce_sum(",
+        "qwen3_rmsnorm_accumulate_component_v1",
+    ] {
+        assert!(
+            !SOURCE.contains(forbidden),
+            "shared-memory or reduction custody regressed through {forbidden}"
+        );
+    }
+    let lane_zero = body.find("iflane_index==0").unwrap();
+    let serial_loop = body.find("whilecolumn<widthasusize").unwrap();
+    let collective = body
+        .find("collectives.subgroup_reduce_sum_f32::<64>(local_sum)")
+        .unwrap();
+    let write_loop = body.find("whilecomponent<64").unwrap();
+    assert!(lane_zero < serial_loop && serial_loop < collective && collective < write_loop);
 }
 
 #[test]
