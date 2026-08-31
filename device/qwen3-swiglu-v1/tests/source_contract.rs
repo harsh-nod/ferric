@@ -83,6 +83,41 @@ fn source_has_one_exact_attributed_kernel_and_no_worker_escape_hatch() {
 }
 
 #[test]
+fn host_build_exposes_the_exact_write_only_kfd_adapter() {
+    use fe2o3_host::__generated::{
+        CompilerGeneratedKernelExpectationV1, CompilerGeneratedKfdArguments, GeneratedKfdReadSlice,
+        GeneratedKfdWriteSlice,
+    };
+    use ferric_qwen3_swiglu_device_v1::qwen3_swiglu_bf16_f32_v1_gpu::{Arguments, Marker};
+
+    fn assert_kfd_adapter<'allocation, K, A>()
+    where
+        K: CompilerGeneratedKernelExpectationV1,
+        A: CompilerGeneratedKfdArguments<'allocation, K>,
+    {
+    }
+
+    assert_kfd_adapter::<
+        Marker,
+        Arguments<
+            'static,
+            GeneratedKfdReadSlice<'static, u16>,
+            GeneratedKfdReadSlice<'static, u16>,
+            GeneratedKfdWriteSlice<'static, u16>,
+        >,
+    >();
+
+    let gate = [0_u16; 8];
+    let up = [0_u16; 8];
+    let mut output = [0_u16; 8];
+    let _arguments = Arguments::new(
+        GeneratedKfdReadSlice::new(&gate),
+        GeneratedKfdReadSlice::new(&up),
+        GeneratedKfdWriteSlice::new(&mut output),
+    );
+}
+
+#[test]
 fn attribute_pins_launch_grid_without_dynamic_control_contracts() {
     let kernel = kernel();
     let attribute = kernel
@@ -119,7 +154,10 @@ fn signature_retains_three_slice_records_and_physical_bf16_carriers() {
         .collect();
     assert_eq!(arguments[0], "&[u16]");
     assert_eq!(arguments[1], "&[u16]");
-    assert_eq!(arguments[2], "DisjointSlice<u16,Blocked<Index1D,1,8>>");
+    assert_eq!(
+        arguments[2],
+        "WriteOnlyDisjointSlice<u16,Blocked<Index1D,1,8>>"
+    );
 }
 
 fn quote_type(ty: &Type) -> String {
@@ -235,13 +273,22 @@ fn kernel_uses_eight_constant_blocked_stores() {
         assert!(body.contains(&format!(
             "qwen3_swiglu_element_v1!(gate[{index}],up[{index}])"
         )));
-        assert!(body.contains(&format!("output.get_block_mut(&output_block,{component})")));
+        assert!(body.contains(&format!(
+            "output.write_block(&output_block,{component},value)"
+        )));
     }
     assert_eq!(body.matches("qwen3_swiglu_element_v1!(").count(), 8);
-    assert_eq!(body.matches("output.get_block_mut(").count(), 8);
-    assert_eq!(body.matches("*slot=value;").count(), 8);
+    assert_eq!(body.matches("output.write_block(").count(), 8);
     assert_eq!(body.matches("fe2o3_device::trap()").count(), 10);
-    for forbidden in ["while", "loop", "break", "continue", "macro_rules!"] {
+    for forbidden in [
+        "while",
+        "loop",
+        "break",
+        "continue",
+        "macro_rules!",
+        "get_block_mut",
+        "*slot",
+    ] {
         assert!(
             !body.contains(forbidden),
             "found forbidden body marker {forbidden}"

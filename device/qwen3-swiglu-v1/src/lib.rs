@@ -8,8 +8,7 @@
 //! or M1 authority. Production Worker V3 integration remains fail-closed until
 //! an exact compiler run emits and verifies a replacement artifact.
 
-#[cfg(target_arch = "amdgpu")]
-use fe2o3_device::{Bf16, Blocked, DisjointSlice, Index1D, Math, kernel, thread};
+use fe2o3_device::{Bf16, Blocked, Index1D, Math, WriteOnlyDisjointSlice, kernel, thread};
 
 /// Exact exported kernel symbol retained from the direct-LLVM implementation.
 pub const QWEN3_SWIGLU_KERNEL_SYMBOL_V1: &str = "qwen3_swiglu_bf16_f32_v1";
@@ -61,7 +60,6 @@ const fn f32_is_finite_v1(value: f32) -> bool {
     value >= f32::MIN && value <= f32::MAX
 }
 
-#[cfg(target_arch = "amdgpu")]
 macro_rules! qwen3_swiglu_element_v1 {
     ($gate_bits:expr, $up_bits:expr) => {{
         let gate_value = Bf16::from_bits($gate_bits);
@@ -110,7 +108,6 @@ macro_rules! qwen3_swiglu_element_v1 {
 /// Each workitem owns exactly eight contiguous elements. Non-finite input or
 /// intermediate values trap before the current store; earlier stores are not
 /// rolled back.
-#[cfg(target_arch = "amdgpu")]
 #[kernel(
     typed,
     launch(
@@ -122,7 +119,7 @@ macro_rules! qwen3_swiglu_element_v1 {
 pub fn qwen3_swiglu_bf16_f32_v1(
     gate: &[u16],
     up: &[u16],
-    mut output: DisjointSlice<u16, Blocked<Index1D, 1, 8>>,
+    mut output: WriteOnlyDisjointSlice<u16, Blocked<Index1D, 1, 8>>,
 ) {
     let elements = gate.len();
     if !qwen3_swiglu_extent_is_admitted_expr_v1!(elements)
@@ -141,73 +138,65 @@ pub fn qwen3_swiglu_bf16_f32_v1(
     let index_0 = base;
     if index_0 < elements {
         let value = qwen3_swiglu_element_v1!(gate[index_0], up[index_0]);
-        let Some(slot) = output.get_block_mut(&output_block, 0) else {
+        if !output.write_block(&output_block, 0, value) {
             fe2o3_device::trap();
-        };
-        *slot = value;
+        }
     }
 
     let index_1 = base + 1;
     if index_1 < elements {
         let value = qwen3_swiglu_element_v1!(gate[index_1], up[index_1]);
-        let Some(slot) = output.get_block_mut(&output_block, 1) else {
+        if !output.write_block(&output_block, 1, value) {
             fe2o3_device::trap();
-        };
-        *slot = value;
+        }
     }
 
     let index_2 = base + 2;
     if index_2 < elements {
         let value = qwen3_swiglu_element_v1!(gate[index_2], up[index_2]);
-        let Some(slot) = output.get_block_mut(&output_block, 2) else {
+        if !output.write_block(&output_block, 2, value) {
             fe2o3_device::trap();
-        };
-        *slot = value;
+        }
     }
 
     let index_3 = base + 3;
     if index_3 < elements {
         let value = qwen3_swiglu_element_v1!(gate[index_3], up[index_3]);
-        let Some(slot) = output.get_block_mut(&output_block, 3) else {
+        if !output.write_block(&output_block, 3, value) {
             fe2o3_device::trap();
-        };
-        *slot = value;
+        }
     }
 
     let index_4 = base + 4;
     if index_4 < elements {
         let value = qwen3_swiglu_element_v1!(gate[index_4], up[index_4]);
-        let Some(slot) = output.get_block_mut(&output_block, 4) else {
+        if !output.write_block(&output_block, 4, value) {
             fe2o3_device::trap();
-        };
-        *slot = value;
+        }
     }
 
     let index_5 = base + 5;
     if index_5 < elements {
         let value = qwen3_swiglu_element_v1!(gate[index_5], up[index_5]);
-        let Some(slot) = output.get_block_mut(&output_block, 5) else {
+        if !output.write_block(&output_block, 5, value) {
             fe2o3_device::trap();
-        };
-        *slot = value;
+        }
     }
 
     let index_6 = base + 6;
     if index_6 < elements {
         let value = qwen3_swiglu_element_v1!(gate[index_6], up[index_6]);
-        let Some(slot) = output.get_block_mut(&output_block, 6) else {
+        if !output.write_block(&output_block, 6, value) {
             fe2o3_device::trap();
-        };
-        *slot = value;
+        }
     }
 
     let index_7 = base + 7;
     if index_7 < elements {
         let value = qwen3_swiglu_element_v1!(gate[index_7], up[index_7]);
-        let Some(slot) = output.get_block_mut(&output_block, 7) else {
+        if !output.write_block(&output_block, 7, value) {
             fe2o3_device::trap();
-        };
-        *slot = value;
+        }
     }
 }
 
