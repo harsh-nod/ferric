@@ -201,19 +201,18 @@
             <h2 id="next-title">Close compiler and custody gates</h2>
           </div>
           <p>
-            Ferric cannot run Qwen through the production path. K6 SwiGLU attributed source landed
-            through PR #32 at Ferric main da25cef3, but no current compiler artifact or run is claimed.
-            K1 GEMM/embedding has 21 managed debug and release host tests passing on MI300X without
-            production extraction, artifact, or hardware evidence. Active unlanded K2 RMSNorm
-            development now matches authoritative lane-zero ascending serial FP32 accumulation and
-            passes 17 debug plus 17 release managed tests on MI300X, while ABI, PR #22 transport,
-            latest-compiler extraction, artifact, KFD, and hardware gaps remain. K3 RoPE/KV remains
-            in development. fe2o3 PRs #20 and #21 merged exact multi-root production lowering
-            and reviewed external source trust, and current fe2o3 main is 881078f3. PR #22 non-null
-            empty KFD transport remains open with failing checks, while generic volatile-load production
-            support remains active and unmerged. Qwen numerical, hardware, and performance evidence,
-            independent validation, formal closure, the production receipt, and all 33 M1 requirements
-            remain open. No current production Ferric Qwen run has occurred.
+            Ferric cannot run Qwen through the production path. M1 integration head baf5b6a8 contains
+            the K1, qualified K2, K4, K5, inherited K6, and K7 attributed source packages; K3 RoPE/KV
+            is in source qualification. Current fe2o3 main is 130ab26c. PR #262 non-null empty generated
+            KFD slice transport is open at 06282ff9; targeted mi300x gates were green on the prior exact
+            head, and current-head requalification and CI are in progress. Volatile-load tree e2bb916a
+            is remotely staged with formatting green and remaining qualification pending. Generic service-
+            runtime candidate 738aeebf has targeted mi300x qualification green, while Ferric seven-roster
+            acquisition and authentication remain open.
+            Production extraction, current artifacts, authenticated KFD execution, Qwen numerical,
+            hardware, and performance evidence, independent validation, formal closure, the production
+            receipt, and all 33 M1 requirements remain open. No current production Ferric Qwen run has
+            occurred.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>
