@@ -407,7 +407,10 @@ impl Qwen3GemmProfileV1 {
         }
         let block_x = checked_ceil_div_16(n).ok_or(Qwen3GemmCatalogErrorV1::GridOverflow)?;
         let block_y = checked_ceil_div_16(m).ok_or(Qwen3GemmCatalogErrorV1::GridOverflow)?;
-        let grid_x = block_x
+        let block_count = block_x
+            .checked_mul(block_y)
+            .ok_or(Qwen3GemmCatalogErrorV1::GridOverflow)?;
+        let grid_x = block_count
             .checked_mul(QWEN3_GEMM_WORKGROUP_V1[0])
             .ok_or(Qwen3GemmCatalogErrorV1::GridOverflow)?;
         let schedule = if m < 16 {
@@ -422,8 +425,8 @@ impl Qwen3GemmProfileV1 {
             dimensions,
             strides,
             storage_elements,
-            block_counts: [block_x, block_y, 1],
-            aql_grid_workitems: [grid_x, block_y, 1],
+            block_counts: [block_count, 1, 1],
+            aql_grid_workitems: [grid_x, 1, 1],
             reduction_phases: k / 4,
             numerical_policy: Qwen3GemmNumericalPolicyV1::Bf16StorageAscendingFp32Bf16Rne,
             identity: Qwen3GemmProfileIdentityV1([0; 32]),
@@ -492,7 +495,7 @@ impl Qwen3GemmProfileV1 {
         self.storage_elements
     }
 
-    /// Exact HSA-adapter block counts.
+    /// Exact flattened 1D HSA-adapter block counts.
     #[must_use]
     pub const fn hsa_adapter_block_counts(self) -> [u32; 3] {
         self.block_counts
@@ -3322,17 +3325,12 @@ mod tests {
             assert!(profile.dimensions()[2].is_multiple_of(4));
             let blocks = profile.hsa_adapter_block_counts();
             let grid = profile.aql_grid_workitems();
-            assert_eq!(blocks[0].checked_mul(64), Some(grid[0]));
-            assert_eq!(blocks[1], grid[1]);
-            assert_eq!(blocks[2], grid[2]);
-            assert_eq!(
-                checked_ceil_div_16(profile.dimensions()[1]),
-                Some(blocks[0])
-            );
-            assert_eq!(
-                checked_ceil_div_16(profile.dimensions()[0]),
-                Some(blocks[1])
-            );
+            let tile_columns = checked_ceil_div_16(profile.dimensions()[1]).unwrap();
+            let tile_rows = checked_ceil_div_16(profile.dimensions()[0]).unwrap();
+            let flattened_blocks = tile_columns.checked_mul(tile_rows).unwrap();
+            assert_eq!(blocks, [flattened_blocks, 1, 1]);
+            assert_eq!(grid, [flattened_blocks.checked_mul(64).unwrap(), 1, 1]);
+            assert!(blocks[0] <= 1_215_488);
             assert!(!profile.proves_machine_arithmetic());
         }
     }
