@@ -24,9 +24,9 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Latest observed fe2o3 upstream", "main 958423dc"],
     ["Current fe2o3 repair line", "repair 952d3835d is staged for the current compiler/runtime qualification; it is not merged production authority"],
     ["Non-null empty KFD transport", "candidate c2b0cf4f6 is included in the current qualification stack; merge and production runtime authority remain open"],
-    ["Qualified development work", "exact 11-file snapshot admission at 8e7fbbd and snapshot-only operational intake at edfaefa, including a source-path-absent 22-plan MI300X proof; neither branch is integrated or published"],
-    ["Staged compiler work", "volatile combined candidate 1a52ae136 has focused closure, volatile-positive, and same-name-forgery-negative checks green; full Generic-core qualification is running"],
-    ["Authenticated Ferric intake", "the exact seven-roster and 12-program intake is being qualified; it does not yet grant artifact load, dispatch, or Qwen execution authority"],
+    ["Qualified development work", "exact 11-file snapshot admission at 8e7fbbd and snapshot-only operational intake at edfaefa, including a source-path-absent 22-plan MI300X proof, are integrated into the current unpublished M1 integration lineage, not main"],
+    ["Staged compiler work", "current volatile qualification head 0e38cf312 is awaiting final exact-compiler qualification; it is not merged compiler or extraction authority"],
+    ["Authenticated Ferric intake", "service head ada15d3603f82649fd24bd395fe31cf93c950d20 on base KFD 9c9e2bb78 is qualifying the exact seven-roster and 12-program intake; it does not yet grant artifact load, dispatch, or Qwen execution authority"],
     [
       "Historical protected artifact",
       "SwiGLU semantic fe2ce532...e9569e8f / HSACO 57ecb86b...fc6afa7; qualification-only and not supplied by the PR #32 landing",
@@ -83,7 +83,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Seven-artifact recovery to runtime join",
       state: "integration",
       detail:
-        "Ferric's exact seven-roster and 12-program intake is under qualification. Until that intake and the persistent runtime join complete, current artifact persistence is structural custody rather than Worker V3 load, dispatch, or Qwen execution authority.",
+        "Ferric service head ada15d3603f82649fd24bd395fe31cf93c950d20 on base KFD 9c9e2bb78 is qualifying the exact seven-roster and 12-program intake. Until that intake and the persistent runtime join complete, current artifact persistence is structural custody rather than Worker V3 load, dispatch, or Qwen execution authority.",
     },
     {
       label: "Long-lived KFD queue lifecycle",
@@ -149,13 +149,13 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Exact 11-file Qwen snapshot admission",
       state: "integration",
       detail:
-        "Development commit 8e7fbbd implements and qualifies a self-contained, exact 11-file Qwen snapshot with authenticated snapshot-owned metadata and strict fail-closed roster validation after source removal. The branch is not integrated or published and grants no production Qwen or M1 authority.",
+        "Development commit 8e7fbbd implements and qualifies a self-contained, exact 11-file Qwen snapshot with authenticated snapshot-owned metadata and strict fail-closed roster validation after source removal. It is integrated into the current unpublished M1 integration lineage, not main, and grants no production Qwen or M1 authority.",
     },
     {
       label: "Snapshot-only operational intake",
       state: "integration",
       detail:
-        "Development commit edfaefa implements snapshot-only operational intake and has a source-path-absent 22-plan MI300X proof. The branch is qualified for that development scope but is not integrated or published, so it is not a production intake or M1 authority.",
+        "Development commit edfaefa implements snapshot-only operational intake and has a source-path-absent 22-plan MI300X proof. It is qualified for that development scope and integrated into the current unpublished M1 integration lineage, not main; it is not a production intake or M1 authority.",
     },
     {
       label: "Exact multi-root production lowering",
@@ -179,7 +179,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Generic volatile-load production support",
       state: "integration",
       detail:
-        "Volatile combined candidate 1a52ae136 has focused source-closure, volatile-positive, and same-name-forgery-negative checks green. Full Generic-core qualification is running; it is not merged and must not be treated as current compiler or extraction authority.",
+        "Current volatile qualification head 0e38cf312 is awaiting final exact-compiler qualification. It is not merged and must not be treated as current compiler or extraction authority.",
     },
     {
       label: "K1 GEMM and embedding device source",
@@ -360,12 +360,12 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Integrate snapshot and lifecycle branches",
         detail:
-          "Integrate and publish the qualified exact 11-file snapshot admission and snapshot-only operational intake branches, then complete qualification of the staged lifecycle merge without widening their development-scope authority.",
+          "The qualified exact 11-file snapshot admission and snapshot-only operational intake are integrated into the current unpublished M1 integration lineage, not main. Complete qualification and publication of that lineage and the staged lifecycle merge without widening their development-scope authority.",
       },
       {
         name: "Complete KFD edge handling",
         detail:
-          "Adopt merged compiler-authenticated write-only KFD arguments and exact multi-root lowering, finish qualification and integration of non-null candidate c2b0cf4f6, and complete full Generic-core qualification of volatile combined candidate 1a52ae136. Then qualify the joined upstream line in Ferric.",
+          "Adopt merged compiler-authenticated write-only KFD arguments and exact multi-root lowering, finish qualification and integration of non-null candidate c2b0cf4f6, and complete exact-compiler qualification of current volatile head 0e38cf312. Then qualify the joined upstream line in Ferric.",
       },
       {
         name: "Ordered Stage C and joint Stage D",
@@ -456,12 +456,19 @@ window.FERRIC_PROJECT = Object.freeze({
   },
   recentProgress: [
     {
-      commit: "1a52ae136",
+      commit: "0e38cf312",
       repository: "https://github.com/harsh-nod/fe2o3",
       title: "Qualify the combined volatile compiler stack",
       state: "integration",
       detail:
-        "Focused source-closure, volatile-positive, and same-name-forgery-negative checks are green. Full Generic-core qualification is running, so this candidate is not merged compiler authority and does not authorize Ferric production extraction.",
+        "This is the current volatile qualification head. Final exact-compiler qualification remains open, so this candidate is not merged compiler authority and does not authorize Ferric production extraction.",
+    },
+    {
+      commit: "ada15d3603f82649fd24bd395fe31cf93c950d20",
+      title: "Qualify authenticated Ferric service intake",
+      state: "integration",
+      detail:
+        "Current service head ada15d3603 on base KFD 9c9e2bb78 is qualifying the exact seven-roster and 12-program intake. It grants no artifact load, dispatch, Qwen execution, performance, or M1 authority.",
     },
     {
       commit: "c2b0cf4f6",
@@ -572,14 +579,14 @@ window.FERRIC_PROJECT = Object.freeze({
       title: "Qualify snapshot-only operational intake",
       state: "integration",
       detail:
-        "The development branch accepts operational input only from the authenticated snapshot and has a source-path-absent 22-plan MI300X proof. It is implemented and qualified for that branch scope but is not integrated or published and grants no production Qwen or M1 authority.",
+        "The development branch accepts operational input only from the authenticated snapshot and has a source-path-absent 22-plan MI300X proof. It is implemented and qualified for that branch scope and integrated into the current unpublished M1 integration lineage, not main; it grants no production Qwen or M1 authority.",
     },
     {
       commit: "8e7fbbd8eb53196268b4bfdd6160f9c679dda661",
       title: "Qualify self-contained Qwen snapshot admission",
       state: "integration",
       detail:
-        "The development branch authenticates an exact 11-file Qwen snapshot with snapshot-owned metadata and strict roster, length, type, and mutation checks after the source path is removed. It is implemented and qualified for that branch scope but is not integrated or published.",
+        "The development branch authenticates an exact 11-file Qwen snapshot with snapshot-owned metadata and strict roster, length, type, and mutation checks after the source path is removed. It is implemented and qualified for that branch scope and integrated into the current unpublished M1 integration lineage, not main.",
     },
     {
       commit: "90f16d261ce90c4ece6e0e2d57ffaecc58fb1b4f",
@@ -887,7 +894,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "Qualified source 1d666dbc binds all seven K1-K7 families to protected Worker V3 custody and landed through be307d52 in m1/bundle-admission",
       "PR #24 qualified canonical 100644/100755 source-closure modes at 3898bf40 and landed them through 49a539f2",
       "This Pages refresh is based on Ferric main ec1a2e03a2923e7a6431ebc26aa30d04884f8a69; the published GitHub Pages site is live",
-      "Exact 11-file snapshot admission at 8e7fbbd and snapshot-only operational intake at edfaefa are qualified development work but are not integrated or published",
+      "Exact 11-file snapshot admission at 8e7fbbd and snapshot-only operational intake at edfaefa are qualified development work integrated into the current unpublished M1 integration lineage, not main",
       "A staged lifecycle merge is under qualification and does not yet define an integrated production baseline",
       "All seven K1-K7 family host adapters and all 12 host symbols and ABI inspectors exist",
       "K6 SwiGLU is the only attributed device package and root landed on main, through PR #32; no current artifact or run is claimed",
@@ -895,7 +902,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "K2 source qualification is complete at adc01968; its latest-compiler extraction, artifacts, authenticated KFD, hardware, and performance gaps remain",
       "K3 RoPE/KV source and ownership-proof work is complete outside the integration head; exact-compiler qualification, extraction, and hardware integration remain open",
       "K4 prefill commit 7e333905, K5 paged-decode commit 863e82ec, and K7 logits commit 5d821ee5 are integrated source packages; none has production artifact, authenticated KFD, hardware, or performance authority",
-      "Ferric's exact seven-roster and 12-program intake is being qualified and does not yet grant artifact load, dispatch, or Qwen execution authority",
+      "Ferric service head ada15d3603f82649fd24bd395fe31cf93c950d20 on base KFD 9c9e2bb78 is qualifying the exact seven-roster and 12-program intake and does not yet grant artifact load, dispatch, or Qwen execution authority",
       "Ferric cannot run Qwen through the production path",
       "Current artifacts, protected policy and deployment, end-to-end Qwen, numerical, hardware, and performance evidence, independent validation, formal closure, the production receipt, and M1 remain Ferric work",
       "All 33 M1 roadmap requirements remain open",
@@ -924,8 +931,8 @@ window.FERRIC_PROJECT = Object.freeze({
       "Latest observed fe2o3 main is 958423dc, with current repair line 952d3835d staged for qualification",
       "Exact multi-root KIR/LLVM/HSACO lowering merged through PR #20 at d32d8a11, and reviewed external source trust merged through PR #21 at 17396690",
       "Non-null empty-slice KFD candidate c2b0cf4f6 is present in the current qualification stack; merge and production runtime authority remain open",
-      "Volatile combined candidate 1a52ae136 has focused closure, positive, and same-name-forgery negative checks green while full Generic-core qualification runs",
-      "Ferric's exact seven-roster and 12-program intake is under qualification; upstream reusable custody does not define Ferric deployment or inference authority",
+      "Current volatile head 0e38cf312 is awaiting final exact-compiler qualification and is not merged compiler or extraction authority",
+      "Ferric service head ada15d3603 on base KFD 9c9e2bb78 is qualifying the exact seven-roster and 12-program intake; upstream reusable custody does not define Ferric deployment or inference authority",
       "Deployment identities and Ferric-specific inference authority are intentionally not defined upstream",
     ],
   },
