@@ -59,7 +59,7 @@
           <aside class="readiness" aria-labelledby="readiness-title">
             <div class="panel-heading">
               <h2 id="readiness-title">Current readiness</h2>
-              <time data-updated datetime="2026-08-30">Updated 2026-08-30</time>
+              <time data-updated datetime="2026-08-31">Updated 2026-08-31</time>
             </div>
             <div class="readiness-list" data-readiness></div>
           </aside>
@@ -201,20 +201,18 @@
             <h2 id="next-title">Close compiler and custody gates</h2>
           </div>
           <p>
-            Ferric's qualified compiler/runtime integration baseline remains fe2o3 42639ecc; its
-            checked-in device fixture and proof binder use narrower 2c7668d2 and a6fa86b5 pins. Ferric
-            cannot run Qwen through the production path. Current fe2o3 main is 501afb03, which Ferric
-            has not pinned or qualified. Aggregate Worker V3 roster custody and long-lived KFD queue
-            lifecycle hardening merged through PRs #254 and #255. Draft compiler PR #257 exact head
-            19fdd14d on a25b577e clears every semantic overflow and bounds assertion in the real workload,
-            then fails closed later at barrier convergence. Device-sqrt qualification remains under review in PR #256,
-            generated write-only compiler/KFD arguments are in progress, and exact multi-root production
-            lowering remains open. PR #250's descriptor-only nine-FD inventory is merged, but it is not
-            integrated into the authenticated SCM_RIGHTS vertical or distinct-UID qualified. The production
-            supervisor still needs a root-backed, server-retained one-use permit consumed before FD204 and
-            Stage C. Stage D ownership, a qualified Ferric pin, current artifacts and rosters, the runner,
-            hardware and performance evidence, the production receipt, and all 33 M1 requirements remain
-            open. No current production Ferric Qwen run has occurred.
+            Ferric cannot run Qwen through the production path. fe2o3 PR #258 merged generic
+            compiler-generated write-only KFD arguments at d9552090 with all 20 checks green; that
+            merge is an ancestor of current fe2o3 main f8c6e29b. Exact multi-root lowering and generic
+            non-null empty-slice KFD support remain active, unmerged, and are being rebased to that main.
+            Exact 11-file Qwen snapshot admission and snapshot-only operational intake are implemented
+            and qualified on development branches, including a source-path-absent 22-plan MI300X proof,
+            but neither branch is integrated or published. A staged lifecycle merge is under qualification.
+            All seven K1-K7 family host adapters and all 12 host symbols and ABI inspectors exist, but only
+            K6 SwiGLU has an attributed safe device package and root: one of seven required packages and one
+            of 12 required roots. Qwen numerical, hardware, and performance evidence, independent validation,
+            formal closure, the production receipt, and all 33 M1 requirements remain open. No current
+            production Ferric Qwen run has occurred.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>
