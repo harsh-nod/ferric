@@ -7,7 +7,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Ferric retains authenticated Qwen inputs, exact execution plans, bounded engine state, all seven K1-K7 family host adapters, and all 12 host symbols and ABI inspectors, but cannot run Qwen through the production path. K6 SwiGLU is the only attributed device package landed on main, through PR #32 at da25cef3; that landing establishes source and host-test coverage, not a current compiler artifact or run. K1 GEMM/embedding has 21 managed debug and release host tests passing on MI300X but no production extraction, artifact, or hardware result. K2 RMSNorm and K3 RoPE/KV remain development sources; K2 has unresolved serial-versus-XOR numerical semantics plus ABI, launch, and extraction gaps. fe2o3 PRs #20 and #21 merged exact multi-root production lowering and reviewed external source trust. PR #22 non-null empty KFD transport remains open, generic volatile-load production support remains active and unmerged, no current production Ferric Qwen run has occurred, and all 33 M1 requirements remain open.",
+      "Ferric retains authenticated Qwen inputs, exact execution plans, bounded engine state, all seven K1-K7 family host adapters, and all 12 host symbols and ABI inspectors, but cannot run Qwen through the production path. K6 SwiGLU is the only attributed device package landed on main, through PR #32 at da25cef3; that landing establishes source and host-test coverage, not a current compiler artifact or run. K1 GEMM/embedding has 21 managed debug and release host tests passing on MI300X but no production extraction, artifact, or hardware result. K2 RMSNorm and K3 RoPE/KV remain development sources; active K2 development now matches the authoritative lane-zero ascending serial FP32 association and passes 16 debug plus 16 release managed tests on MI300X, but ABI, PR #22 transport, latest-compiler extraction, artifact, KFD, and hardware gaps remain. fe2o3 PRs #20 and #21 merged exact multi-root production lowering and reviewed external source trust. PR #22 non-null empty KFD transport remains open, generic volatile-load production support remains active and unmerged, no current production Ferric Qwen run has occurred, and all 33 M1 requirements remain open.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -19,7 +19,7 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Ferric main", "da25cef31032e126cbad3aa21923da07a8f9b900; K6 attributed source landed through PR #32"],
     ["Host adapter surface", "all seven K1-K7 family adapters and all 12 host symbols/ABI inspectors exist"],
     ["Landed attributed device surface", "K6 SwiGLU only: one of seven required packages and one of 12 required device roots; no current artifact or run"],
-    ["Development device surface", "K1 has managed host-test evidence; K2 has unresolved review blockers; K3 remains in development"],
+    ["Development device surface", "K1 has managed host-test evidence; K2 corrected its numerical association but retains integration gaps; K3 remains in development"],
     ["Merged fe2o3 prerequisite", "write-only compiler/KFD arguments merged through PR #258 at d9552090 with all 20 checks green"],
     ["Current fe2o3 upstream", "main 356fe53fc317913efdee7da3265ac4a8894de127; exact multi-root PR #20 and external source trust PR #21 are merged"],
     ["Qualified development work", "exact 11-file snapshot admission at 8e7fbbd and snapshot-only operational intake at edfaefa, including a source-path-absent 22-plan MI300X proof; neither branch is integrated or published"],
@@ -182,7 +182,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "K2 RMSNorm device source",
       state: "integration",
       detail:
-        "An attributed K2 development source exists, but independent review found that its wave64 XOR reduction does not match the authoritative serial lane-zero FP32 association. Exact generated ABI names, finite-profile launch binding, production extraction, PR #22 empty-slice transport, artifacts, and hardware results also remain unresolved.",
+        "Active unlanded K2 development caps rows at 65,536, uses lane-zero ascending serial FP32 accumulation with bounded loops and bounded volatile reads, and distinguishes the corrected serial result 0x49be1c17 from the former XOR-tree result 0x49be1c1a. Its managed check and all 16 debug plus 16 release tests pass on MI300X. Exact generated ABI names, PR #22 empty-slice transport, latest-compiler production extraction, artifacts, KFD dispatch, hardware results, and performance remain unresolved.",
     },
     {
       label: "K3 RoPE and KV device source",
@@ -456,7 +456,7 @@ window.FERRIC_PROJECT = Object.freeze({
       title: "Draft the K2 RMSNorm attributed source",
       state: "integration",
       detail:
-        "The standalone K2 development package carries RMSNorm source, ABI, profile, adapter-construction, and host reference tests. Independent review found an unresolved FP32 serial-versus-XOR reduction-order mismatch plus exact generated-ABI, finite launch binding, production extraction, PR #22 empty-slice transport, artifact, and hardware gaps. It is not on Ferric main and is not dispatch authority.",
+        "This commit began the standalone K2 development package. A later active, unlanded revision replaced the XOR tree with authoritative lane-zero ascending serial FP32 accumulation, added bounded row and volatile-read behavior, and passed its managed check plus 16 debug and 16 release tests on MI300X. Exact generated ABI, PR #22 empty-slice transport, latest-compiler production extraction, artifacts, KFD dispatch, hardware results, and performance remain open; the package is not on Ferric main and is not dispatch authority.",
     },
     {
       commit: "d955209099c7b434dfceb69e1152d948dab76b22",
@@ -791,7 +791,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "All seven K1-K7 family host adapters and all 12 host symbols and ABI inspectors exist",
       "K6 SwiGLU is the only attributed device package and root landed on main, through PR #32; no current artifact or run is claimed",
       "K1 GEMM/embedding has 21 managed debug and release host tests passing on MI300X but no production extraction, artifact, or hardware result",
-      "K2 RMSNorm has unresolved serial-versus-XOR numerical semantics and ABI, launch, extraction, empty-slice transport, artifact, and hardware gaps",
+      "Active unlanded K2 RMSNorm development corrected serial FP32 association and passes 16 debug plus 16 release MI300X tests, while ABI, latest-compiler extraction, empty-slice transport, artifact, KFD, hardware, and performance gaps remain",
       "K3 RoPE/KV remains development work outside main",
       "Ferric cannot run Qwen through the production path",
       "Current artifacts, protected policy and deployment, end-to-end Qwen, numerical, hardware, and performance evidence, independent validation, formal closure, the production receipt, and M1 remain Ferric work",

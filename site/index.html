@@ -204,9 +204,11 @@
             Ferric cannot run Qwen through the production path. K6 SwiGLU attributed source landed
             through PR #32 at Ferric main da25cef3, but no current compiler artifact or run is claimed.
             K1 GEMM/embedding has 21 managed debug and release host tests passing on MI300X without
-            production extraction, artifact, or hardware evidence. K2 RMSNorm has unresolved
-            serial-versus-XOR numerical semantics plus ABI, launch, and extraction gaps; K3 RoPE/KV
-            remains in development. fe2o3 PRs #20 and #21 merged exact multi-root production lowering
+            production extraction, artifact, or hardware evidence. Active unlanded K2 RMSNorm
+            development now matches authoritative lane-zero ascending serial FP32 accumulation and
+            passes 16 debug plus 16 release managed tests on MI300X, while ABI, PR #22 transport,
+            latest-compiler extraction, artifact, KFD, and hardware gaps remain. K3 RoPE/KV remains
+            in development. fe2o3 PRs #20 and #21 merged exact multi-root production lowering
             and reviewed external source trust, and current fe2o3 main is 356fe53f. PR #22 non-null
             empty KFD transport remains open with failing checks, while generic volatile-load production
             support remains active and unmerged. Qwen numerical, hardware, and performance evidence,
