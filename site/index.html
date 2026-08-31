@@ -42,8 +42,9 @@
             <div class="section-label">Proof-carrying LLM inference</div>
             <h1 id="overview-title">Ferric</h1>
             <p class="lede">
-              A Rust inference engine that connects authenticated model inputs to
-              Ferric-owned Qwen kernels and reviewed direct HSA execution through fe2o3.
+              A Rust inference engine building an authority-bound path from authenticated model
+              inputs to Ferric-owned Qwen kernels and fe2o3's direct-KFD runtime. End-to-end Qwen
+              execution remains open.
             </p>
             <div class="milestone-line">
               <span class="status-dot" data-milestone-dot aria-hidden="true"></span>
@@ -58,7 +59,7 @@
           <aside class="readiness" aria-labelledby="readiness-title">
             <div class="panel-heading">
               <h2 id="readiness-title">Current readiness</h2>
-              <time data-updated datetime="2026-08-26">Updated 2026-08-26</time>
+              <time data-updated datetime="2026-08-31">Updated 2026-08-31</time>
             </div>
             <div class="readiness-list" data-readiness></div>
           </aside>
@@ -135,8 +136,8 @@
               <h2 id="architecture-title">One production path, two repositories</h2>
             </div>
             <p>
-              Ferric owns inference semantics and kernels. fe2o3 supplies reusable compiler,
-              runtime, KFD, and HSA capabilities.
+              Ferric owns inference semantics and kernels. fe2o3 supplies the reusable compiler
+              and direct-KFD runtime.
             </p>
           </div>
           <figure class="architecture-figure">
@@ -197,12 +198,21 @@
         <div class="shell next-layout">
           <div>
             <div class="section-label">Next engineering checkpoint</div>
-            <h2 id="next-title">Run the qualified source on gfx942</h2>
+            <h2 id="next-title">Close compiler and custody gates</h2>
           </div>
           <p>
-            Run source 58fd37e and its four-transition rollover catalog on MI300X when access is
-            available, then collect numerical, performance, and independent evidence against
-            that exact source. The proof-release receipt alone does not close M1.
+            Ferric cannot run Qwen through the production path. fe2o3 PR #258 merged generic
+            compiler-generated write-only KFD arguments at d9552090 with all 20 checks green; that
+            merge is an ancestor of current fe2o3 main f8c6e29b. Exact multi-root lowering and generic
+            non-null empty-slice KFD support remain active, unmerged, and are being rebased to that main.
+            Exact 11-file Qwen snapshot admission and snapshot-only operational intake are implemented
+            and qualified on development branches, including a source-path-absent 22-plan MI300X proof,
+            but neither branch is integrated or published. A staged lifecycle merge is under qualification.
+            All seven K1-K7 family host adapters and all 12 host symbols and ABI inspectors exist, but only
+            K6 SwiGLU has an attributed safe device package and root: one of seven required packages and one
+            of 12 required roots. Qwen numerical, hardware, and performance evidence, independent validation,
+            formal closure, the production receipt, and all 33 M1 requirements remain open. No current
+            production Ferric Qwen run has occurred.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>

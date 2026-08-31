@@ -7,7 +7,7 @@ pointer-plus-length slice ABI, exact admitted extents, 256-workitem workgroup,
 and eight contiguous output elements per workitem.
 
 The crate is intentionally outside Ferric's stable host workspace and pins the
-exact combined fe2o3 device-provider revision `06c74c64506f`. That revision
+exact combined fe2o3 device-provider revision `2c7668d23326`. That revision
 includes external-device dependency disambiguation, authenticated BF16
 conversion terminals that remain calls in optimized external MIR, and strict
 gfx942 OCML exp admission with the reviewed ROCm 7.2.4 provider hashes. It also
@@ -19,13 +19,21 @@ expanded locally before MIR construction, leaving no ordinary helper-function
 call for the production semantic projector. Passing its host-side source and
 reference tests establishes only the attributed Rust source contract.
 
-The pinned fe2o3 stack contains the reviewed BF16, OCML, provenance, and blocked
-terminal support. Ferric `57f6cfdf` completed a protected Worker V3 build with
-the current fe2o3 compiler at `21e4c106`, producing the exact `gfx942:xnack-`
-HSACO identified in M1 evidence. That artifact and its durable load envelope
-remain inert until the production verifier/runtime authorization join closes.
+The exact Ferric revision `7e1c36aa35d743478772ce4bff14c4f4bbff85c0`
+was compiled on MI300X through `cargo fe2o3 authority release build` using
+fe2o3 compiler revision `4cd2af64645e57bdb3902ac2618baefeb3cb8722`.
+The protected build admitted KIR identity
+`fe2o3::semantic::54361a526f73befabecd65a3a7dc0338ef8653d15209d3b47765356236f34dcc`,
+completed reproducible Worker V3 linking, and published a 14,192-byte COV6
+HSACO with SHA-256
+`0a27ada84a6382331af6a16d4ed0be6fcf1f85333ca5087b908a64618062702a`.
+Read-only fe2o3 inspection reports the exact `gfx942:xnack-` target, one kernel,
+304-byte kernarg segment, 256-workitem workgroup, 84 SGPRs, 11 VGPRs, zero LDS,
+and zero private-segment bytes. Independent ELF inspection finds the protected
+kernel, its `.kd` descriptor, and a defined weak `__ocml_exp_f32` symbol.
 
-`../../qualification/qwen3-swiglu-v1/hip_numeric.cpp` is a qualification-only
-harness for the exact published HSACO. Loading through HIP does not exercise
-or grant Ferric's production Worker V3 verifier, KFD load, dispatch, or Qwen
-inference authority.
+The same transaction durably published the Worker V3 readiness claim,
+canonical envelope, and receipt. Those records remain inert: no production
+verifier has promoted them into KFD dispatch authority, and no load, dispatch,
+hardware result, numerical comparison, whole-Qwen execution, performance, or
+M1 completion is claimed.

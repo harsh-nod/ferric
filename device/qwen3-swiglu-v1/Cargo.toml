@@ -6,15 +6,15 @@ rust-version = "1.94"
 publish = false
 
 # The device compiler is nightly-pinned independently of Ferric's stable host
-# workspace. This also prevents standalone device compilation from granting
-# host or runtime authority.
+# workspace. This also prevents the in-progress V3 port from granting authority
+# to the retained Worker V2 host path.
 [workspace]
 
 [dependencies]
-fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "06c74c64506f15883d64c5ab2ca476561909181d", version = "=0.1.0" }
+fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "2c7668d233263b5346b76ccc11b27c6af33e8bfb", version = "=0.1.0" }
 
 [target.'cfg(not(target_arch = "amdgpu"))'.dependencies]
-fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "06c74c64506f15883d64c5ab2ca476561909181d", version = "=0.1.0" }
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "2c7668d233263b5346b76ccc11b27c6af33e8bfb", version = "=0.1.0" }
 
 [dev-dependencies]
 quote = "1"

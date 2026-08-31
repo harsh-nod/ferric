@@ -46,7 +46,7 @@
   <rect x="982" y="82" width="194" height="88" class="box fe"/>
   <text x="1001" y="111" class="label">Runtime / KFD</text>
   <text x="1001" y="133" class="small">typed memory + transfers</text>
-  <text x="1001" y="150" class="small">long-lived HSA queue</text>
+  <text x="1001" y="150" class="small">long-lived AQL queue</text>
 
   <path d="M214 126h38" class="line"/>
   <path d="M448 126h38" class="line"/>

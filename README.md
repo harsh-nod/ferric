@@ -37,21 +37,20 @@ implements:
 - linear logical publication of those retained declarations into engine custody;
 - direct pinned-Verus proofs of the executable M0 state machines;
 - identity-bound fe2o3 M0 property records with actual-body mutation evidence;
-- structural invariant validation and hostile stale-handle tests; and
+- structural invariant validation and hostile stale-handle tests;
+- one production-compiled Qwen3 SwiGLU kernel with an independently inspected
+  `gfx942:xnack-` COV6 HSACO and durable Worker V3 load-envelope custody; and
 - the roadmap, assurance policy, feature ledger, and performance protocol.
 
-Ferric does **not** prove general Hugging Face tokenizer equivalence or its
-contracted regex, Unicode, native-build, and unsafe-FFI dependencies,
-transform or pack weights,
-sign deployment records, allocate device memory, load a model onto a device,
-compile a GPU kernel, instantiate a command template, dispatch HSA, prove graph
-refinement, or make a verified-inference or performance claim. The canonical
-records bind pinned values but do not authenticate external compiler, runtime,
-proof, executable, or machine identities. The model-admission, planning,
-catalog, identity, declaration, and logical publication bodies remain
-explicitly pending Verus. Logical publication grants no physical runner,
-artifact, address, load, launch, queue, completion, or qualification authority.
-Unsupported stages fail closed rather than selecting another implementation.
+Ferric does **not** currently load a model, dispatch the production HSACO,
+execute Qwen, or make a verified-inference or performance claim. Only K6
+SwiGLU has an attributed safe device package and source root: one of seven
+required packages and one of 12 required roots. Its historical artifact does
+not authorize the current write-only source. The production verifier,
+generated runner, remaining kernels, model bundle, hardware qualification,
+performance qualification, and end-to-end inference path remain open. All 33
+M1 roadmap requirements remain open. Unsupported stages fail closed rather
+than selecting another implementation.
 
 ## First Product Milestone
 
@@ -66,7 +65,7 @@ KV cache:           paged
 scheduling:         continuous batching
 decoding:           greedy, then exact finite-distribution sampling
 runtime:            direct HSA command batches
-kernels:            Ferric-owned
+kernels:            Ferric-owned, compiled by fe2o3
 compiler/runtime:   reusable fe2o3 APIs
 ```
 

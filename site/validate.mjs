@@ -43,6 +43,12 @@ assert(
   ),
   "repository must be a GitHub repository URL",
 );
+assert(
+  /^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(
+    project.fe2o3Repository,
+  ),
+  "fe2o3Repository must be a GitHub repository URL",
+);
 assertState(project.milestone.state, "milestone");
 
 assert(Array.isArray(project.envelope) && project.envelope.length > 0, "envelope is empty");
@@ -103,6 +109,12 @@ const progressCommits = new Set();
 project.recentProgress.forEach((item, index) => {
   assertCommit(item.commit, `recentProgress[${index}].commit`);
   assertState(item.state, `recentProgress[${index}]`);
+  if (item.repository !== undefined) {
+    assert(
+      [project.repository, project.fe2o3Repository].includes(item.repository),
+      `recentProgress[${index}].repository is not an approved source repository`,
+    );
+  }
   assert(!progressCommits.has(item.commit), `duplicate progress commit ${item.commit}`);
   progressCommits.add(item.commit);
 });

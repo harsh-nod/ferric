@@ -8,6 +8,7 @@
 //! or M1 authority. Production Worker V3 integration remains fail-closed until
 //! an exact compiler run emits and verifies a replacement artifact.
 
+#[cfg(target_arch = "amdgpu")]
 use fe2o3_device::{Bf16, Blocked, DisjointSlice, Index1D, Math, kernel, thread};
 
 /// Exact exported kernel symbol retained from the direct-LLVM implementation.
@@ -60,6 +61,7 @@ const fn f32_is_finite_v1(value: f32) -> bool {
     value >= f32::MIN && value <= f32::MAX
 }
 
+#[cfg(target_arch = "amdgpu")]
 macro_rules! qwen3_swiglu_element_v1 {
     ($gate_bits:expr, $up_bits:expr) => {{
         let gate_value = Bf16::from_bits($gate_bits);
@@ -108,10 +110,9 @@ macro_rules! qwen3_swiglu_element_v1 {
 /// Each workitem owns exactly eight contiguous elements. Non-finite input or
 /// intermediate values trap before the current store; earlier stores are not
 /// rolled back.
-// Compiler-derived from this exact device package and dependency closure.
+#[cfg(target_arch = "amdgpu")]
 #[kernel(
     typed,
-    namespace = "945c6bcdb6e275891490d8062a0b53b82f4b9d558ff2792d3fedfdf9c9bc0820",
     launch(
         required = [256, 1, 1],
         max = [256, 1, 1],

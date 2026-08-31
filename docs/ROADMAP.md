@@ -14,9 +14,10 @@ every implementation on the final production path.
 ## Program Rules
 
 1. There is one implementation path. Unsupported behavior fails closed.
-2. Model- and inference-specific kernels are owned by Ferric. Reusable GPU
-   compiler and runtime capabilities are implemented in fe2o3 and consumed
-   through public APIs.
+2. Model-specific kernels and inference code are owned by Ferric. Missing
+   reusable compiler, runtime, or KFD capabilities are implemented in fe2o3
+   and consumed through its public APIs rather than hidden behind a Ferric
+   abstraction.
 3. A proof applies only through the last boundary it covers. Hashes, machine
    inspection, and hardware tests do not imply semantic refinement.
 4. Correctness and performance evidence remain independent and identity-bound.
