@@ -21,7 +21,7 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Landed attributed device surface", "K6 SwiGLU only: one of seven required packages and one of 12 required device roots; no current artifact or run"],
     ["Development device surface", "K1 has managed host-test evidence; K2 corrected its numerical association but retains integration gaps; K3 remains in development"],
     ["Merged fe2o3 prerequisite", "write-only compiler/KFD arguments merged through PR #258 at d9552090 with all 20 checks green"],
-    ["Current fe2o3 upstream", "main 356fe53fc317913efdee7da3265ac4a8894de127; exact multi-root PR #20 and external source trust PR #21 are merged"],
+    ["Current fe2o3 upstream", "main 7cd6a40380622f8b0c591134968bcbf32b534d4a; exact multi-root PR #20 and external source trust PR #21 are merged"],
     ["Qualified development work", "exact 11-file snapshot admission at 8e7fbbd and snapshot-only operational intake at edfaefa, including a source-path-absent 22-plan MI300X proof; neither branch is integrated or published"],
     ["Active unmerged core work", "PR #22 non-null empty KFD transport and generic volatile-load production support"],
     [
@@ -818,7 +818,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "The descriptor-only Stage C inventory is merged, but the authenticated distinct-UID Stage C vertical remains open; feature-bypass evidence and the current seccomp candidate are not production closure",
       "Stage D's raw-tuple API was rejected and awaits opaque-owner provenance rework",
       "Lower-MIR candidate 2c3140d7 is audit-only and must be reimplemented under whole-module current KIR replay",
-      "Current fe2o3 main is 356fe53fc317913efdee7da3265ac4a8894de127",
+      "Current fe2o3 main is 7cd6a40380622f8b0c591134968bcbf32b534d4a",
       "Exact multi-root KIR/LLVM/HSACO lowering merged through PR #20 at d32d8a11, and reviewed external source trust merged through PR #21 at 17396690",
       "PR #22 non-null empty-slice KFD transport remains open with failing checks",
       "Generic volatile-load production support remains active in an unmerged development worktree with no published PR",
