@@ -27,3 +27,33 @@ jobs:
       - run: python3 -I -B -m unittest discover -s benches/m1/reference -p 'test*.py'
       - run: python3 -I -B proofs/m1/evidence/test-source-closure-mode-policy.py
       - run: python3 -I -B proofs/m1/evidence/test-r29-differential-evidence-policy.py
+
+  qwen3-swiglu-device:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: device/qwen3-swiglu-v1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          toolchain: "nightly-2026-04-03"
+          components: rust-src, rustc-dev, rustfmt
+      - name: Install reviewed binding-only host-test tool
+        run: >-
+          cargo install --locked
+          --git https://github.com/harsh-nod/fe2o3.git
+          --rev 1739669000eea19614fdf772127f4d5d705530c0
+          --root "$RUNNER_TEMP/cargo-fe2o3"
+          cargo-fe2o3
+      - run: cargo fmt --all --check
+      # Namespace-free typed kernels require the documented binding-only route.
+      # cargo-fe2o3 has no managed clippy lane; do not bypass binding to invoke it.
+      - name: Check all host targets through compiler-derived binding
+        run: >-
+          "$RUNNER_TEMP/cargo-fe2o3/bin/cargo-fe2o3"
+          fe2o3 check --locked --all-targets
+      - name: Test all host targets through compiler-derived binding
+        run: >-
+          "$RUNNER_TEMP/cargo-fe2o3/bin/cargo-fe2o3"
+          fe2o3 test --locked --all-targets
