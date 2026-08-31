@@ -7,7 +7,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "The Ferric status site is live, but M1 is incomplete and all 33 M1 roadmap gates remain open. Integration head 82900803 contains all seven K1-K7 attributed device-source packages, including the complete K3 source with its fixed 16,384-physical-page grid. Exact-compiler qualification, production extraction, authenticated runtime and hardware integration, numerics, and performance remain open. No current production Ferric Qwen run has occurred.",
+      "The Ferric status site is live, but M1 is incomplete and all 33 M1 roadmap gates remain open. Integration head 82900803 contains all seven K1-K7 attributed device-source packages, including the complete K3 source with its fixed 16,384-physical-page grid. The current exact fe2o3 qualification target is combined compiler/runtime descendant de4683a91. Ferric authenticated-runtime commit 464a68dc passed its scoped custody checks against that revision; production extraction, integrated runtime and hardware execution, numerics, and performance remain open. No current production Ferric Qwen run has occurred.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -22,12 +22,13 @@ window.FERRIC_PROJECT = Object.freeze({
     ["M1 integration device surface", "head 82900803b661fca9d20ca683795b01300f6a69e9: all seven K1-K7 attributed source packages are integrated; K3 uses the fixed 16,384-physical-page grid"],
     ["Merged fe2o3 prerequisite", "write-only compiler/KFD arguments merged through PR #258 at d9552090 with all 20 checks green"],
     ["Latest observed fe2o3 upstream", "main d5b90f192"],
-    ["Current fe2o3 repair line", "repair 5b5899973 is the current repair head; it is not production compiler or runtime authority"],
-    ["Non-null empty KFD transport", "corrected KFD head 8beba70c7 is retained by the current combined line; production runtime authority remains open"],
+    ["Current fe2o3 repair line", "repair 168eeab04 is the current repair head; it is not production compiler or runtime authority"],
+    ["Non-null empty KFD transport", "corrected KFD head f9a2e0f3e is retained by the current combined line; production runtime authority remains open"],
     ["Qualified development work", "exact 11-file snapshot admission at 8e7fbbd and snapshot-only operational intake at edfaefa, including a source-path-absent 22-plan MI300X proof, are integrated into the current unpublished M1 integration lineage, not main"],
-    ["Staged compiler work", "current volatile head 4ee1835c6 remains pending exact production qualification and extraction"],
-    ["Authenticated service sibling", "head 3710142b7 identifies the current service-side roster-custody line parallel to the combined descendant; it does not grant Ferric artifact load, dispatch, or Qwen execution authority"],
-    ["Combined compiler/runtime line", "descendant 285a1a02039300142e5f274595b7775bccc42f0f joins the current compiler and runtime work; exact extraction, runtime, hardware, numerical, and performance qualification remain open"],
+    ["Staged compiler work", "current volatile head 7030a3476 remains pending exact production qualification and extraction"],
+    ["Authenticated service sibling", "head 6e478ce14 identifies the current service-side roster-custody line parallel to the combined descendant; it does not grant Ferric artifact load, dispatch, or Qwen execution authority"],
+    ["Combined compiler/runtime line", "descendant de4683a91a1cbd774796861c21c2f7c90e6acaa8 is the exact current qualification target; extraction, Ferric runtime admission, hardware, numerical, and performance qualification remain open"],
+    ["Ferric authenticated-runtime branch", "commit 464a68dc9fe252be6500422e48f4a868f7373208 passed its dedicated 3-test custody suite and static checks against exact de4683a91; the full engine replay had 440 passing, 5 ignored, and one independently pre-existing K6 frozen-record mismatch"],
     [
       "Historical protected artifact",
       "SwiGLU semantic fe2ce532...e9569e8f / HSACO 57ecb86b...fc6afa7; qualification-only and not supplied by the PR #32 landing",
@@ -84,7 +85,13 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Seven-artifact recovery to runtime join",
       state: "integration",
       detail:
-        "Service sibling 3710142b7 and combined compiler/runtime descendant 285a1a02039300142e5f274595b7775bccc42f0f identify the current intake and joined integration lines. Until exact qualification and the persistent runtime join complete, current artifact persistence is structural custody rather than Worker V3 load, dispatch, or Qwen execution authority.",
+        "Service sibling 6e478ce14 and combined compiler/runtime descendant de4683a91a1cbd774796861c21c2f7c90e6acaa8 identify the current intake and exact qualification target. Until production extraction and the persistent Ferric runtime join complete, current artifact persistence is structural custody rather than Worker V3 load, dispatch, or Qwen execution authority.",
+    },
+    {
+      label: "Authenticated Ferric kernel custody",
+      state: "integration",
+      detail:
+        "Ferric development commit 464a68dc requires authenticated Worker V3 owners for the seven-family, 12-program runtime set and passed its dedicated 3-test suite plus format, lock, engine-check, and six device checks against exact fe2o3 de4683a91. A full engine replay passed 440 tests, ignored 5, and exposed one independently pre-existing K6 frozen-record length mismatch. The branch is not the K3 integration head and grants no extracted-artifact, dispatch, hardware, Qwen, performance, or M1 authority.",
     },
     {
       label: "Long-lived KFD queue lifecycle",
@@ -174,13 +181,13 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Non-null empty KFD transport",
       state: "integration",
       detail:
-        "Corrected KFD head 8beba70c7 provides the current non-null empty-slice line retained by the combined compiler/runtime descendant. Its shared sentinel is required before empty generated slices can be packed and dispatched truthfully; exact qualification and production runtime authority remain open.",
+        "Corrected KFD head f9a2e0f3e provides the current non-null empty-slice line retained by the combined compiler/runtime descendant. Its shared sentinel is required before empty generated slices can be packed and dispatched truthfully; exact qualification and production runtime authority remain open.",
     },
     {
       label: "Generic volatile-load production support",
       state: "integration",
       detail:
-        "Current volatile head 4ee1835c6 is retained by the combined compiler/runtime descendant. Exact production qualification and extraction remain open, so it must not be treated as current production compiler authority.",
+        "Current volatile head 7030a3476 is retained by the combined compiler/runtime descendant. Exact production qualification and extraction remain open, so it must not be treated as current production compiler authority.",
     },
     {
       label: "K1 GEMM and embedding device source",
@@ -366,7 +373,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Complete KFD edge handling",
         detail:
-          "Qualify corrected KFD head 8beba70c7, volatile head 4ee1835c6, service sibling 3710142b7, and combined compiler/runtime descendant 285a1a02039300142e5f274595b7775bccc42f0f without widening their authority. Then qualify the exact joined line in Ferric.",
+          "Finish exact qualification of repair head 168eeab04, corrected KFD head f9a2e0f3e, volatile head 7030a3476, service sibling 6e478ce14, and combined compiler/runtime descendant de4683a91a1cbd774796861c21c2f7c90e6acaa8 without widening their authority. Then integrate and qualify the exact joined line in Ferric.",
       },
       {
         name: "Ordered Stage C and joint Stage D",
@@ -457,15 +464,22 @@ window.FERRIC_PROJECT = Object.freeze({
   },
   recentProgress: [
     {
-      commit: "285a1a02039300142e5f274595b7775bccc42f0f",
+      commit: "464a68dc9fe252be6500422e48f4a868f7373208",
+      title: "Require authenticated Worker V3 kernel custody",
+      state: "integration",
+      detail:
+        "This Ferric development commit binds the seven-family, 12-program runtime set to authenticated Worker V3 owners. Against exact fe2o3 de4683a91, its dedicated custody suite passed 3 of 3 tests together with format, lock, engine-check, and all six device checks. The full engine replay passed 440 tests, ignored 5, and found one independently pre-existing K6 frozen-record length mismatch. This scoped result is not production artifact, dispatch, hardware, Qwen, performance, or M1 authority.",
+    },
+    {
+      commit: "de4683a91a1cbd774796861c21c2f7c90e6acaa8",
       repository: "https://github.com/harsh-nod/fe2o3",
       title: "Join the current compiler and runtime lineage",
       state: "integration",
       detail:
-        "This descendant joins the current repair, corrected KFD, volatile compiler, and authenticated-service runtime work. Exact production qualification, Ferric extraction, runtime admission, hardware numerics, performance, Qwen execution, and M1 authority remain open.",
+        "This descendant is the exact current qualification target joining the repair, corrected KFD, volatile compiler, and authenticated-service runtime work. Production extraction, Ferric runtime admission, hardware numerics, performance, Qwen execution, and M1 authority remain open.",
     },
     {
-      commit: "3710142b7",
+      commit: "6e478ce14",
       repository: "https://github.com/harsh-nod/fe2o3",
       title: "Refresh the authenticated-service sibling",
       state: "integration",
@@ -473,7 +487,7 @@ window.FERRIC_PROJECT = Object.freeze({
         "This is the current authenticated-service sibling to the combined compiler/runtime line. It grants no Ferric artifact load, dispatch, Qwen execution, performance, or M1 authority.",
     },
     {
-      commit: "4ee1835c6",
+      commit: "7030a3476",
       repository: "https://github.com/harsh-nod/fe2o3",
       title: "Qualify volatile extraction structurally",
       state: "integration",
@@ -481,7 +495,7 @@ window.FERRIC_PROJECT = Object.freeze({
         "This is the current volatile compiler head retained by the combined descendant. Exact production qualification and Ferric extraction remain open.",
     },
     {
-      commit: "8beba70c7",
+      commit: "f9a2e0f3e",
       repository: "https://github.com/harsh-nod/fe2o3",
       title: "Correct non-null empty generated KFD transport",
       state: "integration",
@@ -489,7 +503,7 @@ window.FERRIC_PROJECT = Object.freeze({
         "This corrected KFD head is retained by the combined descendant. Exact runtime qualification, Ferric adoption, and production authority remain open.",
     },
     {
-      commit: "5b5899973",
+      commit: "168eeab04",
       repository: "https://github.com/harsh-nod/fe2o3",
       title: "Refresh the current compiler/runtime repair",
       state: "integration",
@@ -912,7 +926,8 @@ window.FERRIC_PROJECT = Object.freeze({
       "K2 source qualification is complete at adc01968; its latest-compiler extraction, artifacts, authenticated KFD, hardware, and performance gaps remain",
       "K3 RoPE/KV source and ownership-proof work is integrated; exact-compiler qualification, extraction, runtime admission, hardware numerics, and performance remain open",
       "K4 prefill commit 7e333905, K5 paged-decode commit 863e82ec, and K7 logits commit 5d821ee5 are integrated source packages; none has production artifact, authenticated KFD, hardware, or performance authority",
-      "fe2o3 service sibling 3710142b7 and combined compiler/runtime descendant 285a1a02039300142e5f274595b7775bccc42f0f define the current upstream integration lines but do not grant Ferric artifact load, dispatch, or Qwen execution authority",
+      "Ferric authenticated-runtime commit 464a68dc passed its scoped custody tests against exact fe2o3 de4683a91; its full engine replay exposed one independently pre-existing K6 frozen-record mismatch, and it grants no artifact, dispatch, hardware, Qwen, performance, or M1 authority",
+      "fe2o3 service sibling 6e478ce14 and combined compiler/runtime descendant de4683a91a1cbd774796861c21c2f7c90e6acaa8 define the current upstream integration lines but do not grant Ferric artifact load, dispatch, or Qwen execution authority",
       "Ferric cannot run Qwen through the production path",
       "Current artifacts, protected policy and deployment, end-to-end Qwen, numerical, hardware, and performance evidence, independent validation, formal closure, the production receipt, and M1 remain Ferric work",
       "All 33 M1 roadmap requirements remain open",
@@ -938,11 +953,11 @@ window.FERRIC_PROJECT = Object.freeze({
       "The descriptor-only Stage C inventory is merged, but the authenticated distinct-UID Stage C vertical remains open; feature-bypass evidence and the current seccomp candidate are not production closure",
       "Stage D's raw-tuple API was rejected and awaits opaque-owner provenance rework",
       "Lower-MIR candidate 2c3140d7 is audit-only and must be reimplemented under whole-module current KIR replay",
-      "Latest observed fe2o3 main is d5b90f192, with current repair head 5b5899973 retained by the combined descendant",
+      "Latest observed fe2o3 main is d5b90f192, with current repair head 168eeab04 retained by the combined descendant",
       "Exact multi-root KIR/LLVM/HSACO lowering merged through PR #20 at d32d8a11, and reviewed external source trust merged through PR #21 at 17396690",
-      "Corrected non-null empty-slice KFD head 8beba70c7 is retained by the combined descendant; exact qualification and production runtime authority remain open",
-      "Current volatile head 4ee1835c6 is retained by the combined descendant; exact production compiler qualification and extraction remain open",
-      "Authenticated-service sibling 3710142b7 remains parallel to combined compiler/runtime descendant 285a1a02039300142e5f274595b7775bccc42f0f; neither defines Ferric deployment or inference authority",
+      "Corrected non-null empty-slice KFD head f9a2e0f3e is retained by the combined descendant; exact qualification and production runtime authority remain open",
+      "Current volatile head 7030a3476 is retained by the combined descendant; exact production compiler qualification and extraction remain open",
+      "Authenticated-service sibling 6e478ce14 remains parallel to combined compiler/runtime descendant de4683a91a1cbd774796861c21c2f7c90e6acaa8; neither defines Ferric deployment or inference authority",
       "Deployment identities and Ferric-specific inference authority are intentionally not defined upstream",
     ],
   },
