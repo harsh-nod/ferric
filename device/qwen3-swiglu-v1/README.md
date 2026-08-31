@@ -7,19 +7,19 @@ pointer-plus-length slice ABI, exact admitted extents, 256-workitem workgroup,
 and eight contiguous output elements per workitem.
 
 The crate is intentionally outside Ferric's stable host workspace and pins the
-exact combined fe2o3 device-provider revision `2c7668d23326`. That revision
-includes external-device dependency disambiguation, authenticated BF16
-conversion terminals that remain calls in optimized external MIR, and strict
-gfx942 OCML exp admission with the reviewed ROCm 7.2.4 provider hashes. It also
-keeps the blocked-index producer and output accessor visible as authenticated
-semantic terminals in release builds. The kernel spells its eight owned output
-components as eight constant blocked-access calls so M1 does not depend on a
-new loop-carried race/progress proof in fe2o3. Its repeated pure element math is
+exact reviewed external fe2o3 revision `d955209099c7`. That revision provides
+the compiler-issued write-only device capability and its generated KFD output
+binding. A newer fe2o3 compiler may explicitly admit this immutable dependency
+revision after independently pinning its host-code closure. The kernel's output
+has no readable element, reference, or pointer surface; it spells its eight
+owned components as eight constant checked `write_block` calls so M1 does not
+depend on a loop-carried race/progress proof. Its repeated pure element math is
 expanded locally before MIR construction, leaving no ordinary helper-function
 call for the production semantic projector. Passing its host-side source and
 reference tests establishes only the attributed Rust source contract.
 
-The exact Ferric revision `7e1c36aa35d743478772ce4bff14c4f4bbff85c0`
+Before this write-only migration, the exact Ferric revision
+`7e1c36aa35d743478772ce4bff14c4f4bbff85c0`
 was compiled on MI300X through `cargo fe2o3 authority release build` using
 fe2o3 compiler revision `4cd2af64645e57bdb3902ac2618baefeb3cb8722`.
 The protected build admitted KIR identity
