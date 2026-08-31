@@ -24,7 +24,8 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Latest observed fe2o3 upstream", "main 130ab26c340f61084f273ab729940f083152b5d4"],
     ["Non-null empty KFD transport", "fe2o3 PR #262 is open at 06282ff960774d7b3fea63d0cff87ae18122e898; targeted mi300x gates were green on the prior exact head, and current-head requalification and CI are in progress"],
     ["Qualified development work", "exact 11-file snapshot admission at 8e7fbbd and snapshot-only operational intake at edfaefa, including a source-path-absent 22-plan MI300X proof; neither branch is integrated or published"],
-    ["Staged compiler work", "volatile-load candidate 568f1a7d has exact tree 4f9dfd89ceccdbea483ca0333135a80603425f76; it is staged but not yet qualified"],
+    ["Staged compiler work", "volatile-load candidate b88cebf49511f9566c4aa716329a162e904ebb4a has exact tree e2bb916a2c485c6037a1232e569581cc655c425a; remote exact staging and formatting are green, while remaining qualification is pending"],
+    ["Authenticated service-runtime candidate", "branch codex/authenticated-roster-service-runtime-v2 at 738aeebf5bb2d77ec54723af4134f91bf9c9a2ec, tree e970eadfcf0b51868bb4d39a7e9191ada3ca4c4b, has targeted mi300x qualification green; Ferric seven-roster acquisition and authentication remain open"],
     [
       "Historical protected artifact",
       "SwiGLU semantic fe2ce532...e9569e8f / HSACO 57ecb86b...fc6afa7; qualification-only and not supplied by the PR #32 landing",
@@ -81,7 +82,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Seven-artifact recovery to runtime join",
       state: "integration",
       detail:
-        "Production still lacks aggregate roster verifier/current-record plumbing and an authenticated roster-to-persistent service KFD queue transition. Ferric's current raw artifact persistence is structural custody, not Worker V3 load or launch authority.",
+        "Generic branch codex/authenticated-roster-service-runtime-v2 retains authenticated rosters through service queues at 738aeebf5bb2d77ec54723af4134f91bf9c9a2ec and has targeted mi300x qualification green. Ferric still lacks its exact seven-roster acquisition and authentication join; current raw artifact persistence is structural custody, not Worker V3 load or launch authority.",
     },
     {
       label: "Long-lived KFD queue lifecycle",
@@ -177,7 +178,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Generic volatile-load production support",
       state: "integration",
       detail:
-        "Generic volatile-load candidate commit 568f1a7df9cd096601120a674477e2eba841579a has exact tree 4f9dfd89ceccdbea483ca0333135a80603425f76. The tree is staged but has not completed qualification, is not merged, and must not be treated as current compiler authority.",
+        "Generic volatile-load candidate commit b88cebf49511f9566c4aa716329a162e904ebb4a has exact tree e2bb916a2c485c6037a1232e569581cc655c425a. Remote exact staging and formatting are green, but remaining qualification is pending; it is not merged and must not be treated as current compiler authority.",
     },
     {
       label: "K1 GEMM and embedding device source",
@@ -363,7 +364,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Complete KFD edge handling",
         detail:
-          "Adopt merged compiler-authenticated write-only KFD arguments and exact multi-root lowering, complete and merge PR #262 non-null empty-slice transport, and qualify the staged volatile-load tree 4f9dfd89cecc before integration. Then qualify the joined upstream line in Ferric.",
+          "Adopt merged compiler-authenticated write-only KFD arguments and exact multi-root lowering, complete and merge PR #262 non-null empty-slice transport, and finish qualification of volatile-load tree e2bb916a2c48 before integration. Then qualify the joined upstream line in Ferric.",
       },
       {
         name: "Ordered Stage C and joint Stage D",
@@ -453,6 +454,22 @@ window.FERRIC_PROJECT = Object.freeze({
       "The catalog records host-validated source paths. Target-only decode and every unlisted cross-plan transition require explicit queue retirement and a fresh admitted launch; none inherit rollover authority.",
   },
   recentProgress: [
+    {
+      commit: "b88cebf49511f9566c4aa716329a162e904ebb4a",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Stage generic volatile-load production support",
+      state: "integration",
+      detail:
+        "Exact tree e2bb916a2c485c6037a1232e569581cc655c425a is remotely staged and formatting is green. Remaining qualification is pending, so this candidate is not merged compiler authority and does not authorize Ferric production extraction.",
+    },
+    {
+      commit: "738aeebf5bb2d77ec54723af4134f91bf9c9a2ec",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Retain authenticated rosters through service queues",
+      state: "integration",
+      detail:
+        "Branch codex/authenticated-roster-service-runtime-v2, exact tree e970eadfcf0b51868bb4d39a7e9191ada3ca4c4b, has targeted mi300x qualification green. This generic transition does not acquire or authenticate Ferric's exact seven-roster set; that Ferric integration remains open.",
+    },
     {
       commit: "baf5b6a8ce7fe09d12ddb783a6a2f1621a11ee8d",
       title: "Integrate the current attributed device-source line",
@@ -877,7 +894,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "K2 source qualification is complete at adc01968; its latest-compiler extraction, artifacts, authenticated KFD, hardware, and performance gaps remain",
       "K3 RoPE/KV is in source qualification outside the integration head",
       "K4 prefill commit 7e333905, K5 paged-decode commit 863e82ec, and K7 logits commit 5d821ee5 are integrated source packages; none has production artifact, authenticated KFD, hardware, or performance authority",
-      "Durable Worker V3 recovery and generic roster custody exist, but production aggregate roster verification/current-record plumbing and the authenticated roster-to-persistent KFD queue transition remain open",
+      "Generic service-runtime candidate 738aeebf retains authenticated rosters through service queues with targeted mi300x qualification green, but Ferric seven-roster acquisition and authentication remain open",
       "Ferric cannot run Qwen through the production path",
       "Current artifacts, protected policy and deployment, end-to-end Qwen, numerical, hardware, and performance evidence, independent validation, formal closure, the production receipt, and M1 remain Ferric work",
       "All 33 M1 roadmap requirements remain open",
@@ -906,7 +923,8 @@ window.FERRIC_PROJECT = Object.freeze({
       "Latest observed fe2o3 main is 130ab26c340f61084f273ab729940f083152b5d4",
       "Exact multi-root KIR/LLVM/HSACO lowering merged through PR #20 at d32d8a11, and reviewed external source trust merged through PR #21 at 17396690",
       "PR #262 non-null empty-slice KFD transport is open at 06282ff9; targeted mi300x gates were green on the prior exact head while current-head requalification and CI are in progress",
-      "Generic volatile-load tree 4f9dfd89ceccdbea483ca0333135a80603425f76 is staged but not yet qualified or merged",
+      "Generic volatile-load commit b88cebf49511f9566c4aa716329a162e904ebb4a, tree e2bb916a2c485c6037a1232e569581cc655c425a, is remotely staged with formatting green and remaining qualification pending",
+      "Authenticated service-runtime branch codex/authenticated-roster-service-runtime-v2 at 738aeebf5bb2d77ec54723af4134f91bf9c9a2ec, tree e970eadfcf0b51868bb4d39a7e9191ada3ca4c4b, has targeted mi300x qualification green; Ferric-specific acquisition and authentication remain downstream work",
       "Deployment identities and Ferric-specific inference authority are intentionally not defined upstream",
     ],
   },
