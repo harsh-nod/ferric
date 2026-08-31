@@ -23,19 +23,19 @@ use ferric_build::{
     QWEN3_TOKENIZER_METADATA_BYTES, TARGET_REPOSITORY, TARGET_REVISION,
 };
 use ferric_engine::{
-    bind_m1_kv_workspace_table_v1, bind_m1_physical_runner_v1,
-    bind_m1_speculative_draft_kv_round_workspace_table_v1, complete_m1_physical_step_v1,
+    bind_m1_kv_workspace_table_v1, bind_m1_speculative_draft_kv_round_workspace_table_v1,
+    bind_structural_m1_physical_runner_v1, complete_m1_physical_step_v1,
     initialize_m1_physical_runner_memory_v1, prelease_m1_qualification_target_pages_v1,
     prepare_m1_long_lived_queue_rearm_v1, release_m1_completed_step_kv_pages_v1,
-    reopen_persisted_m1_kernel_artifacts_v1, reserve_m1_long_lived_queue_rearm_kv_v1,
-    schedule_m1_long_lived_queue_rearm_v1, ActiveDeviceKvCache, CompletionWireSemanticExpectation,
-    Engine, M1CompletedDeviceKvMemberV1, M1CompletedStepOutcomeV1,
-    M1DeviceKvCompletionDispositionV1, M1DeviceKvCompletionMemberV1, M1DeviceKvCompletionRosterV1,
-    M1FullStepKvWorkspaceTablesV1, M1FullStepWorkspacePlans, M1LongLivedQueueRearmKvInputsV1,
-    M1LongLivedQueueReleasedRoundV1, M1PhysicalRunnerFirstCompletionOutcomeV1,
-    M1PhysicalRunnerRecipeOutcomeV1, M1QualificationCompletionEvidenceV1,
-    M1RearmedQualifiedRoundReleaseOutcomeV1, M1RearmedRoundReleaseOutcomeV1,
-    M1ScheduledLongLivedQueueRearmV1, M1StepDispatchIntent,
+    reopen_persisted_m1_kernel_artifacts_v1, require_m1_authenticated_roster_acquisition_v1,
+    reserve_m1_long_lived_queue_rearm_kv_v1, schedule_m1_long_lived_queue_rearm_v1,
+    ActiveDeviceKvCache, CompletionWireSemanticExpectation, Engine, M1CompletedDeviceKvMemberV1,
+    M1CompletedStepOutcomeV1, M1DeviceKvCompletionDispositionV1, M1DeviceKvCompletionMemberV1,
+    M1DeviceKvCompletionRosterV1, M1FullStepKvWorkspaceTablesV1, M1FullStepWorkspacePlans,
+    M1LongLivedQueueRearmKvInputsV1, M1LongLivedQueueReleasedRoundV1,
+    M1PhysicalRunnerFirstCompletionOutcomeV1, M1PhysicalRunnerRecipeOutcomeV1,
+    M1QualificationCompletionEvidenceV1, M1RearmedQualifiedRoundReleaseOutcomeV1,
+    M1RearmedRoundReleaseOutcomeV1, M1ScheduledLongLivedQueueRearmV1, M1StepDispatchIntent,
 };
 use ferric_engine::{
     EngineError, M1CompletedStepKvReleaseErrorV1, M1CompletedStepPoisonV1,
@@ -2080,6 +2080,8 @@ fn run_r30_canary_capture(arguments: &[OsString]) -> CaptureResult<()> {
     else {
         return Err("usage: ferric-m1-qualification-capture capture-r30-canary PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned());
     };
+    require_m1_authenticated_roster_acquisition_v1(Path::new(artifact_root))
+        .map_err(|error| error.to_string())?;
     let gpu_unique_id = gpu_unique_id
         .to_str()
         .ok_or_else(|| "GPU unique ID must be UTF-8 decimal".to_owned())?
@@ -2102,7 +2104,7 @@ fn run_r30_canary_capture(arguments: &[OsString]) -> CaptureResult<()> {
         .map_err(|error| format!("cannot generate authenticated runner declaration: {error:?}"))?;
     let publication = publish_qwen3_gfx942_runner_declaration(declaration)
         .map_err(|error| format!("cannot publish runner declaration: {error:?}"))?;
-    let runner = bind_m1_physical_runner_v1(artifacts, publication)
+    let runner = bind_structural_m1_physical_runner_v1(artifacts, publication)
         .map_err(|error| format!("cannot bind physical runner: {error:?}"))?;
 
     let memory_admission = model.authenticate()?;
@@ -2166,6 +2168,8 @@ fn run_r30_fault_transition_capture(arguments: &[OsString]) -> CaptureResult<()>
     else {
         return Err("usage: ferric-m1-qualification-capture capture-r30-fault-transition PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned());
     };
+    require_m1_authenticated_roster_acquisition_v1(Path::new(artifact_root))
+        .map_err(|error| error.to_string())?;
     let gpu_unique_id = gpu_unique_id
         .to_str()
         .ok_or_else(|| "GPU unique ID must be UTF-8 decimal".to_owned())?
@@ -2188,7 +2192,7 @@ fn run_r30_fault_transition_capture(arguments: &[OsString]) -> CaptureResult<()>
         .map_err(|error| format!("cannot generate authenticated runner declaration: {error:?}"))?;
     let publication = publish_qwen3_gfx942_runner_declaration(declaration)
         .map_err(|error| format!("cannot publish runner declaration: {error:?}"))?;
-    let runner = bind_m1_physical_runner_v1(artifacts, publication)
+    let runner = bind_structural_m1_physical_runner_v1(artifacts, publication)
         .map_err(|error| format!("cannot bind physical runner: {error:?}"))?;
 
     let memory_admission = model.authenticate()?;
@@ -2369,6 +2373,8 @@ fn run_r30_cancellation_capture(arguments: &[OsString]) -> CaptureResult<()> {
     else {
         return Err("usage: ferric-m1-qualification-capture capture-r30-cancellation PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned());
     };
+    require_m1_authenticated_roster_acquisition_v1(Path::new(artifact_root))
+        .map_err(|error| error.to_string())?;
     let gpu_unique_id = gpu_unique_id
         .to_str()
         .ok_or_else(|| "GPU unique ID must be UTF-8 decimal".to_owned())?
@@ -2392,7 +2398,7 @@ fn run_r30_cancellation_capture(arguments: &[OsString]) -> CaptureResult<()> {
         .map_err(|error| format!("cannot generate authenticated runner declaration: {error:?}"))?;
     let publication = publish_qwen3_gfx942_runner_declaration(declaration)
         .map_err(|error| format!("cannot publish runner declaration: {error:?}"))?;
-    let runner = bind_m1_physical_runner_v1(artifacts, publication)
+    let runner = bind_structural_m1_physical_runner_v1(artifacts, publication)
         .map_err(|error| format!("cannot bind physical runner: {error:?}"))?;
 
     let memory_admission = model.authenticate()?;
@@ -2486,6 +2492,8 @@ fn run_r30_exhaustion_capture(arguments: &[OsString]) -> CaptureResult<()> {
     else {
         return Err("usage: ferric-m1-qualification-capture capture-r30-exhaustion PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned());
     };
+    require_m1_authenticated_roster_acquisition_v1(Path::new(artifact_root))
+        .map_err(|error| error.to_string())?;
     let gpu_unique_id = gpu_unique_id
         .to_str()
         .ok_or_else(|| "GPU unique ID must be UTF-8 decimal".to_owned())?
@@ -2508,7 +2516,7 @@ fn run_r30_exhaustion_capture(arguments: &[OsString]) -> CaptureResult<()> {
         .map_err(|error| format!("cannot generate authenticated runner declaration: {error:?}"))?;
     let publication = publish_qwen3_gfx942_runner_declaration(declaration)
         .map_err(|error| format!("cannot publish runner declaration: {error:?}"))?;
-    let runner = bind_m1_physical_runner_v1(artifacts, publication)
+    let runner = bind_structural_m1_physical_runner_v1(artifacts, publication)
         .map_err(|error| format!("cannot bind physical runner: {error:?}"))?;
 
     let memory_admission = model.authenticate()?;
@@ -2763,6 +2771,8 @@ fn run_r30_rollback_capture(arguments: &[OsString]) -> CaptureResult<()> {
     else {
         return Err("usage: ferric-m1-qualification-capture capture-r30-rollback PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned());
     };
+    require_m1_authenticated_roster_acquisition_v1(Path::new(artifact_root))
+        .map_err(|error| error.to_string())?;
     let gpu_unique_id = gpu_unique_id
         .to_str()
         .ok_or_else(|| "GPU unique ID must be UTF-8 decimal".to_owned())?
@@ -2785,7 +2795,7 @@ fn run_r30_rollback_capture(arguments: &[OsString]) -> CaptureResult<()> {
         .map_err(|error| format!("cannot generate authenticated runner declaration: {error:?}"))?;
     let publication = publish_qwen3_gfx942_runner_declaration(declaration)
         .map_err(|error| format!("cannot publish runner declaration: {error:?}"))?;
-    let runner = bind_m1_physical_runner_v1(artifacts, publication)
+    let runner = bind_structural_m1_physical_runner_v1(artifacts, publication)
         .map_err(|error| format!("cannot bind physical runner: {error:?}"))?;
 
     let memory_admission = model.authenticate()?;
@@ -3149,6 +3159,8 @@ fn run_r32_speculative_capture(arguments: &[OsString]) -> CaptureResult<()> {
     else {
         return Err("usage: ferric-m1-qualification-capture capture-r32-speculative-k4 PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned());
     };
+    require_m1_authenticated_roster_acquisition_v1(Path::new(artifact_root))
+        .map_err(|error| error.to_string())?;
     let gpu_unique_id = gpu_unique_id
         .to_str()
         .ok_or_else(|| "GPU unique ID must be UTF-8 decimal".to_owned())?
@@ -3171,7 +3183,7 @@ fn run_r32_speculative_capture(arguments: &[OsString]) -> CaptureResult<()> {
         .map_err(|error| format!("cannot generate authenticated runner declaration: {error:?}"))?;
     let publication = publish_qwen3_gfx942_runner_declaration(declaration)
         .map_err(|error| format!("cannot publish runner declaration: {error:?}"))?;
-    let runner = bind_m1_physical_runner_v1(artifacts, publication)
+    let runner = bind_structural_m1_physical_runner_v1(artifacts, publication)
         .map_err(|error| format!("cannot bind physical runner: {error:?}"))?;
 
     let memory_admission = model.authenticate()?;
@@ -3553,6 +3565,8 @@ fn run_capture_with_purpose(
             CapturePurposeV1::R30PartialFaultTransition => "capture-r30-fault-transition uses its independent six-argument path".to_owned(),
         });
     };
+    require_m1_authenticated_roster_acquisition_v1(Path::new(artifact_root))
+        .map_err(|error| error.to_string())?;
     let case_id = case_id
         .to_str()
         .ok_or_else(|| "case ID must be UTF-8".to_owned())?;
@@ -3608,7 +3622,7 @@ fn run_capture_with_purpose(
     require_supported_capture(&workload)?;
     let publication = publish_qwen3_gfx942_runner_declaration(declaration)
         .map_err(|error| format!("cannot publish runner declaration: {error:?}"))?;
-    let runner = bind_m1_physical_runner_v1(artifacts, publication)
+    let runner = bind_structural_m1_physical_runner_v1(artifacts, publication)
         .map_err(|error| format!("cannot bind physical runner: {error:?}"))?;
 
     let memory_admission = model.authenticate()?;

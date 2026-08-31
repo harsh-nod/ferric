@@ -4844,7 +4844,7 @@ mod tests {
         };
 
         use crate::{
-            bind_m1_kv_workspace_table_v1, bind_m1_physical_runner_v1,
+            bind_m1_kv_workspace_table_v1, bind_structural_m1_physical_runner_v1,
             initialize_m1_physical_runner_memory_v1, reopen_persisted_m1_kernel_artifacts_v1,
             ActiveDeviceKvCache, Engine, M1FiniteSpeculativeQueueRolloverKvInputsV1,
             M1FullStepKvWorkspaceTablesV1, M1FullStepWorkspacePlans,
@@ -4927,7 +4927,7 @@ mod tests {
                 .expect("generate fixture structural publication");
         let publication = publish_qwen3_gfx942_runner_declaration(declaration)
             .expect("publish fixture structural declaration");
-        let runner = bind_m1_physical_runner_v1(artifacts, publication)
+        let runner = bind_structural_m1_physical_runner_v1(artifacts, publication)
             .expect("bind persisted kernels to canonical operations");
         let checked = OpenedKfd::open_default()
             .expect("open KFD")

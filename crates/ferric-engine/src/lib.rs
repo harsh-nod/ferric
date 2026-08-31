@@ -5,6 +5,7 @@
 #[allow(unused_imports)]
 use vstd::prelude::*;
 
+mod authenticated_kernel_programs;
 mod bound_step_workspaces;
 mod cache;
 mod completed_readback_join;
@@ -55,6 +56,17 @@ mod step_workspace_images;
 mod step_workspace_subleases;
 mod system;
 
+pub use authenticated_kernel_programs::{
+    admit_m1_authenticated_worker_v3_programs_v1, bind_m1_authenticated_service_queue_v1,
+    require_m1_authenticated_roster_acquisition_v1, reuse_m1_authenticated_service_queue_v1,
+    rollover_m1_authenticated_service_queue_v1, M1AuthenticatedProgramSetIntakeErrorV1,
+    M1AuthenticatedProgramSetIntakeFailureV1, M1AuthenticatedProgramSetIntakePhaseV1,
+    M1AuthenticatedRosterAcquisitionRequiredV1, M1AuthenticatedWorkerV3ProgramSetResidueV1,
+    M1AuthenticatedWorkerV3ProgramSetV1, M1AuthenticatedWorkerV3RostersV1, M1GemmWorkerV3RosterV1,
+    M1LogitsWorkerV3RosterV1, M1PagedDecodeWorkerV3RosterV1, M1PrefillWorkerV3RosterV1,
+    M1RmsNormWorkerV3RosterV1, M1SwiGluWorkerV3RosterV1, M1_AUTHENTICATED_PROGRAM_TARGET_V1,
+    M1_AUTHENTICATED_ROSTER_COUNT_V1,
+};
 pub use bound_step_workspaces::{
     BoundM1FullStepWorkspaceSubleases, M1FullStepWorkspaceDispatchRangeError,
     M1FullStepWorkspaceSubleaseBindingError, M1FullStepWorkspaceSubleaseBindingFailure,
@@ -451,8 +463,9 @@ pub use qualification_logits::{
     M1_QUALIFICATION_LOGITS_ALIGNMENT_V1, M1_QUALIFICATION_LOGITS_ELEMENT_BYTES_V1,
 };
 pub use runner::{
-    bind_m1_physical_runner_v1, initialize_m1_physical_runner_memory_v1, LogicalRunnerDeclaration,
-    LogicalRunnerError, M1PhysicalRunnerBindFailureV1,
+    bind_m1_physical_runner_v1, bind_structural_m1_physical_runner_v1,
+    initialize_m1_physical_runner_memory_v1, LogicalRunnerDeclaration, LogicalRunnerError,
+    M1AuthenticatedPhysicalRunnerV1, M1PhysicalRunnerBindFailureV1,
     M1PhysicalRunnerFiniteSpeculativeRolloverSubmissionFailureV1,
     M1PhysicalRunnerFirstCompletionOutcomeV1, M1PhysicalRunnerFirstPublicationDiagnosticV1,
     M1PhysicalRunnerFirstPublicationExhaustedV1, M1PhysicalRunnerFirstPublicationFailureV1,
@@ -460,6 +473,7 @@ pub use runner::{
     M1PhysicalRunnerRearmSubmissionExhaustedV1, M1PhysicalRunnerRearmSubmissionFailureV1,
     M1PhysicalRunnerRecipeFailureV1, M1PhysicalRunnerRecipeOutcomeV1,
     M1PhysicalRunnerS1K4RolloverSubmissionFailureV1, M1PhysicalRunnerV1,
+    M1StructuralPhysicalRunnerBindFailureV1,
 };
 pub use scheduler::{DispatchBatch, M1ExactDispatchErrorV1, M1ScheduledDispatchV1, SchedulerError};
 pub use speculative_diagnostic_choices::{

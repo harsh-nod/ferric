@@ -7,7 +7,7 @@ mod ferric_m1_hardware_harness_source_identity;
 use fe2o3_kfd::{DeviceSelector, OpenedKfd};
 use ferric_engine::{
     execute_m1_k7_s1k4_packet_v1, reopen_persisted_m1_kernel_artifacts_from_directory_v1,
-    reopen_persisted_m1_kernel_artifacts_v1,
+    reopen_persisted_m1_kernel_artifacts_v1, require_m1_authenticated_roster_acquisition_v1,
 };
 use ferric_m1_hardware_harness_source_identity::TOOL_SOURCE_SHA256S;
 use rustix::fd::OwnedFd;
@@ -172,6 +172,9 @@ fn parse_command(arguments: Vec<OsString>) -> HarnessResult<Command> {
 }
 
 fn execute(command: Command) -> HarnessResult<()> {
+    require_m1_authenticated_roster_acquisition_v1(&command.artifact_root)
+        .map_err(|error| error.to_string())?;
+
     let started_seconds = unix_seconds()?;
     let run_nonce = unix_nanos()?;
     let started_at_utc = utc_timestamp(started_seconds)?;

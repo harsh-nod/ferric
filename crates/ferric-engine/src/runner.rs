@@ -9,8 +9,11 @@
 
 use core::fmt;
 
+use fe2o3_host::{AuthenticatedServiceQueueCreateFailureV1, AuthenticatedServiceQueueSessionV1};
 use fe2o3_kfd::CheckedGfx942XnackMinusDevice;
-use fe2o3_service_host::ServiceQueueErrorV1;
+use fe2o3_service_host::{
+    ServiceAllocationSessionV1, ServiceFixedDispatchPacketV1, ServiceQueueErrorV1,
+};
 use ferric_build::{
     AddresslessModelMemoryPlan, GeneratedOperationDeclaration, GeneratedPlanDeclaration,
     M1KernelArtifactFamilyV1, PublishedRunnerDeclaration,
@@ -212,16 +215,95 @@ impl LogicalRunnerDeclaration {
     }
 }
 
-/// Exact Ferric-owned physical runner authority for the admitted M1 artifacts.
+/// Legacy structural physical runner for admitted raw M1 artifacts.
 ///
-/// The persisted bytes remain owned here while the structural operation plan
-/// retains the sole published declaration. Program envelopes can only borrow
-/// those bytes, so an artifact owner cannot be separated from a later rearm.
+/// This owner remains available to structural tests and diagnostics. Production
+/// entry points must use the authenticated physical runner instead.
 #[must_use = "physical runner artifact and declaration custody must remain retained"]
 #[derive(Debug)]
 pub struct M1PhysicalRunnerV1 {
     artifacts: AdmittedPersistedM1KernelArtifactsV1,
     operations: DeclaredOperationKernelPlan,
+}
+
+/// Production physical runner retaining authenticated Worker V3 program custody.
+///
+/// The exact seven-roster set cannot be constructed from a persisted artifact
+/// path. Queue creation consumes this runner's program set and delegates to the
+/// authenticated fe2o3 queue boundary, which revalidates every current
+/// publication immediately before program materialization.
+#[must_use = "authenticated physical runner custody must remain retained"]
+pub struct M1AuthenticatedPhysicalRunnerV1 {
+    programs: crate::M1AuthenticatedWorkerV3ProgramSetV1,
+    operations: DeclaredOperationKernelPlan,
+}
+
+impl fmt::Debug for M1AuthenticatedPhysicalRunnerV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AuthenticatedPhysicalRunnerV1")
+            .field("programs", &self.programs)
+            .field("declaration_id", &self.operations.runner_declaration_id())
+            .field("kernel_catalog_id", &self.operations.kernel_catalog_id())
+            .finish_non_exhaustive()
+    }
+}
+
+impl M1AuthenticatedPhysicalRunnerV1 {
+    /// Exact Ferric-domain-separated authenticated program catalog identity.
+    #[must_use]
+    pub const fn program_catalog_id(&self) -> Identity {
+        self.programs.catalog_id()
+    }
+
+    /// Exact generated runner declaration identity.
+    #[must_use]
+    pub const fn declaration_id(&self) -> Identity {
+        self.operations.runner_declaration_id()
+    }
+
+    /// Exact generated structural K1-K7 catalog identity.
+    #[must_use]
+    pub const fn kernel_catalog_id(&self) -> Identity {
+        self.operations.kernel_catalog_id()
+    }
+
+    /// Exact generated operation count retained by physical runner custody.
+    #[must_use]
+    pub fn operation_count(&self) -> usize {
+        self.operations.operations().len()
+    }
+
+    /// Borrows the logical declaration used for request-local plan binding.
+    #[must_use]
+    pub const fn logical_runner(&self) -> &LogicalRunnerDeclaration {
+        self.operations.runner()
+    }
+
+    /// Derives the complete addressless physical recipe for one admitted step.
+    pub fn derive_step_recipe(
+        &self,
+        intent: M1StepDispatchIntent,
+        workspace_plans: M1FullStepWorkspacePlans,
+    ) -> M1PhysicalRunnerRecipeOutcomeV1 {
+        derive_physical_step_recipe(&self.operations, intent, workspace_plans)
+    }
+
+    /// Consumes authenticated program custody into one exact service queue.
+    ///
+    /// # Errors
+    ///
+    /// Returns the fe2o3 owner-retaining authenticated creation failure.
+    pub fn create_service_queue<const N: usize>(
+        self,
+        allocations: ServiceAllocationSessionV1,
+        ring_bytes: u32,
+        packets: [ServiceFixedDispatchPacketV1; N],
+    ) -> Result<AuthenticatedServiceQueueSessionV1<N>, AuthenticatedServiceQueueCreateFailureV1<N>>
+    {
+        self.programs
+            .create_service_queue(allocations, ring_bytes, packets)
+    }
 }
 
 impl M1PhysicalRunnerV1 {
@@ -603,43 +685,104 @@ fn derive_physical_step_recipe(
     }
 }
 
-/// Binding failure retaining the exact persisted artifacts and publication.
+/// Production binding failure retaining authenticated programs and publication.
 #[must_use = "runner binding rejection retains every exact input"]
-#[derive(Debug)]
 pub enum M1PhysicalRunnerBindFailureV1 {
     /// Canonical operation derivation rejected before consuming the publication.
+    Canonical {
+        error: OperationKernelPlanError,
+        programs: Box<crate::M1AuthenticatedWorkerV3ProgramSetV1>,
+        runner: Box<LogicalRunnerDeclaration>,
+    },
+    /// Independent structural validation rejected the generated bindings.
+    Structural {
+        programs: Box<crate::M1AuthenticatedWorkerV3ProgramSetV1>,
+        failure: Box<OperationKernelPlanFailure>,
+    },
+}
+
+impl fmt::Debug for M1PhysicalRunnerBindFailureV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Canonical { error, .. } => {
+                formatter.debug_tuple("Canonical").field(error).finish()
+            }
+            Self::Structural { failure, .. } => {
+                formatter.debug_tuple("Structural").field(failure).finish()
+            }
+        }
+    }
+}
+
+/// Binds authenticated K1-K7 custody to the exact generated operation roster.
+///
+/// Family build and ABI identities come from current Ferric source facts, while
+/// artifact identities come from protected Worker V3 roster verification.
+///
+/// # Errors
+///
+/// Returns canonical derivation or independent structural binding failure with
+/// the exact authenticated program and declaration owners.
+pub fn bind_m1_physical_runner_v1(
+    programs: crate::M1AuthenticatedWorkerV3ProgramSetV1,
+    publication: PublishedRunnerDeclaration,
+) -> Result<M1AuthenticatedPhysicalRunnerV1, M1PhysicalRunnerBindFailureV1> {
+    let runner = LogicalRunnerDeclaration::from_published(publication);
+    let families = programs.family_artifacts().to_vec().into_boxed_slice();
+    let operations = match derive_canonical_operation_bindings(&runner, &families) {
+        Ok(operations) => operations,
+        Err(error) => {
+            return Err(M1PhysicalRunnerBindFailureV1::Canonical {
+                error,
+                programs: Box::new(programs),
+                runner: Box::new(runner),
+            })
+        }
+    };
+    match bind_declared_operation_kernel_plan(runner, families, operations) {
+        OperationKernelPlanOutcome::Bound(operations) => Ok(M1AuthenticatedPhysicalRunnerV1 {
+            programs,
+            operations,
+        }),
+        OperationKernelPlanOutcome::Rejected(failure) => {
+            Err(M1PhysicalRunnerBindFailureV1::Structural {
+                programs: Box::new(programs),
+                failure: Box::new(failure),
+            })
+        }
+    }
+}
+
+/// Structural-only raw-artifact binding failure.
+#[must_use = "structural binding rejection retains every exact input"]
+#[derive(Debug)]
+pub enum M1StructuralPhysicalRunnerBindFailureV1 {
     Canonical {
         error: OperationKernelPlanError,
         artifacts: Box<AdmittedPersistedM1KernelArtifactsV1>,
         runner: Box<LogicalRunnerDeclaration>,
     },
-    /// Independent structural validation rejected the generated bindings.
     Structural {
         artifacts: Box<AdmittedPersistedM1KernelArtifactsV1>,
         failure: Box<OperationKernelPlanFailure>,
     },
 }
 
-/// Binds persisted K1-K7 bytes to the exact generated operation roster.
+/// Binds raw persisted artifacts for structural tests and diagnostics only.
 ///
-/// Family build, artifact, and ABI identities are derived only from the
-/// persisted compiler-handoff, HSACO, and symbol-manifest digests. The complete
-/// 10,648-operation binding roster is then independently revalidated.
-///
-/// # Errors
-///
-/// Returns canonical derivation or independent structural binding failure with
-/// the exact persisted artifact and declaration owners.
-pub fn bind_m1_physical_runner_v1(
+/// This API does not authenticate Worker V3 roster custody and is not a
+/// production load or queue authority.
+#[doc(hidden)]
+pub fn bind_structural_m1_physical_runner_v1(
     artifacts: AdmittedPersistedM1KernelArtifactsV1,
     publication: PublishedRunnerDeclaration,
-) -> Result<M1PhysicalRunnerV1, M1PhysicalRunnerBindFailureV1> {
+) -> Result<M1PhysicalRunnerV1, M1StructuralPhysicalRunnerBindFailureV1> {
     let runner = LogicalRunnerDeclaration::from_published(publication);
     let families = physical_family_artifacts(&artifacts);
     let operations = match derive_canonical_operation_bindings(&runner, &families) {
         Ok(operations) => operations,
         Err(error) => {
-            return Err(M1PhysicalRunnerBindFailureV1::Canonical {
+            return Err(M1StructuralPhysicalRunnerBindFailureV1::Canonical {
                 error,
                 artifacts: Box::new(artifacts),
                 runner: Box::new(runner),
@@ -652,7 +795,7 @@ pub fn bind_m1_physical_runner_v1(
             operations,
         }),
         OperationKernelPlanOutcome::Rejected(failure) => {
-            Err(M1PhysicalRunnerBindFailureV1::Structural {
+            Err(M1StructuralPhysicalRunnerBindFailureV1::Structural {
                 artifacts: Box::new(artifacts),
                 failure: Box::new(failure),
             })
@@ -1448,7 +1591,9 @@ mod tests {
             ValidatedM1StepInputs,
         };
 
-        use super::{bind_m1_physical_runner_v1, initialize_m1_physical_runner_memory_v1};
+        use super::{
+            bind_structural_m1_physical_runner_v1, initialize_m1_physical_runner_memory_v1,
+        };
         use crate::{
             bind_m1_kv_workspace_table_v1, reopen_persisted_m1_kernel_artifacts_v1,
             ActiveDeviceKvCache, Engine, M1FullStepKvWorkspaceTablesV1,
@@ -1501,7 +1646,7 @@ mod tests {
                 .expect("generate fixture structural publication");
         let publication = publish_qwen3_gfx942_runner_declaration(declaration)
             .expect("publish fixture structural declaration");
-        let runner = bind_m1_physical_runner_v1(artifacts, publication)
+        let runner = bind_structural_m1_physical_runner_v1(artifacts, publication)
             .expect("bind persisted kernels to canonical operations");
 
         let checked = OpenedKfd::open_default()
@@ -1663,7 +1808,9 @@ mod tests {
             ValidatedM1StepInputs,
         };
 
-        use super::{bind_m1_physical_runner_v1, initialize_m1_physical_runner_memory_v1};
+        use super::{
+            bind_structural_m1_physical_runner_v1, initialize_m1_physical_runner_memory_v1,
+        };
         use crate::{
             bind_m1_kv_workspace_table_v1, bind_m1_speculative_draft_kv_round_workspace_table_v1,
             complete_m1_physical_step_v1, device_cache::m1_speculative_draft_round_shape_v1,
@@ -1720,7 +1867,7 @@ mod tests {
                 .expect("generate fixture structural publication");
         let publication = publish_qwen3_gfx942_runner_declaration(declaration)
             .expect("publish fixture structural declaration");
-        let runner = bind_m1_physical_runner_v1(artifacts, publication)
+        let runner = bind_structural_m1_physical_runner_v1(artifacts, publication)
             .expect("bind persisted kernels to canonical operations");
         let checked = OpenedKfd::open_default()
             .expect("open KFD")

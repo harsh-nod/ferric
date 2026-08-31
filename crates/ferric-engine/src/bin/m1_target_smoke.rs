@@ -26,10 +26,10 @@ use ferric_build::{
     TokenizerExecutionLimits,
 };
 use ferric_engine::{
-    bind_m1_physical_runner_v1, complete_m1_physical_step_v1,
-    initialize_m1_physical_runner_memory_v1, DeviceKvPageLease,
-    M1LongLivedQueueRearmScheduleFailureV1, M1PhysicalRunnerV1, M1RearmedRoundReleaseOutcomeV1,
-    M1ScheduledLongLivedQueueRearmV1,
+    bind_structural_m1_physical_runner_v1, complete_m1_physical_step_v1,
+    initialize_m1_physical_runner_memory_v1, require_m1_authenticated_roster_acquisition_v1,
+    DeviceKvPageLease, M1LongLivedQueueRearmScheduleFailureV1, M1PhysicalRunnerV1,
+    M1RearmedRoundReleaseOutcomeV1, M1ScheduledLongLivedQueueRearmV1,
 };
 use ferric_spec::{
     ValidatedM1StepInputs, M1_KV_PAGE_TOKENS, M1_QUALIFICATION_TOKENS_PER_LANE, QWEN3_IM_END_TOKEN,
@@ -212,6 +212,9 @@ pub(super) fn run(arguments: &[OsString]) -> CaptureResult<()> {
         .to_str()
         .ok_or_else(|| "RAW-PROMPT must be UTF-8".to_owned())?;
 
+    require_m1_authenticated_roster_acquisition_v1(Path::new(artifact_root))
+        .map_err(|error| error.to_string())?;
+
     let closure = load_closure(Path::new(closure_path))?;
     let artifacts = reopen_persisted_m1_kernel_artifacts_v1(Path::new(artifact_root))
         .map_err(|error| format!("cannot authenticate persisted kernel artifacts: {error}"))?;
@@ -241,7 +244,7 @@ pub(super) fn run(arguments: &[OsString]) -> CaptureResult<()> {
         .map_err(|error| format!("cannot generate authenticated runner declaration: {error:?}"))?;
     let publication = publish_qwen3_gfx942_runner_declaration(declaration)
         .map_err(|error| format!("cannot publish runner declaration: {error:?}"))?;
-    let runner = bind_m1_physical_runner_v1(artifacts, publication)
+    let runner = bind_structural_m1_physical_runner_v1(artifacts, publication)
         .map_err(|error| format!("cannot bind physical runner: {error:?}"))?;
 
     let memory_admission = model.authenticate()?;
