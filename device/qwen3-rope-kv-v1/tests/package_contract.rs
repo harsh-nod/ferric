@@ -38,7 +38,12 @@ fn package_retains_the_reviewed_nightly_and_truthful_nonclaims() {
     assert!(TOOLCHAIN.contains("nightly-2026-04-03"));
     assert!(TOOLCHAIN.contains("rustc-dev"));
     assert!(README.contains("revision `d955209099c7`"));
-    assert!(README.contains("correctness-first source boundary"));
-    assert!(README.contains("both fixed 512 MiB cache buffers"));
-    assert!(README.contains("not establish host-plan integration"));
+    assert!(README.contains("parallel ownership boundary"));
+    assert!(README.contains("does not claim"));
+    assert!(README.contains("hardware measurement"));
+    assert!(README.contains("both fixed 512 MiB cache"));
+    assert!(README.contains("buffers in each direction"));
+    assert!(README.contains("host profile uses the same"));
+    assert!(README.contains("fixed physical-page"));
+    assert!(README.contains("not establish extracted host-plan binding"));
 }

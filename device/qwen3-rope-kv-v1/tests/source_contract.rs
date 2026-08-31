@@ -1,5 +1,6 @@
 use quote::ToTokens as _;
-use syn::{FnArg, Item, ItemFn, Pat};
+use syn::visit::{self, Visit as _};
+use syn::{Expr, ExprMethodCall, FnArg, Item, ItemFn, Lit, Pat};
 
 const SOURCE: &str = include_str!("../src/lib.rs");
 
@@ -45,6 +46,34 @@ fn argument_name(argument: &FnArg) -> String {
     pattern.ident.to_string()
 }
 
+#[derive(Default)]
+struct WriteBlockComponents {
+    components: Vec<usize>,
+    non_literal_components: usize,
+}
+
+impl<'ast> syn::visit::Visit<'ast> for WriteBlockComponents {
+    fn visit_expr_method_call(&mut self, call: &'ast ExprMethodCall) {
+        if call.method == "write_block" {
+            let component = call
+                .args
+                .iter()
+                .nth(1)
+                .expect("write_block has a component operand");
+            match component {
+                Expr::Lit(literal) => match &literal.lit {
+                    Lit::Int(value) => self
+                        .components
+                        .push(value.base10_parse().expect("component literal fits usize")),
+                    _ => self.non_literal_components += 1,
+                },
+                _ => self.non_literal_components += 1,
+            }
+        }
+        visit::visit_expr_method_call(self, call);
+    }
+}
+
 #[test]
 fn source_has_exact_two_root_roster_and_no_escape_hatch() {
     let kernels = kernels();
@@ -75,6 +104,53 @@ fn source_has_exact_two_root_roster_and_no_escape_hatch() {
 }
 
 #[test]
+fn immutable_inputs_use_the_exact_volatile_load_custody() {
+    assert_eq!(SOURCE.matches("memory::volatile_load").count(), 41);
+    for input in [
+        "query_bf16",
+        "key_bf16",
+        "position_ids",
+        "cos_table_f32",
+        "sin_table_f32",
+        "rotated_key_bf16",
+        "value_bf16",
+        "logical_starts",
+        "page_indices",
+    ] {
+        assert!(
+            !SOURCE.contains(&format!("{input}[")),
+            "immutable input {input} bypasses volatile-load custody"
+        );
+    }
+
+    for component in 0..16 {
+        let key_load = format!("memory::volatile_load(rotated_key_bf16, input_index_{component})");
+        let value_load = format!("memory::volatile_load(value_bf16, input_index_{component})");
+        assert_eq!(SOURCE.matches(&key_load).count(), 1);
+        assert_eq!(SOURCE.matches(&value_load).count(), 1);
+        let value_component = format!("value_component_{component}");
+        assert_eq!(
+            SOURCE
+                .split(|character: char| {
+                    !(character.is_ascii_alphanumeric() || character == '_')
+                })
+                .filter(|token| *token == value_component.as_str())
+                .count(),
+            17,
+            "value component must be loaded once and reused by all page slots"
+        );
+    }
+
+    let owner_guard = SOURCE
+        .find("if physical_page == owned_physical_page")
+        .expect("physical-page owner guard is present");
+    let first_payload_load = SOURCE
+        .find("memory::volatile_load(rotated_key_bf16, input_index_0)")
+        .expect("first owned-row payload load is present");
+    assert!(owner_guard < first_payload_load);
+}
+
+#[test]
 fn attributes_pin_wave64_flat_grid_and_exact_loop_bounds() {
     let kernels = kernels();
     let rope = kernels[0]
@@ -96,10 +172,11 @@ fn attributes_pin_wave64_flat_grid_and_exact_loop_bounds() {
     for attribute in [&rope, &kv] {
         assert!(attribute.contains("required = [64 , 1 , 1]"));
         assert!(attribute.contains("max = [64 , 1 , 1]"));
-        assert!(attribute.contains("max_grid = [2048 , 1 , 1]"));
     }
+    assert!(rope.contains("max_grid = [2048 , 1 , 1]"));
+    assert!(kv.contains("max_grid = [16384 , 1 , 1]"));
     assert!(rope.contains("loop_bounds (32 , 8)"));
-    assert!(kv.contains("loop_bounds (2048 , 1024)"));
+    assert!(kv.contains("loop_bounds (2048)"));
 }
 
 #[test]
@@ -166,11 +243,11 @@ fn source_signatures_match_the_exact_host_abis() {
     assert_eq!(compact_type(&kv.sig.inputs[3]), "&[u32]");
     assert_eq!(
         compact_type(&kv.sig.inputs[4]),
-        "WriteOnlyDisjointSlice<u16,GridExclusive>"
+        "WriteOnlyDisjointSlice<u16,Blocked<Index1D,64,256>>"
     );
     assert_eq!(
         compact_type(&kv.sig.inputs[5]),
-        "WriteOnlyDisjointSlice<u16,GridExclusive>"
+        "WriteOnlyDisjointSlice<u16,Blocked<Index1D,64,256>>"
     );
     for scalar in kv.sig.inputs.iter().skip(6) {
         assert_eq!(compact_type(scalar), "u32");
@@ -273,20 +350,36 @@ fn rope_row_stripes_are_injective_and_cover_each_output_row() {
 }
 
 #[test]
-fn paged_cache_index_is_bounded_and_grid_exclusive() {
-    let mut indices = std::collections::BTreeSet::new();
-    for physical_page in [0_usize, 1, 16_383] {
-        for token_in_page in 0..16 {
-            for component in 0..1_024 {
-                let cache_token = physical_page * 16 + token_in_page;
-                let index = cache_token * 1_024 + component;
-                assert!(index < 268_435_456);
-                assert!(indices.insert(index));
-            }
-        }
+fn paged_cache_uses_only_literal_static_blocked_write_sites() {
+    let kernels = kernels();
+    let mut visitor = WriteBlockComponents::default();
+    visitor.visit_item_fn(&kernels[1]);
+    assert_eq!(visitor.non_literal_components, 0);
+    assert_eq!(visitor.components.len(), 512);
+    for component in 0..256 {
+        assert_eq!(
+            visitor
+                .components
+                .iter()
+                .filter(|candidate| **candidate == component)
+                .count(),
+            2,
+            "key and value must each have one literal store for component {component}"
+        );
     }
-    assert!(SOURCE.contains("let Some(leader) = thread::grid_leader()"));
-    assert_eq!(SOURCE.matches("write_exclusive").count(), 2);
+    assert_eq!(SOURCE.matches("if token_in_page == ").count(), 16);
+    for token_in_page in 0..16 {
+        assert_eq!(
+            SOURCE
+                .matches(&format!("if token_in_page == {token_in_page} {{"))
+                .count(),
+            1,
+            "each physical-page token slot must have one static store case"
+        );
+    }
+    assert!(SOURCE.contains("page_lane_index.checked_block::<64, 256>()"));
+    assert!(!SOURCE.contains("grid_leader"));
+    assert!(!SOURCE.contains("write_exclusive"));
     assert!(!SOURCE.contains("get_mut_at"));
     assert!(!SOURCE.contains("key_cache_bf16["));
     assert!(!SOURCE.contains("value_cache_bf16["));
@@ -298,12 +391,16 @@ fn launch_and_numerical_source_contracts_are_explicit() {
         .chars()
         .filter(|character| !character.is_whitespace())
         .collect();
-    assert_eq!(compact.matches("max_grid=[2048,1,1]").count(), 2);
+    assert_eq!(compact.matches("max_grid=[2048,1,1]").count(), 1);
+    assert_eq!(compact.matches("max_grid=[16384,1,1]").count(), 1);
     assert_eq!(
         SOURCE
             .matches("thread::launch_extent_1d() != rows * 64")
             .count(),
-        2
+        1
+    );
+    assert!(
+        SOURCE.contains("thread::launch_extent_1d() != QWEN3_PAGED_KV_WRITE_GRID_WORKITEMS_V1")
     );
     for required in [
         "let first_cos = first_value * cos;",
@@ -331,7 +428,6 @@ fn profile_guards_and_launch_checks_are_inlined_in_both_roots() {
     assert!(!kv.contains("kv_profile_is_admitted_v1 !"));
     assert!(!rope.contains("qwen3_rope_profile_is_admitted_v1 ("));
     assert!(!kv.contains("qwen3_paged_kv_write_profile_is_admitted_v1 ("));
-    for body in [&rope, &kv] {
-        assert!(body.contains("thread :: launch_extent_1d () != rows * 64"));
-    }
+    assert!(rope.contains("thread :: launch_extent_1d () != rows * 64"));
+    assert!(kv.contains("thread :: launch_extent_1d () != QWEN3_PAGED_KV_WRITE_GRID_WORKITEMS_V1"));
 }

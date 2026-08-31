@@ -18,7 +18,7 @@ fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "d955209099
 
 [dev-dependencies]
 quote = "1"
-syn = { version = "2", features = ["full"] }
+syn = { version = "2", features = ["full", "visit"] }
 
 [lib]
 name = "ferric_qwen3_rope_kv_device_v1"

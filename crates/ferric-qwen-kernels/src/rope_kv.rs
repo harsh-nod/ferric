@@ -18,9 +18,9 @@ use fe2o3_compiler_ffi::{
     CompilerModuleSymbolRoleV1, DeviceTargetV1,
 };
 use fe2o3_hsaco::{
-    inspect_and_bind_kernel_descriptors, ArgumentAccess, ArgumentAddressSpace,
-    CodeObjectVersion as InspectedCodeObjectVersion, ExplicitArgument, ExplicitValueKind,
-    ExplicitValueType, HiddenArgument, HiddenValueKind, KernelBindingError, MAX_HSACO_BYTES,
+    ArgumentAccess, ArgumentAddressSpace, CodeObjectVersion as InspectedCodeObjectVersion,
+    ExplicitArgument, ExplicitValueKind, ExplicitValueType, HiddenArgument, HiddenValueKind,
+    KernelBindingError, MAX_HSACO_BYTES, inspect_and_bind_kernel_descriptors,
 };
 use fe2o3_hsaco_finalize::{
     InertDecodedWorkerExchangeV2, InertProtectedFirstBuildWorkerV3EvidenceV1, WorkerProtocolError,
@@ -37,7 +37,7 @@ use fe2o3_llvm_handoff::{
     ScalarTypeV1, StageIdentitiesV1, TerminatorV2, TypedValueV2, ValueIdV2, ValueTypeV2,
     WorkgroupSizeRangeV1,
 };
-use fe2o3_llvm_text::{serialize_gfx942_handoff_v2, Gfx942LlvmAssemblyV2, SerializeErrorV2};
+use fe2o3_llvm_text::{Gfx942LlvmAssemblyV2, SerializeErrorV2, serialize_gfx942_handoff_v2};
 use sha2::{Digest as _, Sha256};
 
 /// Exact `RoPE` kernel entry emitted by the typed graph.
@@ -71,7 +71,7 @@ pub const QWEN3_PAGED_KV_WRITE_GLOBAL_BUFFER_ABI_V1: [KernelGlobalBufferAbiV1<'s
 pub const QWEN3_ROPE_KV_TARGET_V1: &str = "gfx942:xnack-";
 /// Exact code-object version required by this compiler lane.
 pub const QWEN3_ROPE_KV_CODE_OBJECT_VERSION_V1: u8 = 6;
-/// Exact Wave64 workgroup required by both device roots.
+/// Wave64 workgroup shape shared by RoPE rows and physical KV pages.
 pub const QWEN3_ROPE_KV_WORKGROUP_V1: [u32; 3] = [64, 1, 1];
 /// Exact Qwen3 head dimension.
 pub const QWEN3_ROPE_KV_HEAD_DIMENSION_V1: u32 = 128;
@@ -87,9 +87,11 @@ pub const QWEN3_KV_PAGE_TOKENS_V1: u32 = 16;
 pub const QWEN3_KV_PAGE_TABLE_ENTRIES_V1: u32 = 512;
 /// Fixed physical page slots in the global Ferric KV cache pool.
 pub const QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1: u32 = 16_384;
-/// One Wave64 workgroup owns each physical page during paged KV writes.
+/// One paged-KV-write workgroup owns each physical cache page.
+pub const QWEN3_PAGED_KV_WRITE_GRID_WORKGROUPS_V1: u32 = QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1;
+/// Exact one-dimensional paged-KV-write AQL grid extent.
 pub const QWEN3_PAGED_KV_WRITE_GRID_WORKITEMS_V1: u32 =
-    QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1 * QWEN3_ROPE_KV_WORKGROUP_V1[0];
+    QWEN3_PAGED_KV_WRITE_GRID_WORKGROUPS_V1 * QWEN3_ROPE_KV_WORKGROUP_V1[0];
 /// BF16 elements in each fixed global key or value cache.
 pub const QWEN3_KV_CACHE_ELEMENTS_V1: u64 = QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1 as u64
     * QWEN3_KV_PAGE_TOKENS_V1 as u64
@@ -347,13 +349,13 @@ impl Qwen3RopeKvProfileV1 {
             .ok_or(Qwen3RopeKvCatalogErrorV1::ExtentOverflow)?;
         let (block_counts, aql_grid_work_items) = match operation {
             Qwen3RopeKvOperationV1::Rope => {
-                let grid_x = base_rows
+                let grid_x = active_tokens
                     .checked_mul(QWEN3_ROPE_KV_WORKGROUP_V1[0])
                     .ok_or(Qwen3RopeKvCatalogErrorV1::GridOverflow)?;
-                ([base_rows, 1, 1], [grid_x, 1, 1])
+                ([active_tokens, sequences, 1], [grid_x, sequences, 1])
             }
             Qwen3RopeKvOperationV1::PagedKvWrite => (
-                [QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1, 1, 1],
+                [QWEN3_PAGED_KV_WRITE_GRID_WORKGROUPS_V1, 1, 1],
                 [QWEN3_PAGED_KV_WRITE_GRID_WORKITEMS_V1, 1, 1],
             ),
         };
@@ -3542,19 +3544,16 @@ mod tests {
                     );
                     match operation {
                         Qwen3RopeKvOperationV1::Rope => {
-                            assert_eq!(
-                                profile.hsa_adapter_block_counts(),
-                                [sequences * active, 1, 1]
-                            );
+                            assert_eq!(profile.hsa_adapter_block_counts(), [active, sequences, 1]);
                             assert_eq!(
                                 profile.aql_grid_work_items(),
-                                [sequences * active * 64, 1, 1]
+                                [active * QWEN3_ROPE_KV_WORKGROUP_V1[0], sequences, 1]
                             );
                         }
                         Qwen3RopeKvOperationV1::PagedKvWrite => {
                             assert_eq!(
                                 profile.hsa_adapter_block_counts(),
-                                [QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1, 1, 1]
+                                [QWEN3_PAGED_KV_WRITE_GRID_WORKGROUPS_V1, 1, 1]
                             );
                             assert_eq!(
                                 profile.aql_grid_work_items(),
@@ -3565,6 +3564,8 @@ mod tests {
                 }
             }
         }
+        assert_eq!(QWEN3_PAGED_KV_WRITE_GRID_WORKGROUPS_V1, 16_384);
+        assert_eq!(QWEN3_PAGED_KV_WRITE_GRID_WORKITEMS_V1, 1_048_576);
         assert_eq!(Qwen3RopeKvModelRoleV1::Target8B.query_heads(), 32);
         assert_eq!(Qwen3RopeKvModelRoleV1::Draft06B.query_heads(), 16);
         assert_eq!(Qwen3RopeKvModelRoleV1::Target8B.layers(), 36);
