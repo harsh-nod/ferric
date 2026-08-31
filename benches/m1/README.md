@@ -39,6 +39,12 @@ resource-inspection, calibration, holdout, and regression-reference companions.
 The policy covers the exact seven K1-K7 case/family positions and freezes each
 external profile, work-unit definition, Ferric implementation, vendor
 applicability and implementation, weight, threshold, and companion identity.
+Its canonical `toolchain` object also freezes the externally supplied Ferric
+commit and source closure, the exact workspace-pinned fe2o3 commit and supplied
+source closure, compiler configuration and worker closure, and runtime and KFD
+closure identities. Ferric checks their syntax, the pinned fe2o3 commit, and
+their cross-artifact identity; it does not attest that a supplied closure
+digest describes the named source or executable.
 It freezes a requested count of exactly 10 untimed warmups followed by 30
 recorded samples per case. Calibration and holdout companions carry nonempty,
 disjoint canonical member rosters whose digests are recomputed, and the tuning
@@ -73,7 +79,7 @@ cargo run --locked -p ferric-m1-benchmarks --bin ferric-m1-d10 -- \
 ```
 
 `COLLECTION-MANIFEST` is canonical
-`FERRIC-M1-D10-COLLECTION-MANIFEST-V1`. It binds the exact collector ELF,
+`FERRIC-M1-D10-COLLECTION-MANIFEST-V2`. It binds the exact collector ELF,
 policy, cleared environment snapshot, timeout, K1-K7 case order, admitted
 holdout member, per-case expected resource counters, and exact resource and
 measurement ELF, argument, configuration, and protocol identities. All paths
@@ -82,6 +88,10 @@ descriptor. The environment snapshot digest must equal the policy telemetry
 binding, implementation and configuration bytes must match their policy
 identities, and reference and resource command protocols must match their
 respective policy companions.
+The manifest repeats the complete canonical toolchain object and digest;
+collection rejects either a self-inconsistent digest or any difference from
+the held policy. Every resource and measurement request carries that digest,
+and every implementation observation repeats it in its binding set.
 
 Before launching a command, the collector derives the complete deterministic
 case, implementation, phase, and sample-ID order and requires its canonical
@@ -115,13 +125,16 @@ cargo run --locked -p ferric-m1-benchmarks --bin ferric-m1-d10 -- \
 
 `ADMISSION-BUNDLE` must contain exactly the original `admission.json` and
 policy `protocol.json`. `OBSERVATION-BUNDLE` must contain exactly canonical
-`observations.json` in `FERRIC-M1-D10-POLICY-OBSERVATIONS-V2` and the
+`observations.json` in `FERRIC-M1-D10-POLICY-OBSERVATIONS-V3` and the
 source-controlled `d10_observation_protocol.json` as `protocol.json`. The
 validator holds and repeatedly rebinds those four files plus the original ten
 policy-root files. It recomputes the admission and requires every policy,
 protocol, admission, companion, case, implementation, profile, work-unit,
 resource-policy, tuning, admitted-holdout-member, and regression measurement
 roster identity to match.
+It also recomputes the complete toolchain digest and requires the policy,
+admission, collected bundle, and every implementation binding to name the same
+Ferric, pinned-fe2o3, compiler-worker, runtime, and KFD closure tuple.
 
 Every applicable Ferric-reference, Ferric, and vendor stream has exactly 10
 ordered untimed warmups and exactly 30 ordered raw timing samples. Each row also
@@ -151,7 +164,8 @@ is a structural computability bound, not a supplied or default weight.
 The validator enforces the supplied telemetry and resource schemas, their exact
 policy identity bindings, empty error events, physical numeric bounds, and exact
 expected/observed resource equality. These checks do not authenticate who
-produced the bundle. `OUTPUT-BUNDLE` is published without replacement with
+produced the bundle or establish that an externally supplied closure digest is
+truthful. `OUTPUT-BUNDLE` is published without replacement with
 exactly `observations.json`, its `protocol.json`, and recomputed
 `validation.json` under descriptor-held file, directory, name, and parent
 custody. Its status remains `PARTIAL_NON_EVIDENCE`: it does not validate
@@ -253,17 +267,31 @@ authority. It does not establish that the external threshold was independently
 reviewed, create qualification evidence, or close `m1.r29`; those remain duties
 of the independent M1 evidence and qualification validators.
 
+Ferric can admit the complete result into an identity-bound, deliberately
+non-qualifying r29 handoff. The additive intake fixes the exact plan, policy and
+declared review, seven Ferric captures, seven reference outputs, pair manifest,
+raw comparisons, acceptance result, source closures, toolchain, target, and TCB
+identities. See `proofs/m1/evidence/R29_DIFFERENTIAL_EVIDENCE.md`. Its status is
+`partial-non-evidence`; it supplies neither independent validation nor r29
+closure authority.
+
 The Ferric qualification capture binary can generate and revalidate the exact
 seven-case input bundle without opening KFD:
 
 ```text
 ferric-m1-qualification-capture generate-inputs \
-  MODEL-SOURCE PREPACKED KERNEL-ARTIFACTS CLOSURE ACCEPTANCE-POLICY \
+  PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ACCEPTANCE-POLICY \
   REFERENCE-IMPLEMENTATION REFERENCE-PROTOCOL GPU-ID OUTPUT
 ferric-m1-qualification-capture validate-inputs \
-  MODEL-SOURCE PREPACKED KERNEL-ARTIFACTS CLOSURE ACCEPTANCE-POLICY \
+  PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ACCEPTANCE-POLICY \
   REFERENCE-IMPLEMENTATION REFERENCE-PROTOCOL GPU-ID INPUT-BUNDLE
 ```
+
+Operational intake opens the self-contained prepacked snapshot once by directory
+descriptor and requires its exact 11-member regular-file roster. Target and
+draft configs, tokenizer metadata, one shared tokenizer, weights, manifests,
+deployment bundle, and admission record all come from that descriptor. The
+original model source tree is neither accepted nor recorded by these commands.
 
 The bundle contains exactly 20 flat, regular, single-link files: benchmark
 input, plan, roster, closure, environment, acceptance policy, and adjacent
@@ -311,7 +339,7 @@ target-prefill S1 K7 completion range:
 
 ```text
 cargo run --locked -p ferric-engine --bin ferric-m1-qualification-capture -- \
-  capture-r30-canary MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS \
+  capture-r30-canary PREPACKED-SNAPSHOT KERNEL-ARTIFACTS \
   CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE
 ```
 
@@ -346,7 +374,7 @@ cancellation capture:
 
 ```text
 cargo run --locked -p ferric-engine --bin ferric-m1-qualification-capture -- \
-  capture-r30-cancellation MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS \
+  capture-r30-cancellation PREPACKED-SNAPSHOT KERNEL-ARTIFACTS \
   CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE
 ```
 
@@ -381,7 +409,7 @@ the production S1/K4 diagnostic path:
 
 ```text
 cargo run --locked -p ferric-engine --bin ferric-m1-qualification-capture -- \
-  capture-r30-rollback MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS \
+  capture-r30-rollback PREPACKED-SNAPSHOT KERNEL-ARTIFACTS \
   CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE
 ```
 
@@ -415,7 +443,7 @@ for the R30 exhaustion case:
 
 ```text
 cargo run --locked -p ferric-engine --bin ferric-m1-qualification-capture -- \
-  capture-r30-exhaustion MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS \
+  capture-r30-exhaustion PREPACKED-SNAPSHOT KERNEL-ARTIFACTS \
   CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE
 ```
 
@@ -433,37 +461,56 @@ The exhaustion bundle remains `partial-non-evidence`: it establishes only
 request-local model-memory ledger saturation, not device-memory exhaustion or
 pressure. It does not dispatch a kernel or create or pressure a queue. The full
 R30 roster now has only one Ferric-owned adjacent-guard readback for one
-target-prefill S1 K7 output; it still lacks broader canary coverage and an
-admitted physical queue/device fault-injection authority. Those missing runtime
-boundaries cannot be replaced by the existing external self-reported intake.
+target-prefill S1 K7 output, so it still lacks broader canary coverage.
 
-The four Ferric-owned partial bundles can be joined with one canonical external
-fault-observation document without conflating their authorities:
+The feature-gated R30 queue-transition capture exercises one real target-prefill
+S1 physical queue at the exact post-completion/recycle and pre-read boundary:
 
 ```text
-ferric-m1-qualification-capture compose-r30-runner \
-  CANARY-BUNDLE CANCELLATION-BUNDLE EXHAUSTION-BUNDLE ROLLBACK-BUNDLE \
-  FAULT-OBSERVATION OUTPUT-BUNDLE
+cargo run --locked -p ferric-engine --features qualification-fault-injection \
+  --bin ferric-m1-qualification-capture -- \
+  capture-r30-fault-transition PREPACKED-SNAPSHOT KERNEL-ARTIFACTS \
+  CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE
 ```
 
-`FAULT-OBSERVATION` must be canonical
-`FERRIC-M1-R30-FAULT-OBSERVATION-V1`, use authority
-`externally-reported-r30-fault-observation-only`, declare
-`hardware_claim: none`, bind its source executable, protocol, environment, and
-transcript identities, and contain a nonempty, uniquely named bounded fault
-roster. The composer re-admits every physical capture against its exact
-checked-in protocol, requires the four captures to bind the same device,
+The service-host transition consumes the recycled queue before any completed
+read attempt. Ferric then terminalizes the Engine, requires a subsequent
+admission to fail with `EngineError::Faulted`, and performs the faulted queue's
+only transition: returning native queue destruction and allocation release.
+The two-file output uses canonical
+`FERRIC-M1-R30-FAULT-TRANSITION-PARTIAL-PROTOCOL-V1` and no-replace
+publication.
+
+This bundle remains `partial-non-evidence`. The injected event is a deliberate
+Ferric/service queue-state transition, not a synthetic KFD error, native KFD or
+GPU fault, or GPU reset. It grants no native device-fault, global-resource,
+hardware-correctness, benchmark-evidence, external-validation, independent-
+validation, `m1.r30`, or M1 closure authority.
+
+The five Ferric-owned physical partial bundles can be joined without conflating
+their authorities:
+
+```text
+cargo run --locked -p ferric-engine --features qualification-fault-injection \
+  --bin ferric-m1-qualification-capture -- compose-r30-runner \
+  CANARY-BUNDLE CANCELLATION-BUNDLE EXHAUSTION-BUNDLE ROLLBACK-BUNDLE \
+  FAULT-TRANSITION-BUNDLE OUTPUT-BUNDLE
+```
+
+The composer re-admits every physical capture against its exact checked-in
+protocol and requires all five captures to bind the same device,
 kernel-artifact manifest, program catalog, runner declaration, and GPU unique
-ID. It also descriptor-measures the running composer executable and publishes
+ID. It separately preserves the queue-transition capture's lack of native fault
+authority. It descriptor-measures the running composer executable and publishes
 exactly `runner.json` and canonical
-`FERRIC-M1-R30-COMPOSED-RUNNER-PROTOCOL-V5` `protocol.json` without
+`FERRIC-M1-R30-COMPOSED-RUNNER-PROTOCOL-V6` `protocol.json` without
 replacement.
 
-The composed runner remains `partial-non-evidence`. It records four physical
-partial authorities and one `reported-unvalidated` external authority, carries
-`hardware_claim: none`, and fixes `evidence_case_count` to zero. It cannot turn
-reported fault fields into physical observations. A production physical
-queue/device fault-injection API, broader canary coverage, and independent
+The composed runner remains `partial-non-evidence`. It records five physical
+partial authorities, carries `hardware_claim: none`, and fixes
+`evidence_case_count` to zero. It cannot promote the deliberate service
+transition into a native KFD/device-fault observation. Broader canary coverage,
+native fault authority where required by the acceptance policy, and independent
 evidence validation remain required before `m1.r30` can close.
 
 The serving suite has an additive pre-observation producer for one bounded,
@@ -681,7 +728,7 @@ An exclusive gfx942 operator can opt into that single-round path with:
 
 ```text
 cargo run --locked -p ferric-engine --bin ferric-m1-qualification-capture -- \
-  capture-r32-speculative-k4 MODEL-SOURCE PREPACKED-SNAPSHOT \
+  capture-r32-speculative-k4 PREPACKED-SNAPSHOT \
   KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE
 ```
 
@@ -700,6 +747,31 @@ The ignored hardware smoke is
 `configured_mi300x_s1_k4_diagnostic_readback_settles_one_real_round`. It uses
 the same artifact, prepacked-weight, and GPU environment variables as the
 existing target-only smoke and deliberately publishes no evidence artifact.
+
+For a one-shot target-only prompt-to-text smoke on an exclusive gfx942, run:
+
+```text
+cargo run --locked -p ferric-engine --bin ferric-m1-qualification-capture -- \
+  run-target-smoke PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE \
+  GPU-UNIQUE-ID MAX-NEW-TOKENS 'RAW PROMPT'
+```
+
+The command authenticates the same self-contained prepacked model snapshot,
+persisted K1-K7 artifacts, closure, generated runner, and selected device as the
+physical capture path. It passes the raw prompt directly to the authenticated target
+tokenizer without adding a chat template, teacher-feeds those token IDs from
+context zero, and then feeds each structurally observed physical K7 token back
+through the same S1 target-decode queue. It eagerly leases only the bounded
+number of ordinary KV pages the invocation can reach, retains unused lease
+identities until queue destruction, and is not a serving or reusable-inference
+interface. Generation stops at the Qwen3
+`<|im_end|>` token, the requested new-token limit, or the C8192 context bound.
+Its single JSON result includes every directly published prompt-priming choice,
+the generated token IDs, decoded text, exact decoded-byte hex, an explicit
+lossy-replacement UTF-8 display policy, and the fixed
+`smoke-non-evidence-non-qualification` status. It writes no evidence bundle and
+makes no qualification, numerical-correctness, hardware-correctness, or M1
+closure claim.
 
 The policy test uses the distinct `synthetic-policy-fixture-only` authority and
 the nonpublishing `check-policy-fixture` command solely to exercise the shared

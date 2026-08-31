@@ -682,6 +682,80 @@ def main() -> None:
             raise AssertionError(f"synthetic complete index was rejected:\n{output}")
         print("PASS: complete synthetic index through test-only validator harness")
 
+        receipt_ids = {
+            record["receipt_artifact_id"]
+            for record in fixture.index["obligations"]
+            if record["obligation_class"] == "Roadmap"
+        }
+        if len(receipt_ids) != 1:
+            raise AssertionError("synthetic index lacks one canonical receipt")
+        receipt_id = next(iter(receipt_ids))
+        candidate = copy.deepcopy(fixture.index)
+        candidate["artifacts"] = [
+            record for record in candidate["artifacts"] if record["id"] != receipt_id
+        ]
+        for record in candidate["obligations"]:
+            if record["obligation_class"] == "Roadmap":
+                record["receipt_artifact_id"] = "artifact.qualification.m1"
+        candidate_path = fixture.evidence / "candidate-index.json"
+        write_json(candidate_path, candidate)
+        for gate_id in checker.PRE_RECEIPT_GATE_IDS:
+            gate_output = io.StringIO()
+            try:
+                with (
+                    contextlib.redirect_stdout(gate_output),
+                    contextlib.redirect_stderr(gate_output),
+                ):
+                    checker.validate_evidence_index(
+                        fixture.ferric,
+                        candidate_path,
+                        fixture.fe2o3,
+                        _test_only_validator=fixture_validator,
+                        _pre_receipt_gate=gate_id,
+                    )
+            except SystemExit as error:
+                raise AssertionError(
+                    f"pre-receipt gate {gate_id} rejected the candidate:\n"
+                    f"{gate_output.getvalue()}"
+                ) from error
+            expected = (
+                f"PASS: {checker.PRE_RECEIPT_PROTOCOL} gate={gate_id} "
+                f"candidate_sha256={sha256(candidate_path.read_bytes())}\n"
+            )
+            if gate_output.getvalue() != expected:
+                raise AssertionError(
+                    f"pre-receipt gate {gate_id} output drifted:\n"
+                    f"{gate_output.getvalue()}"
+                )
+        print("PASS: all source-pinned pre-receipt gate protocols")
+
+        intake_root = Path(temporary) / "separate-qualification-run"
+        intake_root.mkdir()
+        exported_candidate = intake_root / "candidate-index.json"
+        shutil.copyfile(candidate_path, exported_candidate)
+        gate_output = io.StringIO()
+        with (
+            contextlib.redirect_stdout(gate_output),
+            contextlib.redirect_stderr(gate_output),
+        ):
+            checker.validate_evidence_index(
+                fixture.ferric,
+                exported_candidate,
+                fixture.fe2o3,
+                _test_only_validator=fixture_validator,
+                _pre_receipt_gate="evidence-index",
+                _pre_receipt_artifact_root=fixture.evidence,
+            )
+        if (
+            f"gate=evidence-index candidate_sha256={sha256(candidate_path.read_bytes())}"
+            not in gate_output.getvalue()
+        ):
+            raise AssertionError(
+                "separate candidate/artifact roots were not admitted:\n"
+                f"{gate_output.getvalue()}"
+            )
+        print("PASS: pre-receipt candidate uses an explicit artifact root")
+
         callback_count = 0
 
         def counting_validator(kind: str, context: dict[str, Any]) -> None:

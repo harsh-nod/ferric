@@ -98,6 +98,14 @@ def fail(message: str) -> NoReturn:
     raise SystemExit(1)
 
 
+def cargo_target_root(repo: Path) -> Path:
+    configured = os.environ.get("CARGO_TARGET_DIR")
+    if not configured:
+        return repo / "target"
+    target = Path(configured)
+    return target if target.is_absolute() else repo / target
+
+
 def canonical_bytes(value: Any) -> bytes:
     return (
         json.dumps(value, ensure_ascii=True, indent=2, sort_keys=True) + "\n"
@@ -114,14 +122,6 @@ def cargo_environment() -> dict[str, str]:
         if value := os.environ.get(name):
             environment[name] = value
     return environment
-
-
-def cargo_target_directory(repo: Path) -> Path:
-    value = os.environ.get("CARGO_TARGET_DIR")
-    if not value:
-        return repo / "target"
-    path = Path(value)
-    return path if path.is_absolute() else repo / path
 
 
 def invoke(
@@ -1053,7 +1053,7 @@ def exercise_differential_producer(
     bare_output = scratch / "differential.bare.bundle"
     bare_result = subprocess.run(
         [
-            str(cargo_target_directory(repo) / "debug/ferric-m1-differential"),
+            str(cargo_target_root(repo) / "debug/ferric-m1-differential"),
             "produce",
             plan_path.name,
             pairs_path.name,

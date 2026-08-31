@@ -7,6 +7,9 @@ rust-version.workspace = true
 version.workspace = true
 publish = false
 
+[features]
+qualification-fault-injection = ["fe2o3-service-host/qualification-fault-injection"]
+
 [[bin]]
 name = "ferric-m1-qualification-capture"
 path = "src/bin/ferric-m1-qualification-capture.rs"

@@ -25,11 +25,30 @@ runners, the three declaration-only TCB reporters, all 74 artifact-identity
 bindings, all 14 canonical-structure bindings, all 15 external-contract
 bindings, all 52 fe2o3-contract bindings, all 58 MI300X hardware-test bindings,
 all 36 performance-gate bindings, all 44 independent-validator bindings, and
-the five exact unsupported-rationale bindings are represented as available
-commands. The queue therefore has 357 available producer items and one missing
-producer item: the shared qualification receipt. Availability means that the
-in-repository production or intake command exists; it does not mean that the
-required external measurement or independent-review input has been supplied.
+the five exact unsupported-rationale bindings and the shared qualification
+receipt intake/finalizer are represented as available commands. The queue
+therefore has 358 available producer items and no missing producer. Availability
+means that the in-repository production or intake command exists; it does not
+mean that the required hardware measurement, performance measurement,
+independent-review response, or qualification-run input has been supplied.
+
+An additive r29-specific handoff can authenticate one complete differential run
+before the external evidence plan is assembled:
+
+```text
+python3 -I proofs/m1-qualification/produce-r29-differential-evidence.py \
+  INTAKE-ROOT OUTPUT-BUNDLE
+python3 -I proofs/m1/evidence/validate-r29-differential-evidence.py \
+  validate INTAKE-ROOT OUTPUT-BUNDLE
+```
+
+The fixed intake binds the exact seven-case plan, external policy-review
+declaration, Ferric and reference bundles, pairs, comparisons, acceptance,
+source/toolchain/target, and TCB identities. This source-paired replay remains
+`partial-non-evidence`; it is not an evidence-index artifact, independent
+validation, qualification receipt, or r29 closure. The complete schema and
+authority boundary are documented in
+`proofs/m1/evidence/R29_DIFFERENTIAL_EVIDENCE.md`.
 
 After producing a plan against the final clean source identities, materialize
 the three global TCB declarations independently:
@@ -251,10 +270,56 @@ excluded-claim roster. It publishes one owner-private canonical report without
 replacement and grants only `nonclaim-only` authority. It emits no companion
 payload, evidence index, receipt, positive validation result, or status closure.
 
-This command never emits an evidence index or qualification receipt. Those
-outputs remain forbidden until every external artifact exists and the complete
-candidate closure passes `proofs/check-m1-evidence-index.py`. The plan has
-`planning-only-no-evidence` authority and changes no `Open` M1 obligation.
+After every binding artifact and all three TCB reports exist, export the exact
+pre-receipt candidate into a new owner-private qualification-run root:
+
+```text
+python3 -I proofs/m1-qualification/produce-qualification-receipt.py \
+  prepare-candidate FERRIC_REPO FE2O3_REPO PLAN_DIR QUALIFICATION_RUN_ROOT
+```
+
+The export creates only `candidate-index.json`; it emits no receipt or closure.
+The external qualification orchestrator adds one canonical `intake.json` that
+names the candidate, run UUID, MI300X environment, and absolute Cargo and Rustc
+executables. It does not assert gate results or supply command/output hashes.
+The finalizer executes the source-pinned pre-receipt protocol in
+`proofs/check-m1-evidence-index.py` itself for `evidence-index`, `hardware`,
+`performance`, `proof`, `quality`, `source-closure`, and `validators`. It hashes
+the exact checker and Python executable, executes and verifies every gate's
+canonical PASS output, and derives every artifact/binding roster from the
+candidate instead of accepting caller-supplied rosters. Cargo and Rustc are
+hashed and executed with `--version`; the running Python binary is measured
+directly instead of being named by intake. This dedicated protocol passes both
+the exported candidate path and the canonical plan directory as its artifact
+root, so candidate custody stays external while evidence bytes remain in the
+held plan tree.
+
+Finalize only after the external run root is complete:
+
+```text
+python3 -I proofs/m1-qualification/produce-qualification-receipt.py \
+  FERRIC_REPO FE2O3_REPO PLAN_DIR QUALIFICATION_RUN_ROOT
+```
+
+The finalizer independently replays the planner, reauthenticates the clean
+sources, source closures, every artifact, TCB report, validator source, measured
+tool binary, and candidate index before and after publication, and retains exact
+directory custody throughout the transaction. It first publishes the
+`completed-work.json` transition that binds all 358 queue items and the seven
+executed gates, then the qualification transcript, receipt, and finally
+`evidence-index.json` as the commit marker. Every create is no-replace and every
+rollback is inode-identity checked. The finalizer invokes trusted validators only
+through the source-pinned pre-receipt checker and prints no closure claim. The
+authoritative final step remains a separate command:
+
+```text
+python3 -I proofs/check-m1-evidence-index.py \
+  FERRIC_REPO PLAN_DIR/evidence-index.json FE2O3_REPO
+```
+
+All planning and individual evidence-production commands retain
+`planning-only-no-evidence` or narrower authority and change no `Open` in-repo
+M1 obligation.
 
 Record one completed protected Worker V3 build and its inert load-readiness
 publication with:
@@ -306,6 +371,8 @@ python3 -I proofs/m1-qualification/test-fe2o3-contract-producer-policy.py \
 python3 -I proofs/m1-qualification/test-performance-producer-policy.py \
   FERRIC_REPO FE2O3_OBJECT_REPO
 python3 -I proofs/m1-qualification/test-independent-validator-producer-policy.py \
+  FERRIC_REPO FE2O3_OBJECT_REPO
+python3 -I proofs/m1-qualification/test-qualification-receipt-producer-policy.py \
   FERRIC_REPO FE2O3_OBJECT_REPO
 python3 -I proofs/m1-qualification/test-unsupported-rationale-producer-policy.py \
   FERRIC_REPO FE2O3_OBJECT_REPO

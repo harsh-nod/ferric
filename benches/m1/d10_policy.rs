@@ -19,8 +19,8 @@ use std::io::{Read, Seek, SeekFrom, Write};
 use std::os::unix::ffi::OsStrExt;
 use std::path::{Component, Path, PathBuf};
 
-const POLICY_FORMAT: &str = "FERRIC-M1-D10-EXPERIMENT-POLICY-INPUT-V1";
-const ADMISSION_FORMAT: &str = "FERRIC-M1-D10-EXPERIMENT-POLICY-ADMISSION-V1";
+const POLICY_FORMAT: &str = "FERRIC-M1-D10-EXPERIMENT-POLICY-INPUT-V2";
+const ADMISSION_FORMAT: &str = "FERRIC-M1-D10-EXPERIMENT-POLICY-ADMISSION-V2";
 const POLICY_AUTHORITY: &str = "externally-supplied-pre-observation-policy-only";
 const COMPANION_AUTHORITY: &str = "externally-supplied-pre-observation-companion-only";
 const ADMISSION_AUTHORITY: &str = "checked-pre-observation-policy-structure-only";
@@ -30,10 +30,12 @@ const WARMUPS: u64 = 10;
 const RECORDED_SAMPLES: u64 = 30;
 const MAX_DOCUMENT_BYTES: usize = 8 * 1024 * 1024;
 const MAX_POLICY_INTEGER: u64 = 1_000_000_000_000_000;
-const POLICY_NONCLAIM: &str = "This input freezes externally supplied D10 experiment-policy values before observation. It does not claim that the values are reviewed, fair, sufficient, measured, passing, or able to close m1.r31.";
-const ADMISSION_NONCLAIM: &str = "This admission authenticates only canonical structure and frozen identity for an externally supplied pre-observation D10 experiment policy. Legacy plan and validate commands do not consume this policy, so its 10 warmups and 30 recorded samples are not execution-enforced. A future policy-SHA-256-bound D10 observation validator remains required. This admission does not endorse thresholds, weights, work units, vendor mappings, tuning budgets, observations, performance, hardware correctness, qualification, or close m1.r31.";
+const POLICY_NONCLAIM: &str = "This input freezes externally supplied D10 experiment-policy values and source, compiler-worker, runtime, and KFD closure identities before observation. It does not claim that the values or identities are reviewed, truthful, fair, sufficient, measured, passing, or able to close m1.r31.";
+const ADMISSION_NONCLAIM: &str = "This admission authenticates only canonical structure and frozen identity for an externally supplied pre-observation D10 experiment policy and its Ferric, pinned-fe2o3, compiler-worker, runtime, and KFD bindings. Legacy plan and validate commands do not consume this policy, so its 10 warmups and 30 recorded samples are not execution-enforced. The separate policy-SHA-256-bound D10 observation validator does not retroactively bind those legacy commands or validate the supplied policy values or closure truth. This admission does not endorse thresholds, weights, work units, vendor mappings, tuning budgets, observations, performance, hardware correctness, qualification, or close m1.r31.";
 const FUTURE_OBSERVATION_BINDING: &str = "policy-sha256-bound-d10-observation-validator";
-const PROTOCOL_SHA256: &str = "7327260dafb2ccdd326aed8906493ee44369ff400949bb0668e7e34b260794e4";
+pub(super) const PINNED_FE2O3_SOURCE_COMMIT: &str = "42639ecc7f2f377ab57e5e884c36133a126f230e";
+pub(super) const TOOLCHAIN_BINDING_SCHEMA: &str = "canonical-external-ferric-source-commit-and-closure-pinned-fe2o3-source-commit-and-closure-compiler-configuration-and-worker-closure-runtime-and-kfd-closure-v1";
+const PROTOCOL_SHA256: &str = "d3563541f74b9506c22743398c1a38055dc600053d76e78fc30160513504284f";
 
 const CASE_ROSTER: &[(&str, &str)] = &[
     ("flash-attention-prefill", "k4-gqa-prefill"),
@@ -93,6 +95,18 @@ impl HeldValidatedPolicy {
 
     pub(super) fn document_value(&self, path: &str) -> BenchResult<&Value> {
         Ok(&self.root.document(path)?.value)
+    }
+
+    pub(super) fn toolchain(&self) -> BenchResult<&Value> {
+        let policy = self
+            .document_value("policy.json")?
+            .as_object()
+            .ok_or_else(|| "held D10 policy must be an object".to_owned())?;
+        get(policy, "toolchain", "held D10 policy")
+    }
+
+    pub(super) fn toolchain_sha256(&self) -> BenchResult<String> {
+        validate_toolchain(self.toolchain()?)
     }
 
     pub(super) fn revalidate(&mut self) -> BenchResult<()> {
@@ -725,6 +739,7 @@ fn validate_policy(root: &PolicyRoot) -> BenchResult<Value> {
             "suite",
             "target",
             "thresholds",
+            "toolchain",
         ],
         "D10 experiment policy",
     )?;
@@ -751,6 +766,8 @@ fn validate_policy(root: &PolicyRoot) -> BenchResult<Value> {
     validate_samples(get(policy, "sample_protocol", "D10 experiment policy")?)?;
     let cases = validate_cases(get(policy, "cases", "D10 experiment policy")?)?;
     validate_thresholds(get(policy, "thresholds", "D10 experiment policy")?)?;
+    let toolchain = get(policy, "toolchain", "D10 experiment policy")?;
+    let toolchain_sha256 = validate_toolchain(toolchain)?;
     let companion_bindings =
         validate_companion_bindings(root, get(policy, "companions", "D10 experiment policy")?)?;
     validate_timing(&root.document("timing.json")?.value)?;
@@ -812,6 +829,8 @@ fn validate_policy(root: &PolicyRoot) -> BenchResult<Value> {
         "suite": "d10",
         "target": TARGET,
         "thresholds": get(policy, "thresholds", "D10 experiment policy")?,
+        "toolchain": toolchain,
+        "toolchain_sha256": toolchain_sha256,
     }))
 }
 
@@ -835,6 +854,7 @@ fn validate_protocol(value: &Value) -> BenchResult<()> {
             "status",
             "suite",
             "target",
+            "toolchain_binding_schema",
             "warmups",
         ],
         "D10 policy protocol",
@@ -848,7 +868,7 @@ fn validate_protocol(value: &Value) -> BenchResult<()> {
     expect_string(
         protocol,
         "format",
-        "FERRIC-M1-D10-EXPERIMENT-POLICY-PROTOCOL-V1",
+        "FERRIC-M1-D10-EXPERIMENT-POLICY-PROTOCOL-V2",
         "D10 protocol format",
     )?;
     expect_string(
@@ -890,6 +910,12 @@ fn validate_protocol(value: &Value) -> BenchResult<()> {
     expect_string(protocol, "status", PARTIAL_STATUS, "D10 protocol status")?;
     expect_string(protocol, "suite", "d10", "D10 protocol suite")?;
     expect_string(protocol, "target", TARGET, "D10 protocol target")?;
+    expect_string(
+        protocol,
+        "toolchain_binding_schema",
+        TOOLCHAIN_BINDING_SCHEMA,
+        "D10 protocol toolchain binding schema",
+    )?;
     expect_u64(protocol, "warmups", WARMUPS, "D10 protocol warmups")?;
     expect_u64(
         protocol,
@@ -1061,6 +1087,46 @@ fn validate_thresholds(value: &Value) -> BenchResult<()> {
         )?;
     }
     Ok(())
+}
+
+pub(super) fn validate_toolchain(value: &Value) -> BenchResult<String> {
+    let toolchain = exact_object(
+        value,
+        &[
+            "compiler_configuration_sha256",
+            "compiler_worker_closure_sha256",
+            "fe2o3_source_closure_sha256",
+            "fe2o3_source_commit",
+            "ferric_source_closure_sha256",
+            "ferric_source_commit",
+            "kfd_runtime_closure_sha256",
+            "runtime_closure_sha256",
+        ],
+        "D10 toolchain binding",
+    )?;
+    for field in ["ferric_source_commit", "fe2o3_source_commit"] {
+        require_commit(
+            get_string(toolchain, field, "D10 toolchain binding")?,
+            field,
+        )?;
+    }
+    expect_string(
+        toolchain,
+        "fe2o3_source_commit",
+        PINNED_FE2O3_SOURCE_COMMIT,
+        "D10 pinned fe2o3 source commit",
+    )?;
+    for field in [
+        "compiler_configuration_sha256",
+        "compiler_worker_closure_sha256",
+        "fe2o3_source_closure_sha256",
+        "ferric_source_closure_sha256",
+        "kfd_runtime_closure_sha256",
+        "runtime_closure_sha256",
+    ] {
+        require_sha256(get_string(toolchain, field, "D10 toolchain binding")?)?;
+    }
+    Ok(sha256_identity(&encode_canonical_document(value)?))
 }
 
 fn validate_companion_bindings(root: &PolicyRoot, value: &Value) -> BenchResult<Value> {
@@ -1480,6 +1546,18 @@ fn require_sha256(value: &str) -> BenchResult<()> {
     Ok(())
 }
 
+fn require_commit(value: &str, description: &str) -> BenchResult<()> {
+    if value.len() != 40
+        || !value
+            .bytes()
+            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+        || value.bytes().all(|byte| byte == value.as_bytes()[0])
+    {
+        return Err(format!("invalid {description}"));
+    }
+    Ok(())
+}
+
 fn require_bounded_positive(value: u64, description: &str) -> BenchResult<()> {
     if value == 0 || value > MAX_POLICY_INTEGER {
         return Err(format!("{description} is outside the structural bound"));
@@ -1662,7 +1740,7 @@ pub(crate) mod tests {
     use super::*;
     use std::cell::RefCell;
     use std::fs;
-    use std::os::unix::fs::{DirBuilderExt, PermissionsExt};
+    use std::os::unix::fs::{DirBuilderExt, MetadataExt, PermissionsExt};
     use std::path::PathBuf;
     use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -1691,6 +1769,10 @@ pub(crate) mod tests {
 
     fn digest(label: &str) -> String {
         sha256_identity(label.as_bytes())
+    }
+
+    fn commit(label: &str) -> String {
+        digest(label)[..40].to_owned()
     }
 
     fn protocol_bytes() -> Vec<u8> {
@@ -1907,6 +1989,16 @@ pub(crate) mod tests {
                 "minimum_per_case_vendor_ratio_ppm": 11,
                 "minimum_weighted_vendor_ratio_ppm": 13,
             },
+            "toolchain": {
+                "compiler_configuration_sha256": digest("compiler-configuration"),
+                "compiler_worker_closure_sha256": digest("compiler-worker-closure"),
+                "fe2o3_source_closure_sha256": digest("fe2o3-source-closure"),
+                "fe2o3_source_commit": PINNED_FE2O3_SOURCE_COMMIT,
+                "ferric_source_closure_sha256": digest("ferric-source-closure"),
+                "ferric_source_commit": commit("ferric-source-commit"),
+                "kfd_runtime_closure_sha256": digest("kfd-runtime-closure"),
+                "runtime_closure_sha256": digest("runtime-closure"),
+            },
         });
         write_canonical(&root.join("policy.json"), &policy);
         let output = temporary.0.join("admitted");
@@ -1945,6 +2037,11 @@ pub(crate) mod tests {
             serde_json::from_slice(&fs::read(output.join("admission.json")).unwrap()).unwrap();
         assert_eq!(admission["authority"], ADMISSION_AUTHORITY);
         assert_eq!(admission["status"], PARTIAL_STATUS);
+        assert_eq!(admission["r31_closed"], false);
+        assert_eq!(
+            admission["toolchain_sha256"],
+            validate_toolchain(&admission["toolchain"]).unwrap()
+        );
         assert_eq!(
             admission["future_required_binding"],
             FUTURE_OBSERVATION_BINDING
@@ -1958,6 +2055,51 @@ pub(crate) mod tests {
             fs::read(output.join("protocol.json")).unwrap(),
             protocol_bytes()
         );
+    }
+
+    #[test]
+    fn malformed_toolchain_commit_and_closure_values_fail_closed() {
+        for field in [
+            "compiler_configuration_sha256",
+            "compiler_worker_closure_sha256",
+            "fe2o3_source_closure_sha256",
+            "ferric_source_closure_sha256",
+            "kfd_runtime_closure_sha256",
+            "runtime_closure_sha256",
+        ] {
+            let (_temporary, root, output) = fixture();
+            mutate_policy(&root, |policy| {
+                policy["toolchain"][field] = json!("not-a-sha256");
+            });
+            assert!(admit_experiment_policy(&arguments(&root, &output)).is_err());
+        }
+
+        let (_temporary, root, output) = fixture();
+        mutate_policy(&root, |policy| {
+            policy["toolchain"]["fe2o3_source_commit"] = json!(commit("wrong-fe2o3"));
+        });
+        assert!(admit_experiment_policy(&arguments(&root, &output)).is_err());
+
+        let (_temporary, root, output) = fixture();
+        mutate_policy(&root, |policy| {
+            policy["toolchain"]["ferric_source_commit"] = json!("not-a-commit");
+        });
+        assert!(admit_experiment_policy(&arguments(&root, &output)).is_err());
+    }
+
+    #[test]
+    fn pinned_fe2o3_toolchain_commit_matches_every_workspace_dependency() {
+        let workspace = include_str!("../../Cargo.toml");
+        let dependencies = workspace
+            .lines()
+            .filter(|line| {
+                let line = line.trim_start();
+                line.starts_with("fe2o3-") || line.starts_with("reserved-fe2o3-symbols")
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(dependencies.len(), 12);
+        let revision = format!("rev = \"{PINNED_FE2O3_SOURCE_COMMIT}\"");
+        assert!(dependencies.iter().all(|line| line.contains(&revision)));
     }
 
     #[test]
@@ -2248,9 +2390,19 @@ pub(crate) mod tests {
             |_| Ok(()),
             |published| {
                 let transient = published.join("transient.json");
-                fs::write(&transient, b"{}\n").unwrap();
-                fs::remove_file(transient).unwrap();
-                Ok(())
+                let baseline = fs::metadata(published).unwrap();
+                for _ in 0..100 {
+                    std::thread::sleep(std::time::Duration::from_millis(10));
+                    fs::write(&transient, b"{}\n").unwrap();
+                    fs::remove_file(&transient).unwrap();
+                    let current = fs::metadata(published).unwrap();
+                    if current.ctime() != baseline.ctime()
+                        || current.ctime_nsec() != baseline.ctime_nsec()
+                    {
+                        return Ok(());
+                    }
+                }
+                panic!("test could not induce published directory ctime drift")
             },
         );
         assert!(result.is_err());

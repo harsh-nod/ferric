@@ -87,9 +87,10 @@ yet joined to a generated Ferric plan or runner.
 `RMSNorm` inputs, weights, residuals, fused residual outputs, and normalized
 outputs are BF16. The typed graph declares FP32 square accumulation,
 normalization, weighting, and residual addition before BF16 conversion. Pure
-mode requires both optional residual pointer/length pairs to be exactly zero,
-the pointer parameters carry neither `nonnull` nor dereferenceable attributes,
-and its control flow cannot reach residual loads or fused-output stores.
+mode requires the two optional residual lengths to be exactly zero while their
+pointer arguments remain nonzero aligned sentinels. The pointers carry
+`nonnull` but no dereferenceable attributes, and pure-mode control flow cannot
+reach residual loads or fused-output stores.
 Residual-fused mode is hidden-width only, requires exact nonzero disjoint spans,
 and rejects width 128.
 

@@ -37,6 +37,12 @@ pub const DRAFT_REVISION: PinnedStr = "c1899de289a04d12100db370d81485cdf75e47ca"
 
 /// Size of the shared upstream `tokenizer.json` payload.
 pub const QWEN3_TOKENIZER_BYTES: u64 = 11_422_654;
+/// Complete pinned Qwen3-8B upstream `config.json` bytes.
+pub const QWEN3_TARGET_CONFIG_BYTES: u64 = 728;
+/// Complete pinned Qwen3-0.6B upstream `config.json` bytes.
+pub const QWEN3_DRAFT_CONFIG_BYTES: u64 = 726;
+/// Complete pinned shared upstream `tokenizer_config.json` bytes.
+pub const QWEN3_TOKENIZER_METADATA_BYTES: u64 = 9_732;
 /// Total file bytes across the five pinned Qwen3-8B safetensors shards.
 pub const QWEN3_TARGET_WEIGHT_ARTIFACT_BYTES: u64 = 16_381_516_776;
 /// Tensor-data bytes declared by the pinned Qwen3-8B safetensors index.

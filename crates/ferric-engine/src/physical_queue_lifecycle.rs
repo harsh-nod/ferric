@@ -9,6 +9,8 @@
 
 use core::fmt;
 
+#[cfg(feature = "qualification-fault-injection")]
+use fe2o3_kfd::Gfx942CompletionRecycleObservationV1;
 use fe2o3_service_host::{
     ServiceCompletedQueueSessionV1, ServiceCompletedReadbackV1, ServiceHostDispatchRangeV1,
     ServicePublishedQueueSessionV1, ServiceQueueCreateFailureV1, ServiceQueueErrorV1,
@@ -16,25 +18,33 @@ use fe2o3_service_host::{
     ServiceQueueReleaseFailureV1, ServiceQueueReleaseObservationV1, ServiceQueueSessionV1,
     ServiceQueueUnboundSessionV1, ServiceRecycledQueueSessionV1,
 };
+#[cfg(feature = "qualification-fault-injection")]
+use fe2o3_service_host::{
+    ServiceQualificationFaultedQueueSessionV1, ServiceQualificationQueueFaultPointV1,
+};
 use ferric_spec::completion::CompletionEpoch;
-use ferric_spec::Qwen3ExecutionMode;
+use ferric_spec::{Qwen3ExecutionMode, M1_MAX_ACTIVE_SEQUENCES};
 
 use crate::completed_readback_join::{
     check_m1_completed_output_v1, check_m1_qualification_completed_output_v1,
 };
+use crate::direct_diagnostic_choices::observe_m1_direct_diagnostic_choices_v1;
 use crate::observed_completion::{
     observe_m1_completed_output_v1, observe_m1_guarded_completed_output_v1,
 };
 use crate::qualification_logits::{
     observe_m1_qualification_logits_v1, M1QualificationFinalRowChoicesV1,
 };
-use crate::speculative_diagnostic_choices::observe_m1_speculative_diagnostic_choices_v1;
+use crate::speculative_diagnostic_choices::{
+    m1_speculative_diagnostic_is_s1_k4_selection_v1, observe_m1_speculative_diagnostic_choices_v1,
+};
 use crate::{
     preflight_m1_completion_canary_v1, validate_m1_completion_canary_readback_v1,
     CompletionWireExpectation, CompletionWireSemanticExpectation, Engine, ExactCompletion,
     Gfx942DeviceBinding, M1CheckedCompletionOutputV1, M1CompletedOutputCheckErrorV1,
-    M1CompletionCanaryErrorV1, M1FullStepKvReservationCustodyV1, M1ObservedCompletionImageErrorV1,
-    M1ObservedCompletionImageV1, M1ObservedQualificationLogitsV1,
+    M1CompletionCanaryErrorV1, M1DirectDiagnosticChoicesErrorV1, M1FullStepKvReservationCustodyV1,
+    M1ObservedCompletionImageErrorV1, M1ObservedCompletionImageV1,
+    M1ObservedDirectDiagnosticChoicesV1, M1ObservedQualificationLogitsV1,
     M1ObservedSpeculativeDiagnosticChoicesV1, M1PhysicalDispatchRecipeRowV1,
     M1PhysicalFixedBatchCaseV1, M1PhysicalFixedBatchCustodyV1, M1PhysicalFixedBatchShapeV1,
     M1PhysicalFixedBatchV1, M1PhysicalQueueBatchCustodyV1, M1PrepublicationBatchV1,
@@ -200,6 +210,9 @@ pub enum M1PhysicalQueuePhaseV1 {
     Completed,
     /// Every completion signal was recycled; readback, detach, or release is allowed.
     Recycled,
+    /// A deliberate qualification transition consumed recycled custody; only release remains.
+    #[cfg(feature = "qualification-fault-injection")]
+    QualificationFaulted,
     /// Exact K7 bytes were copied once and structurally observed without semantic authority.
     Observed,
     /// Exact completed bytes were checked and completion authority was minted once.
@@ -239,6 +252,13 @@ impl M1PhysicalQueuePhaseV1 {
     #[must_use]
     pub const fn can_detach_or_release(self) -> bool {
         matches!(self, Self::Recycled | Self::Observed | Self::ReadbackJoined)
+    }
+
+    /// Whether this qualification-only phase grants returning teardown and no other transition.
+    #[cfg(feature = "qualification-fault-injection")]
+    #[must_use]
+    pub const fn can_release_only(self) -> bool {
+        matches!(self, Self::QualificationFaulted)
     }
 }
 
@@ -780,6 +800,340 @@ impl M1PhysicalRecycledQueueSessionV1 {
     }
 }
 
+/// Ferric classification of a rejected deliberate queue-transition fault.
+#[cfg(feature = "qualification-fault-injection")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1QualificationQueueTransitionFaultInjectionRejectionReasonV1 {
+    /// The Engine was already terminal before the qualification transition.
+    EngineAlreadyFaulted,
+    /// A completed-read attempt preceded the requested fault point.
+    CompletedReadAlreadyAttempted,
+}
+
+/// Pure fault-injection rejection retaining the unchanged recycled M1 queue.
+#[cfg(feature = "qualification-fault-injection")]
+#[must_use = "rejection retains exact recycled queue custody"]
+#[derive(Debug)]
+pub struct M1QualificationQueueTransitionFaultInjectionRejectionV1 {
+    reason: M1QualificationQueueTransitionFaultInjectionRejectionReasonV1,
+    queue: Box<M1PhysicalRecycledQueueSessionV1>,
+}
+
+#[cfg(feature = "qualification-fault-injection")]
+impl M1QualificationQueueTransitionFaultInjectionRejectionV1 {
+    /// Returns why the deliberate transition was rejected without faulting the Engine.
+    #[must_use]
+    pub const fn reason(&self) -> M1QualificationQueueTransitionFaultInjectionRejectionReasonV1 {
+        self.reason
+    }
+
+    /// Recovers the exact unchanged recycled M1 queue.
+    #[must_use = "recycled queue custody must remain retained"]
+    pub fn into_queue(self) -> M1PhysicalRecycledQueueSessionV1 {
+        *self.queue
+    }
+}
+
+/// Terminal M1 queue after a deliberate post-recycle qualification transition.
+///
+/// The lower service owner and Ferric scheduler/KV custody remain paired. This
+/// type exposes returning teardown but no readback, reuse, detach, or submit
+/// transition. It is not evidence of a native KFD or device fault.
+///
+/// ```compile_fail
+/// use ferric_engine::M1QualificationQueueTransitionFaultSessionV1;
+/// fn read(queue: M1QualificationQueueTransitionFaultSessionV1) {
+///     let _ = queue.observe_completion();
+/// }
+/// ```
+///
+/// ```compile_fail
+/// use ferric_engine::M1QualificationQueueTransitionFaultSessionV1;
+/// fn detach(queue: M1QualificationQueueTransitionFaultSessionV1) {
+///     let _ = queue.detach();
+/// }
+/// ```
+#[cfg(feature = "qualification-fault-injection")]
+#[must_use = "the qualification-faulted queue must be destroyed or retained"]
+#[derive(Debug)]
+pub enum M1QualificationQueueTransitionFaultSessionV1 {
+    /// Faulted target-only queue.
+    TargetOnly(
+        Box<
+            M1PhysicalQueuePhaseCaseV1<
+                ServiceQualificationFaultedQueueSessionV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    ),
+    /// Faulted paired-prefill queue.
+    PairedPrefill(
+        Box<
+            M1PhysicalQueuePhaseCaseV1<
+                ServiceQualificationFaultedQueueSessionV1<M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    ),
+    /// Faulted K4 speculative queue.
+    SpeculativeK4(
+        Box<
+            M1PhysicalQueuePhaseCaseV1<
+                ServiceQualificationFaultedQueueSessionV1<M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    ),
+    /// Faulted K8 speculative queue.
+    SpeculativeK8(
+        Box<
+            M1PhysicalQueuePhaseCaseV1<
+                ServiceQualificationFaultedQueueSessionV1<M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    ),
+    /// Faulted K16 speculative queue.
+    SpeculativeK16(
+        Box<
+            M1PhysicalQueuePhaseCaseV1<
+                ServiceQualificationFaultedQueueSessionV1<
+                    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
+                >,
+            >,
+        >,
+    ),
+}
+
+#[cfg(feature = "qualification-fault-injection")]
+impl M1QualificationQueueTransitionFaultSessionV1 {
+    /// Returns the exact closed M1 publication shape.
+    #[must_use]
+    pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
+        match self {
+            Self::TargetOnly(_) => M1PhysicalFixedBatchShapeV1::TargetOnly,
+            Self::PairedPrefill(_) => M1PhysicalFixedBatchShapeV1::PairedPrefill,
+            Self::SpeculativeK4(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+            Self::SpeculativeK8(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+            Self::SpeculativeK16(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+        }
+    }
+
+    /// Returns the compile-time packet cardinality of the retained queue.
+    #[must_use]
+    pub const fn packet_count(&self) -> usize {
+        self.shape().packet_count()
+    }
+
+    /// Returns the terminal qualification-only queue phase.
+    #[must_use]
+    pub const fn phase(&self) -> M1PhysicalQueuePhaseV1 {
+        M1PhysicalQueuePhaseV1::QualificationFaulted
+    }
+
+    /// Returns the immutable scheduler-issued logical epoch.
+    #[must_use]
+    pub const fn queue_epoch(&self) -> CompletionEpoch {
+        match self {
+            Self::TargetOnly(case) => case.queue_epoch(),
+            Self::PairedPrefill(case) => case.queue_epoch(),
+            Self::SpeculativeK4(case) => case.queue_epoch(),
+            Self::SpeculativeK8(case) => case.queue_epoch(),
+            Self::SpeculativeK16(case) => case.queue_epoch(),
+        }
+    }
+
+    /// Returns the lower dispatch generation at the deliberate transition.
+    #[must_use]
+    pub const fn dispatch_generation(&self) -> u64 {
+        match self {
+            Self::TargetOnly(case) => case.lower.dispatch_generation(),
+            Self::PairedPrefill(case) => case.lower.dispatch_generation(),
+            Self::SpeculativeK4(case) => case.lower.dispatch_generation(),
+            Self::SpeculativeK8(case) => case.lower.dispatch_generation(),
+            Self::SpeculativeK16(case) => case.lower.dispatch_generation(),
+        }
+    }
+
+    /// Returns the deliberate lower service transition point.
+    #[must_use]
+    pub const fn fault_point(&self) -> ServiceQualificationQueueFaultPointV1 {
+        match self {
+            Self::TargetOnly(case) => case.lower.point(),
+            Self::PairedPrefill(case) => case.lower.point(),
+            Self::SpeculativeK4(case) => case.lower.point(),
+            Self::SpeculativeK8(case) => case.lower.point(),
+            Self::SpeculativeK16(case) => case.lower.point(),
+        }
+    }
+
+    /// Returns the exact lower recycle observation preceding the transition.
+    #[must_use]
+    pub const fn recycle_observation(&self) -> Gfx942CompletionRecycleObservationV1 {
+        match self {
+            Self::TargetOnly(case) => case.lower.recycle_observation(),
+            Self::PairedPrefill(case) => case.lower.recycle_observation(),
+            Self::SpeculativeK4(case) => case.lower.recycle_observation(),
+            Self::SpeculativeK8(case) => case.lower.recycle_observation(),
+            Self::SpeculativeK16(case) => case.lower.recycle_observation(),
+        }
+    }
+
+    /// Returns retained Ferric recipe and allocation custody by borrow.
+    #[must_use = "Ferric custody remains paired with the terminal queue"]
+    pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
+        match self {
+            Self::TargetOnly(case) => case.custody(),
+            Self::PairedPrefill(case) => case.custody(),
+            Self::SpeculativeK4(case) => case.custody(),
+            Self::SpeculativeK8(case) => case.custody(),
+            Self::SpeculativeK16(case) => case.custody(),
+        }
+    }
+
+    /// Returns the exact scheduler dispatch retained beside the terminal queue.
+    #[must_use = "scheduler dispatch authority remains paired with physical custody"]
+    pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
+        match self {
+            Self::TargetOnly(case) => case.scheduled_dispatch(),
+            Self::PairedPrefill(case) => case.scheduled_dispatch(),
+            Self::SpeculativeK4(case) => case.scheduled_dispatch(),
+            Self::SpeculativeK8(case) => case.scheduled_dispatch(),
+            Self::SpeculativeK16(case) => case.scheduled_dispatch(),
+        }
+    }
+
+    /// Destroys the native queue through the qualification state's only transition.
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal lower release failure with all available Ferric custody.
+    pub fn destroy_and_release(
+        self,
+    ) -> Result<
+        M1QualificationQueueTransitionFaultTeardownSuccessV1,
+        Box<M1QualificationQueueTransitionFaultTeardownFailureV1>,
+    > {
+        match self {
+            Self::TargetOnly(case) => {
+                release_qualification_fault_case(case, M1PhysicalFixedBatchShapeV1::TargetOnly)
+            }
+            Self::PairedPrefill(case) => {
+                release_qualification_fault_case(case, M1PhysicalFixedBatchShapeV1::PairedPrefill)
+            }
+            Self::SpeculativeK4(case) => {
+                release_qualification_fault_case(case, M1PhysicalFixedBatchShapeV1::SpeculativeK4)
+            }
+            Self::SpeculativeK8(case) => {
+                release_qualification_fault_case(case, M1PhysicalFixedBatchShapeV1::SpeculativeK8)
+            }
+            Self::SpeculativeK16(case) => {
+                release_qualification_fault_case(case, M1PhysicalFixedBatchShapeV1::SpeculativeK16)
+            }
+        }
+    }
+}
+
+/// Successful returning teardown of a deliberately faulted qualification queue.
+#[cfg(feature = "qualification-fault-injection")]
+#[must_use]
+#[derive(Debug)]
+pub struct M1QualificationQueueTransitionFaultTeardownSuccessV1 {
+    shape: M1PhysicalFixedBatchShapeV1,
+    queue_epoch: CompletionEpoch,
+    dispatch_generation: u64,
+    fault_point: ServiceQualificationQueueFaultPointV1,
+    release: ServiceQueueReleaseObservationV1,
+}
+
+#[cfg(feature = "qualification-fault-injection")]
+impl M1QualificationQueueTransitionFaultTeardownSuccessV1 {
+    /// Returns the exact former M1 shape.
+    #[must_use]
+    pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
+        self.shape
+    }
+
+    /// Returns the immutable scheduler-issued logical epoch.
+    #[must_use]
+    pub const fn queue_epoch(&self) -> CompletionEpoch {
+        self.queue_epoch
+    }
+
+    /// Returns the lower dispatch generation at injection.
+    #[must_use]
+    pub const fn dispatch_generation(&self) -> u64 {
+        self.dispatch_generation
+    }
+
+    /// Returns the deliberate lower service transition point.
+    #[must_use]
+    pub const fn fault_point(&self) -> ServiceQualificationQueueFaultPointV1 {
+        self.fault_point
+    }
+
+    /// Returns the exact native queue and allocation release observation.
+    #[must_use]
+    pub const fn release(&self) -> &ServiceQueueReleaseObservationV1 {
+        &self.release
+    }
+}
+
+/// Terminal release failure retaining lower and Ferric qualification custody.
+#[cfg(feature = "qualification-fault-injection")]
+#[must_use = "release failure retains all available lower and Ferric custody"]
+#[derive(Debug)]
+pub struct M1QualificationQueueTransitionFaultTeardownFailureV1 {
+    shape: M1PhysicalFixedBatchShapeV1,
+    queue_epoch: CompletionEpoch,
+    dispatch_generation: u64,
+    fault_point: ServiceQualificationQueueFaultPointV1,
+    lower: ServiceQueueReleaseFailureV1,
+    step: Box<M1PrepublicationStepCustodyV1>,
+    custody: Box<M1PhysicalQueueBatchCustodyV1>,
+}
+
+#[cfg(feature = "qualification-fault-injection")]
+impl M1QualificationQueueTransitionFaultTeardownFailureV1 {
+    /// Returns the exact failed M1 shape.
+    #[must_use]
+    pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
+        self.shape
+    }
+
+    /// Returns the immutable scheduler-issued logical epoch.
+    #[must_use]
+    pub const fn queue_epoch(&self) -> CompletionEpoch {
+        self.queue_epoch
+    }
+
+    /// Returns the lower dispatch generation at injection.
+    #[must_use]
+    pub const fn dispatch_generation(&self) -> u64 {
+        self.dispatch_generation
+    }
+
+    /// Returns the deliberate lower service transition point.
+    #[must_use]
+    pub const fn fault_point(&self) -> ServiceQualificationQueueFaultPointV1 {
+        self.fault_point
+    }
+
+    /// Returns the lower terminal release failure by borrow.
+    #[must_use = "lower failure retains available generic custody"]
+    pub const fn lower(&self) -> &ServiceQueueReleaseFailureV1 {
+        &self.lower
+    }
+
+    /// Returns the exact scheduler dispatch retained after release failure.
+    #[must_use = "scheduler dispatch authority remains retained"]
+    pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
+        self.step.scheduled_dispatch()
+    }
+
+    /// Returns retained Ferric recipe and allocation custody by borrow.
+    #[must_use = "Ferric custody remains retained"]
+    pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
+        &self.custody
+    }
+}
+
 /// One exact recycled queue generation paired with its completed output copy.
 ///
 /// Ordinary backing owns the copied K7 image. Guarded backing privately owns
@@ -835,13 +1189,21 @@ pub enum M1ObservedCompletionOutputV1 {
     SpeculativeK16(Box<M1ObservedCompletionCaseV1<M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1>>),
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum M1CompletionEvidenceJoinAuthorityV1 {
+    Generic,
+    DirectDiagnostic,
+    SpeculativeDiagnostic,
+}
+
 fn join_observed_output_case<const N: usize>(
     case: Box<M1ObservedCompletionCaseV1<N>>,
     observed: fn(Box<M1ObservedCompletionCaseV1<N>>) -> M1ObservedCompletionOutputV1,
     readback: fn(Box<M1PhysicalReadbackQueueCaseV1<N>>) -> M1PhysicalReadbackQueueSessionV1,
+    authority: M1CompletionEvidenceJoinAuthorityV1,
     expectations: &[CompletionWireSemanticExpectation<'_>],
 ) -> Result<M1PhysicalCompletedReadbackV1, M1CompletedReadbackJoinFailureV1> {
-    match check_observed_case(case, expectations) {
+    match check_observed_case(case, authority, expectations) {
         Ok((case, checked, completion, kv)) => Ok(M1PhysicalCompletedReadbackV1 {
             queue: readback(case),
             checked,
@@ -1016,12 +1378,204 @@ impl M1ObservedCompletionOutputV1 {
         }
     }
 
-    /// Copies the exact four draft and five target choice scalars after the
-    /// same S1/K4 queue generation has already produced its compact image.
+    pub(crate) const fn direct_diagnostic_choices_enabled(&self) -> bool {
+        match self {
+            Self::TargetOnly(case) => case
+                .case
+                .custody
+                .completion_output()
+                .direct_diagnostic_choices()
+                .is_some(),
+            Self::PairedPrefill(case) => case
+                .case
+                .custody
+                .completion_output()
+                .direct_diagnostic_choices()
+                .is_some(),
+            Self::SpeculativeK4(case) => case
+                .case
+                .custody
+                .completion_output()
+                .direct_diagnostic_choices()
+                .is_some(),
+            Self::SpeculativeK8(case) => case
+                .case
+                .custody
+                .completion_output()
+                .direct_diagnostic_choices()
+                .is_some(),
+            Self::SpeculativeK16(case) => case
+                .case
+                .custody
+                .completion_output()
+                .direct_diagnostic_choices()
+                .is_some(),
+        }
+    }
+
+    pub(crate) const fn speculative_diagnostic_choices_enabled(&self) -> bool {
+        match self {
+            Self::TargetOnly(case) => case
+                .case
+                .custody
+                .completion_output()
+                .speculative_diagnostic_choices()
+                .is_some(),
+            Self::PairedPrefill(case) => case
+                .case
+                .custody
+                .completion_output()
+                .speculative_diagnostic_choices()
+                .is_some(),
+            Self::SpeculativeK4(case) => case
+                .case
+                .custody
+                .completion_output()
+                .speculative_diagnostic_choices()
+                .is_some(),
+            Self::SpeculativeK8(case) => case
+                .case
+                .custody
+                .completion_output()
+                .speculative_diagnostic_choices()
+                .is_some(),
+            Self::SpeculativeK16(case) => case
+                .case
+                .custody
+                .completion_output()
+                .speculative_diagnostic_choices()
+                .is_some(),
+        }
+    }
+
+    /// Copies the independently retained final active-row target choice for
+    /// every live direct lane.
+    ///
+    /// The attachment must have been enabled before physical binding. Target
+    /// active lengths come from the queue-retained pending KV reservations, not
+    /// from compact K7 output. This admits `TargetOnly` and `PairedPrefill` only.
+    ///
+    /// # Errors
+    ///
+    /// Rejects another queue shape, absent attachment, active-row drift,
+    /// completed-copy failure, generation/offset/extent drift, or an
+    /// out-of-vocabulary device choice. Once any scalar copy succeeds, this
+    /// failure exposes no observation retry.
+    pub fn observe_direct_diagnostic_choices(
+        mut self,
+    ) -> Result<M1ObservedDirectDiagnosticOutputV1, Box<M1DirectDiagnosticObservationFailureV1>>
+    {
+        let mut active_lengths = [0_u32; M1_MAX_ACTIVE_SEQUENCES as usize];
+        let mut ranges = [None; M1_MAX_ACTIVE_SEQUENCES as usize];
+        let prepared = match &self {
+            Self::TargetOnly(case) => {
+                prepare_direct_diagnostic_ranges(case, &mut active_lengths, &mut ranges)
+            }
+            Self::PairedPrefill(case) => {
+                prepare_direct_diagnostic_ranges(case, &mut active_lengths, &mut ranges)
+            }
+            _ => {
+                return Err(Box::new(M1DirectDiagnosticObservationFailureV1 {
+                    error: M1DirectDiagnosticObservationErrorV1::NotDirectShape,
+                    completion: Box::new(self),
+                    partial_choices: Box::new([]),
+                }))
+            }
+        };
+        let (live, generation) = match prepared {
+            Ok(prepared) => prepared,
+            Err(error) => {
+                return Err(Box::new(M1DirectDiagnosticObservationFailureV1 {
+                    error,
+                    completion: Box::new(self),
+                    partial_choices: Box::new([]),
+                }))
+            }
+        };
+        let mut readbacks = Vec::new();
+        if readbacks.try_reserve_exact(live).is_err() {
+            return Err(Box::new(M1DirectDiagnosticObservationFailureV1 {
+                error: M1DirectDiagnosticObservationErrorV1::HostAllocation,
+                completion: Box::new(self),
+                partial_choices: Box::new([]),
+            }));
+        }
+        for (lane, range) in ranges.iter().copied().take(live).enumerate() {
+            let Some(range) = range else {
+                return Err(Box::new(M1DirectDiagnosticObservationFailureV1 {
+                    error: M1DirectDiagnosticObservationErrorV1::PreparedRangeMissing { lane },
+                    completion: Box::new(self),
+                    partial_choices: readbacks.into_boxed_slice(),
+                }));
+            };
+            let result = match &mut self {
+                Self::TargetOnly(case) => {
+                    let request = case.case.lower.completed_read_request(range);
+                    case.case.lower.read_completed(request)
+                }
+                Self::PairedPrefill(case) => {
+                    let request = case.case.lower.completed_read_request(range);
+                    case.case.lower.read_completed(request)
+                }
+                _ => unreachable!("direct preflight retains a direct shape"),
+            };
+            match result {
+                Ok(readback) => readbacks.push(readback),
+                Err(source) => {
+                    return Err(Box::new(M1DirectDiagnosticObservationFailureV1 {
+                        error: M1DirectDiagnosticObservationErrorV1::Queue { lane, source },
+                        completion: Box::new(self),
+                        partial_choices: readbacks.into_boxed_slice(),
+                    }))
+                }
+            }
+        }
+        let owner = match &self {
+            Self::TargetOnly(case) => case
+                .case
+                .custody
+                .completion_output()
+                .direct_diagnostic_choices(),
+            Self::PairedPrefill(case) => case
+                .case
+                .custody
+                .completion_output()
+                .direct_diagnostic_choices(),
+            _ => None,
+        };
+        let Some(owner) = owner else {
+            return Err(Box::new(M1DirectDiagnosticObservationFailureV1 {
+                error: M1DirectDiagnosticObservationErrorV1::CaptureNotEnabled,
+                completion: Box::new(self),
+                partial_choices: readbacks.into_boxed_slice(),
+            }));
+        };
+        let choices = match observe_m1_direct_diagnostic_choices_v1(
+            owner,
+            generation,
+            &active_lengths[..live],
+            readbacks,
+        ) {
+            Ok(choices) => choices,
+            Err((error, partial_choices)) => {
+                return Err(Box::new(M1DirectDiagnosticObservationFailureV1 {
+                    error: M1DirectDiagnosticObservationErrorV1::Choices(error),
+                    completion: Box::new(self),
+                    partial_choices: partial_choices.into_boxed_slice(),
+                }))
+            }
+        };
+        Ok(M1ObservedDirectDiagnosticOutputV1 {
+            completion: self,
+            choices,
+        })
+    }
+
+    /// Source-compatible S1/K4 entry point for diagnostic choice observation.
     ///
     /// The diagnostic attachment must have been enabled before physical
-    /// binding. This transition is unavailable to target-only qualification
-    /// and every speculative shape other than S1/K4.
+    /// binding. Production serving currently calls this entry point only for
+    /// S1/K4; the underlying evidence transition is shape-generic.
     ///
     /// # Errors
     ///
@@ -1030,12 +1584,47 @@ impl M1ObservedCompletionOutputV1 {
     /// Once a choice copy succeeds, failure custody exposes no observation
     /// retry.
     pub fn observe_speculative_k4_diagnostic_choices(
+        self,
+    ) -> Result<
+        M1ObservedSpeculativeDiagnosticOutputV1,
+        Box<M1SpeculativeDiagnosticObservationFailureV1>,
+    > {
+        let is_s1_k4 = match &self {
+            Self::SpeculativeK4(case) => {
+                let selection = case.case.custody.completion_output().shape().selection();
+                m1_speculative_diagnostic_is_s1_k4_selection_v1(selection)
+            }
+            _ => false,
+        };
+        if !is_s1_k4 {
+            return Err(Box::new(M1SpeculativeDiagnosticObservationFailureV1 {
+                custody: M1SpeculativeDiagnosticObservationFailureCustodyV1::Direct {
+                    error: M1SpeculativeDiagnosticObservationErrorV1::NotSpeculativeK4,
+                    completion: Box::new(self),
+                    partial_choices: Box::new([]),
+                },
+            }));
+        }
+        self.observe_speculative_diagnostic_choices()
+    }
+
+    /// Copies the exact `K` draft rows and full target choice matrix after the
+    /// same finite M1 speculative queue generation produced its compact image.
+    ///
+    /// This is an evidence-only transition for S1/K4, S8/K4, S1/K8, and S1/K16.
+    /// It does not widen serving-provider or physical-operation admission.
+    ///
+    /// # Errors
+    ///
+    /// Rejects a non-speculative shape, absent capture owner, incomplete copy,
+    /// coordinate drift, or invalid live token.
+    pub fn observe_speculative_diagnostic_choices(
         mut self,
     ) -> Result<
         M1ObservedSpeculativeDiagnosticOutputV1,
         Box<M1SpeculativeDiagnosticObservationFailureV1>,
     > {
-        let (draft_range, target_range, generation) = match &self {
+        let (draft_ranges, target_range, generation, live_sequences, draft_tokens) = match &self {
             Self::SpeculativeK4(case) => {
                 let Some(choices) = case
                     .case
@@ -1051,25 +1640,113 @@ impl M1ObservedCompletionOutputV1 {
                         },
                     }));
                 };
+                let draft_ranges = match choices.retained_draft_read_ranges() {
+                    Ok(ranges) => ranges,
+                    Err(error) => {
+                        return Err(Box::new(M1SpeculativeDiagnosticObservationFailureV1 {
+                            custody: M1SpeculativeDiagnosticObservationFailureCustodyV1::Direct {
+                                error: M1SpeculativeDiagnosticObservationErrorV1::Choices(error),
+                                completion: Box::new(self),
+                                partial_choices: Box::new([]),
+                            },
+                        }));
+                    }
+                };
                 (
-                    choices.retained_draft_range(),
+                    draft_ranges,
                     choices.retained_target_range(),
                     case.image.dispatch_generation(),
+                    u32::try_from(case.case.step.scheduled_dispatch().member_count())
+                        .unwrap_or(u32::MAX),
+                    choices.shape().draft_tokens(),
+                )
+            }
+            Self::SpeculativeK8(case) => {
+                let Some(choices) = case
+                    .case
+                    .custody
+                    .completion_output()
+                    .speculative_diagnostic_choices()
+                else {
+                    return Err(Box::new(M1SpeculativeDiagnosticObservationFailureV1 {
+                        custody: M1SpeculativeDiagnosticObservationFailureCustodyV1::Direct {
+                            error: M1SpeculativeDiagnosticObservationErrorV1::CaptureNotEnabled,
+                            completion: Box::new(self),
+                            partial_choices: Box::new([]),
+                        },
+                    }));
+                };
+                let draft_ranges = match choices.retained_draft_read_ranges() {
+                    Ok(ranges) => ranges,
+                    Err(error) => {
+                        return Err(Box::new(M1SpeculativeDiagnosticObservationFailureV1 {
+                            custody: M1SpeculativeDiagnosticObservationFailureCustodyV1::Direct {
+                                error: M1SpeculativeDiagnosticObservationErrorV1::Choices(error),
+                                completion: Box::new(self),
+                                partial_choices: Box::new([]),
+                            },
+                        }));
+                    }
+                };
+                (
+                    draft_ranges,
+                    choices.retained_target_range(),
+                    case.image.dispatch_generation(),
+                    u32::try_from(case.case.step.scheduled_dispatch().member_count())
+                        .unwrap_or(u32::MAX),
+                    choices.shape().draft_tokens(),
+                )
+            }
+            Self::SpeculativeK16(case) => {
+                let Some(choices) = case
+                    .case
+                    .custody
+                    .completion_output()
+                    .speculative_diagnostic_choices()
+                else {
+                    return Err(Box::new(M1SpeculativeDiagnosticObservationFailureV1 {
+                        custody: M1SpeculativeDiagnosticObservationFailureCustodyV1::Direct {
+                            error: M1SpeculativeDiagnosticObservationErrorV1::CaptureNotEnabled,
+                            completion: Box::new(self),
+                            partial_choices: Box::new([]),
+                        },
+                    }));
+                };
+                let draft_ranges = match choices.retained_draft_read_ranges() {
+                    Ok(ranges) => ranges,
+                    Err(error) => {
+                        return Err(Box::new(M1SpeculativeDiagnosticObservationFailureV1 {
+                            custody: M1SpeculativeDiagnosticObservationFailureCustodyV1::Direct {
+                                error: M1SpeculativeDiagnosticObservationErrorV1::Choices(error),
+                                completion: Box::new(self),
+                                partial_choices: Box::new([]),
+                            },
+                        }));
+                    }
+                };
+                (
+                    draft_ranges,
+                    choices.retained_target_range(),
+                    case.image.dispatch_generation(),
+                    u32::try_from(case.case.step.scheduled_dispatch().member_count())
+                        .unwrap_or(u32::MAX),
+                    choices.shape().draft_tokens(),
                 )
             }
             _ => {
                 return Err(Box::new(M1SpeculativeDiagnosticObservationFailureV1 {
                     custody: M1SpeculativeDiagnosticObservationFailureCustodyV1::Direct {
-                        error: M1SpeculativeDiagnosticObservationErrorV1::NotSpeculativeK4,
+                        error: M1SpeculativeDiagnosticObservationErrorV1::NotSpeculativeShape,
                         completion: Box::new(self),
                         partial_choices: Box::new([]),
                     },
                 }))
             }
         };
-        let (backend, draft, target) = match read_m1_diagnostic_choice_pair_v1(
+        let (backend, draft, target) = match read_m1_diagnostic_choice_ranges_v1(
             M1ProductionDiagnosticChoiceReadBackendV1 { completion: self },
-            draft_range,
+            draft_ranges,
+            draft_tokens,
             target_range,
         ) {
             Ok(copies) => copies,
@@ -1092,7 +1769,41 @@ impl M1ObservedCompletionOutputV1 {
                         custody: M1SpeculativeDiagnosticObservationFailureCustodyV1::Direct {
                             error: M1SpeculativeDiagnosticObservationErrorV1::CaptureNotEnabled,
                             completion: Box::new(self),
-                            partial_choices: vec![draft, target].into_boxed_slice(),
+                            partial_choices: retain_all_m1_diagnostic_choice_copies(draft, target),
+                        },
+                    }));
+                };
+                owner
+            }
+            Self::SpeculativeK8(case) => {
+                let Some(owner) = case
+                    .case
+                    .custody
+                    .completion_output()
+                    .speculative_diagnostic_choices()
+                else {
+                    return Err(Box::new(M1SpeculativeDiagnosticObservationFailureV1 {
+                        custody: M1SpeculativeDiagnosticObservationFailureCustodyV1::Direct {
+                            error: M1SpeculativeDiagnosticObservationErrorV1::CaptureNotEnabled,
+                            completion: Box::new(self),
+                            partial_choices: retain_all_m1_diagnostic_choice_copies(draft, target),
+                        },
+                    }));
+                };
+                owner
+            }
+            Self::SpeculativeK16(case) => {
+                let Some(owner) = case
+                    .case
+                    .custody
+                    .completion_output()
+                    .speculative_diagnostic_choices()
+                else {
+                    return Err(Box::new(M1SpeculativeDiagnosticObservationFailureV1 {
+                        custody: M1SpeculativeDiagnosticObservationFailureCustodyV1::Direct {
+                            error: M1SpeculativeDiagnosticObservationErrorV1::CaptureNotEnabled,
+                            completion: Box::new(self),
+                            partial_choices: retain_all_m1_diagnostic_choice_copies(draft, target),
                         },
                     }));
                 };
@@ -1101,9 +1812,9 @@ impl M1ObservedCompletionOutputV1 {
             _ => {
                 return Err(Box::new(M1SpeculativeDiagnosticObservationFailureV1 {
                     custody: M1SpeculativeDiagnosticObservationFailureCustodyV1::Direct {
-                        error: M1SpeculativeDiagnosticObservationErrorV1::NotSpeculativeK4,
+                        error: M1SpeculativeDiagnosticObservationErrorV1::NotSpeculativeShape,
                         completion: Box::new(self),
-                        partial_choices: vec![draft, target].into_boxed_slice(),
+                        partial_choices: retain_all_m1_diagnostic_choice_copies(draft, target),
                     },
                 }))
             }
@@ -1111,6 +1822,7 @@ impl M1ObservedCompletionOutputV1 {
         let choices = match observe_m1_speculative_diagnostic_choices_v1(
             choices_owner,
             generation,
+            live_sequences,
             draft,
             target,
         ) {
@@ -1121,7 +1833,7 @@ impl M1ObservedCompletionOutputV1 {
                     custody: M1SpeculativeDiagnosticObservationFailureCustodyV1::Direct {
                         error: M1SpeculativeDiagnosticObservationErrorV1::Choices(error),
                         completion: Box::new(self),
-                        partial_choices: vec![draft, target].into_boxed_slice(),
+                        partial_choices: retain_all_m1_diagnostic_choice_copies(draft, target),
                     },
                 }));
             }
@@ -1131,6 +1843,40 @@ impl M1ObservedCompletionOutputV1 {
             choices,
         })
     }
+}
+
+fn prepare_direct_diagnostic_ranges<const N: usize>(
+    case: &M1ObservedCompletionCaseV1<N>,
+    active_lengths: &mut [u32; M1_MAX_ACTIVE_SEQUENCES as usize],
+    ranges: &mut [Option<ServiceHostDispatchRangeV1>; M1_MAX_ACTIVE_SEQUENCES as usize],
+) -> Result<(usize, u64), M1DirectDiagnosticObservationErrorV1> {
+    let Some(owner) = case
+        .case
+        .custody
+        .completion_output()
+        .direct_diagnostic_choices()
+    else {
+        return Err(M1DirectDiagnosticObservationErrorV1::CaptureNotEnabled);
+    };
+    let active = case.case.step.target_active_lengths();
+    let live = active.len();
+    let expected = case.case.step.scheduled_dispatch().member_count();
+    if live != expected || live > active_lengths.len() {
+        return Err(M1DirectDiagnosticObservationErrorV1::LiveLaneCount {
+            capacity: active_lengths.len(),
+            expected,
+            actual: live,
+        });
+    }
+    for (lane, active_length) in active.enumerate() {
+        active_lengths[lane] = active_length;
+        ranges[lane] = Some(
+            owner
+                .retained_final_choice_range(lane, active_length)
+                .map_err(M1DirectDiagnosticObservationErrorV1::Choices)?,
+        );
+    }
+    Ok((live, case.image.dispatch_generation()))
 }
 
 /// One exact recycled queue generation paired with a rejected completed copy.
@@ -1954,7 +2700,18 @@ impl M1CompletedReadbackJoinFailureV1 {
         self,
         expectations: &[CompletionWireSemanticExpectation<'_>],
     ) -> Result<M1PhysicalCompletedReadbackV1, Self> {
-        (*self.observed).check_completion(expectations)
+        self.retry_with_evidence_authority(
+            M1CompletionEvidenceJoinAuthorityV1::Generic,
+            expectations,
+        )
+    }
+
+    fn retry_with_evidence_authority(
+        self,
+        authority: M1CompletionEvidenceJoinAuthorityV1,
+        expectations: &[CompletionWireSemanticExpectation<'_>],
+    ) -> Result<M1PhysicalCompletedReadbackV1, Self> {
+        (*self.observed).check_completion_with_evidence_authority(authority, expectations)
     }
 
     /// Destroys the semantically rejected queue after faulting the logical
@@ -2100,23 +2857,195 @@ pub struct M1PhysicalCompletedReadbackV1 {
     kv: M1FullStepKvReservationCustodyV1,
 }
 
-/// Post-compact observation rejection for diagnostic S1/K4 choice readback.
+/// Post-compact observation rejection for direct target-choice readback.
+#[derive(Debug)]
+pub enum M1DirectDiagnosticObservationErrorV1 {
+    /// The observed physical queue was not `TargetOnly` or `PairedPrefill`.
+    NotDirectShape,
+    /// Direct choice allocation was not attached before publication.
+    CaptureNotEnabled,
+    /// Retained live-lane and scheduler cardinality drifted.
+    LiveLaneCount {
+        capacity: usize,
+        expected: usize,
+        actual: usize,
+    },
+    /// Internal preflight did not retain a range for one live lane.
+    PreparedRangeMissing { lane: usize },
+    /// A bounded host evidence vector could not be reserved.
+    HostAllocation,
+    /// One generation-bound completed scalar copy failed.
+    Queue {
+        lane: usize,
+        source: ServiceQueueErrorV1,
+    },
+    /// Choice shape, coordinates, or token value rejected.
+    Choices(M1DirectDiagnosticChoicesErrorV1),
+}
+
+impl fmt::Display for M1DirectDiagnosticObservationErrorV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            formatter,
+            "M1 direct diagnostic observation rejected: {self:?}"
+        )
+    }
+}
+
+impl std::error::Error for M1DirectDiagnosticObservationErrorV1 {}
+
+/// Failure retaining compact custody and every successfully copied scalar.
+#[must_use = "direct diagnostic observation failure retains queue and evidence custody"]
+#[derive(Debug)]
+pub struct M1DirectDiagnosticObservationFailureV1 {
+    error: M1DirectDiagnosticObservationErrorV1,
+    completion: Box<M1ObservedCompletionOutputV1>,
+    partial_choices: Box<[ServiceCompletedReadbackV1]>,
+}
+
+impl M1DirectDiagnosticObservationFailureV1 {
+    /// Exact pre-copy, copy, or validation rejection.
+    #[must_use]
+    pub const fn error(&self) -> &M1DirectDiagnosticObservationErrorV1 {
+        &self.error
+    }
+
+    /// Number of scalar ranges copied before fail-closed retention.
+    #[must_use]
+    pub const fn copied_choice_ranges(&self) -> usize {
+        self.partial_choices.len()
+    }
+
+    /// Destroys the observed queue without minting completion authority.
+    ///
+    /// # Errors
+    ///
+    /// Returns the existing terminal queue-release quarantine.
+    pub fn destroy_and_release(
+        self,
+    ) -> Result<ServiceQueueReleaseObservationV1, M1PhysicalQueueReleaseFailureV1> {
+        self.completion.destroy_and_release()
+    }
+
+    /// Faults the Engine and destroys the queue while retaining compact and
+    /// partially copied direct-choice evidence.
+    ///
+    /// # Errors
+    ///
+    /// Returns lower release quarantine joined to unchanged evidence.
+    pub fn destroy_queue_and_retain_evidence<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1DirectDiagnosticObservationTeardownSuccessV1,
+        Box<M1DirectDiagnosticObservationTeardownFailureV1>,
+    > {
+        engine.quarantine_m1_queue_rearm_failure();
+        let Self {
+            error,
+            completion,
+            partial_choices,
+        } = self;
+        match completion.destroy_and_release_retaining_image() {
+            Ok((queue_release, compact)) => Ok(M1DirectDiagnosticObservationTeardownSuccessV1 {
+                error,
+                compact,
+                partial_choices,
+                queue_release,
+            }),
+            Err(source) => {
+                let (source, compact) = *source;
+                Err(Box::new(M1DirectDiagnosticObservationTeardownFailureV1 {
+                    error,
+                    compact,
+                    partial_choices,
+                    source,
+                }))
+            }
+        }
+    }
+}
+
+/// Clean teardown retaining a failed direct-choice observation.
+#[must_use = "direct diagnostic observation evidence remains retained"]
+#[derive(Debug)]
+pub struct M1DirectDiagnosticObservationTeardownSuccessV1 {
+    error: M1DirectDiagnosticObservationErrorV1,
+    compact: M1ObservedCompletionImageV1,
+    partial_choices: Box<[ServiceCompletedReadbackV1]>,
+    queue_release: ServiceQueueReleaseObservationV1,
+}
+
+impl M1DirectDiagnosticObservationTeardownSuccessV1 {
+    #[must_use]
+    pub const fn error(&self) -> &M1DirectDiagnosticObservationErrorV1 {
+        &self.error
+    }
+
+    pub const fn compact(&self) -> &M1ObservedCompletionImageV1 {
+        &self.compact
+    }
+
+    #[must_use]
+    pub const fn copied_choice_ranges(&self) -> usize {
+        self.partial_choices.len()
+    }
+
+    #[must_use]
+    pub const fn queue_release(&self) -> ServiceQueueReleaseObservationV1 {
+        self.queue_release
+    }
+}
+
+/// Terminal release quarantine retaining a failed direct-choice observation.
+#[must_use = "direct diagnostic observation evidence and release quarantine remain retained"]
+#[derive(Debug)]
+pub struct M1DirectDiagnosticObservationTeardownFailureV1 {
+    error: M1DirectDiagnosticObservationErrorV1,
+    compact: M1ObservedCompletionImageV1,
+    partial_choices: Box<[ServiceCompletedReadbackV1]>,
+    source: M1PhysicalQueueReleaseFailureV1,
+}
+
+impl M1DirectDiagnosticObservationTeardownFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> &M1DirectDiagnosticObservationErrorV1 {
+        &self.error
+    }
+
+    pub const fn compact(&self) -> &M1ObservedCompletionImageV1 {
+        &self.compact
+    }
+
+    #[must_use]
+    pub const fn copied_choice_ranges(&self) -> usize {
+        self.partial_choices.len()
+    }
+
+    pub const fn source(&self) -> &M1PhysicalQueueReleaseFailureV1 {
+        &self.source
+    }
+}
+
+/// Post-compact observation rejection for finite speculative choice readback.
 #[derive(Debug)]
 pub enum M1SpeculativeDiagnosticObservationErrorV1 {
-    /// The observed physical queue was not the exact K4 shape.
+    /// A source-compatible K4 entry point received another selection.
     NotSpeculativeK4,
+    /// The observed physical queue was not one of the finite speculative shapes.
+    NotSpeculativeShape,
     /// Diagnostic choice allocations were not attached before publication.
     CaptureNotEnabled,
     /// One completed generic copy failed.
     Queue {
-        /// `draft` or `target` full-choice range.
+        /// One exact `draft-N` scalar or `target` full-choice range.
         range: &'static str,
         /// Existing generation-bound queue diagnostic.
         source: ServiceQueueErrorV1,
     },
     /// Copied coordinates, extent, or token values rejected.
     Choices(M1SpeculativeDiagnosticChoicesErrorV1),
-    /// Internal typed copy custody did not contain exact draft then target copies.
+    /// Internal typed copy custody did not contain `K` draft rows then target.
     PartialCopyCount { actual: usize },
 }
 
@@ -2125,10 +3054,12 @@ struct M1DiagnosticChoiceCopyCustodyV1<T> {
     copies: Vec<T>,
 }
 
+type M1DiagnosticChoiceCompleteCustodyV1<T> = Result<(Box<[T]>, T), Box<[T]>>;
+
 impl<T> M1DiagnosticChoiceCopyCustodyV1<T> {
-    fn new() -> Self {
+    fn new(expected: usize) -> Self {
         Self {
-            copies: Vec::with_capacity(2),
+            copies: Vec::with_capacity(expected),
         }
     }
 
@@ -2140,13 +3071,19 @@ impl<T> M1DiagnosticChoiceCopyCustodyV1<T> {
         self.copies.into_boxed_slice()
     }
 
-    fn into_pair(self) -> Result<(T, T), Box<[T]>> {
-        let pair: Result<[T; 2], Vec<T>> = self.copies.try_into();
-        match pair {
-            Ok([draft, target]) => Ok((draft, target)),
-            Err(copies) => Err(copies.into_boxed_slice()),
+    fn into_complete(mut self, draft_tokens: usize) -> M1DiagnosticChoiceCompleteCustodyV1<T> {
+        if self.copies.len() != draft_tokens + 1 {
+            return Err(self.copies.into_boxed_slice());
         }
+        let target = self.copies.pop().expect("checked nonempty copy custody");
+        Ok((self.copies.into_boxed_slice(), target))
     }
+}
+
+fn retain_all_m1_diagnostic_choice_copies<T>(draft: Box<[T]>, target: T) -> Box<[T]> {
+    let mut copies = draft.into_vec();
+    copies.push(target);
+    copies.into_boxed_slice()
 }
 
 trait M1DiagnosticChoiceReadBackendV1: fmt::Debug + Sized {
@@ -2164,6 +3101,15 @@ trait M1DiagnosticChoiceReadBackendV1: fmt::Debug + Sized {
 
     fn destroy_or_quarantine(self) -> Result<Self::TeardownSuccess, Self::TeardownFailure>;
 }
+
+type M1DiagnosticChoiceReadSuccessV1<B> = (
+    B,
+    Box<[<B as M1DiagnosticChoiceReadBackendV1>::Readback]>,
+    <B as M1DiagnosticChoiceReadBackendV1>::Readback,
+);
+
+type M1DiagnosticChoiceReadResultV1<B> =
+    Result<M1DiagnosticChoiceReadSuccessV1<B>, M1DiagnosticChoiceReadFailureV1<B>>;
 
 #[derive(Debug)]
 struct M1DiagnosticChoiceReadFailureV1<B: M1DiagnosticChoiceReadBackendV1> {
@@ -2228,23 +3174,35 @@ impl<B: M1DiagnosticChoiceReadBackendV1> M1DiagnosticChoiceReadFailureV1<B> {
     }
 }
 
-fn read_m1_diagnostic_choice_pair_v1<B: M1DiagnosticChoiceReadBackendV1>(
+fn read_m1_diagnostic_choice_ranges_v1<B: M1DiagnosticChoiceReadBackendV1>(
     mut backend: B,
-    draft_range: B::Range,
+    draft_ranges: [Option<B::Range>; crate::M1_SPECULATIVE_DIAGNOSTIC_MAX_DRAFT_TOKENS_V1],
+    draft_tokens: u8,
     target_range: B::Range,
-) -> Result<(B, B::Readback, B::Readback), M1DiagnosticChoiceReadFailureV1<B>> {
-    let mut partial = M1DiagnosticChoiceCopyCustodyV1::new();
-    let draft = match backend.read_completed("draft", draft_range) {
-        Ok(draft) => draft,
-        Err(error) => {
-            return Err(M1DiagnosticChoiceReadFailureV1 {
-                error,
-                partial,
-                backend,
-            })
+) -> M1DiagnosticChoiceReadResultV1<B> {
+    const DRAFT_RANGE_NAMES: [&str; crate::M1_SPECULATIVE_DIAGNOSTIC_MAX_DRAFT_TOKENS_V1] = [
+        "draft-0", "draft-1", "draft-2", "draft-3", "draft-4", "draft-5", "draft-6", "draft-7",
+        "draft-8", "draft-9", "draft-10", "draft-11", "draft-12", "draft-13", "draft-14",
+        "draft-15",
+    ];
+    let draft_tokens = usize::from(draft_tokens);
+    let mut partial = M1DiagnosticChoiceCopyCustodyV1::new(draft_tokens + 1);
+    for index in 0..draft_tokens {
+        let range_name = DRAFT_RANGE_NAMES[index];
+        let Some(range) = draft_ranges[index] else {
+            unreachable!("shape owner provides one range for each admitted draft row")
+        };
+        match backend.read_completed(range_name, range) {
+            Ok(draft) => partial.retain(draft),
+            Err(error) => {
+                return Err(M1DiagnosticChoiceReadFailureV1 {
+                    error,
+                    partial,
+                    backend,
+                });
+            }
         }
-    };
-    partial.retain(draft);
+    }
     let target = match backend.read_completed("target", target_range) {
         Ok(target) => target,
         Err(error) => {
@@ -2256,9 +3214,9 @@ fn read_m1_diagnostic_choice_pair_v1<B: M1DiagnosticChoiceReadBackendV1>(
         }
     };
     partial.retain(target);
-    match partial.into_pair() {
+    match partial.into_complete(draft_tokens) {
         Ok((draft, target)) => Ok((backend, draft, target)),
-        Err(_) => unreachable!("the helper retained exactly two successful choice copies"),
+        Err(_) => unreachable!("the helper retained exactly K+1 successful choice copies"),
     }
 }
 
@@ -2282,15 +3240,24 @@ impl M1DiagnosticChoiceReadBackendV1 for M1ProductionDiagnosticChoiceReadBackend
         range_name: &'static str,
         range: Self::Range,
     ) -> Result<Self::Readback, Self::Error> {
-        let M1ObservedCompletionOutputV1::SpeculativeK4(case) = &mut self.completion else {
-            unreachable!("production diagnostic backend was preflighted as K4")
-        };
-        let request = case.case.lower.completed_read_request(range);
-        case.case.lower.read_completed(request).map_err(|source| {
-            M1SpeculativeDiagnosticObservationErrorV1::Queue {
-                range: range_name,
-                source,
+        let result = match &mut self.completion {
+            M1ObservedCompletionOutputV1::SpeculativeK4(case) => {
+                let request = case.case.lower.completed_read_request(range);
+                case.case.lower.read_completed(request)
             }
+            M1ObservedCompletionOutputV1::SpeculativeK8(case) => {
+                let request = case.case.lower.completed_read_request(range);
+                case.case.lower.read_completed(request)
+            }
+            M1ObservedCompletionOutputV1::SpeculativeK16(case) => {
+                let request = case.case.lower.completed_read_request(range);
+                case.case.lower.read_completed(request)
+            }
+            _ => unreachable!("production diagnostic backend was preflighted as speculative"),
+        };
+        result.map_err(|source| M1SpeculativeDiagnosticObservationErrorV1::Queue {
+            range: range_name,
+            source,
         })
     }
 
@@ -2451,7 +3418,7 @@ fn finish_m1_speculative_diagnostic_observation_teardown(
     }
 }
 
-/// Clean teardown retaining a failed S1/K4 diagnostic observation.
+/// Clean teardown retaining a failed finite-speculative diagnostic observation.
 #[must_use = "diagnostic observation evidence remains retained"]
 #[derive(Debug)]
 pub struct M1SpeculativeDiagnosticObservationTeardownSuccessV1 {
@@ -2482,7 +3449,7 @@ impl M1SpeculativeDiagnosticObservationTeardownSuccessV1 {
     }
 }
 
-/// Terminal release quarantine retaining failed S1/K4 diagnostic evidence.
+/// Terminal release quarantine retaining failed finite-speculative diagnostic evidence.
 #[must_use = "diagnostic observation evidence and release quarantine remain retained"]
 #[derive(Debug)]
 pub struct M1SpeculativeDiagnosticObservationTeardownFailureV1 {
@@ -2512,7 +3479,219 @@ impl M1SpeculativeDiagnosticObservationTeardownFailureV1 {
     }
 }
 
-/// One compact K7 observation paired with both completed S1/K4 choice copies.
+fn direct_semantic_expectations(
+    choices: &M1ObservedDirectDiagnosticChoicesV1,
+) -> (
+    [CompletionWireSemanticExpectation<'static>; M1_MAX_ACTIVE_SEQUENCES as usize],
+    usize,
+) {
+    let mut expectations = [CompletionWireSemanticExpectation::DirectFinalRow { choice: 0 };
+        M1_MAX_ACTIVE_SEQUENCES as usize];
+    let count = choices.choices().len();
+    debug_assert!(count <= expectations.len());
+    for (expectation, choice) in expectations.iter_mut().zip(choices.choices()) {
+        *expectation = CompletionWireSemanticExpectation::DirectFinalRow { choice: *choice };
+    }
+    (expectations, count)
+}
+
+/// Compact K7 observation paired with independent final-row target choices.
+#[must_use = "direct diagnostic observation must be checked, destroyed, or retained"]
+#[derive(Debug)]
+pub struct M1ObservedDirectDiagnosticOutputV1 {
+    completion: M1ObservedCompletionOutputV1,
+    choices: M1ObservedDirectDiagnosticChoicesV1,
+}
+
+impl M1ObservedDirectDiagnosticOutputV1 {
+    /// Structurally observed compact K7 image from the same queue generation.
+    pub const fn compact(&self) -> &M1ObservedCompletionImageV1 {
+        self.completion.image()
+    }
+
+    /// Independently copied final active-row target choices.
+    pub const fn choices(&self) -> &M1ObservedDirectDiagnosticChoicesV1 {
+        &self.choices
+    }
+
+    /// Checks direct semantics against captured K6 choices and joins scheduler,
+    /// epoch, plan, completion, and KV custody.
+    ///
+    /// # Errors
+    ///
+    /// Returns unchanged copied evidence when the compact semantic join rejects.
+    pub fn check_completion(
+        self,
+    ) -> Result<
+        M1DirectDiagnosticCompletedReadbackV1,
+        Box<M1DirectDiagnosticCompletedReadbackJoinFailureV1>,
+    > {
+        let (expectations, count) = direct_semantic_expectations(&self.choices);
+        let Self {
+            completion,
+            choices,
+        } = self;
+        match completion.check_completion_with_evidence_authority(
+            M1CompletionEvidenceJoinAuthorityV1::DirectDiagnostic,
+            &expectations[..count],
+        ) {
+            Ok(completed) => Ok(M1DirectDiagnosticCompletedReadbackV1 { completed, choices }),
+            Err(failure) => Err(Box::new(M1DirectDiagnosticCompletedReadbackJoinFailureV1 {
+                failure,
+                choices,
+            })),
+        }
+    }
+
+    /// Tears down without granting semantic completion authority.
+    ///
+    /// # Errors
+    ///
+    /// Returns the existing terminal queue-release quarantine.
+    pub fn destroy_and_release(
+        self,
+    ) -> Result<ServiceQueueReleaseObservationV1, M1PhysicalQueueReleaseFailureV1> {
+        self.completion.destroy_and_release()
+    }
+}
+
+/// Positive direct join retaining exact independent choice evidence.
+#[must_use = "completed readback and direct choice evidence remain retained"]
+#[derive(Debug)]
+pub struct M1DirectDiagnosticCompletedReadbackV1 {
+    completed: M1PhysicalCompletedReadbackV1,
+    choices: M1ObservedDirectDiagnosticChoicesV1,
+}
+
+impl M1DirectDiagnosticCompletedReadbackV1 {
+    pub const fn completed(&self) -> &M1PhysicalCompletedReadbackV1 {
+        &self.completed
+    }
+
+    pub const fn choices(&self) -> &M1ObservedDirectDiagnosticChoicesV1 {
+        &self.choices
+    }
+
+    /// Separates exact completion and inert direct evidence once.
+    #[must_use = "completion and direct choice evidence remain retained"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1PhysicalCompletedReadbackV1,
+        M1ObservedDirectDiagnosticChoicesV1,
+    ) {
+        (self.completed, self.choices)
+    }
+}
+
+/// Semantic rejection retaining the same copied direct-choice evidence.
+#[must_use = "semantic rejection retains direct diagnostic custody"]
+#[derive(Debug)]
+pub struct M1DirectDiagnosticCompletedReadbackJoinFailureV1 {
+    failure: M1CompletedReadbackJoinFailureV1,
+    choices: M1ObservedDirectDiagnosticChoicesV1,
+}
+
+impl M1DirectDiagnosticCompletedReadbackJoinFailureV1 {
+    /// Existing roster, epoch, plan, wire, or direct-token rejection.
+    #[must_use]
+    pub const fn error(&self) -> &M1CompletedReadbackJoinErrorV1 {
+        self.failure.error()
+    }
+
+    pub const fn choices(&self) -> &M1ObservedDirectDiagnosticChoicesV1 {
+        &self.choices
+    }
+
+    /// Rechecks unchanged copied bytes without another physical read.
+    ///
+    /// # Errors
+    ///
+    /// Returns unchanged failure custody when the join still rejects.
+    pub fn retry(self) -> Result<M1DirectDiagnosticCompletedReadbackV1, Box<Self>> {
+        let (expectations, count) = direct_semantic_expectations(&self.choices);
+        let Self { failure, choices } = self;
+        match failure.retry_with_evidence_authority(
+            M1CompletionEvidenceJoinAuthorityV1::DirectDiagnostic,
+            &expectations[..count],
+        ) {
+            Ok(completed) => Ok(M1DirectDiagnosticCompletedReadbackV1 { completed, choices }),
+            Err(failure) => Err(Box::new(Self { failure, choices })),
+        }
+    }
+
+    /// Separates the generic semantic rejection and inert choices once.
+    #[must_use = "semantic rejection and direct choices remain retained"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1CompletedReadbackJoinFailureV1,
+        M1ObservedDirectDiagnosticChoicesV1,
+    ) {
+        (self.failure, self.choices)
+    }
+
+    /// Faults the Engine and tears down the rejected queue while retaining
+    /// compact and direct-choice evidence.
+    ///
+    /// # Errors
+    ///
+    /// Returns lower release quarantine joined to unchanged evidence.
+    pub fn destroy_queue_and_retain_evidence<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1DirectDiagnosticSemanticTeardownSuccessV1,
+        Box<M1DirectDiagnosticSemanticTeardownFailureV1>,
+    > {
+        let Self { failure, choices } = self;
+        match failure.destroy_queue_and_retain_evidence(engine) {
+            Ok(teardown) => Ok(M1DirectDiagnosticSemanticTeardownSuccessV1 { choices, teardown }),
+            Err(teardown) => Err(Box::new(M1DirectDiagnosticSemanticTeardownFailureV1 {
+                choices,
+                teardown,
+            })),
+        }
+    }
+}
+
+/// Clean teardown retaining direct semantic rejection and choices.
+#[must_use = "direct semantic diagnostic and choices remain retained"]
+#[derive(Debug)]
+pub struct M1DirectDiagnosticSemanticTeardownSuccessV1 {
+    choices: M1ObservedDirectDiagnosticChoicesV1,
+    teardown: M1CompletionEvidenceTeardownSuccessV1,
+}
+
+impl M1DirectDiagnosticSemanticTeardownSuccessV1 {
+    pub const fn choices(&self) -> &M1ObservedDirectDiagnosticChoicesV1 {
+        &self.choices
+    }
+
+    pub const fn teardown(&self) -> &M1CompletionEvidenceTeardownSuccessV1 {
+        &self.teardown
+    }
+}
+
+/// Terminal release quarantine retaining direct semantic rejection and choices.
+#[must_use = "direct semantic diagnostic, choices, and release quarantine remain retained"]
+#[derive(Debug)]
+pub struct M1DirectDiagnosticSemanticTeardownFailureV1 {
+    choices: M1ObservedDirectDiagnosticChoicesV1,
+    teardown: Box<M1CompletionEvidenceTeardownFailureV1>,
+}
+
+impl M1DirectDiagnosticSemanticTeardownFailureV1 {
+    pub const fn choices(&self) -> &M1ObservedDirectDiagnosticChoicesV1 {
+        &self.choices
+    }
+
+    pub const fn teardown(&self) -> &M1CompletionEvidenceTeardownFailureV1 {
+        &self.teardown
+    }
+}
+
+/// One compact K7 observation paired with `K+1` completed choice-range copies.
 #[must_use = "diagnostic observation must be checked, destroyed, or retained"]
 #[derive(Debug)]
 pub struct M1ObservedSpeculativeDiagnosticOutputV1 {
@@ -2526,7 +3705,7 @@ impl M1ObservedSpeculativeDiagnosticOutputV1 {
         self.completion.image()
     }
 
-    /// Exact four draft and five target choices.
+    /// Exact physical draft and target choice matrices.
     pub const fn choices(&self) -> &M1ObservedSpeculativeDiagnosticChoicesV1 {
         &self.choices
     }
@@ -2544,18 +3723,35 @@ impl M1ObservedSpeculativeDiagnosticOutputV1 {
         M1SpeculativeDiagnosticCompletedReadbackV1,
         Box<M1SpeculativeDiagnosticCompletedReadbackJoinFailureV1>,
     > {
-        let draft_tokens = *self.choices.draft_choices();
-        let target_choices = *self.choices.target_choices();
         let Self {
             completion,
             choices,
         } = self;
-        let semantic = CompletionWireSemanticExpectation::Speculative {
-            draft_tokens: &draft_tokens,
-            target_choices: &target_choices,
+        let empty = CompletionWireSemanticExpectation::Speculative {
+            draft_tokens: &[],
+            target_choices: &[],
         };
-        match completion.check_completion(&[semantic]) {
-            Ok(completed) => Ok(M1SpeculativeDiagnosticCompletedReadbackV1 { completed, choices }),
+        let mut semantics = [empty; M1_MAX_ACTIVE_SEQUENCES as usize];
+        let live = choices.live_sequences() as usize;
+        for (lane, semantic) in semantics.iter_mut().take(live).enumerate() {
+            *semantic = CompletionWireSemanticExpectation::Speculative {
+                draft_tokens: choices.draft_choices_for_lane(lane).unwrap_or(&[]),
+                target_choices: choices.target_choices_for_lane(lane).unwrap_or(&[]),
+            };
+        }
+        match completion.check_completion_with_evidence_authority(
+            M1CompletionEvidenceJoinAuthorityV1::SpeculativeDiagnostic,
+            &semantics[..live],
+        ) {
+            Ok(completed) => Ok(M1SpeculativeDiagnosticCompletedReadbackV1 {
+                completed,
+                corresponding_target_only_token: choices
+                    .target_choices()
+                    .first()
+                    .copied()
+                    .unwrap_or(u32::MAX),
+                choices,
+            }),
             Err(failure) => Err(Box::new(
                 M1SpeculativeDiagnosticCompletedReadbackJoinFailureV1 { failure, choices },
             )),
@@ -2579,6 +3775,7 @@ impl M1ObservedSpeculativeDiagnosticOutputV1 {
 #[derive(Debug)]
 pub struct M1SpeculativeDiagnosticCompletedReadbackV1 {
     completed: M1PhysicalCompletedReadbackV1,
+    corresponding_target_only_token: ferric_spec::TokenId,
     choices: M1ObservedSpeculativeDiagnosticChoicesV1,
 }
 
@@ -2593,25 +3790,44 @@ impl M1SpeculativeDiagnosticCompletedReadbackV1 {
         &self.choices
     }
 
-    /// Target's next-token choice for the same pre-round context.
+    /// Target's next-token choice for capacity lane zero.
+    ///
+    /// This source-compatible accessor is sufficient for the production S1/K4
+    /// path. Multi-lane evidence consumers must use
+    /// [`Self::corresponding_target_only_token_for_lane`].
     #[must_use]
     pub const fn corresponding_target_only_token(&self) -> ferric_spec::TokenId {
-        self.choices.target_choices()[0]
+        self.corresponding_target_only_token
     }
 
-    /// Whether the speculative round's first published token equals the
-    /// corresponding target choice. Successful greedy validation makes this
-    /// true; the explicit predicate is retained for capture reporting.
+    /// Target's next-token choice for one live lane's pre-round context.
+    #[must_use]
+    pub fn corresponding_target_only_token_for_lane(
+        &self,
+        lane: usize,
+    ) -> Option<ferric_spec::TokenId> {
+        if lane >= self.choices.live_sequences() as usize {
+            return None;
+        }
+        self.choices.target_choices_for_lane(lane)?.first().copied()
+    }
+
+    /// Whether lane zero's first published token equals its target choice.
+    ///
+    /// This source-compatible predicate is sufficient for S1/K4. Multi-lane
+    /// evidence consumers must use [`Self::target_token_matches_for_lane`].
     #[must_use]
     pub fn target_token_matches(&self) -> bool {
-        self.completed
-            .checked()
-            .records()
-            .first()
-            .is_some_and(|record| {
-                record.record().emitted_token_count > 0
-                    && record.record().emitted_tokens[0] == self.corresponding_target_only_token()
-            })
+        self.target_token_matches_for_lane(0).unwrap_or(false)
+    }
+
+    /// Whether one live lane's first published token equals its target choice.
+    #[must_use]
+    pub fn target_token_matches_for_lane(&self, lane: usize) -> Option<bool> {
+        let expected = self.corresponding_target_only_token_for_lane(lane)?;
+        self.completed.checked().records().get(lane).map(|record| {
+            record.record().emitted_token_count > 0 && record.record().emitted_tokens[0] == expected
+        })
     }
 
     /// Faults the logical Engine and tears down this positively joined queue
@@ -2628,7 +3844,9 @@ impl M1SpeculativeDiagnosticCompletedReadbackV1 {
         Box<M1SpeculativeDiagnosticCompletedTeardownFailureV1>,
     > {
         engine.quarantine_m1_queue_rearm_failure();
-        let Self { completed, choices } = self;
+        let Self {
+            completed, choices, ..
+        } = self;
         let (queue, checked, completion, kv) = completed.into_parts();
         match queue.destroy_and_release() {
             Ok(queue_release) => Ok(M1SpeculativeDiagnosticCompletedTeardownSuccessV1 {
@@ -2662,7 +3880,7 @@ impl M1SpeculativeDiagnosticCompletedReadbackV1 {
     }
 }
 
-/// Clean teardown retaining a positively joined S1/K4 diagnostic completion.
+/// Clean teardown retaining a positively joined finite-speculative completion.
 #[must_use = "checked completion, KV, and choice evidence remain retained"]
 #[derive(Debug)]
 pub struct M1SpeculativeDiagnosticCompletedTeardownSuccessV1 {
@@ -2697,7 +3915,7 @@ impl M1SpeculativeDiagnosticCompletedTeardownSuccessV1 {
     }
 }
 
-/// Terminal release quarantine retaining a joined S1/K4 completion.
+/// Terminal release quarantine retaining a joined finite-speculative completion.
 #[must_use = "joined completion evidence and release quarantine remain retained"]
 #[derive(Debug)]
 pub struct M1SpeculativeDiagnosticCompletedTeardownFailureV1 {
@@ -2757,15 +3975,32 @@ impl M1SpeculativeDiagnosticCompletedReadbackJoinFailureV1 {
     ///
     /// Returns the unchanged failure if the same semantic join still rejects.
     pub fn retry(self) -> Result<M1SpeculativeDiagnosticCompletedReadbackV1, Box<Self>> {
-        let draft_tokens = *self.choices.draft_choices();
-        let target_choices = *self.choices.target_choices();
         let Self { failure, choices } = self;
-        let semantic = CompletionWireSemanticExpectation::Speculative {
-            draft_tokens: &draft_tokens,
-            target_choices: &target_choices,
+        let empty = CompletionWireSemanticExpectation::Speculative {
+            draft_tokens: &[],
+            target_choices: &[],
         };
-        match failure.retry(&[semantic]) {
-            Ok(completed) => Ok(M1SpeculativeDiagnosticCompletedReadbackV1 { completed, choices }),
+        let mut semantics = [empty; M1_MAX_ACTIVE_SEQUENCES as usize];
+        let live = choices.live_sequences() as usize;
+        for (lane, semantic) in semantics.iter_mut().take(live).enumerate() {
+            *semantic = CompletionWireSemanticExpectation::Speculative {
+                draft_tokens: choices.draft_choices_for_lane(lane).unwrap_or(&[]),
+                target_choices: choices.target_choices_for_lane(lane).unwrap_or(&[]),
+            };
+        }
+        match failure.retry_with_evidence_authority(
+            M1CompletionEvidenceJoinAuthorityV1::SpeculativeDiagnostic,
+            &semantics[..live],
+        ) {
+            Ok(completed) => Ok(M1SpeculativeDiagnosticCompletedReadbackV1 {
+                completed,
+                corresponding_target_only_token: choices
+                    .target_choices()
+                    .first()
+                    .copied()
+                    .unwrap_or(u32::MAX),
+                choices,
+            }),
             Err(failure) => Err(Box::new(Self { failure, choices })),
         }
     }
@@ -2796,7 +4031,7 @@ impl M1SpeculativeDiagnosticCompletedReadbackJoinFailureV1 {
     }
 }
 
-/// Clean teardown retaining semantic rejection and S1/K4 choices.
+/// Clean teardown retaining semantic rejection and finite-speculative choices.
 #[must_use = "semantic diagnostic and choice evidence remain retained"]
 #[derive(Debug)]
 pub struct M1SpeculativeDiagnosticSemanticTeardownSuccessV1 {
@@ -2814,7 +4049,7 @@ impl M1SpeculativeDiagnosticSemanticTeardownSuccessV1 {
     }
 }
 
-/// Terminal release quarantine retaining semantic rejection and S1/K4 choices.
+/// Terminal release quarantine retaining semantic rejection and finite-speculative choices.
 #[must_use = "semantic diagnostic, choices, and release quarantine remain retained"]
 #[derive(Debug)]
 pub struct M1SpeculativeDiagnosticSemanticTeardownFailureV1 {
@@ -3632,7 +4867,7 @@ enum M1PhysicalQueueCreateFailureStateV1<'a> {
 /// Opaque queue-creation rejection or terminal failure with exact Ferric custody.
 ///
 /// Pure rejection can recover only the exact recombined prepublication input
-/// through [`Self::into_rejected_input`]. Terminal model, partition, ledger,
+/// through [`Self::into_rejected_input_or_self`]. Terminal model, partition, ledger,
 /// scheduler, and batch custody cannot be pattern-matched apart.
 ///
 /// ```compile_fail
@@ -4061,12 +5296,15 @@ enum CreateCaseResultV1<'a, const N: usize> {
     },
 }
 
+struct CreateCaseInputV1<'a, const N: usize>(Box<M1PhysicalFixedBatchCaseV1<'a, N>>);
+
+#[inline(never)]
 fn create_case<const N: usize>(
     ring_bytes: u32,
     step: M1PrepublicationStepCustodyV1,
-    case: M1PhysicalFixedBatchCaseV1<'_, N>,
+    case: CreateCaseInputV1<'_, N>,
 ) -> CreateCaseResultV1<'_, N> {
-    let (batch, custody) = case.into_parts();
+    let (batch, custody) = (*case.0).into_parts();
     let (allocations, queue_custody) = custody.into_queue_creation_parts();
     match ServiceQueueSessionV1::create(allocations, ring_bytes, batch) {
         Ok(lower) => CreateCaseResultV1::Ready(Box::new(M1PhysicalQueuePhaseCaseV1::new(
@@ -4567,6 +5805,60 @@ fn release_case<const N: usize>(
     }
 }
 
+#[cfg(feature = "qualification-fault-injection")]
+fn inject_qualification_fault_case<const N: usize>(
+    case: Box<M1PhysicalQueuePhaseCaseV1<ServiceRecycledQueueSessionV1<N>>>,
+) -> Result<
+    Box<M1PhysicalQueuePhaseCaseV1<ServiceQualificationFaultedQueueSessionV1<N>>>,
+    Box<M1PhysicalQueuePhaseCaseV1<ServiceRecycledQueueSessionV1<N>>>,
+> {
+    let (lower, custody, step) = (*case).into_parts();
+    match lower.inject_qualification_fault(
+        ServiceQualificationQueueFaultPointV1::PostRecycleBeforeCompletedReadAttempt,
+    ) {
+        Ok(lower) => Ok(Box::new(M1PhysicalQueuePhaseCaseV1::new(
+            lower, custody, step,
+        ))),
+        Err(lower) => Err(Box::new(M1PhysicalQueuePhaseCaseV1::new(
+            *lower, custody, step,
+        ))),
+    }
+}
+
+#[cfg(feature = "qualification-fault-injection")]
+fn release_qualification_fault_case<const N: usize>(
+    case: Box<M1PhysicalQueuePhaseCaseV1<ServiceQualificationFaultedQueueSessionV1<N>>>,
+    shape: M1PhysicalFixedBatchShapeV1,
+) -> Result<
+    M1QualificationQueueTransitionFaultTeardownSuccessV1,
+    Box<M1QualificationQueueTransitionFaultTeardownFailureV1>,
+> {
+    let (lower, custody, step) = (*case).into_parts();
+    let queue_epoch = step.scheduled_dispatch().epoch();
+    let dispatch_generation = lower.dispatch_generation();
+    let fault_point = lower.point();
+    match lower.destroy_and_release() {
+        Ok(release) => Ok(M1QualificationQueueTransitionFaultTeardownSuccessV1 {
+            shape,
+            queue_epoch,
+            dispatch_generation,
+            fault_point,
+            release,
+        }),
+        Err(lower) => Err(Box::new(
+            M1QualificationQueueTransitionFaultTeardownFailureV1 {
+                shape,
+                queue_epoch,
+                dispatch_generation,
+                fault_point,
+                lower,
+                step: Box::new(step),
+                custody: Box::new(custody),
+            },
+        )),
+    }
+}
+
 impl M1PhysicalQueueSessionV1 {
     /// Privately transfers the prepublication owner's allocation session into a queue.
     ///
@@ -4598,20 +5890,20 @@ impl M1PhysicalQueueSessionV1 {
         let M1PrepublicationBatchV1 { batch, step } = prepublication;
         match batch {
             M1PhysicalFixedBatchV1::TargetOnly(case) => {
-                finish_target_only_create(create_case(ring_bytes, step, *case))
+                finish_target_only_create(create_case(ring_bytes, step, CreateCaseInputV1(case)))
             }
             M1PhysicalFixedBatchV1::PairedPrefill(case) => {
-                finish_paired_prefill_create(create_case(ring_bytes, step, *case))
+                finish_paired_prefill_create(create_case(ring_bytes, step, CreateCaseInputV1(case)))
             }
             M1PhysicalFixedBatchV1::SpeculativeK4(case) => {
-                finish_speculative_k4_create(create_case(ring_bytes, step, *case))
+                finish_speculative_k4_create(create_case(ring_bytes, step, CreateCaseInputV1(case)))
             }
             M1PhysicalFixedBatchV1::SpeculativeK8(case) => {
-                finish_speculative_k8_create(create_case(ring_bytes, step, *case))
+                finish_speculative_k8_create(create_case(ring_bytes, step, CreateCaseInputV1(case)))
             }
-            M1PhysicalFixedBatchV1::SpeculativeK16(case) => {
-                finish_speculative_k16_create(create_case(ring_bytes, step, *case))
-            }
+            M1PhysicalFixedBatchV1::SpeculativeK16(case) => finish_speculative_k16_create(
+                create_case(ring_bytes, step, CreateCaseInputV1(case)),
+            ),
         }
     }
 
@@ -4988,6 +6280,7 @@ type CheckObservedCaseResultV1<const N: usize> = Result<
 
 fn check_observed_case<const N: usize>(
     case: Box<M1ObservedCompletionCaseV1<N>>,
+    authority: M1CompletionEvidenceJoinAuthorityV1,
     semantics: &[CompletionWireSemanticExpectation<'_>],
 ) -> CheckObservedCaseResultV1<N> {
     let scheduled = case.case.step.scheduled_dispatch();
@@ -5001,10 +6294,21 @@ fn check_observed_case<const N: usize>(
         ));
     }
     if let Err(error) = validate_generic_observed_semantics(
+        authority,
         case.case
             .custody
             .completion_output()
             .qualification_logits()
+            .is_some(),
+        case.case
+            .custody
+            .completion_output()
+            .direct_diagnostic_choices()
+            .is_some(),
+        case.case
+            .custody
+            .completion_output()
+            .speculative_diagnostic_choices()
             .is_some(),
         semantics,
     ) {
@@ -5053,9 +6357,28 @@ fn check_observed_case<const N: usize>(
 }
 
 fn validate_generic_observed_semantics(
+    authority: M1CompletionEvidenceJoinAuthorityV1,
     qualification_capture_enabled: bool,
+    direct_diagnostic_capture_enabled: bool,
+    speculative_diagnostic_capture_enabled: bool,
     semantics: &[CompletionWireSemanticExpectation<'_>],
 ) -> Result<(), M1CompletedOutputCheckErrorV1> {
+    if direct_diagnostic_capture_enabled
+        != matches!(
+            authority,
+            M1CompletionEvidenceJoinAuthorityV1::DirectDiagnostic
+        )
+    {
+        return Err(M1CompletedOutputCheckErrorV1::DirectDiagnosticCaptureRequiresEvidence);
+    }
+    if speculative_diagnostic_capture_enabled
+        != matches!(
+            authority,
+            M1CompletionEvidenceJoinAuthorityV1::SpeculativeDiagnostic
+        )
+    {
+        return Err(M1CompletedOutputCheckErrorV1::SpeculativeDiagnosticCaptureRequiresEvidence);
+    }
     if qualification_capture_enabled {
         if let Some(lane) = semantics.iter().position(|semantic| {
             !matches!(
@@ -5387,6 +6710,106 @@ fn finish_qualification_observation(
 }
 
 impl M1PhysicalRecycledQueueSessionV1 {
+    /// Deliberately terminalizes a real recycled queue before any completed-read attempt.
+    ///
+    /// Success consumes recycled custody into a release-only lower typestate and
+    /// permanently faults the Ferric Engine, which denies subsequent admission.
+    /// This service transition does not synthesize a KFD error or claim a native
+    /// device fault. An already faulted Engine or any prior completed-read attempt
+    /// rejects without mutating the Engine and returns the exact recycled queue.
+    ///
+    /// ```compile_fail
+    /// use ferric_engine::{Engine, M1PhysicalRecycledQueueSessionV1};
+    /// fn inject_twice<const C: usize>(
+    ///     queue: M1PhysicalRecycledQueueSessionV1,
+    ///     engine: &mut Engine<C>,
+    /// ) {
+    ///     let _faulted = queue.inject_qualification_queue_transition_fault(engine);
+    ///     let _again = queue.destroy_and_release();
+    /// }
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns pure rejection with unchanged recycled custody.
+    #[cfg(feature = "qualification-fault-injection")]
+    pub fn inject_qualification_queue_transition_fault<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1QualificationQueueTransitionFaultSessionV1,
+        M1QualificationQueueTransitionFaultInjectionRejectionV1,
+    > {
+        if engine.is_faulted() {
+            return Err(
+                M1QualificationQueueTransitionFaultInjectionRejectionV1 {
+                    reason:
+                        M1QualificationQueueTransitionFaultInjectionRejectionReasonV1::EngineAlreadyFaulted,
+                    queue: Box::new(self),
+                },
+            );
+        }
+        let faulted = match self {
+            Self::TargetOnly(case) => match inject_qualification_fault_case(case) {
+                Ok(case) => M1QualificationQueueTransitionFaultSessionV1::TargetOnly(case),
+                Err(case) => {
+                    return Err(
+                        M1QualificationQueueTransitionFaultInjectionRejectionV1 {
+                            reason: M1QualificationQueueTransitionFaultInjectionRejectionReasonV1::CompletedReadAlreadyAttempted,
+                            queue: Box::new(Self::TargetOnly(case)),
+                        },
+                    )
+                }
+            },
+            Self::PairedPrefill(case) => match inject_qualification_fault_case(case) {
+                Ok(case) => M1QualificationQueueTransitionFaultSessionV1::PairedPrefill(case),
+                Err(case) => {
+                    return Err(
+                        M1QualificationQueueTransitionFaultInjectionRejectionV1 {
+                            reason: M1QualificationQueueTransitionFaultInjectionRejectionReasonV1::CompletedReadAlreadyAttempted,
+                            queue: Box::new(Self::PairedPrefill(case)),
+                        },
+                    )
+                }
+            },
+            Self::SpeculativeK4(case) => match inject_qualification_fault_case(case) {
+                Ok(case) => M1QualificationQueueTransitionFaultSessionV1::SpeculativeK4(case),
+                Err(case) => {
+                    return Err(
+                        M1QualificationQueueTransitionFaultInjectionRejectionV1 {
+                            reason: M1QualificationQueueTransitionFaultInjectionRejectionReasonV1::CompletedReadAlreadyAttempted,
+                            queue: Box::new(Self::SpeculativeK4(case)),
+                        },
+                    )
+                }
+            },
+            Self::SpeculativeK8(case) => match inject_qualification_fault_case(case) {
+                Ok(case) => M1QualificationQueueTransitionFaultSessionV1::SpeculativeK8(case),
+                Err(case) => {
+                    return Err(
+                        M1QualificationQueueTransitionFaultInjectionRejectionV1 {
+                            reason: M1QualificationQueueTransitionFaultInjectionRejectionReasonV1::CompletedReadAlreadyAttempted,
+                            queue: Box::new(Self::SpeculativeK8(case)),
+                        },
+                    )
+                }
+            },
+            Self::SpeculativeK16(case) => match inject_qualification_fault_case(case) {
+                Ok(case) => M1QualificationQueueTransitionFaultSessionV1::SpeculativeK16(case),
+                Err(case) => {
+                    return Err(
+                        M1QualificationQueueTransitionFaultInjectionRejectionV1 {
+                            reason: M1QualificationQueueTransitionFaultInjectionRejectionReasonV1::CompletedReadAlreadyAttempted,
+                            queue: Box::new(Self::SpeculativeK16(case)),
+                        },
+                    )
+                }
+            },
+        };
+        engine.quarantine_m1_queue_rearm_failure();
+        Ok(faulted)
+    }
+
     /// Copies target-only compact K7 output and each final live BF16 logits row.
     ///
     /// Qualification capture must have been explicitly enabled before physical
@@ -5574,35 +6997,51 @@ impl M1ObservedCompletionOutputV1 {
         self,
         expectations: &[CompletionWireSemanticExpectation<'_>],
     ) -> Result<M1PhysicalCompletedReadbackV1, M1CompletedReadbackJoinFailureV1> {
+        self.check_completion_with_evidence_authority(
+            M1CompletionEvidenceJoinAuthorityV1::Generic,
+            expectations,
+        )
+    }
+
+    fn check_completion_with_evidence_authority(
+        self,
+        authority: M1CompletionEvidenceJoinAuthorityV1,
+        expectations: &[CompletionWireSemanticExpectation<'_>],
+    ) -> Result<M1PhysicalCompletedReadbackV1, M1CompletedReadbackJoinFailureV1> {
         match self {
             Self::TargetOnly(case) => join_observed_output_case(
                 case,
                 M1ObservedCompletionOutputV1::TargetOnly,
                 M1PhysicalReadbackQueueSessionV1::TargetOnly,
+                authority,
                 expectations,
             ),
             Self::PairedPrefill(case) => join_observed_output_case(
                 case,
                 M1ObservedCompletionOutputV1::PairedPrefill,
                 M1PhysicalReadbackQueueSessionV1::PairedPrefill,
+                authority,
                 expectations,
             ),
             Self::SpeculativeK4(case) => join_observed_output_case(
                 case,
                 M1ObservedCompletionOutputV1::SpeculativeK4,
                 M1PhysicalReadbackQueueSessionV1::SpeculativeK4,
+                authority,
                 expectations,
             ),
             Self::SpeculativeK8(case) => join_observed_output_case(
                 case,
                 M1ObservedCompletionOutputV1::SpeculativeK8,
                 M1PhysicalReadbackQueueSessionV1::SpeculativeK8,
+                authority,
                 expectations,
             ),
             Self::SpeculativeK16(case) => join_observed_output_case(
                 case,
                 M1ObservedCompletionOutputV1::SpeculativeK16,
                 M1PhysicalReadbackQueueSessionV1::SpeculativeK16,
+                authority,
                 expectations,
             ),
         }
@@ -5771,14 +7210,14 @@ fn operation_failure_with_completion_progress(
 mod tests {
     use super::{
         checked_completion_progress_total_scan_bound, m1_completion_progress_total_scan_bound_v1,
-        read_m1_diagnostic_choice_pair_v1, validate_completion_progress_observation,
+        read_m1_diagnostic_choice_ranges_v1, validate_completion_progress_observation,
         validate_generic_observed_semantics, wait_with_completion_progress_policy,
         CompletionProgressPollV1, CompletionProgressWaitFailureV1,
         CompletionWireSemanticExpectation, M1CompletedOutputCheckErrorV1,
-        M1CompletionProgressObservationV1, M1CompletionProgressWaitDiagnosticV1,
-        M1CompletionProgressWaitTerminalReasonV1, M1DiagnosticChoiceCopyCustodyV1,
-        M1DiagnosticChoiceReadBackendV1, M1PhysicalFixedBatchShapeV1,
-        M1PhysicalQueueCreateFailureClassV1, M1PhysicalQueuePhaseV1,
+        M1CompletionEvidenceJoinAuthorityV1, M1CompletionProgressObservationV1,
+        M1CompletionProgressWaitDiagnosticV1, M1CompletionProgressWaitTerminalReasonV1,
+        M1DiagnosticChoiceCopyCustodyV1, M1DiagnosticChoiceReadBackendV1,
+        M1PhysicalFixedBatchShapeV1, M1PhysicalQueueCreateFailureClassV1, M1PhysicalQueuePhaseV1,
         M1_COMPLETION_PROGRESS_MAX_CONSECUTIVE_STALLED_SCANS_V1,
     };
     use crate::Engine;
@@ -5892,11 +7331,12 @@ mod tests {
     }
 
     #[derive(Debug)]
-    struct InjectedSecondReadBackendV1 {
+    struct InjectedReadBackendV1 {
         calls: Vec<u64>,
+        fail_at: Option<usize>,
     }
 
-    impl M1DiagnosticChoiceReadBackendV1 for InjectedSecondReadBackendV1 {
+    impl M1DiagnosticChoiceReadBackendV1 for InjectedReadBackendV1 {
         type Range = u64;
         type Readback = Vec<u32>;
         type Error = InjectedReadErrorV1;
@@ -5908,14 +7348,15 @@ mod tests {
             range_name: &'static str,
             range: Self::Range,
         ) -> Result<Self::Readback, Self::Error> {
+            let index = self.calls.len();
             self.calls.push(range);
-            if self.calls.len() == 1 {
-                Ok(vec![11_u32; 4])
-            } else {
+            if self.fail_at == Some(index) {
                 Err(InjectedReadErrorV1 {
                     range: range_name,
-                    message: "injected target read_completed fault",
+                    message: "injected read_completed fault",
                 })
+            } else {
+                Ok(vec![u32::try_from(range).unwrap()])
             }
         }
 
@@ -5956,6 +7397,12 @@ mod tests {
         assert!(!M1PhysicalQueuePhaseV1::ReadbackJoined.can_read_detach_or_release());
         assert_eq!(0, grants_for(M1PhysicalQueuePhaseV1::Detached));
         assert_eq!(0, grants_for(M1PhysicalQueuePhaseV1::Quarantined));
+        #[cfg(feature = "qualification-fault-injection")]
+        {
+            let faulted = M1PhysicalQueuePhaseV1::QualificationFaulted;
+            assert!(faulted.can_release_only());
+            assert_eq!(0, grants_for(faulted));
+        }
     }
 
     #[test]
@@ -6163,61 +7610,172 @@ mod tests {
     fn capture_attached_generic_readback_rejects_caller_direct_choice() {
         let direct = [CompletionWireSemanticExpectation::DirectFinalRow { choice: 41 }];
         assert!(matches!(
-            validate_generic_observed_semantics(true, &direct),
+            validate_generic_observed_semantics(
+                M1CompletionEvidenceJoinAuthorityV1::Generic,
+                true,
+                false,
+                false,
+                &direct,
+            ),
             Err(M1CompletedOutputCheckErrorV1::QualificationCaptureRequiresEvidence { lane: 0 })
         ));
-        assert!(validate_generic_observed_semantics(false, &direct).is_ok());
+        assert!(matches!(
+            validate_generic_observed_semantics(
+                M1CompletionEvidenceJoinAuthorityV1::Generic,
+                false,
+                true,
+                false,
+                &direct,
+            ),
+            Err(M1CompletedOutputCheckErrorV1::DirectDiagnosticCaptureRequiresEvidence)
+        ));
+        assert!(matches!(
+            validate_generic_observed_semantics(
+                M1CompletionEvidenceJoinAuthorityV1::Generic,
+                false,
+                false,
+                true,
+                &direct,
+            ),
+            Err(M1CompletedOutputCheckErrorV1::SpeculativeDiagnosticCaptureRequiresEvidence)
+        ));
+        assert!(validate_generic_observed_semantics(
+            M1CompletionEvidenceJoinAuthorityV1::Generic,
+            false,
+            false,
+            false,
+            &direct,
+        )
+        .is_ok());
+        assert!(validate_generic_observed_semantics(
+            M1CompletionEvidenceJoinAuthorityV1::DirectDiagnostic,
+            false,
+            true,
+            false,
+            &direct,
+        )
+        .is_ok());
+        assert!(matches!(
+            validate_generic_observed_semantics(
+                M1CompletionEvidenceJoinAuthorityV1::DirectDiagnostic,
+                false,
+                false,
+                false,
+                &direct,
+            ),
+            Err(M1CompletedOutputCheckErrorV1::DirectDiagnosticCaptureRequiresEvidence)
+        ));
+        assert!(validate_generic_observed_semantics(
+            M1CompletionEvidenceJoinAuthorityV1::SpeculativeDiagnostic,
+            false,
+            false,
+            true,
+            &direct,
+        )
+        .is_ok());
+        assert!(matches!(
+            validate_generic_observed_semantics(
+                M1CompletionEvidenceJoinAuthorityV1::SpeculativeDiagnostic,
+                false,
+                false,
+                false,
+                &direct,
+            ),
+            Err(M1CompletedOutputCheckErrorV1::SpeculativeDiagnosticCaptureRequiresEvidence)
+        ));
     }
 
     #[test]
     fn partial_choice_copy_failure_retains_every_completed_range_once() {
-        let empty = M1DiagnosticChoiceCopyCustodyV1::<u32>::new();
+        let empty = M1DiagnosticChoiceCopyCustodyV1::<u32>::new(5);
         assert_eq!(empty.copies.len(), 0);
         assert_eq!(&*empty.into_partial(), &[] as &[u32]);
 
-        let mut after_draft = M1DiagnosticChoiceCopyCustodyV1::new();
+        let mut after_draft = M1DiagnosticChoiceCopyCustodyV1::new(5);
         after_draft.retain(11_u32);
         assert_eq!(after_draft.copies.len(), 1);
         assert_eq!(&*after_draft.into_partial(), &[11]);
 
-        let mut complete = M1DiagnosticChoiceCopyCustodyV1::new();
-        complete.retain(11_u32);
-        complete.retain(12_u32);
-        assert_eq!(complete.copies.len(), 2);
-        assert_eq!(complete.into_pair().unwrap(), (11, 12));
+        let mut complete = M1DiagnosticChoiceCopyCustodyV1::new(5);
+        for value in 11_u32..=15 {
+            complete.retain(value);
+        }
+        assert_eq!(complete.copies.len(), 5);
+        let (draft, target) = complete.into_complete(4).unwrap();
+        assert_eq!(&*draft, &[11, 12, 13, 14]);
+        assert_eq!(target, 15);
     }
 
     #[test]
-    fn second_diagnostic_read_fault_retains_first_copy_without_retry() {
-        let failure = read_m1_diagnostic_choice_pair_v1(
-            InjectedSecondReadBackendV1 { calls: Vec::new() },
-            16_u64,
-            20_u64,
-        )
-        .unwrap_err();
-        assert_eq!(
-            failure.error(),
-            &InjectedReadErrorV1 {
-                range: "target",
-                message: "injected target read_completed fault",
+    fn bounded_diagnostic_ranges_are_ordered_and_each_fault_retains_its_exact_prefix() {
+        const NAMES: [&str; 17] = [
+            "draft-0", "draft-1", "draft-2", "draft-3", "draft-4", "draft-5", "draft-6", "draft-7",
+            "draft-8", "draft-9", "draft-10", "draft-11", "draft-12", "draft-13", "draft-14",
+            "draft-15", "target",
+        ];
+        for draft_tokens in [4_u8, 8, 16] {
+            let mut ranges = (0..u64::from(draft_tokens))
+                .map(|iteration| iteration * 32)
+                .collect::<Vec<_>>();
+            ranges.push(4_096);
+            let mut draft_ranges = [None; crate::M1_SPECULATIVE_DIAGNOSTIC_MAX_DRAFT_TOKENS_V1];
+            for (slot, range) in draft_ranges.iter_mut().zip(&ranges) {
+                *slot = Some(*range);
             }
-        );
-        assert_eq!(failure.copied_choice_ranges(), 1);
+            let (backend, draft, target) = read_m1_diagnostic_choice_ranges_v1(
+                InjectedReadBackendV1 {
+                    calls: Vec::new(),
+                    fail_at: None,
+                },
+                draft_ranges,
+                draft_tokens,
+                *ranges.last().unwrap(),
+            )
+            .unwrap();
+            assert_eq!(backend.calls, ranges);
+            assert_eq!(
+                draft,
+                ranges[..usize::from(draft_tokens)]
+                    .iter()
+                    .map(|range| vec![u32::try_from(*range).unwrap()])
+                    .collect::<Vec<_>>()
+                    .into_boxed_slice()
+            );
+            assert_eq!(target, vec![4_096]);
 
-        let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
-        let teardown = failure.destroy_or_quarantine(&mut engine).unwrap();
-        assert!(engine.is_faulted());
-        assert_eq!(
-            teardown.error,
-            InjectedReadErrorV1 {
-                range: "target",
-                message: "injected target read_completed fault",
+            for fail_at in 0..ranges.len() {
+                let failure = read_m1_diagnostic_choice_ranges_v1(
+                    InjectedReadBackendV1 {
+                        calls: Vec::new(),
+                        fail_at: Some(fail_at),
+                    },
+                    draft_ranges,
+                    draft_tokens,
+                    *ranges.last().unwrap(),
+                )
+                .unwrap_err();
+                let expected_name = if fail_at == usize::from(draft_tokens) {
+                    "target"
+                } else {
+                    NAMES[fail_at]
+                };
+                assert_eq!(
+                    failure.error(),
+                    &InjectedReadErrorV1 {
+                        range: expected_name,
+                        message: "injected read_completed fault",
+                    }
+                );
+                assert_eq!(failure.copied_choice_ranges(), fail_at);
+
+                let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+                let teardown = failure.destroy_or_quarantine(&mut engine).unwrap();
+                assert!(engine.is_faulted());
+                assert_eq!(teardown.partial.len(), fail_at);
+                assert_eq!(teardown.teardown.calls, ranges[..=fail_at]);
+                assert_eq!(teardown.teardown.destroy_calls, 1);
             }
-        );
-        assert_eq!(teardown.partial.len(), 1);
-        assert_eq!(&*teardown.partial[0], &[11_u32; 4]);
-        assert_eq!(teardown.teardown.calls, [16, 20]);
-        assert_eq!(teardown.teardown.destroy_calls, 1);
+        }
     }
 
     fn grants_for(phase: M1PhysicalQueuePhaseV1) -> usize {

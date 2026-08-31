@@ -4,7 +4,9 @@
 //! qualification authority. It retains every input descriptor through final
 //! no-replace publication and recomputes every reported metric from raw rows.
 
-use crate::d10_policy::{hold_validated_policy, HeldValidatedPolicy};
+use crate::d10_policy::{
+    hold_validated_policy, validate_toolchain, HeldValidatedPolicy, TOOLCHAIN_BINDING_SCHEMA,
+};
 use ferric_m1_benchmarks::{encode_canonical_document, sha256_identity, BenchResult};
 use num_bigint::BigUint;
 use rustix::fd::OwnedFd;
@@ -23,8 +25,8 @@ use std::path::{Component, Path, PathBuf};
 
 pub(super) const COMMAND: &str = "validate-policy-observations";
 
-const INPUT_FORMAT: &str = "FERRIC-M1-D10-POLICY-OBSERVATIONS-V2";
-const OUTPUT_FORMAT: &str = "FERRIC-M1-D10-POLICY-OBSERVATION-VALIDATION-V1";
+const INPUT_FORMAT: &str = "FERRIC-M1-D10-POLICY-OBSERVATIONS-V3";
+const OUTPUT_FORMAT: &str = "FERRIC-M1-D10-POLICY-OBSERVATION-VALIDATION-V2";
 const INPUT_AUTHORITY: &str = "ferric-collected-policy-bound-d10-observations-only";
 const OUTPUT_AUTHORITY: &str = "checked-policy-bound-d10-observation-structure-and-arithmetic-only";
 const STATUS: &str = "PARTIAL_NON_EVIDENCE";
@@ -37,9 +39,9 @@ const MAX_DOCUMENT_BYTES: usize = 8 * 1024 * 1024;
 const MAX_EXACT_AGGREGATE_BITS: u64 = 8 * 1024 * 1024;
 const MAX_EXACT_AGGREGATE_CASE_WEIGHT: u64 = 8_192;
 pub(super) const PROTOCOL_SHA256: &str =
-    "ed6cc9b2ec94a1db4c1c1c6a724cdf4f1edca648340ca29630b52dfab1cf8b47";
+    "ecfdcafd72947498c2487369e07481953555256c20e702b91f17ec74939dec66";
 pub(super) const PROTOCOL_BYTES: &[u8] = br#"{
-  "admission_format": "FERRIC-M1-D10-EXPERIMENT-POLICY-ADMISSION-V1",
+  "admission_format": "FERRIC-M1-D10-EXPERIMENT-POLICY-ADMISSION-V2",
   "authority": "source-controlled-d10-observation-collection-and-validation-protocol-only",
   "case_roster": [
     {
@@ -71,24 +73,24 @@ pub(super) const PROTOCOL_BYTES: &[u8] = br#"{
       "kernel_family": "k6-swiglu"
     }
   ],
-  "collection_manifest_format": "FERRIC-M1-D10-COLLECTION-MANIFEST-V1",
+  "collection_manifest_format": "FERRIC-M1-D10-COLLECTION-MANIFEST-V2",
   "collection_order": "case-roster-order-then-resource-inspection-then-ferric-reference-ferric-vendor-order-with-ten-warmups-followed-by-thirty-recorded-samples-per-applicable-implementation",
   "exact_aggregate_maximum_case_weight": 8192,
-  "format": "FERRIC-M1-D10-POLICY-OBSERVATION-COLLECTION-AND-VALIDATION-PROTOCOL-V2",
+  "format": "FERRIC-M1-D10-POLICY-OBSERVATION-COLLECTION-AND-VALIDATION-PROTOCOL-V3",
   "future_required_binding": "policy-sha256-bound-d10-observation-validator",
   "implementation_roster": [
     "ferric-reference",
     "ferric",
     "vendor"
   ],
-  "input_format": "FERRIC-M1-D10-POLICY-OBSERVATIONS-V2",
-  "nonclaim": "This protocol collects exact policy-bound raw D10 observations from held ELF commands under a cleared policy-bound environment, requires canonical stdin/stdout, empty stderr, zero exit, a bound timeout, parseable telemetry, and exact resource agreement, then validates structure and arithmetic. It does not validate externally supplied policy values, observation truth, timing hardware, telemetry meaning, kernel correctness, independent reproduction, qualification, or close m1.r31.",
+  "input_format": "FERRIC-M1-D10-POLICY-OBSERVATIONS-V3",
+  "nonclaim": "This protocol collects exact policy-bound raw D10 observations from held ELF commands under a cleared policy-bound environment, binds the externally supplied Ferric, pinned fe2o3, compiler-worker, runtime, and KFD closure identities, requires canonical stdin/stdout, empty stderr, zero exit, a bound timeout, parseable telemetry, and exact resource agreement, then validates structure and arithmetic. It does not validate externally supplied policy values or closure truth, observation truth, timing hardware, telemetry meaning, kernel correctness, independent reproduction, qualification, or close m1.r31.",
   "observation_bundle_roster": [
     "observations.json",
     "protocol.json"
   ],
   "order_projection": "canonical-array-of-implementation-exact-holdout-member-and-ordered-sample-id-rosters-in-ferric-reference-ferric-vendor-order-with-inapplicable-vendor-null-and-empty",
-  "output_format": "FERRIC-M1-D10-POLICY-OBSERVATION-VALIDATION-V1",
+  "output_format": "FERRIC-M1-D10-POLICY-OBSERVATION-VALIDATION-V2",
   "publication_roster": [
     "observations.json",
     "protocol.json",
@@ -97,10 +99,10 @@ pub(super) const PROTOCOL_BYTES: &[u8] = br#"{
   "rate_formula": "floor-of-policy-work-unit-count-per-iteration-times-iterations-times-1000000000-divided-by-positive-elapsed-nanoseconds",
   "rate_unit": "integer-policy-work-units-per-second",
   "recorded_samples": 30,
-  "resource_request_format": "FERRIC-M1-D10-RESOURCE-REQUEST-V1",
+  "resource_request_format": "FERRIC-M1-D10-RESOURCE-REQUEST-V2",
   "resource_result_format": "FERRIC-M1-D10-RESOURCE-RESULT-V1",
   "sample_id_format": "case-id-dot-implementation-dot-phase-dot-two-digit-zero-based-sequence",
-  "sample_request_format": "FERRIC-M1-D10-SAMPLE-REQUEST-V1",
+  "sample_request_format": "FERRIC-M1-D10-SAMPLE-REQUEST-V2",
   "sample_result_format": "FERRIC-M1-D10-SAMPLE-RESULT-V1",
   "status": "PARTIAL_NON_EVIDENCE",
   "subprocess_contract": "held-elf-cleared-environment-canonical-stdin-canonical-stdout-empty-stderr-zero-exit-timeout-v1",
@@ -108,10 +110,11 @@ pub(super) const PROTOCOL_BYTES: &[u8] = br#"{
   "target": "gfx942:xnack-",
   "telemetry_schema": "positive-start-and-end-clock-hz-bounded-at-10ghz-empty-error-events-and-start-end-millicelsius-bounded-at-200000-all-policy-protocol-bound",
   "timing_schema": "every-sample-binds-the-exact-clock-source-iteration-boundary-synchronization-and-timer-overhead-policy-identities",
+  "toolchain_binding_schema": "canonical-external-ferric-source-commit-and-closure-pinned-fe2o3-source-commit-and-closure-compiler-configuration-and-worker-closure-runtime-and-kfd-closure-v1",
   "warmups": 10
 }
 "#;
-const NONCLAIM: &str = "This artifact checks exact canonical policy-bound raw D10 timing rows, deterministic order, holdout membership, tuning budgets, collector, command, binary, environment, telemetry, resource, and subprocess bindings, and recomputes integer throughput medians, regression gates, applicable-vendor gates, and the applicable-vendor weighted geometric aggregate. It does not validate externally supplied policy values, prove that observations or hardware telemetry are truthful, independently reproduce results, establish kernel correctness, constitute qualification evidence, or close m1.r31.";
+const NONCLAIM: &str = "This artifact checks exact canonical policy-bound raw D10 timing rows, deterministic order, holdout membership, tuning budgets, collector, command, binary, environment, telemetry, resource, subprocess, and Ferric, pinned-fe2o3, compiler-worker, runtime, and KFD identity bindings, and recomputes integer throughput medians, regression gates, applicable-vendor gates, and the applicable-vendor weighted geometric aggregate. It does not validate externally supplied policy values or closure truth, prove that observations or hardware telemetry are truthful, independently reproduce results, establish kernel correctness, constitute qualification evidence, or close m1.r31.";
 
 pub(super) const CASE_ROSTER: &[(&str, &str)] = &[
     ("flash-attention-prefill", "k4-gqa-prefill"),
@@ -480,6 +483,16 @@ fn validate_observation_protocol(observations: &HeldBundle) -> BenchResult<()> {
     if sha256_identity(&protocol.bytes) != PROTOCOL_SHA256 {
         return Err("D10 observation protocol was substituted".to_owned());
     }
+    let protocol = protocol
+        .value
+        .as_object()
+        .ok_or_else(|| "D10 observation protocol must be an object".to_owned())?;
+    expect_string(
+        protocol,
+        "toolchain_binding_schema",
+        TOOLCHAIN_BINDING_SCHEMA,
+        "D10 observation protocol toolchain binding schema",
+    )?;
     Ok(())
 }
 
@@ -502,6 +515,8 @@ fn validate_observations(
             "protocol_sha256",
             "suite",
             "target",
+            "toolchain",
+            "toolchain_sha256",
         ],
         "D10 observations",
     )?;
@@ -509,17 +524,40 @@ fn validate_observations(
     expect_string(root, "format", INPUT_FORMAT, "D10 observations")?;
     expect_string(root, "suite", "d10", "D10 observations")?;
     expect_string(root, "target", TARGET, "D10 observations")?;
+    let toolchain = get(root, "toolchain", "D10 observations")?;
+    let toolchain_sha256 = validate_toolchain(toolchain)?;
+    expect_string(
+        root,
+        "toolchain_sha256",
+        &toolchain_sha256,
+        "D10 observation toolchain identity",
+    )?;
+    if toolchain != policy.toolchain()? || toolchain_sha256 != policy.toolchain_sha256()? {
+        return Err("D10 observation toolchain drifted from the held policy".to_owned());
+    }
     expect_string(
         root,
         "admission_sha256",
         &sha256_identity(&admission.document("admission.json")?.bytes),
         "D10 observation admission identity",
     )?;
-    let environment_sha256 = validate_collection(get(root, "collection", "D10 observations")?)?;
+    let environment_sha256 = validate_collection(
+        get(root, "collection", "D10 observations")?,
+        &toolchain_sha256,
+    )?;
     let admission_value = policy
         .admission()
         .as_object()
         .ok_or_else(|| "held D10 admission must be an object".to_owned())?;
+    expect_string(
+        admission_value,
+        "toolchain_sha256",
+        &toolchain_sha256,
+        "D10 admission toolchain identity",
+    )?;
+    if get(admission_value, "toolchain", "held D10 admission")? != toolchain {
+        return Err("D10 admission toolchain drifted from the observation".to_owned());
+    }
     expect_string(
         root,
         "policy_sha256",
@@ -623,6 +661,9 @@ fn validate_observations(
         "target": TARGET,
         "telemetry_resource_identity_bindings_enforced": true,
         "telemetry_resource_schema_bindings_enforced": true,
+        "toolchain": toolchain,
+        "toolchain_identity_bindings_enforced": true,
+        "toolchain_sha256": toolchain_sha256,
         "holdout_membership_enforced": true,
         "warmups_per_applicable_implementation": WARMUPS,
         "weighted_applicable_vendor_aggregate": aggregate_json,
@@ -649,7 +690,7 @@ fn validate_companion_identities(policy: &HeldValidatedPolicy, value: &Value) ->
     Ok(())
 }
 
-fn validate_collection(value: &Value) -> BenchResult<String> {
+fn validate_collection(value: &Value, toolchain_sha256: &str) -> BenchResult<String> {
     let collection = exact_object(
         value,
         &[
@@ -657,6 +698,7 @@ fn validate_collection(value: &Value) -> BenchResult<String> {
             "environment_sha256",
             "manifest_sha256",
             "subprocess_contract",
+            "toolchain_sha256",
         ],
         "D10 collection identity",
     )?;
@@ -672,6 +714,12 @@ fn validate_collection(value: &Value) -> BenchResult<String> {
         "subprocess_contract",
         "held-elf-cleared-environment-canonical-stdin-canonical-stdout-empty-stderr-zero-exit-timeout-v1",
         "D10 subprocess contract",
+    )?;
+    expect_string(
+        collection,
+        "toolchain_sha256",
+        toolchain_sha256,
+        "D10 collection toolchain identity",
     )?;
     Ok(get_string(collection, "environment_sha256", "D10 collection identity")?.to_owned())
 }
@@ -1146,6 +1194,7 @@ fn validate_execution_bindings(policy: &HeldValidatedPolicy, value: &Value) -> B
             "resource_inspection_sha256",
             "telemetry_sha256",
             "timing_sha256",
+            "toolchain_sha256",
             "tuning_sha256",
         ],
         "D10 implementation bindings",
@@ -1167,6 +1216,12 @@ fn validate_execution_bindings(policy: &HeldValidatedPolicy, value: &Value) -> B
             "D10 implementation binding",
         )?;
     }
+    expect_string(
+        bindings,
+        "toolchain_sha256",
+        &policy.toolchain_sha256()?,
+        "D10 implementation toolchain binding",
+    )?;
     Ok(())
 }
 
@@ -2376,6 +2431,25 @@ mod tests {
         bytes
     }
 
+    #[test]
+    fn policy_and_observation_protocols_share_one_toolchain_binding_schema() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let policy: Value =
+            serde_json::from_slice(&fs::read(root.join("d10_policy_protocol.json")).unwrap())
+                .unwrap();
+        let observations: Value = serde_json::from_slice(&protocol_bytes()).unwrap();
+
+        assert_eq!(policy["toolchain_binding_schema"], TOOLCHAIN_BINDING_SCHEMA);
+        assert_eq!(
+            observations["toolchain_binding_schema"],
+            TOOLCHAIN_BINDING_SCHEMA
+        );
+        assert_eq!(
+            policy["toolchain_binding_schema"],
+            observations["toolchain_binding_schema"]
+        );
+    }
+
     fn sample_id(case_id: &str, implementation: &str, phase: &str, sequence: usize) -> String {
         format!("{case_id}-{implementation}-{phase}-{sequence:02}")
     }
@@ -2601,6 +2675,7 @@ mod tests {
             "resource_inspection_sha256": companion_sha256["resource-inspection"],
             "telemetry_sha256": companion_sha256["telemetry"],
             "timing_sha256": companion_sha256["timing"],
+            "toolchain_sha256": validate_toolchain(&policy_value["toolchain"]).unwrap(),
             "tuning_sha256": companion_sha256["tuning"],
         });
         for case in &mut observation_cases {
@@ -2619,6 +2694,7 @@ mod tests {
                 "environment_sha256": environment_sha256,
                 "manifest_sha256": sha256_identity(b"collector-manifest"),
                 "subprocess_contract": "held-elf-cleared-environment-canonical-stdin-canonical-stdout-empty-stderr-zero-exit-timeout-v1",
+                "toolchain_sha256": validate_toolchain(&policy_value["toolchain"]).unwrap(),
             },
             "companion_sha256": companion_sha256,
             "format": INPUT_FORMAT,
@@ -2626,6 +2702,8 @@ mod tests {
             "protocol_sha256": PROTOCOL_SHA256,
             "suite": "d10",
             "target": TARGET,
+            "toolchain": policy_value["toolchain"],
+            "toolchain_sha256": validate_toolchain(&policy_value["toolchain"]).unwrap(),
         });
         write_canonical(&observations.join("observations.json"), &observation_value);
         fs::write(observations.join("protocol.json"), protocol_bytes()).unwrap();
@@ -2671,6 +2749,11 @@ mod tests {
         assert_eq!(result["observation_counts_enforced"], true);
         assert_eq!(result["holdout_membership_enforced"], true);
         assert_eq!(result["telemetry_resource_schema_bindings_enforced"], true);
+        assert_eq!(result["toolchain_identity_bindings_enforced"], true);
+        assert_eq!(
+            result["toolchain_sha256"],
+            validate_toolchain(&result["toolchain"]).unwrap()
+        );
         assert_eq!(
             result["cases"][0]["ferric_median"]["numerator"],
             "110000000"
@@ -2799,6 +2882,31 @@ mod tests {
             });
             assert!(validate_policy_observations(&arguments(&fixture)).is_err());
         }
+    }
+
+    #[test]
+    fn observation_and_implementation_toolchain_substitutions_fail_closed() {
+        let fixture = make_fixture();
+        mutate_observations(&fixture, |value| {
+            value["toolchain"]["runtime_closure_sha256"] =
+                json!(sha256_identity(b"substituted-runtime-closure"));
+            value["toolchain_sha256"] = json!(validate_toolchain(&value["toolchain"]).unwrap());
+        });
+        assert!(validate_policy_observations(&arguments(&fixture)).is_err());
+
+        let fixture = make_fixture();
+        mutate_observations(&fixture, |value| {
+            value["collection"]["toolchain_sha256"] =
+                json!(sha256_identity(b"substituted-collection-toolchain"));
+        });
+        assert!(validate_policy_observations(&arguments(&fixture)).is_err());
+
+        let fixture = make_fixture();
+        mutate_observations(&fixture, |value| {
+            value["cases"][0]["implementations"][0]["bindings"]["toolchain_sha256"] =
+                json!(sha256_identity(b"substituted-toolchain-binding"));
+        });
+        assert!(validate_policy_observations(&arguments(&fixture)).is_err());
     }
 
     #[test]

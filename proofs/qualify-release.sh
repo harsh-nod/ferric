@@ -42,8 +42,8 @@ timeout_seconds=${FERRIC_PROOF_TIMEOUT_SECONDS:-600}
 case "$timeout_seconds" in
     ''|*[!0-9]*) printf 'FAIL: invalid proof timeout\n' >&2; exit 2 ;;
 esac
-[ "$timeout_seconds" -ge 1 ] && [ "$timeout_seconds" -le 1200 ] || {
-    printf 'FAIL: proof timeout must be 1 through 1200\n' >&2
+[ "$timeout_seconds" -ge 1 ] && [ "$timeout_seconds" -le 3600 ] || {
+    printf 'FAIL: proof timeout must be 1 through 3600\n' >&2
     exit 2
 }
 
@@ -258,12 +258,23 @@ set +e
     printf 'FERRIC_QUALITY_GATE=clippy:BEGIN\n'
     cargo clippy --workspace --all-targets --locked --target-dir "$runtime_test_target" -- -D warnings
     printf 'FERRIC_QUALITY_GATE=clippy:PASS\n'
+    printf 'FERRIC_QUALITY_GATE=clippy-all-features:BEGIN\n'
+    cargo clippy --workspace --all-targets --all-features --locked \
+        --target-dir "$runtime_test_target" -- -D warnings
+    printf 'FERRIC_QUALITY_GATE=clippy-all-features:PASS\n'
     printf 'FERRIC_QUALITY_GATE=test-debug:BEGIN\n'
     cargo test --workspace --locked --target-dir "$runtime_test_target"
     printf 'FERRIC_QUALITY_GATE=test-debug:PASS\n'
+    printf 'FERRIC_QUALITY_GATE=test-debug-all-features:BEGIN\n'
+    cargo test --workspace --all-features --locked --target-dir "$runtime_test_target"
+    printf 'FERRIC_QUALITY_GATE=test-debug-all-features:PASS\n'
     printf 'FERRIC_QUALITY_GATE=test-release:BEGIN\n'
     cargo test --workspace --locked --release --target-dir "$runtime_test_target"
     printf 'FERRIC_QUALITY_GATE=test-release:PASS\n'
+    printf 'FERRIC_QUALITY_GATE=test-release-all-features:BEGIN\n'
+    cargo test --workspace --all-features --locked --release \
+        --target-dir "$runtime_test_target"
+    printf 'FERRIC_QUALITY_GATE=test-release-all-features:PASS\n'
     printf 'FERRIC_QUALITY_GATE=source-closure-policy:BEGIN\n'
     PYTHONDONTWRITEBYTECODE=1 python3 -I -B proofs/test-source-closure.py
     printf 'FERRIC_QUALITY_GATE=source-closure-policy:PASS\n'
@@ -276,6 +287,10 @@ set +e
     PYTHONDONTWRITEBYTECODE=1 python3 -I -B -m unittest discover \
         -s benches/m1/reference -p 'test*.py'
     printf 'FERRIC_QUALITY_GATE=m1-reference-policy:PASS\n'
+    printf 'FERRIC_QUALITY_GATE=m1-r29-differential-evidence:BEGIN\n'
+    PYTHONDONTWRITEBYTECODE=1 python3 -I -B \
+        proofs/m1/evidence/test-r29-differential-evidence-policy.py
+    printf 'FERRIC_QUALITY_GATE=m1-r29-differential-evidence:PASS\n'
 ) >"$runtime_tests" 2>&1
 runtime_test_status=$?
 set -e
@@ -317,5 +332,6 @@ cmp -s "$live_source_before" "$live_source_after" || fail 'live source changed d
 python3 -I "$qualified_scripts/record-qualification.py" \
     "$qualified_repo" "$verus_root" "$artifact_stage" "$metadata" "$transcript" "$counts" \
     "$closure_log" "$negative" "$snapshot_source" "$source_gate" "$runtime_tests" \
-    "$property_binder" "$property_evidence" "$property_contract" "$receipt_dir"
+    "$property_binder" "$property_evidence" "$property_contract" "$timeout_seconds" \
+    "$receipt_dir"
 printf 'PASS: Ferric strict proof and release qualification completed\n'

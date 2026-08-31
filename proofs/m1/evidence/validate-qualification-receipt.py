@@ -22,6 +22,17 @@ INDEX_FORMAT = "ferric.m1-evidence-index.v1"
 REPORT_FORMAT = "FERRIC-M1-QUALIFICATION-RECEIPT-V1"
 TRANSCRIPT_FORMAT = "FERRIC-M1-QUALIFICATION-TRANSCRIPT-V1"
 QUALIFICATION_PROTOCOL = "ferric.m1.qualification.v1"
+PRE_RECEIPT_PROTOCOL = "ferric.m1-pre-receipt-gate.v1"
+PLAN_FORMAT = "FERRIC-M1-EVIDENCE-PLAN-V1"
+WORK_FORMAT = "FERRIC-M1-EVIDENCE-WORK-QUEUE-V1"
+PLAN_AUTHORITY = "planning-only-no-evidence"
+PLAN_NONCLAIM = (
+    "This bundle allocates external M1 evidence work only. It is not an evidence "
+    "index, qualification receipt, validation result, or M1 closure claim."
+)
+ALLOCATION_SHA256 = "948ad3023df7ad4b1313ed865b54464f63b6bad9406f1510c85e60f9db055bd6"
+COMPLETION_FORMAT = "FERRIC-M1-EVIDENCE-WORK-COMPLETION-V1"
+COMPLETION_AUTHORITY = "authenticated-qualification-work-completion"
 TARGET = "gfx942:xnack-"
 AUTHORITY = "m1-qualification-receipt-only"
 NONCLAIM = (
@@ -47,6 +58,7 @@ MAX_CONTEXT_BYTES = 32_000_000
 MAX_REQUIREMENTS_BYTES = 2_000_000
 MAX_REPORT_BYTES = 4_000_000
 MAX_TRANSCRIPT_BYTES = 4_000_000
+MAX_PLAN_BYTES = 32_000_000
 MAX_CHECKER_BYTES = 2_000_000
 MAX_VALIDATOR_BYTES = 4_000_000
 MAX_ARTIFACT_BYTES = 64_000_000
@@ -235,6 +247,9 @@ REPORT_KEYS = {
     "validator_count",
     "validator_roster",
     "validator_roster_sha256",
+    "work_queue_completion_relative_path",
+    "work_queue_completion_sha256",
+    "work_queue_completion_size_bytes",
 }
 TRANSCRIPT_KEYS = {
     "all_required_gates_passed",
@@ -263,6 +278,68 @@ TRANSCRIPT_KEYS = {
     "tool_roster_sha256",
     "tools",
     "validator_roster_sha256",
+    "work_queue_completion_relative_path",
+    "work_queue_completion_sha256",
+    "work_queue_completion_size_bytes",
+}
+COMPLETION_KEYS = {
+    "authority",
+    "candidate_index_sha256",
+    "completed_item_ids",
+    "counts",
+    "format",
+    "gate_roster_sha256",
+    "plan_path",
+    "plan_sha256",
+    "queue_path",
+    "queue_sha256",
+    "status",
+}
+PLAN_KEYS = {
+    "allocation_sha256",
+    "authority",
+    "binding_slots",
+    "counts",
+    "fe2o3_pins",
+    "finalization",
+    "format",
+    "nonclaim",
+    "obligation_slots",
+    "path_resolutions",
+    "planner_sha256",
+    "requirements",
+    "source_closures",
+    "sources",
+    "target",
+    "trusted_validators",
+}
+WORK_KEYS = {
+    "authority",
+    "counts",
+    "format",
+    "items",
+    "nonclaim",
+    "plan_path",
+    "plan_sha256",
+    "status",
+}
+SLOT_KEYS = {
+    "binding",
+    "expected_artifact",
+    "foundation_selectors",
+    "producer",
+    "state",
+}
+SOURCE_CLOSURE_PLAN_KEYS = {"artifact", "file_count", "producer"}
+SOURCE_CLOSURE_PRODUCER_KEYS = {"command", "source_sha256"}
+FE2O3_PIN_KEYS = {
+    "direct",
+    "direct_count",
+    "resolved",
+    "resolved_count",
+    "revision",
+    "root_dependencies",
+    "root_dependency_count",
 }
 GATE_KEYS = {
     "artifact_ids",
@@ -310,6 +387,12 @@ def exact_keys(value: Any, expected: set[str], description: str) -> dict[str, An
 
 def digest_bytes(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
+
+
+def canonical_bytes(value: Any) -> bytes:
+    return (
+        json.dumps(value, ensure_ascii=True, indent=2, sort_keys=True) + "\n"
+    ).encode("ascii")
 
 
 def canonical_digest(value: Any) -> str:
@@ -1172,6 +1255,18 @@ def validate_tools(
     if not isinstance(value, list) or len(value) != len(TOOL_IDS):
         fail("qualification tool roster is incomplete")
     validator_by_id = {record["evidence_kind"]: record for record in validators}
+    try:
+        python_path = Path(sys.executable).resolve(strict=True)
+    except OSError as error:
+        fail(f"qualification Python executable is unavailable: {error}")
+    python_identity = digest_bytes(
+        read_bounded(
+            python_path,
+            MAX_ARTIFACT_BYTES,
+            "qualification Python executable",
+            single_link=False,
+        )
+    )
     verus_version_raw = read_bounded(
         repo / "proofs/verus/VERUS_VERSION", 4096, "Verus version pin"
     )
@@ -1193,7 +1288,7 @@ def validate_tools(
                 )
             ),
         ),
-        "runtime.python": ("qualification-measured-binary", None, None),
+        "runtime.python": ("qualification-measured-binary", None, python_identity),
         "validator.evidence-index": (
             "checker-owned-source",
             INDEX_FORMAT,
@@ -1333,12 +1428,33 @@ def validate_gates(
     receipt_id: str,
     run_start: datetime,
     run_end: datetime,
+    tools: list[dict[str, Any]],
+    repo: Path,
 ) -> list[dict[str, Any]]:
     if not isinstance(value, list) or len(value) != len(GATE_IDS):
         fail("qualification gate roster is incomplete")
     expected = expected_gate_rosters(index, receipt_id)
     commands: set[str] = set()
     outputs: set[str] = set()
+    nonreceipt_index = {
+        **index,
+        "artifacts": [
+            record for record in index["artifacts"] if record["id"] != receipt_id
+        ],
+    }
+    candidate_sha256 = digest_bytes(canonical_bytes(nonreceipt_index))
+    checker_sha256 = digest_bytes(
+        read_bounded(
+            repo / "proofs/check-m1-evidence-index.py",
+            MAX_CHECKER_BYTES,
+            "M1 pre-receipt gate checker",
+        )
+    )
+    python_sha256 = next(
+        record["identity_sha256"]
+        for record in tools
+        if record["id"] == "runtime.python"
+    )
     for record, expected_id in zip(value, GATE_IDS, strict=True):
         exact_keys(record, GATE_KEYS, f"qualification gate {expected_id}")
         command = require_sha256(record["command_sha256"], f"{expected_id} command")
@@ -1346,11 +1462,28 @@ def validate_gates(
         started = parse_time(record["started_at_utc"], f"{expected_id} start")
         finished = parse_time(record["finished_at_utc"], f"{expected_id} finish")
         artifacts, bindings = expected[expected_id]
+        expected_command = canonical_digest(
+            {
+                "candidate_sha256": candidate_sha256,
+                "checker_sha256": checker_sha256,
+                "gate_id": expected_id,
+                "protocol": PRE_RECEIPT_PROTOCOL,
+                "runtime_python_sha256": python_sha256,
+            }
+        )
+        expected_output = digest_bytes(
+            (
+                f"PASS: {PRE_RECEIPT_PROTOCOL} gate={expected_id} "
+                f"candidate_sha256={candidate_sha256}\n"
+            ).encode("ascii")
+        )
         if (
             record["id"] != expected_id
             or record["result"] != "pass"
             or record["artifact_ids"] != artifacts
             or record["binding_ids"] != bindings
+            or command != expected_command
+            or output != expected_output
             or not (run_start <= started < finished <= run_end)
             or command in commands
             or output in outputs
@@ -1361,6 +1494,351 @@ def validate_gates(
         commands.add(command)
         outputs.add(output)
     return value
+
+
+def artifact_descriptor(record: dict[str, Any]) -> dict[str, Any]:
+    return {key: record[key] for key in ("id", "kind", "path")}
+
+
+def expected_obligation_slots(candidate: dict[str, Any]) -> list[dict[str, Any]]:
+    bindings = {record["id"]: record for record in candidate["evidence_bindings"]}
+    result: list[dict[str, Any]] = []
+    for obligation in candidate["obligations"]:
+        grouped: dict[str, list[str]] = {
+            "negative-mutation": [],
+            "independent-validator": [],
+            "unsupported-rationale": [],
+            "verus-theorem": [],
+        }
+        for identifier in obligation["evidence_binding_ids"]:
+            binding = bindings[identifier]
+            if binding["evidence_kind"] in grouped:
+                grouped[binding["evidence_kind"]].append(binding["artifact_id"])
+        roadmap = obligation["obligation_class"] == "Roadmap"
+        result.append(
+            {
+                "assurance_dependency_ids": (
+                    obligation["assurance_dependencies"] if roadmap else []
+                ),
+                "binding_ids": obligation["evidence_binding_ids"],
+                "id": obligation["id"],
+                "obligation_class": obligation["obligation_class"],
+                "path_ids": obligation["path_resolution_ids"],
+                "required_artifact_ids": {
+                    "mutation": sorted(grouped["negative-mutation"]),
+                    "proof": sorted(grouped["verus-theorem"]),
+                    "qualification_receipt": (
+                        obligation["receipt_artifact_id"] if roadmap else None
+                    ),
+                    "rationale": sorted(grouped["unsupported-rationale"]),
+                    "validator": sorted(grouped["independent-validator"]),
+                },
+                "required_status": obligation["closure_status"],
+                "statement_sha256": obligation["statement_sha256"],
+                "tcb_ids": obligation["tcb_ids"],
+            }
+        )
+    return result
+
+
+def validate_plan_identity(
+    plan: dict[str, Any],
+    queue: dict[str, Any],
+    candidate: dict[str, Any],
+    repositories: dict[str, Path],
+    validators: list[dict[str, Any]],
+    report: dict[str, Any],
+) -> None:
+    exact_keys(plan, PLAN_KEYS, "M1 evidence plan")
+    exact_keys(queue, WORK_KEYS, "M1 evidence work queue")
+    artifact_by_id = {record["id"]: record for record in candidate["artifacts"]}
+    binding_slots = plan["binding_slots"]
+    if not isinstance(binding_slots, list):
+        fail("M1 plan binding slots are malformed")
+    bindings: list[dict[str, Any]] = []
+    for slot in binding_slots:
+        exact_keys(slot, SLOT_KEYS, "M1 plan binding slot")
+        binding = slot["binding"]
+        artifact = artifact_by_id.get(binding.get("artifact_id"))
+        selectors = slot["foundation_selectors"]
+        producer = slot["producer"]
+        if (
+            artifact is None
+            or slot["expected_artifact"] != artifact_descriptor(artifact)
+            or slot["state"] != "missing"
+            or not isinstance(selectors, list)
+            or not all(isinstance(item, str) and item for item in selectors)
+            or not isinstance(producer, dict)
+            or producer.get("availability") != "available"
+        ):
+            fail("M1 plan binding artifact or producer identity drifted")
+        bindings.append(binding)
+    trusted_validators = [
+        {key: value for key, value in record.items() if key != "availability"}
+        for record in validators
+    ]
+    closure_by_artifact = {
+        record["artifact_id"]: record for record in report["source_closure_roster"]
+    }
+    source_closures = plan["source_closures"]
+    if not isinstance(source_closures, list):
+        fail("M1 plan source-closure roster is malformed")
+    expected_closures: list[dict[str, Any]] = []
+    measure_source = (
+        repositories["ferric"] / "proofs/m1/evidence/measure-source-closure.py"
+    )
+    measure_sha256 = digest_bytes(
+        read_bounded(
+            measure_source,
+            MAX_VALIDATOR_BYTES,
+            "M1 source-closure producer",
+            single_link=False,
+        )
+    )
+    for source in candidate["sources"]:
+        artifact = artifact_by_id[source["source_closure_artifact_id"]]
+        closure = closure_by_artifact.get(artifact["id"])
+        repository = source["repository"]
+        expected_closures.append(
+            {
+                "artifact": artifact,
+                "file_count": closure["file_count"] if closure is not None else None,
+                "producer": {
+                    "command": [
+                        "python3",
+                        "-I",
+                        "proofs/m1/evidence/measure-source-closure.py",
+                        repository.upper() + "_REPO",
+                        artifact["path"],
+                    ],
+                    "source_sha256": measure_sha256,
+                },
+            }
+        )
+    for record in source_closures:
+        exact_keys(record, SOURCE_CLOSURE_PLAN_KEYS, "M1 plan source closure")
+        exact_keys(
+            record["producer"],
+            SOURCE_CLOSURE_PRODUCER_KEYS,
+            "M1 plan source-closure producer",
+        )
+    pins = exact_keys(plan["fe2o3_pins"], FE2O3_PIN_KEYS, "M1 fe2o3 pins")
+    fe2o3_source = next(
+        record for record in candidate["sources"] if record["repository"] == "fe2o3"
+    )
+    if (
+        not isinstance(pins["direct"], list)
+        or pins["direct_count"] != len(pins["direct"])
+        or not isinstance(pins["resolved"], list)
+        or pins["resolved_count"] != len(pins["resolved"])
+        or not isinstance(pins["root_dependencies"], list)
+        or pins["root_dependency_count"] != len(pins["root_dependencies"])
+        or pins["revision"] != fe2o3_source["commit"]
+    ):
+        fail("M1 fe2o3 pin identity drifted")
+    requirements_path = repositories["ferric"] / "proofs/M1_REQUIREMENTS.json"
+    requirements, requirements_raw = load_canonical_json(
+        requirements_path, MAX_REQUIREMENTS_BYTES, "M1 requirements manifest"
+    )
+    planner_raw = read_bounded(
+        repositories["ferric"] / "proofs/m1-qualification/planner.py",
+        MAX_VALIDATOR_BYTES,
+        "M1 planner source",
+        single_link=False,
+    )
+    roadmap_bindings = sum(
+        record["obligation_class"] == "Roadmap" for record in bindings
+    )
+    expected_counts = {
+        "assurance_binding_slots": len(bindings) - roadmap_bindings,
+        "binding_slots": len(bindings),
+        "obligation_slots": len(candidate["obligations"]),
+        "path_resolutions": len(candidate["path_resolutions"]),
+        "roadmap_binding_slots": roadmap_bindings,
+        "source_closures": len(expected_closures),
+        "trusted_validators": len(trusted_validators),
+    }
+    if (
+        plan["format"] != PLAN_FORMAT
+        or plan["authority"] != PLAN_AUTHORITY
+        or plan["nonclaim"] != PLAN_NONCLAIM
+        or plan["target"] != TARGET
+        or plan["allocation_sha256"] != ALLOCATION_SHA256
+        or plan["counts"] != expected_counts
+        or bindings != candidate["evidence_bindings"]
+        or plan["obligation_slots"] != expected_obligation_slots(candidate)
+        or plan["path_resolutions"] != candidate["path_resolutions"]
+        or plan["planner_sha256"] != digest_bytes(planner_raw)
+        or plan["requirements"]
+        != {
+            "format": requirements["format"],
+            "path": "proofs/M1_REQUIREMENTS.json",
+            "sha256": digest_bytes(requirements_raw),
+        }
+        or source_closures != expected_closures
+        or plan["sources"] != candidate["sources"]
+        or plan["trusted_validators"] != trusted_validators
+    ):
+        fail("M1 plan nested identity differs from the qualified closure")
+
+    binding_work = [
+        {
+            "expected_artifact": slot["expected_artifact"],
+            "id": slot["binding"]["id"].replace("binding.", "work.", 1),
+            "producer": slot["producer"],
+            "state": "missing",
+            "subject": f"binding:{slot['binding']['id']}",
+        }
+        for slot in binding_slots
+    ]
+    tcb_work = []
+    for record in candidate["tcb"]:
+        artifact = artifact_by_id[record["artifact_id"]]
+        tcb_work.append(
+            {
+                "expected_artifact": artifact_descriptor(artifact),
+                "id": f"work.{record['id']}",
+                "producer": {
+                    "availability": "available",
+                    "command": [
+                        "python3",
+                        "-I",
+                        "proofs/m1-qualification/produce-tcb-report.py",
+                        "FERRIC_REPO",
+                        "FE2O3_REPO",
+                        "PLAN_DIR",
+                        record["id"],
+                    ],
+                    "role": f"ferric-{record['kind'].lower()}-tcb-reporter",
+                },
+                "state": "missing",
+                "subject": f"tcb:{record['id']}",
+            }
+        )
+    receipt_work = {
+        "expected_artifact": {
+            "id": "artifact.qualification.m1",
+            "kind": "QualificationReceipt",
+            "path": "artifacts/artifact.qualification.m1.qualification-receipt.json",
+        },
+        "id": "work.qualification.m1",
+        "producer": {
+            "availability": "available",
+            "command": [
+                "python3",
+                "-I",
+                "proofs/m1-qualification/produce-qualification-receipt.py",
+                "FERRIC_REPO",
+                "FE2O3_REPO",
+                "PLAN_DIR",
+                "QUALIFICATION_RUN_ROOT",
+            ],
+            "role": "ferric-m1-qualification-intake-finalizer",
+        },
+        "state": "blocked-on-all-validated-evidence",
+        "subject": "qualification:M1",
+    }
+    expected_items = sorted(
+        [*binding_work, *tcb_work, receipt_work], key=lambda item: item["id"]
+    )
+    if queue["items"] != expected_items:
+        fail("M1 work queue differs from the nested plan identities")
+
+
+def validate_work_completion(
+    root: Path,
+    candidate: dict[str, Any],
+    gates: list[dict[str, Any]],
+    report: dict[str, Any],
+    transcript: dict[str, Any],
+    repositories: dict[str, Path],
+    validators: list[dict[str, Any]],
+) -> None:
+    relative_name = "completed-work.json"
+    if (
+        report["work_queue_completion_relative_path"] != relative_name
+        or transcript["work_queue_completion_relative_path"] != relative_name
+    ):
+        fail("M1 work completion path is noncanonical")
+    completion_path = reject_symlink_components(
+        root, PurePosixPath(relative_name), "M1 work completion"
+    )
+    completion, completion_raw = load_canonical_json(
+        completion_path, MAX_PLAN_BYTES, "M1 work completion"
+    )
+    exact_keys(completion, COMPLETION_KEYS, "M1 work completion")
+    completion_sha256 = digest_bytes(completion_raw)
+    for owner, description in (
+        (report, "qualification receipt"),
+        (transcript, "qualification transcript"),
+    ):
+        if owner["work_queue_completion_sha256"] != completion_sha256 or owner[
+            "work_queue_completion_size_bytes"
+        ] != len(completion_raw):
+            fail(f"{description} work-completion identity drifted")
+    plan, plan_raw = load_canonical_json(
+        root / "plan.json", MAX_PLAN_BYTES, "M1 evidence plan"
+    )
+    queue, queue_raw = load_canonical_json(
+        root / "missing-work.json", MAX_PLAN_BYTES, "M1 evidence work queue"
+    )
+    validate_plan_identity(plan, queue, candidate, repositories, validators, report)
+    item_ids = [record.get("id") for record in queue.get("items", [])]
+    expected_item_ids = sorted(
+        [
+            record["id"].replace("binding.", "work.", 1)
+            for record in candidate["evidence_bindings"]
+        ]
+        + [
+            "work.qualification.m1",
+            "work.tcb.compiler",
+            "work.tcb.hardware",
+            "work.tcb.runtime",
+        ]
+    )
+    expected_item_count = len(expected_item_ids)
+    expected_finalization = {
+        "completion_transition_output": relative_name,
+        "evidence_index_output": "requires-authenticated-work-queue-completion-v1",
+        "qualification_receipt_output": "requires-authenticated-work-queue-completion-v1",
+        "required_validator": "proofs/check-m1-evidence-index.py",
+    }
+    if (
+        plan.get("format") != PLAN_FORMAT
+        or plan.get("finalization") != expected_finalization
+        or queue.get("format") != WORK_FORMAT
+        or queue.get("status") != "INCOMPLETE"
+        or queue.get("plan_path") != "plan.json"
+        or queue.get("plan_sha256") != digest_bytes(plan_raw)
+        or queue.get("counts")
+        != {
+            "available_producer_items": expected_item_count,
+            "missing_items": expected_item_count,
+            "missing_producer_items": 0,
+        }
+        or len(item_ids) != expected_item_count
+        or not all(isinstance(identifier, str) for identifier in item_ids)
+        or item_ids != sorted(item_ids)
+        or item_ids != expected_item_ids
+        or len(set(item_ids)) != len(item_ids)
+    ):
+        fail("M1 plan cannot authorize the completed-work transition")
+    if (
+        completion["format"] != COMPLETION_FORMAT
+        or completion["authority"] != COMPLETION_AUTHORITY
+        or completion["status"] != "COMPLETE"
+        or completion["counts"]
+        != {"completed_items": expected_item_count, "missing_items": 0}
+        or completion["completed_item_ids"] != item_ids
+        or completion["plan_path"] != "plan.json"
+        or completion["plan_sha256"] != digest_bytes(plan_raw)
+        or completion["queue_path"] != "missing-work.json"
+        or completion["queue_sha256"] != digest_bytes(queue_raw)
+        or completion["candidate_index_sha256"]
+        != digest_bytes(canonical_bytes(candidate))
+        or completion["gate_roster_sha256"] != canonical_digest(gates)
+    ):
+        fail("M1 completed-work transition is partial, replayed, or inconsistent")
 
 
 def qualification_identity(transcript: dict[str, Any]) -> str:
@@ -1377,6 +1855,7 @@ def qualification_identity(transcript: dict[str, Any]) -> str:
             "tcb_roster_sha256": transcript["tcb_roster_sha256"],
             "tool_roster_sha256": transcript["tool_roster_sha256"],
             "validator_roster_sha256": transcript["validator_roster_sha256"],
+            "work_queue_completion_sha256": transcript["work_queue_completion_sha256"],
         }
     )
 
@@ -1558,7 +2037,18 @@ def validate(context: dict[str, Any]) -> None:
     run_end = parse_time(transcript["finished_at_utc"], "qualification finish")
     if run_start >= run_end:
         fail("qualification transcript has no positive run interval")
-    gates = validate_gates(transcript["gates"], index, receipt_id, run_start, run_end)
+    gates = validate_gates(
+        transcript["gates"], index, receipt_id, run_start, run_end, tools, repo
+    )
+    validate_work_completion(
+        root,
+        index_projection,
+        gates,
+        report,
+        transcript,
+        repositories,
+        validators,
+    )
 
     if (
         transcript["format"] != TRANSCRIPT_FORMAT

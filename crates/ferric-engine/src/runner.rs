@@ -27,7 +27,8 @@ use crate::{
     compose_addressless_m1_full_step_workspaces, derive_m1_physical_buffer_recipe_v1,
     derive_m1_physical_dispatch_recipe_v1, derive_m1_physical_kernarg_recipe_v1,
     derive_m1_step_dispatch_plan, prepare_m1_scheduled_workspace_images_v1,
-    release_m1_completed_step_kv_pages_v1, submit_m1_long_lived_queue_rearm_v1,
+    release_m1_completed_step_kv_pages_v1, submit_m1_finite_speculative_queue_rollover_v1,
+    submit_m1_long_lived_queue_rearm_v1, submit_m1_s1_k4_queue_rollover_v1,
     AddresslessM1PhysicalBufferRecipeV1, AddresslessM1PhysicalKernargRecipeV1,
     AddresslessM1StepDispatchPlan, AdmittedPersistedM1KernelArtifactsV1, BoundM1CompletionOutputV1,
     ContentBoundM1ProgramCatalogV1, DeclaredKernelFamilyArtifact, DeclaredOperationKernelPlan,
@@ -41,11 +42,12 @@ use crate::{
     M1PhysicalFixedBatchBuildErrorV1, M1PhysicalProgramCatalogErrorV1,
     M1PhysicalPublishedQueueSessionV1, M1PhysicalQueueCreateFailureClassV1,
     M1PhysicalQueueCreateFailureV1, M1PhysicalQueueOperationFailureV1, M1PhysicalQueueSessionV1,
-    M1PrepareFailureV1, M1PreparedLongLivedQueueRearmV1, M1PrepublicationAllocationFailureV1,
-    M1PrepublicationBatchBuildErrorKindV1, M1PrepublicationBatchBuildFailureV1,
-    M1RearmedPublishedQueueV1, M1ReleasedCompletedStepV1, M1ScheduledDispatchV1,
-    M1StepDispatchCompositionError, M1StepDispatchIntent, OperationKernelPlanError,
-    OperationKernelPlanFailure, OperationKernelPlanOutcome,
+    M1PrepareFailureV1, M1PreparedFiniteSpeculativeQueueRolloverV1,
+    M1PreparedLongLivedQueueRearmV1, M1PreparedS1K4QueueRolloverV1,
+    M1PrepublicationAllocationFailureV1, M1PrepublicationBatchBuildErrorKindV1,
+    M1PrepublicationBatchBuildFailureV1, M1RearmedPublishedQueueV1, M1ReleasedCompletedStepV1,
+    M1ScheduledDispatchV1, M1StepDispatchCompositionError, M1StepDispatchIntent,
+    OperationKernelPlanError, OperationKernelPlanFailure, OperationKernelPlanOutcome,
 };
 
 /// Fail-closed logical declaration lookup error.
@@ -467,6 +469,77 @@ impl M1PhysicalRunnerV1 {
         };
         submit_m1_long_lived_queue_rearm_v1(engine, prepared, recipe, catalog).map_err(|failure| {
             M1PhysicalRunnerRearmSubmissionFailureV1::Submission(Box::new(failure))
+        })
+    }
+
+    /// Revalidates persisted K1-K7 bytes and replaces one completed S1 paired
+    /// prefill queue with its exact native S1/K4 successor generation.
+    ///
+    /// # Errors
+    ///
+    /// Returns retryable unpublished inputs on catalog rejection, or terminal
+    /// rollover submission custody after the lower queue transition begins.
+    pub fn submit_s1_k4_rollover<'runner, const C: usize>(
+        &'runner self,
+        engine: &mut Engine<C>,
+        ring_bytes: u32,
+        prepared: M1PreparedS1K4QueueRolloverV1,
+        recipe: AddresslessM1PhysicalBufferRecipeV1,
+    ) -> Result<M1RearmedPublishedQueueV1, M1PhysicalRunnerS1K4RolloverSubmissionFailureV1<'runner>>
+    {
+        let catalog = match self.artifacts.content_bound_program_catalog_v1() {
+            Ok(catalog) => catalog,
+            Err(error) => {
+                return Err(M1PhysicalRunnerS1K4RolloverSubmissionFailureV1::Catalog {
+                    error,
+                    prepared: Box::new(prepared),
+                    recipe: Box::new(recipe),
+                })
+            }
+        };
+        submit_m1_s1_k4_queue_rollover_v1(engine, prepared, recipe, catalog, ring_bytes).map_err(
+            |failure| {
+                M1PhysicalRunnerS1K4RolloverSubmissionFailureV1::Submission(Box::new(failure))
+            },
+        )
+    }
+
+    /// Revalidates persisted K1-K7 bytes and replaces paired prefill with one
+    /// of the four admitted finite-speculative successor queue shapes.
+    ///
+    /// # Errors
+    ///
+    /// Returns retryable unpublished inputs on catalog rejection, or terminal
+    /// rollover submission custody after the lower queue transition begins.
+    pub fn submit_finite_speculative_rollover<'runner, const C: usize>(
+        &'runner self,
+        engine: &mut Engine<C>,
+        ring_bytes: u32,
+        prepared: M1PreparedFiniteSpeculativeQueueRolloverV1,
+        recipe: AddresslessM1PhysicalBufferRecipeV1,
+    ) -> Result<
+        M1RearmedPublishedQueueV1,
+        M1PhysicalRunnerFiniteSpeculativeRolloverSubmissionFailureV1<'runner>,
+    > {
+        let catalog = match self.artifacts.content_bound_program_catalog_v1() {
+            Ok(catalog) => catalog,
+            Err(error) => {
+                return Err(
+                    M1PhysicalRunnerFiniteSpeculativeRolloverSubmissionFailureV1::Catalog {
+                        error,
+                        prepared: Box::new(prepared),
+                        recipe: Box::new(recipe),
+                    },
+                )
+            }
+        };
+        submit_m1_finite_speculative_queue_rollover_v1(
+            engine, prepared, recipe, catalog, ring_bytes,
+        )
+        .map_err(|failure| {
+            M1PhysicalRunnerFiniteSpeculativeRolloverSubmissionFailureV1::Submission(Box::new(
+                failure,
+            ))
         })
     }
 }
@@ -907,6 +980,78 @@ pub enum M1PhysicalRunnerRearmSubmissionFailureV1<'a> {
         recipe: Box<AddresslessM1PhysicalBufferRecipeV1>,
     },
     Submission(Box<M1LongLivedQueueRearmSubmissionFailureV1<'a>>),
+}
+
+/// Catalog rejection or terminal cross-shape rollover submission quarantine.
+#[must_use = "rollover failure retains every prepared queue and recipe owner"]
+#[derive(Debug)]
+pub enum M1PhysicalRunnerS1K4RolloverSubmissionFailureV1<'a> {
+    Catalog {
+        error: M1PhysicalProgramCatalogErrorV1,
+        prepared: Box<M1PreparedS1K4QueueRolloverV1>,
+        recipe: Box<AddresslessM1PhysicalBufferRecipeV1>,
+    },
+    Submission(Box<M1LongLivedQueueRearmSubmissionFailureV1<'a>>),
+}
+
+/// Catalog rejection or terminal shape-generic rollover submission quarantine.
+#[must_use = "rollover failure retains every prepared queue and recipe owner"]
+#[derive(Debug)]
+pub enum M1PhysicalRunnerFiniteSpeculativeRolloverSubmissionFailureV1<'a> {
+    Catalog {
+        error: M1PhysicalProgramCatalogErrorV1,
+        prepared: Box<M1PreparedFiniteSpeculativeQueueRolloverV1>,
+        recipe: Box<AddresslessM1PhysicalBufferRecipeV1>,
+    },
+    Submission(Box<M1LongLivedQueueRearmSubmissionFailureV1<'a>>),
+}
+
+impl<'a> M1PhysicalRunnerS1K4RolloverSubmissionFailureV1<'a> {
+    /// Revalidates the catalog and retries only unchanged unpublished rollover
+    /// inputs. A lower submission quarantine is returned unchanged.
+    ///
+    /// # Errors
+    ///
+    /// Returns renewed catalog rejection or unchanged terminal submission
+    /// custody.
+    pub fn retry<const C: usize>(
+        self,
+        runner: &'a M1PhysicalRunnerV1,
+        engine: &mut Engine<C>,
+        ring_bytes: u32,
+    ) -> Result<M1RearmedPublishedQueueV1, Self> {
+        let recoverable = matches!(&self, Self::Catalog { .. });
+        retry_if_recoverable(self, recoverable, |failure| match failure {
+            Self::Catalog {
+                prepared, recipe, ..
+            } => runner.submit_s1_k4_rollover(engine, ring_bytes, *prepared, *recipe),
+            terminal @ Self::Submission(_) => Err(terminal),
+        })
+    }
+}
+
+impl<'a> M1PhysicalRunnerFiniteSpeculativeRolloverSubmissionFailureV1<'a> {
+    /// Revalidates the catalog and retries the unchanged generic rollover.
+    /// A lower submission quarantine is returned unchanged.
+    ///
+    /// # Errors
+    ///
+    /// Returns renewed catalog rejection or unchanged terminal submission
+    /// custody.
+    pub fn retry<const C: usize>(
+        self,
+        runner: &'a M1PhysicalRunnerV1,
+        engine: &mut Engine<C>,
+        ring_bytes: u32,
+    ) -> Result<M1RearmedPublishedQueueV1, Self> {
+        let recoverable = matches!(&self, Self::Catalog { .. });
+        retry_if_recoverable(self, recoverable, |failure| match failure {
+            Self::Catalog {
+                prepared, recipe, ..
+            } => runner.submit_finite_speculative_rollover(engine, ring_bytes, *prepared, *recipe),
+            terminal @ Self::Submission(_) => Err(terminal),
+        })
+    }
 }
 
 impl<'a> M1PhysicalRunnerRearmSubmissionFailureV1<'a> {
@@ -1708,6 +1853,13 @@ mod tests {
             .check_completion()
             .expect("check maximal prefix under exact queue custody");
         assert!(joined.target_token_matches());
+        assert_eq!(
+            joined.corresponding_target_only_token_for_lane(0),
+            Some(joined.corresponding_target_only_token())
+        );
+        assert_eq!(joined.corresponding_target_only_token_for_lane(1), None);
+        assert_eq!(joined.target_token_matches_for_lane(0), Some(true));
+        assert_eq!(joined.target_token_matches_for_lane(1), None);
         let (completed, choices) = joined.into_parts();
         let roster =
             M1DeviceKvCompletionRosterV1::new(vec![M1DeviceKvCompletionMemberV1::continuing(

@@ -26,3 +26,4 @@ jobs:
       - run: python3 -I -B benches/m1/reference/test-policy.py
       - run: python3 -I -B -m unittest discover -s benches/m1/reference -p 'test*.py'
       - run: python3 -I -B proofs/m1/evidence/test-source-closure-mode-policy.py
+      - run: python3 -I -B proofs/m1/evidence/test-r29-differential-evidence-policy.py

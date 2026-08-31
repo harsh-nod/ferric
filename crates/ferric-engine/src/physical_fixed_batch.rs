@@ -704,16 +704,20 @@ pub fn build_m1_physical_fixed_batch_v1(
 
     let lowered = match shape {
         M1PhysicalFixedBatchShapeV1::TargetOnly => {
-            lower_fixed_batch(parts).map(|case| M1PhysicalFixedBatchV1::TargetOnly(Box::new(case)))
+            lower_boxed_fixed_batch(parts).map(M1PhysicalFixedBatchV1::TargetOnly)
         }
-        M1PhysicalFixedBatchShapeV1::PairedPrefill => lower_fixed_batch(parts)
-            .map(|case| M1PhysicalFixedBatchV1::PairedPrefill(Box::new(case))),
-        M1PhysicalFixedBatchShapeV1::SpeculativeK4 => lower_fixed_batch(parts)
-            .map(|case| M1PhysicalFixedBatchV1::SpeculativeK4(Box::new(case))),
-        M1PhysicalFixedBatchShapeV1::SpeculativeK8 => lower_fixed_batch(parts)
-            .map(|case| M1PhysicalFixedBatchV1::SpeculativeK8(Box::new(case))),
-        M1PhysicalFixedBatchShapeV1::SpeculativeK16 => lower_fixed_batch(parts)
-            .map(|case| M1PhysicalFixedBatchV1::SpeculativeK16(Box::new(case))),
+        M1PhysicalFixedBatchShapeV1::PairedPrefill => {
+            lower_boxed_fixed_batch(parts).map(M1PhysicalFixedBatchV1::PairedPrefill)
+        }
+        M1PhysicalFixedBatchShapeV1::SpeculativeK4 => {
+            lower_boxed_fixed_batch(parts).map(M1PhysicalFixedBatchV1::SpeculativeK4)
+        }
+        M1PhysicalFixedBatchShapeV1::SpeculativeK8 => {
+            lower_boxed_fixed_batch(parts).map(M1PhysicalFixedBatchV1::SpeculativeK8)
+        }
+        M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
+            lower_boxed_fixed_batch(parts).map(M1PhysicalFixedBatchV1::SpeculativeK16)
+        }
     };
     match lowered {
         Ok(batch) => Ok(batch),
@@ -1009,6 +1013,14 @@ struct PacketLoweringInputV1 {
     physical: crate::M1PhysicalDispatchRecipeRowV1,
     image: M1PhysicalKernargImageV1,
     buffers: Box<[fe2o3_service_host::ServiceFixedDispatchBufferV1]>,
+}
+
+// Keep each const-cardinality array construction out of the shape dispatcher.
+#[inline(never)]
+fn lower_boxed_fixed_batch<const N: usize>(
+    parts: LoweringPartsV1<'_>,
+) -> Result<Box<M1PhysicalFixedBatchCaseV1<'_, N>>, Box<LoweringFailureV1<'_>>> {
+    lower_fixed_batch(parts).map(Box::new)
 }
 
 fn lower_fixed_batch<const N: usize>(

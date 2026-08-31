@@ -440,6 +440,40 @@ impl M1AllocatedScheduledStepV1 {
             .allocate_guarded_completion_output(selection)
     }
 
+    /// Preallocates the inactive compact output and independent diagnostic
+    /// choices required by a future exact S1/K4 queue rollover.
+    ///
+    /// This must complete before first queue construction because the generic
+    /// detached-queue API can replace, but cannot insert, host-visible
+    /// allocations.
+    ///
+    /// # Errors
+    ///
+    /// Rejects repeated reservation or returns the exact host allocation
+    /// failure while this allocated step retains the model/allocation pool.
+    pub fn reserve_s1_k4_rollover_output(
+        &mut self,
+    ) -> Result<(), crate::M1S1K4RolloverOutputReserveErrorV1> {
+        self.partitioned_memory.reserve_s1_k4_rollover_output()
+    }
+
+    /// Preallocates inactive outputs for every finite speculative successor.
+    ///
+    /// This catalog must be complete before first queue construction because
+    /// the detached-queue rollover path may replace host allocations but
+    /// cannot add a successor output after publication.
+    ///
+    /// # Errors
+    ///
+    /// Rejects repeated reservation or returns the exact host allocation
+    /// failure while this allocated step retains the model/allocation pool.
+    pub fn reserve_finite_speculative_rollover_outputs(
+        &mut self,
+    ) -> Result<(), crate::device_cache::M1FiniteSpeculativeRolloverOutputReserveErrorV1> {
+        self.partitioned_memory
+            .reserve_finite_speculative_rollover_outputs()
+    }
+
     /// Attaches qualification logits without permitting another device allocation.
     ///
     /// # Errors
@@ -454,7 +488,23 @@ impl M1AllocatedScheduledStepV1 {
             .enable_qualification_logits_capture(completion)
     }
 
-    /// Attaches S1/K4 diagnostic choices after every device allocation.
+    /// Attaches finite speculative diagnostic choices after every device allocation.
+    ///
+    /// # Errors
+    ///
+    /// Returns the exact attachment failure with compact-output custody.
+    pub fn enable_speculative_diagnostic_choices_capture(
+        &mut self,
+        completion: BoundM1CompletionOutputV1,
+    ) -> Result<
+        BoundM1CompletionOutputV1,
+        Box<crate::M1SpeculativeDiagnosticChoicesAllocationFailureV1>,
+    > {
+        self.partitioned_memory
+            .enable_speculative_diagnostic_choices_capture(completion)
+    }
+
+    /// Source-compatible S1/K4 entry point for diagnostic choice capture.
     ///
     /// # Errors
     ///
@@ -468,6 +518,20 @@ impl M1AllocatedScheduledStepV1 {
     > {
         self.partitioned_memory
             .enable_speculative_k4_diagnostic_choices_capture(completion)
+    }
+
+    /// Attaches direct target-choice capture after every device allocation.
+    ///
+    /// # Errors
+    ///
+    /// Returns the exact attachment failure with compact-output custody.
+    pub fn enable_direct_diagnostic_choices_capture(
+        &mut self,
+        completion: BoundM1CompletionOutputV1,
+    ) -> Result<BoundM1CompletionOutputV1, Box<crate::M1DirectDiagnosticChoicesAllocationFailureV1>>
+    {
+        self.partitioned_memory
+            .enable_direct_diagnostic_choices_capture(completion)
     }
 
     fn into_parts(

@@ -122,23 +122,42 @@ class Fixture:
         self.evidence = self.foundation.evidence
         self.validator_path = self.ferric / VALIDATOR_RELATIVE
         self.validator = load_module(self.validator_path, "qualification_validator")
-        self.receipt_id = self.foundation.index["obligations"][0]["receipt_artifact_id"]
+        original_receipt_id = self.foundation.index["obligations"][0][
+            "receipt_artifact_id"
+        ]
         if {
             record["receipt_artifact_id"]
             for record in self.foundation.index["obligations"]
             if record["obligation_class"] == "Roadmap"
-        } != {self.receipt_id}:
+        } != {original_receipt_id}:
             raise AssertionError("synthetic index did not use one canonical receipt")
+        self.receipt_id = "artifact.qualification.m1"
+        self._artifact(self.foundation.index, original_receipt_id)["id"] = (
+            self.receipt_id
+        )
+        for obligation in self.foundation.index["obligations"]:
+            if obligation["obligation_class"] == "Roadmap":
+                obligation["receipt_artifact_id"] = self.receipt_id
         self.report_relative = f"artifacts/{self.receipt_id}.qualification-receipt.json"
         self.transcript_relative = f"qualification-transcripts/{self.receipt_id}.json"
+        self.completion_relative = "completed-work.json"
         self._install_receipt_paths()
         self.base_index = copy.deepcopy(self.foundation.index)
         self.base_transcript = self._make_transcript(self.base_index)
+        self.base_completion = self._make_completion(
+            self.base_index, self.base_transcript["gates"]
+        )
+        self._bind_completion(self.base_transcript, self.base_completion)
+        self.base_transcript["qualification_id_sha256"] = (
+            self.validator.qualification_identity(self.base_transcript)
+        )
         self.base_report = self._make_report(self.base_index, self.base_transcript)
         self.index: dict[str, Any] = {}
         self.transcript: dict[str, Any] = {}
         self.report: dict[str, Any] = {}
+        self.completion: dict[str, Any] = {}
         self.context: dict[str, Any] = {}
+        self.plan_mutation: Callable[[dict[str, Any]], None] | None = None
         self.reset()
 
     def _artifact(self, index: dict[str, Any], identifier: str) -> dict[str, Any]:
@@ -202,8 +221,13 @@ class Fixture:
             {
                 "authority": "qualification-measured-binary",
                 "id": "runtime.python",
-                "identity_sha256": digest_bytes(b"synthetic python binary identity"),
-                "version": "3.13.7",
+                "identity_sha256": digest_bytes(
+                    Path(sys.executable).resolve(strict=True).read_bytes()
+                ),
+                "version": (
+                    f"{sys.version_info.major}.{sys.version_info.minor}."
+                    f"{sys.version_info.micro}"
+                ),
             },
             {
                 "authority": "checker-owned-source",
@@ -254,6 +278,15 @@ class Fixture:
 
     def _gates(self, index: dict[str, Any]) -> list[dict[str, Any]]:
         rosters = self.validator.expected_gate_rosters(index, self.receipt_id)
+        candidate = self._index_projection(index)
+        candidate_sha256 = digest_bytes(canonical_bytes(candidate))
+        checker_sha256 = digest_bytes((self.ferric / CHECKER_RELATIVE).read_bytes())
+        tools = self._tools(self._validators())
+        python_sha256 = next(
+            record["identity_sha256"]
+            for record in tools
+            if record["id"] == "runtime.python"
+        )
         result = []
         for number, identifier in enumerate(self.validator.GATE_IDS, start=1):
             artifacts, bindings = rosters[identifier]
@@ -261,13 +294,22 @@ class Fixture:
                 {
                     "artifact_ids": artifacts,
                     "binding_ids": bindings,
-                    "command_sha256": digest_bytes(
-                        f"synthetic {identifier} command".encode("ascii")
+                    "command_sha256": canonical_digest(
+                        {
+                            "candidate_sha256": candidate_sha256,
+                            "checker_sha256": checker_sha256,
+                            "gate_id": identifier,
+                            "protocol": self.validator.PRE_RECEIPT_PROTOCOL,
+                            "runtime_python_sha256": python_sha256,
+                        }
                     ),
                     "finished_at_utc": f"2026-08-21T00:{number:02d}:30Z",
                     "id": identifier,
                     "output_sha256": digest_bytes(
-                        f"synthetic {identifier} output".encode("ascii")
+                        (
+                            f"PASS: {self.validator.PRE_RECEIPT_PROTOCOL} "
+                            f"gate={identifier} candidate_sha256={candidate_sha256}\n"
+                        ).encode("ascii")
                     ),
                     "result": "pass",
                     "started_at_utc": f"2026-08-21T00:{number:02d}:00Z",
@@ -284,6 +326,226 @@ class Fixture:
                 if record["id"] != self.receipt_id
             ],
         }
+
+    def _plan_queue(
+        self, index: dict[str, Any]
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        plan_index = getattr(self, "base_index", index)
+        candidate = self._index_projection(plan_index)
+        artifact_by_id = {record["id"]: record for record in candidate["artifacts"]}
+        binding_slots = []
+        for binding in candidate["evidence_bindings"]:
+            artifact = artifact_by_id[binding["artifact_id"]]
+            binding_slots.append(
+                {
+                    "binding": copy.deepcopy(binding),
+                    "expected_artifact": {
+                        key: artifact[key] for key in ("id", "kind", "path")
+                    },
+                    "foundation_selectors": [],
+                    "producer": {
+                        "availability": "available",
+                        "command": ["synthetic-source-bound-producer", binding["id"]],
+                        "role": "synthetic-policy-producer",
+                    },
+                    "state": "missing",
+                }
+            )
+        closure_by_id = {
+            record["artifact_id"]: record
+            for record in self._source_closure_roster(candidate)
+        }
+        measure_source = self.ferric / "proofs/m1/evidence/measure-source-closure.py"
+        source_closures = []
+        for source in candidate["sources"]:
+            artifact = artifact_by_id[source["source_closure_artifact_id"]]
+            repository = source["repository"]
+            source_closures.append(
+                {
+                    "artifact": copy.deepcopy(artifact),
+                    "file_count": closure_by_id[artifact["id"]]["file_count"],
+                    "producer": {
+                        "command": [
+                            "python3",
+                            "-I",
+                            "proofs/m1/evidence/measure-source-closure.py",
+                            repository.upper() + "_REPO",
+                            artifact["path"],
+                        ],
+                        "source_sha256": digest_bytes(measure_source.read_bytes()),
+                    },
+                }
+            )
+        validators = [
+            {key: value for key, value in record.items() if key != "availability"}
+            for record in self._validators()
+        ]
+        roadmap_bindings = sum(
+            record["obligation_class"] == "Roadmap"
+            for record in candidate["evidence_bindings"]
+        )
+        requirements = json.loads(
+            (self.ferric / "proofs/M1_REQUIREMENTS.json").read_text(encoding="ascii")
+        )
+        plan = {
+            "allocation_sha256": self.validator.ALLOCATION_SHA256,
+            "authority": self.validator.PLAN_AUTHORITY,
+            "binding_slots": binding_slots,
+            "counts": {
+                "assurance_binding_slots": len(candidate["evidence_bindings"])
+                - roadmap_bindings,
+                "binding_slots": len(candidate["evidence_bindings"]),
+                "obligation_slots": len(candidate["obligations"]),
+                "path_resolutions": len(candidate["path_resolutions"]),
+                "roadmap_binding_slots": roadmap_bindings,
+                "source_closures": len(source_closures),
+                "trusted_validators": len(validators),
+            },
+            "fe2o3_pins": {
+                "direct": [],
+                "direct_count": 0,
+                "resolved": [],
+                "resolved_count": 0,
+                "revision": next(
+                    record["commit"]
+                    for record in candidate["sources"]
+                    if record["repository"] == "fe2o3"
+                ),
+                "root_dependencies": [],
+                "root_dependency_count": 0,
+            },
+            "finalization": {
+                "completion_transition_output": self.completion_relative,
+                "evidence_index_output": "requires-authenticated-work-queue-completion-v1",
+                "qualification_receipt_output": "requires-authenticated-work-queue-completion-v1",
+                "required_validator": "proofs/check-m1-evidence-index.py",
+            },
+            "format": self.validator.PLAN_FORMAT,
+            "nonclaim": self.validator.PLAN_NONCLAIM,
+            "obligation_slots": self.validator.expected_obligation_slots(candidate),
+            "path_resolutions": copy.deepcopy(candidate["path_resolutions"]),
+            "planner_sha256": digest_bytes(
+                (self.ferric / "proofs/m1-qualification/planner.py").read_bytes()
+            ),
+            "requirements": {
+                "format": requirements["format"],
+                "path": "proofs/M1_REQUIREMENTS.json",
+                "sha256": digest_bytes(
+                    (self.ferric / "proofs/M1_REQUIREMENTS.json").read_bytes()
+                ),
+            },
+            "source_closures": source_closures,
+            "sources": copy.deepcopy(candidate["sources"]),
+            "target": self.validator.TARGET,
+            "trusted_validators": validators,
+        }
+        binding_work = [
+            {
+                "expected_artifact": slot["expected_artifact"],
+                "id": slot["binding"]["id"].replace("binding.", "work.", 1),
+                "producer": slot["producer"],
+                "state": "missing",
+                "subject": f"binding:{slot['binding']['id']}",
+            }
+            for slot in binding_slots
+        ]
+        tcb_work = []
+        for record in candidate["tcb"]:
+            artifact = artifact_by_id[record["artifact_id"]]
+            tcb_work.append(
+                {
+                    "expected_artifact": {
+                        key: artifact[key] for key in ("id", "kind", "path")
+                    },
+                    "id": f"work.{record['id']}",
+                    "producer": {
+                        "availability": "available",
+                        "command": [
+                            "python3",
+                            "-I",
+                            "proofs/m1-qualification/produce-tcb-report.py",
+                            "FERRIC_REPO",
+                            "FE2O3_REPO",
+                            "PLAN_DIR",
+                            record["id"],
+                        ],
+                        "role": f"ferric-{record['kind'].lower()}-tcb-reporter",
+                    },
+                    "state": "missing",
+                    "subject": f"tcb:{record['id']}",
+                }
+            )
+        receipt_work = {
+            "expected_artifact": {
+                "id": self.receipt_id,
+                "kind": "QualificationReceipt",
+                "path": self.report_relative,
+            },
+            "id": "work.qualification.m1",
+            "producer": {
+                "availability": "available",
+                "command": [
+                    "python3",
+                    "-I",
+                    "proofs/m1-qualification/produce-qualification-receipt.py",
+                    "FERRIC_REPO",
+                    "FE2O3_REPO",
+                    "PLAN_DIR",
+                    "QUALIFICATION_RUN_ROOT",
+                ],
+                "role": "ferric-m1-qualification-intake-finalizer",
+            },
+            "state": "blocked-on-all-validated-evidence",
+            "subject": "qualification:M1",
+        }
+        items = sorted(
+            [*binding_work, *tcb_work, receipt_work], key=lambda record: record["id"]
+        )
+        item_ids = [record["id"] for record in items]
+        queue = {
+            "authority": self.validator.PLAN_AUTHORITY,
+            "counts": {
+                "available_producer_items": len(item_ids),
+                "missing_items": len(item_ids),
+                "missing_producer_items": 0,
+            },
+            "format": self.validator.WORK_FORMAT,
+            "items": items,
+            "nonclaim": self.validator.PLAN_NONCLAIM,
+            "plan_path": "plan.json",
+            "plan_sha256": digest_bytes(canonical_bytes(plan)),
+            "status": "INCOMPLETE",
+        }
+        return plan, queue
+
+    def _make_completion(
+        self, index: dict[str, Any], gates: list[dict[str, Any]]
+    ) -> dict[str, Any]:
+        plan, queue = self._plan_queue(index)
+        item_ids = [record["id"] for record in queue["items"]]
+        return {
+            "authority": self.validator.COMPLETION_AUTHORITY,
+            "candidate_index_sha256": digest_bytes(
+                canonical_bytes(self._index_projection(index))
+            ),
+            "completed_item_ids": item_ids,
+            "counts": {"completed_items": len(item_ids), "missing_items": 0},
+            "format": self.validator.COMPLETION_FORMAT,
+            "gate_roster_sha256": canonical_digest(gates),
+            "plan_path": "plan.json",
+            "plan_sha256": digest_bytes(canonical_bytes(plan)),
+            "queue_path": "missing-work.json",
+            "queue_sha256": digest_bytes(canonical_bytes(queue)),
+            "status": "COMPLETE",
+        }
+
+    def _bind_completion(
+        self, transcript: dict[str, Any], completion: dict[str, Any]
+    ) -> None:
+        raw = canonical_bytes(completion)
+        transcript["work_queue_completion_relative_path"] = self.completion_relative
+        transcript["work_queue_completion_sha256"] = digest_bytes(raw)
+        transcript["work_queue_completion_size_bytes"] = len(raw)
 
     def _make_transcript(self, index: dict[str, Any]) -> dict[str, Any]:
         validators = self._validators()
@@ -322,6 +584,9 @@ class Fixture:
             "tool_roster_sha256": canonical_digest(tools),
             "tools": tools,
             "validator_roster_sha256": canonical_digest(validators),
+            "work_queue_completion_relative_path": self.completion_relative,
+            "work_queue_completion_sha256": digest_bytes(b"pending completion"),
+            "work_queue_completion_size_bytes": 1,
         }
         transcript["qualification_id_sha256"] = self.validator.qualification_identity(
             transcript
@@ -377,12 +642,21 @@ class Fixture:
             "validator_count": len(validators),
             "validator_roster": validators,
             "validator_roster_sha256": canonical_digest(validators),
+            "work_queue_completion_relative_path": transcript[
+                "work_queue_completion_relative_path"
+            ],
+            "work_queue_completion_sha256": transcript["work_queue_completion_sha256"],
+            "work_queue_completion_size_bytes": transcript[
+                "work_queue_completion_size_bytes"
+            ],
         }
 
     def reset(self) -> None:
         self.index = copy.deepcopy(self.base_index)
         self.transcript = copy.deepcopy(self.base_transcript)
         self.report = copy.deepcopy(self.base_report)
+        self.completion = copy.deepcopy(self.base_completion)
+        self.plan_mutation = None
         self.materialize()
 
     def seal_transcript(self) -> None:
@@ -398,17 +672,43 @@ class Fixture:
         self.transcript["gate_roster_sha256"] = canonical_digest(
             self.transcript["gates"]
         )
+        self.completion = self._make_completion(self.index, self.transcript["gates"])
+        self.seal_completion()
+
+    def seal_completion(self) -> None:
+        self._bind_completion(self.transcript, self.completion)
         self.transcript["qualification_id_sha256"] = (
             self.validator.qualification_identity(self.transcript)
         )
         self.report["qualification_id_sha256"] = self.transcript[
             "qualification_id_sha256"
         ]
+        self.report["work_queue_completion_relative_path"] = self.transcript[
+            "work_queue_completion_relative_path"
+        ]
+        self.report["work_queue_completion_sha256"] = self.transcript[
+            "work_queue_completion_sha256"
+        ]
+        self.report["work_queue_completion_size_bytes"] = self.transcript[
+            "work_queue_completion_size_bytes"
+        ]
 
     def materialize(
         self, *, canonical_report: bool = True, canonical_transcript: bool = True
     ) -> None:
         self.foundation.reset_evidence()
+        plan, queue = self._plan_queue(self.index)
+        if self.plan_mutation is not None:
+            self.plan_mutation(plan)
+            queue["plan_sha256"] = digest_bytes(canonical_bytes(plan))
+            self.completion["plan_sha256"] = queue["plan_sha256"]
+            self.completion["queue_sha256"] = digest_bytes(canonical_bytes(queue))
+            self.seal_completion()
+        (self.evidence / "plan.json").write_bytes(canonical_bytes(plan))
+        (self.evidence / "missing-work.json").write_bytes(canonical_bytes(queue))
+        (self.evidence / self.completion_relative).write_bytes(
+            canonical_bytes(self.completion)
+        )
         transcript_raw = canonical_bytes(self.transcript)
         if not canonical_transcript:
             transcript_raw = json.dumps(self.transcript).encode("ascii")
@@ -726,6 +1026,44 @@ def main() -> None:
             "unknown receipt field",
             "fields drifted",
             lambda item: item.report.__setitem__("promoted_authority", True),
+        )
+        add(
+            "partial work completion",
+            "completed-work transition is partial, replayed, or inconsistent",
+            lambda item: (
+                item.completion["completed_item_ids"].pop(),
+                item.seal_completion(),
+            ),
+        )
+        add(
+            "weakened work completion status",
+            "completed-work transition is partial, replayed, or inconsistent",
+            lambda item: (
+                item.completion.__setitem__("status", "INCOMPLETE"),
+                item.seal_completion(),
+            ),
+        )
+        add(
+            "replayed work completion candidate",
+            "completed-work transition is partial, replayed, or inconsistent",
+            lambda item: (
+                item.completion.__setitem__(
+                    "candidate_index_sha256",
+                    digest_bytes(b"replayed candidate index"),
+                ),
+                item.seal_completion(),
+            ),
+        )
+        add(
+            "nested plan source replay",
+            "plan nested identity differs from the qualified closure",
+            lambda item: setattr(
+                item,
+                "plan_mutation",
+                lambda plan: plan["sources"][0].__setitem__(
+                    "commit", digest_bytes(b"replayed plan source")[:40]
+                ),
+            ),
         )
 
         for name, marker, mutate in cases:

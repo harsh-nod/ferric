@@ -44,7 +44,7 @@ jobs:
         env:
           VERUS_ROOT: ${{ runner.temp }}/verus/verus-x86-linux
           FERRIC_RECEIPT_DIR: ${{ runner.temp }}/ferric-receipt
-          FERRIC_PROOF_TIMEOUT_SECONDS: "600"
+          FERRIC_PROOF_TIMEOUT_SECONDS: "3600"
         run: proofs/qualify-release.sh
 
       - name: Retain qualification receipt and artifacts

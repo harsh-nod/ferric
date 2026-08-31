@@ -12,6 +12,19 @@ import sys
 from pathlib import Path
 
 COMMIT = "b677dd5a766f25f56e9aa1e32621aa4e53304b47"
+QUALITY_GATES = (
+    "fmt",
+    "clippy",
+    "clippy-all-features",
+    "test-debug",
+    "test-debug-all-features",
+    "test-release",
+    "test-release-all-features",
+    "source-closure-policy",
+    "m1-benchmark-policy",
+    "m1-reference-policy",
+    "m1-r29-differential-evidence",
+)
 COMMAND = (
     "for each compiler-rooted package in dependency order: cargo-verus build -p PACKAGE "
     "--locked --release --target-dir FRESH --fwd-verus-args-to roots -j 1 --lib -- "
@@ -64,17 +77,26 @@ def tool_output(arguments: list[str]) -> str:
 
 
 def main() -> None:
-    if len(sys.argv) != 16:
+    if len(sys.argv) != 17:
         print(
             f"usage: {sys.argv[0]} REPO VERUS_ROOT TARGET METADATA TRANSCRIPT COUNTS "
             "CLOSURE_TRANSCRIPT NEGATIVE_DIR SOURCE_RECORDS SOURCE_GATE RUNTIME_TESTS "
-            "PROPERTY_BINDER PROPERTY_EVIDENCE PROPERTY_CONTRACT RECEIPT_DIR",
+            "PROPERTY_BINDER PROPERTY_EVIDENCE PROPERTY_CONTRACT PROOF_TIMEOUT_SECONDS "
+            "RECEIPT_DIR",
             file=sys.stderr,
         )
         raise SystemExit(2)
-    repo, verus_root, target, metadata_path, transcript, counts_path, closure_log, negative_dir, source_records_input, source_gate, runtime_tests, property_binder, property_evidence, property_contract, receipt_dir = map(
-        Path, sys.argv[1:]
+    *path_arguments, proof_timeout_text, receipt_argument = sys.argv[1:]
+    repo, verus_root, target, metadata_path, transcript, counts_path, closure_log, negative_dir, source_records_input, source_gate, runtime_tests, property_binder, property_evidence, property_contract = map(
+        Path, path_arguments
     )
+    receipt_dir = Path(receipt_argument)
+    try:
+        proof_timeout_seconds = int(proof_timeout_text)
+    except ValueError:
+        fail("proof timeout is malformed")
+    if not 1 <= proof_timeout_seconds <= 3600 or str(proof_timeout_seconds) != proof_timeout_text:
+        fail("proof timeout is outside the admitted range")
     if receipt_dir.exists() and any(receipt_dir.iterdir()):
         fail(f"receipt directory is not empty: {receipt_dir}")
     receipt_dir.mkdir(parents=True, exist_ok=True)
@@ -282,18 +304,20 @@ def main() -> None:
         f"cargo-metadata-sha256={digest(metadata_path)}",
         f"source-closure-sha256={digest(source_records)}",
         f"proof-transcript-sha256={digest(transcript)}",
+        f"proof-counts-sha256={digest(counts_path)}",
+        f"verus-closure-transcript-sha256={digest(closure_log)}",
         f"runtime-tests-sha256={digest(receipt_dir / 'runtime-tests.transcript')}",
         f"m0-property-evidence-sha256={digest(receipt_dir / 'm0-property-evidence.records')}",
         f"m0-property-contract-sha256={digest(receipt_dir / 'm0-property-contract.records')}",
         f"verification-queries={verification_queries}",
         f"direct-verified-bodies={direct_total}",
+        f"proof-timeout-seconds={proof_timeout_seconds}",
         f"opted-packages={','.join(package['name'] for package in opted_packages)}",
         f"rustc={tool_output([str(rust_tools['rustc']), '-vV'])}",
         f"cargo={tool_output([str(rust_tools['cargo']), '-V'])}",
         f"rustfmt={tool_output([str(rust_tools['rustfmt']), '--version'])}",
         f"clippy={tool_output([str(rust_tools['clippy-driver']), '--version'])}",
-        "quality-gates=fmt,clippy,test-debug,test-release,source-closure-policy,"
-        "m1-benchmark-policy,m1-reference-policy",
+        f"quality-gates={','.join(QUALITY_GATES)}",
         "claim-boundary=verified Rust source bodies plus default Verus erasure checks",
         "nonclaim=rustc linker runtime GPU execution and machine-code refinement remain outside this proof",
         "qualification-host-tcb=ambient Rust/Cargo, Python, POSIX shell/coreutils, OS, filesystem, and process supervision are contracted",

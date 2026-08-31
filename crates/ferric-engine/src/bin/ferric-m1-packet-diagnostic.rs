@@ -1,5 +1,7 @@
 //! One-packet hardware diagnostics for the Ferric M1 service queue path.
 
+mod ferric_m1_k7_queue_diagnostic;
+
 use fe2o3_kfd::{
     CheckedGfx942XnackMinusDevice, DeviceSelector, Gfx942BarrierProbeFailureV1,
     Gfx942BarrierProbePollBoundV1, OpenedKfd,
@@ -11,6 +13,12 @@ use ferric_build::{
 use ferric_engine::{
     execute_m1_k1_target_s1t128_packet_v1, execute_m1_k7_s1k4_packet_v1,
     reopen_persisted_m1_kernel_artifacts_v1, M1_PACKET_DIAGNOSTIC_RING_BYTES_V1,
+};
+use ferric_m1_k7_queue_diagnostic::{
+    execute_independent_pair, execute_independent_pair_shared_inputs,
+    execute_independent_pair_shared_inputs_with_one_unreferenced,
+    execute_independent_pair_shared_inputs_with_unreferenced, execute_ordered_pair,
+    execute_ordered_single, execute_rearm,
 };
 use ferric_spec::{
     Qwen3ModelRole, Qwen3TensorKind, QWEN3_NO_LAYER, QWEN3_TARGET_TENSOR_DATA_BYTES,
@@ -27,7 +35,7 @@ use std::process::ExitCode;
 type DiagnosticResult<T> = Result<T, String>;
 
 const BARRIER_COMPLETION_POLL_LIMIT: u32 = 1_000;
-const USAGE: &str = "usage: ferric-m1-packet-diagnostic queue-barrier GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic queue-barrier-executable GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic queue-barrier-userptr GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k1-embedding PREPACKED-SNAPSHOT KERNEL-ARTIFACTS GPU-UNIQUE-ID";
+const USAGE: &str = "usage: ferric-m1-packet-diagnostic queue-barrier GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic queue-barrier-executable GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic queue-barrier-userptr GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-ordered-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-rearm-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-two-ordered-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-two-independent-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-two-shared-input-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-two-shared-input-one-extra-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k7-two-shared-input-extra-roster-smoke KERNEL-ARTIFACTS GPU-UNIQUE-ID\n       ferric-m1-packet-diagnostic k1-embedding PREPACKED-SNAPSHOT KERNEL-ARTIFACTS GPU-UNIQUE-ID";
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum QueueBarrierRing {
@@ -43,6 +51,34 @@ enum Command {
         ring: QueueBarrierRing,
     },
     K7Smoke {
+        artifact_root: OsString,
+        gpu_unique_id: u64,
+    },
+    K7OrderedSmoke {
+        artifact_root: OsString,
+        gpu_unique_id: u64,
+    },
+    K7RearmSmoke {
+        artifact_root: OsString,
+        gpu_unique_id: u64,
+    },
+    K7TwoOrderedSmoke {
+        artifact_root: OsString,
+        gpu_unique_id: u64,
+    },
+    K7TwoIndependentSmoke {
+        artifact_root: OsString,
+        gpu_unique_id: u64,
+    },
+    K7TwoSharedInputSmoke {
+        artifact_root: OsString,
+        gpu_unique_id: u64,
+    },
+    K7TwoSharedInputOneExtraSmoke {
+        artifact_root: OsString,
+        gpu_unique_id: u64,
+    },
+    K7TwoSharedInputExtraRosterSmoke {
         artifact_root: OsString,
         gpu_unique_id: u64,
     },
@@ -92,6 +128,50 @@ fn parse_command(arguments: Vec<OsString>) -> DiagnosticResult<Command> {
             artifact_root: artifact_root.clone(),
             gpu_unique_id: parse_gpu_unique_id(gpu_unique_id)?,
         }),
+        [mode, artifact_root, gpu_unique_id] if mode == "k7-ordered-smoke" => {
+            Ok(Command::K7OrderedSmoke {
+                artifact_root: artifact_root.clone(),
+                gpu_unique_id: parse_gpu_unique_id(gpu_unique_id)?,
+            })
+        }
+        [mode, artifact_root, gpu_unique_id] if mode == "k7-rearm-smoke" => {
+            Ok(Command::K7RearmSmoke {
+                artifact_root: artifact_root.clone(),
+                gpu_unique_id: parse_gpu_unique_id(gpu_unique_id)?,
+            })
+        }
+        [mode, artifact_root, gpu_unique_id] if mode == "k7-two-ordered-smoke" => {
+            Ok(Command::K7TwoOrderedSmoke {
+                artifact_root: artifact_root.clone(),
+                gpu_unique_id: parse_gpu_unique_id(gpu_unique_id)?,
+            })
+        }
+        [mode, artifact_root, gpu_unique_id] if mode == "k7-two-independent-smoke" => {
+            Ok(Command::K7TwoIndependentSmoke {
+                artifact_root: artifact_root.clone(),
+                gpu_unique_id: parse_gpu_unique_id(gpu_unique_id)?,
+            })
+        }
+        [mode, artifact_root, gpu_unique_id] if mode == "k7-two-shared-input-smoke" => {
+            Ok(Command::K7TwoSharedInputSmoke {
+                artifact_root: artifact_root.clone(),
+                gpu_unique_id: parse_gpu_unique_id(gpu_unique_id)?,
+            })
+        }
+        [mode, artifact_root, gpu_unique_id] if mode == "k7-two-shared-input-one-extra-smoke" => {
+            Ok(Command::K7TwoSharedInputOneExtraSmoke {
+                artifact_root: artifact_root.clone(),
+                gpu_unique_id: parse_gpu_unique_id(gpu_unique_id)?,
+            })
+        }
+        [mode, artifact_root, gpu_unique_id]
+            if mode == "k7-two-shared-input-extra-roster-smoke" =>
+        {
+            Ok(Command::K7TwoSharedInputExtraRosterSmoke {
+                artifact_root: artifact_root.clone(),
+                gpu_unique_id: parse_gpu_unique_id(gpu_unique_id)?,
+            })
+        }
         [mode, prepacked_root, artifact_root, gpu_unique_id] if mode == "k1-embedding" => {
             Ok(Command::K1Embedding {
                 prepacked_root: prepacked_root.clone(),
@@ -139,6 +219,156 @@ fn execute(command: Command) -> DiagnosticResult<()> {
                 .with_content_bound_program_catalog_v1(|catalog| {
                     let mut report = |line| println!("{line}");
                     execute_m1_k7_s1k4_packet_v1(checked, catalog, &mut report)
+                })
+                .map_err(|error| format!("cannot bind content-bound program catalog: {error}"))??;
+            Ok(())
+        }
+        Command::K7OrderedSmoke {
+            artifact_root,
+            gpu_unique_id,
+        } => {
+            println!("mode=k7-ordered-smoke");
+            let artifacts = reopen_persisted_m1_kernel_artifacts_v1(Path::new(&artifact_root))
+                .map_err(|error| {
+                    format!("cannot authenticate persisted kernel artifacts: {error}")
+                })?;
+            let checked = bind_device(gpu_unique_id)?;
+            artifacts
+                .with_content_bound_program_catalog_v1(|catalog| {
+                    let mut report = |line| println!("{line}");
+                    execute_ordered_single(checked, catalog, &mut report)
+                })
+                .map_err(|error| format!("cannot bind content-bound program catalog: {error}"))??;
+            Ok(())
+        }
+        Command::K7RearmSmoke {
+            artifact_root,
+            gpu_unique_id,
+        } => {
+            println!("mode=k7-rearm-smoke");
+            let first_artifacts = reopen_persisted_m1_kernel_artifacts_v1(Path::new(
+                &artifact_root,
+            ))
+            .map_err(|error| {
+                format!("cannot authenticate first persisted kernel artifacts: {error}")
+            })?;
+            let second_artifacts = reopen_persisted_m1_kernel_artifacts_v1(Path::new(
+                &artifact_root,
+            ))
+            .map_err(|error| {
+                format!("cannot authenticate second persisted kernel artifacts: {error}")
+            })?;
+            let checked = bind_device(gpu_unique_id)?;
+            first_artifacts
+                .with_content_bound_program_catalog_v1(|first_catalog| {
+                    second_artifacts
+                        .with_content_bound_program_catalog_v1(|second_catalog| {
+                            let mut report = |line| println!("{line}");
+                            execute_rearm(checked, first_catalog, second_catalog, &mut report)
+                        })
+                        .map_err(|error| {
+                            format!("cannot bind second content-bound program catalog: {error}")
+                        })?
+                })
+                .map_err(|error| {
+                    format!("cannot bind first content-bound program catalog: {error}")
+                })??;
+            Ok(())
+        }
+        Command::K7TwoOrderedSmoke {
+            artifact_root,
+            gpu_unique_id,
+        } => {
+            println!("mode=k7-two-ordered-smoke");
+            let artifacts = reopen_persisted_m1_kernel_artifacts_v1(Path::new(&artifact_root))
+                .map_err(|error| {
+                    format!("cannot authenticate persisted kernel artifacts: {error}")
+                })?;
+            let checked = bind_device(gpu_unique_id)?;
+            artifacts
+                .with_content_bound_program_catalog_v1(|catalog| {
+                    let mut report = |line| println!("{line}");
+                    execute_ordered_pair(checked, catalog, &mut report)
+                })
+                .map_err(|error| format!("cannot bind content-bound program catalog: {error}"))??;
+            Ok(())
+        }
+        Command::K7TwoIndependentSmoke {
+            artifact_root,
+            gpu_unique_id,
+        } => {
+            println!("mode=k7-two-independent-smoke");
+            let artifacts = reopen_persisted_m1_kernel_artifacts_v1(Path::new(&artifact_root))
+                .map_err(|error| {
+                    format!("cannot authenticate persisted kernel artifacts: {error}")
+                })?;
+            let checked = bind_device(gpu_unique_id)?;
+            artifacts
+                .with_content_bound_program_catalog_v1(|catalog| {
+                    let mut report = |line| println!("{line}");
+                    execute_independent_pair(checked, catalog, &mut report)
+                })
+                .map_err(|error| format!("cannot bind content-bound program catalog: {error}"))??;
+            Ok(())
+        }
+        Command::K7TwoSharedInputSmoke {
+            artifact_root,
+            gpu_unique_id,
+        } => {
+            println!("mode=k7-two-shared-input-smoke");
+            let artifacts = reopen_persisted_m1_kernel_artifacts_v1(Path::new(&artifact_root))
+                .map_err(|error| {
+                    format!("cannot authenticate persisted kernel artifacts: {error}")
+                })?;
+            let checked = bind_device(gpu_unique_id)?;
+            artifacts
+                .with_content_bound_program_catalog_v1(|catalog| {
+                    let mut report = |line| println!("{line}");
+                    execute_independent_pair_shared_inputs(checked, catalog, &mut report)
+                })
+                .map_err(|error| format!("cannot bind content-bound program catalog: {error}"))??;
+            Ok(())
+        }
+        Command::K7TwoSharedInputOneExtraSmoke {
+            artifact_root,
+            gpu_unique_id,
+        } => {
+            println!("mode=k7-two-shared-input-one-extra-smoke");
+            let artifacts = reopen_persisted_m1_kernel_artifacts_v1(Path::new(&artifact_root))
+                .map_err(|error| {
+                    format!("cannot authenticate persisted kernel artifacts: {error}")
+                })?;
+            let checked = bind_device(gpu_unique_id)?;
+            artifacts
+                .with_content_bound_program_catalog_v1(|catalog| {
+                    let mut report = |line| println!("{line}");
+                    execute_independent_pair_shared_inputs_with_one_unreferenced(
+                        checked,
+                        catalog,
+                        &mut report,
+                    )
+                })
+                .map_err(|error| format!("cannot bind content-bound program catalog: {error}"))??;
+            Ok(())
+        }
+        Command::K7TwoSharedInputExtraRosterSmoke {
+            artifact_root,
+            gpu_unique_id,
+        } => {
+            println!("mode=k7-two-shared-input-extra-roster-smoke");
+            let artifacts = reopen_persisted_m1_kernel_artifacts_v1(Path::new(&artifact_root))
+                .map_err(|error| {
+                    format!("cannot authenticate persisted kernel artifacts: {error}")
+                })?;
+            let checked = bind_device(gpu_unique_id)?;
+            artifacts
+                .with_content_bound_program_catalog_v1(|catalog| {
+                    let mut report = |line| println!("{line}");
+                    execute_independent_pair_shared_inputs_with_unreferenced(
+                        checked,
+                        catalog,
+                        &mut report,
+                    )
                 })
                 .map_err(|error| format!("cannot bind content-bound program catalog: {error}"))??;
             Ok(())
@@ -494,6 +724,83 @@ mod tests {
         ));
         assert!(matches!(
             parse_command(vec![
+                "k7-ordered-smoke".into(),
+                "artifacts".into(),
+                "8".into(),
+            ]),
+            Ok(Command::K7OrderedSmoke {
+                gpu_unique_id: 8,
+                ..
+            })
+        ));
+        assert!(matches!(
+            parse_command(vec![
+                "k7-rearm-smoke".into(),
+                "artifacts".into(),
+                "9".into(),
+            ]),
+            Ok(Command::K7RearmSmoke {
+                gpu_unique_id: 9,
+                ..
+            })
+        ));
+        assert!(matches!(
+            parse_command(vec![
+                "k7-two-ordered-smoke".into(),
+                "artifacts".into(),
+                "9".into(),
+            ]),
+            Ok(Command::K7TwoOrderedSmoke {
+                gpu_unique_id: 9,
+                ..
+            })
+        ));
+        assert!(matches!(
+            parse_command(vec![
+                "k7-two-independent-smoke".into(),
+                "artifacts".into(),
+                "10".into(),
+            ]),
+            Ok(Command::K7TwoIndependentSmoke {
+                gpu_unique_id: 10,
+                ..
+            })
+        ));
+        assert!(matches!(
+            parse_command(vec![
+                "k7-two-shared-input-smoke".into(),
+                "artifacts".into(),
+                "11".into(),
+            ]),
+            Ok(Command::K7TwoSharedInputSmoke {
+                gpu_unique_id: 11,
+                ..
+            })
+        ));
+        assert!(matches!(
+            parse_command(vec![
+                "k7-two-shared-input-extra-roster-smoke".into(),
+                "artifacts".into(),
+                "12".into(),
+            ]),
+            Ok(Command::K7TwoSharedInputExtraRosterSmoke {
+                gpu_unique_id: 12,
+                ..
+            })
+        ));
+        assert!(matches!(
+            parse_command(vec![
+                "k7-two-shared-input-one-extra-smoke".into(),
+                "artifacts".into(),
+                "13".into(),
+            ]),
+            Ok(Command::K7TwoSharedInputOneExtraSmoke {
+                gpu_unique_id: 13,
+                ..
+            })
+        ));
+        assert!(matches!(
+            parse_command(vec![
                 "k1-embedding".into(),
                 "snapshot".into(),
                 "artifacts".into(),
@@ -505,6 +812,24 @@ mod tests {
             })
         ));
         assert!(parse_command(vec!["k7-smoke".into()]).is_err());
+        assert!(parse_command(vec![
+            "k7-ordered-smoke".into(),
+            "artifacts".into(),
+            "8".into(),
+            "extra".into(),
+        ])
+        .is_err());
+        assert!(parse_command(vec![
+            "k7-rearm-smoke".into(),
+            "artifacts".into(),
+            "8".into(),
+            "extra".into(),
+        ])
+        .is_err());
+        assert!(parse_command(vec!["k7-two-ordered-smoke".into(), "artifacts".into(),]).is_err());
+        assert!(
+            parse_command(vec!["k7-two-independent-smoke".into(), "artifacts".into(),]).is_err()
+        );
         let barrier_bound = Gfx942BarrierProbePollBoundV1::new(BARRIER_COMPLETION_POLL_LIMIT)
             .expect("diagnostic poll count must remain within FE2O3's typed bound");
         assert_eq!(barrier_bound.get(), BARRIER_COMPLETION_POLL_LIMIT);

@@ -8,26 +8,26 @@
     "canary": "ferric-physical-partial-capture",
     "cancellation": "ferric-physical-partial-capture",
     "exhaustion": "ferric-physical-partial-capture",
-    "fault-injection": "external-report",
+    "fault-transition": "ferric-physical-queue-transition-fault-capture",
     "rollback": "ferric-physical-partial-capture"
   },
-  "format": "FERRIC-M1-R30-COMPOSED-RUNNER-PROTOCOL-V5",
+  "format": "FERRIC-M1-R30-COMPOSED-RUNNER-PROTOCOL-V6",
   "hardware_claim": "none",
   "milestone": "M1",
-  "nonclaim": "Composition and identity-join protocol only. Fault injection remains externally reported and unvalidated because the public physical queue API supplies no production fault-injection authority. This protocol makes no hardware, correctness, evidence, qualification, m1.r30, or M1 closure claim.",
+  "nonclaim": "Composition and identity-join protocol for five physical partial captures only. The fault-transition source grants no native KFD/device fault or GPU-reset authority. This protocol makes no hardware, correctness, evidence, qualification, m1.r30, or M1 closure claim.",
   "obligation_id": "m1.r30",
   "required_case_roster": [
     "canary",
     "cancellation",
     "exhaustion",
-    "fault-injection",
+    "fault-transition",
     "rollback"
   ],
   "source_capture_formats": [
     "FERRIC-M1-R30-CANARY-PARTIAL-CAPTURE-V4",
     "FERRIC-M1-R30-PARTIAL-CAPTURE-V5",
     "FERRIC-M1-R30-EXHAUSTION-PARTIAL-CAPTURE-V1",
-    "FERRIC-M1-R30-FAULT-OBSERVATION-V1",
+    "FERRIC-M1-R30-FAULT-TRANSITION-PARTIAL-CAPTURE-V1",
     "FERRIC-M1-R30-ROLLBACK-PARTIAL-CAPTURE-V1"
   ],
   "status": "partial-non-evidence",

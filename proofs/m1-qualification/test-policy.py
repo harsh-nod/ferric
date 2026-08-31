@@ -174,8 +174,8 @@ def exercise_prepare_boundaries(repo: Path, fe2o3_source: Path, planner: Any) ->
             or queue.get("format") != planner.WORK_FORMAT
             or queue.get("status") != "INCOMPLETE"
             or queue.get("counts", {}).get("missing_items") != 358
-            or queue.get("counts", {}).get("available_producer_items") != 357
-            or queue.get("counts", {}).get("missing_producer_items") != 1
+            or queue.get("counts", {}).get("available_producer_items") != 358
+            or queue.get("counts", {}).get("missing_producer_items") != 0
         ):
             fail("M1 planner positive integration output weakened its nonclaim")
         if any(
@@ -922,14 +922,22 @@ def main() -> None:
         },
         "id": "work.qualification.m1",
         "producer": {
-            "availability": "missing",
-            "command": None,
-            "role": "external-m1-qualification-receipt-producer",
+            "availability": "available",
+            "command": [
+                "python3",
+                "-I",
+                "proofs/m1-qualification/produce-qualification-receipt.py",
+                "FERRIC_REPO",
+                "FE2O3_REPO",
+                "PLAN_DIR",
+                "QUALIFICATION_RUN_ROOT",
+            ],
+            "role": "ferric-m1-qualification-intake-finalizer",
         },
         "state": "blocked-on-all-validated-evidence",
         "subject": "qualification:M1",
     }:
-        fail("M1 planner qualification-receipt nonavailability drifted")
+        fail("M1 planner qualification-receipt producer drifted")
 
     kind_counts: dict[str, int] = {}
     for slot in first:

@@ -730,7 +730,7 @@ def source_races(root: Path, producer: Path) -> int:
             lambda: module.read_source_file(
                 file_source, file_source_fd, "file.bin", "race selected file"
             ),
-            "race selected file changed after it was authenticated",
+            "race selected file changed",
         )
     finally:
         module.open_regular_at = original

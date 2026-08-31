@@ -60,10 +60,10 @@ struct ReconstructedInputs {
 }
 
 pub(super) fn generate_inputs(arguments: &[OsString]) -> CaptureResult<()> {
-    let [source_root, prepacked_root, artifact_root, closure_path, policy_path, reference_implementation_path, reference_protocol_path, gpu_unique_id, output] =
+    let [prepacked_root, artifact_root, closure_path, policy_path, reference_implementation_path, reference_protocol_path, gpu_unique_id, output] =
         arguments
     else {
-        return Err("usage: ferric-m1-qualification-capture generate-inputs MODEL-SOURCE PREPACKED KERNEL-ARTIFACTS CLOSURE ACCEPTANCE-POLICY REFERENCE-IMPLEMENTATION REFERENCE-PROTOCOL GPU-ID OUTPUT".to_owned());
+        return Err("usage: ferric-m1-qualification-capture generate-inputs PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ACCEPTANCE-POLICY REFERENCE-IMPLEMENTATION REFERENCE-PROTOCOL GPU-ID OUTPUT".to_owned());
     };
     let gpu_unique_id = parse_gpu_unique_id(gpu_unique_id)?;
     let (closure_value, closure_bytes) =
@@ -80,7 +80,6 @@ pub(super) fn generate_inputs(arguments: &[OsString]) -> CaptureResult<()> {
         measure_regular_file(Path::new(reference_protocol_path), "reference protocol")?;
     let executable = current_executable_sha256()?;
     let reconstructed = reconstruct_inputs(
-        Path::new(source_root),
         Path::new(prepacked_root),
         Path::new(artifact_root),
         &closure,
@@ -97,7 +96,6 @@ pub(super) fn generate_inputs(arguments: &[OsString]) -> CaptureResult<()> {
     let plan = validate_protocol_documents(&documents, gpu_unique_id, &closure, &reconstructed)?;
     let invocation_map = invocation_map_bytes(
         Path::new(output),
-        Path::new(source_root),
         Path::new(prepacked_root),
         Path::new(artifact_root),
         gpu_unique_id,
@@ -108,10 +106,10 @@ pub(super) fn generate_inputs(arguments: &[OsString]) -> CaptureResult<()> {
 }
 
 pub(super) fn validate_inputs(arguments: &[OsString]) -> CaptureResult<()> {
-    let [source_root, prepacked_root, artifact_root, closure_path, policy_path, reference_implementation_path, reference_protocol_path, gpu_unique_id, input_bundle] =
+    let [prepacked_root, artifact_root, closure_path, policy_path, reference_implementation_path, reference_protocol_path, gpu_unique_id, input_bundle] =
         arguments
     else {
-        return Err("usage: ferric-m1-qualification-capture validate-inputs MODEL-SOURCE PREPACKED KERNEL-ARTIFACTS CLOSURE ACCEPTANCE-POLICY REFERENCE-IMPLEMENTATION REFERENCE-PROTOCOL GPU-ID INPUT-BUNDLE".to_owned());
+        return Err("usage: ferric-m1-qualification-capture validate-inputs PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ACCEPTANCE-POLICY REFERENCE-IMPLEMENTATION REFERENCE-PROTOCOL GPU-ID INPUT-BUNDLE".to_owned());
     };
     let gpu_unique_id = parse_gpu_unique_id(gpu_unique_id)?;
     require_published_roster(Path::new(input_bundle))?;
@@ -129,7 +127,6 @@ pub(super) fn validate_inputs(arguments: &[OsString]) -> CaptureResult<()> {
         measure_regular_file(Path::new(reference_protocol_path), "reference protocol")?;
     let executable = current_executable_sha256()?;
     let reconstructed = reconstruct_inputs(
-        Path::new(source_root),
         Path::new(prepacked_root),
         Path::new(artifact_root),
         &closure,
@@ -147,7 +144,6 @@ pub(super) fn validate_inputs(arguments: &[OsString]) -> CaptureResult<()> {
     let plan = validate_protocol_documents(&expected, gpu_unique_id, &closure, &reconstructed)?;
     invocation_map_bytes(
         Path::new(input_bundle),
-        Path::new(source_root),
         Path::new(prepacked_root),
         Path::new(artifact_root),
         gpu_unique_id,
@@ -182,7 +178,6 @@ fn measure_regular_file(path: &Path, description: &str) -> CaptureResult<String>
 }
 
 fn reconstruct_inputs(
-    source_root: &Path,
     prepacked_root: &Path,
     artifact_root: &Path,
     closure: &ClosureIdentities,
@@ -190,9 +185,8 @@ fn reconstruct_inputs(
     let artifacts = reopen_persisted_m1_kernel_artifacts_v1(artifact_root)
         .map_err(|error| format!("cannot authenticate persisted kernel artifacts: {error}"))?;
     let executable_catalog = artifacts.program_catalog_id();
-    let source = SecureDirectory::open(source_root, "model source root")?;
     let snapshot = SecureDirectory::open(prepacked_root, "prepacked snapshot root")?;
-    let model = load_model_inputs(&source, &snapshot)?;
+    let model = load_model_inputs(&snapshot)?;
     let runner_admission = model.authenticate()?;
     let deployment = *runner_admission.prepacked().deployment();
     let plan_catalog = build_authenticated_sequential_plan_catalog(runner_admission)
@@ -769,7 +763,6 @@ fn validate_acceptance_policy(value: &Value) -> CaptureResult<()> {
 
 fn invocation_map_bytes(
     bundle: &Path,
-    source_root: &Path,
     prepacked_root: &Path,
     artifact_root: &Path,
     gpu_unique_id: u64,
@@ -790,7 +783,6 @@ fn invocation_map_bytes(
                     path_string(&roster_path)?,
                     case.id,
                     path_string(&bundle.join(workload_path(&case.kind)))?,
-                    path_string(source_root)?,
                     path_string(prepacked_root)?,
                     path_string(artifact_root)?,
                     path_string(&closure_path)?,
@@ -988,7 +980,6 @@ mod tests {
 
         let invocation_bytes = invocation_map_bytes(
             Path::new("inputs.bundle"),
-            Path::new("model-source"),
             Path::new("prepacked"),
             Path::new("kernel-artifacts"),
             7,
@@ -999,6 +990,13 @@ mod tests {
         assert_eq!(invocation["format"], INVOCATION_FORMAT);
         assert_eq!(invocation["invocations"].as_array().unwrap().len(), 7);
         assert_eq!(
+            invocation["invocations"][0]["arguments"]
+                .as_array()
+                .unwrap()
+                .len(),
+            10
+        );
+        assert_eq!(
             invocation["invocations"][0]["arguments"][0],
             "inputs.bundle/plan.json"
         );
@@ -1006,6 +1004,7 @@ mod tests {
             invocation["invocations"][0]["arguments"][3],
             "inputs.bundle/decode-s1-c8192.001.workload.json"
         );
+        assert_eq!(invocation["invocations"][0]["arguments"][4], "prepacked");
         assert_eq!(invocation["plan_sha256"], plan.sha256());
 
         for case in &plan.cases {

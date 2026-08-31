@@ -4,7 +4,8 @@
 use crate::cache::{KvDetachedRequest, KvError, KvPool, MAX_REQUEST_SLOTS};
 use crate::epoch::ExactCompletion;
 use crate::scheduler::{
-    DispatchBatch, KvQuiescencePermit, M1ScheduledDispatchV1, Scheduler, SchedulerError,
+    DispatchBatch, KvQuiescencePermit, M1ExactDispatchErrorV1, M1ScheduledDispatchV1, Scheduler,
+    SchedulerError,
 };
 use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::scheduling::RequestState;
@@ -2226,6 +2227,47 @@ impl<const C: usize> Engine<C> {
         }
     }
 
+    /// Dispatches the exact caller-named Ready subset in caller-provided lane
+    /// order at the exact next epoch. Other Ready requests remain unchanged.
+    ///
+    /// Every caller-controlled rejection is decided before dispatch mutates
+    /// scheduler state, so a corrected call can retry the same epoch.
+    ///
+    /// # Errors
+    ///
+    /// Returns a fail-stop rejection, an epoch or roster validation error, or
+    /// an exact scheduler-capacity error before any dispatch state advances.
+    pub fn dispatch_m1_exact_ready(
+        &mut self,
+        expected_epoch: CompletionEpoch,
+        requests: &[RequestId],
+    ) -> (result: Result<M1ScheduledDispatchV1, M1ExactDispatchErrorV1>)
+        requires old(self).well_formed(),
+        ensures final(self).well_formed(),
+    {
+        reveal(Engine::well_formed);
+        if self.faulted {
+            return Err(M1ExactDispatchErrorV1::Faulted);
+        }
+        let ghost before_scheduler = self.scheduler;
+        let result = self.scheduler.dispatch_m1_exact_ready(expected_epoch, requests);
+        assert(self.identity_agreement()) by {
+            reveal(Engine::identity_agreement);
+            assert forall|slot: int| 0 <= slot < C implies {
+                &&& self.scheduler.slot_is_live_spec(slot)
+                    == self.kv.request_live_by_slot_spec(slot)
+                &&& self.scheduler.slot_generation_spec(slot)
+                    == self.kv.request_generation_by_slot_spec(slot)
+            } by {
+                assert(self.scheduler.slot_is_live_spec(slot)
+                    == before_scheduler.slot_is_live_spec(slot));
+                assert(self.scheduler.slot_generation_spec(slot)
+                    == before_scheduler.slot_generation_spec(slot));
+            }
+        }
+        result
+    }
+
     /// Applies one exact completion and its per-member accepted token counts.
     ///
     /// Caller-controlled length and acceptance bounds are checked before the
@@ -3055,7 +3097,7 @@ impl<const C: usize> Engine<C> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Engine, EngineError};
+    use super::{Engine, EngineError, M1ExactDispatchErrorV1};
     use crate::epoch::ExactCompletion;
     use ferric_spec::completion::CompletionEpoch;
     use ferric_spec::scheduling::RequestState;
@@ -3095,6 +3137,145 @@ mod tests {
         assert_eq!(scheduled.member(0), Some(first));
         assert_eq!(scheduled.member(1), Some(second));
         assert!(scheduled.members()[2..].iter().all(Option::is_none));
+    }
+
+    #[test]
+    fn m1_exact_dispatch_preserves_named_order_and_skips_other_ready_requests() {
+        let mut engine = Engine::<4>::new(32, 4, 64).unwrap();
+        let first = engine.admit().unwrap();
+        let skipped = engine.admit().unwrap();
+        let third = engine.admit().unwrap();
+        engine.append_tentative(first, 1).unwrap();
+        engine.append_tentative(skipped, 2).unwrap();
+        engine.append_tentative(third, 3).unwrap();
+
+        let scheduled = engine
+            .dispatch_m1_exact_ready(CompletionEpoch::new(1), &[third, first])
+            .unwrap();
+        assert_eq!(scheduled.epoch(), CompletionEpoch::new(1));
+        assert_eq!(scheduled.member_count(), 2);
+        assert_eq!(scheduled.member(0), Some(third));
+        assert_eq!(scheduled.member(1), Some(first));
+        assert_eq!(engine.state(third), Some(RequestState::InFlight));
+        assert_eq!(engine.state(first), Some(RequestState::InFlight));
+        assert_eq!(engine.state(skipped), Some(RequestState::Ready));
+        assert_eq!(engine.resident_tokens(skipped), Some(2));
+    }
+
+    #[test]
+    fn m1_exact_dispatch_accepts_a_strict_ready_subset() {
+        let mut engine = Engine::<4>::new(32, 4, 64).unwrap();
+        let first = engine.admit().unwrap();
+        let second = engine.admit().unwrap();
+
+        let first_batch = engine
+            .dispatch_m1_exact_ready(CompletionEpoch::new(1), &[first])
+            .unwrap();
+        assert_eq!(first_batch.members()[..1], [Some(first)]);
+        assert_eq!(engine.state(first), Some(RequestState::InFlight));
+        assert_eq!(engine.state(second), Some(RequestState::Ready));
+        assert_eq!(engine.free_pages(), 32);
+
+        let scheduled = engine
+            .dispatch_m1_exact_ready(CompletionEpoch::new(2), &[second])
+            .unwrap();
+        assert_eq!(scheduled.epoch(), CompletionEpoch::new(2));
+        assert_eq!(scheduled.members()[..1], [Some(second)]);
+    }
+
+    #[test]
+    fn m1_exact_dispatch_rejects_duplicates_without_mutation() {
+        let mut engine = Engine::<4>::new(32, 4, 64).unwrap();
+        let first = engine.admit().unwrap();
+        let second = engine.admit().unwrap();
+
+        assert_eq!(
+            engine.dispatch_m1_exact_ready(CompletionEpoch::new(1), &[first, first]),
+            Err(M1ExactDispatchErrorV1::DuplicateRequest {
+                first_lane: 0,
+                lane: 1,
+            })
+        );
+        assert_eq!(engine.state(first), Some(RequestState::Ready));
+        assert_eq!(engine.state(second), Some(RequestState::Ready));
+
+        let scheduled = engine
+            .dispatch_m1_exact_ready(CompletionEpoch::new(1), &[first, second])
+            .unwrap();
+        assert_eq!(scheduled.epoch(), CompletionEpoch::new(1));
+        assert_eq!(scheduled.members()[..2], [Some(first), Some(second)]);
+    }
+
+    #[test]
+    fn m1_exact_dispatch_rejects_missing_handles_without_mutation() {
+        let mut engine = Engine::<4>::new(32, 4, 64).unwrap();
+        let request = engine.admit().unwrap();
+        let missing = RequestId::new(3, 99);
+
+        assert_eq!(
+            engine.dispatch_m1_exact_ready(CompletionEpoch::new(1), &[missing]),
+            Err(M1ExactDispatchErrorV1::MissingRequest {
+                lane: 0,
+                request: missing,
+            })
+        );
+        assert_eq!(engine.state(request), Some(RequestState::Ready));
+        assert_eq!(engine.live_count(), 1);
+
+        let scheduled = engine
+            .dispatch_m1_exact_ready(CompletionEpoch::new(1), &[request])
+            .unwrap();
+        assert_eq!(scheduled.epoch(), CompletionEpoch::new(1));
+        assert_eq!(scheduled.member(0), Some(request));
+    }
+
+    #[test]
+    fn m1_exact_dispatch_rejects_non_ready_handles_without_mutation() {
+        let mut engine = Engine::<2>::new(16, 4, 32).unwrap();
+        let in_flight = engine.admit().unwrap();
+        let mut one = output::<1>();
+        let first_batch = engine.dispatch_ready(&mut one).unwrap().unwrap();
+        assert_eq!(first_batch.epoch(), CompletionEpoch::new(1));
+        let ready = engine.admit().unwrap();
+
+        assert_eq!(
+            engine.dispatch_m1_exact_ready(CompletionEpoch::new(2), &[in_flight]),
+            Err(M1ExactDispatchErrorV1::RequestNotReady {
+                lane: 0,
+                request: in_flight,
+                state: RequestState::InFlight,
+            })
+        );
+        assert_eq!(engine.state(in_flight), Some(RequestState::InFlight));
+        assert_eq!(engine.state(ready), Some(RequestState::Ready));
+
+        let scheduled = engine
+            .dispatch_m1_exact_ready(CompletionEpoch::new(2), &[ready])
+            .unwrap();
+        assert_eq!(scheduled.epoch(), CompletionEpoch::new(2));
+        assert_eq!(scheduled.member(0), Some(ready));
+    }
+
+    #[test]
+    fn m1_exact_dispatch_rejects_the_wrong_epoch_without_mutation() {
+        let mut engine = Engine::<2>::new(16, 4, 32).unwrap();
+        let request = engine.admit().unwrap();
+
+        assert_eq!(
+            engine.dispatch_m1_exact_ready(CompletionEpoch::new(2), &[request]),
+            Err(M1ExactDispatchErrorV1::EpochMismatch {
+                expected: CompletionEpoch::new(1),
+                actual: CompletionEpoch::new(2),
+            })
+        );
+        assert_eq!(engine.state(request), Some(RequestState::Ready));
+        assert_eq!(engine.completed_epoch(), CompletionEpoch::new(0));
+
+        let scheduled = engine
+            .dispatch_m1_exact_ready(CompletionEpoch::new(1), &[request])
+            .unwrap();
+        assert_eq!(scheduled.epoch(), CompletionEpoch::new(1));
+        assert_eq!(scheduled.member(0), Some(request));
     }
 
     #[test]

@@ -27,8 +27,11 @@ use crate::bound_step_workspaces::bind_addressless_m1_full_step_workspace_sublea
 use crate::initialized_step_workspaces::allocate_initialized_m1_full_step_workspaces_v1;
 use crate::{
     allocate_m1_completion_output_v1, allocate_m1_guarded_completion_output_v1,
+    direct_diagnostic_choices::attach_m1_direct_diagnostic_choices_v1,
     qualification_logits::attach_m1_qualification_logits_v1,
-    speculative_diagnostic_choices::attach_m1_speculative_diagnostic_choices_v1,
+    speculative_diagnostic_choices::{
+        attach_m1_speculative_diagnostic_choices_v1, attach_m1_speculative_k4_diagnostic_choices_v1,
+    },
     AddresslessM1FullStepWorkspaceComposition, BoundM1CompletionOutputV1,
     BoundM1FullStepWorkspaceSubleases, BoundModelMemoryAllocationsV1, ExactCompletion,
     InitializedM1FullStepWorkspaceAllocationFailureV1, M1CompletionOutputErrorV1,
@@ -48,12 +51,13 @@ use ferric_build::{
 };
 use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::{
-    append_physical_page, cancel_physical_kv, commit_physical_kv, map_initialized_token,
+    append_physical_page, apply_preflighted_physical_kv_reselection, cancel_physical_kv,
+    commit_physical_kv, map_initialized_token, preflight_physical_kv_reselection,
     retire_cancelled_tail, rollback_physical_token, write_physical_token, Identity, LogicalKvState,
     M1QualificationLaneExecutionBinding, M1QualificationLaneGrouping, PhysicalKvError,
-    PhysicalKvLifecycle, PhysicalKvLocation, PhysicalKvState, PhysicalPageId, Qwen3ExecutionMode,
-    Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection, RequestId, Target,
-    M1_KV_PAGE_TABLE_ENTRIES, M1_KV_PAGE_TOKENS, M1_KV_PHYSICAL_PAGE_SLOTS,
+    PhysicalKvLifecycle, PhysicalKvLocation, PhysicalKvReselectionPermit, PhysicalKvState,
+    PhysicalPageId, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection,
+    RequestId, Target, M1_KV_PAGE_TABLE_ENTRIES, M1_KV_PAGE_TOKENS, M1_KV_PHYSICAL_PAGE_SLOTS,
     M1_MAX_ACTIVE_SEQUENCES,
 };
 use vstd::prelude::*;
@@ -64,6 +68,31 @@ pub const GFX942_PROCESSOR: &str = "gfx942";
 pub const GFX942_TARGET_FEATURES: &str = "+wavefrontsize64,-xnack";
 /// Exact P16 target-page cardinality required by one C8192 qualification lane.
 pub const M1_QUALIFICATION_TARGET_PAGE_COUNT_V1: usize = M1_KV_PAGE_TABLE_ENTRIES;
+
+const M1_S1_K4_TARGET_SELECTION_V1: Qwen3PlanSelection = Qwen3PlanSelection {
+    role: Qwen3ModelRole::Target8B,
+    mode: Qwen3ExecutionMode::Speculative,
+    bucket: Qwen3PlanBucket::SpeculativeS1K4C8192,
+};
+
+const M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1: [Qwen3PlanSelection; 4] = [
+    M1_S1_K4_TARGET_SELECTION_V1,
+    Qwen3PlanSelection {
+        role: Qwen3ModelRole::Target8B,
+        mode: Qwen3ExecutionMode::Speculative,
+        bucket: Qwen3PlanBucket::SpeculativeS8K4C8192,
+    },
+    Qwen3PlanSelection {
+        role: Qwen3ModelRole::Target8B,
+        mode: Qwen3ExecutionMode::Speculative,
+        bucket: Qwen3PlanBucket::SpeculativeS1K8C8192,
+    },
+    Qwen3PlanSelection {
+        role: Qwen3ModelRole::Target8B,
+        mode: Qwen3ExecutionMode::Speculative,
+        bucket: Qwen3PlanBucket::SpeculativeS1K16C8192,
+    },
+];
 
 verus! {
 
@@ -761,6 +790,121 @@ pub struct M1PartitionedModelMemoryKvPoolV1 {
     draft_planes: DraftKvPlaneSubleasesV1,
     target_pages: Box<[M1KvPoolPageStateV1]>,
     draft_pages: Box<[M1KvPoolPageStateV1]>,
+    s1_k4_rollover_output: M1S1K4RolloverOutputPortfolioV1,
+}
+
+/// Public projection of the one-shot S1/K4 rollover-output portfolio.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1S1K4RolloverOutputPortfolioStateV1 {
+    /// No future output has been allocated.
+    Vacant,
+    /// A complete inactive S1/K4 output is retained before activation.
+    Reserved,
+    /// The S1/K4 output was activated and the predecessor direct output is retained.
+    Activated,
+}
+
+/// Inactive compact output and independent choices for one future S1/K4 queue.
+#[must_use = "the future S1/K4 output must remain retained until rollover"]
+#[derive(Debug)]
+pub struct M1S1K4RolloverOutputReserveV1 {
+    output: BoundM1CompletionOutputV1,
+}
+
+#[derive(Debug)]
+enum M1S1K4RolloverOutputPortfolioV1 {
+    Vacant,
+    Partial {
+        _retained: Vec<M1S1K4RolloverOutputReserveV1>,
+    },
+    Reserved(Vec<M1S1K4RolloverOutputReserveV1>),
+    Activated {
+        retired_direct: Box<BoundM1CompletionOutputV1>,
+        _unused: Vec<M1S1K4RolloverOutputReserveV1>,
+    },
+}
+
+impl M1S1K4RolloverOutputPortfolioV1 {
+    const fn state(&self) -> M1S1K4RolloverOutputPortfolioStateV1 {
+        match self {
+            Self::Vacant => M1S1K4RolloverOutputPortfolioStateV1::Vacant,
+            Self::Partial { .. } | Self::Reserved(_) => {
+                M1S1K4RolloverOutputPortfolioStateV1::Reserved
+            }
+            Self::Activated { .. } => M1S1K4RolloverOutputPortfolioStateV1::Activated,
+        }
+    }
+}
+
+/// Pre-publication failure while reserving an inactive S1/K4 output.
+#[derive(Debug)]
+pub enum M1S1K4RolloverOutputReserveErrorV1 {
+    /// This pool already retains a reserve or an activated predecessor output.
+    AlreadyReserved(M1S1K4RolloverOutputPortfolioStateV1),
+    /// The compact S1/K4 output allocation failed.
+    Completion(M1CompletionOutputErrorV1),
+    /// Independent S1/K4 choice capture failed and retains the compact output.
+    Diagnostic(Box<crate::M1SpeculativeDiagnosticChoicesAllocationFailureV1>),
+}
+
+/// Shape-generic name for finite-speculative rollover output reservation.
+pub type M1FiniteSpeculativeRolloverOutputReserveErrorV1 = M1S1K4RolloverOutputReserveErrorV1;
+
+/// Shape-generic name for the finite-speculative rollover portfolio state.
+pub type M1FiniteSpeculativeRolloverOutputPortfolioStateV1 = M1S1K4RolloverOutputPortfolioStateV1;
+
+impl fmt::Display for M1S1K4RolloverOutputReserveErrorV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            formatter,
+            "M1 S1/K4 rollover output reserve rejected: {self:?}"
+        )
+    }
+}
+
+impl std::error::Error for M1S1K4RolloverOutputReserveErrorV1 {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Completion(source) => Some(source),
+            Self::Diagnostic(source) => Some(source.error()),
+            Self::AlreadyReserved(_) => None,
+        }
+    }
+}
+
+/// Fail-closed activation diagnostic for the preallocated S1/K4 output.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1S1K4RolloverOutputActivationErrorV1 {
+    ReserveUnavailable(M1S1K4RolloverOutputPortfolioStateV1),
+    PriorOutputNotDirect,
+    ReserveOutputDrift,
+}
+
+/// Shape-generic finite-speculative rollover activation diagnostic.
+pub type M1FiniteSpeculativeRolloverOutputActivationErrorV1 = M1S1K4RolloverOutputActivationErrorV1;
+
+/// Failed activation retaining the unchanged predecessor direct output.
+#[must_use = "the predecessor output remains live after activation rejection"]
+#[derive(Debug)]
+pub struct M1S1K4RolloverOutputActivationFailureV1 {
+    error: M1S1K4RolloverOutputActivationErrorV1,
+    prior: Box<BoundM1CompletionOutputV1>,
+}
+
+/// Shape-generic finite-speculative rollover activation failure custody.
+pub type M1FiniteSpeculativeRolloverOutputActivationFailureV1 =
+    M1S1K4RolloverOutputActivationFailureV1;
+
+impl M1S1K4RolloverOutputActivationFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1S1K4RolloverOutputActivationErrorV1 {
+        self.error
+    }
+
+    #[must_use = "the unchanged predecessor output remains live"]
+    pub fn into_prior(self) -> BoundM1CompletionOutputV1 {
+        *self.prior
+    }
 }
 
 /// Opaque Ferric custody retained after generic queue ownership is created.
@@ -786,6 +930,7 @@ pub struct M1PartitionedModelMemoryKvQueueCustodyV1 {
     draft_planes: DraftKvPlaneSubleasesV1,
     target_pages: Box<[M1KvPoolPageStateV1]>,
     draft_pages: Box<[M1KvPoolPageStateV1]>,
+    s1_k4_rollover_output: M1S1K4RolloverOutputPortfolioV1,
 }
 
 impl M1PartitionedModelMemoryKvQueueCustodyV1 {
@@ -793,6 +938,107 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
     #[must_use]
     pub const fn device(&self) -> Gfx942DeviceBinding {
         self.device
+    }
+
+    /// State of the future S1/K4 host-output custody retained in this queue ledger.
+    #[must_use]
+    pub const fn s1_k4_rollover_output_state(&self) -> M1S1K4RolloverOutputPortfolioStateV1 {
+        self.s1_k4_rollover_output.state()
+    }
+
+    /// State of the future finite-speculative output catalog.
+    #[must_use]
+    pub const fn finite_speculative_rollover_output_state(
+        &self,
+    ) -> M1FiniteSpeculativeRolloverOutputPortfolioStateV1 {
+        self.s1_k4_rollover_output.state()
+    }
+
+    /// Retired direct output retained after successful S1/K4 activation.
+    #[must_use = "retired direct host-allocation custody remains live"]
+    pub const fn retired_direct_rollover_output(&self) -> Option<&BoundM1CompletionOutputV1> {
+        match &self.s1_k4_rollover_output {
+            M1S1K4RolloverOutputPortfolioV1::Activated { retired_direct, .. } => {
+                Some(retired_direct)
+            }
+            M1S1K4RolloverOutputPortfolioV1::Vacant
+            | M1S1K4RolloverOutputPortfolioV1::Partial { .. }
+            | M1S1K4RolloverOutputPortfolioV1::Reserved(_) => None,
+        }
+    }
+
+    /// Activates the exact preallocated S1/K4 output and retains the replaced
+    /// direct output as typed retired custody in the same queue ledger owner.
+    ///
+    /// # Errors
+    ///
+    /// Returns the unchanged predecessor output when the reserve is absent,
+    /// already activated, or either output's semantic attachment drifted.
+    pub fn activate_s1_k4_rollover_output(
+        &mut self,
+        prior: BoundM1CompletionOutputV1,
+    ) -> Result<BoundM1CompletionOutputV1, M1S1K4RolloverOutputActivationFailureV1> {
+        self.activate_finite_speculative_rollover_output(M1_S1_K4_TARGET_SELECTION_V1, prior)
+    }
+
+    /// Activates one exact preallocated finite-speculative output while
+    /// retaining every unused catalog member and the replaced direct output.
+    ///
+    /// # Errors
+    ///
+    /// Returns the unchanged predecessor output when the reserve is absent,
+    /// already activated, outside the finite catalog, or semantically drifted.
+    pub fn activate_finite_speculative_rollover_output(
+        &mut self,
+        selection: Qwen3PlanSelection,
+        prior: BoundM1CompletionOutputV1,
+    ) -> Result<BoundM1CompletionOutputV1, M1FiniteSpeculativeRolloverOutputActivationFailureV1>
+    {
+        let state = self.s1_k4_rollover_output.state();
+        let M1S1K4RolloverOutputPortfolioV1::Reserved(reserves) = &self.s1_k4_rollover_output
+        else {
+            return Err(M1S1K4RolloverOutputActivationFailureV1 {
+                error: M1S1K4RolloverOutputActivationErrorV1::ReserveUnavailable(state),
+                prior: Box::new(prior),
+            });
+        };
+        if !direct_prefill_output_is_valid_for(&prior, selection) {
+            return Err(M1S1K4RolloverOutputActivationFailureV1 {
+                error: M1S1K4RolloverOutputActivationErrorV1::PriorOutputNotDirect,
+                prior: Box::new(prior),
+            });
+        }
+        let Some(reserve_index) = reserves
+            .iter()
+            .position(|reserve| reserve.output.shape().selection() == selection)
+        else {
+            return Err(M1S1K4RolloverOutputActivationFailureV1 {
+                error: M1S1K4RolloverOutputActivationErrorV1::ReserveOutputDrift,
+                prior: Box::new(prior),
+            });
+        };
+        if !finite_speculative_rollover_reserve_output_is_valid(
+            &reserves[reserve_index].output,
+            selection,
+        ) {
+            return Err(M1S1K4RolloverOutputActivationFailureV1 {
+                error: M1S1K4RolloverOutputActivationErrorV1::ReserveOutputDrift,
+                prior: Box::new(prior),
+            });
+        }
+
+        let M1S1K4RolloverOutputPortfolioV1::Reserved(mut reserves) = core::mem::replace(
+            &mut self.s1_k4_rollover_output,
+            M1S1K4RolloverOutputPortfolioV1::Vacant,
+        ) else {
+            unreachable!("reserve presence was checked before portfolio activation")
+        };
+        let reserve = reserves.remove(reserve_index);
+        self.s1_k4_rollover_output = M1S1K4RolloverOutputPortfolioV1::Activated {
+            retired_direct: Box::new(prior),
+            _unused: reserves,
+        };
+        Ok(reserve.output)
     }
 
     /// Returns one exact role-scoped KV allocation identity without exposing its owner.
@@ -878,6 +1124,34 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
     }
 }
 
+fn direct_prefill_output_is_valid_for(
+    output: &BoundM1CompletionOutputV1,
+    successor: Qwen3PlanSelection,
+) -> bool {
+    let selection = output.shape().selection();
+    selection.role == Qwen3ModelRole::Target8B
+        && selection.mode == Qwen3ExecutionMode::Prefill
+        && output.shape().sequences()
+            == successor
+                .bucket
+                .dimensions(successor.role, successor.mode)
+                .map_or(0, |dimensions| dimensions.sequences)
+        && output.direct_diagnostic_choices().is_some()
+        && output.speculative_diagnostic_choices().is_none()
+        && output.qualification_logits().is_none()
+}
+
+fn finite_speculative_rollover_reserve_output_is_valid(
+    output: &BoundM1CompletionOutputV1,
+    selection: Qwen3PlanSelection,
+) -> bool {
+    M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1.contains(&selection)
+        && output.shape().selection() == selection
+        && output.direct_diagnostic_choices().is_none()
+        && output.speculative_diagnostic_choices().is_some()
+        && output.qualification_logits().is_none()
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum M1KvPageReturnErrorV1 {
     Device,
@@ -951,11 +1225,107 @@ fn commit_page_return_state(
     *state = returned_page_state(&preflighted);
 }
 
+fn build_exact_reserve_catalog<S: Copy, T, E>(
+    selections: &[S],
+    mut reserves: Vec<T>,
+    mut reserve: impl FnMut(S) -> Result<T, E>,
+) -> Result<Vec<T>, (Vec<T>, E)> {
+    for selection in selections.iter().copied() {
+        match reserve(selection) {
+            Ok(output) => reserves.push(output),
+            Err(source) => return Err((reserves, source)),
+        }
+    }
+    Ok(reserves)
+}
+
 impl M1PartitionedModelMemoryKvPoolV1 {
     /// Returns the exact device declaration retained by the pool.
     #[must_use]
     pub const fn device(&self) -> Gfx942DeviceBinding {
         self.device
+    }
+
+    /// State of the one-shot future S1/K4 output portfolio.
+    #[must_use]
+    pub const fn s1_k4_rollover_output_state(&self) -> M1S1K4RolloverOutputPortfolioStateV1 {
+        self.s1_k4_rollover_output.state()
+    }
+
+    /// State of the one-shot finite-speculative rollover output catalog.
+    #[must_use]
+    pub const fn finite_speculative_rollover_output_state(
+        &self,
+    ) -> M1FiniteSpeculativeRolloverOutputPortfolioStateV1 {
+        self.s1_k4_rollover_output.state()
+    }
+
+    /// Allocates a complete inactive S1/K4 compact output and both independent
+    /// diagnostic choice ranges before this pool enters a queue ledger.
+    ///
+    /// The reserve is intentionally not attached to the active direct output,
+    /// so it cannot route buffers or authenticate the predecessor generation.
+    ///
+    /// # Errors
+    ///
+    /// Rejects repeated reservation or returns the exact compact/diagnostic
+    /// allocation failure while retaining this pool's allocation session.
+    pub(crate) fn reserve_s1_k4_rollover_output(
+        &mut self,
+    ) -> Result<(), M1S1K4RolloverOutputReserveErrorV1> {
+        self.reserve_finite_speculative_rollover_output_catalog(&[M1_S1_K4_TARGET_SELECTION_V1])
+    }
+
+    /// Preallocates outputs and independent diagnostic choices for every
+    /// finite speculative successor before first queue construction.
+    pub(crate) fn reserve_finite_speculative_rollover_outputs(
+        &mut self,
+    ) -> Result<(), M1FiniteSpeculativeRolloverOutputReserveErrorV1> {
+        self.reserve_finite_speculative_rollover_output_catalog(
+            &M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1,
+        )
+    }
+
+    fn reserve_finite_speculative_rollover_output_catalog(
+        &mut self,
+        selections: &[Qwen3PlanSelection],
+    ) -> Result<(), M1FiniteSpeculativeRolloverOutputReserveErrorV1> {
+        let state = self.s1_k4_rollover_output.state();
+        if state != M1S1K4RolloverOutputPortfolioStateV1::Vacant {
+            return Err(M1S1K4RolloverOutputReserveErrorV1::AlreadyReserved(state));
+        }
+        let mut reserves = Vec::new();
+        reserves.try_reserve_exact(selections.len()).map_err(|_| {
+            M1S1K4RolloverOutputReserveErrorV1::Completion(
+                M1CompletionOutputErrorV1::ExtentOverflow,
+            )
+        })?;
+        match build_exact_reserve_catalog(selections, reserves, |selection| {
+            let completion = self
+                .allocate_completion_output(selection)
+                .map_err(M1S1K4RolloverOutputReserveErrorV1::Completion)?;
+            let output = if selection == M1_S1_K4_TARGET_SELECTION_V1 {
+                self.enable_speculative_k4_diagnostic_choices_capture(completion)
+            } else {
+                self.enable_speculative_diagnostic_choices_capture(completion)
+            }
+            .map_err(M1S1K4RolloverOutputReserveErrorV1::Diagnostic)?;
+            debug_assert!(finite_speculative_rollover_reserve_output_is_valid(
+                &output, selection
+            ));
+            Ok(M1S1K4RolloverOutputReserveV1 { output })
+        }) {
+            Ok(reserves) => {
+                self.s1_k4_rollover_output = M1S1K4RolloverOutputPortfolioV1::Reserved(reserves);
+                Ok(())
+            }
+            Err((reserves, source)) => {
+                self.s1_k4_rollover_output = M1S1K4RolloverOutputPortfolioV1::Partial {
+                    _retained: reserves,
+                };
+                Err(source)
+            }
+        }
     }
 
     /// Returns the exact inert arena identity retained for one model role.
@@ -1057,17 +1427,17 @@ impl M1PartitionedModelMemoryKvPoolV1 {
         attach_m1_qualification_logits_v1(&mut self.allocations, completion)
     }
 
-    /// Adds diagnostic-only S1/K4 choice capture to a compact output.
+    /// Adds diagnostic-only finite speculative choice capture to a compact output.
     ///
     /// This does not alter the target-only qualification path. The attachment
-    /// is admitted only for exact target `SpeculativeS1K4C8192` completion
-    /// output and grants no inference or evidence authority.
+    /// is admitted only for the four finite M1 speculative completion shapes
+    /// and grants no inference or evidence authority.
     ///
     /// # Errors
     ///
     /// Rejects another selection or allocation/range drift while returning the
     /// unchanged compact output inside the boxed failure.
-    pub(crate) fn enable_speculative_k4_diagnostic_choices_capture(
+    pub(crate) fn enable_speculative_diagnostic_choices_capture(
         &mut self,
         completion: BoundM1CompletionOutputV1,
     ) -> Result<
@@ -1075,6 +1445,34 @@ impl M1PartitionedModelMemoryKvPoolV1 {
         Box<crate::M1SpeculativeDiagnosticChoicesAllocationFailureV1>,
     > {
         attach_m1_speculative_diagnostic_choices_v1(&mut self.allocations, completion)
+    }
+
+    /// Source-compatible S1/K4 entry point for diagnostic choice capture.
+    pub(crate) fn enable_speculative_k4_diagnostic_choices_capture(
+        &mut self,
+        completion: BoundM1CompletionOutputV1,
+    ) -> Result<
+        BoundM1CompletionOutputV1,
+        Box<crate::M1SpeculativeDiagnosticChoicesAllocationFailureV1>,
+    > {
+        attach_m1_speculative_k4_diagnostic_choices_v1(&mut self.allocations, completion)
+    }
+
+    /// Adds direct target-choice capture to a compact output.
+    ///
+    /// The attachment replaces the existing target `Choices [S,A]` workspace
+    /// with initialized host-visible storage before physical buffer binding.
+    ///
+    /// # Errors
+    ///
+    /// Rejects a non-direct target selection or allocation/range drift while
+    /// returning unchanged compact-output custody inside the boxed failure.
+    pub(crate) fn enable_direct_diagnostic_choices_capture(
+        &mut self,
+        completion: BoundM1CompletionOutputV1,
+    ) -> Result<BoundM1CompletionOutputV1, Box<crate::M1DirectDiagnosticChoicesAllocationFailureV1>>
+    {
+        attach_m1_direct_diagnostic_choices_v1(&mut self.allocations, completion)
     }
 
     pub(crate) fn completion_output_dispatch_range(
@@ -1106,6 +1504,17 @@ impl M1PartitionedModelMemoryKvPoolV1 {
         crate::M1SpeculativeDiagnosticChoicesErrorV1,
     > {
         choices.host_dispatch_ranges(&self.allocations, selection)
+    }
+
+    pub(crate) fn direct_diagnostic_choices_dispatch_range(
+        &self,
+        choices: &crate::BoundM1DirectDiagnosticChoicesV1,
+        selection: Qwen3PlanSelection,
+    ) -> Result<
+        fe2o3_service_host::ServiceHostDispatchRangeV1,
+        crate::M1DirectDiagnosticChoicesErrorV1,
+    > {
+        choices.host_dispatch_range(&self.allocations, selection)
     }
 
     pub(crate) fn allocate_full_step_workspaces(
@@ -1185,6 +1594,7 @@ impl M1PartitionedModelMemoryKvPoolV1 {
                 draft_planes: self.draft_planes,
                 target_pages: self.target_pages,
                 draft_pages: self.draft_pages,
+                s1_k4_rollover_output: self.s1_k4_rollover_output,
             },
         )
     }
@@ -1201,6 +1611,7 @@ impl M1PartitionedModelMemoryKvPoolV1 {
             draft_planes: custody.draft_planes,
             target_pages: custody.target_pages,
             draft_pages: custody.draft_pages,
+            s1_k4_rollover_output: custody.s1_k4_rollover_output,
         }
     }
 
@@ -2348,6 +2759,7 @@ pub fn bind_m1_partitioned_model_memory_kv_pool_v1(
         draft_planes,
         target_pages,
         draft_pages,
+        s1_k4_rollover_output: M1S1K4RolloverOutputPortfolioV1::Vacant,
     })
 }
 
@@ -3374,6 +3786,18 @@ struct DeviceKvCacheCommon {
     target_qualification_reserve: Option<M1QualificationTargetPageReserveV1>,
 }
 
+fn quiescent_reselection_pair_is_valid(
+    target: Qwen3PlanSelection,
+    draft: Qwen3PlanSelection,
+) -> bool {
+    target.role == Qwen3ModelRole::Target8B
+        && draft.role == Qwen3ModelRole::Draft06B
+        && target.mode == draft.mode
+        && target.bucket == draft.bucket
+        && target.validate().is_ok()
+        && draft.validate().is_ok()
+}
+
 impl DeviceKvCacheCommon {
     fn projection(&self) -> DeviceKvCacheProjection {
         DeviceKvCacheProjection {
@@ -3588,6 +4012,77 @@ impl ActiveDeviceKvCache {
     #[must_use]
     pub fn projection(&self) -> DeviceKvCacheProjection {
         self.common.projection()
+    }
+
+    /// Preflights an exact role-stable quiescent selection pair without mutation.
+    ///
+    /// # Errors
+    ///
+    /// Returns the same pending-write, qualification-reserve, page-table,
+    /// lifecycle, role, selection, pair, and capacity diagnostics as
+    /// [`Self::reselect_quiescent`].
+    pub fn preflight_quiescent_reselection(
+        &self,
+        target_selection: Qwen3PlanSelection,
+        draft_selection: Qwen3PlanSelection,
+    ) -> Result<(), DeviceKvCacheError> {
+        self.preflight_quiescent_reselection_permits(target_selection, draft_selection)
+            .map(|_| ())
+    }
+
+    /// Changes the exact target/draft plan pair while retaining quiescent KV
+    /// contents and all device-page custody.
+    ///
+    /// Both role transitions are preflighted before either physical state is
+    /// changed. Success changes only the selections and their derived context
+    /// capacities. Request identity, logical counts, page tables, physical
+    /// generations, arena bindings, retirement custody, and write generations
+    /// remain unchanged.
+    ///
+    /// # Errors
+    ///
+    /// Rejects pending writes, qualification reserves, incoherent page-table
+    /// custody, non-active physical state, role drift, invalid or mismatched
+    /// plan pairs, and resident prefixes exceeding a new bucket's capacity.
+    pub fn reselect_quiescent(
+        &mut self,
+        target_selection: Qwen3PlanSelection,
+        draft_selection: Qwen3PlanSelection,
+    ) -> Result<(), DeviceKvCacheError> {
+        let (target_permit, draft_permit) =
+            self.preflight_quiescent_reselection_permits(target_selection, draft_selection)?;
+
+        apply_preflighted_physical_kv_reselection(&mut self.common.target.physical, target_permit);
+        apply_preflighted_physical_kv_reselection(&mut self.common.draft.physical, draft_permit);
+        Ok(())
+    }
+
+    fn preflight_quiescent_reselection_permits(
+        &self,
+        target_selection: Qwen3PlanSelection,
+        draft_selection: Qwen3PlanSelection,
+    ) -> Result<(PhysicalKvReselectionPermit, PhysicalKvReselectionPermit), DeviceKvCacheError>
+    {
+        if self.common.target.pending.is_some() || self.common.draft.pending.is_some() {
+            return Err(DeviceKvCacheError::PendingWriteExists);
+        }
+        if self.common.target_qualification_reserve.is_some() {
+            return Err(DeviceKvCacheError::QualificationReserveAlreadyInstalled);
+        }
+        if !DeviceKvCacheCommon::owned_table_matches(&self.common.target)
+            || !DeviceKvCacheCommon::owned_table_matches(&self.common.draft)
+        {
+            return Err(DeviceKvCacheError::OwnedPageTableDrift);
+        }
+
+        let target_permit =
+            preflight_physical_kv_reselection(&self.common.target.physical, target_selection)?;
+        let draft_permit =
+            preflight_physical_kv_reselection(&self.common.draft.physical, draft_selection)?;
+        if !quiescent_reselection_pair_is_valid(target_selection, draft_selection) {
+            return Err(DeviceKvCacheError::PlanPairMismatch);
+        }
+        Ok((target_permit, draft_permit))
     }
 
     pub(crate) fn release_state_is_valid(&self) -> bool {
@@ -5390,6 +5885,39 @@ mod tests {
         M1_KV_PHYSICAL_PAGE_SLOTS,
     };
 
+    #[test]
+    fn finite_rollover_catalog_failures_retain_every_prior_member() {
+        let selections = [0_u8, 1, 2, 3];
+        for fail_at in 1..selections.len() {
+            let mut calls = 0;
+            let failure = build_exact_reserve_catalog(
+                &selections,
+                Vec::with_capacity(selections.len()),
+                |selection| {
+                    let current = calls;
+                    calls += 1;
+                    if current == fail_at {
+                        Err(selection)
+                    } else {
+                        Ok(selection)
+                    }
+                },
+            )
+            .unwrap_err();
+            assert_eq!(failure.0, selections[..fail_at]);
+            assert_eq!(failure.1, selections[fail_at]);
+            assert_eq!(calls, fail_at + 1);
+        }
+
+        assert_eq!(
+            M1S1K4RolloverOutputPortfolioV1::Partial {
+                _retained: Vec::new(),
+            }
+            .state(),
+            M1S1K4RolloverOutputPortfolioStateV1::Reserved
+        );
+    }
+
     #[derive(Debug)]
     struct QualificationTargetPageCancellationTestPoolV1 {
         device: Gfx942DeviceBinding,
@@ -6162,6 +6690,404 @@ mod tests {
         }
     }
 
+    #[derive(Debug, PartialEq, Eq)]
+    struct KvReselectionPreservedState {
+        projection: DeviceKvCacheProjection,
+        target_page_table: Vec<Option<PhysicalPageId>>,
+        draft_page_table: Vec<Option<PhysicalPageId>>,
+        target_generations: Vec<Option<u32>>,
+        draft_generations: Vec<Option<u32>>,
+        target_active_pages: String,
+        draft_active_pages: String,
+        target_retired_pages: String,
+        draft_retired_pages: String,
+        target_pending: Option<PendingWriteState>,
+        draft_pending: Option<PendingWriteState>,
+        target_next_write_generation: u64,
+        draft_next_write_generation: u64,
+        qualification_reserve: String,
+    }
+
+    #[derive(Debug, PartialEq, Eq)]
+    struct KvReselectionSnapshot {
+        preserved: KvReselectionPreservedState,
+        target_selection: Qwen3PlanSelection,
+        draft_selection: Qwen3PlanSelection,
+        target_max_context_tokens: u32,
+        draft_max_context_tokens: u32,
+    }
+
+    fn preserved_reselection_state(cache: &ActiveDeviceKvCache) -> KvReselectionPreservedState {
+        let page_positions = 0..u32::try_from(M1_KV_PAGE_TABLE_ENTRIES).unwrap();
+        let slot_indices = 0..u32::try_from(M1_KV_PHYSICAL_PAGE_SLOTS).unwrap();
+        KvReselectionPreservedState {
+            projection: cache.projection(),
+            target_page_table: page_positions
+                .clone()
+                .map(|position| cache.common.target.physical.page_at(position))
+                .collect(),
+            draft_page_table: page_positions
+                .map(|position| cache.common.draft.physical.page_at(position))
+                .collect(),
+            target_generations: slot_indices
+                .clone()
+                .map(|index| cache.common.target.physical.page_generation(index))
+                .collect(),
+            draft_generations: slot_indices
+                .map(|index| cache.common.draft.physical.page_generation(index))
+                .collect(),
+            target_active_pages: format!("{:?}", cache.common.target.active_pages),
+            draft_active_pages: format!("{:?}", cache.common.draft.active_pages),
+            target_retired_pages: format!("{:?}", cache.common.target.retired_pages),
+            draft_retired_pages: format!("{:?}", cache.common.draft.retired_pages),
+            target_pending: cache.common.target.pending,
+            draft_pending: cache.common.draft.pending,
+            target_next_write_generation: cache.common.target.next_write_generation,
+            draft_next_write_generation: cache.common.draft.next_write_generation,
+            qualification_reserve: format!("{:?}", cache.common.target_qualification_reserve),
+        }
+    }
+
+    fn reselection_snapshot(cache: &ActiveDeviceKvCache) -> KvReselectionSnapshot {
+        KvReselectionSnapshot {
+            preserved: preserved_reselection_state(cache),
+            target_selection: cache.common.target.selection(),
+            draft_selection: cache.common.draft.selection(),
+            target_max_context_tokens: cache.common.target.physical.max_context_tokens(),
+            draft_max_context_tokens: cache.common.draft.physical.max_context_tokens(),
+        }
+    }
+
+    fn assert_successful_reselection(
+        cache: &mut ActiveDeviceKvCache,
+        target: Qwen3PlanSelection,
+        draft: Qwen3PlanSelection,
+    ) {
+        let preserved = preserved_reselection_state(cache);
+        cache.reselect_quiescent(target, draft).unwrap();
+        assert_eq!(preserved_reselection_state(cache), preserved);
+        assert_eq!(cache.common.target.selection(), target);
+        assert_eq!(cache.common.draft.selection(), draft);
+        assert_eq!(
+            cache.common.target.physical.max_context_tokens(),
+            target
+                .bucket
+                .dimensions(target.role, target.mode)
+                .unwrap()
+                .context_tokens
+        );
+        assert_eq!(
+            cache.common.draft.physical.max_context_tokens(),
+            draft
+                .bucket
+                .dimensions(draft.role, draft.mode)
+                .unwrap()
+                .context_tokens
+        );
+    }
+
+    fn assert_reselection_rejected_unchanged(
+        cache: &mut ActiveDeviceKvCache,
+        target: Qwen3PlanSelection,
+        draft: Qwen3PlanSelection,
+        expected: DeviceKvCacheError,
+    ) {
+        let before = reselection_snapshot(cache);
+        assert_eq!(cache.reselect_quiescent(target, draft), Err(expected));
+        assert_eq!(reselection_snapshot(cache), before);
+    }
+
+    #[test]
+    fn quiescent_reselection_preflight_is_nonmutating_and_predictive() {
+        let target = selected(
+            Qwen3ModelRole::Target8B,
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+        );
+        let draft = selected(
+            Qwen3ModelRole::Draft06B,
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+        );
+        let mut cache = cache_for(
+            request(),
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        );
+        let before = reselection_snapshot(&cache);
+
+        assert_eq!(cache.preflight_quiescent_reselection(target, draft), Ok(()));
+        assert_eq!(reselection_snapshot(&cache), before);
+        assert_eq!(cache.reselect_quiescent(target, draft), Ok(()));
+
+        let wrong_draft = selected(
+            Qwen3ModelRole::Draft06B,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        let before = reselection_snapshot(&cache);
+        let predicted = cache
+            .preflight_quiescent_reselection(target, wrong_draft)
+            .unwrap_err();
+        assert_eq!(predicted, DeviceKvCacheError::PlanPairMismatch);
+        assert_eq!(reselection_snapshot(&cache), before);
+        assert_eq!(
+            cache.reselect_quiescent(target, wrong_draft),
+            Err(predicted)
+        );
+        assert_eq!(reselection_snapshot(&cache), before);
+    }
+
+    #[test]
+    fn quiescent_reselection_covers_serving_transition_matrix_without_custody_drift() {
+        let mut cache = cache_for(
+            request(),
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        );
+        for (role, allocation_tag) in [
+            (Qwen3ModelRole::Target8B, 80),
+            (Qwen3ModelRole::Draft06B, 81),
+        ] {
+            append_and_initialize(&mut cache, role, 0, allocation_tag, 16, 50);
+            cache.accept_initialized(request(), role, 16).unwrap();
+            append_and_initialize(&mut cache, role, 1, allocation_tag, 1, 50);
+            assert!(matches!(
+                cache
+                    .rollback_one(request(), role, CompletionEpoch::new(50))
+                    .unwrap(),
+                DeviceKvRetirementOutcome::PageRetired(_)
+            ));
+        }
+        let (settled, _completion) = cache
+            .settle_retired_epoch(ExactCompletion::from_contracted_hsa_quiescence(
+                CompletionEpoch::new(50),
+            ))
+            .unwrap();
+        assert_eq!(settled, 2);
+
+        let target_decode_s1 = selected(
+            Qwen3ModelRole::Target8B,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        let draft_decode_s1 = selected(
+            Qwen3ModelRole::Draft06B,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        assert_successful_reselection(&mut cache, target_decode_s1, draft_decode_s1);
+
+        for bucket in [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ] {
+            let draft_speculative = selected(
+                Qwen3ModelRole::Draft06B,
+                Qwen3ExecutionMode::Speculative,
+                bucket,
+            );
+            assert_successful_reselection(
+                &mut cache,
+                selected(
+                    Qwen3ModelRole::Target8B,
+                    Qwen3ExecutionMode::Speculative,
+                    bucket,
+                ),
+                draft_speculative,
+            );
+        }
+
+        let target_speculative_s8 = selected(
+            Qwen3ModelRole::Target8B,
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS8K4C8192,
+        );
+        let draft_speculative_s8 = selected(
+            Qwen3ModelRole::Draft06B,
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS8K4C8192,
+        );
+        assert_successful_reselection(&mut cache, target_speculative_s8, draft_speculative_s8);
+        let target_speculative_s1 = selected(
+            Qwen3ModelRole::Target8B,
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+        );
+        assert_successful_reselection(
+            &mut cache,
+            target_speculative_s1,
+            selected(
+                Qwen3ModelRole::Draft06B,
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K4C8192,
+            ),
+        );
+        assert_reselection_rejected_unchanged(
+            &mut cache,
+            target_speculative_s1,
+            draft_decode_s1,
+            DeviceKvCacheError::PlanPairMismatch,
+        );
+        assert_successful_reselection(&mut cache, target_decode_s1, draft_decode_s1);
+    }
+
+    #[test]
+    fn hostile_quiescent_reselection_rejections_are_exactly_nonmutating() {
+        let target_decode = selected(
+            Qwen3ModelRole::Target8B,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        let draft_decode = selected(
+            Qwen3ModelRole::Draft06B,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+
+        let mut role_drift = cache_for(
+            request(),
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        assert_reselection_rejected_unchanged(
+            &mut role_drift,
+            selected(
+                Qwen3ModelRole::Draft06B,
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+            draft_decode,
+            DeviceKvCacheError::Physical(PhysicalKvError::RoleMismatch),
+        );
+
+        let mut invalid = cache_for(
+            request(),
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        assert_reselection_rejected_unchanged(
+            &mut invalid,
+            selected(
+                Qwen3ModelRole::Target8B,
+                Qwen3ExecutionMode::Prefill,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+            draft_decode,
+            DeviceKvCacheError::Physical(PhysicalKvError::InvalidSelection),
+        );
+
+        let mut mismatched_pair = cache_for(
+            request(),
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        assert_reselection_rejected_unchanged(
+            &mut mismatched_pair,
+            target_decode,
+            selected(
+                Qwen3ModelRole::Draft06B,
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS8C8192,
+            ),
+            DeviceKvCacheError::PlanPairMismatch,
+        );
+
+        let mut pending = cache_for(
+            request(),
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        pending
+            .append_page(request(), lease(Qwen3ModelRole::Target8B, 0, 82))
+            .unwrap();
+        let _pending_write = pending
+            .prepare_write(
+                request(),
+                Qwen3ModelRole::Target8B,
+                0,
+                CompletionEpoch::new(51),
+            )
+            .unwrap();
+        assert_reselection_rejected_unchanged(
+            &mut pending,
+            target_decode,
+            draft_decode,
+            DeviceKvCacheError::PendingWriteExists,
+        );
+
+        let grouping = M1QualificationLaneGrouping::S1;
+        let (plan, expected) = qualification_plan(grouping);
+        let validated =
+            crate::validate_m1_qualification_context_plan_v1(&plan, grouping, &expected).unwrap();
+        let mut reserved = qualification_cache(request(), grouping);
+        install_qualification_reserve_for_test(&mut reserved, validated.step(0, 0).unwrap(), 83);
+        assert_reselection_rejected_unchanged(
+            &mut reserved,
+            target_decode,
+            draft_decode,
+            DeviceKvCacheError::QualificationReserveAlreadyInstalled,
+        );
+
+        let mut insufficient = cache_for(
+            request(),
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        for page_index in 0..9 {
+            let count = if page_index == 8 {
+                1
+            } else {
+                M1_KV_PAGE_TOKENS
+            };
+            append_and_initialize(
+                &mut insufficient,
+                Qwen3ModelRole::Target8B,
+                page_index,
+                84,
+                count,
+                52,
+            );
+        }
+        insufficient
+            .accept_initialized(request(), Qwen3ModelRole::Target8B, 129)
+            .unwrap();
+        assert_reselection_rejected_unchanged(
+            &mut insufficient,
+            selected(
+                Qwen3ModelRole::Target8B,
+                Qwen3ExecutionMode::Prefill,
+                Qwen3PlanBucket::PrefillS1T128,
+            ),
+            selected(
+                Qwen3ModelRole::Draft06B,
+                Qwen3ExecutionMode::Prefill,
+                Qwen3PlanBucket::PrefillS1T128,
+            ),
+            DeviceKvCacheError::Physical(PhysicalKvError::ContextExceeded),
+        );
+
+        let mut nonactive = cache_for(
+            request(),
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        cancel_physical_kv(
+            &mut nonactive.common.target.physical,
+            request(),
+            target_decode,
+            CompletionEpoch::new(53),
+        )
+        .unwrap();
+        assert_reselection_rejected_unchanged(
+            &mut nonactive,
+            target_decode,
+            draft_decode,
+            DeviceKvCacheError::Physical(PhysicalKvError::WrongLifecycle),
+        );
+    }
+
     #[test]
     fn prefill_step_reservations_cover_all_exact_page_identities_and_abort_losslessly() {
         for (bucket, active_tokens) in [
@@ -6752,6 +7678,39 @@ mod tests {
                 .unwrap();
             assert_eq!(recovered.draft_tokens(), 4);
         }
+    }
+
+    #[test]
+    fn quiescent_prefill_to_speculative_reselection_admits_exact_draft_round() {
+        let bucket = Qwen3PlanBucket::SpeculativeS1K4C8192;
+        let target = selected(
+            Qwen3ModelRole::Target8B,
+            Qwen3ExecutionMode::Speculative,
+            bucket,
+        );
+        let (draft_cache, draft_decode, _) = m1_speculative_draft_round_shape_v1(target).unwrap();
+        let mut cache = cache_for(
+            request(),
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        );
+
+        cache.reselect_quiescent(target, draft_cache).unwrap();
+        let reservation = cache
+            .reserve_speculative_draft_round_write(
+                request(),
+                target,
+                draft_decode,
+                0,
+                CompletionEpoch::new(151),
+                leases(Qwen3ModelRole::Draft06B, 0, 1, 151),
+            )
+            .unwrap();
+
+        assert_eq!(reservation.target_speculative_selection(), target);
+        assert_eq!(reservation.draft_decode_selection(), draft_decode);
+        assert_eq!(reservation.draft_tokens(), 4);
+        assert!(cache.projection().draft_write_pending);
     }
 
     #[test]

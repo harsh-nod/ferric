@@ -1116,9 +1116,9 @@ def full_cli_policy(
     plan = read_json(baseline / "plan.json")
     queue = read_json(baseline / "missing-work.json")
     if queue["counts"] != {
-        "available_producer_items": 357,
+        "available_producer_items": 358,
         "missing_items": 358,
-        "missing_producer_items": 1,
+        "missing_producer_items": 0,
     }:
         fail(f"performance CLI fixture queue-count drifted: {queue['counts']}")
     slots = performance_slots(plan)

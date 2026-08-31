@@ -87,6 +87,10 @@ pub enum M1CompletedOutputCheckErrorV1 {
     QualificationFinalObservationShape,
     /// Generic compact checking was requested for a capture-attached non-prompt lane.
     QualificationCaptureRequiresEvidence { lane: usize },
+    /// Generic compact checking was requested while direct-choice evidence was attached.
+    DirectDiagnosticCaptureRequiresEvidence,
+    /// Generic compact checking was requested while speculative-choice evidence was attached.
+    SpeculativeDiagnosticCaptureRequiresEvidence,
     /// Evidence-derived qualification prefill was requested for another selection.
     QualificationPrefillSelection { actual: Qwen3PlanSelection },
     /// A qualification grouping did not cover the exact scheduler roster.
@@ -222,6 +226,25 @@ impl M1CheckedCompletionOutputV1 {
             completion_canary: None,
             completion_canary_readback: None,
             records: Box::new([]),
+        }
+    }
+
+    pub(crate) fn for_serving_history_test(
+        selection: Qwen3PlanSelection,
+        epoch: CompletionEpoch,
+        records: Box<[InertCheckedCompletionRecord]>,
+    ) -> Self {
+        Self {
+            selection,
+            epoch,
+            dispatch_generation: 0,
+            data_index: 0,
+            offset_bytes: 0,
+            extent_bytes: 0,
+            raw_sha256: [0; 32],
+            completion_canary: None,
+            completion_canary_readback: None,
+            records,
         }
     }
 }

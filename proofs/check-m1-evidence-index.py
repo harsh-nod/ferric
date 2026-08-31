@@ -17,6 +17,16 @@ from typing import Any, Callable, NoReturn
 
 
 FORMAT = "ferric.m1-evidence-index.v1"
+PRE_RECEIPT_PROTOCOL = "ferric.m1-pre-receipt-gate.v1"
+PRE_RECEIPT_GATE_IDS = (
+    "evidence-index",
+    "hardware",
+    "performance",
+    "proof",
+    "quality",
+    "source-closure",
+    "validators",
+)
 FERRIC_REQUIREMENTS_BASE_COMMIT = "c5a86fd56c1c817664593df25c04bbed30e84971"
 ROADMAP_STATUS = "Closed"
 SHA256 = re.compile(r"[0-9a-f]{64}\Z")
@@ -121,7 +131,7 @@ TRUSTED_VALIDATORS = {
     "qualification-receipt": (
         "proofs/m1/evidence/validate-qualification-receipt.py",
         "ferric.m1-validator.qualification-receipt.v1",
-        "cf2f043001815f06220dbf03a8131a3931c01b4c8b96681ed07e626374b36612",
+        "450c1283df88c7c36ba7a6b43627a5f4dfce26535bec21b0b9568bc336ecd7e0",
     ),
     "tcb-report": (
         "proofs/m1/evidence/validate-tcb-report.py",
@@ -170,6 +180,61 @@ def digest_file(path: Path) -> str:
     except OSError as error:
         fail(f"cannot hash {path}: {error}")
     return hasher.hexdigest()
+
+
+def stable_source_bytes(path: Path, description: str) -> bytes:
+    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0)
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    try:
+        before_path = path.lstat()
+        descriptor = os.open(path, flags)
+        before = os.fstat(descriptor)
+    except OSError as error:
+        fail(f"{description} is unavailable: {path}: {error}")
+    try:
+        if (
+            stat.S_ISLNK(before_path.st_mode)
+            or not stat.S_ISREG(before_path.st_mode)
+            or not stat.S_ISREG(before.st_mode)
+            or (before_path.st_dev, before_path.st_ino)
+            != (before.st_dev, before.st_ino)
+            or before.st_size <= 0
+            or before.st_size > 8_000_000
+        ):
+            fail(f"{description} must be a bounded stable regular file: {path}")
+        with os.fdopen(descriptor, "rb", closefd=False) as source:
+            raw = source.read(8_000_001)
+        after = os.fstat(descriptor)
+    except OSError as error:
+        fail(f"cannot read {description}: {error}")
+    finally:
+        os.close(descriptor)
+    try:
+        after_path = path.lstat()
+    except OSError as error:
+        fail(f"cannot revalidate {description}: {error}")
+
+    def identity(value: os.stat_result) -> tuple[int, ...]:
+        return (
+            value.st_dev,
+            value.st_ino,
+            value.st_mode,
+            value.st_nlink,
+            value.st_size,
+            value.st_mtime_ns,
+            value.st_ctime_ns,
+        )
+
+    if (
+        len(raw) != before.st_size
+        or len(raw) > 8_000_000
+        or identity(before_path) != identity(before)
+        or identity(before) != identity(after)
+        or identity(after) != identity(after_path)
+    ):
+        fail(f"{description} changed while it was read: {path}")
+    return raw
 
 
 def canonical_digest(value: dict[str, Any]) -> str:
@@ -932,6 +997,8 @@ def validate_obligations(
     grouped: dict[tuple[str, str], list[str]],
     artifacts: dict[str, dict[str, Any]],
     used_artifacts: set[str],
+    *,
+    allow_missing_receipt: bool = False,
 ) -> str:
     if not isinstance(value, list) or len(value) != len(specs):
         fail(f"M1 closure roster must contain exactly {len(specs)} obligation records")
@@ -1004,10 +1071,14 @@ def validate_obligations(
                 fail(f"M1 roadmap assurance dependencies drifted: {spec['id']}")
             receipt_id = record["receipt_artifact_id"]
             receipt = artifacts.get(receipt_id)
-            if receipt is None or receipt["kind"] != "QualificationReceipt":
+            if receipt is None and allow_missing_receipt:
+                if receipt_id != "artifact.qualification.m1":
+                    fail(f"M1 roadmap receipt identity drifted: {spec['id']}")
+            elif receipt is None or receipt["kind"] != "QualificationReceipt":
                 fail(f"M1 roadmap receipt is unavailable or fake: {spec['id']}")
             receipt_ids.add(receipt_id)
-            used_artifacts.add(receipt_id)
+            if receipt is not None:
+                used_artifacts.add(receipt_id)
         elif status == "Proved":
             proof_ids = binding_artifacts_for_kind(
                 grouped[key], bindings, "verus-theorem"
@@ -1082,32 +1153,54 @@ def invoke_trusted_validator(
             f"trusted M1 validator is absent from the exact Ferric source closure: {relative}"
         )
     validator = ferric / relative
-    regular_file(validator, f"trusted M1 validator for {evidence_kind}")
+    validator_raw = stable_source_bytes(
+        validator, f"trusted M1 validator for {evidence_kind}"
+    )
     if expected_source_digest is None:
         fail(f"trusted M1 validator has no pinned source identity: {relative}")
     if require_sha256(
         expected_source_digest, f"trusted validator source: {evidence_kind}"
-    ) != digest_file(validator):
+    ) != digest_bytes(validator_raw):
         fail(f"trusted M1 validator source identity mismatch: {relative}")
     payload = json.dumps(
         context, ensure_ascii=True, separators=(",", ":"), sort_keys=True
     )
     payload_digest = digest_bytes(payload.encode("ascii"))
     artifact_digest = context["artifact"]["sha256"]
-    try:
-        result = subprocess.run(
-            [sys.executable, "-I", str(validator), validator_format],
-            check=False,
-            input=payload + "\n",
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            timeout=60,
-            cwd=ferric,
-            env={"PATH": os.environ.get("PATH", "")},
-        )
-    except (OSError, subprocess.TimeoutExpired) as error:
-        fail(f"trusted M1 validator could not run for {evidence_kind}: {error}")
+    bootstrap = (
+        "import os,sys;"
+        "p=sys.argv.pop(1);f=int(sys.argv.pop(1));sys.argv[0]=p;"
+        "s=os.fdopen(os.dup(f),'rb').read();"
+        "g={'__name__':'__main__','__file__':p,'__package__':None};"
+        "exec(compile(s,p,'exec'),g)"
+    )
+    with tempfile.TemporaryFile(mode="w+b") as pinned_source:
+        pinned_source.write(validator_raw)
+        pinned_source.flush()
+        pinned_source.seek(0)
+        try:
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-I",
+                    "-c",
+                    bootstrap,
+                    str(validator),
+                    str(pinned_source.fileno()),
+                    validator_format,
+                ],
+                check=False,
+                input=payload + "\n",
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                timeout=60,
+                cwd=ferric,
+                env={"PATH": os.environ.get("PATH", "")},
+                pass_fds=(pinned_source.fileno(),),
+            )
+        except (OSError, subprocess.TimeoutExpired) as error:
+            fail(f"trusted M1 validator could not run for {evidence_kind}: {error}")
     expected = (
         f"PASS: {validator_format} artifact_sha256={artifact_digest} "
         f"context_sha256={payload_digest}\n"
@@ -1133,6 +1226,10 @@ def validate_with_trusted_producers(
     bindings: dict[str, dict[str, Any]],
     receipt_artifact_id: str,
     test_only_validator: TestValidator | None,
+    *,
+    evidence_kinds: set[str] | None = None,
+    include_tcb: bool = True,
+    include_receipt: bool = True,
 ) -> None:
     common = {
         "format": FORMAT,
@@ -1141,6 +1238,11 @@ def validate_with_trusted_producers(
         "tcb": [tcb[identifier] for identifier in TCB_IDS],
     }
     for identifier, binding in bindings.items():
+        if (
+            evidence_kinds is not None
+            and binding["evidence_kind"] not in evidence_kinds
+        ):
+            continue
         artifact_id = binding["artifact_id"]
         path_id = binding["path_id"]
         context = {
@@ -1158,7 +1260,7 @@ def validate_with_trusted_producers(
             context,
             test_only_validator,
         )
-    for identifier in TCB_IDS:
+    for identifier in TCB_IDS if include_tcb else ():
         record = tcb[identifier]
         artifact_id = record["artifact_id"]
         context = {
@@ -1175,6 +1277,8 @@ def validate_with_trusted_producers(
             context,
             test_only_validator,
         )
+    if not include_receipt:
+        return
     context = {
         **common,
         "artifact": artifacts[receipt_artifact_id],
@@ -1201,7 +1305,11 @@ def validate_evidence_index(
     fe2o3: Path,
     *,
     _test_only_validator: TestValidator | None = None,
+    _pre_receipt_gate: str | None = None,
+    _pre_receipt_artifact_root: Path | None = None,
 ) -> None:
+    if _pre_receipt_gate is not None and _pre_receipt_gate not in PRE_RECEIPT_GATE_IDS:
+        fail(f"unknown M1 pre-receipt gate: {_pre_receipt_gate}")
     ferric = ferric.resolve(strict=True)
     fe2o3 = fe2o3.resolve(strict=True)
     validate_requirements(ferric)
@@ -1228,8 +1336,21 @@ def validate_evidence_index(
     if index["requirements_sha256"] != requirements_digest:
         fail("M1 evidence index does not bind the exact requirements manifest")
 
-    index_root = index_path.resolve(strict=True).parent
+    if _pre_receipt_artifact_root is not None:
+        if _pre_receipt_gate is None:
+            fail("M1 artifact-root override is restricted to pre-receipt validation")
+        supplied_root = _pre_receipt_artifact_root.absolute()
+        try:
+            index_root = _pre_receipt_artifact_root.resolve(strict=True)
+        except OSError as error:
+            fail(f"M1 pre-receipt artifact root is unavailable: {error}")
+        if supplied_root != index_root or not index_root.is_dir():
+            fail("M1 pre-receipt artifact root is not a canonical directory")
+    else:
+        index_root = index_path.resolve(strict=True).parent
     artifacts, artifact_files = validate_artifacts(index_root, index["artifacts"])
+    if _pre_receipt_gate is not None and "artifact.qualification.m1" in artifacts:
+        fail("M1 pre-receipt candidate already contains the qualification receipt")
     used_artifacts: set[str] = set()
     repositories = {"ferric": ferric, "fe2o3": fe2o3}
     sources, closure_paths = validate_sources(
@@ -1273,6 +1394,7 @@ def validate_evidence_index(
         grouped,
         artifacts,
         used_artifacts,
+        allow_missing_receipt=_pre_receipt_gate is not None,
     )
     if used_artifacts != set(artifacts):
         unused = sorted(set(artifacts) - used_artifacts)
@@ -1284,34 +1406,81 @@ def validate_evidence_index(
         bindings,
         artifact_files,
     )
-    validate_with_trusted_producers(
-        ferric,
-        fe2o3,
-        requirements_digest,
-        index,
-        sources,
-        closure_paths,
-        resolutions,
-        artifacts,
-        artifact_files,
-        tcb,
-        bindings,
-        receipt_artifact_id,
-        _test_only_validator,
-    )
+    if _pre_receipt_gate is None:
+        validate_with_trusted_producers(
+            ferric,
+            fe2o3,
+            requirements_digest,
+            index,
+            sources,
+            closure_paths,
+            resolutions,
+            artifacts,
+            artifact_files,
+            tcb,
+            bindings,
+            receipt_artifact_id,
+            _test_only_validator,
+        )
+    else:
+        gate_kinds: dict[str, set[str] | None] = {
+            "evidence-index": set(),
+            "hardware": {"hardware-test"},
+            "performance": {"performance-gate"},
+            "proof": {"negative-mutation", "verus-theorem"},
+            "quality": set(),
+            "source-closure": set(),
+            "validators": None,
+        }
+        validate_with_trusted_producers(
+            ferric,
+            fe2o3,
+            requirements_digest,
+            index,
+            sources,
+            closure_paths,
+            resolutions,
+            artifacts,
+            artifact_files,
+            tcb,
+            bindings,
+            receipt_artifact_id,
+            _test_only_validator,
+            evidence_kinds=gate_kinds[_pre_receipt_gate],
+            include_tcb=_pre_receipt_gate == "validators",
+            include_receipt=False,
+        )
     counts = (
         f"33 roadmap, 17 assurance, {len(bindings)} independent bindings, "
         f"{len(artifacts)} identity-bound artifacts, sha256={digest_file(index_path)}"
     )
-    if _test_only_validator is None:
+    if _pre_receipt_gate is not None:
+        print(
+            f"PASS: {PRE_RECEIPT_PROTOCOL} gate={_pre_receipt_gate} "
+            f"candidate_sha256={digest_file(index_path)}"
+        )
+    elif _test_only_validator is None:
         print(f"PASS: closed M1 evidence index ({counts})")
     else:
         print(f"PASS: structurally complete synthetic M1 evidence index ({counts})")
 
 
 def main() -> None:
+    if len(sys.argv) == 7 and sys.argv[1] == PRE_RECEIPT_PROTOCOL:
+        validate_evidence_index(
+            Path(sys.argv[3]),
+            Path(sys.argv[4]),
+            Path(sys.argv[6]),
+            _pre_receipt_gate=sys.argv[2],
+            _pre_receipt_artifact_root=Path(sys.argv[5]),
+        )
+        return
     if len(sys.argv) != 4:
-        fail(f"usage: {sys.argv[0]} FERRIC_REPO EVIDENCE_INDEX FE2O3_REPO")
+        fail(
+            f"usage: {sys.argv[0]} FERRIC_REPO EVIDENCE_INDEX FE2O3_REPO; or "
+            f"{sys.argv[0]} {PRE_RECEIPT_PROTOCOL} GATE FERRIC_REPO "
+            "CANDIDATE_INDEX ARTIFACT_ROOT FE2O3_REPO"
+        )
     validate_evidence_index(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]))
 
 

@@ -1072,6 +1072,20 @@ fn validate_attributes(attributes: &[Attribute], allow_solver_attributes: bool) 
     for attribute in attributes {
         let name = path_name(attribute.path());
         match name.as_str() {
+            "cfg"
+                if matches!(
+                    &attribute.meta,
+                    Meta::List(list)
+                        if matches!(
+                            list.tokens.to_string().as_str(),
+                            "feature = \"qualification-fault-injection\""
+                                | "not (feature = \"qualification-fault-injection\")"
+                        )
+                ) =>
+            {
+                // Qualification builds compile both default and all-feature variants of the
+                // admitted fault-transition surface; no other conditional source is accepted.
+            }
             "cfg" | "cfg_attr" => {
                 let detail = match &attribute.meta {
                     Meta::List(list) => format!("({})", list.tokens),
@@ -1146,6 +1160,19 @@ fn validate_attributes(attributes: &[Attribute], allow_solver_attributes: bool) 
                 };
                 if list.tokens.to_string() != "autoderive_clone_without_spec" {
                     return Err(format!("unsupported verifier allowance: {}", list.tokens));
+                }
+            }
+            "verifier::rlimit" if allow_solver_attributes => {
+                let Meta::List(list) = &attribute.meta else {
+                    return Err("malformed verifier resource limit".to_owned());
+                };
+                let limit = list
+                    .tokens
+                    .to_string()
+                    .parse::<u32>()
+                    .map_err(|_| "malformed verifier resource limit".to_owned())?;
+                if !(1..=100).contains(&limit) {
+                    return Err(format!("unsupported verifier resource limit: {limit}"));
                 }
             }
             "trigger" | "verifier::bit_vector" if allow_solver_attributes => {}
