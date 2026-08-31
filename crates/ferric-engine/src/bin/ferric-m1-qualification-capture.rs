@@ -16,10 +16,11 @@ use ferric_build::{
     DeclaredDeviceAllocation, DeclaredM1StepWorkspaceAllocation, ExternalIdentityClosureInputs,
     M1StepWorkspaceDeclaration, M1StepWorkspacePlanOutcome, ModelMemoryAllocationSet,
     ModelMemoryPlanOutcome, PrepackedDeploymentBundle, BUNDLE_ADMISSION_RECORD_BYTES,
-    CANONICAL_DEPLOYMENT_BUNDLE_BYTES, DRAFT_REPOSITORY, DRAFT_REVISION,
+    CANONICAL_DEPLOYMENT_BUNDLE_BYTES, DRAFT_REPOSITORY, DRAFT_REVISION, QWEN3_DRAFT_CONFIG_BYTES,
     QWEN3_DRAFT_PREPACKED_MANIFEST_BYTES, QWEN3_DRAFT_TENSOR_DATA_BYTES,
-    QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1, QWEN3_TARGET_PREPACKED_MANIFEST_BYTES,
-    QWEN3_TARGET_TENSOR_DATA_BYTES, TARGET_REPOSITORY, TARGET_REVISION,
+    QWEN3_MODEL_MEMORY_ALLOCATION_ALIGNMENT_V1, QWEN3_TARGET_CONFIG_BYTES,
+    QWEN3_TARGET_PREPACKED_MANIFEST_BYTES, QWEN3_TARGET_TENSOR_DATA_BYTES, QWEN3_TOKENIZER_BYTES,
+    QWEN3_TOKENIZER_METADATA_BYTES, TARGET_REPOSITORY, TARGET_REVISION,
 };
 use ferric_engine::{
     bind_m1_kv_workspace_table_v1, bind_m1_physical_runner_v1,
@@ -123,10 +124,62 @@ const R30_PREFILL_ACTIVE_TOKENS: u32 = 128;
 const R30_PREFILL_INPUT_TOKEN: u32 = 1;
 const R30_PREFILL_INPUT_BYTES: u64 = R30_PREFILL_ACTIVE_TOKENS as u64 * 4;
 const R30_PREFILL_TARGET_PAGES: usize = 8;
-const METADATA_BYTES: u64 = 64 * 1_024;
 const BF16_BYTES: u64 = 2;
 const DECODE_CONTEXT_LENGTH: u32 = M1_QUALIFICATION_FINAL_INPUT_TOKEN;
 const QUALIFICATION_LOGICAL_KV_PAGE_TOKENS: u32 = 256;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct SnapshotFileV1 {
+    name: &'static str,
+    bytes: u64,
+}
+
+const MODEL_SNAPSHOT_FILES_V1: [SnapshotFileV1; 11] = [
+    SnapshotFileV1 {
+        name: "bundle.admission.bin",
+        bytes: BUNDLE_ADMISSION_RECORD_BYTES as u64,
+    },
+    SnapshotFileV1 {
+        name: "deployment.bundle.bin",
+        bytes: CANONICAL_DEPLOYMENT_BUNDLE_BYTES as u64,
+    },
+    SnapshotFileV1 {
+        name: "draft.config.json",
+        bytes: QWEN3_DRAFT_CONFIG_BYTES,
+    },
+    SnapshotFileV1 {
+        name: "draft.tokenizer_config.json",
+        bytes: QWEN3_TOKENIZER_METADATA_BYTES,
+    },
+    SnapshotFileV1 {
+        name: "draft.weights.bin",
+        bytes: QWEN3_DRAFT_TENSOR_DATA_BYTES,
+    },
+    SnapshotFileV1 {
+        name: "draft.weights.manifest.bin",
+        bytes: QWEN3_DRAFT_PREPACKED_MANIFEST_BYTES as u64,
+    },
+    SnapshotFileV1 {
+        name: "target.config.json",
+        bytes: QWEN3_TARGET_CONFIG_BYTES,
+    },
+    SnapshotFileV1 {
+        name: "target.tokenizer_config.json",
+        bytes: QWEN3_TOKENIZER_METADATA_BYTES,
+    },
+    SnapshotFileV1 {
+        name: "target.weights.bin",
+        bytes: QWEN3_TARGET_TENSOR_DATA_BYTES,
+    },
+    SnapshotFileV1 {
+        name: "target.weights.manifest.bin",
+        bytes: QWEN3_TARGET_PREPACKED_MANIFEST_BYTES as u64,
+    },
+    SnapshotFileV1 {
+        name: "tokenizer.json",
+        bytes: QWEN3_TOKENIZER_BYTES,
+    },
+];
 
 const COMMON_IDENTITIES: &[&str] = &[
     "benchmark-executable",
@@ -1225,14 +1278,13 @@ struct ModelInputBytes {
     deployment_bundle: Vec<u8>,
     draft_config: Vec<u8>,
     draft_manifest: Vec<u8>,
-    draft_tokenizer: Vec<u8>,
     draft_tokenizer_metadata: Vec<u8>,
     draft_weights: Box<[u8]>,
     target_config: Vec<u8>,
     target_manifest: Vec<u8>,
-    target_tokenizer: Vec<u8>,
     target_tokenizer_metadata: Vec<u8>,
     target_weights: Box<[u8]>,
+    tokenizer: Vec<u8>,
 }
 
 impl ModelInputBytes {
@@ -1253,16 +1305,12 @@ impl ModelInputBytes {
             Cursor::new(&self.draft_weights),
         )
         .map_err(|error| format!("cannot authenticate persisted draft weights: {error}"))?;
-        let target_tokenizer = authenticate_qwen3_tokenizer(
-            Qwen3ModelRole::Target8B,
-            Cursor::new(&self.target_tokenizer),
-        )
-        .map_err(|error| format!("cannot authenticate target tokenizer: {error}"))?;
-        let draft_tokenizer = authenticate_qwen3_tokenizer(
-            Qwen3ModelRole::Draft06B,
-            Cursor::new(&self.draft_tokenizer),
-        )
-        .map_err(|error| format!("cannot authenticate draft tokenizer: {error}"))?;
+        let target_tokenizer =
+            authenticate_qwen3_tokenizer(Qwen3ModelRole::Target8B, Cursor::new(&self.tokenizer))
+                .map_err(|error| format!("cannot authenticate target tokenizer: {error}"))?;
+        let draft_tokenizer =
+            authenticate_qwen3_tokenizer(Qwen3ModelRole::Draft06B, Cursor::new(&self.tokenizer))
+                .map_err(|error| format!("cannot authenticate draft tokenizer: {error}"))?;
         let prepacked = build_prepacked_deployment_bundle(
             authenticated_assets(
                 &self.target_config,
@@ -1352,6 +1400,60 @@ impl SecureDirectory {
         let bytes = self.read_bounded(relative, MAX_DOCUMENT_BYTES as u64, description)?;
         let value = parse_canonical(&bytes, description)?;
         Ok((value, bytes))
+    }
+
+    fn validate_exact_regular_file_roster(
+        &self,
+        expected: &[SnapshotFileV1],
+        description: &str,
+    ) -> CaptureResult<()> {
+        let expected_names = expected
+            .iter()
+            .map(|file| file.name.to_owned())
+            .collect::<BTreeSet<_>>();
+        if expected_names.len() != expected.len() {
+            return Err(format!(
+                "{description} expected roster contains a duplicate"
+            ));
+        }
+        if self.directory_roster(description)? != expected_names {
+            return Err(format!(
+                "{description} must contain exactly the admitted regular-file roster"
+            ));
+        }
+        for file in expected {
+            let member_description = format!("{description} member {}", file.name);
+            let member = self.open_file(Path::new(file.name), &member_description)?;
+            if u64::try_from(member.length(&member_description)?).ok() != Some(file.bytes) {
+                return Err(format!("{member_description} length drifted"));
+            }
+            member.validate_snapshot(&member_description)?;
+        }
+        Ok(())
+    }
+
+    fn directory_roster(&self, description: &str) -> CaptureResult<BTreeSet<String>> {
+        let mut entries = Dir::read_from(&self.descriptor)
+            .map_err(|error| format!("cannot enumerate {description}: {error}"))?;
+        let mut names = BTreeSet::new();
+        while let Some(entry) = entries.read() {
+            let entry =
+                entry.map_err(|error| format!("cannot enumerate {description}: {error}"))?;
+            let bytes = entry.file_name().to_bytes();
+            if matches!(bytes, b"." | b"..") {
+                continue;
+            }
+            if !bytes.is_ascii() {
+                return Err(format!("{description} filename must be ASCII"));
+            }
+            let name = std::str::from_utf8(bytes)
+                .map_err(|_| format!("{description} filename must be UTF-8"))?;
+            require_relative(Path::new(name), &format!("{description} member"))?;
+            if !names.insert(name.to_owned()) {
+                return Err(format!("{description} contains a duplicate filename"));
+            }
+        }
+        Ok(names)
     }
 
     fn open_file(&self, relative: &Path, description: &str) -> CaptureResult<SecureFile> {
@@ -1933,7 +2035,7 @@ fn run(arguments: Vec<OsString>) -> CaptureResult<()> {
     {
         return run_r32_speculative_capture(&arguments[1..]);
     }
-    if arguments.len() != 11 {
+    if arguments.len() != 10 {
         match arguments.first().and_then(|argument| argument.to_str()) {
             Some("generate-inputs") => return input_bundle::generate_inputs(&arguments[1..]),
             Some("validate-inputs") => return input_bundle::validate_inputs(&arguments[1..]),
@@ -1944,10 +2046,10 @@ fn run(arguments: Vec<OsString>) -> CaptureResult<()> {
 }
 
 fn run_r30_canary_capture(arguments: &[OsString]) -> CaptureResult<()> {
-    let [source_root, prepacked_root, artifact_root, closure_path, environment_path, gpu_unique_id, output] =
+    let [prepacked_root, artifact_root, closure_path, environment_path, gpu_unique_id, output] =
         arguments
     else {
-        return Err("usage: ferric-m1-qualification-capture capture-r30-canary MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned());
+        return Err("usage: ferric-m1-qualification-capture capture-r30-canary PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned());
     };
     let gpu_unique_id = gpu_unique_id
         .to_str()
@@ -1959,9 +2061,8 @@ fn run_r30_canary_capture(arguments: &[OsString]) -> CaptureResult<()> {
     let artifacts = reopen_persisted_m1_kernel_artifacts_v1(Path::new(artifact_root))
         .map_err(|error| format!("cannot authenticate persisted kernel artifacts: {error}"))?;
     let executable_catalog_id = artifacts.program_catalog_id();
-    let source = SecureDirectory::open(Path::new(source_root), "model source root")?;
     let snapshot = SecureDirectory::open(Path::new(prepacked_root), "prepacked snapshot root")?;
-    let model = load_model_inputs(&source, &snapshot)?;
+    let model = load_model_inputs(&snapshot)?;
     let runner_admission = model.authenticate()?;
     let plan_catalog = build_authenticated_sequential_plan_catalog(runner_admission)
         .map_err(|error| format!("cannot build authenticated plan catalog: {error:?}"))?;
@@ -2119,10 +2220,10 @@ fn fixed_r30_canary_workload() -> CaptureResult<(Workload, Vec<u32>)> {
 }
 
 fn run_r30_cancellation_capture(arguments: &[OsString]) -> CaptureResult<()> {
-    let [source_root, prepacked_root, artifact_root, closure_path, environment_path, gpu_unique_id, output] =
+    let [prepacked_root, artifact_root, closure_path, environment_path, gpu_unique_id, output] =
         arguments
     else {
-        return Err("usage: ferric-m1-qualification-capture capture-r30-cancellation MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned());
+        return Err("usage: ferric-m1-qualification-capture capture-r30-cancellation PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned());
     };
     let gpu_unique_id = gpu_unique_id
         .to_str()
@@ -2135,9 +2236,8 @@ fn run_r30_cancellation_capture(arguments: &[OsString]) -> CaptureResult<()> {
     let artifacts = reopen_persisted_m1_kernel_artifacts_v1(Path::new(artifact_root))
         .map_err(|error| format!("cannot authenticate persisted kernel artifacts: {error}"))?;
     let executable_catalog_id = artifacts.program_catalog_id();
-    let source = SecureDirectory::open(Path::new(source_root), "model source root")?;
     let snapshot = SecureDirectory::open(Path::new(prepacked_root), "prepacked snapshot root")?;
-    let model = load_model_inputs(&source, &snapshot)?;
+    let model = load_model_inputs(&snapshot)?;
     let runner_admission = model.authenticate()?;
     let plan_catalog = build_authenticated_sequential_plan_catalog(runner_admission)
         .map_err(|error| format!("cannot build authenticated plan catalog: {error:?}"))?;
@@ -2237,10 +2337,10 @@ fn fixed_r30_cancellation_workload() -> CaptureResult<(Workload, Vec<u32>)> {
 }
 
 fn run_r30_exhaustion_capture(arguments: &[OsString]) -> CaptureResult<()> {
-    let [source_root, prepacked_root, artifact_root, closure_path, environment_path, gpu_unique_id, output] =
+    let [prepacked_root, artifact_root, closure_path, environment_path, gpu_unique_id, output] =
         arguments
     else {
-        return Err("usage: ferric-m1-qualification-capture capture-r30-exhaustion MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned());
+        return Err("usage: ferric-m1-qualification-capture capture-r30-exhaustion PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned());
     };
     let gpu_unique_id = gpu_unique_id
         .to_str()
@@ -2252,9 +2352,8 @@ fn run_r30_exhaustion_capture(arguments: &[OsString]) -> CaptureResult<()> {
     let artifacts = reopen_persisted_m1_kernel_artifacts_v1(Path::new(artifact_root))
         .map_err(|error| format!("cannot authenticate persisted kernel artifacts: {error}"))?;
     let executable_catalog_id = artifacts.program_catalog_id();
-    let source = SecureDirectory::open(Path::new(source_root), "model source root")?;
     let snapshot = SecureDirectory::open(Path::new(prepacked_root), "prepacked snapshot root")?;
-    let model = load_model_inputs(&source, &snapshot)?;
+    let model = load_model_inputs(&snapshot)?;
     let runner_admission = model.authenticate()?;
     let plan_catalog = build_authenticated_sequential_plan_catalog(runner_admission)
         .map_err(|error| format!("cannot build authenticated plan catalog: {error:?}"))?;
@@ -2515,10 +2614,10 @@ fn quarantine_unpublished_pages(
 }
 
 fn run_r30_rollback_capture(arguments: &[OsString]) -> CaptureResult<()> {
-    let [source_root, prepacked_root, artifact_root, closure_path, environment_path, gpu_unique_id, output] =
+    let [prepacked_root, artifact_root, closure_path, environment_path, gpu_unique_id, output] =
         arguments
     else {
-        return Err("usage: ferric-m1-qualification-capture capture-r30-rollback MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned());
+        return Err("usage: ferric-m1-qualification-capture capture-r30-rollback PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned());
     };
     let gpu_unique_id = gpu_unique_id
         .to_str()
@@ -2530,9 +2629,8 @@ fn run_r30_rollback_capture(arguments: &[OsString]) -> CaptureResult<()> {
     let artifacts = reopen_persisted_m1_kernel_artifacts_v1(Path::new(artifact_root))
         .map_err(|error| format!("cannot authenticate persisted kernel artifacts: {error}"))?;
     let executable_catalog_id = artifacts.program_catalog_id();
-    let source = SecureDirectory::open(Path::new(source_root), "model source root")?;
     let snapshot = SecureDirectory::open(Path::new(prepacked_root), "prepacked snapshot root")?;
-    let model = load_model_inputs(&source, &snapshot)?;
+    let model = load_model_inputs(&snapshot)?;
     let runner_admission = model.authenticate()?;
     let plan_catalog = build_authenticated_sequential_plan_catalog(runner_admission)
         .map_err(|error| format!("cannot build authenticated plan catalog: {error:?}"))?;
@@ -2902,10 +3000,10 @@ fn execute_r30_rollback_capture(
 }
 
 fn run_r32_speculative_capture(arguments: &[OsString]) -> CaptureResult<()> {
-    let [source_root, prepacked_root, artifact_root, closure_path, environment_path, gpu_unique_id, output] =
+    let [prepacked_root, artifact_root, closure_path, environment_path, gpu_unique_id, output] =
         arguments
     else {
-        return Err("usage: ferric-m1-qualification-capture capture-r32-speculative-k4 MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned());
+        return Err("usage: ferric-m1-qualification-capture capture-r32-speculative-k4 PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned());
     };
     let gpu_unique_id = gpu_unique_id
         .to_str()
@@ -2917,9 +3015,8 @@ fn run_r32_speculative_capture(arguments: &[OsString]) -> CaptureResult<()> {
     let artifacts = reopen_persisted_m1_kernel_artifacts_v1(Path::new(artifact_root))
         .map_err(|error| format!("cannot authenticate persisted kernel artifacts: {error}"))?;
     let executable_catalog_id = artifacts.program_catalog_id();
-    let source = SecureDirectory::open(Path::new(source_root), "model source root")?;
     let snapshot = SecureDirectory::open(Path::new(prepacked_root), "prepacked snapshot root")?;
-    let model = load_model_inputs(&source, &snapshot)?;
+    let model = load_model_inputs(&snapshot)?;
     let runner_admission = model.authenticate()?;
     let plan_catalog = build_authenticated_sequential_plan_catalog(runner_admission)
         .map_err(|error| format!("cannot build authenticated plan catalog: {error:?}"))?;
@@ -3291,13 +3388,13 @@ fn run_capture_with_purpose(
     arguments: &[OsString],
     purpose: CapturePurposeV1,
 ) -> CaptureResult<()> {
-    let [plan_path, roster_path, case_id, workload_path, source_root, prepacked_root, artifact_root, closure_path, environment_path, gpu_unique_id, output] =
+    let [plan_path, roster_path, case_id, workload_path, prepacked_root, artifact_root, closure_path, environment_path, gpu_unique_id, output] =
         arguments
     else {
         return Err(match purpose {
-            CapturePurposeV1::Qualification => "usage: ferric-m1-qualification-capture PLAN ROSTER CASE-ID WORKLOAD MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned(),
-            CapturePurposeV1::R30PartialCanary => "capture-r30-canary uses its independent seven-argument path".to_owned(),
-            CapturePurposeV1::R30PartialCancellation => "capture-r30-cancellation uses its independent seven-argument path".to_owned(),
+            CapturePurposeV1::Qualification => "usage: ferric-m1-qualification-capture PLAN ROSTER CASE-ID WORKLOAD PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned(),
+            CapturePurposeV1::R30PartialCanary => "capture-r30-canary uses its independent six-argument path".to_owned(),
+            CapturePurposeV1::R30PartialCancellation => "capture-r30-cancellation uses its independent six-argument path".to_owned(),
         });
     };
     let case_id = case_id
@@ -3340,9 +3437,8 @@ fn run_capture_with_purpose(
         .map_err(|error| format!("cannot authenticate persisted kernel artifacts: {error}"))?;
     let executable_catalog_id = artifacts.program_catalog_id();
 
-    let source = SecureDirectory::open(Path::new(source_root), "model source root")?;
     let snapshot = SecureDirectory::open(Path::new(prepacked_root), "prepacked snapshot root")?;
-    let model = load_model_inputs(&source, &snapshot)?;
+    let model = load_model_inputs(&snapshot)?;
     let runner_admission = model.authenticate()?;
     let deployment = *runner_admission.prepacked().deployment();
     let plan_catalog = build_authenticated_sequential_plan_catalog(runner_admission)
@@ -7212,11 +7308,10 @@ fn parse_environment_document(value: &Value) -> CaptureResult<u64> {
     integer_field(object, "gpu_unique_id")
 }
 
-fn load_model_inputs(
-    source: &SecureDirectory,
-    snapshot: &SecureDirectory,
-) -> CaptureResult<ModelInputBytes> {
-    Ok(ModelInputBytes {
+fn load_model_inputs(snapshot: &SecureDirectory) -> CaptureResult<ModelInputBytes> {
+    snapshot
+        .validate_exact_regular_file_roster(&MODEL_SNAPSHOT_FILES_V1, "prepacked model snapshot")?;
+    let model = ModelInputBytes {
         admission_record: snapshot.read_exact(
             Path::new("bundle.admission.bin"),
             BUNDLE_ADMISSION_RECORD_BYTES as u64,
@@ -7227,9 +7322,9 @@ fn load_model_inputs(
             CANONICAL_DEPLOYMENT_BUNDLE_BYTES as u64,
             "canonical deployment bundle",
         )?,
-        draft_config: source.read_bounded(
-            Path::new("draft/config.json"),
-            METADATA_BYTES,
+        draft_config: snapshot.read_exact(
+            Path::new("draft.config.json"),
+            QWEN3_DRAFT_CONFIG_BYTES,
             "draft config",
         )?,
         draft_manifest: snapshot.read_exact(
@@ -7237,14 +7332,9 @@ fn load_model_inputs(
             u64::from(QWEN3_DRAFT_PREPACKED_MANIFEST_BYTES),
             "draft weight manifest",
         )?,
-        draft_tokenizer: source.read_bounded(
-            Path::new("draft/tokenizer.json"),
-            64 * 1_024 * 1_024,
-            "draft tokenizer",
-        )?,
-        draft_tokenizer_metadata: source.read_bounded(
-            Path::new("draft/tokenizer_config.json"),
-            METADATA_BYTES,
+        draft_tokenizer_metadata: snapshot.read_exact(
+            Path::new("draft.tokenizer_config.json"),
+            QWEN3_TOKENIZER_METADATA_BYTES,
             "draft tokenizer metadata",
         )?,
         draft_weights: snapshot
@@ -7254,9 +7344,9 @@ fn load_model_inputs(
                 "draft prepacked weights",
             )?
             .into_boxed_slice(),
-        target_config: source.read_bounded(
-            Path::new("target/config.json"),
-            METADATA_BYTES,
+        target_config: snapshot.read_exact(
+            Path::new("target.config.json"),
+            QWEN3_TARGET_CONFIG_BYTES,
             "target config",
         )?,
         target_manifest: snapshot.read_exact(
@@ -7264,14 +7354,9 @@ fn load_model_inputs(
             u64::from(QWEN3_TARGET_PREPACKED_MANIFEST_BYTES),
             "target weight manifest",
         )?,
-        target_tokenizer: source.read_bounded(
-            Path::new("target/tokenizer.json"),
-            64 * 1_024 * 1_024,
-            "target tokenizer",
-        )?,
-        target_tokenizer_metadata: source.read_bounded(
-            Path::new("target/tokenizer_config.json"),
-            METADATA_BYTES,
+        target_tokenizer_metadata: snapshot.read_exact(
+            Path::new("target.tokenizer_config.json"),
+            QWEN3_TOKENIZER_METADATA_BYTES,
             "target tokenizer metadata",
         )?,
         target_weights: snapshot
@@ -7281,7 +7366,15 @@ fn load_model_inputs(
                 "target prepacked weights",
             )?
             .into_boxed_slice(),
-    })
+        tokenizer: snapshot.read_exact(
+            Path::new("tokenizer.json"),
+            QWEN3_TOKENIZER_BYTES,
+            "shared target and draft tokenizer",
+        )?,
+    };
+    snapshot
+        .validate_exact_regular_file_roster(&MODEL_SNAPSHOT_FILES_V1, "prepacked model snapshot")?;
+    Ok(model)
 }
 
 fn authenticated_assets<'a>(
@@ -7949,6 +8042,7 @@ mod tests {
     use super::*;
     use ferric_spec::RequestId;
     use std::fs;
+    use std::os::unix::fs::symlink;
     use std::sync::atomic::{AtomicU64, Ordering};
 
     static TEST_NONCE: AtomicU64 = AtomicU64::new(0);
@@ -8012,69 +8106,200 @@ mod tests {
         })
     }
 
-    #[test]
-    fn input_subcommands_do_not_reserve_legacy_eleven_argument_plan_names() {
-        let new_mode_error = run(vec![OsString::from("generate-inputs")]).unwrap_err();
-        assert!(new_mode_error
-            .starts_with("usage: ferric-m1-qualification-capture generate-inputs MODEL-SOURCE"));
+    fn small_snapshot_files() -> [SnapshotFileV1; 2] {
+        [
+            SnapshotFileV1 {
+                name: "first.bin",
+                bytes: 5,
+            },
+            SnapshotFileV1 {
+                name: "second.bin",
+                bytes: 6,
+            },
+        ]
+    }
 
-        let mut legacy = vec![OsString::from("unused"); 11];
+    fn write_small_snapshot(path: &Path) {
+        fs::create_dir(path).unwrap();
+        fs::write(path.join("first.bin"), b"first").unwrap();
+        fs::write(path.join("second.bin"), b"second").unwrap();
+    }
+
+    #[test]
+    fn secure_snapshot_roster_rejects_missing_extra_nonregular_and_symlink_members() {
+        let temporary = TestDirectory::new();
+        let expected = small_snapshot_files();
+
+        let exact = temporary.0.join("exact");
+        write_small_snapshot(&exact);
+        SecureDirectory::open(&exact, "exact snapshot")
+            .unwrap()
+            .validate_exact_regular_file_roster(&expected, "exact snapshot")
+            .unwrap();
+
+        let missing = temporary.0.join("missing");
+        write_small_snapshot(&missing);
+        fs::remove_file(missing.join("second.bin")).unwrap();
+        assert!(SecureDirectory::open(&missing, "missing snapshot")
+            .unwrap()
+            .validate_exact_regular_file_roster(&expected, "missing snapshot")
+            .is_err());
+
+        let extra = temporary.0.join("extra");
+        write_small_snapshot(&extra);
+        fs::write(extra.join("extra.bin"), b"extra").unwrap();
+        assert!(SecureDirectory::open(&extra, "extra snapshot")
+            .unwrap()
+            .validate_exact_regular_file_roster(&expected, "extra snapshot")
+            .is_err());
+
+        let nonregular = temporary.0.join("nonregular");
+        write_small_snapshot(&nonregular);
+        fs::remove_file(nonregular.join("second.bin")).unwrap();
+        fs::create_dir(nonregular.join("second.bin")).unwrap();
+        assert!(SecureDirectory::open(&nonregular, "nonregular snapshot")
+            .unwrap()
+            .validate_exact_regular_file_roster(&expected, "nonregular snapshot")
+            .is_err());
+
+        let symlinked = temporary.0.join("symlinked");
+        write_small_snapshot(&symlinked);
+        fs::remove_file(symlinked.join("second.bin")).unwrap();
+        symlink("first.bin", symlinked.join("second.bin")).unwrap();
+        assert!(SecureDirectory::open(&symlinked, "symlinked snapshot")
+            .unwrap()
+            .validate_exact_regular_file_roster(&expected, "symlinked snapshot")
+            .is_err());
+    }
+
+    #[test]
+    fn secure_snapshot_intake_holds_directory_identity_across_path_swap() {
+        let temporary = TestDirectory::new();
+        let expected = small_snapshot_files();
+        let snapshot = temporary.0.join("snapshot");
+        let displaced = temporary.0.join("displaced");
+        write_small_snapshot(&snapshot);
+        let held = SecureDirectory::open(&snapshot, "held snapshot").unwrap();
+
+        fs::rename(&snapshot, &displaced).unwrap();
+        write_small_snapshot(&snapshot);
+        fs::write(snapshot.join("first.bin"), b"other").unwrap();
+
+        held.validate_exact_regular_file_roster(&expected, "held snapshot")
+            .unwrap();
+        assert_eq!(
+            held.read_exact(Path::new("first.bin"), 5, "held member")
+                .unwrap(),
+            b"first"
+        );
+        assert_eq!(
+            SecureDirectory::open(&snapshot, "replacement snapshot")
+                .unwrap()
+                .read_exact(Path::new("first.bin"), 5, "replacement member")
+                .unwrap(),
+            b"other"
+        );
+    }
+
+    #[test]
+    fn secure_snapshot_member_mutation_after_open_fails_closed() {
+        let temporary = TestDirectory::new();
+        let snapshot = temporary.0.join("snapshot");
+        write_small_snapshot(&snapshot);
+        let held = SecureDirectory::open(&snapshot, "held snapshot").unwrap();
+        let mut member = held
+            .open_file(Path::new("first.bin"), "held snapshot member")
+            .unwrap();
+        fs::write(snapshot.join("first.bin"), b"mutated").unwrap();
+        assert!(member
+            .read_exact_snapshot(5, "held snapshot member")
+            .is_err());
+    }
+
+    #[test]
+    #[ignore = "requires the canonical 16 GiB M1 prepacked snapshot"]
+    fn canonical_snapshot_only_intake_crosses_authenticated_plan_boundary() {
+        let snapshot_path = std::env::var_os("FERRIC_M1_OPERATIONAL_SNAPSHOT_ROOT")
+            .map(PathBuf::from)
+            .expect("FERRIC_M1_OPERATIONAL_SNAPSHOT_ROOT must name the canonical snapshot");
+        let snapshot = SecureDirectory::open(&snapshot_path, "canonical prepacked snapshot")
+            .expect("canonical snapshot opens by descriptor");
+        let model = load_model_inputs(&snapshot).expect("snapshot-only model intake succeeds");
+        let admission = model
+            .authenticate()
+            .expect("snapshot-only model admission reauthenticates");
+        let catalog = build_authenticated_sequential_plan_catalog(admission)
+            .expect("snapshot-only intake reaches authenticated plan construction");
+        assert_eq!(catalog.plans().len(), 22);
+        assert!(catalog.admission_record().is_some());
+    }
+
+    #[test]
+    fn input_subcommands_do_not_reserve_ten_argument_plan_names() {
+        let new_mode_error = run(vec![OsString::from("generate-inputs")]).unwrap_err();
+        assert!(new_mode_error.starts_with(
+            "usage: ferric-m1-qualification-capture generate-inputs PREPACKED-SNAPSHOT"
+        ));
+        assert!(!new_mode_error.contains("MODEL"));
+
+        let mut legacy = vec![OsString::from("unused"); 10];
         legacy[0] = OsString::from("generate-inputs");
         let legacy_error = run(legacy).unwrap_err();
-        assert!(!legacy_error.contains("generate-inputs MODEL-SOURCE"));
+        assert!(!legacy_error.contains("generate-inputs PREPACKED-SNAPSHOT"));
 
         let r30_error = run(vec![OsString::from(m1_r30_partial_capture::COMMAND)]).unwrap_err();
-        assert!(r30_error.contains("capture-r30-cancellation MODEL-SOURCE"));
+        assert!(r30_error.contains("capture-r30-cancellation PREPACKED-SNAPSHOT"));
+        assert!(!r30_error.contains("MODEL"));
         assert!(!r30_error.contains("PLAN ROSTER"));
 
         let composed_error =
             run(vec![OsString::from(m1_r30_capture_composition::COMMAND)]).unwrap_err();
         assert!(composed_error.contains("compose-r30-runner CANARY-BUNDLE"));
 
-        let mut legacy = vec![OsString::from("unused"); 11];
+        let mut legacy = vec![OsString::from("unused"); 10];
         legacy[0] = OsString::from(m1_r30_partial_capture::COMMAND);
         let legacy_error = run(legacy).unwrap_err();
-        assert!(legacy_error.contains("capture-r30-cancellation MODEL-SOURCE"));
+        assert!(legacy_error.contains("capture-r30-cancellation PREPACKED-SNAPSHOT"));
         assert!(!legacy_error.contains("PLAN ROSTER"));
 
         let canary_error =
             run(vec![OsString::from(m1_r30_canary_partial_capture::COMMAND)]).unwrap_err();
-        assert!(canary_error.contains("capture-r30-canary MODEL-SOURCE"));
+        assert!(canary_error.contains("capture-r30-canary PREPACKED-SNAPSHOT"));
 
         let mut canary_wrong_width = vec![OsString::from("unused"); 11];
         canary_wrong_width[0] = OsString::from(m1_r30_canary_partial_capture::COMMAND);
         let canary_error = run(canary_wrong_width).unwrap_err();
-        assert!(canary_error.contains("capture-r30-canary MODEL-SOURCE"));
+        assert!(canary_error.contains("capture-r30-canary PREPACKED-SNAPSHOT"));
 
         let rollback_error = run(vec![OsString::from(
             m1_r30_rollback_partial_capture::COMMAND,
         )])
         .unwrap_err();
-        assert!(rollback_error.contains("capture-r30-rollback MODEL-SOURCE"));
+        assert!(rollback_error.contains("capture-r30-rollback PREPACKED-SNAPSHOT"));
 
         let mut wrong_width = vec![OsString::from("unused"); 11];
         wrong_width[0] = OsString::from(m1_r30_rollback_partial_capture::COMMAND);
         let rollback_error = run(wrong_width).unwrap_err();
-        assert!(rollback_error.contains("capture-r30-rollback MODEL-SOURCE"));
+        assert!(rollback_error.contains("capture-r30-rollback PREPACKED-SNAPSHOT"));
 
         let exhaustion_error = run(vec![OsString::from(
             m1_r30_exhaustion_partial_capture::COMMAND,
         )])
         .unwrap_err();
-        assert!(exhaustion_error.contains("capture-r30-exhaustion MODEL-SOURCE"));
+        assert!(exhaustion_error.contains("capture-r30-exhaustion PREPACKED-SNAPSHOT"));
 
         let mut exhaustion_wrong_width = vec![OsString::from("unused"); 11];
         exhaustion_wrong_width[0] = OsString::from(m1_r30_exhaustion_partial_capture::COMMAND);
         let exhaustion_error = run(exhaustion_wrong_width).unwrap_err();
-        assert!(exhaustion_error.contains("capture-r30-exhaustion MODEL-SOURCE"));
+        assert!(exhaustion_error.contains("capture-r30-exhaustion PREPACKED-SNAPSHOT"));
 
         let r32_error = run(vec![OsString::from(m1_r32_partial_capture::COMMAND)]).unwrap_err();
-        assert!(r32_error.contains("capture-r32-speculative-k4 MODEL-SOURCE"));
+        assert!(r32_error.contains("capture-r32-speculative-k4 PREPACKED-SNAPSHOT"));
 
         let mut wrong_width = vec![OsString::from("unused"); 11];
         wrong_width[0] = OsString::from(m1_r32_partial_capture::COMMAND);
         let r32_error = run(wrong_width).unwrap_err();
-        assert!(r32_error.contains("capture-r32-speculative-k4 MODEL-SOURCE"));
+        assert!(r32_error.contains("capture-r32-speculative-k4 PREPACKED-SNAPSHOT"));
     }
 
     #[test]

@@ -258,12 +258,18 @@ seven-case input bundle without opening KFD:
 
 ```text
 ferric-m1-qualification-capture generate-inputs \
-  MODEL-SOURCE PREPACKED KERNEL-ARTIFACTS CLOSURE ACCEPTANCE-POLICY \
+  PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ACCEPTANCE-POLICY \
   REFERENCE-IMPLEMENTATION REFERENCE-PROTOCOL GPU-ID OUTPUT
 ferric-m1-qualification-capture validate-inputs \
-  MODEL-SOURCE PREPACKED KERNEL-ARTIFACTS CLOSURE ACCEPTANCE-POLICY \
+  PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ACCEPTANCE-POLICY \
   REFERENCE-IMPLEMENTATION REFERENCE-PROTOCOL GPU-ID INPUT-BUNDLE
 ```
+
+Operational intake opens the self-contained prepacked snapshot once by directory
+descriptor and requires its exact 11-member regular-file roster. Target and
+draft configs, tokenizer metadata, one shared tokenizer, weights, manifests,
+deployment bundle, and admission record all come from that descriptor. The
+original model source tree is neither accepted nor recorded by these commands.
 
 The bundle contains exactly 20 flat, regular, single-link files: benchmark
 input, plan, roster, closure, environment, acceptance policy, and adjacent
@@ -311,7 +317,7 @@ target-prefill S1 K7 completion range:
 
 ```text
 cargo run --locked -p ferric-engine --bin ferric-m1-qualification-capture -- \
-  capture-r30-canary MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS \
+  capture-r30-canary PREPACKED-SNAPSHOT KERNEL-ARTIFACTS \
   CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE
 ```
 
@@ -346,7 +352,7 @@ cancellation capture:
 
 ```text
 cargo run --locked -p ferric-engine --bin ferric-m1-qualification-capture -- \
-  capture-r30-cancellation MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS \
+  capture-r30-cancellation PREPACKED-SNAPSHOT KERNEL-ARTIFACTS \
   CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE
 ```
 
@@ -381,7 +387,7 @@ the production S1/K4 diagnostic path:
 
 ```text
 cargo run --locked -p ferric-engine --bin ferric-m1-qualification-capture -- \
-  capture-r30-rollback MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS \
+  capture-r30-rollback PREPACKED-SNAPSHOT KERNEL-ARTIFACTS \
   CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE
 ```
 
@@ -415,7 +421,7 @@ for the R30 exhaustion case:
 
 ```text
 cargo run --locked -p ferric-engine --bin ferric-m1-qualification-capture -- \
-  capture-r30-exhaustion MODEL-SOURCE PREPACKED-SNAPSHOT KERNEL-ARTIFACTS \
+  capture-r30-exhaustion PREPACKED-SNAPSHOT KERNEL-ARTIFACTS \
   CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE
 ```
 
@@ -681,7 +687,7 @@ An exclusive gfx942 operator can opt into that single-round path with:
 
 ```text
 cargo run --locked -p ferric-engine --bin ferric-m1-qualification-capture -- \
-  capture-r32-speculative-k4 MODEL-SOURCE PREPACKED-SNAPSHOT \
+  capture-r32-speculative-k4 PREPACKED-SNAPSHOT \
   KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE
 ```
 
