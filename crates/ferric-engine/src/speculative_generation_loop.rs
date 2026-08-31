@@ -419,7 +419,9 @@ impl M1SpeculativeTokenBlockV1 {
         }
     }
 
-    fn from_slice(tokens: &[TokenId]) -> Result<Self, M1SpeculativeGenerationLoopErrorV1> {
+    pub(crate) fn from_slice(
+        tokens: &[TokenId],
+    ) -> Result<Self, M1SpeculativeGenerationLoopErrorV1> {
         if tokens.len() > M1_MAX_COMPLETION_TOKENS {
             return Err(M1SpeculativeGenerationLoopErrorV1::EmittedCount {
                 lane: 0,
@@ -1153,7 +1155,7 @@ impl M1SpeculativeGenerationLoopV1 {
         validate_binding(self, &preflighted.binding)
     }
 
-    fn preflight_observed_round(
+    pub(crate) fn preflight_observed_round(
         &self,
         binding: M1SpeculativeRoundBindingV1,
         selection: Qwen3PlanSelection,
@@ -1264,10 +1266,10 @@ impl M1SpeculativeGenerationLoopV1 {
 }
 
 #[derive(Clone, Copy, Debug)]
-struct CheckedMemberObservationV1 {
-    request: RequestId,
-    semantics: CheckedCompletionSemantics,
-    emitted: M1SpeculativeTokenBlockV1,
+pub(crate) struct CheckedMemberObservationV1 {
+    pub(crate) request: RequestId,
+    pub(crate) semantics: CheckedCompletionSemantics,
+    pub(crate) emitted: M1SpeculativeTokenBlockV1,
 }
 
 #[derive(Debug)]

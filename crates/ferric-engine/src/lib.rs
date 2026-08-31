@@ -494,9 +494,14 @@ pub use speculative_generation_loop::{
     M1SpeculativeTerminalReasonV1, M1SpeculativeTokenBlockV1, M1SpeculativeVerificationChoiceV1,
 };
 pub use speculative_graph::{
-    complete_single_member_speculative_graph, SingleMemberSpeculativeGraphError,
-    SingleMemberSpeculativeGraphFailure, SingleMemberSpeculativeGraphInputs,
-    SingleMemberSpeculativeGraphOutcome,
+    complete_single_member_speculative_graph, run_bounded_multi_member_speculative_graph_v1,
+    M1SpeculativeGraphCommitFailureV1, M1SpeculativeGraphControlContextV1,
+    M1SpeculativeGraphExecutionErrorV1, M1SpeculativeGraphExecutorV1,
+    M1SpeculativeGraphKvSettlementV1, M1SpeculativeGraphRoundContextV1,
+    M1SpeculativeGraphRunOutcomeV1, M1SpeculativeGraphStageV1, M1SpeculativeGraphStopV1,
+    SingleMemberSpeculativeGraphError, SingleMemberSpeculativeGraphFailure,
+    SingleMemberSpeculativeGraphInputs, SingleMemberSpeculativeGraphOutcome,
+    M1_MAX_SPECULATIVE_GRAPH_ROUNDS_V1,
 };
 pub use step_dispatch_composition::{
     derive_m1_step_dispatch_plan, AddresslessM1StepDispatchPlan, M1StepDispatchCompositionError,

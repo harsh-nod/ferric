@@ -1,18 +1,34 @@
-//! Narrow single-member speculative completion composition.
+//! Speculative graph execution composition.
 //!
-//! This module joins one already-existing ordered completion with the checked
-//! logical publication/KV transaction and the existing engine completion path.
-//! It does not construct completion authority, execute a graph, refine the
-//! engine KV pool to the two-role isolated KV model, or support multi-member
-//! batches. The `ContinuousBatch` is an independently checked logical witness;
-//! no runtime scheduler refinement is claimed.
+//! The legacy single-member path below joins one already-existing ordered
+//! completion with the checked logical publication/KV transaction. The M1
+//! bounded path executes every live member's autoregressive draft stage,
+//! target verification, deterministic greedy acceptance, and exact target and
+//! draft KV settlement through a caller-owned transactional backend. A stage
+//! failure aborts the complete physical round before coordinator mutation.
+//!
+//! The backend is the authority for queue, allocation, artifact, and physical
+//! KV effects. This module neither manufactures that authority nor claims that
+//! a particular device implementation, artifact, or hardware run is qualified.
 
-use crate::{Engine, EngineError, ExactCompletion};
+use core::fmt;
+
+use crate::speculative_generation_loop::CheckedMemberObservationV1;
+use crate::{
+    CheckedCompletionSemantics, Engine, EngineError, ExactCompletion,
+    M1DeviceKvCompletionDispositionV1, M1SpeculativeGenerationLoopErrorV1,
+    M1SpeculativeGenerationLoopV1, M1SpeculativeKvRoleSettlementV1,
+    M1SpeculativeMemberControlActionV1, M1SpeculativeMemberControlV1,
+    M1SpeculativeMemberRoundOutcomeV1, M1SpeculativeRoundMemberInputV1,
+    M1SpeculativeRoundOutcomeV1, M1SpeculativeTokenBlockV1,
+};
+use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::{
     apply_preflighted_speculative_step, preflight_speculative_step, AtomicSpeculativeStepError,
     AtomicSpeculativeStepOutcome, ContinuousBatch, IsolatedRequestKv,
     IsolatedSpeculativeKvExpectation, RequestId, SpeculativeKvRoundIndex, SpeculativeTokenInputs,
-    StepPublication,
+    StepPublication, TokenId, M1_MAX_ACTIVE_SEQUENCES, M1_MAX_COMPLETION_TOKENS,
+    M1_MAX_CONTEXT_TOKENS, QWEN3_VOCABULARY_SIZE,
 };
 use vstd::prelude::*;
 
@@ -341,6 +357,602 @@ pub fn complete_single_member_speculative_graph<const C: usize>(
 }
 
 } // verus!
+
+/// Maximum caller-selected number of physical rounds in one bounded run.
+///
+/// Every successful speculative round publishes at least one target-authoritative
+/// token per live member, so the context bound is also a conservative round bound.
+pub const M1_MAX_SPECULATIVE_GRAPH_ROUNDS_V1: u32 = M1_MAX_CONTEXT_TOKENS;
+
+/// Exact execution stage named by a fail-closed graph diagnostic.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1SpeculativeGraphStageV1 {
+    BeginRound,
+    Draft,
+    TargetVerification,
+    GreedyAcceptance,
+    PrepareKvSettlement,
+    CommitKvSettlement,
+    RollbackRound,
+}
+
+/// Immutable physical coordinates for one complete multi-member graph round.
+#[derive(Clone, Copy, Debug)]
+pub struct M1SpeculativeGraphRoundContextV1<'a> {
+    selection: ferric_spec::Qwen3PlanSelection,
+    round: u64,
+    epoch: CompletionEpoch,
+    members: &'a [M1SpeculativeRoundMemberInputV1],
+}
+
+impl<'a> M1SpeculativeGraphRoundContextV1<'a> {
+    #[must_use]
+    pub const fn selection(self) -> ferric_spec::Qwen3PlanSelection {
+        self.selection
+    }
+
+    #[must_use]
+    pub const fn round(self) -> u64 {
+        self.round
+    }
+
+    #[must_use]
+    pub const fn epoch(self) -> CompletionEpoch {
+        self.epoch
+    }
+
+    #[must_use]
+    pub const fn members(self) -> &'a [M1SpeculativeRoundMemberInputV1] {
+        self.members
+    }
+}
+
+/// Exact commit/rollback coordinates prepared for one verified member.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct M1SpeculativeGraphKvSettlementV1 {
+    request: RequestId,
+    target: M1SpeculativeKvRoleSettlementV1,
+    draft: M1SpeculativeKvRoleSettlementV1,
+    disposition: M1DeviceKvCompletionDispositionV1,
+}
+
+impl M1SpeculativeGraphKvSettlementV1 {
+    #[must_use]
+    pub const fn request(self) -> RequestId {
+        self.request
+    }
+
+    #[must_use]
+    pub const fn target(self) -> M1SpeculativeKvRoleSettlementV1 {
+        self.target
+    }
+
+    #[must_use]
+    pub const fn draft(self) -> M1SpeculativeKvRoleSettlementV1 {
+        self.draft
+    }
+
+    #[must_use]
+    pub const fn disposition(self) -> M1DeviceKvCompletionDispositionV1 {
+        self.disposition
+    }
+}
+
+/// A failed physical commit retaining the exact transaction for mandatory abort.
+#[must_use = "a failed graph commit still owns a transaction that Ferric must abort"]
+#[derive(Debug)]
+pub struct M1SpeculativeGraphCommitFailureV1<Transaction, Error> {
+    transaction: Transaction,
+    error: Error,
+}
+
+impl<Transaction, Error> M1SpeculativeGraphCommitFailureV1<Transaction, Error> {
+    /// Constructs a retry-ineligible commit failure with retained transaction.
+    pub const fn new(transaction: Transaction, error: Error) -> Self {
+        Self { transaction, error }
+    }
+
+    /// Recovers the backend diagnostic and exact uncommitted transaction.
+    pub fn into_parts(self) -> (Error, Transaction) {
+        (self.error, self.transaction)
+    }
+}
+
+/// Physical execution boundary for one transactional M1 speculative round.
+///
+/// `draft_token` is called in increasing ordinal order and then member order,
+/// matching the physical graph's roster-wide draft iterations. Its
+/// `prior_token` is the request's round anchor at ordinal zero and the prior
+/// draft result thereafter. After all roster-wide draft iterations,
+/// `target_verify` is called in member order and must return exactly `K + 1`
+/// target-authoritative choices. The transaction is committed only after every
+/// member has passed greedy verification and exact KV settlement preparation.
+pub trait M1SpeculativeGraphExecutorV1 {
+    type Transaction;
+    type Error;
+
+    /// Starts one exact roster transaction.
+    ///
+    /// # Errors
+    ///
+    /// Returns the backend diagnostic without creating a transaction.
+    fn begin_round(
+        &mut self,
+        context: M1SpeculativeGraphRoundContextV1<'_>,
+    ) -> Result<Self::Transaction, Self::Error>;
+
+    /// Executes one autoregressive draft step inside the live transaction.
+    ///
+    /// # Errors
+    ///
+    /// Returns a backend failure while Ferric still owns the transaction.
+    fn draft_token(
+        &mut self,
+        transaction: &mut Self::Transaction,
+        lane: usize,
+        member: M1SpeculativeRoundMemberInputV1,
+        ordinal: u8,
+        prior_token: TokenId,
+    ) -> Result<TokenId, Self::Error>;
+
+    /// Executes target verification for one complete draft prefix.
+    ///
+    /// # Errors
+    ///
+    /// Returns a backend failure while Ferric still owns the transaction.
+    fn target_verify(
+        &mut self,
+        transaction: &mut Self::Transaction,
+        lane: usize,
+        member: M1SpeculativeRoundMemberInputV1,
+        draft_tokens: &[TokenId],
+    ) -> Result<Vec<TokenId>, Self::Error>;
+
+    /// Prepares one member's exact target/draft commit and rollback ranges.
+    ///
+    /// # Errors
+    ///
+    /// Returns a backend failure while Ferric still owns the transaction.
+    fn prepare_kv_settlement(
+        &mut self,
+        transaction: &mut Self::Transaction,
+        lane: usize,
+        settlement: M1SpeculativeGraphKvSettlementV1,
+    ) -> Result<(), Self::Error>;
+
+    /// Atomically publishes every prepared member settlement.
+    ///
+    /// # Errors
+    ///
+    /// Returns both the diagnostic and uncommitted transaction for mandatory
+    /// rollback.
+    fn commit_round(
+        &mut self,
+        transaction: Self::Transaction,
+    ) -> Result<(), M1SpeculativeGraphCommitFailureV1<Self::Transaction, Self::Error>>;
+
+    /// Aborts every tentative effect in an uncommitted round.
+    ///
+    /// # Errors
+    ///
+    /// Returns a terminal backend diagnostic when rollback cannot be proved.
+    fn rollback_round(&mut self, transaction: Self::Transaction) -> Result<(), Self::Error>;
+}
+
+/// Per-member control query for one bound round.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct M1SpeculativeGraphControlContextV1 {
+    round: u64,
+    epoch: CompletionEpoch,
+    lane: usize,
+    request: RequestId,
+}
+
+impl M1SpeculativeGraphControlContextV1 {
+    #[must_use]
+    pub const fn round(self) -> u64 {
+        self.round
+    }
+
+    #[must_use]
+    pub const fn epoch(self) -> CompletionEpoch {
+        self.epoch
+    }
+
+    #[must_use]
+    pub const fn lane(self) -> usize {
+        self.lane
+    }
+
+    #[must_use]
+    pub const fn request(self) -> RequestId {
+        self.request
+    }
+}
+
+/// Why a successful bounded graph invocation returned to its caller.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1SpeculativeGraphStopV1 {
+    AllMembersTerminal,
+    RoundBoundReached,
+}
+
+/// Ordered results from every physically committed round in one invocation.
+#[must_use = "committed speculative publication results must be consumed"]
+#[derive(Debug)]
+pub struct M1SpeculativeGraphRunOutcomeV1 {
+    rounds: Box<[M1SpeculativeRoundOutcomeV1]>,
+    stop: M1SpeculativeGraphStopV1,
+}
+
+impl M1SpeculativeGraphRunOutcomeV1 {
+    pub fn rounds(&self) -> &[M1SpeculativeRoundOutcomeV1] {
+        &self.rounds
+    }
+
+    #[must_use]
+    pub const fn stop(&self) -> M1SpeculativeGraphStopV1 {
+        self.stop
+    }
+}
+
+/// Typed failure from a bounded multi-member speculative graph invocation.
+#[derive(Debug)]
+pub enum M1SpeculativeGraphExecutionErrorV1<BackendError> {
+    InvalidRoundLimit {
+        maximum: u32,
+        actual: u32,
+    },
+    EpochOverflow,
+    HostAllocation,
+    Coordinator(M1SpeculativeGenerationLoopErrorV1),
+    TargetChoiceCount {
+        lane: usize,
+        expected: usize,
+        actual: usize,
+    },
+    TokenOutOfRange {
+        stage: M1SpeculativeGraphStageV1,
+        lane: usize,
+        ordinal: usize,
+        token: TokenId,
+    },
+    Backend {
+        stage: M1SpeculativeGraphStageV1,
+        lane: Option<usize>,
+        ordinal: Option<u8>,
+        source: BackendError,
+    },
+    RollbackFailed {
+        cause: Box<Self>,
+        rollback: BackendError,
+    },
+    PostCommitCoordinatorInvariant(M1SpeculativeGenerationLoopErrorV1),
+}
+
+impl<BackendError: fmt::Debug> fmt::Display for M1SpeculativeGraphExecutionErrorV1<BackendError> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(formatter, "M1 speculative graph rejected: {self:?}")
+    }
+}
+
+impl<BackendError: fmt::Debug> std::error::Error
+    for M1SpeculativeGraphExecutionErrorV1<BackendError>
+{
+}
+
+/// Executes a bounded sequence of complete multi-member speculative rounds.
+///
+/// Each round is ordered as draft generation, target verification, greedy
+/// accept/reject, full-roster semantic preflight, physical KV settlement, and
+/// coordinator commit. Any error before physical commit consumes the backend
+/// transaction through `rollback_round`; no coordinator state is changed.
+///
+/// # Errors
+///
+/// Rejects an invalid bound, coordinator drift, malformed model output, backend
+/// stage failure, or physical rollback failure. A post-commit coordinator
+/// invariant failure is fail-stop and never represented as retryable.
+pub fn run_bounded_multi_member_speculative_graph_v1<Executor, Control>(
+    coordinator: &mut M1SpeculativeGenerationLoopV1,
+    executor: &mut Executor,
+    first_epoch: CompletionEpoch,
+    max_rounds: u32,
+    mut control: Control,
+) -> Result<M1SpeculativeGraphRunOutcomeV1, M1SpeculativeGraphExecutionErrorV1<Executor::Error>>
+where
+    Executor: M1SpeculativeGraphExecutorV1,
+    Control: FnMut(M1SpeculativeGraphControlContextV1) -> M1SpeculativeMemberControlActionV1,
+{
+    if max_rounds == 0 || max_rounds > M1_MAX_SPECULATIVE_GRAPH_ROUNDS_V1 {
+        return Err(M1SpeculativeGraphExecutionErrorV1::InvalidRoundLimit {
+            maximum: M1_MAX_SPECULATIVE_GRAPH_ROUNDS_V1,
+            actual: max_rounds,
+        });
+    }
+    let maximum = usize::try_from(max_rounds)
+        .map_err(|_| M1SpeculativeGraphExecutionErrorV1::HostAllocation)?;
+    let mut rounds = Vec::new();
+    rounds
+        .try_reserve_exact(maximum)
+        .map_err(|_| M1SpeculativeGraphExecutionErrorV1::HostAllocation)?;
+    if coordinator.active_roster().is_empty() {
+        return Ok(M1SpeculativeGraphRunOutcomeV1 {
+            rounds: rounds.into_boxed_slice(),
+            stop: M1SpeculativeGraphStopV1::AllMembersTerminal,
+        });
+    }
+
+    let mut epoch = first_epoch;
+    for round_offset in 0..max_rounds {
+        let roster = coordinator.active_roster();
+        let completed = execute_multi_member_speculative_round(
+            coordinator,
+            executor,
+            epoch,
+            &roster,
+            &mut control,
+        )?;
+        let terminal = completed.next_active_roster().is_empty();
+        rounds.push(completed);
+        if terminal {
+            return Ok(M1SpeculativeGraphRunOutcomeV1 {
+                rounds: rounds.into_boxed_slice(),
+                stop: M1SpeculativeGraphStopV1::AllMembersTerminal,
+            });
+        }
+        if round_offset + 1 < max_rounds {
+            epoch = CompletionEpoch::new(
+                epoch
+                    .value()
+                    .checked_add(1)
+                    .ok_or(M1SpeculativeGraphExecutionErrorV1::EpochOverflow)?,
+            );
+        }
+    }
+    Ok(M1SpeculativeGraphRunOutcomeV1 {
+        rounds: rounds.into_boxed_slice(),
+        stop: M1SpeculativeGraphStopV1::RoundBoundReached,
+    })
+}
+
+fn execute_multi_member_speculative_round<Executor, Control>(
+    coordinator: &mut M1SpeculativeGenerationLoopV1,
+    executor: &mut Executor,
+    epoch: CompletionEpoch,
+    roster: &[RequestId],
+    control: &mut Control,
+) -> Result<M1SpeculativeRoundOutcomeV1, M1SpeculativeGraphExecutionErrorV1<Executor::Error>>
+where
+    Executor: M1SpeculativeGraphExecutorV1,
+    Control: FnMut(M1SpeculativeGraphControlContextV1) -> M1SpeculativeMemberControlActionV1,
+{
+    let round = coordinator.next_round();
+    let binding = coordinator
+        .bind_round(round, epoch, roster)
+        .map_err(M1SpeculativeGraphExecutionErrorV1::Coordinator)?;
+    let selection = binding.shape().selection();
+    let width = usize::from(binding.shape().draft_tokens());
+    let member_count = binding.members().len();
+    let maximum_members =
+        usize::try_from(M1_MAX_ACTIVE_SEQUENCES).expect("M1 active-sequence bound fits usize");
+    if member_count > maximum_members || width + 1 > M1_MAX_COMPLETION_TOKENS {
+        return Err(M1SpeculativeGraphExecutionErrorV1::Coordinator(
+            M1SpeculativeGenerationLoopErrorV1::RosterCapacity {
+                maximum: maximum_members,
+                actual: member_count,
+            },
+        ));
+    }
+
+    let mut observations = Vec::new();
+    observations
+        .try_reserve_exact(member_count)
+        .map_err(|_| M1SpeculativeGraphExecutionErrorV1::HostAllocation)?;
+    let mut controls = Vec::new();
+    controls
+        .try_reserve_exact(member_count)
+        .map_err(|_| M1SpeculativeGraphExecutionErrorV1::HostAllocation)?;
+    let context = M1SpeculativeGraphRoundContextV1 {
+        selection,
+        round,
+        epoch,
+        members: binding.members(),
+    };
+    let mut transaction = executor.begin_round(context).map_err(|source| {
+        M1SpeculativeGraphExecutionErrorV1::Backend {
+            stage: M1SpeculativeGraphStageV1::BeginRound,
+            lane: None,
+            ordinal: None,
+            source,
+        }
+    })?;
+
+    let mut roster_draft_tokens = [[0; M1_MAX_COMPLETION_TOKENS]; M1_MAX_ACTIVE_SEQUENCES as usize];
+    for ordinal in 0..width {
+        for (lane, member) in binding.members().iter().copied().enumerate() {
+            let ordinal_u8 = u8::try_from(ordinal).expect("M1 draft width is at most sixteen");
+            let prior = if ordinal == 0 {
+                member.round_anchor()
+            } else {
+                roster_draft_tokens[lane][ordinal - 1]
+            };
+            let token =
+                match executor.draft_token(&mut transaction, lane, member, ordinal_u8, prior) {
+                    Ok(token) => token,
+                    Err(source) => {
+                        let cause = M1SpeculativeGraphExecutionErrorV1::Backend {
+                            stage: M1SpeculativeGraphStageV1::Draft,
+                            lane: Some(lane),
+                            ordinal: Some(ordinal_u8),
+                            source,
+                        };
+                        return Err(rollback_graph_round(executor, transaction, cause));
+                    }
+                };
+            if token >= QWEN3_VOCABULARY_SIZE {
+                let cause = M1SpeculativeGraphExecutionErrorV1::TokenOutOfRange {
+                    stage: M1SpeculativeGraphStageV1::Draft,
+                    lane,
+                    ordinal,
+                    token,
+                };
+                return Err(rollback_graph_round(executor, transaction, cause));
+            }
+            roster_draft_tokens[lane][ordinal] = token;
+        }
+    }
+
+    for (lane, member) in binding.members().iter().copied().enumerate() {
+        let draft_tokens = &roster_draft_tokens[lane];
+        let target_choices =
+            match executor.target_verify(&mut transaction, lane, member, &draft_tokens[..width]) {
+                Ok(choices) => choices,
+                Err(source) => {
+                    let cause = M1SpeculativeGraphExecutionErrorV1::Backend {
+                        stage: M1SpeculativeGraphStageV1::TargetVerification,
+                        lane: Some(lane),
+                        ordinal: None,
+                        source,
+                    };
+                    return Err(rollback_graph_round(executor, transaction, cause));
+                }
+            };
+        if target_choices.len() != width + 1 {
+            let cause = M1SpeculativeGraphExecutionErrorV1::TargetChoiceCount {
+                lane,
+                expected: width + 1,
+                actual: target_choices.len(),
+            };
+            return Err(rollback_graph_round(executor, transaction, cause));
+        }
+        for (ordinal, token) in target_choices.iter().copied().enumerate() {
+            if token >= QWEN3_VOCABULARY_SIZE {
+                let cause = M1SpeculativeGraphExecutionErrorV1::TokenOutOfRange {
+                    stage: M1SpeculativeGraphStageV1::TargetVerification,
+                    lane,
+                    ordinal,
+                    token,
+                };
+                return Err(rollback_graph_round(executor, transaction, cause));
+            }
+        }
+
+        let accepted = draft_tokens[..width]
+            .iter()
+            .zip(&target_choices[..width])
+            .take_while(|(draft, target)| draft == target)
+            .count();
+        let mut emitted = [0; M1_MAX_COMPLETION_TOKENS];
+        emitted[..accepted].copy_from_slice(&draft_tokens[..accepted]);
+        emitted[accepted] = target_choices[accepted];
+        let emitted = match M1SpeculativeTokenBlockV1::from_slice(&emitted[..=accepted]) {
+            Ok(emitted) => emitted,
+            Err(error) => {
+                let cause = M1SpeculativeGraphExecutionErrorV1::Coordinator(error);
+                return Err(rollback_graph_round(executor, transaction, cause));
+            }
+        };
+        let accepted_draft_tokens =
+            u8::try_from(accepted).expect("M1 draft width is at most sixteen");
+        observations.push(CheckedMemberObservationV1 {
+            request: member.request(),
+            semantics: CheckedCompletionSemantics::Speculative {
+                accepted_draft_tokens,
+                correction_or_bonus: target_choices[accepted],
+            },
+            emitted,
+        });
+        let action = control(M1SpeculativeGraphControlContextV1 {
+            round,
+            epoch,
+            lane,
+            request: member.request(),
+        });
+        controls.push(match action {
+            M1SpeculativeMemberControlActionV1::Continue => {
+                M1SpeculativeMemberControlV1::continuing(member.request())
+            }
+            M1SpeculativeMemberControlActionV1::Cancel(reason) => {
+                M1SpeculativeMemberControlV1::cancelling(member.request(), reason)
+            }
+        });
+    }
+
+    let preflighted = match coordinator.preflight_observed_round(
+        binding,
+        selection,
+        epoch,
+        &observations,
+        &controls,
+    ) {
+        Ok(preflighted) => preflighted,
+        Err(error) => {
+            let cause = M1SpeculativeGraphExecutionErrorV1::Coordinator(error);
+            return Err(rollback_graph_round(executor, transaction, cause));
+        }
+    };
+    for (lane, outcome) in preflighted.members().iter().enumerate() {
+        let settlement = settlement_from_outcome(outcome);
+        if let Err(source) = executor.prepare_kv_settlement(&mut transaction, lane, settlement) {
+            let cause = M1SpeculativeGraphExecutionErrorV1::Backend {
+                stage: M1SpeculativeGraphStageV1::PrepareKvSettlement,
+                lane: Some(lane),
+                ordinal: None,
+                source,
+            };
+            return Err(rollback_graph_round(executor, transaction, cause));
+        }
+    }
+    if let Err(error) = coordinator.preflight_prepared_round_commit(&preflighted) {
+        let cause = M1SpeculativeGraphExecutionErrorV1::Coordinator(error);
+        return Err(rollback_graph_round(executor, transaction, cause));
+    }
+    if let Err(failure) = executor.commit_round(transaction) {
+        let (source, transaction) = failure.into_parts();
+        let cause = M1SpeculativeGraphExecutionErrorV1::Backend {
+            stage: M1SpeculativeGraphStageV1::CommitKvSettlement,
+            lane: None,
+            ordinal: None,
+            source,
+        };
+        return Err(rollback_graph_round(executor, transaction, cause));
+    }
+    coordinator
+        .commit_preflighted_round(preflighted)
+        .map_err(|failure| {
+            let (error, _) = failure.into_parts();
+            M1SpeculativeGraphExecutionErrorV1::PostCommitCoordinatorInvariant(error)
+        })
+}
+
+fn settlement_from_outcome(
+    outcome: &M1SpeculativeMemberRoundOutcomeV1,
+) -> M1SpeculativeGraphKvSettlementV1 {
+    M1SpeculativeGraphKvSettlementV1 {
+        request: outcome.request(),
+        target: outcome.target_settlement(),
+        draft: outcome.draft_settlement(),
+        disposition: outcome.physical_disposition(),
+    }
+}
+
+fn rollback_graph_round<Executor>(
+    executor: &mut Executor,
+    transaction: Executor::Transaction,
+    cause: M1SpeculativeGraphExecutionErrorV1<Executor::Error>,
+) -> M1SpeculativeGraphExecutionErrorV1<Executor::Error>
+where
+    Executor: M1SpeculativeGraphExecutorV1,
+{
+    match executor.rollback_round(transaction) {
+        Ok(()) => cause,
+        Err(rollback) => M1SpeculativeGraphExecutionErrorV1::RollbackFailed {
+            cause: Box::new(cause),
+            rollback,
+        },
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -748,5 +1360,507 @@ mod tests {
         assert_eq!(fixture.engine.completed_epoch(), CompletionEpoch::new(0));
         assert_eq!(fixture.publication.phase(), before_publication);
         assert_eq!(fixture.selected.projection(), before_selected);
+    }
+}
+
+#[cfg(test)]
+mod bounded_graph_tests {
+    use std::collections::VecDeque;
+
+    use super::*;
+    use crate::{
+        M1SpeculativeGenerationPolicyV1, M1SpeculativeMemberSeedV1, M1SpeculativeMemberStatusV1,
+    };
+    use ferric_spec::{Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection};
+
+    #[derive(Clone, Debug)]
+    struct MemberScript {
+        draft: Vec<TokenId>,
+        target: Vec<TokenId>,
+    }
+
+    #[derive(Clone, Debug)]
+    struct RoundScript {
+        members: Vec<MemberScript>,
+    }
+
+    #[derive(Debug)]
+    struct ScriptedTransaction {
+        round: u64,
+        script: RoundScript,
+        drafted: Vec<Vec<TokenId>>,
+        settlements: Vec<M1SpeculativeGraphKvSettlementV1>,
+    }
+
+    #[derive(Clone, Debug, Eq, PartialEq)]
+    enum Event {
+        Begin {
+            round: u64,
+            members: Vec<RequestId>,
+        },
+        Draft {
+            round: u64,
+            lane: usize,
+            ordinal: u8,
+            prior: TokenId,
+            token: TokenId,
+        },
+        Target {
+            round: u64,
+            lane: usize,
+            draft: Vec<TokenId>,
+        },
+        Prepare {
+            round: u64,
+            lane: usize,
+            settlement: M1SpeculativeGraphKvSettlementV1,
+        },
+        Commit {
+            round: u64,
+        },
+        Rollback {
+            round: u64,
+        },
+    }
+
+    #[derive(Default)]
+    struct ScriptedExecutor {
+        scripts: VecDeque<RoundScript>,
+        events: Vec<Event>,
+        fail_target: Option<(u64, usize)>,
+        fail_prepare: Option<(u64, usize)>,
+        fail_commit: Option<u64>,
+        fail_rollback: Option<u64>,
+    }
+
+    impl ScriptedExecutor {
+        fn with_scripts(scripts: impl IntoIterator<Item = RoundScript>) -> Self {
+            Self {
+                scripts: scripts.into_iter().collect(),
+                ..Self::default()
+            }
+        }
+    }
+
+    impl M1SpeculativeGraphExecutorV1 for ScriptedExecutor {
+        type Transaction = ScriptedTransaction;
+        type Error = &'static str;
+
+        fn begin_round(
+            &mut self,
+            context: M1SpeculativeGraphRoundContextV1<'_>,
+        ) -> Result<Self::Transaction, Self::Error> {
+            let script = self.scripts.pop_front().ok_or("missing round script")?;
+            if script.members.len() != context.members().len() {
+                return Err("script roster mismatch");
+            }
+            self.events.push(Event::Begin {
+                round: context.round(),
+                members: context
+                    .members()
+                    .iter()
+                    .map(|member| member.request())
+                    .collect(),
+            });
+            Ok(ScriptedTransaction {
+                round: context.round(),
+                drafted: vec![Vec::new(); script.members.len()],
+                script,
+                settlements: Vec::new(),
+            })
+        }
+
+        fn draft_token(
+            &mut self,
+            transaction: &mut Self::Transaction,
+            lane: usize,
+            member: M1SpeculativeRoundMemberInputV1,
+            ordinal: u8,
+            prior_token: TokenId,
+        ) -> Result<TokenId, Self::Error> {
+            let drafted = &transaction.drafted[lane];
+            let expected_prior = drafted.last().copied().unwrap_or(member.round_anchor());
+            assert_eq!(prior_token, expected_prior);
+            let token = transaction.script.members[lane].draft[usize::from(ordinal)];
+            self.events.push(Event::Draft {
+                round: transaction.round,
+                lane,
+                ordinal,
+                prior: prior_token,
+                token,
+            });
+            transaction.drafted[lane].push(token);
+            Ok(token)
+        }
+
+        fn target_verify(
+            &mut self,
+            transaction: &mut Self::Transaction,
+            lane: usize,
+            _: M1SpeculativeRoundMemberInputV1,
+            draft_tokens: &[TokenId],
+        ) -> Result<Vec<TokenId>, Self::Error> {
+            self.events.push(Event::Target {
+                round: transaction.round,
+                lane,
+                draft: draft_tokens.to_vec(),
+            });
+            if self.fail_target == Some((transaction.round, lane)) {
+                return Err("target verification fault");
+            }
+            assert_eq!(transaction.drafted[lane], draft_tokens);
+            Ok(transaction.script.members[lane].target.clone())
+        }
+
+        fn prepare_kv_settlement(
+            &mut self,
+            transaction: &mut Self::Transaction,
+            lane: usize,
+            settlement: M1SpeculativeGraphKvSettlementV1,
+        ) -> Result<(), Self::Error> {
+            self.events.push(Event::Prepare {
+                round: transaction.round,
+                lane,
+                settlement,
+            });
+            if self.fail_prepare == Some((transaction.round, lane)) {
+                return Err("KV settlement fault");
+            }
+            transaction.settlements.push(settlement);
+            Ok(())
+        }
+
+        fn commit_round(
+            &mut self,
+            transaction: Self::Transaction,
+        ) -> Result<(), M1SpeculativeGraphCommitFailureV1<Self::Transaction, Self::Error>> {
+            if self.fail_commit == Some(transaction.round) {
+                return Err(M1SpeculativeGraphCommitFailureV1::new(
+                    transaction,
+                    "KV commit fault",
+                ));
+            }
+            assert_eq!(
+                transaction.settlements.len(),
+                transaction.script.members.len()
+            );
+            self.events.push(Event::Commit {
+                round: transaction.round,
+            });
+            Ok(())
+        }
+
+        fn rollback_round(&mut self, transaction: Self::Transaction) -> Result<(), Self::Error> {
+            self.events.push(Event::Rollback {
+                round: transaction.round,
+            });
+            if self.fail_rollback == Some(transaction.round) {
+                Err("rollback fault")
+            } else {
+                Ok(())
+            }
+        }
+    }
+
+    const fn selection() -> Qwen3PlanSelection {
+        Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Speculative,
+            bucket: Qwen3PlanBucket::SpeculativeS8K4C8192,
+        }
+    }
+
+    fn request(lane: u32) -> RequestId {
+        RequestId::new(lane, 1)
+    }
+
+    fn seed(lane: u32, max_output_tokens: u32) -> M1SpeculativeMemberSeedV1 {
+        M1SpeculativeMemberSeedV1::new(
+            request(lane),
+            70 + lane,
+            10,
+            10,
+            M1SpeculativeGenerationPolicyV1::new(max_output_tokens, &[]).unwrap(),
+        )
+    }
+
+    fn member(draft: &[TokenId], target: &[TokenId]) -> MemberScript {
+        MemberScript {
+            draft: draft.to_vec(),
+            target: target.to_vec(),
+        }
+    }
+
+    #[test]
+    fn multi_member_loop_executes_partial_full_and_reject_all_rounds_in_order() {
+        let mut coordinator =
+            M1SpeculativeGenerationLoopV1::new(selection(), &[seed(0, 4), seed(1, 5), seed(2, 1)])
+                .unwrap();
+        let mut executor = ScriptedExecutor::with_scripts([
+            RoundScript {
+                members: vec![
+                    member(&[10, 11, 12, 13], &[10, 11, 90, 91, 92]),
+                    member(&[20, 21, 22, 23], &[20, 21, 22, 23, 91]),
+                    member(&[30, 31, 32, 33], &[92, 31, 32, 33, 94]),
+                ],
+            },
+            RoundScript {
+                members: vec![member(&[40, 41, 42, 43], &[93, 41, 42, 43, 95])],
+            },
+        ]);
+
+        let run = run_bounded_multi_member_speculative_graph_v1(
+            &mut coordinator,
+            &mut executor,
+            CompletionEpoch::new(7),
+            2,
+            |_| M1SpeculativeMemberControlActionV1::Continue,
+        )
+        .unwrap();
+
+        assert_eq!(run.stop(), M1SpeculativeGraphStopV1::AllMembersTerminal);
+        assert_eq!(run.rounds().len(), 2);
+        assert_eq!(
+            run.rounds()[0].members()[0].accepted_prefix_tokens(),
+            &[10, 11]
+        );
+        assert_eq!(
+            run.rounds()[0].members()[0].published().tokens(),
+            &[10, 11, 90]
+        );
+        assert_eq!(run.rounds()[0].members()[1].accepted_draft_tokens(), 4);
+        assert_eq!(run.rounds()[0].members()[2].accepted_draft_tokens(), 0);
+        assert_eq!(run.rounds()[0].next_active_roster(), &[request(0)]);
+        assert!(run.rounds()[1].next_active_roster().is_empty());
+        assert!(matches!(
+            coordinator.member(request(0)).unwrap().status(),
+            M1SpeculativeMemberStatusV1::Completed(_)
+        ));
+        assert!(matches!(
+            coordinator.member(request(1)).unwrap().status(),
+            M1SpeculativeMemberStatusV1::Completed(_)
+        ));
+        assert!(matches!(
+            coordinator.member(request(2)).unwrap().status(),
+            M1SpeculativeMemberStatusV1::Completed(_)
+        ));
+
+        let first_settlements: Vec<_> = executor
+            .events
+            .iter()
+            .filter_map(|event| match event {
+                Event::Prepare {
+                    round: 0,
+                    settlement,
+                    ..
+                } => Some(*settlement),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(first_settlements.len(), 3);
+        assert_eq!(first_settlements[0].target().commit_end(), 13);
+        assert_eq!(first_settlements[0].target().rollback_tokens(), 2);
+        assert_eq!(first_settlements[0].draft().commit_end(), 13);
+        assert_eq!(first_settlements[0].draft().rollback_tokens(), 1);
+        assert_eq!(first_settlements[1].target().commit_end(), 15);
+        assert_eq!(first_settlements[1].draft().commit_end(), 14);
+        assert_eq!(first_settlements[2].target().commit_end(), 11);
+        assert_eq!(first_settlements[2].target().rollback_tokens(), 4);
+        assert_eq!(first_settlements[2].draft().commit_end(), 11);
+        assert_eq!(first_settlements[2].draft().rollback_tokens(), 3);
+        let final_round_zero_draft = executor
+            .events
+            .iter()
+            .rposition(|event| matches!(event, Event::Draft { round: 0, .. }))
+            .unwrap();
+        let first_round_zero_target = executor
+            .events
+            .iter()
+            .position(|event| matches!(event, Event::Target { round: 0, .. }))
+            .unwrap();
+        assert!(final_round_zero_draft < first_round_zero_target);
+        assert!(executor.events.iter().any(|event| matches!(
+            event,
+            Event::Draft {
+                round: 1,
+                lane: 0,
+                ordinal: 0,
+                prior: 90,
+                ..
+            }
+        )));
+        assert_eq!(
+            executor
+                .events
+                .iter()
+                .filter(|event| matches!(event, Event::Commit { .. }))
+                .count(),
+            2
+        );
+        assert!(!executor
+            .events
+            .iter()
+            .any(|event| matches!(event, Event::Rollback { .. })));
+    }
+
+    #[test]
+    fn target_fault_aborts_whole_roster_before_settlement_or_state_change() {
+        let mut coordinator =
+            M1SpeculativeGenerationLoopV1::new(selection(), &[seed(0, 32), seed(1, 32)]).unwrap();
+        let before_first = coordinator.member(request(0)).unwrap();
+        let before_second = coordinator.member(request(1)).unwrap();
+        let mut executor = ScriptedExecutor::with_scripts([RoundScript {
+            members: vec![
+                member(&[10, 11, 12, 13], &[10, 11, 90, 91, 92]),
+                member(&[20, 21, 22, 23], &[20, 21, 22, 23, 91]),
+            ],
+        }]);
+        executor.fail_target = Some((0, 1));
+
+        let error = run_bounded_multi_member_speculative_graph_v1(
+            &mut coordinator,
+            &mut executor,
+            CompletionEpoch::new(1),
+            1,
+            |_| M1SpeculativeMemberControlActionV1::Continue,
+        )
+        .unwrap_err();
+
+        assert!(matches!(
+            error,
+            M1SpeculativeGraphExecutionErrorV1::Backend {
+                stage: M1SpeculativeGraphStageV1::TargetVerification,
+                lane: Some(1),
+                source: "target verification fault",
+                ..
+            }
+        ));
+        assert_eq!(coordinator.next_round(), 0);
+        assert_eq!(coordinator.member(request(0)).unwrap(), before_first);
+        assert_eq!(coordinator.member(request(1)).unwrap(), before_second);
+        assert!(executor
+            .events
+            .iter()
+            .any(|event| matches!(event, Event::Rollback { round: 0 })));
+        assert!(!executor
+            .events
+            .iter()
+            .any(|event| matches!(event, Event::Prepare { .. } | Event::Commit { .. })));
+    }
+
+    #[test]
+    fn malformed_target_shape_and_out_of_range_draft_fail_closed() {
+        let cases = [
+            (member(&[10, 11, 12, 13], &[10, 11, 12, 13]), false),
+            (
+                member(&[QWEN3_VOCABULARY_SIZE, 11, 12, 13], &[10, 11, 12, 13, 14]),
+                true,
+            ),
+        ];
+        for (script, out_of_range) in cases {
+            let mut coordinator =
+                M1SpeculativeGenerationLoopV1::new(selection(), &[seed(0, 32)]).unwrap();
+            let mut executor = ScriptedExecutor::with_scripts([RoundScript {
+                members: vec![script],
+            }]);
+            let error = run_bounded_multi_member_speculative_graph_v1(
+                &mut coordinator,
+                &mut executor,
+                CompletionEpoch::new(1),
+                1,
+                |_| M1SpeculativeMemberControlActionV1::Continue,
+            )
+            .unwrap_err();
+            if out_of_range {
+                assert!(matches!(
+                    error,
+                    M1SpeculativeGraphExecutionErrorV1::TokenOutOfRange {
+                        stage: M1SpeculativeGraphStageV1::Draft,
+                        lane: 0,
+                        ordinal: 0,
+                        ..
+                    }
+                ));
+            } else {
+                assert!(matches!(
+                    error,
+                    M1SpeculativeGraphExecutionErrorV1::TargetChoiceCount {
+                        lane: 0,
+                        expected: 5,
+                        actual: 4,
+                    }
+                ));
+            }
+            assert_eq!(coordinator.next_round(), 0);
+            assert!(matches!(
+                executor.events.last(),
+                Some(Event::Rollback { round: 0 })
+            ));
+        }
+    }
+
+    #[test]
+    fn failed_commit_retains_transaction_for_abort_and_rollback_fault_is_terminal() {
+        for rollback_fails in [false, true] {
+            let mut coordinator =
+                M1SpeculativeGenerationLoopV1::new(selection(), &[seed(0, 32)]).unwrap();
+            let mut executor = ScriptedExecutor::with_scripts([RoundScript {
+                members: vec![member(&[10, 11, 12, 13], &[10, 11, 90, 91, 92])],
+            }]);
+            executor.fail_commit = Some(0);
+            executor.fail_rollback = rollback_fails.then_some(0);
+            let error = run_bounded_multi_member_speculative_graph_v1(
+                &mut coordinator,
+                &mut executor,
+                CompletionEpoch::new(1),
+                1,
+                |_| M1SpeculativeMemberControlActionV1::Continue,
+            )
+            .unwrap_err();
+            if rollback_fails {
+                assert!(matches!(
+                    error,
+                    M1SpeculativeGraphExecutionErrorV1::RollbackFailed {
+                        rollback: "rollback fault",
+                        ..
+                    }
+                ));
+            } else {
+                assert!(matches!(
+                    error,
+                    M1SpeculativeGraphExecutionErrorV1::Backend {
+                        stage: M1SpeculativeGraphStageV1::CommitKvSettlement,
+                        source: "KV commit fault",
+                        ..
+                    }
+                ));
+            }
+            assert_eq!(coordinator.next_round(), 0);
+            assert!(matches!(
+                executor.events.last(),
+                Some(Event::Rollback { round: 0 })
+            ));
+        }
+    }
+
+    #[test]
+    fn live_members_return_at_the_exact_round_bound() {
+        let mut coordinator =
+            M1SpeculativeGenerationLoopV1::new(selection(), &[seed(0, 32)]).unwrap();
+        let mut executor = ScriptedExecutor::with_scripts([RoundScript {
+            members: vec![member(&[10, 11, 12, 13], &[10, 11, 90, 91, 92])],
+        }]);
+        let run = run_bounded_multi_member_speculative_graph_v1(
+            &mut coordinator,
+            &mut executor,
+            CompletionEpoch::new(u64::MAX),
+            1,
+            |_| M1SpeculativeMemberControlActionV1::Continue,
+        )
+        .unwrap();
+        assert_eq!(run.stop(), M1SpeculativeGraphStopV1::RoundBoundReached);
+        assert_eq!(run.rounds().len(), 1);
+        assert_eq!(coordinator.next_round(), 1);
+        assert_eq!(coordinator.active_roster(), vec![request(0)]);
     }
 }
