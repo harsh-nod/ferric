@@ -1,0 +1,24 @@
+[package]
+name = "ferric-qwen3-prefill-device-v1"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94"
+publish = false
+
+# This package is intentionally independent of Ferric's stable host workspace.
+# The revision is provisional until the final M1 fe2o3 compiler/runtime chain lands.
+[workspace]
+
+[dependencies]
+fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "25cae194b4c44ff4175fd15ed8fb17e6adb17b10", version = "=0.1.0" }
+
+[target.'cfg(not(target_arch = "amdgpu"))'.dependencies]
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "25cae194b4c44ff4175fd15ed8fb17e6adb17b10", version = "=0.1.0" }
+
+[dev-dependencies]
+quote = "1"
+syn = { version = "2", features = ["full"] }
+
+[lib]
+name = "ferric_qwen3_prefill_device_v1"
+path = "src/lib.rs"
