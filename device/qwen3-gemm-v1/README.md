@@ -7,13 +7,12 @@ and output storage with ascending FP32 accumulation and an exact zero-or-one
 residual epilogue. The embedding root copies the admitted vocabulary row
 without arithmetic.
 
-The typed matrix output witness uses a flattened one-dimensional tile grid.
-Ferric's retained direct-LLVM host profiles still declare a two-dimensional
-grid, so those profiles and the generated runner must be converted and bound
-to the compiled source artifact before this package is an executable M1 path.
-The A4 root applies four adjacent reduction terms per loop iteration; hardware
-inspection and performance evidence must establish any actual vector load or
-throughput claim.
+The typed matrix output witness and Ferric's host profiles use the same
+flattened one-dimensional tile grid. The compiled source artifact, extracted
+descriptor ABI, and generated runner still must be reconciled and bound before
+this package is an executable M1 path. The A4 root applies four adjacent
+reduction terms per loop iteration; hardware inspection and performance
+evidence must establish any actual vector load or throughput claim.
 
 The package pins immutable reviewed `fe2o3-device` and generated-host source at
 revision `d955209099c7`. A newer `cargo-fe2o3` compiler may admit and compile
