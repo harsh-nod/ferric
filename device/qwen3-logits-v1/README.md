@@ -34,7 +34,7 @@ not substitute a dummy buffer: production KFD packing depends on the pending
 generic fe2o3 non-null-empty-slice support.
 
 The package pins exact reviewed fe2o3 revision
-`61967a3cb3958faddcda3a5e7ed6b19fd6e68ebb`. This package grants no artifact,
+`9f97985ee0a4a8ef0bc8f0fa0fd33771c8180592`. This package grants no artifact,
 source-to-machine, load, launch, completion, hardware, performance, or M1 gate
 authority. Final integration still requires extracting all three roots,
 reconciling generated ABI and launch descriptors with `ferric-qwen-kernels`,

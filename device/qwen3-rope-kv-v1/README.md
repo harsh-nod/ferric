@@ -33,7 +33,7 @@ to long-lived device-resident KV allocations retained across dispatches and
 retire them only after exact queue quiescence.
 
 The package pins immutable reviewed `fe2o3-device` and generated-host source at
-revision `61967a3cb395`. The exact `cargo-fe2o3` compiler used to produce an
+revision `9f97985ee0a4`. The exact `cargo-fe2o3` compiler used to produce an
 artifact remains separately bound by the protected compiler-execution receipt.
 
 Source and host tests establish the exact two-root roster, finite machine
