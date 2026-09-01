@@ -74,7 +74,7 @@ pub struct M1CompletionProgressObservationV1 {
 }
 
 impl M1CompletionProgressObservationV1 {
-    fn from_service(progress: ServiceQueueProgressV1) -> Self {
+    pub(crate) fn from_service(progress: ServiceQueueProgressV1) -> Self {
         Self {
             packet_count: progress.packet_count(),
             completed_count: progress.completed_count(),
@@ -5486,7 +5486,7 @@ fn submit_case<const N: usize>(
     }
 }
 
-enum CompletionProgressPollV1<P, C> {
+pub(crate) enum CompletionProgressPollV1<P, C> {
     Pending {
         session: P,
         progress: M1CompletionProgressObservationV1,
@@ -5497,7 +5497,7 @@ enum CompletionProgressPollV1<P, C> {
     },
 }
 
-enum CompletionProgressWaitFailureV1<E> {
+pub(crate) enum CompletionProgressWaitFailureV1<E> {
     Lower(E),
     Policy {
         lower: E,
@@ -5570,7 +5570,7 @@ fn validate_completion_progress_observation(
     Ok(())
 }
 
-fn wait_with_completion_progress_policy<const N: usize, P, C, E>(
+pub(crate) fn wait_with_completion_progress_policy<const N: usize, P, C, E>(
     pending: P,
     maximum_consecutive_stalled_scans: u32,
     mut poll: impl FnMut(P) -> Result<CompletionProgressPollV1<P, C>, E>,

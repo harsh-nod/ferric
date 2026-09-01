@@ -14,14 +14,15 @@ use ferric_spec::{Identity, Qwen3PlanBucket, Qwen3PlanSelection};
 use vstd::prelude::*;
 
 use crate::{
-    m1_completion_output_shape_v1, AddresslessM1FullStepWorkspaceComposition,
-    AddresslessM1PhysicalBufferRecipeV1, AddresslessM1PhysicalDispatchRecipeV1,
-    AddresslessM1PhysicalKernargRecipeV1, BoundM1CompletionOutputV1,
-    BoundM1PhysicalBufferBindingsV1, ContentBoundM1ProgramCatalogV1, Gfx942DeviceBinding,
+    derive_m1_step_dispatch_plan, m1_completion_output_shape_v1,
+    AddresslessM1FullStepWorkspaceComposition, AddresslessM1PhysicalBufferRecipeV1,
+    AddresslessM1PhysicalDispatchRecipeV1, AddresslessM1PhysicalKernargRecipeV1,
+    BoundM1CompletionOutputV1, BoundM1PhysicalBufferBindingsV1, ContentBoundM1ProgramCatalogV1,
+    DeclaredOperationKernelPlan, Gfx942DeviceBinding, M1AuthenticatedWorkerV3ProgramSetV1,
     M1BoundPhysicalBufferRowV1, M1CompletionOutputShapeV1, M1FullStepWorkspaceSubleaseOwners,
     M1PartitionedModelMemoryKvPoolV1, M1PartitionedModelMemoryKvQueueCustodyV1,
     M1PhysicalBufferRecipeRowV1, M1PhysicalKernargImageV1, M1PhysicalProgramV1,
-    M1StepDispatchIntent, M1_PHYSICAL_PROGRAM_COUNT_V1,
+    M1StepDispatchCompositionError, M1StepDispatchIntent, M1_PHYSICAL_PROGRAM_COUNT_V1,
 };
 
 /// Exact packet count of every target-only M1 step.
@@ -425,6 +426,83 @@ pub enum M1PhysicalFixedBatchV1<'a> {
     SpeculativeK16(Box<M1PhysicalFixedBatchCaseV1<'a, M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1>>),
 }
 
+/// One exact authenticated packet array and its Ferric allocation custody.
+///
+/// Packet construction is crate-private and the packet array has no public
+/// accessor, so callers cannot substitute service program indices after the
+/// authenticated Worker V3 mapping has been applied.
+#[must_use = "authenticated packet and allocation custody must remain joined"]
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedPhysicalPacketBatchCaseV1<const N: usize> {
+    packets: [ServiceFixedDispatchPacketV1; N],
+    custody: M1PhysicalFixedBatchCustodyV1,
+}
+
+impl<const N: usize> M1AuthenticatedPhysicalPacketBatchCaseV1<N> {
+    pub(crate) const fn from_parts(
+        packets: [ServiceFixedDispatchPacketV1; N],
+        custody: M1PhysicalFixedBatchCustodyV1,
+    ) -> Self {
+        Self { packets, custody }
+    }
+
+    pub(crate) const fn custody(&self) -> &M1PhysicalFixedBatchCustodyV1 {
+        &self.custody
+    }
+
+    pub(crate) fn into_parts(
+        self,
+    ) -> (
+        [ServiceFixedDispatchPacketV1; N],
+        M1PhysicalFixedBatchCustodyV1,
+    ) {
+        (self.packets, self.custody)
+    }
+}
+
+/// Closed family of authenticated packet cardinalities for every complete M1 step.
+#[must_use = "authenticated packet custody must enter the Ferric queue boundary"]
+#[derive(Debug)]
+pub(crate) enum M1AuthenticatedPhysicalPacketBatchV1 {
+    TargetOnly(
+        Box<M1AuthenticatedPhysicalPacketBatchCaseV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>>,
+    ),
+    PairedPrefill(
+        Box<M1AuthenticatedPhysicalPacketBatchCaseV1<M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1>>,
+    ),
+    SpeculativeK4(
+        Box<M1AuthenticatedPhysicalPacketBatchCaseV1<M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1>>,
+    ),
+    SpeculativeK8(
+        Box<M1AuthenticatedPhysicalPacketBatchCaseV1<M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1>>,
+    ),
+    SpeculativeK16(
+        Box<M1AuthenticatedPhysicalPacketBatchCaseV1<M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1>>,
+    ),
+}
+
+impl M1AuthenticatedPhysicalPacketBatchV1 {
+    pub(crate) const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
+        match self {
+            Self::TargetOnly(_) => M1PhysicalFixedBatchShapeV1::TargetOnly,
+            Self::PairedPrefill(_) => M1PhysicalFixedBatchShapeV1::PairedPrefill,
+            Self::SpeculativeK4(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+            Self::SpeculativeK8(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+            Self::SpeculativeK16(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+        }
+    }
+
+    pub(crate) const fn custody(&self) -> &M1PhysicalFixedBatchCustodyV1 {
+        match self {
+            Self::TargetOnly(case) => case.custody(),
+            Self::PairedPrefill(case) => case.custody(),
+            Self::SpeculativeK4(case) => case.custody(),
+            Self::SpeculativeK8(case) => case.custody(),
+            Self::SpeculativeK16(case) => case.custody(),
+        }
+    }
+}
+
 impl M1PhysicalFixedBatchV1<'_> {
     /// Checked physical-device receipt retained by this complete fixed batch.
     #[must_use]
@@ -525,6 +603,16 @@ pub enum M1PhysicalFixedBatchBuildErrorV1 {
     HostAllocation,
     /// Selected program roster cardinality drifted.
     ProgramCount { expected: usize, actual: usize },
+    /// Authenticated program families differ from the generated operation plan.
+    ProgramFamilyArtifacts,
+    /// The retained step intent cannot be derived from the authenticated operation plan.
+    OperationPlan(M1StepDispatchCompositionError),
+    /// The exact retained dispatch plan differs from fresh authenticated derivation.
+    OperationPlanDrift,
+    /// The retained physical recipe names another generated runner declaration.
+    RunnerDeclarationIdentity,
+    /// The retained physical recipe names another structural kernel catalog.
+    KernelCatalogIdentity,
     /// Physical and workspace compositions no longer name the same step.
     CompositionIdentity,
     /// A retained intent is outside the closed M1 fixed-batch family.
@@ -624,6 +712,25 @@ impl<'a> M1PhysicalFixedBatchBuildFailureV1<'a> {
         BoundM1PhysicalBufferBindingsV1,
     ) {
         (self.error, *self.catalog, *self.bindings)
+    }
+}
+
+/// Authenticated packet-lowering rejection retaining the exact unchanged bindings.
+#[must_use = "authenticated packet lowering failure retains physical bindings"]
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedPhysicalPacketBatchBuildFailureV1 {
+    error: M1PhysicalFixedBatchBuildErrorV1,
+    bindings: Box<BoundM1PhysicalBufferBindingsV1>,
+}
+
+impl M1AuthenticatedPhysicalPacketBatchBuildFailureV1 {
+    pub(crate) fn into_parts(
+        self,
+    ) -> (
+        M1PhysicalFixedBatchBuildErrorV1,
+        BoundM1PhysicalBufferBindingsV1,
+    ) {
+        (self.error, *self.bindings)
     }
 }
 
@@ -732,14 +839,131 @@ pub fn build_m1_physical_fixed_batch_v1(
     }
 }
 
+/// Lowers owner-checked bindings with the exact authenticated Worker V3 program map.
+///
+/// The expected declaration and structural catalog identities come from the
+/// same authenticated runner that retained `programs`. Every service program
+/// index is selected privately from that set after all validation succeeds.
+pub(crate) fn build_m1_authenticated_physical_packet_batch_v1(
+    programs: &M1AuthenticatedWorkerV3ProgramSetV1,
+    operations: &DeclaredOperationKernelPlan,
+    bindings: BoundM1PhysicalBufferBindingsV1,
+) -> Result<M1AuthenticatedPhysicalPacketBatchV1, M1AuthenticatedPhysicalPacketBatchBuildFailureV1>
+{
+    let shape = match validate_bound_inputs(programs.program_count(), &bindings) {
+        Ok(shape) => shape,
+        Err(error) => {
+            return Err(M1AuthenticatedPhysicalPacketBatchBuildFailureV1 {
+                error,
+                bindings: Box::new(bindings),
+            });
+        }
+    };
+    let dispatch_plan = bindings.workspace_bindings().composition().dispatch_plan();
+    if programs.family_artifacts() != operations.families() {
+        return Err(M1AuthenticatedPhysicalPacketBatchBuildFailureV1 {
+            error: M1PhysicalFixedBatchBuildErrorV1::ProgramFamilyArtifacts,
+            bindings: Box::new(bindings),
+        });
+    }
+    if let Err(error) = validate_authenticated_operation_plan_v1(operations, dispatch_plan) {
+        return Err(M1AuthenticatedPhysicalPacketBatchBuildFailureV1 {
+            error,
+            bindings: Box::new(bindings),
+        });
+    }
+
+    let catalog_id = programs.catalog_id();
+    let service_program_indices =
+        M1PhysicalProgramV1::ALL.map(|program| programs.service_program_index(program));
+    let (recipe, workspace_owners, partitioned_memory, completion_output, bound_rows) =
+        bindings.into_parts();
+    let (kernargs, workspace_composition, source_rows) = recipe.into_parts();
+    let (physical_recipe, images) = kernargs.into_parts();
+    let selection = workspace_composition
+        .dispatch_plan()
+        .intent()
+        .target_selection();
+    let parts = AuthenticatedLoweringPartsV1 {
+        catalog_id,
+        selection,
+        physical_recipe,
+        images,
+        workspace_composition,
+        workspace_owners,
+        partitioned_memory,
+        completion_output,
+        source_rows,
+        bound_rows,
+    };
+
+    let lowered = match shape {
+        M1PhysicalFixedBatchShapeV1::TargetOnly => {
+            lower_authenticated_boxed_packet_batch(parts, service_program_indices)
+                .map(M1AuthenticatedPhysicalPacketBatchV1::TargetOnly)
+        }
+        M1PhysicalFixedBatchShapeV1::PairedPrefill => {
+            lower_authenticated_boxed_packet_batch(parts, service_program_indices)
+                .map(M1AuthenticatedPhysicalPacketBatchV1::PairedPrefill)
+        }
+        M1PhysicalFixedBatchShapeV1::SpeculativeK4 => {
+            lower_authenticated_boxed_packet_batch(parts, service_program_indices)
+                .map(M1AuthenticatedPhysicalPacketBatchV1::SpeculativeK4)
+        }
+        M1PhysicalFixedBatchShapeV1::SpeculativeK8 => {
+            lower_authenticated_boxed_packet_batch(parts, service_program_indices)
+                .map(M1AuthenticatedPhysicalPacketBatchV1::SpeculativeK8)
+        }
+        M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
+            lower_authenticated_boxed_packet_batch(parts, service_program_indices)
+                .map(M1AuthenticatedPhysicalPacketBatchV1::SpeculativeK16)
+        }
+    };
+    match lowered {
+        Ok(batch) => Ok(batch),
+        Err(failure) => {
+            let (error, bindings) = (*failure).into_original_inputs();
+            Err(M1AuthenticatedPhysicalPacketBatchBuildFailureV1 {
+                error,
+                bindings: Box::new(bindings),
+            })
+        }
+    }
+}
+
+pub(crate) fn validate_authenticated_operation_plan_v1(
+    operations: &DeclaredOperationKernelPlan,
+    dispatch_plan: &crate::AddresslessM1StepDispatchPlan,
+) -> Result<(), M1PhysicalFixedBatchBuildErrorV1> {
+    if dispatch_plan.runner_declaration_id() != operations.runner_declaration_id() {
+        return Err(M1PhysicalFixedBatchBuildErrorV1::RunnerDeclarationIdentity);
+    }
+    if dispatch_plan.kernel_catalog_id() != operations.kernel_catalog_id() {
+        return Err(M1PhysicalFixedBatchBuildErrorV1::KernelCatalogIdentity);
+    }
+    let expected_dispatch_plan = derive_m1_step_dispatch_plan(operations, dispatch_plan.intent())
+        .map_err(M1PhysicalFixedBatchBuildErrorV1::OperationPlan)?;
+    if &expected_dispatch_plan != dispatch_plan {
+        return Err(M1PhysicalFixedBatchBuildErrorV1::OperationPlanDrift);
+    }
+    Ok(())
+}
+
 fn validate_inputs(
     catalog: &ContentBoundM1ProgramCatalogV1<'_>,
     bindings: &BoundM1PhysicalBufferBindingsV1,
 ) -> Result<M1PhysicalFixedBatchShapeV1, M1PhysicalFixedBatchBuildErrorV1> {
-    if catalog.program_count() != M1_PHYSICAL_PROGRAM_COUNT_V1 {
+    validate_bound_inputs(catalog.program_count(), bindings)
+}
+
+fn validate_bound_inputs(
+    program_count: usize,
+    bindings: &BoundM1PhysicalBufferBindingsV1,
+) -> Result<M1PhysicalFixedBatchShapeV1, M1PhysicalFixedBatchBuildErrorV1> {
+    if program_count != M1_PHYSICAL_PROGRAM_COUNT_V1 {
         return Err(M1PhysicalFixedBatchBuildErrorV1::ProgramCount {
             expected: M1_PHYSICAL_PROGRAM_COUNT_V1,
-            actual: catalog.program_count(),
+            actual: program_count,
         });
     }
 
@@ -1009,6 +1233,54 @@ impl<'a> LoweringFailureV1<'a> {
     }
 }
 
+struct AuthenticatedLoweringPartsV1 {
+    catalog_id: Identity,
+    selection: Qwen3PlanSelection,
+    physical_recipe: AddresslessM1PhysicalDispatchRecipeV1,
+    images: Box<[M1PhysicalKernargImageV1]>,
+    workspace_composition: AddresslessM1FullStepWorkspaceComposition,
+    workspace_owners: M1FullStepWorkspaceSubleaseOwners,
+    partitioned_memory: M1PartitionedModelMemoryKvPoolV1,
+    completion_output: BoundM1CompletionOutputV1,
+    source_rows: Box<[M1PhysicalBufferRecipeRowV1]>,
+    bound_rows: Box<[M1BoundPhysicalBufferRowV1]>,
+}
+
+impl AuthenticatedLoweringPartsV1 {
+    fn into_original_bindings(self) -> BoundM1PhysicalBufferBindingsV1 {
+        let kernargs =
+            AddresslessM1PhysicalKernargRecipeV1::from_parts(self.physical_recipe, self.images);
+        let recipe = AddresslessM1PhysicalBufferRecipeV1::from_parts(
+            kernargs,
+            self.workspace_composition,
+            self.source_rows,
+        );
+        BoundM1PhysicalBufferBindingsV1::from_parts(
+            recipe,
+            self.workspace_owners,
+            self.partitioned_memory,
+            self.completion_output,
+            self.bound_rows,
+        )
+    }
+}
+
+struct AuthenticatedLoweringFailureV1 {
+    error: M1PhysicalFixedBatchBuildErrorV1,
+    parts: AuthenticatedLoweringPartsV1,
+}
+
+impl AuthenticatedLoweringFailureV1 {
+    fn into_original_inputs(
+        self,
+    ) -> (
+        M1PhysicalFixedBatchBuildErrorV1,
+        BoundM1PhysicalBufferBindingsV1,
+    ) {
+        (self.error, self.parts.into_original_bindings())
+    }
+}
+
 struct PacketLoweringInputV1 {
     physical: crate::M1PhysicalDispatchRecipeRowV1,
     image: M1PhysicalKernargImageV1,
@@ -1021,6 +1293,115 @@ fn lower_boxed_fixed_batch<const N: usize>(
     parts: LoweringPartsV1<'_>,
 ) -> Result<Box<M1PhysicalFixedBatchCaseV1<'_, N>>, Box<LoweringFailureV1<'_>>> {
     lower_fixed_batch(parts).map(Box::new)
+}
+
+// Keep each authenticated const-cardinality array construction out of the shape dispatcher.
+#[inline(never)]
+fn lower_authenticated_boxed_packet_batch<const N: usize>(
+    parts: AuthenticatedLoweringPartsV1,
+    service_program_indices: [usize; M1_PHYSICAL_PROGRAM_COUNT_V1],
+) -> Result<Box<M1AuthenticatedPhysicalPacketBatchCaseV1<N>>, Box<AuthenticatedLoweringFailureV1>> {
+    lower_authenticated_packet_batch(parts, service_program_indices).map(Box::new)
+}
+
+fn lower_authenticated_packet_batch<const N: usize>(
+    mut parts: AuthenticatedLoweringPartsV1,
+    service_program_indices: [usize; M1_PHYSICAL_PROGRAM_COUNT_V1],
+) -> Result<M1AuthenticatedPhysicalPacketBatchCaseV1<N>, Box<AuthenticatedLoweringFailureV1>> {
+    if parts.physical_recipe.rows().len() != N {
+        return Err(Box::new(AuthenticatedLoweringFailureV1 {
+            error: M1PhysicalFixedBatchBuildErrorV1::RowCount {
+                rows: M1PhysicalFixedBatchRowSetV1::PhysicalRecipe,
+                expected: N,
+                actual: parts.physical_recipe.rows().len(),
+            },
+            parts,
+        }));
+    }
+    if parts.images.len() != N {
+        return Err(Box::new(AuthenticatedLoweringFailureV1 {
+            error: M1PhysicalFixedBatchBuildErrorV1::RowCount {
+                rows: M1PhysicalFixedBatchRowSetV1::KernargImages,
+                expected: N,
+                actual: parts.images.len(),
+            },
+            parts,
+        }));
+    }
+    if parts.bound_rows.len() != N {
+        return Err(Box::new(AuthenticatedLoweringFailureV1 {
+            error: M1PhysicalFixedBatchBuildErrorV1::RowCount {
+                rows: M1PhysicalFixedBatchRowSetV1::BoundBuffers,
+                expected: N,
+                actual: parts.bound_rows.len(),
+            },
+            parts,
+        }));
+    }
+    let mut inputs = Vec::new();
+    if inputs.try_reserve_exact(N).is_err() {
+        return Err(Box::new(AuthenticatedLoweringFailureV1 {
+            error: M1PhysicalFixedBatchBuildErrorV1::HostAllocation,
+            parts,
+        }));
+    }
+    let images = core::mem::take(&mut parts.images).into_vec();
+    for ((image, physical), bound) in images
+        .into_iter()
+        .zip(parts.physical_recipe.rows().iter().copied())
+        .zip(parts.bound_rows.iter())
+    {
+        inputs.push(PacketLoweringInputV1 {
+            physical,
+            image,
+            buffers: bound.buffers().to_vec().into_boxed_slice(),
+        });
+    }
+    let inputs: [PacketLoweringInputV1; N] = match inputs.try_into() {
+        Ok(inputs) => inputs,
+        Err(inputs) => {
+            parts.images = inputs
+                .into_iter()
+                .map(|input| input.image)
+                .collect::<Vec<_>>()
+                .into_boxed_slice();
+            return Err(Box::new(AuthenticatedLoweringFailureV1 {
+                error: M1PhysicalFixedBatchBuildErrorV1::RowCount {
+                    rows: M1PhysicalFixedBatchRowSetV1::KernargImages,
+                    expected: N,
+                    actual: parts.images.len(),
+                },
+                parts,
+            }));
+        }
+    };
+    let packets = inputs.map(|input| {
+        let PacketLoweringInputV1 {
+            physical,
+            image,
+            buffers,
+        } = input;
+        let service_program_index = service_program_indices[physical.program().program_index()];
+        ServiceFixedDispatchPacketV1::new(
+            service_program_index,
+            physical.geometry(),
+            physical.dynamic_group_segment_bytes(),
+            image.into_bytes(),
+            buffers,
+        )
+    });
+    let custody = M1PhysicalFixedBatchCustodyV1 {
+        catalog_id: parts.catalog_id,
+        selection: parts.selection,
+        physical_recipe: parts.physical_recipe,
+        workspace_composition: parts.workspace_composition,
+        workspace_owners: parts.workspace_owners,
+        partitioned_memory: parts.partitioned_memory,
+        completion_output: parts.completion_output,
+        source_rows: parts.source_rows,
+        bound_rows: parts.bound_rows,
+    };
+    Ok(M1AuthenticatedPhysicalPacketBatchCaseV1 { packets, custody })
 }
 
 fn lower_fixed_batch<const N: usize>(

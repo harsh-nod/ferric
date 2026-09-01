@@ -19,6 +19,7 @@ use ferric_kernels::KernelFamily;
 use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::{Identity, Qwen3PlanSelection, RequestId, StepPlan};
 
+use crate::m1_prepublication::build_m1_authenticated_prepublication_batch_v1;
 use crate::operation_kernel_plan::derive_canonical_operation_bindings;
 use crate::{
     allocate_initialized_m1_model_memory_on_device_v1, allocate_m1_prepublication_workspaces_v1,
@@ -32,22 +33,23 @@ use crate::{
     AddresslessM1PhysicalBufferRecipeV1, AddresslessM1PhysicalKernargRecipeV1,
     AddresslessM1StepDispatchPlan, AdmittedPersistedM1KernelArtifactsV1, BoundM1CompletionOutputV1,
     ContentBoundM1ProgramCatalogV1, DeclaredKernelFamilyArtifact, DeclaredOperationKernelPlan,
-    Engine, M1CompletedReadbackJoinFailureV1, M1CompletedStepKvReleaseFailureV1,
-    M1CompletedStepOutcomeV1, M1CompletionObservationFailureV1,
-    M1DeviceKvArenaLeaseBindingFailureV1, M1DeviceKvCompletionRosterV1,
-    M1DeviceModelMemoryAllocationFailureV1, M1FullStepKvWorkspaceTablesV1,
-    M1FullStepWorkspaceCompositionFailure, M1FullStepWorkspaceCompositionOutcome,
-    M1FullStepWorkspacePlans, M1LongLivedQueueRearmSubmissionFailureV1,
-    M1PhysicalBufferBindingErrorV1, M1PhysicalDispatchRecipeErrorV1,
-    M1PhysicalFixedBatchBuildErrorV1, M1PhysicalProgramCatalogErrorV1,
-    M1PhysicalPublishedQueueSessionV1, M1PhysicalQueueCreateFailureClassV1,
-    M1PhysicalQueueCreateFailureV1, M1PhysicalQueueOperationFailureV1, M1PhysicalQueueSessionV1,
-    M1PrepareFailureV1, M1PreparedFiniteSpeculativeQueueRolloverV1,
-    M1PreparedLongLivedQueueRearmV1, M1PreparedS1K4QueueRolloverV1,
-    M1PrepublicationAllocationFailureV1, M1PrepublicationBatchBuildErrorKindV1,
-    M1PrepublicationBatchBuildFailureV1, M1RearmedPublishedQueueV1, M1ReleasedCompletedStepV1,
-    M1ScheduledDispatchV1, M1StepDispatchCompositionError, M1StepDispatchIntent,
-    OperationKernelPlanError, OperationKernelPlanFailure, OperationKernelPlanOutcome,
+    Engine, M1AuthenticatedPrepublicationBatchBuildFailureV1, M1AuthenticatedPrepublicationBatchV1,
+    M1CompletedReadbackJoinFailureV1, M1CompletedStepKvReleaseFailureV1, M1CompletedStepOutcomeV1,
+    M1CompletionObservationFailureV1, M1DeviceKvArenaLeaseBindingFailureV1,
+    M1DeviceKvCompletionRosterV1, M1DeviceModelMemoryAllocationFailureV1,
+    M1FullStepKvWorkspaceTablesV1, M1FullStepWorkspaceCompositionFailure,
+    M1FullStepWorkspaceCompositionOutcome, M1FullStepWorkspacePlans,
+    M1LongLivedQueueRearmSubmissionFailureV1, M1PhysicalBufferBindingErrorV1,
+    M1PhysicalDispatchRecipeErrorV1, M1PhysicalFixedBatchBuildErrorV1,
+    M1PhysicalProgramCatalogErrorV1, M1PhysicalPublishedQueueSessionV1,
+    M1PhysicalQueueCreateFailureClassV1, M1PhysicalQueueCreateFailureV1,
+    M1PhysicalQueueOperationFailureV1, M1PhysicalQueueSessionV1, M1PrepareFailureV1,
+    M1PreparedFiniteSpeculativeQueueRolloverV1, M1PreparedLongLivedQueueRearmV1,
+    M1PreparedS1K4QueueRolloverV1, M1PrepublicationAllocationFailureV1,
+    M1PrepublicationBatchBuildErrorKindV1, M1PrepublicationBatchBuildFailureV1,
+    M1RearmedPublishedQueueV1, M1ReleasedCompletedStepV1, M1ScheduledDispatchV1,
+    M1StepDispatchCompositionError, M1StepDispatchIntent, OperationKernelPlanError,
+    OperationKernelPlanFailure, OperationKernelPlanOutcome,
 };
 
 /// Fail-closed logical declaration lookup error.
@@ -247,6 +249,33 @@ impl fmt::Debug for M1AuthenticatedPhysicalRunnerV1 {
 }
 
 impl M1AuthenticatedPhysicalRunnerV1 {
+    pub(crate) const fn programs(&self) -> &crate::M1AuthenticatedWorkerV3ProgramSetV1 {
+        &self.programs
+    }
+
+    pub(crate) const fn operations(&self) -> &DeclaredOperationKernelPlan {
+        &self.operations
+    }
+
+    pub(crate) fn into_parts(
+        self,
+    ) -> (
+        crate::M1AuthenticatedWorkerV3ProgramSetV1,
+        DeclaredOperationKernelPlan,
+    ) {
+        (self.programs, self.operations)
+    }
+
+    pub(crate) const fn from_parts(
+        programs: crate::M1AuthenticatedWorkerV3ProgramSetV1,
+        operations: DeclaredOperationKernelPlan,
+    ) -> Self {
+        Self {
+            programs,
+            operations,
+        }
+    }
+
     /// Exact Ferric-domain-separated authenticated program catalog identity.
     #[must_use]
     pub const fn program_catalog_id(&self) -> Identity {
@@ -284,6 +313,54 @@ impl M1AuthenticatedPhysicalRunnerV1 {
         workspace_plans: M1FullStepWorkspacePlans,
     ) -> M1PhysicalRunnerRecipeOutcomeV1 {
         derive_physical_step_recipe(&self.operations, intent, workspace_plans)
+    }
+
+    /// Joins scheduler authority to complete initialized workspace images.
+    ///
+    /// # Errors
+    ///
+    /// Returns exact join or workspace-composition failure custody.
+    pub fn prepare_scheduled_workspaces(
+        &self,
+        scheduled: M1ScheduledDispatchV1,
+        plans: M1FullStepWorkspacePlans,
+        tables: M1FullStepKvWorkspaceTablesV1,
+    ) -> Result<crate::M1PreparedScheduledWorkspaceImagesV1, M1PrepareFailureV1> {
+        prepare_m1_scheduled_workspace_images_v1(scheduled, self.logical_runner(), plans, tables)
+    }
+
+    /// Allocates every prepared workspace on the initialized service device.
+    ///
+    /// # Errors
+    ///
+    /// Returns exact allocation failure with scheduler, KV, and memory custody.
+    pub fn allocate_scheduled_workspaces(
+        &self,
+        partitioned_memory: crate::M1PartitionedModelMemoryKvPoolV1,
+        prepared: crate::M1PreparedScheduledWorkspaceImagesV1,
+    ) -> Result<crate::M1AllocatedScheduledStepV1, M1PrepublicationAllocationFailureV1> {
+        allocate_m1_prepublication_workspaces_v1(partitioned_memory, prepared)
+    }
+
+    /// Consumes this exact authenticated runner into an opaque prepublication owner.
+    ///
+    /// The runner remains joined to the privately lowered packet batch, so a
+    /// different program owner cannot be substituted at queue creation.
+    ///
+    /// # Errors
+    ///
+    /// Returns exact runner and original allocation inputs on any pure
+    /// prepublication rejection.
+    pub fn prepare_first_step(
+        self,
+        allocated: crate::M1AllocatedScheduledStepV1,
+        recipe: AddresslessM1PhysicalBufferRecipeV1,
+        completion_output: BoundM1CompletionOutputV1,
+    ) -> Result<
+        M1AuthenticatedPrepublicationBatchV1,
+        Box<M1AuthenticatedPrepublicationBatchBuildFailureV1>,
+    > {
+        build_m1_authenticated_prepublication_batch_v1(self, allocated, recipe, completion_output)
     }
 }
 

@@ -12,6 +12,9 @@ use ferric_spec::{
     StepPlan, ValidatedM1StepInputs, M1_MAX_ACTIVE_SEQUENCES,
 };
 
+use crate::physical_fixed_batch::{
+    build_m1_authenticated_physical_packet_batch_v1, M1AuthenticatedPhysicalPacketBatchV1,
+};
 use crate::{
     bind_m1_physical_buffer_ranges_v1, build_m1_physical_fixed_batch_v1,
     compose_m1_step_workspace_image_v1, AddresslessM1PhysicalBufferRecipeV1,
@@ -20,8 +23,8 @@ use crate::{
     ComposedM1StepWorkspaceImageV1, ContentBoundM1ProgramCatalogV1, Gfx942DeviceBinding,
     InitializedM1FullStepWorkspaceAllocationFailureV1,
     InitializedM1FullStepWorkspacePreflightErrorV1, LogicalRunnerDeclaration,
-    M1FullStepWorkspaceImagesV1, M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans,
-    M1FullStepWorkspaceSubleaseOwners, M1KvWorkspaceReservationCustodyV1,
+    M1AuthenticatedPhysicalRunnerV1, M1FullStepWorkspaceImagesV1, M1FullStepWorkspaceInputKind,
+    M1FullStepWorkspacePlans, M1FullStepWorkspaceSubleaseOwners, M1KvWorkspaceReservationCustodyV1,
     M1PartitionedModelMemoryKvPoolV1, M1PhysicalBufferBindingErrorV1,
     M1PhysicalBufferBindingFailureV1, M1PhysicalFixedBatchBuildErrorV1,
     M1PhysicalFixedBatchBuildFailureV1, M1PhysicalFixedBatchShapeV1, M1PhysicalFixedBatchV1,
@@ -889,6 +892,93 @@ impl M1PrepublicationBatchV1<'_> {
     }
 }
 
+/// Authenticated packet batch joined to scheduler and KV authority before queue creation.
+#[must_use = "authenticated prepublication custody must enter the Ferric queue boundary"]
+#[derive(Debug)]
+pub struct M1AuthenticatedPrepublicationBatchV1 {
+    pub(crate) runner: M1AuthenticatedPhysicalRunnerV1,
+    pub(crate) batch: M1AuthenticatedPhysicalPacketBatchV1,
+    pub(crate) step: M1PrepublicationStepCustodyV1,
+}
+
+impl M1AuthenticatedPrepublicationBatchV1 {
+    /// Checked physical-device receipt retained before authenticated queue creation.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.batch.custody().device()
+    }
+
+    /// Exact closed physical packet shape.
+    #[must_use]
+    pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
+        self.batch.shape()
+    }
+
+    /// Exact scheduler and KV authority joined to the authenticated packets.
+    #[must_use = "scheduler and KV authority remain retained"]
+    pub const fn step(&self) -> &M1PrepublicationStepCustodyV1 {
+        &self.step
+    }
+
+    /// Exact authenticated program-catalog identity retained by the producing runner.
+    #[must_use]
+    pub const fn program_catalog_id(&self) -> Identity {
+        self.runner.program_catalog_id()
+    }
+
+    /// Exact generated runner declaration retained by the producing runner.
+    #[must_use]
+    pub const fn runner_declaration_id(&self) -> Identity {
+        self.runner.declaration_id()
+    }
+
+    /// Exact structural kernel catalog retained by the producing runner.
+    #[must_use]
+    pub const fn kernel_catalog_id(&self) -> Identity {
+        self.runner.kernel_catalog_id()
+    }
+}
+
+/// Authenticated batch-construction rejection retaining every exact retry input.
+#[must_use = "authenticated prepublication failure retains exact retry custody"]
+#[derive(Debug)]
+pub struct M1AuthenticatedPrepublicationBatchBuildFailureV1 {
+    diagnostic: M1PrepublicationBatchBuildDiagnosticV1,
+    runner: Box<M1AuthenticatedPhysicalRunnerV1>,
+    allocated: Box<M1AllocatedScheduledStepV1>,
+    recipe: Box<AddresslessM1PhysicalBufferRecipeV1>,
+    completion_output: Box<BoundM1CompletionOutputV1>,
+}
+
+impl M1AuthenticatedPrepublicationBatchBuildFailureV1 {
+    /// Stable phase-local rejection diagnostic.
+    #[must_use]
+    pub const fn diagnostic(&self) -> &M1PrepublicationBatchBuildDiagnosticV1 {
+        &self.diagnostic
+    }
+
+    /// Recovers the exact original inputs for a corrected retry.
+    #[must_use = "the diagnostic and every exact retry input remain retained"]
+    #[allow(clippy::type_complexity)]
+    pub fn into_retry_inputs(
+        self,
+    ) -> (
+        M1PrepublicationBatchBuildDiagnosticV1,
+        M1AuthenticatedPhysicalRunnerV1,
+        M1AllocatedScheduledStepV1,
+        AddresslessM1PhysicalBufferRecipeV1,
+        BoundM1CompletionOutputV1,
+    ) {
+        (
+            self.diagnostic,
+            *self.runner,
+            *self.allocated,
+            *self.recipe,
+            *self.completion_output,
+        )
+    }
+}
+
 /// Owner-checks all physical ranges and constructs the sole queue input.
 ///
 /// The allocated input already owns the closed model-memory/KV pool. Every
@@ -941,6 +1031,79 @@ pub fn build_m1_prepublication_batch_v1(
         }
     };
     Ok(M1PrepublicationBatchV1 { batch, step })
+}
+
+/// Joins exact authenticated program mapping to owner-checked prepublication custody.
+pub(crate) fn build_m1_authenticated_prepublication_batch_v1(
+    runner: M1AuthenticatedPhysicalRunnerV1,
+    allocated: M1AllocatedScheduledStepV1,
+    recipe: AddresslessM1PhysicalBufferRecipeV1,
+    completion_output: BoundM1CompletionOutputV1,
+) -> Result<
+    M1AuthenticatedPrepublicationBatchV1,
+    Box<M1AuthenticatedPrepublicationBatchBuildFailureV1>,
+> {
+    if let Err(error) = validate_batch_inputs(&allocated, &recipe, &completion_output) {
+        return Err(Box::new(M1AuthenticatedPrepublicationBatchBuildFailureV1 {
+            diagnostic: M1PrepublicationBatchBuildDiagnosticV1::Preflight(error),
+            runner: Box::new(runner),
+            allocated: Box::new(allocated),
+            recipe: Box::new(recipe),
+            completion_output: Box::new(completion_output),
+        }));
+    }
+    let (workspace_owners, partitioned_memory, step) = allocated.into_parts();
+    let bindings = match bind_m1_physical_buffer_ranges_v1(
+        recipe,
+        workspace_owners,
+        partitioned_memory,
+        completion_output,
+    ) {
+        Ok(bindings) => bindings,
+        Err(failure) => {
+            let (error, recipe, workspace_owners, partitioned_memory, completion_output) =
+                failure.into_parts();
+            return Err(Box::new(M1AuthenticatedPrepublicationBatchBuildFailureV1 {
+                diagnostic: M1PrepublicationBatchBuildDiagnosticV1::Binding(error),
+                runner: Box::new(runner),
+                allocated: Box::new(M1AllocatedScheduledStepV1 {
+                    workspace_owners,
+                    partitioned_memory,
+                    step,
+                }),
+                recipe: Box::new(recipe),
+                completion_output: Box::new(completion_output),
+            }));
+        }
+    };
+    let batch = match build_m1_authenticated_physical_packet_batch_v1(
+        runner.programs(),
+        runner.operations(),
+        bindings,
+    ) {
+        Ok(batch) => batch,
+        Err(failure) => {
+            let (error, bindings) = failure.into_parts();
+            let (recipe, workspace_owners, partitioned_memory, completion_output, _bound_rows) =
+                bindings.into_parts();
+            return Err(Box::new(M1AuthenticatedPrepublicationBatchBuildFailureV1 {
+                diagnostic: M1PrepublicationBatchBuildDiagnosticV1::FixedBatch(error),
+                runner: Box::new(runner),
+                allocated: Box::new(M1AllocatedScheduledStepV1 {
+                    workspace_owners,
+                    partitioned_memory,
+                    step,
+                }),
+                recipe: Box::new(recipe),
+                completion_output: Box::new(completion_output),
+            }));
+        }
+    };
+    Ok(M1AuthenticatedPrepublicationBatchV1 {
+        runner,
+        batch,
+        step,
+    })
 }
 
 fn validate_batch_inputs(

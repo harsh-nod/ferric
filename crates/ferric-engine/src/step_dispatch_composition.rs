@@ -524,7 +524,9 @@ mod tests {
         M1StepDispatchIntent, M1StepDispatchStage,
     };
     use crate::operation_kernel_plan::tests::public_operation_kernel_plan_fixture;
+    use crate::physical_fixed_batch::validate_authenticated_operation_plan_v1;
     use crate::M1OperationDispatchKind;
+    use crate::M1PhysicalFixedBatchBuildErrorV1;
 
     const fn target(mode: Qwen3ExecutionMode, bucket: Qwen3PlanBucket) -> Qwen3PlanSelection {
         Qwen3PlanSelection {
@@ -714,5 +716,32 @@ mod tests {
         assert!(!first.authenticates_artifacts());
         assert!(!first.grants_execution_authority());
         assert!(!first.proves_refinement());
+    }
+
+    #[test]
+    fn authenticated_plan_rejects_segment_drift_with_matching_copied_identities() {
+        let operation_plan = public_operation_kernel_plan_fixture();
+        let mut actual = derive_m1_step_dispatch_plan(
+            &operation_plan,
+            M1StepDispatchIntent::TargetOnly(target(
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS1C8192,
+            )),
+        )
+        .expect("canonical target decode composes");
+        assert_eq!(
+            actual.runner_declaration_id(),
+            operation_plan.runner_declaration_id()
+        );
+        assert_eq!(
+            actual.kernel_catalog_id(),
+            operation_plan.kernel_catalog_id()
+        );
+
+        actual.segments[0].segment_index = 1;
+        assert_eq!(
+            validate_authenticated_operation_plan_v1(&operation_plan, &actual),
+            Err(M1PhysicalFixedBatchBuildErrorV1::OperationPlanDrift)
+        );
     }
 }

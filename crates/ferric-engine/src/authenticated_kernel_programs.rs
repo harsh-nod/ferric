@@ -350,6 +350,29 @@ pub struct M1AuthenticatedWorkerV3ProgramSetV1 {
     service_program_indices: [usize; M1_PHYSICAL_PROGRAM_COUNT_V1],
 }
 
+/// Ferric-only identity and role map retained while fe2o3 owns executable custody.
+#[must_use = "authenticated program identity witness must remain joined to executable custody"]
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedProgramCatalogWitnessV1 {
+    family_artifacts: Box<[DeclaredKernelFamilyArtifact]>,
+    catalog_id: Identity,
+    service_program_indices: [usize; M1_PHYSICAL_PROGRAM_COUNT_V1],
+}
+
+impl M1AuthenticatedProgramCatalogWitnessV1 {
+    pub(crate) const fn catalog_id(&self) -> Identity {
+        self.catalog_id
+    }
+
+    pub(crate) fn family_artifacts(&self) -> &[DeclaredKernelFamilyArtifact] {
+        &self.family_artifacts
+    }
+
+    pub(crate) const fn service_program_index(&self, program: M1PhysicalProgramV1) -> usize {
+        self.service_program_indices[program.program_index()]
+    }
+}
+
 impl fmt::Debug for M1AuthenticatedWorkerV3ProgramSetV1 {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter
@@ -364,6 +387,34 @@ impl fmt::Debug for M1AuthenticatedWorkerV3ProgramSetV1 {
 }
 
 impl M1AuthenticatedWorkerV3ProgramSetV1 {
+    pub(crate) fn into_queue_parts(
+        self,
+    ) -> (
+        AuthenticatedWorkerV3ProgramSetV1,
+        M1AuthenticatedProgramCatalogWitnessV1,
+    ) {
+        (
+            self.programs,
+            M1AuthenticatedProgramCatalogWitnessV1 {
+                family_artifacts: self.family_artifacts,
+                catalog_id: self.catalog_id,
+                service_program_indices: self.service_program_indices,
+            },
+        )
+    }
+
+    pub(crate) fn from_queue_parts(
+        programs: AuthenticatedWorkerV3ProgramSetV1,
+        witness: M1AuthenticatedProgramCatalogWitnessV1,
+    ) -> Self {
+        Self {
+            programs,
+            family_artifacts: witness.family_artifacts,
+            catalog_id: witness.catalog_id,
+            service_program_indices: witness.service_program_indices,
+        }
+    }
+
     /// Returns the exact seven-roster count.
     #[must_use]
     pub fn roster_count(&self) -> usize {

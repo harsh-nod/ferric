@@ -6,6 +6,7 @@
 use vstd::prelude::*;
 
 mod authenticated_kernel_programs;
+mod authenticated_physical_queue;
 mod bound_step_workspaces;
 mod cache;
 mod completed_readback_join;
@@ -64,6 +65,14 @@ pub use authenticated_kernel_programs::{
     M1AuthenticatedWorkerV3RostersV1, M1GemmWorkerV3RosterV1, M1LogitsWorkerV3RosterV1,
     M1PagedDecodeWorkerV3RosterV1, M1PrefillWorkerV3RosterV1, M1RmsNormWorkerV3RosterV1,
     M1SwiGluWorkerV3RosterV1, M1_AUTHENTICATED_PROGRAM_TARGET_V1, M1_AUTHENTICATED_ROSTER_COUNT_V1,
+};
+pub use authenticated_physical_queue::{
+    M1AuthenticatedPhysicalCompletedQueueSessionV1, M1AuthenticatedPhysicalPublishedQueueSessionV1,
+    M1AuthenticatedPhysicalQueueCreateDiagnosticV1, M1AuthenticatedPhysicalQueueCreateFailureV1,
+    M1AuthenticatedPhysicalQueueCreateTerminalV1, M1AuthenticatedPhysicalQueueOperationFailureV1,
+    M1AuthenticatedPhysicalQueuePhaseCaseV1, M1AuthenticatedPhysicalQueueReuseFailureV1,
+    M1AuthenticatedPhysicalQueueSessionV1, M1AuthenticatedPhysicalQueueSubmitFailureV1,
+    M1AuthenticatedPhysicalRecycledQueueSessionV1,
 };
 pub use bound_step_workspaces::{
     BoundM1FullStepWorkspaceSubleases, M1FullStepWorkspaceDispatchRangeError,
@@ -182,6 +191,7 @@ pub use m1_packet_diagnostic_execution::{
 pub use m1_prepublication::{
     allocate_m1_prepublication_workspaces_v1, build_m1_prepublication_batch_v1,
     prepare_m1_scheduled_workspace_images_v1, M1AllocatedScheduledStepV1,
+    M1AuthenticatedPrepublicationBatchBuildFailureV1, M1AuthenticatedPrepublicationBatchV1,
     M1FullStepKvReservationCustodyV1, M1FullStepKvWorkspaceTablesV1, M1PrepareFailureV1,
     M1PreparedScheduledWorkspaceImagesV1, M1PrepublicationAllocationFailureV1,
     M1PrepublicationBatchBuildDiagnosticV1, M1PrepublicationBatchBuildErrorKindV1,
