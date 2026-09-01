@@ -1,13 +1,32 @@
 window.FERRIC_PROJECT = Object.freeze({
-  updated: "2026-08-31",
+  updated: "2026-09-01",
   repository: "https://github.com/harsh-nod/ferric",
   fe2o3Repository: "https://github.com/harsh-nod/fe2o3",
+  current: {
+    siteRefreshBase: "e419160a3d21db5e8b25f414fd696982a959a171",
+    implementationCommit: "5f40e404ba4bc76c16eed15868c63a72e60e716c",
+    selectedFe2o3Pin: "b5374c6e6a4c1215ad481cefcd294334dcb1cbeb",
+    devicePackages: [
+      "gemm",
+      "logits",
+      "paged-decode",
+      "prefill",
+      "rmsnorm",
+      "rope-kv",
+      "swiglu",
+    ],
+    generatedExpectations: 12,
+    sourceGateModules: 151,
+    sourceGateExecutableBodies: 6850,
+    plannerSlots: 354,
+    openM1Gates: 33,
+  },
   milestone: {
     name: "M1",
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "The Ferric status site is live, but M1 is incomplete and all 33 M1 roadmap gates remain open. Integration head 922dcb6 adds the canonical seven-family Worker V3 selector-manifest parser and an authority-free ferric-m1-worker-v3-preflight. The preflight recovers all seven host rosters, requires exactly 12 markers, releases custody, and reports authentication, load, launch, and GPU-submission authority false. On mi300x, all seven device packages passed cargo-fe2o3 all-target checks on Rust 1.97.1 and fe2o3 2f6da870; strict engine clippy, 465 engine tests with 5 ignored, 11 harness tests, 2 packet tests, 81 qualification tests with 1 ignored, the preflight test, and 132 doctests passed. No real current V2 K1-K7 custody or production protected-roster verifier backend exists, and Ferric cannot yet run Qwen.",
+      "M1 remains incomplete and all 33 roadmap gates remain open. Implementation 5f40e40 selects exact fe2o3 b5374c6e, integrates all seven opaque device packages and 12 generated marker/argument expectations, and repins the authority-free Worker V3 adapter. On mi300x, every device package passed locked all-target cargo-fe2o3 check and test, direct fallback tests, and an independent wrapper/fallback binding-parity gate; root formatting, strict clippy, locked workspace, UI, and documentation tests also passed. The source gate accepts 151 modules and 6,850 executable bodies, while newly discovered bodies remain unverified and pending without authority. The deterministic planner accepts 354 slots and rejects hostile policy mutations. Ferric still lacks the current protected verifier/service, theorem contract, receipt-bound current HSACO artifacts and roster owners, authenticated runtime path, and hardware, formal, numerical, and performance evidence required to run Qwen.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -16,23 +35,23 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Precision", "BF16 / FP32 accumulate"],
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
-    ["Ferric main", "ec1a2e03a2923e7a6431ebc26aa30d04884f8a69; GitHub Pages status is live"],
+    ["Pages refresh base", "e419160a3d21db5e8b25f414fd696982a959a171; merge of implementation 5f40e40 with the published Pages history"],
     ["Host adapter surface", "all seven K1-K7 family adapters and all 12 host symbols/ABI inspectors exist"],
     ["Landed attributed device surface", "K6 SwiGLU only: one of seven required packages and one of 12 required device roots; no current artifact or run"],
-    ["M1 integration head", "922dcb621e5bb2acc41eb623cf2894b5ffa21a37: canonical selector-manifest parsing plus authority-free seven-roster host preflight over the exact acquisition API"],
-    ["Qualified dependency pin", "047f2269f2366b595d5c5eb5bf113d4ec42d4aa3 pins every active Ferric fe2o3 dependency and all seven standalone device-package locks to exact head 2f6da870"],
-    ["Exact fe2o3 head", "2f6da870a31b8e430fd0af9c756ca86685e67572 retains authenticated service-queue custody, exposes exact roster source identities, refreshes retained-queue lock dependencies, and is qualified on Rust 1.97"],
+    ["M1 implementation", "5f40e404ba4bc76c16eed15868c63a72e60e716c: latest-fe2o3 device roots, exact validation policy, and 12 generated marker/argument expectations"],
+    ["Selected fe2o3 pin", "b5374c6e6a4c1215ad481cefcd294334dcb1cbeb is the exact current compiler/runtime source for the workspace, Worker V3 adapter, and all seven standalone device packages"],
+    ["Opaque device roots", "gemm, logits, paged-decode, prefill, rmsnorm, rope-kv, and swiglu are integrated as runtime source without Verus, theorem, artifact, load, launch, or Qwen authority"],
     ["Qualified development work", "exact 11-file snapshot admission at 8e7fbbd and snapshot-only operational intake at edfaefa, including a source-path-absent 22-plan MI300X proof, are integrated into the current unpublished M1 integration lineage, not main"],
     ["Canonical selector manifest", "format ferric.m1-worker-v3-selector-manifest.v1 is bounded to 64 KiB, canonical pretty ASCII JSON with one trailing newline, exactly seven K1-K7 entries, canonical absolute paths, exact BuildAttempt values, fixed family order, and duplicate exact-publication rejection"],
     ["Exact artifact selectors", "seven named K1-K7 selectors each retain one durable output directory and one exact BuildAttempt; no directory scan or latest-attempt inference is allowed"],
-    ["Production compiler extraction", "exact fe2o3 2f6da870 is pinned and host-qualified with Ferric, but no real current V2 K1-K7 custody has been extracted, recovered, or admitted"],
+    ["Production compiler extraction", "exact fe2o3 b5374c6e is pinned and host-qualified with Ferric, but no receipt-bound current K1-K7 HSACO roster or move-only owners have been extracted and admitted"],
     ["Authenticated retained runtime", "the f76ef8e lineage preserves authenticated Worker V3 witness, operation-plan, program, queue, and Ferric batch custody across first submit and repeated same-native rounds"],
     ["Authenticated completed-step KV release", "ce14b99 returns quiescent retired pages to their exact pools in deterministic draft-then-target order while retaining authenticated retry, success, teardown, and failure owners without raw queue conversion"],
-    ["Concrete Worker V3 roster", "a537b70 acquires the seven concrete rosters from exact selectors; f76ef8e removed K3 marker generics and fixed 12 generated markers, with K3 paged-KV write then RoPE and K7 compact completion, lowest-ID argmax, then speculative token assembly"],
+    ["Concrete Worker V3 roster", "a537b70 acquires the seven concrete rosters from exact selectors; implementation 5f40e40 fixes 12 generated expectations in current compiler order, with K3 paged-KV write then RoPE and K7 lowest-ID argmax, compact completion, then speculative token assembly"],
     ["Authority-free host preflight", "ferric-m1-worker-v3-preflight hashes the selector manifest, recovers and host-admits all seven rosters, requires 12 markers, reports authentication/load/launch/GPU authority false, and releases roster custody before printing its canonical result"],
     ["Protected verifier backend", "the production path still requires one backend implementing protected verification for every concrete K1-K7 roster before 12-program composition; Ferric has no production backend or positive real-custody fixture yet"],
     ["Authenticated repeat-round lifecycle", "f76ef8e retains the 62a2ef4 combined parked-roster scheduling, KV reserve, workspace prepare, same-native rebind, resubmission, completion readback, settlement, page release, retry, and teardown path"],
-    ["Scoped qualification", "on mi300x, all seven device packages passed cargo-fe2o3 check --locked --all-targets with Rust 1.97.1 and fe2o3 2f6da870; strict engine clippy passed; engine 465 passed/5 ignored, harness 11, packet 2, qualification 81 passed/1 ignored, preflight 1, and doctests 132 passed; authenticated hardware behavior is not qualified"],
+    ["Scoped qualification", "on mi300x, all seven device packages passed exact cargo-fe2o3 locked all-target check/test, direct fallback tests, and independent wrapper/fallback binding parity at fe2o3 b5374c6e; root fmt, strict clippy, locked workspace, UI, and documentation tests also passed"],
     [
       "Historical protected artifact",
       "SwiGLU semantic fe2ce532...e9569e8f / HSACO 57ecb86b...fc6afa7; qualification-only and not supplied by the PR #32 landing",
@@ -65,7 +84,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Seven Worker V3 source adapters",
       state: "implemented",
       detail:
-        "Qualified source 1d666dbc, landed through be307d52, provides all seven K1-K7 family host adapters and all 12 host symbols and ABI inspectors, requiring matching compiler-produced, move-only Worker V3 owners before strict structural inspection. K6 SwiGLU is the only attributed package and root landed on main, through PR #32 at da25cef3. Its tests establish source and adapter behavior only; they do not execute Worker V3 or establish a current HSACO.",
+        "Qualified source 1d666dbc, landed through be307d52, provides all seven K1-K7 family host adapters and all 12 host symbols and ABI inspectors, requiring matching compiler-produced, move-only Worker V3 owners before strict structural inspection. Implementation 5f40e40 repins and tests the standalone authority-free Worker V3 envelope adapter against exact fe2o3 b5374c6e. K6 SwiGLU remains the only attributed package and root landed on main; the active integration branch carries all seven opaque device packages without creating a current HSACO or execution authority.",
     },
     {
       label: "Generic Worker V3 roster admission",
@@ -89,7 +108,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Seven-artifact recovery to runtime join",
       state: "integration",
       detail:
-        "Ferric head 922dcb6 accepts a canonical selector manifest containing seven explicit output-directory and BuildAttempt pairs in fixed K1-K7 family order, recovers the exact V2 envelope for each selector, and host-admits each envelope against its compiler-generated roster. The recovered aggregate is deliberately inert before protected authentication. Production extraction has not populated any real current K1-K7 V2 owner, so this API is not load, dispatch, hardware, or Qwen execution authority.",
+        "Ferric implementation 5f40e40 retains canonical selector-manifest admission for seven explicit output-directory and BuildAttempt pairs in fixed K1-K7 family order, exact V2 recovery, and host admission against compiler-generated rosters. The recovered aggregate is deliberately inert before protected authentication. Production extraction has not populated a receipt-bound current K1-K7 HSACO roster or move-only owners, so this API is not load, dispatch, hardware, or Qwen execution authority.",
     },
     {
       label: "Canonical selector-manifest admission",
@@ -119,25 +138,37 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Authenticated Ferric kernel custody",
       state: "integration",
       detail:
-        "Integration head 922dcb6 exposes the exact path from a canonical manifest through seven durable selectors, V2 recovery, host roster admission, and the authority-free preflight, while a537b70 separately exposes protected authentication and the concrete 12-program intake. No real current V2 owners or production protected verifier backend exist, so authenticated hardware behavior, Qwen, performance, and M1 authority remain unqualified.",
+        "Implementation 5f40e40 exposes the exact path from a canonical manifest through seven durable selectors, V2 recovery, host roster admission, 12 generated marker/argument expectations, and the authority-free preflight. No receipt-bound current roster owners or production protected verifier/service exist, so authenticated runtime behavior, Qwen, performance, and M1 authority remain unqualified.",
     },
     {
       label: "Concrete K3 and refreshed K7 roster order",
       state: "integration",
       detail:
-        "K3 now uses its exact generated RoPE and paged-KV-write marker types with no caller-supplied marker generics. Canonical compiler binding order is paged-KV write then RoPE. K7's canonical order is compact completion, lowest-ID argmax, then speculative token assembly. The K3 standalone package passed 3 library, 2 generated-contract, 6 package-contract, and 9 reference tests plus a fresh cargo-fe2o3 all-target binding check on mi300x. This establishes source and binding integration only, not extracted artifacts or execution.",
+        "All 12 generated marker/argument expectations are integrated. K3 uses exact RoPE and paged-KV-write marker types with canonical paged-KV-write then RoPE order; K7 uses lowest-ID argmax, compact completion, then speculative token assembly. The all-seven mi300x validation includes locked wrapper check/test, direct fallback tests, and independent binding parity. This establishes source and binding integration only, not extracted artifacts or execution.",
+    },
+    {
+      label: "Latest fe2o3 device validation",
+      state: "qualified",
+      detail:
+        "At exact fe2o3 b5374c6e, gemm, logits, paged-decode, prefill, rmsnorm, rope-kv, and swiglu each passed cargo-fe2o3 check and test with --locked --all-targets, their direct fallback tests, and an independent wrapper/fallback binding-parity gate on mi300x. These are package and binding checks; they grant no theorem, artifact, load, launch, runtime, hardware, or Qwen authority.",
+    },
+    {
+      label: "Source gate and deterministic planner",
+      state: "qualified",
+      detail:
+        "The source gate accepts 151 modules and 6,850 executable bodies while keeping newly discovered bodies unverified and pending without authority. The deterministic M1 planner accepts exactly 354 slots, and hostile policy tests fail closed. This validates inventory and planning policy, not the missing theorem contract or production verifier.",
     },
     {
       label: "Authenticated retained readback, settlement, and KV release",
       state: "integration",
       detail:
-        "The 922dcb6 lineage retains f76ef8e's authenticated completion through the shared Engine/device-KV settlement core, returns every quiescent retired page to its exact pool after complete preflight, and makes the released owner available to the next round. Retry rejection preserves custody; success and teardown retain queue, program, observation, cache, parked-roster, terminal-lineage, and round-history ownership without exposing a raw queue. Authenticated hardware behavior remains open.",
+        "The 5f40e40 lineage retains f76ef8e's authenticated completion through the shared Engine/device-KV settlement core, returns every quiescent retired page to its exact pool after complete preflight, and makes the released owner available to the next round. Retry rejection preserves custody; success and teardown retain queue, program, observation, cache, parked-roster, terminal-lineage, and round-history ownership without exposing a raw queue. Authenticated hardware behavior remains open.",
     },
     {
       label: "Authenticated repeat-round same-native lifecycle",
       state: "integration",
       detail:
-        "Head 922dcb6 retains f76ef8e's combined active and parked roster scheduling, KV reservation, workspace preparation, effectful rebind, submit, wait, recycle, readback, completion, page release, retry, and teardown path for the same-native queue. It preserves round history and terminal lineage across target-only and speculative K4/K8/K16 rounds while keeping invalid transitions fail-closed. This is host lifecycle source only; it has no authenticated hardware result.",
+        "Head 5f40e40 retains f76ef8e's combined active and parked roster scheduling, KV reservation, workspace preparation, effectful rebind, submit, wait, recycle, readback, completion, page release, retry, and teardown path for the same-native queue. It preserves round history and terminal lineage across target-only and speculative K4/K8/K16 rounds while keeping invalid transitions fail-closed. This is host lifecycle source only; it has no authenticated hardware result.",
     },
     {
       label: "Long-lived KFD queue lifecycle",
@@ -227,13 +258,13 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Non-null empty KFD transport",
       state: "integration",
       detail:
-        "The corrected non-null empty-slice transport is retained in exact pinned fe2o3 head 2f6da870 and participates in Ferric's qualified host lifecycle stack. No current artifact dispatch or GPU execution result has exercised that transport through the production Qwen path.",
+        "The corrected non-null empty-slice transport is retained in exact pinned fe2o3 head b5374c6e and participates in Ferric's qualified host lifecycle stack. No current artifact dispatch or GPU execution result has exercised that transport through the production Qwen path.",
     },
     {
       label: "Generic volatile-load production support",
       state: "integration",
       detail:
-        "Volatile-load support is retained in exact pinned fe2o3 head 2f6da870. Ferric's host qualification covers integration of the pinned workspace, not production extraction, current HSACO artifacts, GPU launch, or numerical behavior.",
+        "Volatile-load support is retained in exact pinned fe2o3 head b5374c6e. Ferric's host qualification covers integration of the pinned workspace, not production extraction, current HSACO artifacts, GPU launch, or numerical behavior.",
     },
     {
       label: "K1 GEMM and embedding device source",
@@ -245,13 +276,13 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "K2 RMSNorm device source",
       state: "integration",
       detail:
-        "K2 source qualification is complete and the package is retained at integration head 922dcb6 through qualified source commit adc019684d415e45a9543c07e66bc3a17d20edad. It caps rows at 65,536, uses lane-zero ascending serial FP32 accumulation with bounded loops and bounded volatile reads. Its current package also passed cargo-fe2o3 check --locked --all-targets on Rust 1.97.1 and fe2o3 2f6da870. Production extraction, current artifacts, authenticated KFD dispatch, hardware results, and performance remain open.",
+        "K2 source qualification is complete and retained at implementation 5f40e40 through qualified source commit adc019684d415e45a9543c07e66bc3a17d20edad. It caps rows at 65,536 and uses lane-zero ascending serial FP32 accumulation with bounded loops and bounded volatile reads. Its current package passed the complete exact-fe2o3 b5374c6e device validation matrix. Production extraction, current artifacts, authenticated KFD dispatch, hardware results, and performance remain open.",
     },
     {
       label: "K3 RoPE and KV device source",
       state: "integration",
       detail:
-        "K3 source and disjoint-ownership proof work is retained at integration head 922dcb6. Its paged-KV root uses a fixed 16,384-physical-page grid, and its exact generated markers form a concrete two-entry Worker V3 roster in canonical paged-KV-write then RoPE binding order. Its current package passed cargo-fe2o3 check --locked --all-targets on Rust 1.97.1 and fe2o3 2f6da870. Production extraction, runtime artifact population, authenticated KFD dispatch, hardware numerics, and performance remain open.",
+        "K3 source and disjoint-ownership proof work is retained at implementation 5f40e40. Its paged-KV root uses a fixed 16,384-physical-page grid, and its exact generated markers form a concrete two-entry Worker V3 roster in canonical paged-KV-write then RoPE binding order. Its current package passed the complete exact-fe2o3 b5374c6e device validation matrix. Production extraction, runtime artifact population, authenticated KFD dispatch, hardware numerics, and performance remain open.",
     },
     {
       label: "K4 prefill device source",
@@ -269,13 +300,13 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "K7 logits device source",
       state: "integration",
       detail:
-        "The attributed K7 logits package at 5d821ee5b13aab01fa5b2c553143e0e7de1c20bc is integrated through merge 9a367e7. Head f76ef8e refreshes its concrete Worker V3 roster to canonical compact-completion, lowest-ID-argmax, speculative-token-assembly binding order. Source integration does not establish production extraction, a current artifact, authenticated KFD dispatch, hardware numerical results, or performance authority.",
+        "The attributed K7 logits package at 5d821ee5b13aab01fa5b2c553143e0e7de1c20bc is integrated through merge 9a367e7. Implementation 5f40e40 refreshes its concrete Worker V3 roster to canonical lowest-ID-argmax, compact-completion, speculative-token-assembly binding order for fe2o3 b5374c6e. Source integration does not establish production extraction, a current artifact, authenticated KFD dispatch, hardware numerical results, or performance authority.",
     },
     {
       label: "Staged lifecycle integration",
       state: "integration",
       detail:
-        "Integration head 922dcb6 adds canonical selector-manifest admission and the authority-free host preflight ahead of a537b70's exact artifact acquisition and f76ef8e's concrete 12-marker intake and retained lifecycle. It is not merged to Ferric main; no real V2 custody or production protected verifier backend is present, and authenticated hardware, Qwen correctness, performance, and M1 evidence remain open.",
+        "Implementation 5f40e40 retains canonical selector-manifest admission and the authority-free host preflight ahead of a537b70's exact artifact acquisition and f76ef8e's concrete 12-marker intake and retained lifecycle. Pages refresh base e419160 merges that implementation with published site history, but the implementation is not merged to Ferric main. The current protected verifier/service, receipt-bound HSACO roster and owners, authenticated runtime path, and hardware, Qwen correctness, performance, and M1 evidence remain open.",
     },
     {
       label: "Ordered Stage C artifact-set handoff",
@@ -311,13 +342,13 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "End-to-end Qwen through Ferric",
       state: "open",
       detail:
-        "Ferric cannot yet run Qwen through the production path. Head 922dcb6 has a canonical seven-family manifest and authority-free preflight over exact V2 recovery and host admission, plus the separate protected-authentication and 12-program APIs, but it has no real current V2 K1-K7 custody, no production protected-roster verifier backend, and no authenticated hardware result. Production extraction, exact graph execution, numerics, performance, independent qualification, and the remaining serving path remain open.",
+        "Ferric cannot yet run Qwen through the production path. Implementation 5f40e40 integrates all seven exact-fe2o3 device packages, the canonical manifest, authority-free preflight, and 12 generated marker/argument expectations, but it has no current protected verifier/service, theorem contract, receipt-bound current HSACO roster and owners, or authenticated runtime path. Exact graph execution and hardware, formal, numerical, performance, and independent qualification evidence remain open.",
     },
     {
       label: "M1 qualification",
       state: "open",
       detail:
-        "All 33 roadmap requirements remain open. Qwen numerical, hardware, and performance evidence, independent validation, formal closure, and the complete M1 evidence index and qualification receipt remain open. The qualified development snapshots, source closure, scoped proof release, historical kernel artifact, and qualification-only numerics do not close the production receipt or M1.",
+        "All 33 roadmap requirements remain open. The current protected verifier/service, theorem contract, receipt-bound current HSACO artifacts and roster owners, authenticated runtime path, Qwen numerical, hardware, formal, and performance evidence, independent validation, and the complete M1 qualification receipt remain open. The current source gates and historical evidence do not close M1.",
     },
   ],
   capabilities: {
@@ -444,12 +475,12 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Integrate snapshot and lifecycle branches",
         detail:
-          "The exact snapshot intake, canonical selector manifest, authority-free preflight, seven-family recovery API, concrete roster admission, and retained same-native lifecycle are integrated at 922dcb6, not merged to main. Supply real current V2 custody, implement the production protected verifier backend, and qualify the lifecycle on authenticated hardware before publishing a production continuing-serving claim.",
+          "The exact snapshot intake, canonical selector manifest, authority-free preflight, seven-family recovery API, concrete roster admission, retained same-native lifecycle, and latest-fe2o3 device roots are integrated through 5f40e40 and retained by Pages refresh base e419160, not merged to main. Supply receipt-bound current owners, implement the protected verifier/service, and qualify the authenticated runtime lifecycle on hardware before publishing a production continuing-serving claim.",
       },
       {
         name: "Complete KFD edge handling",
         detail:
-          "Ferric pins exact fe2o3 head 2f6da870 and host-qualifies authenticated retained repeat rounds through retry and teardown. Complete rollover, diagnostic evidence joins, authenticated hardware qualification, and production serving custody without exposing lower or raw queue ownership.",
+          "Ferric pins exact fe2o3 head b5374c6e and host-qualifies retained repeat-round source behavior through retry and teardown. Complete the authenticated runtime path, rollover, diagnostic evidence joins, hardware qualification, and production serving custody without exposing lower or raw queue ownership.",
       },
       {
         name: "Ordered Stage C and joint Stage D",
@@ -459,7 +490,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Extract the integrated device packages",
         detail:
-          "All seven K1-K7 source packages, exact selectors, and the canonical input manifest are retained at 922dcb6, and every package passes cargo-fe2o3 all-target checking on the current pin. Every family still needs real current V2 custody for exact production KIR, LLVM, HSACO, descriptors, authenticated launch, and hostile evidence before entering the live Ferric artifact roster.",
+          "All seven K1-K7 source packages, exact selectors, and the canonical input manifest are retained through 5f40e40. Every package passes locked cargo-fe2o3 all-target check/test, direct fallback tests, and independent wrapper/fallback binding parity on b5374c6e. Every family still needs receipt-bound current KIR, LLVM, HSACO, descriptors, roster owners, authenticated launch, and hostile evidence before entering the live Ferric artifact roster.",
       },
       {
         name: "Authenticated fixed-batch KFD",
@@ -469,7 +500,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Ferric compiler integration and authority rosters",
         detail:
-          "The workspace is pinned against fe2o3 2f6da870 and now parses canonical exact K1-K7 BuildAttempt selectors, recovers and host-admits their V2 owners, and can preflight 12 markers without claiming authority. Produce the current compiler artifacts, implement the production protected-roster verifier backend, then join authenticated owners to Ferric's protected policy, Worker ledger, lineage, rollback verifier, deployment identities, and keys.",
+          "The workspace is pinned against fe2o3 b5374c6e and parses canonical exact K1-K7 BuildAttempt selectors, recovers and host-admits their V2 owners, and can preflight 12 generated expectations without claiming authority. Produce receipt-bound current compiler artifacts and owners, implement the protected verifier/service and theorem contract, then join authenticated owners to Ferric's policy, Worker ledger, lineage, rollback verifier, deployment identities, and keys.",
       },
       {
         name: "Complete Qwen execution",
@@ -502,13 +533,13 @@ window.FERRIC_PROJECT = Object.freeze({
   },
   validation: {
     host: {
-      title: "Canonical seven-family manifest and host preflight",
+      title: "Latest fe2o3 integration gates",
       state: "qualified",
-      source: "922dcb621e5bb2acc41eb623cf2894b5ffa21a37",
+      source: "5f40e404ba4bc76c16eed15868c63a72e60e716c",
       result:
-        "PASS: 7 device checks; clippy; engine 465/5; harness 11; packet 2; qualification 81/1; preflight 1; docs 132",
+        "PASS: 7 locked wrapper check/test lanes; direct fallback; binding parity; root fmt/clippy/workspace/UI/docs",
       detail:
-        "On mi300x, all seven standalone device packages passed cargo-fe2o3 check --locked --all-targets with Rust 1.97.1 and exact fe2o3 2f6da870. Strict ferric-engine clippy passed with all targets, all features, and warnings denied; 465 engine tests passed with 5 hardware-dependent tests ignored, alongside 11 hardware-harness tests, 2 packet-diagnostic tests, 81 qualification-capture tests with 1 ignored, 1 preflight test, and 132 doctests. These checks qualify source, parser, host recovery, and authority-free reporting only. No real V2 custody or production protected verifier backend participated, so this is not authenticated GPU, numerical, Qwen, performance, production-receipt, or M1 evidence.",
+        "On mi300x, gemm, logits, paged-decode, prefill, rmsnorm, rope-kv, and swiglu each passed exact cargo-fe2o3 check and test with --locked --all-targets at selected pin b5374c6e, direct fallback tests, and a new independent wrapper/fallback binding-parity gate. The current Worker V3 adapter was repinned and tested. Root formatting, strict clippy, locked workspace, UI, and documentation tests passed. These checks grant no theorem, protected-verifier, artifact, runtime, hardware, Qwen, performance, production-receipt, or M1 authority.",
     },
     proof: {
       title: "Authenticated release proof",
@@ -518,7 +549,7 @@ window.FERRIC_PROJECT = Object.freeze({
         "b922a6cd2881bd38403afce0c14dc898cf13da770616875489069a2701f2c933",
       result: "PASS: 645 admitted proof bodies; 1,490 verification queries",
       detail:
-        "The source gate covers 143 verified modules and 6,121 executable bodies. It qualifies the scoped release proof only, not the evolving Worker V3 integration, hardware execution, Qwen correctness, performance, or M1.",
+        "The current source gate accepts 151 modules and 6,850 executable bodies. Newly discovered bodies remain explicitly unverified and pending with no authority grant. The retained 58fd37e release proof remains scoped to its recorded closure; neither result establishes the missing current theorem contract, protected verifier, hardware execution, Qwen correctness, performance, or M1.",
     },
     hardware: {
       title: "Qualification-only SwiGLU run",
@@ -538,6 +569,21 @@ window.FERRIC_PROJECT = Object.freeze({
       "The catalog records host-validated source paths. Target-only decode and every unlisted cross-plan transition require explicit queue retirement and a fresh admitted launch; none inherit rollover authority.",
   },
   recentProgress: [
+    {
+      commit: "5f40e404ba4bc76c16eed15868c63a72e60e716c",
+      title: "Integrate the latest fe2o3 device roots",
+      state: "qualified",
+      detail:
+        "Ferric now selects exact fe2o3 b5374c6e across the root workspace, current Worker V3 adapter, and all seven opaque device packages. On mi300x, every device package passed locked all-target cargo-fe2o3 check/test, direct fallback tests, and independent wrapper/fallback binding parity; root fmt, strict clippy, locked workspace, UI, and documentation tests passed. The source gate accepts 151 modules and 6,850 executable bodies with newly discovered bodies still unverified, and the deterministic planner accepts 354 slots with hostile policy rejection. This creates no theorem, artifact, load, launch, hardware, Qwen, performance, or M1 authority.",
+    },
+    {
+      commit: "b5374c6e6a4c1215ad481cefcd294334dcb1cbeb",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Select the current Ferric compiler/runtime pin",
+      state: "integration",
+      detail:
+        "This exact upstream source is the selected compiler/runtime pin for Ferric implementation 5f40e40, its authority-free Worker V3 adapter, and all seven standalone device packages. The qualified integration checks establish source and binding compatibility only; Ferric-specific theorem, protected-verifier, artifact, runtime, and Qwen authority remain downstream.",
+    },
     {
       commit: "922dcb621e5bb2acc41eb623cf2894b5ffa21a37",
       title: "Add the canonical Worker V3 roster preflight",
@@ -615,7 +661,7 @@ window.FERRIC_PROJECT = Object.freeze({
       title: "Qualify and integrate K2 RMSNorm source",
       state: "integration",
       detail:
-        "K2 source qualification is complete and the exact package is retained at integration head 922dcb6. Its current cargo-fe2o3 all-target check passed on mi300x, but production extraction, artifacts, authenticated KFD dispatch, hardware numerics, performance, Qwen execution, and M1 remain open.",
+        "K2 source qualification is complete and the exact package is retained through implementation 5f40e40. Its current exact-fe2o3 package checks, tests, fallback tests, and binding parity passed on mi300x, but production extraction, artifacts, authenticated KFD dispatch, hardware numerics, performance, Qwen execution, and M1 remain open.",
     },
     {
       commit: "5d821ee5b13aab01fa5b2c553143e0e7de1c20bc",
@@ -643,7 +689,7 @@ window.FERRIC_PROJECT = Object.freeze({
       title: "Integrate K1 on the M1 integration branch",
       state: "integration",
       detail:
-        "Current M1 integration head 922dcb621e5bb2acc41eb623cf2894b5ffa21a37 retains the attributed Qwen3 GEMM and embedding merge. This is branch integration and source-level evidence, not an origin/main landing, extracted production artifact, authenticated KFD dispatch result, hardware result, performance result, Qwen run, or M1 authority.",
+        "Current implementation 5f40e404ba4bc76c16eed15868c63a72e60e716c retains the attributed Qwen3 GEMM and embedding merge and validates it against exact fe2o3 b5374c6e. This is branch integration and source-level evidence, not an origin/main landing, extracted production artifact, authenticated KFD dispatch result, hardware result, performance result, Qwen run, or M1 authority.",
     },
     {
       commit: "da25cef31032e126cbad3aa21923da07a8f9b900",
@@ -673,7 +719,7 @@ window.FERRIC_PROJECT = Object.freeze({
       title: "Begin the K2 RMSNorm attributed source",
       state: "integration",
       detail:
-        "This commit began the standalone K2 package. Qualified revision adc01968 replaced the XOR tree with authoritative lane-zero ascending serial FP32 accumulation and is retained at integration head 922dcb6; its current cargo-fe2o3 all-target check passed on mi300x. Production extraction, artifacts, authenticated KFD dispatch, hardware results, and performance remain open.",
+        "This commit began the standalone K2 package. Qualified revision adc01968 replaced the XOR tree with authoritative lane-zero ascending serial FP32 accumulation and is retained through implementation 5f40e40; its current exact-fe2o3 device validation passed on mi300x. Production extraction, artifacts, authenticated KFD dispatch, hardware results, and performance remain open.",
     },
     {
       commit: "d955209099c7b434dfceb69e1152d948dab76b22",
@@ -1002,25 +1048,26 @@ window.FERRIC_PROJECT = Object.freeze({
       "Scheduling, paged KV, speculation, generated runner, and M1 qualification",
       "Qualified source 1d666dbc binds all seven K1-K7 families to protected Worker V3 custody and landed through be307d52 in m1/bundle-admission",
       "PR #24 qualified canonical 100644/100755 source-closure modes at 3898bf40 and landed them through 49a539f2",
-      "This Pages refresh is based on Ferric main ec1a2e03a2923e7a6431ebc26aa30d04884f8a69; the published GitHub Pages site is live",
+      "This Pages refresh is based on merge e419160a3d21db5e8b25f414fd696982a959a171, which combines implementation 5f40e40 with the published Pages history",
       "Exact 11-file snapshot admission at 8e7fbbd and snapshot-only operational intake at edfaefa are qualified development work integrated into the current unpublished M1 integration lineage, not main",
-      "Integration head 922dcb6 adds canonical selector-manifest admission and an authority-free seven-roster host preflight over a537b70's exact recovery and authentication APIs, but is not merged to main and is not a production inference baseline",
+      "Implementation 5f40e40 retains canonical selector-manifest admission and an authority-free seven-roster host preflight over a537b70's exact recovery and authentication APIs, but is not merged to main and is not a production inference baseline",
       "All seven K1-K7 family host adapters and all 12 host symbols and ABI inspectors exist",
       "K6 SwiGLU is the only attributed device package and root landed on main, through PR #32; no current artifact or run is claimed",
-      "M1 integration head 922dcb621e5bb2acc41eb623cf2894b5ffa21a37 contains all seven K1-K7 source packages, seven concrete rosters over 12 markers, the exact acquisition API, canonical manifest parsing, and authority-free preflight",
+      "M1 implementation 5f40e404ba4bc76c16eed15868c63a72e60e716c contains all seven K1-K7 source packages, seven concrete rosters over 12 generated marker/argument expectations, the exact acquisition API, canonical manifest parsing, and authority-free preflight",
       "The manifest is bounded canonical pretty ASCII JSON with exactly seven ordered family entries, canonical absolute paths, canonical BuildAttempt values, and duplicate exact-publication rejection",
       "The preflight binds the manifest SHA-256, recovers and host-admits all seven rosters, requires 12 markers, releases custody, and reports authentication, load, launch, and GPU-submission authority false",
       "Each family selector binds one durable output directory to one exact BuildAttempt; a duplicate exact publication is rejected before recovery and a missing exact attempt fails at K1 without probing later families",
       "Recovered V2 custody is only host-admitted and explicitly carries no verification, load, or launch authority until the protected verifier adapter accepts every concrete roster and exact program composition succeeds",
-      "K2 source qualification is complete at adc01968; its latest-compiler extraction, artifacts, authenticated KFD, hardware, and performance gaps remain",
-      "K3 RoPE/KV uses exact generated markers in canonical paged-KV-write then RoPE order; 3+2+6+9 standalone tests and a fresh cargo-fe2o3 all-target binding check passed on mi300x, while extraction, runtime admission, hardware numerics, and performance remain open",
-      "K7's concrete roster is refreshed to canonical compact-completion, lowest-ID-argmax, speculative-token-assembly binding order; this is typed source admission, not artifact or execution authority",
+      "K2 source qualification is complete at adc01968; its current artifact extraction, authenticated KFD, hardware, and performance gaps remain",
+      "K3 RoPE/KV uses exact generated markers in canonical paged-KV-write then RoPE order and passed the current all-seven exact-fe2o3 validation matrix, while extraction, runtime admission, hardware numerics, and performance remain open",
+      "K7's concrete roster is refreshed to canonical lowest-ID-argmax, compact-completion, speculative-token-assembly binding order; this is typed source admission, not artifact or execution authority",
       "K4 prefill commit 7e333905, K5 paged-decode commit 863e82ec, and K7 logits commit 5d821ee5 are integrated source packages; none has production artifact, authenticated KFD, hardware, or performance authority",
-      "Ferric head 922dcb6 retains exact fe2o3 2f6da870; all seven device all-target cargo-fe2o3 checks and the complete stated host validation matrix passed on mi300x, but the result grants no populated artifact, authenticated hardware, Qwen, performance, or M1 authority",
+      "Ferric implementation 5f40e40 selects exact fe2o3 b5374c6e; all seven devices passed locked wrapper check/test, direct fallback tests, and independent binding parity on mi300x, while root fmt, strict clippy, locked workspace, UI, and documentation tests also passed",
+      "The source gate accepts 151 modules and 6,850 executable bodies while newly discovered bodies remain unverified and pending without authority; the deterministic planner accepts 354 slots and its hostile policy tests pass",
       "Authenticated combined parked-roster scheduling, reserve, prepare, rebind, submit, wait, recycle, readback, completion, page release, retry, and teardown retain ownership without raw queue conversion; rollover, diagnostic serving, and end-to-end inference remain open",
       "Authenticated hardware behavior is not yet qualified",
       "Ferric cannot yet run Qwen through the production path",
-      "Real current V2 K1-K7 custody, a production protected-roster verifier backend, protected policy and deployment, end-to-end Qwen, numerical, hardware, and performance evidence, independent validation, formal closure, the production receipt, and M1 remain Ferric work",
+      "A current protected verifier/service, theorem contract, receipt-bound current HSACO artifacts and roster owners, authenticated runtime path, end-to-end Qwen, numerical, hardware, formal, and performance evidence, independent validation, the production receipt, and M1 remain Ferric work",
       "All 33 M1 roadmap requirements remain open",
     ],
     fe2o3: [
@@ -1028,7 +1075,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "Durable subject-bound compiler receipt acquisition and recovered V2 carriage",
       "Generic receipt-complete sealed verification and promotion boundary",
       "Typed KFD allocations, USERPTR/AQL queues, fixed-batch publication, completion, and dispatch",
-      "Exact pinned head 2f6da870a31b8e430fd0af9c756ca86685e67572 retains authenticated service-queue custody, refreshes retained queue lock dependencies, and exposes exact roster source identities used by Ferric's qualified host integration",
+      "Exact selected head b5374c6e6a4c1215ad481cefcd294334dcb1cbeb is the current compiler/runtime source used by Ferric's root workspace, Worker V3 adapter, and seven standalone device packages",
       "fe2o3 PR #246 merged at eca3bcaa after duplicated 40-minute Generic core runs and all gates passed",
       "fe2o3 PR #258 merged compiler-generated write-only KFD arguments at d9552090 with all 20 exact-head checks green",
       "The gfx942 EXEC-control layer assigns no opcode semantics and proves neither machine reconvergence, empty masks, termination, nor launch authority",
@@ -1046,7 +1093,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "Stage D's raw-tuple API was rejected and awaits opaque-owner provenance rework",
       "Lower-MIR candidate 2c3140d7 is audit-only and must be reimplemented under whole-module current KIR replay",
       "Exact multi-root KIR/LLVM/HSACO lowering merged through PR #20 at d32d8a11, and reviewed external source trust merged through PR #21 at 17396690",
-      "The exact 2f6da870 pin retains corrected non-null empty-slice transport and volatile-load support; Ferric has host-qualified integration but no current-source production artifact extraction or GPU result",
+      "The exact b5374c6e pin retains corrected non-null empty-slice transport and volatile-load support; Ferric has host-qualified integration but no receipt-bound current production artifacts or authenticated GPU result",
       "Deployment identities and Ferric-specific inference authority are intentionally not defined upstream",
     ],
   },
