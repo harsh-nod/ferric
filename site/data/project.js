@@ -3,8 +3,8 @@ window.FERRIC_PROJECT = Object.freeze({
   repository: "https://github.com/harsh-nod/ferric",
   fe2o3Repository: "https://github.com/harsh-nod/fe2o3",
   current: {
-    siteRefreshBase: "24748e11358db7ad3ab5fe35992cff354896e607",
-    implementationCommit: "24748e11358db7ad3ab5fe35992cff354896e607",
+    siteRefreshBase: "e8d76e5c18d893eb6cffa7dff137a4a3492454a8",
+    implementationCommit: "e8d76e5c18d893eb6cffa7dff137a4a3492454a8",
     selectedFe2o3Pin: "52815c9ed52a3075e26322cf506144cb22da12d2",
     aggregateSourceCommit: "5514afe176a090aa3f1da9e5354799bb4ca5a8b3",
     aggregateProducerCommit: "e57c42523050922ad76538150df691cc5ab975a7",
@@ -13,6 +13,11 @@ window.FERRIC_PROJECT = Object.freeze({
     diagnosticStatus: "partial-non-evidence",
     diagnosticDispatchGeneration: 1,
     diagnosticCopyCount: 5,
+    proofQueries: 1493,
+    directVerifiedBodies: 645,
+    sourceGateModules: 151,
+    sourceGateBodies: 6893,
+    sourceClosureFiles: 600,
     openM1Gates: 33,
   },
   milestone: {
@@ -20,7 +25,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Integration 24748e1 adds a fail-closed authenticated first-publication S1/K4 diagnostic bridge. It is explicitly partial-non-evidence, accepts dispatch generation 1 only, and copies four ordered draft rows followed by the target matrix before a specialized semantic join. Independent audit approved the boundary, and remote mi300x formatting, policy, check, clippy, and library tests passed with 475 passed, 0 failed, and 5 ignored. This is not hardware execution: the aggregate source pin remains None, the protected verifier is unavailable, no production Qwen run exists, and all 33 M1 exit gates remain open.",
+      "Exact Ferric head e8d76e5 passed strict proof and release qualification on mi300x: 1,493 proof queries, 645 directly verified bodies, and a source gate covering 151 modules and 6,893 executable bodies. The canonical 600-file source closure and exact receipt and log identities are retained, and both GitHub CI workflows are green. This qualifies the scoped source/proof release only: there is no protected aggregate source pin or service, no authenticated Qwen hardware execution, and all 33 M1 exit gates remain open.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -29,13 +34,14 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Precision", "BF16 / FP32 accumulate"],
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
-    ["Pages refresh base", "24748e11358db7ad3ab5fe35992cff354896e607; authenticated first-publication S1/K4 diagnostic bridge"],
-    ["M1 implementation", "24748e11358db7ad3ab5fe35992cff354896e607: aggregate source and producer controls plus the generation-1 authenticated diagnostic readback/semantic join"],
+    ["Pages refresh base", "e8d76e5c18d893eb6cffa7dff137a4a3492454a8; strict proof/release qualification for the authenticated diagnostic bridge lineage"],
+    ["M1 implementation", "e8d76e5c18d893eb6cffa7dff137a4a3492454a8: aggregate source and producer controls, generation-1 diagnostic join, and admitted proof bodies"],
     ["Selected fe2o3 pin", "52815c9ed52a3075e26322cf506144cb22da12d2 across the workspace, aggregate device package, and typed source-pin adapter"],
     ["Aggregate device source", "one selected compilation unit owns all 12 attributed M1 kernel roots across the seven canonical source modules"],
     ["Aggregate source-pin policy", "the typed adapter admits LLVM text IR for gfx942:xnack-, code-object V6, and exact sets of 12 kernel entries plus 12 matching descriptors; its projection is identity-observation-only"],
     ["Aggregate build producer", "the bounded producer retains committed device and adapter source identities, invokes the prebound typed adapter, and emits an observational record with explicit nonclaims"],
     ["Authenticated diagnostic bridge", "partial-non-evidence; first S1/K4 publication only; generation 1; ordered draft-0 through draft-3 then target; no rearm path"],
+    ["Strict proof release", "PASS on mi300x: 1,493 queries; 645 direct bodies; source gate 151 modules / 6,893 bodies; 600-file canonical closure"],
     ["Protected acceptance", "aggregate source pin is None and the protected verifier is unavailable; no production runtime admission exists"],
     [
       "Historical protected artifact",
@@ -112,6 +118,12 @@ window.FERRIC_PROJECT = Object.freeze({
       state: "integration",
       detail:
         "Commit 24748e1 bridges the authenticated generation-1 S1/K4 completion owner to four completed draft-row copies in exact draft-0 through draft-3 order, then one target copy and a specialized semantic join. The status is partial-non-evidence, reused generations and rearm exposure fail closed, and every failure retains compact, queue, program, and copied-byte custody for teardown. Independent audit approved this bounded source boundary.",
+    },
+    {
+      label: "Strict proof and release qualification",
+      state: "qualified",
+      detail:
+        "Exact head e8d76e5 passed on mi300x with 1,493 proof queries, 645 directly verified bodies, and source-gate coverage of 151 modules and 6,893 executable bodies. The canonical closure contains 600 files and hashes to d3a5f9a9e48d2ca2536cac059efa9b7b63e99076c93152ec08b4399a7fbd387a. Both GitHub workflows are green. This is scoped proof-release authority, not protected aggregate acceptance, hardware execution, Qwen, or M1 closure.",
     },
     {
       label: "Authenticated retained readback, settlement, and KV release",
@@ -461,12 +473,16 @@ window.FERRIC_PROJECT = Object.freeze({
     proof: {
       title: "Authenticated release proof",
       state: "qualified",
-      source: "58fd37e",
+      source: "e8d76e5c18d893eb6cffa7dff137a4a3492454a8",
       closureSha256:
-        "b922a6cd2881bd38403afce0c14dc898cf13da770616875489069a2701f2c933",
-      result: "PASS: 645 admitted proof bodies; 1,490 verification queries",
+        "d3a5f9a9e48d2ca2536cac059efa9b7b63e99076c93152ec08b4399a7fbd387a",
+      receiptSha256:
+        "72d4799011f133be673d85d77bc27232cc87a11a7cb7afeb8bdc1f2bb4cc4039",
+      logSha256:
+        "ad3ec9b17b762a7593b98bd77400fdd2cb172c8d71724e3c48600afd8154c571",
+      result: "PASS: 1,493 queries; 645 direct bodies; source gate 151 modules / 6,893 bodies",
       detail:
-        "The retained 58fd37e release proof remains scoped to its recorded closure. It does not establish accepting aggregate artifact/source-pin authority, current hardware execution, Qwen correctness, performance, or M1.",
+        "Strict proof/release qualification passed on mi300x for the exact 600-file source closure. Receipt SHA-256 is 72d4799011f133be673d85d77bc27232cc87a11a7cb7afeb8bdc1f2bb4cc4039 and log SHA-256 is ad3ec9b17b762a7593b98bd77400fdd2cb172c8d71724e3c48600afd8154c571. GitHub ci run 33539253010 and authenticated-verus-release run 33539253076 both completed successfully. No protected aggregate source pin/service, authenticated Qwen hardware execution, or M1 closure follows.",
     },
     hardware: {
       title: "Qualification-only SwiGLU run",
@@ -486,6 +502,13 @@ window.FERRIC_PROJECT = Object.freeze({
       "The catalog records host-validated source paths. Target-only decode and every unlisted cross-plan transition require explicit queue retirement and a fresh admitted launch; none inherit rollover authority.",
   },
   recentProgress: [
+    {
+      commit: "e8d76e5c18d893eb6cffa7dff137a4a3492454a8",
+      title: "Qualify the authenticated K4 bridge proof release",
+      state: "qualified",
+      detail:
+        "Strict mi300x proof/release qualification passed with 1,493 proof queries, 645 directly verified bodies, source-gate coverage of 151 modules and 6,893 executable bodies, and a 600-file closure at d3a5f9a9e48d2ca2536cac059efa9b7b63e99076c93152ec08b4399a7fbd387a. Receipt 72d4799011f133be673d85d77bc27232cc87a11a7cb7afeb8bdc1f2bb4cc4039 and log ad3ec9b17b762a7593b98bd77400fdd2cb172c8d71724e3c48600afd8154c571 retain the exact result; both CI workflows are green. The authority is scoped to this proof release and does not establish protected aggregate acceptance, hardware Qwen execution, or M1.",
+    },
     {
       commit: "24748e11358db7ad3ab5fe35992cff354896e607",
       title: "Bridge authenticated first-publication K4 diagnostics",
@@ -1006,7 +1029,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "Ferric-owned inference kernels and their concrete protected policy",
       "Worker ledger, repository lineage, host-descriptor lineage, and rollback admission",
       "Scheduling, paged KV, speculation, generated runner, and M1 qualification",
-      "Integration 24748e11358db7ad3ab5fe35992cff354896e607 is the current Pages status base",
+      "Exact qualified integration e8d76e5c18d893eb6cffa7dff137a4a3492454a8 is the current Pages status base",
       "One aggregate device package owns all 12 attributed M1 kernel roots across seven canonical source modules",
       "The aggregate compiler-generated roster and source gate use the exact current descriptor-table order",
       "The typed source-pin adapter pins fe2o3 52815c9ed52a3075e26322cf506144cb22da12d2 and admits only the exact aggregate target, code-object version, entry set, and descriptor set",
@@ -1015,6 +1038,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "Authenticated first-publication S1/K4 diagnostics are partial-non-evidence, generation 1 only, and copy draft-0 through draft-3 followed by target before the specialized semantic join",
       "The diagnostic bridge is excluded from rearm and retains compact, queue, program, and copied-byte custody on failure",
       "Independent audit approved the exact bridge; remote mi300x fmt, policy, check, clippy, and library tests passed 475 / 0 / 5",
+      "Strict mi300x proof/release qualification at e8d76e5 passed 1,493 queries and 645 direct bodies over a source gate of 151 modules / 6,893 bodies and a canonical 600-file closure; both CI workflows are green",
       "The aggregate source pin remains None and the protected verifier is unavailable, so no accepting protected aggregate artifact grants publication, load, launch, or runtime authority",
       "Ferric has no authenticated full-Qwen execution, numerical result, or performance result",
       "All 33 M1 exit gates remain open until their required evidence closes them",

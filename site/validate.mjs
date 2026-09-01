@@ -13,8 +13,8 @@ const allowedStates = new Set([
   "open",
 ]);
 const expectedCurrent = Object.freeze({
-  siteRefreshBase: "24748e11358db7ad3ab5fe35992cff354896e607",
-  implementationCommit: "24748e11358db7ad3ab5fe35992cff354896e607",
+  siteRefreshBase: "e8d76e5c18d893eb6cffa7dff137a4a3492454a8",
+  implementationCommit: "e8d76e5c18d893eb6cffa7dff137a4a3492454a8",
   selectedFe2o3Pin: "52815c9ed52a3075e26322cf506144cb22da12d2",
   aggregateSourceCommit: "5514afe176a090aa3f1da9e5354799bb4ca5a8b3",
   aggregateProducerCommit: "e57c42523050922ad76538150df691cc5ab975a7",
@@ -23,6 +23,11 @@ const expectedCurrent = Object.freeze({
   diagnosticStatus: "partial-non-evidence",
   diagnosticDispatchGeneration: 1,
   diagnosticCopyCount: 5,
+  proofQueries: 1493,
+  directVerifiedBodies: 645,
+  sourceGateModules: 151,
+  sourceGateBodies: 6893,
+  sourceClosureFiles: 600,
   openM1Gates: 33,
 });
 
@@ -114,11 +119,13 @@ for (const key of ["host", "proof", "hardware"]) {
   if (validation.source !== null) {
     assertCommit(validation.source, `validation.${key}.source`);
   }
-  if (validation.closureSha256 !== undefined) {
-    assert(
-      /^[0-9a-f]{64}$/.test(validation.closureSha256),
-      `validation.${key}.closureSha256 must be a lowercase SHA-256 digest`,
-    );
+  for (const digestKey of ["closureSha256", "receiptSha256", "logSha256"]) {
+    if (validation[digestKey] !== undefined) {
+      assert(
+        /^[0-9a-f]{64}$/.test(validation[digestKey]),
+        `validation.${key}.${digestKey} must be a lowercase SHA-256 digest`,
+      );
+    }
   }
 }
 assert(
