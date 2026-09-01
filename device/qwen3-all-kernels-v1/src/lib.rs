@@ -31,18 +31,18 @@ mod host_roster {
     fe2o3_host::compiler_generated_kernel_expectation_roster_v1! {
         /// All 12 aggregate markers in exact compiler descriptor-table order.
         pub struct M1AllKernelsWorkerV3RosterV1 = [
+            SwiGlu,
+            Prefill,
             LowestIdArgmax,
-            GemmVectorized,
-            Rope,
-            CompactCompletion,
             PagedKvWrite,
             PagedDecode,
-            SwiGlu,
-            GemmReference,
-            RmsNorm,
-            TokenEmbedding,
             SpeculativeAssembly,
-            Prefill,
+            GemmVectorized,
+            GemmReference,
+            TokenEmbedding,
+            CompactCompletion,
+            Rope,
+            RmsNorm,
         ];
     }
 }

@@ -61,6 +61,13 @@ BINDING_NONCLAIM = (
     "source closure. It is not a reproducible-build proof, compiler-origin attestation, "
     "semantic-correctness proof, or runtime authority."
 )
+CHECKED_BINDING_GIT_BLOB = "d33dc378bb0b95070ec46f6ce62cbbe82eecc3f4"
+CHECKED_BINDING_SHA256 = "f65b80c347db49c435a3eee0a5156c069d7e5b15ddb2c3e041ebcfa5f963e66c"
+CHECKED_BINARY_SHA256 = "5bd21ea2c9739756a3ce55729bb63ea1ee5f24c76f834f23ff514f2ad39dbcc0"
+CHECKED_BINARY_SIZE_BYTES = 7_622_704
+CHECKED_SOURCE_CLOSURE_SHA256 = (
+    "daaf12a48aedf14fa868f67842ad300222a4c703bc4d7913b8ba39c288318190"
+)
 
 
 def fail(message: str) -> NoReturn:
@@ -84,6 +91,79 @@ def canonical(value: Any) -> bytes:
     return (json.dumps(value, ensure_ascii=True, indent=2, sort_keys=True) + "\n").encode(
         "ascii"
     )
+
+
+def compact(value: Any) -> bytes:
+    return json.dumps(
+        value, ensure_ascii=True, separators=(",", ":"), sort_keys=True
+    ).encode("ascii")
+
+
+def git_blob(data: bytes) -> str:
+    header = f"blob {len(data)}\0".encode("ascii")
+    return hashlib.sha1(header + data, usedforsecurity=False).hexdigest()
+
+
+def validate_checked_binding(repo: Path) -> None:
+    binding_path = repo / BINDING_RELATIVE
+    raw = binding_path.read_bytes()
+    try:
+        binding = json.loads(raw)
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        fail(f"checked aggregate adapter binding is not JSON: {error}")
+    if raw != canonical(binding):
+        fail("checked aggregate adapter binding is not canonical ASCII JSON")
+    if (
+        hashlib.sha256(raw).hexdigest() != CHECKED_BINDING_SHA256
+        or git_blob(raw) != CHECKED_BINDING_GIT_BLOB
+    ):
+        fail("checked aggregate adapter binding identity drifted")
+    if not isinstance(binding, dict) or set(binding) != {
+        "authority",
+        "binary",
+        "format",
+        "nonclaim",
+        "protocol",
+        "source_closure_sha256",
+        "source_files",
+    }:
+        fail("checked aggregate adapter binding fields drifted")
+    binary = binding["binary"]
+    if (
+        binding["authority"] != "binary-identity-prebinding-only"
+        or binding["format"]
+        != "FERRIC-M1-ALL-KERNELS-SOURCE-PIN-ADAPTER-BINDING-V1"
+        or binding["nonclaim"] != BINDING_NONCLAIM
+        or binding["protocol"] != "ferric.m1-all-kernels-worker-v3-source-pin.v1"
+        or not isinstance(binary, dict)
+        or binary
+        != {
+            "name": "ferric-qwen3-all-kernels-worker-v3-source-pin-v1",
+            "sha256": CHECKED_BINARY_SHA256,
+            "size_bytes": CHECKED_BINARY_SIZE_BYTES,
+        }
+    ):
+        fail("checked aggregate adapter binary prebinding drifted")
+    expected_paths = [f"{ADAPTER_RELATIVE}/{path}" for path in ADAPTER_SOURCE_FILES]
+    source_records = []
+    for path in expected_paths:
+        data = (repo / path).read_bytes()
+        source_records.append(
+            {
+                "git_blob": git_blob(data),
+                "path": path,
+                "sha256": hashlib.sha256(data).hexdigest(),
+                "size_bytes": len(data),
+            }
+        )
+    if binding["source_files"] != source_records:
+        fail("checked aggregate adapter source records drifted")
+    closure = hashlib.sha256(compact(source_records)).hexdigest()
+    if (
+        closure != CHECKED_SOURCE_CLOSURE_SHA256
+        or binding["source_closure_sha256"] != closure
+    ):
+        fail("checked aggregate adapter source closure drifted")
 
 
 def inspection(
@@ -170,6 +250,7 @@ def main() -> None:
     historical = repo / "proofs/m1-qualification/produce-protected-worker-v3-build.py"
     if hashlib.sha256(historical.read_bytes()).hexdigest() != HISTORICAL_PRODUCER_SHA256:
         fail("historical singleton SwiGLU producer changed")
+    validate_checked_binding(repo)
     producer_source = producer.read_text(encoding="ascii")
     for required in [
         "invoke_source_pin_adapter(adapter, files[\"envelope\"])",
@@ -604,9 +685,9 @@ def main() -> None:
         )
 
     print(
-        "PASS: aggregate Worker V3 producer accepted exact source-prebound 12-kernel "
-        "custody and rejected adapter, envelope, coordinate, bound, kernel, durable "
-        "record, namespace, output, and source mutations"
+        "PASS: checked aggregate adapter binding and Worker V3 producer accepted exact "
+        "source-prebound 12-kernel custody and rejected adapter, envelope, coordinate, "
+        "bound, kernel, durable record, namespace, output, and source mutations"
     )
 
 
