@@ -14,8 +14,16 @@ const allowedStates = new Set([
 ]);
 const expectedCurrent = Object.freeze({
   siteRefreshBase: "e419160a3d21db5e8b25f414fd696982a959a171",
-  implementationCommit: "5f40e404ba4bc76c16eed15868c63a72e60e716c",
-  selectedFe2o3Pin: "b5374c6e6a4c1215ad481cefcd294334dcb1cbeb",
+  implementationCommit: "4369786fde888e1ec64fe6b05fbced39bc33090d",
+  qualifiedImplementationBaseline: "5f40e404ba4bc76c16eed15868c63a72e60e716c",
+  selectedFe2o3Pin: "9f97985ee0a4a8ef0bc8f0fa0fd33771c8180592",
+  qualifiedFe2o3Baseline: "b5374c6e6a4c1215ad481cefcd294334dcb1cbeb",
+  repinState: "integration",
+  githubCiRun: "33490985105",
+  githubCiState: "qualified",
+  authenticatedReleaseRun: "33490985170",
+  authenticatedReleaseState: "integration",
+  remoteRootAdapterState: "qualified",
   devicePackages: [
     "gemm",
     "logits",
@@ -25,11 +33,17 @@ const expectedCurrent = Object.freeze({
     "rope-kv",
     "swiglu",
   ],
+  repinValidatedDevicePackages: ["gemm", "logits", "paged-decode"],
+  repinPartiallyValidatedDevicePackages: ["prefill"],
   generatedExpectations: 12,
   sourceGateModules: 151,
   sourceGateExecutableBodies: 6850,
   plannerSlots: 354,
   openM1Gates: 33,
+});
+const supersededProgress = Object.freeze({
+  implementationCommit: "0c04ab7f94072eb6b763ffdcaa878af6e3c5a2f7",
+  fe2o3Pin: "61967a3cb3958faddcda3a5e7ed6b19fd6e68ebb",
 });
 
 function assert(condition, message) {
@@ -71,7 +85,21 @@ assert(
 assert(project.current && typeof project.current === "object", "current status is missing");
 assertCommit(project.current.siteRefreshBase, "current.siteRefreshBase");
 assertCommit(project.current.implementationCommit, "current.implementationCommit");
+assertCommit(
+  project.current.qualifiedImplementationBaseline,
+  "current.qualifiedImplementationBaseline",
+);
 assertCommit(project.current.selectedFe2o3Pin, "current.selectedFe2o3Pin");
+assertCommit(project.current.qualifiedFe2o3Baseline, "current.qualifiedFe2o3Baseline");
+assertState(project.current.repinState, "current.repinState");
+assert(/^\d+$/.test(project.current.githubCiRun), "current.githubCiRun must be numeric");
+assertState(project.current.githubCiState, "current.githubCiState");
+assert(
+  /^\d+$/.test(project.current.authenticatedReleaseRun),
+  "current.authenticatedReleaseRun must be numeric",
+);
+assertState(project.current.authenticatedReleaseState, "current.authenticatedReleaseState");
+assertState(project.current.remoteRootAdapterState, "current.remoteRootAdapterState");
 for (const [key, expected] of Object.entries(expectedCurrent)) {
   const actual = project.current[key];
   assert(
@@ -84,16 +112,54 @@ assertState(project.milestone.state, "milestone");
 assert(Array.isArray(project.envelope) && project.envelope.length > 0, "envelope is empty");
 const envelope = new Map(project.envelope);
 assert(
-  envelope.get("Selected fe2o3 pin")?.includes(expectedCurrent.selectedFe2o3Pin),
-  "envelope must expose the exact selected fe2o3 pin",
+  envelope.get("Active fe2o3 transition")?.includes(expectedCurrent.selectedFe2o3Pin),
+  "envelope must expose the exact active fe2o3 transition",
 );
 assert(
-  envelope.get("M1 implementation")?.includes(expectedCurrent.implementationCommit),
-  "envelope must expose the exact current implementation commit",
+  envelope.get("Qualified fe2o3 baseline")?.includes(expectedCurrent.qualifiedFe2o3Baseline),
+  "envelope must preserve the exact qualified fe2o3 baseline",
+);
+assert(
+  envelope.get("Current implementation")?.includes(expectedCurrent.implementationCommit),
+  "envelope must expose the exact current implementation",
+);
+assert(
+  envelope.get("Qualified implementation baseline")?.includes(
+    expectedCurrent.qualifiedImplementationBaseline,
+  ),
+  "envelope must preserve the exact qualified implementation baseline",
+);
+assert(
+  envelope.get("Active fe2o3 transition")?.includes(
+    expectedCurrent.implementationCommit,
+  ),
+  "active fe2o3 transition must bind the exact current implementation",
+);
+assert(
+  envelope.get("GitHub CI")?.includes(expectedCurrent.githubCiRun) &&
+    envelope.get("GitHub CI")?.includes("passed"),
+  "envelope must expose the terminal GitHub CI pass",
+);
+assert(
+  envelope.get("Authenticated release")?.includes(expectedCurrent.authenticatedReleaseRun) &&
+    envelope.get("Authenticated release")?.includes("in progress"),
+  "envelope must expose authenticated release as in progress",
+);
+assert(
+  envelope.get("Corrected device matrix")?.includes("gemm, logits, and paged-decode") &&
+    envelope.get("Corrected device matrix")?.includes("prefill is partially complete"),
+  "envelope must distinguish passed and partially complete device lanes",
 );
 assert(Array.isArray(project.readiness) && project.readiness.length > 0, "readiness is empty");
 project.readiness.forEach((item, index) =>
   assertState(item.state, `readiness[${index}]`),
+);
+const qwenReadiness = project.readiness.find(
+  (item) => item.label === "End-to-end Qwen through Ferric",
+);
+assert(
+  qwenReadiness?.state === "open" && qwenReadiness.detail.includes("cannot yet run Qwen"),
+  "end-to-end Qwen must remain explicitly unrunnable",
 );
 
 for (const group of ["runnable", "experimental", "roadmap"]) {
@@ -129,6 +195,14 @@ assert(
     typeof project.validation.proof.closureSha256 === "string",
   "qualified proof validation must bind a source closure digest",
 );
+assert(
+  project.validation.host.state === "integration" &&
+    project.validation.host.source === expectedCurrent.implementationCommit &&
+    project.validation.host.result.includes("PASS: CI, root/adapter, planner 354") &&
+    project.validation.host.result.includes("PARTIAL: prefill") &&
+    project.validation.host.result.includes("IN PROGRESS"),
+  "current host validation must distinguish passed, partial, and in-progress gates",
+);
 
 assert(
   Array.isArray(project.validation.transitions) &&
@@ -145,6 +219,7 @@ project.validation.transitions.forEach(([prior, next, state], index) => {
 });
 
 const progressCommits = new Set();
+const progressByCommit = new Map();
 project.recentProgress.forEach((item, index) => {
   assertCommit(item.commit, `recentProgress[${index}].commit`);
   assertState(item.state, `recentProgress[${index}]`);
@@ -156,15 +231,42 @@ project.recentProgress.forEach((item, index) => {
   }
   assert(!progressCommits.has(item.commit), `duplicate progress commit ${item.commit}`);
   progressCommits.add(item.commit);
+  progressByCommit.set(item.commit, item);
 });
 assert(
   progressCommits.has(expectedCurrent.implementationCommit),
   "recent progress must include the current implementation commit",
 );
 assert(
-  progressCommits.has(expectedCurrent.selectedFe2o3Pin),
-  "recent progress must include the selected fe2o3 pin",
+  progressCommits.has(expectedCurrent.qualifiedImplementationBaseline),
+  "recent progress must preserve the qualified implementation baseline",
 );
+assert(
+  progressCommits.has(expectedCurrent.selectedFe2o3Pin),
+  "recent progress must include the active fe2o3 transition",
+);
+assert(
+  progressCommits.has(expectedCurrent.qualifiedFe2o3Baseline),
+  "recent progress must preserve the qualified fe2o3 baseline",
+);
+const upstreamRosterHandoff = progressByCommit.get(
+  "62e527c960b40716290ba8cb82ba5594be4f3706",
+);
+assert(
+  upstreamRosterHandoff?.repository === project.fe2o3Repository &&
+    upstreamRosterHandoff.detail.includes("remains pinned to 9f97985e") &&
+    upstreamRosterHandoff.detail.includes("has not selected"),
+  "upstream roster handoff must not be presented as the selected Ferric pin",
+);
+for (const [label, commit] of Object.entries(supersededProgress)) {
+  const item = progressByCommit.get(commit);
+  assert(
+    item?.state === "observed" &&
+      item.title.startsWith("Superseded:") &&
+      item.detail.toLowerCase().includes("supersed"),
+    `superseded ${label} must remain historical progress only`,
+  );
+}
 
 project.evidence.gates.forEach(([label, count, state], index) => {
   assert(label && /^\d+$/.test(count), `evidence.gates[${index}] is malformed`);

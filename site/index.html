@@ -201,17 +201,16 @@
             <h2 id="next-title">Close compiler and custody gates</h2>
           </div>
           <p>
-            Ferric cannot run Qwen through the production path. Implementation 5f40e40 selects exact
-            fe2o3 b5374c6e, integrates all seven opaque device packages and 12 generated marker/argument
-            expectations, and repins the authority-free Worker V3 adapter. On mi300x, all seven packages
-            passed locked all-target cargo-fe2o3 check/test, direct fallback tests, and independent binding
-            parity; root fmt, strict clippy, locked workspace, UI, and documentation tests also passed. The
-            source gate accepts 151 modules and 6,850 executable bodies, with newly discovered bodies still
-            unverified and pending, and the deterministic planner accepts 354 slots with hostile policy
-            rejection. The current protected verifier/service, theorem contract, receipt-bound current
-            HSACO artifacts and roster owners, authenticated runtime path, and hardware, formal, numerical,
-            and performance evidence remain open. These results grant no Qwen or M1 authority. All 33 M1
-            roadmap requirements remain open, and no current production Ferric Qwen run has occurred.
+            Ferric cannot run Qwen through the production path. Ferric 4369786f commits and pushes the
+            corrected integration repin to exact fe2o3 9f97985e. GitHub CI run 33490985105 passed, as did
+            the exact mi300x root and Worker V3 adapter matrix and deterministic 354-slot planner policy.
+            Gemm, logits, and paged-decode completed their exact device lanes; prefill is partially complete,
+            while corrected generic-core, the remaining device work, and authenticated release run
+            33490985170 remain in progress. The current protected
+            verifier/service, theorem contract, receipt-bound current HSACO artifacts and roster owners,
+            authenticated runtime path, and hardware, formal, numerical, and performance evidence remain
+            open. These results grant no Qwen or M1 authority. All 33 M1 roadmap requirements
+            remain open, and no current production Ferric Qwen run has occurred.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>
