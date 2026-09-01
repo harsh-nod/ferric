@@ -3,8 +3,10 @@ window.FERRIC_PROJECT = Object.freeze({
   repository: "https://github.com/harsh-nod/ferric",
   fe2o3Repository: "https://github.com/harsh-nod/fe2o3",
   current: {
-    siteRefreshBase: "e419160a3d21db5e8b25f414fd696982a959a171",
+    siteRefreshBase: "709212109a5d177e581002f0cc8502afa703e3ed",
     implementationCommit: "4369786fde888e1ec64fe6b05fbced39bc33090d",
+    aggregateCheckpoint: "5514afe176a090aa3f1da9e5354799bb4ca5a8b3",
+    bindingCheckerHardening: "1138506d2ac3ca5fc5d736c420e6b458c2fecc1d",
     historicalImplementationBaseline: "5f40e404ba4bc76c16eed15868c63a72e60e716c",
     selectedFe2o3Pin: "9f97985ee0a4a8ef0bc8f0fa0fd33771c8180592",
     historicalFe2o3Baseline: "b5374c6e6a4c1215ad481cefcd294334dcb1cbeb",
@@ -12,7 +14,7 @@ window.FERRIC_PROJECT = Object.freeze({
     githubCiRun: "33490985105",
     githubCiState: "qualified",
     authenticatedReleaseRun: "33490985170",
-    authenticatedReleaseState: "integration",
+    authenticatedReleaseState: "qualified",
     remoteRootAdapterState: "qualified",
     genericCoreState: "qualified",
     fallbackBindingParityState: "open",
@@ -46,7 +48,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "M1 remains incomplete and all 33 roadmap gates remain open. Ferric 4369786f commits and pushes the corrected integration repin to exact fe2o3 9f97985e. GitHub CI, the exact mi300x root and Worker V3 adapter matrix, generic-core qualification, the deterministic 354-slot planner policy, and all seven device compilation/test/rmeta lanes passed. The public binding checker only printed compiler and fallback bindings without comparing them; those bindings differ, so fallback parity remains open and fallback regeneration is required. Fresh exact qualification of upstream fe2o3 62e527c9 and authenticated release run 33490985170 remain in progress. Ferric still lacks the current protected verifier/service, theorem contract, receipt-bound current HSACO artifacts and roster owners, authenticated runtime path, and hardware, formal, numerical, and performance evidence required to run Qwen.",
+      "M1 remains incomplete and all 33 roadmap gates remain open. Corrected Ferric 4369786f passed GitHub CI and authenticated release run 33490985170 against exact fe2o3 9f97985e. Branch checkpoint 5514afe adds one aggregate-owned package for all 12 Qwen device roots plus seven non-authoritative compatibility wrappers; its direct, compiler-binding, and wrapper lanes and all seven compatibility suites passed on mi300x. Commit 1138506 makes binding parity fail closed. The engine and source gate still use the seven old namespaces, the aggregate package grants no runtime or M1 authority, and fresh exact generic-core qualification of upstream fe2o3 62e527c9 remains in progress. Ferric still lacks the current protected verifier/service, theorem contract, receipt-bound current HSACO artifacts and roster owners, authenticated runtime path, and hardware, formal, numerical, and performance evidence required to run Qwen.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -55,18 +57,20 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Precision", "BF16 / FP32 accumulate"],
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
-    ["Pages refresh base", "e419160a3d21db5e8b25f414fd696982a959a171; merge of implementation 5f40e40 with the published Pages history"],
+    ["Pages refresh base", "709212109a5d177e581002f0cc8502afa703e3ed; latest published Pages correction before this refresh"],
     ["Host adapter surface", "all seven K1-K7 family adapters and all 12 host symbols/ABI inspectors exist"],
     ["Landed attributed device surface", "K6 SwiGLU only: one of seven required packages and one of 12 required device roots; no current artifact or run"],
     ["Current implementation", "4369786fde888e1ec64fe6b05fbced39bc33090d commits and pushes the corrected exact fe2o3 9f97985e repin across the workspace, Worker V3 adapter, and seven standalone device packages"],
     ["Historical implementation baseline", "5f40e404ba4bc76c16eed15868c63a72e60e716c: exact fe2o3 b5374c6e device roots, validation policy, and 12 generated marker/argument expectations; binding parity is not qualified"],
     ["Historical fe2o3 baseline", "b5374c6e6a4c1215ad481cefcd294334dcb1cbeb retains compilation/test evidence, but not compiler-versus-fallback binding parity"],
-    ["Active fe2o3 transition", "9f97985ee0a4a8ef0bc8f0fa0fd33771c8180592 is the exact corrected pin committed and pushed by Ferric 4369786fde888e1ec64fe6b05fbced39bc33090d; generic-core, GitHub CI, root/adapter, planner, and all-seven compilation/test/rmeta lanes passed, while fallback parity remains open and authenticated release qualification is in progress"],
+    ["Aggregate source checkpoint", "5514afe176a090aa3f1da9e5354799bb4ca5a8b3 owns all 12 attributed Qwen device roots in one package and leaves seven non-authoritative compatibility wrappers; the engine and source gate still use the old seven namespaces"],
+    ["Active fe2o3 transition", "9f97985ee0a4a8ef0bc8f0fa0fd33771c8180592 is the exact corrected pin committed and pushed by Ferric 4369786fde888e1ec64fe6b05fbced39bc33090d; generic-core, GitHub CI, root/adapter, planner, all-seven compilation/test/rmeta lanes, and authenticated release passed, while fallback regeneration remains open"],
     ["GitHub CI", "run 33490985105 passed for exact Ferric implementation 4369786fde888e1ec64fe6b05fbced39bc33090d"],
     ["Exact mi300x root/adapter matrix", "PASS: root fmt, strict clippy, locked workspace, UI, and documentation tests; Worker V3 adapter fmt, strict clippy, and locked tests"],
     ["Corrected device matrix", "all seven exact 4369786f/9f97985e lanes passed formatting, direct locked tests, compiler-derived wrapper check, locked all-target wrapper check/test, and rmeta embedding; this is not fallback binding parity"],
-    ["Fallback binding parity", "OPEN: the public checker printed compiler and checked-in fallback bindings but did not compare them; the reported bindings differ, so the fallback must be regenerated and the hardened comparison must pass"],
-    ["Authenticated release", "GitHub Actions run 33490985170 remains in progress and grants no release authority until terminal success"],
+    ["Aggregate mi300x matrix", "PASS at 5514afe/9f97985e: direct tests, compiler-derived binding and rmeta checks, cargo-fe2o3 wrapper check/test, and all seven compatibility suites; this validates preparatory source ownership only"],
+    ["Fallback binding parity", "OPEN: the seven historical package fallbacks still require regeneration. The former checker printed differing compiler and checked-in fallback bindings without comparing them. Commit 1138506d2ac3ca5fc5d736c420e6b458c2fecc1d now rejects mismatches, so a passing hardened comparison remains required"],
+    ["Authenticated release", "PASS: GitHub Actions run 33490985170 completed successfully for exact Ferric 4369786f"],
     ["Upstream roster handoff", "fe2o3 62e527c960b40716290ba8cb82ba5594be4f3706 is newly pushed generic integration infrastructure under fresh exact qualification; Ferric 4369786f remains pinned to 9f97985e and has not selected 62e527c9"],
     ["Opaque device roots", "gemm, logits, paged-decode, prefill, rmsnorm, rope-kv, and swiglu are integrated as runtime source without Verus, theorem, artifact, load, launch, or Qwen authority"],
     ["Qualified development work", "exact 11-file snapshot admission at 8e7fbbd and snapshot-only operational intake at edfaefa, including a source-path-absent 22-plan MI300X proof, are integrated into the current unpublished M1 integration lineage, not main"],
@@ -80,7 +84,7 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Protected verifier backend", "the production path still requires one backend implementing protected verification for every concrete K1-K7 roster before 12-program composition; Ferric has no production backend or positive real-custody fixture yet"],
     ["Authenticated repeat-round lifecycle", "f76ef8e retains the 62a2ef4 combined parked-roster scheduling, KV reserve, workspace prepare, same-native rebind, resubmission, completion readback, settlement, page release, retry, and teardown path"],
     ["Historical compilation baseline", "on mi300x, all seven device packages passed exact cargo-fe2o3 locked all-target check/test and direct fallback tests at fe2o3 b5374c6e; the prior wrapper/fallback parity claim is withdrawn because the checker did not compare its printed bindings"],
-    ["Corrected repin validation", "generic-core, planner policy, GitHub CI run 33490985105, exact mi300x root/adapter matrix, and all-seven compilation/test/rmeta lanes pass; fallback parity is open, while fresh exact fe2o3 62e527c9 qualification and authenticated release run 33490985170 remain in progress"],
+    ["Corrected repin validation", "generic-core, planner policy, GitHub CI run 33490985105, authenticated release run 33490985170, exact mi300x root/adapter matrix, and all-seven compilation/test/rmeta lanes pass; fallback parity is open, while fresh exact fe2o3 62e527c9 qualification remains in progress"],
     [
       "Historical protected artifact",
       "SwiGLU semantic fe2ce532...e9569e8f / HSACO 57ecb86b...fc6afa7; qualification-only and not supplied by the PR #32 landing",
@@ -167,7 +171,13 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Authenticated Ferric kernel custody",
       state: "integration",
       detail:
-        "Implementation 4369786f commits the corrected exact fe2o3 9f97985e repin while retaining the path from a canonical manifest through seven durable selectors, V2 recovery, host roster admission, 12 generated marker/argument expectations, and the authority-free preflight. GitHub CI, exact mi300x root/adapter, generic-core, and all-seven compilation/test/rmeta gates passed. Fallback binding parity remains open after the fail-open checker was discovered, and authenticated release qualification remains in progress, alongside receipt-bound current roster owners and the production protected verifier/service. Authenticated runtime behavior, Qwen, performance, and M1 authority remain unqualified.",
+        "Implementation 4369786f commits the corrected exact fe2o3 9f97985e repin while retaining the path from a canonical manifest through seven durable selectors, V2 recovery, host roster admission, 12 generated marker/argument expectations, and the authority-free preflight. GitHub CI, authenticated release, exact mi300x root/adapter, generic-core, and all-seven compilation/test/rmeta gates passed. Fallback binding parity remains open alongside receipt-bound current roster owners and the production protected verifier/service. Authenticated runtime behavior, Qwen, performance, and M1 authority remain unqualified.",
+    },
+    {
+      label: "Aggregate 12-root source ownership",
+      state: "integration",
+      detail:
+        "Branch checkpoint 5514afe moves all 12 attributed Qwen device roots into one aggregate-owned package and converts the seven family packages into explicitly non-authoritative compatibility wrappers. On mi300x, the aggregate direct, compiler-binding, rmeta, and cargo-fe2o3 wrapper lanes passed, as did all seven compatibility suites. Commit 1138506 makes compiler-versus-fallback binding comparison fail closed. The engine and source gate still consume the seven old namespaces, so this preparatory package creates no roster, runtime, hardware, Qwen, or M1 authority.",
     },
     {
       label: "Concrete K3 and refreshed K7 roster order",
@@ -185,7 +195,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Source gate and deterministic planner",
       state: "integration",
       detail:
-        "The corrected deterministic M1 planner policy accepts exactly 354 slots and rejects hostile policy mutations. GitHub CI run 33490985105, the exact mi300x root/adapter matrix, and generic-core exact 9f qualification passed. The prior source-gate inventory remains scoped historical evidence; fresh exact qualification of fe2o3 62e527c9 and authenticated release run 33490985170 remain in progress. These results do not establish fallback parity, the missing theorem contract, production verifier, or Qwen authority.",
+        "The corrected deterministic M1 planner policy accepts exactly 354 slots and rejects hostile policy mutations. GitHub CI run 33490985105, authenticated release run 33490985170, the exact mi300x root/adapter matrix, and generic-core exact 9f qualification passed. The source gate still uses the seven old device namespaces and does not yet select the aggregate package. Fresh exact qualification of fe2o3 62e527c9 remains in progress. These results do not establish fallback parity, the missing theorem contract, production verifier, or Qwen authority.",
     },
     {
       label: "Authenticated retained readback, settlement, and KV release",
@@ -371,7 +381,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "End-to-end Qwen through Ferric",
       state: "open",
       detail:
-        "Ferric cannot yet run Qwen through the production path. Implementation 4369786f commits all seven device packages against corrected exact fe2o3 9f97985e and retains the canonical manifest, authority-free preflight, and 12 generated marker/argument expectations. GitHub CI, exact mi300x root/adapter, planner, generic-core, and all-seven compilation/test/rmeta gates pass. Fallback binding parity is open because the public checker did not compare differing compiler and fallback bindings; fresh fe2o3 62e527c9 and authenticated release qualification remain in progress. There is no current protected verifier/service, theorem contract, receipt-bound current HSACO roster and owners, or authenticated runtime path. Exact graph execution and hardware, formal, numerical, performance, and independent qualification evidence remain open.",
+        "Ferric cannot yet run Qwen through the production path. Implementation 4369786f passes GitHub CI and authenticated release against corrected exact fe2o3 9f97985e. Branch checkpoint 5514afe adds a mi300x-tested aggregate-owned 12-root package, but the engine and source gate still use the seven old namespaces. Historical fallback regeneration, fresh fe2o3 62e527c9 generic-core qualification, the current protected verifier/service, theorem contract, receipt-bound current HSACO roster and owners, and authenticated runtime path remain open. Exact graph execution and hardware, formal, numerical, performance, and independent qualification evidence remain open.",
     },
     {
       label: "M1 qualification",
@@ -504,12 +514,12 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Integrate snapshot and lifecycle branches",
         detail:
-          "The exact snapshot intake, canonical selector manifest, authority-free preflight, seven-family recovery API, concrete roster admission, retained same-native lifecycle, and corrected fe2o3 9f97985e pins are integrated through 4369786f, not merged to main. GitHub CI, exact mi300x root/adapter, generic-core, and all-seven compilation/test/rmeta gates passed. Regenerate fallbacks and pass the hardened binding comparison, then complete fresh fe2o3 62e527c9 and authenticated release qualification before supplying receipt-bound current owners and qualifying the authenticated runtime lifecycle on hardware.",
+          "The exact snapshot intake, canonical selector manifest, authority-free preflight, seven-family recovery API, concrete roster admission, retained same-native lifecycle, and corrected fe2o3 9f97985e pins are integrated through 4369786f, not merged to main. GitHub CI, authenticated release, exact mi300x root/adapter, generic-core, and all-seven compilation/test/rmeta gates passed. Regenerate historical family fallbacks, pass the hardened binding comparison, and complete fresh fe2o3 62e527c9 qualification before supplying receipt-bound current owners and qualifying the authenticated runtime lifecycle on hardware.",
       },
       {
         name: "Complete KFD edge handling",
         detail:
-          "Ferric's historical compilation baseline pins fe2o3 b5374c6e, and the corrected active integration tree pins 9f97985e through 4369786f. Its GitHub CI, exact mi300x root/adapter matrix, and generic-core qualification passed; fallback parity remains open. Complete fallback regeneration, hardened comparison, authenticated release qualification, and the authenticated runtime path without exposing lower or raw queue ownership.",
+          "Ferric's historical compilation baseline pins fe2o3 b5374c6e, and the corrected active integration tree pins 9f97985e through 4369786f. Its GitHub CI, authenticated release, exact mi300x root/adapter matrix, and generic-core qualification passed; historical family fallback parity remains open. Complete fallback regeneration, hardened comparison, and the authenticated runtime path without exposing lower or raw queue ownership.",
       },
       {
         name: "Ordered Stage C and joint Stage D",
@@ -529,7 +539,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Ferric compiler integration and authority rosters",
         detail:
-          "The historical compilation baseline pins fe2o3 b5374c6e; implementation 4369786f commits and pushes the corrected exact 9f97985e repin. Its planner, GitHub CI, exact mi300x root/adapter, generic-core, and all-seven compilation/test/rmeta gates pass, but fallback parity remains open after discovery of the fail-open checker. Upstream fe2o3 62e527c9 adds generic roster-handoff infrastructure under fresh exact qualification; Ferric has not selected it. Complete fallback regeneration, hardened comparison, fresh qualification, and authenticated release before producing receipt-bound current compiler artifacts and owners.",
+          "The historical compilation baseline pins fe2o3 b5374c6e; implementation 4369786f commits and pushes the corrected exact 9f97985e repin. Its planner, GitHub CI, authenticated release, exact mi300x root/adapter, generic-core, and all-seven compilation/test/rmeta gates pass, but historical family fallback parity remains open after discovery of the fail-open checker. Upstream fe2o3 62e527c9 adds generic roster-handoff infrastructure under fresh exact qualification; Ferric has not selected it. Complete fallback regeneration, hardened comparison, and fresh qualification before producing receipt-bound current compiler artifacts and owners.",
       },
       {
         name: "Complete Qwen execution",
@@ -562,13 +572,13 @@ window.FERRIC_PROJECT = Object.freeze({
   },
   validation: {
     host: {
-      title: "Corrected fe2o3 repin gates",
+      title: "Corrected repin and aggregate source gates",
       state: "integration",
-      source: "4369786fde888e1ec64fe6b05fbced39bc33090d",
+      source: "5514afe176a090aa3f1da9e5354799bb4ca5a8b3",
       result:
-        "PASS: CI, root/adapter, planner 354, generic-core, all-seven compile/test/rmeta; OPEN: fallback parity; IN PROGRESS: fe2o3 62e qualification, release",
+        "PASS: CI, release, root/adapter, planner 354, generic-core, aggregate and compatibility suites; OPEN: fallback parity and engine/source-gate migration; IN PROGRESS: fe2o3 62e qualification",
       detail:
-        "Ferric 4369786f commits and pushes corrected fe2o3 9f97985e. GitHub CI run 33490985105, exact mi300x root/adapter, planner, and generic-core qualification passed. All seven device packages passed formatting, direct locked tests, compiler-derived wrapper check, locked all-target wrapper check/test, and rmeta embedding. The public checker printed compiler and checked-in fallback bindings without comparing them; those bindings differ, so parity remains open pending fallback regeneration and a passing hardened comparison. Fresh exact fe2o3 62e527c9 qualification and authenticated release run 33490985170 remain in progress. These results grant no theorem, protected-verifier, artifact, runtime, hardware, Qwen, performance, production-receipt, or M1 authority.",
+        "Ferric 4369786f commits corrected fe2o3 9f97985e. GitHub CI run 33490985105, authenticated release run 33490985170, exact mi300x root/adapter, planner, and generic-core qualification passed. At branch checkpoint 5514afe, the aggregate 12-root package passed direct tests, compiler binding and rmeta checks, and cargo-fe2o3 wrapper check/test; all seven non-authoritative compatibility suites also passed. Commit 1138506 hardens the checker to reject compiler/fallback mismatches. Historical family fallback regeneration, engine and source-gate migration from the seven old namespaces, and fresh exact fe2o3 62e527c9 qualification remain open or in progress. These results grant no theorem, protected-verifier, artifact, runtime, hardware, Qwen, performance, production-receipt, or M1 authority.",
     },
     proof: {
       title: "Authenticated release proof",
@@ -599,11 +609,25 @@ window.FERRIC_PROJECT = Object.freeze({
   },
   recentProgress: [
     {
+      commit: "5514afe176a090aa3f1da9e5354799bb4ca5a8b3",
+      title: "Aggregate all 12 M1 device roots under one source owner",
+      state: "integration",
+      detail:
+        "This pushed branch checkpoint owns all 12 attributed Qwen roots in one aggregate device package and makes the seven historical family packages non-authoritative compatibility wrappers. On mi300x, aggregate direct tests, compiler binding and rmeta checks, cargo-fe2o3 wrapper check/test, and all seven compatibility suites passed against exact fe2o3 9f97985e. The engine and source gate still use the old seven namespaces, so this is preparatory source integration without runtime, Qwen, or M1 authority.",
+    },
+    {
+      commit: "1138506d2ac3ca5fc5d736c420e6b458c2fecc1d",
+      title: "Require compiler and fallback binding parity",
+      state: "qualified",
+      detail:
+        "The device-binding checker now compares the compiler-derived and checked-in fallback bindings and fails on any mismatch. The aggregate 9f97985e lane passes this hardened check. Seven historical family fallbacks still require regeneration before their parity scope can pass; this policy repair grants no compiler artifact, runtime, Qwen, or M1 authority.",
+    },
+    {
       commit: "4369786fde888e1ec64fe6b05fbced39bc33090d",
       title: "Commit the corrected Worker V3 compiler/runtime repin",
       state: "integration",
       detail:
-        "This pushed Ferric branch commit pins the root workspace, authority-free Worker V3 adapter, and all seven standalone device packages to corrected exact fe2o3 9f97985e. GitHub CI run 33490985105, exact mi300x root/adapter, planner, generic-core, and all-seven compilation/test/rmeta gates passed. Fallback parity is open because the public checker did not compare differing compiler and fallback bindings; fresh fe2o3 62e527c9 and authenticated release run 33490985170 remain in progress. No Qwen or M1 authority follows.",
+        "This pushed Ferric branch commit pins the root workspace, authority-free Worker V3 adapter, and all seven standalone device packages to corrected exact fe2o3 9f97985e. GitHub CI run 33490985105, authenticated release run 33490985170, exact mi300x root/adapter, planner, generic-core, and all-seven compilation/test/rmeta gates passed. Historical family fallback parity and fresh fe2o3 62e527c9 qualification remain open or in progress. No Qwen or M1 authority follows.",
     },
     {
       commit: "9f97985ee0a4a8ef0bc8f0fa0fd33771c8180592",
@@ -611,7 +635,7 @@ window.FERRIC_PROJECT = Object.freeze({
       title: "Select the corrected compiler/runtime repin target",
       state: "integration",
       detail:
-        "Ferric 4369786f pins this exact upstream source across the root workspace, authority-free Worker V3 adapter, and all seven standalone device packages. Generic-core, GitHub CI, exact mi300x root/adapter, planner, and all-seven compilation/test/rmeta gates pass. Fallback parity remains open pending regeneration and a passing hardened comparison; authenticated release qualification remains in progress.",
+        "Ferric 4369786f pins this exact upstream source across the root workspace, authority-free Worker V3 adapter, and all seven standalone device packages. Generic-core, GitHub CI, authenticated release, exact mi300x root/adapter, planner, and all-seven compilation/test/rmeta gates pass. Branch checkpoint 5514afe also passes its aggregate and compatibility lanes. Historical family fallback parity remains open pending regeneration and a passing hardened comparison.",
     },
     {
       commit: "62e527c960b40716290ba8cb82ba5594be4f3706",
@@ -1115,7 +1139,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "Scheduling, paged KV, speculation, generated runner, and M1 qualification",
       "Qualified source 1d666dbc binds all seven K1-K7 families to protected Worker V3 custody and landed through be307d52 in m1/bundle-admission",
       "PR #24 qualified canonical 100644/100755 source-closure modes at 3898bf40 and landed them through 49a539f2",
-      "This Pages refresh is based on merge e419160a3d21db5e8b25f414fd696982a959a171, which combines implementation 5f40e40 with the published Pages history",
+      "This Pages refresh starts from published main checkpoint 709212109a5d177e581002f0cc8502afa703e3ed",
       "Exact 11-file snapshot admission at 8e7fbbd and snapshot-only operational intake at edfaefa are qualified development work integrated into the current unpublished M1 integration lineage, not main",
       "Implementation 5f40e40 retains canonical selector-manifest admission and an authority-free seven-roster host preflight over a537b70's exact recovery and authentication APIs, but is not merged to main and is not a production inference baseline",
       "All seven K1-K7 family host adapters and all 12 host symbols and ABI inspectors exist",
@@ -1129,7 +1153,10 @@ window.FERRIC_PROJECT = Object.freeze({
       "K3 RoPE/KV uses exact generated markers in canonical paged-KV-write then RoPE order; its corrected 9f97985e device validation, extraction, runtime admission, hardware numerics, and performance remain open",
       "K7's concrete roster is refreshed to canonical lowest-ID-argmax, compact-completion, speculative-token-assembly binding order; this is typed source admission, not artifact or execution authority",
       "K4 prefill commit 7e333905, K5 paged-decode commit 863e82ec, and K7 logits commit 5d821ee5 are integrated source packages; none has production artifact, authenticated KFD, hardware, or performance authority",
-      "Ferric implementation 5f40e40 and fe2o3 b5374c6e form a historical compilation/test baseline, not a binding-parity qualification; Ferric 4369786f commits and pushes corrected fe2o3 9f97985e, whose GitHub CI, exact mi300x root/adapter matrix, planner, generic-core, and all-seven compilation/test/rmeta lanes pass while fallback parity remains open and authenticated release remains in progress",
+      "Ferric implementation 5f40e40 and fe2o3 b5374c6e form a historical compilation/test baseline, not a binding-parity qualification; Ferric 4369786f commits and pushes corrected fe2o3 9f97985e, whose GitHub CI, authenticated release, exact mi300x root/adapter matrix, planner, generic-core, and all-seven compilation/test/rmeta lanes pass while historical family fallback parity remains open",
+      "Branch checkpoint 5514afe owns all 12 attributed Qwen roots in one aggregate package and retains seven non-authoritative compatibility wrappers; its aggregate lanes and all seven compatibility suites pass on mi300x",
+      "The engine and source gate still use the seven old device namespaces, so the aggregate package is preparatory and grants no runtime, Qwen, or M1 authority",
+      "Commit 1138506 makes compiler-versus-fallback binding comparison fail closed; historical family fallbacks still require regeneration and qualification",
       "The corrected deterministic planner accepts exactly 354 slots and rejects hostile policy mutations; GitHub CI run 33490985105 and the exact mi300x root/adapter matrix also pass, but these results grant no runtime, Qwen, or M1 authority",
       "Authenticated combined parked-roster scheduling, reserve, prepare, rebind, submit, wait, recycle, readback, completion, page release, retry, and teardown retain ownership without raw queue conversion; rollover, diagnostic serving, and end-to-end inference remain open",
       "Authenticated hardware behavior is not yet qualified",
@@ -1143,7 +1170,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "Generic receipt-complete sealed verification and promotion boundary",
       "Typed KFD allocations, USERPTR/AQL queues, fixed-batch publication, completion, and dispatch",
       "Exact head b5374c6e6a4c1215ad481cefcd294334dcb1cbeb is Ferric's historical compiler/runtime compilation baseline; binding parity is not qualified",
-      "Exact head 9f97985ee0a4a8ef0bc8f0fa0fd33771c8180592 is the corrected active pin committed and pushed by Ferric 4369786f across the root workspace, Worker V3 adapter, and seven standalone device packages; CI, root/adapter, planner, generic-core, and all-seven compilation/test/rmeta lanes pass while fallback parity and authenticated release remain open or in progress",
+      "Exact head 9f97985ee0a4a8ef0bc8f0fa0fd33771c8180592 is the corrected active pin committed and pushed by Ferric 4369786f across the root workspace, Worker V3 adapter, and seven standalone device packages; CI, authenticated release, root/adapter, planner, generic-core, and all-seven compilation/test/rmeta lanes pass while historical family fallback parity remains open",
       "Upstream head 62e527c960b40716290ba8cb82ba5594be4f3706 adds generic roster-handoff integration infrastructure under fresh exact qualification; Ferric 4369786f remains pinned to 9f97985e and has not selected or qualified it",
       "fe2o3 PR #246 merged at eca3bcaa after duplicated 40-minute Generic core runs and all gates passed",
       "fe2o3 PR #258 merged compiler-generated write-only KFD arguments at d9552090 with all 20 exact-head checks green",
