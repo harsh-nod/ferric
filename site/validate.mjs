@@ -15,10 +15,12 @@ const allowedStates = new Set([
 const expectedCurrent = Object.freeze({
   siteRefreshBase: "709212109a5d177e581002f0cc8502afa703e3ed",
   implementationCommit: "4369786fde888e1ec64fe6b05fbced39bc33090d",
+  integrationBranchHead: "c021f707df4bf1cbfd17a7a9eaf384a30c783ef0",
   aggregateCheckpoint: "5514afe176a090aa3f1da9e5354799bb4ca5a8b3",
   bindingCheckerHardening: "1138506d2ac3ca5fc5d736c420e6b458c2fecc1d",
   historicalImplementationBaseline: "5f40e404ba4bc76c16eed15868c63a72e60e716c",
-  selectedFe2o3Pin: "9f97985ee0a4a8ef0bc8f0fa0fd33771c8180592",
+  selectedFe2o3Pin: "5978cefb2c4b4ce2600ea7af8294b1bab5685ea5",
+  qualifiedFe2o3Pin: "9f97985ee0a4a8ef0bc8f0fa0fd33771c8180592",
   historicalFe2o3Baseline: "b5374c6e6a4c1215ad481cefcd294334dcb1cbeb",
   repinState: "integration",
   githubCiRun: "33490985105",
@@ -26,18 +28,13 @@ const expectedCurrent = Object.freeze({
   authenticatedReleaseRun: "33490985170",
   authenticatedReleaseState: "qualified",
   remoteRootAdapterState: "qualified",
-  genericCoreState: "qualified",
+  genericCoreState: "integration",
   fallbackBindingParityState: "open",
   freshFe2o3QualificationState: "integration",
-  devicePackages: [
-    "gemm",
-    "logits",
-    "paged-decode",
-    "prefill",
-    "rmsnorm",
-    "rope-kv",
-    "swiglu",
-  ],
+  aggregateRuntimeMigrationState: "integration",
+  protectedVerifierState: "open",
+  currentQualificationState: "open",
+  devicePackages: ["all-kernels"],
   repinCompilationTestValidatedDevicePackages: [
     "gemm",
     "logits",
@@ -48,6 +45,8 @@ const expectedCurrent = Object.freeze({
     "swiglu",
   ],
   generatedExpectations: 12,
+  aggregateRosterCount: 1,
+  aggregateProgramCount: 12,
   sourceGateModules: 151,
   sourceGateExecutableBodies: 6850,
   plannerSlots: 354,
@@ -97,6 +96,7 @@ assert(
 assert(project.current && typeof project.current === "object", "current status is missing");
 assertCommit(project.current.siteRefreshBase, "current.siteRefreshBase");
 assertCommit(project.current.implementationCommit, "current.implementationCommit");
+assertCommit(project.current.integrationBranchHead, "current.integrationBranchHead");
 assertCommit(project.current.aggregateCheckpoint, "current.aggregateCheckpoint");
 assertCommit(project.current.bindingCheckerHardening, "current.bindingCheckerHardening");
 assertCommit(
@@ -104,6 +104,7 @@ assertCommit(
   "current.historicalImplementationBaseline",
 );
 assertCommit(project.current.selectedFe2o3Pin, "current.selectedFe2o3Pin");
+assertCommit(project.current.qualifiedFe2o3Pin, "current.qualifiedFe2o3Pin");
 assertCommit(project.current.historicalFe2o3Baseline, "current.historicalFe2o3Baseline");
 assertState(project.current.repinState, "current.repinState");
 assert(/^\d+$/.test(project.current.githubCiRun), "current.githubCiRun must be numeric");
@@ -120,6 +121,12 @@ assertState(
   project.current.freshFe2o3QualificationState,
   "current.freshFe2o3QualificationState",
 );
+assertState(
+  project.current.aggregateRuntimeMigrationState,
+  "current.aggregateRuntimeMigrationState",
+);
+assertState(project.current.protectedVerifierState, "current.protectedVerifierState");
+assertState(project.current.currentQualificationState, "current.currentQualificationState");
 for (const [key, expected] of Object.entries(expectedCurrent)) {
   const actual = project.current[key];
   assert(
@@ -140,8 +147,9 @@ assert(
   "envelope must preserve the exact historical fe2o3 baseline",
 );
 assert(
-  envelope.get("Current implementation")?.includes(expectedCurrent.implementationCommit),
-  "envelope must expose the exact current implementation",
+  envelope.get("Current implementation")?.includes(expectedCurrent.integrationBranchHead) &&
+    envelope.get("Current implementation")?.includes("uncommitted integration work"),
+  "envelope must expose the current integration base without presenting dirty work as a commit",
 );
 assert(
   envelope.get("Historical implementation baseline")?.includes(
@@ -151,9 +159,9 @@ assert(
 );
 assert(
   envelope.get("Active fe2o3 transition")?.includes(
-    expectedCurrent.implementationCommit,
-  ),
-  "active fe2o3 transition must bind the exact current implementation",
+    expectedCurrent.selectedFe2o3Pin,
+  ) && envelope.get("Active fe2o3 transition")?.includes("remain pending"),
+  "active fe2o3 transition must identify the selected pin and pending qualification",
 );
 assert(
   envelope.get("GitHub CI")?.includes(expectedCurrent.githubCiRun) &&
@@ -167,9 +175,35 @@ assert(
 );
 assert(
   envelope.get("Aggregate source checkpoint")?.includes(expectedCurrent.aggregateCheckpoint) &&
-    envelope.get("Aggregate source checkpoint")?.includes("non-authoritative") &&
-    envelope.get("Aggregate source checkpoint")?.includes("seven namespaces"),
+    envelope.get("Aggregate source checkpoint")?.includes("qualified source-only baseline") &&
+    envelope.get("Aggregate source checkpoint")?.includes("predates runtime migration"),
   "envelope must scope the aggregate checkpoint away from runtime authority",
+);
+assert(
+  envelope.get("Aggregate runtime migration")?.startsWith("INTEGRATION:") &&
+    envelope.get("Aggregate runtime migration")?.includes("M1AllKernelsWorkerV3RosterV1") &&
+    envelope.get("Aggregate runtime migration")?.includes(
+      "[2,0,10,1,5,3,7,6,4,11,8,9]",
+    ) &&
+    envelope.get("Aggregate runtime migration")?.includes(
+      "No terminal exact-state qualification",
+    ),
+  "envelope must expose the exact one-roster architecture and its qualification boundary",
+);
+assert(
+  envelope.get("Protected verifier backend")?.startsWith("OPEN:") &&
+    envelope.get("Protected verifier backend")?.includes(
+      "MissingProtectedVerificationReceipt",
+    ) &&
+    envelope.get("Protected verifier backend")?.includes("constructs no verification evidence"),
+  "envelope must expose the protected verifier's unconditional fail-closed state",
+);
+assert(
+  envelope.get("Current qualification")?.startsWith("OPEN") &&
+    envelope.get("Current qualification")?.includes("4369786f/9f97985e") &&
+    envelope.get("Current qualification")?.includes("5514afe/9f97985e") &&
+    envelope.get("Current qualification")?.includes("neither establishes current"),
+  "envelope must distinguish historical qualified scopes from current authority",
 );
 assert(
   envelope.get("Aggregate mi300x matrix")?.includes("direct tests") &&
@@ -238,10 +272,12 @@ assert(
 assert(
   project.validation.host.state === "integration" &&
     project.validation.host.source === expectedCurrent.aggregateCheckpoint &&
-    project.validation.host.result.includes("aggregate and compatibility suites") &&
-    project.validation.host.result.includes("OPEN: fallback parity and engine/source-gate migration") &&
-    project.validation.host.result.includes("IN PROGRESS"),
-  "current host validation must distinguish aggregate passes from open migration and parity",
+    project.validation.host.result.includes("historical 436/9f") &&
+    project.validation.host.result.includes("one roster and fe2o3 5978") &&
+    project.validation.host.result.includes(
+      "OPEN: exact-state qualification and protected receipt",
+    ),
+  "current host validation must distinguish historical passes from open one-roster qualification",
 );
 
 assert(
@@ -275,7 +311,11 @@ project.recentProgress.forEach((item, index) => {
 });
 assert(
   progressCommits.has(expectedCurrent.implementationCommit),
-  "recent progress must include the current implementation commit",
+  "recent progress must preserve the last terminal implementation commit",
+);
+assert(
+  progressCommits.has(expectedCurrent.integrationBranchHead),
+  "recent progress must include the current integration branch base",
 );
 assert(
   progressCommits.has(expectedCurrent.aggregateCheckpoint),
@@ -304,9 +344,27 @@ const aggregateCheckpoint = progressByCommit.get(expectedCurrent.aggregateCheckp
 assert(
   aggregateCheckpoint?.detail.includes("all 12 attributed Qwen roots") &&
     aggregateCheckpoint.detail.includes("all seven compatibility suites") &&
-    aggregateCheckpoint.detail.includes("engine and source gate still use the old seven namespaces") &&
-    aggregateCheckpoint.detail.includes("without runtime, Qwen, or M1 authority"),
+    aggregateCheckpoint.detail.includes("last qualified aggregate source-only baseline") &&
+    aggregateCheckpoint.detail.includes("predates the current one-roster runtime migration"),
   "aggregate progress must retain its preparatory authority boundary",
+);
+const integrationBranchHead = progressByCommit.get(expectedCurrent.integrationBranchHead);
+assert(
+  (integrationBranchHead?.repository === undefined ||
+    integrationBranchHead.repository === project.repository) &&
+    integrationBranchHead.state === "integration" &&
+    integrationBranchHead.detail.includes("Uncommitted work above it") &&
+    integrationBranchHead.detail.includes("12-program roster") &&
+    integrationBranchHead.detail.includes("no terminal exact-state qualification"),
+  "integration progress must separate the pushed base from current dirty one-roster work",
+);
+const selectedFe2o3 = progressByCommit.get(expectedCurrent.selectedFe2o3Pin);
+assert(
+  selectedFe2o3?.repository === project.fe2o3Repository &&
+    selectedFe2o3.state === "integration" &&
+    selectedFe2o3.detail.includes("selected by the active Ferric integration source") &&
+    selectedFe2o3.detail.includes("qualification at this pin remains pending"),
+  "selected fe2o3 progress must retain its pending-qualification boundary",
 );
 const bindingCheckerHardening = progressByCommit.get(
   expectedCurrent.bindingCheckerHardening,
@@ -318,9 +376,10 @@ assert(
 );
 assert(
   upstreamRosterHandoff?.repository === project.fe2o3Repository &&
-    upstreamRosterHandoff.detail.includes("remains pinned to 9f97985e") &&
-    upstreamRosterHandoff.detail.includes("has not selected"),
-  "upstream roster handoff must not be presented as the selected Ferric pin",
+    upstreamRosterHandoff.state === "observed" &&
+    upstreamRosterHandoff.detail.includes("superseded in the active Ferric selection") &&
+    upstreamRosterHandoff.detail.includes("5978cefb"),
+  "superseded upstream roster handoff must remain historical progress only",
 );
 for (const [label, commit] of Object.entries(supersededProgress)) {
   const item = progressByCommit.get(commit);
