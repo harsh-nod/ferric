@@ -38,19 +38,22 @@ implements:
 - direct pinned-Verus proofs of the executable M0 state machines;
 - identity-bound fe2o3 M0 property records with actual-body mutation evidence;
 - structural invariant validation and hostile stale-handle tests;
+- one aggregate device package containing all 12 attributed M1 kernel roots,
+  with a path-independent compiler-derived host binding;
 - one production-compiled Qwen3 SwiGLU kernel with an independently inspected
   `gfx942:xnack-` COV6 HSACO and durable Worker V3 load-envelope custody; and
 - the roadmap, assurance policy, feature ledger, and performance protocol.
 
 Ferric does **not** currently load a model, dispatch the production HSACO,
-execute Qwen, or make a verified-inference or performance claim. Only K6
-SwiGLU has an attributed safe device package and source root: one of seven
-required packages and one of 12 required roots. Its historical artifact does
-not authorize the current write-only source. The production verifier,
-generated runner, remaining kernels, model bundle, hardware qualification,
-performance qualification, and end-to-end inference path remain open. All 33
-M1 roadmap requirements remain open. Unsupported stages fail closed rather
-than selecting another implementation.
+execute Qwen, or make a verified-inference or performance claim. All 12 kernel
+source roots are consolidated into the aggregate device package, but source
+presence and compiler binding grant no artifact, verifier, load, or launch
+authority. Only K6 SwiGLU has a historical protected artifact, and that
+artifact does not authorize the current aggregate source. The protected
+verifier, executable generated runner, current aggregate artifact, hardware
+qualification, performance qualification, and end-to-end inference path
+remain open. All 33 M1 roadmap requirements remain open. Unsupported stages
+fail closed rather than selecting another implementation.
 
 ## First Product Milestone
 

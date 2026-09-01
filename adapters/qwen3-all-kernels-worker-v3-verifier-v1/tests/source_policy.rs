@@ -4,7 +4,7 @@ const SOURCE: &str = include_str!("../src/lib.rs");
 const MANIFEST: &str = include_str!("../Cargo.toml");
 const README: &str = include_str!("../README.md");
 
-const FE2O3_REVISION: &str = "2d275684d7a22f8f913114b51b1d1dd524d1ed9b";
+const FE2O3_REVISION: &str = "52815c9ed52a3075e26322cf506144cb22da12d2";
 
 #[test]
 fn backend_is_specific_to_the_exact_aggregate_roster() {

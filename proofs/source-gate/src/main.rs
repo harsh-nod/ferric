@@ -17,8 +17,8 @@ const RUNTIME_TCB_PATH: &str = "proofs/RUNTIME_DEPENDENCY_TCB";
 const CRATES_IO_SOURCE: &str = "registry+https://github.com/rust-lang/crates.io-index";
 const VERUS_SOURCE: &str = "git+https://github.com/verus-lang/verus.git?rev=b677dd5";
 const FE2O3_SOURCE: &str =
-    "git+https://github.com/harsh-nod/fe2o3.git?rev=2d275684d7a22f8f913114b51b1d1dd524d1ed9b";
-const FE2O3_RESOLVED_SOURCE: &str = "git+https://github.com/harsh-nod/fe2o3.git?rev=2d275684d7a22f8f913114b51b1d1dd524d1ed9b#2d275684d7a22f8f913114b51b1d1dd524d1ed9b";
+    "git+https://github.com/harsh-nod/fe2o3.git?rev=52815c9ed52a3075e26322cf506144cb22da12d2";
+const FE2O3_RESOLVED_SOURCE: &str = "git+https://github.com/harsh-nod/fe2o3.git?rev=52815c9ed52a3075e26322cf506144cb22da12d2#52815c9ed52a3075e26322cf506144cb22da12d2";
 const QUALIFIED_BINARIES: &[(&str, &str, &str)] = &[
     (
         "ferric-build",
