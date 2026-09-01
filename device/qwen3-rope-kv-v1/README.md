@@ -23,7 +23,7 @@ Ferric's retained host profile uses the same fixed physical-page grid. Final
 integration still requires exact-compiler extraction and authenticated runtime
 admission before this root can be launched through Ferric.
 
-The standalone generated d955 write-only KFD path seeds each device allocation
+The pinned generated write-only KFD path seeds each device allocation
 from the destination and writes it back only after successful dispatch
 completion. That preserves cache elements not touched by this source without
 granting device read access, but it also stages both fixed 512 MiB cache
@@ -33,7 +33,7 @@ to long-lived device-resident KV allocations retained across dispatches and
 retire them only after exact queue quiescence.
 
 The package pins immutable reviewed `fe2o3-device` and generated-host source at
-revision `2f6da870a31b`. The exact `cargo-fe2o3` compiler used to produce an
+revision `b5374c6e6a4c`. The exact `cargo-fe2o3` compiler used to produce an
 artifact remains separately bound by the protected compiler-execution receipt.
 
 Source and host tests establish the exact two-root roster, finite machine

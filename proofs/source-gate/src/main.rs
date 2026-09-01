@@ -4,11 +4,11 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
-use verus_syn::parse::Parser;
+use verus_syn::parse::{ParseStream, Parser};
 use verus_syn::visit::{self, Visit};
 use verus_syn::{
     Attribute, Block, Expr, File, FnMode, ImplItem, Item, ItemImpl, Meta, Path as SynPath, Publish,
-    Signature, TraitItem, Type,
+    Signature, TraitItem, Type, Visibility,
 };
 
 const FORMAT: &str = "FERRIC-VERIFIED-MODULES-V2";
@@ -17,7 +17,8 @@ const RUNTIME_TCB_PATH: &str = "proofs/RUNTIME_DEPENDENCY_TCB";
 const CRATES_IO_SOURCE: &str = "registry+https://github.com/rust-lang/crates.io-index";
 const VERUS_SOURCE: &str = "git+https://github.com/verus-lang/verus.git?rev=b677dd5";
 const FE2O3_SOURCE: &str =
-    "git+https://github.com/harsh-nod/fe2o3.git?rev=42639ecc7f2f377ab57e5e884c36133a126f230e";
+    "git+https://github.com/harsh-nod/fe2o3.git?rev=b5374c6e6a4c1215ad481cefcd294334dcb1cbeb";
+const FE2O3_RESOLVED_SOURCE: &str = "git+https://github.com/harsh-nod/fe2o3.git?rev=b5374c6e6a4c1215ad481cefcd294334dcb1cbeb#b5374c6e6a4c1215ad481cefcd294334dcb1cbeb";
 const QUALIFIED_BINARIES: &[(&str, &str, &str)] = &[
     (
         "ferric-build",
@@ -45,15 +46,16 @@ const QUALIFIED_BINARIES: &[(&str, &str, &str)] = &[
         "crates/ferric-engine/src/bin/ferric-m1-qualification-capture.rs",
     ),
     (
+        "ferric-engine",
+        "ferric-m1-worker-v3-preflight",
+        "crates/ferric-engine/src/bin/ferric-m1-worker-v3-preflight.rs",
+    ),
+    (
         "ferric-m1-benchmarks",
         "ferric-m1-adversarial",
         "benches/m1/adversarial.rs",
     ),
-    (
-        "ferric-m1-benchmarks",
-        "ferric-m1-d10",
-        "benches/m1/d10.rs",
-    ),
+    ("ferric-m1-benchmarks", "ferric-m1-d10", "benches/m1/d10.rs"),
     (
         "ferric-m1-benchmarks",
         "ferric-m1-differential",
@@ -92,13 +94,7 @@ const RUNTIME_ROOTS: &[(&str, &str, &str, bool, &[&str])] = &[
         true,
         &["fs", "process"],
     ),
-    (
-        "ferric-m1-benchmarks",
-        "serde_json",
-        "=1.0.151",
-        true,
-        &[],
-    ),
+    ("ferric-m1-benchmarks", "serde_json", "=1.0.151", true, &[]),
     ("ferric-m1-benchmarks", "sha2", "^0.11.0", true, &[]),
     ("ferric-qwen-kernels", "sha2", "^0.11.0", true, &[]),
 ];
@@ -106,9 +102,13 @@ const FE2O3_ROOTS: &[(&str, &str)] = &[
     ("ferric-build", "fe2o3-amdhsa-loader"),
     ("ferric-build", "fe2o3-compiler-ffi"),
     ("ferric-build", "fe2o3-hsaco-finalize"),
+    ("ferric-engine", "fe2o3-amd-target"),
     ("ferric-engine", "fe2o3-amdhsa-loader"),
     ("ferric-engine", "fe2o3-aql"),
+    ("ferric-engine", "fe2o3-artifact-transaction"),
+    ("ferric-engine", "fe2o3-host"),
     ("ferric-engine", "fe2o3-kfd"),
+    ("ferric-engine", "fe2o3-runtime-protocol"),
     ("ferric-engine", "fe2o3-service-host"),
     ("ferric-qwen-kernels", "fe2o3-amdhsa-loader"),
     ("ferric-qwen-kernels", "fe2o3-artifact-transaction"),
@@ -119,6 +119,76 @@ const FE2O3_ROOTS: &[(&str, &str)] = &[
     ("ferric-qwen-kernels", "fe2o3-llvm-text"),
     ("ferric-qwen-kernels", "reserved-fe2o3-symbols"),
 ];
+const LOCAL_RUNTIME_ROOTS: &[(&str, &str, &str, &str)] = &[
+    (
+        "ferric-engine",
+        "ferric-qwen3-gemm-device-v1",
+        "device/qwen3-gemm-v1",
+        "ferric_qwen3_gemm_device_v1",
+    ),
+    (
+        "ferric-engine",
+        "ferric-qwen3-logits-device-v1",
+        "device/qwen3-logits-v1",
+        "ferric_qwen3_logits_device_v1",
+    ),
+    (
+        "ferric-engine",
+        "ferric-qwen3-paged-decode-device-v1",
+        "device/qwen3-paged-decode-v1",
+        "ferric_qwen3_paged_decode_device_v1",
+    ),
+    (
+        "ferric-engine",
+        "ferric-qwen3-prefill-device-v1",
+        "device/qwen3-prefill-v1",
+        "ferric_qwen3_prefill_device_v1",
+    ),
+    (
+        "ferric-engine",
+        "ferric-qwen3-rmsnorm-device-v1",
+        "device/qwen3-rmsnorm-v1",
+        "ferric_qwen3_rmsnorm_device_v1",
+    ),
+    (
+        "ferric-engine",
+        "ferric-qwen3-rope-kv-device-v1",
+        "device/qwen3-rope-kv-v1",
+        "ferric_qwen3_rope_kv_device_v1",
+    ),
+    (
+        "ferric-engine",
+        "ferric-qwen3-swiglu-device-v1",
+        "device/qwen3-swiglu-v1",
+        "ferric_qwen3_swiglu_device_v1",
+    ),
+];
+const GENERATED_ROSTER_DECLARATIONS: &[(&str, &[&str])] = &[
+    (
+        "M1GemmWorkerV3RosterV1",
+        &[
+            "GemmVectorizedMarkerV1",
+            "GemmReferenceMarkerV1",
+            "TokenEmbeddingMarkerV1",
+        ],
+    ),
+    ("M1RmsNormWorkerV3RosterV1", &["RmsNormMarkerV1"]),
+    (
+        "M1RopeKvWorkerV3RosterV1",
+        &["PagedKvWriteMarkerV1", "RopeMarkerV1"],
+    ),
+    ("M1PrefillWorkerV3RosterV1", &["PrefillMarkerV1"]),
+    ("M1PagedDecodeWorkerV3RosterV1", &["PagedDecodeMarkerV1"]),
+    ("M1SwiGluWorkerV3RosterV1", &["SwiGluMarkerV1"]),
+    (
+        "M1LogitsWorkerV3RosterV1",
+        &[
+            "LogitsArgmaxMarkerV1",
+            "LogitsCompactMarkerV1",
+            "SpeculativeAssemblyMarkerV1",
+        ],
+    ),
+];
 const ENGINE_ALLOCATION_CONSTRUCTORS: &[&str] = &[
     "ferric_engine::cache::KvPool::new_bounded",
     "ferric_engine::system::Engine::new",
@@ -126,7 +196,12 @@ const ENGINE_ALLOCATION_CONSTRUCTORS: &[&str] = &[
 
 type GateResult<T> = Result<T, String>;
 type ModuleMap = BTreeMap<String, (String, String)>;
-type WalkOutput = (ModuleMap, BTreeSet<Function>, BTreeSet<PathBuf>);
+type WalkOutput = (
+    ModuleMap,
+    BTreeSet<Function>,
+    BTreeSet<PathBuf>,
+    BTreeSet<String>,
+);
 
 #[derive(Clone)]
 struct PackageTarget {
@@ -190,6 +265,7 @@ struct SourceWalker<'a> {
     functions: BTreeSet<Function>,
     type_owners: BTreeMap<String, BTreeSet<String>>,
     inherent_methods: Vec<PendingInherentMethod>,
+    generated_rosters: BTreeSet<String>,
 }
 
 struct SyntaxAudit {
@@ -528,6 +604,397 @@ fn validate_fe2o3_root_declaration(owner: &str, dependency: &Value) -> GateResul
     Ok(true)
 }
 
+fn validate_local_runtime_package(
+    repo: &Path,
+    packages_by_id: &BTreeMap<&str, &Value>,
+    resolve_nodes: &BTreeMap<&str, &Value>,
+    workspace_members: &BTreeSet<&str>,
+    owner: &str,
+    dependency: &Value,
+) -> GateResult<bool> {
+    let name = string_field(dependency, "name")?;
+    let Some((_, _, relative_path, expected_crate_name)) =
+        LOCAL_RUNTIME_ROOTS
+            .iter()
+            .find(|(expected_owner, expected_name, _, _)| {
+                owner == *expected_owner && name == *expected_name
+            })
+    else {
+        return Ok(false);
+    };
+    let expected_root = canonical(&repo.join(relative_path))?;
+    if expected_root == repo
+        || expected_root
+            .strip_prefix(repo)
+            .map_err(|_| format!("local runtime package escapes repository: {name}"))?
+            != Path::new(relative_path)
+    {
+        return Err(format!(
+            "local runtime package path is not an exact repository descendant: {name}"
+        ));
+    }
+    let declared_root = dependency
+        .get("path")
+        .and_then(Value::as_str)
+        .ok_or_else(|| format!("local runtime dependency has no path: {owner}::{name}"))?;
+    if canonical(Path::new(declared_root))? != expected_root
+        || dependency
+            .get("source")
+            .is_some_and(|value| !value.is_null())
+        || string_field(dependency, "req")? != "*"
+        || !bool_field(dependency, "uses_default_features")?
+        || bool_field(dependency, "optional")?
+        || dependency
+            .get("rename")
+            .is_some_and(|value| !value.is_null())
+        || dependency
+            .get("target")
+            .is_some_and(|value| !value.is_null())
+        || dependency
+            .get("registry")
+            .is_some_and(|value| !value.is_null())
+        || !string_array(dependency, "features", "local runtime root feature")?.is_empty()
+    {
+        return Err(format!(
+            "local runtime dependency declaration drifted: {owner}::{name}"
+        ));
+    }
+
+    let candidates = packages_by_id
+        .values()
+        .copied()
+        .filter(|package| package.get("name").and_then(Value::as_str) == Some(name))
+        .collect::<Vec<_>>();
+    let [package] = candidates.as_slice() else {
+        return Err(format!(
+            "local runtime package does not resolve uniquely: {owner}::{name}"
+        ));
+    };
+    let package_id = string_field(package, "id")?;
+    safe_tcb_field(package_id, "local runtime package ID")?;
+    if workspace_members.contains(package_id) {
+        return Err(format!(
+            "local runtime package may not become a workspace member: {name}"
+        ));
+    }
+    if is_opted(package) {
+        return Err(format!(
+            "local runtime package may not claim Verus authority: {name}"
+        ));
+    }
+    let manifest = canonical(Path::new(string_field(package, "manifest_path")?))?;
+    let expected_manifest = canonical(&expected_root.join("Cargo.toml"))?;
+    let publish = package
+        .get("publish")
+        .and_then(Value::as_array)
+        .ok_or_else(|| format!("local runtime package publish policy is malformed: {name}"))?;
+    let features = package
+        .get("features")
+        .and_then(Value::as_object)
+        .ok_or_else(|| format!("local runtime package features are malformed: {name}"))?;
+    if manifest != expected_manifest
+        || string_field(package, "version")? != "0.1.0"
+        || string_field(package, "edition")? != "2024"
+        || string_field(package, "rust_version")? != "1.94"
+        || package.get("source").is_some_and(|value| !value.is_null())
+        || package.get("links").is_some_and(|value| !value.is_null())
+        || !publish.is_empty()
+        || !features.is_empty()
+        || package
+            .get("metadata")
+            .is_some_and(|value| !value.is_null())
+    {
+        return Err(format!("local runtime package identity drifted: {name}"));
+    }
+
+    let expected_library = canonical(&expected_root.join("src/lib.rs"))?;
+    let expected_build_script = canonical(&expected_root.join("build.rs"))?;
+    let expected_tests = canonical(&expected_root.join("tests"))?;
+    let mut library_count = 0_u8;
+    let mut build_script_count = 0_u8;
+    for target in package
+        .get("targets")
+        .and_then(Value::as_array)
+        .ok_or_else(|| format!("local runtime package targets are malformed: {name}"))?
+    {
+        let target_name = string_field(target, "name")?;
+        safe_atom(target_name, "local runtime target name")?;
+        let kinds = string_array(target, "kind", "local runtime target kind")?;
+        let crate_types = string_array(target, "crate_types", "local runtime crate type")?;
+        let source = canonical(Path::new(string_field(target, "src_path")?))?;
+        let edition = string_field(target, "edition")?;
+        match kinds.as_slice() {
+            [kind] if kind == "lib" => {
+                library_count = library_count
+                    .checked_add(1)
+                    .ok_or_else(|| "local runtime library target count overflowed".to_owned())?;
+                if target_name != *expected_crate_name
+                    || crate_types != ["lib"]
+                    || source != expected_library
+                    || edition != "2024"
+                    || !bool_field(target, "doc")?
+                    || !bool_field(target, "doctest")?
+                    || !bool_field(target, "test")?
+                {
+                    return Err(format!("local runtime library target drifted: {name}"));
+                }
+            }
+            [kind] if kind == "custom-build" => {
+                build_script_count = build_script_count.checked_add(1).ok_or_else(|| {
+                    "local runtime build-script target count overflowed".to_owned()
+                })?;
+                if target_name != "build-script-build"
+                    || crate_types != ["bin"]
+                    || source != expected_build_script
+                    || edition != "2024"
+                    || bool_field(target, "doc")?
+                    || bool_field(target, "doctest")?
+                    || bool_field(target, "test")?
+                {
+                    return Err(format!("local runtime build-script target drifted: {name}"));
+                }
+            }
+            [kind] if kind == "test" => {
+                if crate_types != ["bin"]
+                    || !source.starts_with(&expected_tests)
+                    || edition != "2024"
+                    || bool_field(target, "doc")?
+                    || bool_field(target, "doctest")?
+                    || !bool_field(target, "test")?
+                {
+                    return Err(format!("local runtime test target drifted: {name}"));
+                }
+            }
+            _ => return Err(format!("local runtime package target drifted: {name}")),
+        }
+    }
+    if library_count != 1 || build_script_count != 1 {
+        return Err(format!(
+            "local runtime production target roster drifted: {name}"
+        ));
+    }
+
+    let mut production_dependencies = BTreeSet::new();
+    for package_dependency in package
+        .get("dependencies")
+        .and_then(Value::as_array)
+        .ok_or_else(|| format!("local runtime package dependencies are malformed: {name}"))?
+    {
+        if is_dev_dependency(package_dependency)? {
+            continue;
+        }
+        let dependency_name = string_field(package_dependency, "name")?;
+        let target = package_dependency
+            .get("target")
+            .and_then(Value::as_str)
+            .map(str::to_owned);
+        if package_dependency.get("source").and_then(Value::as_str) != Some(FE2O3_SOURCE)
+            || string_field(package_dependency, "req")? != "=0.1.0"
+            || !bool_field(package_dependency, "uses_default_features")?
+            || bool_field(package_dependency, "optional")?
+            || package_dependency
+                .get("rename")
+                .is_some_and(|value| !value.is_null())
+            || package_dependency
+                .get("registry")
+                .is_some_and(|value| !value.is_null())
+            || package_dependency
+                .get("path")
+                .is_some_and(|value| !value.is_null())
+            || !string_array(
+                package_dependency,
+                "features",
+                "local runtime dependency feature",
+            )?
+            .is_empty()
+        {
+            return Err(format!(
+                "local runtime package dependency drifted: {name}::{dependency_name}"
+            ));
+        }
+        if !production_dependencies.insert((dependency_name.to_owned(), target)) {
+            return Err(format!(
+                "duplicate local runtime package dependency: {name}::{dependency_name}"
+            ));
+        }
+    }
+    let expected_dependencies = BTreeSet::from([
+        ("fe2o3-device".to_owned(), None),
+        (
+            "fe2o3-host".to_owned(),
+            Some("cfg(not(target_arch = \"amdgpu\"))".to_owned()),
+        ),
+    ]);
+    if production_dependencies != expected_dependencies {
+        return Err(format!(
+            "local runtime package dependency roster drifted: {name}"
+        ));
+    }
+
+    let owner_candidates = packages_by_id
+        .values()
+        .copied()
+        .filter(|package| package.get("name").and_then(Value::as_str) == Some(owner))
+        .collect::<Vec<_>>();
+    let [owner_package] = owner_candidates.as_slice() else {
+        return Err(format!(
+            "local runtime dependency owner does not resolve uniquely: {owner}"
+        ));
+    };
+    let owner_id = string_field(owner_package, "id")?;
+    if !workspace_members.contains(owner_id) {
+        return Err(format!(
+            "local runtime dependency owner is not a workspace member: {owner}"
+        ));
+    }
+    let owner_node = resolve_nodes
+        .get(owner_id)
+        .ok_or_else(|| format!("local runtime dependency owner has no resolve node: {owner}"))?;
+    let owner_edges = owner_node
+        .get("deps")
+        .and_then(Value::as_array)
+        .ok_or_else(|| format!("local runtime owner resolve edges are malformed: {owner}"))?;
+    let matching_owner_edges = owner_edges
+        .iter()
+        .filter(|edge| {
+            edge.get("name").and_then(Value::as_str) == Some(*expected_crate_name)
+                || edge.get("pkg").and_then(Value::as_str) == Some(package_id)
+        })
+        .collect::<Vec<_>>();
+    let [owner_edge] = matching_owner_edges.as_slice() else {
+        return Err(format!(
+            "local runtime owner resolve edge does not resolve uniquely: {owner}::{name}"
+        ));
+    };
+    let owner_edge_kinds = owner_edge
+        .get("dep_kinds")
+        .and_then(Value::as_array)
+        .ok_or_else(|| format!("local runtime owner resolve edge kinds are malformed: {name}"))?;
+    let [owner_edge_kind] = owner_edge_kinds.as_slice() else {
+        return Err(format!(
+            "local runtime owner resolve edge kind roster drifted: {owner}::{name}"
+        ));
+    };
+    if string_field(owner_edge, "name")? != *expected_crate_name
+        || string_field(owner_edge, "pkg")? != package_id
+        || owner_edge_kind
+            .get("kind")
+            .is_some_and(|value| !value.is_null())
+        || owner_edge_kind
+            .get("target")
+            .is_some_and(|value| !value.is_null())
+    {
+        return Err(format!(
+            "local runtime owner resolve edge drifted: {owner}::{name}"
+        ));
+    }
+    let owner_dependency_ids = owner_node
+        .get("dependencies")
+        .and_then(Value::as_array)
+        .ok_or_else(|| format!("local runtime owner dependency IDs are malformed: {owner}"))?;
+    if owner_dependency_ids
+        .iter()
+        .filter(|id| id.as_str() == Some(package_id))
+        .count()
+        != 1
+    {
+        return Err(format!(
+            "local runtime owner dependency identity drifted: {owner}::{name}"
+        ));
+    }
+
+    let local_node = resolve_nodes
+        .get(package_id)
+        .ok_or_else(|| format!("local runtime package has no resolve node: {name}"))?;
+    if !string_array(local_node, "features", "local runtime resolved feature")?.is_empty() {
+        return Err(format!(
+            "local runtime package resolved features drifted: {name}"
+        ));
+    }
+    let local_edges = local_node
+        .get("deps")
+        .and_then(Value::as_array)
+        .ok_or_else(|| format!("local runtime package resolve edges are malformed: {name}"))?;
+    if local_edges.len() != 2 {
+        return Err(format!(
+            "local runtime package resolve edge roster drifted: {name}"
+        ));
+    }
+    let expected_resolved_edges = BTreeMap::from([
+        ("fe2o3_device", ("fe2o3-device", None)),
+        (
+            "fe2o3_host",
+            ("fe2o3-host", Some("cfg(not(target_arch = \"amdgpu\"))")),
+        ),
+    ]);
+    let mut resolved_dependency_ids = BTreeSet::new();
+    for edge in local_edges {
+        let edge_name = string_field(edge, "name")?;
+        let (expected_package_name, expected_target) =
+            expected_resolved_edges.get(edge_name).ok_or_else(|| {
+                format!("local runtime package resolve edge drifted: {name}::{edge_name}")
+            })?;
+        let dependency_id = string_field(edge, "pkg")?;
+        if !resolved_dependency_ids.insert(dependency_id.to_owned()) {
+            return Err(format!(
+                "duplicate local runtime resolved dependency: {name}::{edge_name}"
+            ));
+        }
+        let resolved_package = packages_by_id.get(dependency_id).ok_or_else(|| {
+            format!("local runtime resolved dependency package is absent: {name}::{edge_name}")
+        })?;
+        if string_field(resolved_package, "name")? != *expected_package_name
+            || string_field(resolved_package, "version")? != "0.1.0"
+            || string_field(resolved_package, "source")? != FE2O3_RESOLVED_SOURCE
+        {
+            return Err(format!(
+                "local runtime resolved dependency identity drifted: {name}::{edge_name}"
+            ));
+        }
+        let kinds = edge
+            .get("dep_kinds")
+            .and_then(Value::as_array)
+            .ok_or_else(|| {
+                format!("local runtime resolve edge kinds are malformed: {name}::{edge_name}")
+            })?;
+        let [kind] = kinds.as_slice() else {
+            return Err(format!(
+                "local runtime resolve edge kind roster drifted: {name}::{edge_name}"
+            ));
+        };
+        let actual_target = kind.get("target").and_then(Value::as_str);
+        if kind.get("kind").is_some_and(|value| !value.is_null())
+            || actual_target != *expected_target
+        {
+            return Err(format!(
+                "local runtime resolve edge kind drifted: {name}::{edge_name}"
+            ));
+        }
+    }
+    let dependency_id_values = local_node
+        .get("dependencies")
+        .and_then(Value::as_array)
+        .ok_or_else(|| format!("local runtime package dependency IDs are malformed: {name}"))?;
+    let dependency_ids = dependency_id_values
+        .iter()
+        .map(|value| {
+            value
+                .as_str()
+                .map(str::to_owned)
+                .ok_or_else(|| format!("local runtime dependency ID is malformed: {name}"))
+        })
+        .collect::<GateResult<BTreeSet<_>>>()?;
+    if dependency_id_values.len() != 2
+        || dependency_ids.len() != 2
+        || dependency_ids != resolved_dependency_ids
+    {
+        return Err(format!(
+            "local runtime package resolved dependency roster drifted: {name}"
+        ));
+    }
+    Ok(true)
+}
+
 fn render_runtime_dependency_tcb(repo: &Path, metadata: &Value) -> GateResult<RuntimeTcb> {
     let packages = package_map(metadata)?;
     let nodes = resolve_map(metadata)?;
@@ -786,6 +1253,8 @@ fn packages(
     metadata: &Value,
     runtime_roots: &BTreeSet<(String, String)>,
 ) -> GateResult<Vec<Package>> {
+    let packages_by_id = package_map(metadata)?;
+    let resolve_nodes = resolve_map(metadata)?;
     let members: BTreeSet<&str> = metadata
         .get("workspace_members")
         .and_then(Value::as_array)
@@ -801,6 +1270,29 @@ fn packages(
         .get("packages")
         .and_then(Value::as_array)
         .ok_or_else(|| "Cargo metadata has no packages array".to_owned())?;
+    for (_, local_name, _, _) in LOCAL_RUNTIME_ROOTS {
+        let candidates = packages_by_id
+            .values()
+            .copied()
+            .filter(|package| package.get("name").and_then(Value::as_str) == Some(*local_name))
+            .collect::<Vec<_>>();
+        let [package] = candidates.as_slice() else {
+            return Err(format!(
+                "local runtime package does not resolve uniquely: {local_name}"
+            ));
+        };
+        let package_id = string_field(package, "id")?;
+        if members.contains(package_id) {
+            return Err(format!(
+                "local runtime package may not become a workspace member: {local_name}"
+            ));
+        }
+        if is_opted(package) {
+            return Err(format!(
+                "local runtime package may not claim Verus authority: {local_name}"
+            ));
+        }
+    }
     let workspace: Vec<&Value> = package_values
         .iter()
         .filter(|package| {
@@ -850,6 +1342,7 @@ fn packages(
     }
 
     let mut result = Vec::new();
+    let mut local_runtime_roots = BTreeSet::new();
     let mut crate_names = BTreeSet::new();
     for package in workspace {
         let name = string_field(package, "name")?.to_owned();
@@ -876,11 +1369,9 @@ fn packages(
                     .get("name")
                     .and_then(Value::as_str)
                     .is_some_and(|target_name| {
-                        QUALIFIED_BINARIES
-                            .iter()
-                            .any(|(owner, expected_name, _)| {
-                                name == *owner && target_name == *expected_name
-                            })
+                        QUALIFIED_BINARIES.iter().any(|(owner, expected_name, _)| {
+                            name == *owner && target_name == *expected_name
+                        })
                     })
             {
                 let target_name = target
@@ -903,8 +1394,7 @@ fn packages(
                 let expected_path = QUALIFIED_BINARIES
                     .iter()
                     .find_map(|(owner, expected_name, expected_path)| {
-                        (name == *owner && target_name == *expected_name)
-                            .then_some(*expected_path)
+                        (name == *owner && target_name == *expected_name).then_some(*expected_path)
                     })
                     .ok_or_else(|| "unsupported qualified binary".to_owned())?;
                 let expected_root = canonical(&repo.join(expected_path))?;
@@ -975,18 +1465,32 @@ fn packages(
             }
             if let Some(path) = dependency.get("path").and_then(Value::as_str) {
                 let dependency_path = canonical(Path::new(path))?;
-                let admitted = manifest_to_name.get(&dependency_path).ok_or_else(|| {
-                    format!(
+                if let Some(admitted) = manifest_to_name.get(&dependency_path) {
+                    if admitted != dependency_name {
+                        return Err(format!(
+                            "package {name} path dependency identity drifted: {dependency_name}"
+                        ));
+                    }
+                    dependencies.insert(admitted.clone());
+                } else if validate_local_runtime_package(
+                    repo,
+                    &packages_by_id,
+                    &resolve_nodes,
+                    &members,
+                    &name,
+                    dependency,
+                )? {
+                    if !local_runtime_roots.insert((name.clone(), dependency_name.to_owned())) {
+                        return Err(format!(
+                            "duplicate local runtime root: {name}::{dependency_name}"
+                        ));
+                    }
+                } else {
+                    return Err(format!(
                         "package {name} has an unadmitted path dependency: {}",
                         dependency_path.display()
-                    )
-                })?;
-                if admitted != dependency_name {
-                    return Err(format!(
-                        "package {name} path dependency identity drifted: {dependency_name}"
                     ));
                 }
-                dependencies.insert(admitted.clone());
             } else {
                 let source = dependency.get("source").and_then(Value::as_str);
                 let admitted_runtime_root = source == Some(CRATES_IO_SOURCE)
@@ -1007,6 +1511,15 @@ fn packages(
             dependencies,
             additional_targets,
         });
+    }
+    let expected_local_runtime_roots = LOCAL_RUNTIME_ROOTS
+        .iter()
+        .map(|(owner, name, _, _)| ((*owner).to_owned(), (*name).to_owned()))
+        .collect::<BTreeSet<_>>();
+    if local_runtime_roots != expected_local_runtime_roots {
+        return Err(format!(
+            "local runtime roots drifted (expected={expected_local_runtime_roots:?}, actual={local_runtime_roots:?})"
+        ));
     }
     topological_packages(result)
 }
@@ -1095,6 +1608,40 @@ fn validate_attributes(attributes: &[Attribute], allow_solver_attributes: bool) 
             }
             "path" => return Err("#[path] module redirection is forbidden".to_owned()),
             "doc" | "must_use" | "inline" | "cold" | "non_exhaustive" | "deprecated" => {}
+            "expect" => {
+                const REASON: &str = "the staged private rebind core is consumed by the authenticated reserve/prepare/submit bridge";
+                let Meta::List(expect_list) = &attribute.meta else {
+                    return Err("malformed expect attribute".to_owned());
+                };
+                let expectations = expect_list
+                    .parse_args_with(
+                        verus_syn::punctuated::Punctuated::<
+                            Meta,
+                            verus_syn::Token![,],
+                        >::parse_terminated,
+                    )
+                    .map_err(|error| format!("cannot parse expect attribute: {error}"))?;
+                let mut expectations = expectations.iter();
+                let lint_meta = expectations.next();
+                let reason = expectations.next();
+                let exact_lint = matches!(
+                    lint_meta,
+                    Some(Meta::Path(path)) if path_name(path) == "dead_code"
+                );
+                let exact_reason = matches!(
+                    reason,
+                    Some(Meta::NameValue(value))
+                        if path_name(&value.path) == "reason"
+                            && matches!(
+                                &value.value,
+                                Expr::Lit(expression)
+                                    if matches!(&expression.lit, verus_syn::Lit::Str(literal) if literal.value() == REASON)
+                            )
+                );
+                if !exact_lint || !exact_reason || expectations.next().is_some() {
+                    return Err("unsupported expect attribute".to_owned());
+                }
+            }
             "allow" => {
                 let Meta::List(list) = &attribute.meta else {
                     return Err("malformed allow attribute".to_owned());
@@ -1456,6 +2003,7 @@ fn cfg_test_attributes(attributes: &[Attribute]) -> bool {
 
 fn cfg_test_item(item: &Item) -> bool {
     match item {
+        Item::Fn(item) => cfg_test_attributes(&item.attrs),
         Item::Impl(item) => cfg_test_attributes(&item.attrs),
         Item::Mod(item) => cfg_test_attributes(&item.attrs),
         _ => false,
@@ -1476,12 +2024,16 @@ fn cfg_test_fixture_item(item: &Item) -> GateResult<bool> {
     if cfg_attributes.is_empty() {
         return Ok(false);
     }
-    if cfg_attributes.len() != 1
-        || !matches!(
-            &cfg_attributes[0].meta,
-            Meta::List(list) if list.tokens.to_string() == "feature = \"test-fixtures\""
-        )
-    {
+    let admitted_condition = matches!(
+        &cfg_attributes[0].meta,
+        Meta::List(list)
+            if matches!(
+                list.tokens.to_string().as_str(),
+                "feature = \"test-fixtures\""
+                    | "any (test , feature = \"test-fixtures\")"
+            )
+    );
+    if cfg_attributes.len() != 1 || !admitted_condition {
         return Ok(false);
     }
     let remaining: Vec<Attribute> = attributes
@@ -1491,6 +2043,74 @@ fn cfg_test_fixture_item(item: &Item) -> GateResult<bool> {
         .collect();
     validate_attributes(&remaining, false)?;
     Ok(true)
+}
+
+fn parse_generated_roster_declaration(item: &verus_syn::ItemMacro) -> GateResult<Ident> {
+    if item.ident.is_some() || item.semi_token.is_some() {
+        return Err("generated roster macro invocation shape drifted".to_owned());
+    }
+    validate_attributes(&item.attrs, false)?;
+    let parser = |input: ParseStream<'_>| {
+        let attributes = input.call(Attribute::parse_outer)?;
+        let visibility = input.parse::<Visibility>()?;
+        input.parse::<verus_syn::Token![struct]>()?;
+        let roster = input.parse::<Ident>()?;
+        input.parse::<verus_syn::Token![=]>()?;
+        let content;
+        let _ = verus_syn::bracketed!(content in input);
+        let markers =
+            verus_syn::punctuated::Punctuated::<Type, verus_syn::Token![,]>::parse_terminated(
+                &content,
+            )?;
+        input.parse::<verus_syn::Token![;]>()?;
+        if !input.is_empty() {
+            return Err(input.error("trailing generated roster declaration tokens"));
+        }
+        Ok((attributes, visibility, roster, markers))
+    };
+    let (attributes, visibility, roster, marker_types) = parser
+        .parse2(item.mac.tokens.clone())
+        .map_err(|error| format!("generated roster declaration is malformed: {error}"))?;
+    validate_attributes(&attributes, false)?;
+    if !matches!(visibility, Visibility::Public(_)) {
+        return Err("generated roster declaration must remain public".to_owned());
+    }
+    let roster_name = roster.to_string();
+    safe_atom(&roster_name, "generated roster name")?;
+    let expected_markers = GENERATED_ROSTER_DECLARATIONS
+        .iter()
+        .find_map(|(name, markers)| (*name == roster_name).then_some(*markers))
+        .ok_or_else(|| format!("unadmitted generated roster declaration: {roster_name}"))?;
+    let mut markers = Vec::new();
+    for marker_type in marker_types {
+        let Type::Path(marker_path) = marker_type else {
+            return Err(format!(
+                "generated roster marker is not a path: {roster_name}"
+            ));
+        };
+        if marker_path.qself.is_some() || marker_path.path.segments.len() != 1 {
+            return Err(format!(
+                "generated roster marker path drifted: {roster_name}"
+            ));
+        }
+        let marker = marker_path
+            .path
+            .segments
+            .first()
+            .ok_or_else(|| format!("generated roster marker path is empty: {roster_name}"))?;
+        if !matches!(marker.arguments, verus_syn::PathArguments::None) {
+            return Err(format!(
+                "generated roster marker arguments are forbidden: {roster_name}"
+            ));
+        }
+        markers.push(marker.ident.to_string());
+    }
+    if markers != expected_markers {
+        return Err(format!(
+            "generated roster marker order drifted: {roster_name}"
+        ));
+    }
+    Ok(roster)
 }
 
 fn impl_owner(item: &ItemImpl) -> GateResult<String> {
@@ -1537,7 +2157,12 @@ impl SourceWalker<'_> {
         let module_path = self.package.crate_name.clone();
         self.walk_file(&root, &module_dir, &module_path)?;
         self.resolve_inherent_methods()?;
-        Ok((self.modules, self.functions, self.visited))
+        Ok((
+            self.modules,
+            self.functions,
+            self.visited,
+            self.generated_rosters,
+        ))
     }
 
     fn add_type_owner(&mut self, owner: &Ident, module_path: &str) -> GateResult<()> {
@@ -1625,9 +2250,29 @@ impl SourceWalker<'_> {
                     validate_attributes(&inner.attrs, true)?;
                     self.walk_items(&inner.items, source, module_dir, module_path, true)?;
                 }
+                Item::Macro(item_macro)
+                    if path_name(&item_macro.mac.path)
+                        == "fe2o3_host::compiler_generated_kernel_expectation_roster_v1" =>
+                {
+                    if in_verus
+                        || self.package.name != "ferric-engine"
+                        || source != "crates/ferric-engine/src/authenticated_kernel_programs.rs"
+                        || module_path != "ferric_engine::authenticated_kernel_programs"
+                    {
+                        return Err("generated roster macro escaped its admitted source".to_owned());
+                    }
+                    let roster = parse_generated_roster_declaration(item_macro)?;
+                    let roster_name = roster.to_string();
+                    if !self.generated_rosters.insert(roster_name.clone()) {
+                        return Err(format!(
+                            "duplicate generated roster declaration: {roster_name}"
+                        ));
+                    }
+                    self.add_type_owner(&roster, module_path)?;
+                }
                 Item::Macro(item_macro) => {
                     return Err(format!(
-                        "item macro invocation is forbidden: {}!",
+                        "{source}: item macro invocation is forbidden: {}!",
                         path_name(&item_macro.mac.path)
                     ));
                 }
@@ -1846,6 +2491,29 @@ fn target_module_dir(root: &Path) -> GateResult<PathBuf> {
         .ok_or_else(|| format!("target root has no parent: {}", root.display()))
 }
 
+fn validate_local_runtime_authority_absent(inventory: &Inventory) -> GateResult<()> {
+    for (_, local_name, _, _) in LOCAL_RUNTIME_ROOTS {
+        let present = inventory
+            .packages
+            .iter()
+            .any(|package| package.name == *local_name)
+            || inventory
+                .modules
+                .values()
+                .any(|(package, _)| package == local_name)
+            || inventory
+                .functions
+                .iter()
+                .any(|function| function.package == *local_name);
+        if present {
+            return Err(format!(
+                "opaque local runtime package acquired proof authority: {local_name}"
+            ));
+        }
+    }
+    Ok(())
+}
+
 fn inventory(repo: &Path, metadata: &Value) -> GateResult<Inventory> {
     let runtime_tcb = validate_runtime_dependency_tcb(repo, metadata)?;
     let packages = packages(repo, metadata, &runtime_tcb.roots)?;
@@ -1854,6 +2522,7 @@ fn inventory(repo: &Path, metadata: &Value) -> GateResult<Inventory> {
         runtime_tcb: runtime_tcb.text.lines().map(str::to_owned).collect(),
         ..Inventory::default()
     };
+    let mut generated_rosters = BTreeSet::new();
     for package in &packages {
         let source_root = package
             .root
@@ -1885,8 +2554,9 @@ fn inventory(repo: &Path, metadata: &Value) -> GateResult<Inventory> {
                 functions: BTreeSet::new(),
                 type_owners: BTreeMap::new(),
                 inherent_methods: Vec::new(),
+                generated_rosters: BTreeSet::new(),
             };
-            let (modules, functions, target_visited) = walker.walk()?;
+            let (modules, functions, target_visited, target_generated_rosters) = walker.walk()?;
             for (source, owner) in modules {
                 if inventory.modules.insert(source.clone(), owner).is_some() {
                     return Err(format!("source belongs to multiple packages: {source}"));
@@ -1901,6 +2571,13 @@ fn inventory(repo: &Path, metadata: &Value) -> GateResult<Inventory> {
                 }
             }
             visited.extend(target_visited);
+            for roster in target_generated_rosters {
+                if !generated_rosters.insert(roster.clone()) {
+                    return Err(format!(
+                        "generated roster is declared more than once: {roster}"
+                    ));
+                }
+            }
         }
         let mut all_rs = BTreeSet::new();
         collect_rs_files(&source_root, &mut all_rs)?;
@@ -1915,6 +2592,16 @@ fn inventory(repo: &Path, metadata: &Value) -> GateResult<Inventory> {
             ));
         }
     }
+    let expected_generated_rosters = GENERATED_ROSTER_DECLARATIONS
+        .iter()
+        .map(|(name, _)| (*name).to_owned())
+        .collect::<BTreeSet<_>>();
+    if generated_rosters != expected_generated_rosters {
+        return Err(format!(
+            "generated roster declarations drifted (expected={expected_generated_rosters:?}, actual={generated_rosters:?})"
+        ));
+    }
+    validate_local_runtime_authority_absent(&inventory)?;
     Ok(inventory)
 }
 
@@ -2002,6 +2689,23 @@ fn render(inventory: &Inventory) -> String {
     lines.join("\n") + "\n"
 }
 
+fn render_unverified_inventory(inventory: &Inventory) -> String {
+    let mut lines = vec!["format=FERRIC-UNVERIFIED-INVENTORY-V1".to_owned()];
+    lines.extend(
+        inventory
+            .functions
+            .iter()
+            .filter(|function| !function.verified)
+            .map(|function| {
+                format!(
+                    "unverified={}|{}|{}",
+                    function.package, function.source, function.compiler_path
+                )
+            }),
+    );
+    lines.join("\n") + "\n"
+}
+
 fn render_dependency_tcb(repo: &Path, metadata: &Value) -> GateResult<String> {
     let packages = metadata
         .get("packages")
@@ -2083,6 +2787,14 @@ fn run() -> GateResult<()> {
             println!("PASS: generated workspace runtime dependency TCB at {output_arg}");
             return Ok(());
         }
+        if flag == "--unverified-inventory" {
+            let repo = canonical(Path::new(repo_arg))?;
+            let inventory = inventory(&repo, &read_json(Path::new(metadata_arg))?)?;
+            fs::write(output_arg, render_unverified_inventory(&inventory))
+                .map_err(|error| format!("{output_arg}: {error}"))?;
+            println!("PASS: generated unverified executable inventory at {output_arg}");
+            return Ok(());
+        }
     }
     let (generate, repo_arg, manifest_arg, metadata_arg) = match arguments.as_slice() {
         [flag, repo, metadata, output] if flag == "--generate" => {
@@ -2091,7 +2803,7 @@ fn run() -> GateResult<()> {
         [repo, manifest, metadata] => (false, repo.as_str(), manifest.as_str(), metadata.as_str()),
         _ => {
             return Err(
-                "usage: ferric-source-gate REPO MANIFEST METADATA\n       ferric-source-gate --generate REPO METADATA OUTPUT\n       ferric-source-gate --runtime-dependency-tcb REPO METADATA OUTPUT\n       ferric-source-gate --dependency-tcb REPO METADATA OUTPUT"
+                "usage: ferric-source-gate REPO MANIFEST METADATA\n       ferric-source-gate --generate REPO METADATA OUTPUT\n       ferric-source-gate --unverified-inventory REPO METADATA OUTPUT\n       ferric-source-gate --runtime-dependency-tcb REPO METADATA OUTPUT\n       ferric-source-gate --dependency-tcb REPO METADATA OUTPUT"
                     .to_owned(),
             );
         }
@@ -2138,9 +2850,13 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::{inherent_owner_module, target_module_dir};
+    use super::{
+        cfg_test_fixture_item, cfg_test_item, inherent_owner_module,
+        parse_generated_roster_declaration, target_module_dir, validate_attributes,
+    };
     use std::collections::{BTreeMap, BTreeSet};
     use std::path::{Path, PathBuf};
+    use verus_syn::Item;
 
     fn owners(records: &[(&str, &[&str])]) -> BTreeMap<String, BTreeSet<String>> {
         records
@@ -2184,5 +2900,79 @@ mod tests {
             target_module_dir(Path::new("crate/src/bin/tool.rs")),
             Ok(PathBuf::from("crate/src/bin"))
         );
+    }
+
+    #[test]
+    fn exact_cfg_test_functions_are_release_absent_items() {
+        let item = verus_syn::parse_str::<Item>("#[cfg(test)] fn unit_fixture() {}")
+            .expect("exact cfg(test) function parses");
+        assert!(cfg_test_item(&item));
+
+        let conditional = verus_syn::parse_str::<Item>(
+            "#[cfg(any(test, feature = \"test-fixtures\"))] fn conditional() {}",
+        )
+        .expect("conditional function parses");
+        assert!(!cfg_test_item(&conditional));
+    }
+
+    #[test]
+    fn exact_test_fixture_conditions_are_release_absent_items() {
+        let fixture = verus_syn::parse_str::<Item>(
+            "#[cfg(any(test, feature = \"test-fixtures\"))] fn fixture() {}",
+        )
+        .expect("fixture function parses");
+        assert_eq!(cfg_test_fixture_item(&fixture), Ok(true));
+
+        let broader = verus_syn::parse_str::<Item>(
+            "#[cfg(any(test, feature = \"test-fixtures\", unix))] fn broader() {}",
+        )
+        .expect("broader fixture function parses");
+        assert_eq!(cfg_test_fixture_item(&broader), Ok(false));
+    }
+
+    #[test]
+    fn generated_roster_parser_binds_exact_ordered_markers() {
+        let exact = verus_syn::parse_str::<Item>(
+            "fe2o3_host::compiler_generated_kernel_expectation_roster_v1! {\
+                pub struct M1RopeKvWorkerV3RosterV1 = [\
+                    PagedKvWriteMarkerV1, RopeMarkerV1,\
+                ];\
+            }",
+        )
+        .expect("exact generated roster parses");
+        let Item::Macro(exact) = exact else {
+            panic!("generated roster must parse as an item macro");
+        };
+        assert_eq!(
+            parse_generated_roster_declaration(&exact).map(|name| name.to_string()),
+            Ok("M1RopeKvWorkerV3RosterV1".to_owned())
+        );
+
+        let reordered = verus_syn::parse_str::<Item>(
+            "fe2o3_host::compiler_generated_kernel_expectation_roster_v1! {\
+                pub struct M1RopeKvWorkerV3RosterV1 = [\
+                    RopeMarkerV1, PagedKvWriteMarkerV1,\
+                ];\
+            }",
+        )
+        .expect("reordered generated roster parses");
+        let Item::Macro(reordered) = reordered else {
+            panic!("generated roster must parse as an item macro");
+        };
+        assert!(parse_generated_roster_declaration(&reordered).is_err());
+    }
+
+    #[test]
+    fn exact_dead_code_expectation_is_lint_only() {
+        let exact = verus_syn::parse_file(
+            "#![expect(dead_code, reason = \"the staged private rebind core is consumed by the authenticated reserve/prepare/submit bridge\")]",
+        )
+        .expect("exact lint expectation parses");
+        assert_eq!(validate_attributes(&exact.attrs, false), Ok(()));
+
+        let drifted =
+            verus_syn::parse_file("#![expect(dead_code, reason = \"broader suppression\")]")
+                .expect("drifted lint expectation parses");
+        assert!(validate_attributes(&drifted.attrs, false).is_err());
     }
 }

@@ -38,7 +38,7 @@ checked-in V1 candidate is rejected explicitly by
 
 The standalone
 `adapters/qwen3-swiglu-worker-v3-envelope-v2` package now pins fe2o3
-`42639ecc7f2f377ab57e5e884c36133a126f230e`. Its raw entry point strictly
+`b5374c6e6a4c1215ad481cefcd294334dcb1cbeb`. Its raw entry point strictly
 decodes V2 into an inert request. Its recovered entry point consumes and
 retains one move-only `RecoveredWorkerV3LoadEnvelopeV2`, derives every
 compiler-receipt identity from that owner's carriage, checks the exact carried
@@ -92,12 +92,12 @@ replacement executable workflow until an authenticated in-process collector
 can acquire all seven V3 owners and pass them to the fail-closed artifact
 publisher.
 
-Only SwiGLU currently has a generated `Marker`/`Arguments` expectation, and it
-is tied to the older checked-in candidate. GEMM, RMSNorm, RoPE/KV, prefill,
-paged decode, and logits do not yet have receipt-bound generated marker
-contracts. None of the seven lanes has the complete authenticated
-proof/executable, Rust layout, Rust effect, and safety-property evidence needed
-for an accepting protected decision.
+All seven kernel families now have exact generated `Marker`/`Arguments`
+expectation declarations in Ferric source. Those declarations are expected
+compiler output shapes, not receipt-bound current artifacts or authenticated
+owners. None of the seven lanes has the complete authenticated proof/executable,
+Rust layout, Rust effect, and safety-property evidence needed for an accepting
+protected decision.
 
 The remaining production join must:
 

@@ -82,30 +82,6 @@ pub enum M1AuthenticatedObservedCompletionOutputV1 {
     ),
 }
 
-macro_rules! observed_case_ref {
-    ($self:expr, $field:ident) => {
-        match $self {
-            M1AuthenticatedObservedCompletionOutputV1::TargetOnly(case) => &case.$field,
-            M1AuthenticatedObservedCompletionOutputV1::PairedPrefill(case) => &case.$field,
-            M1AuthenticatedObservedCompletionOutputV1::SpeculativeK4(case) => &case.$field,
-            M1AuthenticatedObservedCompletionOutputV1::SpeculativeK8(case) => &case.$field,
-            M1AuthenticatedObservedCompletionOutputV1::SpeculativeK16(case) => &case.$field,
-        }
-    };
-}
-
-macro_rules! observed_case_call {
-    ($self:expr, $method:ident) => {
-        match $self {
-            M1AuthenticatedObservedCompletionOutputV1::TargetOnly(case) => case.case.$method(),
-            M1AuthenticatedObservedCompletionOutputV1::PairedPrefill(case) => case.case.$method(),
-            M1AuthenticatedObservedCompletionOutputV1::SpeculativeK4(case) => case.case.$method(),
-            M1AuthenticatedObservedCompletionOutputV1::SpeculativeK8(case) => case.case.$method(),
-            M1AuthenticatedObservedCompletionOutputV1::SpeculativeK16(case) => case.case.$method(),
-        }
-    };
-}
-
 impl M1AuthenticatedObservedCompletionOutputV1 {
     /// Exact closed M1 publication shape.
     #[must_use]
@@ -122,37 +98,73 @@ impl M1AuthenticatedObservedCompletionOutputV1 {
     /// Inert copied image retained without another completed-read capability.
     #[must_use = "the observed image remains paired with authenticated custody"]
     pub const fn image(&self) -> &M1ObservedCompletionImageV1 {
-        observed_case_ref!(self, image)
+        match self {
+            Self::TargetOnly(case) => &case.image,
+            Self::PairedPrefill(case) => &case.image,
+            Self::SpeculativeK4(case) => &case.image,
+            Self::SpeculativeK8(case) => &case.image,
+            Self::SpeculativeK16(case) => &case.image,
+        }
     }
 
     /// Exact scheduler dispatch retained until the semantic join succeeds.
     #[must_use = "scheduler authority remains paired with the observation"]
     pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
-        observed_case_call!(self, scheduled_dispatch)
+        match self {
+            Self::TargetOnly(case) => case.case.scheduled_dispatch(),
+            Self::PairedPrefill(case) => case.case.scheduled_dispatch(),
+            Self::SpeculativeK4(case) => case.case.scheduled_dispatch(),
+            Self::SpeculativeK8(case) => case.case.scheduled_dispatch(),
+            Self::SpeculativeK16(case) => case.case.scheduled_dispatch(),
+        }
     }
 
     /// Checked physical-device receipt retained through observation.
     #[must_use]
     pub const fn device(&self) -> Gfx942DeviceBinding {
-        observed_case_call!(self, device)
+        match self {
+            Self::TargetOnly(case) => case.case.device(),
+            Self::PairedPrefill(case) => case.case.device(),
+            Self::SpeculativeK4(case) => case.case.device(),
+            Self::SpeculativeK8(case) => case.case.device(),
+            Self::SpeculativeK16(case) => case.case.device(),
+        }
     }
 
     /// Exact authenticated program-catalog identity.
     #[must_use]
     pub const fn program_catalog_id(&self) -> Identity {
-        observed_case_call!(self, program_catalog_id)
+        match self {
+            Self::TargetOnly(case) => case.case.program_catalog_id(),
+            Self::PairedPrefill(case) => case.case.program_catalog_id(),
+            Self::SpeculativeK4(case) => case.case.program_catalog_id(),
+            Self::SpeculativeK8(case) => case.case.program_catalog_id(),
+            Self::SpeculativeK16(case) => case.case.program_catalog_id(),
+        }
     }
 
     /// Exact generated runner declaration identity.
     #[must_use]
     pub const fn runner_declaration_id(&self) -> Identity {
-        observed_case_call!(self, runner_declaration_id)
+        match self {
+            Self::TargetOnly(case) => case.case.runner_declaration_id(),
+            Self::PairedPrefill(case) => case.case.runner_declaration_id(),
+            Self::SpeculativeK4(case) => case.case.runner_declaration_id(),
+            Self::SpeculativeK8(case) => case.case.runner_declaration_id(),
+            Self::SpeculativeK16(case) => case.case.runner_declaration_id(),
+        }
     }
 
     /// Exact structural kernel-catalog identity.
     #[must_use]
     pub const fn kernel_catalog_id(&self) -> Identity {
-        observed_case_call!(self, kernel_catalog_id)
+        match self {
+            Self::TargetOnly(case) => case.case.kernel_catalog_id(),
+            Self::PairedPrefill(case) => case.case.kernel_catalog_id(),
+            Self::SpeculativeK4(case) => case.case.kernel_catalog_id(),
+            Self::SpeculativeK8(case) => case.case.kernel_catalog_id(),
+            Self::SpeculativeK16(case) => case.case.kernel_catalog_id(),
+        }
     }
 }
 
@@ -606,53 +618,57 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
         M1AuthenticatedObservedCompletionOutputV1,
         M1AuthenticatedCompletionObservationFailureV1,
     > {
-        macro_rules! observe_variant {
-            ($case:expr, $observed:ident, $recycled:ident, $rejected:ident, $snapshot:ident) => {
-                observe_case($case)
-                    .map(M1AuthenticatedObservedCompletionOutputV1::$observed)
-                    .map_err(|failure| {
-                        retain_observation_failure(
-                            *failure,
-                            M1AuthenticatedPhysicalRecycledQueueSessionV1::$recycled,
-                            M1AuthenticatedRejectedCompletionOutputV1::$rejected,
-                            M1AuthenticatedCompletionSnapshotReadFailedOutputV1::$snapshot,
-                        )
-                    })
-            };
-        }
-
         match self {
-            Self::TargetOnly(case) => {
-                observe_variant!(case, TargetOnly, TargetOnly, TargetOnly, TargetOnly)
-            }
-            Self::PairedPrefill(case) => observe_variant!(
-                case,
-                PairedPrefill,
-                PairedPrefill,
-                PairedPrefill,
-                PairedPrefill
-            ),
-            Self::SpeculativeK4(case) => observe_variant!(
-                case,
-                SpeculativeK4,
-                SpeculativeK4,
-                SpeculativeK4,
-                SpeculativeK4
-            ),
-            Self::SpeculativeK8(case) => observe_variant!(
-                case,
-                SpeculativeK8,
-                SpeculativeK8,
-                SpeculativeK8,
-                SpeculativeK8
-            ),
-            Self::SpeculativeK16(case) => observe_variant!(
-                case,
-                SpeculativeK16,
-                SpeculativeK16,
-                SpeculativeK16,
-                SpeculativeK16
-            ),
+            Self::TargetOnly(case) => observe_case(case)
+                .map(M1AuthenticatedObservedCompletionOutputV1::TargetOnly)
+                .map_err(|failure| {
+                    retain_observation_failure(
+                        *failure,
+                        M1AuthenticatedPhysicalRecycledQueueSessionV1::TargetOnly,
+                        M1AuthenticatedRejectedCompletionOutputV1::TargetOnly,
+                        M1AuthenticatedCompletionSnapshotReadFailedOutputV1::TargetOnly,
+                    )
+                }),
+            Self::PairedPrefill(case) => observe_case(case)
+                .map(M1AuthenticatedObservedCompletionOutputV1::PairedPrefill)
+                .map_err(|failure| {
+                    retain_observation_failure(
+                        *failure,
+                        M1AuthenticatedPhysicalRecycledQueueSessionV1::PairedPrefill,
+                        M1AuthenticatedRejectedCompletionOutputV1::PairedPrefill,
+                        M1AuthenticatedCompletionSnapshotReadFailedOutputV1::PairedPrefill,
+                    )
+                }),
+            Self::SpeculativeK4(case) => observe_case(case)
+                .map(M1AuthenticatedObservedCompletionOutputV1::SpeculativeK4)
+                .map_err(|failure| {
+                    retain_observation_failure(
+                        *failure,
+                        M1AuthenticatedPhysicalRecycledQueueSessionV1::SpeculativeK4,
+                        M1AuthenticatedRejectedCompletionOutputV1::SpeculativeK4,
+                        M1AuthenticatedCompletionSnapshotReadFailedOutputV1::SpeculativeK4,
+                    )
+                }),
+            Self::SpeculativeK8(case) => observe_case(case)
+                .map(M1AuthenticatedObservedCompletionOutputV1::SpeculativeK8)
+                .map_err(|failure| {
+                    retain_observation_failure(
+                        *failure,
+                        M1AuthenticatedPhysicalRecycledQueueSessionV1::SpeculativeK8,
+                        M1AuthenticatedRejectedCompletionOutputV1::SpeculativeK8,
+                        M1AuthenticatedCompletionSnapshotReadFailedOutputV1::SpeculativeK8,
+                    )
+                }),
+            Self::SpeculativeK16(case) => observe_case(case)
+                .map(M1AuthenticatedObservedCompletionOutputV1::SpeculativeK16)
+                .map_err(|failure| {
+                    retain_observation_failure(
+                        *failure,
+                        M1AuthenticatedPhysicalRecycledQueueSessionV1::SpeculativeK16,
+                        M1AuthenticatedRejectedCompletionOutputV1::SpeculativeK16,
+                        M1AuthenticatedCompletionSnapshotReadFailedOutputV1::SpeculativeK16,
+                    )
+                }),
         }
     }
 }
@@ -1800,10 +1816,11 @@ fn validate_generic_observed_semantics(
     }
     if qualification_capture_enabled {
         if let Some(lane) = semantics.iter().position(|semantic| {
-            !matches!(
-                semantic,
-                CompletionWireSemanticExpectation::QualificationPromptCommit { .. }
-            )
+            let CompletionWireSemanticExpectation::QualificationPromptCommit { .. } = semantic
+            else {
+                return true;
+            };
+            false
         }) {
             return Err(
                 M1CompletedOutputCheckErrorV1::QualificationCaptureRequiresEvidence { lane },

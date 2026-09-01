@@ -10,6 +10,8 @@ permissions:
 jobs:
   rust:
     runs-on: ubuntu-latest
+    env:
+      RUSTC_BOOTSTRAP: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -17,8 +19,8 @@ jobs:
           toolchain: "1.97.1"
           components: rustfmt, clippy
       - run: cargo fmt --all --check
-      - run: cargo clippy --workspace --all-targets -- -D warnings
-      - run: cargo test --workspace
+      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - run: cargo test --workspace --locked
       - run: cargo fmt --manifest-path adapters/qwen3-swiglu-worker-v3-envelope-v2/Cargo.toml -- --check
       - run: cargo clippy --manifest-path adapters/qwen3-swiglu-worker-v3-envelope-v2/Cargo.toml --all-targets --locked -- -D warnings
       - run: cargo test --manifest-path adapters/qwen3-swiglu-worker-v3-envelope-v2/Cargo.toml --all-targets --locked
@@ -27,12 +29,33 @@ jobs:
       - run: python3 -I -B -m unittest discover -s benches/m1/reference -p 'test*.py'
       - run: python3 -I -B proofs/m1/evidence/test-source-closure-mode-policy.py
       - run: python3 -I -B proofs/m1/evidence/test-r29-differential-evidence-policy.py
+      - run: python3 -I -B proofs/check-device-binding.py --self-test
+      - name: Check exact M1 planner and fe2o3 integration policy
+        env:
+          FE2O3_REVISION: b5374c6e6a4c1215ad481cefcd294334dcb1cbeb
+        run: |
+          git clone --quiet --no-checkout https://github.com/harsh-nod/fe2o3.git "$RUNNER_TEMP/fe2o3"
+          git -C "$RUNNER_TEMP/fe2o3" checkout --quiet --detach "$FE2O3_REVISION"
+          test "$(git -C "$RUNNER_TEMP/fe2o3" rev-parse HEAD)" = "$FE2O3_REVISION"
+          python3 -I -B proofs/m1-qualification/test-policy.py . "$RUNNER_TEMP/fe2o3"
+          rm -rf "$RUNNER_TEMP/fe2o3"
 
-  qwen3-swiglu-device:
+  qwen3-device:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - qwen3-gemm-v1
+          - qwen3-logits-v1
+          - qwen3-paged-decode-v1
+          - qwen3-prefill-v1
+          - qwen3-rmsnorm-v1
+          - qwen3-rope-kv-v1
+          - qwen3-swiglu-v1
     defaults:
       run:
-        working-directory: device/qwen3-swiglu-v1
+        working-directory: device/${{ matrix.package }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@nightly
@@ -43,10 +66,21 @@ jobs:
         run: >-
           cargo install --locked
           --git https://github.com/harsh-nod/fe2o3.git
-          --rev 1739669000eea19614fdf772127f4d5d705530c0
+          --rev b5374c6e6a4c1215ad481cefcd294334dcb1cbeb
           --root "$RUNNER_TEMP/cargo-fe2o3"
           cargo-fe2o3
-      - run: cargo fmt --all --check
+      - run: cargo fmt --all -- --check
+      - name: Test fallback compiler-derived binding
+        run: cargo test --locked --all-targets
+      - name: Check canonical compiler-derived binding parity
+        shell: bash
+        run: |
+          set -o pipefail
+          "$RUNNER_TEMP/cargo-fe2o3/bin/cargo-fe2o3" \
+            fe2o3 check --locked --lib -vv 2>&1 | \
+            tee "$RUNNER_TEMP/${{ matrix.package }}-binding.log"
+          python3 -I -B ../../proofs/check-device-binding.py \
+            . "$RUNNER_TEMP/${{ matrix.package }}-binding.log"
       # Namespace-free typed kernels require the documented binding-only route.
       # cargo-fe2o3 has no managed clippy lane; do not bypass binding to invoke it.
       - name: Check all host targets through compiler-derived binding

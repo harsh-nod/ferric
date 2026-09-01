@@ -731,8 +731,8 @@ const fn hex_digit(byte: u8) -> u8 {
 mod tests {
     use super::*;
     use fe2o3_runtime_protocol::{
-        MAX_WORKER_V3_LOAD_ENVELOPE_BYTES_V2, WORKER_V3_LOAD_ENVELOPE_MAGIC_V1,
-        WORKER_V3_LOAD_ENVELOPE_MAGIC_V2,
+        COMPILER_EXECUTION_RECEIPT_CARRIAGE_BYTES_V1, MAX_WORKER_V3_LOAD_ENVELOPE_BYTES_V2,
+        WORKER_V3_LOAD_ENVELOPE_MAGIC_V1, WORKER_V3_LOAD_ENVELOPE_MAGIC_V2,
     };
 
     #[test]
@@ -742,11 +742,16 @@ mod tests {
         assert!(matches!(
             decode_m1_swiglu_pending_request_v2(&v1),
             Err(M1SwiGluV2ProjectionErrorV1::Envelope(
-                WorkerV3LoadEnvelopeErrorV2::BadMagic
-            ))
+                WorkerV3LoadEnvelopeErrorV2::WireLengthOutOfRange {
+                    actual: 2_115,
+                    minimum,
+                    ..
+                }
+            )) if minimum > 2_115
         ));
 
-        let mut wrong_version = vec![0_u8; 2_115];
+        let current_v2_minimum = 24 + COMPILER_EXECUTION_RECEIPT_CARRIAGE_BYTES_V1 + 32 + 1;
+        let mut wrong_version = vec![0_u8; current_v2_minimum];
         wrong_version[..8].copy_from_slice(&WORKER_V3_LOAD_ENVELOPE_MAGIC_V2);
         wrong_version[8..10].copy_from_slice(&1_u16.to_le_bytes());
         assert!(matches!(

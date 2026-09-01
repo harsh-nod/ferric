@@ -33,8 +33,9 @@ remain non-null even though the kernel never reads it. Ferric deliberately does
 not substitute a dummy buffer: production KFD packing depends on the pending
 generic fe2o3 non-null-empty-slice support.
 
-The dependency revision is provisional. This package grants no artifact,
+The package pins exact reviewed fe2o3 revision
+`b5374c6e6a4c1215ad481cefcd294334dcb1cbeb`. This package grants no artifact,
 source-to-machine, load, launch, completion, hardware, performance, or M1 gate
-authority. Final integration requires pinning the settled fe2o3 compiler/runtime
-revision, extracting all three roots, reconciling generated ABI and launch
-descriptors with `ferric-qwen-kernels`, and qualifying them on MI300X.
+authority. Final integration still requires extracting all three roots,
+reconciling generated ABI and launch descriptors with `ferric-qwen-kernels`,
+and qualifying them on MI300X.

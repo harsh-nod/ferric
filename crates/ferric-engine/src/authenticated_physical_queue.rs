@@ -159,119 +159,385 @@ impl<Q: core::fmt::Debug> core::fmt::Debug for M1AuthenticatedPhysicalQueuePhase
     }
 }
 
-macro_rules! define_authenticated_queue_phase {
-    ($name:ident, $lower:ident, $must_use:literal) => {
-        #[must_use = $must_use]
-        #[derive(Debug)]
-        pub enum $name {
-            /// One complete target-only queue generation.
-            TargetOnly(
-                Box<
-                    M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                        $lower<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>,
-                    >,
-                >,
-            ),
-            /// One complete paired-prefill queue generation.
-            PairedPrefill(
-                Box<
-                    M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                        $lower<M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1>,
-                    >,
-                >,
-            ),
-            /// One complete K4 speculative queue generation.
-            SpeculativeK4(
-                Box<
-                    M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                        $lower<M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1>,
-                    >,
-                >,
-            ),
-            /// One complete K8 speculative queue generation.
-            SpeculativeK8(
-                Box<
-                    M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                        $lower<M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1>,
-                    >,
-                >,
-            ),
-            /// One complete K16 speculative queue generation.
-            SpeculativeK16(
-                Box<
-                    M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                        $lower<M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1>,
-                    >,
-                >,
-            ),
-        }
-
-        impl $name {
-            /// Exact closed M1 publication shape.
-            #[must_use]
-            pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
-                match self {
-                    Self::TargetOnly(_) => M1PhysicalFixedBatchShapeV1::TargetOnly,
-                    Self::PairedPrefill(_) => M1PhysicalFixedBatchShapeV1::PairedPrefill,
-                    Self::SpeculativeK4(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK4,
-                    Self::SpeculativeK8(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK8,
-                    Self::SpeculativeK16(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK16,
-                }
-            }
-
-            /// Exact compile-time packet cardinality.
-            #[must_use]
-            pub const fn packet_count(&self) -> usize {
-                self.shape().packet_count()
-            }
-
-            /// Exact scheduler authority retained by this queue phase.
-            #[must_use = "scheduler authority remains retained by the queue"]
-            pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
-                match self {
-                    Self::TargetOnly(case) => case.scheduled_dispatch(),
-                    Self::PairedPrefill(case) => case.scheduled_dispatch(),
-                    Self::SpeculativeK4(case) => case.scheduled_dispatch(),
-                    Self::SpeculativeK8(case) => case.scheduled_dispatch(),
-                    Self::SpeculativeK16(case) => case.scheduled_dispatch(),
-                }
-            }
-
-            /// Checked physical-device receipt retained by this queue phase.
-            #[must_use]
-            pub const fn device(&self) -> Gfx942DeviceBinding {
-                match self {
-                    Self::TargetOnly(case) => case.device(),
-                    Self::PairedPrefill(case) => case.device(),
-                    Self::SpeculativeK4(case) => case.device(),
-                    Self::SpeculativeK8(case) => case.device(),
-                    Self::SpeculativeK16(case) => case.device(),
-                }
-            }
-        }
-    };
+#[must_use = "prepared authenticated queue custody must be submitted or retained"]
+#[derive(Debug)]
+pub enum M1AuthenticatedPhysicalQueueSessionV1 {
+    /// One complete target-only queue generation.
+    TargetOnly(
+        Box<
+            M1AuthenticatedPhysicalQueuePhaseCaseV1<
+                AuthenticatedServiceQueueSessionV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    ),
+    /// One complete paired-prefill queue generation.
+    PairedPrefill(
+        Box<
+            M1AuthenticatedPhysicalQueuePhaseCaseV1<
+                AuthenticatedServiceQueueSessionV1<M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    ),
+    /// One complete K4 speculative queue generation.
+    SpeculativeK4(
+        Box<
+            M1AuthenticatedPhysicalQueuePhaseCaseV1<
+                AuthenticatedServiceQueueSessionV1<M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    ),
+    /// One complete K8 speculative queue generation.
+    SpeculativeK8(
+        Box<
+            M1AuthenticatedPhysicalQueuePhaseCaseV1<
+                AuthenticatedServiceQueueSessionV1<M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    ),
+    /// One complete K16 speculative queue generation.
+    SpeculativeK16(
+        Box<
+            M1AuthenticatedPhysicalQueuePhaseCaseV1<
+                AuthenticatedServiceQueueSessionV1<M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    ),
 }
 
-define_authenticated_queue_phase!(
-    M1AuthenticatedPhysicalQueueSessionV1,
-    AuthenticatedServiceQueueSessionV1,
-    "prepared authenticated queue custody must be submitted or retained"
-);
-define_authenticated_queue_phase!(
-    M1AuthenticatedPhysicalPublishedQueueSessionV1,
-    AuthenticatedServicePublishedQueueSessionV1,
-    "published authenticated queue custody must be completed"
-);
-define_authenticated_queue_phase!(
-    M1AuthenticatedPhysicalCompletedQueueSessionV1,
-    AuthenticatedServiceCompletedQueueSessionV1,
-    "completed authenticated queue custody must be recycled"
-);
-define_authenticated_queue_phase!(
-    M1AuthenticatedPhysicalRecycledQueueSessionV1,
-    AuthenticatedServiceRecycledQueueSessionV1,
-    "recycled authenticated queue custody must be reused, detached, or released"
-);
+impl M1AuthenticatedPhysicalQueueSessionV1 {
+    /// Exact closed M1 publication shape.
+    #[must_use]
+    pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
+        match self {
+            Self::TargetOnly(_) => M1PhysicalFixedBatchShapeV1::TargetOnly,
+            Self::PairedPrefill(_) => M1PhysicalFixedBatchShapeV1::PairedPrefill,
+            Self::SpeculativeK4(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+            Self::SpeculativeK8(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+            Self::SpeculativeK16(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+        }
+    }
+
+    /// Exact compile-time packet cardinality.
+    #[must_use]
+    pub const fn packet_count(&self) -> usize {
+        self.shape().packet_count()
+    }
+
+    /// Exact scheduler authority retained by this queue phase.
+    #[must_use = "scheduler authority remains retained by the queue"]
+    pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
+        match self {
+            Self::TargetOnly(case) => case.scheduled_dispatch(),
+            Self::PairedPrefill(case) => case.scheduled_dispatch(),
+            Self::SpeculativeK4(case) => case.scheduled_dispatch(),
+            Self::SpeculativeK8(case) => case.scheduled_dispatch(),
+            Self::SpeculativeK16(case) => case.scheduled_dispatch(),
+        }
+    }
+
+    /// Checked physical-device receipt retained by this queue phase.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        match self {
+            Self::TargetOnly(case) => case.device(),
+            Self::PairedPrefill(case) => case.device(),
+            Self::SpeculativeK4(case) => case.device(),
+            Self::SpeculativeK8(case) => case.device(),
+            Self::SpeculativeK16(case) => case.device(),
+        }
+    }
+}
+
+#[must_use = "published authenticated queue custody must be completed"]
+#[derive(Debug)]
+pub enum M1AuthenticatedPhysicalPublishedQueueSessionV1 {
+    /// One complete target-only queue generation.
+    TargetOnly(
+        Box<
+            M1AuthenticatedPhysicalQueuePhaseCaseV1<
+                AuthenticatedServicePublishedQueueSessionV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    ),
+    /// One complete paired-prefill queue generation.
+    PairedPrefill(
+        Box<
+            M1AuthenticatedPhysicalQueuePhaseCaseV1<
+                AuthenticatedServicePublishedQueueSessionV1<
+                    M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
+                >,
+            >,
+        >,
+    ),
+    /// One complete K4 speculative queue generation.
+    SpeculativeK4(
+        Box<
+            M1AuthenticatedPhysicalQueuePhaseCaseV1<
+                AuthenticatedServicePublishedQueueSessionV1<
+                    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
+                >,
+            >,
+        >,
+    ),
+    /// One complete K8 speculative queue generation.
+    SpeculativeK8(
+        Box<
+            M1AuthenticatedPhysicalQueuePhaseCaseV1<
+                AuthenticatedServicePublishedQueueSessionV1<
+                    M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
+                >,
+            >,
+        >,
+    ),
+    /// One complete K16 speculative queue generation.
+    SpeculativeK16(
+        Box<
+            M1AuthenticatedPhysicalQueuePhaseCaseV1<
+                AuthenticatedServicePublishedQueueSessionV1<
+                    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
+                >,
+            >,
+        >,
+    ),
+}
+
+impl M1AuthenticatedPhysicalPublishedQueueSessionV1 {
+    /// Exact closed M1 publication shape.
+    #[must_use]
+    pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
+        match self {
+            Self::TargetOnly(_) => M1PhysicalFixedBatchShapeV1::TargetOnly,
+            Self::PairedPrefill(_) => M1PhysicalFixedBatchShapeV1::PairedPrefill,
+            Self::SpeculativeK4(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+            Self::SpeculativeK8(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+            Self::SpeculativeK16(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+        }
+    }
+
+    /// Exact compile-time packet cardinality.
+    #[must_use]
+    pub const fn packet_count(&self) -> usize {
+        self.shape().packet_count()
+    }
+
+    /// Exact scheduler authority retained by this queue phase.
+    #[must_use = "scheduler authority remains retained by the queue"]
+    pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
+        match self {
+            Self::TargetOnly(case) => case.scheduled_dispatch(),
+            Self::PairedPrefill(case) => case.scheduled_dispatch(),
+            Self::SpeculativeK4(case) => case.scheduled_dispatch(),
+            Self::SpeculativeK8(case) => case.scheduled_dispatch(),
+            Self::SpeculativeK16(case) => case.scheduled_dispatch(),
+        }
+    }
+
+    /// Checked physical-device receipt retained by this queue phase.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        match self {
+            Self::TargetOnly(case) => case.device(),
+            Self::PairedPrefill(case) => case.device(),
+            Self::SpeculativeK4(case) => case.device(),
+            Self::SpeculativeK8(case) => case.device(),
+            Self::SpeculativeK16(case) => case.device(),
+        }
+    }
+}
+
+#[must_use = "completed authenticated queue custody must be recycled"]
+#[derive(Debug)]
+pub enum M1AuthenticatedPhysicalCompletedQueueSessionV1 {
+    /// One complete target-only queue generation.
+    TargetOnly(
+        Box<
+            M1AuthenticatedPhysicalQueuePhaseCaseV1<
+                AuthenticatedServiceCompletedQueueSessionV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    ),
+    /// One complete paired-prefill queue generation.
+    PairedPrefill(
+        Box<
+            M1AuthenticatedPhysicalQueuePhaseCaseV1<
+                AuthenticatedServiceCompletedQueueSessionV1<
+                    M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
+                >,
+            >,
+        >,
+    ),
+    /// One complete K4 speculative queue generation.
+    SpeculativeK4(
+        Box<
+            M1AuthenticatedPhysicalQueuePhaseCaseV1<
+                AuthenticatedServiceCompletedQueueSessionV1<
+                    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
+                >,
+            >,
+        >,
+    ),
+    /// One complete K8 speculative queue generation.
+    SpeculativeK8(
+        Box<
+            M1AuthenticatedPhysicalQueuePhaseCaseV1<
+                AuthenticatedServiceCompletedQueueSessionV1<
+                    M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
+                >,
+            >,
+        >,
+    ),
+    /// One complete K16 speculative queue generation.
+    SpeculativeK16(
+        Box<
+            M1AuthenticatedPhysicalQueuePhaseCaseV1<
+                AuthenticatedServiceCompletedQueueSessionV1<
+                    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
+                >,
+            >,
+        >,
+    ),
+}
+
+impl M1AuthenticatedPhysicalCompletedQueueSessionV1 {
+    /// Exact closed M1 publication shape.
+    #[must_use]
+    pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
+        match self {
+            Self::TargetOnly(_) => M1PhysicalFixedBatchShapeV1::TargetOnly,
+            Self::PairedPrefill(_) => M1PhysicalFixedBatchShapeV1::PairedPrefill,
+            Self::SpeculativeK4(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+            Self::SpeculativeK8(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+            Self::SpeculativeK16(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+        }
+    }
+
+    /// Exact compile-time packet cardinality.
+    #[must_use]
+    pub const fn packet_count(&self) -> usize {
+        self.shape().packet_count()
+    }
+
+    /// Exact scheduler authority retained by this queue phase.
+    #[must_use = "scheduler authority remains retained by the queue"]
+    pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
+        match self {
+            Self::TargetOnly(case) => case.scheduled_dispatch(),
+            Self::PairedPrefill(case) => case.scheduled_dispatch(),
+            Self::SpeculativeK4(case) => case.scheduled_dispatch(),
+            Self::SpeculativeK8(case) => case.scheduled_dispatch(),
+            Self::SpeculativeK16(case) => case.scheduled_dispatch(),
+        }
+    }
+
+    /// Checked physical-device receipt retained by this queue phase.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        match self {
+            Self::TargetOnly(case) => case.device(),
+            Self::PairedPrefill(case) => case.device(),
+            Self::SpeculativeK4(case) => case.device(),
+            Self::SpeculativeK8(case) => case.device(),
+            Self::SpeculativeK16(case) => case.device(),
+        }
+    }
+}
+
+#[must_use = "recycled authenticated queue custody must be reused, detached, or released"]
+#[derive(Debug)]
+pub enum M1AuthenticatedPhysicalRecycledQueueSessionV1 {
+    /// One complete target-only queue generation.
+    TargetOnly(
+        Box<
+            M1AuthenticatedPhysicalQueuePhaseCaseV1<
+                AuthenticatedServiceRecycledQueueSessionV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    ),
+    /// One complete paired-prefill queue generation.
+    PairedPrefill(
+        Box<
+            M1AuthenticatedPhysicalQueuePhaseCaseV1<
+                AuthenticatedServiceRecycledQueueSessionV1<
+                    M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
+                >,
+            >,
+        >,
+    ),
+    /// One complete K4 speculative queue generation.
+    SpeculativeK4(
+        Box<
+            M1AuthenticatedPhysicalQueuePhaseCaseV1<
+                AuthenticatedServiceRecycledQueueSessionV1<
+                    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
+                >,
+            >,
+        >,
+    ),
+    /// One complete K8 speculative queue generation.
+    SpeculativeK8(
+        Box<
+            M1AuthenticatedPhysicalQueuePhaseCaseV1<
+                AuthenticatedServiceRecycledQueueSessionV1<
+                    M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
+                >,
+            >,
+        >,
+    ),
+    /// One complete K16 speculative queue generation.
+    SpeculativeK16(
+        Box<
+            M1AuthenticatedPhysicalQueuePhaseCaseV1<
+                AuthenticatedServiceRecycledQueueSessionV1<
+                    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
+                >,
+            >,
+        >,
+    ),
+}
+
+impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
+    /// Exact closed M1 publication shape.
+    #[must_use]
+    pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
+        match self {
+            Self::TargetOnly(_) => M1PhysicalFixedBatchShapeV1::TargetOnly,
+            Self::PairedPrefill(_) => M1PhysicalFixedBatchShapeV1::PairedPrefill,
+            Self::SpeculativeK4(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+            Self::SpeculativeK8(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+            Self::SpeculativeK16(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+        }
+    }
+
+    /// Exact compile-time packet cardinality.
+    #[must_use]
+    pub const fn packet_count(&self) -> usize {
+        self.shape().packet_count()
+    }
+
+    /// Exact scheduler authority retained by this queue phase.
+    #[must_use = "scheduler authority remains retained by the queue"]
+    pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
+        match self {
+            Self::TargetOnly(case) => case.scheduled_dispatch(),
+            Self::PairedPrefill(case) => case.scheduled_dispatch(),
+            Self::SpeculativeK4(case) => case.scheduled_dispatch(),
+            Self::SpeculativeK8(case) => case.scheduled_dispatch(),
+            Self::SpeculativeK16(case) => case.scheduled_dispatch(),
+        }
+    }
+
+    /// Checked physical-device receipt retained by this queue phase.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        match self {
+            Self::TargetOnly(case) => case.device(),
+            Self::PairedPrefill(case) => case.device(),
+            Self::SpeculativeK4(case) => case.device(),
+            Self::SpeculativeK8(case) => case.device(),
+            Self::SpeculativeK16(case) => case.device(),
+        }
+    }
+}
 
 /// Live detached queue retaining authenticated program history and prior-step custody.
 ///
@@ -529,30 +795,34 @@ fn create_case<const N: usize>(
     }
 }
 
-macro_rules! finish_create {
-    ($result:expr, $queue_variant:ident, $batch_variant:ident) => {
-        match $result {
-            CreateCaseResultV1::Ready(case) => {
-                Ok(M1AuthenticatedPhysicalQueueSessionV1::$queue_variant(case))
-            }
-            CreateCaseResultV1::Rejected {
-                diagnostic,
-                runner,
-                batch,
-                step,
-            } => Err(M1AuthenticatedPhysicalQueueCreateFailureV1::Rejected {
-                diagnostic,
-                prepublication: Box::new(M1AuthenticatedPrepublicationBatchV1 {
-                    runner: *runner,
-                    batch: M1AuthenticatedPhysicalPacketBatchV1::$batch_variant(batch),
-                    step: *step,
-                }),
+fn finish_create<const N: usize>(
+    result: CreateCaseResultV1<N>,
+    queue_variant: fn(
+        Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceQueueSessionV1<N>>>,
+    ) -> M1AuthenticatedPhysicalQueueSessionV1,
+    batch_variant: fn(
+        Box<M1AuthenticatedPhysicalPacketBatchCaseV1<N>>,
+    ) -> M1AuthenticatedPhysicalPacketBatchV1,
+) -> Result<M1AuthenticatedPhysicalQueueSessionV1, M1AuthenticatedPhysicalQueueCreateFailureV1> {
+    match result {
+        CreateCaseResultV1::Ready(case) => Ok(queue_variant(case)),
+        CreateCaseResultV1::Rejected {
+            diagnostic,
+            runner,
+            batch,
+            step,
+        } => Err(M1AuthenticatedPhysicalQueueCreateFailureV1::Rejected {
+            diagnostic,
+            prepublication: Box::new(M1AuthenticatedPrepublicationBatchV1 {
+                runner: *runner,
+                batch: batch_variant(batch),
+                step: *step,
             }),
-            CreateCaseResultV1::Terminal(terminal) => Err(
-                M1AuthenticatedPhysicalQueueCreateFailureV1::Terminal(Box::new(terminal)),
-            ),
-        }
-    };
+        }),
+        CreateCaseResultV1::Terminal(terminal) => Err(
+            M1AuthenticatedPhysicalQueueCreateFailureV1::Terminal(Box::new(terminal)),
+        ),
+    }
 }
 
 impl M1AuthenticatedPhysicalQueueSessionV1 {
@@ -594,7 +864,7 @@ impl M1AuthenticatedPhysicalQueueSessionV1 {
             step,
         } = prepublication;
         match batch {
-            M1AuthenticatedPhysicalPacketBatchV1::TargetOnly(batch) => finish_create!(
+            M1AuthenticatedPhysicalPacketBatchV1::TargetOnly(batch) => finish_create(
                 create_case(
                     ring_bytes,
                     runner,
@@ -602,10 +872,10 @@ impl M1AuthenticatedPhysicalQueueSessionV1 {
                     step,
                     M1PhysicalFixedBatchShapeV1::TargetOnly,
                 ),
-                TargetOnly,
-                TargetOnly
+                M1AuthenticatedPhysicalQueueSessionV1::TargetOnly,
+                M1AuthenticatedPhysicalPacketBatchV1::TargetOnly,
             ),
-            M1AuthenticatedPhysicalPacketBatchV1::PairedPrefill(batch) => finish_create!(
+            M1AuthenticatedPhysicalPacketBatchV1::PairedPrefill(batch) => finish_create(
                 create_case(
                     ring_bytes,
                     runner,
@@ -613,10 +883,10 @@ impl M1AuthenticatedPhysicalQueueSessionV1 {
                     step,
                     M1PhysicalFixedBatchShapeV1::PairedPrefill,
                 ),
-                PairedPrefill,
-                PairedPrefill
+                M1AuthenticatedPhysicalQueueSessionV1::PairedPrefill,
+                M1AuthenticatedPhysicalPacketBatchV1::PairedPrefill,
             ),
-            M1AuthenticatedPhysicalPacketBatchV1::SpeculativeK4(batch) => finish_create!(
+            M1AuthenticatedPhysicalPacketBatchV1::SpeculativeK4(batch) => finish_create(
                 create_case(
                     ring_bytes,
                     runner,
@@ -624,10 +894,10 @@ impl M1AuthenticatedPhysicalQueueSessionV1 {
                     step,
                     M1PhysicalFixedBatchShapeV1::SpeculativeK4,
                 ),
-                SpeculativeK4,
-                SpeculativeK4
+                M1AuthenticatedPhysicalQueueSessionV1::SpeculativeK4,
+                M1AuthenticatedPhysicalPacketBatchV1::SpeculativeK4,
             ),
-            M1AuthenticatedPhysicalPacketBatchV1::SpeculativeK8(batch) => finish_create!(
+            M1AuthenticatedPhysicalPacketBatchV1::SpeculativeK8(batch) => finish_create(
                 create_case(
                     ring_bytes,
                     runner,
@@ -635,10 +905,10 @@ impl M1AuthenticatedPhysicalQueueSessionV1 {
                     step,
                     M1PhysicalFixedBatchShapeV1::SpeculativeK8,
                 ),
-                SpeculativeK8,
-                SpeculativeK8
+                M1AuthenticatedPhysicalQueueSessionV1::SpeculativeK8,
+                M1AuthenticatedPhysicalPacketBatchV1::SpeculativeK8,
             ),
-            M1AuthenticatedPhysicalPacketBatchV1::SpeculativeK16(batch) => finish_create!(
+            M1AuthenticatedPhysicalPacketBatchV1::SpeculativeK16(batch) => finish_create(
                 create_case(
                     ring_bytes,
                     runner,
@@ -646,8 +916,8 @@ impl M1AuthenticatedPhysicalQueueSessionV1 {
                     step,
                     M1PhysicalFixedBatchShapeV1::SpeculativeK16,
                 ),
-                SpeculativeK16,
-                SpeculativeK16
+                M1AuthenticatedPhysicalQueueSessionV1::SpeculativeK16,
+                M1AuthenticatedPhysicalPacketBatchV1::SpeculativeK16,
             ),
         }
     }
@@ -784,23 +1054,31 @@ fn submit_case<const N: usize>(
     }
 }
 
-macro_rules! submit_variant {
-    ($case:expr, $shape:ident, $variant:ident) => {
-        match submit_case($case, M1PhysicalFixedBatchShapeV1::$shape) {
-            Ok(case) => Ok(M1AuthenticatedPhysicalPublishedQueueSessionV1::$variant(
-                case,
-            )),
-            Err(SubmitCaseFailureV1::Currentness { error, retained }) => {
-                Err(M1AuthenticatedPhysicalQueueSubmitFailureV1::Currentness {
-                    error,
-                    retained: Box::new(M1AuthenticatedPhysicalQueueSessionV1::$variant(retained)),
-                })
-            }
-            Err(SubmitCaseFailureV1::Queue(failure)) => {
-                Err(M1AuthenticatedPhysicalQueueSubmitFailureV1::Queue(failure))
-            }
+fn submit_variant<const N: usize>(
+    case: Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceQueueSessionV1<N>>>,
+    shape: M1PhysicalFixedBatchShapeV1,
+    published_variant: fn(
+        Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServicePublishedQueueSessionV1<N>>>,
+    ) -> M1AuthenticatedPhysicalPublishedQueueSessionV1,
+    retained_variant: fn(
+        Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceQueueSessionV1<N>>>,
+    ) -> M1AuthenticatedPhysicalQueueSessionV1,
+) -> Result<
+    M1AuthenticatedPhysicalPublishedQueueSessionV1,
+    M1AuthenticatedPhysicalQueueSubmitFailureV1,
+> {
+    match submit_case(case, shape) {
+        Ok(case) => Ok(published_variant(case)),
+        Err(SubmitCaseFailureV1::Currentness { error, retained }) => {
+            Err(M1AuthenticatedPhysicalQueueSubmitFailureV1::Currentness {
+                error,
+                retained: Box::new(retained_variant(retained)),
+            })
         }
-    };
+        Err(SubmitCaseFailureV1::Queue(failure)) => {
+            Err(M1AuthenticatedPhysicalQueueSubmitFailureV1::Queue(failure))
+        }
+    }
 }
 
 impl M1AuthenticatedPhysicalQueueSessionV1 {
@@ -817,11 +1095,36 @@ impl M1AuthenticatedPhysicalQueueSessionV1 {
         M1AuthenticatedPhysicalQueueSubmitFailureV1,
     > {
         match self {
-            Self::TargetOnly(case) => submit_variant!(case, TargetOnly, TargetOnly),
-            Self::PairedPrefill(case) => submit_variant!(case, PairedPrefill, PairedPrefill),
-            Self::SpeculativeK4(case) => submit_variant!(case, SpeculativeK4, SpeculativeK4),
-            Self::SpeculativeK8(case) => submit_variant!(case, SpeculativeK8, SpeculativeK8),
-            Self::SpeculativeK16(case) => submit_variant!(case, SpeculativeK16, SpeculativeK16),
+            Self::TargetOnly(case) => submit_variant(
+                case,
+                M1PhysicalFixedBatchShapeV1::TargetOnly,
+                M1AuthenticatedPhysicalPublishedQueueSessionV1::TargetOnly,
+                Self::TargetOnly,
+            ),
+            Self::PairedPrefill(case) => submit_variant(
+                case,
+                M1PhysicalFixedBatchShapeV1::PairedPrefill,
+                M1AuthenticatedPhysicalPublishedQueueSessionV1::PairedPrefill,
+                Self::PairedPrefill,
+            ),
+            Self::SpeculativeK4(case) => submit_variant(
+                case,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+                M1AuthenticatedPhysicalPublishedQueueSessionV1::SpeculativeK4,
+                Self::SpeculativeK4,
+            ),
+            Self::SpeculativeK8(case) => submit_variant(
+                case,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+                M1AuthenticatedPhysicalPublishedQueueSessionV1::SpeculativeK8,
+                Self::SpeculativeK8,
+            ),
+            Self::SpeculativeK16(case) => submit_variant(
+                case,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+                M1AuthenticatedPhysicalPublishedQueueSessionV1::SpeculativeK16,
+                Self::SpeculativeK16,
+            ),
         }
     }
 }
@@ -886,11 +1189,19 @@ fn wait_case<const N: usize>(
     }
 }
 
-macro_rules! wait_variant {
-    ($case:expr, $shape:ident, $variant:ident) => {
-        wait_case($case, M1PhysicalFixedBatchShapeV1::$shape)
-            .map(M1AuthenticatedPhysicalCompletedQueueSessionV1::$variant)
-    };
+fn wait_variant<const N: usize>(
+    case: Box<
+        M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServicePublishedQueueSessionV1<N>>,
+    >,
+    shape: M1PhysicalFixedBatchShapeV1,
+    completed_variant: fn(
+        Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceCompletedQueueSessionV1<N>>>,
+    ) -> M1AuthenticatedPhysicalCompletedQueueSessionV1,
+) -> Result<
+    M1AuthenticatedPhysicalCompletedQueueSessionV1,
+    Box<M1AuthenticatedPhysicalQueueOperationFailureV1>,
+> {
+    wait_case(case, shape).map(completed_variant)
 }
 
 impl M1AuthenticatedPhysicalPublishedQueueSessionV1 {
@@ -907,11 +1218,31 @@ impl M1AuthenticatedPhysicalPublishedQueueSessionV1 {
         Box<M1AuthenticatedPhysicalQueueOperationFailureV1>,
     > {
         match self {
-            Self::TargetOnly(case) => wait_variant!(case, TargetOnly, TargetOnly),
-            Self::PairedPrefill(case) => wait_variant!(case, PairedPrefill, PairedPrefill),
-            Self::SpeculativeK4(case) => wait_variant!(case, SpeculativeK4, SpeculativeK4),
-            Self::SpeculativeK8(case) => wait_variant!(case, SpeculativeK8, SpeculativeK8),
-            Self::SpeculativeK16(case) => wait_variant!(case, SpeculativeK16, SpeculativeK16),
+            Self::TargetOnly(case) => wait_variant(
+                case,
+                M1PhysicalFixedBatchShapeV1::TargetOnly,
+                M1AuthenticatedPhysicalCompletedQueueSessionV1::TargetOnly,
+            ),
+            Self::PairedPrefill(case) => wait_variant(
+                case,
+                M1PhysicalFixedBatchShapeV1::PairedPrefill,
+                M1AuthenticatedPhysicalCompletedQueueSessionV1::PairedPrefill,
+            ),
+            Self::SpeculativeK4(case) => wait_variant(
+                case,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+                M1AuthenticatedPhysicalCompletedQueueSessionV1::SpeculativeK4,
+            ),
+            Self::SpeculativeK8(case) => wait_variant(
+                case,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+                M1AuthenticatedPhysicalCompletedQueueSessionV1::SpeculativeK8,
+            ),
+            Self::SpeculativeK16(case) => wait_variant(
+                case,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+                M1AuthenticatedPhysicalCompletedQueueSessionV1::SpeculativeK16,
+            ),
         }
     }
 }
@@ -936,11 +1267,19 @@ fn recycle_case<const N: usize>(
     }
 }
 
-macro_rules! recycle_variant {
-    ($case:expr, $shape:ident, $variant:ident) => {
-        recycle_case($case, M1PhysicalFixedBatchShapeV1::$shape)
-            .map(M1AuthenticatedPhysicalRecycledQueueSessionV1::$variant)
-    };
+fn recycle_variant<const N: usize>(
+    case: Box<
+        M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceCompletedQueueSessionV1<N>>,
+    >,
+    shape: M1PhysicalFixedBatchShapeV1,
+    recycled_variant: fn(
+        Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceRecycledQueueSessionV1<N>>>,
+    ) -> M1AuthenticatedPhysicalRecycledQueueSessionV1,
+) -> Result<
+    M1AuthenticatedPhysicalRecycledQueueSessionV1,
+    Box<M1AuthenticatedPhysicalQueueOperationFailureV1>,
+> {
+    recycle_case(case, shape).map(recycled_variant)
 }
 
 impl M1AuthenticatedPhysicalCompletedQueueSessionV1 {
@@ -956,11 +1295,31 @@ impl M1AuthenticatedPhysicalCompletedQueueSessionV1 {
         Box<M1AuthenticatedPhysicalQueueOperationFailureV1>,
     > {
         match self {
-            Self::TargetOnly(case) => recycle_variant!(case, TargetOnly, TargetOnly),
-            Self::PairedPrefill(case) => recycle_variant!(case, PairedPrefill, PairedPrefill),
-            Self::SpeculativeK4(case) => recycle_variant!(case, SpeculativeK4, SpeculativeK4),
-            Self::SpeculativeK8(case) => recycle_variant!(case, SpeculativeK8, SpeculativeK8),
-            Self::SpeculativeK16(case) => recycle_variant!(case, SpeculativeK16, SpeculativeK16),
+            Self::TargetOnly(case) => recycle_variant(
+                case,
+                M1PhysicalFixedBatchShapeV1::TargetOnly,
+                M1AuthenticatedPhysicalRecycledQueueSessionV1::TargetOnly,
+            ),
+            Self::PairedPrefill(case) => recycle_variant(
+                case,
+                M1PhysicalFixedBatchShapeV1::PairedPrefill,
+                M1AuthenticatedPhysicalRecycledQueueSessionV1::PairedPrefill,
+            ),
+            Self::SpeculativeK4(case) => recycle_variant(
+                case,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+                M1AuthenticatedPhysicalRecycledQueueSessionV1::SpeculativeK4,
+            ),
+            Self::SpeculativeK8(case) => recycle_variant(
+                case,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+                M1AuthenticatedPhysicalRecycledQueueSessionV1::SpeculativeK8,
+            ),
+            Self::SpeculativeK16(case) => recycle_variant(
+                case,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+                M1AuthenticatedPhysicalRecycledQueueSessionV1::SpeculativeK16,
+            ),
         }
     }
 }
@@ -1023,20 +1382,26 @@ fn reuse_case<const N: usize>(
     }
 }
 
-macro_rules! reuse_variant {
-    ($case:expr, $variant:ident) => {
-        match reuse_case($case) {
-            Ok(case) => Ok(M1AuthenticatedPhysicalQueueSessionV1::$variant(case)),
-            Err(ReuseCaseFailureV1 { error, retained }) => {
-                Err(M1AuthenticatedPhysicalQueueReuseFailureV1 {
-                    error: Box::new(error),
-                    retained: Box::new(M1AuthenticatedPhysicalRecycledQueueSessionV1::$variant(
-                        retained,
-                    )),
-                })
-            }
+fn reuse_variant<const N: usize>(
+    case: Box<
+        M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceRecycledQueueSessionV1<N>>,
+    >,
+    prepared_variant: fn(
+        Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceQueueSessionV1<N>>>,
+    ) -> M1AuthenticatedPhysicalQueueSessionV1,
+    retained_variant: fn(
+        Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceRecycledQueueSessionV1<N>>>,
+    ) -> M1AuthenticatedPhysicalRecycledQueueSessionV1,
+) -> Result<M1AuthenticatedPhysicalQueueSessionV1, M1AuthenticatedPhysicalQueueReuseFailureV1> {
+    match reuse_case(case) {
+        Ok(case) => Ok(prepared_variant(case)),
+        Err(ReuseCaseFailureV1 { error, retained }) => {
+            Err(M1AuthenticatedPhysicalQueueReuseFailureV1 {
+                error: Box::new(error),
+                retained: Box::new(retained_variant(retained)),
+            })
         }
-    };
+    }
 }
 
 impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
@@ -1051,11 +1416,31 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
     ) -> Result<M1AuthenticatedPhysicalQueueSessionV1, M1AuthenticatedPhysicalQueueReuseFailureV1>
     {
         match self {
-            Self::TargetOnly(case) => reuse_variant!(case, TargetOnly),
-            Self::PairedPrefill(case) => reuse_variant!(case, PairedPrefill),
-            Self::SpeculativeK4(case) => reuse_variant!(case, SpeculativeK4),
-            Self::SpeculativeK8(case) => reuse_variant!(case, SpeculativeK8),
-            Self::SpeculativeK16(case) => reuse_variant!(case, SpeculativeK16),
+            Self::TargetOnly(case) => reuse_variant(
+                case,
+                M1AuthenticatedPhysicalQueueSessionV1::TargetOnly,
+                Self::TargetOnly,
+            ),
+            Self::PairedPrefill(case) => reuse_variant(
+                case,
+                M1AuthenticatedPhysicalQueueSessionV1::PairedPrefill,
+                Self::PairedPrefill,
+            ),
+            Self::SpeculativeK4(case) => reuse_variant(
+                case,
+                M1AuthenticatedPhysicalQueueSessionV1::SpeculativeK4,
+                Self::SpeculativeK4,
+            ),
+            Self::SpeculativeK8(case) => reuse_variant(
+                case,
+                M1AuthenticatedPhysicalQueueSessionV1::SpeculativeK8,
+                Self::SpeculativeK8,
+            ),
+            Self::SpeculativeK16(case) => reuse_variant(
+                case,
+                M1AuthenticatedPhysicalQueueSessionV1::SpeculativeK16,
+                Self::SpeculativeK16,
+            ),
         }
     }
 }

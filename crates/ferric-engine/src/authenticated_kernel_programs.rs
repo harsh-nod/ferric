@@ -58,9 +58,9 @@ type SpeculativeAssemblyMarkerV1 =
 fe2o3_host::compiler_generated_kernel_expectation_roster_v1! {
     /// Exact compiler-generated K1 marker roster in canonical `KernelId` order.
     pub struct M1GemmWorkerV3RosterV1 = [
-        TokenEmbeddingMarkerV1,
-        GemmReferenceMarkerV1,
         GemmVectorizedMarkerV1,
+        GemmReferenceMarkerV1,
+        TokenEmbeddingMarkerV1,
     ];
 }
 
@@ -95,8 +95,8 @@ fe2o3_host::compiler_generated_kernel_expectation_roster_v1! {
 fe2o3_host::compiler_generated_kernel_expectation_roster_v1! {
     /// Exact compiler-generated K7 marker roster in canonical `KernelId` order.
     pub struct M1LogitsWorkerV3RosterV1 = [
-        LogitsCompactMarkerV1,
         LogitsArgmaxMarkerV1,
+        LogitsCompactMarkerV1,
         SpeculativeAssemblyMarkerV1,
     ];
 }
@@ -510,6 +510,12 @@ pub fn require_m1_authenticated_roster_acquisition_v1(
 ///
 /// Returns the exact failed intake phase, diagnostic, and every roster or
 /// partially composed program owner available at that phase.
+///
+/// # Panics
+///
+/// Panics only if this function's private canonical residue construction loses
+/// an uncomposed roster before its composition step. Caller-provided roster
+/// contents cannot alter that fixed construction.
 pub fn admit_m1_authenticated_worker_v3_programs_v1(
     rosters: M1AuthenticatedWorkerV3RostersV1,
 ) -> Result<M1AuthenticatedWorkerV3ProgramSetV1, M1AuthenticatedProgramSetIntakeFailureV1> {
@@ -575,37 +581,133 @@ pub fn admit_m1_authenticated_worker_v3_programs_v1(
         }
     };
 
-    macro_rules! append_roster {
-        ($field:ident, $family:expr) => {{
-            let roster = residue
-                .$field
-                .take()
-                .expect("canonical intake retains each uncomposed roster");
-            programs = match programs.append_roster(roster) {
-                Ok(programs) => programs,
-                Err(failure) => {
-                    let (error, retained, roster) = failure.into_parts();
-                    residue.programs = Some(retained);
-                    residue.$field = Some(roster);
-                    return Err(intake_failure(
-                        M1AuthenticatedProgramSetIntakePhaseV1::Compose($family),
-                        M1AuthenticatedProgramSetIntakeErrorV1::ProgramSet {
-                            family: $family,
-                            source: Box::new(error),
-                        },
-                        residue,
-                    ));
-                }
-            };
-        }};
-    }
+    let roster = residue
+        .rmsnorm
+        .take()
+        .expect("canonical intake retains each uncomposed roster");
+    programs = match programs.append_roster(roster) {
+        Ok(programs) => programs,
+        Err(failure) => {
+            let (error, retained, roster) = failure.into_parts();
+            residue.programs = Some(retained);
+            residue.rmsnorm = Some(roster);
+            return Err(intake_failure(
+                M1AuthenticatedProgramSetIntakePhaseV1::Compose(M1KernelArtifactFamilyV1::RmsNorm),
+                M1AuthenticatedProgramSetIntakeErrorV1::ProgramSet {
+                    family: M1KernelArtifactFamilyV1::RmsNorm,
+                    source: Box::new(error),
+                },
+                residue,
+            ));
+        }
+    };
 
-    append_roster!(rmsnorm, M1KernelArtifactFamilyV1::RmsNorm);
-    append_roster!(rope_kv, M1KernelArtifactFamilyV1::RopeKv);
-    append_roster!(prefill, M1KernelArtifactFamilyV1::Prefill);
-    append_roster!(paged_decode, M1KernelArtifactFamilyV1::PagedDecode);
-    append_roster!(swiglu, M1KernelArtifactFamilyV1::SwiGlu);
-    append_roster!(logits, M1KernelArtifactFamilyV1::Logits);
+    let roster = residue
+        .rope_kv
+        .take()
+        .expect("canonical intake retains each uncomposed roster");
+    programs = match programs.append_roster(roster) {
+        Ok(programs) => programs,
+        Err(failure) => {
+            let (error, retained, roster) = failure.into_parts();
+            residue.programs = Some(retained);
+            residue.rope_kv = Some(roster);
+            return Err(intake_failure(
+                M1AuthenticatedProgramSetIntakePhaseV1::Compose(M1KernelArtifactFamilyV1::RopeKv),
+                M1AuthenticatedProgramSetIntakeErrorV1::ProgramSet {
+                    family: M1KernelArtifactFamilyV1::RopeKv,
+                    source: Box::new(error),
+                },
+                residue,
+            ));
+        }
+    };
+
+    let roster = residue
+        .prefill
+        .take()
+        .expect("canonical intake retains each uncomposed roster");
+    programs = match programs.append_roster(roster) {
+        Ok(programs) => programs,
+        Err(failure) => {
+            let (error, retained, roster) = failure.into_parts();
+            residue.programs = Some(retained);
+            residue.prefill = Some(roster);
+            return Err(intake_failure(
+                M1AuthenticatedProgramSetIntakePhaseV1::Compose(M1KernelArtifactFamilyV1::Prefill),
+                M1AuthenticatedProgramSetIntakeErrorV1::ProgramSet {
+                    family: M1KernelArtifactFamilyV1::Prefill,
+                    source: Box::new(error),
+                },
+                residue,
+            ));
+        }
+    };
+
+    let roster = residue
+        .paged_decode
+        .take()
+        .expect("canonical intake retains each uncomposed roster");
+    programs = match programs.append_roster(roster) {
+        Ok(programs) => programs,
+        Err(failure) => {
+            let (error, retained, roster) = failure.into_parts();
+            residue.programs = Some(retained);
+            residue.paged_decode = Some(roster);
+            return Err(intake_failure(
+                M1AuthenticatedProgramSetIntakePhaseV1::Compose(
+                    M1KernelArtifactFamilyV1::PagedDecode,
+                ),
+                M1AuthenticatedProgramSetIntakeErrorV1::ProgramSet {
+                    family: M1KernelArtifactFamilyV1::PagedDecode,
+                    source: Box::new(error),
+                },
+                residue,
+            ));
+        }
+    };
+
+    let roster = residue
+        .swiglu
+        .take()
+        .expect("canonical intake retains each uncomposed roster");
+    programs = match programs.append_roster(roster) {
+        Ok(programs) => programs,
+        Err(failure) => {
+            let (error, retained, roster) = failure.into_parts();
+            residue.programs = Some(retained);
+            residue.swiglu = Some(roster);
+            return Err(intake_failure(
+                M1AuthenticatedProgramSetIntakePhaseV1::Compose(M1KernelArtifactFamilyV1::SwiGlu),
+                M1AuthenticatedProgramSetIntakeErrorV1::ProgramSet {
+                    family: M1KernelArtifactFamilyV1::SwiGlu,
+                    source: Box::new(error),
+                },
+                residue,
+            ));
+        }
+    };
+
+    let roster = residue
+        .logits
+        .take()
+        .expect("canonical intake retains each uncomposed roster");
+    programs = match programs.append_roster(roster) {
+        Ok(programs) => programs,
+        Err(failure) => {
+            let (error, retained, roster) = failure.into_parts();
+            residue.programs = Some(retained);
+            residue.logits = Some(roster);
+            return Err(intake_failure(
+                M1AuthenticatedProgramSetIntakePhaseV1::Compose(M1KernelArtifactFamilyV1::Logits),
+                M1AuthenticatedProgramSetIntakeErrorV1::ProgramSet {
+                    family: M1KernelArtifactFamilyV1::Logits,
+                    source: Box::new(error),
+                },
+                residue,
+            ));
+        }
+    };
 
     if programs.roster_count() != M1_AUTHENTICATED_ROSTER_COUNT_V1
         || programs.program_count() != M1_PHYSICAL_PROGRAM_COUNT_V1

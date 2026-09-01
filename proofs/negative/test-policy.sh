@@ -57,6 +57,7 @@ new_copy() {
     cp -a "$repo/Cargo.toml" "$repo/Cargo.lock" "$repo/rust-toolchain.toml" "$destination/"
     cp -a "$repo/benches" "$destination/"
     cp -a "$repo/crates" "$destination/"
+    cp -a "$repo/device" "$destination/"
     mkdir -p "$destination/proofs"
     cp -a "$repo/proofs/m1" "$destination/proofs/"
     cp -a "$repo/proofs/UNVERIFIED_BODIES" \
@@ -145,13 +146,19 @@ metadata = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
 scratch = Path(sys.argv[2])
 
 
-def package(name):
-    return next(value for value in metadata["packages"] if value["name"] == name)
+def package(document, name):
+    matches = [value for value in document["packages"] if value["name"] == name]
+    if len(matches) != 1:
+        raise SystemExit(f"package fixture anchor drifted: {name}")
+    return matches[0]
 
 
-def node(name):
-    identity = package(name)["id"]
-    return next(value for value in metadata["resolve"]["nodes"] if value["id"] == identity)
+def node(document, name):
+    identity = package(document, name)["id"]
+    matches = [value for value in document["resolve"]["nodes"] if value["id"] == identity]
+    if len(matches) != 1:
+        raise SystemExit(f"resolve fixture anchor drifted: {name}")
+    return matches[0]
 
 
 feature = copy.deepcopy(metadata)
@@ -205,7 +212,7 @@ compiler_dependency = next(
     d for d in qwen_package["dependencies"] if d["name"] == "fe2o3-compiler-ffi"
 )
 compiler_dependency["source"] = compiler_dependency["source"].replace(
-    "42639ecc7f2f377ab57e5e884c36133a126f230e", "0" * 40
+    "b5374c6e6a4c1215ad481cefcd294334dcb1cbeb", "0" * 40
 )
 (scratch / "fe2o3-source.metadata").write_text(json.dumps(fe2o3), encoding="utf-8")
 
@@ -243,6 +250,103 @@ runtime_build["features"].append("test-fixtures")
 (scratch / "test-fixture-runtime.metadata").write_text(
     json.dumps(test_fixture_runtime), encoding="utf-8"
 )
+
+device_gemm = "ferric-qwen3-gemm-device-v1"
+device_logits = "ferric-qwen3-logits-device-v1"
+
+
+def dependency(document, owner, name):
+    matches = [
+        value
+        for value in package(document, owner)["dependencies"]
+        if value["name"] == name and value["kind"] is None
+    ]
+    if len(matches) != 1:
+        raise SystemExit(f"dependency fixture anchor drifted: {owner}::{name}")
+    return matches[0]
+
+
+def write_hostile(name, document):
+    (scratch / f"local-runtime-{name}.metadata").write_text(
+        json.dumps(document), encoding="utf-8"
+    )
+
+
+local_missing = copy.deepcopy(metadata)
+engine_dependencies = package(local_missing, "ferric-engine")["dependencies"]
+gemm_dependency = dependency(local_missing, "ferric-engine", device_gemm)
+engine_dependencies.remove(gemm_dependency)
+write_hostile("missing", local_missing)
+
+local_eighth = copy.deepcopy(metadata)
+hostile_dependency = copy.deepcopy(
+    dependency(local_eighth, "ferric-engine", device_gemm)
+)
+hostile_dependency["name"] = "ferric-qwen3-hostile-device-v1"
+package(local_eighth, "ferric-engine")["dependencies"].append(hostile_dependency)
+write_hostile("eighth", local_eighth)
+
+local_wrong_owner = copy.deepcopy(metadata)
+wrong_owner_dependency = copy.deepcopy(
+    dependency(local_wrong_owner, "ferric-engine", device_gemm)
+)
+package(local_wrong_owner, "ferric-qwen-kernels")["dependencies"].append(
+    wrong_owner_dependency
+)
+write_hostile("wrong-owner", local_wrong_owner)
+
+local_path = copy.deepcopy(metadata)
+dependency(local_path, "ferric-engine", device_gemm)["path"] = dependency(
+    local_path, "ferric-engine", device_logits
+)["path"]
+write_hostile("path", local_path)
+
+local_workspace = copy.deepcopy(metadata)
+local_workspace["workspace_members"].append(
+    package(local_workspace, device_gemm)["id"]
+)
+write_hostile("workspace", local_workspace)
+
+local_verus = copy.deepcopy(metadata)
+package(local_verus, device_gemm)["metadata"] = {
+    "verus": {"verify": True}
+}
+write_hostile("verus", local_verus)
+
+local_manifest = copy.deepcopy(metadata)
+package(local_manifest, device_gemm)["manifest_path"] = package(
+    local_manifest, device_logits
+)["manifest_path"]
+write_hostile("manifest", local_manifest)
+
+local_target = copy.deepcopy(metadata)
+gemm_library = next(
+    value
+    for value in package(local_target, device_gemm)["targets"]
+    if value["kind"] == ["lib"]
+)
+gemm_library["name"] = f"{gemm_library['name']}_hostile"
+write_hostile("target", local_target)
+
+local_fe2o3 = copy.deepcopy(metadata)
+device_dependency = dependency(local_fe2o3, device_gemm, "fe2o3-device")
+device_dependency["source"] = device_dependency["source"].replace(
+    "b5374c6e6a4c1215ad481cefcd294334dcb1cbeb", "0" * 40
+)
+write_hostile("fe2o3", local_fe2o3)
+
+local_resolve = copy.deepcopy(metadata)
+gemm_id = package(local_resolve, device_gemm)["id"]
+logits_id = package(local_resolve, device_logits)["id"]
+resolved_gemm = [
+    value
+    for value in node(local_resolve, "ferric-engine")["deps"]
+    if value["pkg"] == gemm_id
+]
+if len(resolved_gemm) != 1:
+    raise SystemExit("local runtime resolve edge fixture anchor drifted")
+resolved_gemm[0]["pkg"] = logits_id
+write_hostile("resolve", local_resolve)
 PY
 
 expect_rejected runtime-tcb-feature 'workspace runtime dependency TCB drifted' \
@@ -276,6 +380,37 @@ expect_rejected test-fixture-runtime-activation \
     'activates the test-fixtures feature outside its admitted dev edge' \
     "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/test-fixture-runtime.metadata"
+expect_rejected local-runtime-missing 'local runtime roots drifted' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    "$scratch/local-runtime-missing.metadata"
+expect_rejected local-runtime-eighth 'unadmitted path dependency' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    "$scratch/local-runtime-eighth.metadata"
+expect_rejected local-runtime-wrong-owner 'unadmitted path dependency' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    "$scratch/local-runtime-wrong-owner.metadata"
+expect_rejected local-runtime-path 'local runtime dependency declaration drifted' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    "$scratch/local-runtime-path.metadata"
+expect_rejected local-runtime-workspace \
+    'local runtime package may not become a workspace member' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    "$scratch/local-runtime-workspace.metadata"
+expect_rejected local-runtime-verus 'local runtime package may not claim Verus authority' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    "$scratch/local-runtime-verus.metadata"
+expect_rejected local-runtime-manifest 'local runtime package identity drifted' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    "$scratch/local-runtime-manifest.metadata"
+expect_rejected local-runtime-target 'local runtime library target drifted' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    "$scratch/local-runtime-target.metadata"
+expect_rejected local-runtime-fe2o3 'local runtime package dependency drifted' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    "$scratch/local-runtime-fe2o3.metadata"
+expect_rejected local-runtime-resolve 'local runtime' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    "$scratch/local-runtime-resolve.metadata"
 
 cp "$repo/proofs/negative/REQUIRED_COMPONENTS" "$scratch/unsafe-target.registry"
 chmod u+w "$scratch/unsafe-target.registry"

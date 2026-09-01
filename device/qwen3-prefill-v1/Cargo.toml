@@ -6,14 +6,14 @@ rust-version = "1.94"
 publish = false
 
 # This package is intentionally independent of Ferric's stable host workspace.
-# The revision is provisional until the final M1 fe2o3 compiler/runtime chain lands.
+# The exact reviewed compiler/runtime source pin grants no artifact or runtime authority.
 [workspace]
 
 [dependencies]
-fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "2f6da870a31b8e430fd0af9c756ca86685e67572", version = "=0.1.0" }
+fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "b5374c6e6a4c1215ad481cefcd294334dcb1cbeb", version = "=0.1.0" }
 
 [target.'cfg(not(target_arch = "amdgpu"))'.dependencies]
-fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "2f6da870a31b8e430fd0af9c756ca86685e67572", version = "=0.1.0" }
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "b5374c6e6a4c1215ad481cefcd294334dcb1cbeb", version = "=0.1.0" }
 
 [dev-dependencies]
 quote = "1"

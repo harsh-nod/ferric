@@ -133,6 +133,11 @@ def exercise_prepare_boundaries(repo: Path, fe2o3_source: Path, planner: Any) ->
             dirs_exist_ok=True,
             ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
         )
+        shutil.copy2(repo / "Cargo.toml", ferric_fixture / "Cargo.toml")
+        shutil.copy2(repo / "Cargo.lock", ferric_fixture / "Cargo.lock")
+        shutil.copytree(
+            repo / "device", ferric_fixture / "device", dirs_exist_ok=True
+        )
         if git(
             ferric_fixture,
             ["status", "--porcelain=v1", "--untracked-files=all"],
@@ -178,6 +183,74 @@ def exercise_prepare_boundaries(repo: Path, fe2o3_source: Path, planner: Any) ->
             or queue.get("counts", {}).get("missing_producer_items") != 0
         ):
             fail("M1 planner positive integration output weakened its nonclaim")
+        expected_source = (
+            f"git+{planner.FE2O3_REPOSITORY}?rev={fe2o3_commit}#{fe2o3_commit}"
+        )
+        expected_pins = {
+            "device_workspace_count": len(planner.FE2O3_DEVICE_WORKSPACES),
+            "device_workspaces": [
+                {
+                    "direct": [
+                        {
+                            "name": "fe2o3-device",
+                            "repository": planner.FE2O3_REPOSITORY,
+                            "revision": fe2o3_commit,
+                            "scope": "dependencies",
+                            "version": "=0.1.0",
+                        },
+                        {
+                            "name": "fe2o3-host",
+                            "repository": planner.FE2O3_REPOSITORY,
+                            "revision": fe2o3_commit,
+                            "scope": (
+                                'target:cfg(not(target_arch = "amdgpu")):'
+                                "dependencies"
+                            ),
+                            "version": "=0.1.0",
+                        },
+                    ],
+                    "direct_count": 2,
+                    "manifest": f"{relative_path}/Cargo.toml",
+                    "name": package_name,
+                    "resolved": [
+                        {
+                            "name": name,
+                            "source": expected_source,
+                            "version": version,
+                        }
+                        for name, version in sorted(
+                            planner.FE2O3_RESOLVED_PACKAGES
+                        )
+                    ],
+                    "resolved_count": len(planner.FE2O3_RESOLVED_PACKAGES),
+                }
+                for package_name, relative_path in planner.FE2O3_DEVICE_WORKSPACES
+            ],
+            "direct": [
+                {
+                    "name": name,
+                    "repository": planner.FE2O3_REPOSITORY,
+                    "revision": fe2o3_commit,
+                }
+                for name in sorted(planner.FE2O3_DIRECT_PACKAGES)
+            ],
+            "direct_count": len(planner.FE2O3_DIRECT_PACKAGES),
+            "resolved": [
+                {"name": name, "source": expected_source, "version": version}
+                for name, version in sorted(planner.FE2O3_RESOLVED_PACKAGES)
+            ],
+            "resolved_count": len(planner.FE2O3_RESOLVED_PACKAGES),
+            "revision": fe2o3_commit,
+            "root_dependencies": [
+                {"owner": owner, "scope": scope, "name": name}
+                for owner, scope, name in sorted(
+                    planner.FE2O3_DEPENDENCY_TOPOLOGY
+                )
+            ],
+            "root_dependency_count": len(planner.FE2O3_DEPENDENCY_TOPOLOGY),
+        }
+        if plan.get("fe2o3_pins") != expected_pins:
+            fail("M1 planner positive integration fe2o3 pin graph drifted")
         if any(
             (output / name).exists() for name in ("evidence-index.json", "receipt.json")
         ):
@@ -239,10 +312,20 @@ def exercise_prepare_boundaries(repo: Path, fe2o3_source: Path, planner: Any) ->
         lock_path = resolved_case / "Cargo.lock"
         lock_source = lock_path.read_text(encoding="utf-8")
         expected_url = "git+https://github.com/harsh-nod/fe2o3.git"
-        if lock_source.count(expected_url) != 25:
+        lock_document = tomllib.loads(lock_source)
+        resolved_records = [
+            package
+            for package in lock_document.get("package", [])
+            if isinstance(package, dict)
+            and isinstance(package.get("source"), str)
+            and package["source"].startswith(expected_url)
+        ]
+        if len(resolved_records) != len(planner.FE2O3_RESOLVED_PACKAGES):
             fail("integration fixture resolved fe2o3 roster drifted before mutation")
         lock_path.write_text(
-            lock_source.replace(expected_url, "git+https://evil.invalid/fe2o3.git"),
+            lock_source.replace(
+                expected_url, "git+https://evil.invalid/fe2o3.git", 1
+            ),
             encoding="utf-8",
         )
         commit_fixture(resolved_case, "mutate resolved fe2o3 repository")
@@ -252,6 +335,24 @@ def exercise_prepare_boundaries(repo: Path, fe2o3_source: Path, planner: Any) ->
             fe2o3_fixture,
             temporary / "resolved-pin-output",
             "resolved fe2o3 package declaration drifted",
+        )
+
+        device_case = temporary / "device-pin"
+        clone_at(ferric_fixture, device_case)
+        device_manifest = device_case / "device/qwen3-gemm-v1/Cargo.toml"
+        device_source = device_manifest.read_text(encoding="utf-8")
+        if device_source.count(fe2o3_commit) != 2:
+            fail("integration fixture device fe2o3 pin roster drifted before mutation")
+        device_manifest.write_text(
+            device_source.replace(fe2o3_commit, "0" * 40, 1), encoding="utf-8"
+        )
+        commit_fixture(device_case, "mutate device fe2o3 revision")
+        expect_prepare_failure(
+            device_case / "proofs/m1-qualification/planner.py",
+            device_case,
+            fe2o3_fixture,
+            temporary / "device-pin-output",
+            "device fe2o3 dependency declaration drifted",
         )
 
         topology_case = temporary / "topology"

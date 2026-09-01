@@ -28,29 +28,48 @@ NONCLAIM = (
 TARGET = "gfx942:xnack-"
 FE2O3_REPOSITORY = "https://github.com/harsh-nod/fe2o3.git"
 FE2O3_DIRECT_PACKAGES = (
+    "fe2o3-amd-target",
     "fe2o3-amdhsa-loader",
     "fe2o3-aql",
     "fe2o3-artifact-transaction",
     "fe2o3-compiler-ffi",
+    "fe2o3-host",
     "fe2o3-hsaco",
     "fe2o3-hsaco-finalize",
     "fe2o3-kfd",
     "fe2o3-llvm-handoff",
     "fe2o3-llvm-text",
+    "fe2o3-runtime-protocol",
     "fe2o3-service-host",
     "reserved-fe2o3-symbols",
 )
 FE2O3_RESOLVED_PACKAGES = (
     ("dialect-amdgcn", "0.1.0"),
+    ("dialect-gpu", "0.1.0"),
+    ("dialect-kernel", "0.1.0"),
+    ("dialect-mir", "0.1.0"),
+    ("dialect-proof", "0.1.0"),
     ("fe2o3-amd-target", "0.1.0"),
     ("fe2o3-amdgcn-model", "0.1.0"),
     ("fe2o3-amdhsa-loader", "0.1.0"),
     ("fe2o3-aql", "0.1.0"),
     ("fe2o3-artifact-transaction", "0.1.0"),
+    ("fe2o3-artifacts", "0.1.0"),
     ("fe2o3-build-authority", "0.1.0"),
+    ("fe2o3-compiler-closure-capability", "0.1.0"),
+    ("fe2o3-compiler-execution-client", "0.1.0"),
+    ("fe2o3-compiler-execution-protocol", "0.1.0"),
     ("fe2o3-compiler-ffi", "0.1.0"),
     ("fe2o3-compiler-lineage", "0.1.0"),
+    ("fe2o3-completion", "0.1.0"),
+    ("fe2o3-contracts", "0.1.0"),
+    ("fe2o3-core", "0.1.0"),
+    ("fe2o3-device", "0.1.0"),
     ("fe2o3-drm-uapi", "0.1.0"),
+    ("fe2o3-external-anchor-protocol", "0.1.0"),
+    ("fe2o3-functional-proof", "0.1.0"),
+    ("fe2o3-hip-sys", "0.1.0"),
+    ("fe2o3-host", "0.1.0"),
     ("fe2o3-host-api", "0.1.0"),
     ("fe2o3-hsaco", "0.1.0"),
     ("fe2o3-hsaco-finalize", "0.1.0"),
@@ -61,19 +80,33 @@ FE2O3_RESOLVED_PACKAGES = (
     ("fe2o3-kfd-uapi", "0.1.0"),
     ("fe2o3-llvm-handoff", "0.1.0"),
     ("fe2o3-llvm-text", "0.1.0"),
+    ("fe2o3-lower-mir-kernel", "0.1.0"),
+    ("fe2o3-macros", "0.1.0"),
+    ("fe2o3-mir-model", "0.1.0"),
+    ("fe2o3-pliron", "0.1.0"),
+    ("fe2o3-pliron-owner-core", "0.1.0"),
+    ("fe2o3-proof-contracts", "0.1.0"),
+    ("fe2o3-runtime", "0.1.0"),
     ("fe2o3-runtime-model", "0.1.0"),
+    ("fe2o3-runtime-protocol", "0.1.0"),
+    ("fe2o3-rustc-front", "0.1.0"),
     ("fe2o3-rustc-invocation", "0.1.0"),
     ("fe2o3-service-host", "0.1.0"),
     ("fe2o3-service-model", "0.1.0"),
+    ("fe2o3-verifier", "0.1.0"),
     ("reserved-fe2o3-symbols", "0.1.0"),
 )
 FE2O3_DEPENDENCY_TOPOLOGY = (
     ("ferric-build", "dependencies", "fe2o3-amdhsa-loader"),
     ("ferric-build", "dependencies", "fe2o3-compiler-ffi"),
     ("ferric-build", "dependencies", "fe2o3-hsaco-finalize"),
+    ("ferric-engine", "dependencies", "fe2o3-amd-target"),
     ("ferric-engine", "dependencies", "fe2o3-amdhsa-loader"),
     ("ferric-engine", "dependencies", "fe2o3-aql"),
+    ("ferric-engine", "dependencies", "fe2o3-artifact-transaction"),
+    ("ferric-engine", "dependencies", "fe2o3-host"),
     ("ferric-engine", "dependencies", "fe2o3-kfd"),
+    ("ferric-engine", "dependencies", "fe2o3-runtime-protocol"),
     ("ferric-engine", "dependencies", "fe2o3-service-host"),
     ("ferric-engine", "dev-dependencies", "fe2o3-hsaco"),
     ("ferric-qwen-kernels", "dependencies", "fe2o3-amdhsa-loader"),
@@ -84,6 +117,15 @@ FE2O3_DEPENDENCY_TOPOLOGY = (
     ("ferric-qwen-kernels", "dependencies", "fe2o3-llvm-handoff"),
     ("ferric-qwen-kernels", "dependencies", "fe2o3-llvm-text"),
     ("ferric-qwen-kernels", "dependencies", "reserved-fe2o3-symbols"),
+)
+FE2O3_DEVICE_WORKSPACES = (
+    ("ferric-qwen3-gemm-device-v1", "device/qwen3-gemm-v1"),
+    ("ferric-qwen3-logits-device-v1", "device/qwen3-logits-v1"),
+    ("ferric-qwen3-paged-decode-device-v1", "device/qwen3-paged-decode-v1"),
+    ("ferric-qwen3-prefill-device-v1", "device/qwen3-prefill-v1"),
+    ("ferric-qwen3-rmsnorm-device-v1", "device/qwen3-rmsnorm-v1"),
+    ("ferric-qwen3-rope-kv-device-v1", "device/qwen3-rope-kv-v1"),
+    ("ferric-qwen3-swiglu-device-v1", "device/qwen3-swiglu-v1"),
 )
 TCB = (
     ("tcb.compiler", "Compiler"),
@@ -345,6 +387,134 @@ def validate_fe2o3_topology(ferric: Path, workspace: JsonObject) -> list[JsonObj
     ]
 
 
+def validate_fe2o3_device_workspaces(
+    ferric: Path, fe2o3_commit: str
+) -> list[JsonObject]:
+    expected_resolved = set(FE2O3_RESOLVED_PACKAGES)
+    expected_source = f"git+{FE2O3_REPOSITORY}?rev={fe2o3_commit}#{fe2o3_commit}"
+    expected_edges = {
+        ("dependencies", "fe2o3-device"),
+        (
+            'target:cfg(not(target_arch = "amdgpu")):dependencies',
+            "fe2o3-host",
+        ),
+    }
+    workspaces: list[JsonObject] = []
+    for package_name, relative_path in FE2O3_DEVICE_WORKSPACES:
+        root = ferric / relative_path
+        manifest = read_toml(root / "Cargo.toml", f"{package_name} manifest")
+        package = manifest.get("package")
+        if (
+            not isinstance(package, dict)
+            or package.get("name") != package_name
+            or manifest.get("workspace") != {}
+        ):
+            fail(f"Ferric device workspace identity drifted: {package_name}")
+
+        dependency_tables: list[tuple[str, JsonObject]] = []
+        for scope in ("dependencies", "dev-dependencies", "build-dependencies"):
+            table = manifest.get(scope, {})
+            if not isinstance(table, dict):
+                fail(f"Ferric device dependency table is malformed: {package_name}:{scope}")
+            dependency_tables.append((scope, table))
+        targets = manifest.get("target", {})
+        if not isinstance(targets, dict):
+            fail(f"Ferric device target dependency table is malformed: {package_name}")
+        for target, target_value in targets.items():
+            if not isinstance(target, str) or not isinstance(target_value, dict):
+                fail(f"Ferric device target dependency entry is malformed: {package_name}")
+            for scope in ("dependencies", "dev-dependencies", "build-dependencies"):
+                table = target_value.get(scope, {})
+                if not isinstance(table, dict):
+                    fail(
+                        "Ferric device target dependency table is malformed: "
+                        f"{package_name}:{target}:{scope}"
+                    )
+                dependency_tables.append((f"target:{target}:{scope}", table))
+
+        direct: list[JsonObject] = []
+        actual_edges: set[tuple[str, str]] = set()
+        for scope, table in dependency_tables:
+            for name, declaration in table.items():
+                git_url = (
+                    str(declaration.get("git", ""))
+                    if isinstance(declaration, dict)
+                    else ""
+                )
+                edge = (scope, name)
+                if edge not in expected_edges and "fe2o3" not in git_url.lower():
+                    continue
+                if (
+                    edge not in expected_edges
+                    or not isinstance(declaration, dict)
+                    or set(declaration) != {"git", "rev", "version"}
+                    or declaration.get("git") != FE2O3_REPOSITORY
+                    or declaration.get("rev") != fe2o3_commit
+                    or declaration.get("version") != "=0.1.0"
+                    or edge in actual_edges
+                ):
+                    fail(
+                        "Ferric device fe2o3 dependency declaration drifted: "
+                        f"{package_name}:{scope}:{name}"
+                    )
+                actual_edges.add(edge)
+                direct.append(
+                    {
+                        "name": name,
+                        "repository": FE2O3_REPOSITORY,
+                        "revision": fe2o3_commit,
+                        "scope": scope,
+                        "version": "=0.1.0",
+                    }
+                )
+        if actual_edges != expected_edges:
+            fail(f"Ferric device fe2o3 dependency roster drifted: {package_name}")
+        direct.sort(key=lambda record: (record["scope"], record["name"]))
+
+        lock = read_toml(root / "Cargo.lock", f"{package_name} lockfile")
+        resolved: list[JsonObject] = []
+        for locked in lock.get("package", []):
+            if not isinstance(locked, dict):
+                fail(f"Ferric device lockfile package is malformed: {package_name}")
+            name = locked.get("name")
+            version = locked.get("version")
+            source = locked.get("source")
+            if not isinstance(name, str) or not isinstance(version, str):
+                fail(f"Ferric device lockfile identity is malformed: {package_name}")
+            identity = (name, version)
+            if identity not in expected_resolved and (
+                not isinstance(source, str) or "fe2o3" not in source.lower()
+            ):
+                continue
+            if identity not in expected_resolved or source != expected_source:
+                fail(
+                    "Ferric device resolved fe2o3 package declaration drifted: "
+                    f"{package_name}:{name}"
+                )
+            resolved.append(
+                {"name": name, "source": expected_source, "version": version}
+            )
+        resolved.sort(key=lambda record: (record["name"], record["version"]))
+        actual_resolved = [
+            (record["name"], record["version"]) for record in resolved
+        ]
+        if len(actual_resolved) != len(set(actual_resolved)) or set(
+            actual_resolved
+        ) != expected_resolved:
+            fail(f"Ferric device resolved fe2o3 roster drifted: {package_name}")
+        workspaces.append(
+            {
+                "direct": direct,
+                "direct_count": len(direct),
+                "manifest": f"{relative_path}/Cargo.toml",
+                "name": package_name,
+                "resolved": resolved,
+                "resolved_count": len(resolved),
+            }
+        )
+    return workspaces
+
+
 def validate_fe2o3_pins(ferric: Path, fe2o3_commit: str) -> JsonObject:
     workspace = read_toml(ferric / "Cargo.toml", "Ferric workspace manifest")
     lock = read_toml(ferric / "Cargo.lock", "Ferric lockfile")
@@ -405,7 +575,10 @@ def validate_fe2o3_pins(ferric: Path, fe2o3_commit: str) -> JsonObject:
     ):
         fail("Ferric resolved fe2o3 package roster does not equal the admitted roster")
     topology = validate_fe2o3_topology(ferric, workspace)
+    device_workspaces = validate_fe2o3_device_workspaces(ferric, fe2o3_commit)
     return {
+        "device_workspace_count": len(device_workspaces),
+        "device_workspaces": device_workspaces,
         "direct": direct,
         "direct_count": len(direct),
         "resolved": resolved,

@@ -7,16 +7,16 @@ pointer-plus-length slice ABI, exact admitted extents, 256-workitem workgroup,
 and eight contiguous output elements per workitem.
 
 The crate is intentionally outside Ferric's stable host workspace and pins the
-exact reviewed external fe2o3 revision `d955209099c7`. That revision provides
+exact reviewed external fe2o3 revision
+`b5374c6e6a4c1215ad481cefcd294334dcb1cbeb`. That revision provides
 the compiler-issued write-only device capability and its generated KFD output
-binding. A newer fe2o3 compiler may explicitly admit this immutable dependency
-revision after independently pinning its host-code closure. The kernel's output
-has no readable element, reference, or pointer surface; it spells its eight
-owned components as eight constant checked `write_block` calls so M1 does not
-depend on a loop-carried race/progress proof. Its repeated pure element math is
-expanded locally before MIR construction, leaving no ordinary helper-function
-call for the production semantic projector. Passing its host-side source and
-reference tests establishes only the attributed Rust source contract.
+binding. The kernel's output has no readable element, reference, or pointer
+surface; it spells its eight owned components as eight constant checked
+`write_block` calls so M1 does not depend on a loop-carried race/progress proof.
+Its repeated pure element math is expanded locally before MIR construction,
+leaving no ordinary helper-function call for the production semantic projector.
+Passing its host-side source and reference tests establishes only the
+attributed Rust source contract.
 
 Before this write-only migration, the exact Ferric revision
 `7e1c36aa35d743478772ce4bff14c4f4bbff85c0`

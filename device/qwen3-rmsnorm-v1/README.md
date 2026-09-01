@@ -21,13 +21,12 @@ result must remain finite or the kernel traps before publishing that result.
 
 The crate is intentionally outside Ferric's stable host workspace. Both
 `fe2o3-device` and `fe2o3-host` are pinned to immutable revision
-`d955209099c7b434dfceb69e1152d948dab76b22`. That closure supplies write-only
+`b5374c6e6a4c1215ad481cefcd294334dcb1cbeb`. That closure supplies write-only
 generated KFD arguments and accepts empty generated-slice constructors, but its
 KFD packer does not produce the required nonnull pointer fixup for empty
-slices. fe2o3 PR22 proposes the shared nonnull empty-slice transport sentinel.
-Consequently pure-mode KFD packing and dispatch remain unauthorized until that
-change lands and the source is compiled and integrated with a final
-PR22-or-later host/runtime closure. The pin is not silently moved here.
+slices. Consequently pure-mode KFD packing and dispatch remain unauthorized
+until that generic transport requirement is implemented and this source is
+compiled and integrated with a later reviewed host/runtime closure.
 
 Passing this crate's host-side source, ABI, profile, adapter-construction, and
 reference tests establishes only the reviewed source contract. No compiler

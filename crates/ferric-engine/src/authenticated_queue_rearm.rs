@@ -223,47 +223,57 @@ pub struct M1AuthenticatedLongLivedQueueRearmTeardownFailureV1 {
     history: M1RearmRoundHistoryV1,
 }
 
-macro_rules! authenticated_released_round_teardown_accessors {
-    ($owner:ident, $released:ty) => {
-        impl $owner {
-            pub const fn released(&self) -> &$released {
-                &self.released
-            }
+impl M1AuthenticatedLongLivedQueueRearmTeardownSuccessV1 {
+    pub const fn released(&self) -> &crate::M1AuthenticatedReleasedQueueTeardownSuccessV1 {
+        &self.released
+    }
 
-            #[must_use]
-            pub const fn parked_count(&self) -> usize {
-                self.parked.len()
-            }
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        self.parked.len()
+    }
 
-            #[must_use]
-            pub const fn terminal_lineage_count(&self) -> usize {
-                self.terminal.len()
-            }
+    #[must_use]
+    pub const fn terminal_lineage_count(&self) -> usize {
+        self.terminal.len()
+    }
 
-            #[must_use]
-            pub const fn round_history_len(&self) -> usize {
-                self.history.len()
-            }
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.history.len()
+    }
 
-            #[must_use]
-            pub fn round_history(
-                &self,
-                index: usize,
-            ) -> Option<&crate::M1RearmRoundHistoryEntryV1> {
-                self.history.get(index)
-            }
-        }
-    };
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&crate::M1RearmRoundHistoryEntryV1> {
+        self.history.get(index)
+    }
 }
 
-authenticated_released_round_teardown_accessors!(
-    M1AuthenticatedLongLivedQueueRearmTeardownSuccessV1,
-    crate::M1AuthenticatedReleasedQueueTeardownSuccessV1
-);
-authenticated_released_round_teardown_accessors!(
-    M1AuthenticatedLongLivedQueueRearmTeardownFailureV1,
-    crate::M1AuthenticatedReleasedQueueTeardownFailureV1
-);
+impl M1AuthenticatedLongLivedQueueRearmTeardownFailureV1 {
+    pub const fn released(&self) -> &crate::M1AuthenticatedReleasedQueueTeardownFailureV1 {
+        &self.released
+    }
+
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        self.parked.len()
+    }
+
+    #[must_use]
+    pub const fn terminal_lineage_count(&self) -> usize {
+        self.terminal.len()
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&crate::M1RearmRoundHistoryEntryV1> {
+        self.history.get(index)
+    }
+}
 
 /// Unchanged released-step rejection before queue detachment.
 ///
@@ -2125,57 +2135,77 @@ pub struct M1AuthenticatedRearmedReadbackTeardownFailureV1 {
     device: Gfx942DeviceBinding,
 }
 
-macro_rules! authenticated_rearmed_readback_teardown_accessors {
-    ($owner:ident, $source:ty) => {
-        impl $owner {
-            pub const fn source(&self) -> &$source {
-                &self.source
-            }
+impl M1AuthenticatedRearmedReadbackTeardownSuccessV1 {
+    pub const fn source(&self) -> &crate::M1AuthenticatedReadbackTeardownSuccessV1 {
+        &self.source
+    }
 
-            #[must_use]
-            pub const fn retained_cache_count(&self) -> usize {
-                self.carry.selected.len() + self.carry.parked.len()
-            }
+    #[must_use]
+    pub const fn retained_cache_count(&self) -> usize {
+        self.carry.selected.len() + self.carry.parked.len()
+    }
 
-            #[must_use]
-            pub const fn terminal_lineage_count(&self) -> usize {
-                self.carry.terminal.len()
-            }
+    #[must_use]
+    pub const fn terminal_lineage_count(&self) -> usize {
+        self.carry.terminal.len()
+    }
 
-            #[must_use]
-            pub const fn round_history_len(&self) -> usize {
-                self.carry.history.len()
-            }
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.carry.history.len()
+    }
 
-            #[must_use]
-            pub fn round_history(
-                &self,
-                index: usize,
-            ) -> Option<&crate::M1RearmRoundHistoryEntryV1> {
-                self.carry.history.get(index)
-            }
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&crate::M1RearmRoundHistoryEntryV1> {
+        self.carry.history.get(index)
+    }
 
-            #[must_use]
-            pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
-                self.queue_observation
-            }
+    #[must_use]
+    pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
+        self.queue_observation
+    }
 
-            #[must_use]
-            pub const fn device(&self) -> Gfx942DeviceBinding {
-                self.device
-            }
-        }
-    };
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.device
+    }
 }
 
-authenticated_rearmed_readback_teardown_accessors!(
-    M1AuthenticatedRearmedReadbackTeardownSuccessV1,
-    crate::M1AuthenticatedReadbackTeardownSuccessV1
-);
-authenticated_rearmed_readback_teardown_accessors!(
-    M1AuthenticatedRearmedReadbackTeardownFailureV1,
-    crate::M1AuthenticatedReadbackTeardownFailureV1
-);
+impl M1AuthenticatedRearmedReadbackTeardownFailureV1 {
+    pub const fn source(&self) -> &crate::M1AuthenticatedReadbackTeardownFailureV1 {
+        &self.source
+    }
+
+    #[must_use]
+    pub const fn retained_cache_count(&self) -> usize {
+        self.carry.selected.len() + self.carry.parked.len()
+    }
+
+    #[must_use]
+    pub const fn terminal_lineage_count(&self) -> usize {
+        self.carry.terminal.len()
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.carry.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&crate::M1RearmRoundHistoryEntryV1> {
+        self.carry.history.get(index)
+    }
+
+    #[must_use]
+    pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
+        self.queue_observation
+    }
+
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.device
+    }
+}
 
 impl M1AuthenticatedRearmedRecycledQueueV1 {
     /// Copies and structurally observes the exact authenticated completion once.
@@ -2541,74 +2571,115 @@ pub struct M1AuthenticatedRearmedCompletionPreflightTeardownFailureV1 {
     custody: M1AuthenticatedRearmedCompletionPreflightTeardownCustodyV1,
 }
 
-macro_rules! authenticated_completion_preflight_teardown_accessors {
-    ($owner:ident) => {
-        impl $owner {
-            #[must_use]
-            pub const fn error(&self) -> M1AuthenticatedRearmedCompletionPreflightErrorV1 {
-                self.custody.error
-            }
+impl M1AuthenticatedRearmedCompletionPreflightTeardownSuccessV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1AuthenticatedRearmedCompletionPreflightErrorV1 {
+        self.custody.error
+    }
 
-            pub const fn checked(&self) -> &M1CheckedCompletionOutputV1 {
-                &self.custody.checked
-            }
+    pub const fn checked(&self) -> &M1CheckedCompletionOutputV1 {
+        &self.custody.checked
+    }
 
-            #[must_use]
-            pub fn dispositions(&self) -> &[M1DeviceKvCompletionDispositionV1] {
-                &self.custody.dispositions
-            }
+    #[must_use]
+    pub fn dispositions(&self) -> &[M1DeviceKvCompletionDispositionV1] {
+        &self.custody.dispositions
+    }
 
-            #[must_use]
-            pub const fn retained_cache_count(&self) -> usize {
-                self.custody.carry.selected.len() + self.custody.carry.parked.len()
-            }
+    #[must_use]
+    pub const fn retained_cache_count(&self) -> usize {
+        self.custody.carry.selected.len() + self.custody.carry.parked.len()
+    }
 
-            #[must_use]
-            pub const fn terminal_lineage_count(&self) -> usize {
-                self.custody.carry.terminal.len()
-            }
+    #[must_use]
+    pub const fn terminal_lineage_count(&self) -> usize {
+        self.custody.carry.terminal.len()
+    }
 
-            #[must_use]
-            pub const fn round_history_len(&self) -> usize {
-                self.custody.carry.history.len()
-            }
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.custody.carry.history.len()
+    }
 
-            #[must_use]
-            pub fn round_history(
-                &self,
-                index: usize,
-            ) -> Option<&crate::M1RearmRoundHistoryEntryV1> {
-                self.custody.carry.history.get(index)
-            }
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&crate::M1RearmRoundHistoryEntryV1> {
+        self.custody.carry.history.get(index)
+    }
 
-            #[must_use]
-            pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
-                self.custody.queue_observation
-            }
+    #[must_use]
+    pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
+        self.custody.queue_observation
+    }
 
-            #[must_use]
-            pub const fn device(&self) -> Gfx942DeviceBinding {
-                self.custody.device
-            }
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.custody.device
+    }
 
-            #[must_use]
-            pub const fn completion_epoch(&self) -> CompletionEpoch {
-                self.custody.completion.epoch()
-            }
+    #[must_use]
+    pub const fn completion_epoch(&self) -> CompletionEpoch {
+        self.custody.completion.epoch()
+    }
 
-            pub const fn kv_reservations(&self) -> &M1FullStepKvReservationCustodyV1 {
-                &self.custody.kv
-            }
-        }
-    };
+    pub const fn kv_reservations(&self) -> &M1FullStepKvReservationCustodyV1 {
+        &self.custody.kv
+    }
 }
 
-authenticated_completion_preflight_teardown_accessors!(
-    M1AuthenticatedRearmedCompletionPreflightTeardownSuccessV1
-);
-authenticated_completion_preflight_teardown_accessors!(
-    M1AuthenticatedRearmedCompletionPreflightTeardownFailureV1
-);
+impl M1AuthenticatedRearmedCompletionPreflightTeardownFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1AuthenticatedRearmedCompletionPreflightErrorV1 {
+        self.custody.error
+    }
+
+    pub const fn checked(&self) -> &M1CheckedCompletionOutputV1 {
+        &self.custody.checked
+    }
+
+    #[must_use]
+    pub fn dispositions(&self) -> &[M1DeviceKvCompletionDispositionV1] {
+        &self.custody.dispositions
+    }
+
+    #[must_use]
+    pub const fn retained_cache_count(&self) -> usize {
+        self.custody.carry.selected.len() + self.custody.carry.parked.len()
+    }
+
+    #[must_use]
+    pub const fn terminal_lineage_count(&self) -> usize {
+        self.custody.carry.terminal.len()
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.custody.carry.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&crate::M1RearmRoundHistoryEntryV1> {
+        self.custody.carry.history.get(index)
+    }
+
+    #[must_use]
+    pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
+        self.custody.queue_observation
+    }
+
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.custody.device
+    }
+
+    #[must_use]
+    pub const fn completion_epoch(&self) -> CompletionEpoch {
+        self.custody.completion.epoch()
+    }
+
+    pub const fn kv_reservations(&self) -> &M1FullStepKvReservationCustodyV1 {
+        &self.custody.kv
+    }
+}
 
 impl M1AuthenticatedRearmedCompletionPreflightTeardownSuccessV1 {
     pub const fn queue_release(&self) -> &AuthenticatedServiceQueueReleaseV1 {
@@ -2797,47 +2868,57 @@ pub struct M1AuthenticatedRearmedRejectedCompletionTeardownFailureV1 {
     lineage: M1AuthenticatedRearmPriorRoundCustodyV1,
 }
 
-macro_rules! authenticated_rejected_completion_teardown_accessors {
-    ($owner:ident, $source:ty) => {
-        impl $owner {
-            pub const fn source(&self) -> &$source {
-                &self.source
-            }
+impl M1AuthenticatedRearmedRejectedCompletionTeardownSuccessV1 {
+    pub const fn source(&self) -> &crate::M1AuthenticatedCompletedStepRejectionTeardownSuccessV1 {
+        &self.source
+    }
 
-            #[must_use]
-            pub const fn parked_count(&self) -> usize {
-                self.lineage.parked.len()
-            }
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        self.lineage.parked.len()
+    }
 
-            #[must_use]
-            pub const fn terminal_lineage_count(&self) -> usize {
-                self.lineage.terminal.len()
-            }
+    #[must_use]
+    pub const fn terminal_lineage_count(&self) -> usize {
+        self.lineage.terminal.len()
+    }
 
-            #[must_use]
-            pub const fn round_history_len(&self) -> usize {
-                self.lineage.history.len()
-            }
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.lineage.history.len()
+    }
 
-            #[must_use]
-            pub fn round_history(
-                &self,
-                index: usize,
-            ) -> Option<&crate::M1RearmRoundHistoryEntryV1> {
-                self.lineage.history.get(index)
-            }
-        }
-    };
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&crate::M1RearmRoundHistoryEntryV1> {
+        self.lineage.history.get(index)
+    }
 }
 
-authenticated_rejected_completion_teardown_accessors!(
-    M1AuthenticatedRearmedRejectedCompletionTeardownSuccessV1,
-    crate::M1AuthenticatedCompletedStepRejectionTeardownSuccessV1
-);
-authenticated_rejected_completion_teardown_accessors!(
-    M1AuthenticatedRearmedRejectedCompletionTeardownFailureV1,
-    crate::M1AuthenticatedCompletedStepRejectionTeardownFailureV1
-);
+impl M1AuthenticatedRearmedRejectedCompletionTeardownFailureV1 {
+    pub const fn source(&self) -> &crate::M1AuthenticatedCompletedStepRejectionTeardownFailureV1 {
+        &self.source
+    }
+
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        self.lineage.parked.len()
+    }
+
+    #[must_use]
+    pub const fn terminal_lineage_count(&self) -> usize {
+        self.lineage.terminal.len()
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.lineage.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&crate::M1RearmRoundHistoryEntryV1> {
+        self.lineage.history.get(index)
+    }
+}
 
 /// Retry-safe authenticated page-release rejection with complete prior lineage.
 #[must_use = "authenticated page-release rejection remains the sole retry owner"]
@@ -2928,51 +3009,67 @@ pub struct M1AuthenticatedRearmedRoundPageReleaseTeardownFailureV1 {
     lineage: M1AuthenticatedRearmPriorRoundCustodyV1,
 }
 
-macro_rules! authenticated_page_release_teardown_accessors {
-    ($owner:ident, $completed:ty) => {
-        impl $owner {
-            pub const fn error(&self) -> &crate::M1CompletedStepKvReleaseErrorV1 {
-                &self.error
-            }
+impl M1AuthenticatedRearmedRoundPageReleaseTeardownSuccessV1 {
+    #[must_use]
+    pub const fn error(&self) -> &crate::M1CompletedStepKvReleaseErrorV1 {
+        &self.error
+    }
 
-            pub const fn completed(&self) -> &$completed {
-                &self.completed
-            }
+    pub const fn completed(&self) -> &crate::M1AuthenticatedCompletedStepTeardownSuccessV1 {
+        &self.completed
+    }
 
-            #[must_use]
-            pub const fn parked_count(&self) -> usize {
-                self.lineage.parked.len()
-            }
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        self.lineage.parked.len()
+    }
 
-            #[must_use]
-            pub const fn terminal_lineage_count(&self) -> usize {
-                self.lineage.terminal.len()
-            }
+    #[must_use]
+    pub const fn terminal_lineage_count(&self) -> usize {
+        self.lineage.terminal.len()
+    }
 
-            #[must_use]
-            pub const fn round_history_len(&self) -> usize {
-                self.lineage.history.len()
-            }
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.lineage.history.len()
+    }
 
-            #[must_use]
-            pub fn round_history(
-                &self,
-                index: usize,
-            ) -> Option<&crate::M1RearmRoundHistoryEntryV1> {
-                self.lineage.history.get(index)
-            }
-        }
-    };
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&crate::M1RearmRoundHistoryEntryV1> {
+        self.lineage.history.get(index)
+    }
 }
 
-authenticated_page_release_teardown_accessors!(
-    M1AuthenticatedRearmedRoundPageReleaseTeardownSuccessV1,
-    crate::M1AuthenticatedCompletedStepTeardownSuccessV1
-);
-authenticated_page_release_teardown_accessors!(
-    M1AuthenticatedRearmedRoundPageReleaseTeardownFailureV1,
-    crate::M1AuthenticatedCompletedStepTeardownFailureV1
-);
+impl M1AuthenticatedRearmedRoundPageReleaseTeardownFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> &crate::M1CompletedStepKvReleaseErrorV1 {
+        &self.error
+    }
+
+    pub const fn completed(&self) -> &crate::M1AuthenticatedCompletedStepTeardownFailureV1 {
+        &self.completed
+    }
+
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        self.lineage.parked.len()
+    }
+
+    #[must_use]
+    pub const fn terminal_lineage_count(&self) -> usize {
+        self.lineage.terminal.len()
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.lineage.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&crate::M1RearmRoundHistoryEntryV1> {
+        self.lineage.history.get(index)
+    }
+}
 
 /// Exhaustive transition from authenticated completion into another schedulable round.
 #[must_use = "every authenticated release outcome retains exact linear custody"]

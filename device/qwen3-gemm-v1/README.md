@@ -14,10 +14,10 @@ this package is an executable M1 path. The A4 root applies four adjacent
 reduction terms per loop iteration; hardware inspection and performance
 evidence must establish any actual vector load or throughput claim.
 
-The package pins immutable reviewed `fe2o3-device` and generated-host source at
-revision `d955209099c7`. A newer `cargo-fe2o3` compiler may admit and compile
-that dependency closure, but the dependency pin is not a claim about the
-compiler used to produce an artifact. Production extraction also requires the
+The package pins reviewed `fe2o3-device` and generated-host source at exact
+revision `b5374c6e6a4c1215ad481cefcd294334dcb1cbeb`. That source pin and a
+passing `cargo-fe2o3` host-test lane do not identify a production compiler
+occurrence or artifact. Production extraction also requires the
 compiler-authenticated semantic terminal for safe, bounds-checked
 `fe2o3_device::memory::volatile_load`; the dependency API alone does not grant
 that production lowering.
