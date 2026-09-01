@@ -224,6 +224,30 @@ macro_rules! define_authenticated_queue_phase {
             pub const fn packet_count(&self) -> usize {
                 self.shape().packet_count()
             }
+
+            /// Exact scheduler authority retained by this queue phase.
+            #[must_use = "scheduler authority remains retained by the queue"]
+            pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
+                match self {
+                    Self::TargetOnly(case) => case.scheduled_dispatch(),
+                    Self::PairedPrefill(case) => case.scheduled_dispatch(),
+                    Self::SpeculativeK4(case) => case.scheduled_dispatch(),
+                    Self::SpeculativeK8(case) => case.scheduled_dispatch(),
+                    Self::SpeculativeK16(case) => case.scheduled_dispatch(),
+                }
+            }
+
+            /// Checked physical-device receipt retained by this queue phase.
+            #[must_use]
+            pub const fn device(&self) -> Gfx942DeviceBinding {
+                match self {
+                    Self::TargetOnly(case) => case.device(),
+                    Self::PairedPrefill(case) => case.device(),
+                    Self::SpeculativeK4(case) => case.device(),
+                    Self::SpeculativeK8(case) => case.device(),
+                    Self::SpeculativeK16(case) => case.device(),
+                }
+            }
         }
     };
 }

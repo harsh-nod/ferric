@@ -134,6 +134,30 @@ pub struct M1RearmRoundHistoryEntryV1 {
 }
 
 impl M1RearmRoundHistoryEntryV1 {
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) const fn from_same_native_queue(
+        checked: crate::M1CheckedCompletionOutputV1,
+        logical_accepted_counts: Box<[u32]>,
+        externally_published_counts: Box<[u32]>,
+        release_counts: Box<[M1CompletedKvPageReleaseCountsV1]>,
+        completed_members: usize,
+        total_released: usize,
+        queue_observation: ComputeAqlQueueObservationV1,
+        device: Gfx942DeviceBinding,
+    ) -> Self {
+        Self {
+            checked,
+            logical_accepted_counts,
+            externally_published_counts,
+            release_counts,
+            completed_members,
+            total_released,
+            queue_observation,
+            device,
+            rollover: None,
+        }
+    }
+
     pub const fn checked(&self) -> &crate::M1CheckedCompletionOutputV1 {
         &self.checked
     }
@@ -181,7 +205,7 @@ impl M1RearmRoundHistoryEntryV1 {
 }
 
 #[derive(Debug)]
-struct M1NonEmptyRearmRoundHistoryV1<T = M1RearmRoundHistoryEntryV1> {
+pub(crate) struct M1NonEmptyRearmRoundHistoryV1<T = M1RearmRoundHistoryEntryV1> {
     earlier: Vec<T>,
     latest: T,
 }
@@ -243,11 +267,11 @@ fn join_qualification_evidence<Success, Failure, Evidence>(
 }
 
 impl<T> M1NonEmptyRearmRoundHistoryV1<T> {
-    const fn len(&self) -> usize {
+    pub(crate) const fn len(&self) -> usize {
         self.earlier.len() + 1
     }
 
-    fn get(&self, index: usize) -> Option<&T> {
+    pub(crate) fn get(&self, index: usize) -> Option<&T> {
         if index == self.earlier.len() {
             Some(&self.latest)
         } else {
@@ -255,33 +279,33 @@ impl<T> M1NonEmptyRearmRoundHistoryV1<T> {
         }
     }
 
-    const fn latest(&self) -> &T {
+    pub(crate) const fn latest(&self) -> &T {
         &self.latest
     }
 }
 
 #[derive(Debug)]
-enum M1RearmRoundHistoryV1<T = M1RearmRoundHistoryEntryV1> {
+pub(crate) enum M1RearmRoundHistoryV1<T = M1RearmRoundHistoryEntryV1> {
     Empty,
     NonEmpty(M1NonEmptyRearmRoundHistoryV1<T>),
 }
 
 impl<T> M1RearmRoundHistoryV1<T> {
-    const fn len(&self) -> usize {
+    pub(crate) const fn len(&self) -> usize {
         match self {
             Self::Empty => 0,
             Self::NonEmpty(history) => history.len(),
         }
     }
 
-    fn get(&self, index: usize) -> Option<&T> {
+    pub(crate) fn get(&self, index: usize) -> Option<&T> {
         match self {
             Self::Empty => None,
             Self::NonEmpty(history) => history.get(index),
         }
     }
 
-    fn try_reserve_append(&mut self) -> Result<(), M1RearmedCompletionPreflightErrorV1> {
+    pub(crate) fn try_reserve_append(&mut self) -> Result<(), M1RearmedCompletionPreflightErrorV1> {
         if self.len() >= M1_MAX_REARM_ROUND_HISTORY_V1 {
             return Err(M1RearmedCompletionPreflightErrorV1::RoundHistoryCapacity {
                 maximum: M1_MAX_REARM_ROUND_HISTORY_V1,
@@ -296,7 +320,7 @@ impl<T> M1RearmRoundHistoryV1<T> {
         }
     }
 
-    fn append(self, entry: T) -> M1NonEmptyRearmRoundHistoryV1<T> {
+    pub(crate) fn append(self, entry: T) -> M1NonEmptyRearmRoundHistoryV1<T> {
         match self {
             Self::Empty => M1NonEmptyRearmRoundHistoryV1 {
                 earlier: Vec::new(),

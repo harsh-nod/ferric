@@ -828,10 +828,6 @@ impl M1AuthenticatedReleasedCompletedStepV1 {
         }
     }
 
-    #[expect(
-        dead_code,
-        reason = "consumed by the staged authenticated retained-rearm bridge"
-    )]
     pub(crate) fn try_reserve_rearm_members(
         &mut self,
         additional: usize,
@@ -839,10 +835,6 @@ impl M1AuthenticatedReleasedCompletedStepV1 {
         self.members.try_reserve_exact(additional)
     }
 
-    #[expect(
-        dead_code,
-        reason = "consumed by the staged authenticated retained-rearm bridge"
-    )]
     #[allow(clippy::type_complexity)]
     pub(crate) fn into_rearm_parts(
         self,
