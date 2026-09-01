@@ -40,6 +40,7 @@ jobs:
       - run: python3 -I -B proofs/m1-qualification/test-authenticated-s1-k4-diagnostic-bridge-policy.py .
       - run: python3 -I -B proofs/m1-qualification/test-protected-worker-v3-build-producer-policy.py
       - run: python3 -I -B proofs/m1-qualification/test-protected-worker-v3-all-kernels-build-producer-policy.py
+      - run: python3 -I -B proofs/m1-qualification/test-protected-worker-v3-all-kernels-publication-selection-policy.py
       - run: python3 -I -B proofs/check-device-binding.py --self-test
       - name: Check exact M1 planner and fe2o3 integration policy
         env:

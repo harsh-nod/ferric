@@ -467,8 +467,9 @@ def main() -> None:
                         "byte_len": 42,
                         "llvm_build_identity": "7.2.4",
                         "path": str(root / "worker"),
-                        "sha256": "4" * 64,
-                        "worker_build_identity": "fe2o3-worker-v1-sha256-" + "5" * 64,
+                        "sha256": hashlib.sha256(b"synthetic aggregate worker").hexdigest(),
+                        "worker_build_identity": "fe2o3-worker-v1-sha256-"
+                        + hashlib.sha256(b"synthetic aggregate worker build").hexdigest(),
                     },
                 }
             )
@@ -514,6 +515,21 @@ def main() -> None:
             or b"/tmp/" in output_bytes
         ):
             fail("aggregate producer emitted a drifted or machine-local record")
+        validator = (
+            repo
+            / "proofs/m1-qualification/validate-protected-worker-v3-all-kernels-build.py"
+        )
+        validated = subprocess.run(
+            [sys.executable, "-I", "-B", str(validator), str(output)],
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            timeout=30,
+        )
+        if validated.returncode != 0 or not validated.stdout.startswith(
+            b"PASS: canonical aggregate protected Worker V3 build record sha256="
+        ):
+            fail(f"canonical validator rejected producer output: {validated.stdout!r}")
 
         require_rejection(producer, arguments, output, "a preexisting output")
 

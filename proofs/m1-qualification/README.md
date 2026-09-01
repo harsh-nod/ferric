@@ -354,6 +354,29 @@ python3 -I \
   proofs/m1-qualification/test-protected-worker-v3-build-producer-policy.py
 ```
 
+For the aggregate all-kernels output, validate the observational build record
+and produce a noncurrent, owner-private selection candidate with:
+
+```text
+python3 -I -B \
+  proofs/m1-qualification/validate-protected-worker-v3-all-kernels-build.py \
+  OBSERVATIONAL_BUILD_RECORD
+python3 -I -B \
+  proofs/m1-qualification/produce-protected-worker-v3-all-kernels-publication-selection.py \
+  FERRIC_SOURCE_REPO FE2O3_SOURCE_REPO OBSERVATIONAL_BUILD_RECORD NEW_CANDIDATE
+python3 -I -B \
+  proofs/m1-qualification/test-protected-worker-v3-all-kernels-publication-selection-policy.py
+```
+
+The candidate binds the record bytes, clean Ferric, fe2o3, and provider source
+identities, `gfx942:xnack-`, COV6, the exact ordered 12-symbol roster, all six
+source-pin coordinates, the finalized HSACO identity, and the receipt-bound
+Worker V3 envelope identity. It is published without replacement at mode 0600.
+It is not a current publication, verifier result, runtime selection, load or
+launch authority, Qwen execution record, M1 evidence, or gate closure. The
+engine's private current aggregate selection remains `None` and has no public,
+environment, CLI, or file override.
+
 Run the focused hostile policy with:
 
 ```text

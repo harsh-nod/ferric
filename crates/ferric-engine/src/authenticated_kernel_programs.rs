@@ -355,25 +355,30 @@ pub fn require_m1_authenticated_roster_acquisition_v1(
     })
 }
 
-/// Producer-owned current-source coordinates for the single aggregate compiler output.
+/// Producer-owned selection coordinates for the single aggregate compiler output.
 ///
-/// No Ferric producer emits this pin yet. Keeping the unavailable pin private prevents callers
-/// from substituting arbitrary identities while the aggregate publication work is incomplete.
-struct M1AggregateSourcePinV1 {
+/// A selection candidate is not a current selection. Keeping this unavailable type and its
+/// current value private prevents callers from substituting identities while the protected
+/// publication and verifier-authority work remains incomplete.
+struct M1AggregatePublicationSelectionV1 {
     compiler_module_sha256: [u8; 32],
     compiler_module_length: u64,
     compiler_handoff_sha256: [u8; 32],
     compiler_handoff_length: u64,
     symbol_manifest_sha256: [u8; 32],
     symbol_manifest_length: u64,
+    finalized_artifact_sha256: [u8; 32],
+    finalized_artifact_length: u64,
 }
 
-const M1_CURRENT_AGGREGATE_SOURCE_PIN_V1: Option<M1AggregateSourcePinV1> = None;
+const M1_CURRENT_AGGREGATE_PUBLICATION_SELECTION_V1: Option<M1AggregatePublicationSelectionV1> =
+    None;
 
 /// Admits one authenticated aggregate roster into the exact 12-program catalog.
 ///
-/// Until the aggregate build producer emits a current source pin, this function rejects with
-/// `MissingAggregateSourcePin` and returns the authenticated roster in its residue.
+/// A produced selection candidate is not current authority. Until a separate review installs
+/// one private current selection, this function rejects with `MissingAggregateSourcePin` and
+/// returns the authenticated roster in its residue.
 ///
 /// # Errors
 ///
@@ -381,7 +386,7 @@ const M1_CURRENT_AGGREGATE_SOURCE_PIN_V1: Option<M1AggregateSourcePinV1> = None;
 pub fn admit_m1_authenticated_worker_v3_programs_v1(
     roster: M1AuthenticatedWorkerV3RosterV1,
 ) -> Result<M1AuthenticatedWorkerV3ProgramSetV1, M1AuthenticatedProgramSetIntakeFailureV1> {
-    let Some(source_pin) = M1_CURRENT_AGGREGATE_SOURCE_PIN_V1 else {
+    let Some(selection) = M1_CURRENT_AGGREGATE_PUBLICATION_SELECTION_V1 else {
         return Err(intake_failure(
             M1AuthenticatedProgramSetIntakePhaseV1::SourceFacts,
             M1AuthenticatedProgramSetIntakeErrorV1::MissingAggregateSourcePin,
@@ -392,7 +397,7 @@ pub fn admit_m1_authenticated_worker_v3_programs_v1(
         ));
     };
 
-    if let Err(error) = validate_roster(&source_pin, &roster) {
+    if let Err(error) = validate_roster(&selection, &roster) {
         return Err(intake_failure(
             M1AuthenticatedProgramSetIntakePhaseV1::Preflight,
             error,
@@ -403,7 +408,7 @@ pub fn admit_m1_authenticated_worker_v3_programs_v1(
         ));
     }
 
-    let roster_catalog_id = authenticated_catalog_id(&source_pin, &roster);
+    let roster_catalog_id = authenticated_catalog_id(&selection, &roster);
     let family_artifacts = authenticated_family_artifacts(&roster);
     let programs = match AuthenticatedWorkerV3ProgramSetV1::from_roster(roster) {
         Ok(programs) => programs,
@@ -475,7 +480,7 @@ fn intake_failure(
 }
 
 fn validate_roster(
-    source_pin: &M1AggregateSourcePinV1,
+    selection: &M1AggregatePublicationSelectionV1,
     roster: &M1AuthenticatedWorkerV3RosterV1,
 ) -> Result<(), M1AuthenticatedProgramSetIntakeErrorV1> {
     let expected_target =
@@ -485,24 +490,24 @@ fn validate_roster(
     })?;
 
     let compiler_module = roster.compiler_module_identity();
-    if compiler_module.sha256() != &source_pin.compiler_module_sha256
-        || compiler_module.byte_len() != source_pin.compiler_module_length
+    if compiler_module.sha256() != &selection.compiler_module_sha256
+        || compiler_module.byte_len() != selection.compiler_module_length
     {
         return Err(M1AuthenticatedProgramSetIntakeErrorV1::SourceIdentity {
             axis: "compiler module",
         });
     }
     let compiler_handoff = roster.compiler_handoff_identity();
-    if compiler_handoff.sha256() != &source_pin.compiler_handoff_sha256
-        || compiler_handoff.byte_len() != source_pin.compiler_handoff_length
+    if compiler_handoff.sha256() != &selection.compiler_handoff_sha256
+        || compiler_handoff.byte_len() != selection.compiler_handoff_length
     {
         return Err(M1AuthenticatedProgramSetIntakeErrorV1::SourceIdentity {
             axis: "compiler handoff",
         });
     }
     let symbol_manifest = roster.compiler_symbol_manifest_identity();
-    if symbol_manifest.sha256() != &source_pin.symbol_manifest_sha256
-        || symbol_manifest.byte_len() != source_pin.symbol_manifest_length
+    if symbol_manifest.sha256() != &selection.symbol_manifest_sha256
+        || symbol_manifest.byte_len() != selection.symbol_manifest_length
     {
         return Err(M1AuthenticatedProgramSetIntakeErrorV1::SourceIdentity {
             axis: "symbol manifest",
@@ -535,6 +540,13 @@ fn validate_roster(
         || verification.finalized_hsaco_sha256() == [0; 32]
     {
         return Err(M1AuthenticatedProgramSetIntakeErrorV1::EmptyFinalizedArtifact);
+    }
+    if verification.finalized_hsaco_sha256() != selection.finalized_artifact_sha256
+        || verification.finalized_hsaco_length() != selection.finalized_artifact_length
+    {
+        return Err(M1AuthenticatedProgramSetIntakeErrorV1::SourceIdentity {
+            axis: "finalized artifact",
+        });
     }
 
     let mut bindings = Vec::with_capacity(M1_PHYSICAL_PROGRAM_COUNT_V1);
@@ -646,7 +658,7 @@ fn authenticated_family_artifacts(
 }
 
 fn authenticated_catalog_id(
-    source_pin: &M1AggregateSourcePinV1,
+    selection: &M1AggregatePublicationSelectionV1,
     roster: &M1AuthenticatedWorkerV3RosterV1,
 ) -> Identity {
     let verification = roster.verification();
@@ -654,12 +666,14 @@ fn authenticated_catalog_id(
     digest.update(M1_AUTHENTICATED_PROGRAM_CATALOG_DOMAIN_V2);
     digest.update((M1_AUTHENTICATED_ROSTER_COUNT_V1 as u64).to_le_bytes());
     digest.update((M1_PHYSICAL_PROGRAM_COUNT_V1 as u64).to_le_bytes());
-    digest.update(source_pin.compiler_module_sha256);
-    digest.update(source_pin.compiler_module_length.to_le_bytes());
-    digest.update(source_pin.compiler_handoff_sha256);
-    digest.update(source_pin.compiler_handoff_length.to_le_bytes());
-    digest.update(source_pin.symbol_manifest_sha256);
-    digest.update(source_pin.symbol_manifest_length.to_le_bytes());
+    digest.update(selection.compiler_module_sha256);
+    digest.update(selection.compiler_module_length.to_le_bytes());
+    digest.update(selection.compiler_handoff_sha256);
+    digest.update(selection.compiler_handoff_length.to_le_bytes());
+    digest.update(selection.symbol_manifest_sha256);
+    digest.update(selection.symbol_manifest_length.to_le_bytes());
+    digest.update(selection.finalized_artifact_sha256);
+    digest.update(selection.finalized_artifact_length.to_le_bytes());
     digest.update(verification.lineage_identity().as_bytes());
     digest.update(verification.roster_identity().as_bytes());
     digest.update(verification.finalized_hsaco_sha256());
@@ -774,8 +788,8 @@ mod tests {
     }
 
     #[test]
-    fn aggregate_source_pin_is_explicitly_unavailable() {
-        assert!(M1_CURRENT_AGGREGATE_SOURCE_PIN_V1.is_none());
+    fn aggregate_publication_selection_is_explicitly_unavailable() {
+        assert!(M1_CURRENT_AGGREGATE_PUBLICATION_SELECTION_V1.is_none());
         assert_eq!(M1_AUTHENTICATED_ROSTER_COUNT_V1, 1);
     }
 }
