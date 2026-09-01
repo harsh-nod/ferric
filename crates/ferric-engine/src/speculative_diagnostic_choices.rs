@@ -129,6 +129,8 @@ pub enum M1SpeculativeDiagnosticChoicesErrorV1 {
     DraftReadRangeMissing { iteration: usize },
     /// A copied range came from another dispatch generation.
     DispatchGeneration { expected: u64, actual: u64 },
+    /// A copied range came from another fixed-dispatch data ordinal.
+    ReadbackDataIndex { expected: usize, actual: usize },
     /// A copied range began at another allocation offset.
     ReadbackOffset { expected: u64, actual: u64 },
     /// A copied byte extent drifted.
@@ -163,8 +165,10 @@ pub struct BoundM1SpeculativeDiagnosticChoicesV1 {
     shape: M1SpeculativeDiagnosticChoicesShapeV1,
     draft_key: ChoiceAllocationKeyV1,
     draft_range: ServiceHostDispatchRangeV1,
+    draft_data_index: usize,
     target_key: ChoiceAllocationKeyV1,
     target_range: ServiceHostDispatchRangeV1,
+    target_data_index: usize,
 }
 
 impl BoundM1SpeculativeDiagnosticChoicesV1 {
@@ -525,14 +529,18 @@ fn allocate(
     allocations: &mut ServiceAllocationSessionV1,
     shape: M1SpeculativeDiagnosticChoicesShapeV1,
 ) -> Result<BoundM1SpeculativeDiagnosticChoicesV1, M1SpeculativeDiagnosticChoicesErrorV1> {
-    let (draft_key, draft_range) = allocate_range(allocations, shape.draft_extent_bytes)?;
-    let (target_key, target_range) = allocate_range(allocations, shape.target_extent_bytes)?;
+    let (draft_key, draft_range, draft_data_index) =
+        allocate_range(allocations, shape.draft_extent_bytes)?;
+    let (target_key, target_range, target_data_index) =
+        allocate_range(allocations, shape.target_extent_bytes)?;
     Ok(BoundM1SpeculativeDiagnosticChoicesV1 {
         shape,
         draft_key,
         draft_range,
+        draft_data_index,
         target_key,
         target_range,
+        target_data_index,
     })
 }
 
@@ -540,9 +548,14 @@ fn allocate_range(
     allocations: &mut ServiceAllocationSessionV1,
     extent: u64,
 ) -> Result<
-    (ChoiceAllocationKeyV1, ServiceHostDispatchRangeV1),
+    (ChoiceAllocationKeyV1, ServiceHostDispatchRangeV1, usize),
     M1SpeculativeDiagnosticChoicesErrorV1,
 > {
+    // Ferric appends each initialized diagnostic allocation after the complete
+    // mapped allocation roster. fe2o3 assigns fixed-dispatch ordinals densely
+    // in that same device-then-host roster, so the pre-allocation count is an
+    // independent expected ordinal retained for completed-readback checking.
+    let data_index = allocations.allocation_count();
     let requested =
         usize::try_from(extent).map_err(|_| M1SpeculativeDiagnosticChoicesErrorV1::Overflow)?;
     let initialized = speculative_choice_initial_image(requested)?;
@@ -554,7 +567,7 @@ fn allocate_range(
         extent,
         M1_SPECULATIVE_DIAGNOSTIC_CHOICE_ALIGNMENT_V1,
     )?;
-    Ok((key, allocations.host_dispatch_range(typed)?))
+    Ok((key, allocations.host_dispatch_range(typed)?, data_index))
 }
 
 fn speculative_choice_initial_image(
@@ -724,7 +737,13 @@ pub(crate) fn observe_m1_speculative_diagnostic_choices_v1(
                 target,
             )));
         };
-        if let Err(error) = validate_readback(readback, range, row_extent, dispatch_generation) {
+        if let Err(error) = validate_readback(
+            readback,
+            range,
+            owner.draft_data_index,
+            row_extent,
+            dispatch_generation,
+        ) {
             return Err(Box::new((error, draft, target)));
         }
         draft_bytes.extend_from_slice(readback.bytes());
@@ -732,6 +751,7 @@ pub(crate) fn observe_m1_speculative_diagnostic_choices_v1(
     if let Err(error) = validate_readback(
         &target,
         owner.target_range,
+        owner.target_data_index,
         owner.shape.target_extent_bytes,
         dispatch_generation,
     ) {
@@ -791,31 +811,37 @@ pub(crate) fn observe_m1_speculative_diagnostic_choices_v1(
 fn validate_readback(
     readback: &ServiceCompletedReadbackV1,
     range: ServiceHostDispatchRangeV1,
+    data_index: usize,
     extent: u64,
     generation: u64,
 ) -> Result<(), M1SpeculativeDiagnosticChoicesErrorV1> {
     validate_readback_coordinates(
-        generation,
-        range.offset_bytes(),
-        extent,
-        readback.dispatch_generation(),
-        readback.offset_bytes(),
-        u64::try_from(readback.bytes().len()).unwrap_or(u64::MAX),
+        (generation, data_index, range.offset_bytes(), extent),
+        (
+            readback.dispatch_generation(),
+            readback.data_index(),
+            readback.offset_bytes(),
+            u64::try_from(readback.bytes().len()).unwrap_or(u64::MAX),
+        ),
     )
 }
 
 fn validate_readback_coordinates(
-    expected_generation: u64,
-    expected_offset: u64,
-    expected_extent: u64,
-    actual_generation: u64,
-    actual_offset: u64,
-    actual_extent: u64,
+    expected: (u64, usize, u64, u64),
+    actual: (u64, usize, u64, u64),
 ) -> Result<(), M1SpeculativeDiagnosticChoicesErrorV1> {
+    let (expected_generation, expected_data_index, expected_offset, expected_extent) = expected;
+    let (actual_generation, actual_data_index, actual_offset, actual_extent) = actual;
     if actual_generation != expected_generation {
         return Err(M1SpeculativeDiagnosticChoicesErrorV1::DispatchGeneration {
             expected: expected_generation,
             actual: actual_generation,
+        });
+    }
+    if actual_data_index != expected_data_index {
+        return Err(M1SpeculativeDiagnosticChoicesErrorV1::ReadbackDataIndex {
+            expected: expected_data_index,
+            actual: actual_data_index,
         });
     }
     if actual_offset != expected_offset {
@@ -1016,17 +1042,21 @@ mod tests {
 
     #[test]
     fn generation_offset_and_extent_substitution_reject() {
-        validate_readback_coordinates(31, 64, 16, 31, 64, 16).unwrap();
+        validate_readback_coordinates((31, 7, 64, 16), (31, 7, 64, 16)).unwrap();
         assert!(matches!(
-            validate_readback_coordinates(31, 64, 16, 32, 64, 16),
+            validate_readback_coordinates((31, 7, 64, 16), (32, 7, 64, 16)),
             Err(M1SpeculativeDiagnosticChoicesErrorV1::DispatchGeneration { .. })
         ));
         assert!(matches!(
-            validate_readback_coordinates(31, 64, 16, 31, 68, 16),
+            validate_readback_coordinates((31, 7, 64, 16), (31, 8, 64, 16)),
+            Err(M1SpeculativeDiagnosticChoicesErrorV1::ReadbackDataIndex { .. })
+        ));
+        assert!(matches!(
+            validate_readback_coordinates((31, 7, 64, 16), (31, 7, 68, 16)),
             Err(M1SpeculativeDiagnosticChoicesErrorV1::ReadbackOffset { .. })
         ));
         assert!(matches!(
-            validate_readback_coordinates(31, 64, 16, 31, 64, 20),
+            validate_readback_coordinates((31, 7, 64, 16), (31, 7, 64, 20)),
             Err(M1SpeculativeDiagnosticChoicesErrorV1::ReadbackExtent { .. })
         ));
     }

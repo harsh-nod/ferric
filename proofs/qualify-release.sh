@@ -294,6 +294,10 @@ set +e
     PYTHONDONTWRITEBYTECODE=1 python3 -I -B \
         proofs/m1/evidence/test-r29-differential-evidence-policy.py
     printf 'FERRIC_QUALITY_GATE=m1-r29-differential-evidence:PASS\n'
+    printf 'FERRIC_QUALITY_GATE=authenticated-s1-k4-diagnostic-bridge-policy:BEGIN\n'
+    PYTHONDONTWRITEBYTECODE=1 python3 -I -B \
+        proofs/m1-qualification/test-authenticated-s1-k4-diagnostic-bridge-policy.py .
+    printf 'FERRIC_QUALITY_GATE=authenticated-s1-k4-diagnostic-bridge-policy:PASS\n'
     printf 'FERRIC_QUALITY_GATE=worker-v3-producer-policy:BEGIN\n'
     PYTHONDONTWRITEBYTECODE=1 python3 -I -B \
         proofs/m1-qualification/test-protected-worker-v3-build-producer-policy.py

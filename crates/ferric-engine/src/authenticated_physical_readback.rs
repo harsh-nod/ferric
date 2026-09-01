@@ -2,7 +2,9 @@
 //!
 //! This boundary copies the exact completed K7 output once while retaining
 //! authenticated program history, then joins the inert image to scheduler and
-//! KV authority without exposing a raw queue or any diagnostic capture path.
+//! KV authority without exposing a raw queue. One explicitly demoted,
+//! first-publication-only S1/K4 path may additionally copy the four draft rows
+//! and one target matrix needed by the existing Ferric diagnostic semantics.
 
 use core::fmt;
 
@@ -13,14 +15,18 @@ use fe2o3_host::{
 };
 use fe2o3_kfd::ComputeAqlQueueObservationV1;
 use fe2o3_service_host::{
-    ServiceCompletedReadbackV1, ServiceQueueErrorV1, ServiceQueueReleaseFailureV1,
+    ServiceCompletedReadbackV1, ServiceHostDispatchRangeV1, ServiceQueueErrorV1,
+    ServiceQueueReleaseFailureV1,
 };
-use ferric_spec::{completion::CompletionEpoch, Identity};
+use ferric_spec::{completion::CompletionEpoch, Identity, M1_MAX_ACTIVE_SEQUENCES};
 
 use crate::authenticated_kernel_programs::M1AuthenticatedProgramCatalogWitnessV1;
 use crate::completed_readback_join::check_m1_completed_output_v1;
 use crate::observed_completion::{
     observe_m1_completed_output_v1, observe_m1_guarded_completed_output_v1,
+};
+use crate::speculative_diagnostic_choices::{
+    m1_speculative_diagnostic_is_s1_k4_selection_v1, observe_m1_speculative_diagnostic_choices_v1,
 };
 use crate::{
     preflight_m1_completion_canary_v1, validate_m1_completion_canary_readback_v1,
@@ -28,12 +34,23 @@ use crate::{
     Engine, ExactCompletion, Gfx942DeviceBinding, M1AuthenticatedPhysicalQueuePhaseCaseV1,
     M1AuthenticatedPhysicalRecycledQueueSessionV1, M1CheckedCompletionOutputV1,
     M1CompletedOutputCheckErrorV1, M1CompletionObservationErrorV1,
-    M1FullStepKvReservationCustodyV1, M1ObservedCompletionImageV1, M1PhysicalFixedBatchShapeV1,
+    M1FullStepKvReservationCustodyV1, M1ObservedCompletionImageV1,
+    M1ObservedSpeculativeDiagnosticChoicesV1, M1PhysicalFixedBatchShapeV1,
     M1PhysicalQueueBatchCustodyV1, M1PrepublicationStepCustodyV1, M1ScheduledDispatchV1,
-    M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
-    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
-    M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
+    M1SpeculativeDiagnosticChoicesErrorV1, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
 };
+
+/// Explicit authority demotion for authenticated first-publication S1/K4 diagnostics.
+pub const M1_AUTHENTICATED_S1_K4_DIAGNOSTIC_STATUS_V1: &str = "partial-non-evidence";
+const M1_AUTHENTICATED_S1_K4_FIRST_DISPATCH_GENERATION_V1: u64 = 1;
+const M1_AUTHENTICATED_S1_K4_DRAFT_RANGE_NAMES_V1: [&str; 4] =
+    ["draft-0", "draft-1", "draft-2", "draft-3"];
+
+const fn is_authenticated_s1_k4_first_dispatch_generation(generation: u64) -> bool {
+    generation == M1_AUTHENTICATED_S1_K4_FIRST_DISPATCH_GENERATION_V1
+}
 
 /// One authenticated recycled queue generation paired with its completed output copy.
 #[must_use = "observed bytes and authenticated queue custody remain linear"]
@@ -165,6 +182,438 @@ impl M1AuthenticatedObservedCompletionOutputV1 {
             Self::SpeculativeK8(case) => case.case.kernel_catalog_id(),
             Self::SpeculativeK16(case) => case.case.kernel_catalog_id(),
         }
+    }
+
+    /// Copies the exact four draft rows and one target matrix for the
+    /// first-generation target S1/K4 diagnostic.
+    ///
+    /// The compact K7 image has already been copied exactly once by
+    /// [`M1AuthenticatedPhysicalRecycledQueueSessionV1::observe_completion`].
+    /// This transition retains that observed owner, its authenticated program
+    /// witness, and its queue session while issuing the same ordered
+    /// `draft-0` through `draft-3`, then `target`, completed copies as the raw
+    /// Ferric path. It is not implemented on any authenticated rearm wrapper.
+    ///
+    /// # Errors
+    ///
+    /// Rejects any non-S1/K4 owner, an absent diagnostic attachment, range
+    /// derivation failure, completed-copy failure, or copied-coordinate/token
+    /// rejection. Failure never exposes another diagnostic observation attempt.
+    pub fn observe_speculative_k4_diagnostic_choices(
+        mut self,
+    ) -> Result<
+        M1AuthenticatedObservedSpeculativeK4DiagnosticOutputV1,
+        Box<M1AuthenticatedSpeculativeK4DiagnosticObservationFailureV1>,
+    > {
+        let (draft_ranges, target_range, dispatch_generation, live_sequences) = match &self {
+            Self::SpeculativeK4(case) => {
+                let selection = case.case.custody().completion_output().shape().selection();
+                if !m1_speculative_diagnostic_is_s1_k4_selection_v1(selection) {
+                    return Err(Box::new(
+                        M1AuthenticatedSpeculativeK4DiagnosticObservationFailureV1::new(
+                            M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1::NotS1K4,
+                            self,
+                            Box::new([]),
+                        ),
+                    ));
+                }
+                let dispatch_generation = case.image.dispatch_generation();
+                if !is_authenticated_s1_k4_first_dispatch_generation(dispatch_generation) {
+                    return Err(Box::new(
+                        M1AuthenticatedSpeculativeK4DiagnosticObservationFailureV1::new(
+                            M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1::NotFirstDispatchGeneration {
+                                actual: dispatch_generation,
+                            },
+                            self,
+                            Box::new([]),
+                        ),
+                    ));
+                }
+                let Some(owner) = case
+                    .case
+                    .custody()
+                    .completion_output()
+                    .speculative_diagnostic_choices()
+                else {
+                    return Err(Box::new(
+                        M1AuthenticatedSpeculativeK4DiagnosticObservationFailureV1::new(
+                            M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1::CaptureNotEnabled,
+                            self,
+                            Box::new([]),
+                        ),
+                    ));
+                };
+                let draft_ranges = match owner.retained_draft_read_ranges() {
+                    Ok(ranges) => ranges,
+                    Err(error) => {
+                        return Err(Box::new(
+                            M1AuthenticatedSpeculativeK4DiagnosticObservationFailureV1::new(
+                                M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1::Choices(
+                                    error,
+                                ),
+                                self,
+                                Box::new([]),
+                            ),
+                        ));
+                    }
+                };
+                (
+                    draft_ranges,
+                    owner.retained_target_range(),
+                    dispatch_generation,
+                    u32::try_from(case.case.scheduled_dispatch().member_count())
+                        .unwrap_or(u32::MAX),
+                )
+            }
+            _ => {
+                return Err(Box::new(
+                    M1AuthenticatedSpeculativeK4DiagnosticObservationFailureV1::new(
+                        M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1::NotS1K4,
+                        self,
+                        Box::new([]),
+                    ),
+                ));
+            }
+        };
+
+        let mut copies = Vec::new();
+        if copies.try_reserve_exact(5).is_err() {
+            return Err(Box::new(
+                M1AuthenticatedSpeculativeK4DiagnosticObservationFailureV1::new(
+                    M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1::HostAllocation,
+                    self,
+                    Box::new([]),
+                ),
+            ));
+        }
+        for (index, range_name) in M1_AUTHENTICATED_S1_K4_DRAFT_RANGE_NAMES_V1
+            .iter()
+            .copied()
+            .enumerate()
+        {
+            let Some(range) = draft_ranges[index] else {
+                return Err(Box::new(
+                    M1AuthenticatedSpeculativeK4DiagnosticObservationFailureV1::new(
+                        M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1::DraftRangeMissing {
+                            iteration: index,
+                        },
+                        self,
+                        copies.into_boxed_slice(),
+                    ),
+                ));
+            };
+            match read_authenticated_speculative_k4_choice(&mut self, range_name, range) {
+                Ok(readback) => copies.push(readback),
+                Err(source) => {
+                    return Err(Box::new(
+                        M1AuthenticatedSpeculativeK4DiagnosticObservationFailureV1::new(
+                            M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1::Queue {
+                                range: range_name,
+                                source,
+                            },
+                            self,
+                            copies.into_boxed_slice(),
+                        ),
+                    ));
+                }
+            }
+        }
+        let target =
+            match read_authenticated_speculative_k4_choice(&mut self, "target", target_range) {
+                Ok(readback) => readback,
+                Err(source) => {
+                    return Err(Box::new(
+                        M1AuthenticatedSpeculativeK4DiagnosticObservationFailureV1::new(
+                            M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1::Queue {
+                                range: "target",
+                                source,
+                            },
+                            self,
+                            copies.into_boxed_slice(),
+                        ),
+                    ));
+                }
+            };
+        let draft = copies.into_boxed_slice();
+        let owner = if let Self::SpeculativeK4(case) = &self {
+            case.case
+                .custody()
+                .completion_output()
+                .speculative_diagnostic_choices()
+        } else {
+            let mut copies = draft.into_vec();
+            copies.push(target);
+            return Err(Box::new(
+                M1AuthenticatedSpeculativeK4DiagnosticObservationFailureV1::new(
+                    M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1::NotS1K4,
+                    self,
+                    copies.into_boxed_slice(),
+                ),
+            ));
+        };
+        let Some(owner) = owner else {
+            let mut copies = draft.into_vec();
+            copies.push(target);
+            return Err(Box::new(
+                M1AuthenticatedSpeculativeK4DiagnosticObservationFailureV1::new(
+                    M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1::CaptureNotEnabled,
+                    self,
+                    copies.into_boxed_slice(),
+                ),
+            ));
+        };
+        let choices = match observe_m1_speculative_diagnostic_choices_v1(
+            owner,
+            dispatch_generation,
+            live_sequences,
+            draft,
+            target,
+        ) {
+            Ok(choices) => choices,
+            Err(failure) => {
+                let (error, draft, target) = *failure;
+                let mut copies = draft.into_vec();
+                copies.push(target);
+                return Err(Box::new(
+                    M1AuthenticatedSpeculativeK4DiagnosticObservationFailureV1::new(
+                        M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1::Choices(error),
+                        self,
+                        copies.into_boxed_slice(),
+                    ),
+                ));
+            }
+        };
+        Ok(M1AuthenticatedObservedSpeculativeK4DiagnosticOutputV1 {
+            completion: self,
+            choices,
+        })
+    }
+}
+
+fn read_authenticated_speculative_k4_choice(
+    completion: &mut M1AuthenticatedObservedCompletionOutputV1,
+    _range_name: &'static str,
+    range: ServiceHostDispatchRangeV1,
+) -> Result<ServiceCompletedReadbackV1, ServiceQueueErrorV1> {
+    let M1AuthenticatedObservedCompletionOutputV1::SpeculativeK4(case) = completion else {
+        unreachable!("authenticated diagnostic read was preflighted as S1/K4")
+    };
+    let (lower, _custody, _step) = case.case.observation_parts();
+    let request = lower.completed_read_request(range);
+    lower.read_completed(request)
+}
+
+/// First-publication authenticated S1/K4 diagnostic observation rejection.
+#[derive(Debug)]
+pub enum M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1 {
+    /// The owner is not the exact target `SpeculativeS1K4C8192` case.
+    NotS1K4,
+    /// The queue was directly reused; diagnostic sentinels were not reset.
+    NotFirstDispatchGeneration { actual: u64 },
+    /// Diagnostic choice allocations were not attached before publication.
+    CaptureNotEnabled,
+    /// Host custody for the five completed copies could not be reserved.
+    HostAllocation,
+    /// An exact draft-row range was unexpectedly absent.
+    DraftRangeMissing { iteration: usize },
+    /// One exact ordered completed copy failed.
+    Queue {
+        range: &'static str,
+        source: ServiceQueueErrorV1,
+    },
+    /// Copied coordinates, extents, generation, or token values rejected.
+    Choices(M1SpeculativeDiagnosticChoicesErrorV1),
+}
+
+impl fmt::Display for M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            formatter,
+            "authenticated first-publication S1/K4 diagnostic observation rejected: {self:?}"
+        )
+    }
+}
+
+impl std::error::Error for M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1 {}
+
+/// Failure retaining authenticated compact/queue/program custody and every copy.
+#[must_use = "authenticated diagnostic failure custody must be torn down or retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeK4DiagnosticObservationFailureV1 {
+    error: M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1,
+    completion: Box<M1AuthenticatedObservedCompletionOutputV1>,
+    partial_choices: Box<[ServiceCompletedReadbackV1]>,
+}
+
+impl M1AuthenticatedSpeculativeK4DiagnosticObservationFailureV1 {
+    fn new(
+        error: M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1,
+        completion: M1AuthenticatedObservedCompletionOutputV1,
+        partial_choices: Box<[ServiceCompletedReadbackV1]>,
+    ) -> Self {
+        Self {
+            error,
+            completion: Box::new(completion),
+            partial_choices,
+        }
+    }
+
+    #[must_use]
+    pub const fn error(&self) -> &M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1 {
+        &self.error
+    }
+
+    /// Explicitly demoted diagnostic status; this owner is not M1 evidence.
+    #[must_use]
+    pub const fn status(&self) -> &'static str {
+        M1_AUTHENTICATED_S1_K4_DIAGNOSTIC_STATUS_V1
+    }
+
+    #[must_use]
+    pub const fn copied_choice_ranges(&self) -> usize {
+        self.partial_choices.len()
+    }
+
+    #[must_use = "authenticated compact and queue custody remain retained"]
+    pub const fn compact(&self) -> &M1AuthenticatedObservedCompletionOutputV1 {
+        &self.completion
+    }
+
+    /// Faults the logical engine, destroys the queue, and retains all inert bytes.
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal authenticated release quarantine paired with the
+    /// compact image and every completed choice copy.
+    pub fn destroy_queue_and_retain_evidence<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1AuthenticatedSpeculativeK4DiagnosticObservationTeardownSuccessV1,
+        Box<M1AuthenticatedSpeculativeK4DiagnosticObservationTeardownFailureV1>,
+    > {
+        engine.quarantine_m1_queue_rearm_failure();
+        let Self {
+            error,
+            completion,
+            partial_choices,
+        } = self;
+        match release_authenticated_observed_output(*completion) {
+            Ok((queue_release, compact)) => Ok(
+                M1AuthenticatedSpeculativeK4DiagnosticObservationTeardownSuccessV1 {
+                    error,
+                    compact,
+                    partial_choices,
+                    queue_release,
+                },
+            ),
+            Err(failure) => {
+                let (source, compact) = *failure;
+                Err(Box::new(
+                    M1AuthenticatedSpeculativeK4DiagnosticObservationTeardownFailureV1 {
+                        error,
+                        compact,
+                        partial_choices,
+                        source,
+                    },
+                ))
+            }
+        }
+    }
+}
+
+/// Clean authenticated teardown after diagnostic observation rejection.
+#[must_use = "diagnostic bytes and authenticated queue release remain retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeK4DiagnosticObservationTeardownSuccessV1 {
+    error: M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1,
+    compact: M1ObservedCompletionImageV1,
+    partial_choices: Box<[ServiceCompletedReadbackV1]>,
+    queue_release: AuthenticatedServiceQueueReleaseV1,
+}
+
+impl M1AuthenticatedSpeculativeK4DiagnosticObservationTeardownSuccessV1 {
+    #[must_use]
+    pub const fn error(&self) -> &M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1 {
+        &self.error
+    }
+
+    #[must_use]
+    pub const fn copied_choice_ranges(&self) -> usize {
+        self.partial_choices.len()
+    }
+
+    #[must_use = "the compact image remains retained"]
+    pub const fn compact(&self) -> &M1ObservedCompletionImageV1 {
+        &self.compact
+    }
+
+    #[must_use = "authenticated program release remains retained"]
+    pub const fn queue_release(&self) -> &AuthenticatedServiceQueueReleaseV1 {
+        &self.queue_release
+    }
+}
+
+/// Terminal authenticated release quarantine after diagnostic observation rejection.
+#[must_use = "diagnostic bytes and authenticated release quarantine remain retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeK4DiagnosticObservationTeardownFailureV1 {
+    error: M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1,
+    compact: M1ObservedCompletionImageV1,
+    partial_choices: Box<[ServiceCompletedReadbackV1]>,
+    source: M1AuthenticatedPhysicalReadbackQueueReleaseFailureV1,
+}
+
+impl M1AuthenticatedSpeculativeK4DiagnosticObservationTeardownFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> &M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1 {
+        &self.error
+    }
+
+    #[must_use]
+    pub const fn copied_choice_ranges(&self) -> usize {
+        self.partial_choices.len()
+    }
+
+    #[must_use = "the compact image remains retained"]
+    pub const fn compact(&self) -> &M1ObservedCompletionImageV1 {
+        &self.compact
+    }
+
+    #[must_use = "authenticated release quarantine remains retained"]
+    pub const fn source(&self) -> &M1AuthenticatedPhysicalReadbackQueueReleaseFailureV1 {
+        &self.source
+    }
+}
+
+/// One authenticated compact K7 observation paired with exactly five S1/K4 copies.
+#[must_use = "authenticated diagnostic observation must be checked or retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedObservedSpeculativeK4DiagnosticOutputV1 {
+    completion: M1AuthenticatedObservedCompletionOutputV1,
+    choices: M1ObservedSpeculativeDiagnosticChoicesV1,
+}
+
+impl M1AuthenticatedObservedSpeculativeK4DiagnosticOutputV1 {
+    /// Explicitly demoted diagnostic status; this owner is not M1 evidence.
+    #[must_use]
+    pub const fn status(&self) -> &'static str {
+        M1_AUTHENTICATED_S1_K4_DIAGNOSTIC_STATUS_V1
+    }
+
+    #[must_use = "the compact K7 image remains paired with authenticated custody"]
+    pub const fn compact(&self) -> &M1ObservedCompletionImageV1 {
+        self.completion.image()
+    }
+
+    #[must_use = "the exact draft/target copies remain retained"]
+    pub const fn choices(&self) -> &M1ObservedSpeculativeDiagnosticChoicesV1 {
+        &self.choices
+    }
+
+    #[must_use]
+    pub const fn program_catalog_id(&self) -> Identity {
+        self.completion.program_catalog_id()
     }
 }
 
@@ -1802,7 +2251,14 @@ type CheckObservedCaseResultV1<const N: usize> = Result<
     ),
 >;
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum M1AuthenticatedCompletionEvidenceJoinAuthorityV1 {
+    Generic,
+    SpeculativeK4Diagnostic,
+}
+
 fn validate_generic_observed_semantics(
+    authority: M1AuthenticatedCompletionEvidenceJoinAuthorityV1,
     qualification_capture_enabled: bool,
     direct_diagnostic_capture_enabled: bool,
     speculative_diagnostic_capture_enabled: bool,
@@ -1811,7 +2267,12 @@ fn validate_generic_observed_semantics(
     if direct_diagnostic_capture_enabled {
         return Err(M1CompletedOutputCheckErrorV1::DirectDiagnosticCaptureRequiresEvidence);
     }
-    if speculative_diagnostic_capture_enabled {
+    if speculative_diagnostic_capture_enabled
+        != matches!(
+            authority,
+            M1AuthenticatedCompletionEvidenceJoinAuthorityV1::SpeculativeK4Diagnostic
+        )
+    {
         return Err(M1CompletedOutputCheckErrorV1::SpeculativeDiagnosticCaptureRequiresEvidence);
     }
     if qualification_capture_enabled {
@@ -1832,6 +2293,7 @@ fn validate_generic_observed_semantics(
 
 fn check_observed_case<const N: usize>(
     case: Box<M1AuthenticatedObservedCompletionCaseV1<N>>,
+    authority: M1AuthenticatedCompletionEvidenceJoinAuthorityV1,
     semantics: &[CompletionWireSemanticExpectation<'_>],
 ) -> CheckObservedCaseResultV1<N> {
     let scheduled = case.case.scheduled_dispatch();
@@ -1845,6 +2307,7 @@ fn check_observed_case<const N: usize>(
         ));
     }
     if let Err(error) = validate_generic_observed_semantics(
+        authority,
         case.case
             .custody()
             .completion_output()
@@ -2059,10 +2522,11 @@ fn join_observed_output_case<const N: usize>(
     readback: fn(
         Box<M1AuthenticatedPhysicalReadbackQueueCaseV1<N>>,
     ) -> M1AuthenticatedPhysicalReadbackQueueSessionV1,
+    authority: M1AuthenticatedCompletionEvidenceJoinAuthorityV1,
     expectations: &[CompletionWireSemanticExpectation<'_>],
 ) -> Result<M1AuthenticatedPhysicalCompletedReadbackV1, M1AuthenticatedCompletedReadbackJoinFailureV1>
 {
-    match check_observed_case(case, expectations) {
+    match check_observed_case(case, authority, expectations) {
         Ok((case, checked, completion, kv)) => Ok(M1AuthenticatedPhysicalCompletedReadbackV1 {
             queue: readback(case),
             checked,
@@ -2099,55 +2563,368 @@ impl M1AuthenticatedObservedCompletionOutputV1 {
                 case,
                 Self::TargetOnly,
                 M1AuthenticatedPhysicalReadbackQueueSessionV1::TargetOnly,
+                M1AuthenticatedCompletionEvidenceJoinAuthorityV1::Generic,
                 expectations,
             ),
             Self::PairedPrefill(case) => join_observed_output_case(
                 case,
                 Self::PairedPrefill,
                 M1AuthenticatedPhysicalReadbackQueueSessionV1::PairedPrefill,
+                M1AuthenticatedCompletionEvidenceJoinAuthorityV1::Generic,
                 expectations,
             ),
             Self::SpeculativeK4(case) => join_observed_output_case(
                 case,
                 Self::SpeculativeK4,
                 M1AuthenticatedPhysicalReadbackQueueSessionV1::SpeculativeK4,
+                M1AuthenticatedCompletionEvidenceJoinAuthorityV1::Generic,
                 expectations,
             ),
             Self::SpeculativeK8(case) => join_observed_output_case(
                 case,
                 Self::SpeculativeK8,
                 M1AuthenticatedPhysicalReadbackQueueSessionV1::SpeculativeK8,
+                M1AuthenticatedCompletionEvidenceJoinAuthorityV1::Generic,
                 expectations,
             ),
             Self::SpeculativeK16(case) => join_observed_output_case(
                 case,
                 Self::SpeculativeK16,
                 M1AuthenticatedPhysicalReadbackQueueSessionV1::SpeculativeK16,
+                M1AuthenticatedCompletionEvidenceJoinAuthorityV1::Generic,
                 expectations,
             ),
         }
     }
 }
 
+fn authenticated_speculative_k4_semantics(
+    choices: &M1ObservedSpeculativeDiagnosticChoicesV1,
+) -> (
+    [CompletionWireSemanticExpectation<'_>; M1_MAX_ACTIVE_SEQUENCES as usize],
+    usize,
+) {
+    let empty = CompletionWireSemanticExpectation::Speculative {
+        draft_tokens: &[],
+        target_choices: &[],
+    };
+    let mut semantics = [empty; M1_MAX_ACTIVE_SEQUENCES as usize];
+    let live = choices.live_sequences() as usize;
+    for (lane, semantic) in semantics.iter_mut().take(live).enumerate() {
+        *semantic = CompletionWireSemanticExpectation::Speculative {
+            draft_tokens: choices.draft_choices_for_lane(lane).unwrap_or(&[]),
+            target_choices: choices.target_choices_for_lane(lane).unwrap_or(&[]),
+        };
+    }
+    (semantics, live)
+}
+
+fn check_authenticated_speculative_k4_diagnostic(
+    completion: M1AuthenticatedObservedCompletionOutputV1,
+    choices: M1ObservedSpeculativeDiagnosticChoicesV1,
+) -> Result<
+    M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackV1,
+    Box<M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackJoinFailureV1>,
+> {
+    let (semantics, live) = authenticated_speculative_k4_semantics(&choices);
+    let joined = match completion {
+        M1AuthenticatedObservedCompletionOutputV1::SpeculativeK4(case) => {
+            join_observed_output_case(
+                case,
+                M1AuthenticatedObservedCompletionOutputV1::SpeculativeK4,
+                M1AuthenticatedPhysicalReadbackQueueSessionV1::SpeculativeK4,
+                M1AuthenticatedCompletionEvidenceJoinAuthorityV1::SpeculativeK4Diagnostic,
+                &semantics[..live],
+            )
+        }
+        completion => {
+            return Err(Box::new(
+                M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackJoinFailureV1 {
+                    failure: M1AuthenticatedCompletedReadbackJoinFailureV1 {
+                        error: M1CompletedOutputCheckErrorV1::SpeculativeDiagnosticCaptureRequiresEvidence,
+                        observed: Box::new(completion),
+                    },
+                    choices,
+                },
+            ));
+        }
+    };
+    match joined {
+        Ok(completed) => Ok(M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackV1 {
+            corresponding_target_only_token: choices
+                .target_choices()
+                .first()
+                .copied()
+                .unwrap_or(u32::MAX),
+            completed,
+            choices,
+        }),
+        Err(failure) => Err(Box::new(
+            M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackJoinFailureV1 {
+                failure,
+                choices,
+            },
+        )),
+    }
+}
+
+impl M1AuthenticatedObservedSpeculativeK4DiagnosticOutputV1 {
+    /// Joins copied S1/K4 choices to compact wire, scheduler, plan, epoch, and KV custody.
+    ///
+    /// This specialized private-authority route is the only authenticated join
+    /// that admits a speculative diagnostic attachment. It derives all token
+    /// semantics from the retained completed copies and accepts no caller-supplied
+    /// semantic values.
+    ///
+    /// # Errors
+    ///
+    /// Returns the unchanged authenticated compact owner and choice copies when
+    /// roster, epoch, plan, wire, request, or maximal-prefix semantics reject.
+    pub fn check_completion(
+        self,
+    ) -> Result<
+        M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackV1,
+        Box<M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackJoinFailureV1>,
+    > {
+        check_authenticated_speculative_k4_diagnostic(self.completion, self.choices)
+    }
+}
+
+/// Positive authenticated S1/K4 maximal-prefix join retaining exact choice copies.
+#[must_use = "authenticated completed readback and diagnostic choices remain retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackV1 {
+    completed: M1AuthenticatedPhysicalCompletedReadbackV1,
+    corresponding_target_only_token: ferric_spec::TokenId,
+    choices: M1ObservedSpeculativeDiagnosticChoicesV1,
+}
+
+impl M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackV1 {
+    /// Explicitly demoted diagnostic status; this owner is not M1 evidence.
+    #[must_use]
+    pub const fn status(&self) -> &'static str {
+        M1_AUTHENTICATED_S1_K4_DIAGNOSTIC_STATUS_V1
+    }
+
+    #[must_use = "authenticated completed readback authority remains retained"]
+    pub const fn completed(&self) -> &M1AuthenticatedPhysicalCompletedReadbackV1 {
+        &self.completed
+    }
+
+    #[must_use = "exact diagnostic choices remain retained"]
+    pub const fn choices(&self) -> &M1ObservedSpeculativeDiagnosticChoicesV1 {
+        &self.choices
+    }
+
+    /// Target's S1 next-token choice for the pre-round context.
+    #[must_use]
+    pub const fn corresponding_target_only_token(&self) -> ferric_spec::TokenId {
+        self.corresponding_target_only_token
+    }
+
+    /// Whether compact output's first token equals the same-round target choice.
+    #[must_use]
+    pub fn target_token_matches(&self) -> bool {
+        self.completed
+            .checked()
+            .records()
+            .first()
+            .is_some_and(|record| {
+                record.record().emitted_token_count > 0
+                    && record.record().emitted_tokens[0] == self.corresponding_target_only_token
+            })
+    }
+
+    /// Separates authenticated completion authority and inert choice copies once.
+    #[must_use = "authenticated completion and diagnostic choices remain retained"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1AuthenticatedPhysicalCompletedReadbackV1,
+        M1ObservedSpeculativeDiagnosticChoicesV1,
+    ) {
+        (self.completed, self.choices)
+    }
+}
+
+/// Semantic rejection retaining authenticated observed queue/program custody and choices.
+#[must_use = "authenticated diagnostic join failure must be retried, torn down, or retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackJoinFailureV1 {
+    failure: M1AuthenticatedCompletedReadbackJoinFailureV1,
+    choices: M1ObservedSpeculativeDiagnosticChoicesV1,
+}
+
+impl M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackJoinFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> &M1CompletedOutputCheckErrorV1 {
+        self.failure.error()
+    }
+
+    #[must_use]
+    pub const fn status(&self) -> &'static str {
+        M1_AUTHENTICATED_S1_K4_DIAGNOSTIC_STATUS_V1
+    }
+
+    #[must_use = "the same copied choices remain retained"]
+    pub const fn choices(&self) -> &M1ObservedSpeculativeDiagnosticChoicesV1 {
+        &self.choices
+    }
+
+    /// Rechecks the same compact image and choices without another device read.
+    ///
+    /// # Errors
+    ///
+    /// Returns the same closed failure owner if the immutable join still rejects.
+    pub fn retry(
+        self,
+    ) -> Result<M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackV1, Box<Self>> {
+        let Self { failure, choices } = self;
+        match check_authenticated_speculative_k4_diagnostic(*failure.observed, choices) {
+            Ok(completed) => Ok(completed),
+            Err(failure) => Err(failure),
+        }
+    }
+
+    /// Faults the logical engine and tears down while retaining both evidence owners.
+    ///
+    /// # Errors
+    ///
+    /// Returns authenticated release quarantine paired with the compact image,
+    /// join diagnostic, and exact choice copies.
+    pub fn destroy_queue_and_retain_evidence<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1AuthenticatedSpeculativeK4DiagnosticSemanticTeardownSuccessV1,
+        Box<M1AuthenticatedSpeculativeK4DiagnosticSemanticTeardownFailureV1>,
+    > {
+        let Self { failure, choices } = self;
+        match failure.destroy_queue_and_retain_evidence(engine) {
+            Ok(teardown) => Ok(
+                M1AuthenticatedSpeculativeK4DiagnosticSemanticTeardownSuccessV1 {
+                    choices,
+                    teardown,
+                },
+            ),
+            Err(teardown) => Err(Box::new(
+                M1AuthenticatedSpeculativeK4DiagnosticSemanticTeardownFailureV1 {
+                    choices,
+                    teardown,
+                },
+            )),
+        }
+    }
+}
+
+/// Clean teardown retaining authenticated semantic rejection and S1/K4 choices.
+#[must_use = "authenticated diagnostic teardown and choice custody remain retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeK4DiagnosticSemanticTeardownSuccessV1 {
+    choices: M1ObservedSpeculativeDiagnosticChoicesV1,
+    teardown: M1AuthenticatedReadbackTeardownSuccessV1,
+}
+
+impl M1AuthenticatedSpeculativeK4DiagnosticSemanticTeardownSuccessV1 {
+    #[must_use = "exact diagnostic choices remain retained"]
+    pub const fn choices(&self) -> &M1ObservedSpeculativeDiagnosticChoicesV1 {
+        &self.choices
+    }
+
+    #[must_use = "authenticated program release remains retained"]
+    pub const fn teardown(&self) -> &M1AuthenticatedReadbackTeardownSuccessV1 {
+        &self.teardown
+    }
+}
+
+/// Terminal teardown retaining authenticated release quarantine and S1/K4 choices.
+#[must_use = "authenticated diagnostic teardown quarantine remains retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeK4DiagnosticSemanticTeardownFailureV1 {
+    choices: M1ObservedSpeculativeDiagnosticChoicesV1,
+    teardown: Box<M1AuthenticatedReadbackTeardownFailureV1>,
+}
+
+impl M1AuthenticatedSpeculativeK4DiagnosticSemanticTeardownFailureV1 {
+    #[must_use = "exact diagnostic choices remain retained"]
+    pub const fn choices(&self) -> &M1ObservedSpeculativeDiagnosticChoicesV1 {
+        &self.choices
+    }
+
+    #[must_use = "authenticated release quarantine remains retained"]
+    pub const fn teardown(&self) -> &M1AuthenticatedReadbackTeardownFailureV1 {
+        &self.teardown
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::validate_generic_observed_semantics;
+    use super::{
+        is_authenticated_s1_k4_first_dispatch_generation, validate_generic_observed_semantics,
+        M1AuthenticatedCompletionEvidenceJoinAuthorityV1,
+        M1_AUTHENTICATED_S1_K4_DIAGNOSTIC_STATUS_V1,
+    };
     use crate::M1CompletedOutputCheckErrorV1;
 
     #[test]
     fn generic_readback_denies_diagnostic_capture_routes() {
         assert!(matches!(
-            validate_generic_observed_semantics(false, true, false, &[]),
+            validate_generic_observed_semantics(
+                M1AuthenticatedCompletionEvidenceJoinAuthorityV1::Generic,
+                false,
+                true,
+                false,
+                &[]
+            ),
             Err(M1CompletedOutputCheckErrorV1::DirectDiagnosticCaptureRequiresEvidence)
         ));
         assert!(matches!(
-            validate_generic_observed_semantics(false, false, true, &[]),
+            validate_generic_observed_semantics(
+                M1AuthenticatedCompletionEvidenceJoinAuthorityV1::Generic,
+                false,
+                false,
+                true,
+                &[]
+            ),
             Err(M1CompletedOutputCheckErrorV1::SpeculativeDiagnosticCaptureRequiresEvidence)
         ));
     }
 
     #[test]
     fn generic_readback_accepts_capture_free_semantic_route() {
-        assert!(validate_generic_observed_semantics(false, false, false, &[]).is_ok());
+        assert!(validate_generic_observed_semantics(
+            M1AuthenticatedCompletionEvidenceJoinAuthorityV1::Generic,
+            false,
+            false,
+            false,
+            &[]
+        )
+        .is_ok());
+    }
+
+    #[test]
+    fn private_diagnostic_authority_requires_exactly_one_speculative_attachment() {
+        let authority = M1AuthenticatedCompletionEvidenceJoinAuthorityV1::SpeculativeK4Diagnostic;
+        assert!(validate_generic_observed_semantics(authority, false, false, true, &[]).is_ok());
+        assert!(matches!(
+            validate_generic_observed_semantics(authority, false, false, false, &[]),
+            Err(M1CompletedOutputCheckErrorV1::SpeculativeDiagnosticCaptureRequiresEvidence)
+        ));
+        assert!(matches!(
+            validate_generic_observed_semantics(authority, false, true, true, &[]),
+            Err(M1CompletedOutputCheckErrorV1::DirectDiagnosticCaptureRequiresEvidence)
+        ));
+        assert_eq!(
+            M1_AUTHENTICATED_S1_K4_DIAGNOSTIC_STATUS_V1,
+            "partial-non-evidence"
+        );
+    }
+
+    #[test]
+    fn authenticated_s1_k4_diagnostic_admits_only_first_dispatch_generation() {
+        assert!(is_authenticated_s1_k4_first_dispatch_generation(1));
+        for hostile in [0, 2, u64::MAX] {
+            assert!(!is_authenticated_s1_k4_first_dispatch_generation(hostile));
+        }
     }
 }
