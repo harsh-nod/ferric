@@ -13,22 +13,12 @@ const allowedStates = new Set([
   "open",
 ]);
 const expectedCurrent = Object.freeze({
-  siteRefreshBase: "e419160a3d21db5e8b25f414fd696982a959a171",
-  implementationCommit: "5f40e404ba4bc76c16eed15868c63a72e60e716c",
-  selectedFe2o3Pin: "b5374c6e6a4c1215ad481cefcd294334dcb1cbeb",
-  devicePackages: [
-    "gemm",
-    "logits",
-    "paged-decode",
-    "prefill",
-    "rmsnorm",
-    "rope-kv",
-    "swiglu",
-  ],
-  generatedExpectations: 12,
-  sourceGateModules: 151,
-  sourceGateExecutableBodies: 6850,
-  plannerSlots: 354,
+  siteRefreshBase: "6a20199b71283c8d4c88a94c9489823ab15630b3",
+  implementationCommit: "6a20199b71283c8d4c88a94c9489823ab15630b3",
+  selectedFe2o3Pin: "52815c9ed52a3075e26322cf506144cb22da12d2",
+  aggregateSourceCommit: "5514afe176a090aa3f1da9e5354799bb4ca5a8b3",
+  aggregateProducerCommit: "e57c42523050922ad76538150df691cc5ab975a7",
+  aggregateKernelCount: 12,
   openM1Gates: 33,
 });
 
@@ -72,6 +62,8 @@ assert(project.current && typeof project.current === "object", "current status i
 assertCommit(project.current.siteRefreshBase, "current.siteRefreshBase");
 assertCommit(project.current.implementationCommit, "current.implementationCommit");
 assertCommit(project.current.selectedFe2o3Pin, "current.selectedFe2o3Pin");
+assertCommit(project.current.aggregateSourceCommit, "current.aggregateSourceCommit");
+assertCommit(project.current.aggregateProducerCommit, "current.aggregateProducerCommit");
 for (const [key, expected] of Object.entries(expectedCurrent)) {
   const actual = project.current[key];
   assert(
