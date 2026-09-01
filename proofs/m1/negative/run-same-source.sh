@@ -144,8 +144,10 @@ copy_source() {
     mkdir -p "$destination/proofs"
     cp -a "$repo/Cargo.toml" "$repo/Cargo.lock" "$repo/rust-toolchain.toml" \
         "$destination/"
+    cp -a "$repo/adapters" "$destination/"
     cp -a "$repo/benches" "$destination/"
     cp -a "$repo/crates" "$destination/"
+    cp -a "$repo/device" "$destination/"
     cp -a "$repo/proofs/m1" "$destination/proofs/"
     chmod -R u+w "$destination"
 }

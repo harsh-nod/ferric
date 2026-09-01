@@ -590,6 +590,7 @@ done
 printf 'cargo|%s|%s|%s|%s\n' "$PWD" "$package" "$target" "$manifest" \
     >>"$FERRIC_FAKE_TOOL_LOG"
 workspace=${manifest%/Cargo.toml}
+[ -f "$workspace/adapters/qwen3-all-kernels-worker-v3-verifier-v1/Cargo.toml" ] || exit 8
 for device in qwen3-all-kernels-v1 qwen3-gemm-v1 qwen3-logits-v1 qwen3-paged-decode-v1 qwen3-prefill-v1 \
     qwen3-rmsnorm-v1 qwen3-rope-kv-v1 qwen3-swiglu-v1; do
     [ -f "$workspace/device/$device/Cargo.toml" ] || exit 8
