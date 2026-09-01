@@ -1,4 +1,4 @@
-//! Canonical deployment input for seven exact M1 Worker V3 publications.
+//! Canonical deployment input for the aggregate M1 Worker V3 publication and its legacy rosters.
 
 use std::error::Error;
 use std::fmt;
@@ -12,14 +12,24 @@ use crate::{
     M1WorkerV3ArtifactSelectorV1, M1WorkerV3ArtifactSelectorsErrorV1, M1WorkerV3ArtifactSelectorsV1,
 };
 
-/// Exact format label for the canonical seven-family selector document.
+/// Legacy format label for the canonical seven-family selector document.
 pub const M1_WORKER_V3_SELECTOR_MANIFEST_FORMAT_V1: &str =
     "ferric.m1-worker-v3-selector-manifest.v1";
 
-/// Maximum admitted selector-document size.
+/// Maximum admitted legacy selector-document size.
 pub const M1_WORKER_V3_SELECTOR_MANIFEST_MAX_BYTES_V1: usize = 64 * 1_024;
 
-/// Why a canonical selector document could not name seven exact publications.
+/// Format label for the canonical singular aggregate selector document.
+pub const M1_WORKER_V3_SELECTOR_MANIFEST_FORMAT_V2: &str =
+    "ferric.m1-worker-v3-selector-manifest.v2";
+
+/// Exact compiler unit admitted by the singular aggregate selector document.
+pub const M1_WORKER_V3_AGGREGATE_COMPILER_UNIT_V2: &str = "qwen3-all-kernels-v1";
+
+/// Maximum admitted aggregate selector-document size.
+pub const M1_WORKER_V3_SELECTOR_MANIFEST_MAX_BYTES_V2: usize = 64 * 1_024;
+
+/// Why a canonical legacy selector document could not name seven exact publications.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[non_exhaustive]
 pub enum M1WorkerV3SelectorManifestErrorV1 {
@@ -71,7 +81,54 @@ impl Error for M1WorkerV3SelectorManifestErrorV1 {
     }
 }
 
-/// Decodes one canonical, explicitly ordered K1-K7 selector document.
+/// Why a canonical V2 selector document could not name one exact aggregate publication.
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[non_exhaustive]
+pub enum M1WorkerV3SelectorManifestErrorV2 {
+    Size { actual: usize },
+    Json(String),
+    NonCanonicalJson,
+    Schema(String),
+    UnsupportedCompilerUnit,
+    InvalidOutputDirectory,
+    InvalidBuildAttempt,
+}
+
+impl fmt::Display for M1WorkerV3SelectorManifestErrorV2 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Size { actual } => write!(
+                formatter,
+                "M1 aggregate Worker V3 selector manifest size {actual} is outside 1..={M1_WORKER_V3_SELECTOR_MANIFEST_MAX_BYTES_V2}"
+            ),
+            Self::Json(error) => write!(
+                formatter,
+                "M1 aggregate Worker V3 selector manifest JSON is invalid: {error}"
+            ),
+            Self::NonCanonicalJson => formatter.write_str(
+                "M1 aggregate Worker V3 selector manifest must be canonical pretty ASCII JSON with one trailing newline",
+            ),
+            Self::Schema(error) => write!(
+                formatter,
+                "M1 aggregate Worker V3 selector manifest schema is invalid: {error}"
+            ),
+            Self::UnsupportedCompilerUnit => write!(
+                formatter,
+                "M1 aggregate Worker V3 selector compiler unit must be {M1_WORKER_V3_AGGREGATE_COMPILER_UNIT_V2}"
+            ),
+            Self::InvalidOutputDirectory => formatter.write_str(
+                "M1 aggregate Worker V3 output directory is not an exact canonical absolute path",
+            ),
+            Self::InvalidBuildAttempt => {
+                formatter.write_str("M1 aggregate Worker V3 build attempt is not canonical")
+            }
+        }
+    }
+}
+
+impl Error for M1WorkerV3SelectorManifestErrorV2 {}
+
+/// Decodes one canonical, explicitly ordered legacy K1-K7 selector document.
 ///
 /// The document names exact `BuildAttempt` values. It never scans a directory or infers a latest
 /// publication, and constructing the result performs no artifact recovery or authentication.
@@ -172,11 +229,84 @@ pub fn decode_m1_worker_v3_selector_manifest_v1(
     .map_err(M1WorkerV3SelectorManifestErrorV1::Selectors)
 }
 
+/// Decodes one canonical V2 selector for the exact aggregate M1 compiler unit.
+///
+/// The document names one exact `BuildAttempt` and canonical absolute output directory. It binds
+/// that publication to `qwen3-all-kernels-v1`, never scans a directory, and never infers a latest
+/// attempt.
+///
+/// # Errors
+///
+/// Rejects noncanonical JSON, unknown or missing fields, the wrong compiler unit, an aliased or
+/// relative output directory, and a noncanonical build attempt.
+pub fn decode_m1_worker_v3_selector_manifest_v2(
+    bytes: &[u8],
+) -> Result<M1WorkerV3ArtifactSelectorV1, M1WorkerV3SelectorManifestErrorV2> {
+    if bytes.is_empty() || bytes.len() > M1_WORKER_V3_SELECTOR_MANIFEST_MAX_BYTES_V2 {
+        return Err(M1WorkerV3SelectorManifestErrorV2::Size {
+            actual: bytes.len(),
+        });
+    }
+    let value: Value = serde_json::from_slice(bytes)
+        .map_err(|error| M1WorkerV3SelectorManifestErrorV2::Json(error.to_string()))?;
+    if canonical_json_v2(&value)? != bytes {
+        return Err(M1WorkerV3SelectorManifestErrorV2::NonCanonicalJson);
+    }
+    let document = value
+        .as_object()
+        .ok_or_else(|| schema_v2("root must be an object"))?;
+    if document.len() != 2 {
+        return Err(schema_v2("root must contain exactly format and selector"));
+    }
+    if document.get("format").and_then(Value::as_str)
+        != Some(M1_WORKER_V3_SELECTOR_MANIFEST_FORMAT_V2)
+    {
+        return Err(schema_v2("format is missing or unsupported"));
+    }
+    let selector = document
+        .get("selector")
+        .and_then(Value::as_object)
+        .ok_or_else(|| schema_v2("selector must be an object"))?;
+    if selector.len() != 3 {
+        return Err(schema_v2(
+            "selector must contain exactly build_attempt, compiler_unit, and output_directory",
+        ));
+    }
+    if selector.get("compiler_unit").and_then(Value::as_str)
+        != Some(M1_WORKER_V3_AGGREGATE_COMPILER_UNIT_V2)
+    {
+        return Err(M1WorkerV3SelectorManifestErrorV2::UnsupportedCompilerUnit);
+    }
+    let output = selector
+        .get("output_directory")
+        .and_then(Value::as_str)
+        .ok_or_else(|| schema_v2("selector output_directory must be a string"))?;
+    let output_dir = canonical_absolute_path(output)
+        .ok_or(M1WorkerV3SelectorManifestErrorV2::InvalidOutputDirectory)?;
+    let attempt = selector
+        .get("build_attempt")
+        .and_then(Value::as_str)
+        .ok_or_else(|| schema_v2("selector build_attempt must be a string"))?;
+    let attempt = BuildAttempt::from_env_value(attempt)
+        .map_err(|_| M1WorkerV3SelectorManifestErrorV2::InvalidBuildAttempt)?;
+    Ok(M1WorkerV3ArtifactSelectorV1::new(output_dir, attempt))
+}
+
 fn canonical_json(value: &Value) -> Result<Vec<u8>, M1WorkerV3SelectorManifestErrorV1> {
     let mut bytes = serde_json::to_vec_pretty(value)
         .map_err(|error| M1WorkerV3SelectorManifestErrorV1::Json(error.to_string()))?;
     if !bytes.is_ascii() {
         return Err(M1WorkerV3SelectorManifestErrorV1::NonCanonicalJson);
+    }
+    bytes.push(b'\n');
+    Ok(bytes)
+}
+
+fn canonical_json_v2(value: &Value) -> Result<Vec<u8>, M1WorkerV3SelectorManifestErrorV2> {
+    let mut bytes = serde_json::to_vec_pretty(value)
+        .map_err(|error| M1WorkerV3SelectorManifestErrorV2::Json(error.to_string()))?;
+    if !bytes.is_ascii() {
+        return Err(M1WorkerV3SelectorManifestErrorV2::NonCanonicalJson);
     }
     bytes.push(b'\n');
     Ok(bytes)
@@ -225,6 +355,10 @@ fn schema(error: impl Into<String>) -> M1WorkerV3SelectorManifestErrorV1 {
     M1WorkerV3SelectorManifestErrorV1::Schema(error.into())
 }
 
+fn schema_v2(error: impl Into<String>) -> M1WorkerV3SelectorManifestErrorV2 {
+    M1WorkerV3SelectorManifestErrorV2::Schema(error.into())
+}
+
 #[cfg(test)]
 mod tests {
     use serde_json::json;
@@ -257,6 +391,92 @@ mod tests {
 
     fn encode(value: &Value) -> Vec<u8> {
         canonical_json(value).expect("canonical JSON")
+    }
+
+    fn aggregate_manifest() -> Value {
+        json!({
+            "format": M1_WORKER_V3_SELECTOR_MANIFEST_FORMAT_V2,
+            "selector": {
+                "build_attempt": ATTEMPT,
+                "compiler_unit": M1_WORKER_V3_AGGREGATE_COMPILER_UNIT_V2,
+                "output_directory": "/worker-v3/all-kernels",
+            },
+        })
+    }
+
+    fn encode_v2(value: &Value) -> Vec<u8> {
+        canonical_json_v2(value).expect("canonical aggregate JSON")
+    }
+
+    #[test]
+    fn canonical_aggregate_manifest_preserves_one_exact_selector() {
+        let encoded = encode_v2(&aggregate_manifest());
+        assert!(encoded.is_ascii());
+        assert_eq!(encoded.last(), Some(&b'\n'));
+        let selector = decode_m1_worker_v3_selector_manifest_v2(&encoded)
+            .expect("canonical aggregate selector manifest");
+        assert_eq!(selector.output_dir(), Path::new("/worker-v3/all-kernels"));
+        assert_eq!(selector.attempt().to_env_value(), ATTEMPT);
+    }
+
+    #[test]
+    fn aggregate_manifest_rejects_unknown_fields_and_wrong_compiler_unit() {
+        let mut value = aggregate_manifest();
+        value["extra"] = Value::Bool(false);
+        assert!(matches!(
+            decode_m1_worker_v3_selector_manifest_v2(&encode_v2(&value)),
+            Err(M1WorkerV3SelectorManifestErrorV2::Schema(_))
+        ));
+
+        let mut value = aggregate_manifest();
+        value["selector"]["extra"] = Value::Bool(false);
+        assert!(matches!(
+            decode_m1_worker_v3_selector_manifest_v2(&encode_v2(&value)),
+            Err(M1WorkerV3SelectorManifestErrorV2::Schema(_))
+        ));
+
+        let mut value = aggregate_manifest();
+        value["selector"]["compiler_unit"] = Value::String("qwen3-swiglu-v1".to_owned());
+        assert_eq!(
+            decode_m1_worker_v3_selector_manifest_v2(&encode_v2(&value)),
+            Err(M1WorkerV3SelectorManifestErrorV2::UnsupportedCompilerUnit)
+        );
+    }
+
+    #[test]
+    fn aggregate_manifest_rejects_noncanonical_attempts_paths_and_json() {
+        let compact = serde_json::to_vec(&aggregate_manifest()).expect("compact aggregate JSON");
+        assert_eq!(
+            decode_m1_worker_v3_selector_manifest_v2(&compact),
+            Err(M1WorkerV3SelectorManifestErrorV2::NonCanonicalJson)
+        );
+
+        let mut value = aggregate_manifest();
+        value["selector"]["build_attempt"] = Value::String(format!("0:{ATTEMPT}"));
+        assert_eq!(
+            decode_m1_worker_v3_selector_manifest_v2(&encode_v2(&value)),
+            Err(M1WorkerV3SelectorManifestErrorV2::InvalidBuildAttempt)
+        );
+
+        let mut value = aggregate_manifest();
+        value["selector"]["output_directory"] =
+            Value::String("/worker-v3/../worker-v3/all-kernels".to_owned());
+        assert_eq!(
+            decode_m1_worker_v3_selector_manifest_v2(&encode_v2(&value)),
+            Err(M1WorkerV3SelectorManifestErrorV2::InvalidOutputDirectory)
+        );
+    }
+
+    #[test]
+    fn selector_manifest_versions_are_mutually_rejected() {
+        assert!(matches!(
+            decode_m1_worker_v3_selector_manifest_v2(&encode(&manifest())),
+            Err(M1WorkerV3SelectorManifestErrorV2::Schema(_))
+        ));
+        assert!(matches!(
+            decode_m1_worker_v3_selector_manifest_v1(&encode_v2(&aggregate_manifest())),
+            Err(M1WorkerV3SelectorManifestErrorV1::Schema(_))
+        ));
     }
 
     #[test]

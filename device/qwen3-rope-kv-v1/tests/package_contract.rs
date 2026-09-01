@@ -3,8 +3,8 @@ const LOCK: &str = include_str!("../Cargo.lock");
 const TOOLCHAIN: &str = include_str!("../rust-toolchain.toml");
 const README: &str = include_str!("../README.md");
 
-const FE2O3_REVISION: &str = "9f97985ee0a4a8ef0bc8f0fa0fd33771c8180592";
-const FE2O3_LOCK_SOURCE: &str = "git+https://github.com/harsh-nod/fe2o3.git?rev=9f97985ee0a4a8ef0bc8f0fa0fd33771c8180592#9f97985ee0a4a8ef0bc8f0fa0fd33771c8180592";
+const FE2O3_REVISION: &str = "2d275684d7a22f8f913114b51b1d1dd524d1ed9b";
+const FE2O3_LOCK_SOURCE: &str = "git+https://github.com/harsh-nod/fe2o3.git?rev=2d275684d7a22f8f913114b51b1d1dd524d1ed9b#2d275684d7a22f8f913114b51b1d1dd524d1ed9b";
 
 #[test]
 fn manifest_and_complete_lock_closure_pin_exact_reviewed_fe2o3_source() {
@@ -27,7 +27,7 @@ fn manifest_and_complete_lock_closure_pin_exact_reviewed_fe2o3_source() {
             .all(|line| line.trim() == expected_source)
     );
     assert_eq!(
-        LOCK.matches("?rev=9f97985ee0a4a8ef0bc8f0fa0fd33771c8180592#")
+        LOCK.matches("?rev=2d275684d7a22f8f913114b51b1d1dd524d1ed9b#")
             .count(),
         fe2o3_sources.len()
     );
@@ -37,7 +37,7 @@ fn manifest_and_complete_lock_closure_pin_exact_reviewed_fe2o3_source() {
 fn package_retains_the_reviewed_nightly_and_truthful_nonclaims() {
     assert!(TOOLCHAIN.contains("nightly-2026-04-03"));
     assert!(TOOLCHAIN.contains("rustc-dev"));
-    assert!(README.contains("revision `9f97985ee0a4`"));
+    assert!(README.contains("revision `2d275684d7a2`"));
     assert!(README.contains("parallel ownership boundary"));
     assert!(README.contains("does not claim"));
     assert!(README.contains("hardware measurement"));

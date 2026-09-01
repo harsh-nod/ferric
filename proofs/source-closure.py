@@ -35,6 +35,7 @@ def source_paths(repo: Path) -> list[Path]:
         repo / ".github/workflows/verus.yml",
     ]
     for root in (
+        repo / "adapters",
         repo / "benches",
         repo / "crates",
         repo / "device",

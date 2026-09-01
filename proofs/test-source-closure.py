@@ -45,6 +45,7 @@ def main() -> None:
             "Cargo.lock": "version = 4\n",
             "rust-toolchain.toml": '[toolchain]\nchannel = "test"\n',
             ".github/workflows/verus.yml": "name: test\n",
+            "adapters/example/src/lib.rs": "pub fn adapt() {}\n",
             "benches/m1/benchmark.rs": "fn main() {}\n",
             "crates/example/src/lib.rs": "pub fn example() {}\n",
             "device/example/src/lib.rs": "pub fn kernel() {}\n",
@@ -58,6 +59,8 @@ def main() -> None:
 
         baseline = measure(repo, root / "baseline.records")
         records = baseline.decode("ascii").splitlines()
+        if not any(row.startswith("adapters/example/src/lib.rs|644|") for row in records):
+            fail("adapter sources are absent from the release closure")
         if not any(row.startswith("benches/m1/benchmark.rs|644|") for row in records):
             fail("benchmark sources are absent from the release closure")
         if not any(row.startswith("device/example/src/lib.rs|644|") for row in records):

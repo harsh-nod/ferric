@@ -7,8 +7,8 @@ use std::path::{Path, PathBuf};
 use verus_syn::parse::{ParseStream, Parser};
 use verus_syn::visit::{self, Visit};
 use verus_syn::{
-    Attribute, Block, Expr, File, FnMode, ImplItem, Item, ItemImpl, Meta, Path as SynPath, Publish,
-    Signature, TraitItem, Type, Visibility,
+    AttrStyle, Attribute, Block, Expr, File, FnMode, ImplItem, Item, ItemImpl, Meta,
+    Path as SynPath, Publish, Signature, TraitItem, Type, Visibility,
 };
 
 const FORMAT: &str = "FERRIC-VERIFIED-MODULES-V2";
@@ -17,8 +17,8 @@ const RUNTIME_TCB_PATH: &str = "proofs/RUNTIME_DEPENDENCY_TCB";
 const CRATES_IO_SOURCE: &str = "registry+https://github.com/rust-lang/crates.io-index";
 const VERUS_SOURCE: &str = "git+https://github.com/verus-lang/verus.git?rev=b677dd5";
 const FE2O3_SOURCE: &str =
-    "git+https://github.com/harsh-nod/fe2o3.git?rev=9f97985ee0a4a8ef0bc8f0fa0fd33771c8180592";
-const FE2O3_RESOLVED_SOURCE: &str = "git+https://github.com/harsh-nod/fe2o3.git?rev=9f97985ee0a4a8ef0bc8f0fa0fd33771c8180592#9f97985ee0a4a8ef0bc8f0fa0fd33771c8180592";
+    "git+https://github.com/harsh-nod/fe2o3.git?rev=2d275684d7a22f8f913114b51b1d1dd524d1ed9b";
+const FE2O3_RESOLVED_SOURCE: &str = "git+https://github.com/harsh-nod/fe2o3.git?rev=2d275684d7a22f8f913114b51b1d1dd524d1ed9b#2d275684d7a22f8f913114b51b1d1dd524d1ed9b";
 const QUALIFIED_BINARIES: &[(&str, &str, &str)] = &[
     (
         "ferric-build",
@@ -122,72 +122,76 @@ const FE2O3_ROOTS: &[(&str, &str)] = &[
 const LOCAL_RUNTIME_ROOTS: &[(&str, &str, &str, &str)] = &[
     (
         "ferric-engine",
-        "ferric-qwen3-gemm-device-v1",
-        "device/qwen3-gemm-v1",
-        "ferric_qwen3_gemm_device_v1",
-    ),
-    (
-        "ferric-engine",
-        "ferric-qwen3-logits-device-v1",
-        "device/qwen3-logits-v1",
-        "ferric_qwen3_logits_device_v1",
-    ),
-    (
-        "ferric-engine",
-        "ferric-qwen3-paged-decode-device-v1",
-        "device/qwen3-paged-decode-v1",
-        "ferric_qwen3_paged_decode_device_v1",
-    ),
-    (
-        "ferric-engine",
-        "ferric-qwen3-prefill-device-v1",
-        "device/qwen3-prefill-v1",
-        "ferric_qwen3_prefill_device_v1",
-    ),
-    (
-        "ferric-engine",
-        "ferric-qwen3-rmsnorm-device-v1",
-        "device/qwen3-rmsnorm-v1",
-        "ferric_qwen3_rmsnorm_device_v1",
-    ),
-    (
-        "ferric-engine",
-        "ferric-qwen3-rope-kv-device-v1",
-        "device/qwen3-rope-kv-v1",
-        "ferric_qwen3_rope_kv_device_v1",
-    ),
-    (
-        "ferric-engine",
-        "ferric-qwen3-swiglu-device-v1",
-        "device/qwen3-swiglu-v1",
-        "ferric_qwen3_swiglu_device_v1",
+        "ferric-qwen3-all-kernels-device-v1",
+        "device/qwen3-all-kernels-v1",
+        "ferric_qwen3_all_kernels_device_v1",
     ),
 ];
-const GENERATED_ROSTER_DECLARATIONS: &[(&str, &[&str])] = &[
+const AGGREGATE_ROSTER_NAME: &str = "M1AllKernelsWorkerV3RosterV1";
+const AGGREGATE_ROSTER_ALIASES: &[(&str, &str)] = &[
     (
-        "M1GemmWorkerV3RosterV1",
-        &[
-            "GemmVectorizedMarkerV1",
-            "GemmReferenceMarkerV1",
-            "TokenEmbeddingMarkerV1",
-        ],
+        "PagedKvWrite",
+        "super::rope_kv::qwen3_paged_kv_write_v1_gpu::Marker",
     ),
-    ("M1RmsNormWorkerV3RosterV1", &["RmsNormMarkerV1"]),
     (
-        "M1RopeKvWorkerV3RosterV1",
-        &["PagedKvWriteMarkerV1", "RopeMarkerV1"],
+        "SwiGlu",
+        "super::swiglu::qwen3_swiglu_bf16_f32_v1_gpu::Marker",
     ),
-    ("M1PrefillWorkerV3RosterV1", &["PrefillMarkerV1"]),
-    ("M1PagedDecodeWorkerV3RosterV1", &["PagedDecodeMarkerV1"]),
-    ("M1SwiGluWorkerV3RosterV1", &["SwiGluMarkerV1"]),
     (
-        "M1LogitsWorkerV3RosterV1",
-        &[
-            "LogitsArgmaxMarkerV1",
-            "LogitsCompactMarkerV1",
-            "SpeculativeAssemblyMarkerV1",
-        ],
+        "LowestIdArgmax",
+        "super::logits::ferric_qwen3_lowest_id_argmax_bf16_v1_gpu::Marker",
     ),
+    (
+        "GemmVectorized",
+        "super::gemm::ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1_gpu::Marker",
+    ),
+    (
+        "GemmReference",
+        "super::gemm::ferric_qwen3_gemm_reference_bf16_f32_bf16_v1_gpu::Marker",
+    ),
+    (
+        "Prefill",
+        "super::prefill::qwen3_gqa_prefill_causal_bf16_f32_v1_gpu::Marker",
+    ),
+    (
+        "PagedDecode",
+        "super::paged_decode::qwen3_paged_gqa_decode_bf16_f32_v1_gpu::Marker",
+    ),
+    (
+        "TokenEmbedding",
+        "super::gemm::ferric_qwen3_token_embedding_bf16_copy_v1_gpu::Marker",
+    ),
+    (
+        "SpeculativeAssembly",
+        "super::logits::ferric_qwen3_speculative_token_assembly_v1_gpu::Marker",
+    ),
+    (
+        "CompactCompletion",
+        "super::logits::ferric_qwen3_compact_completion_v1_gpu::Marker",
+    ),
+    (
+        "RmsNorm",
+        "super::rmsnorm::qwen3_rmsnorm_v1_gpu::Marker",
+    ),
+    ("Rope", "super::rope_kv::qwen3_rope_v1_gpu::Marker"),
+];
+const AGGREGATE_ROSTER_MARKERS: &[&str] = &[
+    "LowestIdArgmax",
+    "GemmVectorized",
+    "Rope",
+    "CompactCompletion",
+    "PagedKvWrite",
+    "PagedDecode",
+    "SwiGlu",
+    "GemmReference",
+    "RmsNorm",
+    "TokenEmbedding",
+    "SpeculativeAssembly",
+    "Prefill",
+];
+const AGGREGATE_HOST_REEXPORT: &[&str] = &[
+    "host_roster",
+    "M1AllKernelsWorkerV3RosterV1",
 ];
 const ENGINE_ALLOCATION_CONSTRUCTORS: &[&str] = &[
     "ferric_engine::cache::KvPool::new_bounded",
@@ -200,7 +204,6 @@ type WalkOutput = (
     ModuleMap,
     BTreeSet<Function>,
     BTreeSet<PathBuf>,
-    BTreeSet<String>,
 );
 
 #[derive(Clone)]
@@ -265,7 +268,6 @@ struct SourceWalker<'a> {
     functions: BTreeSet<Function>,
     type_owners: BTreeMap<String, BTreeSet<String>>,
     inherent_methods: Vec<PendingInherentMethod>,
-    generated_rosters: BTreeSet<String>,
 }
 
 struct SyntaxAudit {
@@ -707,7 +709,9 @@ fn validate_local_runtime_package(
         return Err(format!("local runtime package identity drifted: {name}"));
     }
 
-    let expected_library = canonical(&expected_root.join("src/lib.rs"))?;
+    let roster_source = expected_root.join("src/lib.rs");
+    validate_aggregate_runtime_roster(&roster_source)?;
+    let expected_library = canonical(&roster_source)?;
     let expected_build_script = canonical(&expected_root.join("build.rs"))?;
     let expected_tests = canonical(&expected_root.join("tests"))?;
     let mut library_count = 0_u8;
@@ -2045,7 +2049,296 @@ fn cfg_test_fixture_item(item: &Item) -> GateResult<bool> {
     Ok(true)
 }
 
-fn parse_generated_roster_declaration(item: &verus_syn::ItemMacro) -> GateResult<Ident> {
+fn exact_path_segments(path: &SynPath, expected: &[&str]) -> bool {
+    path.leading_colon.is_none()
+        && path.segments.len() == expected.len()
+        && path
+            .segments
+            .iter()
+            .zip(expected)
+            .all(|(segment, expected)| {
+                segment.ident == *expected
+                    && matches!(&segment.arguments, verus_syn::PathArguments::None)
+            })
+}
+
+fn validate_aggregate_host_cfg(attributes: &[Attribute]) -> GateResult<()> {
+    let [attribute] = attributes else {
+        return Err("aggregate roster host cfg attribute roster drifted".to_owned());
+    };
+    let Meta::List(cfg) = &attribute.meta else {
+        return Err("aggregate roster host cfg is malformed".to_owned());
+    };
+    if !exact_path_segments(&cfg.path, &["cfg"])
+        || !matches!(&cfg.delimiter, verus_syn::MacroDelimiter::Paren(_))
+    {
+        return Err("aggregate roster host cfg path drifted".to_owned());
+    }
+    let not = cfg
+        .parse_args::<Meta>()
+        .map_err(|error| format!("aggregate roster host cfg is malformed: {error}"))?;
+    let Meta::List(not) = not else {
+        return Err("aggregate roster host cfg must contain exact not predicate".to_owned());
+    };
+    if !exact_path_segments(&not.path, &["not"])
+        || !matches!(&not.delimiter, verus_syn::MacroDelimiter::Paren(_))
+    {
+        return Err("aggregate roster host cfg predicate drifted".to_owned());
+    }
+    let target = not
+        .parse_args::<Meta>()
+        .map_err(|error| format!("aggregate roster target cfg is malformed: {error}"))?;
+    let Meta::NameValue(target) = target else {
+        return Err("aggregate roster target cfg must be a name-value predicate".to_owned());
+    };
+    let exact_value = matches!(
+        &target.value,
+        Expr::Lit(expression)
+            if matches!(&expression.lit, verus_syn::Lit::Str(literal) if literal.value() == "amdgpu")
+    );
+    if !exact_path_segments(&target.path, &["target_arch"]) || !exact_value {
+        return Err("aggregate roster target cfg drifted".to_owned());
+    }
+    Ok(())
+}
+
+fn aggregate_type_path(item: &verus_syn::ItemType) -> GateResult<String> {
+    if !item.attrs.is_empty()
+        || !matches!(&item.vis, Visibility::Inherited)
+        || item.generics.lt_token.is_some()
+        || !item.generics.params.is_empty()
+        || item.generics.gt_token.is_some()
+        || item.generics.where_clause.is_some()
+    {
+        return Err(format!(
+            "aggregate roster alias declaration drifted: {}",
+            item.ident
+        ));
+    }
+    let Type::Path(marker) = item.ty.as_ref() else {
+        return Err(format!(
+            "aggregate roster alias is not a marker path: {}",
+            item.ident
+        ));
+    };
+    if marker.qself.is_some()
+        || marker.path.leading_colon.is_some()
+        || marker
+            .path
+            .segments
+            .iter()
+            .any(|segment| !matches!(&segment.arguments, verus_syn::PathArguments::None))
+    {
+        return Err(format!(
+            "aggregate roster alias marker path drifted: {}",
+            item.ident
+        ));
+    }
+    Ok(path_name(&marker.path))
+}
+
+fn aggregate_use_path(tree: &verus_syn::UseTree, output: &mut Vec<String>) -> GateResult<()> {
+    match tree {
+        verus_syn::UseTree::Path(path) => {
+            output.push(path.ident.to_string());
+            aggregate_use_path(&path.tree, output)
+        }
+        verus_syn::UseTree::Name(name) => {
+            output.push(name.ident.to_string());
+            Ok(())
+        }
+        verus_syn::UseTree::Rename(_)
+        | verus_syn::UseTree::Glob(_)
+        | verus_syn::UseTree::Group(_) => {
+            Err("aggregate roster host re-export shape drifted".to_owned())
+        }
+    }
+}
+
+fn validate_aggregate_host_roster_module(item: &verus_syn::ItemMod) -> GateResult<()> {
+    validate_aggregate_host_cfg(&item.attrs)?;
+    if !matches!(&item.vis, Visibility::Inherited)
+        || item.unsafety.is_some()
+        || item.ident != "host_roster"
+        || item.semi.is_some()
+    {
+        return Err("aggregate host roster module declaration drifted".to_owned());
+    }
+    let Some((_, items)) = &item.content else {
+        return Err("aggregate host roster module body is absent".to_owned());
+    };
+    if items.len() != AGGREGATE_ROSTER_ALIASES.len() + 1 {
+        return Err("aggregate host roster module item count drifted".to_owned());
+    }
+    for (item, (expected_alias, expected_path)) in
+        items.iter().zip(AGGREGATE_ROSTER_ALIASES.iter())
+    {
+        let Item::Type(alias) = item else {
+            return Err("aggregate roster ordered alias declaration drifted".to_owned());
+        };
+        if alias.ident != *expected_alias || aggregate_type_path(alias)? != *expected_path
+        {
+            return Err(format!(
+                "aggregate roster alias or marker path drifted: {expected_alias}"
+            ));
+        }
+    }
+    let Item::Macro(roster) = &items[AGGREGATE_ROSTER_ALIASES.len()] else {
+        return Err("aggregate generated roster macro is absent or reordered".to_owned());
+    };
+    if !exact_path_segments(
+        &roster.mac.path,
+        &[
+            "fe2o3_host",
+            "compiler_generated_kernel_expectation_roster_v1",
+        ],
+    ) || !matches!(
+        &roster.mac.delimiter,
+        verus_syn::MacroDelimiter::Brace(_)
+    )
+    {
+        return Err("aggregate generated roster macro path drifted".to_owned());
+    }
+    parse_generated_roster_declaration(
+        roster,
+        AGGREGATE_ROSTER_NAME,
+        AGGREGATE_ROSTER_MARKERS,
+    )?;
+    Ok(())
+}
+
+fn validate_aggregate_host_reexport(item: &verus_syn::ItemUse) -> GateResult<()> {
+    validate_aggregate_host_cfg(&item.attrs)?;
+    if !matches!(&item.vis, Visibility::Public(_)) || item.leading_colon.is_some() {
+        return Err("aggregate roster host re-export visibility drifted".to_owned());
+    }
+    let mut path = Vec::new();
+    aggregate_use_path(&item.tree, &mut path)?;
+    if path
+        .iter()
+        .map(String::as_str)
+        .ne(AGGREGATE_HOST_REEXPORT.iter().copied())
+    {
+        return Err(format!(
+            "aggregate roster host re-export path drifted: {path:?}"
+        ));
+    }
+    Ok(())
+}
+
+fn validate_aggregate_runtime_crate_attrs(attributes: &[Attribute]) -> GateResult<()> {
+    let non_doc: Vec<&Attribute> = attributes
+        .iter()
+        .filter(|attribute| path_name(attribute.path()) != "doc")
+        .collect();
+    if non_doc.len() != 3
+        || non_doc
+            .iter()
+            .any(|attribute| !matches!(&attribute.style, AttrStyle::Inner(_)))
+    {
+        return Err("aggregate runtime crate attribute roster drifted".to_owned());
+    }
+    if !matches!(&non_doc[0].meta, Meta::Path(path) if path_name(path) == "no_std")
+        || !matches!(
+            &non_doc[1].meta,
+            Meta::List(list)
+                if path_name(&list.path) == "forbid"
+                    && list.tokens.to_string() == "unsafe_op_in_unsafe_fn"
+        )
+        || !matches!(
+            &non_doc[2].meta,
+            Meta::List(list)
+                if path_name(&list.path) == "allow"
+                    && list.tokens.to_string() == "missing_docs"
+        )
+    {
+        return Err("aggregate runtime crate attribute policy drifted".to_owned());
+    }
+    Ok(())
+}
+
+fn validate_aggregate_runtime_roster_file(file: &File) -> GateResult<()> {
+    validate_aggregate_runtime_crate_attrs(&file.attrs)?;
+    let expected_modules = [
+        "gemm",
+        "logits",
+        "paged_decode",
+        "prefill",
+        "rmsnorm",
+        "rope_kv",
+        "swiglu",
+    ];
+    let mut modules = Vec::new();
+    let mut host_roster = None;
+    let mut host_reexport = None;
+    for item in &file.items {
+        match item {
+            Item::Mod(module) if module.ident == "host_roster" => {
+                if host_roster.replace(module).is_some() {
+                    return Err("aggregate host roster module is declared more than once".to_owned());
+                }
+            }
+            Item::Mod(module) => {
+                if !module.attrs.is_empty()
+                    || !matches!(&module.vis, Visibility::Public(_))
+                    || module.unsafety.is_some()
+                    || module.content.is_some()
+                    || module.semi.is_none()
+                {
+                    return Err(format!(
+                        "aggregate runtime kernel module declaration drifted: {}",
+                        module.ident
+                    ));
+                }
+                modules.push(module.ident.to_string());
+            }
+            Item::Use(item_use) => {
+                if host_reexport.replace(item_use).is_some() {
+                    return Err("aggregate host roster re-export is declared more than once".to_owned());
+                }
+            }
+            _ => return Err("aggregate runtime library contains an unadmitted root item".to_owned()),
+        }
+    }
+    if modules
+        .iter()
+        .map(String::as_str)
+        .ne(expected_modules)
+    {
+        return Err(format!(
+            "aggregate runtime kernel module order drifted: {modules:?}"
+        ));
+    }
+    validate_aggregate_host_roster_module(
+        host_roster.ok_or_else(|| "aggregate host roster module is absent".to_owned())?,
+    )?;
+    validate_aggregate_host_reexport(
+        host_reexport.ok_or_else(|| "aggregate host roster re-export is absent".to_owned())?,
+    )?;
+    Ok(())
+}
+
+fn validate_aggregate_runtime_roster(source: &Path) -> GateResult<()> {
+    let metadata = fs::symlink_metadata(source)
+        .map_err(|error| format!("{}: {error}", source.display()))?;
+    if metadata.file_type().is_symlink() || !metadata.file_type().is_file() {
+        return Err(format!(
+            "aggregate runtime roster source is not an exact regular file: {}",
+            source.display()
+        ));
+    }
+    let text = fs::read_to_string(source)
+        .map_err(|error| format!("{}: {error}", source.display()))?;
+    let file = verus_syn::parse_file(&text)
+        .map_err(|error| format!("cannot parse aggregate runtime roster source: {error}"))?;
+    validate_aggregate_runtime_roster_file(&file)
+}
+
+fn parse_generated_roster_declaration(
+    item: &verus_syn::ItemMacro,
+    expected_roster: &str,
+    expected_markers: &[&str],
+) -> GateResult<Ident> {
     if item.ident.is_some() || item.semi_token.is_some() {
         return Err("generated roster macro invocation shape drifted".to_owned());
     }
@@ -2077,10 +2370,11 @@ fn parse_generated_roster_declaration(item: &verus_syn::ItemMacro) -> GateResult
     }
     let roster_name = roster.to_string();
     safe_atom(&roster_name, "generated roster name")?;
-    let expected_markers = GENERATED_ROSTER_DECLARATIONS
-        .iter()
-        .find_map(|(name, markers)| (*name == roster_name).then_some(*markers))
-        .ok_or_else(|| format!("unadmitted generated roster declaration: {roster_name}"))?;
+    if roster_name != expected_roster {
+        return Err(format!(
+            "generated roster name drifted (expected={expected_roster}, actual={roster_name})"
+        ));
+    }
     let mut markers = Vec::new();
     for marker_type in marker_types {
         let Type::Path(marker_path) = marker_type else {
@@ -2161,7 +2455,6 @@ impl SourceWalker<'_> {
             self.modules,
             self.functions,
             self.visited,
-            self.generated_rosters,
         ))
     }
 
@@ -2254,21 +2547,9 @@ impl SourceWalker<'_> {
                     if path_name(&item_macro.mac.path)
                         == "fe2o3_host::compiler_generated_kernel_expectation_roster_v1" =>
                 {
-                    if in_verus
-                        || self.package.name != "ferric-engine"
-                        || source != "crates/ferric-engine/src/authenticated_kernel_programs.rs"
-                        || module_path != "ferric_engine::authenticated_kernel_programs"
-                    {
-                        return Err("generated roster macro escaped its admitted source".to_owned());
-                    }
-                    let roster = parse_generated_roster_declaration(item_macro)?;
-                    let roster_name = roster.to_string();
-                    if !self.generated_rosters.insert(roster_name.clone()) {
-                        return Err(format!(
-                            "duplicate generated roster declaration: {roster_name}"
-                        ));
-                    }
-                    self.add_type_owner(&roster, module_path)?;
+                    return Err(format!(
+                        "{source}: engine-local generated roster declarations are forbidden; the exact aggregate roster belongs to its opaque runtime package"
+                    ));
                 }
                 Item::Macro(item_macro) => {
                     return Err(format!(
@@ -2522,7 +2803,6 @@ fn inventory(repo: &Path, metadata: &Value) -> GateResult<Inventory> {
         runtime_tcb: runtime_tcb.text.lines().map(str::to_owned).collect(),
         ..Inventory::default()
     };
-    let mut generated_rosters = BTreeSet::new();
     for package in &packages {
         let source_root = package
             .root
@@ -2554,9 +2834,8 @@ fn inventory(repo: &Path, metadata: &Value) -> GateResult<Inventory> {
                 functions: BTreeSet::new(),
                 type_owners: BTreeMap::new(),
                 inherent_methods: Vec::new(),
-                generated_rosters: BTreeSet::new(),
             };
-            let (modules, functions, target_visited, target_generated_rosters) = walker.walk()?;
+            let (modules, functions, target_visited) = walker.walk()?;
             for (source, owner) in modules {
                 if inventory.modules.insert(source.clone(), owner).is_some() {
                     return Err(format!("source belongs to multiple packages: {source}"));
@@ -2571,13 +2850,6 @@ fn inventory(repo: &Path, metadata: &Value) -> GateResult<Inventory> {
                 }
             }
             visited.extend(target_visited);
-            for roster in target_generated_rosters {
-                if !generated_rosters.insert(roster.clone()) {
-                    return Err(format!(
-                        "generated roster is declared more than once: {roster}"
-                    ));
-                }
-            }
         }
         let mut all_rs = BTreeSet::new();
         collect_rs_files(&source_root, &mut all_rs)?;
@@ -2591,15 +2863,6 @@ fn inventory(repo: &Path, metadata: &Value) -> GateResult<Inventory> {
                 package.name
             ));
         }
-    }
-    let expected_generated_rosters = GENERATED_ROSTER_DECLARATIONS
-        .iter()
-        .map(|(name, _)| (*name).to_owned())
-        .collect::<BTreeSet<_>>();
-    if generated_rosters != expected_generated_rosters {
-        return Err(format!(
-            "generated roster declarations drifted (expected={expected_generated_rosters:?}, actual={generated_rosters:?})"
-        ));
     }
     validate_local_runtime_authority_absent(&inventory)?;
     Ok(inventory)
@@ -2852,11 +3115,25 @@ fn main() {
 mod tests {
     use super::{
         cfg_test_fixture_item, cfg_test_item, inherent_owner_module,
-        parse_generated_roster_declaration, target_module_dir, validate_attributes,
+        parse_generated_roster_declaration, target_module_dir,
+        validate_aggregate_runtime_roster_file, validate_attributes,
     };
     use std::collections::{BTreeMap, BTreeSet};
     use std::path::{Path, PathBuf};
     use verus_syn::Item;
+
+    const AGGREGATE_RUNTIME_SOURCE: &str =
+        include_str!("../../../device/qwen3-all-kernels-v1/src/lib.rs");
+
+    fn replace_once(source: &str, exact: &str, hostile: &str) -> String {
+        assert_eq!(source.matches(exact).count(), 1, "fixture anchor drifted");
+        source.replace(exact, hostile)
+    }
+
+    fn validate_aggregate_source(source: &str) -> super::GateResult<()> {
+        let file = verus_syn::parse_file(source).expect("aggregate runtime source parses");
+        validate_aggregate_runtime_roster_file(&file)
+    }
 
     fn owners(records: &[(&str, &[&str])]) -> BTreeMap<String, BTreeSet<String>> {
         records
@@ -2931,11 +3208,11 @@ mod tests {
     }
 
     #[test]
-    fn generated_roster_parser_binds_exact_ordered_markers() {
+    fn generated_roster_parser_binds_supplied_name_and_ordered_markers() {
         let exact = verus_syn::parse_str::<Item>(
             "fe2o3_host::compiler_generated_kernel_expectation_roster_v1! {\
-                pub struct M1RopeKvWorkerV3RosterV1 = [\
-                    PagedKvWriteMarkerV1, RopeMarkerV1,\
+                pub struct M1AllKernelsWorkerV3RosterV1 = [\
+                    GemmVectorized, RmsNorm,\
                 ];\
             }",
         )
@@ -2944,14 +3221,19 @@ mod tests {
             panic!("generated roster must parse as an item macro");
         };
         assert_eq!(
-            parse_generated_roster_declaration(&exact).map(|name| name.to_string()),
-            Ok("M1RopeKvWorkerV3RosterV1".to_owned())
+            parse_generated_roster_declaration(
+                &exact,
+                "M1AllKernelsWorkerV3RosterV1",
+                &["GemmVectorized", "RmsNorm"],
+            )
+            .map(|name| name.to_string()),
+            Ok("M1AllKernelsWorkerV3RosterV1".to_owned())
         );
 
         let reordered = verus_syn::parse_str::<Item>(
             "fe2o3_host::compiler_generated_kernel_expectation_roster_v1! {\
-                pub struct M1RopeKvWorkerV3RosterV1 = [\
-                    RopeMarkerV1, PagedKvWriteMarkerV1,\
+                pub struct M1AllKernelsWorkerV3RosterV1 = [\
+                    RmsNorm, GemmVectorized,\
                 ];\
             }",
         )
@@ -2959,7 +3241,86 @@ mod tests {
         let Item::Macro(reordered) = reordered else {
             panic!("generated roster must parse as an item macro");
         };
-        assert!(parse_generated_roster_declaration(&reordered).is_err());
+        assert!(parse_generated_roster_declaration(
+            &reordered,
+            "M1AllKernelsWorkerV3RosterV1",
+            &["GemmVectorized", "RmsNorm"],
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn aggregate_runtime_roster_source_is_exact() {
+        assert_eq!(validate_aggregate_source(AGGREGATE_RUNTIME_SOURCE), Ok(()));
+    }
+
+    #[test]
+    fn aggregate_runtime_roster_rejects_crate_attribute_drift() {
+        let hostile_sources = [
+            replace_once(AGGREGATE_RUNTIME_SOURCE, "#![no_std]\n", ""),
+            replace_once(
+                AGGREGATE_RUNTIME_SOURCE,
+                "#![forbid(unsafe_op_in_unsafe_fn)]\n",
+                "#![forbid(unsafe_code)]\n",
+            ),
+            replace_once(
+                AGGREGATE_RUNTIME_SOURCE,
+                "#![allow(missing_docs)] // The kernel macro emits undocumented helper modules.\n",
+                "#![allow(missing_docs, unsafe_code)] // The kernel macro emits undocumented helper modules.\n",
+            ),
+            replace_once(
+                AGGREGATE_RUNTIME_SOURCE,
+                "#![no_std]\n",
+                "#![cfg(unix)]\n#![no_std]\n",
+            ),
+        ];
+        for hostile_source in hostile_sources {
+            assert!(validate_aggregate_source(&hostile_source).is_err());
+        }
+    }
+
+    #[test]
+    fn aggregate_runtime_roster_rejects_alias_order_and_path_drift() {
+        let reordered = replace_once(
+            AGGREGATE_RUNTIME_SOURCE,
+            "    type PagedKvWrite = super::rope_kv::qwen3_paged_kv_write_v1_gpu::Marker;\n    type SwiGlu = super::swiglu::qwen3_swiglu_bf16_f32_v1_gpu::Marker;",
+            "    type SwiGlu = super::swiglu::qwen3_swiglu_bf16_f32_v1_gpu::Marker;\n    type PagedKvWrite = super::rope_kv::qwen3_paged_kv_write_v1_gpu::Marker;",
+        );
+        assert!(validate_aggregate_source(&reordered).is_err());
+
+        let wrong_path = replace_once(
+            AGGREGATE_RUNTIME_SOURCE,
+            "super::rope_kv::qwen3_paged_kv_write_v1_gpu::Marker",
+            "super::rope_kv::qwen3_rope_v1_gpu::Marker",
+        );
+        assert!(validate_aggregate_source(&wrong_path).is_err());
+    }
+
+    #[test]
+    fn aggregate_runtime_roster_rejects_marker_order_drift() {
+        let reordered = replace_once(
+            AGGREGATE_RUNTIME_SOURCE,
+            "            GemmVectorized,\n            Rope,",
+            "            Rope,\n            GemmVectorized,",
+        );
+        assert!(validate_aggregate_source(&reordered).is_err());
+    }
+
+    #[test]
+    fn aggregate_runtime_roster_rejects_host_cfg_and_reexport_drift() {
+        let wrong_cfg = replace_once(
+            AGGREGATE_RUNTIME_SOURCE,
+            "#[cfg(not(target_arch = \"amdgpu\"))]\nmod host_roster",
+            "#[cfg(target_arch = \"amdgpu\")]\nmod host_roster",
+        );
+        assert!(validate_aggregate_source(&wrong_cfg).is_err());
+
+        let wrong_reexport = replace_once(
+            AGGREGATE_RUNTIME_SOURCE,
+            "pub use host_roster::M1AllKernelsWorkerV3RosterV1;",
+            "pub(crate) use host_roster::M1AllKernelsWorkerV3RosterV1;",
+        );
+        assert!(validate_aggregate_source(&wrong_reexport).is_err());
     }
 
     #[test]

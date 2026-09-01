@@ -138,11 +138,12 @@ def exercise_prepare_boundaries(repo: Path, fe2o3_source: Path, planner: Any) ->
         shutil.copytree(
             repo / "device", ferric_fixture / "device", dirs_exist_ok=True
         )
-        shutil.copytree(
-            repo / "adapters/qwen3-swiglu-worker-v3-envelope-v2",
-            ferric_fixture / "adapters/qwen3-swiglu-worker-v3-envelope-v2",
-            dirs_exist_ok=True,
-        )
+        for _, relative_path, _, _ in planner.FE2O3_ADAPTER_WORKSPACES:
+            shutil.copytree(
+                repo / relative_path,
+                ferric_fixture / relative_path,
+                dirs_exist_ok=True,
+            )
         if git(
             ferric_fixture,
             ["status", "--porcelain=v1", "--untracked-files=all"],
@@ -192,6 +193,39 @@ def exercise_prepare_boundaries(repo: Path, fe2o3_source: Path, planner: Any) ->
             f"git+{planner.FE2O3_REPOSITORY}?rev={fe2o3_commit}#{fe2o3_commit}"
         )
         expected_pins = {
+            "adapter_workspace_count": len(planner.FE2O3_ADAPTER_WORKSPACES),
+            "adapter_workspaces": [
+                {
+                    "direct": [
+                        {
+                            "name": dependency,
+                            "repository": planner.FE2O3_REPOSITORY,
+                            "revision": fe2o3_commit,
+                            "scope": "dependencies",
+                            "version": "=0.1.0",
+                        }
+                        for dependency in sorted(dependencies)
+                    ],
+                    "direct_count": len(dependencies),
+                    "manifest": f"{adapter_relative}/Cargo.toml",
+                    "name": adapter_package,
+                    "resolved": [
+                        {
+                            "name": name,
+                            "source": expected_source,
+                            "version": version,
+                        }
+                        for name, version in sorted(resolved)
+                    ],
+                    "resolved_count": len(resolved),
+                }
+                for (
+                    adapter_package,
+                    adapter_relative,
+                    dependencies,
+                    resolved,
+                ) in planner.FE2O3_ADAPTER_WORKSPACES
+            ],
             "device_workspace_count": len(planner.FE2O3_DEVICE_WORKSPACES),
             "device_workspaces": [
                 {
@@ -360,102 +394,168 @@ def exercise_prepare_boundaries(repo: Path, fe2o3_source: Path, planner: Any) ->
             "device fe2o3 dependency declaration drifted",
         )
 
-        adapter_case = temporary / "adapter-pin"
-        clone_at(ferric_fixture, adapter_case)
-        adapter_manifest = (
-            adapter_case
-            / "adapters/qwen3-swiglu-worker-v3-envelope-v2/Cargo.toml"
-        )
-        adapter_source = adapter_manifest.read_text(encoding="utf-8")
-        if adapter_source.count(fe2o3_commit) != 1:
-            fail("integration fixture adapter fe2o3 pin roster drifted before mutation")
-        adapter_manifest.write_text(
-            adapter_source.replace(fe2o3_commit, "0" * 40, 1), encoding="utf-8"
-        )
-        commit_fixture(adapter_case, "mutate adapter fe2o3 revision")
-        expect_prepare_failure(
-            adapter_case / "proofs/m1-qualification/planner.py",
-            adapter_case,
-            fe2o3_fixture,
-            temporary / "adapter-pin-output",
-            "adapter fe2o3 dependency declaration drifted",
-        )
-
-        adapter_alias_case = temporary / "adapter-alias"
-        clone_at(ferric_fixture, adapter_alias_case)
-        adapter_alias_manifest = (
-            adapter_alias_case
-            / "adapters/qwen3-swiglu-worker-v3-envelope-v2/Cargo.toml"
-        )
-        replace_once(
-            adapter_alias_manifest,
-            "ferric-engine = { path = \"../../crates/ferric-engine\" }\n",
-            "shadow-runtime = { package = \"fe2o3-runtime-protocol\", "
-            "git = \"https://evil.invalid/runtime.git\", rev = \""
-            + "0" * 40
-            + "\", version = \"=0.1.0\" }\n"
-            "ferric-engine = { path = \"../../crates/ferric-engine\" }\n",
-        )
-        commit_fixture(adapter_alias_case, "add aliased adapter fe2o3 dependency")
-        expect_prepare_failure(
-            adapter_alias_case / "proofs/m1-qualification/planner.py",
-            adapter_alias_case,
-            fe2o3_fixture,
-            temporary / "adapter-alias-output",
-            "adapter fe2o3 dependency declaration drifted",
-        )
-
-        adapter_lock_case = temporary / "adapter-lock-pin"
-        clone_at(ferric_fixture, adapter_lock_case)
-        adapter_lock = (
-            adapter_lock_case
-            / "adapters/qwen3-swiglu-worker-v3-envelope-v2/Cargo.lock"
-        )
-        adapter_lock_source = adapter_lock.read_text(encoding="utf-8")
-        if adapter_lock_source.count(expected_url) != len(
-            planner.FE2O3_RESOLVED_PACKAGES
+        for (
+            adapter_package,
+            adapter_relative,
+            adapter_dependencies,
+            adapter_resolved,
+        ) in (
+            planner.FE2O3_ADAPTER_WORKSPACES
         ):
-            fail("integration fixture adapter lock roster drifted before mutation")
-        adapter_lock.write_text(
-            adapter_lock_source.replace(
-                expected_url, "git+https://evil.invalid/fe2o3.git", 1
-            ),
-            encoding="utf-8",
-        )
-        commit_fixture(adapter_lock_case, "mutate adapter resolved fe2o3 repository")
-        expect_prepare_failure(
-            adapter_lock_case / "proofs/m1-qualification/planner.py",
-            adapter_lock_case,
-            fe2o3_fixture,
-            temporary / "adapter-lock-pin-output",
-            "adapter resolved fe2o3 package declaration drifted",
-        )
+            adapter_slug = Path(adapter_relative).name
 
-        adapter_lock_extra_case = temporary / "adapter-lock-extra"
-        clone_at(ferric_fixture, adapter_lock_extra_case)
-        adapter_extra_lock = (
-            adapter_lock_extra_case
-            / "adapters/qwen3-swiglu-worker-v3-envelope-v2/Cargo.lock"
-        )
-        adapter_extra_lock.write_text(
-            adapter_extra_lock.read_text(encoding="utf-8")
-            + "\n[[package]]\n"
-            + 'name = "fe2o3-hostile-registry"\n'
-            + 'version = "0.1.0"\n'
-            + 'source = "registry+https://github.com/rust-lang/crates.io-index"\n'
-            + 'checksum = "'
-            + "0" * 64
-            + '"\n',
-            encoding="utf-8",
-        )
-        commit_fixture(adapter_lock_extra_case, "add adapter fe2o3 lock package")
-        expect_prepare_failure(
-            adapter_lock_extra_case / "proofs/m1-qualification/planner.py",
-            adapter_lock_extra_case,
-            fe2o3_fixture,
-            temporary / "adapter-lock-extra-output",
-            "adapter resolved fe2o3 package declaration drifted",
-        )
+            adapter_case = temporary / f"adapter-pin-{adapter_slug}"
+            clone_at(ferric_fixture, adapter_case)
+            adapter_manifest = adapter_case / adapter_relative / "Cargo.toml"
+            adapter_source = adapter_manifest.read_text(encoding="utf-8")
+            if adapter_source.count(fe2o3_commit) != len(adapter_dependencies):
+                fail(
+                    "integration fixture adapter fe2o3 pin roster drifted before "
+                    f"mutation: {adapter_package}"
+                )
+            adapter_manifest.write_text(
+                adapter_source.replace(fe2o3_commit, "0" * 40, 1),
+                encoding="utf-8",
+            )
+            commit_fixture(adapter_case, "mutate adapter fe2o3 revision")
+            expect_prepare_failure(
+                adapter_case / "proofs/m1-qualification/planner.py",
+                adapter_case,
+                fe2o3_fixture,
+                temporary / f"adapter-pin-output-{adapter_slug}",
+                "adapter fe2o3 dependency declaration drifted",
+            )
+
+            adapter_missing_case = temporary / f"adapter-missing-{adapter_slug}"
+            clone_at(ferric_fixture, adapter_missing_case)
+            adapter_missing_manifest = (
+                adapter_missing_case / adapter_relative / "Cargo.toml"
+            )
+            missing_source = adapter_missing_manifest.read_text(encoding="utf-8")
+            dependency_prefix = f"{adapter_dependencies[0]} = "
+            matching_lines = [
+                line for line in missing_source.splitlines(keepends=True)
+                if line.startswith(dependency_prefix)
+            ]
+            if len(matching_lines) != 1:
+                fail(f"adapter dependency deletion anchor drifted: {adapter_package}")
+            adapter_missing_manifest.write_text(
+                missing_source.replace(matching_lines[0], "", 1), encoding="utf-8"
+            )
+            commit_fixture(adapter_missing_case, "delete adapter fe2o3 dependency")
+            expect_prepare_failure(
+                adapter_missing_case / "proofs/m1-qualification/planner.py",
+                adapter_missing_case,
+                fe2o3_fixture,
+                temporary / f"adapter-missing-output-{adapter_slug}",
+                "adapter fe2o3 dependency roster drifted",
+            )
+
+            adapter_alias_case = temporary / f"adapter-alias-{adapter_slug}"
+            clone_at(ferric_fixture, adapter_alias_case)
+            adapter_alias_manifest = (
+                adapter_alias_case / adapter_relative / "Cargo.toml"
+            )
+            replace_once(
+                adapter_alias_manifest,
+                "[dependencies]\n",
+                "[dependencies]\n"
+                f"shadow-fe2o3 = {{ package = \"{adapter_dependencies[0]}\", "
+                "git = \"https://evil.invalid/fe2o3.git\", rev = \""
+                + "0" * 40
+                + "\", version = \"=0.1.0\" }\n",
+            )
+            commit_fixture(adapter_alias_case, "add aliased adapter fe2o3 dependency")
+            expect_prepare_failure(
+                adapter_alias_case / "proofs/m1-qualification/planner.py",
+                adapter_alias_case,
+                fe2o3_fixture,
+                temporary / f"adapter-alias-output-{adapter_slug}",
+                "adapter fe2o3 dependency declaration drifted",
+            )
+
+            adapter_lock_case = temporary / f"adapter-lock-pin-{adapter_slug}"
+            clone_at(ferric_fixture, adapter_lock_case)
+            adapter_lock = adapter_lock_case / adapter_relative / "Cargo.lock"
+            adapter_lock_source = adapter_lock.read_text(encoding="utf-8")
+            if adapter_lock_source.count(expected_url) != len(adapter_resolved):
+                fail(
+                    "integration fixture adapter lock roster drifted before mutation: "
+                    f"{adapter_package}"
+                )
+            adapter_lock.write_text(
+                adapter_lock_source.replace(
+                    expected_url, "git+https://evil.invalid/fe2o3.git", 1
+                ),
+                encoding="utf-8",
+            )
+            commit_fixture(
+                adapter_lock_case, "mutate adapter resolved fe2o3 repository"
+            )
+            expect_prepare_failure(
+                adapter_lock_case / "proofs/m1-qualification/planner.py",
+                adapter_lock_case,
+                fe2o3_fixture,
+                temporary / f"adapter-lock-pin-output-{adapter_slug}",
+                "adapter resolved fe2o3 package declaration drifted",
+            )
+
+            if adapter_package == "ferric-qwen3-all-kernels-worker-v3-source-pin-v1":
+                adapter_lock_missing_case = temporary / "adapter-lock-missing-source-pin"
+                clone_at(ferric_fixture, adapter_lock_missing_case)
+                adapter_missing_lock = (
+                    adapter_lock_missing_case / adapter_relative / "Cargo.lock"
+                )
+                lock_parts = adapter_missing_lock.read_text(encoding="utf-8").split(
+                    "\n[[package]]\n"
+                )
+                missing_name = adapter_resolved[0][0]
+                matching_parts = [
+                    index
+                    for index, part in enumerate(lock_parts)
+                    if f'name = "{missing_name}"\n' in part and expected_url in part
+                ]
+                if len(matching_parts) != 1:
+                    fail("source-pin adapter lock deletion anchor drifted")
+                del lock_parts[matching_parts[0]]
+                adapter_missing_lock.write_text(
+                    "\n[[package]]\n".join(lock_parts), encoding="utf-8"
+                )
+                commit_fixture(
+                    adapter_lock_missing_case, "delete source-pin adapter lock package"
+                )
+                expect_prepare_failure(
+                    adapter_lock_missing_case / "proofs/m1-qualification/planner.py",
+                    adapter_lock_missing_case,
+                    fe2o3_fixture,
+                    temporary / "adapter-lock-missing-source-pin-output",
+                    "adapter resolved fe2o3 roster drifted",
+                )
+
+            adapter_lock_extra_case = temporary / f"adapter-lock-extra-{adapter_slug}"
+            clone_at(ferric_fixture, adapter_lock_extra_case)
+            adapter_extra_lock = (
+                adapter_lock_extra_case / adapter_relative / "Cargo.lock"
+            )
+            adapter_extra_lock.write_text(
+                adapter_extra_lock.read_text(encoding="utf-8")
+                + "\n[[package]]\n"
+                + 'name = "fe2o3-hostile-registry"\n'
+                + 'version = "0.1.0"\n'
+                + 'source = "registry+https://github.com/rust-lang/crates.io-index"\n'
+                + 'checksum = "'
+                + "0" * 64
+                + '"\n',
+                encoding="utf-8",
+            )
+            commit_fixture(adapter_lock_extra_case, "add adapter fe2o3 lock package")
+            expect_prepare_failure(
+                adapter_lock_extra_case / "proofs/m1-qualification/planner.py",
+                adapter_lock_extra_case,
+                fe2o3_fixture,
+                temporary / f"adapter-lock-extra-output-{adapter_slug}",
+                "adapter resolved fe2o3 package declaration drifted",
+            )
 
         topology_case = temporary / "topology"
         clone_at(ferric_fixture, topology_case)
@@ -575,6 +675,44 @@ def main() -> None:
     planner_path = repo / "proofs/m1-qualification/planner.py"
     bytecode_before = set(planner_path.parent.rglob("*.pyc"))
     planner = load_planner(planner_path)
+    expected_source_pin_names = {
+        "dialect-amdgcn",
+        "dialect-gpu",
+        "dialect-kernel",
+        "dialect-mir",
+        "dialect-proof",
+        "fe2o3-amd-target",
+        "fe2o3-amdgcn-model",
+        "fe2o3-artifact-transaction",
+        "fe2o3-build-authority",
+        "fe2o3-compiler-execution-protocol",
+        "fe2o3-compiler-ffi",
+        "fe2o3-compiler-lineage",
+        "fe2o3-external-anchor-protocol",
+        "fe2o3-functional-proof",
+        "fe2o3-hsaco",
+        "fe2o3-hsaco-finalize",
+        "fe2o3-kernel-analysis",
+        "fe2o3-kernel-descriptor",
+        "fe2o3-kernel-ir",
+        "fe2o3-llvm-handoff",
+        "fe2o3-llvm-text",
+        "fe2o3-lower-mir-kernel",
+        "fe2o3-mir-model",
+        "fe2o3-pliron",
+        "fe2o3-pliron-owner-core",
+        "fe2o3-proof-contracts",
+        "fe2o3-runtime-protocol",
+        "fe2o3-rustc-invocation",
+        "fe2o3-source-isa-observation",
+        "reserved-fe2o3-symbols",
+    }
+    if (
+        len(expected_source_pin_names) != 30
+        or set(planner.FE2O3_SOURCE_PIN_RESOLVED_PACKAGES)
+        != {(name, "0.1.0") for name in expected_source_pin_names}
+    ):
+        fail("M1 planner source-pin adapter closure drifted")
     if planner.FE2O3_AGGREGATE_DEVICE_WORKSPACES != (
         ("ferric-qwen3-all-kernels-device-v1", "device/qwen3-all-kernels-v1"),
     ):
@@ -583,6 +721,27 @@ def main() -> None:
         planner.FE2O3_AGGREGATE_DEVICE_WORKSPACES
     ) & set(planner.FE2O3_COMPATIBILITY_DEVICE_WORKSPACES):
         fail("M1 planner compatibility device classification drifted")
+    if planner.FE2O3_ADAPTER_WORKSPACES != (
+        (
+            "ferric-qwen3-all-kernels-worker-v3-verifier-v1",
+            "adapters/qwen3-all-kernels-worker-v3-verifier-v1",
+            ("fe2o3-host",),
+            planner.FE2O3_RESOLVED_PACKAGES,
+        ),
+        (
+            "ferric-qwen3-all-kernels-worker-v3-source-pin-v1",
+            "adapters/qwen3-all-kernels-worker-v3-source-pin-v1",
+            ("fe2o3-compiler-ffi", "fe2o3-runtime-protocol"),
+            planner.FE2O3_SOURCE_PIN_RESOLVED_PACKAGES,
+        ),
+        (
+            "ferric-qwen3-swiglu-worker-v3-envelope-v2",
+            "adapters/qwen3-swiglu-worker-v3-envelope-v2",
+            ("fe2o3-runtime-protocol",),
+            planner.FE2O3_RESOLVED_PACKAGES,
+        ),
+    ):
+        fail("M1 planner adapter workspace classification drifted")
     requirements = planner.read_canonical_json(
         repo / "proofs/M1_REQUIREMENTS.json", "M1 requirements"
     )

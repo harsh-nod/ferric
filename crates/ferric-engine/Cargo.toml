@@ -38,13 +38,7 @@ fe2o3-service-host.workspace = true
 ferric-build = { path = "../ferric-build" }
 ferric-kernels = { path = "../ferric-kernels" }
 ferric-qwen-kernels = { path = "../ferric-qwen-kernels" }
-ferric-qwen3-gemm-device-v1 = { path = "../../device/qwen3-gemm-v1" }
-ferric-qwen3-logits-device-v1 = { path = "../../device/qwen3-logits-v1" }
-ferric-qwen3-paged-decode-device-v1 = { path = "../../device/qwen3-paged-decode-v1" }
-ferric-qwen3-prefill-device-v1 = { path = "../../device/qwen3-prefill-v1" }
-ferric-qwen3-rmsnorm-device-v1 = { path = "../../device/qwen3-rmsnorm-v1" }
-ferric-qwen3-rope-kv-device-v1 = { path = "../../device/qwen3-rope-kv-v1" }
-ferric-qwen3-swiglu-device-v1 = { path = "../../device/qwen3-swiglu-v1" }
+ferric-qwen3-all-kernels-device-v1 = { path = "../../device/qwen3-all-kernels-v1" }
 ferric-spec = { path = "../ferric-spec" }
 rustix.workspace = true
 serde_json = "=1.0.151"

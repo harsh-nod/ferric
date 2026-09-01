@@ -212,7 +212,7 @@ compiler_dependency = next(
     d for d in qwen_package["dependencies"] if d["name"] == "fe2o3-compiler-ffi"
 )
 compiler_dependency["source"] = compiler_dependency["source"].replace(
-    "9f97985ee0a4a8ef0bc8f0fa0fd33771c8180592", "0" * 40
+    "2d275684d7a22f8f913114b51b1d1dd524d1ed9b", "0" * 40
 )
 (scratch / "fe2o3-source.metadata").write_text(json.dumps(fe2o3), encoding="utf-8")
 
@@ -251,8 +251,9 @@ runtime_build["features"].append("test-fixtures")
     json.dumps(test_fixture_runtime), encoding="utf-8"
 )
 
-device_gemm = "ferric-qwen3-gemm-device-v1"
-device_logits = "ferric-qwen3-logits-device-v1"
+device_aggregate = "ferric-qwen3-all-kernels-device-v1"
+device_compatibility = "ferric-qwen3-gemm-device-v1"
+compatibility_crate = "ferric_qwen3_gemm_device_v1"
 
 
 def dependency(document, owner, name):
@@ -272,23 +273,56 @@ def write_hostile(name, document):
     )
 
 
+def add_compatibility_package(document, include_resolve=False):
+    aggregate = package(document, device_aggregate)
+    aggregate_root = Path(aggregate["manifest_path"]).parent
+    compatibility_root = aggregate_root.parent / "qwen3-gemm-v1"
+    compatibility = copy.deepcopy(aggregate)
+    compatibility_id = (
+        f"path+file://{compatibility_root}#{device_compatibility}@0.1.0"
+    )
+    compatibility["name"] = device_compatibility
+    compatibility["id"] = compatibility_id
+    compatibility["manifest_path"] = str(compatibility_root / "Cargo.toml")
+    for target in compatibility["targets"]:
+        source = Path(target["src_path"])
+        target["src_path"] = str(compatibility_root / source.relative_to(aggregate_root))
+        if target["kind"] == ["lib"]:
+            target["name"] = compatibility_crate
+    document["packages"].append(compatibility)
+    if include_resolve:
+        aggregate_node = next(
+            value
+            for value in document["resolve"]["nodes"]
+            if value["id"] == aggregate["id"]
+        )
+        compatibility_node = copy.deepcopy(aggregate_node)
+        compatibility_node["id"] = compatibility_id
+        document["resolve"]["nodes"].append(compatibility_node)
+    return compatibility, compatibility_root
+
+
 local_missing = copy.deepcopy(metadata)
 engine_dependencies = package(local_missing, "ferric-engine")["dependencies"]
-gemm_dependency = dependency(local_missing, "ferric-engine", device_gemm)
-engine_dependencies.remove(gemm_dependency)
+aggregate_dependency = dependency(
+    local_missing, "ferric-engine", device_aggregate
+)
+engine_dependencies.remove(aggregate_dependency)
 write_hostile("missing", local_missing)
 
-local_eighth = copy.deepcopy(metadata)
+local_extra = copy.deepcopy(metadata)
+_, compatibility_root = add_compatibility_package(local_extra)
 hostile_dependency = copy.deepcopy(
-    dependency(local_eighth, "ferric-engine", device_gemm)
+    dependency(local_extra, "ferric-engine", device_aggregate)
 )
-hostile_dependency["name"] = "ferric-qwen3-hostile-device-v1"
-package(local_eighth, "ferric-engine")["dependencies"].append(hostile_dependency)
-write_hostile("eighth", local_eighth)
+hostile_dependency["name"] = device_compatibility
+hostile_dependency["path"] = str(compatibility_root)
+package(local_extra, "ferric-engine")["dependencies"].append(hostile_dependency)
+write_hostile("extra", local_extra)
 
 local_wrong_owner = copy.deepcopy(metadata)
 wrong_owner_dependency = copy.deepcopy(
-    dependency(local_wrong_owner, "ferric-engine", device_gemm)
+    dependency(local_wrong_owner, "ferric-engine", device_aggregate)
 )
 package(local_wrong_owner, "ferric-qwen-kernels")["dependencies"].append(
     wrong_owner_dependency
@@ -296,56 +330,66 @@ package(local_wrong_owner, "ferric-qwen-kernels")["dependencies"].append(
 write_hostile("wrong-owner", local_wrong_owner)
 
 local_path = copy.deepcopy(metadata)
-dependency(local_path, "ferric-engine", device_gemm)["path"] = dependency(
-    local_path, "ferric-engine", device_logits
-)["path"]
+aggregate_root = Path(
+    dependency(local_path, "ferric-engine", device_aggregate)["path"]
+)
+dependency(local_path, "ferric-engine", device_aggregate)["path"] = str(
+    aggregate_root.parent / "qwen3-gemm-v1"
+)
 write_hostile("path", local_path)
 
 local_workspace = copy.deepcopy(metadata)
 local_workspace["workspace_members"].append(
-    package(local_workspace, device_gemm)["id"]
+    package(local_workspace, device_aggregate)["id"]
 )
 write_hostile("workspace", local_workspace)
 
 local_verus = copy.deepcopy(metadata)
-package(local_verus, device_gemm)["metadata"] = {
+package(local_verus, device_aggregate)["metadata"] = {
     "verus": {"verify": True}
 }
 write_hostile("verus", local_verus)
 
 local_manifest = copy.deepcopy(metadata)
-package(local_manifest, device_gemm)["manifest_path"] = package(
-    local_manifest, device_logits
-)["manifest_path"]
+aggregate_manifest = Path(
+    package(local_manifest, device_aggregate)["manifest_path"]
+)
+package(local_manifest, device_aggregate)["manifest_path"] = str(
+    aggregate_manifest.parent.parent / "qwen3-gemm-v1" / "Cargo.toml"
+)
 write_hostile("manifest", local_manifest)
 
 local_target = copy.deepcopy(metadata)
-gemm_library = next(
+aggregate_library = next(
     value
-    for value in package(local_target, device_gemm)["targets"]
+    for value in package(local_target, device_aggregate)["targets"]
     if value["kind"] == ["lib"]
 )
-gemm_library["name"] = f"{gemm_library['name']}_hostile"
+aggregate_library["name"] = f"{aggregate_library['name']}_hostile"
 write_hostile("target", local_target)
 
 local_fe2o3 = copy.deepcopy(metadata)
-device_dependency = dependency(local_fe2o3, device_gemm, "fe2o3-device")
+device_dependency = dependency(local_fe2o3, device_aggregate, "fe2o3-device")
 device_dependency["source"] = device_dependency["source"].replace(
-    "9f97985ee0a4a8ef0bc8f0fa0fd33771c8180592", "0" * 40
+    "2d275684d7a22f8f913114b51b1d1dd524d1ed9b", "0" * 40
 )
 write_hostile("fe2o3", local_fe2o3)
 
 local_resolve = copy.deepcopy(metadata)
-gemm_id = package(local_resolve, device_gemm)["id"]
-logits_id = package(local_resolve, device_logits)["id"]
-resolved_gemm = [
+aggregate_id = package(local_resolve, device_aggregate)["id"]
+compatibility, _ = add_compatibility_package(local_resolve, include_resolve=True)
+resolved_aggregate = [
     value
     for value in node(local_resolve, "ferric-engine")["deps"]
-    if value["pkg"] == gemm_id
+    if value["pkg"] == aggregate_id
 ]
-if len(resolved_gemm) != 1:
+if len(resolved_aggregate) != 1:
     raise SystemExit("local runtime resolve edge fixture anchor drifted")
-resolved_gemm[0]["pkg"] = logits_id
+resolved_aggregate[0]["pkg"] = compatibility["id"]
+owner_dependencies = node(local_resolve, "ferric-engine")["dependencies"]
+if owner_dependencies.count(aggregate_id) != 1:
+    raise SystemExit("local runtime resolve dependency fixture anchor drifted")
+owner_dependencies[owner_dependencies.index(aggregate_id)] = compatibility["id"]
 write_hostile("resolve", local_resolve)
 PY
 
@@ -383,9 +427,9 @@ expect_rejected test-fixture-runtime-activation \
 expect_rejected local-runtime-missing 'local runtime roots drifted' \
     "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/local-runtime-missing.metadata"
-expect_rejected local-runtime-eighth 'unadmitted path dependency' \
+expect_rejected local-runtime-extra 'unadmitted path dependency' \
     "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
-    "$scratch/local-runtime-eighth.metadata"
+    "$scratch/local-runtime-extra.metadata"
 expect_rejected local-runtime-wrong-owner 'unadmitted path dependency' \
     "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/local-runtime-wrong-owner.metadata"

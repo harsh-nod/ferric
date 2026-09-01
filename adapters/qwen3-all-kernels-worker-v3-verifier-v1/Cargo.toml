@@ -1,0 +1,22 @@
+[package]
+name = "ferric-qwen3-all-kernels-worker-v3-verifier-v1"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97.1"
+publish = false
+
+# Keep this authority adapter isolated from the legacy Ferric workspace while
+# it follows the current Worker V3 verifier boundary.
+[workspace]
+
+[dependencies]
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "2d275684d7a22f8f913114b51b1d1dd524d1ed9b", version = "=0.1.0" }
+ferric-qwen3-all-kernels-device-v1 = { path = "../../device/qwen3-all-kernels-v1" }
+
+[lints.rust]
+missing_docs = "deny"
+unsafe_op_in_unsafe_fn = "deny"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }

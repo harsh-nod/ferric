@@ -1,4 +1,4 @@
-//! Exact durable Worker V3 roster acquisition for the M1 program catalog.
+//! Exact durable Worker V3 aggregate-roster acquisition for the M1 program catalog.
 
 use std::error::Error;
 use std::fmt;
@@ -7,21 +7,20 @@ use std::path::{Path, PathBuf};
 use fe2o3_artifact_transaction::BuildAttempt;
 use fe2o3_host::{
     admit_recovered_worker_v3_roster_v1, AuthenticatedWorkerV3RosterV1,
-    CompilerGeneratedKernelExpectationRosterV1, RecoveredWorkerV3AdmissionErrorV1,
-    RecoveredWorkerV3PinnedRosterV1, WorkerV3ProtectedRosterVerifierAdapterV1,
-    WorkerV3ProtectedRosterVerifierBackendV1, WorkerV3RosterVerificationAuthenticationErrorV1,
+    RecoveredWorkerV3AdmissionErrorV1, RecoveredWorkerV3PinnedRosterV1,
+    WorkerV3ProtectedRosterVerifierAdapterV1, WorkerV3ProtectedRosterVerifierBackendV1,
+    WorkerV3RosterVerificationAuthenticationErrorV1,
 };
 use fe2o3_runtime_protocol::{recover_worker_v3_load_envelope_v2, WorkerV3LoadEnvelopeErrorV2};
 use ferric_build::M1KernelArtifactFamilyV1;
+use ferric_qwen3_all_kernels_device_v1::M1AllKernelsWorkerV3RosterV1;
 
 use crate::{
     admit_m1_authenticated_worker_v3_programs_v1, M1AuthenticatedProgramSetIntakeFailureV1,
-    M1AuthenticatedWorkerV3ProgramSetV1, M1AuthenticatedWorkerV3RostersV1, M1GemmWorkerV3RosterV1,
-    M1LogitsWorkerV3RosterV1, M1PagedDecodeWorkerV3RosterV1, M1PrefillWorkerV3RosterV1,
-    M1RmsNormWorkerV3RosterV1, M1RopeKvWorkerV3RosterV1, M1SwiGluWorkerV3RosterV1,
+    M1AuthenticatedWorkerV3ProgramSetV1,
 };
 
-/// Exact durable publication selected for one M1 kernel family.
+/// Exact durable publication selected for the aggregate M1 compiler unit.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct M1WorkerV3ArtifactSelectorV1 {
     output_dir: PathBuf,
@@ -51,7 +50,7 @@ impl M1WorkerV3ArtifactSelectorV1 {
     }
 }
 
-/// Invalid seven-family selector set.
+/// Invalid legacy seven-family selector set.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[non_exhaustive]
 pub enum M1WorkerV3ArtifactSelectorsErrorV1 {
@@ -74,7 +73,10 @@ impl fmt::Display for M1WorkerV3ArtifactSelectorsErrorV1 {
 
 impl Error for M1WorkerV3ArtifactSelectorsErrorV1 {}
 
-/// Seven exact durable selectors in canonical K1-K7 family order.
+/// Compatibility-only seven-selector container for the legacy manifest decoder.
+///
+/// This type cannot be converted to an aggregate selector because no member is authoritative for
+/// the new all-kernels compiler unit. Aggregate recovery rejects it explicitly.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct M1WorkerV3ArtifactSelectorsV1 {
     gemm: M1WorkerV3ArtifactSelectorV1,
@@ -87,11 +89,11 @@ pub struct M1WorkerV3ArtifactSelectorsV1 {
 }
 
 impl M1WorkerV3ArtifactSelectorsV1 {
-    /// Names every family selector explicitly so family order cannot be inferred from a directory.
+    /// Retains the legacy manifest shape without granting aggregate publication authority.
     ///
     /// # Errors
     ///
-    /// Rejects one exact durable publication assigned to more than one family.
+    /// Returns an error when two families select the same exact publication.
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         gemm: M1WorkerV3ArtifactSelectorV1,
@@ -136,7 +138,7 @@ impl M1WorkerV3ArtifactSelectorsV1 {
         Ok(selectors)
     }
 
-    /// Returns the exact selector bound to one family.
+    /// Returns one legacy family selector for manifest diagnostics only.
     #[must_use]
     pub const fn selector(
         &self,
@@ -154,44 +156,34 @@ impl M1WorkerV3ArtifactSelectorsV1 {
     }
 }
 
-/// Seven current, inert host-admitted rosters before protected authentication.
+/// One current, inert host-admitted aggregate roster before protected authentication.
 #[must_use = "recovered roster custody must be authenticated or explicitly released"]
-pub struct M1RecoveredWorkerV3RostersV1 {
-    gemm: RecoveredWorkerV3PinnedRosterV1<M1GemmWorkerV3RosterV1>,
-    rmsnorm: RecoveredWorkerV3PinnedRosterV1<M1RmsNormWorkerV3RosterV1>,
-    rope_kv: RecoveredWorkerV3PinnedRosterV1<M1RopeKvWorkerV3RosterV1>,
-    prefill: RecoveredWorkerV3PinnedRosterV1<M1PrefillWorkerV3RosterV1>,
-    paged_decode: RecoveredWorkerV3PinnedRosterV1<M1PagedDecodeWorkerV3RosterV1>,
-    swiglu: RecoveredWorkerV3PinnedRosterV1<M1SwiGluWorkerV3RosterV1>,
-    logits: RecoveredWorkerV3PinnedRosterV1<M1LogitsWorkerV3RosterV1>,
+pub struct M1RecoveredWorkerV3RosterV1 {
+    selector: M1WorkerV3ArtifactSelectorV1,
+    roster: RecoveredWorkerV3PinnedRosterV1<M1AllKernelsWorkerV3RosterV1>,
 }
 
-impl fmt::Debug for M1RecoveredWorkerV3RostersV1 {
+impl fmt::Debug for M1RecoveredWorkerV3RosterV1 {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter
-            .debug_struct("M1RecoveredWorkerV3RostersV1")
-            .field("gemm", &self.gemm)
-            .field("rmsnorm", &self.rmsnorm)
-            .field("rope_kv", &self.rope_kv)
-            .field("prefill", &self.prefill)
-            .field("paged_decode", &self.paged_decode)
-            .field("swiglu", &self.swiglu)
-            .field("logits", &self.logits)
+            .debug_struct("M1RecoveredWorkerV3RosterV1")
+            .field("selector", &self.selector)
+            .field("roster", &self.roster)
             .finish()
     }
 }
 
-impl M1RecoveredWorkerV3RostersV1 {
-    /// Returns the exact flattened marker count retained across all seven rosters.
+impl M1RecoveredWorkerV3RosterV1 {
+    /// Returns the exact durable publication selector retained with recovered custody.
+    #[must_use]
+    pub const fn selector(&self) -> &M1WorkerV3ArtifactSelectorV1 {
+        &self.selector
+    }
+
+    /// Returns the exact aggregate marker count.
     #[must_use]
     pub fn program_count(&self) -> usize {
-        self.gemm.entrypoints().len()
-            + self.rmsnorm.entrypoints().len()
-            + self.rope_kv.entrypoints().len()
-            + self.prefill.entrypoints().len()
-            + self.paged_decode.entrypoints().len()
-            + self.swiglu.entrypoints().len()
-            + self.logits.entrypoints().len()
+        self.roster.entrypoints().len()
     }
 
     /// This custody proves host admission only, not verification, load, or launch authority.
@@ -199,47 +191,68 @@ impl M1RecoveredWorkerV3RostersV1 {
     pub const fn authenticates_verification_authority(&self) -> bool {
         false
     }
+
+    fn into_parts(
+        self,
+    ) -> (
+        M1WorkerV3ArtifactSelectorV1,
+        RecoveredWorkerV3PinnedRosterV1<M1AllKernelsWorkerV3RosterV1>,
+    ) {
+        (self.selector, self.roster)
+    }
 }
 
-/// Exact pre-authentication stage that rejected one family selector.
+/// Compatibility alias retained for legacy selector-set callers.
+pub type M1RecoveredWorkerV3RostersV1 = M1RecoveredWorkerV3RosterV1;
+
+/// Exact pre-authentication stage that rejected aggregate acquisition.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum M1WorkerV3RosterAcquisitionStageV1 {
+    SelectAggregatePublication,
     RecoverEnvelope,
     HostRosterAdmission,
 }
 
-/// Typed failure for exact V2 recovery or compiler-generated roster admission.
+/// Typed failure for aggregate selection, exact V2 recovery, or roster admission.
+#[must_use = "roster acquisition failure retains the exact rejected selector"]
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum M1WorkerV3RosterAcquisitionFailureV1 {
+    LegacySelectorSetUnsupported {
+        selectors: Box<M1WorkerV3ArtifactSelectorsV1>,
+    },
     RecoverEnvelope {
-        family: M1KernelArtifactFamilyV1,
+        selector: M1WorkerV3ArtifactSelectorV1,
         source: Box<WorkerV3LoadEnvelopeErrorV2>,
     },
     HostRosterAdmission {
-        family: M1KernelArtifactFamilyV1,
+        selector: M1WorkerV3ArtifactSelectorV1,
         source: Box<RecoveredWorkerV3AdmissionErrorV1>,
     },
 }
 
 impl M1WorkerV3RosterAcquisitionFailureV1 {
-    /// Returns the exact family whose selector failed.
-    #[must_use]
-    pub const fn family(&self) -> M1KernelArtifactFamilyV1 {
-        match self {
-            Self::RecoverEnvelope { family, .. } | Self::HostRosterAdmission { family, .. } => {
-                *family
-            }
-        }
-    }
-
     /// Returns the exact rejected pre-authentication stage.
     #[must_use]
     pub const fn stage(&self) -> M1WorkerV3RosterAcquisitionStageV1 {
         match self {
+            Self::LegacySelectorSetUnsupported { .. } => {
+                M1WorkerV3RosterAcquisitionStageV1::SelectAggregatePublication
+            }
             Self::RecoverEnvelope { .. } => M1WorkerV3RosterAcquisitionStageV1::RecoverEnvelope,
             Self::HostRosterAdmission { .. } => {
                 M1WorkerV3RosterAcquisitionStageV1::HostRosterAdmission
+            }
+        }
+    }
+
+    /// Returns the retained aggregate selector when recovery had selected one.
+    #[must_use]
+    pub const fn selector(&self) -> Option<&M1WorkerV3ArtifactSelectorV1> {
+        match self {
+            Self::LegacySelectorSetUnsupported { .. } => None,
+            Self::RecoverEnvelope { selector, .. } | Self::HostRosterAdmission { selector, .. } => {
+                Some(selector)
             }
         }
     }
@@ -248,15 +261,19 @@ impl M1WorkerV3RosterAcquisitionFailureV1 {
 impl fmt::Display for M1WorkerV3RosterAcquisitionFailureV1 {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::RecoverEnvelope { family, source } => {
+            Self::LegacySelectorSetUnsupported { .. } => write!(
+                formatter,
+                "legacy seven-family Worker V3 selectors cannot identify the aggregate M1 publication"
+            ),
+            Self::RecoverEnvelope { source, .. } => {
                 write!(
                     formatter,
-                    "M1 {family:?} Worker V3 envelope recovery failed: {source}"
+                    "M1 aggregate Worker V3 envelope recovery failed: {source}"
                 )
             }
-            Self::HostRosterAdmission { family, source } => write!(
+            Self::HostRosterAdmission { source, .. } => write!(
                 formatter,
-                "M1 {family:?} Worker V3 host roster admission failed: {source}"
+                "M1 aggregate Worker V3 host roster admission failed: {source}"
             ),
         }
     }
@@ -265,6 +282,7 @@ impl fmt::Display for M1WorkerV3RosterAcquisitionFailureV1 {
 impl Error for M1WorkerV3RosterAcquisitionFailureV1 {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
+            Self::LegacySelectorSetUnsupported { .. } => None,
             Self::RecoverEnvelope { source, .. } => Some(source),
             Self::HostRosterAdmission { source, .. } => Some(source),
         }
@@ -279,26 +297,21 @@ pub enum M1WorkerV3AuthenticationStageV1 {
 }
 
 /// Typed protected-authentication or exact-program-set composition failure.
+#[must_use = "authentication failure retains the exact selector and Worker V3 custody"]
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum M1WorkerV3AuthenticationFailureV1<E> {
     ProtectedAuthentication {
-        family: M1KernelArtifactFamilyV1,
         source: Box<WorkerV3RosterVerificationAuthenticationErrorV1<E>>,
+        recovered: Box<M1RecoveredWorkerV3RosterV1>,
     },
-    ProgramSetComposition(Box<M1AuthenticatedProgramSetIntakeFailureV1>),
+    ProgramSetComposition {
+        selector: Box<M1WorkerV3ArtifactSelectorV1>,
+        source: Box<M1AuthenticatedProgramSetIntakeFailureV1>,
+    },
 }
 
 impl<E> M1WorkerV3AuthenticationFailureV1<E> {
-    /// Returns the family rejected by protected authentication, when applicable.
-    #[must_use]
-    pub const fn family(&self) -> Option<M1KernelArtifactFamilyV1> {
-        match self {
-            Self::ProtectedAuthentication { family, .. } => Some(*family),
-            Self::ProgramSetComposition(_) => None,
-        }
-    }
-
     /// Returns the exact rejected authenticated-acquisition stage.
     #[must_use]
     pub const fn stage(&self) -> M1WorkerV3AuthenticationStageV1 {
@@ -306,9 +319,18 @@ impl<E> M1WorkerV3AuthenticationFailureV1<E> {
             Self::ProtectedAuthentication { .. } => {
                 M1WorkerV3AuthenticationStageV1::ProtectedAuthentication
             }
-            Self::ProgramSetComposition(_) => {
+            Self::ProgramSetComposition { .. } => {
                 M1WorkerV3AuthenticationStageV1::ProgramSetComposition
             }
+        }
+    }
+
+    /// Returns the exact aggregate publication selector retained at either rejection stage.
+    #[must_use]
+    pub fn selector(&self) -> &M1WorkerV3ArtifactSelectorV1 {
+        match self {
+            Self::ProtectedAuthentication { recovered, .. } => recovered.selector(),
+            Self::ProgramSetComposition { selector, .. } => selector,
         }
     }
 }
@@ -316,13 +338,15 @@ impl<E> M1WorkerV3AuthenticationFailureV1<E> {
 impl<E: fmt::Display> fmt::Display for M1WorkerV3AuthenticationFailureV1<E> {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::ProtectedAuthentication { family, source } => write!(
+            Self::ProtectedAuthentication { source, .. } => write!(
                 formatter,
-                "M1 {family:?} Worker V3 protected authentication failed: {source}"
+                "M1 aggregate Worker V3 protected authentication failed: {source}"
             ),
-            Self::ProgramSetComposition(failure) => write!(
+            Self::ProgramSetComposition {
+                source: failure, ..
+            } => write!(
                 formatter,
-                "M1 Worker V3 program-set composition failed at {:?}: {}",
+                "M1 aggregate Worker V3 program-set composition failed at {:?}: {}",
                 failure.phase(),
                 failure.error()
             ),
@@ -337,12 +361,13 @@ where
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::ProtectedAuthentication { source, .. } => Some(source),
-            Self::ProgramSetComposition(_) => None,
+            Self::ProgramSetComposition { .. } => None,
         }
     }
 }
 
 /// End-to-end exact-selector acquisition failure.
+#[must_use = "acquisition failure retains the exact selector and available Worker V3 custody"]
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum M1AuthenticatedWorkerV3AcquisitionFailureV1<E> {
@@ -371,139 +396,139 @@ where
     }
 }
 
-/// Recovers and host-admits all seven exact selectors without creating authority.
+/// Recovers and host-admits one exact aggregate publication without creating authority.
 ///
 /// # Errors
 ///
-/// Returns the first exact family and recovery/admission stage that rejects.
+/// Returns the rejected recovery or host-admission stage while retaining the exact selector.
+pub fn recover_m1_all_kernels_worker_v3_roster_v1(
+    selector: M1WorkerV3ArtifactSelectorV1,
+) -> Result<M1RecoveredWorkerV3RosterV1, M1WorkerV3RosterAcquisitionFailureV1> {
+    let envelope = recover_worker_v3_load_envelope_v2(selector.output_dir(), selector.attempt())
+        .map_err(
+            |source| M1WorkerV3RosterAcquisitionFailureV1::RecoverEnvelope {
+                selector: selector.clone(),
+                source: Box::new(source),
+            },
+        )?;
+    let roster = admit_recovered_worker_v3_roster_v1::<M1AllKernelsWorkerV3RosterV1>(envelope)
+        .map_err(
+            |source| M1WorkerV3RosterAcquisitionFailureV1::HostRosterAdmission {
+                selector: selector.clone(),
+                source: Box::new(source),
+            },
+        )?;
+    Ok(M1RecoveredWorkerV3RosterV1 { selector, roster })
+}
+
+/// Compatibility-only legacy entry point retained for V1 selector-manifest callers.
+///
+/// It rejects before reading any of the seven publications because none identifies the aggregate
+/// compiler unit.
+///
+/// # Errors
+///
+/// Always returns a typed rejection retaining the legacy selector set.
 pub fn recover_m1_worker_v3_rosters_v1(
     selectors: M1WorkerV3ArtifactSelectorsV1,
 ) -> Result<M1RecoveredWorkerV3RostersV1, M1WorkerV3RosterAcquisitionFailureV1> {
-    let M1WorkerV3ArtifactSelectorsV1 {
-        gemm,
-        rmsnorm,
-        rope_kv,
-        prefill,
-        paged_decode,
-        swiglu,
-        logits,
-    } = selectors;
-    Ok(M1RecoveredWorkerV3RostersV1 {
-        gemm: recover_roster(M1KernelArtifactFamilyV1::Gemm, gemm)?,
-        rmsnorm: recover_roster(M1KernelArtifactFamilyV1::RmsNorm, rmsnorm)?,
-        rope_kv: recover_roster(M1KernelArtifactFamilyV1::RopeKv, rope_kv)?,
-        prefill: recover_roster(M1KernelArtifactFamilyV1::Prefill, prefill)?,
-        paged_decode: recover_roster(M1KernelArtifactFamilyV1::PagedDecode, paged_decode)?,
-        swiglu: recover_roster(M1KernelArtifactFamilyV1::SwiGlu, swiglu)?,
-        logits: recover_roster(M1KernelArtifactFamilyV1::Logits, logits)?,
-    })
+    Err(
+        M1WorkerV3RosterAcquisitionFailureV1::LegacySelectorSetUnsupported {
+            selectors: Box::new(selectors),
+        },
+    )
 }
 
-/// Authenticates seven recovered rosters through one protected backend and composes 12 programs.
+/// Authenticates one recovered aggregate roster and attempts exact 12-program composition.
+///
+/// Protected-authentication failures retain the exact aggregate selector and recovered roster.
+/// Composition failures retain the selector plus the authenticated roster or composed program set
+/// in their residue.
 ///
 /// # Errors
 ///
-/// Returns the exact family rejected by protected authentication or the existing ownership-
-/// retaining program-set composition failure.
-pub fn authenticate_m1_worker_v3_rosters_v1<B, E>(
-    rosters: M1RecoveredWorkerV3RostersV1,
+/// Returns a protected-authentication error or an ownership-retaining composition failure.
+pub fn authenticate_m1_all_kernels_worker_v3_roster_v1<B, E>(
+    roster: M1RecoveredWorkerV3RosterV1,
     verifier: &mut WorkerV3ProtectedRosterVerifierAdapterV1<B>,
 ) -> Result<M1AuthenticatedWorkerV3ProgramSetV1, M1WorkerV3AuthenticationFailureV1<E>>
 where
-    B: WorkerV3ProtectedRosterVerifierBackendV1<M1GemmWorkerV3RosterV1, Error = E>
-        + WorkerV3ProtectedRosterVerifierBackendV1<M1RmsNormWorkerV3RosterV1, Error = E>
-        + WorkerV3ProtectedRosterVerifierBackendV1<M1RopeKvWorkerV3RosterV1, Error = E>
-        + WorkerV3ProtectedRosterVerifierBackendV1<M1PrefillWorkerV3RosterV1, Error = E>
-        + WorkerV3ProtectedRosterVerifierBackendV1<M1PagedDecodeWorkerV3RosterV1, Error = E>
-        + WorkerV3ProtectedRosterVerifierBackendV1<M1SwiGluWorkerV3RosterV1, Error = E>
-        + WorkerV3ProtectedRosterVerifierBackendV1<M1LogitsWorkerV3RosterV1, Error = E>,
+    B: WorkerV3ProtectedRosterVerifierBackendV1<M1AllKernelsWorkerV3RosterV1, Error = E>,
 {
-    let M1RecoveredWorkerV3RostersV1 {
-        gemm,
-        rmsnorm,
-        rope_kv,
-        prefill,
-        paged_decode,
-        swiglu,
-        logits,
-    } = rosters;
-    let rosters = M1AuthenticatedWorkerV3RostersV1::new(
-        authenticate_roster(M1KernelArtifactFamilyV1::Gemm, gemm, verifier)?,
-        authenticate_roster(M1KernelArtifactFamilyV1::RmsNorm, rmsnorm, verifier)?,
-        authenticate_roster(M1KernelArtifactFamilyV1::RopeKv, rope_kv, verifier)?,
-        authenticate_roster(M1KernelArtifactFamilyV1::Prefill, prefill, verifier)?,
-        authenticate_roster(
-            M1KernelArtifactFamilyV1::PagedDecode,
-            paged_decode,
-            verifier,
-        )?,
-        authenticate_roster(M1KernelArtifactFamilyV1::SwiGlu, swiglu, verifier)?,
-        authenticate_roster(M1KernelArtifactFamilyV1::Logits, logits, verifier)?,
-    );
-    admit_m1_authenticated_worker_v3_programs_v1(rosters).map_err(|failure| {
-        M1WorkerV3AuthenticationFailureV1::ProgramSetComposition(Box::new(failure))
-    })
+    let (selector, roster) = roster.into_parts();
+    let roster = match AuthenticatedWorkerV3RosterV1::authenticate(roster, verifier) {
+        Ok(roster) => roster,
+        Err(failure) => {
+            let (source, roster) = failure.into_parts();
+            return Err(M1WorkerV3AuthenticationFailureV1::ProtectedAuthentication {
+                source: Box::new(source),
+                recovered: Box::new(M1RecoveredWorkerV3RosterV1 { selector, roster }),
+            });
+        }
+    };
+    match admit_m1_authenticated_worker_v3_programs_v1(roster) {
+        Ok(programs) => Ok(programs),
+        Err(source) => Err(M1WorkerV3AuthenticationFailureV1::ProgramSetComposition {
+            selector: Box::new(selector),
+            source: Box::new(source),
+        }),
+    }
 }
 
-/// Runs exact V2 recovery, host admission, protected authentication, and program composition.
+/// Compatibility alias for callers already holding the now-singular recovered owner.
 ///
 /// # Errors
 ///
-/// Returns the exact recovery, admission, protected-verification, or composition failure.
+/// Returns the same authentication or composition failure as the aggregate entry point.
+pub fn authenticate_m1_worker_v3_rosters_v1<B, E>(
+    roster: M1RecoveredWorkerV3RostersV1,
+    verifier: &mut WorkerV3ProtectedRosterVerifierAdapterV1<B>,
+) -> Result<M1AuthenticatedWorkerV3ProgramSetV1, M1WorkerV3AuthenticationFailureV1<E>>
+where
+    B: WorkerV3ProtectedRosterVerifierBackendV1<M1AllKernelsWorkerV3RosterV1, Error = E>,
+{
+    authenticate_m1_all_kernels_worker_v3_roster_v1(roster, verifier)
+}
+
+/// Runs aggregate V2 recovery, host admission, authentication, and program composition.
+///
+/// # Errors
+///
+/// Returns the exact acquisition, authentication, or composition failure.
+pub fn acquire_m1_all_kernels_authenticated_worker_v3_programs_v1<B, E>(
+    selector: M1WorkerV3ArtifactSelectorV1,
+    verifier: &mut WorkerV3ProtectedRosterVerifierAdapterV1<B>,
+) -> Result<M1AuthenticatedWorkerV3ProgramSetV1, M1AuthenticatedWorkerV3AcquisitionFailureV1<E>>
+where
+    B: WorkerV3ProtectedRosterVerifierBackendV1<M1AllKernelsWorkerV3RosterV1, Error = E>,
+{
+    let roster = recover_m1_all_kernels_worker_v3_roster_v1(selector).map_err(|source| {
+        M1AuthenticatedWorkerV3AcquisitionFailureV1::RosterAcquisition(Box::new(source))
+    })?;
+    authenticate_m1_all_kernels_worker_v3_roster_v1(roster, verifier).map_err(|source| {
+        M1AuthenticatedWorkerV3AcquisitionFailureV1::Authentication(Box::new(source))
+    })
+}
+
+/// Compatibility-only legacy end-to-end entry point.
+///
+/// This always rejects the seven-selector container before protected authentication.
+///
+/// # Errors
+///
+/// Always returns a roster-acquisition rejection retaining the legacy selector set.
 pub fn acquire_m1_authenticated_worker_v3_programs_v1<B, E>(
     selectors: M1WorkerV3ArtifactSelectorsV1,
     verifier: &mut WorkerV3ProtectedRosterVerifierAdapterV1<B>,
 ) -> Result<M1AuthenticatedWorkerV3ProgramSetV1, M1AuthenticatedWorkerV3AcquisitionFailureV1<E>>
 where
-    B: WorkerV3ProtectedRosterVerifierBackendV1<M1GemmWorkerV3RosterV1, Error = E>
-        + WorkerV3ProtectedRosterVerifierBackendV1<M1RmsNormWorkerV3RosterV1, Error = E>
-        + WorkerV3ProtectedRosterVerifierBackendV1<M1RopeKvWorkerV3RosterV1, Error = E>
-        + WorkerV3ProtectedRosterVerifierBackendV1<M1PrefillWorkerV3RosterV1, Error = E>
-        + WorkerV3ProtectedRosterVerifierBackendV1<M1PagedDecodeWorkerV3RosterV1, Error = E>
-        + WorkerV3ProtectedRosterVerifierBackendV1<M1SwiGluWorkerV3RosterV1, Error = E>
-        + WorkerV3ProtectedRosterVerifierBackendV1<M1LogitsWorkerV3RosterV1, Error = E>,
+    B: WorkerV3ProtectedRosterVerifierBackendV1<M1AllKernelsWorkerV3RosterV1, Error = E>,
 {
-    let rosters = recover_m1_worker_v3_rosters_v1(selectors).map_err(|source| {
+    let roster = recover_m1_worker_v3_rosters_v1(selectors).map_err(|source| {
         M1AuthenticatedWorkerV3AcquisitionFailureV1::RosterAcquisition(Box::new(source))
     })?;
-    authenticate_m1_worker_v3_rosters_v1(rosters, verifier).map_err(|source| {
+    authenticate_m1_all_kernels_worker_v3_roster_v1(roster, verifier).map_err(|source| {
         M1AuthenticatedWorkerV3AcquisitionFailureV1::Authentication(Box::new(source))
-    })
-}
-
-fn recover_roster<R: CompilerGeneratedKernelExpectationRosterV1>(
-    family: M1KernelArtifactFamilyV1,
-    selector: M1WorkerV3ArtifactSelectorV1,
-) -> Result<RecoveredWorkerV3PinnedRosterV1<R>, M1WorkerV3RosterAcquisitionFailureV1> {
-    let envelope = recover_worker_v3_load_envelope_v2(selector.output_dir(), selector.attempt())
-        .map_err(
-            |source| M1WorkerV3RosterAcquisitionFailureV1::RecoverEnvelope {
-                family,
-                source: Box::new(source),
-            },
-        )?;
-    admit_recovered_worker_v3_roster_v1::<R>(envelope).map_err(|source| {
-        M1WorkerV3RosterAcquisitionFailureV1::HostRosterAdmission {
-            family,
-            source: Box::new(source),
-        }
-    })
-}
-
-fn authenticate_roster<R, B, E>(
-    family: M1KernelArtifactFamilyV1,
-    roster: RecoveredWorkerV3PinnedRosterV1<R>,
-    verifier: &mut WorkerV3ProtectedRosterVerifierAdapterV1<B>,
-) -> Result<AuthenticatedWorkerV3RosterV1<R>, M1WorkerV3AuthenticationFailureV1<E>>
-where
-    R: CompilerGeneratedKernelExpectationRosterV1,
-    B: WorkerV3ProtectedRosterVerifierBackendV1<R, Error = E>,
-{
-    AuthenticatedWorkerV3RosterV1::authenticate(roster, verifier).map_err(|source| {
-        M1WorkerV3AuthenticationFailureV1::ProtectedAuthentication {
-            family,
-            source: Box::new(source),
-        }
     })
 }
 
@@ -547,7 +572,7 @@ mod tests {
         BuildAttempt::from_env_value(DIRECT_ATTEMPT).expect("canonical direct attempt")
     }
 
-    fn selectors(root: &Path) -> M1WorkerV3ArtifactSelectorsV1 {
+    fn legacy_selectors(root: &Path) -> M1WorkerV3ArtifactSelectorsV1 {
         M1WorkerV3ArtifactSelectorsV1::new(
             M1WorkerV3ArtifactSelectorV1::new(root.join("k1"), attempt()),
             M1WorkerV3ArtifactSelectorV1::new(root.join("k2"), attempt()),
@@ -557,33 +582,33 @@ mod tests {
             M1WorkerV3ArtifactSelectorV1::new(root.join("k6"), attempt()),
             M1WorkerV3ArtifactSelectorV1::new(root.join("k7"), attempt()),
         )
-        .expect("seven distinct exact selectors")
+        .expect("seven distinct legacy selectors")
     }
 
     #[test]
-    fn selectors_preserve_exact_named_family_paths_and_attempts() {
-        let root = Path::new("/durable-worker-v3");
-        let selectors = selectors(root);
-        for (family, suffix) in M1KernelArtifactFamilyV1::ALL
-            .into_iter()
-            .zip(["k1", "k2", "k3", "k4", "k5", "k6", "k7"])
-        {
-            let selector = selectors.selector(family);
-            assert_eq!(selector.output_dir(), root.join(suffix));
-            assert_eq!(selector.attempt(), attempt());
-        }
+    fn singular_selector_preserves_exact_aggregate_publication() {
+        let selector = M1WorkerV3ArtifactSelectorV1::new(
+            PathBuf::from("/durable-worker-v3/all-kernels"),
+            attempt(),
+        );
+        assert_eq!(
+            selector.output_dir(),
+            Path::new("/durable-worker-v3/all-kernels")
+        );
+        assert_eq!(selector.attempt(), attempt());
     }
 
     #[test]
-    fn missing_exact_attempt_fails_at_k1_recovery_without_trying_later_families() {
+    fn missing_exact_attempt_fails_at_aggregate_recovery_and_retains_selector() {
         let directory = TestDirectory::new("missing-attempt");
-        let error = recover_m1_worker_v3_rosters_v1(selectors(&directory.0))
+        let selector = M1WorkerV3ArtifactSelectorV1::new(directory.0.clone(), attempt());
+        let error = recover_m1_all_kernels_worker_v3_roster_v1(selector.clone())
             .expect_err("no durable publication exists");
-        assert_eq!(error.family(), M1KernelArtifactFamilyV1::Gemm);
         assert_eq!(
             error.stage(),
             M1WorkerV3RosterAcquisitionStageV1::RecoverEnvelope
         );
+        assert_eq!(error.selector(), Some(&selector));
         assert!(matches!(
             error,
             M1WorkerV3RosterAcquisitionFailureV1::RecoverEnvelope { .. }
@@ -591,7 +616,24 @@ mod tests {
     }
 
     #[test]
-    fn duplicate_exact_publication_is_rejected_before_recovery() {
+    fn legacy_selector_set_is_rejected_before_any_publication_is_read() {
+        let selectors = legacy_selectors(Path::new("/durable-worker-v3"));
+        let error = recover_m1_worker_v3_rosters_v1(selectors.clone())
+            .expect_err("legacy family publications cannot identify the aggregate unit");
+        assert_eq!(
+            error.stage(),
+            M1WorkerV3RosterAcquisitionStageV1::SelectAggregatePublication
+        );
+        match error {
+            M1WorkerV3RosterAcquisitionFailureV1::LegacySelectorSetUnsupported {
+                selectors: retained,
+            } => assert_eq!(*retained, selectors),
+            other => panic!("unexpected compatibility rejection: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn duplicate_legacy_publication_remains_rejected_by_manifest_container() {
         let root = Path::new("/durable-worker-v3");
         let duplicate = M1WorkerV3ArtifactSelectorV1::new(root.join("shared"), attempt());
         let error = M1WorkerV3ArtifactSelectorsV1::new(
@@ -603,7 +645,7 @@ mod tests {
             M1WorkerV3ArtifactSelectorV1::new(root.join("k6"), attempt()),
             M1WorkerV3ArtifactSelectorV1::new(root.join("k7"), attempt()),
         )
-        .expect_err("one exact publication cannot serve two families");
+        .expect_err("one exact publication cannot serve two legacy families");
         assert_eq!(
             error,
             M1WorkerV3ArtifactSelectorsErrorV1::DuplicatePublication {

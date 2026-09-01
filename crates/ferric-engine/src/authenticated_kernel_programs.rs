@@ -1,6 +1,6 @@
-//! Ferric-owned intake for the exact authenticated M1 Worker V3 roster set.
+//! Ferric-owned intake for the exact aggregate M1 Worker V3 roster.
 //!
-//! All seven families use their compiler-generated marker types directly.
+//! Every marker and the roster type come from the same selected compiler unit.
 //! Nothing in this module constructs authentication authority from persisted
 //! bytes or reopens a raw HSACO file.
 
@@ -15,175 +15,57 @@ use fe2o3_host::{
     CompilerGeneratedKernelExpectationRosterV1, CompilerGeneratedKernelExpectationV1,
     RecoveredWorkerV3AdmissionErrorV1,
 };
-use ferric_build::{
-    current_m1_kernel_source_facts_v1, M1CurrentKernelSourceFactsV1, M1KernelArtifactBuildErrorV1,
-    M1KernelArtifactFamilyV1,
-};
+use ferric_build::M1KernelArtifactFamilyV1;
 use ferric_kernels::KernelFamily;
+use ferric_qwen3_all_kernels_device_v1::{
+    gemm::{
+        ferric_qwen3_gemm_reference_bf16_f32_bf16_v1_gpu::Marker as GemmReferenceMarkerV1,
+        ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1_gpu::Marker as GemmVectorizedMarkerV1,
+        ferric_qwen3_token_embedding_bf16_copy_v1_gpu::Marker as TokenEmbeddingMarkerV1,
+    },
+    logits::{
+        ferric_qwen3_compact_completion_v1_gpu::Marker as LogitsCompactMarkerV1,
+        ferric_qwen3_lowest_id_argmax_bf16_v1_gpu::Marker as LogitsArgmaxMarkerV1,
+        ferric_qwen3_speculative_token_assembly_v1_gpu::Marker as SpeculativeAssemblyMarkerV1,
+    },
+    paged_decode::qwen3_paged_gqa_decode_bf16_f32_v1_gpu::Marker as PagedDecodeMarkerV1,
+    prefill::qwen3_gqa_prefill_causal_bf16_f32_v1_gpu::Marker as PrefillMarkerV1,
+    rmsnorm::qwen3_rmsnorm_v1_gpu::Marker as RmsNormMarkerV1,
+    rope_kv::{
+        qwen3_paged_kv_write_v1_gpu::Marker as PagedKvWriteMarkerV1,
+        qwen3_rope_v1_gpu::Marker as RopeMarkerV1,
+    },
+    swiglu::qwen3_swiglu_bf16_f32_v1_gpu::Marker as SwiGluMarkerV1,
+    M1AllKernelsWorkerV3RosterV1,
+};
 use ferric_spec::Identity;
 use sha2::{Digest, Sha256};
 
 use crate::{DeclaredKernelFamilyArtifact, M1PhysicalProgramV1, M1_PHYSICAL_PROGRAM_COUNT_V1};
 
-const M1_AUTHENTICATED_PROGRAM_CATALOG_DOMAIN_V1: &[u8] =
-    b"ferric.m1.authenticated-worker-v3-program-catalog.v1";
-const M1_AUTHENTICATED_PROGRAM_MAP_DOMAIN_V1: &[u8] =
-    b"ferric.m1.authenticated-worker-v3-program-map.v1";
+const M1_AUTHENTICATED_PROGRAM_CATALOG_DOMAIN_V2: &[u8] =
+    b"ferric.m1.authenticated-worker-v3-program-catalog.v2";
+const M1_AUTHENTICATED_PROGRAM_MAP_DOMAIN_V2: &[u8] =
+    b"ferric.m1.authenticated-worker-v3-program-map.v2";
+const M1_AGGREGATE_SERVICE_PROGRAM_INDICES_V1: [usize; M1_PHYSICAL_PROGRAM_COUNT_V1] =
+    [7, 1, 9, 8, 2, 4, 11, 5, 6, 0, 3, 10];
+
 /// Exact production target admitted by the M1 physical runner.
 pub const M1_AUTHENTICATED_PROGRAM_TARGET_V1: &str = "gfx942:xnack-";
 /// Exact number of independently authenticated artifact rosters.
-pub const M1_AUTHENTICATED_ROSTER_COUNT_V1: usize = 7;
+pub const M1_AUTHENTICATED_ROSTER_COUNT_V1: usize = 1;
 
-type GemmReferenceMarkerV1 =
-    ferric_qwen3_gemm_device_v1::ferric_qwen3_gemm_reference_bf16_f32_bf16_v1_gpu::Marker;
-type GemmVectorizedMarkerV1 =
-    ferric_qwen3_gemm_device_v1::ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1_gpu::Marker;
-type TokenEmbeddingMarkerV1 =
-    ferric_qwen3_gemm_device_v1::ferric_qwen3_token_embedding_bf16_copy_v1_gpu::Marker;
-type RmsNormMarkerV1 = ferric_qwen3_rmsnorm_device_v1::qwen3_rmsnorm_v1_gpu::Marker;
-type RopeMarkerV1 = ferric_qwen3_rope_kv_device_v1::qwen3_rope_v1_gpu::Marker;
-type PagedKvWriteMarkerV1 = ferric_qwen3_rope_kv_device_v1::qwen3_paged_kv_write_v1_gpu::Marker;
-type PrefillMarkerV1 =
-    ferric_qwen3_prefill_device_v1::qwen3_gqa_prefill_causal_bf16_f32_v1_gpu::Marker;
-type PagedDecodeMarkerV1 =
-    ferric_qwen3_paged_decode_device_v1::qwen3_paged_gqa_decode_bf16_f32_v1_gpu::Marker;
-type SwiGluMarkerV1 = ferric_qwen3_swiglu_device_v1::qwen3_swiglu_bf16_f32_v1_gpu::Marker;
-type LogitsArgmaxMarkerV1 =
-    ferric_qwen3_logits_device_v1::ferric_qwen3_lowest_id_argmax_bf16_v1_gpu::Marker;
-type LogitsCompactMarkerV1 =
-    ferric_qwen3_logits_device_v1::ferric_qwen3_compact_completion_v1_gpu::Marker;
-type SpeculativeAssemblyMarkerV1 =
-    ferric_qwen3_logits_device_v1::ferric_qwen3_speculative_token_assembly_v1_gpu::Marker;
-
-fe2o3_host::compiler_generated_kernel_expectation_roster_v1! {
-    /// Exact compiler-generated K1 marker roster in canonical `KernelId` order.
-    pub struct M1GemmWorkerV3RosterV1 = [
-        GemmVectorizedMarkerV1,
-        GemmReferenceMarkerV1,
-        TokenEmbeddingMarkerV1,
-    ];
-}
-
-fe2o3_host::compiler_generated_kernel_expectation_roster_v1! {
-    /// Exact compiler-generated K2 marker roster.
-    pub struct M1RmsNormWorkerV3RosterV1 = [RmsNormMarkerV1];
-}
-
-fe2o3_host::compiler_generated_kernel_expectation_roster_v1! {
-    /// Exact compiler-generated K3 marker roster in canonical `KernelId` order.
-    pub struct M1RopeKvWorkerV3RosterV1 = [
-        PagedKvWriteMarkerV1,
-        RopeMarkerV1,
-    ];
-}
-
-fe2o3_host::compiler_generated_kernel_expectation_roster_v1! {
-    /// Exact compiler-generated K4 marker roster.
-    pub struct M1PrefillWorkerV3RosterV1 = [PrefillMarkerV1];
-}
-
-fe2o3_host::compiler_generated_kernel_expectation_roster_v1! {
-    /// Exact compiler-generated K5 marker roster.
-    pub struct M1PagedDecodeWorkerV3RosterV1 = [PagedDecodeMarkerV1];
-}
-
-fe2o3_host::compiler_generated_kernel_expectation_roster_v1! {
-    /// Exact compiler-generated K6 marker roster.
-    pub struct M1SwiGluWorkerV3RosterV1 = [SwiGluMarkerV1];
-}
-
-fe2o3_host::compiler_generated_kernel_expectation_roster_v1! {
-    /// Exact compiler-generated K7 marker roster in canonical `KernelId` order.
-    pub struct M1LogitsWorkerV3RosterV1 = [
-        LogitsArgmaxMarkerV1,
-        LogitsCompactMarkerV1,
-        SpeculativeAssemblyMarkerV1,
-    ];
-}
-
-/// Move-only authenticated roster owners before heterogeneous set composition.
-#[must_use = "authenticated roster custody must be admitted or explicitly released"]
-pub struct M1AuthenticatedWorkerV3RostersV1 {
-    gemm: AuthenticatedWorkerV3RosterV1<M1GemmWorkerV3RosterV1>,
-    rmsnorm: AuthenticatedWorkerV3RosterV1<M1RmsNormWorkerV3RosterV1>,
-    rope_kv: AuthenticatedWorkerV3RosterV1<M1RopeKvWorkerV3RosterV1>,
-    prefill: AuthenticatedWorkerV3RosterV1<M1PrefillWorkerV3RosterV1>,
-    paged_decode: AuthenticatedWorkerV3RosterV1<M1PagedDecodeWorkerV3RosterV1>,
-    swiglu: AuthenticatedWorkerV3RosterV1<M1SwiGluWorkerV3RosterV1>,
-    logits: AuthenticatedWorkerV3RosterV1<M1LogitsWorkerV3RosterV1>,
-}
-
-impl fmt::Debug for M1AuthenticatedWorkerV3RostersV1 {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter
-            .debug_struct("M1AuthenticatedWorkerV3RostersV1")
-            .field("gemm", &self.gemm)
-            .field("rmsnorm", &self.rmsnorm)
-            .field("rope_kv", &self.rope_kv)
-            .field("prefill", &self.prefill)
-            .field("paged_decode", &self.paged_decode)
-            .field("swiglu", &self.swiglu)
-            .field("logits", &self.logits)
-            .finish()
-    }
-}
-
-impl M1AuthenticatedWorkerV3RostersV1 {
-    /// Groups seven already-authenticated roster owners without creating authority.
-    #[allow(clippy::too_many_arguments)]
-    pub const fn new(
-        gemm: AuthenticatedWorkerV3RosterV1<M1GemmWorkerV3RosterV1>,
-        rmsnorm: AuthenticatedWorkerV3RosterV1<M1RmsNormWorkerV3RosterV1>,
-        rope_kv: AuthenticatedWorkerV3RosterV1<M1RopeKvWorkerV3RosterV1>,
-        prefill: AuthenticatedWorkerV3RosterV1<M1PrefillWorkerV3RosterV1>,
-        paged_decode: AuthenticatedWorkerV3RosterV1<M1PagedDecodeWorkerV3RosterV1>,
-        swiglu: AuthenticatedWorkerV3RosterV1<M1SwiGluWorkerV3RosterV1>,
-        logits: AuthenticatedWorkerV3RosterV1<M1LogitsWorkerV3RosterV1>,
-    ) -> Self {
-        Self {
-            gemm,
-            rmsnorm,
-            rope_kv,
-            prefill,
-            paged_decode,
-            swiglu,
-            logits,
-        }
-    }
-
-    fn into_residue(self) -> M1AuthenticatedWorkerV3ProgramSetResidueV1 {
-        M1AuthenticatedWorkerV3ProgramSetResidueV1 {
-            programs: None,
-            gemm: Some(self.gemm),
-            rmsnorm: Some(self.rmsnorm),
-            rope_kv: Some(self.rope_kv),
-            prefill: Some(self.prefill),
-            paged_decode: Some(self.paged_decode),
-            swiglu: Some(self.swiglu),
-            logits: Some(self.logits),
-        }
-    }
-}
+/// The one move-only authenticated aggregate roster owner before set composition.
+pub type M1AuthenticatedWorkerV3RosterV1 =
+    AuthenticatedWorkerV3RosterV1<M1AllKernelsWorkerV3RosterV1>;
 
 /// Owners retained when exact M1 program-set intake rejects.
 #[must_use = "rejected authenticated owners must remain classified"]
 pub struct M1AuthenticatedWorkerV3ProgramSetResidueV1 {
-    /// Erased set containing every roster composed before the rejection.
+    /// Erased set containing the aggregate roster after successful composition.
     pub programs: Option<AuthenticatedWorkerV3ProgramSetV1>,
-    /// Uncomposed or rejected K1 owner.
-    pub gemm: Option<AuthenticatedWorkerV3RosterV1<M1GemmWorkerV3RosterV1>>,
-    /// Uncomposed or rejected K2 owner.
-    pub rmsnorm: Option<AuthenticatedWorkerV3RosterV1<M1RmsNormWorkerV3RosterV1>>,
-    /// Uncomposed or rejected K3 owner.
-    pub rope_kv: Option<AuthenticatedWorkerV3RosterV1<M1RopeKvWorkerV3RosterV1>>,
-    /// Uncomposed or rejected K4 owner.
-    pub prefill: Option<AuthenticatedWorkerV3RosterV1<M1PrefillWorkerV3RosterV1>>,
-    /// Uncomposed or rejected K5 owner.
-    pub paged_decode: Option<AuthenticatedWorkerV3RosterV1<M1PagedDecodeWorkerV3RosterV1>>,
-    /// Uncomposed or rejected K6 owner.
-    pub swiglu: Option<AuthenticatedWorkerV3RosterV1<M1SwiGluWorkerV3RosterV1>>,
-    /// Uncomposed or rejected K7 owner.
-    pub logits: Option<AuthenticatedWorkerV3RosterV1<M1LogitsWorkerV3RosterV1>>,
+    /// The uncomposed or rejected aggregate roster owner.
+    pub roster: Option<M1AuthenticatedWorkerV3RosterV1>,
 }
 
 impl fmt::Debug for M1AuthenticatedWorkerV3ProgramSetResidueV1 {
@@ -191,81 +73,53 @@ impl fmt::Debug for M1AuthenticatedWorkerV3ProgramSetResidueV1 {
         formatter
             .debug_struct("M1AuthenticatedWorkerV3ProgramSetResidueV1")
             .field("programs", &self.programs)
-            .field("has_gemm", &self.gemm.is_some())
-            .field("has_rmsnorm", &self.rmsnorm.is_some())
-            .field("has_rope_kv", &self.rope_kv.is_some())
-            .field("has_prefill", &self.prefill.is_some())
-            .field("has_paged_decode", &self.paged_decode.is_some())
-            .field("has_swiglu", &self.swiglu.is_some())
-            .field("has_logits", &self.logits.is_some())
+            .field("has_roster", &self.roster.is_some())
             .finish()
     }
 }
 
-/// Exact intake phase that rejected authenticated roster custody.
+/// Exact intake phase that rejected authenticated aggregate custody.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum M1AuthenticatedProgramSetIntakePhaseV1 {
     SourceFacts,
-    Preflight(M1KernelArtifactFamilyV1),
-    Compose(M1KernelArtifactFamilyV1),
+    Preflight,
+    Compose,
     Aggregate,
 }
 
-/// Why seven authenticated M1 rosters did not become one exact 12-program set.
+/// Why the authenticated aggregate roster did not become one exact 12-program set.
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum M1AuthenticatedProgramSetIntakeErrorV1 {
-    SourceFacts(Box<M1KernelArtifactBuildErrorV1>),
-    CurrentPublication {
-        family: M1KernelArtifactFamilyV1,
-        source: Box<RecoveredWorkerV3AdmissionErrorV1>,
+    /// No checked-in producer fact can yet identify the current aggregate compiler output.
+    MissingAggregateSourcePin,
+    CurrentPublication(Box<RecoveredWorkerV3AdmissionErrorV1>),
+    SourceIdentity {
+        axis: &'static str,
     },
     Target {
-        family: M1KernelArtifactFamilyV1,
         expected: AmdTargetId,
         actual: AmdTargetId,
     },
     EntryCount {
-        family: M1KernelArtifactFamilyV1,
         expected: usize,
         actual: usize,
     },
     MarkerSymbol {
-        family: M1KernelArtifactFamilyV1,
-        ordinal: usize,
-        expected: &'static str,
-        logical: &'static str,
-        export: &'static str,
-    },
-    MarkerOutsideFamily {
-        family: M1KernelArtifactFamilyV1,
         ordinal: usize,
         logical: &'static str,
         export: &'static str,
     },
     MarkerIdentity {
-        family: M1KernelArtifactFamilyV1,
         ordinal: usize,
     },
     VerificationEntry {
-        family: M1KernelArtifactFamilyV1,
         ordinal: usize,
     },
-    VerificationAuthority(M1KernelArtifactFamilyV1),
-    EmptyFinalizedArtifact(M1KernelArtifactFamilyV1),
+    VerificationAuthority,
+    EmptyFinalizedArtifact,
     DuplicateKernelBinding,
-    SourceFamilyOrder {
-        expected: M1KernelArtifactFamilyV1,
-        actual: M1KernelArtifactFamilyV1,
-    },
-    SourceIdentity {
-        family: M1KernelArtifactFamilyV1,
-        axis: &'static str,
-    },
-    ProgramSet {
-        family: M1KernelArtifactFamilyV1,
-        source: Box<AuthenticatedWorkerV3ProgramSetAdmissionErrorV1>,
-    },
+    ProgramSet(Box<AuthenticatedWorkerV3ProgramSetAdmissionErrorV1>),
     AggregateCount {
         expected_rosters: usize,
         actual_rosters: usize,
@@ -274,7 +128,7 @@ pub enum M1AuthenticatedProgramSetIntakeErrorV1 {
     },
     ProgramIndex {
         program: M1PhysicalProgramV1,
-        expected: usize,
+        expected_service_index: usize,
         actual: Option<usize>,
     },
 }
@@ -283,7 +137,7 @@ impl fmt::Display for M1AuthenticatedProgramSetIntakeErrorV1 {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             formatter,
-            "authenticated M1 Worker V3 program-set intake failed: {self:?}"
+            "authenticated M1 aggregate Worker V3 program-set intake failed: {self:?}"
         )
     }
 }
@@ -291,15 +145,14 @@ impl fmt::Display for M1AuthenticatedProgramSetIntakeErrorV1 {
 impl Error for M1AuthenticatedProgramSetIntakeErrorV1 {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
-            Self::SourceFacts(source) => Some(source),
-            Self::CurrentPublication { source, .. } => Some(source),
-            Self::ProgramSet { source, .. } => Some(source),
+            Self::CurrentPublication(source) => Some(source),
+            Self::ProgramSet(source) => Some(source),
             _ => None,
         }
     }
 }
 
-/// Intake failure retaining every roster owner available at the rejection.
+/// Intake failure retaining every aggregate owner available at the rejection.
 #[must_use = "intake failure retains authenticated roster custody"]
 pub struct M1AuthenticatedProgramSetIntakeFailureV1 {
     phase: M1AuthenticatedProgramSetIntakePhaseV1,
@@ -343,7 +196,7 @@ impl fmt::Debug for M1AuthenticatedProgramSetIntakeFailureV1 {
     }
 }
 
-/// Ferric-qualified custody of seven current rosters and exactly 12 programs.
+/// Ferric-qualified custody of one current aggregate roster and exactly 12 programs.
 #[must_use = "authenticated M1 program custody must remain retained"]
 pub struct M1AuthenticatedWorkerV3ProgramSetV1 {
     programs: AuthenticatedWorkerV3ProgramSetV1,
@@ -417,7 +270,7 @@ impl M1AuthenticatedWorkerV3ProgramSetV1 {
         }
     }
 
-    /// Returns the exact seven-roster count.
+    /// Returns the exact one-roster count.
     #[must_use]
     pub fn roster_count(&self) -> usize {
         self.programs.roster_count()
@@ -441,7 +294,7 @@ impl M1AuthenticatedWorkerV3ProgramSetV1 {
         self.catalog_id
     }
 
-    /// Resolves one stable Ferric program role to its canonical Worker V3 service index.
+    /// Resolves one stable Ferric program role to its aggregate service index.
     #[must_use]
     pub const fn service_program_index(&self, program: M1PhysicalProgramV1) -> usize {
         self.service_program_indices[program.program_index()]
@@ -451,8 +304,7 @@ impl M1AuthenticatedWorkerV3ProgramSetV1 {
     ///
     /// # Errors
     ///
-    /// Returns the generic authenticated-program lookup error when the marker
-    /// is absent from the exact retained roster set.
+    /// Returns an authenticated-program lookup error when the marker is absent or mismatched.
     pub fn program_index<K: CompilerGeneratedKernelExpectationV1>(
         &self,
     ) -> Result<usize, AuthenticatedWorkerV3ProgramLookupErrorV1> {
@@ -494,8 +346,7 @@ impl Error for M1AuthenticatedRosterAcquisitionRequiredV1 {}
 ///
 /// # Errors
 ///
-/// Always returns typed rejection custody naming the path that cannot establish
-/// a current authenticated Worker V3 roster.
+/// Always returns a typed rejection naming the path that lacks authenticated roster custody.
 pub fn require_m1_authenticated_roster_acquisition_v1(
     artifact_root: &Path,
 ) -> Result<(), M1AuthenticatedRosterAcquisitionRequiredV1> {
@@ -504,207 +355,67 @@ pub fn require_m1_authenticated_roster_acquisition_v1(
     })
 }
 
-/// Composes seven current authenticated rosters in canonical K1-K7 order.
+/// Producer-owned current-source coordinates for the single aggregate compiler output.
+///
+/// No Ferric producer emits this pin yet. Keeping the unavailable pin private prevents callers
+/// from substituting arbitrary identities while the aggregate publication work is incomplete.
+struct M1AggregateSourcePinV1 {
+    compiler_module_sha256: [u8; 32],
+    compiler_module_length: u64,
+    compiler_handoff_sha256: [u8; 32],
+    compiler_handoff_length: u64,
+    symbol_manifest_sha256: [u8; 32],
+    symbol_manifest_length: u64,
+}
+
+const M1_CURRENT_AGGREGATE_SOURCE_PIN_V1: Option<M1AggregateSourcePinV1> = None;
+
+/// Admits one authenticated aggregate roster into the exact 12-program catalog.
+///
+/// Until the aggregate build producer emits a current source pin, this function rejects with
+/// `MissingAggregateSourcePin` and returns the authenticated roster in its residue.
 ///
 /// # Errors
 ///
-/// Returns the exact failed intake phase, diagnostic, and every roster or
-/// partially composed program owner available at that phase.
-///
-/// # Panics
-///
-/// Panics only if this function's private canonical residue construction loses
-/// an uncomposed roster before its composition step. Caller-provided roster
-/// contents cannot alter that fixed construction.
+/// Returns the exact rejected intake phase, diagnostic, and retained aggregate owner.
 pub fn admit_m1_authenticated_worker_v3_programs_v1(
-    rosters: M1AuthenticatedWorkerV3RostersV1,
+    roster: M1AuthenticatedWorkerV3RosterV1,
 ) -> Result<M1AuthenticatedWorkerV3ProgramSetV1, M1AuthenticatedProgramSetIntakeFailureV1> {
-    let facts = match current_m1_kernel_source_facts_v1() {
-        Ok(facts) => facts,
-        Err(error) => {
-            return Err(intake_failure(
-                M1AuthenticatedProgramSetIntakePhaseV1::SourceFacts,
-                M1AuthenticatedProgramSetIntakeErrorV1::SourceFacts(Box::new(error)),
-                rosters.into_residue(),
-            ));
-        }
-    };
-    if let Err(error) = validate_source_family_order(&facts) {
+    let Some(source_pin) = M1_CURRENT_AGGREGATE_SOURCE_PIN_V1 else {
         return Err(intake_failure(
             M1AuthenticatedProgramSetIntakePhaseV1::SourceFacts,
-            error,
-            rosters.into_residue(),
+            M1AuthenticatedProgramSetIntakeErrorV1::MissingAggregateSourcePin,
+            M1AuthenticatedWorkerV3ProgramSetResidueV1 {
+                programs: None,
+                roster: Some(roster),
+            },
         ));
-    }
-    if let Err((family, error)) = validate_rosters(&facts, &rosters) {
+    };
+
+    if let Err(error) = validate_roster(&source_pin, &roster) {
         return Err(intake_failure(
-            M1AuthenticatedProgramSetIntakePhaseV1::Preflight(family),
+            M1AuthenticatedProgramSetIntakePhaseV1::Preflight,
             error,
-            rosters.into_residue(),
+            M1AuthenticatedWorkerV3ProgramSetResidueV1 {
+                programs: None,
+                roster: Some(roster),
+            },
         ));
     }
-    let roster_catalog_id = authenticated_catalog_id(&facts, &rosters);
-    let family_artifacts = authenticated_family_artifacts(&facts, &rosters);
 
-    let M1AuthenticatedWorkerV3RostersV1 {
-        gemm,
-        rmsnorm,
-        rope_kv,
-        prefill,
-        paged_decode,
-        swiglu,
-        logits,
-    } = rosters;
-    let mut residue = M1AuthenticatedWorkerV3ProgramSetResidueV1 {
-        programs: None,
-        gemm: None,
-        rmsnorm: Some(rmsnorm),
-        rope_kv: Some(rope_kv),
-        prefill: Some(prefill),
-        paged_decode: Some(paged_decode),
-        swiglu: Some(swiglu),
-        logits: Some(logits),
-    };
-    let mut programs = match AuthenticatedWorkerV3ProgramSetV1::from_roster(gemm) {
+    let roster_catalog_id = authenticated_catalog_id(&source_pin, &roster);
+    let family_artifacts = authenticated_family_artifacts(&roster);
+    let programs = match AuthenticatedWorkerV3ProgramSetV1::from_roster(roster) {
         Ok(programs) => programs,
         Err(failure) => {
-            let (error, gemm) = failure.into_parts();
-            residue.gemm = Some(gemm);
+            let (error, roster) = failure.into_parts();
             return Err(intake_failure(
-                M1AuthenticatedProgramSetIntakePhaseV1::Compose(M1KernelArtifactFamilyV1::Gemm),
-                M1AuthenticatedProgramSetIntakeErrorV1::ProgramSet {
-                    family: M1KernelArtifactFamilyV1::Gemm,
-                    source: Box::new(error),
+                M1AuthenticatedProgramSetIntakePhaseV1::Compose,
+                M1AuthenticatedProgramSetIntakeErrorV1::ProgramSet(Box::new(error)),
+                M1AuthenticatedWorkerV3ProgramSetResidueV1 {
+                    programs: None,
+                    roster: Some(roster),
                 },
-                residue,
-            ));
-        }
-    };
-
-    let roster = residue
-        .rmsnorm
-        .take()
-        .expect("canonical intake retains each uncomposed roster");
-    programs = match programs.append_roster(roster) {
-        Ok(programs) => programs,
-        Err(failure) => {
-            let (error, retained, roster) = failure.into_parts();
-            residue.programs = Some(retained);
-            residue.rmsnorm = Some(roster);
-            return Err(intake_failure(
-                M1AuthenticatedProgramSetIntakePhaseV1::Compose(M1KernelArtifactFamilyV1::RmsNorm),
-                M1AuthenticatedProgramSetIntakeErrorV1::ProgramSet {
-                    family: M1KernelArtifactFamilyV1::RmsNorm,
-                    source: Box::new(error),
-                },
-                residue,
-            ));
-        }
-    };
-
-    let roster = residue
-        .rope_kv
-        .take()
-        .expect("canonical intake retains each uncomposed roster");
-    programs = match programs.append_roster(roster) {
-        Ok(programs) => programs,
-        Err(failure) => {
-            let (error, retained, roster) = failure.into_parts();
-            residue.programs = Some(retained);
-            residue.rope_kv = Some(roster);
-            return Err(intake_failure(
-                M1AuthenticatedProgramSetIntakePhaseV1::Compose(M1KernelArtifactFamilyV1::RopeKv),
-                M1AuthenticatedProgramSetIntakeErrorV1::ProgramSet {
-                    family: M1KernelArtifactFamilyV1::RopeKv,
-                    source: Box::new(error),
-                },
-                residue,
-            ));
-        }
-    };
-
-    let roster = residue
-        .prefill
-        .take()
-        .expect("canonical intake retains each uncomposed roster");
-    programs = match programs.append_roster(roster) {
-        Ok(programs) => programs,
-        Err(failure) => {
-            let (error, retained, roster) = failure.into_parts();
-            residue.programs = Some(retained);
-            residue.prefill = Some(roster);
-            return Err(intake_failure(
-                M1AuthenticatedProgramSetIntakePhaseV1::Compose(M1KernelArtifactFamilyV1::Prefill),
-                M1AuthenticatedProgramSetIntakeErrorV1::ProgramSet {
-                    family: M1KernelArtifactFamilyV1::Prefill,
-                    source: Box::new(error),
-                },
-                residue,
-            ));
-        }
-    };
-
-    let roster = residue
-        .paged_decode
-        .take()
-        .expect("canonical intake retains each uncomposed roster");
-    programs = match programs.append_roster(roster) {
-        Ok(programs) => programs,
-        Err(failure) => {
-            let (error, retained, roster) = failure.into_parts();
-            residue.programs = Some(retained);
-            residue.paged_decode = Some(roster);
-            return Err(intake_failure(
-                M1AuthenticatedProgramSetIntakePhaseV1::Compose(
-                    M1KernelArtifactFamilyV1::PagedDecode,
-                ),
-                M1AuthenticatedProgramSetIntakeErrorV1::ProgramSet {
-                    family: M1KernelArtifactFamilyV1::PagedDecode,
-                    source: Box::new(error),
-                },
-                residue,
-            ));
-        }
-    };
-
-    let roster = residue
-        .swiglu
-        .take()
-        .expect("canonical intake retains each uncomposed roster");
-    programs = match programs.append_roster(roster) {
-        Ok(programs) => programs,
-        Err(failure) => {
-            let (error, retained, roster) = failure.into_parts();
-            residue.programs = Some(retained);
-            residue.swiglu = Some(roster);
-            return Err(intake_failure(
-                M1AuthenticatedProgramSetIntakePhaseV1::Compose(M1KernelArtifactFamilyV1::SwiGlu),
-                M1AuthenticatedProgramSetIntakeErrorV1::ProgramSet {
-                    family: M1KernelArtifactFamilyV1::SwiGlu,
-                    source: Box::new(error),
-                },
-                residue,
-            ));
-        }
-    };
-
-    let roster = residue
-        .logits
-        .take()
-        .expect("canonical intake retains each uncomposed roster");
-    programs = match programs.append_roster(roster) {
-        Ok(programs) => programs,
-        Err(failure) => {
-            let (error, retained, roster) = failure.into_parts();
-            residue.programs = Some(retained);
-            residue.logits = Some(roster);
-            return Err(intake_failure(
-                M1AuthenticatedProgramSetIntakePhaseV1::Compose(M1KernelArtifactFamilyV1::Logits),
-                M1AuthenticatedProgramSetIntakeErrorV1::ProgramSet {
-                    family: M1KernelArtifactFamilyV1::Logits,
-                    source: Box::new(error),
-                },
-                residue,
             ));
         }
     };
@@ -718,21 +429,26 @@ pub fn admit_m1_authenticated_worker_v3_programs_v1(
             expected_programs: M1_PHYSICAL_PROGRAM_COUNT_V1,
             actual_programs: programs.program_count(),
         };
-        residue.programs = Some(programs);
         return Err(intake_failure(
             M1AuthenticatedProgramSetIntakePhaseV1::Aggregate,
             error,
-            residue,
+            M1AuthenticatedWorkerV3ProgramSetResidueV1 {
+                programs: Some(programs),
+                roster: None,
+            },
         ));
     }
+
     let service_program_indices = match authenticated_program_indices(&programs) {
         Ok(indices) => indices,
         Err(error) => {
-            residue.programs = Some(programs);
             return Err(intake_failure(
                 M1AuthenticatedProgramSetIntakePhaseV1::Aggregate,
                 error,
-                residue,
+                M1AuthenticatedWorkerV3ProgramSetResidueV1 {
+                    programs: Some(programs),
+                    roster: None,
+                },
             ));
         }
     };
@@ -758,253 +474,101 @@ fn intake_failure(
     }
 }
 
-fn validate_source_family_order(
-    facts: &[M1CurrentKernelSourceFactsV1; M1_AUTHENTICATED_ROSTER_COUNT_V1],
+fn validate_roster(
+    source_pin: &M1AggregateSourcePinV1,
+    roster: &M1AuthenticatedWorkerV3RosterV1,
 ) -> Result<(), M1AuthenticatedProgramSetIntakeErrorV1> {
-    for (fact, expected) in facts.iter().zip(M1KernelArtifactFamilyV1::ALL) {
-        if fact.family() != expected {
-            return Err(M1AuthenticatedProgramSetIntakeErrorV1::SourceFamilyOrder {
-                expected,
-                actual: fact.family(),
-            });
-        }
-    }
-    Ok(())
-}
-
-fn validate_rosters(
-    facts: &[M1CurrentKernelSourceFactsV1; M1_AUTHENTICATED_ROSTER_COUNT_V1],
-    rosters: &M1AuthenticatedWorkerV3RostersV1,
-) -> Result<
-    (),
-    (
-        M1KernelArtifactFamilyV1,
-        M1AuthenticatedProgramSetIntakeErrorV1,
-    ),
-> {
-    let checks = [
-        validate_roster(
-            M1KernelArtifactFamilyV1::Gemm,
-            &facts[0],
-            &rosters.gemm,
-            &M1PhysicalProgramV1::ALL[0..3],
-        ),
-        validate_roster(
-            M1KernelArtifactFamilyV1::RmsNorm,
-            &facts[1],
-            &rosters.rmsnorm,
-            &M1PhysicalProgramV1::ALL[3..4],
-        ),
-        validate_roster(
-            M1KernelArtifactFamilyV1::RopeKv,
-            &facts[2],
-            &rosters.rope_kv,
-            &M1PhysicalProgramV1::ALL[4..6],
-        ),
-        validate_roster(
-            M1KernelArtifactFamilyV1::Prefill,
-            &facts[3],
-            &rosters.prefill,
-            &M1PhysicalProgramV1::ALL[6..7],
-        ),
-        validate_roster(
-            M1KernelArtifactFamilyV1::PagedDecode,
-            &facts[4],
-            &rosters.paged_decode,
-            &M1PhysicalProgramV1::ALL[7..8],
-        ),
-        validate_roster(
-            M1KernelArtifactFamilyV1::SwiGlu,
-            &facts[5],
-            &rosters.swiglu,
-            &M1PhysicalProgramV1::ALL[8..9],
-        ),
-        validate_roster(
-            M1KernelArtifactFamilyV1::Logits,
-            &facts[6],
-            &rosters.logits,
-            &M1PhysicalProgramV1::ALL[9..12],
-        ),
-    ];
-    for check in checks {
-        check?;
-    }
-    let mut bindings = Vec::with_capacity(M1_PHYSICAL_PROGRAM_COUNT_V1);
-    append_bindings::<M1GemmWorkerV3RosterV1>(&mut bindings, M1KernelArtifactFamilyV1::Gemm)?;
-    append_bindings::<M1RmsNormWorkerV3RosterV1>(&mut bindings, M1KernelArtifactFamilyV1::RmsNorm)?;
-    append_bindings::<M1RopeKvWorkerV3RosterV1>(&mut bindings, M1KernelArtifactFamilyV1::RopeKv)?;
-    append_bindings::<M1PrefillWorkerV3RosterV1>(&mut bindings, M1KernelArtifactFamilyV1::Prefill)?;
-    append_bindings::<M1PagedDecodeWorkerV3RosterV1>(
-        &mut bindings,
-        M1KernelArtifactFamilyV1::PagedDecode,
-    )?;
-    append_bindings::<M1SwiGluWorkerV3RosterV1>(&mut bindings, M1KernelArtifactFamilyV1::SwiGlu)?;
-    append_bindings::<M1LogitsWorkerV3RosterV1>(&mut bindings, M1KernelArtifactFamilyV1::Logits)?;
-    Ok(())
-}
-
-fn validate_roster<R: CompilerGeneratedKernelExpectationRosterV1>(
-    family: M1KernelArtifactFamilyV1,
-    facts: &M1CurrentKernelSourceFactsV1,
-    roster: &AuthenticatedWorkerV3RosterV1<R>,
-    programs: &[M1PhysicalProgramV1],
-) -> Result<
-    (),
-    (
-        M1KernelArtifactFamilyV1,
-        M1AuthenticatedProgramSetIntakeErrorV1,
-    ),
-> {
     let expected_target =
         AmdTargetId::parse(M1_AUTHENTICATED_PROGRAM_TARGET_V1).expect("fixed target is canonical");
     roster.revalidate_currentness().map_err(|source| {
-        (
-            family,
-            M1AuthenticatedProgramSetIntakeErrorV1::CurrentPublication {
-                family,
-                source: Box::new(source),
-            },
-        )
+        M1AuthenticatedProgramSetIntakeErrorV1::CurrentPublication(Box::new(source))
     })?;
+
     let compiler_module = roster.compiler_module_identity();
-    let expected_module = facts.compiler_module();
-    if compiler_module.sha256() != expected_module.sha256()
-        || compiler_module.byte_len() != expected_module.byte_len()
+    if compiler_module.sha256() != &source_pin.compiler_module_sha256
+        || compiler_module.byte_len() != source_pin.compiler_module_length
     {
-        return Err((
-            family,
-            M1AuthenticatedProgramSetIntakeErrorV1::SourceIdentity {
-                family,
-                axis: "compiler module",
-            },
-        ));
+        return Err(M1AuthenticatedProgramSetIntakeErrorV1::SourceIdentity {
+            axis: "compiler module",
+        });
     }
     let compiler_handoff = roster.compiler_handoff_identity();
-    let expected_handoff = facts.compiler_handoff();
-    if compiler_handoff.sha256() != expected_handoff.sha256()
-        || compiler_handoff.byte_len() != expected_handoff.byte_len()
+    if compiler_handoff.sha256() != &source_pin.compiler_handoff_sha256
+        || compiler_handoff.byte_len() != source_pin.compiler_handoff_length
     {
-        return Err((
-            family,
-            M1AuthenticatedProgramSetIntakeErrorV1::SourceIdentity {
-                family,
-                axis: "compiler handoff",
-            },
-        ));
+        return Err(M1AuthenticatedProgramSetIntakeErrorV1::SourceIdentity {
+            axis: "compiler handoff",
+        });
     }
     let symbol_manifest = roster.compiler_symbol_manifest_identity();
-    let expected_manifest = facts.symbol_manifest();
-    if symbol_manifest.sha256() != expected_manifest.sha256()
-        || symbol_manifest.byte_len() != expected_manifest.byte_len()
+    if symbol_manifest.sha256() != &source_pin.symbol_manifest_sha256
+        || symbol_manifest.byte_len() != source_pin.symbol_manifest_length
     {
-        return Err((
-            family,
-            M1AuthenticatedProgramSetIntakeErrorV1::SourceIdentity {
-                family,
-                axis: "symbol manifest",
-            },
-        ));
+        return Err(M1AuthenticatedProgramSetIntakeErrorV1::SourceIdentity {
+            axis: "symbol manifest",
+        });
     }
     if roster.target() != expected_target {
-        return Err((
-            family,
-            M1AuthenticatedProgramSetIntakeErrorV1::Target {
-                family,
-                expected: expected_target,
-                actual: roster.target(),
-            },
-        ));
+        return Err(M1AuthenticatedProgramSetIntakeErrorV1::Target {
+            expected: expected_target,
+            actual: roster.target(),
+        });
     }
-    if roster.entry_count() != programs.len() || R::ENTRIES.len() != programs.len() {
-        return Err((
-            family,
-            M1AuthenticatedProgramSetIntakeErrorV1::EntryCount {
-                family,
-                expected: programs.len(),
-                actual: roster.entry_count(),
-            },
-        ));
+    if roster.entry_count() != M1_PHYSICAL_PROGRAM_COUNT_V1
+        || M1AllKernelsWorkerV3RosterV1::ENTRIES.len() != M1_PHYSICAL_PROGRAM_COUNT_V1
+    {
+        return Err(M1AuthenticatedProgramSetIntakeErrorV1::EntryCount {
+            expected: M1_PHYSICAL_PROGRAM_COUNT_V1,
+            actual: roster.entry_count(),
+        });
     }
+
     let verification = roster.verification();
     if !roster.authenticates_verification_authority()
         || !verification.retains_current_compiler_and_signed_verus_evidence()
         || verification.validated_compiler_proof_inputs().is_none()
         || verification.validated_compiler_target_lineage().is_none()
     {
-        return Err((
-            family,
-            M1AuthenticatedProgramSetIntakeErrorV1::VerificationAuthority(family),
-        ));
+        return Err(M1AuthenticatedProgramSetIntakeErrorV1::VerificationAuthority);
     }
     if verification.finalized_hsaco_length() == 0
         || verification.finalized_hsaco_sha256() == [0; 32]
     {
-        return Err((
-            family,
-            M1AuthenticatedProgramSetIntakeErrorV1::EmptyFinalizedArtifact(family),
-        ));
+        return Err(M1AuthenticatedProgramSetIntakeErrorV1::EmptyFinalizedArtifact);
     }
-    for (ordinal, entry) in R::ENTRIES.iter().enumerate() {
-        if !programs.iter().any(|program| {
-            let expected = program.kernel_symbol();
-            entry.logical_name() == expected && entry.export_name() == expected
-        }) {
-            return Err((
-                family,
-                M1AuthenticatedProgramSetIntakeErrorV1::MarkerOutsideFamily {
-                    family,
-                    ordinal,
-                    logical: entry.logical_name(),
-                    export: entry.export_name(),
-                },
-            ));
+
+    let mut bindings = Vec::with_capacity(M1_PHYSICAL_PROGRAM_COUNT_V1);
+    for (ordinal, entry) in M1AllKernelsWorkerV3RosterV1::ENTRIES.iter().enumerate() {
+        if entry.logical_name() != entry.export_name()
+            || !M1PhysicalProgramV1::ALL
+                .iter()
+                .any(|program| program.kernel_symbol() == entry.export_name())
+        {
+            return Err(M1AuthenticatedProgramSetIntakeErrorV1::MarkerSymbol {
+                ordinal,
+                logical: entry.logical_name(),
+                export: entry.export_name(),
+            });
         }
         if entry.kernel_binding_id() == [0; 32]
             || entry.generated_host_contract_identity() == [0; 32]
         {
-            return Err((
-                family,
-                M1AuthenticatedProgramSetIntakeErrorV1::MarkerIdentity { family, ordinal },
-            ));
+            return Err(M1AuthenticatedProgramSetIntakeErrorV1::MarkerIdentity { ordinal });
         }
+        if bindings.contains(&entry.kernel_binding_id()) {
+            return Err(M1AuthenticatedProgramSetIntakeErrorV1::DuplicateKernelBinding);
+        }
+        bindings.push(entry.kernel_binding_id());
+
         let Some(evidence) = verification.entries().get(ordinal) else {
-            return Err((
-                family,
-                M1AuthenticatedProgramSetIntakeErrorV1::VerificationEntry { family, ordinal },
-            ));
+            return Err(M1AuthenticatedProgramSetIntakeErrorV1::VerificationEntry { ordinal });
         };
         if evidence.marker_binding_identity() != entry.kernel_binding_id()
             || evidence.generated_host_contract_identity()
                 != entry.generated_host_contract_identity()
         {
-            return Err((
-                family,
-                M1AuthenticatedProgramSetIntakeErrorV1::VerificationEntry { family, ordinal },
-            ));
+            return Err(M1AuthenticatedProgramSetIntakeErrorV1::VerificationEntry { ordinal });
         }
-    }
-    Ok(())
-}
-
-fn append_bindings<R: CompilerGeneratedKernelExpectationRosterV1>(
-    bindings: &mut Vec<[u8; 32]>,
-    family: M1KernelArtifactFamilyV1,
-) -> Result<
-    (),
-    (
-        M1KernelArtifactFamilyV1,
-        M1AuthenticatedProgramSetIntakeErrorV1,
-    ),
-> {
-    for entry in R::ENTRIES {
-        let binding = entry.kernel_binding_id();
-        if bindings.contains(&binding) {
-            return Err((
-                family,
-                M1AuthenticatedProgramSetIntakeErrorV1::DuplicateKernelBinding,
-            ));
-        }
-        bindings.push(binding);
     }
     Ok(())
 }
@@ -1027,15 +591,19 @@ fn authenticated_program_indices(
         programs.program_index::<SpeculativeAssemblyMarkerV1>().ok(),
     ];
     let mut indices = [0; M1_PHYSICAL_PROGRAM_COUNT_V1];
-    for (program, actual) in M1PhysicalProgramV1::ALL.into_iter().zip(actual) {
-        let Some(actual) = actual else {
+    for ((program, actual), expected_service_index) in M1PhysicalProgramV1::ALL
+        .into_iter()
+        .zip(actual)
+        .zip(M1_AGGREGATE_SERVICE_PROGRAM_INDICES_V1)
+    {
+        if actual != Some(expected_service_index) {
             return Err(M1AuthenticatedProgramSetIntakeErrorV1::ProgramIndex {
                 program,
-                expected: program.program_index(),
-                actual: None,
+                expected_service_index,
+                actual,
             });
-        };
-        indices[program.program_index()] = actual;
+        }
+        indices[program.program_index()] = expected_service_index;
     }
     Ok(indices)
 }
@@ -1045,7 +613,7 @@ fn authenticated_catalog_id_with_program_map(
     service_program_indices: &[usize; M1_PHYSICAL_PROGRAM_COUNT_V1],
 ) -> Identity {
     let mut digest = Sha256::new();
-    digest.update(M1_AUTHENTICATED_PROGRAM_MAP_DOMAIN_V1);
+    digest.update(M1_AUTHENTICATED_PROGRAM_MAP_DOMAIN_V2);
     digest.update(roster_catalog_id.as_bytes());
     for (program, service_index) in M1PhysicalProgramV1::ALL
         .into_iter()
@@ -1058,27 +626,19 @@ fn authenticated_catalog_id_with_program_map(
 }
 
 fn authenticated_family_artifacts(
-    facts: &[M1CurrentKernelSourceFactsV1; M1_AUTHENTICATED_ROSTER_COUNT_V1],
-    rosters: &M1AuthenticatedWorkerV3RostersV1,
+    roster: &M1AuthenticatedWorkerV3RosterV1,
 ) -> Box<[DeclaredKernelFamilyArtifact]> {
-    let finalized = [
-        rosters.gemm.verification().finalized_hsaco_sha256(),
-        rosters.rmsnorm.verification().finalized_hsaco_sha256(),
-        rosters.rope_kv.verification().finalized_hsaco_sha256(),
-        rosters.prefill.verification().finalized_hsaco_sha256(),
-        rosters.paged_decode.verification().finalized_hsaco_sha256(),
-        rosters.swiglu.verification().finalized_hsaco_sha256(),
-        rosters.logits.verification().finalized_hsaco_sha256(),
-    ];
-    facts
-        .iter()
-        .zip(finalized)
-        .map(|(fact, artifact)| {
+    let compiler_handoff = Identity::new(*roster.compiler_handoff_identity().sha256());
+    let finalized = Identity::new(roster.verification().finalized_hsaco_sha256());
+    let symbol_manifest = Identity::new(*roster.compiler_symbol_manifest_identity().sha256());
+    M1KernelArtifactFamilyV1::ALL
+        .into_iter()
+        .map(|family| {
             DeclaredKernelFamilyArtifact::new(
-                kernel_family(fact.family()),
-                Identity::new(*fact.compiler_handoff().sha256()),
-                Identity::new(artifact),
-                Identity::new(*fact.symbol_manifest().sha256()),
+                kernel_family(family),
+                compiler_handoff,
+                finalized,
+                symbol_manifest,
             )
         })
         .collect::<Vec<_>>()
@@ -1086,36 +646,30 @@ fn authenticated_family_artifacts(
 }
 
 fn authenticated_catalog_id(
-    facts: &[M1CurrentKernelSourceFactsV1; M1_AUTHENTICATED_ROSTER_COUNT_V1],
-    rosters: &M1AuthenticatedWorkerV3RostersV1,
+    source_pin: &M1AggregateSourcePinV1,
+    roster: &M1AuthenticatedWorkerV3RosterV1,
 ) -> Identity {
-    let verifications = [
-        rosters.gemm.verification(),
-        rosters.rmsnorm.verification(),
-        rosters.rope_kv.verification(),
-        rosters.prefill.verification(),
-        rosters.paged_decode.verification(),
-        rosters.swiglu.verification(),
-        rosters.logits.verification(),
-    ];
+    let verification = roster.verification();
     let mut digest = Sha256::new();
-    digest.update(M1_AUTHENTICATED_PROGRAM_CATALOG_DOMAIN_V1);
+    digest.update(M1_AUTHENTICATED_PROGRAM_CATALOG_DOMAIN_V2);
     digest.update((M1_AUTHENTICATED_ROSTER_COUNT_V1 as u64).to_le_bytes());
     digest.update((M1_PHYSICAL_PROGRAM_COUNT_V1 as u64).to_le_bytes());
-    for (fact, verification) in facts.iter().zip(verifications) {
-        digest.update([fact.family() as u8]);
-        digest.update(fact.compiler_handoff().sha256());
-        digest.update(fact.compiler_handoff().byte_len().to_le_bytes());
-        digest.update(fact.symbol_manifest().sha256());
-        digest.update(fact.symbol_manifest().byte_len().to_le_bytes());
-        digest.update(verification.lineage_identity().as_bytes());
-        digest.update(verification.roster_identity().as_bytes());
-        digest.update(verification.finalized_hsaco_sha256());
-        digest.update(verification.finalized_hsaco_length().to_le_bytes());
-        for entry in verification.entries() {
-            digest.update(entry.marker_binding_identity());
-            digest.update(entry.generated_host_contract_identity());
-        }
+    digest.update(source_pin.compiler_module_sha256);
+    digest.update(source_pin.compiler_module_length.to_le_bytes());
+    digest.update(source_pin.compiler_handoff_sha256);
+    digest.update(source_pin.compiler_handoff_length.to_le_bytes());
+    digest.update(source_pin.symbol_manifest_sha256);
+    digest.update(source_pin.symbol_manifest_length.to_le_bytes());
+    digest.update(verification.lineage_identity().as_bytes());
+    digest.update(verification.roster_identity().as_bytes());
+    digest.update(verification.finalized_hsaco_sha256());
+    digest.update(verification.finalized_hsaco_length().to_le_bytes());
+    for entry in verification.entries() {
+        digest.update(entry.marker_binding_identity());
+        digest.update(entry.generated_host_contract_identity());
+    }
+    for family in M1KernelArtifactFamilyV1::ALL {
+        digest.update([family as u8]);
     }
     Identity::new(digest.finalize().into())
 }
@@ -1136,33 +690,26 @@ const fn kernel_family(family: M1KernelArtifactFamilyV1) -> KernelFamily {
 mod tests {
     use super::*;
 
+    fn service_index<K: CompilerGeneratedKernelExpectationV1>() -> usize {
+        M1AllKernelsWorkerV3RosterV1::ENTRIES
+            .iter()
+            .position(|entry| entry.kernel_binding_id() == K::KERNEL_BINDING_ID_V1)
+            .expect("aggregate marker must occur exactly once")
+    }
+
     #[test]
-    fn integrated_rosters_are_canonical_and_cover_twelve_exact_markers() {
-        let rosters: [&[fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1]; 7] = [
-            M1GemmWorkerV3RosterV1::ENTRIES,
-            M1RmsNormWorkerV3RosterV1::ENTRIES,
-            M1RopeKvWorkerV3RosterV1::ENTRIES,
-            M1PrefillWorkerV3RosterV1::ENTRIES,
-            M1PagedDecodeWorkerV3RosterV1::ENTRIES,
-            M1SwiGluWorkerV3RosterV1::ENTRIES,
-            M1LogitsWorkerV3RosterV1::ENTRIES,
-        ];
-        assert_eq!(rosters.iter().map(|roster| roster.len()).sum::<usize>(), 12);
-        for roster in rosters {
-            assert!(
-                roster
-                    .windows(2)
-                    .all(|entries| entries[0].kernel_binding_id() < entries[1].kernel_binding_id()),
-                "Worker V3 rosters must follow canonical descriptor-table order"
-            );
-        }
-        let mut symbols = rosters
-            .into_iter()
-            .flat_map(|roster| {
-                roster
-                    .iter()
-                    .map(fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1::export_name)
-            })
+    fn aggregate_roster_is_canonical_and_covers_twelve_exact_markers() {
+        let roster = M1AllKernelsWorkerV3RosterV1::ENTRIES;
+        assert_eq!(roster.len(), M1_PHYSICAL_PROGRAM_COUNT_V1);
+        assert!(
+            roster
+                .windows(2)
+                .all(|entries| entries[0].kernel_binding_id() < entries[1].kernel_binding_id()),
+            "aggregate Worker V3 roster must follow canonical descriptor-table order"
+        );
+        let mut symbols = roster
+            .iter()
+            .map(fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1::export_name)
             .collect::<Vec<_>>();
         let mut expected = M1PhysicalProgramV1::ALL
             .into_iter()
@@ -1174,38 +721,47 @@ mod tests {
     }
 
     #[test]
-    fn k3_roster_binds_exact_generated_markers_and_slots() {
-        assert_eq!(M1PhysicalProgramV1::Rope.program_index(), 4);
-        assert_eq!(M1PhysicalProgramV1::PagedKvWrite.program_index(), 5);
-        assert_eq!(M1PhysicalProgramV1::Rope.kernel_symbol(), "qwen3_rope_v1");
-        assert_eq!(
-            M1PhysicalProgramV1::PagedKvWrite.kernel_symbol(),
-            "qwen3_paged_kv_write_v1"
-        );
-        let entries = M1RopeKvWorkerV3RosterV1::ENTRIES;
-        assert_eq!(entries.len(), 2);
-        assert_eq!(
-            entries[0].kernel_binding_id(),
-            PagedKvWriteMarkerV1::KERNEL_BINDING_ID_V1
-        );
-        assert_eq!(
-            entries[1].kernel_binding_id(),
-            RopeMarkerV1::KERNEL_BINDING_ID_V1
-        );
-        assert_eq!(
-            entries[0].generated_host_contract_identity(),
-            PagedKvWriteMarkerV1::PROFILE.generated_host_contract_identity()
-        );
-        assert_eq!(
-            entries[1].generated_host_contract_identity(),
-            RopeMarkerV1::PROFILE.generated_host_contract_identity()
-        );
-        assert_ne!(entries[0].kernel_binding_id(), [0; 32]);
-        assert_ne!(entries[1].kernel_binding_id(), [0; 32]);
-        assert_ne!(
-            entries[0].kernel_binding_id(),
-            entries[1].kernel_binding_id()
-        );
+    fn physical_roles_map_to_exact_aggregate_service_indices() {
+        let actual = [
+            service_index::<GemmReferenceMarkerV1>(),
+            service_index::<GemmVectorizedMarkerV1>(),
+            service_index::<TokenEmbeddingMarkerV1>(),
+            service_index::<RmsNormMarkerV1>(),
+            service_index::<RopeMarkerV1>(),
+            service_index::<PagedKvWriteMarkerV1>(),
+            service_index::<PrefillMarkerV1>(),
+            service_index::<PagedDecodeMarkerV1>(),
+            service_index::<SwiGluMarkerV1>(),
+            service_index::<LogitsArgmaxMarkerV1>(),
+            service_index::<LogitsCompactMarkerV1>(),
+            service_index::<SpeculativeAssemblyMarkerV1>(),
+        ];
+        assert_eq!(actual, [7, 1, 9, 8, 2, 4, 11, 5, 6, 0, 3, 10]);
+        assert_eq!(actual, M1_AGGREGATE_SERVICE_PROGRAM_INDICES_V1);
+    }
+
+    #[test]
+    fn aggregate_k3_markers_retain_exact_generated_contracts() {
+        let entries = M1AllKernelsWorkerV3RosterV1::ENTRIES;
+        for (ordinal, binding, contract) in [
+            (
+                4,
+                PagedKvWriteMarkerV1::KERNEL_BINDING_ID_V1,
+                PagedKvWriteMarkerV1::PROFILE.generated_host_contract_identity(),
+            ),
+            (
+                2,
+                RopeMarkerV1::KERNEL_BINDING_ID_V1,
+                RopeMarkerV1::PROFILE.generated_host_contract_identity(),
+            ),
+        ] {
+            assert_eq!(entries[ordinal].kernel_binding_id(), binding);
+            assert_eq!(
+                entries[ordinal].generated_host_contract_identity(),
+                contract
+            );
+            assert_ne!(binding, [0; 32]);
+        }
     }
 
     #[test]
@@ -1215,5 +771,11 @@ mod tests {
             .expect_err("a path cannot authenticate Worker V3 custody");
         assert_eq!(error.artifact_root(), path);
         assert!(error.to_string().contains("roster acquisition is required"));
+    }
+
+    #[test]
+    fn aggregate_source_pin_is_explicitly_unavailable() {
+        assert!(M1_CURRENT_AGGREGATE_SOURCE_PIN_V1.is_none());
+        assert_eq!(M1_AUTHENTICATED_ROSTER_COUNT_V1, 1);
     }
 }

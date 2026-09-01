@@ -62,8 +62,11 @@ mod system;
 mod worker_v3_selector_manifest;
 
 pub use authenticated_kernel_acquisition::{
-    acquire_m1_authenticated_worker_v3_programs_v1, authenticate_m1_worker_v3_rosters_v1,
-    recover_m1_worker_v3_rosters_v1, M1AuthenticatedWorkerV3AcquisitionFailureV1,
+    acquire_m1_all_kernels_authenticated_worker_v3_programs_v1,
+    acquire_m1_authenticated_worker_v3_programs_v1,
+    authenticate_m1_all_kernels_worker_v3_roster_v1, authenticate_m1_worker_v3_rosters_v1,
+    recover_m1_all_kernels_worker_v3_roster_v1, recover_m1_worker_v3_rosters_v1,
+    M1AuthenticatedWorkerV3AcquisitionFailureV1, M1RecoveredWorkerV3RosterV1,
     M1RecoveredWorkerV3RostersV1, M1WorkerV3ArtifactSelectorV1, M1WorkerV3ArtifactSelectorsErrorV1,
     M1WorkerV3ArtifactSelectorsV1, M1WorkerV3AuthenticationFailureV1,
     M1WorkerV3AuthenticationStageV1, M1WorkerV3RosterAcquisitionFailureV1,
@@ -74,9 +77,7 @@ pub use authenticated_kernel_programs::{
     M1AuthenticatedProgramSetIntakeErrorV1, M1AuthenticatedProgramSetIntakeFailureV1,
     M1AuthenticatedProgramSetIntakePhaseV1, M1AuthenticatedRosterAcquisitionRequiredV1,
     M1AuthenticatedWorkerV3ProgramSetResidueV1, M1AuthenticatedWorkerV3ProgramSetV1,
-    M1AuthenticatedWorkerV3RostersV1, M1GemmWorkerV3RosterV1, M1LogitsWorkerV3RosterV1,
-    M1PagedDecodeWorkerV3RosterV1, M1PrefillWorkerV3RosterV1, M1RmsNormWorkerV3RosterV1,
-    M1RopeKvWorkerV3RosterV1, M1SwiGluWorkerV3RosterV1, M1_AUTHENTICATED_PROGRAM_TARGET_V1,
+    M1AuthenticatedWorkerV3RosterV1, M1_AUTHENTICATED_PROGRAM_TARGET_V1,
     M1_AUTHENTICATED_ROSTER_COUNT_V1,
 };
 pub use authenticated_physical_queue::{
@@ -210,6 +211,7 @@ pub use direct_diagnostic_choices::{
     M1_DIRECT_DIAGNOSTIC_CHOICE_ALIGNMENT_V1,
 };
 pub use epoch::ExactCompletion;
+pub use ferric_qwen3_all_kernels_device_v1::M1AllKernelsWorkerV3RosterV1;
 pub use initialized_model_memory::{
     allocate_initialized_model_memory_v1, m1_model_memory_content_descriptor_v1,
     m1_model_memory_content_role_v1, InitializedModelMemoryAllocationErrorV1,
@@ -614,8 +616,11 @@ pub use step_workspace_subleases::{
 };
 pub use system::{CompletionFailure, Engine, EngineError, M1CaptureQuarantinedEngineV1};
 pub use worker_v3_selector_manifest::{
-    decode_m1_worker_v3_selector_manifest_v1, M1WorkerV3SelectorManifestErrorV1,
-    M1_WORKER_V3_SELECTOR_MANIFEST_FORMAT_V1, M1_WORKER_V3_SELECTOR_MANIFEST_MAX_BYTES_V1,
+    decode_m1_worker_v3_selector_manifest_v1, decode_m1_worker_v3_selector_manifest_v2,
+    M1WorkerV3SelectorManifestErrorV1, M1WorkerV3SelectorManifestErrorV2,
+    M1_WORKER_V3_AGGREGATE_COMPILER_UNIT_V2, M1_WORKER_V3_SELECTOR_MANIFEST_FORMAT_V1,
+    M1_WORKER_V3_SELECTOR_MANIFEST_FORMAT_V2, M1_WORKER_V3_SELECTOR_MANIFEST_MAX_BYTES_V1,
+    M1_WORKER_V3_SELECTOR_MANIFEST_MAX_BYTES_V2,
 };
 
 verus! {
