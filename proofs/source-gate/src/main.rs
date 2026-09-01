@@ -176,18 +176,18 @@ const AGGREGATE_ROSTER_ALIASES: &[(&str, &str)] = &[
     ("Rope", "super::rope_kv::qwen3_rope_v1_gpu::Marker"),
 ];
 const AGGREGATE_ROSTER_MARKERS: &[&str] = &[
+    "SwiGlu",
+    "Prefill",
     "LowestIdArgmax",
-    "GemmVectorized",
-    "Rope",
-    "CompactCompletion",
     "PagedKvWrite",
     "PagedDecode",
-    "SwiGlu",
-    "GemmReference",
-    "RmsNorm",
-    "TokenEmbedding",
     "SpeculativeAssembly",
-    "Prefill",
+    "GemmVectorized",
+    "GemmReference",
+    "TokenEmbedding",
+    "CompactCompletion",
+    "Rope",
+    "RmsNorm",
 ];
 const AGGREGATE_HOST_REEXPORT: &[&str] = &[
     "host_roster",
@@ -3300,8 +3300,8 @@ mod tests {
     fn aggregate_runtime_roster_rejects_marker_order_drift() {
         let reordered = replace_once(
             AGGREGATE_RUNTIME_SOURCE,
-            "            GemmVectorized,\n            Rope,",
-            "            Rope,\n            GemmVectorized,",
+            "            SwiGlu,\n            Prefill,",
+            "            Prefill,\n            SwiGlu,",
         );
         assert!(validate_aggregate_source(&reordered).is_err());
     }
