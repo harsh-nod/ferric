@@ -7,6 +7,7 @@
 
 use core::fmt;
 
+use fe2o3_host::AuthenticatedServiceQueueReleaseV1;
 use fe2o3_service_host::ServiceQueueReleaseObservationV1;
 use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::scheduling::RequestState;
@@ -18,7 +19,10 @@ use crate::device_cache::{
 };
 use crate::{
     ActiveDeviceKvCache, CheckedCompletionSemantics, DeviceKvCacheError,
-    DeviceKvCancellationOutcome, Engine, EngineError, ExactCompletion, M1CheckedCompletionOutputV1,
+    DeviceKvCancellationOutcome, Engine, EngineError, ExactCompletion,
+    M1AuthenticatedPhysicalCompletedReadbackV1,
+    M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1,
+    M1AuthenticatedPhysicalReadbackQueueSessionV1, M1CheckedCompletionOutputV1,
     M1FullStepKvReservationCustodyV1, M1PhysicalCompletedReadbackV1, M1PhysicalFixedBatchShapeV1,
     M1PhysicalReadbackQueueReleaseFailureV1, M1PhysicalReadbackQueueSessionV1,
     PendingDeviceKvStepWrite, SettledQuiescentDeviceKvCache,
@@ -675,12 +679,611 @@ pub enum M1CompletedStepOutcomeV1 {
     Poisoned(Box<M1CompletedStepPoisonV1>),
 }
 
-fn reject(
+/// Pure authenticated rejection retaining the exact readback and cache roster.
+#[must_use = "rejected authenticated completion inputs remain recoverable"]
+#[derive(Debug)]
+pub struct M1AuthenticatedCompletedStepRejectionV1 {
     error: M1CompletedStepErrorV1,
-    readback: M1PhysicalCompletedReadbackV1,
+    readback: M1AuthenticatedPhysicalCompletedReadbackV1,
     roster: M1DeviceKvCompletionRosterV1,
-) -> M1CompletedStepOutcomeV1 {
-    M1CompletedStepOutcomeV1::Rejected(M1CompletedStepRejectionV1 {
+}
+
+impl M1AuthenticatedCompletedStepRejectionV1 {
+    /// Exact preflight rejection.
+    #[must_use]
+    pub const fn error(&self) -> M1CompletedStepErrorV1 {
+        self.error
+    }
+
+    /// Semantically checked compact completion retained by this rejection.
+    #[must_use = "checked completion remains paired with authenticated queue custody"]
+    pub const fn checked(&self) -> &M1CheckedCompletionOutputV1 {
+        self.readback.checked()
+    }
+
+    /// Unchanged scheduler-ordered cache/disposition roster.
+    #[must_use = "cache roster remains paired with authenticated readback custody"]
+    pub const fn roster(&self) -> &M1DeviceKvCompletionRosterV1 {
+        &self.roster
+    }
+
+    /// Recovers the exact unchanged rejection inputs.
+    #[must_use = "all rejected authenticated completion owners remain linear"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1CompletedStepErrorV1,
+        M1AuthenticatedPhysicalCompletedReadbackV1,
+        M1DeviceKvCompletionRosterV1,
+    ) {
+        (self.error, self.readback, self.roster)
+    }
+
+    /// Faults the logical Engine, destroys the rejected authenticated queue,
+    /// and retains the exact checked completion, KV, and roster custody.
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal authenticated release quarantine joined to the same
+    /// rejected completion custody.
+    pub fn destroy_queue_and_retain_rejection<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1AuthenticatedCompletedStepRejectionTeardownSuccessV1,
+        Box<M1AuthenticatedCompletedStepRejectionTeardownFailureV1>,
+    > {
+        let owner = quarantine_completion_teardown_owner(engine, self);
+        let Self {
+            error,
+            readback,
+            roster,
+        } = owner;
+        let (queue, checked, completion, kv) = readback.into_parts();
+        let custody = M1CompletedStepRejectionTeardownCustodyV1 {
+            error,
+            checked,
+            completion,
+            kv,
+            roster,
+        };
+        match queue.destroy_and_release() {
+            Ok(queue_release) => Ok(M1AuthenticatedCompletedStepRejectionTeardownSuccessV1 {
+                queue_release,
+                custody,
+            }),
+            Err(source) => Err(Box::new(
+                M1AuthenticatedCompletedStepRejectionTeardownFailureV1 {
+                    source: *source,
+                    custody,
+                },
+            )),
+        }
+    }
+}
+
+/// Clean authenticated queue teardown retaining an unchanged rejection.
+///
+/// Released authenticated program owners remain recoverable:
+///
+/// ```
+/// use ferric_engine::M1AuthenticatedCompletedStepRejectionTeardownSuccessV1;
+/// fn recover_programs(owner: M1AuthenticatedCompletedStepRejectionTeardownSuccessV1) {
+///     let (release, ..) = owner.into_parts();
+///     let _programs = release.into_program_sets();
+/// }
+/// ```
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedCompletedStepRejectionTeardownSuccessV1;
+/// fn split_twice(owner: M1AuthenticatedCompletedStepRejectionTeardownSuccessV1) {
+///     let _first = owner.into_parts();
+///     let _second = owner.into_parts();
+/// }
+/// ```
+#[must_use = "authenticated release, rejection evidence, and roster remain retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedCompletedStepRejectionTeardownSuccessV1 {
+    queue_release: AuthenticatedServiceQueueReleaseV1,
+    custody: M1CompletedStepRejectionTeardownCustodyV1,
+}
+
+/// Terminal authenticated release quarantine retaining an unchanged rejection.
+#[must_use = "authenticated release quarantine and rejection custody remain retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedCompletedStepRejectionTeardownFailureV1 {
+    source: M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1,
+    custody: M1CompletedStepRejectionTeardownCustodyV1,
+}
+
+impl M1AuthenticatedCompletedStepRejectionTeardownSuccessV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1CompletedStepErrorV1 {
+        self.custody.error
+    }
+
+    #[must_use = "checked completion remains retained by teardown"]
+    pub const fn checked(&self) -> &M1CheckedCompletionOutputV1 {
+        &self.custody.checked
+    }
+
+    #[must_use]
+    pub const fn completion_epoch(&self) -> CompletionEpoch {
+        self.custody.completion.epoch()
+    }
+
+    #[must_use = "KV reservation custody remains retained by teardown"]
+    pub const fn kv_reservations(&self) -> &M1FullStepKvReservationCustodyV1 {
+        &self.custody.kv
+    }
+
+    #[must_use]
+    pub const fn roster_member_count(&self) -> usize {
+        self.custody.roster.member_count()
+    }
+
+    pub fn roster_requests(&self) -> impl ExactSizeIterator<Item = RequestId> + '_ {
+        self.custody
+            .roster
+            .members()
+            .iter()
+            .map(M1DeviceKvCompletionMemberV1::request)
+    }
+
+    #[must_use = "authenticated program release remains explicitly owned"]
+    pub const fn queue_release(&self) -> &AuthenticatedServiceQueueReleaseV1 {
+        &self.queue_release
+    }
+
+    /// Separates the authenticated release and every unchanged rejection
+    /// owner exactly once.
+    #[must_use = "all authenticated teardown owners remain retained"]
+    #[allow(clippy::type_complexity)]
+    pub fn into_parts(
+        self,
+    ) -> (
+        AuthenticatedServiceQueueReleaseV1,
+        M1CompletedStepErrorV1,
+        M1CheckedCompletionOutputV1,
+        ExactCompletion,
+        M1FullStepKvReservationCustodyV1,
+        M1DeviceKvCompletionRosterV1,
+    ) {
+        (
+            self.queue_release,
+            self.custody.error,
+            self.custody.checked,
+            self.custody.completion,
+            self.custody.kv,
+            self.custody.roster,
+        )
+    }
+}
+
+impl M1AuthenticatedCompletedStepRejectionTeardownFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1CompletedStepErrorV1 {
+        self.custody.error
+    }
+
+    #[must_use = "checked completion remains retained by teardown failure"]
+    pub const fn checked(&self) -> &M1CheckedCompletionOutputV1 {
+        &self.custody.checked
+    }
+
+    #[must_use]
+    pub const fn completion_epoch(&self) -> CompletionEpoch {
+        self.custody.completion.epoch()
+    }
+
+    #[must_use = "KV reservation custody remains retained by teardown failure"]
+    pub const fn kv_reservations(&self) -> &M1FullStepKvReservationCustodyV1 {
+        &self.custody.kv
+    }
+
+    #[must_use]
+    pub const fn roster_member_count(&self) -> usize {
+        self.custody.roster.member_count()
+    }
+
+    pub fn roster_requests(&self) -> impl ExactSizeIterator<Item = RequestId> + '_ {
+        self.custody
+            .roster
+            .members()
+            .iter()
+            .map(M1DeviceKvCompletionMemberV1::request)
+    }
+
+    #[must_use = "authenticated release quarantine remains retained"]
+    pub const fn source(&self) -> &M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1 {
+        &self.source
+    }
+}
+
+/// Successful authenticated physical and Engine completion of one generation.
+#[must_use = "authenticated post-readback queue and completed KV custody remain retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedCompletedStepSuccessV1 {
+    queue: M1AuthenticatedPhysicalReadbackQueueSessionV1,
+    checked: M1CheckedCompletionOutputV1,
+    members: Vec<M1CompletedDeviceKvMemberV1>,
+    logical_accepted_counts: Box<[u32]>,
+    externally_published_counts: Box<[u32]>,
+    completed_members: usize,
+}
+
+/// Clean authenticated queue teardown retaining a completed step whose page
+/// release could not make progress.
+///
+/// Released authenticated program owners remain recoverable:
+///
+/// ```
+/// use ferric_engine::M1AuthenticatedCompletedStepTeardownSuccessV1;
+/// fn recover_programs(owner: M1AuthenticatedCompletedStepTeardownSuccessV1) {
+///     let (release, ..) = owner.into_parts();
+///     let _programs = release.into_program_sets();
+/// }
+/// ```
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedCompletedStepTeardownSuccessV1;
+/// fn split_twice(owner: M1AuthenticatedCompletedStepTeardownSuccessV1) {
+///     let _first = owner.into_parts();
+///     let _second = owner.into_parts();
+/// }
+/// ```
+#[must_use = "authenticated release and completed KV custody remain retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedCompletedStepTeardownSuccessV1 {
+    queue_release: AuthenticatedServiceQueueReleaseV1,
+    checked: M1CheckedCompletionOutputV1,
+    members: Vec<M1CompletedDeviceKvMemberV1>,
+    logical_accepted_counts: Box<[u32]>,
+    externally_published_counts: Box<[u32]>,
+    completed_members: usize,
+}
+
+impl M1AuthenticatedCompletedStepTeardownSuccessV1 {
+    /// Authenticated program release and native queue-destruction evidence.
+    #[must_use = "released authenticated program sets remain explicitly owned"]
+    pub const fn queue_release(&self) -> &AuthenticatedServiceQueueReleaseV1 {
+        &self.queue_release
+    }
+
+    /// Semantically checked compact records in scheduler-member order.
+    pub const fn checked(&self) -> &M1CheckedCompletionOutputV1 {
+        &self.checked
+    }
+
+    /// Completed per-request device-KV owners.
+    #[must_use = "completed device-KV custody remains retained"]
+    pub fn members(&self) -> &[M1CompletedDeviceKvMemberV1] {
+        &self.members
+    }
+
+    /// Per-member logical accepted-token counts committed to the Engine.
+    #[must_use]
+    pub fn logical_accepted_counts(&self) -> &[u32] {
+        &self.logical_accepted_counts
+    }
+
+    /// Per-member token counts made externally visible by this completion.
+    #[must_use]
+    pub fn externally_published_counts(&self) -> &[u32] {
+        &self.externally_published_counts
+    }
+
+    /// Scheduler members completed by the exact Engine transition.
+    #[must_use]
+    pub const fn completed_members(&self) -> usize {
+        self.completed_members
+    }
+
+    /// Separates the authenticated release and every completed-step owner
+    /// exactly once.
+    #[must_use = "all authenticated teardown owners remain retained"]
+    #[allow(clippy::type_complexity)]
+    pub fn into_parts(
+        self,
+    ) -> (
+        AuthenticatedServiceQueueReleaseV1,
+        M1CheckedCompletionOutputV1,
+        Vec<M1CompletedDeviceKvMemberV1>,
+        Box<[u32]>,
+        Box<[u32]>,
+        usize,
+    ) {
+        (
+            self.queue_release,
+            self.checked,
+            self.members,
+            self.logical_accepted_counts,
+            self.externally_published_counts,
+            self.completed_members,
+        )
+    }
+}
+
+/// Terminal authenticated queue-release quarantine retaining the same
+/// completed step.
+#[must_use = "authenticated release quarantine and completed KV custody remain retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedCompletedStepTeardownFailureV1 {
+    source: M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1,
+    checked: M1CheckedCompletionOutputV1,
+    members: Vec<M1CompletedDeviceKvMemberV1>,
+    logical_accepted_counts: Box<[u32]>,
+    externally_published_counts: Box<[u32]>,
+    completed_members: usize,
+}
+
+impl M1AuthenticatedCompletedStepTeardownFailureV1 {
+    /// Terminal authenticated release failure with no raw queue extraction.
+    #[must_use = "authenticated release quarantine remains retained"]
+    pub const fn source(&self) -> &M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1 {
+        &self.source
+    }
+
+    /// Semantically checked compact records in scheduler-member order.
+    pub const fn checked(&self) -> &M1CheckedCompletionOutputV1 {
+        &self.checked
+    }
+
+    /// Completed per-request device-KV owners.
+    #[must_use = "completed device-KV custody remains retained"]
+    pub fn members(&self) -> &[M1CompletedDeviceKvMemberV1] {
+        &self.members
+    }
+
+    /// Per-member logical accepted-token counts committed to the Engine.
+    #[must_use]
+    pub fn logical_accepted_counts(&self) -> &[u32] {
+        &self.logical_accepted_counts
+    }
+
+    /// Per-member token counts made externally visible by this completion.
+    #[must_use]
+    pub fn externally_published_counts(&self) -> &[u32] {
+        &self.externally_published_counts
+    }
+
+    /// Scheduler members completed by the exact Engine transition.
+    #[must_use]
+    pub const fn completed_members(&self) -> usize {
+        self.completed_members
+    }
+}
+
+impl M1AuthenticatedCompletedStepSuccessV1 {
+    /// Authenticated post-readback queue with no scheduler step attached.
+    #[must_use = "authenticated queue custody remains retained"]
+    pub const fn queue(&self) -> &M1AuthenticatedPhysicalReadbackQueueSessionV1 {
+        &self.queue
+    }
+
+    /// Semantically checked compact records in scheduler-member order.
+    #[must_use = "checked completion remains paired with authenticated success custody"]
+    pub const fn checked(&self) -> &M1CheckedCompletionOutputV1 {
+        &self.checked
+    }
+
+    /// Completed per-request device-KV owners.
+    #[must_use = "completed device-KV custody remains retained"]
+    pub fn members(&self) -> &[M1CompletedDeviceKvMemberV1] {
+        &self.members
+    }
+
+    /// Per-member logical accepted-token counts committed to the Engine.
+    #[must_use]
+    pub fn logical_accepted_counts(&self) -> &[u32] {
+        &self.logical_accepted_counts
+    }
+
+    /// Per-member token counts made externally visible by this completion.
+    #[must_use]
+    pub fn externally_published_counts(&self) -> &[u32] {
+        &self.externally_published_counts
+    }
+
+    /// Scheduler members completed by the exact Engine transition.
+    #[must_use]
+    pub const fn completed_members(&self) -> usize {
+        self.completed_members
+    }
+
+    /// Faults the logical Engine, destroys the authenticated queue, and
+    /// retains every completed member and observation after page release
+    /// cannot make progress.
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal authenticated queue-release quarantine joined to the
+    /// same completed-step custody.
+    pub fn destroy_queue_and_retain_completion<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1AuthenticatedCompletedStepTeardownSuccessV1,
+        Box<M1AuthenticatedCompletedStepTeardownFailureV1>,
+    > {
+        let owner = quarantine_completion_teardown_owner(engine, self);
+        let Self {
+            queue,
+            checked,
+            members,
+            logical_accepted_counts,
+            externally_published_counts,
+            completed_members,
+        } = owner;
+        match queue.destroy_and_release() {
+            Ok(queue_release) => Ok(M1AuthenticatedCompletedStepTeardownSuccessV1 {
+                queue_release,
+                checked,
+                members,
+                logical_accepted_counts,
+                externally_published_counts,
+                completed_members,
+            }),
+            Err(source) => Err(Box::new(M1AuthenticatedCompletedStepTeardownFailureV1 {
+                source: *source,
+                checked,
+                members,
+                logical_accepted_counts,
+                externally_published_counts,
+                completed_members,
+            })),
+        }
+    }
+
+    /// Separates every successful authenticated completion owner exactly once.
+    #[must_use = "all successful authenticated completion custody remains linear"]
+    #[allow(clippy::type_complexity)]
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1AuthenticatedPhysicalReadbackQueueSessionV1,
+        M1CheckedCompletionOutputV1,
+        Vec<M1CompletedDeviceKvMemberV1>,
+        Box<[u32]>,
+        Box<[u32]>,
+    ) {
+        (
+            self.queue,
+            self.checked,
+            self.members,
+            self.logical_accepted_counts,
+            self.externally_published_counts,
+        )
+    }
+
+    #[allow(dead_code, clippy::type_complexity)]
+    pub(crate) fn into_release_parts(
+        self,
+    ) -> (
+        M1AuthenticatedPhysicalReadbackQueueSessionV1,
+        M1CheckedCompletionOutputV1,
+        Vec<M1CompletedDeviceKvMemberV1>,
+        Box<[u32]>,
+        Box<[u32]>,
+        usize,
+    ) {
+        (
+            self.queue,
+            self.checked,
+            self.members,
+            self.logical_accepted_counts,
+            self.externally_published_counts,
+            self.completed_members,
+        )
+    }
+}
+
+/// Terminal authenticated custody after an unexpected post-preflight failure.
+#[must_use = "poisoned authenticated completion custody requires process-level quarantine"]
+#[derive(Debug)]
+pub struct M1AuthenticatedCompletedStepPoisonV1 {
+    error: M1CompletedStepErrorV1,
+    queue: M1AuthenticatedPhysicalReadbackQueueSessionV1,
+    checked: M1CheckedCompletionOutputV1,
+    custody: M1CompletedStepPoisonCustodyV1,
+}
+
+impl M1AuthenticatedCompletedStepPoisonV1 {
+    /// Exact supposedly-infallible transition failure.
+    #[must_use]
+    pub const fn error(&self) -> M1CompletedStepErrorV1 {
+        self.error
+    }
+
+    /// Authenticated post-readback queue retained beside poisoned state.
+    #[must_use = "authenticated queue custody remains retained"]
+    pub const fn queue(&self) -> &M1AuthenticatedPhysicalReadbackQueueSessionV1 {
+        &self.queue
+    }
+
+    /// Semantically checked compact completion retained by poison.
+    #[must_use = "checked completion remains paired with authenticated poison custody"]
+    pub const fn checked(&self) -> &M1CheckedCompletionOutputV1 {
+        &self.checked
+    }
+
+    /// Members settled before the unexpected transition failure.
+    #[must_use]
+    pub fn completed_member_count(&self) -> usize {
+        self.custody.completed.len()
+    }
+
+    /// Exact logical accepted counts derived before mutation.
+    #[must_use]
+    pub fn logical_accepted_counts(&self) -> &[u32] {
+        &self.custody.logical_accepted_counts
+    }
+
+    /// Exact externally published counts derived before mutation.
+    #[must_use]
+    pub fn externally_published_counts(&self) -> &[u32] {
+        &self.custody.externally_published_counts
+    }
+
+    /// Whether exact scheduler completion authority remains retained.
+    #[must_use]
+    pub const fn retains_completion(&self) -> bool {
+        self.custody.completion.is_some()
+    }
+}
+
+/// Exhaustive authenticated completion outcome with no raw queue conversion.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedCompletedStepOutcomeV1;
+/// fn require_clone<T: Clone>() {}
+/// require_clone::<M1AuthenticatedCompletedStepOutcomeV1>();
+/// ```
+#[must_use = "every authenticated outcome retains exact linear custody"]
+#[derive(Debug)]
+pub enum M1AuthenticatedCompletedStepOutcomeV1 {
+    /// Exact scheduler and device-KV completion succeeded.
+    Completed(M1AuthenticatedCompletedStepSuccessV1),
+    /// Pure preflight rejection retained unchanged inputs.
+    Rejected(M1AuthenticatedCompletedStepRejectionV1),
+    /// Unexpected post-preflight failure retained terminal custody.
+    Poisoned(Box<M1AuthenticatedCompletedStepPoisonV1>),
+}
+
+struct M1CompletedStepCoreRejectionV1<R> {
+    error: M1CompletedStepErrorV1,
+    readback: R,
+    roster: M1DeviceKvCompletionRosterV1,
+}
+
+struct M1CompletedStepCoreSuccessV1<Q> {
+    queue: Q,
+    checked: M1CheckedCompletionOutputV1,
+    members: Vec<M1CompletedDeviceKvMemberV1>,
+    logical_accepted_counts: Box<[u32]>,
+    externally_published_counts: Box<[u32]>,
+    completed_members: usize,
+}
+
+struct M1CompletedStepCorePoisonV1<Q> {
+    error: M1CompletedStepErrorV1,
+    queue: Q,
+    checked: M1CheckedCompletionOutputV1,
+    custody: M1CompletedStepPoisonCustodyV1,
+}
+
+enum M1CompletedStepCoreOutcomeV1<Q, R> {
+    Completed(M1CompletedStepCoreSuccessV1<Q>),
+    Rejected(M1CompletedStepCoreRejectionV1<R>),
+    Poisoned(Box<M1CompletedStepCorePoisonV1<Q>>),
+}
+
+fn reject_core<Q, R>(
+    error: M1CompletedStepErrorV1,
+    readback: R,
+    roster: M1DeviceKvCompletionRosterV1,
+) -> M1CompletedStepCoreOutcomeV1<Q, R> {
+    M1CompletedStepCoreOutcomeV1::Rejected(M1CompletedStepCoreRejectionV1 {
         error,
         readback,
         roster,
@@ -706,6 +1309,94 @@ fn expected_shape_matches(
             M1FullStepKvReservationCustodyV1::SpeculativeRound { .. }
         )
     )
+}
+
+trait M1CompletedStepReadbackCarrierV1: Sized {
+    type Queue;
+
+    fn checked(&self) -> &M1CheckedCompletionOutputV1;
+    fn kv_reservations(&self) -> &M1FullStepKvReservationCustodyV1;
+    fn completion_epoch(&self) -> CompletionEpoch;
+    fn completion_authority(&self) -> &ExactCompletion;
+    fn queue_shape(&self) -> M1PhysicalFixedBatchShapeV1;
+    fn into_completion_parts(
+        self,
+    ) -> (
+        Self::Queue,
+        M1CheckedCompletionOutputV1,
+        ExactCompletion,
+        M1FullStepKvReservationCustodyV1,
+    );
+}
+
+impl M1CompletedStepReadbackCarrierV1 for M1PhysicalCompletedReadbackV1 {
+    type Queue = M1PhysicalReadbackQueueSessionV1;
+
+    fn checked(&self) -> &M1CheckedCompletionOutputV1 {
+        self.checked()
+    }
+
+    fn kv_reservations(&self) -> &M1FullStepKvReservationCustodyV1 {
+        self.kv_reservations()
+    }
+
+    fn completion_epoch(&self) -> CompletionEpoch {
+        self.completion_epoch()
+    }
+
+    fn completion_authority(&self) -> &ExactCompletion {
+        self.completion_authority()
+    }
+
+    fn queue_shape(&self) -> M1PhysicalFixedBatchShapeV1 {
+        self.queue().shape()
+    }
+
+    fn into_completion_parts(
+        self,
+    ) -> (
+        Self::Queue,
+        M1CheckedCompletionOutputV1,
+        ExactCompletion,
+        M1FullStepKvReservationCustodyV1,
+    ) {
+        self.into_parts()
+    }
+}
+
+impl M1CompletedStepReadbackCarrierV1 for M1AuthenticatedPhysicalCompletedReadbackV1 {
+    type Queue = M1AuthenticatedPhysicalReadbackQueueSessionV1;
+
+    fn checked(&self) -> &M1CheckedCompletionOutputV1 {
+        self.checked()
+    }
+
+    fn kv_reservations(&self) -> &M1FullStepKvReservationCustodyV1 {
+        self.kv_reservations()
+    }
+
+    fn completion_epoch(&self) -> CompletionEpoch {
+        self.completion_epoch()
+    }
+
+    fn completion_authority(&self) -> &ExactCompletion {
+        self.completion_authority()
+    }
+
+    fn queue_shape(&self) -> M1PhysicalFixedBatchShapeV1 {
+        self.queue().shape()
+    }
+
+    fn into_completion_parts(
+        self,
+    ) -> (
+        Self::Queue,
+        M1CheckedCompletionOutputV1,
+        ExactCompletion,
+        M1FullStepKvReservationCustodyV1,
+    ) {
+        self.into_parts()
+    }
 }
 
 fn preflight_engine<const C: usize>(
@@ -816,9 +1507,9 @@ fn preflight_target_completion_semantics(
     Ok(())
 }
 
-fn preflight_all<const C: usize>(
+fn preflight_all<const C: usize, R: M1CompletedStepReadbackCarrierV1>(
     engine: &Engine<C>,
-    readback: &M1PhysicalCompletedReadbackV1,
+    readback: &R,
     roster: &M1DeviceKvCompletionRosterV1,
 ) -> Result<M1CompletedStepPreflightV1, M1CompletedStepErrorV1> {
     let checked = readback.checked();
@@ -827,7 +1518,7 @@ fn preflight_all<const C: usize>(
     if checked.epoch() != readback.completion_epoch() {
         return Err(M1CompletedStepErrorV1::Epoch);
     }
-    if !expected_shape_matches(readback.queue().shape(), reservations) {
+    if !expected_shape_matches(readback.queue_shape(), reservations) {
         return Err(M1CompletedStepErrorV1::Shape);
     }
     if roster.member_count() != member_count {
@@ -1309,61 +2000,55 @@ fn quarantine_poison_owner<const C: usize, Owner>(engine: &mut Engine<C>, owner:
     quarantine_completion_teardown_owner(engine, owner)
 }
 
-fn poison<const C: usize>(
+fn poison_core<const C: usize, Q, R>(
     engine: &mut Engine<C>,
     error: M1CompletedStepErrorV1,
-    queue: M1PhysicalReadbackQueueSessionV1,
+    queue: Q,
     checked: M1CheckedCompletionOutputV1,
     custody: M1CompletedStepPoisonCustodyV1,
-) -> M1CompletedStepOutcomeV1 {
+) -> M1CompletedStepCoreOutcomeV1<Q, R> {
     let poison = quarantine_poison_owner(
         engine,
-        M1CompletedStepPoisonV1 {
+        M1CompletedStepCorePoisonV1 {
             error,
             queue,
             checked,
             custody,
         },
     );
-    M1CompletedStepOutcomeV1::Poisoned(Box::new(poison))
+    M1CompletedStepCoreOutcomeV1::Poisoned(Box::new(poison))
 }
 
-/// Completes one physical M1 readback across every scheduler member exactly once.
-///
-/// All output, reservation, cache-roster, arithmetic, and Engine checks finish
-/// before the first device-cache mutation. A preflight rejection returns both
-/// linear inputs unchanged. Any unexpected failure after mutation is terminal
-/// and retains opaque queue, cache, reservation, and completion custody.
-pub fn complete_m1_physical_step_v1<const C: usize>(
+fn complete_m1_step_core_v1<const C: usize, R: M1CompletedStepReadbackCarrierV1>(
     engine: &mut Engine<C>,
-    readback: M1PhysicalCompletedReadbackV1,
+    readback: R,
     roster: M1DeviceKvCompletionRosterV1,
-) -> M1CompletedStepOutcomeV1 {
+) -> M1CompletedStepCoreOutcomeV1<R::Queue, R> {
     let M1CompletedStepPreflightV1 {
         arithmetic,
         logical_accepted,
         externally_published,
     } = match preflight_all(engine, &readback, &roster) {
         Ok(preflight) => preflight,
-        Err(error) => return reject(error, readback, roster),
+        Err(error) => return reject_core(error, readback, roster),
     };
     let member_count = arithmetic.len();
     let mut completed = Vec::new();
     if completed.try_reserve_exact(member_count).is_err() {
-        return reject(M1CompletedStepErrorV1::HostAllocation, readback, roster);
+        return reject_core(M1CompletedStepErrorV1::HostAllocation, readback, roster);
     }
     let mut remaining = Vec::new();
     if remaining.try_reserve_exact(member_count).is_err() {
-        return reject(M1CompletedStepErrorV1::HostAllocation, readback, roster);
+        return reject_core(M1CompletedStepErrorV1::HostAllocation, readback, roster);
     }
 
-    let (queue, checked, completion, reservations) = readback.into_parts();
+    let (queue, checked, completion, reservations) = readback.into_completion_parts();
     let epoch = checked.epoch();
     let mut remaining = bind_work(roster, reservations, arithmetic, remaining);
     let mut completion = Some(completion);
     for lane in 0..member_count {
         let Some(work) = remaining.get_mut(lane).and_then(Option::take) else {
-            return poison(
+            return poison_core(
                 engine,
                 M1CompletedStepErrorV1::Internal { lane },
                 queue,
@@ -1384,7 +2069,7 @@ pub fn complete_m1_physical_step_v1<const C: usize>(
             if let Some(slot) = remaining.get_mut(lane) {
                 *slot = Some(work);
             }
-            return poison(
+            return poison_core(
                 engine,
                 M1CompletedStepErrorV1::Internal { lane },
                 queue,
@@ -1407,7 +2092,7 @@ pub fn complete_m1_physical_step_v1<const C: usize>(
                 completion = Some(returned);
             }
             Err(failure) => {
-                return poison(
+                return poison_core(
                     engine,
                     M1CompletedStepErrorV1::Cache {
                         lane,
@@ -1431,7 +2116,7 @@ pub fn complete_m1_physical_step_v1<const C: usize>(
     }
 
     let Some(authority) = completion.take() else {
-        return poison(
+        return poison_core(
             engine,
             M1CompletedStepErrorV1::Internal { lane: member_count },
             queue,
@@ -1449,17 +2134,19 @@ pub fn complete_m1_physical_step_v1<const C: usize>(
         );
     };
     match engine.complete_exact(authority, &logical_accepted) {
-        Ok(completed_members) => M1CompletedStepOutcomeV1::Completed(M1CompletedStepSuccessV1 {
-            queue,
-            checked,
-            members: completed,
-            logical_accepted_counts: logical_accepted.into_boxed_slice(),
-            externally_published_counts: externally_published.into_boxed_slice(),
-            completed_members,
-        }),
+        Ok(completed_members) => {
+            M1CompletedStepCoreOutcomeV1::Completed(M1CompletedStepCoreSuccessV1 {
+                queue,
+                checked,
+                members: completed,
+                logical_accepted_counts: logical_accepted.into_boxed_slice(),
+                externally_published_counts: externally_published.into_boxed_slice(),
+                completed_members,
+            })
+        }
         Err(failure) => {
             let error = failure.error();
-            poison(
+            poison_core(
                 engine,
                 M1CompletedStepErrorV1::Engine(error),
                 queue,
@@ -1477,6 +2164,137 @@ pub fn complete_m1_physical_step_v1<const C: usize>(
             )
         }
     }
+}
+
+fn into_raw_completed_step_outcome(
+    outcome: M1CompletedStepCoreOutcomeV1<
+        M1PhysicalReadbackQueueSessionV1,
+        M1PhysicalCompletedReadbackV1,
+    >,
+) -> M1CompletedStepOutcomeV1 {
+    match outcome {
+        M1CompletedStepCoreOutcomeV1::Completed(completed) => {
+            M1CompletedStepOutcomeV1::Completed(M1CompletedStepSuccessV1 {
+                queue: completed.queue,
+                checked: completed.checked,
+                members: completed.members,
+                logical_accepted_counts: completed.logical_accepted_counts,
+                externally_published_counts: completed.externally_published_counts,
+                completed_members: completed.completed_members,
+            })
+        }
+        M1CompletedStepCoreOutcomeV1::Rejected(rejected) => {
+            M1CompletedStepOutcomeV1::Rejected(M1CompletedStepRejectionV1 {
+                error: rejected.error,
+                readback: rejected.readback,
+                roster: rejected.roster,
+            })
+        }
+        M1CompletedStepCoreOutcomeV1::Poisoned(poison) => {
+            let M1CompletedStepCorePoisonV1 {
+                error,
+                queue,
+                checked,
+                custody,
+            } = *poison;
+            M1CompletedStepOutcomeV1::Poisoned(Box::new(M1CompletedStepPoisonV1 {
+                error,
+                queue,
+                checked,
+                custody,
+            }))
+        }
+    }
+}
+
+fn into_authenticated_completed_step_outcome(
+    outcome: M1CompletedStepCoreOutcomeV1<
+        M1AuthenticatedPhysicalReadbackQueueSessionV1,
+        M1AuthenticatedPhysicalCompletedReadbackV1,
+    >,
+) -> M1AuthenticatedCompletedStepOutcomeV1 {
+    match outcome {
+        M1CompletedStepCoreOutcomeV1::Completed(completed) => {
+            M1AuthenticatedCompletedStepOutcomeV1::Completed(
+                M1AuthenticatedCompletedStepSuccessV1 {
+                    queue: completed.queue,
+                    checked: completed.checked,
+                    members: completed.members,
+                    logical_accepted_counts: completed.logical_accepted_counts,
+                    externally_published_counts: completed.externally_published_counts,
+                    completed_members: completed.completed_members,
+                },
+            )
+        }
+        M1CompletedStepCoreOutcomeV1::Rejected(rejected) => {
+            M1AuthenticatedCompletedStepOutcomeV1::Rejected(
+                M1AuthenticatedCompletedStepRejectionV1 {
+                    error: rejected.error,
+                    readback: rejected.readback,
+                    roster: rejected.roster,
+                },
+            )
+        }
+        M1CompletedStepCoreOutcomeV1::Poisoned(poison) => {
+            let M1CompletedStepCorePoisonV1 {
+                error,
+                queue,
+                checked,
+                custody,
+            } = *poison;
+            M1AuthenticatedCompletedStepOutcomeV1::Poisoned(Box::new(
+                M1AuthenticatedCompletedStepPoisonV1 {
+                    error,
+                    queue,
+                    checked,
+                    custody,
+                },
+            ))
+        }
+    }
+}
+
+/// Completes one physical M1 readback across every scheduler member exactly once.
+///
+/// All output, reservation, cache-roster, arithmetic, and Engine checks finish
+/// before the first device-cache mutation. A preflight rejection returns both
+/// linear inputs unchanged. Any unexpected failure after mutation is terminal
+/// and retains opaque queue, cache, reservation, and completion custody.
+pub fn complete_m1_physical_step_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    readback: M1PhysicalCompletedReadbackV1,
+    roster: M1DeviceKvCompletionRosterV1,
+) -> M1CompletedStepOutcomeV1 {
+    into_raw_completed_step_outcome(complete_m1_step_core_v1(engine, readback, roster))
+}
+
+/// Completes one authenticated physical M1 readback without raw queue conversion.
+///
+/// The same transactional preflight and exact Engine/device-KV mutation core is
+/// used by the raw path. Rejection, success, and poison retain authenticated
+/// queue/program custody in authenticated-only public outcome types.
+///
+/// ```no_run
+/// use ferric_engine::{
+///     complete_m1_authenticated_physical_step_v1, Engine,
+///     M1AuthenticatedCompletedStepOutcomeV1, M1AuthenticatedPhysicalCompletedReadbackV1,
+///     M1DeviceKvCompletionRosterV1,
+/// };
+///
+/// fn settle<const C: usize>(
+///     engine: &mut Engine<C>,
+///     readback: M1AuthenticatedPhysicalCompletedReadbackV1,
+///     roster: M1DeviceKvCompletionRosterV1,
+/// ) -> M1AuthenticatedCompletedStepOutcomeV1 {
+///     complete_m1_authenticated_physical_step_v1(engine, readback, roster)
+/// }
+/// ```
+pub fn complete_m1_authenticated_physical_step_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    readback: M1AuthenticatedPhysicalCompletedReadbackV1,
+    roster: M1DeviceKvCompletionRosterV1,
+) -> M1AuthenticatedCompletedStepOutcomeV1 {
+    into_authenticated_completed_step_outcome(complete_m1_step_core_v1(engine, readback, roster))
 }
 
 #[cfg(test)]
@@ -1601,6 +2419,26 @@ mod tests {
         );
         assert_eq!(core::ptr::from_ref(owner.as_ref()), pointer);
         assert_eq!(*owner, identity(94));
+    }
+
+    #[test]
+    fn authenticated_readback_implements_the_shared_completion_contract() {
+        fn assert_carrier<T>()
+        where
+            T: M1CompletedStepReadbackCarrierV1<
+                Queue = M1AuthenticatedPhysicalReadbackQueueSessionV1,
+            >,
+        {
+        }
+
+        assert_carrier::<M1AuthenticatedPhysicalCompletedReadbackV1>();
+        let entrypoint: fn(
+            &mut Engine<1>,
+            M1AuthenticatedPhysicalCompletedReadbackV1,
+            M1DeviceKvCompletionRosterV1,
+        ) -> M1AuthenticatedCompletedStepOutcomeV1 =
+            complete_m1_authenticated_physical_step_v1::<1>;
+        let _ = entrypoint;
     }
 
     fn paired_work(

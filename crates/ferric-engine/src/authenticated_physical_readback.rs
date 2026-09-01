@@ -811,6 +811,20 @@ impl M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1 {
         }
     }
 
+    #[expect(
+        dead_code,
+        reason = "consumed by the staged authenticated completed-step page release"
+    )]
+    pub(crate) fn custody_mut(&mut self) -> &mut M1PhysicalQueueBatchCustodyV1 {
+        match self {
+            Self::TargetOnly(case)
+            | Self::PairedPrefill(case)
+            | Self::SpeculativeK4(case)
+            | Self::SpeculativeK8(case)
+            | Self::SpeculativeK16(case) => &mut case.custody,
+        }
+    }
+
     /// Checked physical-device receipt retained beside the live queue.
     #[must_use]
     pub const fn device(&self) -> Gfx942DeviceBinding {
@@ -950,6 +964,71 @@ impl M1AuthenticatedPhysicalReadbackQueueOperationFailureV1 {
     /// Exact lower queue error without exposing the lower queue owner.
     #[must_use]
     pub const fn error(&self) -> &ServiceQueueErrorV1 {
+        self.lower.error()
+    }
+
+    /// Exact Ferric allocation, recipe, and model-memory custody.
+    #[must_use = "Ferric custody remains paired with authenticated quarantine"]
+    pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
+        &self.custody
+    }
+
+    /// Exact authenticated program-catalog identity retained by quarantine.
+    #[must_use]
+    pub const fn program_catalog_id(&self) -> Identity {
+        self.witness.catalog_id()
+    }
+
+    /// Exact generated runner declaration identity.
+    #[must_use]
+    pub const fn runner_declaration_id(&self) -> Identity {
+        self.operations.runner_declaration_id()
+    }
+
+    /// Exact structural kernel-catalog identity.
+    #[must_use]
+    pub const fn kernel_catalog_id(&self) -> Identity {
+        self.operations.kernel_catalog_id()
+    }
+}
+
+/// Terminal authenticated post-readback release failure retaining every owner.
+#[must_use = "post-readback release failure retains authenticated and Ferric custody"]
+pub struct M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1 {
+    shape: M1PhysicalFixedBatchShapeV1,
+    lower: AuthenticatedServiceQueueReleaseFailureV1,
+    witness: M1AuthenticatedProgramCatalogWitnessV1,
+    operations: DeclaredOperationKernelPlan,
+    custody: M1PhysicalQueueBatchCustodyV1,
+}
+
+impl fmt::Debug for M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1")
+            .field("shape", &self.shape)
+            .field("error", &self.error())
+            .field("device", &self.custody.device())
+            .field("program_catalog_id", &self.witness.catalog_id())
+            .field(
+                "runner_declaration_id",
+                &self.operations.runner_declaration_id(),
+            )
+            .field("kernel_catalog_id", &self.operations.kernel_catalog_id())
+            .finish_non_exhaustive()
+    }
+}
+
+impl M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1 {
+    /// Exact failed M1 shape.
+    #[must_use]
+    pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
+        self.shape
+    }
+
+    /// Exact lower terminal release error without exposing queue custody.
+    #[must_use = "the lower release failure remains retained by authenticated quarantine"]
+    pub const fn error(&self) -> &ServiceQueueReleaseFailureV1 {
         self.lower.error()
     }
 
@@ -1512,6 +1591,64 @@ impl M1AuthenticatedPhysicalReadbackQueueSessionV1 {
             .map(M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1::SpeculativeK16),
         }
     }
+
+    /// Destroys the post-readback queue and releases authenticated programs.
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal authenticated lower release quarantine paired with the
+    /// exact witness, operation plan, and Ferric custody. No retry is claimed.
+    pub fn destroy_and_release(
+        self,
+    ) -> Result<
+        AuthenticatedServiceQueueReleaseV1,
+        Box<M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1>,
+    > {
+        match self {
+            Self::TargetOnly(case) => release_authenticated_post_readback_case(
+                case,
+                M1PhysicalFixedBatchShapeV1::TargetOnly,
+            ),
+            Self::PairedPrefill(case) => release_authenticated_post_readback_case(
+                case,
+                M1PhysicalFixedBatchShapeV1::PairedPrefill,
+            ),
+            Self::SpeculativeK4(case) => release_authenticated_post_readback_case(
+                case,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+            ),
+            Self::SpeculativeK8(case) => release_authenticated_post_readback_case(
+                case,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+            ),
+            Self::SpeculativeK16(case) => release_authenticated_post_readback_case(
+                case,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+            ),
+        }
+    }
+}
+
+fn release_authenticated_post_readback_case<const N: usize>(
+    case: Box<M1AuthenticatedPhysicalReadbackQueueCaseV1<N>>,
+    shape: M1PhysicalFixedBatchShapeV1,
+) -> Result<
+    AuthenticatedServiceQueueReleaseV1,
+    Box<M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1>,
+> {
+    let (lower, witness, operations, custody) = (*case).into_parts();
+    match lower.destroy_and_release() {
+        Ok(release) => Ok(release),
+        Err(lower) => Err(Box::new(
+            M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1 {
+                shape,
+                lower,
+                witness,
+                operations,
+                custody,
+            },
+        )),
+    }
 }
 
 fn detach_authenticated_readback_case<const N: usize>(
@@ -1778,6 +1915,10 @@ impl M1AuthenticatedPhysicalCompletedReadbackV1 {
     #[must_use]
     pub const fn completion_epoch(&self) -> CompletionEpoch {
         self.completion.epoch()
+    }
+
+    pub(crate) const fn completion_authority(&self) -> &ExactCompletion {
+        &self.completion
     }
 
     /// Pending KV reservations split from scheduler completion authority.
