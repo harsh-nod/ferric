@@ -59,7 +59,7 @@
           <aside class="readiness" aria-labelledby="readiness-title">
             <div class="panel-heading">
               <h2 id="readiness-title">Current readiness</h2>
-              <time data-updated datetime="2026-08-31">Updated 2026-08-31</time>
+              <time data-updated datetime="2026-09-01">Updated 2026-09-01</time>
             </div>
             <div class="readiness-list" data-readiness></div>
           </aside>
@@ -201,16 +201,17 @@
             <h2 id="next-title">Close compiler and custody gates</h2>
           </div>
           <p>
-            Ferric cannot run Qwen through the production path. M1 integration head 922dcb6 pins exact
-            fe2o3 2f6da870 and adds a canonical seven-family selector manifest plus the authority-free
-            ferric-m1-worker-v3-preflight. The preflight recovers all seven host rosters, requires exactly
-            12 markers, releases custody, and reports authentication, load, launch, and GPU authority false.
-            On mi300x, all seven device packages passed cargo-fe2o3 all-target checks on Rust 1.97.1; strict
-            engine clippy, engine 465/5, harness 11, packet 2, qualification 81/1, preflight 1, and doctests
-            132 passed. No real current V2 K1-K7 custody or production protected-roster verifier backend
-            exists. This source evidence grants no authenticated GPU, numerical, Qwen, performance,
-            production-receipt, or M1 authority. All 33 M1 roadmap requirements remain open, and no current
-            production Ferric Qwen run has occurred.
+            Ferric cannot run Qwen through the production path. Implementation 5f40e40 selects exact
+            fe2o3 b5374c6e, integrates all seven opaque device packages and 12 generated marker/argument
+            expectations, and repins the authority-free Worker V3 adapter. On mi300x, all seven packages
+            passed locked all-target cargo-fe2o3 check/test, direct fallback tests, and independent binding
+            parity; root fmt, strict clippy, locked workspace, UI, and documentation tests also passed. The
+            source gate accepts 151 modules and 6,850 executable bodies, with newly discovered bodies still
+            unverified and pending, and the deterministic planner accepts 354 slots with hostile policy
+            rejection. The current protected verifier/service, theorem contract, receipt-bound current
+            HSACO artifacts and roster owners, authenticated runtime path, and hardware, formal, numerical,
+            and performance evidence remain open. These results grant no Qwen or M1 authority. All 33 M1
+            roadmap requirements remain open, and no current production Ferric Qwen run has occurred.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>
