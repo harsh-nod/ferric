@@ -15,15 +15,18 @@ const allowedStates = new Set([
 const expectedCurrent = Object.freeze({
   siteRefreshBase: "e419160a3d21db5e8b25f414fd696982a959a171",
   implementationCommit: "4369786fde888e1ec64fe6b05fbced39bc33090d",
-  qualifiedImplementationBaseline: "5f40e404ba4bc76c16eed15868c63a72e60e716c",
+  historicalImplementationBaseline: "5f40e404ba4bc76c16eed15868c63a72e60e716c",
   selectedFe2o3Pin: "9f97985ee0a4a8ef0bc8f0fa0fd33771c8180592",
-  qualifiedFe2o3Baseline: "b5374c6e6a4c1215ad481cefcd294334dcb1cbeb",
+  historicalFe2o3Baseline: "b5374c6e6a4c1215ad481cefcd294334dcb1cbeb",
   repinState: "integration",
   githubCiRun: "33490985105",
   githubCiState: "qualified",
   authenticatedReleaseRun: "33490985170",
   authenticatedReleaseState: "integration",
   remoteRootAdapterState: "qualified",
+  genericCoreState: "qualified",
+  fallbackBindingParityState: "open",
+  freshFe2o3QualificationState: "integration",
   devicePackages: [
     "gemm",
     "logits",
@@ -33,8 +36,15 @@ const expectedCurrent = Object.freeze({
     "rope-kv",
     "swiglu",
   ],
-  repinValidatedDevicePackages: ["gemm", "logits", "paged-decode"],
-  repinPartiallyValidatedDevicePackages: ["prefill"],
+  repinCompilationTestValidatedDevicePackages: [
+    "gemm",
+    "logits",
+    "paged-decode",
+    "prefill",
+    "rmsnorm",
+    "rope-kv",
+    "swiglu",
+  ],
   generatedExpectations: 12,
   sourceGateModules: 151,
   sourceGateExecutableBodies: 6850,
@@ -86,11 +96,11 @@ assert(project.current && typeof project.current === "object", "current status i
 assertCommit(project.current.siteRefreshBase, "current.siteRefreshBase");
 assertCommit(project.current.implementationCommit, "current.implementationCommit");
 assertCommit(
-  project.current.qualifiedImplementationBaseline,
-  "current.qualifiedImplementationBaseline",
+  project.current.historicalImplementationBaseline,
+  "current.historicalImplementationBaseline",
 );
 assertCommit(project.current.selectedFe2o3Pin, "current.selectedFe2o3Pin");
-assertCommit(project.current.qualifiedFe2o3Baseline, "current.qualifiedFe2o3Baseline");
+assertCommit(project.current.historicalFe2o3Baseline, "current.historicalFe2o3Baseline");
 assertState(project.current.repinState, "current.repinState");
 assert(/^\d+$/.test(project.current.githubCiRun), "current.githubCiRun must be numeric");
 assertState(project.current.githubCiState, "current.githubCiState");
@@ -100,6 +110,12 @@ assert(
 );
 assertState(project.current.authenticatedReleaseState, "current.authenticatedReleaseState");
 assertState(project.current.remoteRootAdapterState, "current.remoteRootAdapterState");
+assertState(project.current.genericCoreState, "current.genericCoreState");
+assertState(project.current.fallbackBindingParityState, "current.fallbackBindingParityState");
+assertState(
+  project.current.freshFe2o3QualificationState,
+  "current.freshFe2o3QualificationState",
+);
 for (const [key, expected] of Object.entries(expectedCurrent)) {
   const actual = project.current[key];
   assert(
@@ -116,18 +132,18 @@ assert(
   "envelope must expose the exact active fe2o3 transition",
 );
 assert(
-  envelope.get("Qualified fe2o3 baseline")?.includes(expectedCurrent.qualifiedFe2o3Baseline),
-  "envelope must preserve the exact qualified fe2o3 baseline",
+  envelope.get("Historical fe2o3 baseline")?.includes(expectedCurrent.historicalFe2o3Baseline),
+  "envelope must preserve the exact historical fe2o3 baseline",
 );
 assert(
   envelope.get("Current implementation")?.includes(expectedCurrent.implementationCommit),
   "envelope must expose the exact current implementation",
 );
 assert(
-  envelope.get("Qualified implementation baseline")?.includes(
-    expectedCurrent.qualifiedImplementationBaseline,
+  envelope.get("Historical implementation baseline")?.includes(
+    expectedCurrent.historicalImplementationBaseline,
   ),
-  "envelope must preserve the exact qualified implementation baseline",
+  "envelope must preserve the exact historical implementation baseline",
 );
 assert(
   envelope.get("Active fe2o3 transition")?.includes(
@@ -146,9 +162,15 @@ assert(
   "envelope must expose authenticated release as in progress",
 );
 assert(
-  envelope.get("Corrected device matrix")?.includes("gemm, logits, and paged-decode") &&
-    envelope.get("Corrected device matrix")?.includes("prefill is partially complete"),
-  "envelope must distinguish passed and partially complete device lanes",
+  envelope.get("Corrected device matrix")?.includes("all seven exact") &&
+    envelope.get("Corrected device matrix")?.includes("not fallback binding parity"),
+  "envelope must scope the all-seven matrix away from fallback parity",
+);
+assert(
+  envelope.get("Fallback binding parity")?.startsWith("OPEN:") &&
+    envelope.get("Fallback binding parity")?.includes("did not compare") &&
+    envelope.get("Fallback binding parity")?.includes("bindings differ"),
+  "envelope must expose the fail-open checker and differing bindings",
 );
 assert(Array.isArray(project.readiness) && project.readiness.length > 0, "readiness is empty");
 project.readiness.forEach((item, index) =>
@@ -198,10 +220,10 @@ assert(
 assert(
   project.validation.host.state === "integration" &&
     project.validation.host.source === expectedCurrent.implementationCommit &&
-    project.validation.host.result.includes("PASS: CI, root/adapter, planner 354") &&
-    project.validation.host.result.includes("PARTIAL: prefill") &&
+    project.validation.host.result.includes("generic-core, all-seven compile/test/rmeta") &&
+    project.validation.host.result.includes("OPEN: fallback parity") &&
     project.validation.host.result.includes("IN PROGRESS"),
-  "current host validation must distinguish passed, partial, and in-progress gates",
+  "current host validation must distinguish compilation passes from open parity",
 );
 
 assert(
@@ -238,16 +260,16 @@ assert(
   "recent progress must include the current implementation commit",
 );
 assert(
-  progressCommits.has(expectedCurrent.qualifiedImplementationBaseline),
-  "recent progress must preserve the qualified implementation baseline",
+  progressCommits.has(expectedCurrent.historicalImplementationBaseline),
+  "recent progress must preserve the historical implementation baseline",
 );
 assert(
   progressCommits.has(expectedCurrent.selectedFe2o3Pin),
   "recent progress must include the active fe2o3 transition",
 );
 assert(
-  progressCommits.has(expectedCurrent.qualifiedFe2o3Baseline),
-  "recent progress must preserve the qualified fe2o3 baseline",
+  progressCommits.has(expectedCurrent.historicalFe2o3Baseline),
+  "recent progress must preserve the historical fe2o3 baseline",
 );
 const upstreamRosterHandoff = progressByCommit.get(
   "62e527c960b40716290ba8cb82ba5594be4f3706",
