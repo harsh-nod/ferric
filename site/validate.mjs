@@ -13,12 +13,16 @@ const allowedStates = new Set([
   "open",
 ]);
 const expectedCurrent = Object.freeze({
-  siteRefreshBase: "6a20199b71283c8d4c88a94c9489823ab15630b3",
-  implementationCommit: "6a20199b71283c8d4c88a94c9489823ab15630b3",
+  siteRefreshBase: "24748e11358db7ad3ab5fe35992cff354896e607",
+  implementationCommit: "24748e11358db7ad3ab5fe35992cff354896e607",
   selectedFe2o3Pin: "52815c9ed52a3075e26322cf506144cb22da12d2",
   aggregateSourceCommit: "5514afe176a090aa3f1da9e5354799bb4ca5a8b3",
   aggregateProducerCommit: "e57c42523050922ad76538150df691cc5ab975a7",
   aggregateKernelCount: 12,
+  diagnosticBridgeCommit: "24748e11358db7ad3ab5fe35992cff354896e607",
+  diagnosticStatus: "partial-non-evidence",
+  diagnosticDispatchGeneration: 1,
+  diagnosticCopyCount: 5,
   openM1Gates: 33,
 });
 
@@ -64,6 +68,7 @@ assertCommit(project.current.implementationCommit, "current.implementationCommit
 assertCommit(project.current.selectedFe2o3Pin, "current.selectedFe2o3Pin");
 assertCommit(project.current.aggregateSourceCommit, "current.aggregateSourceCommit");
 assertCommit(project.current.aggregateProducerCommit, "current.aggregateProducerCommit");
+assertCommit(project.current.diagnosticBridgeCommit, "current.diagnosticBridgeCommit");
 for (const [key, expected] of Object.entries(expectedCurrent)) {
   const actual = project.current[key];
   assert(
