@@ -9,11 +9,8 @@
 
 use core::fmt;
 
-use fe2o3_host::{AuthenticatedServiceQueueCreateFailureV1, AuthenticatedServiceQueueSessionV1};
 use fe2o3_kfd::CheckedGfx942XnackMinusDevice;
-use fe2o3_service_host::{
-    ServiceAllocationSessionV1, ServiceFixedDispatchPacketV1, ServiceQueueErrorV1,
-};
+use fe2o3_service_host::ServiceQueueErrorV1;
 use ferric_build::{
     AddresslessModelMemoryPlan, GeneratedOperationDeclaration, GeneratedPlanDeclaration,
     M1KernelArtifactFamilyV1, PublishedRunnerDeclaration,
@@ -287,22 +284,6 @@ impl M1AuthenticatedPhysicalRunnerV1 {
         workspace_plans: M1FullStepWorkspacePlans,
     ) -> M1PhysicalRunnerRecipeOutcomeV1 {
         derive_physical_step_recipe(&self.operations, intent, workspace_plans)
-    }
-
-    /// Consumes authenticated program custody into one exact service queue.
-    ///
-    /// # Errors
-    ///
-    /// Returns the fe2o3 owner-retaining authenticated creation failure.
-    pub fn create_service_queue<const N: usize>(
-        self,
-        allocations: ServiceAllocationSessionV1,
-        ring_bytes: u32,
-        packets: [ServiceFixedDispatchPacketV1; N],
-    ) -> Result<AuthenticatedServiceQueueSessionV1<N>, AuthenticatedServiceQueueCreateFailureV1<N>>
-    {
-        self.programs
-            .create_service_queue(allocations, ring_bytes, packets)
     }
 }
 

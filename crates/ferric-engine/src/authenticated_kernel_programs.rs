@@ -12,16 +12,11 @@ use std::path::{Path, PathBuf};
 
 use fe2o3_amd_target::AmdTargetId;
 use fe2o3_host::{
-    AuthenticatedServiceCurrentnessFailureV1, AuthenticatedServiceQueueBindFailureV1,
-    AuthenticatedServiceQueueCreateFailureV1, AuthenticatedServiceQueueRolloverFailureV1,
-    AuthenticatedServiceQueueRolloverSuccessV1, AuthenticatedServiceQueueSessionV1,
-    AuthenticatedServiceQueueUnboundSessionV1, AuthenticatedServiceRecycledQueueSessionV1,
     AuthenticatedWorkerV3ProgramLookupErrorV1, AuthenticatedWorkerV3ProgramSetAdmissionErrorV1,
     AuthenticatedWorkerV3ProgramSetV1, AuthenticatedWorkerV3RosterV1,
     CompilerGeneratedKernelExpectationRosterV1, CompilerGeneratedKernelExpectationV1,
     RecoveredWorkerV3AdmissionErrorV1,
 };
-use fe2o3_service_host::{ServiceAllocationSessionV1, ServiceFixedDispatchPacketV1};
 use ferric_build::{
     current_m1_kernel_source_facts_v1, M1CurrentKernelSourceFactsV1, M1KernelArtifactBuildErrorV1,
     M1KernelArtifactFamilyV1,
@@ -34,6 +29,8 @@ use crate::{DeclaredKernelFamilyArtifact, M1PhysicalProgramV1, M1_PHYSICAL_PROGR
 
 const M1_AUTHENTICATED_PROGRAM_CATALOG_DOMAIN_V1: &[u8] =
     b"ferric.m1.authenticated-worker-v3-program-catalog.v1";
+const M1_AUTHENTICATED_PROGRAM_MAP_DOMAIN_V1: &[u8] =
+    b"ferric.m1.authenticated-worker-v3-program-map.v1";
 /// Exact production target admitted by the M1 physical runner.
 pub const M1_AUTHENTICATED_PROGRAM_TARGET_V1: &str = "gfx942:xnack-";
 /// Exact number of independently authenticated artifact rosters.
@@ -59,11 +56,11 @@ type SpeculativeAssemblyMarkerV1 =
     ferric_qwen3_logits_device_v1::ferric_qwen3_speculative_token_assembly_v1_gpu::Marker;
 
 fe2o3_host::compiler_generated_kernel_expectation_roster_v1! {
-    /// Exact compiler-generated K1 marker roster.
+    /// Exact compiler-generated K1 marker roster in canonical `KernelId` order.
     pub struct M1GemmWorkerV3RosterV1 = [
+        TokenEmbeddingMarkerV1,
         GemmReferenceMarkerV1,
         GemmVectorizedMarkerV1,
-        TokenEmbeddingMarkerV1,
     ];
 }
 
@@ -232,6 +229,12 @@ pub enum M1AuthenticatedProgramSetIntakeErrorV1 {
         logical: &'static str,
         export: &'static str,
     },
+    MarkerOutsideFamily {
+        family: M1KernelArtifactFamilyV1,
+        ordinal: usize,
+        logical: &'static str,
+        export: &'static str,
+    },
     MarkerIdentity {
         family: M1KernelArtifactFamilyV1,
         ordinal: usize,
@@ -252,6 +255,10 @@ pub enum M1AuthenticatedProgramSetIntakeErrorV1 {
     SourceFamilyOrder {
         expected: M1KernelArtifactFamilyV1,
         actual: M1KernelArtifactFamilyV1,
+    },
+    SourceIdentity {
+        family: M1KernelArtifactFamilyV1,
+        axis: &'static str,
     },
     ProgramSet {
         family: M1KernelArtifactFamilyV1,
@@ -300,11 +307,13 @@ pub struct M1AuthenticatedProgramSetIntakeFailureV1<K3R> {
 
 impl<K3R> M1AuthenticatedProgramSetIntakeFailureV1<K3R> {
     /// Returns the exact rejection phase.
+    #[must_use]
     pub const fn phase(&self) -> M1AuthenticatedProgramSetIntakePhaseV1 {
         self.phase
     }
 
     /// Returns the exact rejection diagnostic.
+    #[must_use]
     pub const fn error(&self) -> &M1AuthenticatedProgramSetIntakeErrorV1 {
         &self.error
     }
@@ -338,6 +347,7 @@ pub struct M1AuthenticatedWorkerV3ProgramSetV1 {
     programs: AuthenticatedWorkerV3ProgramSetV1,
     family_artifacts: Box<[DeclaredKernelFamilyArtifact]>,
     catalog_id: Identity,
+    service_program_indices: [usize; M1_PHYSICAL_PROGRAM_COUNT_V1],
 }
 
 impl fmt::Debug for M1AuthenticatedWorkerV3ProgramSetV1 {
@@ -348,32 +358,48 @@ impl fmt::Debug for M1AuthenticatedWorkerV3ProgramSetV1 {
             .field("program_count", &self.programs.program_count())
             .field("target", &self.programs.target())
             .field("catalog_id", &self.catalog_id)
+            .field("service_program_indices", &self.service_program_indices)
             .finish_non_exhaustive()
     }
 }
 
 impl M1AuthenticatedWorkerV3ProgramSetV1 {
     /// Returns the exact seven-roster count.
+    #[must_use]
     pub fn roster_count(&self) -> usize {
         self.programs.roster_count()
     }
 
     /// Returns the exact flattened program count.
+    #[must_use]
     pub fn program_count(&self) -> usize {
         self.programs.program_count()
     }
 
     /// Returns the exact common target.
+    #[must_use]
     pub const fn target(&self) -> AmdTargetId {
         self.programs.target()
     }
 
     /// Returns the Ferric-domain-separated current program catalog identity.
+    #[must_use]
     pub const fn catalog_id(&self) -> Identity {
         self.catalog_id
     }
 
+    /// Resolves one stable Ferric program role to its canonical Worker V3 service index.
+    #[must_use]
+    pub const fn service_program_index(&self, program: M1PhysicalProgramV1) -> usize {
+        self.service_program_indices[program.program_index()]
+    }
+
     /// Resolves a compiler-generated marker in the retained program set.
+    ///
+    /// # Errors
+    ///
+    /// Returns the generic authenticated-program lookup error when the marker
+    /// is absent from the exact retained roster set.
     pub fn program_index<K: CompilerGeneratedKernelExpectationV1>(
         &self,
     ) -> Result<usize, AuthenticatedWorkerV3ProgramLookupErrorV1> {
@@ -383,56 +409,6 @@ impl M1AuthenticatedWorkerV3ProgramSetV1 {
     pub(crate) fn family_artifacts(&self) -> &[DeclaredKernelFamilyArtifact] {
         &self.family_artifacts
     }
-
-    pub(crate) fn into_programs(self) -> AuthenticatedWorkerV3ProgramSetV1 {
-        self.programs
-    }
-
-    /// Creates a queue only from this authenticated set and addressless packets.
-    ///
-    /// The generic fe2o3 failure retains the program set, allocation owner, and
-    /// packets according to its exact rejection phase.
-    pub fn create_service_queue<const N: usize>(
-        self,
-        allocations: ServiceAllocationSessionV1,
-        ring_bytes: u32,
-        packets: [ServiceFixedDispatchPacketV1; N],
-    ) -> Result<AuthenticatedServiceQueueSessionV1<N>, AuthenticatedServiceQueueCreateFailureV1<N>>
-    {
-        AuthenticatedServiceQueueSessionV1::create(self.programs, allocations, ring_bytes, packets)
-    }
-}
-
-/// Revalidates and reuses the same attached authenticated set.
-pub fn reuse_m1_authenticated_service_queue_v1<const N: usize>(
-    recycled: AuthenticatedServiceRecycledQueueSessionV1<N>,
-) -> Result<
-    AuthenticatedServiceQueueSessionV1<N>,
-    AuthenticatedServiceCurrentnessFailureV1<AuthenticatedServiceRecycledQueueSessionV1<N>>,
-> {
-    recycled.reuse()
-}
-
-/// Binds a fresh move-only Ferric-qualified replacement set.
-pub fn bind_m1_authenticated_service_queue_v1<const N: usize>(
-    queue: AuthenticatedServiceQueueUnboundSessionV1,
-    replacement: M1AuthenticatedWorkerV3ProgramSetV1,
-    packets: [ServiceFixedDispatchPacketV1; N],
-) -> Result<AuthenticatedServiceQueueSessionV1<N>, AuthenticatedServiceQueueBindFailureV1<N>> {
-    queue.bind(replacement.into_programs(), packets)
-}
-
-/// Rolls over only with a fresh move-only Ferric-qualified replacement set.
-pub fn rollover_m1_authenticated_service_queue_v1<const N: usize>(
-    queue: AuthenticatedServiceQueueUnboundSessionV1,
-    ring_bytes: u32,
-    replacement: M1AuthenticatedWorkerV3ProgramSetV1,
-    packets: [ServiceFixedDispatchPacketV1; N],
-) -> Result<
-    AuthenticatedServiceQueueRolloverSuccessV1<N>,
-    AuthenticatedServiceQueueRolloverFailureV1<N>,
-> {
-    queue.rollover(ring_bytes, replacement.into_programs(), packets)
 }
 
 /// Typed fail-closed result for a legacy raw-artifact production entry point.
@@ -443,6 +419,7 @@ pub struct M1AuthenticatedRosterAcquisitionRequiredV1 {
 
 impl M1AuthenticatedRosterAcquisitionRequiredV1 {
     /// Returns the legacy path that cannot establish authenticated custody.
+    #[must_use]
     pub fn artifact_root(&self) -> &Path {
         &self.artifact_root
     }
@@ -461,6 +438,11 @@ impl fmt::Display for M1AuthenticatedRosterAcquisitionRequiredV1 {
 impl Error for M1AuthenticatedRosterAcquisitionRequiredV1 {}
 
 /// Rejects a path-only production request before raw artifact reopening.
+///
+/// # Errors
+///
+/// Always returns typed rejection custody naming the path that cannot establish
+/// a current authenticated Worker V3 roster.
 pub fn require_m1_authenticated_roster_acquisition_v1(
     artifact_root: &Path,
 ) -> Result<(), M1AuthenticatedRosterAcquisitionRequiredV1> {
@@ -474,6 +456,11 @@ pub fn require_m1_authenticated_roster_acquisition_v1(
 /// K3 marker types must be the two real compiler-generated markers from the
 /// caller's K3 roster. This API intentionally cannot be concretely instantiated
 /// by Ferric until that generated crate is integrated.
+///
+/// # Errors
+///
+/// Returns the exact failed intake phase, diagnostic, and every roster or
+/// partially composed program owner available at that phase.
 pub fn admit_m1_authenticated_worker_v3_programs_v1<K3R, K3Rope, K3PagedKv>(
     rosters: M1AuthenticatedWorkerV3RostersV1<K3R>,
 ) -> Result<M1AuthenticatedWorkerV3ProgramSetV1, M1AuthenticatedProgramSetIntakeFailureV1<K3R>>
@@ -499,14 +486,14 @@ where
             rosters.into_residue(),
         ));
     }
-    if let Err((family, error)) = validate_rosters::<K3R, K3Rope, K3PagedKv>(&rosters) {
+    if let Err((family, error)) = validate_rosters::<K3R, K3Rope, K3PagedKv>(&facts, &rosters) {
         return Err(intake_failure(
             M1AuthenticatedProgramSetIntakePhaseV1::Preflight(family),
             error,
             rosters.into_residue(),
         ));
     }
-    let catalog_id = authenticated_catalog_id(&facts, &rosters);
+    let roster_catalog_id = authenticated_catalog_id(&facts, &rosters);
     let family_artifacts = authenticated_family_artifacts(&facts, &rosters);
 
     let M1AuthenticatedWorkerV3RostersV1 {
@@ -592,18 +579,25 @@ where
             residue,
         ));
     }
-    if let Err(error) = validate_program_indices::<K3Rope, K3PagedKv>(&programs) {
-        residue.programs = Some(programs);
-        return Err(intake_failure(
-            M1AuthenticatedProgramSetIntakePhaseV1::Aggregate,
-            error,
-            residue,
-        ));
-    }
+    let service_program_indices =
+        match authenticated_program_indices::<K3Rope, K3PagedKv>(&programs) {
+            Ok(indices) => indices,
+            Err(error) => {
+                residue.programs = Some(programs);
+                return Err(intake_failure(
+                    M1AuthenticatedProgramSetIntakePhaseV1::Aggregate,
+                    error,
+                    residue,
+                ));
+            }
+        };
+    let catalog_id =
+        authenticated_catalog_id_with_program_map(roster_catalog_id, &service_program_indices);
     Ok(M1AuthenticatedWorkerV3ProgramSetV1 {
         programs,
         family_artifacts,
         catalog_id,
+        service_program_indices,
     })
 }
 
@@ -634,6 +628,7 @@ fn validate_source_family_order(
 }
 
 fn validate_rosters<K3R, K3Rope, K3PagedKv>(
+    facts: &[M1CurrentKernelSourceFactsV1; M1_AUTHENTICATED_ROSTER_COUNT_V1],
     rosters: &M1AuthenticatedWorkerV3RostersV1<K3R>,
 ) -> Result<
     (),
@@ -650,36 +645,43 @@ where
     let checks = [
         validate_roster(
             M1KernelArtifactFamilyV1::Gemm,
+            &facts[0],
             &rosters.gemm,
             &M1PhysicalProgramV1::ALL[0..3],
         ),
         validate_roster(
             M1KernelArtifactFamilyV1::RmsNorm,
+            &facts[1],
             &rosters.rmsnorm,
             &M1PhysicalProgramV1::ALL[3..4],
         ),
         validate_roster(
             M1KernelArtifactFamilyV1::RopeKv,
+            &facts[2],
             &rosters.rope_kv,
             &M1PhysicalProgramV1::ALL[4..6],
         ),
         validate_roster(
             M1KernelArtifactFamilyV1::Prefill,
+            &facts[3],
             &rosters.prefill,
             &M1PhysicalProgramV1::ALL[6..7],
         ),
         validate_roster(
             M1KernelArtifactFamilyV1::PagedDecode,
+            &facts[4],
             &rosters.paged_decode,
             &M1PhysicalProgramV1::ALL[7..8],
         ),
         validate_roster(
             M1KernelArtifactFamilyV1::SwiGlu,
+            &facts[5],
             &rosters.swiglu,
             &M1PhysicalProgramV1::ALL[8..9],
         ),
         validate_roster(
             M1KernelArtifactFamilyV1::Logits,
+            &facts[6],
             &rosters.logits,
             &M1PhysicalProgramV1::ALL[9..12],
         ),
@@ -706,6 +708,7 @@ where
 
 fn validate_roster<R: CompilerGeneratedKernelExpectationRosterV1>(
     family: M1KernelArtifactFamilyV1,
+    facts: &M1CurrentKernelSourceFactsV1,
     roster: &AuthenticatedWorkerV3RosterV1<R>,
     programs: &[M1PhysicalProgramV1],
 ) -> Result<
@@ -726,6 +729,45 @@ fn validate_roster<R: CompilerGeneratedKernelExpectationRosterV1>(
             },
         )
     })?;
+    let compiler_module = roster.compiler_module_identity();
+    let expected_module = facts.compiler_module();
+    if compiler_module.sha256() != expected_module.sha256()
+        || compiler_module.byte_len() != expected_module.byte_len()
+    {
+        return Err((
+            family,
+            M1AuthenticatedProgramSetIntakeErrorV1::SourceIdentity {
+                family,
+                axis: "compiler module",
+            },
+        ));
+    }
+    let compiler_handoff = roster.compiler_handoff_identity();
+    let expected_handoff = facts.compiler_handoff();
+    if compiler_handoff.sha256() != expected_handoff.sha256()
+        || compiler_handoff.byte_len() != expected_handoff.byte_len()
+    {
+        return Err((
+            family,
+            M1AuthenticatedProgramSetIntakeErrorV1::SourceIdentity {
+                family,
+                axis: "compiler handoff",
+            },
+        ));
+    }
+    let symbol_manifest = roster.compiler_symbol_manifest_identity();
+    let expected_manifest = facts.symbol_manifest();
+    if symbol_manifest.sha256() != expected_manifest.sha256()
+        || symbol_manifest.byte_len() != expected_manifest.byte_len()
+    {
+        return Err((
+            family,
+            M1AuthenticatedProgramSetIntakeErrorV1::SourceIdentity {
+                family,
+                axis: "symbol manifest",
+            },
+        ));
+    }
     if roster.target() != expected_target {
         return Err((
             family,
@@ -765,15 +807,16 @@ fn validate_roster<R: CompilerGeneratedKernelExpectationRosterV1>(
             M1AuthenticatedProgramSetIntakeErrorV1::EmptyFinalizedArtifact(family),
         ));
     }
-    for (ordinal, (entry, program)) in R::ENTRIES.iter().zip(programs).enumerate() {
-        let expected = program.kernel_symbol();
-        if entry.logical_name() != expected || entry.export_name() != expected {
+    for (ordinal, entry) in R::ENTRIES.iter().enumerate() {
+        if !programs.iter().any(|program| {
+            let expected = program.kernel_symbol();
+            entry.logical_name() == expected && entry.export_name() == expected
+        }) {
             return Err((
                 family,
-                M1AuthenticatedProgramSetIntakeErrorV1::MarkerSymbol {
+                M1AuthenticatedProgramSetIntakeErrorV1::MarkerOutsideFamily {
                     family,
                     ordinal,
-                    expected,
                     logical: entry.logical_name(),
                     export: entry.export_name(),
                 },
@@ -836,10 +879,19 @@ where
                 export: export[ordinal],
             });
         }
-        let entry = &K3R::ENTRIES[ordinal];
+        let Some(entry) = K3R::ENTRIES
+            .iter()
+            .find(|entry| entry.kernel_binding_id() == bindings[ordinal])
+        else {
+            return Err(M1AuthenticatedProgramSetIntakeErrorV1::K3MarkerType {
+                ordinal,
+                expected: expected[ordinal],
+                logical: logical[ordinal],
+                export: export[ordinal],
+            });
+        };
         if entry.logical_name() != logical[ordinal]
             || entry.export_name() != export[ordinal]
-            || entry.kernel_binding_id() != bindings[ordinal]
             || entry.generated_host_contract_identity() != contracts[ordinal]
         {
             return Err(M1AuthenticatedProgramSetIntakeErrorV1::K3MarkerType {
@@ -876,9 +928,9 @@ fn append_bindings<R: CompilerGeneratedKernelExpectationRosterV1>(
     Ok(())
 }
 
-fn validate_program_indices<K3Rope, K3PagedKv>(
+fn authenticated_program_indices<K3Rope, K3PagedKv>(
     programs: &AuthenticatedWorkerV3ProgramSetV1,
-) -> Result<(), M1AuthenticatedProgramSetIntakeErrorV1>
+) -> Result<[usize; M1_PHYSICAL_PROGRAM_COUNT_V1], M1AuthenticatedProgramSetIntakeErrorV1>
 where
     K3Rope: CompilerGeneratedKernelExpectationV1,
     K3PagedKv: CompilerGeneratedKernelExpectationV1,
@@ -897,16 +949,35 @@ where
         programs.program_index::<LogitsCompactMarkerV1>().ok(),
         programs.program_index::<SpeculativeAssemblyMarkerV1>().ok(),
     ];
+    let mut indices = [0; M1_PHYSICAL_PROGRAM_COUNT_V1];
     for (program, actual) in M1PhysicalProgramV1::ALL.into_iter().zip(actual) {
-        if actual != Some(program.program_index()) {
+        let Some(actual) = actual else {
             return Err(M1AuthenticatedProgramSetIntakeErrorV1::ProgramIndex {
                 program,
                 expected: program.program_index(),
-                actual,
+                actual: None,
             });
-        }
+        };
+        indices[program.program_index()] = actual;
     }
-    Ok(())
+    Ok(indices)
+}
+
+fn authenticated_catalog_id_with_program_map(
+    roster_catalog_id: Identity,
+    service_program_indices: &[usize; M1_PHYSICAL_PROGRAM_COUNT_V1],
+) -> Identity {
+    let mut digest = Sha256::new();
+    digest.update(M1_AUTHENTICATED_PROGRAM_MAP_DOMAIN_V1);
+    digest.update(roster_catalog_id.as_bytes());
+    for (program, service_index) in M1PhysicalProgramV1::ALL
+        .into_iter()
+        .zip(service_program_indices)
+    {
+        digest.update([program as u8]);
+        digest.update((*service_index as u64).to_le_bytes());
+    }
+    Identity::new(digest.finalize().into())
 }
 
 fn authenticated_family_artifacts<K3R>(
@@ -995,7 +1066,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn integrated_rosters_cover_ten_exact_compiler_generated_markers() {
+    fn integrated_rosters_are_canonical_and_cover_ten_exact_markers() {
         let rosters: [&[fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1]; 6] = [
             M1GemmWorkerV3RosterV1::ENTRIES,
             M1RmsNormWorkerV3RosterV1::ENTRIES,
@@ -1005,11 +1076,19 @@ mod tests {
             M1LogitsWorkerV3RosterV1::ENTRIES,
         ];
         assert_eq!(rosters.iter().map(|roster| roster.len()).sum::<usize>(), 10);
-        let symbols = rosters
+        for roster in rosters {
+            assert!(
+                roster
+                    .windows(2)
+                    .all(|entries| entries[0].kernel_binding_id() < entries[1].kernel_binding_id()),
+                "Worker V3 rosters must follow canonical descriptor-table order"
+            );
+        }
+        let mut symbols = rosters
             .into_iter()
             .flat_map(|roster| roster.iter().map(|entry| entry.export_name()))
             .collect::<Vec<_>>();
-        let expected = M1PhysicalProgramV1::ALL
+        let mut expected = M1PhysicalProgramV1::ALL
             .into_iter()
             .filter(|program| {
                 !matches!(
@@ -1019,6 +1098,8 @@ mod tests {
             })
             .map(M1PhysicalProgramV1::kernel_symbol)
             .collect::<Vec<_>>();
+        symbols.sort_unstable();
+        expected.sort_unstable();
         assert_eq!(symbols, expected);
     }
 

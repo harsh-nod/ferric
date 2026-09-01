@@ -91,7 +91,10 @@ impl M1PhysicalProgramV1 {
         Self::SpeculativeTokenAssembly,
     ];
 
-    /// Zero-based index supplied to a fixed service packet.
+    /// Stable structural program ordinal.
+    ///
+    /// Authenticated Worker V3 service indices are resolved independently from canonical
+    /// descriptor order.
     #[must_use]
     pub const fn program_index(self) -> usize {
         self as usize

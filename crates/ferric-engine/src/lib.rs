@@ -57,15 +57,13 @@ mod step_workspace_subleases;
 mod system;
 
 pub use authenticated_kernel_programs::{
-    admit_m1_authenticated_worker_v3_programs_v1, bind_m1_authenticated_service_queue_v1,
-    require_m1_authenticated_roster_acquisition_v1, reuse_m1_authenticated_service_queue_v1,
-    rollover_m1_authenticated_service_queue_v1, M1AuthenticatedProgramSetIntakeErrorV1,
-    M1AuthenticatedProgramSetIntakeFailureV1, M1AuthenticatedProgramSetIntakePhaseV1,
-    M1AuthenticatedRosterAcquisitionRequiredV1, M1AuthenticatedWorkerV3ProgramSetResidueV1,
-    M1AuthenticatedWorkerV3ProgramSetV1, M1AuthenticatedWorkerV3RostersV1, M1GemmWorkerV3RosterV1,
-    M1LogitsWorkerV3RosterV1, M1PagedDecodeWorkerV3RosterV1, M1PrefillWorkerV3RosterV1,
-    M1RmsNormWorkerV3RosterV1, M1SwiGluWorkerV3RosterV1, M1_AUTHENTICATED_PROGRAM_TARGET_V1,
-    M1_AUTHENTICATED_ROSTER_COUNT_V1,
+    admit_m1_authenticated_worker_v3_programs_v1, require_m1_authenticated_roster_acquisition_v1,
+    M1AuthenticatedProgramSetIntakeErrorV1, M1AuthenticatedProgramSetIntakeFailureV1,
+    M1AuthenticatedProgramSetIntakePhaseV1, M1AuthenticatedRosterAcquisitionRequiredV1,
+    M1AuthenticatedWorkerV3ProgramSetResidueV1, M1AuthenticatedWorkerV3ProgramSetV1,
+    M1AuthenticatedWorkerV3RostersV1, M1GemmWorkerV3RosterV1, M1LogitsWorkerV3RosterV1,
+    M1PagedDecodeWorkerV3RosterV1, M1PrefillWorkerV3RosterV1, M1RmsNormWorkerV3RosterV1,
+    M1SwiGluWorkerV3RosterV1, M1_AUTHENTICATED_PROGRAM_TARGET_V1, M1_AUTHENTICATED_ROSTER_COUNT_V1,
 };
 pub use bound_step_workspaces::{
     BoundM1FullStepWorkspaceSubleases, M1FullStepWorkspaceDispatchRangeError,
