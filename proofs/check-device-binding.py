@@ -122,6 +122,15 @@ def fallback_binding(workspace: Path) -> str:
     return matches[0]
 
 
+def binding_parity_error(derived: str, fallback: str) -> str | None:
+    if derived == fallback:
+        return None
+    return (
+        "compiler-derived binding differs from the explicit fallback: "
+        f"compiler={derived} fallback={fallback}"
+    )
+
+
 def verify(workspace: Path, transcript: Path) -> None:
     manifest = tomllib.loads((workspace / "Cargo.toml").read_text(encoding="utf-8"))
     crate_name = manifest.get("lib", {}).get("name")
@@ -133,6 +142,8 @@ def verify(workspace: Path, transcript: Path) -> None:
         fail("canonical rustc invocation has no explicit metadata")
     derived = derive_binding(crate_name, metadata)
     fallback = fallback_binding(workspace)
+    if parity_error := binding_parity_error(derived, fallback):
+        fail(parity_error)
     extra_filename = codegen_values(argv, "extra-filename")
     if len(extra_filename) != 1:
         fail(f"expected one rustc extra-filename, found {len(extra_filename)}")
@@ -170,6 +181,10 @@ def self_test() -> None:
     hostile = "f" + golden[1:]
     if hostile == golden or HEX_64.fullmatch(hostile) is None:
         fail("one-nibble hostile binding fixture is invalid")
+    if binding_parity_error(golden, golden) is not None:
+        fail("equal compiler and fallback bindings did not pass parity")
+    if binding_parity_error(golden, hostile) is None:
+        fail("hostile fallback binding did not fail parity")
     print("PASS: device binding parser and canonical derivation golden vector matched")
 
 
