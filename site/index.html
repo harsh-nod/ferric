@@ -201,19 +201,16 @@
             <h2 id="next-title">Close compiler and custody gates</h2>
           </div>
           <p>
-            Ferric cannot run Qwen through the production path. K6 SwiGLU attributed source landed
-            through PR #32 at Ferric main da25cef3, but no current compiler artifact or run is claimed.
-            K1 GEMM/embedding has 21 managed debug and release host tests passing on MI300X without
-            production extraction, artifact, or hardware evidence. Active unlanded K2 RMSNorm
-            development now matches authoritative lane-zero ascending serial FP32 accumulation and
-            passes 17 debug plus 17 release managed tests on MI300X, while ABI, PR #22 transport,
-            latest-compiler extraction, artifact, KFD, and hardware gaps remain. K3 RoPE/KV remains
-            in development. fe2o3 PRs #20 and #21 merged exact multi-root production lowering
-            and reviewed external source trust, and current fe2o3 main is 881078f3. PR #22 non-null
-            empty KFD transport remains open with failing checks, while generic volatile-load production
-            support remains active and unmerged. Qwen numerical, hardware, and performance evidence,
-            independent validation, formal closure, the production receipt, and all 33 M1 requirements
-            remain open. No current production Ferric Qwen run has occurred.
+            Ferric cannot run Qwen through the production path. M1 integration head 922dcb6 pins exact
+            fe2o3 2f6da870 and adds a canonical seven-family selector manifest plus the authority-free
+            ferric-m1-worker-v3-preflight. The preflight recovers all seven host rosters, requires exactly
+            12 markers, releases custody, and reports authentication, load, launch, and GPU authority false.
+            On mi300x, all seven device packages passed cargo-fe2o3 all-target checks on Rust 1.97.1; strict
+            engine clippy, engine 465/5, harness 11, packet 2, qualification 81/1, preflight 1, and doctests
+            132 passed. No real current V2 K1-K7 custody or production protected-roster verifier backend
+            exists. This source evidence grants no authenticated GPU, numerical, Qwen, performance,
+            production-receipt, or M1 authority. All 33 M1 roadmap requirements remain open, and no current
+            production Ferric Qwen run has occurred.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>
