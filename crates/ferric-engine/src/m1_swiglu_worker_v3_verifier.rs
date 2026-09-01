@@ -174,7 +174,12 @@ impl M1SwiGluProtectedBuildIdentitiesV1 {
     }
 }
 
-/// Returns the exact build axes recorded by `PROTECTED_WORKER_V3_SWIGLU_BUILD.json`.
+/// Returns the exact historical build axes recorded by
+/// `PROTECTED_WORKER_V3_SWIGLU_BUILD.json`.
+///
+/// The checked-in record predates the write-only output conversion in the current device source.
+/// It remains authority-free evidence for that exact artifact and must not be treated as a build
+/// of the current source.
 #[must_use]
 pub fn current_m1_swiglu_worker_v3_build_v1() -> M1SwiGluProtectedBuildIdentitiesV1 {
     M1SwiGluProtectedBuildIdentitiesV1::from_untrusted_observation(
@@ -607,7 +612,7 @@ mod tests {
     }
 
     #[test]
-    fn frozen_build_policy_matches_checked_in_record_and_device_source() {
+    fn frozen_build_policy_matches_checked_in_record_and_is_stale_for_device_source() {
         let record: serde_json::Value = serde_json::from_str(BUILD_RECORD).unwrap();
         let build = current_m1_swiglu_worker_v3_build_v1();
         assert_eq!(hex(build.artifact_sha256), record["artifact"]["sha256"]);
@@ -650,13 +655,14 @@ mod tests {
             .unwrap();
         assert_eq!(hex(build.device_source_sha256), source["sha256"]);
         assert_eq!(build.device_source_length, source["size_bytes"]);
-        assert_eq!(DEVICE_SOURCE.len() as u64, build.device_source_length);
-        assert_eq!(
+        assert_ne!(DEVICE_SOURCE.len() as u64, build.device_source_length);
+        assert_ne!(
             <[u8; 32]>::from(Sha256::digest(DEVICE_SOURCE)),
             build.device_source_sha256
         );
         let source_text = std::str::from_utf8(DEVICE_SOURCE).unwrap();
-        assert!(source_text.contains(DEVICE_SOURCE_NAMESPACE_V1));
+        assert!(!source_text.contains(DEVICE_SOURCE_NAMESPACE_V1));
+        assert!(source_text.contains("WriteOnlyDisjointSlice"));
         assert!(source_text.contains(swiglu::QWEN3_SWIGLU_KERNEL_SYMBOL_V1));
 
         assert_eq!(
