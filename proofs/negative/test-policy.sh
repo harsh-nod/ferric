@@ -55,6 +55,7 @@ new_copy() {
     destination="$scratch/$name"
     mkdir -p "$destination"
     cp -a "$repo/Cargo.toml" "$repo/Cargo.lock" "$repo/rust-toolchain.toml" "$destination/"
+    cp -a "$repo/adapters" "$destination/"
     cp -a "$repo/benches" "$destination/"
     cp -a "$repo/crates" "$destination/"
     cp -a "$repo/device" "$destination/"

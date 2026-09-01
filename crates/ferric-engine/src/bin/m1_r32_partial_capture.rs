@@ -9,17 +9,17 @@ use super::{
     require_sha256, sha256_array, CaptureResult, StagingOutput, TARGET,
 };
 use ferric_engine::{
-    CheckedCompletionSemantics, M1ObservedSpeculativeDiagnosticChoicesV1, M1PhysicalRunnerV1,
-    M1ReleasedCompletedStepV1, M1StepDispatchIntent,
+    CheckedCompletionSemantics, M1AuthenticatedReleasedCompletedStepV1,
+    M1ObservedSpeculativeDiagnosticChoicesV1, M1StepDispatchIntent,
 };
 use ferric_spec::Identity;
 use serde_json::{json, Value};
 use std::path::Path;
 
-const CAPTURE_FORMAT: &str = "FERRIC-M1-R32-PARTIAL-CAPTURE-V1";
+const CAPTURE_FORMAT: &str = "FERRIC-M1-R32-AUTHENTICATED-PARTIAL-CAPTURE-V2";
 const PROTOCOL_FORMAT: &str = "FERRIC-M1-R32-PARTIAL-PROTOCOL-V1";
 const STATUS: &str = "partial-non-evidence";
-const NONCLAIM: &str = "Authenticated Ferric custody for one physical S1/K4 speculative round only. The corresponding target token is the first target-verification choice from that same round, not a separately executed target-only queue. This partial capture does not establish holdout eligibility, sampling refinement, performance, external validation, hardware correctness, qualification, or close m1.r32.";
+const NONCLAIM: &str = "Authenticated Worker V3 program, Ferric queue, completion, diagnostic-choice, and KV custody for one first-publication physical S1/K4 speculative round only. The corresponding target token is the first target-verification choice from that same round, not a separately executed target-only queue. This partial capture does not establish holdout eligibility, sampling refinement, performance, external validation, hardware correctness, qualification, or close m1.r32.";
 const PROTOCOL_NONCLAIM: &str = "Diagnostic S1/K4 physical choice capture only. This protocol does not establish an independent target-only dispatch, holdout eligibility, sampling refinement, performance, external validation, hardware correctness, qualification, or close m1.r32.";
 
 const EVENTS: &[&str] = &[
@@ -37,8 +37,7 @@ pub(super) const COMMAND: &str = "capture-r32-speculative-k4";
 
 pub(super) struct SettledCaptureInputsV1<'a> {
     pub(super) choices: &'a M1ObservedSpeculativeDiagnosticChoicesV1,
-    pub(super) released: &'a M1ReleasedCompletedStepV1,
-    pub(super) runner: &'a M1PhysicalRunnerV1,
+    pub(super) released: &'a M1AuthenticatedReleasedCompletedStepV1,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -50,7 +49,6 @@ struct ExpectedBindingsV1 {
     draft_sha256: [u8; 32],
     gpu_unique_id: u64,
     kernel_catalog: [u8; 32],
-    kernel_manifest: [u8; 32],
     plan_id: [u8; 32],
     program_catalog: [u8; 32],
     request_generation: u32,
@@ -114,18 +112,8 @@ pub(super) fn manifest(inputs: SettledCaptureInputsV1<'_>) -> CaptureResult<Capt
         return Err("partial r32 retained selection or dispatch intent drifted".to_owned());
     }
     let program_catalog = custody.catalog_id();
-    if inputs.runner.program_catalog_id() != program_catalog {
-        return Err("partial r32 retained queue and runner program catalogs differ".to_owned());
-    }
     let runner_declaration = dispatch_plan.runner_declaration_id();
-    if inputs.runner.declaration_id() != runner_declaration {
-        return Err("partial r32 retained queue and runner declarations differ".to_owned());
-    }
     let kernel_catalog = dispatch_plan.kernel_catalog_id();
-    if inputs.runner.kernel_catalog_id() != kernel_catalog {
-        return Err("partial r32 retained queue and runner kernel catalogs differ".to_owned());
-    }
-    let kernel_manifest = inputs.runner.kernel_artifact_manifest_id();
     let expected = ExpectedBindingsV1 {
         compact_sha256: *checked.raw_sha256(),
         completion_epoch: checked.epoch().value(),
@@ -134,7 +122,6 @@ pub(super) fn manifest(inputs: SettledCaptureInputsV1<'_>) -> CaptureResult<Capt
         draft_sha256: *inputs.choices.draft_sha256(),
         gpu_unique_id: device.gpu_unique_id(),
         kernel_catalog: *kernel_catalog.as_bytes(),
-        kernel_manifest: *kernel_manifest.as_bytes(),
         plan_id: *raw.plan_id.as_bytes(),
         program_catalog: *program_catalog.as_bytes(),
         request_generation: raw.request.generation(),
@@ -143,7 +130,7 @@ pub(super) fn manifest(inputs: SettledCaptureInputsV1<'_>) -> CaptureResult<Capt
         target_sha256: *inputs.choices.target_sha256(),
     };
     let value = json!({
-        "authority": "ferric-physical-partial-capture-only",
+        "authority": "ferric-authenticated-worker-v3-partial-capture-only",
         "case": "speculative-s1-k4-c8192",
         "choices": {
             "draft": inputs.choices.draft_choices(),
@@ -159,7 +146,6 @@ pub(super) fn manifest(inputs: SettledCaptureInputsV1<'_>) -> CaptureResult<Capt
             "device_id_sha256": hex_identity(device.device_id()),
             "gpu_unique_id": device.gpu_unique_id(),
             "kernel_catalog_sha256": hex_identity(kernel_catalog),
-            "kernel_manifest_sha256": hex_identity(kernel_manifest),
             "program_catalog_sha256": hex_identity(program_catalog),
             "runner_declaration_sha256": hex_identity(runner_declaration),
         },
@@ -201,7 +187,7 @@ pub(super) fn manifest(inputs: SettledCaptureInputsV1<'_>) -> CaptureResult<Capt
     Ok(CaptureArtifactV1 { bytes, expected })
 }
 
-pub(super) fn publish(output: &Path, capture: CaptureArtifactV1) -> CaptureResult<()> {
+pub(super) fn publish(output: &Path, capture: &CaptureArtifactV1) -> CaptureResult<()> {
     validate_manifest(&capture.bytes, &capture.expected)?;
     require_protocol()?;
     let protocol = protocol_bytes()?;
@@ -234,7 +220,11 @@ fn validate_manifest(bytes: &[u8], expected: &ExpectedBindingsV1) -> CaptureResu
         ],
         "partial r32 capture",
     )?;
-    expect_string(root, "authority", "ferric-physical-partial-capture-only")?;
+    expect_string(
+        root,
+        "authority",
+        "ferric-authenticated-worker-v3-partial-capture-only",
+    )?;
     expect_string(root, "case", "speculative-s1-k4-c8192")?;
     expect_string(root, "format", CAPTURE_FORMAT)?;
     expect_string(root, "milestone", "M1")?;
@@ -249,7 +239,6 @@ fn validate_manifest(bytes: &[u8], expected: &ExpectedBindingsV1) -> CaptureResu
             "device_id_sha256",
             "gpu_unique_id",
             "kernel_catalog_sha256",
-            "kernel_manifest_sha256",
             "program_catalog_sha256",
             "runner_declaration_sha256",
         ],
@@ -265,11 +254,6 @@ fn validate_manifest(bytes: &[u8], expected: &ExpectedBindingsV1) -> CaptureResu
         identities,
         "program_catalog_sha256",
         &expected.program_catalog,
-    )?;
-    require_exact_sha256(
-        identities,
-        "kernel_manifest_sha256",
-        &expected.kernel_manifest,
     )?;
     require_exact_sha256(
         identities,
@@ -566,7 +550,6 @@ mod tests {
             draft_sha256: sha256_array(&token_bytes(&[11, 12, 13, 14])),
             gpu_unique_id: 23,
             kernel_catalog: [6; 32],
-            kernel_manifest: [7; 32],
             plan_id: [3; 32],
             program_catalog: [4; 32],
             request_generation: 7,
@@ -578,7 +561,7 @@ mod tests {
 
     fn fixture() -> Value {
         json!({
-            "authority": "ferric-physical-partial-capture-only",
+            "authority": "ferric-authenticated-worker-v3-partial-capture-only",
             "case": "speculative-s1-k4-c8192",
             "choices": {
                 "draft": [11, 12, 13, 14], "draft_bytes": 16,
@@ -591,7 +574,6 @@ mod tests {
             "identities": {
                 "device_id_sha256": digest(2), "gpu_unique_id": 23,
                 "kernel_catalog_sha256": digest(6),
-                "kernel_manifest_sha256": digest(7),
                 "program_catalog_sha256": digest(4),
                 "runner_declaration_sha256": digest(8),
             },
@@ -639,7 +621,6 @@ mod tests {
             |value| value["identities"]["device_id_sha256"] = json!(digest(11)),
             |value| value["identities"]["gpu_unique_id"] = json!(24),
             |value| value["identities"]["kernel_catalog_sha256"] = json!(digest(16)),
-            |value| value["identities"]["kernel_manifest_sha256"] = json!(digest(14)),
             |value| value["result"]["positive_completion"] = json!(false),
             |value| value["trace"]["compact_sha256"] = json!(digest(12)),
             |value| value["trace"]["dispatch_generation"] = json!(38),
@@ -652,6 +633,13 @@ mod tests {
             let bytes = canonical_bytes(&value).unwrap();
             assert!(validate_manifest(&bytes, &expected()).is_err());
         }
+    }
+
+    #[test]
+    fn unknown_identity_member_rejects() {
+        let mut value = fixture();
+        value["identities"]["unexpected_identity_sha256"] = json!(digest(14));
+        assert!(validate_manifest(&canonical_bytes(&value).unwrap(), &expected()).is_err());
     }
 
     #[test]
@@ -686,27 +674,21 @@ mod tests {
                 .as_nanos()
         ));
         let capture = canonical_bytes(&fixture()).unwrap();
-        publish(
-            &output,
-            CaptureArtifactV1 {
-                bytes: capture.clone(),
-                expected: expected(),
-            },
-        )
-        .unwrap();
+        let artifact = CaptureArtifactV1 {
+            bytes: capture.clone(),
+            expected: expected(),
+        };
+        publish(&output, &artifact).unwrap();
         assert_eq!(std::fs::read(output.join("capture.json")).unwrap(), capture);
         assert_eq!(
             std::fs::read(output.join("protocol.json")).unwrap(),
             protocol_bytes().unwrap()
         );
-        assert!(publish(
-            &output,
-            CaptureArtifactV1 {
-                bytes: capture,
-                expected: expected(),
-            },
-        )
-        .is_err());
+        let replacement = CaptureArtifactV1 {
+            bytes: capture,
+            expected: expected(),
+        };
+        assert!(publish(&output, &replacement).is_err());
         std::fs::remove_dir_all(output).unwrap();
     }
 }

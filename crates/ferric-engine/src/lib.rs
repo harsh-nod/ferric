@@ -87,6 +87,9 @@ pub use authenticated_physical_queue::{
     M1AuthenticatedPhysicalQueueOperationFailureV1, M1AuthenticatedPhysicalQueuePhaseCaseV1,
     M1AuthenticatedPhysicalQueueReuseFailureV1, M1AuthenticatedPhysicalQueueSessionV1,
     M1AuthenticatedPhysicalQueueSubmitFailureV1, M1AuthenticatedPhysicalRecycledQueueSessionV1,
+    M1EngineQuarantinedAuthenticatedPhysicalQueueCreateFailureV1,
+    M1EngineQuarantinedAuthenticatedPhysicalQueueOperationFailureV1,
+    M1EngineQuarantinedAuthenticatedPhysicalQueueSubmitFailureV1,
 };
 pub use authenticated_physical_readback::{
     M1AuthenticatedCompletedReadbackJoinFailureV1,
@@ -109,6 +112,8 @@ pub use authenticated_physical_readback::{
     M1AuthenticatedRejectedCompletionOutputV1,
     M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackJoinFailureV1,
     M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackV1,
+    M1AuthenticatedSpeculativeK4DiagnosticCompletedTeardownFailureV1,
+    M1AuthenticatedSpeculativeK4DiagnosticCompletedTeardownSuccessV1,
     M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1,
     M1AuthenticatedSpeculativeK4DiagnosticObservationFailureV1,
     M1AuthenticatedSpeculativeK4DiagnosticObservationTeardownFailureV1,

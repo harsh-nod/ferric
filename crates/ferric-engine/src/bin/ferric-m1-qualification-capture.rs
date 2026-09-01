@@ -2,6 +2,7 @@
 
 //! One-shot, target-only M1 qualification capture on an exclusive gfx942.
 
+use fe2o3_host::WorkerV3ProtectedRosterVerifierAdapterV1;
 use fe2o3_kfd::{DeviceSelector, OpenedKfd};
 use ferric_build::{
     authenticate_qwen3_tokenizer, build_authenticated_model_weight_layout,
@@ -23,19 +24,24 @@ use ferric_build::{
     QWEN3_TOKENIZER_METADATA_BYTES, TARGET_REPOSITORY, TARGET_REVISION,
 };
 use ferric_engine::{
-    bind_m1_kv_workspace_table_v1, bind_m1_speculative_draft_kv_round_workspace_table_v1,
-    bind_structural_m1_physical_runner_v1, complete_m1_physical_step_v1,
+    acquire_m1_all_kernels_authenticated_worker_v3_programs_v1, bind_m1_kv_workspace_table_v1,
+    bind_m1_physical_runner_v1, bind_m1_speculative_draft_kv_round_workspace_table_v1,
+    bind_structural_m1_physical_runner_v1, complete_m1_authenticated_physical_step_v1,
+    complete_m1_physical_step_v1, decode_m1_worker_v3_selector_manifest_v2,
     initialize_m1_physical_runner_memory_v1, prelease_m1_qualification_target_pages_v1,
-    prepare_m1_long_lived_queue_rearm_v1, release_m1_completed_step_kv_pages_v1,
-    reopen_persisted_m1_kernel_artifacts_v1, require_m1_authenticated_roster_acquisition_v1,
-    reserve_m1_long_lived_queue_rearm_kv_v1, schedule_m1_long_lived_queue_rearm_v1,
-    ActiveDeviceKvCache, CompletionWireSemanticExpectation, Engine, M1CompletedDeviceKvMemberV1,
+    prepare_m1_long_lived_queue_rearm_v1, release_m1_authenticated_completed_step_kv_pages_v1,
+    release_m1_completed_step_kv_pages_v1, reopen_persisted_m1_kernel_artifacts_v1,
+    require_m1_authenticated_roster_acquisition_v1, reserve_m1_long_lived_queue_rearm_kv_v1,
+    schedule_m1_long_lived_queue_rearm_v1, ActiveDeviceKvCache, CompletionWireSemanticExpectation,
+    Engine, M1AuthenticatedCompletedStepOutcomeV1, M1AuthenticatedPhysicalQueueSessionV1,
+    M1AuthenticatedReleasedQueueTeardownSuccessV1, M1CompletedDeviceKvMemberV1,
     M1CompletedStepOutcomeV1, M1DeviceKvCompletionDispositionV1, M1DeviceKvCompletionMemberV1,
     M1DeviceKvCompletionRosterV1, M1FullStepKvWorkspaceTablesV1, M1FullStepWorkspacePlans,
     M1LongLivedQueueRearmKvInputsV1, M1LongLivedQueueReleasedRoundV1,
     M1PhysicalRunnerFirstCompletionOutcomeV1, M1PhysicalRunnerRecipeOutcomeV1,
     M1QualificationCompletionEvidenceV1, M1RearmedQualifiedRoundReleaseOutcomeV1,
     M1RearmedRoundReleaseOutcomeV1, M1ScheduledLongLivedQueueRearmV1, M1StepDispatchIntent,
+    M1_PACKET_DIAGNOSTIC_RING_BYTES_V1, M1_WORKER_V3_SELECTOR_MANIFEST_MAX_BYTES_V2,
 };
 use ferric_engine::{
     EngineError, M1CompletedStepKvReleaseErrorV1, M1CompletedStepPoisonV1,
@@ -79,6 +85,7 @@ use ferric_engine::{
     M1SpeculativeDiagnosticSemanticTeardownFailureV1,
     M1SpeculativeDiagnosticSemanticTeardownSuccessV1,
 };
+use ferric_qwen3_all_kernels_worker_v3_verifier_v1::M1AllKernelsProtectedVerifierV1;
 use ferric_spec::scheduling::RequestState;
 use ferric_spec::{
     m1_qualification_context_plan, validate_m1_step_inputs, EngineLimits, Identity,
@@ -493,33 +500,93 @@ struct CompletionRosterCustodyV1<T> {
 impl<T: CaptureClosedCustodyV1> CaptureClosedCustodyV1 for CompletionRosterCustodyV1<T> {}
 impl<T: CaptureTerminalCustodyV1> CaptureTerminalCustodyV1 for CompletionRosterCustodyV1<T> {}
 
-struct R32CacheCustodyV1<T> {
+struct R32CaptureReadyV1 {
+    capture: m1_r32_partial_capture::CaptureArtifactV1,
+    _choices: ferric_engine::M1ObservedSpeculativeDiagnosticChoicesV1,
+    _closed: M1AuthenticatedReleasedQueueTeardownSuccessV1,
+}
+
+struct R32ClosedCaptureCustodyV1<T> {
+    _ready: R32CaptureReadyV1,
+    _custody: T,
+}
+
+impl<T> CaptureClosedCustodyV1 for R32ClosedCaptureCustodyV1<T> {}
+
+struct R32AuthenticatedKfdSetupCustodyV1<T> {
+    _runner: ferric_engine::M1AuthenticatedPhysicalRunnerV1,
+    _memory_plan: ferric_build::AddresslessModelMemoryPlan,
+    _target_weights: Box<[u8]>,
+    _draft_weights: Box<[u8]>,
+    _custody: T,
+}
+
+impl<T> CaptureTerminalCustodyV1 for R32AuthenticatedKfdSetupCustodyV1<T> {}
+
+struct R32AuthenticatedExecutionSetupCustodyV1<T> {
+    _engine: Option<Engine<1>>,
+    _runner: ferric_engine::M1AuthenticatedPhysicalRunnerV1,
+    _memory: ferric_engine::M1PartitionedModelMemoryKvPoolV1,
+    _custody: T,
+}
+
+impl<T> CaptureTerminalCustodyV1 for R32AuthenticatedExecutionSetupCustodyV1<T> {}
+
+struct R32AuthenticatedCustodyV1<T> {
+    _engine: Engine<1>,
     _cache: ActiveDeviceKvCache,
     _custody: T,
 }
 
-impl<T: CaptureTerminalCustodyV1> CaptureTerminalCustodyV1 for R32CacheCustodyV1<T> {}
+impl<T> CaptureTerminalCustodyV1 for R32AuthenticatedCustodyV1<T> {}
 
-struct R32ChoiceCustodyV1<T> {
+struct R32AuthenticatedPrepublicationCustodyV1<T> {
+    _engine: Engine<1>,
+    _cache: ActiveDeviceKvCache,
+    _runner: ferric_engine::M1AuthenticatedPhysicalRunnerV1,
+    _memory: Option<ferric_engine::M1PartitionedModelMemoryKvPoolV1>,
+    _allocated: Option<Box<ferric_engine::M1AllocatedScheduledStepV1>>,
+    _recipe: Option<ferric_engine::AddresslessM1PhysicalBufferRecipeV1>,
+    _custody: T,
+}
+
+impl<T> CaptureTerminalCustodyV1 for R32AuthenticatedPrepublicationCustodyV1<T> {}
+
+struct R32AuthenticatedPostCompletionCustodyV1<T> {
+    _engine: Engine<1>,
     _choices: ferric_engine::M1ObservedSpeculativeDiagnosticChoicesV1,
     _custody: T,
 }
 
-impl<T: CaptureClosedCustodyV1> CaptureClosedCustodyV1 for R32ChoiceCustodyV1<T> {}
-impl<T: CaptureTerminalCustodyV1> CaptureTerminalCustodyV1 for R32ChoiceCustodyV1<T> {}
+impl<T> CaptureTerminalCustodyV1 for R32AuthenticatedPostCompletionCustodyV1<T> {}
 
-struct R32CaptureCustodyV1<T> {
-    _capture: m1_r32_partial_capture::CaptureArtifactV1,
-    _choices: ferric_engine::M1ObservedSpeculativeDiagnosticChoicesV1,
+struct R32AuthenticatedMemoryInitializationFailureV1 {
+    _runner: ferric_engine::M1AuthenticatedPhysicalRunnerV1,
+    _failure: ferric_engine::M1PhysicalRunnerMemoryFailureV1,
+}
+
+impl CaptureTerminalCustodyV1 for R32AuthenticatedMemoryInitializationFailureV1 {}
+
+struct R32PreKfdAuthenticatedFailureV1<T> {
     _custody: T,
 }
 
-impl<T: CaptureTerminalCustodyV1> CaptureTerminalCustodyV1 for R32CaptureCustodyV1<T> {}
+impl<T> CaptureTerminalCustodyV1 for R32PreKfdAuthenticatedFailureV1<T> {}
 
-struct R32CaptureReadyV1 {
-    capture: m1_r32_partial_capture::CaptureArtifactV1,
-    _choices: ferric_engine::M1ObservedSpeculativeDiagnosticChoicesV1,
-    _closed: M1ReleasedQueueTeardownSuccessV1,
+fn r32_pre_kfd_authenticated_fail_stop<T>(phase: &'static str, diagnostic: &str, custody: T) -> ! {
+    let _ = writeln!(
+        std::io::stderr().lock(),
+        "FAIL: {diagnostic}; submitted_gpu_work=false"
+    );
+    terminal_quarantine(phase, R32PreKfdAuthenticatedFailureV1 { _custody: custody })
+}
+
+fn r32_prepublication_fail_stop<T: CaptureTerminalCustodyV1>(phase: &'static str, custody: T) -> ! {
+    let _ = writeln!(
+        std::io::stderr().lock(),
+        "FAIL: {phase}; submitted_gpu_work=false"
+    );
+    terminal_quarantine(phase, custody)
 }
 
 struct R30RollbackCacheCustodyV1<T> {
@@ -915,40 +982,6 @@ fn close_or_quarantine_roster_with_diagnostic<
                 _diagnostic: diagnostic,
                 _custody: CompletionRosterCustodyV1 {
                     _roster: roster,
-                    _custody: quarantine,
-                },
-            },
-        ),
-    }
-}
-
-fn close_or_quarantine_r32_choices<
-    D: CaptureDiagnosticEvidenceV1,
-    S: CaptureClosedCustodyV1,
-    F: CaptureTerminalCustodyV1,
->(
-    phase: &'static str,
-    diagnostic: D,
-    choices: ferric_engine::M1ObservedSpeculativeDiagnosticChoicesV1,
-    teardown: Result<S, F>,
-) -> ! {
-    match teardown {
-        Ok(closed) => closed_teardown(
-            phase,
-            DiagnosticCustodyV1 {
-                _diagnostic: diagnostic,
-                _custody: R32ChoiceCustodyV1 {
-                    _choices: choices,
-                    _custody: closed,
-                },
-            },
-        ),
-        Err(quarantine) => terminal_quarantine(
-            phase,
-            DiagnosticCustodyV1 {
-                _diagnostic: diagnostic,
-                _custody: R32ChoiceCustodyV1 {
-                    _choices: choices,
                     _custody: quarantine,
                 },
             },
@@ -2861,9 +2894,15 @@ fn execute_r30_rollback_capture(
         .logical_runner()
         .bind_step_plan(request, scheduled.epoch(), draft_decode)
         .map_err(|error| format!("cannot bind rollback draft decode plan: {error:?}"))?;
-    let draft_inputs = speculative_s1_k4_validated_inputs(draft_plan, vec![1], vec![0], 1)?;
-    let target_inputs =
-        speculative_s1_k4_validated_inputs(target_plan, vec![1, 0, 0, 0, 0], (0..5).collect(), 5)?;
+    let draft_inputs = speculative_s1_k4_validated_inputs(draft_plan, vec![1], vec![0], 1)
+        .map_err(|failure| format!("r30 rollback draft inputs rejected: {:?}", failure.error()))?;
+    let target_inputs = speculative_s1_k4_validated_inputs(
+        target_plan,
+        vec![1, 0, 0, 0, 0],
+        (0..5).collect(),
+        5,
+    )
+    .map_err(|failure| format!("r30 rollback target inputs rejected: {:?}", failure.error()))?;
 
     let mut cache =
         ActiveDeviceKvCache::new(memory.device(), request, target, draft_speculative)
@@ -3154,230 +3193,660 @@ fn execute_r30_rollback_capture(
 }
 
 fn run_r32_speculative_capture(arguments: &[OsString]) -> CaptureResult<()> {
-    let [prepacked_root, artifact_root, closure_path, environment_path, gpu_unique_id, output] =
+    let [prepacked_root, selector_manifest, closure_path, environment_path, gpu_unique_id, output] =
         arguments
     else {
-        return Err("usage: ferric-m1-qualification-capture capture-r32-speculative-k4 PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned());
+        return Err("usage: ferric-m1-qualification-capture capture-r32-speculative-k4 PREPACKED-SNAPSHOT AGGREGATE-V2-SELECTOR-MANIFEST CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned());
     };
-    require_m1_authenticated_roster_acquisition_v1(Path::new(artifact_root))
-        .map_err(|error| error.to_string())?;
     let gpu_unique_id = gpu_unique_id
         .to_str()
         .ok_or_else(|| "GPU unique ID must be UTF-8 decimal".to_owned())?
         .parse::<u64>()
         .map_err(|_| "GPU unique ID must be a decimal u64".to_owned())?;
+
+    let selector_bytes = read_r32_selector_manifest(Path::new(selector_manifest))?;
+    let selector = decode_m1_worker_v3_selector_manifest_v2(&selector_bytes).map_err(|error| {
+        format!("cannot decode aggregate V2 selector manifest: {error}; submitted_gpu_work=false")
+    })?;
+
     let closure = load_closure(Path::new(closure_path))?;
     let _environment = load_environment(Path::new(environment_path), gpu_unique_id)?;
-    let artifacts = reopen_persisted_m1_kernel_artifacts_v1(Path::new(artifact_root))
-        .map_err(|error| format!("cannot authenticate persisted kernel artifacts: {error}"))?;
-    let executable_catalog_id = artifacts.program_catalog_id();
     let snapshot = SecureDirectory::open(Path::new(prepacked_root), "prepacked snapshot root")?;
     let model = load_model_inputs(&snapshot)?;
     let runner_admission = model.authenticate()?;
     let plan_catalog = build_authenticated_sequential_plan_catalog(runner_admission)
         .map_err(|error| format!("cannot build authenticated plan catalog: {error:?}"))?;
-    let external = complete_closure(&closure, &plan_catalog, executable_catalog_id)?;
-    let identity_closure = build_preliminary_identity_closure(plan_catalog, external)
-        .map_err(|error| format!("cannot build runner identity closure: {error:?}"))?;
-    let declaration = generate_qwen3_gfx942_runner_declaration(identity_closure)
-        .map_err(|error| format!("cannot generate authenticated runner declaration: {error:?}"))?;
-    let publication = publish_qwen3_gfx942_runner_declaration(declaration)
-        .map_err(|error| format!("cannot publish runner declaration: {error:?}"))?;
-    let runner = bind_structural_m1_physical_runner_v1(artifacts, publication)
-        .map_err(|error| format!("cannot bind physical runner: {error:?}"))?;
-
     let memory_admission = model.authenticate()?;
     let memory_plan = model_memory_plan(memory_admission)?;
-    let checked = OpenedKfd::open_default()
-        .map_err(|error| format!("cannot open KFD: {error}"))?
-        .admit_uapi()
-        .map_err(|error| format!("cannot admit pinned KFD UAPI: {error}"))?
-        .bind_gfx942_xnack_minus(DeviceSelector::UniqueId(gpu_unique_id))
-        .map_err(|error| format!("cannot bind selected gfx942:xnack- device: {error}"))?;
-    let memory = initialize_m1_physical_runner_memory_v1(
+    let recipe_workspace_plans = r32_workspace_plans()?;
+    let prepared_workspace_plans = r32_workspace_plans()?;
+
+    let mut verifier =
+        WorkerV3ProtectedRosterVerifierAdapterV1::new(M1AllKernelsProtectedVerifierV1::new());
+    let programs =
+        match acquire_m1_all_kernels_authenticated_worker_v3_programs_v1(selector, &mut verifier) {
+            Ok(programs) => programs,
+            Err(failure) => {
+                let diagnostic =
+                    format!("cannot authenticate aggregate Worker V3 program custody: {failure}");
+                r32_pre_kfd_authenticated_fail_stop(
+                    "r32 aggregate Worker V3 authentication rejected before KFD open",
+                    &diagnostic,
+                    failure,
+                )
+            }
+        };
+    let executable_catalog_id = programs.catalog_id();
+    let external = match complete_closure(&closure, &plan_catalog, executable_catalog_id) {
+        Ok(external) => external,
+        Err(diagnostic) => r32_pre_kfd_authenticated_fail_stop(
+            "r32 aggregate-bound identity closure rejected before KFD open",
+            &diagnostic,
+            (programs, diagnostic.clone()),
+        ),
+    };
+    let identity_closure = match build_preliminary_identity_closure(plan_catalog, external) {
+        Ok(identity_closure) => identity_closure,
+        Err(failure) => {
+            let diagnostic = format!("cannot build runner identity closure: {failure:?}");
+            r32_pre_kfd_authenticated_fail_stop(
+                "r32 runner identity closure rejected before KFD open",
+                &diagnostic,
+                (programs, failure),
+            )
+        }
+    };
+    let declaration = match generate_qwen3_gfx942_runner_declaration(identity_closure) {
+        Ok(declaration) => declaration,
+        Err(failure) => {
+            let diagnostic =
+                format!("cannot generate authenticated runner declaration: {failure:?}");
+            r32_pre_kfd_authenticated_fail_stop(
+                "r32 runner declaration generation rejected before KFD open",
+                &diagnostic,
+                (programs, failure),
+            )
+        }
+    };
+    let publication = match publish_qwen3_gfx942_runner_declaration(declaration) {
+        Ok(publication) => publication,
+        Err(failure) => {
+            let diagnostic = format!("cannot publish runner declaration: {failure:?}");
+            r32_pre_kfd_authenticated_fail_stop(
+                "r32 runner declaration publication rejected before KFD open",
+                &diagnostic,
+                (programs, failure),
+            )
+        }
+    };
+    let runner = match bind_m1_physical_runner_v1(programs, publication) {
+        Ok(runner) => runner,
+        Err(failure) => {
+            let diagnostic = format!("cannot bind authenticated physical runner: {failure:?}");
+            r32_pre_kfd_authenticated_fail_stop(
+                "r32 authenticated runner binding rejected before KFD open",
+                &diagnostic,
+                failure,
+            )
+        }
+    };
+
+    let ModelInputBytes {
+        target_weights,
+        draft_weights,
+        ..
+    } = model;
+    let opened = match OpenedKfd::open_default() {
+        Ok(opened) => opened,
+        Err(failure) => r32_prepublication_fail_stop(
+            "r32 KFD open rejected",
+            R32AuthenticatedKfdSetupCustodyV1 {
+                _runner: runner,
+                _memory_plan: memory_plan,
+                _target_weights: target_weights,
+                _draft_weights: draft_weights,
+                _custody: failure,
+            },
+        ),
+    };
+    let admitted = match opened.admit_uapi() {
+        Ok(admitted) => admitted,
+        Err(failure) => r32_prepublication_fail_stop(
+            "r32 pinned KFD UAPI admission rejected",
+            R32AuthenticatedKfdSetupCustodyV1 {
+                _runner: runner,
+                _memory_plan: memory_plan,
+                _target_weights: target_weights,
+                _draft_weights: draft_weights,
+                _custody: failure,
+            },
+        ),
+    };
+    let checked = match admitted.bind_gfx942_xnack_minus(DeviceSelector::UniqueId(gpu_unique_id)) {
+        Ok(checked) => checked,
+        Err(failure) => r32_prepublication_fail_stop(
+            "r32 selected gfx942:xnack- device binding rejected",
+            R32AuthenticatedKfdSetupCustodyV1 {
+                _runner: runner,
+                _memory_plan: memory_plan,
+                _target_weights: target_weights,
+                _draft_weights: draft_weights,
+                _custody: failure,
+            },
+        ),
+    };
+    let memory = match initialize_m1_physical_runner_memory_v1(
         checked,
         memory_plan,
-        model.target_weights,
-        model.draft_weights,
-    )
-    .map_err(|error| format!("cannot initialize physical model memory: {error:?}"))?;
-    let ready = execute_r32_speculative_capture(&runner, memory)?;
+        target_weights,
+        draft_weights,
+    ) {
+        Ok(memory) => memory,
+        Err(failure) => r32_prepublication_fail_stop(
+            "r32 authenticated physical model-memory initialization failure",
+            R32AuthenticatedMemoryInitializationFailureV1 {
+                _runner: runner,
+                _failure: failure,
+            },
+        ),
+    };
+    let ready = execute_r32_speculative_capture(
+        runner,
+        memory,
+        recipe_workspace_plans,
+        prepared_workspace_plans,
+    );
     let capture_sha256 = sha256_hex(ready.capture.bytes());
-    m1_r32_partial_capture::publish(Path::new(output), ready.capture)?;
+    if let Err(diagnostic) = m1_r32_partial_capture::publish(Path::new(output), &ready.capture) {
+        closed_teardown(
+            "r32 authenticated capture publication rejected after queue teardown",
+            R32ClosedCaptureCustodyV1 {
+                _ready: ready,
+                _custody: diagnostic,
+            },
+        )
+    }
     println!("output={}", Path::new(output).display());
     println!("capture_sha256={capture_sha256}");
     println!("status=partial-non-evidence");
+    println!("submitted_gpu_work=true");
     Ok(())
 }
 
-fn execute_r32_speculative_capture(
-    runner: &ferric_engine::M1PhysicalRunnerV1,
-    mut memory: ferric_engine::M1PartitionedModelMemoryKvPoolV1,
-) -> CaptureResult<R32CaptureReadyV1> {
-    let target = Qwen3PlanSelection {
+fn read_r32_selector_manifest(path: &Path) -> CaptureResult<Vec<u8>> {
+    let descriptor = openat2(
+        CWD,
+        path,
+        OFlags::RDONLY | OFlags::NOFOLLOW | OFlags::NONBLOCK | OFlags::CLOEXEC,
+        Mode::empty(),
+        ResolveFlags::NO_SYMLINKS | ResolveFlags::NO_MAGICLINKS,
+    )
+    .map_err(|error| {
+        format!(
+            "cannot securely open aggregate V2 selector manifest {}: {error}; submitted_gpu_work=false",
+            path.display()
+        )
+    })?;
+    let initial = fstat(&descriptor).map_err(|error| {
+        format!(
+            "cannot inspect aggregate V2 selector manifest {}: {error}; submitted_gpu_work=false",
+            path.display()
+        )
+    })?;
+    if FileType::from_raw_mode(initial.st_mode) != FileType::RegularFile || initial.st_nlink != 1 {
+        return Err(
+            "aggregate V2 selector manifest must be a singly linked regular file; submitted_gpu_work=false"
+                .to_owned(),
+        );
+    }
+    let length = usize::try_from(initial.st_size).map_err(|_| {
+        "aggregate V2 selector manifest length does not fit usize; submitted_gpu_work=false"
+            .to_owned()
+    })?;
+    if length == 0 || length > M1_WORKER_V3_SELECTOR_MANIFEST_MAX_BYTES_V2 {
+        return Err(format!(
+            "aggregate V2 selector manifest size is outside 1..={M1_WORKER_V3_SELECTOR_MANIFEST_MAX_BYTES_V2}; submitted_gpu_work=false"
+        ));
+    }
+    let mut input = SecureFile {
+        file: File::from(descriptor),
+        initial,
+    };
+    input
+        .read_exact_snapshot(length, "aggregate V2 selector manifest")
+        .map_err(|error| format!("{error}; submitted_gpu_work=false"))
+}
+
+fn r32_target_selection() -> Qwen3PlanSelection {
+    Qwen3PlanSelection {
         role: Qwen3ModelRole::Target8B,
         mode: Qwen3ExecutionMode::Speculative,
         bucket: Qwen3PlanBucket::SpeculativeS1K4C8192,
-    };
-    let draft_speculative = Qwen3PlanSelection {
+    }
+}
+
+fn r32_draft_speculative_selection() -> Qwen3PlanSelection {
+    Qwen3PlanSelection {
         role: Qwen3ModelRole::Draft06B,
         mode: Qwen3ExecutionMode::Speculative,
         bucket: Qwen3PlanBucket::SpeculativeS1K4C8192,
-    };
-    let draft_decode = Qwen3PlanSelection {
+    }
+}
+
+fn r32_draft_decode_selection() -> Qwen3PlanSelection {
+    Qwen3PlanSelection {
         role: Qwen3ModelRole::Draft06B,
         mode: Qwen3ExecutionMode::Decode,
         bucket: Qwen3PlanBucket::DecodeS1C8192,
-    };
-    let mut engine = Engine::<1>::new(512, 256, 8_192)
-        .map_err(|error| format!("cannot construct one-lane r32 engine: {error:?}"))?;
-    let request = engine
-        .admit()
-        .map_err(|error| format!("cannot admit r32 request: {error:?}"))?;
-    engine
-        .append_tentative(request, 5)
-        .map_err(|error| format!("cannot append exact r32 K4 round: {error:?}"))?;
-    let scheduled = engine
-        .dispatch_m1_ready()
-        .map_err(|error| format!("cannot dispatch r32 request: {error:?}"))?
-        .ok_or_else(|| "r32 request was not scheduler-ready".to_owned())?;
-    let target_plan = runner
-        .logical_runner()
-        .bind_step_plan(request, scheduled.epoch(), target)
-        .map_err(|error| format!("cannot bind target speculative plan: {error:?}"))?;
-    let draft_plan = runner
-        .logical_runner()
-        .bind_step_plan(request, scheduled.epoch(), draft_decode)
-        .map_err(|error| format!("cannot bind draft decode plan: {error:?}"))?;
-    let draft_inputs = speculative_s1_k4_validated_inputs(draft_plan, vec![1], vec![0], 1)?;
-    let target_inputs =
-        speculative_s1_k4_validated_inputs(target_plan, vec![1, 0, 0, 0, 0], (0..5).collect(), 5)?;
+    }
+}
 
-    let mut cache = ActiveDeviceKvCache::new(memory.device(), request, target, draft_speculative)
-        .map_err(|error| format!("cannot construct r32 paired KV cache: {error:?}"))?;
-    let draft_lease = memory
-        .lease_page(request, Qwen3ModelRole::Draft06B, 0)
-        .map_err(|error| format!("cannot lease r32 draft KV page: {error:?}"))?;
-    let draft_pending = cache
-        .reserve_speculative_draft_round_write(
-            request,
-            target,
-            draft_decode,
-            0,
-            scheduled.epoch(),
-            vec![draft_lease],
-        )
-        .map_err(|failure| format!("cannot reserve r32 draft KV write: {:?}", failure.error()))?;
-    let target_lease = memory
-        .lease_page(request, Qwen3ModelRole::Target8B, 0)
-        .map_err(|error| format!("cannot lease r32 target KV page: {error:?}"))?;
-    let target_pending = cache
-        .reserve_step_write(
-            request,
-            Qwen3ModelRole::Target8B,
-            0,
-            5,
-            scheduled.epoch(),
-            vec![target_lease],
-        )
-        .map_err(|failure| format!("cannot reserve r32 target KV write: {:?}", failure.error()))?;
-    let draft_table = bind_m1_speculative_draft_kv_round_workspace_table_v1(
-        target,
-        draft_inputs,
-        vec![draft_pending],
-    )
-    .map_err(|failure| format!("cannot bind r32 draft KV table: {:?}", failure.error()))?;
-    let target_table = bind_m1_kv_workspace_table_v1(target_inputs, vec![target_pending])
-        .map_err(|failure| format!("cannot bind r32 target KV table: {:?}", failure.error()))?;
-    let tables = M1FullStepKvWorkspaceTablesV1::SpeculativeRound {
-        draft_decode: draft_table,
-        target_speculative: target_table,
-    };
+fn r32_workspace_plans() -> CaptureResult<M1FullStepWorkspacePlans> {
     let draft_workspace_identity =
         *domain_identity(b"ferric.m1.r32.draft-workspace.v1", &[]).as_bytes();
     let target_workspace_identity =
         *domain_identity(b"ferric.m1.r32.target-workspace.v1", &[]).as_bytes();
-    let plans = M1FullStepWorkspacePlans::speculative_round(
-        workload_workspace_plan(draft_decode, draft_workspace_identity)?,
-        workload_workspace_plan(target, target_workspace_identity)?,
-    );
+    Ok(M1FullStepWorkspacePlans::speculative_round(
+        workload_workspace_plan(r32_draft_decode_selection(), draft_workspace_identity)?,
+        workload_workspace_plan(r32_target_selection(), target_workspace_identity)?,
+    ))
+}
+
+fn execute_r32_speculative_capture(
+    runner: ferric_engine::M1AuthenticatedPhysicalRunnerV1,
+    mut memory: ferric_engine::M1PartitionedModelMemoryKvPoolV1,
+    recipe_workspace_plans: M1FullStepWorkspacePlans,
+    prepared_workspace_plans: M1FullStepWorkspacePlans,
+) -> R32CaptureReadyV1 {
+    let target = r32_target_selection();
+    let draft_speculative = r32_draft_speculative_selection();
+    let draft_decode = r32_draft_decode_selection();
+    let mut engine = match Engine::<1>::new(512, 256, 8_192) {
+        Ok(engine) => engine,
+        Err(failure) => r32_prepublication_fail_stop(
+            "r32 one-lane Engine construction rejected",
+            R32AuthenticatedExecutionSetupCustodyV1 {
+                _engine: None,
+                _runner: runner,
+                _memory: memory,
+                _custody: failure,
+            },
+        ),
+    };
+    let request = match engine.admit() {
+        Ok(request) => request,
+        Err(failure) => r32_prepublication_fail_stop(
+            "r32 request admission rejected",
+            R32AuthenticatedExecutionSetupCustodyV1 {
+                _engine: Some(engine),
+                _runner: runner,
+                _memory: memory,
+                _custody: failure,
+            },
+        ),
+    };
+    if let Err(failure) = engine.append_tentative(request, 5) {
+        r32_prepublication_fail_stop(
+            "r32 exact K4 scheduler append rejected",
+            R32AuthenticatedExecutionSetupCustodyV1 {
+                _engine: Some(engine),
+                _runner: runner,
+                _memory: memory,
+                _custody: (request, failure),
+            },
+        )
+    }
+    let scheduled = match engine.dispatch_m1_ready() {
+        Ok(Some(scheduled)) => scheduled,
+        Ok(None) => r32_prepublication_fail_stop(
+            "r32 request was not scheduler-ready",
+            R32AuthenticatedExecutionSetupCustodyV1 {
+                _engine: Some(engine),
+                _runner: runner,
+                _memory: memory,
+                _custody: request,
+            },
+        ),
+        Err(failure) => r32_prepublication_fail_stop(
+            "r32 scheduler dispatch rejected",
+            R32AuthenticatedExecutionSetupCustodyV1 {
+                _engine: Some(engine),
+                _runner: runner,
+                _memory: memory,
+                _custody: (request, failure),
+            },
+        ),
+    };
+    let target_plan =
+        match runner
+            .logical_runner()
+            .bind_step_plan(request, scheduled.epoch(), target)
+        {
+            Ok(plan) => plan,
+            Err(failure) => r32_prepublication_fail_stop(
+                "r32 target speculative plan binding rejected",
+                R32AuthenticatedExecutionSetupCustodyV1 {
+                    _engine: Some(engine),
+                    _runner: runner,
+                    _memory: memory,
+                    _custody: (scheduled, failure),
+                },
+            ),
+        };
+    let draft_plan =
+        match runner
+            .logical_runner()
+            .bind_step_plan(request, scheduled.epoch(), draft_decode)
+        {
+            Ok(plan) => plan,
+            Err(failure) => r32_prepublication_fail_stop(
+                "r32 draft decode plan binding rejected",
+                R32AuthenticatedExecutionSetupCustodyV1 {
+                    _engine: Some(engine),
+                    _runner: runner,
+                    _memory: memory,
+                    _custody: (scheduled, target_plan, failure),
+                },
+            ),
+        };
+    let draft_inputs = match speculative_s1_k4_validated_inputs(draft_plan, vec![1], vec![0], 1) {
+        Ok(inputs) => inputs,
+        Err(failure) => r32_prepublication_fail_stop(
+            "r32 draft S1/K4 input validation rejected",
+            R32AuthenticatedExecutionSetupCustodyV1 {
+                _engine: Some(engine),
+                _runner: runner,
+                _memory: memory,
+                _custody: (scheduled, target_plan, failure),
+            },
+        ),
+    };
+    let target_inputs = match speculative_s1_k4_validated_inputs(
+        target_plan,
+        vec![1, 0, 0, 0, 0],
+        (0..5).collect(),
+        5,
+    ) {
+        Ok(inputs) => inputs,
+        Err(failure) => r32_prepublication_fail_stop(
+            "r32 target S1/K4 input validation rejected",
+            R32AuthenticatedExecutionSetupCustodyV1 {
+                _engine: Some(engine),
+                _runner: runner,
+                _memory: memory,
+                _custody: (scheduled, draft_inputs, failure),
+            },
+        ),
+    };
+
+    let mut cache =
+        match ActiveDeviceKvCache::new(memory.device(), request, target, draft_speculative) {
+            Ok(cache) => cache,
+            Err(failure) => r32_prepublication_fail_stop(
+                "r32 paired KV cache construction rejected",
+                R32AuthenticatedExecutionSetupCustodyV1 {
+                    _engine: Some(engine),
+                    _runner: runner,
+                    _memory: memory,
+                    _custody: (scheduled, draft_inputs, target_inputs, failure),
+                },
+            ),
+        };
+    let draft_lease = match memory.lease_page(request, Qwen3ModelRole::Draft06B, 0) {
+        Ok(lease) => lease,
+        Err(failure) => r32_prepublication_fail_stop(
+            "r32 draft KV page lease rejected",
+            R32AuthenticatedPrepublicationCustodyV1 {
+                _engine: engine,
+                _cache: cache,
+                _runner: runner,
+                _memory: Some(memory),
+                _allocated: None,
+                _recipe: None,
+                _custody: (scheduled, draft_inputs, target_inputs, failure),
+            },
+        ),
+    };
+    let draft_pending = match cache.reserve_speculative_draft_round_write(
+        request,
+        target,
+        draft_decode,
+        0,
+        scheduled.epoch(),
+        vec![draft_lease],
+    ) {
+        Ok(pending) => pending,
+        Err(failure) => r32_prepublication_fail_stop(
+            "r32 draft KV reservation rejected",
+            R32AuthenticatedPrepublicationCustodyV1 {
+                _engine: engine,
+                _cache: cache,
+                _runner: runner,
+                _memory: Some(memory),
+                _allocated: None,
+                _recipe: None,
+                _custody: (scheduled, draft_inputs, target_inputs, failure),
+            },
+        ),
+    };
+    let target_lease = match memory.lease_page(request, Qwen3ModelRole::Target8B, 0) {
+        Ok(lease) => lease,
+        Err(failure) => r32_prepublication_fail_stop(
+            "r32 target KV page lease rejected",
+            R32AuthenticatedPrepublicationCustodyV1 {
+                _engine: engine,
+                _cache: cache,
+                _runner: runner,
+                _memory: Some(memory),
+                _allocated: None,
+                _recipe: None,
+                _custody: (
+                    scheduled,
+                    draft_inputs,
+                    target_inputs,
+                    draft_pending,
+                    failure,
+                ),
+            },
+        ),
+    };
+    let target_pending = match cache.reserve_step_write(
+        request,
+        Qwen3ModelRole::Target8B,
+        0,
+        5,
+        scheduled.epoch(),
+        vec![target_lease],
+    ) {
+        Ok(pending) => pending,
+        Err(failure) => r32_prepublication_fail_stop(
+            "r32 target KV reservation rejected",
+            R32AuthenticatedPrepublicationCustodyV1 {
+                _engine: engine,
+                _cache: cache,
+                _runner: runner,
+                _memory: Some(memory),
+                _allocated: None,
+                _recipe: None,
+                _custody: (
+                    scheduled,
+                    draft_inputs,
+                    target_inputs,
+                    draft_pending,
+                    failure,
+                ),
+            },
+        ),
+    };
+    let draft_table = match bind_m1_speculative_draft_kv_round_workspace_table_v1(
+        target,
+        draft_inputs,
+        vec![draft_pending],
+    ) {
+        Ok(table) => table,
+        Err(failure) => r32_prepublication_fail_stop(
+            "r32 draft KV workspace table binding rejected",
+            R32AuthenticatedPrepublicationCustodyV1 {
+                _engine: engine,
+                _cache: cache,
+                _runner: runner,
+                _memory: Some(memory),
+                _allocated: None,
+                _recipe: None,
+                _custody: (scheduled, target_inputs, target_pending, failure),
+            },
+        ),
+    };
+    let target_table = match bind_m1_kv_workspace_table_v1(target_inputs, vec![target_pending]) {
+        Ok(table) => table,
+        Err(failure) => r32_prepublication_fail_stop(
+            "r32 target KV workspace table binding rejected",
+            R32AuthenticatedPrepublicationCustodyV1 {
+                _engine: engine,
+                _cache: cache,
+                _runner: runner,
+                _memory: Some(memory),
+                _allocated: None,
+                _recipe: None,
+                _custody: (scheduled, draft_table, failure),
+            },
+        ),
+    };
+    let tables = M1FullStepKvWorkspaceTablesV1::SpeculativeRound {
+        draft_decode: draft_table,
+        target_speculative: target_table,
+    };
     let recipe = match runner.derive_step_recipe(
         M1StepDispatchIntent::SpeculativeRound(target),
-        M1FullStepWorkspacePlans::speculative_round(
-            workload_workspace_plan(draft_decode, draft_workspace_identity)?,
-            workload_workspace_plan(target, target_workspace_identity)?,
-        ),
+        recipe_workspace_plans,
     ) {
         M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
-        M1PhysicalRunnerRecipeOutcomeV1::Rejected(failure) => {
-            return Err(format!(
-                "cannot derive exact r32 physical recipe: {failure:?}"
-            ))
-        }
+        M1PhysicalRunnerRecipeOutcomeV1::Rejected(failure) => r32_prepublication_fail_stop(
+            "r32 authenticated physical recipe derivation rejected",
+            R32AuthenticatedPrepublicationCustodyV1 {
+                _engine: engine,
+                _cache: cache,
+                _runner: runner,
+                _memory: Some(memory),
+                _allocated: None,
+                _recipe: None,
+                _custody: (failure, tables),
+            },
+        ),
     };
-    let prepared = runner
-        .prepare_scheduled_workspaces(scheduled, plans, tables)
-        .map_err(|failure| format!("cannot prepare r32 workspaces: {failure:?}"))?;
+    let prepared =
+        match runner.prepare_scheduled_workspaces(scheduled, prepared_workspace_plans, tables) {
+            Ok(prepared) => prepared,
+            Err(failure) => r32_prepublication_fail_stop(
+                "r32 authenticated scheduled-workspace preparation rejected",
+                R32AuthenticatedPrepublicationCustodyV1 {
+                    _engine: engine,
+                    _cache: cache,
+                    _runner: runner,
+                    _memory: Some(memory),
+                    _allocated: None,
+                    _recipe: Some(recipe),
+                    _custody: failure,
+                },
+            ),
+        };
     let mut allocated = match runner.allocate_scheduled_workspaces(memory, prepared) {
         Ok(allocated) => allocated,
-        Err(failure) => abandon_single_speculative_prepublication(
-            "r32 workspace allocation failure",
-            engine,
-            cache,
-            SingleSpeculativePrepublicationFailureV1::Workspace {
-                _failure: failure,
-                _recipe: recipe,
+        Err(failure) => r32_prepublication_fail_stop(
+            "r32 authenticated workspace allocation failure",
+            R32AuthenticatedPrepublicationCustodyV1 {
+                _engine: engine,
+                _cache: cache,
+                _runner: runner,
+                _memory: None,
+                _allocated: None,
+                _recipe: Some(recipe),
+                _custody: failure,
             },
         ),
     };
     let completion = match allocated.allocate_completion_output(target) {
         Ok(completion) => completion,
-        Err(diagnostic) => abandon_single_speculative_prepublication(
-            "r32 compact output allocation failure",
-            engine,
-            cache,
-            SingleSpeculativePrepublicationFailureV1::CompletionOutput {
-                _allocated: Box::new(allocated),
-                _diagnostic: diagnostic,
-                _recipe: recipe,
+        Err(diagnostic) => r32_prepublication_fail_stop(
+            "r32 authenticated compact output allocation failure",
+            R32AuthenticatedPrepublicationCustodyV1 {
+                _engine: engine,
+                _cache: cache,
+                _runner: runner,
+                _memory: None,
+                _allocated: Some(Box::new(allocated)),
+                _recipe: Some(recipe),
+                _custody: diagnostic,
             },
         ),
     };
     let completion = match allocated.enable_speculative_k4_diagnostic_choices_capture(completion) {
         Ok(completion) => completion,
-        Err(failure) => abandon_single_speculative_prepublication(
-            "r32 diagnostic choice allocation failure",
-            engine,
-            cache,
-            SingleSpeculativePrepublicationFailureV1::DiagnosticChoices {
-                _allocated: Box::new(allocated),
-                _failure: failure,
-                _recipe: recipe,
+        Err(failure) => r32_prepublication_fail_stop(
+            "r32 authenticated diagnostic-choice allocation failure",
+            R32AuthenticatedPrepublicationCustodyV1 {
+                _engine: engine,
+                _cache: cache,
+                _runner: runner,
+                _memory: None,
+                _allocated: Some(Box::new(allocated)),
+                _recipe: Some(recipe),
+                _custody: failure,
             },
         ),
     };
-    let published =
-        match publish_first_step_with_retries(runner, &mut engine, allocated, recipe, completion) {
-            Ok(published) => published,
-            Err(failure) => terminal_quarantine(
-                "r32 first publication retry exhaustion",
-                R32CacheCustodyV1 {
+    let prepublication = match runner.prepare_first_step(allocated, recipe, completion) {
+        Ok(prepublication) => prepublication,
+        Err(failure) => r32_prepublication_fail_stop(
+            "r32 authenticated first-step preparation rejected",
+            R32AuthenticatedCustodyV1 {
+                _engine: engine,
+                _cache: cache,
+                _custody: failure,
+            },
+        ),
+    };
+    let queue = match M1AuthenticatedPhysicalQueueSessionV1::create(
+        M1_PACKET_DIAGNOSTIC_RING_BYTES_V1,
+        prepublication,
+    ) {
+        Ok(queue) => queue,
+        Err(failure) => {
+            let quarantine = failure.quarantine_engine(&mut engine);
+            r32_prepublication_fail_stop(
+                "r32 authenticated queue creation rejected",
+                R32AuthenticatedCustodyV1 {
+                    _engine: engine,
                     _cache: cache,
-                    _custody: failure.quarantine_after_retry_exhaustion(&mut engine),
+                    _custody: quarantine,
                 },
-            ),
-        };
-    let roster =
-        M1DeviceKvCompletionRosterV1::new(vec![M1DeviceKvCompletionMemberV1::continuing(cache)]);
+            )
+        }
+    };
+    let published = match queue.submit() {
+        Ok(published) => published,
+        Err(failure) => {
+            let quarantine = failure.quarantine_engine(&mut engine);
+            terminal_quarantine(
+                "r32 authenticated first publication rejected",
+                R32AuthenticatedCustodyV1 {
+                    _engine: engine,
+                    _cache: cache,
+                    _custody: quarantine,
+                },
+            )
+        }
+    };
     let completed = match published.wait() {
         Ok(completed) => completed,
         Err(failure) => {
-            report_physical_queue_failure("r32 physical dispatch wait failure", &failure);
+            let quarantine = (*failure).quarantine_engine(&mut engine);
             terminal_quarantine(
-                "r32 physical dispatch wait failure",
-                CompletionRosterCustodyV1 {
-                    _roster: roster,
-                    _custody: failure.quarantine_engine(&mut engine),
+                "r32 authenticated physical dispatch wait failure",
+                R32AuthenticatedCustodyV1 {
+                    _engine: engine,
+                    _cache: cache,
+                    _custody: quarantine,
                 },
             )
         }
@@ -3385,12 +3854,13 @@ fn execute_r32_speculative_capture(
     let recycled = match completed.recycle() {
         Ok(recycled) => recycled,
         Err(failure) => {
-            report_physical_queue_failure("r32 physical queue recycle failure", &failure);
+            let quarantine = (*failure).quarantine_engine(&mut engine);
             terminal_quarantine(
-                "r32 physical queue recycle failure",
-                CompletionRosterCustodyV1 {
-                    _roster: roster,
-                    _custody: failure.quarantine_engine(&mut engine),
+                "r32 authenticated physical queue recycle failure",
+                R32AuthenticatedCustodyV1 {
+                    _engine: engine,
+                    _cache: cache,
+                    _custody: quarantine,
                 },
             )
         }
@@ -3399,11 +3869,17 @@ fn execute_r32_speculative_capture(
         Ok(observed) => observed,
         Err(failure) => match failure.retry() {
             Ok(observed) => observed,
-            Err(failure) => close_or_quarantine_roster(
-                "r32 compact observation rejected after bounded retry",
-                roster,
-                (*failure).destroy_queue_and_retain_evidence(&mut engine),
-            ),
+            Err(failure) => {
+                let teardown = (*failure).destroy_queue_and_retain_evidence(&mut engine);
+                terminal_quarantine(
+                    "r32 compact observation rejected after bounded retry",
+                    R32AuthenticatedCustodyV1 {
+                        _engine: engine,
+                        _cache: cache,
+                        _custody: teardown,
+                    },
+                )
+            }
         },
     };
     let diagnostic = match observed.observe_speculative_k4_diagnostic_choices() {
@@ -3415,10 +3891,14 @@ fn execute_r32_speculative_capture(
                 failure.error(),
                 failure.copied_choice_ranges(),
             );
-            close_or_quarantine_roster(
-                "r32 diagnostic choice observation rejected",
-                roster,
-                (*failure).destroy_queue_and_retain_evidence(&mut engine),
+            let teardown = (*failure).destroy_queue_and_retain_evidence(&mut engine);
+            terminal_quarantine(
+                "r32 authenticated diagnostic choice observation rejected",
+                R32AuthenticatedCustodyV1 {
+                    _engine: engine,
+                    _cache: cache,
+                    _custody: teardown,
+                },
             )
         }
     };
@@ -3426,93 +3906,121 @@ fn execute_r32_speculative_capture(
         Ok(joined) => joined,
         Err(failure) => match (*failure).retry() {
             Ok(joined) => joined,
-            Err(failure) => close_or_quarantine_roster(
-                "r32 maximal-prefix semantic join rejected after bounded retry",
-                roster,
-                (*failure).destroy_queue_and_retain_evidence(&mut engine),
-            ),
+            Err(failure) => {
+                let teardown = (*failure).destroy_queue_and_retain_evidence(&mut engine);
+                terminal_quarantine(
+                    "r32 authenticated maximal-prefix semantic join rejected after bounded retry",
+                    R32AuthenticatedCustodyV1 {
+                        _engine: engine,
+                        _cache: cache,
+                        _custody: teardown,
+                    },
+                )
+            }
         },
     };
     if !joined.target_token_matches() {
-        close_or_quarantine_roster_with_diagnostic(
-            "r32 corresponding target-token equality rejection",
-            "r32 speculative token differs from corresponding target choice".to_owned(),
-            roster,
-            joined.destroy_queue_and_retain_evidence(&mut engine),
-        );
+        let teardown = joined.destroy_queue_and_retain_evidence(&mut engine);
+        terminal_quarantine(
+            "r32 authenticated corresponding target-token equality invariant rejected",
+            R32AuthenticatedCustodyV1 {
+                _engine: engine,
+                _cache: cache,
+                _custody: teardown,
+            },
+        )
     }
     let (completed, choices) = joined.into_parts();
-    let completed = match complete_m1_physical_step_v1(&mut engine, completed, roster) {
-        M1CompletedStepOutcomeV1::Completed(completed) => completed,
-        M1CompletedStepOutcomeV1::Rejected(rejected) => {
+    let roster =
+        M1DeviceKvCompletionRosterV1::new(vec![M1DeviceKvCompletionMemberV1::continuing(cache)]);
+    let completed = match complete_m1_authenticated_physical_step_v1(&mut engine, completed, roster)
+    {
+        M1AuthenticatedCompletedStepOutcomeV1::Completed(completed) => completed,
+        M1AuthenticatedCompletedStepOutcomeV1::Rejected(rejected) => {
             let (_error, completed, roster) = rejected.into_parts();
-            match complete_m1_physical_step_v1(&mut engine, completed, roster) {
-                M1CompletedStepOutcomeV1::Completed(completed) => completed,
-                M1CompletedStepOutcomeV1::Rejected(rejected) => close_or_quarantine_r32_choices(
-                    "r32 Engine completion rejected after bounded retry",
-                    "r32 exact Engine completion rejected twice".to_owned(),
-                    choices,
-                    rejected.destroy_queue_and_retain_rejection(&mut engine),
-                ),
-                M1CompletedStepOutcomeV1::Poisoned(poison) => terminal_quarantine(
-                    "r32 Engine completion retry entered terminal poison",
-                    R32ChoiceCustodyV1 {
+            match complete_m1_authenticated_physical_step_v1(&mut engine, completed, roster) {
+                M1AuthenticatedCompletedStepOutcomeV1::Completed(completed) => completed,
+                M1AuthenticatedCompletedStepOutcomeV1::Rejected(rejected) => {
+                    let teardown = rejected.destroy_queue_and_retain_rejection(&mut engine);
+                    terminal_quarantine(
+                        "r32 authenticated Engine completion rejected after bounded retry",
+                        R32AuthenticatedPostCompletionCustodyV1 {
+                            _engine: engine,
+                            _choices: choices,
+                            _custody: teardown,
+                        },
+                    )
+                }
+                M1AuthenticatedCompletedStepOutcomeV1::Poisoned(poison) => terminal_quarantine(
+                    "r32 authenticated Engine completion retry entered terminal poison",
+                    R32AuthenticatedPostCompletionCustodyV1 {
+                        _engine: engine,
                         _choices: choices,
                         _custody: poison,
                     },
                 ),
             }
         }
-        M1CompletedStepOutcomeV1::Poisoned(poison) => terminal_quarantine(
-            "r32 Engine completion entered terminal poison",
-            R32ChoiceCustodyV1 {
+        M1AuthenticatedCompletedStepOutcomeV1::Poisoned(poison) => terminal_quarantine(
+            "r32 authenticated Engine completion entered terminal poison",
+            R32AuthenticatedPostCompletionCustodyV1 {
+                _engine: engine,
                 _choices: choices,
                 _custody: poison,
             },
         ),
     };
-    let released = match release_first_completed_step(&mut engine, completed) {
+    let released = match release_m1_authenticated_completed_step_kv_pages_v1(completed) {
         Ok(released) => released,
-        Err(teardown) => {
-            let FirstPageReleaseTeardownV1 { error, teardown } = *teardown;
-            close_or_quarantine_r32_choices(
-                "r32 KV page release rejected after bounded retry",
-                error,
-                choices,
-                teardown,
-            )
+        Err(failure) => {
+            let (first_error, completed) = (*failure).into_parts();
+            match release_m1_authenticated_completed_step_kv_pages_v1(completed) {
+                Ok(released) => released,
+                Err(failure) => terminal_quarantine(
+                    "r32 authenticated KV page release rejected after bounded retry",
+                    R32AuthenticatedPostCompletionCustodyV1 {
+                        _engine: engine,
+                        _choices: choices,
+                        _custody: (first_error, failure),
+                    },
+                ),
+            }
         }
     };
     let capture =
         match m1_r32_partial_capture::manifest(m1_r32_partial_capture::SettledCaptureInputsV1 {
             choices: &choices,
             released: &released,
-            runner,
         }) {
             Ok(capture) => capture,
-            Err(diagnostic) => close_or_quarantine_r32_choices(
-                "r32 settled manifest construction rejected",
-                diagnostic,
-                choices,
-                released.destroy_queue_and_retain_step(&mut engine),
-            ),
+            Err(diagnostic) => {
+                let teardown = released.destroy_queue_and_retain_step(&mut engine);
+                terminal_quarantine(
+                    "r32 authenticated settled manifest construction rejected",
+                    R32AuthenticatedPostCompletionCustodyV1 {
+                        _engine: engine,
+                        _choices: choices,
+                        _custody: (diagnostic, teardown),
+                    },
+                )
+            }
         };
     let closed = match released.destroy_queue_and_retain_step(&mut engine) {
         Ok(closed) => closed,
         Err(quarantine) => terminal_quarantine(
-            "r32 settled queue destruction failure",
-            R32CaptureCustodyV1 {
-                _capture: capture,
+            "r32 authenticated settled queue destruction failure",
+            R32AuthenticatedPostCompletionCustodyV1 {
+                _engine: engine,
                 _choices: choices,
-                _custody: quarantine,
+                _custody: (capture, quarantine),
             },
         ),
     };
-    Ok(R32CaptureReadyV1 {
+    R32CaptureReadyV1 {
         capture,
         _choices: choices,
         _closed: closed,
-    })
+    }
 }
 
 fn speculative_s1_k4_validated_inputs(
@@ -3520,7 +4028,7 @@ fn speculative_s1_k4_validated_inputs(
     tokens: Vec<u32>,
     positions: Vec<u32>,
     active_length: u32,
-) -> CaptureResult<ValidatedM1StepInputs> {
+) -> Result<ValidatedM1StepInputs, Box<ferric_spec::M1StepInputRejection>> {
     let candidate = M1StepInputCandidate::new(
         plan.selection(),
         vec![Some(plan)],
@@ -3531,9 +4039,7 @@ fn speculative_s1_k4_validated_inputs(
     );
     match validate_m1_step_inputs(candidate) {
         M1StepInputValidationOutcome::Validated(inputs) => Ok(inputs),
-        M1StepInputValidationOutcome::Rejected(failure) => {
-            Err(format!("r32 S1/K4 inputs rejected: {:?}", failure.error()))
-        }
+        M1StepInputValidationOutcome::Rejected(failure) => Err(Box::new(failure)),
     }
 }
 
@@ -8579,16 +9085,146 @@ mod tests {
         assert!(exhaustion_error.contains("capture-r30-exhaustion PREPACKED-SNAPSHOT"));
 
         let r32_error = run(vec![OsString::from(m1_r32_partial_capture::COMMAND)]).unwrap_err();
-        assert!(r32_error.contains("capture-r32-speculative-k4 PREPACKED-SNAPSHOT"));
+        assert!(r32_error.contains(
+            "capture-r32-speculative-k4 PREPACKED-SNAPSHOT AGGREGATE-V2-SELECTOR-MANIFEST"
+        ));
+        assert!(!r32_error.contains("KERNEL-ARTIFACTS"));
 
         let mut wrong_width = vec![OsString::from("unused"); 11];
         wrong_width[0] = OsString::from(m1_r32_partial_capture::COMMAND);
         let r32_error = run(wrong_width).unwrap_err();
-        assert!(r32_error.contains("capture-r32-speculative-k4 PREPACKED-SNAPSHOT"));
+        assert!(r32_error.contains("AGGREGATE-V2-SELECTOR-MANIFEST"));
+        assert!(!r32_error.contains("KERNEL-ARTIFACTS"));
 
         let smoke_error = run(vec![OsString::from(m1_target_smoke::COMMAND)]).unwrap_err();
         assert!(smoke_error.contains("run-target-smoke PREPACKED-SNAPSHOT"));
         assert!(!smoke_error.contains("MODEL-SOURCE"));
+    }
+
+    #[test]
+    fn r32_malformed_selector_rejects_before_kfd_with_explicit_non_submission() {
+        let temporary = TestDirectory::new();
+        let selector = temporary.0.join("selector.json");
+        fs::write(&selector, b"{}\n").unwrap();
+        let error = run(vec![
+            OsString::from(m1_r32_partial_capture::COMMAND),
+            OsString::from("missing-snapshot"),
+            selector.into_os_string(),
+            OsString::from("missing-closure"),
+            OsString::from("missing-environment"),
+            OsString::from("1"),
+            OsString::from("unused-output"),
+        ])
+        .unwrap_err();
+        assert!(error.contains("aggregate V2 selector manifest"));
+        assert!(error.contains("submitted_gpu_work=false"));
+        assert!(!error.contains("KFD"));
+    }
+
+    #[test]
+    fn r32_source_orders_protected_authentication_before_kfd_and_has_no_raw_artifact_path() {
+        let source = include_str!("ferric-m1-qualification-capture.rs");
+        let command = source
+            .split("fn run_r32_speculative_capture")
+            .nth(1)
+            .unwrap()
+            .split("fn read_r32_selector_manifest")
+            .next()
+            .unwrap();
+        for required in [
+            "decode_m1_worker_v3_selector_manifest_v2",
+            "WorkerV3ProtectedRosterVerifierAdapterV1::new",
+            "M1AllKernelsProtectedVerifierV1::new",
+            "acquire_m1_all_kernels_authenticated_worker_v3_programs_v1",
+            "bind_m1_physical_runner_v1",
+            "submitted_gpu_work=false",
+        ] {
+            assert!(
+                command.contains(required),
+                "missing authenticated R32 stage {required}"
+            );
+        }
+        let authentication = command
+            .find("acquire_m1_all_kernels_authenticated_worker_v3_programs_v1")
+            .unwrap();
+        let bind = command.find("bind_m1_physical_runner_v1").unwrap();
+        let kfd = command.find("OpenedKfd::open_default").unwrap();
+        assert!(authentication < kfd);
+        assert!(bind < kfd);
+        for forbidden in [
+            "KERNEL-ARTIFACTS",
+            "reopen_persisted_m1_kernel_artifacts_v1",
+            "bind_structural_m1_physical_runner_v1",
+            "require_m1_authenticated_roster_acquisition_v1",
+            "Synthetic",
+            "TestVerifier",
+            "M1_CURRENT_AGGREGATE_SOURCE_PIN_V1",
+        ] {
+            assert!(
+                !command.contains(forbidden),
+                "raw R32 path contains {forbidden}"
+            );
+        }
+
+        let execution = source
+            .split("fn execute_r32_speculative_capture")
+            .nth(1)
+            .unwrap()
+            .split("fn speculative_s1_k4_validated_inputs")
+            .next()
+            .unwrap();
+        for required in [
+            "M1AuthenticatedPhysicalRunnerV1",
+            ".prepare_first_step(",
+            "M1AuthenticatedPhysicalQueueSessionV1::create",
+            ".submit()",
+            ".wait()",
+            ".recycle()",
+            ".observe_completion()",
+            ".observe_speculative_k4_diagnostic_choices()",
+            ".check_completion()",
+            "complete_m1_authenticated_physical_step_v1",
+            "release_m1_authenticated_completed_step_kv_pages_v1",
+            "target_token_matches",
+            "destroy_queue_and_retain_evidence",
+        ] {
+            assert!(
+                execution.contains(required),
+                "missing authenticated R32 stage {required}"
+            );
+        }
+        let mismatch = execution.find("if !joined.target_token_matches()").unwrap();
+        let mismatch_teardown = execution[mismatch..]
+            .find("joined.destroy_queue_and_retain_evidence(&mut engine)")
+            .unwrap();
+        assert!(mismatch_teardown > 0);
+        for forbidden in [
+            "runner: &ferric_engine::M1PhysicalRunnerV1",
+            "complete_m1_physical_step_v1",
+            "rearm",
+        ] {
+            assert!(
+                !execution.contains(forbidden),
+                "authenticated R32 execution contains {forbidden}"
+            );
+        }
+    }
+
+    #[test]
+    fn r32_encoder_accepts_only_authenticated_settled_custody() {
+        let source = include_str!("m1_r32_partial_capture.rs");
+        let inputs = source
+            .split("pub(super) struct SettledCaptureInputsV1")
+            .nth(1)
+            .unwrap()
+            .split("#[derive")
+            .next()
+            .unwrap();
+        assert!(inputs.contains("M1AuthenticatedReleasedCompletedStepV1"));
+        assert!(!inputs.contains("M1ReleasedCompletedStepV1"));
+        assert!(!inputs.contains("M1PhysicalRunnerV1"));
+        assert!(!source.contains("kernel_artifact_manifest_id"));
+        assert!(source.contains("ferric-authenticated-worker-v3-partial-capture-only"));
     }
 
     #[test]

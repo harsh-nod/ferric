@@ -122,6 +122,12 @@ const FE2O3_ROOTS: &[(&str, &str)] = &[
 const LOCAL_RUNTIME_ROOTS: &[(&str, &str, &str, &str)] = &[
     (
         "ferric-engine",
+        "ferric-qwen3-all-kernels-worker-v3-verifier-v1",
+        "adapters/qwen3-all-kernels-worker-v3-verifier-v1",
+        "ferric_qwen3_all_kernels_worker_v3_verifier_v1",
+    ),
+    (
+        "ferric-engine",
         "ferric-qwen3-all-kernels-device-v1",
         "device/qwen3-all-kernels-v1",
         "ferric_qwen3_all_kernels_device_v1",
@@ -694,10 +700,16 @@ fn validate_local_runtime_package(
         .get("features")
         .and_then(Value::as_object)
         .ok_or_else(|| format!("local runtime package features are malformed: {name}"))?;
+    let is_protected_verifier = name == "ferric-qwen3-all-kernels-worker-v3-verifier-v1";
+    let expected_rust_version = if is_protected_verifier {
+        "1.97.1"
+    } else {
+        "1.94"
+    };
     if manifest != expected_manifest
         || string_field(package, "version")? != "0.1.0"
         || string_field(package, "edition")? != "2024"
-        || string_field(package, "rust_version")? != "1.94"
+        || string_field(package, "rust_version")? != expected_rust_version
         || package.get("source").is_some_and(|value| !value.is_null())
         || package.get("links").is_some_and(|value| !value.is_null())
         || !publish.is_empty()
@@ -710,9 +722,13 @@ fn validate_local_runtime_package(
     }
 
     let roster_source = expected_root.join("src/lib.rs");
-    validate_aggregate_runtime_roster(&roster_source)?;
+    if !is_protected_verifier {
+        validate_aggregate_runtime_roster(&roster_source)?;
+    }
     let expected_library = canonical(&roster_source)?;
-    let expected_build_script = canonical(&expected_root.join("build.rs"))?;
+    let expected_build_script = (!is_protected_verifier)
+        .then(|| canonical(&expected_root.join("build.rs")))
+        .transpose()?;
     let expected_tests = canonical(&expected_root.join("tests"))?;
     let mut library_count = 0_u8;
     let mut build_script_count = 0_u8;
@@ -749,7 +765,7 @@ fn validate_local_runtime_package(
                 })?;
                 if target_name != "build-script-build"
                     || crate_types != ["bin"]
-                    || source != expected_build_script
+                    || Some(&source) != expected_build_script.as_ref()
                     || edition != "2024"
                     || bool_field(target, "doc")?
                     || bool_field(target, "doctest")?
@@ -772,7 +788,8 @@ fn validate_local_runtime_package(
             _ => return Err(format!("local runtime package target drifted: {name}")),
         }
     }
-    if library_count != 1 || build_script_count != 1 {
+    let expected_build_script_count = u8::from(!is_protected_verifier);
+    if library_count != 1 || build_script_count != expected_build_script_count {
         return Err(format!(
             "local runtime production target roster drifted: {name}"
         ));
@@ -792,9 +809,7 @@ fn validate_local_runtime_package(
             .get("target")
             .and_then(Value::as_str)
             .map(str::to_owned);
-        if package_dependency.get("source").and_then(Value::as_str) != Some(FE2O3_SOURCE)
-            || string_field(package_dependency, "req")? != "=0.1.0"
-            || !bool_field(package_dependency, "uses_default_features")?
+        let common_drift = !bool_field(package_dependency, "uses_default_features")?
             || bool_field(package_dependency, "optional")?
             || package_dependency
                 .get("rename")
@@ -802,16 +817,47 @@ fn validate_local_runtime_package(
             || package_dependency
                 .get("registry")
                 .is_some_and(|value| !value.is_null())
-            || package_dependency
-                .get("path")
-                .is_some_and(|value| !value.is_null())
             || !string_array(
                 package_dependency,
                 "features",
                 "local runtime dependency feature",
             )?
-            .is_empty()
-        {
+            .is_empty();
+        let dependency_drift = if is_protected_verifier {
+            match dependency_name {
+                "fe2o3-host" => {
+                    package_dependency.get("source").and_then(Value::as_str)
+                        != Some(FE2O3_SOURCE)
+                        || string_field(package_dependency, "req")? != "=0.1.0"
+                        || package_dependency
+                            .get("path")
+                            .is_some_and(|value| !value.is_null())
+                        || target.is_some()
+                }
+                "ferric-qwen3-all-kernels-device-v1" => {
+                    package_dependency
+                        .get("source")
+                        .is_some_and(|value| !value.is_null())
+                        || string_field(package_dependency, "req")? != "*"
+                        || package_dependency
+                            .get("path")
+                            .and_then(Value::as_str)
+                            .map(Path::new)
+                            .map(canonical)
+                            .transpose()?
+                            != Some(canonical(&repo.join("device/qwen3-all-kernels-v1"))?)
+                        || target.is_some()
+                }
+                _ => true,
+            }
+        } else {
+            package_dependency.get("source").and_then(Value::as_str) != Some(FE2O3_SOURCE)
+                || string_field(package_dependency, "req")? != "=0.1.0"
+                || package_dependency
+                    .get("path")
+                    .is_some_and(|value| !value.is_null())
+        };
+        if common_drift || dependency_drift {
             return Err(format!(
                 "local runtime package dependency drifted: {name}::{dependency_name}"
             ));
@@ -822,13 +868,20 @@ fn validate_local_runtime_package(
             ));
         }
     }
-    let expected_dependencies = BTreeSet::from([
-        ("fe2o3-device".to_owned(), None),
-        (
-            "fe2o3-host".to_owned(),
-            Some("cfg(not(target_arch = \"amdgpu\"))".to_owned()),
-        ),
-    ]);
+    let expected_dependencies = if is_protected_verifier {
+        BTreeSet::from([
+            ("fe2o3-host".to_owned(), None),
+            ("ferric-qwen3-all-kernels-device-v1".to_owned(), None),
+        ])
+    } else {
+        BTreeSet::from([
+            ("fe2o3-device".to_owned(), None),
+            (
+                "fe2o3-host".to_owned(),
+                Some("cfg(not(target_arch = \"amdgpu\"))".to_owned()),
+            ),
+        ])
+    };
     if production_dependencies != expected_dependencies {
         return Err(format!(
             "local runtime package dependency roster drifted: {name}"
@@ -924,13 +977,23 @@ fn validate_local_runtime_package(
             "local runtime package resolve edge roster drifted: {name}"
         ));
     }
-    let expected_resolved_edges = BTreeMap::from([
-        ("fe2o3_device", ("fe2o3-device", None)),
-        (
-            "fe2o3_host",
-            ("fe2o3-host", Some("cfg(not(target_arch = \"amdgpu\"))")),
-        ),
-    ]);
+    let expected_resolved_edges = if is_protected_verifier {
+        BTreeMap::from([
+            ("fe2o3_host", ("fe2o3-host", None)),
+            (
+                "ferric_qwen3_all_kernels_device_v1",
+                ("ferric-qwen3-all-kernels-device-v1", None),
+            ),
+        ])
+    } else {
+        BTreeMap::from([
+            ("fe2o3_device", ("fe2o3-device", None)),
+            (
+                "fe2o3_host",
+                ("fe2o3-host", Some("cfg(not(target_arch = \"amdgpu\"))")),
+            ),
+        ])
+    };
     let mut resolved_dependency_ids = BTreeSet::new();
     for edge in local_edges {
         let edge_name = string_field(edge, "name")?;
@@ -947,9 +1010,20 @@ fn validate_local_runtime_package(
         let resolved_package = packages_by_id.get(dependency_id).ok_or_else(|| {
             format!("local runtime resolved dependency package is absent: {name}::{edge_name}")
         })?;
+        let resolved_identity_drift = if *expected_package_name
+            == "ferric-qwen3-all-kernels-device-v1"
+        {
+            resolved_package
+                .get("source")
+                .is_some_and(|value| !value.is_null())
+                || canonical(Path::new(string_field(resolved_package, "manifest_path")?))?
+                    != canonical(&repo.join("device/qwen3-all-kernels-v1/Cargo.toml"))?
+        } else {
+            string_field(resolved_package, "source")? != FE2O3_RESOLVED_SOURCE
+        };
         if string_field(resolved_package, "name")? != *expected_package_name
             || string_field(resolved_package, "version")? != "0.1.0"
-            || string_field(resolved_package, "source")? != FE2O3_RESOLVED_SOURCE
+            || resolved_identity_drift
         {
             return Err(format!(
                 "local runtime resolved dependency identity drifted: {name}::{edge_name}"

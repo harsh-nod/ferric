@@ -10,6 +10,7 @@ members = [
     "proofs/m1",
 ]
 exclude = [
+    "adapters/qwen3-all-kernels-worker-v3-verifier-v1",
     "device/qwen3-all-kernels-v1",
     "device/qwen3-gemm-v1",
     "device/qwen3-logits-v1",

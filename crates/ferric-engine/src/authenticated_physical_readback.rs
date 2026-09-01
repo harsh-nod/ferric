@@ -2699,6 +2699,92 @@ pub struct M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackV1 {
     choices: M1ObservedSpeculativeDiagnosticChoicesV1,
 }
 
+/// Clean fail-closed release of a joined diagnostic that cannot be completed.
+#[must_use = "authenticated diagnostic evidence and program release remain retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeK4DiagnosticCompletedTeardownSuccessV1 {
+    queue_release: AuthenticatedServiceQueueReleaseV1,
+    checked: M1CheckedCompletionOutputV1,
+    completion: ExactCompletion,
+    kv: M1FullStepKvReservationCustodyV1,
+    choices: M1ObservedSpeculativeDiagnosticChoicesV1,
+}
+
+impl M1AuthenticatedSpeculativeK4DiagnosticCompletedTeardownSuccessV1 {
+    /// Authenticated program release and native queue-destruction observation.
+    #[must_use = "released authenticated programs remain explicitly owned"]
+    pub const fn queue_release(&self) -> &AuthenticatedServiceQueueReleaseV1 {
+        &self.queue_release
+    }
+
+    /// Structurally and semantically checked compact completion.
+    #[must_use = "checked completion remains retained"]
+    pub const fn checked(&self) -> &M1CheckedCompletionOutputV1 {
+        &self.checked
+    }
+
+    /// Exact copied diagnostic choices.
+    #[must_use = "diagnostic choices remain retained"]
+    pub const fn choices(&self) -> &M1ObservedSpeculativeDiagnosticChoicesV1 {
+        &self.choices
+    }
+
+    /// Exact completion epoch retained during fail-closed release.
+    #[must_use]
+    pub const fn completion_epoch(&self) -> CompletionEpoch {
+        self.completion.epoch()
+    }
+
+    /// Pending KV reservations retained after scheduler quarantine.
+    #[must_use = "pending KV reservations remain retained"]
+    pub const fn kv_reservations(&self) -> &M1FullStepKvReservationCustodyV1 {
+        &self.kv
+    }
+}
+
+/// Terminal release quarantine for a joined diagnostic that cannot be completed.
+#[must_use = "authenticated diagnostic evidence and release quarantine remain retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeK4DiagnosticCompletedTeardownFailureV1 {
+    source: M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1,
+    checked: M1CheckedCompletionOutputV1,
+    completion: ExactCompletion,
+    kv: M1FullStepKvReservationCustodyV1,
+    choices: M1ObservedSpeculativeDiagnosticChoicesV1,
+}
+
+impl M1AuthenticatedSpeculativeK4DiagnosticCompletedTeardownFailureV1 {
+    /// Authenticated lower release quarantine and every Ferric owner.
+    #[must_use = "authenticated release quarantine remains retained"]
+    pub const fn source(&self) -> &M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1 {
+        &self.source
+    }
+
+    /// Structurally and semantically checked compact completion.
+    #[must_use = "checked completion remains retained"]
+    pub const fn checked(&self) -> &M1CheckedCompletionOutputV1 {
+        &self.checked
+    }
+
+    /// Exact copied diagnostic choices.
+    #[must_use = "diagnostic choices remain retained"]
+    pub const fn choices(&self) -> &M1ObservedSpeculativeDiagnosticChoicesV1 {
+        &self.choices
+    }
+
+    /// Exact completion epoch retained by terminal quarantine.
+    #[must_use]
+    pub const fn completion_epoch(&self) -> CompletionEpoch {
+        self.completion.epoch()
+    }
+
+    /// Pending KV reservations retained after scheduler quarantine.
+    #[must_use = "pending KV reservations remain retained"]
+    pub const fn kv_reservations(&self) -> &M1FullStepKvReservationCustodyV1 {
+        &self.kv
+    }
+}
+
 impl M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackV1 {
     /// Explicitly demoted diagnostic status; this owner is not M1 evidence.
     #[must_use]
@@ -2733,6 +2819,53 @@ impl M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackV1 {
                 record.record().emitted_token_count > 0
                     && record.record().emitted_tokens[0] == self.corresponding_target_only_token
             })
+    }
+
+    /// Faults the logical Engine, destroys the authenticated queue, and retains
+    /// the checked compact image, exact completion, KV reservations, and choices.
+    ///
+    /// This is the fail-closed terminal transition for an invariant rejection
+    /// after the private diagnostic semantic join. It does not complete the
+    /// scheduler request or release any KV page.
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal authenticated lower release quarantine paired with all
+    /// post-join Ferric owners when native queue destruction fails.
+    pub fn destroy_queue_and_retain_evidence<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1AuthenticatedSpeculativeK4DiagnosticCompletedTeardownSuccessV1,
+        Box<M1AuthenticatedSpeculativeK4DiagnosticCompletedTeardownFailureV1>,
+    > {
+        engine.quarantine_m1_queue_rearm_failure();
+        let Self {
+            completed,
+            corresponding_target_only_token: _,
+            choices,
+        } = self;
+        let (queue, checked, completion, kv) = completed.into_parts();
+        match queue.destroy_and_release() {
+            Ok(queue_release) => Ok(
+                M1AuthenticatedSpeculativeK4DiagnosticCompletedTeardownSuccessV1 {
+                    queue_release,
+                    checked,
+                    completion,
+                    kv,
+                    choices,
+                },
+            ),
+            Err(source) => Err(Box::new(
+                M1AuthenticatedSpeculativeK4DiagnosticCompletedTeardownFailureV1 {
+                    source: *source,
+                    checked,
+                    completion,
+                    kv,
+                    choices,
+                },
+            )),
+        }
     }
 
     /// Separates authenticated completion authority and inert choice copies once.

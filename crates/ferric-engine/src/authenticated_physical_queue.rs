@@ -24,7 +24,7 @@ use crate::physical_queue_lifecycle::{
     wait_with_completion_progress_policy, CompletionProgressPollV1, CompletionProgressWaitFailureV1,
 };
 use crate::{
-    DeclaredOperationKernelPlan, Gfx942DeviceBinding, M1AuthenticatedPhysicalRunnerV1,
+    DeclaredOperationKernelPlan, Engine, Gfx942DeviceBinding, M1AuthenticatedPhysicalRunnerV1,
     M1AuthenticatedPrepublicationBatchV1, M1CompletionProgressObservationV1,
     M1CompletionProgressWaitDiagnosticV1, M1PhysicalFixedBatchCustodyV1,
     M1PhysicalFixedBatchShapeV1, M1PhysicalQueueBatchCustodyV1, M1PrepublicationStepCustodyV1,
@@ -539,6 +539,38 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::{
+        M1AuthenticatedPhysicalQueueCreateFailureV1,
+        M1AuthenticatedPhysicalQueueOperationFailureV1,
+        M1AuthenticatedPhysicalQueueSubmitFailureV1,
+        M1EngineQuarantinedAuthenticatedPhysicalQueueCreateFailureV1,
+        M1EngineQuarantinedAuthenticatedPhysicalQueueOperationFailureV1,
+        M1EngineQuarantinedAuthenticatedPhysicalQueueSubmitFailureV1,
+    };
+    use crate::Engine;
+
+    #[test]
+    fn authenticated_effectful_failure_types_expose_consuming_engine_quarantine() {
+        let _: fn(
+            M1AuthenticatedPhysicalQueueCreateFailureV1,
+            &mut Engine<1>,
+        ) -> M1EngineQuarantinedAuthenticatedPhysicalQueueCreateFailureV1 =
+            M1AuthenticatedPhysicalQueueCreateFailureV1::quarantine_engine::<1>;
+        let _: fn(
+            M1AuthenticatedPhysicalQueueSubmitFailureV1,
+            &mut Engine<1>,
+        ) -> M1EngineQuarantinedAuthenticatedPhysicalQueueSubmitFailureV1 =
+            M1AuthenticatedPhysicalQueueSubmitFailureV1::quarantine_engine::<1>;
+        let _: fn(
+            M1AuthenticatedPhysicalQueueOperationFailureV1,
+            &mut Engine<1>,
+        ) -> M1EngineQuarantinedAuthenticatedPhysicalQueueOperationFailureV1 =
+            M1AuthenticatedPhysicalQueueOperationFailureV1::quarantine_engine::<1>;
+    }
+}
+
 /// Live detached queue retaining authenticated program history and prior-step custody.
 ///
 /// ```compile_fail
@@ -682,6 +714,35 @@ pub enum M1AuthenticatedPhysicalQueueCreateFailureV1 {
     },
     /// Native queue creation began and retry is forbidden.
     Terminal(Box<M1AuthenticatedPhysicalQueueCreateTerminalV1>),
+}
+
+/// Authenticated queue-creation failure after the paired scheduler Engine was faulted.
+#[must_use = "Engine-quarantined authenticated creation custody must remain retained"]
+#[derive(Debug)]
+pub struct M1EngineQuarantinedAuthenticatedPhysicalQueueCreateFailureV1 {
+    failure: Box<M1AuthenticatedPhysicalQueueCreateFailureV1>,
+}
+
+impl M1EngineQuarantinedAuthenticatedPhysicalQueueCreateFailureV1 {
+    /// Exact rejected or terminal authenticated creation owner.
+    #[must_use = "authenticated creation failure custody remains retained"]
+    pub const fn failure(&self) -> &M1AuthenticatedPhysicalQueueCreateFailureV1 {
+        &self.failure
+    }
+}
+
+impl M1AuthenticatedPhysicalQueueCreateFailureV1 {
+    /// Permanently faults the paired scheduler and retains this exact failure.
+    #[must_use = "Engine-quarantined authenticated creation custody must remain retained"]
+    pub fn quarantine_engine<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> M1EngineQuarantinedAuthenticatedPhysicalQueueCreateFailureV1 {
+        engine.quarantine_m1_queue_rearm_failure();
+        M1EngineQuarantinedAuthenticatedPhysicalQueueCreateFailureV1 {
+            failure: Box::new(self),
+        }
+    }
 }
 
 enum CreateCaseResultV1<const N: usize> {
@@ -935,7 +996,34 @@ pub struct M1AuthenticatedPhysicalQueueOperationFailureV1 {
     completion_progress_wait: Option<Box<M1CompletionProgressWaitDiagnosticV1>>,
 }
 
+/// Authenticated queue operation failure after the paired scheduler Engine was faulted.
+#[must_use = "Engine-quarantined authenticated operation custody must remain retained"]
+#[derive(Debug)]
+pub struct M1EngineQuarantinedAuthenticatedPhysicalQueueOperationFailureV1 {
+    failure: Box<M1AuthenticatedPhysicalQueueOperationFailureV1>,
+}
+
+impl M1EngineQuarantinedAuthenticatedPhysicalQueueOperationFailureV1 {
+    /// Exact terminal authenticated queue operation failure.
+    #[must_use = "authenticated operation failure custody remains retained"]
+    pub const fn failure(&self) -> &M1AuthenticatedPhysicalQueueOperationFailureV1 {
+        &self.failure
+    }
+}
+
 impl M1AuthenticatedPhysicalQueueOperationFailureV1 {
+    /// Permanently faults the paired scheduler and retains this exact terminal failure.
+    #[must_use = "Engine-quarantined authenticated operation custody must remain retained"]
+    pub fn quarantine_engine<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> M1EngineQuarantinedAuthenticatedPhysicalQueueOperationFailureV1 {
+        engine.quarantine_m1_queue_rearm_failure();
+        M1EngineQuarantinedAuthenticatedPhysicalQueueOperationFailureV1 {
+            failure: Box::new(self),
+        }
+    }
+
     /// Exact lower queue error.
     #[must_use]
     pub const fn error(&self) -> &ServiceQueueErrorV1 {
@@ -1015,6 +1103,35 @@ pub enum M1AuthenticatedPhysicalQueueSubmitFailureV1 {
     },
     /// The lower publication transition became quarantined.
     Queue(Box<M1AuthenticatedPhysicalQueueOperationFailureV1>),
+}
+
+/// Authenticated submit failure after the paired scheduler Engine was faulted.
+#[must_use = "Engine-quarantined authenticated submit custody must remain retained"]
+#[derive(Debug)]
+pub struct M1EngineQuarantinedAuthenticatedPhysicalQueueSubmitFailureV1 {
+    failure: Box<M1AuthenticatedPhysicalQueueSubmitFailureV1>,
+}
+
+impl M1EngineQuarantinedAuthenticatedPhysicalQueueSubmitFailureV1 {
+    /// Exact currentness or terminal lower submit failure.
+    #[must_use = "authenticated submit failure custody remains retained"]
+    pub const fn failure(&self) -> &M1AuthenticatedPhysicalQueueSubmitFailureV1 {
+        &self.failure
+    }
+}
+
+impl M1AuthenticatedPhysicalQueueSubmitFailureV1 {
+    /// Permanently faults the paired scheduler and retains this exact failure.
+    #[must_use = "Engine-quarantined authenticated submit custody must remain retained"]
+    pub fn quarantine_engine<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> M1EngineQuarantinedAuthenticatedPhysicalQueueSubmitFailureV1 {
+        engine.quarantine_m1_queue_rearm_failure();
+        M1EngineQuarantinedAuthenticatedPhysicalQueueSubmitFailureV1 {
+            failure: Box::new(self),
+        }
+    }
 }
 
 enum SubmitCaseFailureV1<const N: usize> {
