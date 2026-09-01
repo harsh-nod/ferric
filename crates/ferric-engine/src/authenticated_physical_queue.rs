@@ -103,7 +103,21 @@ impl<Q> M1AuthenticatedPhysicalQueuePhaseCaseV1<Q> {
         &self.custody
     }
 
-    fn into_parts(
+    pub(crate) const fn step(&self) -> &M1PrepublicationStepCustodyV1 {
+        &self.step
+    }
+
+    pub(crate) fn observation_parts(
+        &mut self,
+    ) -> (
+        &mut Q,
+        &M1PhysicalQueueBatchCustodyV1,
+        &M1PrepublicationStepCustodyV1,
+    ) {
+        (&mut self.lower, &self.custody, &self.step)
+    }
+
+    pub(crate) fn into_parts(
         self,
     ) -> (
         Q,

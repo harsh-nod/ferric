@@ -7,6 +7,7 @@ use vstd::prelude::*;
 
 mod authenticated_kernel_programs;
 mod authenticated_physical_queue;
+mod authenticated_physical_readback;
 mod bound_step_workspaces;
 mod cache;
 mod completed_readback_join;
@@ -73,6 +74,22 @@ pub use authenticated_physical_queue::{
     M1AuthenticatedPhysicalQueueOperationFailureV1, M1AuthenticatedPhysicalQueuePhaseCaseV1,
     M1AuthenticatedPhysicalQueueReuseFailureV1, M1AuthenticatedPhysicalQueueSessionV1,
     M1AuthenticatedPhysicalQueueSubmitFailureV1, M1AuthenticatedPhysicalRecycledQueueSessionV1,
+};
+pub use authenticated_physical_readback::{
+    M1AuthenticatedCompletedReadbackJoinFailureV1,
+    M1AuthenticatedCompletionObservationFailureCustodyV1,
+    M1AuthenticatedCompletionObservationFailureV1,
+    M1AuthenticatedCompletionSnapshotReadFailedOutputV1, M1AuthenticatedObservedCompletionCaseV1,
+    M1AuthenticatedObservedCompletionOutputV1, M1AuthenticatedPhysicalCompletedReadbackV1,
+    M1AuthenticatedPhysicalReadbackDetachedQueueCaseV1,
+    M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
+    M1AuthenticatedPhysicalReadbackQueueCaseV1,
+    M1AuthenticatedPhysicalReadbackQueueOperationFailureV1,
+    M1AuthenticatedPhysicalReadbackQueueReleaseFailureV1,
+    M1AuthenticatedPhysicalReadbackQueueSessionV1, M1AuthenticatedReadbackTeardownDiagnosticV1,
+    M1AuthenticatedReadbackTeardownEvidenceV1, M1AuthenticatedReadbackTeardownFailureV1,
+    M1AuthenticatedReadbackTeardownSuccessV1, M1AuthenticatedRejectedCompletionCaseV1,
+    M1AuthenticatedRejectedCompletionOutputV1,
 };
 pub use bound_step_workspaces::{
     BoundM1FullStepWorkspaceSubleases, M1FullStepWorkspaceDispatchRangeError,
