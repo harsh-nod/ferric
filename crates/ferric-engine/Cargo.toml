@@ -22,6 +22,10 @@ path = "src/bin/ferric-m1-packet-diagnostic.rs"
 name = "ferric-m1-hardware-harness"
 path = "src/bin/ferric-m1-hardware-harness.rs"
 
+[[bin]]
+name = "ferric-m1-worker-v3-preflight"
+path = "src/bin/ferric-m1-worker-v3-preflight.rs"
+
 [dependencies]
 fe2o3-amdhsa-loader.workspace = true
 fe2o3-amd-target.workspace = true

@@ -59,6 +59,7 @@ mod step_workspace_composition;
 mod step_workspace_images;
 mod step_workspace_subleases;
 mod system;
+mod worker_v3_selector_manifest;
 
 pub use authenticated_kernel_acquisition::{
     acquire_m1_authenticated_worker_v3_programs_v1, authenticate_m1_worker_v3_rosters_v1,
@@ -612,6 +613,10 @@ pub use step_workspace_subleases::{
     M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
 };
 pub use system::{CompletionFailure, Engine, EngineError, M1CaptureQuarantinedEngineV1};
+pub use worker_v3_selector_manifest::{
+    decode_m1_worker_v3_selector_manifest_v1, M1WorkerV3SelectorManifestErrorV1,
+    M1_WORKER_V3_SELECTOR_MANIFEST_FORMAT_V1, M1_WORKER_V3_SELECTOR_MANIFEST_MAX_BYTES_V1,
+};
 
 verus! {
 
