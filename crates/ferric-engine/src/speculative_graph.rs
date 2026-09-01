@@ -739,6 +739,14 @@ impl<BackendError> M1SpeculativeGraphRunFailureV1<BackendError> {
     }
 }
 
+impl<BackendError: fmt::Debug> fmt::Display for M1SpeculativeGraphRunFailureV1<BackendError> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(&self.error, formatter)
+    }
+}
+
+impl<BackendError: fmt::Debug> std::error::Error for M1SpeculativeGraphRunFailureV1<BackendError> {}
+
 struct M1SpeculativeGraphRoundFailureV1<BackendError> {
     error: M1SpeculativeGraphExecutionErrorV1<BackendError>,
     custody: M1SpeculativeGraphFailureCustodyV1,
