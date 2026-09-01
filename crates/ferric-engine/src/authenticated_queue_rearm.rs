@@ -4180,6 +4180,13 @@ mod tests {
             M1AuthenticatedRearmedCompletionPreflightTeardownSuccessV1,
             Box<M1AuthenticatedRearmedCompletionPreflightTeardownFailureV1>,
         >;
+        fn exhaust_release(outcome: M1AuthenticatedRearmedRoundReleaseOutcomeV1) {
+            match outcome {
+                M1AuthenticatedRearmedRoundReleaseOutcomeV1::Released(_)
+                | M1AuthenticatedRearmedRoundReleaseOutcomeV1::Rejected(_)
+                | M1AuthenticatedRearmedRoundReleaseOutcomeV1::NotCompleted(_) => {}
+            }
+        }
 
         let _: ScheduleNext = M1AuthenticatedLongLivedQueueReleasedRoundV1::schedule_next::<32>;
         let _: ScheduleNextExact =
@@ -4195,13 +4202,6 @@ mod tests {
                 32,
             >;
 
-        fn exhaust_release(outcome: M1AuthenticatedRearmedRoundReleaseOutcomeV1) {
-            match outcome {
-                M1AuthenticatedRearmedRoundReleaseOutcomeV1::Released(_) => {}
-                M1AuthenticatedRearmedRoundReleaseOutcomeV1::Rejected(_) => {}
-                M1AuthenticatedRearmedRoundReleaseOutcomeV1::NotCompleted(_) => {}
-            }
-        }
         let _: fn(M1AuthenticatedRearmedRoundReleaseOutcomeV1) = exhaust_release;
     }
 }

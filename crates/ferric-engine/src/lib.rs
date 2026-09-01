@@ -66,7 +66,8 @@ pub use authenticated_kernel_programs::{
     M1AuthenticatedWorkerV3ProgramSetResidueV1, M1AuthenticatedWorkerV3ProgramSetV1,
     M1AuthenticatedWorkerV3RostersV1, M1GemmWorkerV3RosterV1, M1LogitsWorkerV3RosterV1,
     M1PagedDecodeWorkerV3RosterV1, M1PrefillWorkerV3RosterV1, M1RmsNormWorkerV3RosterV1,
-    M1SwiGluWorkerV3RosterV1, M1_AUTHENTICATED_PROGRAM_TARGET_V1, M1_AUTHENTICATED_ROSTER_COUNT_V1,
+    M1RopeKvWorkerV3RosterV1, M1SwiGluWorkerV3RosterV1, M1_AUTHENTICATED_PROGRAM_TARGET_V1,
+    M1_AUTHENTICATED_ROSTER_COUNT_V1,
 };
 pub use authenticated_physical_queue::{
     M1AuthenticatedPhysicalCompletedQueueSessionV1, M1AuthenticatedPhysicalDetachedQueueSessionV1,

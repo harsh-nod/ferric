@@ -15,6 +15,7 @@ exclude = [
     "device/qwen3-paged-decode-v1",
     "device/qwen3-prefill-v1",
     "device/qwen3-rmsnorm-v1",
+    "device/qwen3-rope-kv-v1",
     "device/qwen3-swiglu-v1",
 ]
 resolver = "2"

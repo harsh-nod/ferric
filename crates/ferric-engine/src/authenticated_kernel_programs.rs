@@ -1,8 +1,6 @@
 //! Ferric-owned intake for the exact authenticated M1 Worker V3 roster set.
 //!
-//! Six integrated families use their compiler-generated marker types directly.
-//! K3 remains generic until its generated device crate is integrated; callers
-//! must supply the authenticated roster and both generated marker types.
+//! All seven families use their compiler-generated marker types directly.
 //! Nothing in this module constructs authentication authority from persisted
 //! bytes or reopens a raw HSACO file.
 
@@ -43,6 +41,8 @@ type GemmVectorizedMarkerV1 =
 type TokenEmbeddingMarkerV1 =
     ferric_qwen3_gemm_device_v1::ferric_qwen3_token_embedding_bf16_copy_v1_gpu::Marker;
 type RmsNormMarkerV1 = ferric_qwen3_rmsnorm_device_v1::qwen3_rmsnorm_v1_gpu::Marker;
+type RopeMarkerV1 = ferric_qwen3_rope_kv_device_v1::qwen3_rope_v1_gpu::Marker;
+type PagedKvWriteMarkerV1 = ferric_qwen3_rope_kv_device_v1::qwen3_paged_kv_write_v1_gpu::Marker;
 type PrefillMarkerV1 =
     ferric_qwen3_prefill_device_v1::qwen3_gqa_prefill_causal_bf16_f32_v1_gpu::Marker;
 type PagedDecodeMarkerV1 =
@@ -70,6 +70,14 @@ fe2o3_host::compiler_generated_kernel_expectation_roster_v1! {
 }
 
 fe2o3_host::compiler_generated_kernel_expectation_roster_v1! {
+    /// Exact compiler-generated K3 marker roster in canonical `KernelId` order.
+    pub struct M1RopeKvWorkerV3RosterV1 = [
+        PagedKvWriteMarkerV1,
+        RopeMarkerV1,
+    ];
+}
+
+fe2o3_host::compiler_generated_kernel_expectation_roster_v1! {
     /// Exact compiler-generated K4 marker roster.
     pub struct M1PrefillWorkerV3RosterV1 = [PrefillMarkerV1];
 }
@@ -85,27 +93,27 @@ fe2o3_host::compiler_generated_kernel_expectation_roster_v1! {
 }
 
 fe2o3_host::compiler_generated_kernel_expectation_roster_v1! {
-    /// Exact compiler-generated K7 marker roster.
+    /// Exact compiler-generated K7 marker roster in canonical `KernelId` order.
     pub struct M1LogitsWorkerV3RosterV1 = [
-        LogitsArgmaxMarkerV1,
         LogitsCompactMarkerV1,
+        LogitsArgmaxMarkerV1,
         SpeculativeAssemblyMarkerV1,
     ];
 }
 
 /// Move-only authenticated roster owners before heterogeneous set composition.
 #[must_use = "authenticated roster custody must be admitted or explicitly released"]
-pub struct M1AuthenticatedWorkerV3RostersV1<K3R> {
+pub struct M1AuthenticatedWorkerV3RostersV1 {
     gemm: AuthenticatedWorkerV3RosterV1<M1GemmWorkerV3RosterV1>,
     rmsnorm: AuthenticatedWorkerV3RosterV1<M1RmsNormWorkerV3RosterV1>,
-    rope_kv: AuthenticatedWorkerV3RosterV1<K3R>,
+    rope_kv: AuthenticatedWorkerV3RosterV1<M1RopeKvWorkerV3RosterV1>,
     prefill: AuthenticatedWorkerV3RosterV1<M1PrefillWorkerV3RosterV1>,
     paged_decode: AuthenticatedWorkerV3RosterV1<M1PagedDecodeWorkerV3RosterV1>,
     swiglu: AuthenticatedWorkerV3RosterV1<M1SwiGluWorkerV3RosterV1>,
     logits: AuthenticatedWorkerV3RosterV1<M1LogitsWorkerV3RosterV1>,
 }
 
-impl<K3R> fmt::Debug for M1AuthenticatedWorkerV3RostersV1<K3R> {
+impl fmt::Debug for M1AuthenticatedWorkerV3RostersV1 {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter
             .debug_struct("M1AuthenticatedWorkerV3RostersV1")
@@ -120,13 +128,13 @@ impl<K3R> fmt::Debug for M1AuthenticatedWorkerV3RostersV1<K3R> {
     }
 }
 
-impl<K3R: CompilerGeneratedKernelExpectationRosterV1> M1AuthenticatedWorkerV3RostersV1<K3R> {
+impl M1AuthenticatedWorkerV3RostersV1 {
     /// Groups seven already-authenticated roster owners without creating authority.
     #[allow(clippy::too_many_arguments)]
     pub const fn new(
         gemm: AuthenticatedWorkerV3RosterV1<M1GemmWorkerV3RosterV1>,
         rmsnorm: AuthenticatedWorkerV3RosterV1<M1RmsNormWorkerV3RosterV1>,
-        rope_kv: AuthenticatedWorkerV3RosterV1<K3R>,
+        rope_kv: AuthenticatedWorkerV3RosterV1<M1RopeKvWorkerV3RosterV1>,
         prefill: AuthenticatedWorkerV3RosterV1<M1PrefillWorkerV3RosterV1>,
         paged_decode: AuthenticatedWorkerV3RosterV1<M1PagedDecodeWorkerV3RosterV1>,
         swiglu: AuthenticatedWorkerV3RosterV1<M1SwiGluWorkerV3RosterV1>,
@@ -143,7 +151,7 @@ impl<K3R: CompilerGeneratedKernelExpectationRosterV1> M1AuthenticatedWorkerV3Ros
         }
     }
 
-    fn into_residue(self) -> M1AuthenticatedWorkerV3ProgramSetResidueV1<K3R> {
+    fn into_residue(self) -> M1AuthenticatedWorkerV3ProgramSetResidueV1 {
         M1AuthenticatedWorkerV3ProgramSetResidueV1 {
             programs: None,
             gemm: Some(self.gemm),
@@ -159,15 +167,15 @@ impl<K3R: CompilerGeneratedKernelExpectationRosterV1> M1AuthenticatedWorkerV3Ros
 
 /// Owners retained when exact M1 program-set intake rejects.
 #[must_use = "rejected authenticated owners must remain classified"]
-pub struct M1AuthenticatedWorkerV3ProgramSetResidueV1<K3R> {
+pub struct M1AuthenticatedWorkerV3ProgramSetResidueV1 {
     /// Erased set containing every roster composed before the rejection.
     pub programs: Option<AuthenticatedWorkerV3ProgramSetV1>,
     /// Uncomposed or rejected K1 owner.
     pub gemm: Option<AuthenticatedWorkerV3RosterV1<M1GemmWorkerV3RosterV1>>,
     /// Uncomposed or rejected K2 owner.
     pub rmsnorm: Option<AuthenticatedWorkerV3RosterV1<M1RmsNormWorkerV3RosterV1>>,
-    /// Uncomposed or rejected caller-supplied K3 owner.
-    pub rope_kv: Option<AuthenticatedWorkerV3RosterV1<K3R>>,
+    /// Uncomposed or rejected K3 owner.
+    pub rope_kv: Option<AuthenticatedWorkerV3RosterV1<M1RopeKvWorkerV3RosterV1>>,
     /// Uncomposed or rejected K4 owner.
     pub prefill: Option<AuthenticatedWorkerV3RosterV1<M1PrefillWorkerV3RosterV1>>,
     /// Uncomposed or rejected K5 owner.
@@ -178,7 +186,7 @@ pub struct M1AuthenticatedWorkerV3ProgramSetResidueV1<K3R> {
     pub logits: Option<AuthenticatedWorkerV3RosterV1<M1LogitsWorkerV3RosterV1>>,
 }
 
-impl<K3R> fmt::Debug for M1AuthenticatedWorkerV3ProgramSetResidueV1<K3R> {
+impl fmt::Debug for M1AuthenticatedWorkerV3ProgramSetResidueV1 {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter
             .debug_struct("M1AuthenticatedWorkerV3ProgramSetResidueV1")
@@ -246,12 +254,6 @@ pub enum M1AuthenticatedProgramSetIntakeErrorV1 {
     VerificationAuthority(M1KernelArtifactFamilyV1),
     EmptyFinalizedArtifact(M1KernelArtifactFamilyV1),
     DuplicateKernelBinding,
-    K3MarkerType {
-        ordinal: usize,
-        expected: &'static str,
-        logical: &'static str,
-        export: &'static str,
-    },
     SourceFamilyOrder {
         expected: M1KernelArtifactFamilyV1,
         actual: M1KernelArtifactFamilyV1,
@@ -299,13 +301,13 @@ impl Error for M1AuthenticatedProgramSetIntakeErrorV1 {
 
 /// Intake failure retaining every roster owner available at the rejection.
 #[must_use = "intake failure retains authenticated roster custody"]
-pub struct M1AuthenticatedProgramSetIntakeFailureV1<K3R> {
+pub struct M1AuthenticatedProgramSetIntakeFailureV1 {
     phase: M1AuthenticatedProgramSetIntakePhaseV1,
     error: Box<M1AuthenticatedProgramSetIntakeErrorV1>,
-    residue: Box<M1AuthenticatedWorkerV3ProgramSetResidueV1<K3R>>,
+    residue: Box<M1AuthenticatedWorkerV3ProgramSetResidueV1>,
 }
 
-impl<K3R> M1AuthenticatedProgramSetIntakeFailureV1<K3R> {
+impl M1AuthenticatedProgramSetIntakeFailureV1 {
     /// Returns the exact rejection phase.
     #[must_use]
     pub const fn phase(&self) -> M1AuthenticatedProgramSetIntakePhaseV1 {
@@ -324,13 +326,13 @@ impl<K3R> M1AuthenticatedProgramSetIntakeFailureV1<K3R> {
     ) -> (
         M1AuthenticatedProgramSetIntakePhaseV1,
         M1AuthenticatedProgramSetIntakeErrorV1,
-        M1AuthenticatedWorkerV3ProgramSetResidueV1<K3R>,
+        M1AuthenticatedWorkerV3ProgramSetResidueV1,
     ) {
         (self.phase, *self.error, *self.residue)
     }
 }
 
-impl<K3R> fmt::Debug for M1AuthenticatedProgramSetIntakeFailureV1<K3R> {
+impl fmt::Debug for M1AuthenticatedProgramSetIntakeFailureV1 {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter
             .debug_struct("M1AuthenticatedProgramSetIntakeFailureV1")
@@ -504,22 +506,13 @@ pub fn require_m1_authenticated_roster_acquisition_v1(
 
 /// Composes seven current authenticated rosters in canonical K1-K7 order.
 ///
-/// K3 marker types must be the two real compiler-generated markers from the
-/// caller's K3 roster. This API intentionally cannot be concretely instantiated
-/// by Ferric until that generated crate is integrated.
-///
 /// # Errors
 ///
 /// Returns the exact failed intake phase, diagnostic, and every roster or
 /// partially composed program owner available at that phase.
-pub fn admit_m1_authenticated_worker_v3_programs_v1<K3R, K3Rope, K3PagedKv>(
-    rosters: M1AuthenticatedWorkerV3RostersV1<K3R>,
-) -> Result<M1AuthenticatedWorkerV3ProgramSetV1, M1AuthenticatedProgramSetIntakeFailureV1<K3R>>
-where
-    K3R: CompilerGeneratedKernelExpectationRosterV1,
-    K3Rope: CompilerGeneratedKernelExpectationV1,
-    K3PagedKv: CompilerGeneratedKernelExpectationV1,
-{
+pub fn admit_m1_authenticated_worker_v3_programs_v1(
+    rosters: M1AuthenticatedWorkerV3RostersV1,
+) -> Result<M1AuthenticatedWorkerV3ProgramSetV1, M1AuthenticatedProgramSetIntakeFailureV1> {
     let facts = match current_m1_kernel_source_facts_v1() {
         Ok(facts) => facts,
         Err(error) => {
@@ -537,7 +530,7 @@ where
             rosters.into_residue(),
         ));
     }
-    if let Err((family, error)) = validate_rosters::<K3R, K3Rope, K3PagedKv>(&facts, &rosters) {
+    if let Err((family, error)) = validate_rosters(&facts, &rosters) {
         return Err(intake_failure(
             M1AuthenticatedProgramSetIntakePhaseV1::Preflight(family),
             error,
@@ -630,18 +623,17 @@ where
             residue,
         ));
     }
-    let service_program_indices =
-        match authenticated_program_indices::<K3Rope, K3PagedKv>(&programs) {
-            Ok(indices) => indices,
-            Err(error) => {
-                residue.programs = Some(programs);
-                return Err(intake_failure(
-                    M1AuthenticatedProgramSetIntakePhaseV1::Aggregate,
-                    error,
-                    residue,
-                ));
-            }
-        };
+    let service_program_indices = match authenticated_program_indices(&programs) {
+        Ok(indices) => indices,
+        Err(error) => {
+            residue.programs = Some(programs);
+            return Err(intake_failure(
+                M1AuthenticatedProgramSetIntakePhaseV1::Aggregate,
+                error,
+                residue,
+            ));
+        }
+    };
     let catalog_id =
         authenticated_catalog_id_with_program_map(roster_catalog_id, &service_program_indices);
     Ok(M1AuthenticatedWorkerV3ProgramSetV1 {
@@ -652,11 +644,11 @@ where
     })
 }
 
-fn intake_failure<K3R>(
+fn intake_failure(
     phase: M1AuthenticatedProgramSetIntakePhaseV1,
     error: M1AuthenticatedProgramSetIntakeErrorV1,
-    residue: M1AuthenticatedWorkerV3ProgramSetResidueV1<K3R>,
-) -> M1AuthenticatedProgramSetIntakeFailureV1<K3R> {
+    residue: M1AuthenticatedWorkerV3ProgramSetResidueV1,
+) -> M1AuthenticatedProgramSetIntakeFailureV1 {
     M1AuthenticatedProgramSetIntakeFailureV1 {
         phase,
         error: Box::new(error),
@@ -678,21 +670,16 @@ fn validate_source_family_order(
     Ok(())
 }
 
-fn validate_rosters<K3R, K3Rope, K3PagedKv>(
+fn validate_rosters(
     facts: &[M1CurrentKernelSourceFactsV1; M1_AUTHENTICATED_ROSTER_COUNT_V1],
-    rosters: &M1AuthenticatedWorkerV3RostersV1<K3R>,
+    rosters: &M1AuthenticatedWorkerV3RostersV1,
 ) -> Result<
     (),
     (
         M1KernelArtifactFamilyV1,
         M1AuthenticatedProgramSetIntakeErrorV1,
     ),
->
-where
-    K3R: CompilerGeneratedKernelExpectationRosterV1,
-    K3Rope: CompilerGeneratedKernelExpectationV1,
-    K3PagedKv: CompilerGeneratedKernelExpectationV1,
-{
+> {
     let checks = [
         validate_roster(
             M1KernelArtifactFamilyV1::Gemm,
@@ -740,13 +727,10 @@ where
     for check in checks {
         check?;
     }
-    validate_k3_marker_types::<K3R, K3Rope, K3PagedKv>()
-        .map_err(|error| (M1KernelArtifactFamilyV1::RopeKv, error))?;
-
     let mut bindings = Vec::with_capacity(M1_PHYSICAL_PROGRAM_COUNT_V1);
     append_bindings::<M1GemmWorkerV3RosterV1>(&mut bindings, M1KernelArtifactFamilyV1::Gemm)?;
     append_bindings::<M1RmsNormWorkerV3RosterV1>(&mut bindings, M1KernelArtifactFamilyV1::RmsNorm)?;
-    append_bindings::<K3R>(&mut bindings, M1KernelArtifactFamilyV1::RopeKv)?;
+    append_bindings::<M1RopeKvWorkerV3RosterV1>(&mut bindings, M1KernelArtifactFamilyV1::RopeKv)?;
     append_bindings::<M1PrefillWorkerV3RosterV1>(&mut bindings, M1KernelArtifactFamilyV1::Prefill)?;
     append_bindings::<M1PagedDecodeWorkerV3RosterV1>(
         &mut bindings,
@@ -900,62 +884,6 @@ fn validate_roster<R: CompilerGeneratedKernelExpectationRosterV1>(
     Ok(())
 }
 
-fn validate_k3_marker_types<K3R, K3Rope, K3PagedKv>(
-) -> Result<(), M1AuthenticatedProgramSetIntakeErrorV1>
-where
-    K3R: CompilerGeneratedKernelExpectationRosterV1,
-    K3Rope: CompilerGeneratedKernelExpectationV1,
-    K3PagedKv: CompilerGeneratedKernelExpectationV1,
-{
-    let expected = [
-        M1PhysicalProgramV1::Rope.kernel_symbol(),
-        M1PhysicalProgramV1::PagedKvWrite.kernel_symbol(),
-    ];
-    let logical = [K3Rope::LOGICAL_NAME, K3PagedKv::LOGICAL_NAME];
-    let export = [K3Rope::EXPORT_NAME, K3PagedKv::EXPORT_NAME];
-    let bindings = [
-        K3Rope::KERNEL_BINDING_ID_V1,
-        K3PagedKv::KERNEL_BINDING_ID_V1,
-    ];
-    let contracts = [
-        K3Rope::PROFILE.generated_host_contract_identity(),
-        K3PagedKv::PROFILE.generated_host_contract_identity(),
-    ];
-    for ordinal in 0..2 {
-        if logical[ordinal] != expected[ordinal] || export[ordinal] != expected[ordinal] {
-            return Err(M1AuthenticatedProgramSetIntakeErrorV1::K3MarkerType {
-                ordinal,
-                expected: expected[ordinal],
-                logical: logical[ordinal],
-                export: export[ordinal],
-            });
-        }
-        let Some(entry) = K3R::ENTRIES
-            .iter()
-            .find(|entry| entry.kernel_binding_id() == bindings[ordinal])
-        else {
-            return Err(M1AuthenticatedProgramSetIntakeErrorV1::K3MarkerType {
-                ordinal,
-                expected: expected[ordinal],
-                logical: logical[ordinal],
-                export: export[ordinal],
-            });
-        };
-        if entry.logical_name() != logical[ordinal]
-            || entry.export_name() != export[ordinal]
-            || entry.generated_host_contract_identity() != contracts[ordinal]
-        {
-            return Err(M1AuthenticatedProgramSetIntakeErrorV1::K3MarkerType {
-                ordinal,
-                expected: expected[ordinal],
-                logical: entry.logical_name(),
-                export: entry.export_name(),
-            });
-        }
-    }
-    Ok(())
-}
-
 fn append_bindings<R: CompilerGeneratedKernelExpectationRosterV1>(
     bindings: &mut Vec<[u8; 32]>,
     family: M1KernelArtifactFamilyV1,
@@ -979,20 +907,16 @@ fn append_bindings<R: CompilerGeneratedKernelExpectationRosterV1>(
     Ok(())
 }
 
-fn authenticated_program_indices<K3Rope, K3PagedKv>(
+fn authenticated_program_indices(
     programs: &AuthenticatedWorkerV3ProgramSetV1,
-) -> Result<[usize; M1_PHYSICAL_PROGRAM_COUNT_V1], M1AuthenticatedProgramSetIntakeErrorV1>
-where
-    K3Rope: CompilerGeneratedKernelExpectationV1,
-    K3PagedKv: CompilerGeneratedKernelExpectationV1,
-{
+) -> Result<[usize; M1_PHYSICAL_PROGRAM_COUNT_V1], M1AuthenticatedProgramSetIntakeErrorV1> {
     let actual = [
         programs.program_index::<GemmReferenceMarkerV1>().ok(),
         programs.program_index::<GemmVectorizedMarkerV1>().ok(),
         programs.program_index::<TokenEmbeddingMarkerV1>().ok(),
         programs.program_index::<RmsNormMarkerV1>().ok(),
-        programs.program_index::<K3Rope>().ok(),
-        programs.program_index::<K3PagedKv>().ok(),
+        programs.program_index::<RopeMarkerV1>().ok(),
+        programs.program_index::<PagedKvWriteMarkerV1>().ok(),
         programs.program_index::<PrefillMarkerV1>().ok(),
         programs.program_index::<PagedDecodeMarkerV1>().ok(),
         programs.program_index::<SwiGluMarkerV1>().ok(),
@@ -1031,13 +955,10 @@ fn authenticated_catalog_id_with_program_map(
     Identity::new(digest.finalize().into())
 }
 
-fn authenticated_family_artifacts<K3R>(
+fn authenticated_family_artifacts(
     facts: &[M1CurrentKernelSourceFactsV1; M1_AUTHENTICATED_ROSTER_COUNT_V1],
-    rosters: &M1AuthenticatedWorkerV3RostersV1<K3R>,
-) -> Box<[DeclaredKernelFamilyArtifact]>
-where
-    K3R: CompilerGeneratedKernelExpectationRosterV1,
-{
+    rosters: &M1AuthenticatedWorkerV3RostersV1,
+) -> Box<[DeclaredKernelFamilyArtifact]> {
     let finalized = [
         rosters.gemm.verification().finalized_hsaco_sha256(),
         rosters.rmsnorm.verification().finalized_hsaco_sha256(),
@@ -1062,13 +983,10 @@ where
         .into_boxed_slice()
 }
 
-fn authenticated_catalog_id<K3R>(
+fn authenticated_catalog_id(
     facts: &[M1CurrentKernelSourceFactsV1; M1_AUTHENTICATED_ROSTER_COUNT_V1],
-    rosters: &M1AuthenticatedWorkerV3RostersV1<K3R>,
-) -> Identity
-where
-    K3R: CompilerGeneratedKernelExpectationRosterV1,
-{
+    rosters: &M1AuthenticatedWorkerV3RostersV1,
+) -> Identity {
     let verifications = [
         rosters.gemm.verification(),
         rosters.rmsnorm.verification(),
@@ -1117,16 +1035,17 @@ mod tests {
     use super::*;
 
     #[test]
-    fn integrated_rosters_are_canonical_and_cover_ten_exact_markers() {
-        let rosters: [&[fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1]; 6] = [
+    fn integrated_rosters_are_canonical_and_cover_twelve_exact_markers() {
+        let rosters: [&[fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1]; 7] = [
             M1GemmWorkerV3RosterV1::ENTRIES,
             M1RmsNormWorkerV3RosterV1::ENTRIES,
+            M1RopeKvWorkerV3RosterV1::ENTRIES,
             M1PrefillWorkerV3RosterV1::ENTRIES,
             M1PagedDecodeWorkerV3RosterV1::ENTRIES,
             M1SwiGluWorkerV3RosterV1::ENTRIES,
             M1LogitsWorkerV3RosterV1::ENTRIES,
         ];
-        assert_eq!(rosters.iter().map(|roster| roster.len()).sum::<usize>(), 10);
+        assert_eq!(rosters.iter().map(|roster| roster.len()).sum::<usize>(), 12);
         for roster in rosters {
             assert!(
                 roster
@@ -1137,16 +1056,14 @@ mod tests {
         }
         let mut symbols = rosters
             .into_iter()
-            .flat_map(|roster| roster.iter().map(|entry| entry.export_name()))
+            .flat_map(|roster| {
+                roster
+                    .iter()
+                    .map(fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1::export_name)
+            })
             .collect::<Vec<_>>();
         let mut expected = M1PhysicalProgramV1::ALL
             .into_iter()
-            .filter(|program| {
-                !matches!(
-                    program,
-                    M1PhysicalProgramV1::Rope | M1PhysicalProgramV1::PagedKvWrite
-                )
-            })
             .map(M1PhysicalProgramV1::kernel_symbol)
             .collect::<Vec<_>>();
         symbols.sort_unstable();
@@ -1155,13 +1072,37 @@ mod tests {
     }
 
     #[test]
-    fn canonical_contract_reserves_exact_k3_slots() {
+    fn k3_roster_binds_exact_generated_markers_and_slots() {
         assert_eq!(M1PhysicalProgramV1::Rope.program_index(), 4);
         assert_eq!(M1PhysicalProgramV1::PagedKvWrite.program_index(), 5);
         assert_eq!(M1PhysicalProgramV1::Rope.kernel_symbol(), "qwen3_rope_v1");
         assert_eq!(
             M1PhysicalProgramV1::PagedKvWrite.kernel_symbol(),
             "qwen3_paged_kv_write_v1"
+        );
+        let entries = M1RopeKvWorkerV3RosterV1::ENTRIES;
+        assert_eq!(entries.len(), 2);
+        assert_eq!(
+            entries[0].kernel_binding_id(),
+            PagedKvWriteMarkerV1::KERNEL_BINDING_ID_V1
+        );
+        assert_eq!(
+            entries[1].kernel_binding_id(),
+            RopeMarkerV1::KERNEL_BINDING_ID_V1
+        );
+        assert_eq!(
+            entries[0].generated_host_contract_identity(),
+            PagedKvWriteMarkerV1::PROFILE.generated_host_contract_identity()
+        );
+        assert_eq!(
+            entries[1].generated_host_contract_identity(),
+            RopeMarkerV1::PROFILE.generated_host_contract_identity()
+        );
+        assert_ne!(entries[0].kernel_binding_id(), [0; 32]);
+        assert_ne!(entries[1].kernel_binding_id(), [0; 32]);
+        assert_ne!(
+            entries[0].kernel_binding_id(),
+            entries[1].kernel_binding_id()
         );
     }
 

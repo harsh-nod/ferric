@@ -37,6 +37,7 @@ ferric-qwen3-logits-device-v1 = { path = "../../device/qwen3-logits-v1" }
 ferric-qwen3-paged-decode-device-v1 = { path = "../../device/qwen3-paged-decode-v1" }
 ferric-qwen3-prefill-device-v1 = { path = "../../device/qwen3-prefill-v1" }
 ferric-qwen3-rmsnorm-device-v1 = { path = "../../device/qwen3-rmsnorm-v1" }
+ferric-qwen3-rope-kv-device-v1 = { path = "../../device/qwen3-rope-kv-v1" }
 ferric-qwen3-swiglu-device-v1 = { path = "../../device/qwen3-swiglu-v1" }
 ferric-spec = { path = "../ferric-spec" }
 rustix.workspace = true

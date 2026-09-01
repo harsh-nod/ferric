@@ -8,6 +8,6 @@ fn main() {
     }
     println!(
         "cargo:rustc-env=FE2O3_CRATE_BINDING_ID_V1={}",
-        "eb6f9529161232a38fcb030f3b50948aaf5aa29db763b26d04cd53c0f99e969b"
+        "a9850c1d52fba8c7778ef2e389fa9a085524f020c0e1913e7017f2632e7a58c3"
     );
 }

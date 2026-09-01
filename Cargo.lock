@@ -928,6 +928,7 @@ dependencies = [
  "ferric-qwen3-paged-decode-device-v1",
  "ferric-qwen3-prefill-device-v1",
  "ferric-qwen3-rmsnorm-device-v1",
+ "ferric-qwen3-rope-kv-device-v1",
  "ferric-qwen3-swiglu-device-v1",
  "ferric-spec",
  "rustix",
@@ -1028,6 +1029,14 @@ dependencies = [
 
 [[package]]
 name = "ferric-qwen3-rmsnorm-device-v1"
+version = "0.1.0"
+dependencies = [
+ "fe2o3-device",
+ "fe2o3-host",
+]
+
+[[package]]
+name = "ferric-qwen3-rope-kv-device-v1"
 version = "0.1.0"
 dependencies = [
  "fe2o3-device",
