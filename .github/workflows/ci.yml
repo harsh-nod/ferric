@@ -37,6 +37,8 @@ jobs:
       - run: python3 -I -B -m unittest discover -s benches/m1/reference -p 'test*.py'
       - run: python3 -I -B proofs/m1/evidence/test-source-closure-mode-policy.py
       - run: python3 -I -B proofs/m1/evidence/test-r29-differential-evidence-policy.py
+      - run: python3 -I -B proofs/m1-qualification/test-protected-worker-v3-build-producer-policy.py
+      - run: python3 -I -B proofs/m1-qualification/test-protected-worker-v3-all-kernels-build-producer-policy.py
       - run: python3 -I -B proofs/check-device-binding.py --self-test
       - name: Check exact M1 planner and fe2o3 integration policy
         env:
