@@ -18,9 +18,9 @@ use fe2o3_compiler_ffi::{
     CompilerModuleSymbolRoleV1, DeviceTargetV1,
 };
 use fe2o3_hsaco::{
-    ArgumentAccess, ArgumentAddressSpace, CodeObjectVersion as InspectedCodeObjectVersion,
-    ExplicitArgument, ExplicitValueKind, ExplicitValueType, HiddenArgument, HiddenValueKind,
-    KernelBindingError, MAX_HSACO_BYTES, inspect_and_bind_kernel_descriptors,
+    inspect_and_bind_kernel_descriptors, ArgumentAccess, ArgumentAddressSpace,
+    CodeObjectVersion as InspectedCodeObjectVersion, ExplicitArgument, ExplicitValueKind,
+    ExplicitValueType, HiddenArgument, HiddenValueKind, KernelBindingError, MAX_HSACO_BYTES,
 };
 use fe2o3_hsaco_finalize::{
     InertDecodedWorkerExchangeV2, InertProtectedFirstBuildWorkerV3EvidenceV1, WorkerProtocolError,
@@ -37,7 +37,7 @@ use fe2o3_llvm_handoff::{
     ScalarTypeV1, StageIdentitiesV1, TerminatorV2, TypedValueV2, ValueIdV2, ValueTypeV2,
     WorkgroupSizeRangeV1,
 };
-use fe2o3_llvm_text::{Gfx942LlvmAssemblyV2, SerializeErrorV2, serialize_gfx942_handoff_v2};
+use fe2o3_llvm_text::{serialize_gfx942_handoff_v2, Gfx942LlvmAssemblyV2, SerializeErrorV2};
 use sha2::{Digest as _, Sha256};
 
 /// Exact `RoPE` kernel entry emitted by the typed graph.
@@ -71,7 +71,7 @@ pub const QWEN3_PAGED_KV_WRITE_GLOBAL_BUFFER_ABI_V1: [KernelGlobalBufferAbiV1<'s
 pub const QWEN3_ROPE_KV_TARGET_V1: &str = "gfx942:xnack-";
 /// Exact code-object version required by this compiler lane.
 pub const QWEN3_ROPE_KV_CODE_OBJECT_VERSION_V1: u8 = 6;
-/// Wave64 workgroup shape shared by RoPE rows and physical KV pages.
+/// Wave64 workgroup shape shared by `RoPE` rows and physical KV pages.
 pub const QWEN3_ROPE_KV_WORKGROUP_V1: [u32; 3] = [64, 1, 1];
 /// Exact Qwen3 head dimension.
 pub const QWEN3_ROPE_KV_HEAD_DIMENSION_V1: u32 = 128;

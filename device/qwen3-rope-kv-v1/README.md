@@ -33,9 +33,8 @@ to long-lived device-resident KV allocations retained across dispatches and
 retire them only after exact queue quiescence.
 
 The package pins immutable reviewed `fe2o3-device` and generated-host source at
-revision `d955209099c7`. A newer `cargo-fe2o3` compiler may admit and compile
-that dependency closure, but the dependency pin is not a claim about the
-compiler used to produce an artifact.
+revision `de4683a91a1c`. The exact `cargo-fe2o3` compiler used to produce an
+artifact remains separately bound by the protected compiler-execution receipt.
 
 Source and host tests establish the exact two-root roster, finite machine
 profiles, scalar-dependent RoPE launch, fixed physical-page KV launch, static
