@@ -811,6 +811,14 @@ write_metadata "$outside" "$scratch/outside.metadata"
 expect_rejected parser-unadmitted-outside-verus 'unverified executable body admission drifted' \
     "$source_gate" --generate "$outside" "$scratch/outside.metadata" "$scratch/outside.manifest"
 
+stale=$(new_copy stale-unverified-body)
+cat >>"$stale/proofs/UNVERIFIED_BODIES" <<'ADMISSIONS'
+unverified=ferric-spec|crates/ferric-spec/src/configuration.rs|ferric_spec::configuration::stale_admission_probe|pending-verus|hostile-stale-admission-fixture
+ADMISSIONS
+write_metadata "$stale" "$scratch/stale.metadata"
+expect_rejected parser-stale-unverified-body 'unverified executable body admission drifted' \
+    "$source_gate" --generate "$stale" "$scratch/stale.metadata" "$scratch/stale.manifest"
+
 solver=$(new_copy solver-attributes)
 cat >>"$solver/crates/ferric-spec/src/identity.rs" <<'RS'
 
