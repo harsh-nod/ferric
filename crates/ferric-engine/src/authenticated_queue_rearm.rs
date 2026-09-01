@@ -21,7 +21,7 @@ use fe2o3_service_host::{DeviceWorkspaceRoleV1, ServiceDeviceDispatchRangeV1};
 use ferric_build::AddresslessM1StepWorkspacePlan;
 use ferric_spec::{
     completion::CompletionEpoch, scheduling::RequestState, Qwen3ExecutionMode, Qwen3ModelRole,
-    Qwen3PlanSelection, RequestId, M1_MAX_ACTIVE_SEQUENCES,
+    Qwen3PlanSelection, RequestId, StepPlan, M1_MAX_ACTIVE_SEQUENCES,
 };
 
 use crate::m1_queue_rearm::{
@@ -39,7 +39,7 @@ use crate::step_workspace_subleases::{
 use crate::{
     ActiveDeviceKvCache, AddresslessM1PhysicalBufferRecipeV1, BoundM1StepWorkspaceSubleases,
     DeclaredOperationKernelPlan, Engine, EngineError, ExactCompletion, Gfx942DeviceBinding,
-    LogicalRunnerDeclaration, M1AuthenticatedCompletedReadbackJoinFailureV1,
+    LogicalRunnerError, M1AuthenticatedCompletedReadbackJoinFailureV1,
     M1AuthenticatedCompletedStepOutcomeV1, M1AuthenticatedCompletionObservationFailureV1,
     M1AuthenticatedObservedCompletionOutputV1, M1AuthenticatedPhysicalCompletedQueueSessionV1,
     M1AuthenticatedPhysicalCompletedReadbackV1, M1AuthenticatedPhysicalPublishedQueueSessionV1,
@@ -56,11 +56,11 @@ use crate::{
     M1LongLivedQueueRearmProgressPhaseV1, M1LongLivedQueueRearmScheduleErrorV1,
     M1LongLivedQueueRearmSchedulePhaseV1, M1ObservedCompletionImageV1,
     M1PhysicalFixedBatchBuildErrorV1, M1PhysicalFixedBatchShapeV1, M1PhysicalQueueBatchCustodyV1,
-    M1PrepareFailureV1, M1PreparedScheduledWorkspaceImagesV1, M1PrepublicationStepCustodyV1,
-    M1ReleasedDeviceKvMemberV1, M1ReleasedTerminalDeviceKvMemberV1, M1ScheduledDispatchV1,
-    M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
-    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
-    M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
+    M1PhysicalRunnerRecipeOutcomeV1, M1PrepareFailureV1, M1PreparedScheduledWorkspaceImagesV1,
+    M1PrepublicationStepCustodyV1, M1ReleasedDeviceKvMemberV1, M1ReleasedTerminalDeviceKvMemberV1,
+    M1ScheduledDispatchV1, M1StepDispatchIntent, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
 };
 
 /// Authenticated scheduling rejection before or after physical queue detachment.
@@ -388,6 +388,15 @@ pub struct M1AuthenticatedScheduledLongLivedQueueRearmV1 {
     history: M1RearmRoundHistoryV1,
 }
 
+/// Exact failure to bind a selected request through retained queue custody.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1AuthenticatedRetainedStepPlanErrorV1 {
+    /// The request is not a member of the scheduler-issued next batch.
+    RequestNotSelected(RequestId),
+    /// The retained generated runner declaration rejected its exact selection.
+    Declaration(LogicalRunnerError),
+}
+
 impl M1AuthenticatedScheduledLongLivedQueueRearmV1 {
     /// Exact once-issued next scheduler batch.
     pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
@@ -417,6 +426,55 @@ impl M1AuthenticatedScheduledLongLivedQueueRearmV1 {
     #[must_use]
     pub fn prior_externally_published_counts(&self) -> &[u32] {
         &self.externally_published_counts
+    }
+
+    /// Binds one selected request through the exact declaration retained by the queue.
+    ///
+    /// # Errors
+    ///
+    /// Rejects a request outside the scheduler-issued batch or any drift in the retained
+    /// generated declaration. Neither selection nor epoch is accepted from the caller.
+    pub fn bind_selected_step_plan(
+        &self,
+        request: RequestId,
+    ) -> Result<StepPlan, M1AuthenticatedRetainedStepPlanErrorV1> {
+        if !self.selected_requests().any(|selected| selected == request) {
+            return Err(M1AuthenticatedRetainedStepPlanErrorV1::RequestNotSelected(
+                request,
+            ));
+        }
+        self.queue
+            .operations()
+            .runner()
+            .bind_step_plan(
+                request,
+                self.scheduled.epoch(),
+                self.queue.custody().selection(),
+            )
+            .map_err(M1AuthenticatedRetainedStepPlanErrorV1::Declaration)
+    }
+
+    /// Derives the next addressless physical recipe from retained queue shape and selection.
+    ///
+    /// The caller supplies only workspace plans. The operation plan, target selection, and
+    /// step shape all remain private and are derived from authenticated queue custody.
+    pub fn derive_retained_step_recipe(
+        &self,
+        workspace_plans: M1FullStepWorkspacePlans,
+    ) -> M1PhysicalRunnerRecipeOutcomeV1 {
+        let selection = self.queue.custody().selection();
+        let intent = match self.queue.shape() {
+            M1PhysicalFixedBatchShapeV1::TargetOnly => M1StepDispatchIntent::TargetOnly(selection),
+            M1PhysicalFixedBatchShapeV1::PairedPrefill => {
+                M1StepDispatchIntent::PairedPrefill(selection)
+            }
+            M1PhysicalFixedBatchShapeV1::SpeculativeK4
+            | M1PhysicalFixedBatchShapeV1::SpeculativeK8
+            | M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
+                M1StepDispatchIntent::SpeculativeRound(selection)
+            }
+        };
+        crate::runner::derive_physical_step_recipe(self.queue.operations(), intent, workspace_plans)
     }
 }
 
@@ -1550,7 +1608,6 @@ impl M1AuthenticatedPreparedLongLivedQueueRearmV1 {
 
 fn prepare_m1_authenticated_long_lived_queue_rearm_inner_v1(
     reserved: M1AuthenticatedReservedLongLivedQueueRearmV1,
-    runner: &LogicalRunnerDeclaration,
     plans: M1FullStepWorkspacePlans,
 ) -> Result<
     M1AuthenticatedPreparedLongLivedQueueRearmV1,
@@ -1571,6 +1628,12 @@ fn prepare_m1_authenticated_long_lived_queue_rearm_inner_v1(
         total_released,
         history,
     } = scheduled;
+    let preparation = crate::prepare_m1_scheduled_workspace_images_v1(
+        scheduled,
+        queue.operations().runner(),
+        plans,
+        tables,
+    );
     let remainder = M1AuthenticatedScheduledRemainderV1 {
         queue,
         selected,
@@ -1584,7 +1647,7 @@ fn prepare_m1_authenticated_long_lived_queue_rearm_inner_v1(
         total_released,
         history,
     };
-    match crate::prepare_m1_scheduled_workspace_images_v1(scheduled, runner, plans, tables) {
+    match preparation {
         Ok(prepared) => Ok(M1AuthenticatedPreparedLongLivedQueueRearmV1 {
             prepared,
             remainder,
@@ -1608,7 +1671,6 @@ fn prepare_m1_authenticated_long_lived_queue_rearm_inner_v1(
 pub fn prepare_m1_authenticated_long_lived_queue_rearm_v1<const C: usize>(
     engine: &mut Engine<C>,
     reserved: M1AuthenticatedReservedLongLivedQueueRearmV1,
-    runner: &LogicalRunnerDeclaration,
     plans: M1FullStepWorkspacePlans,
 ) -> Result<
     M1AuthenticatedPreparedLongLivedQueueRearmV1,
@@ -1623,7 +1685,7 @@ pub fn prepare_m1_authenticated_long_lived_queue_rearm_v1<const C: usize>(
             },
         ));
     }
-    match prepare_m1_authenticated_long_lived_queue_rearm_inner_v1(reserved, runner, plans) {
+    match prepare_m1_authenticated_long_lived_queue_rearm_inner_v1(reserved, plans) {
         Ok(prepared) => Ok(prepared),
         Err(failure) => {
             engine.quarantine_m1_queue_rearm_failure();
@@ -4300,5 +4362,31 @@ mod tests {
             >;
 
         let _: fn(M1AuthenticatedRearmedRoundReleaseOutcomeV1) = exhaust_release;
+    }
+
+    #[test]
+    fn authenticated_rearm_plan_and_recipe_surface_uses_retained_queue_authority() {
+        type BindSelected = fn(
+            &M1AuthenticatedScheduledLongLivedQueueRearmV1,
+            RequestId,
+        ) -> Result<StepPlan, M1AuthenticatedRetainedStepPlanErrorV1>;
+        type DeriveRecipe = fn(
+            &M1AuthenticatedScheduledLongLivedQueueRearmV1,
+            M1FullStepWorkspacePlans,
+        ) -> M1PhysicalRunnerRecipeOutcomeV1;
+        type Prepare = fn(
+            &mut Engine<32>,
+            M1AuthenticatedReservedLongLivedQueueRearmV1,
+            M1FullStepWorkspacePlans,
+        ) -> Result<
+            M1AuthenticatedPreparedLongLivedQueueRearmV1,
+            Box<M1AuthenticatedLongLivedQueueRearmPrepareFailureV1>,
+        >;
+
+        let _: BindSelected =
+            M1AuthenticatedScheduledLongLivedQueueRearmV1::bind_selected_step_plan;
+        let _: DeriveRecipe =
+            M1AuthenticatedScheduledLongLivedQueueRearmV1::derive_retained_step_recipe;
+        let _: Prepare = prepare_m1_authenticated_long_lived_queue_rearm_v1::<32>;
     }
 }

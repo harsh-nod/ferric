@@ -139,7 +139,7 @@ pub use authenticated_queue_rearm::{
     M1AuthenticatedRearmedRoundPageReleaseTeardownFailureV1,
     M1AuthenticatedRearmedRoundPageReleaseTeardownSuccessV1,
     M1AuthenticatedRearmedRoundReleaseOutcomeV1, M1AuthenticatedReservedLongLivedQueueRearmV1,
-    M1AuthenticatedScheduledLongLivedQueueRearmV1,
+    M1AuthenticatedRetainedStepPlanErrorV1, M1AuthenticatedScheduledLongLivedQueueRearmV1,
 };
 pub use bound_step_workspaces::{
     BoundM1FullStepWorkspaceSubleases, M1FullStepWorkspaceDispatchRangeError,

@@ -684,7 +684,7 @@ impl M1PhysicalRunnerV1 {
     }
 }
 
-fn derive_physical_step_recipe(
+pub(crate) fn derive_physical_step_recipe(
     operations: &DeclaredOperationKernelPlan,
     intent: M1StepDispatchIntent,
     workspace_plans: M1FullStepWorkspacePlans,
