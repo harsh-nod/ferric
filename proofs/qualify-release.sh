@@ -257,9 +257,22 @@ set +e
     export CARGO_TARGET_DIR="$runtime_test_target"
     printf 'FERRIC_QUALITY_GATE=fmt:BEGIN\n'
     cargo fmt --all -- --check
+    for adapter in \
+        adapters/qwen3-swiglu-worker-v3-envelope-v2 \
+        adapters/qwen3-all-kernels-worker-v3-verifier-v1 \
+        adapters/qwen3-all-kernels-worker-v3-source-pin-v1; do
+        cargo fmt --manifest-path "$adapter/Cargo.toml" -- --check
+    done
     printf 'FERRIC_QUALITY_GATE=fmt:PASS\n'
     printf 'FERRIC_QUALITY_GATE=clippy:BEGIN\n'
     cargo clippy --workspace --all-targets --locked --target-dir "$runtime_test_target" -- -D warnings
+    for adapter in \
+        adapters/qwen3-swiglu-worker-v3-envelope-v2 \
+        adapters/qwen3-all-kernels-worker-v3-verifier-v1 \
+        adapters/qwen3-all-kernels-worker-v3-source-pin-v1; do
+        cargo clippy --manifest-path "$adapter/Cargo.toml" --all-targets \
+            --locked --target-dir "$runtime_test_target" -- -D warnings
+    done
     printf 'FERRIC_QUALITY_GATE=clippy:PASS\n'
     printf 'FERRIC_QUALITY_GATE=clippy-all-features:BEGIN\n'
     cargo clippy --workspace --all-targets --all-features --locked \
@@ -267,6 +280,13 @@ set +e
     printf 'FERRIC_QUALITY_GATE=clippy-all-features:PASS\n'
     printf 'FERRIC_QUALITY_GATE=test-debug:BEGIN\n'
     cargo test --workspace --locked --target-dir "$runtime_test_target"
+    for adapter in \
+        adapters/qwen3-swiglu-worker-v3-envelope-v2 \
+        adapters/qwen3-all-kernels-worker-v3-verifier-v1 \
+        adapters/qwen3-all-kernels-worker-v3-source-pin-v1; do
+        cargo test --manifest-path "$adapter/Cargo.toml" --all-targets \
+            --locked --target-dir "$runtime_test_target"
+    done
     printf 'FERRIC_QUALITY_GATE=test-debug:PASS\n'
     printf 'FERRIC_QUALITY_GATE=test-debug-all-features:BEGIN\n'
     cargo test --workspace --all-features --locked --target-dir "$runtime_test_target"
