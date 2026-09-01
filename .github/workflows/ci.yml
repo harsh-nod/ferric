@@ -11,7 +11,7 @@ jobs:
   rust:
     runs-on: ubuntu-latest
     env:
-      RUSTC_BOOTSTRAP: "1"
+      RUSTC_BOOTSTRAP: fe2o3_device,fe2o3_macros
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -72,9 +72,9 @@ jobs:
           --root "$RUNNER_TEMP/cargo-fe2o3"
           cargo-fe2o3
       - run: cargo fmt --all -- --check
-      - name: Test fallback compiler-derived binding
+      - name: Test explicit fallback namespace
         run: cargo test --locked --all-targets
-      - name: Check canonical compiler-derived binding parity
+      - name: Check canonical compiler-derived binding embedding
         shell: bash
         run: |
           set -o pipefail

@@ -6,6 +6,8 @@ fn main() {
     {
         return;
     }
+    // Direct host tests use a non-authoritative fallback namespace. cargo-fe2o3
+    // replaces it with the compiler-derived binding for managed builds.
     println!(
         "cargo:rustc-env=FE2O3_CRATE_BINDING_ID_V1={}",
         "23628d5cdb792f8ce6cfe60158728174c6fc655264d23ea3aaa7eee1485f6006"

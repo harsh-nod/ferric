@@ -75,6 +75,8 @@ trap 'chmod -R u+w "$scratch" "$proof_target" "$source_gate_target" "$property_b
 
 # Exclude ambient Cargo wrappers, flags, and configuration from the artifact.
 unset RUSTC RUSTFLAGS CARGO_ENCODED_RUSTFLAGS RUSTC_WRAPPER RUSTC_WORKSPACE_WRAPPER CARGO_BUILD_TARGET CARGO_TARGET_DIR
+RUSTC_BOOTSTRAP=fe2o3_device,fe2o3_macros
+export RUSTC_BOOTSTRAP
 export CARGO_HOME="$scratch/cargo-home"
 export CARGO_TERM_COLOR=never
 export GIT_CONFIG_NOSYSTEM=1

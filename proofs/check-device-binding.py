@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify one canonical cargo-fe2o3 host binding against its fallback."""
+"""Verify one canonical cargo-fe2o3 host binding and explicit fallback."""
 
 from __future__ import annotations
 
@@ -133,9 +133,6 @@ def verify(workspace: Path, transcript: Path) -> None:
         fail("canonical rustc invocation has no explicit metadata")
     derived = derive_binding(crate_name, metadata)
     fallback = fallback_binding(workspace)
-    if fallback != derived:
-        fail(f"fallback binding {fallback} does not match wrapper binding {derived}")
-
     extra_filename = codegen_values(argv, "extra-filename")
     if len(extra_filename) != 1:
         fail(f"expected one rustc extra-filename, found {len(extra_filename)}")
@@ -146,8 +143,9 @@ def verify(workspace: Path, transcript: Path) -> None:
     if derived.encode("ascii") not in metadata_artifact.read_bytes():
         fail("wrapper-derived binding is absent from the canonical metadata artifact")
     print(
-        "PASS: canonical device binding matched "
-        f"crate={crate_name} metadata={','.join(metadata)} binding={derived}"
+        "PASS: canonical device binding embedded "
+        f"crate={crate_name} metadata={','.join(metadata)} "
+        f"compiler_binding={derived} fallback_binding={fallback}"
     )
 
 

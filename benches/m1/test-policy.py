@@ -117,7 +117,10 @@ def digest(label: str) -> str:
 
 
 def cargo_environment() -> dict[str, str]:
-    environment = {"PATH": os.environ.get("PATH", "")}
+    environment = {
+        "PATH": os.environ.get("PATH", ""),
+        "RUSTC_BOOTSTRAP": "fe2o3_device,fe2o3_macros",
+    }
     for name in ("CARGO_HOME", "CARGO_TARGET_DIR"):
         if value := os.environ.get(name):
             environment[name] = value
