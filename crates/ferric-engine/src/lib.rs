@@ -5,6 +5,7 @@
 #[allow(unused_imports)]
 use vstd::prelude::*;
 
+mod authenticated_kernel_acquisition;
 mod authenticated_kernel_programs;
 mod authenticated_physical_queue;
 mod authenticated_physical_readback;
@@ -59,6 +60,14 @@ mod step_workspace_images;
 mod step_workspace_subleases;
 mod system;
 
+pub use authenticated_kernel_acquisition::{
+    acquire_m1_authenticated_worker_v3_programs_v1, authenticate_m1_worker_v3_rosters_v1,
+    recover_m1_worker_v3_rosters_v1, M1AuthenticatedWorkerV3AcquisitionFailureV1,
+    M1RecoveredWorkerV3RostersV1, M1WorkerV3ArtifactSelectorV1, M1WorkerV3ArtifactSelectorsErrorV1,
+    M1WorkerV3ArtifactSelectorsV1, M1WorkerV3AuthenticationFailureV1,
+    M1WorkerV3AuthenticationStageV1, M1WorkerV3RosterAcquisitionFailureV1,
+    M1WorkerV3RosterAcquisitionStageV1,
+};
 pub use authenticated_kernel_programs::{
     admit_m1_authenticated_worker_v3_programs_v1, require_m1_authenticated_roster_acquisition_v1,
     M1AuthenticatedProgramSetIntakeErrorV1, M1AuthenticatedProgramSetIntakeFailureV1,
