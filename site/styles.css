@@ -370,8 +370,10 @@ h3 {
 }
 
 .envelope dd {
+  min-width: 0;
   padding-top: 2px;
   padding-bottom: 20px;
+  overflow-wrap: anywhere;
   color: var(--ink);
   font-size: 12px;
   font-weight: 680;
