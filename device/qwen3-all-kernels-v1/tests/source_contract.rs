@@ -4,10 +4,7 @@ const ROOT: &str = include_str!("../src/lib.rs");
 const FAMILY_SOURCES: [(&str, &str); 7] = [
     ("gemm", include_str!("../src/gemm.rs")),
     ("logits", include_str!("../src/logits.rs")),
-    (
-        "paged_decode",
-        include_str!("../src/paged_decode.rs"),
-    ),
+    ("paged_decode", include_str!("../src/paged_decode.rs")),
     ("prefill", include_str!("../src/prefill.rs")),
     ("rmsnorm", include_str!("../src/rmsnorm.rs")),
     ("rope_kv", include_str!("../src/rope_kv.rs")),
@@ -33,7 +30,15 @@ fn aggregate_root_owns_the_seven_canonical_sources() {
         .collect::<Vec<_>>();
     assert_eq!(
         modules,
-        vec!["gemm", "logits", "paged_decode", "prefill", "rmsnorm", "rope_kv", "swiglu"]
+        vec![
+            "gemm",
+            "logits",
+            "paged_decode",
+            "prefill",
+            "rmsnorm",
+            "rope_kv",
+            "swiglu"
+        ]
     );
 }
 
