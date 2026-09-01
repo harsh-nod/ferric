@@ -68,7 +68,7 @@ copy_source() {
     destination=$1
     mkdir -p "$destination/proofs"
     cp -a "$repo/Cargo.toml" "$repo/Cargo.lock" "$repo/rust-toolchain.toml" "$destination/"
-    cp -a "$repo/benches" "$repo/crates" "$destination/"
+    cp -a "$repo/benches" "$repo/crates" "$repo/device" "$destination/"
     cp -a "$repo/proofs/m1" "$destination/proofs/"
     chmod -R u+w "$destination"
 }
@@ -78,10 +78,12 @@ clean_package() {
     package=$2
     target=$3
     transcript=$4
-    env CARGO_TERM_COLOR=never cargo clean \
-        --manifest-path "$copy/Cargo.toml" \
-        -p "$package" --locked --release --target-dir "$target" \
-        >>"$transcript" 2>&1
+    (
+        cd "$copy"
+        env CARGO_TERM_COLOR=never cargo clean \
+            --manifest-path "$copy/Cargo.toml" \
+            -p "$package" --locked --release --target-dir "$target"
+    ) >>"$transcript" 2>&1
 }
 
 run_rejected() {

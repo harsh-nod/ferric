@@ -482,6 +482,16 @@ expect_rejected mutation-closure-escape \
     python3 -I "$mutation_checker" "$repo" "$mutation_escape" \
     "$scratch/mutation-closure-escape.marker" ferric-spec
 
+device_escape=$(new_copy mutation-device-closure-escape)
+python3 -I "$repo/proofs/negative/components/identity-trust.py" "$device_escape" \
+    >"$scratch/mutation-device-closure-escape.marker"
+printf '\n// hostile device mutation\n' \
+    >>"$device_escape/device/qwen3-gemm-v1/src/lib.rs"
+expect_rejected mutation-device-closure-escape \
+    'mutator changed source outside its exact attestation' \
+    python3 -I "$mutation_checker" "$repo" "$device_escape" \
+    "$scratch/mutation-device-closure-escape.marker" ferric-spec
+
 lane_fixture=$(new_copy negative-cache-lanes)
 mkdir -p "$lane_fixture/proofs/negative/components" "$scratch/fake-bin" \
     "$scratch/fake-verus" "$scratch/fake-state"
@@ -519,18 +529,26 @@ PY
 cat >"$scratch/fake-bin/cargo" <<'SH'
 #!/bin/sh
 set -eu
-printf 'cargo|%s|%s\n' "$PWD" "$*" >>"$FERRIC_FAKE_TOOL_LOG"
 package=
 target=
+manifest=
 previous=
 for argument in "$@"; do
     case "$previous" in
         -p) package=$argument ;;
         --target-dir) target=$argument ;;
+        --manifest-path) manifest=$argument ;;
     esac
     previous=$argument
 done
-[ -n "$package" ] && [ -n "$target" ] || exit 8
+[ -n "$package" ] && [ -n "$target" ] && [ -n "$manifest" ] || exit 8
+printf 'cargo|%s|%s|%s|%s\n' "$PWD" "$package" "$target" "$manifest" \
+    >>"$FERRIC_FAKE_TOOL_LOG"
+workspace=${manifest%/Cargo.toml}
+for device in qwen3-gemm-v1 qwen3-logits-v1 qwen3-paged-decode-v1 qwen3-prefill-v1 \
+    qwen3-rmsnorm-v1 qwen3-rope-kv-v1 qwen3-swiglu-v1; do
+    [ -f "$workspace/device/$device/Cargo.toml" ] || exit 8
+done
 if [ -d "$target" ] && [ ! -f "$target/CACHEDIR.TAG" ]; then
     exit 8
 fi
@@ -582,7 +600,7 @@ from pathlib import Path
 import sys
 
 lines = Path(sys.argv[1]).read_text(encoding="utf-8").splitlines()
-clean = [line.split("|", 2) for line in lines if line.startswith("cargo|")]
+clean = [line.split("|", 4) for line in lines if line.startswith("cargo|")]
 verus = [line.split("|", 3) for line in lines if line.startswith("verus|")]
 if len(clean) != 6:
     raise SystemExit(f"negative cache lanes performed {len(clean)} cleans, expected 6")
@@ -597,9 +615,18 @@ if len({(fields[1], fields[3]) for fields in spec}) != 1:
 if (engine[0][1], engine[0][3]) == (spec[0][1], spec[0][3]):
     raise SystemExit("negative package cache lanes were not isolated")
 for package, expected in (("ferric-spec", 4), ("ferric-engine", 2)):
-    actual = sum(f" -p {package} " in f" {fields[2]} " for fields in clean)
+    actual = sum(fields[2] == package for fields in clean)
     if actual != expected:
         raise SystemExit(f"{package} performed {actual} package cleans, expected {expected}")
+copies_by_target = {
+    Path(fields[3]): (Path(fields[1]), fields[2])
+    for fields in verus
+}
+for _kind, pwd, package, target, manifest in clean:
+    source = Path(manifest).parent
+    expected = copies_by_target.get(Path(target))
+    if expected != (source, package) or Path(pwd) != source:
+        raise SystemExit("package clean escaped its isolated mutation source and target lane")
 PY
 
 cat >"$lane_fixture/proofs/negative/REQUIRED_COMPONENTS" <<'REGISTRY'

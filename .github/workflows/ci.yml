@@ -14,6 +14,8 @@ jobs:
       RUSTC_BOOTSTRAP: fe2o3_device,fe2o3_macros
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: "1.97.1"

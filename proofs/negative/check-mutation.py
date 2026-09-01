@@ -13,6 +13,7 @@ COPIED_ROOTS = (
     "rust-toolchain.toml",
     "benches",
     "crates",
+    "device",
     "proofs/m1",
 )
 
