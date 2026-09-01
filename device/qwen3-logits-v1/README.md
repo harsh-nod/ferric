@@ -1,7 +1,9 @@
 # Ferric Qwen3 logits K7 attributed source V1
 
-This standalone Ferric-owned package defines the three attributed device roots
-required by the M1 K7 boundary:
+This non-authoritative compatibility package exposes the three attributed
+device roots required by the M1 K7 boundary. Their canonical source is owned
+by `qwen3-all-kernels-v1`; this package remains only for focused tests and is
+not a production selected-package or publication root:
 
 - `ferric_qwen3_lowest_id_argmax_bf16_v1` selects the lowest token ID attaining
   the maximum finite BF16 logit for each flattened target or draft row.

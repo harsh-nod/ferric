@@ -1,6 +1,6 @@
 use syn::{FnArg, Item, ItemFn, Meta};
 
-const SOURCE: &str = include_str!("../src/lib.rs");
+const SOURCE: &str = include_str!("../../qwen3-all-kernels-v1/src/prefill.rs");
 
 fn kernel() -> ItemFn {
     let kernels: Vec<_> = syn::parse_file(SOURCE)

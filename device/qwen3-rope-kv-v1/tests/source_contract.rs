@@ -2,7 +2,7 @@ use quote::ToTokens as _;
 use syn::visit::{self, Visit as _};
 use syn::{Expr, ExprMethodCall, FnArg, Item, ItemFn, Lit, Pat};
 
-const SOURCE: &str = include_str!("../src/lib.rs");
+const SOURCE: &str = include_str!("../../qwen3-all-kernels-v1/src/rope_kv.rs");
 
 fn kernels() -> Vec<ItemFn> {
     syn::parse_file(SOURCE)

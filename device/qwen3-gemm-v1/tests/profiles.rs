@@ -9,7 +9,7 @@ use syn::{BinOp, Expr, Item, ItemFn, Lit, Pat, Stmt};
 const BETA_ZERO: u32 = 0.0_f32.to_bits();
 const BETA_ONE: u32 = 1.0_f32.to_bits();
 const MODEL_VOCABULARY_SIZE: u32 = 151_936;
-const SOURCE: &str = include_str!("../src/lib.rs");
+const SOURCE: &str = include_str!("../../qwen3-all-kernels-v1/src/gemm.rs");
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum PredicateValue {

@@ -1,7 +1,7 @@
 use quote::ToTokens as _;
 use syn::{FnArg, Item, ItemFn};
 
-const SOURCE: &str = include_str!("../src/lib.rs");
+const SOURCE: &str = include_str!("../../qwen3-all-kernels-v1/src/gemm.rs");
 
 fn kernels() -> Vec<ItemFn> {
     syn::parse_file(SOURCE)

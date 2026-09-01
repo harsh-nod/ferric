@@ -1,7 +1,9 @@
 # Ferric Qwen3 Paged Decode Device V1
 
-This standalone package owns the attributed Rust source for Ferric's exact
-Qwen3 paged-GQA causal-decode kernel. It retains the production symbol and
+This non-authoritative compatibility package exposes Ferric's exact Qwen3
+paged-GQA causal-decode kernel from canonical source owned by
+`qwen3-all-kernels-v1`. It is retained for focused tests and is not a
+production selected-package or publication root. It retains the production symbol and
 six-slice ABI from `ferric-qwen-kernels`, the closed fourteen-profile
 target/draft B3 catalog, Wave64 launch geometry, committed-token causal bounds,
 global P16 page-table mapping, quotient GQA, sequential D128 score reduction,

@@ -42,7 +42,7 @@ jobs:
           python3 -I -B proofs/m1-qualification/test-policy.py . "$RUNNER_TEMP/fe2o3"
           rm -rf "$RUNNER_TEMP/fe2o3"
 
-  qwen3-device:
+  qwen3-aggregate-device:
     runs-on: ubuntu-latest
     env:
       CARGO_TERM_COLOR: never
@@ -50,13 +50,7 @@ jobs:
       fail-fast: false
       matrix:
         package:
-          - qwen3-gemm-v1
-          - qwen3-logits-v1
-          - qwen3-paged-decode-v1
-          - qwen3-prefill-v1
-          - qwen3-rmsnorm-v1
-          - qwen3-rope-kv-v1
-          - qwen3-swiglu-v1
+          - qwen3-all-kernels-v1
     defaults:
       run:
         working-directory: device/${{ matrix.package }}
@@ -95,3 +89,29 @@ jobs:
         run: >-
           "$RUNNER_TEMP/cargo-fe2o3/bin/cargo-fe2o3"
           fe2o3 test --locked --all-targets
+
+  qwen3-device-compatibility:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - qwen3-gemm-v1
+          - qwen3-logits-v1
+          - qwen3-paged-decode-v1
+          - qwen3-prefill-v1
+          - qwen3-rmsnorm-v1
+          - qwen3-rope-kv-v1
+          - qwen3-swiglu-v1
+    defaults:
+      run:
+        working-directory: device/${{ matrix.package }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          toolchain: "nightly-2026-04-03"
+          components: rustfmt
+      - run: cargo fmt --all -- --check
+      - name: Test non-authoritative family compatibility wrapper
+        run: cargo test --locked --all-targets

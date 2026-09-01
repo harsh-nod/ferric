@@ -486,7 +486,7 @@ device_escape=$(new_copy mutation-device-closure-escape)
 python3 -I "$repo/proofs/negative/components/identity-trust.py" "$device_escape" \
     >"$scratch/mutation-device-closure-escape.marker"
 printf '\n// hostile device mutation\n' \
-    >>"$device_escape/device/qwen3-gemm-v1/src/lib.rs"
+    >>"$device_escape/device/qwen3-all-kernels-v1/src/gemm.rs"
 expect_rejected mutation-device-closure-escape \
     'mutator changed source outside its exact attestation' \
     python3 -I "$mutation_checker" "$repo" "$device_escape" \
@@ -545,7 +545,7 @@ done
 printf 'cargo|%s|%s|%s|%s\n' "$PWD" "$package" "$target" "$manifest" \
     >>"$FERRIC_FAKE_TOOL_LOG"
 workspace=${manifest%/Cargo.toml}
-for device in qwen3-gemm-v1 qwen3-logits-v1 qwen3-paged-decode-v1 qwen3-prefill-v1 \
+for device in qwen3-all-kernels-v1 qwen3-gemm-v1 qwen3-logits-v1 qwen3-paged-decode-v1 qwen3-prefill-v1 \
     qwen3-rmsnorm-v1 qwen3-rope-kv-v1 qwen3-swiglu-v1; do
     [ -f "$workspace/device/$device/Cargo.toml" ] || exit 8
 done

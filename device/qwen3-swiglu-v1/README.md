@@ -1,8 +1,10 @@
 # Ferric Qwen3 SwiGLU Device V1
 
-This standalone crate is the first Ferric Qwen kernel source migrated from the
-retired caller-created Worker V2 handoff to fe2o3's rustc-produced Worker V3
-pipeline. It preserves the existing `qwen3_swiglu_bf16_f32_v1` symbol, three
+This non-authoritative compatibility crate exposes the first Ferric Qwen
+kernel migrated from the retired caller-created Worker V2 handoff to fe2o3's
+rustc-produced Worker V3 pipeline. Its canonical source is owned by
+`qwen3-all-kernels-v1`; this crate remains for focused tests and is not a
+production selected-package or publication root. It preserves the existing `qwen3_swiglu_bf16_f32_v1` symbol, three
 pointer-plus-length slice ABI, exact admitted extents, 256-workitem workgroup,
 and eight contiguous output elements per workitem.
 

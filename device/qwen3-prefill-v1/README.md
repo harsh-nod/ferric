@@ -1,7 +1,9 @@
 # Ferric Qwen3 Prefill Device V1
 
-This standalone package owns the attributed Rust source for Ferric's exact
-Qwen3 paged-GQA causal-prefill kernel. It retains the production symbol and
+This non-authoritative compatibility package exposes Ferric's exact Qwen3
+paged-GQA causal-prefill kernel from canonical source owned by
+`qwen3-all-kernels-v1`. It is retained for focused tests and is not a
+production selected-package or publication root. It retains the production symbol and
 five-slice ABI from `ferric-qwen-kernels`, the closed target/draft B3 profile
 set, Wave64 launch geometry, P16 page-table mapping, sequential D128 score
 reduction, online stable-softmax recurrence, and adjacent two-BF16 output

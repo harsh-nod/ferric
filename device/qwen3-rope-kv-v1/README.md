@@ -1,8 +1,10 @@
 # Ferric Qwen3 RoPE and Paged-KV Device V1
 
-This standalone package owns the two attributed K3 device roots intended to
-supply Ferric's M1 Qwen3 envelope: split-half rotary embedding and P16 paged
-key/value-cache writes. It retains the exact finite target/draft machine
+This non-authoritative compatibility package exposes the two attributed K3
+device roots whose canonical source is owned by `qwen3-all-kernels-v1`:
+split-half rotary embedding and P16 paged key/value-cache writes. It is
+retained for focused tests and is not a production selected-package or
+publication root. It retains the exact finite target/draft machine
 profiles, Wave64 ABI, BF16/FP32 storage types, fixed deployment trigonometric
 tables, global 16,384-page cache pool, and immutable source dependency closure.
 

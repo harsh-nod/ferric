@@ -42,6 +42,9 @@ TARGET = "gfx942:xnack-"
 DEVICE_CRATE = "ferric-qwen3-swiglu-device-v1"
 DEVICE_CRATE_RUST = "ferric_qwen3_swiglu_device_v1"
 DEVICE_RELATIVE = PurePosixPath("device/qwen3-swiglu-v1")
+CANONICAL_SOURCE_RELATIVE = PurePosixPath(
+    "device/qwen3-all-kernels-v1/src/swiglu.rs"
+)
 KERNEL = "qwen3_swiglu_bf16_f32_v1"
 
 CLAIM_MAGIC = b"FE2O3-PUBLISHED-HSACO-CLAIM-V3\0"
@@ -267,11 +270,17 @@ def device_source(source_repo: Path) -> tuple[str, list[dict[str, Any]]]:
     device = source_repo.joinpath(*DEVICE_RELATIVE.parts)
     manifest = hold(device / "Cargo.toml", "device Cargo manifest", 64_000)
     lock = hold(device / "Cargo.lock", "device Cargo lock", 1_000_000)
-    source = hold(device / "src/lib.rs", "device Rust source", 256_000)
+    wrapper = hold(device / "src/lib.rs", "device Rust wrapper", 64_000)
+    canonical = hold(
+        source_repo.joinpath(*CANONICAL_SOURCE_RELATIVE.parts),
+        "canonical device Rust source",
+        256_000,
+    )
     try:
         parsed = tomllib.loads(manifest[3].decode("utf-8"))
+        wrapper_text = wrapper[3].decode("utf-8")
     except (UnicodeDecodeError, tomllib.TOMLDecodeError) as error:
-        fail(f"device Cargo manifest is invalid: {error}")
+        fail(f"device Cargo manifest or wrapper is invalid: {error}")
     package = parsed.get("package", {})
     dependencies = parsed.get("dependencies", {})
     target = parsed.get("target", {}).get("cfg(not(target_arch = \"amdgpu\"))", {})
@@ -287,14 +296,18 @@ def device_source(source_repo: Path) -> tuple[str, list[dict[str, Any]]]:
         or host.get("git") != "https://github.com/harsh-nod/fe2o3.git"
     ):
         fail("device crate does not carry one exact fe2o3 provider revision")
+    if '#[path = "../../qwen3-all-kernels-v1/src/swiglu.rs"]' not in wrapper_text:
+        fail("device compatibility wrapper does not select the canonical SwiGLU source")
     records = []
-    for relative, held in [
-        ("Cargo.lock", lock),
-        ("Cargo.toml", manifest),
-        ("src/lib.rs", source),
-    ]:
+    held_sources = [
+        (DEVICE_RELATIVE / "Cargo.lock", lock),
+        (DEVICE_RELATIVE / "Cargo.toml", manifest),
+        (DEVICE_RELATIVE / "src/lib.rs", wrapper),
+        (CANONICAL_SOURCE_RELATIVE, canonical),
+    ]
+    for relative, held in sorted(held_sources, key=lambda item: str(item[0])):
         records.append(
-            {"path": str(DEVICE_RELATIVE / relative), "sha256": sha256(held[3]), "size_bytes": len(held[3])}
+            {"path": str(relative), "sha256": sha256(held[3]), "size_bytes": len(held[3])}
         )
         revalidate(held)
         held[1].close()

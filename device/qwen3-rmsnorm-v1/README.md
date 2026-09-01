@@ -1,7 +1,9 @@
 # Ferric Qwen3 RMSNorm Device V1
 
-This standalone crate is attributed Rust source for Ferric's exact
-`qwen3_rmsnorm_v1` kernel. It retains the five pointer-plus-length slice
+This non-authoritative compatibility crate exposes Ferric's exact
+`qwen3_rmsnorm_v1` kernel from canonical source owned by
+`qwen3-all-kernels-v1`. It is retained for focused tests and is not a
+production selected-package or publication root. It retains the five pointer-plus-length slice
 records followed by `rows`, `width`, `epsilon`, and `behavior`; 96 explicit
 kernarg bytes; a 64-workitem workgroup; one workgroup per row; the exact
 132-profile target/draft catalog geometry; and the pure and residual-fused

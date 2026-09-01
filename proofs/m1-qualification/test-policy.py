@@ -575,6 +575,14 @@ def main() -> None:
     planner_path = repo / "proofs/m1-qualification/planner.py"
     bytecode_before = set(planner_path.parent.rglob("*.pyc"))
     planner = load_planner(planner_path)
+    if planner.FE2O3_AGGREGATE_DEVICE_WORKSPACES != (
+        ("ferric-qwen3-all-kernels-device-v1", "device/qwen3-all-kernels-v1"),
+    ):
+        fail("M1 planner aggregate device classification drifted")
+    if len(planner.FE2O3_COMPATIBILITY_DEVICE_WORKSPACES) != 7 or set(
+        planner.FE2O3_AGGREGATE_DEVICE_WORKSPACES
+    ) & set(planner.FE2O3_COMPATIBILITY_DEVICE_WORKSPACES):
+        fail("M1 planner compatibility device classification drifted")
     requirements = planner.read_canonical_json(
         repo / "proofs/M1_REQUIREMENTS.json", "M1 requirements"
     )

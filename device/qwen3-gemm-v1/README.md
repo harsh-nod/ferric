@@ -1,8 +1,10 @@
 # Ferric Qwen3 GEMM Device V1
 
-This standalone package owns three attributed K1 device roots intended to
-supply the Ferric M1 Qwen3 envelope: scalar-reference GEMM/GEMV, A4 reduction
-GEMM/GEMV, and token-embedding lookup. The matrix roots implement BF16 input
+This non-authoritative compatibility package exposes three attributed K1
+device roots whose canonical source is owned by `qwen3-all-kernels-v1`:
+scalar-reference GEMM/GEMV, A4 reduction GEMM/GEMV, and token-embedding
+lookup. It is retained for focused source and numerical tests and is not a
+production selected-package or publication root. The matrix roots implement BF16 input
 and output storage with ascending FP32 accumulation and an exact zero-or-one
 residual epilogue. The embedding root copies the admitted vocabulary row
 without arithmetic.

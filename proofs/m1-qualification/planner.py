@@ -120,7 +120,10 @@ FE2O3_DEPENDENCY_TOPOLOGY = (
     ("ferric-qwen-kernels", "dependencies", "fe2o3-llvm-text"),
     ("ferric-qwen-kernels", "dependencies", "reserved-fe2o3-symbols"),
 )
-FE2O3_DEVICE_WORKSPACES = (
+FE2O3_AGGREGATE_DEVICE_WORKSPACES = (
+    ("ferric-qwen3-all-kernels-device-v1", "device/qwen3-all-kernels-v1"),
+)
+FE2O3_COMPATIBILITY_DEVICE_WORKSPACES = (
     ("ferric-qwen3-gemm-device-v1", "device/qwen3-gemm-v1"),
     ("ferric-qwen3-logits-device-v1", "device/qwen3-logits-v1"),
     ("ferric-qwen3-paged-decode-device-v1", "device/qwen3-paged-decode-v1"),
@@ -128,6 +131,10 @@ FE2O3_DEVICE_WORKSPACES = (
     ("ferric-qwen3-rmsnorm-device-v1", "device/qwen3-rmsnorm-v1"),
     ("ferric-qwen3-rope-kv-device-v1", "device/qwen3-rope-kv-v1"),
     ("ferric-qwen3-swiglu-device-v1", "device/qwen3-swiglu-v1"),
+)
+FE2O3_DEVICE_WORKSPACES = (
+    FE2O3_AGGREGATE_DEVICE_WORKSPACES
+    + FE2O3_COMPATIBILITY_DEVICE_WORKSPACES
 )
 FE2O3_ADAPTER_WORKSPACES = (
     (

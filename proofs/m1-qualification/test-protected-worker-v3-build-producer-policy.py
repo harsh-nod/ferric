@@ -180,7 +180,9 @@ def main() -> None:
 
         source_repo = root / "source"
         device = source_repo / "device/qwen3-swiglu-v1"
+        canonical = source_repo / "device/qwen3-all-kernels-v1/src"
         (device / "src").mkdir(parents=True)
+        canonical.mkdir(parents=True)
         git(source_repo, "init", "-q")
         (device / "Cargo.toml").write_text(
             "\n".join(
@@ -203,7 +205,16 @@ def main() -> None:
             encoding="ascii",
         )
         (device / "Cargo.lock").write_text("# synthetic lock\n", encoding="ascii")
-        (device / "src/lib.rs").write_text("#![no_std]\n", encoding="ascii")
+        (device / "src/lib.rs").write_text(
+            "#![no_std]\n"
+            '#[path = "../../qwen3-all-kernels-v1/src/swiglu.rs"]\n'
+            "mod kernels;\n",
+            encoding="ascii",
+        )
+        (canonical / "swiglu.rs").write_text(
+            "#![forbid(unsafe_op_in_unsafe_fn)]\n",
+            encoding="ascii",
+        )
         commit(source_repo, "source")
 
         cargo = root / "cargo-fe2o3"

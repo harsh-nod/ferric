@@ -572,7 +572,8 @@ mod tests {
 
     const BUILD_RECORD: &str =
         include_str!("../../../proofs/m1/evidence/PROTECTED_WORKER_V3_SWIGLU_BUILD.json");
-    const DEVICE_SOURCE: &[u8] = include_bytes!("../../../device/qwen3-swiglu-v1/src/lib.rs");
+    const DEVICE_SOURCE: &[u8] =
+        include_bytes!("../../../device/qwen3-all-kernels-v1/src/swiglu.rs");
 
     fn carriage(seed: u8) -> M1SwiGluCompilerReceiptCarriageIdentitiesV1 {
         M1SwiGluCompilerReceiptCarriageIdentitiesV1::from_untrusted_observation(
