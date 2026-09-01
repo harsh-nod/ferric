@@ -13,8 +13,8 @@
 use core::fmt;
 
 use fe2o3_host::{
-    AuthenticatedServiceQueueDataUpdateFailureV1, AuthenticatedServiceQueueSessionV1,
-    AuthenticatedServiceQueueUnboundSessionV1,
+    AuthenticatedServiceQueueDataUpdateFailureV1, AuthenticatedServiceQueueReleaseV1,
+    AuthenticatedServiceQueueSessionV1, AuthenticatedServiceQueueUnboundSessionV1,
 };
 use fe2o3_kfd::{ComputeAqlQueueObservationV1, Gfx942DeviceContentDescriptorV1};
 use fe2o3_service_host::{DeviceWorkspaceRoleV1, ServiceDeviceDispatchRangeV1};
@@ -38,7 +38,7 @@ use crate::step_workspace_subleases::{
 };
 use crate::{
     ActiveDeviceKvCache, AddresslessM1PhysicalBufferRecipeV1, BoundM1StepWorkspaceSubleases,
-    DeclaredOperationKernelPlan, Engine, EngineError, Gfx942DeviceBinding,
+    DeclaredOperationKernelPlan, Engine, EngineError, ExactCompletion, Gfx942DeviceBinding,
     LogicalRunnerDeclaration, M1AuthenticatedCompletedReadbackJoinFailureV1,
     M1AuthenticatedCompletedStepOutcomeV1, M1AuthenticatedCompletionObservationFailureV1,
     M1AuthenticatedObservedCompletionOutputV1, M1AuthenticatedPhysicalCompletedQueueSessionV1,
@@ -49,9 +49,9 @@ use crate::{
     M1AuthenticatedPhysicalRecycledQueueSessionV1, M1AuthenticatedReleasedCompletedStepV1,
     M1CheckedCompletionOutputV1, M1CompletedKvPageReleaseCountsV1,
     M1DeviceKvCompletionDispositionV1, M1DeviceKvCompletionMemberV1, M1DeviceKvCompletionRosterV1,
-    M1ExactDispatchErrorV1, M1FullStepKvWorkspaceTablesV1, M1FullStepWorkspaceImagesV1,
-    M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans, M1FullStepWorkspaceRole,
-    M1FullStepWorkspaceSubleaseOwners, M1InitializedWorkspaceSlotV1,
+    M1ExactDispatchErrorV1, M1FullStepKvReservationCustodyV1, M1FullStepKvWorkspaceTablesV1,
+    M1FullStepWorkspaceImagesV1, M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans,
+    M1FullStepWorkspaceRole, M1FullStepWorkspaceSubleaseOwners, M1InitializedWorkspaceSlotV1,
     M1LongLivedQueueRearmKvInputsV1, M1LongLivedQueueRearmKvReservationPhaseV1,
     M1LongLivedQueueRearmProgressPhaseV1, M1LongLivedQueueRearmScheduleErrorV1,
     M1LongLivedQueueRearmSchedulePhaseV1, M1ObservedCompletionImageV1,
@@ -2059,7 +2059,123 @@ impl M1AuthenticatedRearmedReadbackFailureV1 {
             }
         }
     }
+
+    /// Faults the Engine, destroys the authenticated queue, and retains all
+    /// copied evidence and rearm continuation custody.
+    ///
+    /// # Errors
+    ///
+    /// Returns authenticated lower release quarantine joined to the same
+    /// selected, parked, terminal, and prior-round owners.
+    pub fn destroy_queue_and_retain_custody<const C: usize>(
+        self: Box<Self>,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1AuthenticatedRearmedReadbackTeardownSuccessV1,
+        Box<M1AuthenticatedRearmedReadbackTeardownFailureV1>,
+    > {
+        let Self {
+            source,
+            carry,
+            queue_observation,
+            device,
+        } = *self;
+        let teardown = match source {
+            M1AuthenticatedRearmedReadbackFailureSourceV1::Observation(source) => {
+                source.destroy_queue_and_retain_evidence(engine)
+            }
+            M1AuthenticatedRearmedReadbackFailureSourceV1::Join(source) => {
+                source.destroy_queue_and_retain_evidence(engine)
+            }
+        };
+        match teardown {
+            Ok(source) => Ok(M1AuthenticatedRearmedReadbackTeardownSuccessV1 {
+                source,
+                carry,
+                queue_observation,
+                device,
+            }),
+            Err(source) => Err(Box::new(M1AuthenticatedRearmedReadbackTeardownFailureV1 {
+                source,
+                carry,
+                queue_observation,
+                device,
+            })),
+        }
+    }
 }
+
+/// Clean authenticated readback teardown retaining complete rearm custody.
+#[must_use = "authenticated readback teardown custody remains retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedRearmedReadbackTeardownSuccessV1 {
+    source: crate::M1AuthenticatedReadbackTeardownSuccessV1,
+    carry: M1AuthenticatedRearmContinuationCustodyV1,
+    queue_observation: ComputeAqlQueueObservationV1,
+    device: Gfx942DeviceBinding,
+}
+
+/// Terminal authenticated readback release quarantine with complete rearm custody.
+#[must_use = "authenticated readback quarantine custody remains retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedRearmedReadbackTeardownFailureV1 {
+    source: Box<crate::M1AuthenticatedReadbackTeardownFailureV1>,
+    carry: M1AuthenticatedRearmContinuationCustodyV1,
+    queue_observation: ComputeAqlQueueObservationV1,
+    device: Gfx942DeviceBinding,
+}
+
+macro_rules! authenticated_rearmed_readback_teardown_accessors {
+    ($owner:ident, $source:ty) => {
+        impl $owner {
+            pub const fn source(&self) -> &$source {
+                &self.source
+            }
+
+            #[must_use]
+            pub const fn retained_cache_count(&self) -> usize {
+                self.carry.selected.len() + self.carry.parked.len()
+            }
+
+            #[must_use]
+            pub const fn terminal_lineage_count(&self) -> usize {
+                self.carry.terminal.len()
+            }
+
+            #[must_use]
+            pub const fn round_history_len(&self) -> usize {
+                self.carry.history.len()
+            }
+
+            #[must_use]
+            pub fn round_history(
+                &self,
+                index: usize,
+            ) -> Option<&crate::M1RearmRoundHistoryEntryV1> {
+                self.carry.history.get(index)
+            }
+
+            #[must_use]
+            pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
+                self.queue_observation
+            }
+
+            #[must_use]
+            pub const fn device(&self) -> Gfx942DeviceBinding {
+                self.device
+            }
+        }
+    };
+}
+
+authenticated_rearmed_readback_teardown_accessors!(
+    M1AuthenticatedRearmedReadbackTeardownSuccessV1,
+    crate::M1AuthenticatedReadbackTeardownSuccessV1
+);
+authenticated_rearmed_readback_teardown_accessors!(
+    M1AuthenticatedRearmedReadbackTeardownFailureV1,
+    crate::M1AuthenticatedReadbackTeardownFailureV1
+);
 
 impl M1AuthenticatedRearmedRecycledQueueV1 {
     /// Copies and structurally observes the exact authenticated completion once.
@@ -2345,6 +2461,164 @@ impl M1AuthenticatedRearmedCompletionPreflightFailureV1 {
         M1AuthenticatedRearmedCompletionPreflightFailureV1,
     > {
         (*self.readback).complete(engine, self.dispositions)
+    }
+
+    /// Faults the Engine, destroys the authenticated queue, and retains the
+    /// rejected preflight diagnostic, dispositions, checked readback, KV, and
+    /// complete rearm lineage.
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal authenticated lower release quarantine joined to the
+    /// same completion-preflight custody.
+    pub fn destroy_queue_and_retain_custody<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1AuthenticatedRearmedCompletionPreflightTeardownSuccessV1,
+        Box<M1AuthenticatedRearmedCompletionPreflightTeardownFailureV1>,
+    > {
+        engine.quarantine_m1_queue_rearm_failure();
+        let Self {
+            error,
+            readback,
+            dispositions,
+        } = self;
+        let M1AuthenticatedRearmedCompletedReadbackV1 {
+            readback,
+            carry,
+            queue_observation,
+            device,
+        } = *readback;
+        let (queue, checked, completion, kv) = readback.into_parts();
+        let custody = M1AuthenticatedRearmedCompletionPreflightTeardownCustodyV1 {
+            error,
+            checked,
+            completion,
+            kv,
+            dispositions,
+            carry,
+            queue_observation,
+            device,
+        };
+        match queue.destroy_and_release() {
+            Ok(queue_release) => Ok(M1AuthenticatedRearmedCompletionPreflightTeardownSuccessV1 {
+                queue_release,
+                custody,
+            }),
+            Err(source) => Err(Box::new(
+                M1AuthenticatedRearmedCompletionPreflightTeardownFailureV1 { source, custody },
+            )),
+        }
+    }
+}
+
+#[derive(Debug)]
+struct M1AuthenticatedRearmedCompletionPreflightTeardownCustodyV1 {
+    error: M1AuthenticatedRearmedCompletionPreflightErrorV1,
+    checked: M1CheckedCompletionOutputV1,
+    completion: ExactCompletion,
+    kv: M1FullStepKvReservationCustodyV1,
+    dispositions: Vec<M1DeviceKvCompletionDispositionV1>,
+    carry: M1AuthenticatedRearmContinuationCustodyV1,
+    queue_observation: ComputeAqlQueueObservationV1,
+    device: Gfx942DeviceBinding,
+}
+
+/// Clean authenticated queue teardown retaining completion-preflight custody.
+#[must_use = "authenticated completion-preflight teardown remains retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedRearmedCompletionPreflightTeardownSuccessV1 {
+    queue_release: AuthenticatedServiceQueueReleaseV1,
+    custody: M1AuthenticatedRearmedCompletionPreflightTeardownCustodyV1,
+}
+
+/// Terminal release quarantine retaining authenticated completion-preflight custody.
+#[must_use = "authenticated completion-preflight quarantine remains retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedRearmedCompletionPreflightTeardownFailureV1 {
+    source: Box<crate::M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1>,
+    custody: M1AuthenticatedRearmedCompletionPreflightTeardownCustodyV1,
+}
+
+macro_rules! authenticated_completion_preflight_teardown_accessors {
+    ($owner:ident) => {
+        impl $owner {
+            #[must_use]
+            pub const fn error(&self) -> M1AuthenticatedRearmedCompletionPreflightErrorV1 {
+                self.custody.error
+            }
+
+            pub const fn checked(&self) -> &M1CheckedCompletionOutputV1 {
+                &self.custody.checked
+            }
+
+            #[must_use]
+            pub fn dispositions(&self) -> &[M1DeviceKvCompletionDispositionV1] {
+                &self.custody.dispositions
+            }
+
+            #[must_use]
+            pub const fn retained_cache_count(&self) -> usize {
+                self.custody.carry.selected.len() + self.custody.carry.parked.len()
+            }
+
+            #[must_use]
+            pub const fn terminal_lineage_count(&self) -> usize {
+                self.custody.carry.terminal.len()
+            }
+
+            #[must_use]
+            pub const fn round_history_len(&self) -> usize {
+                self.custody.carry.history.len()
+            }
+
+            #[must_use]
+            pub fn round_history(
+                &self,
+                index: usize,
+            ) -> Option<&crate::M1RearmRoundHistoryEntryV1> {
+                self.custody.carry.history.get(index)
+            }
+
+            #[must_use]
+            pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
+                self.custody.queue_observation
+            }
+
+            #[must_use]
+            pub const fn device(&self) -> Gfx942DeviceBinding {
+                self.custody.device
+            }
+
+            #[must_use]
+            pub const fn completion_epoch(&self) -> CompletionEpoch {
+                self.custody.completion.epoch()
+            }
+
+            pub const fn kv_reservations(&self) -> &M1FullStepKvReservationCustodyV1 {
+                &self.custody.kv
+            }
+        }
+    };
+}
+
+authenticated_completion_preflight_teardown_accessors!(
+    M1AuthenticatedRearmedCompletionPreflightTeardownSuccessV1
+);
+authenticated_completion_preflight_teardown_accessors!(
+    M1AuthenticatedRearmedCompletionPreflightTeardownFailureV1
+);
+
+impl M1AuthenticatedRearmedCompletionPreflightTeardownSuccessV1 {
+    pub const fn queue_release(&self) -> &AuthenticatedServiceQueueReleaseV1 {
+        &self.queue_release
+    }
+}
+
+impl M1AuthenticatedRearmedCompletionPreflightTeardownFailureV1 {
+    pub const fn source(&self) -> &crate::M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1 {
+        &self.source
     }
 }
 
@@ -3892,6 +4166,20 @@ mod tests {
         type RetryRelease = fn(
             M1AuthenticatedRearmedRoundPageReleaseFailureV1,
         ) -> M1AuthenticatedRearmedRoundReleaseOutcomeV1;
+        type ReadbackTeardown = fn(
+            Box<M1AuthenticatedRearmedReadbackFailureV1>,
+            &mut Engine<32>,
+        ) -> Result<
+            M1AuthenticatedRearmedReadbackTeardownSuccessV1,
+            Box<M1AuthenticatedRearmedReadbackTeardownFailureV1>,
+        >;
+        type CompletionPreflightTeardown = fn(
+            M1AuthenticatedRearmedCompletionPreflightFailureV1,
+            &mut Engine<32>,
+        ) -> Result<
+            M1AuthenticatedRearmedCompletionPreflightTeardownSuccessV1,
+            Box<M1AuthenticatedRearmedCompletionPreflightTeardownFailureV1>,
+        >;
 
         let _: ScheduleNext = M1AuthenticatedLongLivedQueueReleasedRoundV1::schedule_next::<32>;
         let _: ScheduleNextExact =
@@ -3900,6 +4188,12 @@ mod tests {
             M1AuthenticatedLongLivedQueueReleasedRoundV1::destroy_queue_and_retain_round::<32>;
         let _: Release = M1AuthenticatedRearmedCompletionOutcomeV1::release_completed;
         let _: RetryRelease = M1AuthenticatedRearmedRoundPageReleaseFailureV1::retry;
+        let _: ReadbackTeardown =
+            M1AuthenticatedRearmedReadbackFailureV1::destroy_queue_and_retain_custody::<32>;
+        let _: CompletionPreflightTeardown =
+            M1AuthenticatedRearmedCompletionPreflightFailureV1::destroy_queue_and_retain_custody::<
+                32,
+            >;
 
         fn exhaust_release(outcome: M1AuthenticatedRearmedRoundReleaseOutcomeV1) {
             match outcome {
