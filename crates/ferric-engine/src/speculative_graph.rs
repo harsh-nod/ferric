@@ -19,8 +19,8 @@ use crate::{
     M1DeviceKvCompletionDispositionV1, M1SpeculativeGenerationLoopErrorV1,
     M1SpeculativeGenerationLoopV1, M1SpeculativeKvRoleSettlementV1,
     M1SpeculativeMemberControlActionV1, M1SpeculativeMemberControlV1,
-    M1SpeculativeMemberRoundOutcomeV1, M1SpeculativeRoundMemberInputV1,
-    M1SpeculativeRoundOutcomeV1, M1SpeculativeTokenBlockV1,
+    M1SpeculativeMemberRoundOutcomeV1, M1SpeculativePreparedRoundCommitFailureV1,
+    M1SpeculativeRoundMemberInputV1, M1SpeculativeRoundOutcomeV1, M1SpeculativeTokenBlockV1,
 };
 use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::{
@@ -596,6 +596,49 @@ impl M1SpeculativeGraphRunOutcomeV1 {
     }
 }
 
+/// Exact physical/coordinator custody after a bounded graph run fails.
+///
+/// The committed prefix is carried separately by
+/// [`M1SpeculativeGraphRunFailureV1`]. A settled prefix means no later physical
+/// transaction remains live. The two fail-stop variants retain the coordinates
+/// needed to diagnose the only states in which the backend and coordinator are
+/// not both settled at that prefix.
+#[must_use = "speculative failure custody determines whether execution may continue"]
+#[derive(Debug)]
+pub enum M1SpeculativeGraphFailureCustodyV1 {
+    /// The coordinator and backend are both settled at the committed prefix.
+    SettledCommittedPrefix,
+    /// The backend consumed the current transaction but could not prove abort.
+    BackendRollbackFailStop { round: u64, epoch: CompletionEpoch },
+    /// Physical commit succeeded, but the coordinator could not join it.
+    ///
+    /// The unchanged checked permit is the exact receipt for the physically
+    /// committed round. It is retained only for fail-stop diagnosis and must
+    /// not be replayed as an ordinary retry.
+    PhysicalCommitCoordinatorFailStop {
+        failure: Box<M1SpeculativePreparedRoundCommitFailureV1>,
+    },
+}
+
+impl M1SpeculativeGraphFailureCustodyV1 {
+    /// True only when no transaction exists beyond the committed prefix.
+    #[must_use]
+    pub const fn is_settled_committed_prefix(&self) -> bool {
+        matches!(self, Self::SettledCommittedPrefix)
+    }
+
+    /// Exact checked failure and receipt retained after a physical split.
+    #[must_use = "a post-physical failure owns the exact unjoined commit receipt"]
+    pub const fn physical_commit_failure(
+        &self,
+    ) -> Option<&M1SpeculativePreparedRoundCommitFailureV1> {
+        match self {
+            Self::PhysicalCommitCoordinatorFailStop { failure } => Some(failure),
+            Self::SettledCommittedPrefix | Self::BackendRollbackFailStop { .. } => None,
+        }
+    }
+}
+
 /// Typed failure from a bounded multi-member speculative graph invocation.
 #[derive(Debug)]
 pub enum M1SpeculativeGraphExecutionErrorV1<BackendError> {
@@ -627,7 +670,7 @@ pub enum M1SpeculativeGraphExecutionErrorV1<BackendError> {
         cause: Box<Self>,
         rollback: BackendError,
     },
-    PostCommitCoordinatorInvariant(M1SpeculativeGenerationLoopErrorV1),
+    PostPhysicalCommitCoordinatorFailStop,
 }
 
 impl<BackendError: fmt::Debug> fmt::Display for M1SpeculativeGraphExecutionErrorV1<BackendError> {
@@ -641,6 +684,75 @@ impl<BackendError: fmt::Debug> std::error::Error
 {
 }
 
+/// Ownership-preserving failure from a bounded speculative graph run.
+///
+/// Every physically committed and coordinator-joined round remains present in
+/// `committed_rounds`. `custody` then identifies whether the failed round was
+/// absent/aborted, failed during backend rollback, or physically committed and
+/// retained as an exact checked receipt awaiting fail-stop recovery.
+#[must_use = "a speculative run failure retains committed publication and custody evidence"]
+#[derive(Debug)]
+pub struct M1SpeculativeGraphRunFailureV1<BackendError> {
+    error: M1SpeculativeGraphExecutionErrorV1<BackendError>,
+    committed_rounds: Vec<M1SpeculativeRoundOutcomeV1>,
+    custody: M1SpeculativeGraphFailureCustodyV1,
+}
+
+impl<BackendError> M1SpeculativeGraphRunFailureV1<BackendError> {
+    /// Borrows the diagnostic without discarding committed outcomes or custody.
+    #[must_use]
+    pub const fn error(&self) -> &M1SpeculativeGraphExecutionErrorV1<BackendError> {
+        &self.error
+    }
+
+    /// Exact coordinator-joined and physically committed outcome prefix.
+    pub fn committed_rounds(&self) -> &[M1SpeculativeRoundOutcomeV1] {
+        &self.committed_rounds
+    }
+
+    /// Borrows the exact state of the failed round's physical custody.
+    pub const fn custody(&self) -> &M1SpeculativeGraphFailureCustodyV1 {
+        &self.custody
+    }
+
+    /// Consumes the failure without dropping any retained authority or result.
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1SpeculativeGraphExecutionErrorV1<BackendError>,
+        Vec<M1SpeculativeRoundOutcomeV1>,
+        M1SpeculativeGraphFailureCustodyV1,
+    ) {
+        (self.error, self.committed_rounds, self.custody)
+    }
+
+    fn new(
+        error: M1SpeculativeGraphExecutionErrorV1<BackendError>,
+        committed_rounds: Vec<M1SpeculativeRoundOutcomeV1>,
+        custody: M1SpeculativeGraphFailureCustodyV1,
+    ) -> Self {
+        Self {
+            error,
+            committed_rounds,
+            custody,
+        }
+    }
+}
+
+struct M1SpeculativeGraphRoundFailureV1<BackendError> {
+    error: M1SpeculativeGraphExecutionErrorV1<BackendError>,
+    custody: M1SpeculativeGraphFailureCustodyV1,
+}
+
+impl<BackendError> M1SpeculativeGraphRoundFailureV1<BackendError> {
+    const fn settled(error: M1SpeculativeGraphExecutionErrorV1<BackendError>) -> Self {
+        Self {
+            error,
+            custody: M1SpeculativeGraphFailureCustodyV1::SettledCommittedPrefix,
+        }
+    }
+}
+
 /// Executes a bounded sequence of complete multi-member speculative rounds.
 ///
 /// Each round is ordered as draft generation, target verification, greedy
@@ -650,32 +762,57 @@ impl<BackendError: fmt::Debug> std::error::Error
 ///
 /// # Errors
 ///
-/// Rejects an invalid bound, coordinator drift, malformed model output, backend
-/// stage failure, or physical rollback failure. A post-commit coordinator
-/// invariant failure is fail-stop and never represented as retryable.
+/// Rejects an invalid bound or overflowing complete epoch span before the first
+/// backend call. Later failures retain every committed outcome plus exact
+/// custody of the failed round. A post-physical-commit coordinator invariant
+/// failure is fail-stop and retains its unchanged checked receipt.
 pub fn run_bounded_multi_member_speculative_graph_v1<Executor, Control>(
     coordinator: &mut M1SpeculativeGenerationLoopV1,
     executor: &mut Executor,
     first_epoch: CompletionEpoch,
     max_rounds: u32,
     mut control: Control,
-) -> Result<M1SpeculativeGraphRunOutcomeV1, M1SpeculativeGraphExecutionErrorV1<Executor::Error>>
+) -> Result<M1SpeculativeGraphRunOutcomeV1, M1SpeculativeGraphRunFailureV1<Executor::Error>>
 where
     Executor: M1SpeculativeGraphExecutorV1,
     Control: FnMut(M1SpeculativeGraphControlContextV1) -> M1SpeculativeMemberControlActionV1,
 {
     if max_rounds == 0 || max_rounds > M1_MAX_SPECULATIVE_GRAPH_ROUNDS_V1 {
-        return Err(M1SpeculativeGraphExecutionErrorV1::InvalidRoundLimit {
-            maximum: M1_MAX_SPECULATIVE_GRAPH_ROUNDS_V1,
-            actual: max_rounds,
-        });
+        return Err(M1SpeculativeGraphRunFailureV1::new(
+            M1SpeculativeGraphExecutionErrorV1::InvalidRoundLimit {
+                maximum: M1_MAX_SPECULATIVE_GRAPH_ROUNDS_V1,
+                actual: max_rounds,
+            },
+            Vec::new(),
+            M1SpeculativeGraphFailureCustodyV1::SettledCommittedPrefix,
+        ));
     }
-    let maximum = usize::try_from(max_rounds)
-        .map_err(|_| M1SpeculativeGraphExecutionErrorV1::HostAllocation)?;
+    if first_epoch
+        .value()
+        .checked_add(u64::from(max_rounds - 1))
+        .is_none()
+    {
+        return Err(M1SpeculativeGraphRunFailureV1::new(
+            M1SpeculativeGraphExecutionErrorV1::EpochOverflow,
+            Vec::new(),
+            M1SpeculativeGraphFailureCustodyV1::SettledCommittedPrefix,
+        ));
+    }
+    let maximum = usize::try_from(max_rounds).map_err(|_| {
+        M1SpeculativeGraphRunFailureV1::new(
+            M1SpeculativeGraphExecutionErrorV1::HostAllocation,
+            Vec::new(),
+            M1SpeculativeGraphFailureCustodyV1::SettledCommittedPrefix,
+        )
+    })?;
     let mut rounds = Vec::new();
-    rounds
-        .try_reserve_exact(maximum)
-        .map_err(|_| M1SpeculativeGraphExecutionErrorV1::HostAllocation)?;
+    rounds.try_reserve_exact(maximum).map_err(|_| {
+        M1SpeculativeGraphRunFailureV1::new(
+            M1SpeculativeGraphExecutionErrorV1::HostAllocation,
+            Vec::new(),
+            M1SpeculativeGraphFailureCustodyV1::SettledCommittedPrefix,
+        )
+    })?;
     if coordinator.active_roster().is_empty() {
         return Ok(M1SpeculativeGraphRunOutcomeV1 {
             rounds: rounds.into_boxed_slice(),
@@ -683,16 +820,26 @@ where
         });
     }
 
-    let mut epoch = first_epoch;
     for round_offset in 0..max_rounds {
+        let epoch =
+            CompletionEpoch::new(first_epoch.value().saturating_add(u64::from(round_offset)));
         let roster = coordinator.active_roster();
-        let completed = execute_multi_member_speculative_round(
+        let completed = match execute_multi_member_speculative_round(
             coordinator,
             executor,
             epoch,
             &roster,
             &mut control,
-        )?;
+        ) {
+            Ok(completed) => completed,
+            Err(failure) => {
+                return Err(M1SpeculativeGraphRunFailureV1::new(
+                    failure.error,
+                    rounds,
+                    failure.custody,
+                ));
+            }
+        };
         let terminal = completed.next_active_roster().is_empty();
         rounds.push(completed);
         if terminal {
@@ -700,14 +847,6 @@ where
                 rounds: rounds.into_boxed_slice(),
                 stop: M1SpeculativeGraphStopV1::AllMembersTerminal,
             });
-        }
-        if round_offset + 1 < max_rounds {
-            epoch = CompletionEpoch::new(
-                epoch
-                    .value()
-                    .checked_add(1)
-                    .ok_or(M1SpeculativeGraphExecutionErrorV1::EpochOverflow)?,
-            );
         }
     }
     Ok(M1SpeculativeGraphRunOutcomeV1 {
@@ -722,7 +861,7 @@ fn execute_multi_member_speculative_round<Executor, Control>(
     epoch: CompletionEpoch,
     roster: &[RequestId],
     control: &mut Control,
-) -> Result<M1SpeculativeRoundOutcomeV1, M1SpeculativeGraphExecutionErrorV1<Executor::Error>>
+) -> Result<M1SpeculativeRoundOutcomeV1, M1SpeculativeGraphRoundFailureV1<Executor::Error>>
 where
     Executor: M1SpeculativeGraphExecutorV1,
     Control: FnMut(M1SpeculativeGraphControlContextV1) -> M1SpeculativeMemberControlActionV1,
@@ -730,43 +869,49 @@ where
     let round = coordinator.next_round();
     let binding = coordinator
         .bind_round(round, epoch, roster)
-        .map_err(M1SpeculativeGraphExecutionErrorV1::Coordinator)?;
+        .map_err(M1SpeculativeGraphExecutionErrorV1::Coordinator)
+        .map_err(M1SpeculativeGraphRoundFailureV1::settled)?;
     let selection = binding.shape().selection();
     let width = usize::from(binding.shape().draft_tokens());
     let member_count = binding.members().len();
     let maximum_members =
         usize::try_from(M1_MAX_ACTIVE_SEQUENCES).expect("M1 active-sequence bound fits usize");
     if member_count > maximum_members || width + 1 > M1_MAX_COMPLETION_TOKENS {
-        return Err(M1SpeculativeGraphExecutionErrorV1::Coordinator(
-            M1SpeculativeGenerationLoopErrorV1::RosterCapacity {
-                maximum: maximum_members,
-                actual: member_count,
-            },
+        return Err(M1SpeculativeGraphRoundFailureV1::settled(
+            M1SpeculativeGraphExecutionErrorV1::Coordinator(
+                M1SpeculativeGenerationLoopErrorV1::RosterCapacity {
+                    maximum: maximum_members,
+                    actual: member_count,
+                },
+            ),
         ));
     }
 
     let mut observations = Vec::new();
     observations
         .try_reserve_exact(member_count)
-        .map_err(|_| M1SpeculativeGraphExecutionErrorV1::HostAllocation)?;
+        .map_err(|_| M1SpeculativeGraphExecutionErrorV1::HostAllocation)
+        .map_err(M1SpeculativeGraphRoundFailureV1::settled)?;
     let mut controls = Vec::new();
     controls
         .try_reserve_exact(member_count)
-        .map_err(|_| M1SpeculativeGraphExecutionErrorV1::HostAllocation)?;
+        .map_err(|_| M1SpeculativeGraphExecutionErrorV1::HostAllocation)
+        .map_err(M1SpeculativeGraphRoundFailureV1::settled)?;
     let context = M1SpeculativeGraphRoundContextV1 {
         selection,
         round,
         epoch,
         members: binding.members(),
     };
-    let mut transaction = executor.begin_round(context).map_err(|source| {
-        M1SpeculativeGraphExecutionErrorV1::Backend {
+    let mut transaction = executor
+        .begin_round(context)
+        .map_err(|source| M1SpeculativeGraphExecutionErrorV1::Backend {
             stage: M1SpeculativeGraphStageV1::BeginRound,
             lane: None,
             ordinal: None,
             source,
-        }
-    })?;
+        })
+        .map_err(M1SpeculativeGraphRoundFailureV1::settled)?;
 
     let mut roster_draft_tokens = [[0; M1_MAX_COMPLETION_TOKENS]; M1_MAX_ACTIVE_SEQUENCES as usize];
     for ordinal in 0..width {
@@ -787,7 +932,13 @@ where
                             ordinal: Some(ordinal_u8),
                             source,
                         };
-                        return Err(rollback_graph_round(executor, transaction, cause));
+                        return Err(rollback_graph_round(
+                            executor,
+                            transaction,
+                            round,
+                            epoch,
+                            cause,
+                        ));
                     }
                 };
             if token >= QWEN3_VOCABULARY_SIZE {
@@ -797,7 +948,13 @@ where
                     ordinal,
                     token,
                 };
-                return Err(rollback_graph_round(executor, transaction, cause));
+                return Err(rollback_graph_round(
+                    executor,
+                    transaction,
+                    round,
+                    epoch,
+                    cause,
+                ));
             }
             roster_draft_tokens[lane][ordinal] = token;
         }
@@ -815,7 +972,13 @@ where
                         ordinal: None,
                         source,
                     };
-                    return Err(rollback_graph_round(executor, transaction, cause));
+                    return Err(rollback_graph_round(
+                        executor,
+                        transaction,
+                        round,
+                        epoch,
+                        cause,
+                    ));
                 }
             };
         if target_choices.len() != width + 1 {
@@ -824,7 +987,13 @@ where
                 expected: width + 1,
                 actual: target_choices.len(),
             };
-            return Err(rollback_graph_round(executor, transaction, cause));
+            return Err(rollback_graph_round(
+                executor,
+                transaction,
+                round,
+                epoch,
+                cause,
+            ));
         }
         for (ordinal, token) in target_choices.iter().copied().enumerate() {
             if token >= QWEN3_VOCABULARY_SIZE {
@@ -834,7 +1003,13 @@ where
                     ordinal,
                     token,
                 };
-                return Err(rollback_graph_round(executor, transaction, cause));
+                return Err(rollback_graph_round(
+                    executor,
+                    transaction,
+                    round,
+                    epoch,
+                    cause,
+                ));
             }
         }
 
@@ -850,7 +1025,13 @@ where
             Ok(emitted) => emitted,
             Err(error) => {
                 let cause = M1SpeculativeGraphExecutionErrorV1::Coordinator(error);
-                return Err(rollback_graph_round(executor, transaction, cause));
+                return Err(rollback_graph_round(
+                    executor,
+                    transaction,
+                    round,
+                    epoch,
+                    cause,
+                ));
             }
         };
         let accepted_draft_tokens =
@@ -889,7 +1070,13 @@ where
         Ok(preflighted) => preflighted,
         Err(error) => {
             let cause = M1SpeculativeGraphExecutionErrorV1::Coordinator(error);
-            return Err(rollback_graph_round(executor, transaction, cause));
+            return Err(rollback_graph_round(
+                executor,
+                transaction,
+                round,
+                epoch,
+                cause,
+            ));
         }
     };
     for (lane, outcome) in preflighted.members().iter().enumerate() {
@@ -901,12 +1088,24 @@ where
                 ordinal: None,
                 source,
             };
-            return Err(rollback_graph_round(executor, transaction, cause));
+            return Err(rollback_graph_round(
+                executor,
+                transaction,
+                round,
+                epoch,
+                cause,
+            ));
         }
     }
     if let Err(error) = coordinator.preflight_prepared_round_commit(&preflighted) {
         let cause = M1SpeculativeGraphExecutionErrorV1::Coordinator(error);
-        return Err(rollback_graph_round(executor, transaction, cause));
+        return Err(rollback_graph_round(
+            executor,
+            transaction,
+            round,
+            epoch,
+            cause,
+        ));
     }
     if let Err(failure) = executor.commit_round(transaction) {
         let (source, transaction) = failure.into_parts();
@@ -916,14 +1115,23 @@ where
             ordinal: None,
             source,
         };
-        return Err(rollback_graph_round(executor, transaction, cause));
+        return Err(rollback_graph_round(
+            executor,
+            transaction,
+            round,
+            epoch,
+            cause,
+        ));
     }
-    coordinator
-        .commit_preflighted_round(preflighted)
-        .map_err(|failure| {
-            let (error, _) = failure.into_parts();
-            M1SpeculativeGraphExecutionErrorV1::PostCommitCoordinatorInvariant(error)
-        })
+    match coordinator.commit_preflighted_round(preflighted) {
+        Ok(outcome) => Ok(outcome),
+        Err(failure) => Err(M1SpeculativeGraphRoundFailureV1 {
+            error: M1SpeculativeGraphExecutionErrorV1::PostPhysicalCommitCoordinatorFailStop,
+            custody: M1SpeculativeGraphFailureCustodyV1::PhysicalCommitCoordinatorFailStop {
+                failure,
+            },
+        }),
+    }
 }
 
 fn settlement_from_outcome(
@@ -940,16 +1148,21 @@ fn settlement_from_outcome(
 fn rollback_graph_round<Executor>(
     executor: &mut Executor,
     transaction: Executor::Transaction,
+    round: u64,
+    epoch: CompletionEpoch,
     cause: M1SpeculativeGraphExecutionErrorV1<Executor::Error>,
-) -> M1SpeculativeGraphExecutionErrorV1<Executor::Error>
+) -> M1SpeculativeGraphRoundFailureV1<Executor::Error>
 where
     Executor: M1SpeculativeGraphExecutorV1,
 {
     match executor.rollback_round(transaction) {
-        Ok(()) => cause,
-        Err(rollback) => M1SpeculativeGraphExecutionErrorV1::RollbackFailed {
-            cause: Box::new(cause),
-            rollback,
+        Ok(()) => M1SpeculativeGraphRoundFailureV1::settled(cause),
+        Err(rollback) => M1SpeculativeGraphRoundFailureV1 {
+            error: M1SpeculativeGraphExecutionErrorV1::RollbackFailed {
+                cause: Box::new(cause),
+                rollback,
+            },
+            custody: M1SpeculativeGraphFailureCustodyV1::BackendRollbackFailStop { round, epoch },
         },
     }
 }
@@ -1717,7 +1930,7 @@ mod bounded_graph_tests {
         }]);
         executor.fail_target = Some((0, 1));
 
-        let error = run_bounded_multi_member_speculative_graph_v1(
+        let failure = run_bounded_multi_member_speculative_graph_v1(
             &mut coordinator,
             &mut executor,
             CompletionEpoch::new(1),
@@ -1727,7 +1940,7 @@ mod bounded_graph_tests {
         .unwrap_err();
 
         assert!(matches!(
-            error,
+            failure.error(),
             M1SpeculativeGraphExecutionErrorV1::Backend {
                 stage: M1SpeculativeGraphStageV1::TargetVerification,
                 lane: Some(1),
@@ -1735,6 +1948,8 @@ mod bounded_graph_tests {
                 ..
             }
         ));
+        assert!(failure.committed_rounds().is_empty());
+        assert!(failure.custody().is_settled_committed_prefix());
         assert_eq!(coordinator.next_round(), 0);
         assert_eq!(coordinator.member(request(0)).unwrap(), before_first);
         assert_eq!(coordinator.member(request(1)).unwrap(), before_second);
@@ -1763,7 +1978,7 @@ mod bounded_graph_tests {
             let mut executor = ScriptedExecutor::with_scripts([RoundScript {
                 members: vec![script],
             }]);
-            let error = run_bounded_multi_member_speculative_graph_v1(
+            let failure = run_bounded_multi_member_speculative_graph_v1(
                 &mut coordinator,
                 &mut executor,
                 CompletionEpoch::new(1),
@@ -1773,7 +1988,7 @@ mod bounded_graph_tests {
             .unwrap_err();
             if out_of_range {
                 assert!(matches!(
-                    error,
+                    failure.error(),
                     M1SpeculativeGraphExecutionErrorV1::TokenOutOfRange {
                         stage: M1SpeculativeGraphStageV1::Draft,
                         lane: 0,
@@ -1783,7 +1998,7 @@ mod bounded_graph_tests {
                 ));
             } else {
                 assert!(matches!(
-                    error,
+                    failure.error(),
                     M1SpeculativeGraphExecutionErrorV1::TargetChoiceCount {
                         lane: 0,
                         expected: 5,
@@ -1791,6 +2006,8 @@ mod bounded_graph_tests {
                     }
                 ));
             }
+            assert!(failure.committed_rounds().is_empty());
+            assert!(failure.custody().is_settled_committed_prefix());
             assert_eq!(coordinator.next_round(), 0);
             assert!(matches!(
                 executor.events.last(),
@@ -1809,7 +2026,7 @@ mod bounded_graph_tests {
             }]);
             executor.fail_commit = Some(0);
             executor.fail_rollback = rollback_fails.then_some(0);
-            let error = run_bounded_multi_member_speculative_graph_v1(
+            let failure = run_bounded_multi_member_speculative_graph_v1(
                 &mut coordinator,
                 &mut executor,
                 CompletionEpoch::new(1),
@@ -1819,7 +2036,7 @@ mod bounded_graph_tests {
             .unwrap_err();
             if rollback_fails {
                 assert!(matches!(
-                    error,
+                    failure.error(),
                     M1SpeculativeGraphExecutionErrorV1::RollbackFailed {
                         rollback: "rollback fault",
                         ..
@@ -1827,7 +2044,7 @@ mod bounded_graph_tests {
                 ));
             } else {
                 assert!(matches!(
-                    error,
+                    failure.error(),
                     M1SpeculativeGraphExecutionErrorV1::Backend {
                         stage: M1SpeculativeGraphStageV1::CommitKvSettlement,
                         source: "KV commit fault",
@@ -1835,12 +2052,100 @@ mod bounded_graph_tests {
                     }
                 ));
             }
+            assert!(failure.committed_rounds().is_empty());
+            if rollback_fails {
+                assert!(matches!(
+                    failure.custody(),
+                    M1SpeculativeGraphFailureCustodyV1::BackendRollbackFailStop {
+                        round: 0,
+                        epoch,
+                    } if *epoch == CompletionEpoch::new(1)
+                ));
+            } else {
+                assert!(failure.custody().is_settled_committed_prefix());
+            }
             assert_eq!(coordinator.next_round(), 0);
             assert!(matches!(
                 executor.events.last(),
                 Some(Event::Rollback { round: 0 })
             ));
         }
+    }
+
+    #[test]
+    fn later_round_failure_returns_exact_committed_prefix_and_settled_custody() {
+        let mut coordinator =
+            M1SpeculativeGenerationLoopV1::new(selection(), &[seed(0, 32)]).unwrap();
+        let round = RoundScript {
+            members: vec![member(&[10, 11, 12, 13], &[10, 11, 90, 91, 92])],
+        };
+        let mut executor = ScriptedExecutor::with_scripts([round.clone(), round]);
+        executor.fail_target = Some((1, 0));
+
+        let failure = run_bounded_multi_member_speculative_graph_v1(
+            &mut coordinator,
+            &mut executor,
+            CompletionEpoch::new(7),
+            2,
+            |_| M1SpeculativeMemberControlActionV1::Continue,
+        )
+        .unwrap_err();
+
+        assert!(matches!(
+            failure.error(),
+            M1SpeculativeGraphExecutionErrorV1::Backend {
+                stage: M1SpeculativeGraphStageV1::TargetVerification,
+                lane: Some(0),
+                source: "target verification fault",
+                ..
+            }
+        ));
+        assert_eq!(failure.committed_rounds().len(), 1);
+        assert_eq!(failure.committed_rounds()[0].completed_round(), 0);
+        assert_eq!(
+            failure.committed_rounds()[0].completed_epoch(),
+            CompletionEpoch::new(7)
+        );
+        assert!(failure.custody().is_settled_committed_prefix());
+        assert_eq!(coordinator.next_round(), 1);
+        assert_eq!(coordinator.active_roster(), vec![request(0)]);
+        assert!(executor
+            .events
+            .iter()
+            .any(|event| matches!(event, Event::Commit { round: 0 })));
+        assert!(executor
+            .events
+            .iter()
+            .any(|event| matches!(event, Event::Rollback { round: 1 })));
+        assert!(!executor
+            .events
+            .iter()
+            .any(|event| matches!(event, Event::Commit { round: 1 })));
+    }
+
+    #[test]
+    fn overflowing_complete_epoch_span_fails_before_any_backend_call() {
+        let mut coordinator =
+            M1SpeculativeGenerationLoopV1::new(selection(), &[seed(0, 32)]).unwrap();
+        let mut executor = ScriptedExecutor::default();
+
+        let failure = run_bounded_multi_member_speculative_graph_v1(
+            &mut coordinator,
+            &mut executor,
+            CompletionEpoch::new(u64::MAX),
+            2,
+            |_| M1SpeculativeMemberControlActionV1::Continue,
+        )
+        .unwrap_err();
+
+        assert!(matches!(
+            failure.error(),
+            M1SpeculativeGraphExecutionErrorV1::EpochOverflow
+        ));
+        assert!(failure.committed_rounds().is_empty());
+        assert!(failure.custody().is_settled_committed_prefix());
+        assert_eq!(coordinator.next_round(), 0);
+        assert!(executor.events.is_empty());
     }
 
     #[test]
