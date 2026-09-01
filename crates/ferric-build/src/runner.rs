@@ -202,6 +202,10 @@ pub struct PublishedRunnerDeclaration {
 }
 
 impl PublishedRunnerDeclaration {
+    pub(crate) const fn declaration(&self) -> &GeneratedRunnerDeclaration {
+        &self.declaration
+    }
+
     /// Returns the exact generated source-closure identity retained by publication.
     #[must_use]
     pub const fn source_id(&self) -> Identity {
@@ -594,6 +598,12 @@ pub fn publish_qwen3_gfx942_runner_declaration(
 ) -> Result<PublishedRunnerDeclaration, GeneratedRunnerError> {
     validate_qwen3_gfx942_runner_declaration(&declaration)?;
     Ok(PublishedRunnerDeclaration { declaration })
+}
+
+pub(crate) fn validate_published_qwen3_gfx942_runner_declaration(
+    publication: &PublishedRunnerDeclaration,
+) -> Result<(), GeneratedRunnerError> {
+    validate_qwen3_gfx942_runner_declaration(&publication.declaration)
 }
 
 /// Revalidates every retained generated declaration field independently.
@@ -1096,6 +1106,13 @@ fn identity_record(domain: &[u8], bytes: &[u8]) -> Identity {
 #[doc(hidden)]
 #[must_use]
 pub fn qwen3_runner_closure_test_fixture() -> PreliminaryIdentityClosure {
+    qwen3_runner_closure_test_fixture_with_executable_catalog(Identity::new([39; 32]))
+}
+
+#[cfg(any(test, feature = "test-fixtures"))]
+pub(crate) fn qwen3_runner_closure_test_fixture_with_executable_catalog(
+    executable_catalog: Identity,
+) -> PreliminaryIdentityClosure {
     use crate::{
         build_authenticated_sequential_plan_catalog, build_preliminary_identity_closure,
         build_prepacked_deployment_bundle, expected_preliminary_kernel_catalog_identity,
@@ -1129,7 +1146,7 @@ pub fn qwen3_runner_closure_test_fixture() -> PreliminaryIdentityClosure {
         kernel_catalog: fixture_identity(36),
         kernel_proof_set: fixture_identity(37),
         kernel_abi_catalog: fixture_identity(38),
-        executable_catalog: fixture_identity(39),
+        executable_catalog,
         runtime_contract: fixture_identity(40),
         runtime_abi: fixture_identity(41),
         generated_runner: expected_qwen3_gfx942_runner_source_identity(),

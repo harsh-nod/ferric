@@ -1238,6 +1238,65 @@ fn hex(bytes: &[u8]) -> String {
 }
 
 #[cfg(test)]
+pub(crate) fn m1_kernel_artifact_manifest_unit_fixture_v1() -> M1KernelArtifactManifestV1 {
+    let source_facts = super::current_m1_kernel_source_facts_v1()
+        .expect("current M1 source facts remain constructible");
+    let entries = std::array::from_fn(|index| {
+        let seed = u8::try_from(index + 1).expect("seven fixture families fit u8");
+        let artifact_len = 4_096 + u64::from(seed);
+        let family = M1KernelArtifactFamilyV1::ALL[index];
+        let source = &source_facts[index];
+        M1KernelArtifactEntryV1 {
+            family,
+            artifact: ContentIdentityV1::from_parts([seed; 32], artifact_len),
+            compiler_module: source.compiler_module(),
+            compiler_handoff: source.compiler_handoff(),
+            symbol_manifest: source.symbol_manifest(),
+            profile_catalogs: source.profile_catalogs().to_vec(),
+            programs: expected_programs(family),
+            provider: family.uses_ocml().then(DeviceLibraryProviderRecordV1::ocml),
+            load_plan: LoadPlanRecordV1 {
+                input_len: artifact_len,
+                image_start: 0x1_000,
+                image_end: 0x6_000,
+                metadata_offset: 64,
+                metadata_len: 64,
+                segments: vec![
+                    LoadSegmentRecordV1 {
+                        file_offset: 0,
+                        file_size: 256,
+                        virtual_address: 0x1_000,
+                        memory_size: 256,
+                        mapping_address: 0x1_000,
+                        mapping_size: 0x1_000,
+                        permissions: 1,
+                    },
+                    LoadSegmentRecordV1 {
+                        file_offset: 512,
+                        file_size: 512,
+                        virtual_address: 0x3_000,
+                        memory_size: 512,
+                        mapping_address: 0x3_000,
+                        mapping_size: 0x1_000,
+                        permissions: 2,
+                    },
+                    LoadSegmentRecordV1 {
+                        file_offset: 1_024,
+                        file_size: 512,
+                        virtual_address: 0x5_000,
+                        memory_size: 1_024,
+                        mapping_address: 0x5_000,
+                        mapping_size: 0x1_000,
+                        permissions: 3,
+                    },
+                ],
+            },
+        }
+    });
+    M1KernelArtifactManifestV1::new(entries).expect("exact current-source unit manifest")
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
 
