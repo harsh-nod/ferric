@@ -12,6 +12,25 @@ const allowedStates = new Set([
   "qualified",
   "open",
 ]);
+const expectedCurrent = Object.freeze({
+  siteRefreshBase: "e419160a3d21db5e8b25f414fd696982a959a171",
+  implementationCommit: "5f40e404ba4bc76c16eed15868c63a72e60e716c",
+  selectedFe2o3Pin: "b5374c6e6a4c1215ad481cefcd294334dcb1cbeb",
+  devicePackages: [
+    "gemm",
+    "logits",
+    "paged-decode",
+    "prefill",
+    "rmsnorm",
+    "rope-kv",
+    "swiglu",
+  ],
+  generatedExpectations: 12,
+  sourceGateModules: 151,
+  sourceGateExecutableBodies: 6850,
+  plannerSlots: 354,
+  openM1Gates: 33,
+});
 
 function assert(condition, message) {
   if (!condition) {
@@ -49,9 +68,29 @@ assert(
   ),
   "fe2o3Repository must be a GitHub repository URL",
 );
+assert(project.current && typeof project.current === "object", "current status is missing");
+assertCommit(project.current.siteRefreshBase, "current.siteRefreshBase");
+assertCommit(project.current.implementationCommit, "current.implementationCommit");
+assertCommit(project.current.selectedFe2o3Pin, "current.selectedFe2o3Pin");
+for (const [key, expected] of Object.entries(expectedCurrent)) {
+  const actual = project.current[key];
+  assert(
+    JSON.stringify(actual) === JSON.stringify(expected),
+    `current.${key} must match the selected implementation status`,
+  );
+}
 assertState(project.milestone.state, "milestone");
 
 assert(Array.isArray(project.envelope) && project.envelope.length > 0, "envelope is empty");
+const envelope = new Map(project.envelope);
+assert(
+  envelope.get("Selected fe2o3 pin")?.includes(expectedCurrent.selectedFe2o3Pin),
+  "envelope must expose the exact selected fe2o3 pin",
+);
+assert(
+  envelope.get("M1 implementation")?.includes(expectedCurrent.implementationCommit),
+  "envelope must expose the exact current implementation commit",
+);
 assert(Array.isArray(project.readiness) && project.readiness.length > 0, "readiness is empty");
 project.readiness.forEach((item, index) =>
   assertState(item.state, `readiness[${index}]`),
@@ -118,11 +157,24 @@ project.recentProgress.forEach((item, index) => {
   assert(!progressCommits.has(item.commit), `duplicate progress commit ${item.commit}`);
   progressCommits.add(item.commit);
 });
+assert(
+  progressCommits.has(expectedCurrent.implementationCommit),
+  "recent progress must include the current implementation commit",
+);
+assert(
+  progressCommits.has(expectedCurrent.selectedFe2o3Pin),
+  "recent progress must include the selected fe2o3 pin",
+);
 
 project.evidence.gates.forEach(([label, count, state], index) => {
   assert(label && /^\d+$/.test(count), `evidence.gates[${index}] is malformed`);
   assertState(state, `evidence.gates[${index}]`);
 });
+const roadmapGate = project.evidence.gates.find(([label]) => label === "Roadmap requirements");
+assert(
+  roadmapGate?.[1] === String(expectedCurrent.openM1Gates) && roadmapGate?.[2] === "open",
+  "the exact M1 roadmap gate count must remain open",
+);
 project.evidence.legend.forEach(([state], index) =>
   assertState(state, `evidence.legend[${index}]`),
 );
