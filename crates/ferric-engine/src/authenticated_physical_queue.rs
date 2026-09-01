@@ -8,9 +8,10 @@ use fe2o3_host::{
     AuthenticatedServiceCompletedQueueSessionV1, AuthenticatedServicePublishedQueueSessionV1,
     AuthenticatedServiceQueueCreateFailureV1, AuthenticatedServiceQueueOperationFailureV1,
     AuthenticatedServiceQueuePollWithProgressV1, AuthenticatedServiceQueueSessionV1,
-    AuthenticatedServiceQueueSubmitFailureV1, AuthenticatedServiceRecycledQueueSessionV1,
-    AuthenticatedWorkerV3ProgramMaterializationErrorV1,
+    AuthenticatedServiceQueueSubmitFailureV1, AuthenticatedServiceQueueUnboundSessionV1,
+    AuthenticatedServiceRecycledQueueSessionV1, AuthenticatedWorkerV3ProgramMaterializationErrorV1,
 };
+use fe2o3_kfd::ComputeAqlQueueObservationV1;
 use fe2o3_service_host::ServiceQueueErrorV1;
 use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::Identity;
@@ -221,8 +222,83 @@ define_authenticated_queue_phase!(
 define_authenticated_queue_phase!(
     M1AuthenticatedPhysicalRecycledQueueSessionV1,
     AuthenticatedServiceRecycledQueueSessionV1,
-    "recycled authenticated queue custody must be reused or released"
+    "recycled authenticated queue custody must be reused, detached, or released"
 );
+
+/// Live detached queue retaining authenticated program history and prior-step custody.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedPhysicalDetachedQueueSessionV1;
+/// fn split(detached: M1AuthenticatedPhysicalDetachedQueueSessionV1) {
+///     let _ = detached.into_parts();
+/// }
+/// ```
+#[must_use = "the live detached authenticated queue and Ferric custody must remain retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedPhysicalDetachedQueueSessionV1 {
+    lower: AuthenticatedServiceQueueUnboundSessionV1,
+    former_shape: M1PhysicalFixedBatchShapeV1,
+    witness: M1AuthenticatedProgramCatalogWitnessV1,
+    operations: DeclaredOperationKernelPlan,
+    custody: M1PhysicalQueueBatchCustodyV1,
+    prior_step: M1PrepublicationStepCustodyV1,
+}
+
+impl M1AuthenticatedPhysicalDetachedQueueSessionV1 {
+    /// Exact closed shape of the completed generation that was detached.
+    #[must_use]
+    pub const fn former_shape(&self) -> M1PhysicalFixedBatchShapeV1 {
+        self.former_shape
+    }
+
+    /// Checked physical-device receipt retained beside the live queue.
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.custody.device()
+    }
+
+    /// Exact authenticated program-catalog identity retained as history.
+    #[must_use]
+    pub const fn program_catalog_id(&self) -> Identity {
+        self.witness.catalog_id()
+    }
+
+    /// Exact generated runner declaration identity.
+    #[must_use]
+    pub const fn runner_declaration_id(&self) -> Identity {
+        self.operations.runner_declaration_id()
+    }
+
+    /// Exact structural kernel-catalog identity.
+    #[must_use]
+    pub const fn kernel_catalog_id(&self) -> Identity {
+        self.operations.kernel_catalog_id()
+    }
+
+    /// Immutable scheduler-issued queue epoch retained from the prior step.
+    #[must_use]
+    pub const fn queue_epoch(&self) -> CompletionEpoch {
+        self.prior_step.scheduled_dispatch().epoch()
+    }
+
+    /// Redacted observation of the still-live native queue.
+    #[must_use]
+    pub const fn observation(&self) -> ComputeAqlQueueObservationV1 {
+        self.lower.observation()
+    }
+
+    /// Completed lower dispatch generation that authorized detachment.
+    #[must_use]
+    pub const fn detached_dispatch_generation(&self) -> u64 {
+        self.lower.detached_dispatch_generation()
+    }
+
+    /// Exact Ferric allocation, recipe, and model-memory custody.
+    #[must_use = "Ferric queue custody remains retained"]
+    pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
+        &self.custody
+    }
+}
 
 /// Pure reason why authenticated queue creation returned unchanged inputs.
 #[must_use]
@@ -932,6 +1008,68 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
             Self::SpeculativeK4(case) => reuse_variant!(case, SpeculativeK4),
             Self::SpeculativeK8(case) => reuse_variant!(case, SpeculativeK8),
             Self::SpeculativeK16(case) => reuse_variant!(case, SpeculativeK16),
+        }
+    }
+}
+
+fn detach_case<const N: usize>(
+    case: Box<
+        M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceRecycledQueueSessionV1<N>>,
+    >,
+    former_shape: M1PhysicalFixedBatchShapeV1,
+) -> Result<
+    M1AuthenticatedPhysicalDetachedQueueSessionV1,
+    Box<M1AuthenticatedPhysicalQueueOperationFailureV1>,
+> {
+    let (lower, witness, operations, custody, prior_step) = (*case).into_parts();
+    match lower.detach() {
+        Ok(lower) => Ok(M1AuthenticatedPhysicalDetachedQueueSessionV1 {
+            lower,
+            former_shape,
+            witness,
+            operations,
+            custody,
+            prior_step,
+        }),
+        Err(lower) => Err(operation_failure(
+            former_shape,
+            lower,
+            witness,
+            operations,
+            custody,
+            prior_step,
+            None,
+        )),
+    }
+}
+
+impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
+    /// Detaches the completed batch while preserving program history and prior-step authority.
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal lower quarantine paired with every authenticated and
+    /// Ferric owner when native detachment becomes ambiguous.
+    pub fn detach(
+        self,
+    ) -> Result<
+        M1AuthenticatedPhysicalDetachedQueueSessionV1,
+        Box<M1AuthenticatedPhysicalQueueOperationFailureV1>,
+    > {
+        match self {
+            Self::TargetOnly(case) => detach_case(case, M1PhysicalFixedBatchShapeV1::TargetOnly),
+            Self::PairedPrefill(case) => {
+                detach_case(case, M1PhysicalFixedBatchShapeV1::PairedPrefill)
+            }
+            Self::SpeculativeK4(case) => {
+                detach_case(case, M1PhysicalFixedBatchShapeV1::SpeculativeK4)
+            }
+            Self::SpeculativeK8(case) => {
+                detach_case(case, M1PhysicalFixedBatchShapeV1::SpeculativeK8)
+            }
+            Self::SpeculativeK16(case) => {
+                detach_case(case, M1PhysicalFixedBatchShapeV1::SpeculativeK16)
+            }
         }
     }
 }

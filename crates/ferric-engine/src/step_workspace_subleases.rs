@@ -8,6 +8,9 @@
 
 use core::fmt;
 
+use fe2o3_host::{
+    AuthenticatedServiceQueuePartitionedDataUpdateV1, AuthenticatedServiceQueueUnboundSessionV1,
+};
 use fe2o3_service_host::{
     DeviceLocalAllocationV1, DeviceWorkspaceRoleV1, ServiceAllocationErrorV1,
     ServiceAllocationKeyV1, ServiceAllocationSessionV1, ServiceAllocationSubleaseSetV1,
@@ -377,6 +380,22 @@ impl<const N: usize> BoundM1StepWorkspaceSubleases<N> {
     }
 }
 
+fn returned_m1_step_workspace_layout_matches<const N: usize>(
+    subleases: &ServiceAllocationSubleaseSetV1<DeviceWorkspaceRoleV1, DeviceLocalAllocationV1, N>,
+    ranges: &[ServiceDeviceDispatchRangeV1; N],
+    members: &[(u64, u64, u64); N],
+) -> bool {
+    ranges.iter().zip(members.iter().copied()).enumerate().all(
+        |(index, (range, (offset, extent, alignment)))| {
+            subleases.offset_bytes(index) == Some(offset)
+                && subleases.extent_bytes(index) == Some(extent)
+                && subleases.alignment(index) == Some(alignment)
+                && range.offset_bytes() == offset
+                && range.extent_bytes() == extent
+        },
+    )
+}
+
 #[derive(Debug)]
 pub(crate) enum M1QueueReplacedWorkspaceBindingFailureV1<const N: usize> {
     Plan {
@@ -447,18 +466,118 @@ pub(crate) fn bind_queue_replaced_m1_step_workspace<const N: usize>(
     // The generic update is unforgeable and produces both values from one
     // committed owner/allocation generation. Recheck its entire public member
     // layout, including the sublease witness, before constructing Ferric custody.
-    let returned_layout_matches = ranges.iter().zip(roster.members).enumerate().all(
-        |(index, (range, (offset, extent, alignment)))| {
-            subleases.offset_bytes(index) == Some(offset)
-                && subleases.extent_bytes(index) == Some(extent)
-                && subleases.alignment(index) == Some(alignment)
-                && range.offset_bytes() == offset
-                && range.extent_bytes() == extent
-        },
-    );
+    let returned_layout_matches =
+        returned_m1_step_workspace_layout_matches(&subleases, &ranges, &roster.members);
     if !returned_layout_matches {
         return Err(Box::new(
             M1QueueReplacedWorkspaceBindingFailureV1::ReturnedRange {
+                plan,
+                queue: Box::new(queue),
+                subleases: Box::new(subleases),
+                ranges: Box::new(ranges),
+            },
+        ));
+    }
+    Ok((
+        queue,
+        BoundM1StepWorkspaceSubleases {
+            plan,
+            roles: roster.roles,
+            subleases,
+        },
+        ranges,
+    ))
+}
+
+/// Authenticated replacement rejection retaining every opaque queue owner and
+/// every fresh workspace value needed for teardown or diagnosis.
+#[must_use = "the authenticated queue and fresh workspace custody remain retained"]
+#[derive(Debug)]
+#[expect(
+    dead_code,
+    reason = "consumed by the staged authenticated retained-rebind transition"
+)]
+pub(crate) enum M1AuthenticatedQueueReplacedWorkspaceBindingFailureV1<const N: usize> {
+    Plan {
+        failure: M1StepWorkspaceSubleaseBindingFailure,
+        update: Box<AuthenticatedServiceQueuePartitionedDataUpdateV1<DeviceWorkspaceRoleV1, N>>,
+    },
+    ReturnedRange {
+        plan: AddresslessM1StepWorkspacePlan,
+        queue: Box<AuthenticatedServiceQueueUnboundSessionV1>,
+        subleases:
+            Box<ServiceAllocationSubleaseSetV1<DeviceWorkspaceRoleV1, DeviceLocalAllocationV1, N>>,
+        ranges: Box<[ServiceDeviceDispatchRangeV1; N]>,
+    },
+}
+
+impl<const N: usize> M1AuthenticatedQueueReplacedWorkspaceBindingFailureV1<N> {
+    #[expect(
+        dead_code,
+        reason = "consumed by the staged authenticated retained-rebind transition"
+    )]
+    pub(crate) fn retained_owner_count(&self) -> usize {
+        match self {
+            Self::Plan { failure, update } => {
+                let _ = failure.error();
+                let _ = update;
+                2
+            }
+            Self::ReturnedRange {
+                plan,
+                queue,
+                subleases,
+                ranges,
+            } => {
+                let _ = plan.selection();
+                let _ = queue.observation();
+                let _ = subleases;
+                let _ = ranges.len();
+                2
+            }
+        }
+    }
+}
+
+#[expect(
+    dead_code,
+    reason = "consumed by the staged authenticated retained-rebind transition"
+)]
+pub(crate) fn bind_authenticated_queue_replaced_m1_step_workspace<const N: usize>(
+    plan: AddresslessM1StepWorkspacePlan,
+    update: AuthenticatedServiceQueuePartitionedDataUpdateV1<DeviceWorkspaceRoleV1, N>,
+) -> Result<
+    (
+        AuthenticatedServiceQueueUnboundSessionV1,
+        BoundM1StepWorkspaceSubleases<N>,
+        [ServiceDeviceDispatchRangeV1; N],
+    ),
+    Box<M1AuthenticatedQueueReplacedWorkspaceBindingFailureV1<N>>,
+> {
+    let allocation = plan.allocation();
+    let (plan, roster) = match preflight_m1_step_workspace_subleases::<N>(
+        plan.selection(),
+        allocation.allocation_id(),
+        allocation.byte_len(),
+        allocation.alignment(),
+        plan,
+    ) {
+        Ok(preflighted) => preflighted,
+        Err(failure) => {
+            return Err(Box::new(
+                M1AuthenticatedQueueReplacedWorkspaceBindingFailureV1::Plan {
+                    failure,
+                    update: Box::new(update),
+                },
+            ));
+        }
+    };
+    let (queue, subleases, ranges) = update.into_parts();
+    // Keep authenticated program custody attached to the opaque queue while
+    // applying the same complete layout check as the structural bridge.
+    if !returned_m1_step_workspace_layout_matches(&subleases, &ranges, &roster.members) {
+        return Err(Box::new(
+            M1AuthenticatedQueueReplacedWorkspaceBindingFailureV1::ReturnedRange {
                 plan,
                 queue: Box::new(queue),
                 subleases: Box::new(subleases),

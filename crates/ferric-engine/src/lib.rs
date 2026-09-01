@@ -67,12 +67,12 @@ pub use authenticated_kernel_programs::{
     M1SwiGluWorkerV3RosterV1, M1_AUTHENTICATED_PROGRAM_TARGET_V1, M1_AUTHENTICATED_ROSTER_COUNT_V1,
 };
 pub use authenticated_physical_queue::{
-    M1AuthenticatedPhysicalCompletedQueueSessionV1, M1AuthenticatedPhysicalPublishedQueueSessionV1,
-    M1AuthenticatedPhysicalQueueCreateDiagnosticV1, M1AuthenticatedPhysicalQueueCreateFailureV1,
-    M1AuthenticatedPhysicalQueueCreateTerminalV1, M1AuthenticatedPhysicalQueueOperationFailureV1,
-    M1AuthenticatedPhysicalQueuePhaseCaseV1, M1AuthenticatedPhysicalQueueReuseFailureV1,
-    M1AuthenticatedPhysicalQueueSessionV1, M1AuthenticatedPhysicalQueueSubmitFailureV1,
-    M1AuthenticatedPhysicalRecycledQueueSessionV1,
+    M1AuthenticatedPhysicalCompletedQueueSessionV1, M1AuthenticatedPhysicalDetachedQueueSessionV1,
+    M1AuthenticatedPhysicalPublishedQueueSessionV1, M1AuthenticatedPhysicalQueueCreateDiagnosticV1,
+    M1AuthenticatedPhysicalQueueCreateFailureV1, M1AuthenticatedPhysicalQueueCreateTerminalV1,
+    M1AuthenticatedPhysicalQueueOperationFailureV1, M1AuthenticatedPhysicalQueuePhaseCaseV1,
+    M1AuthenticatedPhysicalQueueReuseFailureV1, M1AuthenticatedPhysicalQueueSessionV1,
+    M1AuthenticatedPhysicalQueueSubmitFailureV1, M1AuthenticatedPhysicalRecycledQueueSessionV1,
 };
 pub use bound_step_workspaces::{
     BoundM1FullStepWorkspaceSubleases, M1FullStepWorkspaceDispatchRangeError,
