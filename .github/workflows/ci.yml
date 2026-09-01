@@ -42,6 +42,8 @@ jobs:
 
   qwen3-device:
     runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_COLOR: never
     strategy:
       fail-fast: false
       matrix:

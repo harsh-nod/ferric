@@ -14,6 +14,7 @@ from typing import NoReturn
 
 BINDING_DOMAIN = b"fe2o3.crate-binding.v1\0"
 HEX_64 = re.compile(r"^[0-9a-f]{64}$")
+ANSI_SGR = re.compile(r"\x1b\[[0-9;]*m")
 
 
 def fail(message: str) -> NoReturn:
@@ -84,6 +85,7 @@ def option_value(argv: list[str], name: str) -> str:
 
 
 def running_argv(line: str) -> list[str] | None:
+    line = ANSI_SGR.sub("", line)
     marker = "Running `"
     if marker not in line or not line.rstrip().endswith("`"):
         return None
@@ -161,6 +163,9 @@ def self_test() -> None:
     ]
     if codegen_values(argv, "metadata") != ["first", "second", "first", "third"]:
         fail("metadata parser did not retain all four spellings in order")
+    colored = "\x1b[1m\x1b[92m     Running\x1b[0m `rustc --crate-name demo --crate-type lib`"
+    if running_argv(colored) != ["rustc", "--crate-name", "demo", "--crate-type", "lib"]:
+        fail("Cargo ANSI presentation bytes changed command parsing")
     golden = derive_binding("ferric_qwen3_gemm_device_v1", ["d3a576c41b0b5cf4"])
     if golden != "e74f99e6ef7616bc5baa58242567f3a181137796c0ed7d53c827d054a5fc19f1":
         fail("crate-binding derivation drifted from the b537 golden vector")
