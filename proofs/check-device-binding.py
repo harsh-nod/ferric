@@ -166,11 +166,11 @@ def self_test() -> None:
         fail("Cargo ANSI presentation bytes changed command parsing")
     golden = derive_binding("ferric_qwen3_gemm_device_v1", ["d3a576c41b0b5cf4"])
     if golden != "e74f99e6ef7616bc5baa58242567f3a181137796c0ed7d53c827d054a5fc19f1":
-        fail("crate-binding derivation drifted from the b537 golden vector")
+        fail("crate-binding derivation drifted from the canonical golden vector")
     hostile = "f" + golden[1:]
     if hostile == golden or HEX_64.fullmatch(hostile) is None:
         fail("one-nibble hostile binding fixture is invalid")
-    print("PASS: device binding parser and b537 derivation golden vector matched")
+    print("PASS: device binding parser and canonical derivation golden vector matched")
 
 
 def main() -> None:

@@ -138,6 +138,11 @@ def exercise_prepare_boundaries(repo: Path, fe2o3_source: Path, planner: Any) ->
         shutil.copytree(
             repo / "device", ferric_fixture / "device", dirs_exist_ok=True
         )
+        shutil.copytree(
+            repo / "adapters/qwen3-swiglu-worker-v3-envelope-v2",
+            ferric_fixture / "adapters/qwen3-swiglu-worker-v3-envelope-v2",
+            dirs_exist_ok=True,
+        )
         if git(
             ferric_fixture,
             ["status", "--porcelain=v1", "--untracked-files=all"],
@@ -353,6 +358,103 @@ def exercise_prepare_boundaries(repo: Path, fe2o3_source: Path, planner: Any) ->
             fe2o3_fixture,
             temporary / "device-pin-output",
             "device fe2o3 dependency declaration drifted",
+        )
+
+        adapter_case = temporary / "adapter-pin"
+        clone_at(ferric_fixture, adapter_case)
+        adapter_manifest = (
+            adapter_case
+            / "adapters/qwen3-swiglu-worker-v3-envelope-v2/Cargo.toml"
+        )
+        adapter_source = adapter_manifest.read_text(encoding="utf-8")
+        if adapter_source.count(fe2o3_commit) != 1:
+            fail("integration fixture adapter fe2o3 pin roster drifted before mutation")
+        adapter_manifest.write_text(
+            adapter_source.replace(fe2o3_commit, "0" * 40, 1), encoding="utf-8"
+        )
+        commit_fixture(adapter_case, "mutate adapter fe2o3 revision")
+        expect_prepare_failure(
+            adapter_case / "proofs/m1-qualification/planner.py",
+            adapter_case,
+            fe2o3_fixture,
+            temporary / "adapter-pin-output",
+            "adapter fe2o3 dependency declaration drifted",
+        )
+
+        adapter_alias_case = temporary / "adapter-alias"
+        clone_at(ferric_fixture, adapter_alias_case)
+        adapter_alias_manifest = (
+            adapter_alias_case
+            / "adapters/qwen3-swiglu-worker-v3-envelope-v2/Cargo.toml"
+        )
+        replace_once(
+            adapter_alias_manifest,
+            "ferric-engine = { path = \"../../crates/ferric-engine\" }\n",
+            "shadow-runtime = { package = \"fe2o3-runtime-protocol\", "
+            "git = \"https://evil.invalid/runtime.git\", rev = \""
+            + "0" * 40
+            + "\", version = \"=0.1.0\" }\n"
+            "ferric-engine = { path = \"../../crates/ferric-engine\" }\n",
+        )
+        commit_fixture(adapter_alias_case, "add aliased adapter fe2o3 dependency")
+        expect_prepare_failure(
+            adapter_alias_case / "proofs/m1-qualification/planner.py",
+            adapter_alias_case,
+            fe2o3_fixture,
+            temporary / "adapter-alias-output",
+            "adapter fe2o3 dependency declaration drifted",
+        )
+
+        adapter_lock_case = temporary / "adapter-lock-pin"
+        clone_at(ferric_fixture, adapter_lock_case)
+        adapter_lock = (
+            adapter_lock_case
+            / "adapters/qwen3-swiglu-worker-v3-envelope-v2/Cargo.lock"
+        )
+        adapter_lock_source = adapter_lock.read_text(encoding="utf-8")
+        if adapter_lock_source.count(expected_url) != len(
+            planner.FE2O3_RESOLVED_PACKAGES
+        ):
+            fail("integration fixture adapter lock roster drifted before mutation")
+        adapter_lock.write_text(
+            adapter_lock_source.replace(
+                expected_url, "git+https://evil.invalid/fe2o3.git", 1
+            ),
+            encoding="utf-8",
+        )
+        commit_fixture(adapter_lock_case, "mutate adapter resolved fe2o3 repository")
+        expect_prepare_failure(
+            adapter_lock_case / "proofs/m1-qualification/planner.py",
+            adapter_lock_case,
+            fe2o3_fixture,
+            temporary / "adapter-lock-pin-output",
+            "adapter resolved fe2o3 package declaration drifted",
+        )
+
+        adapter_lock_extra_case = temporary / "adapter-lock-extra"
+        clone_at(ferric_fixture, adapter_lock_extra_case)
+        adapter_extra_lock = (
+            adapter_lock_extra_case
+            / "adapters/qwen3-swiglu-worker-v3-envelope-v2/Cargo.lock"
+        )
+        adapter_extra_lock.write_text(
+            adapter_extra_lock.read_text(encoding="utf-8")
+            + "\n[[package]]\n"
+            + 'name = "fe2o3-hostile-registry"\n'
+            + 'version = "0.1.0"\n'
+            + 'source = "registry+https://github.com/rust-lang/crates.io-index"\n'
+            + 'checksum = "'
+            + "0" * 64
+            + '"\n',
+            encoding="utf-8",
+        )
+        commit_fixture(adapter_lock_extra_case, "add adapter fe2o3 lock package")
+        expect_prepare_failure(
+            adapter_lock_extra_case / "proofs/m1-qualification/planner.py",
+            adapter_lock_extra_case,
+            fe2o3_fixture,
+            temporary / "adapter-lock-extra-output",
+            "adapter resolved fe2o3 package declaration drifted",
         )
 
         topology_case = temporary / "topology"

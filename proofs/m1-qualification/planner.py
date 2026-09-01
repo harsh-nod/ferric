@@ -93,9 +93,11 @@ FE2O3_RESOLVED_PACKAGES = (
     ("fe2o3-rustc-invocation", "0.1.0"),
     ("fe2o3-service-host", "0.1.0"),
     ("fe2o3-service-model", "0.1.0"),
+    ("fe2o3-source-isa-observation", "0.1.0"),
     ("fe2o3-verifier", "0.1.0"),
     ("reserved-fe2o3-symbols", "0.1.0"),
 )
+FE2O3_PACKAGE_NAMES = frozenset(name for name, _ in FE2O3_RESOLVED_PACKAGES)
 FE2O3_DEPENDENCY_TOPOLOGY = (
     ("ferric-build", "dependencies", "fe2o3-amdhsa-loader"),
     ("ferric-build", "dependencies", "fe2o3-compiler-ffi"),
@@ -126,6 +128,13 @@ FE2O3_DEVICE_WORKSPACES = (
     ("ferric-qwen3-rmsnorm-device-v1", "device/qwen3-rmsnorm-v1"),
     ("ferric-qwen3-rope-kv-device-v1", "device/qwen3-rope-kv-v1"),
     ("ferric-qwen3-swiglu-device-v1", "device/qwen3-swiglu-v1"),
+)
+FE2O3_ADAPTER_WORKSPACES = (
+    (
+        "ferric-qwen3-swiglu-worker-v3-envelope-v2",
+        "adapters/qwen3-swiglu-worker-v3-envelope-v2",
+        "fe2o3-runtime-protocol",
+    ),
 )
 TCB = (
     ("tcb.compiler", "Compiler"),
@@ -179,6 +188,26 @@ JsonObject = dict[str, Any]
 def fail(message: str) -> NoReturn:
     print(f"FAIL: {message}", file=sys.stderr)
     raise SystemExit(1)
+
+
+def names_fe2o3_package(value: Any) -> bool:
+    return isinstance(value, str) and (
+        value in FE2O3_PACKAGE_NAMES or "fe2o3" in value.lower()
+    )
+
+
+def declares_fe2o3_dependency(name: str, declaration: Any) -> bool:
+    if names_fe2o3_package(name):
+        return True
+    if not isinstance(declaration, dict):
+        return False
+    return names_fe2o3_package(declaration.get("package")) or names_fe2o3_package(
+        declaration.get("git")
+    )
+
+
+def is_fe2o3_lock_record(name: str, source: Any) -> bool:
+    return names_fe2o3_package(name) or names_fe2o3_package(source)
 
 
 def digest_bytes(value: bytes) -> str:
@@ -357,20 +386,9 @@ def validate_fe2o3_topology(ferric: Path, workspace: JsonObject) -> list[JsonObj
             if not isinstance(dependencies, dict):
                 fail(f"Ferric dependency table is malformed: {owner}:{scope}")
             for name, declaration in dependencies.items():
-                package_name = (
-                    declaration.get("package")
-                    if isinstance(declaration, dict)
-                    else None
-                )
-                git_url = (
-                    str(declaration.get("git", ""))
-                    if isinstance(declaration, dict)
-                    else ""
-                )
                 if (
                     name not in expected_names
-                    and package_name not in expected_names
-                    and "fe2o3" not in git_url.lower()
+                    and not declares_fe2o3_dependency(name, declaration)
                 ):
                     continue
                 if name not in expected_names or declaration != {"workspace": True}:
@@ -436,13 +454,10 @@ def validate_fe2o3_device_workspaces(
         actual_edges: set[tuple[str, str]] = set()
         for scope, table in dependency_tables:
             for name, declaration in table.items():
-                git_url = (
-                    str(declaration.get("git", ""))
-                    if isinstance(declaration, dict)
-                    else ""
-                )
                 edge = (scope, name)
-                if edge not in expected_edges and "fe2o3" not in git_url.lower():
+                if edge not in expected_edges and not declares_fe2o3_dependency(
+                    name, declaration
+                ):
                     continue
                 if (
                     edge not in expected_edges
@@ -482,8 +497,8 @@ def validate_fe2o3_device_workspaces(
             if not isinstance(name, str) or not isinstance(version, str):
                 fail(f"Ferric device lockfile identity is malformed: {package_name}")
             identity = (name, version)
-            if identity not in expected_resolved and (
-                not isinstance(source, str) or "fe2o3" not in source.lower()
+            if identity not in expected_resolved and not is_fe2o3_lock_record(
+                name, source
             ):
                 continue
             if identity not in expected_resolved or source != expected_source:
@@ -515,6 +530,94 @@ def validate_fe2o3_device_workspaces(
     return workspaces
 
 
+def validate_fe2o3_adapter_workspaces(
+    ferric: Path, fe2o3_commit: str
+) -> None:
+    expected_resolved = set(FE2O3_RESOLVED_PACKAGES)
+    expected_source = f"git+{FE2O3_REPOSITORY}?rev={fe2o3_commit}#{fe2o3_commit}"
+    for package_name, relative_path, dependency_name in FE2O3_ADAPTER_WORKSPACES:
+        root = ferric / relative_path
+        manifest = read_toml(root / "Cargo.toml", f"{package_name} manifest")
+        package = manifest.get("package")
+        if (
+            not isinstance(package, dict)
+            or package.get("name") != package_name
+            or manifest.get("workspace") != {}
+        ):
+            fail(f"Ferric adapter workspace identity drifted: {package_name}")
+
+        dependency_tables: list[tuple[str, JsonObject]] = []
+        for scope in ("dependencies", "dev-dependencies", "build-dependencies"):
+            table = manifest.get(scope, {})
+            if not isinstance(table, dict):
+                fail(f"Ferric adapter dependency table is malformed: {package_name}:{scope}")
+            dependency_tables.append((scope, table))
+        targets = manifest.get("target", {})
+        if not isinstance(targets, dict):
+            fail(f"Ferric adapter target dependency table is malformed: {package_name}")
+        for target, target_value in targets.items():
+            if not isinstance(target, str) or not isinstance(target_value, dict):
+                fail(f"Ferric adapter target dependency entry is malformed: {package_name}")
+            for scope in ("dependencies", "dev-dependencies", "build-dependencies"):
+                table = target_value.get(scope, {})
+                if not isinstance(table, dict):
+                    fail(
+                        "Ferric adapter target dependency table is malformed: "
+                        f"{package_name}:{target}:{scope}"
+                    )
+                dependency_tables.append((f"target:{target}:{scope}", table))
+
+        expected_edge = ("dependencies", dependency_name)
+        actual_edges: set[tuple[str, str]] = set()
+        for scope, table in dependency_tables:
+            for name, declaration in table.items():
+                edge = (scope, name)
+                if edge != expected_edge and not declares_fe2o3_dependency(
+                    name, declaration
+                ):
+                    continue
+                if (
+                    edge != expected_edge
+                    or not isinstance(declaration, dict)
+                    or set(declaration) != {"git", "rev", "version"}
+                    or declaration.get("git") != FE2O3_REPOSITORY
+                    or declaration.get("rev") != fe2o3_commit
+                    or declaration.get("version") != "=0.1.0"
+                    or edge in actual_edges
+                ):
+                    fail(
+                        "Ferric adapter fe2o3 dependency declaration drifted: "
+                        f"{package_name}:{scope}:{name}"
+                    )
+                actual_edges.add(edge)
+        if actual_edges != {expected_edge}:
+            fail(f"Ferric adapter fe2o3 dependency roster drifted: {package_name}")
+
+        lock = read_toml(root / "Cargo.lock", f"{package_name} lockfile")
+        resolved: list[tuple[str, str]] = []
+        for locked in lock.get("package", []):
+            if not isinstance(locked, dict):
+                fail(f"Ferric adapter lockfile package is malformed: {package_name}")
+            name = locked.get("name")
+            version = locked.get("version")
+            source = locked.get("source")
+            if not isinstance(name, str) or not isinstance(version, str):
+                fail(f"Ferric adapter lockfile identity is malformed: {package_name}")
+            identity = (name, version)
+            if identity not in expected_resolved and not is_fe2o3_lock_record(
+                name, source
+            ):
+                continue
+            if identity not in expected_resolved or source != expected_source:
+                fail(
+                    "Ferric adapter resolved fe2o3 package declaration drifted: "
+                    f"{package_name}:{name}"
+                )
+            resolved.append(identity)
+        if len(resolved) != len(set(resolved)) or set(resolved) != expected_resolved:
+            fail(f"Ferric adapter resolved fe2o3 roster drifted: {package_name}")
+
+
 def validate_fe2o3_pins(ferric: Path, fe2o3_commit: str) -> JsonObject:
     workspace = read_toml(ferric / "Cargo.toml", "Ferric workspace manifest")
     lock = read_toml(ferric / "Cargo.lock", "Ferric lockfile")
@@ -527,8 +630,7 @@ def validate_fe2o3_pins(ferric: Path, fe2o3_commit: str) -> JsonObject:
     expected_direct = set(FE2O3_DIRECT_PACKAGES)
     direct: list[dict[str, str]] = []
     for name, value in workspace_dependencies.items():
-        git_url = str(value.get("git", "")) if isinstance(value, dict) else ""
-        if name not in expected_direct and "fe2o3" not in git_url.lower():
+        if name not in expected_direct and not declares_fe2o3_dependency(name, value):
             continue
         if (
             name not in expected_direct
@@ -561,9 +663,7 @@ def validate_fe2o3_pins(ferric: Path, fe2o3_commit: str) -> JsonObject:
         if not isinstance(name, str) or not isinstance(version, str):
             fail("Ferric lockfile package identity is malformed")
         identity = (name, version)
-        if identity not in expected_resolved and (
-            not isinstance(source, str) or "fe2o3" not in source.lower()
-        ):
+        if identity not in expected_resolved and not is_fe2o3_lock_record(name, source):
             continue
         if identity not in expected_resolved or source != expected_source:
             fail(f"Ferric resolved fe2o3 package declaration drifted: {name}")
@@ -576,6 +676,7 @@ def validate_fe2o3_pins(ferric: Path, fe2o3_commit: str) -> JsonObject:
         fail("Ferric resolved fe2o3 package roster does not equal the admitted roster")
     topology = validate_fe2o3_topology(ferric, workspace)
     device_workspaces = validate_fe2o3_device_workspaces(ferric, fe2o3_commit)
+    validate_fe2o3_adapter_workspaces(ferric, fe2o3_commit)
     return {
         "device_workspace_count": len(device_workspaces),
         "device_workspaces": device_workspaces,
