@@ -898,6 +898,30 @@ impl M1AuthenticatedCompletedStepRejectionTeardownFailureV1 {
     pub const fn source(&self) -> &M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1 {
         &self.source
     }
+
+    /// Separates terminal authenticated quarantine and unchanged rejection
+    /// custody exactly once.
+    #[must_use = "all authenticated rejection teardown owners remain retained"]
+    #[allow(clippy::type_complexity)]
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1,
+        M1CompletedStepErrorV1,
+        M1CheckedCompletionOutputV1,
+        ExactCompletion,
+        M1FullStepKvReservationCustodyV1,
+        M1DeviceKvCompletionRosterV1,
+    ) {
+        (
+            self.source,
+            self.custody.error,
+            self.custody.checked,
+            self.custody.completion,
+            self.custody.kv,
+            self.custody.roster,
+        )
+    }
 }
 
 /// Successful authenticated physical and Engine completion of one generation.
@@ -1052,6 +1076,30 @@ impl M1AuthenticatedCompletedStepTeardownFailureV1 {
     pub const fn completed_members(&self) -> usize {
         self.completed_members
     }
+
+    /// Separates terminal authenticated quarantine and every completed-step
+    /// owner exactly once.
+    #[must_use = "all authenticated completion teardown owners remain retained"]
+    #[allow(clippy::type_complexity)]
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1,
+        M1CheckedCompletionOutputV1,
+        Vec<M1CompletedDeviceKvMemberV1>,
+        Box<[u32]>,
+        Box<[u32]>,
+        usize,
+    ) {
+        (
+            self.source,
+            self.checked,
+            self.members,
+            self.logical_accepted_counts,
+            self.externally_published_counts,
+            self.completed_members,
+        )
+    }
 }
 
 impl M1AuthenticatedCompletedStepSuccessV1 {
@@ -1156,7 +1204,7 @@ impl M1AuthenticatedCompletedStepSuccessV1 {
         )
     }
 
-    #[allow(dead_code, clippy::type_complexity)]
+    #[allow(clippy::type_complexity)]
     pub(crate) fn into_release_parts(
         self,
     ) -> (

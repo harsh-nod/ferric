@@ -82,6 +82,7 @@ pub use authenticated_physical_readback::{
     M1AuthenticatedCompletionSnapshotReadFailedOutputV1, M1AuthenticatedObservedCompletionCaseV1,
     M1AuthenticatedObservedCompletionOutputV1, M1AuthenticatedPhysicalCompletedReadbackV1,
     M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1,
+    M1AuthenticatedPhysicalPostReadbackQueueReleaseResidueV1,
     M1AuthenticatedPhysicalReadbackDetachedQueueCaseV1,
     M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
     M1AuthenticatedPhysicalReadbackQueueCaseV1,
@@ -196,10 +197,12 @@ pub use m1_completed_step::{
     M1DeviceKvCompletionDispositionV1, M1DeviceKvCompletionMemberV1, M1DeviceKvCompletionRosterV1,
 };
 pub use m1_completed_step_release::{
-    release_m1_completed_step_kv_pages_v1, M1CompletedKvPageIdentityErrorV1,
-    M1CompletedKvPageReleaseCountsV1, M1CompletedStepKvReleaseErrorV1,
-    M1CompletedStepKvReleaseFailureV1, M1ReleasedCompletedStepV1, M1ReleasedDeviceKvMemberV1,
-    M1ReleasedQueueTeardownFailureV1, M1ReleasedQueueTeardownSuccessV1,
+    release_m1_authenticated_completed_step_kv_pages_v1, release_m1_completed_step_kv_pages_v1,
+    M1AuthenticatedCompletedStepKvReleaseFailureV1, M1AuthenticatedReleasedCompletedStepV1,
+    M1AuthenticatedReleasedQueueTeardownFailureV1, M1AuthenticatedReleasedQueueTeardownSuccessV1,
+    M1CompletedKvPageIdentityErrorV1, M1CompletedKvPageReleaseCountsV1,
+    M1CompletedStepKvReleaseErrorV1, M1CompletedStepKvReleaseFailureV1, M1ReleasedCompletedStepV1,
+    M1ReleasedDeviceKvMemberV1, M1ReleasedQueueTeardownFailureV1, M1ReleasedQueueTeardownSuccessV1,
     M1ReleasedTerminalDeviceKvMemberV1,
 };
 pub use m1_packet_diagnostic::{

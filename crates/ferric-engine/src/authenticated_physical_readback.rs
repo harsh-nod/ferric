@@ -811,20 +811,6 @@ impl M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1 {
         }
     }
 
-    #[expect(
-        dead_code,
-        reason = "consumed by the staged authenticated completed-step page release"
-    )]
-    pub(crate) fn custody_mut(&mut self) -> &mut M1PhysicalQueueBatchCustodyV1 {
-        match self {
-            Self::TargetOnly(case)
-            | Self::PairedPrefill(case)
-            | Self::SpeculativeK4(case)
-            | Self::SpeculativeK8(case)
-            | Self::SpeculativeK16(case) => &mut case.custody,
-        }
-    }
-
     /// Checked physical-device receipt retained beside the live queue.
     #[must_use]
     pub const fn device(&self) -> Gfx942DeviceBinding {
@@ -1002,6 +988,59 @@ pub struct M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1 {
     custody: M1PhysicalQueueBatchCustodyV1,
 }
 
+/// Ferric-only residue after authenticated post-readback release quarantine
+/// is separated from lower program custody.
+#[must_use = "authenticated release residue retains Ferric identity and allocation custody"]
+pub struct M1AuthenticatedPhysicalPostReadbackQueueReleaseResidueV1 {
+    shape: M1PhysicalFixedBatchShapeV1,
+    witness: M1AuthenticatedProgramCatalogWitnessV1,
+    operations: DeclaredOperationKernelPlan,
+    custody: M1PhysicalQueueBatchCustodyV1,
+}
+
+impl fmt::Debug for M1AuthenticatedPhysicalPostReadbackQueueReleaseResidueV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AuthenticatedPhysicalPostReadbackQueueReleaseResidueV1")
+            .field("shape", &self.shape)
+            .field("device", &self.custody.device())
+            .field("program_catalog_id", &self.witness.catalog_id())
+            .field(
+                "runner_declaration_id",
+                &self.operations.runner_declaration_id(),
+            )
+            .field("kernel_catalog_id", &self.operations.kernel_catalog_id())
+            .finish_non_exhaustive()
+    }
+}
+
+impl M1AuthenticatedPhysicalPostReadbackQueueReleaseResidueV1 {
+    #[must_use]
+    pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
+        self.shape
+    }
+
+    #[must_use = "Ferric custody remains paired with authenticated release residue"]
+    pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
+        &self.custody
+    }
+
+    #[must_use]
+    pub const fn program_catalog_id(&self) -> Identity {
+        self.witness.catalog_id()
+    }
+
+    #[must_use]
+    pub const fn runner_declaration_id(&self) -> Identity {
+        self.operations.runner_declaration_id()
+    }
+
+    #[must_use]
+    pub const fn kernel_catalog_id(&self) -> Identity {
+        self.operations.kernel_catalog_id()
+    }
+}
+
 impl fmt::Debug for M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1 {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter
@@ -1054,6 +1093,26 @@ impl M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1 {
     #[must_use]
     pub const fn kernel_catalog_id(&self) -> Identity {
         self.operations.kernel_catalog_id()
+    }
+
+    /// Separates lower authenticated release quarantine from Ferric-only
+    /// identity and allocation residue without exposing a raw queue.
+    #[must_use = "lower program custody and Ferric release residue remain retained"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        AuthenticatedServiceQueueReleaseFailureV1,
+        M1AuthenticatedPhysicalPostReadbackQueueReleaseResidueV1,
+    ) {
+        (
+            self.lower,
+            M1AuthenticatedPhysicalPostReadbackQueueReleaseResidueV1 {
+                shape: self.shape,
+                witness: self.witness,
+                operations: self.operations,
+                custody: self.custody,
+            },
+        )
     }
 }
 
@@ -1541,6 +1600,16 @@ impl M1AuthenticatedPhysicalReadbackQueueSessionV1 {
             Self::SpeculativeK4(case) => &case.custody,
             Self::SpeculativeK8(case) => &case.custody,
             Self::SpeculativeK16(case) => &case.custody,
+        }
+    }
+
+    pub(crate) fn custody_mut(&mut self) -> &mut M1PhysicalQueueBatchCustodyV1 {
+        match self {
+            Self::TargetOnly(case) => &mut case.custody,
+            Self::PairedPrefill(case) => &mut case.custody,
+            Self::SpeculativeK4(case) => &mut case.custody,
+            Self::SpeculativeK8(case) => &mut case.custody,
+            Self::SpeculativeK16(case) => &mut case.custody,
         }
     }
 
