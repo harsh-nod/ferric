@@ -720,6 +720,14 @@ impl fmt::Debug for M1AuthenticatedPhysicalReadbackDetachedQueueCaseV1 {
 }
 
 impl M1AuthenticatedPhysicalReadbackDetachedQueueCaseV1 {
+    pub(crate) const fn operations(&self) -> &DeclaredOperationKernelPlan {
+        &self.operations
+    }
+
+    pub(crate) fn program_families_match(&self) -> bool {
+        self.witness.family_artifacts() == self.operations.families()
+    }
+
     /// Exact Ferric allocation, recipe, and model-memory custody.
     #[must_use = "Ferric custody remains paired with the detached authenticated queue"]
     pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
@@ -787,6 +795,26 @@ pub enum M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1 {
 }
 
 impl M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1 {
+    pub(crate) const fn operations(&self) -> &DeclaredOperationKernelPlan {
+        match self {
+            Self::TargetOnly(case)
+            | Self::PairedPrefill(case)
+            | Self::SpeculativeK4(case)
+            | Self::SpeculativeK8(case)
+            | Self::SpeculativeK16(case) => case.operations(),
+        }
+    }
+
+    pub(crate) fn program_families_match(&self) -> bool {
+        match self {
+            Self::TargetOnly(case)
+            | Self::PairedPrefill(case)
+            | Self::SpeculativeK4(case)
+            | Self::SpeculativeK8(case)
+            | Self::SpeculativeK16(case) => case.program_families_match(),
+        }
+    }
+
     /// Exact closed shape of the completed generation that was detached.
     #[must_use]
     pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
@@ -883,10 +911,6 @@ impl M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1 {
         }
     }
 
-    #[expect(
-        dead_code,
-        reason = "consumed by the staged authenticated retained-rearm integration"
-    )]
     pub(crate) fn into_rearm_parts(
         self,
     ) -> (

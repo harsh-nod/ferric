@@ -8,6 +8,7 @@ use vstd::prelude::*;
 mod authenticated_kernel_programs;
 mod authenticated_physical_queue;
 mod authenticated_physical_readback;
+mod authenticated_queue_rearm;
 mod bound_step_workspaces;
 mod cache;
 mod completed_readback_join;

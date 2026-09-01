@@ -493,10 +493,6 @@ pub(crate) fn bind_queue_replaced_m1_step_workspace<const N: usize>(
 /// every fresh workspace value needed for teardown or diagnosis.
 #[must_use = "the authenticated queue and fresh workspace custody remain retained"]
 #[derive(Debug)]
-#[expect(
-    dead_code,
-    reason = "consumed by the staged authenticated retained-rebind transition"
-)]
 pub(crate) enum M1AuthenticatedQueueReplacedWorkspaceBindingFailureV1<const N: usize> {
     Plan {
         failure: M1StepWorkspaceSubleaseBindingFailure,
@@ -512,10 +508,6 @@ pub(crate) enum M1AuthenticatedQueueReplacedWorkspaceBindingFailureV1<const N: u
 }
 
 impl<const N: usize> M1AuthenticatedQueueReplacedWorkspaceBindingFailureV1<N> {
-    #[expect(
-        dead_code,
-        reason = "consumed by the staged authenticated retained-rebind transition"
-    )]
     pub(crate) fn retained_owner_count(&self) -> usize {
         match self {
             Self::Plan { failure, update } => {
@@ -539,10 +531,6 @@ impl<const N: usize> M1AuthenticatedQueueReplacedWorkspaceBindingFailureV1<N> {
     }
 }
 
-#[expect(
-    dead_code,
-    reason = "consumed by the staged authenticated retained-rebind transition"
-)]
 pub(crate) fn bind_authenticated_queue_replaced_m1_step_workspace<const N: usize>(
     plan: AddresslessM1StepWorkspacePlan,
     update: AuthenticatedServiceQueuePartitionedDataUpdateV1<DeviceWorkspaceRoleV1, N>,

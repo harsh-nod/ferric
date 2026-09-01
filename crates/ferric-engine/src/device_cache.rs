@@ -3279,6 +3279,10 @@ pub(crate) fn m1_speculative_draft_round_shape_v1(
 }
 
 impl PendingDeviceKvStepWrite {
+    pub(crate) const fn device(&self) -> Gfx942DeviceBinding {
+        self.binding.device
+    }
+
     #[must_use]
     pub const fn request(&self) -> RequestId {
         self.binding.request

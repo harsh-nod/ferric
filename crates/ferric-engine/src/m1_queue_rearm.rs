@@ -2609,20 +2609,22 @@ fn submission_failure<'a>(
 }
 
 #[derive(Clone, Copy, Debug)]
-struct FreshWorkspaceRangeV1 {
-    workspace: M1FullStepWorkspaceRole,
-    semantic: M1StepWorkspaceRange,
-    dispatch: ServiceDeviceDispatchRangeV1,
+pub(crate) struct FreshWorkspaceRangeV1 {
+    pub(crate) workspace: M1FullStepWorkspaceRole,
+    pub(crate) semantic: M1StepWorkspaceRange,
+    pub(crate) dispatch: ServiceDeviceDispatchRangeV1,
 }
 
-fn member_layout<const N: usize>(plan: &AddresslessM1StepWorkspacePlan) -> [(u64, u64, u64); N] {
+pub(crate) fn member_layout<const N: usize>(
+    plan: &AddresslessM1StepWorkspacePlan,
+) -> [(u64, u64, u64); N] {
     core::array::from_fn(|index| {
         let range = plan.ranges()[index];
         (range.offset(), range.byte_len(), range.alignment())
     })
 }
 
-fn append_workspace_ranges<const N: usize>(
+pub(crate) fn append_workspace_ranges<const N: usize>(
     destination: &mut Vec<FreshWorkspaceRangeV1>,
     workspace: M1FullStepWorkspaceRole,
     owner: &BoundM1StepWorkspaceSubleases<N>,
@@ -9591,6 +9593,24 @@ fn retained_host_capture_ranges(
             .completion_canary()
             .map(crate::BoundM1CompletionCanaryV1::snapshot_range),
     })
+}
+
+pub(crate) fn rebuild_unchanged_capture_bound_rows(
+    source_rows: &[M1PhysicalBufferRecipeRowV1],
+    old_bound_rows: &[M1BoundPhysicalBufferRowV1],
+    composition: &AddresslessM1FullStepWorkspaceComposition,
+    workspace_ranges: &[FreshWorkspaceRangeV1],
+    completion: &crate::BoundM1CompletionOutputV1,
+) -> Result<Box<[M1BoundPhysicalBufferRowV1]>, ()> {
+    let capture = retained_host_capture_ranges(completion)?;
+    rebuild_bound_rows(
+        source_rows,
+        old_bound_rows,
+        composition,
+        workspace_ranges,
+        &capture,
+        &capture,
+    )
 }
 
 #[allow(clippy::too_many_arguments)]

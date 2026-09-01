@@ -98,6 +98,33 @@ pub enum M1FullStepKvReservationCustodyV1 {
 }
 
 impl M1FullStepKvReservationCustodyV1 {
+    pub(crate) fn all_devices_match(&self, expected: Gfx942DeviceBinding) -> bool {
+        let target_matches = |target: &M1KvWorkspaceReservationCustodyV1| {
+            !target.reservations().is_empty()
+                && target
+                    .reservations()
+                    .iter()
+                    .all(|pending| pending.device() == expected)
+        };
+        match self {
+            Self::TargetOnly { target } => target_matches(target),
+            Self::PairedPrefill { draft, target } => {
+                target_matches(draft) && target_matches(target)
+            }
+            Self::SpeculativeRound {
+                draft_decode,
+                target_speculative,
+            } => {
+                !draft_decode.reservations().is_empty()
+                    && draft_decode
+                        .reservations()
+                        .iter()
+                        .all(|pending| pending.pending_step_write().device() == expected)
+                    && target_matches(target_speculative)
+            }
+        }
+    }
+
     /// Exact target selection retained by the reservation set.
     #[must_use]
     pub const fn target_selection(&self) -> Qwen3PlanSelection {
@@ -350,6 +377,10 @@ impl M1PreparedScheduledWorkspaceImagesV1 {
 
     pub(crate) const fn plans(&self) -> &M1FullStepWorkspacePlans {
         &self.plans
+    }
+
+    pub(crate) const fn images(&self) -> &M1FullStepWorkspaceImagesV1 {
+        &self.images
     }
 
     pub(crate) fn into_rearm_parts(

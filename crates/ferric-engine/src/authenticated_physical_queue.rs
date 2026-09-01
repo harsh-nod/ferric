@@ -61,6 +61,16 @@ impl<Q> M1AuthenticatedPhysicalQueuePhaseCaseV1<Q> {
         }
     }
 
+    pub(crate) const fn from_queue_rearm(
+        lower: Q,
+        witness: M1AuthenticatedProgramCatalogWitnessV1,
+        operations: DeclaredOperationKernelPlan,
+        custody: M1PhysicalQueueBatchCustodyV1,
+        step: M1PrepublicationStepCustodyV1,
+    ) -> Self {
+        Self::new(lower, witness, operations, custody, step)
+    }
+
     /// Checked physical-device receipt retained beside the lower queue.
     #[must_use]
     pub const fn device(&self) -> Gfx942DeviceBinding {

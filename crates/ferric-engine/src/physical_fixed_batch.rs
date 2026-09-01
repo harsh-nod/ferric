@@ -511,13 +511,11 @@ impl M1AuthenticatedPhysicalPacketBatchV1 {
 /// outside the crate-private detached-queue rebind boundary.
 #[must_use = "authenticated rebind packets and queue custody must remain joined"]
 #[derive(Debug)]
-#[expect(dead_code, reason = "staged for authenticated detached rebind")]
 pub(crate) struct M1AuthenticatedQueuePacketBatchCaseV1<const N: usize> {
     packets: [ServiceFixedDispatchPacketV1; N],
     custody: M1PhysicalQueueBatchCustodyV1,
 }
 
-#[expect(dead_code, reason = "staged for authenticated detached rebind")]
 impl<const N: usize> M1AuthenticatedQueuePacketBatchCaseV1<N> {
     pub(crate) fn into_parts(
         self,
@@ -532,7 +530,6 @@ impl<const N: usize> M1AuthenticatedQueuePacketBatchCaseV1<N> {
 /// Closed authenticated packet-array family accepted by detached queue rebind.
 #[must_use = "authenticated rebind packet custody must enter the detached queue boundary"]
 #[derive(Debug)]
-#[expect(dead_code, reason = "staged for authenticated detached rebind")]
 pub(crate) enum M1AuthenticatedQueuePacketBatchV1 {
     TargetOnly(Box<M1AuthenticatedQueuePacketBatchCaseV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>>),
     PairedPrefill(
@@ -549,7 +546,6 @@ pub(crate) enum M1AuthenticatedQueuePacketBatchV1 {
     ),
 }
 
-#[expect(dead_code, reason = "staged for authenticated detached rebind")]
 impl M1AuthenticatedQueuePacketBatchV1 {
     pub(crate) const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
         match self {
@@ -806,7 +802,6 @@ impl M1AuthenticatedPhysicalPacketBatchBuildFailureV1 {
 /// Authenticated rebind lowering rejection retaining every exact linear input.
 #[must_use = "authenticated rebind lowering failure retains fresh recipe and queue custody"]
 #[derive(Debug)]
-#[expect(dead_code, reason = "staged for authenticated detached rebind")]
 pub(crate) struct M1AuthenticatedQueuePacketBatchBuildFailureV1 {
     error: M1PhysicalFixedBatchBuildErrorV1,
     recipe: Box<AddresslessM1PhysicalBufferRecipeV1>,
@@ -814,7 +809,6 @@ pub(crate) struct M1AuthenticatedQueuePacketBatchBuildFailureV1 {
     custody: Box<M1PhysicalQueueBatchCustodyV1>,
 }
 
-#[expect(dead_code, reason = "staged for authenticated detached rebind")]
 impl M1AuthenticatedQueuePacketBatchBuildFailureV1 {
     pub(crate) const fn error(&self) -> M1PhysicalFixedBatchBuildErrorV1 {
         self.error
@@ -1040,7 +1034,6 @@ pub(crate) fn build_m1_authenticated_physical_packet_batch_v1(
 /// Returns every exact linear input unchanged on authenticated identity,
 /// operation-plan, retained-structure, packet-row, cardinality, completion
 /// shape, or host-allocation rejection.
-#[expect(dead_code, reason = "staged for authenticated detached rebind")]
 pub(crate) fn build_m1_authenticated_queue_packet_batch_v1(
     witness: &M1AuthenticatedProgramCatalogWitnessV1,
     operations: &DeclaredOperationKernelPlan,
