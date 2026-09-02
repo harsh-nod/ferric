@@ -837,6 +837,17 @@ impl M1AuthenticatedSpeculativePhysicalRoundPreDetachRetryV1 {
     pub const fn retains_exact_inputs(&self) -> bool {
         true
     }
+
+    fn close_without_authority<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
+        engine.quarantine_m1_queue_rearm_failure();
+        match self.executor.destroy_queue_and_retain_state(engine) {
+            Ok(released) => released_disposition((released, self.inputs)),
+            Err(quarantined) => quarantined_disposition((quarantined, self.inputs)),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -1748,9 +1759,17 @@ fn close_pending_rollover_failure<const C: usize>(
         }
         PendingM1AuthenticatedSpeculativeRolloverRoundFailureV1::Round(pending) => {
             let failure = close_pending_round_failure(engine, pending);
-            M1AuthenticatedSpeculativeRolloverRoundFailureV1 {
-                stage: failure.stage,
-                disposition: failure.disposition,
+            match *failure {
+                M1AuthenticatedSpeculativePhysicalRoundFailureV1::Terminal {
+                    stage,
+                    disposition,
+                } => M1AuthenticatedSpeculativeRolloverRoundFailureV1 { stage, disposition },
+                M1AuthenticatedSpeculativePhysicalRoundFailureV1::PreDetach { stage, retry } => {
+                    M1AuthenticatedSpeculativeRolloverRoundFailureV1 {
+                        stage,
+                        disposition: retry.close_without_authority(engine),
+                    }
+                }
             }
         }
     }
