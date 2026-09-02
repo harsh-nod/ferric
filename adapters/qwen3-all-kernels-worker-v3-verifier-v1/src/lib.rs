@@ -3,6 +3,8 @@
 //! M1 does not yet possess an independently produced protected-verification
 //! receipt for the aggregate 12-marker artifact. This backend therefore makes
 //! the integration boundary explicit while refusing every verification request.
+//! Before that refusal, it independently reacquires the common finalizer and
+//! compiler proof owners carried by the exact typed request.
 
 #![deny(missing_docs)]
 #![deny(unsafe_op_in_unsafe_fn)]
@@ -260,6 +262,12 @@ impl M1AllKernelsPendingRequestProjectionV1 {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[non_exhaustive]
 pub enum M1AllKernelsProtectedVerifierErrorV1 {
+    /// The exact finalizer replay did not independently revalidate.
+    FinalizerDerivationRevalidationFailed,
+    /// The common multi-root compiler proof inputs did not validate.
+    CompilerMultiRootProofInputsValidationFailed,
+    /// The common multi-root target lineage did not validate.
+    CompilerMultiRootTargetLineageValidationFailed,
     /// No independently authenticated protected-verification receipt exists.
     MissingProtectedVerificationReceipt {
         /// Number of ordered marker results the missing receipt must cover.
@@ -270,12 +278,22 @@ pub enum M1AllKernelsProtectedVerifierErrorV1 {
 impl fmt::Display for M1AllKernelsProtectedVerifierErrorV1 {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::FinalizerDerivationRevalidationFailed => {
+                formatter.write_str("independent finalizer derivation revalidation failed")
+            }
+            Self::CompilerMultiRootProofInputsValidationFailed => {
+                formatter.write_str("common multi-root compiler proof input validation failed")
+            }
+            Self::CompilerMultiRootTargetLineageValidationFailed => {
+                formatter.write_str("common multi-root compiler target-lineage validation failed")
+            }
             Self::MissingProtectedVerificationReceipt {
                 expected_roster_entries,
-            } => write!(
-                formatter,
-                "missing protected verification receipt for all {expected_roster_entries} aggregate M1 roster entries"
-            ),
+            } => {
+                formatter.write_str("missing protected verification receipt for all ")?;
+                formatter.write_str(&expected_roster_entries.to_string())?;
+                formatter.write_str(" aggregate M1 roster entries")
+            }
         }
     }
 }
@@ -297,8 +315,11 @@ impl M1AllKernelsProtectedVerifierV1 {
         Self
     }
 
-    fn reject_missing_protected_receipt(
+    fn reject_missing_protected_receipt<FinalizerOwner, ProofInputsOwner, TargetLineageOwner>(
         _request: &M1AllKernelsPendingRequestProjectionV1,
+        _finalizer_owner: FinalizerOwner,
+        _proof_inputs_owner: ProofInputsOwner,
+        _target_lineage_owner: TargetLineageOwner,
     ) -> Result<WorkerV3ProtectedRosterVerificationEvidenceV1, M1AllKernelsProtectedVerifierErrorV1>
     {
         Err(missing_protected_verification_receipt_v1())
@@ -324,7 +345,27 @@ unsafe impl WorkerV3ProtectedRosterVerifierBackendV1<M1AllKernelsWorkerV3RosterV
         request: &WorkerV3RosterVerificationRequestV1<'_, M1AllKernelsWorkerV3RosterV1>,
     ) -> Result<WorkerV3ProtectedRosterVerificationEvidenceV1, Self::Error> {
         let pending_request = M1AllKernelsPendingRequestProjectionV1::from_request(request);
-        Self::reject_missing_protected_receipt(&pending_request)
+        let finalizer_owner = request
+            .independently_revalidate_finalizer_derivation()
+            .map_err(|_| {
+                M1AllKernelsProtectedVerifierErrorV1::FinalizerDerivationRevalidationFailed
+            })?;
+        let proof_inputs_owner = request
+            .validate_compiler_multi_root_proof_inputs_v1()
+            .map_err(|_| {
+                M1AllKernelsProtectedVerifierErrorV1::CompilerMultiRootProofInputsValidationFailed
+            })?;
+        let target_lineage_owner = request
+            .validate_compiler_multi_root_target_lineage_v1(&proof_inputs_owner)
+            .map_err(|_| {
+                M1AllKernelsProtectedVerifierErrorV1::CompilerMultiRootTargetLineageValidationFailed
+            })?;
+        Self::reject_missing_protected_receipt(
+            &pending_request,
+            finalizer_owner,
+            proof_inputs_owner,
+            target_lineage_owner,
+        )
     }
 }
 
@@ -354,5 +395,33 @@ mod tests {
             error.to_string(),
             "missing protected verification receipt for all 12 aggregate M1 roster entries"
         );
+    }
+
+    #[test]
+    fn common_custody_preflight_failures_are_distinct() {
+        assert_eq!(
+            M1AllKernelsProtectedVerifierErrorV1::FinalizerDerivationRevalidationFailed.to_string(),
+            "independent finalizer derivation revalidation failed"
+        );
+        assert_eq!(
+            M1AllKernelsProtectedVerifierErrorV1::CompilerMultiRootProofInputsValidationFailed
+                .to_string(),
+            "common multi-root compiler proof input validation failed"
+        );
+        assert_eq!(
+            M1AllKernelsProtectedVerifierErrorV1::CompilerMultiRootTargetLineageValidationFailed
+                .to_string(),
+            "common multi-root compiler target-lineage validation failed"
+        );
+    }
+
+    #[test]
+    fn missing_receipt_count_uses_default_decimal_formatting() {
+        let error = missing_protected_verification_receipt_v1();
+        let expected =
+            "missing protected verification receipt for all 12 aggregate M1 roster entries";
+        assert_eq!(format!("{error:010}"), expected);
+        assert_eq!(format!("{error:+}"), expected);
+        assert_eq!(format!("{error:>120}"), expected);
     }
 }

@@ -44,15 +44,27 @@ are code-object coordinates, not runtime pointers or load authority.
 Each descriptor, binding, physical-kernel, and lineage subprojection remains
 `Option`. If any typed accessor lacks a row fact, the adapter retains `None`;
 it neither panics nor invents a zero identity, and the call still rejects. The
-projection has no public constructor, serializer, JSON preflight, environment, file, or CLI input.
-The projection is neither protected evidence nor a verifier decision and
-cannot leave the rejection path.
+projection has no public constructor, serializer, or JSON input.
+It has no environment, file, or CLI input. The projection is neither protected
+evidence nor a verifier decision and cannot leave the rejection path.
 
-Every verifier call then returns the unconditional `Err(MissingProtectedVerificationReceipt)`.
-The adapter does not construct fe2o3 verification evidence or enable fe2o3's
-synthetic test support. It does not accept hashes as a substitute for protected
-proof, finalizer, compiler-execution, source/target custody, layout, effect, or
-executable verification.
+After constructing that projection, the backend performs an authority-free
+common-custody preflight in exact order. It independently revalidates the
+finalizer derivation from the exact borrowed replay, validates the common
+multi-root compiler proof inputs, and then validates the common multi-root
+target lineage by borrowing those proof inputs. Each failure maps to a distinct
+fail-closed error. The three inferred move-only owners are retained together
+through the private rejection helper; they are not exposed or serialized.
+
+Passing the preflight still returns the unconditional
+`Err(MissingProtectedVerificationReceipt)`. The common owners do not establish
+the per-entry proof-to-executable, Rust layout, or Rust effect joins, nor do
+they authenticate compiler policy, Worker-ledger currentness, or rollback
+currentness. The adapter performs none of those checks and does not construct
+fe2o3 verification evidence or enable fe2o3's synthetic test support. It does
+not accept hashes as a substitute for protected proof, finalizer,
+compiler-execution, source/target custody, layout, effect, or executable
+verification.
 
 This scaffold grants no verification, load, launch, or inference authority. It
 has no direct KFD, HSA, HIP, engine, or model import and invokes none of those
