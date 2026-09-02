@@ -186,10 +186,36 @@ pub(crate) struct M1AuthenticatedSpeculativeRolloverLogicalV1 {
     pub(crate) lineage: M1AuthenticatedSpeculativeLogicalLineageWitnessV1,
 }
 
-/// Scheduling failure with unchanged retryable inputs or concrete post-detach custody.
-#[must_use = "rollover scheduling failure custody must be retained or closed"]
+/// Terminal rollover scheduling failure without released-round authority.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativeRolloverScheduleFailureV1;
+/// fn recover_round(failure: M1AuthenticatedSpeculativeRolloverScheduleFailureV1) {
+///     let _round = failure.into_released_round();
+/// }
+/// ```
+#[must_use = "terminal rollover scheduling custody remains retained"]
 #[derive(Debug)]
-pub enum M1AuthenticatedSpeculativeRolloverScheduleFailureV1 {
+pub struct M1AuthenticatedSpeculativeRolloverScheduleFailureV1 {
+    error: M1AuthenticatedSpeculativeRolloverScheduleErrorV1,
+    disposition: crate::M1AuthenticatedSpeculativeFailureDispositionV1,
+}
+
+impl M1AuthenticatedSpeculativeRolloverScheduleFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1AuthenticatedSpeculativeRolloverScheduleErrorV1 {
+        self.error
+    }
+
+    #[must_use = "the terminal disposition must remain observed"]
+    pub const fn disposition(&self) -> &crate::M1AuthenticatedSpeculativeFailureDispositionV1 {
+        &self.disposition
+    }
+}
+
+/// Internal scheduling custody pending mandatory queue closure.
+#[derive(Debug)]
+enum PendingM1AuthenticatedSpeculativeRolloverScheduleFailureV1 {
     Rejected {
         error: M1AuthenticatedSpeculativeRolloverScheduleErrorV1,
         released: Box<M1AuthenticatedReleasedCompletedStepV1>,
@@ -210,7 +236,7 @@ pub enum M1AuthenticatedSpeculativeRolloverScheduleFailureV1 {
 /// Authenticated detached queue plus all non-queue scheduling custody.
 #[must_use = "detached rollover failure must destroy the queue or remain quarantined"]
 #[derive(Debug)]
-pub struct M1AuthenticatedSpeculativeRolloverDetachedFailureV1 {
+struct M1AuthenticatedSpeculativeRolloverDetachedFailureV1 {
     error: M1AuthenticatedSpeculativeRolloverScheduleErrorV1,
     queue: M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
     retained: Box<dyn fmt::Debug>,
@@ -224,12 +250,21 @@ pub struct M1AuthenticatedSpeculativeRolloverTeardownSuccessV1 {
     retained: Box<dyn fmt::Debug>,
 }
 
-/// Terminal lower teardown quarantine retaining all Ferric custody.
+/// Opaque terminal teardown quarantine retaining all Ferric custody.
 #[must_use = "lower quarantine and Ferric custody remain retained"]
-#[derive(Debug)]
 pub struct M1AuthenticatedSpeculativeRolloverTeardownFailureV1 {
-    source: AuthenticatedServiceQueueReleaseFailureV1,
     retained: Box<dyn fmt::Debug>,
+}
+
+#[allow(clippy::missing_fields_in_debug)]
+impl fmt::Debug for M1AuthenticatedSpeculativeRolloverTeardownFailureV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AuthenticatedSpeculativeRolloverTeardownFailureV1")
+            .field("engine_quarantined", &true)
+            .field("custody_sealed", &true)
+            .finish()
+    }
 }
 
 impl M1AuthenticatedSpeculativeRolloverTeardownSuccessV1 {
@@ -245,29 +280,25 @@ impl M1AuthenticatedSpeculativeRolloverTeardownSuccessV1 {
 }
 
 impl M1AuthenticatedSpeculativeRolloverTeardownFailureV1 {
-    pub const fn source(&self) -> &AuthenticatedServiceQueueReleaseFailureV1 {
-        &self.source
-    }
-
     #[must_use]
     pub fn retains_ferric_custody(&self) -> bool {
         let _ = &self.retained;
         true
     }
+
+    #[must_use]
+    pub const fn engine_quarantined(&self) -> bool {
+        true
+    }
 }
 
 impl M1AuthenticatedSpeculativeRolloverDetachedFailureV1 {
-    #[must_use]
-    pub const fn error(&self) -> M1AuthenticatedSpeculativeRolloverScheduleErrorV1 {
-        self.error
-    }
-
     /// Faults the scheduler and destroys the detached authenticated queue.
     ///
     /// # Errors
     ///
     /// Returns the lower terminal release quarantine with all Ferric custody.
-    pub fn destroy_queue_and_retain_custody<const C: usize>(
+    fn destroy_queue_and_retain_custody<const C: usize>(
         self,
         engine: &mut Engine<C>,
     ) -> Result<
@@ -289,10 +320,59 @@ impl M1AuthenticatedSpeculativeRolloverDetachedFailureV1 {
                 Ok(M1AuthenticatedSpeculativeRolloverTeardownSuccessV1 { release, retained })
             }
             Err(source) => Err(Box::new(
-                M1AuthenticatedSpeculativeRolloverTeardownFailureV1 { source, retained },
+                M1AuthenticatedSpeculativeRolloverTeardownFailureV1 {
+                    retained: Box::new((source, retained)),
+                },
             )),
         }
     }
+}
+
+fn close_pending_schedule_failure<const C: usize>(
+    engine: &mut Engine<C>,
+    pending: PendingM1AuthenticatedSpeculativeRolloverScheduleFailureV1,
+) -> M1AuthenticatedSpeculativeRolloverScheduleFailureV1 {
+    use crate::authenticated_speculative_executor::{
+        quarantined_disposition, released_disposition,
+    };
+
+    let (error, disposition) = match pending {
+        PendingM1AuthenticatedSpeculativeRolloverScheduleFailureV1::Rejected {
+            error,
+            released,
+            intent,
+            coordinator,
+            inputs,
+            recipe_plans,
+            preparation_plans,
+        } => {
+            engine.quarantine_m1_queue_rearm_failure();
+            let logical = (intent, coordinator, inputs, recipe_plans, preparation_plans);
+            let disposition = match released.destroy_queue_and_retain_step(engine) {
+                Ok(released) => released_disposition((released, logical), true),
+                Err(quarantined) => quarantined_disposition((quarantined, logical)),
+            };
+            (error, disposition)
+        }
+        PendingM1AuthenticatedSpeculativeRolloverScheduleFailureV1::Detach {
+            error,
+            source,
+            retained,
+        } => {
+            engine.quarantine_m1_queue_rearm_failure();
+            (error, quarantined_disposition((source, retained)))
+        }
+        PendingM1AuthenticatedSpeculativeRolloverScheduleFailureV1::Detached(detached) => {
+            let error = detached.error;
+            engine.quarantine_m1_queue_rearm_failure();
+            let disposition = match detached.destroy_queue_and_retain_custody(engine) {
+                Ok(released) => released_disposition(released, true),
+                Err(quarantined) => quarantined_disposition(quarantined),
+            };
+            (error, disposition)
+        }
+    };
+    M1AuthenticatedSpeculativeRolloverScheduleFailureV1 { error, disposition }
 }
 
 /// Detached, exactly scheduled rollover with a private split causal witness.
@@ -708,8 +788,8 @@ fn preflight<const C: usize>(
 ///
 /// # Errors
 ///
-/// Returns unchanged retry inputs for pre-detachment rejection or concrete
-/// detached queue custody after an effectful failure.
+/// Every failure closes the queue and seals all scheduling custody. Once
+/// detachment starts, the Engine is quarantined before the failure returns.
 #[allow(clippy::too_many_arguments)]
 pub fn schedule_m1_authenticated_speculative_rollover_v1<const C: usize>(
     engine: &mut Engine<C>,
@@ -724,12 +804,39 @@ pub fn schedule_m1_authenticated_speculative_rollover_v1<const C: usize>(
     M1AuthenticatedScheduledSpeculativeRolloverV1,
     M1AuthenticatedSpeculativeRolloverScheduleFailureV1,
 > {
+    schedule_m1_authenticated_speculative_rollover_pending_v1(
+        engine,
+        released,
+        batch,
+        intent,
+        coordinator,
+        inputs,
+        recipe_plans,
+        preparation_plans,
+    )
+    .map_err(|failure| close_pending_schedule_failure(engine, failure))
+}
+
+#[allow(clippy::too_many_arguments)]
+fn schedule_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    released: M1AuthenticatedReleasedCompletedStepV1,
+    batch: &M1ServingBatchPlanV1,
+    intent: M1AuthenticatedSpeculativeRolloverIntentV1,
+    coordinator: M1SpeculativeGenerationLoopV1,
+    inputs: M1FiniteSpeculativeQueueRolloverKvInputsV1,
+    recipe_plans: M1FullStepWorkspacePlans,
+    preparation_plans: M1FullStepWorkspacePlans,
+) -> Result<
+    M1AuthenticatedScheduledSpeculativeRolloverV1,
+    PendingM1AuthenticatedSpeculativeRolloverScheduleFailureV1,
+> {
     let (prior, next, reason, binding) =
         match preflight(engine, &released, batch, &intent, &coordinator, &inputs) {
             Ok(value) => value,
             Err(error) => {
                 return Err(
-                    M1AuthenticatedSpeculativeRolloverScheduleFailureV1::Rejected {
+                    PendingM1AuthenticatedSpeculativeRolloverScheduleFailureV1::Rejected {
                         error,
                         released: Box::new(released),
                         intent: Box::new(intent),
@@ -749,7 +856,7 @@ pub fn schedule_m1_authenticated_speculative_rollover_v1<const C: usize>(
         Ok(value) => value,
         Err(_) => {
             return Err(
-                M1AuthenticatedSpeculativeRolloverScheduleFailureV1::Rejected {
+                PendingM1AuthenticatedSpeculativeRolloverScheduleFailureV1::Rejected {
                     error: M1AuthenticatedSpeculativeRolloverScheduleErrorV1::Lineage,
                     released: Box::new(released),
                     intent: Box::new(intent),
@@ -784,7 +891,7 @@ pub fn schedule_m1_authenticated_speculative_rollover_v1<const C: usize>(
         Err(source) => {
             engine.quarantine_m1_queue_rearm_failure();
             return Err(
-                M1AuthenticatedSpeculativeRolloverScheduleFailureV1::Detach {
+                PendingM1AuthenticatedSpeculativeRolloverScheduleFailureV1::Detach {
                     error: M1AuthenticatedSpeculativeRolloverScheduleErrorV1::Detach,
                     source,
                     retained: Box::new((
@@ -806,7 +913,7 @@ pub fn schedule_m1_authenticated_speculative_rollover_v1<const C: usize>(
         Err(source) => {
             engine.quarantine_m1_queue_rearm_failure();
             return Err(
-                M1AuthenticatedSpeculativeRolloverScheduleFailureV1::Detached(Box::new(
+                PendingM1AuthenticatedSpeculativeRolloverScheduleFailureV1::Detached(Box::new(
                     M1AuthenticatedSpeculativeRolloverDetachedFailureV1 {
                         error: M1AuthenticatedSpeculativeRolloverScheduleErrorV1::ExactDispatch,
                         queue,
@@ -830,7 +937,7 @@ pub fn schedule_m1_authenticated_speculative_rollover_v1<const C: usize>(
     if selected.try_reserve_exact(members.len()).is_err() {
         engine.quarantine_m1_queue_rearm_failure();
         return Err(
-            M1AuthenticatedSpeculativeRolloverScheduleFailureV1::Detached(Box::new(
+            PendingM1AuthenticatedSpeculativeRolloverScheduleFailureV1::Detached(Box::new(
                 M1AuthenticatedSpeculativeRolloverDetachedFailureV1 {
                     error: M1AuthenticatedSpeculativeRolloverScheduleErrorV1::Roster,
                     queue,
@@ -856,7 +963,7 @@ pub fn schedule_m1_authenticated_speculative_rollover_v1<const C: usize>(
         if let Err(source) = cache.reselect_quiescent(next.target(), next.draft_cache_selection()) {
             engine.quarantine_m1_queue_rearm_failure();
             return Err(
-                M1AuthenticatedSpeculativeRolloverScheduleFailureV1::Detached(Box::new(
+                PendingM1AuthenticatedSpeculativeRolloverScheduleFailureV1::Detached(Box::new(
                     M1AuthenticatedSpeculativeRolloverDetachedFailureV1 {
                         error:
                             M1AuthenticatedSpeculativeRolloverScheduleErrorV1::CacheReselection {
@@ -915,13 +1022,19 @@ pub enum M1AuthenticatedSpeculativeRolloverPrepareStageV1 {
     LineageAttachment,
 }
 
-/// Detached preparation failure with an immediately usable queue teardown API.
-#[must_use = "failed rollover preparation must be torn down or retained"]
+/// Terminal detached preparation failure without queue authority.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativeRolloverPrepareFailureV1;
+/// fn recover_queue(failure: M1AuthenticatedSpeculativeRolloverPrepareFailureV1) {
+///     let _queue = failure.into_detached_queue();
+/// }
+/// ```
+#[must_use = "terminal rollover preparation custody remains retained"]
 #[derive(Debug)]
 pub struct M1AuthenticatedSpeculativeRolloverPrepareFailureV1 {
     stage: M1AuthenticatedSpeculativeRolloverPrepareStageV1,
-    queue: M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
-    retained: Box<dyn fmt::Debug>,
+    disposition: crate::M1AuthenticatedSpeculativeFailureDispositionV1,
 }
 
 impl M1AuthenticatedSpeculativeRolloverPrepareFailureV1 {
@@ -930,12 +1043,27 @@ impl M1AuthenticatedSpeculativeRolloverPrepareFailureV1 {
         self.stage
     }
 
+    #[must_use = "the terminal disposition must remain observed"]
+    pub const fn disposition(&self) -> &crate::M1AuthenticatedSpeculativeFailureDispositionV1 {
+        &self.disposition
+    }
+}
+
+/// Internal detached preparation custody pending mandatory closure.
+#[derive(Debug)]
+struct PendingM1AuthenticatedSpeculativeRolloverPrepareFailureV1 {
+    stage: M1AuthenticatedSpeculativeRolloverPrepareStageV1,
+    queue: M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
+    retained: Box<dyn fmt::Debug>,
+}
+
+impl PendingM1AuthenticatedSpeculativeRolloverPrepareFailureV1 {
     /// Destroys the detached queue while retaining failed preparation custody.
     ///
     /// # Errors
     ///
     /// Returns the lower terminal release quarantine with all Ferric custody.
-    pub fn destroy_queue_and_retain_custody<const C: usize>(
+    fn destroy_queue_and_retain_custody<const C: usize>(
         self,
         engine: &mut Engine<C>,
     ) -> Result<
@@ -951,12 +1079,31 @@ impl M1AuthenticatedSpeculativeRolloverPrepareFailureV1 {
     }
 }
 
+#[allow(clippy::boxed_local, clippy::unnecessary_box_returns)]
+fn close_pending_preparation_failure<const C: usize>(
+    engine: &mut Engine<C>,
+    pending: Box<PendingM1AuthenticatedSpeculativeRolloverPrepareFailureV1>,
+) -> Box<M1AuthenticatedSpeculativeRolloverPrepareFailureV1> {
+    use crate::authenticated_speculative_executor::{
+        quarantined_disposition, released_disposition,
+    };
+
+    engine.quarantine_m1_queue_rearm_failure();
+    let stage = pending.stage;
+    let disposition = match pending.destroy_queue_and_retain_custody(engine) {
+        Ok(released) => released_disposition(released, true),
+        Err(quarantined) => quarantined_disposition(quarantined),
+    };
+    Box::new(M1AuthenticatedSpeculativeRolloverPrepareFailureV1 { stage, disposition })
+}
+
+#[allow(clippy::unnecessary_box_returns)]
 fn preparation_failure(
     stage: M1AuthenticatedSpeculativeRolloverPrepareStageV1,
     queue: M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
     retained: impl fmt::Debug + 'static,
-) -> Box<M1AuthenticatedSpeculativeRolloverPrepareFailureV1> {
-    Box::new(M1AuthenticatedSpeculativeRolloverPrepareFailureV1 {
+) -> Box<PendingM1AuthenticatedSpeculativeRolloverPrepareFailureV1> {
+    Box::new(PendingM1AuthenticatedSpeculativeRolloverPrepareFailureV1 {
         stage,
         queue,
         retained: Box::new(retained),
@@ -994,7 +1141,8 @@ impl M1AuthenticatedPreparedSpeculativeRolloverV1 {
 ///
 /// # Errors
 ///
-/// Returns the detached queue and all custody at the exact rejected stage.
+/// Every rejection quarantines the Engine and consumes the detached queue. The
+/// returned failure contains only clean release evidence or opaque quarantine.
 ///
 /// # Panics
 ///
@@ -1007,6 +1155,18 @@ pub fn prepare_m1_authenticated_speculative_rollover_v1<const C: usize>(
 ) -> Result<
     M1AuthenticatedPreparedSpeculativeRolloverV1,
     Box<M1AuthenticatedSpeculativeRolloverPrepareFailureV1>,
+> {
+    prepare_m1_authenticated_speculative_rollover_pending_v1(engine, scheduled, runner)
+        .map_err(|failure| close_pending_preparation_failure(engine, failure))
+}
+
+fn prepare_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    scheduled: M1AuthenticatedScheduledSpeculativeRolloverV1,
+    runner: &LogicalRunnerDeclaration,
+) -> Result<
+    M1AuthenticatedPreparedSpeculativeRolloverV1,
+    Box<PendingM1AuthenticatedSpeculativeRolloverPrepareFailureV1>,
 > {
     let M1AuthenticatedScheduledSpeculativeRolloverV1 {
         prior,
@@ -1323,29 +1483,14 @@ pub enum M1AuthenticatedSpeculativeRolloverSubmissionStageV1 {
 /// A queue that was cleanly destroyed while closing a pre-rollover failure.
 #[must_use = "authenticated release and retained Ferric inputs remain owned"]
 #[derive(Debug)]
-pub struct M1AuthenticatedSpeculativeRolloverClosedFailureV1 {
+struct M1AuthenticatedSpeculativeRolloverClosedFailureV1 {
     release: Result<AuthenticatedServiceQueueReleaseV1, AuthenticatedServiceQueueReleaseFailureV1>,
     retained: Box<dyn fmt::Debug>,
 }
 
-impl M1AuthenticatedSpeculativeRolloverClosedFailureV1 {
-    pub const fn release(
-        &self,
-    ) -> &Result<AuthenticatedServiceQueueReleaseV1, AuthenticatedServiceQueueReleaseFailureV1>
-    {
-        &self.release
-    }
-
-    #[must_use]
-    pub fn retains_ferric_custody(&self) -> bool {
-        let _ = &self.retained;
-        true
-    }
-}
-
 /// Exact lower native rollover rejection or terminal program quarantine.
 #[must_use = "native rollover failure must be torn down or retained"]
-pub struct M1AuthenticatedSpeculativeNativeRolloverFailureV1<const N: usize> {
+struct M1AuthenticatedSpeculativeNativeRolloverFailureV1<const N: usize> {
     source: AuthenticatedServiceQueueRetainedRolloverFailureV1<N>,
     retained: Box<dyn fmt::Debug>,
 }
@@ -1361,12 +1506,8 @@ impl<const N: usize> fmt::Debug for M1AuthenticatedSpeculativeNativeRolloverFail
 }
 
 impl<const N: usize> M1AuthenticatedSpeculativeNativeRolloverFailureV1<N> {
-    pub const fn source(&self) -> &AuthenticatedServiceQueueRetainedRolloverFailureV1<N> {
-        &self.source
-    }
-
     /// Destroys a retryable predecessor queue or retains an already terminal quarantine.
-    pub fn close(self) -> M1AuthenticatedSpeculativeNativeRolloverClosureV1<N> {
+    fn close(self) -> M1AuthenticatedSpeculativeNativeRolloverClosureV1<N> {
         match self.source {
             AuthenticatedServiceQueueRetainedRolloverFailureV1::Program {
                 error,
@@ -1401,7 +1542,7 @@ impl<const N: usize> M1AuthenticatedSpeculativeNativeRolloverFailureV1<N> {
 /// Exhaustive close outcome for one native rollover failure.
 #[must_use = "released or quarantined native custody remains retained"]
 #[derive(Debug)]
-pub enum M1AuthenticatedSpeculativeNativeRolloverClosureV1<const N: usize> {
+enum M1AuthenticatedSpeculativeNativeRolloverClosureV1<const N: usize> {
     Released(Box<M1AuthenticatedSpeculativeRolloverClosedFailureV1>),
     Quarantined(
         Box<(
@@ -1411,11 +1552,36 @@ pub enum M1AuthenticatedSpeculativeNativeRolloverClosureV1<const N: usize> {
     ),
 }
 
-/// Concrete authenticated submission failure. Pre-rollover failures are
-/// already closed; native and publication failures retain their exact lower API.
-#[must_use = "rollover submission failure custody must be closed or retained"]
+/// Terminal rollover submission failure without queue or retry authority.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativeRolloverSubmissionFailureV1;
+/// fn resubmit(failure: M1AuthenticatedSpeculativeRolloverSubmissionFailureV1) {
+///     let _queue = failure.into_queue();
+/// }
+/// ```
+#[must_use = "terminal rollover submission custody remains retained"]
 #[derive(Debug)]
-pub enum M1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
+pub struct M1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
+    stage: M1AuthenticatedSpeculativeRolloverSubmissionStageV1,
+    disposition: crate::M1AuthenticatedSpeculativeFailureDispositionV1,
+}
+
+impl M1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
+    #[must_use]
+    pub const fn stage(&self) -> M1AuthenticatedSpeculativeRolloverSubmissionStageV1 {
+        self.stage
+    }
+
+    #[must_use = "the terminal disposition must remain observed"]
+    pub const fn disposition(&self) -> &crate::M1AuthenticatedSpeculativeFailureDispositionV1 {
+        &self.disposition
+    }
+}
+
+/// Internal rollover submission custody pending mandatory terminal closure.
+#[derive(Debug)]
+enum PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
     Closed {
         stage: M1AuthenticatedSpeculativeRolloverSubmissionStageV1,
         source: Box<M1AuthenticatedSpeculativeRolloverClosedFailureV1>,
@@ -1456,9 +1622,9 @@ pub enum M1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
     },
 }
 
-impl M1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
+impl PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
     #[must_use]
-    pub const fn stage(&self) -> M1AuthenticatedSpeculativeRolloverSubmissionStageV1 {
+    const fn stage(&self) -> M1AuthenticatedSpeculativeRolloverSubmissionStageV1 {
         match self {
             Self::Closed { stage, .. } | Self::Quarantined { stage, .. } => *stage,
             Self::NativeK4(_) | Self::NativeK8(_) | Self::NativeK16(_) => {
@@ -1472,14 +1638,96 @@ impl M1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
     }
 }
 
+fn close_pending_submission_failure<const C: usize>(
+    engine: &mut Engine<C>,
+    pending: PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1,
+) -> M1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
+    use crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
+    use crate::authenticated_speculative_executor::{
+        quarantined_disposition, released_disposition,
+    };
+
+    engine.quarantine_m1_queue_rearm_failure();
+    let stage = pending.stage();
+    let disposition = match pending {
+        PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::Closed { source, .. } => {
+            let M1AuthenticatedSpeculativeRolloverClosedFailureV1 { release, retained } = *source;
+            if release.is_ok() {
+                released_disposition((release, retained), true)
+            } else {
+                quarantined_disposition((release, retained))
+            }
+        }
+        PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::Quarantined {
+            source,
+            retained,
+            ..
+        } => quarantined_disposition((source, retained)),
+        PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::NativeK4(source) => {
+            disposition_from_native_closure(source.close())
+        }
+        PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::NativeK8(source) => {
+            disposition_from_native_closure(source.close())
+        }
+        PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::NativeK16(source) => {
+            disposition_from_native_closure(source.close())
+        }
+        PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::Observation {
+            queue,
+            retained,
+        } => match queue.close_unpublished() {
+            M1AuthenticatedPhysicalQueueClosureV1::Released(released) => {
+                released_disposition((released, retained), true)
+            }
+            M1AuthenticatedPhysicalQueueClosureV1::Quarantined(quarantined) => {
+                quarantined_disposition((quarantined, retained))
+            }
+        },
+        PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::Submit {
+            source,
+            retained,
+        } => match source.close_without_authority(engine) {
+            M1AuthenticatedPhysicalQueueClosureV1::Released(released) => {
+                released_disposition((released, retained), true)
+            }
+            M1AuthenticatedPhysicalQueueClosureV1::Quarantined(quarantined) => {
+                quarantined_disposition((quarantined, retained))
+            }
+        },
+    };
+    M1AuthenticatedSpeculativeRolloverSubmissionFailureV1 { stage, disposition }
+}
+
+fn disposition_from_native_closure<const N: usize>(
+    closure: M1AuthenticatedSpeculativeNativeRolloverClosureV1<N>,
+) -> crate::M1AuthenticatedSpeculativeFailureDispositionV1 {
+    use crate::authenticated_speculative_executor::{
+        quarantined_disposition, released_disposition,
+    };
+
+    match closure {
+        M1AuthenticatedSpeculativeNativeRolloverClosureV1::Released(source) => {
+            let M1AuthenticatedSpeculativeRolloverClosedFailureV1 { release, retained } = *source;
+            if release.is_ok() {
+                released_disposition((release, retained), true)
+            } else {
+                quarantined_disposition((release, retained))
+            }
+        }
+        M1AuthenticatedSpeculativeNativeRolloverClosureV1::Quarantined(source) => {
+            quarantined_disposition(source)
+        }
+    }
+}
+
 fn close_unbound<const C: usize>(
     engine: &mut Engine<C>,
     stage: M1AuthenticatedSpeculativeRolloverSubmissionStageV1,
     lower: AuthenticatedServiceQueueUnboundSessionV1,
     retained: impl fmt::Debug + 'static,
-) -> M1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
+) -> PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
     engine.quarantine_m1_queue_rearm_failure();
-    M1AuthenticatedSpeculativeRolloverSubmissionFailureV1::Closed {
+    PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::Closed {
         stage,
         source: Box::new(M1AuthenticatedSpeculativeRolloverClosedFailureV1 {
             release: lower.destroy_and_release(),
@@ -1488,12 +1736,13 @@ fn close_unbound<const C: usize>(
     }
 }
 
+#[allow(clippy::boxed_local)]
 fn close_workspace_failure<const C: usize, const N: usize>(
     engine: &mut Engine<C>,
     stage: M1AuthenticatedSpeculativeRolloverSubmissionStageV1,
     failure: Box<crate::authenticated_queue_rearm::AuthenticatedWorkspaceReplacementFailureV1<N>>,
     retained: impl fmt::Debug + 'static,
-) -> M1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
+) -> PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
     use crate::authenticated_queue_rearm::AuthenticatedWorkspaceReplacementFailureV1;
     use crate::step_workspace_subleases::M1AuthenticatedQueueReplacedWorkspaceBindingFailureV1;
 
@@ -1507,7 +1756,7 @@ fn close_workspace_failure<const C: usize, const N: usize>(
                 retained: queue,
             } => {
                 engine.quarantine_m1_queue_rearm_failure();
-                M1AuthenticatedSpeculativeRolloverSubmissionFailureV1::Quarantined {
+                PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::Quarantined {
                     stage,
                     source: queue,
                     retained: Box::new((error, plan, retained)),
@@ -1529,7 +1778,7 @@ fn close_workspace_failure<const C: usize, const N: usize>(
     }
 }
 
-#[allow(clippy::too_many_arguments)]
+#[allow(clippy::result_large_err, clippy::too_many_arguments)]
 fn rollover_case<const N: usize, F>(
     lower: AuthenticatedServiceQueueUnboundSessionV1,
     ring_bytes: u32,
@@ -1579,13 +1828,13 @@ where
     ))
 }
 
-/// Atomically replaces the authenticated paired-prefill native queue with the
-/// prepared finite-speculative generation and submits it once.
+/// Replaces the authenticated paired-prefill queue with a prepared finite-
+/// speculative generation, then attempts its exact publication.
 ///
 /// # Errors
 ///
-/// Returns an already closed pre-rollover failure, exact native rollover
-/// failure, or concretely quarantined post-rollover custody.
+/// Every failure quarantines the Engine and consumes any unpublished queue.
+/// The caller receives only clean release evidence or opaque quarantine.
 pub fn submit_m1_authenticated_speculative_rollover_v1<const C: usize>(
     engine: &mut Engine<C>,
     prepared: M1AuthenticatedPreparedSpeculativeRolloverV1,
@@ -1593,6 +1842,18 @@ pub fn submit_m1_authenticated_speculative_rollover_v1<const C: usize>(
 ) -> Result<
     crate::M1AuthenticatedSpeculativeRolloverPublishedV1,
     M1AuthenticatedSpeculativeRolloverSubmissionFailureV1,
+> {
+    submit_m1_authenticated_speculative_rollover_pending_v1(engine, prepared, ring_bytes)
+        .map_err(|failure| close_pending_submission_failure(engine, failure))
+}
+
+fn submit_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    prepared: M1AuthenticatedPreparedSpeculativeRolloverV1,
+    ring_bytes: u32,
+) -> Result<
+    crate::M1AuthenticatedSpeculativeRolloverPublishedV1,
+    PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1,
 > {
     let M1AuthenticatedPreparedSpeculativeRolloverV1 {
         prior,
@@ -2076,9 +2337,9 @@ pub fn submit_m1_authenticated_speculative_rollover_v1<const C: usize>(
                     engine.quarantine_m1_queue_rearm_failure();
                     source.retained = Box::new((source.retained, selected, residue, logical));
                     return Err(
-                        M1AuthenticatedSpeculativeRolloverSubmissionFailureV1::NativeK4(Box::new(
-                            source,
-                        )),
+                        PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::NativeK4(
+                            Box::new(source),
+                        ),
                     );
                 }
             }
@@ -2099,9 +2360,9 @@ pub fn submit_m1_authenticated_speculative_rollover_v1<const C: usize>(
                     engine.quarantine_m1_queue_rearm_failure();
                     source.retained = Box::new((source.retained, selected, residue, logical));
                     return Err(
-                        M1AuthenticatedSpeculativeRolloverSubmissionFailureV1::NativeK8(Box::new(
-                            source,
-                        )),
+                        PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::NativeK8(
+                            Box::new(source),
+                        ),
                     );
                 }
             }
@@ -2122,9 +2383,9 @@ pub fn submit_m1_authenticated_speculative_rollover_v1<const C: usize>(
                     engine.quarantine_m1_queue_rearm_failure();
                     source.retained = Box::new((source.retained, selected, residue, logical));
                     return Err(
-                        M1AuthenticatedSpeculativeRolloverSubmissionFailureV1::NativeK16(Box::new(
-                            source,
-                        )),
+                        PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::NativeK16(
+                            Box::new(source),
+                        ),
                     );
                 }
             }
@@ -2145,7 +2406,7 @@ pub fn submit_m1_authenticated_speculative_rollover_v1<const C: usize>(
     {
         engine.quarantine_m1_queue_rearm_failure();
         return Err(
-            M1AuthenticatedSpeculativeRolloverSubmissionFailureV1::Observation {
+            PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::Observation {
                 queue: Box::new(queue),
                 retained: Box::new((selected, residue, logical, rollover)),
             },
@@ -2156,7 +2417,7 @@ pub fn submit_m1_authenticated_speculative_rollover_v1<const C: usize>(
         Err(source) => {
             engine.quarantine_m1_queue_rearm_failure();
             return Err(
-                M1AuthenticatedSpeculativeRolloverSubmissionFailureV1::Submit {
+                PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::Submit {
                     source: Box::new(source),
                     retained: Box::new((selected, residue, logical, rollover)),
                 },
@@ -2469,6 +2730,13 @@ mod tests {
 
     #[test]
     fn authenticated_rollover_transition_gate_covers_all_four_profiles() {
+        type Cancel = fn(
+            M1AuthenticatedScheduledSpeculativeRolloverV1,
+            &mut Engine<32>,
+        ) -> Result<
+            M1AuthenticatedSpeculativeRolloverTeardownSuccessV1,
+            Box<M1AuthenticatedSpeculativeRolloverTeardownFailureV1>,
+        >;
         let cases = [
             (
                 Qwen3PlanBucket::PrefillS1T128,
@@ -2503,10 +2771,22 @@ mod tests {
 
         // These signatures require normal released authentication and prepared
         // custody; this structural test does not manufacture either as evidence.
-        let _intent = bind_m1_authenticated_speculative_rollover_intent_v1;
-        let _entry = schedule_m1_authenticated_speculative_rollover_v1::<32>;
-        let _prepare = prepare_m1_authenticated_speculative_rollover_v1::<32>;
-        let _submit = submit_m1_authenticated_speculative_rollover_v1::<32>;
+        let _ = bind_m1_authenticated_speculative_rollover_intent_v1;
+        let _ = schedule_m1_authenticated_speculative_rollover_v1::<32>;
+        let _ = prepare_m1_authenticated_speculative_rollover_v1::<32>;
+        let _ = submit_m1_authenticated_speculative_rollover_v1::<32>;
+        let _: Cancel =
+            M1AuthenticatedScheduledSpeculativeRolloverV1::destroy_queue_and_retain_custody::<32>;
         let _ = core::mem::size_of::<M1AuthenticatedReleasedCompletedStepV1>();
+    }
+
+    #[test]
+    fn terminal_teardown_debug_is_opaque() {
+        let failure = M1AuthenticatedSpeculativeRolloverTeardownFailureV1 {
+            retained: Box::new("secret detached queue quarantine"),
+        };
+        assert!(failure.engine_quarantined());
+        assert!(failure.retains_ferric_custody());
+        assert!(!format!("{failure:?}").contains("secret detached queue quarantine"));
     }
 }

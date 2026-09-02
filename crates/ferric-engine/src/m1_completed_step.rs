@@ -1298,6 +1298,54 @@ pub enum M1AuthenticatedCompletedStepOutcomeV1 {
     Poisoned(Box<M1AuthenticatedCompletedStepPoisonV1>),
 }
 
+/// Crate-private terminal closure used by higher-level executors that must not
+/// return completion or queue authority after a failed transition.
+#[derive(Debug)]
+pub(crate) enum M1AuthenticatedCompletedStepClosureV1 {
+    Released(Box<dyn fmt::Debug>),
+    Quarantined(Box<dyn fmt::Debug>),
+}
+
+pub(crate) fn close_m1_authenticated_completed_step_outcome_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    outcome: M1AuthenticatedCompletedStepOutcomeV1,
+) -> M1AuthenticatedCompletedStepClosureV1 {
+    engine.quarantine_m1_queue_rearm_failure();
+    match outcome {
+        M1AuthenticatedCompletedStepOutcomeV1::Completed(completed) => {
+            match completed.destroy_queue_and_retain_completion(engine) {
+                Ok(released) => M1AuthenticatedCompletedStepClosureV1::Released(Box::new(released)),
+                Err(quarantined) => M1AuthenticatedCompletedStepClosureV1::Quarantined(quarantined),
+            }
+        }
+        M1AuthenticatedCompletedStepOutcomeV1::Rejected(rejected) => {
+            match rejected.destroy_queue_and_retain_rejection(engine) {
+                Ok(released) => M1AuthenticatedCompletedStepClosureV1::Released(Box::new(released)),
+                Err(quarantined) => M1AuthenticatedCompletedStepClosureV1::Quarantined(quarantined),
+            }
+        }
+        M1AuthenticatedCompletedStepOutcomeV1::Poisoned(poisoned) => {
+            let M1AuthenticatedCompletedStepPoisonV1 {
+                error,
+                queue,
+                checked,
+                custody,
+            } = *poisoned;
+            match queue.destroy_and_release() {
+                Ok(released) => M1AuthenticatedCompletedStepClosureV1::Released(Box::new((
+                    released, error, checked, custody,
+                ))),
+                Err(quarantined) => M1AuthenticatedCompletedStepClosureV1::Quarantined(Box::new((
+                    quarantined,
+                    error,
+                    checked,
+                    custody,
+                ))),
+            }
+        }
+    }
+}
+
 struct M1CompletedStepCoreRejectionV1<R> {
     error: M1CompletedStepErrorV1,
     readback: R,
@@ -1320,6 +1368,7 @@ struct M1CompletedStepCorePoisonV1<Q> {
     custody: M1CompletedStepPoisonCustodyV1,
 }
 
+#[allow(clippy::large_enum_variant)]
 enum M1CompletedStepCoreOutcomeV1<Q, R> {
     Completed(M1CompletedStepCoreSuccessV1<Q>),
     Rejected(M1CompletedStepCoreRejectionV1<R>),

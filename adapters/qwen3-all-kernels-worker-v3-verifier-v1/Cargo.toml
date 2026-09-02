@@ -11,9 +11,9 @@ publish = false
 
 [dependencies]
 ed25519-dalek = { version = "=2.2.0", default-features = false, features = ["fast", "zeroize"] }
-fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "57d2d9ced5c113d40546ea1dee603e8ba499cf40", version = "=0.1.0" }
-fe2o3-hsaco-finalize = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "57d2d9ced5c113d40546ea1dee603e8ba499cf40", version = "=0.1.0" }
-fe2o3-verifier = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "57d2d9ced5c113d40546ea1dee603e8ba499cf40", version = "=0.1.0" }
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "ff21f24f5349d78583a2a832ba3aa37bf3e0846c", version = "=0.1.0" }
+fe2o3-hsaco-finalize = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "ff21f24f5349d78583a2a832ba3aa37bf3e0846c", version = "=0.1.0" }
+fe2o3-verifier = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "ff21f24f5349d78583a2a832ba3aa37bf3e0846c", version = "=0.1.0" }
 ferric-qwen3-all-kernels-device-v1 = { path = "../../device/qwen3-all-kernels-v1" }
 ferric-qwen3-all-kernels-worker-v3-source-pin-v1 = { path = "../qwen3-all-kernels-worker-v3-source-pin-v1" }
 libc = "=0.2.189"

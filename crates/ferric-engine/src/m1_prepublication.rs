@@ -421,6 +421,7 @@ impl M1PreparedScheduledWorkspaceImagesV1 {
         (self.plans, self.images, self.step)
     }
 
+    #[allow(clippy::result_large_err)]
     pub(crate) fn retain_speculative_lineage(
         mut self,
         lineage: crate::authenticated_speculative_executor::M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
@@ -434,6 +435,7 @@ impl M1PreparedScheduledWorkspaceImagesV1 {
         Ok(self)
     }
 
+    #[allow(clippy::result_large_err)]
     pub(crate) fn retain_speculative_rollover_intent(
         mut self,
         intent: crate::authenticated_queue_rollover::M1AuthenticatedSpeculativeRolloverPhysicalIntentV1,

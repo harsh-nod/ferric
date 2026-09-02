@@ -246,6 +246,42 @@ impl M1AuthenticatedPhysicalQueueSessionV1 {
             Self::SpeculativeK16(case) => case.device(),
         }
     }
+
+    /// Consumes an unpublished queue without exposing it to a higher-level
+    /// failure API.
+    pub(crate) fn close_unpublished(self) -> M1AuthenticatedPhysicalQueueClosureV1 {
+        match self {
+            Self::TargetOnly(case) => close_unpublished_case(case),
+            Self::PairedPrefill(case) => close_unpublished_case(case),
+            Self::SpeculativeK4(case) => close_unpublished_case(case),
+            Self::SpeculativeK8(case) => close_unpublished_case(case),
+            Self::SpeculativeK16(case) => close_unpublished_case(case),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub(crate) enum M1AuthenticatedPhysicalQueueClosureV1 {
+    Released(Box<dyn core::fmt::Debug>),
+    Quarantined(Box<dyn core::fmt::Debug>),
+}
+
+fn close_unpublished_case<const N: usize>(
+    case: Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceQueueSessionV1<N>>>,
+) -> M1AuthenticatedPhysicalQueueClosureV1 {
+    let (lower, witness, operations, custody, step) = (*case).into_parts();
+    match lower.destroy_and_release() {
+        Ok(released) => M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new((
+            released, witness, operations, custody, step,
+        ))),
+        Err(quarantined) => M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new((
+            quarantined,
+            witness,
+            operations,
+            custody,
+            step,
+        ))),
+    }
 }
 
 #[must_use = "published authenticated queue custody must be completed"]
@@ -542,8 +578,8 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
 #[cfg(test)]
 mod tests {
     use super::{
-        M1AuthenticatedPhysicalQueueCreateFailureV1,
-        M1AuthenticatedPhysicalQueueOperationFailureV1,
+        M1AuthenticatedPhysicalQueueClosureV1, M1AuthenticatedPhysicalQueueCreateFailureV1,
+        M1AuthenticatedPhysicalQueueOperationFailureV1, M1AuthenticatedPhysicalQueueSessionV1,
         M1AuthenticatedPhysicalQueueSubmitFailureV1,
         M1EngineQuarantinedAuthenticatedPhysicalQueueCreateFailureV1,
         M1EngineQuarantinedAuthenticatedPhysicalQueueOperationFailureV1,
@@ -568,6 +604,17 @@ mod tests {
             &mut Engine<1>,
         ) -> M1EngineQuarantinedAuthenticatedPhysicalQueueOperationFailureV1 =
             M1AuthenticatedPhysicalQueueOperationFailureV1::quarantine_engine::<1>;
+    }
+
+    #[test]
+    fn unpublished_and_currentness_closures_consume_without_resubmit_authority() {
+        let _: fn(M1AuthenticatedPhysicalQueueSessionV1) -> M1AuthenticatedPhysicalQueueClosureV1 =
+            M1AuthenticatedPhysicalQueueSessionV1::close_unpublished;
+        let _: fn(
+            M1AuthenticatedPhysicalQueueSubmitFailureV1,
+            &mut Engine<1>,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 =
+            M1AuthenticatedPhysicalQueueSubmitFailureV1::close_without_authority::<1>;
     }
 }
 
@@ -1130,6 +1177,31 @@ impl M1AuthenticatedPhysicalQueueSubmitFailureV1 {
         engine.quarantine_m1_queue_rearm_failure();
         M1EngineQuarantinedAuthenticatedPhysicalQueueSubmitFailureV1 {
             failure: Box::new(self),
+        }
+    }
+
+    /// Terminal high-level closure that never returns the retryable unpublished
+    /// queue retained by a currentness rejection.
+    pub(crate) fn close_without_authority<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+        engine.quarantine_m1_queue_rearm_failure();
+        match self {
+            Self::Currentness { error, retained } => match retained.close_unpublished() {
+                M1AuthenticatedPhysicalQueueClosureV1::Released(released) => {
+                    M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new((released, error)))
+                }
+                M1AuthenticatedPhysicalQueueClosureV1::Quarantined(quarantined) => {
+                    M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new((
+                        quarantined,
+                        error,
+                    )))
+                }
+            },
+            Self::Queue(quarantined) => {
+                M1AuthenticatedPhysicalQueueClosureV1::Quarantined(quarantined)
+            }
         }
     }
 }

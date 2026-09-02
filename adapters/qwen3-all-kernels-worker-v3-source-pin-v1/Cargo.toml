@@ -16,8 +16,8 @@ name = "ferric-qwen3-all-kernels-worker-v3-source-pin-v1"
 path = "src/main.rs"
 
 [dependencies]
-fe2o3-compiler-ffi = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "57d2d9ced5c113d40546ea1dee603e8ba499cf40", version = "=0.1.0" }
-fe2o3-runtime-protocol = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "57d2d9ced5c113d40546ea1dee603e8ba499cf40", version = "=0.1.0" }
+fe2o3-compiler-ffi = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "ff21f24f5349d78583a2a832ba3aa37bf3e0846c", version = "=0.1.0" }
+fe2o3-runtime-protocol = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "ff21f24f5349d78583a2a832ba3aa37bf3e0846c", version = "=0.1.0" }
 serde_json = "=1.0.151"
 
 [lints.rust]
