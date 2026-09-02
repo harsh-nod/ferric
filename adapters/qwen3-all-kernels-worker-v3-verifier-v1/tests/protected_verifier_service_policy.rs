@@ -153,6 +153,11 @@ fn client_pins_peer_and_rejects_ambiguous_transport() {
         "into_peer(self) -> OwnedFd",
         "not replay across new",
         "locally retained request, evidence-custody, and audit owners",
+        "M1AllKernelsProtectedVerifierClientV2",
+        "WorkerV3VerificationClientV2::admit(peer, timeout)",
+        "WorkerV3VerificationPayloadSnapshotsV1::admit(&request, descriptors)",
+        "WorkerV3VerificationTerminalDispositionV2::ApplicationResponse",
+        "TerminalRejected",
     ] {
         assert!(client.contains(required), "missing client rule: {required}");
     }
@@ -181,11 +186,14 @@ fn client_pins_peer_and_rejects_ambiguous_transport() {
 fn configured_backend_owns_reviewed_client_while_default_stays_fail_closed() {
     let backend = production_before_tests(BACKEND_SOURCE);
     for required in [
-        "M1AllKernelsProtectedVerifierClientV1",
+        "M1AllKernelsProtectedVerifierClientV2",
+        "M1AllKernelsProtectedVerifierBeginChallengeV2",
         "M1AllKernelsProtectedVerifierServiceRequestV1",
         "M1AllKernelsProtectedVerifierTrustPolicyV1",
         "InheritedWorkerV3CompilerCurrentRecordAuditorV1",
-        ".request_receipt(&self.trust_policy, &service_request)",
+        ".audit_roster_with_challenge(request, compiler_challenge)",
+        ".submit_current_record(",
+        "bound_service_request.canonical_bytes() == service_request.canonical_bytes()",
         "WorkerV3ProtectedRosterVerificationEvidenceV1::new",
     ] {
         assert!(
@@ -204,6 +212,7 @@ fn configured_backend_owns_reviewed_client_while_default_stays_fail_closed() {
 #[test]
 fn dependency_and_documentation_boundaries_are_explicit() {
     assert!(MANIFEST.contains("libc = \"=0.2.189\""));
+    assert!(MANIFEST.contains("rustix = { version = \"=1.1.4\", features = [\"fs\"] }"));
     for forbidden in ["serde =", "serde_json =", "reqwest =", "hyper ="] {
         assert!(
             !MANIFEST.contains(forbidden),
@@ -218,8 +227,10 @@ fn dependency_and_documentation_boundaries_are_explicit() {
         "caller-provisioned trust policy",
         "unsafe constructor",
         "dedicated non-root credentials",
-        "coordinate protocol, not evidence transport",
-        "exact Worker V3 V2 envelope, finalized HSACO, semantic/proof inputs, and protected current-record evidence",
+        "generic V2 now transports immutable envelope and HSACO snapshots",
+        "does **not** directly cover the generic Begin request identity or reservation identity",
+        "transports immutable envelope and HSACO snapshots plus the complete current-record arrays",
+        "remaining semantic/proof inputs",
         "atomically consume each challenge",
         "protected live current-ledger state shared across service instances and durable across restarts",
         "Neither constructor discovers an endpoint, reads an environment setting, loads a key, opens `CURRENT`, or manufactures a receipt",

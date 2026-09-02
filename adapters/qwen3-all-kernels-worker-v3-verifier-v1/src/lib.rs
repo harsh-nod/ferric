@@ -12,20 +12,29 @@
 
 use std::error::Error;
 use std::fmt;
+use std::fs::File;
+use std::io::{self, Write};
+use std::os::fd::OwnedFd;
 
 use fe2o3_host::{
     BlockSizeV1, CompilerGeneratedKernelExpectationRosterEntryV1,
     CompilerGeneratedKernelExpectationRosterV1, InheritedWorkerV3CompilerCurrentRecordAuditorV1,
-    WorkerV3CompilerCurrentRecordAuditErrorV1, WorkerV3CompilerExecutionEvidenceErrorV1,
-    WorkerV3CompilerExecutionVerificationV1, WorkerV3ProtectedRosterEntryEvidenceV1,
-    WorkerV3ProtectedRosterVerificationEvidenceV1, WorkerV3ProtectedRosterVerifierBackendV1,
-    WorkerV3RosterVerificationRequestV1,
+    WorkerV3CompilerCurrentRecordAuditErrorV1, WorkerV3CompilerCurrentRecordAuditV1,
+    WorkerV3CompilerExecutionEvidenceErrorV1, WorkerV3CompilerExecutionVerificationV1,
+    WorkerV3ProtectedRosterEntryEvidenceV1, WorkerV3ProtectedRosterVerificationEvidenceV1,
+    WorkerV3ProtectedRosterVerifierBackendV1, WorkerV3RosterVerificationRequestV1,
 };
 use fe2o3_hsaco_finalize::{
     FinalizedDescriptorInspection, RevalidatedProtectedWorkerV3FinalizerDerivationV1,
 };
 use fe2o3_verifier::{
     ValidatedCompilerMultiRootProofInputsV1, ValidatedCompilerMultiRootTargetLineageV1,
+};
+use fe2o3_worker_v3_verification_protocol::{
+    WorkerV3VerificationEntryCoordinateV1, WorkerV3VerificationFdPayloadDescriptorV1,
+    WorkerV3VerificationMeasurementIdentityV1, WorkerV3VerificationPolicyIdentityV1,
+    WorkerV3VerificationProtocolErrorV1, WorkerV3VerificationRequestV1,
+    WorkerV3VerificationRosterIdentityV1,
 };
 use ferric_qwen3_all_kernels_device_v1::M1AllKernelsWorkerV3RosterV1;
 use ferric_qwen3_all_kernels_worker_v3_source_pin_v1::{
@@ -39,13 +48,16 @@ use crate::protected_receipt::{
     M1AllKernelsProtectedReceiptSourcePinV1, M1AllKernelsProtectedVerifierTrustPolicyV1,
 };
 use crate::protected_verifier_client::{
-    M1AllKernelsProtectedVerifierClientErrorV1, M1AllKernelsProtectedVerifierClientV1,
+    M1AllKernelsProtectedVerifierBeginChallengeV2, M1AllKernelsProtectedVerifierClientErrorV2,
+    M1AllKernelsProtectedVerifierClientV2,
 };
 use crate::protected_verifier_service::{
     M1AllKernelsProtectedVerifierServiceEntryV1,
     M1AllKernelsProtectedVerifierServiceProtocolErrorV1,
     M1AllKernelsProtectedVerifierServiceRequestV1,
 };
+use rustix::fs::{MemfdFlags, Mode, SealFlags};
+use sha2::{Digest, Sha256};
 
 /// Canonical protected-receipt wire and caller-provisioned trust policy.
 pub mod protected_receipt;
@@ -649,12 +661,27 @@ pub enum M1AllKernelsProductionProtectedVerifierErrorV1 {
     ReceiptClaims(M1AllKernelsProtectedReceiptErrorV1),
     /// Canonical protected-verifier service request construction failed.
     ServiceRequest(M1AllKernelsProtectedVerifierServiceProtocolErrorV1),
+    /// Generic V2 request or coordinate construction failed.
+    GenericRequest(WorkerV3VerificationProtocolErrorV1),
+    /// An exact sealed memfd snapshot could not be constructed.
+    PayloadSnapshot {
+        /// Snapshot operation that failed.
+        operation: &'static str,
+        /// Underlying operating-system failure.
+        source: io::Error,
+    },
     /// The typed roster request lacked one exact canonical entry coordinate.
     RosterRequestAssociationFailed,
     /// The configured protected-verifier client was already consumed.
     ProtectedVerifierClientAlreadyConsumed,
+    /// The deployment-reserved generic Begin challenge was already consumed.
+    BeginChallengeAlreadyConsumed,
+    /// The service challenge could not be transferred into the compiler-current client.
+    CompilerCurrentRecordChallenge(
+        fe2o3_runtime_protocol::CompilerExecutionCurrentRecordVerificationErrorV3,
+    ),
     /// Protected-verifier transport, correlation, or authentication failed.
-    ProtectedVerifierClient(M1AllKernelsProtectedVerifierClientErrorV1),
+    ProtectedVerifierClient(M1AllKernelsProtectedVerifierClientErrorV2),
     /// Authenticated receipt coordinates differed during the final local join.
     AuthenticatedReceiptAssociationFailed,
 }
@@ -694,12 +721,28 @@ impl fmt::Display for M1AllKernelsProductionProtectedVerifierErrorV1 {
                     "protected-verifier request construction failed: {error}"
                 )
             }
+            Self::GenericRequest(error) => {
+                ::core::write!(formatter, "generic V2 request construction failed: {error}")
+            }
+            Self::PayloadSnapshot { operation, source } => {
+                ::core::write!(
+                    formatter,
+                    "protected-verifier payload {operation} failed: {source}"
+                )
+            }
             Self::RosterRequestAssociationFailed => {
                 formatter.write_str("aggregate roster request entry association failed")
             }
             Self::ProtectedVerifierClientAlreadyConsumed => {
                 formatter.write_str("protected-verifier client was already consumed")
             }
+            Self::BeginChallengeAlreadyConsumed => {
+                formatter.write_str("protected-verifier Begin challenge was already consumed")
+            }
+            Self::CompilerCurrentRecordChallenge(error) => ::core::write!(
+                formatter,
+                "service current-record challenge transfer failed: {error}"
+            ),
             Self::ProtectedVerifierClient(error) => {
                 ::core::write!(formatter, "protected-verifier exchange failed: {error}")
             }
@@ -718,10 +761,14 @@ impl Error for M1AllKernelsProductionProtectedVerifierErrorV1 {
             Self::CompilerExecutionBinding(error) => Some(error),
             Self::ReceiptClaims(error) => Some(error),
             Self::ServiceRequest(error) => Some(error),
+            Self::GenericRequest(error) => Some(error),
+            Self::PayloadSnapshot { source, .. } => Some(source),
+            Self::CompilerCurrentRecordChallenge(error) => Some(error),
             Self::ProtectedVerifierClient(error) => Some(error),
             Self::CompilerExecutionAssociationFailed
             | Self::RosterRequestAssociationFailed
             | Self::ProtectedVerifierClientAlreadyConsumed
+            | Self::BeginChallengeAlreadyConsumed
             | Self::AuthenticatedReceiptAssociationFailed => None,
         }
     }
@@ -741,8 +788,22 @@ impl Error for M1AllKernelsProductionProtectedVerifierErrorV1 {
 /// fn require_clone<T: Clone>() {}
 /// require_clone::<M1AllKernelsProductionProtectedVerifierV1>();
 /// ```
+///
+/// The exact current-record byte view cannot escape its move-only audit owner:
+///
+/// ```compile_fail
+/// use fe2o3_host::{
+///     WorkerV3CompilerCurrentRecordAuditV1, WorkerV3CompilerCurrentRecordEvidenceViewV1,
+/// };
+/// fn escape(
+///     owner: &WorkerV3CompilerCurrentRecordAuditV1,
+/// ) -> WorkerV3CompilerCurrentRecordEvidenceViewV1<'static> {
+///     owner.canonical_evidence_view()
+/// }
+/// ```
 pub struct M1AllKernelsProductionProtectedVerifierV1 {
-    client: Option<M1AllKernelsProtectedVerifierClientV1>,
+    client: Option<M1AllKernelsProtectedVerifierClientV2>,
+    begin_challenge: Option<M1AllKernelsProtectedVerifierBeginChallengeV2>,
     trust_policy: M1AllKernelsProtectedVerifierTrustPolicyV1,
     current_auditor: InheritedWorkerV3CompilerCurrentRecordAuditorV1,
 }
@@ -752,6 +813,7 @@ impl fmt::Debug for M1AllKernelsProductionProtectedVerifierV1 {
         formatter
             .debug_struct("M1AllKernelsProductionProtectedVerifierV1")
             .field("client_available", &self.client.is_some())
+            .field("begin_challenge_available", &self.begin_challenge.is_some())
             .field("trust_policy_identity", &self.trust_policy.identity())
             .field("current_auditor", &self.current_auditor)
             .finish_non_exhaustive()
@@ -765,6 +827,8 @@ impl M1AllKernelsProductionProtectedVerifierV1 {
     ///
     /// The caller must have independently reviewed the verifier and independent
     /// checker implementations identified by `client` and `trust_policy`. The
+    /// supplied Begin challenge must already be unpredictably generated and
+    /// durably reserved against replay across all instances and restarts. The
     /// protected signing key must be bound to the exact admitted verifier and
     /// checker measurements. For every request, the deployment must hold
     /// pre-provisioned, or authentically reacquire over a separately reviewed
@@ -785,12 +849,14 @@ impl M1AllKernelsProductionProtectedVerifierV1 {
     /// by the unsafe protected-roster backend contract implemented below.
     #[must_use]
     pub unsafe fn new(
-        client: M1AllKernelsProtectedVerifierClientV1,
+        client: M1AllKernelsProtectedVerifierClientV2,
+        begin_challenge: M1AllKernelsProtectedVerifierBeginChallengeV2,
         trust_policy: M1AllKernelsProtectedVerifierTrustPolicyV1,
         current_auditor: InheritedWorkerV3CompilerCurrentRecordAuditorV1,
     ) -> Self {
         Self {
             client: Some(client),
+            begin_challenge: Some(begin_challenge),
             trust_policy,
             current_auditor,
         }
@@ -812,34 +878,6 @@ fn protected_service_request_v1(
     M1AllKernelsProtectedVerifierServiceRequestV1,
     M1AllKernelsProductionProtectedVerifierErrorV1,
 > {
-    let source_pin = project_m1_aggregate_module_handoff_v1(
-        request.semantic_compiler_handoff().module_handoff(),
-    )
-    .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::SourcePin)?
-    .source_pin();
-    let source_pin = M1AllKernelsProtectedReceiptSourcePinV1::new(
-        source_pin.compiler_module_sha256(),
-        source_pin.compiler_module_length(),
-        source_pin.compiler_handoff_sha256(),
-        source_pin.compiler_handoff_length(),
-        source_pin.symbol_manifest_sha256(),
-        source_pin.symbol_manifest_length(),
-    )
-    .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::ReceiptClaims)?;
-    let request_claims = M1AllKernelsProtectedReceiptRequestClaimsV1::new(
-        pending.challenge_identity,
-        pending.roster_identity,
-        pending.lineage_identity,
-        pending.finalizer_derivation_sha256,
-        source_pin,
-        pending.capsule_sha256,
-        pending.formal_memory_receipt_sha256,
-        pending.proof_binding_receipt_sha256,
-        pending.finalized_hsaco_sha256,
-        pending.finalized_hsaco_length,
-    )
-    .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::ReceiptClaims)?;
-
     (compiler.subject_sha256() == pending.compiler_execution_subject_sha256
         && compiler.carriage_sha256() == pending.compiler_execution_carriage_sha256
         && compiler.policy_sha256() == pending.compiler_execution_policy_sha256
@@ -877,6 +915,107 @@ fn protected_service_request_v1(
         compiler.external_rollback_verification_sha256(),
     )
     .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::ReceiptClaims)?;
+    protected_service_request_with_compiler_claims_v1(
+        request,
+        pending,
+        &compiler_claims,
+        trust_policy,
+    )
+}
+
+fn protected_service_request_from_current_audit_v1(
+    request: &WorkerV3RosterVerificationRequestV1<'_, M1AllKernelsWorkerV3RosterV1>,
+    pending: &M1AllKernelsPendingRequestProjectionV1,
+    current_audit: &WorkerV3CompilerCurrentRecordAuditV1,
+    trust_policy: &M1AllKernelsProtectedVerifierTrustPolicyV1,
+) -> Result<
+    M1AllKernelsProtectedVerifierServiceRequestV1,
+    M1AllKernelsProductionProtectedVerifierErrorV1,
+> {
+    let verification = current_audit.verification();
+    (verification.subject_identity() == pending.compiler_execution_subject_sha256
+        && verification.carriage_identity() == pending.compiler_execution_carriage_sha256
+        && verification.policy_identity() == pending.compiler_execution_policy_sha256
+        && verification.issuer_journal_identity()
+            == pending.compiler_execution_issuer_journal_sha256
+        && verification.worker_ledger_record_identity()
+            == pending.compiler_execution_worker_ledger_record_sha256
+        && verification.sequence() == pending.compiler_execution_sequence
+        && verification.prior_rollback_anchor()
+            == pending.compiler_execution_prior_rollback_anchor
+        && verification.current_rollback_anchor()
+            == pending.compiler_execution_current_rollback_anchor
+        && current_audit.authenticates_pinned_signing_key()
+        && current_audit.authenticates_expected_fresh_challenge()
+        && current_audit.authenticates_protected_current_record()
+        && current_audit.authenticates_external_anchor_commit()
+        && current_audit.authenticates_external_rollback_currentness())
+    .then_some(())
+    .ok_or(M1AllKernelsProductionProtectedVerifierErrorV1::CompilerExecutionAssociationFailed)?;
+    let compiler_claims = M1AllKernelsProtectedReceiptCompilerClaimsV1::new(
+        pending.compiler_execution_subject_sha256,
+        pending.compiler_execution_carriage_sha256,
+        pending.compiler_execution_policy_sha256,
+        pending.compiler_execution_issuer_journal_sha256,
+        pending.compiler_occurrence_sha256,
+        pending.compiler_execution_receipt_sha256,
+        pending.compiler_execution_publication_sha256,
+        pending.compiler_execution_acknowledgment_sha256,
+        pending.compiler_execution_worker_ledger_record_sha256,
+        pending.compiler_execution_sequence,
+        pending.compiler_execution_prior_rollback_anchor,
+        pending.compiler_execution_current_rollback_anchor,
+        *verification.identity().as_bytes(),
+        *current_audit.attestation_identity().as_bytes(),
+        verification.protected_policy_verification_identity(),
+        verification.protected_worker_ledger_verification_identity(),
+        current_audit.external_rollback_verification_identity(),
+    )
+    .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::ReceiptClaims)?;
+    protected_service_request_with_compiler_claims_v1(
+        request,
+        pending,
+        &compiler_claims,
+        trust_policy,
+    )
+}
+
+fn protected_service_request_with_compiler_claims_v1(
+    request: &WorkerV3RosterVerificationRequestV1<'_, M1AllKernelsWorkerV3RosterV1>,
+    pending: &M1AllKernelsPendingRequestProjectionV1,
+    compiler_claims: &M1AllKernelsProtectedReceiptCompilerClaimsV1,
+    trust_policy: &M1AllKernelsProtectedVerifierTrustPolicyV1,
+) -> Result<
+    M1AllKernelsProtectedVerifierServiceRequestV1,
+    M1AllKernelsProductionProtectedVerifierErrorV1,
+> {
+    let source_pin = project_m1_aggregate_module_handoff_v1(
+        request.semantic_compiler_handoff().module_handoff(),
+    )
+    .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::SourcePin)?
+    .source_pin();
+    let source_pin = M1AllKernelsProtectedReceiptSourcePinV1::new(
+        source_pin.compiler_module_sha256(),
+        source_pin.compiler_module_length(),
+        source_pin.compiler_handoff_sha256(),
+        source_pin.compiler_handoff_length(),
+        source_pin.symbol_manifest_sha256(),
+        source_pin.symbol_manifest_length(),
+    )
+    .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::ReceiptClaims)?;
+    let request_claims = M1AllKernelsProtectedReceiptRequestClaimsV1::new(
+        pending.challenge_identity,
+        pending.roster_identity,
+        pending.lineage_identity,
+        pending.finalizer_derivation_sha256,
+        source_pin,
+        pending.capsule_sha256,
+        pending.formal_memory_receipt_sha256,
+        pending.proof_binding_receipt_sha256,
+        pending.finalized_hsaco_sha256,
+        pending.finalized_hsaco_length,
+    )
+    .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::ReceiptClaims)?;
     let entries = pending
         .entries
         .iter()
@@ -903,10 +1042,113 @@ fn protected_service_request_v1(
     M1AllKernelsProtectedVerifierServiceRequestV1::new(
         trust_policy.identity(),
         request_claims,
-        compiler_claims,
+        *compiler_claims,
         entries,
     )
     .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::ServiceRequest)
+}
+
+fn generic_verification_request_v1(
+    request: &WorkerV3RosterVerificationRequestV1<'_, M1AllKernelsWorkerV3RosterV1>,
+    pending: &M1AllKernelsPendingRequestProjectionV1,
+    trust_policy: &M1AllKernelsProtectedVerifierTrustPolicyV1,
+    challenge: M1AllKernelsProtectedVerifierBeginChallengeV2,
+) -> Result<WorkerV3VerificationRequestV1, M1AllKernelsProductionProtectedVerifierErrorV1> {
+    let envelope_view = request.load_envelope_evidence_view();
+    let envelope = envelope_view.exact_canonical_bytes();
+    let hsaco = request.finalized_hsaco_bytes();
+    let envelope_sha256: [u8; 32] = Sha256::digest(envelope).into();
+    let hsaco_sha256: [u8; 32] = Sha256::digest(hsaco).into();
+    (hsaco_sha256 == pending.finalized_hsaco_sha256
+        && u64::try_from(hsaco.len()).ok() == Some(pending.finalized_hsaco_length))
+    .then_some(())
+    .ok_or(M1AllKernelsProductionProtectedVerifierErrorV1::RosterRequestAssociationFailed)?;
+    let entries = pending
+        .entries
+        .iter()
+        .map(|entry| {
+            WorkerV3VerificationEntryCoordinateV1::new(
+                u32::try_from(entry.ordinal).map_err(|_| {
+                    M1AllKernelsProductionProtectedVerifierErrorV1::RosterRequestAssociationFailed
+                })?,
+                entry.logical_name,
+                entry.export_name,
+                entry.lineage_identity.ok_or(
+                    M1AllKernelsProductionProtectedVerifierErrorV1::RosterRequestAssociationFailed,
+                )?,
+                entry.marker_binding_identity,
+                entry.generated_host_contract_identity,
+            )
+            .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::GenericRequest)
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    WorkerV3VerificationRequestV1::new(
+        challenge.into_protocol_challenge(),
+        WorkerV3VerificationRosterIdentityV1::new(pending.roster_identity)
+            .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::GenericRequest)?,
+        WorkerV3VerificationPolicyIdentityV1::new(*trust_policy.identity().as_bytes())
+            .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::GenericRequest)?,
+        WorkerV3VerificationMeasurementIdentityV1::new(trust_policy.verifier_measurement_sha256())
+            .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::GenericRequest)?,
+        WorkerV3VerificationFdPayloadDescriptorV1::load_envelope_v2(
+            u64::try_from(envelope.len()).map_err(|_| {
+                M1AllKernelsProductionProtectedVerifierErrorV1::RosterRequestAssociationFailed
+            })?,
+            envelope_sha256,
+        )
+        .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::GenericRequest)?,
+        WorkerV3VerificationFdPayloadDescriptorV1::finalized_hsaco(
+            pending.finalized_hsaco_length,
+            pending.finalized_hsaco_sha256,
+        )
+        .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::GenericRequest)?,
+        entries,
+    )
+    .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::GenericRequest)
+}
+
+fn protected_payload_snapshots_v2(
+    request: &WorkerV3RosterVerificationRequestV1<'_, M1AllKernelsWorkerV3RosterV1>,
+) -> Result<Vec<OwnedFd>, M1AllKernelsProductionProtectedVerifierErrorV1> {
+    let envelope_view = request.load_envelope_evidence_view();
+    let envelope = sealed_payload_snapshot_v2(
+        "ferric-worker-v3-load-envelope-v2",
+        envelope_view.exact_canonical_bytes(),
+    )?;
+    let hsaco = sealed_payload_snapshot_v2(
+        "ferric-worker-v3-finalized-hsaco",
+        request.finalized_hsaco_bytes(),
+    )?;
+    Ok(Vec::from([envelope, hsaco]))
+}
+
+fn sealed_payload_snapshot_v2(
+    name: &str,
+    bytes: &[u8],
+) -> Result<OwnedFd, M1AllKernelsProductionProtectedVerifierErrorV1> {
+    let descriptor =
+        rustix::fs::memfd_create(name, MemfdFlags::CLOEXEC | MemfdFlags::ALLOW_SEALING)
+            .map_err(|source| payload_snapshot_error_v2("creation", source.into()))?;
+    let mut writer = File::from(descriptor);
+    rustix::fs::fchmod(&writer, Mode::RUSR)
+        .map_err(|source| payload_snapshot_error_v2("permission pinning", source.into()))?;
+    writer
+        .write_all(bytes)
+        .map_err(|source| payload_snapshot_error_v2("write", source))?;
+    writer
+        .flush()
+        .map_err(|source| payload_snapshot_error_v2("flush", source))?;
+    let seals = SealFlags::WRITE | SealFlags::GROW | SealFlags::SHRINK | SealFlags::SEAL;
+    rustix::fs::fcntl_add_seals(&writer, seals)
+        .map_err(|source| payload_snapshot_error_v2("sealing", source.into()))?;
+    Ok(writer.into())
+}
+
+fn payload_snapshot_error_v2(
+    operation: &'static str,
+    source: io::Error,
+) -> M1AllKernelsProductionProtectedVerifierErrorV1 {
+    M1AllKernelsProductionProtectedVerifierErrorV1::PayloadSnapshot { operation, source }
 }
 
 fn authenticated_entry_coordinates_associate_v1(
@@ -995,12 +1237,14 @@ fn authenticated_receipt_associates_v1(
 }
 
 // SAFETY: this implementation promotes only after it has locally reconstructed
-// and cross-bound the exact finalizer, proof inputs, target lineage, finalized
-// HSACO, and signed FD195 compiler-current evidence. It then sends the exact
-// typed source, compiler, artifact, and 12-entry coordinates over an admitted
-// one-shot session, authenticates and correlates the complete signed receipt
-// under caller-provisioned deployment policy, and repeats every ordered entry
-// join before consuming the local owners into fe2o3 aggregate evidence.
+// and cross-bound the exact finalizer, proof inputs, target lineage, and
+// finalized HSACO. It transfers exact immutable envelope/HSACO snapshots,
+// obtains the service challenge before acquiring challenge-bound FD195
+// current-record evidence, and submits both complete canonical arrays. It
+// authenticates the correlated terminal receipt before consuming that audit
+// into compiler evidence, byte-compares the pre/post-bind service requests,
+// and repeats every ordered entry join before consuming the local owners into
+// fe2o3 aggregate evidence.
 unsafe impl WorkerV3ProtectedRosterVerifierBackendV1<M1AllKernelsWorkerV3RosterV1>
     for M1AllKernelsProductionProtectedVerifierV1
 {
@@ -1015,27 +1259,49 @@ unsafe impl WorkerV3ProtectedRosterVerifierBackendV1<M1AllKernelsWorkerV3RosterV
         )?;
         let owners = locally_revalidate_request_v1(request, &pending)
             .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::LocalRevalidation)?;
-        let current_audit = self
-            .current_auditor
-            .audit_roster(request)
-            .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::CompilerCurrentRecordAudit)?;
-        let compiler_execution = current_audit
-            .bind_exact_compiler_execution_v1(
-                request.compiler_execution_subject(),
-                request.compiler_execution_receipt_carriage(),
-            )
-            .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::CompilerExecutionBinding)?;
-        let service_request = protected_service_request_v1(
-            request,
-            &pending,
-            &compiler_execution,
-            &self.trust_policy,
-        )?;
         let client = self.client.take().ok_or(
             M1AllKernelsProductionProtectedVerifierErrorV1::ProtectedVerifierClientAlreadyConsumed,
         )?;
-        let authenticated = client
-            .request_receipt(&self.trust_policy, &service_request)
+        let begin_challenge = self
+            .begin_challenge
+            .take()
+            .ok_or(M1AllKernelsProductionProtectedVerifierErrorV1::BeginChallengeAlreadyConsumed)?;
+        let generic_request = generic_verification_request_v1(
+            request,
+            &pending,
+            &self.trust_policy,
+            begin_challenge,
+        )?;
+        let snapshots = protected_payload_snapshots_v2(request)?;
+        let reserved = client
+            .begin(generic_request, snapshots)
+            .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::ProtectedVerifierClient)?;
+        let (service_challenge, pending_client) = reserved.into_parts();
+        let compiler_challenge = service_challenge
+            .into_compiler_execution_challenge()
+            .map_err(
+                M1AllKernelsProductionProtectedVerifierErrorV1::CompilerCurrentRecordChallenge,
+            )?;
+        let current_audit = self
+            .current_auditor
+            .audit_roster_with_challenge(request, compiler_challenge)
+            .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::CompilerCurrentRecordAudit)?;
+        let service_request = protected_service_request_from_current_audit_v1(
+            request,
+            &pending,
+            &current_audit,
+            &self.trust_policy,
+        )?;
+        let current_record = current_audit.canonical_evidence_view();
+        let exact_verification = *current_record.verification_canonical_bytes();
+        let exact_attestation = *current_record.attestation_canonical_bytes();
+        let authenticated = pending_client
+            .submit_current_record(
+                exact_verification,
+                exact_attestation,
+                &self.trust_policy,
+                &service_request,
+            )
             .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::ProtectedVerifierClient)?;
         authenticated_receipt_associates_v1(
             &authenticated,
@@ -1046,6 +1312,23 @@ unsafe impl WorkerV3ProtectedRosterVerifierBackendV1<M1AllKernelsWorkerV3RosterV
         .ok_or(
             M1AllKernelsProductionProtectedVerifierErrorV1::AuthenticatedReceiptAssociationFailed,
         )?;
+        let compiler_execution = current_audit
+            .bind_exact_compiler_execution_v1(
+                request.compiler_execution_subject(),
+                request.compiler_execution_receipt_carriage(),
+            )
+            .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::CompilerExecutionBinding)?;
+        let bound_service_request = protected_service_request_v1(
+            request,
+            &pending,
+            &compiler_execution,
+            &self.trust_policy,
+        )?;
+        (bound_service_request.canonical_bytes() == service_request.canonical_bytes())
+            .then_some(())
+            .ok_or(
+                M1AllKernelsProductionProtectedVerifierErrorV1::CompilerExecutionAssociationFailed,
+            )?;
         let entries = authenticated_entry_evidence_v1(request, &pending, &authenticated)?;
         let verifier_measurement = authenticated.receipt().verifier_measurement_sha256();
         let verification_transcript = authenticated.receipt().verification_transcript_sha256();
