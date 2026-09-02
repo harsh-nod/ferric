@@ -23,3 +23,13 @@ that third-party code is correct. Updating a lockfile, manifest, feature set,
 target, or dependency edge requires regeneration and review of the resulting
 TCB diff. `proofs/qualify-release.sh` regenerates and compares both records and
 runs the source-gate unit suite in locked release mode before using the gate.
+
+Registry and Git `manifest_path` and target paths are observations, not source
+authentication. The qualifier creates both Cargo 1.97 metadata documents itself
+from the locked, read-only source snapshot, stores them below its private
+`mktemp` directory, and passes those fresh documents directly to the source
+gate. Registry checksums and exact Git revisions remain the source authorities.
+The gate requires every observed target to remain below its observed package
+manifest directory and requires first-party manifests to be the exact reviewed
+repository paths; it does not claim to authenticate an arbitrary caller-supplied
+registry checkout independently of this qualification boundary.

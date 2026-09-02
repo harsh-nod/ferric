@@ -986,8 +986,16 @@ fn render_verifier_lock_records(text: &str) -> GateResult<Vec<String>> {
         if !closure.insert(index) {
             continue;
         }
+        let mut resolved_dependencies = BTreeSet::new();
         for dependency in &packages[index].dependencies {
-            stack.push(resolve_lock_dependency(&packages, dependency)?);
+            let dependency_index = resolve_lock_dependency(&packages, dependency)?;
+            if !resolved_dependencies.insert(dependency_index) {
+                return Err(format!(
+                    "standalone verifier lock dependency strings resolve to one package: {}",
+                    packages[index].name
+                ));
+            }
+            stack.push(dependency_index);
         }
     }
     if closure.len() != packages.len() {
@@ -2226,6 +2234,12 @@ enum VerifierDependencyScope {
     Development,
 }
 
+#[derive(Debug, Eq, PartialEq)]
+struct VerifierEdgeKinds {
+    traversed: Vec<(String, String)>,
+    filtered: Vec<(String, String)>,
+}
+
 fn verifier_tcb_format(scope: VerifierDependencyScope) -> &'static str {
     match scope {
         VerifierDependencyScope::Production => VERIFIER_PRODUCTION_TCB_FORMAT,
@@ -2288,7 +2302,15 @@ fn canonical_verifier_package_id(repo: &Path, package: &Value) -> GateResult<Str
         )),
         None => {
             let manifest = canonical(Path::new(string_field(package, "manifest_path")?))?;
-            let root = manifest
+            let relative = allowed_local_package_path(name)
+                .ok_or_else(|| format!("unadmitted local verifier dependency package: {name}"))?;
+            let expected_manifest = canonical(&repo.join(relative).join("Cargo.toml"))?;
+            if manifest != expected_manifest {
+                return Err(format!(
+                    "local verifier dependency manifest path drifted: {name}"
+                ));
+            }
+            let root = expected_manifest
                 .parent()
                 .ok_or_else(|| format!("local verifier package root is absent: {name}"))?;
             let relative = canonical_local_path(repo, name, root)?;
@@ -2447,14 +2469,24 @@ fn validate_isolated_lock_closure(
                 verifier_metadata_identity(package)
             })
             .collect::<GateResult<BTreeSet<_>>>()?;
-        let lock_dependencies = lock_package
+        let lock_dependency_values = lock_package
             .dependencies
             .iter()
             .map(|dependency| {
                 resolve_lock_dependency(lock_packages, dependency)
                     .map(|index| lock_identity(&lock_packages[index]))
             })
-            .collect::<GateResult<BTreeSet<_>>>()?;
+            .collect::<GateResult<Vec<_>>>()?;
+        let lock_dependencies = lock_dependency_values
+            .iter()
+            .cloned()
+            .collect::<BTreeSet<_>>();
+        if lock_dependency_values.len() != lock_dependencies.len() {
+            return Err(format!(
+                "standalone verifier lock dependency identities are duplicated: {}",
+                lock_package.name
+            ));
+        }
         if metadata_dependencies != lock_dependencies {
             return Err(format!(
                 "standalone verifier metadata and lock topology drifted: {}",
@@ -2487,7 +2519,7 @@ fn validate_isolated_lock_closure(
 fn verifier_edge_kinds(
     edge: &Value,
     scope: VerifierDependencyScope,
-) -> GateResult<Vec<(String, String)>> {
+) -> GateResult<VerifierEdgeKinds> {
     let edge_object = edge
         .as_object()
         .ok_or_else(|| "verifier dependency resolve edge is malformed".to_owned())?;
@@ -2499,12 +2531,15 @@ fn verifier_edge_kinds(
     {
         return Err("verifier dependency resolve edge field roster drifted".to_owned());
     }
-    let mut kinds = Vec::new();
-    for kind in edge
+    let kind_values = edge
         .get("dep_kinds")
         .and_then(Value::as_array)
-        .ok_or_else(|| "verifier dependency edge kinds are malformed".to_owned())?
-    {
+        .ok_or_else(|| "verifier dependency edge kinds are malformed".to_owned())?;
+    if kind_values.is_empty() {
+        return Err("verifier dependency edge has no kind".to_owned());
+    }
+    let mut kinds = Vec::new();
+    for kind in kind_values {
         let object = kind
             .as_object()
             .ok_or_else(|| "verifier dependency edge kind is malformed".to_owned())?;
@@ -2519,18 +2554,21 @@ fn verifier_edge_kinds(
         }
         let target = nullable_string_field(kind, "target")?.unwrap_or("none");
         safe_tcb_field(target, "verifier dependency edge target")?;
-        if scope == VerifierDependencyScope::Development || name != "dev" {
-            kinds.push((name.to_owned(), target.to_owned()));
-        }
-    }
-    if kinds.is_empty() && scope == VerifierDependencyScope::Development {
-        return Err("standalone verifier dependency edge has no kind".to_owned());
+        kinds.push((name.to_owned(), target.to_owned()));
     }
     kinds.sort();
     if kinds.windows(2).any(|pair| pair[0] == pair[1]) {
         return Err("duplicate verifier dependency edge kind".to_owned());
     }
-    Ok(kinds)
+    let (filtered, traversed) = if scope == VerifierDependencyScope::Production {
+        kinds.into_iter().partition(|(kind, _)| kind == "dev")
+    } else {
+        (Vec::new(), kinds)
+    };
+    Ok(VerifierEdgeKinds {
+        traversed,
+        filtered,
+    })
 }
 
 fn validate_node_dependency_ids(node: &Value) -> GateResult<()> {
@@ -2559,6 +2597,44 @@ fn validate_node_dependency_ids(node: &Value) -> GateResult<()> {
         || edge_ids != dependency_ids
     {
         return Err("verifier dependency ID roster drifted".to_owned());
+    }
+    Ok(())
+}
+
+fn validate_resolved_edge_declarations(package: &Value, node: &Value) -> GateResult<()> {
+    let declarations = package
+        .get("dependencies")
+        .and_then(Value::as_array)
+        .ok_or_else(|| "verifier dependency declarations are malformed".to_owned())?
+        .iter()
+        .map(|dependency| {
+            let name = nullable_string_field(dependency, "rename")?
+                .unwrap_or(string_field(dependency, "name")?)
+                .replace('-', "_");
+            let kind = nullable_string_field(dependency, "kind")?
+                .unwrap_or("normal")
+                .to_owned();
+            let target = nullable_string_field(dependency, "target")?
+                .unwrap_or("none")
+                .to_owned();
+            Ok((name, kind, target))
+        })
+        .collect::<GateResult<BTreeSet<_>>>()?;
+    for edge in node
+        .get("deps")
+        .and_then(Value::as_array)
+        .ok_or_else(|| "verifier dependency resolve edges are malformed".to_owned())?
+    {
+        let edge_name = string_field(edge, "name")?;
+        for (kind, target) in
+            verifier_edge_kinds(edge, VerifierDependencyScope::Development)?.traversed
+        {
+            if !declarations.contains(&(edge_name.to_owned(), kind.clone(), target.clone())) {
+                return Err(format!(
+                    "verifier resolved edge has no matching declaration: {edge_name}::{kind}::{target}"
+                ));
+            }
+        }
     }
     Ok(())
 }
@@ -2631,6 +2707,13 @@ fn render_verifier_dependency_tcb(
     metadata: &Value,
     scope: VerifierDependencyScope,
 ) -> GateResult<String> {
+    let expected_workspace_root = match scope {
+        VerifierDependencyScope::Production => canonical(repo)?,
+        VerifierDependencyScope::Development => canonical(&repo.join(VERIFIER_RELATIVE_PATH))?,
+    };
+    if canonical(Path::new(string_field(metadata, "workspace_root")?))? != expected_workspace_root {
+        return Err("verifier Cargo metadata workspace root drifted".to_owned());
+    }
     let packages = package_map(metadata)?;
     let nodes = resolve_map(metadata)?;
     let workspace_members = metadata
@@ -2710,10 +2793,6 @@ fn render_verifier_dependency_tcb(
 
     if let Some(lock_packages) = &lock_packages {
         validate_isolated_lock_closure(metadata, &packages, &nodes, lock_packages)?;
-        let workspace_root = canonical(Path::new(string_field(metadata, "workspace_root")?))?;
-        if workspace_root != canonical(&repo.join(VERIFIER_RELATIVE_PATH))? {
-            return Err("standalone verifier workspace root drifted".to_owned());
-        }
     }
 
     let mut closure = BTreeSet::new();
@@ -2730,12 +2809,13 @@ fn render_verifier_dependency_tcb(
             .get(id.as_str())
             .ok_or_else(|| format!("verifier dependency has no resolve node: {id}"))?;
         validate_node_dependency_ids(node)?;
+        validate_resolved_edge_declarations(package, node)?;
         for edge in node
             .get("deps")
             .and_then(Value::as_array)
             .ok_or_else(|| format!("verifier dependency resolve edges are malformed: {id}"))?
         {
-            if !verifier_edge_kinds(edge, scope)?.is_empty() {
+            if !verifier_edge_kinds(edge, scope)?.traversed.is_empty() {
                 stack.push(string_field(edge, "pkg")?.to_owned());
             }
         }
@@ -2751,6 +2831,7 @@ fn render_verifier_dependency_tcb(
     let mut target_records = Vec::new();
     let mut declaration_records = Vec::new();
     let mut edge_records = Vec::new();
+    let mut filtered_edge_records = Vec::new();
     for id in &closure {
         let package = packages
             .get(id.as_str())
@@ -2864,7 +2945,8 @@ fn render_verifier_dependency_tcb(
             .ok_or_else(|| format!("verifier dependency resolve edges are malformed: {id}"))?
         {
             let dependency_id = string_field(edge, "pkg")?;
-            for (kind, target) in verifier_edge_kinds(edge, scope)? {
+            let kinds = verifier_edge_kinds(edge, scope)?;
+            for (kind, target) in kinds.traversed {
                 if !closure.contains(dependency_id) {
                     return Err(format!(
                         "verifier dependency edge escapes closure: {id}::{}",
@@ -2880,6 +2962,16 @@ fn render_verifier_dependency_tcb(
                     canonical_verifier_package_id(repo, dependency_package)?,
                 ));
             }
+            for (kind, target) in kinds.filtered {
+                let dependency_package = packages.get(dependency_id).ok_or_else(|| {
+                    format!("filtered verifier dependency package is absent: {dependency_id}")
+                })?;
+                filtered_edge_records.push(format!(
+                    "filtered-edge={canonical_id}|{}|{}|{kind}|{target}",
+                    string_field(edge, "name")?,
+                    canonical_verifier_package_id(repo, dependency_package)?,
+                ));
+            }
         }
     }
     for records in [
@@ -2888,6 +2980,7 @@ fn render_verifier_dependency_tcb(
         &mut target_records,
         &mut declaration_records,
         &mut edge_records,
+        &mut filtered_edge_records,
     ] {
         records.sort();
         if records.windows(2).any(|pair| pair[0] == pair[1]) {
@@ -2904,6 +2997,7 @@ fn render_verifier_dependency_tcb(
     lines.extend(target_records);
     lines.extend(declaration_records);
     lines.extend(edge_records);
+    lines.extend(filtered_edge_records);
     Ok(lines.join("\n") + "\n")
 }
 
@@ -5124,14 +5218,15 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::{
-        cfg_test_fixture_item, cfg_test_item, inherent_owner_module, package_map,
-        parse_generated_roster_declaration, render_verifier_lock_records, resolve_map,
-        runtime_lock_checksums, target_module_dir, validate_aggregate_runtime_roster_file,
-        validate_attributes, validate_node_dependency_ids, validate_source_pin_package,
+        canonical_verifier_package_id, canonical_verifier_target_path, cfg_test_fixture_item,
+        cfg_test_item, inherent_owner_module, package_map, parse_generated_roster_declaration,
+        render_verifier_lock_records, resolve_map, runtime_lock_checksums, target_module_dir,
+        validate_aggregate_runtime_roster_file, validate_attributes, validate_node_dependency_ids,
+        validate_resolved_edge_declarations, validate_source_pin_package,
         validate_verifier_dependency_declarations, validate_verifier_resolved_dependencies,
         verifier_edge_kinds, ExpectedRuntimeDependency, ExpectedSourcePinTarget,
-        VerifierDependencyScope, CRATES_IO_SOURCE, FE2O3_RESOLVED_SOURCE, FE2O3_SOURCE,
-        SOURCE_PIN_DEPENDENCIES, SOURCE_PIN_PACKAGE_NAME, SOURCE_PIN_RELATIVE_PATH,
+        VerifierDependencyScope, VerifierEdgeKinds, CRATES_IO_SOURCE, FE2O3_RESOLVED_SOURCE,
+        FE2O3_SOURCE, SOURCE_PIN_DEPENDENCIES, SOURCE_PIN_PACKAGE_NAME, SOURCE_PIN_RELATIVE_PATH,
         SOURCE_PIN_TARGETS, VERIFIER_DEV_DEPENDENCIES, VERIFIER_NORMAL_DEPENDENCIES,
     };
     use serde_json::{json, Value};
@@ -6035,6 +6130,11 @@ mod tests {
                 "name = \"proc-macro2\"\nversion = \"1.0.107\"\nsource = \"registry+https://github.com/rust-lang/crates.io-index\"\nchecksum = \"985e7ec9bb745e6ce6535b544d84d6cd6f7ad8bd711c398938ae983b91a766d9\"\ndependencies = [\n \"unicode-ident\",\n]",
                 "name = \"proc-macro2\"\nversion = \"1.0.107\"\nsource = \"registry+https://github.com/rust-lang/crates.io-index\"\nchecksum = \"985e7ec9bb745e6ce6535b544d84d6cd6f7ad8bd711c398938ae983b91a766d9\"\ndependencies = [\n \"unicode-ident-missing\",\n]",
             ),
+            replace_once(
+                VERIFIER_LOCK,
+                "dependencies = [\n \"unicode-ident\",\n]",
+                "dependencies = [\n \"unicode-ident\",\n \"unicode-ident 1.0.24 (registry+https://github.com/rust-lang/crates.io-index)\",\n]",
+            ),
             format!(
                 "{VERIFIER_LOCK}\n[[package]]\nname = \"unreachable\"\nversion = \"1.0.0\"\n"
             ),
@@ -6063,15 +6163,37 @@ mod tests {
         });
         assert_eq!(
             verifier_edge_kinds(&normal, VerifierDependencyScope::Production),
-            Ok(vec![("normal".to_owned(), "none".to_owned())])
+            Ok(VerifierEdgeKinds {
+                traversed: vec![("normal".to_owned(), "none".to_owned())],
+                filtered: Vec::new(),
+            })
         );
         assert_eq!(
             verifier_edge_kinds(&dev, VerifierDependencyScope::Production),
-            Ok(Vec::new())
+            Ok(VerifierEdgeKinds {
+                traversed: Vec::new(),
+                filtered: vec![("dev".to_owned(), "cfg(unix)".to_owned())],
+            })
         );
         assert_eq!(
             verifier_edge_kinds(&dev, VerifierDependencyScope::Development),
-            Ok(vec![("dev".to_owned(), "cfg(unix)".to_owned())])
+            Ok(VerifierEdgeKinds {
+                traversed: vec![("dev".to_owned(), "cfg(unix)".to_owned())],
+                filtered: Vec::new(),
+            })
+        );
+        let mut empty = normal.clone();
+        empty["dep_kinds"] = json!([]);
+        assert!(verifier_edge_kinds(&empty, VerifierDependencyScope::Production).is_err());
+        assert!(verifier_edge_kinds(&empty, VerifierDependencyScope::Development).is_err());
+        let mut reclassified = normal.clone();
+        reclassified["dep_kinds"][0]["kind"] = json!("dev");
+        assert_eq!(
+            verifier_edge_kinds(&reclassified, VerifierDependencyScope::Production),
+            Ok(VerifierEdgeKinds {
+                traversed: Vec::new(),
+                filtered: vec![("dev".to_owned(), "none".to_owned())],
+            })
         );
 
         let exact_node = json!({
@@ -6082,6 +6204,56 @@ mod tests {
             ],
         });
         assert_eq!(validate_node_dependency_ids(&exact_node), Ok(()));
+        let package = json!({
+            "dependencies": [
+                {
+                    "name": "normal-edge",
+                    "rename": null,
+                    "kind": null,
+                    "target": null
+                },
+                {
+                    "name": "dev-edge-package",
+                    "rename": "dev_edge",
+                    "kind": "dev",
+                    "target": "cfg(unix)"
+                }
+            ]
+        });
+        assert_eq!(
+            validate_resolved_edge_declarations(&package, &exact_node),
+            Ok(())
+        );
+        for (field, replacement) in [
+            ("name", json!("unmatched")),
+            ("dep_kinds", json!([{ "kind": "build", "target": null }])),
+            (
+                "dep_kinds",
+                json!([{ "kind": "dev", "target": "cfg(windows)" }]),
+            ),
+        ] {
+            let mut hostile = exact_node.clone();
+            hostile["deps"][1][field] = replacement;
+            assert!(validate_resolved_edge_declarations(&package, &hostile).is_err());
+        }
+        let mut extra_dev = exact_node.clone();
+        extra_dev["deps"].as_array_mut().unwrap().push(json!({
+            "name": "extra_dev",
+            "pkg": "registry+https://example.invalid#extra-dev@1.0.0",
+            "dep_kinds": [{ "kind": "dev", "target": null }],
+        }));
+        extra_dev["dependencies"]
+            .as_array_mut()
+            .unwrap()
+            .push(json!("registry+https://example.invalid#extra-dev@1.0.0"));
+        assert_eq!(validate_node_dependency_ids(&extra_dev), Ok(()));
+        assert_eq!(
+            verifier_edge_kinds(&extra_dev["deps"][2], VerifierDependencyScope::Production),
+            Ok(VerifierEdgeKinds {
+                traversed: Vec::new(),
+                filtered: vec![("dev".to_owned(), "none".to_owned())],
+            })
+        );
         for hostile in [
             {
                 let mut value = exact_node.clone();
@@ -6117,6 +6289,30 @@ mod tests {
                     .is_err()
             );
         }
+    }
+
+    #[test]
+    fn verifier_local_manifest_and_target_roots_are_exact() {
+        let repo = repo();
+        let source_pin = VERIFIER_NORMAL_DEPENDENCIES
+            .iter()
+            .find(|dependency| dependency.name == SOURCE_PIN_PACKAGE_NAME)
+            .expect("source-pin descriptor");
+        let mut package = resolved_package(&repo, source_pin);
+        assert!(canonical_verifier_package_id(&repo, &package).is_ok());
+
+        let target = source_pin_target(&repo, &SOURCE_PIN_TARGETS[0]);
+        assert_eq!(
+            canonical_verifier_target_path(&package, &target),
+            Ok("src/lib.rs".to_owned())
+        );
+
+        let exact_package = package.clone();
+        package["manifest_path"] = json!(repo.join("Cargo.toml"));
+        assert!(canonical_verifier_package_id(&repo, &package).is_err());
+        let mut escaped_target = target;
+        escaped_target["src_path"] = json!(repo.join("Cargo.toml"));
+        assert!(canonical_verifier_target_path(&exact_package, &escaped_target).is_err());
     }
 
     fn validate_aggregate_source(source: &str) -> super::GateResult<()> {

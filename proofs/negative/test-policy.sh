@@ -239,7 +239,7 @@ expect_rejected verifier-dev-feature 'protected verifier resolved features drift
 expect_rejected verifier-dev-target 'verifier dependency TCB drifted' \
     "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" "$metadata" \
     "$scratch/verifier-dev-target.metadata"
-expect_rejected verifier-dev-edge 'verifier dependency TCB drifted' \
+expect_rejected verifier-dev-edge 'verifier resolved edge has no matching declaration' \
     "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" "$metadata" \
     "$scratch/verifier-dev-edge.metadata"
 expect_rejected verifier-dev-unreachable \
@@ -504,20 +504,164 @@ owner_dependencies[owner_dependencies.index(aggregate_id)] = compatibility["id"]
 write_hostile("resolve", local_resolve)
 PY
 
-python3 -I - "$metadata" "$scratch/verifier-production-target.metadata" <<'PY'
+python3 -I - "$metadata" "$scratch" <<'PY'
+import copy
 import json
 from pathlib import Path
 import sys
 
 metadata = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+scratch = Path(sys.argv[2])
+packages = {package["id"]: package for package in metadata["packages"]}
+nodes = {node["id"]: node for node in metadata["resolve"]["nodes"]}
+root = next(
+    package["id"]
+    for package in metadata["packages"]
+    if package["name"] == "ferric-qwen3-all-kernels-worker-v3-verifier-v1"
+)
+
+def edge_kinds(edge):
+    return [(kind["kind"] or "normal", kind["target"]) for kind in edge["dep_kinds"]]
+
+reachable = set()
+stack = [root]
+while stack:
+    identity = stack.pop()
+    if identity in reachable:
+        continue
+    reachable.add(identity)
+    for edge in nodes[identity]["deps"]:
+        if any(kind != "dev" for kind, _ in edge_kinds(edge)):
+            stack.append(edge["pkg"])
+
+selected = None
+for identity in sorted(reachable):
+    package = packages[identity]
+    for edge_index, edge in enumerate(nodes[identity]["deps"]):
+        for kind_index, (kind, target) in enumerate(edge_kinds(edge)):
+            if kind != "normal":
+                continue
+            for declaration_index, declaration in enumerate(package["dependencies"]):
+                declared_name = (declaration["rename"] or declaration["name"]).replace("-", "_")
+                declared_kind = declaration["kind"] or "normal"
+                if (declared_name, declared_kind, declaration["target"]) == (
+                    edge["name"], kind, target
+                ):
+                    selected = (identity, edge_index, kind_index, declaration_index)
+                    break
+            if selected:
+                break
+        if selected:
+            break
+    if selected:
+        break
+if selected is None:
+    raise SystemExit("production verifier edge/declaration fixture anchor drifted")
+identity, edge_index, kind_index, declaration_index = selected
+
 package = next(package for package in metadata["packages"] if package["name"] == "curve25519-dalek")
 package["targets"][0]["doc"] = not package["targets"][0]["doc"]
-Path(sys.argv[2]).write_text(json.dumps(metadata), encoding="utf-8")
+(scratch / "verifier-production-target.metadata").write_text(
+    json.dumps(metadata), encoding="utf-8"
+)
+
+empty = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+next(node for node in empty["resolve"]["nodes"] if node["id"] == identity)["deps"][edge_index][
+    "dep_kinds"
+] = []
+(scratch / "verifier-production-empty-kind.metadata").write_text(
+    json.dumps(empty), encoding="utf-8"
+)
+
+reclassified = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+next(node for node in reclassified["resolve"]["nodes"] if node["id"] == identity)["deps"][
+    edge_index
+]["dep_kinds"][kind_index]["kind"] = "dev"
+next(package for package in reclassified["packages"] if package["id"] == identity)[
+    "dependencies"
+][declaration_index]["kind"] = "dev"
+(scratch / "verifier-production-reclassified.metadata").write_text(
+    json.dumps(reclassified), encoding="utf-8"
+)
+
+extra_dev = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+extra_packages = {package["id"]: package for package in extra_dev["packages"]}
+owner = extra_packages[identity]
+owner_node = next(node for node in extra_dev["resolve"]["nodes"] if node["id"] == identity)
+existing_ids = {edge["pkg"] for edge in owner_node["deps"]}
+extra = next(
+    package
+    for package in extra_dev["packages"]
+    if package["source"] == "registry+https://github.com/rust-lang/crates.io-index"
+    and package["id"] not in existing_ids
+    and package["id"] != identity
+)
+edge_name = extra["name"].replace("-", "_") + "_filtered_probe"
+owner["dependencies"].append(
+    {
+        "name": extra["name"],
+        "source": extra["source"],
+        "req": "=" + extra["version"],
+        "kind": "dev",
+        "rename": edge_name,
+        "optional": False,
+        "uses_default_features": True,
+        "features": [],
+        "target": None,
+        "registry": None,
+    }
+)
+owner_node["deps"].append(
+    {
+        "name": edge_name,
+        "pkg": extra["id"],
+        "dep_kinds": [{"kind": "dev", "target": None}],
+    }
+)
+owner_node["dependencies"].append(extra["id"])
+(scratch / "verifier-production-extra-dev.metadata").write_text(
+    json.dumps(extra_dev), encoding="utf-8"
+)
+
+workspace_root = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+workspace_root["workspace_root"] = str(Path(workspace_root["workspace_root"]) / "adapters")
+(scratch / "verifier-production-workspace-root.metadata").write_text(
+    json.dumps(workspace_root), encoding="utf-8"
+)
+
+remote_manifest = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+remote_package = next(
+    package for package in remote_manifest["packages"] if package["name"] == "curve25519-dalek"
+)
+remote_package["manifest_path"] = str(
+    Path(remote_manifest["workspace_root"])
+    / "adapters/qwen3-all-kernels-worker-v3-verifier-v1/Cargo.toml"
+)
+(scratch / "verifier-production-remote-manifest.metadata").write_text(
+    json.dumps(remote_manifest), encoding="utf-8"
+)
 PY
 
 expect_rejected verifier-production-target 'verifier dependency TCB drifted' \
     "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/verifier-production-target.metadata" "$verifier_metadata"
+expect_rejected verifier-production-empty-kind 'verifier dependency edge has no kind' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    "$scratch/verifier-production-empty-kind.metadata" "$verifier_metadata"
+expect_rejected verifier-production-reclassified 'verifier dependency TCB drifted' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    "$scratch/verifier-production-reclassified.metadata" "$verifier_metadata"
+expect_rejected verifier-production-extra-dev 'verifier dependency TCB drifted' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    "$scratch/verifier-production-extra-dev.metadata" "$verifier_metadata"
+expect_rejected verifier-production-workspace-root \
+    'verifier Cargo metadata workspace root drifted' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    "$scratch/verifier-production-workspace-root.metadata" "$verifier_metadata"
+expect_rejected verifier-production-remote-manifest \
+    'verifier dependency target escapes its package root' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    "$scratch/verifier-production-remote-manifest.metadata" "$verifier_metadata"
 
 expect_rejected runtime-tcb-feature 'workspace runtime dependency TCB drifted' \
     invoke_source_gate "$repo" "$repo/proofs/VERIFIED_MODULES" \
