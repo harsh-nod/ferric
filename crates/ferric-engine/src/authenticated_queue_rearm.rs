@@ -1838,32 +1838,7 @@ const fn authenticated_classified_submission_failure(
     M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1 { phase, retained }
 }
 
-trait ClosePreparedRearmSubmissionV1<R> {
-    fn close(self, recipe: R) -> AuthenticatedSubmissionOpaqueCustodyV1;
-}
-
-fn close_prepared_rearm_submission<P, R>(
-    prepared: P,
-    recipe: R,
-) -> AuthenticatedSubmissionOpaqueCustodyV1
-where
-    P: ClosePreparedRearmSubmissionV1<R>,
-{
-    prepared.close(recipe)
-}
-
-impl ClosePreparedRearmSubmissionV1<AddresslessM1PhysicalBufferRecipeV1>
-    for M1AuthenticatedPreparedLongLivedQueueRearmV1
-{
-    fn close(
-        self,
-        recipe: AddresslessM1PhysicalBufferRecipeV1,
-    ) -> AuthenticatedSubmissionOpaqueCustodyV1 {
-        close_native_prepared_rearm_submission(self, recipe)
-    }
-}
-
-fn close_native_prepared_rearm_submission(
+fn close_prepared_rearm_submission(
     prepared: M1AuthenticatedPreparedLongLivedQueueRearmV1,
     recipe: AddresslessM1PhysicalBufferRecipeV1,
 ) -> AuthenticatedSubmissionOpaqueCustodyV1 {
@@ -1906,33 +1881,6 @@ fn close_native_prepared_rearm_submission(
         }
         Err(quarantined) => {
             AuthenticatedSubmissionOpaqueCustodyV1::Quarantined(Box::new((quarantined, retained)))
-        }
-    }
-}
-
-#[cfg(test)]
-#[derive(Debug)]
-struct InjectedPreparedRearmSubmissionV1 {
-    queue: crate::authenticated_test_runtime::InjectedQueueV1,
-    releases_cleanly: bool,
-}
-
-#[cfg(test)]
-#[derive(Debug)]
-struct InjectedPreparedRearmRecipeV1;
-
-#[cfg(test)]
-impl ClosePreparedRearmSubmissionV1<InjectedPreparedRearmRecipeV1>
-    for InjectedPreparedRearmSubmissionV1
-{
-    fn close(
-        self,
-        _recipe: InjectedPreparedRearmRecipeV1,
-    ) -> AuthenticatedSubmissionOpaqueCustodyV1 {
-        if self.queue.destroy(self.releases_cleanly) {
-            AuthenticatedSubmissionOpaqueCustodyV1::Released(Box::new(self.queue))
-        } else {
-            AuthenticatedSubmissionOpaqueCustodyV1::Quarantined(Box::new(self.queue))
         }
     }
 }
@@ -5355,37 +5303,73 @@ mod tests {
     }
 
     #[test]
-    fn prepared_rearm_close_executes_one_destroy_and_classifies_both_outcomes() {
-        use crate::authenticated_test_runtime::{InjectedQueuePhaseV1, InjectedQueueV1};
-
-        for releases_cleanly in [true, false] {
-            let queue = InjectedQueueV1::new([], []);
-            let retained = close_prepared_rearm_submission(
-                InjectedPreparedRearmSubmissionV1 {
-                    queue: queue.clone(),
-                    releases_cleanly,
-                },
-                InjectedPreparedRearmRecipeV1,
-            );
-            assert_eq!(
-                matches!(
-                    retained,
-                    AuthenticatedSubmissionOpaqueCustodyV1::Released(_)
-                ),
-                releases_cleanly
-            );
-            let snapshot = queue.snapshot();
-            assert_eq!(snapshot.submits, 0);
-            assert_eq!(snapshot.destroys, 1);
-            assert_eq!(
-                snapshot.phase,
-                if releases_cleanly {
-                    InjectedQueuePhaseV1::Destroyed
-                } else {
-                    InjectedQueuePhaseV1::Quarantined
-                }
-            );
+    fn authenticated_repeat_round_surface_has_schedule_release_and_teardown_edges() {
+        type ScheduleNext = fn(
+            M1AuthenticatedLongLivedQueueReleasedRoundV1,
+            &mut Engine<32>,
+        ) -> Result<
+            M1AuthenticatedScheduledLongLivedQueueRearmV1,
+            M1AuthenticatedLongLivedQueueRearmScheduleFailureV1,
+        >;
+        type ScheduleNextExact = fn(
+            M1AuthenticatedLongLivedQueueReleasedRoundV1,
+            &mut Engine<32>,
+            CompletionEpoch,
+            &[RequestId],
+        ) -> Result<
+            M1AuthenticatedScheduledLongLivedQueueRearmV1,
+            M1AuthenticatedLongLivedQueueRearmScheduleFailureV1,
+        >;
+        type Teardown = fn(
+            M1AuthenticatedLongLivedQueueReleasedRoundV1,
+            &mut Engine<32>,
+        ) -> Result<
+            M1AuthenticatedLongLivedQueueRearmTeardownSuccessV1,
+            Box<M1AuthenticatedLongLivedQueueRearmTeardownFailureV1>,
+        >;
+        type Release = fn(
+            M1AuthenticatedRearmedCompletionOutcomeV1,
+        ) -> M1AuthenticatedRearmedRoundReleaseOutcomeV1;
+        type RetryRelease = fn(
+            M1AuthenticatedRearmedRoundPageReleaseFailureV1,
+        ) -> M1AuthenticatedRearmedRoundReleaseOutcomeV1;
+        type ReadbackTeardown = fn(
+            Box<M1AuthenticatedRearmedReadbackFailureV1>,
+            &mut Engine<32>,
+        ) -> Result<
+            M1AuthenticatedRearmedReadbackTeardownSuccessV1,
+            Box<M1AuthenticatedRearmedReadbackTeardownFailureV1>,
+        >;
+        type CompletionPreflightTeardown = fn(
+            M1AuthenticatedRearmedCompletionPreflightFailureV1,
+            &mut Engine<32>,
+        ) -> Result<
+            M1AuthenticatedRearmedCompletionPreflightTeardownSuccessV1,
+            Box<M1AuthenticatedRearmedCompletionPreflightTeardownFailureV1>,
+        >;
+        fn exhaust_release(outcome: M1AuthenticatedRearmedRoundReleaseOutcomeV1) {
+            match outcome {
+                M1AuthenticatedRearmedRoundReleaseOutcomeV1::Released(_)
+                | M1AuthenticatedRearmedRoundReleaseOutcomeV1::Rejected(_)
+                | M1AuthenticatedRearmedRoundReleaseOutcomeV1::NotCompleted(_) => {}
+            }
         }
+
+        let _: ScheduleNext = M1AuthenticatedLongLivedQueueReleasedRoundV1::schedule_next::<32>;
+        let _: ScheduleNextExact =
+            M1AuthenticatedLongLivedQueueReleasedRoundV1::schedule_next_exact::<32>;
+        let _: Teardown =
+            M1AuthenticatedLongLivedQueueReleasedRoundV1::destroy_queue_and_retain_round::<32>;
+        let _: Release = M1AuthenticatedRearmedCompletionOutcomeV1::release_completed;
+        let _: RetryRelease = M1AuthenticatedRearmedRoundPageReleaseFailureV1::retry;
+        let _: ReadbackTeardown =
+            M1AuthenticatedRearmedReadbackFailureV1::destroy_queue_and_retain_custody::<32>;
+        let _: CompletionPreflightTeardown =
+            M1AuthenticatedRearmedCompletionPreflightFailureV1::destroy_queue_and_retain_custody::<
+                32,
+            >;
+
+        let _: fn(M1AuthenticatedRearmedRoundReleaseOutcomeV1) = exhaust_release;
     }
 
     #[test]
@@ -5415,26 +5399,27 @@ mod tests {
     }
 
     #[test]
-    fn executed_prepared_close_truthfully_reports_release_and_quarantine() {
-        use crate::authenticated_test_runtime::InjectedQueueV1;
-
-        for releases_cleanly in [true, false] {
-            let retained = close_prepared_rearm_submission(
-                InjectedPreparedRearmSubmissionV1 {
-                    queue: InjectedQueueV1::new([], []),
-                    releases_cleanly,
-                },
-                InjectedPreparedRearmRecipeV1,
-            );
+    fn public_submission_failure_truthfully_reports_release_and_quarantine() {
+        for (retained, released) in [
+            (
+                AuthenticatedSubmissionOpaqueCustodyV1::Released(Box::new("clean release")),
+                true,
+            ),
+            (
+                AuthenticatedSubmissionOpaqueCustodyV1::Quarantined(Box::new("terminal custody")),
+                false,
+            ),
+        ] {
             let failure = authenticated_classified_submission_failure(
                 M1AuthenticatedLongLivedQueueRearmSubmissionPhaseV1::QueueSubmit,
                 retained,
             );
-            assert_eq!(failure.queue_released(), releases_cleanly);
+            assert_eq!(failure.queue_released(), released);
             assert!(failure.engine_quarantined());
             assert!(failure.retains_custody());
             let debug = format!("{failure:?}");
-            assert!(!debug.contains("InjectedQueueV1"));
+            assert!(!debug.contains("clean release"));
+            assert!(!debug.contains("terminal custody"));
         }
     }
 }

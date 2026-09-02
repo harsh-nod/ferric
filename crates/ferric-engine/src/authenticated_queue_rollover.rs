@@ -2838,7 +2838,14 @@ mod tests {
     }
 
     #[test]
-    fn rollover_profile_transition_inputs_cover_all_four_profiles() {
+    fn authenticated_rollover_transition_gate_covers_all_four_profiles() {
+        type Cancel = fn(
+            M1AuthenticatedScheduledSpeculativeRolloverV1,
+            &mut Engine<32>,
+        ) -> Result<
+            M1AuthenticatedSpeculativeRolloverTeardownSuccessV1,
+            Box<M1AuthenticatedSpeculativeRolloverTeardownFailureV1>,
+        >;
         let cases = [
             (
                 Qwen3PlanBucket::PrefillS1T128,
@@ -2870,6 +2877,16 @@ mod tests {
                 Ok((prior, next, M1ServingRolloverReasonV1::Mode))
             );
         }
+
+        // These signatures require normal released authentication and prepared
+        // custody; this structural test does not manufacture either as evidence.
+        let _ = bind_m1_authenticated_speculative_rollover_intent_v1;
+        let _ = schedule_m1_authenticated_speculative_rollover_v1::<32>;
+        let _ = prepare_m1_authenticated_speculative_rollover_v1::<32>;
+        let _ = submit_m1_authenticated_speculative_rollover_v1::<32>;
+        let _: Cancel =
+            M1AuthenticatedScheduledSpeculativeRolloverV1::destroy_queue_and_retain_custody::<32>;
+        let _ = core::mem::size_of::<M1AuthenticatedReleasedCompletedStepV1>();
     }
 
     #[test]
