@@ -873,6 +873,7 @@ fn protected_service_request_v1(
     request: &WorkerV3RosterVerificationRequestV1<'_, M1AllKernelsWorkerV3RosterV1>,
     pending: &M1AllKernelsPendingRequestProjectionV1,
     compiler: &WorkerV3CompilerExecutionVerificationV1,
+    source_pin: &M1AllKernelsProtectedReceiptSourcePinV1,
     trust_policy: &M1AllKernelsProtectedVerifierTrustPolicyV1,
 ) -> Result<
     M1AllKernelsProtectedVerifierServiceRequestV1,
@@ -919,6 +920,7 @@ fn protected_service_request_v1(
         request,
         pending,
         &compiler_claims,
+        source_pin,
         trust_policy,
     )
 }
@@ -927,6 +929,7 @@ fn protected_service_request_from_current_audit_v1(
     request: &WorkerV3RosterVerificationRequestV1<'_, M1AllKernelsWorkerV3RosterV1>,
     pending: &M1AllKernelsPendingRequestProjectionV1,
     current_audit: &WorkerV3CompilerCurrentRecordAuditV1,
+    source_pin: &M1AllKernelsProtectedReceiptSourcePinV1,
     trust_policy: &M1AllKernelsProtectedVerifierTrustPolicyV1,
 ) -> Result<
     M1AllKernelsProtectedVerifierServiceRequestV1,
@@ -976,6 +979,7 @@ fn protected_service_request_from_current_audit_v1(
         request,
         pending,
         &compiler_claims,
+        source_pin,
         trust_policy,
     )
 }
@@ -984,31 +988,29 @@ fn protected_service_request_with_compiler_claims_v1(
     request: &WorkerV3RosterVerificationRequestV1<'_, M1AllKernelsWorkerV3RosterV1>,
     pending: &M1AllKernelsPendingRequestProjectionV1,
     compiler_claims: &M1AllKernelsProtectedReceiptCompilerClaimsV1,
+    source_pin: &M1AllKernelsProtectedReceiptSourcePinV1,
     trust_policy: &M1AllKernelsProtectedVerifierTrustPolicyV1,
 ) -> Result<
     M1AllKernelsProtectedVerifierServiceRequestV1,
     M1AllKernelsProductionProtectedVerifierErrorV1,
 > {
-    let source_pin = project_m1_aggregate_module_handoff_v1(
-        request.semantic_compiler_handoff().module_handoff(),
-    )
-    .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::SourcePin)?
-    .source_pin();
-    let source_pin = M1AllKernelsProtectedReceiptSourcePinV1::new(
-        source_pin.compiler_module_sha256(),
-        source_pin.compiler_module_length(),
-        source_pin.compiler_handoff_sha256(),
-        source_pin.compiler_handoff_length(),
-        source_pin.symbol_manifest_sha256(),
-        source_pin.symbol_manifest_length(),
-    )
-    .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::ReceiptClaims)?;
+    let module_handoff = request.semantic_compiler_handoff().module_handoff();
+    (source_pin.compiler_module_sha256() == *module_handoff.module_identity().sha256()
+        && source_pin.compiler_module_length() == module_handoff.module_identity().byte_len()
+        && source_pin.compiler_handoff_sha256() == *module_handoff.identity().sha256()
+        && source_pin.compiler_handoff_length() == module_handoff.identity().byte_len()
+        && source_pin.symbol_manifest_sha256()
+            == *module_handoff.symbol_manifest().identity().sha256()
+        && source_pin.symbol_manifest_length()
+            == module_handoff.symbol_manifest().identity().byte_len())
+    .then_some(())
+    .ok_or(M1AllKernelsProductionProtectedVerifierErrorV1::RosterRequestAssociationFailed)?;
     let request_claims = M1AllKernelsProtectedReceiptRequestClaimsV1::new(
         pending.challenge_identity,
         pending.roster_identity,
         pending.lineage_identity,
         pending.finalizer_derivation_sha256,
-        source_pin,
+        *source_pin,
         pending.capsule_sha256,
         pending.formal_memory_receipt_sha256,
         pending.proof_binding_receipt_sha256,
@@ -1259,6 +1261,20 @@ unsafe impl WorkerV3ProtectedRosterVerifierBackendV1<M1AllKernelsWorkerV3RosterV
         )?;
         let owners = locally_revalidate_request_v1(request, &pending)
             .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::LocalRevalidation)?;
+        let projected_source_pin = project_m1_aggregate_module_handoff_v1(
+            request.semantic_compiler_handoff().module_handoff(),
+        )
+        .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::SourcePin)?
+        .source_pin();
+        let source_pin = M1AllKernelsProtectedReceiptSourcePinV1::new(
+            projected_source_pin.compiler_module_sha256(),
+            projected_source_pin.compiler_module_length(),
+            projected_source_pin.compiler_handoff_sha256(),
+            projected_source_pin.compiler_handoff_length(),
+            projected_source_pin.symbol_manifest_sha256(),
+            projected_source_pin.symbol_manifest_length(),
+        )
+        .map_err(M1AllKernelsProductionProtectedVerifierErrorV1::ReceiptClaims)?;
         let client = self.client.take().ok_or(
             M1AllKernelsProductionProtectedVerifierErrorV1::ProtectedVerifierClientAlreadyConsumed,
         )?;
@@ -1290,6 +1306,7 @@ unsafe impl WorkerV3ProtectedRosterVerifierBackendV1<M1AllKernelsWorkerV3RosterV
             request,
             &pending,
             &current_audit,
+            &source_pin,
             &self.trust_policy,
         )?;
         let current_record = current_audit.canonical_evidence_view();
@@ -1322,6 +1339,7 @@ unsafe impl WorkerV3ProtectedRosterVerifierBackendV1<M1AllKernelsWorkerV3RosterV
             request,
             &pending,
             &compiler_execution,
+            &source_pin,
             &self.trust_policy,
         )?;
         (bound_service_request.canonical_bytes() == service_request.canonical_bytes())

@@ -154,9 +154,12 @@ fn client_pins_peer_and_rejects_ambiguous_transport() {
         "not replay across new",
         "locally retained request, evidence-custody, and audit owners",
         "M1AllKernelsProtectedVerifierClientV2",
-        "WorkerV3VerificationClientV2::admit(peer, timeout)",
+        "WorkerV3VerificationClientV2::admit_until(peer, deadline)",
+        "debug_assert_eq!(inner.deadline(), deadline)",
         "WorkerV3VerificationPayloadSnapshotsV1::admit(&request, descriptors)",
         "WorkerV3VerificationTerminalDispositionV2::ApplicationResponse",
+        "authenticate_application_response_until_v1(",
+        "require_v2_deadline(deadline)?",
         "TerminalRejected",
     ] {
         assert!(client.contains(required), "missing client rule: {required}");
@@ -174,6 +177,7 @@ fn client_pins_peer_and_rejects_ambiguous_transport() {
         "impl Default",
         "option_env!",
         "env!",
+        "WorkerV3VerificationClientV2::admit(peer, timeout)",
     ] {
         assert!(
             !client.contains(forbidden),
