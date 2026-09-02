@@ -10,6 +10,7 @@ const viewports = [
   ["desktop", 1440, 1100],
   ["validation-edge-1027", 1027, 900],
   ["validation-edge-981", 981, 900],
+  ["sweep-proof-800", 800, 900],
   ["header-edge-710", 710, 844],
   ["header-edge-701", 701, 844],
   ["mobile", 390, 844],
@@ -178,4 +179,4 @@ if (process.env.FERRIC_EXHAUSTIVE_WIDTHS === "1") {
   console.log("Validated every Ferric Pages width from 320px through 1440px.");
 }
 
-console.log("Validated rendered Ferric Pages at 1440px, 1027px, 981px, 710px, 701px, 390px, and 320px.");
+console.log("Validated rendered Ferric Pages at 1440px, 1027px, 981px, 800px, 710px, 701px, 390px, and 320px.");

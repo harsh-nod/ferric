@@ -21,8 +21,8 @@ When implementation or qualification state changes:
    npm run stage -- /tmp/ferric-pages-artifact
    ```
 
-The deployment workflow runs the same syntax, structured-data, and Chromium
-checks before publishing only this directory. `validate.mjs` rejects schema
+The deployment workflow requires the exhaustive Chromium sweep in addition to
+the syntax and structured-data checks before publishing. `validate.mjs` rejects schema
 drift, stale current-dependency claims, unknown status states, malformed source
 references, duplicate transitions, missing render targets, and missing local
 assets. `render-validate.mjs` checks populated visible output without horizontal
