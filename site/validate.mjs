@@ -328,7 +328,7 @@ for (const claim of [
   "multi-root proof inputs",
   "target lineage by borrowing those inputs",
   "passing preflight has the sole terminal result MissingProtectedVerificationReceipt",
-  "private current aggregate publication selection",
+  "selection remains None",
   "successful current-source R32 trace",
   "all 33 M1 exit gates remain open",
 ]) {
