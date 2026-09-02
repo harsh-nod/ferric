@@ -2746,7 +2746,7 @@ impl<T> RetainedCaptureRangesV1<T> {
 }
 
 #[derive(Clone, Copy, Debug)]
-struct RetainedHostCaptureRangesV1 {
+pub(crate) struct RetainedHostCaptureRangesV1 {
     ranges: RetainedCaptureRangesV1<ServiceHostDispatchRangeV1>,
     completion_snapshot: Option<ServiceHostDispatchSnapshotRangeV1>,
 }
@@ -3097,7 +3097,7 @@ impl RearmRangeSelectionV1 {
     }
 }
 
-fn rebuild_bound_rows(
+pub(crate) fn rebuild_bound_rows(
     source_rows: &[M1PhysicalBufferRecipeRowV1],
     old_bound_rows: &[M1BoundPhysicalBufferRowV1],
     composition: &AddresslessM1FullStepWorkspaceComposition,
@@ -9586,7 +9586,7 @@ fn reset_retained_diagnostic_capture(
     Ok((lower, completion))
 }
 
-fn retained_host_capture_ranges(
+pub(crate) fn retained_host_capture_ranges(
     completion: &crate::BoundM1CompletionOutputV1,
 ) -> Result<RetainedHostCaptureRangesV1, ()> {
     let qualification = completion.qualification_logits();
@@ -9617,24 +9617,6 @@ fn retained_host_capture_ranges(
             .completion_canary()
             .map(crate::BoundM1CompletionCanaryV1::snapshot_range),
     })
-}
-
-pub(crate) fn rebuild_unchanged_capture_bound_rows(
-    source_rows: &[M1PhysicalBufferRecipeRowV1],
-    old_bound_rows: &[M1BoundPhysicalBufferRowV1],
-    composition: &AddresslessM1FullStepWorkspaceComposition,
-    workspace_ranges: &[FreshWorkspaceRangeV1],
-    completion: &crate::BoundM1CompletionOutputV1,
-) -> Result<Box<[M1BoundPhysicalBufferRowV1]>, ()> {
-    let capture = retained_host_capture_ranges(completion)?;
-    rebuild_bound_rows(
-        source_rows,
-        old_bound_rows,
-        composition,
-        workspace_ranges,
-        &capture,
-        &capture,
-    )
 }
 
 #[allow(clippy::too_many_arguments)]

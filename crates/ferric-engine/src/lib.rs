@@ -10,6 +10,7 @@ mod authenticated_kernel_programs;
 mod authenticated_physical_queue;
 mod authenticated_physical_readback;
 mod authenticated_queue_rearm;
+mod authenticated_speculative_executor;
 mod bound_step_workspaces;
 mod cache;
 mod completed_readback_join;
@@ -97,6 +98,7 @@ pub use authenticated_physical_readback::{
     M1AuthenticatedCompletionObservationFailureV1,
     M1AuthenticatedCompletionSnapshotReadFailedOutputV1, M1AuthenticatedObservedCompletionCaseV1,
     M1AuthenticatedObservedCompletionOutputV1,
+    M1AuthenticatedObservedSpeculativeDiagnosticOutputV1,
     M1AuthenticatedObservedSpeculativeK4DiagnosticOutputV1,
     M1AuthenticatedPhysicalCompletedReadbackV1,
     M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1,
@@ -110,6 +112,9 @@ pub use authenticated_physical_readback::{
     M1AuthenticatedReadbackTeardownEvidenceV1, M1AuthenticatedReadbackTeardownFailureV1,
     M1AuthenticatedReadbackTeardownSuccessV1, M1AuthenticatedRejectedCompletionCaseV1,
     M1AuthenticatedRejectedCompletionOutputV1,
+    M1AuthenticatedSpeculativeDiagnosticCompletedReadbackJoinFailureV1,
+    M1AuthenticatedSpeculativeDiagnosticCompletedReadbackV1,
+    M1AuthenticatedSpeculativeDiagnosticObservationFailureV1,
     M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackJoinFailureV1,
     M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackV1,
     M1AuthenticatedSpeculativeK4DiagnosticCompletedTeardownFailureV1,
@@ -120,7 +125,7 @@ pub use authenticated_physical_readback::{
     M1AuthenticatedSpeculativeK4DiagnosticObservationTeardownSuccessV1,
     M1AuthenticatedSpeculativeK4DiagnosticSemanticTeardownFailureV1,
     M1AuthenticatedSpeculativeK4DiagnosticSemanticTeardownSuccessV1,
-    M1_AUTHENTICATED_S1_K4_DIAGNOSTIC_STATUS_V1,
+    M1_AUTHENTICATED_S1_K4_DIAGNOSTIC_STATUS_V1, M1_AUTHENTICATED_SPECULATIVE_DIAGNOSTIC_STATUS_V1,
 };
 pub use authenticated_queue_rearm::{
     prepare_m1_authenticated_long_lived_queue_rearm_v1,
@@ -140,8 +145,11 @@ pub use authenticated_queue_rearm::{
     M1AuthenticatedLongLivedQueueRearmTeardownFailureV1,
     M1AuthenticatedLongLivedQueueRearmTeardownSuccessV1,
     M1AuthenticatedLongLivedQueueReleasedRoundV1, M1AuthenticatedPreparedLongLivedQueueRearmV1,
-    M1AuthenticatedRearmedCompletedQueueV1, M1AuthenticatedRearmedCompletedReadbackV1,
-    M1AuthenticatedRearmedCompletionOutcomeV1, M1AuthenticatedRearmedCompletionPreflightErrorV1,
+    M1AuthenticatedRearmedCompletedQueueV1,
+    M1AuthenticatedRearmedCompletedReadbackTeardownFailureV1,
+    M1AuthenticatedRearmedCompletedReadbackTeardownSuccessV1,
+    M1AuthenticatedRearmedCompletedReadbackV1, M1AuthenticatedRearmedCompletionOutcomeV1,
+    M1AuthenticatedRearmedCompletionPreflightErrorV1,
     M1AuthenticatedRearmedCompletionPreflightFailureV1,
     M1AuthenticatedRearmedCompletionPreflightTeardownFailureV1,
     M1AuthenticatedRearmedCompletionPreflightTeardownSuccessV1,
@@ -155,8 +163,31 @@ pub use authenticated_queue_rearm::{
     M1AuthenticatedRearmedRoundPageReleaseFailureV1,
     M1AuthenticatedRearmedRoundPageReleaseTeardownFailureV1,
     M1AuthenticatedRearmedRoundPageReleaseTeardownSuccessV1,
-    M1AuthenticatedRearmedRoundReleaseOutcomeV1, M1AuthenticatedReservedLongLivedQueueRearmV1,
-    M1AuthenticatedRetainedStepPlanErrorV1, M1AuthenticatedScheduledLongLivedQueueRearmV1,
+    M1AuthenticatedRearmedRoundReleaseOutcomeV1,
+    M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1,
+    M1AuthenticatedRearmedSpeculativeDiagnosticReadbackFailureSourceV1,
+    M1AuthenticatedRearmedSpeculativeDiagnosticReadbackFailureV1,
+    M1AuthenticatedRearmedSpeculativeDiagnosticReadbackTeardownFailureSourceV1,
+    M1AuthenticatedRearmedSpeculativeDiagnosticReadbackTeardownFailureV1,
+    M1AuthenticatedRearmedSpeculativeDiagnosticReadbackTeardownSuccessSourceV1,
+    M1AuthenticatedRearmedSpeculativeDiagnosticReadbackTeardownSuccessV1,
+    M1AuthenticatedRearmedSpeculativeDiagnosticRetainedCustodyV1,
+    M1AuthenticatedReservedLongLivedQueueRearmV1, M1AuthenticatedRetainedStepPlanErrorV1,
+    M1AuthenticatedScheduledLongLivedQueueRearmV1,
+};
+pub use authenticated_speculative_executor::{
+    M1AuthenticatedSpeculativeExecutorInitErrorV1, M1AuthenticatedSpeculativeExecutorInitFailureV1,
+    M1AuthenticatedSpeculativeExecutorTeardownFailureV1,
+    M1AuthenticatedSpeculativeExecutorTeardownSuccessV1,
+    M1AuthenticatedSpeculativePhysicalExecutorV1, M1AuthenticatedSpeculativePhysicalRoundFailureV1,
+    M1AuthenticatedSpeculativePhysicalRoundInputsV1,
+    M1AuthenticatedSpeculativePhysicalRoundStageV1,
+    M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+    M1AuthenticatedSpeculativePhysicalRoundTeardownFailureSourceV1,
+    M1AuthenticatedSpeculativePhysicalRoundTeardownFailureV1,
+    M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessSourceV1,
+    M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1,
+    M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1,
 };
 pub use bound_step_workspaces::{
     BoundM1FullStepWorkspaceSubleases, M1FullStepWorkspaceDispatchRangeError,

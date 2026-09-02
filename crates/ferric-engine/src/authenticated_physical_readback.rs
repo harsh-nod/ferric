@@ -44,9 +44,17 @@ use crate::{
 
 /// Explicit authority demotion for authenticated first-publication S1/K4 diagnostics.
 pub const M1_AUTHENTICATED_S1_K4_DIAGNOSTIC_STATUS_V1: &str = "partial-non-evidence";
+/// Compatibility-neutral name for the same non-authoritative diagnostic status.
+pub const M1_AUTHENTICATED_SPECULATIVE_DIAGNOSTIC_STATUS_V1: &str =
+    M1_AUTHENTICATED_S1_K4_DIAGNOSTIC_STATUS_V1;
 const M1_AUTHENTICATED_S1_K4_FIRST_DISPATCH_GENERATION_V1: u64 = 1;
 const M1_AUTHENTICATED_S1_K4_DRAFT_RANGE_NAMES_V1: [&str; 4] =
     ["draft-0", "draft-1", "draft-2", "draft-3"];
+const M1_AUTHENTICATED_SPECULATIVE_DRAFT_RANGE_NAMES_V1: [&str;
+    crate::M1_SPECULATIVE_DIAGNOSTIC_MAX_DRAFT_TOKENS_V1] = [
+    "draft-0", "draft-1", "draft-2", "draft-3", "draft-4", "draft-5", "draft-6", "draft-7",
+    "draft-8", "draft-9", "draft-10", "draft-11", "draft-12", "draft-13", "draft-14", "draft-15",
+];
 
 const fn is_authenticated_s1_k4_first_dispatch_generation(generation: u64) -> bool {
     generation == M1_AUTHENTICATED_S1_K4_FIRST_DISPATCH_GENERATION_V1
@@ -388,6 +396,229 @@ impl M1AuthenticatedObservedCompletionOutputV1 {
             choices,
         })
     }
+
+    /// Copies the exact `K` draft rows and target matrix for any admitted
+    /// finite speculative generation, including authenticated rearm rounds.
+    ///
+    /// This remains a diagnostic-only transition. It derives semantic values
+    /// exclusively from completed device copies and grants no publication or
+    /// verification authority.
+    ///
+    /// # Errors
+    ///
+    /// Rejects a non-speculative shape, absent capture owner, incomplete copy,
+    /// coordinate drift, generation drift, or an out-of-vocabulary choice.
+    pub fn observe_speculative_diagnostic_choices(
+        mut self,
+    ) -> Result<
+        M1AuthenticatedObservedSpeculativeDiagnosticOutputV1,
+        Box<M1AuthenticatedSpeculativeDiagnosticObservationFailureV1>,
+    > {
+        let (draft_ranges, target_range, generation, live_sequences, draft_tokens) =
+            match authenticated_speculative_diagnostic_inputs(&self) {
+                Ok(inputs) => inputs,
+                Err(error) => {
+                    return Err(Box::new(
+                        M1AuthenticatedSpeculativeK4DiagnosticObservationFailureV1::new(
+                            error,
+                            self,
+                            Box::new([]),
+                        ),
+                    ));
+                }
+            };
+
+        let draft_tokens = usize::from(draft_tokens);
+        let mut copies = Vec::new();
+        if copies.try_reserve_exact(draft_tokens + 1).is_err() {
+            return Err(Box::new(
+                M1AuthenticatedSpeculativeK4DiagnosticObservationFailureV1::new(
+                    M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1::HostAllocation,
+                    self,
+                    Box::new([]),
+                ),
+            ));
+        }
+        for index in 0..draft_tokens {
+            let range_name = M1_AUTHENTICATED_SPECULATIVE_DRAFT_RANGE_NAMES_V1[index];
+            let Some(range) = draft_ranges[index] else {
+                return Err(Box::new(
+                    M1AuthenticatedSpeculativeK4DiagnosticObservationFailureV1::new(
+                        M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1::DraftRangeMissing {
+                            iteration: index,
+                        },
+                        self,
+                        copies.into_boxed_slice(),
+                    ),
+                ));
+            };
+            match read_authenticated_speculative_choice(&mut self, range_name, range) {
+                Ok(readback) => copies.push(readback),
+                Err(source) => {
+                    return Err(Box::new(
+                        M1AuthenticatedSpeculativeK4DiagnosticObservationFailureV1::new(
+                            M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1::Queue {
+                                range: range_name,
+                                source,
+                            },
+                            self,
+                            copies.into_boxed_slice(),
+                        ),
+                    ));
+                }
+            }
+        }
+        let target = match read_authenticated_speculative_choice(&mut self, "target", target_range)
+        {
+            Ok(readback) => readback,
+            Err(source) => {
+                return Err(Box::new(
+                    M1AuthenticatedSpeculativeK4DiagnosticObservationFailureV1::new(
+                        M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1::Queue {
+                            range: "target",
+                            source,
+                        },
+                        self,
+                        copies.into_boxed_slice(),
+                    ),
+                ));
+            }
+        };
+        let draft = copies.into_boxed_slice();
+        let Some(owner) = authenticated_speculative_diagnostic_owner(&self) else {
+            let mut copies = draft.into_vec();
+            copies.push(target);
+            return Err(Box::new(
+                M1AuthenticatedSpeculativeK4DiagnosticObservationFailureV1::new(
+                    M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1::CaptureNotEnabled,
+                    self,
+                    copies.into_boxed_slice(),
+                ),
+            ));
+        };
+        let choices = match observe_m1_speculative_diagnostic_choices_v1(
+            owner,
+            generation,
+            live_sequences,
+            draft,
+            target,
+        ) {
+            Ok(choices) => choices,
+            Err(failure) => {
+                let (error, draft, target) = *failure;
+                let mut copies = draft.into_vec();
+                copies.push(target);
+                return Err(Box::new(
+                    M1AuthenticatedSpeculativeK4DiagnosticObservationFailureV1::new(
+                        M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1::Choices(error),
+                        self,
+                        copies.into_boxed_slice(),
+                    ),
+                ));
+            }
+        };
+        Ok(M1AuthenticatedObservedSpeculativeK4DiagnosticOutputV1 {
+            completion: self,
+            choices,
+        })
+    }
+}
+
+type AuthenticatedSpeculativeDiagnosticInputsV1 = (
+    [Option<ServiceHostDispatchRangeV1>; crate::M1_SPECULATIVE_DIAGNOSTIC_MAX_DRAFT_TOKENS_V1],
+    ServiceHostDispatchRangeV1,
+    u64,
+    u32,
+    u8,
+);
+
+fn authenticated_speculative_diagnostic_inputs(
+    completion: &M1AuthenticatedObservedCompletionOutputV1,
+) -> Result<
+    AuthenticatedSpeculativeDiagnosticInputsV1,
+    M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1,
+> {
+    macro_rules! inputs {
+        ($case:expr) => {{
+            let Some(owner) = $case
+                .case
+                .custody()
+                .completion_output()
+                .speculative_diagnostic_choices()
+            else {
+                return Err(
+                    M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1::CaptureNotEnabled,
+                );
+            };
+            (
+                owner
+                    .retained_draft_read_ranges()
+                    .map_err(M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1::Choices)?,
+                owner.retained_target_range(),
+                $case.image.dispatch_generation(),
+                u32::try_from($case.case.scheduled_dispatch().member_count()).unwrap_or(u32::MAX),
+                owner.shape().draft_tokens(),
+            )
+        }};
+    }
+    Ok(match completion {
+        M1AuthenticatedObservedCompletionOutputV1::SpeculativeK4(case) => inputs!(case),
+        M1AuthenticatedObservedCompletionOutputV1::SpeculativeK8(case) => inputs!(case),
+        M1AuthenticatedObservedCompletionOutputV1::SpeculativeK16(case) => inputs!(case),
+        _ => {
+            return Err(
+                M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1::NotSpeculativeShape,
+            );
+        }
+    })
+}
+
+fn authenticated_speculative_diagnostic_owner(
+    completion: &M1AuthenticatedObservedCompletionOutputV1,
+) -> Option<&crate::BoundM1SpeculativeDiagnosticChoicesV1> {
+    match completion {
+        M1AuthenticatedObservedCompletionOutputV1::SpeculativeK4(case) => case
+            .case
+            .custody()
+            .completion_output()
+            .speculative_diagnostic_choices(),
+        M1AuthenticatedObservedCompletionOutputV1::SpeculativeK8(case) => case
+            .case
+            .custody()
+            .completion_output()
+            .speculative_diagnostic_choices(),
+        M1AuthenticatedObservedCompletionOutputV1::SpeculativeK16(case) => case
+            .case
+            .custody()
+            .completion_output()
+            .speculative_diagnostic_choices(),
+        _ => None,
+    }
+}
+
+fn read_authenticated_speculative_choice(
+    completion: &mut M1AuthenticatedObservedCompletionOutputV1,
+    _range_name: &'static str,
+    range: ServiceHostDispatchRangeV1,
+) -> Result<ServiceCompletedReadbackV1, ServiceQueueErrorV1> {
+    match completion {
+        M1AuthenticatedObservedCompletionOutputV1::SpeculativeK4(case) => {
+            let (lower, _custody, _step) = case.case.observation_parts();
+            let request = lower.completed_read_request(range);
+            lower.read_completed(request)
+        }
+        M1AuthenticatedObservedCompletionOutputV1::SpeculativeK8(case) => {
+            let (lower, _custody, _step) = case.case.observation_parts();
+            let request = lower.completed_read_request(range);
+            lower.read_completed(request)
+        }
+        M1AuthenticatedObservedCompletionOutputV1::SpeculativeK16(case) => {
+            let (lower, _custody, _step) = case.case.observation_parts();
+            let request = lower.completed_read_request(range);
+            lower.read_completed(request)
+        }
+        _ => unreachable!("authenticated diagnostic read was preflighted as speculative"),
+    }
 }
 
 fn read_authenticated_speculative_k4_choice(
@@ -408,6 +639,8 @@ fn read_authenticated_speculative_k4_choice(
 pub enum M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1 {
     /// The owner is not the exact target `SpeculativeS1K4C8192` case.
     NotS1K4,
+    /// The owner is not one of the finite speculative queue shapes.
+    NotSpeculativeShape,
     /// The queue was directly reused; diagnostic sentinels were not reset.
     NotFirstDispatchGeneration { actual: u64 },
     /// Diagnostic choice allocations were not attached before publication.
@@ -444,6 +677,10 @@ pub struct M1AuthenticatedSpeculativeK4DiagnosticObservationFailureV1 {
     completion: Box<M1AuthenticatedObservedCompletionOutputV1>,
     partial_choices: Box<[ServiceCompletedReadbackV1]>,
 }
+
+/// Shape-generic name for diagnostic observation failure custody.
+pub type M1AuthenticatedSpeculativeDiagnosticObservationFailureV1 =
+    M1AuthenticatedSpeculativeK4DiagnosticObservationFailureV1;
 
 impl M1AuthenticatedSpeculativeK4DiagnosticObservationFailureV1 {
     fn new(
@@ -593,6 +830,10 @@ pub struct M1AuthenticatedObservedSpeculativeK4DiagnosticOutputV1 {
     completion: M1AuthenticatedObservedCompletionOutputV1,
     choices: M1ObservedSpeculativeDiagnosticChoicesV1,
 }
+
+/// Shape-generic name for one authenticated finite speculative observation.
+pub type M1AuthenticatedObservedSpeculativeDiagnosticOutputV1 =
+    M1AuthenticatedObservedSpeculativeK4DiagnosticOutputV1;
 
 impl M1AuthenticatedObservedSpeculativeK4DiagnosticOutputV1 {
     /// Explicitly demoted diagnostic status; this owner is not M1 evidence.
@@ -2254,7 +2495,7 @@ type CheckObservedCaseResultV1<const N: usize> = Result<
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum M1AuthenticatedCompletionEvidenceJoinAuthorityV1 {
     Generic,
-    SpeculativeK4Diagnostic,
+    SpeculativeDiagnostic,
 }
 
 fn validate_generic_observed_semantics(
@@ -2270,7 +2511,7 @@ fn validate_generic_observed_semantics(
     if speculative_diagnostic_capture_enabled
         != matches!(
             authority,
-            M1AuthenticatedCompletionEvidenceJoinAuthorityV1::SpeculativeK4Diagnostic
+            M1AuthenticatedCompletionEvidenceJoinAuthorityV1::SpeculativeDiagnostic
         )
     {
         return Err(M1CompletedOutputCheckErrorV1::SpeculativeDiagnosticCaptureRequiresEvidence);
@@ -2598,7 +2839,7 @@ impl M1AuthenticatedObservedCompletionOutputV1 {
     }
 }
 
-fn authenticated_speculative_k4_semantics(
+fn authenticated_speculative_semantics(
     choices: &M1ObservedSpeculativeDiagnosticChoicesV1,
 ) -> (
     [CompletionWireSemanticExpectation<'_>; M1_MAX_ACTIVE_SEQUENCES as usize],
@@ -2619,21 +2860,39 @@ fn authenticated_speculative_k4_semantics(
     (semantics, live)
 }
 
-fn check_authenticated_speculative_k4_diagnostic(
+fn check_authenticated_speculative_diagnostic(
     completion: M1AuthenticatedObservedCompletionOutputV1,
     choices: M1ObservedSpeculativeDiagnosticChoicesV1,
 ) -> Result<
     M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackV1,
     Box<M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackJoinFailureV1>,
 > {
-    let (semantics, live) = authenticated_speculative_k4_semantics(&choices);
+    let (semantics, live) = authenticated_speculative_semantics(&choices);
     let joined = match completion {
         M1AuthenticatedObservedCompletionOutputV1::SpeculativeK4(case) => {
             join_observed_output_case(
                 case,
                 M1AuthenticatedObservedCompletionOutputV1::SpeculativeK4,
                 M1AuthenticatedPhysicalReadbackQueueSessionV1::SpeculativeK4,
-                M1AuthenticatedCompletionEvidenceJoinAuthorityV1::SpeculativeK4Diagnostic,
+                M1AuthenticatedCompletionEvidenceJoinAuthorityV1::SpeculativeDiagnostic,
+                &semantics[..live],
+            )
+        }
+        M1AuthenticatedObservedCompletionOutputV1::SpeculativeK8(case) => {
+            join_observed_output_case(
+                case,
+                M1AuthenticatedObservedCompletionOutputV1::SpeculativeK8,
+                M1AuthenticatedPhysicalReadbackQueueSessionV1::SpeculativeK8,
+                M1AuthenticatedCompletionEvidenceJoinAuthorityV1::SpeculativeDiagnostic,
+                &semantics[..live],
+            )
+        }
+        M1AuthenticatedObservedCompletionOutputV1::SpeculativeK16(case) => {
+            join_observed_output_case(
+                case,
+                M1AuthenticatedObservedCompletionOutputV1::SpeculativeK16,
+                M1AuthenticatedPhysicalReadbackQueueSessionV1::SpeculativeK16,
+                M1AuthenticatedCompletionEvidenceJoinAuthorityV1::SpeculativeDiagnostic,
                 &semantics[..live],
             )
         }
@@ -2686,7 +2945,7 @@ impl M1AuthenticatedObservedSpeculativeK4DiagnosticOutputV1 {
         M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackV1,
         Box<M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackJoinFailureV1>,
     > {
-        check_authenticated_speculative_k4_diagnostic(self.completion, self.choices)
+        check_authenticated_speculative_diagnostic(self.completion, self.choices)
     }
 }
 
@@ -2698,6 +2957,10 @@ pub struct M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackV1 {
     corresponding_target_only_token: ferric_spec::TokenId,
     choices: M1ObservedSpeculativeDiagnosticChoicesV1,
 }
+
+/// Shape-generic name for a joined authenticated diagnostic readback.
+pub type M1AuthenticatedSpeculativeDiagnosticCompletedReadbackV1 =
+    M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackV1;
 
 /// Clean fail-closed release of a joined diagnostic that cannot be completed.
 #[must_use = "authenticated diagnostic evidence and program release remain retained"]
@@ -2888,6 +3151,10 @@ pub struct M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackJoinFailureV1 
     choices: M1ObservedSpeculativeDiagnosticChoicesV1,
 }
 
+/// Shape-generic name for semantic-join rejection with choice custody.
+pub type M1AuthenticatedSpeculativeDiagnosticCompletedReadbackJoinFailureV1 =
+    M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackJoinFailureV1;
+
 impl M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackJoinFailureV1 {
     #[must_use]
     pub const fn error(&self) -> &M1CompletedOutputCheckErrorV1 {
@@ -2913,7 +3180,7 @@ impl M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackJoinFailureV1 {
         self,
     ) -> Result<M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackV1, Box<Self>> {
         let Self { failure, choices } = self;
-        match check_authenticated_speculative_k4_diagnostic(*failure.observed, choices) {
+        match check_authenticated_speculative_diagnostic(*failure.observed, choices) {
             Ok(completed) => Ok(completed),
             Err(failure) => Err(failure),
         }
@@ -3037,7 +3304,7 @@ mod tests {
 
     #[test]
     fn private_diagnostic_authority_requires_exactly_one_speculative_attachment() {
-        let authority = M1AuthenticatedCompletionEvidenceJoinAuthorityV1::SpeculativeK4Diagnostic;
+        let authority = M1AuthenticatedCompletionEvidenceJoinAuthorityV1::SpeculativeDiagnostic;
         assert!(validate_generic_observed_semantics(authority, false, false, true, &[]).is_ok());
         assert!(matches!(
             validate_generic_observed_semantics(authority, false, false, false, &[]),

@@ -28,7 +28,7 @@ const M1_SPECULATIVE_STOP_TOKEN_CAPACITY_V1: usize = 2;
 static NEXT_M1_SPECULATIVE_COORDINATOR_IDENTITY_V1: AtomicU64 = AtomicU64::new(1);
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-struct M1SpeculativeCoordinatorIdentityV1(u64);
+pub(crate) struct M1SpeculativeCoordinatorIdentityV1(u64);
 
 impl M1SpeculativeCoordinatorIdentityV1 {
     fn fresh() -> Result<Self, M1SpeculativeGenerationLoopErrorV1> {
@@ -635,6 +635,7 @@ impl M1SpeculativeMemberRoundOutcomeV1 {
 #[must_use = "round publication and next-roster state must be consumed"]
 #[derive(Debug)]
 pub struct M1SpeculativeRoundOutcomeV1 {
+    coordinator_identity: M1SpeculativeCoordinatorIdentityV1,
     selection: Qwen3PlanSelection,
     completed_round: u64,
     completed_epoch: CompletionEpoch,
@@ -643,6 +644,10 @@ pub struct M1SpeculativeRoundOutcomeV1 {
 }
 
 impl M1SpeculativeRoundOutcomeV1 {
+    pub(crate) const fn coordinator_identity(&self) -> M1SpeculativeCoordinatorIdentityV1 {
+        self.coordinator_identity
+    }
+
     #[must_use]
     pub const fn selection(&self) -> Qwen3PlanSelection {
         self.selection
@@ -874,6 +879,10 @@ pub struct M1SpeculativeGenerationLoopV1 {
 }
 
 impl M1SpeculativeGenerationLoopV1 {
+    pub(crate) const fn identity(&self) -> M1SpeculativeCoordinatorIdentityV1 {
+        self.identity
+    }
+
     /// Creates one deterministic loop in caller-supplied scheduler order.
     ///
     /// # Errors
@@ -1140,6 +1149,7 @@ impl M1SpeculativeGenerationLoopV1 {
         self.next_round += 1;
         self.last_epoch = Some(binding.epoch);
         Ok(M1SpeculativeRoundOutcomeV1 {
+            coordinator_identity: self.identity,
             selection: self.shape.selection(),
             completed_round,
             completed_epoch: binding.epoch,
