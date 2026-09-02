@@ -19,7 +19,10 @@ window.FERRIC_PROJECT = Object.freeze({
     productionSpeculativeExecutorStatus: "no-go-remediation",
     protectedVerifierServiceLocalCandidate: "9a435522a4a88d55108f7c6a4cb493aabb01ad93",
     protectedVerifierServiceStatus: "foundation-go-local-undeployed",
-    verifierBinderStatus: "deadline-source-order-fix-in-progress",
+    verifierBinderCandidate: "6846d9282f858c80dd2b0b4abfe247dc89e9d8f8",
+    verifierBinderCandidateTree: "4690d8c9e502de18a947d6def2f8c09d4f153ea1",
+    verifierBinderIntegrationCommit: "ed708de7fc906926091be29ff118af95ee50a42b",
+    verifierBinderStatus: "qualified-go-local-integration",
     aggregateSourceCommit: "5514afe176a090aa3f1da9e5354799bb4ca5a8b3",
     aggregateProducerCommit: "e57c42523050922ad76538150df691cc5ab975a7",
     aggregateKernelCount: 12,
@@ -44,7 +47,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "The latest public upstream candidate ff21f24 is based on fe2o3 main 308d8fa and passed exact-archive qualification on mi300x. It carries one caller-supplied absolute deadline through Worker V3 V2 and adds safe destroy/release for unpublished prepared queues. Ferric executor candidate f300ab8 passed 492 library tests and 136 doctests on mi300x, but independent re-review found four P1 custody and lifecycle escapes, so it is NO-GO while remediation continues. The protected-verifier service is a locally qualified foundation, not a deployed authority, and the verifier binder deadline/source-order repair is still in progress. Ferric's private current aggregate publication selection remains None (CURRENT=None); no authenticated current-source Qwen, hardware, numerical, or performance run exists. All 33 M1 roadmap gates and all 17 assurance properties remain Open.",
+      "The latest public upstream candidate ff21f24 is based on fe2o3 main 308d8fa and passed exact-archive qualification on mi300x. Ferric verifier-binder candidate 6846d92 (tree 4690d8c) also passed its exact-archive mi300x matrix and independent review returned GO with no P0, P1, or P2 findings. It is integrated locally at ed708de, but is not on public main and supplies no deployed authority. Ferric executor candidate f300ab8 passed 492 library tests and 136 doctests on mi300x, but independent re-review found four P1 custody and lifecycle escapes, so it remains NO-GO under remediation. The protected-verifier service remains an undeployed local foundation. Ferric's private current aggregate publication selection remains None (CURRENT=None); no authenticated current-source Qwen, hardware, numerical, or performance run exists. All 33 M1 roadmap gates and all 17 assurance properties remain Open.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -57,7 +60,7 @@ window.FERRIC_PROJECT = Object.freeze({
     ["M1 implementation", "7f516e073b8759eb012c998bc9df2eb101d0c7ab; finalized-HSACO reinspection 749324c9e287aaec688c8733c88becddc539b12e; association preflight eb3b1937ec509cb6ecea080a25965dd3e8bc5457; common custody e187ca52dfdaee79fdc17921c9acffebeed6ca96; diagnostic bridge 24748e11358db7ad3ab5fe35992cff354896e607"],
     ["Qualified fe2o3 candidate", "ff21f24f5349d78583a2a832ba3aa37bf3e0846c; tree 861ad57c9725d06a5bed14739269ddd20b70e86a; based on main 308d8fa00fa41e098b2a1a47bbfea1bc29735464; exact-archive qualified on mi300x but not yet integrated into Ferric"],
     ["Speculative executor candidate", "f300ab8b174ff4e71d5d5fdaf038741db159907e; 492 library tests and 136 doctests passed on mi300x; independent re-review is NO-GO with four P1 custody/lifecycle escapes; remediation is in progress"],
-    ["Protected verifier status", "local candidate 9a435522a4a88d55108f7c6a4cb493aabb01ad93 is not publicly linked; it passed 28 tests and 6 doctests and received independent foundation GO; it is not deployed and still requires real protected current, checker, signer, head store, supervisor, and IPC facilities; the binder deadline/source-order fix is unqualified work in progress"],
+    ["Protected verifier status", "local service candidate 9a435522a4a88d55108f7c6a4cb493aabb01ad93 is not publicly linked; it passed 28 tests and 6 doctests and received independent foundation GO, but is not deployed and still requires real protected current, checker, signer, head store, supervisor, and IPC facilities; binder candidate 6846d9282f858c80dd2b0b4abfe247dc89e9d8f8 / tree 4690d8c9e502de18a947d6def2f8c09d4f153ea1 passed exact-archive qualification and independent review with no P0/P1/P2, and is integrated locally at ed708de7fc906926091be29ff118af95ee50a42b but not public main or deployed authority"],
     ["Aggregate device source", "one selected compilation unit owns all 12 attributed M1 kernel roots across the seven canonical source modules"],
     ["Aggregate source-pin policy", "the typed adapter admits LLVM text IR for gfx942:xnack-, code-object V6, and exact sets of 12 kernel entries plus 12 matching descriptors; its projection is identity-observation-only"],
     ["Aggregate build producer", "the bounded producer retains committed device and adapter source identities, invokes the prebound typed adapter, and emits an observational record with explicit nonclaims"],
@@ -66,7 +69,7 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Pending verifier projection", "private and reject-only; exact typed request plus 12 Option-preserving entry rows; retained as the first preflight step"],
     ["Aggregate verifier preflight", "authority-free and reject-only; after projection, exactly once reinspects the request's finalized-HSACO bytes, reacquires common multi-root custody, then cross-binds finalizer artifact, LLVM handoffs, gfx942:xnack-/COV6 target, the full 12-entry descriptor and physical roster, and exact workgroups; a passing preflight has the sole terminal result MissingProtectedVerificationReceipt"],
     ["Strict proof release", "7f516e0 PASS on mi300x: 1,493 queries; 645 direct bodies; 0 errors; 8 packages; 37 actual-body hostile mutations rejected; 13 source-quality PASS markers; source gate 151 modules / 6,916 bodies; 603-file canonical closure"],
-    ["Protected acceptance", "CURRENT=None: the private current aggregate publication selection is None; the local verifier-service foundation and in-progress binder do not create production runtime admission"],
+    ["Protected acceptance", "CURRENT=None: the private current aggregate publication selection is None; the undeployed verifier-service foundation and locally integrated binder candidate do not create production runtime admission"],
     [
       "Historical protected artifact",
       "SwiGLU semantic fe2ce532...e9569e8f / HSACO 57ecb86b...fc6afa7; qualification-only and not supplied by the PR #32 landing",
@@ -153,7 +156,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Accepting protected aggregate artifact",
       state: "open",
       detail:
-        "Ferric's private current aggregate publication selection remains None. Local protected-verifier service candidate 9a435522 is not publicly linked; it passed 28 tests and 6 doctests and received independent foundation GO, but it is not deployed and still requires real protected current, checker, signer, head-store, supervisor, and IPC facilities. The binder's absolute-deadline and source-policy-order fix is still in progress and unqualified. No independent verifier, rollback-currentness, load, launch, or runtime authority exists.",
+        "Ferric's private current aggregate publication selection remains None. Local protected-verifier service candidate 9a435522 is not publicly linked; it passed 28 tests and 6 doctests and received independent foundation GO, but it is not deployed and still requires real protected current, checker, signer, head-store, supervisor, and IPC facilities. Binder candidate 6846d92 is exact-archive qualified, independently reviewed GO with no P0/P1/P2, and integrated locally at ed708de, but is not public main or deployed authority. No independent verifier, rollback-currentness, load, launch, or runtime authority exists.",
     },
     {
       label: "fe2o3 absolute-deadline Worker V3 candidate",
@@ -169,9 +172,9 @@ window.FERRIC_PROJECT = Object.freeze({
     },
     {
       label: "Protected verifier binder",
-      state: "integration",
+      state: "qualified",
       detail:
-        "The binder repair is moving exact Ferric source-policy projection ahead of reservation and one-shot FD consumption and adopting fe2o3's single absolute-deadline API. The fix remains in progress and has not completed exact-archive qualification.",
+        "Candidate 6846d9282f858c80dd2b0b4abfe247dc89e9d8f8 (tree 4690d8c9e502de18a947d6def2f8c09d4f153ea1) moves exact Ferric source-policy projection ahead of reservation and one-shot FD consumption and adopts fe2o3's single absolute-deadline API. Its exact-archive mi300x matrix passed, and independent review returned GO with no P0, P1, or P2 findings. It is integrated locally at ed708de7fc906926091be29ff118af95ee50a42b, but is not public main or deployed authority.",
     },
     {
       label: "Authenticated R32 first-publication capture vertical",
@@ -333,7 +336,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "End-to-end Qwen through Ferric",
       state: "open",
       detail:
-        "Ferric cannot yet run Qwen through the production path. Its private current aggregate publication selection remains None (CURRENT=None). The protected-verifier service is only a local foundation and lacks the real protected current, checker, signer, head-store, supervisor, and IPC deployment; the binder repair and executor custody remediation remain unfinished. The canonical prepack result is a non-final probe, and no authenticated current-source Qwen execution, hardware run, numerical result, or performance result exists.",
+        "Ferric cannot yet run Qwen through the production path. Its private current aggregate publication selection remains None (CURRENT=None). The protected-verifier service is only a local foundation and lacks the real protected current, checker, signer, head-store, supervisor, and IPC deployment. The qualified binder candidate is integrated only in the local M1 branch, not public main or a deployed authority, and executor custody remediation remains unfinished. The canonical prepack result is a non-final probe, and no authenticated current-source Qwen execution, hardware run, numerical result, or performance result exists.",
     },
     {
       label: "M1 qualification",
@@ -444,7 +447,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Protected verifier service foundation",
         detail:
-          "Local candidate 9a435522 is not publicly linked. It passed 28 tests and 6 doctests and received independent foundation GO, but it is not deployed and does not supply real protected current, checker, signer, head-store, supervisor, or IPC authority. The companion binder deadline/source-order repair remains unqualified work in progress.",
+          "Local service candidate 9a435522 is not publicly linked. It passed 28 tests and 6 doctests and received independent foundation GO, but it is not deployed and does not supply real protected current, checker, signer, head-store, supervisor, or IPC authority. Companion binder candidate 6846d92 passed exact-archive qualification and independent review with no P0/P1/P2 and is integrated locally at ed708de, but is not public main or deployed authority.",
       },
       {
         name: "Typed KFD execution substrate",
@@ -511,7 +514,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Produce and accept the aggregate artifact",
         detail:
-          "Complete and qualify the fe2o3 repin, binder ordering fix, and real protected service deployment. Then produce a current protected aggregate publication, independently authenticate compiler/finalizer/verifier authority, review and install its private current selection, and pass its exact 12-kernel artifact and source pin through runtime acceptance. The current candidate evidence alone is insufficient.",
+          "Complete the fe2o3 repin, land the qualified binder candidate from local integration onto public main, and deploy the real protected service facilities. Then produce a current protected aggregate publication, independently authenticate compiler/finalizer/verifier authority, review and install its private current selection, and pass its exact 12-kernel artifact and source pin through runtime acceptance. The current candidate evidence alone is insufficient.",
       },
       {
         name: "Authenticated fixed-batch KFD",
@@ -593,6 +596,13 @@ window.FERRIC_PROJECT = Object.freeze({
       "The catalog records host-validated source paths. Target-only decode and every unlisted cross-plan transition require explicit queue retirement and a fresh admitted launch; none inherit rollover authority.",
   },
   recentProgress: [
+    {
+      commit: "6846d9282f858c80dd2b0b4abfe247dc89e9d8f8",
+      title: "Qualify the protected verifier binder repair",
+      state: "qualified",
+      detail:
+        "Candidate 6846d92 (tree 4690d8c9e502de18a947d6def2f8c09d4f153ea1) passed its exact-archive mi300x matrix. Independent review returned GO with no P0, P1, or P2 findings. It is integrated locally into the M1 branch at ed708de7fc906926091be29ff118af95ee50a42b, but is not public main, protected-service deployment, aggregate acceptance, Qwen execution, hardware, numerical, performance, or M1 authority.",
+    },
     {
       commit: "ff21f24f5349d78583a2a832ba3aa37bf3e0846c",
       repository: "https://github.com/harsh-nod/fe2o3",
@@ -1202,7 +1212,8 @@ window.FERRIC_PROJECT = Object.freeze({
       "Ferric's private current aggregate publication selection remains None with no public, environment, CLI, or file override, and the zero-state protected verifier has no protected receipt",
       "Speculative executor candidate f300ab8b174ff4e71d5d5fdaf038741db159907e passed 492 library tests and 136 doctests on mi300x but is NO-GO after independent re-review found four P1 custody/lifecycle escapes; remediation remains in progress",
       "Local protected-verifier service candidate 9a435522 is not publicly linked; it passed 28 tests and 6 doctests and received independent foundation GO, but it is not deployed and still lacks real protected current, checker, signer, head-store, supervisor, and IPC facilities",
-      "The verifier binder absolute-deadline and source-policy-order fix remains in progress and is not yet qualified",
+      "Verifier binder candidate 6846d9282f858c80dd2b0b4abfe247dc89e9d8f8, tree 4690d8c9e502de18a947d6def2f8c09d4f153ea1, passed its exact-archive mi300x matrix and independent review returned GO with no P0/P1/P2",
+      "The binder candidate is integrated locally at ed708de7fc906926091be29ff118af95ee50a42b but is not public main or deployed authority",
       "Ferric has no successful current-source R32 trace or authenticated current-source Qwen, hardware, numerical, or performance result",
       "All 33 M1 roadmap gates and all 17 assurance properties remain Open until their required evidence closes them",
     ],

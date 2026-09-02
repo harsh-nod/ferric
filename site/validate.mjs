@@ -29,7 +29,10 @@ const expectedCurrent = Object.freeze({
   productionSpeculativeExecutorStatus: "no-go-remediation",
   protectedVerifierServiceLocalCandidate: "9a435522a4a88d55108f7c6a4cb493aabb01ad93",
   protectedVerifierServiceStatus: "foundation-go-local-undeployed",
-  verifierBinderStatus: "deadline-source-order-fix-in-progress",
+  verifierBinderCandidate: "6846d9282f858c80dd2b0b4abfe247dc89e9d8f8",
+  verifierBinderCandidateTree: "4690d8c9e502de18a947d6def2f8c09d4f153ea1",
+  verifierBinderIntegrationCommit: "ed708de7fc906926091be29ff118af95ee50a42b",
+  verifierBinderStatus: "qualified-go-local-integration",
   aggregateSourceCommit: "5514afe176a090aa3f1da9e5354799bb4ca5a8b3",
   aggregateProducerCommit: "e57c42523050922ad76538150df691cc5ab975a7",
   aggregateKernelCount: 12,
@@ -133,6 +136,18 @@ assertCommit(
   project.current.protectedVerifierServiceLocalCandidate,
   "current.protectedVerifierServiceLocalCandidate",
 );
+assertCommit(
+  project.current.verifierBinderCandidate,
+  "current.verifierBinderCandidate",
+);
+assertCommit(
+  project.current.verifierBinderCandidateTree,
+  "current.verifierBinderCandidateTree",
+);
+assertCommit(
+  project.current.verifierBinderIntegrationCommit,
+  "current.verifierBinderIntegrationCommit",
+);
 assertCommit(project.current.aggregateSourceCommit, "current.aggregateSourceCommit");
 assertCommit(project.current.aggregateProducerCommit, "current.aggregateProducerCommit");
 assertCommit(project.current.diagnosticBridgeCommit, "current.diagnosticBridgeCommit");
@@ -158,6 +173,16 @@ assert(
     expectedCurrent.productionSpeculativeExecutorCandidate,
   ) && envelope.get("Speculative executor candidate")?.includes("NO-GO"),
   "envelope must expose the exact speculative executor candidate as NO-GO",
+);
+assert(
+  envelope.get("Protected verifier status")?.includes(expectedCurrent.verifierBinderCandidate) &&
+    envelope.get("Protected verifier status")?.includes(expectedCurrent.verifierBinderCandidateTree) &&
+    envelope.get("Protected verifier status")?.includes(
+      expectedCurrent.verifierBinderIntegrationCommit,
+    ) &&
+    envelope.get("Protected verifier status")?.includes("no P0/P1/P2") &&
+    envelope.get("Protected verifier status")?.includes("not public main or deployed authority"),
+  "envelope must expose the qualified binder candidate and its local-only authority",
 );
 assert(
   envelope.get("M1 implementation")?.includes(expectedCurrent.implementationCommit),
@@ -231,7 +256,10 @@ assert(
     protectedAcceptance.detail.includes("not publicly linked") &&
     protectedAcceptance.detail.includes("not deployed") &&
     protectedAcceptance.detail.includes("protected current, checker, signer, head-store") &&
-    protectedAcceptance.detail.includes("binder's absolute-deadline and source-policy-order fix"),
+    protectedAcceptance.detail.includes("Binder candidate 6846d92") &&
+    protectedAcceptance.detail.includes("independently reviewed GO with no P0/P1/P2") &&
+    protectedAcceptance.detail.includes("integrated locally at ed708de") &&
+    protectedAcceptance.detail.includes("not public main or deployed authority"),
   "protected aggregate acceptance must remain fail-closed and open",
 );
 const deadlineReadiness = project.readiness.find(
@@ -262,11 +290,16 @@ const binderReadiness = project.readiness.find(
   (item) => item.label === "Protected verifier binder",
 );
 assert(
-  binderReadiness?.state === "integration" &&
+  binderReadiness?.state === "qualified" &&
+    binderReadiness.detail.includes(expectedCurrent.verifierBinderCandidate) &&
+    binderReadiness.detail.includes(expectedCurrent.verifierBinderCandidateTree) &&
+    binderReadiness.detail.includes(expectedCurrent.verifierBinderIntegrationCommit) &&
     binderReadiness.detail.includes("ahead of reservation and one-shot FD consumption") &&
     binderReadiness.detail.includes("single absolute-deadline API") &&
-    binderReadiness.detail.includes("has not completed exact-archive qualification"),
-  "binder deadline/source-order fix must remain unqualified work in progress",
+    binderReadiness.detail.includes("exact-archive mi300x matrix passed") &&
+    binderReadiness.detail.includes("GO with no P0, P1, or P2 findings") &&
+    binderReadiness.detail.includes("not public main or deployed authority"),
+  "binder candidate must retain exact qualification, independent GO, and deployment limits",
 );
 const qwenReadiness = project.readiness.find(
   (item) => item.label === "End-to-end Qwen through Ferric",
@@ -410,6 +443,10 @@ assert(
   progressCommits.has(expectedCurrent.productionSpeculativeExecutorCandidate),
   "recent progress must include the independently rejected executor candidate",
 );
+assert(
+  progressCommits.has(expectedCurrent.verifierBinderCandidate),
+  "recent progress must include the qualified verifier binder candidate",
+);
 
 project.evidence.gates.forEach(([label, count, state], index) => {
   assert(label && /^\d+$/.test(count), `evidence.gates[${index}] is malformed`);
@@ -450,8 +487,10 @@ for (const claim of [
   "independent foundation GO",
   "it is not deployed",
   "real protected current, checker, signer, head-store, supervisor, and IPC facilities",
-  "binder absolute-deadline and source-policy-order fix remains in progress",
-  "not yet qualified",
+  "Binder candidate 6846d92, tree 4690d8c, passed its exact-archive mi300x matrix",
+  "independent review returned GO with no P0, P1, or P2 findings",
+  "integrated locally into the M1 branch at ed708de",
+  "not public main or deployed authority",
   "Ferric-specific inference and kernel ownership remain in Ferric",
   "selection remains None",
   "CURRENT=None",
@@ -470,7 +509,10 @@ assert(
     dataSource.includes(expectedCurrent.fe2o3DeadlineCandidateTree) &&
     dataSource.includes(expectedCurrent.fe2o3DeadlineCandidateBase) &&
     dataSource.includes(expectedCurrent.productionSpeculativeExecutorCandidate) &&
-    dataSource.includes(expectedCurrent.protectedVerifierServiceLocalCandidate),
+    dataSource.includes(expectedCurrent.protectedVerifierServiceLocalCandidate) &&
+    dataSource.includes(expectedCurrent.verifierBinderCandidate) &&
+    dataSource.includes(expectedCurrent.verifierBinderCandidateTree) &&
+    dataSource.includes(expectedCurrent.verifierBinderIntegrationCommit),
   "Pages data must bind the exact current candidate and retained implementation lineage",
 );
 assert(
@@ -480,6 +522,20 @@ assert(
     !normalizedHtml.includes("57d2d9c"),
   "Pages must not present superseded feature candidates or the historical pin as current",
 );
+for (const staleBinderClaim of [
+  "verifier binder deadline/source-order repair is still in progress",
+  "binder deadline/source-order fix is unqualified work in progress",
+  "binder's absolute-deadline and source-policy-order fix is still in progress",
+  "binder repair and executor custody remediation remain unfinished",
+  "companion binder deadline/source-order repair remains unqualified work in progress",
+  "verifier binder absolute-deadline and source-policy-order fix remains in progress",
+]) {
+  assert(
+    !dataSource.toLowerCase().includes(staleBinderClaim) &&
+      !normalizedHtml.toLowerCase().includes(staleBinderClaim),
+    `Pages must not retain stale binder claim: ${staleBinderClaim}`,
+  );
+}
 assert(
   dataSource.includes("private current aggregate publication selection remains None") &&
     dataSource.includes("not independent verifier authority") &&
@@ -488,6 +544,8 @@ assert(
     dataSource.includes("four P1 custody and lifecycle escapes") &&
     dataSource.includes("explicitly NO-GO") &&
     dataSource.includes("passed 28 tests and 6 doctests") &&
+    dataSource.includes("independent review returned GO with no P0, P1, or P2 findings") &&
+    dataSource.includes("not public main or deployed authority") &&
     dataSource.includes("not deployed") &&
     dataSource.includes("no authenticated current-source Qwen") &&
     dataSource.includes("All 33 M1 roadmap gates and all 17 assurance properties remain Open"),
