@@ -85,7 +85,7 @@ pub struct M1AuthenticatedLongLivedQueueReleasedRoundV1 {
 }
 
 impl M1AuthenticatedLongLivedQueueReleasedRoundV1 {
-    const fn initial(released: M1AuthenticatedReleasedCompletedStepV1) -> Self {
+    pub(crate) const fn initial(released: M1AuthenticatedReleasedCompletedStepV1) -> Self {
         Self {
             released,
             parked: Vec::new(),
@@ -118,6 +118,38 @@ impl M1AuthenticatedLongLivedQueueReleasedRoundV1 {
     #[must_use]
     pub fn round_history(&self, index: usize) -> Option<&crate::M1RearmRoundHistoryEntryV1> {
         self.history.get(index)
+    }
+
+    pub(crate) fn speculative_lineage_witness(
+        &self,
+    ) -> Result<
+        &crate::authenticated_speculative_executor::M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+        (),
+    >{
+        let mut found = self.released.checked().speculative_lineage();
+        for index in 0..self.history.len() {
+            let witness = self
+                .history
+                .get(index)
+                .and_then(|entry| entry.checked().speculative_lineage());
+            if witness.is_some() {
+                if found.is_some() {
+                    return Err(());
+                }
+                found = witness;
+            }
+        }
+        found.ok_or(())
+    }
+
+    pub(crate) fn speculative_history_count(&self, selection: Qwen3PlanSelection) -> usize {
+        (0..self.history.len())
+            .filter(|index| {
+                self.history
+                    .get(*index)
+                    .is_some_and(|entry| entry.checked().selection() == selection)
+            })
+            .count()
     }
 
     /// Destroys the authenticated queue while retaining current and prior lineage.
@@ -3909,8 +3941,8 @@ fn validate_kv_arena_ids(
     Ok(())
 }
 
-const fn diagnostic_capture_is_supported(direct: bool, speculative: bool) -> bool {
-    !(direct && speculative)
+const fn diagnostic_capture_is_supported(direct: bool, _speculative: bool) -> bool {
+    !direct
 }
 
 #[derive(Debug)]
@@ -4911,9 +4943,9 @@ mod tests {
     }
 
     #[test]
-    fn authenticated_rearm_admits_exactly_one_resettable_diagnostic_capture() {
+    fn authenticated_rearm_rejects_direct_and_preserves_speculative_capture() {
         assert!(diagnostic_capture_is_supported(false, false));
-        assert!(diagnostic_capture_is_supported(true, false));
+        assert!(!diagnostic_capture_is_supported(true, false));
         assert!(diagnostic_capture_is_supported(false, true));
         assert!(!diagnostic_capture_is_supported(true, true));
     }

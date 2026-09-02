@@ -213,6 +213,10 @@ impl M1SpeculativeMemberSeedV1 {
             policy,
         }
     }
+
+    pub(crate) const fn request(self) -> RequestId {
+        self.request
+    }
 }
 
 /// Stable terminal cause selected after checked target verification.
@@ -881,6 +885,117 @@ pub struct M1SpeculativeGenerationLoopV1 {
 impl M1SpeculativeGenerationLoopV1 {
     pub(crate) const fn identity(&self) -> M1SpeculativeCoordinatorIdentityV1 {
         self.identity
+    }
+
+    pub(crate) fn bootstrap_seed_snapshot(
+        &self,
+    ) -> Result<Box<[M1SpeculativeMemberSeedV1]>, M1SpeculativeGenerationLoopErrorV1> {
+        if self.next_round != 0 || self.last_epoch.is_some() {
+            return Err(M1SpeculativeGenerationLoopErrorV1::RoundDrift {
+                expected: 0,
+                actual: self.next_round,
+            });
+        }
+        let mut seeds = Vec::new();
+        seeds
+            .try_reserve_exact(self.members.len())
+            .map_err(|_| M1SpeculativeGenerationLoopErrorV1::HostAllocation)?;
+        for (lane, member) in self.members.iter().enumerate() {
+            if member.status != M1SpeculativeMemberStatusV1::Active || member.generated_tokens != 0
+            {
+                return Err(M1SpeculativeGenerationLoopErrorV1::BindingMemberState {
+                    lane,
+                    request: member.request,
+                });
+            }
+            seeds.push(M1SpeculativeMemberSeedV1 {
+                request: member.request,
+                round_anchor: member.next_anchor,
+                target_committed_tokens: member.target_committed_tokens,
+                draft_committed_tokens: member.draft_committed_tokens,
+                policy: member.policy,
+            });
+        }
+        Ok(seeds.into_boxed_slice())
+    }
+
+    pub(crate) fn matches_bootstrap_seeds(
+        &self,
+        selection: Qwen3PlanSelection,
+        seeds: &[M1SpeculativeMemberSeedV1],
+    ) -> bool {
+        self.next_round == 0
+            && self.last_epoch.is_none()
+            && self.shape.selection() == selection
+            && self.members.len() == seeds.len()
+            && self.members.iter().zip(seeds).all(|(member, seed)| {
+                member.request == seed.request
+                    && member.status == M1SpeculativeMemberStatusV1::Active
+                    && member.next_anchor == seed.round_anchor
+                    && member.target_committed_tokens == seed.target_committed_tokens
+                    && member.draft_committed_tokens == seed.draft_committed_tokens
+                    && member.generated_tokens == 0
+                    && member.policy == seed.policy
+            })
+    }
+
+    pub(crate) fn matches_causal_lineage(
+        &self,
+        selection: Qwen3PlanSelection,
+        initial: &[M1SpeculativeMemberSeedV1],
+        generated: &[(RequestId, u32)],
+        rounds: u64,
+        last_epoch: Option<CompletionEpoch>,
+    ) -> bool {
+        self.shape.selection() == selection
+            && self.next_round == rounds
+            && self.last_epoch == last_epoch
+            && self.members.len() == initial.len()
+            && self.members.len() == generated.len()
+            && self.members.iter().zip(initial).zip(generated).all(
+                |((member, seed), (request, generated_tokens))| {
+                    member.request == seed.request
+                        && member.policy == seed.policy
+                        && member.request == *request
+                        && member.generated_tokens == *generated_tokens
+                },
+            )
+    }
+
+    #[cfg(test)]
+    pub(crate) fn commit_test_causal_round(
+        &mut self,
+        epoch: CompletionEpoch,
+    ) -> Result<M1SpeculativeRoundOutcomeV1, M1SpeculativeGenerationLoopErrorV1> {
+        let roster = self.active_roster();
+        let binding = self.bind_round(self.next_round, epoch, &roster)?;
+        let observations: Vec<_> = roster
+            .iter()
+            .copied()
+            .map(|request| CheckedMemberObservationV1 {
+                request,
+                semantics: CheckedCompletionSemantics::Speculative {
+                    accepted_draft_tokens: 0,
+                    correction_or_bonus: 777,
+                },
+                emitted: M1SpeculativeTokenBlockV1::from_slice(&[777])
+                    .expect("one test token is a valid block"),
+            })
+            .collect();
+        let controls: Vec<_> = roster
+            .iter()
+            .copied()
+            .map(M1SpeculativeMemberControlV1::continuing)
+            .collect();
+        let preflighted = self.preflight_observed_round(
+            binding,
+            self.shape.selection(),
+            epoch,
+            &observations,
+            &controls,
+        )?;
+        self.commit_preflighted_round(preflighted)
+            .map_err(|failure| failure.into_parts().0)
     }
 
     /// Creates one deterministic loop in caller-supplied scheduler order.

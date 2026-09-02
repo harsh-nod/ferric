@@ -176,7 +176,14 @@ pub use authenticated_queue_rearm::{
     M1AuthenticatedScheduledLongLivedQueueRearmV1,
 };
 pub use authenticated_speculative_executor::{
-    M1AuthenticatedSpeculativeExecutorInitErrorV1, M1AuthenticatedSpeculativeExecutorInitFailureV1,
+    prepare_m1_authenticated_speculative_bootstrap_v1,
+    M1AuthenticatedSpeculativeBootstrapContinuationV1, M1AuthenticatedSpeculativeBootstrapErrorV1,
+    M1AuthenticatedSpeculativeBootstrapFailureCustodyV1,
+    M1AuthenticatedSpeculativeBootstrapFailureV1, M1AuthenticatedSpeculativeBootstrapPreparedV1,
+    M1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1,
+    M1AuthenticatedSpeculativeBootstrapRoundFailureV1,
+    M1AuthenticatedSpeculativeBootstrapRoundStageV1, M1AuthenticatedSpeculativeCausalLineageV1,
+    M1AuthenticatedSpeculativeExecutorInitErrorV1,
     M1AuthenticatedSpeculativeExecutorTeardownFailureV1,
     M1AuthenticatedSpeculativeExecutorTeardownSuccessV1,
     M1AuthenticatedSpeculativePhysicalExecutorV1, M1AuthenticatedSpeculativePhysicalRoundFailureV1,

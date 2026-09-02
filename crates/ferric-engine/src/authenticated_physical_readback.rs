@@ -2597,10 +2597,12 @@ fn check_observed_case<const N: usize>(
         Err(error) => return Err((error, case)),
     };
     let M1AuthenticatedObservedCompletionCaseV1 { case, image } = *case;
-    let checked =
-        checked.retain_completion_canary_readback(image.into_completion_canary_readback());
     let (lower, witness, operations, custody, step) = (*case).into_parts();
-    let (scheduled, _target_plans, kv) = step.into_parts();
+    let (scheduled, _target_plans, kv, speculative_lineage) =
+        step.into_parts_with_speculative_lineage();
+    let checked = checked
+        .retain_completion_canary_readback(image.into_completion_canary_readback())
+        .retain_speculative_lineage(speculative_lineage);
     let completion = ExactCompletion::from_completed_m1_queue_readback(scheduled);
     Ok((
         Box::new(M1AuthenticatedPhysicalReadbackQueueCaseV1 {

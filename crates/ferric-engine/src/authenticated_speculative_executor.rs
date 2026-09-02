@@ -8,21 +8,74 @@
 //! to enter through the normal verified-launch path.
 
 use core::fmt;
+use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferric_spec::{completion::CompletionEpoch, Qwen3PlanSelection, RequestId};
+use ferric_spec::{
+    completion::CompletionEpoch, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket,
+    Qwen3PlanSelection, RequestId, ValidatedM1StepInputs,
+};
 
 use crate::{
-    prepare_m1_authenticated_long_lived_queue_rearm_v1,
+    complete_m1_authenticated_physical_step_v1, prepare_m1_authenticated_long_lived_queue_rearm_v1,
+    release_m1_authenticated_completed_step_kv_pages_v1,
     reserve_m1_authenticated_long_lived_queue_rearm_kv_v1,
-    submit_m1_authenticated_long_lived_queue_rearm_v1, Engine,
+    submit_m1_authenticated_long_lived_queue_rearm_v1, ActiveDeviceKvCache, Engine,
+    LogicalRunnerDeclaration, M1AuthenticatedCompletedStepOutcomeV1,
     M1AuthenticatedLongLivedQueueRearmScheduleFailureV1,
     M1AuthenticatedLongLivedQueueReleasedRoundV1, M1AuthenticatedRearmedRoundPageReleaseFailureV1,
-    M1AuthenticatedRearmedRoundReleaseOutcomeV1, M1FullStepWorkspacePlans,
+    M1AuthenticatedRearmedRoundReleaseOutcomeV1,
+    M1AuthenticatedSpeculativeDiagnosticCompletedReadbackV1, M1DeviceKvCompletionMemberV1,
+    M1DeviceKvCompletionRosterV1, M1FullStepKvWorkspaceTablesV1, M1FullStepWorkspacePlans,
     M1LongLivedQueueRearmKvInputsV1, M1ObservedSpeculativeDiagnosticChoicesV1,
-    M1PhysicalFixedBatchShapeV1, M1PhysicalRunnerRecipeOutcomeV1, M1ReleasedDeviceKvMemberV1,
-    M1SpeculativeGenerationLoopV1, M1SpeculativeMemberControlV1, M1SpeculativeMemberStatusV1,
-    M1SpeculativeRoundOutcomeV1,
+    M1PhysicalFixedBatchShapeV1, M1PhysicalRunnerRecipeOutcomeV1, M1PrepareFailureV1,
+    M1PreparedScheduledWorkspaceImagesV1, M1ReleasedDeviceKvMemberV1, M1ScheduledDispatchV1,
+    M1SpeculativeGenerationLoopV1, M1SpeculativeMemberControlV1, M1SpeculativeMemberSeedV1,
+    M1SpeculativeMemberStatusV1, M1SpeculativeRoundOutcomeV1,
 };
+
+static NEXT_AUTHENTICATED_SPECULATIVE_LINEAGE_ID_V1: AtomicU64 = AtomicU64::new(1);
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct M1AuthenticatedSpeculativeLineageIdentityV1(u64);
+
+impl M1AuthenticatedSpeculativeLineageIdentityV1 {
+    fn fresh() -> Option<Self> {
+        let identity = NEXT_AUTHENTICATED_SPECULATIVE_LINEAGE_ID_V1.fetch_update(
+            Ordering::Relaxed,
+            Ordering::Relaxed,
+            |current| current.checked_add(1),
+        );
+        identity.ok().filter(|identity| *identity != 0).map(Self)
+    }
+}
+
+/// Private move-only proof that a round-zero coordinator binding entered one
+/// exact authenticated physical queue before publication.
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedSpeculativePhysicalLineageWitnessV1 {
+    identity: M1AuthenticatedSpeculativeLineageIdentityV1,
+    coordinator_identity: crate::speculative_generation_loop::M1SpeculativeCoordinatorIdentityV1,
+    selection: Qwen3PlanSelection,
+    round: u64,
+    epoch: CompletionEpoch,
+    initial_seeds: Box<[M1SpeculativeMemberSeedV1]>,
+}
+
+#[derive(Debug)]
+struct M1AuthenticatedSpeculativeLogicalLineageWitnessV1 {
+    identity: M1AuthenticatedSpeculativeLineageIdentityV1,
+}
+
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeCausalLineageV1 {
+    logical: M1AuthenticatedSpeculativeLogicalLineageWitnessV1,
+    coordinator_identity: crate::speculative_generation_loop::M1SpeculativeCoordinatorIdentityV1,
+    selection: Qwen3PlanSelection,
+    initial_seeds: Box<[M1SpeculativeMemberSeedV1]>,
+    generated: Box<[(RequestId, u32)]>,
+    completed_rounds: u64,
+    last_epoch: CompletionEpoch,
+}
 
 /// Stable association rejection before any executor exists.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -38,41 +91,13 @@ pub enum M1AuthenticatedSpeculativeExecutorInitErrorV1 {
     TerminalKv { lane: usize },
 }
 
-/// Failed constructor retaining all three association witnesses unchanged.
-#[must_use = "constructor rejection retains coordinator, outcome, and authenticated queue"]
-#[derive(Debug)]
-pub struct M1AuthenticatedSpeculativeExecutorInitFailureV1 {
-    error: M1AuthenticatedSpeculativeExecutorInitErrorV1,
-    coordinator: M1SpeculativeGenerationLoopV1,
-    prior: M1SpeculativeRoundOutcomeV1,
-    released: M1AuthenticatedLongLivedQueueReleasedRoundV1,
-}
-
-impl M1AuthenticatedSpeculativeExecutorInitFailureV1 {
-    #[must_use]
-    pub const fn error(&self) -> M1AuthenticatedSpeculativeExecutorInitErrorV1 {
-        self.error
-    }
-
-    #[must_use = "all rejected constructor inputs remain linear"]
-    pub fn into_parts(
-        self,
-    ) -> (
-        M1AuthenticatedSpeculativeExecutorInitErrorV1,
-        M1SpeculativeGenerationLoopV1,
-        M1SpeculativeRoundOutcomeV1,
-        M1AuthenticatedLongLivedQueueReleasedRoundV1,
-    ) {
-        (self.error, self.coordinator, self.prior, self.released)
-    }
-}
-
 /// Linear production owner of a verified authenticated queue and its logical coordinator.
 #[must_use = "the authenticated executor must execute another round or be retained"]
 #[derive(Debug)]
 pub struct M1AuthenticatedSpeculativePhysicalExecutorV1 {
     coordinator: M1SpeculativeGenerationLoopV1,
     released: M1AuthenticatedLongLivedQueueReleasedRoundV1,
+    lineage: M1AuthenticatedSpeculativeCausalLineageV1,
 }
 
 /// Clean queue teardown retaining the final logical coordinator state.
@@ -81,6 +106,7 @@ pub struct M1AuthenticatedSpeculativePhysicalExecutorV1 {
 pub struct M1AuthenticatedSpeculativeExecutorTeardownSuccessV1 {
     coordinator: M1SpeculativeGenerationLoopV1,
     released: crate::M1AuthenticatedLongLivedQueueRearmTeardownSuccessV1,
+    lineage: M1AuthenticatedSpeculativeCausalLineageV1,
 }
 
 /// Terminal queue-release quarantine retaining the final logical state.
@@ -89,6 +115,7 @@ pub struct M1AuthenticatedSpeculativeExecutorTeardownSuccessV1 {
 pub struct M1AuthenticatedSpeculativeExecutorTeardownFailureV1 {
     coordinator: M1SpeculativeGenerationLoopV1,
     released: Box<crate::M1AuthenticatedLongLivedQueueRearmTeardownFailureV1>,
+    lineage: M1AuthenticatedSpeculativeCausalLineageV1,
 }
 
 impl M1AuthenticatedSpeculativeExecutorTeardownSuccessV1 {
@@ -99,6 +126,12 @@ impl M1AuthenticatedSpeculativeExecutorTeardownSuccessV1 {
     #[must_use]
     pub const fn coordinator(&self) -> &M1SpeculativeGenerationLoopV1 {
         &self.coordinator
+    }
+
+    #[must_use]
+    pub const fn retains_causal_lineage(&self) -> bool {
+        let _ = &self.lineage;
+        true
     }
 }
 
@@ -111,6 +144,12 @@ impl M1AuthenticatedSpeculativeExecutorTeardownFailureV1 {
     pub const fn coordinator(&self) -> &M1SpeculativeGenerationLoopV1 {
         &self.coordinator
     }
+
+    #[must_use]
+    pub const fn retains_causal_lineage(&self) -> bool {
+        let _ = &self.lineage;
+        true
+    }
 }
 
 /// Exact linear inputs for one next generation.
@@ -121,6 +160,200 @@ pub struct M1AuthenticatedSpeculativePhysicalRoundInputsV1 {
     recipe_workspace_plans: M1FullStepWorkspacePlans,
     preparation_workspace_plans: M1FullStepWorkspacePlans,
     controls: Vec<M1SpeculativeMemberControlV1>,
+}
+
+/// Pure authenticated round-zero bootstrap rejection.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1AuthenticatedSpeculativeBootstrapErrorV1 {
+    Coordinator,
+    Inputs,
+    CacheRoster,
+    LineageIdentityExhausted,
+    Preparation,
+    LineageAttachment,
+}
+
+#[derive(Debug)]
+pub enum M1AuthenticatedSpeculativeBootstrapFailureCustodyV1 {
+    Unprepared(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            Vec<ActiveDeviceKvCache>,
+            M1ScheduledDispatchV1,
+            M1FullStepWorkspacePlans,
+            M1FullStepKvWorkspaceTablesV1,
+        )>,
+    ),
+    Preparation(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            crate::M1SpeculativeRoundBindingV1,
+            Vec<ActiveDeviceKvCache>,
+            M1PrepareFailureV1,
+        )>,
+    ),
+    Attachment(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            crate::M1SpeculativeRoundBindingV1,
+            Vec<ActiveDeviceKvCache>,
+            M1PreparedScheduledWorkspaceImagesV1,
+        )>,
+    ),
+}
+
+/// Bootstrap failure retaining every scheduler, KV, cache, and coordinator owner.
+#[must_use = "bootstrap rejection retains all linear inputs"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeBootstrapFailureV1 {
+    error: M1AuthenticatedSpeculativeBootstrapErrorV1,
+    custody: M1AuthenticatedSpeculativeBootstrapFailureCustodyV1,
+}
+
+impl M1AuthenticatedSpeculativeBootstrapFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1AuthenticatedSpeculativeBootstrapErrorV1 {
+        self.error
+    }
+
+    #[must_use]
+    pub const fn retains_all_custody(&self) -> bool {
+        match &self.custody {
+            M1AuthenticatedSpeculativeBootstrapFailureCustodyV1::Unprepared(_)
+            | M1AuthenticatedSpeculativeBootstrapFailureCustodyV1::Preparation(_)
+            | M1AuthenticatedSpeculativeBootstrapFailureCustodyV1::Attachment(_) => true,
+        }
+    }
+
+    #[must_use = "all rejected bootstrap custody remains linear"]
+    pub fn into_custody(self) -> M1AuthenticatedSpeculativeBootstrapFailureCustodyV1 {
+        self.custody
+    }
+}
+
+/// Logical half of a round-zero provenance join.
+///
+/// It is useful only when joined later to the physical half carried through
+/// the exact authenticated queue publication and readback.
+#[must_use = "bootstrap continuation must rejoin its authenticated physical lineage"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeBootstrapContinuationV1 {
+    coordinator: M1SpeculativeGenerationLoopV1,
+    epoch: CompletionEpoch,
+    selected: Vec<ActiveDeviceKvCache>,
+    lineage: M1AuthenticatedSpeculativeLogicalLineageWitnessV1,
+}
+
+/// Prepared round-zero images plus the only logical continuation able to join them.
+#[must_use = "prepared physical custody and logical bootstrap continuation remain linear"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeBootstrapPreparedV1 {
+    prepared: M1PreparedScheduledWorkspaceImagesV1,
+    continuation: M1AuthenticatedSpeculativeBootstrapContinuationV1,
+}
+
+impl M1AuthenticatedSpeculativeBootstrapPreparedV1 {
+    #[must_use = "both bootstrap owners must remain retained"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1PreparedScheduledWorkspaceImagesV1,
+        M1AuthenticatedSpeculativeBootstrapContinuationV1,
+    ) {
+        (self.prepared, self.continuation)
+    }
+}
+
+/// Round-zero completion failure stage after authenticated bootstrap.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1AuthenticatedSpeculativeBootstrapRoundStageV1 {
+    Lineage,
+    CoordinatorPreflight,
+    HostAllocation,
+    PhysicalCompletion,
+    CoordinatorCommit,
+    PageRelease,
+}
+
+/// Concrete round-zero custody. No stage erases its lower recovery API.
+#[must_use = "bootstrap-round failure custody must be retried, torn down, or retained"]
+#[derive(Debug)]
+pub enum M1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1 {
+    Retryable(
+        Box<(
+            M1AuthenticatedSpeculativeBootstrapContinuationV1,
+            M1AuthenticatedSpeculativeDiagnosticCompletedReadbackV1,
+            Vec<M1SpeculativeMemberControlV1>,
+        )>,
+    ),
+    PhysicalOutcome(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            M1AuthenticatedSpeculativeCausalLineageV1,
+            Vec<M1SpeculativeMemberControlV1>,
+            M1ObservedSpeculativeDiagnosticChoicesV1,
+            crate::M1SpeculativePreflightedRoundV1,
+            M1AuthenticatedCompletedStepOutcomeV1,
+        )>,
+    ),
+    CoordinatorCommit(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            M1AuthenticatedSpeculativeCausalLineageV1,
+            Vec<M1SpeculativeMemberControlV1>,
+            M1ObservedSpeculativeDiagnosticChoicesV1,
+            crate::M1AuthenticatedCompletedStepSuccessV1,
+            Box<crate::M1SpeculativePreparedRoundCommitFailureV1>,
+        )>,
+    ),
+    LineageAfterCommit(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            M1AuthenticatedSpeculativeCausalLineageV1,
+            Vec<M1SpeculativeMemberControlV1>,
+            M1ObservedSpeculativeDiagnosticChoicesV1,
+            crate::M1AuthenticatedCompletedStepSuccessV1,
+            M1SpeculativeRoundOutcomeV1,
+        )>,
+    ),
+    PageRelease(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            M1AuthenticatedSpeculativeCausalLineageV1,
+            M1SpeculativeRoundOutcomeV1,
+            M1ObservedSpeculativeDiagnosticChoicesV1,
+            Box<crate::M1AuthenticatedCompletedStepKvReleaseFailureV1>,
+        )>,
+    ),
+    ReleasedLineage(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            M1AuthenticatedSpeculativeCausalLineageV1,
+            M1SpeculativeRoundOutcomeV1,
+            M1ObservedSpeculativeDiagnosticChoicesV1,
+            M1AuthenticatedLongLivedQueueReleasedRoundV1,
+        )>,
+    ),
+}
+
+/// Failed authenticated round-zero completion with concrete linear custody.
+#[must_use = "bootstrap-round failure retains all physical and logical owners"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeBootstrapRoundFailureV1 {
+    stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1,
+    custody: M1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1,
+}
+
+impl M1AuthenticatedSpeculativeBootstrapRoundFailureV1 {
+    #[must_use]
+    pub const fn stage(&self) -> M1AuthenticatedSpeculativeBootstrapRoundStageV1 {
+        self.stage
+    }
+
+    #[must_use = "concrete bootstrap failure custody remains linear"]
+    pub fn into_custody(self) -> M1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1 {
+        self.custody
+    }
 }
 
 impl M1AuthenticatedSpeculativePhysicalRoundInputsV1 {
@@ -161,6 +394,7 @@ pub enum M1AuthenticatedSpeculativePhysicalRoundStageV1 {
     CoordinatorPreflight,
     PhysicalCompletion,
     CoordinatorCommit,
+    CausalLineage,
     PageRelease,
 }
 
@@ -305,6 +539,22 @@ enum M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1 {
             crate::M1AuthenticatedRearmedCompletionOutcomeV1,
         )>,
     ),
+    LineageAfterCommit(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            M1SpeculativeRoundOutcomeV1,
+            M1ObservedSpeculativeDiagnosticChoicesV1,
+            crate::M1AuthenticatedRearmedCompletionOutcomeV1,
+        )>,
+    ),
+    ReleasedLineage(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            M1SpeculativeRoundOutcomeV1,
+            M1ObservedSpeculativeDiagnosticChoicesV1,
+            M1AuthenticatedLongLivedQueueReleasedRoundV1,
+        )>,
+    ),
 }
 
 /// Exact stage-specific terminal source; no lower failure is type-erased.
@@ -319,6 +569,7 @@ pub enum M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1 {
     Coordinator(crate::M1SpeculativeGenerationLoopErrorV1),
     CoordinatorCommit(Box<crate::M1SpeculativePreparedRoundCommitFailureV1>),
     PhysicalOutcome(Box<crate::M1AuthenticatedRearmedCompletionOutcomeV1>),
+    CausalLineage,
     HostAllocation,
 }
 
@@ -328,6 +579,7 @@ pub enum M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1 {
 pub struct M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
     stage: M1AuthenticatedSpeculativePhysicalRoundStageV1,
     custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1,
+    lineage: Option<M1AuthenticatedSpeculativeCausalLineageV1>,
 }
 
 impl M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
@@ -366,12 +618,20 @@ impl M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
         ),
         Self,
     > {
-        let Self { stage, custody } = self;
+        let Self {
+            stage,
+            custody,
+            lineage,
+        } = self;
         match custody {
             M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Retryable(retained) => {
                 Ok(*retained)
             }
-            custody => Err(Self { stage, custody }),
+            custody => Err(Self {
+                stage,
+                custody,
+                lineage,
+            }),
         }
     }
 
@@ -389,12 +649,20 @@ impl M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
         ),
         Self,
     > {
-        let Self { stage, custody } = self;
+        let Self {
+            stage,
+            custody,
+            lineage,
+        } = self;
         match custody {
             M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Complete(retained) => {
                 Ok(*retained)
             }
-            custody => Err(Self { stage, custody }),
+            custody => Err(Self {
+                stage,
+                custody,
+                lineage,
+            }),
         }
     }
 
@@ -415,13 +683,17 @@ impl M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
         >,
         Self,
     > {
-        let Self { stage, custody } = self;
+        let Self {
+            stage,
+            custody,
+            lineage,
+        } = self;
         match custody {
             M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::DiagnosticReadback(
                 retained,
             ) => {
                 let (coordinator, binding, controls, failure) = *retained;
-                let logical = Box::new((coordinator, binding, controls)) as Box<dyn fmt::Debug>;
+                let logical = retain_logical_lineage(lineage, (coordinator, binding, controls));
                 Ok(match failure.destroy_queue_and_retain_custody(engine) {
                     Ok(source) => Ok(M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1 {
                         stage,
@@ -448,8 +720,10 @@ impl M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
             ) => {
                 let (coordinator, diagnostic, controls, error) = *retained;
                 let (readback, choices) = diagnostic.into_parts();
-                let logical =
-                    Box::new((coordinator, controls, error, choices)) as Box<dyn fmt::Debug>;
+                let logical = retain_logical_lineage(
+                    lineage,
+                    (coordinator, controls, error, choices),
+                );
                 Ok(match readback.destroy_queue_and_retain_custody(engine) {
                     Ok(source) => Ok(M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1 {
                         stage,
@@ -476,8 +750,10 @@ impl M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
             ) => {
                 let (coordinator, diagnostic, controls, permit, error) = *retained;
                 let (readback, choices) = diagnostic.into_parts();
-                let logical = Box::new((coordinator, controls, permit, error, choices))
-                    as Box<dyn fmt::Debug>;
+                let logical = retain_logical_lineage(
+                    lineage,
+                    (coordinator, controls, permit, error, choices),
+                );
                 Ok(match readback.destroy_queue_and_retain_custody(engine) {
                     Ok(source) => Ok(M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1 {
                         stage,
@@ -502,8 +778,10 @@ impl M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
             M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::HostAllocation(retained) => {
                 let (coordinator, diagnostic, controls, permit) = *retained;
                 let (readback, choices) = diagnostic.into_parts();
-                let logical =
-                    Box::new((coordinator, controls, permit, choices)) as Box<dyn fmt::Debug>;
+                let logical = retain_logical_lineage(
+                    lineage,
+                    (coordinator, controls, permit, choices),
+                );
                 Ok(match readback.destroy_queue_and_retain_custody(engine) {
                     Ok(source) => Ok(M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1 {
                         stage,
@@ -529,8 +807,10 @@ impl M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
                 retained,
             ) => {
                 let (coordinator, permit, controls, choices, failure) = *retained;
-                let logical =
-                    Box::new((coordinator, permit, controls, choices)) as Box<dyn fmt::Debug>;
+                let logical = retain_logical_lineage(
+                    lineage,
+                    (coordinator, permit, controls, choices),
+                );
                 Ok(match failure.destroy_queue_and_retain_custody(engine) {
                     Ok(source) => Ok(M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1 {
                         stage,
@@ -559,7 +839,7 @@ impl M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
                     choices,
                     failure,
                 } = *retained;
-                let logical = Box::new((coordinator, outcome, choices)) as Box<dyn fmt::Debug>;
+                let logical = retain_logical_lineage(lineage, (coordinator, outcome, choices));
                 Ok(match failure.destroy_queue_and_retain_round(engine) {
                     Ok(source) => Ok(M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1 {
                         stage,
@@ -583,8 +863,10 @@ impl M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
             }
             M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::PhysicalOutcome(retained) => {
                 let (coordinator, permit, controls, choices, physical) = *retained;
-                let logical =
-                    Box::new((coordinator, permit, controls, choices)) as Box<dyn fmt::Debug>;
+                let logical = retain_logical_lineage(
+                    lineage,
+                    (coordinator, permit, controls, choices),
+                );
                 Ok(match physical.destroy_queue_and_retain_rejected(engine) {
                     Ok(Ok(source)) => Ok(M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1 {
                         stage,
@@ -622,7 +904,7 @@ impl M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
             M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::CoordinatorCommit(retained) => {
                 let (coordinator, controls, choices, physical, failure) = *retained;
                 engine.quarantine_m1_queue_rearm_failure();
-                let logical = Box::new((coordinator, controls, choices)) as Box<dyn fmt::Debug>;
+                let logical = retain_logical_lineage(lineage, (coordinator, controls, choices));
                 Ok(match physical.release_completed() {
                     M1AuthenticatedRearmedRoundReleaseOutcomeV1::Released(released) => {
                         match released.destroy_queue_and_retain_round(engine) {
@@ -682,13 +964,103 @@ impl M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
                     }
                 })
             }
+            M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::LineageAfterCommit(
+                retained,
+            ) => {
+                let (coordinator, outcome, choices, physical) = *retained;
+                engine.quarantine_m1_queue_rearm_failure();
+                let logical = retain_logical_lineage(lineage, (coordinator, outcome, choices));
+                Ok(match physical.release_completed() {
+                    M1AuthenticatedRearmedRoundReleaseOutcomeV1::Released(released) => {
+                        match released.destroy_queue_and_retain_round(engine) {
+                            Ok(source) => Ok(M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1 {
+                                stage,
+                                source:
+                                    M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessSourceV1::Released(
+                                        source,
+                                    ),
+                                logical,
+                            }),
+                            Err(source) => Err(Box::new(
+                                M1AuthenticatedSpeculativePhysicalRoundTeardownFailureV1 {
+                                    stage,
+                                    source:
+                                        M1AuthenticatedSpeculativePhysicalRoundTeardownFailureSourceV1::Released(
+                                            source,
+                                        ),
+                                    logical,
+                                },
+                            )),
+                        }
+                    }
+                    M1AuthenticatedRearmedRoundReleaseOutcomeV1::Rejected(source) => {
+                        match source.destroy_queue_and_retain_round(engine) {
+                            Ok(source) => Ok(M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1 {
+                                stage,
+                                source:
+                                    M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessSourceV1::PageRelease(
+                                        source,
+                                    ),
+                                logical,
+                            }),
+                            Err(source) => Err(Box::new(
+                                M1AuthenticatedSpeculativePhysicalRoundTeardownFailureV1 {
+                                    stage,
+                                    source:
+                                        M1AuthenticatedSpeculativePhysicalRoundTeardownFailureSourceV1::PageRelease(
+                                            source,
+                                        ),
+                                    logical,
+                                },
+                            )),
+                        }
+                    }
+                    M1AuthenticatedRearmedRoundReleaseOutcomeV1::NotCompleted(physical) => {
+                        Ok(M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1 {
+                            stage,
+                            source:
+                                M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessSourceV1::TerminalQuarantine(
+                                    M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1::PhysicalOutcome(
+                                        Box::new(physical),
+                                    ),
+                                ),
+                            logical,
+                        })
+                    }
+                })
+            }
+            M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::ReleasedLineage(retained) => {
+                let (coordinator, outcome, choices, released) = *retained;
+                engine.quarantine_m1_queue_rearm_failure();
+                let logical = retain_logical_lineage(lineage, (coordinator, outcome, choices));
+                Ok(match released.destroy_queue_and_retain_round(engine) {
+                    Ok(source) => Ok(M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1 {
+                        stage,
+                        source:
+                            M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessSourceV1::Released(
+                                source,
+                            ),
+                        logical,
+                    }),
+                    Err(source) => Err(Box::new(
+                        M1AuthenticatedSpeculativePhysicalRoundTeardownFailureV1 {
+                            stage,
+                            source:
+                                M1AuthenticatedSpeculativePhysicalRoundTeardownFailureSourceV1::Released(
+                                    source,
+                                ),
+                            logical,
+                        },
+                    )),
+                })
+            }
             M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Schedule(retained) => {
                 let (coordinator, binding, kv, recipe, preparation, controls, source) = *retained;
                 terminal_quarantine(
                     engine,
                     stage,
                     M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1::Schedule(source),
-                    (coordinator, binding, kv, recipe, preparation, controls),
+                    (lineage, coordinator, binding, kv, recipe, preparation, controls),
                 )
             }
             M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Recipe(retained) => {
@@ -699,7 +1071,7 @@ impl M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
                     M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1::Recipe(Box::new(
                         source,
                     )),
-                    (coordinator, binding, scheduled, kv, plans, controls),
+                    (lineage, coordinator, binding, scheduled, kv, plans, controls),
                 )
             }
             M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::KvReservation(retained) => {
@@ -710,7 +1082,7 @@ impl M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
                     M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1::KvReservation(
                         Box::new(source),
                     ),
-                    (coordinator, binding, recipe, plans, controls),
+                    (lineage, coordinator, binding, recipe, plans, controls),
                 )
             }
             M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::WorkspacePreparation(retained) => {
@@ -719,7 +1091,7 @@ impl M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
                     engine,
                     stage,
                     M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1::WorkspacePreparation(source),
-                    (coordinator, binding, recipe, controls),
+                    (lineage, coordinator, binding, recipe, controls),
                 )
             }
             M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Submit(retained) => {
@@ -730,7 +1102,7 @@ impl M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
                     M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1::Submit(Box::new(
                         source,
                     )),
-                    (coordinator, binding, controls),
+                    (lineage, coordinator, binding, controls),
                 )
             }
             M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::QueueProgress(retained) => {
@@ -739,7 +1111,7 @@ impl M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
                     engine,
                     stage,
                     M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1::QueueProgress(source),
-                    (coordinator, binding, controls),
+                    (lineage, coordinator, binding, controls),
                 )
             }
             M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::ReleasedPhysicalOutcome(retained) => {
@@ -750,7 +1122,7 @@ impl M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
                     M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1::PhysicalOutcome(
                         Box::new(source),
                     ),
-                    (coordinator, outcome, choices),
+                    (lineage, coordinator, outcome, choices),
                 )
             }
             M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Retryable(retained) => {
@@ -759,6 +1131,7 @@ impl M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
                     custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Retryable(
                         retained,
                     ),
+                    lineage,
                 })
             }
             M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Complete(retained) => {
@@ -767,6 +1140,7 @@ impl M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
                     custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Complete(
                         retained,
                     ),
+                    lineage,
                 })
             }
         }
@@ -781,11 +1155,28 @@ impl M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
     pub fn retry_page_release(
         self,
     ) -> Result<M1AuthenticatedSpeculativePhysicalRoundSuccessV1, Self> {
-        let Self { stage, custody } = self;
+        let Self {
+            stage,
+            custody,
+            lineage,
+        } = self;
         let M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::PageRelease(retained) =
             custody
         else {
-            return Err(Self { stage, custody });
+            return Err(Self {
+                stage,
+                custody,
+                lineage,
+            });
+        };
+        let Some(lineage) = lineage else {
+            return Err(Self {
+                stage,
+                custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::PageRelease(
+                    retained,
+                ),
+                lineage: None,
+            });
         };
         let M1AuthenticatedSpeculativePhysicalPageReleaseCustodyV1 {
             coordinator,
@@ -799,6 +1190,7 @@ impl M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
                     executor: M1AuthenticatedSpeculativePhysicalExecutorV1 {
                         coordinator,
                         released,
+                        lineage,
                     },
                     outcome,
                     choices,
@@ -814,6 +1206,7 @@ impl M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
                         failure: *failure,
                     }),
                 ),
+                lineage: Some(lineage),
             }),
             M1AuthenticatedRearmedRoundReleaseOutcomeV1::NotCompleted(not_completed) => Err(Self {
                 stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::PageRelease,
@@ -821,6 +1214,7 @@ impl M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
                     M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::ReleasedPhysicalOutcome(
                         Box::new((coordinator, outcome, choices, not_completed)),
                     ),
+                lineage: Some(lineage),
             }),
         }
     }
@@ -968,6 +1362,536 @@ const fn production_entry_has_active_members(active_count: usize) -> bool {
     active_count != 0
 }
 
+fn speculative_draft_selection(target: Qwen3PlanSelection) -> Option<Qwen3PlanSelection> {
+    let bucket = match target.bucket {
+        Qwen3PlanBucket::SpeculativeS1K4C8192
+        | Qwen3PlanBucket::SpeculativeS1K8C8192
+        | Qwen3PlanBucket::SpeculativeS1K16C8192 => Qwen3PlanBucket::DecodeS1C8192,
+        Qwen3PlanBucket::SpeculativeS8K4C8192 => Qwen3PlanBucket::DecodeS8C8192,
+        _ => return None,
+    };
+    (target.role == Qwen3ModelRole::Target8B && target.mode == Qwen3ExecutionMode::Speculative)
+        .then_some(Qwen3PlanSelection {
+            role: Qwen3ModelRole::Draft06B,
+            mode: Qwen3ExecutionMode::Decode,
+            bucket,
+        })
+}
+
+fn speculative_role_inputs_match_binding(
+    input: &ValidatedM1StepInputs,
+    expected_selection: Qwen3PlanSelection,
+    binding: &crate::M1SpeculativeRoundBindingV1,
+    committed: impl Fn(crate::M1SpeculativeRoundMemberInputV1) -> u32,
+) -> bool {
+    let members = binding.members();
+    let Ok(live_lanes) = usize::try_from(input.live_lane_count()) else {
+        return false;
+    };
+    let width = input.dimensions().active_tokens as usize;
+    input.selection() == expected_selection
+        && live_lanes == members.len()
+        && members.iter().copied().enumerate().all(|(lane, member)| {
+            let Some(plan) = input.lanes().get(lane).and_then(Option::as_ref) else {
+                return false;
+            };
+            let Some(row_start) = lane.checked_mul(width) else {
+                return false;
+            };
+            plan.selection() == expected_selection
+                && plan.request() == member.request()
+                && plan.completion_epoch() == binding.epoch()
+                && input.token_ids().get(row_start) == Some(&member.round_anchor())
+                && input.position_ids().get(row_start) == Some(&committed(member))
+                && input.context_lengths().get(lane) == Some(&committed(member))
+                && input.active_lengths().get(lane) == Some(&input.dimensions().active_tokens)
+        })
+}
+
+fn speculative_round_inputs_match_binding(
+    inputs: &M1LongLivedQueueRearmKvInputsV1,
+    binding: &crate::M1SpeculativeRoundBindingV1,
+) -> bool {
+    let M1LongLivedQueueRearmKvInputsV1::SpeculativeRound {
+        draft_decode,
+        target_speculative,
+        ..
+    } = inputs
+    else {
+        return false;
+    };
+    speculative_validated_pair_matches_binding(draft_decode, target_speculative, binding)
+}
+
+fn speculative_validated_pair_matches_binding(
+    draft_decode: &ValidatedM1StepInputs,
+    target_speculative: &ValidatedM1StepInputs,
+    binding: &crate::M1SpeculativeRoundBindingV1,
+) -> bool {
+    let target_selection = binding.shape().selection();
+    let Some(draft_selection) = speculative_draft_selection(target_selection) else {
+        return false;
+    };
+    let target_width = target_speculative.dimensions().active_tokens as usize;
+    let expected_target_width = usize::from(binding.shape().draft_tokens()) + 1;
+    speculative_role_inputs_match_binding(
+        draft_decode,
+        draft_selection,
+        binding,
+        crate::M1SpeculativeRoundMemberInputV1::draft_pre_committed,
+    ) && draft_decode.dimensions().active_tokens == 1
+        && speculative_role_inputs_match_binding(
+            target_speculative,
+            target_selection,
+            binding,
+            crate::M1SpeculativeRoundMemberInputV1::target_pre_committed,
+        )
+        && target_width == expected_target_width
+        && binding.members().iter().enumerate().all(|(lane, _)| {
+            let Some(row_start) = lane.checked_mul(target_width) else {
+                return false;
+            };
+            let Some(future_start) = row_start.checked_add(1) else {
+                return false;
+            };
+            let Some(row_end) = row_start.checked_add(target_width) else {
+                return false;
+            };
+            target_speculative
+                .token_ids()
+                .get(future_start..row_end)
+                .is_some_and(|future| future.iter().all(|token| *token == 0))
+        })
+}
+
+fn bootstrap_unprepared_failure(
+    error: M1AuthenticatedSpeculativeBootstrapErrorV1,
+    coordinator: M1SpeculativeGenerationLoopV1,
+    selected: Vec<ActiveDeviceKvCache>,
+    scheduled: M1ScheduledDispatchV1,
+    plans: M1FullStepWorkspacePlans,
+    tables: M1FullStepKvWorkspaceTablesV1,
+) -> Box<M1AuthenticatedSpeculativeBootstrapFailureV1> {
+    Box::new(M1AuthenticatedSpeculativeBootstrapFailureV1 {
+        error,
+        custody: M1AuthenticatedSpeculativeBootstrapFailureCustodyV1::Unprepared(Box::new((
+            coordinator,
+            selected,
+            scheduled,
+            plans,
+            tables,
+        ))),
+    })
+}
+
+/// Binds a fresh coordinator to the exact authenticated round-zero physical
+/// inputs before any queue publication can consume them.
+///
+/// The returned prepared step contains one private move-only lineage half.
+/// Its companion continuation cannot become an executor until that same half
+/// returns through authenticated completion and page release.
+///
+/// # Errors
+///
+/// Every rejection retains all coordinator, cache, scheduler, plan, and KV
+/// custody at the exact stage reached.
+pub fn prepare_m1_authenticated_speculative_bootstrap_v1(
+    coordinator: M1SpeculativeGenerationLoopV1,
+    selected: Vec<ActiveDeviceKvCache>,
+    scheduled: M1ScheduledDispatchV1,
+    runner: &LogicalRunnerDeclaration,
+    plans: M1FullStepWorkspacePlans,
+    tables: M1FullStepKvWorkspaceTablesV1,
+) -> Result<
+    M1AuthenticatedSpeculativeBootstrapPreparedV1,
+    Box<M1AuthenticatedSpeculativeBootstrapFailureV1>,
+> {
+    let mut roster = Vec::new();
+    if roster.try_reserve_exact(scheduled.member_count()).is_err() {
+        return Err(bootstrap_unprepared_failure(
+            M1AuthenticatedSpeculativeBootstrapErrorV1::Coordinator,
+            coordinator,
+            selected,
+            scheduled,
+            plans,
+            tables,
+        ));
+    }
+    for lane in 0..scheduled.member_count() {
+        let Some(request) = scheduled.member(lane) else {
+            return Err(bootstrap_unprepared_failure(
+                M1AuthenticatedSpeculativeBootstrapErrorV1::Inputs,
+                coordinator,
+                selected,
+                scheduled,
+                plans,
+                tables,
+            ));
+        };
+        roster.push(request);
+    }
+    let binding = match coordinator.bind_round(0, scheduled.epoch(), &roster) {
+        Ok(binding) => binding,
+        Err(_) => {
+            return Err(bootstrap_unprepared_failure(
+                M1AuthenticatedSpeculativeBootstrapErrorV1::Coordinator,
+                coordinator,
+                selected,
+                scheduled,
+                plans,
+                tables,
+            ));
+        }
+    };
+    let inputs_match = match &tables {
+        M1FullStepKvWorkspaceTablesV1::SpeculativeRound {
+            draft_decode,
+            target_speculative,
+        } => speculative_validated_pair_matches_binding(
+            draft_decode.inputs(),
+            target_speculative.inputs(),
+            &binding,
+        ),
+        _ => false,
+    };
+    if !inputs_match {
+        return Err(bootstrap_unprepared_failure(
+            M1AuthenticatedSpeculativeBootstrapErrorV1::Inputs,
+            coordinator,
+            selected,
+            scheduled,
+            plans,
+            tables,
+        ));
+    }
+    let caches_match = selected.len() == binding.members().len()
+        && selected
+            .iter()
+            .zip(binding.members())
+            .all(|(cache, member)| {
+                let projection = cache.projection();
+                projection.request == member.request()
+                    && projection.target.committed_tokens == member.target_pre_committed()
+                    && projection.draft.committed_tokens == member.draft_pre_committed()
+            });
+    if !caches_match {
+        return Err(bootstrap_unprepared_failure(
+            M1AuthenticatedSpeculativeBootstrapErrorV1::CacheRoster,
+            coordinator,
+            selected,
+            scheduled,
+            plans,
+            tables,
+        ));
+    }
+    let initial_seeds = match coordinator.bootstrap_seed_snapshot() {
+        Ok(seeds) => seeds,
+        Err(_) => {
+            return Err(bootstrap_unprepared_failure(
+                M1AuthenticatedSpeculativeBootstrapErrorV1::Coordinator,
+                coordinator,
+                selected,
+                scheduled,
+                plans,
+                tables,
+            ));
+        }
+    };
+    let Some(lineage_identity) = M1AuthenticatedSpeculativeLineageIdentityV1::fresh() else {
+        return Err(bootstrap_unprepared_failure(
+            M1AuthenticatedSpeculativeBootstrapErrorV1::LineageIdentityExhausted,
+            coordinator,
+            selected,
+            scheduled,
+            plans,
+            tables,
+        ));
+    };
+    let physical = M1AuthenticatedSpeculativePhysicalLineageWitnessV1 {
+        identity: lineage_identity,
+        coordinator_identity: coordinator.identity(),
+        selection: coordinator.shape().selection(),
+        round: binding.round(),
+        epoch: binding.epoch(),
+        initial_seeds,
+    };
+    let prepared =
+        match crate::prepare_m1_scheduled_workspace_images_v1(scheduled, runner, plans, tables) {
+            Ok(prepared) => prepared,
+            Err(source) => {
+                return Err(Box::new(M1AuthenticatedSpeculativeBootstrapFailureV1 {
+                    error: M1AuthenticatedSpeculativeBootstrapErrorV1::Preparation,
+                    custody: M1AuthenticatedSpeculativeBootstrapFailureCustodyV1::Preparation(
+                        Box::new((coordinator, binding, selected, source)),
+                    ),
+                }));
+            }
+        };
+    let prepared = match prepared.retain_speculative_lineage(physical) {
+        Ok(prepared) => prepared,
+        Err(prepared) => {
+            return Err(Box::new(M1AuthenticatedSpeculativeBootstrapFailureV1 {
+                error: M1AuthenticatedSpeculativeBootstrapErrorV1::LineageAttachment,
+                custody: M1AuthenticatedSpeculativeBootstrapFailureCustodyV1::Attachment(Box::new(
+                    (coordinator, binding, selected, prepared),
+                )),
+            }));
+        }
+    };
+    Ok(M1AuthenticatedSpeculativeBootstrapPreparedV1 {
+        prepared,
+        continuation: M1AuthenticatedSpeculativeBootstrapContinuationV1 {
+            coordinator,
+            epoch: binding.epoch(),
+            selected,
+            lineage: M1AuthenticatedSpeculativeLogicalLineageWitnessV1 {
+                identity: lineage_identity,
+            },
+        },
+    })
+}
+
+fn bootstrap_round_retryable(
+    stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1,
+    continuation: M1AuthenticatedSpeculativeBootstrapContinuationV1,
+    diagnostic: M1AuthenticatedSpeculativeDiagnosticCompletedReadbackV1,
+    controls: Vec<M1SpeculativeMemberControlV1>,
+) -> Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1> {
+    Box::new(M1AuthenticatedSpeculativeBootstrapRoundFailureV1 {
+        stage,
+        custody: M1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1::Retryable(Box::new((
+            continuation,
+            diagnostic,
+            controls,
+        ))),
+    })
+}
+
+impl M1AuthenticatedSpeculativeBootstrapContinuationV1 {
+    /// Joins the private physical lineage half after round-zero authenticated
+    /// readback, settles physical KV, commits the coordinator, and only then
+    /// releases retired pages into the repeated executor.
+    ///
+    /// # Errors
+    ///
+    /// Pure lineage, coordinator, and allocation failures retain the unchanged
+    /// continuation and diagnostic. Later failures expose concrete physical,
+    /// commit, or page-release custody without an opaque terminal bucket.
+    pub fn complete_initial_round<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        diagnostic: M1AuthenticatedSpeculativeDiagnosticCompletedReadbackV1,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+    ) -> Result<
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1>,
+    > {
+        let checked = diagnostic.completed().checked();
+        let Some(physical) = checked.speculative_lineage() else {
+            return Err(bootstrap_round_retryable(
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::Lineage,
+                self,
+                diagnostic,
+                controls,
+            ));
+        };
+        if physical.identity != self.lineage.identity
+            || physical.coordinator_identity != self.coordinator.identity()
+            || physical.selection != self.coordinator.shape().selection()
+            || physical.round != 0
+            || physical.epoch != self.epoch
+            || checked.selection() != physical.selection
+            || checked.epoch() != physical.epoch
+            || !self
+                .coordinator
+                .matches_bootstrap_seeds(physical.selection, &physical.initial_seeds)
+        {
+            return Err(bootstrap_round_retryable(
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::Lineage,
+                self,
+                diagnostic,
+                controls,
+            ));
+        }
+        let physical_coordinator_identity = physical.coordinator_identity;
+        let physical_selection = physical.selection;
+
+        let mut initial_seeds = Vec::new();
+        let mut generated = Vec::new();
+        let mut roster = Vec::new();
+        let mut completion_members = Vec::new();
+        let member_count = physical.initial_seeds.len();
+        if initial_seeds.try_reserve_exact(member_count).is_err()
+            || generated.try_reserve_exact(member_count).is_err()
+            || roster.try_reserve_exact(member_count).is_err()
+            || completion_members.try_reserve_exact(member_count).is_err()
+        {
+            return Err(bootstrap_round_retryable(
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::HostAllocation,
+                self,
+                diagnostic,
+                controls,
+            ));
+        }
+        initial_seeds.extend_from_slice(&physical.initial_seeds);
+        roster.extend(physical.initial_seeds.iter().map(|seed| seed.request()));
+        generated.extend(roster.iter().copied().map(|request| (request, 0)));
+        let binding = match self.coordinator.bind_round(0, self.epoch, &roster) {
+            Ok(binding) => binding,
+            Err(_) => {
+                return Err(bootstrap_round_retryable(
+                    M1AuthenticatedSpeculativeBootstrapRoundStageV1::CoordinatorPreflight,
+                    self,
+                    diagnostic,
+                    controls,
+                ));
+            }
+        };
+        let preflighted = match self
+            .coordinator
+            .preflight_checked_round(binding, checked, &controls)
+        {
+            Ok(preflighted) => preflighted,
+            Err(_) => {
+                return Err(bootstrap_round_retryable(
+                    M1AuthenticatedSpeculativeBootstrapRoundStageV1::CoordinatorPreflight,
+                    self,
+                    diagnostic,
+                    controls,
+                ));
+            }
+        };
+        if self.selected.len() != preflighted.members().len() {
+            return Err(bootstrap_round_retryable(
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::CoordinatorPreflight,
+                self,
+                diagnostic,
+                controls,
+            ));
+        }
+        let Self {
+            coordinator,
+            epoch,
+            selected,
+            lineage: logical,
+        } = self;
+        for (cache, outcome) in selected.into_iter().zip(preflighted.members()) {
+            debug_assert_eq!(cache.projection().request, outcome.request());
+            completion_members.push(match outcome.physical_disposition() {
+                crate::M1DeviceKvCompletionDispositionV1::Continue => {
+                    M1DeviceKvCompletionMemberV1::continuing(cache)
+                }
+                crate::M1DeviceKvCompletionDispositionV1::Retire => {
+                    M1DeviceKvCompletionMemberV1::retiring(cache)
+                }
+            });
+        }
+        let mut lineage = M1AuthenticatedSpeculativeCausalLineageV1 {
+            logical,
+            coordinator_identity: physical_coordinator_identity,
+            selection: physical_selection,
+            initial_seeds: initial_seeds.into_boxed_slice(),
+            generated: generated.into_boxed_slice(),
+            completed_rounds: 0,
+            last_epoch: epoch,
+        };
+        let (readback, choices) = diagnostic.into_parts();
+        let physical = complete_m1_authenticated_physical_step_v1(
+            engine,
+            readback,
+            M1DeviceKvCompletionRosterV1::new(completion_members),
+        );
+        let physical = match physical {
+            M1AuthenticatedCompletedStepOutcomeV1::Completed(physical) => physical,
+            physical => {
+                return Err(Box::new(M1AuthenticatedSpeculativeBootstrapRoundFailureV1 {
+                    stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1::PhysicalCompletion,
+                    custody:
+                        M1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1::PhysicalOutcome(
+                            Box::new((
+                                coordinator,
+                                lineage,
+                                controls,
+                                choices,
+                                preflighted,
+                                physical,
+                            )),
+                        ),
+                }));
+            }
+        };
+        let mut coordinator = coordinator;
+        let outcome = match coordinator.commit_preflighted_round(preflighted) {
+            Ok(outcome) => outcome,
+            Err(failure) => {
+                engine.quarantine_m1_queue_rearm_failure();
+                return Err(Box::new(M1AuthenticatedSpeculativeBootstrapRoundFailureV1 {
+                    stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1::CoordinatorCommit,
+                    custody:
+                        M1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1::CoordinatorCommit(
+                            Box::new((
+                                coordinator,
+                                lineage,
+                                controls,
+                                choices,
+                                physical,
+                                failure,
+                            )),
+                        ),
+                }));
+            }
+        };
+        if !refresh_causal_generated_counts(&mut lineage, &coordinator, outcome.completed_epoch()) {
+            engine.quarantine_m1_queue_rearm_failure();
+            return Err(Box::new(
+                M1AuthenticatedSpeculativeBootstrapRoundFailureV1 {
+                    stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1::Lineage,
+                    custody:
+                        M1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1::LineageAfterCommit(
+                            Box::new((coordinator, lineage, controls, choices, physical, outcome)),
+                        ),
+                },
+            ));
+        }
+        let released =
+            match release_m1_authenticated_completed_step_kv_pages_v1(physical) {
+                Ok(released) => M1AuthenticatedLongLivedQueueReleasedRoundV1::initial(released),
+                Err(failure) => {
+                    return Err(Box::new(M1AuthenticatedSpeculativeBootstrapRoundFailureV1 {
+                    stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1::PageRelease,
+                    custody:
+                        M1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1::PageRelease(
+                            Box::new((coordinator, lineage, outcome, choices, failure)),
+                        ),
+                }));
+                }
+            };
+        if validate_prior_association(&coordinator, &outcome, &released).is_err()
+            || !validate_causal_lineage(&coordinator, &released, &lineage)
+        {
+            engine.quarantine_m1_queue_rearm_failure();
+            return Err(Box::new(
+                M1AuthenticatedSpeculativeBootstrapRoundFailureV1 {
+                    stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1::Lineage,
+                    custody:
+                        M1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1::ReleasedLineage(
+                            Box::new((coordinator, lineage, outcome, choices, released)),
+                        ),
+                },
+            ));
+        }
+        Ok(M1AuthenticatedSpeculativePhysicalRoundSuccessV1 {
+            executor: M1AuthenticatedSpeculativePhysicalExecutorV1 {
+                coordinator,
+                released,
+                lineage,
+            },
+            outcome,
+            choices,
+        })
+    }
+}
+
 struct M1AuthenticatedSpeculativeAssociationHeaderV1<'a> {
     coordinator_identity: crate::speculative_generation_loop::M1SpeculativeCoordinatorIdentityV1,
     prior_identity: crate::speculative_generation_loop::M1SpeculativeCoordinatorIdentityV1,
@@ -1102,6 +2026,81 @@ fn validate_prior_association(
     Ok(())
 }
 
+fn validate_causal_lineage(
+    coordinator: &M1SpeculativeGenerationLoopV1,
+    released: &M1AuthenticatedLongLivedQueueReleasedRoundV1,
+    lineage: &M1AuthenticatedSpeculativeCausalLineageV1,
+) -> bool {
+    let Ok(physical) = released.speculative_lineage_witness() else {
+        return false;
+    };
+    validate_causal_lineage_join(
+        coordinator,
+        physical,
+        lineage,
+        released.current_released().checked().epoch(),
+        released.speculative_history_count(lineage.selection),
+    )
+}
+
+fn validate_causal_lineage_join(
+    coordinator: &M1SpeculativeGenerationLoopV1,
+    physical: &M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+    lineage: &M1AuthenticatedSpeculativeCausalLineageV1,
+    current_epoch: CompletionEpoch,
+    history_count: usize,
+) -> bool {
+    physical.identity == lineage.logical.identity
+        && physical.coordinator_identity == lineage.coordinator_identity
+        && physical.coordinator_identity == coordinator.identity()
+        && physical.selection == lineage.selection
+        && physical.round == 0
+        && physical.epoch.value() != 0
+        && physical.initial_seeds == lineage.initial_seeds
+        && lineage.completed_rounds == coordinator.next_round()
+        && coordinator.last_epoch() == Some(lineage.last_epoch)
+        && current_epoch == lineage.last_epoch
+        && history_count
+            .checked_add(1)
+            .and_then(|count| u64::try_from(count).ok())
+            == Some(lineage.completed_rounds)
+        && coordinator.matches_causal_lineage(
+            lineage.selection,
+            &lineage.initial_seeds,
+            &lineage.generated,
+            lineage.completed_rounds,
+            Some(lineage.last_epoch),
+        )
+}
+
+fn refresh_causal_generated_counts(
+    lineage: &mut M1AuthenticatedSpeculativeCausalLineageV1,
+    coordinator: &M1SpeculativeGenerationLoopV1,
+    epoch: CompletionEpoch,
+) -> bool {
+    if lineage.generated.len() != lineage.initial_seeds.len() {
+        return false;
+    }
+    for ((request, generated), seed) in lineage.generated.iter_mut().zip(&lineage.initial_seeds) {
+        let Some(member) = coordinator.member(seed.request()) else {
+            return false;
+        };
+        if *request != seed.request() || member.request() != seed.request() {
+            return false;
+        }
+        *generated = member.generated_tokens();
+    }
+    lineage.completed_rounds = coordinator.next_round();
+    lineage.last_epoch = epoch;
+    coordinator.matches_causal_lineage(
+        lineage.selection,
+        &lineage.initial_seeds,
+        &lineage.generated,
+        lineage.completed_rounds,
+        Some(lineage.last_epoch),
+    )
+}
+
 #[allow(clippy::unnecessary_box_returns)]
 fn retryable_failure(
     stage: M1AuthenticatedSpeculativePhysicalRoundStageV1,
@@ -1113,7 +2112,15 @@ fn retryable_failure(
         custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Retryable(Box::new((
             executor, inputs,
         ))),
+        lineage: None,
     })
+}
+
+fn retain_logical_lineage(
+    lineage: Option<M1AuthenticatedSpeculativeCausalLineageV1>,
+    logical: impl fmt::Debug + 'static,
+) -> Box<dyn fmt::Debug> {
+    Box::new((lineage, logical))
 }
 
 #[allow(clippy::unnecessary_wraps)]
@@ -1143,32 +2150,6 @@ fn terminal_quarantine<const C: usize>(
 }
 
 impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
-    /// Associates one coordinator-committed prior result with the exact released
-    /// authenticated queue that produced it.
-    ///
-    /// # Errors
-    ///
-    /// Returns all three unchanged owners when coordinator identity, selection,
-    /// queue shape, epoch, round, roster, record, or KV lineage differs.
-    pub fn new(
-        coordinator: M1SpeculativeGenerationLoopV1,
-        prior: M1SpeculativeRoundOutcomeV1,
-        released: M1AuthenticatedLongLivedQueueReleasedRoundV1,
-    ) -> Result<Self, Box<M1AuthenticatedSpeculativeExecutorInitFailureV1>> {
-        if let Err(error) = validate_prior_association(&coordinator, &prior, &released) {
-            return Err(Box::new(M1AuthenticatedSpeculativeExecutorInitFailureV1 {
-                error,
-                coordinator,
-                prior,
-                released,
-            }));
-        }
-        Ok(Self {
-            coordinator,
-            released,
-        })
-    }
-
     #[must_use]
     pub const fn selection(&self) -> Qwen3PlanSelection {
         self.coordinator.shape().selection()
@@ -1205,16 +2186,19 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
         let Self {
             coordinator,
             released,
+            lineage,
         } = self;
         match released.destroy_queue_and_retain_round(engine) {
             Ok(released) => Ok(M1AuthenticatedSpeculativeExecutorTeardownSuccessV1 {
                 coordinator,
                 released,
+                lineage,
             }),
             Err(released) => Err(Box::new(
                 M1AuthenticatedSpeculativeExecutorTeardownFailureV1 {
                     coordinator,
                     released,
+                    lineage,
                 },
             )),
         }
@@ -1251,6 +2235,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                 custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Complete(
                     Box::new((self, inputs)),
                 ),
+                lineage: None,
             }));
         }
         if inputs.recipe_workspace_plans != inputs.preparation_workspace_plans
@@ -1270,6 +2255,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
         let Self {
             coordinator,
             released,
+            lineage,
         } = self;
         let epoch = match released
             .current_released()
@@ -1286,6 +2272,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                     Self {
                         coordinator,
                         released,
+                        lineage,
                     },
                     inputs,
                 ));
@@ -1300,11 +2287,23 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                     Self {
                         coordinator,
                         released,
+                        lineage,
                     },
                     inputs,
                 ));
             }
         };
+        if !speculative_round_inputs_match_binding(&inputs.kv, &binding) {
+            return Err(retryable_failure(
+                M1AuthenticatedSpeculativePhysicalRoundStageV1::Inputs,
+                Self {
+                    coordinator,
+                    released,
+                    lineage,
+                },
+                inputs,
+            ));
+        }
         let M1AuthenticatedSpeculativePhysicalRoundInputsV1 {
             kv,
             recipe_workspace_plans,
@@ -1320,6 +2319,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                     Self {
                         coordinator,
                         released,
+                        lineage,
                     },
                     M1AuthenticatedSpeculativePhysicalRoundInputsV1 {
                         kv,
@@ -1343,6 +2343,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                             terminal,
                         )),
                     ),
+                    lineage: Some(lineage),
                 }));
             }
         };
@@ -1363,6 +2364,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                             failure,
                         )),
                     ),
+                    lineage: Some(lineage),
                 }));
             }
         };
@@ -1383,6 +2385,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                                     failure,
                                 )),
                             ),
+                        lineage: Some(lineage),
                     }));
                 }
             };
@@ -1399,6 +2402,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                         M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::WorkspacePreparation(
                             Box::new((coordinator, binding, recipe, controls, failure)),
                         ),
+                    lineage: Some(lineage),
                 }));
             }
         };
@@ -1411,6 +2415,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                         custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Submit(
                             Box::new((coordinator, binding, controls, failure)),
                         ),
+                        lineage: Some(lineage),
                     }));
                 }
             };
@@ -1422,6 +2427,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                     custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::QueueProgress(
                         Box::new((coordinator, binding, controls, failure)),
                     ),
+                    lineage: Some(lineage),
                 }));
             }
         };
@@ -1433,6 +2439,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                     custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::QueueProgress(
                         Box::new((coordinator, binding, controls, failure)),
                     ),
+                    lineage: Some(lineage),
                 }));
             }
         };
@@ -1445,6 +2452,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                         M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::DiagnosticReadback(
                             Box::new((coordinator, binding, controls, failure)),
                         ),
+                    lineage: Some(lineage),
                 }));
             }
         };
@@ -1462,6 +2470,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                         M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::CoordinatorPreflight(
                             Box::new((coordinator, diagnostic, controls, error)),
                         ),
+                    lineage: Some(lineage),
                 }));
             }
         };
@@ -1473,6 +2482,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                     M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::CoordinatorCommitPreflight(
                         Box::new((coordinator, diagnostic, controls, preflighted, error)),
                     ),
+                lineage: Some(lineage),
             }));
         }
         let mut dispositions = Vec::new();
@@ -1486,6 +2496,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                 custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::HostAllocation(
                     Box::new((coordinator, diagnostic, controls, preflighted)),
                 ),
+                lineage: Some(lineage),
             }));
         }
         dispositions.extend(
@@ -1505,6 +2516,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                         M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::PhysicalCompletionPreflight(
                             Box::new((coordinator, preflighted, controls, choices, failure)),
                         ),
+                    lineage: Some(lineage),
                 }));
             }
         };
@@ -1518,9 +2530,11 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                 custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::PhysicalOutcome(
                     Box::new((coordinator, preflighted, controls, choices, physical)),
                 ),
+                lineage: Some(lineage),
             }));
         }
         let mut coordinator = coordinator;
+        let mut lineage = lineage;
         let outcome = match coordinator.commit_preflighted_round(preflighted) {
             Ok(outcome) => outcome,
             Err(failure) => {
@@ -1531,15 +2545,41 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                         M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::CoordinatorCommit(
                             Box::new((coordinator, controls, choices, physical, failure)),
                         ),
+                    lineage: Some(lineage),
                 }));
             }
         };
+        if !refresh_causal_generated_counts(&mut lineage, &coordinator, outcome.completed_epoch()) {
+            engine.quarantine_m1_queue_rearm_failure();
+            return Err(Box::new(M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::CausalLineage,
+                custody:
+                    M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::LineageAfterCommit(
+                        Box::new((coordinator, outcome, choices, physical)),
+                    ),
+                lineage: Some(lineage),
+            }));
+        }
         match physical.release_completed() {
             M1AuthenticatedRearmedRoundReleaseOutcomeV1::Released(released) => {
+                if validate_prior_association(&coordinator, &outcome, &released).is_err()
+                    || !validate_causal_lineage(&coordinator, &released, &lineage)
+                {
+                    engine.quarantine_m1_queue_rearm_failure();
+                    return Err(Box::new(M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                        stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::CausalLineage,
+                        custody:
+                            M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::ReleasedLineage(
+                                Box::new((coordinator, outcome, choices, released)),
+                            ),
+                        lineage: Some(lineage),
+                    }));
+                }
                 Ok(M1AuthenticatedSpeculativePhysicalRoundSuccessV1 {
                     executor: Self {
                         coordinator,
                         released,
+                        lineage,
                     },
                     outcome,
                     choices,
@@ -1556,6 +2596,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                             failure: *failure,
                         }),
                     ),
+                    lineage: Some(lineage),
                 }))
             }
             M1AuthenticatedRearmedRoundReleaseOutcomeV1::NotCompleted(not_completed) => {
@@ -1566,6 +2607,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                         M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::ReleasedPhysicalOutcome(
                             Box::new((coordinator, outcome, choices, not_completed)),
                         ),
+                    lineage: Some(lineage),
                 }))
             }
         }
@@ -1575,7 +2617,10 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ferric_spec::{Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket};
+    use ferric_spec::{
+        validate_m1_step_inputs, Identity, M1StepInputCandidate, M1StepInputValidationOutcome,
+        Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, StepPlan,
+    };
 
     fn selection(bucket: Qwen3PlanBucket) -> Qwen3PlanSelection {
         Qwen3PlanSelection {
@@ -1599,6 +2644,429 @@ mod tests {
         .unwrap()
     }
 
+    fn validated_role_inputs(
+        selection: Qwen3PlanSelection,
+        requests: &[RequestId],
+        epoch: CompletionEpoch,
+        anchors: &[ferric_spec::TokenId],
+        committed: &[u32],
+        future_override: Option<(usize, usize, ferric_spec::TokenId)>,
+    ) -> ValidatedM1StepInputs {
+        assert_eq!(requests.len(), anchors.len());
+        assert_eq!(requests.len(), committed.len());
+        let dimensions = selection
+            .bucket
+            .dimensions(selection.role, selection.mode)
+            .expect("test selection must be finite");
+        let capacity = dimensions.sequences as usize;
+        let width = dimensions.active_tokens as usize;
+        let mut lanes = Vec::with_capacity(capacity);
+        let mut tokens = vec![0; capacity * width];
+        let mut positions = vec![0; capacity * width];
+        let mut active_lengths = vec![0; capacity];
+        let mut context_lengths = vec![0; capacity];
+        for lane in 0..capacity {
+            lanes.push(
+                requests.get(lane).copied().map(|request| {
+                    StepPlan::new(request, epoch, Identity::new([73; 32]), selection)
+                }),
+            );
+        }
+        for lane in 0..requests.len() {
+            let row_start = lane * width;
+            tokens[row_start] = anchors[lane];
+            for column in 0..width {
+                positions[row_start + column] =
+                    committed[lane] + u32::try_from(column).expect("finite row width fits u32");
+            }
+            active_lengths[lane] = dimensions.active_tokens;
+            context_lengths[lane] = committed[lane];
+        }
+        if let Some((lane, column, token)) = future_override {
+            tokens[lane * width + column] = token;
+        }
+        match validate_m1_step_inputs(M1StepInputCandidate::new(
+            selection,
+            lanes,
+            tokens,
+            positions,
+            active_lengths,
+            context_lengths,
+        )) {
+            M1StepInputValidationOutcome::Validated(inputs) => inputs,
+            M1StepInputValidationOutcome::Rejected(failure) => {
+                panic!("structural test input rejected: {:?}", failure.error())
+            }
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn speculative_kv_inputs(
+        target_selection: Qwen3PlanSelection,
+        draft_selection: Qwen3PlanSelection,
+        requests: &[RequestId],
+        epoch: CompletionEpoch,
+        draft_anchors: &[ferric_spec::TokenId],
+        target_anchors: &[ferric_spec::TokenId],
+        draft_committed: &[u32],
+        target_committed: &[u32],
+        future_override: Option<(usize, usize, ferric_spec::TokenId)>,
+    ) -> M1LongLivedQueueRearmKvInputsV1 {
+        M1LongLivedQueueRearmKvInputsV1::speculative_round(
+            validated_role_inputs(
+                draft_selection,
+                requests,
+                epoch,
+                draft_anchors,
+                draft_committed,
+                None,
+            ),
+            validated_role_inputs(
+                target_selection,
+                requests,
+                epoch,
+                target_anchors,
+                target_committed,
+                future_override,
+            ),
+            (0..requests.len()).map(|_| Vec::new()).collect(),
+            (0..requests.len()).map(|_| Vec::new()).collect(),
+        )
+    }
+
+    fn coordinator_for_members(
+        selection: Qwen3PlanSelection,
+        requests: &[RequestId],
+        anchors: &[ferric_spec::TokenId],
+        target_committed: &[u32],
+        draft_committed: &[u32],
+    ) -> crate::M1SpeculativeGenerationLoopV1 {
+        let policy = crate::M1SpeculativeGenerationPolicyV1::new(32, &[999]).unwrap();
+        let seeds: Vec<_> = requests
+            .iter()
+            .copied()
+            .zip(anchors.iter().copied())
+            .zip(target_committed.iter().copied())
+            .zip(draft_committed.iter().copied())
+            .map(|(((request, anchor), target), draft)| {
+                crate::M1SpeculativeMemberSeedV1::new(request, anchor, target, draft, policy)
+            })
+            .collect();
+        crate::M1SpeculativeGenerationLoopV1::new(selection, &seeds).unwrap()
+    }
+
+    fn causal_round_zero_fixture(
+        selected: Qwen3PlanSelection,
+        seeds: &[M1SpeculativeMemberSeedV1],
+    ) -> (
+        M1SpeculativeGenerationLoopV1,
+        M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+        M1AuthenticatedSpeculativeCausalLineageV1,
+    ) {
+        let mut coordinator = M1SpeculativeGenerationLoopV1::new(selected, seeds).unwrap();
+        let initial_seeds = coordinator.bootstrap_seed_snapshot().unwrap();
+        let identity = M1AuthenticatedSpeculativeLineageIdentityV1::fresh().unwrap();
+        let physical = M1AuthenticatedSpeculativePhysicalLineageWitnessV1 {
+            identity,
+            coordinator_identity: coordinator.identity(),
+            selection: selected,
+            round: 0,
+            epoch: CompletionEpoch::new(7),
+            initial_seeds: initial_seeds.clone(),
+        };
+        let generated: Vec<_> = initial_seeds
+            .iter()
+            .map(|seed| (seed.request(), 0))
+            .collect();
+        let mut lineage = M1AuthenticatedSpeculativeCausalLineageV1 {
+            logical: M1AuthenticatedSpeculativeLogicalLineageWitnessV1 { identity },
+            coordinator_identity: coordinator.identity(),
+            selection: selected,
+            initial_seeds,
+            generated: generated.into_boxed_slice(),
+            completed_rounds: 0,
+            last_epoch: CompletionEpoch::new(7),
+        };
+        let _ = coordinator
+            .commit_test_causal_round(CompletionEpoch::new(7))
+            .unwrap();
+        assert!(refresh_causal_generated_counts(
+            &mut lineage,
+            &coordinator,
+            CompletionEpoch::new(7),
+        ));
+        (coordinator, physical, lineage)
+    }
+
+    #[test]
+    fn production_input_binding_rejects_hostile_role_rows_before_detach() {
+        let engine = Engine::<1>::new(8, 4, 32).unwrap();
+        let target = selection(Qwen3PlanBucket::SpeculativeS1K4C8192);
+        let draft = speculative_draft_selection(target).unwrap();
+        let epoch = CompletionEpoch::new(7);
+        let requests = [RequestId::new(0, 1)];
+        let anchors = [70];
+        let target_committed = [10];
+        let draft_committed = [11];
+        let coordinator = coordinator_for_members(
+            target,
+            &requests,
+            &anchors,
+            &target_committed,
+            &draft_committed,
+        );
+        let binding = coordinator.bind_round(0, epoch, &requests).unwrap();
+        let exact = speculative_kv_inputs(
+            target,
+            draft,
+            &requests,
+            epoch,
+            &anchors,
+            &anchors,
+            &draft_committed,
+            &target_committed,
+            None,
+        );
+        assert!(speculative_round_inputs_match_binding(&exact, &binding));
+
+        let independent_target_anchor = speculative_kv_inputs(
+            target,
+            draft,
+            &requests,
+            epoch,
+            &anchors,
+            &[71],
+            &draft_committed,
+            &target_committed,
+            None,
+        );
+        assert!(!speculative_round_inputs_match_binding(
+            &independent_target_anchor,
+            &binding,
+        ));
+        let nonzero_future = speculative_kv_inputs(
+            target,
+            draft,
+            &requests,
+            epoch,
+            &anchors,
+            &anchors,
+            &draft_committed,
+            &target_committed,
+            Some((0, 1, 72)),
+        );
+        assert!(!speculative_round_inputs_match_binding(
+            &nonzero_future,
+            &binding,
+        ));
+        let wrong_cursor_and_position = speculative_kv_inputs(
+            target,
+            draft,
+            &requests,
+            epoch,
+            &anchors,
+            &anchors,
+            &draft_committed,
+            &[12],
+            None,
+        );
+        assert!(!speculative_round_inputs_match_binding(
+            &wrong_cursor_and_position,
+            &binding,
+        ));
+        let wrong_epoch = speculative_kv_inputs(
+            target,
+            draft,
+            &requests,
+            CompletionEpoch::new(8),
+            &anchors,
+            &anchors,
+            &draft_committed,
+            &target_committed,
+            None,
+        );
+        assert!(!speculative_round_inputs_match_binding(
+            &wrong_epoch,
+            &binding,
+        ));
+        let wrong_target = selection(Qwen3PlanBucket::SpeculativeS1K8C8192);
+        let wrong_selection = speculative_kv_inputs(
+            wrong_target,
+            speculative_draft_selection(wrong_target).unwrap(),
+            &requests,
+            epoch,
+            &anchors,
+            &anchors,
+            &draft_committed,
+            &target_committed,
+            None,
+        );
+        assert!(!speculative_round_inputs_match_binding(
+            &wrong_selection,
+            &binding,
+        ));
+        // These predicates execute before queue detachment or any engine call.
+        assert!(!engine.is_faulted());
+    }
+
+    #[test]
+    fn production_input_binding_rejects_s8_lane_swap_before_detach() {
+        let engine = Engine::<1>::new(8, 4, 32).unwrap();
+        let target = selection(Qwen3PlanBucket::SpeculativeS8K4C8192);
+        let draft = speculative_draft_selection(target).unwrap();
+        let epoch = CompletionEpoch::new(9);
+        let requests = [RequestId::new(0, 1), RequestId::new(1, 1)];
+        let anchors = [70, 80];
+        let target_committed = [10, 20];
+        let draft_committed = [11, 21];
+        let coordinator = coordinator_for_members(
+            target,
+            &requests,
+            &anchors,
+            &target_committed,
+            &draft_committed,
+        );
+        let binding = coordinator.bind_round(0, epoch, &requests).unwrap();
+        let swapped = speculative_kv_inputs(
+            target,
+            draft,
+            &[requests[1], requests[0]],
+            epoch,
+            &[anchors[1], anchors[0]],
+            &[anchors[1], anchors[0]],
+            &[draft_committed[1], draft_committed[0]],
+            &[target_committed[1], target_committed[0]],
+            None,
+        );
+        assert!(!speculative_round_inputs_match_binding(&swapped, &binding,));
+        assert!(!engine.is_faulted());
+    }
+
+    #[test]
+    fn causal_witness_joins_fresh_spec_zero_and_repeated_spec_one() {
+        let seeds = [M1SpeculativeMemberSeedV1::new(
+            RequestId::new(0, 1),
+            70,
+            10,
+            10,
+            crate::M1SpeculativeGenerationPolicyV1::new(32, &[999]).unwrap(),
+        )];
+        let (mut coordinator, physical, mut lineage) =
+            causal_round_zero_fixture(selection(Qwen3PlanBucket::SpeculativeS1K4C8192), &seeds);
+        assert!(validate_causal_lineage_join(
+            &coordinator,
+            &physical,
+            &lineage,
+            CompletionEpoch::new(7),
+            0,
+        ));
+
+        let _ = coordinator
+            .commit_test_causal_round(CompletionEpoch::new(8))
+            .unwrap();
+        assert!(refresh_causal_generated_counts(
+            &mut lineage,
+            &coordinator,
+            CompletionEpoch::new(8),
+        ));
+        assert!(validate_causal_lineage_join(
+            &coordinator,
+            &physical,
+            &lineage,
+            CompletionEpoch::new(8),
+            1,
+        ));
+        assert!(!validate_causal_lineage_join(
+            &coordinator,
+            &physical,
+            &lineage,
+            CompletionEpoch::new(7),
+            1,
+        ));
+    }
+
+    #[test]
+    fn causal_witness_rejects_fresh_coordinator_policy_and_generated_splices() {
+        let seeds = [M1SpeculativeMemberSeedV1::new(
+            RequestId::new(0, 1),
+            70,
+            10,
+            10,
+            crate::M1SpeculativeGenerationPolicyV1::new(32, &[999]).unwrap(),
+        )];
+        let (coordinator, physical, mut lineage) =
+            causal_round_zero_fixture(selection(Qwen3PlanBucket::SpeculativeS1K4C8192), &seeds);
+        let mut fresh = M1SpeculativeGenerationLoopV1::new(lineage.selection, &seeds).unwrap();
+        let _ = fresh
+            .commit_test_causal_round(CompletionEpoch::new(7))
+            .unwrap();
+        assert!(!validate_causal_lineage_join(
+            &fresh,
+            &physical,
+            &lineage,
+            CompletionEpoch::new(7),
+            0,
+        ));
+
+        lineage.initial_seeds[0] = M1SpeculativeMemberSeedV1::new(
+            RequestId::new(0, 1),
+            70,
+            10,
+            10,
+            crate::M1SpeculativeGenerationPolicyV1::new(32, &[998]).unwrap(),
+        );
+        assert!(!validate_causal_lineage_join(
+            &coordinator,
+            &physical,
+            &lineage,
+            CompletionEpoch::new(7),
+            0,
+        ));
+        lineage.initial_seeds[0] = seeds[0];
+        lineage.generated[0].1 += 1;
+        assert!(!validate_causal_lineage_join(
+            &coordinator,
+            &physical,
+            &lineage,
+            CompletionEpoch::new(7),
+            0,
+        ));
+    }
+
+    #[test]
+    fn causal_witness_rejects_reorder_epoch_and_history_splices() {
+        let policy = crate::M1SpeculativeGenerationPolicyV1::new(32, &[999]).unwrap();
+        let seeds = [
+            M1SpeculativeMemberSeedV1::new(RequestId::new(0, 1), 70, 10, 10, policy),
+            M1SpeculativeMemberSeedV1::new(RequestId::new(1, 1), 80, 20, 20, policy),
+        ];
+        let (coordinator, physical, mut lineage) =
+            causal_round_zero_fixture(selection(Qwen3PlanBucket::SpeculativeS8K4C8192), &seeds);
+        lineage.generated.swap(0, 1);
+        assert!(!validate_causal_lineage_join(
+            &coordinator,
+            &physical,
+            &lineage,
+            CompletionEpoch::new(7),
+            0,
+        ));
+        lineage.generated.swap(0, 1);
+        assert!(!validate_causal_lineage_join(
+            &coordinator,
+            &physical,
+            &lineage,
+            CompletionEpoch::new(8),
+            0,
+        ));
+        assert!(!validate_causal_lineage_join(
+            &coordinator,
+            &physical,
+            &lineage,
+            CompletionEpoch::new(7),
+            1,
+        ));
+    }
+
     #[test]
     fn production_entry_profile_gate_covers_all_four_declared_shapes() {
         let cases = [
@@ -1620,10 +3088,35 @@ mod tests {
             ),
         ];
         for (bucket, expected) in cases {
-            assert!(production_entry_profile_matches(
-                selection(bucket),
-                expected
-            ));
+            let target = selection(bucket);
+            assert!(production_entry_profile_matches(target, expected));
+            let draft = speculative_draft_selection(target).unwrap();
+            let requests = [RequestId::new(0, 1)];
+            let anchors = [70];
+            let target_committed = [10];
+            let draft_committed = [10];
+            let coordinator = coordinator_for_members(
+                target,
+                &requests,
+                &anchors,
+                &target_committed,
+                &draft_committed,
+            );
+            let binding = coordinator
+                .bind_round(0, CompletionEpoch::new(7), &requests)
+                .unwrap();
+            let inputs = speculative_kv_inputs(
+                target,
+                draft,
+                &requests,
+                CompletionEpoch::new(7),
+                &anchors,
+                &anchors,
+                &draft_committed,
+                &target_committed,
+                None,
+            );
+            assert!(speculative_round_inputs_match_binding(&inputs, &binding));
         }
         assert!(!production_entry_profile_matches(
             Qwen3PlanSelection {
@@ -1727,12 +3220,35 @@ mod tests {
             M1AuthenticatedSpeculativeExecutorTeardownSuccessV1,
             Box<M1AuthenticatedSpeculativeExecutorTeardownFailureV1>,
         >;
+        type BootstrapPrepare = fn(
+            M1SpeculativeGenerationLoopV1,
+            Vec<ActiveDeviceKvCache>,
+            M1ScheduledDispatchV1,
+            &LogicalRunnerDeclaration,
+            M1FullStepWorkspacePlans,
+            M1FullStepKvWorkspaceTablesV1,
+        ) -> Result<
+            M1AuthenticatedSpeculativeBootstrapPreparedV1,
+            Box<M1AuthenticatedSpeculativeBootstrapFailureV1>,
+        >;
+        type BootstrapComplete = fn(
+            M1AuthenticatedSpeculativeBootstrapContinuationV1,
+            &mut Engine<32>,
+            M1AuthenticatedSpeculativeDiagnosticCompletedReadbackV1,
+            Vec<M1SpeculativeMemberControlV1>,
+        ) -> Result<
+            M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+            Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1>,
+        >;
 
         let _: Execute = M1AuthenticatedSpeculativePhysicalExecutorV1::execute_round::<32>;
         let _: FailureCleanup =
             M1AuthenticatedSpeculativePhysicalRoundFailureV1::destroy_queue_and_retain_custody::<32>;
         let _: FinishedCleanup =
             M1AuthenticatedSpeculativePhysicalExecutorV1::destroy_queue_and_retain_state::<32>;
+        let _: BootstrapPrepare = prepare_m1_authenticated_speculative_bootstrap_v1;
+        let _: BootstrapComplete =
+            M1AuthenticatedSpeculativeBootstrapContinuationV1::complete_initial_round::<32>;
         assert!(production_entry_has_active_members(1));
         assert!(!production_entry_has_active_members(0));
     }
