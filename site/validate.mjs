@@ -13,7 +13,7 @@ const allowedStates = new Set([
   "open",
 ]);
 const expectedCurrent = Object.freeze({
-  siteRefreshBase: "7f516e073b8759eb012c998bc9df2eb101d0c7ab",
+  siteRefreshBase: "3ee14ea6a38b84b74166ca4e3254050c12c77a56",
   implementationCommit: "7f516e073b8759eb012c998bc9df2eb101d0c7ab",
   authenticatedR32Commit: "d67fae3b063b1997aaa92b0cbc6f4c960c3b010b",
   aggregateSelectionCommit: "eceffdf00c1ec0f7241be95d6b636fa1ea69a46d",
@@ -22,11 +22,14 @@ const expectedCurrent = Object.freeze({
   commonCustodyPreflightCommit: "e187ca52dfdaee79fdc17921c9acffebeed6ca96",
   associationPreflightCommit: "eb3b1937ec509cb6ecea080a25965dd3e8bc5457",
   finalizedHsacoReinspectionCommit: "749324c9e287aaec688c8733c88becddc539b12e",
-  selectedFe2o3Pin: "57d2d9ced5c113d40546ea1dee603e8ba499cf40",
-  fe2o3CallerChallengeCandidate: "40cb4337c1b495e43eed66276d81cd4cae36d3bf",
-  fe2o3VerificationTransportCandidate: "701449c39029de040cd285a2d527dcc185a8750b",
-  fe2o3DescriptorEnvelopeCandidate: "ac00e7ae89d7c73737612d6d0565a632db898890",
-  productionSpeculativeExecutorStatus: "in-progress",
+  fe2o3DeadlineCandidate: "ff21f24f5349d78583a2a832ba3aa37bf3e0846c",
+  fe2o3DeadlineCandidateTree: "861ad57c9725d06a5bed14739269ddd20b70e86a",
+  fe2o3DeadlineCandidateBase: "308d8fa00fa41e098b2a1a47bbfea1bc29735464",
+  productionSpeculativeExecutorCandidate: "f300ab8b174ff4e71d5d5fdaf038741db159907e",
+  productionSpeculativeExecutorStatus: "no-go-remediation",
+  protectedVerifierServiceLocalCandidate: "9a435522a4a88d55108f7c6a4cb493aabb01ad93",
+  protectedVerifierServiceStatus: "foundation-go-local-undeployed",
+  verifierBinderStatus: "deadline-source-order-fix-in-progress",
   aggregateSourceCommit: "5514afe176a090aa3f1da9e5354799bb4ca5a8b3",
   aggregateProducerCommit: "e57c42523050922ad76538150df691cc5ab975a7",
   aggregateKernelCount: 12,
@@ -44,6 +47,7 @@ const expectedCurrent = Object.freeze({
   sourceGateBodies: 6916,
   sourceClosureFiles: 603,
   openM1Gates: 33,
+  openAssuranceProperties: 17,
 });
 const expectedProof = Object.freeze({
   source: "7f516e073b8759eb012c998bc9df2eb101d0c7ab",
@@ -109,18 +113,25 @@ assertCommit(
   project.current.finalizedHsacoReinspectionCommit,
   "current.finalizedHsacoReinspectionCommit",
 );
-assertCommit(project.current.selectedFe2o3Pin, "current.selectedFe2o3Pin");
 assertCommit(
-  project.current.fe2o3CallerChallengeCandidate,
-  "current.fe2o3CallerChallengeCandidate",
+  project.current.fe2o3DeadlineCandidate,
+  "current.fe2o3DeadlineCandidate",
 );
 assertCommit(
-  project.current.fe2o3VerificationTransportCandidate,
-  "current.fe2o3VerificationTransportCandidate",
+  project.current.fe2o3DeadlineCandidateTree,
+  "current.fe2o3DeadlineCandidateTree",
 );
 assertCommit(
-  project.current.fe2o3DescriptorEnvelopeCandidate,
-  "current.fe2o3DescriptorEnvelopeCandidate",
+  project.current.fe2o3DeadlineCandidateBase,
+  "current.fe2o3DeadlineCandidateBase",
+);
+assertCommit(
+  project.current.productionSpeculativeExecutorCandidate,
+  "current.productionSpeculativeExecutorCandidate",
+);
+assertCommit(
+  project.current.protectedVerifierServiceLocalCandidate,
+  "current.protectedVerifierServiceLocalCandidate",
 );
 assertCommit(project.current.aggregateSourceCommit, "current.aggregateSourceCommit");
 assertCommit(project.current.aggregateProducerCommit, "current.aggregateProducerCommit");
@@ -137,8 +148,16 @@ assertState(project.milestone.state, "milestone");
 assert(Array.isArray(project.envelope) && project.envelope.length > 0, "envelope is empty");
 const envelope = new Map(project.envelope);
 assert(
-  envelope.get("Selected fe2o3 pin")?.includes(expectedCurrent.selectedFe2o3Pin),
-  "envelope must expose the exact selected fe2o3 pin",
+  envelope.get("Qualified fe2o3 candidate")?.includes(expectedCurrent.fe2o3DeadlineCandidate) &&
+    envelope.get("Qualified fe2o3 candidate")?.includes(expectedCurrent.fe2o3DeadlineCandidateTree) &&
+    envelope.get("Qualified fe2o3 candidate")?.includes(expectedCurrent.fe2o3DeadlineCandidateBase),
+  "envelope must expose the exact qualified fe2o3 candidate, tree, and main base",
+);
+assert(
+  envelope.get("Speculative executor candidate")?.includes(
+    expectedCurrent.productionSpeculativeExecutorCandidate,
+  ) && envelope.get("Speculative executor candidate")?.includes("NO-GO"),
+  "envelope must expose the exact speculative executor candidate as NO-GO",
 );
 assert(
   envelope.get("M1 implementation")?.includes(expectedCurrent.implementationCommit),
@@ -207,27 +226,58 @@ const protectedAcceptance = project.readiness.find(
 assert(
   protectedAcceptance?.state === "open" &&
     protectedAcceptance.detail.includes("remains None") &&
-    protectedAcceptance.detail.includes(
-      "sole terminal result MissingProtectedVerificationReceipt",
-    ) &&
-    protectedAcceptance.detail.includes(
-      "neither a provisioned protected compiler-execution service and client profile",
-    ) &&
-    protectedAcceptance.detail.includes(
-      "nor an independent protected-verifier signer and durable currentness service",
-    ) &&
-    protectedAcceptance.detail.includes("earlier preflight failures return their distinct"),
+    protectedAcceptance.detail.includes("passed 28 tests and 6 doctests") &&
+    protectedAcceptance.detail.includes("foundation GO") &&
+    protectedAcceptance.detail.includes("not publicly linked") &&
+    protectedAcceptance.detail.includes("not deployed") &&
+    protectedAcceptance.detail.includes("protected current, checker, signer, head-store") &&
+    protectedAcceptance.detail.includes("binder's absolute-deadline and source-policy-order fix"),
   "protected aggregate acceptance must remain fail-closed and open",
+);
+const deadlineReadiness = project.readiness.find(
+  (item) => item.label === "fe2o3 absolute-deadline Worker V3 candidate",
+);
+assert(
+  deadlineReadiness?.state === "qualified" &&
+    deadlineReadiness.detail.includes(expectedCurrent.fe2o3DeadlineCandidate) &&
+    deadlineReadiness.detail.includes(expectedCurrent.fe2o3DeadlineCandidateTree) &&
+    deadlineReadiness.detail.includes(expectedCurrent.fe2o3DeadlineCandidateBase) &&
+    deadlineReadiness.detail.includes("exact-archive matrix on mi300x") &&
+    deadlineReadiness.detail.includes("not yet Ferric's integrated dependency"),
+  "fe2o3 deadline candidate must retain exact qualification and integration limits",
+);
+const executorReadiness = project.readiness.find(
+  (item) => item.label === "Production speculative executor",
+);
+assert(
+  executorReadiness?.state === "integration" &&
+    executorReadiness.detail.includes(expectedCurrent.productionSpeculativeExecutorCandidate) &&
+    executorReadiness.detail.includes("492 library tests and 136 doctests") &&
+    executorReadiness.detail.includes("four P1 custody and lifecycle escapes") &&
+    executorReadiness.detail.includes("explicitly NO-GO") &&
+    executorReadiness.detail.includes("not integrated production code"),
+  "speculative executor candidate must remain an explicit independently reviewed NO-GO",
+);
+const binderReadiness = project.readiness.find(
+  (item) => item.label === "Protected verifier binder",
+);
+assert(
+  binderReadiness?.state === "integration" &&
+    binderReadiness.detail.includes("ahead of reservation and one-shot FD consumption") &&
+    binderReadiness.detail.includes("single absolute-deadline API") &&
+    binderReadiness.detail.includes("has not completed exact-archive qualification"),
+  "binder deadline/source-order fix must remain unqualified work in progress",
 );
 const qwenReadiness = project.readiness.find(
   (item) => item.label === "End-to-end Qwen through Ferric",
 );
 assert(
   qwenReadiness?.state === "open" &&
-    qwenReadiness.detail.includes("protected compiler and independent verifier services") &&
+    qwenReadiness.detail.includes("CURRENT=None") &&
+    qwenReadiness.detail.includes("only a local foundation") &&
     qwenReadiness.detail.includes("canonical prepack result is a non-final probe") &&
     qwenReadiness.detail.includes(
-      "no authenticated full-Qwen execution, numerical result, or performance result",
+      "no authenticated current-source Qwen execution, hardware run, numerical result, or performance result",
     ),
   "Qwen, numerical, and performance authority must remain open",
 );
@@ -353,12 +403,12 @@ assert(
   "recent progress must include the authenticated R32 implementation commit",
 );
 assert(
-  progressCommits.has(expectedCurrent.selectedFe2o3Pin),
-  "recent progress must include the selected fe2o3 pin",
+  progressCommits.has(expectedCurrent.fe2o3DeadlineCandidate),
+  "recent progress must include the qualified fe2o3 absolute-deadline candidate",
 );
 assert(
-  progressCommits.has(expectedCurrent.fe2o3CallerChallengeCandidate),
-  "recent progress must include the pushed caller-challenge feature candidate",
+  progressCommits.has(expectedCurrent.productionSpeculativeExecutorCandidate),
+  "recent progress must include the independently rejected executor candidate",
 );
 
 project.evidence.gates.forEach(([label, count, state], index) => {
@@ -369,6 +419,12 @@ const roadmapGate = project.evidence.gates.find(([label]) => label === "Roadmap 
 assert(
   roadmapGate?.[1] === String(expectedCurrent.openM1Gates) && roadmapGate?.[2] === "open",
   "the exact M1 roadmap gate count must remain open",
+);
+const assuranceGate = project.evidence.gates.find(([label]) => label === "Assurance properties");
+assert(
+  assuranceGate?.[1] === String(expectedCurrent.openAssuranceProperties) &&
+    assuranceGate?.[2] === "open",
+  "the exact assurance property count must remain open",
 );
 assert(
   project.evidence.gates.every(([, , state]) => state === "open"),
@@ -381,27 +437,26 @@ project.evidence.legend.forEach(([state], index) =>
 const html = await readFile(join(siteRoot, "index.html"), "utf8");
 const normalizedHtml = html.replace(/\s+/g, " ");
 for (const claim of [
-  "Exact head 7f516e0 passed strict proof and release qualification on mi300x",
-  "33615415798",
-  "33615415693 both completed successfully",
-  "invokes exact-pinned finalized-HSACO reinspection once on the request bytes",
-  "reacquires common multi-root compiler custody",
-  "unique 12-entry metadata permutation",
-  "not independent verifier authority",
-  "passing preflight has the sole terminal result MissingProtectedVerificationReceipt",
-  "exact fe2o3 source 57d2d9c",
-  "caller-challenge/current-record API candidate 40cb4337 passed its exact-archive matrix",
-  "generic V2 protected verification transport candidate 701449c3",
-  "descriptor/exact envelope candidate ac00e7ae still awaits its final rerun",
-  "feature candidates do not replace the selected 57d2d9c pin",
-  "production speculative executor remains in progress",
-  "canonical Qwen prepack result is a non-final probe",
-  "protected-verifier signer and durable currentness service",
+  "Public fe2o3 candidate ff21f24, tree 861ad57c",
+  "based on latest main 308d8fa",
+  "passed exact-archive qualification on mi300x",
+  "one caller-supplied absolute deadline through Worker V3 V2",
+  "safely destroys or releases unpublished prepared queues",
+  "Ferric has not completed its dependency repin",
+  "Speculative executor candidate f300ab8 passed 492 library tests and 136 doctests",
+  "independent re-review found four P1 custody and lifecycle escapes",
+  "explicitly NO-GO and remediation is in progress",
+  "Local protected-verifier service candidate 9a435522 is not publicly linked",
+  "independent foundation GO",
+  "it is not deployed",
+  "real protected current, checker, signer, head-store, supervisor, and IPC facilities",
+  "binder absolute-deadline and source-policy-order fix remains in progress",
+  "not yet qualified",
   "Ferric-specific inference and kernel ownership remain in Ferric",
   "selection remains None",
   "CURRENT=None",
-  "successful current-source R32 trace",
-  "all 33 M1 exit gates",
+  "No authenticated current-source Qwen, hardware, numerical, or performance run exists",
+  "All 33 M1 roadmap gates and all 17 assurance properties remain Open",
 ]) {
   assert(normalizedHtml.includes(claim), `index.html is missing current claim: ${claim}`);
 }
@@ -411,29 +466,32 @@ assert(
     dataSource.includes("eb3b1937ec509cb6ecea080a25965dd3e8bc5457") &&
     dataSource.includes("e187ca52dfdaee79fdc17921c9acffebeed6ca96") &&
     dataSource.includes("24748e11358db7ad3ab5fe35992cff354896e607") &&
-    dataSource.includes("57d2d9ced5c113d40546ea1dee603e8ba499cf40") &&
-    dataSource.includes("40cb4337c1b495e43eed66276d81cd4cae36d3bf") &&
-    dataSource.includes("701449c39029de040cd285a2d527dcc185a8750b") &&
-    dataSource.includes("ac00e7ae89d7c73737612d6d0565a632db898890"),
-  "Pages data must bind the exact qualified reinspection and custody lineage",
+    dataSource.includes(expectedCurrent.fe2o3DeadlineCandidate) &&
+    dataSource.includes(expectedCurrent.fe2o3DeadlineCandidateTree) &&
+    dataSource.includes(expectedCurrent.fe2o3DeadlineCandidateBase) &&
+    dataSource.includes(expectedCurrent.productionSpeculativeExecutorCandidate) &&
+    dataSource.includes(expectedCurrent.protectedVerifierServiceLocalCandidate),
+  "Pages data must bind the exact current candidate and retained implementation lineage",
 );
 assert(
-  dataSource.includes("6638bc3c387e87339145df42e7757377fc14f485") &&
-    dataSource.includes("52815c9ed52a3075e26322cf506144cb22da12d2") &&
-    dataSource.includes("324004a21488895d07359b263cc19ea7a9d4df24") &&
-    dataSource.includes("were not moved into fe2o3"),
-  "Pages data must retain both fe2o3 merge parents and the Ferric ownership boundary",
+  !dataSource.includes("40cb4337c1b495e43eed66276d81cd4cae36d3bf") &&
+    !dataSource.includes("701449c39029de040cd285a2d527dcc185a8750b") &&
+    !dataSource.includes("ac00e7ae89d7c73737612d6d0565a632db898890") &&
+    !normalizedHtml.includes("57d2d9c"),
+  "Pages must not present superseded feature candidates or the historical pin as current",
 );
 assert(
-  dataSource.includes("sole terminal result MissingProtectedVerificationReceipt") &&
-    dataSource.includes("private current aggregate publication selection remains None") &&
+  dataSource.includes("private current aggregate publication selection remains None") &&
     dataSource.includes("not independent verifier authority") &&
     dataSource.includes("non-final mi300x probe") &&
-    dataSource.includes("protected-verifier signer and durable currentness service") &&
-    dataSource.includes("production speculative executor remains in progress") &&
-    dataSource.includes("no authenticated full-Qwen execution, numerical result, or performance result") &&
-    dataSource.includes("all 33 M1 exit gates remain open"),
-  "Pages data must retain verifier, Qwen, selection, and all-open gate nonclaims",
+    dataSource.includes("passed 492 library tests and 136 doctests") &&
+    dataSource.includes("four P1 custody and lifecycle escapes") &&
+    dataSource.includes("explicitly NO-GO") &&
+    dataSource.includes("passed 28 tests and 6 doctests") &&
+    dataSource.includes("not deployed") &&
+    dataSource.includes("no authenticated current-source Qwen") &&
+    dataSource.includes("All 33 M1 roadmap gates and all 17 assurance properties remain Open"),
+  "Pages data must retain service, executor, Qwen, selection, and all-open nonclaims",
 );
 for (const target of [
   "data-readiness",
