@@ -2,17 +2,23 @@
 set -eu
 
 usage() {
-    printf 'usage: %s REPO METADATA_JSON OUTPUT_DIR SOURCE_GATE\n' "$0" >&2
+    printf 'usage: %s REPO METADATA_JSON VERIFIER_METADATA_JSON OUTPUT_DIR SOURCE_GATE\n' "$0" >&2
     exit 2
 }
 
-[ "$#" -eq 4 ] || usage
+[ "$#" -eq 5 ] || usage
 repo=$(CDPATH='' cd -- "$1" && pwd)
 metadata=$2
-output=$3
-source_gate=$4
+verifier_metadata=$3
+output=$4
+source_gate=$5
 [ -f "$metadata" ] || {
     printf 'FAIL: Cargo metadata is unavailable: %s\n' "$metadata" >&2
+    exit 1
+}
+[ -f "$verifier_metadata" ] || {
+    printf 'FAIL: standalone verifier Cargo metadata is unavailable: %s\n' \
+        "$verifier_metadata" >&2
     exit 1
 }
 [ -x "$source_gate" ] || {
@@ -22,6 +28,40 @@ source_gate=$4
 mkdir -p "$output"
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/ferric-policy-negative.XXXXXX")
 trap 'chmod -R u+w "$scratch" 2>/dev/null || true; rm -rf "$scratch"' EXIT HUP INT TERM
+
+verifier_metadata_for() {
+    candidate_repo=$(CDPATH='' cd -- "$1" && pwd)
+    if [ "$candidate_repo" = "$repo" ]; then
+        printf '%s\n' "$verifier_metadata"
+        return
+    fi
+    key=$(printf '%s' "$candidate_repo" | sha256sum | awk '{ print $1 }')
+    candidate_metadata="$scratch/verifier-$key.metadata"
+    if [ ! -f "$candidate_metadata" ]; then
+        (
+            cd "$candidate_repo"
+            cargo metadata \
+                --manifest-path adapters/qwen3-all-kernels-worker-v3-verifier-v1/Cargo.toml \
+                --locked --all-features --format-version 1
+        ) >"$candidate_metadata"
+    fi
+    printf '%s\n' "$candidate_metadata"
+}
+
+invoke_source_gate() {
+    case "$1" in
+        --generate|--unverified-inventory|--runtime-dependency-tcb)
+            candidate_repo=$2
+            candidate_verifier_metadata=$(verifier_metadata_for "$candidate_repo")
+            "$source_gate" "$1" "$2" "$3" "$candidate_verifier_metadata" "$4"
+            ;;
+        *)
+            candidate_repo=$1
+            candidate_verifier_metadata=$(verifier_metadata_for "$candidate_repo")
+            "$source_gate" "$1" "$2" "$3" "$candidate_verifier_metadata"
+            ;;
+    esac
+}
 registry_checker="$repo/proofs/negative/check-registry.py"
 [ -f "$registry_checker" ] || {
     printf 'FAIL: negative registry checker is unavailable\n' >&2
@@ -63,6 +103,10 @@ new_copy() {
     cp -a "$repo/proofs/m1" "$destination/proofs/"
     cp -a "$repo/proofs/UNVERIFIED_BODIES" \
         "$repo/proofs/RUNTIME_DEPENDENCY_TCB" "$destination/proofs/"
+    mkdir -p "$destination/proofs/source-gate"
+    cp -a "$repo/proofs/source-gate/VERIFIER_PRODUCTION_DEPENDENCY_TCB" \
+        "$repo/proofs/source-gate/VERIFIER_DEV_DEPENDENCY_TCB" \
+        "$destination/proofs/source-gate/"
     chmod -R u+w "$destination"
     printf '%s\n' "$destination"
 }
@@ -129,13 +173,79 @@ if mutation != "lock-checksum":
     manifest.write_text("\n".join(lines) + "\n", encoding="utf-8")
 PY
     expect_rejected "runtime-tcb-$name" 'workspace runtime dependency TCB drifted' \
-        "$source_gate" "$fixture" "$repo/proofs/VERIFIED_MODULES" \
+        invoke_source_gate "$fixture" "$repo/proofs/VERIFIED_MODULES" \
         "$fixture_metadata"
 }
 
 for mutation in missing extra reordered duplicate version source checksum root lock-checksum; do
     runtime_tcb_hostile "$mutation" "$mutation"
 done
+
+for scope in PRODUCTION DEV; do
+    lower=$(printf '%s' "$scope" | tr 'A-Z' 'a-z')
+    fixture=$(new_copy "verifier-$lower-tcb-missing")
+    fixture_metadata="$scratch/verifier-$lower-tcb-missing.metadata"
+    write_metadata "$fixture" "$fixture_metadata"
+    tcb="$fixture/proofs/source-gate/VERIFIER_${scope}_DEPENDENCY_TCB"
+    awk 'BEGIN { removed = 0 } /^package=/ && !removed { removed = 1; next } { print }' \
+        "$tcb" >"$tcb.mutated"
+    cp "$tcb.mutated" "$tcb"
+    rm "$tcb.mutated"
+    expect_rejected "verifier-$lower-tcb-missing" \
+        'verifier dependency TCB drifted' \
+        invoke_source_gate "$fixture" "$repo/proofs/VERIFIED_MODULES" \
+        "$fixture_metadata"
+done
+
+python3 -I - "$verifier_metadata" "$scratch" <<'PY'
+import copy
+import json
+from pathlib import Path
+import sys
+
+metadata = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+scratch = Path(sys.argv[2])
+root = metadata["resolve"]["root"]
+
+feature = copy.deepcopy(metadata)
+next(node for node in feature["resolve"]["nodes"] if node["id"] == root)["features"] = ["escape"]
+(scratch / "verifier-dev-feature.metadata").write_text(json.dumps(feature), encoding="utf-8")
+
+target = copy.deepcopy(metadata)
+package = next(package for package in target["packages"] if package["id"] != root)
+package["targets"][0]["doc"] = not package["targets"][0]["doc"]
+(scratch / "verifier-dev-target.metadata").write_text(json.dumps(target), encoding="utf-8")
+
+edge = copy.deepcopy(metadata)
+node = next(node for node in edge["resolve"]["nodes"] if node["id"] != root and node["deps"])
+node["deps"][0]["dep_kinds"][0]["target"] = "cfg(ferric_escape)"
+(scratch / "verifier-dev-edge.metadata").write_text(json.dumps(edge), encoding="utf-8")
+
+unreachable = copy.deepcopy(metadata)
+extra = copy.deepcopy(unreachable["packages"][0])
+extra["id"] = "registry+https://example.invalid#index@1.0.0"
+extra["name"] = "unreachable-index"
+extra["version"] = "1.0.0"
+extra["source"] = "registry+https://example.invalid"
+unreachable["packages"].append(extra)
+(scratch / "verifier-dev-unreachable.metadata").write_text(
+    json.dumps(unreachable), encoding="utf-8"
+)
+PY
+
+expect_rejected verifier-dev-feature 'protected verifier resolved features drifted' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" "$metadata" \
+    "$scratch/verifier-dev-feature.metadata"
+expect_rejected verifier-dev-target 'verifier dependency TCB drifted' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" "$metadata" \
+    "$scratch/verifier-dev-target.metadata"
+expect_rejected verifier-dev-edge 'verifier dependency TCB drifted' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" "$metadata" \
+    "$scratch/verifier-dev-edge.metadata"
+expect_rejected verifier-dev-unreachable \
+    'standalone verifier metadata and Cargo.lock package rosters drifted' \
+    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" "$metadata" \
+    "$scratch/verifier-dev-unreachable.metadata"
 
 python3 -I - "$metadata" "$scratch" <<'PY'
 import copy
@@ -394,67 +504,82 @@ owner_dependencies[owner_dependencies.index(aggregate_id)] = compatibility["id"]
 write_hostile("resolve", local_resolve)
 PY
 
-expect_rejected runtime-tcb-feature 'workspace runtime dependency TCB drifted' \
+python3 -I - "$metadata" "$scratch/verifier-production-target.metadata" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+metadata = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+package = next(package for package in metadata["packages"] if package["name"] == "curve25519-dalek")
+package["targets"][0]["doc"] = not package["targets"][0]["doc"]
+Path(sys.argv[2]).write_text(json.dumps(metadata), encoding="utf-8")
+PY
+
+expect_rejected verifier-production-target 'verifier dependency TCB drifted' \
     "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    "$scratch/verifier-production-target.metadata" "$verifier_metadata"
+
+expect_rejected runtime-tcb-feature 'workspace runtime dependency TCB drifted' \
+    invoke_source_gate "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/runtime-feature.metadata"
 expect_rejected runtime-tcb-build-script 'workspace runtime dependency TCB drifted' \
-    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    invoke_source_gate "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/runtime-build-script.metadata"
 expect_rejected runtime-tcb-proc-macro 'workspace runtime dependency TCB drifted' \
-    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    invoke_source_gate "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/runtime-proc-macro.metadata"
 expect_rejected runtime-tcb-extra-root 'unadmitted registry runtime root' \
-    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    invoke_source_gate "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/runtime-extra-root.metadata"
 expect_rejected runtime-dev-promoted 'unadmitted registry runtime root' \
-    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    invoke_source_gate "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/runtime-dev-promoted.metadata"
 expect_rejected fe2o3-source-drift 'workspace fe2o3 dependency declaration drifted' \
-    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    invoke_source_gate "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/fe2o3-source.metadata"
 expect_rejected non-library-target 'unsupported non-library target' \
-    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    invoke_source_gate "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/non-library-target.metadata"
 expect_rejected binary-name-drift 'unsupported non-library target' \
-    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    invoke_source_gate "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/binary-name.metadata"
 expect_rejected binary-path-drift 'qualified binary source path drifted' \
-    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    invoke_source_gate "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/binary-path.metadata"
 expect_rejected test-fixture-runtime-activation \
     'activates the test-fixtures feature outside its admitted dev edge' \
-    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    invoke_source_gate "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/test-fixture-runtime.metadata"
 expect_rejected local-runtime-missing 'local runtime roots drifted' \
-    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    invoke_source_gate "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/local-runtime-missing.metadata"
 expect_rejected local-runtime-extra 'unadmitted path dependency' \
-    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    invoke_source_gate "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/local-runtime-extra.metadata"
 expect_rejected local-runtime-wrong-owner 'unadmitted path dependency' \
-    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    invoke_source_gate "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/local-runtime-wrong-owner.metadata"
 expect_rejected local-runtime-path 'local runtime dependency declaration drifted' \
-    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    invoke_source_gate "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/local-runtime-path.metadata"
 expect_rejected local-runtime-workspace \
     'local runtime package may not become a workspace member' \
-    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    invoke_source_gate "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/local-runtime-workspace.metadata"
 expect_rejected local-runtime-verus 'local runtime package may not claim Verus authority' \
-    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+    invoke_source_gate "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/local-runtime-verus.metadata"
-expect_rejected local-runtime-manifest 'local runtime package identity drifted' \
-    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+expect_rejected local-runtime-manifest 'protected verifier resolved dependency identity drifted' \
+    invoke_source_gate "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/local-runtime-manifest.metadata"
-expect_rejected local-runtime-target 'local runtime library target drifted' \
-    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+expect_rejected local-runtime-target 'verifier dependency TCB drifted' \
+    invoke_source_gate "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/local-runtime-target.metadata"
-expect_rejected local-runtime-fe2o3 'local runtime package dependency drifted' \
-    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+expect_rejected local-runtime-fe2o3 'verifier dependency TCB drifted' \
+    invoke_source_gate "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/local-runtime-fe2o3.metadata"
-expect_rejected local-runtime-resolve 'local runtime' \
-    "$source_gate" "$repo" "$repo/proofs/VERIFIED_MODULES" \
+expect_rejected local-runtime-resolve 'local runtime owner resolve edge drifted' \
+    invoke_source_gate "$repo" "$repo/proofs/VERIFIED_MODULES" \
     "$scratch/local-runtime-resolve.metadata"
 
 cp "$repo/proofs/negative/REQUIRED_COMPONENTS" "$scratch/unsafe-target.registry"
@@ -749,7 +874,7 @@ if not removed:
 Path(sys.argv[2]).write_text("\n".join(output) + "\n", encoding="utf-8")
 PY
 expect_rejected coverage-missing-record 'compiler-rooted proof coverage manifest drifted' \
-    "$source_gate" "$repo" "$scratch/missing-record.manifest" "$metadata"
+    invoke_source_gate "$repo" "$scratch/missing-record.manifest" "$metadata"
 
 sed '/^verified=ferric-engine|/d' "$repo/proofs/VERIFIED_MODULES" \
     >"$scratch/zero-direct.manifest"
@@ -789,7 +914,7 @@ unverified=ferric-spec|crates/ferric-spec/src/configuration.rs|ferric_spec::conf
 unverified=ferric-spec|crates/ferric-spec/src/configuration.rs|ferric_spec::configuration::generic_probe|pending-verus|hostile-parser-generic-fixture
 ADMISSIONS
 write_metadata "$complex" "$scratch/complex.metadata"
-"$source_gate" --generate "$complex" "$scratch/complex.metadata" "$scratch/complex.manifest"
+invoke_source_gate --generate "$complex" "$scratch/complex.metadata" "$scratch/complex.manifest"
 grep -F 'ferric_spec::configuration::generic_probe' "$scratch/complex.manifest" >/dev/null || {
     printf 'FAIL: generic executable body was not classified\n' >&2
     exit 1
@@ -804,14 +929,14 @@ if grep -F 'CallbackProbe' "$scratch/complex.manifest" >/dev/null; then
     exit 1
 fi
 expect_rejected coverage-generic-drift 'compiler-rooted proof coverage manifest drifted' \
-    "$source_gate" "$complex" "$repo/proofs/VERIFIED_MODULES" "$scratch/complex.metadata"
+    invoke_source_gate "$complex" "$repo/proofs/VERIFIED_MODULES" "$scratch/complex.metadata"
 
 outside=$(new_copy unadmitted-outside-verus)
 printf '\npub fn unadmitted_production_body() {}\n' \
     >>"$outside/crates/ferric-spec/src/configuration.rs"
 write_metadata "$outside" "$scratch/outside.metadata"
 expect_rejected parser-unadmitted-outside-verus 'unverified executable body admission drifted' \
-    "$source_gate" --generate "$outside" "$scratch/outside.metadata" "$scratch/outside.manifest"
+    invoke_source_gate --generate "$outside" "$scratch/outside.metadata" "$scratch/outside.manifest"
 
 stale=$(new_copy stale-unverified-body)
 cat >>"$stale/proofs/UNVERIFIED_BODIES" <<'ADMISSIONS'
@@ -819,7 +944,7 @@ unverified=ferric-spec|crates/ferric-spec/src/configuration.rs|ferric_spec::conf
 ADMISSIONS
 write_metadata "$stale" "$scratch/stale.metadata"
 expect_rejected parser-stale-unverified-body 'unverified executable body admission drifted' \
-    "$source_gate" --generate "$stale" "$scratch/stale.metadata" "$scratch/stale.manifest"
+    invoke_source_gate --generate "$stale" "$scratch/stale.metadata" "$scratch/stale.manifest"
 
 solver=$(new_copy solver-attributes)
 cat >>"$solver/crates/ferric-spec/src/identity.rs" <<'RS'
@@ -840,7 +965,7 @@ proof fn bounded_resource_attribute_probe()
 }
 RS
 write_metadata "$solver" "$scratch/solver.metadata"
-"$source_gate" "$solver" "$repo/proofs/VERIFIED_MODULES" "$scratch/solver.metadata"
+invoke_source_gate "$solver" "$repo/proofs/VERIFIED_MODULES" "$scratch/solver.metadata"
 
 resource_limit=$(new_copy unsupported-resource-limit)
 cat >>"$resource_limit/crates/ferric-spec/src/identity.rs" <<'RS'
@@ -853,12 +978,12 @@ proof fn unsupported_resource_limit_probe()
 RS
 write_metadata "$resource_limit" "$scratch/resource-limit.metadata"
 expect_rejected parser-unsupported-resource-limit 'unsupported verifier resource limit: 101' \
-    "$source_gate" --generate "$resource_limit" "$scratch/resource-limit.metadata" \
+    invoke_source_gate --generate "$resource_limit" "$scratch/resource-limit.metadata" \
     "$scratch/resource-limit.manifest"
 
 constructor=$(new_copy admitted-allocation-constructor)
 write_metadata "$constructor" "$scratch/constructor.metadata"
-"$source_gate" --generate "$constructor" "$scratch/constructor.metadata" \
+invoke_source_gate --generate "$constructor" "$scratch/constructor.metadata" \
     "$scratch/constructor.manifest"
 grep -F 'ferric_engine::cache::KvPool::new_bounded' \
     "$scratch/constructor.manifest" >/dev/null || {
@@ -868,7 +993,7 @@ grep -F 'ferric_engine::cache::KvPool::new_bounded' \
 
 engine_constructor=$(new_copy admitted-engine-allocation-constructor)
 write_metadata "$engine_constructor" "$scratch/engine-constructor.metadata"
-"$source_gate" --generate "$engine_constructor" \
+invoke_source_gate --generate "$engine_constructor" \
     "$scratch/engine-constructor.metadata" "$scratch/engine-constructor.manifest"
 grep -F 'ferric_engine::system::Engine::new' \
     "$scratch/engine-constructor.manifest" >/dev/null || {
@@ -890,7 +1015,7 @@ RS
 write_metadata "$engine_transition" "$scratch/engine-transition.metadata"
 expect_rejected parser-engine-transition-allocation \
     'verified engine body ferric_engine::system::Engine::transition violates no-transition-allocation policy' \
-    "$source_gate" --generate "$engine_transition" \
+    invoke_source_gate --generate "$engine_transition" \
     "$scratch/engine-transition.metadata" "$scratch/engine-transition.manifest"
 
 ghost_allocation=$(new_copy admitted-engine-ghost-allocation)
@@ -908,7 +1033,7 @@ impl Engine {
 }
 RS
 write_metadata "$ghost_allocation" "$scratch/ghost-allocation.metadata"
-"$source_gate" --generate "$ghost_allocation" \
+invoke_source_gate --generate "$ghost_allocation" \
     "$scratch/ghost-allocation.metadata" "$scratch/ghost-allocation.manifest"
 grep -F 'ferric_engine::system::Engine::ghost_allocation_probe' \
     "$scratch/ghost-allocation.manifest" >/dev/null || {
@@ -936,7 +1061,7 @@ pub fn transition_allocation_probe() {
 RS
 write_metadata "$allocation" "$scratch/allocation.metadata"
 expect_rejected parser-transition-allocation 'violates no-transition-allocation policy' \
-    "$source_gate" --generate "$allocation" "$scratch/allocation.metadata" \
+    invoke_source_gate --generate "$allocation" "$scratch/allocation.metadata" \
     "$scratch/allocation.manifest"
 for marker in 'Vec::new' 'Box::new' 'method is forbidden: push' \
     'method is forbidden: reserve' 'method is forbidden: resize' \
@@ -953,7 +1078,7 @@ raw=$(new_copy raw-identifier)
 printf '\npub fn r#match() {}\n' >>"$raw/crates/ferric-spec/src/configuration.rs"
 write_metadata "$raw" "$scratch/raw.metadata"
 expect_rejected parser-raw-identifier 'raw identifier is forbidden' \
-    "$source_gate" --generate "$raw" "$scratch/raw.metadata" "$scratch/raw.manifest"
+    invoke_source_gate --generate "$raw" "$scratch/raw.metadata" "$scratch/raw.manifest"
 
 macro=$(new_copy item-macro)
 cat >>"$macro/crates/ferric-spec/src/configuration.rs" <<'RS'
@@ -965,20 +1090,20 @@ generated_body!();
 RS
 write_metadata "$macro" "$scratch/macro.metadata"
 expect_rejected parser-item-macro 'item macro invocation is forbidden' \
-    "$source_gate" --generate "$macro" "$scratch/macro.metadata" "$scratch/macro.manifest"
+    invoke_source_gate --generate "$macro" "$scratch/macro.metadata" "$scratch/macro.manifest"
 
 orphan=$(new_copy orphan-source)
 printf 'pub fn orphan_probe() {}\n' >"$orphan/crates/ferric-spec/src/orphan_probe.rs"
 write_metadata "$orphan" "$scratch/orphan.metadata"
 expect_rejected parser-orphan-source 'contains unreachable Rust source' \
-    "$source_gate" --generate "$orphan" "$scratch/orphan.metadata" "$scratch/orphan.manifest"
+    invoke_source_gate --generate "$orphan" "$scratch/orphan.metadata" "$scratch/orphan.manifest"
 
 conditional=$(new_copy conditional-source)
 printf '\n#[cfg(any())]\npub fn conditionally_absent_probe() {}\n' \
     >>"$conditional/crates/ferric-spec/src/configuration.rs"
 write_metadata "$conditional" "$scratch/conditional.metadata"
 expect_rejected parser-cfg 'conditional source is forbidden' \
-    "$source_gate" --generate "$conditional" "$scratch/conditional.metadata" \
+    invoke_source_gate --generate "$conditional" "$scratch/conditional.metadata" \
     "$scratch/conditional.manifest"
 
 deny=$(new_copy unsupported-deny)
@@ -986,14 +1111,14 @@ sed -i 's/^#!\[deny(missing_docs)\]$/#![deny(dead_code)]/' \
     "$deny/crates/ferric-qwen-kernels/src/lib.rs"
 write_metadata "$deny" "$scratch/deny.metadata"
 expect_rejected parser-unsupported-deny 'unsupported deny attribute: dead_code' \
-    "$source_gate" --generate "$deny" "$scratch/deny.metadata" "$scratch/deny.manifest"
+    invoke_source_gate --generate "$deny" "$scratch/deny.metadata" "$scratch/deny.manifest"
 
 repr=$(new_copy unsupported-repr)
 sed -i '0,/^#\[repr(u8)\]$/s//#[repr(C)]/' \
     "$repr/crates/ferric-qwen-kernels/src/gemm.rs"
 write_metadata "$repr" "$scratch/repr.metadata"
 expect_rejected parser-unsupported-repr 'unsupported repr attribute: C' \
-    "$source_gate" --generate "$repr" "$scratch/repr.metadata" "$scratch/repr.manifest"
+    invoke_source_gate --generate "$repr" "$scratch/repr.metadata" "$scratch/repr.manifest"
 
 assert_include=$(new_copy assert-source-inclusion)
 cat >>"$assert_include/crates/ferric-spec/src/configuration.rs" <<'RS'
@@ -1004,7 +1129,7 @@ const _: () = {
 RS
 write_metadata "$assert_include" "$scratch/assert-include.metadata"
 expect_rejected parser-assert-source-inclusion 'source inclusion macro is forbidden: include_str!' \
-    "$source_gate" --generate "$assert_include" "$scratch/assert-include.metadata" \
+    invoke_source_gate --generate "$assert_include" "$scratch/assert-include.metadata" \
     "$scratch/assert-include.manifest"
 
 trust=$(new_copy trust-attribute)
@@ -1015,7 +1140,7 @@ pub fn alternate_trust_attribute_probe() {}
 RS
 write_metadata "$trust" "$scratch/trust.metadata"
 expect_rejected parser-alternate-trust-attribute 'trust-expanding or unsupported verifier attribute: verus_verify' \
-    "$source_gate" --generate "$trust" "$scratch/trust.metadata" "$scratch/trust.manifest"
+    invoke_source_gate --generate "$trust" "$scratch/trust.metadata" "$scratch/trust.manifest"
 
 assume=$(new_copy qualified-assume)
 cat >>"$assume/crates/ferric-spec/src/identity.rs" <<'RS'
@@ -1028,7 +1153,7 @@ pub fn qualified_assume_probe() {
 RS
 write_metadata "$assume" "$scratch/assume.metadata"
 expect_rejected parser-qualified-assume 'forbidden trust call' \
-    "$source_gate" --generate "$assume" "$scratch/assume.metadata" "$scratch/assume.manifest"
+    invoke_source_gate --generate "$assume" "$scratch/assume.metadata" "$scratch/assume.manifest"
 
 cat >"$scratch/trust-call-method.rs" <<'RS'
 verus! {
@@ -1078,6 +1203,6 @@ path.write_text(source.replace(needle, "[package.metadata.verus]\nverify = false
 PY
 write_metadata "$optout" "$scratch/optout.metadata"
 expect_rejected dependency-opt-out 'first-party workspace package is not opted into strict Verus' \
-    "$source_gate" --generate "$optout" "$scratch/optout.metadata" "$scratch/optout.manifest"
+    invoke_source_gate --generate "$optout" "$scratch/optout.metadata" "$scratch/optout.manifest"
 
 printf 'PASS: compiler-rooted admission rejects stale, unparsed, conditional, trust-expanded, and opted-out source\n'

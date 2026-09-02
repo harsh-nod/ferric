@@ -126,10 +126,35 @@ python3 -I "$qualified_scripts/check-lock.py" \
     cd "$qualified_repo"
     cargo build --manifest-path proofs/source-gate/Cargo.toml --locked --release \
         --target-dir "$source_gate_target"
+    cargo test --manifest-path proofs/source-gate/Cargo.toml --locked --release \
+        --target-dir "$source_gate_target"
 )
 source_gate="$source_gate_target/release/ferric-source-gate"
 [ -x "$source_gate" ] || fail 'compiler-rooted source gate was not built'
 source_gate_digest=$(sha256sum "$source_gate" | awk '{ print $1 }')
+metadata="$scratch/cargo-metadata.json"
+(
+    cd "$qualified_repo"
+    CARGO_TARGET_DIR="$proof_target" cargo metadata --locked --format-version 1
+) >"$metadata"
+verifier_metadata="$scratch/verifier-cargo-metadata.json"
+(
+    cd "$qualified_repo"
+    CARGO_TARGET_DIR="$proof_target" cargo metadata \
+        --manifest-path adapters/qwen3-all-kernels-worker-v3-verifier-v1/Cargo.toml \
+        --locked --all-features --format-version 1
+) >"$verifier_metadata"
+generated_verifier_production_tcb="$scratch/VERIFIER_PRODUCTION_DEPENDENCY_TCB.generated"
+"$source_gate" --verifier-production-dependency-tcb \
+    "$qualified_repo" "$metadata" "$generated_verifier_production_tcb"
+cmp -s "$qualified_scripts/source-gate/VERIFIER_PRODUCTION_DEPENDENCY_TCB" \
+    "$generated_verifier_production_tcb" || \
+    fail 'production verifier dependency TCB drifted'
+generated_verifier_dev_tcb="$scratch/VERIFIER_DEV_DEPENDENCY_TCB.generated"
+"$source_gate" --verifier-dev-dependency-tcb \
+    "$qualified_repo" "$verifier_metadata" "$generated_verifier_dev_tcb"
+cmp -s "$qualified_scripts/source-gate/VERIFIER_DEV_DEPENDENCY_TCB" \
+    "$generated_verifier_dev_tcb" || fail 'development verifier dependency TCB drifted'
 source_gate_metadata="$scratch/source-gate-cargo-metadata.json"
 (
     cd "$qualified_repo"
@@ -139,7 +164,7 @@ source_gate_metadata="$scratch/source-gate-cargo-metadata.json"
 chmod -R a-w "$source_gate_target"
 generated_source_gate_tcb="$scratch/SOURCE_GATE_DEPENDENCY_TCB.generated"
 "$source_gate" --dependency-tcb "$qualified_repo" "$source_gate_metadata" \
-    "$generated_source_gate_tcb"
+    "$metadata" "$verifier_metadata" "$generated_source_gate_tcb"
 cmp -s "$qualified_scripts/source-gate/DEPENDENCY_TCB" "$generated_source_gate_tcb" || \
     fail 'source-gate dependency or build-script TCB drifted'
 (
@@ -165,20 +190,17 @@ cmp -s "$qualified_scripts/property-binder/DEPENDENCY_TCB" \
     fail 'property-binder dependency or build-script TCB drifted'
 "$property_binder" --manifest-check "$qualified_repo"
 chmod -R a-w "$property_binder_target"
-metadata="$scratch/cargo-metadata.json"
-(
-    cd "$qualified_repo"
-    CARGO_TARGET_DIR="$proof_target" cargo metadata --locked --format-version 1
-) >"$metadata"
 generated_coverage="$scratch/VERIFIED_MODULES.generated"
-"$source_gate" --generate "$qualified_repo" "$metadata" "$generated_coverage"
+"$source_gate" --generate "$qualified_repo" "$metadata" "$verifier_metadata" \
+    "$generated_coverage"
 cmp -s "$qualified_scripts/VERIFIED_MODULES" "$generated_coverage" || {
     printf 'FAIL: proof coverage manifest is stale; regenerate with:\n' >&2
     printf '  CARGO_TARGET_DIR=/tmp/ferric-source-gate-target cargo build --manifest-path proofs/source-gate/Cargo.toml --release --locked\n' >&2
-    printf '  /tmp/ferric-source-gate-target/release/ferric-source-gate --generate . METADATA proofs/VERIFIED_MODULES\n' >&2
+    printf '  /tmp/ferric-source-gate-target/release/ferric-source-gate --generate . METADATA VERIFIER_METADATA proofs/VERIFIED_MODULES\n' >&2
     exit 1
 }
-"$source_gate" "$qualified_repo" "$qualified_scripts/VERIFIED_MODULES" "$metadata"
+"$source_gate" "$qualified_repo" "$qualified_scripts/VERIFIED_MODULES" \
+    "$metadata" "$verifier_metadata"
 
 verified_sources="$scratch/verified-sources"
 sed -n 's/^verified=[^|]*|\([^|]*\)|.*/\1/p' "$qualified_scripts/VERIFIED_MODULES" | LC_ALL=C sort -u >"$verified_sources"
@@ -245,7 +267,7 @@ FERRIC_NEGATIVE_TIMEOUT_SECONDS="$timeout_seconds" \
     "$qualified_scripts/negative/run-same-source.sh" \
     "$qualified_repo" "$verus_root" "$negative"
 "$qualified_scripts/negative/test-policy.sh" \
-    "$qualified_repo" "$metadata" "$negative" "$source_gate"
+    "$qualified_repo" "$metadata" "$verifier_metadata" "$negative" "$source_gate"
 "$qualified_scripts/property-binder/test-policy.sh" \
     "$qualified_repo" "$property_binder" "$source_gate" "$negative"
 
@@ -348,7 +370,8 @@ property_contract="$scratch/m0-property-contract.records"
     fail 'compiler-rooted source gate changed during qualification'
 [ "$(sha256sum "$property_binder" | awk '{ print $1 }')" = "$property_binder_digest" ] || \
     fail 'M0 property binder changed during qualification'
-"$source_gate" "$qualified_repo" "$qualified_scripts/VERIFIED_MODULES" "$metadata"
+"$source_gate" "$qualified_repo" "$qualified_scripts/VERIFIED_MODULES" \
+    "$metadata" "$verifier_metadata"
 "$property_binder" --manifest-check "$qualified_repo"
 
 post_closure_log="$scratch/verus-closure-post.transcript"
