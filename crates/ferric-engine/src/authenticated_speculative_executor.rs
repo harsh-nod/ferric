@@ -388,7 +388,7 @@ impl M1AuthenticatedSpeculativeRolloverPublishedV1 {
             Err(failure) => {
                 engine.quarantine_m1_queue_rearm_failure();
                 let disposition = match failure.destroy_queue_and_retain_custody(engine) {
-                    Ok(released) => released_disposition((released, continuation, controls), true),
+                    Ok(released) => released_disposition((released, continuation, controls)),
                     Err(quarantined) => {
                         quarantined_disposition((quarantined, continuation, controls))
                     }
@@ -406,6 +406,7 @@ impl M1AuthenticatedSpeculativeRolloverPublishedV1 {
 /// Round-zero completion failure stage after authenticated bootstrap.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum M1AuthenticatedSpeculativeBootstrapRoundStageV1 {
+    EngineFaulted,
     WorkspaceAllocation,
     CompletionOutput,
     DiagnosticCapture,
@@ -650,7 +651,6 @@ pub enum M1AuthenticatedSpeculativePhysicalRoundStageV1 {
 #[must_use = "clean queue-release evidence retains all terminal custody"]
 pub struct M1AuthenticatedSpeculativeCleanReleaseV1 {
     retained: Box<dyn fmt::Debug>,
-    engine_quarantined: bool,
 }
 
 impl fmt::Debug for M1AuthenticatedSpeculativeCleanReleaseV1 {
@@ -658,7 +658,7 @@ impl fmt::Debug for M1AuthenticatedSpeculativeCleanReleaseV1 {
         formatter
             .debug_struct("M1AuthenticatedSpeculativeCleanReleaseV1")
             .field("queue_released", &true)
-            .field("engine_quarantined", &self.engine_quarantined)
+            .field("engine_quarantined", &true)
             .field("custody_sealed", &true)
             .finish_non_exhaustive()
     }
@@ -672,7 +672,7 @@ impl M1AuthenticatedSpeculativeCleanReleaseV1 {
 
     #[must_use]
     pub const fn engine_quarantined(&self) -> bool {
-        self.engine_quarantined
+        true
     }
 
     #[must_use]
@@ -722,10 +722,11 @@ pub enum M1AuthenticatedSpeculativeFailureDispositionV1 {
     Quarantined(M1AuthenticatedSpeculativeTerminalQuarantineV1),
 }
 
-/// Public failure for one production speculative round.
+/// Public rejection or terminal failure for one production speculative round.
 ///
-/// Unlike the internal pending failure, this value can never yield an
-/// executor, completed readback, completed-step owner, or released round.
+/// A pure pre-detach rejection yields only an opaque consuming retry owner.
+/// Terminal failures can never yield an executor, completed readback,
+/// completed-step owner, or released round.
 ///
 /// ```compile_fail
 /// use ferric_engine::M1AuthenticatedSpeculativePhysicalRoundFailureV1;
@@ -743,26 +744,97 @@ pub enum M1AuthenticatedSpeculativeFailureDispositionV1 {
 ///     let _ = failure.retry_page_release(engine);
 /// }
 /// ```
-#[must_use = "terminal speculative failure custody remains retained"]
-#[derive(Debug)]
-pub struct M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
-    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1,
-    disposition: M1AuthenticatedSpeculativeFailureDispositionV1,
+#[must_use = "pre-detach retry or terminal speculative custody remains retained"]
+pub enum M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+    PreDetach {
+        stage: M1AuthenticatedSpeculativePhysicalRoundStageV1,
+        retry: Box<M1AuthenticatedSpeculativePhysicalRoundPreDetachRetryV1>,
+    },
+    Terminal {
+        stage: M1AuthenticatedSpeculativePhysicalRoundStageV1,
+        disposition: M1AuthenticatedSpeculativeFailureDispositionV1,
+    },
 }
 
 impl M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
     #[must_use]
     pub const fn stage(&self) -> M1AuthenticatedSpeculativePhysicalRoundStageV1 {
-        self.stage
+        match self {
+            Self::PreDetach { stage, .. } | Self::Terminal { stage, .. } => *stage,
+        }
     }
 
-    #[must_use = "the terminal disposition must remain observed"]
-    pub const fn disposition(&self) -> &M1AuthenticatedSpeculativeFailureDispositionV1 {
-        &self.disposition
+    #[must_use = "the terminal disposition must remain observed when present"]
+    pub const fn disposition(&self) -> Option<&M1AuthenticatedSpeculativeFailureDispositionV1> {
+        match self {
+            Self::PreDetach { .. } => None,
+            Self::Terminal { disposition, .. } => Some(disposition),
+        }
+    }
+
+    #[must_use]
+    pub const fn is_pre_detach_retry(&self) -> bool {
+        matches!(self, Self::PreDetach { .. })
     }
 
     #[must_use]
     pub const fn is_terminal(&self) -> bool {
+        matches!(self, Self::Terminal { .. })
+    }
+}
+
+impl fmt::Debug for M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AuthenticatedSpeculativePhysicalRoundFailureV1")
+            .field("stage", &self.stage())
+            .field("pre_detach_retry", &self.is_pre_detach_retry())
+            .field("terminal_disposition", &self.disposition())
+            .finish()
+    }
+}
+
+/// Opaque exact executor and inputs retained before queue detachment.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativePhysicalRoundPreDetachRetryV1;
+/// fn extract(retry: M1AuthenticatedSpeculativePhysicalRoundPreDetachRetryV1) {
+///     let _executor_or_inputs = retry.into_parts();
+/// }
+/// ```
+#[must_use = "pre-detach speculative retry custody remains linear"]
+pub struct M1AuthenticatedSpeculativePhysicalRoundPreDetachRetryV1 {
+    executor: M1AuthenticatedSpeculativePhysicalExecutorV1,
+    inputs: M1AuthenticatedSpeculativePhysicalRoundInputsV1,
+}
+
+impl fmt::Debug for M1AuthenticatedSpeculativePhysicalRoundPreDetachRetryV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AuthenticatedSpeculativePhysicalRoundPreDetachRetryV1")
+            .field("retains_exact_inputs", &true)
+            .finish()
+    }
+}
+
+impl M1AuthenticatedSpeculativePhysicalRoundPreDetachRetryV1 {
+    /// Retries the exact unchanged executor and inputs.
+    ///
+    /// # Errors
+    ///
+    /// Returns renewed pre-detach custody or a terminal post-detach failure.
+    pub fn retry<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        Box<M1AuthenticatedSpeculativePhysicalRoundFailureV1>,
+    > {
+        self.executor.execute_round(engine, self.inputs)
+    }
+
+    #[must_use]
+    pub const fn retains_exact_inputs(&self) -> bool {
         true
     }
 }
@@ -1438,12 +1510,10 @@ impl PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
 
 pub(crate) fn released_disposition(
     retained: impl fmt::Debug + 'static,
-    engine_quarantined: bool,
 ) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
     M1AuthenticatedSpeculativeFailureDispositionV1::Released(
         M1AuthenticatedSpeculativeCleanReleaseV1 {
             retained: Box::new(retained),
-            engine_quarantined,
         },
     )
 }
@@ -1462,11 +1532,10 @@ pub(crate) fn quarantined_disposition(
 fn released_failure(
     stage: M1AuthenticatedSpeculativePhysicalRoundStageV1,
     retained: impl fmt::Debug + 'static,
-    engine_quarantined: bool,
 ) -> Box<M1AuthenticatedSpeculativePhysicalRoundFailureV1> {
-    Box::new(M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+    Box::new(M1AuthenticatedSpeculativePhysicalRoundFailureV1::Terminal {
         stage,
-        disposition: released_disposition(retained, engine_quarantined),
+        disposition: released_disposition(retained),
     })
 }
 
@@ -1475,7 +1544,7 @@ fn quarantined_failure(
     stage: M1AuthenticatedSpeculativePhysicalRoundStageV1,
     retained: impl fmt::Debug + 'static,
 ) -> Box<M1AuthenticatedSpeculativePhysicalRoundFailureV1> {
-    Box::new(M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+    Box::new(M1AuthenticatedSpeculativePhysicalRoundFailureV1::Terminal {
         stage,
         disposition: quarantined_disposition(retained),
     })
@@ -1488,17 +1557,38 @@ fn close_pending_round_failure<const C: usize>(
     engine: &mut Engine<C>,
     pending: Box<PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1>,
 ) -> Box<M1AuthenticatedSpeculativePhysicalRoundFailureV1> {
-    let stage = pending.stage;
-    let post_detach = !matches!(
-        &pending.custody,
-        M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Complete(_)
-            | M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Retryable(_)
-    );
-    if post_detach {
+    let PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+        stage,
+        custody,
+        lineage,
+    } = *pending;
+    if let M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Retryable(retained) = custody {
+        let (executor, inputs) = *retained;
+        if !engine.is_faulted() {
+            return Box::new(
+                M1AuthenticatedSpeculativePhysicalRoundFailureV1::PreDetach {
+                    stage,
+                    retry: Box::new(M1AuthenticatedSpeculativePhysicalRoundPreDetachRetryV1 {
+                        executor,
+                        inputs,
+                    }),
+                },
+            );
+        }
         engine.quarantine_m1_queue_rearm_failure();
+        return match executor.destroy_queue_and_retain_state(engine) {
+            Ok(released) => released_failure(stage, (released, inputs, lineage)),
+            Err(quarantined) => quarantined_failure(stage, (quarantined, inputs, lineage)),
+        };
     }
+    let pending = Box::new(PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+        stage,
+        custody,
+        lineage,
+    });
+    engine.quarantine_m1_queue_rearm_failure();
     match pending.destroy_queue_and_retain_custody(engine) {
-        Ok(Ok(released)) => released_failure(stage, released, post_detach),
+        Ok(Ok(released)) => released_failure(stage, released),
         Ok(Err(quarantined)) => {
             engine.quarantine_m1_queue_rearm_failure();
             quarantined_failure(stage, quarantined)
@@ -1518,7 +1608,7 @@ fn close_pending_round_failure<const C: usize>(
                 }
             };
             match executor.destroy_queue_and_retain_state(engine) {
-                Ok(released) => released_failure(stage, (released, inputs, lineage), false),
+                Ok(released) => released_failure(stage, (released, inputs, lineage)),
                 Err(quarantined) => {
                     engine.quarantine_m1_queue_rearm_failure();
                     quarantined_failure(stage, (quarantined, inputs, lineage))
@@ -1539,7 +1629,7 @@ fn close_pending_bootstrap_failure<const C: usize>(
         PendingM1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1::Retryable(retained) => {
             let (continuation, diagnostic, controls) = *retained;
             match diagnostic.destroy_queue_and_retain_evidence(engine) {
-                Ok(released) => released_disposition((released, continuation, controls), true),
+                Ok(released) => released_disposition((released, continuation, controls)),
                 Err(quarantined) => quarantined_disposition((quarantined, continuation, controls)),
             }
         }
@@ -1553,7 +1643,7 @@ fn close_pending_bootstrap_failure<const C: usize>(
             ) {
                 crate::m1_completed_step::M1AuthenticatedCompletedStepClosureV1::Released(
                     released,
-                ) => released_disposition((released, logical), true),
+                ) => released_disposition((released, logical)),
                 crate::m1_completed_step::M1AuthenticatedCompletedStepClosureV1::Quarantined(
                     quarantined,
                 ) => quarantined_disposition((quarantined, logical)),
@@ -1564,10 +1654,14 @@ fn close_pending_bootstrap_failure<const C: usize>(
         ) => {
             let (coordinator, lineage, controls, choices, completed, failure) = *retained;
             match completed.destroy_queue_and_retain_completion(engine) {
-                Ok(released) => released_disposition(
-                    (released, coordinator, lineage, controls, choices, failure),
-                    true,
-                ),
+                Ok(released) => released_disposition((
+                    released,
+                    coordinator,
+                    lineage,
+                    controls,
+                    choices,
+                    failure,
+                )),
                 Err(quarantined) => quarantined_disposition((
                     quarantined,
                     coordinator,
@@ -1583,10 +1677,14 @@ fn close_pending_bootstrap_failure<const C: usize>(
         ) => {
             let (coordinator, lineage, controls, choices, completed, outcome) = *retained;
             match completed.destroy_queue_and_retain_completion(engine) {
-                Ok(released) => released_disposition(
-                    (released, coordinator, lineage, controls, choices, outcome),
-                    true,
-                ),
+                Ok(released) => released_disposition((
+                    released,
+                    coordinator,
+                    lineage,
+                    controls,
+                    choices,
+                    outcome,
+                )),
                 Err(quarantined) => quarantined_disposition((
                     quarantined,
                     coordinator,
@@ -1601,10 +1699,9 @@ fn close_pending_bootstrap_failure<const C: usize>(
             let (coordinator, lineage, outcome, choices, failure) = *retained;
             let (error, completed) = failure.into_parts();
             match completed.destroy_queue_and_retain_completion(engine) {
-                Ok(released) => released_disposition(
-                    (released, coordinator, lineage, outcome, choices, error),
-                    true,
-                ),
+                Ok(released) => {
+                    released_disposition((released, coordinator, lineage, outcome, choices, error))
+                }
                 Err(quarantined) => quarantined_disposition((
                     quarantined,
                     coordinator,
@@ -1621,7 +1718,7 @@ fn close_pending_bootstrap_failure<const C: usize>(
             let (coordinator, lineage, outcome, choices, released) = *retained;
             match released.destroy_queue_and_retain_round(engine) {
                 Ok(release) => {
-                    released_disposition((release, coordinator, lineage, outcome, choices), true)
+                    released_disposition((release, coordinator, lineage, outcome, choices))
                 }
                 Err(quarantined) => {
                     quarantined_disposition((quarantined, coordinator, lineage, outcome, choices))
@@ -1642,9 +1739,7 @@ fn close_pending_rollover_failure<const C: usize>(
             let (continuation, diagnostic, controls) = *retained;
             let (readback, choices) = diagnostic.into_parts();
             let disposition = match readback.destroy_queue_and_retain_custody(engine) {
-                Ok(released) => {
-                    released_disposition((released, choices, continuation, controls), true)
-                }
+                Ok(released) => released_disposition((released, choices, continuation, controls)),
                 Err(quarantined) => {
                     quarantined_disposition((quarantined, choices, continuation, controls))
                 }
@@ -2293,6 +2388,20 @@ fn execute_bootstrap_from_allocation<const C: usize>(
     M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
     Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1>,
 > {
+    if engine.is_faulted() {
+        return Err(bootstrap_terminal_failure(
+            engine,
+            M1AuthenticatedSpeculativeBootstrapRoundStageV1::EngineFaulted,
+            (
+                bootstrap,
+                partitioned_memory,
+                runner,
+                recipe,
+                ring_bytes,
+                controls,
+            ),
+        ));
+    }
     let M1AuthenticatedSpeculativeBootstrapPreparedV1 {
         prepared,
         continuation,
@@ -2390,6 +2499,21 @@ fn execute_bootstrap_from_prepublication<const C: usize>(
     M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
     Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1>,
 > {
+    if engine.is_faulted() {
+        return Err(bootstrap_terminal_failure(
+            engine,
+            M1AuthenticatedSpeculativeBootstrapRoundStageV1::EngineFaulted,
+            (
+                continuation,
+                runner,
+                allocated,
+                recipe,
+                completion,
+                ring_bytes,
+                controls,
+            ),
+        ));
+    }
     let prepublication = match runner.prepare_first_step(allocated, recipe, completion) {
         Ok(prepublication) => prepublication,
         Err(failure) => {
@@ -2422,6 +2546,13 @@ fn execute_bootstrap_from_queue_create<const C: usize>(
     M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
     Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1>,
 > {
+    if engine.is_faulted() {
+        return Err(bootstrap_terminal_failure(
+            engine,
+            M1AuthenticatedSpeculativeBootstrapRoundStageV1::EngineFaulted,
+            (continuation, prepublication, ring_bytes, controls),
+        ));
+    }
     let queue = match M1AuthenticatedPhysicalQueueSessionV1::create(ring_bytes, prepublication) {
         Ok(queue) => queue,
         Err(M1AuthenticatedPhysicalQueueCreateFailureV1::Rejected {
@@ -2453,7 +2584,7 @@ fn execute_bootstrap_from_queue_create<const C: usize>(
             use crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
             let disposition = match failure.close_without_authority(engine) {
                 M1AuthenticatedPhysicalQueueClosureV1::Released(released) => {
-                    released_disposition((released, continuation, controls), true)
+                    released_disposition((released, continuation, controls))
                 }
                 M1AuthenticatedPhysicalQueueClosureV1::Quarantined(quarantined) => {
                     quarantined_disposition((quarantined, continuation, controls))
@@ -2490,7 +2621,7 @@ fn execute_bootstrap_from_queue_create<const C: usize>(
         Err(failure) => {
             engine.quarantine_m1_queue_rearm_failure();
             let disposition = match failure.destroy_queue_and_retain_evidence(engine) {
-                Ok(released) => released_disposition((released, continuation, controls), true),
+                Ok(released) => released_disposition((released, continuation, controls)),
                 Err(quarantined) => quarantined_disposition((quarantined, continuation, controls)),
             };
             return Err(bootstrap_terminal_disposition(
@@ -2504,7 +2635,7 @@ fn execute_bootstrap_from_queue_create<const C: usize>(
         Err(failure) => {
             engine.quarantine_m1_queue_rearm_failure();
             let disposition = match failure.destroy_queue_and_retain_evidence(engine) {
-                Ok(released) => released_disposition((released, continuation, controls), true),
+                Ok(released) => released_disposition((released, continuation, controls)),
                 Err(quarantined) => quarantined_disposition((quarantined, continuation, controls)),
             };
             return Err(bootstrap_terminal_disposition(
@@ -2518,7 +2649,7 @@ fn execute_bootstrap_from_queue_create<const C: usize>(
         Err(failure) => {
             engine.quarantine_m1_queue_rearm_failure();
             let disposition = match failure.destroy_queue_and_retain_evidence(engine) {
-                Ok(released) => released_disposition((released, continuation, controls), true),
+                Ok(released) => released_disposition((released, continuation, controls)),
                 Err(quarantined) => quarantined_disposition((quarantined, continuation, controls)),
             };
             return Err(bootstrap_terminal_disposition(
@@ -3380,15 +3511,16 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
     /// Executes one authenticated KFD queue generation.
     ///
     /// The executor is returned only after physical settlement, logical commit,
-    /// page release, and causal validation all succeed. Every failure consumes
-    /// queue authority before it reaches the caller. Once scheduling detaches
-    /// the queue, the Engine is quarantined even when queue destruction itself
-    /// succeeds.
+    /// page release, and causal validation all succeed. Pure validation and
+    /// scheduling rejection before detachment returns one opaque exact retry
+    /// owner. Once scheduling detaches the queue, the Engine is quarantined even
+    /// when queue destruction itself succeeds.
     ///
     /// # Errors
     ///
-    /// Returns only clean queue-release evidence or opaque terminal quarantine.
-    /// No failure exposes retry, readback, completion, or scheduling authority.
+    /// Returns opaque pre-detach retry custody, clean queue-release evidence, or
+    /// opaque terminal quarantine. No failure exposes raw readback, completion,
+    /// or scheduling authority.
     pub fn execute_round<const C: usize>(
         self,
         engine: &mut Engine<C>,
@@ -4539,7 +4671,7 @@ mod tests {
     }
 
     #[test]
-    fn production_round_failures_expose_only_terminal_dispositions() {
+    fn production_round_surface_separates_pre_detach_retry_from_terminal_disposition() {
         type Execute = fn(
             M1AuthenticatedSpeculativePhysicalExecutorV1,
             &mut Engine<32>,
@@ -4608,7 +4740,6 @@ mod tests {
     fn public_failure_dispositions_redact_all_retained_authority() {
         let released = M1AuthenticatedSpeculativeCleanReleaseV1 {
             retained: Box::new("secret released authority"),
-            engine_quarantined: true,
         };
         assert!(released.queue_released());
         assert!(released.engine_quarantined());

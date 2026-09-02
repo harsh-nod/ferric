@@ -442,7 +442,7 @@ fn close_pending_schedule_failure<const C: usize>(
                 engine.quarantine_m1_queue_rearm_failure();
                 let logical = (intent, coordinator, inputs, recipe_plans, preparation_plans);
                 let disposition = match released.destroy_queue_and_retain_step(engine) {
-                    Ok(released) => released_disposition((released, logical), true),
+                    Ok(released) => released_disposition((released, logical)),
                     Err(quarantined) => quarantined_disposition((quarantined, logical)),
                 };
                 M1AuthenticatedSpeculativeRolloverScheduleFailureV1::Terminal { error, disposition }
@@ -475,7 +475,7 @@ fn close_pending_schedule_failure<const C: usize>(
             let error = detached.error;
             engine.quarantine_m1_queue_rearm_failure();
             let disposition = match detached.destroy_queue_and_retain_custody(engine) {
-                Ok(released) => released_disposition(released, true),
+                Ok(released) => released_disposition(released),
                 Err(quarantined) => quarantined_disposition(quarantined),
             };
             M1AuthenticatedSpeculativeRolloverScheduleFailureV1::Terminal { error, disposition }
@@ -1200,7 +1200,7 @@ fn close_pending_preparation_failure<const C: usize>(
     engine.quarantine_m1_queue_rearm_failure();
     let stage = pending.stage;
     let disposition = match pending.destroy_queue_and_retain_custody(engine) {
-        Ok(released) => released_disposition(released, true),
+        Ok(released) => released_disposition(released),
         Err(quarantined) => quarantined_disposition(quarantined),
     };
     Box::new(M1AuthenticatedSpeculativeRolloverPrepareFailureV1 { stage, disposition })
@@ -1762,7 +1762,7 @@ fn close_pending_submission_failure<const C: usize>(
         PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::Closed { source, .. } => {
             let M1AuthenticatedSpeculativeRolloverClosedFailureV1 { release, retained } = *source;
             if release.is_ok() {
-                released_disposition((release, retained), true)
+                released_disposition((release, retained))
             } else {
                 quarantined_disposition((release, retained))
             }
@@ -1786,7 +1786,7 @@ fn close_pending_submission_failure<const C: usize>(
             retained,
         } => match queue.close_unpublished() {
             M1AuthenticatedPhysicalQueueClosureV1::Released(released) => {
-                released_disposition((released, retained), true)
+                released_disposition((released, retained))
             }
             M1AuthenticatedPhysicalQueueClosureV1::Quarantined(quarantined) => {
                 quarantined_disposition((quarantined, retained))
@@ -1797,7 +1797,7 @@ fn close_pending_submission_failure<const C: usize>(
             retained,
         } => match source.close_without_authority(engine) {
             M1AuthenticatedPhysicalQueueClosureV1::Released(released) => {
-                released_disposition((released, retained), true)
+                released_disposition((released, retained))
             }
             M1AuthenticatedPhysicalQueueClosureV1::Quarantined(quarantined) => {
                 quarantined_disposition((quarantined, retained))
@@ -1818,7 +1818,7 @@ fn disposition_from_native_closure<const N: usize>(
         M1AuthenticatedSpeculativeNativeRolloverClosureV1::Released(source) => {
             let M1AuthenticatedSpeculativeRolloverClosedFailureV1 { release, retained } = *source;
             if release.is_ok() {
-                released_disposition((release, retained), true)
+                released_disposition((release, retained))
             } else {
                 quarantined_disposition((release, retained))
             }

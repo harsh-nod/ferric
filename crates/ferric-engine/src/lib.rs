@@ -209,6 +209,7 @@ pub use authenticated_speculative_executor::{
     M1AuthenticatedSpeculativeFailureDispositionV1, M1AuthenticatedSpeculativePhysicalExecutorV1,
     M1AuthenticatedSpeculativePhysicalRoundFailureV1,
     M1AuthenticatedSpeculativePhysicalRoundInputsV1,
+    M1AuthenticatedSpeculativePhysicalRoundPreDetachRetryV1,
     M1AuthenticatedSpeculativePhysicalRoundStageV1,
     M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
     M1AuthenticatedSpeculativeRolloverPublishedV1,
