@@ -100,7 +100,7 @@ a:hover {
   min-height: 64px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 36px;
 }
@@ -119,6 +119,7 @@ a:hover {
 }
 
 nav {
+  min-width: 0;
   display: flex;
   gap: 28px;
 }
@@ -290,6 +291,13 @@ h3 {
   gap: 20px;
 }
 
+.readiness-row-heading > :first-child,
+.timeline-heading > :first-child,
+.observation-heading > :first-child,
+.validation-item-heading > :first-child {
+  min-width: 0;
+}
+
 .readiness-row-heading strong {
   font-size: 14px;
 }
@@ -302,6 +310,7 @@ h3 {
 }
 
 .state-tag {
+  flex: 0 0 auto;
   display: inline-flex;
   min-height: 24px;
   padding: 3px 8px;
@@ -524,6 +533,7 @@ h3 {
 .validation-item-heading {
   margin-bottom: 20px;
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
@@ -1102,15 +1112,7 @@ footer {
   }
 }
 
-@media (max-width: 700px) {
-  :root {
-    --shell: calc(100% - 28px);
-  }
-
-  html {
-    scroll-padding-top: 60px;
-  }
-
+@media (max-width: 720px) {
   .site-header {
     position: static;
   }
@@ -1142,6 +1144,16 @@ footer {
   nav a {
     padding-right: 0;
     font-size: 11px;
+  }
+}
+
+@media (max-width: 700px) {
+  :root {
+    --shell: calc(100% - 28px);
+  }
+
+  html {
+    scroll-padding-top: 60px;
   }
 
   .overview {

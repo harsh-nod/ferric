@@ -8,6 +8,10 @@ const pageUrl = pathToFileURL(join(siteRoot, "index.html")).href;
 const screenshotRoot = process.env.FERRIC_SCREENSHOT_DIR;
 const viewports = [
   ["desktop", 1440, 1100],
+  ["validation-edge-1027", 1027, 900],
+  ["validation-edge-981", 981, 900],
+  ["header-edge-710", 710, 844],
+  ["header-edge-701", 701, 844],
   ["mobile", 390, 844],
   ["narrow", 320, 720],
 ];
@@ -135,4 +139,43 @@ try {
   await browser.close();
 }
 
-console.log("Validated rendered Ferric Pages at 1440px, 390px, and 320px.");
+if (process.env.FERRIC_EXHAUSTIVE_WIDTHS === "1") {
+  const sweepBrowser = await chromium.launch({ headless: true });
+  try {
+    const page = await sweepBrowser.newPage({ viewport: { width: 320, height: 900 } });
+    await page.goto(pageUrl, { waitUntil: "load" });
+    await page.waitForFunction(
+      (selectors) => selectors.every((selector) => document.querySelector(selector)?.children.length),
+      dynamicRoots,
+    );
+    for (let width = 320; width <= 1440; width += 1) {
+      await page.setViewportSize({ width, height: 900 });
+      const result = await page.evaluate(() => {
+        const viewportClipping = [...document.querySelectorAll(".repo-link, .state-tag")]
+          .filter((element) => !element.closest(".transition-table-wrap"))
+          .map((element) => {
+            const rect = element.getBoundingClientRect();
+            return { label: element.textContent.trim(), left: rect.left, right: rect.right };
+          })
+          .filter(({ left, right }) => left < -1 || right > window.innerWidth + 1);
+        return {
+          overflow:
+            Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) -
+            window.innerWidth,
+          viewportClipping,
+        };
+      });
+      assert(result.overflow <= 1, `${width}px sweep: page has horizontal overflow`);
+      assert(
+        result.viewportClipping.length === 0,
+        `${width}px sweep: clipped status or repository control: ${JSON.stringify(result.viewportClipping)}`,
+      );
+    }
+    await page.close();
+  } finally {
+    await sweepBrowser.close();
+  }
+  console.log("Validated every Ferric Pages width from 320px through 1440px.");
+}
+
+console.log("Validated rendered Ferric Pages at 1440px, 1027px, 981px, 710px, 701px, 390px, and 320px.");
