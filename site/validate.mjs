@@ -22,7 +22,11 @@ const expectedCurrent = Object.freeze({
   commonCustodyPreflightCommit: "e187ca52dfdaee79fdc17921c9acffebeed6ca96",
   associationPreflightCommit: "eb3b1937ec509cb6ecea080a25965dd3e8bc5457",
   finalizedHsacoReinspectionCommit: "749324c9e287aaec688c8733c88becddc539b12e",
-  selectedFe2o3Pin: "52815c9ed52a3075e26322cf506144cb22da12d2",
+  selectedFe2o3Pin: "57d2d9ced5c113d40546ea1dee603e8ba499cf40",
+  fe2o3CallerChallengeCandidate: "40cb4337c1b495e43eed66276d81cd4cae36d3bf",
+  fe2o3VerificationTransportCandidate: "701449c39029de040cd285a2d527dcc185a8750b",
+  fe2o3DescriptorEnvelopeCandidate: "ac00e7ae89d7c73737612d6d0565a632db898890",
+  productionSpeculativeExecutorStatus: "in-progress",
   aggregateSourceCommit: "5514afe176a090aa3f1da9e5354799bb4ca5a8b3",
   aggregateProducerCommit: "e57c42523050922ad76538150df691cc5ab975a7",
   aggregateKernelCount: 12,
@@ -32,6 +36,10 @@ const expectedCurrent = Object.freeze({
   diagnosticCopyCount: 5,
   proofQueries: 1493,
   directVerifiedBodies: 645,
+  proofErrors: 0,
+  proofPackages: 8,
+  actualBodyHostileMutations: 37,
+  sourceQualityPassMarkers: 13,
   sourceGateModules: 151,
   sourceGateBodies: 6916,
   sourceClosureFiles: 603,
@@ -102,6 +110,18 @@ assertCommit(
   "current.finalizedHsacoReinspectionCommit",
 );
 assertCommit(project.current.selectedFe2o3Pin, "current.selectedFe2o3Pin");
+assertCommit(
+  project.current.fe2o3CallerChallengeCandidate,
+  "current.fe2o3CallerChallengeCandidate",
+);
+assertCommit(
+  project.current.fe2o3VerificationTransportCandidate,
+  "current.fe2o3VerificationTransportCandidate",
+);
+assertCommit(
+  project.current.fe2o3DescriptorEnvelopeCandidate,
+  "current.fe2o3DescriptorEnvelopeCandidate",
+);
 assertCommit(project.current.aggregateSourceCommit, "current.aggregateSourceCommit");
 assertCommit(project.current.aggregateProducerCommit, "current.aggregateProducerCommit");
 assertCommit(project.current.diagnosticBridgeCommit, "current.diagnosticBridgeCommit");
@@ -190,6 +210,12 @@ assert(
     protectedAcceptance.detail.includes(
       "sole terminal result MissingProtectedVerificationReceipt",
     ) &&
+    protectedAcceptance.detail.includes(
+      "neither a provisioned protected compiler-execution service and client profile",
+    ) &&
+    protectedAcceptance.detail.includes(
+      "nor an independent protected-verifier signer and durable currentness service",
+    ) &&
     protectedAcceptance.detail.includes("earlier preflight failures return their distinct"),
   "protected aggregate acceptance must remain fail-closed and open",
 );
@@ -198,10 +224,30 @@ const qwenReadiness = project.readiness.find(
 );
 assert(
   qwenReadiness?.state === "open" &&
+    qwenReadiness.detail.includes("protected compiler and independent verifier services") &&
+    qwenReadiness.detail.includes("canonical prepack result is a non-final probe") &&
     qwenReadiness.detail.includes(
       "no authenticated full-Qwen execution, numerical result, or performance result",
     ),
   "Qwen, numerical, and performance authority must remain open",
+);
+const prepackProbe = project.readiness.find(
+  (item) => item.label === "Canonical Qwen prepack probe",
+);
+assert(
+  prepackProbe?.state === "observed" &&
+    prepackProbe.detail.includes("non-final mi300x probe") &&
+    prepackProbe.detail.includes(
+      "6dfba0acd1c00ce13cec7b5eebb180691bdb8855a7eee89876df2a0a12a2802b",
+    ) &&
+    prepackProbe.detail.includes(
+      "6a396e95e715d1be16bbc27b8c762a9308e40e5355c5bd89b9fc28fb06a1dd16",
+    ) &&
+    prepackProbe.detail.includes("not final-integration evidence") &&
+    prepackProbe.detail.includes("a protected artifact") &&
+    prepackProbe.detail.includes("a hardware run") &&
+    prepackProbe.detail.includes("Qwen execution authority"),
+  "canonical Qwen prepack must remain explicitly non-final and non-authoritative",
 );
 
 for (const group of ["runnable", "experimental", "roadmap"]) {
@@ -310,6 +356,10 @@ assert(
   progressCommits.has(expectedCurrent.selectedFe2o3Pin),
   "recent progress must include the selected fe2o3 pin",
 );
+assert(
+  progressCommits.has(expectedCurrent.fe2o3CallerChallengeCandidate),
+  "recent progress must include the pushed caller-challenge feature candidate",
+);
 
 project.evidence.gates.forEach(([label, count, state], index) => {
   assert(label && /^\d+$/.test(count), `evidence.gates[${index}] is malformed`);
@@ -339,7 +389,17 @@ for (const claim of [
   "unique 12-entry metadata permutation",
   "not independent verifier authority",
   "passing preflight has the sole terminal result MissingProtectedVerificationReceipt",
+  "exact fe2o3 source 57d2d9c",
+  "caller-challenge/current-record API candidate 40cb4337 passed its exact-archive matrix",
+  "generic V2 protected verification transport candidate 701449c3",
+  "descriptor/exact envelope candidate ac00e7ae still awaits its final rerun",
+  "feature candidates do not replace the selected 57d2d9c pin",
+  "production speculative executor remains in progress",
+  "canonical Qwen prepack result is a non-final probe",
+  "protected-verifier signer and durable currentness service",
+  "Ferric-specific inference and kernel ownership remain in Ferric",
   "selection remains None",
+  "CURRENT=None",
   "successful current-source R32 trace",
   "all 33 M1 exit gates",
 ]) {
@@ -350,13 +410,27 @@ assert(
     dataSource.includes("749324c9e287aaec688c8733c88becddc539b12e") &&
     dataSource.includes("eb3b1937ec509cb6ecea080a25965dd3e8bc5457") &&
     dataSource.includes("e187ca52dfdaee79fdc17921c9acffebeed6ca96") &&
-    dataSource.includes("24748e11358db7ad3ab5fe35992cff354896e607"),
+    dataSource.includes("24748e11358db7ad3ab5fe35992cff354896e607") &&
+    dataSource.includes("57d2d9ced5c113d40546ea1dee603e8ba499cf40") &&
+    dataSource.includes("40cb4337c1b495e43eed66276d81cd4cae36d3bf") &&
+    dataSource.includes("701449c39029de040cd285a2d527dcc185a8750b") &&
+    dataSource.includes("ac00e7ae89d7c73737612d6d0565a632db898890"),
   "Pages data must bind the exact qualified reinspection and custody lineage",
+);
+assert(
+  dataSource.includes("6638bc3c387e87339145df42e7757377fc14f485") &&
+    dataSource.includes("52815c9ed52a3075e26322cf506144cb22da12d2") &&
+    dataSource.includes("324004a21488895d07359b263cc19ea7a9d4df24") &&
+    dataSource.includes("were not moved into fe2o3"),
+  "Pages data must retain both fe2o3 merge parents and the Ferric ownership boundary",
 );
 assert(
   dataSource.includes("sole terminal result MissingProtectedVerificationReceipt") &&
     dataSource.includes("private current aggregate publication selection remains None") &&
     dataSource.includes("not independent verifier authority") &&
+    dataSource.includes("non-final mi300x probe") &&
+    dataSource.includes("protected-verifier signer and durable currentness service") &&
+    dataSource.includes("production speculative executor remains in progress") &&
     dataSource.includes("no authenticated full-Qwen execution, numerical result, or performance result") &&
     dataSource.includes("all 33 M1 exit gates remain open"),
   "Pages data must retain verifier, Qwen, selection, and all-open gate nonclaims",
