@@ -201,14 +201,14 @@
             <h2 id="next-title">Accept the aggregate artifact</h2>
           </div>
           <p>
-            Exact head eceffdf passed strict proof and release qualification on mi300x: 1,493 proof
+            Exact head 75c5f72 passed strict proof and release qualification on mi300x: 1,493 proof
             queries, 645 directly verified bodies, and a source gate covering 151 modules and 6,916
-            executable bodies. Its canonical source closure contains 603 files. This scoped release
-            includes the authenticated first-publication S1/K4 R32 command and the reviewed
-            aggregate observational-record/noncurrent-selection policy. Exact-head CI run
-            33589469432 and authenticated-verus-release run 33589469441 both completed successfully.
-            Ferric still pins fe2o3 52815c9, but its private current aggregate publication selection
-            remains None and the zero-state protected verifier rejects every request. There is no
+            executable bodies across a canonical 603-file source closure. This scoped release adds a
+            private, reject-only projection of the exact typed aggregate verifier request. Missing
+            per-entry facts remain Option::None, and every verifier call still returns
+            MissingProtectedVerificationReceipt. Exact-head CI run
+            33594006967 and authenticated-verus-release run 33594007027 both completed successfully.
+            Ferric's private current aggregate publication selection remains None. There is no
             successful current-source R32 trace, authenticated Qwen hardware run, numerical result,
             or performance result, and all 33 M1 exit gates remain open.
           </p>

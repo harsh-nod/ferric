@@ -13,11 +13,12 @@ const allowedStates = new Set([
   "open",
 ]);
 const expectedCurrent = Object.freeze({
-  siteRefreshBase: "eceffdf00c1ec0f7241be95d6b636fa1ea69a46d",
-  implementationCommit: "eceffdf00c1ec0f7241be95d6b636fa1ea69a46d",
+  siteRefreshBase: "75c5f724fbc7928bf1b231a86aec0f1d5fdcc3f9",
+  implementationCommit: "75c5f724fbc7928bf1b231a86aec0f1d5fdcc3f9",
   authenticatedR32Commit: "d67fae3b063b1997aaa92b0cbc6f4c960c3b010b",
   aggregateSelectionCommit: "eceffdf00c1ec0f7241be95d6b636fa1ea69a46d",
   aggregateSelectionStatus: "noncurrent-candidate",
+  pendingVerifierProjectionCommit: "75c5f724fbc7928bf1b231a86aec0f1d5fdcc3f9",
   selectedFe2o3Pin: "52815c9ed52a3075e26322cf506144cb22da12d2",
   aggregateSourceCommit: "5514afe176a090aa3f1da9e5354799bb4ca5a8b3",
   aggregateProducerCommit: "e57c42523050922ad76538150df691cc5ab975a7",
@@ -34,13 +35,13 @@ const expectedCurrent = Object.freeze({
   openM1Gates: 33,
 });
 const expectedProof = Object.freeze({
-  source: "eceffdf00c1ec0f7241be95d6b636fa1ea69a46d",
+  source: "75c5f724fbc7928bf1b231a86aec0f1d5fdcc3f9",
   closureSha256:
-    "3f28f858de49fb80182b8409fa6825b20cc542b1a104e618e722bea08a99d854",
+    "19d090e8f60e813533d60bfdf7133b2829ede3f6fac780adc8e27dc61fbd7e0f",
   receiptSha256:
-    "fa20c04ad8f8c436331a6b16edb04c5c78716aef888893296f226338a15636c2",
+    "b03c3aaeca723d9100669c457d3a49864c2e13bfafc9a99fd5034eb915033673",
   logSha256:
-    "1903c13c96e964e67d50ea5ba318e5b454f15b9b83a951b7a3041f171083c115",
+    "ed9d8aec91f98016cfa44f981c6b04bf0be2bbb005888ae7a0097d7af128ae07",
 });
 
 function assert(condition, message) {
@@ -84,6 +85,10 @@ assertCommit(project.current.siteRefreshBase, "current.siteRefreshBase");
 assertCommit(project.current.implementationCommit, "current.implementationCommit");
 assertCommit(project.current.authenticatedR32Commit, "current.authenticatedR32Commit");
 assertCommit(project.current.aggregateSelectionCommit, "current.aggregateSelectionCommit");
+assertCommit(
+  project.current.pendingVerifierProjectionCommit,
+  "current.pendingVerifierProjectionCommit",
+);
 assertCommit(project.current.selectedFe2o3Pin, "current.selectedFe2o3Pin");
 assertCommit(project.current.aggregateSourceCommit, "current.aggregateSourceCommit");
 assertCommit(project.current.aggregateProducerCommit, "current.aggregateProducerCommit");
@@ -128,13 +133,23 @@ assert(
     selectionReadiness.detail.includes("explicitly noncurrent"),
   "aggregate selection candidate must remain noncurrent integration",
 );
+const projectionReadiness = project.readiness.find(
+  (item) => item.label === "Aggregate pending-verifier projection",
+);
+assert(
+  projectionReadiness?.state === "integration" &&
+    projectionReadiness.detail.includes("private, reject-only projection") &&
+    projectionReadiness.detail.includes("remain Option") &&
+    projectionReadiness.detail.includes("cannot leave the rejection path"),
+  "aggregate pending-verifier projection must remain private, optional, and reject-only",
+);
 const protectedAcceptance = project.readiness.find(
   (item) => item.label === "Accepting protected aggregate artifact",
 );
 assert(
   protectedAcceptance?.state === "open" &&
     protectedAcceptance.detail.includes("remains None") &&
-    protectedAcceptance.detail.includes("rejects every request"),
+    protectedAcceptance.detail.includes("MissingProtectedVerificationReceipt for every request"),
   "protected aggregate acceptance must remain fail-closed and open",
 );
 const qwenReadiness = project.readiness.find(
@@ -193,8 +208,8 @@ for (const [key, expected] of Object.entries(expectedProof)) {
   );
 }
 assert(
-  project.validation.proof.detail.includes("33589469432") &&
-    project.validation.proof.detail.includes("33589469441") &&
+  project.validation.proof.detail.includes("33594006967") &&
+    project.validation.proof.detail.includes("33594007027") &&
     project.validation.proof.detail.includes("both completed successfully"),
   "proof validation must expose both successful exact-head workflow runs",
 );
@@ -274,13 +289,29 @@ project.evidence.legend.forEach(([state], index) =>
 
 const html = await readFile(join(siteRoot, "index.html"), "utf8");
 for (const claim of [
-  "Exact head eceffdf passed strict proof and release qualification on mi300x",
-  "33589469432 and authenticated-verus-release run 33589469441 both completed successfully",
+  "Exact head 75c5f72 passed strict proof and release qualification on mi300x",
+  "33594006967 and authenticated-verus-release run 33594007027 both completed successfully",
   "private current aggregate publication selection",
   "successful current-source R32 trace",
   "all 33 M1 exit gates remain open",
 ]) {
   assert(html.includes(claim), `index.html is missing current claim: ${claim}`);
+}
+assert(
+  !dataSource.includes("e187ca52dfdaee79fdc17921c9acffebeed6ca96"),
+  "Pages data must not claim the later unqualified preflight commit",
+);
+for (const unqualifiedClaim of [
+  "authority-free common-custody preflight",
+  "independently revalidates common finalizer derivation",
+  "reacquires common finalizer and compiler proof/target-lineage owners",
+  "Passing the common-custody preflight",
+  "common finalizer/compiler custody is revalidated",
+]) {
+  assert(
+    !dataSource.includes(unqualifiedClaim) && !html.includes(unqualifiedClaim),
+    `Pages must not claim later unqualified work: ${unqualifiedClaim}`,
+  );
 }
 for (const target of [
   "data-readiness",
