@@ -12,7 +12,9 @@ different backends:
   previously admitted one-shot service client, a caller-provisioned trust
   policy, and an inherited FD195 compiler-current auditor. The caller must also
   uphold the external service, evidence-custody, freshness, and durable
-  rollback-currentness obligations that those inert inputs cannot prove.
+  rollback-currentness obligations that those inert inputs cannot prove, and
+  guarantee correct theorem and safety results for every concrete invocation
+  covered by each marker contract.
 
 Neither constructor discovers an endpoint, reads an environment setting,
 loads a key, opens `CURRENT`, or manufactures a receipt. The configured binder

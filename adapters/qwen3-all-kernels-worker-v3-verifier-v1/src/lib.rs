@@ -762,15 +762,26 @@ impl M1AllKernelsProductionProtectedVerifierV1 {
     ///
     /// # Safety
     ///
-    /// The caller must have independently reviewed the service identified by
-    /// `client` and the verifier/checker closure named by `trust_policy`. That
-    /// deployment must hold or authentically reacquire the exact request
-    /// payloads, verify them instead of signing caller-supplied coordinate
-    /// echoes, bind the signing key to the admitted measurements, and enforce
-    /// one atomic challenge consumption plus durable compiler-ledger rollback
-    /// currentness across every service instance and restart. These properties
-    /// are external to this crate and are required by the unsafe protected
-    /// roster backend contract implemented below.
+    /// The caller must have independently reviewed the verifier and independent
+    /// checker implementations identified by `client` and `trust_policy`. The
+    /// protected signing key must be bound to the exact admitted verifier and
+    /// checker measurements. For every request, the deployment must hold
+    /// pre-provisioned, or authentically reacquire over a separately reviewed
+    /// bounded channel, the exact:
+    ///
+    /// - Worker V3 V2 envelope;
+    /// - finalized HSACO;
+    /// - semantic and proof-input payloads; and
+    /// - protected compiler-current-record payload.
+    ///
+    /// The deployment must verify those payloads instead of signing coordinate
+    /// echoes. It must atomically consume every fresh challenge and exclude
+    /// replay across all service instances. It must check the exact live Worker
+    /// ledger and rollback currentness against durable state that survives
+    /// service restarts. Every signed theorem, type-layout, effect, and safety
+    /// result must be correct for every concrete invocation covered by its
+    /// corresponding marker contract. These external properties are required
+    /// by the unsafe protected-roster backend contract implemented below.
     #[must_use]
     pub unsafe fn new(
         client: M1AllKernelsProtectedVerifierClientV1,

@@ -127,14 +127,38 @@ fn both_backends_share_one_local_owner_revalidation_and_association_path() {
 
 #[test]
 fn configured_binder_orders_all_one_shot_transitions_before_promotion() {
+    let constructor = between(
+        SOURCE,
+        "impl M1AllKernelsProductionProtectedVerifierV1 {",
+        "fn protected_service_request_v1(",
+    );
     let configured = between(SOURCE, CONFIGURED_IMPL, "#[cfg(test)]\nmod tests {");
     assert!(
-        SOURCE
+        constructor
             .contains("pub unsafe fn new(\n        client: M1AllKernelsProtectedVerifierClientV1")
     );
-    assert!(SOURCE.contains(
-        "# Safety\n    ///\n    /// The caller must have independently reviewed the service"
+    assert!(!constructor.contains("pub fn new("));
+    assert!(constructor.contains(
+        "# Safety\n    ///\n    /// The caller must have independently reviewed the verifier"
     ));
+    for required in [
+        "protected signing key must be bound to the exact admitted verifier",
+        "Worker V3 V2 envelope",
+        "finalized HSACO",
+        "semantic and proof-input payloads",
+        "protected compiler-current-record payload",
+        "instead of signing coordinate",
+        "atomically consume every fresh challenge",
+        "replay across all service instances",
+        "exact live Worker",
+        "durable state that survives",
+        "correct for every concrete invocation covered by its",
+    ] {
+        assert!(
+            constructor.contains(required),
+            "unsafe constructor omits deployment obligation `{required}`"
+        );
+    }
     assert!(appears_in_order(
         configured,
         &[
