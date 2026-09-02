@@ -26,6 +26,7 @@ mod plan;
 mod runner;
 mod safetensors;
 mod sha256;
+mod source_bundle;
 mod step_workspace;
 mod tokenizer;
 mod tokenizer_execution;
@@ -129,6 +130,9 @@ pub use runner::{
 pub use safetensors::{
     authenticate_qwen3_draft_weights, authenticate_qwen3_target_weights, AuthenticatedWeightSet,
     SafetensorsError, SafetensorsSource,
+};
+pub use source_bundle::{
+    open_canonical_qwen3_source_bundle, CanonicalQwen3SourceBundle, CanonicalQwen3SourceFile,
 };
 pub use step_workspace::{
     m1_step_workspace_requirements, plan_addressless_m1_step_workspace,

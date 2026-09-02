@@ -16,7 +16,7 @@ use std::io::{self, Read};
 pub(super) const MAX_SAFETENSORS_HEADER_BYTES: u64 = 64 * 1_024;
 const MAX_INDEX_BYTES: usize = 64 * 1_024;
 const STREAM_BUFFER_BYTES: usize = 64 * 1_024;
-const TARGET_INDEX_BYTES: usize = 32_878;
+pub(super) const TARGET_INDEX_BYTES: usize = 32_878;
 const TARGET_INDEX_SHA256: [u8; 32] =
     decode_hex_32(b"f9fdbcb91c23971c13ec5d5f2573d2349e8f61f2f049371ec699281748fdb1bc");
 

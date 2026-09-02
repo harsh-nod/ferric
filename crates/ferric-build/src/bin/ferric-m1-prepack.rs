@@ -10,17 +10,17 @@
 use ferric_build::{
     authenticate_qwen3_tokenizer, build_preliminary_deployment_bundle,
     build_prepacked_deployment_bundle, decode_bundle_admission_record,
-    encode_canonical_deployment_bundle, prepack_qwen3_draft_weights, prepack_qwen3_target_weights,
-    reopen_persisted_qwen3_weights, seal_authenticated_bundle, ArtifactDigest,
-    AuthenticatedDeploymentAssets, AuthenticatedModelAssets, AuthenticatedTokenizer,
-    DeploymentAssets, ModelAssets, SafetensorsSource, WeightDescriptor,
-    BUNDLE_ADMISSION_RECORD_BYTES, CANONICAL_DEPLOYMENT_BUNDLE_BYTES, DRAFT_REPOSITORY,
-    DRAFT_REVISION, QWEN3_DRAFT_CONFIG_BYTES, QWEN3_DRAFT_PREPACKED_MANIFEST_BYTES,
-    QWEN3_DRAFT_TENSOR_DATA_BYTES, QWEN3_DRAFT_WEIGHT_ARTIFACT_BYTES, QWEN3_DRAFT_WEIGHT_SHA256,
-    QWEN3_TARGET_CONFIG_BYTES, QWEN3_TARGET_PREPACKED_MANIFEST_BYTES,
-    QWEN3_TARGET_TENSOR_DATA_BYTES, QWEN3_TARGET_WEIGHT_ARTIFACT_BYTES,
-    QWEN3_TARGET_WEIGHT_SET_SHA256, QWEN3_TOKENIZER_BYTES, QWEN3_TOKENIZER_METADATA_BYTES,
-    QWEN3_TOKENIZER_SHA256, TARGET_REPOSITORY, TARGET_REVISION,
+    encode_canonical_deployment_bundle, open_canonical_qwen3_source_bundle,
+    prepack_qwen3_draft_weights, prepack_qwen3_target_weights, reopen_persisted_qwen3_weights,
+    seal_authenticated_bundle, ArtifactDigest, AuthenticatedDeploymentAssets,
+    AuthenticatedModelAssets, AuthenticatedTokenizer, CanonicalQwen3SourceBundle, DeploymentAssets,
+    ModelAssets, WeightDescriptor, BUNDLE_ADMISSION_RECORD_BYTES,
+    CANONICAL_DEPLOYMENT_BUNDLE_BYTES, DRAFT_REPOSITORY, DRAFT_REVISION, QWEN3_DRAFT_CONFIG_BYTES,
+    QWEN3_DRAFT_PREPACKED_MANIFEST_BYTES, QWEN3_DRAFT_TENSOR_DATA_BYTES,
+    QWEN3_DRAFT_WEIGHT_ARTIFACT_BYTES, QWEN3_DRAFT_WEIGHT_SHA256, QWEN3_TARGET_CONFIG_BYTES,
+    QWEN3_TARGET_PREPACKED_MANIFEST_BYTES, QWEN3_TARGET_TENSOR_DATA_BYTES,
+    QWEN3_TARGET_WEIGHT_ARTIFACT_BYTES, QWEN3_TARGET_WEIGHT_SET_SHA256, QWEN3_TOKENIZER_BYTES,
+    QWEN3_TOKENIZER_METADATA_BYTES, QWEN3_TOKENIZER_SHA256, TARGET_REPOSITORY, TARGET_REVISION,
 };
 use ferric_spec::{EngineLimits, Qwen3ModelRole};
 use std::collections::BTreeSet;
@@ -31,7 +31,6 @@ use std::io::{self, Cursor, Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-const METADATA_INPUT_LIMIT: u64 = 64 * 1_024;
 const TARGET_CONFIG_NAME: &str = "target.config.json";
 const DRAFT_CONFIG_NAME: &str = "draft.config.json";
 const TARGET_TOKENIZER_METADATA_NAME: &str = "target.tokenizer_config.json";
@@ -104,14 +103,6 @@ struct SnapshotMetadata {
     draft_tokenizer_metadata: Vec<u8>,
     tokenizer: Vec<u8>,
 }
-const TARGET_SHARD_NAMES: [&str; 5] = [
-    "model-00001-of-00005.safetensors",
-    "model-00002-of-00005.safetensors",
-    "model-00003-of-00005.safetensors",
-    "model-00004-of-00005.safetensors",
-    "model-00005-of-00005.safetensors",
-];
-
 #[derive(Debug)]
 struct StagingDirectory {
     path: PathBuf,
@@ -190,32 +181,6 @@ fn run() -> Result<(), Box<dyn Error>> {
     }
 
     admit_and_prepack(Path::new(&first), Path::new(&output))
-}
-
-fn read_source_metadata(source: &Path) -> io::Result<SnapshotMetadata> {
-    let target_root = source.join("target");
-    let draft_root = source.join("draft");
-    let target_tokenizer =
-        read_bounded(&target_root.join("tokenizer.json"), QWEN3_TOKENIZER_BYTES)?;
-    let draft_tokenizer = read_bounded(&draft_root.join("tokenizer.json"), QWEN3_TOKENIZER_BYTES)?;
-    if target_tokenizer != draft_tokenizer {
-        return Err(invalid_snapshot(
-            "target and draft tokenizer bytes are not identical",
-        ));
-    }
-    Ok(SnapshotMetadata {
-        target_config: read_bounded(&target_root.join("config.json"), METADATA_INPUT_LIMIT)?,
-        target_tokenizer_metadata: read_bounded(
-            &target_root.join("tokenizer_config.json"),
-            METADATA_INPUT_LIMIT,
-        )?,
-        draft_config: read_bounded(&draft_root.join("config.json"), METADATA_INPUT_LIMIT)?,
-        draft_tokenizer_metadata: read_bounded(
-            &draft_root.join("tokenizer_config.json"),
-            METADATA_INPUT_LIMIT,
-        )?,
-        tokenizer: target_tokenizer,
-    })
 }
 
 fn read_snapshot_metadata(root: &Path) -> io::Result<SnapshotMetadata> {
@@ -303,13 +268,23 @@ fn write_snapshot_metadata(root: &Path, metadata: &SnapshotMetadata) -> io::Resu
 
 fn admit_and_prepack(source: &Path, output: &Path) -> Result<(), Box<dyn Error>> {
     validate_source_output_separation(source, output)?;
-    let target_root = source.join("target");
-    let draft_root = source.join("draft");
-    let metadata = read_source_metadata(source)?;
-    let target_index = read_bounded(
-        &target_root.join("model.safetensors.index.json"),
-        METADATA_INPUT_LIMIT,
-    )?;
+    let CanonicalQwen3SourceBundle {
+        target_config,
+        target_tokenizer_metadata,
+        draft_config,
+        draft_tokenizer_metadata,
+        tokenizer,
+        target_index,
+        target_shards,
+        draft_weights,
+    } = open_canonical_qwen3_source_bundle(source)?;
+    let metadata = SnapshotMetadata {
+        target_config,
+        target_tokenizer_metadata,
+        draft_config,
+        draft_tokenizer_metadata,
+        tokenizer,
+    };
 
     let limits = EngineLimits {
         max_context_tokens: 8_192,
@@ -321,21 +296,12 @@ fn admit_and_prepack(source: &Path, output: &Path) -> Result<(), Box<dyn Error>>
 
     let staging = StagingDirectory::create(output)?;
     let mut target_output = create_new_file(&staging.path.join(TARGET_WEIGHTS_NAME))?;
-    let target_weights = prepack_qwen3_target_weights(
-        &target_index,
-        open_target_shards(&target_root)?,
-        &mut target_output,
-    )?;
+    let target_weights =
+        prepack_qwen3_target_weights(&target_index, target_shards, &mut target_output)?;
     target_output.sync_all()?;
 
     let mut draft_output = create_new_file(&staging.path.join(DRAFT_WEIGHTS_NAME))?;
-    let draft_weights = prepack_qwen3_draft_weights(
-        SafetensorsSource {
-            name: "model.safetensors",
-            reader: File::open(draft_root.join("model.safetensors"))?,
-        },
-        &mut draft_output,
-    )?;
+    let draft_weights = prepack_qwen3_draft_weights(draft_weights, &mut draft_output)?;
     draft_output.sync_all()?;
 
     let prepacked = build_prepacked_deployment_bundle(
@@ -575,33 +541,6 @@ fn validate_source_output_separation(source: &Path, output: &Path) -> io::Result
         ));
     }
     Ok(())
-}
-
-fn open_target_shards(
-    root: &Path,
-) -> io::Result<[SafetensorsSource<'static, File>; TARGET_SHARD_NAMES.len()]> {
-    Ok([
-        SafetensorsSource {
-            name: TARGET_SHARD_NAMES[0],
-            reader: File::open(root.join(TARGET_SHARD_NAMES[0]))?,
-        },
-        SafetensorsSource {
-            name: TARGET_SHARD_NAMES[1],
-            reader: File::open(root.join(TARGET_SHARD_NAMES[1]))?,
-        },
-        SafetensorsSource {
-            name: TARGET_SHARD_NAMES[2],
-            reader: File::open(root.join(TARGET_SHARD_NAMES[2]))?,
-        },
-        SafetensorsSource {
-            name: TARGET_SHARD_NAMES[3],
-            reader: File::open(root.join(TARGET_SHARD_NAMES[3]))?,
-        },
-        SafetensorsSource {
-            name: TARGET_SHARD_NAMES[4],
-            reader: File::open(root.join(TARGET_SHARD_NAMES[4]))?,
-        },
-    ])
 }
 
 fn read_bounded(path: &Path, limit: u64) -> io::Result<Vec<u8>> {
