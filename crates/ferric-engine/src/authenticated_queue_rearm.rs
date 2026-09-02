@@ -1839,15 +1839,11 @@ const fn authenticated_classified_submission_failure(
 }
 
 trait M1PreparedRearmCloseEffectV1: fmt::Debug {
-    fn destroy_and_release_effect(
-        self,
-    ) -> Result<Box<dyn fmt::Debug>, Box<dyn fmt::Debug>>;
+    fn destroy_and_release_effect(self) -> Result<Box<dyn fmt::Debug>, Box<dyn fmt::Debug>>;
 }
 
 impl M1PreparedRearmCloseEffectV1 for AuthenticatedServiceQueueUnboundSessionV1 {
-    fn destroy_and_release_effect(
-        self,
-    ) -> Result<Box<dyn fmt::Debug>, Box<dyn fmt::Debug>> {
+    fn destroy_and_release_effect(self) -> Result<Box<dyn fmt::Debug>, Box<dyn fmt::Debug>> {
         self.destroy_and_release()
             .map(|released| Box::new(released) as Box<dyn fmt::Debug>)
             .map_err(|quarantined| Box::new(quarantined) as Box<dyn fmt::Debug>)

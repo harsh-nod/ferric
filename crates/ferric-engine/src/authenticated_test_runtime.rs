@@ -142,8 +142,10 @@ impl ModelQueueV1 {
         assert_eq!(state.phase, ModelQueuePhaseV1::Recycled);
         state.readback_count += 1;
         match state.active_failure.take() {
-            Some(failure @ (ModelQueueFailureV1::ReadbackReleased
-            | ModelQueueFailureV1::ReadbackQuarantined)) => Err(failure),
+            Some(
+                failure @ (ModelQueueFailureV1::ReadbackReleased
+                | ModelQueueFailureV1::ReadbackQuarantined),
+            ) => Err(failure),
             Some(ModelQueueFailureV1::Wait) => unreachable!(),
             Some(
                 ModelQueueFailureV1::CurrentnessReleased
@@ -164,9 +166,7 @@ impl ModelQueueV1 {
         let mut state = self.0.borrow_mut();
         assert!(matches!(
             state.phase,
-            ModelQueuePhaseV1::Prepared
-                | ModelQueuePhaseV1::Recycled
-                | ModelQueuePhaseV1::Released
+            ModelQueuePhaseV1::Prepared | ModelQueuePhaseV1::Recycled | ModelQueuePhaseV1::Released
         ));
         assert_eq!(state.destroys, 0);
         state.destroys = 1;

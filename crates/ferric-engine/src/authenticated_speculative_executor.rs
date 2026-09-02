@@ -369,9 +369,8 @@ impl M1AuthenticatedSpeculativeRolloverPublishedV1 {
                 published,
                 (continuation, controls),
             )
-            .map_err(|(stage, disposition)| M1AuthenticatedSpeculativeRolloverRoundFailureV1 {
-                stage,
-                disposition,
+            .map_err(|(stage, disposition)| {
+                M1AuthenticatedSpeculativeRolloverRoundFailureV1 { stage, disposition }
             })?;
         continuation.complete_rollover_round(engine, diagnostic, controls)
     }
@@ -727,9 +726,7 @@ trait M1InitialQueueEffectsV1 {
     type DiagnosticObservationFailure: fmt::Debug + 'static;
     type JoinFailure: fmt::Debug + 'static;
 
-    fn submit(
-        prepared: Self::Prepared,
-    ) -> Result<Self::Published, Self::SubmitFailure>;
+    fn submit(prepared: Self::Prepared) -> Result<Self::Published, Self::SubmitFailure>;
     fn close_submit_failure<const C: usize>(
         engine: &mut Engine<C>,
         failure: Self::SubmitFailure,
@@ -748,9 +745,7 @@ trait M1InitialQueueEffectsV1 {
         engine: &mut Engine<C>,
         failure: Self::DiagnosticObservationFailure,
     ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
-    fn check(
-        observed: Self::DiagnosticObserved,
-    ) -> Result<Self::Diagnostic, Self::JoinFailure>;
+    fn check(observed: Self::DiagnosticObserved) -> Result<Self::Diagnostic, Self::JoinFailure>;
     fn close_join_failure<const C: usize>(
         engine: &mut Engine<C>,
         failure: Self::JoinFailure,
@@ -773,11 +768,10 @@ impl M1InitialQueueEffectsV1 for M1NativeInitialQueueEffectsV1 {
     type ObservationFailure = crate::M1AuthenticatedCompletionObservationFailureV1;
     type DiagnosticObservationFailure =
         Box<crate::M1AuthenticatedSpeculativeDiagnosticObservationFailureV1>;
-    type JoinFailure = Box<crate::M1AuthenticatedSpeculativeDiagnosticCompletedReadbackJoinFailureV1>;
+    type JoinFailure =
+        Box<crate::M1AuthenticatedSpeculativeDiagnosticCompletedReadbackJoinFailureV1>;
 
-    fn submit(
-        prepared: Self::Prepared,
-    ) -> Result<Self::Published, Self::SubmitFailure> {
+    fn submit(prepared: Self::Prepared) -> Result<Self::Published, Self::SubmitFailure> {
         prepared.submit()
     }
 
@@ -826,9 +820,7 @@ impl M1InitialQueueEffectsV1 for M1NativeInitialQueueEffectsV1 {
         }
     }
 
-    fn check(
-        observed: Self::DiagnosticObserved,
-    ) -> Result<Self::Diagnostic, Self::JoinFailure> {
+    fn check(observed: Self::DiagnosticObserved) -> Result<Self::Diagnostic, Self::JoinFailure> {
         observed.check_completion()
     }
 
@@ -945,9 +937,7 @@ trait M1RearmedQueueEffectsV1 {
         engine: &mut Engine<C>,
         completed: Self::Completed,
     ) -> Result<Self::Recycled, Self::ProgressFailure>;
-    fn readback(
-        recycled: Self::Recycled,
-    ) -> Result<Self::Diagnostic, Self::ReadbackFailure>;
+    fn readback(recycled: Self::Recycled) -> Result<Self::Diagnostic, Self::ReadbackFailure>;
     fn close_readback_failure<const C: usize>(
         engine: &mut Engine<C>,
         failure: Self::ReadbackFailure,
@@ -1004,9 +994,7 @@ impl M1RearmedQueueEffectsV1 for M1NativeRearmedQueueEffectsV1 {
         completed.recycle(engine)
     }
 
-    fn readback(
-        recycled: Self::Recycled,
-    ) -> Result<Self::Diagnostic, Self::ReadbackFailure> {
+    fn readback(recycled: Self::Recycled) -> Result<Self::Diagnostic, Self::ReadbackFailure> {
         recycled.read_and_check_speculative_diagnostic_completion()
     }
 
@@ -2451,6 +2439,42 @@ const fn production_entry_has_active_members(active_count: usize) -> bool {
     active_count != 0
 }
 
+#[derive(Clone, Copy)]
+struct M1PreDetachRoundFactsV1 {
+    profile_matches: bool,
+    active_count: usize,
+    inputs_match: bool,
+}
+
+fn pre_detach_round_core<O, I>(
+    owner: O,
+    inputs: I,
+    facts: M1PreDetachRoundFactsV1,
+) -> Result<(O, I), (M1AuthenticatedSpeculativePhysicalRoundStageV1, O, I)> {
+    if !facts.profile_matches {
+        return Err((
+            M1AuthenticatedSpeculativePhysicalRoundStageV1::Profile,
+            owner,
+            inputs,
+        ));
+    }
+    if !production_entry_has_active_members(facts.active_count) {
+        return Err((
+            M1AuthenticatedSpeculativePhysicalRoundStageV1::Complete,
+            owner,
+            inputs,
+        ));
+    }
+    if !facts.inputs_match {
+        return Err((
+            M1AuthenticatedSpeculativePhysicalRoundStageV1::Inputs,
+            owner,
+            inputs,
+        ));
+    }
+    Ok((owner, inputs))
+}
+
 fn speculative_draft_selection(target: Qwen3PlanSelection) -> Option<Qwen3PlanSelection> {
     let bucket = match target.bucket {
         Qwen3PlanBucket::SpeculativeS1K4C8192
@@ -3130,13 +3154,12 @@ fn execute_bootstrap_from_queue_create<const C: usize>(
             ));
         }
     };
-    let (diagnostic, (continuation, controls)) =
-        execute_initial_round_core::<M1NativeInitialQueueEffectsV1, _, C>(
-            engine,
-            queue,
-            (continuation, controls),
-        )
-        .map_err(|(stage, disposition)| bootstrap_terminal_disposition(stage, disposition))?;
+    let (diagnostic, (continuation, controls)) = execute_initial_round_core::<
+        M1NativeInitialQueueEffectsV1,
+        _,
+        C,
+    >(engine, queue, (continuation, controls))
+    .map_err(|(stage, disposition)| bootstrap_terminal_disposition(stage, disposition))?;
     continuation.complete_initial_round(engine, diagnostic, controls)
 }
 
@@ -3273,26 +3296,26 @@ impl M1AuthenticatedSpeculativeBootstrapContinuationV1 {
             Ok(prepared) => prepared,
             Err(failure) => {
                 let (coordinator, diagnostic, controls, lineage) = match failure {
-                M1PrepareCoordinatorRoundCoreFailureV1::Preflight {
-                    coordinator,
-                    diagnostic,
-                    controls,
-                    lineage,
-                    ..
-                }
-                | M1PrepareCoordinatorRoundCoreFailureV1::CommitPreflight {
-                    coordinator,
-                    diagnostic,
-                    controls,
-                    lineage,
-                    ..
-                }
-                | M1PrepareCoordinatorRoundCoreFailureV1::HostAllocation {
-                    coordinator,
-                    diagnostic,
-                    controls,
-                    lineage,
-                    ..
+                    M1PrepareCoordinatorRoundCoreFailureV1::Preflight {
+                        coordinator,
+                        diagnostic,
+                        controls,
+                        lineage,
+                        ..
+                    }
+                    | M1PrepareCoordinatorRoundCoreFailureV1::CommitPreflight {
+                        coordinator,
+                        diagnostic,
+                        controls,
+                        lineage,
+                        ..
+                    }
+                    | M1PrepareCoordinatorRoundCoreFailureV1::HostAllocation {
+                        coordinator,
+                        diagnostic,
+                        controls,
+                        lineage,
+                        ..
                     } => (coordinator, diagnostic, controls, lineage),
                 };
                 let M1AuthenticatedSpeculativeCausalLineageV1 { logical, .. } = lineage;
@@ -3470,16 +3493,10 @@ fn complete_authenticated_rearmed_speculative_round<const C: usize>(
     M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
     Box<PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1>,
 > {
-    let prepared = prepare_coordinator_round_core(
-        engine,
-        coordinator,
-        binding,
-        diagnostic,
-        controls,
-        lineage,
-    )
-    .map_err(|failure| {
-        let (custody, lineage) = match failure {
+    let prepared =
+        prepare_coordinator_round_core(engine, coordinator, binding, diagnostic, controls, lineage)
+            .map_err(|failure| {
+                let (custody, lineage) = match failure {
             M1PrepareCoordinatorRoundCoreFailureV1::Preflight {
                 coordinator,
                 diagnostic,
@@ -3521,12 +3538,12 @@ fn complete_authenticated_rearmed_speculative_round<const C: usize>(
                 lineage,
             ),
         };
-        Box::new(PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
-            stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::CoordinatorPreflight,
-            custody,
-            lineage: Some(lineage),
-        })
-    })?;
+                Box::new(PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::CoordinatorPreflight,
+                    custody,
+                    lineage: Some(lineage),
+                })
+            })?;
     let M1PreparedCoordinatorRoundCoreV1 {
         coordinator,
         diagnostic,
@@ -3594,10 +3611,9 @@ fn complete_authenticated_rearmed_speculative_round<const C: usize>(
             lineage,
         } => Box::new(PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
             stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::CausalLineage,
-            custody:
-                M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::LineageAfterCommit(
-                    Box::new((coordinator, outcome, choices, physical)),
-                ),
+            custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::LineageAfterCommit(
+                Box::new((coordinator, outcome, choices, physical)),
+            ),
             lineage: Some(lineage),
         }),
     })?;
@@ -4119,46 +4135,42 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
         M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
         Box<PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1>,
     > {
-        if !production_entry_profile_matches(
-            self.selection(),
-            self.released.current_released().queue().shape(),
-        ) {
-            return Err(retryable_failure(
-                M1AuthenticatedSpeculativePhysicalRoundStageV1::Profile,
-                self,
-                inputs,
-            ));
-        }
-        if !production_entry_has_active_members(self.active_count()) {
-            return Err(Box::new(
-                PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
-                    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Complete,
-                    custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Complete(
-                        Box::new((self, inputs)),
-                    ),
-                    lineage: None,
-                },
-            ));
-        }
-        if inputs.recipe_workspace_plans != inputs.preparation_workspace_plans
-            || inputs.recipe_workspace_plans.kind()
-                != crate::M1FullStepWorkspaceInputKind::SpeculativeRound
-            || !matches!(
-                &inputs.kv,
-                M1LongLivedQueueRearmKvInputsV1::SpeculativeRound { .. }
-            )
-        {
-            return Err(retryable_failure(
-                M1AuthenticatedSpeculativePhysicalRoundStageV1::Inputs,
-                self,
-                inputs,
-            ));
-        }
+        let facts = M1PreDetachRoundFactsV1 {
+            profile_matches: production_entry_profile_matches(
+                self.selection(),
+                self.released.current_released().queue().shape(),
+            ),
+            active_count: self.active_count(),
+            inputs_match: inputs.recipe_workspace_plans == inputs.preparation_workspace_plans
+                && inputs.recipe_workspace_plans.kind()
+                    == crate::M1FullStepWorkspaceInputKind::SpeculativeRound
+                && matches!(
+                    &inputs.kv,
+                    M1LongLivedQueueRearmKvInputsV1::SpeculativeRound { .. }
+                ),
+        };
+        let (this, inputs) = match pre_detach_round_core(self, inputs, facts) {
+            Ok(retained) => retained,
+            Err((M1AuthenticatedSpeculativePhysicalRoundStageV1::Complete, executor, inputs)) => {
+                return Err(Box::new(
+                    PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                        stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Complete,
+                        custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Complete(
+                            Box::new((executor, inputs)),
+                        ),
+                        lineage: None,
+                    },
+                ));
+            }
+            Err((stage, executor, inputs)) => {
+                return Err(retryable_failure(stage, executor, inputs));
+            }
+        };
         let Self {
             coordinator,
             released,
             lineage,
-        } = self;
+        } = this;
         let epoch = match released
             .current_released()
             .checked()
@@ -4401,9 +4413,7 @@ mod tests {
         type DiagnosticObservationFailure = Infallible;
         type JoinFailure = Infallible;
 
-        fn submit(
-            prepared: Self::Prepared,
-        ) -> Result<Self::Published, Self::SubmitFailure> {
+        fn submit(prepared: Self::Prepared) -> Result<Self::Published, Self::SubmitFailure> {
             prepared.submit()
         }
 
@@ -4501,9 +4511,7 @@ mod tests {
             Ok(completed.recycle())
         }
 
-        fn readback(
-            recycled: Self::Recycled,
-        ) -> Result<Self::Diagnostic, Self::ReadbackFailure> {
+        fn readback(recycled: Self::Recycled) -> Result<Self::Diagnostic, Self::ReadbackFailure> {
             recycled.readback()
         }
 
@@ -4656,6 +4664,61 @@ mod tests {
     }
 
     #[test]
+    fn pre_detach_core_returns_the_same_owners_without_queue_or_engine_mutation() {
+        #[derive(Debug)]
+        struct ModelPreDetachOwnerV1 {
+            identity: u64,
+            queue: ModelQueueV1,
+        }
+
+        for (expected, facts) in [
+            (
+                M1AuthenticatedSpeculativePhysicalRoundStageV1::Profile,
+                M1PreDetachRoundFactsV1 {
+                    profile_matches: false,
+                    active_count: 8,
+                    inputs_match: true,
+                },
+            ),
+            (
+                M1AuthenticatedSpeculativePhysicalRoundStageV1::Complete,
+                M1PreDetachRoundFactsV1 {
+                    profile_matches: true,
+                    active_count: 0,
+                    inputs_match: true,
+                },
+            ),
+            (
+                M1AuthenticatedSpeculativePhysicalRoundStageV1::Inputs,
+                M1PreDetachRoundFactsV1 {
+                    profile_matches: true,
+                    active_count: 8,
+                    inputs_match: false,
+                },
+            ),
+        ] {
+            let queue = ModelQueueV1::new([], []);
+            let engine = Engine::<1>::new(8, 4, 32).unwrap();
+            let (stage, owner, inputs) = pre_detach_round_core(
+                ModelPreDetachOwnerV1 {
+                    identity: 71,
+                    queue: queue.clone(),
+                },
+                "exact round inputs",
+                facts,
+            )
+            .unwrap_err();
+            assert_eq!(stage, expected);
+            assert_eq!(owner.identity, 71);
+            assert_eq!(inputs, "exact round inputs");
+            assert_eq!(owner.queue.snapshot(), queue.snapshot());
+            assert_eq!(queue.snapshot().submits, 0);
+            assert_eq!(queue.snapshot().destroys, 0);
+            assert!(!engine.is_faulted());
+        }
+    }
+
+    #[test]
     fn model_queue_cores_drive_initial_repeated_and_rollover_lifecycles() {
         let profiles = [
             (Qwen3PlanBucket::SpeculativeS1K4C8192, 1_usize, 3_u8),
@@ -4746,21 +4809,20 @@ mod tests {
             assert_eq!(snapshot.readbacks, 2);
             assert_eq!(snapshot.releases, 2);
 
-            let rollover = ModelQueueV1::new(
-                [None],
-                [model_members(member_count, 0, None)],
-            );
+            let rollover = ModelQueueV1::new([None], [model_members(member_count, 0, None)]);
             rollover.publish_for_rollover();
-            let (_diagnostic, logical) =
-                complete_round_core::<ModelRearmedQueueEffectsV1, _, 1>(
-                    &mut engine,
-                    ModelPublishedQueueV1::from_published(rollover.clone()),
-                    "rollover continuation",
-                )
-                .unwrap();
+            let (_diagnostic, logical) = complete_round_core::<ModelRearmedQueueEffectsV1, _, 1>(
+                &mut engine,
+                ModelPublishedQueueV1::from_published(rollover.clone()),
+                "rollover continuation",
+            )
+            .unwrap();
             assert_eq!(logical, "rollover continuation");
             let snapshot = rollover.snapshot();
-            assert_eq!((snapshot.submits, snapshot.waits, snapshot.recycles), (1, 1, 1));
+            assert_eq!(
+                (snapshot.submits, snapshot.waits, snapshot.recycles),
+                (1, 1, 1)
+            );
             assert_eq!(snapshot.readbacks, 1);
         }
     }
@@ -4773,13 +4835,12 @@ mod tests {
         ] {
             let queue = ModelQueueV1::new([Some(failure)], []);
             let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
-            let (_stage, disposition) =
-                execute_round_core::<ModelRearmedQueueEffectsV1, _, 1>(
-                    &mut engine,
-                    ModelPreparedQueueV1::new(queue.clone()),
-                    "retained logical",
-                )
-                .unwrap_err();
+            let (_stage, disposition) = execute_round_core::<ModelRearmedQueueEffectsV1, _, 1>(
+                &mut engine,
+                ModelPreparedQueueV1::new(queue.clone()),
+                "retained logical",
+            )
+            .unwrap_err();
             assert!(engine.is_faulted());
             assert_eq!(queue.snapshot().submits, 0);
             assert_eq!(queue.snapshot().destroys, 1);
@@ -4820,6 +4881,26 @@ mod tests {
                 failure == ModelQueueFailureV1::ReadbackReleased
             );
         }
+
+        let queue = ModelQueueV1::new(
+            [Some(ModelQueueFailureV1::Wait)],
+            [model_members(1, 0, None)],
+        );
+        let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+        let (stage, disposition) = execute_round_core::<ModelRearmedQueueEffectsV1, _, 1>(
+            &mut engine,
+            ModelPreparedQueueV1::new(queue.clone()),
+            "published logical custody",
+        )
+        .unwrap_err();
+        assert_eq!(stage, M1AuthenticatedSpeculativePhysicalRoundStageV1::Wait);
+        assert!(matches!(
+            disposition,
+            M1AuthenticatedSpeculativeFailureDispositionV1::Quarantined(_)
+        ));
+        assert!(engine.is_faulted());
+        assert_eq!(queue.snapshot().submits, 1);
+        assert_eq!(queue.snapshot().destroys, 0);
     }
 
     #[test]
@@ -4834,7 +4915,10 @@ mod tests {
             let selected = selection(Qwen3PlanBucket::SpeculativeS8K4C8192);
             let queue = ModelQueueV1::new(
                 [None, None],
-                [model_members(8, 1, None), model_members(8, 2, Some(stop_lane))],
+                [
+                    model_members(8, 1, None),
+                    model_members(8, 2, Some(stop_lane)),
+                ],
             );
             let coordinator = model_coordinator(selected, 8);
             let lineage = model_lineage(&coordinator);
@@ -4904,15 +4988,13 @@ mod tests {
             let second = finish_model_round(&mut engine, prepared);
             assert_eq!(
                 second.outcome.members()[stop_lane].status(),
-                M1SpeculativeMemberStatusV1::Completed(
-                    M1SpeculativeTerminalReasonV1::StopToken { token: 999 }
-                )
+                M1SpeculativeMemberStatusV1::Completed(M1SpeculativeTerminalReasonV1::StopToken {
+                    token: 999
+                })
             );
             assert_eq!(
                 second.outcome.members()[cancel_lane].status(),
-                M1SpeculativeMemberStatusV1::Cancelled(
-                    M1SpeculativeCancellationReasonV1::Deadline
-                )
+                M1SpeculativeMemberStatusV1::Cancelled(M1SpeculativeCancellationReasonV1::Deadline)
             );
             assert_eq!(second.outcome.next_active_roster().len(), 6);
             assert_eq!(queue.snapshot().submits, 2);
@@ -5340,76 +5422,6 @@ mod tests {
             &lineage,
             CompletionEpoch::new(7),
             1,
-        ));
-    }
-
-    #[test]
-    fn production_entry_profile_gate_covers_all_four_declared_shapes() {
-        let cases = [
-            (
-                Qwen3PlanBucket::SpeculativeS1K4C8192,
-                M1PhysicalFixedBatchShapeV1::SpeculativeK4,
-                1_usize,
-            ),
-            (
-                Qwen3PlanBucket::SpeculativeS8K4C8192,
-                M1PhysicalFixedBatchShapeV1::SpeculativeK4,
-                8,
-            ),
-            (
-                Qwen3PlanBucket::SpeculativeS1K8C8192,
-                M1PhysicalFixedBatchShapeV1::SpeculativeK8,
-                1,
-            ),
-            (
-                Qwen3PlanBucket::SpeculativeS1K16C8192,
-                M1PhysicalFixedBatchShapeV1::SpeculativeK16,
-                1,
-            ),
-        ];
-        for (bucket, expected, member_count) in cases {
-            let target = selection(bucket);
-            assert!(production_entry_profile_matches(target, expected));
-            let draft = speculative_draft_selection(target).unwrap();
-            let requests: Vec<_> = (0..member_count)
-                .map(|lane| RequestId::new(u32::try_from(lane).unwrap(), 1))
-                .collect();
-            let anchors: Vec<_> = (0..member_count)
-                .map(|lane| 70 + u32::try_from(lane).unwrap())
-                .collect();
-            let target_committed = vec![10; member_count];
-            let draft_committed = vec![10; member_count];
-            let coordinator = coordinator_for_members(
-                target,
-                &requests,
-                &anchors,
-                &target_committed,
-                &draft_committed,
-            );
-            let binding = coordinator
-                .bind_round(0, CompletionEpoch::new(7), &requests)
-                .unwrap();
-            let inputs = speculative_kv_inputs(
-                target,
-                draft,
-                &requests,
-                CompletionEpoch::new(7),
-                &anchors,
-                &anchors,
-                &draft_committed,
-                &target_committed,
-                None,
-            );
-            assert!(speculative_round_inputs_match_binding(&inputs, &binding));
-            assert_eq!(binding.members().len(), member_count);
-        }
-        assert!(!production_entry_profile_matches(
-            Qwen3PlanSelection {
-                role: Qwen3ModelRole::Target8B,
-                mode: Qwen3ExecutionMode::Decode,
-                bucket: Qwen3PlanBucket::DecodeS1C8192,
-            },
-            M1PhysicalFixedBatchShapeV1::SpeculativeK4,
         ));
     }
 
