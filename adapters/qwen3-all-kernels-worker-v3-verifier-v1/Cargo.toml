@@ -10,8 +10,8 @@ publish = false
 [workspace]
 
 [dependencies]
-fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "52815c9ed52a3075e26322cf506144cb22da12d2", version = "=0.1.0" }
-fe2o3-hsaco-finalize = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "52815c9ed52a3075e26322cf506144cb22da12d2", version = "=0.1.0" }
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "57d2d9ced5c113d40546ea1dee603e8ba499cf40", version = "=0.1.0" }
+fe2o3-hsaco-finalize = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "57d2d9ced5c113d40546ea1dee603e8ba499cf40", version = "=0.1.0" }
 ferric-qwen3-all-kernels-device-v1 = { path = "../../device/qwen3-all-kernels-v1" }
 
 [lints.rust]

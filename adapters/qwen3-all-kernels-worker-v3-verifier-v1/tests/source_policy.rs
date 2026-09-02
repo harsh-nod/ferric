@@ -8,7 +8,7 @@ const SOURCE: &str = include_str!("../src/lib.rs");
 const MANIFEST: &str = include_str!("../Cargo.toml");
 const README: &str = include_str!("../README.md");
 
-const FE2O3_REVISION: &str = "52815c9ed52a3075e26322cf506144cb22da12d2";
+const FE2O3_REVISION: &str = "57d2d9ced5c113d40546ea1dee603e8ba499cf40";
 const PRODUCTION_VERIFY_METHOD_ITEM: &str = "unsafe fn verify_protected_roster";
 const PRODUCTION_REJECTION_HELPER_ITEM: &str = "fn reject_missing_protected_receipt";
 const COMPACT_VERIFY_METHOD_ITEM: &str = "unsafefnverify_protected_roster(";
