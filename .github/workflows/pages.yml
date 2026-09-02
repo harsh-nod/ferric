@@ -40,7 +40,7 @@ jobs:
         run: |
           npm ci
           npx playwright install --with-deps chromium
-          npm test
+          FERRIC_EXHAUSTIVE_WIDTHS=1 npm test
 
       - name: Stage static Pages artifact
         working-directory: site
