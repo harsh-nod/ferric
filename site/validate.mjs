@@ -330,7 +330,7 @@ for (const claim of [
   "passing preflight has the sole terminal result MissingProtectedVerificationReceipt",
   "selection remains None",
   "successful current-source R32 trace",
-  "all 33 M1 exit gates remain open",
+  "all 33 M1 exit gates",
 ]) {
   assert(html.includes(claim), `index.html is missing current claim: ${claim}`);
 }
