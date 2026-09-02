@@ -1,0 +1,32 @@
+[package]
+name = "ferric-qwen3-all-kernels-worker-v3-verifier-service-v1"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97.1"
+publish = false
+
+# The protected service is qualified independently from the legacy Ferric
+# workspace. Its production deployment closure is intentionally external.
+[workspace]
+
+[dependencies]
+fe2o3-runtime-protocol = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb", version = "=0.1.0" }
+fe2o3-worker-v3-verification-protocol = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb", version = "=0.1.0" }
+fe2o3-worker-v3-verification-service = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb", version = "=0.1.0" }
+ferric-qwen3-all-kernels-worker-v3-verifier-v1 = { path = "../../adapters/qwen3-all-kernels-worker-v3-verifier-v1" }
+rustix = { version = "=1.1.4", features = ["fs"] }
+sha2 = { version = "=0.11.0", default-features = false }
+
+[dev-dependencies]
+ed25519-dalek = { version = "=2.2.0", default-features = false, features = ["fast", "zeroize"] }
+tempfile = "=3.27.0"
+
+[lints.rust]
+missing_docs = "deny"
+unsafe_op_in_unsafe_fn = "deny"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+too_many_arguments = "allow"
+too_many_lines = "allow"
