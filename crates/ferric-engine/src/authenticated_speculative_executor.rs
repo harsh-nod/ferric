@@ -146,8 +146,6 @@ pub struct M1AuthenticatedSpeculativeExecutorTeardownFailureV1 {
     coordinator: Option<M1SpeculativeGenerationLoopV1>,
     released: Option<Box<crate::M1AuthenticatedLongLivedQueueRearmTeardownFailureV1>>,
     lineage: Option<M1AuthenticatedSpeculativeCausalLineageV1>,
-    #[cfg(test)]
-    injected_release: bool,
 }
 
 impl M1AuthenticatedSpeculativeExecutorTeardownSuccessV1 {
@@ -3730,8 +3728,6 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                     coordinator: Some(coordinator),
                     released: Some(released),
                     lineage: Some(lineage),
-                    #[cfg(test)]
-                    injected_release: false,
                 },
             )),
         }
@@ -4549,7 +4545,6 @@ fn destroy_injected_executor<const C: usize>(
                 coordinator: Some(injected.coordinator),
                 released: None,
                 lineage: None,
-                injected_release: false,
             },
         ))
     }
