@@ -216,7 +216,10 @@ impl AuthenticatedCompilerCurrentRecordV1 {
 ///
 /// Implementations must communicate with an authenticated, measured protected
 /// endpoint and may return acceptance only after satisfying the obligations on
-/// [`AuthenticatedCompilerCurrentRecordV1::from_independent_authentication`].
+/// [`AuthenticatedCompilerCurrentRecordV1::from_independent_authentication`]. IPC
+/// must enforce the supplied absolute deadline and support transport cancellation;
+/// a return after that deadline is rejected, but this synchronous call cannot
+/// recover a thread from a hung implementation.
 pub unsafe trait ProtectedCompilerCurrentRecordProviderV1 {
     /// Concrete provider failure.
     type Error: Error + Send + Sync + 'static;
@@ -333,7 +336,8 @@ impl IndependentCheckerVerifiedClaimsV1 {
 ///
 /// Implementations must use authenticated bounded IPC to an independently
 /// measured checker and uphold the constructor obligations of
-/// [`IndependentCheckerVerifiedClaimsV1`].
+/// [`IndependentCheckerVerifiedClaimsV1`]. IPC must enforce the supplied absolute
+/// deadline and support cancellation; a late return is always rejected.
 pub unsafe trait IndependentCheckerProviderV1 {
     /// Concrete checker failure.
     type Error: Error + Send + Sync + 'static;
@@ -377,6 +381,8 @@ impl ProtectedReceiptSignerInputV1<'_> {
 }
 
 /// External protected signer provider. It never exposes private-key material.
+/// Implementations must use authenticated deadline-aware, cancellable IPC. A
+/// return after the supplied deadline is always rejected by the service.
 pub trait ProtectedReceiptSignerProviderV1 {
     /// Concrete signer transport or policy failure.
     type Error: Error + Send + Sync + 'static;
@@ -705,7 +711,10 @@ where
         }
     };
 
-    let mut early_rejection = validate_roster(pending.request(), config.caller).err();
+    let mut early_rejection = deadline
+        .require_live()
+        .err()
+        .or_else(|| validate_roster(pending.request(), config.caller).err());
     let payloads = match read_and_decode_payloads(&pending) {
         Ok(payloads) => Some(payloads),
         Err(reason) => {
@@ -734,9 +743,11 @@ where
     if deadline.require_live().is_err() {
         return reject_ready(ready, ServiceApplicationRejectionV1::DeadlineExpired);
     }
-    if config.current_provider.measurement_identity()
-        != config.expected_current_provider_measurement
-    {
+    let current_provider_measurement = config.current_provider.measurement_identity();
+    if deadline.require_live().is_err() {
+        return reject_ready(ready, ServiceApplicationRejectionV1::DeadlineExpired);
+    }
+    if current_provider_measurement != config.expected_current_provider_measurement {
         return reject_ready(
             ready,
             ServiceApplicationRejectionV1::CurrentProviderSubstitution,
@@ -747,18 +758,22 @@ where
             Ok(current_record) => current_record,
             Err(reason) => return reject_ready(ready, reason),
         };
-    let current_authentication =
-        match current_provider_result(config.current_provider.authenticate_current_record(
+    let current_authentication_result =
+        current_provider_result(config.current_provider.authenticate_current_record(
             ProtectedCompilerCurrentRecordInputV1 {
                 request: ready.request(),
                 envelope: &envelope,
                 current_record: &current_record,
                 deadline,
             },
-        )) {
-            Ok(authentication) => authentication,
-            Err(reason) => return reject_ready(ready, reason),
-        };
+        ));
+    if deadline.require_live().is_err() {
+        return reject_ready(ready, ServiceApplicationRejectionV1::DeadlineExpired);
+    }
+    let current_authentication = match current_authentication_result {
+        Ok(authentication) => authentication,
+        Err(reason) => return reject_ready(ready, reason),
+    };
     let Ok(compiler_claims) = build_compiler_claims(&envelope, &current_record) else {
         return reject_ready(
             ready,
@@ -768,10 +783,14 @@ where
     if deadline.require_live().is_err() {
         return reject_ready(ready, ServiceApplicationRejectionV1::DeadlineExpired);
     }
-    if config.checker.measurement_identity() != config.trust_policy.checker_measurement_sha256() {
+    let checker_measurement = config.checker.measurement_identity();
+    if deadline.require_live().is_err() {
+        return reject_ready(ready, ServiceApplicationRejectionV1::DeadlineExpired);
+    }
+    if checker_measurement != config.trust_policy.checker_measurement_sha256() {
         return reject_ready(ready, ServiceApplicationRejectionV1::CheckerRejected);
     }
-    let checked = match checker_provider_result(config.checker.verify_all_kernels(
+    let checked_result = checker_provider_result(config.checker.verify_all_kernels(
         IndependentCheckerInputV1 {
             request: ready.request(),
             envelope_bytes: &envelope_bytes,
@@ -781,7 +800,11 @@ where
             current_authentication: &current_authentication,
             deadline,
         },
-    )) {
+    ));
+    if deadline.require_live().is_err() {
+        return reject_ready(ready, ServiceApplicationRejectionV1::DeadlineExpired);
+    }
+    let checked = match checked_result {
         Ok(checked) => checked,
         Err(reason) => return reject_ready(ready, reason),
     };
@@ -838,6 +861,9 @@ where
     else {
         return reject_ready(ready, ServiceApplicationRejectionV1::FerricReceiptAssembly);
     };
+    if deadline.require_live().is_err() {
+        return reject_ready(ready, ServiceApplicationRejectionV1::DeadlineExpired);
+    }
     let completed = ready
         .send_application_response(response.canonical_bytes().to_vec())
         .map_err(FerricProtectedVerifierServiceFailureV1::ResponseSend)?;
@@ -1014,18 +1040,20 @@ fn request_receipt_signature<S: ProtectedReceiptSignerProviderV1>(
     deadline: AbsoluteSessionDeadlineV1,
 ) -> Result<[u8; 64], ServiceApplicationRejectionV1> {
     deadline.require_live()?;
-    if signer.provider_identity() != expected_provider_identity
-        || signer.verifying_key_bytes() != expected_verifying_key
-    {
+    let provider_identity = signer.provider_identity();
+    deadline.require_live()?;
+    let verifying_key = signer.verifying_key_bytes();
+    deadline.require_live()?;
+    if provider_identity != expected_provider_identity || verifying_key != expected_verifying_key {
         return Err(ServiceApplicationRejectionV1::SignerRejected);
     }
-    signer
-        .sign_receipt(ProtectedReceiptSignerInputV1 {
-            signing_bytes,
-            policy_identity,
-            deadline,
-        })
-        .map_err(|_| ServiceApplicationRejectionV1::SignerRejected)
+    let signature = signer.sign_receipt(ProtectedReceiptSignerInputV1 {
+        signing_bytes,
+        policy_identity,
+        deadline,
+    });
+    deadline.require_live()?;
+    signature.map_err(|_| ServiceApplicationRejectionV1::SignerRejected)
 }
 
 fn current_provider_result<T, E>(result: Result<T, E>) -> Result<T, ServiceApplicationRejectionV1> {
@@ -1215,6 +1243,7 @@ mod tests {
         provider: [u8; 32],
         fail: bool,
         calls: usize,
+        delay: Duration,
     }
 
     impl ProtectedReceiptSignerProviderV1 for MockSignerProvider {
@@ -1233,6 +1262,7 @@ mod tests {
             input: ProtectedReceiptSignerInputV1<'_>,
         ) -> Result<[u8; 64], Self::Error> {
             self.calls += 1;
+            std::thread::sleep(self.delay);
             assert!(!input.signing_bytes().is_empty());
             assert_ne!(input.policy_identity(), [0; 32]);
             if self.fail {
@@ -1267,6 +1297,7 @@ mod tests {
                 provider: [0xa4; 32],
                 fail: false,
                 calls: 0,
+                delay: Duration::ZERO,
             },
         )
     }
@@ -1456,6 +1487,21 @@ mod tests {
             Err(ServiceApplicationRejectionV1::DeadlineExpired)
         );
         assert_eq!(signer.calls, 2);
+
+        signer.delay = Duration::from_millis(10);
+        let overrun = AbsoluteSessionDeadlineV1::after(Duration::from_millis(1)).unwrap();
+        assert_eq!(
+            request_receipt_signature(
+                &mut signer,
+                [0xa4; 32],
+                trust.verifying_key_bytes(),
+                b"receipt",
+                policy_identity,
+                overrun,
+            ),
+            Err(ServiceApplicationRejectionV1::DeadlineExpired)
+        );
+        assert_eq!(signer.calls, 3);
     }
 
     #[test]

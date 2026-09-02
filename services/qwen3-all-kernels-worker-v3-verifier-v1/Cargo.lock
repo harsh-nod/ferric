@@ -541,6 +541,21 @@ dependencies = [
 [[package]]
 name = "fe2o3-compiler-closure-capability"
 version = "0.1.0"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
+dependencies = [
+ "ed25519-dalek",
+ "fe2o3-build-authority 0.1.0 (git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb)",
+ "fe2o3-compiler-execution-protocol 0.1.0 (git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb)",
+ "fe2o3-rustc-invocation 0.1.0 (git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb)",
+ "libc",
+ "rustix",
+ "sha2 0.11.0",
+ "zeroize",
+]
+
+[[package]]
+name = "fe2o3-compiler-closure-capability"
+version = "0.1.0"
 source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
 dependencies = [
  "ed25519-dalek",
@@ -556,10 +571,23 @@ dependencies = [
 [[package]]
 name = "fe2o3-compiler-execution-client"
 version = "0.1.0"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
+dependencies = [
+ "fe2o3-artifact-transaction 0.1.0 (git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb)",
+ "fe2o3-compiler-closure-capability 0.1.0 (git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb)",
+ "fe2o3-compiler-execution-protocol 0.1.0 (git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb)",
+ "libc",
+ "rustix",
+ "sha2 0.11.0",
+]
+
+[[package]]
+name = "fe2o3-compiler-execution-client"
+version = "0.1.0"
 source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
 dependencies = [
  "fe2o3-artifact-transaction 0.1.0 (git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40)",
- "fe2o3-compiler-closure-capability",
+ "fe2o3-compiler-closure-capability 0.1.0 (git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40)",
  "fe2o3-compiler-execution-protocol 0.1.0 (git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40)",
  "libc",
  "rustix",
@@ -729,7 +757,7 @@ dependencies = [
  "fe2o3-aql",
  "fe2o3-artifact-transaction 0.1.0 (git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40)",
  "fe2o3-artifacts",
- "fe2o3-compiler-execution-client",
+ "fe2o3-compiler-execution-client 0.1.0 (git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40)",
  "fe2o3-compiler-ffi 0.1.0 (git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40)",
  "fe2o3-core",
  "fe2o3-device",
@@ -1215,6 +1243,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "fe2o3-worker-v3-verification-client"
+version = "0.1.0"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
+dependencies = [
+ "fe2o3-compiler-execution-client 0.1.0 (git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb)",
+ "fe2o3-runtime-protocol 0.1.0 (git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb)",
+ "fe2o3-worker-v3-verification-protocol",
+ "rustix",
+ "sha2 0.11.0",
+]
+
+[[package]]
 name = "fe2o3-worker-v3-verification-protocol"
 version = "0.1.0"
 source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
@@ -1257,7 +1297,10 @@ name = "ferric-qwen3-all-kernels-worker-v3-verifier-service-v1"
 version = "0.1.0"
 dependencies = [
  "ed25519-dalek",
+ "fe2o3-compiler-execution-protocol 0.1.0 (git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb)",
+ "fe2o3-external-anchor-protocol 0.1.0 (git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb)",
  "fe2o3-runtime-protocol 0.1.0 (git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb)",
+ "fe2o3-worker-v3-verification-client",
  "fe2o3-worker-v3-verification-protocol",
  "fe2o3-worker-v3-verification-service",
  "ferric-qwen3-all-kernels-worker-v3-verifier-v1",

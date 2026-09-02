@@ -8,7 +8,10 @@ Ferric workspace and uses fe2o3's multi-phase Worker V3 transport at commit
 The foundation provides:
 
 - caller credential plus pinned policy/measurement admission;
-- append-only, checksummed, descriptor-backed replay and reservation ledgers;
+- hard-bounded, checksummed replay and reservation ledger epochs with retained
+  deterministic indexes;
+- a move-only protected-storage capability minted only at a documented unsafe
+  supervisor boundary, backed by an external antirollback head store;
 - service challenges read from a supervisor-provided entropy descriptor and
   durably burned before release;
 - a single absolute session deadline;
@@ -19,8 +22,19 @@ The foundation provides:
 - exact 12-entry request/result joins and a terminal Ferric V1 response payload;
 - stage-specific rejection and terminal-send custody.
 
+The ledger's SHA chain detects corruption; it does not prevent rollback. That
+property is an explicit unsafe deployment contract on the protected head store
+and supervisor. Ledger capacity is terminal within an epoch. Rotation requires
+the supervisor to quiesce admission, provision a new protected object under a
+strictly increasing non-reused epoch, synchronize it, and atomically advance the
+external antirollback head. There is no silent compaction.
+
 This is **service foundation, not deployment closure**. Production still needs
 reviewed measured processes implementing the current-record authenticator,
-theorem checker, and signing provider, plus a supervisor that supplies only
-preopened descriptors and pins their identities. The service never accepts an
-ambient path, environment variable, default endpoint, or raw private key.
+theorem checker, signer, and protected antirollback head store, plus a supervisor
+that supplies only preopened descriptors and pins their identities. Every
+synchronous provider IPC must impose deadline-aware transport cancellation; if
+a provider returns after the outer deadline the service rejects, while a hung
+in-process call cannot be cancelled by this foundation. The service never
+accepts an ambient path, environment variable, default endpoint, or raw private
+key.
