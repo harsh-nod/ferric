@@ -19,6 +19,12 @@ ferric-qwen3-all-kernels-worker-v3-source-pin-v1 = { path = "../qwen3-all-kernel
 libc = "=0.2.189"
 sha2 = { version = "=0.11.0", default-features = false }
 
+[dev-dependencies]
+proc-macro2 = "=1.0.107"
+quote = "=1.0.47"
+syn = { version = "=2.0.119", features = ["full", "visit"] }
+toml = "=1.1.4"
+
 [lints.rust]
 missing_docs = "deny"
 unsafe_op_in_unsafe_fn = "deny"

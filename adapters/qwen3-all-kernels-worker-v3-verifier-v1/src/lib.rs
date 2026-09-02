@@ -56,6 +56,7 @@ pub mod protected_verifier_client;
 /// Canonical aggregate protected-verifier request and response packets.
 pub mod protected_verifier_service;
 
+#[cfg(test)]
 mod protected_verifier_test_support;
 
 /// Exact number of markers in Ferric's current aggregate M1 roster.
@@ -662,33 +663,33 @@ impl fmt::Display for M1AllKernelsProductionProtectedVerifierErrorV1 {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::LocalRevalidation(error) => {
-                write!(
+                ::core::write!(
                     formatter,
                     "local aggregate request revalidation failed: {error}"
                 )
             }
             Self::SourcePin(error) => {
-                write!(
+                ::core::write!(
                     formatter,
                     "aggregate compiler source-pin projection failed: {error}"
                 )
             }
             Self::CompilerCurrentRecordAudit(error) => {
-                write!(formatter, "compiler current-record audit failed: {error}")
+                ::core::write!(formatter, "compiler current-record audit failed: {error}")
             }
             Self::CompilerExecutionBinding(error) => {
-                write!(formatter, "compiler current-record binding failed: {error}")
+                ::core::write!(formatter, "compiler current-record binding failed: {error}")
             }
             Self::CompilerExecutionAssociationFailed => formatter
                 .write_str("bound compiler execution differs from the aggregate roster request"),
             Self::ReceiptClaims(error) => {
-                write!(
+                ::core::write!(
                     formatter,
                     "protected receipt claim construction failed: {error}"
                 )
             }
             Self::ServiceRequest(error) => {
-                write!(
+                ::core::write!(
                     formatter,
                     "protected-verifier request construction failed: {error}"
                 )
@@ -700,7 +701,7 @@ impl fmt::Display for M1AllKernelsProductionProtectedVerifierErrorV1 {
                 formatter.write_str("protected-verifier client was already consumed")
             }
             Self::ProtectedVerifierClient(error) => {
-                write!(formatter, "protected-verifier exchange failed: {error}")
+                ::core::write!(formatter, "protected-verifier exchange failed: {error}")
             }
             Self::AuthenticatedReceiptAssociationFailed => formatter
                 .write_str("authenticated protected receipt failed the final local association"),
