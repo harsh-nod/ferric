@@ -1255,6 +1255,7 @@ enum M1CommitCoordinatorRoundCoreFailureV1<P> {
     CausalLineage {
         coordinator: M1SpeculativeGenerationLoopV1,
         outcome: M1SpeculativeRoundOutcomeV1,
+        controls: Vec<M1SpeculativeMemberControlV1>,
         physical: P,
         lineage: M1AuthenticatedSpeculativeCausalLineageV1,
     },
@@ -1286,6 +1287,7 @@ fn commit_coordinator_round_core<P, const C: usize>(
         return Err(M1CommitCoordinatorRoundCoreFailureV1::CausalLineage {
             coordinator,
             outcome,
+            controls,
             physical,
             lineage,
         });
@@ -3245,46 +3247,13 @@ impl M1AuthenticatedSpeculativeBootstrapContinuationV1 {
                 ));
             }
         };
-        let preflighted = match self
-            .coordinator
-            .preflight_checked_round(binding, checked, &controls)
-        {
-            Ok(preflighted) => preflighted,
-            Err(_) => {
-                return Err(bootstrap_round_retryable(
-                    M1AuthenticatedSpeculativeBootstrapRoundStageV1::CoordinatorPreflight,
-                    self,
-                    diagnostic,
-                    controls,
-                ));
-            }
-        };
-        if self.selected.len() != preflighted.members().len() {
-            return Err(bootstrap_round_retryable(
-                M1AuthenticatedSpeculativeBootstrapRoundStageV1::CoordinatorPreflight,
-                self,
-                diagnostic,
-                controls,
-            ));
-        }
         let Self {
             coordinator,
             epoch,
             selected,
             lineage: logical,
         } = self;
-        for (cache, outcome) in selected.into_iter().zip(preflighted.members()) {
-            debug_assert_eq!(cache.projection().request, outcome.request());
-            completion_members.push(match outcome.physical_disposition() {
-                crate::M1DeviceKvCompletionDispositionV1::Continue => {
-                    M1DeviceKvCompletionMemberV1::continuing(cache)
-                }
-                crate::M1DeviceKvCompletionDispositionV1::Retire => {
-                    M1DeviceKvCompletionMemberV1::retiring(cache)
-                }
-            });
-        }
-        let mut lineage = M1AuthenticatedSpeculativeCausalLineageV1 {
+        let lineage = M1AuthenticatedSpeculativeCausalLineageV1 {
             logical,
             coordinator_identity: physical_coordinator_identity,
             selection: physical_selection,
@@ -3293,6 +3262,91 @@ impl M1AuthenticatedSpeculativeBootstrapContinuationV1 {
             completed_rounds: 0,
             last_epoch: epoch,
         };
+        let prepared = match prepare_coordinator_round_core(
+            engine,
+            coordinator,
+            binding,
+            diagnostic,
+            controls,
+            lineage,
+        ) {
+            Ok(prepared) => prepared,
+            Err(failure) => {
+                let (coordinator, diagnostic, controls, lineage) = match failure {
+                M1PrepareCoordinatorRoundCoreFailureV1::Preflight {
+                    coordinator,
+                    diagnostic,
+                    controls,
+                    lineage,
+                    ..
+                }
+                | M1PrepareCoordinatorRoundCoreFailureV1::CommitPreflight {
+                    coordinator,
+                    diagnostic,
+                    controls,
+                    lineage,
+                    ..
+                }
+                | M1PrepareCoordinatorRoundCoreFailureV1::HostAllocation {
+                    coordinator,
+                    diagnostic,
+                    controls,
+                    lineage,
+                    ..
+                    } => (coordinator, diagnostic, controls, lineage),
+                };
+                let M1AuthenticatedSpeculativeCausalLineageV1 { logical, .. } = lineage;
+                return Err(bootstrap_round_retryable(
+                    M1AuthenticatedSpeculativeBootstrapRoundStageV1::CoordinatorPreflight,
+                    Self {
+                        coordinator,
+                        epoch,
+                        selected,
+                        lineage: logical,
+                    },
+                    diagnostic,
+                    controls,
+                ));
+            }
+        };
+        let M1PreparedCoordinatorRoundCoreV1 {
+            coordinator,
+            diagnostic,
+            controls,
+            preflighted,
+            dispositions,
+            lineage,
+        } = prepared;
+        if selected.len() != preflighted.members().len() {
+            engine.quarantine_m1_queue_rearm_failure();
+            let M1AuthenticatedSpeculativeCausalLineageV1 { logical, .. } = lineage;
+            return Err(bootstrap_round_retryable(
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::CoordinatorPreflight,
+                Self {
+                    coordinator,
+                    epoch,
+                    selected,
+                    lineage: logical,
+                },
+                diagnostic,
+                controls,
+            ));
+        }
+        for ((cache, outcome), disposition) in selected
+            .into_iter()
+            .zip(preflighted.members())
+            .zip(dispositions)
+        {
+            debug_assert_eq!(cache.projection().request, outcome.request());
+            completion_members.push(match disposition {
+                crate::M1DeviceKvCompletionDispositionV1::Continue => {
+                    M1DeviceKvCompletionMemberV1::continuing(cache)
+                }
+                crate::M1DeviceKvCompletionDispositionV1::Retire => {
+                    M1DeviceKvCompletionMemberV1::retiring(cache)
+                }
+            });
+        }
         let (readback, choices) = diagnostic.into_parts();
         let physical = complete_m1_authenticated_physical_step_v1(
             engine,
@@ -3318,39 +3372,55 @@ impl M1AuthenticatedSpeculativeBootstrapContinuationV1 {
                 }));
             }
         };
-        let mut coordinator = coordinator;
-        let outcome = match coordinator.commit_preflighted_round(preflighted) {
-            Ok(outcome) => outcome,
-            Err(failure) => {
-                engine.quarantine_m1_queue_rearm_failure();
-                return Err(Box::new(PendingM1AuthenticatedSpeculativeBootstrapRoundFailureV1 {
-                    stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1::CoordinatorCommit,
-                    custody:
-                        PendingM1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1::CoordinatorCommit(
-                            Box::new((
-                                coordinator,
-                                lineage,
-                                controls,
-                                choices,
-                                physical,
-                                failure,
-                            )),
-                        ),
-                }));
-            }
-        };
-        if !refresh_causal_generated_counts(&mut lineage, &coordinator, outcome.completed_epoch()) {
-            engine.quarantine_m1_queue_rearm_failure();
-            return Err(Box::new(
-                PendingM1AuthenticatedSpeculativeBootstrapRoundFailureV1 {
-                    stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1::Lineage,
-                    custody:
-                        PendingM1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1::LineageAfterCommit(
-                            Box::new((coordinator, lineage, controls, choices, physical, outcome)),
-                        ),
-                },
-            ));
-        }
+        let committed = commit_coordinator_round_core(
+            engine,
+            coordinator,
+            preflighted,
+            controls,
+            (choices, physical),
+            lineage,
+        )
+        .map_err(|failure| match failure {
+            M1CommitCoordinatorRoundCoreFailureV1::Coordinator {
+                coordinator,
+                controls,
+                physical: (choices, physical),
+                failure,
+                lineage,
+            } => Box::new(PendingM1AuthenticatedSpeculativeBootstrapRoundFailureV1 {
+                stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1::CoordinatorCommit,
+                custody:
+                    PendingM1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1::CoordinatorCommit(
+                        Box::new((
+                            coordinator,
+                            lineage,
+                            controls,
+                            choices,
+                            physical,
+                            failure,
+                        )),
+                    ),
+            }),
+            M1CommitCoordinatorRoundCoreFailureV1::CausalLineage {
+                coordinator,
+                outcome,
+                controls,
+                physical: (choices, physical),
+                lineage,
+            } => Box::new(PendingM1AuthenticatedSpeculativeBootstrapRoundFailureV1 {
+                stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1::Lineage,
+                custody:
+                    PendingM1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1::LineageAfterCommit(
+                        Box::new((coordinator, lineage, controls, choices, physical, outcome)),
+                    ),
+            }),
+        })?;
+        let M1CommittedCoordinatorRoundCoreV1 {
+            coordinator,
+            outcome,
+            physical: (choices, physical),
+            lineage,
+        } = committed;
         let released = match release_m1_authenticated_completed_step_kv_pages_v1(physical) {
             Ok(released) => M1AuthenticatedLongLivedQueueReleasedRoundV1::initial(released),
             Err(failure) => {
@@ -3519,6 +3589,7 @@ fn complete_authenticated_rearmed_speculative_round<const C: usize>(
         M1CommitCoordinatorRoundCoreFailureV1::CausalLineage {
             coordinator,
             outcome,
+            controls: _,
             physical: (choices, physical),
             lineage,
         } => Box::new(PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
