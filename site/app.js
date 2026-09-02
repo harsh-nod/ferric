@@ -119,7 +119,7 @@
     const facts = element("dl", "validation-facts");
     const sourceValue = element("dd", "");
     if (item.source) {
-      sourceValue.append(commitLink(item.source));
+      sourceValue.append(commitLink(item.source, item.repository));
     } else {
       sourceValue.textContent = item.sourceStatus || "No current-source observation";
     }

@@ -20,7 +20,7 @@ const expectedCurrent = Object.freeze({
   aggregateSelectionStatus: "noncurrent-candidate",
   pendingVerifierProjectionCommit: "75c5f724fbc7928bf1b231a86aec0f1d5fdcc3f9",
   commonCustodyPreflightCommit: "e187ca52dfdaee79fdc17921c9acffebeed6ca96",
-  aggregateAssociationCommit: "eb3b1937ec509cb6ecea080a25965dd3e8bc5457",
+  associationPreflightCommit: "eb3b1937ec509cb6ecea080a25965dd3e8bc5457",
   finalizedHsacoReinspectionCommit: "749324c9e287aaec688c8733c88becddc539b12e",
   selectedFe2o3Pin: "57d2d9ced5c113d40546ea1dee603e8ba499cf40",
   aggregateSourceCommit: "5514afe176a090aa3f1da9e5354799bb4ca5a8b3",
@@ -100,7 +100,7 @@ assertCommit(
   project.current.commonCustodyPreflightCommit,
   "current.commonCustodyPreflightCommit",
 );
-assertCommit(project.current.aggregateAssociationCommit, "current.aggregateAssociationCommit");
+assertCommit(project.current.associationPreflightCommit, "current.associationPreflightCommit");
 assertCommit(
   project.current.finalizedHsacoReinspectionCommit,
   "current.finalizedHsacoReinspectionCommit",
@@ -129,10 +129,10 @@ assert(
   "envelope must expose the exact current implementation commit",
 );
 assert(
-  envelope.get("Common-custody preflight")?.includes(
+  envelope.get("Aggregate verifier preflight")?.includes(
     "sole terminal result MissingProtectedVerificationReceipt",
   ),
-  "envelope must expose the reject-only common-custody preflight",
+  "envelope must expose the reject-only aggregate verifier preflight",
 );
 assert(Array.isArray(project.readiness) && project.readiness.length > 0, "readiness is empty");
 project.readiness.forEach((item, index) =>
@@ -165,17 +165,25 @@ assert(
     projectionReadiness.detail.includes("cannot leave the rejection path"),
   "aggregate pending-verifier projection must remain private, optional, and reject-only",
 );
-const commonCustodyReadiness = project.readiness.find(
-  (item) => item.label === "Reject-only common-custody verifier preflight",
+const verifierPreflightReadiness = project.readiness.find(
+  (item) => item.label === "Reject-only aggregate verifier preflight",
 );
 assert(
-  commonCustodyReadiness?.state === "integration" &&
-    commonCustodyReadiness.detail.includes("association cross-binding") &&
-    commonCustodyReadiness.detail.includes("exact finalized-HSACO structural reinspection") &&
-    commonCustodyReadiness.detail.includes("all 12 entry associations") &&
-    commonCustodyReadiness.detail.includes("MissingProtectedVerificationReceipt") &&
-    commonCustodyReadiness.detail.includes("grants no protected, load, launch, hardware, Qwen"),
-  "common-custody preflight must preserve its exact order, terminal rejection, and nonclaims",
+  verifierPreflightReadiness?.state === "integration" &&
+    verifierPreflightReadiness.detail.includes(
+      "call the pinned finalized-HSACO verifier exactly once on the request bytes",
+    ) &&
+    verifierPreflightReadiness.detail.includes(
+      "validate common multi-root compiler proof inputs",
+    ) &&
+    verifierPreflightReadiness.detail.includes(
+      "unique 12-entry export-plus-descriptor-symbol permutation",
+    ) &&
+    verifierPreflightReadiness.detail.includes("same-process descriptive integrity") &&
+    verifierPreflightReadiness.detail.includes("not independent verifier authority") &&
+    verifierPreflightReadiness.detail.includes("MissingProtectedVerificationReceipt") &&
+    verifierPreflightReadiness.detail.includes("grants no protected, load, launch, hardware, Qwen"),
+  "aggregate verifier preflight must preserve reinspection, associations, rejection, and nonclaims",
 );
 const protectedAcceptance = project.readiness.find(
   (item) => item.label === "Accepting protected aggregate artifact",
@@ -186,6 +194,12 @@ assert(
     protectedAcceptance.detail.includes(
       "sole terminal result MissingProtectedVerificationReceipt",
     ) &&
+    protectedAcceptance.detail.includes(
+      "neither a provisioned protected compiler-execution service and client profile",
+    ) &&
+    protectedAcceptance.detail.includes(
+      "nor an independent protected-verifier signer and durable currentness service",
+    ) &&
     protectedAcceptance.detail.includes("earlier preflight failures return their distinct"),
   "protected aggregate acceptance must remain fail-closed and open",
 );
@@ -194,10 +208,30 @@ const qwenReadiness = project.readiness.find(
 );
 assert(
   qwenReadiness?.state === "open" &&
+    qwenReadiness.detail.includes("protected compiler and independent verifier services") &&
+    qwenReadiness.detail.includes("canonical prepack result is a non-final probe") &&
     qwenReadiness.detail.includes(
       "no authenticated full-Qwen execution, numerical result, or performance result",
     ),
   "Qwen, numerical, and performance authority must remain open",
+);
+const prepackProbe = project.readiness.find(
+  (item) => item.label === "Canonical Qwen prepack probe",
+);
+assert(
+  prepackProbe?.state === "observed" &&
+    prepackProbe.detail.includes("non-final mi300x probe") &&
+    prepackProbe.detail.includes(
+      "6dfba0acd1c00ce13cec7b5eebb180691bdb8855a7eee89876df2a0a12a2802b",
+    ) &&
+    prepackProbe.detail.includes(
+      "6a396e95e715d1be16bbc27b8c762a9308e40e5355c5bd89b9fc28fb06a1dd16",
+    ) &&
+    prepackProbe.detail.includes("not final-integration evidence") &&
+    prepackProbe.detail.includes("a protected artifact") &&
+    prepackProbe.detail.includes("a hardware run") &&
+    prepackProbe.detail.includes("Qwen execution authority"),
+  "canonical Qwen prepack must remain explicitly non-final and non-authoritative",
 );
 
 for (const group of ["runnable", "experimental", "roadmap"]) {
@@ -247,7 +281,7 @@ for (const [key, expected] of Object.entries(expectedProof)) {
 assert(
   project.validation.proof.detail.includes("33615415798") &&
     project.validation.proof.detail.includes("33615415693") &&
-    project.validation.proof.detail.includes("completed successfully"),
+    project.validation.proof.detail.includes("both completed successfully"),
   "proof validation must expose both successful exact-head workflow runs",
 );
 assert(
@@ -303,20 +337,8 @@ assert(
   "recent progress must include the authenticated R32 implementation commit",
 );
 assert(
-  progressCommits.has(expectedCurrent.aggregateAssociationCommit),
-  "recent progress must include the aggregate association cross-binding commit",
-);
-assert(
-  progressCommits.has(expectedCurrent.finalizedHsacoReinspectionCommit),
-  "recent progress must include the finalized-HSACO reinspection commit",
-);
-assert(
   progressCommits.has(expectedCurrent.selectedFe2o3Pin),
   "recent progress must include the selected fe2o3 pin",
-);
-assert(
-  progressCommits.has("52815c9ed52a3075e26322cf506144cb22da12d2"),
-  "recent progress must retain the prior coherent Worker V3 fe2o3 pin",
 );
 
 project.evidence.gates.forEach(([label, count, state], index) => {
@@ -337,27 +359,34 @@ project.evidence.legend.forEach(([state], index) =>
 );
 
 const html = await readFile(join(siteRoot, "index.html"), "utf8");
+const normalizedHtml = html.replace(/\s+/g, " ");
 for (const claim of [
   "Exact head 7f516e0 passed strict proof and release qualification on mi300x",
   "33615415798",
-  "33615415693 completed successfully",
-  "association cross-binding",
-  "finalized-HSACO structural reinspection",
-  "all 12 entry associations",
-  "result MissingProtectedVerificationReceipt",
+  "33615415693 both completed successfully",
+  "invokes exact-pinned finalized-HSACO reinspection once on the request bytes",
+  "reacquires common multi-root compiler custody",
+  "unique 12-entry metadata permutation",
+  "not independent verifier authority",
+  "passing preflight has the sole terminal result MissingProtectedVerificationReceipt",
   "exact fe2o3 source 57d2d9c",
-  "ownership moved upstream",
-  "remains None",
+  "canonical Qwen prepack result is a non-final probe",
+  "protected-verifier signer and durable currentness service",
+  "Ferric-specific inference and kernel ownership remain in Ferric",
+  "selection remains None",
   "successful current-source R32 trace",
   "all 33 M1 exit gates",
 ]) {
-  assert(html.includes(claim), `index.html is missing current claim: ${claim}`);
+  assert(normalizedHtml.includes(claim), `index.html is missing current claim: ${claim}`);
 }
 assert(
-  dataSource.includes("e187ca52dfdaee79fdc17921c9acffebeed6ca96") &&
+  dataSource.includes("7f516e073b8759eb012c998bc9df2eb101d0c7ab") &&
+    dataSource.includes("749324c9e287aaec688c8733c88becddc539b12e") &&
     dataSource.includes("eb3b1937ec509cb6ecea080a25965dd3e8bc5457") &&
-    dataSource.includes("749324c9e287aaec688c8733c88becddc539b12e"),
-  "Pages data must bind the exact verifier owner, association, and reinspection commits",
+    dataSource.includes("e187ca52dfdaee79fdc17921c9acffebeed6ca96") &&
+    dataSource.includes("24748e11358db7ad3ab5fe35992cff354896e607") &&
+    dataSource.includes("57d2d9ced5c113d40546ea1dee603e8ba499cf40"),
+  "Pages data must bind the exact qualified reinspection and custody lineage",
 );
 assert(
   dataSource.includes("6638bc3c387e87339145df42e7757377fc14f485") &&
@@ -369,8 +398,12 @@ assert(
 assert(
   dataSource.includes("sole terminal result MissingProtectedVerificationReceipt") &&
     dataSource.includes("private current aggregate publication selection remains None") &&
+    dataSource.includes("not independent verifier authority") &&
+    dataSource.includes("non-final mi300x probe") &&
+    dataSource.includes("protected-verifier signer and durable currentness service") &&
+    dataSource.includes("no authenticated full-Qwen execution, numerical result, or performance result") &&
     dataSource.includes("all 33 M1 exit gates remain open"),
-  "Pages data must retain terminal rejection, None selection, and all-open gate nonclaims",
+  "Pages data must retain verifier, Qwen, selection, and all-open gate nonclaims",
 );
 for (const target of [
   "data-readiness",
