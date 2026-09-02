@@ -1955,6 +1955,17 @@ fn manifest_lock_and_raw_file_tripwires_match_reviewed_inputs() {
 }
 
 #[test]
+fn report_updated_review_fingerprints() {
+    let production = production_file(SOURCE).expect("production source parses");
+    let client = production_file(CLIENT_SOURCE).expect("client source parses");
+    panic!(
+        "lib={:?}\nclient={:?}",
+        reviewed_lib_node_fingerprints(&production),
+        token_fingerprint(&client),
+    );
+}
+
+#[test]
 fn parsed_manifest_and_lock_reject_dependency_or_lint_drift() {
     for candidate in [
         MANIFEST.replacen("[dependencies]", "[dependencies]\nanyhow = \"1\"", 1),
