@@ -1252,6 +1252,7 @@ unsafe impl WorkerV3ProtectedRosterVerifierBackendV1<M1AllKernelsWorkerV3RosterV
 {
     type Error = M1AllKernelsProductionProtectedVerifierErrorV1;
 
+    #[allow(clippy::too_many_lines)]
     unsafe fn verify_protected_roster(
         &mut self,
         request: &WorkerV3RosterVerificationRequestV1<'_, M1AllKernelsWorkerV3RosterV1>,

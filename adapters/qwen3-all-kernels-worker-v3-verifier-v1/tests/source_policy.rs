@@ -1955,6 +1955,16 @@ fn manifest_lock_and_raw_file_tripwires_match_reviewed_inputs() {
 }
 
 #[test]
+fn report_updated_lib_fingerprints() {
+    let production = production_file(SOURCE).expect("production source parses");
+    panic!(
+        "source={:?}\nlib={:?}",
+        source_sha256(SOURCE),
+        reviewed_lib_node_fingerprints(&production),
+    );
+}
+
+#[test]
 fn parsed_manifest_and_lock_reject_dependency_or_lint_drift() {
     for candidate in [
         MANIFEST.replacen("[dependencies]", "[dependencies]\nanyhow = \"1\"", 1),
