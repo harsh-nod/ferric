@@ -3,8 +3,11 @@ window.FERRIC_PROJECT = Object.freeze({
   repository: "https://github.com/harsh-nod/ferric",
   fe2o3Repository: "https://github.com/harsh-nod/fe2o3",
   current: {
-    siteRefreshBase: "e8d76e5c18d893eb6cffa7dff137a4a3492454a8",
-    implementationCommit: "e8d76e5c18d893eb6cffa7dff137a4a3492454a8",
+    siteRefreshBase: "eceffdf00c1ec0f7241be95d6b636fa1ea69a46d",
+    implementationCommit: "eceffdf00c1ec0f7241be95d6b636fa1ea69a46d",
+    authenticatedR32Commit: "d67fae3b063b1997aaa92b0cbc6f4c960c3b010b",
+    aggregateSelectionCommit: "eceffdf00c1ec0f7241be95d6b636fa1ea69a46d",
+    aggregateSelectionStatus: "noncurrent-candidate",
     selectedFe2o3Pin: "52815c9ed52a3075e26322cf506144cb22da12d2",
     aggregateSourceCommit: "5514afe176a090aa3f1da9e5354799bb4ca5a8b3",
     aggregateProducerCommit: "e57c42523050922ad76538150df691cc5ab975a7",
@@ -16,8 +19,8 @@ window.FERRIC_PROJECT = Object.freeze({
     proofQueries: 1493,
     directVerifiedBodies: 645,
     sourceGateModules: 151,
-    sourceGateBodies: 6893,
-    sourceClosureFiles: 600,
+    sourceGateBodies: 6916,
+    sourceClosureFiles: 603,
     openM1Gates: 33,
   },
   milestone: {
@@ -25,7 +28,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Exact Ferric head e8d76e5 passed strict proof and release qualification on mi300x: 1,493 proof queries, 645 directly verified bodies, and a source gate covering 151 modules and 6,893 executable bodies. The canonical 600-file source closure and exact receipt and log identities are retained, and both GitHub CI workflows are green. This qualifies the scoped source/proof release only: there is no protected aggregate source pin or service, no authenticated Qwen hardware execution, and all 33 M1 exit gates remain open.",
+      "Exact Ferric head eceffdf passed strict proof and release qualification on mi300x: 1,493 proof queries, 645 directly verified bodies, a source gate covering 151 modules and 6,916 executable bodies, and a canonical 603-file source closure. It includes the authenticated R32 source vertical and reviewed aggregate observational-record/noncurrent-selection policy. This is scoped source/proof authority only: Ferric's private current aggregate publication selection remains None, the protected verifier rejects every request without a protected receipt, no authenticated Qwen hardware execution exists, and all 33 M1 exit gates remain open.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -34,15 +37,16 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Precision", "BF16 / FP32 accumulate"],
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
-    ["Pages refresh base", "e8d76e5c18d893eb6cffa7dff137a4a3492454a8; strict proof/release qualification for the authenticated diagnostic bridge lineage"],
-    ["M1 implementation", "e8d76e5c18d893eb6cffa7dff137a4a3492454a8: aggregate source and producer controls, generation-1 diagnostic join, and admitted proof bodies"],
+    ["Pages refresh base", "eceffdf00c1ec0f7241be95d6b636fa1ea69a46d; authenticated R32 vertical plus aggregate observational-record validation and private noncurrent selection-candidate production"],
+    ["M1 implementation", "eceffdf00c1ec0f7241be95d6b636fa1ea69a46d; R32 implementation d67fae3b063b1997aaa92b0cbc6f4c960c3b010b"],
     ["Selected fe2o3 pin", "52815c9ed52a3075e26322cf506144cb22da12d2 across the workspace, aggregate device package, and typed source-pin adapter"],
     ["Aggregate device source", "one selected compilation unit owns all 12 attributed M1 kernel roots across the seven canonical source modules"],
     ["Aggregate source-pin policy", "the typed adapter admits LLVM text IR for gfx942:xnack-, code-object V6, and exact sets of 12 kernel entries plus 12 matching descriptors; its projection is identity-observation-only"],
     ["Aggregate build producer", "the bounded producer retains committed device and adapter source identities, invokes the prebound typed adapter, and emits an observational record with explicit nonclaims"],
-    ["Authenticated diagnostic bridge", "partial-non-evidence; first S1/K4 publication only; generation 1; ordered draft-0 through draft-3 then target; no rearm path"],
-    ["Strict proof release", "PASS on mi300x: 1,493 queries; 645 direct bodies; source gate 151 modules / 6,893 bodies; 600-file canonical closure"],
-    ["Protected acceptance", "aggregate source pin is None and the protected verifier is unavailable; no production runtime admission exists"],
+    ["Authenticated R32 capture", "partial-non-evidence; aggregate V2 selector intake, authenticated first S1/K4 publication, Engine completion, KV release, queue teardown, and V2 partial capture; no rearm path"],
+    ["Aggregate selection candidate", "owner-private and noncurrent; exact observational record, source, target, COV6, ordered 12-symbol roster, source-pin, envelope, and finalized-HSACO identities only"],
+    ["Strict proof release", "PASS on mi300x: 1,493 queries; 645 direct bodies; source gate 151 modules / 6,916 bodies; 603-file canonical closure"],
+    ["Protected acceptance", "the private current aggregate publication selection is None and the zero-state protected verifier rejects every request; no production runtime admission exists"],
     [
       "Historical protected artifact",
       "SwiGLU semantic fe2ce532...e9569e8f / HSACO 57ecb86b...fc6afa7; qualification-only and not supplied by the PR #32 landing",
@@ -108,34 +112,40 @@ window.FERRIC_PROJECT = Object.freeze({
         "Commit e57c425 adds a bounded producer that holds exact committed aggregate device and adapter sources, invokes the source-prebound typed adapter, and emits one observational record. Commit 8d95881 requires its hostile policy suite in CI and release qualification; 6a20199 aligns the source gate with the exact aggregate roster order.",
     },
     {
+      label: "Aggregate publication-selection candidate",
+      state: "integration",
+      detail:
+        "Integration eceffdf validates one canonical observational record and binds its exact clean Ferric, fe2o3, manifest-selected provider, device-source, adapter-source, adapter-binding, projection-output, compiler-handoff, target, COV6, ordered 12-symbol roster, source-pin, envelope, and finalized-HSACO identities into an owner-private, no-replace candidate. The candidate is explicitly noncurrent and grants no compiler-origin, finalization, verifier, publication, load, launch, dispatch, inference, Qwen, performance, or M1 authority.",
+    },
+    {
       label: "Accepting protected aggregate artifact",
       state: "open",
       detail:
-        "No accepting protected decision currently joins a live aggregate publication, its exact source pin, protected compiler origin, durable currentness, and runtime authority. The producer record explicitly cannot substitute for that acceptance boundary.",
+        "Ferric's private current aggregate publication selection remains None, and the protected verifier still rejects every request without an independently authenticated protected receipt. The observational record and noncurrent selection candidate cannot substitute for protected acceptance, durable currentness, or runtime authority.",
     },
     {
-      label: "Authenticated first-publication S1/K4 diagnostics",
+      label: "Authenticated R32 first-publication capture vertical",
       state: "integration",
       detail:
-        "Commit 24748e1 bridges the authenticated generation-1 S1/K4 completion owner to four completed draft-row copies in exact draft-0 through draft-3 order, then one target copy and a specialized semantic join. The status is partial-non-evidence, reused generations and rearm exposure fail closed, and every failure retains compact, queue, program, and copied-byte custody for teardown. Independent audit approved this bounded source boundary.",
+        "Commit d67fae3 replaces the raw R32 command with aggregate V2 selector intake, the zero-state protected-verifier adapter, authenticated runner binding before KFD, physical queue create/submit/wait/recycle, compact and K4 choice readback, checked Engine completion, KV-page release, queue teardown, and a V2 partial capture built only from released completed-step custody. Failures retain authenticated owners or enter typed quarantine. The path remains partial-non-evidence and cannot pass its protected-verifier boundary today.",
     },
     {
       label: "Strict proof and release qualification",
       state: "qualified",
       detail:
-        "Exact head e8d76e5 passed on mi300x with 1,493 proof queries, 645 directly verified bodies, and source-gate coverage of 151 modules and 6,893 executable bodies. The canonical closure contains 600 files and hashes to d3a5f9a9e48d2ca2536cac059efa9b7b63e99076c93152ec08b4399a7fbd387a. Both GitHub workflows are green. This is scoped proof-release authority, not protected aggregate acceptance, hardware execution, Qwen, or M1 closure.",
+        "Exact head eceffdf passed on mi300x with 1,493 proof queries, 645 directly verified bodies, and source-gate coverage of 151 modules and 6,916 executable bodies. The canonical closure contains 603 files and hashes to 3f28f858de49fb80182b8409fa6825b20cc542b1a104e618e722bea08a99d854. Exact-head GitHub CI run 33589469432 and authenticated-verus-release run 33589469441 both completed successfully. This is scoped proof-release authority, not protected aggregate acceptance, hardware execution, Qwen, performance, or M1 closure.",
     },
     {
       label: "Authenticated retained readback, settlement, and KV release",
       state: "integration",
       detail:
-        "Integration 24748e1 retains the host-side completion, settlement, page-release, retry, and teardown ownership paths and adds the bounded first-publication S1/K4 diagnostic join. The aggregate source pin remains None and the protected verifier is unavailable, so this is not authenticated hardware or full-Qwen evidence.",
+        "Integration eceffdf retains the host-side completion, settlement, page-release, retry, and teardown ownership paths. The R32 command at d67fae3 composes them into one authenticated source vertical without reopening a raw artifact, but the private current selection remains None and the verifier rejects, so there is no successful current-source R32 trace, authenticated hardware result, or full-Qwen evidence.",
     },
     {
       label: "Authenticated repeat-round same-native lifecycle",
       state: "integration",
       detail:
-        "Integration 24748e1 retains the combined active and parked roster scheduling, KV reservation, workspace preparation, same-native rebind, submit, wait, recycle, readback, completion, page release, retry, and teardown source paths. Diagnostic capture is excluded from authenticated rearm. Without an accepted aggregate artifact and authenticated run, these paths establish no Qwen, hardware, performance, or M1 result.",
+        "Integration eceffdf retains the combined active and parked roster scheduling, KV reservation, workspace preparation, same-native rebind, submit, wait, recycle, readback, completion, page release, retry, and teardown source paths. R32 capture remains first-publication only and excluded from authenticated rearm. Without a current accepted aggregate selection and authenticated run, these paths establish no Qwen, hardware, performance, or M1 result.",
     },
     {
       label: "Long-lived KFD queue lifecycle",
@@ -267,7 +277,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "End-to-end Qwen through Ferric",
       state: "open",
       detail:
-        "Ferric cannot yet run Qwen through the production path. The aggregate source pin remains None and the protected verifier is unavailable. The generation-1 S1/K4 diagnostic bridge is partial-non-evidence and not hardware execution; no authenticated full-Qwen execution, numerical result, or performance result is claimed.",
+        "Ferric cannot yet run Qwen through the production path. Its private current aggregate publication selection remains None, and the zero-state protected verifier rejects every roster without an independently authenticated receipt. The R32 command is partial-non-evidence source integration, not a successful hardware run; no authenticated full-Qwen execution, numerical result, or performance result is claimed.",
     },
     {
       label: "M1 qualification",
@@ -313,17 +323,22 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Bounded aggregate build observation",
         detail:
-          "The producer retains committed aggregate sources, a prebound adapter identity, bounded namespace custody, and descriptive HSACO inspection in one canonical observational record. CI and release policy exercise hostile mutations, but the record is not protected artifact acceptance or runtime authority.",
+          "The producer retains committed aggregate sources, a prebound adapter identity, bounded namespace custody, and descriptive HSACO inspection in one canonical observational record. Integration eceffdf validates every exact identity cross-link consumed by the private selection-candidate producer. The record remains observational and is not protected artifact acceptance or runtime authority.",
       },
       {
-        name: "Generation-1 S1/K4 diagnostic join",
+        name: "Authenticated generation-1 R32 capture vertical",
         detail:
-          "The authenticated first-publication owner can copy four ordered draft rows and one target matrix, validate their coordinates and data indices, and derive the existing Ferric diagnostic semantics without caller-supplied expectations. The path is partial-non-evidence, unavailable on rearm, fail-closed, and not hardware evidence.",
+          "The R32 command consumes an aggregate V2 selector, attempts protected roster acquisition, binds only authenticated runner custody, executes the first S1/K4 queue lifecycle, checks completion and ordered draft/target choices, settles Engine and KV ownership, destroys the queue, and publishes a V2 partial capture. It contains no raw-artifact fallback, but the current selection and verifier gates make it unavailable today; the path is partial-non-evidence, not hardware evidence.",
+      },
+      {
+        name: "Private aggregate selection candidate",
+        detail:
+          "A reviewed producer can bind one canonical observational record to exact clean repository objects and the target, COV6, ordered roster, source-pin, envelope, and finalized-HSACO identities, then publish one owner-private candidate without replacement. Status is noncurrent-candidate. Ferric does not consume it as current authority, and no public, environment, CLI, or file override can install it.",
       },
       {
         name: "Authenticated retained first-generation runtime",
         detail:
-          "Exact Worker V3 source identities, program witnesses, operation plans, loaded programs, queue typestates, and Ferric batch custody remain joined across authenticated creation, submit, bounded wait, recycle, observation, detach, and terminal release. The new diagnostic bridge is generation 1 only; this host source is not evidence of a populated aggregate source pin or GPU execution.",
+          "Exact Worker V3 source identities, program witnesses, operation plans, loaded programs, queue typestates, and Ferric batch custody remain joined across authenticated creation, submit, bounded wait, recycle, observation, completion, KV release, and terminal queue teardown. The R32 capture is generation 1 only; this host source is not evidence of a current aggregate selection or GPU execution.",
       },
       {
         name: "Authenticated readback and completed-step settlement",
@@ -405,12 +420,12 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Accept the protected aggregate artifact",
         detail:
-          "The aggregate source pin is currently None and the protected verifier is unavailable. Join one live receipt-bound aggregate publication to its exact source pin, protected compiler origin, durable currentness, complete 12-kernel roster, and reviewed verifier decision; the observational producer and source-prebound adapter cannot grant this authority.",
+          "Ferric's private current aggregate publication selection is currently None and the zero-state protected verifier rejects every request. Review and install authority only from one live receipt-bound aggregate publication joined to its exact source pin, protected compiler origin, durable currentness, complete 12-kernel roster, and independently authenticated verifier decision; the observational record and noncurrent candidate cannot grant this authority.",
       },
       {
         name: "Complete KFD edge handling",
         detail:
-          "Ferric pins exact fe2o3 52815c9. Connect only accepted aggregate custody to the authenticated runtime path, keep the generation-1 S1/K4 diagnostic bridge explicitly partial-non-evidence, then close rollover, hardware qualification, and production serving custody without exposing lower or raw queue ownership.",
+          "Ferric pins exact fe2o3 52815c9. Connect only an accepted current aggregate selection to the authenticated runtime path, retain R32's fail-closed ownership and partial-non-evidence status, then close rollover, hardware qualification, and production serving custody without exposing lower or raw queue ownership.",
       },
       {
         name: "Ordered Stage C and joint Stage D",
@@ -420,7 +435,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Produce and accept the aggregate artifact",
         detail:
-          "Compile the selected aggregate package through fe2o3 52815c9, retain the exact 12-kernel artifact and source pin, and pass both through the protected acceptance boundary. Source presence, typed projection, and producer-policy tests alone are insufficient.",
+          "Produce a current protected aggregate publication through fe2o3 52815c9, independently authenticate compiler/finalizer/verifier authority, review and install its private current selection, and pass its exact 12-kernel artifact and source pin through runtime acceptance. The observational record, identity-bound noncurrent candidate, typed projection, and hostile policy tests alone are insufficient.",
       },
       {
         name: "Authenticated fixed-batch KFD",
@@ -463,26 +478,26 @@ window.FERRIC_PROJECT = Object.freeze({
   },
   validation: {
     host: {
-      title: "First-publication S1/K4 diagnostic bridge",
+      title: "Authenticated R32 capture vertical",
       state: "qualified",
-      source: "24748e11358db7ad3ab5fe35992cff354896e607",
-      result: "PASS: audit; fmt; policy; check; clippy; lib 475 passed / 0 failed / 5 ignored",
+      source: "d67fae3b063b1997aaa92b0cbc6f4c960c3b010b",
+      result: "PASS: independent review; remote fmt, policy, check, clippy, and all-target tests",
       detail:
-        "Independent audit approved the bounded generation-1 S1/K4 readback and semantic-join boundary. Remote mi300x formatting, policy, check, strict clippy, and library tests passed. The exact authority remains partial-non-evidence: this is source and host-policy qualification, not hardware execution, aggregate source-pin acceptance, protected verification, Qwen execution, or M1 evidence.",
+        "Independent audit approved the authenticated first-publication S1/K4 command from aggregate selector intake through queue teardown and V2 partial-capture publication. Remote mi300x formatting, policy, checks, strict clippy, and all-target tests passed. No successful R32 hardware trace was produced because the private current aggregate selection is None and the zero-state protected verifier rejects every request. This qualifies source and host policy only, not hardware execution, protected acceptance, Qwen execution, performance, m1.r32, or M1.",
     },
     proof: {
       title: "Authenticated release proof",
       state: "qualified",
-      source: "e8d76e5c18d893eb6cffa7dff137a4a3492454a8",
+      source: "eceffdf00c1ec0f7241be95d6b636fa1ea69a46d",
       closureSha256:
-        "d3a5f9a9e48d2ca2536cac059efa9b7b63e99076c93152ec08b4399a7fbd387a",
+        "3f28f858de49fb80182b8409fa6825b20cc542b1a104e618e722bea08a99d854",
       receiptSha256:
-        "72d4799011f133be673d85d77bc27232cc87a11a7cb7afeb8bdc1f2bb4cc4039",
+        "fa20c04ad8f8c436331a6b16edb04c5c78716aef888893296f226338a15636c2",
       logSha256:
-        "ad3ec9b17b762a7593b98bd77400fdd2cb172c8d71724e3c48600afd8154c571",
-      result: "PASS: 1,493 queries; 645 direct bodies; source gate 151 modules / 6,893 bodies",
+        "1903c13c96e964e67d50ea5ba318e5b454f15b9b83a951b7a3041f171083c115",
+      result: "PASS: 1,493 queries; 645 direct bodies; source gate 151 modules / 6,916 bodies",
       detail:
-        "Strict proof/release qualification passed on mi300x for the exact 600-file source closure. Receipt SHA-256 is 72d4799011f133be673d85d77bc27232cc87a11a7cb7afeb8bdc1f2bb4cc4039 and log SHA-256 is ad3ec9b17b762a7593b98bd77400fdd2cb172c8d71724e3c48600afd8154c571. GitHub ci run 33539253010 and authenticated-verus-release run 33539253076 both completed successfully. No protected aggregate source pin/service, authenticated Qwen hardware execution, or M1 closure follows.",
+        "Strict proof/release qualification passed on mi300x for the exact 603-file source closure. Receipt SHA-256 is fa20c04ad8f8c436331a6b16edb04c5c78716aef888893296f226338a15636c2 and log SHA-256 is 1903c13c96e964e67d50ea5ba318e5b454f15b9b83a951b7a3041f171083c115. Exact-head GitHub ci run 33589469432 and authenticated-verus-release run 33589469441 both completed successfully. No current protected aggregate selection/service, authenticated Qwen hardware execution, performance result, or M1 closure follows.",
     },
     hardware: {
       title: "Qualification-only SwiGLU run",
@@ -502,6 +517,20 @@ window.FERRIC_PROJECT = Object.freeze({
       "The catalog records host-validated source paths. Target-only decode and every unlisted cross-plan transition require explicit queue retirement and a fresh admitted launch; none inherit rollover authority.",
   },
   recentProgress: [
+    {
+      commit: "eceffdf00c1ec0f7241be95d6b636fa1ea69a46d",
+      title: "Qualify authenticated R32 and private aggregate selection policy",
+      state: "qualified",
+      detail:
+        "Strict mi300x qualification passed with 1,493 proof queries, 645 directly verified bodies, source-gate coverage of 151 modules and 6,916 executable bodies, and a 603-file closure at 3f28f858de49fb80182b8409fa6825b20cc542b1a104e618e722bea08a99d854. Receipt fa20c04ad8f8c436331a6b16edb04c5c78716aef888893296f226338a15636c2 and log 1903c13c96e964e67d50ea5ba318e5b454f15b9b83a951b7a3041f171083c115 retain the exact result. Exact-head CI run 33589469432 and authenticated-verus-release run 33589469441 are green. The private current selection remains None, so no protected runtime, hardware, Qwen, performance, or M1 authority follows.",
+    },
+    {
+      commit: "d67fae3b063b1997aaa92b0cbc6f4c960c3b010b",
+      title: "Authenticate the R32 first-publication capture vertical",
+      state: "qualified",
+      detail:
+        "The R32 command now consumes an aggregate V2 selector, attempts protected roster admission, binds authenticated runner custody before KFD, composes queue create/submit/wait/recycle/readback with Engine completion, KV release, queue teardown, and V2 partial capture, and retains typed custody on failures without a raw artifact fallback. Independent review and scoped remote checks passed. The path cannot cross its current-selection and verifier gates today and supplies no hardware, Qwen, performance, m1.r32, or M1 evidence.",
+    },
     {
       commit: "e8d76e5c18d893eb6cffa7dff137a4a3492454a8",
       title: "Qualify the authenticated K4 bridge proof release",
@@ -1029,18 +1058,19 @@ window.FERRIC_PROJECT = Object.freeze({
       "Ferric-owned inference kernels and their concrete protected policy",
       "Worker ledger, repository lineage, host-descriptor lineage, and rollback admission",
       "Scheduling, paged KV, speculation, generated runner, and M1 qualification",
-      "Exact qualified integration e8d76e5c18d893eb6cffa7dff137a4a3492454a8 is the current Pages status base",
+      "Integration eceffdf00c1ec0f7241be95d6b636fa1ea69a46d is the current Pages status base; d67fae3b063b1997aaa92b0cbc6f4c960c3b010b is the authenticated R32 implementation commit",
       "One aggregate device package owns all 12 attributed M1 kernel roots across seven canonical source modules",
       "The aggregate compiler-generated roster and source gate use the exact current descriptor-table order",
       "The typed source-pin adapter pins fe2o3 52815c9ed52a3075e26322cf506144cb22da12d2 and admits only the exact aggregate target, code-object version, entry set, and descriptor set",
       "The aggregate producer holds committed device and adapter source identities and emits an observational, authority-free build record",
       "CI and release qualification require the aggregate producer-policy suite",
-      "Authenticated first-publication S1/K4 diagnostics are partial-non-evidence, generation 1 only, and copy draft-0 through draft-3 followed by target before the specialized semantic join",
-      "The diagnostic bridge is excluded from rearm and retains compact, queue, program, and copied-byte custody on failure",
-      "Independent audit approved the exact bridge; remote mi300x fmt, policy, check, clippy, and library tests passed 475 / 0 / 5",
-      "Strict mi300x proof/release qualification at e8d76e5 passed 1,493 queries and 645 direct bodies over a source gate of 151 modules / 6,893 bodies and a canonical 600-file closure; both CI workflows are green",
-      "The aggregate source pin remains None and the protected verifier is unavailable, so no accepting protected aggregate artifact grants publication, load, launch, or runtime authority",
-      "Ferric has no authenticated full-Qwen execution, numerical result, or performance result",
+      "Authenticated R32 first-publication capture is partial-non-evidence, generation 1 only, and composes aggregate selector intake, protected verification, runner binding, KFD queue execution, ordered K4 choice readback, Engine completion, KV release, queue teardown, and V2 partial-capture publication",
+      "The R32 command has no raw artifact fallback, is excluded from rearm, and retains authenticated queue, program, completion, KV, choice, and model-memory custody or typed quarantine on failure",
+      "The reviewed observational-record validator and selection producer bind exact source, adapter, provider, projection, compiler-handoff, target, COV6, ordered-roster, source-pin, envelope, and finalized-HSACO identities into an owner-private no-replace candidate",
+      "The aggregate selection candidate is explicitly noncurrent and grants no compiler-origin, finalization, verifier, publication, load, launch, dispatch, inference, Qwen, performance, or M1 authority",
+      "Strict mi300x proof/release qualification at eceffdf passed 1,493 queries and 645 direct bodies over a source gate of 151 modules / 6,916 bodies and a canonical 603-file closure; exact-head CI run 33589469432 and authenticated-verus-release run 33589469441 are green",
+      "Ferric's private current aggregate publication selection remains None with no public, environment, CLI, or file override, and the zero-state protected verifier rejects every request without an independently authenticated receipt",
+      "Ferric has no successful current-source R32 trace, authenticated full-Qwen execution, numerical result, or performance result",
       "All 33 M1 exit gates remain open until their required evidence closes them",
     ],
     fe2o3: [

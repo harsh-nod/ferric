@@ -13,8 +13,11 @@ const allowedStates = new Set([
   "open",
 ]);
 const expectedCurrent = Object.freeze({
-  siteRefreshBase: "e8d76e5c18d893eb6cffa7dff137a4a3492454a8",
-  implementationCommit: "e8d76e5c18d893eb6cffa7dff137a4a3492454a8",
+  siteRefreshBase: "eceffdf00c1ec0f7241be95d6b636fa1ea69a46d",
+  implementationCommit: "eceffdf00c1ec0f7241be95d6b636fa1ea69a46d",
+  authenticatedR32Commit: "d67fae3b063b1997aaa92b0cbc6f4c960c3b010b",
+  aggregateSelectionCommit: "eceffdf00c1ec0f7241be95d6b636fa1ea69a46d",
+  aggregateSelectionStatus: "noncurrent-candidate",
   selectedFe2o3Pin: "52815c9ed52a3075e26322cf506144cb22da12d2",
   aggregateSourceCommit: "5514afe176a090aa3f1da9e5354799bb4ca5a8b3",
   aggregateProducerCommit: "e57c42523050922ad76538150df691cc5ab975a7",
@@ -26,9 +29,18 @@ const expectedCurrent = Object.freeze({
   proofQueries: 1493,
   directVerifiedBodies: 645,
   sourceGateModules: 151,
-  sourceGateBodies: 6893,
-  sourceClosureFiles: 600,
+  sourceGateBodies: 6916,
+  sourceClosureFiles: 603,
   openM1Gates: 33,
+});
+const expectedProof = Object.freeze({
+  source: "eceffdf00c1ec0f7241be95d6b636fa1ea69a46d",
+  closureSha256:
+    "3f28f858de49fb80182b8409fa6825b20cc542b1a104e618e722bea08a99d854",
+  receiptSha256:
+    "fa20c04ad8f8c436331a6b16edb04c5c78716aef888893296f226338a15636c2",
+  logSha256:
+    "1903c13c96e964e67d50ea5ba318e5b454f15b9b83a951b7a3041f171083c115",
 });
 
 function assert(condition, message) {
@@ -70,6 +82,8 @@ assert(
 assert(project.current && typeof project.current === "object", "current status is missing");
 assertCommit(project.current.siteRefreshBase, "current.siteRefreshBase");
 assertCommit(project.current.implementationCommit, "current.implementationCommit");
+assertCommit(project.current.authenticatedR32Commit, "current.authenticatedR32Commit");
+assertCommit(project.current.aggregateSelectionCommit, "current.aggregateSelectionCommit");
 assertCommit(project.current.selectedFe2o3Pin, "current.selectedFe2o3Pin");
 assertCommit(project.current.aggregateSourceCommit, "current.aggregateSourceCommit");
 assertCommit(project.current.aggregateProducerCommit, "current.aggregateProducerCommit");
@@ -96,6 +110,42 @@ assert(
 assert(Array.isArray(project.readiness) && project.readiness.length > 0, "readiness is empty");
 project.readiness.forEach((item, index) =>
   assertState(item.state, `readiness[${index}]`),
+);
+const r32Readiness = project.readiness.find(
+  (item) => item.label === "Authenticated R32 first-publication capture vertical",
+);
+assert(r32Readiness?.state === "integration", "R32 vertical must remain in integration");
+assert(
+  r32Readiness.detail.includes("partial-non-evidence") &&
+    r32Readiness.detail.includes("cannot pass its protected-verifier boundary today"),
+  "R32 readiness must retain its fail-closed partial nonclaim",
+);
+const selectionReadiness = project.readiness.find(
+  (item) => item.label === "Aggregate publication-selection candidate",
+);
+assert(
+  selectionReadiness?.state === "integration" &&
+    selectionReadiness.detail.includes("explicitly noncurrent"),
+  "aggregate selection candidate must remain noncurrent integration",
+);
+const protectedAcceptance = project.readiness.find(
+  (item) => item.label === "Accepting protected aggregate artifact",
+);
+assert(
+  protectedAcceptance?.state === "open" &&
+    protectedAcceptance.detail.includes("remains None") &&
+    protectedAcceptance.detail.includes("rejects every request"),
+  "protected aggregate acceptance must remain fail-closed and open",
+);
+const qwenReadiness = project.readiness.find(
+  (item) => item.label === "End-to-end Qwen through Ferric",
+);
+assert(
+  qwenReadiness?.state === "open" &&
+    qwenReadiness.detail.includes(
+      "no authenticated full-Qwen execution, numerical result, or performance result",
+    ),
+  "Qwen, numerical, and performance authority must remain open",
 );
 
 for (const group of ["runnable", "experimental", "roadmap"]) {
@@ -128,6 +178,37 @@ for (const key of ["host", "proof", "hardware"]) {
     }
   }
 }
+assert(
+  project.validation.host.source === expectedCurrent.authenticatedR32Commit,
+  "host validation must bind the authenticated R32 implementation commit",
+);
+assert(
+  project.validation.proof.source === expectedCurrent.implementationCommit,
+  "proof validation must bind the exact qualified integration commit",
+);
+for (const [key, expected] of Object.entries(expectedProof)) {
+  assert(
+    project.validation.proof[key] === expected,
+    `validation.proof.${key} must match the exact retained qualification`,
+  );
+}
+assert(
+  project.validation.proof.detail.includes("33589469432") &&
+    project.validation.proof.detail.includes("33589469441") &&
+    project.validation.proof.detail.includes("both completed successfully"),
+  "proof validation must expose both successful exact-head workflow runs",
+);
+assert(
+  project.validation.host.detail.includes("No successful R32 hardware trace") &&
+    project.validation.host.detail.includes("m1.r32") &&
+    project.validation.host.detail.includes("M1"),
+  "host validation must deny hardware, m1.r32, and M1 closure",
+);
+assert(
+  project.validation.hardware.state === "observed" &&
+    project.validation.hardware.source !== expectedCurrent.implementationCommit,
+  "historical hardware observation must not be presented as current integration evidence",
+);
 assert(
   project.validation.proof.state !== "qualified" ||
     typeof project.validation.proof.closureSha256 === "string",
@@ -166,6 +247,10 @@ assert(
   "recent progress must include the current implementation commit",
 );
 assert(
+  progressCommits.has(expectedCurrent.authenticatedR32Commit),
+  "recent progress must include the authenticated R32 implementation commit",
+);
+assert(
   progressCommits.has(expectedCurrent.selectedFe2o3Pin),
   "recent progress must include the selected fe2o3 pin",
 );
@@ -179,11 +264,24 @@ assert(
   roadmapGate?.[1] === String(expectedCurrent.openM1Gates) && roadmapGate?.[2] === "open",
   "the exact M1 roadmap gate count must remain open",
 );
+assert(
+  project.evidence.gates.every(([, , state]) => state === "open"),
+  "every M1 closure roster remains open without its required evidence",
+);
 project.evidence.legend.forEach(([state], index) =>
   assertState(state, `evidence.legend[${index}]`),
 );
 
 const html = await readFile(join(siteRoot, "index.html"), "utf8");
+for (const claim of [
+  "Exact head eceffdf passed strict proof and release qualification on mi300x",
+  "33589469432 and authenticated-verus-release run 33589469441 both completed successfully",
+  "private current aggregate publication selection",
+  "successful current-source R32 trace",
+  "all 33 M1 exit gates remain open",
+]) {
+  assert(html.includes(claim), `index.html is missing current claim: ${claim}`);
+}
 for (const target of [
   "data-readiness",
   "data-capabilities",
