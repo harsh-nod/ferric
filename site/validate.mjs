@@ -13,12 +13,13 @@ const allowedStates = new Set([
   "open",
 ]);
 const expectedCurrent = Object.freeze({
-  siteRefreshBase: "75c5f724fbc7928bf1b231a86aec0f1d5fdcc3f9",
-  implementationCommit: "75c5f724fbc7928bf1b231a86aec0f1d5fdcc3f9",
+  siteRefreshBase: "e187ca52dfdaee79fdc17921c9acffebeed6ca96",
+  implementationCommit: "e187ca52dfdaee79fdc17921c9acffebeed6ca96",
   authenticatedR32Commit: "d67fae3b063b1997aaa92b0cbc6f4c960c3b010b",
   aggregateSelectionCommit: "eceffdf00c1ec0f7241be95d6b636fa1ea69a46d",
   aggregateSelectionStatus: "noncurrent-candidate",
   pendingVerifierProjectionCommit: "75c5f724fbc7928bf1b231a86aec0f1d5fdcc3f9",
+  commonCustodyPreflightCommit: "e187ca52dfdaee79fdc17921c9acffebeed6ca96",
   selectedFe2o3Pin: "52815c9ed52a3075e26322cf506144cb22da12d2",
   aggregateSourceCommit: "5514afe176a090aa3f1da9e5354799bb4ca5a8b3",
   aggregateProducerCommit: "e57c42523050922ad76538150df691cc5ab975a7",
@@ -35,13 +36,13 @@ const expectedCurrent = Object.freeze({
   openM1Gates: 33,
 });
 const expectedProof = Object.freeze({
-  source: "75c5f724fbc7928bf1b231a86aec0f1d5fdcc3f9",
+  source: "e187ca52dfdaee79fdc17921c9acffebeed6ca96",
   closureSha256:
-    "19d090e8f60e813533d60bfdf7133b2829ede3f6fac780adc8e27dc61fbd7e0f",
+    "4920f55d8c98681e6ee154b8d5bba64f80d17241e89e07505626f9f365a8a2e2",
   receiptSha256:
-    "b03c3aaeca723d9100669c457d3a49864c2e13bfafc9a99fd5034eb915033673",
+    "fbdb2ad3f3acdf9f46480be16e993cee2ededf548be22e6e35b787749ed65d21",
   logSha256:
-    "ed9d8aec91f98016cfa44f981c6b04bf0be2bbb005888ae7a0097d7af128ae07",
+    "1a5bb9049f496d1f74f4233147b4a72b588333d4dfbf30ae1658fcb0d67c47fa",
 });
 
 function assert(condition, message) {
@@ -89,6 +90,10 @@ assertCommit(
   project.current.pendingVerifierProjectionCommit,
   "current.pendingVerifierProjectionCommit",
 );
+assertCommit(
+  project.current.commonCustodyPreflightCommit,
+  "current.commonCustodyPreflightCommit",
+);
 assertCommit(project.current.selectedFe2o3Pin, "current.selectedFe2o3Pin");
 assertCommit(project.current.aggregateSourceCommit, "current.aggregateSourceCommit");
 assertCommit(project.current.aggregateProducerCommit, "current.aggregateProducerCommit");
@@ -111,6 +116,12 @@ assert(
 assert(
   envelope.get("M1 implementation")?.includes(expectedCurrent.implementationCommit),
   "envelope must expose the exact current implementation commit",
+);
+assert(
+  envelope.get("Common-custody preflight")?.includes(
+    "sole terminal result MissingProtectedVerificationReceipt",
+  ),
+  "envelope must expose the reject-only common-custody preflight",
 );
 assert(Array.isArray(project.readiness) && project.readiness.length > 0, "readiness is empty");
 project.readiness.forEach((item, index) =>
@@ -143,13 +154,34 @@ assert(
     projectionReadiness.detail.includes("cannot leave the rejection path"),
   "aggregate pending-verifier projection must remain private, optional, and reject-only",
 );
+const commonCustodyReadiness = project.readiness.find(
+  (item) => item.label === "Reject-only common-custody verifier preflight",
+);
+assert(
+  commonCustodyReadiness?.state === "integration" &&
+    commonCustodyReadiness.detail.includes(
+      "independently revalidate the exact-pinned finalizer derivation from the borrowed replay",
+    ) &&
+    commonCustodyReadiness.detail.includes(
+      "validate common multi-root compiler proof inputs",
+    ) &&
+    commonCustodyReadiness.detail.includes(
+      "validate common multi-root target lineage by borrowing those proof inputs",
+    ) &&
+    commonCustodyReadiness.detail.includes("MissingProtectedVerificationReceipt") &&
+    commonCustodyReadiness.detail.includes("grants no protected, load, launch, hardware, Qwen"),
+  "common-custody preflight must preserve its exact order, terminal rejection, and nonclaims",
+);
 const protectedAcceptance = project.readiness.find(
   (item) => item.label === "Accepting protected aggregate artifact",
 );
 assert(
   protectedAcceptance?.state === "open" &&
     protectedAcceptance.detail.includes("remains None") &&
-    protectedAcceptance.detail.includes("MissingProtectedVerificationReceipt for every request"),
+    protectedAcceptance.detail.includes(
+      "sole terminal result MissingProtectedVerificationReceipt",
+    ) &&
+    protectedAcceptance.detail.includes("earlier preflight failures return their distinct"),
   "protected aggregate acceptance must remain fail-closed and open",
 );
 const qwenReadiness = project.readiness.find(
@@ -208,8 +240,8 @@ for (const [key, expected] of Object.entries(expectedProof)) {
   );
 }
 assert(
-  project.validation.proof.detail.includes("33594006967") &&
-    project.validation.proof.detail.includes("33594007027") &&
+  project.validation.proof.detail.includes("33599537169") &&
+    project.validation.proof.detail.includes("33599537184") &&
     project.validation.proof.detail.includes("both completed successfully"),
   "proof validation must expose both successful exact-head workflow runs",
 );
@@ -289,8 +321,13 @@ project.evidence.legend.forEach(([state], index) =>
 
 const html = await readFile(join(siteRoot, "index.html"), "utf8");
 for (const claim of [
-  "Exact head 75c5f72 passed strict proof and release qualification on mi300x",
-  "33594006967 and authenticated-verus-release run 33594007027 both completed successfully",
+  "Exact head e187ca5 passed strict proof and release qualification on mi300x",
+  "33599537169",
+  "33599537184 both completed successfully",
+  "independently revalidates the exact-pinned finalizer derivation",
+  "multi-root proof inputs",
+  "target lineage by borrowing those inputs",
+  "passing preflight has the sole terminal result MissingProtectedVerificationReceipt",
   "private current aggregate publication selection",
   "successful current-source R32 trace",
   "all 33 M1 exit gates remain open",
@@ -298,21 +335,15 @@ for (const claim of [
   assert(html.includes(claim), `index.html is missing current claim: ${claim}`);
 }
 assert(
-  !dataSource.includes("e187ca52dfdaee79fdc17921c9acffebeed6ca96"),
-  "Pages data must not claim the later unqualified preflight commit",
+  dataSource.includes("e187ca52dfdaee79fdc17921c9acffebeed6ca96"),
+  "Pages data must bind the exact qualified common-custody preflight commit",
 );
-for (const unqualifiedClaim of [
-  "authority-free common-custody preflight",
-  "independently revalidates common finalizer derivation",
-  "reacquires common finalizer and compiler proof/target-lineage owners",
-  "Passing the common-custody preflight",
-  "common finalizer/compiler custody is revalidated",
-]) {
-  assert(
-    !dataSource.includes(unqualifiedClaim) && !html.includes(unqualifiedClaim),
-    `Pages must not claim later unqualified work: ${unqualifiedClaim}`,
-  );
-}
+assert(
+  dataSource.includes("sole terminal result MissingProtectedVerificationReceipt") &&
+    dataSource.includes("private current aggregate publication selection remains None") &&
+    dataSource.includes("all 33 M1 exit gates remain open"),
+  "Pages data must retain terminal rejection, None selection, and all-open gate nonclaims",
+);
 for (const target of [
   "data-readiness",
   "data-capabilities",
