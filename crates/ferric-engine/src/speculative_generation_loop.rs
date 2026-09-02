@@ -183,6 +183,10 @@ impl M1SpeculativeGenerationPolicyV1 {
     fn is_stop(self, token: TokenId) -> bool {
         self.stop_tokens().contains(&token)
     }
+
+    pub(crate) fn permits_fresh_anchor(self, token: TokenId) -> bool {
+        self.max_output_tokens != 0 && !self.is_stop(token)
+    }
 }
 
 /// Initial request-local state after paired prefill or an equivalent join.
@@ -216,6 +220,22 @@ impl M1SpeculativeMemberSeedV1 {
 
     pub(crate) const fn request(self) -> RequestId {
         self.request
+    }
+
+    pub(crate) const fn round_anchor(self) -> TokenId {
+        self.round_anchor
+    }
+
+    pub(crate) const fn target_committed_tokens(self) -> u32 {
+        self.target_committed_tokens
+    }
+
+    pub(crate) const fn draft_committed_tokens(self) -> u32 {
+        self.draft_committed_tokens
+    }
+
+    pub(crate) const fn policy(self) -> M1SpeculativeGenerationPolicyV1 {
+        self.policy
     }
 }
 

@@ -10,6 +10,7 @@ mod authenticated_kernel_programs;
 mod authenticated_physical_queue;
 mod authenticated_physical_readback;
 mod authenticated_queue_rearm;
+mod authenticated_queue_rollover;
 mod authenticated_speculative_executor;
 mod bound_step_workspaces;
 mod cache;
@@ -175,6 +176,29 @@ pub use authenticated_queue_rearm::{
     M1AuthenticatedReservedLongLivedQueueRearmV1, M1AuthenticatedRetainedStepPlanErrorV1,
     M1AuthenticatedScheduledLongLivedQueueRearmV1,
 };
+pub use authenticated_queue_rollover::{
+    bind_m1_authenticated_speculative_rollover_intent_v1,
+    prepare_m1_authenticated_speculative_rollover_v1,
+    schedule_m1_authenticated_speculative_rollover_v1,
+    submit_m1_authenticated_speculative_rollover_v1, M1AuthenticatedPreparedSpeculativeRolloverV1,
+    M1AuthenticatedScheduledSpeculativeRolloverV1,
+    M1AuthenticatedSpeculativeNativeRolloverClosureV1,
+    M1AuthenticatedSpeculativeNativeRolloverFailureV1,
+    M1AuthenticatedSpeculativeRolloverClosedFailureV1,
+    M1AuthenticatedSpeculativeRolloverDetachedFailureV1,
+    M1AuthenticatedSpeculativeRolloverIntentErrorV1,
+    M1AuthenticatedSpeculativeRolloverIntentFailureV1,
+    M1AuthenticatedSpeculativeRolloverIntentPreparedV1, M1AuthenticatedSpeculativeRolloverIntentV1,
+    M1AuthenticatedSpeculativeRolloverMemberIntentV1,
+    M1AuthenticatedSpeculativeRolloverPrepareFailureV1,
+    M1AuthenticatedSpeculativeRolloverPrepareStageV1,
+    M1AuthenticatedSpeculativeRolloverScheduleErrorV1,
+    M1AuthenticatedSpeculativeRolloverScheduleFailureV1,
+    M1AuthenticatedSpeculativeRolloverSubmissionFailureV1,
+    M1AuthenticatedSpeculativeRolloverSubmissionStageV1,
+    M1AuthenticatedSpeculativeRolloverTeardownFailureV1,
+    M1AuthenticatedSpeculativeRolloverTeardownSuccessV1,
+};
 pub use authenticated_speculative_executor::{
     prepare_m1_authenticated_speculative_bootstrap_v1,
     M1AuthenticatedSpeculativeBootstrapContinuationV1, M1AuthenticatedSpeculativeBootstrapErrorV1,
@@ -195,6 +219,9 @@ pub use authenticated_speculative_executor::{
     M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessSourceV1,
     M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1,
     M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1,
+    M1AuthenticatedSpeculativeRolloverContinuationV1,
+    M1AuthenticatedSpeculativeRolloverPublishedV1,
+    M1AuthenticatedSpeculativeRolloverRoundFailureV1,
 };
 pub use bound_step_workspaces::{
     BoundM1FullStepWorkspaceSubleases, M1FullStepWorkspaceDispatchRangeError,

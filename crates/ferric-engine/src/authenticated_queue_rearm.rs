@@ -1841,6 +1841,7 @@ struct M1AuthenticatedRearmContinuationCustodyV1 {
     completed_members: usize,
     total_released: usize,
     history: M1RearmRoundHistoryV1,
+    rollover: Option<crate::M1QueueRolloverObservationV1>,
 }
 
 /// Published authenticated next generation on the same native queue.
@@ -1860,6 +1861,42 @@ pub struct M1AuthenticatedRearmedPublishedQueueV1 {
 }
 
 impl M1AuthenticatedRearmedPublishedQueueV1 {
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) const fn from_authenticated_rollover(
+        queue: M1AuthenticatedPhysicalPublishedQueueSessionV1,
+        selected: Vec<ActiveDeviceKvCache>,
+        previous_epoch: CompletionEpoch,
+        prior_checked: M1CheckedCompletionOutputV1,
+        logical_accepted_counts: Box<[u32]>,
+        externally_published_counts: Box<[u32]>,
+        release_counts: Box<[M1CompletedKvPageReleaseCountsV1]>,
+        completed_members: usize,
+        total_released: usize,
+        queue_observation: ComputeAqlQueueObservationV1,
+        device: Gfx942DeviceBinding,
+        rollover: crate::M1QueueRolloverObservationV1,
+    ) -> Self {
+        Self {
+            queue,
+            carry: M1AuthenticatedRearmContinuationCustodyV1 {
+                selected,
+                parked: Vec::new(),
+                terminal: Vec::new(),
+                previous_epoch,
+                prior_checked,
+                logical_accepted_counts,
+                externally_published_counts,
+                release_counts,
+                completed_members,
+                total_released,
+                history: M1RearmRoundHistoryV1::Empty,
+                rollover: Some(rollover),
+            },
+            queue_observation,
+            device,
+        }
+    }
+
     /// Exact scheduler authority retained through authenticated publication.
     #[must_use = "scheduler authority remains retained"]
     pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
@@ -2857,19 +2894,30 @@ impl M1AuthenticatedRearmedCompletedReadbackV1 {
         }
         let roster = M1DeviceKvCompletionRosterV1::new(members);
         let outcome = crate::complete_m1_authenticated_physical_step_v1(engine, readback, roster);
-        let history =
-            carry
-                .history
-                .append(crate::M1RearmRoundHistoryEntryV1::from_same_native_queue(
-                    carry.prior_checked,
-                    carry.logical_accepted_counts,
-                    carry.externally_published_counts,
-                    carry.release_counts,
-                    carry.completed_members,
-                    carry.total_released,
-                    queue_observation,
-                    device,
-                ));
+        let history_entry = match carry.rollover {
+            Some(rollover) => crate::M1RearmRoundHistoryEntryV1::from_queue_transition(
+                carry.prior_checked,
+                carry.logical_accepted_counts,
+                carry.externally_published_counts,
+                carry.release_counts,
+                carry.completed_members,
+                carry.total_released,
+                queue_observation,
+                device,
+                Some(rollover),
+            ),
+            None => crate::M1RearmRoundHistoryEntryV1::from_same_native_queue(
+                carry.prior_checked,
+                carry.logical_accepted_counts,
+                carry.externally_published_counts,
+                carry.release_counts,
+                carry.completed_members,
+                carry.total_released,
+                queue_observation,
+                device,
+            ),
+        };
+        let history = carry.history.append(history_entry);
         Ok(M1AuthenticatedRearmedCompletionOutcomeV1 {
             outcome,
             lineage: M1AuthenticatedRearmPriorRoundCustodyV1 {
@@ -3653,6 +3701,7 @@ pub fn submit_m1_authenticated_long_lived_queue_rearm_v1<const C: usize>(
         completed_members,
         total_released,
         history,
+        rollover: None,
     };
     let queue = match rearm_m1_authenticated_detached_queue_v1(
         queue,
@@ -4174,7 +4223,7 @@ fn preflight_authenticated_queue_rearm(
 }
 
 #[derive(Debug)]
-enum AuthenticatedWorkspaceReplacementFailureV1<const N: usize> {
+pub(crate) enum AuthenticatedWorkspaceReplacementFailureV1<const N: usize> {
     Update {
         failure: AuthenticatedServiceQueueDataUpdateFailureV1,
         plan: AddresslessM1StepWorkspacePlan,
@@ -4195,7 +4244,7 @@ impl<const N: usize> AuthenticatedWorkspaceReplacementFailureV1<N> {
     }
 }
 
-fn replace_authenticated_workspace<const N: usize>(
+pub(crate) fn replace_authenticated_workspace<const N: usize>(
     queue: AuthenticatedServiceQueueUnboundSessionV1,
     old: &BoundM1StepWorkspaceSubleases<N>,
     plan: AddresslessM1StepWorkspacePlan,
@@ -4229,7 +4278,41 @@ fn replace_authenticated_workspace<const N: usize>(
         .map_err(|failure| Box::new(AuthenticatedWorkspaceReplacementFailureV1::Binding(failure)))
 }
 
-fn descriptor(
+pub(crate) fn replace_authenticated_rollover_workspace<const OLD_N: usize, const NEW_N: usize>(
+    queue: AuthenticatedServiceQueueUnboundSessionV1,
+    old: &BoundM1StepWorkspaceSubleases<OLD_N>,
+    plan: AddresslessM1StepWorkspacePlan,
+    bytes: Box<[u8]>,
+    descriptor: Gfx942DeviceContentDescriptorV1,
+) -> Result<
+    (
+        AuthenticatedServiceQueueUnboundSessionV1,
+        BoundM1StepWorkspaceSubleases<NEW_N>,
+        [ServiceDeviceDispatchRangeV1; NEW_N],
+    ),
+    Box<AuthenticatedWorkspaceReplacementFailureV1<NEW_N>>,
+> {
+    let allocation = plan.allocation();
+    let update = match queue
+        .replace_initialized_partitioned_device_local::<DeviceWorkspaceRoleV1, OLD_N, NEW_N>(
+            old.replacement_subleases(),
+            bytes,
+            allocation.alignment(),
+            descriptor,
+            member_layout(&plan),
+        ) {
+        Ok(update) => update,
+        Err(failure) => {
+            return Err(Box::new(
+                AuthenticatedWorkspaceReplacementFailureV1::Update { failure, plan },
+            ));
+        }
+    };
+    bind_authenticated_queue_replaced_m1_step_workspace(plan, update)
+        .map_err(|failure| Box::new(AuthenticatedWorkspaceReplacementFailureV1::Binding(failure)))
+}
+
+pub(crate) fn descriptor(
     slot: M1InitializedWorkspaceSlotV1,
     bytes: &[u8],
 ) -> Result<Gfx942DeviceContentDescriptorV1, ()> {

@@ -2598,11 +2598,12 @@ fn check_observed_case<const N: usize>(
     };
     let M1AuthenticatedObservedCompletionCaseV1 { case, image } = *case;
     let (lower, witness, operations, custody, step) = (*case).into_parts();
-    let (scheduled, _target_plans, kv, speculative_lineage) =
+    let (scheduled, _target_plans, kv, speculative_lineage, speculative_rollover_intent) =
         step.into_parts_with_speculative_lineage();
     let checked = checked
         .retain_completion_canary_readback(image.into_completion_canary_readback())
-        .retain_speculative_lineage(speculative_lineage);
+        .retain_speculative_lineage(speculative_lineage)
+        .retain_speculative_rollover_intent(speculative_rollover_intent);
     let completion = ExactCompletion::from_completed_m1_queue_readback(scheduled);
     Ok((
         Box::new(M1AuthenticatedPhysicalReadbackQueueCaseV1 {

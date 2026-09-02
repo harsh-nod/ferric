@@ -664,6 +664,31 @@ impl M1S1K4QueueRolloverKvInputsV1 {
             && target_index.and_then(|index| self.target_speculative.token_ids().get(index))
                 == Some(&anchor)
     }
+
+    pub(crate) const fn validated_inputs(
+        &self,
+    ) -> (&ValidatedM1StepInputs, &ValidatedM1StepInputs) {
+        (&self.draft_decode, &self.target_speculative)
+    }
+
+    pub(crate) fn into_parts(
+        self,
+    ) -> (
+        ValidatedM1StepInputs,
+        ValidatedM1StepInputs,
+        Vec<Vec<DeviceKvPageLease>>,
+        Vec<Vec<DeviceKvPageLease>>,
+    ) {
+        let (draft, target) = match self.page_leases {
+            M1FiniteSpeculativeQueueRolloverPageLeasesV1::ExactS1 { draft, target } => {
+                (vec![draft], vec![target])
+            }
+            M1FiniteSpeculativeQueueRolloverPageLeasesV1::Roster { draft, target } => {
+                (draft, target)
+            }
+        };
+        (self.draft_decode, self.target_speculative, draft, target)
+    }
 }
 
 /// Generic finite-speculative rollover input custody.

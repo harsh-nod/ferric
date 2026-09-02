@@ -1083,6 +1083,95 @@ pub(crate) fn build_m1_authenticated_queue_packet_batch_v1(
     }
 }
 
+/// Lowers an authenticated packet batch while replacing the retained physical
+/// recipe and workspace composition during an admitted native queue rollover.
+/// The old custody remains the sole source of catalog, allocation, and output
+/// ownership; only addressless successor structure is accepted from `recipe`.
+pub(crate) fn build_m1_authenticated_rollover_packet_batch_v1(
+    witness: &M1AuthenticatedProgramCatalogWitnessV1,
+    operations: &DeclaredOperationKernelPlan,
+    recipe: AddresslessM1PhysicalBufferRecipeV1,
+    bound_rows: Box<[M1BoundPhysicalBufferRowV1]>,
+    custody: M1PhysicalQueueBatchCustodyV1,
+) -> Result<M1AuthenticatedQueuePacketBatchV1, M1AuthenticatedQueuePacketBatchBuildFailureV1> {
+    let reject =
+        |error, recipe, bound_rows, custody| M1AuthenticatedQueuePacketBatchBuildFailureV1 {
+            error,
+            recipe: Box::new(recipe),
+            bound_rows,
+            custody: Box::new(custody),
+        };
+    if witness.catalog_id() != custody.catalog_id() {
+        return Err(reject(
+            M1PhysicalFixedBatchBuildErrorV1::ProgramCatalogIdentity,
+            recipe,
+            bound_rows,
+            custody,
+        ));
+    }
+    if witness.family_artifacts() != operations.families() {
+        return Err(reject(
+            M1PhysicalFixedBatchBuildErrorV1::ProgramFamilyArtifacts,
+            recipe,
+            bound_rows,
+            custody,
+        ));
+    }
+    if let Err(error) = validate_authenticated_operation_plan_v1(
+        operations,
+        recipe.workspace_composition().dispatch_plan(),
+    ) {
+        return Err(reject(error, recipe, bound_rows, custody));
+    }
+    let shape = match validate_packet_inputs(PacketValidationInputsV1 {
+        program_count: M1_PHYSICAL_PROGRAM_COUNT_V1,
+        physical_recipe: recipe.kernarg_recipe().source_recipe(),
+        images: recipe.kernarg_recipe().images(),
+        workspace_composition: recipe.workspace_composition(),
+        source_rows: recipe.rows(),
+        bound_rows: &bound_rows,
+        completion_output_shape: custody.completion_output().shape(),
+    }) {
+        Ok(shape) => shape,
+        Err(error) => return Err(reject(error, recipe, bound_rows, custody)),
+    };
+    let selection = recipe
+        .workspace_composition()
+        .dispatch_plan()
+        .intent()
+        .target_selection();
+    if selection != custody.selection() {
+        return Err(reject(
+            M1PhysicalFixedBatchBuildErrorV1::RetainedSelection,
+            recipe,
+            bound_rows,
+            custody,
+        ));
+    }
+    match shape {
+        M1PhysicalFixedBatchShapeV1::TargetOnly => {
+            lower_authenticated_queue_packet_case(witness, recipe, bound_rows, custody)
+                .map(M1AuthenticatedQueuePacketBatchV1::TargetOnly)
+        }
+        M1PhysicalFixedBatchShapeV1::PairedPrefill => {
+            lower_authenticated_queue_packet_case(witness, recipe, bound_rows, custody)
+                .map(M1AuthenticatedQueuePacketBatchV1::PairedPrefill)
+        }
+        M1PhysicalFixedBatchShapeV1::SpeculativeK4 => {
+            lower_authenticated_queue_packet_case(witness, recipe, bound_rows, custody)
+                .map(M1AuthenticatedQueuePacketBatchV1::SpeculativeK4)
+        }
+        M1PhysicalFixedBatchShapeV1::SpeculativeK8 => {
+            lower_authenticated_queue_packet_case(witness, recipe, bound_rows, custody)
+                .map(M1AuthenticatedQueuePacketBatchV1::SpeculativeK8)
+        }
+        M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
+            lower_authenticated_queue_packet_case(witness, recipe, bound_rows, custody)
+                .map(M1AuthenticatedQueuePacketBatchV1::SpeculativeK16)
+        }
+    }
+}
+
 fn validate_authenticated_queue_packet_inputs(
     witness: &M1AuthenticatedProgramCatalogWitnessV1,
     operations: &DeclaredOperationKernelPlan,

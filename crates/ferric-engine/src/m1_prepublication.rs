@@ -311,6 +311,9 @@ pub struct M1PrepublicationStepCustodyV1 {
     speculative_lineage: Option<
         crate::authenticated_speculative_executor::M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
     >,
+    speculative_rollover_intent: Option<
+        crate::authenticated_queue_rollover::M1AuthenticatedSpeculativeRolloverPhysicalIntentV1,
+    >,
 }
 
 impl M1PrepublicationStepCustodyV1 {
@@ -365,12 +368,16 @@ impl M1PrepublicationStepCustodyV1 {
         Option<
             crate::authenticated_speculative_executor::M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
         >,
+        Option<
+            crate::authenticated_queue_rollover::M1AuthenticatedSpeculativeRolloverPhysicalIntentV1,
+        >,
     ){
         (
             self.scheduled,
             self.target_plans,
             self.kv,
             self.speculative_lineage,
+            self.speculative_rollover_intent,
         )
     }
 }
@@ -424,6 +431,20 @@ impl M1PreparedScheduledWorkspaceImagesV1 {
             return Err(self);
         }
         self.step.speculative_lineage = Some(lineage);
+        Ok(self)
+    }
+
+    pub(crate) fn retain_speculative_rollover_intent(
+        mut self,
+        intent: crate::authenticated_queue_rollover::M1AuthenticatedSpeculativeRolloverPhysicalIntentV1,
+    ) -> Result<Self, Self> {
+        if self.step.speculative_rollover_intent.is_some()
+            || self.step.speculative_lineage.is_some()
+            || self.kind() != M1FullStepWorkspaceInputKind::PairedPrefill
+        {
+            return Err(self);
+        }
+        self.step.speculative_rollover_intent = Some(intent);
         Ok(self)
     }
 }
@@ -738,6 +759,7 @@ pub fn prepare_m1_scheduled_workspace_images_v1(
                     target_plans,
                     kv,
                     speculative_lineage: None,
+                    speculative_rollover_intent: None,
                 },
             })
         }
