@@ -162,6 +162,13 @@ impl<Q: core::fmt::Debug> core::fmt::Debug for M1AuthenticatedPhysicalQueuePhase
 #[must_use = "prepared authenticated queue custody must be submitted or retained"]
 #[derive(Debug)]
 pub enum M1AuthenticatedPhysicalQueueSessionV1 {
+    #[cfg(test)]
+    #[doc(hidden)]
+    InjectedCurrentness {
+        shape: M1PhysicalFixedBatchShapeV1,
+        queue: crate::authenticated_test_runtime::InjectedQueueV1,
+        releases_cleanly: bool,
+    },
     /// One complete target-only queue generation.
     TargetOnly(
         Box<
@@ -209,6 +216,8 @@ impl M1AuthenticatedPhysicalQueueSessionV1 {
     #[must_use]
     pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
         match self {
+            #[cfg(test)]
+            Self::InjectedCurrentness { shape, .. } => *shape,
             Self::TargetOnly(_) => M1PhysicalFixedBatchShapeV1::TargetOnly,
             Self::PairedPrefill(_) => M1PhysicalFixedBatchShapeV1::PairedPrefill,
             Self::SpeculativeK4(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK4,
@@ -227,6 +236,10 @@ impl M1AuthenticatedPhysicalQueueSessionV1 {
     #[must_use = "scheduler authority remains retained by the queue"]
     pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
         match self {
+            #[cfg(test)]
+            Self::InjectedCurrentness { .. } => {
+                unreachable!("injected currentness custody has no scheduler authority")
+            }
             Self::TargetOnly(case) => case.scheduled_dispatch(),
             Self::PairedPrefill(case) => case.scheduled_dispatch(),
             Self::SpeculativeK4(case) => case.scheduled_dispatch(),
@@ -239,6 +252,10 @@ impl M1AuthenticatedPhysicalQueueSessionV1 {
     #[must_use]
     pub const fn device(&self) -> Gfx942DeviceBinding {
         match self {
+            #[cfg(test)]
+            Self::InjectedCurrentness { .. } => {
+                unreachable!("injected currentness custody has no device authority")
+            }
             Self::TargetOnly(case) => case.device(),
             Self::PairedPrefill(case) => case.device(),
             Self::SpeculativeK4(case) => case.device(),
@@ -251,6 +268,18 @@ impl M1AuthenticatedPhysicalQueueSessionV1 {
     /// failure API.
     pub(crate) fn close_unpublished(self) -> M1AuthenticatedPhysicalQueueClosureV1 {
         match self {
+            #[cfg(test)]
+            Self::InjectedCurrentness {
+                queue,
+                releases_cleanly,
+                ..
+            } => {
+                if queue.destroy(releases_cleanly) {
+                    M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new(queue))
+                } else {
+                    M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new(queue))
+                }
+            }
             Self::TargetOnly(case) => close_unpublished_case(case),
             Self::PairedPrefill(case) => close_unpublished_case(case),
             Self::SpeculativeK4(case) => close_unpublished_case(case),
@@ -608,13 +637,40 @@ mod tests {
 
     #[test]
     fn unpublished_and_currentness_closures_consume_without_resubmit_authority() {
-        let _: fn(M1AuthenticatedPhysicalQueueSessionV1) -> M1AuthenticatedPhysicalQueueClosureV1 =
-            M1AuthenticatedPhysicalQueueSessionV1::close_unpublished;
-        let _: fn(
-            M1AuthenticatedPhysicalQueueSubmitFailureV1,
-            &mut Engine<1>,
-        ) -> M1AuthenticatedPhysicalQueueClosureV1 =
-            M1AuthenticatedPhysicalQueueSubmitFailureV1::close_without_authority::<1>;
+        use crate::authenticated_test_runtime::{InjectedQueuePhaseV1, InjectedQueueV1};
+        use crate::M1PhysicalFixedBatchShapeV1;
+
+        for releases_cleanly in [true, false] {
+            let queue = InjectedQueueV1::new([], []);
+            let failure = M1AuthenticatedPhysicalQueueSubmitFailureV1::InjectedCurrentness {
+                retained: Box::new(M1AuthenticatedPhysicalQueueSessionV1::InjectedCurrentness {
+                    shape: M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+                    queue: queue.clone(),
+                    releases_cleanly,
+                }),
+            };
+            let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+
+            let closure = failure.close_without_authority(&mut engine);
+
+            assert!(engine.is_faulted());
+            assert!(matches!(
+                (&closure, releases_cleanly),
+                (M1AuthenticatedPhysicalQueueClosureV1::Released(_), true)
+                    | (M1AuthenticatedPhysicalQueueClosureV1::Quarantined(_), false)
+            ));
+            let snapshot = queue.snapshot();
+            assert_eq!(snapshot.submits, 0, "currentness never resubmits");
+            assert_eq!(snapshot.destroys, 1, "retained queue closes exactly once");
+            assert_eq!(
+                snapshot.phase,
+                if releases_cleanly {
+                    InjectedQueuePhaseV1::Destroyed
+                } else {
+                    InjectedQueuePhaseV1::Quarantined
+                }
+            );
+        }
     }
 }
 
@@ -1141,6 +1197,11 @@ fn operation_failure(
 #[must_use = "publication failure retains authenticated queue custody"]
 #[derive(Debug)]
 pub enum M1AuthenticatedPhysicalQueueSubmitFailureV1 {
+    #[cfg(test)]
+    #[doc(hidden)]
+    InjectedCurrentness {
+        retained: Box<M1AuthenticatedPhysicalQueueSessionV1>,
+    },
     /// Currentness rejected before publication and the prepared owner is unchanged.
     Currentness {
         /// Exact currentness/materialization error.
@@ -1188,6 +1249,8 @@ impl M1AuthenticatedPhysicalQueueSubmitFailureV1 {
     ) -> M1AuthenticatedPhysicalQueueClosureV1 {
         engine.quarantine_m1_queue_rearm_failure();
         match self {
+            #[cfg(test)]
+            Self::InjectedCurrentness { retained } => retained.close_unpublished(),
             Self::Currentness { error, retained } => match retained.close_unpublished() {
                 M1AuthenticatedPhysicalQueueClosureV1::Released(released) => {
                     M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new((released, error)))
@@ -1284,6 +1347,10 @@ impl M1AuthenticatedPhysicalQueueSessionV1 {
         M1AuthenticatedPhysicalQueueSubmitFailureV1,
     > {
         match self {
+            #[cfg(test)]
+            Self::InjectedCurrentness { .. } => {
+                unreachable!("injected currentness failure is consumed by closure tests")
+            }
             Self::TargetOnly(case) => submit_variant(
                 case,
                 M1PhysicalFixedBatchShapeV1::TargetOnly,
