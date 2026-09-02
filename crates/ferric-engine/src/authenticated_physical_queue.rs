@@ -234,6 +234,7 @@ impl M1AuthenticatedPhysicalQueueSessionV1 {
 
     /// Exact scheduler authority retained by this queue phase.
     #[must_use = "scheduler authority remains retained by the queue"]
+    #[cfg_attr(test, allow(clippy::missing_panics_doc))]
     pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
         match self {
             #[cfg(test)]
@@ -248,6 +249,7 @@ impl M1AuthenticatedPhysicalQueueSessionV1 {
 
     /// Checked physical-device receipt retained by this queue phase.
     #[must_use]
+    #[cfg_attr(test, allow(clippy::missing_panics_doc))]
     pub const fn device(&self) -> Gfx942DeviceBinding {
         match self {
             #[cfg(test)]

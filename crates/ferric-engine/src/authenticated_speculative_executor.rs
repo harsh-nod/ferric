@@ -125,6 +125,7 @@ pub struct M1AuthenticatedSpeculativePhysicalExecutorV1 {
 }
 
 #[derive(Debug)]
+#[cfg_attr(test, allow(clippy::large_enum_variant))]
 enum M1AuthenticatedSpeculativePhysicalExecutorStateV1 {
     Production {
         coordinator: M1SpeculativeGenerationLoopV1,
@@ -143,6 +144,7 @@ pub struct M1AuthenticatedSpeculativeExecutorTeardownSuccessV1 {
 }
 
 #[derive(Debug)]
+#[cfg_attr(test, allow(clippy::large_enum_variant))]
 enum M1AuthenticatedSpeculativeExecutorTeardownSuccessStateV1 {
     Production {
         coordinator: M1SpeculativeGenerationLoopV1,
@@ -165,6 +167,7 @@ pub struct M1AuthenticatedSpeculativeExecutorTeardownFailureV1 {
 }
 
 impl M1AuthenticatedSpeculativeExecutorTeardownSuccessV1 {
+    #[cfg_attr(test, allow(clippy::missing_panics_doc))]
     pub const fn released(&self) -> &crate::M1AuthenticatedLongLivedQueueRearmTeardownSuccessV1 {
         match &self.state {
             M1AuthenticatedSpeculativeExecutorTeardownSuccessStateV1::Production {
@@ -231,6 +234,7 @@ pub struct M1AuthenticatedSpeculativePhysicalRoundInputsV1 {
 }
 
 #[derive(Debug)]
+#[cfg_attr(test, allow(clippy::large_enum_variant))]
 enum M1AuthenticatedSpeculativePhysicalRoundInputsStateV1 {
     Production {
         kv: M1LongLivedQueueRearmKvInputsV1,
@@ -341,6 +345,7 @@ pub struct M1AuthenticatedSpeculativeBootstrapPreparedV1 {
 }
 
 #[derive(Debug)]
+#[cfg_attr(test, allow(clippy::large_enum_variant))]
 enum M1AuthenticatedSpeculativeBootstrapPreparedStateV1 {
     Production {
         prepared: M1PreparedScheduledWorkspaceImagesV1,
@@ -374,6 +379,7 @@ pub struct M1AuthenticatedSpeculativeRolloverPublishedV1 {
 }
 
 #[derive(Debug)]
+#[cfg_attr(test, allow(clippy::large_enum_variant))]
 enum M1AuthenticatedSpeculativeRolloverPublishedStateV1 {
     Production {
         published: crate::M1AuthenticatedRearmedPublishedQueueV1,
@@ -1988,6 +1994,7 @@ pub struct M1AuthenticatedSpeculativePhysicalRoundSuccessV1 {
 }
 
 #[derive(Debug)]
+#[cfg_attr(test, allow(clippy::large_enum_variant))]
 enum M1AuthenticatedSpeculativeDiagnosticChoicesStateV1 {
     Production(M1ObservedSpeculativeDiagnosticChoicesV1),
     #[cfg(test)]
@@ -2004,6 +2011,7 @@ impl M1AuthenticatedSpeculativePhysicalRoundSuccessV1 {
     }
 
     /// Independent device copies used for semantic checking; never M1 evidence.
+    #[cfg_attr(test, allow(clippy::missing_panics_doc))]
     pub const fn diagnostic_choices(&self) -> &M1ObservedSpeculativeDiagnosticChoicesV1 {
         match &self.choices {
             M1AuthenticatedSpeculativeDiagnosticChoicesStateV1::Production(choices) => choices,
@@ -2013,6 +2021,7 @@ impl M1AuthenticatedSpeculativePhysicalRoundSuccessV1 {
     }
 
     #[must_use = "all success owners remain linear"]
+    #[allow(clippy::infallible_destructuring_match)]
     pub fn into_parts(
         self,
     ) -> (
@@ -2516,7 +2525,7 @@ impl M1AuthenticatedSpeculativeBootstrapPreparedV1 {
         )
     }
 
-    #[allow(clippy::too_many_arguments, private_bounds)]
+    #[allow(clippy::missing_errors_doc, clippy::too_many_arguments, private_bounds)]
     #[cfg(test)]
     pub fn execute_initial_round<const C: usize, M, R, P>(
         self,
@@ -4610,6 +4619,7 @@ fn complete_injected_rollover<const C: usize>(
 }
 
 #[cfg(test)]
+#[allow(clippy::unnecessary_wraps)]
 fn destroy_injected_executor<const C: usize>(
     state: M1AuthenticatedSpeculativePhysicalExecutorStateV1,
     _engine: &mut Engine<C>,
