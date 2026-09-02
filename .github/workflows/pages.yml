@@ -42,13 +42,17 @@ jobs:
           npx playwright install --with-deps chromium
           npm test
 
+      - name: Stage static Pages artifact
+        working-directory: site
+        run: npm run stage -- "${{ runner.temp }}/ferric-pages-artifact"
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
       - name: Upload static site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: ${{ runner.temp }}/ferric-pages-artifact
 
       - name: Deploy GitHub Pages
         id: deployment

@@ -17,6 +17,8 @@ When implementation or qualification state changes:
    npm ci
    npx playwright install chromium
    npm test
+   FERRIC_EXHAUSTIVE_WIDTHS=1 npm test
+   npm run stage -- /tmp/ferric-pages-artifact
    ```
 
 The deployment workflow runs the same syntax, structured-data, and Chromium
@@ -24,4 +26,7 @@ checks before publishing only this directory. `validate.mjs` rejects schema
 drift, stale current-dependency claims, unknown status states, malformed source
 references, duplicate transitions, missing render targets, and missing local
 assets. `render-validate.mjs` checks populated visible output without horizontal
-overflow at 1440px, 390px, and 320px.
+overflow at the desktop, breakpoint-edge, and mobile widths; its exhaustive mode
+checks every width from 320px through 1440px. `stage-artifact.mjs` creates and
+validates the six-file static deployment roster so `node_modules`, dependency
+metadata, documentation, and test-only files cannot enter the Pages artifact.
