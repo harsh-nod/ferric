@@ -1761,6 +1761,13 @@ impl AuthenticatedSubmissionOpaqueCustodyV1 {
 }
 
 /// Terminal authenticated rebind or publication custody.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1;
+/// fn resubmit(failure: M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1) {
+///     let _queue = failure.into_queue();
+/// }
+/// ```
 #[must_use = "terminal authenticated submission custody must remain retained"]
 pub struct M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1 {
     phase: M1AuthenticatedLongLivedQueueRearmSubmissionPhaseV1,
@@ -5388,5 +5395,30 @@ mod tests {
         let _: DeriveRecipe =
             M1AuthenticatedScheduledLongLivedQueueRearmV1::derive_retained_step_recipe;
         let _: Prepare = prepare_m1_authenticated_long_lived_queue_rearm_v1::<32>;
+    }
+
+    #[test]
+    fn public_submission_failure_truthfully_reports_release_and_quarantine() {
+        for (retained, released) in [
+            (
+                AuthenticatedSubmissionOpaqueCustodyV1::Released(Box::new("clean release")),
+                true,
+            ),
+            (
+                AuthenticatedSubmissionOpaqueCustodyV1::Quarantined(Box::new("terminal custody")),
+                false,
+            ),
+        ] {
+            let failure = authenticated_classified_submission_failure(
+                M1AuthenticatedLongLivedQueueRearmSubmissionPhaseV1::QueueSubmit,
+                retained,
+            );
+            assert_eq!(failure.queue_released(), released);
+            assert!(failure.engine_quarantined());
+            assert!(failure.retains_custody());
+            let debug = format!("{failure:?}");
+            assert!(!debug.contains("clean release"));
+            assert!(!debug.contains("terminal custody"));
+        }
     }
 }

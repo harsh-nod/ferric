@@ -483,6 +483,13 @@ impl fmt::Debug for M1AuthenticatedSpeculativeBootstrapRoundFailureV1 {
 
 /// Opaque exact inputs for retrying a bootstrap rejection that occurred before
 /// native queue creation began.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativeBootstrapPreDetachRetryV1;
+/// fn extract(retry: M1AuthenticatedSpeculativeBootstrapPreDetachRetryV1) {
+///     let _generic_queue_or_inputs = retry.into_parts();
+/// }
+/// ```
 #[must_use = "pre-detach bootstrap retry custody remains linear"]
 pub struct M1AuthenticatedSpeculativeBootstrapPreDetachRetryV1 {
     state: M1AuthenticatedSpeculativeBootstrapPreDetachRetryStateV1,
@@ -4275,28 +4282,36 @@ mod tests {
             (
                 Qwen3PlanBucket::SpeculativeS1K4C8192,
                 M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+                1_usize,
             ),
             (
                 Qwen3PlanBucket::SpeculativeS8K4C8192,
                 M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+                8,
             ),
             (
                 Qwen3PlanBucket::SpeculativeS1K8C8192,
                 M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+                1,
             ),
             (
                 Qwen3PlanBucket::SpeculativeS1K16C8192,
                 M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+                1,
             ),
         ];
-        for (bucket, expected) in cases {
+        for (bucket, expected, member_count) in cases {
             let target = selection(bucket);
             assert!(production_entry_profile_matches(target, expected));
             let draft = speculative_draft_selection(target).unwrap();
-            let requests = [RequestId::new(0, 1)];
-            let anchors = [70];
-            let target_committed = [10];
-            let draft_committed = [10];
+            let requests: Vec<_> = (0..member_count)
+                .map(|lane| RequestId::new(u32::try_from(lane).unwrap(), 1))
+                .collect();
+            let anchors: Vec<_> = (0..member_count)
+                .map(|lane| 70 + u32::try_from(lane).unwrap())
+                .collect();
+            let target_committed = vec![10; member_count];
+            let draft_committed = vec![10; member_count];
             let coordinator = coordinator_for_members(
                 target,
                 &requests,
@@ -4319,6 +4334,7 @@ mod tests {
                 None,
             );
             assert!(speculative_round_inputs_match_binding(&inputs, &binding));
+            assert_eq!(binding.members().len(), member_count);
         }
         assert!(!production_entry_profile_matches(
             Qwen3PlanSelection {
@@ -4328,6 +4344,133 @@ mod tests {
             },
             M1PhysicalFixedBatchShapeV1::SpeculativeK4,
         ));
+    }
+
+    #[test]
+    fn public_coordinator_profiles_repeat_then_stop_and_cancel_all_live_lanes() {
+        use crate::speculative_generation_loop::CheckedMemberObservationV1;
+        use crate::{
+            CheckedCompletionSemantics, M1SpeculativeCancellationReasonV1,
+            M1SpeculativeMemberStatusV1, M1SpeculativeTerminalReasonV1, M1SpeculativeTokenBlockV1,
+        };
+
+        let cases = [
+            (Qwen3PlanBucket::SpeculativeS1K4C8192, 1_usize),
+            (Qwen3PlanBucket::SpeculativeS8K4C8192, 8),
+            (Qwen3PlanBucket::SpeculativeS1K8C8192, 1),
+            (Qwen3PlanBucket::SpeculativeS1K16C8192, 1),
+        ];
+        for (bucket, member_count) in cases {
+            let target = selection(bucket);
+            let policy = crate::M1SpeculativeGenerationPolicyV1::new(32, &[999]).unwrap();
+            let seeds: Vec<_> = (0..member_count)
+                .map(|lane| {
+                    crate::M1SpeculativeMemberSeedV1::new(
+                        RequestId::new(u32::try_from(lane).unwrap(), 1),
+                        70 + u32::try_from(lane).unwrap(),
+                        10,
+                        10,
+                        policy,
+                    )
+                })
+                .collect();
+            let mut coordinator = M1SpeculativeGenerationLoopV1::new(target, &seeds).unwrap();
+            let roster = coordinator.active_roster();
+            assert_eq!(roster.len(), member_count);
+
+            let first = coordinator
+                .bind_round(0, CompletionEpoch::new(40), &roster)
+                .unwrap();
+            let first_observations: Vec<_> = roster
+                .iter()
+                .copied()
+                .map(|request| CheckedMemberObservationV1 {
+                    request,
+                    semantics: CheckedCompletionSemantics::Speculative {
+                        accepted_draft_tokens: 0,
+                        correction_or_bonus: 777,
+                    },
+                    emitted: M1SpeculativeTokenBlockV1::from_slice(&[777]).unwrap(),
+                })
+                .collect();
+            let first_controls: Vec<_> = roster
+                .iter()
+                .copied()
+                .map(M1SpeculativeMemberControlV1::continuing)
+                .collect();
+            let first = coordinator
+                .preflight_observed_round(
+                    first,
+                    target,
+                    CompletionEpoch::new(40),
+                    &first_observations,
+                    &first_controls,
+                )
+                .unwrap();
+            let first = coordinator.commit_preflighted_round(first).unwrap();
+            assert_eq!(first.next_active_roster(), roster.as_slice());
+
+            let second_roster = coordinator.active_roster();
+            let second = coordinator
+                .bind_round(1, CompletionEpoch::new(41), &second_roster)
+                .unwrap();
+            let second_observations: Vec<_> = second_roster
+                .iter()
+                .enumerate()
+                .map(|(lane, request)| {
+                    let token = if lane == 0 { 999 } else { 778 };
+                    CheckedMemberObservationV1 {
+                        request: *request,
+                        semantics: CheckedCompletionSemantics::Speculative {
+                            accepted_draft_tokens: 0,
+                            correction_or_bonus: token,
+                        },
+                        emitted: M1SpeculativeTokenBlockV1::from_slice(&[token]).unwrap(),
+                    }
+                })
+                .collect();
+            let second_controls: Vec<_> = second_roster
+                .iter()
+                .enumerate()
+                .map(|(lane, request)| {
+                    if member_count == 8 && lane == 1 {
+                        M1SpeculativeMemberControlV1::cancelling(
+                            *request,
+                            M1SpeculativeCancellationReasonV1::Deadline,
+                        )
+                    } else {
+                        M1SpeculativeMemberControlV1::continuing(*request)
+                    }
+                })
+                .collect();
+            let second = coordinator
+                .preflight_observed_round(
+                    second,
+                    target,
+                    CompletionEpoch::new(41),
+                    &second_observations,
+                    &second_controls,
+                )
+                .unwrap();
+            let second = coordinator.commit_preflighted_round(second).unwrap();
+            assert_eq!(
+                second.members()[0].status(),
+                M1SpeculativeMemberStatusV1::Completed(M1SpeculativeTerminalReasonV1::StopToken {
+                    token: 999
+                })
+            );
+            if member_count == 8 {
+                assert_eq!(
+                    second.members()[1].status(),
+                    M1SpeculativeMemberStatusV1::Cancelled(
+                        M1SpeculativeCancellationReasonV1::Deadline
+                    )
+                );
+                assert_eq!(second.next_active_roster().len(), 6);
+            } else {
+                assert!(second.next_active_roster().is_empty());
+            }
+        }
     }
 
     #[test]
@@ -4423,22 +4566,10 @@ mod tests {
             M1AuthenticatedSpeculativeBootstrapPreparedV1,
             Box<M1AuthenticatedSpeculativeBootstrapFailureV1>,
         >;
-        type BootstrapComplete = fn(
-            M1AuthenticatedSpeculativeBootstrapContinuationV1,
-            &mut Engine<32>,
-            M1AuthenticatedSpeculativeDiagnosticCompletedReadbackV1,
-            Vec<M1SpeculativeMemberControlV1>,
-        ) -> Result<
-            M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
-            Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1>,
-        >;
-
         let _: Execute = M1AuthenticatedSpeculativePhysicalExecutorV1::execute_round::<32>;
         let _: FinishedCleanup =
             M1AuthenticatedSpeculativePhysicalExecutorV1::destroy_queue_and_retain_state::<32>;
         let _: BootstrapPrepare = prepare_m1_authenticated_speculative_bootstrap_v1;
-        let _: BootstrapComplete =
-            M1AuthenticatedSpeculativeBootstrapContinuationV1::complete_initial_round::<32>;
         assert!(production_entry_has_active_members(1));
         assert!(!production_entry_has_active_members(0));
     }

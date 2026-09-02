@@ -246,6 +246,13 @@ impl fmt::Debug for M1AuthenticatedSpeculativeRolloverScheduleFailureV1 {
 
 /// Opaque exact owners retained by a pure rollover scheduling preflight
 /// rejection. The released queue and coordinator cannot be separated.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativeRolloverSchedulePreDetachRetryV1;
+/// fn extract(retry: M1AuthenticatedSpeculativeRolloverSchedulePreDetachRetryV1) {
+///     let _released_queue_or_coordinator = retry.into_parts();
+/// }
+/// ```
 #[must_use = "pre-detach rollover retry custody remains linear"]
 pub struct M1AuthenticatedSpeculativeRolloverSchedulePreDetachRetryV1 {
     released: Box<M1AuthenticatedReleasedCompletedStepV1>,
@@ -889,8 +896,9 @@ fn preflight<const C: usize>(
 ///
 /// # Errors
 ///
-/// Every failure closes the queue and seals all scheduling custody. Once
-/// detachment starts, the Engine is quarantined before the failure returns.
+/// Pure preflight rejection returns an opaque retry owner without faulting the
+/// Engine. Once detachment starts, every failure closes or quarantines queue
+/// custody and permanently faults the Engine before returning.
 #[allow(clippy::too_many_arguments)]
 pub fn schedule_m1_authenticated_speculative_rollover_v1<const C: usize>(
     engine: &mut Engine<C>,
