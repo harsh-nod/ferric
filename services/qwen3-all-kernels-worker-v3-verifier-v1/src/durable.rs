@@ -20,23 +20,24 @@ use fe2o3_worker_v3_verification_service::{
 use rustix::fs::{FlockOperation, flock};
 use sha2::{Digest, Sha256};
 
-const HEADER_MAGIC: [u8; 8] = *b"FRV2LED2";
-const RECORD_MAGIC: [u8; 8] = *b"FRV2REC2";
-const VERSION: u16 = 2;
-const HEADER_BYTES: usize = 96;
-const HEADER_BYTES_U64: u64 = 96;
-const HEADER_BYTES_U32: u32 = 96;
+const HEADER_MAGIC: [u8; 8] = *b"FRV2LED3";
+const RECORD_MAGIC: [u8; 8] = *b"FRV2REC3";
+const VERSION: u16 = 3;
+const HEADER_BYTES: usize = 128;
+const HEADER_BYTES_U64: u64 = 128;
+const HEADER_BYTES_U32: u32 = 128;
 const RECORD_BYTES: usize = 224;
 const RECORD_BYTES_U64: u64 = 224;
 const RECORD_BYTES_U32: u32 = 224;
 const REPLAY_KIND: u16 = 1;
 const RESERVATION_KIND: u16 = 2;
-const HEADER_DOMAIN: &[u8] = b"FERRIC/M1/PROTECTED-VERIFIER/DURABLE-LEDGER-HEADER/V2\0";
-const RECORD_DOMAIN: &[u8] = b"FERRIC/M1/PROTECTED-VERIFIER/DURABLE-LEDGER-RECORD/V2\0";
+const NAMESPACE_DOMAIN: &[u8] = b"FERRIC/M1/PROTECTED-VERIFIER/DURABLE-LEDGER-NAMESPACE/V3\0";
+const HEADER_DOMAIN: &[u8] = b"FERRIC/M1/PROTECTED-VERIFIER/DURABLE-LEDGER-HEADER/V3\0";
+const RECORD_DOMAIN: &[u8] = b"FERRIC/M1/PROTECTED-VERIFIER/DURABLE-LEDGER-RECORD/V3\0";
 const MAX_ENTROPY_ATTEMPTS: usize = 16;
 const REQUIRED_LEDGER_PERMISSION_BITS: u32 = 0o600;
 
-/// Hard implementation ceiling for one durable ledger epoch.
+/// Hard terminal capacity for one policy-bound durable ledger.
 pub const MAX_DURABLE_LEDGER_RECORDS_V1: u32 = 1_048_576;
 
 /// Boxed failure returned by a deployment-owned protected head store.
@@ -168,11 +169,87 @@ impl ProtectedLedgerKindV1 {
     }
 }
 
-/// Externally anchored exact state of one protected ledger epoch.
+/// Move-only evidence that a protected supervisor durably revoked one old policy.
+///
+/// This token is an unsafe-boundary witness, not an in-process proof of revocation.
+///
+/// ```compile_fail
+/// use ferric_qwen3_all_kernels_worker_v3_verifier_service_v1::
+///     ProtectedPolicyRevocationV1;
+/// fn duplicate(value: ProtectedPolicyRevocationV1) {
+///     let _again = value.clone();
+/// }
+/// ```
+pub struct ProtectedPolicyRevocationV1 {
+    prior: WorkerV3VerificationPolicyIdentityV1,
+    replacement: WorkerV3VerificationPolicyIdentityV1,
+}
+
+impl ProtectedPolicyRevocationV1 {
+    /// Mints replacement authority after external revocation of `prior`.
+    ///
+    /// # Safety
+    ///
+    /// The protected supervisor must have durably and globally revoked `prior`
+    /// before calling. No endpoint may accept a new Begin under `prior`, and the
+    /// protected head store must permanently retain every old `(policy, kind)`
+    /// namespace. The replacement identity must be a newly provisioned trust policy.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the replacement reuses the old policy identity.
+    pub unsafe fn from_supervisor_revocation(
+        prior: WorkerV3VerificationPolicyIdentityV1,
+        replacement: WorkerV3VerificationPolicyIdentityV1,
+    ) -> Result<Self, DurableLedgerErrorV1> {
+        if prior == replacement {
+            return Err(DurableLedgerErrorV1::PolicyReplacementRequiresNewIdentity);
+        }
+        Ok(Self { prior, replacement })
+    }
+
+    /// Splits the revocation witness into one move-only authorization per ledger kind.
+    pub fn into_ledger_authorizations(
+        self,
+    ) -> (
+        ProtectedLedgerReplacementAuthorizationV1,
+        ProtectedLedgerReplacementAuthorizationV1,
+    ) {
+        (
+            ProtectedLedgerReplacementAuthorizationV1 {
+                prior: self.prior,
+                replacement: self.replacement,
+                kind: ProtectedLedgerKindV1::Replay,
+            },
+            ProtectedLedgerReplacementAuthorizationV1 {
+                prior: self.prior,
+                replacement: self.replacement,
+                kind: ProtectedLedgerKindV1::Reservation,
+            },
+        )
+    }
+}
+
+/// Move-only authorization for one new-policy ledger replacement.
+///
+/// ```compile_fail
+/// use ferric_qwen3_all_kernels_worker_v3_verifier_service_v1::
+///     ProtectedLedgerReplacementAuthorizationV1;
+/// fn duplicate(value: ProtectedLedgerReplacementAuthorizationV1) {
+///     let _again = value.clone();
+/// }
+/// ```
+pub struct ProtectedLedgerReplacementAuthorizationV1 {
+    prior: WorkerV3VerificationPolicyIdentityV1,
+    replacement: WorkerV3VerificationPolicyIdentityV1,
+    kind: ProtectedLedgerKindV1,
+}
+
+/// Externally anchored exact state of one policy-bound protected ledger.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ProtectedLedgerExternalHeadV1 {
+    policy_identity: [u8; 32],
     header_identity: [u8; 32],
-    epoch: u64,
     record_count: u32,
     record_identity: [u8; 32],
 }
@@ -185,39 +262,36 @@ impl ProtectedLedgerExternalHeadV1 {
     ///
     /// # Errors
     ///
-    /// Returns an error for zero identities, epoch zero, or an inconsistent
+    /// Returns an error for zero identities or an inconsistent
     /// empty/nonempty record identity.
     pub fn new(
+        policy_identity: [u8; 32],
         header_identity: [u8; 32],
-        epoch: u64,
         record_count: u32,
         record_identity: [u8; 32],
     ) -> Result<Self, DurableLedgerErrorV1> {
-        if header_identity == [0; 32] {
+        if policy_identity == [0; 32] || header_identity == [0; 32] {
             return Err(DurableLedgerErrorV1::ExternalHeadMismatch);
-        }
-        if epoch == 0 {
-            return Err(DurableLedgerErrorV1::InvalidEpoch);
         }
         if (record_count == 0) != (record_identity == [0; 32]) {
             return Err(DurableLedgerErrorV1::ExternalHeadMismatch);
         }
         Ok(Self {
+            policy_identity,
             header_identity,
-            epoch,
             record_count,
             record_identity,
         })
     }
 
-    /// Returns the exact header identity covering namespace, kind, epoch, and capacity.
-    pub const fn header_identity(&self) -> [u8; 32] {
-        self.header_identity
+    /// Returns the exact Worker V3 policy identity.
+    pub const fn policy_identity(&self) -> [u8; 32] {
+        self.policy_identity
     }
 
-    /// Returns the monotonically increasing supervisor epoch.
-    pub const fn epoch(&self) -> u64 {
-        self.epoch
+    /// Returns the exact header identity covering policy, namespace, kind, and capacity.
+    pub const fn header_identity(&self) -> [u8; 32] {
+        self.header_identity
     }
 
     /// Returns the exact committed record count.
@@ -225,7 +299,7 @@ impl ProtectedLedgerExternalHeadV1 {
         self.record_count
     }
 
-    /// Returns the final record identity, or zero for an empty epoch.
+    /// Returns the final record identity, or zero for an empty ledger.
     pub const fn record_identity(&self) -> [u8; 32] {
         self.record_identity
     }
@@ -240,7 +314,10 @@ impl ProtectedLedgerExternalHeadV1 {
 /// rollback or deletion of a committed head, and return success only after the
 /// new head is externally durable. Provider IPC must be bounded and cancellable;
 /// this synchronous interface cannot recover a thread from a hung implementation.
-/// A SHA chain in the ledger file is not enough.
+/// A `(policy, kind)` head may never be deleted, reset, or reinitialized, even
+/// after capacity exhaustion or policy revocation. Replacement requires a new
+/// trust-policy identity in a distinct domain-separated namespace after the old
+/// policy is globally revoked. A SHA chain in the ledger file is not enough.
 pub unsafe trait ProtectedLedgerHeadStoreV1: Send {
     /// Returns the exact measured/pinned provider identity.
     fn provider_identity(&self) -> [u8; 32];
@@ -254,7 +331,7 @@ pub unsafe trait ProtectedLedgerHeadStoreV1: Send {
         &mut self,
     ) -> Result<Option<ProtectedLedgerExternalHeadV1>, ProtectedLedgerHeadStoreFailureV1>;
 
-    /// Durably installs the initial epoch only when no head has ever existed.
+    /// Durably installs a head only when this `(policy, kind)` never existed.
     ///
     /// # Errors
     ///
@@ -289,8 +366,8 @@ pub struct ProtectedLedgerStorageCapabilityV1 {
     file: OwnedFd,
     object: LedgerObjectIdentityV1,
     namespace: [u8; 32],
+    policy: WorkerV3VerificationPolicyIdentityV1,
     kind: ProtectedLedgerKindV1,
-    epoch: u64,
     max_records: u32,
     head_store: Box<dyn ProtectedLedgerHeadStoreV1>,
     head_store_identity: [u8; 32],
@@ -298,7 +375,7 @@ pub struct ProtectedLedgerStorageCapabilityV1 {
 }
 
 impl ProtectedLedgerStorageCapabilityV1 {
-    /// Provisions a never-before-used ledger and initializes its external head.
+    /// Provisions the first ledger for a never-before-used protected policy.
     ///
     /// # Safety
     ///
@@ -306,23 +383,89 @@ impl ProtectedLedgerStorageCapabilityV1 {
     /// is new and cannot be replaced, rolled back, linked, or modified by another
     /// principal, and that the pinned owner is the protected service principal.
     /// `head_store` must satisfy its unsafe trait contract and be dedicated to this
-    /// logical ledger. Namespace and epoch must never be reused.
+    /// `(policy, kind)` ledger. This initial API must never be used to replace or
+    /// reset a previously provisioned policy, even after capacity exhaustion.
     ///
     /// # Errors
     ///
     /// Returns a typed error if any invariant or external durable transition fails.
     #[allow(clippy::too_many_arguments)]
-    pub unsafe fn provision_new_from_supervisor(
+    pub unsafe fn provision_initial_from_supervisor(
         file: OwnedFd,
         object: LedgerObjectIdentityV1,
-        namespace: [u8; 32],
+        policy: WorkerV3VerificationPolicyIdentityV1,
         kind: ProtectedLedgerKindV1,
-        epoch: u64,
+        max_records: u32,
+        head_store: Box<dyn ProtectedLedgerHeadStoreV1>,
+        head_store_identity: [u8; 32],
+    ) -> Result<Self, DurableLedgerErrorV1> {
+        Self::provision(
+            file,
+            object,
+            policy,
+            kind,
+            max_records,
+            head_store,
+            head_store_identity,
+        )
+    }
+
+    /// Provisions one replacement ledger only for a newly identified policy.
+    ///
+    /// # Safety
+    ///
+    /// The authorization must originate from a truthful call to
+    /// [`ProtectedPolicyRevocationV1::from_supervisor_revocation`]. The supervisor
+    /// must uphold the same protected-file and head-store requirements as initial
+    /// provisioning. It must never reset the authorization's prior policy.
+    ///
+    /// # Errors
+    ///
+    /// Returns a typed error for an authorization, object, or durable-store failure.
+    #[allow(
+        clippy::needless_pass_by_value,
+        clippy::too_many_arguments,
+        reason = "replacement authority is a deliberately consumed move-only witness"
+    )]
+    pub unsafe fn provision_replacement_from_supervisor(
+        file: OwnedFd,
+        object: LedgerObjectIdentityV1,
+        policy: WorkerV3VerificationPolicyIdentityV1,
+        kind: ProtectedLedgerKindV1,
+        max_records: u32,
+        head_store: Box<dyn ProtectedLedgerHeadStoreV1>,
+        head_store_identity: [u8; 32],
+        authorization: ProtectedLedgerReplacementAuthorizationV1,
+    ) -> Result<Self, DurableLedgerErrorV1> {
+        if authorization.replacement != policy
+            || authorization.prior == policy
+            || authorization.kind != kind
+        {
+            return Err(DurableLedgerErrorV1::PolicyIdentityMismatch);
+        }
+        Self::provision(
+            file,
+            object,
+            policy,
+            kind,
+            max_records,
+            head_store,
+            head_store_identity,
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn provision(
+        file: OwnedFd,
+        object: LedgerObjectIdentityV1,
+        policy: WorkerV3VerificationPolicyIdentityV1,
+        kind: ProtectedLedgerKindV1,
         max_records: u32,
         mut head_store: Box<dyn ProtectedLedgerHeadStoreV1>,
         head_store_identity: [u8; 32],
     ) -> Result<Self, DurableLedgerErrorV1> {
-        validate_configuration(namespace, epoch, max_records, head_store_identity)?;
+        let namespace = ledger_namespace(policy, kind);
+        validate_configuration(max_records, head_store_identity)?;
         validate_file(&file, object)?;
         validate_head_store_identity(&*head_store, head_store_identity)?;
         let provision_lock = LedgerLockV1::acquire(&file)?;
@@ -331,13 +474,13 @@ impl ProtectedLedgerStorageCapabilityV1 {
         if stat.st_size != 0 {
             return Err(DurableLedgerErrorV1::AlreadyProvisioned);
         }
-        let header = encode_header(kind, namespace, epoch, max_records);
+        let header = encode_header(kind, namespace, policy, max_records);
         pwrite_all(&file, &header, 0)?;
         rustix::fs::fdatasync(&file)
             .map_err(|source| DurableLedgerErrorV1::Synchronize(source.into()))?;
         let initial = ProtectedLedgerExternalHeadV1 {
+            policy_identity: *policy.as_bytes(),
             header_identity: header_identity(&header),
-            epoch,
             record_count: 0,
             record_identity: [0; 32],
         };
@@ -352,8 +495,8 @@ impl ProtectedLedgerStorageCapabilityV1 {
             file,
             object,
             namespace,
+            policy,
             kind,
-            epoch,
             max_records,
             head_store,
             head_store_identity,
@@ -366,7 +509,7 @@ impl ProtectedLedgerStorageCapabilityV1 {
     /// # Safety
     ///
     /// The protected supervisor must uphold the same exclusive-modification and
-    /// antirollback contract as [`Self::provision_new_from_supervisor`], including
+    /// antirollback contract as [`Self::provision_initial_from_supervisor`], including
     /// continuity of the exact protected head store across restarts.
     ///
     /// # Errors
@@ -376,26 +519,26 @@ impl ProtectedLedgerStorageCapabilityV1 {
     pub unsafe fn open_existing_from_supervisor(
         file: OwnedFd,
         object: LedgerObjectIdentityV1,
-        namespace: [u8; 32],
+        policy: WorkerV3VerificationPolicyIdentityV1,
         kind: ProtectedLedgerKindV1,
-        epoch: u64,
         max_records: u32,
         head_store: Box<dyn ProtectedLedgerHeadStoreV1>,
         head_store_identity: [u8; 32],
     ) -> Result<Self, DurableLedgerErrorV1> {
-        validate_configuration(namespace, epoch, max_records, head_store_identity)?;
+        let namespace = ledger_namespace(policy, kind);
+        validate_configuration(max_records, head_store_identity)?;
         validate_file(&file, object)?;
         validate_head_store_identity(&*head_store, head_store_identity)?;
         let state = {
             let _lock = LedgerLockV1::acquire(&file)?;
-            read_validated_state(&file, kind, namespace, epoch, max_records)?
+            read_validated_state(&file, kind, namespace, policy, max_records)?
         };
         let mut capability = Self {
             file,
             object,
             namespace,
+            policy,
             kind,
-            epoch,
             max_records,
             head_store,
             head_store_identity,
@@ -403,75 +546,6 @@ impl ProtectedLedgerStorageCapabilityV1 {
         };
         capability.validate_current_head()?;
         Ok(capability)
-    }
-
-    /// Rotates a full epoch to a new empty object without weakening antirollback.
-    ///
-    /// No automatic compaction exists. Capacity exhaustion remains terminal until
-    /// the protected supervisor quiesces admission and performs this transition.
-    ///
-    /// # Safety
-    ///
-    /// The supervisor must quiesce every old user, protect the new file under the
-    /// initial-provisioning contract, and never reuse `next_epoch`. The protected
-    /// head-store CAS is the commit point: before it the old epoch is authoritative;
-    /// after it the already-synchronized new epoch is authoritative.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error unless the old epoch is full/current and the next epoch,
-    /// new object, and external CAS all satisfy the protected contract.
-    pub unsafe fn rotate_full_epoch_from_supervisor(
-        mut self,
-        new_file: OwnedFd,
-        new_object: LedgerObjectIdentityV1,
-        next_epoch: u64,
-        next_max_records: u32,
-    ) -> Result<Self, DurableLedgerErrorV1> {
-        if next_epoch <= self.epoch {
-            return Err(DurableLedgerErrorV1::InvalidEpoch);
-        }
-        validate_configuration(
-            self.namespace,
-            next_epoch,
-            next_max_records,
-            self.head_store_identity,
-        )?;
-        let old = self.validate_current_head()?;
-        if old.record_count != self.max_records {
-            return Err(DurableLedgerErrorV1::RotationBeforeCapacity);
-        }
-        validate_file(&new_file, new_object)?;
-        let lock = LedgerLockV1::acquire(&new_file)?;
-        let stat = rustix::fs::fstat(&new_file)
-            .map_err(|source| DurableLedgerErrorV1::Inspect(source.into()))?;
-        if stat.st_size != 0 {
-            return Err(DurableLedgerErrorV1::AlreadyProvisioned);
-        }
-        let header = encode_header(self.kind, self.namespace, next_epoch, next_max_records);
-        pwrite_all(&new_file, &header, 0)?;
-        rustix::fs::fdatasync(&new_file)
-            .map_err(|source| DurableLedgerErrorV1::Synchronize(source.into()))?;
-        let next = ProtectedLedgerExternalHeadV1 {
-            header_identity: header_identity(&header),
-            epoch: next_epoch,
-            record_count: 0,
-            record_identity: [0; 32],
-        };
-        if !self
-            .head_store
-            .compare_exchange_head(old, next)
-            .map_err(DurableLedgerErrorV1::ExternalHead)?
-        {
-            return Err(DurableLedgerErrorV1::ExternalHeadConflict);
-        }
-        drop(lock);
-        self.file = new_file;
-        self.object = new_object;
-        self.epoch = next_epoch;
-        self.max_records = next_max_records;
-        self.state = ValidatedLedgerStateV1::empty(next);
-        Ok(self)
     }
 
     fn validate_current_head(
@@ -484,7 +558,7 @@ impl ProtectedLedgerStorageCapabilityV1 {
             &self.file,
             self.kind,
             self.namespace,
-            self.epoch,
+            self.policy,
             self.max_records,
             &self.state,
         )?;
@@ -506,16 +580,14 @@ impl ProtectedLedgerStorageCapabilityV1 {
 pub enum DurableLedgerErrorV1 {
     /// The pinned descriptor identity/mode/owner/link/type did not match.
     ObjectIdentityMismatch,
-    /// The namespace used the forbidden zero sentinel.
-    ZeroNamespace,
-    /// The epoch was zero or did not increase during rotation.
-    InvalidEpoch,
+    /// A ledger, call, service, or replacement authorization named another policy.
+    PolicyIdentityMismatch,
+    /// Replacement attempted to reuse the revoked policy identity.
+    PolicyReplacementRequiresNewIdentity,
     /// Capacity was zero or exceeded the hard implementation ceiling.
     InvalidCapacity,
-    /// No more records may be appended in this epoch.
+    /// No more records may be appended to this policy's terminal-capacity ledger.
     CapacityExhausted,
-    /// Rotation was attempted before exact capacity.
-    RotationBeforeCapacity,
     /// The external head-store identity was zero or substituted.
     ExternalHeadIdentityMismatch,
     /// The external head was absent for an existing ledger.
@@ -538,7 +610,7 @@ pub enum DurableLedgerErrorV1 {
     Synchronize(io::Error),
     /// The descriptor did not contain the exact schema.
     Corrupt(&'static str),
-    /// Provisioning or rotation received a nonempty file.
+    /// Provisioning received a nonempty file.
     AlreadyProvisioned,
     /// The entropy descriptor failed before a complete candidate was read.
     Entropy(io::Error),
@@ -550,13 +622,14 @@ impl fmt::Display for DurableLedgerErrorV1 {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::ObjectIdentityMismatch => formatter.write_str("protected ledger object mismatch"),
-            Self::ZeroNamespace => formatter.write_str("protected ledger namespace is zero"),
-            Self::InvalidEpoch => formatter.write_str("protected ledger epoch is invalid"),
-            Self::InvalidCapacity => formatter.write_str("protected ledger capacity is invalid"),
-            Self::CapacityExhausted => formatter.write_str("protected ledger epoch is full"),
-            Self::RotationBeforeCapacity => {
-                formatter.write_str("rotation requested before capacity")
+            Self::PolicyIdentityMismatch => {
+                formatter.write_str("protected ledger policy identity mismatch")
             }
+            Self::PolicyReplacementRequiresNewIdentity => {
+                formatter.write_str("replacement must use a new protected policy identity")
+            }
+            Self::InvalidCapacity => formatter.write_str("protected ledger capacity is invalid"),
+            Self::CapacityExhausted => formatter.write_str("protected ledger capacity is terminal"),
             Self::ExternalHeadIdentityMismatch => {
                 formatter.write_str("head-store identity mismatch")
             }
@@ -611,6 +684,9 @@ impl DurableLedgerV1 {
         &mut self,
         candidate: LedgerRecordV1,
     ) -> Result<bool, DurableLedgerErrorV1> {
+        if candidate.policy != *self.storage.policy.as_bytes() {
+            return Err(DurableLedgerErrorV1::PolicyIdentityMismatch);
+        }
         validate_file(&self.storage.file, self.storage.object)?;
         validate_head_store_identity(&*self.storage.head_store, self.storage.head_store_identity)?;
         let _lock = LedgerLockV1::acquire(&self.storage.file)?;
@@ -618,7 +694,7 @@ impl DurableLedgerV1 {
             &self.storage.file,
             self.storage.kind,
             self.storage.namespace,
-            self.storage.epoch,
+            self.storage.policy,
             self.storage.max_records,
             &self.storage.state,
         )?;
@@ -646,8 +722,8 @@ impl DurableLedgerV1 {
         rustix::fs::fdatasync(&self.storage.file)
             .map_err(|source| DurableLedgerErrorV1::Synchronize(source.into()))?;
         let next = ProtectedLedgerExternalHeadV1 {
+            policy_identity: *self.storage.policy.as_bytes(),
             header_identity: self.storage.state.external_head.header_identity,
-            epoch: self.storage.state.external_head.epoch,
             record_count: self
                 .storage
                 .state
@@ -818,6 +894,11 @@ impl DurableReplayGuardV1 {
     pub const fn last_error(&self) -> Option<&DurableLedgerErrorV1> {
         self.last_error.as_ref()
     }
+
+    /// Returns the exact policy identity permanently bound to this guard.
+    pub const fn policy_identity(&self) -> WorkerV3VerificationPolicyIdentityV1 {
+        self.ledger.storage.policy
+    }
 }
 
 impl WorkerV3VerificationChallengeReplayGuardV1 for DurableReplayGuardV1 {
@@ -827,6 +908,10 @@ impl WorkerV3VerificationChallengeReplayGuardV1 for DurableReplayGuardV1 {
         policy: WorkerV3VerificationPolicyIdentityV1,
         challenge: WorkerV3VerificationFreshChallengeV1,
     ) -> bool {
+        if policy != self.policy_identity() {
+            self.last_error = Some(DurableLedgerErrorV1::PolicyIdentityMismatch);
+            return false;
+        }
         let record = LedgerRecordV1 {
             caller: [caller.pid(), caller.uid(), caller.gid()],
             policy: *policy.as_bytes(),
@@ -883,11 +968,19 @@ impl DurableReservationProviderV2 {
         self.last_error.as_ref()
     }
 
+    /// Returns the exact policy identity permanently bound to this provider.
+    pub const fn policy_identity(&self) -> WorkerV3VerificationPolicyIdentityV1 {
+        self.ledger.storage.policy
+    }
+
     fn try_reserve(
         &mut self,
         caller: WorkerV3VerificationCallerV1,
         request: &WorkerV3VerificationRequestV1,
     ) -> Result<WorkerV3VerificationChallengeReservationV2, DurableLedgerErrorV1> {
+        if request.policy_identity() != self.policy_identity() {
+            return Err(DurableLedgerErrorV1::PolicyIdentityMismatch);
+        }
         self.try_reserve_coordinates(
             [caller.pid(), caller.uid(), caller.gid()],
             *request.policy_identity().as_bytes(),
@@ -901,6 +994,9 @@ impl DurableReservationProviderV2 {
         policy: [u8; 32],
         request: [u8; 32],
     ) -> Result<WorkerV3VerificationChallengeReservationV2, DurableLedgerErrorV1> {
+        if policy != *self.policy_identity().as_bytes() {
+            return Err(DurableLedgerErrorV1::PolicyIdentityMismatch);
+        }
         if !self.entropy_identity.matches(&self.entropy)? {
             return Err(DurableLedgerErrorV1::ObjectIdentityMismatch);
         }
@@ -946,17 +1042,9 @@ impl WorkerV3VerificationChallengeReservationProviderV2 for DurableReservationPr
 }
 
 fn validate_configuration(
-    namespace: [u8; 32],
-    epoch: u64,
     max_records: u32,
     head_store_identity: [u8; 32],
 ) -> Result<(), DurableLedgerErrorV1> {
-    if namespace == [0; 32] {
-        return Err(DurableLedgerErrorV1::ZeroNamespace);
-    }
-    if epoch == 0 {
-        return Err(DurableLedgerErrorV1::InvalidEpoch);
-    }
     if max_records == 0 || max_records > MAX_DURABLE_LEDGER_RECORDS_V1 {
         return Err(DurableLedgerErrorV1::InvalidCapacity);
     }
@@ -964,6 +1052,17 @@ fn validate_configuration(
         return Err(DurableLedgerErrorV1::ExternalHeadIdentityMismatch);
     }
     Ok(())
+}
+
+fn ledger_namespace(
+    policy: WorkerV3VerificationPolicyIdentityV1,
+    kind: ProtectedLedgerKindV1,
+) -> [u8; 32] {
+    hash_parts(&[
+        NAMESPACE_DOMAIN,
+        policy.as_bytes(),
+        &kind.tag().to_le_bytes(),
+    ])
 }
 
 fn validate_file(
@@ -990,7 +1089,7 @@ fn read_validated_state(
     file: &OwnedFd,
     kind: ProtectedLedgerKindV1,
     namespace: [u8; 32],
-    epoch: u64,
+    policy: WorkerV3VerificationPolicyIdentityV1,
     max_records: u32,
 ) -> Result<ValidatedLedgerStateV1, DurableLedgerErrorV1> {
     let stat =
@@ -1017,11 +1116,11 @@ fn read_validated_state(
     }
     let mut header = [0_u8; HEADER_BYTES];
     pread_all(file, &mut header, 0)?;
-    validate_header(&header, kind, namespace, epoch, max_records)?;
+    validate_header(&header, kind, namespace, policy, max_records)?;
     let mut state = ValidatedLedgerStateV1 {
         external_head: ProtectedLedgerExternalHeadV1 {
+            policy_identity: *policy.as_bytes(),
             header_identity: header_identity(&header),
-            epoch,
             record_count,
             record_identity: [0; 32],
         },
@@ -1035,6 +1134,9 @@ fn read_validated_state(
         let mut bytes = [0_u8; RECORD_BYTES];
         pread_all(file, &mut bytes, record_offset(index)?)?;
         let record = decode_record(&bytes, kind, previous)?;
+        if record.policy != *policy.as_bytes() {
+            return Err(DurableLedgerErrorV1::Corrupt("record policy binding"));
+        }
         let inserted = match kind {
             ProtectedLedgerKindV1::Replay => {
                 state
@@ -1063,7 +1165,7 @@ fn validate_cached_file_state(
     file: &OwnedFd,
     kind: ProtectedLedgerKindV1,
     namespace: [u8; 32],
-    epoch: u64,
+    policy: WorkerV3VerificationPolicyIdentityV1,
     max_records: u32,
     state: &ValidatedLedgerStateV1,
 ) -> Result<(), DurableLedgerErrorV1> {
@@ -1076,7 +1178,7 @@ fn validate_cached_file_state(
     }
     let mut header = [0_u8; HEADER_BYTES];
     pread_all(file, &mut header, 0)?;
-    validate_header(&header, kind, namespace, epoch, max_records)?;
+    validate_header(&header, kind, namespace, policy, max_records)?;
     if header_identity(&header) != state.external_head.header_identity {
         return Err(DurableLedgerErrorV1::ExternalHeadMismatch);
     }
@@ -1109,7 +1211,7 @@ fn record_offset(record_count: u32) -> Result<u64, DurableLedgerErrorV1> {
 fn encode_header(
     kind: ProtectedLedgerKindV1,
     namespace: [u8; 32],
-    epoch: u64,
+    policy: WorkerV3VerificationPolicyIdentityV1,
     max_records: u32,
 ) -> [u8; HEADER_BYTES] {
     let mut bytes = [0_u8; HEADER_BYTES];
@@ -1120,8 +1222,9 @@ fn encode_header(
     put(&mut bytes, &mut offset, &HEADER_BYTES_U32.to_le_bytes());
     put(&mut bytes, &mut offset, &RECORD_BYTES_U32.to_le_bytes());
     put(&mut bytes, &mut offset, &max_records.to_le_bytes());
-    put(&mut bytes, &mut offset, &epoch.to_le_bytes());
+    put(&mut bytes, &mut offset, &[0; 8]);
     put(&mut bytes, &mut offset, &namespace);
+    put(&mut bytes, &mut offset, policy.as_bytes());
     let digest = hash_parts(&[HEADER_DOMAIN, &bytes[..offset]]);
     put(&mut bytes, &mut offset, &digest);
     debug_assert_eq!(offset, HEADER_BYTES);
@@ -1129,14 +1232,14 @@ fn encode_header(
 }
 
 fn header_identity(bytes: &[u8; HEADER_BYTES]) -> [u8; 32] {
-    bytes[64..96].try_into().expect("fixed header identity")
+    bytes[96..128].try_into().expect("fixed header identity")
 }
 
 fn validate_header(
     bytes: &[u8; HEADER_BYTES],
     kind: ProtectedLedgerKindV1,
     namespace: [u8; 32],
-    epoch: u64,
+    policy: WorkerV3VerificationPolicyIdentityV1,
     max_records: u32,
 ) -> Result<(), DurableLedgerErrorV1> {
     if bytes[..8] != HEADER_MAGIC
@@ -1145,9 +1248,10 @@ fn validate_header(
         || u32::from_le_bytes(bytes[12..16].try_into().expect("header length")) != HEADER_BYTES_U32
         || u32::from_le_bytes(bytes[16..20].try_into().expect("record length")) != RECORD_BYTES_U32
         || u32::from_le_bytes(bytes[20..24].try_into().expect("record capacity")) != max_records
-        || u64::from_le_bytes(bytes[24..32].try_into().expect("epoch")) != epoch
+        || bytes[24..32] != [0; 8]
         || bytes[32..64] != namespace
-        || bytes[64..96] != hash_parts(&[HEADER_DOMAIN, &bytes[..64]])
+        || bytes[64..96] != *policy.as_bytes()
+        || bytes[96..128] != hash_parts(&[HEADER_DOMAIN, &bytes[..96]])
     {
         return Err(DurableLedgerErrorV1::Corrupt("header binding"));
     }
@@ -1325,6 +1429,50 @@ mod tests {
         }
     }
 
+    struct IndeterminateCasHeadStore {
+        identity: [u8; 32],
+        head: Arc<Mutex<Option<ProtectedLedgerExternalHeadV1>>>,
+    }
+
+    // The test store durably commits CAS but reports transport failure afterward.
+    unsafe impl ProtectedLedgerHeadStoreV1 for IndeterminateCasHeadStore {
+        fn provider_identity(&self) -> [u8; 32] {
+            self.identity
+        }
+
+        fn load_head(
+            &mut self,
+        ) -> Result<Option<ProtectedLedgerExternalHeadV1>, ProtectedLedgerHeadStoreFailureV1>
+        {
+            Ok(*self.head.lock().unwrap())
+        }
+
+        fn initialize_head(
+            &mut self,
+            initial: ProtectedLedgerExternalHeadV1,
+        ) -> Result<bool, ProtectedLedgerHeadStoreFailureV1> {
+            let mut head = self.head.lock().unwrap();
+            if head.is_some() {
+                return Ok(false);
+            }
+            *head = Some(initial);
+            Ok(true)
+        }
+
+        fn compare_exchange_head(
+            &mut self,
+            current: ProtectedLedgerExternalHeadV1,
+            next: ProtectedLedgerExternalHeadV1,
+        ) -> Result<bool, ProtectedLedgerHeadStoreFailureV1> {
+            let mut head = self.head.lock().unwrap();
+            if *head != Some(current) {
+                return Ok(false);
+            }
+            *head = Some(next);
+            Err(std::io::Error::other("indeterminate CAS reply").into())
+        }
+    }
+
     fn owned(file: &File) -> OwnedFd {
         rustix::io::fcntl_dupfd_cloexec(file, 0).unwrap()
     }
@@ -1360,6 +1508,10 @@ mod tests {
         )
     }
 
+    fn policy(seed: u8) -> WorkerV3VerificationPolicyIdentityV1 {
+        WorkerV3VerificationPolicyIdentityV1::new([seed; 32]).unwrap()
+    }
+
     fn provision(
         file: &File,
         kind: ProtectedLedgerKindV1,
@@ -1368,18 +1520,38 @@ mod tests {
     ) -> ProtectedLedgerStorageCapabilityV1 {
         // SAFETY: test owns the linked 0600 file and serialized mock head exclusively.
         unsafe {
-            ProtectedLedgerStorageCapabilityV1::provision_new_from_supervisor(
+            ProtectedLedgerStorageCapabilityV1::provision_initial_from_supervisor(
                 owned(file),
                 object(file),
-                [1; 32],
+                policy(21),
                 kind,
-                1,
                 capacity,
                 Box::new(store),
                 [0xa0; 32],
             )
         }
         .unwrap()
+    }
+
+    fn provision_for_policy(
+        file: &File,
+        policy: WorkerV3VerificationPolicyIdentityV1,
+        kind: ProtectedLedgerKindV1,
+        capacity: u32,
+        store: TestHeadStore,
+    ) -> Result<ProtectedLedgerStorageCapabilityV1, DurableLedgerErrorV1> {
+        // SAFETY: test owns the linked 0600 file and serialized mock head exclusively.
+        unsafe {
+            ProtectedLedgerStorageCapabilityV1::provision_initial_from_supervisor(
+                owned(file),
+                object(file),
+                policy,
+                kind,
+                capacity,
+                Box::new(store),
+                [0xa0; 32],
+            )
+        }
     }
 
     fn reopen(
@@ -1393,9 +1565,8 @@ mod tests {
             ProtectedLedgerStorageCapabilityV1::open_existing_from_supervisor(
                 owned(file),
                 object(file),
-                [1; 32],
+                policy(21),
                 kind,
-                1,
                 capacity,
                 Box::new(store),
                 [0xa0; 32],
@@ -1463,6 +1634,138 @@ mod tests {
     }
 
     #[test]
+    fn reservation_state_and_terminal_capacity_survive_restart() {
+        let file = protected_file();
+        let (store, _) = test_store();
+        let first = record(ProtectedLedgerKindV1::Reservation, 43);
+        let mut ledger = DurableLedgerV1::from_capability(provision(
+            file.as_file(),
+            ProtectedLedgerKindV1::Reservation,
+            1,
+            store.clone(),
+        ));
+        assert!(ledger.append_if_absent(first).unwrap());
+        drop(ledger);
+
+        let mut restarted = DurableLedgerV1::from_capability(
+            reopen(file.as_file(), ProtectedLedgerKindV1::Reservation, 1, store).unwrap(),
+        );
+        assert!(!restarted.append_if_absent(first).unwrap());
+        assert!(matches!(
+            restarted.append_if_absent(record(ProtectedLedgerKindV1::Reservation, 44)),
+            Err(DurableLedgerErrorV1::CapacityExhausted)
+        ));
+    }
+
+    #[test]
+    fn same_policy_cannot_be_reset_or_authorized_as_a_replacement() {
+        let first_file = protected_file();
+        let replacement_file = protected_file();
+        let (store, _) = test_store();
+        drop(provision(
+            first_file.as_file(),
+            ProtectedLedgerKindV1::Replay,
+            1,
+            store.clone(),
+        ));
+        assert!(matches!(
+            provision_for_policy(
+                replacement_file.as_file(),
+                policy(21),
+                ProtectedLedgerKindV1::Replay,
+                1,
+                store,
+            ),
+            Err(DurableLedgerErrorV1::ExternalHeadConflict)
+        ));
+        assert!(matches!(
+            // SAFETY: the test deliberately attempts the forbidden same-policy transition.
+            unsafe {
+                ProtectedPolicyRevocationV1::from_supervisor_revocation(policy(21), policy(21))
+            },
+            Err(DurableLedgerErrorV1::PolicyReplacementRequiresNewIdentity)
+        ));
+    }
+
+    #[test]
+    fn revoked_policy_replacement_requires_new_domain_separated_ledgers() {
+        let prior = policy(21);
+        let replacement = policy(22);
+        assert_ne!(
+            ledger_namespace(prior, ProtectedLedgerKindV1::Replay),
+            ledger_namespace(replacement, ProtectedLedgerKindV1::Replay)
+        );
+        assert_ne!(
+            ledger_namespace(replacement, ProtectedLedgerKindV1::Replay),
+            ledger_namespace(replacement, ProtectedLedgerKindV1::Reservation)
+        );
+        // SAFETY: this test models a completed global revocation before replacement.
+        let revocation = unsafe {
+            ProtectedPolicyRevocationV1::from_supervisor_revocation(prior, replacement).unwrap()
+        };
+        let (replay_authorization, reservation_authorization) =
+            revocation.into_ledger_authorizations();
+        let replay_file = protected_file();
+        let reservation_file = protected_file();
+        let (replay_store, _) = test_store();
+        let (reservation_store, _) = test_store();
+        // SAFETY: the move-only authorizations model the supervisor's revoked-policy transition.
+        let replay = unsafe {
+            ProtectedLedgerStorageCapabilityV1::provision_replacement_from_supervisor(
+                owned(replay_file.as_file()),
+                object(replay_file.as_file()),
+                replacement,
+                ProtectedLedgerKindV1::Replay,
+                2,
+                Box::new(replay_store),
+                [0xa0; 32],
+                replay_authorization,
+            )
+        }
+        .unwrap();
+        // SAFETY: same modeled transition, for the separately domain-separated kind.
+        let reservation = unsafe {
+            ProtectedLedgerStorageCapabilityV1::provision_replacement_from_supervisor(
+                owned(reservation_file.as_file()),
+                object(reservation_file.as_file()),
+                replacement,
+                ProtectedLedgerKindV1::Reservation,
+                2,
+                Box::new(reservation_store),
+                [0xa0; 32],
+                reservation_authorization,
+            )
+        }
+        .unwrap();
+        assert_eq!(replay.policy, replacement);
+        assert_eq!(reservation.policy, replacement);
+    }
+
+    #[test]
+    fn per_call_policy_mismatch_fails_before_append() {
+        let file = protected_file();
+        let (store, head) = test_store();
+        let mut ledger = DurableLedgerV1::from_capability(provision(
+            file.as_file(),
+            ProtectedLedgerKindV1::Replay,
+            2,
+            store,
+        ));
+        let initial = head.lock().unwrap().unwrap();
+        let mut hostile = record(ProtectedLedgerKindV1::Replay, 47);
+        hostile.policy = [22; 32];
+        assert!(matches!(
+            ledger.append_if_absent(hostile),
+            Err(DurableLedgerErrorV1::PolicyIdentityMismatch)
+        ));
+        assert_eq!(*head.lock().unwrap(), Some(initial));
+        assert_eq!(
+            rustix::fs::fstat(file.as_file()).unwrap().st_size,
+            i64::try_from(HEADER_BYTES).unwrap()
+        );
+    }
+
+    #[test]
     fn rollback_and_head_substitution_fail_closed() {
         let file = protected_file();
         let (store, head) = test_store();
@@ -1507,6 +1810,44 @@ mod tests {
                 substituted
             ),
             Err(DurableLedgerErrorV1::ExternalHeadIdentityMismatch)
+        ));
+    }
+
+    #[test]
+    fn header_and_external_head_policy_substitution_fail_closed() {
+        let file = protected_file();
+        let (store, head) = test_store();
+        drop(provision(
+            file.as_file(),
+            ProtectedLedgerKindV1::Replay,
+            2,
+            store.clone(),
+        ));
+        let anchored = head.lock().unwrap().unwrap();
+        *head.lock().unwrap() = Some(
+            ProtectedLedgerExternalHeadV1::new(
+                [22; 32],
+                anchored.header_identity(),
+                anchored.record_count(),
+                anchored.record_identity(),
+            )
+            .unwrap(),
+        );
+        assert!(matches!(
+            reopen(
+                file.as_file(),
+                ProtectedLedgerKindV1::Replay,
+                2,
+                store.clone()
+            ),
+            Err(DurableLedgerErrorV1::ExternalHeadMismatch)
+        ));
+        *head.lock().unwrap() = Some(anchored);
+        rustix::io::pwrite(file.as_file(), &[0x16], 64).unwrap();
+        rustix::fs::fdatasync(file.as_file()).unwrap();
+        assert!(matches!(
+            reopen(file.as_file(), ProtectedLedgerKindV1::Replay, 2, store),
+            Err(DurableLedgerErrorV1::Corrupt("header binding"))
         ));
     }
 
@@ -1574,6 +1915,44 @@ mod tests {
             stale.append_if_absent(record(ProtectedLedgerKindV1::Replay, 82)),
             Err(DurableLedgerErrorV1::ExternalHeadMismatch)
         ));
+    }
+
+    #[test]
+    fn indeterminate_cas_is_never_reported_as_acceptance_and_burns_on_restart() {
+        let file = protected_file();
+        let head = Arc::new(Mutex::new(None));
+        // SAFETY: test owns the exact file and serialized mock store exclusively.
+        let capability = unsafe {
+            ProtectedLedgerStorageCapabilityV1::provision_initial_from_supervisor(
+                owned(file.as_file()),
+                object(file.as_file()),
+                policy(21),
+                ProtectedLedgerKindV1::Reservation,
+                2,
+                Box::new(IndeterminateCasHeadStore {
+                    identity: [0xa0; 32],
+                    head: Arc::clone(&head),
+                }),
+                [0xa0; 32],
+            )
+        }
+        .unwrap();
+        let burned = record(ProtectedLedgerKindV1::Reservation, 83);
+        let mut ledger = DurableLedgerV1::from_capability(capability);
+        assert!(matches!(
+            ledger.append_if_absent(burned),
+            Err(DurableLedgerErrorV1::ExternalHead(_))
+        ));
+        drop(ledger);
+
+        let store = TestHeadStore {
+            identity: [0xa0; 32],
+            head,
+        };
+        let mut restarted = DurableLedgerV1::from_capability(
+            reopen(file.as_file(), ProtectedLedgerKindV1::Reservation, 2, store).unwrap(),
+        );
+        assert!(!restarted.append_if_absent(burned).unwrap());
     }
 
     #[test]

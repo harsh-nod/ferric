@@ -21,7 +21,7 @@ use fe2o3_worker_v3_verification_service::{
     WorkerV3VerificationCallerV1, WorkerV3VerificationCurrentRecordOutcomeV2,
     WorkerV3VerificationMeasurementResolverV1, WorkerV3VerificationPolicyResolverV1,
     WorkerV3VerificationRejectedSendFailureV2, WorkerV3VerificationServiceErrorV2,
-    WorkerV3VerificationTerminalSendFailureV2, begin_worker_v3_verification_session_v2,
+    WorkerV3VerificationTerminalSendFailureV2, begin_worker_v3_verification_session_until_v2,
 };
 use ferric_qwen3_all_kernels_worker_v3_verifier_v1::M1_ALL_KERNELS_ROSTER_ENTRY_COUNT_V1;
 use ferric_qwen3_all_kernels_worker_v3_verifier_v1::protected_receipt::{
@@ -54,6 +54,11 @@ impl AbsoluteSessionDeadlineV1 {
     pub fn remaining(self) -> Option<Duration> {
         let remaining = self.0.saturating_duration_since(Instant::now());
         (!remaining.is_zero()).then_some(remaining)
+    }
+
+    /// Returns the exact monotonic deadline without deriving a new duration.
+    pub fn instant(self) -> Instant {
+        self.0
     }
 
     fn require_live(self) -> Result<(), ServiceApplicationRejectionV1> {
@@ -466,6 +471,16 @@ where
         {
             return Err(FerricProtectedVerifierServiceConfigErrorV1::ZeroProviderIdentity);
         }
+        let service_policy =
+            WorkerV3VerificationPolicyIdentityV1::new(*trust_policy.identity().as_bytes())
+                .map_err(|_| {
+                    FerricProtectedVerifierServiceConfigErrorV1::InvalidProtocolIdentity
+                })?;
+        if replay_guard.policy_identity() != service_policy
+            || reservations.policy_identity() != service_policy
+        {
+            return Err(FerricProtectedVerifierServiceConfigErrorV1::LedgerPolicyMismatch);
+        }
         validate_provider_identities(
             &trust_policy,
             &current_provider,
@@ -512,6 +527,8 @@ pub enum FerricProtectedVerifierServiceConfigErrorV1 {
     CheckerSubstitution,
     /// The signer endpoint identity or public key was substituted.
     SignerSubstitution,
+    /// A replay or reservation ledger was bound to another trust-policy identity.
+    LedgerPolicyMismatch,
     /// A pinned identity could not be represented by the generic protocol.
     InvalidProtocolIdentity,
 }
@@ -687,12 +704,9 @@ where
     };
     let mut policy_resolver = resolvers;
     let mut measurement_resolver = resolvers;
-    let remaining = deadline
-        .remaining()
-        .ok_or(FerricProtectedVerifierServiceFailureV1::DeadlineOverflow)?;
-    let begin = begin_worker_v3_verification_session_v2(
+    let begin = begin_worker_v3_verification_session_until_v2(
         control,
-        remaining,
+        deadline.instant(),
         &mut policy_resolver,
         &mut measurement_resolver,
         &mut config.replay_guard,
@@ -710,6 +724,7 @@ where
             return Err(FerricProtectedVerifierServiceFailureV1::UnsupportedTransportDisposition);
         }
     };
+    debug_assert_eq!(pending.deadline(), deadline.instant());
 
     let mut early_rejection = deadline
         .require_live()
@@ -734,6 +749,7 @@ where
             return Err(FerricProtectedVerifierServiceFailureV1::UnsupportedTransportDisposition);
         }
     };
+    debug_assert_eq!(ready.deadline(), deadline.instant());
     if let Some(reason) = early_rejection {
         return reject_ready(ready, reason);
     }
@@ -1542,7 +1558,7 @@ mod tests {
             assert!(!production_durable.contains(forbidden));
         }
         let manifest = include_str!("../Cargo.toml");
-        assert!(manifest.contains("rev = \"43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb\""));
+        assert!(manifest.contains("rev = \"ff21f24f5349d78583a2a832ba3aa37bf3e0846c\""));
         assert!(!manifest.contains("branch ="));
     }
 }

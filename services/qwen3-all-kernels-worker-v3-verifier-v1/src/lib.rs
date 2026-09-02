@@ -16,7 +16,8 @@ pub use durable::{
     DurableLedgerErrorV1, DurableReplayGuardV1, DurableReservationProviderV2,
     EntropyObjectIdentityV1, LedgerObjectIdentityV1, MAX_DURABLE_LEDGER_RECORDS_V1,
     ProtectedLedgerExternalHeadV1, ProtectedLedgerHeadStoreFailureV1, ProtectedLedgerHeadStoreV1,
-    ProtectedLedgerKindV1, ProtectedLedgerStorageCapabilityV1,
+    ProtectedLedgerKindV1, ProtectedLedgerReplacementAuthorizationV1,
+    ProtectedLedgerStorageCapabilityV1, ProtectedPolicyRevocationV1,
 };
 pub use service::{
     AbsoluteSessionDeadlineV1, AuthenticatedCompilerCurrentRecordV1,

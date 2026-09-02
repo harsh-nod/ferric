@@ -3,13 +3,13 @@
 This standalone package owns Ferric's fail-closed V2 service orchestration for
 the 12-entry Qwen3 aggregate roster. It is deliberately outside the legacy
 Ferric workspace and uses fe2o3's multi-phase Worker V3 transport at commit
-`43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb`.
+`ff21f24f5349d78583a2a832ba3aa37bf3e0846c`.
 
 The foundation provides:
 
 - caller credential plus pinned policy/measurement admission;
-- hard-bounded, checksummed replay and reservation ledger epochs with retained
-  deterministic indexes;
+- hard-bounded, policy-bound replay and reservation ledgers with retained
+  deterministic indexes and policy/kind-domain-separated namespaces;
 - a move-only protected-storage capability minted only at a documented unsafe
   supervisor boundary, backed by an external antirollback head store;
 - service challenges read from a supervisor-provided entropy descriptor and
@@ -24,10 +24,15 @@ The foundation provides:
 
 The ledger's SHA chain detects corruption; it does not prevent rollback. That
 property is an explicit unsafe deployment contract on the protected head store
-and supervisor. Ledger capacity is terminal within an epoch. Rotation requires
-the supervisor to quiesce admission, provision a new protected object under a
-strictly increasing non-reused epoch, synchronize it, and atomically advance the
-external antirollback head. There is no silent compaction.
+and supervisor. Each ledger capability, file header, external head, replay
+guard, and reservation provider is bound to one exact Worker V3 trust-policy
+identity. Capacity exhaustion is permanent and terminal for that policy. The
+safe API provides no rotation, reset, deletion, reinitialization, or compaction.
+A supported replacement requires a newly identified trust policy, durable
+global revocation of the old policy before provisioning, separate
+policy/kind-domain-separated ledgers, and permanent retention of the old heads.
+The unsafe global head-store contract explicitly forbids resetting or reusing a
+same-policy namespace.
 
 This is **service foundation, not deployment closure**. Production still needs
 reviewed measured processes implementing the current-record authenticator,
