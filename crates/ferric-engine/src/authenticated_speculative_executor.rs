@@ -505,6 +505,7 @@ impl fmt::Debug for M1AuthenticatedSpeculativeBootstrapPreDetachRetryV1 {
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 enum M1AuthenticatedSpeculativeBootstrapPreDetachRetryStateV1 {
     Allocation {
         diagnostic: Box<dyn fmt::Debug>,
@@ -2240,18 +2241,22 @@ pub fn prepare_m1_authenticated_speculative_bootstrap_v1(
     })
 }
 
+#[allow(clippy::unnecessary_box_returns)]
 fn bootstrap_pre_detach_failure(
     stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1,
-    state: M1AuthenticatedSpeculativeBootstrapPreDetachRetryStateV1,
+    retry_state: M1AuthenticatedSpeculativeBootstrapPreDetachRetryStateV1,
 ) -> Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1> {
     Box::new(
         M1AuthenticatedSpeculativeBootstrapRoundFailureV1::PreDetach {
             stage,
-            retry: Box::new(M1AuthenticatedSpeculativeBootstrapPreDetachRetryV1 { state }),
+            retry: Box::new(M1AuthenticatedSpeculativeBootstrapPreDetachRetryV1 {
+                state: retry_state,
+            }),
         },
     )
 }
 
+#[allow(clippy::unnecessary_box_returns)]
 fn bootstrap_terminal_failure<const C: usize>(
     engine: &mut Engine<C>,
     stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1,
@@ -2266,6 +2271,7 @@ fn bootstrap_terminal_failure<const C: usize>(
     )
 }
 
+#[allow(clippy::unnecessary_box_returns)]
 fn bootstrap_terminal_disposition(
     stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1,
     disposition: M1AuthenticatedSpeculativeFailureDispositionV1,

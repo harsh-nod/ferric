@@ -1817,7 +1817,7 @@ impl fmt::Debug for M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1 {
             .field("phase", &self.phase)
             .field("queue_released", &self.queue_released())
             .field("engine_quarantined", &true)
-            .finish()
+            .finish_non_exhaustive()
     }
 }
 
@@ -4077,6 +4077,7 @@ fn terminal_data_update_failure(
     }
 }
 
+#[allow(clippy::boxed_local)]
 fn terminal_workspace_failure<const N: usize>(
     phase: M1AuthenticatedQueueRearmTerminalPhaseV1,
     failure: Box<AuthenticatedWorkspaceReplacementFailureV1<N>>,
