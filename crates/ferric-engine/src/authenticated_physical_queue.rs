@@ -237,9 +237,7 @@ impl M1AuthenticatedPhysicalQueueSessionV1 {
     pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
         match self {
             #[cfg(test)]
-            Self::InjectedCurrentness { .. } => {
-                unreachable!("injected currentness custody has no scheduler authority")
-            }
+            Self::InjectedCurrentness { .. } => panic!(),
             Self::TargetOnly(case) => case.scheduled_dispatch(),
             Self::PairedPrefill(case) => case.scheduled_dispatch(),
             Self::SpeculativeK4(case) => case.scheduled_dispatch(),
@@ -253,9 +251,7 @@ impl M1AuthenticatedPhysicalQueueSessionV1 {
     pub const fn device(&self) -> Gfx942DeviceBinding {
         match self {
             #[cfg(test)]
-            Self::InjectedCurrentness { .. } => {
-                unreachable!("injected currentness custody has no device authority")
-            }
+            Self::InjectedCurrentness { .. } => panic!(),
             Self::TargetOnly(case) => case.device(),
             Self::PairedPrefill(case) => case.device(),
             Self::SpeculativeK4(case) => case.device(),

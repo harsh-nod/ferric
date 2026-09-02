@@ -154,7 +154,7 @@ impl M1AuthenticatedSpeculativeExecutorTeardownSuccessV1 {
     pub const fn released(&self) -> &crate::M1AuthenticatedLongLivedQueueRearmTeardownSuccessV1 {
         match &self.released {
             Some(released) => released,
-            None => unreachable!("injected teardown has no native release owner"),
+            None => panic!(),
         }
     }
 
@@ -162,7 +162,7 @@ impl M1AuthenticatedSpeculativeExecutorTeardownSuccessV1 {
     pub const fn coordinator(&self) -> &M1SpeculativeGenerationLoopV1 {
         match &self.coordinator {
             Some(coordinator) => coordinator,
-            None => unreachable!("teardown retains a coordinator"),
+            None => panic!(),
         }
     }
 
@@ -177,7 +177,7 @@ impl M1AuthenticatedSpeculativeExecutorTeardownFailureV1 {
     pub const fn released(&self) -> &crate::M1AuthenticatedLongLivedQueueRearmTeardownFailureV1 {
         match &self.released {
             Some(released) => released,
-            None => unreachable!("injected teardown has no native quarantine owner"),
+            None => panic!(),
         }
     }
 
@@ -185,7 +185,7 @@ impl M1AuthenticatedSpeculativeExecutorTeardownFailureV1 {
     pub const fn coordinator(&self) -> &M1SpeculativeGenerationLoopV1 {
         match &self.coordinator {
             Some(coordinator) => coordinator,
-            None => unreachable!("teardown retains a coordinator"),
+            None => panic!(),
         }
     }
 
@@ -1948,7 +1948,7 @@ impl M1AuthenticatedSpeculativePhysicalRoundSuccessV1 {
     pub const fn diagnostic_choices(&self) -> &M1ObservedSpeculativeDiagnosticChoicesV1 {
         match &self.choices {
             Some(choices) => choices,
-            None => unreachable!("injected lifecycle has no device diagnostic allocation"),
+            None => panic!(),
         }
     }
 
@@ -4246,7 +4246,7 @@ fn close_injected_currentness<const C: usize>(
     shape: M1PhysicalFixedBatchShapeV1,
     releases_cleanly: bool,
 ) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
-    let failure = M1AuthenticatedPhysicalQueueSubmitFailureV1::InjectedCurrentness {
+    let failure = crate::M1AuthenticatedPhysicalQueueSubmitFailureV1::InjectedCurrentness {
         retained: Box::new(M1AuthenticatedPhysicalQueueSessionV1::InjectedCurrentness {
             shape,
             queue,
@@ -4283,7 +4283,8 @@ fn execute_injected_generation<const C: usize>(
     ),
 > {
     use crate::authenticated_test_runtime::InjectedQueueFailureV1;
-    use ferric_spec::{CheckedCompletionSemantics, CheckedMemberObservationV1};
+    use crate::speculative_generation_loop::CheckedMemberObservationV1;
+    use crate::CheckedCompletionSemantics;
 
     let selection = injected.coordinator.shape().selection();
     let roster = injected.coordinator.active_roster();
