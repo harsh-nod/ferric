@@ -23,6 +23,10 @@ const expectedCurrent = Object.freeze({
   associationPreflightCommit: "eb3b1937ec509cb6ecea080a25965dd3e8bc5457",
   finalizedHsacoReinspectionCommit: "749324c9e287aaec688c8733c88becddc539b12e",
   selectedFe2o3Pin: "57d2d9ced5c113d40546ea1dee603e8ba499cf40",
+  fe2o3CallerChallengeCandidate: "40cb4337c1b495e43eed66276d81cd4cae36d3bf",
+  fe2o3VerificationTransportCandidate: "701449c39029de040cd285a2d527dcc185a8750b",
+  fe2o3DescriptorEnvelopeCandidate: "ac00e7ae89d7c73737612d6d0565a632db898890",
+  productionSpeculativeExecutorStatus: "in-progress",
   aggregateSourceCommit: "5514afe176a090aa3f1da9e5354799bb4ca5a8b3",
   aggregateProducerCommit: "e57c42523050922ad76538150df691cc5ab975a7",
   aggregateKernelCount: 12,
@@ -106,6 +110,18 @@ assertCommit(
   "current.finalizedHsacoReinspectionCommit",
 );
 assertCommit(project.current.selectedFe2o3Pin, "current.selectedFe2o3Pin");
+assertCommit(
+  project.current.fe2o3CallerChallengeCandidate,
+  "current.fe2o3CallerChallengeCandidate",
+);
+assertCommit(
+  project.current.fe2o3VerificationTransportCandidate,
+  "current.fe2o3VerificationTransportCandidate",
+);
+assertCommit(
+  project.current.fe2o3DescriptorEnvelopeCandidate,
+  "current.fe2o3DescriptorEnvelopeCandidate",
+);
 assertCommit(project.current.aggregateSourceCommit, "current.aggregateSourceCommit");
 assertCommit(project.current.aggregateProducerCommit, "current.aggregateProducerCommit");
 assertCommit(project.current.diagnosticBridgeCommit, "current.diagnosticBridgeCommit");
@@ -340,6 +356,10 @@ assert(
   progressCommits.has(expectedCurrent.selectedFe2o3Pin),
   "recent progress must include the selected fe2o3 pin",
 );
+assert(
+  progressCommits.has(expectedCurrent.fe2o3CallerChallengeCandidate),
+  "recent progress must include the pushed caller-challenge feature candidate",
+);
 
 project.evidence.gates.forEach(([label, count, state], index) => {
   assert(label && /^\d+$/.test(count), `evidence.gates[${index}] is malformed`);
@@ -370,10 +390,16 @@ for (const claim of [
   "not independent verifier authority",
   "passing preflight has the sole terminal result MissingProtectedVerificationReceipt",
   "exact fe2o3 source 57d2d9c",
+  "caller-challenge/current-record API candidate 40cb4337 passed its exact-archive matrix",
+  "generic V2 protected verification transport candidate 701449c3",
+  "descriptor/exact envelope candidate ac00e7ae still awaits its final rerun",
+  "feature candidates do not replace the selected 57d2d9c pin",
+  "production speculative executor remains in progress",
   "canonical Qwen prepack result is a non-final probe",
   "protected-verifier signer and durable currentness service",
   "Ferric-specific inference and kernel ownership remain in Ferric",
   "selection remains None",
+  "CURRENT=None",
   "successful current-source R32 trace",
   "all 33 M1 exit gates",
 ]) {
@@ -385,7 +411,10 @@ assert(
     dataSource.includes("eb3b1937ec509cb6ecea080a25965dd3e8bc5457") &&
     dataSource.includes("e187ca52dfdaee79fdc17921c9acffebeed6ca96") &&
     dataSource.includes("24748e11358db7ad3ab5fe35992cff354896e607") &&
-    dataSource.includes("57d2d9ced5c113d40546ea1dee603e8ba499cf40"),
+    dataSource.includes("57d2d9ced5c113d40546ea1dee603e8ba499cf40") &&
+    dataSource.includes("40cb4337c1b495e43eed66276d81cd4cae36d3bf") &&
+    dataSource.includes("701449c39029de040cd285a2d527dcc185a8750b") &&
+    dataSource.includes("ac00e7ae89d7c73737612d6d0565a632db898890"),
   "Pages data must bind the exact qualified reinspection and custody lineage",
 );
 assert(
@@ -401,6 +430,7 @@ assert(
     dataSource.includes("not independent verifier authority") &&
     dataSource.includes("non-final mi300x probe") &&
     dataSource.includes("protected-verifier signer and durable currentness service") &&
+    dataSource.includes("production speculative executor remains in progress") &&
     dataSource.includes("no authenticated full-Qwen execution, numerical result, or performance result") &&
     dataSource.includes("all 33 M1 exit gates remain open"),
   "Pages data must retain verifier, Qwen, selection, and all-open gate nonclaims",
