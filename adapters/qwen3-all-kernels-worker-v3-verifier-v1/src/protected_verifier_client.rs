@@ -347,6 +347,7 @@ pub struct M1AllKernelsProtectedVerifierClientV2 {
     inner: WorkerV3VerificationClientV2,
     expected_service: M1AllKernelsProtectedVerifierServiceIdentityV1,
     peer_pid: u32,
+    deadline: Instant,
 }
 
 impl fmt::Debug for M1AllKernelsProtectedVerifierClientV2 {
@@ -355,6 +356,7 @@ impl fmt::Debug for M1AllKernelsProtectedVerifierClientV2 {
             .debug_struct("M1AllKernelsProtectedVerifierClientV2")
             .field("expected_service", &self.expected_service)
             .field("peer_pid", &self.peer_pid)
+            .field("deadline", &self.deadline)
             .field("authority", &"none")
             .finish_non_exhaustive()
     }
@@ -379,18 +381,20 @@ impl M1AllKernelsProtectedVerifierClientV2 {
         expected_service: M1AllKernelsProtectedVerifierServiceIdentityV1,
         timeout: Duration,
     ) -> Result<Self, M1AllKernelsProtectedVerifierClientErrorV2> {
-        let (peer_pid, _deadline) =
+        let (peer_pid, deadline) =
             admit_peer::<REQUIRE_DISTINCT_UID>(&peer, expected_service, timeout)
                 .map_err(M1AllKernelsProtectedVerifierClientErrorV2::PeerAdmission)?;
         revalidate_peer(&peer, expected_service, peer_pid)
             .map_err(M1AllKernelsProtectedVerifierClientErrorV2::PeerAdmission)?;
-        let inner = WorkerV3VerificationClientV2::admit(peer, timeout)
+        let inner = WorkerV3VerificationClientV2::admit_until(peer, deadline)
             .map_err(M1AllKernelsProtectedVerifierClientErrorV2::Transport)?;
         debug_assert!(!inner.authenticates_peer());
+        debug_assert_eq!(inner.deadline(), deadline);
         Ok(Self {
             inner,
             expected_service,
             peer_pid,
+            deadline,
         })
     }
 
@@ -413,8 +417,13 @@ impl M1AllKernelsProtectedVerifierClientV2 {
     > {
         let snapshots = WorkerV3VerificationPayloadSnapshotsV1::admit(&request, descriptors)
             .map_err(M1AllKernelsProtectedVerifierClientErrorV2::Snapshot)?;
-        match self
-            .inner
+        let Self {
+            inner,
+            expected_service: _,
+            peer_pid: _,
+            deadline,
+        } = self;
+        match inner
             .begin(request, snapshots)
             .map_err(M1AllKernelsProtectedVerifierClientErrorV2::Transport)?
         {
@@ -422,7 +431,7 @@ impl M1AllKernelsProtectedVerifierClientV2 {
                 let (challenge, pending) = reserved.into_parts();
                 Ok(M1AllKernelsReservedProtectedVerifierSessionV2 {
                     challenge,
-                    pending: M1AllKernelsPendingProtectedVerifierClientV2 { pending },
+                    pending: M1AllKernelsPendingProtectedVerifierClientV2 { pending, deadline },
                 })
             }
             WorkerV3VerificationBeginOutcomeV2::Rejected(rejected) => {
@@ -493,6 +502,7 @@ impl fmt::Debug for M1AllKernelsReservedProtectedVerifierSessionV2 {
 /// ```
 pub struct M1AllKernelsPendingProtectedVerifierClientV2 {
     pending: PendingWorkerV3VerificationClientV2,
+    deadline: Instant,
 }
 
 impl M1AllKernelsPendingProtectedVerifierClientV2 {
@@ -534,12 +544,12 @@ impl M1AllKernelsPendingProtectedVerifierClientV2 {
                 );
             }
         }
-        authenticate_application_response_v1(
+        authenticate_application_response_until_v1(
             policy,
             service_request,
             terminal.application_response_bytes(),
+            self.deadline,
         )
-        .map_err(M1AllKernelsProtectedVerifierClientErrorV2::from_application_error)
     }
 
     /// Pending transport custody alone grants no protected-verifier authority.
@@ -553,6 +563,7 @@ impl fmt::Debug for M1AllKernelsPendingProtectedVerifierClientV2 {
         formatter
             .debug_struct("M1AllKernelsPendingProtectedVerifierClientV2")
             .field("pending", &self.pending)
+            .field("deadline", &self.deadline)
             .field("authority", &"none")
             .finish()
     }
@@ -589,6 +600,34 @@ fn authenticate_application_response_v1(
     policy
         .authenticate_canonical(receipt.encode_canonical())
         .map_err(M1AllKernelsApplicationResponseErrorV1::ReceiptAuthentication)
+}
+
+fn authenticate_application_response_until_v1(
+    policy: &M1AllKernelsProtectedVerifierTrustPolicyV1,
+    request: &M1AllKernelsProtectedVerifierServiceRequestV1,
+    bytes: &[u8],
+    deadline: Instant,
+) -> Result<
+    M1AllKernelsAuthenticatedProtectedVerifierReceiptV1,
+    M1AllKernelsProtectedVerifierClientErrorV2,
+> {
+    require_v2_deadline(deadline)?;
+    let authenticated = authenticate_application_response_v1(policy, request, bytes)
+        .map_err(M1AllKernelsProtectedVerifierClientErrorV2::from_application_error)?;
+    require_v2_deadline(deadline)?;
+    Ok(authenticated)
+}
+
+fn require_v2_deadline(
+    deadline: Instant,
+) -> Result<(), M1AllKernelsProtectedVerifierClientErrorV2> {
+    if deadline.saturating_duration_since(Instant::now()).is_zero() {
+        Err(M1AllKernelsProtectedVerifierClientErrorV2::Transport(
+            WorkerV3VerificationClientErrorV2::Timeout,
+        ))
+    } else {
+        Ok(())
+    }
 }
 
 /// Ferric peer-admission, V2 phase, snapshot, terminal, or receipt-authentication failure.
@@ -2112,6 +2151,39 @@ mod tests {
     fn v2_exchange_preserves_phase_order_exact_payloads_and_authenticates_receipt() {
         let authenticated = run_v2_terminal_case(V2TerminalCase::Valid).unwrap();
         assert!(!authenticated.grants_verifier_authority());
+    }
+
+    #[test]
+    fn v2_full_terminal_cannot_be_authenticated_after_the_caller_deadline() {
+        let generic = generic_request(0x25);
+        let reservation =
+            WorkerV3VerificationChallengeReservationV2::new([0x71; 32], [0x72; 32]).unwrap();
+        let (policy, receipt) = signed_fixture();
+        let service_request = fixture_request(&policy, &receipt);
+        let response =
+            M1AllKernelsProtectedVerifierServiceResponseV1::new(&service_request, receipt).unwrap();
+        let terminal = WorkerV3VerificationTerminalFrameV2::application_response(
+            &generic,
+            &reservation,
+            response.canonical_bytes().to_vec(),
+        )
+        .unwrap();
+        let deadline = Instant::now()
+            .checked_add(Duration::from_millis(10))
+            .unwrap();
+        thread::sleep(Duration::from_millis(30));
+
+        assert!(matches!(
+            authenticate_application_response_until_v1(
+                &policy,
+                &service_request,
+                terminal.application_response_bytes(),
+                deadline,
+            ),
+            Err(M1AllKernelsProtectedVerifierClientErrorV2::Transport(
+                WorkerV3VerificationClientErrorV2::Timeout
+            ))
+        ));
     }
 
     #[test]

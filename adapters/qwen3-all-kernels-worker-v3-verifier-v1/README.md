@@ -52,7 +52,11 @@ surface.
 ## Configured Binder
 
 After its unsafe deployment contract is upheld, the configured backend first
-performs the shared local preflight. It constructs the generic V2 Begin request
+performs the shared local preflight and the exact aggregate source-policy
+projection. It constructs and retains the receipt source-pin owner before it
+takes the client or Begin challenge, sends Begin, reserves service state, or
+consumes the FD195 current-record auditor. An invalid source therefore leaves
+all four one-shot resources untouched. It constructs the generic V2 Begin request
 from the reserved caller challenge, exact roster and policy identities, the
 complete verifier-runtime-closure measurement, and all 12 ordered coordinates.
 It creates separate sealed, unlinked memfd snapshots of the exact originally
@@ -69,14 +73,19 @@ audit is not verifier authority.
 The six source coordinates are not copied without policy checking. Ferric's
 public typed source-pin projector repeats the exact LLVM-text, target,
 code-object, 12-entry-symbol, and 12-descriptor-symbol policy over the request's
-decoded compiler handoff. The service request combines that projection with
+decoded compiler handoff before any external effect. Both the pre-bind and
+post-bind service requests borrow the same retained source-pin owner and
+reassociate it with the still-borrowed handoff. The service request combines that projection with
 the typed request, bound compiler owner, caller policy identity, exact artifact,
 and all 12 ordered host lineage/marker/generated-host rows.
 
 The owned client requires an already connected unnamed Unix `SOCK_SEQPACKET`
 peer and pins dedicated non-root credentials before transferring the descriptor
-to fe2o3's authority-free V2 transport. The generic transport applies one
-absolute deadline, rejects ancillary data and ambiguous framing, and correlates
+to fe2o3's authority-free V2 transport. Ferric computes one absolute monotonic
+deadline during peer admission and passes that exact `Instant` to
+`WorkerV3VerificationClientV2::admit_until`; it never restarts the caller's
+relative timeout. That same deadline governs every generic phase and Ferric's
+final application-response authentication. The transport rejects ancillary data and ambiguous framing, and correlates
 every phase to the exact Begin request, service challenge, and reservation. The
 Ferric terminal then requires an application response of exactly 3,768 bytes
 and authenticates its Ed25519 signature and distinct verifier/checker
