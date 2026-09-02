@@ -307,11 +307,7 @@ fn production_source_contains_no_deployment_values_or_runtime_surface() {
         })
         .collect::<Vec<_>>();
     assert_eq!(revisions.len(), 3);
-    assert!(
-        revisions
-            .iter()
-            .all(|revision| *revision == FE2O3_REVISION)
-    );
+    assert!(revisions.iter().all(|revision| *revision == FE2O3_REVISION));
 }
 
 #[test]
