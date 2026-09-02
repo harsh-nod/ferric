@@ -906,6 +906,7 @@ dependencies = [
  "fe2o3-host",
  "fe2o3-hsaco-finalize",
  "ferric-qwen3-all-kernels-device-v1",
+ "libc",
  "sha2 0.11.0",
 ]
 

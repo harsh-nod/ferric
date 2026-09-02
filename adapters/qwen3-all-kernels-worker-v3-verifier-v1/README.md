@@ -175,3 +175,72 @@ constructs protected evidence, and terminates at
 `MissingProtectedVerificationReceipt`. A later reviewed service/backend join
 must supply genuine external policy and receipt custody before that terminal
 state can change.
+
+## Protected verifier service protocol V1
+
+The `protected_verifier_service` module defines one canonical request for the
+existing receipt and one canonical receipt-bearing response. It is a binary,
+fixed-width protocol rather than HTTP, JSON, or a filesystem interchange. The
+request is exactly 2,304 bytes and the response is exactly 3,768 bytes. Both
+use distinct magic values, schema version, fixed header and total lengths,
+zero reserved fields, domain-separated whole-packet identities, and the
+literal `gfx942:xnack-`, COV6, 12-entry target block.
+
+The request carries the caller-provisioned trust-policy identity and repeats
+the expected compiler sequence and current rollback anchor ahead of the full
+compiler claims. Canonical construction and decoding require those positions
+to agree. It then carries the exact host challenge, roster and lineage,
+finalizer derivation, all six source-pin coordinates, capsule,
+formal-memory/proof-binding receipts, finalized-HSACO digest and length, every
+compiler input/currentness coordinate, and exactly 12 ordered host lineage,
+marker-binding, and generated-host-contract rows. Zero identities,
+noncanonical ordinals, and duplicate lineage or marker identities are
+rejected.
+
+The response correlates the exact request identity, policy identity, compiler
+sequence, current rollback anchor, target block, receipt identity, and the
+complete 3,552-byte signed receipt. The decoder strictly reconstructs both the
+response and embedded receipt. The client additionally requires every signed
+caller-known receipt coordinate to equal the request. A packet hash detects
+corruption but is not authentication; only strict Ed25519 verification under
+the caller-provisioned trust policy authenticates the receipt.
+
+V1 is deliberately a coordinate protocol, not evidence transport. A protected
+service must be provisioned with, or authentically reacquire through a separate
+bounded channel, the exact receipt-bearing Worker V3 V2 envelope, finalized
+HSACO bytes, semantic/proof inputs, and protected current-record evidence named
+by the request. It must validate those payloads under their governing policies
+before producing a receipt; equality of caller-supplied digests is never proof
+of custody and must never be signed as a hash echo. A future live hookup may
+instead correlate this request with fe2o3's reviewed sealed-payload session,
+but this package does not create that session.
+
+The `protected_verifier_client` module is a one-shot client for an already
+supervised, caller-owned Unix `SOCK_SEQPACKET` descriptor. It discovers no
+path or environment setting. Admission pins a dedicated non-root UID/GID,
+requires a connected unnamed Unix seqpacket endpoint, enables close-on-exec,
+checks `SO_PEERCRED`, requires a distinct production client/service UID, and
+returns the exact `OwnedFd` to the caller on pre-transport admission failure.
+One absolute monotonic deadline covers the atomic send and receive. The client
+rejects partial sends, truncated or non-exact packets, ancillary data, peer
+closure/error, peer PID or credential change, request/policy substitution,
+rollback-position substitution, and any receipt authentication failure.
+
+Consuming the client prevents reuse of one local session object; it does not
+make an identical request fresh on another connection. A production service
+must atomically consume every signed challenge and validate the requested
+sequence and current rollback anchor against protected live current-ledger
+state shared across all service instances and durable across restarts. Packet
+equality, nonzero fields, and one-shot client ownership alone establish neither
+freshness nor rollback currentness.
+
+There is no production endpoint constructor, pathname, inherited descriptor,
+service process, or backend hookup in this package. Production code contains
+no signing key, verifying key constant, policy, measurement, transcript, or
+receipt. Test-only fixtures exercise hostile framing and authentication but
+are excluded from production builds. The default backend is unchanged and
+still returns `MissingProtectedVerificationReceipt`; service transport and an
+authenticated receipt still grant no fe2o3 verifier, load, launch, inference,
+publication, or `CURRENT` authority. A later reviewed backend must locally bind
+the authenticated receipt to its retained request, evidence-custody owners, and
+audit result before any authority promotion; it must never promote a hash echo.

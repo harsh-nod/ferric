@@ -22,6 +22,14 @@ use ferric_qwen3_all_kernels_device_v1::M1AllKernelsWorkerV3RosterV1;
 /// Canonical protected-receipt wire and caller-provisioned trust policy.
 pub mod protected_receipt;
 
+/// One-shot bounded client for an externally supervised protected verifier.
+pub mod protected_verifier_client;
+
+/// Canonical aggregate protected-verifier request and response packets.
+pub mod protected_verifier_service;
+
+mod protected_verifier_test_support;
+
 /// Exact number of markers in Ferric's current aggregate M1 roster.
 pub const M1_ALL_KERNELS_ROSTER_ENTRY_COUNT_V1: usize = M1AllKernelsWorkerV3RosterV1::ENTRIES.len();
 

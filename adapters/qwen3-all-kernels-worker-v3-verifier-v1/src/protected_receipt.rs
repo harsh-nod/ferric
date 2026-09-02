@@ -266,6 +266,10 @@ impl M1AllKernelsProtectedVerifierTrustPolicyIdentityV1 {
     pub const fn as_bytes(&self) -> &[u8; SHA256_BYTES] {
         &self.0
     }
+
+    pub(crate) const fn from_protocol_bytes(bytes: [u8; SHA256_BYTES]) -> Self {
+        Self(bytes)
+    }
 }
 
 /// Identity of one exact canonical signed receipt.
