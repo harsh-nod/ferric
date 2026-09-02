@@ -1164,7 +1164,7 @@ fn prepare_coordinator_round_core<D, const C: usize>(
     diagnostic: D,
     controls: Vec<M1SpeculativeMemberControlV1>,
     lineage: M1AuthenticatedSpeculativeCausalLineageV1,
-) -> Result<M1PreparedCoordinatorRoundCoreV1<D>, M1PrepareCoordinatorRoundCoreFailureV1<D>>
+) -> Result<M1PreparedCoordinatorRoundCoreV1<D>, Box<M1PrepareCoordinatorRoundCoreFailureV1<D>>>
 where
     D: M1SpeculativeRoundObservationV1,
 {
@@ -1172,25 +1172,29 @@ where
         Ok(preflighted) => preflighted,
         Err(error) => {
             engine.quarantine_m1_queue_rearm_failure();
-            return Err(M1PrepareCoordinatorRoundCoreFailureV1::Preflight {
-                coordinator,
-                diagnostic,
-                controls,
-                error,
-                lineage,
-            });
+            return Err(Box::new(
+                M1PrepareCoordinatorRoundCoreFailureV1::Preflight {
+                    coordinator,
+                    diagnostic,
+                    controls,
+                    error,
+                    lineage,
+                },
+            ));
         }
     };
     if let Err(error) = coordinator.preflight_prepared_round_commit(&preflighted) {
         engine.quarantine_m1_queue_rearm_failure();
-        return Err(M1PrepareCoordinatorRoundCoreFailureV1::CommitPreflight {
-            coordinator,
-            diagnostic,
-            controls,
-            preflighted,
-            error,
-            lineage,
-        });
+        return Err(Box::new(
+            M1PrepareCoordinatorRoundCoreFailureV1::CommitPreflight {
+                coordinator,
+                diagnostic,
+                controls,
+                preflighted,
+                error,
+                lineage,
+            },
+        ));
     }
     let mut dispositions = Vec::new();
     if dispositions
@@ -1198,13 +1202,15 @@ where
         .is_err()
     {
         engine.quarantine_m1_queue_rearm_failure();
-        return Err(M1PrepareCoordinatorRoundCoreFailureV1::HostAllocation {
-            coordinator,
-            diagnostic,
-            controls,
-            preflighted,
-            lineage,
-        });
+        return Err(Box::new(
+            M1PrepareCoordinatorRoundCoreFailureV1::HostAllocation {
+                coordinator,
+                diagnostic,
+                controls,
+                preflighted,
+                lineage,
+            },
+        ));
     }
     dispositions.extend(
         preflighted
@@ -1256,29 +1262,33 @@ fn commit_coordinator_round_core<P, const C: usize>(
     controls: Vec<M1SpeculativeMemberControlV1>,
     physical: P,
     mut lineage: M1AuthenticatedSpeculativeCausalLineageV1,
-) -> Result<M1CommittedCoordinatorRoundCoreV1<P>, M1CommitCoordinatorRoundCoreFailureV1<P>> {
+) -> Result<M1CommittedCoordinatorRoundCoreV1<P>, Box<M1CommitCoordinatorRoundCoreFailureV1<P>>> {
     let outcome = match coordinator.commit_preflighted_round(preflighted) {
         Ok(outcome) => outcome,
         Err(failure) => {
             engine.quarantine_m1_queue_rearm_failure();
-            return Err(M1CommitCoordinatorRoundCoreFailureV1::Coordinator {
-                coordinator,
-                controls,
-                physical,
-                failure,
-                lineage,
-            });
+            return Err(Box::new(
+                M1CommitCoordinatorRoundCoreFailureV1::Coordinator {
+                    coordinator,
+                    controls,
+                    physical,
+                    failure,
+                    lineage,
+                },
+            ));
         }
     };
     if !refresh_causal_generated_counts(&mut lineage, &coordinator, outcome.completed_epoch()) {
         engine.quarantine_m1_queue_rearm_failure();
-        return Err(M1CommitCoordinatorRoundCoreFailureV1::CausalLineage {
-            coordinator,
-            outcome,
-            controls,
-            physical,
-            lineage,
-        });
+        return Err(Box::new(
+            M1CommitCoordinatorRoundCoreFailureV1::CausalLineage {
+                coordinator,
+                outcome,
+                controls,
+                physical,
+                lineage,
+            },
+        ));
     }
     Ok(M1CommittedCoordinatorRoundCoreV1 {
         coordinator,
@@ -3295,7 +3305,7 @@ impl M1AuthenticatedSpeculativeBootstrapContinuationV1 {
         ) {
             Ok(prepared) => prepared,
             Err(failure) => {
-                let (coordinator, diagnostic, controls, lineage) = match failure {
+                let (coordinator, diagnostic, controls, lineage) = match *failure {
                     M1PrepareCoordinatorRoundCoreFailureV1::Preflight {
                         coordinator,
                         diagnostic,
@@ -3403,7 +3413,7 @@ impl M1AuthenticatedSpeculativeBootstrapContinuationV1 {
             (choices, physical),
             lineage,
         )
-        .map_err(|failure| match failure {
+        .map_err(|failure| match *failure {
             M1CommitCoordinatorRoundCoreFailureV1::Coordinator {
                 coordinator,
                 controls,
@@ -3496,7 +3506,7 @@ fn complete_authenticated_rearmed_speculative_round<const C: usize>(
     let prepared =
         prepare_coordinator_round_core(engine, coordinator, binding, diagnostic, controls, lineage)
             .map_err(|failure| {
-                let (custody, lineage) = match failure {
+                let (custody, lineage) = match *failure {
             M1PrepareCoordinatorRoundCoreFailureV1::Preflight {
                 coordinator,
                 diagnostic,
@@ -3589,7 +3599,7 @@ fn complete_authenticated_rearmed_speculative_round<const C: usize>(
         (choices, physical),
         lineage,
     )
-    .map_err(|failure| match failure {
+    .map_err(|failure| match *failure {
         M1CommitCoordinatorRoundCoreFailureV1::Coordinator {
             coordinator,
             controls,

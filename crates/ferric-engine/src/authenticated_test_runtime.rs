@@ -146,9 +146,9 @@ impl ModelQueueV1 {
                 failure @ (ModelQueueFailureV1::ReadbackReleased
                 | ModelQueueFailureV1::ReadbackQuarantined),
             ) => Err(failure),
-            Some(ModelQueueFailureV1::Wait) => unreachable!(),
             Some(
-                ModelQueueFailureV1::CurrentnessReleased
+                ModelQueueFailureV1::Wait
+                | ModelQueueFailureV1::CurrentnessReleased
                 | ModelQueueFailureV1::CurrentnessQuarantined,
             ) => unreachable!(),
             None => Ok(state.readbacks.pop_front().unwrap_or_default()),
