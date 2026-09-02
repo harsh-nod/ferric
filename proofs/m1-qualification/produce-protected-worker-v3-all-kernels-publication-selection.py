@@ -11,6 +11,7 @@ from pathlib import Path
 import stat
 import subprocess
 import sys
+import tomllib
 from types import ModuleType
 from typing import Any, NoReturn
 
@@ -46,6 +47,11 @@ EXCLUDED = [
     "verifier-authority",
     "worker-v3-finalization-authentication",
 ]
+ADAPTER_BINDING_NONCLAIM = (
+    "This source-controlled record pre-binds one executable identity to the exact adapter "
+    "source closure. It is not a reproducible-build proof, compiler-origin attestation, "
+    "semantic-correctness proof, or runtime authority."
+)
 
 
 def fail(message: str) -> NoReturn:
@@ -91,6 +97,20 @@ def git(repository: Path, arguments: list[str], description: str) -> str:
     return result.stdout.strip()
 
 
+def git_bytes(repository: Path, arguments: list[str], description: str) -> bytes:
+    result = subprocess.run(
+        ["git", "-C", str(repository), *arguments],
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        timeout=30,
+        env={"PATH": os.environ.get("PATH", "")},
+    )
+    if result.returncode != 0:
+        fail(f"cannot {description}: {result.stdout[:1000]!r}")
+    return result.stdout
+
+
 def source_identity(repository: Path, description: str) -> dict[str, str]:
     if not repository.is_absolute() or repository.is_symlink() or not repository.is_dir():
         fail(f"{description} must be an absolute nonsymlink Git worktree")
@@ -115,6 +135,138 @@ def same_file_identity(left: os.stat_result, right: os.stat_result) -> bool:
         right.st_size,
         right.st_mtime_ns,
     )
+
+
+def same_directory_identity(left: os.stat_result, right: os.stat_result) -> bool:
+    return (
+        left.st_dev,
+        left.st_ino,
+        left.st_uid,
+        stat.S_IMODE(left.st_mode),
+    ) == (
+        right.st_dev,
+        right.st_ino,
+        right.st_uid,
+        stat.S_IMODE(right.st_mode),
+    )
+
+
+def bind_source_records(
+    repository: Path,
+    commit: str,
+    records: list[dict[str, Any]],
+    description: str,
+) -> dict[str, bytes]:
+    held: dict[str, bytes] = {}
+    for record in records:
+        relative = record["path"]
+        object_name = f"{commit}:{relative}"
+        blob = git(
+            repository,
+            ["rev-parse", object_name],
+            f"resolve {description} Git blob {relative}",
+        )
+        data = git_bytes(
+            repository,
+            ["cat-file", "blob", object_name],
+            f"read {description} Git blob {relative}",
+        )
+        if (
+            blob != record["git_blob"]
+            or hashlib.sha256(data).hexdigest() != record["sha256"]
+            or len(data) != record["size_bytes"]
+        ):
+            fail(f"{description} record does not bind exact committed bytes: {relative}")
+        held[relative] = data
+    return held
+
+
+def bind_adapter_binding(
+    repository: Path, commit: str, prebinding: dict[str, Any]
+) -> None:
+    relative = VALIDATOR.ADAPTER_BINDING
+    object_name = f"{commit}:{relative}"
+    blob = git(
+        repository,
+        ["rev-parse", object_name],
+        "resolve aggregate adapter binding Git blob",
+    )
+    data = git_bytes(
+        repository,
+        ["cat-file", "blob", object_name],
+        "read aggregate adapter binding Git blob",
+    )
+    if (
+        blob != prebinding["binding_git_blob"]
+        or hashlib.sha256(data).hexdigest() != prebinding["binding_sha256"]
+    ):
+        fail("aggregate adapter binding record does not bind exact committed bytes")
+    try:
+        value = json.loads(data)
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        fail(f"aggregate adapter binding record is invalid: {error}")
+    if not isinstance(value, dict) or data != VALIDATOR.canonical_bytes(value):
+        fail("aggregate adapter binding record is not canonical ASCII JSON")
+    binary = value.get("binary")
+    if (
+        set(value)
+        != {
+            "authority",
+            "binary",
+            "format",
+            "nonclaim",
+            "protocol",
+            "source_closure_sha256",
+            "source_files",
+        }
+        or value["authority"] != "binary-identity-prebinding-only"
+        or value["format"]
+        != "FERRIC-M1-ALL-KERNELS-SOURCE-PIN-ADAPTER-BINDING-V1"
+        or value["nonclaim"] != ADAPTER_BINDING_NONCLAIM
+        or value["protocol"]
+        != "ferric.m1-all-kernels-worker-v3-source-pin.v1"
+        or value["source_closure_sha256"] != prebinding["source_closure_sha256"]
+        or value["source_files"] != prebinding["source_files"]
+        or not isinstance(binary, dict)
+        or set(binary) != {"name", "sha256", "size_bytes"}
+        or binary["name"] != prebinding["name"]
+        or binary["sha256"] != prebinding["binary_sha256"]
+        or binary["size_bytes"] != prebinding["binary_size_bytes"]
+    ):
+        fail("aggregate adapter binding JSON does not bind the claimed prebinding")
+
+
+def validate_provider_manifest(manifest: bytes, provider_commit: str) -> None:
+    try:
+        value = tomllib.loads(manifest.decode("utf-8"))
+    except (UnicodeDecodeError, tomllib.TOMLDecodeError) as error:
+        fail(f"aggregate device manifest is invalid: {error}")
+    if not isinstance(value, dict):
+        fail("aggregate device manifest root is not a table")
+    dependencies = value.get("dependencies", {})
+    targets = value.get("target", {})
+    if not isinstance(dependencies, dict) or not isinstance(targets, dict):
+        fail("aggregate device manifest dependency tables drifted")
+    host_target = targets.get('cfg(not(target_arch = "amdgpu"))', {})
+    if not isinstance(host_target, dict):
+        fail("aggregate device manifest host target table drifted")
+    target_dependencies = host_target.get("dependencies", {})
+    if not isinstance(target_dependencies, dict):
+        fail("aggregate device manifest host dependencies drifted")
+    device = dependencies.get("fe2o3-device", {})
+    host = target_dependencies.get("fe2o3-host", {})
+    package = value.get("package", {})
+    if (
+        not isinstance(package, dict)
+        or not isinstance(device, dict)
+        or not isinstance(host, dict)
+        or package.get("name") != "ferric-qwen3-all-kernels-device-v1"
+        or device.get("git") != "https://github.com/harsh-nod/fe2o3.git"
+        or host.get("git") != "https://github.com/harsh-nod/fe2o3.git"
+        or device.get("rev") != provider_commit
+        or host.get("rev") != provider_commit
+    ):
+        fail("aggregate device manifest does not bind the exact provider revision")
 
 
 def revalidate_record(path: Path, expected: os.stat_result) -> None:
@@ -148,6 +300,13 @@ def publish(path: Path, data: bytes) -> None:
         fail(f"cannot hold selection-candidate output directory: {error}")
     descriptor = -1
     try:
+        opened_parent = os.fstat(directory)
+        named_parent = parent.lstat()
+        if (
+            not same_directory_identity(parent_metadata, opened_parent)
+            or not same_directory_identity(opened_parent, named_parent)
+        ):
+            fail("selection-candidate output directory changed during open")
         descriptor = os.open(
             path.name,
             os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_CLOEXEC | os.O_NOFOLLOW,
@@ -170,6 +329,13 @@ def publish(path: Path, data: bytes) -> None:
         ):
             fail("selection-candidate output lost owner-private file custody")
         os.fsync(directory)
+        final_named = os.stat(path.name, dir_fd=directory, follow_symlinks=False)
+        final_parent = parent.lstat()
+        if (
+            not same_file_identity(held, final_named)
+            or not same_directory_identity(opened_parent, final_parent)
+        ):
+            fail("selection-candidate output path changed during final publication sync")
     except FileExistsError:
         fail("selection-candidate output already exists; replacement is forbidden")
     except OSError as error:
@@ -195,7 +361,24 @@ def main() -> None:
     observed_compiler = record["observed_compiler_inputs"]
     if compiler != {key: observed_compiler[key] for key in ("commit", "tree")}:
         fail("observational record does not bind the exact clean fe2o3 source")
+    device_sources = bind_source_records(
+        source_repo,
+        ferric["commit"],
+        record["source"]["device_files"],
+        "aggregate device source",
+    )
+    prebinding = record["source_pin_observation"]["adapter_prebinding"]
+    bind_source_records(
+        source_repo,
+        ferric["commit"],
+        prebinding["source_files"],
+        "aggregate adapter source",
+    )
+    bind_adapter_binding(source_repo, ferric["commit"], prebinding)
     provider_commit = record["source"]["device_provider_commit"]
+    validate_provider_manifest(
+        device_sources["device/qwen3-all-kernels-v1/Cargo.toml"], provider_commit
+    )
     provider_tree = git(
         compiler_repo,
         ["rev-parse", f"{provider_commit}^{{tree}}"],

@@ -79,6 +79,10 @@ ADAPTER_FILES = (
     "adapters/qwen3-all-kernels-worker-v3-source-pin-v1/src/lib.rs",
     "adapters/qwen3-all-kernels-worker-v3-source-pin-v1/src/main.rs",
 )
+ADAPTER_BINDING = (
+    "adapters/qwen3-all-kernels-worker-v3-source-pin-v1/"
+    "SOURCE_PIN_ADAPTER_BINDING_V1.json"
+)
 TOP_KEYS = {
     "artifact",
     "authority",
@@ -444,6 +448,10 @@ def validate(record: dict[str, Any]) -> None:
     )
     for field in adapter_execution:
         sha256(adapter_execution[field], f"adapter execution {field}")
+    if adapter_execution["output_sha256"] != hashlib.sha256(
+        canonical_bytes(projection)
+    ).hexdigest():
+        fail("adapter execution output does not bind the canonical source-pin projection")
 
     worker_records = exact(
         record["observed_worker_v3_records"],
@@ -502,10 +510,11 @@ def validate(record: dict[str, Any]) -> None:
         else:
             positive_u64(value, f"Worker V3 binding {field}")
     if (
-        binding["finalized_output_sha256"] != artifact_sha
+        binding["compiler_handoff_sha256"] != source_pin["compiler_handoff_sha256"]
+        or binding["finalized_output_sha256"] != artifact_sha
         or binding["finalized_output_size_bytes"] != artifact_size
     ):
-        fail("finalized artifact or Worker V3 binding cross-link drifted")
+        fail("source pin, finalized artifact, or Worker V3 binding cross-link drifted")
 
     custody = record["custody_records"]
     expected_kinds = {

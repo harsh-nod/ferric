@@ -34,6 +34,7 @@ KERNELS = (
     "ferric_qwen3_speculative_token_assembly_v1",
     "qwen3_gqa_prefill_causal_bf16_f32_v1",
 )
+WORKER_COMPILER_HANDOFF_SHA256 = hashlib.sha256(b"binding-3").hexdigest()
 SOURCE_FILES = (
     "Cargo.lock",
     "Cargo.toml",
@@ -208,7 +209,7 @@ def source_pin_projection() -> dict[str, Any]:
         "program_count": len(KERNELS),
         "source_pin": {
             "compiler_handoff_length": 31_337,
-            "compiler_handoff_sha256": hashlib.sha256(b"compiler-handoff").hexdigest(),
+            "compiler_handoff_sha256": WORKER_COMPILER_HANDOFF_SHA256,
             "compiler_module_length": 29_911,
             "compiler_module_sha256": hashlib.sha256(b"compiler-module").hexdigest(),
             "symbol_manifest_length": 2_117,

@@ -368,8 +368,10 @@ python3 -I -B \
   proofs/m1-qualification/test-protected-worker-v3-all-kernels-publication-selection-policy.py
 ```
 
-The candidate binds the record bytes, clean Ferric, fe2o3, and provider source
-identities, `gfx942:xnack-`, COV6, the exact ordered 12-symbol roster, all six
+The candidate resolves every claimed device, adapter, and adapter-binding row
+through the clean Git object bytes, then binds the record bytes and exact
+Ferric, fe2o3, and manifest-selected provider source identities,
+`gfx942:xnack-`, COV6, the exact ordered 12-symbol roster, all six
 source-pin coordinates, the finalized HSACO identity, and the receipt-bound
 Worker V3 envelope identity. It is published without replacement at mode 0600.
 It is not a current publication, verifier result, runtime selection, load or

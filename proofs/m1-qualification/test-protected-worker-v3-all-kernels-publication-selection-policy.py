@@ -69,26 +69,45 @@ def git(repository: Path, *arguments: str) -> str:
     return result.stdout.strip()
 
 
+def git_bytes(repository: Path, *arguments: str) -> bytes:
+    result = subprocess.run(
+        ["git", "-C", str(repository), *arguments],
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        env={"PATH": os.environ.get("PATH", "")},
+        timeout=20,
+    )
+    return result.stdout
+
+
 def commit(repository: Path, message: str) -> str:
     git(repository, "add", "-A")
     git(repository, "commit", "-q", "-m", message)
     return git(repository, "rev-parse", "HEAD")
 
 
-def source_records(paths: tuple[str, ...], prefix: str) -> list[dict[str, Any]]:
-    return [
-        {
-            "git_blob": hashlib.sha1(f"blob-{prefix}-{path}".encode("ascii")).hexdigest(),
-            "path": path,
-            "sha256": digest(f"source-{prefix}-{path}"),
-            "size_bytes": 100 + index,
-        }
-        for index, path in enumerate(paths)
-    ]
+def source_records(
+    repository: Path, commit_id: str, paths: tuple[str, ...]
+) -> list[dict[str, Any]]:
+    records = []
+    for path in paths:
+        object_name = f"{commit_id}:{path}"
+        data = git_bytes(repository, "cat-file", "blob", object_name)
+        records.append(
+            {
+                "git_blob": git(repository, "rev-parse", object_name),
+                "path": path,
+                "sha256": hashlib.sha256(data).hexdigest(),
+                "size_bytes": len(data),
+            }
+        )
+    return records
 
 
 def build_record(
     validator: ModuleType,
+    ferric_repo: Path,
     ferric_commit: str,
     ferric_tree: str,
     compiler_commit: str,
@@ -111,7 +130,14 @@ def build_record(
         "symbol_manifest_length": 2_117,
         "symbol_manifest_sha256": digest("symbol-manifest"),
     }
-    adapter_files = source_records(validator.ADAPTER_FILES, "adapter")
+    device_files = source_records(ferric_repo, ferric_commit, validator.DEVICE_FILES)
+    adapter_files = source_records(ferric_repo, ferric_commit, validator.ADAPTER_FILES)
+    binding_bytes = git_bytes(
+        ferric_repo, "cat-file", "blob", f"{ferric_commit}:{validator.ADAPTER_BINDING}"
+    )
+    binding_blob = git(
+        ferric_repo, "rev-parse", f"{ferric_commit}:{validator.ADAPTER_BINDING}"
+    )
     closure = {
         "cargo_binding_trampoline_sha256": digest("cargo-binding-trampoline"),
         "cargo_executable_sha256": digest("cargo-executable"),
@@ -152,6 +178,20 @@ def build_record(
         {"kind": ".fe2o3-owned-v1", "path": ".fe2o3-owned-v1", "sha256": digest("owned"), "size_bytes": 24},
     ]
     custody.sort(key=lambda item: item["path"])
+    projection = {
+        "authority": "identity-observation-only",
+        "authenticates_compiler_origin": False,
+        "code_object_version": 6,
+        "format": "ferric.m1-all-kernels-worker-v3-source-pin.v1",
+        "grants_launch_authority": False,
+        "grants_load_authority": False,
+        "grants_publication_authority": False,
+        "grants_verifier_authority": False,
+        "policy_kernel_symbols": list(validator.KERNELS),
+        "program_count": 12,
+        "source_pin": source_pin,
+        "target": validator.TARGET,
+    }
     return {
         "artifact": {
             "path": f".fe2o3-link-artifact-v1-{artifact_sha}.bin",
@@ -241,7 +281,7 @@ def build_record(
         },
         "source": {
             "commit": ferric_commit,
-            "device_files": source_records(validator.DEVICE_FILES, "device"),
+            "device_files": device_files,
             "device_provider_commit": provider_commit,
             "device_provider_tree": provider_tree,
             "tree": ferric_tree,
@@ -249,11 +289,11 @@ def build_record(
         "source_pin_observation": {
             "adapter_execution": {
                 "envelope_sha256": envelope_sha,
-                "output_sha256": digest("adapter-output"),
+                "output_sha256": hashlib.sha256(canonical(projection)).hexdigest(),
             },
             "adapter_prebinding": {
-                "binding_git_blob": hashlib.sha1(b"binding-blob").hexdigest(),
-                "binding_sha256": digest("binding"),
+                "binding_git_blob": binding_blob,
+                "binding_sha256": hashlib.sha256(binding_bytes).hexdigest(),
                 "binary_sha256": digest("adapter-binary"),
                 "binary_size_bytes": 8_192,
                 "name": "ferric-qwen3-all-kernels-worker-v3-source-pin-v1",
@@ -261,20 +301,7 @@ def build_record(
                 "source_closure_sha256": hashlib.sha256(compact(adapter_files)).hexdigest(),
                 "source_files": adapter_files,
             },
-            "projection": {
-                "authority": "identity-observation-only",
-                "authenticates_compiler_origin": False,
-                "code_object_version": 6,
-                "format": "ferric.m1-all-kernels-worker-v3-source-pin.v1",
-                "grants_launch_authority": False,
-                "grants_load_authority": False,
-                "grants_publication_authority": False,
-                "grants_verifier_authority": False,
-                "policy_kernel_symbols": list(validator.KERNELS),
-                "program_count": 12,
-                "source_pin": source_pin,
-                "target": validator.TARGET,
-            },
+            "projection": projection,
         },
         "target": validator.TARGET,
     }
@@ -316,6 +343,25 @@ def require_rejection(
         fail(f"validator accepted hostile {name}: {result.stdout!r}")
 
 
+def require_producer_record_rejection(
+    producer: Path,
+    root: Path,
+    ferric: Path,
+    compiler: Path,
+    canonical_record: dict[str, Any],
+    name: str,
+    mutation: Mutation,
+) -> None:
+    hostile = copy.deepcopy(canonical_record)
+    mutation(hostile)
+    record_path = root / f"hostile-producer-{name}.json"
+    output_path = root / f"hostile-producer-{name}-output.json"
+    record_path.write_bytes(canonical(hostile))
+    result = invoke(producer, [ferric, compiler, record_path, output_path])
+    if result.returncode == 0 or b"FAIL:" not in result.stdout or output_path.exists():
+        fail(f"selection producer accepted hostile {name}: {result.stdout!r}")
+
+
 def main() -> None:
     repo = Path(__file__).resolve().parents[2]
     validator_path = repo / "proofs/m1-qualification/validate-protected-worker-v3-all-kernels-build.py"
@@ -339,6 +385,15 @@ def main() -> None:
     for forbidden in forbidden_engine_overrides:
         if forbidden in engine_source:
             fail(f"private engine selection gained a forbidden override: {forbidden}")
+    producer_source = producer.read_text(encoding="ascii")
+    for required in [
+        '["cat-file", "blob", object_name]',
+        "same_directory_identity(parent_metadata, opened_parent)",
+        "same_directory_identity(opened_parent, named_parent)",
+        "same_directory_identity(opened_parent, final_parent)",
+    ]:
+        if required not in producer_source:
+            fail(f"selection producer lost exact source or directory custody: {required}")
 
     with tempfile.TemporaryDirectory(prefix="ferric-aggregate-selection-policy-") as raw:
         root = Path(raw)
@@ -355,12 +410,58 @@ def main() -> None:
         (compiler / "compiler.txt").write_text("compiler\n", encoding="ascii")
         compiler_commit = commit(compiler, "compiler")
         compiler_tree = git(compiler, "rev-parse", "HEAD^{tree}")
-        (ferric / "ferric.txt").write_text("ferric\n", encoding="ascii")
-        ferric_commit = commit(ferric, "ferric")
+        for path in (*validator.DEVICE_FILES, *validator.ADAPTER_FILES):
+            target = ferric / path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(f"synthetic committed source for {path}\n", encoding="ascii")
+        (ferric / "device/qwen3-all-kernels-v1/Cargo.toml").write_text(
+            "\n".join(
+                [
+                    "[package]",
+                    'name = "ferric-qwen3-all-kernels-device-v1"',
+                    'version = "0.1.0"',
+                    'edition = "2024"',
+                    "",
+                    "[dependencies]",
+                    'fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", '
+                    f'rev = "{provider_commit}" }}',
+                    "",
+                    "[target.'cfg(not(target_arch = \"amdgpu\"))'.dependencies]",
+                    'fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", '
+                    f'rev = "{provider_commit}" }}',
+                    "",
+                ]
+            ),
+            encoding="ascii",
+        )
+        source_roster_commit = commit(ferric, "aggregate source roster")
+        adapter_records = source_records(
+            ferric, source_roster_commit, validator.ADAPTER_FILES
+        )
+        binding = {
+            "authority": "binary-identity-prebinding-only",
+            "binary": {
+                "name": "ferric-qwen3-all-kernels-worker-v3-source-pin-v1",
+                "sha256": digest("adapter-binary"),
+                "size_bytes": 8_192,
+            },
+            "format": "FERRIC-M1-ALL-KERNELS-SOURCE-PIN-ADAPTER-BINDING-V1",
+            "nonclaim": (
+                "This source-controlled record pre-binds one executable identity to the exact "
+                "adapter source closure. It is not a reproducible-build proof, "
+                "compiler-origin attestation, semantic-correctness proof, or runtime authority."
+            ),
+            "protocol": "ferric.m1-all-kernels-worker-v3-source-pin.v1",
+            "source_closure_sha256": hashlib.sha256(compact(adapter_records)).hexdigest(),
+            "source_files": adapter_records,
+        }
+        binding_path = ferric / validator.ADAPTER_BINDING
+        binding_path.write_bytes(canonical(binding))
+        ferric_commit = commit(ferric, "aggregate adapter binding")
         ferric_tree = git(ferric, "rev-parse", "HEAD^{tree}")
 
         record = build_record(
-            validator, ferric_commit, ferric_tree, compiler_commit, compiler_tree,
+            validator, ferric, ferric_commit, ferric_tree, compiler_commit, compiler_tree,
             provider_commit, provider_tree,
         )
         record_path = root / "aggregate-build.json"
@@ -380,6 +481,8 @@ def main() -> None:
             ("roster", set_path(("source_pin_observation", "projection", "policy_kernel_symbols", 0), "hostile_kernel")),
             ("artifact", set_path(("artifact", "sha256"), digest("other-artifact"))),
             ("envelope", set_path(("source_pin_observation", "adapter_execution", "envelope_sha256"), digest("other-envelope"))),
+            ("adapter-output", set_path(("source_pin_observation", "adapter_execution", "output_sha256"), digest("other-adapter-output"))),
+            ("handoff-link", set_path(("observed_worker_v3_records", "shallow_worker_v3_binding_observation", "compiler_handoff_sha256"), digest("other-compiler-handoff"))),
             ("authority", set_path(("authority",), "runtime-selection-authority")),
             ("currentness", set_path(("observed_worker_v3_records", "typed_current_publication_reacquisition"), True)),
         ]
@@ -420,6 +523,38 @@ def main() -> None:
             != hashlib.sha256(record_path.read_bytes()).hexdigest()
         ):
             fail("selection candidate lost an exact binding or nonauthority field")
+
+        def mutate_adapter_source(value: dict[str, Any]) -> None:
+            prebinding = value["source_pin_observation"]["adapter_prebinding"]
+            prebinding["source_files"][0]["sha256"] = digest("other-adapter-source")
+            prebinding["source_closure_sha256"] = hashlib.sha256(
+                compact(prebinding["source_files"])
+            ).hexdigest()
+
+        def mutate_provider(value: dict[str, Any]) -> None:
+            value["source"]["device_provider_commit"] = compiler_commit
+            value["source"]["device_provider_tree"] = compiler_tree
+
+        producer_mutations: list[tuple[str, Mutation]] = [
+            (
+                "device-source-bytes",
+                set_path(("source", "device_files", 0, "sha256"), digest("other-device-source")),
+            ),
+            ("adapter-source-bytes", mutate_adapter_source),
+            (
+                "adapter-binding-binary",
+                set_path(
+                    ("source_pin_observation", "adapter_prebinding", "binary_sha256"),
+                    digest("other-adapter-binary"),
+                ),
+            ),
+            ("provider-manifest", mutate_provider),
+        ]
+        for name, mutation in producer_mutations:
+            require_producer_record_rejection(
+                producer, root, ferric, compiler, record, name, mutation
+            )
+
         replacement = invoke(producer, [ferric, compiler, record_path, output])
         if replacement.returncode == 0 or b"replacement is forbidden" not in replacement.stdout:
             fail(f"candidate producer replaced an existing output: {replacement.stdout!r}")
@@ -435,6 +570,20 @@ def main() -> None:
             fail(
                 "candidate producer accepted a symlinked output: "
                 f"{symlink_output_result.stdout!r}"
+            )
+        symlink_parent = root / "selection-parent-symlink"
+        symlink_parent.symlink_to(root, target_is_directory=True)
+        symlink_parent_result = invoke(
+            producer,
+            [ferric, compiler, record_path, symlink_parent / "selection.json"],
+        )
+        if (
+            symlink_parent_result.returncode == 0
+            or b"owner-private and nonsymlink" not in symlink_parent_result.stdout
+        ):
+            fail(
+                "candidate producer accepted a symlinked output parent: "
+                f"{symlink_parent_result.stdout!r}"
             )
 
         dirty = ferric / "dirty"
@@ -456,7 +605,8 @@ def main() -> None:
 
     print(
         "PASS: canonical aggregate validator and private noncurrent selection producer "
-        f"rejected {len(mutations) + 8} schema, field, order, identity, target, COV6, "
+        f"rejected {len(mutations) + len(producer_mutations) + 9} schema, field, order, "
+        "source-byte, binding, identity, target, COV6, "
         "roster, artifact, envelope, authority, replacement, symlink, and dirty-source cases"
     )
 
