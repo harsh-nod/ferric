@@ -121,70 +121,90 @@ pub enum M1AuthenticatedSpeculativeExecutorInitErrorV1 {
 #[must_use = "the authenticated executor must execute another round or be retained"]
 #[derive(Debug)]
 pub struct M1AuthenticatedSpeculativePhysicalExecutorV1 {
-    coordinator: Option<M1SpeculativeGenerationLoopV1>,
-    released: Option<M1AuthenticatedLongLivedQueueReleasedRoundV1>,
-    lineage: Option<M1AuthenticatedSpeculativeCausalLineageV1>,
+    state: M1AuthenticatedSpeculativePhysicalExecutorStateV1,
+}
+
+#[derive(Debug)]
+enum M1AuthenticatedSpeculativePhysicalExecutorStateV1 {
+    Production {
+        coordinator: M1SpeculativeGenerationLoopV1,
+        released: M1AuthenticatedLongLivedQueueReleasedRoundV1,
+        lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+    },
     #[cfg(test)]
-    injected: Option<InjectedSpeculativeExecutorV1>,
+    Injected(InjectedSpeculativeExecutorV1),
 }
 
 /// Clean queue teardown retaining the final logical coordinator state.
 #[must_use = "final coordinator state and authenticated release remain retained"]
 #[derive(Debug)]
 pub struct M1AuthenticatedSpeculativeExecutorTeardownSuccessV1 {
-    coordinator: Option<M1SpeculativeGenerationLoopV1>,
-    released: Option<crate::M1AuthenticatedLongLivedQueueRearmTeardownSuccessV1>,
-    lineage: Option<M1AuthenticatedSpeculativeCausalLineageV1>,
+    state: M1AuthenticatedSpeculativeExecutorTeardownSuccessStateV1,
+}
+
+#[derive(Debug)]
+enum M1AuthenticatedSpeculativeExecutorTeardownSuccessStateV1 {
+    Production {
+        coordinator: M1SpeculativeGenerationLoopV1,
+        released: crate::M1AuthenticatedLongLivedQueueRearmTeardownSuccessV1,
+        lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+    },
     #[cfg(test)]
-    injected_release: bool,
+    Injected {
+        coordinator: M1SpeculativeGenerationLoopV1,
+    },
 }
 
 /// Terminal queue-release quarantine retaining the final logical state.
 #[must_use = "final coordinator state and release quarantine remain retained"]
 #[derive(Debug)]
 pub struct M1AuthenticatedSpeculativeExecutorTeardownFailureV1 {
-    coordinator: Option<M1SpeculativeGenerationLoopV1>,
-    released: Option<Box<crate::M1AuthenticatedLongLivedQueueRearmTeardownFailureV1>>,
-    lineage: Option<M1AuthenticatedSpeculativeCausalLineageV1>,
+    coordinator: M1SpeculativeGenerationLoopV1,
+    released: Box<crate::M1AuthenticatedLongLivedQueueRearmTeardownFailureV1>,
+    lineage: M1AuthenticatedSpeculativeCausalLineageV1,
 }
 
 impl M1AuthenticatedSpeculativeExecutorTeardownSuccessV1 {
     pub const fn released(&self) -> &crate::M1AuthenticatedLongLivedQueueRearmTeardownSuccessV1 {
-        match &self.released {
-            Some(released) => released,
-            None => panic!(),
+        match &self.state {
+            M1AuthenticatedSpeculativeExecutorTeardownSuccessStateV1::Production {
+                released,
+                ..
+            } => released,
+            #[cfg(test)]
+            M1AuthenticatedSpeculativeExecutorTeardownSuccessStateV1::Injected { .. } => panic!(),
         }
     }
 
     #[must_use]
     pub const fn coordinator(&self) -> &M1SpeculativeGenerationLoopV1 {
-        match &self.coordinator {
-            Some(coordinator) => coordinator,
-            None => panic!(),
+        match &self.state {
+            M1AuthenticatedSpeculativeExecutorTeardownSuccessStateV1::Production {
+                coordinator,
+                ..
+            } => coordinator,
+            #[cfg(test)]
+            M1AuthenticatedSpeculativeExecutorTeardownSuccessStateV1::Injected { coordinator } => {
+                coordinator
+            }
         }
     }
 
     #[must_use]
     pub const fn retains_causal_lineage(&self) -> bool {
-        let _ = &self.lineage;
+        let _ = &self.state;
         true
     }
 }
 
 impl M1AuthenticatedSpeculativeExecutorTeardownFailureV1 {
     pub const fn released(&self) -> &crate::M1AuthenticatedLongLivedQueueRearmTeardownFailureV1 {
-        match &self.released {
-            Some(released) => released,
-            None => panic!(),
-        }
+        &self.released
     }
 
     #[must_use]
     pub const fn coordinator(&self) -> &M1SpeculativeGenerationLoopV1 {
-        match &self.coordinator {
-            Some(coordinator) => coordinator,
-            None => panic!(),
-        }
+        &self.coordinator
     }
 
     #[must_use]
@@ -198,12 +218,21 @@ impl M1AuthenticatedSpeculativeExecutorTeardownFailureV1 {
 #[must_use = "round inputs contain linear page leases and workspace plans"]
 #[derive(Debug)]
 pub struct M1AuthenticatedSpeculativePhysicalRoundInputsV1 {
-    kv: Option<M1LongLivedQueueRearmKvInputsV1>,
-    recipe_workspace_plans: Option<M1FullStepWorkspacePlans>,
-    preparation_workspace_plans: Option<M1FullStepWorkspacePlans>,
-    controls: Option<Vec<M1SpeculativeMemberControlV1>>,
+    state: M1AuthenticatedSpeculativePhysicalRoundInputsStateV1,
+}
+
+#[derive(Debug)]
+enum M1AuthenticatedSpeculativePhysicalRoundInputsStateV1 {
+    Production {
+        kv: M1LongLivedQueueRearmKvInputsV1,
+        recipe_workspace_plans: M1FullStepWorkspacePlans,
+        preparation_workspace_plans: M1FullStepWorkspacePlans,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+    },
     #[cfg(test)]
-    injected: bool,
+    Injected {
+        controls: Vec<M1SpeculativeMemberControlV1>,
+    },
 }
 
 /// Pure authenticated round-zero bootstrap rejection.
@@ -299,10 +328,17 @@ struct M1AuthenticatedSpeculativeBootstrapContinuationV1 {
 #[must_use = "prepared physical custody and logical bootstrap continuation remain linear"]
 #[derive(Debug)]
 pub struct M1AuthenticatedSpeculativeBootstrapPreparedV1 {
-    prepared: Option<M1PreparedScheduledWorkspaceImagesV1>,
-    continuation: Option<M1AuthenticatedSpeculativeBootstrapContinuationV1>,
+    state: M1AuthenticatedSpeculativeBootstrapPreparedStateV1,
+}
+
+#[derive(Debug)]
+enum M1AuthenticatedSpeculativeBootstrapPreparedStateV1 {
+    Production {
+        prepared: M1PreparedScheduledWorkspaceImagesV1,
+        continuation: M1AuthenticatedSpeculativeBootstrapContinuationV1,
+    },
     #[cfg(test)]
-    injected: Option<InjectedSpeculativeExecutorV1>,
+    Injected(InjectedSpeculativeExecutorV1),
 }
 
 /// Logical half of an authenticated paired-prefill rollover lineage join.
@@ -325,10 +361,17 @@ struct M1AuthenticatedSpeculativeRolloverContinuationV1 {
 #[must_use = "published rollover queue and continuation must remain paired"]
 #[derive(Debug)]
 pub struct M1AuthenticatedSpeculativeRolloverPublishedV1 {
-    published: Option<crate::M1AuthenticatedRearmedPublishedQueueV1>,
-    continuation: Option<M1AuthenticatedSpeculativeRolloverContinuationV1>,
+    state: M1AuthenticatedSpeculativeRolloverPublishedStateV1,
+}
+
+#[derive(Debug)]
+enum M1AuthenticatedSpeculativeRolloverPublishedStateV1 {
+    Production {
+        published: crate::M1AuthenticatedRearmedPublishedQueueV1,
+        continuation: M1AuthenticatedSpeculativeRolloverContinuationV1,
+    },
     #[cfg(test)]
-    injected: Option<InjectedSpeculativeExecutorV1>,
+    Injected(InjectedSpeculativeExecutorV1),
 }
 
 /// Terminal first-round rollover failure without reusable queue authority.
@@ -380,14 +423,14 @@ impl M1AuthenticatedSpeculativeRolloverPublishedV1 {
         lineage: M1AuthenticatedSpeculativeLogicalLineageWitnessV1,
     ) -> Self {
         Self {
-            published: Some(published),
-            continuation: Some(M1AuthenticatedSpeculativeRolloverContinuationV1 {
-                coordinator,
-                epoch,
-                lineage,
-            }),
-            #[cfg(test)]
-            injected: None,
+            state: M1AuthenticatedSpeculativeRolloverPublishedStateV1::Production {
+                published,
+                continuation: M1AuthenticatedSpeculativeRolloverContinuationV1 {
+                    coordinator,
+                    epoch,
+                    lineage,
+                },
+            },
         }
     }
 
@@ -406,18 +449,20 @@ impl M1AuthenticatedSpeculativeRolloverPublishedV1 {
         M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
         M1AuthenticatedSpeculativeRolloverRoundFailureV1,
     > {
-        #[cfg(test)]
-        if self.injected.is_some() {
-            return complete_injected_rollover(self, engine, controls);
-        }
-        let Self {
-            published,
-            continuation,
+        let (published, continuation) = match self.state {
+            M1AuthenticatedSpeculativeRolloverPublishedStateV1::Production {
+                published,
+                continuation,
+            } => (published, continuation),
             #[cfg(test)]
-                injected: _,
-        } = self;
-        let published = published.expect("production rollover retains published queue");
-        let continuation = continuation.expect("production rollover retains continuation");
+            M1AuthenticatedSpeculativeRolloverPublishedStateV1::Injected(injected) => {
+                return complete_injected_rollover(
+                    M1AuthenticatedSpeculativeRolloverPublishedStateV1::Injected(injected),
+                    engine,
+                    controls,
+                );
+            }
+        };
         let completed = match published.wait(engine) {
             Ok(completed) => completed,
             Err(failure) => {
@@ -669,12 +714,12 @@ impl M1AuthenticatedSpeculativePhysicalRoundInputsV1 {
         controls: Vec<M1SpeculativeMemberControlV1>,
     ) -> Self {
         Self {
-            kv: Some(kv),
-            recipe_workspace_plans: Some(recipe_workspace_plans),
-            preparation_workspace_plans: Some(preparation_workspace_plans),
-            controls: Some(controls),
-            #[cfg(test)]
-            injected: false,
+            state: M1AuthenticatedSpeculativePhysicalRoundInputsStateV1::Production {
+                kv,
+                recipe_workspace_plans,
+                preparation_workspace_plans,
+                controls,
+            },
         }
     }
 }
@@ -1930,7 +1975,14 @@ struct M1AuthenticatedSpeculativePhysicalPageReleaseCustodyV1 {
 pub struct M1AuthenticatedSpeculativePhysicalRoundSuccessV1 {
     executor: M1AuthenticatedSpeculativePhysicalExecutorV1,
     outcome: M1SpeculativeRoundOutcomeV1,
-    choices: Option<M1ObservedSpeculativeDiagnosticChoicesV1>,
+    choices: M1AuthenticatedSpeculativeDiagnosticChoicesStateV1,
+}
+
+#[derive(Debug)]
+enum M1AuthenticatedSpeculativeDiagnosticChoicesStateV1 {
+    Production(M1ObservedSpeculativeDiagnosticChoicesV1),
+    #[cfg(test)]
+    Injected,
 }
 
 impl M1AuthenticatedSpeculativePhysicalRoundSuccessV1 {
@@ -1945,8 +1997,9 @@ impl M1AuthenticatedSpeculativePhysicalRoundSuccessV1 {
     /// Independent device copies used for semantic checking; never M1 evidence.
     pub const fn diagnostic_choices(&self) -> &M1ObservedSpeculativeDiagnosticChoicesV1 {
         match &self.choices {
-            Some(choices) => choices,
-            None => panic!(),
+            M1AuthenticatedSpeculativeDiagnosticChoicesStateV1::Production(choices) => choices,
+            #[cfg(test)]
+            M1AuthenticatedSpeculativeDiagnosticChoicesStateV1::Injected => panic!(),
         }
     }
 
@@ -1958,12 +2011,11 @@ impl M1AuthenticatedSpeculativePhysicalRoundSuccessV1 {
         M1SpeculativeRoundOutcomeV1,
         M1ObservedSpeculativeDiagnosticChoicesV1,
     ) {
-        (
-            self.executor,
-            self.outcome,
-            self.choices
-                .expect("production success retains diagnostic choices"),
-        )
+        let M1AuthenticatedSpeculativeDiagnosticChoicesStateV1::Production(choices) = self.choices
+        else {
+            unreachable!("injected lifecycle has no device diagnostic allocation")
+        };
+        (self.executor, self.outcome, choices)
     }
 }
 
@@ -2294,17 +2346,17 @@ pub fn prepare_m1_authenticated_speculative_bootstrap_v1(
         }
     };
     Ok(M1AuthenticatedSpeculativeBootstrapPreparedV1 {
-        prepared: Some(prepared),
-        continuation: Some(M1AuthenticatedSpeculativeBootstrapContinuationV1 {
-            coordinator,
-            epoch: binding.epoch(),
-            selected,
-            lineage: M1AuthenticatedSpeculativeLogicalLineageWitnessV1 {
-                identity: lineage_identity,
+        state: M1AuthenticatedSpeculativeBootstrapPreparedStateV1::Production {
+            prepared,
+            continuation: M1AuthenticatedSpeculativeBootstrapContinuationV1 {
+                coordinator,
+                epoch: binding.epoch(),
+                selected,
+                lineage: M1AuthenticatedSpeculativeLogicalLineageWitnessV1 {
+                    identity: lineage_identity,
+                },
             },
-        }),
-        #[cfg(test)]
-        injected: None,
+        },
     })
 }
 
@@ -2584,13 +2636,15 @@ fn execute_bootstrap_from_allocation<const C: usize>(
         ));
     }
     let M1AuthenticatedSpeculativeBootstrapPreparedV1 {
-        prepared,
-        continuation,
-        #[cfg(test)]
-            injected: _,
-    } = bootstrap;
-    let prepared = prepared.expect("production bootstrap retains prepared images");
-    let continuation = continuation.expect("production bootstrap retains continuation");
+        state:
+            M1AuthenticatedSpeculativeBootstrapPreparedStateV1::Production {
+                prepared,
+                continuation,
+            },
+    } = bootstrap
+    else {
+        unreachable!("injected bootstrap uses the injected argument backend")
+    };
     let mut allocated =
         match crate::allocate_m1_prepublication_workspaces_v1(partitioned_memory, prepared) {
             Ok(allocated) => allocated,
@@ -2601,10 +2655,11 @@ fn execute_bootstrap_from_allocation<const C: usize>(
                         M1AuthenticatedSpeculativeBootstrapPreDetachRetryStateV1::Allocation {
                             diagnostic: Box::new(diagnostic),
                             prepared: M1AuthenticatedSpeculativeBootstrapPreparedV1 {
-                                prepared: Some(prepared),
-                                continuation: Some(continuation),
-                                #[cfg(test)]
-                                injected: None,
+                                state:
+                                    M1AuthenticatedSpeculativeBootstrapPreparedStateV1::Production {
+                                        prepared,
+                                        continuation,
+                                    },
                             },
                             partitioned_memory,
                             runner,
@@ -3089,14 +3144,14 @@ impl M1AuthenticatedSpeculativeBootstrapContinuationV1 {
         }
         Ok(M1AuthenticatedSpeculativePhysicalRoundSuccessV1 {
             executor: M1AuthenticatedSpeculativePhysicalExecutorV1 {
-                coordinator: Some(coordinator),
-                released: Some(released),
-                lineage: Some(lineage),
-                #[cfg(test)]
-                injected: None,
+                state: M1AuthenticatedSpeculativePhysicalExecutorStateV1::Production {
+                    coordinator,
+                    released,
+                    lineage,
+                },
             },
             outcome,
-            choices: Some(choices),
+            choices: M1AuthenticatedSpeculativeDiagnosticChoicesStateV1::Production(choices),
         })
     }
 }
@@ -3237,14 +3292,14 @@ fn complete_authenticated_rearmed_speculative_round<const C: usize>(
             }
             Ok(M1AuthenticatedSpeculativePhysicalRoundSuccessV1 {
                 executor: M1AuthenticatedSpeculativePhysicalExecutorV1 {
-                    coordinator: Some(coordinator),
-                    released: Some(released),
-                    lineage: Some(lineage),
-                    #[cfg(test)]
-                    injected: None,
+                    state: M1AuthenticatedSpeculativePhysicalExecutorStateV1::Production {
+                        coordinator,
+                        released,
+                        lineage,
+                    },
                 },
                 outcome,
-                choices: Some(choices),
+                choices: M1AuthenticatedSpeculativeDiagnosticChoicesStateV1::Production(choices),
             })
         }
         M1AuthenticatedRearmedRoundReleaseOutcomeV1::Rejected(failure) => Err(Box::new(
@@ -3646,41 +3701,42 @@ fn terminal_quarantine<const C: usize>(
 
 impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
     #[must_use]
-    pub fn selection(&self) -> Qwen3PlanSelection {
-        #[cfg(test)]
-        if let Some(injected) = &self.injected {
-            return injected.coordinator.shape().selection();
+    pub const fn selection(&self) -> Qwen3PlanSelection {
+        match &self.state {
+            M1AuthenticatedSpeculativePhysicalExecutorStateV1::Production {
+                coordinator, ..
+            } => coordinator.shape().selection(),
+            #[cfg(test)]
+            M1AuthenticatedSpeculativePhysicalExecutorStateV1::Injected(injected) => {
+                injected.coordinator.shape().selection()
+            }
         }
-        self.coordinator
-            .as_ref()
-            .expect("production executor retains coordinator")
-            .shape()
-            .selection()
     }
 
     #[must_use]
-    pub fn next_round(&self) -> u64 {
-        #[cfg(test)]
-        if let Some(injected) = &self.injected {
-            return injected.coordinator.next_round();
+    pub const fn next_round(&self) -> u64 {
+        match &self.state {
+            M1AuthenticatedSpeculativePhysicalExecutorStateV1::Production {
+                coordinator, ..
+            } => coordinator.next_round(),
+            #[cfg(test)]
+            M1AuthenticatedSpeculativePhysicalExecutorStateV1::Injected(injected) => {
+                injected.coordinator.next_round()
+            }
         }
-        self.coordinator
-            .as_ref()
-            .expect("production executor retains coordinator")
-            .next_round()
     }
 
     #[must_use]
     pub fn active_count(&self) -> usize {
-        #[cfg(test)]
-        if let Some(injected) = &self.injected {
-            return injected.coordinator.active_roster().len();
+        match &self.state {
+            M1AuthenticatedSpeculativePhysicalExecutorStateV1::Production {
+                coordinator, ..
+            } => coordinator.active_roster().len(),
+            #[cfg(test)]
+            M1AuthenticatedSpeculativePhysicalExecutorStateV1::Injected(injected) => {
+                injected.coordinator.active_roster().len()
+            }
         }
-        self.coordinator
-            .as_ref()
-            .expect("production executor retains coordinator")
-            .active_roster()
-            .len()
     }
 
     #[must_use]
@@ -3701,33 +3757,30 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
         M1AuthenticatedSpeculativeExecutorTeardownSuccessV1,
         Box<M1AuthenticatedSpeculativeExecutorTeardownFailureV1>,
     > {
-        #[cfg(test)]
-        if self.injected.is_some() {
-            return destroy_injected_executor(self, engine);
-        }
-        let Self {
-            coordinator,
-            released,
-            lineage,
+        let (coordinator, released, lineage) = match self.state {
+            M1AuthenticatedSpeculativePhysicalExecutorStateV1::Production {
+                coordinator,
+                released,
+                lineage,
+            } => (coordinator, released, lineage),
             #[cfg(test)]
-                injected: _,
-        } = self;
-        let coordinator = coordinator.expect("production executor retains coordinator");
-        let released = released.expect("production executor retains released queue");
-        let lineage = lineage.expect("production executor retains lineage");
+            state @ M1AuthenticatedSpeculativePhysicalExecutorStateV1::Injected(_) => {
+                return destroy_injected_executor(state, engine);
+            }
+        };
         match released.destroy_queue_and_retain_round(engine) {
             Ok(released) => Ok(M1AuthenticatedSpeculativeExecutorTeardownSuccessV1 {
-                coordinator: Some(coordinator),
-                released: Some(released),
-                lineage: Some(lineage),
-                #[cfg(test)]
-                injected_release: false,
+                state: M1AuthenticatedSpeculativeExecutorTeardownSuccessStateV1::Production {
+                    coordinator,
+                    released,
+                    lineage,
+                },
             }),
             Err(released) => Err(Box::new(
                 M1AuthenticatedSpeculativeExecutorTeardownFailureV1 {
-                    coordinator: Some(coordinator),
-                    released: Some(released),
-                    lineage: Some(lineage),
+                    coordinator,
+                    released,
+                    lineage,
                 },
             )),
         }
@@ -3755,7 +3808,13 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
         Box<M1AuthenticatedSpeculativePhysicalRoundFailureV1>,
     > {
         #[cfg(test)]
-        if self.injected.is_some() || inputs.injected {
+        if matches!(
+            self.state,
+            M1AuthenticatedSpeculativePhysicalExecutorStateV1::Injected(_)
+        ) || matches!(
+            &inputs.state,
+            M1AuthenticatedSpeculativePhysicalRoundInputsStateV1::Injected { .. }
+        ) {
             return execute_injected_round(self, engine, inputs);
         }
         self.execute_round_pending(engine, inputs)
@@ -3770,15 +3829,14 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
         M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
         Box<PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1>,
     > {
-        if !production_entry_profile_matches(
-            self.selection(),
-            self.released
-                .as_ref()
-                .expect("production executor retains released queue")
-                .current_released()
-                .queue()
-                .shape(),
-        ) {
+        let queue_shape = match &self.state {
+            M1AuthenticatedSpeculativePhysicalExecutorStateV1::Production { released, .. } => {
+                released.current_released().queue().shape()
+            }
+            #[cfg(test)]
+            M1AuthenticatedSpeculativePhysicalExecutorStateV1::Injected(_) => unreachable!(),
+        };
+        if !production_entry_profile_matches(self.selection(), queue_shape) {
             return Err(retryable_failure(
                 M1AuthenticatedSpeculativePhysicalRoundStageV1::Profile,
                 self,
@@ -3796,34 +3854,36 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                 },
             ));
         }
-        if inputs.recipe_workspace_plans != inputs.preparation_workspace_plans
-            || inputs
-                .recipe_workspace_plans
-                .as_ref()
-                .expect("production inputs retain recipe plans")
-                .kind()
-                != crate::M1FullStepWorkspaceInputKind::SpeculativeRound
-            || !matches!(
-                inputs.kv.as_ref(),
-                Some(M1LongLivedQueueRearmKvInputsV1::SpeculativeRound { .. })
-            )
-        {
+        let inputs_match = match &inputs.state {
+            M1AuthenticatedSpeculativePhysicalRoundInputsStateV1::Production {
+                kv,
+                recipe_workspace_plans,
+                preparation_workspace_plans,
+                ..
+            } => {
+                recipe_workspace_plans == preparation_workspace_plans
+                    && recipe_workspace_plans.kind()
+                        == crate::M1FullStepWorkspaceInputKind::SpeculativeRound
+                    && matches!(kv, M1LongLivedQueueRearmKvInputsV1::SpeculativeRound { .. })
+            }
+            #[cfg(test)]
+            M1AuthenticatedSpeculativePhysicalRoundInputsStateV1::Injected { .. } => false,
+        };
+        if !inputs_match {
             return Err(retryable_failure(
                 M1AuthenticatedSpeculativePhysicalRoundStageV1::Inputs,
                 self,
                 inputs,
             ));
         }
-        let Self {
+        let M1AuthenticatedSpeculativePhysicalExecutorStateV1::Production {
             coordinator,
             released,
             lineage,
-            #[cfg(test)]
-                injected: _,
-        } = self;
-        let coordinator = coordinator.expect("production executor retains coordinator");
-        let released = released.expect("production executor retains released queue");
-        let lineage = lineage.expect("production executor retains lineage");
+        } = self.state
+        else {
+            unreachable!("injected executor is handled before production execution")
+        };
         let epoch = match released
             .current_released()
             .checked()
@@ -3837,11 +3897,11 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                 return Err(retryable_failure(
                     M1AuthenticatedSpeculativePhysicalRoundStageV1::Epoch,
                     Self {
-                        coordinator: Some(coordinator),
-                        released: Some(released),
-                        lineage: Some(lineage),
-                        #[cfg(test)]
-                        injected: None,
+                        state: M1AuthenticatedSpeculativePhysicalExecutorStateV1::Production {
+                            coordinator,
+                            released,
+                            lineage,
+                        },
                     },
                     inputs,
                 ));
@@ -3854,46 +3914,48 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                 return Err(retryable_failure(
                     M1AuthenticatedSpeculativePhysicalRoundStageV1::Bind,
                     Self {
-                        coordinator: Some(coordinator),
-                        released: Some(released),
-                        lineage: Some(lineage),
-                        #[cfg(test)]
-                        injected: None,
+                        state: M1AuthenticatedSpeculativePhysicalExecutorStateV1::Production {
+                            coordinator,
+                            released,
+                            lineage,
+                        },
                     },
                     inputs,
                 ));
             }
         };
-        if !speculative_round_inputs_match_binding(
-            inputs.kv.as_ref().expect("production inputs retain KV"),
-            &binding,
-        ) {
+        let kv_matches_binding = match &inputs.state {
+            M1AuthenticatedSpeculativePhysicalRoundInputsStateV1::Production { kv, .. } => {
+                speculative_round_inputs_match_binding(kv, &binding)
+            }
+            #[cfg(test)]
+            M1AuthenticatedSpeculativePhysicalRoundInputsStateV1::Injected { .. } => false,
+        };
+        if !kv_matches_binding {
             return Err(retryable_failure(
                 M1AuthenticatedSpeculativePhysicalRoundStageV1::Inputs,
                 Self {
-                    coordinator: Some(coordinator),
-                    released: Some(released),
-                    lineage: Some(lineage),
-                    #[cfg(test)]
-                    injected: None,
+                    state: M1AuthenticatedSpeculativePhysicalExecutorStateV1::Production {
+                        coordinator,
+                        released,
+                        lineage,
+                    },
                 },
                 inputs,
             ));
         }
         let M1AuthenticatedSpeculativePhysicalRoundInputsV1 {
-            kv,
-            recipe_workspace_plans,
-            preparation_workspace_plans,
-            controls,
-            #[cfg(test)]
-                injected: _,
-        } = inputs;
-        let kv = kv.expect("production inputs retain KV");
-        let recipe_workspace_plans =
-            recipe_workspace_plans.expect("production inputs retain recipe plans");
-        let preparation_workspace_plans =
-            preparation_workspace_plans.expect("production inputs retain preparation plans");
-        let controls = controls.expect("production inputs retain controls");
+            state:
+                M1AuthenticatedSpeculativePhysicalRoundInputsStateV1::Production {
+                    kv,
+                    recipe_workspace_plans,
+                    preparation_workspace_plans,
+                    controls,
+                },
+        } = inputs
+        else {
+            unreachable!("injected inputs are handled before production execution")
+        };
         let scheduled = match released.schedule_next_exact(engine, epoch, &roster) {
             Ok(scheduled) => scheduled,
             Err(M1AuthenticatedLongLivedQueueRearmScheduleFailureV1::Rejected(rejected)) => {
@@ -3901,19 +3963,19 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                 return Err(retryable_failure(
                     M1AuthenticatedSpeculativePhysicalRoundStageV1::Schedule,
                     Self {
-                        coordinator: Some(coordinator),
-                        released: Some(released),
-                        lineage: Some(lineage),
-                        #[cfg(test)]
-                        injected: None,
+                        state: M1AuthenticatedSpeculativePhysicalExecutorStateV1::Production {
+                            coordinator,
+                            released,
+                            lineage,
+                        },
                     },
                     M1AuthenticatedSpeculativePhysicalRoundInputsV1 {
-                        kv: Some(kv),
-                        recipe_workspace_plans: Some(recipe_workspace_plans),
-                        preparation_workspace_plans: Some(preparation_workspace_plans),
-                        controls: Some(controls),
-                        #[cfg(test)]
-                        injected: false,
+                        state: M1AuthenticatedSpeculativePhysicalRoundInputsStateV1::Production {
+                            kv,
+                            recipe_workspace_plans,
+                            preparation_workspace_plans,
+                            controls,
+                        },
                     },
                 ));
             }
@@ -4182,14 +4244,16 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                 }
                 Ok(M1AuthenticatedSpeculativePhysicalRoundSuccessV1 {
                     executor: Self {
-                        coordinator: Some(coordinator),
-                        released: Some(released),
-                        lineage: Some(lineage),
-                        #[cfg(test)]
-                        injected: None,
+                        state: M1AuthenticatedSpeculativePhysicalExecutorStateV1::Production {
+                            coordinator,
+                            released,
+                            lineage,
+                        },
                     },
                     outcome,
-                    choices: Some(choices),
+                    choices: M1AuthenticatedSpeculativeDiagnosticChoicesStateV1::Production(
+                        choices,
+                    ),
                 })
             }
             M1AuthenticatedRearmedRoundReleaseOutcomeV1::Rejected(failure) => Err(Box::new(
@@ -4410,13 +4474,10 @@ fn execute_injected_generation<const C: usize>(
     );
     Ok(M1AuthenticatedSpeculativePhysicalRoundSuccessV1 {
         executor: M1AuthenticatedSpeculativePhysicalExecutorV1 {
-            coordinator: None,
-            released: None,
-            lineage: None,
-            injected: Some(injected),
+            state: M1AuthenticatedSpeculativePhysicalExecutorStateV1::Injected(injected),
         },
         outcome,
-        choices: None,
+        choices: M1AuthenticatedSpeculativeDiagnosticChoicesStateV1::Injected,
     })
 }
 
@@ -4429,21 +4490,25 @@ fn execute_injected_round<const C: usize>(
     M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
     Box<M1AuthenticatedSpeculativePhysicalRoundFailureV1>,
 > {
-    let profile_matches = executor.injected.as_ref().is_some_and(|injected| {
-        production_entry_profile_matches(
-            injected.coordinator.shape().selection(),
-            injected.queue_shape,
-        )
-    });
-    let reject_once = executor.injected.as_mut().is_some_and(|injected| {
-        if injected.pre_detach_rejections == 0 {
-            false
-        } else {
-            injected.pre_detach_rejections -= 1;
-            true
+    let (profile_matches, reject_once) = match &mut executor.state {
+        M1AuthenticatedSpeculativePhysicalExecutorStateV1::Injected(injected) => {
+            let profile_matches = production_entry_profile_matches(
+                injected.coordinator.shape().selection(),
+                injected.queue_shape,
+            );
+            let reject_once = injected.pre_detach_rejections != 0;
+            injected.pre_detach_rejections = injected.pre_detach_rejections.saturating_sub(1);
+            (profile_matches, reject_once)
         }
-    });
-    if !profile_matches || !inputs.injected || reject_once {
+        M1AuthenticatedSpeculativePhysicalExecutorStateV1::Production { .. } => (false, false),
+    };
+    if !profile_matches
+        || !matches!(
+            &inputs.state,
+            M1AuthenticatedSpeculativePhysicalRoundInputsStateV1::Injected { .. }
+        )
+        || reject_once
+    {
         return Err(Box::new(
             M1AuthenticatedSpeculativePhysicalRoundFailureV1::PreDetach {
                 stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Profile,
@@ -4454,12 +4519,14 @@ fn execute_injected_round<const C: usize>(
             },
         ));
     }
-    let controls = inputs
-        .controls
-        .expect("injected round retains exact controls");
-    let injected = executor
-        .injected
-        .expect("injected round retains queue lifecycle");
+    let M1AuthenticatedSpeculativePhysicalRoundInputsStateV1::Injected { controls } = inputs.state
+    else {
+        unreachable!()
+    };
+    let M1AuthenticatedSpeculativePhysicalExecutorStateV1::Injected(injected) = executor.state
+    else {
+        unreachable!()
+    };
     execute_injected_generation(engine, injected, controls).map_err(|(stage, disposition)| {
         Box::new(M1AuthenticatedSpeculativePhysicalRoundFailureV1::Terminal { stage, disposition })
     })
@@ -4474,9 +4541,10 @@ fn execute_injected_bootstrap<const C: usize>(
     M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
     Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1>,
 > {
-    let injected = bootstrap
-        .injected
-        .expect("injected bootstrap retains queue lifecycle");
+    let M1AuthenticatedSpeculativeBootstrapPreparedStateV1::Injected(injected) = bootstrap.state
+    else {
+        unreachable!()
+    };
     execute_injected_generation(engine, injected, controls).map_err(|(stage, disposition)| {
         let stage = match stage {
             M1AuthenticatedSpeculativePhysicalRoundStageV1::Submit => {
@@ -4505,16 +4573,16 @@ fn execute_injected_bootstrap<const C: usize>(
 
 #[cfg(test)]
 fn complete_injected_rollover<const C: usize>(
-    rollover: M1AuthenticatedSpeculativeRolloverPublishedV1,
+    state: M1AuthenticatedSpeculativeRolloverPublishedStateV1,
     engine: &mut Engine<C>,
     controls: Vec<M1SpeculativeMemberControlV1>,
 ) -> Result<
     M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
     M1AuthenticatedSpeculativeRolloverRoundFailureV1,
 > {
-    let injected = rollover
-        .injected
-        .expect("injected rollover retains queue lifecycle");
+    let M1AuthenticatedSpeculativeRolloverPublishedStateV1::Injected(injected) = state else {
+        unreachable!()
+    };
     execute_injected_generation(engine, injected, controls).map_err(|(stage, disposition)| {
         M1AuthenticatedSpeculativeRolloverRoundFailureV1 { stage, disposition }
     })
@@ -4522,32 +4590,21 @@ fn complete_injected_rollover<const C: usize>(
 
 #[cfg(test)]
 fn destroy_injected_executor<const C: usize>(
-    executor: M1AuthenticatedSpeculativePhysicalExecutorV1,
-    engine: &mut Engine<C>,
+    state: M1AuthenticatedSpeculativePhysicalExecutorStateV1,
+    _engine: &mut Engine<C>,
 ) -> Result<
     M1AuthenticatedSpeculativeExecutorTeardownSuccessV1,
     Box<M1AuthenticatedSpeculativeExecutorTeardownFailureV1>,
 > {
-    let injected = executor
-        .injected
-        .expect("injected executor retains queue lifecycle");
-    if injected.queue.destroy(true) {
-        Ok(M1AuthenticatedSpeculativeExecutorTeardownSuccessV1 {
-            coordinator: Some(injected.coordinator),
-            released: None,
-            lineage: None,
-            injected_release: true,
-        })
-    } else {
-        engine.quarantine_m1_queue_rearm_failure();
-        Err(Box::new(
-            M1AuthenticatedSpeculativeExecutorTeardownFailureV1 {
-                coordinator: Some(injected.coordinator),
-                released: None,
-                lineage: None,
-            },
-        ))
-    }
+    let M1AuthenticatedSpeculativePhysicalExecutorStateV1::Injected(injected) = state else {
+        unreachable!()
+    };
+    assert!(injected.queue.destroy(true));
+    Ok(M1AuthenticatedSpeculativeExecutorTeardownSuccessV1 {
+        state: M1AuthenticatedSpeculativeExecutorTeardownSuccessStateV1::Injected {
+            coordinator: injected.coordinator,
+        },
+    })
 }
 
 #[cfg(test)]
@@ -4617,17 +4674,16 @@ mod tests {
         pre_detach_rejections: usize,
     ) -> M1AuthenticatedSpeculativePhysicalExecutorV1 {
         M1AuthenticatedSpeculativePhysicalExecutorV1 {
-            coordinator: None,
-            released: None,
-            lineage: None,
-            injected: Some(InjectedSpeculativeExecutorV1 {
-                coordinator: injected_coordinator(selection(bucket), members),
-                queue,
-                queue_shape: injected_shape(bucket),
-                next_epoch: CompletionEpoch::new(40),
-                published: false,
-                pre_detach_rejections,
-            }),
+            state: M1AuthenticatedSpeculativePhysicalExecutorStateV1::Injected(
+                InjectedSpeculativeExecutorV1 {
+                    coordinator: injected_coordinator(selection(bucket), members),
+                    queue,
+                    queue_shape: injected_shape(bucket),
+                    next_epoch: CompletionEpoch::new(40),
+                    published: false,
+                    pre_detach_rejections,
+                },
+            ),
         }
     }
 
@@ -4635,11 +4691,7 @@ mod tests {
         controls: Vec<M1SpeculativeMemberControlV1>,
     ) -> M1AuthenticatedSpeculativePhysicalRoundInputsV1 {
         M1AuthenticatedSpeculativePhysicalRoundInputsV1 {
-            kv: None,
-            recipe_workspace_plans: None,
-            preparation_workspace_plans: None,
-            controls: Some(controls),
-            injected: true,
+            state: M1AuthenticatedSpeculativePhysicalRoundInputsStateV1::Injected { controls },
         }
     }
 
@@ -4654,7 +4706,10 @@ mod tests {
             outcome,
             choices,
         } = success;
-        assert!(choices.is_none());
+        assert!(matches!(
+            choices,
+            M1AuthenticatedSpeculativeDiagnosticChoicesStateV1::Injected
+        ));
         (executor, outcome)
     }
 
@@ -5124,16 +5179,16 @@ mod tests {
                 ],
             );
             let bootstrap = M1AuthenticatedSpeculativeBootstrapPreparedV1 {
-                prepared: None,
-                continuation: None,
-                injected: Some(InjectedSpeculativeExecutorV1 {
-                    coordinator: injected_coordinator(target, member_count),
-                    queue: queue.clone(),
-                    queue_shape: expected,
-                    next_epoch: CompletionEpoch::new(40),
-                    published: false,
-                    pre_detach_rejections: 0,
-                }),
+                state: M1AuthenticatedSpeculativeBootstrapPreparedStateV1::Injected(
+                    InjectedSpeculativeExecutorV1 {
+                        coordinator: injected_coordinator(target, member_count),
+                        queue: queue.clone(),
+                        queue_shape: expected,
+                        next_epoch: CompletionEpoch::new(40),
+                        published: false,
+                        pre_detach_rejections: 0,
+                    },
+                ),
             };
             let initial_controls: Vec<_> = (0..member_count)
                 .map(|lane| {
@@ -5206,7 +5261,10 @@ mod tests {
             let teardown = executor
                 .destroy_queue_and_retain_state(&mut engine)
                 .unwrap();
-            assert!(teardown.injected_release);
+            assert!(matches!(
+                teardown.state,
+                M1AuthenticatedSpeculativeExecutorTeardownSuccessStateV1::Injected { .. }
+            ));
             assert_eq!(queue.snapshot().destroys, 1);
             assert_eq!(queue.snapshot().phase, InjectedQueuePhaseV1::Destroyed);
         }
@@ -5415,16 +5473,16 @@ mod tests {
         queue.publish_for_resume();
         let selected = selection(Qwen3PlanBucket::SpeculativeS1K4C8192);
         let rollover = M1AuthenticatedSpeculativeRolloverPublishedV1 {
-            published: None,
-            continuation: None,
-            injected: Some(InjectedSpeculativeExecutorV1 {
-                coordinator: injected_coordinator(selected, 1),
-                queue: queue.clone(),
-                queue_shape: M1PhysicalFixedBatchShapeV1::SpeculativeK4,
-                next_epoch: CompletionEpoch::new(40),
-                published: true,
-                pre_detach_rejections: 0,
-            }),
+            state: M1AuthenticatedSpeculativeRolloverPublishedStateV1::Injected(
+                InjectedSpeculativeExecutorV1 {
+                    coordinator: injected_coordinator(selected, 1),
+                    queue: queue.clone(),
+                    queue_shape: M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+                    next_epoch: CompletionEpoch::new(40),
+                    published: true,
+                    pre_detach_rejections: 0,
+                },
+            ),
         };
         let controls = vec![M1SpeculativeMemberControlV1::continuing(RequestId::new(
             0, 1,
