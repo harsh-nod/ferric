@@ -13,6 +13,7 @@ use std::error::Error;
 use std::fmt;
 
 use fe2o3_host::{
+    BlockSizeV1, CompilerGeneratedKernelExpectationRosterEntryV1,
     CompilerGeneratedKernelExpectationRosterV1, WorkerV3ProtectedRosterVerificationEvidenceV1,
     WorkerV3ProtectedRosterVerifierBackendV1, WorkerV3RosterVerificationRequestV1,
 };
@@ -39,6 +40,7 @@ struct M1AllKernelsPendingDescriptorProjectionV1 {
     explicit_argument_size: u32,
     kernarg_segment_size: u32,
     kernarg_segment_alignment: u32,
+    launch_block_size: BlockSizeV1,
     capability_count: usize,
     logical_argument_count: usize,
 }
@@ -134,9 +136,8 @@ impl M1AllKernelsPendingRequestProjectionV1 {
     fn entry_from_request(
         request: &WorkerV3RosterVerificationRequestV1<'_, M1AllKernelsWorkerV3RosterV1>,
         ordinal: usize,
+        marker: &CompilerGeneratedKernelExpectationRosterEntryV1,
     ) -> M1AllKernelsPendingEntryProjectionV1 {
-        let marker_entries = request.marker_entries();
-        let marker = &marker_entries[ordinal];
         let lineage = request
             .entry_lineage_identity(ordinal)
             .map(|identity| *identity.as_bytes());
@@ -156,6 +157,7 @@ impl M1AllKernelsPendingRequestProjectionV1 {
                 explicit_argument_size: abi.explicit_argument_size(),
                 kernarg_segment_size: abi.kernarg_segment_size(),
                 kernarg_segment_alignment: abi.kernarg_segment_alignment(),
+                launch_block_size: descriptor.launch().block_size(),
                 capability_count: descriptor.capabilities().len(),
                 logical_argument_count: descriptor.arguments().len(),
             }
@@ -222,9 +224,16 @@ impl M1AllKernelsPendingRequestProjectionV1 {
 
     fn from_request(
         request: &WorkerV3RosterVerificationRequestV1<'_, M1AllKernelsWorkerV3RosterV1>,
-    ) -> Self {
-        let entries = std::array::from_fn(|ordinal| Self::entry_from_request(request, ordinal));
-        Self {
+    ) -> Option<Self> {
+        let entries = request
+            .marker_entries()
+            .iter()
+            .enumerate()
+            .map(|(ordinal, marker)| Self::entry_from_request(request, ordinal, marker))
+            .collect::<Vec<_>>()
+            .try_into()
+            .ok()?;
+        Some(Self {
             challenge_identity: *request.challenge_identity().as_bytes(),
             roster_identity: *request.roster_identity().as_bytes(),
             lineage_identity: *request.lineage_identity().as_bytes(),
@@ -254,7 +263,7 @@ impl M1AllKernelsPendingRequestProjectionV1 {
             target: request.target().to_string(),
             code_object_version: request.code_object_version().number(),
             entries,
-        }
+        })
     }
 }
 
@@ -268,6 +277,12 @@ pub enum M1AllKernelsProtectedVerifierErrorV1 {
     CompilerMultiRootProofInputsValidationFailed,
     /// The common multi-root target lineage did not validate.
     CompilerMultiRootTargetLineageValidationFailed,
+    /// Finalizer custody did not match the request's exact artifact coordinates.
+    FinalizerArtifactAssociationFailed,
+    /// Compiler target custody did not match the finalizer, handoff, or target.
+    CompilerTargetAssociationFailed,
+    /// The marker, proof-root, descriptor, physical, or workgroup roster drifted.
+    RosterEntryAssociationFailed,
     /// No independently authenticated protected-verification receipt exists.
     MissingProtectedVerificationReceipt {
         /// Number of ordered marker results the missing receipt must cover.
@@ -286,6 +301,15 @@ impl fmt::Display for M1AllKernelsProtectedVerifierErrorV1 {
             }
             Self::CompilerMultiRootTargetLineageValidationFailed => {
                 formatter.write_str("common multi-root compiler target-lineage validation failed")
+            }
+            Self::FinalizerArtifactAssociationFailed => {
+                formatter.write_str("finalizer and exact artifact association failed")
+            }
+            Self::CompilerTargetAssociationFailed => {
+                formatter.write_str("compiler module and target association failed")
+            }
+            Self::RosterEntryAssociationFailed => {
+                formatter.write_str("aggregate roster entry association failed")
             }
             Self::MissingProtectedVerificationReceipt {
                 expected_roster_entries,
@@ -340,11 +364,13 @@ unsafe impl WorkerV3ProtectedRosterVerifierBackendV1<M1AllKernelsWorkerV3RosterV
 {
     type Error = M1AllKernelsProtectedVerifierErrorV1;
 
+    #[allow(clippy::too_many_lines)]
     unsafe fn verify_protected_roster(
         &mut self,
         request: &WorkerV3RosterVerificationRequestV1<'_, M1AllKernelsWorkerV3RosterV1>,
     ) -> Result<WorkerV3ProtectedRosterVerificationEvidenceV1, Self::Error> {
-        let pending_request = M1AllKernelsPendingRequestProjectionV1::from_request(request);
+        let pending_request = M1AllKernelsPendingRequestProjectionV1::from_request(request)
+            .ok_or(M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed)?;
         let finalizer_owner = request
             .independently_revalidate_finalizer_derivation()
             .map_err(|_| {
@@ -360,6 +386,109 @@ unsafe impl WorkerV3ProtectedRosterVerifierBackendV1<M1AllKernelsWorkerV3RosterV
             .map_err(|_| {
                 M1AllKernelsProtectedVerifierErrorV1::CompilerMultiRootTargetLineageValidationFailed
             })?;
+        {
+            let validate_associations = || -> Result<(), Self::Error> {
+                let finalizer_identity = finalizer_owner.identity();
+                let finalized_hsaco = finalizer_owner.finalized_hsaco_identity();
+                (finalizer_identity.as_bytes() == &pending_request.finalizer_derivation_sha256
+                    && finalized_hsaco.sha256() == &pending_request.finalized_hsaco_sha256
+                    && finalized_hsaco.byte_len() == pending_request.finalized_hsaco_length)
+                    .then_some(())
+                    .ok_or(
+                        M1AllKernelsProtectedVerifierErrorV1::FinalizerArtifactAssociationFailed,
+                    )?;
+
+                let final_llvm = target_lineage_owner.final_llvm_identity();
+                let finalizer_module = finalizer_owner.compiler_module_identity();
+                let semantic_module = request
+                    .semantic_compiler_handoff()
+                    .module_handoff()
+                    .module_identity();
+                let target_binding = target_lineage_owner.target_binding();
+                (final_llvm.sha256() == *finalizer_module.sha256()
+                    && final_llvm.byte_len() == finalizer_module.byte_len()
+                    && final_llvm.sha256() == *semantic_module.sha256()
+                    && final_llvm.byte_len() == semantic_module.byte_len()
+                    && target_binding.configured_target() == pending_request.target
+                    && target_binding.code_object_version()
+                        == u16::from(pending_request.code_object_version)
+                    && pending_request.target == "gfx942:xnack-"
+                    && pending_request.code_object_version == 6)
+                    .then_some(())
+                    .ok_or(M1AllKernelsProtectedVerifierErrorV1::CompilerTargetAssociationFailed)?;
+
+                let markers = request.marker_entries();
+                let proof_roots = proof_inputs_owner.roots();
+                (markers.len() == M1_ALL_KERNELS_PENDING_ENTRY_COUNT_V1
+                    && proof_roots.len() == M1_ALL_KERNELS_PENDING_ENTRY_COUNT_V1
+                    && target_binding.root_count() == M1_ALL_KERNELS_PENDING_ENTRY_COUNT_V1)
+                    .then_some(())
+                    .ok_or(M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed)?;
+
+                (markers.iter().all(|marker| {
+                    proof_roots
+                        .iter()
+                        .filter(|root| root.kernel_binding() == &marker.kernel_binding_id())
+                        .count()
+                        == 1
+                }) && proof_roots.iter().all(|root| {
+                    markers
+                        .iter()
+                        .filter(|marker| marker.kernel_binding_id() == *root.kernel_binding())
+                        .count()
+                        == 1
+                }))
+                .then_some(())
+                .ok_or(M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed)?;
+
+                pending_request.entries.iter().try_for_each(|entry| {
+                    let (root_index, root) = proof_roots
+                        .iter()
+                        .enumerate()
+                        .find(|(_, root)| root.kernel_binding() == &entry.marker_binding_identity)
+                        .ok_or(
+                            M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
+                        )?;
+                    let _lineage = entry.lineage_identity.as_ref().ok_or(
+                        M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
+                    )?;
+                    let descriptor = entry.descriptor.as_ref().ok_or(
+                        M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
+                    )?;
+                    let _descriptor_binding = entry.descriptor_binding.as_ref().ok_or(
+                        M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
+                    )?;
+                    let physical = entry.physical_kernel.as_ref().ok_or(
+                        M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
+                    )?;
+                    let target_workgroup = target_binding.workgroup(root_index).ok_or(
+                        M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
+                    )?;
+                    let descriptor_workgroup = match descriptor.launch_block_size {
+                        BlockSizeV1::Exact(dimensions) => {
+                            Some([dimensions.x(), dimensions.y(), dimensions.z()])
+                        }
+                        BlockSizeV1::Any | BlockSizeV1::AtMost(_) => None,
+                    }
+                    .ok_or(M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed)?;
+
+                    (entry.logical_name == root.logical_name()
+                        && entry.export_name == root.export_symbol()
+                        && descriptor.kernel_id == entry.marker_binding_identity
+                        && descriptor.kernel_id == *root.kernel_binding()
+                        && descriptor.logical_name == root.logical_name()
+                        && descriptor.entry_name == root.export_symbol()
+                        && physical.name == root.export_symbol()
+                        && physical.symbol == descriptor.descriptor_symbol
+                        && target_workgroup.kernel() == root.kernel_id()
+                        && target_workgroup.workgroup() == root.workgroup()
+                        && descriptor_workgroup == root.workgroup())
+                    .then_some(())
+                    .ok_or(M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed)
+                })
+            };
+            validate_associations()?;
+        }
         Self::reject_missing_protected_receipt(
             &pending_request,
             finalizer_owner,
@@ -412,6 +541,18 @@ mod tests {
             M1AllKernelsProtectedVerifierErrorV1::CompilerMultiRootTargetLineageValidationFailed
                 .to_string(),
             "common multi-root compiler target-lineage validation failed"
+        );
+        assert_eq!(
+            M1AllKernelsProtectedVerifierErrorV1::FinalizerArtifactAssociationFailed.to_string(),
+            "finalizer and exact artifact association failed"
+        );
+        assert_eq!(
+            M1AllKernelsProtectedVerifierErrorV1::CompilerTargetAssociationFailed.to_string(),
+            "compiler module and target association failed"
+        );
+        assert_eq!(
+            M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed.to_string(),
+            "aggregate roster entry association failed"
         );
     }
 

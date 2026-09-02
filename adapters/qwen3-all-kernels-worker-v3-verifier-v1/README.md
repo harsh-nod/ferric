@@ -43,8 +43,9 @@ are code-object coordinates, not runtime pointers or load authority.
 
 Each descriptor, binding, physical-kernel, and lineage subprojection remains
 `Option`. If any typed accessor lacks a row fact, the adapter retains `None`;
-it neither panics nor invents a zero identity, and the call still rejects. The
-projection has no public constructor, serializer, or JSON input.
+it neither panics nor invents a zero identity. `None` is faithfully projected,
+but the association preflight rejects it. The projection has no public
+constructor, serializer, or JSON input.
 It has no environment, file, or CLI input. The projection is neither protected
 evidence nor a verifier decision and cannot leave the rejection path.
 
@@ -55,6 +56,22 @@ multi-root compiler proof inputs, and then validates the common multi-root
 target lineage by borrowing those proof inputs. Each failure maps to a distinct
 fail-closed error. The three inferred move-only owners are retained together
 through the private rejection helper; they are not exposed or serialized.
+
+A lexically scoped, zero-argument association closure then borrows all three
+owners and the typed request projection. It checks the finalizer identity and
+finalized-HSACO digest and length, cross-binds the final LLVM module to both the
+finalizer compiler module and semantic handoff module, and requires the literal
+`gfx942:xnack-` / COV6 target. It requires exactly 12 markers, proof roots, and
+target workgroups; establishes marker/proof binding bijection in both
+directions; and matches each entry to its proof root by binding identity rather
+than ordinal. Every matched row must contain lineage, descriptor, ELF-binding,
+and physical-kernel facts with consistent logical name, export name, kernel
+binding, physical export, and descriptor symbol. The target workgroup is read
+at the matched proof-root index and must name that proof root's Kernel IR kernel
+and exact workgroup. Descriptor launch constraints are matched exhaustively:
+only `BlockSizeV1::Exact` equal to the proof-root workgroup is accepted;
+`Any`, `AtMost`, or a missing descriptor is rejected. The closure ends before
+all three owners are moved unchanged into the private rejection helper.
 
 Passing the preflight still returns the unconditional
 `Err(MissingProtectedVerificationReceipt)`. The common owners do not establish

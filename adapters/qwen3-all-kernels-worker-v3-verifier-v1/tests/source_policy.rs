@@ -18,6 +18,7 @@ const COMPACT_INHERENT_IMPL_HEADER: &str = "implM1AllKernelsProtectedVerifierV1{
 const COMPACT_BACKEND_IMPL_HEADER: &str = "unsafeimplWorkerV3ProtectedRosterVerifierBackendV1<M1AllKernelsWorkerV3RosterV1>forM1AllKernelsProtectedVerifierV1{";
 const PRIVATE_REJECTION_HELPER_LEAD_IN: &str = "    pub const fn new() -> Self {\n        Self\n    }\n\n    fn reject_missing_protected_receipt";
 const TEST_MODULE_BOUNDARY: &str = "#[cfg(test)]\nmod tests {";
+const REQUIRED_GFX942_TARGET_LITERAL: &str = "\"gfx942:xnack-\"";
 
 struct ProtectedBoundaryRanges {
     verify_method: Range<usize>,
@@ -154,7 +155,9 @@ fn rust_code_without_comments_or_strings(source: &str) -> String {
                 }
             }
             assert!(closed, "production source has an unterminated string");
-            mask_non_newline_bytes(&mut code[start..index]);
+            if bytes.get(start..index) != Some(REQUIRED_GFX942_TARGET_LITERAL.as_bytes()) {
+                mask_non_newline_bytes(&mut code[start..index]);
+            }
             continue;
         }
         if let Some(end) = char_literal_end(bytes, index) {
@@ -171,6 +174,27 @@ fn compact_rust_code(code: &str) -> String {
     code.chars()
         .filter(|character| !character.is_whitespace())
         .collect()
+}
+
+fn compact_production_code(source: &str) -> Option<String> {
+    let code = rust_code_without_comments_or_strings(source);
+    let (production, _tests) = split_complete_production_and_tests(&code)?;
+    Some(compact_rust_code(production))
+}
+
+const fn is_identifier_byte(byte: u8) -> bool {
+    byte == b'_' || byte.is_ascii_alphanumeric()
+}
+
+fn contains_identifier(code: &str, identifier: &str) -> bool {
+    code.match_indices(identifier).any(|(start, _)| {
+        let before = start
+            .checked_sub(1)
+            .and_then(|index| code.as_bytes().get(index));
+        let after = code.as_bytes().get(start + identifier.len());
+        before.is_none_or(|byte| !is_identifier_byte(*byte))
+            && after.is_none_or(|byte| !is_identifier_byte(*byte))
+    })
 }
 
 fn unique_occurrence(code: &str, needle: &str) -> Option<usize> {
@@ -261,6 +285,14 @@ fn has_unique_private_boundary_items(code: &str) -> bool {
     protected_boundary_ranges(&compact_rust_code(code)).is_some()
 }
 
+fn protected_verify_method(source: &str) -> Option<String> {
+    let code = rust_code_without_comments_or_strings(source);
+    let (production, _tests) = split_complete_production_and_tests(&code)?;
+    let compact = compact_rust_code(production);
+    let ranges = protected_boundary_ranges(&compact)?;
+    compact.get(ranges.verify_method).map(str::to_owned)
+}
+
 fn split_complete_production_and_tests(code: &str) -> Option<(&str, &str)> {
     if code.matches("#[cfg(test)]").count() != 1 {
         return None;
@@ -298,6 +330,7 @@ fn has_no_production_macro_authority(code: &str) -> bool {
         ("#[non_exhaustive]", 1),
         ("#[derive(Clone,Copy,Debug,Default)]", 1),
         ("#[must_use]", 1),
+        ("#[allow(clippy::too_many_lines)]", 1),
     ] {
         if compact.matches(attribute).count() != expected_count {
             return false;
@@ -406,8 +439,11 @@ fn pending_projection_has_exactly_twelve_ordered_complete_entry_rows() {
     assert!(SOURCE.contains("[(); M1_ALL_KERNELS_ROSTER_ENTRY_COUNT_V1];"));
     assert!(SOURCE.contains("entries: [M1AllKernelsPendingEntryProjectionV1;"));
     assert!(SOURCE.contains("M1_ALL_KERNELS_PENDING_ENTRY_COUNT_V1],"));
-    assert!(SOURCE.contains("let marker_entries = request.marker_entries();"));
-    assert!(SOURCE.contains("let entries = std::array::from_fn(|ordinal|"));
+    assert!(SOURCE.contains("request\n            .marker_entries()\n            .iter()"));
+    assert!(SOURCE.contains(".map(|(ordinal, marker)| Self::entry_from_request("));
+    assert!(SOURCE.contains(".collect::<Vec<_>>()\n            .try_into()\n            .ok()?;"));
+    assert!(SOURCE.contains(") -> Option<Self> {"));
+    assert!(!SOURCE.contains("marker_entries[ordinal]"));
     assert!(SOURCE.contains(".entry_lineage_identity(ordinal)"));
     for field in [
         "ordinal,",
@@ -449,6 +485,7 @@ fn every_entry_projects_typed_descriptor_binding_and_physical_facts() {
         "explicit_argument_size:",
         "kernarg_segment_size:",
         "kernarg_segment_alignment:",
+        "launch_block_size: descriptor.launch().block_size()",
         "capability_count:",
         "logical_argument_count:",
         "kernel_index: binding.kernel_index()",
@@ -530,6 +567,7 @@ fn typed_roster_fixes_the_exact_twelve_projection_rows() {
 }
 
 #[test]
+#[allow(clippy::too_many_lines)]
 fn production_backend_projects_then_preflights_in_exact_custody_order() {
     let code = rust_code_without_comments_or_strings(SOURCE);
     let (production, _tests) = split_complete_production_and_tests(&code)
@@ -553,8 +591,9 @@ fn production_backend_projects_then_preflights_in_exact_custody_order() {
         .1
         .strip_suffix('}')
         .expect("production verifier method must terminate");
-    let expected_method_body = r"
-        let pending_request = M1AllKernelsPendingRequestProjectionV1::from_request(request);
+    let expected_method_body = r#"
+        let pending_request = M1AllKernelsPendingRequestProjectionV1::from_request(request)
+            .ok_or(M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed)?;
         let finalizer_owner = request
             .independently_revalidate_finalizer_derivation()
             .map_err(|_| {
@@ -570,16 +609,120 @@ fn production_backend_projects_then_preflights_in_exact_custody_order() {
             .map_err(|_| {
                 M1AllKernelsProtectedVerifierErrorV1::CompilerMultiRootTargetLineageValidationFailed
             })?;
+        {
+            let validate_associations = || -> Result<(), Self::Error> {
+                let finalizer_identity = finalizer_owner.identity();
+                let finalized_hsaco = finalizer_owner.finalized_hsaco_identity();
+                (finalizer_identity.as_bytes() == &pending_request.finalizer_derivation_sha256
+                    && finalized_hsaco.sha256() == &pending_request.finalized_hsaco_sha256
+                    && finalized_hsaco.byte_len() == pending_request.finalized_hsaco_length)
+                    .then_some(())
+                    .ok_or(
+                        M1AllKernelsProtectedVerifierErrorV1::FinalizerArtifactAssociationFailed,
+                    )?;
+
+                let final_llvm = target_lineage_owner.final_llvm_identity();
+                let finalizer_module = finalizer_owner.compiler_module_identity();
+                let semantic_module = request
+                    .semantic_compiler_handoff()
+                    .module_handoff()
+                    .module_identity();
+                let target_binding = target_lineage_owner.target_binding();
+                (final_llvm.sha256() == *finalizer_module.sha256()
+                    && final_llvm.byte_len() == finalizer_module.byte_len()
+                    && final_llvm.sha256() == *semantic_module.sha256()
+                    && final_llvm.byte_len() == semantic_module.byte_len()
+                    && target_binding.configured_target() == pending_request.target
+                    && target_binding.code_object_version()
+                        == u16::from(pending_request.code_object_version)
+                    && pending_request.target == "gfx942:xnack-"
+                    && pending_request.code_object_version == 6)
+                    .then_some(())
+                    .ok_or(M1AllKernelsProtectedVerifierErrorV1::CompilerTargetAssociationFailed)?;
+
+                let markers = request.marker_entries();
+                let proof_roots = proof_inputs_owner.roots();
+                (markers.len() == M1_ALL_KERNELS_PENDING_ENTRY_COUNT_V1
+                    && proof_roots.len() == M1_ALL_KERNELS_PENDING_ENTRY_COUNT_V1
+                    && target_binding.root_count() == M1_ALL_KERNELS_PENDING_ENTRY_COUNT_V1)
+                    .then_some(())
+                    .ok_or(M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed)?;
+
+                (markers.iter().all(|marker| {
+                    proof_roots
+                        .iter()
+                        .filter(|root| root.kernel_binding() == &marker.kernel_binding_id())
+                        .count()
+                        == 1
+                }) && proof_roots.iter().all(|root| {
+                    markers
+                        .iter()
+                        .filter(|marker| marker.kernel_binding_id() == *root.kernel_binding())
+                        .count()
+                        == 1
+                }))
+                .then_some(())
+                .ok_or(M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed)?;
+
+                pending_request.entries.iter().try_for_each(|entry| {
+                    let (root_index, root) = proof_roots
+                        .iter()
+                        .enumerate()
+                        .find(|(_, root)| root.kernel_binding() == &entry.marker_binding_identity)
+                        .ok_or(
+                            M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
+                        )?;
+                    let _lineage = entry.lineage_identity.as_ref().ok_or(
+                        M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
+                    )?;
+                    let descriptor = entry.descriptor.as_ref().ok_or(
+                        M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
+                    )?;
+                    let _descriptor_binding = entry.descriptor_binding.as_ref().ok_or(
+                        M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
+                    )?;
+                    let physical = entry.physical_kernel.as_ref().ok_or(
+                        M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
+                    )?;
+                    let target_workgroup = target_binding.workgroup(root_index).ok_or(
+                        M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
+                    )?;
+                    let descriptor_workgroup = match descriptor.launch_block_size {
+                        BlockSizeV1::Exact(dimensions) => {
+                            Some([dimensions.x(), dimensions.y(), dimensions.z()])
+                        }
+                        BlockSizeV1::Any | BlockSizeV1::AtMost(_) => None,
+                    }
+                    .ok_or(M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed)?;
+
+                    (entry.logical_name == root.logical_name()
+                        && entry.export_name == root.export_symbol()
+                        && descriptor.kernel_id == entry.marker_binding_identity
+                        && descriptor.kernel_id == *root.kernel_binding()
+                        && descriptor.logical_name == root.logical_name()
+                        && descriptor.entry_name == root.export_symbol()
+                        && physical.name == root.export_symbol()
+                        && physical.symbol == descriptor.descriptor_symbol
+                        && target_workgroup.kernel() == root.kernel_id()
+                        && target_workgroup.workgroup() == root.workgroup()
+                        && descriptor_workgroup == root.workgroup())
+                    .then_some(())
+                    .ok_or(M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed)
+                })
+            };
+            validate_associations()?;
+        }
         Self::reject_missing_protected_receipt(
             &pending_request,
             finalizer_owner,
             proof_inputs_owner,
             target_lineage_owner,
         )
-    ";
+    "#;
+    let expected_method_body =
+        compact_rust_code(&rust_code_without_comments_or_strings(expected_method_body));
     assert_eq!(
-        method_body,
-        compact_rust_code(expected_method_body),
+        method_body, expected_method_body,
         "production method must project first, run only the exact ordered preflight, and move the unshadowed owners into rejection"
     );
 
@@ -607,6 +750,198 @@ fn production_backend_projects_then_preflights_in_exact_custody_order() {
     );
     assert_eq!(SOURCE.matches("Err(").count(), 1);
     assert_eq!(SOURCE.matches("Ok(").count(), 0);
+    assert_eq!(
+        method
+            .matches("letvalidate_associations=||->Result<(),Self::Error>{")
+            .count(),
+        1
+    );
+    assert!(method.contains("};validate_associations()?;}Self::reject_missing_protected_receipt("));
+    assert!(!method.contains("proof_roots["));
+    assert!(!method.contains("markers["));
+    for owner_type in [
+        "RevalidatedProtectedWorkerV3FinalizerDerivationV1",
+        "ValidatedCompilerMultiRootProofInputsV1",
+        "ValidatedCompilerMultiRootTargetLineageV1",
+    ] {
+        assert!(
+            !method.contains(owner_type),
+            "association closure must infer the move-only owner type {owner_type}"
+        );
+    }
+}
+
+#[test]
+fn exact_target_literal_is_bound_inside_the_anchored_production_method() {
+    let canonical = protected_verify_method(SOURCE).expect("canonical verifier method must parse");
+    assert_eq!(canonical.matches(REQUIRED_GFX942_TARGET_LITERAL).count(), 1);
+
+    let changed_real_target = SOURCE.replacen(
+        "pending_request.target == \"gfx942:xnack-\"",
+        "pending_request.target == \"gfx942:xnack+\"",
+        1,
+    );
+    let comment_decoy = changed_real_target.replacen(
+        "unsafe impl WorkerV3ProtectedRosterVerifierBackendV1",
+        "// pending_request.target == \"gfx942:xnack-\"\nunsafe impl WorkerV3ProtectedRosterVerifierBackendV1",
+        1,
+    );
+    let string_decoy = changed_real_target.replacen(
+        TEST_MODULE_BOUNDARY,
+        "const TARGET_LITERAL_DECOY: &str = \"gfx942:xnack-\";\n\n#[cfg(test)]\nmod tests {",
+        1,
+    );
+    let in_method_string_decoy = changed_real_target.replacen(
+        "let markers = request.marker_entries();",
+        "let _target_literal_decoy = \"gfx942:xnack-\";\n                let markers = request.marker_entries();",
+        1,
+    );
+
+    for hostile in [
+        changed_real_target,
+        comment_decoy,
+        string_decoy,
+        in_method_string_decoy,
+    ] {
+        assert_ne!(
+            protected_verify_method(&hostile).as_deref(),
+            Some(canonical.as_str()),
+            "a target decoy must not satisfy the anchored verifier method policy"
+        );
+    }
+}
+
+#[test]
+#[allow(clippy::too_many_lines)]
+fn association_preflight_shape_rejects_each_critical_hostile_mutation() {
+    let code = rust_code_without_comments_or_strings(SOURCE);
+    let (production, _tests) = split_complete_production_and_tests(&code)
+        .expect("one balanced cfg(test) module must consume the complete source suffix");
+    let compact = compact_rust_code(production);
+    let ranges = protected_boundary_ranges(&compact).expect("canonical boundary must parse");
+    let canonical = &compact[ranges.verify_method];
+
+    for (needle, replacement) in [
+        (
+            "finalizer_identity.as_bytes()==&pending_request.finalizer_derivation_sha256",
+            "true",
+        ),
+        (
+            "finalized_hsaco.sha256()==&pending_request.finalized_hsaco_sha256",
+            "true",
+        ),
+        (
+            "finalized_hsaco.byte_len()==pending_request.finalized_hsaco_length",
+            "true",
+        ),
+        ("final_llvm.sha256()==*finalizer_module.sha256()", "true"),
+        ("final_llvm.byte_len()==finalizer_module.byte_len()", "true"),
+        ("final_llvm.sha256()==*semantic_module.sha256()", "true"),
+        ("final_llvm.byte_len()==semantic_module.byte_len()", "true"),
+        (
+            "target_binding.configured_target()==pending_request.target",
+            "true",
+        ),
+        (
+            "target_binding.code_object_version()==u16::from(pending_request.code_object_version)",
+            "true",
+        ),
+        ("pending_request.target==", "true=="),
+        ("pending_request.code_object_version==6", "true"),
+        (
+            "markers.len()==M1_ALL_KERNELS_PENDING_ENTRY_COUNT_V1",
+            "true",
+        ),
+        (
+            "proof_roots.len()==M1_ALL_KERNELS_PENDING_ENTRY_COUNT_V1",
+            "true",
+        ),
+        (
+            "target_binding.root_count()==M1_ALL_KERNELS_PENDING_ENTRY_COUNT_V1",
+            "true",
+        ),
+        ("root.kernel_binding()==&marker.kernel_binding_id()", "true"),
+        ("marker.kernel_binding_id()==*root.kernel_binding()", "true"),
+        (".count()==1", ".count()>0"),
+        (
+            "entry.lineage_identity.as_ref().ok_or(",
+            "Some(&[0_u8;32]).ok_or(",
+        ),
+        (
+            "entry.descriptor.as_ref().ok_or(",
+            "None::<&M1AllKernelsPendingDescriptorProjectionV1>.ok_or(",
+        ),
+        (
+            "entry.descriptor_binding.as_ref().ok_or(",
+            "None::<&M1AllKernelsPendingDescriptorBindingProjectionV1>.ok_or(",
+        ),
+        (
+            "entry.physical_kernel.as_ref().ok_or(",
+            "None::<&M1AllKernelsPendingPhysicalKernelProjectionV1>.ok_or(",
+        ),
+        (
+            "target_binding.workgroup(root_index).ok_or(",
+            "target_binding.workgroup(entry.ordinal).ok_or(",
+        ),
+        (
+            "BlockSizeV1::Exact(dimensions)",
+            "BlockSizeV1::AtMost(dimensions)",
+        ),
+        (
+            "BlockSizeV1::Any|BlockSizeV1::AtMost(_)=>None",
+            "BlockSizeV1::Any=>None,BlockSizeV1::AtMost(dimensions)=>Some([dimensions.x(),dimensions.y(),dimensions.z()])",
+        ),
+        ("entry.logical_name==root.logical_name()", "true"),
+        ("entry.export_name==root.export_symbol()", "true"),
+        (
+            "descriptor.kernel_id==entry.marker_binding_identity",
+            "true",
+        ),
+        ("descriptor.kernel_id==*root.kernel_binding()", "true"),
+        ("descriptor.logical_name==root.logical_name()", "true"),
+        ("descriptor.entry_name==root.export_symbol()", "true"),
+        ("physical.name==root.export_symbol()", "true"),
+        ("physical.symbol==descriptor.descriptor_symbol", "true"),
+        ("target_workgroup.kernel()==root.kernel_id()", "true"),
+        ("target_workgroup.workgroup()==root.workgroup()", "true"),
+        ("descriptor_workgroup==root.workgroup()", "true"),
+    ] {
+        assert!(
+            canonical.contains(needle),
+            "missing hostile fixture token {needle}"
+        );
+        let hostile = canonical.replacen(needle, replacement, 1);
+        assert_ne!(
+            hostile, canonical,
+            "hostile mutation must alter the exact production policy for {needle}"
+        );
+    }
+}
+
+#[test]
+fn association_failures_are_exactly_three_coarse_variants() {
+    for variant in [
+        "FinalizerArtifactAssociationFailed",
+        "CompilerTargetAssociationFailed",
+        "RosterEntryAssociationFailed",
+    ] {
+        assert_eq!(
+            SOURCE.matches(&format!("    {variant},")).count(),
+            1,
+            "association error variant must have one enum declaration"
+        );
+    }
+    for forbidden in [
+        "FinalizerIdentityMismatch",
+        "FinalizedHsacoMismatch",
+        "TargetMismatch",
+        "CodeObjectVersionMismatch",
+        "MissingDescriptor",
+        "DuplicateBinding",
+        "LaunchBlockMismatch",
+    ] {
+        assert!(!SOURCE.contains(forbidden));
+    }
 }
 
 #[test]
@@ -869,6 +1204,7 @@ fn no_synthetic_or_projected_identity_acceptance_surface_exists() {
 
 #[test]
 fn adapter_has_no_external_input_or_policy_authority_surface() {
+    assert!(production_has_no_external_authority_surface(SOURCE));
     for forbidden in [
         "std::env",
         "std::fs",
@@ -911,12 +1247,121 @@ fn adapter_has_no_external_input_or_policy_authority_surface() {
         "::load(",
         "authorize_hsa_load",
     ] {
-        assert!(!SOURCE.contains(forbidden), "source contains {forbidden}");
         assert!(
             !MANIFEST.contains(forbidden),
             "manifest contains {forbidden}"
         );
     }
+}
+
+fn production_has_no_external_authority_surface(source: &str) -> bool {
+    let Some(mut production) = compact_production_code(source) else {
+        return false;
+    };
+    let allowed_descriptor_launch = "descriptor.launch().block_size()";
+    if production.matches(allowed_descriptor_launch).count() != 1 {
+        return false;
+    }
+    production = production.replacen(allowed_descriptor_launch, "descriptor.block_size()", 1);
+
+    if [
+        "std::env",
+        "std::fs",
+        "std::net",
+        "std::path",
+        "std::process",
+        "hip::",
+        "env!",
+        "option_env!",
+        "json!",
+        "fnmain(",
+    ]
+    .iter()
+    .any(|forbidden| production.contains(forbidden))
+    {
+        return false;
+    }
+    if [
+        "File",
+        "OpenOptions",
+        "Path",
+        "PathBuf",
+        "Command",
+        "TcpStream",
+        "UnixStream",
+        "serde",
+        "serde_json",
+        "clap",
+        "argh",
+        "lexopt",
+        "policy_key",
+        "policy_root",
+        "trust_root",
+        "root_key",
+        "secret_key",
+        "public_key",
+        "keyring",
+        "fe2o3_kfd",
+        "fe2o3_hsa_runtime",
+        "hip_runtime",
+        "ferric_engine",
+        "load",
+        "launch",
+        "authorize_hsa_load",
+    ]
+    .iter()
+    .any(|identifier| contains_identifier(&production, identifier))
+    {
+        return false;
+    }
+    true
+}
+
+#[test]
+fn authority_policy_rejects_whitespace_comments_ufcs_paths_and_turbofish() {
+    let inject = |snippet: &str| {
+        SOURCE.replacen(
+            TEST_MODULE_BOUNDARY,
+            &format!("{snippet}\n\n{TEST_MODULE_BOUNDARY}"),
+            1,
+        )
+    };
+    for snippet in [
+        "fn hostile() { runtime . load (); }",
+        "fn hostile() { runtime . /* split */ load (); }",
+        "fn hostile() { Runtime :: load (bytes); }",
+        "fn hostile() { Runtime :: load :: <Artifact> (bytes); }",
+        "fn hostile() { runtime . launch :: <Grid> (); }",
+        "fn hostile() { Runtime :: launch (grid); }",
+        "fn hostile() { std :: process :: Command :: new (); }",
+        "fn hostile() { std /* split */ :: process :: Command :: new (); }",
+        "fn hostile() { Command :: <Mode> :: new (); }",
+        "fn hostile() { descriptor /* split */ . launch ().block_size(); }",
+        "fn hostile() { authorize_hsa_load :: <Adapter> (); }",
+        "fn hostile() { (Type::<Artifact>::load)(owner); }",
+        "fn hostile() { let f = Type::<Artifact>::load; f(owner); }",
+        "fn hostile() { (Type::<Grid>::launch)(owner); }",
+        "fn hostile() { let f = Type::<Grid>::launch; f(owner); }",
+        "fn hostile() { (Type::<Adapter>::authorize_hsa_load)(owner); }",
+        "fn hostile() { let f = Type::<Adapter>::authorize_hsa_load; f(owner); }",
+    ] {
+        assert!(
+            !production_has_no_external_authority_surface(&inject(snippet)),
+            "normalized production policy accepted hostile source: {snippet}"
+        );
+    }
+
+    let inert_decoys = inject(
+        "const INERT_DECOY: &str = \"std :: process :: Command :: new (); Runtime::load::<Artifact>();\";\n/* Runtime :: launch :: <Grid> (); */",
+    );
+    assert!(production_has_no_external_authority_surface(&inert_decoys));
+
+    let similar_identifiers = inject(
+        "fn inert(kernarg_preload: u16, launch_block_size: u32) { let _ = (kernarg_preload, launch_block_size); }",
+    );
+    assert!(production_has_no_external_authority_surface(
+        &similar_identifiers
+    ));
 }
 
 #[test]
@@ -943,6 +1388,7 @@ fn documentation_states_the_non_authority_boundary() {
         "kernarg-preload field",
         "not runtime pointers or load authority",
         "lineage subprojection remains",
+        "`None` is faithfully projected, but the association preflight rejects it",
         "no public constructor, serializer, or JSON input",
         "no environment, file, or CLI input",
         "common-custody preflight in exact order",
@@ -952,6 +1398,18 @@ fn documentation_states_the_non_authority_boundary() {
         "Each failure maps to a distinct fail-closed error",
         "three inferred move-only owners are retained together",
         "not exposed or serialized",
+        "lexically scoped, zero-argument association closure",
+        "finalizer identity and finalized-HSACO digest and length",
+        "final LLVM module to both the finalizer compiler module and semantic handoff module",
+        "literal `gfx942:xnack-` / COV6 target",
+        "exactly 12 markers, proof roots, and target workgroups",
+        "marker/proof binding bijection in both directions",
+        "by binding identity rather than ordinal",
+        "lineage, descriptor, ELF-binding, and physical-kernel facts",
+        "target workgroup is read at the matched proof-root index",
+        "only `BlockSizeV1::Exact` equal to the proof-root workgroup is accepted",
+        "`Any`, `AtMost`, or a missing descriptor is rejected",
+        "closure ends before all three owners are moved unchanged",
         "do not establish the per-entry proof-to-executable, Rust layout, or Rust effect joins",
         "does not construct fe2o3 verification evidence",
         "no protected policy key or trust root",
