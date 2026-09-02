@@ -14,7 +14,8 @@ use core::fmt;
 
 use fe2o3_host::{
     AuthenticatedServiceQueueDataUpdateFailureV1, AuthenticatedServiceQueueReleaseV1,
-    AuthenticatedServiceQueueSessionV1, AuthenticatedServiceQueueUnboundSessionV1,
+    AuthenticatedServiceQueueRetainedBindFailureV1, AuthenticatedServiceQueueSessionV1,
+    AuthenticatedServiceQueueUnboundSessionV1,
 };
 use fe2o3_kfd::{ComputeAqlQueueObservationV1, Gfx942DeviceContentDescriptorV1};
 use fe2o3_service_host::{DeviceWorkspaceRoleV1, HostDownloadRoleV1, ServiceDeviceDispatchRangeV1};
@@ -44,8 +45,7 @@ use crate::{
     M1AuthenticatedObservedCompletionOutputV1, M1AuthenticatedPhysicalCompletedQueueSessionV1,
     M1AuthenticatedPhysicalCompletedReadbackV1, M1AuthenticatedPhysicalPublishedQueueSessionV1,
     M1AuthenticatedPhysicalQueueOperationFailureV1, M1AuthenticatedPhysicalQueuePhaseCaseV1,
-    M1AuthenticatedPhysicalQueueSessionV1, M1AuthenticatedPhysicalQueueSubmitFailureV1,
-    M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
+    M1AuthenticatedPhysicalQueueSessionV1, M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
     M1AuthenticatedPhysicalRecycledQueueSessionV1, M1AuthenticatedReleasedCompletedStepV1,
     M1CheckedCompletionOutputV1, M1CompletedKvPageReleaseCountsV1,
     M1DeviceKvCompletionDispositionV1, M1DeviceKvCompletionMemberV1, M1DeviceKvCompletionRosterV1,
@@ -1746,12 +1746,22 @@ pub enum M1AuthenticatedLongLivedQueueRearmSubmissionPhaseV1 {
     QueueSubmit,
 }
 
-#[derive(Debug)]
-struct AuthenticatedSubmissionOpaqueCustodyV1(Box<dyn fmt::Debug>);
+enum AuthenticatedSubmissionOpaqueCustodyV1 {
+    Released(Box<dyn fmt::Debug>),
+    Quarantined(Box<dyn fmt::Debug>),
+}
+
+impl AuthenticatedSubmissionOpaqueCustodyV1 {
+    fn retain(self, extra: impl fmt::Debug + 'static) -> Self {
+        match self {
+            Self::Released(retained) => Self::Released(Box::new((retained, extra))),
+            Self::Quarantined(retained) => Self::Quarantined(Box::new((retained, extra))),
+        }
+    }
+}
 
 /// Terminal authenticated rebind or publication custody.
 #[must_use = "terminal authenticated submission custody must remain retained"]
-#[derive(Debug)]
 pub struct M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1 {
     phase: M1AuthenticatedLongLivedQueueRearmSubmissionPhaseV1,
     retained: AuthenticatedSubmissionOpaqueCustodyV1,
@@ -1768,10 +1778,39 @@ impl M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1 {
         true
     }
 
+    /// Whether every unpublished queue owner was cleanly destroyed.
+    #[must_use]
+    pub const fn queue_released(&self) -> bool {
+        matches!(
+            &self.retained,
+            AuthenticatedSubmissionOpaqueCustodyV1::Released(_)
+        )
+    }
+
+    /// Every returned submission failure permanently faults its Engine.
+    #[must_use]
+    pub const fn engine_quarantined(&self) -> bool {
+        true
+    }
+
     #[must_use]
     pub fn retains_custody(&self) -> bool {
-        let _ = &self.retained.0;
+        let _ = match &self.retained {
+            AuthenticatedSubmissionOpaqueCustodyV1::Released(retained)
+            | AuthenticatedSubmissionOpaqueCustodyV1::Quarantined(retained) => retained,
+        };
         true
+    }
+}
+
+impl fmt::Debug for M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1")
+            .field("phase", &self.phase)
+            .field("queue_released", &self.queue_released())
+            .field("engine_quarantined", &true)
+            .finish()
     }
 }
 
@@ -1781,7 +1820,61 @@ fn authenticated_submission_failure(
 ) -> M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1 {
     M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1 {
         phase,
-        retained: AuthenticatedSubmissionOpaqueCustodyV1(Box::new(retained)),
+        retained: AuthenticatedSubmissionOpaqueCustodyV1::Quarantined(Box::new(retained)),
+    }
+}
+
+const fn authenticated_classified_submission_failure(
+    phase: M1AuthenticatedLongLivedQueueRearmSubmissionPhaseV1,
+    retained: AuthenticatedSubmissionOpaqueCustodyV1,
+) -> M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1 {
+    M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1 { phase, retained }
+}
+
+fn close_prepared_rearm_submission(
+    prepared: M1AuthenticatedPreparedLongLivedQueueRearmV1,
+    recipe: AddresslessM1PhysicalBufferRecipeV1,
+) -> AuthenticatedSubmissionOpaqueCustodyV1 {
+    let M1AuthenticatedPreparedLongLivedQueueRearmV1 {
+        prepared,
+        remainder,
+    } = prepared;
+    let M1AuthenticatedScheduledRemainderV1 {
+        queue,
+        selected,
+        parked,
+        terminal,
+        prior_checked,
+        logical_accepted_counts,
+        externally_published_counts,
+        release_counts,
+        completed_members,
+        total_released,
+        history,
+    } = remainder;
+    let (shape, lower, witness, operations, custody) = queue.into_rearm_parts();
+    let retained = (
+        (
+            shape, witness, operations, custody, prepared, recipe, selected, parked,
+        ),
+        (
+            terminal,
+            prior_checked,
+            logical_accepted_counts,
+            externally_published_counts,
+            release_counts,
+            completed_members,
+            total_released,
+            history,
+        ),
+    );
+    match lower.destroy_and_release() {
+        Ok(release) => {
+            AuthenticatedSubmissionOpaqueCustodyV1::Released(Box::new((release, retained)))
+        }
+        Err(quarantined) => {
+            AuthenticatedSubmissionOpaqueCustodyV1::Quarantined(Box::new((quarantined, retained)))
+        }
     }
 }
 
@@ -3664,9 +3757,10 @@ pub fn submit_m1_authenticated_long_lived_queue_rearm_v1<const C: usize>(
     M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1,
 > {
     if engine.is_faulted() {
-        return Err(authenticated_submission_failure(
+        let retained = close_prepared_rearm_submission(prepared, recipe);
+        return Err(authenticated_classified_submission_failure(
             M1AuthenticatedLongLivedQueueRearmSubmissionPhaseV1::EngineFaulted,
-            (prepared, recipe),
+            retained,
         ));
     }
     let M1AuthenticatedPreparedLongLivedQueueRearmV1 {
@@ -3712,33 +3806,41 @@ pub fn submit_m1_authenticated_long_lived_queue_rearm_v1<const C: usize>(
         Ok(queue) => queue,
         Err(M1AuthenticatedQueueRearmFailureV1::Rejected(rejection)) => {
             let error = rejection.error();
-            let parts = rejection.into_parts();
-            engine.quarantine_m1_queue_rearm_failure();
-            return Err(authenticated_submission_failure(
+            let retained = rejection
+                .close_without_authority(engine)
+                .retain((error, carry));
+            return Err(authenticated_classified_submission_failure(
                 M1AuthenticatedLongLivedQueueRearmSubmissionPhaseV1::RebindPreflight,
-                (error, parts, carry),
+                retained,
             ));
         }
         Err(M1AuthenticatedQueueRearmFailureV1::Terminal(terminal)) => {
             let phase = authenticated_submission_phase(terminal.phase());
             engine.quarantine_m1_queue_rearm_failure();
-            return Err(authenticated_submission_failure(phase, (terminal, carry)));
+            return Err(authenticated_classified_submission_failure(
+                phase,
+                terminal.into_custody().retain(carry),
+            ));
         }
     };
     let queue = match queue.submit() {
         Ok(queue) => queue,
-        Err(M1AuthenticatedPhysicalQueueSubmitFailureV1::Currentness { error, retained }) => {
-            engine.quarantine_m1_queue_rearm_failure();
-            return Err(authenticated_submission_failure(
+        Err(failure) => {
+            use crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
+            let retained = match failure.close_without_authority(engine) {
+                M1AuthenticatedPhysicalQueueClosureV1::Released(released) => {
+                    AuthenticatedSubmissionOpaqueCustodyV1::Released(Box::new((released, carry)))
+                }
+                M1AuthenticatedPhysicalQueueClosureV1::Quarantined(quarantined) => {
+                    AuthenticatedSubmissionOpaqueCustodyV1::Quarantined(Box::new((
+                        quarantined,
+                        carry,
+                    )))
+                }
+            };
+            return Err(authenticated_classified_submission_failure(
                 M1AuthenticatedLongLivedQueueRearmSubmissionPhaseV1::QueueSubmit,
-                (error, retained, carry),
-            ));
-        }
-        Err(M1AuthenticatedPhysicalQueueSubmitFailureV1::Queue(failure)) => {
-            engine.quarantine_m1_queue_rearm_failure();
-            return Err(authenticated_submission_failure(
-                M1AuthenticatedLongLivedQueueRearmSubmissionPhaseV1::QueueSubmit,
-                (failure, carry),
+                retained,
             ));
         }
     };
@@ -3824,12 +3926,41 @@ impl M1AuthenticatedQueueRearmRejectionV1 {
     ) {
         (self.detached, self.prepared, self.recipe)
     }
+
+    fn close_without_authority<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> AuthenticatedSubmissionOpaqueCustodyV1 {
+        engine.quarantine_m1_queue_rearm_failure();
+        let Self {
+            error,
+            detached,
+            prepared,
+            recipe,
+        } = self;
+        let (shape, lower, witness, operations, custody) = detached.into_rearm_parts();
+        match lower.destroy_and_release() {
+            Ok(release) => AuthenticatedSubmissionOpaqueCustodyV1::Released(Box::new((
+                release, error, shape, witness, operations, custody, prepared, recipe,
+            ))),
+            Err(quarantined) => AuthenticatedSubmissionOpaqueCustodyV1::Quarantined(Box::new((
+                quarantined,
+                error,
+                shape,
+                witness,
+                operations,
+                custody,
+                prepared,
+                recipe,
+            ))),
+        }
+    }
 }
 
 #[must_use = "terminal authenticated rearm custody must remain retained"]
 pub(crate) struct M1AuthenticatedQueueRearmTerminalV1 {
     phase: M1AuthenticatedQueueRearmTerminalPhaseV1,
-    retained: Box<dyn fmt::Debug>,
+    custody: AuthenticatedSubmissionOpaqueCustodyV1,
 }
 
 impl fmt::Debug for M1AuthenticatedQueueRearmTerminalV1 {
@@ -3837,7 +3968,13 @@ impl fmt::Debug for M1AuthenticatedQueueRearmTerminalV1 {
         formatter
             .debug_struct("M1AuthenticatedQueueRearmTerminalV1")
             .field("phase", &self.phase)
-            .field("retained", &self.retained)
+            .field(
+                "queue_released",
+                &matches!(
+                    &self.custody,
+                    AuthenticatedSubmissionOpaqueCustodyV1::Released(_)
+                ),
+            )
             .finish()
     }
 }
@@ -3845,6 +3982,10 @@ impl fmt::Debug for M1AuthenticatedQueueRearmTerminalV1 {
 impl M1AuthenticatedQueueRearmTerminalV1 {
     pub(crate) const fn phase(&self) -> M1AuthenticatedQueueRearmTerminalPhaseV1 {
         self.phase
+    }
+
+    fn into_custody(self) -> AuthenticatedSubmissionOpaqueCustodyV1 {
+        self.custody
     }
 }
 
@@ -3861,8 +4002,119 @@ fn terminal<T: fmt::Debug + 'static>(
 ) -> M1AuthenticatedQueueRearmFailureV1 {
     M1AuthenticatedQueueRearmFailureV1::Terminal(Box::new(M1AuthenticatedQueueRearmTerminalV1 {
         phase,
-        retained: Box::new(retained),
+        custody: AuthenticatedSubmissionOpaqueCustodyV1::Quarantined(Box::new(retained)),
     }))
+}
+
+fn terminal_custody(
+    phase: M1AuthenticatedQueueRearmTerminalPhaseV1,
+    custody: AuthenticatedSubmissionOpaqueCustodyV1,
+) -> M1AuthenticatedQueueRearmFailureV1 {
+    M1AuthenticatedQueueRearmFailureV1::Terminal(Box::new(M1AuthenticatedQueueRearmTerminalV1 {
+        phase,
+        custody,
+    }))
+}
+
+fn terminal_unbound(
+    phase: M1AuthenticatedQueueRearmTerminalPhaseV1,
+    lower: AuthenticatedServiceQueueUnboundSessionV1,
+    retained: impl fmt::Debug + 'static,
+) -> M1AuthenticatedQueueRearmFailureV1 {
+    let custody = match lower.destroy_and_release() {
+        Ok(release) => {
+            AuthenticatedSubmissionOpaqueCustodyV1::Released(Box::new((release, retained)))
+        }
+        Err(quarantined) => {
+            AuthenticatedSubmissionOpaqueCustodyV1::Quarantined(Box::new((quarantined, retained)))
+        }
+    };
+    M1AuthenticatedQueueRearmFailureV1::Terminal(Box::new(M1AuthenticatedQueueRearmTerminalV1 {
+        phase,
+        custody,
+    }))
+}
+
+fn terminal_bound<const N: usize>(
+    phase: M1AuthenticatedQueueRearmTerminalPhaseV1,
+    lower: AuthenticatedServiceQueueSessionV1<N>,
+    retained: impl fmt::Debug + 'static,
+) -> M1AuthenticatedQueueRearmFailureV1 {
+    let custody = match lower.destroy_and_release() {
+        Ok(release) => {
+            AuthenticatedSubmissionOpaqueCustodyV1::Released(Box::new((release, retained)))
+        }
+        Err(quarantined) => {
+            AuthenticatedSubmissionOpaqueCustodyV1::Quarantined(Box::new((quarantined, retained)))
+        }
+    };
+    M1AuthenticatedQueueRearmFailureV1::Terminal(Box::new(M1AuthenticatedQueueRearmTerminalV1 {
+        phase,
+        custody,
+    }))
+}
+
+fn terminal_data_update_failure(
+    phase: M1AuthenticatedQueueRearmTerminalPhaseV1,
+    failure: AuthenticatedServiceQueueDataUpdateFailureV1,
+    retained: impl fmt::Debug + 'static,
+) -> M1AuthenticatedQueueRearmFailureV1 {
+    match failure {
+        AuthenticatedServiceQueueDataUpdateFailureV1::Rejected { error, queue } => {
+            terminal_unbound(phase, *queue, (error, retained))
+        }
+        AuthenticatedServiceQueueDataUpdateFailureV1::Quarantined {
+            error,
+            retained: queue,
+        } => terminal(phase, (error, queue, retained)),
+    }
+}
+
+fn terminal_workspace_failure<const N: usize>(
+    phase: M1AuthenticatedQueueRearmTerminalPhaseV1,
+    failure: Box<AuthenticatedWorkspaceReplacementFailureV1<N>>,
+    retained: impl fmt::Debug + 'static,
+) -> M1AuthenticatedQueueRearmFailureV1 {
+    match *failure {
+        AuthenticatedWorkspaceReplacementFailureV1::Update { failure, plan } => {
+            terminal_data_update_failure(phase, failure, (plan, retained))
+        }
+        AuthenticatedWorkspaceReplacementFailureV1::Binding(failure) => match *failure {
+            M1AuthenticatedQueueReplacedWorkspaceBindingFailureV1::Plan { failure, update } => {
+                let (lower, subleases, ranges) = update.into_parts();
+                terminal_unbound(phase, lower, (failure, subleases, ranges, retained))
+            }
+            M1AuthenticatedQueueReplacedWorkspaceBindingFailureV1::ReturnedRange {
+                plan,
+                queue,
+                subleases,
+                ranges,
+            } => terminal_unbound(phase, *queue, (plan, subleases, ranges, retained)),
+        },
+    }
+}
+
+fn terminal_bind_failure<const N: usize>(
+    phase: M1AuthenticatedQueueRearmTerminalPhaseV1,
+    failure: AuthenticatedServiceQueueRetainedBindFailureV1<N>,
+    retained: impl fmt::Debug + 'static,
+) -> M1AuthenticatedQueueRearmFailureV1 {
+    match failure {
+        AuthenticatedServiceQueueRetainedBindFailureV1::Program {
+            error,
+            queue,
+            packets,
+        } => terminal_unbound(phase, *queue, (error, packets, retained)),
+        AuthenticatedServiceQueueRetainedBindFailureV1::QueueRejected {
+            error,
+            queue,
+            packets,
+        } => terminal_unbound(phase, *queue, (error, packets, retained)),
+        AuthenticatedServiceQueueRetainedBindFailureV1::Quarantined {
+            error,
+            retained: queue,
+        } => terminal(phase, (error, queue, retained)),
+    }
 }
 
 fn shape_kind_matches(
@@ -3994,19 +4246,38 @@ const fn diagnostic_capture_is_supported(direct: bool, _speculative: bool) -> bo
     !direct
 }
 
-#[derive(Debug)]
 struct AuthenticatedDiagnosticCaptureResetFailureV1 {
     phase: M1AuthenticatedQueueRearmTerminalPhaseV1,
-    retained: Box<dyn fmt::Debug>,
+    custody: AuthenticatedSubmissionOpaqueCustodyV1,
 }
 
-fn authenticated_diagnostic_capture_reset_failure(
+fn authenticated_diagnostic_capture_reset_unbound_failure(
     phase: M1AuthenticatedQueueRearmTerminalPhaseV1,
+    lower: AuthenticatedServiceQueueUnboundSessionV1,
     retained: impl fmt::Debug + 'static,
 ) -> AuthenticatedDiagnosticCaptureResetFailureV1 {
+    let terminal = terminal_unbound(phase, lower, retained);
+    let M1AuthenticatedQueueRearmFailureV1::Terminal(terminal) = terminal else {
+        unreachable!("unbound teardown always produces terminal custody")
+    };
     AuthenticatedDiagnosticCaptureResetFailureV1 {
         phase,
-        retained: Box::new(retained),
+        custody: terminal.into_custody(),
+    }
+}
+
+fn authenticated_diagnostic_capture_reset_update_failure(
+    phase: M1AuthenticatedQueueRearmTerminalPhaseV1,
+    failure: AuthenticatedServiceQueueDataUpdateFailureV1,
+    retained: impl fmt::Debug + 'static,
+) -> AuthenticatedDiagnosticCaptureResetFailureV1 {
+    let terminal = terminal_data_update_failure(phase, failure, retained);
+    let M1AuthenticatedQueueRearmFailureV1::Terminal(terminal) = terminal else {
+        unreachable!("data-update teardown always produces terminal custody")
+    };
+    AuthenticatedDiagnosticCaptureResetFailureV1 {
+        phase,
+        custody: terminal.into_custody(),
     }
 }
 
@@ -4028,9 +4299,10 @@ fn reset_retained_authenticated_diagnostic_capture(
             let image = match choices.replacement_image() {
                 Ok(image) => image,
                 Err(error) => {
-                    return Err(authenticated_diagnostic_capture_reset_failure(
+                    return Err(authenticated_diagnostic_capture_reset_unbound_failure(
                         M1AuthenticatedQueueRearmTerminalPhaseV1::DirectDiagnosticChoiceReplacement,
-                        (lower, completion, error),
+                        lower,
+                        (completion, error),
                     ));
                 }
             };
@@ -4040,9 +4312,10 @@ fn reset_retained_authenticated_diagnostic_capture(
         {
             Ok(update) => update,
             Err(failure) => {
-                return Err(authenticated_diagnostic_capture_reset_failure(
+                return Err(authenticated_diagnostic_capture_reset_update_failure(
                     M1AuthenticatedQueueRearmTerminalPhaseV1::DirectDiagnosticChoiceReplacement,
-                    (failure, completion),
+                    failure,
+                    completion,
                 ));
             }
         };
@@ -4052,9 +4325,10 @@ fn reset_retained_authenticated_diagnostic_capture(
             .expect("presence checked above")
             .replace_retained_range(range)
         {
-            return Err(authenticated_diagnostic_capture_reset_failure(
+            return Err(authenticated_diagnostic_capture_reset_unbound_failure(
                 M1AuthenticatedQueueRearmTerminalPhaseV1::DirectDiagnosticChoiceReplacement,
-                (lower, completion, error),
+                lower,
+                (completion, error),
             ));
         }
         return Ok((lower, completion));
@@ -4068,18 +4342,20 @@ fn reset_retained_authenticated_diagnostic_capture(
             let draft_image = match choices.replacement_draft_image() {
                 Ok(image) => image,
                 Err(error) => {
-                    return Err(authenticated_diagnostic_capture_reset_failure(
+                    return Err(authenticated_diagnostic_capture_reset_unbound_failure(
                         M1AuthenticatedQueueRearmTerminalPhaseV1::SpeculativeDraftChoiceReplacement,
-                        (lower, completion, error),
+                        lower,
+                        (completion, error),
                     ));
                 }
             };
             let target_image = match choices.replacement_target_image() {
                 Ok(image) => image,
                 Err(error) => {
-                    return Err(authenticated_diagnostic_capture_reset_failure(
+                    return Err(authenticated_diagnostic_capture_reset_unbound_failure(
                         M1AuthenticatedQueueRearmTerminalPhaseV1::SpeculativeTargetChoiceReplacement,
-                        (lower, completion, draft_image, error),
+                        lower,
+                        (completion, draft_image, error),
                     ));
                 }
             };
@@ -4095,9 +4371,10 @@ fn reset_retained_authenticated_diagnostic_capture(
         {
             Ok(update) => update,
             Err(failure) => {
-                return Err(authenticated_diagnostic_capture_reset_failure(
+                return Err(authenticated_diagnostic_capture_reset_update_failure(
                     M1AuthenticatedQueueRearmTerminalPhaseV1::SpeculativeDraftChoiceReplacement,
-                    (failure, completion, target_image),
+                    failure,
+                    (completion, target_image),
                 ));
             }
         };
@@ -4107,9 +4384,10 @@ fn reset_retained_authenticated_diagnostic_capture(
             .expect("presence checked above")
             .replace_retained_draft_range(draft_range)
         {
-            return Err(authenticated_diagnostic_capture_reset_failure(
+            return Err(authenticated_diagnostic_capture_reset_unbound_failure(
                 M1AuthenticatedQueueRearmTerminalPhaseV1::SpeculativeDraftChoiceReplacement,
-                (lower, completion, target_image, error),
+                lower,
+                (completion, target_image, error),
             ));
         }
         let target_update = match lower
@@ -4117,9 +4395,10 @@ fn reset_retained_authenticated_diagnostic_capture(
         {
             Ok(update) => update,
             Err(failure) => {
-                return Err(authenticated_diagnostic_capture_reset_failure(
+                return Err(authenticated_diagnostic_capture_reset_update_failure(
                     M1AuthenticatedQueueRearmTerminalPhaseV1::SpeculativeTargetChoiceReplacement,
-                    (failure, completion),
+                    failure,
+                    completion,
                 ));
             }
         };
@@ -4129,9 +4408,10 @@ fn reset_retained_authenticated_diagnostic_capture(
             .expect("presence checked above")
             .replace_retained_target_range(target_range)
         {
-            return Err(authenticated_diagnostic_capture_reset_failure(
+            return Err(authenticated_diagnostic_capture_reset_unbound_failure(
                 M1AuthenticatedQueueRearmTerminalPhaseV1::SpeculativeTargetChoiceReplacement,
-                (lower, completion, error),
+                lower,
+                (completion, error),
             ));
         }
         return Ok((lower, completion));
@@ -4338,16 +4618,18 @@ where
     let lower = match lower.bind_retained(packets) {
         Ok(lower) => lower,
         Err(failure) => {
-            return Err(terminal(
+            return Err(terminal_bind_failure(
                 M1AuthenticatedQueueRearmTerminalPhaseV1::QueueBind,
-                (failure, witness, operations, custody, step),
+                failure,
+                (witness, operations, custody, step),
             ));
         }
     };
     if lower.observation() != expected_observation {
-        return Err(terminal(
+        return Err(terminal_bound(
             M1AuthenticatedQueueRearmTerminalPhaseV1::QueueObservation,
-            (lower, witness, operations, custody, step),
+            lower,
+            (witness, operations, custody, step),
         ));
     }
     Ok(wrap(
@@ -4390,11 +4672,10 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
                     match descriptor(M1InitializedWorkspaceSlotV1::TargetOnlyTarget, &bytes) {
                         Ok(descriptor) => descriptor,
                         Err(()) => {
-                            return Err(terminal(
+                            return Err(terminal_unbound(
                                 M1AuthenticatedQueueRearmTerminalPhaseV1::WorkspaceContent,
-                                (
-                                    lower, witness, operations, custody, plan, bytes, recipe, step,
-                                ),
+                                lower,
+                                (witness, operations, custody, plan, bytes, recipe, step),
                             ));
                         }
                     };
@@ -4404,19 +4685,19 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
                     Ok(replaced) => replaced,
                     Err(failure) => {
                         let _ = failure.retained_owner_count();
-                        return Err(terminal(
+                        return Err(terminal_workspace_failure(
                             M1AuthenticatedQueueRearmTerminalPhaseV1::TargetWorkspaceReplacement,
-                            (failure, witness, operations, custody, recipe, step),
+                            failure,
+                            (witness, operations, custody, recipe, step),
                         ));
                     }
                 };
                 let mut workspace_ranges = Vec::new();
                 if workspace_ranges.try_reserve_exact(ranges.len()).is_err() {
-                    return Err(terminal(
+                    return Err(terminal_unbound(
                         M1AuthenticatedQueueRearmTerminalPhaseV1::WorkspaceRangeRebinding,
-                        (
-                            lower, witness, operations, custody, target, ranges, recipe, step,
-                        ),
+                        lower,
+                        (witness, operations, custody, target, ranges, recipe, step),
                     ));
                 }
                 append_workspace_ranges(
@@ -4452,10 +4733,10 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
                 ) {
                     Ok(descriptor) => descriptor,
                     Err(()) => {
-                        return Err(terminal(
+                        return Err(terminal_unbound(
                             M1AuthenticatedQueueRearmTerminalPhaseV1::WorkspaceContent,
+                            lower,
                             (
-                                lower,
                                 witness,
                                 operations,
                                 custody,
@@ -4475,10 +4756,10 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
                 ) {
                     Ok(descriptor) => descriptor,
                     Err(()) => {
-                        return Err(terminal(
+                        return Err(terminal_unbound(
                             M1AuthenticatedQueueRearmTerminalPhaseV1::WorkspaceContent,
+                            lower,
                             (
-                                lower,
                                 witness,
                                 operations,
                                 custody,
@@ -4502,10 +4783,10 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
                     Ok(replaced) => replaced,
                     Err(failure) => {
                         let _ = failure.retained_owner_count();
-                        return Err(terminal(
+                        return Err(terminal_workspace_failure(
                             M1AuthenticatedQueueRearmTerminalPhaseV1::DraftWorkspaceReplacement,
+                            failure,
                             (
-                                failure,
                                 witness,
                                 operations,
                                 custody,
@@ -4527,10 +4808,10 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
                     Ok(replaced) => replaced,
                     Err(failure) => {
                         let _ = failure.retained_owner_count();
-                        return Err(terminal(
+                        return Err(terminal_workspace_failure(
                             M1AuthenticatedQueueRearmTerminalPhaseV1::TargetWorkspaceReplacement,
+                            failure,
                             (
-                                failure,
                                 witness,
                                 operations,
                                 custody,
@@ -4547,10 +4828,10 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
                     .try_reserve_exact(draft_ranges.len() + target_ranges.len())
                     .is_err()
                 {
-                    return Err(terminal(
+                    return Err(terminal_unbound(
                         M1AuthenticatedQueueRearmTerminalPhaseV1::WorkspaceRangeRebinding,
+                        lower,
                         (
-                            lower,
                             witness,
                             operations,
                             custody,
@@ -4604,10 +4885,10 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
                 ) {
                     Ok(descriptor) => descriptor,
                     Err(()) => {
-                        return Err(terminal(
+                        return Err(terminal_unbound(
                             M1AuthenticatedQueueRearmTerminalPhaseV1::WorkspaceContent,
+                            lower,
                             (
-                                lower,
                                 witness,
                                 operations,
                                 custody,
@@ -4627,10 +4908,10 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
                 ) {
                     Ok(descriptor) => descriptor,
                     Err(()) => {
-                        return Err(terminal(
+                        return Err(terminal_unbound(
                             M1AuthenticatedQueueRearmTerminalPhaseV1::WorkspaceContent,
+                            lower,
                             (
-                                lower,
                                 witness,
                                 operations,
                                 custody,
@@ -4654,10 +4935,10 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
                     Ok(replaced) => replaced,
                     Err(failure) => {
                         let _ = failure.retained_owner_count();
-                        return Err(terminal(
+                        return Err(terminal_workspace_failure(
                             M1AuthenticatedQueueRearmTerminalPhaseV1::DraftWorkspaceReplacement,
+                            failure,
                             (
-                                failure,
                                 witness,
                                 operations,
                                 custody,
@@ -4679,10 +4960,10 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
                     Ok(replaced) => replaced,
                     Err(failure) => {
                         let _ = failure.retained_owner_count();
-                        return Err(terminal(
+                        return Err(terminal_workspace_failure(
                             M1AuthenticatedQueueRearmTerminalPhaseV1::TargetWorkspaceReplacement,
+                            failure,
                             (
-                                failure,
                                 witness,
                                 operations,
                                 custody,
@@ -4699,10 +4980,10 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
                     .try_reserve_exact(draft_ranges.len() + target_ranges.len())
                     .is_err()
                 {
-                    return Err(terminal(
+                    return Err(terminal_unbound(
                         M1AuthenticatedQueueRearmTerminalPhaseV1::WorkspaceRangeRebinding,
+                        lower,
                         (
-                            lower,
                             witness,
                             operations,
                             custody,
@@ -4734,11 +5015,10 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
                 )
             }
             (_, _, plans, images) => {
-                return Err(terminal(
+                return Err(terminal_unbound(
                     M1AuthenticatedQueueRearmTerminalPhaseV1::ShapeJoin,
-                    (
-                        lower, witness, operations, custody, plans, images, recipe, step,
-                    ),
+                    lower,
+                    (witness, operations, custody, plans, images, recipe, step),
                 ));
             }
         };
@@ -4747,17 +5027,10 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
     let previous_capture = match retained_host_capture_ranges(&custody.completion_output) {
         Ok(capture) => capture,
         Err(()) => {
-            return Err(terminal(
+            return Err(terminal_unbound(
                 M1AuthenticatedQueueRearmTerminalPhaseV1::WorkspaceRangeRebinding,
-                (
-                    lower,
-                    witness,
-                    operations,
-                    custody,
-                    workspace_ranges,
-                    recipe,
-                    step,
-                ),
+                lower,
+                (witness, operations, custody, workspace_ranges, recipe, step),
             ));
         }
     };
@@ -4766,10 +5039,9 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
             Ok(reset) => reset,
             Err(failure) => {
                 let phase = failure.phase;
-                return Err(terminal(
+                return Err(terminal_custody(
                     phase,
-                    (
-                        failure.retained,
+                    failure.custody.retain((
                         witness,
                         operations,
                         (
@@ -4785,7 +5057,7 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
                             recipe,
                             step,
                         ),
-                    ),
+                    )),
                 ));
             }
         };
@@ -4793,17 +5065,10 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
     let retained_capture = match retained_host_capture_ranges(&custody.completion_output) {
         Ok(capture) => capture,
         Err(()) => {
-            return Err(terminal(
+            return Err(terminal_unbound(
                 M1AuthenticatedQueueRearmTerminalPhaseV1::WorkspaceRangeRebinding,
-                (
-                    lower,
-                    witness,
-                    operations,
-                    custody,
-                    workspace_ranges,
-                    recipe,
-                    step,
-                ),
+                lower,
+                (witness, operations, custody, workspace_ranges, recipe, step),
             ));
         }
     };
@@ -4817,17 +5082,10 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
     ) {
         Ok(rows) => rows,
         Err(()) => {
-            return Err(terminal(
+            return Err(terminal_unbound(
                 M1AuthenticatedQueueRearmTerminalPhaseV1::BoundRowRebuild,
-                (
-                    lower,
-                    witness,
-                    operations,
-                    custody,
-                    workspace_ranges,
-                    recipe,
-                    step,
-                ),
+                lower,
+                (witness, operations, custody, workspace_ranges, recipe, step),
             ));
         }
     };
@@ -4843,16 +5101,18 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
         Err(failure) => {
             let error = failure.error();
             let parts = failure.into_parts();
-            return Err(terminal(
+            return Err(terminal_unbound(
                 M1AuthenticatedQueueRearmTerminalPhaseV1::PacketLowering,
-                (lower, witness, operations, error, parts, step),
+                lower,
+                (witness, operations, error, parts, step),
             ));
         }
     };
     if batch.shape() != shape {
-        return Err(terminal(
+        return Err(terminal_unbound(
             M1AuthenticatedQueueRearmTerminalPhaseV1::ShapeJoin,
-            (lower, witness, operations, batch, step),
+            lower,
+            (witness, operations, batch, step),
         ));
     }
 
@@ -4917,9 +5177,10 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
             expected_observation,
             |case| M1AuthenticatedPhysicalQueueSessionV1::SpeculativeK16(Box::new(case)),
         ),
-        (_, batch) => Err(terminal(
+        (_, batch) => Err(terminal_unbound(
             M1AuthenticatedQueueRearmTerminalPhaseV1::ShapeJoin,
-            (lower, witness, operations, batch, step),
+            lower,
+            (witness, operations, batch, step),
         )),
     }
 }

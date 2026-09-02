@@ -186,7 +186,8 @@ pub(crate) struct M1AuthenticatedSpeculativeRolloverLogicalV1 {
     pub(crate) lineage: M1AuthenticatedSpeculativeLogicalLineageWitnessV1,
 }
 
-/// Terminal rollover scheduling failure without released-round authority.
+/// Rollover scheduling rejection before detachment or terminal failure after
+/// detachment began.
 ///
 /// ```compile_fail
 /// use ferric_engine::M1AuthenticatedSpeculativeRolloverScheduleFailureV1;
@@ -194,22 +195,106 @@ pub(crate) struct M1AuthenticatedSpeculativeRolloverLogicalV1 {
 ///     let _round = failure.into_released_round();
 /// }
 /// ```
-#[must_use = "terminal rollover scheduling custody remains retained"]
-#[derive(Debug)]
-pub struct M1AuthenticatedSpeculativeRolloverScheduleFailureV1 {
-    error: M1AuthenticatedSpeculativeRolloverScheduleErrorV1,
-    disposition: crate::M1AuthenticatedSpeculativeFailureDispositionV1,
+#[must_use = "rollover scheduling retry or terminal custody remains retained"]
+pub enum M1AuthenticatedSpeculativeRolloverScheduleFailureV1 {
+    /// Exact unchanged owners retained after a pure pre-detach rejection.
+    PreDetach {
+        error: M1AuthenticatedSpeculativeRolloverScheduleErrorV1,
+        retry: Box<M1AuthenticatedSpeculativeRolloverSchedulePreDetachRetryV1>,
+    },
+    /// Detach-or-later failure, or an already-faulted Engine closed explicitly.
+    Terminal {
+        error: M1AuthenticatedSpeculativeRolloverScheduleErrorV1,
+        disposition: crate::M1AuthenticatedSpeculativeFailureDispositionV1,
+    },
 }
 
 impl M1AuthenticatedSpeculativeRolloverScheduleFailureV1 {
     #[must_use]
     pub const fn error(&self) -> M1AuthenticatedSpeculativeRolloverScheduleErrorV1 {
-        self.error
+        match self {
+            Self::PreDetach { error, .. } | Self::Terminal { error, .. } => *error,
+        }
     }
 
-    #[must_use = "the terminal disposition must remain observed"]
-    pub const fn disposition(&self) -> &crate::M1AuthenticatedSpeculativeFailureDispositionV1 {
-        &self.disposition
+    #[must_use]
+    pub const fn is_pre_detach_retry(&self) -> bool {
+        matches!(self, Self::PreDetach { .. })
+    }
+
+    #[must_use = "the terminal disposition must remain observed when present"]
+    pub const fn disposition(
+        &self,
+    ) -> Option<&crate::M1AuthenticatedSpeculativeFailureDispositionV1> {
+        match self {
+            Self::PreDetach { .. } => None,
+            Self::Terminal { disposition, .. } => Some(disposition),
+        }
+    }
+}
+
+impl fmt::Debug for M1AuthenticatedSpeculativeRolloverScheduleFailureV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AuthenticatedSpeculativeRolloverScheduleFailureV1")
+            .field("error", &self.error())
+            .field("pre_detach_retry", &self.is_pre_detach_retry())
+            .field("terminal_disposition", &self.disposition())
+            .finish()
+    }
+}
+
+/// Opaque exact owners retained by a pure rollover scheduling preflight
+/// rejection. The released queue and coordinator cannot be separated.
+#[must_use = "pre-detach rollover retry custody remains linear"]
+pub struct M1AuthenticatedSpeculativeRolloverSchedulePreDetachRetryV1 {
+    released: Box<M1AuthenticatedReleasedCompletedStepV1>,
+    intent: Box<M1AuthenticatedSpeculativeRolloverIntentV1>,
+    coordinator: Box<M1SpeculativeGenerationLoopV1>,
+    inputs: Box<M1FiniteSpeculativeQueueRolloverKvInputsV1>,
+    recipe_plans: M1FullStepWorkspacePlans,
+    preparation_plans: M1FullStepWorkspacePlans,
+}
+
+impl fmt::Debug for M1AuthenticatedSpeculativeRolloverSchedulePreDetachRetryV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AuthenticatedSpeculativeRolloverSchedulePreDetachRetryV1")
+            .field("retains_exact_inputs", &true)
+            .finish()
+    }
+}
+
+impl M1AuthenticatedSpeculativeRolloverSchedulePreDetachRetryV1 {
+    /// Retries the exact unchanged released owner and causal inputs against a
+    /// caller-retained serving batch.
+    ///
+    /// # Errors
+    ///
+    /// Returns renewed pre-detach custody or a terminal detach-or-later failure.
+    pub fn retry<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        batch: &M1ServingBatchPlanV1,
+    ) -> Result<
+        M1AuthenticatedScheduledSpeculativeRolloverV1,
+        M1AuthenticatedSpeculativeRolloverScheduleFailureV1,
+    > {
+        schedule_m1_authenticated_speculative_rollover_v1(
+            engine,
+            *self.released,
+            batch,
+            *self.intent,
+            *self.coordinator,
+            *self.inputs,
+            self.recipe_plans,
+            self.preparation_plans,
+        )
+    }
+
+    #[must_use]
+    pub const fn retains_exact_inputs(&self) -> bool {
+        true
     }
 }
 
@@ -336,7 +421,7 @@ fn close_pending_schedule_failure<const C: usize>(
         quarantined_disposition, released_disposition,
     };
 
-    let (error, disposition) = match pending {
+    match pending {
         PendingM1AuthenticatedSpeculativeRolloverScheduleFailureV1::Rejected {
             error,
             released,
@@ -346,13 +431,27 @@ fn close_pending_schedule_failure<const C: usize>(
             recipe_plans,
             preparation_plans,
         } => {
-            engine.quarantine_m1_queue_rearm_failure();
-            let logical = (intent, coordinator, inputs, recipe_plans, preparation_plans);
-            let disposition = match released.destroy_queue_and_retain_step(engine) {
-                Ok(released) => released_disposition((released, logical), true),
-                Err(quarantined) => quarantined_disposition((quarantined, logical)),
-            };
-            (error, disposition)
+            if error == M1AuthenticatedSpeculativeRolloverScheduleErrorV1::EngineFaulted {
+                engine.quarantine_m1_queue_rearm_failure();
+                let logical = (intent, coordinator, inputs, recipe_plans, preparation_plans);
+                let disposition = match released.destroy_queue_and_retain_step(engine) {
+                    Ok(released) => released_disposition((released, logical), true),
+                    Err(quarantined) => quarantined_disposition((quarantined, logical)),
+                };
+                M1AuthenticatedSpeculativeRolloverScheduleFailureV1::Terminal { error, disposition }
+            } else {
+                M1AuthenticatedSpeculativeRolloverScheduleFailureV1::PreDetach {
+                    error,
+                    retry: Box::new(M1AuthenticatedSpeculativeRolloverSchedulePreDetachRetryV1 {
+                        released,
+                        intent,
+                        coordinator,
+                        inputs,
+                        recipe_plans,
+                        preparation_plans,
+                    }),
+                }
+            }
         }
         PendingM1AuthenticatedSpeculativeRolloverScheduleFailureV1::Detach {
             error,
@@ -360,7 +459,10 @@ fn close_pending_schedule_failure<const C: usize>(
             retained,
         } => {
             engine.quarantine_m1_queue_rearm_failure();
-            (error, quarantined_disposition((source, retained)))
+            M1AuthenticatedSpeculativeRolloverScheduleFailureV1::Terminal {
+                error,
+                disposition: quarantined_disposition((source, retained)),
+            }
         }
         PendingM1AuthenticatedSpeculativeRolloverScheduleFailureV1::Detached(detached) => {
             let error = detached.error;
@@ -369,10 +471,9 @@ fn close_pending_schedule_failure<const C: usize>(
                 Ok(released) => released_disposition(released, true),
                 Err(quarantined) => quarantined_disposition(quarantined),
             };
-            (error, disposition)
+            M1AuthenticatedSpeculativeRolloverScheduleFailureV1::Terminal { error, disposition }
         }
-    };
-    M1AuthenticatedSpeculativeRolloverScheduleFailureV1 { error, disposition }
+    }
 }
 
 /// Detached, exactly scheduled rollover with a private split causal witness.

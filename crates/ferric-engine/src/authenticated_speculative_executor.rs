@@ -19,18 +19,21 @@ use crate::{
     complete_m1_authenticated_physical_step_v1, prepare_m1_authenticated_long_lived_queue_rearm_v1,
     release_m1_authenticated_completed_step_kv_pages_v1,
     reserve_m1_authenticated_long_lived_queue_rearm_kv_v1,
-    submit_m1_authenticated_long_lived_queue_rearm_v1, ActiveDeviceKvCache, Engine,
-    LogicalRunnerDeclaration, M1AuthenticatedCompletedStepOutcomeV1,
+    submit_m1_authenticated_long_lived_queue_rearm_v1, ActiveDeviceKvCache,
+    AddresslessM1PhysicalBufferRecipeV1, Engine, LogicalRunnerDeclaration,
+    M1AllocatedScheduledStepV1, M1AuthenticatedCompletedStepOutcomeV1,
     M1AuthenticatedLongLivedQueueRearmScheduleFailureV1,
-    M1AuthenticatedLongLivedQueueReleasedRoundV1, M1AuthenticatedRearmedRoundPageReleaseFailureV1,
+    M1AuthenticatedLongLivedQueueReleasedRoundV1, M1AuthenticatedPhysicalQueueCreateFailureV1,
+    M1AuthenticatedPhysicalQueueSessionV1, M1AuthenticatedPhysicalRunnerV1,
+    M1AuthenticatedPrepublicationBatchV1, M1AuthenticatedRearmedRoundPageReleaseFailureV1,
     M1AuthenticatedRearmedRoundReleaseOutcomeV1,
     M1AuthenticatedSpeculativeDiagnosticCompletedReadbackV1, M1DeviceKvCompletionMemberV1,
     M1DeviceKvCompletionRosterV1, M1FullStepKvWorkspaceTablesV1, M1FullStepWorkspacePlans,
     M1LongLivedQueueRearmKvInputsV1, M1ObservedSpeculativeDiagnosticChoicesV1,
-    M1PhysicalFixedBatchShapeV1, M1PhysicalRunnerRecipeOutcomeV1, M1PrepareFailureV1,
-    M1PreparedScheduledWorkspaceImagesV1, M1ReleasedDeviceKvMemberV1, M1ScheduledDispatchV1,
-    M1SpeculativeGenerationLoopV1, M1SpeculativeMemberControlV1, M1SpeculativeMemberSeedV1,
-    M1SpeculativeMemberStatusV1, M1SpeculativeRoundOutcomeV1,
+    M1PartitionedModelMemoryKvPoolV1, M1PhysicalFixedBatchShapeV1, M1PhysicalRunnerRecipeOutcomeV1,
+    M1PrepareFailureV1, M1PreparedScheduledWorkspaceImagesV1, M1ReleasedDeviceKvMemberV1,
+    M1ScheduledDispatchV1, M1SpeculativeGenerationLoopV1, M1SpeculativeMemberControlV1,
+    M1SpeculativeMemberSeedV1, M1SpeculativeMemberStatusV1, M1SpeculativeRoundOutcomeV1,
 };
 
 static NEXT_AUTHENTICATED_SPECULATIVE_LINEAGE_ID_V1: AtomicU64 = AtomicU64::new(1);
@@ -237,7 +240,7 @@ impl M1AuthenticatedSpeculativeBootstrapFailureV1 {
 /// the exact authenticated queue publication and readback.
 #[must_use = "bootstrap continuation must rejoin its authenticated physical lineage"]
 #[derive(Debug)]
-pub struct M1AuthenticatedSpeculativeBootstrapContinuationV1 {
+struct M1AuthenticatedSpeculativeBootstrapContinuationV1 {
     coordinator: M1SpeculativeGenerationLoopV1,
     epoch: CompletionEpoch,
     selected: Vec<ActiveDeviceKvCache>,
@@ -245,6 +248,13 @@ pub struct M1AuthenticatedSpeculativeBootstrapContinuationV1 {
 }
 
 /// Prepared round-zero images plus the only logical continuation able to join them.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativeBootstrapPreparedV1;
+/// fn separate(value: M1AuthenticatedSpeculativeBootstrapPreparedV1) {
+///     let _ = value.into_parts();
+/// }
+/// ```
 #[must_use = "prepared physical custody and logical bootstrap continuation remain linear"]
 #[derive(Debug)]
 pub struct M1AuthenticatedSpeculativeBootstrapPreparedV1 {
@@ -255,13 +265,20 @@ pub struct M1AuthenticatedSpeculativeBootstrapPreparedV1 {
 /// Logical half of an authenticated paired-prefill rollover lineage join.
 #[must_use = "rollover continuation must rejoin the first speculative readback"]
 #[derive(Debug)]
-pub struct M1AuthenticatedSpeculativeRolloverContinuationV1 {
+struct M1AuthenticatedSpeculativeRolloverContinuationV1 {
     coordinator: M1SpeculativeGenerationLoopV1,
     epoch: CompletionEpoch,
     lineage: M1AuthenticatedSpeculativeLogicalLineageWitnessV1,
 }
 
 /// Published first speculative generation plus its only logical continuation.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativeRolloverPublishedV1;
+/// fn separate(value: M1AuthenticatedSpeculativeRolloverPublishedV1) {
+///     let _ = value.into_parts();
+/// }
+/// ```
 #[must_use = "published rollover queue and continuation must remain paired"]
 #[derive(Debug)]
 pub struct M1AuthenticatedSpeculativeRolloverPublishedV1 {
@@ -327,32 +344,79 @@ impl M1AuthenticatedSpeculativeRolloverPublishedV1 {
         }
     }
 
-    #[must_use = "both authenticated rollover owners remain linear"]
-    pub fn into_parts(
+    /// Drives wait, recycle, diagnostic readback, and coordinator completion
+    /// without ever exposing the generic published queue independently.
+    ///
+    /// # Errors
+    ///
+    /// Every failure closes available queue custody, permanently faults
+    /// `engine`, and returns only a clean release or opaque quarantine.
+    pub fn complete_round<const C: usize>(
         self,
-    ) -> (
-        crate::M1AuthenticatedRearmedPublishedQueueV1,
-        M1AuthenticatedSpeculativeRolloverContinuationV1,
-    ) {
-        (self.published, self.continuation)
-    }
-}
-
-impl M1AuthenticatedSpeculativeBootstrapPreparedV1 {
-    #[must_use = "both bootstrap owners must remain retained"]
-    pub fn into_parts(
-        self,
-    ) -> (
-        M1PreparedScheduledWorkspaceImagesV1,
-        M1AuthenticatedSpeculativeBootstrapContinuationV1,
-    ) {
-        (self.prepared, self.continuation)
+        engine: &mut Engine<C>,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+    ) -> Result<
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        M1AuthenticatedSpeculativeRolloverRoundFailureV1,
+    > {
+        let Self {
+            published,
+            continuation,
+        } = self;
+        let completed = match published.wait(engine) {
+            Ok(completed) => completed,
+            Err(failure) => {
+                engine.quarantine_m1_queue_rearm_failure();
+                return Err(M1AuthenticatedSpeculativeRolloverRoundFailureV1 {
+                    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Wait,
+                    disposition: quarantined_disposition((failure, continuation, controls)),
+                });
+            }
+        };
+        let recycled = match completed.recycle(engine) {
+            Ok(recycled) => recycled,
+            Err(failure) => {
+                engine.quarantine_m1_queue_rearm_failure();
+                return Err(M1AuthenticatedSpeculativeRolloverRoundFailureV1 {
+                    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Recycle,
+                    disposition: quarantined_disposition((failure, continuation, controls)),
+                });
+            }
+        };
+        let diagnostic = match recycled.read_and_check_speculative_diagnostic_completion() {
+            Ok(diagnostic) => diagnostic,
+            Err(failure) => {
+                engine.quarantine_m1_queue_rearm_failure();
+                let disposition = match failure.destroy_queue_and_retain_custody(engine) {
+                    Ok(released) => released_disposition((released, continuation, controls), true),
+                    Err(quarantined) => {
+                        quarantined_disposition((quarantined, continuation, controls))
+                    }
+                };
+                return Err(M1AuthenticatedSpeculativeRolloverRoundFailureV1 {
+                    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::DiagnosticReadback,
+                    disposition,
+                });
+            }
+        };
+        continuation.complete_rollover_round(engine, diagnostic, controls)
     }
 }
 
 /// Round-zero completion failure stage after authenticated bootstrap.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum M1AuthenticatedSpeculativeBootstrapRoundStageV1 {
+    WorkspaceAllocation,
+    CompletionOutput,
+    DiagnosticCapture,
+    Prepublication,
+    QueueCreate,
+    QueueSubmit,
+    QueueWait,
+    SignalRecycle,
+    CompletionObservation,
+    DiagnosticObservation,
+    SemanticJoin,
     Lineage,
     CoordinatorPreflight,
     HostAllocation,
@@ -369,23 +433,97 @@ pub enum M1AuthenticatedSpeculativeBootstrapRoundStageV1 {
 ///     let _readback = failure.into_custody();
 /// }
 /// ```
-#[must_use = "terminal bootstrap failure custody remains retained"]
-#[derive(Debug)]
-pub struct M1AuthenticatedSpeculativeBootstrapRoundFailureV1 {
-    stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1,
-    disposition: M1AuthenticatedSpeculativeFailureDispositionV1,
+#[must_use = "bootstrap retry or terminal custody remains retained"]
+pub enum M1AuthenticatedSpeculativeBootstrapRoundFailureV1 {
+    /// Pure rejection before native queue creation with exact retry custody.
+    PreDetach {
+        stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1,
+        retry: Box<M1AuthenticatedSpeculativeBootstrapPreDetachRetryV1>,
+    },
+    /// Failure after native queue creation began, or an intentionally terminal
+    /// earlier failure after the Engine was explicitly quarantined.
+    Terminal {
+        stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1,
+        disposition: M1AuthenticatedSpeculativeFailureDispositionV1,
+    },
 }
 
 impl M1AuthenticatedSpeculativeBootstrapRoundFailureV1 {
     #[must_use]
     pub const fn stage(&self) -> M1AuthenticatedSpeculativeBootstrapRoundStageV1 {
-        self.stage
+        match self {
+            Self::PreDetach { stage, .. } | Self::Terminal { stage, .. } => *stage,
+        }
     }
 
-    #[must_use = "the terminal disposition must remain observed"]
-    pub const fn disposition(&self) -> &M1AuthenticatedSpeculativeFailureDispositionV1 {
-        &self.disposition
+    #[must_use]
+    pub const fn is_pre_detach_retry(&self) -> bool {
+        matches!(self, Self::PreDetach { .. })
     }
+
+    #[must_use = "the terminal disposition must remain observed when present"]
+    pub const fn disposition(&self) -> Option<&M1AuthenticatedSpeculativeFailureDispositionV1> {
+        match self {
+            Self::PreDetach { .. } => None,
+            Self::Terminal { disposition, .. } => Some(disposition),
+        }
+    }
+}
+
+impl fmt::Debug for M1AuthenticatedSpeculativeBootstrapRoundFailureV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AuthenticatedSpeculativeBootstrapRoundFailureV1")
+            .field("stage", &self.stage())
+            .field("pre_detach_retry", &self.is_pre_detach_retry())
+            .field("terminal_disposition", &self.disposition())
+            .finish()
+    }
+}
+
+/// Opaque exact inputs for retrying a bootstrap rejection that occurred before
+/// native queue creation began.
+#[must_use = "pre-detach bootstrap retry custody remains linear"]
+pub struct M1AuthenticatedSpeculativeBootstrapPreDetachRetryV1 {
+    state: M1AuthenticatedSpeculativeBootstrapPreDetachRetryStateV1,
+}
+
+impl fmt::Debug for M1AuthenticatedSpeculativeBootstrapPreDetachRetryV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AuthenticatedSpeculativeBootstrapPreDetachRetryV1")
+            .field("retains_exact_inputs", &true)
+            .finish()
+    }
+}
+
+enum M1AuthenticatedSpeculativeBootstrapPreDetachRetryStateV1 {
+    Allocation {
+        diagnostic: Box<dyn fmt::Debug>,
+        prepared: M1AuthenticatedSpeculativeBootstrapPreparedV1,
+        partitioned_memory: M1PartitionedModelMemoryKvPoolV1,
+        runner: M1AuthenticatedPhysicalRunnerV1,
+        recipe: AddresslessM1PhysicalBufferRecipeV1,
+        ring_bytes: u32,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+    },
+    Prepublication {
+        diagnostic: Box<dyn fmt::Debug>,
+        continuation: M1AuthenticatedSpeculativeBootstrapContinuationV1,
+        runner: M1AuthenticatedPhysicalRunnerV1,
+        allocated: M1AllocatedScheduledStepV1,
+        recipe: AddresslessM1PhysicalBufferRecipeV1,
+        completion: crate::BoundM1CompletionOutputV1,
+        ring_bytes: u32,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+    },
+    QueueCreate {
+        diagnostic: Box<dyn fmt::Debug>,
+        continuation: M1AuthenticatedSpeculativeBootstrapContinuationV1,
+        prepublication: M1AuthenticatedPrepublicationBatchV1,
+        ring_bytes: u32,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+    },
 }
 
 /// Internal round-zero custody pending mandatory terminal closure.
@@ -1484,7 +1622,7 @@ fn close_pending_bootstrap_failure<const C: usize>(
             }
         }
     };
-    Box::new(M1AuthenticatedSpeculativeBootstrapRoundFailureV1 { stage, disposition })
+    Box::new(M1AuthenticatedSpeculativeBootstrapRoundFailureV1::Terminal { stage, disposition })
 }
 
 fn close_pending_rollover_failure<const C: usize>(
@@ -1981,6 +2119,410 @@ pub fn prepare_m1_authenticated_speculative_bootstrap_v1(
     })
 }
 
+fn bootstrap_pre_detach_failure(
+    stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1,
+    state: M1AuthenticatedSpeculativeBootstrapPreDetachRetryStateV1,
+) -> Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1> {
+    Box::new(
+        M1AuthenticatedSpeculativeBootstrapRoundFailureV1::PreDetach {
+            stage,
+            retry: Box::new(M1AuthenticatedSpeculativeBootstrapPreDetachRetryV1 { state }),
+        },
+    )
+}
+
+fn bootstrap_terminal_failure<const C: usize>(
+    engine: &mut Engine<C>,
+    stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1,
+    retained: impl fmt::Debug + 'static,
+) -> Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1> {
+    engine.quarantine_m1_queue_rearm_failure();
+    Box::new(
+        M1AuthenticatedSpeculativeBootstrapRoundFailureV1::Terminal {
+            stage,
+            disposition: quarantined_disposition(retained),
+        },
+    )
+}
+
+fn bootstrap_terminal_disposition(
+    stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1,
+    disposition: M1AuthenticatedSpeculativeFailureDispositionV1,
+) -> Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1> {
+    Box::new(M1AuthenticatedSpeculativeBootstrapRoundFailureV1::Terminal { stage, disposition })
+}
+
+impl M1AuthenticatedSpeculativeBootstrapPreparedV1 {
+    /// Runs the complete authenticated round-zero physical lifecycle while
+    /// keeping the coordinator continuation joined to every queue phase.
+    ///
+    /// Pure allocation, packet-preparation, and queue-creation rejections
+    /// return opaque exact retry custody with a healthy Engine. Every other
+    /// failure faults `engine`, closes any available queue, and returns only a
+    /// clean release or opaque terminal quarantine.
+    ///
+    /// # Errors
+    ///
+    /// Returns pre-detach retry custody or terminal failure custody as
+    /// described above.
+    #[allow(clippy::too_many_arguments)]
+    pub fn execute_initial_round<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        partitioned_memory: M1PartitionedModelMemoryKvPoolV1,
+        runner: M1AuthenticatedPhysicalRunnerV1,
+        recipe: AddresslessM1PhysicalBufferRecipeV1,
+        ring_bytes: u32,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+    ) -> Result<
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1>,
+    > {
+        execute_bootstrap_from_allocation(
+            engine,
+            self,
+            partitioned_memory,
+            runner,
+            recipe,
+            ring_bytes,
+            controls,
+        )
+    }
+}
+
+impl M1AuthenticatedSpeculativeBootstrapPreDetachRetryV1 {
+    /// Retries the exact unchanged inputs retained by a pre-detach rejection.
+    ///
+    /// # Errors
+    ///
+    /// Returns renewed pre-detach retry custody or a terminal failure if the
+    /// retry advances beyond the pure rejection boundary.
+    pub fn retry<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1>,
+    > {
+        match self.state {
+            M1AuthenticatedSpeculativeBootstrapPreDetachRetryStateV1::Allocation {
+                diagnostic,
+                prepared,
+                partitioned_memory,
+                runner,
+                recipe,
+                ring_bytes,
+                controls,
+            } => {
+                drop(diagnostic);
+                execute_bootstrap_from_allocation(
+                    engine,
+                    prepared,
+                    partitioned_memory,
+                    runner,
+                    recipe,
+                    ring_bytes,
+                    controls,
+                )
+            }
+            M1AuthenticatedSpeculativeBootstrapPreDetachRetryStateV1::Prepublication {
+                diagnostic,
+                continuation,
+                runner,
+                allocated,
+                recipe,
+                completion,
+                ring_bytes,
+                controls,
+            } => {
+                drop(diagnostic);
+                execute_bootstrap_from_prepublication(
+                    engine,
+                    continuation,
+                    runner,
+                    allocated,
+                    recipe,
+                    completion,
+                    ring_bytes,
+                    controls,
+                )
+            }
+            M1AuthenticatedSpeculativeBootstrapPreDetachRetryStateV1::QueueCreate {
+                diagnostic,
+                continuation,
+                prepublication,
+                ring_bytes,
+                controls,
+            } => {
+                drop(diagnostic);
+                execute_bootstrap_from_queue_create(
+                    engine,
+                    continuation,
+                    prepublication,
+                    ring_bytes,
+                    controls,
+                )
+            }
+        }
+    }
+
+    /// Confirms this opaque owner retains every exact input needed for retry.
+    #[must_use]
+    pub const fn retains_exact_inputs(&self) -> bool {
+        true
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn execute_bootstrap_from_allocation<const C: usize>(
+    engine: &mut Engine<C>,
+    bootstrap: M1AuthenticatedSpeculativeBootstrapPreparedV1,
+    partitioned_memory: M1PartitionedModelMemoryKvPoolV1,
+    runner: M1AuthenticatedPhysicalRunnerV1,
+    recipe: AddresslessM1PhysicalBufferRecipeV1,
+    ring_bytes: u32,
+    controls: Vec<M1SpeculativeMemberControlV1>,
+) -> Result<
+    M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+    Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1>,
+> {
+    let M1AuthenticatedSpeculativeBootstrapPreparedV1 {
+        prepared,
+        continuation,
+    } = bootstrap;
+    let mut allocated =
+        match crate::allocate_m1_prepublication_workspaces_v1(partitioned_memory, prepared) {
+            Ok(allocated) => allocated,
+            Err(failure) => match failure.into_preflight_prepared() {
+                Ok((diagnostic, partitioned_memory, prepared)) => {
+                    return Err(bootstrap_pre_detach_failure(
+                        M1AuthenticatedSpeculativeBootstrapRoundStageV1::WorkspaceAllocation,
+                        M1AuthenticatedSpeculativeBootstrapPreDetachRetryStateV1::Allocation {
+                            diagnostic: Box::new(diagnostic),
+                            prepared: M1AuthenticatedSpeculativeBootstrapPreparedV1 {
+                                prepared,
+                                continuation,
+                            },
+                            partitioned_memory,
+                            runner,
+                            recipe,
+                            ring_bytes,
+                            controls,
+                        },
+                    ));
+                }
+                Err(failure) => {
+                    return Err(bootstrap_terminal_failure(
+                        engine,
+                        M1AuthenticatedSpeculativeBootstrapRoundStageV1::WorkspaceAllocation,
+                        (failure, continuation, runner, recipe, ring_bytes, controls),
+                    ));
+                }
+            },
+        };
+    let selection = continuation.coordinator.shape().selection();
+    let completion = match allocated.allocate_completion_output(selection) {
+        Ok(completion) => completion,
+        Err(error) => {
+            return Err(bootstrap_terminal_failure(
+                engine,
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::CompletionOutput,
+                (
+                    error,
+                    allocated,
+                    continuation,
+                    runner,
+                    recipe,
+                    ring_bytes,
+                    controls,
+                ),
+            ));
+        }
+    };
+    let completion = match allocated.enable_speculative_diagnostic_choices_capture(completion) {
+        Ok(completion) => completion,
+        Err(failure) => {
+            return Err(bootstrap_terminal_failure(
+                engine,
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::DiagnosticCapture,
+                (
+                    failure,
+                    allocated,
+                    continuation,
+                    runner,
+                    recipe,
+                    ring_bytes,
+                    controls,
+                ),
+            ));
+        }
+    };
+    execute_bootstrap_from_prepublication(
+        engine,
+        continuation,
+        runner,
+        allocated,
+        recipe,
+        completion,
+        ring_bytes,
+        controls,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn execute_bootstrap_from_prepublication<const C: usize>(
+    engine: &mut Engine<C>,
+    continuation: M1AuthenticatedSpeculativeBootstrapContinuationV1,
+    runner: M1AuthenticatedPhysicalRunnerV1,
+    allocated: M1AllocatedScheduledStepV1,
+    recipe: AddresslessM1PhysicalBufferRecipeV1,
+    completion: crate::BoundM1CompletionOutputV1,
+    ring_bytes: u32,
+    controls: Vec<M1SpeculativeMemberControlV1>,
+) -> Result<
+    M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+    Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1>,
+> {
+    let prepublication = match runner.prepare_first_step(allocated, recipe, completion) {
+        Ok(prepublication) => prepublication,
+        Err(failure) => {
+            let (diagnostic, runner, allocated, recipe, completion) = failure.into_retry_inputs();
+            return Err(bootstrap_pre_detach_failure(
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::Prepublication,
+                M1AuthenticatedSpeculativeBootstrapPreDetachRetryStateV1::Prepublication {
+                    diagnostic: Box::new(diagnostic),
+                    continuation,
+                    runner,
+                    allocated,
+                    recipe,
+                    completion,
+                    ring_bytes,
+                    controls,
+                },
+            ));
+        }
+    };
+    execute_bootstrap_from_queue_create(engine, continuation, prepublication, ring_bytes, controls)
+}
+
+fn execute_bootstrap_from_queue_create<const C: usize>(
+    engine: &mut Engine<C>,
+    continuation: M1AuthenticatedSpeculativeBootstrapContinuationV1,
+    prepublication: M1AuthenticatedPrepublicationBatchV1,
+    ring_bytes: u32,
+    controls: Vec<M1SpeculativeMemberControlV1>,
+) -> Result<
+    M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+    Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1>,
+> {
+    let queue = match M1AuthenticatedPhysicalQueueSessionV1::create(ring_bytes, prepublication) {
+        Ok(queue) => queue,
+        Err(M1AuthenticatedPhysicalQueueCreateFailureV1::Rejected {
+            diagnostic,
+            prepublication,
+        }) => {
+            return Err(bootstrap_pre_detach_failure(
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::QueueCreate,
+                M1AuthenticatedSpeculativeBootstrapPreDetachRetryStateV1::QueueCreate {
+                    diagnostic: Box::new(diagnostic),
+                    continuation,
+                    prepublication: *prepublication,
+                    ring_bytes,
+                    controls,
+                },
+            ));
+        }
+        Err(M1AuthenticatedPhysicalQueueCreateFailureV1::Terminal(terminal)) => {
+            return Err(bootstrap_terminal_failure(
+                engine,
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::QueueCreate,
+                (terminal, continuation, controls),
+            ));
+        }
+    };
+    let published = match queue.submit() {
+        Ok(published) => published,
+        Err(failure) => {
+            use crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
+            let disposition = match failure.close_without_authority(engine) {
+                M1AuthenticatedPhysicalQueueClosureV1::Released(released) => {
+                    released_disposition((released, continuation, controls), true)
+                }
+                M1AuthenticatedPhysicalQueueClosureV1::Quarantined(quarantined) => {
+                    quarantined_disposition((quarantined, continuation, controls))
+                }
+            };
+            return Err(bootstrap_terminal_disposition(
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::QueueSubmit,
+                disposition,
+            ));
+        }
+    };
+    let completed = match published.wait() {
+        Ok(completed) => completed,
+        Err(failure) => {
+            return Err(bootstrap_terminal_failure(
+                engine,
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::QueueWait,
+                (failure, continuation, controls),
+            ));
+        }
+    };
+    let recycled = match completed.recycle() {
+        Ok(recycled) => recycled,
+        Err(failure) => {
+            return Err(bootstrap_terminal_failure(
+                engine,
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::SignalRecycle,
+                (failure, continuation, controls),
+            ));
+        }
+    };
+    let observed = match recycled.observe_completion() {
+        Ok(observed) => observed,
+        Err(failure) => {
+            engine.quarantine_m1_queue_rearm_failure();
+            let disposition = match failure.destroy_queue_and_retain_evidence(engine) {
+                Ok(released) => released_disposition((released, continuation, controls), true),
+                Err(quarantined) => quarantined_disposition((quarantined, continuation, controls)),
+            };
+            return Err(bootstrap_terminal_disposition(
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::CompletionObservation,
+                disposition,
+            ));
+        }
+    };
+    let diagnostic = match observed.observe_speculative_diagnostic_choices() {
+        Ok(diagnostic) => diagnostic,
+        Err(failure) => {
+            engine.quarantine_m1_queue_rearm_failure();
+            let disposition = match failure.destroy_queue_and_retain_evidence(engine) {
+                Ok(released) => released_disposition((released, continuation, controls), true),
+                Err(quarantined) => quarantined_disposition((quarantined, continuation, controls)),
+            };
+            return Err(bootstrap_terminal_disposition(
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::DiagnosticObservation,
+                disposition,
+            ));
+        }
+    };
+    let diagnostic = match diagnostic.check_completion() {
+        Ok(diagnostic) => diagnostic,
+        Err(failure) => {
+            engine.quarantine_m1_queue_rearm_failure();
+            let disposition = match failure.destroy_queue_and_retain_evidence(engine) {
+                Ok(released) => released_disposition((released, continuation, controls), true),
+                Err(quarantined) => quarantined_disposition((quarantined, continuation, controls)),
+            };
+            return Err(bootstrap_terminal_disposition(
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::SemanticJoin,
+                disposition,
+            ));
+        }
+    };
+    continuation.complete_initial_round(engine, diagnostic, controls)
+}
+
 #[allow(clippy::unnecessary_box_returns)]
 fn bootstrap_round_retryable(
     stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1,
@@ -2005,7 +2547,7 @@ impl M1AuthenticatedSpeculativeBootstrapContinuationV1 {
     ///
     /// Every failure quarantines the Engine, consumes the completed queue, and
     /// returns only clean release evidence or opaque terminal quarantine.
-    pub fn complete_initial_round<const C: usize>(
+    fn complete_initial_round<const C: usize>(
         self,
         engine: &mut Engine<C>,
         diagnostic: M1AuthenticatedSpeculativeDiagnosticCompletedReadbackV1,
@@ -2412,7 +2954,7 @@ impl M1AuthenticatedSpeculativeRolloverContinuationV1 {
     ///
     /// Every failure quarantines the Engine, consumes the detached queue when
     /// possible, and returns no retry or scheduling authority.
-    pub fn complete_rollover_round<const C: usize>(
+    fn complete_rollover_round<const C: usize>(
         self,
         engine: &mut Engine<C>,
         diagnostic: crate::M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1,
