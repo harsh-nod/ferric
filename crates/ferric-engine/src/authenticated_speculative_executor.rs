@@ -1442,14 +1442,6 @@ enum M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1 {
             M1AuthenticatedSpeculativePhysicalRoundInputsV1,
         )>,
     ),
-    DiagnosticReadback(
-        Box<(
-            M1SpeculativeGenerationLoopV1,
-            crate::M1SpeculativeRoundBindingV1,
-            Vec<M1SpeculativeMemberControlV1>,
-            Box<crate::M1AuthenticatedRearmedSpeculativeDiagnosticReadbackFailureV1>,
-        )>,
-    ),
     CoordinatorPreflight(
         Box<(
             M1SpeculativeGenerationLoopV1,
@@ -1507,22 +1499,6 @@ enum M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1 {
             crate::AddresslessM1PhysicalBufferRecipeV1,
             Vec<M1SpeculativeMemberControlV1>,
             Box<crate::M1AuthenticatedLongLivedQueueRearmPrepareFailureV1>,
-        )>,
-    ),
-    Submit(
-        Box<(
-            M1SpeculativeGenerationLoopV1,
-            crate::M1SpeculativeRoundBindingV1,
-            Vec<M1SpeculativeMemberControlV1>,
-            crate::M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1,
-        )>,
-    ),
-    QueueProgress(
-        Box<(
-            M1SpeculativeGenerationLoopV1,
-            crate::M1SpeculativeRoundBindingV1,
-            Vec<M1SpeculativeMemberControlV1>,
-            Box<crate::M1AuthenticatedRearmedQueueProgressFailureV1>,
         )>,
     ),
     CoordinatorCommitPreflight(
@@ -1636,32 +1612,6 @@ impl PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
             lineage,
         } = self;
         match custody {
-            M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::DiagnosticReadback(
-                retained,
-            ) => {
-                let (coordinator, binding, controls, failure) = *retained;
-                let logical = retain_logical_lineage(lineage, (coordinator, binding, controls));
-                Ok(match failure.destroy_queue_and_retain_custody(engine) {
-                    Ok(source) => Ok(M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1 {
-                        stage,
-                        source:
-                            M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessSourceV1::Diagnostic(
-                                source,
-                            ),
-                        logical,
-                    }),
-                    Err(source) => Err(Box::new(
-                        M1AuthenticatedSpeculativePhysicalRoundTeardownFailureV1 {
-                            stage,
-                            source:
-                                M1AuthenticatedSpeculativePhysicalRoundTeardownFailureSourceV1::Diagnostic(
-                                    source,
-                                ),
-                            logical,
-                        },
-                    )),
-                })
-            }
             M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::CoordinatorPreflight(
                 retained,
             ) => {
@@ -2041,26 +1991,6 @@ impl PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
                     stage,
                     M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1::WorkspacePreparation(source),
                     (lineage, coordinator, binding, recipe, controls),
-                )
-            }
-            M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Submit(retained) => {
-                let (coordinator, binding, controls, source) = *retained;
-                terminal_quarantine(
-                    engine,
-                    stage,
-                    M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1::Submit(Box::new(
-                        source,
-                    )),
-                    (lineage, coordinator, binding, controls),
-                )
-            }
-            M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::QueueProgress(retained) => {
-                let (coordinator, binding, controls, source) = *retained;
-                terminal_quarantine(
-                    engine,
-                    stage,
-                    M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1::QueueProgress(source),
-                    (lineage, coordinator, binding, controls),
                 )
             }
             M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::ReleasedPhysicalOutcome(retained) => {
@@ -4352,6 +4282,7 @@ mod tests {
         ModelPublishedQueueV1, ModelQueueFailureV1, ModelQueueV1, ModelReadbackFailureV1,
         ModelRecycledQueueV1, ModelSubmitFailureV1, ModelWaitFailureV1,
     };
+    use crate::speculative_generation_loop::CheckedMemberObservationV1;
     use crate::{CheckedCompletionSemantics, M1SpeculativeTokenBlockV1};
 
     struct ModelInitialQueueEffectsV1;

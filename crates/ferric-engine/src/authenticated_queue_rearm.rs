@@ -5233,7 +5233,7 @@ mod tests {
     }
 
     impl M1PreparedRearmCloseEffectV1 for ModelPreparedRearmV1 {
-        fn destroy_and_release(self) -> Result<Box<dyn fmt::Debug>, Box<dyn fmt::Debug>> {
+        fn destroy_and_release_effect(self) -> Result<Box<dyn fmt::Debug>, Box<dyn fmt::Debug>> {
             self.prepared.destroy(self.clean);
             if self.clean {
                 Ok(Box::new("released"))
