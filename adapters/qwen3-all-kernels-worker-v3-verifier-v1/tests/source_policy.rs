@@ -1559,6 +1559,19 @@ fn no_synthetic_or_projected_identity_acceptance_surface_exists() {
             !SOURCE.contains(forbidden),
             "production source contains forbidden acceptance surface {forbidden}"
         );
+    }
+    for forbidden in [
+        "synthetic_for_test_only",
+        "worker-v3-verifier-test-support",
+        "WorkerV3ProtectedRosterVerificationEvidenceV1::new",
+        "WorkerV3ProtectedRosterEntryEvidenceV1::new",
+        "WorkerV3ProtectedRosterEntryEvidenceV1",
+        "AuthenticatedWorkerV3RosterV1",
+        "AuthenticatedWorkerV3ExecutableV1",
+        "ValidatedCompilerMultiRootProofInputsV1",
+        "ValidatedCompilerMultiRootTargetLineageV1",
+        "RevalidatedProtectedWorkerV3FinalizerDerivationV1",
+    ] {
         assert!(
             !MANIFEST.contains(forbidden),
             "manifest contains forbidden acceptance surface {forbidden}"

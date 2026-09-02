@@ -11,8 +11,8 @@ directly from the borrowed, typed `WorkerV3RosterVerificationRequestV1`. It
 copies the challenge, roster, host-lineage, finalizer, complete compiler
 carriage/currentness, capsule, formal-memory, proof-binding, finalized-HSACO,
 target, and code-object identities. The carried compiler-policy digest is only
-another request identity; the adapter has no protected policy key or trust root
-with which to authenticate it.
+another request identity; the production backend has no protected policy key
+or trust root with which to authenticate it.
 
 The projection contains exactly 12 ordered entry rows in the roster's canonical
 descriptor-table order:
@@ -116,3 +116,62 @@ that transitive closure does not grant this adapter runtime authority. A future
 implementation must replace the unconditional error only when a reviewed
 protected backend can satisfy every obligation of fe2o3's unsafe aggregate
 Worker V3 verifier trait.
+
+## Protected receipt V1
+
+The `protected_receipt` module defines the authority-free wire boundary needed
+by that future implementation. The receipt is one fixed-width, 3,552-byte
+little-endian frame with a 3,488-byte signed preimage, a domain-separated
+Ed25519 signing message, and a domain-separated whole-receipt identity. The
+strict decoder requires the exact magic, version, header size, entry size,
+total size, zero reserved fields, literal `gfx942:xnack-` target, COV6, and 12
+canonical entry ordinals. It rejects truncation, trailing bytes, all-zero
+required identities, zero content lengths, a zero compiler sequence, an
+unadvanced rollback anchor, duplicate lineage or marker identities, aliased
+verifier/checker measurements, and any entry missing one of the eight required
+Worker V3 safety properties.
+
+The common signed claims bind the exact host challenge, aggregate roster and
+lineage, independently replayed finalizer identity, semantic capsule,
+formal-memory and proof-binding receipts, and finalized HSACO digest and
+length. The source pin covers the neutral compiler module, nested compiler
+handoff, and symbol manifest by both SHA-256 and byte length. Compiler claims
+cover the subject, carriage, issuer policy, issuer journal, occurrence,
+receipt, publication, acknowledgment, Worker-ledger record, rollback sequence,
+prior and current anchors, signed current-record verification and attestation,
+protected policy and Worker-ledger decisions, and external rollback decision.
+The receipt also carries distinct protected-verifier and independent-checker
+measurements plus the complete verification transcript.
+
+Each of the 12 ordered signed results binds its ordinal, host lineage, marker
+binding, generated host contract, proof-to-executable theorem, Rust type-layout
+theorem, Rust effect theorem, and complete safety-property set. The roster
+identity covers the canonical logical and export names. A future backend join
+must compare the three per-entry host coordinates again at every ordinal.
+
+`M1AllKernelsProtectedVerifierTrustPolicyV1` has no default and embeds no key or
+measurement. A caller must independently provision an exact non-weak Ed25519
+public key and distinct verifier/checker measurements. Its domain-separated
+identity also covers the schema version, roster cardinality, target, COV, and
+required safety mask. Authentication strictly verifies the signature only
+after canonical decoding and exact policy/measurement comparison. The
+authenticated receipt still explicitly grants no verifier, load, launch, or
+inference authority.
+
+This codec intentionally does not yet expose a typed-request binding
+transition. The pinned fe2o3 API creates
+`WorkerV3RosterVerificationRequestV1` only from a real recovered aggregate
+publication, and this repository does not carry such a fixture. Shipping an
+untested comparison map or a forgeable host constructor would weaken the
+boundary. Typed binding must therefore land with the real service/backend and
+aggregate-publication integration fixture. That later comparison must cover
+every host-known common identity, all six source-pin coordinates, all
+compiler-execution input and rollback coordinates, target/COV, finalized
+artifact, and all 12 ordered entry coordinates before any evidence promotion.
+
+The production backend does not read, embed, or instantiate this policy or
+receipt. `M1AllKernelsProtectedVerifierV1::new()` remains zero-state, never
+constructs protected evidence, and terminates at
+`MissingProtectedVerificationReceipt`. A later reviewed service/backend join
+must supply genuine external policy and receipt custody before that terminal
+state can change.

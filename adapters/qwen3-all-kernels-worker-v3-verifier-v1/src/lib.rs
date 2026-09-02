@@ -19,6 +19,9 @@ use fe2o3_host::{
 };
 use ferric_qwen3_all_kernels_device_v1::M1AllKernelsWorkerV3RosterV1;
 
+/// Canonical protected-receipt wire and caller-provisioned trust policy.
+pub mod protected_receipt;
+
 /// Exact number of markers in Ferric's current aggregate M1 roster.
 pub const M1_ALL_KERNELS_ROSTER_ENTRY_COUNT_V1: usize = M1AllKernelsWorkerV3RosterV1::ENTRIES.len();
 
