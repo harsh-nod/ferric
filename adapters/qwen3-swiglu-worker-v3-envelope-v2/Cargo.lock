@@ -986,6 +986,7 @@ name = "ferric-qwen3-all-kernels-worker-v3-verifier-v1"
 version = "0.1.0"
 dependencies = [
  "fe2o3-host",
+ "fe2o3-hsaco-finalize",
  "ferric-qwen3-all-kernels-device-v1",
 ]
 
