@@ -22,6 +22,12 @@ ferric-qwen3-all-kernels-worker-v3-source-pin-v1 ENVELOPE
 Use `-` to read the envelope from standard input. Successful output is one
 deterministic, pretty-printed ASCII JSON document with a final newline.
 
+Protected-verifier adapters that already retain a typed
+`CompilerModuleHandoffV2` can call
+`project_m1_aggregate_module_handoff_v1` directly. That API repeats the same
+module-kind, target, code-object, entry-symbol, and descriptor-symbol policy;
+it does not weaken the authority boundary below.
+
 ## Authority boundary
 
 The output is an `identity-observation-only` projection. Decoding and matching

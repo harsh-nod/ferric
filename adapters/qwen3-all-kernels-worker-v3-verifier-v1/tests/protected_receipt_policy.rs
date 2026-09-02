@@ -176,7 +176,7 @@ fn exactly_twelve_ordered_complete_entry_results_are_required() {
 }
 
 #[test]
-fn codec_cannot_construct_host_evidence_or_change_default_backend_rejection() {
+fn codec_cannot_construct_host_evidence_and_default_backend_stays_reject_only() {
     let production = production_receipt_source();
     for forbidden in [
         "WorkerV3ProtectedRosterVerificationEvidenceV1",
@@ -194,8 +194,9 @@ fn codec_cannot_construct_host_evidence_or_change_default_backend_rejection() {
     assert!(BACKEND_SOURCE.contains("pub struct M1AllKernelsProtectedVerifierV1;"));
     assert!(BACKEND_SOURCE.contains("Err(missing_protected_verification_receipt_v1())"));
     assert!(BACKEND_SOURCE.contains("Self::reject_missing_protected_receipt("));
-    assert!(!BACKEND_SOURCE.contains("M1AllKernelsProtectedVerifierTrustPolicyV1"));
-    assert!(!BACKEND_SOURCE.contains("authenticate_canonical("));
+    assert!(BACKEND_SOURCE.contains("pub struct M1AllKernelsProductionProtectedVerifierV1"));
+    assert!(BACKEND_SOURCE.contains("M1AllKernelsProtectedVerifierTrustPolicyV1"));
+    assert!(BACKEND_SOURCE.contains("M1AllKernelsAuthenticatedProtectedVerifierReceiptV1"));
     assert!(!production.contains("bind_request"));
     assert!(!production.contains("WorkerV3RosterVerificationRequestV1"));
     assert!(!production.contains("RequestBoundProtectedVerifierReceipt"));
@@ -227,14 +228,14 @@ fn documentation_keeps_receipt_authentication_below_authority_promotion() {
     for statement in [
         "fixed-width, 3,552-byte little-endian frame",
         "3,488-byte signed preimage",
-        "domain-separated Ed25519 signing message",
-        "distinct protected-verifier and independent-checker measurements",
-        "all 12 ordered entry coordinates",
-        "has no default and embeds no key or measurement",
-        "must independently provision an exact non-weak Ed25519 public key",
-        "still explicitly grants no verifier, load, launch, or inference authority",
-        "The production backend does not read, embed, or instantiate this policy or receipt",
-        "`MissingProtectedVerificationReceipt`",
+        "domain-separated signing message",
+        "distinct verifier/checker measurements",
+        "12 canonical ordinals",
+        "caller-provisioned trust policy",
+        "caller-provisioned non-weak Ed25519 public key",
+        "zero-state default",
+        "always returns `MissingProtectedVerificationReceipt`",
+        "embeds none of those deployment values",
     ] {
         assert!(
             normalized.contains(statement),

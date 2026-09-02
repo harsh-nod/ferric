@@ -178,18 +178,19 @@ fn client_pins_peer_and_rejects_ambiguous_transport() {
 }
 
 #[test]
-fn production_backend_remains_disconnected_and_fail_closed() {
+fn configured_backend_owns_reviewed_client_while_default_stays_fail_closed() {
     let backend = production_before_tests(BACKEND_SOURCE);
-    for forbidden in [
+    for required in [
         "M1AllKernelsProtectedVerifierClientV1",
         "M1AllKernelsProtectedVerifierServiceRequestV1",
         "M1AllKernelsProtectedVerifierTrustPolicyV1",
-        "authenticate_canonical(",
-        "WorkerV3ProtectedRosterVerificationEvidenceV1::",
+        "InheritedWorkerV3CompilerCurrentRecordAuditorV1",
+        ".request_receipt(&self.trust_policy, &service_request)",
+        "WorkerV3ProtectedRosterVerificationEvidenceV1::new",
     ] {
         assert!(
-            !backend.contains(forbidden),
-            "production backend reaches service authority surface {forbidden}",
+            backend.contains(required),
+            "configured backend omits reviewed binder surface {required}",
         );
     }
     assert!(backend.contains("Err(missing_protected_verification_receipt_v1())"));
@@ -213,20 +214,18 @@ fn dependency_and_documentation_boundaries_are_explicit() {
     for statement in [
         "request is exactly 2,304 bytes",
         "response is exactly 3,768 bytes",
-        "binary, fixed-width protocol rather than HTTP, JSON, or a filesystem interchange",
-        "caller-provisioned trust-policy identity",
-        "requires a distinct production client/service UID",
-        "returns the exact `OwnedFd`",
-        "V1 is deliberately a coordinate protocol, not evidence transport",
-        "exact receipt-bearing Worker V3 V2 envelope, finalized HSACO bytes, semantic/proof inputs, and protected current-record evidence",
-        "must never be signed as a hash echo",
-        "atomically consume every signed challenge",
-        "protected live current-ledger state shared across all service instances and durable across restarts",
-        "There is no production endpoint constructor, pathname, inherited descriptor, service process, or backend hookup",
-        "still returns `MissingProtectedVerificationReceipt`",
-        "locally bind the authenticated receipt to its retained request, evidence-custody owners, and audit result",
-        "must never promote a hash echo",
-        "grant no fe2o3 verifier, load, launch, inference, publication, or `CURRENT` authority",
+        "fixed-width binary packets",
+        "caller-provisioned trust policy",
+        "dedicated non-root credentials",
+        "coordinate protocol, not evidence transport",
+        "exact Worker V3 V2 envelope, finalized HSACO, semantic/proof inputs, and protected current-record evidence",
+        "atomically consume each challenge",
+        "protected live current-ledger state shared across service instances and durable across restarts",
+        "Neither constructor discovers an endpoint, reads an environment setting, loads a key, opens `CURRENT`, or manufactures a receipt",
+        "always returns `MissingProtectedVerificationReceipt`",
+        "maps all 12 signed proof-to-executable, Rust type-layout, Rust effect",
+        "Signing caller-supplied hash echoes does not satisfy",
+        "grants no publication, load, launch, or inference authority by itself",
     ] {
         assert!(
             normalized.contains(statement),

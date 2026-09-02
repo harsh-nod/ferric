@@ -257,10 +257,23 @@ pub fn extract_m1_aggregate_source_pin_v1(
         .map_err(|error| M1AggregateSourcePinErrorV1::Envelope(Box::new(error)))?;
     let outer = InertSemanticCompilerModuleHandoffV3::decode(wire.replay().outer_handoff())
         .map_err(|error| M1AggregateSourcePinErrorV1::OuterHandoff(Box::new(error)))?;
-    project_module_handoff(outer.module_handoff())
+    project_m1_aggregate_module_handoff_v1(outer.module_handoff())
 }
 
-fn project_module_handoff(
+/// Projects the exact aggregate source coordinates from an already decoded compiler handoff.
+///
+/// This is the typed counterpart to [`extract_m1_aggregate_source_pin_v1`]. It
+/// repeats Ferric's LLVM-text, target, code-object, and complete symbol-roster
+/// policy before returning the six content coordinates needed by a protected
+/// verifier request. The projection authenticates no producer and grants no
+/// verifier, publication, load, or launch authority.
+///
+/// # Errors
+///
+/// Returns a typed policy error when the module kind, target, code-object
+/// version, kernel-entry set, or kernel-descriptor set differs from the exact
+/// aggregate M1 policy.
+pub fn project_m1_aggregate_module_handoff_v1(
     handoff: &CompilerModuleHandoffV2,
 ) -> Result<M1AggregateSourcePinProjectionV1, M1AggregateSourcePinErrorV1> {
     if handoff.kind() != CompilerModuleKindV1::LlvmTextIr {
@@ -431,7 +444,8 @@ mod tests {
             &M1_AGGREGATE_POLICY_KERNEL_SYMBOLS_V1,
             &exact_descriptors(),
         );
-        let projection = project_module_handoff(&handoff).expect("exact aggregate handoff");
+        let projection =
+            project_m1_aggregate_module_handoff_v1(&handoff).expect("exact aggregate handoff");
         let pin = projection.source_pin();
         assert_eq!(
             pin.compiler_module_sha256(),
@@ -466,7 +480,7 @@ mod tests {
             &M1_AGGREGATE_POLICY_KERNEL_SYMBOLS_V1,
             &exact_descriptors(),
         );
-        let bytes = project_module_handoff(&handoff)
+        let bytes = project_m1_aggregate_module_handoff_v1(&handoff)
             .unwrap()
             .to_canonical_json()
             .unwrap();
@@ -505,7 +519,7 @@ mod tests {
             &exact_descriptors(),
         );
         assert!(matches!(
-            project_module_handoff(&wrong_target),
+            project_m1_aggregate_module_handoff_v1(&wrong_target),
             Err(M1AggregateSourcePinErrorV1::Policy {
                 field: M1AggregateSourcePinFieldV1::Target,
                 ..
@@ -519,7 +533,7 @@ mod tests {
             &exact_descriptors(),
         );
         assert!(matches!(
-            project_module_handoff(&wrong_version),
+            project_m1_aggregate_module_handoff_v1(&wrong_version),
             Err(M1AggregateSourcePinErrorV1::Policy {
                 field: M1AggregateSourcePinFieldV1::CodeObjectVersion,
                 ..
@@ -537,7 +551,7 @@ mod tests {
             &exact_descriptors(),
         );
         assert!(matches!(
-            project_module_handoff(&bitcode),
+            project_m1_aggregate_module_handoff_v1(&bitcode),
             Err(M1AggregateSourcePinErrorV1::Policy {
                 field: M1AggregateSourcePinFieldV1::ModuleKind,
                 ..
@@ -554,7 +568,7 @@ mod tests {
             &exact_descriptors()[..11],
         );
         assert!(matches!(
-            project_module_handoff(&missing),
+            project_m1_aggregate_module_handoff_v1(&missing),
             Err(M1AggregateSourcePinErrorV1::Policy {
                 field: M1AggregateSourcePinFieldV1::KernelEntries,
                 ..
@@ -572,7 +586,7 @@ mod tests {
             &extra_descriptors,
         );
         assert!(matches!(
-            project_module_handoff(&extra),
+            project_m1_aggregate_module_handoff_v1(&extra),
             Err(M1AggregateSourcePinErrorV1::Policy {
                 field: M1AggregateSourcePinFieldV1::KernelEntries,
                 ..
@@ -591,7 +605,7 @@ mod tests {
             &descriptors,
         );
         assert!(matches!(
-            project_module_handoff(&substituted),
+            project_m1_aggregate_module_handoff_v1(&substituted),
             Err(M1AggregateSourcePinErrorV1::Policy {
                 field: M1AggregateSourcePinFieldV1::KernelDescriptors,
                 ..
