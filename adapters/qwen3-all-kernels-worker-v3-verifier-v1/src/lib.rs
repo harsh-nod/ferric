@@ -4,7 +4,8 @@
 //! configured backend owns caller-admitted one-shot protected-verifier and
 //! compiler-current clients, derives an exact request from local move-only
 //! owners, and promotes only a correlated signature-authenticated 12-entry
-//! receipt. Neither backend embeds deployment keys, receipts, or authority.
+//! receipt after the caller has assumed the external deployment obligations.
+//! Neither backend embeds deployment keys, receipts, or authority.
 
 #![deny(missing_docs)]
 #![deny(unsafe_op_in_unsafe_fn)]
@@ -758,8 +759,20 @@ impl fmt::Debug for M1AllKernelsProductionProtectedVerifierV1 {
 
 impl M1AllKernelsProductionProtectedVerifierV1 {
     /// Takes ownership of all caller-admitted one-shot deployment inputs.
+    ///
+    /// # Safety
+    ///
+    /// The caller must have independently reviewed the service identified by
+    /// `client` and the verifier/checker closure named by `trust_policy`. That
+    /// deployment must hold or authentically reacquire the exact request
+    /// payloads, verify them instead of signing caller-supplied coordinate
+    /// echoes, bind the signing key to the admitted measurements, and enforce
+    /// one atomic challenge consumption plus durable compiler-ledger rollback
+    /// currentness across every service instance and restart. These properties
+    /// are external to this crate and are required by the unsafe protected
+    /// roster backend contract implemented below.
     #[must_use]
-    pub fn new(
+    pub unsafe fn new(
         client: M1AllKernelsProtectedVerifierClientV1,
         trust_policy: M1AllKernelsProtectedVerifierTrustPolicyV1,
         current_auditor: InheritedWorkerV3CompilerCurrentRecordAuditorV1,

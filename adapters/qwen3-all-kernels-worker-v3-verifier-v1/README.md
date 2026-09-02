@@ -8,9 +8,11 @@ different backends:
   local artifact preflight and always returns
   `MissingProtectedVerificationReceipt`.
 - `M1AllKernelsProductionProtectedVerifierV1` is a move-only binder for a
-  separately supervised deployment. Its constructor requires a previously
-  admitted one-shot service client, a caller-provisioned trust policy, and an
-  inherited FD195 compiler-current auditor.
+  separately supervised deployment. Its unsafe constructor requires a
+  previously admitted one-shot service client, a caller-provisioned trust
+  policy, and an inherited FD195 compiler-current auditor. The caller must also
+  uphold the external service, evidence-custody, freshness, and durable
+  rollback-currentness obligations that those inert inputs cannot prove.
 
 Neither constructor discovers an endpoint, reads an environment setting,
 loads a key, opens `CURRENT`, or manufactures a receipt. The configured binder
@@ -45,7 +47,8 @@ surface.
 
 ## Configured Binder
 
-The configured backend first performs the shared local preflight. It then uses
+After its unsafe deployment contract is upheld, the configured backend first
+performs the shared local preflight. It then uses
 the inherited FD195 auditor once and consumes the signed current-record audit
 through fe2o3's exact subject/carriage binding transition. The resulting
 move-only compiler-execution owner supplies every signed current-record,

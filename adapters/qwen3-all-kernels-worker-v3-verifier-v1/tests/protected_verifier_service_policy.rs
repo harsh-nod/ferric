@@ -216,6 +216,7 @@ fn dependency_and_documentation_boundaries_are_explicit() {
         "response is exactly 3,768 bytes",
         "fixed-width binary packets",
         "caller-provisioned trust policy",
+        "unsafe constructor",
         "dedicated non-root credentials",
         "coordinate protocol, not evidence transport",
         "exact Worker V3 V2 envelope, finalized HSACO, semantic/proof inputs, and protected current-record evidence",

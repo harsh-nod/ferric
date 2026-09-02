@@ -128,6 +128,13 @@ fn both_backends_share_one_local_owner_revalidation_and_association_path() {
 #[test]
 fn configured_binder_orders_all_one_shot_transitions_before_promotion() {
     let configured = between(SOURCE, CONFIGURED_IMPL, "#[cfg(test)]\nmod tests {");
+    assert!(
+        SOURCE
+            .contains("pub unsafe fn new(\n        client: M1AllKernelsProtectedVerifierClientV1")
+    );
+    assert!(SOURCE.contains(
+        "# Safety\n    ///\n    /// The caller must have independently reviewed the service"
+    ));
     assert!(appears_in_order(
         configured,
         &[
