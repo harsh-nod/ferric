@@ -1019,12 +1019,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "ferric-qwen3-all-kernels-worker-v3-source-pin-v1"
+version = "0.1.0"
+dependencies = [
+ "fe2o3-compiler-ffi",
+ "fe2o3-runtime-protocol",
+ "serde_json",
+]
+
+[[package]]
 name = "ferric-qwen3-all-kernels-worker-v3-verifier-v1"
 version = "0.1.0"
 dependencies = [
+ "ed25519-dalek",
  "fe2o3-host",
  "fe2o3-hsaco-finalize",
+ "fe2o3-verifier",
  "ferric-qwen3-all-kernels-device-v1",
+ "ferric-qwen3-all-kernels-worker-v3-source-pin-v1",
+ "libc",
+ "sha2 0.11.0",
 ]
 
 [[package]]
