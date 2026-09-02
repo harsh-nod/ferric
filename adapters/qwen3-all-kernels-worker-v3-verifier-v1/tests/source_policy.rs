@@ -20,7 +20,7 @@ const TEST_SUPPORT_SOURCE: &str = include_str!("../src/protected_verifier_test_s
 const MANIFEST: &str = include_str!("../Cargo.toml");
 const LOCKFILE: &str = include_str!("../Cargo.lock");
 const README: &str = include_str!("../README.md");
-const FE2O3_REVISION: &str = "57d2d9ced5c113d40546ea1dee603e8ba499cf40";
+const FE2O3_REVISION: &str = "43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb";
 const TEST_MODULE_BOUNDARY: &str = "#[cfg(test)]\nmod tests {";
 const BACKEND_TRAIT: &str =
     "WorkerV3ProtectedRosterVerifierBackendV1<M1AllKernelsWorkerV3RosterV1>";
@@ -31,16 +31,16 @@ const EVIDENCE_CONSTRUCTOR: &str = "WorkerV3ProtectedRosterVerificationEvidenceV
 // Co-located review tripwires. They provide no external provenance or authority.
 const REVIEWED_FILE_SHA256: [[u8; 32]; 7] = [
     [
-        179, 124, 39, 236, 137, 4, 101, 72, 109, 223, 124, 235, 168, 161, 183, 87, 50, 240, 67, 56,
-        199, 82, 215, 245, 135, 162, 82, 192, 80, 155, 239, 196,
+        167, 250, 228, 102, 146, 244, 60, 112, 211, 29, 113, 127, 101, 126, 17, 222, 245, 85, 240,
+        223, 174, 133, 21, 22, 36, 176, 69, 95, 201, 115, 227, 47,
     ],
     [
         195, 119, 11, 143, 50, 4, 217, 48, 95, 184, 90, 183, 252, 155, 177, 118, 152, 33, 3, 19,
         20, 99, 98, 151, 180, 221, 112, 70, 109, 36, 46, 208,
     ],
     [
-        76, 189, 18, 153, 4, 136, 177, 34, 187, 169, 14, 132, 44, 81, 52, 181, 169, 241, 26, 216,
-        93, 12, 140, 5, 105, 235, 47, 4, 64, 53, 121, 151,
+        149, 7, 11, 108, 45, 206, 232, 124, 186, 215, 118, 157, 86, 127, 149, 124, 24, 136, 69, 89,
+        28, 152, 109, 119, 37, 91, 63, 137, 165, 176, 192, 40,
     ],
     [
         119, 0, 112, 223, 146, 53, 127, 254, 153, 252, 82, 174, 50, 184, 138, 184, 213, 153, 59,
@@ -51,15 +51,15 @@ const REVIEWED_FILE_SHA256: [[u8; 32]; 7] = [
         4, 53, 9, 149, 204, 198, 78, 167, 240, 54, 180, 86,
     ],
     [
-        185, 157, 54, 196, 95, 215, 153, 222, 68, 169, 153, 1, 30, 131, 242, 62, 42, 11, 223, 73,
-        104, 70, 239, 79, 50, 176, 87, 218, 204, 168, 187, 7,
+        185, 49, 80, 79, 192, 88, 79, 24, 149, 3, 32, 43, 160, 67, 57, 217, 42, 227, 252, 204, 86,
+        59, 147, 76, 126, 0, 245, 225, 29, 220, 75, 43,
     ],
     [
-        37, 198, 36, 218, 78, 93, 174, 90, 153, 80, 90, 63, 113, 131, 221, 2, 48, 62, 125, 42, 243,
-        36, 168, 239, 255, 154, 147, 172, 49, 27, 155, 168,
+        247, 161, 224, 195, 78, 210, 75, 123, 141, 104, 233, 216, 134, 253, 160, 198, 187, 40, 38,
+        14, 190, 34, 138, 16, 149, 165, 35, 183, 208, 189, 80, 198,
     ],
 ];
-const REVIEWED_LIB_NODE_FINGERPRINTS: [[u8; 32]; 17] = [
+const REVIEWED_LIB_NODE_FINGERPRINTS: [[u8; 32]; 23] = [
     [
         50, 238, 77, 41, 217, 199, 224, 23, 244, 21, 119, 56, 197, 141, 198, 227, 9, 253, 142, 86,
         105, 130, 43, 38, 186, 66, 185, 88, 156, 137, 112, 178,
@@ -77,28 +77,28 @@ const REVIEWED_LIB_NODE_FINGERPRINTS: [[u8; 32]; 17] = [
         220, 99, 188, 236, 246, 132, 118, 53, 141, 74, 156, 203, 242,
     ],
     [
-        179, 240, 150, 74, 98, 174, 208, 107, 88, 201, 18, 227, 165, 105, 80, 184, 61, 223, 127,
-        60, 204, 121, 44, 54, 255, 83, 196, 17, 153, 23, 250, 92,
+        100, 52, 229, 209, 200, 138, 199, 150, 190, 126, 5, 137, 129, 151, 173, 180, 19, 61, 204,
+        44, 76, 220, 71, 14, 23, 69, 5, 166, 198, 191, 169, 2,
     ],
     [
-        175, 108, 249, 220, 109, 138, 45, 245, 13, 69, 141, 79, 8, 206, 63, 117, 115, 236, 255,
-        120, 94, 205, 166, 218, 187, 149, 203, 123, 202, 174, 243, 32,
+        182, 112, 114, 135, 231, 199, 79, 124, 108, 14, 197, 150, 219, 97, 13, 145, 167, 159, 138,
+        227, 219, 151, 225, 127, 242, 231, 225, 218, 82, 14, 163, 206,
     ],
     [
         236, 41, 154, 219, 92, 3, 84, 178, 73, 96, 62, 38, 237, 56, 164, 121, 57, 115, 133, 27, 57,
         189, 221, 144, 146, 21, 66, 50, 176, 64, 194, 85,
     ],
     [
-        28, 72, 253, 35, 91, 186, 35, 119, 22, 150, 245, 74, 32, 255, 119, 105, 201, 159, 252, 37,
-        87, 207, 205, 87, 59, 115, 209, 249, 2, 174, 21, 128,
+        193, 231, 93, 62, 111, 43, 190, 67, 15, 193, 126, 47, 125, 215, 249, 227, 247, 176, 133,
+        102, 183, 241, 180, 99, 69, 86, 42, 188, 208, 190, 188, 252,
     ],
     [
         77, 160, 73, 31, 254, 138, 240, 206, 17, 49, 226, 178, 255, 123, 21, 87, 229, 220, 2, 156,
         217, 23, 147, 8, 239, 11, 85, 1, 112, 241, 106, 118,
     ],
     [
-        5, 165, 151, 133, 16, 137, 185, 116, 244, 189, 215, 188, 21, 180, 61, 133, 115, 244, 65,
-        111, 236, 253, 207, 170, 94, 192, 31, 89, 87, 18, 99, 148,
+        235, 183, 116, 68, 78, 5, 168, 237, 63, 241, 205, 252, 57, 194, 203, 24, 233, 69, 58, 75,
+        178, 113, 68, 119, 12, 143, 83, 75, 61, 142, 0, 55,
     ],
     [
         54, 229, 87, 129, 69, 60, 128, 39, 35, 245, 141, 52, 58, 41, 21, 154, 72, 29, 217, 102, 23,
@@ -113,6 +113,10 @@ const REVIEWED_LIB_NODE_FINGERPRINTS: [[u8; 32]; 17] = [
         245, 186, 168, 169, 69, 126, 136, 165, 36, 203, 162, 139, 167,
     ],
     [
+        32, 183, 172, 125, 174, 72, 242, 122, 44, 23, 122, 14, 198, 212, 196, 62, 138, 204, 193,
+        88, 220, 50, 1, 30, 57, 223, 0, 46, 136, 50, 169, 26,
+    ],
+    [
         61, 14, 171, 223, 118, 173, 225, 189, 63, 154, 117, 128, 217, 191, 10, 6, 11, 231, 248, 93,
         228, 218, 156, 160, 86, 223, 214, 108, 60, 40, 164, 39,
     ],
@@ -121,8 +125,28 @@ const REVIEWED_LIB_NODE_FINGERPRINTS: [[u8; 32]; 17] = [
         211, 0, 233, 210, 99, 5, 26, 231, 195, 150, 35, 253, 59,
     ],
     [
-        48, 200, 200, 93, 94, 172, 212, 69, 223, 17, 203, 157, 103, 247, 155, 78, 38, 161, 190, 25,
-        90, 106, 149, 22, 229, 115, 77, 64, 115, 176, 80, 197,
+        182, 100, 212, 133, 159, 236, 249, 32, 234, 24, 108, 98, 77, 88, 36, 168, 174, 144, 137,
+        195, 74, 64, 131, 146, 166, 83, 238, 207, 29, 114, 224, 29,
+    ],
+    [
+        181, 212, 84, 130, 178, 252, 119, 216, 185, 69, 214, 62, 226, 36, 255, 48, 35, 191, 208,
+        217, 27, 13, 86, 148, 219, 63, 31, 52, 83, 89, 119, 193,
+    ],
+    [
+        216, 45, 131, 254, 0, 238, 222, 248, 40, 26, 125, 252, 111, 20, 164, 229, 224, 237, 143,
+        207, 21, 49, 99, 53, 143, 133, 112, 32, 224, 159, 7, 104,
+    ],
+    [
+        177, 197, 249, 209, 239, 162, 220, 142, 240, 163, 110, 252, 20, 213, 48, 84, 253, 197, 227,
+        160, 17, 212, 112, 198, 17, 1, 113, 157, 158, 212, 226, 96,
+    ],
+    [
+        49, 169, 182, 106, 228, 12, 111, 80, 31, 81, 14, 160, 23, 33, 41, 206, 133, 165, 211, 186,
+        183, 254, 162, 102, 134, 147, 122, 214, 107, 63, 83, 105,
+    ],
+    [
+        101, 49, 229, 201, 105, 218, 125, 245, 78, 156, 233, 191, 80, 16, 247, 241, 123, 14, 201,
+        102, 198, 127, 41, 38, 216, 145, 131, 20, 6, 188, 49, 234,
     ],
     [
         77, 247, 145, 90, 139, 253, 7, 182, 145, 235, 58, 245, 66, 45, 161, 176, 176, 80, 124, 242,
@@ -135,8 +159,8 @@ const REVIEWED_SIBLING_AST_FINGERPRINTS: [[u8; 32]; 4] = [
         213, 42, 98, 16, 254, 251, 110, 231, 51, 232, 170, 12,
     ],
     [
-        168, 83, 143, 78, 102, 148, 141, 241, 251, 153, 144, 6, 208, 215, 181, 234, 47, 90, 251,
-        44, 73, 68, 171, 211, 82, 245, 233, 76, 69, 106, 30, 45,
+        215, 224, 181, 159, 127, 161, 118, 207, 141, 89, 85, 150, 192, 79, 25, 210, 83, 25, 189,
+        178, 47, 202, 87, 239, 6, 158, 138, 1, 11, 66, 70, 109,
     ],
     [
         14, 13, 82, 110, 6, 11, 196, 61, 238, 133, 37, 37, 200, 246, 123, 56, 56, 218, 103, 73,
@@ -159,15 +183,21 @@ publish = false
 
 [dependencies]
 ed25519-dalek = { version = "=2.2.0", default-features = false, features = ["fast", "zeroize"] }
-fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "57d2d9ced5c113d40546ea1dee603e8ba499cf40", version = "=0.1.0" }
-fe2o3-hsaco-finalize = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "57d2d9ced5c113d40546ea1dee603e8ba499cf40", version = "=0.1.0" }
-fe2o3-verifier = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "57d2d9ced5c113d40546ea1dee603e8ba499cf40", version = "=0.1.0" }
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb", version = "=0.1.0" }
+fe2o3-hsaco-finalize = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb", version = "=0.1.0" }
+fe2o3-runtime-protocol = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb", version = "=0.1.0" }
+fe2o3-verifier = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb", version = "=0.1.0" }
+fe2o3-worker-v3-verification-client = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb", version = "=0.1.0" }
+fe2o3-worker-v3-verification-protocol = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb", version = "=0.1.0" }
 ferric-qwen3-all-kernels-device-v1 = { path = "../../device/qwen3-all-kernels-v1" }
 ferric-qwen3-all-kernels-worker-v3-source-pin-v1 = { path = "../qwen3-all-kernels-worker-v3-source-pin-v1" }
 libc = "=0.2.189"
+rustix = { version = "=1.1.4", features = ["fs"] }
 sha2 = { version = "=0.11.0", default-features = false }
 
 [dev-dependencies]
+fe2o3-artifact-transaction = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb", version = "=0.1.0" }
+fe2o3-external-anchor-protocol = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb", version = "=0.1.0" }
 proc-macro2 = "=1.0.107"
 quote = "=1.0.47"
 syn = { version = "=2.0.119", features = ["full", "visit"] }
@@ -181,13 +211,19 @@ unsafe_op_in_unsafe_fn = "deny"
 all = { level = "deny", priority = -1 }
 pedantic = { level = "deny", priority = -1 }
 "#;
-const REVIEWED_FREE_FUNCTIONS: [&str; 7] = [
+const REVIEWED_FREE_FUNCTIONS: [&str; 13] = [
     "authenticated_entry_coordinates_associate_v1",
     "authenticated_entry_evidence_v1",
     "authenticated_receipt_associates_v1",
+    "generic_verification_request_v1",
     "locally_revalidate_request_v1",
     "missing_protected_verification_receipt_v1",
+    "payload_snapshot_error_v2",
+    "protected_payload_snapshots_v2",
+    "protected_service_request_from_current_audit_v1",
     "protected_service_request_v1",
+    "protected_service_request_with_compiler_claims_v1",
+    "sealed_payload_snapshot_v2",
     "validate_local_request_associations_v1",
 ];
 #[derive(Clone)]
@@ -201,6 +237,11 @@ struct AstVerifierPolicySource {
     local_revalidation: ItemFn,
     local_associations: ItemFn,
     service_request_builder: ItemFn,
+    current_audit_service_request_builder: ItemFn,
+    shared_service_request_builder: ItemFn,
+    generic_request_builder: ItemFn,
+    payload_snapshots_builder: ItemFn,
+    sealed_snapshot_builder: ItemFn,
     entry_coordinate_join: ItemFn,
     entry_evidence_mapper: ItemFn,
     receipt_association: ItemFn,
@@ -263,14 +304,14 @@ impl AstVerifierPolicySource {
             || surface.nested_or_extra_function
             || surface.type_alias
             || surface.return_expressions != 0
-            || surface.reviewed_macros != 7
+            || surface.reviewed_macros != 10
             || surface.evidence_constructor_calls != 1
             || surface.evidence_constructor_references != 1
             || surface.configured_constructor_references != 0
             || surface.verify_references != 0
             || surface.explicit_configured_constructions != 0
             || surface.unsafe_blocks != 2
-            || surface.helper_calls != [1, 1, 1, 2, 1, 1, 1]
+            || surface.helper_calls != [1, 1, 1, 1, 2, 1, 5, 1, 1, 1, 2, 2, 1]
             || surface.helper_references != surface.helper_calls
             || surface.free_functions
                 != REVIEWED_FREE_FUNCTIONS
@@ -312,6 +353,31 @@ impl AstVerifierPolicySource {
             service_request_builder: unique_free_function(
                 &production,
                 "protected_service_request_v1",
+            )?
+            .clone(),
+            current_audit_service_request_builder: unique_free_function(
+                &production,
+                "protected_service_request_from_current_audit_v1",
+            )?
+            .clone(),
+            shared_service_request_builder: unique_free_function(
+                &production,
+                "protected_service_request_with_compiler_claims_v1",
+            )?
+            .clone(),
+            generic_request_builder: unique_free_function(
+                &production,
+                "generic_verification_request_v1",
+            )?
+            .clone(),
+            payload_snapshots_builder: unique_free_function(
+                &production,
+                "protected_payload_snapshots_v2",
+            )?
+            .clone(),
+            sealed_snapshot_builder: unique_free_function(
+                &production,
+                "sealed_payload_snapshot_v2",
             )?
             .clone(),
             entry_coordinate_join: unique_free_function(
@@ -456,14 +522,20 @@ fn lockfile_semantics_policy(source: &str) -> bool {
     }
     let expected_dependencies = [
         "ed25519-dalek",
+        "fe2o3-artifact-transaction",
+        "fe2o3-external-anchor-protocol",
         "fe2o3-host",
         "fe2o3-hsaco-finalize",
+        "fe2o3-runtime-protocol",
         "fe2o3-verifier",
+        "fe2o3-worker-v3-verification-client",
+        "fe2o3-worker-v3-verification-protocol",
         "ferric-qwen3-all-kernels-device-v1",
         "ferric-qwen3-all-kernels-worker-v3-source-pin-v1",
         "libc",
         "proc-macro2",
         "quote",
+        "rustix",
         "sha2 0.11.0",
         "syn 2.0.119",
         "toml",
@@ -484,7 +556,7 @@ fn lockfile_semantics_policy(source: &str) -> bool {
 
     let registry = Some("registry+https://github.com/rust-lang/crates.io-index");
     let fe2o3 = Some(
-        "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40",
+        "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb",
     );
     [
         (
@@ -493,9 +565,19 @@ fn lockfile_semantics_policy(source: &str) -> bool {
             registry,
             Some("70e796c081cee67dc755e1a36a0a172b897fab85fc3f6bc48307991f64e4eca9"),
         ),
+        ("fe2o3-artifact-transaction", "0.1.0", fe2o3, None),
+        ("fe2o3-external-anchor-protocol", "0.1.0", fe2o3, None),
         ("fe2o3-host", "0.1.0", fe2o3, None),
         ("fe2o3-hsaco-finalize", "0.1.0", fe2o3, None),
+        ("fe2o3-runtime-protocol", "0.1.0", fe2o3, None),
         ("fe2o3-verifier", "0.1.0", fe2o3, None),
+        ("fe2o3-worker-v3-verification-client", "0.1.0", fe2o3, None),
+        (
+            "fe2o3-worker-v3-verification-protocol",
+            "0.1.0",
+            fe2o3,
+            None,
+        ),
         ("ferric-qwen3-all-kernels-device-v1", "0.1.0", None, None),
         (
             "ferric-qwen3-all-kernels-worker-v3-source-pin-v1",
@@ -520,6 +602,12 @@ fn lockfile_semantics_policy(source: &str) -> bool {
             "1.0.47",
             registry,
             Some("1fbf4db142a473a8d80c26bbf18454ed458bf8d26c8219c331daecfdbd079001"),
+        ),
+        (
+            "rustix",
+            "1.1.4",
+            registry,
+            Some("b6fe4565b9518b83ef4f91bb47ce29620ca828bd32cb7e408f0062e9930ba190"),
         ),
         (
             "sha2",
@@ -692,7 +780,7 @@ fn attributes_fingerprint(attributes: &[Attribute]) -> [u8; 32] {
     token_fingerprint(&stream)
 }
 
-fn reviewed_lib_node_fingerprints(file: &File) -> Option<[[u8; 32]; 17]> {
+fn reviewed_lib_node_fingerprints(file: &File) -> Option<[[u8; 32]; 23]> {
     let zero_impls = impls_for_type(file, ZERO_TYPE);
     let zero_inherent = unique_impl(&zero_impls, None, false)?;
     let zero_backend = unique_impl(&zero_impls, Some(BACKEND_TRAIT), true)?;
@@ -834,7 +922,11 @@ fn configured_fields_are_exact(fields: &Fields) -> bool {
         return false;
     };
     let expected = [
-        ("client", "Option<M1AllKernelsProtectedVerifierClientV1>"),
+        ("client", "Option<M1AllKernelsProtectedVerifierClientV2>"),
+        (
+            "begin_challenge",
+            "Option<M1AllKernelsProtectedVerifierBeginChallengeV2>",
+        ),
         ("trust_policy", "M1AllKernelsProtectedVerifierTrustPolicyV1"),
         (
             "current_auditor",
@@ -944,15 +1036,21 @@ fn exact_impl_roster(implementations: &mut [String]) -> bool {
 fn reviewed_use(item_use: &ItemUse) -> bool {
     let expected = [
         "usecrate::protected_receipt::{M1AllKernelsAuthenticatedProtectedVerifierReceiptV1,M1AllKernelsProtectedReceiptCompilerClaimsV1,M1AllKernelsProtectedReceiptEntryV1,M1AllKernelsProtectedReceiptErrorV1,M1AllKernelsProtectedReceiptRequestClaimsV1,M1AllKernelsProtectedReceiptSourcePinV1,M1AllKernelsProtectedVerifierTrustPolicyV1,};",
-        "usecrate::protected_verifier_client::{M1AllKernelsProtectedVerifierClientErrorV1,M1AllKernelsProtectedVerifierClientV1,};",
+        "usecrate::protected_verifier_client::{M1AllKernelsProtectedVerifierBeginChallengeV2,M1AllKernelsProtectedVerifierClientErrorV2,M1AllKernelsProtectedVerifierClientV2,};",
         "usecrate::protected_verifier_service::{M1AllKernelsProtectedVerifierServiceEntryV1,M1AllKernelsProtectedVerifierServiceProtocolErrorV1,M1AllKernelsProtectedVerifierServiceRequestV1,};",
-        "usefe2o3_host::{BlockSizeV1,CompilerGeneratedKernelExpectationRosterEntryV1,CompilerGeneratedKernelExpectationRosterV1,InheritedWorkerV3CompilerCurrentRecordAuditorV1,WorkerV3CompilerCurrentRecordAuditErrorV1,WorkerV3CompilerExecutionEvidenceErrorV1,WorkerV3CompilerExecutionVerificationV1,WorkerV3ProtectedRosterEntryEvidenceV1,WorkerV3ProtectedRosterVerificationEvidenceV1,WorkerV3ProtectedRosterVerifierBackendV1,WorkerV3RosterVerificationRequestV1,};",
+        "usefe2o3_host::{BlockSizeV1,CompilerGeneratedKernelExpectationRosterEntryV1,CompilerGeneratedKernelExpectationRosterV1,InheritedWorkerV3CompilerCurrentRecordAuditorV1,WorkerV3CompilerCurrentRecordAuditErrorV1,WorkerV3CompilerCurrentRecordAuditV1,WorkerV3CompilerExecutionEvidenceErrorV1,WorkerV3CompilerExecutionVerificationV1,WorkerV3ProtectedRosterEntryEvidenceV1,WorkerV3ProtectedRosterVerificationEvidenceV1,WorkerV3ProtectedRosterVerifierBackendV1,WorkerV3RosterVerificationRequestV1,};",
         "usefe2o3_hsaco_finalize::{FinalizedDescriptorInspection,RevalidatedProtectedWorkerV3FinalizerDerivationV1,};",
         "usefe2o3_verifier::{ValidatedCompilerMultiRootProofInputsV1,ValidatedCompilerMultiRootTargetLineageV1,};",
+        "usefe2o3_worker_v3_verification_protocol::{WorkerV3VerificationEntryCoordinateV1,WorkerV3VerificationFdPayloadDescriptorV1,WorkerV3VerificationMeasurementIdentityV1,WorkerV3VerificationPolicyIdentityV1,WorkerV3VerificationProtocolErrorV1,WorkerV3VerificationRequestV1,WorkerV3VerificationRosterIdentityV1,};",
         "useferric_qwen3_all_kernels_device_v1::M1AllKernelsWorkerV3RosterV1;",
         "useferric_qwen3_all_kernels_worker_v3_source_pin_v1::{M1AggregateSourcePinErrorV1,project_m1_aggregate_module_handoff_v1,};",
+        "userustix::fs::{MemfdFlags,Mode,SealFlags};",
+        "usesha2::{Digest,Sha256};",
         "usestd::error::Error;",
         "usestd::fmt;",
+        "usestd::fs::File;",
+        "usestd::io::{self,Write};",
+        "usestd::os::fd::OwnedFd;",
     ];
     item_use.attrs.is_empty()
         && matches!(item_use.vis, Visibility::Inherited)
@@ -987,7 +1085,7 @@ fn top_level_surface_is_exact(file: &File) -> bool {
         };
         counts[index] += 1;
     }
-    counts == [3, 2, 7, 10, 4, 8, 10] && exact_impl_roster(&mut implementations)
+    counts == [3, 2, 13, 10, 4, 8, 16] && exact_impl_roster(&mut implementations)
 }
 
 fn expression_path(expression: &Expr) -> Option<&Path> {
@@ -1450,6 +1548,12 @@ impl<'ast> Visit<'ast> for MethodAudit {
                 "missing_receipt",
             ),
             ("protected_service_request_v1", "service_request"),
+            (
+                "protected_service_request_from_current_audit_v1",
+                "prebind_service_request",
+            ),
+            ("generic_verification_request_v1", "generic_request"),
+            ("protected_payload_snapshots_v2", "payload_snapshots"),
             ("authenticated_receipt_associates_v1", "receipt_association"),
             ("authenticated_entry_evidence_v1", "entry_evidence"),
         ];
@@ -1472,10 +1576,14 @@ impl<'ast> Visit<'ast> for MethodAudit {
 
     fn visit_expr_method_call(&mut self, call: &'ast ExprMethodCall) {
         let label = match call.method.to_string().as_str() {
-            "audit_roster" => Some("current_audit"),
+            "audit_roster_with_challenge" => Some("current_audit"),
             "bind_exact_compiler_execution_v1" => Some("compiler_binding"),
-            "take" => Some("client_take"),
-            "request_receipt" => Some("request_receipt"),
+            "take" => Some("owner_take"),
+            "begin" => Some("begin"),
+            "into_parts" => Some("service_challenge"),
+            "into_compiler_execution_challenge" => Some("compiler_challenge"),
+            "canonical_evidence_view" => Some("current_record_view"),
+            "submit_current_record" => Some("submit_current_record"),
             "verify_protected_roster" => {
                 self.verify_references += 1;
                 None
@@ -1568,7 +1676,7 @@ fn configured_constructor_policy(source: &str) -> bool {
     let constructor_audit = MethodAudit::from_impl(&policy.configured_constructor);
     let authority = item_tokens(&policy.configured_authority_query);
     compact_tokens(&policy.configured_constructor.sig)
-        == "unsafefnnew(client:M1AllKernelsProtectedVerifierClientV1,trust_policy:M1AllKernelsProtectedVerifierTrustPolicyV1,current_auditor:InheritedWorkerV3CompilerCurrentRecordAuditorV1,)->Self"
+        == "unsafefnnew(client:M1AllKernelsProtectedVerifierClientV2,begin_challenge:M1AllKernelsProtectedVerifierBeginChallengeV2,trust_policy:M1AllKernelsProtectedVerifierTrustPolicyV1,current_auditor:InheritedWorkerV3CompilerCurrentRecordAuditorV1,)->Self"
         && matches!(policy.configured_constructor.vis, Visibility::Public(_))
         && policy.configured_constructor.block.stmts.len() == 1
         && constructor_audit.self_constructions == 1
@@ -1578,7 +1686,7 @@ fn configured_constructor_policy(source: &str) -> bool {
         && constructor_audit.unsafe_blocks == 0
         && !constructor_audit.invalid_control
         && !constructor_audit.invalid_macro
-        && constructor.ends_with("{Self{client:Some(client),trust_policy,current_auditor,}}")
+        && constructor.ends_with("{Self{client:Some(client),begin_challenge:Some(begin_challenge),trust_policy,current_auditor,}}")
         && compact_tokens(&policy.configured_authority_query.sig)
             == "constfngrants_authority(&self)->bool"
         && matches!(policy.configured_authority_query.vis, Visibility::Public(_))
@@ -1602,17 +1710,25 @@ fn configured_binder_policy(source: &str) -> bool {
     compact_tokens(&policy.configured_verify.sig)
         == "unsafefnverify_protected_roster(&mutself,request:&WorkerV3RosterVerificationRequestV1<'_,M1AllKernelsWorkerV3RosterV1>,)->Result<WorkerV3ProtectedRosterVerificationEvidenceV1,Self::Error>"
         && matches!(policy.configured_verify.vis, Visibility::Inherited)
-        && policy.configured_verify.block.stmts.len() == 14
+        && policy.configured_verify.block.stmts.len() == 25
         && audit.critical_calls
             == [
                 "projection",
                 "local_revalidation",
+                "owner_take",
+                "owner_take",
+                "generic_request",
+                "payload_snapshots",
+                "begin",
+                "service_challenge",
+                "compiler_challenge",
                 "current_audit",
+                "prebind_service_request",
+                "current_record_view",
+                "submit_current_record",
+                "receipt_association",
                 "compiler_binding",
                 "service_request",
-                "client_take",
-                "request_receipt",
-                "receipt_association",
                 "entry_evidence",
                 "evidence_promotion",
             ]
@@ -1771,7 +1887,7 @@ fn sibling_structural_gate_rejects_every_authority_escape_surface() {
     }
 }",
         r"fn safe_new_wrapper(
-    client: M1AllKernelsProtectedVerifierClientV1,
+    client: M1AllKernelsProtectedVerifierClientV2,
     trust_policy: M1AllKernelsProtectedVerifierTrustPolicyV1,
     current_auditor: InheritedWorkerV3CompilerCurrentRecordAuditorV1,
 ) -> impl core::fmt::Debug {
@@ -1850,8 +1966,8 @@ fn parsed_manifest_and_lock_reject_dependency_or_lint_drift() {
     }
 
     let dependency_substitution = LOCKFILE.replacen(
-        " \"proc-macro2\",\n \"quote\",\n \"sha2 0.11.0\",",
-        " \"proc-macro2\",\n \"quote\",\n \"sha2 0.10.9\",",
+        " \"proc-macro2\",\n \"quote\",\n \"rustix\",\n \"sha2 0.11.0\",",
+        " \"proc-macro2\",\n \"quote\",\n \"rustix\",\n \"sha2 0.10.9\",",
         1,
     );
     let checksum_substitution = LOCKFILE.replacen(
@@ -1901,7 +2017,12 @@ fn token_fingerprint_preserves_literals_delimiters_punctuation_and_boundaries() 
 fn service_claims_come_only_from_typed_source_and_bound_current_owners() {
     let policy =
         AstVerifierPolicySource::parse(SOURCE).expect("canonical source policy must parse");
-    let builder = item_tokens(&policy.service_request_builder);
+    let builder = format!(
+        "{}{}{}",
+        item_tokens(&policy.service_request_builder),
+        item_tokens(&policy.current_audit_service_request_builder),
+        item_tokens(&policy.shared_service_request_builder),
+    );
     for required in [
         "project_m1_aggregate_module_handoff_v1(request.semantic_compiler_handoff().module_handoff(),)",
         "M1AllKernelsProtectedReceiptSourcePinV1::new(",
@@ -1914,6 +2035,9 @@ fn service_claims_come_only_from_typed_source_and_bound_current_owners() {
         "compiler.protected_policy_verification_sha256()",
         "compiler.protected_worker_ledger_verification_sha256()",
         "compiler.external_rollback_verification_sha256()",
+        "current_audit.authenticates_expected_fresh_challenge()",
+        "*verification.identity().as_bytes()",
+        "*current_audit.attestation_identity().as_bytes()",
         "M1AllKernelsProtectedVerifierServiceEntryV1::new(",
         "M1AllKernelsProtectedVerifierServiceRequestV1::new(",
     ] {
@@ -1934,6 +2058,72 @@ fn service_claims_come_only_from_typed_source_and_bound_current_owners() {
             "fabricated request input `{forbidden}`"
         );
     }
+}
+
+#[test]
+fn generic_v2_request_and_payload_snapshots_are_exact_and_sealed() {
+    let policy =
+        AstVerifierPolicySource::parse(SOURCE).expect("canonical source policy must parse");
+    let generic = item_tokens(&policy.generic_request_builder);
+    for required in [
+        "challenge.into_protocol_challenge()",
+        "WorkerV3VerificationRosterIdentityV1::new(pending.roster_identity)",
+        "WorkerV3VerificationPolicyIdentityV1::new(*trust_policy.identity().as_bytes())",
+        "WorkerV3VerificationMeasurementIdentityV1::new(trust_policy.verifier_measurement_sha256())",
+        "WorkerV3VerificationFdPayloadDescriptorV1::load_envelope_v2(",
+        "WorkerV3VerificationFdPayloadDescriptorV1::finalized_hsaco(",
+        "WorkerV3VerificationEntryCoordinateV1::new(",
+        "entry.logical_name",
+        "entry.export_name",
+        "entry.marker_binding_identity",
+        "entry.generated_host_contract_identity",
+    ] {
+        assert!(
+            generic.contains(required),
+            "missing generic V2 input `{required}`"
+        );
+    }
+    for forbidden in ["Default::default", "from_rng", "getrandom", "rand::"] {
+        assert!(
+            !generic.contains(forbidden),
+            "implicit challenge authority `{forbidden}`"
+        );
+    }
+
+    let snapshots = item_tokens(&policy.payload_snapshots_builder);
+    let envelope = snapshots
+        .find("\"ferric-worker-v3-load-envelope-v2\"")
+        .expect("envelope snapshot exists");
+    let hsaco = snapshots
+        .find("\"ferric-worker-v3-finalized-hsaco\"")
+        .expect("HSACO snapshot exists");
+    assert!(
+        envelope < hsaco,
+        "snapshot FD order must be envelope then HSACO"
+    );
+    assert!(snapshots.contains("envelope_view.exact_canonical_bytes()"));
+    assert!(snapshots.contains("request.finalized_hsaco_bytes()"));
+
+    let sealed = item_tokens(&policy.sealed_snapshot_builder);
+    for required in [
+        "MemfdFlags::CLOEXEC|MemfdFlags::ALLOW_SEALING",
+        "rustix::fs::fchmod(&writer,Mode::RUSR)",
+        ".write_all(bytes)",
+        ".flush()",
+        "SealFlags::WRITE|SealFlags::GROW|SealFlags::SHRINK|SealFlags::SEAL",
+        "rustix::fs::fcntl_add_seals(&writer,seals)",
+    ] {
+        assert!(
+            sealed.contains(required),
+            "missing sealed snapshot step `{required}`"
+        );
+    }
+
+    let client = item_tokens(&production_file(CLIENT_SOURCE).expect("client source parses"));
+    assert!(!client.contains("implDefaultforM1AllKernelsProtectedVerifierBeginChallengeV2"));
+    assert!(!client.contains("implCloneforM1AllKernelsProtectedVerifierBeginChallengeV2"));
+    assert!(!client.contains("getrandom"));
+    assert!(!client.contains("rand::"));
 }
 
 #[test]
@@ -2044,15 +2234,14 @@ fn comments_and_strings_cannot_replace_real_backend_obligations() {
     assert!(!zero_state_policy(&string_decoy));
 
     let changed_configured = SOURCE.replacen(
-        ".request_receipt(&self.trust_policy, &service_request)",
-        ".accept_unbound_receipt(&service_request)",
+        ".submit_current_record(",
+        ".accept_unbound_current_record(",
         1,
     );
-    let configured_comment = format!(
-        "/* unsafe impl Fake {{ .request_receipt(&self.trust_policy,&service_request) */\n{changed_configured}"
-    );
+    let configured_comment =
+        format!("/* unsafe impl Fake {{ .submit_current_record( */\n{changed_configured}");
     let configured_string = format!(
-        "const CONFIGURED_POLICY_DECOY: &str = r#\".request_receipt(&self.trust_policy,&service_request)\"#;\n{changed_configured}"
+        "const CONFIGURED_POLICY_DECOY: &str = r#\".submit_current_record(\"#;\n{changed_configured}"
     );
     assert!(!configured_binder_policy(&configured_comment));
     assert!(!configured_binder_policy(&configured_string));
@@ -2101,7 +2290,7 @@ fn safe_inherent_and_trait_factories_cannot_construct_the_configured_backend() {
         "    /// Configuration alone grants no verification, load, or launch authority.";
     for factory in [
         r"    pub fn from_parts(
-        client: M1AllKernelsProtectedVerifierClientV1,
+        client: M1AllKernelsProtectedVerifierClientV2,
         trust_policy: M1AllKernelsProtectedVerifierTrustPolicyV1,
         current_auditor: InheritedWorkerV3CompilerCurrentRecordAuditorV1,
     ) -> Self {
@@ -2110,7 +2299,7 @@ fn safe_inherent_and_trait_factories_cannot_construct_the_configured_backend() {
 
 ",
         r"    fn private_from_parts(
-        client: M1AllKernelsProtectedVerifierClientV1,
+        client: M1AllKernelsProtectedVerifierClientV2,
         trust_policy: M1AllKernelsProtectedVerifierTrustPolicyV1,
         current_auditor: InheritedWorkerV3CompilerCurrentRecordAuditorV1,
     ) -> Self {
@@ -2119,7 +2308,7 @@ fn safe_inherent_and_trait_factories_cannot_construct_the_configured_backend() {
 
 ",
         r"    pub fn safe_wrapper(
-        client: M1AllKernelsProtectedVerifierClientV1,
+        client: M1AllKernelsProtectedVerifierClientV2,
         trust_policy: M1AllKernelsProtectedVerifierTrustPolicyV1,
         current_auditor: InheritedWorkerV3CompilerCurrentRecordAuditorV1,
     ) -> Self {
@@ -2151,8 +2340,8 @@ fn configured_backend_fields_are_exact_private_and_typed() {
             1,
         ),
         SOURCE.replacen(
-            "    client: Option<M1AllKernelsProtectedVerifierClientV1>,",
-            "    pub client: Option<M1AllKernelsProtectedVerifierClientV1>,",
+            "    client: Option<M1AllKernelsProtectedVerifierClientV2>,",
+            "    pub client: Option<M1AllKernelsProtectedVerifierClientV2>,",
             1,
         ),
         SOURCE.replacen(
@@ -2190,7 +2379,7 @@ fn free_factories_verify_wrappers_and_promoters_are_rejected_globally() {
     let free_factory = inject_before_tests(
         SOURCE,
         r"pub fn configured_factory(
-    client: M1AllKernelsProtectedVerifierClientV1,
+    client: M1AllKernelsProtectedVerifierClientV2,
     trust_policy: M1AllKernelsProtectedVerifierTrustPolicyV1,
     current_auditor: InheritedWorkerV3CompilerCurrentRecordAuditorV1,
 ) -> M1AllKernelsProductionProtectedVerifierV1 {
@@ -2243,14 +2432,15 @@ fn early_return_closure_and_prefixed_identifier_decoys_are_rejected() {
     assert!(!configured_binder_policy(&early_return));
 
     let closure_decoy = SOURCE.replacen(
-        "        let service_request = protected_service_request_v1(\n            request,",
-        "        let _body_decoy = || protected_service_request_v1(\n            request, &pending, &compiler_execution, &self.trust_policy,\n        );\n        let service_request = unreviewed_service_request_v1(\n            request,",
+        "        let bound_service_request = protected_service_request_v1(\n            request,",
+        "        let _body_decoy = || protected_service_request_v1(\n            request, &pending, &compiler_execution, &self.trust_policy,\n        );\n        let bound_service_request = unreviewed_service_request_v1(\n            request,",
         1,
     );
     assert_ne!(closure_decoy, SOURCE);
     assert!(!configured_binder_policy(&closure_decoy));
 
-    let prefixed_call = SOURCE.replacen(".request_receipt(", ".evil_request_receipt(", 1);
+    let prefixed_call =
+        SOURCE.replacen(".submit_current_record(", ".evil_submit_current_record(", 1);
     assert_ne!(prefixed_call, SOURCE);
     assert!(!configured_binder_policy(&prefixed_call));
 
@@ -2408,13 +2598,13 @@ fn macro_test_module_and_post_test_decoys_cannot_supply_production_authority() {
     assert!(AstVerifierPolicySource::parse(&macro_decoy).is_none());
 
     let changed = SOURCE.replacen(
-        ".request_receipt(&self.trust_policy, &service_request)",
-        ".accept_unbound_receipt(&service_request)",
+        ".submit_current_record(",
+        ".accept_unbound_current_record(",
         1,
     );
     let test_decoy = changed.replacen(
         TEST_MODULE_BOUNDARY,
-        "#[cfg(test)]\nmod tests {\n    fn request_receipt_decoy() { client.request_receipt(&self.trust_policy, &service_request); }",
+        "#[cfg(test)]\nmod tests {\n    fn submit_current_record_decoy() { client.submit_current_record(); }",
         1,
     );
     assert!(!configured_binder_policy(&test_decoy));
@@ -2461,8 +2651,8 @@ fn owner_custody_and_promotion_order_evasions_are_rejected() {
     assert!(!configured_binder_policy(&dropped_production_owner));
 
     let premature_promotion = SOURCE.replacen(
-        "        let authenticated = client",
-        "        let _premature = unsafe {\n            WorkerV3ProtectedRosterVerificationEvidenceV1::new(\n                finalizer, compiler_execution, proof_inputs, target_lineage,\n                verifier_measurement, verification_transcript, entries,\n            )\n        };\n        let authenticated = client",
+        "        let authenticated = pending_client",
+        "        let _premature = unsafe {\n            WorkerV3ProtectedRosterVerificationEvidenceV1::new(\n                finalizer, compiler_execution, proof_inputs, target_lineage,\n                verifier_measurement, verification_transcript, entries,\n            )\n        };\n        let authenticated = pending_client",
         1,
     );
     assert_ne!(premature_promotion, SOURCE);
@@ -2511,7 +2701,6 @@ fn request_and_entry_join_guards_ignore_wrong_scope_and_comment_decoys() {
 fn production_source_contains_no_deployment_values_or_runtime_surface() {
     for forbidden in [
         "std::env",
-        "std::fs",
         "UnixStream::connect",
         "SigningKey",
         "CURRENT.json",
@@ -2528,6 +2717,8 @@ fn production_source_contains_no_deployment_values_or_runtime_surface() {
     assert!(!MANIFEST.contains("worker-v3-verifier-test-support"));
     assert!(MANIFEST.contains("[workspace]"));
     assert!(MANIFEST.contains("fe2o3-verifier ="));
+    assert!(MANIFEST.contains("fe2o3-worker-v3-verification-client ="));
+    assert!(MANIFEST.contains("fe2o3-worker-v3-verification-protocol ="));
     assert!(MANIFEST.contains(
         "ferric-qwen3-all-kernels-worker-v3-source-pin-v1 = { path = \"../qwen3-all-kernels-worker-v3-source-pin-v1\" }"
     ));
@@ -2541,7 +2732,7 @@ fn production_source_contains_no_deployment_values_or_runtime_surface() {
                 .expect("every direct fe2o3 dependency is pinned")
         })
         .collect::<Vec<_>>();
-    assert_eq!(revisions.len(), 3);
+    assert_eq!(revisions.len(), 8);
     assert!(revisions.iter().all(|revision| *revision == FE2O3_REVISION));
 }
 
@@ -2551,12 +2742,13 @@ fn documentation_states_prerequisites_and_nonclaims() {
     for statement in [
         "zero-state default",
         "always returns `MissingProtectedVerificationReceipt`",
-        "previously admitted one-shot service client",
+        "previously admitted one-shot V2 service client",
+        "Begin challenge already reserved in durable deployment replay state",
         "caller-provisioned trust policy",
         "inherited FD195 compiler-current auditor",
-        "All request-known compiler coordinates are compared back",
+        "requires the resulting service request to byte-match the pre-bind request",
         "maps all 12 signed proof-to-executable, Rust type-layout, Rust effect",
-        "coordinate protocol, not evidence transport",
+        "generic V2 now transports immutable envelope and HSACO snapshots",
         "Signing caller-supplied hash echoes does not satisfy",
         "A production deployment still must provide",
         "embeds none of those deployment values",

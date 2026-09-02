@@ -231,7 +231,7 @@ dependencies = [
 [[package]]
 name = "dialect-amdgcn"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "fe2o3-amdgcn-model",
  "fe2o3-llvm-handoff",
@@ -240,7 +240,7 @@ dependencies = [
 [[package]]
 name = "dialect-gpu"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "fe2o3-pliron-owner-core",
  "pliron",
@@ -249,7 +249,7 @@ dependencies = [
 [[package]]
 name = "dialect-kernel"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "fe2o3-kernel-ir",
  "fe2o3-pliron-owner-core",
@@ -260,7 +260,7 @@ dependencies = [
 [[package]]
 name = "dialect-mir"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "fe2o3-mir-model",
  "fe2o3-pliron-owner-core",
@@ -270,7 +270,7 @@ dependencies = [
 [[package]]
 name = "dialect-proof"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "dialect-kernel",
  "fe2o3-pliron-owner-core",
@@ -350,12 +350,12 @@ dependencies = [
 [[package]]
 name = "fe2o3-amd-target"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 
 [[package]]
 name = "fe2o3-amdgcn-model"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "fe2o3-amd-target",
  "fe2o3-kernel-analysis",
@@ -368,7 +368,7 @@ dependencies = [
 [[package]]
 name = "fe2o3-artifact-transaction"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "fe2o3-build-authority",
  "fe2o3-compiler-ffi",
@@ -381,7 +381,7 @@ dependencies = [
 [[package]]
 name = "fe2o3-build-authority"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "sha2 0.11.0",
 ]
@@ -389,7 +389,7 @@ dependencies = [
 [[package]]
 name = "fe2o3-compiler-execution-protocol"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "ed25519-dalek",
  "fe2o3-artifact-transaction",
@@ -400,7 +400,7 @@ dependencies = [
 [[package]]
 name = "fe2o3-compiler-ffi"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "fe2o3-amd-target",
  "fe2o3-compiler-lineage",
@@ -412,7 +412,7 @@ dependencies = [
 [[package]]
 name = "fe2o3-compiler-lineage"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "fe2o3-amd-target",
  "fe2o3-build-authority",
@@ -424,7 +424,7 @@ dependencies = [
 [[package]]
 name = "fe2o3-external-anchor-protocol"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "ed25519-dalek",
  "sha2 0.11.0",
@@ -433,7 +433,7 @@ dependencies = [
 [[package]]
 name = "fe2o3-functional-proof"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "ed25519-dalek",
  "fe2o3-proof-contracts",
@@ -443,7 +443,7 @@ dependencies = [
 [[package]]
 name = "fe2o3-hsaco"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "fe2o3-amd-target",
 ]
@@ -451,7 +451,7 @@ dependencies = [
 [[package]]
 name = "fe2o3-hsaco-finalize"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "dialect-amdgcn",
  "fe2o3-amd-target",
@@ -476,7 +476,7 @@ dependencies = [
 [[package]]
 name = "fe2o3-kernel-analysis"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "dialect-gpu",
  "dialect-kernel",
@@ -490,7 +490,7 @@ dependencies = [
 [[package]]
 name = "fe2o3-kernel-descriptor"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "fe2o3-amd-target",
  "sha2 0.11.0",
@@ -499,7 +499,7 @@ dependencies = [
 [[package]]
 name = "fe2o3-kernel-ir"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "serde",
  "serde_json",
@@ -509,7 +509,7 @@ dependencies = [
 [[package]]
 name = "fe2o3-llvm-handoff"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "fe2o3-amd-target",
  "sha2 0.11.0",
@@ -518,7 +518,7 @@ dependencies = [
 [[package]]
 name = "fe2o3-llvm-text"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "fe2o3-llvm-handoff",
  "sha2 0.11.0",
@@ -527,7 +527,7 @@ dependencies = [
 [[package]]
 name = "fe2o3-lower-mir-kernel"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "dialect-gpu",
  "dialect-kernel",
@@ -542,7 +542,7 @@ dependencies = [
 [[package]]
 name = "fe2o3-mir-model"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "fe2o3-amd-target",
  "serde",
@@ -553,7 +553,7 @@ dependencies = [
 [[package]]
 name = "fe2o3-pliron"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "dialect-gpu",
  "dialect-kernel",
@@ -572,7 +572,7 @@ dependencies = [
 [[package]]
 name = "fe2o3-pliron-owner-core"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "pliron",
 ]
@@ -580,12 +580,12 @@ dependencies = [
 [[package]]
 name = "fe2o3-proof-contracts"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 
 [[package]]
 name = "fe2o3-runtime-protocol"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "fe2o3-artifact-transaction",
  "fe2o3-compiler-execution-protocol",
@@ -597,7 +597,7 @@ dependencies = [
 [[package]]
 name = "fe2o3-rustc-invocation"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "fe2o3-amd-target",
  "fe2o3-build-authority",
@@ -608,7 +608,7 @@ dependencies = [
 [[package]]
 name = "fe2o3-source-isa-observation"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "fe2o3-kernel-ir",
  "serde",
@@ -866,7 +866,7 @@ checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 [[package]]
 name = "reserved-fe2o3-symbols"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=57d2d9ced5c113d40546ea1dee603e8ba499cf40#57d2d9ced5c113d40546ea1dee603e8ba499cf40"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb#43ada6c5029d2daf62908fd1cfa86ee56cc4d9eb"
 dependencies = [
  "sha2 0.11.0",
 ]
@@ -1018,9 +1018,9 @@ dependencies = [
 
 [[package]]
 name = "smallvec"
-version = "1.15.2"
+version = "1.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ed6a63f02c8539c91a8685a86f4099661ba3da017932f6ebbea6de3f0fa7c90"
+checksum = "b9be42f50aa861c555654aa3a37f52f4b1074bacf4e48fe0ef7fa584e80f1f0f"
 
 [[package]]
 name = "spin"

@@ -21,6 +21,21 @@ use std::mem;
 use std::os::fd::{AsRawFd, OwnedFd};
 use std::time::{Duration, Instant};
 
+use fe2o3_runtime_protocol::{
+    COMPILER_EXECUTION_CURRENT_RECORD_ATTESTATION_BYTES_V3,
+    COMPILER_EXECUTION_CURRENT_RECORD_VERIFICATION_BYTES_V3,
+};
+use fe2o3_worker_v3_verification_client::{
+    PendingWorkerV3VerificationClientV2, WorkerV3VerificationBeginOutcomeV2,
+    WorkerV3VerificationClientErrorV1, WorkerV3VerificationClientErrorV2,
+    WorkerV3VerificationClientV2, WorkerV3VerificationCurrentRecordChallengeV2,
+    WorkerV3VerificationPayloadSnapshotsV1,
+};
+use fe2o3_worker_v3_verification_protocol::{
+    WorkerV3VerificationFreshChallengeV1, WorkerV3VerificationProtocolErrorV1,
+    WorkerV3VerificationRequestV1, WorkerV3VerificationTerminalDispositionV2,
+};
+
 use crate::protected_receipt::{
     M1AllKernelsAuthenticatedProtectedVerifierReceiptV1, M1AllKernelsProtectedReceiptErrorV1,
     M1AllKernelsProtectedVerifierTrustPolicyV1,
@@ -32,6 +47,65 @@ use crate::protected_verifier_service::{
 };
 
 const INVALID_ID: u32 = u32::MAX;
+
+/// One deployment-reserved, move-only generic Begin challenge.
+///
+/// Ferric does not generate this challenge: production deployment code must use an unpredictable
+/// source and durably exclude the exact value from every prior and future Begin transaction before
+/// constructing this token. The deterministic host roster challenge is a different coordinate and
+/// must never be substituted here.
+///
+/// ```compile_fail
+/// use ferric_qwen3_all_kernels_worker_v3_verifier_v1::protected_verifier_client::
+///     M1AllKernelsProtectedVerifierBeginChallengeV2;
+/// fn duplicate(value: M1AllKernelsProtectedVerifierBeginChallengeV2) {
+///     let _again = value.clone();
+/// }
+/// ```
+pub struct M1AllKernelsProtectedVerifierBeginChallengeV2 {
+    challenge: WorkerV3VerificationFreshChallengeV1,
+}
+
+impl M1AllKernelsProtectedVerifierBeginChallengeV2 {
+    /// Admits a deployment-generated challenge after durable reservation.
+    ///
+    /// # Safety
+    ///
+    /// Before this call, the deployment must generate `bytes` unpredictably, atomically reserve it
+    /// in durable replay state shared by every verifier instance, and guarantee that the value is
+    /// never admitted for another Begin transaction, including after disconnects or restarts.
+    ///
+    /// # Errors
+    ///
+    /// Returns a protocol error for the forbidden all-zero challenge.
+    pub unsafe fn from_durable_reservation(
+        bytes: [u8; 32],
+    ) -> Result<Self, WorkerV3VerificationProtocolErrorV1> {
+        Ok(Self {
+            challenge: WorkerV3VerificationFreshChallengeV1::new(bytes)?,
+        })
+    }
+
+    pub(crate) fn into_protocol_challenge(self) -> WorkerV3VerificationFreshChallengeV1 {
+        self.challenge
+    }
+
+    /// Reservation of a caller nonce alone grants no verifier authority.
+    pub const fn grants_authority(&self) -> bool {
+        false
+    }
+}
+
+impl fmt::Debug for M1AllKernelsProtectedVerifierBeginChallengeV2 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AllKernelsProtectedVerifierBeginChallengeV2")
+            .field("challenge", &"redacted")
+            .field("durable_reservation", &"caller obligation")
+            .field("authority", &"none")
+            .finish()
+    }
+}
 
 /// Caller-pinned kernel credential identity for the protected-verifier peer.
 ///
@@ -246,14 +320,8 @@ impl M1AllKernelsProtectedVerifierClientV1 {
         send_packet(&self.peer, request.canonical_bytes(), self.deadline)?;
         let received = receive_packet(&self.peer, self.deadline)?;
         revalidate_peer(&self.peer, self.expected_service, self.peer_pid)?;
-        let response = M1AllKernelsProtectedVerifierServiceResponseV1::decode(&received)?;
-        if !response.matches_request(request) {
-            return Err(M1AllKernelsProtectedVerifierClientErrorV1::ResponseRequestMismatch);
-        }
-        let receipt = response.into_receipt();
-        let authenticated = policy
-            .authenticate_canonical(receipt.encode_canonical())
-            .map_err(M1AllKernelsProtectedVerifierClientErrorV1::ReceiptAuthentication)?;
+        let authenticated = authenticate_application_response_v1(policy, request, &received)
+            .map_err(M1AllKernelsProtectedVerifierClientErrorV1::from_application_error)?;
         require_deadline(self.deadline)?;
         Ok(authenticated)
     }
@@ -261,6 +329,384 @@ impl M1AllKernelsProtectedVerifierClientV1 {
     /// This transport client itself grants no protected-verifier authority.
     pub const fn grants_authority(&self) -> bool {
         false
+    }
+}
+
+/// Caller-admitted V2 transport after Ferric has pinned the dedicated service peer.
+///
+/// The generic transport deliberately does not authenticate its peer. This wrapper first applies
+/// Ferric's dedicated non-root UID/GID admission and only then transfers the same descriptor into
+/// the generic multi-phase client. The value is move-only and grants no verifier authority.
+///
+/// ```compile_fail
+/// use ferric_qwen3_all_kernels_worker_v3_verifier_v1::protected_verifier_client::
+///     M1AllKernelsProtectedVerifierClientV2;
+/// fn duplicate(value: M1AllKernelsProtectedVerifierClientV2) { let _again = value.clone(); }
+/// ```
+pub struct M1AllKernelsProtectedVerifierClientV2 {
+    inner: WorkerV3VerificationClientV2,
+    expected_service: M1AllKernelsProtectedVerifierServiceIdentityV1,
+    peer_pid: u32,
+}
+
+impl fmt::Debug for M1AllKernelsProtectedVerifierClientV2 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AllKernelsProtectedVerifierClientV2")
+            .field("expected_service", &self.expected_service)
+            .field("peer_pid", &self.peer_pid)
+            .field("authority", &"none")
+            .finish_non_exhaustive()
+    }
+}
+
+impl M1AllKernelsProtectedVerifierClientV2 {
+    /// Admits one connected unnamed `SOCK_SEQPACKET` peer under dedicated non-root credentials.
+    ///
+    /// # Errors
+    ///
+    /// Returns a typed error if Ferric peer admission or generic V2 admission fails.
+    pub fn admit(
+        peer: OwnedFd,
+        expected_service: M1AllKernelsProtectedVerifierServiceIdentityV1,
+        timeout: Duration,
+    ) -> Result<Self, M1AllKernelsProtectedVerifierClientErrorV2> {
+        Self::admit_inner::<true>(peer, expected_service, timeout)
+    }
+
+    fn admit_inner<const REQUIRE_DISTINCT_UID: bool>(
+        peer: OwnedFd,
+        expected_service: M1AllKernelsProtectedVerifierServiceIdentityV1,
+        timeout: Duration,
+    ) -> Result<Self, M1AllKernelsProtectedVerifierClientErrorV2> {
+        let (peer_pid, _deadline) =
+            admit_peer::<REQUIRE_DISTINCT_UID>(&peer, expected_service, timeout)
+                .map_err(M1AllKernelsProtectedVerifierClientErrorV2::PeerAdmission)?;
+        revalidate_peer(&peer, expected_service, peer_pid)
+            .map_err(M1AllKernelsProtectedVerifierClientErrorV2::PeerAdmission)?;
+        let inner = WorkerV3VerificationClientV2::admit(peer, timeout)
+            .map_err(M1AllKernelsProtectedVerifierClientErrorV2::Transport)?;
+        debug_assert!(!inner.authenticates_peer());
+        Ok(Self {
+            inner,
+            expected_service,
+            peer_pid,
+        })
+    }
+
+    /// Sends one generic Begin request and its exact immutable payload snapshots.
+    ///
+    /// Ferric converts a generic Begin rejection into an explicit terminal error. A successful
+    /// result retains the generic pending session separately from the move-only service challenge.
+    ///
+    /// # Errors
+    ///
+    /// Returns a typed error when snapshot admission, transport, session correlation, or the
+    /// service's Begin disposition fails closed.
+    pub fn begin(
+        self,
+        request: WorkerV3VerificationRequestV1,
+        descriptors: Vec<OwnedFd>,
+    ) -> Result<
+        M1AllKernelsReservedProtectedVerifierSessionV2,
+        M1AllKernelsProtectedVerifierClientErrorV2,
+    > {
+        let snapshots = WorkerV3VerificationPayloadSnapshotsV1::admit(&request, descriptors)
+            .map_err(M1AllKernelsProtectedVerifierClientErrorV2::Snapshot)?;
+        match self
+            .inner
+            .begin(request, snapshots)
+            .map_err(M1AllKernelsProtectedVerifierClientErrorV2::Transport)?
+        {
+            WorkerV3VerificationBeginOutcomeV2::Reserved(reserved) => {
+                let (challenge, pending) = reserved.into_parts();
+                Ok(M1AllKernelsReservedProtectedVerifierSessionV2 {
+                    challenge,
+                    pending: M1AllKernelsPendingProtectedVerifierClientV2 { pending },
+                })
+            }
+            WorkerV3VerificationBeginOutcomeV2::Rejected(rejected) => {
+                Err(M1AllKernelsProtectedVerifierClientErrorV2::BeginRejected {
+                    request_identity: *rejected.request().identity().as_bytes(),
+                })
+            }
+            _ => Err(M1AllKernelsProtectedVerifierClientErrorV2::UnexpectedBeginOutcome),
+        }
+    }
+
+    /// Socket admission and protocol framing alone grant no protected-verifier authority.
+    pub const fn grants_authority(&self) -> bool {
+        false
+    }
+}
+
+/// Successful Begin result with separate move-only challenge and pending-session custody.
+///
+/// ```compile_fail
+/// use ferric_qwen3_all_kernels_worker_v3_verifier_v1::protected_verifier_client::
+///     M1AllKernelsReservedProtectedVerifierSessionV2;
+/// fn duplicate(value: M1AllKernelsReservedProtectedVerifierSessionV2) {
+///     let _again = value.clone();
+/// }
+/// ```
+pub struct M1AllKernelsReservedProtectedVerifierSessionV2 {
+    challenge: WorkerV3VerificationCurrentRecordChallengeV2,
+    pending: M1AllKernelsPendingProtectedVerifierClientV2,
+}
+
+impl M1AllKernelsReservedProtectedVerifierSessionV2 {
+    /// Separates the service challenge from the pending terminal transport.
+    pub fn into_parts(
+        self,
+    ) -> (
+        WorkerV3VerificationCurrentRecordChallengeV2,
+        M1AllKernelsPendingProtectedVerifierClientV2,
+    ) {
+        (self.challenge, self.pending)
+    }
+
+    /// A reserved generic session grants no protected-verifier authority.
+    pub const fn grants_authority(&self) -> bool {
+        false
+    }
+}
+
+impl fmt::Debug for M1AllKernelsReservedProtectedVerifierSessionV2 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AllKernelsReservedProtectedVerifierSessionV2")
+            .field("challenge", &self.challenge)
+            .field("pending", &self.pending)
+            .field("authority", &"none")
+            .finish()
+    }
+}
+
+/// Pending Ferric V2 session after the service has released its current-record challenge.
+///
+/// ```compile_fail
+/// use ferric_qwen3_all_kernels_worker_v3_verifier_v1::protected_verifier_client::
+///     M1AllKernelsPendingProtectedVerifierClientV2;
+/// fn duplicate(value: M1AllKernelsPendingProtectedVerifierClientV2) {
+///     let _again = value.clone();
+/// }
+/// ```
+pub struct M1AllKernelsPendingProtectedVerifierClientV2 {
+    pending: PendingWorkerV3VerificationClientV2,
+}
+
+impl M1AllKernelsPendingProtectedVerifierClientV2 {
+    /// Submits the exact current-record arrays and authenticates the sole application response.
+    ///
+    /// Generic V2 correlates the terminal frame to the Begin request, service challenge, and
+    /// reservation. Ferric separately requires an exact V1 application-response length and a
+    /// signature-authenticated receipt correlated to `service_request`.
+    ///
+    /// # Errors
+    ///
+    /// Returns a typed error for policy mismatch, transport or terminal-correlation failure,
+    /// malformed application bytes, request mismatch, or receipt-authentication failure.
+    pub fn submit_current_record(
+        self,
+        verification: [u8; COMPILER_EXECUTION_CURRENT_RECORD_VERIFICATION_BYTES_V3],
+        attestation: [u8; COMPILER_EXECUTION_CURRENT_RECORD_ATTESTATION_BYTES_V3],
+        policy: &M1AllKernelsProtectedVerifierTrustPolicyV1,
+        service_request: &M1AllKernelsProtectedVerifierServiceRequestV1,
+    ) -> Result<
+        M1AllKernelsAuthenticatedProtectedVerifierReceiptV1,
+        M1AllKernelsProtectedVerifierClientErrorV2,
+    > {
+        if policy.identity() != service_request.trust_policy_identity() {
+            return Err(M1AllKernelsProtectedVerifierClientErrorV2::TrustPolicyMismatch);
+        }
+        let terminal = self
+            .pending
+            .submit_current_record(verification, attestation)
+            .map_err(M1AllKernelsProtectedVerifierClientErrorV2::Transport)?;
+        match terminal.disposition() {
+            WorkerV3VerificationTerminalDispositionV2::ApplicationResponse => {}
+            WorkerV3VerificationTerminalDispositionV2::Rejected => {
+                return Err(M1AllKernelsProtectedVerifierClientErrorV2::TerminalRejected);
+            }
+            _ => {
+                return Err(
+                    M1AllKernelsProtectedVerifierClientErrorV2::UnexpectedTerminalDisposition,
+                );
+            }
+        }
+        authenticate_application_response_v1(
+            policy,
+            service_request,
+            terminal.application_response_bytes(),
+        )
+        .map_err(M1AllKernelsProtectedVerifierClientErrorV2::from_application_error)
+    }
+
+    /// Pending transport custody alone grants no protected-verifier authority.
+    pub const fn grants_authority(&self) -> bool {
+        false
+    }
+}
+
+impl fmt::Debug for M1AllKernelsPendingProtectedVerifierClientV2 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AllKernelsPendingProtectedVerifierClientV2")
+            .field("pending", &self.pending)
+            .field("authority", &"none")
+            .finish()
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+enum M1AllKernelsApplicationResponseErrorV1 {
+    Length { expected: usize, actual: usize },
+    Protocol(M1AllKernelsProtectedVerifierServiceProtocolErrorV1),
+    RequestMismatch,
+    ReceiptAuthentication(M1AllKernelsProtectedReceiptErrorV1),
+}
+
+fn authenticate_application_response_v1(
+    policy: &M1AllKernelsProtectedVerifierTrustPolicyV1,
+    request: &M1AllKernelsProtectedVerifierServiceRequestV1,
+    bytes: &[u8],
+) -> Result<
+    M1AllKernelsAuthenticatedProtectedVerifierReceiptV1,
+    M1AllKernelsApplicationResponseErrorV1,
+> {
+    if bytes.len() != M1_ALL_KERNELS_PROTECTED_VERIFIER_SERVICE_RESPONSE_BYTES_V1 {
+        return Err(M1AllKernelsApplicationResponseErrorV1::Length {
+            expected: M1_ALL_KERNELS_PROTECTED_VERIFIER_SERVICE_RESPONSE_BYTES_V1,
+            actual: bytes.len(),
+        });
+    }
+    let response = M1AllKernelsProtectedVerifierServiceResponseV1::decode(bytes)
+        .map_err(M1AllKernelsApplicationResponseErrorV1::Protocol)?;
+    if !response.matches_request(request) {
+        return Err(M1AllKernelsApplicationResponseErrorV1::RequestMismatch);
+    }
+    let receipt = response.into_receipt();
+    policy
+        .authenticate_canonical(receipt.encode_canonical())
+        .map_err(M1AllKernelsApplicationResponseErrorV1::ReceiptAuthentication)
+}
+
+/// Ferric peer-admission, V2 phase, snapshot, terminal, or receipt-authentication failure.
+#[derive(Debug)]
+#[non_exhaustive]
+pub enum M1AllKernelsProtectedVerifierClientErrorV2 {
+    /// Ferric's dedicated UID/GID or peer-shape admission rejected the descriptor.
+    PeerAdmission(M1AllKernelsProtectedVerifierClientErrorV1),
+    /// Exact immutable payload-snapshot admission failed.
+    Snapshot(WorkerV3VerificationClientErrorV1),
+    /// Generic V2 transport, framing, or session correlation failed.
+    Transport(WorkerV3VerificationClientErrorV2),
+    /// The service rejected a structurally valid Begin request.
+    BeginRejected {
+        /// Exact generic request identity named by the correlated rejection.
+        request_identity: [u8; 32],
+    },
+    /// The generic client returned a future Begin outcome not understood by this Ferric revision.
+    UnexpectedBeginOutcome,
+    /// The service returned the correlated generic terminal rejection.
+    TerminalRejected,
+    /// The generic terminal used a disposition not understood by this Ferric revision.
+    UnexpectedTerminalDisposition,
+    /// The application payload did not have Ferric's exact V1 response length.
+    ApplicationResponseLength {
+        /// Required Ferric response length.
+        expected: usize,
+        /// Received application payload length.
+        actual: usize,
+    },
+    /// The Ferric application response was not strict canonical V1 bytes.
+    ApplicationProtocol(M1AllKernelsProtectedVerifierServiceProtocolErrorV1),
+    /// The Ferric response or receipt named another protected-verifier request.
+    ApplicationRequestMismatch,
+    /// The caller policy did not match the application service request.
+    TrustPolicyMismatch,
+    /// Strict Ed25519 receipt authentication under the caller policy failed.
+    ReceiptAuthentication(M1AllKernelsProtectedReceiptErrorV1),
+}
+
+impl M1AllKernelsProtectedVerifierClientErrorV2 {
+    fn from_application_error(error: M1AllKernelsApplicationResponseErrorV1) -> Self {
+        match error {
+            M1AllKernelsApplicationResponseErrorV1::Length { expected, actual } => {
+                Self::ApplicationResponseLength { expected, actual }
+            }
+            M1AllKernelsApplicationResponseErrorV1::Protocol(source) => {
+                Self::ApplicationProtocol(source)
+            }
+            M1AllKernelsApplicationResponseErrorV1::RequestMismatch => {
+                Self::ApplicationRequestMismatch
+            }
+            M1AllKernelsApplicationResponseErrorV1::ReceiptAuthentication(source) => {
+                Self::ReceiptAuthentication(source)
+            }
+        }
+    }
+}
+
+impl fmt::Display for M1AllKernelsProtectedVerifierClientErrorV2 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::PeerAdmission(source) => {
+                write!(formatter, "protected-verifier V2 peer admission failed: {source}")
+            }
+            Self::Snapshot(source) => {
+                write!(formatter, "protected-verifier V2 snapshot admission failed: {source}")
+            }
+            Self::Transport(source) => {
+                write!(formatter, "protected-verifier V2 transport failed: {source}")
+            }
+            Self::BeginRejected { request_identity } => write!(
+                formatter,
+                "protected-verifier V2 Begin was rejected for request {request_identity:02x?}"
+            ),
+            Self::UnexpectedBeginOutcome => formatter
+                .write_str("protected-verifier V2 Begin used an unsupported outcome"),
+            Self::TerminalRejected => {
+                formatter.write_str("protected-verifier V2 terminal rejected the current record")
+            }
+            Self::UnexpectedTerminalDisposition => formatter
+                .write_str("protected-verifier V2 terminal used an unsupported disposition"),
+            Self::ApplicationResponseLength { expected, actual } => write!(
+                formatter,
+                "protected-verifier V2 application response length {actual} differs from {expected}"
+            ),
+            Self::ApplicationProtocol(source) => {
+                write!(formatter, "protected-verifier V2 application response failed: {source}")
+            }
+            Self::ApplicationRequestMismatch => formatter.write_str(
+                "protected-verifier V2 application response names another request or coordinate set",
+            ),
+            Self::TrustPolicyMismatch => formatter
+                .write_str("protected-verifier V2 request names another trust policy"),
+            Self::ReceiptAuthentication(source) => write!(
+                formatter,
+                "protected-verifier V2 receipt authentication failed: {source}"
+            ),
+        }
+    }
+}
+
+impl Error for M1AllKernelsProtectedVerifierClientErrorV2 {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::PeerAdmission(source) => Some(source),
+            Self::Snapshot(source) => Some(source),
+            Self::Transport(source) => Some(source),
+            Self::ApplicationProtocol(source) => Some(source),
+            Self::ReceiptAuthentication(source) => Some(source),
+            Self::BeginRejected { .. }
+            | Self::UnexpectedBeginOutcome
+            | Self::TerminalRejected
+            | Self::UnexpectedTerminalDisposition
+            | Self::ApplicationResponseLength { .. }
+            | Self::ApplicationRequestMismatch
+            | Self::TrustPolicyMismatch => None,
+        }
     }
 }
 
@@ -650,6 +1096,23 @@ pub enum M1AllKernelsProtectedVerifierClientErrorV1 {
     ReceiptAuthentication(M1AllKernelsProtectedReceiptErrorV1),
 }
 
+impl M1AllKernelsProtectedVerifierClientErrorV1 {
+    fn from_application_error(error: M1AllKernelsApplicationResponseErrorV1) -> Self {
+        match error {
+            M1AllKernelsApplicationResponseErrorV1::Length { expected, actual } => {
+                Self::ResponseLength { expected, actual }
+            }
+            M1AllKernelsApplicationResponseErrorV1::Protocol(source) => Self::Protocol(source),
+            M1AllKernelsApplicationResponseErrorV1::RequestMismatch => {
+                Self::ResponseRequestMismatch
+            }
+            M1AllKernelsApplicationResponseErrorV1::ReceiptAuthentication(source) => {
+                Self::ReceiptAuthentication(source)
+            }
+        }
+    }
+}
+
 impl fmt::Display for M1AllKernelsProtectedVerifierClientErrorV1 {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -748,11 +1211,377 @@ mod tests {
     use super::*;
     use crate::protected_verifier_service::M1AllKernelsProtectedVerifierServiceResponseV1;
     use crate::protected_verifier_test_support::{fixture_request, signed_fixture};
+    use ed25519_dalek::{Signer, SigningKey};
+    use fe2o3_artifact_transaction::{
+        INERT_COMPILER_EXECUTION_SUBJECT_BYTES_V1, INERT_COMPILER_EXECUTION_SUBJECT_MAGIC_V1,
+        INERT_COMPILER_EXECUTION_SUBJECT_VERSION_V1, InertCompilerExecutionSubjectV1,
+    };
+    use fe2o3_external_anchor_protocol::{
+        AnchorPositionV1, AnchorTransitionReceiptV1, AnchoredStateV1, CallerNonceV1,
+        HashChainHeadV1, PinnedAnchorKeyV1, UnsignedAnchorObservationV1,
+    };
+    use fe2o3_runtime_protocol::{
+        CompilerExecutionAttestationChallengeV1, CompilerExecutionAttestationReceiptV1,
+        CompilerExecutionAttestationRequestV1, CompilerExecutionCurrentRecordAttestationV3,
+        CompilerExecutionCurrentRecordVerificationV3, CompilerExecutionExternalAnchorTransactionV1,
+        CompilerExecutionIssuerMeasurementV1, CompilerExecutionIssuerPolicyV1,
+        CompilerExecutionReceiptCarriageV1, CompilerExecutionReceiptPublicationAckV1,
+        CompilerExecutionReceiptPublicationV1,
+    };
+    use fe2o3_worker_v3_verification_protocol::{
+        MAX_WORKER_V3_VERIFICATION_REQUEST_BYTES_V1,
+        WORKER_V3_VERIFICATION_CURRENT_RECORD_BYTES_V2, WorkerV3VerificationChallengeFrameV2,
+        WorkerV3VerificationChallengeReservationV2, WorkerV3VerificationCurrentRecordFrameV2,
+        WorkerV3VerificationEntryCoordinateV1, WorkerV3VerificationFdPayloadDescriptorV1,
+        WorkerV3VerificationMeasurementIdentityV1, WorkerV3VerificationPolicyIdentityV1,
+        WorkerV3VerificationRosterIdentityV1, WorkerV3VerificationTerminalFrameV2,
+    };
+    use rustix::fs::{MemfdFlags, OFlags, SealFlags};
+    use rustix::net::{
+        RecvAncillaryBuffer, RecvAncillaryMessage, RecvFlags, ReturnFlags, SendFlags,
+    };
+    use sha2::{Digest, Sha256};
     use std::fs::File;
+    use std::io::{IoSliceMut, Write};
+    use std::mem::MaybeUninit;
     use std::os::fd::{FromRawFd, IntoRawFd};
     use std::os::unix::net::UnixStream;
     use std::ptr;
     use std::thread;
+
+    const SUBJECT_IDENTITY_DOMAIN: &[u8] = b"FE2O3/INERT-COMPILER-EXECUTION-SUBJECT/V1\0";
+    const COMPILER_CLOSURE_IDENTITY_DOMAIN: &[u8] = b"fe2o3-compiler-closure-identity-v2\0";
+    const GENERIC_ENVELOPE: &[u8] = b"ferric-exact-canonical-v2-envelope";
+    const GENERIC_HSACO: &[u8] = b"ferric-exact-finalized-hsaco";
+
+    #[derive(Clone)]
+    struct CurrentRecordFixture {
+        signing_key: SigningKey,
+        anchor_signing_key: SigningKey,
+        policy: CompilerExecutionIssuerPolicyV1,
+        carriage: CompilerExecutionReceiptCarriageV1,
+        publication_request: CompilerExecutionAttestationRequestV1,
+        publication: CompilerExecutionReceiptPublicationV1,
+    }
+
+    impl CurrentRecordFixture {
+        fn new() -> Self {
+            let signing_key = SigningKey::from_bytes(&[0x51; 32]);
+            let anchor_signing_key = SigningKey::from_bytes(&[0x52; 32]);
+            let policy = CompilerExecutionIssuerPolicyV1::new(
+                7,
+                CompilerExecutionIssuerMeasurementV1::new([0x61; 32], 123).unwrap(),
+                CompilerExecutionIssuerMeasurementV1::new([0x62; 32], 456).unwrap(),
+                signing_key.verifying_key().to_bytes(),
+                anchor_signing_key.verifying_key().to_bytes(),
+            )
+            .unwrap();
+            let subject = compiler_subject(0x20);
+            let challenge = CompilerExecutionAttestationChallengeV1::new(
+                &policy, &subject, [0x63; 32], 1, [0; 32],
+            )
+            .unwrap();
+            let publication_request =
+                CompilerExecutionAttestationRequestV1::new(challenge, subject).unwrap();
+            let receipt = CompilerExecutionAttestationReceiptV1::issue(
+                &policy,
+                &publication_request,
+                &signing_key,
+            )
+            .unwrap();
+            let publication =
+                CompilerExecutionReceiptPublicationV1::new([0x64; 32], [0x65; 32], receipt)
+                    .unwrap();
+            let acknowledgment =
+                CompilerExecutionReceiptPublicationAckV1::new(&publication, [0x66; 32]).unwrap();
+            let carriage = CompilerExecutionReceiptCarriageV1::new(
+                policy.clone(),
+                publication_request.clone(),
+                publication.clone(),
+                acknowledgment,
+            )
+            .unwrap();
+            Self {
+                signing_key,
+                anchor_signing_key,
+                policy,
+                carriage,
+                publication_request,
+                publication,
+            }
+        }
+
+        fn records(
+            &self,
+            challenge: [u8; 32],
+        ) -> (
+            CompilerExecutionCurrentRecordVerificationV3,
+            CompilerExecutionCurrentRecordAttestationV3,
+        ) {
+            let transaction = CompilerExecutionExternalAnchorTransactionV1::new(
+                self.policy.clone(),
+                self.publication_request.clone(),
+                self.publication.clone(),
+            )
+            .unwrap();
+            let anchor_key =
+                PinnedAnchorKeyV1::from_bytes(self.anchor_signing_key.verifying_key().to_bytes())
+                    .unwrap();
+            let pending =
+                AnchoredStateV1::from_local_state(0, HashChainHeadV1::from_bytes([0; 32]))
+                    .prepare(transaction.external_anchor_digest(), &anchor_key)
+                    .unwrap()
+                    .begin_advance(CallerNonceV1::from_bytes([0x67; 32]), &anchor_key)
+                    .unwrap();
+            let unsigned = UnsignedAnchorObservationV1::from_challenge(
+                pending.challenge(),
+                AnchorPositionV1::Proposed,
+            );
+            let signature = self
+                .anchor_signing_key
+                .sign(&unsigned.signing_bytes())
+                .to_bytes();
+            let commit_receipt = AnchorTransitionReceiptV1::new(
+                pending.challenge().clone(),
+                &unsigned.attach_signature(signature),
+                &anchor_key,
+            )
+            .unwrap();
+            let currentness_challenge =
+                CompilerExecutionCurrentRecordVerificationV3::external_anchor_currentness_challenge(
+                    &self.carriage,
+                    &commit_receipt,
+                    challenge,
+                )
+                .unwrap();
+            let unsigned = UnsignedAnchorObservationV1::from_challenge(
+                &currentness_challenge,
+                AnchorPositionV1::Proposed,
+            );
+            let signature = self
+                .anchor_signing_key
+                .sign(&unsigned.signing_bytes())
+                .to_bytes();
+            let currentness_receipt = AnchorTransitionReceiptV1::new(
+                currentness_challenge,
+                &unsigned.attach_signature(signature),
+                &anchor_key,
+            )
+            .unwrap();
+            let verification = CompilerExecutionCurrentRecordVerificationV3::new(
+                &self.carriage,
+                commit_receipt,
+                currentness_receipt,
+                challenge,
+                [0x91; 32],
+                [0x92; 32],
+            )
+            .unwrap();
+            let attestation = CompilerExecutionCurrentRecordAttestationV3::issue(
+                &self.policy,
+                &self.carriage,
+                verification.clone(),
+                challenge,
+                &self.signing_key,
+            )
+            .unwrap();
+            (verification, attestation)
+        }
+    }
+
+    fn generic_request(challenge: u8) -> WorkerV3VerificationRequestV1 {
+        generic_request_with_payloads(challenge, GENERIC_ENVELOPE, GENERIC_HSACO)
+    }
+
+    fn generic_request_with_payloads(
+        challenge: u8,
+        envelope: &[u8],
+        hsaco: &[u8],
+    ) -> WorkerV3VerificationRequestV1 {
+        WorkerV3VerificationRequestV1::new(
+            WorkerV3VerificationFreshChallengeV1::new([challenge; 32]).unwrap(),
+            WorkerV3VerificationRosterIdentityV1::new([0x22; 32]).unwrap(),
+            WorkerV3VerificationPolicyIdentityV1::new([0x23; 32]).unwrap(),
+            WorkerV3VerificationMeasurementIdentityV1::new([0x24; 32]).unwrap(),
+            WorkerV3VerificationFdPayloadDescriptorV1::load_envelope_v2(
+                envelope.len() as u64,
+                Sha256::digest(envelope).into(),
+            )
+            .unwrap(),
+            WorkerV3VerificationFdPayloadDescriptorV1::finalized_hsaco(
+                hsaco.len() as u64,
+                Sha256::digest(hsaco).into(),
+            )
+            .unwrap(),
+            vec![
+                WorkerV3VerificationEntryCoordinateV1::new(
+                    0,
+                    "kernel",
+                    "kernel_export",
+                    [0x31; 32],
+                    [0x32; 32],
+                    [0x33; 32],
+                )
+                .unwrap(),
+            ],
+        )
+        .unwrap()
+    }
+
+    fn generic_snapshots() -> Vec<OwnedFd> {
+        vec![
+            crate::sealed_payload_snapshot_v2("ferric-v2-test-envelope", GENERIC_ENVELOPE).unwrap(),
+            crate::sealed_payload_snapshot_v2("ferric-v2-test-hsaco", GENERIC_HSACO).unwrap(),
+        ]
+    }
+
+    fn test_memfd(bytes: &[u8], seals: SealFlags) -> OwnedFd {
+        let descriptor = rustix::fs::memfd_create(
+            "ferric-v2-hostile-payload",
+            MemfdFlags::CLOEXEC | MemfdFlags::ALLOW_SEALING,
+        )
+        .unwrap();
+        let mut writer = File::from(descriptor);
+        writer.write_all(bytes).unwrap();
+        if !seals.is_empty() {
+            rustix::fs::fcntl_add_seals(&writer, seals).unwrap();
+        }
+        writer.into()
+    }
+
+    fn receive_generic_begin(peer: &OwnedFd) -> (WorkerV3VerificationRequestV1, Vec<OwnedFd>) {
+        let mut bytes =
+            vec![0_u8; MAX_WORKER_V3_VERIFICATION_REQUEST_BYTES_V1 + 1].into_boxed_slice();
+        let mut control_space = [MaybeUninit::uninit(); rustix::cmsg_space!(ScmRights(3))];
+        let mut control = RecvAncillaryBuffer::new(&mut control_space);
+        let received = {
+            let mut vectors = [IoSliceMut::new(&mut bytes)];
+            rustix::net::recvmsg(
+                peer,
+                &mut vectors,
+                &mut control,
+                RecvFlags::CMSG_CLOEXEC | RecvFlags::TRUNC,
+            )
+            .unwrap()
+        };
+        assert!(
+            !received
+                .flags
+                .intersects(ReturnFlags::TRUNC | ReturnFlags::CTRUNC)
+        );
+        let mut descriptors = Vec::new();
+        for message in control.drain() {
+            match message {
+                RecvAncillaryMessage::ScmRights(rights) => descriptors.extend(rights),
+                _ => panic!("unexpected Begin ancillary message"),
+            }
+        }
+        assert_eq!(descriptors.len(), 2);
+        (
+            WorkerV3VerificationRequestV1::decode_canonical(&bytes[..received.bytes]).unwrap(),
+            descriptors,
+        )
+    }
+
+    fn read_exact_at(descriptor: &OwnedFd, len: usize) -> Vec<u8> {
+        let mut bytes = vec![0; len];
+        let mut offset = 0;
+        while offset < len {
+            let count = rustix::io::pread(descriptor, &mut bytes[offset..], offset as u64).unwrap();
+            assert_ne!(count, 0);
+            offset += count;
+        }
+        bytes
+    }
+
+    fn receive_current_record(peer: &OwnedFd) -> WorkerV3VerificationCurrentRecordFrameV2 {
+        let mut bytes = [0_u8; WORKER_V3_VERIFICATION_CURRENT_RECORD_BYTES_V2];
+        let (received, _address) = rustix::net::recv(peer, &mut bytes, RecvFlags::empty()).unwrap();
+        assert_eq!(received, bytes.len());
+        WorkerV3VerificationCurrentRecordFrameV2::decode_canonical(&bytes).unwrap()
+    }
+
+    fn send_exact(peer: &OwnedFd, bytes: &[u8]) {
+        assert_eq!(
+            rustix::net::send(peer, bytes, SendFlags::NOSIGNAL).unwrap(),
+            bytes.len()
+        );
+    }
+
+    fn compiler_subject(seed: u8) -> InertCompilerExecutionSubjectV1 {
+        let closure_pins = [
+            [seed; 32],
+            [seed + 1; 32],
+            [seed + 2; 32],
+            [seed + 3; 32],
+            [seed + 4; 32],
+            [seed + 5; 32],
+        ];
+        let mut closure_digest = Sha256::new();
+        closure_digest.update(COMPILER_CLOSURE_IDENTITY_DOMAIN);
+        closure_digest.update(1_u16.to_le_bytes());
+        for pin in closure_pins {
+            closure_digest.update(pin);
+        }
+        let closure_identity: [u8; 32] = closure_digest.finalize().into();
+        let mut bytes = [0_u8; INERT_COMPILER_EXECUTION_SUBJECT_BYTES_V1];
+        let mut offset = 0;
+        put_test_bytes(
+            &mut bytes,
+            &mut offset,
+            &INERT_COMPILER_EXECUTION_SUBJECT_MAGIC_V1,
+        );
+        put_test_bytes(
+            &mut bytes,
+            &mut offset,
+            &INERT_COMPILER_EXECUTION_SUBJECT_VERSION_V1.to_le_bytes(),
+        );
+        put_test_bytes(&mut bytes, &mut offset, &0_u16.to_le_bytes());
+        put_test_bytes(
+            &mut bytes,
+            &mut offset,
+            &(INERT_COMPILER_EXECUTION_SUBJECT_BYTES_V1 as u64).to_le_bytes(),
+        );
+        put_test_bytes(&mut bytes, &mut offset, &0_u32.to_le_bytes());
+        put_test_bytes(&mut bytes, &mut offset, &9_u64.to_le_bytes());
+        put_test_bytes(&mut bytes, &mut offset, &[seed + 6; 16]);
+        put_test_bytes(&mut bytes, &mut offset, &[seed + 7; 32]);
+        bytes[offset] = 0;
+        offset += 8;
+        put_test_bytes(&mut bytes, &mut offset, &[seed + 8; 32]);
+        put_test_bytes(&mut bytes, &mut offset, &[seed + 9; 32]);
+        for pin in closure_pins {
+            put_test_bytes(&mut bytes, &mut offset, &pin);
+        }
+        put_test_bytes(&mut bytes, &mut offset, &1_u16.to_le_bytes());
+        put_test_bytes(&mut bytes, &mut offset, &closure_identity);
+        for axis in 0_u8..7 {
+            put_test_bytes(&mut bytes, &mut offset, &[seed + 10 + axis; 32]);
+            put_test_bytes(
+                &mut bytes,
+                &mut offset,
+                &(1_000_u64 + u64::from(axis)).to_le_bytes(),
+            );
+        }
+        let identity = test_digest(SUBJECT_IDENTITY_DOMAIN, &bytes[..offset]);
+        put_test_bytes(&mut bytes, &mut offset, &identity);
+        assert_eq!(offset, bytes.len());
+        InertCompilerExecutionSubjectV1::decode(&bytes).unwrap()
+    }
+
+    fn test_digest(domain: &[u8], bytes: &[u8]) -> [u8; 32] {
+        let mut digest = Sha256::new();
+        digest.update(domain);
+        digest.update((bytes.len() as u64).to_le_bytes());
+        digest.update(bytes);
+        digest.finalize().into()
+    }
+
+    fn put_test_bytes(output: &mut [u8], offset: &mut usize, value: &[u8]) {
+        let end = *offset + value.len();
+        output[*offset..end].copy_from_slice(value);
+        *offset = end;
+    }
 
     fn socketpair() -> (OwnedFd, OwnedFd) {
         let mut descriptors = [-1_i32; 2];
@@ -782,6 +1611,23 @@ mod tests {
         let uid = unsafe { libc::geteuid() };
         let gid = unsafe { libc::getegid() };
         M1AllKernelsProtectedVerifierServiceIdentityV1 { uid, gid }
+    }
+
+    fn assert_v2_snapshot_rejected(
+        request: WorkerV3VerificationRequestV1,
+        descriptors: Vec<OwnedFd>,
+    ) {
+        let (client_peer, _service_peer) = socketpair();
+        let client = M1AllKernelsProtectedVerifierClientV2::admit_inner::<false>(
+            client_peer,
+            current_service_identity(),
+            Duration::from_secs(2),
+        )
+        .unwrap();
+        assert!(matches!(
+            client.begin(request, descriptors),
+            Err(M1AllKernelsProtectedVerifierClientErrorV2::Snapshot(_))
+        ));
     }
 
     fn spawn_response(peer: OwnedFd, bytes: Vec<u8>) -> thread::JoinHandle<()> {
@@ -1125,5 +1971,269 @@ mod tests {
             client.request_receipt(&policy, &request),
             Err(M1AllKernelsProtectedVerifierClientErrorV1::Timeout)
         ));
+    }
+
+    #[derive(Clone, Copy)]
+    enum V2TerminalCase {
+        Valid,
+        Rejected,
+        WrongGenericSession,
+        WrongApplicationLength,
+        WrongApplicationRequest,
+        BadReceiptSignature,
+    }
+
+    #[allow(clippy::too_many_lines)]
+    fn run_v2_terminal_case(
+        terminal_case: V2TerminalCase,
+    ) -> Result<
+        M1AllKernelsAuthenticatedProtectedVerifierReceiptV1,
+        M1AllKernelsProtectedVerifierClientErrorV2,
+    > {
+        let generic = generic_request(0x21);
+        let expected_generic = generic.clone();
+        let (policy, receipt) = signed_fixture();
+        let service_request = fixture_request(&policy, &receipt);
+        let application = match terminal_case {
+            V2TerminalCase::WrongApplicationLength => vec![0; 17],
+            V2TerminalCase::WrongApplicationRequest => {
+                let (other_policy, other_receipt) =
+                    crate::protected_verifier_test_support::signed_fixture_with_seed(0x97);
+                let other_request = fixture_request(&other_policy, &other_receipt);
+                M1AllKernelsProtectedVerifierServiceResponseV1::new(&other_request, other_receipt)
+                    .unwrap()
+                    .canonical_bytes()
+                    .to_vec()
+            }
+            V2TerminalCase::BadReceiptSignature => {
+                let mut hostile = *receipt.encode_canonical();
+                let final_byte = hostile.len() - 1;
+                hostile[final_byte] ^= 1;
+                let hostile =
+                    crate::protected_receipt::M1AllKernelsProtectedVerifierReceiptV1::decode_canonical(
+                        &hostile,
+                    )
+                    .unwrap();
+                M1AllKernelsProtectedVerifierServiceResponseV1::new(&service_request, hostile)
+                    .unwrap()
+                    .canonical_bytes()
+                    .to_vec()
+            }
+            V2TerminalCase::Valid
+            | V2TerminalCase::Rejected
+            | V2TerminalCase::WrongGenericSession => {
+                M1AllKernelsProtectedVerifierServiceResponseV1::new(&service_request, receipt)
+                    .unwrap()
+                    .canonical_bytes()
+                    .to_vec()
+            }
+        };
+        let current = CurrentRecordFixture::new();
+        let service_challenge = [0x71; 32];
+        let (verification, attestation) = current.records(service_challenge);
+        let verification_bytes = *verification.canonical_bytes();
+        let attestation_bytes = *attestation.canonical_bytes();
+        let (client_peer, service_peer) = socketpair();
+        let server = thread::spawn(move || {
+            let (received_request, descriptors) = receive_generic_begin(&service_peer);
+            assert_eq!(received_request, expected_generic);
+            assert_eq!(
+                read_exact_at(&descriptors[0], GENERIC_ENVELOPE.len()),
+                GENERIC_ENVELOPE
+            );
+            assert_eq!(
+                read_exact_at(&descriptors[1], GENERIC_HSACO.len()),
+                GENERIC_HSACO
+            );
+            for descriptor in &descriptors {
+                assert_eq!(
+                    rustix::fs::fcntl_getfl(descriptor).unwrap() & OFlags::ACCMODE,
+                    OFlags::RDONLY
+                );
+            }
+            let reservation =
+                WorkerV3VerificationChallengeReservationV2::new(service_challenge, [0x72; 32])
+                    .unwrap();
+            let challenge =
+                WorkerV3VerificationChallengeFrameV2::reserved(&received_request, &reservation);
+            send_exact(&service_peer, challenge.encode_canonical());
+            let submitted = receive_current_record(&service_peer);
+            assert!(submitted.matches_session(&received_request, &reservation));
+            assert_eq!(
+                submitted.verification().canonical_bytes(),
+                &verification_bytes
+            );
+            assert_eq!(
+                submitted.attestation().canonical_bytes(),
+                &attestation_bytes
+            );
+            let terminal = match terminal_case {
+                V2TerminalCase::Rejected => {
+                    WorkerV3VerificationTerminalFrameV2::rejected(&received_request, &reservation)
+                }
+                V2TerminalCase::WrongGenericSession => {
+                    WorkerV3VerificationTerminalFrameV2::application_response(
+                        &generic_request(0x22),
+                        &reservation,
+                        application,
+                    )
+                    .unwrap()
+                }
+                _ => WorkerV3VerificationTerminalFrameV2::application_response(
+                    &received_request,
+                    &reservation,
+                    application,
+                )
+                .unwrap(),
+            };
+            send_exact(&service_peer, terminal.encode_canonical());
+        });
+        let client = M1AllKernelsProtectedVerifierClientV2::admit_inner::<false>(
+            client_peer,
+            current_service_identity(),
+            Duration::from_secs(2),
+        )
+        .unwrap();
+        let reserved = client.begin(generic, generic_snapshots()).unwrap();
+        let (challenge, pending) = reserved.into_parts();
+        assert_eq!(challenge.as_bytes(), &service_challenge);
+        let _compiler_challenge = challenge.into_compiler_execution_challenge().unwrap();
+        let result = pending.submit_current_record(
+            verification_bytes,
+            attestation_bytes,
+            &policy,
+            &service_request,
+        );
+        server.join().unwrap();
+        result
+    }
+
+    #[test]
+    fn v2_exchange_preserves_phase_order_exact_payloads_and_authenticates_receipt() {
+        let authenticated = run_v2_terminal_case(V2TerminalCase::Valid).unwrap();
+        assert!(!authenticated.grants_verifier_authority());
+    }
+
+    #[test]
+    fn v2_terminal_rejection_and_generic_session_substitution_fail_closed() {
+        assert!(matches!(
+            run_v2_terminal_case(V2TerminalCase::Rejected),
+            Err(M1AllKernelsProtectedVerifierClientErrorV2::TerminalRejected)
+        ));
+        assert!(matches!(
+            run_v2_terminal_case(V2TerminalCase::WrongGenericSession),
+            Err(M1AllKernelsProtectedVerifierClientErrorV2::Transport(
+                WorkerV3VerificationClientErrorV2::SessionMismatch
+            ))
+        ));
+    }
+
+    #[test]
+    fn v2_application_length_request_and_signature_substitution_fail_closed() {
+        assert!(matches!(
+            run_v2_terminal_case(V2TerminalCase::WrongApplicationLength),
+            Err(M1AllKernelsProtectedVerifierClientErrorV2::ApplicationResponseLength { .. })
+        ));
+        assert!(matches!(
+            run_v2_terminal_case(V2TerminalCase::WrongApplicationRequest),
+            Err(M1AllKernelsProtectedVerifierClientErrorV2::ApplicationRequestMismatch)
+        ));
+        assert!(matches!(
+            run_v2_terminal_case(V2TerminalCase::BadReceiptSignature),
+            Err(
+                M1AllKernelsProtectedVerifierClientErrorV2::ReceiptAuthentication(
+                    M1AllKernelsProtectedReceiptErrorV1::SignatureRejected
+                )
+            )
+        ));
+    }
+
+    #[test]
+    fn v2_begin_rejection_is_typed_and_payload_order_is_strict() {
+        let generic = generic_request(0x31);
+        let expected = generic.clone();
+        let (client_peer, service_peer) = socketpair();
+        let server = thread::spawn(move || {
+            let (received, _descriptors) = receive_generic_begin(&service_peer);
+            assert_eq!(received, expected);
+            let rejected = WorkerV3VerificationChallengeFrameV2::rejected(&received);
+            send_exact(&service_peer, rejected.encode_canonical());
+        });
+        let client = M1AllKernelsProtectedVerifierClientV2::admit_inner::<false>(
+            client_peer,
+            current_service_identity(),
+            Duration::from_secs(2),
+        )
+        .unwrap();
+        assert!(matches!(
+            client.begin(generic, generic_snapshots()),
+            Err(M1AllKernelsProtectedVerifierClientErrorV2::BeginRejected { .. })
+        ));
+        server.join().unwrap();
+
+        let generic = generic_request(0x32);
+        let (client_peer, _service_peer) = socketpair();
+        let client = M1AllKernelsProtectedVerifierClientV2::admit_inner::<false>(
+            client_peer,
+            current_service_identity(),
+            Duration::from_secs(2),
+        )
+        .unwrap();
+        let mut descriptors = generic_snapshots();
+        descriptors.swap(0, 1);
+        assert!(matches!(
+            client.begin(generic, descriptors),
+            Err(M1AllKernelsProtectedVerifierClientErrorV2::Snapshot(_))
+        ));
+    }
+
+    #[test]
+    fn v2_payload_snapshots_reject_mutation_length_digest_and_inode_aliasing() {
+        let seals = SealFlags::WRITE | SealFlags::GROW | SealFlags::SHRINK | SealFlags::SEAL;
+        assert_v2_snapshot_rejected(
+            generic_request(0x41),
+            vec![
+                test_memfd(GENERIC_ENVELOPE, SealFlags::empty()),
+                test_memfd(GENERIC_HSACO, seals),
+            ],
+        );
+        let mut trailing = GENERIC_ENVELOPE.to_vec();
+        trailing.push(0);
+        assert_v2_snapshot_rejected(
+            generic_request(0x42),
+            vec![
+                test_memfd(&trailing, seals),
+                test_memfd(GENERIC_HSACO, seals),
+            ],
+        );
+        let mut altered = GENERIC_ENVELOPE.to_vec();
+        altered[0] ^= 1;
+        assert_v2_snapshot_rejected(
+            generic_request(0x43),
+            vec![
+                test_memfd(&altered, seals),
+                test_memfd(GENERIC_HSACO, seals),
+            ],
+        );
+        let aliased_request =
+            generic_request_with_payloads(0x44, GENERIC_ENVELOPE, GENERIC_ENVELOPE);
+        let first = test_memfd(GENERIC_ENVELOPE, seals);
+        let second = rustix::io::dup(&first).unwrap();
+        assert_v2_snapshot_rejected(aliased_request, vec![first, second]);
+    }
+
+    #[test]
+    fn begin_challenge_rejects_zero_and_exposes_no_implicit_generation() {
+        assert!(matches!(
+            unsafe {
+                M1AllKernelsProtectedVerifierBeginChallengeV2::from_durable_reservation([0; 32])
+            },
+            Err(WorkerV3VerificationProtocolErrorV1::ZeroIdentity(_))
+        ));
+        let challenge = unsafe {
+            M1AllKernelsProtectedVerifierBeginChallengeV2::from_durable_reservation([0x81; 32])
+        }
+        .unwrap();
+        assert!(!challenge.grants_authority());
     }
 }
