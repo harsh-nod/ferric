@@ -79,6 +79,17 @@ function assertCommit(commit, location) {
   );
 }
 
+function assertExactKeys(value, expected, location) {
+  const actualKeys = Reflect.ownKeys(value)
+    .map((key) => (typeof key === "symbol" ? key.toString() : key))
+    .sort();
+  const expectedKeys = Object.keys(expected).sort();
+  assert(
+    JSON.stringify(actualKeys) === JSON.stringify(expectedKeys),
+    `${location} keys must exactly match the reviewed schema`,
+  );
+}
+
 const dataSource = await readFile(join(siteRoot, "data/project.js"), "utf8");
 const context = { window: {} };
 vm.runInNewContext(dataSource, context, { filename: "site/data/project.js" });
@@ -99,6 +110,7 @@ assert(
   "fe2o3Repository must be a GitHub repository URL",
 );
 assert(project.current && typeof project.current === "object", "current status is missing");
+assertExactKeys(project.current, expectedCurrent, "current");
 assertCommit(project.current.siteRefreshBase, "current.siteRefreshBase");
 assertCommit(project.current.implementationCommit, "current.implementationCommit");
 assertCommit(project.current.authenticatedR32Commit, "current.authenticatedR32Commit");
@@ -160,8 +172,48 @@ for (const [key, expected] of Object.entries(expectedCurrent)) {
 }
 assertState(project.milestone.state, "milestone");
 
-assert(Array.isArray(project.envelope) && project.envelope.length > 0, "envelope is empty");
+const expectedEnvelopeTerms = [
+  "Target",
+  "Draft",
+  "Device",
+  "Precision",
+  "Context",
+  "Concurrency",
+  "Pages refresh base",
+  "M1 implementation",
+  "Qualified fe2o3 candidate",
+  "Speculative executor candidate",
+  "Protected verifier status",
+  "Aggregate device source",
+  "Aggregate source-pin policy",
+  "Aggregate build producer",
+  "Authenticated R32 capture",
+  "Aggregate selection candidate",
+  "Pending verifier projection",
+  "Aggregate verifier preflight",
+  "Strict proof release",
+  "Protected acceptance",
+  "Historical protected artifact",
+  "Current authority",
+];
+assert(
+  Array.isArray(project.envelope) && project.envelope.length === expectedEnvelopeTerms.length,
+  "envelope must contain exactly the reviewed rows",
+);
+project.envelope.forEach((entry, index) => {
+  assert(
+    Array.isArray(entry) &&
+      entry.length === 2 &&
+      entry.every((value) => typeof value === "string" && value.length > 0),
+    `envelope[${index}] must be a non-empty term and definition pair`,
+  );
+});
 const envelope = new Map(project.envelope);
+assert(
+  envelope.size === expectedEnvelopeTerms.length &&
+    expectedEnvelopeTerms.every((term) => envelope.has(term)),
+  "envelope terms must exactly match the reviewed rows",
+);
 assert(
   envelope.get("Qualified fe2o3 candidate")?.includes(expectedCurrent.fe2o3DeadlineCandidate) &&
     envelope.get("Qualified fe2o3 candidate")?.includes(expectedCurrent.fe2o3DeadlineCandidateTree) &&
@@ -427,6 +479,18 @@ project.recentProgress.forEach((item, index) => {
   assert(!progressCommits.has(item.commit), `duplicate progress commit ${item.commit}`);
   progressCommits.add(item.commit);
 });
+const historicalFe2o3Pin = "57d2d9ced5c113d40546ea1dee603e8ba499cf40";
+const historicalPinEntries = project.recentProgress.filter((item) =>
+  `${item.commit} ${item.title} ${item.detail}`.includes(historicalFe2o3Pin.slice(0, 8)),
+);
+assert(historicalPinEntries.length > 0, "historical fe2o3 progress must remain present");
+historicalPinEntries.forEach((item) => {
+  assert(
+    /\b(?:historical|earlier)\b/i.test(`${item.title} ${item.detail}`) &&
+      /\b(?:current repin|current dependency repin)\b/i.test(item.detail),
+    `historical fe2o3 progress ${item.commit} must be explicitly historical and point forward`,
+  );
+});
 assert(
   progressCommits.has(expectedCurrent.implementationCommit),
   "recent progress must include the current implementation commit",
@@ -473,6 +537,26 @@ project.evidence.legend.forEach(([state], index) =>
 
 const html = await readFile(join(siteRoot, "index.html"), "utf8");
 const normalizedHtml = html.replace(/\s+/g, " ");
+const currentProjectData = JSON.stringify(
+  Object.fromEntries(
+    Object.entries(project).filter(([key]) => key !== "recentProgress"),
+  ),
+);
+const forbiddenCurrentDependencyClaims = [
+  /\bselected fe2o3 pin\b/i,
+  /\bcurrent (?:fe2o3 )?(?:pin|dependency)\b/i,
+];
+assert(
+  !currentProjectData.includes(historicalFe2o3Pin) &&
+    !currentProjectData.includes(historicalFe2o3Pin.slice(0, 8)),
+  "current Pages data must not contain the historical fe2o3 pin",
+);
+for (const claim of forbiddenCurrentDependencyClaims) {
+  assert(
+    !claim.test(currentProjectData),
+    `current Pages data contains a forbidden selected-dependency claim: ${claim}`,
+  );
+}
 for (const claim of [
   "Public fe2o3 candidate ff21f24, tree 861ad57c",
   "based on latest main 308d8fa",
